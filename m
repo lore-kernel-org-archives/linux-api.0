@@ -1,58 +1,69 @@
 From: Linus Torvalds <torvalds@linux-foundation.org>
 Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
-Date: Thu, 10 Jan 2019 13:59:12 -0800
-Message-ID: <CAHk-=wheEc=K19yJjr4_rkNVxVmyxmbeOoDpwiuNUHZsR-BFBw@mail.gmail.com>
+Date: Thu, 10 Jan 2019 14:11:01 -0800
+Message-ID: <CAHk-=wip2CPrdOwgF0z4n2tsdW7uu+Egtcx9Mxxe3gPfPW_JmQ@mail.gmail.com>
 References: <20190108044336.GB27534@dastard> <CAHk-=wjvzEFQcTGJFh9cyV_MPQftNrjOLon8YMMxaX0G1TLqkg@mail.gmail.com>
  <20190109022430.GE27534@dastard> <nycvar.YFH.7.76.1901090326460.16954@cbobk.fhfr.pm>
  <20190109043906.GF27534@dastard> <CAHk-=wic28fSkwmPbBHZcJ3BGbiftprNy861M53k+=OAB9n0=w@mail.gmail.com>
  <20190110004424.GH27534@dastard> <CAHk-=wg1jSQ-gq-M3+HeTBbDs1VCjyiwF4gqnnBhHeWizyrigg@mail.gmail.com>
- <CALCETrWxwaBUYMg=aLySJByMgXzuzV4gHS0n6O6Oet2Jm6SAbw@mail.gmail.com>
- <20190110144711.GV6310@bombadil.infradead.org> <20190110214427.GK27534@dastard>
+ <20190110070355.GJ27534@dastard> <CAHk-=wigwXV_G-V1VxLs6BAvVkvW5=Oj+xrNHxE_7yxEVwoe3w@mail.gmail.com>
+ <20190110122442.GA21216@nautica>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190110214427.GK27534@dastard>
+In-Reply-To: <20190110122442.GA21216@nautica>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Chinner <david@fromorbit.com>
-Cc: Matthew Wilcox <willy@infradead.org>, Andy Lutomirski <luto@kernel.org>, Jiri Kosina <jikos@kernel.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Dominique Martinet <asmadeus@codewreck.org>
+Cc: Dave Chinner <david@fromorbit.com>, Jiri Kosina <jikos@kernel.org>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 10, 2019 at 1:44 PM Dave Chinner <david@fromorbit.com> wrote:
+On Thu, Jan 10, 2019 at 4:25 AM Dominique Martinet
+<asmadeus@codewreck.org> wrote:
 >
-> GUP does page fault on user buffer which is a mmapped region of same
-> file. page fault sets up for buffered IO, tries to take rwsem for
-> write, deadlocks.
+> Linus Torvalds wrote on Thu, Jan 10, 2019:
+> > (Except, of course, if somebody actually notices outside of tests.
+> > Which may well happen and just force us to revert that commit. But
+> > that's a separate issue entirely).
 >
-> Most of the schemes we come up with fall down at this point - you
-> can't hold a lock over gup that is also used in the buffered IO
-> path. That's why XFS (and now ext4) have the IOLOCK and MMAPLOCK
-> for truncation serialisation - we can't lock out both read()/write()
-> and mmap IO paths with the same lock...
+> Both Dave and I pointed at a couple of utilities that break with
+> this. nocache can arguably work with the new behaviour but will behave
+> differently; vmtouch on the other hand is no longer able to display
+> what's in cache or not - people use that for example to "warm up" a
+> container in page cache based on how it appears after it had been
+> running for a while is a pretty valid usecase to me.
 
-Side note: a somewhat similar version of is true even in the absence
-of GUP and dio, for the case of doing a mmap of a file, and then
-reading or writing from the mapped region into the file itself.
+So honestly, the main reason I'm loath to revert is that yes, we know
+of theoretical differences, but they seem to all be
+performance-related.
 
-There are "interesting" locking scenarios wrt just holding the page
-locked, and trying to then fill that page with information with just a
-regular "copy_from_user()".
+It would be really good to hear numbers. Is the warm-up optimization
+something that changes things from 3ms to 3.5ms? Or does it change
+things from 3ms to half a second?
 
-Page fault -> try to read the file -> oops, the page we're trying to
-read from is locked because we're trying to write to it.
+Because Dave is absolutely correct that mincore() isn't really even
+all that interesting an information leak if you can do the same with
+RWF_NOWAIT. But the other side of that same coin is that if we're not
+able to block mincore() sanely, then there's no point at looking at
+RWF_NOWAIT either.
 
-So we have that odd dance in generic_perform_write() which does
+And we *can* do sane things about RWF_NOWAIT. For example, we could
+start async IO on RWF_NOWAIT, and suddenly it would go from "probe the
+page cache" to "probe and fill", and be much harder to use as an
+attack vector..
 
- - touch the first user byte without holding any lock
+Do we want to do that? Maybe, maybe not. But if mincore() can't be
+fixed, there's no point in even trying.
 
- - do write_begin() (which gets the page lock)
+Now, if the mincore() change results in a big performance hit for
+people who use it as a heuristic for filling caches etc, then
+reverting the trial balloon is obviously something we must do, but at
+that point I'd also like to know which load it was that cared so much,
+and just what it did. Because we did have an alternate patch that just
+said "was the file writably opened, then we can do the page cache
+probing". But at least one user (fincore) didn't do even that.
 
- - copy from user space using the "atomic" copy (which just gives up on fault)
+So right now, I consider the mincore change to be a "try to probe the
+state of mincore users", and we haven't really gotten a lot of
+information back yet.
 
- - if nothing got copied, go back and try again with a smaller copy
-that can't cross a page. We might have raced with pageout.
-
-It might be possible to do something similar for direct IO, although
-simpler: just do the GUP entirely atomically (and in the fault case
-just fall back to non-direct IO).
-
-            Linus
+              Linus
