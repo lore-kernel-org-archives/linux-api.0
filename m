@@ -1,47 +1,84 @@
-From: Heiko Carstens <heiko.carstens@de.ibm.com>
-Subject: Re: [PATCH 07/11] y2038: syscalls: rename y2038 compat syscalls
-Date: Thu, 10 Jan 2019 21:55:22 +0100
-Message-ID: <20190110205522.GC3676@osiris>
-References: <20190110172216.313063-1-arnd@arndb.de>
- <20190110172216.313063-8-arnd@arndb.de>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
+Date: Fri, 11 Jan 2019 08:44:27 +1100
+Message-ID: <20190110214427.GK27534@dastard>
+References: <20190108044336.GB27534@dastard>
+ <CAHk-=wjvzEFQcTGJFh9cyV_MPQftNrjOLon8YMMxaX0G1TLqkg@mail.gmail.com>
+ <20190109022430.GE27534@dastard>
+ <nycvar.YFH.7.76.1901090326460.16954@cbobk.fhfr.pm>
+ <20190109043906.GF27534@dastard>
+ <CAHk-=wic28fSkwmPbBHZcJ3BGbiftprNy861M53k+=OAB9n0=w@mail.gmail.com>
+ <20190110004424.GH27534@dastard>
+ <CAHk-=wg1jSQ-gq-M3+HeTBbDs1VCjyiwF4gqnnBhHeWizyrigg@mail.gmail.com>
+ <CALCETrWxwaBUYMg=aLySJByMgXzuzV4gHS0n6O6Oet2Jm6SAbw@mail.gmail.com>
+ <20190110144711.GV6310@bombadil.infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20190110172216.313063-8-arnd@arndb.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-Sender: netdev-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, mattst88@gmail.com, linux@armlinux.org.uk, catalin.marinas@arm.com, will.deacon@arm.com, tony.luck@intel.com, fenghua.yu@intel.com, geert@linux-m68k.org, monstr@monstr.eu, paul.burton@mips.com, deller@gmx.de, benh@kernel.crashing.org, mpe@ellerman.id.au, schwidefsky@de.ibm.com, dalias@libc.org, davem@davemloft.net, luto@kernel.org, tglx@linutronix.de, mingo@redhat.com, hpa@zytor.com, x86@kernel.org, jcmvbkbc@gmail.com, akpm@linux-foundation.org, deepa.kernel@gmail.com, ebiederm@xmission.com, firoz.khan@linaro.org, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org
+In-Reply-To: <20190110144711.GV6310@bombadil.infradead.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Matthew Wilcox <willy@infradead.org>
+Cc: Andy Lutomirski <luto@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jikos@kernel.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 10, 2019 at 06:22:12PM +0100, Arnd Bergmann wrote:
-> diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
-> index f84ea364a302..b3199a744731 100644
-> --- a/arch/s390/kernel/syscalls/syscall.tbl
-> +++ b/arch/s390/kernel/syscalls/syscall.tbl
-> @@ -20,7 +20,7 @@
->  10   common	unlink			sys_unlink			compat_sys_unlink
->  11   common	execve			sys_execve			compat_sys_execve
->  12   common	chdir			sys_chdir			compat_sys_chdir
-> -13   32		time			-				compat_sys_time
-> +13   32		time			-				sys_time32
->  14   common	mknod			sys_mknod			compat_sys_mknod
->  15   common	chmod			sys_chmod			compat_sys_chmod
->  16   32		lchown			-				compat_sys_s390_lchown16
-> @@ -30,11 +30,11 @@
->  22   common	umount			sys_oldumount			compat_sys_oldumount
->  23   32		setuid			-				compat_sys_s390_setuid16
->  24   32		getuid			-				compat_sys_s390_getuid16
-> -25   32		stime			-				compat_sys_stime
-> +25   32		stime			-				sys_stime32
->  26   common	ptrace			sys_ptrace			compat_sys_ptrace
->  27   common	alarm			sys_alarm			sys_alarm
->  29   common	pause			sys_pause			sys_pause
-> -30   common	utime			sys_utime			compat_sys_utime
-> +30   common	utime			sys_utime			sys_utime32
-...(and more)...
+On Thu, Jan 10, 2019 at 06:47:11AM -0800, Matthew Wilcox wrote:
+> On Wed, Jan 09, 2019 at 09:26:41PM -0800, Andy Lutomirski wrote:
+> > Since direct IO has been brought up, I have a question.  I've wondered
+> > for years why direct IO works the way it does.  If I were implementing
+> > it from scratch, my first inclination would be to use the page cache
+> > instead of fighting it.  To do a single-page direct read, I would look
+> > that page up in the page cache (i.e. i_pages these days).  If the page
+> > is there, I would do a normal buffered read.  If the page is not
+> > there, I would insert a record into i_pages indicating that direct IO
+> > is in progress and then I would do the IO into the destination page.
+> > If any other read, direct or otherwise, sees a record saying "under
+> > direct IO", it would wait.
+> 
+> OK, you're in the same ballpark I am ;-)  Kent Overstreet pointed out
+> that what you want to do here is great for the mixed case, but it's
+> pretty inefficient for IOs to files which are wholly uncached.
+> 
+> So what I'm currently thinking about is an rwsem which works like this:
+> 
+> O_DIRECT task:
+> if i_pages is empty, take rwsem for read, recheck i_pages is empty, do IO,
+> drop rwsem.
 
-All of them need compat wrappers to clear the uppermost 33 bits of
-user space pointers. I assume there is no new *32 system call which
-takes u64/s64 arguments; so the pointers should be the only problem.
+GUP does page fault on user buffer which is a mmapped region of same
+file. page fault sets up for buffered IO, tries to take rwsem for
+write, deadlocks.
+
+Most of the schemes we come up with fall down at this point - you
+can't hold a lock over gup that is also used in the buffered IO
+path. That's why XFS (and now ext4) have the IOLOCK and MMAPLOCK
+for truncation serialisation - we can't lock out both read()/write()
+and mmap IO paths with the same lock...
+
+> if i_pages is not empty, insert XA_LOCK_ENTRY, when IO complete, wake waitqueue for that (mapping, index).
+
+I assume you really mean add a tag to the entry?
+
+But this means there is no record ofthe direct IO being in flight
+except for the rwsem being held across the IO. Even if we did insert
+a flag to say "DIO in progress" and not rely on the lock....
+
+> buffered IO:
+> if i_pages is empty, take rwsem for write, allocate page, insert page, drop rwsem.
+> if i_pages is not empty, look up index, if entry is XA_LOCK_ENTRY sleep on
+> waitqueue. otherwise proceed as now.
+
+... we'll sleep on that flags in the page fault and deadlock anyway.
+
+I'm pretty sure we explored this "record DIO state in the radix
+tree" 2 or 3 years ago and came to the conclusion that it didn't
+work for reasons like the above. i.e. it doesn't solve the problems
+we currently have with locking and serialisation between DIO and
+mmap...
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
