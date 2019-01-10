@@ -1,77 +1,36 @@
-From: Dave Chinner <david@fromorbit.com>
+From: Jiri Kosina <jikos@kernel.org>
 Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
-Date: Thu, 10 Jan 2019 18:03:55 +1100
-Message-ID: <20190110070355.GJ27534@dastard>
-References: <CAHk-=wg1A44Roa8C4dmfdXLRLmNysEW36=3R7f+tzZzbcJ2d2g@mail.gmail.com>
- <CAHk-=wiqbKEC5jUXr3ax+oUuiRrp=QMv_ZnUfO-SPv=UNJ-OTw@mail.gmail.com>
- <20190108044336.GB27534@dastard>
- <CAHk-=wjvzEFQcTGJFh9cyV_MPQftNrjOLon8YMMxaX0G1TLqkg@mail.gmail.com>
- <20190109022430.GE27534@dastard>
- <nycvar.YFH.7.76.1901090326460.16954@cbobk.fhfr.pm>
- <20190109043906.GF27534@dastard>
- <CAHk-=wic28fSkwmPbBHZcJ3BGbiftprNy861M53k+=OAB9n0=w@mail.gmail.com>
- <20190110004424.GH27534@dastard>
- <CAHk-=wg1jSQ-gq-M3+HeTBbDs1VCjyiwF4gqnnBhHeWizyrigg@mail.gmail.com>
+Date: Thu, 10 Jan 2019 08:54:23 +0100 (CET)
+Message-ID: <nycvar.YFH.7.76.1901100852080.6626@cbobk.fhfr.pm>
+References: <20190106001138.GW6310@bombadil.infradead.org> <CAHk-=wiT=ov+6zYcnw_64ihYf74Amzqs67iVGtJMQq65PxiVYw@mail.gmail.com> <CAHk-=wg1A44Roa8C4dmfdXLRLmNysEW36=3R7f+tzZzbcJ2d2g@mail.gmail.com> <CAHk-=wiqbKEC5jUXr3ax+oUuiRrp=QMv_ZnUfO-SPv=UNJ-OTw@mail.gmail.com>
+ <20190108044336.GB27534@dastard> <CAHk-=wjvzEFQcTGJFh9cyV_MPQftNrjOLon8YMMxaX0G1TLqkg@mail.gmail.com> <20190109022430.GE27534@dastard> <nycvar.YFH.7.76.1901090326460.16954@cbobk.fhfr.pm> <20190109043906.GF27534@dastard> <nycvar.YFH.7.76.1901091050560.16954@cbobk.fhfr.pm>
+ <20190110011533.GI27534@dastard>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHk-=wg1jSQ-gq-M3+HeTBbDs1VCjyiwF4gqnnBhHeWizyrigg@mail.gmail.com>
+In-Reply-To: <20190110011533.GI27534@dastard>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Jiri Kosina <jikos@kernel.org>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Dave Chinner <david@fromorbit.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jan 09, 2019 at 05:18:21PM -0800, Linus Torvalds wrote:
-> On Wed, Jan 9, 2019 at 4:44 PM Dave Chinner <david@fromorbit.com> wrote:
-> >
-> > I wouldn't look at ext4 as an example of a reliable, problem free
-> > direct IO implementation because, historically speaking, it's been a
-> > series of nasty hacks (*cough* mount -o dioread_nolock *cough*) and
-> > been far worse than XFS from data integrity, performance and
-> > reliability perspectives.
+On Thu, 10 Jan 2019, Dave Chinner wrote:
+
+> > Yeah, preadv2(RWF_NOWAIT) is in the same teritory as mincore(), it has 
+> > "just" been overlooked. I can't speak for Daniel, but I believe he might 
+> > be ok with rephrasing the above as "Restricting mincore() and RWF_NOWAIT 
+> > is sufficient ...".
 > 
-> That's some big words from somebody who just admitted to much worse hacks.
+> Good luck with restricting RWF_NOWAIT. I eagerly await all the
+> fstests that exercise both the existing and new behaviours to
+> demonstrate they work correctly.
 
-Sorry, what hacks did I just admit to making? This O_DIRECT
-behaviour long predates me - I'm just the messenger and you are
-shooting from the hip.
+Well, we can still resurrect my original aproach of doing this opt-in 
+based on a sysctl setting, and letting the admin choose his poison.
 
-Linus, the point I was making is that there are many, many ways to
-control page cache invalidation and measure page cache residency,
-and that trying to address them one-by-one is just a game of
-whack-a-mole.
+If 'secure' mode is selected, RWF_NOWAIT will then probably just always 
+fail wit EAGAIN.
 
-In future, can you please try not to go off the rails when someone
-mentions O_DIRECT? You have a terrible habit of going off on
-misdirected rants about O_DIRECT and/or XFS at any opportunity you
-can get, and all it does is derail whatever useful conversation was
-taking place.
-
-> Seriously. XFS is buggy in this regard, ext4 apparently isn't.
-
-So you keep asserting despite being presented with evidence that it
-mitigates other longstanding bugs that are really hard to solve.
-Ignoring all the evidence you've been presented with and
-re-asserting your original statement doesn't make it correct.
-
-Did you not think to ask "what are those problems, and what can do
-to solve them so we can remove the invalidation mitigations that XFS
-uses?". That would be a useful contribution, whereas shouting about
-how O_DIRECT is broken just pisses off the people working their
-asses off to fix the problems you just heard about and are ranting
-about.
-
-> Thinking that it's better to just invalidate the cache  for direct IO
-> reads is all kinds of odd.
-
-No, it's practicality. If we can't fix the problem, we have to
-mitigate it. When we fix the underlying problem we can remove the
-mitigation code. having you assert that it's broken and demand that
-it be removed doesn't change the fact that we haven't fixed the
-underlying problems. It's being worked on, but we're not there yet.
-
--Dave.
 -- 
-Dave Chinner
-david@fromorbit.com
+Jiri Kosina
+SUSE Labs
