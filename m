@@ -1,183 +1,77 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH glibc 1/4] glibc: Perform rseq(2) registration at
- nptl init and thread creation (v4)
-Date: Thu, 10 Jan 2019 15:31:55 -0500 (EST)
-Message-ID: <1681283664.1380.1547152315426.JavaMail.zimbra@efficios.com>
-References: <20181204192141.4684-1-mathieu.desnoyers@efficios.com> <87h8fkz6qx.fsf@oldenburg2.str.redhat.com>
+From: Heiko Carstens <heiko.carstens@de.ibm.com>
+Subject: Re: [PATCH 14/15] arch: add split IPC system calls where needed
+Date: Thu, 10 Jan 2019 21:32:53 +0100
+Message-ID: <20190110203253.GA3676@osiris>
+References: <20190110162435.309262-1-arnd@arndb.de>
+ <20190110162435.309262-15-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87h8fkz6qx.fsf@oldenburg2.str.redhat.com>
+In-Reply-To: <20190110162435.309262-15-arnd@arndb.de>
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>
-Cc: carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, ink@jurassic.park.msu.ru, mattst88@gmail.com, linux@armlinux.org.uk, catalin.marinas@arm.com, will.deacon@arm.com, tony.luck@intel.com, fenghua.yu@intel.com, geert@linux-m68k.org, monstr@monstr.eu, paul.burton@mips.com, deller@gmx.de, mpe@ellerman.id.au, schwidefsky@de.ibm.com, dalias@libc.org, davem@davemloft.net, luto@kernel.org, tglx@linutronix.de, mingo@redhat.com, hpa@zytor.com, x86@kernel.org, jcmvbkbc@gmail.com, firoz.khan@linaro.org, ebiederm@xmission.com, deepa.kernel@gmail.com, linux@dominikbrodowski.net, akpm@linux-foundation.org, dave@stgolabs.net, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.
 List-Id: linux-api@vger.kernel.org
 
------ On Dec 11, 2018, at 2:40 AM, Florian Weimer fweimer@redhat.com wrote:
-
-> * Mathieu Desnoyers:
+On Thu, Jan 10, 2019 at 05:24:34PM +0100, Arnd Bergmann wrote:
+> The IPC system call handling is highly inconsistent across architectures,
+> some use sys_ipc, some use separate calls, and some use both.  We also
+> have some architectures that require passing IPC_64 in the flags, and
+> others that set it implicitly.
 > 
->> I want to keep the __rseq_refcount symbol so out-of-libc users can
->> register rseq if they are linked against a pre-2.29 libc.
+> For the additon of a y2083 safe semtimedop() system call, I chose to only
+> support the separate entry points, but that requires first supporting
+> the regular ones with their own syscall numbers.
 > 
-> Sorry, I was confused.
-
-Hi Florian,
-
-Thanks for your questions below. Sorry for my delayed answer, I've
-been preempted by vacation time. See more below,
-
+> The IPC_64 is now implied by the new semctl/shmctl/msgctl system
+> calls even on the architectures that require passing it with the ipc()
+> multiplexer.
 > 
->> diff --git a/csu/Makefile b/csu/Makefile
->> index 88fc77662e..81d471587f 100644
->> --- a/csu/Makefile
->> +++ b/csu/Makefile
->> @@ -28,7 +28,7 @@ include ../Makeconfig
->>  
->>  routines = init-first libc-start $(libc-init) sysdep version check_fds \
->>  	   libc-tls elf-init dso_handle
->> -aux	 = errno
->> +aux	 = errno rseq
->>  elide-routines.os = libc-tls
->>  static-only-routines = elf-init
->>  csu-dummies = $(filter-out $(start-installed-name),crt1.o Mcrt1.o)
+> I'm not adding the new semtimedop() or semop() on 32-bit architectures,
+> those will get implemented using the new semtimedop_time64() version
+> that gets added along with the other time64 calls.
+> Three 64-bit architectures (powerpc, s390 and sparc) get semtimedop().
 > 
-> Do we plan to add Hurd support for this?
-
-No.
-
-A logical path where we could move rseq.c is under sysdeps/unix/sysv/linux/rseq.c.
-This would allow the __rseq_abi symbol to be used from anywhere in glibc.
-
+> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+> ---
+> One aspect here that might be a bit controversial is the use of
+> the same system call numbers across all architectures, synchronizing
+> all of them with the x86-32 numbers. With the new syscall.tbl
+> files, I hope we can just keep doing that in the future, and no
+> longer require the architecture maintainers to assign a number.
 > 
->> diff --git a/sysdeps/unix/sysv/linux/rseq-internal.h
->> b/sysdeps/unix/sysv/linux/rseq-internal.h
->> new file mode 100644
->> index 0000000000..2367926def
->> --- /dev/null
->> +++ b/sysdeps/unix/sysv/linux/rseq-internal.h
-> 
->> +#define RSEQ_SIG 0x53053053
-> 
-> What's this?  This needs a comment.
+> This is mainly useful for implementers of the C libraries: if
+> we can add future system calls everywhere at the same time, using
+> a particular version of the kernel headers also guarantees that
+> the system call number macro is visible.
 
-I will move it to an installed header (sysdeps/unix/sysv/linux/sys/rseq.h)
-with the following comment:
+> diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
+> index 022fc099b628..428cf512a757 100644
+> --- a/arch/s390/kernel/syscalls/syscall.tbl
+> +++ b/arch/s390/kernel/syscalls/syscall.tbl
+> @@ -391,3 +391,15 @@
+>  381  common	kexec_file_load		sys_kexec_file_load		compat_sys_kexec_file_load
+>  382  common	io_pgetevents		sys_io_pgetevents		compat_sys_io_pgetevents
+>  383  common	rseq			sys_rseq			compat_sys_rseq
+> +# room for arch specific syscalls
+> +392	64	semtimedop		sys_semtimedop			-
+> +393  common	semget			sys_semget			sys_semget
+...
+> +395  common	shmget			sys_shmget			sys_shmget
+...
+> +398  common	shmdt			sys_shmdt 			sys_shmdt
+> +399  common	msgget			sys_msgget			sys_msgget
 
-/* Signature required before each abort handler code.  */
-#define RSEQ_SIG 0x53053053
+These four need compat system call wrappers, unfortunately... (well,
+actually only shmget and shmdt require them, but let's add them for
+all four). See arch/s390/kernel/compat_wrapper.c
 
-> 
->> +extern __thread volatile struct rseq __rseq_abi
->> +__attribute__ ((tls_model ("initial-exec")));
->> +
->> +extern __thread volatile uint32_t __rseq_refcount
->> +__attribute__ ((tls_model ("initial-exec")));
-> 
-> The volatile qualifier needs justification in a comment.  (Usually,
-> volatile is wrong. and it is difficult to get rid of it.)
-> 
-> We need to document these public symbols somewhere.  There should be an
-> installed header file.
+I'm afraid this compat special handling will be even more annoying in
+the future, since s390 will be the only architecture which requires
+this special handling.
 
-Moving to sysdeps/unix/sysv/linux/sys/rseq.h with the following comments:
-
-/* volatile because fields can be read/updated by the kernel.  */
-extern __thread volatile struct rseq __rseq_abi
-__attribute__ ((tls_model ("initial-exec")));
-
-/* volatile because refcount can be read/updated by signal handlers.  */
-extern __thread volatile uint32_t __rseq_refcount
-__attribute__ ((tls_model ("initial-exec")));
-
-
-> 
->> diff --git a/nptl/Versions b/nptl/Versions
->> index e7f691da7a..f7890f73fc 100644
->> --- a/nptl/Versions
->> +++ b/nptl/Versions
->> @@ -277,6 +277,10 @@ libpthread {
->>      cnd_timedwait; cnd_wait; tss_create; tss_delete; tss_get; tss_set;
->>    }
->>  
->> +  GLIBC_2.29 {
->> +    __rseq_refcount;
->> +  }
-> 
-> Why put this into libpthread, and __rseq_abi into libc?
-
-The __rseq_abi symbol should be available to the glibc memory allocator.
-I plan to move the __rseq_abi to sysdeps/unix/sysv/linux/Versions instead
-so it becomes Linux-specific.
-
-The __rseq_refcount symbol only needs to be made available to applications
-and libraries linking against libpthread, because only libpthread actually
-handles the rseq registration/unregistration at thread start/exit and
-library initialization.
-
-However, considering that we want this to be Linux-specific as well,
-I could move it to sysdeps/unix/sysv/linux/Versions too.
-
-Then it would make sense to move the __rseq_refcount symbol defined in
-nptl/rseq.c to sysdeps/unix/sysv/linux/rseq.c as well and group
-everything together.
-
-Therefore, both symbols will end up in sysdeps/unix/sysv/linux/Versions.
-
-> 
-> What, exactly, is the benefit of having __rseq_refcount defined by
-> glibc?  Have you actually got this working?  If an rseq library is
-> linked against glibc 2.29, it will reference the GLIBC_2.29 symbol
-> version, so it cannot be loaded by older glibcs.  In this case,
-> __rseq_refcount is not needed.
-> 
-> If you build against pre-2.29, then the __rseq_refcount symbol will be
-> unversioned.  But then you don't need it glibc, either.
-> 
-> So it seems to me that the addition to glibc is useless in both
-> scenarios.  Am I missing something?
-
-Here is the scenario where it becomes useful:
-
-librseq is built against a pre-2.29 glibc. So the __rseq_refcount symbol
-it emits is unversioned. Application is build against 2.29 glibc.
-Application links both against librseq (itself built against pre-2.29 glibc)
-and glibc (2.29).
-
-In that scenario, librseq and glibc rely on a unique __rseq_refcount TLS
-variable per process ensure that they don't register rseq twice for each thread.
-
-> 
-> By the way, you could avoid the need for unregistration if you allocated
-> the rseq areas persistently, index by TID.  They are quite small, so
-> with the typical PID range, maybe the wasted memory due to changing TIDs
-> would be acceptable?
-
-Would we be able to access those __rseq_abi as normal TLS IE model variables ?
-The overhead of indexing an array matters for a fast-path.
-
-> 
-> I guess things would be so much easier if the kernel simply provided a
-> means to obtain the address of a previously registered rseq area.
-
-Even if the kernel did provide this (which is not part of the syscall ABI anyway),
-I suspect we would need extra code on the fast-path to access the __rseq_abi
-TLS, which I would very much like to avoid. But perhaps there are ways to do
-this without extra overhead that are beyond my understanding of glibc handling
-of TLS models.
-
-I will soon post an updated patch set taking care of your comments.
-
-Thanks!
-
-Mathieu
-
-> 
-> Thanks,
-> Florian
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+_Maybe_ it would make sense to automatically generate a weak compat
+system call wrapper for s390 with the SYSCALL_DEFINE macros, but that
+probably won't work in all cases.
