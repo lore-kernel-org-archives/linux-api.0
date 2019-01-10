@@ -1,15 +1,17 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH 11/15] mips: fix n32 compat_ipc_parse_version
-Date: Fri, 11 Jan 2019 00:04:09 +0100
-Message-ID: <CAK8P3a1-QvHrPOupHx3sc+c6zAS9E-u8hYbt4keWzpiPgNOD-Q@mail.gmail.com>
+From: Michael Cree <mcree@orcon.net.nz>
+Subject: Re: [PATCH 00/15] arch: synchronize syscall tables in
+ preparation for y2038
+Date: Fri, 11 Jan 2019 12:14:31 +1300
+Message-ID: <20190110231431.ho6mjhjkj4p47hww@tower>
 References: <20190110162435.309262-1-arnd@arndb.de>
- <20190110162435.309262-12-arnd@arndb.de>
- <20190110193949.5wsysvchhhh2gfmu@pburton-laptop>
+ <alpine.DEB.2.21.1901101808220.31458@digraph.polyomino.org.uk>
+ <CAK8P3a2f4SCJXrm6HWO9UKY-akSW+ONNpOvQOtYbia_fRo9ciQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
 Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <20190110193949.5wsysvchhhh2gfmu@pburton-laptop>
+Content-Disposition: inline
+In-Reply-To: <CAK8P3a2f4SCJXrm6HWO9UKY-akSW+ONNpOvQOtYbia_fRo9ciQ@mail.gmail.com>
 List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
  <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
 List-Archive: <http://lists.linaro.org/pipermail/y2038/>
@@ -19,39 +21,40 @@ List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
  <mailto:y2038-request@lists.linaro.org?subject=subscribe>
 Errors-To: y2038-bounces@lists.linaro.org
 Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: Paul Burton <paul.burton@mips.com>
-Cc: "dalias@libc.org" <dalias@libc.org>, "linux-ia64@vger.kernel.org" <linux-ia64@vger.kernel.org>, "linux-sh@vger.kernel.org" <linux-sh@vger.kernel.org>, "catalin.marinas@arm.com" <catalin.marinas@arm.com>, "heiko.carstens@de.ibm.com" <heiko.carstens@de.ibm.com>, "linux@dominikbrodowski.net" <linux@dominikbrodowski.net>, "linux-mips@vger.kernel.org" <linux-mips@vger.kernel.org>, "jcmvbkbc@gmail.com" <jcmvbkbc@gmail.com>, "deepa.kernel@gmail.com" <deepa.kernel@gmail.com>, "hpa@zytor.com" <hpa@zytor.com>, "sparclinux@vger.kernel.org" <sparclinux@vger.kernel.org>, "linux-s390@vger.kernel.org" <linux-s390@vger.kernel.org>, "dave@stgolabs.net" <dave@stgolabs.net>, "y2038@lists.linaro.org" <y2038@lists.linaro.org>, "mpe@ellerman.id.au" <mpe@ellerman.id.au>, "deller@gmx.de" <deller@gmx.de>, "x86@kernel.org" <x86@kernel.org>, "linux@armlinux.org.uk" <linux@armlinux.org.uk>mi
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Rich Felker <dalias@libc.org>, linux-ia64@vger.kernel.org, Linux-sh list <linux-sh@vger.kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Dominik Brodowski <linux@dominikbrodowski.net>, linux-mips@vger.kernel.org, Max Filippov <jcmvbkbc@gmail.com>, Deepa Dinamani <deepa.kernel@gmail.com>, "H. Peter Anvin" <hpa@zytor.com>, sparclinux <sparclinux@vger.kernel.org>, Joseph Myers <joseph@codesourcery.com>, linux-s390 <linux-s390@vger.kernel.org>, Davidlohr Bueso <dave@stgolabs.net>, y2038 Mailman List <y2038@lists.linaro.org>, Michael Ellerman <mpe@ellerman.id.au>, Helge Deller <deller@gmx.de>, the arch/x86 maintainers <x86@kernel.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Ingo Molnar <mingo@redhat.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Firoz Khan <firoz.khan@linaro.org>, Matt Turner <mattst88@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-T24gVGh1LCBKYW4gMTAsIDIwMTkgYXQgODo0MCBQTSBQYXVsIEJ1cnRvbiA8cGF1bC5idXJ0b25A
-bWlwcy5jb20+IHdyb3RlOgo+IE9uIFRodSwgSmFuIDEwLCAyMDE5IGF0IDA1OjI0OjMxUE0gKzAx
-MDAsIEFybmQgQmVyZ21hbm4gd3JvdGU6Cj4gPiBXaGlsZSByZWFkaW5nIHRocm91Z2ggdGhlIHN5
-c3ZpcGMgaW1wbGVtZW50YXRpb24sIEkgbm90aWNlZCB0aGF0IHRoZSBuMzIKPiA+IHNlbWN0bC9z
-aG1jdGwvbXNnY3RsIHN5c3RlbSBjYWxscyBiZWhhdmUgZGlmZmVyZW50bHkgYmFzZWQgb24gd2hl
-dGhlcgo+ID4gbzMyIHN1cHBvcnQgaXMgZW5hYmxlZCBvciBub3Q6IFdpdGhvdXQgbzMyLCB0aGUg
-SVBDXzY0IGZsYWcgcGFzc2VkIGJ5Cj4gPiB1c2VyIHNwYWNlIGlzIHJlamVjdGVkIGJ1dCBjYWxs
-cyB3aXRob3V0IHRoYXQgZmxhZyBnZXQgSVBDXzY0IGJlaGF2aW9yLgo+ID4KPiA+IEFzIGZhciBh
-cyBJIGNhbiB0ZWxsLCB0aGlzIHdhcyBpbmFkdmVydGVudGx5IGNoYW5nZWQgYnkgYSBjbGVhbnVw
-IHBhdGNoCj4gPiBidXQgbmV2ZXIgbm90aWNlZCBieSBhbnlvbmUsIHBvc3NpYmx5IG5vYm9keSBo
-YXMgdHJpZWQgdXNpbmcgc3lzdmlwYwo+ID4gb24gbjMyIGFmdGVyIGxpbnV4LTMuMTkuCj4gPgo+
-ID4gQ2hhbmdlIGl0IGJhY2sgdG8gdGhlIG9sZCBiZWhhdmlvciBub3cuCj4gPgo+ID4gRml4ZXM6
-IDc4YWFmOTU2YmEzYSAoIk1JUFM6IENvbXBhdDogRml4IGJ1aWxkIGVycm9yIGlmIENPTkZJR19N
-SVBTMzJfQ09NUEFUIGJ1dCBubyBjb21wYXQgQUJJLiIpCj4gPiBDYzogc3RhYmxlQHZnZXIua2Vy
-bmVsLm9yZwo+ID4gU2lnbmVkLW9mZi1ieTogQXJuZCBCZXJnbWFubiA8YXJuZEBhcm5kYi5kZT4K
-PiA+IC0tLQo+ID4gQXMgc3RhdGVkIGFib3ZlLCB0aGlzIHdhcyBvbmx5IGZvdW5kIGJ5IGluc3Bl
-Y3Rpb24sIHRoZSBwYXRjaCBpcyBub3QKPiA+IHRlc3RlZC4gUGxlYXNlIHJldmlldyBhY2NvcmRp
-bmdseS4KPgo+IE5pY2UgY2F0Y2ghIFdvdWxkIHlvdSBwcmVmZXIgdG8gbWVyZ2UgdGhpcyB5b3Vy
-c2VsZiwgb3IgdGhhdCBJIHRha2UgaXQKPiB0aHJvdWdoIHRoZSBtaXBzIHRyZWU/CgpVcCB0byB5
-b3U6IGlmIHlvdSB3YW50IHRvIG1lcmdlIGl0IGZvciA1LjAsIEknbGwganVzdCBkcm9wIGl0IGZy
-b20gbXkgdHJlZS4KCj4gSWYgdGhlIGZvcm1lciB0aGVuOgo+Cj4gICBBY2tlZC1ieTogUGF1bCBC
-dXJ0b24gPHBhdWwuYnVydG9uQG1pcHMuY29tPgoKVGhhbmtzIQoKPiBJIHN1c3BlY3Qga2VybmVs
-cyBjb25maWd1cmVkIHdpdGggbjMyIHN1cHBvcnQgYnV0IG5vIG8zMiBzdXBwb3J0IGFyZQo+IHBy
-b2JhYmx5IG5vdCB2ZXJ5IGNvbW1vbiAtIGZvciBpbnRlcm5hbCB0ZXN0aW5nIHdlIGN1cnJlbnRs
-eSBhbHdheXMKPiBlbmFibGUgYm90aC4KCkRvIHlvdSBrbm93IG9mIGFueW9uZSBhY3R1YWxseSBz
-dGlsbCB1c2luZyBuMzIgaW4gcHJvZHVjdGlvbiBzeXN0ZW1zCndpdGggNC54IGtlcm5lbHM/IEkg
-d29uZGVyIGlmIGl0IGp1c3QgZmVsbCBvdXQgb2YgcG9wdWxhcml0eSBhcyB0aGUgNjQtYml0Cm1h
-Y2hpbmVzIHRoYXQgdXNlZCBpdCBlaXRoZXIgYmVjYW1lIGxhcmdlIGVub3VnaCB0byB3YW50IDY0
-LWJpdAp1c2VyIHNwYWNlLCBvciBnb3QgcmVwbGFjZWQgYnkgYXJtNjQgb3IgbWlwczMyIGhhcmR3
-YXJlLgoKICAgICAgQXJuZApfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fXwpZMjAzOCBtYWlsaW5nIGxpc3QKWTIwMzhAbGlzdHMubGluYXJvLm9yZwpodHRwczov
-L2xpc3RzLmxpbmFyby5vcmcvbWFpbG1hbi9saXN0aW5mby95MjAzOAo=
+T24gVGh1LCBKYW4gMTAsIDIwMTkgYXQgMTE6NDI6MzJQTSArMDEwMCwgQXJuZCBCZXJnbWFubiB3
+cm90ZToKPiBPbiBUaHUsIEphbiAxMCwgMjAxOSBhdCA3OjEwIFBNIEpvc2VwaCBNeWVycyA8am9z
+ZXBoQGNvZGVzb3VyY2VyeS5jb20+IHdyb3RlOgo+ID4KPiA+IE9uIFRodSwgMTAgSmFuIDIwMTks
+IEFybmQgQmVyZ21hbm4gd3JvdGU6Cj4gPgo+ID4gPiAtIEFkZCBzeXN0ZW0gY2FsbHMgdGhhdCBo
+YXZlIG5vdCB5ZXQgYmVlbiBpbnRlZ3JhdGVkIGludG8gYWxsCj4gPiA+ICAgYXJjaGl0ZWN0dXJl
+cyBidXQgdGhhdCB3ZSBkZWZpbml0ZWx5IHdhbnQgdGhlcmUuCj4gPgo+ID4gZ2xpYmMgaGFzIGEg
+bm90ZSB0aGF0IGFscGhhIGxhY2tzIHN0YXRmczY0LCBhbnkgcGxhbnMgZm9yIHRoYXQ/Cj4gCj4g
+R29vZCBjYXRjaCwgSSBtaXNzZWQgdGhhdCBiZWNhdXNlIGFsbCBvdGhlciA2NC1iaXQgYXJjaGl0
+ZWN0dXJlcwo+IGhhdmUgYSBzdGF0ZnMoKSBjYWxsIHdpdGggNjQtYml0IGZpZWxkcy4gSSBzZWUg
+dGhhdCBpdCBhbHNvIGhhcyBhbgo+IG9zZl9zdGF0ZnM2NCBzdHJ1Y3R1cmUgYW5kIHN5c3RlbSBj
+YWxsIHdpdGggbG90cyBvZiBwYWRkaW5nIGFuZCBzb21lCj4gb2RkbHkgc2l6ZWQgZmllbGRzOiBm
+X3R5cGUsIGZfZmxhZ3MgYW5kIGZfbmFtZW1heCBhcmUgb25seSAxNiBiaXRzCj4gd2lkZSwgdGhl
+IHJlc3QgaXMgYWxsIDY0LWJpdC4KPiAKPiBBZGRpbmcgdGhlIHJlZ3VsYXIgc3RhdGZzNjQoKSBz
+aG91bGQgYmUgZWFzeSBlbm91Z2gsIHdlIGp1c3QgbmVlZCB0bwo+IGRlY2lkZSB3aGljaCBsYXlv
+dXQgdG8gdXNlOgo+IAo+IGEpIHVzZSB0aGUgY3VycmVudGx5IHVudXNlZCAnc3RydWN0IHN0YXRm
+czY0JyBhcyBwcm92aWRlZCBieSB0aGUKPiAgICAgYWxwaGEgdWFwaSBoZWFkZXJzLCB3aGljaCBo
+YXMgYSAzMi1iaXQgX19zdGF0ZnNfd29yZCBidXQKPiAgICAgNjQtYml0IGZfYmxvY2tzLCBmX2Jm
+cmVlLCBmX2JhdmFpbCwgZl9maWxlcywgYW5kIGZfZmZyZWUuCj4gCj4gYikgY29weSBhc20tZ2Vu
+ZXJpYy9zdGF0ZnMuaCB0byB0aGUgYWxwaGEgYXNtL3N0YXRmcy5oIGFuZAo+ICAgICBjaGFuZ2Ug
+c3RhdGZzNjQgdG8gaGF2ZSB0aGUgcmVndWxhciBsYXlvdXQgdGhhdCB3ZSB1c2UKPiAgICAgb24g
+YWxsIG90aGVyIDY0LWJpdCBhcmNoaXRlY3R1cmVzLCB1c2luZyBhbGwgNjQtYml0IGZpZWxkcy4K
+PiAKPiBUaGUgb3RoZXIgb3BlbiBxdWVzdGlvbiBmb3IgYWxwaGEgKGFzIG1lbnRpb25lZCBpbiBv
+bmUgb2YgdGhlCj4gcGF0Y2hlcyBJIHNlbnQpIHdvdWxkIGJlIHdoZXRoZXIgdG8gYWRkIGdldHtl
+ZyxldSxnLHAscHAsdX1pZCgpCj4gd2l0aCB0aGUgcmVndWxhciBjYWxsaW5nIGNvbnZlbnRpb25z
+LgoKSSB3b3VsZCBiZSBpbnRlcmVzdGVkIGluIHNlZWluZyB0aG9zZSBwcm92aWRlZCBvbiBBbHBo
+YS4gIFRoZXJlIGFyZQphIGhhbmRmdWwgb2YgcHJvamVjdHMgY2hvb3NpbmcgdG8gc2lkZXN0ZXAg
+Z2xpYmMgZm9yIHRoZXNlIHN5c2NhbGxzCmFuZCB0aGV5IGJyZWFrIG9uIEFscGhhLiAgU3VjaCBw
+cm9qZWN0cyBhcmUgbmV2ZXIga2VlbiB0byBpbmNsdWRlCnNwZWNpYWwgYXNzZW1ibGVyIGNvZGUg
+KGJlY2F1c2UgdGhlIGV4dGFudCBzeXNjYWxscyBvbiBBbHBoYSBhcmUgbm90CkMgQUJJIGNvbXBs
+aWFudCkgdG8gc3VwcG9ydCBhIGxlZ2FjeSBhcmNoLgoKQ2hlZXJzCk1pY2hhZWwuCl9fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fClkyMDM4IG1haWxpbmcgbGlz
+dApZMjAzOEBsaXN0cy5saW5hcm8ub3JnCmh0dHBzOi8vbGlzdHMubGluYXJvLm9yZy9tYWlsbWFu
+L2xpc3RpbmZvL3kyMDM4Cg==
