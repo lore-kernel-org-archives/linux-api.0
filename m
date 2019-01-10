@@ -1,107 +1,113 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH 06/11] timex: change syscalls to use struct __kernel_timex
-Date: Thu, 10 Jan 2019 18:22:11 +0100
-Message-ID: <20190110172216.313063-7-arnd@arndb.de>
+Subject: [PATCH 09/11] y2038: remove struct definition redirects
+Date: Thu, 10 Jan 2019 18:22:14 +0100
+Message-ID: <20190110172216.313063-10-arnd@arndb.de>
 References: <20190110172216.313063-1-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+Content-Transfer-Encoding: 8bit
+Return-path: <netdev-owner@vger.kernel.org>
 In-Reply-To: <20190110172216.313063-1-arnd@arndb.de>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+Sender: netdev-owner@vger.kernel.org
 To: y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: dalias@libc.org, linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, catalin.marinas@arm.com, will.deacon@arm.com, jcmvbkbc@gmail.com, deepa.kernel@gmail.com, hpa@zytor.com, sparclinux@vger.kernel.org, linux-arch@vger.kernel.org, linux-s390@vger.kernel.org, mpe@ellerman.id.au, deller@gmx.de, x86@kernel.org, linux@armlinux.org.uk, mingo@redhat.com, geert@linux-m68k.org, benh@kernel.crashing.org, firoz.khan@linaro.org, mattst88@gmail.com, fenghua.yu@intel.com, Arnd Bergmann <arnd@arndb.de>, heiko.carstens@de.ibm.com, linux-fsdevel@vger.kernel.org, linux-m68k@lists.linux-m68k.org, luto@kernel.org, tglx@linutronix.de, linux-arm-kernel@lists.infradead.org, monstr@monstr.eu, tony.luck@intel.com, linux-parisc@vger.kernel.org, netdev@vger.kernel.org, linux-mips@vger.kernel.org, paul.burton@mips.com, ebiederm@xmission.com, linux-alpha@vger.kernel.org, schwidefsky@de.ibm.com, akp
+Cc: Arnd Bergmann <arnd@arndb.de>, mattst88@gmail.com, linux@armlinux.org.uk, catalin.marinas@arm.com, will.deacon@arm.com, tony.luck@intel.com, fenghua.yu@intel.com, geert@linux-m68k.org, monstr@monstr.eu, paul.burton@mips.com, deller@gmx.de, benh@kernel.crashing.org, mpe@ellerman.id.au, schwidefsky@de.ibm.com, heiko.carstens@de.ibm.com, dalias@libc.org, davem@davemloft.net, luto@kernel.org, tglx@linutronix.de, mingo@redhat.com, hpa@zytor.com, x86@kernel.org, jcmvbkbc@gmail.com, akpm@linux-foundation.org, deepa.kernel@gmail.com, ebiederm@xmission.com, firoz.khan@linaro.org, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.or
 List-Id: linux-api@vger.kernel.org
 
-From: Deepa Dinamani <deepa.kernel@gmail.com>
+We now use 64-bit time_t on all architectures, so the __kernel_timex,
+__kernel_timeval and __kernel_timespec redirects can be removed
+after having served their purpose.
 
-struct timex is not y2038 safe.
-Switch all the syscall apis to use y2038 safe __kernel_timex.
+This makes it all much less confusing, as the __kernel_* types
+now always refer to the same layout based on 64-bit time_t across
+all 32-bit and 64-bit architectures.
 
-Note that sys_adjtimex() does not have a y2038 safe solution.  C libraries
-can implement it by calling clock_adjtime(CLOCK_REALTIME, ...).
-
-Signed-off-by: Deepa Dinamani <deepa.kernel@gmail.com>
 Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 ---
- include/linux/syscalls.h   | 6 +++---
- kernel/time/posix-timers.c | 2 +-
- kernel/time/time.c         | 4 +++-
- 3 files changed, 7 insertions(+), 5 deletions(-)
+ include/linux/time64.h     | 8 --------
+ include/linux/timex.h      | 7 -------
+ include/uapi/linux/time.h  | 4 ----
+ include/uapi/linux/timex.h | 2 --
+ 4 files changed, 21 deletions(-)
 
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 8e86d9623d4e..394e8db7e57e 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -54,7 +54,7 @@ struct __sysctl_args;
- struct sysinfo;
- struct timespec;
- struct timeval;
--struct timex;
-+struct __kernel_timex;
- struct timezone;
- struct tms;
- struct utimbuf;
-@@ -695,7 +695,7 @@ asmlinkage long sys_gettimeofday(struct timeval __user *tv,
- 				struct timezone __user *tz);
- asmlinkage long sys_settimeofday(struct timeval __user *tv,
- 				struct timezone __user *tz);
--asmlinkage long sys_adjtimex(struct timex __user *txc_p);
-+asmlinkage long sys_adjtimex(struct __kernel_timex __user *txc_p);
+diff --git a/include/linux/time64.h b/include/linux/time64.h
+index 05634afba0db..f38d382ffec1 100644
+--- a/include/linux/time64.h
++++ b/include/linux/time64.h
+@@ -7,14 +7,6 @@
+ typedef __s64 time64_t;
+ typedef __u64 timeu64_t;
  
- /* kernel/timer.c */
- asmlinkage long sys_getpid(void);
-@@ -870,7 +870,7 @@ asmlinkage long sys_open_by_handle_at(int mountdirfd,
- 				      struct file_handle __user *handle,
- 				      int flags);
- asmlinkage long sys_clock_adjtime(clockid_t which_clock,
--				struct timex __user *tx);
-+				struct __kernel_timex __user *tx);
- asmlinkage long sys_syncfs(int fd);
- asmlinkage long sys_setns(int fd, int nstype);
- asmlinkage long sys_sendmmsg(int fd, struct mmsghdr __user *msg,
-diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
-index 2d84b3db1ade..de79f85ae14f 100644
---- a/kernel/time/posix-timers.c
-+++ b/kernel/time/posix-timers.c
-@@ -1060,7 +1060,7 @@ int do_clock_adjtime(const clockid_t which_clock, struct __kernel_timex * ktx)
- }
+-/* CONFIG_64BIT_TIME enables new 64 bit time_t syscalls in the compat path
+- * and 32-bit emulation.
+- */
+-#ifndef CONFIG_64BIT_TIME
+-#define __kernel_timespec timespec
+-#define __kernel_itimerspec itimerspec
+-#endif
+-
+ #include <uapi/linux/time.h>
  
- SYSCALL_DEFINE2(clock_adjtime, const clockid_t, which_clock,
--		struct timex __user *, utx)
-+		struct __kernel_timex __user *, utx)
- {
- 	struct __kernel_timex ktx;
- 	int err;
-diff --git a/kernel/time/time.c b/kernel/time/time.c
-index d179d33f639a..78b5c8f1495a 100644
---- a/kernel/time/time.c
-+++ b/kernel/time/time.c
-@@ -263,7 +263,8 @@ COMPAT_SYSCALL_DEFINE2(settimeofday, struct old_timeval32 __user *, tv,
- }
- #endif
+ struct timespec64 {
+diff --git a/include/linux/timex.h b/include/linux/timex.h
+index 4aff9f0d1367..ce0859763670 100644
+--- a/include/linux/timex.h
++++ b/include/linux/timex.h
+@@ -53,13 +53,6 @@
+ #ifndef _LINUX_TIMEX_H
+ #define _LINUX_TIMEX_H
  
--SYSCALL_DEFINE1(adjtimex, struct timex __user *, txc_p)
-+#if !defined(CONFIG_64BIT_TIME) || defined(CONFIG_64BIT)
-+SYSCALL_DEFINE1(adjtimex, struct __kernel_timex __user *, txc_p)
- {
- 	struct __kernel_timex txc;		/* Local copy of parameter */
- 	int ret;
-@@ -277,6 +278,7 @@ SYSCALL_DEFINE1(adjtimex, struct timex __user *, txc_p)
- 	ret = do_adjtimex(&txc);
- 	return copy_to_user(txc_p, &txc, sizeof(struct __kernel_timex)) ? -EFAULT : ret;
- }
-+#endif
+-/* CONFIG_64BIT_TIME enables new 64 bit time_t syscalls in the compat path
+- * and 32-bit emulation.
+- */
+-#ifndef CONFIG_64BIT_TIME
+-#define __kernel_timex timex
+-#endif
+-
+ #include <uapi/linux/timex.h>
  
- #ifdef CONFIG_COMPAT_32BIT_TIME
- int get_old_timex32(struct __kernel_timex *txc, const struct old_timex32 __user *utp)
+ #define ADJ_ADJTIME		0x8000	/* switch between adjtime/adjtimex modes */
+diff --git a/include/uapi/linux/time.h b/include/uapi/linux/time.h
+index 6b56a2208be7..b03f8717c312 100644
+--- a/include/uapi/linux/time.h
++++ b/include/uapi/linux/time.h
+@@ -42,19 +42,15 @@ struct itimerval {
+ 	struct timeval it_value;	/* current value */
+ };
+ 
+-#ifndef __kernel_timespec
+ struct __kernel_timespec {
+ 	__kernel_time64_t       tv_sec;                 /* seconds */
+ 	long long               tv_nsec;                /* nanoseconds */
+ };
+-#endif
+ 
+-#ifndef __kernel_itimerspec
+ struct __kernel_itimerspec {
+ 	struct __kernel_timespec it_interval;    /* timer period */
+ 	struct __kernel_timespec it_value;       /* timer expiration */
+ };
+-#endif
+ 
+ /*
+  * legacy timeval structure, only embedded in structures that
+diff --git a/include/uapi/linux/timex.h b/include/uapi/linux/timex.h
+index a1c6b73016a5..9f517f9010bb 100644
+--- a/include/uapi/linux/timex.h
++++ b/include/uapi/linux/timex.h
+@@ -97,7 +97,6 @@ struct __kernel_timex_timeval {
+ 	long long		tv_usec;
+ };
+ 
+-#ifndef __kernel_timex
+ struct __kernel_timex {
+ 	unsigned int modes;	/* mode selector */
+ 	int :32;            /* pad */
+@@ -131,7 +130,6 @@ struct __kernel_timex {
+ 	int  :32; int  :32; int  :32; int  :32;
+ 	int  :32; int  :32; int  :32;
+ };
+-#endif
+ 
+ /*
+  * Mode codes (timex.mode)
 -- 
 2.20.0
