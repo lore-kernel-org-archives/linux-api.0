@@ -1,71 +1,91 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [RESEND PATCH v3 2/2] sysctl: handle overflow for file-max
-Date: Thu, 10 Jan 2019 16:00:52 +0100
-Message-ID: <20190110150051.ah7srm4wcmumlxff@brauner.io>
-References: <20190107222700.15954-1-christian@brauner.io>
- <20190107222700.15954-3-christian@brauner.io>
- <20190108070110.GA7998@light.dominikbrodowski.net>
- <20190110145004.zhc2t42aasni7wnq@brauner.io>
- <20190110145559.relfx37ocq5xu4by@isilmar-4.linta.de>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: [PATCH 01/15] ia64: add __NR_umount2 definition
+Date: Thu, 10 Jan 2019 17:24:21 +0100
+Message-ID: <20190110162435.309262-2-arnd@arndb.de>
+References: <20190110162435.309262-1-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190110145559.relfx37ocq5xu4by@isilmar-4.linta.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Dominik Brodowski <linux@dominikbrodowski.net>
-Cc: akpm@linux-foundation.org, keescook@chromium.org, linux-kernel@vger.kernel.org, ebiederm@xmission.com, mcgrof@kernel.org, joe.lawrence@redhat.com, longman@redhat.com, viro@zeniv.linux.org.uk, adobriyan@gmail.com, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+In-Reply-To: <20190110162435.309262-1-arnd@arndb.de>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: dalias@libc.org, linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, catalin.marinas@arm.com, will.deacon@arm.com, linux@dominikbrodowski.net, jcmvbkbc@gmail.com, deepa.kernel@gmail.com, hpa@zytor.com, sparclinux@vger.kernel.org, linux-s390@vger.kernel.org, dave@stgolabs.net, mpe@ellerman.id.au, deller@gmx.de, x86@kernel.org, linux@armlinux.org.uk, mingo@redhat.com, geert@linux-m68k.org, firoz.khan@linaro.org, mattst88@gmail.com, fenghua.yu@intel.com, Arnd Bergmann <arnd@arndb.de>, heiko.carstens@de.ibm.com, linux-m68k@lists.linux-m68k.org, ink@jurassic.park.msu.ru, luto@kernel.org, tglx@linutronix.de, linux-arm-kernel@lists.infradead.org, monstr@monstr.eu, tony.luck@intel.com, linux-parisc@vger.kernel.org, linux-mips@vger.kernel.org, paul.burton@mips.com, ebiederm@xmission.com, linux-alpha@vger.kernel.org, schwidefsky@de.ibm.com, akpm@linux-foundation.org, linuxppc-dev
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 10, 2019 at 03:55:59PM +0100, Dominik Brodowski wrote:
-> On Thu, Jan 10, 2019 at 03:50:05PM +0100, Christian Brauner wrote:
-> > On Tue, Jan 08, 2019 at 08:01:10AM +0100, Dominik Brodowski wrote:
-> > > On Mon, Jan 07, 2019 at 11:27:00PM +0100, Christian Brauner wrote:
-> > > > @@ -2833,6 +2836,10 @@ static int __do_proc_doulongvec_minmax(void *data, struct ctl_table *table, int
-> > > >  				break;
-> > > >  			if (neg)
-> > > >  				continue;
-> > > > +			if ((max && val > *max) || (min && val < *min)) {
-> > > > +				err = -EINVAL;
-> > > > +				break;
-> > > > +			}
-> > > >  			val = convmul * val / convdiv;
-> > > >  			if ((min && val < *min) || (max && val > *max))
-> > > >  				continue;
-> > > 
-> > > This is a generic change which affects all users of
-> > > do_proc_doulongvec_minmax() that have extra1 or extra2 set. In sysctl.c, I
-> > > do not see another user of proc_doulongvec_minmax() that has extra1 or
-> > > extra2 set. However, have you verified whether your patch changes the
-> > > behaviour for other files that make use of proc_doulongvec_minmax() or
-> > > proc_doulongvec_ms_jiffies_minmax(), and not only of the file-max sysctl?
-> > 
-> > Sorry for the delayed reply. I did look at the callers. The functions
-> > that are of interest afaict are:
-> > 
-> > proc_doulongvec_ms_jiffies_minmax
-> > proc_doulongvec_minmax
-> > 
-> > So this could be visible when users write values that would overflow the
-> > type used in the kernel.
-> >
-> > I guess your point is whether we are venturing into userspace break
-> > territory. Hm... We should probably make sure that we're not regressing
-> > anyone else! What do you think if instead of the above patch we did:
-> 
-> Hm, I prefer the original patch -- as the same (valid) reasons which apply
-> for the file-max sysctl might also apply to other users of this function
-> where extra1 and/or2 extra2 are set.
+Other architectures commonly use __NR_umount2 for sys_umount,
+only ia64 and alpha use __NR_umount here. In order to synchronize
+the generated tables, use umount2 like everyone else, and add back
+the old name from asm/unistd.h for compatibility.
 
-In that case we should erorr out on:
+The __IGNORE_* lines are now all obsolete and can be removed as
+a side-effect.
 
-val = convmul * val / convdiv;
-if ((min && val < *min) || (max && val > *max)) {
-        err = -EINVAL;
-        break;
-}
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ arch/ia64/include/asm/unistd.h        | 14 --------------
+ arch/ia64/include/uapi/asm/unistd.h   |  2 ++
+ arch/ia64/kernel/syscalls/syscall.tbl |  2 +-
+ 3 files changed, 3 insertions(+), 15 deletions(-)
 
-I fear that erroring out before might break *_jiffies since they are the
-only caller that request a convmul/convdiv value that is not 1l.
-
-Christian
+diff --git a/arch/ia64/include/asm/unistd.h b/arch/ia64/include/asm/unistd.h
+index 0b08ebd2dfde..9ba6110b10b9 100644
+--- a/arch/ia64/include/asm/unistd.h
++++ b/arch/ia64/include/asm/unistd.h
+@@ -12,20 +12,6 @@
+ 
+ #define NR_syscalls		__NR_syscalls /* length of syscall table */
+ 
+-/*
+- * The following defines stop scripts/checksyscalls.sh from complaining about
+- * unimplemented system calls.  Glibc provides for each of these by using
+- * more modern equivalent system calls.
+- */
+-#define __IGNORE_fork		/* clone() */
+-#define __IGNORE_time		/* gettimeofday() */
+-#define __IGNORE_alarm		/* setitimer(ITIMER_REAL, ... */
+-#define __IGNORE_pause		/* rt_sigprocmask(), rt_sigsuspend() */
+-#define __IGNORE_utime		/* utimes() */
+-#define __IGNORE_getpgrp	/* getpgid() */
+-#define __IGNORE_vfork		/* clone() */
+-#define __IGNORE_umount2	/* umount() */
+-
+ #define __ARCH_WANT_NEW_STAT
+ #define __ARCH_WANT_SYS_UTIME
+ 
+diff --git a/arch/ia64/include/uapi/asm/unistd.h b/arch/ia64/include/uapi/asm/unistd.h
+index b2513922dcb5..013e0bcacc39 100644
+--- a/arch/ia64/include/uapi/asm/unistd.h
++++ b/arch/ia64/include/uapi/asm/unistd.h
+@@ -15,6 +15,8 @@
+ 
+ #define __NR_Linux      1024
+ 
++#define __NR_umount __NR_umount2
++
+ #include <asm/unistd_64.h>
+ 
+ #endif /* _UAPI_ASM_IA64_UNISTD_H */
+diff --git a/arch/ia64/kernel/syscalls/syscall.tbl b/arch/ia64/kernel/syscalls/syscall.tbl
+index b22203b40bfe..e97caf51be42 100644
+--- a/arch/ia64/kernel/syscalls/syscall.tbl
++++ b/arch/ia64/kernel/syscalls/syscall.tbl
+@@ -29,7 +29,7 @@
+ 17	common	getpid				sys_getpid
+ 18	common	getppid				sys_getppid
+ 19	common	mount				sys_mount
+-20	common	umount				sys_umount
++20	common	umount2				sys_umount
+ 21	common	setuid				sys_setuid
+ 22	common	getuid				sys_getuid
+ 23	common	geteuid				sys_geteuid
+-- 
+2.20.0
