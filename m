@@ -1,51 +1,120 @@
-From: Matthew Wilcox <willy@infradead.org>
-Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
-Date: Thu, 10 Jan 2019 06:47:11 -0800
-Message-ID: <20190110144711.GV6310@bombadil.infradead.org>
-References: <CAHk-=wiqbKEC5jUXr3ax+oUuiRrp=QMv_ZnUfO-SPv=UNJ-OTw@mail.gmail.com>
- <20190108044336.GB27534@dastard>
- <CAHk-=wjvzEFQcTGJFh9cyV_MPQftNrjOLon8YMMxaX0G1TLqkg@mail.gmail.com>
- <20190109022430.GE27534@dastard>
- <nycvar.YFH.7.76.1901090326460.16954@cbobk.fhfr.pm>
- <20190109043906.GF27534@dastard>
- <CAHk-=wic28fSkwmPbBHZcJ3BGbiftprNy861M53k+=OAB9n0=w@mail.gmail.com>
- <20190110004424.GH27534@dastard>
- <CAHk-=wg1jSQ-gq-M3+HeTBbDs1VCjyiwF4gqnnBhHeWizyrigg@mail.gmail.com>
- <CALCETrWxwaBUYMg=aLySJByMgXzuzV4gHS0n6O6Oet2Jm6SAbw@mail.gmail.com>
+From: Christian Brauner <christian@brauner.io>
+Subject: Re: [RESEND PATCH v3 2/2] sysctl: handle overflow for file-max
+Date: Thu, 10 Jan 2019 15:50:05 +0100
+Message-ID: <20190110145004.zhc2t42aasni7wnq@brauner.io>
+References: <20190107222700.15954-1-christian@brauner.io>
+ <20190107222700.15954-3-christian@brauner.io>
+ <20190108070110.GA7998@light.dominikbrodowski.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CALCETrWxwaBUYMg=aLySJByMgXzuzV4gHS0n6O6Oet2Jm6SAbw@mail.gmail.com>
+In-Reply-To: <20190108070110.GA7998@light.dominikbrodowski.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Dave Chinner <david@fromorbit.com>, Jiri Kosina <jikos@kernel.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Dominik Brodowski <linux@dominikbrodowski.net>
+Cc: akpm@linux-foundation.org, keescook@chromium.org, linux-kernel@vger.kernel.org, ebiederm@xmission.com, mcgrof@kernel.org, joe.lawrence@redhat.com, longman@redhat.com, viro@zeniv.linux.org.uk, adobriyan@gmail.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jan 09, 2019 at 09:26:41PM -0800, Andy Lutomirski wrote:
-> Since direct IO has been brought up, I have a question.  I've wondered
-> for years why direct IO works the way it does.  If I were implementing
-> it from scratch, my first inclination would be to use the page cache
-> instead of fighting it.  To do a single-page direct read, I would look
-> that page up in the page cache (i.e. i_pages these days).  If the page
-> is there, I would do a normal buffered read.  If the page is not
-> there, I would insert a record into i_pages indicating that direct IO
-> is in progress and then I would do the IO into the destination page.
-> If any other read, direct or otherwise, sees a record saying "under
-> direct IO", it would wait.
+On Tue, Jan 08, 2019 at 08:01:10AM +0100, Dominik Brodowski wrote:
+> On Mon, Jan 07, 2019 at 11:27:00PM +0100, Christian Brauner wrote:
+> > @@ -2833,6 +2836,10 @@ static int __do_proc_doulongvec_minmax(void *data, struct ctl_table *table, int
+> >  				break;
+> >  			if (neg)
+> >  				continue;
+> > +			if ((max && val > *max) || (min && val < *min)) {
+> > +				err = -EINVAL;
+> > +				break;
+> > +			}
+> >  			val = convmul * val / convdiv;
+> >  			if ((min && val < *min) || (max && val > *max))
+> >  				continue;
+> 
+> This is a generic change which affects all users of
+> do_proc_doulongvec_minmax() that have extra1 or extra2 set. In sysctl.c, I
+> do not see another user of proc_doulongvec_minmax() that has extra1 or
+> extra2 set. However, have you verified whether your patch changes the
+> behaviour for other files that make use of proc_doulongvec_minmax() or
+> proc_doulongvec_ms_jiffies_minmax(), and not only of the file-max sysctl?
 
-OK, you're in the same ballpark I am ;-)  Kent Overstreet pointed out
-that what you want to do here is great for the mixed case, but it's
-pretty inefficient for IOs to files which are wholly uncached.
+Sorry for the delayed reply. I did look at the callers. The functions
+that are of interest afaict are:
 
-So what I'm currently thinking about is an rwsem which works like this:
+proc_doulongvec_ms_jiffies_minmax
+proc_doulongvec_minmax
 
-O_DIRECT task:
-if i_pages is empty, take rwsem for read, recheck i_pages is empty, do IO,
-drop rwsem.
-if i_pages is not empty, insert XA_LOCK_ENTRY, when IO complete, wake waitqueue for that (mapping, index).
+So this could be visible when users write values that would overflow the
+type used in the kernel.
+I guess your point is whether we are venturing into userspace break
+territory. Hm... We should probably make sure that we're not regressing
+anyone else! What do you think if instead of the above patch we did:
 
-buffered IO:
-if i_pages is empty, take rwsem for write, allocate page, insert page, drop rwsem.
-if i_pages is not empty, look up index, if entry is XA_LOCK_ENTRY sleep on
-waitqueue. otherwise proceed as now.
+diff --git a/kernel/sysctl.c b/kernel/sysctl.c
+index ba4d9e85feb8..37727b4c7a97 100644
+--- a/kernel/sysctl.c
++++ b/kernel/sysctl.c
+@@ -1721,7 +1721,7 @@ static struct ctl_table fs_table[] = {
+ 		.data		= &files_stat.max_files,
+ 		.maxlen		= sizeof(files_stat.max_files),
+ 		.mode		= 0644,
+-		.proc_handler	= proc_doulongvec_minmax,
++		.proc_handler	= proc_file_max,
+ 	},
+ 	{
+ 		.procname	= "nr_open",
+@@ -2758,7 +2758,7 @@ static int __do_proc_doulongvec_minmax(void *data, struct ctl_table *table, int
+ 				     void __user *buffer,
+ 				     size_t *lenp, loff_t *ppos,
+ 				     unsigned long convmul,
+-				     unsigned long convdiv)
++				     unsigned long convdiv, bool strict)
+ {
+ 	unsigned long *i, *min, *max;
+ 	int vleft, first = 1, err = 0;
+@@ -2806,7 +2806,12 @@ static int __do_proc_doulongvec_minmax(void *data, struct ctl_table *table, int
+ 				continue;
+ 			val = convmul * val / convdiv;
+ 			if ((min && val < *min) || (max && val > *max))
+-				continue;
++				if (strict) {
++					err = -EINVAL;
++					break;
++				} else {
++					continue;
++				}
+ 			*i = val;
+ 		} else {
+ 			val = convdiv * (*i) / convmul;
+@@ -2843,7 +2848,15 @@ static int do_proc_doulongvec_minmax(struct ctl_table *table, int write,
+ 				     unsigned long convdiv)
+ {
+ 	return __do_proc_doulongvec_minmax(table->data, table, write,
+-			buffer, lenp, ppos, convmul, convdiv);
++			buffer, lenp, ppos, convmul, convdiv, false);
++}
++
++static int proc_file_max(struct ctl_table *table, int write,
++			 void __user *buffer, size_t *lenp, loff_t *ppos,
++			 unsigned long convmul, unsigned long convdiv)
++{
++	return __do_proc_doulongvec_minmax(table->data, table, write, buffer,
++					   lenp, ppos, convmul, convdiv, true);
+ }
+ 
+ /**
+@@ -2865,7 +2878,8 @@ static int do_proc_doulongvec_minmax(struct ctl_table *table, int write,
+ int proc_doulongvec_minmax(struct ctl_table *table, int write,
+ 			   void __user *buffer, size_t *lenp, loff_t *ppos)
+ {
+-    return do_proc_doulongvec_minmax(table, write, buffer, lenp, ppos, 1l, 1l);
++	return do_proc_doulongvec_minmax(table, write, buffer, lenp, ppos, 1l,
++					 1l, false);
+ }
+ 
+ /**
+@@ -2890,7 +2904,7 @@ int proc_doulongvec_ms_jiffies_minmax(struct ctl_table *table, int write,
+ 				      size_t *lenp, loff_t *ppos)
+ {
+     return do_proc_doulongvec_minmax(table, write, buffer,
+-				     lenp, ppos, HZ, 1000l);
++				     lenp, ppos, HZ, 1000l, false);
+ }
