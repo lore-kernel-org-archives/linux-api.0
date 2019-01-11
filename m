@@ -1,73 +1,60 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH glibc 1/4] glibc: Perform rseq(2) registration at
- nptl init and thread creation (v4)
-Date: Thu, 10 Jan 2019 20:11:56 -0500 (EST)
-Message-ID: <1488546469.1564.1547169116539.JavaMail.zimbra@efficios.com>
-References: <20181204192141.4684-1-mathieu.desnoyers@efficios.com> <87h8fkz6qx.fsf@oldenburg2.str.redhat.com> <1681283664.1380.1547152315426.JavaMail.zimbra@efficios.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
+Date: Fri, 11 Jan 2019 12:47:28 +1100
+Message-ID: <20190111014728.GL27534@dastard>
+References: <CAHk-=wiqbKEC5jUXr3ax+oUuiRrp=QMv_ZnUfO-SPv=UNJ-OTw@mail.gmail.com>
+ <20190108044336.GB27534@dastard>
+ <CAHk-=wjvzEFQcTGJFh9cyV_MPQftNrjOLon8YMMxaX0G1TLqkg@mail.gmail.com>
+ <20190109022430.GE27534@dastard>
+ <nycvar.YFH.7.76.1901090326460.16954@cbobk.fhfr.pm>
+ <20190109043906.GF27534@dastard>
+ <CAHk-=wic28fSkwmPbBHZcJ3BGbiftprNy861M53k+=OAB9n0=w@mail.gmail.com>
+ <20190110004424.GH27534@dastard>
+ <CAHk-=wg1jSQ-gq-M3+HeTBbDs1VCjyiwF4gqnnBhHeWizyrigg@mail.gmail.com>
+ <CALCETrWxwaBUYMg=aLySJByMgXzuzV4gHS0n6O6Oet2Jm6SAbw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <libc-alpha-return-99167-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-In-Reply-To: <1681283664.1380.1547152315426.JavaMail.zimbra@efficios.com>
-To: Florian Weimer <fweimer@redhat.com>
-Cc: carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CALCETrWxwaBUYMg=aLySJByMgXzuzV4gHS0n6O6Oet2Jm6SAbw@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jikos@kernel.org>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Jan 10, 2019, at 12:31 PM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
+On Wed, Jan 09, 2019 at 09:26:41PM -0800, Andy Lutomirski wrote:
+> Since direct IO has been brought up, I have a question.  I've wondered
+> for years why direct IO works the way it does.  If I were implementing
+> it from scratch, my first inclination would be to use the page cache
+> instead of fighting it.  To do a single-page direct read, I would look
+> that page up in the page cache (i.e. i_pages these days).  If the page
+> is there, I would do a normal buffered read.  If the page is not
 
-> ----- On Dec 11, 2018, at 2:40 AM, Florian Weimer fweimer@redhat.com wrote:
-[...]
->> 
->>> diff --git a/nptl/Versions b/nptl/Versions
->>> index e7f691da7a..f7890f73fc 100644
->>> --- a/nptl/Versions
->>> +++ b/nptl/Versions
->>> @@ -277,6 +277,10 @@ libpthread {
->>>      cnd_timedwait; cnd_wait; tss_create; tss_delete; tss_get; tss_set;
->>>    }
->>>  
->>> +  GLIBC_2.29 {
->>> +    __rseq_refcount;
->>> +  }
->> 
->> Why put this into libpthread, and __rseq_abi into libc?
-> 
-> The __rseq_abi symbol should be available to the glibc memory allocator.
-> I plan to move the __rseq_abi to sysdeps/unix/sysv/linux/Versions instead
-> so it becomes Linux-specific.
-> 
-> The __rseq_refcount symbol only needs to be made available to applications
-> and libraries linking against libpthread, because only libpthread actually
-> handles the rseq registration/unregistration at thread start/exit and
-> library initialization.
-> 
-> However, considering that we want this to be Linux-specific as well,
-> I could move it to sysdeps/unix/sysv/linux/Versions too.
-> 
-> Then it would make sense to move the __rseq_refcount symbol defined in
-> nptl/rseq.c to sysdeps/unix/sysv/linux/rseq.c as well and group
-> everything together.
-> 
-> Therefore, both symbols will end up in sysdeps/unix/sysv/linux/Versions.
+Therein lies the problem. Copying data is prohibitively expensive,
+and that's the primary reason for O_DIRECT existing.  i.e. O_DIRECT
+is a low-overhead, zero-copy data movement interface.
 
-Now that I think about it, it's important to move the rseq registration
-done at nptl init (in my current code) to some lower-level csu initialiation,
-so applications that happen _not_ to link against libpthread also get
-registered rseq for the main thread.
+The moment we switch from using CPU to dispatch IO to copying data,
+performance goes down because we will be unable to keep storage
+pipelines full.  IOWs, any rework of O_DIRECT that involves copying
+data is a non-starter.
 
-Does it make sense ?
+But let's bring this back to the issue at hand - observability of
+page cache residency of file pages. If th epage is caceh resident,
+then it will have a latency of copying that data out of the page
+(i.e. very low latency). If the page is not resident, then it will
+do IO and take much, much longer to complete. i.e. we have clear
+timing differences between cachce hit and cache miss IO.  This is
+exactly the timing information needed for observing page cache
+residency.
 
-Thanks,
+We need to work out how to make page cache residency less
+observable, not add new, near perfect observation mechanisms that
+third parties can easily exploit...
 
-Mathieu
+Cheers,
 
+Dave.
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Dave Chinner
+david@fromorbit.com
