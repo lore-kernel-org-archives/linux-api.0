@@ -1,88 +1,37 @@
-From: Dominique Martinet <asmadeus@codewreck.org>
+From: Linus Torvalds <torvalds@linux-foundation.org>
 Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
-Date: Fri, 11 Jan 2019 05:57:50 +0100
-Message-ID: <20190111045750.GA27333@nautica>
-References: <20190109022430.GE27534@dastard>
- <nycvar.YFH.7.76.1901090326460.16954@cbobk.fhfr.pm>
- <20190109043906.GF27534@dastard>
- <CAHk-=wic28fSkwmPbBHZcJ3BGbiftprNy861M53k+=OAB9n0=w@mail.gmail.com>
- <20190110004424.GH27534@dastard>
- <CAHk-=wg1jSQ-gq-M3+HeTBbDs1VCjyiwF4gqnnBhHeWizyrigg@mail.gmail.com>
- <20190110070355.GJ27534@dastard>
- <CAHk-=wigwXV_G-V1VxLs6BAvVkvW5=Oj+xrNHxE_7yxEVwoe3w@mail.gmail.com>
- <20190110122442.GA21216@nautica>
- <CAHk-=wip2CPrdOwgF0z4n2tsdW7uu+Egtcx9Mxxe3gPfPW_JmQ@mail.gmail.com>
+Date: Thu, 10 Jan 2019 23:08:07 -0800
+Message-ID: <CAHk-=wh-kegfnPC_dmw0A72Sdk4B9tvce-cOR=jEfHDU1-4Eew@mail.gmail.com>
+References: <20190109043906.GF27534@dastard> <CAHk-=wic28fSkwmPbBHZcJ3BGbiftprNy861M53k+=OAB9n0=w@mail.gmail.com>
+ <20190110004424.GH27534@dastard> <CAHk-=wg1jSQ-gq-M3+HeTBbDs1VCjyiwF4gqnnBhHeWizyrigg@mail.gmail.com>
+ <20190110070355.GJ27534@dastard> <CAHk-=wigwXV_G-V1VxLs6BAvVkvW5=Oj+xrNHxE_7yxEVwoe3w@mail.gmail.com>
+ <20190110122442.GA21216@nautica> <CAHk-=wip2CPrdOwgF0z4n2tsdW7uu+Egtcx9Mxxe3gPfPW_JmQ@mail.gmail.com>
+ <20190111020340.GM27534@dastard> <CAHk-=wgLgAzs42=W0tPrTVpu7H7fQ=BP5gXKnoNxMxh9=9uXag@mail.gmail.com>
+ <20190111040434.GN27534@dastard>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHk-=wip2CPrdOwgF0z4n2tsdW7uu+Egtcx9Mxxe3gPfPW_JmQ@mail.gmail.com>
+In-Reply-To: <20190111040434.GN27534@dastard>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Dave Chinner <david@fromorbit.com>, Jiri Kosina <jikos@kernel.org>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Dave Chinner <david@fromorbit.com>
+Cc: Dominique Martinet <asmadeus@codewreck.org>, Jiri Kosina <jikos@kernel.org>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Linus Torvalds wrote on Thu, Jan 10, 2019:
-> On Thu, Jan 10, 2019 at 4:25 AM Dominique Martinet
-> <asmadeus@codewreck.org> wrote:
-> > Linus Torvalds wrote on Thu, Jan 10, 2019:
-> > > (Except, of course, if somebody actually notices outside of tests.
-> > > Which may well happen and just force us to revert that commit. But
-> > > that's a separate issue entirely).
-> >
-> > Both Dave and I pointed at a couple of utilities that break with
-> > this. nocache can arguably work with the new behaviour but will behave
-> > differently; vmtouch on the other hand is no longer able to display
-> > what's in cache or not - people use that for example to "warm up" a
-> > container in page cache based on how it appears after it had been
-> > running for a while is a pretty valid usecase to me.
-> 
-> So honestly, the main reason I'm loath to revert is that yes, we know
-> of theoretical differences, but they seem to all be
-> performance-related.
+On Thu, Jan 10, 2019 at 8:04 PM Dave Chinner <david@fromorbit.com> wrote:
+>
+> So it will only read the single page we tried to access and won't
+> perturb the rest of the message encoded into subsequent pages in
+> file.
 
-I don't see what other use mincore could have, yes - even the
-"debugging" use I gave is performance investigations and not hard
-problems (and I probably would go straight to perf nowadays, you'd get
-the info that the program doesn't use cache from the call graphs)
+Dave, you're being intentionally obtuse, aren't you?
 
-> It would be really good to hear numbers. Is the warm-up optimization
-> something that changes things from 3ms to 3.5ms? Or does it change
-> things from 3ms to half a second?
+It's only that single page that *matters*. That's the page that the
+probe reveals the status of - but it's also the page that the probe
+then *changes* the status of.
 
-This is heavily workload and storage hardware dependant, so hard to give
-some absolute value.
+See?
 
-Trying with some big server, fast SSD, mysql and doing:
- # echo 3 > /proc/sys/vm/drop_caches
- # (optional) prefetch table and innodb files
- # systemctl restart mariadb
- # time mysql -q db "select * from mytable where id in $ENTRIES" > /dev/null
- # time mysql -q db "select * from mytable where id in $ENTRIES2" > /dev/null
- # time mysql -q db "select * from mytable where id in $ENTRIES3" > /dev/null
-(where ENTRIES* are lists of 1000 id, and id is indexed; the table is 8GB
-for 62590661 entries so 1000 entries is approx 128KB of data out of that
-file)
+Think of it as "the act of measurement changes that which is
+measured". And that makes the measurement pointless.
 
-I get on average over a few queries approximately a real time of 350ms,
-230ms and 220ms immediately after drop cache and service restart, and
-150ms, 60ms and 60ms after a prefetch (hand-wavy average over 3 runs, I
-didn't have the patience to do proper testing).
-(In both cases, user/sys are less than 10ms; I don't see much difference
-there)
-
-If I restart the service without dropping caches and redo the query I
-get 60ms from the first query onwards so I must not be preloading
-everything properly, some real script that would look all over a
-container to properly restore the page cache would do better than me
-blindly preloading a few files.
-
-Either way, we're talking about a factor of 2-3 until the application has
-been looking at most of the entries, and I didn't try to see how that
-would look like on spinning disks or the kind of slow storage one would
-get on VPS somewhere in the cloud - I'm sure someone with time to waste
-could get much more impressive figures, but this already look pretty
-worthwhile to me.
-
--- 
-Dominique Martinet | Asmadeus
+              Linus
