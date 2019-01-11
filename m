@@ -1,57 +1,43 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH 14/15] arch: add split IPC system calls where needed
-Date: Fri, 11 Jan 2019 18:33:05 +0100
-Message-ID: <CAK8P3a0PahP8Bbc7OfiqrRcoxMReDuoyn8Hw=aSFtPjNeyrjcA@mail.gmail.com>
-References: <20190110162435.309262-1-arnd@arndb.de> <20190110162435.309262-15-arnd@arndb.de>
- <20190110203253.GA3676@osiris>
+From: Paul Burton <paul.burton@mips.com>
+Subject: Re: [PATCH 11/15] mips: fix n32 compat_ipc_parse_version
+Date: Fri, 11 Jan 2019 19:25:17 +0000
+Message-ID: <MWHPR2201MB12776696BE1B1E8EF4A90DA1C1850@MWHPR2201MB1277.namprd22.prod.outlook.com>
+References: <20190110162435.309262-12-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190110203253.GA3676@osiris>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Heiko Carstens <heiko.carstens@de.ibm.com>
-Cc: y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, Russell King - ARM Linux <linux@armlinux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Tony Luck <tony.luck@intel.com>, Fenghua Yu <fenghua.yu@intel.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Michal Simek <monstr@monstr.eu>, Paul Burton <paul.burton@mips.com>, Helge Deller <deller@gmx.de>, Michael Ellerman <mpe@ellerman.id.au>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Rich Felker <dalias@libc.org>, David Miller <davem@davemloft.net>, Andy Lutomirski <luto@kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
+In-Reply-To: <20190110162435.309262-12-arnd@arndb.de>
+Content-Language: en-US
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Paul Burton <pburton@wavecomp.com>, "dalias@libc.org" <dalias@libc.org>, "linux-ia64@vger.kernel.org" <linux-ia64@vger.kernel.org>, "linux-sh@vger.kernel.org" <linux-sh@vger.kernel.org>, "catalin.marinas@arm.com" <catalin.marinas@arm.com>, "will.deacon@arm.com" <will.deacon@arm.com>, "linux@dominikbrodowski.net" <linux@dominikbrodowski.net>, "linux-mips@vger.kernel.org" <linux-mips@vger.kernel.org>, "jcmvbkbc@gmail.com" <jcmvbkbc@gmail.com>, "deepa.kernel@gmail.com" <deepa.kernel@gmail.com>, "hpa@zytor.com" <hpa@zytor.com>, "sparclinux@vger.kernel.org" <sparclinux@vger.kernel.org>, "linux-s390@vger.kernel.org" <linux-s390@vger.kernel.org>, "dave@stgolabs.net" <dave@stgolabs.net>, "y2038@lists.linaro.org" <y2038@lists.linaro.org>, "mpe@ellerman.id.au" <mpe@ellerman.id.au>, "deller@gmx.de" <deller@gmx.de>, "x86@kernel.org" <x86@kernel.org>"linux@armlinux.org.uk" <linu>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 10, 2019 at 9:33 PM Heiko Carstens
-<heiko.carstens@de.ibm.com> wrote:
-> On Thu, Jan 10, 2019 at 05:24:34PM +0100, Arnd Bergmann wrote:
-
-> > diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
-> > index 022fc099b628..428cf512a757 100644
-> > --- a/arch/s390/kernel/syscalls/syscall.tbl
-> > +++ b/arch/s390/kernel/syscalls/syscall.tbl
-> > @@ -391,3 +391,15 @@
-> >  381  common  kexec_file_load         sys_kexec_file_load             compat_sys_kexec_file_load
-> >  382  common  io_pgetevents           sys_io_pgetevents               compat_sys_io_pgetevents
-> >  383  common  rseq                    sys_rseq                        compat_sys_rseq
-> > +# room for arch specific syscalls
-> > +392  64      semtimedop              sys_semtimedop                  -
-> > +393  common  semget                  sys_semget                      sys_semget
-> ...
-> > +395  common  shmget                  sys_shmget                      sys_shmget
-> ...
-> > +398  common  shmdt                   sys_shmdt                       sys_shmdt
-> > +399  common  msgget                  sys_msgget                      sys_msgget
->
-> These four need compat system call wrappers, unfortunately... (well,
-> actually only shmget and shmdt require them, but let's add them for
-> all four). See arch/s390/kernel/compat_wrapper.c
->
-> I'm afraid this compat special handling will be even more annoying in
-> the future, since s390 will be the only architecture which requires
-> this special handling.
->
-> _Maybe_ it would make sense to automatically generate a weak compat
-> system call wrapper for s390 with the SYSCALL_DEFINE macros, but that
-> probably won't work in all cases.
-
-For some reason I was under the impression that s390 already did that.
-However, it seems that x86 does, so I'll try to convert the x86 version
-for s390, and see if I can get rid of all the wrappers that way.
-
-It would certainly be safer to have the wrappers always present,
-especially if we expect future system calls to be added to the
-s390 table by whoever implements the syscall itself.
-
-      Arnd
+SGVsbG8sCgpBcm5kIEJlcmdtYW5uIHdyb3RlOgo+IFdoaWxlIHJlYWRpbmcgdGhyb3VnaCB0aGUg
+c3lzdmlwYyBpbXBsZW1lbnRhdGlvbiwgSSBub3RpY2VkIHRoYXQgdGhlIG4zMgo+IHNlbWN0bC9z
+aG1jdGwvbXNnY3RsIHN5c3RlbSBjYWxscyBiZWhhdmUgZGlmZmVyZW50bHkgYmFzZWQgb24gd2hl
+dGhlcgo+IG8zMiBzdXBwb3J0IGlzIGVuYWJsZWQgb3Igbm90OiBXaXRob3V0IG8zMiwgdGhlIElQ
+Q182NCBmbGFnIHBhc3NlZCBieQo+IHVzZXIgc3BhY2UgaXMgcmVqZWN0ZWQgYnV0IGNhbGxzIHdp
+dGhvdXQgdGhhdCBmbGFnIGdldCBJUENfNjQgYmVoYXZpb3IuCj4gCj4gQXMgZmFyIGFzIEkgY2Fu
+IHRlbGwsIHRoaXMgd2FzIGluYWR2ZXJ0ZW50bHkgY2hhbmdlZCBieSBhIGNsZWFudXAgcGF0Y2gK
+PiBidXQgbmV2ZXIgbm90aWNlZCBieSBhbnlvbmUsIHBvc3NpYmx5IG5vYm9keSBoYXMgdHJpZWQg
+dXNpbmcgc3lzdmlwYwo+IG9uIG4zMiBhZnRlciBsaW51eC0zLjE5Lgo+IAo+IENoYW5nZSBpdCBi
+YWNrIHRvIHRoZSBvbGQgYmVoYXZpb3Igbm93Lgo+IAo+IEZpeGVzOiA3OGFhZjk1NmJhM2EgKCJN
+SVBTOiBDb21wYXQ6IEZpeCBidWlsZCBlcnJvciBpZiBDT05GSUdfTUlQUzMyX0NPTVBBVCBidXQg
+bm8gY29tcGF0IEFCSS4iKQo+IENjOiBzdGFibGVAdmdlci5rZXJuZWwub3JnCj4gU2lnbmVkLW9m
+Zi1ieTogQXJuZCBCZXJnbWFubiA8YXJuZEBhcm5kYi5kZT4KCkFwcGxpZWQgdG8gbWlwcy1maXhl
+cy4KClRoYW5rcywKICAgIFBhdWwKClsgVGhpcyBtZXNzYWdlIHdhcyBhdXRvLWdlbmVyYXRlZDsg
+aWYgeW91IGJlbGlldmUgYW55dGhpbmcgaXMgaW5jb3JyZWN0CiAgdGhlbiBwbGVhc2UgZW1haWwg
+cGF1bC5idXJ0b25AbWlwcy5jb20gdG8gcmVwb3J0IGl0LiBdCl9fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fClkyMDM4IG1haWxpbmcgbGlzdApZMjAzOEBsaXN0
+cy5saW5hcm8ub3JnCmh0dHBzOi8vbGlzdHMubGluYXJvLm9yZy9tYWlsbWFuL2xpc3RpbmZvL3ky
+MDM4Cg==
