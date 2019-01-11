@@ -1,76 +1,82 @@
-From: Geert Uytterhoeven <geert@linux-m68k.org>
-Subject: Re: [PATCH 00/15] arch: synchronize syscall tables in preparation for
- y2038
-Date: Fri, 11 Jan 2019 09:07:43 +0100
-Message-ID: <CAMuHMdUpThq_fmSitzUrEUFx40itYdURpjmunLs_YLA9BPaMQg@mail.gmail.com>
-References: <20190110162435.309262-1-arnd@arndb.de>
- <CAMuHMdXYP3=TRHYqddVRfbRRaj_Ou=wfoX6ohKM7XNAx-c2RXw@mail.gmail.com>
- <CAK8P3a0kmr2ju+sZE+f-+=-2t5Eu+t-DS-+r6OKrPVTAxHwf8w@mail.gmail.com>
- <CAMuHMdVpUNUx-wdDYChYNzMYqYi79w5tzjk5x3JskdS88VQCQw@mail.gmail.com>
- <CAK8P3a07yNiadLCJcA0Tyfo90YeQ0P2XF-wOEy9XAb8cDTFObw@mail.gmail.com>
+From: Christian Brauner <christian@brauner.io>
+Subject: Re: [RESEND PATCH v3 2/2] sysctl: handle overflow for file-max
+Date: Fri, 11 Jan 2019 15:51:41 +0100
+Message-ID: <20190111145140.lbmiz3w2f255uf65@brauner.io>
+References: <20190107222700.15954-1-christian@brauner.io>
+ <20190107222700.15954-3-christian@brauner.io>
+ <20190108070110.GA7998@light.dominikbrodowski.net>
+ <20190110145004.zhc2t42aasni7wnq@brauner.io>
+ <20190110145559.relfx37ocq5xu4by@isilmar-4.linta.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <CAK8P3a07yNiadLCJcA0Tyfo90YeQ0P2XF-wOEy9XAb8cDTFObw@mail.gmail.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Rich Felker <dalias@libc.org>, "linux-ia64@vger.kernel.org" <linux-ia64@vger.kernel.org>, Linux-sh list <linux-sh@vger.kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Dominik Brodowski <linux@dominikbrodowski.net>, linux-mips@vger.kernel.org, Max Filippov <jcmvbkbc@gmail.com>, Deepa Dinamani <deepa.kernel@gmail.com>, "H. Peter Anvin" <hpa@zytor.com>, sparclinux <sparclinux@vger.kernel.org>, linux-s390 <linux-s390@vger.kernel.org>, Davidlohr Bueso <dave@stgolabs.net>, y2038 Mailman List <y2038@lists.linaro.org>, Michael Ellerman <mpe@ellerman.id.au>, Helge Deller <deller@gmx.de>, the arch/x86 maintainers <x86@kernel.org>, Russell King <linux@armlinux.org.uk>, Ingo Molnar <mingo@redhat.com>, Firoz Khan <firoz.khan@linaro.org>, Matt Turner <mattst88@gmail.com>, Fenghua Yu <fenghua.yu@intel.com>, Will Deacon <will.deacon@a>
+Content-Type: text/plain; charset=utf-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190110145559.relfx37ocq5xu4by@isilmar-4.linta.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dominik Brodowski <linux@dominikbrodowski.net>, akpm@linux-foundation.org
+Cc: keescook@chromium.org, linux-kernel@vger.kernel.org, ebiederm@xmission.com, mcgrof@kernel.org, joe.lawrence@redhat.com, longman@redhat.com, viro@zeniv.linux.org.uk, adobriyan@gmail.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Arnd,
-
-On Thu, Jan 10, 2019 at 11:43 PM Arnd Bergmann <arnd@arndb.de> wrote:
-> On Thu, Jan 10, 2019 at 7:11 PM Geert Uytterhoeven <geert@linux-m68k.org> wrote:
-> > On Thu, Jan 10, 2019 at 6:06 PM Arnd Bergmann <arnd@arndb.de> wrote:
-> > > On Thu, Jan 10, 2019 at 5:59 PM Geert Uytterhoeven <geert@linux-m68k.org> wrote:
-> > > > On Thu, Jan 10, 2019 at 5:26 PM Arnd Bergmann <arnd@arndb.de> wrote:
-> > > > > The system call tables have diverged a bit over the years, and a number
-> > > > > of the recent additions never made it into all architectures, for one
-> > > > > reason or another.
-> > > > >
-> > > > > This is an attempt to clean it up as far as we can without breaking
-> > > > > compatibility, doing a number of steps:
-> > > >
-> > > > Thanks a lot!
-> > > >
-> > > > > - Add system calls that have not yet been integrated into all
-> > > > >   architectures but that we definitely want there.
-> > > >
-> > > > It looks like you missed wiring up io_pgetevents() on m68k.
-> > > > Is that intentional?
-> > >
-> > > Yes, I thought I had described that somewhere but maybe I
-> > > forgot: semtimedop() and io_pgetevents() get replaced with
-> > > time64 versions in the follow-up, so I only added them in
-> > > 64-bit architectures. If you think we should have both
-> > > io_pgetevents() and io_pgetevents_time32() on all 32-bit
-> > > architectures, I can add that as well.
+On Thu, Jan 10, 2019 at 03:55:59PM +0100, Dominik Brodowski wrote:
+> On Thu, Jan 10, 2019 at 03:50:05PM +0100, Christian Brauner wrote:
+> > On Tue, Jan 08, 2019 at 08:01:10AM +0100, Dominik Brodowski wrote:
+> > > On Mon, Jan 07, 2019 at 11:27:00PM +0100, Christian Brauner wrote:
+> > > > @@ -2833,6 +2836,10 @@ static int __do_proc_doulongvec_minmax(void *data, struct ctl_table *table, int
+> > > >  				break;
+> > > >  			if (neg)
+> > > >  				continue;
+> > > > +			if ((max && val > *max) || (min && val < *min)) {
+> > > > +				err = -EINVAL;
+> > > > +				break;
+> > > > +			}
+> > > >  			val = convmul * val / convdiv;
+> > > >  			if ((min && val < *min) || (max && val > *max))
+> > > >  				continue;
+> > > 
+> > > This is a generic change which affects all users of
+> > > do_proc_doulongvec_minmax() that have extra1 or extra2 set. In sysctl.c, I
+> > > do not see another user of proc_doulongvec_minmax() that has extra1 or
+> > > extra2 set. However, have you verified whether your patch changes the
+> > > behaviour for other files that make use of proc_doulongvec_minmax() or
+> > > proc_doulongvec_ms_jiffies_minmax(), and not only of the file-max sysctl?
+> > 
+> > Sorry for the delayed reply. I did look at the callers. The functions
+> > that are of interest afaict are:
+> > 
+> > proc_doulongvec_ms_jiffies_minmax
+> > proc_doulongvec_minmax
+> > 
+> > So this could be visible when users write values that would overflow the
+> > type used in the kernel.
 > >
-> > Thanks, sounds fine to me.
->
-> Just to be sure, you mean it's fine to not add it, not that we should
-> add it?
+> > I guess your point is whether we are venturing into userspace break
+> > territory. Hm... We should probably make sure that we're not regressing
+> > anyone else! What do you think if instead of the above patch we did:
+> 
+> Hm, I prefer the original patch -- as the same (valid) reasons which apply
+> for the file-max sysctl might also apply to other users of this function
+> where extra1 and/or2 extra2 are set.
+> 
+> If there are no other users of this function where extra1 or extra2 are set,
+> just add a comment in the commit message:
+> 
+> 	While this changes the behaviour of __do_proc_doulongvec_minmax(),
+> 	no other existing users in the kernel are affected by this change.
+> 
+> If there are other users of this function where extra1 or extra2 are set,
+> you would need to generalize the commit message overall.
 
-I'm fine with not having the legacy 32-bit ones.
+Andrew, can you please drop this patch
 
-Sorry for being unclear.
+[RESEND PATCH v3 2/2] sysctl: handle overflow for file-max
 
-Gr{oetje,eeting}s,
+from your tree (It should be located at [1] from what I can gather.).
+I'll resend it based on Dominik's observation and will generalize the
+commit message and also error out *after* the conversion has been done
+and not before.
+The first patch 1/2 is correct and can be kept.
 
-                        Geert
+Thanks!
+Christian
 
--- 
-Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k.org
-
-In personal conversations with technical people, I call myself a hacker. But
-when I'm talking to journalists I just say "programmer" or something like that.
-                                -- Linus Torvalds
+[1]: https://www.ozlabs.org/~akpm/mmots/broken-out/sysctl-handle-overflow-for-file-max.patch
