@@ -1,82 +1,131 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [RESEND PATCH v3 2/2] sysctl: handle overflow for file-max
-Date: Fri, 11 Jan 2019 15:51:41 +0100
-Message-ID: <20190111145140.lbmiz3w2f255uf65@brauner.io>
-References: <20190107222700.15954-1-christian@brauner.io>
- <20190107222700.15954-3-christian@brauner.io>
- <20190108070110.GA7998@light.dominikbrodowski.net>
- <20190110145004.zhc2t42aasni7wnq@brauner.io>
- <20190110145559.relfx37ocq5xu4by@isilmar-4.linta.de>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
+Date: Fri, 11 Jan 2019 08:26:14 -0800
+Message-ID: <CAHk-=wj+xyz_GKjgKpU6SF3qeqouGmRoR8uFxzg_c1VpeGEJMw@mail.gmail.com>
+References: <20190110004424.GH27534@dastard> <CAHk-=wg1jSQ-gq-M3+HeTBbDs1VCjyiwF4gqnnBhHeWizyrigg@mail.gmail.com>
+ <20190110070355.GJ27534@dastard> <CAHk-=wigwXV_G-V1VxLs6BAvVkvW5=Oj+xrNHxE_7yxEVwoe3w@mail.gmail.com>
+ <20190110122442.GA21216@nautica> <CAHk-=wip2CPrdOwgF0z4n2tsdW7uu+Egtcx9Mxxe3gPfPW_JmQ@mail.gmail.com>
+ <20190111020340.GM27534@dastard> <CAHk-=wgLgAzs42=W0tPrTVpu7H7fQ=BP5gXKnoNxMxh9=9uXag@mail.gmail.com>
+ <20190111040434.GN27534@dastard> <CAHk-=wh-kegfnPC_dmw0A72Sdk4B9tvce-cOR=jEfHDU1-4Eew@mail.gmail.com>
+ <20190111073606.GP27534@dastard>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190110145559.relfx37ocq5xu4by@isilmar-4.linta.de>
+In-Reply-To: <20190111073606.GP27534@dastard>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dominik Brodowski <linux@dominikbrodowski.net>, akpm@linux-foundation.org
-Cc: keescook@chromium.org, linux-kernel@vger.kernel.org, ebiederm@xmission.com, mcgrof@kernel.org, joe.lawrence@redhat.com, longman@redhat.com, viro@zeniv.linux.org.uk, adobriyan@gmail.com, linux-api@vger.kernel.org
+To: Dave Chinner <david@fromorbit.com>
+Cc: Dominique Martinet <asmadeus@codewreck.org>, Jiri Kosina <jikos@kernel.org>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 10, 2019 at 03:55:59PM +0100, Dominik Brodowski wrote:
-> On Thu, Jan 10, 2019 at 03:50:05PM +0100, Christian Brauner wrote:
-> > On Tue, Jan 08, 2019 at 08:01:10AM +0100, Dominik Brodowski wrote:
-> > > On Mon, Jan 07, 2019 at 11:27:00PM +0100, Christian Brauner wrote:
-> > > > @@ -2833,6 +2836,10 @@ static int __do_proc_doulongvec_minmax(void *data, struct ctl_table *table, int
-> > > >  				break;
-> > > >  			if (neg)
-> > > >  				continue;
-> > > > +			if ((max && val > *max) || (min && val < *min)) {
-> > > > +				err = -EINVAL;
-> > > > +				break;
-> > > > +			}
-> > > >  			val = convmul * val / convdiv;
-> > > >  			if ((min && val < *min) || (max && val > *max))
-> > > >  				continue;
-> > > 
-> > > This is a generic change which affects all users of
-> > > do_proc_doulongvec_minmax() that have extra1 or extra2 set. In sysctl.c, I
-> > > do not see another user of proc_doulongvec_minmax() that has extra1 or
-> > > extra2 set. However, have you verified whether your patch changes the
-> > > behaviour for other files that make use of proc_doulongvec_minmax() or
-> > > proc_doulongvec_ms_jiffies_minmax(), and not only of the file-max sysctl?
-> > 
-> > Sorry for the delayed reply. I did look at the callers. The functions
-> > that are of interest afaict are:
-> > 
-> > proc_doulongvec_ms_jiffies_minmax
-> > proc_doulongvec_minmax
-> > 
-> > So this could be visible when users write values that would overflow the
-> > type used in the kernel.
-> >
-> > I guess your point is whether we are venturing into userspace break
-> > territory. Hm... We should probably make sure that we're not regressing
-> > anyone else! What do you think if instead of the above patch we did:
-> 
-> Hm, I prefer the original patch -- as the same (valid) reasons which apply
-> for the file-max sysctl might also apply to other users of this function
-> where extra1 and/or2 extra2 are set.
-> 
-> If there are no other users of this function where extra1 or extra2 are set,
-> just add a comment in the commit message:
-> 
-> 	While this changes the behaviour of __do_proc_doulongvec_minmax(),
-> 	no other existing users in the kernel are affected by this change.
-> 
-> If there are other users of this function where extra1 or extra2 are set,
-> you would need to generalize the commit message overall.
+On Thu, Jan 10, 2019 at 11:36 PM Dave Chinner <david@fromorbit.com> wrote:
+>
+> > It's only that single page that *matters*. That's the page that the
+> > probe reveals the status of - but it's also the page that the probe
+> > then *changes* the status of.
+>
+> It changes the state of it /after/ we've already got the information
+> we need from it. It's not up to date, it has to come from disk, we
+> return EAGAIN, which means it was not in the cache.
 
-Andrew, can you please drop this patch
+Oh, I see the confusion.
 
-[RESEND PATCH v3 2/2] sysctl: handle overflow for file-max
+Yes, you get the information about whether something was in the cache
+or not, so the side channel does exist to some degree.
 
-from your tree (It should be located at [1] from what I can gather.).
-I'll resend it based on Dominik's observation and will generalize the
-commit message and also error out *after* the conversion has been done
-and not before.
-The first patch 1/2 is correct and can be kept.
+But it's actually hugely reduced for a rather important reason: the
+_primary_ reason for needing to know whether some page is in the cache
+or not is not actually to see if it was ever accessed - it's to see
+that the cache has been scrubbed (and to _guide_ the scrubbing), and
+*when* it was accessed.
 
-Thanks!
-Christian
+Think of it this way: the buffer cache residency is actually a
+horribly bad signal on its own mainly because you generally have a
+very high hit-rate. In most normal non-streaming situations with
+sufficient amounts of memory you have pretty much everything cached.
 
-[1]: https://www.ozlabs.org/~akpm/mmots/broken-out/sysctl-handle-overflow-for-file-max.patch
+So in order to use it as a signal, first you have to first scrub the
+cache (because if the page was already there, there's no signal at
+all), and then for the signal to be as useful as possible, you're also
+going to want to try to get out more than one bit of information: you
+are going to try to see the patterns and the timings of how it gets
+filled.
+
+And that's actually quite painful. You don't know the initial cache
+state, and you're not (in general) controlling the machine entirely,
+because there's also that actual other entity that you're trying to
+attack and see what it does.
+
+So what you want to do is basically to first make sure the cache is
+scrubbed (only for the pages you're interested in!), then trigger
+whatever behavior you are looking for, and then look how that affected
+the cache.
+
+In other words,  you want *multiple* residency status check - first to
+see what the cache state is (because you're going to want that for
+scrubbing), then to see that "yes, it's gone" when doing the
+scrubbing, and then to see the *pattern* and timings of how things are
+brought in.
+
+And then you're likely to want to do this over and over again, so that
+you can get real data out of the signal.
+
+This is why something that doesn't perturb what you measure is really
+important. If the act of measurement brings the page in, then you
+can't use it for that "did I successfully scrub it" phase at all, and
+you can't use it for measurement but once, so your view into patterns
+and timings is going to be *much* worse.
+
+And notice that this is true even if the act of measurement only
+affects the *one* page you're measuring. Sure, any additional noise
+around it would likely be annoying too, but it's not really necessary
+to make the attack much harder to carry out. In fact, it's almost
+irrelevant, since the signal you're trying to *see* is going to be
+affected by prefetching etc too, so the patterns and timings you need
+to look at are in bigger chunks than the readahead thing.
+
+So yes, you as an attacker can remove the prefetching from *your*
+load, but you can't remove it from the target load anyway, so you'll
+just have to live with it.
+
+Can you brute-force scrubbing? Yes. For something like an L1 cache,
+that's easy (well, QoS domains make it harder). For something like a
+disk cache, it's much harder, and makes any attempt to read out state
+a lot slower. The paper that started this all uses mincore() not just
+to see "is the page now scrubbed", but also to guide the scrubbing
+itself (working set estimation etc).
+
+And note that in many ways, the *scrubbing* is really the harder part.
+Populating the cache is really easy: just read the data you want to
+populate.
+
+So if you are looking for a particular signal, say "did this error
+case trigger so that it faulted in *that* piece of information", you'd
+want to scrub the target, populate everything else, and then try to
+measure at "did I trigger that target". Except you wouldn't want to do
+it one page at a time but see as much pattern of "they were touched in
+this order" as you can, and you'd like to get timing information of
+how the pages you are interested were populated too.
+
+And you'd generally do this over and over and over again because
+you're trying to read out some signal.
+
+Notice what the expensive operation was? It's the scrubbing.The "did
+the target do IO" you might actually even see other ways for the
+trivial cases, like even just look at iostat: just pre-populate
+everything but the part you care about, then try to trigger whatever
+you're searching for, and see if it caused IO or not.
+
+So it's a bit like a chalkboard: in order to read out the result, you
+need to erase it first, and doing that blindly is nasty. And you want
+to look at timings, which is also really nasty if every time you look,
+you smudge the very place you looked at. It makes it hard to see what
+somebody else is writing on the board if you're always overwriting
+what you just looked at. Did you get some new information? If not, now
+you have to go back and do that scrubbing again, and you'll likely be
+missing what *else* the person wrote.
+
+Ans as always: there is no "black and white". There is no "absolute
+security", and similarly, there is no "absolute leak proof". It's all
+about making it inconvenient enough that it's not really practical.
+
+                 Linus
