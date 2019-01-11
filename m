@@ -1,131 +1,39 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
-Date: Fri, 11 Jan 2019 08:26:14 -0800
-Message-ID: <CAHk-=wj+xyz_GKjgKpU6SF3qeqouGmRoR8uFxzg_c1VpeGEJMw@mail.gmail.com>
-References: <20190110004424.GH27534@dastard> <CAHk-=wg1jSQ-gq-M3+HeTBbDs1VCjyiwF4gqnnBhHeWizyrigg@mail.gmail.com>
- <20190110070355.GJ27534@dastard> <CAHk-=wigwXV_G-V1VxLs6BAvVkvW5=Oj+xrNHxE_7yxEVwoe3w@mail.gmail.com>
- <20190110122442.GA21216@nautica> <CAHk-=wip2CPrdOwgF0z4n2tsdW7uu+Egtcx9Mxxe3gPfPW_JmQ@mail.gmail.com>
- <20190111020340.GM27534@dastard> <CAHk-=wgLgAzs42=W0tPrTVpu7H7fQ=BP5gXKnoNxMxh9=9uXag@mail.gmail.com>
- <20190111040434.GN27534@dastard> <CAHk-=wh-kegfnPC_dmw0A72Sdk4B9tvce-cOR=jEfHDU1-4Eew@mail.gmail.com>
- <20190111073606.GP27534@dastard>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH 15/15] arch: add pkey and rseq syscall numbers everywhere
+Date: Fri, 11 Jan 2019 18:30:43 +0100
+Message-ID: <CAK8P3a0M6qSJQAtFNKVS5muissKvyzeE9MSYT_uwKnM4BKCAug@mail.gmail.com>
+References: <20190110162435.309262-1-arnd@arndb.de> <20190110162435.309262-16-arnd@arndb.de>
+ <20190110203638.GB3676@osiris>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190111073606.GP27534@dastard>
+In-Reply-To: <20190110203638.GB3676@osiris>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Chinner <david@fromorbit.com>
-Cc: Dominique Martinet <asmadeus@codewreck.org>, Jiri Kosina <jikos@kernel.org>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Heiko Carstens <heiko.carstens@de.ibm.com>
+Cc: y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, Russell King - ARM Linux <linux@armlinux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Tony Luck <tony.luck@intel.com>, Fenghua Yu <fenghua.yu@intel.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Michal Simek <monstr@monstr.eu>, Paul Burton <paul.burton@mips.com>, Helge Deller <deller@gmx.de>, Michael Ellerman <mpe@ellerman.id.au>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Rich Felker <dalias@libc.org>, David Miller <davem@davemloft.net>, Andy Lutomirski <luto@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 10, 2019 at 11:36 PM Dave Chinner <david@fromorbit.com> wrote:
+On Thu, Jan 10, 2019 at 9:36 PM Heiko Carstens
+<heiko.carstens@de.ibm.com> wrote:
+> On Thu, Jan 10, 2019 at 05:24:35PM +0100, Arnd Bergmann wrote:
+
+> Since you only need/want the system call numbers, could you please
+> change these lines to:
 >
-> > It's only that single page that *matters*. That's the page that the
-> > probe reveals the status of - but it's also the page that the probe
-> > then *changes* the status of.
+> > +384  common  pkey_alloc              -                               -
+> > +385  common  pkey_free               -                               -
+> > +386  common  pkey_mprotect           -                               -
 >
-> It changes the state of it /after/ we've already got the information
-> we need from it. It's not up to date, it has to come from disk, we
-> return EAGAIN, which means it was not in the cache.
+> Otherwise it _looks_ like we would need compat wrappers here as well,
+> even though all of them would just jump to sys_ni_syscall() in this
+> case. Making this explicit seems to better.
 
-Oh, I see the confusion.
+Ok, fair enough. I considered doing this originally and then
+decided against it for consistency with the asm-generic file,
+but I don't care much either way.
 
-Yes, you get the information about whether something was in the cache
-or not, so the side channel does exist to some degree.
+Is this something you may want to add later? I'm not sure exactly
+how pkey compares to s390 storage keys, or if this is something
+completely unrelated.
 
-But it's actually hugely reduced for a rather important reason: the
-_primary_ reason for needing to know whether some page is in the cache
-or not is not actually to see if it was ever accessed - it's to see
-that the cache has been scrubbed (and to _guide_ the scrubbing), and
-*when* it was accessed.
-
-Think of it this way: the buffer cache residency is actually a
-horribly bad signal on its own mainly because you generally have a
-very high hit-rate. In most normal non-streaming situations with
-sufficient amounts of memory you have pretty much everything cached.
-
-So in order to use it as a signal, first you have to first scrub the
-cache (because if the page was already there, there's no signal at
-all), and then for the signal to be as useful as possible, you're also
-going to want to try to get out more than one bit of information: you
-are going to try to see the patterns and the timings of how it gets
-filled.
-
-And that's actually quite painful. You don't know the initial cache
-state, and you're not (in general) controlling the machine entirely,
-because there's also that actual other entity that you're trying to
-attack and see what it does.
-
-So what you want to do is basically to first make sure the cache is
-scrubbed (only for the pages you're interested in!), then trigger
-whatever behavior you are looking for, and then look how that affected
-the cache.
-
-In other words,  you want *multiple* residency status check - first to
-see what the cache state is (because you're going to want that for
-scrubbing), then to see that "yes, it's gone" when doing the
-scrubbing, and then to see the *pattern* and timings of how things are
-brought in.
-
-And then you're likely to want to do this over and over again, so that
-you can get real data out of the signal.
-
-This is why something that doesn't perturb what you measure is really
-important. If the act of measurement brings the page in, then you
-can't use it for that "did I successfully scrub it" phase at all, and
-you can't use it for measurement but once, so your view into patterns
-and timings is going to be *much* worse.
-
-And notice that this is true even if the act of measurement only
-affects the *one* page you're measuring. Sure, any additional noise
-around it would likely be annoying too, but it's not really necessary
-to make the attack much harder to carry out. In fact, it's almost
-irrelevant, since the signal you're trying to *see* is going to be
-affected by prefetching etc too, so the patterns and timings you need
-to look at are in bigger chunks than the readahead thing.
-
-So yes, you as an attacker can remove the prefetching from *your*
-load, but you can't remove it from the target load anyway, so you'll
-just have to live with it.
-
-Can you brute-force scrubbing? Yes. For something like an L1 cache,
-that's easy (well, QoS domains make it harder). For something like a
-disk cache, it's much harder, and makes any attempt to read out state
-a lot slower. The paper that started this all uses mincore() not just
-to see "is the page now scrubbed", but also to guide the scrubbing
-itself (working set estimation etc).
-
-And note that in many ways, the *scrubbing* is really the harder part.
-Populating the cache is really easy: just read the data you want to
-populate.
-
-So if you are looking for a particular signal, say "did this error
-case trigger so that it faulted in *that* piece of information", you'd
-want to scrub the target, populate everything else, and then try to
-measure at "did I trigger that target". Except you wouldn't want to do
-it one page at a time but see as much pattern of "they were touched in
-this order" as you can, and you'd like to get timing information of
-how the pages you are interested were populated too.
-
-And you'd generally do this over and over and over again because
-you're trying to read out some signal.
-
-Notice what the expensive operation was? It's the scrubbing.The "did
-the target do IO" you might actually even see other ways for the
-trivial cases, like even just look at iostat: just pre-populate
-everything but the part you care about, then try to trigger whatever
-you're searching for, and see if it caused IO or not.
-
-So it's a bit like a chalkboard: in order to read out the result, you
-need to erase it first, and doing that blindly is nasty. And you want
-to look at timings, which is also really nasty if every time you look,
-you smudge the very place you looked at. It makes it hard to see what
-somebody else is writing on the board if you're always overwriting
-what you just looked at. Did you get some new information? If not, now
-you have to go back and do that scrubbing again, and you'll likely be
-missing what *else* the person wrote.
-
-Ans as always: there is no "black and white". There is no "absolute
-security", and similarly, there is no "absolute leak proof". It's all
-about making it inconvenient enough that it's not really practical.
-
-                 Linus
+     Arnd
