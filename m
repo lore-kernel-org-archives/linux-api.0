@@ -1,73 +1,97 @@
-From: Joel Fernandes <joel@joelfernandes.org>
-Subject: [PATCH -manpage 2/2] memfd_create.2: Update manpage with new memfd F_SEAL_FUTURE_WRITE seal
-Date: Sat, 12 Jan 2019 19:14:46 -0500
-Message-ID: <20190113001446.158789-3-joel@joelfernandes.org>
-References: <20190113001446.158789-1-joel@joelfernandes.org>
+From: Michael Ellerman <mpe@ellerman.id.au>
+Subject: Re: [PATCH 14/15] arch: add split IPC system calls where needed
+Date: Mon, 14 Jan 2019 14:40:14 +1100
+Message-ID: <87r2df29gh.fsf@concordia.ellerman.id.au>
+References: <20190110162435.309262-1-arnd@arndb.de>
+ <20190110162435.309262-15-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190113001446.158789-1-joel@joelfernandes.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, mtk.manpages@gmail.com
-Cc: "Joel Fernandes (Google)" <joel@joelfernandes.org>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, dancol@google.com, Hugh Dickins <hughd@google.com>, Jann Horn <jannh@google.com>, John Stultz <john.stultz@linaro.org>, linux-api@vger.kernel.org, linux-man@vger.kernel.org, linux-mm@kvack.org, marcandre.lureau@redhat.com, Matthew Wilcox <willy@infradead.org>, Mike Kravetz <mike.kravetz@oracle.com>, Shuah Khan <shuah@kernel.org>, Stephen Rothwell <sfr@canb.auug.org.au>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+In-Reply-To: <20190110162435.309262-15-arnd@arndb.de>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: dalias@libc.org, linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, catalin.marinas@arm.com, will.deacon@arm.com, linux@dominikbrodowski.net, jcmvbkbc@gmail.com, deepa.kernel@gmail.com, hpa@zytor.com, sparclinux@vger.kernel.org, linux-s390@vger.kernel.org, dave@stgolabs.net, deller@gmx.de, x86@kernel.org, linux@armlinux.org.uk, mingo@redhat.com, geert@linux-m68k.org, firoz.khan@linaro.org, mattst88@gmail.com, fenghua.yu@intel.com, Arnd Bergmann <arnd@arndb.de>, heiko.carstens@de.ibm.com, linux-m68k@lists.linux-m68k.org, ink@jurassic.park.msu.ru, luto@kernel.org, tglx@linutronix.de, linux-arm-kernel@lists.infradead.org, monstr@monstr.eu, tony.luck@intel.com, linux-parisc@vger.kernel.org, linux-mips@vger.kernel.org, paul.burton@mips.com, ebiederm@xmission.com, linux-alpha@vger.kernel.org, schwidefsky@de.ibm.com, akpm@linux-foundation.org, linuxppc-dev@lists.ozlabs.orgd
 List-Id: linux-api@vger.kernel.org
 
-From: "Joel Fernandes (Google)" <joel@joelfernandes.org>
+Hi Arnd,
 
-More details of the seal can be found in the LKML patch:
-https://lore.kernel.org/lkml/20181120052137.74317-1-joel@joelfernandes.org/T/#t
+Arnd Bergmann <arnd@arndb.de> writes:
+> The IPC system call handling is highly inconsistent across architectures,
+> some use sys_ipc, some use separate calls, and some use both.  We also
+> have some architectures that require passing IPC_64 in the flags, and
+> others that set it implicitly.
+>
+> For the additon of a y2083 safe semtimedop() system call, I chose to only
+> support the separate entry points, but that requires first supporting
+> the regular ones with their own syscall numbers.
+>
+> The IPC_64 is now implied by the new semctl/shmctl/msgctl system
+> calls even on the architectures that require passing it with the ipc()
+> multiplexer.
+>
+> I'm not adding the new semtimedop() or semop() on 32-bit architectures,
+> those will get implemented using the new semtimedop_time64() version
+> that gets added along with the other time64 calls.
+> Three 64-bit architectures (powerpc, s390 and sparc) get semtimedop().
+>
+> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+> ---
+> One aspect here that might be a bit controversial is the use of
+> the same system call numbers across all architectures, synchronizing
+> all of them with the x86-32 numbers. With the new syscall.tbl
+> files, I hope we can just keep doing that in the future, and no
+> longer require the architecture maintainers to assign a number.
+>
+> This is mainly useful for implementers of the C libraries: if
+> we can add future system calls everywhere at the same time, using
+> a particular version of the kernel headers also guarantees that
+> the system call number macro is visible.
+> ---
+>  arch/m68k/kernel/syscalls/syscall.tbl     | 11 +++++++++++
+>  arch/mips/kernel/syscalls/syscall_o32.tbl | 11 +++++++++++
+>  arch/powerpc/kernel/syscalls/syscall.tbl  | 12 ++++++++++++
 
-Signed-off-by: Joel Fernandes (Google) <joel@joelfernandes.org>
----
- man2/memfd_create.2 | 15 ++++++++++++++-
- 1 file changed, 14 insertions(+), 1 deletion(-)
+I have some changes I'd like to make to our syscall table that will
+clash with this.
 
-diff --git a/man2/memfd_create.2 b/man2/memfd_create.2
-index 3cd392d1b..fce2bf8d0 100644
---- a/man2/memfd_create.2
-+++ b/man2/memfd_create.2
-@@ -280,7 +280,15 @@ in order to restrict further modifications on the file.
- (If placing the seal
- .BR F_SEAL_WRITE ,
- then it will be necessary to first unmap the shared writable mapping
--created in the previous step.)
-+created in the previous step. Otherwise, behavior similar to
-+.BR F_SEAL_WRITE
-+can be achieved, by using
-+.BR F_SEAL_FUTURE_WRITE
-+which will prevent future writes via
-+.BR mmap (2)
-+and
-+.BR write (2)
-+from succeeding, while keeping existing shared writable mappings).
- .IP 4.
- A second process obtains a file descriptor for the
- .BR tmpfs (5)
-@@ -425,6 +433,7 @@ main(int argc, char *argv[])
-         fprintf(stderr, "\\t\\tg \- F_SEAL_GROW\\n");
-         fprintf(stderr, "\\t\\ts \- F_SEAL_SHRINK\\n");
-         fprintf(stderr, "\\t\\tw \- F_SEAL_WRITE\\n");
-+        fprintf(stderr, "\\t\\tW \- F_SEAL_FUTURE_WRITE\\n");
-         fprintf(stderr, "\\t\\tS \- F_SEAL_SEAL\\n");
-         exit(EXIT_FAILURE);
-     }
-@@ -463,6 +472,8 @@ main(int argc, char *argv[])
-             seals |= F_SEAL_SHRINK;
-         if (strchr(seals_arg, \(aqw\(aq) != NULL)
-             seals |= F_SEAL_WRITE;
-+        if (strchr(seals_arg, \(aqW\(aq) != NULL)
-+            seals |= F_SEAL_FUTURE_WRITE;
-         if (strchr(seals_arg, \(aqS\(aq) != NULL)
-             seals |= F_SEAL_SEAL;
- 
-@@ -518,6 +529,8 @@ main(int argc, char *argv[])
-         printf(" GROW");
-     if (seals & F_SEAL_WRITE)
-         printf(" WRITE");
-+    if (seals & F_SEAL_FUTURE_WRITE)
-+        printf(" FUTURE_WRITE");
-     if (seals & F_SEAL_SHRINK)
-         printf(" SHRINK");
-     printf("\\n");
--- 
-2.20.1.97.g81188d93c3-goog
+I'll try and send them today.
+
+> diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
+> index db3bbb8744af..1bffab54ff35 100644
+> --- a/arch/powerpc/kernel/syscalls/syscall.tbl
+> +++ b/arch/powerpc/kernel/syscalls/syscall.tbl
+> @@ -425,3 +425,15 @@
+>  386	nospu	pkey_mprotect			sys_pkey_mprotect
+>  387	nospu	rseq				sys_rseq
+>  388	nospu	io_pgetevents			sys_io_pgetevents		compat_sys_io_pgetevents
+> +# room for arch specific syscalls
+> +392	64	semtimedop			sys_semtimedop
+> +393	common	semget				sys_semget
+> +394	common	semctl				sys_semctl			compat_sys_semctl
+> +395	common	shmget				sys_shmget
+> +396	common	shmctl				sys_shmctl			compat_sys_shmctl
+> +397	common	shmat				sys_shmat			compat_sys_shmat
+> +398	common	shmdt				sys_shmdt
+> +399	common	msgget				sys_msgget
+> +400	common	msgsnd				sys_msgsnd			compat_sys_msgsnd
+> +401	common	msgrcv				sys_msgrcv			compat_sys_msgrcv
+> +402	common	msgctl				sys_msgctl			compat_sys_msgctl
+
+We already have a gap at 366-377 from when we tried to add the split IPC
+calls a few years back.
+
+I guess I don't mind leaving that gap and using the common numbers.
+
+But would be good to add a comment pointing out that we have room there
+for arch specific syscalls as well.
+
+cheers
