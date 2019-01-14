@@ -1,32 +1,53 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [RFC PATCH glibc 1/4] glibc: Perform rseq(2) registration at nptl init and thread creation (v4)
-Date: Mon, 14 Jan 2019 19:57:03 +0100
-Message-ID: <87bm4j9if4.fsf@oldenburg2.str.redhat.com>
-References: <20181204192141.4684-1-mathieu.desnoyers@efficios.com>
-        <87h8fkz6qx.fsf@oldenburg2.str.redhat.com>
-        <1681283664.1380.1547152315426.JavaMail.zimbra@efficios.com>
-        <1488546469.1564.1547169116539.JavaMail.zimbra@efficios.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH glibc 1/4] glibc: Perform rseq(2) registration at
+ nptl init and thread creation (v4)
+Date: Mon, 14 Jan 2019 14:22:37 -0500 (EST)
+Message-ID: <394676913.486.1547493757710.JavaMail.zimbra@efficios.com>
+References: <20181204192141.4684-1-mathieu.desnoyers@efficios.com> <87h8fkz6qx.fsf@oldenburg2.str.redhat.com> <1681283664.1380.1547152315426.JavaMail.zimbra@efficios.com> <87fttv9iic.fsf@oldenburg2.str.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1488546469.1564.1547169116539.JavaMail.zimbra@efficios.com>
-        (Mathieu Desnoyers's message of "Thu, 10 Jan 2019 20:11:56 -0500
-        (EST)")
+In-Reply-To: <87fttv9iic.fsf@oldenburg2.str.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+To: Florian Weimer <fweimer@redhat.com>
 Cc: carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-* Mathieu Desnoyers:
+----- On Jan 14, 2019, at 10:55 AM, Florian Weimer fweimer@redhat.com wrote:
 
-> Now that I think about it, it's important to move the rseq registration
-> done at nptl init (in my current code) to some lower-level csu initialiation,
-> so applications that happen _not_ to link against libpthread also get
-> registered rseq for the main thread.
+> * Mathieu Desnoyers:
+> 
+>> Therefore, both symbols will end up in
+>> sysdeps/unix/sysv/linux/Versions.
+> 
+> I'm not sure what you mean by that.  The physical location in the
+> directory tree has little effect on which shared object the symbol is
+> placed in; that will need other changes.
 
-Yes.  In general, we want to avoid to force libraries which do not
-create threads to link against libpthread, and try to provide interfaces
-which are required for synchronization within libc.
+I'm currently moving the symbol definitions to csu/rseq-sym.c. On Linux,
+its content is overridden by a new sysdeps/unix/sysv/linux/rseq-sym.c
+which contains both __rseq_abi and __rseq_refcount symbols. On other
+platforms, it is a stub file.
 
-Thanks,
-Florian
+>>> By the way, you could avoid the need for unregistration if you allocated
+>>> the rseq areas persistently, index by TID.  They are quite small, so
+>>> with the typical PID range, maybe the wasted memory due to changing TIDs
+>>> would be acceptable?
+>>
+>> Would we be able to access those __rseq_abi as normal TLS IE model
+>> variables ?  The overhead of indexing an array matters for a
+>> fast-path.
+> 
+> No, that wouldn't be possible in this case.  You would need another
+> indirection.
+
+Thanks for the clarification!
+
+Mathieu
+
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
