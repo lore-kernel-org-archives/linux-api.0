@@ -1,39 +1,41 @@
-From: Michael Ellerman <mpe@ellerman.id.au>
-Subject: Re: [PATCH 14/15] arch: add split IPC system calls where needed
-Date: Mon, 14 Jan 2019 20:58:52 +1100
-Message-ID: <87muo31rxf.fsf@concordia.ellerman.id.au>
-References: <20190110162435.309262-1-arnd@arndb.de> <20190110162435.309262-15-arnd@arndb.de> <87pnsz28k2.fsf@concordia.ellerman.id.au>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: [RFC PATCH glibc 1/4] glibc: Perform rseq(2) registration at nptl init and thread creation (v4)
+Date: Mon, 14 Jan 2019 19:55:07 +0100
+Message-ID: <87fttv9iic.fsf@oldenburg2.str.redhat.com>
+References: <20181204192141.4684-1-mathieu.desnoyers@efficios.com>
+        <87h8fkz6qx.fsf@oldenburg2.str.redhat.com>
+        <1681283664.1380.1547152315426.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87pnsz28k2.fsf@concordia.ellerman.id.au>
+In-Reply-To: <1681283664.1380.1547152315426.JavaMail.zimbra@efficios.com>
+        (Mathieu Desnoyers's message of "Thu, 10 Jan 2019 15:31:55 -0500
+        (EST)")
 Sender: linux-kernel-owner@vger.kernel.org
-To: y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: Arnd Bergmann <arnd@arndb.de>, ink@jurassic.park.msu.ru, mattst88@gmail.com, linux@armlinux.org.uk, catalin.marinas@arm.com, will.deacon@arm.com, tony.luck@intel.com, fenghua.yu@intel.com, geert@linux-m68k.org, monstr@monstr.eu, paul.burton@mips.com, deller@gmx.de, schwidefsky@de.ibm.com, heiko.carstens@de.ibm.com, dalias@libc.org, davem@davemloft.net, luto@kernel.org, tglx@linutronix.de, mingo@redhat.com, hpa@zytor.com, x86@kernel.org, jcmvbkbc@gmail.com, firoz.khan@linaro.org, ebiederm@xmission.com, deepa.kernel@gmail.com, linux@dominikbrodowski.net, akpm@linux-foundation.org, dave@stgolabs.net, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.orgl
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Michael Ellerman <mpe@ellerman.id.au> writes:
-> Hi Arnd,
->
-> Arnd Bergmann <arnd@arndb.de> writes:
->> The IPC system call handling is highly inconsistent across architectures,
->> some use sys_ipc, some use separate calls, and some use both.  We also
->> have some architectures that require passing IPC_64 in the flags, and
->> others that set it implicitly.
-...
->
-> We already have a gap at 366-377 from when we tried to add the split IPC
-> calls a few years back.
->
-> I guess I don't mind leaving that gap and using the common numbers as
-> you've done here.
->
-> But it would be good to add a comment pointing out that we have room
-> at 366 for more arch specific syscalls as well.
->
-> cheers
+* Mathieu Desnoyers:
 
-Guess I sent that one twice. 🤦
+> Therefore, both symbols will end up in
+> sysdeps/unix/sysv/linux/Versions.
 
-cheers
+I'm not sure what you mean by that.  The physical location in the
+directory tree has little effect on which shared object the symbol is
+placed in; that will need other changes.
+
+>> By the way, you could avoid the need for unregistration if you allocated
+>> the rseq areas persistently, index by TID.  They are quite small, so
+>> with the typical PID range, maybe the wasted memory due to changing TIDs
+>> would be acceptable?
+>
+> Would we be able to access those __rseq_abi as normal TLS IE model
+> variables ?  The overhead of indexing an array matters for a
+> fast-path.
+
+No, that wouldn't be possible in this case.  You would need another
+indirection.
+
+Thanks,
+Florian
