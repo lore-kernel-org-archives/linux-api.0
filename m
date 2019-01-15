@@ -1,330 +1,213 @@
-From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: [PATCH v6 07/16] sched/core: uclamp: Add system default clamps
-Date: Tue, 15 Jan 2019 10:15:04 +0000
-Message-ID: <20190115101513.2822-8-patrick.bellasi@arm.com>
-References: <20190115101513.2822-1-patrick.bellasi@arm.com>
+From: Russell King - ARM Linux admin <linux@armlinux.org.uk>
+Subject: Re: [PATCH 15/15] arch: add pkey and rseq syscall numbers everywhere
+Date: Tue, 15 Jan 2019 11:52:29 +0000
+Message-ID: <20190115115229.mcrmmpwdmjxf2cra@e5254000004ec.dyn.armlinux.org.uk>
+References: <20190110162435.309262-1-arnd@arndb.de>
+ <20190110162435.309262-16-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190115101513.2822-1-patrick.bellasi@arm.com>
+Content-Disposition: inline
+In-Reply-To: <20190110162435.309262-16-arnd@arndb.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, ink@jurassic.park.msu.ru, mattst88@gmail.com, catalin.marinas@arm.com, will.deacon@arm.com, tony.luck@intel.com, fenghua.yu@intel.com, geert@linux-m68k.org, monstr@monstr.eu, paul.burton@mips.com, deller@gmx.de, mpe@ellerman.id.au, schwidefsky@de.ibm.com, heiko.carstens@de.ibm.com, dalias@libc.org, davem@davemloft.net, luto@kernel.org, tglx@linutronix.de, mingo@redhat.com, hpa@zytor.com, x86@kernel.org, jcmvbkbc@gmail.com, firoz.khan@linaro.org, ebiederm@xmission.com, deepa.kernel@gmail.com, linux@dominikbrodowski.net, akpm@linux-foundation.org, dave@stgolabs.net, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.orglinu
 List-Id: linux-api@vger.kernel.org
 
-Tasks without a user-defined clamp value are considered not clamped
-and by default their utilization can have any value in the
-[0..SCHED_CAPACITY_SCALE] range.
+On Thu, Jan 10, 2019 at 05:24:35PM +0100, Arnd Bergmann wrote:
+> Most architectures define system call numbers for the rseq and pkey system
+> calls, even when they don't support the features, and perhaps never will.
+> 
+> Only a few architectures are missing these, so just define them anyway
+> for consistency. If we decide to add them later to one of these, the
+> system call numbers won't get out of sync then.
 
-Tasks with a user-defined clamp value are allowed to request any value
-in that range, and we unconditionally enforce the required clamps.
-However, a "System Management Software" could be interested in limiting
-the range of clamp values allowed for all tasks.
+I was lambasted for adding the pkey syscalls for 32-bit ARM in 2016,
+which will probably never support it.  Why has the attitude towards
+this kind of thing now apparently become acceptable?
 
-Add a privileged interface to define a system default configuration via:
+> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+> ---
+>  arch/alpha/include/asm/unistd.h         | 4 ----
+>  arch/alpha/kernel/syscalls/syscall.tbl  | 4 ++++
+>  arch/ia64/kernel/syscalls/syscall.tbl   | 4 ++++
+>  arch/m68k/kernel/syscalls/syscall.tbl   | 4 ++++
+>  arch/parisc/include/asm/unistd.h        | 3 ---
+>  arch/parisc/kernel/syscalls/syscall.tbl | 4 ++++
+>  arch/s390/include/asm/unistd.h          | 3 ---
+>  arch/s390/kernel/syscalls/syscall.tbl   | 3 +++
+>  arch/sh/kernel/syscalls/syscall.tbl     | 4 ++++
+>  arch/sparc/include/asm/unistd.h         | 5 -----
+>  arch/sparc/kernel/syscalls/syscall.tbl  | 4 ++++
+>  arch/xtensa/kernel/syscalls/syscall.tbl | 1 +
+>  12 files changed, 28 insertions(+), 15 deletions(-)
+> 
+> diff --git a/arch/alpha/include/asm/unistd.h b/arch/alpha/include/asm/unistd.h
+> index 564ba87bdc38..31ad350b58a0 100644
+> --- a/arch/alpha/include/asm/unistd.h
+> +++ b/arch/alpha/include/asm/unistd.h
+> @@ -29,9 +29,5 @@
+>  #define __IGNORE_getppid
+>  #define __IGNORE_getuid
+>  
+> -/* Alpha doesn't have protection keys. */
+> -#define __IGNORE_pkey_mprotect
+> -#define __IGNORE_pkey_alloc
+> -#define __IGNORE_pkey_free
+>  
+>  #endif /* _ALPHA_UNISTD_H */
+> diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
+> index b0e247287908..25b4a7e76943 100644
+> --- a/arch/alpha/kernel/syscalls/syscall.tbl
+> +++ b/arch/alpha/kernel/syscalls/syscall.tbl
+> @@ -452,3 +452,7 @@
+>  521	common	pwritev2			sys_pwritev2
+>  522	common	statx				sys_statx
+>  523	common	io_pgetevents			sys_io_pgetevents
+> +524	common	pkey_alloc			sys_pkey_alloc
+> +525	common	pkey_free			sys_pkey_free
+> +526	common	pkey_mprotect			sys_pkey_mprotect
+> +527	common	rseq				sys_rseq
+> diff --git a/arch/ia64/kernel/syscalls/syscall.tbl b/arch/ia64/kernel/syscalls/syscall.tbl
+> index 2e93dbdcdb80..84e03de00177 100644
+> --- a/arch/ia64/kernel/syscalls/syscall.tbl
+> +++ b/arch/ia64/kernel/syscalls/syscall.tbl
+> @@ -339,3 +339,7 @@
+>  327	common	io_pgetevents			sys_io_pgetevents
+>  328	common	perf_event_open			sys_perf_event_open
+>  329	common	seccomp				sys_seccomp
+> +330	common	pkey_alloc			sys_pkey_alloc
+> +331	common	pkey_free			sys_pkey_free
+> +332	common	pkey_mprotect			sys_pkey_mprotect
+> +333	common	rseq				sys_rseq
+> diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
+> index 5354ba02eed2..ae88b85d068e 100644
+> --- a/arch/m68k/kernel/syscalls/syscall.tbl
+> +++ b/arch/m68k/kernel/syscalls/syscall.tbl
+> @@ -388,6 +388,10 @@
+>  378	common	pwritev2			sys_pwritev2
+>  379	common	statx				sys_statx
+>  380	common	seccomp				sys_seccomp
+> +381	common	pkey_alloc			sys_pkey_alloc
+> +382	common	pkey_free			sys_pkey_free
+> +383	common	pkey_mprotect			sys_pkey_mprotect
+> +384	common	rseq				sys_rseq
+>  # room for arch specific calls
+>  393	common	semget				sys_semget
+>  394	common	semctl				sys_semctl
+> diff --git a/arch/parisc/include/asm/unistd.h b/arch/parisc/include/asm/unistd.h
+> index c2c2afb28941..9ec1026af877 100644
+> --- a/arch/parisc/include/asm/unistd.h
+> +++ b/arch/parisc/include/asm/unistd.h
+> @@ -12,9 +12,6 @@
+>  
+>  #define __IGNORE_select			/* newselect */
+>  #define __IGNORE_fadvise64		/* fadvise64_64 */
+> -#define __IGNORE_pkey_mprotect
+> -#define __IGNORE_pkey_alloc
+> -#define __IGNORE_pkey_free
+>  
+>  #ifndef ASM_LINE_SEP
+>  # define ASM_LINE_SEP ;
+> diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
+> index 9bbd2f9f56c8..e07231de3597 100644
+> --- a/arch/parisc/kernel/syscalls/syscall.tbl
+> +++ b/arch/parisc/kernel/syscalls/syscall.tbl
+> @@ -367,3 +367,7 @@
+>  348	common	pwritev2		sys_pwritev2			compat_sys_pwritev2
+>  349	common	statx			sys_statx
+>  350	common	io_pgetevents		sys_io_pgetevents		compat_sys_io_pgetevents
+> +351	common	pkey_alloc		sys_pkey_alloc
+> +352	common	pkey_free		sys_pkey_free
+> +353	common	pkey_mprotect		sys_pkey_mprotect
+> +354	common	rseq			sys_rseq
+> diff --git a/arch/s390/include/asm/unistd.h b/arch/s390/include/asm/unistd.h
+> index a1fbf15d53aa..ed08f114ee91 100644
+> --- a/arch/s390/include/asm/unistd.h
+> +++ b/arch/s390/include/asm/unistd.h
+> @@ -11,9 +11,6 @@
+>  #include <asm/unistd_nr.h>
+>  
+>  #define __IGNORE_time
+> -#define __IGNORE_pkey_mprotect
+> -#define __IGNORE_pkey_alloc
+> -#define __IGNORE_pkey_free
+>  
+>  #define __ARCH_WANT_NEW_STAT
+>  #define __ARCH_WANT_OLD_READDIR
+> diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
+> index 428cf512a757..f84ea364a302 100644
+> --- a/arch/s390/kernel/syscalls/syscall.tbl
+> +++ b/arch/s390/kernel/syscalls/syscall.tbl
+> @@ -391,6 +391,9 @@
+>  381  common	kexec_file_load		sys_kexec_file_load		compat_sys_kexec_file_load
+>  382  common	io_pgetevents		sys_io_pgetevents		compat_sys_io_pgetevents
+>  383  common	rseq			sys_rseq			compat_sys_rseq
+> +384  common	pkey_alloc		sys_pkey_alloc			sys_pkey_alloc
+> +385  common	pkey_free		sys_pkey_free			sys_pkey_free
+> +386  common	pkey_mprotect		sys_pkey_mprotect		sys_pkey_mprotect
+>  # room for arch specific syscalls
+>  392	64	semtimedop		sys_semtimedop			-
+>  393  common	semget			sys_semget			sys_semget
+> diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
+> index 6d0b84e3ef2d..3f96ad0424e1 100644
+> --- a/arch/sh/kernel/syscalls/syscall.tbl
+> +++ b/arch/sh/kernel/syscalls/syscall.tbl
+> @@ -391,6 +391,10 @@
+>  381	common	preadv2				sys_preadv2
+>  382	common	pwritev2			sys_pwritev2
+>  383	common	statx				sys_statx
+> +384	common	pkey_alloc			sys_pkey_alloc
+> +385	common	pkey_free			sys_pkey_free
+> +386	common	pkey_mprotect			sys_pkey_mprotect
+> +387	common	rseq				sys_rseq
+>  # room for arch specific syscalls
+>  393	common	semget				sys_semget
+>  394	common	semctl				sys_semctl
+> diff --git a/arch/sparc/include/asm/unistd.h b/arch/sparc/include/asm/unistd.h
+> index 5194d86ef72d..08696ea5dca8 100644
+> --- a/arch/sparc/include/asm/unistd.h
+> +++ b/arch/sparc/include/asm/unistd.h
+> @@ -59,9 +59,4 @@
+>  #define __IGNORE_getresgid
+>  #endif
+>  
+> -/* Sparc doesn't have protection keys. */
+> -#define __IGNORE_pkey_mprotect
+> -#define __IGNORE_pkey_alloc
+> -#define __IGNORE_pkey_free
+> -
+>  #endif /* _SPARC_UNISTD_H */
+> diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
+> index 8c9580302422..24ebef675184 100644
+> --- a/arch/sparc/kernel/syscalls/syscall.tbl
+> +++ b/arch/sparc/kernel/syscalls/syscall.tbl
+> @@ -407,6 +407,10 @@
+>  359	common	pwritev2		sys_pwritev2			compat_sys_pwritev2
+>  360	common	statx			sys_statx
+>  361	common	io_pgetevents		sys_io_pgetevents		compat_sys_io_pgetevents
+> +362	common	pkey_alloc		sys_pkey_alloc
+> +363	common	pkey_free		sys_pkey_free
+> +364	common	pkey_mprotect		sys_pkey_mprotect
+> +365	common	rseq			sys_rseq
+>  # room for arch specific syscalls
+>  392	64	semtimedop			sys_semtimedop
+>  393	common	semget			sys_semget
+> diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl b/arch/xtensa/kernel/syscalls/syscall.tbl
+> index f8befa11b0c4..c699e014e0dd 100644
+> --- a/arch/xtensa/kernel/syscalls/syscall.tbl
+> +++ b/arch/xtensa/kernel/syscalls/syscall.tbl
+> @@ -372,3 +372,4 @@
+>  349	common	pkey_alloc			sys_pkey_alloc
+>  350	common	pkey_free			sys_pkey_free
+>  351	common	statx				sys_statx
+> +352	common	rseq				sys_rseq
+> -- 
+> 2.20.0
+> 
+> 
 
-  /proc/sys/kernel/sched_uclamp_util_{min,max}
-
-which works as an unconditional clamp range restriction for all tasks.
-
-If a task specific value is not compliant with the system default range,
-it will be forced to the corresponding system default value.
-
-Signed-off-by: Patrick Bellasi <patrick.bellasi@arm.com>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-
----
-The current restriction could be too aggressive since, for example if a
-task has a util_min which is higher then the system default max, it
-will be forced to the system default min unconditionally.
-
-Let say we have:
-
-   Task Clamp:    min=30, max=40
-   System Clamps: min=10, max=20
-
-In principle we should set the task's min=20, since the system allows
-boosts up to 20%. In the current implementation, however, since the task
-mins exceed the system max, we just go for task min=10.
-
-We should probably better restrict util_min to the maximum system
-default value, but that would make the code more complex since it
-required to track a cross clamp_id dependency.
-Let's keep this as a possible future extension whenever we should really
-see the need for it.
-
-Changes in v6:
- Others:
- - wholesale s/group/bucket/
- - make use of the bit_for() macro
----
- include/linux/sched.h        |   5 ++
- include/linux/sched/sysctl.h |  11 +++
- kernel/sched/core.c          | 137 ++++++++++++++++++++++++++++++++++-
- kernel/sysctl.c              |  16 ++++
- 4 files changed, 166 insertions(+), 3 deletions(-)
-
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 84294925d006..c8f391d1cdc5 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -625,6 +625,11 @@ struct uclamp_se {
- 	unsigned int bucket_id		: bits_per(UCLAMP_BUCKETS);
- 	unsigned int mapped		: 1;
- 	unsigned int active		: 1;
-+	/* Clamp bucket and value actually used by a RUNNABLE task */
-+	struct {
-+		unsigned int value	: bits_per(SCHED_CAPACITY_SCALE);
-+		unsigned int bucket_id	: bits_per(UCLAMP_BUCKETS);
-+	} effective;
- };
- #endif /* CONFIG_UCLAMP_TASK */
- 
-diff --git a/include/linux/sched/sysctl.h b/include/linux/sched/sysctl.h
-index a9c32daeb9d8..445fb54eaeff 100644
---- a/include/linux/sched/sysctl.h
-+++ b/include/linux/sched/sysctl.h
-@@ -56,6 +56,11 @@ int sched_proc_update_handler(struct ctl_table *table, int write,
- extern unsigned int sysctl_sched_rt_period;
- extern int sysctl_sched_rt_runtime;
- 
-+#ifdef CONFIG_UCLAMP_TASK
-+extern unsigned int sysctl_sched_uclamp_util_min;
-+extern unsigned int sysctl_sched_uclamp_util_max;
-+#endif
-+
- #ifdef CONFIG_CFS_BANDWIDTH
- extern unsigned int sysctl_sched_cfs_bandwidth_slice;
- #endif
-@@ -75,6 +80,12 @@ extern int sched_rt_handler(struct ctl_table *table, int write,
- 		void __user *buffer, size_t *lenp,
- 		loff_t *ppos);
- 
-+#ifdef CONFIG_UCLAMP_TASK
-+extern int sched_uclamp_handler(struct ctl_table *table, int write,
-+				void __user *buffer, size_t *lenp,
-+				loff_t *ppos);
-+#endif
-+
- extern int sysctl_numa_balancing(struct ctl_table *table, int write,
- 				 void __user *buffer, size_t *lenp,
- 				 loff_t *ppos);
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index b7ac516a70be..d1ea5825501a 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -731,6 +731,23 @@ static void set_load_weight(struct task_struct *p, bool update_load)
- static DEFINE_MUTEX(uclamp_mutex);
- 
- /*
-+ * Minimum utilization for FAIR tasks
-+ * default: 0
-+ */
-+unsigned int sysctl_sched_uclamp_util_min;
-+
-+/*
-+ * Maximum utilization for FAIR tasks
-+ * default: 1024
-+ */
-+unsigned int sysctl_sched_uclamp_util_max = SCHED_CAPACITY_SCALE;
-+
-+/*
-+ * Tasks specific clamp values are required to be within this range
-+ */
-+static struct uclamp_se uclamp_default[UCLAMP_CNT];
-+
-+/**
-  * Reference count utilization clamp buckets
-  * @value:	the utilization "clamp value" tracked by this clamp bucket
-  * @se_count:	the number of scheduling entities using this "clamp value"
-@@ -827,6 +844,72 @@ static inline void uclamp_cpu_update(struct rq *rq, unsigned int clamp_id,
- 	WRITE_ONCE(rq->uclamp[clamp_id].value, max_value);
- }
- 
-+/*
-+ * The effective clamp bucket index of a task depends on, by increasing
-+ * priority:
-+ * - the task specific clamp value, explicitly requested from userspace
-+ * - the system default clamp value, defined by the sysadmin
-+ *
-+ * As a side effect, update the task's effective value:
-+ *    task_struct::uclamp::effective::value
-+ * to represent the clamp value of the task effective bucket index.
-+ */
-+static inline void
-+uclamp_effective_get(struct task_struct *p, unsigned int clamp_id,
-+		     unsigned int *clamp_value, unsigned int *bucket_id)
-+{
-+	/* Task specific clamp value */
-+	*clamp_value = p->uclamp[clamp_id].value;
-+	*bucket_id = p->uclamp[clamp_id].bucket_id;
-+
-+	/* System default restriction */
-+	if (unlikely(*clamp_value < uclamp_default[UCLAMP_MIN].value ||
-+		     *clamp_value > uclamp_default[UCLAMP_MAX].value)) {
-+		/* Keep it simple: unconditionally enforce system defaults */
-+		*clamp_value = uclamp_default[clamp_id].value;
-+		*bucket_id = uclamp_default[clamp_id].bucket_id;
-+	}
-+}
-+
-+static inline void
-+uclamp_effective_assign(struct task_struct *p, unsigned int clamp_id)
-+{
-+	unsigned int clamp_value, bucket_id;
-+
-+	uclamp_effective_get(p, clamp_id, &clamp_value, &bucket_id);
-+
-+	p->uclamp[clamp_id].effective.value = clamp_value;
-+	p->uclamp[clamp_id].effective.bucket_id = bucket_id;
-+}
-+
-+static inline unsigned int uclamp_effective_bucket_id(struct task_struct *p,
-+						      unsigned int clamp_id)
-+{
-+	unsigned int clamp_value, bucket_id;
-+
-+	/* Task currently refcounted: use back-annotate effective value */
-+	if (p->uclamp[clamp_id].active)
-+		return p->uclamp[clamp_id].effective.bucket_id;
-+
-+	uclamp_effective_get(p, clamp_id, &clamp_value, &bucket_id);
-+
-+	return bucket_id;
-+}
-+
-+static unsigned int uclamp_effective_value(struct task_struct *p,
-+					   unsigned int clamp_id)
-+{
-+	unsigned int clamp_value, bucket_id;
-+
-+	/* Task currently refcounted: use back-annotate effective value */
-+	if (p->uclamp[clamp_id].active)
-+		return p->uclamp[clamp_id].effective.value;
-+
-+	uclamp_effective_get(p, clamp_id, &clamp_value, &bucket_id);
-+
-+	return clamp_value;
-+}
-+
- /*
-  * When a task is enqueued on a CPU's rq, the clamp bucket currently defined by
-  * the task's uclamp::bucket_id is reference counted on that CPU. This also
-@@ -843,14 +926,15 @@ static inline void uclamp_cpu_inc_id(struct task_struct *p, struct rq *rq,
- 
- 	if (unlikely(!p->uclamp[clamp_id].mapped))
- 		return;
-+	uclamp_effective_assign(p, clamp_id);
- 
--	bucket_id = p->uclamp[clamp_id].bucket_id;
-+	bucket_id = uclamp_effective_bucket_id(p, clamp_id);
- 	p->uclamp[clamp_id].active = true;
- 
- 	rq->uclamp[clamp_id].bucket[bucket_id].tasks++;
- 
- 	/* Reset clamp holds on idle exit */
--	tsk_clamp = p->uclamp[clamp_id].value;
-+	tsk_clamp = uclamp_effective_value(p, clamp_id);
- 	uclamp_idle_reset(rq, clamp_id, tsk_clamp);
- 
- 	/* CPU's clamp buckets track the max effective clamp value */
-@@ -880,7 +964,7 @@ static inline void uclamp_cpu_dec_id(struct task_struct *p, struct rq *rq,
- 	if (unlikely(!p->uclamp[clamp_id].mapped))
- 		return;
- 
--	bucket_id = p->uclamp[clamp_id].bucket_id;
-+	bucket_id = uclamp_effective_bucket_id(p, clamp_id);
- 	p->uclamp[clamp_id].active = false;
- 
- 	SCHED_WARN_ON(!rq->uclamp[clamp_id].bucket[bucket_id].tasks);
-@@ -1068,6 +1152,50 @@ static void uclamp_bucket_inc(struct task_struct *p, struct uclamp_se *uc_se,
- 	uc_se->mapped = true;
- }
- 
-+int sched_uclamp_handler(struct ctl_table *table, int write,
-+			 void __user *buffer, size_t *lenp,
-+			 loff_t *ppos)
-+{
-+	int old_min, old_max;
-+	int result = 0;
-+
-+	mutex_lock(&uclamp_mutex);
-+
-+	old_min = sysctl_sched_uclamp_util_min;
-+	old_max = sysctl_sched_uclamp_util_max;
-+
-+	result = proc_dointvec(table, write, buffer, lenp, ppos);
-+	if (result)
-+		goto undo;
-+	if (!write)
-+		goto done;
-+
-+	if (sysctl_sched_uclamp_util_min > sysctl_sched_uclamp_util_max ||
-+	    sysctl_sched_uclamp_util_max > SCHED_CAPACITY_SCALE) {
-+		result = -EINVAL;
-+		goto undo;
-+	}
-+
-+	if (old_min != sysctl_sched_uclamp_util_min) {
-+		uclamp_bucket_inc(NULL, &uclamp_default[UCLAMP_MIN],
-+				  UCLAMP_MIN, sysctl_sched_uclamp_util_min);
-+	}
-+	if (old_max != sysctl_sched_uclamp_util_max) {
-+		uclamp_bucket_inc(NULL, &uclamp_default[UCLAMP_MAX],
-+				  UCLAMP_MAX, sysctl_sched_uclamp_util_max);
-+	}
-+	goto done;
-+
-+undo:
-+	sysctl_sched_uclamp_util_min = old_min;
-+	sysctl_sched_uclamp_util_max = old_max;
-+
-+done:
-+	mutex_unlock(&uclamp_mutex);
-+
-+	return result;
-+}
-+
- static int __setscheduler_uclamp(struct task_struct *p,
- 				 const struct sched_attr *attr)
- {
-@@ -1151,6 +1279,9 @@ static void __init init_uclamp(void)
- 	for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id) {
- 		uc_se = &init_task.uclamp[clamp_id];
- 		uclamp_bucket_inc(NULL, uc_se, clamp_id, uclamp_none(clamp_id));
-+
-+		uc_se = &uclamp_default[clamp_id];
-+		uclamp_bucket_inc(NULL, uc_se, clamp_id, uclamp_none(clamp_id));
- 	}
- }
- 
-diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index ba4d9e85feb8..b0fa4a883999 100644
---- a/kernel/sysctl.c
-+++ b/kernel/sysctl.c
-@@ -446,6 +446,22 @@ static struct ctl_table kern_table[] = {
- 		.mode		= 0644,
- 		.proc_handler	= sched_rr_handler,
- 	},
-+#ifdef CONFIG_UCLAMP_TASK
-+	{
-+		.procname	= "sched_uclamp_util_min",
-+		.data		= &sysctl_sched_uclamp_util_min,
-+		.maxlen		= sizeof(unsigned int),
-+		.mode		= 0644,
-+		.proc_handler	= sched_uclamp_handler,
-+	},
-+	{
-+		.procname	= "sched_uclamp_util_max",
-+		.data		= &sysctl_sched_uclamp_util_max,
-+		.maxlen		= sizeof(unsigned int),
-+		.mode		= 0644,
-+		.proc_handler	= sched_uclamp_handler,
-+	},
-+#endif
- #ifdef CONFIG_SCHED_AUTOGROUP
- 	{
- 		.procname	= "sched_autogroup_enabled",
 -- 
-2.19.2
+RMK's Patch system: https://www.armlinux.org.uk/developer/patches/
+FTTC broadband for 0.8mile line in suburbia: sync at 12.1Mbps down 622kbps up
+According to speedtest.net: 11.9Mbps down 500kbps up
