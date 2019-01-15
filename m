@@ -1,72 +1,37 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH glibc 1/4] glibc: Perform rseq(2) registration at
- nptl init and thread creation (v4)
-Date: Mon, 14 Jan 2019 15:27:28 -0500 (EST)
-Message-ID: <1031872348.636.1547497648914.JavaMail.zimbra@efficios.com>
-References: <20181204192141.4684-1-mathieu.desnoyers@efficios.com> <87h8fkz6qx.fsf@oldenburg2.str.redhat.com> <1681283664.1380.1547152315426.JavaMail.zimbra@efficios.com> <87fttv9iic.fsf@oldenburg2.str.redhat.com> <394676913.486.1547493757710.JavaMail.zimbra@efficios.com> <87y37n8202.fsf@oldenburg2.str.redhat.com>
+From: shuah <shuah@kernel.org>
+Subject: Re: [PATCH v4 2/2] selftests/memfd: Add tests for F_SEAL_FUTURE_WRITE
+ seal
+Date: Mon, 14 Jan 2019 18:39:59 -0700
+Message-ID: <f9ffb7f8-1ff8-3bec-ce79-f9322d8715dc@kernel.org>
+References: <20190112203816.85534-1-joel@joelfernandes.org>
+ <20190112203816.85534-3-joel@joelfernandes.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87y37n8202.fsf@oldenburg2.str.redhat.com>
+In-Reply-To: <20190112203816.85534-3-joel@joelfernandes.org>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>
-Cc: carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
+To: Joel Fernandes <joel@joelfernandes.org>, linux-kernel@vger.kernel.org
+Cc: dancol@google.com, minchan@kernel.org, Jann Horn <jannh@google.com>, John Stultz <john.stultz@linaro.org>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Hugh Dickins <hughd@google.com>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@kernel.org>, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kselftest@vger.kernel.org, linux-mm@kvack.org, =?UTF-8?Q?Marc-Andr=c3=a9_Lureau?= <marcandre.lureau@redhat.com>, Matthew Wilcox <willy@infradead.org>, Mike Kravetz <mike.kravetz@oracle.com>, shuah <shuah@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Jan 14, 2019, at 2:37 PM, Florian Weimer fweimer@redhat.com wrote:
+On 1/12/19 1:38 PM, Joel Fernandes wrote:
+> From: "Joel Fernandes (Google)" <joel@joelfernandes.org>
+> 
+> Add tests to verify sealing memfds with the F_SEAL_FUTURE_WRITE works as
+> expected.
+> 
+> Cc: dancol@google.com
+> Cc: minchan@kernel.org
+> Cc: Jann Horn <jannh@google.com>
+> Cc: John Stultz <john.stultz@linaro.org>
+> Signed-off-by: Joel Fernandes (Google) <joel@joelfernandes.org>
+> ---
 
-> * Mathieu Desnoyers:
->=20
->> ----- On Jan 14, 2019, at 10:55 AM, Florian Weimer fweimer@redhat.com wr=
-ote:
->>
->>> * Mathieu Desnoyers:
->>>=20
->>>> Therefore, both symbols will end up in
->>>> sysdeps/unix/sysv/linux/Versions.
->>>=20
->>> I'm not sure what you mean by that.  The physical location in the
->>> directory tree has little effect on which shared object the symbol is
->>> placed in; that will need other changes.
->>
->> I'm currently moving the symbol definitions to csu/rseq-sym.c. On Linux,
->> its content is overridden by a new sysdeps/unix/sysv/linux/rseq-sym.c
->> which contains both __rseq_abi and __rseq_refcount symbols. On other
->> platforms, it is a stub file.
->=20
-> You don't need a stub file if you use the =E2=80=9Cifeq ($(subdir),csu)=
-=E2=80=9D
-> construct.
+Looks good to me. For selftest part of the series:
 
-OK
+Reviewed-by: Shuah Khan <shuah@kernel.org>
 
->=20
-> The other question is whether this belongs into the csu subdirectory.
-> Since TLS is not available in ld.so, the initialization would have to
-> happen rather late, after relocation, but before ELF constructors are
-> run.
->=20
-> (A side effect is that the rseq area would not be usable from IFUNC
-> resolvers.)
-
-Do you have a specific directory location in mind where we should put
-the built object ? e.g. "ifeq ($(subdir),posix)" or
-"ifeq ($(subdir),misc)" ?
-
-Moreover, from where should we call the rseq initialization ? I'm having
-trouble with invalid system calls parameters if I place it in
-LIBC_START_MAIN() just before or after the call to __pthread_initialize_min=
-imal.
-I get what appears to be invalid parameters to sys_rseq, possibly due to
-stack corruption (?). I'm investigating at the moment. But if you prefer
-we call the rseq init from elsewhere, please let me know.
-
-Thanks,
-
-Mathieu
-
---=20
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+thanks,
+-- Shuah
