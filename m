@@ -1,62 +1,68 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH 14/15] arch: add split IPC system calls where needed
-Date: Tue, 15 Jan 2019 22:24:54 +0100
-Message-ID: <CAK8P3a3KE7bhK34T-G9Lj3v0ERhEj3LB5emEEwy8h6w8pVeQZg@mail.gmail.com>
-References: <20190110162435.309262-1-arnd@arndb.de> <20190110162435.309262-15-arnd@arndb.de>
- <87pnsz28k2.fsf@concordia.ellerman.id.au> <CAK8P3a0uas76i2W1yjFvxHT-2=A8_egUZeAUM-Vya6386+87Xg@mail.gmail.com>
- <CAK8P3a3eUzGDrJtV2ySpgHwjKHwZYr+1xHp6tChCt1gWi=mJ+g@mail.gmail.com> <CAMuHMdVw1mBLGdn4hkiNVyoJ_oxMwi3d=_e7WL5ru+ALA4MKbw@mail.gmail.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
+Date: Wed, 16 Jan 2019 10:45:10 +1100
+Message-ID: <20190115234510.GA6173@dastard>
+References: <20190110070355.GJ27534@dastard>
+ <CAHk-=wigwXV_G-V1VxLs6BAvVkvW5=Oj+xrNHxE_7yxEVwoe3w@mail.gmail.com>
+ <20190110122442.GA21216@nautica>
+ <CAHk-=wip2CPrdOwgF0z4n2tsdW7uu+Egtcx9Mxxe3gPfPW_JmQ@mail.gmail.com>
+ <20190111020340.GM27534@dastard>
+ <CAHk-=wgLgAzs42=W0tPrTVpu7H7fQ=BP5gXKnoNxMxh9=9uXag@mail.gmail.com>
+ <20190111040434.GN27534@dastard>
+ <CAHk-=wh-kegfnPC_dmw0A72Sdk4B9tvce-cOR=jEfHDU1-4Eew@mail.gmail.com>
+ <20190111073606.GP27534@dastard>
+ <CAHk-=wj+xyz_GKjgKpU6SF3qeqouGmRoR8uFxzg_c1VpeGEJMw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAMuHMdVw1mBLGdn4hkiNVyoJ_oxMwi3d=_e7WL5ru+ALA4MKbw@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <CAHk-=wj+xyz_GKjgKpU6SF3qeqouGmRoR8uFxzg_c1VpeGEJMw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Geert Uytterhoeven <geert@linux-m68k.org>
-Cc: Michael Ellerman <mpe@ellerman.id.au>, y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, Russell King - ARM Linux <linux@armlinux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Tony Luck <tony.luck@intel.com>, Fenghua Yu <fenghua.yu@intel.com>, Michal Simek <monstr@monstr.eu>, Paul Burton <paul.burton@mips.com>, Helge Deller <deller@gmx.de>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Rich Felker <dalias@libc.org>, David Miller <davem@davemloft.net>, Andy Lutomirski <luto@kernel.org>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Dominique Martinet <asmadeus@codewreck.org>, Jiri Kosina <jikos@kernel.org>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 15, 2019 at 5:36 PM Geert Uytterhoeven <geert@linux-m68k.org> wrote:
-> On Tue, Jan 15, 2019 at 4:19 PM Arnd Bergmann <arnd@arndb.de> wrote:
-> > On Tue, Jan 15, 2019 at 4:01 PM Arnd Bergmann <arnd@arndb.de> wrote:
-> > > On Mon, Jan 14, 2019 at 4:59 AM Michael Ellerman <mpe@ellerman.id.au> wrote:
-> > > > Arnd Bergmann <arnd@arndb.de> writes:
-> > > > >  arch/m68k/kernel/syscalls/syscall.tbl     | 11 +++++++++++
-> > > > >  arch/mips/kernel/syscalls/syscall_o32.tbl | 11 +++++++++++
-> > > > >  arch/powerpc/kernel/syscalls/syscall.tbl  | 12 ++++++++++++
-> > > >
-> > > > I have some changes I'd like to make to our syscall table that will
-> > > > clash with this.
-> > > >
-> > > > I'll try and send them today.
-> > >
-> > > Ok. Are those for 5.0 or 5.1? If they are intended for 5.0, it would be
-> > > nice for me to have a branch based on 5.0-rc1 that I can put
-> > > the other patches on top of.
+On Fri, Jan 11, 2019 at 08:26:14AM -0800, Linus Torvalds wrote:
+> On Thu, Jan 10, 2019 at 11:36 PM Dave Chinner <david@fromorbit.com> wrote:
 > >
-> > There is also another change that I considered:
+> > > It's only that single page that *matters*. That's the page that the
+> > > probe reveals the status of - but it's also the page that the probe
+> > > then *changes* the status of.
 > >
-> > At the end of my series, we have a lot of entries like
-> >
-> > 245     32      clock_settime                   sys_clock_settime32
-> > 245     64      clock_settime                   sys_clock_settime
-> > 245     spu     clock_settime                   sys_clock_settime
-> >
-> > which could be folded into
-> >
-> > 245     32      clock_settime                   sys_clock_settime32
-> > 245     spu64 clock_settime                   sys_clock_settime
-> >
-> > if we just add another option to the ABI field. Any thoughts on
-> > that?
->
-> So "spu64" would mean "spu + 64"?
-> That makes it more difficult to read, and to grep.
-> What about allowing multiple ABIs, separated by commas?
-> So that line would become:
->
->     245     spu,64 clock_settime                   sys_clock_settime
+> > It changes the state of it /after/ we've already got the information
+> > we need from it. It's not up to date, it has to come from disk, we
+> > return EAGAIN, which means it was not in the cache.
+> 
+> Oh, I see the confusion.
+> 
+> Yes, you get the information about whether something was in the cache
+> or not, so the side channel does exist to some degree.
+> 
+> But it's actually hugely reduced for a rather important reason: the
+> _primary_ reason for needing to know whether some page is in the cache
+> or not is not actually to see if it was ever accessed - it's to see
+> that the cache has been scrubbed (and to _guide_ the scrubbing), and
+> *when* it was accessed.
 
-I agree that would be a nice representation, but doing this would
-again require changing the script, which then in turn clashes with
-Firoz' patches to unify it under the scripts/ directory.
+Oh, you're assuming that you need to probe the page cache to
+determine if brute force invalidation has progressed far enough
+to invalidate the page in question.
 
-       Arnd
+I'm assuming that you can invalidate the page cache reliably by a
+means that does not repeated require probing to detect invalidation
+has occurred. I've mentioned one method in this discussion
+already...
+
+IOWs, just because the specific brute force attack documented in the
+paper required repeated probing it doesn't mean all future
+invalidation attacks will require repeated probing. Hence a robust
+defense mechanism should not rely on the attacker requiring multiple
+observations of the page cache to extract the information they are
+seeking...
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
