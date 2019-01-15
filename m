@@ -1,7 +1,7 @@
 From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: [PATCH v6 14/16] sched/core: uclamp: Map TG's clamp values into CPU's clamp buckets
-Date: Tue, 15 Jan 2019 10:15:11 +0000
-Message-ID: <20190115101513.2822-15-patrick.bellasi@arm.com>
+Subject: [PATCH v6 16/16] sched/core: uclamp: Update CPU's refcount on TG's clamp changes
+Date: Tue, 15 Jan 2019 10:15:13 +0000
+Message-ID: <20190115101513.2822-17-patrick.bellasi@arm.com>
 References: <20190115101513.2822-1-patrick.bellasi@arm.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,18 +12,15 @@ To: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kerne
 Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Utilization clamping requires to map each different clamp value into one
-of the available clamp buckets used at {en,de}queue time (fast-path).
-Each time a TG's clamp value sysfs attribute is updated via:
-   cpu_util_{min,max}_write_u64()
-we need to update the task group reference to the new value's clamp
-bucket and release the reference to the previous one.
+On updates of task group (TG) clamp values, ensure that these new values
+are enforced on all RUNNABLE tasks of the task group, i.e. all RUNNABLE
+tasks are immediately boosted and/or clamped as requested.
 
-Ensure that, whenever a task group is assigned a specific clamp_value,
-this is properly translated into a unique clamp bucket to be used in the
-fast-path. Do it by slightly refactoring uclamp_bucket_inc() to make the
-(*task_struct) parameter optional and by reusing the code already
-available for the per-task API.
+Do that by slightly refactoring uclamp_bucket_inc(). An additional
+parameter *cgroup_subsys_state (css) is used to walk the list of tasks
+in the TGs and update the RUNNABLE ones. Do that by taking the rq
+lock for each task, the same mechanism used for cpu affinity masks
+updates.
 
 Signed-off-by: Patrick Bellasi <patrick.bellasi@arm.com>
 Cc: Ingo Molnar <mingo@redhat.com>
@@ -35,175 +32,156 @@ Changes in v6:
  Others:
  - wholesale s/group/bucket/
  - wholesale s/_{get,put}/_{inc,dec}/ to match refcount APIs
+ - small documentation updates
 ---
- include/linux/sched.h |  4 ++--
- kernel/sched/core.c   | 53 +++++++++++++++++++++++++++++++++----------
- 2 files changed, 43 insertions(+), 14 deletions(-)
+ kernel/sched/core.c | 56 +++++++++++++++++++++++++++++++++------------
+ 1 file changed, 42 insertions(+), 14 deletions(-)
 
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 05d286524d70..3f02128fe6b2 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -617,8 +617,8 @@ struct sched_dl_entity {
-  *   uclamp_bucket_dec() - for the old clamp value
-  *
-  * The active bit is set whenever a task has got an effective clamp bucket
-- * and value assigned, which can be different from the user requested ones.
-- * This allows to know a task is actually refcounting a CPU's clamp bucket.
-+ * and value assigned, and it allows to know a task is actually refcounting a
-+ * CPU's clamp bucket.
-  */
- struct uclamp_se {
- 	unsigned int value		: bits_per(SCHED_CAPACITY_SCALE);
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index ddbd591b305c..734b769db2ca 100644
+index c8d1fc9880ff..36866a1b9f9d 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -1298,9 +1298,9 @@ static void __init init_uclamp(void)
+@@ -1111,7 +1111,22 @@ static void uclamp_bucket_dec(unsigned int clamp_id, unsigned int bucket_id)
+ 					  &uc_map_old.data, uc_map_new.data));
+ }
+ 
+-static void uclamp_bucket_inc(struct task_struct *p, struct uclamp_se *uc_se,
++static inline void uclamp_bucket_inc_tg(struct cgroup_subsys_state *css,
++					int clamp_id, unsigned int bucket_id)
++{
++	struct css_task_iter it;
++	struct task_struct *p;
++
++	/* Update clamp buckets for RUNNABLE tasks in this TG */
++	css_task_iter_start(css, 0, &it);
++	while ((p = css_task_iter_next(&it)))
++		uclamp_task_update_active(p, clamp_id);
++	css_task_iter_end(&it);
++}
++
++static void uclamp_bucket_inc(struct task_struct *p,
++			      struct cgroup_subsys_state *css,
++			      struct uclamp_se *uc_se,
+ 			      unsigned int clamp_id, unsigned int clamp_value)
+ {
+ 	union uclamp_map *uc_maps = &uclamp_maps[clamp_id][0];
+@@ -1183,6 +1198,9 @@ static void uclamp_bucket_inc(struct task_struct *p, struct uclamp_se *uc_se,
+ 	uc_se->value = clamp_value;
+ 	uc_se->bucket_id = bucket_id;
+ 
++	if (css)
++		uclamp_bucket_inc_tg(css, clamp_id, bucket_id);
++
+ 	if (p)
+ 		uclamp_task_update_active(p, clamp_id);
+ 
+@@ -1221,11 +1239,11 @@ int sched_uclamp_handler(struct ctl_table *table, int write,
+ 	}
+ 
+ 	if (old_min != sysctl_sched_uclamp_util_min) {
+-		uclamp_bucket_inc(NULL, &uclamp_default[UCLAMP_MIN],
++		uclamp_bucket_inc(NULL, NULL, &uclamp_default[UCLAMP_MIN],
+ 				  UCLAMP_MIN, sysctl_sched_uclamp_util_min);
+ 	}
+ 	if (old_max != sysctl_sched_uclamp_util_max) {
+-		uclamp_bucket_inc(NULL, &uclamp_default[UCLAMP_MAX],
++		uclamp_bucket_inc(NULL, NULL, &uclamp_default[UCLAMP_MAX],
+ 				  UCLAMP_MAX, sysctl_sched_uclamp_util_max);
+ 	}
+ 	goto done;
+@@ -1260,12 +1278,12 @@ static int __setscheduler_uclamp(struct task_struct *p,
+ 	mutex_lock(&uclamp_mutex);
+ 	if (attr->sched_flags & SCHED_FLAG_UTIL_CLAMP_MIN) {
+ 		p->uclamp[UCLAMP_MIN].user_defined = true;
+-		uclamp_bucket_inc(p, &p->uclamp[UCLAMP_MIN],
++		uclamp_bucket_inc(p, NULL, &p->uclamp[UCLAMP_MIN],
+ 				  UCLAMP_MIN, lower_bound);
+ 	}
+ 	if (attr->sched_flags & SCHED_FLAG_UTIL_CLAMP_MAX) {
+ 		p->uclamp[UCLAMP_MAX].user_defined = true;
+-		uclamp_bucket_inc(p, &p->uclamp[UCLAMP_MAX],
++		uclamp_bucket_inc(p, NULL, &p->uclamp[UCLAMP_MAX],
+ 				  UCLAMP_MAX, upper_bound);
+ 	}
+ 	mutex_unlock(&uclamp_mutex);
+@@ -1304,7 +1322,7 @@ static void uclamp_fork(struct task_struct *p, bool reset)
+ 
+ 		p->uclamp[clamp_id].mapped = false;
+ 		p->uclamp[clamp_id].active = false;
+-		uclamp_bucket_inc(NULL, &p->uclamp[clamp_id],
++		uclamp_bucket_inc(NULL, NULL, &p->uclamp[clamp_id],
+ 				  clamp_id, clamp_value);
+ 	}
+ }
+@@ -1326,19 +1344,23 @@ static void __init init_uclamp(void)
+ 	memset(uclamp_maps, 0, sizeof(uclamp_maps));
+ 	for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id) {
+ 		uc_se = &init_task.uclamp[clamp_id];
+-		uclamp_bucket_inc(NULL, uc_se, clamp_id, uclamp_none(clamp_id));
++		uclamp_bucket_inc(NULL, NULL, uc_se, clamp_id,
++				  uclamp_none(clamp_id));
+ 
+ 		uc_se = &uclamp_default[clamp_id];
+-		uclamp_bucket_inc(NULL, uc_se, clamp_id, uclamp_none(clamp_id));
++		uclamp_bucket_inc(NULL, NULL, uc_se, clamp_id,
++				  uclamp_none(clamp_id));
+ 
+ 		/* RT tasks by default will go to max frequency */
+ 		uc_se = &uclamp_default_perf[clamp_id];
+-		uclamp_bucket_inc(NULL, uc_se, clamp_id, uclamp_none(UCLAMP_MAX));
++		uclamp_bucket_inc(NULL, NULL, uc_se, clamp_id,
++				  uclamp_none(UCLAMP_MAX));
+ 
  #ifdef CONFIG_UCLAMP_TASK_GROUP
  		/* Init root TG's clamp bucket */
  		uc_se = &root_task_group.uclamp[clamp_id];
--		uc_se->value = uclamp_none(clamp_id);
--		uc_se->bucket_id = 0;
--		uc_se->effective.value = uclamp_none(clamp_id);
-+		uclamp_bucket_inc(NULL, uc_se, clamp_id, uclamp_none(UCLAMP_MAX));
-+		uc_se->effective.bucket_id = uc_se->bucket_id;
-+		uc_se->effective.value = uc_se->value;
+-		uclamp_bucket_inc(NULL, uc_se, clamp_id, uclamp_none(UCLAMP_MAX));
++		uclamp_bucket_inc(NULL, NULL, uc_se, clamp_id,
++				  uclamp_none(UCLAMP_MAX));
+ 		uc_se->effective.bucket_id = uc_se->bucket_id;
+ 		uc_se->effective.value = uc_se->value;
  #endif
- 	}
- }
-@@ -6880,6 +6880,16 @@ void ia64_set_curr_task(int cpu, struct task_struct *p)
- /* task_group_lock serializes the addition/removal of task groups */
- static DEFINE_SPINLOCK(task_group_lock);
- 
-+static inline void free_uclamp_sched_group(struct task_group *tg)
-+{
-+#ifdef CONFIG_UCLAMP_TASK_GROUP
-+	int clamp_id;
-+
-+	for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id)
-+		uclamp_bucket_dec(clamp_id, tg->uclamp[clamp_id].bucket_id);
-+#endif
-+}
-+
- static inline int alloc_uclamp_sched_group(struct task_group *tg,
- 					   struct task_group *parent)
- {
-@@ -6887,12 +6897,12 @@ static inline int alloc_uclamp_sched_group(struct task_group *tg,
+@@ -6937,8 +6959,8 @@ static inline int alloc_uclamp_sched_group(struct task_group *tg,
  	int clamp_id;
  
  	for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id) {
--		tg->uclamp[clamp_id].value =
--			parent->uclamp[clamp_id].value;
--		tg->uclamp[clamp_id].bucket_id =
--			parent->uclamp[clamp_id].bucket_id;
-+		uclamp_bucket_inc(NULL, &tg->uclamp[clamp_id], clamp_id,
-+				  parent->uclamp[clamp_id].value);
+-		uclamp_bucket_inc(NULL, &tg->uclamp[clamp_id], clamp_id,
+-				  parent->uclamp[clamp_id].value);
++		uclamp_bucket_inc(NULL, NULL, &tg->uclamp[clamp_id],
++				  clamp_id, parent->uclamp[clamp_id].value);
  		tg->uclamp[clamp_id].effective.value =
  			parent->uclamp[clamp_id].effective.value;
-+		tg->uclamp[clamp_id].effective.bucket_id =
-+			parent->uclamp[clamp_id].effective.bucket_id;
- 	}
- #endif
- 
-@@ -6901,6 +6911,7 @@ static inline int alloc_uclamp_sched_group(struct task_group *tg,
- 
- static void sched_free_group(struct task_group *tg)
- {
-+	free_uclamp_sched_group(tg);
- 	free_fair_sched_group(tg);
- 	free_rt_sched_group(tg);
- 	autogroup_free(tg);
-@@ -7147,7 +7158,8 @@ static void cpu_cgroup_attach(struct cgroup_taskset *tset)
- 
- #ifdef CONFIG_UCLAMP_TASK_GROUP
- static void cpu_util_update_hier(struct cgroup_subsys_state *css,
--				 int clamp_id, unsigned int value)
-+				 unsigned int clamp_id, unsigned int bucket_id,
-+				 unsigned int value)
- {
- 	struct cgroup_subsys_state *top_css = css;
- 	struct uclamp_se *uc_se, *uc_parent;
-@@ -7159,8 +7171,10 @@ static void cpu_util_update_hier(struct cgroup_subsys_state *css,
- 		 * groups we consider their current value.
- 		 */
- 		uc_se = &css_tg(css)->uclamp[clamp_id];
--		if (css != top_css)
-+		if (css != top_css) {
- 			value = uc_se->value;
-+			bucket_id = uc_se->effective.bucket_id;
-+		}
- 
- 		/*
- 		 * Skip the whole subtrees if the current effective clamp is
-@@ -7176,12 +7190,15 @@ static void cpu_util_update_hier(struct cgroup_subsys_state *css,
- 		}
- 
- 		/* Propagate the most restrictive effective value */
--		if (uc_parent->effective.value < value)
-+		if (uc_parent->effective.value < value) {
- 			value = uc_parent->effective.value;
-+			bucket_id = uc_parent->effective.bucket_id;
-+		}
- 		if (uc_se->effective.value == value)
- 			continue;
+ 		tg->uclamp[clamp_id].effective.bucket_id =
+@@ -7239,6 +7261,10 @@ static void cpu_util_update_hier(struct cgroup_subsys_state *css,
  
  		uc_se->effective.value = value;
-+		uc_se->effective.bucket_id = bucket_id;
- 	}
- }
- 
-@@ -7194,6 +7211,7 @@ static int cpu_util_min_write_u64(struct cgroup_subsys_state *css,
- 	if (min_value > SCHED_CAPACITY_SCALE)
- 		return -ERANGE;
- 
-+	mutex_lock(&uclamp_mutex);
- 	rcu_read_lock();
- 
- 	tg = css_tg(css);
-@@ -7204,11 +7222,16 @@ static int cpu_util_min_write_u64(struct cgroup_subsys_state *css,
- 		goto out;
- 	}
- 
-+	/* Update TG's reference count */
-+	uclamp_bucket_inc(NULL, &tg->uclamp[UCLAMP_MIN], UCLAMP_MIN, min_value);
+ 		uc_se->effective.bucket_id = bucket_id;
 +
- 	/* Update effective clamps to track the most restrictive value */
--	cpu_util_update_hier(css, UCLAMP_MIN, min_value);
-+	cpu_util_update_hier(css, UCLAMP_MIN, tg->uclamp[UCLAMP_MIN].bucket_id,
-+			     min_value);
- 
- out:
- 	rcu_read_unlock();
-+	mutex_unlock(&uclamp_mutex);
- 
- 	return ret;
++		/* Immediately updated descendants active tasks */
++		if (css != top_css)
++			uclamp_bucket_inc_tg(css, clamp_id, bucket_id);
+ 	}
  }
-@@ -7222,6 +7245,7 @@ static int cpu_util_max_write_u64(struct cgroup_subsys_state *css,
- 	if (max_value > SCHED_CAPACITY_SCALE)
- 		return -ERANGE;
  
-+	mutex_lock(&uclamp_mutex);
- 	rcu_read_lock();
- 
- 	tg = css_tg(css);
-@@ -7232,11 +7256,16 @@ static int cpu_util_max_write_u64(struct cgroup_subsys_state *css,
- 		goto out;
+@@ -7263,7 +7289,8 @@ static int cpu_util_min_write_u64(struct cgroup_subsys_state *css,
  	}
  
-+	/* Update TG's reference count */
-+	uclamp_bucket_inc(NULL, &tg->uclamp[UCLAMP_MAX], UCLAMP_MAX, max_value);
-+
+ 	/* Update TG's reference count */
+-	uclamp_bucket_inc(NULL, &tg->uclamp[UCLAMP_MIN], UCLAMP_MIN, min_value);
++	uclamp_bucket_inc(NULL, css, &tg->uclamp[UCLAMP_MIN],
++			  UCLAMP_MIN, min_value);
+ 
  	/* Update effective clamps to track the most restrictive value */
--	cpu_util_update_hier(css, UCLAMP_MAX, max_value);
-+	cpu_util_update_hier(css, UCLAMP_MAX, tg->uclamp[UCLAMP_MAX].bucket_id,
-+			     max_value);
+ 	cpu_util_update_hier(css, UCLAMP_MIN, tg->uclamp[UCLAMP_MIN].bucket_id,
+@@ -7297,7 +7324,8 @@ static int cpu_util_max_write_u64(struct cgroup_subsys_state *css,
+ 	}
  
- out:
- 	rcu_read_unlock();
-+	mutex_unlock(&uclamp_mutex);
+ 	/* Update TG's reference count */
+-	uclamp_bucket_inc(NULL, &tg->uclamp[UCLAMP_MAX], UCLAMP_MAX, max_value);
++	uclamp_bucket_inc(NULL, css, &tg->uclamp[UCLAMP_MAX],
++			  UCLAMP_MAX, max_value);
  
- 	return ret;
- }
+ 	/* Update effective clamps to track the most restrictive value */
+ 	cpu_util_update_hier(css, UCLAMP_MAX, tg->uclamp[UCLAMP_MAX].bucket_id,
 -- 
 2.19.2
