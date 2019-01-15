@@ -1,7 +1,7 @@
 From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: [PATCH v6 05/16] sched/core: uclamp: Update CPU's refcount on clamp changes
-Date: Tue, 15 Jan 2019 10:15:02 +0000
-Message-ID: <20190115101513.2822-6-patrick.bellasi@arm.com>
+Subject: [PATCH v6 06/16] sched/core: uclamp: Enforce last task UCLAMP_MAX
+Date: Tue, 15 Jan 2019 10:15:03 +0000
+Message-ID: <20190115101513.2822-7-patrick.bellasi@arm.com>
 References: <20190115101513.2822-1-patrick.bellasi@arm.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,13 +12,23 @@ To: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kerne
 Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Utilization clamp values enforced on a CPU by a task can be updated, for
-example via a sched_setattr() syscall, while a task is RUNNABLE on that
-CPU. A clamp value change always implies a clamp bucket refcount update
-to ensure the new constraints are enforced.
+When the task sleeps, it removes its max utilization clamp from its CPU.
+However, the blocked utilization on that CPU can be higher than the max
+clamp value enforced while the task was running. This allows undesired
+CPU frequency increases while a CPU is idle, for example, when another
+CPU on the same frequency domain triggers a frequency update, since
+schedutil can now see the full not clamped blocked utilization of the
+idle CPU.
 
-Hook into uclamp_bucket_get() to trigger a CPU refcount syncup, via
-uclamp_cpu_{inc,dec}_id(), whenever a task is RUNNABLE.
+Fix this by using
+  uclamp_cpu_dec_id(p, rq, UCLAMP_MAX)
+    uclamp_cpu_update(rq, UCLAMP_MAX, clamp_value)
+to detect when a CPU has no more RUNNABLE clamped tasks and to flag this
+condition.
+
+Don't track any minimum utilization clamps since an idle CPU never
+requires a minimum frequency. The decay of the blocked utilization is
+good enough to reduce the CPU frequency.
 
 Signed-off-by: Patrick Bellasi <patrick.bellasi@arm.com>
 Cc: Ingo Molnar <mingo@redhat.com>
@@ -26,110 +36,128 @@ Cc: Peter Zijlstra <peterz@infradead.org>
 
 ---
 Changes in v6:
- Other:
- - wholesale s/group/bucket/
- - wholesale s/_{get,put}/_{inc,dec}/ to match refcount APIs
- - small documentation updates
+ Others:
+ - moved UCLAMP_FLAG_IDLE management into dedicated functions:
+   uclamp_idle_value() and uclamp_idle_reset()
+ - switched from rq::uclamp::flags to rq::uclamp_flags, since now
+   rq::uclamp is a per-clamp_id array
 ---
- kernel/sched/core.c | 48 +++++++++++++++++++++++++++++++++++++++------
- 1 file changed, 42 insertions(+), 6 deletions(-)
+ kernel/sched/core.c  | 51 +++++++++++++++++++++++++++++++++++++++++---
+ kernel/sched/sched.h |  2 ++
+ 2 files changed, 50 insertions(+), 3 deletions(-)
 
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 190137cd7b3b..67f059ee0a05 100644
+index 67f059ee0a05..b7ac516a70be 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -884,6 +884,38 @@ static inline void uclamp_cpu_dec(struct rq *rq, struct task_struct *p)
- 		uclamp_cpu_dec_id(p, rq, clamp_id);
+@@ -766,9 +766,45 @@ static inline unsigned int uclamp_bucket_value(unsigned int clamp_value)
+ 	return UCLAMP_BUCKET_DELTA * (clamp_value / UCLAMP_BUCKET_DELTA);
  }
  
-+static inline void
-+uclamp_task_update_active(struct task_struct *p, unsigned int clamp_id)
+-static inline void uclamp_cpu_update(struct rq *rq, unsigned int clamp_id)
++static inline unsigned int
++uclamp_idle_value(struct rq *rq, unsigned int clamp_id, unsigned int clamp_value)
 +{
-+	struct rq_flags rf;
-+	struct rq *rq;
-+
 +	/*
-+	 * Lock the task and the CPU where the task is (or was) queued.
-+	 *
-+	 * We might lock the (previous) rq of a !RUNNABLE task, but that's the
-+	 * price to pay to safely serialize util_{min,max} updates with
-+	 * enqueues, dequeues and migration operations.
-+	 * This is the same locking schema used by __set_cpus_allowed_ptr().
++	 * Avoid blocked utilization pushing up the frequency when we go
++	 * idle (which drops the max-clamp) by retaining the last known
++	 * max-clamp.
 +	 */
-+	rq = task_rq_lock(p, &rf);
++	if (clamp_id == UCLAMP_MAX) {
++		rq->uclamp_flags |= UCLAMP_FLAG_IDLE;
++		return clamp_value;
++	}
 +
-+	/*
-+	 * Setting the clamp bucket is serialized by task_rq_lock().
-+	 * If the task is not yet RUNNABLE and its task_struct is not
-+	 * affecting a valid clamp bucket, the next time it's enqueued,
-+	 * it will already see the updated clamp bucket value.
-+	 */
-+	if (!p->uclamp[clamp_id].active)
-+		goto done;
-+
-+	uclamp_cpu_dec_id(p, rq, clamp_id);
-+	uclamp_cpu_inc_id(p, rq, clamp_id);
-+
-+done:
-+	task_rq_unlock(rq, p, &rf);
++	return uclamp_none(UCLAMP_MIN);
 +}
 +
- static void uclamp_bucket_dec(unsigned int clamp_id, unsigned int bucket_id)
- {
- 	union uclamp_map *uc_maps = &uclamp_maps[clamp_id][0];
-@@ -907,8 +939,8 @@ static void uclamp_bucket_dec(unsigned int clamp_id, unsigned int bucket_id)
- 					  &uc_map_old.data, uc_map_new.data));
- }
- 
--static void uclamp_bucket_inc(struct uclamp_se *uc_se, unsigned int clamp_id,
--			      unsigned int clamp_value)
-+static void uclamp_bucket_inc(struct task_struct *p, struct uclamp_se *uc_se,
-+			      unsigned int clamp_id, unsigned int clamp_value)
- {
- 	union uclamp_map *uc_maps = &uclamp_maps[clamp_id][0];
- 	unsigned int prev_bucket_id = uc_se->bucket_id;
-@@ -979,6 +1011,9 @@ static void uclamp_bucket_inc(struct uclamp_se *uc_se, unsigned int clamp_id,
- 	uc_se->value = clamp_value;
- 	uc_se->bucket_id = bucket_id;
- 
-+	if (p)
-+		uclamp_task_update_active(p, clamp_id);
++static inline void uclamp_idle_reset(struct rq *rq, unsigned int clamp_id,
++				     unsigned int clamp_value)
++{
++	/* Reset max-clamp retention only on idle exit */
++	if (!(rq->uclamp_flags & UCLAMP_FLAG_IDLE))
++		return;
 +
- 	if (uc_se->mapped)
- 		uclamp_bucket_dec(clamp_id, prev_bucket_id);
++	WRITE_ONCE(rq->uclamp[clamp_id].value, clamp_value);
++
++	/*
++	 * This function is called for both UCLAMP_MIN (before) and UCLAMP_MAX
++	 * (after). The idle flag is reset only the second time, when we know
++	 * that UCLAMP_MIN has been already updated.
++	 */
++	if (clamp_id == UCLAMP_MAX)
++		rq->uclamp_flags &= ~UCLAMP_FLAG_IDLE;
++}
++
++static inline void uclamp_cpu_update(struct rq *rq, unsigned int clamp_id,
++				     unsigned int clamp_value)
+ {
+ 	unsigned int max_value = 0;
++	bool buckets_active = false;
+ 	unsigned int bucket_id;
  
-@@ -1008,11 +1043,11 @@ static int __setscheduler_uclamp(struct task_struct *p,
+ 	for (bucket_id = 0; bucket_id < UCLAMP_BUCKETS; ++bucket_id) {
+@@ -776,6 +812,7 @@ static inline void uclamp_cpu_update(struct rq *rq, unsigned int clamp_id)
  
- 	mutex_lock(&uclamp_mutex);
- 	if (attr->sched_flags & SCHED_FLAG_UTIL_CLAMP_MIN) {
--		uclamp_bucket_inc(&p->uclamp[UCLAMP_MIN],
-+		uclamp_bucket_inc(p, &p->uclamp[UCLAMP_MIN],
- 				  UCLAMP_MIN, lower_bound);
+ 		if (!rq->uclamp[clamp_id].bucket[bucket_id].tasks)
+ 			continue;
++		buckets_active = true;
+ 
+ 		/* Both min and max clamps are MAX aggregated */
+ 		bucket_value = rq->uclamp[clamp_id].bucket[bucket_id].value;
+@@ -783,6 +820,10 @@ static inline void uclamp_cpu_update(struct rq *rq, unsigned int clamp_id)
+ 		if (max_value >= SCHED_CAPACITY_SCALE)
+ 			break;
  	}
- 	if (attr->sched_flags & SCHED_FLAG_UTIL_CLAMP_MAX) {
--		uclamp_bucket_inc(&p->uclamp[UCLAMP_MAX],
-+		uclamp_bucket_inc(p, &p->uclamp[UCLAMP_MAX],
- 				  UCLAMP_MAX, upper_bound);
- 	}
- 	mutex_unlock(&uclamp_mutex);
-@@ -1049,7 +1084,8 @@ static void uclamp_fork(struct task_struct *p, bool reset)
++
++	if (unlikely(!buckets_active))
++		max_value = uclamp_idle_value(rq, clamp_id, clamp_value);
++
+ 	WRITE_ONCE(rq->uclamp[clamp_id].value, max_value);
+ }
  
- 		p->uclamp[clamp_id].mapped = false;
- 		p->uclamp[clamp_id].active = false;
--		uclamp_bucket_inc(&p->uclamp[clamp_id], clamp_id, clamp_value);
-+		uclamp_bucket_inc(NULL, &p->uclamp[clamp_id],
-+				  clamp_id, clamp_value);
+@@ -808,8 +849,11 @@ static inline void uclamp_cpu_inc_id(struct task_struct *p, struct rq *rq,
+ 
+ 	rq->uclamp[clamp_id].bucket[bucket_id].tasks++;
+ 
+-	/* CPU's clamp buckets track the max effective clamp value */
++	/* Reset clamp holds on idle exit */
+ 	tsk_clamp = p->uclamp[clamp_id].value;
++	uclamp_idle_reset(rq, clamp_id, tsk_clamp);
++
++	/* CPU's clamp buckets track the max effective clamp value */
+ 	grp_clamp = rq->uclamp[clamp_id].bucket[bucket_id].value;
+ 	rq->uclamp[clamp_id].bucket[bucket_id].value = max(grp_clamp, tsk_clamp);
+ 
+@@ -858,7 +902,7 @@ static inline void uclamp_cpu_dec_id(struct task_struct *p, struct rq *rq,
+ 		 */
+ 		rq->uclamp[clamp_id].bucket[bucket_id].value =
+ 			uclamp_maps[clamp_id][bucket_id].value;
+-		uclamp_cpu_update(rq, clamp_id);
++		uclamp_cpu_update(rq, clamp_id, clamp_value);
  	}
  }
  
-@@ -1069,7 +1105,7 @@ static void __init init_uclamp(void)
+@@ -1100,6 +1144,7 @@ static void __init init_uclamp(void)
+ 	for_each_possible_cpu(cpu) {
+ 		memset(&cpu_rq(cpu)->uclamp, 0, sizeof(struct uclamp_cpu));
+ 		cpu_rq(cpu)->uclamp[UCLAMP_MAX].value = uclamp_none(UCLAMP_MAX);
++		cpu_rq(cpu)->uclamp_flags = 0;
+ 	}
+ 
  	memset(uclamp_maps, 0, sizeof(uclamp_maps));
- 	for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id) {
- 		uc_se = &init_task.uclamp[clamp_id];
--		uclamp_bucket_inc(uc_se, clamp_id, uclamp_none(clamp_id));
-+		uclamp_bucket_inc(NULL, uc_se, clamp_id, uclamp_none(clamp_id));
- 	}
- }
+diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
+index 06ff7d890ff6..b7f3ee8ba164 100644
+--- a/kernel/sched/sched.h
++++ b/kernel/sched/sched.h
+@@ -882,6 +882,8 @@ struct rq {
+ #ifdef CONFIG_UCLAMP_TASK
+ 	/* Utilization clamp values based on CPU's RUNNABLE tasks */
+ 	struct uclamp_cpu	uclamp[UCLAMP_CNT] ____cacheline_aligned;
++	unsigned int		uclamp_flags;
++#define UCLAMP_FLAG_IDLE 0x01
+ #endif
  
+ 	struct cfs_rq		cfs;
 -- 
 2.19.2
