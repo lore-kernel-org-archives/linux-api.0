@@ -1,7 +1,7 @@
 From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: [PATCH v6 11/16] sched/fair: Add uclamp support to energy_compute()
-Date: Tue, 15 Jan 2019 10:15:08 +0000
-Message-ID: <20190115101513.2822-12-patrick.bellasi@arm.com>
+Subject: [PATCH v6 13/16] sched/core: uclamp: Propagate parent clamps
+Date: Tue, 15 Jan 2019 10:15:10 +0000
+Message-ID: <20190115101513.2822-14-patrick.bellasi@arm.com>
 References: <20190115101513.2822-1-patrick.bellasi@arm.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,207 +12,288 @@ To: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kerne
 Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-The Energy Aware Scheduler (AES) estimates the energy impact of waking
-up a task on a given CPU. This estimation is based on:
- a) an (active) power consumptions defined for each CPU frequency
- b) an estimation of which frequency will be used on each CPU
- c) an estimation of the busy time (utilization) of each CPU
+In order to properly support hierarchical resources control, the cgroup
+delegation model requires that attribute writes from a child group never
+fail but still are (potentially) constrained based on parent's assigned
+resources. This requires to properly propagate and aggregate parent
+attributes down to its descendants.
 
-Utilization clamping can affect both b) and c) estimations. A CPU is
-expected to run:
- - on an higher than required frequency, but for a shorter time, in case
-   its estimated utilization will be smaller then the minimum utilization
-   enforced by uclamp
- - on a smaller than required frequency, but for a longer time, in case
-   its estimated utilization is bigger then the maximum utilization
-   enforced by uclamp
+Let's implement this mechanism by adding a new "effective" clamp value
+for each task group. The effective clamp value is defined as the smaller
+value between the clamp value of a group and the effective clamp value
+of its parent. This is the actual clamp value enforced on tasks in a
+task group.
 
-While effects on busy time for both boosted/capped tasks are already
-considered by compute_energy(), clamping effects on frequency selection
-are currently ignored by that function.
-
-Fix it by considering how CPU clamp values will be affected by a
-task waking up and being RUNNABLE on that CPU.
-
-Do that by refactoring schedutil_freq_util() to take an additional
-task_struct* which allows EAS to evaluate the impact on clamp values of
-a task being eventually queued in a CPU. Clamp values are applied to the
-RT+CFS utilization only when a FREQUENCY_UTIL is required by
-compute_energy().
-
-Since we are at that:
-- rename schedutil_freq_util() into schedutil_cpu_util(),
-  since it's not only used for frequency selection.
-- use "unsigned int" instead of "unsigned long" whenever the tracked
-  utilization value is not expected to overflow 32bit.
+Since it can be interesting for userspace, e.g. system management
+software, to know exactly what the currently propagated/enforced
+configuration is, the effective clamp values are exposed to user-space
+by means of a new pair of read-only attributes
+cpu.util.{min,max}.effective.
 
 Signed-off-by: Patrick Bellasi <patrick.bellasi@arm.com>
 Cc: Ingo Molnar <mingo@redhat.com>
 Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
----
- kernel/sched/cpufreq_schedutil.c | 26 +++++++++++-----------
- kernel/sched/fair.c              | 37 ++++++++++++++++++++++++++------
- kernel/sched/sched.h             | 19 +++++-----------
- 3 files changed, 48 insertions(+), 34 deletions(-)
+Cc: Tejun Heo <tj@kernel.org>
 
-diff --git a/kernel/sched/cpufreq_schedutil.c b/kernel/sched/cpufreq_schedutil.c
-index 38a05a4f78cc..4e02b419c482 100644
---- a/kernel/sched/cpufreq_schedutil.c
-+++ b/kernel/sched/cpufreq_schedutil.c
-@@ -195,10 +195,11 @@ static unsigned int get_next_freq(struct sugov_policy *sg_policy,
-  * based on the task model parameters and gives the minimal utilization
-  * required to meet deadlines.
-  */
--unsigned long schedutil_freq_util(int cpu, unsigned long util_cfs,
--				  unsigned long max, enum schedutil_type type)
-+unsigned int schedutil_cpu_util(int cpu, unsigned int util_cfs,
-+				 unsigned int max, enum schedutil_type type,
-+				 struct task_struct *p)
- {
--	unsigned long dl_util, util, irq;
-+	unsigned int dl_util, util, irq;
- 	struct rq *rq = cpu_rq(cpu);
+---
+Changes in v6:
+ Others:
+ - wholesale s/group/bucket/
+ - wholesale s/_{get,put}/_{inc,dec}/ to match refcount APIs
+---
+ Documentation/admin-guide/cgroup-v2.rst | 25 ++++++-
+ include/linux/sched.h                   | 10 ++-
+ kernel/sched/core.c                     | 89 +++++++++++++++++++++++--
+ 3 files changed, 117 insertions(+), 7 deletions(-)
+
+diff --git a/Documentation/admin-guide/cgroup-v2.rst b/Documentation/admin-guide/cgroup-v2.rst
+index a059aaf7cce6..7aad2435e961 100644
+--- a/Documentation/admin-guide/cgroup-v2.rst
++++ b/Documentation/admin-guide/cgroup-v2.rst
+@@ -984,22 +984,43 @@ All time durations are in microseconds.
+         A read-write single value file which exists on non-root cgroups.
+         The default is "0", i.e. no utilization boosting.
  
- 	/*
-@@ -222,13 +223,9 @@ unsigned long schedutil_freq_util(int cpu, unsigned long util_cfs,
- 	 * When there are no CFS RUNNABLE tasks, clamps are released and
- 	 * frequency will be gracefully reduced with the utilization decay.
- 	 */
--	util = cpu_util_rt(rq);
--	if (type == FREQUENCY_UTIL) {
--		util += cpu_util_cfs(rq);
--		util  = uclamp_util(rq, util);
--	} else {
--		util += util_cfs;
--	}
-+	util = cpu_util_rt(rq) + util_cfs;
-+	if (type == FREQUENCY_UTIL)
-+		util = uclamp_util_with(rq, util, p);
+-        The minimum utilization in the range [0, 1024].
++        The requested minimum utilization in the range [0, 1024].
  
- 	dl_util = cpu_util_dl(rq);
+         This interface allows reading and setting minimum utilization clamp
+         values similar to the sched_setattr(2). This minimum utilization
+         value is used to clamp the task specific minimum utilization clamp.
  
-@@ -282,13 +279,14 @@ unsigned long schedutil_freq_util(int cpu, unsigned long util_cfs,
- static unsigned long sugov_get_util(struct sugov_cpu *sg_cpu)
- {
- 	struct rq *rq = cpu_rq(sg_cpu->cpu);
--	unsigned long util = cpu_util_cfs(rq);
--	unsigned long max = arch_scale_cpu_capacity(NULL, sg_cpu->cpu);
-+	unsigned int util_cfs = cpu_util_cfs(rq);
-+	unsigned int cpu_cap = arch_scale_cpu_capacity(NULL, sg_cpu->cpu);
++  cpu.util.min.effective
++        A read-only single value file which exists on non-root cgroups and
++        reports minimum utilization clamp value currently enforced on a task
++        group.
++
++        The actual minimum utilization in the range [0, 1024].
++
++        This value can be lower then cpu.util.min in case a parent cgroup
++        allows only smaller minimum utilization values.
++
+   cpu.util.max
+         A read-write single value file which exists on non-root cgroups.
+         The default is "1024". i.e. no utilization capping
  
--	sg_cpu->max = max;
-+	sg_cpu->max = cpu_cap;
- 	sg_cpu->bw_dl = cpu_bw_dl(rq);
+-        The maximum utilization in the range [0, 1024].
++        The requested maximum utilization in the range [0, 1024].
  
--	return schedutil_freq_util(sg_cpu->cpu, util, max, FREQUENCY_UTIL);
-+	return schedutil_cpu_util(sg_cpu->cpu, util_cfs, cpu_cap,
-+				  FREQUENCY_UTIL, NULL);
+         This interface allows reading and setting maximum utilization clamp
+         values similar to the sched_setattr(2). This maximum utilization
+         value is used to clamp the task specific maximum utilization clamp.
+ 
++  cpu.util.max.effective
++        A read-only single value file which exists on non-root cgroups and
++        reports maximum utilization clamp value currently enforced on a task
++        group.
++
++        The actual maximum utilization in the range [0, 1024].
++
++        This value can be lower then cpu.util.max in case a parent cgroup
++        is enforcing a more restrictive clamping on max utilization.
++
++
+ Memory
+ ------
+ 
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index c8f391d1cdc5..05d286524d70 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -625,7 +625,15 @@ struct uclamp_se {
+ 	unsigned int bucket_id		: bits_per(UCLAMP_BUCKETS);
+ 	unsigned int mapped		: 1;
+ 	unsigned int active		: 1;
+-	/* Clamp bucket and value actually used by a RUNNABLE task */
++	/*
++	 * Clamp bucket and value actually used by a scheduling entity,
++	 * i.e. a (RUNNABLE) task or a task group.
++	 * For task groups, this is the value (possibly) enforced by a
++	 * parent task group.
++	 * For a task, this is the value (possibly) enforced by the
++	 * task group the task is currently part of or by the system
++	 * default clamp values, whichever is the most restrictive.
++	 */
+ 	struct {
+ 		unsigned int value	: bits_per(SCHED_CAPACITY_SCALE);
+ 		unsigned int bucket_id	: bits_per(UCLAMP_BUCKETS);
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 29ae83fb9786..ddbd591b305c 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -1300,6 +1300,7 @@ static void __init init_uclamp(void)
+ 		uc_se = &root_task_group.uclamp[clamp_id];
+ 		uc_se->value = uclamp_none(clamp_id);
+ 		uc_se->bucket_id = 0;
++		uc_se->effective.value = uclamp_none(clamp_id);
+ #endif
+ 	}
+ }
+@@ -6890,6 +6891,8 @@ static inline int alloc_uclamp_sched_group(struct task_group *tg,
+ 			parent->uclamp[clamp_id].value;
+ 		tg->uclamp[clamp_id].bucket_id =
+ 			parent->uclamp[clamp_id].bucket_id;
++		tg->uclamp[clamp_id].effective.value =
++			parent->uclamp[clamp_id].effective.value;
+ 	}
+ #endif
+ 
+@@ -7143,6 +7146,45 @@ static void cpu_cgroup_attach(struct cgroup_taskset *tset)
  }
  
- /**
-diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 5de061b055d2..7f8ca3b02dec 100644
---- a/kernel/sched/fair.c
-+++ b/kernel/sched/fair.c
-@@ -6424,11 +6424,20 @@ static unsigned long cpu_util_next(int cpu, struct task_struct *p, int dst_cpu)
- static long
- compute_energy(struct task_struct *p, int dst_cpu, struct perf_domain *pd)
- {
--	long util, max_util, sum_util, energy = 0;
-+	unsigned int max_util, cfs_util, cpu_util, cpu_cap;
-+	unsigned long sum_util, energy = 0;
- 	int cpu;
- 
- 	for (; pd; pd = pd->next) {
-+		struct cpumask *pd_mask = perf_domain_span(pd);
+ #ifdef CONFIG_UCLAMP_TASK_GROUP
++static void cpu_util_update_hier(struct cgroup_subsys_state *css,
++				 int clamp_id, unsigned int value)
++{
++	struct cgroup_subsys_state *top_css = css;
++	struct uclamp_se *uc_se, *uc_parent;
++
++	css_for_each_descendant_pre(css, top_css) {
++		/*
++		 * The first visited task group is top_css, which clamp value
++		 * is the one passed as parameter. For descendent task
++		 * groups we consider their current value.
++		 */
++		uc_se = &css_tg(css)->uclamp[clamp_id];
++		if (css != top_css)
++			value = uc_se->value;
 +
 +		/*
-+		 * The energy model mandate all the CPUs of a performance
-+		 * domain have the same capacity.
++		 * Skip the whole subtrees if the current effective clamp is
++		 * already matching the TG's clamp value.
++		 * In this case, all the subtrees already have top_value, or a
++		 * more restrictive value, as effective clamp.
 +		 */
-+		cpu_cap = arch_scale_cpu_capacity(NULL, cpumask_first(pd_mask));
- 		max_util = sum_util = 0;
++		uc_parent = &css_tg(css)->parent->uclamp[clamp_id];
++		if (uc_se->effective.value == value &&
++		    uc_parent->effective.value >= value) {
++			css = css_rightmost_descendant(css);
++			continue;
++		}
 +
- 		/*
- 		 * The capacity state of CPUs of the current rd can be driven by
- 		 * CPUs of another rd if they belong to the same performance
-@@ -6439,11 +6448,27 @@ compute_energy(struct task_struct *p, int dst_cpu, struct perf_domain *pd)
- 		 * it will not appear in its pd list and will not be accounted
- 		 * by compute_energy().
- 		 */
--		for_each_cpu_and(cpu, perf_domain_span(pd), cpu_online_mask) {
--			util = cpu_util_next(cpu, p, dst_cpu);
--			util = schedutil_energy_util(cpu, util);
--			max_util = max(util, max_util);
--			sum_util += util;
-+		for_each_cpu_and(cpu, pd_mask, cpu_online_mask) {
-+			cfs_util = cpu_util_next(cpu, p, dst_cpu);
++		/* Propagate the most restrictive effective value */
++		if (uc_parent->effective.value < value)
++			value = uc_parent->effective.value;
++		if (uc_se->effective.value == value)
++			continue;
 +
-+			/*
-+			 * Busy time computation: utilization clamping is not
-+			 * required since the ratio (sum_util / cpu_capacity)
-+			 * is already enough to scale the EM reported power
-+			 * consumption at the (eventually clamped) cpu_capacity.
-+			 */
-+			sum_util += schedutil_cpu_util(cpu, cfs_util, cpu_cap,
-+						       ENERGY_UTIL, NULL);
++		uc_se->effective.value = value;
++	}
++}
 +
-+			/*
-+			 * Performance domain frequency: utilization clamping
-+			 * must be considered since it affects the selection
-+			 * of the performance domain frequency.
-+			 */
-+			cpu_util = schedutil_cpu_util(cpu, cfs_util, cpu_cap,
-+						      FREQUENCY_UTIL,
-+						      cpu == dst_cpu ? p : NULL);
-+			max_util = max(max_util, cpu_util);
- 		}
- 
- 		energy += em_pd_energy(pd->em_pd, max_util, sum_util);
-diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index b7ce3023d023..a70f4bf66285 100644
---- a/kernel/sched/sched.h
-+++ b/kernel/sched/sched.h
-@@ -2317,7 +2317,6 @@ static inline unsigned int uclamp_util(struct rq *rq, unsigned int util)
- # define arch_scale_freq_invariant()	false
- #endif
- 
--#ifdef CONFIG_CPU_FREQ_GOV_SCHEDUTIL
- /**
-  * enum schedutil_type - CPU utilization type
-  * @FREQUENCY_UTIL:	Utilization used to select frequency
-@@ -2333,15 +2332,10 @@ enum schedutil_type {
- 	ENERGY_UTIL,
- };
- 
--unsigned long schedutil_freq_util(int cpu, unsigned long util_cfs,
--				  unsigned long max, enum schedutil_type type);
--
--static inline unsigned long schedutil_energy_util(int cpu, unsigned long cfs)
--{
--	unsigned long max = arch_scale_cpu_capacity(NULL, cpu);
--
--	return schedutil_freq_util(cpu, cfs, max, ENERGY_UTIL);
--}
-+#ifdef CONFIG_CPU_FREQ_GOV_SCHEDUTIL
-+unsigned int schedutil_cpu_util(int cpu, unsigned int util_cfs,
-+				unsigned int max, enum schedutil_type type,
-+				struct task_struct *p);
- 
- static inline unsigned long cpu_bw_dl(struct rq *rq)
+ static int cpu_util_min_write_u64(struct cgroup_subsys_state *css,
+ 				  struct cftype *cftype, u64 min_value)
  {
-@@ -2370,10 +2364,7 @@ static inline unsigned long cpu_util_rt(struct rq *rq)
- 	return READ_ONCE(rq->avg_rt.util_avg);
- }
- #else /* CONFIG_CPU_FREQ_GOV_SCHEDUTIL */
--static inline unsigned long schedutil_energy_util(int cpu, unsigned long cfs)
--{
--	return cfs;
--}
-+#define schedutil_cpu_util(cpu, util_cfs, max, type, p) 0
- #endif
+@@ -7162,6 +7204,9 @@ static int cpu_util_min_write_u64(struct cgroup_subsys_state *css,
+ 		goto out;
+ 	}
  
- #ifdef CONFIG_HAVE_SCHED_AVG_IRQ
++	/* Update effective clamps to track the most restrictive value */
++	cpu_util_update_hier(css, UCLAMP_MIN, min_value);
++
+ out:
+ 	rcu_read_unlock();
+ 
+@@ -7187,6 +7232,9 @@ static int cpu_util_max_write_u64(struct cgroup_subsys_state *css,
+ 		goto out;
+ 	}
+ 
++	/* Update effective clamps to track the most restrictive value */
++	cpu_util_update_hier(css, UCLAMP_MAX, max_value);
++
+ out:
+ 	rcu_read_unlock();
+ 
+@@ -7194,14 +7242,17 @@ static int cpu_util_max_write_u64(struct cgroup_subsys_state *css,
+ }
+ 
+ static inline u64 cpu_uclamp_read(struct cgroup_subsys_state *css,
+-				  enum uclamp_id clamp_id)
++				  enum uclamp_id clamp_id,
++				  bool effective)
+ {
+ 	struct task_group *tg;
+ 	u64 util_clamp;
+ 
+ 	rcu_read_lock();
+ 	tg = css_tg(css);
+-	util_clamp = tg->uclamp[clamp_id].value;
++	util_clamp = effective
++		? tg->uclamp[clamp_id].effective.value
++		: tg->uclamp[clamp_id].value;
+ 	rcu_read_unlock();
+ 
+ 	return util_clamp;
+@@ -7210,13 +7261,25 @@ static inline u64 cpu_uclamp_read(struct cgroup_subsys_state *css,
+ static u64 cpu_util_min_read_u64(struct cgroup_subsys_state *css,
+ 				 struct cftype *cft)
+ {
+-	return cpu_uclamp_read(css, UCLAMP_MIN);
++	return cpu_uclamp_read(css, UCLAMP_MIN, false);
+ }
+ 
+ static u64 cpu_util_max_read_u64(struct cgroup_subsys_state *css,
+ 				 struct cftype *cft)
+ {
+-	return cpu_uclamp_read(css, UCLAMP_MAX);
++	return cpu_uclamp_read(css, UCLAMP_MAX, false);
++}
++
++static u64 cpu_util_min_effective_read_u64(struct cgroup_subsys_state *css,
++					   struct cftype *cft)
++{
++	return cpu_uclamp_read(css, UCLAMP_MIN, true);
++}
++
++static u64 cpu_util_max_effective_read_u64(struct cgroup_subsys_state *css,
++					   struct cftype *cft)
++{
++	return cpu_uclamp_read(css, UCLAMP_MAX, true);
+ }
+ #endif /* CONFIG_UCLAMP_TASK_GROUP */
+ 
+@@ -7564,11 +7627,19 @@ static struct cftype cpu_legacy_files[] = {
+ 		.read_u64 = cpu_util_min_read_u64,
+ 		.write_u64 = cpu_util_min_write_u64,
+ 	},
++	{
++		.name = "util.min.effective",
++		.read_u64 = cpu_util_min_effective_read_u64,
++	},
+ 	{
+ 		.name = "util.max",
+ 		.read_u64 = cpu_util_max_read_u64,
+ 		.write_u64 = cpu_util_max_write_u64,
+ 	},
++	{
++		.name = "util.max.effective",
++		.read_u64 = cpu_util_max_effective_read_u64,
++	},
+ #endif
+ 	{ }	/* Terminate */
+ };
+@@ -7744,12 +7815,22 @@ static struct cftype cpu_files[] = {
+ 		.read_u64 = cpu_util_min_read_u64,
+ 		.write_u64 = cpu_util_min_write_u64,
+ 	},
++	{
++		.name = "util.min.effective",
++		.flags = CFTYPE_NOT_ON_ROOT,
++		.read_u64 = cpu_util_min_effective_read_u64,
++	},
+ 	{
+ 		.name = "util.max",
+ 		.flags = CFTYPE_NOT_ON_ROOT,
+ 		.read_u64 = cpu_util_max_read_u64,
+ 		.write_u64 = cpu_util_max_write_u64,
+ 	},
++	{
++		.name = "util.max.effective",
++		.flags = CFTYPE_NOT_ON_ROOT,
++		.read_u64 = cpu_util_max_effective_read_u64,
++	},
+ #endif
+ 	{ }	/* terminate */
+ };
 -- 
 2.19.2
