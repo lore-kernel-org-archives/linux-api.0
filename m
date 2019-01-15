@@ -1,79 +1,56 @@
-From: Geert Uytterhoeven <geert@linux-m68k.org>
-Subject: Re: [PATCH 14/15] arch: add split IPC system calls where needed
-Date: Tue, 15 Jan 2019 17:35:55 +0100
-Message-ID: <CAMuHMdVw1mBLGdn4hkiNVyoJ_oxMwi3d=_e7WL5ru+ALA4MKbw@mail.gmail.com>
-References: <20190110162435.309262-1-arnd@arndb.de>
- <20190110162435.309262-15-arnd@arndb.de>
- <87pnsz28k2.fsf@concordia.ellerman.id.au>
- <CAK8P3a0uas76i2W1yjFvxHT-2=A8_egUZeAUM-Vya6386+87Xg@mail.gmail.com>
- <CAK8P3a3eUzGDrJtV2ySpgHwjKHwZYr+1xHp6tChCt1gWi=mJ+g@mail.gmail.com>
+From: John Stultz <john.stultz@linaro.org>
+Subject: Re: [PATCH v4 1/2] mm/memfd: Add an F_SEAL_FUTURE_WRITE seal to memfd
+Date: Tue, 15 Jan 2019 09:36:52 -0800
+Message-ID: <CALAqxLXFvktP+k8AWPEoT=-MM_vdu=1hzgzPYEzhSp8hXd-ADg@mail.gmail.com>
+References: <20190112203816.85534-1-joel@joelfernandes.org> <20190112203816.85534-2-joel@joelfernandes.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <CAK8P3a3eUzGDrJtV2ySpgHwjKHwZYr+1xHp6tChCt1gWi=mJ+g@mail.gmail.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Rich Felker <dalias@libc.org>, "linux-ia64@vger.kernel.org" <linux-ia64@vger.kernel.org>, Linux-sh list <linux-sh@vger.kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Dominik Brodowski <linux@dominikbrodowski.net>, linux-mips@vger.kernel.org, Max Filippov <jcmvbkbc@gmail.com>, Deepa Dinamani <deepa.kernel@gmail.com>, "H. Peter Anvin" <hpa@zytor.com>, sparclinux <sparclinux@vger.kernel.org>, linux-s390 <linux-s390@vger.kernel.org>, Davidlohr Bueso <dave@stgolabs.net>, y2038 Mailman List <y2038@lists.linaro.org>, Michael Ellerman <mpe@ellerman.id.au>, Helge Deller <deller@gmx.de>, the arch/x86 maintainers <x86@kernel.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Ingo Molnar <mingo@redhat.com>, Firoz Khan <firoz.khan@linaro.org>, Matt Turner <mattst88@gmail.com>, Fenghua Yu <fenghua.yu@intel.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190112203816.85534-2-joel@joelfernandes.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Joel Fernandes <joel@joelfernandes.org>
+Cc: lkml <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Daniel Colascione <dancol@google.com>, Hugh Dickins <hughd@google.com>, Jann Horn <jannh@google.com>, "J. Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel@vger.kernel.org, linux-kselftest@vger.kernel.org, linux-mm <linux-mm@kvack.org>, =?UTF-8?B?TWFyYy1BbmRyw6kgTHVyZWF1?= <marcandre.lureau@redhat.com>, Matthew Wilcox <willy@infradead.org>, Mike Kravetz <mike.kravetz@oracle.com>, Minchan Kim <minchan@kernel.org>, Shuah Khan <shuah@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Arnd,
-
-On Tue, Jan 15, 2019 at 4:19 PM Arnd Bergmann <arnd@arndb.de> wrote:
-> On Tue, Jan 15, 2019 at 4:01 PM Arnd Bergmann <arnd@arndb.de> wrote:
-> > On Mon, Jan 14, 2019 at 4:59 AM Michael Ellerman <mpe@ellerman.id.au> wrote:
-> > > Arnd Bergmann <arnd@arndb.de> writes:
-> > > >  arch/m68k/kernel/syscalls/syscall.tbl     | 11 +++++++++++
-> > > >  arch/mips/kernel/syscalls/syscall_o32.tbl | 11 +++++++++++
-> > > >  arch/powerpc/kernel/syscalls/syscall.tbl  | 12 ++++++++++++
-> > >
-> > > I have some changes I'd like to make to our syscall table that will
-> > > clash with this.
-> > >
-> > > I'll try and send them today.
-> >
-> > Ok. Are those for 5.0 or 5.1? If they are intended for 5.0, it would be
-> > nice for me to have a branch based on 5.0-rc1 that I can put
-> > the other patches on top of.
+On Sat, Jan 12, 2019 at 12:38 PM Joel Fernandes <joel@joelfernandes.org> wrote:
 >
-> There is also another change that I considered:
+> From: "Joel Fernandes (Google)" <joel@joelfernandes.org>
 >
-> At the end of my series, we have a lot of entries like
+> Android uses ashmem for sharing memory regions.  We are looking forward to
+> migrating all usecases of ashmem to memfd so that we can possibly remove
+> the ashmem driver in the future from staging while also benefiting from
+> using memfd and contributing to it.  Note staging drivers are also not ABI
+> and generally can be removed at anytime.
 >
-> 245     32      clock_settime                   sys_clock_settime32
-> 245     64      clock_settime                   sys_clock_settime
-> 245     spu     clock_settime                   sys_clock_settime
+> One of the main usecases Android has is the ability to create a region and
+> mmap it as writeable, then add protection against making any "future"
+> writes while keeping the existing already mmap'ed writeable-region active.
+> This allows us to implement a usecase where receivers of the shared
+> memory buffer can get a read-only view, while the sender continues to
+> write to the buffer.  See CursorWindow documentation in Android for more
+> details:
+> https://developer.android.com/reference/android/database/CursorWindow
 >
-> which could be folded into
+> This usecase cannot be implemented with the existing F_SEAL_WRITE seal.
+> To support the usecase, this patch adds a new F_SEAL_FUTURE_WRITE seal
+> which prevents any future mmap and write syscalls from succeeding while
+> keeping the existing mmap active.
 >
-> 245     32      clock_settime                   sys_clock_settime32
-> 245     spu64 clock_settime                   sys_clock_settime
+> A better way to do F_SEAL_FUTURE_WRITE seal was discussed [1] last week
+> where we don't need to modify core VFS structures to get the same
+> behavior of the seal. This solves several side-effects pointed by Andy.
+> self-tests are provided in later patch to verify the expected semantics.
 >
-> if we just add another option to the ABI field. Any thoughts on
-> that?
+> [1] https://lore.kernel.org/lkml/20181111173650.GA256781@google.com/
+>
+> [Thanks a lot to Andy for suggestions to improve code]
+> Cc: Andy Lutomirski <luto@kernel.org>
+> Signed-off-by: Joel Fernandes (Google) <joel@joelfernandes.org>
+> ---
+>  fs/hugetlbfs/inode.c       |  2 +-
+>  include/uapi/linux/fcntl.h |  1 +
+>  mm/memfd.c                 |  3 ++-
+>  mm/shmem.c                 | 25 ++++++++++++++++++++++---
+>  4 files changed, 26 insertions(+), 5 deletions(-)
 
-So "spu64" would mean "spu + 64"?
-That makes it more difficult to read, and to grep.
-What about allowing multiple ABIs, separated by commas?
-So that line would become:
-
-    245     spu,64 clock_settime                   sys_clock_settime
-
-Gr{oetje,eeting}s,
-
-                        Geert
-
--- 
-Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k.org
-
-In personal conversations with technical people, I call myself a hacker. But
-when I'm talking to journalists I just say "programmer" or something like that.
-                                -- Linus Torvalds
+Acked-by: John Stultz <john.stultz@linaro.org>
