@@ -1,49 +1,49 @@
 From: Linus Torvalds <torvalds@linux-foundation.org>
 Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
-Date: Wed, 16 Jan 2019 16:54:49 +1200
-Message-ID: <CAHk-=wjc2inOae8+9-DK4jFK78-7ZpNR=TEyZg0Dj57SYwP-ng@mail.gmail.com>
-References: <20190110070355.GJ27534@dastard> <CAHk-=wigwXV_G-V1VxLs6BAvVkvW5=Oj+xrNHxE_7yxEVwoe3w@mail.gmail.com>
+Date: Wed, 16 Jan 2019 17:00:25 +1200
+Message-ID: <CAHk-=wgF9p9xNzZei_-ejGLy1bJf4VS1C5E9_V0kCTEpCkpCTQ@mail.gmail.com>
+References: <20190108044336.GB27534@dastard> <CAHk-=wjvzEFQcTGJFh9cyV_MPQftNrjOLon8YMMxaX0G1TLqkg@mail.gmail.com>
+ <20190109022430.GE27534@dastard> <nycvar.YFH.7.76.1901090326460.16954@cbobk.fhfr.pm>
+ <20190109043906.GF27534@dastard> <CAHk-=wic28fSkwmPbBHZcJ3BGbiftprNy861M53k+=OAB9n0=w@mail.gmail.com>
+ <20190110004424.GH27534@dastard> <CAHk-=wg1jSQ-gq-M3+HeTBbDs1VCjyiwF4gqnnBhHeWizyrigg@mail.gmail.com>
+ <20190110070355.GJ27534@dastard> <CAHk-=wigwXV_G-V1VxLs6BAvVkvW5=Oj+xrNHxE_7yxEVwoe3w@mail.gmail.com>
  <20190110122442.GA21216@nautica> <CAHk-=wip2CPrdOwgF0z4n2tsdW7uu+Egtcx9Mxxe3gPfPW_JmQ@mail.gmail.com>
- <20190111020340.GM27534@dastard> <CAHk-=wgLgAzs42=W0tPrTVpu7H7fQ=BP5gXKnoNxMxh9=9uXag@mail.gmail.com>
- <20190111040434.GN27534@dastard> <CAHk-=wh-kegfnPC_dmw0A72Sdk4B9tvce-cOR=jEfHDU1-4Eew@mail.gmail.com>
- <20190111073606.GP27534@dastard> <CAHk-=wj+xyz_GKjgKpU6SF3qeqouGmRoR8uFxzg_c1VpeGEJMw@mail.gmail.com>
- <20190115234510.GA6173@dastard>
+ <5c3e7de6.1c69fb81.4aebb.3fec@mx.google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190115234510.GA6173@dastard>
+In-Reply-To: <5c3e7de6.1c69fb81.4aebb.3fec@mx.google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Chinner <david@fromorbit.com>
-Cc: Dominique Martinet <asmadeus@codewreck.org>, Jiri Kosina <jikos@kernel.org>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Josh Snyder <joshs@netflix.com>
+Cc: Dominique Martinet <asmadeus@codewreck.org>, Dave Chinner <david@fromorbit.com>, Jiri Kosina <jikos@kernel.org>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jan 16, 2019 at 11:45 AM Dave Chinner <david@fromorbit.com> wrote:
+On Wed, Jan 16, 2019 at 12:42 PM Josh Snyder <joshs@netflix.com> wrote:
 >
-> I'm assuming that you can invalidate the page cache reliably by a
-> means that does not repeated require probing to detect invalidation
-> has occurred. I've mentioned one method in this discussion
-> already...
+> For Netflix, losing accurate information from the mincore syscall would
+> lengthen database cluster maintenance operations from days to months.  We
+> rely on cross-process mincore to migrate the contents of a page cache from
+> machine to machine, and across reboots.
 
-Yes. And it was made clear to you that it was a bug in xfs dio and
-what the right thing to do was.
+Ok, this is the kind of feedback we need, and means I guess we can't
+just use the mapping existence for mincore.
 
-And you ignored that, and claimed it was a feature.
+The two other ways that we considered were:
 
-Why do you then bother arguing this thing? We absolutely agree that
-xfs has an information leak. If you don't care, just _say_ so. Don't
-try to argue against other people who are trying to fix things.
+ (a) owner of the file gets to know cache information for that file.
 
-We can easily just say "ok, xfs people don't care", and ignore the xfs
-invalidation issue. That's fine.
+ (b) having the fd opened *writably* gets you cache residency information.
 
-But don't try to make it a big deal for other filesystems that _don't_
-have the bug. I even pointed out how ext4 does the page cache flushing
-correcrly. You pooh-poohed it.
+Sadly, taking a look at happycache, you open the file read-only, so
+(b) doesn't work.
 
-You can't have it both ways.
+Judging just from the source code, I can't tell how the user ownership
+works. Any input on that?
 
-Either you care or you don't. If you don't care (and so far everything
-you said seems to imply you don't), then why are you even discussing
-this? Just admit you don't care, and we're done.
+And if you're not the owner of the file, do you have another
+suggestion for that "Yes, I have the right to see what's in-core for
+this file". Because the problem is literally that if it's some random
+read-only system file, the kernel shouldn't leak access patterns to
+it..
 
-                  Linus
+                     Linus
