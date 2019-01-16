@@ -1,68 +1,58 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
-Date: Wed, 16 Jan 2019 10:45:10 +1100
-Message-ID: <20190115234510.GA6173@dastard>
-References: <20190110070355.GJ27534@dastard>
- <CAHk-=wigwXV_G-V1VxLs6BAvVkvW5=Oj+xrNHxE_7yxEVwoe3w@mail.gmail.com>
- <20190110122442.GA21216@nautica>
- <CAHk-=wip2CPrdOwgF0z4n2tsdW7uu+Egtcx9Mxxe3gPfPW_JmQ@mail.gmail.com>
- <20190111020340.GM27534@dastard>
- <CAHk-=wgLgAzs42=W0tPrTVpu7H7fQ=BP5gXKnoNxMxh9=9uXag@mail.gmail.com>
- <20190111040434.GN27534@dastard>
- <CAHk-=wh-kegfnPC_dmw0A72Sdk4B9tvce-cOR=jEfHDU1-4Eew@mail.gmail.com>
- <20190111073606.GP27534@dastard>
- <CAHk-=wj+xyz_GKjgKpU6SF3qeqouGmRoR8uFxzg_c1VpeGEJMw@mail.gmail.com>
+From: Michael Ellerman <mpe@ellerman.id.au>
+Subject: Re: [PATCH 14/15] arch: add split IPC system calls where
+	needed
+Date: Wed, 16 Jan 2019 11:09:12 +1100
+Message-ID: <874la9zcnr.fsf@concordia.ellerman.id.au>
+References: <20190110162435.309262-1-arnd@arndb.de>
+ <20190110162435.309262-15-arnd@arndb.de>
+ <87pnsz28k2.fsf@concordia.ellerman.id.au>
+ <CAK8P3a0uas76i2W1yjFvxHT-2=A8_egUZeAUM-Vya6386+87Xg@mail.gmail.com>
+ <CAK8P3a3eUzGDrJtV2ySpgHwjKHwZYr+1xHp6tChCt1gWi=mJ+g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHk-=wj+xyz_GKjgKpU6SF3qeqouGmRoR8uFxzg_c1VpeGEJMw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Dominique Martinet <asmadeus@codewreck.org>, Jiri Kosina <jikos@kernel.org>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
+In-Reply-To: <CAK8P3a3eUzGDrJtV2ySpgHwjKHwZYr+1xHp6tChCt1gWi=mJ+g@mail.gmail.com>
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Rich Felker <dalias@libc.org>, linux-ia64@vger.kernel.org, Linux-sh list <linux-sh@vger.kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Dominik Brodowski <linux@dominikbrodowski.net>, linux-mips@vger.kernel.org, Max Filippov <jcmvbkbc@gmail.com>, Deepa Dinamani <deepa.kernel@gmail.com>, "H. Peter Anvin" <hpa@zytor.com>, sparclinux <sparclinux@vger.kernel.org>, linux-s390 <linux-s390@vger.kernel.org>, Davidlohr Bueso <dave@stgolabs.net>, y2038 Mailman List <y2038@lists.linaro.org>, Helge Deller <deller@gmx.de>, the arch/x86 maintainers <x86@kernel.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Ingo Molnar <mingo@redhat.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Firoz Khan <firoz.khan@linaro.org>, Matt Turner <mattst88@gmail.com>, Fenghua Yu <fenghua.yu@intel.com>, Will Deacon <will.deacon@arm.com>linux-
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jan 11, 2019 at 08:26:14AM -0800, Linus Torvalds wrote:
-> On Thu, Jan 10, 2019 at 11:36 PM Dave Chinner <david@fromorbit.com> wrote:
-> >
-> > > It's only that single page that *matters*. That's the page that the
-> > > probe reveals the status of - but it's also the page that the probe
-> > > then *changes* the status of.
-> >
-> > It changes the state of it /after/ we've already got the information
-> > we need from it. It's not up to date, it has to come from disk, we
-> > return EAGAIN, which means it was not in the cache.
-> 
-> Oh, I see the confusion.
-> 
-> Yes, you get the information about whether something was in the cache
-> or not, so the side channel does exist to some degree.
-> 
-> But it's actually hugely reduced for a rather important reason: the
-> _primary_ reason for needing to know whether some page is in the cache
-> or not is not actually to see if it was ever accessed - it's to see
-> that the cache has been scrubbed (and to _guide_ the scrubbing), and
-> *when* it was accessed.
-
-Oh, you're assuming that you need to probe the page cache to
-determine if brute force invalidation has progressed far enough
-to invalidate the page in question.
-
-I'm assuming that you can invalidate the page cache reliably by a
-means that does not repeated require probing to detect invalidation
-has occurred. I've mentioned one method in this discussion
-already...
-
-IOWs, just because the specific brute force attack documented in the
-paper required repeated probing it doesn't mean all future
-invalidation attacks will require repeated probing. Hence a robust
-defense mechanism should not rely on the attacker requiring multiple
-observations of the page cache to extract the information they are
-seeking...
-
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
+QXJuZCBCZXJnbWFubiA8YXJuZEBhcm5kYi5kZT4gd3JpdGVzOgoKPiBPbiBUdWUsIEphbiAxNSwg
+MjAxOSBhdCA0OjAxIFBNIEFybmQgQmVyZ21hbm4gPGFybmRAYXJuZGIuZGU+IHdyb3RlOgo+Pgo+
+PiBPbiBNb24sIEphbiAxNCwgMjAxOSBhdCA0OjU5IEFNIE1pY2hhZWwgRWxsZXJtYW4gPG1wZUBl
+bGxlcm1hbi5pZC5hdT4gd3JvdGU6Cj4+ID4gQXJuZCBCZXJnbWFubiA8YXJuZEBhcm5kYi5kZT4g
+d3JpdGVzOgo+PiA+ID4gIGFyY2gvbTY4ay9rZXJuZWwvc3lzY2FsbHMvc3lzY2FsbC50YmwgICAg
+IHwgMTEgKysrKysrKysrKysKPj4gPiA+ICBhcmNoL21pcHMva2VybmVsL3N5c2NhbGxzL3N5c2Nh
+bGxfbzMyLnRibCB8IDExICsrKysrKysrKysrCj4+ID4gPiAgYXJjaC9wb3dlcnBjL2tlcm5lbC9z
+eXNjYWxscy9zeXNjYWxsLnRibCAgfCAxMiArKysrKysrKysrKysKPj4gPgo+PiA+IEkgaGF2ZSBz
+b21lIGNoYW5nZXMgSSdkIGxpa2UgdG8gbWFrZSB0byBvdXIgc3lzY2FsbCB0YWJsZSB0aGF0IHdp
+bGwKPj4gPiBjbGFzaCB3aXRoIHRoaXMuCj4+ID4KPj4gPiBJJ2xsIHRyeSBhbmQgc2VuZCB0aGVt
+IHRvZGF5Lgo+Pgo+PiBPay4gQXJlIHRob3NlIGZvciA1LjAgb3IgNS4xPyBJZiB0aGV5IGFyZSBp
+bnRlbmRlZCBmb3IgNS4wLCBpdCB3b3VsZCBiZQo+PiBuaWNlIGZvciBtZSB0byBoYXZlIGEgYnJh
+bmNoIGJhc2VkIG9uIDUuMC1yYzEgdGhhdCBJIGNhbiBwdXQKPj4gdGhlIG90aGVyIHBhdGNoZXMg
+b24gdG9wIG9mLgo+Cj4gVGhlcmUgaXMgYWxzbyBhbm90aGVyIGNoYW5nZSB0aGF0IEkgY29uc2lk
+ZXJlZDoKPgo+IEF0IHRoZSBlbmQgb2YgbXkgc2VyaWVzLCB3ZSBoYXZlIGEgbG90IG9mIGVudHJp
+ZXMgbGlrZQo+Cj4gMjQ1ICAgICAzMiAgICAgIGNsb2NrX3NldHRpbWUgICAgICAgICAgICAgICAg
+ICAgc3lzX2Nsb2NrX3NldHRpbWUzMgo+IDI0NSAgICAgNjQgICAgICBjbG9ja19zZXR0aW1lICAg
+ICAgICAgICAgICAgICAgIHN5c19jbG9ja19zZXR0aW1lCj4gMjQ1ICAgICBzcHUgICAgIGNsb2Nr
+X3NldHRpbWUgICAgICAgICAgICAgICAgICAgc3lzX2Nsb2NrX3NldHRpbWUKPgo+IHdoaWNoIGNv
+dWxkIGJlIGZvbGRlZCBpbnRvCj4KPiAyNDUgICAgIDMyICAgICAgY2xvY2tfc2V0dGltZSAgICAg
+ICAgICAgICAgICAgICBzeXNfY2xvY2tfc2V0dGltZTMyCj4gMjQ1ICAgICBzcHU2NCBjbG9ja19z
+ZXR0aW1lICAgICAgICAgICAgICAgICAgIHN5c19jbG9ja19zZXR0aW1lCj4KPiBpZiB3ZSBqdXN0
+IGFkZCBhbm90aGVyIG9wdGlvbiB0byB0aGUgQUJJIGZpZWxkLiBBbnkgdGhvdWdodHMgb24KPiB0
+aGF0PwoKTXkgc2VyaWVzIHNwbGl0cyBzcHUgb3V0IGludG8gYSBzZXBhcmF0ZSBmaWVsZC4gU28g
+dGhlIGFib3ZlIHdvdWxkIGJlOgoKMjQ1ICAgICAzMgktCWNsb2NrX3NldHRpbWUgICAgICAgICAg
+ICAgICAgICAgc3lzX2Nsb2NrX3NldHRpbWUzMgoyNDUgICAgIDY0CXNwdQljbG9ja19zZXR0aW1l
+ICAgICAgICAgICAgICAgICAgIHN5c19jbG9ja19zZXR0aW1lCgpjaGVlcnMKX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KWTIwMzggbWFpbGluZyBsaXN0Clky
+MDM4QGxpc3RzLmxpbmFyby5vcmcKaHR0cHM6Ly9saXN0cy5saW5hcm8ub3JnL21haWxtYW4vbGlz
+dGluZm8veTIwMzgK
