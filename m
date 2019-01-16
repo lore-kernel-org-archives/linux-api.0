@@ -1,122 +1,60 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH 2/5] ipc: introduce ksys_ipc()/compat_ksys_ipc() for s390
-Date: Wed, 16 Jan 2019 14:15:20 +0100
-Message-ID: <20190116131527.2071570-3-arnd@arndb.de>
-References: <20190116131527.2071570-1-arnd@arndb.de>
+From: Jiri Kosina <jikos@kernel.org>
+Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
+Date: Wed, 16 Jan 2019 17:12:24 +0100 (CET)
+Message-ID: <nycvar.YFH.7.76.1901161710470.6626@cbobk.fhfr.pm>
+References: <20190110004424.GH27534@dastard> <CAHk-=wg1jSQ-gq-M3+HeTBbDs1VCjyiwF4gqnnBhHeWizyrigg@mail.gmail.com> <20190110070355.GJ27534@dastard> <CAHk-=wigwXV_G-V1VxLs6BAvVkvW5=Oj+xrNHxE_7yxEVwoe3w@mail.gmail.com> <20190110122442.GA21216@nautica>
+ <CAHk-=wip2CPrdOwgF0z4n2tsdW7uu+Egtcx9Mxxe3gPfPW_JmQ@mail.gmail.com> <5c3e7de6.1c69fb81.4aebb.3fec@mx.google.com> <CAHk-=wgF9p9xNzZei_-ejGLy1bJf4VS1C5E9_V0kCTEpCkpCTQ@mail.gmail.com> <9E337EA6-7CDA-457B-96C6-E91F83742587@amacapital.net>
+ <CAHk-=wjqkbjL2_BwUYxJxJhdadiw6Zx-Yu_mK3E6P7kG3wSGcQ@mail.gmail.com> <20190116054613.GA11670@nautica> <CAHk-=wjVjecbGRcxZUSwoSgAq9ZbMxbA=MOiqDrPgx7_P3xGhg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190116131527.2071570-1-arnd@arndb.de>
+In-Reply-To: <CAHk-=wjVjecbGRcxZUSwoSgAq9ZbMxbA=MOiqDrPgx7_P3xGhg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-s390@vger.kernel.org, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>
-Cc: linux-kernel@vger.kernel.org, y2038@lists.linaro.org, Dominik Brodowski <linux@dominikbrodowski.net>, Mark Rutland <mark.rutland@arm.com>, Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Dominique Martinet <asmadeus@codewreck.org>, Andy Lutomirski <luto@amacapital.net>, Josh Snyder <joshs@netflix.com>, Dave Chinner <david@fromorbit.com>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-The sys_ipc() and compat_ksys_ipc() functions are meant to only
-be used from the system call table, not called by another function.
+On Wed, 16 Jan 2019, Linus Torvalds wrote:
 
-Introduce ksys_*() interfaces for this purpose, as we have done
-for many other system calls.
+> > "Being owner or has cap" (whichever cap) is probably OK. On the other 
+> > hand, writeability check makes more sense in general - could we 
+> > somehow check if the user has write access to the file instead of 
+> > checking if it currently is opened read-write?
+> 
+> That's likely the best option. We could say "is it open for write, or
+> _could_ we open it for writing?"
+> 
+> It's a slightly annoying special case, and I'd have preferred to avoid
+> it, but it doesn't sound *compilcated*.
+> 
+> I'm on the road, but I did send out this:
+> 
+>     https://lore.kernel.org/lkml/CAHk-=wif_9nvNHJiyxHzJ80_WUb0P7CXNBvXkjZz-r1u0ozp7g@mail.gmail.com/
+> 
+> originally. The "let's try to only do the mmap residency" was the
+> optimistic "maybe we can just get rid of this complexity entirely"
+> version..
+> 
+> Anybody willing to test the above patch instead? And replace the
+> 
+>    || capable(CAP_SYS_ADMIN)
+> 
+> check with something like
+> 
+>    || inode_permission(inode, MAY_WRITE) == 0
+> 
+> instead?
+> 
+> (This is obviously after you've reverted the "only check mmap
+> residency" patch..)
 
-Signed-off-by: Arnd Bergmann <arnd@arndb.de>
----
- arch/s390/kernel/compat_linux.c |  2 +-
- arch/s390/kernel/sys_s390.c     |  2 +-
- include/linux/syscalls.h        |  4 ++++
- ipc/syscall.c                   | 20 ++++++++++++++++----
- 4 files changed, 22 insertions(+), 6 deletions(-)
+So that seems to deal with mincore() in a reasonable way indeed.
 
-diff --git a/arch/s390/kernel/compat_linux.c b/arch/s390/kernel/compat_linux.c
-index 8ac38d51ed7d..a47f6d3c6d5b 100644
---- a/arch/s390/kernel/compat_linux.c
-+++ b/arch/s390/kernel/compat_linux.c
-@@ -296,7 +296,7 @@ COMPAT_SYSCALL_DEFINE5(s390_ipc, uint, call, int, first, compat_ulong_t, second,
- {
- 	if (call >> 16)		/* hack for backward compatibility */
- 		return -EINVAL;
--	return compat_sys_ipc(call, first, second, third, ptr, third);
-+	return compat_ksys_ipc(call, first, second, third, ptr, third);
- }
- #endif
- 
-diff --git a/arch/s390/kernel/sys_s390.c b/arch/s390/kernel/sys_s390.c
-index 560bdaf8a74f..6aa8fe00b39e 100644
---- a/arch/s390/kernel/sys_s390.c
-+++ b/arch/s390/kernel/sys_s390.c
-@@ -74,7 +74,7 @@ SYSCALL_DEFINE5(s390_ipc, uint, call, int, first, unsigned long, second,
- 	 * Therefore we can call the generic variant by simply passing the
- 	 * third parameter also as fifth parameter.
- 	 */
--	return sys_ipc(call, first, second, third, ptr, third);
-+	return ksys_ipc(call, first, second, third, ptr, third);
- }
- 
- SYSCALL_DEFINE1(s390_personality, unsigned int, personality)
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 257cccba3062..fb63045a0fb6 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -1185,6 +1185,10 @@ unsigned long ksys_mmap_pgoff(unsigned long addr, unsigned long len,
- 			      unsigned long prot, unsigned long flags,
- 			      unsigned long fd, unsigned long pgoff);
- ssize_t ksys_readahead(int fd, loff_t offset, size_t count);
-+int ksys_ipc(unsigned int call, int first, unsigned long second,
-+	unsigned long third, void __user * ptr, long fifth);
-+int compat_ksys_ipc(u32 call, int first, int second,
-+	u32 third, u32 ptr, u32 fifth);
- 
- /*
-  * The following kernel syscall equivalents are just wrappers to fs-internal
-diff --git a/ipc/syscall.c b/ipc/syscall.c
-index 1ac06e3983c0..3cf8ad703a4d 100644
---- a/ipc/syscall.c
-+++ b/ipc/syscall.c
-@@ -17,8 +17,8 @@
- #include <linux/shm.h>
- #include <linux/uaccess.h>
- 
--SYSCALL_DEFINE6(ipc, unsigned int, call, int, first, unsigned long, second,
--		unsigned long, third, void __user *, ptr, long, fifth)
-+int ksys_ipc(unsigned int call, int first, unsigned long second,
-+	unsigned long third, void __user * ptr, long fifth)
- {
- 	int version, ret;
- 
-@@ -106,6 +106,12 @@ SYSCALL_DEFINE6(ipc, unsigned int, call, int, first, unsigned long, second,
- 		return -ENOSYS;
- 	}
- }
-+
-+SYSCALL_DEFINE6(ipc, unsigned int, call, int, first, unsigned long, second,
-+		unsigned long, third, void __user *, ptr, long, fifth)
-+{
-+	return ksys_ipc(call, first, second, third, ptr, fifth);
-+}
- #endif
- 
- #ifdef CONFIG_COMPAT
-@@ -121,8 +127,8 @@ struct compat_ipc_kludge {
- };
- 
- #ifdef CONFIG_ARCH_WANT_OLD_COMPAT_IPC
--COMPAT_SYSCALL_DEFINE6(ipc, u32, call, int, first, int, second,
--	u32, third, compat_uptr_t, ptr, u32, fifth)
-+int compat_ksys_ipc(u32 call, int first, int second,
-+	u32 third, compat_uptr_t ptr, u32 fifth)
- {
- 	int version;
- 	u32 pad;
-@@ -195,5 +201,11 @@ COMPAT_SYSCALL_DEFINE6(ipc, u32, call, int, first, int, second,
- 
- 	return -ENOSYS;
- }
-+
-+COMPAT_SYSCALL_DEFINE6(ipc, u32, call, int, first, int, second,
-+	u32, third, compat_uptr_t, ptr, u32, fifth)
-+{
-+	return compat_ksys_ipc(call, first, second, third, ptr, fifth);
-+}
- #endif
- #endif
+It doesn't unfortunately really solve the preadv2(RWF_NOWAIT), nor does it 
+provide any good answer what to do about it, does it?
+
+Thanks,
+
 -- 
-2.20.0
+Jiri Kosina
+SUSE Labs
