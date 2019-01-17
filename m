@@ -1,46 +1,71 @@
-From: Jiri Kosina <jikos@kernel.org>
+From: Cyril Hrubis <chrubis@suse.cz>
 Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
-Date: Thu, 17 Jan 2019 09:18:41 +0100 (CET)
-Message-ID: <nycvar.YFH.7.76.1901170917490.6626@cbobk.fhfr.pm>
-References: <CAHk-=wg1A44Roa8C4dmfdXLRLmNysEW36=3R7f+tzZzbcJ2d2g@mail.gmail.com> <CAHk-=wiqbKEC5jUXr3ax+oUuiRrp=QMv_ZnUfO-SPv=UNJ-OTw@mail.gmail.com> <20190108044336.GB27534@dastard> <CAHk-=wjvzEFQcTGJFh9cyV_MPQftNrjOLon8YMMxaX0G1TLqkg@mail.gmail.com>
- <20190109022430.GE27534@dastard> <nycvar.YFH.7.76.1901090326460.16954@cbobk.fhfr.pm> <20190109043906.GF27534@dastard> <CAHk-=wic28fSkwmPbBHZcJ3BGbiftprNy861M53k+=OAB9n0=w@mail.gmail.com> <20190110004424.GH27534@dastard> <nycvar.YFH.7.76.1901110836110.6626@cbobk.fhfr.pm>
- <20190117022244.GV4205@dastard>
+Date: Thu, 17 Jan 2019 10:52:03 +0100
+Message-ID: <20190117095203.GA23942@rei.lan>
+References: <CAHk-=wgF9p9xNzZei_-ejGLy1bJf4VS1C5E9_V0kCTEpCkpCTQ@mail.gmail.com>
+ <9E337EA6-7CDA-457B-96C6-E91F83742587@amacapital.net>
+ <CAHk-=wjqkbjL2_BwUYxJxJhdadiw6Zx-Yu_mK3E6P7kG3wSGcQ@mail.gmail.com>
+ <20190116054613.GA11670@nautica>
+ <CAHk-=wjVjecbGRcxZUSwoSgAq9ZbMxbA=MOiqDrPgx7_P3xGhg@mail.gmail.com>
+ <nycvar.YFH.7.76.1901161710470.6626@cbobk.fhfr.pm>
+ <CAHk-=wgsnWvSsMfoEYzOq6fpahkHWxF3aSJBbVqywLa34OXnLg@mail.gmail.com>
+ <nycvar.YFH.7.76.1901162120000.6626@cbobk.fhfr.pm>
+ <20190116213708.GN6310@bombadil.infradead.org>
+ <nycvar.YFH.7.76.1901162238310.6626@cbobk.fhfr.pm>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190117022244.GV4205@dastard>
+Content-Disposition: inline
+In-Reply-To: <nycvar.YFH.7.76.1901162238310.6626@cbobk.fhfr.pm>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Chinner <david@fromorbit.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Jiri Kosina <jikos@kernel.org>
+Cc: Matthew Wilcox <willy@infradead.org>, Linus Torvalds <torvalds@linux-foundation.org>, Dominique Martinet <asmadeus@codewreck.org>, Andy Lutomirski <luto@amacapital.net>, Josh Snyder <joshs@netflix.com>, Dave Chinner <david@fromorbit.com>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 17 Jan 2019, Dave Chinner wrote:
-
-> > > commit e837eac23662afae603aaaef7c94bc839c1b8f67
-> > > Author: Steve Lord <lord@sgi.com>
-> > > Date:   Mon Mar 5 16:47:52 2001 +0000
-> > > 
-> > >     Add bounds checking for direct I/O, do the cache invalidation for
-> > >     data coherency on direct I/O.
-> > 
-> > Out of curiosity, which repository is this from please? Even google 
-> > doesn't seem to know about this SHA.
+Hi!
+> > Your patch 3/3 just removes the test.  Am I right in thinking that it
+> > doesn't need to be *moved* because the existing test after !PageUptodate
+> > catches it?
 > 
-> because oss.sgi.com is no longer with us, it's fallen out of all the
-> search engines.  It was from the "archive/xfs-import.git" tree on
-> oss.sgi.com:
+> Exactly. It just initiates read-ahead for IOCB_NOWAIT cases as well, and 
+> if it's actually set, it'll be handled by the !PageUpdtodate case.
 > 
-> https://web.archive.org/web/20120326044237/http://oss.sgi.com:80/cgi-bin/gitweb.cgi
+> > Of course, there aren't any tests for RWF_NOWAIT in xfstests.  Are there 
+> > any in LTP?
 > 
-> but archive.org doesn't have a copy of the git tree. It contained
-> the XFS history right back to the first Irix commit in 1993. Some of
-> us still have copies of it sitting around....
+> Not in the released version AFAIK. I've asked the LTP maintainer (in our 
+> internal bugzilla) to take care of this thread a few days ago, but not 
+> sure what came out of it. Adding him (Cyril) to CC.
 
-For cases like this, would it be worth pushing it to git.kernel.org as an 
-frozen historical reference archive?
+So far not much, I've looked over our mincore() tests and noted down how
+to improve them here:
 
-Thanks,
+https://github.com/linux-test-project/ltp/issues/461
+
+We do plan to test the final mincore() fix:
+
+https://github.com/linux-test-project/ltp/issues/460
+
+And we do have RWF_NOWAIT tests on our TODO for some time as well:
+
+https://github.com/linux-test-project/ltp/issues/286
+
+I guess I can raise priority for that one so that we have basic
+functional tests in a week or so. Also if anyone has some RWF_NOWAIT
+tests already it would be nice if these could be shared with us.
+
+
+[A bit off topic rant]
+
+I've been telling kernel developers for years that if they have a test
+code they used when developing a kernel feature that they should share
+it with us (LTP community) and we will turn these into automated tests
+and maintain them for free. LTP is also used in many QA departements
+around the word so such tests will end up executed in different
+environments also for free. Sadly this does not happen much and there
+are only few exceptions so far. But maybe I wasn't shouting loudly
+enough.
 
 -- 
-Jiri Kosina
-SUSE Labs
+Cyril Hrubis
+chrubis@suse.cz
