@@ -1,52 +1,50 @@
-From: Gabriel Paubert <paubert@iram.es>
-Subject: Re: [PATCH v2 13/29] arch: add split IPC system calls where needed
-Date: Fri, 18 Jan 2019 18:18:30 +0100
-Message-ID: <20190118171830.quvvwdgbuhq2nqrh@lt-gp.iram.es>
-References: <20190118161835.2259170-1-arnd@arndb.de>
- <20190118161835.2259170-14-arnd@arndb.de>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [RFC PATCH glibc 1/4] glibc: Perform rseq(2) registration at C
+ startup and thread creation (v5)
+Date: Fri, 18 Jan 2019 12:41:45 -0500 (EST)
+Message-ID: <1887968822.1146.1547833305059.JavaMail.zimbra@efficios.com>
+References: <20190115015148.32155-1-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-Content-Disposition: inline
-In-Reply-To: <20190118161835.2259170-14-arnd@arndb.de>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: dalias@libc.org, linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, catalin.marinas@arm.com, will.deacon@arm.com, linux-mips@vger.kernel.org, jcmvbkbc@gmail.com, deepa.kernel@gmail.com, hpa@zytor.com, sparclinux@vger.kernel.org, linux-arch@vger.kernel.org, linux-s390@vger.kernel.org, y2038@lists.linaro.org, deller@gmx.de, x86@kernel.org, linux@armlinux.org.uk, mingo@redhat.com, geert@linux-m68k.org, firoz.khan@linaro.org, mattst88@gmail.com, fenghua.yu@intel.com, heiko.carstens@de.ibm.com, linux-alpha@vger.kernel.org, schwidefsky@de.ibm.com, linux-m68k@lists.linux-m68k.org, luto@kernel.org, tglx@linutronix.de, linux-arm-kernel@lists.infradead.org, monstr@monstr.eu, tony.luck@intel.com, linux-parisc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, paul.burton@mips.com, ebiederm@xmission.com, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190115015148.32155-1-mathieu.desnoyers@efficios.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Carlos O'Donell <carlos@redhat.com>
+Cc: Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jan 18, 2019 at 05:18:19PM +0100, Arnd Bergmann wrote:
-> The IPC system call handling is highly inconsistent across architectures,
-> some use sys_ipc, some use separate calls, and some use both.  We also
-> have some architectures that require passing IPC_64 in the flags, and
-> others that set it implicitly.
-> 
-> For the additon of a y2083 safe semtimedop() system call, I chose to only
+----- On Jan 14, 2019, at 8:51 PM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
 
-It's not critical, but there are two typos in that line: 
-additon -> addition
-2083 -> 2038
+[...]
 
-	Gabriel
+> diff --git a/sysdeps/unix/sysv/linux/rseq-sym.c
+> b/sysdeps/unix/sysv/linux/rseq-sym.c
+> new file mode 100644
+> index 0000000000..6856d0388a
+[...]
+> +/* volatile because fields can be read/updated by the kernel.  */
+> +__thread volatile struct rseq __rseq_abi = {
+> +  .cpu_id = RSEQ_CPU_ID_UNINITIALIZED,
+> +};
+> +
+> +/* volatile because refcount can be read/updated by signal handlers.  */
+> +__thread volatile uint32_t __rseq_refcount;
 
-> support the separate entry points, but that requires first supporting
-> the regular ones with their own syscall numbers.
-> 
-> The IPC_64 is now implied by the new semctl/shmctl/msgctl system
-> calls even on the architectures that require passing it with the ipc()
-> multiplexer.
-> 
-> I'm not adding the new semtimedop() or semop() on 32-bit architectures,
-> those will get implemented using the new semtimedop_time64() version
-> that gets added along with the other time64 calls.
-> Three 64-bit architectures (powerpc, s390 and sparc) get semtimedop().
-> 
-> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+Back to the weak vs non-weak question about those two symbols. I understand
+that tagging them as weak symbols has little effect on the dynamic loader
+when it loads libc.so. However, I'm worried about that happens when
+libc is statically linked into an application, and there happens to
+be more than one instance of those symbols (e.g. libc and another library
+define the same symbols, and both are statically linked into the same
+application). Isn't it a situation where tagging those symbols as "weak"
+becomes useful ?
+
+Thanks,
+
+Mathieu
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
