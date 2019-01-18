@@ -1,155 +1,105 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH v2 14/29] arch: add pkey and rseq syscall numbers
-	everywhere
-Date: Fri, 18 Jan 2019 17:18:20 +0100
-Message-ID: <20190118161835.2259170-15-arnd@arndb.de>
+Subject: [PATCH v2 17/29] syscalls: remove obsolete __IGNORE_ macros
+Date: Fri, 18 Jan 2019 17:18:23 +0100
+Message-ID: <20190118161835.2259170-18-arnd@arndb.de>
 References: <20190118161835.2259170-1-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190118161835.2259170-1-arnd@arndb.de>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+Sender: linux-kernel-owner@vger.kernel.org
 To: y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org
-Cc: dalias@libc.org, linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, catalin.marinas@arm.com, will.deacon@arm.com, jcmvbkbc@gmail.com, deepa.kernel@gmail.com, hpa@zytor.com, sparclinux@vger.kernel.org, linux-s390@vger.kernel.org, mpe@ellerman.id.au, deller@gmx.de, x86@kernel.org, linux@armlinux.org.uk, mingo@redhat.com, geert@linux-m68k.org, benh@kernel.crashing.org, firoz.khan@linaro.org, mattst88@gmail.com, fenghua.yu@intel.com, Arnd Bergmann <arnd@arndb.de>, heiko.carstens@de.ibm.com, linux-fsdevel@vger.kernel.org, linux-m68k@lists.linux-m68k.org, luto@kernel.org, tglx@linutronix.de, linux-arm-kernel@lists.infradead.org, monstr@monstr.eu, tony.luck@intel.com, linux-parisc@vger.kernel.org, netdev@vger.kernel.org, linux-mips@vger.kernel.org, paul.burton@mips.com, ebiederm@xmission.com, linux-alpha@vger.kernel.org, schwidefsky@de.ibm.com, akpm@linux-foundation.orglinu
+Cc: Arnd Bergmann <arnd@arndb.de>, mattst88@gmail.com, linux@armlinux.org.uk, catalin.marinas@arm.com, will.deacon@arm.com, tony.luck@intel.com, fenghua.yu@intel.com, geert@linux-m68k.org, monstr@monstr.eu, paul.burton@mips.com, deller@gmx.de, benh@kernel.crashing.org, mpe@ellerman.id.au, schwidefsky@de.ibm.com, heiko.carstens@de.ibm.com, dalias@libc.org, davem@davemloft.net, luto@kernel.org, tglx@linutronix.de, mingo@redhat.com, hpa@zytor.com, x86@kernel.org, jcmvbkbc@gmail.com, akpm@linux-foundation.org, deepa.kernel@gmail.com, ebiederm@xmission.com, firoz.khan@linaro.org, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.or
 List-Id: linux-api@vger.kernel.org
 
-TW9zdCBhcmNoaXRlY3R1cmVzIGRlZmluZSBzeXN0ZW0gY2FsbCBudW1iZXJzIGZvciB0aGUgcnNl
-cSBhbmQgcGtleSBzeXN0ZW0KY2FsbHMsIGV2ZW4gd2hlbiB0aGV5IGRvbid0IHN1cHBvcnQgdGhl
-IGZlYXR1cmVzLCBhbmQgcGVyaGFwcyBuZXZlciB3aWxsLgoKT25seSBhIGZldyBhcmNoaXRlY3R1
-cmVzIGFyZSBtaXNzaW5nIHRoZXNlLCBzbyBqdXN0IGRlZmluZSB0aGVtIGFueXdheQpmb3IgY29u
-c2lzdGVuY3kuIElmIHdlIGRlY2lkZSB0byBhZGQgdGhlbSBsYXRlciB0byBvbmUgb2YgdGhlc2Us
-IHRoZQpzeXN0ZW0gY2FsbCBudW1iZXJzIHdvbid0IGdldCBvdXQgb2Ygc3luYyB0aGVuLgoKU2ln
-bmVkLW9mZi1ieTogQXJuZCBCZXJnbWFubiA8YXJuZEBhcm5kYi5kZT4KLS0tCiBhcmNoL2FscGhh
-L2luY2x1ZGUvYXNtL3VuaXN0ZC5oICAgICAgICAgfCA0IC0tLS0KIGFyY2gvYWxwaGEva2VybmVs
-L3N5c2NhbGxzL3N5c2NhbGwudGJsICB8IDQgKysrKwogYXJjaC9pYTY0L2tlcm5lbC9zeXNjYWxs
-cy9zeXNjYWxsLnRibCAgIHwgNCArKysrCiBhcmNoL202OGsva2VybmVsL3N5c2NhbGxzL3N5c2Nh
-bGwudGJsICAgfCA0ICsrKysKIGFyY2gvcGFyaXNjL2luY2x1ZGUvYXNtL3VuaXN0ZC5oICAgICAg
-ICB8IDMgLS0tCiBhcmNoL3BhcmlzYy9rZXJuZWwvc3lzY2FsbHMvc3lzY2FsbC50YmwgfCA0ICsr
-KysKIGFyY2gvczM5MC9pbmNsdWRlL2FzbS91bmlzdGQuaCAgICAgICAgICB8IDMgLS0tCiBhcmNo
-L3MzOTAva2VybmVsL3N5c2NhbGxzL3N5c2NhbGwudGJsICAgfCAzICsrKwogYXJjaC9zaC9rZXJu
-ZWwvc3lzY2FsbHMvc3lzY2FsbC50YmwgICAgIHwgNCArKysrCiBhcmNoL3NwYXJjL2luY2x1ZGUv
-YXNtL3VuaXN0ZC5oICAgICAgICAgfCA1IC0tLS0tCiBhcmNoL3NwYXJjL2tlcm5lbC9zeXNjYWxs
-cy9zeXNjYWxsLnRibCAgfCA0ICsrKysKIGFyY2gveHRlbnNhL2tlcm5lbC9zeXNjYWxscy9zeXNj
-YWxsLnRibCB8IDEgKwogMTIgZmlsZXMgY2hhbmdlZCwgMjggaW5zZXJ0aW9ucygrKSwgMTUgZGVs
-ZXRpb25zKC0pCgpkaWZmIC0tZ2l0IGEvYXJjaC9hbHBoYS9pbmNsdWRlL2FzbS91bmlzdGQuaCBi
-L2FyY2gvYWxwaGEvaW5jbHVkZS9hc20vdW5pc3RkLmgKaW5kZXggNTY0YmE4N2JkYzM4Li4zMWFk
-MzUwYjU4YTAgMTAwNjQ0Ci0tLSBhL2FyY2gvYWxwaGEvaW5jbHVkZS9hc20vdW5pc3RkLmgKKysr
-IGIvYXJjaC9hbHBoYS9pbmNsdWRlL2FzbS91bmlzdGQuaApAQCAtMjksOSArMjksNSBAQAogI2Rl
-ZmluZSBfX0lHTk9SRV9nZXRwcGlkCiAjZGVmaW5lIF9fSUdOT1JFX2dldHVpZAogCi0vKiBBbHBo
-YSBkb2Vzbid0IGhhdmUgcHJvdGVjdGlvbiBrZXlzLiAqLwotI2RlZmluZSBfX0lHTk9SRV9wa2V5
-X21wcm90ZWN0Ci0jZGVmaW5lIF9fSUdOT1JFX3BrZXlfYWxsb2MKLSNkZWZpbmUgX19JR05PUkVf
-cGtleV9mcmVlCiAKICNlbmRpZiAvKiBfQUxQSEFfVU5JU1REX0ggKi8KZGlmZiAtLWdpdCBhL2Fy
-Y2gvYWxwaGEva2VybmVsL3N5c2NhbGxzL3N5c2NhbGwudGJsIGIvYXJjaC9hbHBoYS9rZXJuZWwv
-c3lzY2FsbHMvc3lzY2FsbC50YmwKaW5kZXggYjBlMjQ3Mjg3OTA4Li4yNWI0YTdlNzY5NDMgMTAw
-NjQ0Ci0tLSBhL2FyY2gvYWxwaGEva2VybmVsL3N5c2NhbGxzL3N5c2NhbGwudGJsCisrKyBiL2Fy
-Y2gvYWxwaGEva2VybmVsL3N5c2NhbGxzL3N5c2NhbGwudGJsCkBAIC00NTIsMyArNDUyLDcgQEAK
-IDUyMQljb21tb24JcHdyaXRldjIJCQlzeXNfcHdyaXRldjIKIDUyMgljb21tb24Jc3RhdHgJCQkJ
-c3lzX3N0YXR4CiA1MjMJY29tbW9uCWlvX3BnZXRldmVudHMJCQlzeXNfaW9fcGdldGV2ZW50cwor
-NTI0CWNvbW1vbglwa2V5X2FsbG9jCQkJc3lzX3BrZXlfYWxsb2MKKzUyNQljb21tb24JcGtleV9m
-cmVlCQkJc3lzX3BrZXlfZnJlZQorNTI2CWNvbW1vbglwa2V5X21wcm90ZWN0CQkJc3lzX3BrZXlf
-bXByb3RlY3QKKzUyNwljb21tb24JcnNlcQkJCQlzeXNfcnNlcQpkaWZmIC0tZ2l0IGEvYXJjaC9p
-YTY0L2tlcm5lbC9zeXNjYWxscy9zeXNjYWxsLnRibCBiL2FyY2gvaWE2NC9rZXJuZWwvc3lzY2Fs
-bHMvc3lzY2FsbC50YmwKaW5kZXggMmU5M2RiZGNkYjgwLi44NGUwM2RlMDAxNzcgMTAwNjQ0Ci0t
-LSBhL2FyY2gvaWE2NC9rZXJuZWwvc3lzY2FsbHMvc3lzY2FsbC50YmwKKysrIGIvYXJjaC9pYTY0
-L2tlcm5lbC9zeXNjYWxscy9zeXNjYWxsLnRibApAQCAtMzM5LDMgKzMzOSw3IEBACiAzMjcJY29t
-bW9uCWlvX3BnZXRldmVudHMJCQlzeXNfaW9fcGdldGV2ZW50cwogMzI4CWNvbW1vbglwZXJmX2V2
-ZW50X29wZW4JCQlzeXNfcGVyZl9ldmVudF9vcGVuCiAzMjkJY29tbW9uCXNlY2NvbXAJCQkJc3lz
-X3NlY2NvbXAKKzMzMAljb21tb24JcGtleV9hbGxvYwkJCXN5c19wa2V5X2FsbG9jCiszMzEJY29t
-bW9uCXBrZXlfZnJlZQkJCXN5c19wa2V5X2ZyZWUKKzMzMgljb21tb24JcGtleV9tcHJvdGVjdAkJ
-CXN5c19wa2V5X21wcm90ZWN0CiszMzMJY29tbW9uCXJzZXEJCQkJc3lzX3JzZXEKZGlmZiAtLWdp
-dCBhL2FyY2gvbTY4ay9rZXJuZWwvc3lzY2FsbHMvc3lzY2FsbC50YmwgYi9hcmNoL202OGsva2Vy
-bmVsL3N5c2NhbGxzL3N5c2NhbGwudGJsCmluZGV4IDUzNTRiYTAyZWVkMi4uYWU4OGI4NWQwNjhl
-IDEwMDY0NAotLS0gYS9hcmNoL202OGsva2VybmVsL3N5c2NhbGxzL3N5c2NhbGwudGJsCisrKyBi
-L2FyY2gvbTY4ay9rZXJuZWwvc3lzY2FsbHMvc3lzY2FsbC50YmwKQEAgLTM4OCw2ICszODgsMTAg
-QEAKIDM3OAljb21tb24JcHdyaXRldjIJCQlzeXNfcHdyaXRldjIKIDM3OQljb21tb24Jc3RhdHgJ
-CQkJc3lzX3N0YXR4CiAzODAJY29tbW9uCXNlY2NvbXAJCQkJc3lzX3NlY2NvbXAKKzM4MQljb21t
-b24JcGtleV9hbGxvYwkJCXN5c19wa2V5X2FsbG9jCiszODIJY29tbW9uCXBrZXlfZnJlZQkJCXN5
-c19wa2V5X2ZyZWUKKzM4Mwljb21tb24JcGtleV9tcHJvdGVjdAkJCXN5c19wa2V5X21wcm90ZWN0
-CiszODQJY29tbW9uCXJzZXEJCQkJc3lzX3JzZXEKICMgcm9vbSBmb3IgYXJjaCBzcGVjaWZpYyBj
-YWxscwogMzkzCWNvbW1vbglzZW1nZXQJCQkJc3lzX3NlbWdldAogMzk0CWNvbW1vbglzZW1jdGwJ
-CQkJc3lzX3NlbWN0bApkaWZmIC0tZ2l0IGEvYXJjaC9wYXJpc2MvaW5jbHVkZS9hc20vdW5pc3Rk
-LmggYi9hcmNoL3BhcmlzYy9pbmNsdWRlL2FzbS91bmlzdGQuaAppbmRleCBjMmMyYWZiMjg5NDEu
-LjllYzEwMjZhZjg3NyAxMDA2NDQKLS0tIGEvYXJjaC9wYXJpc2MvaW5jbHVkZS9hc20vdW5pc3Rk
-LmgKKysrIGIvYXJjaC9wYXJpc2MvaW5jbHVkZS9hc20vdW5pc3RkLmgKQEAgLTEyLDkgKzEyLDYg
-QEAKIAogI2RlZmluZSBfX0lHTk9SRV9zZWxlY3QJCQkvKiBuZXdzZWxlY3QgKi8KICNkZWZpbmUg
-X19JR05PUkVfZmFkdmlzZTY0CQkvKiBmYWR2aXNlNjRfNjQgKi8KLSNkZWZpbmUgX19JR05PUkVf
-cGtleV9tcHJvdGVjdAotI2RlZmluZSBfX0lHTk9SRV9wa2V5X2FsbG9jCi0jZGVmaW5lIF9fSUdO
-T1JFX3BrZXlfZnJlZQogCiAjaWZuZGVmIEFTTV9MSU5FX1NFUAogIyBkZWZpbmUgQVNNX0xJTkVf
-U0VQIDsKZGlmZiAtLWdpdCBhL2FyY2gvcGFyaXNjL2tlcm5lbC9zeXNjYWxscy9zeXNjYWxsLnRi
-bCBiL2FyY2gvcGFyaXNjL2tlcm5lbC9zeXNjYWxscy9zeXNjYWxsLnRibAppbmRleCA5YmJkMmY5
-ZjU2YzguLmUwNzIzMWRlMzU5NyAxMDA2NDQKLS0tIGEvYXJjaC9wYXJpc2Mva2VybmVsL3N5c2Nh
-bGxzL3N5c2NhbGwudGJsCisrKyBiL2FyY2gvcGFyaXNjL2tlcm5lbC9zeXNjYWxscy9zeXNjYWxs
-LnRibApAQCAtMzY3LDMgKzM2Nyw3IEBACiAzNDgJY29tbW9uCXB3cml0ZXYyCQlzeXNfcHdyaXRl
-djIJCQljb21wYXRfc3lzX3B3cml0ZXYyCiAzNDkJY29tbW9uCXN0YXR4CQkJc3lzX3N0YXR4CiAz
-NTAJY29tbW9uCWlvX3BnZXRldmVudHMJCXN5c19pb19wZ2V0ZXZlbnRzCQljb21wYXRfc3lzX2lv
-X3BnZXRldmVudHMKKzM1MQljb21tb24JcGtleV9hbGxvYwkJc3lzX3BrZXlfYWxsb2MKKzM1Mglj
-b21tb24JcGtleV9mcmVlCQlzeXNfcGtleV9mcmVlCiszNTMJY29tbW9uCXBrZXlfbXByb3RlY3QJ
-CXN5c19wa2V5X21wcm90ZWN0CiszNTQJY29tbW9uCXJzZXEJCQlzeXNfcnNlcQpkaWZmIC0tZ2l0
-IGEvYXJjaC9zMzkwL2luY2x1ZGUvYXNtL3VuaXN0ZC5oIGIvYXJjaC9zMzkwL2luY2x1ZGUvYXNt
-L3VuaXN0ZC5oCmluZGV4IGExZmJmMTVkNTNhYS4uZWQwOGYxMTRlZTkxIDEwMDY0NAotLS0gYS9h
-cmNoL3MzOTAvaW5jbHVkZS9hc20vdW5pc3RkLmgKKysrIGIvYXJjaC9zMzkwL2luY2x1ZGUvYXNt
-L3VuaXN0ZC5oCkBAIC0xMSw5ICsxMSw2IEBACiAjaW5jbHVkZSA8YXNtL3VuaXN0ZF9uci5oPgog
-CiAjZGVmaW5lIF9fSUdOT1JFX3RpbWUKLSNkZWZpbmUgX19JR05PUkVfcGtleV9tcHJvdGVjdAot
-I2RlZmluZSBfX0lHTk9SRV9wa2V5X2FsbG9jCi0jZGVmaW5lIF9fSUdOT1JFX3BrZXlfZnJlZQog
-CiAjZGVmaW5lIF9fQVJDSF9XQU5UX05FV19TVEFUCiAjZGVmaW5lIF9fQVJDSF9XQU5UX09MRF9S
-RUFERElSCmRpZmYgLS1naXQgYS9hcmNoL3MzOTAva2VybmVsL3N5c2NhbGxzL3N5c2NhbGwudGJs
-IGIvYXJjaC9zMzkwL2tlcm5lbC9zeXNjYWxscy9zeXNjYWxsLnRibAppbmRleCAwYmNjYjAxYzYy
-MDIuLjE0MTQyZWIyMWY4ZiAxMDA2NDQKLS0tIGEvYXJjaC9zMzkwL2tlcm5lbC9zeXNjYWxscy9z
-eXNjYWxsLnRibAorKysgYi9hcmNoL3MzOTAva2VybmVsL3N5c2NhbGxzL3N5c2NhbGwudGJsCkBA
-IC0zOTEsNiArMzkxLDkgQEAKIDM4MSAgY29tbW9uCWtleGVjX2ZpbGVfbG9hZAkJc3lzX2tleGVj
-X2ZpbGVfbG9hZAkJc3lzX2tleGVjX2ZpbGVfbG9hZAogMzgyICBjb21tb24JaW9fcGdldGV2ZW50
-cwkJc3lzX2lvX3BnZXRldmVudHMJCWNvbXBhdF9zeXNfaW9fcGdldGV2ZW50cwogMzgzICBjb21t
-b24JcnNlcQkJCXN5c19yc2VxCQkJc3lzX3JzZXEKKzM4NCAgY29tbW9uCXBrZXlfYWxsb2MJCXN5
-c19wa2V5X2FsbG9jCQkJc3lzX3BrZXlfYWxsb2MKKzM4NSAgY29tbW9uCXBrZXlfZnJlZQkJc3lz
-X3BrZXlfZnJlZQkJCXN5c19wa2V5X2ZyZWUKKzM4NiAgY29tbW9uCXBrZXlfbXByb3RlY3QJCXN5
-c19wa2V5X21wcm90ZWN0CQlzeXNfcGtleV9tcHJvdGVjdAogIyByb29tIGZvciBhcmNoIHNwZWNp
-ZmljIHN5c2NhbGxzCiAzOTIJNjQJc2VtdGltZWRvcAkJc3lzX3NlbXRpbWVkb3AJCQktCiAzOTMg
-IGNvbW1vbglzZW1nZXQJCQlzeXNfc2VtZ2V0CQkJc3lzX3NlbWdldApkaWZmIC0tZ2l0IGEvYXJj
-aC9zaC9rZXJuZWwvc3lzY2FsbHMvc3lzY2FsbC50YmwgYi9hcmNoL3NoL2tlcm5lbC9zeXNjYWxs
-cy9zeXNjYWxsLnRibAppbmRleCA2ZDBiODRlM2VmMmQuLjNmOTZhZDA0MjRlMSAxMDA2NDQKLS0t
-IGEvYXJjaC9zaC9rZXJuZWwvc3lzY2FsbHMvc3lzY2FsbC50YmwKKysrIGIvYXJjaC9zaC9rZXJu
-ZWwvc3lzY2FsbHMvc3lzY2FsbC50YmwKQEAgLTM5MSw2ICszOTEsMTAgQEAKIDM4MQljb21tb24J
-cHJlYWR2MgkJCQlzeXNfcHJlYWR2MgogMzgyCWNvbW1vbglwd3JpdGV2MgkJCXN5c19wd3JpdGV2
-MgogMzgzCWNvbW1vbglzdGF0eAkJCQlzeXNfc3RhdHgKKzM4NAljb21tb24JcGtleV9hbGxvYwkJ
-CXN5c19wa2V5X2FsbG9jCiszODUJY29tbW9uCXBrZXlfZnJlZQkJCXN5c19wa2V5X2ZyZWUKKzM4
-Ngljb21tb24JcGtleV9tcHJvdGVjdAkJCXN5c19wa2V5X21wcm90ZWN0CiszODcJY29tbW9uCXJz
-ZXEJCQkJc3lzX3JzZXEKICMgcm9vbSBmb3IgYXJjaCBzcGVjaWZpYyBzeXNjYWxscwogMzkzCWNv
-bW1vbglzZW1nZXQJCQkJc3lzX3NlbWdldAogMzk0CWNvbW1vbglzZW1jdGwJCQkJc3lzX3NlbWN0
-bApkaWZmIC0tZ2l0IGEvYXJjaC9zcGFyYy9pbmNsdWRlL2FzbS91bmlzdGQuaCBiL2FyY2gvc3Bh
-cmMvaW5jbHVkZS9hc20vdW5pc3RkLmgKaW5kZXggNTE5NGQ4NmVmNzJkLi4wODY5NmVhNWRjYTgg
-MTAwNjQ0Ci0tLSBhL2FyY2gvc3BhcmMvaW5jbHVkZS9hc20vdW5pc3RkLmgKKysrIGIvYXJjaC9z
-cGFyYy9pbmNsdWRlL2FzbS91bmlzdGQuaApAQCAtNTksOSArNTksNCBAQAogI2RlZmluZSBfX0lH
-Tk9SRV9nZXRyZXNnaWQKICNlbmRpZgogCi0vKiBTcGFyYyBkb2Vzbid0IGhhdmUgcHJvdGVjdGlv
-biBrZXlzLiAqLwotI2RlZmluZSBfX0lHTk9SRV9wa2V5X21wcm90ZWN0Ci0jZGVmaW5lIF9fSUdO
-T1JFX3BrZXlfYWxsb2MKLSNkZWZpbmUgX19JR05PUkVfcGtleV9mcmVlCi0KICNlbmRpZiAvKiBf
-U1BBUkNfVU5JU1REX0ggKi8KZGlmZiAtLWdpdCBhL2FyY2gvc3BhcmMva2VybmVsL3N5c2NhbGxz
-L3N5c2NhbGwudGJsIGIvYXJjaC9zcGFyYy9rZXJuZWwvc3lzY2FsbHMvc3lzY2FsbC50YmwKaW5k
-ZXggOGM5NTgwMzAyNDIyLi4yNGViZWY2NzUxODQgMTAwNjQ0Ci0tLSBhL2FyY2gvc3BhcmMva2Vy
-bmVsL3N5c2NhbGxzL3N5c2NhbGwudGJsCisrKyBiL2FyY2gvc3BhcmMva2VybmVsL3N5c2NhbGxz
-L3N5c2NhbGwudGJsCkBAIC00MDcsNiArNDA3LDEwIEBACiAzNTkJY29tbW9uCXB3cml0ZXYyCQlz
-eXNfcHdyaXRldjIJCQljb21wYXRfc3lzX3B3cml0ZXYyCiAzNjAJY29tbW9uCXN0YXR4CQkJc3lz
-X3N0YXR4CiAzNjEJY29tbW9uCWlvX3BnZXRldmVudHMJCXN5c19pb19wZ2V0ZXZlbnRzCQljb21w
-YXRfc3lzX2lvX3BnZXRldmVudHMKKzM2Mgljb21tb24JcGtleV9hbGxvYwkJc3lzX3BrZXlfYWxs
-b2MKKzM2Mwljb21tb24JcGtleV9mcmVlCQlzeXNfcGtleV9mcmVlCiszNjQJY29tbW9uCXBrZXlf
-bXByb3RlY3QJCXN5c19wa2V5X21wcm90ZWN0CiszNjUJY29tbW9uCXJzZXEJCQlzeXNfcnNlcQog
-IyByb29tIGZvciBhcmNoIHNwZWNpZmljIHN5c2NhbGxzCiAzOTIJNjQJc2VtdGltZWRvcAkJCXN5
-c19zZW10aW1lZG9wCiAzOTMJY29tbW9uCXNlbWdldAkJCXN5c19zZW1nZXQKZGlmZiAtLWdpdCBh
-L2FyY2gveHRlbnNhL2tlcm5lbC9zeXNjYWxscy9zeXNjYWxsLnRibCBiL2FyY2gveHRlbnNhL2tl
-cm5lbC9zeXNjYWxscy9zeXNjYWxsLnRibAppbmRleCBmOGJlZmExMWIwYzQuLmM2OTllMDE0ZTBk
-ZCAxMDA2NDQKLS0tIGEvYXJjaC94dGVuc2Eva2VybmVsL3N5c2NhbGxzL3N5c2NhbGwudGJsCisr
-KyBiL2FyY2gveHRlbnNhL2tlcm5lbC9zeXNjYWxscy9zeXNjYWxsLnRibApAQCAtMzcyLDMgKzM3
-Miw0IEBACiAzNDkJY29tbW9uCXBrZXlfYWxsb2MJCQlzeXNfcGtleV9hbGxvYwogMzUwCWNvbW1v
-bglwa2V5X2ZyZWUJCQlzeXNfcGtleV9mcmVlCiAzNTEJY29tbW9uCXN0YXR4CQkJCXN5c19zdGF0
-eAorMzUyCWNvbW1vbglyc2VxCQkJCXN5c19yc2VxCi0tIAoyLjIwLjAKCl9fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fClkyMDM4IG1haWxpbmcgbGlzdApZMjAz
-OEBsaXN0cy5saW5hcm8ub3JnCmh0dHBzOi8vbGlzdHMubGluYXJvLm9yZy9tYWlsbWFuL2xpc3Rp
-bmZvL3kyMDM4Cg==
+These are all for ignoring the lack of obsolete system calls,
+which have been marked the same way in scripts/checksyscall.sh,
+so these can be removed.
+
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ arch/mips/include/asm/unistd.h   | 16 ----------------
+ arch/parisc/include/asm/unistd.h |  3 ---
+ arch/s390/include/asm/unistd.h   |  2 --
+ arch/xtensa/include/asm/unistd.h | 12 ------------
+ 4 files changed, 33 deletions(-)
+
+diff --git a/arch/mips/include/asm/unistd.h b/arch/mips/include/asm/unistd.h
+index b23d74a601b3..5e9eeb83d8d4 100644
+--- a/arch/mips/include/asm/unistd.h
++++ b/arch/mips/include/asm/unistd.h
+@@ -53,22 +53,6 @@
+ #define __ARCH_WANT_SYS_FORK
+ #define __ARCH_WANT_SYS_CLONE
+ 
+-/* whitelists for checksyscalls */
+-#define __IGNORE_select
+-#define __IGNORE_vfork
+-#define __IGNORE_time
+-#define __IGNORE_uselib
+-#define __IGNORE_fadvise64_64
+-#define __IGNORE_getdents64
+-#if _MIPS_SIM == _MIPS_SIM_NABI32
+-#define __IGNORE_truncate64
+-#define __IGNORE_ftruncate64
+-#define __IGNORE_stat64
+-#define __IGNORE_lstat64
+-#define __IGNORE_fstat64
+-#define __IGNORE_fstatat64
+-#endif
+-
+ #endif /* !__ASSEMBLY__ */
+ 
+ #endif /* _ASM_UNISTD_H */
+diff --git a/arch/parisc/include/asm/unistd.h b/arch/parisc/include/asm/unistd.h
+index 9ec1026af877..385eae49ed02 100644
+--- a/arch/parisc/include/asm/unistd.h
++++ b/arch/parisc/include/asm/unistd.h
+@@ -10,9 +10,6 @@
+ 
+ #define SYS_ify(syscall_name)   __NR_##syscall_name
+ 
+-#define __IGNORE_select			/* newselect */
+-#define __IGNORE_fadvise64		/* fadvise64_64 */
+-
+ #ifndef ASM_LINE_SEP
+ # define ASM_LINE_SEP ;
+ #endif
+diff --git a/arch/s390/include/asm/unistd.h b/arch/s390/include/asm/unistd.h
+index ed08f114ee91..59202ceea1f6 100644
+--- a/arch/s390/include/asm/unistd.h
++++ b/arch/s390/include/asm/unistd.h
+@@ -10,8 +10,6 @@
+ #include <uapi/asm/unistd.h>
+ #include <asm/unistd_nr.h>
+ 
+-#define __IGNORE_time
+-
+ #define __ARCH_WANT_NEW_STAT
+ #define __ARCH_WANT_OLD_READDIR
+ #define __ARCH_WANT_SYS_ALARM
+diff --git a/arch/xtensa/include/asm/unistd.h b/arch/xtensa/include/asm/unistd.h
+index 0d34629dafc5..81cc52ea1bd5 100644
+--- a/arch/xtensa/include/asm/unistd.h
++++ b/arch/xtensa/include/asm/unistd.h
+@@ -10,18 +10,6 @@
+ #define __ARCH_WANT_SYS_UTIME
+ #define __ARCH_WANT_SYS_GETPGRP
+ 
+-/* 
+- * Ignore legacy system calls in the checksyscalls.sh script
+- */
+-
+-#define __IGNORE_fork				/* use clone */
+-#define __IGNORE_time
+-#define __IGNORE_alarm				/* use setitimer */
+-#define __IGNORE_pause
+-#define __IGNORE_mmap				/* use mmap2 */
+-#define __IGNORE_vfork				/* use clone */
+-#define __IGNORE_fadvise64			/* use fadvise64_64 */
+-
+ #define NR_syscalls				__NR_syscalls
+ 
+ #endif /* _XTENSA_UNISTD_H */
+-- 
+2.20.0
