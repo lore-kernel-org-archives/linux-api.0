@@ -1,63 +1,49 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH v2 07/29] ARM: add kexec_file_load system call number
-Date: Fri, 18 Jan 2019 17:18:13 +0100
-Message-ID: <20190118161835.2259170-8-arnd@arndb.de>
+Subject: [PATCH v2 24/29] x86/x32: use time64 versions of sigtimedwait and recvmmsg
+Date: Fri, 18 Jan 2019 17:18:30 +0100
+Message-ID: <20190118161835.2259170-25-arnd@arndb.de>
 References: <20190118161835.2259170-1-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
+Content-Transfer-Encoding: 8bit
+Return-path: <netdev-owner@vger.kernel.org>
 In-Reply-To: <20190118161835.2259170-1-arnd@arndb.de>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+Sender: netdev-owner@vger.kernel.org
 To: y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org
-Cc: dalias@libc.org, linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, catalin.marinas@arm.com, will.deacon@arm.com, jcmvbkbc@gmail.com, deepa.kernel@gmail.com, hpa@zytor.com, sparclinux@vger.kernel.org, linux-s390@vger.kernel.org, mpe@ellerman.id.au, deller@gmx.de, x86@kernel.org, linux@armlinux.org.uk, mingo@redhat.com, geert@linux-m68k.org, benh@kernel.crashing.org, firoz.khan@linaro.org, mattst88@gmail.com, fenghua.yu@intel.com, Arnd Bergmann <arnd@arndb.de>, heiko.carstens@de.ibm.com, linux-fsdevel@vger.kernel.org, linux-m68k@lists.linux-m68k.org, luto@kernel.org, tglx@linutronix.de, linux-arm-kernel@lists.infradead.org, monstr@monstr.eu, tony.luck@intel.com, linux-parisc@vger.kernel.org, netdev@vger.kernel.org, linux-mips@vger.kernel.org, paul.burton@mips.com, ebiederm@xmission.com, linux-alpha@vger.kernel.org, schwidefsky@de.ibm.com, akpm@linux-foundation.orglinu
+Cc: Arnd Bergmann <arnd@arndb.de>, mattst88@gmail.com, linux@armlinux.org.uk, catalin.marinas@arm.com, will.deacon@arm.com, tony.luck@intel.com, fenghua.yu@intel.com, geert@linux-m68k.org, monstr@monstr.eu, paul.burton@mips.com, deller@gmx.de, benh@kernel.crashing.org, mpe@ellerman.id.au, schwidefsky@de.ibm.com, heiko.carstens@de.ibm.com, dalias@libc.org, davem@davemloft.net, luto@kernel.org, tglx@linutronix.de, mingo@redhat.com, hpa@zytor.com, x86@kernel.org, jcmvbkbc@gmail.com, akpm@linux-foundation.org, deepa.kernel@gmail.com, ebiederm@xmission.com, firoz.khan@linaro.org, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.or
 List-Id: linux-api@vger.kernel.org
 
-QSBjb3VwbGUgb2YgYXJjaGl0ZWN0dXJlcyBpbmNsdWRpbmcgYXJtNjQgYWxyZWFkeSBpbXBsZW1l
-bnQgdGhlCmtleGVjX2ZpbGVfbG9hZCBzeXN0ZW0gY2FsbCwgb24gbWFueSBvdGhlcnMgd2UgaGF2
-ZSBhc3NpZ25lZCBhIHN5c3RlbQpjYWxsIG51bWJlciBmb3IgaXQsIGJ1dCBub3QgaW1wbGVtZW50
-ZWQgaXQgeWV0LgoKQWRkaW5nIHRoZSBudW1iZXIgaW4gYXJjaC9hcm0vIGxldHMgdXMgdXNlIHRo
-ZSBzeXN0ZW0gY2FsbCBvbiBhcm02NApzeXN0ZW1zIGluIGNvbXBhdCBtb2RlLCBhbmQgYWxzbyBy
-ZWR1Y2VzIHRoZSBudW1iZXIgb2YgZGlmZmVyZW5jZXMKYmV0d2VlbiBhcmNoaXRlY3R1cmVzLiBJ
-ZiB3ZSB3YW50IHRvIGltcGxlbWVudCBrZXhlY19maWxlX2xvYWQgb24gQVJNCmluIHRoZSBmdXR1
-cmUsIHRoZSBudW1iZXIgYXNzaWdubWVudCBtZWFucyB0aGF0IGtleGVjIHRvb2xzIGNhbiBhbHJl
-YWR5CmJlIGJ1aWx0IHdpdGggdGhlIG5vdyBjdXJyZW50IHNldCBvZiBrZXJuZWwgaGVhZGVycy4K
-ClNpZ25lZC1vZmYtYnk6IEFybmQgQmVyZ21hbm4gPGFybmRAYXJuZGIuZGU+Ci0tLQogYXJjaC9h
-cm0vdG9vbHMvc3lzY2FsbC50YmwgICAgICAgIHwgMSArCiBhcmNoL2FybTY0L2luY2x1ZGUvYXNt
-L3VuaXN0ZC5oICAgfCAyICstCiBhcmNoL2FybTY0L2luY2x1ZGUvYXNtL3VuaXN0ZDMyLmggfCAy
-ICsrCiAzIGZpbGVzIGNoYW5nZWQsIDQgaW5zZXJ0aW9ucygrKSwgMSBkZWxldGlvbigtKQoKZGlm
-ZiAtLWdpdCBhL2FyY2gvYXJtL3Rvb2xzL3N5c2NhbGwudGJsIGIvYXJjaC9hcm0vdG9vbHMvc3lz
-Y2FsbC50YmwKaW5kZXggODZkZTllYjM0Mjk2Li4yMGVkN2UwMjY3MjMgMTAwNjQ0Ci0tLSBhL2Fy
-Y2gvYXJtL3Rvb2xzL3N5c2NhbGwudGJsCisrKyBiL2FyY2gvYXJtL3Rvb2xzL3N5c2NhbGwudGJs
-CkBAIC00MTUsMyArNDE1LDQgQEAKIDM5OAljb21tb24JcnNlcQkJCXN5c19yc2VxCiAzOTkJY29t
-bW9uCWlvX3BnZXRldmVudHMJCXN5c19pb19wZ2V0ZXZlbnRzCiA0MDAJY29tbW9uCW1pZ3JhdGVf
-cGFnZXMJCXN5c19taWdyYXRlX3BhZ2VzCis0MDEJY29tbW9uCWtleGVjX2ZpbGVfbG9hZAkJc3lz
-X2tleGVjX2ZpbGVfbG9hZApkaWZmIC0tZ2l0IGEvYXJjaC9hcm02NC9pbmNsdWRlL2FzbS91bmlz
-dGQuaCBiL2FyY2gvYXJtNjQvaW5jbHVkZS9hc20vdW5pc3RkLmgKaW5kZXggMjYxMjE2YzMzMzZl
-Li4yYzMwZTZmMTQ1ZmYgMTAwNjQ0Ci0tLSBhL2FyY2gvYXJtNjQvaW5jbHVkZS9hc20vdW5pc3Rk
-LmgKKysrIGIvYXJjaC9hcm02NC9pbmNsdWRlL2FzbS91bmlzdGQuaApAQCAtNDQsNyArNDQsNyBA
-QAogI2RlZmluZSBfX0FSTV9OUl9jb21wYXRfc2V0X3RscwkJKF9fQVJNX05SX0NPTVBBVF9CQVNF
-ICsgNSkKICNkZWZpbmUgX19BUk1fTlJfQ09NUEFUX0VORAkJKF9fQVJNX05SX0NPTVBBVF9CQVNF
-ICsgMHg4MDApCiAKLSNkZWZpbmUgX19OUl9jb21wYXRfc3lzY2FsbHMJCTQwMQorI2RlZmluZSBf
-X05SX2NvbXBhdF9zeXNjYWxscwkJNDAyCiAjZW5kaWYKIAogI2RlZmluZSBfX0FSQ0hfV0FOVF9T
-WVNfQ0xPTkUKZGlmZiAtLWdpdCBhL2FyY2gvYXJtNjQvaW5jbHVkZS9hc20vdW5pc3RkMzIuaCBi
-L2FyY2gvYXJtNjQvaW5jbHVkZS9hc20vdW5pc3RkMzIuaAppbmRleCBmMTViY2JhY2I4ZjYuLjhj
-YTFkNGMzMDRmNCAxMDA2NDQKLS0tIGEvYXJjaC9hcm02NC9pbmNsdWRlL2FzbS91bmlzdGQzMi5o
-CisrKyBiL2FyY2gvYXJtNjQvaW5jbHVkZS9hc20vdW5pc3RkMzIuaApAQCAtODIzLDYgKzgyMyw4
-IEBAIF9fU1lTQ0FMTChfX05SX3JzZXEsIHN5c19yc2VxKQogX19TWVNDQUxMKF9fTlJfaW9fcGdl
-dGV2ZW50cywgY29tcGF0X3N5c19pb19wZ2V0ZXZlbnRzKQogI2RlZmluZSBfX05SX21pZ3JhdGVf
-cGFnZXMgNDAwCiBfX1NZU0NBTEwoX19OUl9taWdyYXRlX3BhZ2VzLCBjb21wYXRfc3lzX21pZ3Jh
-dGVfcGFnZXMpCisjZGVmaW5lIF9fTlJfa2V4ZWNfZmlsZV9sb2FkIDQwMQorX19TWVNDQUxMKF9f
-TlJfa2V4ZWNfZmlsZV9sb2FkLCBzeXNfa2V4ZWNfZmlsZV9sb2FkKQogCiAvKgogICogUGxlYXNl
-IGFkZCBuZXcgY29tcGF0IHN5c2NhbGxzIGFib3ZlIHRoaXMgY29tbWVudCBhbmQgdXBkYXRlCi0t
-IAoyLjIwLjAKCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-ClkyMDM4IG1haWxpbmcgbGlzdApZMjAzOEBsaXN0cy5saW5hcm8ub3JnCmh0dHBzOi8vbGlzdHMu
-bGluYXJvLm9yZy9tYWlsbWFuL2xpc3RpbmZvL3kyMDM4Cg==
+x32 has always followed the time64 calling conventions of these
+syscalls, which required a special hack in compat_get_timespec
+aka get_old_timespec32 to continue working.
+
+Since we now have the time64 syscalls, use those explicitly.
+
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ arch/x86/entry/syscalls/syscall_64.tbl | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index f0b1709a5ffb..43a622aec07e 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -361,7 +361,7 @@
+ 520	x32	execve			__x32_compat_sys_execve/ptregs
+ 521	x32	ptrace			__x32_compat_sys_ptrace
+ 522	x32	rt_sigpending		__x32_compat_sys_rt_sigpending
+-523	x32	rt_sigtimedwait		__x32_compat_sys_rt_sigtimedwait
++523	x32	rt_sigtimedwait		__x32_compat_sys_rt_sigtimedwait_time64
+ 524	x32	rt_sigqueueinfo		__x32_compat_sys_rt_sigqueueinfo
+ 525	x32	sigaltstack		__x32_compat_sys_sigaltstack
+ 526	x32	timer_create		__x32_compat_sys_timer_create
+@@ -375,7 +375,7 @@
+ 534	x32	preadv			__x32_compat_sys_preadv64
+ 535	x32	pwritev			__x32_compat_sys_pwritev64
+ 536	x32	rt_tgsigqueueinfo	__x32_compat_sys_rt_tgsigqueueinfo
+-537	x32	recvmmsg		__x32_compat_sys_recvmmsg
++537	x32	recvmmsg		__x32_compat_sys_recvmmsg_time64
+ 538	x32	sendmmsg		__x32_compat_sys_sendmmsg
+ 539	x32	process_vm_readv	__x32_compat_sys_process_vm_readv
+ 540	x32	process_vm_writev	__x32_compat_sys_process_vm_writev
+-- 
+2.20.0
