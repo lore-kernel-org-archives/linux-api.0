@@ -1,16 +1,15 @@
-From: Dennis Clarke <dclarke@blastwave.org>
-Subject: Re: [PATCH v2 00/29] y2038: add time64 syscalls
-Date: Fri, 18 Jan 2019 12:19:56 -0500
-Message-ID: <37173869-7516-55c5-8e4a-0c7bef011a62@blastwave.org>
+From: Gabriel Paubert <paubert@iram.es>
+Subject: Re: [PATCH v2 13/29] arch: add split IPC system calls where needed
+Date: Fri, 18 Jan 2019 18:18:30 +0100
+Message-ID: <20190118171830.quvvwdgbuhq2nqrh@lt-gp.iram.es>
 References: <20190118161835.2259170-1-arnd@arndb.de>
- <be3863ae-d903-8e9e-5e6c-e4a58fac189d@blastwave.org>
- <CAK8P3a3xUpbk+Wpo5kdDtZ81jQuzEZH6jdmJJNeNM+acueg+Dw@mail.gmail.com>
+ <20190118161835.2259170-14-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <CAK8P3a3xUpbk+Wpo5kdDtZ81jQuzEZH6jdmJJNeNM+acueg+Dw@mail.gmail.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20190118161835.2259170-14-arnd@arndb.de>
 List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
  <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
 List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
@@ -21,32 +20,33 @@ List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
 Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
 Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
 To: Arnd Bergmann <arnd@arndb.de>
-Cc: Rich Felker <dalias@libc.org>, linux-ia64@vger.kernel.org, Linux-sh list <linux-sh@vger.kernel.org>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-mips@vger.kernel.org, Max Filippov <jcmvbkbc@gmail.com>, Networking <netdev@vger.kernel.org>, Deepa Dinamani <deepa.kernel@gmail.com>, "H. Peter Anvin" <hpa@zytor.com>, sparclinux <sparclinux@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, linux-s390 <linux-s390@vger.kernel.org>, y2038 Mailman List <y2038@lists.linaro.org>, Michael Ellerman <mpe@ellerman.id.au>, Helge Deller <deller@gmx.de>, the arch/x86 maintainers <x86@kernel.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Ingo Molnar <mingo@redhat.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Catalin Marinas <catalin.marinas@arm.com>, Firoz Khan <firoz.khan@linaro.org>, Matt Turner <mattst88@gmai>
+Cc: dalias@libc.org, linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, catalin.marinas@arm.com, will.deacon@arm.com, linux-mips@vger.kernel.org, jcmvbkbc@gmail.com, deepa.kernel@gmail.com, hpa@zytor.com, sparclinux@vger.kernel.org, linux-arch@vger.kernel.org, linux-s390@vger.kernel.org, y2038@lists.linaro.org, deller@gmx.de, x86@kernel.org, linux@armlinux.org.uk, mingo@redhat.com, geert@linux-m68k.org, firoz.khan@linaro.org, mattst88@gmail.com, fenghua.yu@intel.com, heiko.carstens@de.ibm.com, linux-alpha@vger.kernel.org, schwidefsky@de.ibm.com, linux-m68k@lists.linux-m68k.org, luto@kernel.org, tglx@linutronix.de, linux-arm-kernel@lists.infradead.org, monstr@monstr.eu, tony.luck@intel.com, linux-parisc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, paul.burton@mips.com, ebiederm@xmission.com, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 1/18/19 12:14 PM, Arnd Bergmann wrote:
-> On Fri, Jan 18, 2019 at 5:57 PM Dennis Clarke <dclarke@blastwave.org> wrote:
->>
->> On 1/18/19 11:18 AM, Arnd Bergmann wrote:
->>> This is a minor update of the patches I posted last week, I
->>> would like to add this into linux-next now, but would still do
->>> changes if there are concerns about the contents. The first
->>> version did not see a lot of replies, which could mean that
->>> either everyone is happy with it, or that it was largely ignored.
->>>
->>> See also the article at https://lwn.net/Articles/776435/.
->>
->> I would be happy to read "Approaching the kernel year-2038 end game"
->> however it is behind a pay wall.  Perhaps it may be best to just
->> host interesting articles about open source idea elsewhere.
+On Fri, Jan 18, 2019 at 05:18:19PM +0100, Arnd Bergmann wrote:
+> The IPC system call handling is highly inconsistent across architectures,
+> some use sys_ipc, some use separate calls, and some use both.  We also
+> have some architectures that require passing IPC_64 in the flags, and
+> others that set it implicitly.
 > 
-> It's a short summary of the current state.
+> For the additon of a y2083 safe semtimedop() system call, I chose to only
 
-Oh, I pay. Also to FSF and other places however I was merely ranting
-very very quietly that so much open source is becoming commercialized
-in so many ways.  Sort of expected really.
+It's not critical, but there are two typos in that line: 
+additon -> addition
+2083 -> 2038
 
-Pardon my little rant .. I will go back to hacking OpenSSL 1.1.1a and
-trying to get Apache httpd 2.4.38 release running cleanly.
+	Gabriel
 
-Dennis
+> support the separate entry points, but that requires first supporting
+> the regular ones with their own syscall numbers.
+> 
+> The IPC_64 is now implied by the new semctl/shmctl/msgctl system
+> calls even on the architectures that require passing it with the ipc()
+> multiplexer.
+> 
+> I'm not adding the new semtimedop() or semop() on 32-bit architectures,
+> those will get implemented using the new semtimedop_time64() version
+> that gets added along with the other time64 calls.
+> Three 64-bit architectures (powerpc, s390 and sparc) get semtimedop().
+> 
+> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
