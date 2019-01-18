@@ -1,113 +1,68 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH v2 27/29] y2038: remove struct definition redirects
-Date: Fri, 18 Jan 2019 17:18:33 +0100
-Message-ID: <20190118161835.2259170-28-arnd@arndb.de>
+Subject: [PATCH v2 01/29] ia64: add __NR_umount2 definition
+Date: Fri, 18 Jan 2019 17:18:07 +0100
+Message-ID: <20190118161835.2259170-2-arnd@arndb.de>
 References: <20190118161835.2259170-1-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <netdev-owner@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
 In-Reply-To: <20190118161835.2259170-1-arnd@arndb.de>
-Sender: netdev-owner@vger.kernel.org
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
 To: y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org
-Cc: Arnd Bergmann <arnd@arndb.de>, mattst88@gmail.com, linux@armlinux.org.uk, catalin.marinas@arm.com, will.deacon@arm.com, tony.luck@intel.com, fenghua.yu@intel.com, geert@linux-m68k.org, monstr@monstr.eu, paul.burton@mips.com, deller@gmx.de, benh@kernel.crashing.org, mpe@ellerman.id.au, schwidefsky@de.ibm.com, heiko.carstens@de.ibm.com, dalias@libc.org, davem@davemloft.net, luto@kernel.org, tglx@linutronix.de, mingo@redhat.com, hpa@zytor.com, x86@kernel.org, jcmvbkbc@gmail.com, akpm@linux-foundation.org, deepa.kernel@gmail.com, ebiederm@xmission.com, firoz.khan@linaro.org, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.or
+Cc: dalias@libc.org, linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, catalin.marinas@arm.com, will.deacon@arm.com, jcmvbkbc@gmail.com, deepa.kernel@gmail.com, hpa@zytor.com, sparclinux@vger.kernel.org, linux-s390@vger.kernel.org, mpe@ellerman.id.au, deller@gmx.de, x86@kernel.org, linux@armlinux.org.uk, mingo@redhat.com, geert@linux-m68k.org, benh@kernel.crashing.org, firoz.khan@linaro.org, mattst88@gmail.com, fenghua.yu@intel.com, Arnd Bergmann <arnd@arndb.de>, heiko.carstens@de.ibm.com, linux-fsdevel@vger.kernel.org, linux-m68k@lists.linux-m68k.org, luto@kernel.org, tglx@linutronix.de, linux-arm-kernel@lists.infradead.org, monstr@monstr.eu, tony.luck@intel.com, linux-parisc@vger.kernel.org, netdev@vger.kernel.org, linux-mips@vger.kernel.org, paul.burton@mips.com, ebiederm@xmission.com, linux-alpha@vger.kernel.org, schwidefsky@de.ibm.com, akpm@linux-foundation.orglinu
 List-Id: linux-api@vger.kernel.org
 
-We now use 64-bit time_t on all architectures, so the __kernel_timex,
-__kernel_timeval and __kernel_timespec redirects can be removed
-after having served their purpose.
-
-This makes it all much less confusing, as the __kernel_* types
-now always refer to the same layout based on 64-bit time_t across
-all 32-bit and 64-bit architectures.
-
-Signed-off-by: Arnd Bergmann <arnd@arndb.de>
----
- include/linux/time64.h     | 8 --------
- include/linux/timex.h      | 7 -------
- include/uapi/linux/time.h  | 4 ----
- include/uapi/linux/timex.h | 2 --
- 4 files changed, 21 deletions(-)
-
-diff --git a/include/linux/time64.h b/include/linux/time64.h
-index 05634afba0db..f38d382ffec1 100644
---- a/include/linux/time64.h
-+++ b/include/linux/time64.h
-@@ -7,14 +7,6 @@
- typedef __s64 time64_t;
- typedef __u64 timeu64_t;
- 
--/* CONFIG_64BIT_TIME enables new 64 bit time_t syscalls in the compat path
-- * and 32-bit emulation.
-- */
--#ifndef CONFIG_64BIT_TIME
--#define __kernel_timespec timespec
--#define __kernel_itimerspec itimerspec
--#endif
--
- #include <uapi/linux/time.h>
- 
- struct timespec64 {
-diff --git a/include/linux/timex.h b/include/linux/timex.h
-index 4aff9f0d1367..ce0859763670 100644
---- a/include/linux/timex.h
-+++ b/include/linux/timex.h
-@@ -53,13 +53,6 @@
- #ifndef _LINUX_TIMEX_H
- #define _LINUX_TIMEX_H
- 
--/* CONFIG_64BIT_TIME enables new 64 bit time_t syscalls in the compat path
-- * and 32-bit emulation.
-- */
--#ifndef CONFIG_64BIT_TIME
--#define __kernel_timex timex
--#endif
--
- #include <uapi/linux/timex.h>
- 
- #define ADJ_ADJTIME		0x8000	/* switch between adjtime/adjtimex modes */
-diff --git a/include/uapi/linux/time.h b/include/uapi/linux/time.h
-index 6b56a2208be7..b03f8717c312 100644
---- a/include/uapi/linux/time.h
-+++ b/include/uapi/linux/time.h
-@@ -42,19 +42,15 @@ struct itimerval {
- 	struct timeval it_value;	/* current value */
- };
- 
--#ifndef __kernel_timespec
- struct __kernel_timespec {
- 	__kernel_time64_t       tv_sec;                 /* seconds */
- 	long long               tv_nsec;                /* nanoseconds */
- };
--#endif
- 
--#ifndef __kernel_itimerspec
- struct __kernel_itimerspec {
- 	struct __kernel_timespec it_interval;    /* timer period */
- 	struct __kernel_timespec it_value;       /* timer expiration */
- };
--#endif
- 
- /*
-  * legacy timeval structure, only embedded in structures that
-diff --git a/include/uapi/linux/timex.h b/include/uapi/linux/timex.h
-index a1c6b73016a5..9f517f9010bb 100644
---- a/include/uapi/linux/timex.h
-+++ b/include/uapi/linux/timex.h
-@@ -97,7 +97,6 @@ struct __kernel_timex_timeval {
- 	long long		tv_usec;
- };
- 
--#ifndef __kernel_timex
- struct __kernel_timex {
- 	unsigned int modes;	/* mode selector */
- 	int :32;            /* pad */
-@@ -131,7 +130,6 @@ struct __kernel_timex {
- 	int  :32; int  :32; int  :32; int  :32;
- 	int  :32; int  :32; int  :32;
- };
--#endif
- 
- /*
-  * Mode codes (timex.mode)
--- 
-2.20.0
+T3RoZXIgYXJjaGl0ZWN0dXJlcyBjb21tb25seSB1c2UgX19OUl91bW91bnQyIGZvciBzeXNfdW1v
+dW50LApvbmx5IGlhNjQgYW5kIGFscGhhIHVzZSBfX05SX3Vtb3VudCBoZXJlLiBJbiBvcmRlciB0
+byBzeW5jaHJvbml6ZQp0aGUgZ2VuZXJhdGVkIHRhYmxlcywgdXNlIHVtb3VudDIgbGlrZSBldmVy
+eW9uZSBlbHNlLCBhbmQgYWRkIGJhY2sKdGhlIG9sZCBuYW1lIGZyb20gYXNtL3VuaXN0ZC5oIGZv
+ciBjb21wYXRpYmlsaXR5LgoKVGhlIF9fSUdOT1JFXyogbGluZXMgYXJlIG5vdyBhbGwgb2Jzb2xl
+dGUgYW5kIGNhbiBiZSByZW1vdmVkIGFzCmEgc2lkZS1lZmZlY3QuCgpTaWduZWQtb2ZmLWJ5OiBB
+cm5kIEJlcmdtYW5uIDxhcm5kQGFybmRiLmRlPgotLS0KIGFyY2gvaWE2NC9pbmNsdWRlL2FzbS91
+bmlzdGQuaCAgICAgICAgfCAxNCAtLS0tLS0tLS0tLS0tLQogYXJjaC9pYTY0L2luY2x1ZGUvdWFw
+aS9hc20vdW5pc3RkLmggICB8ICAyICsrCiBhcmNoL2lhNjQva2VybmVsL3N5c2NhbGxzL3N5c2Nh
+bGwudGJsIHwgIDIgKy0KIDMgZmlsZXMgY2hhbmdlZCwgMyBpbnNlcnRpb25zKCspLCAxNSBkZWxl
+dGlvbnMoLSkKCmRpZmYgLS1naXQgYS9hcmNoL2lhNjQvaW5jbHVkZS9hc20vdW5pc3RkLmggYi9h
+cmNoL2lhNjQvaW5jbHVkZS9hc20vdW5pc3RkLmgKaW5kZXggMGIwOGViZDJkZmRlLi45YmE2MTEw
+YjEwYjkgMTAwNjQ0Ci0tLSBhL2FyY2gvaWE2NC9pbmNsdWRlL2FzbS91bmlzdGQuaAorKysgYi9h
+cmNoL2lhNjQvaW5jbHVkZS9hc20vdW5pc3RkLmgKQEAgLTEyLDIwICsxMiw2IEBACiAKICNkZWZp
+bmUgTlJfc3lzY2FsbHMJCV9fTlJfc3lzY2FsbHMgLyogbGVuZ3RoIG9mIHN5c2NhbGwgdGFibGUg
+Ki8KIAotLyoKLSAqIFRoZSBmb2xsb3dpbmcgZGVmaW5lcyBzdG9wIHNjcmlwdHMvY2hlY2tzeXNj
+YWxscy5zaCBmcm9tIGNvbXBsYWluaW5nIGFib3V0Ci0gKiB1bmltcGxlbWVudGVkIHN5c3RlbSBj
+YWxscy4gIEdsaWJjIHByb3ZpZGVzIGZvciBlYWNoIG9mIHRoZXNlIGJ5IHVzaW5nCi0gKiBtb3Jl
+IG1vZGVybiBlcXVpdmFsZW50IHN5c3RlbSBjYWxscy4KLSAqLwotI2RlZmluZSBfX0lHTk9SRV9m
+b3JrCQkvKiBjbG9uZSgpICovCi0jZGVmaW5lIF9fSUdOT1JFX3RpbWUJCS8qIGdldHRpbWVvZmRh
+eSgpICovCi0jZGVmaW5lIF9fSUdOT1JFX2FsYXJtCQkvKiBzZXRpdGltZXIoSVRJTUVSX1JFQUws
+IC4uLiAqLwotI2RlZmluZSBfX0lHTk9SRV9wYXVzZQkJLyogcnRfc2lncHJvY21hc2soKSwgcnRf
+c2lnc3VzcGVuZCgpICovCi0jZGVmaW5lIF9fSUdOT1JFX3V0aW1lCQkvKiB1dGltZXMoKSAqLwot
+I2RlZmluZSBfX0lHTk9SRV9nZXRwZ3JwCS8qIGdldHBnaWQoKSAqLwotI2RlZmluZSBfX0lHTk9S
+RV92Zm9yawkJLyogY2xvbmUoKSAqLwotI2RlZmluZSBfX0lHTk9SRV91bW91bnQyCS8qIHVtb3Vu
+dCgpICovCi0KICNkZWZpbmUgX19BUkNIX1dBTlRfTkVXX1NUQVQKICNkZWZpbmUgX19BUkNIX1dB
+TlRfU1lTX1VUSU1FCiAKZGlmZiAtLWdpdCBhL2FyY2gvaWE2NC9pbmNsdWRlL3VhcGkvYXNtL3Vu
+aXN0ZC5oIGIvYXJjaC9pYTY0L2luY2x1ZGUvdWFwaS9hc20vdW5pc3RkLmgKaW5kZXggYjI1MTM5
+MjJkY2I1Li4wMTNlMGJjYWNjMzkgMTAwNjQ0Ci0tLSBhL2FyY2gvaWE2NC9pbmNsdWRlL3VhcGkv
+YXNtL3VuaXN0ZC5oCisrKyBiL2FyY2gvaWE2NC9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oCkBA
+IC0xNSw2ICsxNSw4IEBACiAKICNkZWZpbmUgX19OUl9MaW51eCAgICAgIDEwMjQKIAorI2RlZmlu
+ZSBfX05SX3Vtb3VudCBfX05SX3Vtb3VudDIKKwogI2luY2x1ZGUgPGFzbS91bmlzdGRfNjQuaD4K
+IAogI2VuZGlmIC8qIF9VQVBJX0FTTV9JQTY0X1VOSVNURF9IICovCmRpZmYgLS1naXQgYS9hcmNo
+L2lhNjQva2VybmVsL3N5c2NhbGxzL3N5c2NhbGwudGJsIGIvYXJjaC9pYTY0L2tlcm5lbC9zeXNj
+YWxscy9zeXNjYWxsLnRibAppbmRleCBiMjIyMDNiNDBiZmUuLmU5N2NhZjUxYmU0MiAxMDA2NDQK
+LS0tIGEvYXJjaC9pYTY0L2tlcm5lbC9zeXNjYWxscy9zeXNjYWxsLnRibAorKysgYi9hcmNoL2lh
+NjQva2VybmVsL3N5c2NhbGxzL3N5c2NhbGwudGJsCkBAIC0yOSw3ICsyOSw3IEBACiAxNwljb21t
+b24JZ2V0cGlkCQkJCXN5c19nZXRwaWQKIDE4CWNvbW1vbglnZXRwcGlkCQkJCXN5c19nZXRwcGlk
+CiAxOQljb21tb24JbW91bnQJCQkJc3lzX21vdW50Ci0yMAljb21tb24JdW1vdW50CQkJCXN5c191
+bW91bnQKKzIwCWNvbW1vbgl1bW91bnQyCQkJCXN5c191bW91bnQKIDIxCWNvbW1vbglzZXR1aWQJ
+CQkJc3lzX3NldHVpZAogMjIJY29tbW9uCWdldHVpZAkJCQlzeXNfZ2V0dWlkCiAyMwljb21tb24J
+Z2V0ZXVpZAkJCQlzeXNfZ2V0ZXVpZAotLSAKMi4yMC4wCgpfX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fXwpZMjAzOCBtYWlsaW5nIGxpc3QKWTIwMzhAbGlzdHMu
+bGluYXJvLm9yZwpodHRwczovL2xpc3RzLmxpbmFyby5vcmcvbWFpbG1hbi9saXN0aW5mby95MjAz
+OAo=
