@@ -1,62 +1,57 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH v2 29/29] y2038: add 64-bit time_t syscalls to all 32-bit architectures
-Date: Fri, 18 Jan 2019 10:50:27 -0800
-Message-ID: <CALCETrXqM5mhvwreN5y-9K99h1j9rs9MAVK-cNLC54s1fdHA6w@mail.gmail.com>
-References: <20190118161835.2259170-1-arnd@arndb.de> <20190118161835.2259170-30-arnd@arndb.de>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
+Date: Fri, 18 Jan 2019 19:58:13 +0100
+Message-ID: <362c8696-b308-53b7-2014-261530b4abcb@suse.cz>
+References: <20190110070355.GJ27534@dastard>
+ <CAHk-=wigwXV_G-V1VxLs6BAvVkvW5=Oj+xrNHxE_7yxEVwoe3w@mail.gmail.com>
+ <20190110122442.GA21216@nautica>
+ <CAHk-=wip2CPrdOwgF0z4n2tsdW7uu+Egtcx9Mxxe3gPfPW_JmQ@mail.gmail.com>
+ <5c3e7de6.1c69fb81.4aebb.3fec@mx.google.com>
+ <CAHk-=wgF9p9xNzZei_-ejGLy1bJf4VS1C5E9_V0kCTEpCkpCTQ@mail.gmail.com>
+ <9E337EA6-7CDA-457B-96C6-E91F83742587@amacapital.net>
+ <CAHk-=wjqkbjL2_BwUYxJxJhdadiw6Zx-Yu_mK3E6P7kG3wSGcQ@mail.gmail.com>
+ <20190116054613.GA11670@nautica>
+ <CAHk-=wjVjecbGRcxZUSwoSgAq9ZbMxbA=MOiqDrPgx7_P3xGhg@mail.gmail.com>
+ <20190116063430.GA22938@nautica>
+ <CA+t-nXTfdo07EBvVo+mu8SRhrVyB=mEPLDQikHfpJue1jALJtQ@mail.gmail.com>
+ <a056deb7-9c11-612e-2b3a-6482acca4ff6@suse.cz>
+ <CAHk-=wi0MXm4zTC6jjS1TBfbHW_sQq_OcyfeLBNGJ29m88pt+g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190118161835.2259170-30-arnd@arndb.de>
+In-Reply-To: <CAHk-=wi0MXm4zTC6jjS1TBfbHW_sQq_OcyfeLBNGJ29m88pt+g@mail.gmail.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: y2038@lists.linaro.org, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Matt Turner <mattst88@gmail.com>, Russell King <linux@armlinux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Tony Luck <tony.luck@intel.com>, Fenghua Yu <fenghua.yu@intel.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Michal Simek <monstr@monstr.eu>, Paul Burton <paul.burton@mips.com>, Helge Deller <deller@gmx.de>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Michael Ellerman <mpe@ellerman.id.au>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Rich Felker <dalias@libc.org>, "David S. Miller" <davem@davemloft.net>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Josh Snyder <joshs@netflix.com>, Dominique Martinet <asmadeus@codewreck.org>, Andy Lutomirski <luto@amacapital.net>, Dave Chinner <david@fromorbit.com>, Jiri Kosina <jikos@kernel.org>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jan 18, 2019 at 8:25 AM Arnd Bergmann <arnd@arndb.de> wrote:
->
-> This adds 21 new system calls on each ABI that has 32-bit time_t
-> today. All of these have the exact same semantics as their existing
-> counterparts, and the new ones all have macro names that end in 'time64'
-> for clarification.
->
-> This gets us to the point of being able to safely use a C library
-> that has 64-bit time_t in user space. There are still a couple of
-> loose ends to tie up in various areas of the code, but this is the
-> big one, and should be entirely uncontroversial at this point.
->
-> In particular, there are four system calls (getitimer, setitimer,
-> waitid, and getrusage) that don't have a 64-bit counterpart yet,
-> but these can all be safely implemented in the C library by wrapping
-> around the existing system calls because the 32-bit time_t they
-> pass only counts elapsed time, not time since the epoch. They
-> will be dealt with later.
->
-> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
-> ---
-> The one point that still needs to be agreed on is the actual
-> number assignment. Following the earlier patch that added
-> the sysv IPC calls with common numbers where possible, I also
-> tried the same here, using consistent numbers on all 32-bit
-> architectures.
->
-> There are a couple of minor issues with this:
->
-> - On asm-generic, we now leave the numbers from 295 to 402
->   unassigned, which wastes a small amount of kernel .data
->   segment. Originally I had asm-generic start at 300 and
->   everyone else start at 400 here, which was also not
->   perfect, and we have gone beyond 400 already, so I ended
->   up just using the same numbers as the rest here.
->
-> - Once we get to 512, we clash with the x32 numbers (unless
->   we remove x32 support first), and probably have to skip
->   a few more. I also considered using the 512..547 space
->   for 32-bit-only calls (which never clash with x32), but
->   that also seems to add a bit of complexity.
+On 1/18/19 5:49 AM, Linus Torvalds wrote:
+> On Fri, Jan 18, 2019 at 9:45 AM Vlastimil Babka <vbabka@suse.cz> wrote:
+>>
+>> Or maybe we could resort to the 5.0-rc1 page table check (that is now being
+>> reverted) but only in cases when we are not allowed the page cache residency
+>> check? Or would that be needlessly complicated?
+> 
+> I think it would  be good fallback semantics, but I'm not sure it's
+> worth it. Have you tried writing a patch for it? I don't think you'd
+> want to do the check *when* you find a hole, so you'd have to do it
+> upfront and then pass the cached data down with the private pointer
+> (or have a separate "struct mm_walk" structure, perhaps?
+> 
+> So I suspect we're better off with the patch we have. But if somebody
+> *wants* to try to do that fancier patch, and it doesn't look
+> horrendous, I think it might be the "quality" solution.
 
-I have a patch that I'll send soon to make x32 use its own table.  As
-far as I'm concerned, 547 is *it*.  548 is just a normal number and is
-not special.  But let's please not reuse 512..547 for other purposes
-on x86 variants -- that way lies even more confusion, IMO.
+I thought to drop the idea because of leaking that page has been
+evicted, but then I realized there are other ways to check for that
+anyway in /proc. So I'll try, but probably not until after next week. If
+somebody else wants to, they are welcome. As you say, the current
+solution should be ok, so that would be a patch on top anyway, for
+bisectability etc.
 
---Andy
+Vlastimil
+
+>               Linus
+> 
