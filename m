@@ -1,42 +1,101 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH v2 03/29] ia64: assign syscall numbers for perf and
-	seccomp
-Date: Fri, 18 Jan 2019 17:18:09 +0100
-Message-ID: <20190118161835.2259170-4-arnd@arndb.de>
+Subject: [PATCH v2 05/29] alpha: update syscall macro definitions
+Date: Fri, 18 Jan 2019 17:18:11 +0100
+Message-ID: <20190118161835.2259170-6-arnd@arndb.de>
 References: <20190118161835.2259170-1-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190118161835.2259170-1-arnd@arndb.de>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+Sender: linux-kernel-owner@vger.kernel.org
 To: y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org
-Cc: dalias@libc.org, linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, catalin.marinas@arm.com, will.deacon@arm.com, jcmvbkbc@gmail.com, deepa.kernel@gmail.com, hpa@zytor.com, sparclinux@vger.kernel.org, linux-s390@vger.kernel.org, mpe@ellerman.id.au, deller@gmx.de, x86@kernel.org, linux@armlinux.org.uk, mingo@redhat.com, geert@linux-m68k.org, benh@kernel.crashing.org, firoz.khan@linaro.org, mattst88@gmail.com, fenghua.yu@intel.com, Arnd Bergmann <arnd@arndb.de>, heiko.carstens@de.ibm.com, linux-fsdevel@vger.kernel.org, linux-m68k@lists.linux-m68k.org, luto@kernel.org, tglx@linutronix.de, linux-arm-kernel@lists.infradead.org, monstr@monstr.eu, tony.luck@intel.com, linux-parisc@vger.kernel.org, netdev@vger.kernel.org, linux-mips@vger.kernel.org, paul.burton@mips.com, ebiederm@xmission.com, linux-alpha@vger.kernel.org, schwidefsky@de.ibm.com, akpm@linux-foundation.orglinu
+Cc: Arnd Bergmann <arnd@arndb.de>, mattst88@gmail.com, linux@armlinux.org.uk, catalin.marinas@arm.com, will.deacon@arm.com, tony.luck@intel.com, fenghua.yu@intel.com, geert@linux-m68k.org, monstr@monstr.eu, paul.burton@mips.com, deller@gmx.de, benh@kernel.crashing.org, mpe@ellerman.id.au, schwidefsky@de.ibm.com, heiko.carstens@de.ibm.com, dalias@libc.org, davem@davemloft.net, luto@kernel.org, tglx@linutronix.de, mingo@redhat.com, hpa@zytor.com, x86@kernel.org, jcmvbkbc@gmail.com, akpm@linux-foundation.org, deepa.kernel@gmail.com, ebiederm@xmission.com, firoz.khan@linaro.org, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.or
 List-Id: linux-api@vger.kernel.org
 
-TW9zdCBhcmNoaXRlY3R1cmVzIGhhdmUgYXNzaWduZWQgbnVtYmVycyBmb3IgYm90aCBzZWNjb21w
-IGFuZApwZXJmX2V2ZW50X29wZW4sIGV2ZW4gd2hlbiB0aGV5IGRvIG5vdCBpbXBsZW1lbnQgZWl0
-aGVyLgoKaWE2NCBpcyBhbiBleGNlcHRpb24gaGVyZSwgc28gZm9yIGNvbnNpc3RlbmN5IGxldHMg
-YWRkIG51bWJlcnMgZm9yIGJvdGgKb2YgdGhlbS4gVW5sZXNzIENPTkZJR19QRVJGX0VWRU5UUyBh
-bmQgQ09ORklHX1NFQ0NPTVAgYXJlIGltcGxlbWVudGVkLAp0aGUgc3lzdGVtIGNhbGxzIGp1c3Qg
-cmV0dXJuIC1FTk9TWVMuCgpTaWduZWQtb2ZmLWJ5OiBBcm5kIEJlcmdtYW5uIDxhcm5kQGFybmRi
-LmRlPgotLS0KIGFyY2gvaWE2NC9rZXJuZWwvc3lzY2FsbHMvc3lzY2FsbC50YmwgfCAyICsrCiAx
-IGZpbGUgY2hhbmdlZCwgMiBpbnNlcnRpb25zKCspCgpkaWZmIC0tZ2l0IGEvYXJjaC9pYTY0L2tl
-cm5lbC9zeXNjYWxscy9zeXNjYWxsLnRibCBiL2FyY2gvaWE2NC9rZXJuZWwvc3lzY2FsbHMvc3lz
-Y2FsbC50YmwKaW5kZXggNTI1ODUyODEyMDViLi4yZTkzZGJkY2RiODAgMTAwNjQ0Ci0tLSBhL2Fy
-Y2gvaWE2NC9rZXJuZWwvc3lzY2FsbHMvc3lzY2FsbC50YmwKKysrIGIvYXJjaC9pYTY0L2tlcm5l
-bC9zeXNjYWxscy9zeXNjYWxsLnRibApAQCAtMzM3LDMgKzMzNyw1IEBACiAzMjUJY29tbW9uCXB3
-cml0ZXYyCQkJc3lzX3B3cml0ZXYyCiAzMjYJY29tbW9uCXN0YXR4CQkJCXN5c19zdGF0eAogMzI3
-CWNvbW1vbglpb19wZ2V0ZXZlbnRzCQkJc3lzX2lvX3BnZXRldmVudHMKKzMyOAljb21tb24JcGVy
-Zl9ldmVudF9vcGVuCQkJc3lzX3BlcmZfZXZlbnRfb3BlbgorMzI5CWNvbW1vbglzZWNjb21wCQkJ
-CXN5c19zZWNjb21wCi0tIAoyLjIwLjAKCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fClkyMDM4IG1haWxpbmcgbGlzdApZMjAzOEBsaXN0cy5saW5hcm8ub3Jn
-Cmh0dHBzOi8vbGlzdHMubGluYXJvLm9yZy9tYWlsbWFuL2xpc3RpbmZvL3kyMDM4Cg==
+Other architectures commonly use __NR_umount2 for sys_umount,
+only ia64 and alpha use __NR_umount here. In order to synchronize
+the generated tables, use umount2 like everyone else, and add back
+the old name from asm/unistd.h for compatibility.
+
+For shmat, alpha uses the osf_shmat name, we can do the same thing
+here, which means we don't have to add an entry in the __IGNORE
+list now that shmat is mandatory everywhere
+
+alarm, creat, pause, time, and utime are optional everywhere
+these days, no need to list them here any more.
+
+I considered also adding the regular versions of the get*id system
+calls that have different names and calling conventions on alpha,
+which would further help unify the syscall ABI, but for now
+I decided against that.
+
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ arch/alpha/include/asm/unistd.h        | 6 ------
+ arch/alpha/include/uapi/asm/unistd.h   | 5 +++++
+ arch/alpha/kernel/syscalls/syscall.tbl | 4 ++--
+ 3 files changed, 7 insertions(+), 8 deletions(-)
+
+diff --git a/arch/alpha/include/asm/unistd.h b/arch/alpha/include/asm/unistd.h
+index 21b706a5b772..564ba87bdc38 100644
+--- a/arch/alpha/include/asm/unistd.h
++++ b/arch/alpha/include/asm/unistd.h
+@@ -22,18 +22,12 @@
+ /*
+  * Ignore legacy syscalls that we don't use.
+  */
+-#define __IGNORE_alarm
+-#define __IGNORE_creat
+ #define __IGNORE_getegid
+ #define __IGNORE_geteuid
+ #define __IGNORE_getgid
+ #define __IGNORE_getpid
+ #define __IGNORE_getppid
+ #define __IGNORE_getuid
+-#define __IGNORE_pause
+-#define __IGNORE_time
+-#define __IGNORE_utime
+-#define __IGNORE_umount2
+ 
+ /* Alpha doesn't have protection keys. */
+ #define __IGNORE_pkey_mprotect
+diff --git a/arch/alpha/include/uapi/asm/unistd.h b/arch/alpha/include/uapi/asm/unistd.h
+index 9ba724f116f1..4507071f995f 100644
+--- a/arch/alpha/include/uapi/asm/unistd.h
++++ b/arch/alpha/include/uapi/asm/unistd.h
+@@ -2,6 +2,11 @@
+ #ifndef _UAPI_ALPHA_UNISTD_H
+ #define _UAPI_ALPHA_UNISTD_H
+ 
++/* These are traditionally the names linux-alpha uses for
++ * the two otherwise generic system calls */
++#define __NR_umount	__NR_umount2
++#define __NR_osf_shmat	__NR_shmat
++
+ #include <asm/unistd_32.h>
+ 
+ #endif /* _UAPI_ALPHA_UNISTD_H */
+diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
+index e09558edae73..f920b65e8c49 100644
+--- a/arch/alpha/kernel/syscalls/syscall.tbl
++++ b/arch/alpha/kernel/syscalls/syscall.tbl
+@@ -29,7 +29,7 @@
+ 19	common	lseek				sys_lseek
+ 20	common	getxpid				sys_getxpid
+ 21	common	osf_mount			sys_osf_mount
+-22	common	umount				sys_umount
++22	common	umount2				sys_umount
+ 23	common	setuid				sys_setuid
+ 24	common	getxuid				sys_getxuid
+ 25	common	exec_with_loader		sys_ni_syscall
+@@ -183,7 +183,7 @@
+ 206	common	semop				sys_semop
+ 207	common	osf_utsname			sys_osf_utsname
+ 208	common	lchown				sys_lchown
+-209	common	osf_shmat			sys_shmat
++209	common	shmat				sys_shmat
+ 210	common	shmctl				sys_shmctl
+ 211	common	shmdt				sys_shmdt
+ 212	common	shmget				sys_shmget
+-- 
+2.20.0
