@@ -1,50 +1,39 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH glibc 1/4] glibc: Perform rseq(2) registration at C
- startup and thread creation (v5)
-Date: Fri, 18 Jan 2019 12:41:45 -0500 (EST)
-Message-ID: <1887968822.1146.1547833305059.JavaMail.zimbra@efficios.com>
-References: <20190115015148.32155-1-mathieu.desnoyers@efficios.com>
+From: James Bottomley <James.Bottomley@HansenPartnership.com>
+Subject: Re: [PATCH v2 00/29] y2038: add time64 syscalls
+Date: Fri, 18 Jan 2019 09:45:18 -0800
+Message-ID: <1547833518.2794.36.camel@HansenPartnership.com>
+References: <20190118161835.2259170-1-arnd@arndb.de>
+         <be3863ae-d903-8e9e-5e6c-e4a58fac189d@blastwave.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190115015148.32155-1-mathieu.desnoyers@efficios.com>
+In-Reply-To: <be3863ae-d903-8e9e-5e6c-e4a58fac189d@blastwave.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Carlos O'Donell <carlos@redhat.com>
-Cc: Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
+To: Dennis Clarke <dclarke@blastwave.org>, Arnd Bergmann <arnd@arndb.de>, y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org
+Cc: mattst88@gmail.com, linux@armlinux.org.uk, catalin.marinas@arm.com, will.deacon@arm.com, tony.luck@intel.com, fenghua.yu@intel.com, geert@linux-m68k.org, monstr@monstr.eu, paul.burton@mips.com, deller@gmx.de, benh@kernel.crashing.org, mpe@ellerman.id.au, schwidefsky@de.ibm.com, heiko.carstens@de.ibm.com, dalias@libc.org, davem@davemloft.net, luto@kernel.org, tglx@linutronix.de, mingo@redhat.com, hpa@zytor.com, x86@kernel.org, jcmvbkbc@gmail.com, akpm@linux-foundation.org, deepa.kernel@gmail.com, ebiederm@xmission.com, firoz.khan@linaro.org, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
------ On Jan 14, 2019, at 8:51 PM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
+On Fri, 2019-01-18 at 11:57 -0500, Dennis Clarke wrote:
+> On 1/18/19 11:18 AM, Arnd Bergmann wrote:
+> > This is a minor update of the patches I posted last week, I
+> > would like to add this into linux-next now, but would still do
+> > changes if there are concerns about the contents. The first
+> > version did not see a lot of replies, which could mean that
+> > either everyone is happy with it, or that it was largely ignored.
+> > 
+> > See also the article at https://lwn.net/Articles/776435/.
+> 
+> I would be happy to read "Approaching the kernel year-2038 end game"
+> however it is behind a pay wall.  Perhaps it may be best to just
+> host interesting articles about open source idea elsewhere.
 
-[...]
+Hey, this is an unfair characterization: lwn.net operates an early
+access subscription model, so you can't read the above for 14 days
+after publication without paying for an lwn.net subscription, but by
+the time these patches are upstream there will be no paywall because it
+will expire on 24 January and that URL will then be readable by all. 
+That makes LWN.net a nice, reliable resource for us while still
+supporting some business model to keep it going.
 
-> diff --git a/sysdeps/unix/sysv/linux/rseq-sym.c
-> b/sysdeps/unix/sysv/linux/rseq-sym.c
-> new file mode 100644
-> index 0000000000..6856d0388a
-[...]
-> +/* volatile because fields can be read/updated by the kernel.  */
-> +__thread volatile struct rseq __rseq_abi = {
-> +  .cpu_id = RSEQ_CPU_ID_UNINITIALIZED,
-> +};
-> +
-> +/* volatile because refcount can be read/updated by signal handlers.  */
-> +__thread volatile uint32_t __rseq_refcount;
-
-Back to the weak vs non-weak question about those two symbols. I understand
-that tagging them as weak symbols has little effect on the dynamic loader
-when it loads libc.so. However, I'm worried about that happens when
-libc is statically linked into an application, and there happens to
-be more than one instance of those symbols (e.g. libc and another library
-define the same symbols, and both are statically linked into the same
-application). Isn't it a situation where tagging those symbols as "weak"
-becomes useful ?
-
-Thanks,
-
-Mathieu
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+James
