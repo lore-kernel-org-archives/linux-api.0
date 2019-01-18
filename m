@@ -1,56 +1,43 @@
-From: =?UTF-8?q?J=C3=BCrg=20Billeter?= <j@bitron.ch>
-Subject: [RESEND PATCH v2 0/1] Add prctl to kill descendants on exit
-Date: Fri, 18 Jan 2019 14:11:29 +0100
-Message-ID: <20190118131130.42209-1-j@bitron.ch>
-References: <20181127225408.7553-1-j@bitron.ch>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
+Date: Fri, 18 Jan 2019 06:23:02 -0800
+Message-ID: <20190118142302.GC50184@devbig004.ftw2.facebook.com>
+References: <nycvar.YFH.7.76.1901051817390.16954@cbobk.fhfr.pm>
+ <CAHk-=wicks2BEwm1BhdvEj_P3yawmvQuG3NOnjhdrUDEtTGizw@mail.gmail.com>
+ <nycvar.YFH.7.76.1901052108390.16954@cbobk.fhfr.pm>
+ <CAHk-=whGmE4QVr6NbgHnrVGVENfM3s1y6GNbsfh8PcOg=6bpqw@mail.gmail.com>
+ <nycvar.YFH.7.76.1901052131480.16954@cbobk.fhfr.pm>
+ <CAHk-=wgrSKyN23yp-npq6+J-4pGqbzxb3mJ183PryjHw7PWDyA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181127225408.7553-1-j@bitron.ch>
+Content-Disposition: inline
+In-Reply-To: <CAHk-=wgrSKyN23yp-npq6+J-4pGqbzxb3mJ183PryjHw7PWDyA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Oleg Nesterov <oleg@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Eric Biederman <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@kernel.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, =?UTF-8?q?J=C3=BCrg=20Billeter?= <j@bitron.ch>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Jiri Kosina <jikos@kernel.org>, Masatake YAMATO <yamato@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, linux-mm@kvack.org, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This patch adds a new prctl to kill all descendant processes on exit.
-See commit message for details of the prctl.
+Hello, Linus.
 
-This is a replacement of PR_SET_PDEATHSIG_PROC I proposed last year [1].
-In the following discussion, Oleg suggested this approach.
+On Sat, Jan 05, 2019 at 01:54:03PM -0800, Linus Torvalds wrote:
+> And the first hit is 'fincore', which probably nobody cares about
+> anyway, but it does
+> 
+>     fd = open (name, O_RDONLY)
+>     ..
+>     mmap(window, len, PROT_NONE, MAP_PRIVATE, ..
 
-The motivation for this is to provide a lightweight mechanism to prevent
-stray processes. There is also a related Bugzilla entry [2].
+So, folks here have been using fincore(1) for diagnostic purposes and
+are also looking to expand on it to investigate per-cgroup cache
+usages (mmap -> mincore -> /proc/self/pagemap -> /proc/kpagecgroup ->
+cgroup path).
 
-PID namespaces can also be used to prevent stray processes, of course.
-However, they are not quite as lightweight as they typically also
-require a new mount namespace to be able to mount a new /proc.  And they
-require CAP_SYS_ADMIN.  User namespaces can help to gain CAP_SYS_ADMIN,
-however, that further increases the overhead and the other effects of
-the user namespace may not be desired.
+These are all root-only usages to find out what's going on with the
+whole page cache.  We aren't attached to doing things this particular
+way but it'd suck if there's no way.
 
-PID 1 in PID namespaces also exhibits non-standard signal behavior
-(SIGNAL_UNKILLABLE) [3].
-
-Changes in v2:
-  - Use bool instead of bitfield to avoid race with
-    PR_SET_CHILD_SUBREAPER
-
-[1] https://lkml.kernel.org/lkml/20170929123058.48924-1-j@bitron.ch/
-[2] https://bugzilla.kernel.org/show_bug.cgi?id=43300
-[3] https://lkml.kernel.org/lkml/20180803144021.56920-2-j@bitron.ch/
-
-Jürg Billeter (1):
-  prctl: add PR_{GET,SET}_KILL_DESCENDANTS_ON_EXIT
-
- fs/exec.c                    |  6 ++++++
- include/linux/sched/signal.h |  3 +++
- include/uapi/linux/prctl.h   |  4 ++++
- kernel/exit.c                | 12 ++++++++++++
- kernel/sys.c                 | 11 +++++++++++
- security/apparmor/lsm.c      |  1 +
- security/selinux/hooks.c     |  3 +++
- 7 files changed, 40 insertions(+)
+Thanks.
 
 -- 
-2.20.1
+tejun
