@@ -1,40 +1,81 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH v2 29/29] y2038: add 64-bit time_t syscalls to all 32-bit architectures
-Date: Fri, 18 Jan 2019 21:44:16 +0100
-Message-ID: <CAK8P3a3bGF9iL6fZyyGS1p6vw56FHNMuosVBShX=MTptb6g4Hw@mail.gmail.com>
-References: <20190118161835.2259170-1-arnd@arndb.de> <20190118161835.2259170-30-arnd@arndb.de>
+From: Russell King - ARM Linux admin <linux@armlinux.org.uk>
+Subject: Re: [PATCH v2 29/29] y2038: add 64-bit time_t syscalls to
+ all 32-bit architectures
+Date: Sat, 19 Jan 2019 14:28:52 +0000
+Message-ID: <20190119142852.cntdihah4mpa3lgx@e5254000004ec.dyn.armlinux.org.uk>
+References: <20190118161835.2259170-1-arnd@arndb.de>
+ <20190118161835.2259170-30-arnd@arndb.de>
  <CALCETrXqM5mhvwreN5y-9K99h1j9rs9MAVK-cNLC54s1fdHA6w@mail.gmail.com>
- <CAK8P3a0V+xboaGAF2nqrYtpjXXA7y0LcvCKi4ngLTus1D_XZBA@mail.gmail.com> <CALCETrWPj6dHEyo=AELoVjXGsiwuSpRp17x3CEWBHvp7i3cy+Q@mail.gmail.com>
+ <CAK8P3a0V+xboaGAF2nqrYtpjXXA7y0LcvCKi4ngLTus1D_XZBA@mail.gmail.com>
+ <CALCETrWPj6dHEyo=AELoVjXGsiwuSpRp17x3CEWBHvp7i3cy+Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
+Content-Disposition: inline
 In-Reply-To: <CALCETrWPj6dHEyo=AELoVjXGsiwuSpRp17x3CEWBHvp7i3cy+Q@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
 To: Andy Lutomirski <luto@kernel.org>
-Cc: y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Matt Turner <mattst88@gmail.com>, Russell King <linux@armlinux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Tony Luck <tony.luck@intel.com>, Fenghua Yu <fenghua.yu@intel.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Michal Simek <monstr@monstr.eu>, Paul Burton <paul.burton@mips.com>, Helge Deller <deller@gmx.de>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Michael Ellerman <mpe@ellerman.id.au>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Rich Felker <dalias@libc.org>, David S. Mi
+Cc: Rich Felker <dalias@libc.org>, linux-ia64@vger.kernel.org, Linux-sh list <linux-sh@vger.kernel.org>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Will Deacon <will.deacon@arm.com>, linux-mips@vger.kernel.org, Max Filippov <jcmvbkbc@gmail.com>, Network Development <netdev@vger.kernel.org>, Deepa Dinamani <deepa.kernel@gmail.com>, "H. Peter Anvin" <hpa@zytor.com>, sparclinux <sparclinux@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, linux-s390 <linux-s390@vger.kernel.org>, y2038 Mailman List <y2038@lists.linaro.org>, Michael Ellerman <mpe@ellerman.id.au>, Helge Deller <deller@gmx.de>, X86 ML <x86@kernel.org>, Ingo Molnar <mingo@redhat.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Catalin Marinas <catalin.marinas@arm.com>, Firoz Khan <firoz.khan@linaro.org>, Matt Turner <mattst88@gmail.com>, Fenghua Yu <fenghua.yu@intel.com>, Arnd Bergmann <arnd@arnd>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jan 18, 2019 at 8:53 PM Andy Lutomirski <luto@kernel.org> wrote:
-> I think we have two issues if we reuse those numbers for new syscalls.
-> First, I'd really like to see new syscalls be numbered consistently
-> everywhere, or at least on all x86 variants, and we can't on x32
-> because they mean something else.  Perhaps more importantly, due to
-> what is arguably a rather severe bug, issuing a native x86_64 syscall
-> (x32 bit clear) with nr in the range 512..547 does *not* return
-> -ENOSYS on a kernel with x32 enabled.  Instead it does something that
-> is somewhat arbitrary.  With my patch applied, it will return -ENOSYS,
-> but old kernels will still exist, and this will break syscall probing.
->
-> Can we perhaps just start the consistent numbers above 547 or maybe
-> block out 512..547 in the new regime?
-
-I'm definitely fine with not reusing them ever, and jumping from 511 to
-548 when we get there on all architectures, if you think that helps.
-
-While we could also jump to 548 *now*, I think that would be a
-bit wasteful. Syscall numbers are fairly cheap, but not entirely
-free, especially when you consider architectures like mips that
-have an upper bound of 1000 syscalls before they have to get
-inventive.
-
-     Arnd
+T24gRnJpLCBKYW4gMTgsIDIwMTkgYXQgMTE6NTM6MjVBTSAtMDgwMCwgQW5keSBMdXRvbWlyc2tp
+IHdyb3RlOgo+IE9uIEZyaSwgSmFuIDE4LCAyMDE5IGF0IDExOjMzIEFNIEFybmQgQmVyZ21hbm4g
+PGFybmRAYXJuZGIuZGU+IHdyb3RlOgo+ID4KPiA+IE9uIEZyaSwgSmFuIDE4LCAyMDE5IGF0IDc6
+NTAgUE0gQW5keSBMdXRvbWlyc2tpIDxsdXRvQGtlcm5lbC5vcmc+IHdyb3RlOgo+ID4gPiBPbiBG
+cmksIEphbiAxOCwgMjAxOSBhdCA4OjI1IEFNIEFybmQgQmVyZ21hbm4gPGFybmRAYXJuZGIuZGU+
+IHdyb3RlOgo+ID4gPiA+IC0gT25jZSB3ZSBnZXQgdG8gNTEyLCB3ZSBjbGFzaCB3aXRoIHRoZSB4
+MzIgbnVtYmVycyAodW5sZXNzCj4gPiA+ID4gICB3ZSByZW1vdmUgeDMyIHN1cHBvcnQgZmlyc3Qp
+LCBhbmQgcHJvYmFibHkgaGF2ZSB0byBza2lwCj4gPiA+ID4gICBhIGZldyBtb3JlLiBJIGFsc28g
+Y29uc2lkZXJlZCB1c2luZyB0aGUgNTEyLi41NDcgc3BhY2UKPiA+ID4gPiAgIGZvciAzMi1iaXQt
+b25seSBjYWxscyAod2hpY2ggbmV2ZXIgY2xhc2ggd2l0aCB4MzIpLCBidXQKPiA+ID4gPiAgIHRo
+YXQgYWxzbyBzZWVtcyB0byBhZGQgYSBiaXQgb2YgY29tcGxleGl0eS4KPiA+ID4KPiA+ID4gSSBo
+YXZlIGEgcGF0Y2ggdGhhdCBJJ2xsIHNlbmQgc29vbiB0byBtYWtlIHgzMiB1c2UgaXRzIG93biB0
+YWJsZS4gIEFzCj4gPiA+IGZhciBhcyBJJ20gY29uY2VybmVkLCA1NDcgaXMgKml0Ki4gIDU0OCBp
+cyBqdXN0IGEgbm9ybWFsIG51bWJlciBhbmQgaXMKPiA+ID4gbm90IHNwZWNpYWwuICBCdXQgbGV0
+J3MgcGxlYXNlIG5vdCByZXVzZSA1MTIuLjU0NyBmb3Igb3RoZXIgcHVycG9zZXMKPiA+ID4gb24g
+eDg2IHZhcmlhbnRzIC0tIHRoYXQgd2F5IGxpZXMgZXZlbiBtb3JlIGNvbmZ1c2lvbiwgSU1PLgo+
+ID4KPiA+IEZhaXIgZW5vdWdoLCB0aGUgc3BhY2UgZm9yIHRob3NlIG51bWJlcnMgaXMgY2hlYXAg
+ZW5vdWdoIGhlcmUuCj4gPiBJIHRha2UgaXQgeW91IG1lYW4gd2UgYWxzbyBzaG91bGQgbm90IHJl
+dXNlIHRoYXQgbnVtYmVyIHNwYWNlIGlmCj4gPiB3ZSB3ZXJlIHRvIGRlY2lkZSB0byByZW1vdmUg
+eDMyIHNvb24sIGJ1dCB5b3UgYXJlIG5vdCB3b3JyaWVkCj4gPiBhYm91dCBjbGFzaGluZyB3aXRo
+IGFyY2gvYWxwaGEgd2hlbiBldmVyeXRoaW5nIGVsc2UgdXNlcyBjb25zaXN0ZW50Cj4gPiBudW1i
+ZXJzPwo+ID4KPiAKPiBJIHRoaW5rIHdlIGhhdmUgdHdvIGlzc3VlcyBpZiB3ZSByZXVzZSB0aG9z
+ZSBudW1iZXJzIGZvciBuZXcgc3lzY2FsbHMuCj4gRmlyc3QsIEknZCByZWFsbHkgbGlrZSB0byBz
+ZWUgbmV3IHN5c2NhbGxzIGJlIG51bWJlcmVkIGNvbnNpc3RlbnRseQo+IGV2ZXJ5d2hlcmUsIG9y
+IGF0IGxlYXN0IG9uIGFsbCB4ODYgdmFyaWFudHMsIGFuZCB3ZSBjYW4ndCBvbiB4MzIKPiBiZWNh
+dXNlIHRoZXkgbWVhbiBzb21ldGhpbmcgZWxzZS4gIFBlcmhhcHMgbW9yZSBpbXBvcnRhbnRseSwg
+ZHVlIHRvCj4gd2hhdCBpcyBhcmd1YWJseSBhIHJhdGhlciBzZXZlcmUgYnVnLCBpc3N1aW5nIGEg
+bmF0aXZlIHg4Nl82NCBzeXNjYWxsCj4gKHgzMiBiaXQgY2xlYXIpIHdpdGggbnIgaW4gdGhlIHJh
+bmdlIDUxMi4uNTQ3IGRvZXMgKm5vdCogcmV0dXJuCj4gLUVOT1NZUyBvbiBhIGtlcm5lbCB3aXRo
+IHgzMiBlbmFibGVkLiAgSW5zdGVhZCBpdCBkb2VzIHNvbWV0aGluZyB0aGF0Cj4gaXMgc29tZXdo
+YXQgYXJiaXRyYXJ5LiAgV2l0aCBteSBwYXRjaCBhcHBsaWVkLCBpdCB3aWxsIHJldHVybiAtRU5P
+U1lTLAo+IGJ1dCBvbGQga2VybmVscyB3aWxsIHN0aWxsIGV4aXN0LCBhbmQgdGhpcyB3aWxsIGJy
+ZWFrIHN5c2NhbGwgcHJvYmluZy4KPiAKPiBDYW4gd2UgcGVyaGFwcyBqdXN0IHN0YXJ0IHRoZSBj
+b25zaXN0ZW50IG51bWJlcnMgYWJvdmUgNTQ3IG9yIG1heWJlCj4gYmxvY2sgb3V0IDUxMi4uNTQ3
+IGluIHRoZSBuZXcgcmVnaW1lPwoKSSBkb24ndCB0aGluayB5b3UgZ2FpbiBtdWNoIHdpdGggdGhh
+dCBraW5kIG9mIHNjaGVtZSAtIGl0IHdvbid0IHRha2UKdmVyeSBsb25nIGJlZm9yZSBhbiBhcmNo
+aXRlY3R1cmUgbWlzc2VzIGhhdmluZyBhIHN5c2NhbGwgYWRkZWQsIGFuZAp0aGVuIHNvbWVvbmUg
+ZWxzZSBhZGRzIHRoZWlyIG93bi4gIEJlZW4gdGhlcmUgd2l0aCBBUk0gLSBJIHdhcyBrZWVwaW5n
+CnRoZSBzeXNjYWxsIHRhYmxlIGluIHRoZSBzYW1lIG9yZGVyIGFzIHg4NiBmb3IgbmV3IHN5c2Nh
+bGxzLCBidXQgbm93CnRoYXQgb3RoZXJzIGhhdmUgYmVlbiBhZGRpbmcgc3lzY2FsbHMgdG8gdGhl
+IHRhYmxlIHNpbmNlIEkgY29udmVydGVkCkFSTSB0byB0aGUgdGFidWxhciBmb3JtLCB0aGF0J3Mg
+bm93IGdvbmUgb3V0IHRoZSB3aW5kb3cuCgpTbywgSSB0aGluayBpdCdzIGNvbXBsZXRlbHkgcG9p
+bnRsZXNzIHRvIGRvIHdoYXQgeW91J3JlIHN1Z2dlc3RpbmcuCldlJ2xsIGp1c3QgZW5kIHVwIHdp
+dGggYSBiaWcgaG9sZSBpbiB0aGUgbWlkZGxlIG9mIHRoZSBzeXNjYWxsIHRhYmxlCmFuZCB0aGVu
+IHJldmVydCBiYWNrIHRvIHJhbmRvbSBudW1iZXJpbmcgb2Ygc3lzY2FsbHMgdGhlcmVhZnRlciBh
+Z2Fpbi4KCi0tIApSTUsncyBQYXRjaCBzeXN0ZW06IGh0dHBzOi8vd3d3LmFybWxpbnV4Lm9yZy51
+ay9kZXZlbG9wZXIvcGF0Y2hlcy8KRlRUQyBicm9hZGJhbmQgZm9yIDAuOG1pbGUgbGluZSBpbiBz
+dWJ1cmJpYTogc3luYyBhdCAxMi4xTWJwcyBkb3duIDYyMmticHMgdXAKQWNjb3JkaW5nIHRvIHNw
+ZWVkdGVzdC5uZXQ6IDExLjlNYnBzIGRvd24gNTAwa2JwcyB1cApfX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fXwpZMjAzOCBtYWlsaW5nIGxpc3QKWTIwMzhAbGlz
+dHMubGluYXJvLm9yZwpodHRwczovL2xpc3RzLmxpbmFyby5vcmcvbWFpbG1hbi9saXN0aW5mby95
+MjAzOAo=
