@@ -1,96 +1,116 @@
-From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: Re: [PATCH v6 05/16] sched/core: uclamp: Update CPU's refcount on
- clamp changes
-Date: Mon, 21 Jan 2019 15:44:12 +0000
-Message-ID: <20190121154412.fak2t2iquj3aixtu@e110439-lin>
-References: <20190115101513.2822-1-patrick.bellasi@arm.com>
- <20190115101513.2822-6-patrick.bellasi@arm.com>
- <20190121153308.GL27931@hirez.programming.kicks-ass.net>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH v4 3/3] fs: let filldir_t return bool instead of an error code
+Date: Mon, 21 Jan 2019 16:49:45 +0100
+Message-ID: <CAG48ez3SgejgGbctHwxON1B1k26xk-z16xdozKZkx7=-Li0aHw@mail.gmail.com>
+References: <20190118161440.220134-1-jannh@google.com> <20190118161440.220134-3-jannh@google.com>
+ <20190120224059.GA4205@dastard>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190121153308.GL27931@hirez.programming.kicks-ass.net>
+In-Reply-To: <20190120224059.GA4205@dastard>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
+To: Dave Chinner <david@fromorbit.com>
+Cc: Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-alpha@vger.kernel.org, kernel list <linux-kernel@vger.kernel.org>, Pavel Machek <pavel@ucw.cz>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 21-Jan 16:33, Peter Zijlstra wrote:
-> On Tue, Jan 15, 2019 at 10:15:02AM +0000, Patrick Bellasi wrote:
-> 
-> > +static inline void
-> > +uclamp_task_update_active(struct task_struct *p, unsigned int clamp_id)
-> > +{
-> > +	struct rq_flags rf;
-> > +	struct rq *rq;
-> > +
-> > +	/*
-> > +	 * Lock the task and the CPU where the task is (or was) queued.
-> > +	 *
-> > +	 * We might lock the (previous) rq of a !RUNNABLE task, but that's the
-> > +	 * price to pay to safely serialize util_{min,max} updates with
-> > +	 * enqueues, dequeues and migration operations.
-> > +	 * This is the same locking schema used by __set_cpus_allowed_ptr().
-> > +	 */
-> > +	rq = task_rq_lock(p, &rf);
-> > +
-> > +	/*
-> > +	 * Setting the clamp bucket is serialized by task_rq_lock().
-> > +	 * If the task is not yet RUNNABLE and its task_struct is not
-> > +	 * affecting a valid clamp bucket, the next time it's enqueued,
-> > +	 * it will already see the updated clamp bucket value.
-> > +	 */
-> > +	if (!p->uclamp[clamp_id].active)
-> > +		goto done;
-> > +
-> > +	uclamp_cpu_dec_id(p, rq, clamp_id);
-> > +	uclamp_cpu_inc_id(p, rq, clamp_id);
-> > +
-> > +done:
-> > +	task_rq_unlock(rq, p, &rf);
-> > +}
-> 
-> > @@ -1008,11 +1043,11 @@ static int __setscheduler_uclamp(struct task_struct *p,
-> >  
-> >  	mutex_lock(&uclamp_mutex);
-> >  	if (attr->sched_flags & SCHED_FLAG_UTIL_CLAMP_MIN) {
-> > -		uclamp_bucket_inc(&p->uclamp[UCLAMP_MIN],
-> > +		uclamp_bucket_inc(p, &p->uclamp[UCLAMP_MIN],
-> >  				  UCLAMP_MIN, lower_bound);
-> >  	}
-> >  	if (attr->sched_flags & SCHED_FLAG_UTIL_CLAMP_MAX) {
-> > -		uclamp_bucket_inc(&p->uclamp[UCLAMP_MAX],
-> > +		uclamp_bucket_inc(p, &p->uclamp[UCLAMP_MAX],
-> >  				  UCLAMP_MAX, upper_bound);
-> >  	}
-> >  	mutex_unlock(&uclamp_mutex);
-> 
-> 
-> But.... __sched_setscheduler() actually does the whole dequeue + enqueue
-> thing already ?!? See where it does __setscheduler().
+On Sun, Jan 20, 2019 at 11:41 PM Dave Chinner <david@fromorbit.com> wrote:
+> On Fri, Jan 18, 2019 at 05:14:40PM +0100, Jann Horn wrote:
+> > As Al Viro pointed out, many filldir_t functions return error codes, but
+> > all callers of filldir_t functions just check whether the return value is
+> > non-zero (to determine whether to continue reading the directory); more
+> > precise errors have to be signalled via struct dir_context.
+> > Change all filldir_t functions to return bool instead of int.
+> >
+> > Suggested-by: Al Viro <viro@zeniv.linux.org.uk>
+> > Signed-off-by: Jann Horn <jannh@google.com>
+> > ---
+> >  arch/alpha/kernel/osf_sys.c | 12 +++----
+> >  fs/afs/dir.c                | 30 +++++++++--------
+> >  fs/ecryptfs/file.c          | 13 ++++----
+> >  fs/exportfs/expfs.c         |  8 ++---
+> >  fs/fat/dir.c                |  8 ++---
+> >  fs/gfs2/export.c            |  6 ++--
+> >  fs/nfsd/nfs4recover.c       |  8 ++---
+> >  fs/nfsd/vfs.c               |  6 ++--
+> >  fs/ocfs2/dir.c              | 10 +++---
+> >  fs/ocfs2/journal.c          | 14 ++++----
+> >  fs/overlayfs/readdir.c      | 24 +++++++-------
+> >  fs/readdir.c                | 64 ++++++++++++++++++-------------------
+> >  fs/reiserfs/xattr.c         | 20 ++++++------
+> >  fs/xfs/scrub/dir.c          |  8 ++---
+> >  fs/xfs/scrub/parent.c       |  4 +--
+> >  include/linux/fs.h          | 10 +++---
+> >  16 files changed, 125 insertions(+), 120 deletions(-)
+> >
+> > diff --git a/arch/alpha/kernel/osf_sys.c b/arch/alpha/kernel/osf_sys.c
+> > index db1c2144d477..14e5ae0dac50 100644
+> > --- a/arch/alpha/kernel/osf_sys.c
+> > +++ b/arch/alpha/kernel/osf_sys.c
+> > @@ -108,7 +108,7 @@ struct osf_dirent_callback {
+> >       int error;
+> >  };
+> >
+> > -static int
+> > +static bool
+> >  osf_filldir(struct dir_context *ctx, const char *name, int namlen,
+> >           loff_t offset, u64 ino, unsigned int d_type)
+> >  {
+> > @@ -120,14 +120,14 @@ osf_filldir(struct dir_context *ctx, const char *name, int namlen,
+> >
+> >       buf->error = check_dirent_name(name, namlen);
+> >       if (unlikely(buf->error))
+> > -             return -EFSCORRUPTED;
+> > +             return false;
+> >       buf->error = -EINVAL;   /* only used if we fail */
+> >       if (reclen > buf->count)
+> > -             return -EINVAL;
+> > +             return false;
+>
+> Oh, it's because the error being returned is being squashed by
+> dir_emit():
 
-This is slow-path accounting, not fast path.
+Yeah.
 
-There are two refcounting going on here:
+> >  struct dir_context {
+> > @@ -3469,17 +3471,17 @@ static inline bool dir_emit(struct dir_context *ctx,
+> >                           const char *name, int namelen,
+> >                           u64 ino, unsigned type)
+> >  {
+> > -     return ctx->actor(ctx, name, namelen, ctx->pos, ino, type) == 0;
+> > +     return ctx->actor(ctx, name, namelen, ctx->pos, ino, type);
+> >  }
+>
+> /me wonders if it would be cleaner to do:
+>
+> static inline bool dir_emit(...)
+> {
+>         buf->error = ctx->actor(....)
+>         if (buf->error)
+>                 return false;
+>         return true;
+> }
+>
+> And clean up all filldir actors just to return the error state
+> rather than have to jump through hoops to stash the error state in
+> the context buffer and return the error state?
 
-  1) mapped buckets:
+One negative thing about that, IMO, is that it mixes up the request
+for termination of the loop and the presence of an error. The current
+code returns fake errors that never reach userspace in various places
+to terminate the loop, e.g. fillonedir() has a "return -EINVAL" to
+terminate the loop if at least one element has been read already, and
+filldir() has a "return -EINTR" on signal_pending() that explicitly
+only happens if at least one element has been read already.
 
-     clamp_value <--(M1)--> bucket_id
+But really, I don't have strong feelings about this, I just want to
+get the "fs: don't let getdents return bogus names" patch in. :P
 
-  2) RUNNABLE tasks:
+> That then allows callers who want/need the full error info can
+> continue to call ctx->actor directly,
 
-     bucket_id <--(M2)--> RUNNABLE tasks in a bucket
+"continue to call ctx->actor directly"? I don't remember any code that
+calls ctx->actor directly.
 
-What we fix here is the refcounting for the buckets mapping. If a task
-does not have a task specific clamp value it does not refcount any
-bucket. The moment we assign a task specific clamp value, we need to
-refcount the task in the bucket corresponding to that clamp value.
-
-This will keep the bucket in use at least as long as the task will
-need that clamp value.
-
--- 
-#include <best/regards.h>
-
-Patrick Bellasi
+> while all those that just want
+> to terminate their loops on error can continue just to call
+> dir_emit()...
