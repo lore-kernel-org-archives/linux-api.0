@@ -1,63 +1,69 @@
 From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH v6 04/16] sched/core: uclamp: Add CPU's clamp buckets
- refcounting
-Date: Mon, 21 Jan 2019 16:17:17 +0100
-Message-ID: <20190121151717.GK27931@hirez.programming.kicks-ass.net>
+Subject: Re: [PATCH v6 05/16] sched/core: uclamp: Update CPU's refcount on
+ clamp changes
+Date: Mon, 21 Jan 2019 16:33:08 +0100
+Message-ID: <20190121153308.GL27931@hirez.programming.kicks-ass.net>
 References: <20190115101513.2822-1-patrick.bellasi@arm.com>
- <20190115101513.2822-5-patrick.bellasi@arm.com>
+ <20190115101513.2822-6-patrick.bellasi@arm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190115101513.2822-5-patrick.bellasi@arm.com>
+In-Reply-To: <20190115101513.2822-6-patrick.bellasi@arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Patrick Bellasi <patrick.bellasi@arm.com>
 Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 15, 2019 at 10:15:01AM +0000, Patrick Bellasi wrote:
-> +#ifdef CONFIG_UCLAMP_TASK
+On Tue, Jan 15, 2019 at 10:15:02AM +0000, Patrick Bellasi wrote:
 
-> +struct uclamp_bucket {
-> +	unsigned long value : bits_per(SCHED_CAPACITY_SCALE);
-> +	unsigned long tasks : BITS_PER_LONG - bits_per(SCHED_CAPACITY_SCALE);
-> +};
-
-> +struct uclamp_cpu {
-> +	unsigned int value;
-
-	/* 4 byte hole */
-
-> +	struct uclamp_bucket bucket[UCLAMP_BUCKETS];
-> +};
-
-With the default of 5, this UCLAMP_BUCKETS := 6, so struct uclamp_cpu
-ends up being 7 'unsigned long's, or 56 bytes on 64bit (with a 4 byte
-hole).
-
-> +#endif /* CONFIG_UCLAMP_TASK */
+> +static inline void
+> +uclamp_task_update_active(struct task_struct *p, unsigned int clamp_id)
+> +{
+> +	struct rq_flags rf;
+> +	struct rq *rq;
 > +
->  /*
->   * This is the main, per-CPU runqueue data structure.
->   *
-> @@ -835,6 +879,11 @@ struct rq {
->  	unsigned long		nr_load_updates;
->  	u64			nr_switches;
+> +	/*
+> +	 * Lock the task and the CPU where the task is (or was) queued.
+> +	 *
+> +	 * We might lock the (previous) rq of a !RUNNABLE task, but that's the
+> +	 * price to pay to safely serialize util_{min,max} updates with
+> +	 * enqueues, dequeues and migration operations.
+> +	 * This is the same locking schema used by __set_cpus_allowed_ptr().
+> +	 */
+> +	rq = task_rq_lock(p, &rf);
+> +
+> +	/*
+> +	 * Setting the clamp bucket is serialized by task_rq_lock().
+> +	 * If the task is not yet RUNNABLE and its task_struct is not
+> +	 * affecting a valid clamp bucket, the next time it's enqueued,
+> +	 * it will already see the updated clamp bucket value.
+> +	 */
+> +	if (!p->uclamp[clamp_id].active)
+> +		goto done;
+> +
+> +	uclamp_cpu_dec_id(p, rq, clamp_id);
+> +	uclamp_cpu_inc_id(p, rq, clamp_id);
+> +
+> +done:
+> +	task_rq_unlock(rq, p, &rf);
+> +}
+
+> @@ -1008,11 +1043,11 @@ static int __setscheduler_uclamp(struct task_struct *p,
 >  
-> +#ifdef CONFIG_UCLAMP_TASK
-> +	/* Utilization clamp values based on CPU's RUNNABLE tasks */
-> +	struct uclamp_cpu	uclamp[UCLAMP_CNT] ____cacheline_aligned;
+>  	mutex_lock(&uclamp_mutex);
+>  	if (attr->sched_flags & SCHED_FLAG_UTIL_CLAMP_MIN) {
+> -		uclamp_bucket_inc(&p->uclamp[UCLAMP_MIN],
+> +		uclamp_bucket_inc(p, &p->uclamp[UCLAMP_MIN],
+>  				  UCLAMP_MIN, lower_bound);
+>  	}
+>  	if (attr->sched_flags & SCHED_FLAG_UTIL_CLAMP_MAX) {
+> -		uclamp_bucket_inc(&p->uclamp[UCLAMP_MAX],
+> +		uclamp_bucket_inc(p, &p->uclamp[UCLAMP_MAX],
+>  				  UCLAMP_MAX, upper_bound);
+>  	}
+>  	mutex_unlock(&uclamp_mutex);
 
-Which makes this 112 bytes with 8 bytes in 2 holes, which is short of 2
-64 byte cachelines.
 
-Is that the best layout?
-
-> +#endif
-> +
->  	struct cfs_rq		cfs;
->  	struct rt_rq		rt;
->  	struct dl_rq		dl;
-> -- 
-> 2.19.2
-> 
+But.... __sched_setscheduler() actually does the whole dequeue + enqueue
+thing already ?!? See where it does __setscheduler().
