@@ -1,116 +1,88 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH v4 3/3] fs: let filldir_t return bool instead of an error code
-Date: Mon, 21 Jan 2019 16:49:45 +0100
-Message-ID: <CAG48ez3SgejgGbctHwxON1B1k26xk-z16xdozKZkx7=-Li0aHw@mail.gmail.com>
-References: <20190118161440.220134-1-jannh@google.com> <20190118161440.220134-3-jannh@google.com>
- <20190120224059.GA4205@dastard>
+From: Patrick Bellasi <patrick.bellasi@arm.com>
+Subject: Re: [PATCH v6 04/16] sched/core: uclamp: Add CPU's clamp buckets
+ refcounting
+Date: Mon, 21 Jan 2019 15:54:07 +0000
+Message-ID: <20190121155407.gv4cxpg2njqmdlj5@e110439-lin>
+References: <20190115101513.2822-1-patrick.bellasi@arm.com>
+ <20190115101513.2822-5-patrick.bellasi@arm.com>
+ <20190121151717.GK27931@hirez.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190120224059.GA4205@dastard>
+Content-Disposition: inline
+In-Reply-To: <20190121151717.GK27931@hirez.programming.kicks-ass.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Chinner <david@fromorbit.com>
-Cc: Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-alpha@vger.kernel.org, kernel list <linux-kernel@vger.kernel.org>, Pavel Machek <pavel@ucw.cz>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Jan 20, 2019 at 11:41 PM Dave Chinner <david@fromorbit.com> wrote:
-> On Fri, Jan 18, 2019 at 05:14:40PM +0100, Jann Horn wrote:
-> > As Al Viro pointed out, many filldir_t functions return error codes, but
-> > all callers of filldir_t functions just check whether the return value is
-> > non-zero (to determine whether to continue reading the directory); more
-> > precise errors have to be signalled via struct dir_context.
-> > Change all filldir_t functions to return bool instead of int.
-> >
-> > Suggested-by: Al Viro <viro@zeniv.linux.org.uk>
-> > Signed-off-by: Jann Horn <jannh@google.com>
-> > ---
-> >  arch/alpha/kernel/osf_sys.c | 12 +++----
-> >  fs/afs/dir.c                | 30 +++++++++--------
-> >  fs/ecryptfs/file.c          | 13 ++++----
-> >  fs/exportfs/expfs.c         |  8 ++---
-> >  fs/fat/dir.c                |  8 ++---
-> >  fs/gfs2/export.c            |  6 ++--
-> >  fs/nfsd/nfs4recover.c       |  8 ++---
-> >  fs/nfsd/vfs.c               |  6 ++--
-> >  fs/ocfs2/dir.c              | 10 +++---
-> >  fs/ocfs2/journal.c          | 14 ++++----
-> >  fs/overlayfs/readdir.c      | 24 +++++++-------
-> >  fs/readdir.c                | 64 ++++++++++++++++++-------------------
-> >  fs/reiserfs/xattr.c         | 20 ++++++------
-> >  fs/xfs/scrub/dir.c          |  8 ++---
-> >  fs/xfs/scrub/parent.c       |  4 +--
-> >  include/linux/fs.h          | 10 +++---
-> >  16 files changed, 125 insertions(+), 120 deletions(-)
-> >
-> > diff --git a/arch/alpha/kernel/osf_sys.c b/arch/alpha/kernel/osf_sys.c
-> > index db1c2144d477..14e5ae0dac50 100644
-> > --- a/arch/alpha/kernel/osf_sys.c
-> > +++ b/arch/alpha/kernel/osf_sys.c
-> > @@ -108,7 +108,7 @@ struct osf_dirent_callback {
-> >       int error;
-> >  };
-> >
-> > -static int
-> > +static bool
-> >  osf_filldir(struct dir_context *ctx, const char *name, int namlen,
-> >           loff_t offset, u64 ino, unsigned int d_type)
-> >  {
-> > @@ -120,14 +120,14 @@ osf_filldir(struct dir_context *ctx, const char *name, int namlen,
-> >
-> >       buf->error = check_dirent_name(name, namlen);
-> >       if (unlikely(buf->error))
-> > -             return -EFSCORRUPTED;
-> > +             return false;
-> >       buf->error = -EINVAL;   /* only used if we fail */
-> >       if (reclen > buf->count)
-> > -             return -EINVAL;
-> > +             return false;
->
-> Oh, it's because the error being returned is being squashed by
-> dir_emit():
+On 21-Jan 16:17, Peter Zijlstra wrote:
+> On Tue, Jan 15, 2019 at 10:15:01AM +0000, Patrick Bellasi wrote:
+> > +#ifdef CONFIG_UCLAMP_TASK
+> 
+> > +struct uclamp_bucket {
+> > +	unsigned long value : bits_per(SCHED_CAPACITY_SCALE);
+> > +	unsigned long tasks : BITS_PER_LONG - bits_per(SCHED_CAPACITY_SCALE);
+> > +};
+> 
+> > +struct uclamp_cpu {
+> > +	unsigned int value;
+> 
+> 	/* 4 byte hole */
+> 
+> > +	struct uclamp_bucket bucket[UCLAMP_BUCKETS];
+> > +};
+> 
+> With the default of 5, this UCLAMP_BUCKETS := 6, so struct uclamp_cpu
+> ends up being 7 'unsigned long's, or 56 bytes on 64bit (with a 4 byte
+> hole).
 
-Yeah.
+Yes, that's dimensioned and configured to fit into a single cache line
+for all the possible 5 (by default) clamp values of a clamp index
+(i.e. min or max util).
 
-> >  struct dir_context {
-> > @@ -3469,17 +3471,17 @@ static inline bool dir_emit(struct dir_context *ctx,
-> >                           const char *name, int namelen,
-> >                           u64 ino, unsigned type)
-> >  {
-> > -     return ctx->actor(ctx, name, namelen, ctx->pos, ino, type) == 0;
-> > +     return ctx->actor(ctx, name, namelen, ctx->pos, ino, type);
-> >  }
->
-> /me wonders if it would be cleaner to do:
->
-> static inline bool dir_emit(...)
-> {
->         buf->error = ctx->actor(....)
->         if (buf->error)
->                 return false;
->         return true;
-> }
->
-> And clean up all filldir actors just to return the error state
-> rather than have to jump through hoops to stash the error state in
-> the context buffer and return the error state?
+> 
+> > +#endif /* CONFIG_UCLAMP_TASK */
+> > +
+> >  /*
+> >   * This is the main, per-CPU runqueue data structure.
+> >   *
+> > @@ -835,6 +879,11 @@ struct rq {
+> >  	unsigned long		nr_load_updates;
+> >  	u64			nr_switches;
+> >  
+> > +#ifdef CONFIG_UCLAMP_TASK
+> > +	/* Utilization clamp values based on CPU's RUNNABLE tasks */
+> > +	struct uclamp_cpu	uclamp[UCLAMP_CNT] ____cacheline_aligned;
+> 
+> Which makes this 112 bytes with 8 bytes in 2 holes, which is short of 2
+> 64 byte cachelines.
 
-One negative thing about that, IMO, is that it mixes up the request
-for termination of the loop and the presence of an error. The current
-code returns fake errors that never reach userspace in various places
-to terminate the loop, e.g. fillonedir() has a "return -EINVAL" to
-terminate the loop if at least one element has been read already, and
-filldir() has a "return -EINTR" on signal_pending() that explicitly
-only happens if at least one element has been read already.
+Right, we have 2 cache lines where:
+- the first $L tracks 5 different util_min values
+- the second $L tracks 5 different util_max values
 
-But really, I don't have strong feelings about this, I just want to
-get the "fs: don't let getdents return bogus names" patch in. :P
+> Is that the best layout?
 
-> That then allows callers who want/need the full error info can
-> continue to call ctx->actor directly,
+It changed few times and that's what I found more reasonable for both
+for fitting the default configuration and also for code readability.
+Notice that we access RQ and SE clamp values with the same patter,
+for example:
 
-"continue to call ctx->actor directly"? I don't remember any code that
-calls ctx->actor directly.
+   {rq|p}->uclamp[clamp_idx].value
 
-> while all those that just want
-> to terminate their loops on error can continue just to call
-> dir_emit()...
+Are you worried about the holes or something else specific ?
+
+> > +#endif
+> > +
+> >  	struct cfs_rq		cfs;
+> >  	struct rt_rq		rt;
+> >  	struct dl_rq		dl;
+> > -- 
+> > 2.19.2
+> > 
+
+-- 
+#include <best/regards.h>
+
+Patrick Bellasi
