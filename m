@@ -1,88 +1,54 @@
-From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: Re: [PATCH v6 04/16] sched/core: uclamp: Add CPU's clamp buckets
- refcounting
-Date: Mon, 21 Jan 2019 15:54:07 +0000
-Message-ID: <20190121155407.gv4cxpg2njqmdlj5@e110439-lin>
-References: <20190115101513.2822-1-patrick.bellasi@arm.com>
- <20190115101513.2822-5-patrick.bellasi@arm.com>
- <20190121151717.GK27931@hirez.programming.kicks-ass.net>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH v2 29/29] y2038: add 64-bit time_t syscalls to all 32-bit architectures
+Date: Mon, 21 Jan 2019 17:31:01 +0100
+Message-ID: <CAK8P3a2grsgvLeBHFoLnnpJti7qkZFfBPTrXf+CoihtOJKySzw@mail.gmail.com>
+References: <20190118161835.2259170-1-arnd@arndb.de> <20190118161835.2259170-30-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190121151717.GK27931@hirez.programming.kicks-ass.net>
+In-Reply-To: <20190118161835.2259170-30-arnd@arndb.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
+To: y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>
+Cc: Matt Turner <mattst88@gmail.com>, Russell King - ARM Linux <linux@armlinux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Tony Luck <tony.luck@intel.com>, Fenghua Yu <fenghua.yu@intel.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Michal Simek <monstr@monstr.eu>, Paul Burton <paul.burton@mips.com>, Helge Deller <deller@gmx.de>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Michael Ellerman <mpe@ellerman.id.au>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Rich Felker <dalias@libc.org>, David Miller <davem@davemloft.net>, Andy Lutomirski <luto@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa>
 List-Id: linux-api@vger.kernel.org
 
-On 21-Jan 16:17, Peter Zijlstra wrote:
-> On Tue, Jan 15, 2019 at 10:15:01AM +0000, Patrick Bellasi wrote:
-> > +#ifdef CONFIG_UCLAMP_TASK
-> 
-> > +struct uclamp_bucket {
-> > +	unsigned long value : bits_per(SCHED_CAPACITY_SCALE);
-> > +	unsigned long tasks : BITS_PER_LONG - bits_per(SCHED_CAPACITY_SCALE);
-> > +};
-> 
-> > +struct uclamp_cpu {
-> > +	unsigned int value;
-> 
-> 	/* 4 byte hole */
-> 
-> > +	struct uclamp_bucket bucket[UCLAMP_BUCKETS];
-> > +};
-> 
-> With the default of 5, this UCLAMP_BUCKETS := 6, so struct uclamp_cpu
-> ends up being 7 'unsigned long's, or 56 bytes on 64bit (with a 4 byte
-> hole).
+On Fri, Jan 18, 2019 at 5:25 PM Arnd Bergmann <arnd@arndb.de> wrote:
+>
+> This adds 21 new system calls on each ABI that has 32-bit time_t
+> today. All of these have the exact same semantics as their existing
+> counterparts, and the new ones all have macro names that end in 'time64'
+> for clarification.
+>
+> This gets us to the point of being able to safely use a C library
+> that has 64-bit time_t in user space. There are still a couple of
+> loose ends to tie up in various areas of the code, but this is the
+> big one, and should be entirely uncontroversial at this point.
 
-Yes, that's dimensioned and configured to fit into a single cache line
-for all the possible 5 (by default) clamp values of a clamp index
-(i.e. min or max util).
+I've successfully tested this with musl and LTP now, using an
+i386 kernel. The musl port I used is at
+https://git.linaro.org/people/arnd.bergmann/musl-y2038.git/
+This is just an updated version of what I used for testing last
+year, using the current syscall assignment, and going back
+to the time32 versions of getitimer/setitimer and
+wait4/waitid/getusage.
 
-> 
-> > +#endif /* CONFIG_UCLAMP_TASK */
-> > +
-> >  /*
-> >   * This is the main, per-CPU runqueue data structure.
-> >   *
-> > @@ -835,6 +879,11 @@ struct rq {
-> >  	unsigned long		nr_load_updates;
-> >  	u64			nr_switches;
-> >  
-> > +#ifdef CONFIG_UCLAMP_TASK
-> > +	/* Utilization clamp values based on CPU's RUNNABLE tasks */
-> > +	struct uclamp_cpu	uclamp[UCLAMP_CNT] ____cacheline_aligned;
-> 
-> Which makes this 112 bytes with 8 bytes in 2 holes, which is short of 2
-> 64 byte cachelines.
+It's certainly not intended for merging like this, but a proper
+musl port is under discussion now, and this should be
+sufficient if anyone else wants to try out the new syscall
+ABI before we merge it.
 
-Right, we have 2 cache lines where:
-- the first $L tracks 5 different util_min values
-- the second $L tracks 5 different util_max values
+The LTP I have is heavily hacked, and has a number of
+failures resulting from differences between musl and glibc,
+or from the way we convert between the kernel types and
+the user space types.
 
-> Is that the best layout?
+The testing found one minor bug in all the kernel syscall tables:
 
-It changed few times and that's what I found more reasonable for both
-for fitting the default configuration and also for code readability.
-Notice that we access RQ and SE clamp values with the same patter,
-for example:
+> +418    common  mq_timedsend_time64             sys_mq_timedsend
+> +419    common  mq_timedreceiv_time64           sys_mq_timedreceive
 
-   {rq|p}->uclamp[clamp_idx].value
+While this would have fit in with umount(), creat() and mknod(),
+it was unintentional, and I've changed it back to
+mq_timedreceive_time64 (with an added 'e').
 
-Are you worried about the holes or something else specific ?
-
-> > +#endif
-> > +
-> >  	struct cfs_rq		cfs;
-> >  	struct rt_rq		rt;
-> >  	struct dl_rq		dl;
-> > -- 
-> > 2.19.2
-> > 
-
--- 
-#include <best/regards.h>
-
-Patrick Bellasi
+       Arnd
