@@ -1,45 +1,57 @@
-From: Geert Uytterhoeven <geert@linux-m68k.org>
-Subject: Re: [PATCH v2 26/29] y2038: use time32 syscall names on 32-bit
-Date: Mon, 21 Jan 2019 09:56:02 +0100
-Message-ID: <CAMuHMdWiHTjDT9-tnjgJy9qCWRr+qUgsJa6LjpRDJQzhoJqnzw@mail.gmail.com>
-References: <20190118161835.2259170-1-arnd@arndb.de> <20190118161835.2259170-27-arnd@arndb.de>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH v6 03/16] sched/core: uclamp: Map TASK's clamp values
+ into CPU's clamp buckets
+Date: Mon, 21 Jan 2019 11:15:08 +0100
+Message-ID: <20190121101508.GH27931@hirez.programming.kicks-ass.net>
+References: <20190115101513.2822-1-patrick.bellasi@arm.com>
+ <20190115101513.2822-4-patrick.bellasi@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190118161835.2259170-27-arnd@arndb.de>
+Content-Disposition: inline
+In-Reply-To: <20190115101513.2822-4-patrick.bellasi@arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux-Arch <linux-arch@vger.kernel.org>, Matt Turner <mattst88@gmail.com>, Russell King <linux@armlinux.org.uk>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Tony Luck <tony.luck@intel.com>, Fenghua Yu <fenghua.yu@intel.com>, Michal Simek <monstr@monstr.eu>, Paul Burton <paul.burton@mips.com>, Helge Deller <deller@gmx.de>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Michael Ellerman <mpe@ellerman.id.au>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Rich Felker <dalias@libc.org>, "David S. Miller" <davem@davemloft.net>
+To: Patrick Bellasi <patrick.bellasi@arm.com>
+Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jan 18, 2019 at 5:21 PM Arnd Bergmann <arnd@arndb.de> wrote:
-> This is the big flip, where all 32-bit architectures set COMPAT_32BIT_TIME
-> abd use the _time32 system calls from the former compat layer instead
-> of the system calls that take __kernel_timespec and similar arguments.
->
-> The temporary redirects for __kernel_timespec, __kernel_itimerspec
-> and __kernel_timex can get removed with this.
->
-> It would be easy to split this commit by architecture, but with the new
-> generated system call tables, it's easy enough to do it all at once,
-> which makes it a little easier to check that the changes are the same
-> in each table.
->
-> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+On Tue, Jan 15, 2019 at 10:15:00AM +0000, Patrick Bellasi wrote:
+> +/*
+> + * Number of utilization clamp buckets.
+> + *
+> + * The first clamp bucket (bucket_id=0) is used to track non clamped tasks, i.e.
+> + * util_{min,max} (0,SCHED_CAPACITY_SCALE). Thus we allocate one more bucket in
+> + * addition to the compile time configured number.
+> + */
+> +#define UCLAMP_BUCKETS (CONFIG_UCLAMP_BUCKETS_COUNT + 1)
+> +
+> +/*
+> + * Utilization clamp bucket
+> + * @value:		clamp value tracked by a clamp bucket
+> + * @bucket_id:		the bucket index used by the fast-path
+> + * @mapped:		the bucket index is valid
+> + *
+> + * A utilization clamp bucket maps a:
+> + *   clamp value (value), i.e.
+> + *   util_{min,max} value requested from userspace
+> + * to a:
+> + *   clamp bucket index (bucket_id), i.e.
+> + *   index of the per-cpu RUNNABLE tasks refcounting array
+> + *
+> + * The mapped bit is set whenever a task has been mapped on a clamp bucket for
+> + * the first time. When this bit is set, any:
+> + *   uclamp_bucket_inc() - for a new clamp value
+> + * is matched by a:
+> + *   uclamp_bucket_dec() - for the old clamp value
+> + */
+> +struct uclamp_se {
+> +	unsigned int value		: bits_per(SCHED_CAPACITY_SCALE);
+> +	unsigned int bucket_id		: bits_per(UCLAMP_BUCKETS);
+> +	unsigned int mapped		: 1;
+> +};
 
->  arch/m68k/kernel/syscalls/syscall.tbl       | 42 +++++------
+Do we want something like:
 
-For m68k:
-Acked-by: Geert Uytterhoeven <geert@linux-m68k.org>
+	BUILD_BUG_ON(sizeof(struct uclamp_se) == sizeof(unsigned int));
 
-
-Gr{oetje,eeting}s,
-
-                        Geert
-
---
-Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k.org
-
-In personal conversations with technical people, I call myself a hacker. But
-when I'm talking to journalists I just say "programmer" or something like that.
-                                -- Linus Torvalds
+And/or put a limit on CONFIG_UCLAMP_BUCKETS_COUNT that guarantees that ?
