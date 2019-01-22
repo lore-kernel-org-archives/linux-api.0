@@ -1,139 +1,126 @@
-From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: Re: [PATCH v6 07/16] sched/core: uclamp: Add system default clamps
-Date: Tue, 22 Jan 2019 14:43:29 +0000
-Message-ID: <20190122144329.ziimv6fejwvky7yb@e110439-lin>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH v6 05/16] sched/core: uclamp: Update CPU's refcount on
+ clamp changes
+Date: Tue, 22 Jan 2019 15:57:42 +0100
+Message-ID: <20190122145742.GQ27931@hirez.programming.kicks-ass.net>
 References: <20190115101513.2822-1-patrick.bellasi@arm.com>
- <20190115101513.2822-8-patrick.bellasi@arm.com>
- <20190122135644.GP27931@hirez.programming.kicks-ass.net>
+ <20190115101513.2822-6-patrick.bellasi@arm.com>
+ <20190121153308.GL27931@hirez.programming.kicks-ass.net>
+ <20190121154412.fak2t2iquj3aixtu@e110439-lin>
+ <20190122093704.GM27931@hirez.programming.kicks-ass.net>
+ <20190122104305.6vjx37muqsxm536t@e110439-lin>
+ <20190122132817.GG13777@hirez.programming.kicks-ass.net>
+ <20190122140115.twtx646vewm757ca@e110439-lin>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190122135644.GP27931@hirez.programming.kicks-ass.net>
+In-Reply-To: <20190122140115.twtx646vewm757ca@e110439-lin>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
+To: Patrick Bellasi <patrick.bellasi@arm.com>
 Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On 22-Jan 14:56, Peter Zijlstra wrote:
-> On Tue, Jan 15, 2019 at 10:15:04AM +0000, Patrick Bellasi wrote:
+On Tue, Jan 22, 2019 at 02:01:15PM +0000, Patrick Bellasi wrote:
+> On 22-Jan 14:28, Peter Zijlstra wrote:
+> > On Tue, Jan 22, 2019 at 10:43:05AM +0000, Patrick Bellasi wrote:
+> > > On 22-Jan 10:37, Peter Zijlstra wrote:
+> > 
+> > > > Sure, I get that. What I don't get is why you're adding that (2) here.
+> > > > Like said, __sched_setscheduler() already does a dequeue/enqueue under
+> > > > rq->lock, which should already take care of that.
+> > > 
+> > > Oh, ok... got it what you mean now.
+> > > 
+> > > With:
+> > > 
+> > >    [PATCH v6 01/16] sched/core: Allow sched_setattr() to use the current policy
+> > >    <20190115101513.2822-2-patrick.bellasi@arm.com>
+> > > 
+> > > we can call __sched_setscheduler() with:
+> > > 
+> > >    attr->sched_flags & SCHED_FLAG_KEEP_POLICY
+> > > 
+> > > whenever we want just to change the clamp values of a task without
+> > > changing its class. Thus, we can end up returning from
+> > > __sched_setscheduler() without doing an actual dequeue/enqueue.
+> > 
+> > I don't see that happening.. when KEEP_POLICY we set attr.sched_policy =
+> > SETPARAM_POLICY. That is then checked again in __setscheduler_param(),
+> > which is in the middle of that dequeue/enqueue.
 > 
-> > diff --git a/include/linux/sched.h b/include/linux/sched.h
-> > index 84294925d006..c8f391d1cdc5 100644
-> > --- a/include/linux/sched.h
-> > +++ b/include/linux/sched.h
-> > @@ -625,6 +625,11 @@ struct uclamp_se {
-> >  	unsigned int bucket_id		: bits_per(UCLAMP_BUCKETS);
-> >  	unsigned int mapped		: 1;
-> >  	unsigned int active		: 1;
-> > +	/* Clamp bucket and value actually used by a RUNNABLE task */
-> > +	struct {
-> > +		unsigned int value	: bits_per(SCHED_CAPACITY_SCALE);
-> > +		unsigned int bucket_id	: bits_per(UCLAMP_BUCKETS);
-> > +	} effective;
+> Yes, I think I've forgot a check before we actually dequeue the task.
 > 
-> I am confuzled by this thing..  so uclamp_se already has a value,bucket,
-> which per the prior code is the effective one.
+> The current code does:
 > 
-> Now; I think I see why you want another value; you need the second to
-> store the original value for when the system limits change and we must
-> re-evaluate.
-
-Yes, that's one reason, the other one being to properly support
-CGroup when we add them in the following patches.
-
-Effective will always track the value/bucket in which the task has
-been refcounted at enqueue time and it depends on the aggregated
-value.
-
-> So why are you not adding something like:
+> ---8<---
+>    SYSCALL_DEFINE3(sched_setattr)
 > 
-> 	unsigned int orig_value : bits_per(SCHED_CAPACITY_SCALE);
-
-Would say that can be enough if we decide to ditch the mapping and use
-a linear mapping. In that case the value will always be enough to find
-in which bucket a task has been accounted.
-
-> > +unsigned int sysctl_sched_uclamp_util_min;
+>         // A) request to keep the same policy
+>         if (attr.sched_flags & SCHED_FLAG_KEEP_POLICY)
+>             attr.sched_policy = SETPARAM_POLICY;
 > 
-> > +unsigned int sysctl_sched_uclamp_util_max = SCHED_CAPACITY_SCALE;
+>         sched_setattr()
+>             // B) actually enforce the same policy
+>             if (policy < 0)
+>                 policy = oldpolicy = p->policy;
 > 
-> > +static inline void
-> > +uclamp_effective_get(struct task_struct *p, unsigned int clamp_id,
-> > +		     unsigned int *clamp_value, unsigned int *bucket_id)
-> > +{
-> > +	/* Task specific clamp value */
-> > +	*clamp_value = p->uclamp[clamp_id].value;
-> > +	*bucket_id = p->uclamp[clamp_id].bucket_id;
-> > +
-> > +	/* System default restriction */
-> > +	if (unlikely(*clamp_value < uclamp_default[UCLAMP_MIN].value ||
-> > +		     *clamp_value > uclamp_default[UCLAMP_MAX].value)) {
-> > +		/* Keep it simple: unconditionally enforce system defaults */
-> > +		*clamp_value = uclamp_default[clamp_id].value;
-> > +		*bucket_id = uclamp_default[clamp_id].bucket_id;
-> > +	}
-> > +}
+>             // C) tune the clamp values
+>             if (attr->sched_flags & SCHED_FLAG_UTIL_CLAMP)
+>                 retval = __setscheduler_uclamp(p, attr);
 > 
-> That would then turn into something like:
+>             // D) tune attributes if policy is the same
+>             if (unlikely(policy == p->policy))
+>                 if (fair_policy(policy) && attr->sched_nice != task_nice(p))
+>                     goto change;
+>                 if (rt_policy(policy) && attr->sched_priority != p->rt_priority)
+>                     goto change;
+>                 if (dl_policy(policy) && dl_param_changed(p, attr))
+>                     goto change;
+
+		  if (util_changed)
+		      goto change;
+
+?
+
+>                 return 0;
+>         change:
 > 
-> 	unsigned int high = READ_ONCE(sysctl_sched_uclamp_util_max);
-> 	unsigned int low  = READ_ONCE(sysctl_sched_uclamp_util_min);
+>             // E) dequeue/enqueue task
+> ---8<---
 > 
-> 	uclamp_se->orig_value = value;
-> 	uclamp_se->value = clamp(value, low, high);
+> So, probably in D) I've missed a check on SCHED_FLAG_KEEP_POLICY to
+> enforce a return in that case...
 > 
-> And then determine bucket_id based on value.
-
-Right... if I ditch the mapping that should work.
-
- 
-> > +int sched_uclamp_handler(struct ctl_table *table, int write,
-> > +			 void __user *buffer, size_t *lenp,
-> > +			 loff_t *ppos)
-> > +{
-> > +	int old_min, old_max;
-> > +	int result = 0;
-> > +
-> > +	mutex_lock(&uclamp_mutex);
-> > +
-> > +	old_min = sysctl_sched_uclamp_util_min;
-> > +	old_max = sysctl_sched_uclamp_util_max;
-> > +
-> > +	result = proc_dointvec(table, write, buffer, lenp, ppos);
-> > +	if (result)
-> > +		goto undo;
-> > +	if (!write)
-> > +		goto done;
-> > +
-> > +	if (sysctl_sched_uclamp_util_min > sysctl_sched_uclamp_util_max ||
-> > +	    sysctl_sched_uclamp_util_max > SCHED_CAPACITY_SCALE) {
-> > +		result = -EINVAL;
-> > +		goto undo;
-> > +	}
-> > +
-> > +	if (old_min != sysctl_sched_uclamp_util_min) {
-> > +		uclamp_bucket_inc(NULL, &uclamp_default[UCLAMP_MIN],
-> > +				  UCLAMP_MIN, sysctl_sched_uclamp_util_min);
-> > +	}
-> > +	if (old_max != sysctl_sched_uclamp_util_max) {
-> > +		uclamp_bucket_inc(NULL, &uclamp_default[UCLAMP_MAX],
-> > +				  UCLAMP_MAX, sysctl_sched_uclamp_util_max);
-> > +	}
+> > Also, and this might be 'broken', SETPARAM_POLICY _does_ reset all the
+> > other attributes, it only preserves policy, but it will (re)set nice
+> > level for example (see that same function).
 > 
-> Should you not update all tasks?
+> Mmm... right... my bad! :/
+> 
+> > So maybe we want to introduce another (few?) FLAG_KEEP flag(s) that
+> > preserve the other bits; I'm thinking at least KEEP_PARAM and KEEP_UTIL
+> > or something.
+> 
+> Yes, I would say we have two options:
+> 
+>  1) SCHED_FLAG_KEEP_POLICY enforces all the scheduling class specific
+>     attributes, but cross class attributes (e.g. uclamp)
+>
+>  2) add SCHED_KEEP_NICE, SCHED_KEEP_PRIO, and SCED_KEEP_PARAMS
+>     and use them in the if conditions in D)
 
-That's true, but that's also an expensive operation, that's why now
-I'm doing only lazy updates at next enqueue time.
+So the current KEEP_POLICY basically provides sched_setparam(), and
+given we have that as a syscall, that is supposedly a useful
+functionality.
 
-Do you think that could be acceptable?
+Also, NICE/PRIO/DL* is all the same thing and depends on the policy,
+KEEP_PARAM should cover the lot
 
-Perhaps I can sanity check all the CPU to ensure that they all have a
-current clamp value within the new enforced range. This kind-of
-anticipate the idea to have an in-kernel API which has higher priority
-and allows to set clamp values across all the CPUs...
+And I suppose the UTIL_CLAMP is !KEEP_UTIL; we could go either way
+around with that flag.
 
--- 
-#include <best/regards.h>
+> In both cases the goal should be to return from code block D).
 
-Patrick Bellasi
+I don't think so; we really do want to 'goto change' for util changes
+too I think. Why duplicate part of that logic?
