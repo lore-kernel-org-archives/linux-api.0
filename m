@@ -1,103 +1,94 @@
-From: Peter Zijlstra <peterz@infradead.org>
+From: Patrick Bellasi <patrick.bellasi@arm.com>
 Subject: Re: [PATCH v6 04/16] sched/core: uclamp: Add CPU's clamp buckets
  refcounting
-Date: Tue, 22 Jan 2019 11:03:42 +0100
-Message-ID: <20190122100342.GO27931@hirez.programming.kicks-ass.net>
+Date: Tue, 22 Jan 2019 10:31:07 +0000
+Message-ID: <20190122103107.vulmhrucl3vtjiop@e110439-lin>
 References: <20190115101513.2822-1-patrick.bellasi@arm.com>
  <20190115101513.2822-5-patrick.bellasi@arm.com>
- <20190121151717.GK27931@hirez.programming.kicks-ass.net>
- <20190121155407.gv4cxpg2njqmdlj5@e110439-lin>
+ <20190121145929.GI27931@hirez.programming.kicks-ass.net>
+ <20190121152311.7u7bwbjopuptnzcy@e110439-lin>
+ <20190121161237.GB13777@hirez.programming.kicks-ass.net>
+ <20190121163337.6l7hkggicndtpzjs@e110439-lin>
+ <20190122094507.GN27931@hirez.programming.kicks-ass.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190121155407.gv4cxpg2njqmdlj5@e110439-lin>
+In-Reply-To: <20190122094507.GN27931@hirez.programming.kicks-ass.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Patrick Bellasi <patrick.bellasi@arm.com>
+To: Peter Zijlstra <peterz@infradead.org>
 Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 21, 2019 at 03:54:07PM +0000, Patrick Bellasi wrote:
-> On 21-Jan 16:17, Peter Zijlstra wrote:
-> > On Tue, Jan 15, 2019 at 10:15:01AM +0000, Patrick Bellasi wrote:
-> > > +#ifdef CONFIG_UCLAMP_TASK
-> > 
-> > > +struct uclamp_bucket {
-> > > +	unsigned long value : bits_per(SCHED_CAPACITY_SCALE);
-> > > +	unsigned long tasks : BITS_PER_LONG - bits_per(SCHED_CAPACITY_SCALE);
-> > > +};
-> > 
-> > > +struct uclamp_cpu {
-> > > +	unsigned int value;
-> > 
-> > 	/* 4 byte hole */
-> > 
-> > > +	struct uclamp_bucket bucket[UCLAMP_BUCKETS];
-> > > +};
-> > 
-> > With the default of 5, this UCLAMP_BUCKETS := 6, so struct uclamp_cpu
-> > ends up being 7 'unsigned long's, or 56 bytes on 64bit (with a 4 byte
-> > hole).
+On 22-Jan 10:45, Peter Zijlstra wrote:
+> On Mon, Jan 21, 2019 at 04:33:38PM +0000, Patrick Bellasi wrote:
+> > On 21-Jan 17:12, Peter Zijlstra wrote:
+> > > On Mon, Jan 21, 2019 at 03:23:11PM +0000, Patrick Bellasi wrote:
 > 
-> Yes, that's dimensioned and configured to fit into a single cache line
-> for all the possible 5 (by default) clamp values of a clamp index
-> (i.e. min or max util).
-
-And I suppose you picked 5 because 20% is a 'nice' number? whereas
-16./666/% is a bit odd?
-
-> > > +#endif /* CONFIG_UCLAMP_TASK */
-> > > +
-> > >  /*
-> > >   * This is the main, per-CPU runqueue data structure.
-> > >   *
-> > > @@ -835,6 +879,11 @@ struct rq {
-> > >  	unsigned long		nr_load_updates;
-> > >  	u64			nr_switches;
-> > >  
-> > > +#ifdef CONFIG_UCLAMP_TASK
-> > > +	/* Utilization clamp values based on CPU's RUNNABLE tasks */
-> > > +	struct uclamp_cpu	uclamp[UCLAMP_CNT] ____cacheline_aligned;
+> > > > and keep all
+> > > > the buckets in use at the beginning of a cache line.
+> > > 
+> > > That; is that the rationale for all this? Note that per the defaults
+> > > everything is in a single line already.
 > > 
-> > Which makes this 112 bytes with 8 bytes in 2 holes, which is short of 2
-> > 64 byte cachelines.
+> > Yes, that's because of the loop in:
+> > 
+> >    dequeue_task()
+> >      uclamp_cpu_dec()
+> >        uclamp_cpu_dec_id()
+> >          uclamp_cpu_update()
+> > 
+> > where buckets needs sometimes to be scanned to find a new max.
+> > 
+> > Consider also that, with mapping, we can more easily increase the
+> > buckets count to 20 in order to have a finer clamping granularity if
+> > needed without warring too much about performance impact especially
+> > when we use anyway few different clamp values.
+> > 
+> > So, I agree that mapping adds (code) complexity but it can also save
+> > few cycles in the fast path... do you think it's not worth the added
+> > complexity?
 > 
-> Right, we have 2 cache lines where:
-> - the first $L tracks 5 different util_min values
-> - the second $L tracks 5 different util_max values
-
-Well, not quite so, if you want that you should put
-____cacheline_aligned on struct uclamp_cpu. Such that the individual
-array entries are each aligned, the above only alignes the whole array,
-so the second uclamp_cpu is spread over both lines.
-
-But I think this is actually better, since you have to scan both
-min/max anyway, and allowing one the straddle a line you have to touch
-anyway, allows for using less lines in total.
-
-Consider for example the case where UCLAMP_BUCKETS=8, then each
-uclamp_cpu would be 9 words or 72 bytes. If you force align the member,
-then you end up with 4 lines, whereas now it would be 3.
-
-> > Is that the best layout?
+> Then maybe split this out in a separate patch? Do the trivial linear
+> bucket thing first and then do this smarty pants thing on top.
 > 
-> It changed few times and that's what I found more reasonable for both
-> for fitting the default configuration and also for code readability.
-> Notice that we access RQ and SE clamp values with the same patter,
-> for example:
-> 
->    {rq|p}->uclamp[clamp_idx].value
-> 
-> Are you worried about the holes or something else specific ?
+> One problem with the scheme is that it doesn't defrag; so if you get a
+> peak usage, you can still end up with only two active buckets in
+> different lines.
 
-Not sure; just mostly asking if this was by design or by accident.
+You right, that was saved for a later optimization. :/
 
-One thing I did wonder though; since bucket[0] is counting the tasks
-that are unconstrained and it's bucket value is basically fixed (0 /
-1024), can't we abuse that value field to store uclamp_cpu::value ?
+Mainly in consideration of the fact that, at least for the main usage
+we have in mind on Android, we will likely configure all the required
+clamps once for all at boot time.
 
-OTOH, doing that might make the code really ugly with all them:
+> Also; if it is it's own patch, you get a much better view of the
+> additional complexity and a chance to justify it ;-)
 
-  if (!bucket_id)
+What about ditching the mapping for the time being and see if we
+get a real overhead hit in the future ?
 
-exceptions all over the place.
+At that point we will revamp the mapping patch with also a proper
+defrag support.
+
+> Also; would it make sense to do s/cpu/rq/ on much of this? All this
+> uclamp_cpu_*() stuff really is per rq and takes rq arguments, so why
+> does it have cpu in the name... no strong feelings, just noticed it and
+> thought is a tad inconsistent.
+
+The idea behind using "cpu" instead of "rq" was that we use those only at
+root rq level and the clamps are aggregated per-CPU.
+
+I remember one of the first versions used "cpu" instead of "rq" as a
+parameter name and you proposed to change it as an optimization since
+we call it from dequeue_task() where we already have a *rq.
+
+... but, since we have those uclamp data within struct rq, I think you
+are right: it makes more sense to rename the functions.
+
+Will do it in v7, thanks.
+
+-- 
+#include <best/regards.h>
+
+Patrick Bellasi
