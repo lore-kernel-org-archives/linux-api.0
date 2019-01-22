@@ -1,35 +1,63 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH v2 29/29] y2038: add 64-bit time_t syscalls to all 32-bit architectures
-Date: Tue, 22 Jan 2019 10:37:12 +0100
-Message-ID: <CAK8P3a2sMgHWpSV8OAa7LCo6oQiQ4xd5WQHKJ1-tN0TV8uRDHQ@mail.gmail.com>
-References: <20190118161835.2259170-1-arnd@arndb.de> <20190118161835.2259170-30-arnd@arndb.de>
- <CALCETrXqM5mhvwreN5y-9K99h1j9rs9MAVK-cNLC54s1fdHA6w@mail.gmail.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH v6 04/16] sched/core: uclamp: Add CPU's clamp buckets
+ refcounting
+Date: Tue, 22 Jan 2019 10:45:07 +0100
+Message-ID: <20190122094507.GN27931@hirez.programming.kicks-ass.net>
+References: <20190115101513.2822-1-patrick.bellasi@arm.com>
+ <20190115101513.2822-5-patrick.bellasi@arm.com>
+ <20190121145929.GI27931@hirez.programming.kicks-ass.net>
+ <20190121152311.7u7bwbjopuptnzcy@e110439-lin>
+ <20190121161237.GB13777@hirez.programming.kicks-ass.net>
+ <20190121163337.6l7hkggicndtpzjs@e110439-lin>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrXqM5mhvwreN5y-9K99h1j9rs9MAVK-cNLC54s1fdHA6w@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <20190121163337.6l7hkggicndtpzjs@e110439-lin>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, X86 ML <x86@kernel.org>, alpha <linux-alpha@vger.kernel.org>
+To: Patrick Bellasi <patrick.bellasi@arm.com>
+Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jan 18, 2019 at 7:50 PM Andy Lutomirski <luto@kernel.org> wrote:
-> On Fri, Jan 18, 2019 at 8:25 AM Arnd Bergmann <arnd@arndb.de> wrote:
->
-> I have a patch that I'll send soon to make x32 use its own table.  As
-> far as I'm concerned, 547 is *it*.  548 is just a normal number and is
-> not special.  But let's please not reuse 512..547 for other purposes
-> on x86 variants -- that way lies even more confusion, IMO.
+On Mon, Jan 21, 2019 at 04:33:38PM +0000, Patrick Bellasi wrote:
+> On 21-Jan 17:12, Peter Zijlstra wrote:
+> > On Mon, Jan 21, 2019 at 03:23:11PM +0000, Patrick Bellasi wrote:
 
-(trimming Cc list, as this is getting a little off-topic most most)
+> > > and keep all
+> > > the buckets in use at the beginning of a cache line.
+> > 
+> > That; is that the rationale for all this? Note that per the defaults
+> > everything is in a single line already.
+> 
+> Yes, that's because of the loop in:
+> 
+>    dequeue_task()
+>      uclamp_cpu_dec()
+>        uclamp_cpu_dec_id()
+>          uclamp_cpu_update()
+> 
+> where buckets needs sometimes to be scanned to find a new max.
+> 
+> Consider also that, with mapping, we can more easily increase the
+> buckets count to 20 in order to have a finer clamping granularity if
+> needed without warring too much about performance impact especially
+> when we use anyway few different clamp values.
+> 
+> So, I agree that mapping adds (code) complexity but it can also save
+> few cycles in the fast path... do you think it's not worth the added
+> complexity?
 
-Just so I understand: do you mean duplicating the .tbl file, or just
-the resulting table of entry points?
+Then maybe split this out in a separate patch? Do the trivial linear
+bucket thing first and then do this smarty pants thing on top.
 
-In either way, how will that work with the new io_uring_setup()
-system call that will have to use the compat entry point?
-Are you planning to use the same syscall number as x86_64
-but point it to the compat function, or do we still need a new
-syscall number for x32 in the regular range?
+One problem with the scheme is that it doesn't defrag; so if you get a
+peak usage, you can still end up with only two active buckets in
+different lines.
 
-       Arnd
+Also; if it is it's own patch, you get a much better view of the
+additional complexity and a chance to justify it ;-)
+
+Also; would it make sense to do s/cpu/rq/ on much of this? All this
+uclamp_cpu_*() stuff really is per rq and takes rq arguments, so why
+does it have cpu in the name... no strong feelings, just noticed it and
+thought is a tad inconsistent.
