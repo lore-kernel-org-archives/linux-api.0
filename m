@@ -1,70 +1,108 @@
-From: "Enrico Weigelt, metux IT consult" <lkml@metux.net>
-Subject: Re: Can we drop upstream Linux x32 support?
-Date: Tue, 22 Jan 2019 14:34:11 +0100
-Message-ID: <d6542485-87ba-7d57-29bb-4077bda17809@metux.net>
-References: <CALCETrXoRAibsbWa9nfbDrt0iEuebMnCMhSFg-d9W-J2g8mDjw@mail.gmail.com>
- <6577ac4f-524c-37f4-a4d0-6eb94ec7d9a5@schoebel-theuer.de>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH v6 07/16] sched/core: uclamp: Add system default clamps
+Date: Tue, 22 Jan 2019 14:56:44 +0100
+Message-ID: <20190122135644.GP27931@hirez.programming.kicks-ass.net>
+References: <20190115101513.2822-1-patrick.bellasi@arm.com>
+ <20190115101513.2822-8-patrick.bellasi@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <6577ac4f-524c-37f4-a4d0-6eb94ec7d9a5@schoebel-theuer.de>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20190115101513.2822-8-patrick.bellasi@arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: =?UTF-8?Q?Thomas_Sch=c3=b6bel-Theuer?= <thomas@schoebel-theuer.de>, Andy Lutomirski <luto@kernel.org>, X86 ML <x86@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Peter Zijlstra <peterz@infradead.org>, Borislav Petkov <bp@alien8.de>, Florian Weimer <fweimer@redhat.com>, Mike Frysinger <vapier@gentoo.org>, "H. J. Lu" <hjl.tools@gmail.com>, Rich Felker <dalias@libc.org>, x32@buildd.debian.org, Arnd Bergmann <arnd@arndb.de>, Will Deacon <will.deacon@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Linus Torvalds <torvalds@linux-foundation.org>
+To: Patrick Bellasi <patrick.bellasi@arm.com>
+Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On 14.12.18 22:16, Thomas Schöbel-Theuer wrote:
+On Tue, Jan 15, 2019 at 10:15:04AM +0000, Patrick Bellasi wrote:
 
-Hi,
+> diff --git a/include/linux/sched.h b/include/linux/sched.h
+> index 84294925d006..c8f391d1cdc5 100644
+> --- a/include/linux/sched.h
+> +++ b/include/linux/sched.h
+> @@ -625,6 +625,11 @@ struct uclamp_se {
+>  	unsigned int bucket_id		: bits_per(UCLAMP_BUCKETS);
+>  	unsigned int mapped		: 1;
+>  	unsigned int active		: 1;
+> +	/* Clamp bucket and value actually used by a RUNNABLE task */
+> +	struct {
+> +		unsigned int value	: bits_per(SCHED_CAPACITY_SCALE);
+> +		unsigned int bucket_id	: bits_per(UCLAMP_BUCKETS);
+> +	} effective;
 
-> Currently, we have a few thousands of servers relying on 32bit ABIs in> some thousands of VMs and/or containers of various types (LXC,
-OpenVZ,> etc).
-Similar w/ my clients, but in Industrie/Embedded/i4.0 world. We have
-thousands of devices in the field, that need support for at least a
-decade.
+I am confuzled by this thing..  so uclamp_se already has a value,bucket,
+which per the prior code is the effective one.
 
-Right now, I'm working on a new device, that - even having a 64bit cpu -
-will still run 32bit userland for various reasons (memory footprint
-is one of them).
+Now; I think I see why you want another value; you need the second to
+store the original value for when the system limits change and we must
+re-evaluate.
 
-Even on the data center side, where we have *a lot* of containers
-(eg. container-based microservices on minimal distros like alpine
-or ptxdist - as well as many different, often highly specialized,
-legacy applications), 32bit userland indeed is a major factor.
+So why are you not adding something like:
 
-Dropping it would have huge economic consequences:
+	unsigned int orig_value : bits_per(SCHED_CAPACITY_SCALE);
 
-* massive costs for re-deployment / migration of thousands of different
-  applications
-* field roll of thousands of different embedded / industrial devices,
-  as a major cpu arch
-* huge increase in memory consumption and io load in container-
-  based microservice environments
-* loosing x86 for a huge portion of the embedded / small devices world
+> +unsigned int sysctl_sched_uclamp_util_min;
 
-I don't even dare to estimate the economic damage. (not even speaking
-about reputation loss of the Linux community)
+> +unsigned int sysctl_sched_uclamp_util_max = SCHED_CAPACITY_SCALE;
 
-> Here is my private opinion, not speaking for 1&1: at some point the> future, 32bit userspace support needs to be dropped anyway, somewhen
-in> future. This is inevitable in the very long term.
+> +static inline void
+> +uclamp_effective_get(struct task_struct *p, unsigned int clamp_id,
+> +		     unsigned int *clamp_value, unsigned int *bucket_id)
+> +{
+> +	/* Task specific clamp value */
+> +	*clamp_value = p->uclamp[clamp_id].value;
+> +	*bucket_id = p->uclamp[clamp_id].bucket_id;
+> +
+> +	/* System default restriction */
+> +	if (unlikely(*clamp_value < uclamp_default[UCLAMP_MIN].value ||
+> +		     *clamp_value > uclamp_default[UCLAMP_MAX].value)) {
+> +		/* Keep it simple: unconditionally enforce system defaults */
+> +		*clamp_value = uclamp_default[clamp_id].value;
+> +		*bucket_id = uclamp_default[clamp_id].bucket_id;
+> +	}
+> +}
 
-Very, very, long term. Just the devices I'm coping w/ will have
-remaining lifetime of at least 10..15 years. That's a really long time
-in IT world. Nobody knows whether x86 at all will play a big role then.
+That would then turn into something like:
 
-> 1) please release / declare a new LTS kernel, with upstream support for
-> at least 5 years (as usual). Currently, only 4.4 and 4.9 are marked as
-> LTS. Either mark another existing stable kernel as LTS, or a future one.
+	unsigned int high = READ_ONCE(sysctl_sched_uclamp_util_max);
+	unsigned int low  = READ_ONCE(sysctl_sched_uclamp_util_min);
 
-That might be okay in enterprise world (even though, here I'm regularily
-stumbling across much older code in production), but in industrial
-world, the product lifetimes are much longer - 20+yrs years
-usualstandard.are pretty common.
+	uclamp_se->orig_value = value;
+	uclamp_se->value = clamp(value, low, high);
 
---mtx
+And then determine bucket_id based on value.
 
--- 
-Enrico Weigelt, metux IT consult
-Free software and Linux embedded engineering
-info@metux.net -- +49-151-27565287
+> +int sched_uclamp_handler(struct ctl_table *table, int write,
+> +			 void __user *buffer, size_t *lenp,
+> +			 loff_t *ppos)
+> +{
+> +	int old_min, old_max;
+> +	int result = 0;
+> +
+> +	mutex_lock(&uclamp_mutex);
+> +
+> +	old_min = sysctl_sched_uclamp_util_min;
+> +	old_max = sysctl_sched_uclamp_util_max;
+> +
+> +	result = proc_dointvec(table, write, buffer, lenp, ppos);
+> +	if (result)
+> +		goto undo;
+> +	if (!write)
+> +		goto done;
+> +
+> +	if (sysctl_sched_uclamp_util_min > sysctl_sched_uclamp_util_max ||
+> +	    sysctl_sched_uclamp_util_max > SCHED_CAPACITY_SCALE) {
+> +		result = -EINVAL;
+> +		goto undo;
+> +	}
+> +
+> +	if (old_min != sysctl_sched_uclamp_util_min) {
+> +		uclamp_bucket_inc(NULL, &uclamp_default[UCLAMP_MIN],
+> +				  UCLAMP_MIN, sysctl_sched_uclamp_util_min);
+> +	}
+> +	if (old_max != sysctl_sched_uclamp_util_max) {
+> +		uclamp_bucket_inc(NULL, &uclamp_default[UCLAMP_MAX],
+> +				  UCLAMP_MAX, sysctl_sched_uclamp_util_max);
+> +	}
+
+Should you not update all tasks?
