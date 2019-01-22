@@ -1,154 +1,128 @@
-From: "Rafael J. Wysocki" <rjw@rjwysocki.net>
-Subject: Re: [PATCH v6 08/16] sched/cpufreq: uclamp: Add utilization clamping for FAIR tasks
-Date: Tue, 22 Jan 2019 11:37:42 +0100
-Message-ID: <3006911.57lVBuUGX3@aspire.rjw.lan>
-References: <20190115101513.2822-1-patrick.bellasi@arm.com> <20190115101513.2822-9-patrick.bellasi@arm.com>
+From: Patrick Bellasi <patrick.bellasi@arm.com>
+Subject: Re: [PATCH v6 05/16] sched/core: uclamp: Update CPU's refcount on
+ clamp changes
+Date: Tue, 22 Jan 2019 10:43:05 +0000
+Message-ID: <20190122104305.6vjx37muqsxm536t@e110439-lin>
+References: <20190115101513.2822-1-patrick.bellasi@arm.com>
+ <20190115101513.2822-6-patrick.bellasi@arm.com>
+ <20190121153308.GL27931@hirez.programming.kicks-ass.net>
+ <20190121154412.fak2t2iquj3aixtu@e110439-lin>
+ <20190122093704.GM27931@hirez.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190115101513.2822-9-patrick.bellasi@arm.com>
+Content-Disposition: inline
+In-Reply-To: <20190122093704.GM27931@hirez.programming.kicks-ass.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Patrick Bellasi <patrick.bellasi@arm.com>
-Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tuesday, January 15, 2019 11:15:05 AM CET Patrick Bellasi wrote:
-> Each time a frequency update is required via schedutil, a frequency is
-> selected to (possibly) satisfy the utilization reported by each
-> scheduling class. However, when utilization clamping is in use, the
-> frequency selection should consider userspace utilization clamping
-> hints.  This will allow, for example, to:
+On 22-Jan 10:37, Peter Zijlstra wrote:
+> On Mon, Jan 21, 2019 at 03:44:12PM +0000, Patrick Bellasi wrote:
+> > On 21-Jan 16:33, Peter Zijlstra wrote:
+> > > On Tue, Jan 15, 2019 at 10:15:02AM +0000, Patrick Bellasi wrote:
+> > > 
+> > > > +static inline void
+> > > > +uclamp_task_update_active(struct task_struct *p, unsigned int clamp_id)
+> > > > +{
+> > > > +	struct rq_flags rf;
+> > > > +	struct rq *rq;
+> > > > +
+> > > > +	/*
+> > > > +	 * Lock the task and the CPU where the task is (or was) queued.
+> > > > +	 *
+> > > > +	 * We might lock the (previous) rq of a !RUNNABLE task, but that's the
+> > > > +	 * price to pay to safely serialize util_{min,max} updates with
+> > > > +	 * enqueues, dequeues and migration operations.
+> > > > +	 * This is the same locking schema used by __set_cpus_allowed_ptr().
+> > > > +	 */
+> > > > +	rq = task_rq_lock(p, &rf);
+> > > > +
+> > > > +	/*
+> > > > +	 * Setting the clamp bucket is serialized by task_rq_lock().
+> > > > +	 * If the task is not yet RUNNABLE and its task_struct is not
+> > > > +	 * affecting a valid clamp bucket, the next time it's enqueued,
+> > > > +	 * it will already see the updated clamp bucket value.
+> > > > +	 */
+> > > > +	if (!p->uclamp[clamp_id].active)
+> > > > +		goto done;
+> > > > +
+> > > > +	uclamp_cpu_dec_id(p, rq, clamp_id);
+> > > > +	uclamp_cpu_inc_id(p, rq, clamp_id);
+> > > > +
+> > > > +done:
+> > > > +	task_rq_unlock(rq, p, &rf);
+> > > > +}
+> > > 
+> > > > @@ -1008,11 +1043,11 @@ static int __setscheduler_uclamp(struct task_struct *p,
+> > > >  
+> > > >  	mutex_lock(&uclamp_mutex);
+> > > >  	if (attr->sched_flags & SCHED_FLAG_UTIL_CLAMP_MIN) {
+> > > > -		uclamp_bucket_inc(&p->uclamp[UCLAMP_MIN],
+> > > > +		uclamp_bucket_inc(p, &p->uclamp[UCLAMP_MIN],
+> > > >  				  UCLAMP_MIN, lower_bound);
+> > > >  	}
+> > > >  	if (attr->sched_flags & SCHED_FLAG_UTIL_CLAMP_MAX) {
+> > > > -		uclamp_bucket_inc(&p->uclamp[UCLAMP_MAX],
+> > > > +		uclamp_bucket_inc(p, &p->uclamp[UCLAMP_MAX],
+> > > >  				  UCLAMP_MAX, upper_bound);
+> > > >  	}
+> > > >  	mutex_unlock(&uclamp_mutex);
+> > > 
+> > > 
+> > > But.... __sched_setscheduler() actually does the whole dequeue + enqueue
+> > > thing already ?!? See where it does __setscheduler().
+> > 
+> > This is slow-path accounting, not fast path.
 > 
->  - boost tasks which are directly affecting the user experience
->    by running them at least at a minimum "requested" frequency
+> Sure; but that's still no reason for duplicate or unneeded code.
 > 
->  - cap low priority tasks not directly affecting the user experience
->    by running them only up to a maximum "allowed" frequency
+> > There are two refcounting going on here:
+> > 
+> >   1) mapped buckets:
+> > 
+> >      clamp_value <--(M1)--> bucket_id
+> > 
+> >   2) RUNNABLE tasks:
+> > 
+> >      bucket_id <--(M2)--> RUNNABLE tasks in a bucket
+> > 
+> > What we fix here is the refcounting for the buckets mapping. If a task
+> > does not have a task specific clamp value it does not refcount any
+> > bucket. The moment we assign a task specific clamp value, we need to
+> > refcount the task in the bucket corresponding to that clamp value.
+> > 
+> > This will keep the bucket in use at least as long as the task will
+> > need that clamp value.
 > 
-> These constraints are meant to support a per-task based tuning of the
-> frequency selection thus supporting a fine grained definition of
-> performance boosting vs energy saving strategies in kernel space.
-> 
-> Add support to clamp the utilization and IOWait boost of RUNNABLE FAIR
-> tasks within the boundaries defined by their aggregated utilization
-> clamp constraints.
-> Based on the max(min_util, max_util) of each task, max-aggregated the
-> CPU clamp value in a way to give the boosted tasks the performance they
-> need when they happen to be co-scheduled with other capped tasks.
-> 
-> Signed-off-by: Patrick Bellasi <patrick.bellasi@arm.com>
-> Cc: Ingo Molnar <mingo@redhat.com>
-> Cc: Peter Zijlstra <peterz@infradead.org>
-> Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
-> 
-> ---
-> Changes in v6:
->  Message-ID: <20181107113849.GC14309@e110439-lin>
->  - sanity check util_max >= util_min
->  Others:
->  - wholesale s/group/bucket/
->  - wholesale s/_{get,put}/_{inc,dec}/ to match refcount APIs
-> ---
->  kernel/sched/cpufreq_schedutil.c | 27 ++++++++++++++++++++++++---
->  kernel/sched/sched.h             | 23 +++++++++++++++++++++++
->  2 files changed, 47 insertions(+), 3 deletions(-)
-> 
-> diff --git a/kernel/sched/cpufreq_schedutil.c b/kernel/sched/cpufreq_schedutil.c
-> index 033ec7c45f13..520ee2b785e7 100644
-> --- a/kernel/sched/cpufreq_schedutil.c
-> +++ b/kernel/sched/cpufreq_schedutil.c
-> @@ -218,8 +218,15 @@ unsigned long schedutil_freq_util(int cpu, unsigned long util_cfs,
->  	 * CFS tasks and we use the same metric to track the effective
->  	 * utilization (PELT windows are synchronized) we can directly add them
->  	 * to obtain the CPU's actual utilization.
-> +	 *
-> +	 * CFS utilization can be boosted or capped, depending on utilization
-> +	 * clamp constraints requested by currently RUNNABLE tasks.
-> +	 * When there are no CFS RUNNABLE tasks, clamps are released and
-> +	 * frequency will be gracefully reduced with the utilization decay.
->  	 */
-> -	util = util_cfs;
-> +	util = (type == ENERGY_UTIL)
-> +		? util_cfs
-> +		: uclamp_util(rq, util_cfs);
->  	util += cpu_util_rt(rq);
->  
->  	dl_util = cpu_util_dl(rq);
-> @@ -327,6 +334,7 @@ static void sugov_iowait_boost(struct sugov_cpu *sg_cpu, u64 time,
->  			       unsigned int flags)
->  {
->  	bool set_iowait_boost = flags & SCHED_CPUFREQ_IOWAIT;
-> +	unsigned int max_boost;
->  
->  	/* Reset boost if the CPU appears to have been idle enough */
->  	if (sg_cpu->iowait_boost &&
-> @@ -342,11 +350,24 @@ static void sugov_iowait_boost(struct sugov_cpu *sg_cpu, u64 time,
->  		return;
->  	sg_cpu->iowait_boost_pending = true;
->  
-> +	/*
-> +	 * Boost FAIR tasks only up to the CPU clamped utilization.
-> +	 *
-> +	 * Since DL tasks have a much more advanced bandwidth control, it's
-> +	 * safe to assume that IO boost does not apply to those tasks.
-> +	 * Instead, since RT tasks are not utilization clamped, we don't want
-> +	 * to apply clamping on IO boost while there is blocked RT
-> +	 * utilization.
-> +	 */
-> +	max_boost = sg_cpu->iowait_boost_max;
-> +	if (!cpu_util_rt(cpu_rq(sg_cpu->cpu)))
-> +		max_boost = uclamp_util(cpu_rq(sg_cpu->cpu), max_boost);
-> +
->  	/* Double the boost at each request */
->  	if (sg_cpu->iowait_boost) {
->  		sg_cpu->iowait_boost <<= 1;
-> -		if (sg_cpu->iowait_boost > sg_cpu->iowait_boost_max)
-> -			sg_cpu->iowait_boost = sg_cpu->iowait_boost_max;
-> +		if (sg_cpu->iowait_boost > max_boost)
-> +			sg_cpu->iowait_boost = max_boost;
->  		return;
->  	}
->  
-> diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-> index b7f3ee8ba164..95d62a2a0b44 100644
-> --- a/kernel/sched/sched.h
-> +++ b/kernel/sched/sched.h
-> @@ -2267,6 +2267,29 @@ static inline unsigned int uclamp_none(int clamp_id)
->  	return SCHED_CAPACITY_SCALE;
->  }
->  
-> +#ifdef CONFIG_UCLAMP_TASK
-> +static inline unsigned int uclamp_util(struct rq *rq, unsigned int util)
-> +{
-> +	unsigned int min_util = READ_ONCE(rq->uclamp[UCLAMP_MIN].value);
-> +	unsigned int max_util = READ_ONCE(rq->uclamp[UCLAMP_MAX].value);
-> +
-> +	/*
-> +	 * Since CPU's {min,max}_util clamps are MAX aggregated considering
-> +	 * RUNNABLE tasks with _different_ clamps, we can end up with an
-> +	 * invertion, which we can fix at usage time.
-> +	 */
-> +	if (unlikely(min_util >= max_util))
-> +		return min_util;
-> +
-> +	return clamp(util, min_util, max_util);
-> +}
-> +#else /* CONFIG_UCLAMP_TASK */
-> +static inline unsigned int uclamp_util(struct rq *rq, unsigned int util)
-> +{
-> +	return util;
-> +}
-> +#endif /* CONFIG_UCLAMP_TASK */
-> +
->  #ifdef arch_scale_freq_capacity
->  # ifndef arch_scale_freq_invariant
->  #  define arch_scale_freq_invariant()	true
-> 
+> Sure, I get that. What I don't get is why you're adding that (2) here.
+> Like said, __sched_setscheduler() already does a dequeue/enqueue under
+> rq->lock, which should already take care of that.
 
-IMO it would be better to combine this patch with the next one.
+Oh, ok... got it what you mean now.
 
-At least some things in it I was about to ask about would go away
-then. :-)
+With:
 
-Besides, I don't really see a reason for the split here.
+   [PATCH v6 01/16] sched/core: Allow sched_setattr() to use the current policy
+   <20190115101513.2822-2-patrick.bellasi@arm.com>
+
+we can call __sched_setscheduler() with:
+
+   attr->sched_flags & SCHED_FLAG_KEEP_POLICY
+
+whenever we want just to change the clamp values of a task without
+changing its class. Thus, we can end up returning from
+__sched_setscheduler() without doing an actual dequeue/enqueue.
+
+This is likely the most common use-case.
+
+I'll better check if I can propagate this info and avoid M2 if we
+actually did a dequeue/enqueue.
+
+Cheers Patrick
+
+-- 
+#include <best/regards.h>
+
+Patrick Bellasi
