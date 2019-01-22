@@ -1,141 +1,62 @@
-From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: Re: [PATCH v6 11/16] sched/fair: Add uclamp support to
- energy_compute()
-Date: Tue, 22 Jan 2019 15:01:37 +0000
-Message-ID: <20190122150137.fp4g4kdng2qpy6qx@e110439-lin>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH v6 07/16] sched/core: uclamp: Add system default clamps
+Date: Tue, 22 Jan 2019 16:13:17 +0100
+Message-ID: <20190122151317.GH13777@hirez.programming.kicks-ass.net>
 References: <20190115101513.2822-1-patrick.bellasi@arm.com>
- <20190115101513.2822-12-patrick.bellasi@arm.com>
- <20190122121321.r6mv23ao57uut3t7@queper01-lin>
- <20190122124546.njrpmykzbjpztd6u@e110439-lin>
- <20190122132944.sfxlnpc3xeft4rqd@queper01-lin>
- <20190122142606.gc5hnc5pzefblegw@e110439-lin>
- <20190122143909.pmlqyhcjshyomrbw@queper01-lin>
+ <20190115101513.2822-8-patrick.bellasi@arm.com>
+ <20190122135644.GP27931@hirez.programming.kicks-ass.net>
+ <20190122144329.ziimv6fejwvky7yb@e110439-lin>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190122143909.pmlqyhcjshyomrbw@queper01-lin>
+In-Reply-To: <20190122144329.ziimv6fejwvky7yb@e110439-lin>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Quentin Perret <quentin.perret@arm.com>
-Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
+To: Patrick Bellasi <patrick.bellasi@arm.com>
+Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On 22-Jan 14:39, Quentin Perret wrote:
-> On Tuesday 22 Jan 2019 at 14:26:06 (+0000), Patrick Bellasi wrote:
-> > On 22-Jan 13:29, Quentin Perret wrote:
-> > > On Tuesday 22 Jan 2019 at 12:45:46 (+0000), Patrick Bellasi wrote:
-> > > > On 22-Jan 12:13, Quentin Perret wrote:
-> > > > > On Tuesday 15 Jan 2019 at 10:15:08 (+0000), Patrick Bellasi wrote:
-> > > > > > The Energy Aware Scheduler (AES) estimates the energy impact of waking
-
-[...]
-
-> > > Ah, sorry, I guess my message was misleading. I'm saying this is
-> > > changing the way _EAS_ deals with RT tasks. Right now we don't actually
-> > > consider the RT-go-to-max thing at all in the EAS prediction. Your
-> > > patch is changing that AFAICT. It actually changes the way EAS sees RT
-> > > tasks even without uclamp ...
+On Tue, Jan 22, 2019 at 02:43:29PM +0000, Patrick Bellasi wrote:
+> On 22-Jan 14:56, Peter Zijlstra wrote:
+> > On Tue, Jan 15, 2019 at 10:15:04AM +0000, Patrick Bellasi wrote:
 > > 
-> > Lemme see if I get it right.
+> > > diff --git a/include/linux/sched.h b/include/linux/sched.h
+> > > index 84294925d006..c8f391d1cdc5 100644
+> > > --- a/include/linux/sched.h
+> > > +++ b/include/linux/sched.h
+> > > @@ -625,6 +625,11 @@ struct uclamp_se {
+> > >  	unsigned int bucket_id		: bits_per(UCLAMP_BUCKETS);
+> > >  	unsigned int mapped		: 1;
+> > >  	unsigned int active		: 1;
+> > > +	/* Clamp bucket and value actually used by a RUNNABLE task */
+> > > +	struct {
+> > > +		unsigned int value	: bits_per(SCHED_CAPACITY_SCALE);
+> > > +		unsigned int bucket_id	: bits_per(UCLAMP_BUCKETS);
+> > > +	} effective;
 > > 
-> > Currently, whenever we look at CPU utilization for ENERGY_UTIL, we
-> > always use cpu_util_rt() for RT tasks:
+> > I am confuzled by this thing..  so uclamp_se already has a value,bucket,
+> > which per the prior code is the effective one.
 > > 
-> > ---8<---
-> >         util = util_cfs;
-> >         util += cpu_util_rt(rq);
-> >         util += dl_util;
-> > ---8<---
-> > 
-> > Thus, even when RT tasks are RUNNABLE, we don't always assume the CPU
-> > running at the max capacity but just whatever is the aggregated
-> > utilization across all the classes.
-> > 
-> > With uclamp, we have:
-> > 
-> > ---8<---
-> >         util = cpu_util_rt(rq) + util_cfs;
-> >         if (type == FREQUENCY_UTIL)
-> >             util = uclamp_util_with(rq, util, p);
-> >         dl_util = cpu_util_dl(rq);
-> >         if (type == ENERGY_UTIL)
-> >             util += dl_util;
-> > ---8<---
-> > 
-> > So, I would say that, in terms of ENERGY_UTIL we do the same both
-> > w/ and w/o uclamp. Isn't it?
+> > Now; I think I see why you want another value; you need the second to
+> > store the original value for when the system limits change and we must
+> > re-evaluate.
 > 
-> Yes but now you use FREQUENCY_UTIL for computing 'max_util' in the EAS
-> prediction.
-
-Right, I overlook that "little" detail... :/
-
-> Let's take an example. You have a perf domain with two CPUs. One CPU is
-> busy running a RT task, the other CPU runs a CFS task. Right now in
-> compute_energy() we only use ENERGY_UTIL, so 'max_util' ends up being
-> the max between the utilization of the two tasks. So we don't predict
-> we're going to max freq.
-
-+1
-
-> With your patch, we use FREQUENCY_UTIL to compute 'max_util', so we
-> _will_ predict that we're going to max freq.
-
-Right, with the default conf yes.
-
-> And we will do that even if CONFIG_UCLAMP_TASK=n.
-
-While this should not happen, as I wrote in the RT integration patch,
-that's happening because I'm missing some compilation guard or
-similar. In this configurations we should always go to max... will
-look into that.
-
-> The default EAS calculation will be different with your patch when there
-> are runnable RT tasks in the system. This needs to be documented, I
-> think.
-
-Sure...
-
-> > > But I'm not hostile to the idea since it's possible to enable uclamp and
-> > > set the min cap to 0 for RT if you want. So there is a story there.
-> > > However, I think this needs be documented somewhere, at the very least.
-> > 
-> > The only difference I see is that the actual frequency could be
-> > different (lower then max) when a clamped RT task is RUNNABLE.
-> > 
-> > Are you worried that running RT on a lower freq could have side
-> > effects on the estimated busy time the CPU ?
-> > 
-> > I also still don't completely get why you say it could be useful to
-> >    "set the min cap to 0 for RT if you want"
+> Yes, that's one reason, the other one being to properly support
+> CGroup when we add them in the following patches.
 > 
-> I'm not saying it's useful, I'm saying userspace can decide to do that
-> if it thinks it is a good idea. The default should be min_cap = 1024 for
-> RT, no questions. But you _can_ change it at runtime if you want to.
-> That's my point. And doing that basically provides the same behaviour as
-> what we have right now in terms of EAS calculation (but it changes the
-> freq selection obviously) which is why I'm not fundamentally opposed to
-> your patch.
+> Effective will always track the value/bucket in which the task has
+> been refcounted at enqueue time and it depends on the aggregated
+> value.
 
-Well, I think it's tricky to say whether the current or new approach
-is better... it probably depends on the use-case.
+> > Should you not update all tasks?
+> 
+> That's true, but that's also an expensive operation, that's why now
+> I'm doing only lazy updates at next enqueue time.
 
-> So in short, I'm fine with the behavioural change, but please at least
-> mention it somewhere :-)
+Aaah, so you refcount on the original value, which allows you to skip
+fixing up all tasks. I missed that bit.
 
-Anyway... agree, it's just that to add some documentation I need to
-get what you are pointing out ;)
 
-Will come up with some additional text to be added to the changelog
+> Do you think that could be acceptable?
 
-Maybe we can add a more detailed explanation of the different
-behaviors you can get in the EAS documentation which is coming to
-mainline ?
-
-> Thanks,
-> Quentin
-
--- 
-#include <best/regards.h>
-
-Patrick Bellasi
+Think so, it's a sysctl poke, 'nobody' ever does that.
