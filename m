@@ -1,8 +1,8 @@
 From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: [PATCH v6 09/16] sched/cpufreq: uclamp: Add utilization clamping
  for RT tasks
-Date: Wed, 23 Jan 2019 11:28:21 +0100
-Message-ID: <20190123102821.GW27931@hirez.programming.kicks-ass.net>
+Date: Wed, 23 Jan 2019 11:49:44 +0100
+Message-ID: <20190123104944.GX27931@hirez.programming.kicks-ass.net>
 References: <20190115101513.2822-1-patrick.bellasi@arm.com>
  <20190115101513.2822-10-patrick.bellasi@arm.com>
 Mime-Version: 1.0
@@ -16,41 +16,33 @@ Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kerne
 List-Id: linux-api@vger.kernel.org
 
 On Tue, Jan 15, 2019 at 10:15:06AM +0000, Patrick Bellasi wrote:
-> -	util = (type == ENERGY_UTIL)
-> -		? util_cfs
-> -		: uclamp_util(rq, util_cfs);
-> -	util += cpu_util_rt(rq);
-> +	util = cpu_util_rt(rq);
-> +	if (type == FREQUENCY_UTIL) {
-> +		util += cpu_util_cfs(rq);
-> +		util  = uclamp_util(rq, util);
-> +	} else {
-> +		util += util_cfs;
-> +	}
+> @@ -858,16 +859,23 @@ static inline void
+>  uclamp_effective_get(struct task_struct *p, unsigned int clamp_id,
+>  		     unsigned int *clamp_value, unsigned int *bucket_id)
+>  {
+> +	struct uclamp_se *default_clamp;
+> +
+>  	/* Task specific clamp value */
+>  	*clamp_value = p->uclamp[clamp_id].value;
+>  	*bucket_id = p->uclamp[clamp_id].bucket_id;
+>  
+> +	/* RT tasks have different default values */
+> +	default_clamp = task_has_rt_policy(p)
+> +		? uclamp_default_perf
+> +		: uclamp_default;
+> +
+>  	/* System default restriction */
+> -	if (unlikely(*clamp_value < uclamp_default[UCLAMP_MIN].value ||
+> -		     *clamp_value > uclamp_default[UCLAMP_MAX].value)) {
+> +	if (unlikely(*clamp_value < default_clamp[UCLAMP_MIN].value ||
+> +		     *clamp_value > default_clamp[UCLAMP_MAX].value)) {
+>  		/* Keep it simple: unconditionally enforce system defaults */
+> -		*clamp_value = uclamp_default[clamp_id].value;
+> -		*bucket_id = uclamp_default[clamp_id].bucket_id;
+> +		*clamp_value = default_clamp[clamp_id].value;
+> +		*bucket_id = default_clamp[clamp_id].bucket_id;
+>  	}
+>  }
 
-Or the combined thing:
-
--       util = util_cfs;
--       util += cpu_util_rt(rq);
-+       util = cpu_util_rt(rq);
-+       if (type == FREQUENCY_UTIL) {
-+               util += cpu_util_cfs(rq);
-+               util  = uclamp_util(rq, util);
-+       } else {
-+               util += util_cfs;
-+       }
-
-
-Leaves me confused.
-
-When type == FREQ, util_cfs should already be cpu_util_cfs(), per
-sugov_get_util().
-
-So should that not end up like:
-
-	util = util_cfs;
-	util += cpu_util_rt(rq);
-+	if (type == FREQUENCY_UTIL)
-+		util = uclamp_util(rq, util);
-
-instead?
+So I still don't much like the whole effective thing; but I think you
+should use rt_task() instead of task_has_rt_policy().
