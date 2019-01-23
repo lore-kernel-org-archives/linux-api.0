@@ -1,142 +1,67 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH v4 3/3] fs: let filldir_t return bool instead of an error code
-Date: Wed, 23 Jan 2019 16:07:59 +0100
-Message-ID: <CAG48ez2UmgEkitbgyCCs9LLdgahweFFAJWCU_vcqES6YgN=gLw@mail.gmail.com>
-References: <20190118161440.220134-1-jannh@google.com> <20190118161440.220134-3-jannh@google.com>
- <20190120224059.GA4205@dastard> <CAG48ez3SgejgGbctHwxON1B1k26xk-z16xdozKZkx7=-Li0aHw@mail.gmail.com>
- <20190121222411.GD4205@dastard>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH v6 05/16] sched/core: uclamp: Update CPU's refcount on
+ clamp changes
+Date: Wed, 23 Jan 2019 19:59:40 +0100
+Message-ID: <20190123185940.GF17749@hirez.programming.kicks-ass.net>
+References: <20190121153308.GL27931@hirez.programming.kicks-ass.net>
+ <20190121154412.fak2t2iquj3aixtu@e110439-lin>
+ <20190122093704.GM27931@hirez.programming.kicks-ass.net>
+ <20190122104305.6vjx37muqsxm536t@e110439-lin>
+ <20190122132817.GG13777@hirez.programming.kicks-ass.net>
+ <20190122140115.twtx646vewm757ca@e110439-lin>
+ <20190122145742.GQ27931@hirez.programming.kicks-ass.net>
+ <20190122153315.dhjl67sgpu74hmqv@e110439-lin>
+ <20190123091634.GT27931@hirez.programming.kicks-ass.net>
+ <20190123141426.5samtr4hl6okdypu@e110439-lin>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190121222411.GD4205@dastard>
+Content-Disposition: inline
+In-Reply-To: <20190123141426.5samtr4hl6okdypu@e110439-lin>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Chinner <david@fromorbit.com>
-Cc: Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-alpha@vger.kernel.org, kernel list <linux-kernel@vger.kernel.org>, Pavel Machek <pavel@ucw.cz>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Patrick Bellasi <patrick.bellasi@arm.com>
+Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 21, 2019 at 11:24 PM Dave Chinner <david@fromorbit.com> wrote:
-> On Mon, Jan 21, 2019 at 04:49:45PM +0100, Jann Horn wrote:
-> > On Sun, Jan 20, 2019 at 11:41 PM Dave Chinner <david@fromorbit.com> wrote:
-> > > On Fri, Jan 18, 2019 at 05:14:40PM +0100, Jann Horn wrote:
-> > > > As Al Viro pointed out, many filldir_t functions return error codes, but
-> > > > all callers of filldir_t functions just check whether the return value is
-> > > > non-zero (to determine whether to continue reading the directory); more
-> > > > precise errors have to be signalled via struct dir_context.
-> > > > Change all filldir_t functions to return bool instead of int.
-> > > >
-> > > > Suggested-by: Al Viro <viro@zeniv.linux.org.uk>
-> > > > Signed-off-by: Jann Horn <jannh@google.com>
-> > > > ---
-> > > >  arch/alpha/kernel/osf_sys.c | 12 +++----
-> > > >  fs/afs/dir.c                | 30 +++++++++--------
-> > > >  fs/ecryptfs/file.c          | 13 ++++----
-> > > >  fs/exportfs/expfs.c         |  8 ++---
-> > > >  fs/fat/dir.c                |  8 ++---
-> > > >  fs/gfs2/export.c            |  6 ++--
-> > > >  fs/nfsd/nfs4recover.c       |  8 ++---
-> > > >  fs/nfsd/vfs.c               |  6 ++--
-> > > >  fs/ocfs2/dir.c              | 10 +++---
-> > > >  fs/ocfs2/journal.c          | 14 ++++----
-> > > >  fs/overlayfs/readdir.c      | 24 +++++++-------
-> > > >  fs/readdir.c                | 64 ++++++++++++++++++-------------------
-> > > >  fs/reiserfs/xattr.c         | 20 ++++++------
-> > > >  fs/xfs/scrub/dir.c          |  8 ++---
-> > > >  fs/xfs/scrub/parent.c       |  4 +--
-> > > >  include/linux/fs.h          | 10 +++---
-> > > >  16 files changed, 125 insertions(+), 120 deletions(-)
-> > > >
-> > > > diff --git a/arch/alpha/kernel/osf_sys.c b/arch/alpha/kernel/osf_sys.c
-> > > > index db1c2144d477..14e5ae0dac50 100644
-> > > > --- a/arch/alpha/kernel/osf_sys.c
-> > > > +++ b/arch/alpha/kernel/osf_sys.c
-> > > > @@ -108,7 +108,7 @@ struct osf_dirent_callback {
-> > > >       int error;
-> > > >  };
-> > > >
-> > > > -static int
-> > > > +static bool
-> > > >  osf_filldir(struct dir_context *ctx, const char *name, int namlen,
-> > > >           loff_t offset, u64 ino, unsigned int d_type)
-> > > >  {
-> > > > @@ -120,14 +120,14 @@ osf_filldir(struct dir_context *ctx, const char *name, int namlen,
-> > > >
-> > > >       buf->error = check_dirent_name(name, namlen);
-> > > >       if (unlikely(buf->error))
-> > > > -             return -EFSCORRUPTED;
-> > > > +             return false;
-> > > >       buf->error = -EINVAL;   /* only used if we fail */
-> > > >       if (reclen > buf->count)
-> > > > -             return -EINVAL;
-> > > > +             return false;
-> > >
-> > > Oh, it's because the error being returned is being squashed by
-> > > dir_emit():
-> >
-> > Yeah.
-> >
-> > > >  struct dir_context {
-> > > > @@ -3469,17 +3471,17 @@ static inline bool dir_emit(struct dir_context *ctx,
-> > > >                           const char *name, int namelen,
-> > > >                           u64 ino, unsigned type)
-> > > >  {
-> > > > -     return ctx->actor(ctx, name, namelen, ctx->pos, ino, type) == 0;
-> > > > +     return ctx->actor(ctx, name, namelen, ctx->pos, ino, type);
-> > > >  }
-> > >
-> > > /me wonders if it would be cleaner to do:
-> > >
-> > > static inline bool dir_emit(...)
-> > > {
-> > >         buf->error = ctx->actor(....)
-> > >         if (buf->error)
-> > >                 return false;
-> > >         return true;
-> > > }
-> > >
-> > > And clean up all filldir actors just to return the error state
-> > > rather than have to jump through hoops to stash the error state in
-> > > the context buffer and return the error state?
-> >
-> > One negative thing about that, IMO, is that it mixes up the request
-> > for termination of the loop and the presence of an error.
->
-> Doesn't the code already do that, only worse?
+On Wed, Jan 23, 2019 at 02:14:26PM +0000, Patrick Bellasi wrote:
 
-The current code does that, yes. But with this patch, I think that's
-not really the case anymore?
+> > > Consider also that the uclamp_task_update_active() added by this patch
+> > > not only has lower overhead but it will be use also by cgroups where
+> > > we want to force update all the tasks on a cgroup's clamp change.
+> > 
+> > I haven't gotten that far; but I would prefer not to have two different
+> > 'change' paths in __sched_setscheduler().
+> 
+> Yes, I agree that two paths in __sched_setscheduler() could be
+> confusing. Still we have to consider that here we are adding
+> "not class specific" attributes.
 
-> > > That then allows callers who want/need the full error info can
-> > > continue to call ctx->actor directly,
-> >
-> > "continue to call ctx->actor directly"? I don't remember any code that
-> > calls ctx->actor directly.
->
-> ovl_fill_real().
-
-Ah, right.
+But that change thing is not class specific; the whole:
 
 
-> And the XFS directory scrubber could probably make better use of the
-> error return from ctx->actor when validating the directory contents
-> rather than just calling dir_emit() and aborting the scan at the
-> first error encountered. We eventually want to know exactly what
-> error was encountered here to determine if it is safe to continue,
-> not just a "stop processing" flag. e.g. a bad name length will need
-> to stop traversal because we can't trust the underlying structure,
-> but an invalid file type isn't a structural flaw that prevents us
-> from continuing to traverse and check the rest of the directory....
+	rq = task_rq_lock(p, &rf);
+	queued = task_on_rq_queued(p);
+	running = task_current(rq, p);
+	if (queued)
+		dequeue_task(rq, p, queue_flags);
+	if (running)
+		put_prev_task(rq, p);
 
-Sorry, maybe I'm a bit dense right now, I don't get your point. Are
-you talking about filesystem errors detected in the actor? If so,
-doesn't it make *more* sense for non-fatal errors to put a note that
-an error happened into the xchk_dir_ctx (if that information should be
-kept around), then return a value that says "please continue"?
 
-Or are you talking about filesystem errors detected in the readdir
-implementation? In that case, you're AFAICS going to need special-case
-logic gated on ctx->actor==xchk_dir_actor anyway if you want the
-scrubber to continue while readdir() stops.
+	/* @p is in it's invariant state; frob it's state */
 
-(But as I've said, I don't really care about this patch. If Al takes
-patches 1 and 2 from this series, I'm happy; this patch is just in
-response to <https://lore.kernel.org/lkml/20180731165112.GJ30522@ZenIV.linux.org.uk/>.)
+
+	if (queued)
+		enqueue_task(rq, p, queue_flags);
+	if (running)
+		set_curr_task(rq, p);
+	task_rq_unlock(rq, p, &rf);
+
+
+pattern is all over the place; it is just because C sucks that that
+isn't more explicitly shared (do_set_cpus_allowed(), rt_mutex_setprio(),
+set_user_nice(), __sched_setscheduler(), sched_setnuma(),
+sched_move_task()).
+
+This is _the_ pattern for changing state and is not class specific at
+all.
