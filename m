@@ -1,74 +1,77 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH v6 05/16] sched/core: uclamp: Update CPU's refcount on
- clamp changes
-Date: Thu, 24 Jan 2019 13:38:14 +0100
-Message-ID: <20190124123814.GM13777@hirez.programming.kicks-ass.net>
-References: <20190122093704.GM27931@hirez.programming.kicks-ass.net>
- <20190122104305.6vjx37muqsxm536t@e110439-lin>
- <20190122132817.GG13777@hirez.programming.kicks-ass.net>
- <20190122140115.twtx646vewm757ca@e110439-lin>
- <20190122145742.GQ27931@hirez.programming.kicks-ass.net>
- <20190122153315.dhjl67sgpu74hmqv@e110439-lin>
- <20190123091634.GT27931@hirez.programming.kicks-ass.net>
- <20190123141426.5samtr4hl6okdypu@e110439-lin>
- <20190123185940.GF17749@hirez.programming.kicks-ass.net>
- <20190124112153.pwdsbxjynq6chmvl@e110439-lin>
+From: Patrick Bellasi <patrick.bellasi@arm.com>
+Subject: Re: [PATCH v6 09/16] sched/cpufreq: uclamp: Add utilization clamping
+ for RT tasks
+Date: Thu, 24 Jan 2019 12:38:35 +0000
+Message-ID: <20190124123835.nliwk2onvrhe5aqf@e110439-lin>
+References: <20190115101513.2822-1-patrick.bellasi@arm.com>
+ <20190115101513.2822-10-patrick.bellasi@arm.com>
+ <20190123104944.GX27931@hirez.programming.kicks-ass.net>
+ <20190123144011.iid3avb63r5v4r2c@e110439-lin>
+ <20190123201146.GH17749@hirez.programming.kicks-ass.net>
+ <20190124123009.2yulcf25ld66popd@e110439-lin>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190124112153.pwdsbxjynq6chmvl@e110439-lin>
+In-Reply-To: <20190124123009.2yulcf25ld66popd@e110439-lin>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Patrick Bellasi <patrick.bellasi@arm.com>
+To: Peter Zijlstra <peterz@infradead.org>
 Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 24, 2019 at 11:21:53AM +0000, Patrick Bellasi wrote:
+On 24-Jan 12:30, Patrick Bellasi wrote:
+> On 23-Jan 21:11, Peter Zijlstra wrote:
+> > On Wed, Jan 23, 2019 at 02:40:11PM +0000, Patrick Bellasi wrote:
+> > > On 23-Jan 11:49, Peter Zijlstra wrote:
+> > > > On Tue, Jan 15, 2019 at 10:15:06AM +0000, Patrick Bellasi wrote:
 
-> When a task-specific uclamp value is changed for a task, instead, a
-> dequeue/enqueue is not needed. As long as we are doing a lazy update,
-> that sounds just like not necessary overhead.
+[...]
 
-When that overhead is shown to be a problem, is when we'll look at that
-:-)
-
-> However, there could still be value in keeping code consistent and if
-> you prefer it this way what should I do?
+> > I'm thikning that if we haz a single bit, say:
+> > 
+> >   struct uclamp_se {
+> > 	...
+> > 	unsigned int	changed : 1;
+> >   };
+> > 
+> > We can update uclamp_se::value and set uclamp_se::changed, and then the
+> > next enqueue will (unlikely) test-and-clear changed and recompute the
+> > bucket_id.
 > 
-> ---8<---
->     __sched_setscheduler()
->         ...
->         if (policy < 0)
->             policy = oldpolicy = p->policy;
->         ...
->         if (unlikely(policy == p->policy)) {
->             ...
->             if (uclamp_changed())         // Force dequeue/enqueue
->                 goto change;
->         }
->     change:
->         ...
+> This mean will lazy update the "requested" bucket_id by deferring its
+> computation at enqueue time. Which saves us a copy of the bucket_id,
+> i.e. we will have only the "effective" value updated at enqueue time.
 > 
->         if (queued)
-> 	    dequeue_task(rq, p, queue_flags);
-> 	if (running)
-> 	    put_prev_task(rq, p);
+> But...
 > 
->         __setscheduler_uclamp();
-> 	__setscheduler(rq, p, attr, pi);
+> > Would that not be simpler?
 > 
-> 	if (queued)
-> 	    enqueue_task(rq, p, queue_flags);
-> 	if (running)
-> 	    set_curr_task(rq, p);
->         ...
-> ---8<---
+> ... although being simpler it does not fully exploit the slow-path,
+> a syscall which is usually running from a different process context
+> (system management software).
 > 
-> Could be something like that ok with you?
+> It also fits better for lazy updates but, in the cgroup case, where we
+> wanna enforce an update ASAP for RUNNABLE tasks, we will still have to
+> do the updates from the slow-path.
+> 
+> Will look better into this simplification while working on v7, perhaps
+> the linear mapping can really help in that too.
 
-Yes, that's about what I was expecting.
+Actually, I forgot to mention that:
 
-> Not sure about side-effects on p->prio(): for CFS seems to be reset to
-> NORMAL in this case :/
+    uclamp_se::effective::{
+        value, bucket_id
+    }
 
-That's what we need KEEP_PARAM for, right?
+will be still required to proper support the cgroup delegation model,
+where a child group could be restricted by the parent but we want to
+keep track of the original "requested" value for when the parent
+should relax the restriction.
+
+Thus, since effective values are already there, why not using them
+also to pre-compute the new requested bucket_id from the slow path?
+
+-- 
+#include <best/regards.h>
+
+Patrick Bellasi
