@@ -1,8 +1,8 @@
 From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: [PATCH v6 09/16] sched/cpufreq: uclamp: Add utilization clamping
  for RT tasks
-Date: Thu, 24 Jan 2019 16:31:06 +0100
-Message-ID: <20190124153106.GQ13777@hirez.programming.kicks-ass.net>
+Date: Thu, 24 Jan 2019 16:33:51 +0100
+Message-ID: <20190124153351.GR13777@hirez.programming.kicks-ass.net>
 References: <20190115101513.2822-1-patrick.bellasi@arm.com>
  <20190115101513.2822-10-patrick.bellasi@arm.com>
  <20190123104944.GX27931@hirez.programming.kicks-ass.net>
@@ -20,55 +20,46 @@ Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kerne
 List-Id: linux-api@vger.kernel.org
 
 On Thu, Jan 24, 2019 at 12:30:09PM +0000, Patrick Bellasi wrote:
-> > So I'll have to go over the code again, but I'm wondering why you're
-> > changing uclamp_se::bucket_id on a runnable task.
-> 
-> We change only the "requested" value, not the "effective" one.
-> 
-> > Ideally you keep bucket_id invariant between enqueue and dequeue; then
-> > dequeue knows where we put it.
-> 
-> Right, that's what we do for the "effective" value.
+> On 23-Jan 21:11, Peter Zijlstra wrote:
 
-So the problem I have is that you first introduce uclamp_se::value and
-use that all over the code, and then introduce effective and change all
-the usage sites.
+> > Anyway, once you get range composition defined; that should be something
+> > like:
+> > 
+> > 	R_p \Compose_g R_g
+> > 
+> > Where R_p is the range of task-p, and R_g is the range of the g'th
+> > cgroup of p (where you can make an identity between the root cgroup and
+> > the system default).
+> > 
+> > Now; as per the other email; I think the straight forward composition:
+> > 
+> > struct range compose(struct range a, struct range b)
+> > {
+> > 	return (range){.min = clamp(a.min, b.min, b.max),
+> > 	               .max = clamp(a.max, b.min, b.max), };
+> > }
+> 
+> This composition is done in uclamp_effective_get() but it's
+> slightly different, since we want to support a "nice policy" where
+> tasks can always ask less then what they have got assigned.
 
-That seems daft. Why not keep all the code as-is and add orig_value.
+Not sure I follow..
 
-> > Now I suppose actually determining bucket_id is 'expensive' (it
-> > certainly is with the whole mapping scheme, but even that integer
-> > division is not nice), so we'd like to precompute the bucket_id.
+> Thus, from an abstract standpoint, if a task is in a cgroup:
 > 
-> Yes, although the complexity is mostly in the composition logic
-> described above not on mapping at all. We have "mapping" overheads
-> only when we change a "request" value and that's from slow-paths.
+>      task.min <= R_g.min
+>      task.max <= R_g.max
+> 
+> While, for tasks in the root cgroup system default applies and we
+> enforece:
+> 
+>      task.min >= R_0.min
+>      task.max <= R_0.max
+> 
+> ... where the "nice policy" is currently not more supported, but
+> perhaps we can/should use the same for system defaults too.
 
-It's weird though. Esp. when combined with that mapping logic, because
-then you get to use additional maps that are not in fact ever used.
+That seems inconsistent at best.
 
-> > We can update uclamp_se::value and set uclamp_se::changed, and then the
-> > next enqueue will (unlikely) test-and-clear changed and recompute the
-> > bucket_id.
-> 
-> This mean will lazy update the "requested" bucket_id by deferring its
-> computation at enqueue time. Which saves us a copy of the bucket_id,
-> i.e. we will have only the "effective" value updated at enqueue time.
-> 
-> But...
-> 
-> > Would that not be simpler?
-> 
-> ... although being simpler it does not fully exploit the slow-path,
-> a syscall which is usually running from a different process context
-> (system management software).
-> 
-> It also fits better for lazy updates but, in the cgroup case, where we
-> wanna enforce an update ASAP for RUNNABLE tasks, we will still have to
-> do the updates from the slow-path.
-> 
-> Will look better into this simplification while working on v7, perhaps
-> the linear mapping can really help in that too.
-
-OK. So mostly my complaint is that it seems to do things odd for ill
-explained reasons.
+OK, I'll go have another look. I never recognised that function for
+doing that.
