@@ -1,92 +1,124 @@
-From: Dominique Martinet <asmadeus@codewreck.org>
-Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
-Date: Thu, 24 Jan 2019 01:24:55 +0100
-Message-ID: <20190124002455.GA23181@nautica>
-References: <nycvar.YFH.7.76.1901240009560.6626@cbobk.fhfr.pm>
+From: Patrick Bellasi <patrick.bellasi@arm.com>
+Subject: Re: [PATCH v6 05/16] sched/core: uclamp: Update CPU's refcount on
+ clamp changes
+Date: Thu, 24 Jan 2019 11:21:53 +0000
+Message-ID: <20190124112153.pwdsbxjynq6chmvl@e110439-lin>
+References: <20190121154412.fak2t2iquj3aixtu@e110439-lin>
+ <20190122093704.GM27931@hirez.programming.kicks-ass.net>
+ <20190122104305.6vjx37muqsxm536t@e110439-lin>
+ <20190122132817.GG13777@hirez.programming.kicks-ass.net>
+ <20190122140115.twtx646vewm757ca@e110439-lin>
+ <20190122145742.GQ27931@hirez.programming.kicks-ass.net>
+ <20190122153315.dhjl67sgpu74hmqv@e110439-lin>
+ <20190123091634.GT27931@hirez.programming.kicks-ass.net>
+ <20190123141426.5samtr4hl6okdypu@e110439-lin>
+ <20190123185940.GF17749@hirez.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <nycvar.YFH.7.76.1901240009560.6626@cbobk.fhfr.pm>
- <CAHk-=wg+C65FJHB=Jx1OvuJP4kvpWdw+5G=XOXB6X_KB2XuofA@mail.gmail.com>
+In-Reply-To: <20190123185940.GF17749@hirez.programming.kicks-ass.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jikos@kernel.org>
-Cc: Andy Lutomirski <luto@amacapital.net>, Josh Snyder <joshs@netflix.com>, Dave Chinner <david@fromorbit.com>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Linus Torvalds wrote on Thu, Jan 24, 2019:
-> I've reverted the 'let's try to just remove the code' part in my tree.
-> But I didn't apply the two other patches yet. Any final comments
-> before that should happen?
-
-I mentionned when sending the updated version that just checking file
-permission might not be enough, e.g. a git tree is full of read-only
-objects that someone might want to preload and think we might really
-want to check both despite the overhead in the denied case.
-
-Josh agreed and I meant to send a new version since nothing was
-happening but work priorities got the better of me, and I was kind of
-waiting for the ltp testcases[1] as well because aside from the few
-tests I ran by hand I'm not sure the few hours of ltp/xfstests Jiri ran
-did much but this is probably going to be a chicken-or-egg problem..
-
-[1] https://github.com/linux-test-project/ltp/issues/461
-
-Jiri Kosina wrote on Thu, Jan 24, 2019:
-> On Thu, 24 Jan 2019, Linus Torvalds wrote:
+On 23-Jan 19:59, Peter Zijlstra wrote:
+> On Wed, Jan 23, 2019 at 02:14:26PM +0000, Patrick Bellasi wrote:
 > 
-> > Side note: the inode_permission() addition to can_do_mincore() in that
-> > patch 0002, seems to be questionable. We do
+> > > > Consider also that the uclamp_task_update_active() added by this patch
+> > > > not only has lower overhead but it will be use also by cgroups where
+> > > > we want to force update all the tasks on a cgroup's clamp change.
+> > > 
+> > > I haven't gotten that far; but I would prefer not to have two different
+> > > 'change' paths in __sched_setscheduler().
 > > 
-> > +static inline bool can_do_mincore(struct vm_area_struct *vma)
-> > +{
-> > +       return vma_is_anonymous(vma)
-> > +               || (vma->vm_file && (vma->vm_file->f_mode & FMODE_WRITE))
-> > +               || inode_permission(file_inode(vma->vm_file), MAY_WRITE) == 0;
-> > +}
-> > 
-> > note how it tests whether vma->vm_file is NULL for the FMODE_WRITE
-> > test, but not for the inode_permission() test.
-> > 
-> > So either we test unnecessarily in the second line, or we don't
-> > properly test it in the third one.
-> > 
-> > I think the "test vm_file" thing may be unnecessary, because a
-> > non-anonymous mapping should always have a file pointer and an inode.
-> > But I could  imagine some odd case (vdso mapping, anyone?) that
-> > doesn't have a vm_file, but also isn't anonymous.
+> > Yes, I agree that two paths in __sched_setscheduler() could be
+> > confusing. Still we have to consider that here we are adding
+> > "not class specific" attributes.
 > 
-> Hmm, good point.
+> But that change thing is not class specific; the whole:
 > 
-> So dropping the 'vma->vm_file' test and checking whether given vma is 
-> special mapping should hopefully provide the desired semantics, shouldn't 
-> it?
+> 
+> 	rq = task_rq_lock(p, &rf);
+> 	queued = task_on_rq_queued(p);
+> 	running = task_current(rq, p);
+> 	if (queued)
+> 		dequeue_task(rq, p, queue_flags);
+> 	if (running)
+> 		put_prev_task(rq, p);
+> 
+> 
+> 	/* @p is in it's invariant state; frob it's state */
+> 
+> 
+> 	if (queued)
+> 		enqueue_task(rq, p, queue_flags);
+> 	if (running)
+> 		set_curr_task(rq, p);
+> 	task_rq_unlock(rq, p, &rf);
+> 
+> 
+> pattern is all over the place; it is just because C sucks that that
 
-I think it's probably better to keep this simple, if we're going to
-check something before accessing vm_file we might as well directly check
-it.
+Yes, understand, don't want to enter a language war :)
 
-I was thinking of something along the lines of:
-	return vma_is_anonymous(vma) || (vma->vm_file &&
-			(inode_owner_or_capable(file_inode(vma->vm_file))
-			 || inode_permission(file_inode(vma->vm_file), MAY_WRITE) == 0));
+> isn't more explicitly shared (do_set_cpus_allowed(), rt_mutex_setprio(),
+> set_user_nice(), __sched_setscheduler(), sched_setnuma(),
+> sched_move_task()).
+> 
+> This is _the_ pattern for changing state and is not class specific at
+> all.
 
-I dropped the first f_mode check because none of the known mincore users
-open the files read-write, and the check is redundant with
-inode_permission() so while it would probably be an optimisation in some
-cases I do not think it is useful in practice.
-On the other hand, I have no idea how expensive the inode_permission and
-owner checks really are - do they try to refresh attributes on a
-networked filesystem or would it trust the cache or is it fs dependant?
+Right, that pattern is not "class specific" true and I should have not
+used that term to begin with.
 
-Honestly this is more a case of "the people who's be interested in
-seeing this have no idea what they're doing" than lack of interest.. I
-wouldn't mind if there were tests doing mincore on a bunch of special
-files/mappings but I just tried on a few regular files by hand, this
-isn't proper coverage; I'll try to take more time to test various
-mappings today (JST).
+What I was trying to point out is that all the calls above directly
+affect the current scheduling decision and "requires" a
+dequeue/enqueue pattern.
 
+When a task-specific uclamp value is changed for a task, instead, a
+dequeue/enqueue is not needed. As long as we are doing a lazy update,
+that sounds just like not necessary overhead.
 
-Thanks,
+However, there could still be value in keeping code consistent and if
+you prefer it this way what should I do?
+
+---8<---
+    __sched_setscheduler()
+        ...
+        if (policy < 0)
+            policy = oldpolicy = p->policy;
+        ...
+        if (unlikely(policy == p->policy)) {
+            ...
+            if (uclamp_changed())         // Force dequeue/enqueue
+                goto change;
+        }
+    change:
+        ...
+
+        if (queued)
+	    dequeue_task(rq, p, queue_flags);
+	if (running)
+	    put_prev_task(rq, p);
+
+        __setscheduler_uclamp();
+	__setscheduler(rq, p, attr, pi);
+
+	if (queued)
+	    enqueue_task(rq, p, queue_flags);
+	if (running)
+	    set_curr_task(rq, p);
+        ...
+---8<---
+
+Could be something like that ok with you?
+
+Not sure about side-effects on p->prio(): for CFS seems to be reset to
+NORMAL in this case :/
+
 -- 
-Dominique
+#include <best/regards.h>
+
+Patrick Bellasi
