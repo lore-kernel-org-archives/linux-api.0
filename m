@@ -1,139 +1,78 @@
-From: Jiri Kosina <jikos@kernel.org>
-Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
-Date: Thu, 24 Jan 2019 15:25:53 +0100 (CET)
-Message-ID: <nycvar.YFH.7.76.1901241523500.6626@cbobk.fhfr.pm>
-References: <nycvar.YFH.7.76.1901240009560.6626@cbobk.fhfr.pm> <CAHk-=wg+C65FJHB=Jx1OvuJP4kvpWdw+5G=XOXB6X_KB2XuofA@mail.gmail.com> <20190124002455.GA23181@nautica> <20190124124501.GA18012@nautica>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH v6 09/16] sched/cpufreq: uclamp: Add utilization clamping
+ for RT tasks
+Date: Thu, 24 Jan 2019 16:12:12 +0100
+Message-ID: <20190124151212.GO13777@hirez.programming.kicks-ass.net>
+References: <20190115101513.2822-1-patrick.bellasi@arm.com>
+ <20190115101513.2822-10-patrick.bellasi@arm.com>
+ <20190123104944.GX27931@hirez.programming.kicks-ass.net>
+ <20190123144011.iid3avb63r5v4r2c@e110439-lin>
+ <20190123201146.GH17749@hirez.programming.kicks-ass.net>
+ <20190124123009.2yulcf25ld66popd@e110439-lin>
+ <20190124123835.nliwk2onvrhe5aqf@e110439-lin>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="1678380546-789356226-1548339955=:6626"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190124124501.GA18012@nautica>
+Content-Disposition: inline
+In-Reply-To: <20190124123835.nliwk2onvrhe5aqf@e110439-lin>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dominique Martinet <asmadeus@codewreck.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Josh Snyder <joshs@netflix.com>, Dave Chinner <david@fromorbit.com>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Patrick Bellasi <patrick.bellasi@arm.com>
+Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+On Thu, Jan 24, 2019 at 12:38:35PM +0000, Patrick Bellasi wrote:
+> On 24-Jan 12:30, Patrick Bellasi wrote:
+> > On 23-Jan 21:11, Peter Zijlstra wrote:
+> > > On Wed, Jan 23, 2019 at 02:40:11PM +0000, Patrick Bellasi wrote:
+> > > > On 23-Jan 11:49, Peter Zijlstra wrote:
+> > > > > On Tue, Jan 15, 2019 at 10:15:06AM +0000, Patrick Bellasi wrote:
+> 
+> [...]
+> 
+> > > I'm thikning that if we haz a single bit, say:
+> > > 
+> > >   struct uclamp_se {
+> > > 	...
+> > > 	unsigned int	changed : 1;
+> > >   };
+> > > 
+> > > We can update uclamp_se::value and set uclamp_se::changed, and then the
+> > > next enqueue will (unlikely) test-and-clear changed and recompute the
+> > > bucket_id.
+> > 
+> > This mean will lazy update the "requested" bucket_id by deferring its
+> > computation at enqueue time. Which saves us a copy of the bucket_id,
+> > i.e. we will have only the "effective" value updated at enqueue time.
+> > 
+> > But...
+> > 
+> > > Would that not be simpler?
+> > 
+> > ... although being simpler it does not fully exploit the slow-path,
+> > a syscall which is usually running from a different process context
+> > (system management software).
+> > 
+> > It also fits better for lazy updates but, in the cgroup case, where we
+> > wanna enforce an update ASAP for RUNNABLE tasks, we will still have to
+> > do the updates from the slow-path.
+> > 
+> > Will look better into this simplification while working on v7, perhaps
+> > the linear mapping can really help in that too.
+> 
+> Actually, I forgot to mention that:
+> 
+>     uclamp_se::effective::{
+>         value, bucket_id
+>     }
+> 
+> will be still required to proper support the cgroup delegation model,
+> where a child group could be restricted by the parent but we want to
+> keep track of the original "requested" value for when the parent
+> should relax the restriction.
+> 
+> Thus, since effective values are already there, why not using them
+> also to pre-compute the new requested bucket_id from the slow path?
 
---1678380546-789356226-1548339955=:6626
-Content-Type: text/plain; charset=US-ASCII
-
-On Thu, 24 Jan 2019, Dominique Martinet wrote:
-
-> Jiri, you've offered resubmitting the last two patches properly, can you 
-> incorporate this change or should I just send this directly? (I'd take 
-> most of your commit message and add your name somewhere)
-
-I've been running some basic smoke testing with the kernel from
-
-	https://git.kernel.org/pub/scm/linux/kernel/git/jikos/jikos.git/log/?h=pagecache-sidechannel-v2
-
-(attaching the respective two patches to apply on top of latest Linus' 
-tree to this mail as well), and everything looks good so far.
-
-Thanks,
-
--- 
-Jiri Kosina
-SUSE Labs
-
---1678380546-789356226-1548339955=:6626
-Content-Type: text/x-patch; name=0001-mm-mincore-make-mincore-more-conservative.patch
-Content-Transfer-Encoding: BASE64
-Content-ID: <nycvar.YFH.7.76.1901241525530.6626@cbobk.fhfr.pm>
-Content-Description: 
-Content-Disposition: attachment; filename=0001-mm-mincore-make-mincore-more-conservative.patch
-
-RnJvbSA5ODEwNTY1ZjFkNWY5NjZhODQ5MDBjZGNiODVlMzNhYTc1NzFhZmJl
-IE1vbiBTZXAgMTcgMDA6MDA6MDAgMjAwMQ0KRnJvbTogSmlyaSBLb3NpbmEg
-PGprb3NpbmFAc3VzZS5jej4NCkRhdGU6IFdlZCwgMTYgSmFuIDIwMTkgMjA6
-NTM6MTcgKzAxMDANClN1YmplY3Q6IFtQQVRDSCAxLzJdIG1tL21pbmNvcmU6
-IG1ha2UgbWluY29yZSgpIG1vcmUgY29uc2VydmF0aXZlDQoNClRoZSBzZW1h
-bnRpY3Mgb2Ygd2hhdCBtaW5jb3JlKCkgY29uc2lkZXJzIHRvIGJlIHJlc2lk
-ZW50IGlzIG5vdCBjb21wbGV0ZWx5DQpjbGVhciwgYnV0IExpbnV4IGhhcyBh
-bHdheXMgKHNpbmNlIDIuMy41Miwgd2hpY2ggaXMgd2hlbiBtaW5jb3JlKCkg
-d2FzDQppbml0aWFsbHkgZG9uZSkgdHJlYXRlZCBpdCBhcyAicGFnZSBpcyBh
-dmFpbGFibGUgaW4gcGFnZSBjYWNoZSIuDQoNClRoYXQncyBwb3RlbnRpYWxs
-eSBhIHByb2JsZW0sIGFzIHRoYXQgW2luXWRpcmVjdGx5IGV4cG9zZXMgbWV0
-YS1pbmZvcm1hdGlvbg0KYWJvdXQgcGFnZWNhY2hlIC8gbWVtb3J5IG1hcHBp
-bmcgc3RhdGUgZXZlbiBhYm91dCBtZW1vcnkgbm90IHN0cmljdGx5IGJlbG9u
-Z2luZw0KdG8gdGhlIHByb2Nlc3MgZXhlY3V0aW5nIHRoZSBzeXNjYWxsLCBv
-cGVuaW5nIHBvc3NpYmlsaXRpZXMgZm9yIHNpZGVjaGFubmVsDQphdHRhY2tz
-Lg0KDQpDaGFuZ2UgdGhlIHNlbWFudGljcyBvZiBtaW5jb3JlKCkgc28gdGhh
-dCBpdCBvbmx5IHJldmVhbHMgcGFnZWNhY2hlIGluZm9ybWF0aW9uDQpmb3Ig
-bm9uLWFub255bW91cyBtYXBwaW5ncyB0aGF0IGJlbG9nIHRvIGZpbGVzIHRo
-YXQgdGhlIGNhbGxpbmcgcHJvY2VzcyBjb3VsZA0KKGlmIGl0IHRyaWVkIHRv
-KSBzdWNjZXNzZnVsbHkgb3BlbiBmb3Igd3JpdGluZy4NCg0KT3JpZ2luYWxs
-eS1ieTogTGludXMgVG9ydmFsZHMgPHRvcnZhbGRzQGxpbnV4LWZvdW5kYXRp
-b24ub3JnPg0KT3JpZ2luYWxseS1ieTogRG9taW5pcXVlIE1hcnRpbmV0IDxh
-c21hZGV1c0Bjb2Rld3JlY2sub3JnPg0KU2lnbmVkLW9mZi1ieTogSmlyaSBL
-b3NpbmEgPGprb3NpbmFAc3VzZS5jej4NCi0tLQ0KIG1tL21pbmNvcmUuYyB8
-IDE1ICsrKysrKysrKysrKysrLQ0KIDEgZmlsZSBjaGFuZ2VkLCAxNCBpbnNl
-cnRpb25zKCspLCAxIGRlbGV0aW9uKC0pDQoNCmRpZmYgLS1naXQgYS9tbS9t
-aW5jb3JlLmMgYi9tbS9taW5jb3JlLmMNCmluZGV4IDIxODA5OWI1ZWQzMS4u
-NzQ3YTQ5MDdhM2FjIDEwMDY0NA0KLS0tIGEvbW0vbWluY29yZS5jDQorKysg
-Yi9tbS9taW5jb3JlLmMNCkBAIC0xNjksNiArMTY5LDE0IEBAIHN0YXRpYyBp
-bnQgbWluY29yZV9wdGVfcmFuZ2UocG1kX3QgKnBtZCwgdW5zaWduZWQgbG9u
-ZyBhZGRyLCB1bnNpZ25lZCBsb25nIGVuZCwNCiAJcmV0dXJuIDA7DQogfQ0K
-IA0KK3N0YXRpYyBpbmxpbmUgYm9vbCBjYW5fZG9fbWluY29yZShzdHJ1Y3Qg
-dm1fYXJlYV9zdHJ1Y3QgKnZtYSkNCit7DQorCXJldHVybiB2bWFfaXNfYW5v
-bnltb3VzKHZtYSkgfHwNCisJCSh2bWEtPnZtX2ZpbGUgJiYNCisJCQkoaW5v
-ZGVfb3duZXJfb3JfY2FwYWJsZShmaWxlX2lub2RlKHZtYS0+dm1fZmlsZSkp
-DQorCQkJIHx8IGlub2RlX3Blcm1pc3Npb24oZmlsZV9pbm9kZSh2bWEtPnZt
-X2ZpbGUpLCBNQVlfV1JJVEUpID09IDApKTsNCit9DQorDQogLyoNCiAgKiBE
-byBhIGNodW5rIG9mICJzeXNfbWluY29yZSgpIi4gV2UndmUgYWxyZWFkeSBj
-aGVja2VkDQogICogYWxsIHRoZSBhcmd1bWVudHMsIHdlIGhvbGQgdGhlIG1t
-YXAgc2VtYXBob3JlOiB3ZSBzaG91bGQNCkBAIC0xODksOCArMTk3LDEzIEBA
-IHN0YXRpYyBsb25nIGRvX21pbmNvcmUodW5zaWduZWQgbG9uZyBhZGRyLCB1
-bnNpZ25lZCBsb25nIHBhZ2VzLCB1bnNpZ25lZCBjaGFyICp2DQogCXZtYSA9
-IGZpbmRfdm1hKGN1cnJlbnQtPm1tLCBhZGRyKTsNCiAJaWYgKCF2bWEgfHwg
-YWRkciA8IHZtYS0+dm1fc3RhcnQpDQogCQlyZXR1cm4gLUVOT01FTTsNCi0J
-bWluY29yZV93YWxrLm1tID0gdm1hLT52bV9tbTsNCiAJZW5kID0gbWluKHZt
-YS0+dm1fZW5kLCBhZGRyICsgKHBhZ2VzIDw8IFBBR0VfU0hJRlQpKTsNCisJ
-aWYgKCFjYW5fZG9fbWluY29yZSh2bWEpKSB7DQorCQl1bnNpZ25lZCBsb25n
-IHBhZ2VzID0gKGVuZCAtIGFkZHIpID4+IFBBR0VfU0hJRlQ7DQorCQltZW1z
-ZXQodmVjLCAxLCBwYWdlcyk7DQorCQlyZXR1cm4gcGFnZXM7DQorCX0NCisJ
-bWluY29yZV93YWxrLm1tID0gdm1hLT52bV9tbTsNCiAJZXJyID0gd2Fsa19w
-YWdlX3JhbmdlKGFkZHIsIGVuZCwgJm1pbmNvcmVfd2Fsayk7DQogCWlmIChl
-cnIgPCAwKQ0KIAkJcmV0dXJuIGVycjsNCi0tIA0KMi4xMi4zDQoNCg==
-
---1678380546-789356226-1548339955=:6626
-Content-Type: text/x-patch; name=0002-mm-filemap-initiate-readahead-even-if-IOCB_NOWAIT-is.patch
-Content-Transfer-Encoding: BASE64
-Content-ID: <nycvar.YFH.7.76.1901241525531.6626@cbobk.fhfr.pm>
-Content-Description: 
-Content-Disposition: attachment; filename=0002-mm-filemap-initiate-readahead-even-if-IOCB_NOWAIT-is.patch
-
-RnJvbSBmMjg3MTg1ZmM1ZTBmZmJiYjM4MGYyZDY4ZGQxOTI5MDcxNTgyOWE4
-IE1vbiBTZXAgMTcgMDA6MDA6MDAgMjAwMQ0KRnJvbTogSmlyaSBLb3NpbmEg
-PGprb3NpbmFAc3VzZS5jej4NCkRhdGU6IFdlZCwgMTYgSmFuIDIwMTkgMjE6
-MDY6NTggKzAxMDANClN1YmplY3Q6IFtQQVRDSCAyLzJdIG1tL2ZpbGVtYXA6
-IGluaXRpYXRlIHJlYWRhaGVhZCBldmVuIGlmIElPQ0JfTk9XQUlUIGlzIHNl
-dA0KIGZvciB0aGUgSS9PDQoNCnByZWFkdjIoUldGX05PV0FJVCkgY2FuIGJl
-IHVzZWQgdG8gb3BlbiBhIHNpZGUtY2hhbm5lbCB0byBwYWdlY2FjaGUgY29u
-dGVudHMsIGFzDQppdCByZXZlYWxzIG1ldGFkYXRhIGFib3V0IHJlc2lkZW5j
-eSBvZiBwYWdlcyBpbiBwYWdlY2FjaGUuDQoNCklmIHByZWFkdjIoUldGX05P
-V0FJVCkgcmV0dXJucyBpbW1lZGlhdGVseSwgaXQgcHJvdmlkZXMgYSBjbGVh
-ciAicGFnZSBub3QNCnJlc2lkZW50IiBpbmZvcm1hdGlvbiwgYW5kIHZpY2Ug
-dmVyc2EuDQoNCkNsb3NlIHRoYXQgc2lkZWNoYW5uZWwgYnkgYWx3YXlzIGlu
-aXRpYXRpbmcgcmVhZGFoZWFkIG9uIHRoZSBjYWNoZSBpZiB3ZQ0KZW5jb3Vu
-dGVyIGEgY2FjaGUgbWlzcyBmb3IgcHJlYWR2MihSV0ZfTk9XQUlUKTsgd2l0
-aCB0aGF0IGluIHBsYWNlLCBwcm9iaW5nDQp0aGUgcGFnZWNhY2hlIHJlc2lk
-ZW5jeSBpdHNlbGYgd2lsbCBhY3R1YWxseSBwb3B1bGF0ZSB0aGUgY2FjaGUs
-IG1ha2luZyB0aGUNCnNpZGVjaGFubmVsIHVzZWxlc3MuDQoNCk9yaWdpbmFs
-bHktYnk6IExpbnVzIFRvcnZhbGRzIDx0b3J2YWxkc0BsaW51eC1mb3VuZGF0
-aW9uLm9yZz4NClNpZ25lZC1vZmYtYnk6IEppcmkgS29zaW5hIDxqa29zaW5h
-QHN1c2UuY3o+DQotLS0NCiBtbS9maWxlbWFwLmMgfCAyIC0tDQogMSBmaWxl
-IGNoYW5nZWQsIDIgZGVsZXRpb25zKC0pDQoNCmRpZmYgLS1naXQgYS9tbS9m
-aWxlbWFwLmMgYi9tbS9maWxlbWFwLmMNCmluZGV4IDlmNWUzMjNlODgzZS4u
-N2JjZGQzNmU2MjlkIDEwMDY0NA0KLS0tIGEvbW0vZmlsZW1hcC5jDQorKysg
-Yi9tbS9maWxlbWFwLmMNCkBAIC0yMDc1LDggKzIwNzUsNiBAQCBzdGF0aWMg
-c3NpemVfdCBnZW5lcmljX2ZpbGVfYnVmZmVyZWRfcmVhZChzdHJ1Y3Qga2lv
-Y2IgKmlvY2IsDQogDQogCQlwYWdlID0gZmluZF9nZXRfcGFnZShtYXBwaW5n
-LCBpbmRleCk7DQogCQlpZiAoIXBhZ2UpIHsNCi0JCQlpZiAoaW9jYi0+a2lf
-ZmxhZ3MgJiBJT0NCX05PV0FJVCkNCi0JCQkJZ290byB3b3VsZF9ibG9jazsN
-CiAJCQlwYWdlX2NhY2hlX3N5bmNfcmVhZGFoZWFkKG1hcHBpbmcsDQogCQkJ
-CQlyYSwgZmlscCwNCiAJCQkJCWluZGV4LCBsYXN0X2luZGV4IC0gaW5kZXgp
-Ow0KLS0gDQoyLjEyLjMNCg0K
-
---1678380546-789356226-1548339955=:6626--
+Well, we need the orig_value; but I'm still not sure why you need more
+bucket_id's. Also, retaining orig_value is already required for the
+system limits, there's nothing cgroup-y about this afaict.
