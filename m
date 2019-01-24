@@ -1,77 +1,77 @@
-From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: Re: [PATCH v6 09/16] sched/cpufreq: uclamp: Add utilization clamping
- for RT tasks
-Date: Thu, 24 Jan 2019 12:38:35 +0000
-Message-ID: <20190124123835.nliwk2onvrhe5aqf@e110439-lin>
-References: <20190115101513.2822-1-patrick.bellasi@arm.com>
- <20190115101513.2822-10-patrick.bellasi@arm.com>
- <20190123104944.GX27931@hirez.programming.kicks-ass.net>
- <20190123144011.iid3avb63r5v4r2c@e110439-lin>
- <20190123201146.GH17749@hirez.programming.kicks-ass.net>
- <20190124123009.2yulcf25ld66popd@e110439-lin>
+From: Dominique Martinet <asmadeus@codewreck.org>
+Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
+Date: Thu, 24 Jan 2019 13:45:01 +0100
+Message-ID: <20190124124501.GA18012@nautica>
+References: <nycvar.YFH.7.76.1901240009560.6626@cbobk.fhfr.pm>
+ <CAHk-=wg+C65FJHB=Jx1OvuJP4kvpWdw+5G=XOXB6X_KB2XuofA@mail.gmail.com>
+ <20190124002455.GA23181@nautica>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190124123009.2yulcf25ld66popd@e110439-lin>
+In-Reply-To: <20190124002455.GA23181@nautica>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>, Jiri Kosina <jikos@kernel.org>
+Cc: Andy Lutomirski <luto@amacapital.net>, Josh Snyder <joshs@netflix.com>, Dave Chinner <david@fromorbit.com>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Michal Hocko <mhocko@suse.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 24-Jan 12:30, Patrick Bellasi wrote:
-> On 23-Jan 21:11, Peter Zijlstra wrote:
-> > On Wed, Jan 23, 2019 at 02:40:11PM +0000, Patrick Bellasi wrote:
-> > > On 23-Jan 11:49, Peter Zijlstra wrote:
-> > > > On Tue, Jan 15, 2019 at 10:15:06AM +0000, Patrick Bellasi wrote:
-
-[...]
-
-> > I'm thikning that if we haz a single bit, say:
-> > 
-> >   struct uclamp_se {
-> > 	...
-> > 	unsigned int	changed : 1;
-> >   };
-> > 
-> > We can update uclamp_se::value and set uclamp_se::changed, and then the
-> > next enqueue will (unlikely) test-and-clear changed and recompute the
-> > bucket_id.
+Dominique Martinet wrote on Thu, Jan 24, 2019:
+> I was thinking of something along the lines of:
+> 	return vma_is_anonymous(vma) || (vma->vm_file &&
+> 			(inode_owner_or_capable(file_inode(vma->vm_file))
+> 			 || inode_permission(file_inode(vma->vm_file), MAY_WRITE) == 0));
 > 
-> This mean will lazy update the "requested" bucket_id by deferring its
-> computation at enqueue time. Which saves us a copy of the bucket_id,
-> i.e. we will have only the "effective" value updated at enqueue time.
+> I dropped the first f_mode check because none of the known mincore users
+> open the files read-write, and the check is redundant with
+> inode_permission() so while it would probably be an optimisation in some
+> cases I do not think it is useful in practice.
+> On the other hand, I have no idea how expensive the inode_permission and
+> owner checks really are - do they try to refresh attributes on a
+> networked filesystem or would it trust the cache or is it fs dependant?
 > 
-> But...
-> 
-> > Would that not be simpler?
-> 
-> ... although being simpler it does not fully exploit the slow-path,
-> a syscall which is usually running from a different process context
-> (system management software).
-> 
-> It also fits better for lazy updates but, in the cgroup case, where we
-> wanna enforce an update ASAP for RUNNABLE tasks, we will still have to
-> do the updates from the slow-path.
-> 
-> Will look better into this simplification while working on v7, perhaps
-> the linear mapping can really help in that too.
+> Honestly this is more a case of "the people who's be interested in
+> seeing this have no idea what they're doing" than lack of interest.. I
+> wouldn't mind if there were tests doing mincore on a bunch of special
+> files/mappings but I just tried on a few regular files by hand, this
+> isn't proper coverage; I'll try to take more time to test various
+> mappings today (JST).
 
-Actually, I forgot to mention that:
+I've done some tests with this, it appears OK.
 
-    uclamp_se::effective::{
-        value, bucket_id
-    }
+Obviously the tests I previously had done still work:
+ - user's own files are ok, even if read-only now.
+ - non-user writable files are ok.
+ - non-user non-writable files (e.g. system libs) aren't.
+ - root can still do anything.
 
-will be still required to proper support the cgroup delegation model,
-where a child group could be restricted by the parent but we want to
-keep track of the original "requested" value for when the parent
-should relax the restriction.
+On new tests:
+ - there are vmas with no file that aren't anonymous and come all the
+way there (vvar and vdso), so factoring vma->vm_file check is definitely
+needed.
+ - vsyscall doesn't reach can_do_mincore()
+ - [heap] [stack] and other fileless regular maps are anonymous
 
-Thus, since effective values are already there, why not using them
-also to pre-compute the new requested bucket_id from the slow path?
+ - I tried a char device (/dev/zero) and it was marked anonymous despite
+mapping with MAP_SHARED, which is somewhat expected I guess?
+ - I couldn't map /proc or /sys files (no such device), so no mincore
+there.
 
+
+I'd post my test program but I actually added pr_info messages in
+can_do_mincore to check what it returned because madvise dontneed isn't
+guaranteed to evict pages so we can't rely on madvise dontneed + mincore
+to return 0; not sure what to do for ltp... If anyone has a good idea of
+how to check if mincore actually got granted permissions without
+drop_caches I'll post to the ltp github.
+
+
+Anything else to try?
+
+Jiri, you've offered resubmitting the last two patches properly, can you
+incorporate this change or should I just send this directly? (I'd take
+most of your commit message and add your name somewhere)
+
+
+Thanks,
 -- 
-#include <best/regards.h>
-
-Patrick Bellasi
+Dominique
