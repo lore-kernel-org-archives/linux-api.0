@@ -1,64 +1,36 @@
-From: Alessio Balsini <balsini@android.com>
-Subject: Re: [PATCH v6 01/16] sched/core: Allow sched_setattr() to use the
- current policy
-Date: Fri, 25 Jan 2019 13:56:46 +0000
-Message-ID: <20190125135646.j4j2onitam4mwvcw@google.com>
-References: <20190115101513.2822-1-patrick.bellasi@arm.com>
- <20190115101513.2822-2-patrick.bellasi@arm.com>
+From: Catalin Marinas <catalin.marinas@arm.com>
+Subject: Re: [PATCH v2 06/29] ARM: add migrate_pages() system call
+Date: Fri, 25 Jan 2019 15:16:42 +0000
+Message-ID: <20190125151641.GF25901@arrakis.emea.arm.com>
+References: <20190118161835.2259170-1-arnd@arndb.de>
+ <20190118161835.2259170-7-arnd@arndb.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <netdev-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190115101513.2822-2-patrick.bellasi@arm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Patrick Bellasi <patrick.bellasi@arm.com>
-Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
+In-Reply-To: <20190118161835.2259170-7-arnd@arndb.de>
+Sender: netdev-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, mattst88@gmail.com, linux@armlinux.org.uk, will.deacon@arm.com, tony.luck@intel.com, fenghua.yu@intel.com, geert@linux-m68k.org, monstr@monstr.eu, paul.burton@mips.com, deller@gmx.de, benh@kernel.crashing.org, mpe@ellerman.id.au, schwidefsky@de.ibm.com, heiko.carstens@de.ibm.com, dalias@libc.org, davem@davemloft.net, luto@kernel.org, tglx@linutronix.de, mingo@redhat.com, hpa@zytor.com, x86@kernel.org, jcmvbkbc@gmail.com, akpm@linux-foundation.org, deepa.kernel@gmail.com, ebiederm@xmission.com, firoz.khan@linaro.org, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hello Patrick,
+On Fri, Jan 18, 2019 at 05:18:12PM +0100, Arnd Bergmann wrote:
+> The migrate_pages system call has an assigned number on all architectures
+> except ARM. When it got added initially in commit d80ade7b3231 ("ARM:
+> Fix warning: #warning syscall migrate_pages not implemented"), it was
+> intentionally left out based on the observation that there are no 32-bit
+> ARM NUMA systems.
+> 
+> However, there are now arm64 NUMA machines that can in theory run 32-bit
+> kernels (actually enabling NUMA there would require additional work)
+> as well as 32-bit user space on 64-bit kernels, so that argument is no
+> longer very strong.
+> 
+> Assigning the number lets us use the system call on 64-bit kernels as well
+> as providing a more consistent set of syscalls across architectures.
+> 
+> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 
-What do you think about the following minor changes:
+For the arm64 part:
 
-On Tue, Jan 15, 2019 at 10:14:58AM +0000, Patrick Bellasi wrote:
->  /* SCHED_ISO: reserved but not implemented yet */
->  #define SCHED_IDLE		5
->  #define SCHED_DEADLINE		6
-> +/* Must be the last entry: used to sanity check attr.policy values */
-
-I would remove this comment:
-- the meaning of SCHED_POLICY_MAX is evident, and
-- should we hint on how the value is used? That comment will be removed
-  the next time SCHED_POLICY_MAX is used for something else.
-  This is what should also happen to the comment of SETPARAM_POLICY:
-  now sched_setparam() is no more the only code path accessing
-  SETPARAM_POLICY.
-
-> +#define SCHED_POLICY_MAX	7
-
-+#define SCHED_POLICY_MAX    SCHED_DEADLINE
-
-This would make it compliant with the definition of MAX.
-
-> --- a/kernel/sched/core.c
-> +++ b/kernel/sched/core.c
-> @@ -4560,8 +4560,17 @@ SYSCALL_DEFINE3(sched_setattr, pid_t, pid, struct sched_attr __user *, uattr,
->  	if (retval)
->  		return retval;
->  
-> -	if ((int)attr.sched_policy < 0)
-> +	/*
-> +	 * A valid policy is always required from userspace, unless
-> +	 * SCHED_FLAG_KEEP_POLICY is set and the current policy
-> +	 * is enforced for this call.
-> +	 */
-> +	if (attr.sched_policy >= SCHED_POLICY_MAX &&
-
-+	if (attr.sched_policy > SCHED_POLICY_MAX &&
-
-In line with the previous update.
-
-> +	    !(attr.sched_flags & SCHED_FLAG_KEEP_POLICY)) {
->  		return -EINVAL;
-
-Thanks,
-Alessio
+Acked-by: Catalin Marinas <catalin.marinas@arm.com>
