@@ -1,120 +1,64 @@
-From: Richard Guy Briggs <rgb@redhat.com>
-Subject: Re: [PATCH ghak90 (was ghak32) V4 01/10] audit: collect audit task
- parameters
-Date: Thu, 24 Jan 2019 15:36:37 -0500
-Message-ID: <20190124203637.2gve6epwwd4kdgbm@madcap2.tricolour.ca>
-References: <cover.1533065887.git.rgb@redhat.com>
- <8e617ab568df28a66dfbe3284452de186b42fb0f.1533065887.git.rgb@redhat.com>
- <CAHC9VhQFqs1SyvximK+8XJG5Fk3p9WsWhEV5sY6kksN9tc6eKw@mail.gmail.com>
- <20181101220724.ggkqyf5kjv7lhabx@madcap2.tricolour.ca>
- <CAHC9VhRU-Qss41CnV3mE32tXmZ3FQpy++t4yPUkh9CjuAzxYCA@mail.gmail.com>
+From: Alessio Balsini <balsini@android.com>
+Subject: Re: [PATCH v6 01/16] sched/core: Allow sched_setattr() to use the
+ current policy
+Date: Fri, 25 Jan 2019 13:56:46 +0000
+Message-ID: <20190125135646.j4j2onitam4mwvcw@google.com>
+References: <20190115101513.2822-1-patrick.bellasi@arm.com>
+ <20190115101513.2822-2-patrick.bellasi@arm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAHC9VhRU-Qss41CnV3mE32tXmZ3FQpy++t4yPUkh9CjuAzxYCA@mail.gmail.com>
+In-Reply-To: <20190115101513.2822-2-patrick.bellasi@arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Moore <paul@paul-moore.com>
-Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-audit@redhat.com, linux-kernel@vger.kernel.org, ebiederm@xmission.com, luto@kernel.org, dhowells@redhat.com, viro@zeniv.linux.org.uk, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>
+To: Patrick Bellasi <patrick.bellasi@arm.com>
+Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On 2019-01-03 15:10, Paul Moore wrote:
-> On Thu, Nov 1, 2018 at 6:07 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> > On 2018-10-19 19:15, Paul Moore wrote:
-> > > On Sun, Aug 5, 2018 at 4:32 AM Richard Guy Briggs <rgb@redhat.com> wrote:
-> > > > The audit-related parameters in struct task_struct should ideally be
-> > > > collected together and accessed through a standard audit API.
-> > > >
-> > > > Collect the existing loginuid, sessionid and audit_context together in a
-> > > > new struct audit_task_info called "audit" in struct task_struct.
-> > > >
-> > > > Use kmem_cache to manage this pool of memory.
-> > > > Un-inline audit_free() to be able to always recover that memory.
-> > > >
-> > > > See: https://github.com/linux-audit/audit-kernel/issues/81
-> > > >
-> > > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> > > > ---
-> > > >  include/linux/audit.h | 34 ++++++++++++++++++++++++----------
-> > > >  include/linux/sched.h |  5 +----
-> > > >  init/init_task.c      |  3 +--
-> > > >  init/main.c           |  2 ++
-> > > >  kernel/auditsc.c      | 51 ++++++++++++++++++++++++++++++++++++++++++---------
-> > > >  kernel/fork.c         |  4 +++-
-> > > >  6 files changed, 73 insertions(+), 26 deletions(-)
-> > >
-> > > ...
-> > >
-> > > > diff --git a/include/linux/sched.h b/include/linux/sched.h
-> > > > index 87bf02d..e117272 100644
-> > > > --- a/include/linux/sched.h
-> > > > +++ b/include/linux/sched.h
-> > > > @@ -873,10 +872,8 @@ struct task_struct {
-> > > >
-> > > >         struct callback_head            *task_works;
-> > > >
-> > > > -       struct audit_context            *audit_context;
-> > > >  #ifdef CONFIG_AUDITSYSCALL
-> > > > -       kuid_t                          loginuid;
-> > > > -       unsigned int                    sessionid;
-> > > > +       struct audit_task_info          *audit;
-> > > >  #endif
-> > > >         struct seccomp                  seccomp;
-> > >
-> > > Prior to this patch audit_context was available regardless of
-> > > CONFIG_AUDITSYSCALL, after this patch the corresponding audit_context
-> > > is only available when CONFIG_AUDITSYSCALL is defined.
-> >
-> > This was intentional since audit_context is not used when AUDITSYSCALL is
-> > disabled.  audit_alloc() was stubbed in that case to return 0.  audit_context()
-> > returned NULL.
-> >
-> > The fact that audit_context was still present in struct task_struct was an
-> > oversight in the two patches already accepted:
-> >         ("audit: use inline function to get audit context")
-> >         ("audit: use inline function to get audit context")
-> > that failed to hide or remove it from struct task_struct when it was no longer
-> > relevant.
-> 
-> Okay, in that case let's pull this out and fix this separately from
-> the audit container ID patchset.
+Hello Patrick,
 
-Ok, that should be addressed by ghak104.
+What do you think about the following minor changes:
 
-> > On further digging, loginuid and sessionid (and audit_log_session_info) should
-> > be part of CONFIG_AUDIT scope and not CONFIG_AUDITSYSCALL since it is used in
-> > CONFIG_CHANGE, ANOM_LINK, FEATURE_CHANGE(, INTEGRITY_RULE), none of which are
-> > otherwise dependent on AUDITSYSCALL.
-> 
-> This looks like something else we should fix independently from this patchset.
+On Tue, Jan 15, 2019 at 10:14:58AM +0000, Patrick Bellasi wrote:
+>  /* SCHED_ISO: reserved but not implemented yet */
+>  #define SCHED_IDLE		5
+>  #define SCHED_DEADLINE		6
+> +/* Must be the last entry: used to sanity check attr.policy values */
 
-Ok, this should be addressed by ghak105.
+I would remove this comment:
+- the meaning of SCHED_POLICY_MAX is evident, and
+- should we hint on how the value is used? That comment will be removed
+  the next time SCHED_POLICY_MAX is used for something else.
+  This is what should also happen to the comment of SETPARAM_POLICY:
+  now sched_setparam() is no more the only code path accessing
+  SETPARAM_POLICY.
 
-> > Looking ahead, contid should be treated like loginuid and sessionid, which are
-> > currently only available when syscall auditting is.
-> 
-> That seems reasonable.  Eventually it would be great if we got rid of
-> CONFIG_AUDITSYSCALL, but that is a separate issue, and something that
-> is going to require work from the different arch/ABI folks to ensure
-> everything is working properly.
+> +#define SCHED_POLICY_MAX	7
 
-So I'll plan to rebase on ghak104 and ghak105 once they are upstreamed.
-I'll address the locking issues in the netns list and audit_sig_cid...
++#define SCHED_POLICY_MAX    SCHED_DEADLINE
 
-> > Converting records from standalone to syscall and checking audit_dummy_context
-> > changes the nature of CONFIG_AUDIT/!CONFIG_AUDITSYSCALL separation.
-> > eg: ANOM_LINK accompanied by PATH record (which needed CWD addition to be
-> > complete anyways)
+This would make it compliant with the definition of MAX.
 
-This has been addressed in ghak105, moving ANOM_LINK to auditsc.
+> --- a/kernel/sched/core.c
+> +++ b/kernel/sched/core.c
+> @@ -4560,8 +4560,17 @@ SYSCALL_DEFINE3(sched_setattr, pid_t, pid, struct sched_attr __user *, uattr,
+>  	if (retval)
+>  		return retval;
+>  
+> -	if ((int)attr.sched_policy < 0)
+> +	/*
+> +	 * A valid policy is always required from userspace, unless
+> +	 * SCHED_FLAG_KEEP_POLICY is set and the current policy
+> +	 * is enforced for this call.
+> +	 */
+> +	if (attr.sched_policy >= SCHED_POLICY_MAX &&
 
-> paul moore
++	if (attr.sched_policy > SCHED_POLICY_MAX &&
 
-- RGB
+In line with the previous update.
 
---
-Richard Guy Briggs <rgb@redhat.com>
-Sr. S/W Engineer, Kernel Security, Base Operating Systems
-Remote, Ottawa, Red Hat Canada
-IRC: rgb, SunRaycer
-Voice: +1.647.777.2635, Internal: (81) 32635
+> +	    !(attr.sched_flags & SCHED_FLAG_KEEP_POLICY)) {
+>  		return -EINVAL;
+
+Thanks,
+Alessio
