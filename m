@@ -1,39 +1,40 @@
 From: Catalin Marinas <catalin.marinas@arm.com>
-Subject: Re: [PATCH v2 25/29] y2038: syscalls: rename y2038 compat syscalls
-Date: Fri, 25 Jan 2019 15:47:25 +0000
-Message-ID: <20190125154724.GH25901@arrakis.emea.arm.com>
+Subject: Re: [PATCH v2 29/29] y2038: add 64-bit time_t syscalls to all 32-bit
+ architectures
+Date: Fri, 25 Jan 2019 15:55:43 +0000
+Message-ID: <20190125155542.GI25901@arrakis.emea.arm.com>
 References: <20190118161835.2259170-1-arnd@arndb.de>
- <20190118161835.2259170-26-arnd@arndb.de>
+ <20190118161835.2259170-30-arnd@arndb.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <netdev-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190118161835.2259170-26-arnd@arndb.de>
-Sender: linux-kernel-owner@vger.kernel.org
+In-Reply-To: <20190118161835.2259170-30-arnd@arndb.de>
+Sender: netdev-owner@vger.kernel.org
 To: Arnd Bergmann <arnd@arndb.de>
 Cc: y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, mattst88@gmail.com, linux@armlinux.org.uk, will.deacon@arm.com, tony.luck@intel.com, fenghua.yu@intel.com, geert@linux-m68k.org, monstr@monstr.eu, paul.burton@mips.com, deller@gmx.de, benh@kernel.crashing.org, mpe@ellerman.id.au, schwidefsky@de.ibm.com, heiko.carstens@de.ibm.com, dalias@libc.org, davem@davemloft.net, luto@kernel.org, tglx@linutronix.de, mingo@redhat.com, hpa@zytor.com, x86@kernel.org, jcmvbkbc@gmail.com, akpm@linux-foundation.org, deepa.kernel@gmail.com, ebiederm@xmission.com, firoz.khan@linaro.org, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jan 18, 2019 at 05:18:31PM +0100, Arnd Bergmann wrote:
-> A lot of system calls that pass a time_t somewhere have an implementation
-> using a COMPAT_SYSCALL_DEFINEx() on 64-bit architectures, and have
-> been reworked so that this implementation can now be used on 32-bit
-> architectures as well.
+On Fri, Jan 18, 2019 at 05:18:35PM +0100, Arnd Bergmann wrote:
+> This adds 21 new system calls on each ABI that has 32-bit time_t
+> today. All of these have the exact same semantics as their existing
+> counterparts, and the new ones all have macro names that end in 'time64'
+> for clarification.
 > 
-> The missing step is to redefine them using the regular SYSCALL_DEFINEx()
-> to get them out of the compat namespace and make it possible to build them
-> on 32-bit architectures.
+> This gets us to the point of being able to safely use a C library
+> that has 64-bit time_t in user space. There are still a couple of
+> loose ends to tie up in various areas of the code, but this is the
+> big one, and should be entirely uncontroversial at this point.
 > 
-> Any system call that ends in 'time' gets a '32' suffix on its name for
-> that version, while the others get a '_time32' suffix, to distinguish
-> them from the normal version, which takes a 64-bit time argument in the
-> future.
-> 
-> In this step, only 64-bit architectures are changed, doing this rename
-> first lets us avoid touching the 32-bit architectures twice.
+> In particular, there are four system calls (getitimer, setitimer,
+> waitid, and getrusage) that don't have a 64-bit counterpart yet,
+> but these can all be safely implemented in the C library by wrapping
+> around the existing system calls because the 32-bit time_t they
+> pass only counts elapsed time, not time since the epoch. They
+> will be dealt with later.
 > 
 > Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 
-For arm64:
-
 Acked-by: Catalin Marinas <catalin.marinas@arm.com>
+
+(as long as compat follows the arm32 syscall numbers)
