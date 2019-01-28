@@ -1,50 +1,86 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH 05/18] Add io_uring IO interface
-Date: Mon, 28 Jan 2019 11:25:12 -0700
-Message-ID: <2729ab43-b2bf-44b0-d41d-dbb495ddffbf@kernel.dk>
-References: <20190123153536.7081-1-axboe@kernel.dk>
- <20190123153536.7081-6-axboe@kernel.dk> <20190128145700.GA9795@lst.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20190128145700.GA9795@lst.de>
-Content-Language: en-US
-Sender: owner-linux-aio@kvack.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, linux-block@vger.kernel.org, jmoyer@redhat.com, avi@scylladb.com, linux-api@vger.kernel.org, linux-man@vger.kernel.org
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH] Fix: membarrier: racy access to p->mm in membarrier_global_expedited()
+Date: Mon, 28 Jan 2019 13:26:36 -0500
+Message-ID: <20190128182636.18420-1-mathieu.desnoyers@efficios.com>
+Return-path: <stable-owner@vger.kernel.org>
+Sender: stable-owner@vger.kernel.org
+To: Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Jann Horn <jannh@google.com>, Thomas Gleixner <tglx@linutronix.de>, Andrea Parri <parri.andrea@gmail.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@kernel.org>, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, David Sehr <sehr@google.com>, Greg Hackmann <ghackmann@google.com>, "H . Peter Anvin" <hpa@zytor.com>, Linus Torvalds <torvalds@linux-foundation.org>, Maged Michael <maged.michael@gmail.com>, Michael Ellerman <mpe@ellerman.id.au>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Paul Mackerras <paulus@samba.org>, Ru
 List-Id: linux-api@vger.kernel.org
 
-On 1/28/19 7:57 AM, Christoph Hellwig wrote:
-> [please make sure linux-api and linux-man are CCed on new syscalls
-> so that we get API experts to review them]
-> 
->> io_uring_enter(fd, to_submit, min_complete, flags)
->> 	Initiates IO against the rings mapped to this fd, or waits for
->> 	them to complete, or both. The behavior is controlled by the
->> 	parameters passed in. If 'to_submit' is non-zero, then we'll
->> 	try and submit new IO. If IORING_ENTER_GETEVENTS is set, the
->> 	kernel will wait for 'min_complete' events, if they aren't
->> 	already available. It's valid to set IORING_ENTER_GETEVENTS
->> 	and 'min_complete' == 0 at the same time, this allows the
->> 	kernel to return already completed events without waiting
->> 	for them. This is useful only for polling, as for IRQ
->> 	driven IO, the application can just check the CQ ring
->> 	without entering the kernel.
-> 
-> Especially with poll support now in the series, don't we need a ѕigmask
-> argument similar to pselect/ppoll/io_pgetevents now to deal with signal
-> blocking during waiting for events?
+Jann Horn identified a racy access to p->mm in the global expedited
+command of the membarrier system call.
 
-Is there any way to avoid passing in the sigset_t size? If it's just a
-32-bit/64-bit thing, surely the in_compat_syscall() could cover it? Or
-are there other cases that need to be catered to?
+The suggested fix is to hold the task_lock() around the accesses to
+p->mm and to the mm_struct membarrier_state field to guarantee the
+existence of the mm_struct.
 
+Link: https://lore.kernel.org/lkml/CAG48ez2G8ctF8dHS42TF37pThfr3y0RNOOYTmxvACm4u8Yu3cw@mail.gmail.com
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: Jann Horn <jannh@google.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Peter Zijlstra (Intel) <peterz@infradead.org>
+CC: Ingo Molnar <mingo@kernel.org>
+CC: Andrea Parri <parri.andrea@gmail.com>
+CC: Andrew Hunter <ahh@google.com>
+CC: Andy Lutomirski <luto@kernel.org>
+CC: Avi Kivity <avi@scylladb.com>
+CC: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: Dave Watson <davejwatson@fb.com>
+CC: David Sehr <sehr@google.com>
+CC: Greg Hackmann <ghackmann@google.com>
+CC: H. Peter Anvin <hpa@zytor.com>
+CC: Linus Torvalds <torvalds@linux-foundation.org>
+CC: Maged Michael <maged.michael@gmail.com>
+CC: Michael Ellerman <mpe@ellerman.id.au>
+CC: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+CC: Paul Mackerras <paulus@samba.org>
+CC: Russell King <linux@armlinux.org.uk>
+CC: Will Deacon <will.deacon@arm.com>
+CC: stable@vger.kernel.org # v4.16+
+CC: linux-api@vger.kernel.org
+---
+ kernel/sched/membarrier.c | 27 +++++++++++++++++++++------
+ 1 file changed, 21 insertions(+), 6 deletions(-)
+
+diff --git a/kernel/sched/membarrier.c b/kernel/sched/membarrier.c
+index 76e0eaf4654e..305fdcc4c5f7 100644
+--- a/kernel/sched/membarrier.c
++++ b/kernel/sched/membarrier.c
+@@ -81,12 +81,27 @@ static int membarrier_global_expedited(void)
+ 
+ 		rcu_read_lock();
+ 		p = task_rcu_dereference(&cpu_rq(cpu)->curr);
+-		if (p && p->mm && (atomic_read(&p->mm->membarrier_state) &
+-				   MEMBARRIER_STATE_GLOBAL_EXPEDITED)) {
+-			if (!fallback)
+-				__cpumask_set_cpu(cpu, tmpmask);
+-			else
+-				smp_call_function_single(cpu, ipi_mb, NULL, 1);
++		/*
++		 * Skip this CPU if the runqueue's current task is NULL or if
++		 * it is a kernel thread.
++		 */
++		if (p && READ_ONCE(p->mm)) {
++			bool mm_match;
++
++			/*
++			 * Read p->mm and access membarrier_state while holding
++			 * the task lock to ensure existence of mm.
++			 */
++			task_lock(p);
++			mm_match = p->mm && (atomic_read(&p->mm->membarrier_state) &
++					     MEMBARRIER_STATE_GLOBAL_EXPEDITED);
++			task_unlock(p);
++			if (mm_match) {
++				if (!fallback)
++					__cpumask_set_cpu(cpu, tmpmask);
++				else
++					smp_call_function_single(cpu, ipi_mb, NULL, 1);
++			}
+ 		}
+ 		rcu_read_unlock();
+ 	}
 -- 
-Jens Axboe
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+2.17.1
