@@ -1,74 +1,99 @@
-From: "Paul E. McKenney" <paulmck@linux.ibm.com>
-Subject: Re: [PATCH] Fix: membarrier: racy access to p->mm in
- membarrier_global_expedited()
-Date: Mon, 28 Jan 2019 15:22:36 -0800
-Message-ID: <20190128232236.GG4240@linux.ibm.com>
-References: <20190128220707.30774-1-mathieu.desnoyers@efficios.com>
- <20190128223948.GD4240@linux.ibm.com>
- <CAG48ez1+Vx7=ZqeLJ0waceSneCQhEcoS=bv9ggb3Dbveb+W6AQ@mail.gmail.com>
-Reply-To: paulmck@linux.ibm.com
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH 12/18] io_uring: add support for pre-mapped user IO buffers
+Date: Tue, 29 Jan 2019 00:35:50 +0100
+Message-ID: <CAG48ez3cJS=RUqyP630du3pNw_wBdM82KOtbX=YY6U4LxfMBew@mail.gmail.com>
+References: <20190128213538.13486-1-axboe@kernel.dk> <20190128213538.13486-13-axboe@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAG48ez1+Vx7=ZqeLJ0waceSneCQhEcoS=bv9ggb3Dbveb+W6AQ@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Andrea Parri <parri.andrea@gmail.com>, Andy Lutomirski <luto@kernel.org>, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, David Sehr <sehr@google.com>, "H . Peter Anvin" <hpa@zytor.com>, Linus Torvalds <torvalds@linux-foundation.org>, Maged Michael <maged.michael@gmail.com>, Michael Ellerman <mpe@ellerman.id.au>, Paul Mackerras <paulus@samba.org>, Russell King <linux@armlinux.org.uk>, Will Deacon <will>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <20190128213538.13486-13-axboe@kernel.dk>
+Sender: owner-linux-aio@kvack.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-man <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, hch@lst.de, jmoyer@redhat.com, Avi Kivity <avi@scylladb.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 28, 2019 at 11:45:32PM +0100, Jann Horn wrote:
-> On Mon, Jan 28, 2019 at 11:39 PM Paul E. McKenney <paulmck@linux.ibm.com> wrote:
-> > On Mon, Jan 28, 2019 at 05:07:07PM -0500, Mathieu Desnoyers wrote:
-> > > Jann Horn identified a racy access to p->mm in the global expedited
-> > > command of the membarrier system call.
-> > >
-> > > The suggested fix is to hold the task_lock() around the accesses to
-> > > p->mm and to the mm_struct membarrier_state field to guarantee the
-> > > existence of the mm_struct.
-> > >
-> > > Link: https://lore.kernel.org/lkml/CAG48ez2G8ctF8dHS42TF37pThfr3y0RNOOYTmxvACm4u8Yu3cw@mail.gmail.com
-> > > Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-> [...]
-> > > --- a/kernel/sched/membarrier.c
-> > > +++ b/kernel/sched/membarrier.c
-> > > @@ -81,12 +81,27 @@ static int membarrier_global_expedited(void)
-> > >
-> > >               rcu_read_lock();
-> > >               p = task_rcu_dereference(&cpu_rq(cpu)->curr);
-> > > -             if (p && p->mm && (atomic_read(&p->mm->membarrier_state) &
-> > > -                                MEMBARRIER_STATE_GLOBAL_EXPEDITED)) {
-> > > -                     if (!fallback)
-> > > -                             __cpumask_set_cpu(cpu, tmpmask);
-> > > -                     else
-> > > -                             smp_call_function_single(cpu, ipi_mb, NULL, 1);
-> > > +             /*
-> > > +              * Skip this CPU if the runqueue's current task is NULL or if
-> > > +              * it is a kernel thread.
-> > > +              */
-> > > +             if (p && READ_ONCE(p->mm)) {
-> > > +                     bool mm_match;
-> > > +
-> > > +                     /*
-> > > +                      * Read p->mm and access membarrier_state while holding
-> > > +                      * the task lock to ensure existence of mm.
-> > > +                      */
-> > > +                     task_lock(p);
-> > > +                     mm_match = p->mm && (atomic_read(&p->mm->membarrier_state) &
-> >
-> > Are we guaranteed that this p->mm will be the same as the one loaded via
-> > READ_ONCE() above?
-> 
-> No; the way I read it, that's just an optimization and has no effect
-> on correctness.
-> 
-> > Either way, wouldn't it be better to READ_ONCE() it a
-> > single time and use the same value everywhere?
-> 
-> No; the first READ_ONCE() returns a pointer that you can't access
-> because it wasn't read under a lock. You can only use it for a NULL
-> check.
+On Mon, Jan 28, 2019 at 10:36 PM Jens Axboe <axboe@kernel.dk> wrote:
+> If we have fixed user buffers, we can map them into the kernel when we
+> setup the io_context. That avoids the need to do get_user_pages() for
+> each and every IO.
+[...]
+> +static int __io_uring_register(struct io_ring_ctx *ctx, unsigned opcode,
+> +                              void __user *arg, unsigned nr_args)
+> +{
+> +       int ret;
+> +
+> +       /* Drop our initial ref and wait for the ctx to be fully idle */
+> +       percpu_ref_put(&ctx->refs);
 
-Ah, of course!  Thank you both!
+The line above drops a reference that you just got in the caller...
 
-							Thanx, Paul
+> +       percpu_ref_kill(&ctx->refs);
+> +       wait_for_completion(&ctx->ctx_done);
+> +
+> +       switch (opcode) {
+> +       case IORING_REGISTER_BUFFERS:
+> +               ret = io_sqe_buffer_register(ctx, arg, nr_args);
+> +               break;
+> +       case IORING_UNREGISTER_BUFFERS:
+> +               ret = -EINVAL;
+> +               if (arg || nr_args)
+> +                       break;
+> +               ret = io_sqe_buffer_unregister(ctx);
+> +               break;
+> +       default:
+> +               ret = -EINVAL;
+> +               break;
+> +       }
+> +
+> +       /* bring the ctx back to life */
+> +       reinit_completion(&ctx->ctx_done);
+> +       percpu_ref_resurrect(&ctx->refs);
+> +       percpu_ref_get(&ctx->refs);
+
+And then this line takes a reference that the caller will immediately
+drop again? Why?
+
+> +       return ret;
+> +}
+> +
+> +SYSCALL_DEFINE4(io_uring_register, unsigned int, fd, unsigned int, opcode,
+> +               void __user *, arg, unsigned int, nr_args)
+> +{
+> +       struct io_ring_ctx *ctx;
+> +       long ret = -EBADF;
+> +       struct fd f;
+> +
+> +       f = fdget(fd);
+> +       if (!f.file)
+> +               return -EBADF;
+> +
+> +       ret = -EOPNOTSUPP;
+> +       if (f.file->f_op != &io_uring_fops)
+> +               goto out_fput;
+> +
+> +       ret = -ENXIO;
+> +       ctx = f.file->private_data;
+> +       if (!percpu_ref_tryget(&ctx->refs))
+> +               goto out_fput;
+
+If you are holding the uring_lock of a ctx that can be accessed
+through a file descriptor (which you do just after this point), you
+know that the percpu_ref isn't zero, right? Why are you doing the
+tryget here?
+
+> +       ret = -EBUSY;
+> +       if (mutex_trylock(&ctx->uring_lock)) {
+> +               ret = __io_uring_register(ctx, opcode, arg, nr_args);
+> +               mutex_unlock(&ctx->uring_lock);
+> +       }
+> +       io_ring_drop_ctx_refs(ctx, 1);
+> +out_fput:
+> +       fdput(f);
+> +       return ret;
+> +}
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
