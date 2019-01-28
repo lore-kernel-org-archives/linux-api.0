@@ -1,7 +1,7 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: [PATCH 02/18] block: wire up block device iopoll method
-Date: Mon, 28 Jan 2019 14:35:22 -0700
-Message-ID: <20190128213538.13486-3-axboe@kernel.dk>
+Subject: [PATCH 06/18] io_uring: add fsync support
+Date: Mon, 28 Jan 2019 14:35:26 -0700
+Message-ID: <20190128213538.13486-7-axboe@kernel.dk>
 References: <20190128213538.13486-1-axboe@kernel.dk>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20190128213538.13486-1-axboe@kernel.dk>
@@ -12,51 +12,104 @@ List-Id: linux-api@vger.kernel.org
 
 From: Christoph Hellwig <hch@lst.de>
 
-Just call blk_poll on the iocb cookie, we can derive the block device
-from the inode trivially.
+Add a new fsync opcode, which either syncs a range if one is passed,
+or the whole file if the offset and length fields are both cleared
+to zero.  A flag is provided to use fdatasync semantics, that is only
+force out metadata which is required to retrieve the file data, but
+not others like metadata.
 
-Reviewed-by: Johannes Thumshirn <jthumshirn@suse.de>
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 Signed-off-by: Jens Axboe <axboe@kernel.dk>
 ---
- fs/block_dev.c | 10 ++++++++++
- 1 file changed, 10 insertions(+)
+ fs/io_uring.c                 | 34 ++++++++++++++++++++++++++++++++++
+ include/uapi/linux/io_uring.h |  8 +++++++-
+ 2 files changed, 41 insertions(+), 1 deletion(-)
 
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 58a4c1217fa8..f18d076a2596 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -293,6 +293,14 @@ struct blkdev_dio {
+diff --git a/fs/io_uring.c b/fs/io_uring.c
+index 309eed3629d2..7d2e6db08b05 100644
+--- a/fs/io_uring.c
++++ b/fs/io_uring.c
+@@ -4,6 +4,7 @@
+  * supporting fast/efficient IO.
+  *
+  * Copyright (C) 2018-2019 Jens Axboe
++ * Copyright (c) 2018-2019 Christoph Hellwig
+  */
+ #include <linux/kernel.h>
+ #include <linux/init.h>
+@@ -466,6 +467,36 @@ static int io_nop(struct io_kiocb *req, const struct io_uring_sqe *sqe)
+ 	return 0;
+ }
  
- static struct bio_set blkdev_dio_pool;
- 
-+static int blkdev_iopoll(struct kiocb *kiocb, bool wait)
++static int io_fsync(struct io_kiocb *req, const struct io_uring_sqe *sqe,
++		    bool force_nonblock)
 +{
-+	struct block_device *bdev = I_BDEV(kiocb->ki_filp->f_mapping->host);
-+	struct request_queue *q = bdev_get_queue(bdev);
++	struct io_ring_ctx *ctx = req->ctx;
++	loff_t end = sqe->off + sqe->len;
++	struct file *file;
++	int ret;
 +
-+	return blk_poll(q, READ_ONCE(kiocb->ki_cookie), wait);
++	/* fsync always requires a blocking context */
++	if (force_nonblock)
++		return -EAGAIN;
++
++	if (unlikely(sqe->addr || sqe->ioprio))
++		return -EINVAL;
++	if (unlikely(sqe->fsync_flags & ~IORING_FSYNC_DATASYNC))
++		return -EINVAL;
++
++	file = fget(sqe->fd);
++	if (unlikely(!file))
++		return -EBADF;
++
++	ret = vfs_fsync_range(file, sqe->off, end > 0 ? end : LLONG_MAX,
++			sqe->fsync_flags & IORING_FSYNC_DATASYNC);
++
++	fput(file);
++	io_cqring_add_event(ctx, sqe->user_data, ret, 0);
++	io_free_req(req);
++	return 0;
 +}
 +
- static void blkdev_bio_end_io(struct bio *bio)
+ static int __io_submit_sqe(struct io_ring_ctx *ctx, struct io_kiocb *req,
+ 			   struct sqe_submit *s, bool force_nonblock)
  {
- 	struct blkdev_dio *dio = bio->bi_private;
-@@ -410,6 +418,7 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
- 				bio->bi_opf |= REQ_HIPRI;
+@@ -487,6 +518,9 @@ static int __io_submit_sqe(struct io_ring_ctx *ctx, struct io_kiocb *req,
+ 	case IORING_OP_WRITEV:
+ 		ret = io_write(req, sqe, force_nonblock);
+ 		break;
++	case IORING_OP_FSYNC:
++		ret = io_fsync(req, sqe, force_nonblock);
++		break;
+ 	default:
+ 		ret = -EINVAL;
+ 		break;
+diff --git a/include/uapi/linux/io_uring.h b/include/uapi/linux/io_uring.h
+index ce65db9269a8..ca503ded73e3 100644
+--- a/include/uapi/linux/io_uring.h
++++ b/include/uapi/linux/io_uring.h
+@@ -26,7 +26,7 @@ struct io_uring_sqe {
+ 	__u32	len;		/* buffer size or number of iovecs */
+ 	union {
+ 		__kernel_rwf_t	rw_flags;
+-		__u32		__resv;
++		__u32		fsync_flags;
+ 	};
+ 	__u64	user_data;	/* data to be passed back at completion time */
+ 	__u64	__pad2[3];
+@@ -35,6 +35,12 @@ struct io_uring_sqe {
+ #define IORING_OP_NOP		0
+ #define IORING_OP_READV		1
+ #define IORING_OP_WRITEV	2
++#define IORING_OP_FSYNC		3
++
++/*
++ * sqe->fsync_flags
++ */
++#define IORING_FSYNC_DATASYNC	(1 << 0)
  
- 			qc = submit_bio(bio);
-+			WRITE_ONCE(iocb->ki_cookie, qc);
- 			break;
- 		}
- 
-@@ -2076,6 +2085,7 @@ const struct file_operations def_blk_fops = {
- 	.llseek		= block_llseek,
- 	.read_iter	= blkdev_read_iter,
- 	.write_iter	= blkdev_write_iter,
-+	.iopoll		= blkdev_iopoll,
- 	.mmap		= generic_file_mmap,
- 	.fsync		= blkdev_fsync,
- 	.unlocked_ioctl	= block_ioctl,
+ /*
+  * IO completion data structure (Completion Queue Entry)
 -- 
 2.17.1
 
