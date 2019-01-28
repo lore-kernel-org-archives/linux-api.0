@@ -1,279 +1,101 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH 05/18] Add io_uring IO interface
-Date: Mon, 28 Jan 2019 23:32:47 +0100
-Message-ID: <CAG48ez0vDqDH4ks7q4L3F+xt-4kVQrN1yw34QwFAmwQyy27FTw@mail.gmail.com>
-References: <20190128213538.13486-1-axboe@kernel.dk> <20190128213538.13486-6-axboe@kernel.dk>
+From: "Paul E. McKenney" <paulmck@linux.ibm.com>
+Subject: Re: [PATCH] Fix: membarrier: racy access to p->mm in
+ membarrier_global_expedited()
+Date: Mon, 28 Jan 2019 14:39:48 -0800
+Message-ID: <20190128223948.GD4240@linux.ibm.com>
+References: <20190128220707.30774-1-mathieu.desnoyers@efficios.com>
+Reply-To: paulmck@linux.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20190128213538.13486-6-axboe@kernel.dk>
-Sender: owner-linux-aio@kvack.org
-To: Jens Axboe <axboe@kernel.dk>, Al Viro <viro@zeniv.linux.org.uk>
-Cc: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-man <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, hch@lst.de, jmoyer@redhat.com, Avi Kivity <avi@scylladb.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <stable-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190128220707.30774-1-mathieu.desnoyers@efficios.com>
+Sender: stable-owner@vger.kernel.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Jann Horn <jannh@google.com>, Thomas Gleixner <tglx@linutronix.de>, Andrea Parri <parri.andrea@gmail.com>, Andy Lutomirski <luto@kernel.org>, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, David Sehr <sehr@google.com>, "H . Peter Anvin" <hpa@zytor.com>, Linus Torvalds <torvalds@linux-foundation.org>, Maged Michael <maged.michael@gmail.com>, Michael Ellerman <mpe@ellerman.id.au>, Paul Mackerras <paulus@samba.org>, Russell King <linux@armlinux.org.uk>, Will Deacon <will.deacon@arm.com>, stable@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 28, 2019 at 10:35 PM Jens Axboe <axboe@kernel.dk> wrote:
-> The submission queue (SQ) and completion queue (CQ) rings are shared
-> between the application and the kernel. This eliminates the need to
-> copy data back and forth to submit and complete IO.
->
-> IO submissions use the io_uring_sqe data structure, and completions
-> are generated in the form of io_uring_sqe data structures. The SQ
-> ring is an index into the io_uring_sqe array, which makes it possible
-> to submit a batch of IOs without them being contiguous in the ring.
-> The CQ ring is always contiguous, as completion events are inherently
-> unordered, and hence any io_uring_cqe entry can point back to an
-> arbitrary submission.
->
-> Two new system calls are added for this:
->
-> io_uring_setup(entries, params)
->         Sets up a context for doing async IO. On success, returns a file
->         descriptor that the application can mmap to gain access to the
->         SQ ring, CQ ring, and io_uring_sqes.
->
-> io_uring_enter(fd, to_submit, min_complete, flags, sigset, sigsetsize)
->         Initiates IO against the rings mapped to this fd, or waits for
->         them to complete, or both. The behavior is controlled by the
->         parameters passed in. If 'to_submit' is non-zero, then we'll
->         try and submit new IO. If IORING_ENTER_GETEVENTS is set, the
->         kernel will wait for 'min_complete' events, if they aren't
->         already available. It's valid to set IORING_ENTER_GETEVENTS
->         and 'min_complete' == 0 at the same time, this allows the
->         kernel to return already completed events without waiting
->         for them. This is useful only for polling, as for IRQ
->         driven IO, the application can just check the CQ ring
->         without entering the kernel.
->
-> With this setup, it's possible to do async IO with a single system
-> call. Future developments will enable polled IO with this interface,
-> and polled submission as well. The latter will enable an application
-> to do IO without doing ANY system calls at all.
->
-> For IRQ driven IO, an application only needs to enter the kernel for
-> completions if it wants to wait for them to occur.
->
-> Each io_uring is backed by a workqueue, to support buffered async IO
-> as well. We will only punt to an async context if the command would
-> need to wait for IO on the device side. Any data that can be accessed
-> directly in the page cache is done inline. This avoids the slowness
-> issue of usual threadpools, since cached data is accessed as quickly
-> as a sync interface.
->
-> Sample application: http://git.kernel.dk/cgit/fio/plain/t/io_uring.c
-[...]
-> +static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe,
-> +                     bool force_nonblock)
-> +{
-> +       struct kiocb *kiocb = &req->rw;
-> +       int ret;
+On Mon, Jan 28, 2019 at 05:07:07PM -0500, Mathieu Desnoyers wrote:
+> Jann Horn identified a racy access to p->mm in the global expedited
+> command of the membarrier system call.
+> 
+> The suggested fix is to hold the task_lock() around the accesses to
+> p->mm and to the mm_struct membarrier_state field to guarantee the
+> existence of the mm_struct.
+> 
+> Link: https://lore.kernel.org/lkml/CAG48ez2G8ctF8dHS42TF37pThfr3y0RNOOYTmxvACm4u8Yu3cw@mail.gmail.com
+> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+> Tested-by: Jann Horn <jannh@google.com>
+> CC: Jann Horn <jannh@google.com>
+> CC: Thomas Gleixner <tglx@linutronix.de>
+> CC: Peter Zijlstra (Intel) <peterz@infradead.org>
+> CC: Ingo Molnar <mingo@kernel.org>
+> CC: Andrea Parri <parri.andrea@gmail.com>
+> CC: Andy Lutomirski <luto@kernel.org>
+> CC: Avi Kivity <avi@scylladb.com>
+> CC: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+> CC: Boqun Feng <boqun.feng@gmail.com>
+> CC: Dave Watson <davejwatson@fb.com>
+> CC: David Sehr <sehr@google.com>
+> CC: H. Peter Anvin <hpa@zytor.com>
+> CC: Linus Torvalds <torvalds@linux-foundation.org>
+> CC: Maged Michael <maged.michael@gmail.com>
+> CC: Michael Ellerman <mpe@ellerman.id.au>
+> CC: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+> CC: Paul Mackerras <paulus@samba.org>
+> CC: Russell King <linux@armlinux.org.uk>
+> CC: Will Deacon <will.deacon@arm.com>
+> CC: stable@vger.kernel.org # v4.16+
+> CC: linux-api@vger.kernel.org
+> ---
+>  kernel/sched/membarrier.c | 27 +++++++++++++++++++++------
+>  1 file changed, 21 insertions(+), 6 deletions(-)
+> 
+> diff --git a/kernel/sched/membarrier.c b/kernel/sched/membarrier.c
+> index 76e0eaf4654e..305fdcc4c5f7 100644
+> --- a/kernel/sched/membarrier.c
+> +++ b/kernel/sched/membarrier.c
+> @@ -81,12 +81,27 @@ static int membarrier_global_expedited(void)
+> 
+>  		rcu_read_lock();
+>  		p = task_rcu_dereference(&cpu_rq(cpu)->curr);
+> -		if (p && p->mm && (atomic_read(&p->mm->membarrier_state) &
+> -				   MEMBARRIER_STATE_GLOBAL_EXPEDITED)) {
+> -			if (!fallback)
+> -				__cpumask_set_cpu(cpu, tmpmask);
+> -			else
+> -				smp_call_function_single(cpu, ipi_mb, NULL, 1);
+> +		/*
+> +		 * Skip this CPU if the runqueue's current task is NULL or if
+> +		 * it is a kernel thread.
+> +		 */
+> +		if (p && READ_ONCE(p->mm)) {
+> +			bool mm_match;
 > +
-> +       kiocb->ki_filp = fget(sqe->fd);
-> +       if (unlikely(!kiocb->ki_filp))
-> +               return -EBADF;
-> +       kiocb->ki_pos = sqe->off;
-> +       kiocb->ki_flags = iocb_flags(kiocb->ki_filp);
-> +       kiocb->ki_hint = ki_hint_validate(file_write_hint(kiocb->ki_filp));
-> +       if (sqe->ioprio) {
-> +               ret = ioprio_check_cap(sqe->ioprio);
-> +               if (ret)
-> +                       goto out_fput;
-> +
-> +               kiocb->ki_ioprio = sqe->ioprio;
-> +       } else
-> +               kiocb->ki_ioprio = get_current_ioprio();
-> +
-> +       ret = kiocb_set_rw_flags(kiocb, sqe->rw_flags);
-> +       if (unlikely(ret))
-> +               goto out_fput;
-> +       if (force_nonblock) {
-> +               kiocb->ki_flags |= IOCB_NOWAIT;
-> +               req->flags |= REQ_F_FORCE_NONBLOCK;
-> +       }
-> +       if (kiocb->ki_flags & IOCB_HIPRI) {
-> +               ret = -EINVAL;
-> +               goto out_fput;
-> +       }
-> +
-> +       kiocb->ki_complete = io_complete_rw;
-> +       return 0;
-> +out_fput:
-> +       fput(kiocb->ki_filp);
-> +       return ret;
-> +}
-[...]
-> +static ssize_t io_read(struct io_kiocb *req, const struct io_uring_sqe *sqe,
-> +                      bool force_nonblock)
-> +{
-> +       struct iovec inline_vecs[UIO_FASTIOV], *iovec = inline_vecs;
-> +       struct kiocb *kiocb = &req->rw;
-> +       struct iov_iter iter;
-> +       struct file *file;
-> +       ssize_t ret;
-> +
-> +       ret = io_prep_rw(req, sqe, force_nonblock);
-> +       if (ret)
-> +               return ret;
-> +       file = kiocb->ki_filp;
-> +
-> +       ret = -EBADF;
-> +       if (unlikely(!(file->f_mode & FMODE_READ)))
-> +               goto out_fput;
-> +       ret = -EINVAL;
-> +       if (unlikely(!file->f_op->read_iter))
-> +               goto out_fput;
-> +
-> +       ret = io_import_iovec(req->ctx, READ, sqe, &iovec, &iter);
-> +       if (ret)
-> +               goto out_fput;
-> +
-> +       ret = rw_verify_area(READ, file, &kiocb->ki_pos, iov_iter_count(&iter));
-> +       if (!ret) {
-> +               ssize_t ret2;
-> +
-> +               /* Catch -EAGAIN return for forced non-blocking submission */
-> +               ret2 = call_read_iter(file, kiocb, &iter);
-> +               if (!force_nonblock || ret2 != -EAGAIN)
-> +                       io_rw_done(kiocb, ret2);
-> +               else
-> +                       ret = -EAGAIN;
-> +       }
-> +       kfree(iovec);
-> +out_fput:
-> +       if (unlikely(ret))
-> +               fput(file);
-> +       return ret;
-> +}
-[...]
-> +static int __io_submit_sqe(struct io_ring_ctx *ctx, struct io_kiocb *req,
-> +                          struct sqe_submit *s, bool force_nonblock)
-> +{
-> +       const struct io_uring_sqe *sqe = s->sqe;
-> +       ssize_t ret;
-> +
-> +       if (unlikely(s->index >= ctx->sq_entries))
-> +               return -EINVAL;
-> +       req->user_data = sqe->user_data;
-> +
-> +       ret = -EINVAL;
-> +       switch (sqe->opcode) {
-> +       case IORING_OP_NOP:
-> +               ret = io_nop(req, sqe);
-> +               break;
-> +       case IORING_OP_READV:
-> +               ret = io_read(req, sqe, force_nonblock);
-> +               break;
-> +       case IORING_OP_WRITEV:
-> +               ret = io_write(req, sqe, force_nonblock);
-> +               break;
-> +       default:
-> +               ret = -EINVAL;
-> +               break;
-> +       }
-> +
-> +       return ret;
-> +}
-> +
-> +static void io_sq_wq_submit_work(struct work_struct *work)
-> +{
-> +       struct io_kiocb *req = container_of(work, struct io_kiocb, work);
-> +       struct sqe_submit *s = &req->submit;
-> +       u64 user_data = s->sqe->user_data;
-> +       struct io_ring_ctx *ctx = req->ctx;
-> +       mm_segment_t old_fs = get_fs();
-> +       struct files_struct *old_files;
-> +       int ret;
-> +
-> +        /* Ensure we clear previously set forced non-block flag */
-> +       req->flags &= ~REQ_F_FORCE_NONBLOCK;
-> +
-> +       old_files = current->files;
-> +       current->files = ctx->sqo_files;
+> +			/*
+> +			 * Read p->mm and access membarrier_state while holding
+> +			 * the task lock to ensure existence of mm.
+> +			 */
+> +			task_lock(p);
+> +			mm_match = p->mm && (atomic_read(&p->mm->membarrier_state) &
 
-I think you're not supposed to twiddle with current->files without
-holding task_lock(current).
+Are we guaranteed that this p->mm will be the same as the one loaded via
+READ_ONCE() above?  Either way, wouldn't it be better to READ_ONCE() it a
+single time and use the same value everywhere?
 
-> +       if (!mmget_not_zero(ctx->sqo_mm)) {
-> +               ret = -EFAULT;
-> +               goto err;
-> +       }
-> +
-> +       use_mm(ctx->sqo_mm);
-> +       set_fs(USER_DS);
-> +
-> +       ret = __io_submit_sqe(ctx, req, s, false);
-> +
-> +       set_fs(old_fs);
-> +       unuse_mm(ctx->sqo_mm);
-> +       mmput(ctx->sqo_mm);
-> +err:
-> +       if (ret) {
-> +               io_cqring_add_event(ctx, user_data, ret, 0);
-> +               io_free_req(req);
-> +       }
-> +       current->files = old_files;
-> +}
-[...]
-> +static int io_sq_offload_start(struct io_ring_ctx *ctx)
-> +{
-> +       int ret;
-> +
-> +       ctx->sqo_mm = current->mm;
+							Thanx, Paul
 
-What keeps this thing alive?
-
-> +       /*
-> +        * This is safe since 'current' has the fd installed, and if that gets
-> +        * closed on exit, then fops->release() is invoked which waits for the
-> +        * async contexts to flush and exit before exiting.
-> +        */
-> +       ret = -EBADF;
-> +       ctx->sqo_files = current->files;
-> +       if (!ctx->sqo_files)
-> +               goto err;
-
-That's gnarly. Adding Al Viro to the thread.
-
-I think you misunderstand the semantics of f_op->release. The ->flush
-handler is invoked whenever a file descriptor is closed through
-filp_close() (via deletion of the files_struct, sys_close(),
-sys_dup2(), ...), so if you had used that one, _maybe_ this would
-work. But the ->release handler only runs when the _last_ reference to
-a struct file has been dropped - so you can, for example, fork() a
-child, then exit() in the parent, and the ->release handler isn't
-invoked. So I don't see how this can work.
-
-But even if you had abused ->flush for this instead: close_files()
-currently has a comment in it that claims that "this is the last
-reference to the files structure"; this change would make that claim
-untrue.
-
-> +       /* Do QD, or 2 * CPUS, whatever is smallest */
-> +       ctx->sqo_wq = alloc_workqueue("io_ring-wq", WQ_UNBOUND | WQ_FREEZABLE,
-> +                       min(ctx->sq_entries - 1, 2 * num_online_cpus()));
-> +       if (!ctx->sqo_wq) {
-> +               ret = -ENOMEM;
-> +               goto err;
-> +       }
-> +
-> +       return 0;
-> +err:
-> +       if (ctx->sqo_files)
-> +               ctx->sqo_files = NULL;
-> +       ctx->sqo_mm = NULL;
-> +       return ret;
-> +}
-[...]
-> +static const struct file_operations io_uring_fops = {
-> +       .release        = io_uring_release,
-> +       .mmap           = io_uring_mmap,
-> +       .poll           = io_uring_poll,
-> +       .fasync         = io_uring_fasync,
-> +};
-[...]
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+> +					     MEMBARRIER_STATE_GLOBAL_EXPEDITED);
+> +			task_unlock(p);
+> +			if (mm_match) {
+> +				if (!fallback)
+> +					__cpumask_set_cpu(cpu, tmpmask);
+> +				else
+> +					smp_call_function_single(cpu, ipi_mb, NULL, 1);
+> +			}
+>  		}
+>  		rcu_read_unlock();
+>  	}
+> -- 
+> 2.17.1
+> 
