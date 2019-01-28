@@ -1,7 +1,7 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: [PATCH 13/18] io_uring: add file set registration
-Date: Mon, 28 Jan 2019 14:35:33 -0700
-Message-ID: <20190128213538.13486-14-axboe@kernel.dk>
+Subject: [PATCH 11/18] block: implement bio helper to add iter bvec pages to bio
+Date: Mon, 28 Jan 2019 14:35:31 -0700
+Message-ID: <20190128213538.13486-12-axboe@kernel.dk>
 References: <20190128213538.13486-1-axboe@kernel.dk>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20190128213538.13486-1-axboe@kernel.dk>
@@ -10,296 +10,167 @@ To: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-man@vger.kernel.org,
 Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, Jens Axboe <axboe@kernel.dk>
 List-Id: linux-api@vger.kernel.org
 
-We normally have to fget/fput for each IO we do on a file. Even with
-the batching we do, the cost of the atomic inc/dec of the file usage
-count adds up.
+For an ITER_BVEC, we can just iterate the iov and add the pages
+to the bio directly. This requires that the caller doesn't releases
+the pages on IO completion, we add a BIO_NO_PAGE_REF flag for that.
 
-This adds IORING_REGISTER_FILES, and IORING_UNREGISTER_FILES opcodes
-for the io_uring_register(2) system call. The arguments passed in must
-be an array of __s32 holding file descriptors, and nr_args should hold
-the number of file descriptors the application wishes to pin for the
-duration of the io_uring context (or until IORING_UNREGISTER_FILES is
-called).
+The current two callers of bio_iov_iter_get_pages() are updated to
+check if they need to release pages on completion. This makes them
+work with bvecs that contain kernel mapped pages already.
 
-When used, the application must set IOSQE_FIXED_FILE in the sqe->flags
-member. Then, instead of setting sqe->fd to the real fd, it sets sqe->fd
-to the index in the array passed in to IORING_REGISTER_FILES.
-
-Files are automatically unregistered when the io_uring context is
-torn down. An application need only unregister if it wishes to
-register a few set of fds.
-
+Reviewed-by: Christoph Hellwig <hch@lst.de>
 Signed-off-by: Jens Axboe <axboe@kernel.dk>
 ---
- fs/io_uring.c                 | 125 +++++++++++++++++++++++++++++-----
- include/uapi/linux/io_uring.h |   9 ++-
- 2 files changed, 116 insertions(+), 18 deletions(-)
+ block/bio.c               | 59 ++++++++++++++++++++++++++++++++-------
+ fs/block_dev.c            |  5 ++--
+ fs/iomap.c                |  5 ++--
+ include/linux/blk_types.h |  1 +
+ 4 files changed, 56 insertions(+), 14 deletions(-)
 
-diff --git a/fs/io_uring.c b/fs/io_uring.c
-index 682714d6f217..77993972879b 100644
---- a/fs/io_uring.c
-+++ b/fs/io_uring.c
-@@ -98,6 +98,10 @@ struct io_ring_ctx {
- 		struct fasync_struct	*cq_fasync;
- 	} ____cacheline_aligned_in_smp;
- 
-+	/* if used, fixed file set */
-+	struct file		**user_files;
-+	unsigned		nr_user_files;
-+
- 	/* if used, fixed mapped user buffers */
- 	unsigned		nr_user_bufs;
- 	struct io_mapped_ubuf	*user_bufs;
-@@ -135,6 +139,7 @@ struct io_kiocb {
- #define REQ_F_FORCE_NONBLOCK	1	/* inline submission attempt */
- #define REQ_F_IOPOLL_COMPLETED	2	/* polled IO has completed */
- #define REQ_F_IOPOLL_EAGAIN	4	/* submission got EAGAIN */
-+#define REQ_F_FIXED_FILE	8	/* ctx owns file */
- 	u64			user_data;
- 	u64			res;
- 
-@@ -357,15 +362,17 @@ static void io_iopoll_complete(struct io_ring_ctx *ctx, unsigned int *nr_events,
- 		 * Batched puts of the same file, to avoid dirtying the
- 		 * file usage count multiple times, if avoidable.
- 		 */
--		if (!file) {
--			file = req->rw.ki_filp;
--			file_count = 1;
--		} else if (file == req->rw.ki_filp) {
--			file_count++;
--		} else {
--			fput_many(file, file_count);
--			file = req->rw.ki_filp;
--			file_count = 1;
-+		if (!(req->flags & REQ_F_FIXED_FILE)) {
-+			if (!file) {
-+				file = req->rw.ki_filp;
-+				file_count = 1;
-+			} else if (file == req->rw.ki_filp) {
-+				file_count++;
-+			} else {
-+				fput_many(file, file_count);
-+				file = req->rw.ki_filp;
-+				file_count = 1;
-+			}
- 		}
- 
- 		if (to_free == ARRAY_SIZE(reqs))
-@@ -502,13 +509,19 @@ static void kiocb_end_write(struct kiocb *kiocb)
- 	}
+diff --git a/block/bio.c b/block/bio.c
+index 4db1008309ed..330df572cfb8 100644
+--- a/block/bio.c
++++ b/block/bio.c
+@@ -828,6 +828,23 @@ int bio_add_page(struct bio *bio, struct page *page,
  }
+ EXPORT_SYMBOL(bio_add_page);
  
-+static void io_fput(struct io_kiocb *req)
++static int __bio_iov_bvec_add_pages(struct bio *bio, struct iov_iter *iter)
 +{
-+	if (!(req->flags & REQ_F_FIXED_FILE))
-+		fput(req->rw.ki_filp);
-+}
++	const struct bio_vec *bv = iter->bvec;
++	unsigned int len;
++	size_t size;
 +
- static void io_complete_rw(struct kiocb *kiocb, long res, long res2)
- {
- 	struct io_kiocb *req = container_of(kiocb, struct io_kiocb, rw);
- 
- 	kiocb_end_write(kiocb);
- 
--	fput(kiocb->ki_filp);
-+	io_fput(req);
- 	io_cqring_add_event(req->ctx, req->user_data, res, 0);
- 	io_free_req(req);
- }
-@@ -612,7 +625,14 @@ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe,
- 	struct kiocb *kiocb = &req->rw;
- 	int ret;
- 
--	kiocb->ki_filp = io_file_get(state, sqe->fd);
-+	if (sqe->flags & IOSQE_FIXED_FILE) {
-+		if (unlikely(!ctx->user_files || sqe->fd >= ctx->nr_user_files))
-+			return -EBADF;
-+		kiocb->ki_filp = ctx->user_files[sqe->fd];
-+		req->flags |= REQ_F_FIXED_FILE;
-+	} else {
-+		kiocb->ki_filp = io_file_get(state, sqe->fd);
-+	}
- 	if (unlikely(!kiocb->ki_filp))
- 		return -EBADF;
- 	kiocb->ki_pos = sqe->off;
-@@ -651,7 +671,8 @@ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe,
- 	}
- 	return 0;
- out_fput:
--	io_file_put(state, kiocb->ki_filp);
-+	if (!(sqe->flags & IOSQE_FIXED_FILE))
-+		io_file_put(state, kiocb->ki_filp);
- 	return ret;
- }
- 
-@@ -769,7 +790,7 @@ static ssize_t io_read(struct io_kiocb *req, const struct io_uring_sqe *sqe,
- 	kfree(iovec);
- out_fput:
- 	if (unlikely(ret))
--		fput(file);
-+		io_fput(req);
- 	return ret;
- }
- 
-@@ -824,7 +845,7 @@ static ssize_t io_write(struct io_kiocb *req, const struct io_uring_sqe *sqe,
- 	kfree(iovec);
- out_fput:
- 	if (unlikely(ret))
--		fput(file);
-+		io_fput(req);
- 	return ret;
- }
- 
-@@ -862,14 +883,23 @@ static int io_fsync(struct io_kiocb *req, const struct io_uring_sqe *sqe,
- 	if (unlikely(sqe->fsync_flags & ~IORING_FSYNC_DATASYNC))
- 		return -EINVAL;
- 
--	file = fget(sqe->fd);
-+	if (sqe->flags & IOSQE_FIXED_FILE) {
-+		if (unlikely(!ctx->user_files || sqe->fd >= ctx->nr_user_files))
-+			return -EBADF;
-+		file = ctx->user_files[sqe->fd];
-+	} else {
-+		file = fget(sqe->fd);
++	len = min_t(size_t, bv->bv_len, iter->count);
++	size = bio_add_page(bio, bv->bv_page, len,
++				bv->bv_offset + iter->iov_offset);
++	if (size == len) {
++		iov_iter_advance(iter, size);
++		return 0;
 +	}
 +
- 	if (unlikely(!file))
- 		return -EBADF;
- 
- 	ret = vfs_fsync_range(file, sqe->off, end > 0 ? end : LLONG_MAX,
- 			sqe->fsync_flags & IORING_FSYNC_DATASYNC);
- 
--	fput(file);
-+	if (!(sqe->flags & IOSQE_FIXED_FILE))
-+		fput(file);
++	return -EINVAL;
++}
 +
- 	io_cqring_add_event(ctx, sqe->user_data, ret, 0);
- 	io_free_req(req);
- 	return 0;
-@@ -987,7 +1017,7 @@ static int io_submit_sqe(struct io_ring_ctx *ctx, struct sqe_submit *s,
- 	ssize_t ret;
+ #define PAGE_PTRS_PER_BVEC     (sizeof(struct bio_vec) / sizeof(struct page *))
  
- 	/* enforce forwards compatibility on users */
--	if (unlikely(s->sqe->flags))
-+	if (unlikely(s->sqe->flags & ~IOSQE_FIXED_FILE))
- 		return -EINVAL;
- 
- 	req = io_get_req(ctx, state);
-@@ -1195,6 +1225,57 @@ static int __io_uring_enter(struct io_ring_ctx *ctx, unsigned to_submit,
- 	return submitted ? submitted : ret;
+ /**
+@@ -876,23 +893,43 @@ static int __bio_iov_iter_get_pages(struct bio *bio, struct iov_iter *iter)
  }
  
-+static int io_sqe_files_unregister(struct io_ring_ctx *ctx)
-+{
-+	int i;
-+
-+	if (!ctx->user_files)
-+		return -ENXIO;
-+
-+	for (i = 0; i < ctx->nr_user_files; i++)
-+		fput(ctx->user_files[i]);
-+
-+	kfree(ctx->user_files);
-+	ctx->user_files = NULL;
-+	ctx->nr_user_files = 0;
-+	return 0;
-+}
-+
-+static int io_sqe_files_register(struct io_ring_ctx *ctx, void __user *arg,
-+				 unsigned nr_args)
-+{
-+	__s32 __user *fds = (__s32 __user *) arg;
-+	int fd, i, ret = 0;
-+
-+	if (ctx->user_files)
-+		return -EBUSY;
-+	if (!nr_args)
-+		return -EINVAL;
-+
-+	ctx->user_files = kcalloc(nr_args, sizeof(struct file *), GFP_KERNEL);
-+	if (!ctx->user_files)
-+		return -ENOMEM;
-+
-+	for (i = 0; i < nr_args; i++) {
-+		ret = -EFAULT;
-+		if (copy_from_user(&fd, &fds[i], sizeof(fd)))
-+			break;
-+
-+		ctx->user_files[i] = fget(fd);
-+
-+		ret = -EBADF;
-+		if (!ctx->user_files[i])
-+			break;
-+		ctx->nr_user_files++;
-+		ret = 0;
-+	}
-+
-+	if (ret)
-+		io_sqe_files_unregister(ctx);
-+
-+	return ret;
-+}
-+
- static int io_sq_offload_start(struct io_ring_ctx *ctx)
- {
- 	int ret;
-@@ -1482,6 +1563,7 @@ static void io_ring_ctx_free(struct io_ring_ctx *ctx)
- 	destroy_workqueue(ctx->sqo_wq);
- 	io_iopoll_reap_events(ctx);
- 	io_sqe_buffer_unregister(ctx);
-+	io_sqe_files_unregister(ctx);
- 
- 	io_mem_free(ctx->sq_ring);
- 	io_mem_free(ctx->sq_sqes);
-@@ -1777,6 +1859,15 @@ static int __io_uring_register(struct io_ring_ctx *ctx, unsigned opcode,
- 			break;
- 		ret = io_sqe_buffer_unregister(ctx);
- 		break;
-+	case IORING_REGISTER_FILES:
-+		ret = io_sqe_files_register(ctx, arg, nr_args);
-+		break;
-+	case IORING_UNREGISTER_FILES:
-+		ret = -EINVAL;
-+		if (arg || nr_args)
-+			break;
-+		ret = io_sqe_files_unregister(ctx);
-+		break;
- 	default:
- 		ret = -EINVAL;
- 		break;
-diff --git a/include/uapi/linux/io_uring.h b/include/uapi/linux/io_uring.h
-index 03ce7133c3b2..8323320077ec 100644
---- a/include/uapi/linux/io_uring.h
-+++ b/include/uapi/linux/io_uring.h
-@@ -18,7 +18,7 @@
+ /**
+- * bio_iov_iter_get_pages - pin user or kernel pages and add them to a bio
++ * bio_iov_iter_get_pages - add user or kernel pages to a bio
+  * @bio: bio to add pages to
+- * @iter: iov iterator describing the region to be mapped
++ * @iter: iov iterator describing the region to be added
++ *
++ * This takes either an iterator pointing to user memory, or one pointing to
++ * kernel pages (BVEC iterator). If we're adding user pages, we pin them and
++ * map them into the kernel. On IO completion, the caller should put those
++ * pages. If we're adding kernel pages, we just have to add the pages to the
++ * bio directly. We don't grab an extra reference to those pages (the user
++ * should already have that), and we don't put the page on IO completion.
++ * The caller needs to check if the bio is flagged BIO_NO_PAGE_REF on IO
++ * completion. If it isn't, then pages should be released.
+  *
+- * Pins pages from *iter and appends them to @bio's bvec array. The
+- * pages will have to be released using put_page() when done.
+  * The function tries, but does not guarantee, to pin as many pages as
+- * fit into the bio, or are requested in *iter, whatever is smaller.
+- * If MM encounters an error pinning the requested pages, it stops.
+- * Error is returned only if 0 pages could be pinned.
++ * fit into the bio, or are requested in *iter, whatever is smaller. If
++ * MM encounters an error pinning the requested pages, it stops. Error
++ * is returned only if 0 pages could be pinned.
   */
- struct io_uring_sqe {
- 	__u8	opcode;		/* type of operation for this sqe */
--	__u8	flags;		/* as of now unused */
-+	__u8	flags;		/* IOSQE_ flags */
- 	__u16	ioprio;		/* ioprio for the request */
- 	__s32	fd;		/* file descriptor to do IO on */
- 	__u64	off;		/* offset into file */
-@@ -35,6 +35,11 @@ struct io_uring_sqe {
- 	};
- };
+ int bio_iov_iter_get_pages(struct bio *bio, struct iov_iter *iter)
+ {
++	const bool is_bvec = iov_iter_is_bvec(iter);
+ 	unsigned short orig_vcnt = bio->bi_vcnt;
  
-+/*
-+ * sqe->flags
-+ */
-+#define IOSQE_FIXED_FILE	(1 << 0)	/* use fixed fileset */
++	/*
++	 * If this is a BVEC iter, then the pages are kernel pages. Don't
++	 * release them on IO completion.
++	 */
++	if (is_bvec)
++		bio_set_flag(bio, BIO_NO_PAGE_REF);
 +
+ 	do {
+-		int ret = __bio_iov_iter_get_pages(bio, iter);
++		int ret;
++
++		if (is_bvec)
++			ret = __bio_iov_bvec_add_pages(bio, iter);
++		else
++			ret = __bio_iov_iter_get_pages(bio, iter);
+ 
+ 		if (unlikely(ret))
+ 			return bio->bi_vcnt > orig_vcnt ? 0 : ret;
+@@ -1634,7 +1671,8 @@ static void bio_dirty_fn(struct work_struct *work)
+ 		next = bio->bi_private;
+ 
+ 		bio_set_pages_dirty(bio);
+-		bio_release_pages(bio);
++		if (!bio_flagged(bio, BIO_NO_PAGE_REF))
++			bio_release_pages(bio);
+ 		bio_put(bio);
+ 	}
+ }
+@@ -1650,7 +1688,8 @@ void bio_check_pages_dirty(struct bio *bio)
+ 			goto defer;
+ 	}
+ 
+-	bio_release_pages(bio);
++	if (!bio_flagged(bio, BIO_NO_PAGE_REF))
++		bio_release_pages(bio);
+ 	bio_put(bio);
+ 	return;
+ defer:
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 392e2bfb636f..051ab41d1c61 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -338,8 +338,9 @@ static void blkdev_bio_end_io(struct bio *bio)
+ 		struct bio_vec *bvec;
+ 		int i;
+ 
+-		bio_for_each_segment_all(bvec, bio, i)
+-			put_page(bvec->bv_page);
++		if (!bio_flagged(bio, BIO_NO_PAGE_REF))
++			bio_for_each_segment_all(bvec, bio, i)
++				put_page(bvec->bv_page);
+ 		bio_put(bio);
+ 	}
+ }
+diff --git a/fs/iomap.c b/fs/iomap.c
+index 4ee50b76b4a1..e5c48a0b20e0 100644
+--- a/fs/iomap.c
++++ b/fs/iomap.c
+@@ -1582,8 +1582,9 @@ static void iomap_dio_bio_end_io(struct bio *bio)
+ 		struct bio_vec *bvec;
+ 		int i;
+ 
+-		bio_for_each_segment_all(bvec, bio, i)
+-			put_page(bvec->bv_page);
++		if (!bio_flagged(bio, BIO_NO_PAGE_REF))
++			bio_for_each_segment_all(bvec, bio, i)
++				put_page(bvec->bv_page);
+ 		bio_put(bio);
+ 	}
+ }
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index d66bf5f32610..791fee35df88 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -215,6 +215,7 @@ struct bio {
  /*
-  * io_uring_setup() flags
+  * bio flags
   */
-@@ -114,5 +119,7 @@ struct io_uring_params {
-  */
- #define IORING_REGISTER_BUFFERS		0
- #define IORING_UNREGISTER_BUFFERS	1
-+#define IORING_REGISTER_FILES		2
-+#define IORING_UNREGISTER_FILES		3
- 
- #endif
++#define BIO_NO_PAGE_REF	0	/* don't put release vec pages */
+ #define BIO_SEG_VALID	1	/* bi_phys_segments valid */
+ #define BIO_CLONED	2	/* doesn't own data */
+ #define BIO_BOUNCED	3	/* bio is a bounce bio */
 -- 
 2.17.1
 
