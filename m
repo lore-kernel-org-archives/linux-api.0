@@ -1,58 +1,36 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH 05/18] Add io_uring IO interface
-Date: Mon, 28 Jan 2019 12:32:09 -0700
-Message-ID: <7a076774-f099-521c-8bf5-dc8c7c763bc4@kernel.dk>
-References: <20190123153536.7081-1-axboe@kernel.dk>
- <20190123153536.7081-6-axboe@kernel.dk> <20190128145700.GA9795@lst.de>
- <42a5b12b-8d3a-2495-ad53-6a6fdd4504c6@kernel.dk>
- <20190128163436.GA12427@lst.de>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [RFC PATCH] Fix: membarrier: racy access to p->mm in membarrier_global_expedited()
+Date: Mon, 28 Jan 2019 12:27:03 -0800
+Message-ID: <CAHk-=wjmpfXak0pQVu8dZrk2Oma3OxtEoBHfwCAruu0xpSMN4A@mail.gmail.com>
+References: <20190128182636.18420-1-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20190128163436.GA12427@lst.de>
-Content-Language: en-US
-Sender: owner-linux-aio@kvack.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, linux-block@vger.kernel.org, jmoyer@redhat.com, avi@scylladb.com, linux-api@vger.kernel.org, linux-man@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <20190128182636.18420-1-mathieu.desnoyers@efficios.com>
+Sender: stable-owner@vger.kernel.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Jann Horn <jannh@google.com>, Thomas Gleixner <tglx@linutronix.de>, Andrea Parri <parri.andrea@gmail.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@kernel.org>, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, David Sehr <sehr@google.com>, Greg Hackmann <ghackmann@google.com>, "H . Peter Anvin" <hpa@zytor.com>, Maged Michael <maged.michael@gmail.com>, Michael Ellerman <mpe@ellerman.id.au>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Paul Mackerras <paulus@sam>
 List-Id: linux-api@vger.kernel.org
 
-On 1/28/19 9:34 AM, Christoph Hellwig wrote:
-> On Mon, Jan 28, 2019 at 09:26:42AM -0700, Jens Axboe wrote:
->>>> +static void io_free_scq_urings(struct io_ring_ctx *ctx)
->>>> +{
->>>> +	if (ctx->sq_ring) {
->>>> +		page_frag_free(ctx->sq_ring);
->>>> +		ctx->sq_ring = NULL;
->>>> +	}
->>>> +	if (ctx->sq_sqes) {
->>>> +		page_frag_free(ctx->sq_sqes);
->>>> +		ctx->sq_sqes = NULL;
->>>> +	}
->>>> +	if (ctx->cq_ring) {
->>>> +		page_frag_free(ctx->cq_ring);
->>>> +		ctx->cq_ring = NULL;
->>>> +	}
->>>
->>> Why is this using the page_frag helpers?  Also the callers just free
->>> these ctx structure, so there isn't much of a point zeroing them out.
->>
->> Why not use the page frag helpers? No point in open-coding it. I can
->> kill the zeroing, double call would be a bug anyway.
-> 
-> Because they are at a different level of abstraction, and someone
-> might change the implementation, and is unlikely to catch the io_uring
-> mix of interfaces.  If you think this is really useful we should also
-> export the helpers under a different name and with documentation.
-> (and add a __get_free_pages version that returns a pointer..)
+On Mon, Jan 28, 2019 at 10:27 AM Mathieu Desnoyers
+<mathieu.desnoyers@efficios.com> wrote:
+>
+> Jann Horn identified a racy access to p->mm in the global expedited
+> command of the membarrier system call.
+>
+> The suggested fix is to hold the task_lock() around the accesses to
+> p->mm and to the mm_struct membarrier_state field to guarantee the
+> existence of the mm_struct.
 
-Fair enough, I'll avoid using the page_frag_free().
+Hmm. I think this is right. You shouldn't access another threads mm
+pointer without proper locking.
 
--- 
-Jens Axboe
+That said, we *could* make the mm_cachep be SLAB_TYPESAFE_BY_RCU,
+which would allow speculatively reading data off the mm pointer under
+RCU. It might not be the *right* mm if somebody just did an exit, but
+for things like this it shouldn't matter.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+But if this is the only case that might care, it sounds like just
+doing the proper locking is the right approach.
+
+           Linus
