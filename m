@@ -1,86 +1,58 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH] Fix: membarrier: racy access to p->mm in membarrier_global_expedited()
-Date: Mon, 28 Jan 2019 13:26:36 -0500
-Message-ID: <20190128182636.18420-1-mathieu.desnoyers@efficios.com>
-Return-path: <stable-owner@vger.kernel.org>
-Sender: stable-owner@vger.kernel.org
-To: Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Jann Horn <jannh@google.com>, Thomas Gleixner <tglx@linutronix.de>, Andrea Parri <parri.andrea@gmail.com>, Andrew Hunter <ahh@google.com>, Andy Lutomirski <luto@kernel.org>, Avi Kivity <avi@scylladb.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, David Sehr <sehr@google.com>, Greg Hackmann <ghackmann@google.com>, "H . Peter Anvin" <hpa@zytor.com>, Linus Torvalds <torvalds@linux-foundation.org>, Maged Michael <maged.michael@gmail.com>, Michael Ellerman <mpe@ellerman.id.au>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Paul Mackerras <paulus@samba.org>, Ru
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCH 05/18] Add io_uring IO interface
+Date: Mon, 28 Jan 2019 12:32:09 -0700
+Message-ID: <7a076774-f099-521c-8bf5-dc8c7c763bc4@kernel.dk>
+References: <20190123153536.7081-1-axboe@kernel.dk>
+ <20190123153536.7081-6-axboe@kernel.dk> <20190128145700.GA9795@lst.de>
+ <42a5b12b-8d3a-2495-ad53-6a6fdd4504c6@kernel.dk>
+ <20190128163436.GA12427@lst.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <20190128163436.GA12427@lst.de>
+Content-Language: en-US
+Sender: owner-linux-aio@kvack.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: linux-fsdevel@vger.kernel.org, linux-aio@kvack.org, linux-block@vger.kernel.org, jmoyer@redhat.com, avi@scylladb.com, linux-api@vger.kernel.org, linux-man@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Jann Horn identified a racy access to p->mm in the global expedited
-command of the membarrier system call.
+On 1/28/19 9:34 AM, Christoph Hellwig wrote:
+> On Mon, Jan 28, 2019 at 09:26:42AM -0700, Jens Axboe wrote:
+>>>> +static void io_free_scq_urings(struct io_ring_ctx *ctx)
+>>>> +{
+>>>> +	if (ctx->sq_ring) {
+>>>> +		page_frag_free(ctx->sq_ring);
+>>>> +		ctx->sq_ring = NULL;
+>>>> +	}
+>>>> +	if (ctx->sq_sqes) {
+>>>> +		page_frag_free(ctx->sq_sqes);
+>>>> +		ctx->sq_sqes = NULL;
+>>>> +	}
+>>>> +	if (ctx->cq_ring) {
+>>>> +		page_frag_free(ctx->cq_ring);
+>>>> +		ctx->cq_ring = NULL;
+>>>> +	}
+>>>
+>>> Why is this using the page_frag helpers?  Also the callers just free
+>>> these ctx structure, so there isn't much of a point zeroing them out.
+>>
+>> Why not use the page frag helpers? No point in open-coding it. I can
+>> kill the zeroing, double call would be a bug anyway.
+> 
+> Because they are at a different level of abstraction, and someone
+> might change the implementation, and is unlikely to catch the io_uring
+> mix of interfaces.  If you think this is really useful we should also
+> export the helpers under a different name and with documentation.
+> (and add a __get_free_pages version that returns a pointer..)
 
-The suggested fix is to hold the task_lock() around the accesses to
-p->mm and to the mm_struct membarrier_state field to guarantee the
-existence of the mm_struct.
+Fair enough, I'll avoid using the page_frag_free().
 
-Link: https://lore.kernel.org/lkml/CAG48ez2G8ctF8dHS42TF37pThfr3y0RNOOYTmxvACm4u8Yu3cw@mail.gmail.com
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-CC: Jann Horn <jannh@google.com>
-CC: Thomas Gleixner <tglx@linutronix.de>
-CC: Peter Zijlstra (Intel) <peterz@infradead.org>
-CC: Ingo Molnar <mingo@kernel.org>
-CC: Andrea Parri <parri.andrea@gmail.com>
-CC: Andrew Hunter <ahh@google.com>
-CC: Andy Lutomirski <luto@kernel.org>
-CC: Avi Kivity <avi@scylladb.com>
-CC: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-CC: Boqun Feng <boqun.feng@gmail.com>
-CC: Dave Watson <davejwatson@fb.com>
-CC: David Sehr <sehr@google.com>
-CC: Greg Hackmann <ghackmann@google.com>
-CC: H. Peter Anvin <hpa@zytor.com>
-CC: Linus Torvalds <torvalds@linux-foundation.org>
-CC: Maged Michael <maged.michael@gmail.com>
-CC: Michael Ellerman <mpe@ellerman.id.au>
-CC: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-CC: Paul Mackerras <paulus@samba.org>
-CC: Russell King <linux@armlinux.org.uk>
-CC: Will Deacon <will.deacon@arm.com>
-CC: stable@vger.kernel.org # v4.16+
-CC: linux-api@vger.kernel.org
----
- kernel/sched/membarrier.c | 27 +++++++++++++++++++++------
- 1 file changed, 21 insertions(+), 6 deletions(-)
-
-diff --git a/kernel/sched/membarrier.c b/kernel/sched/membarrier.c
-index 76e0eaf4654e..305fdcc4c5f7 100644
---- a/kernel/sched/membarrier.c
-+++ b/kernel/sched/membarrier.c
-@@ -81,12 +81,27 @@ static int membarrier_global_expedited(void)
- 
- 		rcu_read_lock();
- 		p = task_rcu_dereference(&cpu_rq(cpu)->curr);
--		if (p && p->mm && (atomic_read(&p->mm->membarrier_state) &
--				   MEMBARRIER_STATE_GLOBAL_EXPEDITED)) {
--			if (!fallback)
--				__cpumask_set_cpu(cpu, tmpmask);
--			else
--				smp_call_function_single(cpu, ipi_mb, NULL, 1);
-+		/*
-+		 * Skip this CPU if the runqueue's current task is NULL or if
-+		 * it is a kernel thread.
-+		 */
-+		if (p && READ_ONCE(p->mm)) {
-+			bool mm_match;
-+
-+			/*
-+			 * Read p->mm and access membarrier_state while holding
-+			 * the task lock to ensure existence of mm.
-+			 */
-+			task_lock(p);
-+			mm_match = p->mm && (atomic_read(&p->mm->membarrier_state) &
-+					     MEMBARRIER_STATE_GLOBAL_EXPEDITED);
-+			task_unlock(p);
-+			if (mm_match) {
-+				if (!fallback)
-+					__cpumask_set_cpu(cpu, tmpmask);
-+				else
-+					smp_call_function_single(cpu, ipi_mb, NULL, 1);
-+			}
- 		}
- 		rcu_read_unlock();
- 	}
 -- 
-2.17.1
+Jens Axboe
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
