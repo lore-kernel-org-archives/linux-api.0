@@ -1,192 +1,69 @@
-From: Bert Wesarg <bert.wesarg@googlemail.com>
+From: Arnd Bergmann <arnd@arndb.de>
 Subject: Re: [PATCH 05/18] Add io_uring IO interface
-Date: Tue, 29 Jan 2019 08:12:08 +0100
-Message-ID: <CAKPyHN2UyExWDRqO=oTZP2UdR8naYO_Tv2eVw+CQBEfs7_uuVg@mail.gmail.com>
-References: <20190128213538.13486-1-axboe@kernel.dk> <20190128213538.13486-6-axboe@kernel.dk>
+Date: Tue, 29 Jan 2019 12:58:37 +0100
+Message-ID: <CAK8P3a1x4BsFfacxOmaDXKOKmmQ2j0ypX2+mCNCbjH3E7nC4DQ@mail.gmail.com>
+References: <20190123153536.7081-1-axboe@kernel.dk> <20190123153536.7081-6-axboe@kernel.dk>
+ <20190128145700.GA9795@lst.de> <2729ab43-b2bf-44b0-d41d-dbb495ddffbf@kernel.dk>
+ <20190129063043.GC2996@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20190128213538.13486-6-axboe@kernel.dk>
+In-Reply-To: <20190129063043.GC2996@lst.de>
 Sender: owner-linux-aio@kvack.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-man@vger.kernel.org, linux-api@vger.kernel.org, hch@lst.de, jmoyer@redhat.com, avi@scylladb.com
+To: Christoph Hellwig <hch@lst.de>
+Cc: Jens Axboe <axboe@kernel.dk>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, linux-aio <linux-aio@kvack.org>, linux-block <linux-block@vger.kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Avi Kivity <avi@scylladb.com>, Linux API <linux-api@vger.kernel.org>, linux-man@vger.kernel.org, Deepa Dinamani <deepa.kernel@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 28, 2019 at 10:35 PM Jens Axboe <axboe@kernel.dk> wrote:
+On Tue, Jan 29, 2019 at 7:30 AM Christoph Hellwig <hch@lst.de> wrote:
 >
-> The submission queue (SQ) and completion queue (CQ) rings are shared
-> between the application and the kernel. This eliminates the need to
-> copy data back and forth to submit and complete IO.
+> On Mon, Jan 28, 2019 at 11:25:12AM -0700, Jens Axboe wrote:
+> > > Especially with poll support now in the series, don't we need a =D1=
+=95igmask
+> > > argument similar to pselect/ppoll/io_pgetevents now to deal with sign=
+al
+> > > blocking during waiting for events?
+> >
+> > Is there any way to avoid passing in the sigset_t size? If it's just a
+> > 32-bit/64-bit thing, surely the in_compat_syscall() could cover it? Or
+> > are there other cases that need to be catered to?
 >
-> IO submissions use the io_uring_sqe data structure, and completions
-> are generated in the form of io_uring_sqe data structures. The SQ
-> ring is an index into the io_uring_sqe array, which makes it possible
-> to submit a batch of IOs without them being contiguous in the ring.
-> The CQ ring is always contiguous, as completion events are inherently
-> unordered, and hence any io_uring_cqe entry can point back to an
-> arbitrary submission.
->
-> Two new system calls are added for this:
->
-> io_uring_setup(entries, params)
->         Sets up a context for doing async IO. On success, returns a file
->         descriptor that the application can mmap to gain access to the
->         SQ ring, CQ ring, and io_uring_sqes.
->
-> io_uring_enter(fd, to_submit, min_complete, flags, sigset, sigsetsize)
->         Initiates IO against the rings mapped to this fd, or waits for
->         them to complete, or both. The behavior is controlled by the
->         parameters passed in. If 'to_submit' is non-zero, then we'll
->         try and submit new IO. If IORING_ENTER_GETEVENTS is set, the
->         kernel will wait for 'min_complete' events, if they aren't
->         already available. It's valid to set IORING_ENTER_GETEVENTS
->         and 'min_complete' == 0 at the same time, this allows the
->         kernel to return already completed events without waiting
->         for them. This is useful only for polling, as for IRQ
->         driven IO, the application can just check the CQ ring
->         without entering the kernel.
->
-> With this setup, it's possible to do async IO with a single system
-> call. Future developments will enable polled IO with this interface,
-> and polled submission as well. The latter will enable an application
-> to do IO without doing ANY system calls at all.
->
-> For IRQ driven IO, an application only needs to enter the kernel for
-> completions if it wants to wait for them to occur.
->
-> Each io_uring is backed by a workqueue, to support buffered async IO
-> as well. We will only punt to an async context if the command would
-> need to wait for IO on the device side. Any data that can be accessed
-> directly in the page cache is done inline. This avoids the slowness
-> issue of usual threadpools, since cached data is accessed as quickly
-> as a sync interface.
->
-> Sample application: http://git.kernel.dk/cgit/fio/plain/t/io_uring.c
->
-> Signed-off-by: Jens Axboe <axboe@kernel.dk>
-> ---
->  arch/x86/entry/syscalls/syscall_32.tbl |    2 +
->  arch/x86/entry/syscalls/syscall_64.tbl |    2 +
->  fs/Makefile                            |    1 +
->  fs/io_uring.c                          | 1090 ++++++++++++++++++++++++
->  include/linux/syscalls.h               |    6 +
->  include/uapi/asm-generic/unistd.h      |    6 +-
->  include/uapi/linux/io_uring.h          |   96 +++
->  init/Kconfig                           |    9 +
->  kernel/sys_ni.c                        |    2 +
->  9 files changed, 1213 insertions(+), 1 deletion(-)
->  create mode 100644 fs/io_uring.c
->  create mode 100644 include/uapi/linux/io_uring.h
->
-> diff --git a/include/uapi/linux/io_uring.h b/include/uapi/linux/io_uring.h
-> new file mode 100644
-> index 000000000000..ce65db9269a8
-> --- /dev/null
-> +++ b/include/uapi/linux/io_uring.h
-> @@ -0,0 +1,96 @@
-> +/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-> +/*
-> + * Header file for the io_uring interface.
-> + *
-> + * Copyright (C) 2019 Jens Axboe
-> + * Copyright (C) 2019 Christoph Hellwig
-> + */
-> +#ifndef LINUX_IO_URING_H
-> +#define LINUX_IO_URING_H
-> +
-> +#include <linux/fs.h>
-> +#include <linux/types.h>
-> +
-> +#define IORING_MAX_ENTRIES     4096
-> +
-> +/*
-> + * IO submission data structure (Submission Queue Entry)
-> + */
-> +struct io_uring_sqe {
-> +       __u8    opcode;         /* type of operation for this sqe */
-> +       __u8    flags;          /* as of now unused */
-> +       __u16   ioprio;         /* ioprio for the request */
-> +       __s32   fd;             /* file descriptor to do IO on */
-> +       __u64   off;            /* offset into file */
-> +       __u64   addr;           /* pointer to buffer or iovecs */
-> +       __u32   len;            /* buffer size or number of iovecs */
-> +       union {
-> +               __kernel_rwf_t  rw_flags;
-> +               __u32           __resv;
-> +       };
-> +       __u64   user_data;      /* data to be passed back at completion time */
-> +       __u64   __pad2[3];
-> +};
-> +
-> +#define IORING_OP_NOP          0
-> +#define IORING_OP_READV                1
-> +#define IORING_OP_WRITEV       2
-> +
-> +/*
-> + * IO completion data structure (Completion Queue Entry)
-> + */
-> +struct io_uring_cqe {
-> +       __u64   user_data;      /* sqe->data submission passed back */
-> +       __s32   res;            /* result code for this event */
-> +       __u32   flags;
-> +};
-> +
-> +/*
-> + * Magic offsets for the application to mmap the data it needs
-> + */
-> +#define IORING_OFF_SQ_RING             0ULL
-> +#define IORING_OFF_CQ_RING             0x8000000ULL
-> +#define IORING_OFF_SQES                        0x10000000ULL
-> +
-> +/*
-> + * Filled with the offset for mmap(2)
-> + */
-> +struct io_sqring_offsets {
-> +       __u32 head;
-> +       __u32 tail;
-> +       __u32 ring_mask;
-> +       __u32 ring_entries;
-> +       __u32 flags;
-> +       __u32 dropped;
-> +       __u32 array;
-> +       __u32 resv[3];
-> +};
-> +
-> +struct io_cqring_offsets {
-> +       __u32 head;
-> +       __u32 tail;
-> +       __u32 ring_mask;
-> +       __u32 ring_entries;
-> +       __u32 overflow;
-> +       __u32 cqes;
-> +       __u32 resv[4];
-> +};
-> +
-> +/*
-> + * io_uring_enter(2) flags
-> + */
-> +#define IORING_ENTER_GETEVENTS (1 << 0)
-> +
-> +/*
-> + * Passed in for io_uring_setup(2). Copied back with updated info on success
-> + */
-> +struct io_uring_params {
-> +       __u32 sq_entries;
-> +       __u32 cq_entries;
-> +       __u32 flags;
-> +       __u16 resv[10];
-> +       struct io_sqring_offsets sq_off;
-> +       struct io_cqring_offsets cq_off;
-> +};
-> +
-> +#endif
+> As far as I can tell we never look at it, never looked at it and don't
+> have any plans to look at it anytime soon.  But when I tried to omit
+> it for io_pgetevents I got stong pushback and thus had to add the
+> crazy double indirection calling convention.
 
-from a user perspective, it should always be easier if all exported
-symbols and macros have a common prefix. Here it seems particular
-worrisome, because of the missing 'u' in in the defines.
+Deepa has recently reworked the handling for the sigset_t handling
+to be more consistent. As I understand it, we only ever check the
+size argument to ensure that user and kernel space agree on
+the size, as it there had been some historic differences.
 
-Best,
-Bert
+If you pass a signal mask to a syscall, you should now just use the
+set_user_sigmask()/set_compat_user_sigmask()/restore_user_sigmask()
+helpers. The compat version is required for the incompatible bit order
+between 32-bit and 64-bit big-endian architectures (on little-endian, compa=
+t
+and native signal masks are compatible), and to deal with the one
+architecture that has an _NSIG defined to something other than 64:
+MIPS uses 128 because of a historic accident.
+
+I think Deepa originally suggested combining set_user_sigmask()
+and set_compat_user_sigmask(), using an in_compat_syscall()
+check. This would let us simplify a number of compat syscalls
+(ppoll, ppoll_time32, pselect6, pselect6_time32, epoll_pwait()
+io_pgetevents_time64, io_pgetevents_time32). I advised against
+changing it at the time for consistency with other compat syscalls,
+but it's something we can still do now.
+
+There was a recent discussion about the size of sigset_t in glibc,
+which is 1024 bits there instead of 64 bits in the kernel, the idea
+being that the kernel might eventually grow more signals at
+some point in the future, as we did when we extended from 32
+to 64 a long time ago with the addition of the rt_sig* signals;
+see the thread around
+https://www.spinics.net/lists/linux-snps-arc/msg04860.html
+
+    Arnd
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
