@@ -1,36 +1,66 @@
-From: Arnd Bergmann <arnd@arndb.de>
+From: Florian Weimer <fweimer@redhat.com>
 Subject: Re: [PATCH 05/18] Add io_uring IO interface
-Date: Tue, 29 Jan 2019 13:05:59 +0100
-Message-ID: <CAK8P3a0MDbsdVB80pU+SyDSZDDYy+whK6c9vs-7-yunQ21CiDA@mail.gmail.com>
-References: <20190123153536.7081-1-axboe@kernel.dk> <20190123153536.7081-6-axboe@kernel.dk>
- <20190128145700.GA9795@lst.de> <CALCETrV30uN2qOUEf+kNGWdphBtps7K3rEk8_8+VAwdtPomRkQ@mail.gmail.com>
- <dab3fa32-3887-3264-9fe1-bc3b7abc58b3@kernel.dk> <20190129064548.GA3280@lst.de>
+Date: Tue, 29 Jan 2019 13:12:55 +0100
+Message-ID: <87tvhrpsqg.fsf@oldenburg2.str.redhat.com>
+References: <20190128213538.13486-1-axboe@kernel.dk>
+	<20190128213538.13486-6-axboe@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20190129064548.GA3280@lst.de>
+In-Reply-To: <20190128213538.13486-6-axboe@kernel.dk> (Jens Axboe's message of
+	"Mon, 28 Jan 2019 14:35:25 -0700")
 Sender: owner-linux-aio@kvack.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, Andy Lutomirski <luto@kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, linux-aio <linux-aio@kvack.org>, linux-block <linux-block@vger.kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Avi Kivity <avi@scylladb.com>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-man@vger.kernel.org, linux-api@vger.kernel.org, hch@lst.de, jmoyer@redhat.com, avi@scylladb.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 29, 2019 at 7:45 AM Christoph Hellwig <hch@lst.de> wrote:
->
-> On Mon, Jan 28, 2019 at 06:20:08PM -0700, Jens Axboe wrote:
-> > Sure, that would be straight forward. Is there a strong reason to do
-> > so outside of "that would be nice"? It's not like it's a huge amount
-> > of code.
->
-> And it would be really painful for userspace.  Because now you
-> can't pass struct iovec through from a higher level, but will instead
-> of to copy the iovec to a different type in the submission path.
+* Jens Axboe:
 
-Agreed. However, if we decide to add the in_compat_syscall() check
-to set_user_sigmask()/set_compat_user_sigmask(), we probably want
-to do the same thing in import_iovec()/compat_import_iovec() and
-rw_copy_check_uvector()/compat_rw_copy_check_uvector().
+> +#define IORING_MAX_ENTRIES	4096
 
-      Arnd
+Where does this constant come from?  Should it really be exposed to
+userspace?
+
+> +struct io_uring_params {
+> +	__u32 sq_entries;
+> +	__u32 cq_entries;
+> +	__u32 flags;
+> +	__u16 resv[10];
+> +	struct io_sqring_offsets sq_off;
+> +	struct io_cqring_offsets cq_off;
+> +};
+
+> +struct io_sqring_offsets {
+> +	__u32 head;
+> +	__u32 tail;
+> +	__u32 ring_mask;
+> +	__u32 ring_entries;
+> +	__u32 flags;
+> +	__u32 dropped;
+> +	__u32 array;
+> +	__u32 resv[3];
+> +};
+> +
+> +struct io_cqring_offsets {
+> +	__u32 head;
+> +	__u32 tail;
+> +	__u32 ring_mask;
+> +	__u32 ring_entries;
+> +	__u32 overflow;
+> +	__u32 cqes;
+> +	__u32 resv[4];
+> +};
+
+Should the reserved fields include a __u64 member, to increase struct
+alignment on architectures that might need it in the future?
+
+> +#define IORING_ENTER_GETEVENTS	(1 << 0)
+
+Should this be unsigned, to match the u32 flags argument?  (Otherwise
+using 32 flags can be difficult).
+
+Thanks,
+Florian
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
