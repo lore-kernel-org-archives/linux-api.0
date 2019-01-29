@@ -1,72 +1,62 @@
 From: Christoph Hellwig <hch@lst.de>
-Subject: Re: [PATCH 07/18] io_uring: support for IO polling
-Date: Tue, 29 Jan 2019 18:24:14 +0100
-Message-ID: <20190129172414.GA15347@lst.de>
-References: <20190128213538.13486-1-axboe@kernel.dk> <20190128213538.13486-8-axboe@kernel.dk>
+Subject: Re: [PATCH 10/18] io_uring: batch io_kiocb allocation
+Date: Tue, 29 Jan 2019 18:26:24 +0100
+Message-ID: <20190129172624.GB15347@lst.de>
+References: <20190128213538.13486-1-axboe@kernel.dk> <20190128213538.13486-11-axboe@kernel.dk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-aio@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20190128213538.13486-8-axboe@kernel.dk>
+In-Reply-To: <20190128213538.13486-11-axboe@kernel.dk>
 Sender: owner-linux-aio@kvack.org
 To: Jens Axboe <axboe@kernel.dk>
 Cc: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-man@vger.kernel.org, linux-api@vger.kernel.org, hch@lst.de, jmoyer@redhat.com, avi@scylladb.com
 List-Id: linux-api@vger.kernel.org
 
->  
-> @@ -118,12 +120,16 @@ struct io_kiocb {
->  	struct list_head	list;
->  	unsigned int		flags;
->  #define REQ_F_FORCE_NONBLOCK	1	/* inline submission attempt */
-> +#define REQ_F_IOPOLL_COMPLETED	2	/* polled IO has completed */
-> +#define REQ_F_IOPOLL_EAGAIN	4	/* submission got EAGAIN */
->  	u64			user_data;
-> +	u64			res;
+> -static struct io_kiocb *io_get_req(struct io_ring_ctx *ctx)
+> +static struct io_kiocb *io_get_req(struct io_ring_ctx *ctx,
+> +				   struct io_submit_state *state)
+>  {
+> +	gfp_t gfp = GFP_ATOMIC | __GFP_NOWARN;
 
-Should this be ret or error instead?  res is kinda off.  A little
-comment describing it won't hurt either.  Last but not least with
-the actual errno value stored here we probably don't need the
-REQ_F_IOPOLL_EAGAIN flag, do we?
+No actually in this patch, but why do we do GFP_ATOMIC allocations
+here?  We aren't in irq context or under a spinlock.
 
-> +	/*
-> +	 * Only spin for completions if we don't have multiple devices hanging
-> +	 * off our complete list, and we're under the requested amount.
-> +	 */
-> +	spin = !ctx->poll_multi_file && (*nr_events < min);
+> +	if (!state)
+> +		req = kmem_cache_alloc(req_cachep, gfp);
 
-no need for the braces here.
+Add a
+		if (!req)
+			goto out;
 
-> +static int io_iopoll_getevents(struct io_ring_ctx *ctx, unsigned int *nr_events,
-> +				long min)
-> +{
-> +	int ret;
+plus the missing braces here..
+
+> +	else if (!state->free_reqs) {
+> +		size_t sz;
+> +		int ret;
 > +
-> +	do {
-> +		if (list_empty(&ctx->poll_list))
-> +			return 0;
+> +		sz = min_t(size_t, state->ios_left, ARRAY_SIZE(state->reqs));
+> +		ret = kmem_cache_alloc_bulk(req_cachep, gfp, sz,
+> +						state->reqs);
+> +		if (ret <= 0)
+> +			goto out;
+> +		state->free_reqs = ret - 1;
+> +		state->cur_req = 1;
+> +		req = state->reqs[0];
+> +	} else {
+> +		req = state->reqs[state->cur_req];
+> +		state->free_reqs--;
+> +		state->cur_req++;
+> +	}
 > +
-> +		ret = io_do_iopoll(ctx, nr_events, min);
-> +		if (ret < 0)
-> +			break;
-> +	} while (min && *nr_events < min);
-> +
-> +	if (ret < 0)
-> +		return ret;
-> +
-> +	return *nr_events < min;
+>  	if (req) {
+>  		req->ctx = ctx;
+>  		req->flags = 0;
+>  		return req;
+>  	}
 
-The code looks a little clumsy to me.  Why not:
-
-	while (!list_empty(&ctx->poll_list)) {
-		int ret = io_do_iopoll(ctx, nr_events, min);
-		if (ret)
-			return ret;
-
-		if (!min || *nr_events >= min)
-			return 0;
-	}
-
-	return 1;
+... and we don't need this conditional, which would otherwise also
+be in the fast path.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
