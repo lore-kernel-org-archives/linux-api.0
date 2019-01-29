@@ -1,57 +1,50 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH 05/18] Add io_uring IO interface
-Date: Mon, 28 Jan 2019 18:20:08 -0700
-Message-ID: <dab3fa32-3887-3264-9fe1-bc3b7abc58b3@kernel.dk>
-References: <20190123153536.7081-1-axboe@kernel.dk>
- <20190123153536.7081-6-axboe@kernel.dk> <20190128145700.GA9795@lst.de>
- <CALCETrV30uN2qOUEf+kNGWdphBtps7K3rEk8_8+VAwdtPomRkQ@mail.gmail.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [RESEND PATCH v2 1/1] prctl: add
+ PR_{GET,SET}_KILL_DESCENDANTS_ON_EXIT
+Date: Mon, 28 Jan 2019 17:23:21 -0800
+Message-ID: <20190128172321.780e9b380dd40eb3e7c22daf@linux-foundation.org>
+References: <20181127225408.7553-1-j@bitron.ch>
+        <20190118131130.42209-1-j@bitron.ch>
+        <20190118131130.42209-2-j@bitron.ch>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <CALCETrV30uN2qOUEf+kNGWdphBtps7K3rEk8_8+VAwdtPomRkQ@mail.gmail.com>
-Content-Language: en-US
-Sender: owner-linux-aio@kvack.org
-To: Andy Lutomirski <luto@kernel.org>, Christoph Hellwig <hch@lst.de>
-Cc: Linux FS Devel <linux-fsdevel@vger.kernel.org>, linux-aio@kvack.org, linux-block@vger.kernel.org, Jeff Moyer <jmoyer@redhat.com>, Avi Kivity <avi@scylladb.com>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190118131130.42209-2-j@bitron.ch>
+Sender: linux-kernel-owner@vger.kernel.org
+To: =?ISO-8859-1?Q?J=FCrg?= Billeter <j@bitron.ch>
+Cc: Oleg Nesterov <oleg@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Eric Biederman <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@kernel.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 1/28/19 5:47 PM, Andy Lutomirski wrote:
-> On Mon, Jan 28, 2019 at 6:57 AM Christoph Hellwig <hch@lst.de> wrote:
->>
->> [please make sure linux-api and linux-man are CCed on new syscalls
->> so that we get API experts to review them]
+On Fri, 18 Jan 2019 14:11:30 +0100 Jürg Billeter <j@bitron.ch> wrote:
+
+> This introduces a new thread group flag that can be set by calling
 > 
->>> +static int io_import_iovec(struct io_ring_ctx *ctx, int rw,
->>> +                        const struct io_uring_sqe *sqe,
->>> +                        struct iovec **iovec, struct iov_iter *iter)
->>> +{
->>> +     void __user *buf = u64_to_user_ptr(sqe->addr);
->>> +
->>> +#ifdef CONFIG_COMPAT
->>> +     if (ctx->compat)
->>> +             return compat_import_iovec(rw, buf, sqe->len, UIO_FASTIOV,
->>> +                                             iovec, iter);
->>> +#endif
->>
->> I think we can just check in_compat_syscall() here, which means we
->> can kill the ->compat member, and the separate compat version of the
->> setup syscall.
->>
+>     prctl(PR_SET_KILL_DESCENDANTS_ON_EXIT, 1, 0, 0, 0)
 > 
-> Since this whole API is new, I don't suppose you could introduce a
-> struct iovec64 or similar and just make the ABI be identical for
-> 64-bit and 32-bit code?
+> When a thread group exits with this flag set, it will send SIGKILL to
+> all descendant processes.  This can be used to prevent stray child
+> processes.
+> 
+> This flag is cleared on privilege gaining execve(2) to ensure an
+> unprivileged process cannot get a privileged process to send SIGKILL.
+> 
+> Descendants that are orphaned and reparented to an ancestor of the
+> current process before the current process exits, will not be killed.
+> PR_SET_CHILD_SUBREAPER can be used to contain orphaned processes.
+> 
+> If a descendant gained privileges, the current process may not be
+> allowed to kill it, and the descendant process will survive.
+> PR_SET_NO_NEW_PRIVS can be used to prevent descendant processes from
+> gaining privileges.
 
-Sure, that would be straight forward. Is there a strong reason to do
-so outside of "that would be nice"? It's not like it's a huge amount
-of code.
+I don't feel that I'm able to judge the usefulness of this.  It would
+help to have a lot more words right here in this changelog which
+communicate the value of this change to our users.  References are
+useful, but please don't send people off to chase down mailing list and
+bugzilla discussions as a substitute for properly describing the feature
+and its justification.
 
--- 
-Jens Axboe
+Some test code in tools/testing/selftests/ would be helpful.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+We'll need to update the prctl(2) manpage if we proceed with this.
