@@ -1,67 +1,70 @@
-From: Jens Axboe <axboe@kernel.dk>
+From: Arnd Bergmann <arnd@arndb.de>
 Subject: Re: [PATCH 05/18] Add io_uring IO interface
-Date: Tue, 29 Jan 2019 09:06:42 -0700
-Message-ID: <076acc85-b71d-c65f-e729-53e347626a1d@kernel.dk>
-References: <20190128213538.13486-1-axboe@kernel.dk>
- <20190128213538.13486-6-axboe@kernel.dk>
- <CAG48ez1qxZLfJzK95kjh0RiQ6kvZLbQhr6Dr0EjBNQB6Fr7NXQ@mail.gmail.com>
- <CAG48ez1Ms+NPTXPj_UiQyv=2aMaMR3akCdp5SdDL3x7x7gd_ig@mail.gmail.com>
- <b5902860-30a9-3dc9-b513-3d892afdc51b@kernel.dk>
- <CAG48ez0sNBjgW7ynpNC+sir-_AuccY1sKguiD+VAXvL9-j4iag@mail.gmail.com>
+Date: Tue, 29 Jan 2019 17:18:50 +0100
+Message-ID: <CAK8P3a38-FLBH0sp0vaebv29M5oDyiUkwwmVY+9_S3vSER9n5Q@mail.gmail.com>
+References: <20190123153536.7081-1-axboe@kernel.dk> <20190123153536.7081-6-axboe@kernel.dk>
+ <20190128145700.GA9795@lst.de> <2729ab43-b2bf-44b0-d41d-dbb495ddffbf@kernel.dk>
+ <20190129063043.GC2996@lst.de> <CAK8P3a1x4BsFfacxOmaDXKOKmmQ2j0ypX2+mCNCbjH3E7nC4DQ@mail.gmail.com>
+ <4b12d149-99f7-0b2e-0c3f-9b477ce48520@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <CAG48ez0sNBjgW7ynpNC+sir-_AuccY1sKguiD+VAXvL9-j4iag@mail.gmail.com>
-Content-Language: en-US
+In-Reply-To: <4b12d149-99f7-0b2e-0c3f-9b477ce48520@kernel.dk>
 Sender: owner-linux-aio@kvack.org
-To: Jann Horn <jannh@google.com>
-Cc: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-man <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, hch@lst.de, jmoyer@redhat.com, Avi Kivity <avi@scylladb.com>
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Christoph Hellwig <hch@lst.de>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, linux-aio <linux-aio@kvack.org>, linux-block <linux-block@vger.kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Avi Kivity <avi@scylladb.com>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, Deepa Dinamani <deepa.kernel@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On 1/29/19 8:56 AM, Jann Horn wrote:
-> On Tue, Jan 29, 2019 at 4:46 AM Jens Axboe <axboe@kernel.dk> wrote:
->> On 1/28/19 7:21 PM, Jann Horn wrote:
->>> Please create a local copy of the request before parsing it to keep
->>> the data from changing under you. Additionally, it might make sense to
->>> annotate every pointer to shared memory with a comment, or something
->>> like that, to ensure that anyone looking at the code can immediately
->>> see for which pointers special caution is required on access.
->>
->> I took a look at the viability of NOT having to local copy the data, and
->> I don't think it's too bad. Local copy has a noticeable impact on the
->> performance, hence I'd really (REALLY) like to avoid it.
->>
->> Here's something on top of the current git branch. I think I even went a
->> bit too far in some areas, but it should hopefully catch the cases where
->> we might end up double evaluating the parts of the sqe that we depend
->> on. For most of the sqe reading we don't really care too much. For
->> instance, the sqe->user_data. If the app changes this field, then it
->> just gets whatever passed back in cqe->user_data. That's not a kernel
->> issue.
->>
->> For cases like addr/len etc validation, it should be sound. I'll double
->> check this in the morning as well, and obviously would need to be folded
->> in along the way.
->>
->> I'd appreciate your opinion on this part, if you see any major issues
->> with it, or if I missed something.
-> 
-> The io_sqe_needs_user() checks still look racy. If that helper sees a
-> IORING_OP_READ_FIXED, but then __io_submit_sqe() sees a
-> IORING_OP_READV - especially if this happens in io_sq_wq_submit_work()
-> -, I think you could potentially end up in places like
-> io_import_iovec() without having done the set_fs(USER_DS) and
-> use_mm(), causing the access to potentially occur with KERNEL_DS and a
-> lazy mm.
+On Tue, Jan 29, 2019 at 4:20 PM Jens Axboe <axboe@kernel.dk> wrote:
+> On 1/29/19 4:58 AM, Arnd Bergmann wrote:
+> > On Tue, Jan 29, 2019 at 7:30 AM Christoph Hellwig <hch@lst.de> wrote:
+> >>> On Mon, Jan 28, 2019 at 11:25:12AM -0700, Jens Axboe wrote:
+> >>>> Especially with poll support now in the series, don't we need a =D1=
+=95igmask
+> >>>> argument similar to pselect/ppoll/io_pgetevents now to deal with sig=
+nal
+> >>>> blocking during waiting for events?
+> >>>
+> >>> Is there any way to avoid passing in the sigset_t size? If it's just =
+a
+> >>> 32-bit/64-bit thing, surely the in_compat_syscall() could cover it? O=
+r
+> >>> are there other cases that need to be catered to?
+> >>
+> >> As far as I can tell we never look at it, never looked at it and don't
+> >> have any plans to look at it anytime soon.  But when I tried to omit
+> >> it for io_pgetevents I got stong pushback and thus had to add the
+> >> crazy double indirection calling convention.
+>
+> That's good info. I am currently using set_user_sigmask() for it.
+> I'd really like to avoid having to pass in a sigset_t size for the
+> system call, however.
 
-Indeed, for that case I think we should just copy the sqe. It's in the
-async offload context anyway, so a copy won't really change anything
-in terms of performance. And since the gap is so large between the two
-problematic spots, it'd be trickier to fix.
+I really wouldn't do it, given that all other signal handling interfaces
+are prepared for longer signal masks. You /could/ probably extend
+it later with a flags bit to signify a longer mask instead of using
+the entire register to hold the bit length, it just seems really
+inconsistent with all other system calls.
 
--- 
-Jens Axboe
+      Arnd
+
+
+
+
+> What's the best way of achieving that? Can I get
+> away with doing something like this:
+>
+>         if (in_compat_syscall()) {
+>                 const compat_sigset_t __user *compat_sig;
+>
+>                 compat_sig =3D (const compat_sigset_t __user *) sig;
+>                 ret =3D set_compat_user_sigmask(compat_sig, &ksigmask,
+>                                                 &sigsaved, _NSIG_WORDS);
+>         } else {
+>                 ret =3D set_user_sigmask(sig, &ksigmask, &sigsaved,
+>                                                 _NSIG_WORDS);
+>         }
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
