@@ -1,81 +1,75 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: [PATCHSET v9] io_uring IO interface
-Date: Tue, 29 Jan 2019 12:26:44 -0700
-Message-ID: <20190129192702.3605-1-axboe@kernel.dk>
+Subject: [PATCH 01/18] fs: add an iopoll method to struct file_operations
+Date: Tue, 29 Jan 2019 12:26:45 -0700
+Message-ID: <20190129192702.3605-2-axboe@kernel.dk>
+References: <20190129192702.3605-1-axboe@kernel.dk>
 Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <20190129192702.3605-1-axboe@kernel.dk>
 Sender: owner-linux-aio@kvack.org
 To: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
-Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com
+Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, Jens Axboe <axboe@kernel.dk>
 List-Id: linux-api@vger.kernel.org
 
-Following up on all the great review from yesterday (and today),
-here's a v9 that addresses all known review concerns so far.
-A particular big thanks to Jann Horn for looking into the grittier
-details, which resulted in a slew of fixes. Also thanks to Christoph
-for working through the patches. I feel like we're making good
-progress here.
+From: Christoph Hellwig <hch@lst.de>
 
-A note on ctx->compat still being there - we could store this in
-struct sqe_submit, but this doesn't work for the io_sq_thread()
-polled submission. Additionally, makes more sense to keep this in
-the ctx instead of once per IO.
+This new methods is used to explicitly poll for I/O completion for an
+iocb.  It must be called for any iocb submitted asynchronously (that
+is with a non-null ki_complete) which has the IOCB_HIPRI flag set.
 
-No new changes in the liburing user side library, but as a reference,
-you can clone that here:
+The method is assisted by a new ki_cookie field in struct iocb to store
+the polling cookie.
 
-git://git.kernel.dk/liburing
+Reviewed-by: Johannes Thumshirn <jthumshirn@suse.de>
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+---
+ Documentation/filesystems/vfs.txt | 3 +++
+ include/linux/fs.h                | 2 ++
+ 2 files changed, 5 insertions(+)
 
-We're still missing a man page for io_uring_enter(2), but the two other
-system calls are documented.
-
-Patches are against 5.0-rc4, and can also be found in my io_uring branch
-here:
-
-git://git.kernel.dk/linux-block io_uring
-
-Changes since v8:
-- Check for p->sq_thread_cpu being possible
-- Check for valid flags in io_uring_enter(2)
-- Cap 'to_submit' at SQ ring size in io_uring_enter(2)
-- Fix files/mm references
-- Don't bother with ctx referencing in io_uring_register(2)
-- Use READ/WRITE_ONCE for ring updates/reads
-- Use percpu_ref_tryget() for io_get_req()
-- Protect sqe reads (that matter) with READ_ONCE()
-- Store compat syscall info in the ctx. Still derived from
-  in_compat_syscall(), but we need access to it from the io_sq_thread()
-  as well.
-- Don't make IORING_MAX_ENTRIES user visible
-- Address various review comments
-
- Documentation/filesystems/vfs.txt      |    3 +
- arch/x86/entry/syscalls/syscall_32.tbl |    3 +
- arch/x86/entry/syscalls/syscall_64.tbl |    3 +
- block/bio.c                            |   59 +-
- fs/Makefile                            |    1 +
- fs/block_dev.c                         |   19 +-
- fs/file.c                              |   15 +-
- fs/file_table.c                        |    9 +-
- fs/gfs2/file.c                         |    2 +
- fs/io_uring.c                          | 2599 ++++++++++++++++++++++++
- fs/iomap.c                             |   48 +-
- fs/xfs/xfs_file.c                      |    1 +
- include/linux/bio.h                    |   14 +
- include/linux/blk_types.h              |    1 +
- include/linux/file.h                   |    2 +
- include/linux/fs.h                     |    6 +-
- include/linux/iomap.h                  |    1 +
- include/linux/sched/user.h             |    2 +-
- include/linux/syscalls.h               |    8 +
- include/uapi/asm-generic/unistd.h      |    8 +-
- include/uapi/linux/io_uring.h          |  141 ++
- init/Kconfig                           |    9 +
- kernel/sys_ni.c                        |    3 +
- 23 files changed, 2916 insertions(+), 41 deletions(-)
-
+diff --git a/Documentation/filesystems/vfs.txt b/Documentation/filesystems/vfs.txt
+index 8dc8e9c2913f..761c6fd24a53 100644
+--- a/Documentation/filesystems/vfs.txt
++++ b/Documentation/filesystems/vfs.txt
+@@ -857,6 +857,7 @@ struct file_operations {
+ 	ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);
+ 	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
+ 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
++	int (*iopoll)(struct kiocb *kiocb, bool spin);
+ 	int (*iterate) (struct file *, struct dir_context *);
+ 	int (*iterate_shared) (struct file *, struct dir_context *);
+ 	__poll_t (*poll) (struct file *, struct poll_table_struct *);
+@@ -902,6 +903,8 @@ otherwise noted.
+ 
+   write_iter: possibly asynchronous write with iov_iter as source
+ 
++  iopoll: called when aio wants to poll for completions on HIPRI iocbs
++
+   iterate: called when the VFS needs to read the directory contents
+ 
+   iterate_shared: called when the VFS needs to read the directory contents
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 811c77743dad..ccb0b7a63aa5 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -310,6 +310,7 @@ struct kiocb {
+ 	int			ki_flags;
+ 	u16			ki_hint;
+ 	u16			ki_ioprio; /* See linux/ioprio.h */
++	unsigned int		ki_cookie; /* for ->iopoll */
+ } __randomize_layout;
+ 
+ static inline bool is_sync_kiocb(struct kiocb *kiocb)
+@@ -1786,6 +1787,7 @@ struct file_operations {
+ 	ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);
+ 	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
+ 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
++	int (*iopoll)(struct kiocb *kiocb, bool spin);
+ 	int (*iterate) (struct file *, struct dir_context *);
+ 	int (*iterate_shared) (struct file *, struct dir_context *);
+ 	__poll_t (*poll) (struct file *, struct poll_table_struct *);
 -- 
-Jens Axboe
-
+2.17.1
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
