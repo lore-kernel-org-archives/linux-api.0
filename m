@@ -1,47 +1,53 @@
-From: Jens Axboe <axboe@kernel.dk>
+From: Jann Horn <jannh@google.com>
 Subject: Re: [PATCH 05/18] Add io_uring IO interface
-Date: Tue, 29 Jan 2019 08:54:49 -0700
-Message-ID: <41d1cd0c-8a0b-73a8-32a2-c5ef31425fae@kernel.dk>
-References: <20190128213538.13486-1-axboe@kernel.dk>
- <20190128213538.13486-6-axboe@kernel.dk>
- <87tvhrpsqg.fsf@oldenburg2.str.redhat.com>
- <74fd3127-75f1-3a48-d3cb-a8f6c9bd0b74@kernel.dk>
- <CAG48ez0PPWP7GU5kinzejN1B3invrcxCZT2fkpnHxMK2F0pj6A@mail.gmail.com>
+Date: Tue, 29 Jan 2019 16:56:31 +0100
+Message-ID: <CAG48ez0sNBjgW7ynpNC+sir-_AuccY1sKguiD+VAXvL9-j4iag@mail.gmail.com>
+References: <20190128213538.13486-1-axboe@kernel.dk> <20190128213538.13486-6-axboe@kernel.dk>
+ <CAG48ez1qxZLfJzK95kjh0RiQ6kvZLbQhr6Dr0EjBNQB6Fr7NXQ@mail.gmail.com>
+ <CAG48ez1Ms+NPTXPj_UiQyv=2aMaMR3akCdp5SdDL3x7x7gd_ig@mail.gmail.com> <b5902860-30a9-3dc9-b513-3d892afdc51b@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <CAG48ez0PPWP7GU5kinzejN1B3invrcxCZT2fkpnHxMK2F0pj6A@mail.gmail.com>
-Content-Language: en-US
+In-Reply-To: <b5902860-30a9-3dc9-b513-3d892afdc51b@kernel.dk>
 Sender: owner-linux-aio@kvack.org
-To: Jann Horn <jannh@google.com>
-Cc: Florian Weimer <fweimer@redhat.com>, linux-aio@kvack.org, linux-block@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, hch@lst.de, jmoyer@redhat.com, Avi Kivity <avi@scylladb.com>
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-man <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, hch@lst.de, jmoyer@redhat.com, Avi Kivity <avi@scylladb.com>
 List-Id: linux-api@vger.kernel.org
 
-On 1/29/19 8:38 AM, Jann Horn wrote:
-> On Tue, Jan 29, 2019 at 2:35 PM Jens Axboe <axboe@kernel.dk> wrote:
->>
->> On 1/29/19 5:12 AM, Florian Weimer wrote:
->>> * Jens Axboe:
->>>
->>>> +#define IORING_MAX_ENTRIES  4096
->>>
->>> Where does this constant come from?  Should it really be exposed to
->>> userspace?
->>
->> Seems pretty handy for the application to know what the limit is?
-> 
-> The running kernel version might be different from the kernel version
-> whose headers the userspace code was compiled with. So if this is a
-> limit that might change at some point in the future, and you think
-> userspace wants to know the limit, some other API might be better.
+On Tue, Jan 29, 2019 at 4:46 AM Jens Axboe <axboe@kernel.dk> wrote:
+> On 1/28/19 7:21 PM, Jann Horn wrote:
+> > Please create a local copy of the request before parsing it to keep
+> > the data from changing under you. Additionally, it might make sense to
+> > annotate every pointer to shared memory with a comment, or something
+> > like that, to ensure that anyone looking at the code can immediately
+> > see for which pointers special caution is required on access.
+>
+> I took a look at the viability of NOT having to local copy the data, and
+> I don't think it's too bad. Local copy has a noticeable impact on the
+> performance, hence I'd really (REALLY) like to avoid it.
+>
+> Here's something on top of the current git branch. I think I even went a
+> bit too far in some areas, but it should hopefully catch the cases where
+> we might end up double evaluating the parts of the sqe that we depend
+> on. For most of the sqe reading we don't really care too much. For
+> instance, the sqe->user_data. If the app changes this field, then it
+> just gets whatever passed back in cqe->user_data. That's not a kernel
+> issue.
+>
+> For cases like addr/len etc validation, it should be sound. I'll double
+> check this in the morning as well, and obviously would need to be folded
+> in along the way.
+>
+> I'd appreciate your opinion on this part, if you see any major issues
+> with it, or if I missed something.
 
-Probably best to just kill it, we'll error in io_uring_register() if
-it's exceeded anyway.
-
-
--- 
-Jens Axboe
+The io_sqe_needs_user() checks still look racy. If that helper sees a
+IORING_OP_READ_FIXED, but then __io_submit_sqe() sees a
+IORING_OP_READV - especially if this happens in io_sq_wq_submit_work()
+-, I think you could potentially end up in places like
+io_import_iovec() without having done the set_fs(USER_DS) and
+use_mm(), causing the access to potentially occur with KERNEL_DS and a
+lazy mm.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
