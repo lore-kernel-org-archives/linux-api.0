@@ -1,68 +1,57 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: [PATCH 18/18] io_uring: add io_uring_event cache hit information
-Date: Tue, 29 Jan 2019 12:27:02 -0700
-Message-ID: <20190129192702.3605-19-axboe@kernel.dk>
-References: <20190129192702.3605-1-axboe@kernel.dk>
+From: Jeff Moyer <jmoyer@redhat.com>
+Subject: Re: [PATCH 07/18] io_uring: support for IO polling
+Date: Tue, 29 Jan 2019 15:35:30 -0500
+Message-ID: <x49o97zi4ml.fsf@segfault.boston.devel.redhat.com>
+References: <20190128213538.13486-1-axboe@kernel.dk>
+	<20190128213538.13486-8-axboe@kernel.dk>
+	<20190129172414.GA15347@lst.de>
+	<f21fc281-bbaa-3af5-3d64-a55933f1cbfb@kernel.dk>
+	<cd1b43b7-7116-e53c-91fa-168e6c249e63@kernel.dk>
+Mime-Version: 1.0
+Content-Type: text/plain
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20190129192702.3605-1-axboe@kernel.dk>
+In-Reply-To: <cd1b43b7-7116-e53c-91fa-168e6c249e63@kernel.dk> (Jens Axboe's
+	message of "Tue, 29 Jan 2019 12:10:08 -0700")
 Sender: owner-linux-aio@kvack.org
-To: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
-Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, Jens Axboe <axboe@kernel.dk>
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Christoph Hellwig <hch@lst.de>, linux-aio@kvack.org, linux-block@vger.kernel.org, linux-man@vger.kernel.org, linux-api@vger.kernel.org, avi@scylladb.com
 List-Id: linux-api@vger.kernel.org
 
-Add hint on whether a read was served out of the page cache, or if it
-hit media. This is useful for buffered async IO, O_DIRECT reads would
-never have this set (for obvious reasons).
+Jens Axboe <axboe@kernel.dk> writes:
 
-If the read hit page cache, cqe->flags will have IOCQE_FLAG_CACHEHIT
-set.
+> On 1/29/19 11:31 AM, Jens Axboe wrote:
+>>> The code looks a little clumsy to me.  Why not:
+>>>
+>>> 	while (!list_empty(&ctx->poll_list)) {
+>>> 		int ret = io_do_iopoll(ctx, nr_events, min);
+>>> 		if (ret)
+>>> 			return ret;
+>>>
+>>> 		if (!min || *nr_events >= min)
+>>> 			return 0;
+>>> 	}
+>>>
+>>> 	return 1;
+>> 
+>> I think you messed up the 0/1 here, how about this:
+>> 
+>> 	while (!list_empty(&ctx->poll_list)) {
+>> 		int ret;
+>> 
+>> 		ret = io_do_iopoll(ctx, nr_events, min);
+>> 		if (ret < 0)
+>> 			return ret;
+>> 		if (!min || *nr_events >= min)
+>> 			return 1;
+>> 	}
+>> 
+>> 	return 0;
+>
+> Or I did... I think yours is correct.
 
-Signed-off-by: Jens Axboe <axboe@kernel.dk>
----
- fs/io_uring.c                 | 7 ++++++-
- include/uapi/linux/io_uring.h | 5 +++++
- 2 files changed, 11 insertions(+), 1 deletion(-)
+maybe document the return code?  ;-)
 
-diff --git a/fs/io_uring.c b/fs/io_uring.c
-index af2519d3e434..c6187a8f62a9 100644
---- a/fs/io_uring.c
-+++ b/fs/io_uring.c
-@@ -551,11 +551,16 @@ static void io_fput(struct io_kiocb *req)
- static void io_complete_rw(struct kiocb *kiocb, long res, long res2)
- {
- 	struct io_kiocb *req = container_of(kiocb, struct io_kiocb, rw);
-+	unsigned ev_flags = 0;
- 
- 	kiocb_end_write(kiocb);
- 
- 	io_fput(req);
--	io_cqring_add_event(req->ctx, req->user_data, res, 0);
-+
-+	if (res > 0 && (req->flags & REQ_F_FORCE_NONBLOCK))
-+		ev_flags = IOCQE_FLAG_CACHEHIT;
-+
-+	io_cqring_add_event(req->ctx, req->user_data, res, ev_flags);
- 	io_free_req(req);
- }
- 
-diff --git a/include/uapi/linux/io_uring.h b/include/uapi/linux/io_uring.h
-index d319b2cd6319..6782e4e0464b 100644
---- a/include/uapi/linux/io_uring.h
-+++ b/include/uapi/linux/io_uring.h
-@@ -69,6 +69,11 @@ struct io_uring_cqe {
- 	__u32	flags;
- };
- 
-+/*
-+ * io_uring_event->flags
-+ */
-+#define IOCQE_FLAG_CACHEHIT	(1U << 0)	/* IO did not hit media */
-+
- /*
-  * Magic offsets for the application to mmap the data it needs
-  */
--- 
-2.17.1
+-Jeff
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
