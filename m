@@ -1,87 +1,75 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH glibc 1/4] glibc: Perform rseq(2) registration at C
- startup and thread creation (v6)
-Date: Tue, 29 Jan 2019 11:57:39 -0500 (EST)
-Message-ID: <632671842.3079.1548781059601.JavaMail.zimbra@efficios.com>
-References: <20190121213530.23803-1-mathieu.desnoyers@efficios.com>
+From: Christoph Hellwig <hch@lst.de>
+Subject: Re: [PATCH 07/18] io_uring: support for IO polling
+Date: Tue, 29 Jan 2019 18:24:14 +0100
+Message-ID: <20190129172414.GA15347@lst.de>
+References: <20190128213538.13486-1-axboe@kernel.dk> <20190128213538.13486-8-axboe@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190121213530.23803-1-mathieu.desnoyers@efficios.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>
-Cc: Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-aio@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20190128213538.13486-8-axboe@kernel.dk>
+Sender: owner-linux-aio@kvack.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-man@vger.kernel.org, linux-api@vger.kernel.org, hch@lst.de, jmoyer@redhat.com, avi@scylladb.com
 List-Id: linux-api@vger.kernel.org
 
------ On Jan 21, 2019, at 4:35 PM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
-[...]
+>  
+> @@ -118,12 +120,16 @@ struct io_kiocb {
+>  	struct list_head	list;
+>  	unsigned int		flags;
+>  #define REQ_F_FORCE_NONBLOCK	1	/* inline submission attempt */
+> +#define REQ_F_IOPOLL_COMPLETED	2	/* polled IO has completed */
+> +#define REQ_F_IOPOLL_EAGAIN	4	/* submission got EAGAIN */
+>  	u64			user_data;
+> +	u64			res;
 
-> diff --git a/sysdeps/unix/sysv/linux/sys/rseq.h
-> b/sysdeps/unix/sysv/linux/sys/rseq.h
-> new file mode 100644
-> index 0000000000..61937fb193
-> --- /dev/null
-> +++ b/sysdeps/unix/sysv/linux/sys/rseq.h
-> @@ -0,0 +1,64 @@
+Should this be ret or error instead?  res is kinda off.  A little
+comment describing it won't hurt either.  Last but not least with
+the actual errno value stored here we probably don't need the
+REQ_F_IOPOLL_EAGAIN flag, do we?
 
-[...]
-> +
-> +#ifndef _SYS_RSEQ_H
-> +#define _SYS_RSEQ_H	1
-> +
-> +/* We use the structures declarations from the kernel headers.  */
-> +#include <linux/rseq.h>
-> +#include <stdint.h>
-> +
-> +/* Signature required before each abort handler code.  */
-> +#define RSEQ_SIG 0x53053053
+> +	/*
+> +	 * Only spin for completions if we don't have multiple devices hanging
+> +	 * off our complete list, and we're under the requested amount.
+> +	 */
+> +	spin = !ctx->poll_multi_file && (*nr_events < min);
 
-I recalled that aarch64 defines RSEQ_SIG to a different value which maps to
-a valid trap instruction. So I plan to move the RSEQ_SIG define to per-arch
-headers like this:
+no need for the braces here.
 
- sysdeps/unix/sysv/linux/aarch64/bits/rseq.h                  |   24 ++
- sysdeps/unix/sysv/linux/arm/bits/rseq.h                      |   24 ++
- sysdeps/unix/sysv/linux/bits/rseq.h                          |   23 ++
- sysdeps/unix/sysv/linux/mips/bits/rseq.h                     |   24 ++
- sysdeps/unix/sysv/linux/powerpc/bits/rseq.h                  |   24 ++
- sysdeps/unix/sysv/linux/s390/bits/rseq.h                     |   24 ++
- sysdeps/unix/sysv/linux/x86/bits/rseq.h                      |   24 ++
-
-where "bits/rseq.h" contains a #error:
-
-# error "Architecture does not define RSEQ_SIG.
-
-sys/rseq.h will now include <bits/rseq.h>.
-
-
-> +
-> +enum rseq_register_state
+> +static int io_iopoll_getevents(struct io_ring_ctx *ctx, unsigned int *nr_events,
+> +				long min)
 > +{
-> +  /* Value RSEQ_REGISTER_ALLOWED means it is allowed to update
-> +     the refcount field and to register/unregister rseq.  */
-> +  RSEQ_REGISTER_ALLOWED = 0,
-> +  /* Value RSEQ_REGISTER_NESTED means it is temporarily forbidden
-> +     to update the refcount field or to register/unregister rseq.  */
-> +  RSEQ_REGISTER_NESTED = 1,
+> +	int ret;
+> +
+> +	do {
+> +		if (list_empty(&ctx->poll_list))
+> +			return 0;
+> +
+> +		ret = io_do_iopoll(ctx, nr_events, min);
+> +		if (ret < 0)
+> +			break;
+> +	} while (min && *nr_events < min);
+> +
+> +	if (ret < 0)
+> +		return ret;
+> +
+> +	return *nr_events < min;
 
-I plan to rename "RSEQ_REGISTER_NESTED" to "RSEQ_REGISTER_ONGOING" which
-seems to better represent the current registration state.
+The code looks a little clumsy to me.  Why not:
 
-Please let me know if anything is wrong with those changes.
+	while (!list_empty(&ctx->poll_list)) {
+		int ret = io_do_iopoll(ctx, nr_events, min);
+		if (ret)
+			return ret;
 
-Thanks,
+		if (!min || *nr_events >= min)
+			return 0;
+	}
 
-Mathieu
+	return 1;
 
-
-> +  /* Value RSEQ_REGISTER_EXITING means it is forbidden to update the
-> +     refcount field or to register/unregister rseq for the rest of the
-> +     thread's lifetime.  */
-> +  RSEQ_REGISTER_EXITING = 2,
-> +};
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
