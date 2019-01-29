@@ -1,123 +1,59 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH 13/18] io_uring: add file set registration
-Date: Tue, 29 Jan 2019 17:36:45 +0100
-Message-ID: <CAG48ez2tYBePMCkd-EOdAX1gfVwPJ-fTd-8XKu6J-QPyTXHN9g@mail.gmail.com>
-References: <20190128213538.13486-1-axboe@kernel.dk> <20190128213538.13486-14-axboe@kernel.dk>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH 05/18] Add io_uring IO interface
+Date: Tue, 29 Jan 2019 17:46:24 +0100
+Message-ID: <CAK8P3a3+RHqoAST7TXyL1NX_5OjuFpi8M-5xuuX3y4DU_xNk+g@mail.gmail.com>
+References: <20190123153536.7081-1-axboe@kernel.dk> <20190123153536.7081-6-axboe@kernel.dk>
+ <20190128145700.GA9795@lst.de> <2729ab43-b2bf-44b0-d41d-dbb495ddffbf@kernel.dk>
+ <20190129063043.GC2996@lst.de> <CAK8P3a1x4BsFfacxOmaDXKOKmmQ2j0ypX2+mCNCbjH3E7nC4DQ@mail.gmail.com>
+ <4b12d149-99f7-0b2e-0c3f-9b477ce48520@kernel.dk> <CAK8P3a38-FLBH0sp0vaebv29M5oDyiUkwwmVY+9_S3vSER9n5Q@mail.gmail.com>
+ <9a66c000-62f3-7567-7919-31e61e28defa@kernel.dk> <CAK8P3a1=kho718OSdZ0zp5g3mwmsYbd5J-e58kDyq2QMBCak=Q@mail.gmail.com>
+ <4395ae02-54fe-d5fe-dea9-c50f7eaba3b1@kernel.dk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20190128213538.13486-14-axboe@kernel.dk>
+In-Reply-To: <4395ae02-54fe-d5fe-dea9-c50f7eaba3b1@kernel.dk>
 Sender: owner-linux-aio@kvack.org
 To: Jens Axboe <axboe@kernel.dk>
-Cc: linux-aio@kvack.org, linux-block@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, hch@lst.de, jmoyer@redhat.com, Avi Kivity <avi@scylladb.com>
+Cc: Christoph Hellwig <hch@lst.de>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, linux-aio <linux-aio@kvack.org>, linux-block <linux-block@vger.kernel.org>, Jeff Moyer <jmoyer@redhat.com>, Avi Kivity <avi@scylladb.com>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, Deepa Dinamani <deepa.kernel@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 28, 2019 at 10:36 PM Jens Axboe <axboe@kernel.dk> wrote:
-> We normally have to fget/fput for each IO we do on a file. Even with
-> the batching we do, the cost of the atomic inc/dec of the file usage
-> count adds up.
+On Tue, Jan 29, 2019 at 5:28 PM Jens Axboe <axboe@kernel.dk> wrote:
 >
-> This adds IORING_REGISTER_FILES, and IORING_UNREGISTER_FILES opcodes
-> for the io_uring_register(2) system call. The arguments passed in must
-> be an array of __s32 holding file descriptors, and nr_args should hold
-> the number of file descriptors the application wishes to pin for the
-> duration of the io_uring context (or until IORING_UNREGISTER_FILES is
-> called).
+> On 1/29/19 9:26 AM, Arnd Bergmann wrote:
+> > On Tue, Jan 29, 2019 at 5:19 PM Jens Axboe <axboe@kernel.dk> wrote:
+> >> On 1/29/19 9:18 AM, Arnd Bergmann wrote:
+> >>> On Tue, Jan 29, 2019 at 4:20 PM Jens Axboe <axboe@kernel.dk> wrote:
+> >>>> That's good info. I am currently using set_user_sigmask() for it.
+> >>>> I'd really like to avoid having to pass in a sigset_t size for the
+> >>>> system call, however.
+> >>>
+> >>> I really wouldn't do it, given that all other signal handling interfaces
+> >>> are prepared for longer signal masks. You /could/ probably extend
+> >>> it later with a flags bit to signify a longer mask instead of using
+> >>> the entire register to hold the bit length, it just seems really
+> >>> inconsistent with all other system calls.
+> >>
+> >> Damnit! OK, I'll keep what I currently have then.
+> >
+> > As long as you stay within the 6-argument syscall contraints,
+> > the cost of passing the length is basically free, right?
+> >
+> > Is there anything else you are worried about?
 >
-> When used, the application must set IOSQE_FIXED_FILE in the sqe->flags
-> member. Then, instead of setting sqe->fd to the real fd, it sets sqe->fd
-> to the index in the array passed in to IORING_REGISTER_FILES.
->
-> Files are automatically unregistered when the io_uring context is
-> torn down. An application need only unregister if it wishes to
-> register a few set of fds.
+> My main worry is not the extra argument, more that we're at capacity
+> for the system call. If we wanted to add a timeout parameter, then we'd
+> need to bundle them up, which sucks.
 
-s/few/new/ ?
+Ok, got it. If it turns out that we do need the timeout argument after all,
+you could avoid one indirection level by grouping the sigset_t with
+min_complete, timeout_ns and/or sigset_size, as long as the
+sigset_t comes last (similar to struct sigaction).
 
-> Signed-off-by: Jens Axboe <axboe@kernel.dk>
-> ---
->  fs/io_uring.c                 | 125 +++++++++++++++++++++++++++++-----
->  include/uapi/linux/io_uring.h |   9 ++-
->  2 files changed, 116 insertions(+), 18 deletions(-)
->
-> diff --git a/fs/io_uring.c b/fs/io_uring.c
-> index 682714d6f217..77993972879b 100644
-> --- a/fs/io_uring.c
-> +++ b/fs/io_uring.c
-> @@ -98,6 +98,10 @@ struct io_ring_ctx {
->                 struct fasync_struct    *cq_fasync;
->         } ____cacheline_aligned_in_smp;
->
-> +       /* if used, fixed file set */
-> +       struct file             **user_files;
-> +       unsigned                nr_user_files;
+Another (also awkward) trick might be to combine min_complete and
+sigset_size into a 32-bit integer argument, as each of them can
+fit into 16 bits.
 
-It'd be nice if you could add a comment about locking rules here -
-something like "writers must ensure that ->refs is dead, readers must
-ensure that ->refs is alive as long as the file* is used".
-
-[...]
-> @@ -612,7 +625,14 @@ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe,
->         struct kiocb *kiocb = &req->rw;
->         int ret;
->
-> -       kiocb->ki_filp = io_file_get(state, sqe->fd);
-> +       if (sqe->flags & IOSQE_FIXED_FILE) {
-> +               if (unlikely(!ctx->user_files || sqe->fd >= ctx->nr_user_files))
-> +                       return -EBADF;
-> +               kiocb->ki_filp = ctx->user_files[sqe->fd];
-
-It doesn't really matter as long as ctx->nr_user_files<=INT_MAX, but
-it'd be nice if you could explicitly cast sqe->fd to unsigned here.
-
-> +               req->flags |= REQ_F_FIXED_FILE;
-> +       } else {
-> +               kiocb->ki_filp = io_file_get(state, sqe->fd);
-> +       }
-[...]
-> +static int io_sqe_files_register(struct io_ring_ctx *ctx, void __user *arg,
-> +                                unsigned nr_args)
-> +{
-> +       __s32 __user *fds = (__s32 __user *) arg;
-> +       int fd, i, ret = 0;
-> +
-> +       if (ctx->user_files)
-> +               return -EBUSY;
-> +       if (!nr_args)
-> +               return -EINVAL;
-> +
-> +       ctx->user_files = kcalloc(nr_args, sizeof(struct file *), GFP_KERNEL);
-> +       if (!ctx->user_files)
-> +               return -ENOMEM;
-> +
-> +       for (i = 0; i < nr_args; i++) {
-> +               ret = -EFAULT;
-> +               if (copy_from_user(&fd, &fds[i], sizeof(fd)))
-> +                       break;
-
-"i" is signed, but "nr_args" is unsigned. You can't get through that
-kcalloc() call with nr_args>=0x80000000 on a normal kernel, someone
-would have to set CONFIG_FORCE_MAX_ZONEORDER really high for that, but
-still, in theory, if you reach this copy_to_user(..., &fds[i], ...)
-with a negative "i", that'd be bad. You might want to make "i"
-unsigned here and check that it's at least smaller than UINT_MAX...
-
-
-> +               ctx->user_files[i] = fget(fd);
-> +
-> +               ret = -EBADF;
-> +               if (!ctx->user_files[i])
-> +                       break;
-> +               ctx->nr_user_files++;
-> +               ret = 0;
-> +       }
-> +
-> +       if (ret)
-> +               io_sqe_files_unregister(ctx);
-> +
-> +       return ret;
-> +}
-> +
+      Arnd
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
