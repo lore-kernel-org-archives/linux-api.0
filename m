@@ -1,7 +1,7 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: [PATCH 07/18] io_uring: support for IO polling
-Date: Tue, 29 Jan 2019 12:26:51 -0700
-Message-ID: <20190129192702.3605-8-axboe@kernel.dk>
+Subject: [PATCH 11/18] block: implement bio helper to add iter bvec pages to bio
+Date: Tue, 29 Jan 2019 12:26:55 -0700
+Message-ID: <20190129192702.3605-12-axboe@kernel.dk>
 References: <20190129192702.3605-1-axboe@kernel.dk>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20190129192702.3605-1-axboe@kernel.dk>
@@ -10,399 +10,167 @@ To: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
 Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, Jens Axboe <axboe@kernel.dk>
 List-Id: linux-api@vger.kernel.org
 
-Add support for a polled io_uring context. When a read or write is
-submitted to a polled context, the application must poll for completions
-on the CQ ring through io_uring_enter(2). Polled IO may not generate
-IRQ completions, hence they need to be actively found by the application
-itself.
+For an ITER_BVEC, we can just iterate the iov and add the pages
+to the bio directly. This requires that the caller doesn't releases
+the pages on IO completion, we add a BIO_NO_PAGE_REF flag for that.
 
-To use polling, io_uring_setup() must be used with the
-IORING_SETUP_IOPOLL flag being set. It is illegal to mix and match
-polled and non-polled IO on an io_uring.
+The current two callers of bio_iov_iter_get_pages() are updated to
+check if they need to release pages on completion. This makes them
+work with bvecs that contain kernel mapped pages already.
 
+Reviewed-by: Christoph Hellwig <hch@lst.de>
 Signed-off-by: Jens Axboe <axboe@kernel.dk>
 ---
- fs/io_uring.c                 | 243 ++++++++++++++++++++++++++++++++--
- include/uapi/linux/io_uring.h |   5 +
- 2 files changed, 240 insertions(+), 8 deletions(-)
+ block/bio.c               | 59 ++++++++++++++++++++++++++++++++-------
+ fs/block_dev.c            |  5 ++--
+ fs/iomap.c                |  5 ++--
+ include/linux/blk_types.h |  1 +
+ 4 files changed, 56 insertions(+), 14 deletions(-)
 
-diff --git a/fs/io_uring.c b/fs/io_uring.c
-index c75a3e197ed5..a4f4d75609d5 100644
---- a/fs/io_uring.c
-+++ b/fs/io_uring.c
-@@ -102,6 +102,8 @@ struct io_ring_ctx {
- 
- 	struct {
- 		spinlock_t		completion_lock;
-+		bool			poll_multi_file;
-+		struct list_head	poll_list;
- 	} ____cacheline_aligned_in_smp;
- };
- 
-@@ -120,12 +122,15 @@ struct io_kiocb {
- 	struct list_head	list;
- 	unsigned int		flags;
- #define REQ_F_FORCE_NONBLOCK	1	/* inline submission attempt */
-+#define REQ_F_IOPOLL_COMPLETED	2	/* polled IO has completed */
- 	u64			user_data;
-+	u64			error;
- 
- 	struct work_struct	work;
- };
- 
- #define IO_PLUG_THRESHOLD		2
-+#define IO_IOPOLL_BATCH			8
- 
- static struct kmem_cache *req_cachep;
- 
-@@ -157,6 +162,7 @@ static struct io_ring_ctx *io_ring_ctx_alloc(struct io_uring_params *p)
- 	mutex_init(&ctx->uring_lock);
- 	init_waitqueue_head(&ctx->wait);
- 	spin_lock_init(&ctx->completion_lock);
-+	INIT_LIST_HEAD(&ctx->poll_list);
- 	return ctx;
+diff --git a/block/bio.c b/block/bio.c
+index 4db1008309ed..330df572cfb8 100644
+--- a/block/bio.c
++++ b/block/bio.c
+@@ -828,6 +828,23 @@ int bio_add_page(struct bio *bio, struct page *page,
  }
+ EXPORT_SYMBOL(bio_add_page);
  
-@@ -251,12 +257,154 @@ static struct io_kiocb *io_get_req(struct io_ring_ctx *ctx)
- 	return NULL;
- }
- 
-+static void io_free_req_many(struct io_ring_ctx *ctx, void **reqs, int *nr)
++static int __bio_iov_bvec_add_pages(struct bio *bio, struct iov_iter *iter)
 +{
-+	if (*nr) {
-+		kmem_cache_free_bulk(req_cachep, *nr, reqs);
-+		io_ring_drop_ctx_refs(ctx, *nr);
-+		*nr = 0;
++	const struct bio_vec *bv = iter->bvec;
++	unsigned int len;
++	size_t size;
++
++	len = min_t(size_t, bv->bv_len, iter->count);
++	size = bio_add_page(bio, bv->bv_page, len,
++				bv->bv_offset + iter->iov_offset);
++	if (size == len) {
++		iov_iter_advance(iter, size);
++		return 0;
 +	}
++
++	return -EINVAL;
 +}
 +
- static void io_free_req(struct io_kiocb *req)
+ #define PAGE_PTRS_PER_BVEC     (sizeof(struct bio_vec) / sizeof(struct page *))
+ 
+ /**
+@@ -876,23 +893,43 @@ static int __bio_iov_iter_get_pages(struct bio *bio, struct iov_iter *iter)
+ }
+ 
+ /**
+- * bio_iov_iter_get_pages - pin user or kernel pages and add them to a bio
++ * bio_iov_iter_get_pages - add user or kernel pages to a bio
+  * @bio: bio to add pages to
+- * @iter: iov iterator describing the region to be mapped
++ * @iter: iov iterator describing the region to be added
++ *
++ * This takes either an iterator pointing to user memory, or one pointing to
++ * kernel pages (BVEC iterator). If we're adding user pages, we pin them and
++ * map them into the kernel. On IO completion, the caller should put those
++ * pages. If we're adding kernel pages, we just have to add the pages to the
++ * bio directly. We don't grab an extra reference to those pages (the user
++ * should already have that), and we don't put the page on IO completion.
++ * The caller needs to check if the bio is flagged BIO_NO_PAGE_REF on IO
++ * completion. If it isn't, then pages should be released.
+  *
+- * Pins pages from *iter and appends them to @bio's bvec array. The
+- * pages will have to be released using put_page() when done.
+  * The function tries, but does not guarantee, to pin as many pages as
+- * fit into the bio, or are requested in *iter, whatever is smaller.
+- * If MM encounters an error pinning the requested pages, it stops.
+- * Error is returned only if 0 pages could be pinned.
++ * fit into the bio, or are requested in *iter, whatever is smaller. If
++ * MM encounters an error pinning the requested pages, it stops. Error
++ * is returned only if 0 pages could be pinned.
+  */
+ int bio_iov_iter_get_pages(struct bio *bio, struct iov_iter *iter)
  {
- 	io_ring_drop_ctx_refs(req->ctx, 1);
- 	kmem_cache_free(req_cachep, req);
- }
++	const bool is_bvec = iov_iter_is_bvec(iter);
+ 	unsigned short orig_vcnt = bio->bi_vcnt;
  
-+/*
-+ * Find and free completed poll iocbs
-+ */
-+static void io_iopoll_complete(struct io_ring_ctx *ctx, unsigned int *nr_events,
-+			       struct list_head *done)
-+{
-+	void *reqs[IO_IOPOLL_BATCH];
-+	struct io_kiocb *req;
-+	int to_free = 0;
-+
-+	while (!list_empty(done)) {
-+		req = list_first_entry(done, struct io_kiocb, list);
-+		list_del(&req->list);
-+
-+		io_cqring_fill_event(ctx, req->user_data, req->error, 0);
-+
-+		reqs[to_free++] = req;
-+		(*nr_events)++;
-+
-+		fput(req->rw.ki_filp);
-+		if (to_free == ARRAY_SIZE(reqs))
-+			io_free_req_many(ctx, reqs, &to_free);
-+	}
-+	io_commit_cqring(ctx);
-+
-+	if (to_free)
-+		io_free_req_many(ctx, reqs, &to_free);
-+}
-+
-+static int io_do_iopoll(struct io_ring_ctx *ctx, unsigned int *nr_events,
-+			long min)
-+{
-+	struct io_kiocb *req, *tmp;
-+	LIST_HEAD(done);
-+	bool spin;
-+	int ret;
-+
 +	/*
-+	 * Only spin for completions if we don't have multiple devices hanging
-+	 * off our complete list, and we're under the requested amount.
++	 * If this is a BVEC iter, then the pages are kernel pages. Don't
++	 * release them on IO completion.
 +	 */
-+	spin = !ctx->poll_multi_file && *nr_events < min;
++	if (is_bvec)
++		bio_set_flag(bio, BIO_NO_PAGE_REF);
 +
-+	ret = 0;
-+	list_for_each_entry_safe(req, tmp, &ctx->poll_list, list) {
-+		struct kiocb *kiocb = &req->rw;
-+
-+		/*
-+		 * Move completed entries to our local list. If we find a
-+		 * request that requires polling, break out and complete
-+		 * the done list first, if we have entries there.
-+		 */
-+		if (req->flags & REQ_F_IOPOLL_COMPLETED) {
-+			list_move_tail(&req->list, &done);
-+			continue;
-+		}
-+		if (!list_empty(&done))
-+			break;
-+
-+		ret = kiocb->ki_filp->f_op->iopoll(kiocb, spin);
-+		if (ret < 0)
-+			break;
-+
-+		if (ret && spin)
-+			spin = false;
-+		ret = 0;
-+	}
-+
-+	if (!list_empty(&done))
-+		io_iopoll_complete(ctx, nr_events, &done);
-+
-+	return ret;
-+}
-+
-+/*
-+ * Poll for a mininum of 'min' events. Note that if min == 0 we consider that a
-+ * non-spinning poll check - we'll still enter the driver poll loop, but only
-+ * as a non-spinning completion check.
-+ */
-+static int io_iopoll_getevents(struct io_ring_ctx *ctx, unsigned int *nr_events,
-+				long min)
-+{
-+	while (!list_empty(&ctx->poll_list)) {
+ 	do {
+-		int ret = __bio_iov_iter_get_pages(bio, iter);
 +		int ret;
 +
-+		ret = io_do_iopoll(ctx, nr_events, min);
-+		if (ret < 0)
-+			return ret;
-+		if (!min || *nr_events >= min)
-+			return 0;
-+	}
-+
-+	return 1;
-+}
-+
-+/*
-+ * We can't just wait for polled events to come to us, we have to actively
-+ * find and complete them.
-+ */
-+static void io_iopoll_reap_events(struct io_ring_ctx *ctx)
-+{
-+	if (!(ctx->flags & IORING_SETUP_IOPOLL))
-+		return;
-+
-+	mutex_lock(&ctx->uring_lock);
-+	while (!list_empty(&ctx->poll_list)) {
-+		unsigned int nr_events = 0;
-+
-+		io_iopoll_getevents(ctx, &nr_events, 1);
-+	}
-+	mutex_unlock(&ctx->uring_lock);
-+}
-+
-+static int io_iopoll_check(struct io_ring_ctx *ctx, unsigned *nr_events,
-+			   long min)
-+{
-+	int ret = 0;
-+
-+	do {
-+		int tmin = 0;
-+
-+		if (*nr_events < min)
-+			tmin = min - *nr_events;
-+
-+		ret = io_iopoll_getevents(ctx, nr_events, tmin);
-+		if (ret <= 0)
-+			break;
-+		ret = 0;
-+	} while (!*nr_events || !need_resched());
-+
-+	return ret;
-+}
-+
- static void kiocb_end_write(struct kiocb *kiocb)
- {
- 	if (kiocb->ki_flags & IOCB_WRITE) {
-@@ -283,9 +431,57 @@ static void io_complete_rw(struct kiocb *kiocb, long res, long res2)
- 	io_free_req(req);
- }
- 
-+static void io_complete_rw_iopoll(struct kiocb *kiocb, long res, long res2)
-+{
-+	struct io_kiocb *req = container_of(kiocb, struct io_kiocb, rw);
-+
-+	kiocb_end_write(kiocb);
-+
-+	req->error = res;
-+	if (res != -EAGAIN)
-+		req->flags |= REQ_F_IOPOLL_COMPLETED;
-+}
-+
-+/*
-+ * After the iocb has been issued, it's safe to be found on the poll list.
-+ * Adding the kiocb to the list AFTER submission ensures that we don't
-+ * find it from a io_iopoll_getevents() thread before the issuer is done
-+ * accessing the kiocb cookie.
-+ */
-+static void io_iopoll_req_issued(struct io_kiocb *req)
-+{
-+	struct io_ring_ctx *ctx = req->ctx;
-+
-+	/*
-+	 * Track whether we have multiple files in our lists. This will impact
-+	 * how we do polling eventually, not spinning if we're on potentially
-+	 * different devices.
-+	 */
-+	if (list_empty(&ctx->poll_list)) {
-+		ctx->poll_multi_file = false;
-+	} else if (!ctx->poll_multi_file) {
-+		struct io_kiocb *list_req;
-+
-+		list_req = list_first_entry(&ctx->poll_list, struct io_kiocb,
-+						list);
-+		if (list_req->rw.ki_filp != req->rw.ki_filp)
-+			ctx->poll_multi_file = true;
-+	}
-+
-+	/*
-+	 * For fast devices, IO may have already completed. If it has, add
-+	 * it to the front so we find it first.
-+	 */
-+	if (req->flags & REQ_F_IOPOLL_COMPLETED)
-+		list_add(&req->list, &ctx->poll_list);
-+	else
-+		list_add_tail(&req->list, &ctx->poll_list);
-+}
-+
- static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe,
- 		      bool force_nonblock)
- {
-+	struct io_ring_ctx *ctx = req->ctx;
- 	struct kiocb *kiocb = &req->rw;
- 	unsigned ioprio;
- 	int fd, ret;
-@@ -315,12 +511,21 @@ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe,
- 		kiocb->ki_flags |= IOCB_NOWAIT;
- 		req->flags |= REQ_F_FORCE_NONBLOCK;
- 	}
--	if (kiocb->ki_flags & IOCB_HIPRI) {
--		ret = -EINVAL;
--		goto out_fput;
--	}
-+	if (ctx->flags & IORING_SETUP_IOPOLL) {
-+		ret = -EOPNOTSUPP;
-+		if (!(kiocb->ki_flags & IOCB_DIRECT) ||
-+		    !kiocb->ki_filp->f_op->iopoll)
-+			goto out_fput;
- 
--	kiocb->ki_complete = io_complete_rw;
-+		kiocb->ki_flags |= IOCB_HIPRI;
-+		kiocb->ki_complete = io_complete_rw_iopoll;
-+	} else {
-+		if (kiocb->ki_flags & IOCB_HIPRI) {
-+			ret = -EINVAL;
-+			goto out_fput;
-+		}
-+		kiocb->ki_complete = io_complete_rw;
-+	}
- 	return 0;
- out_fput:
- 	fput(kiocb->ki_filp);
-@@ -469,6 +674,9 @@ static int io_nop(struct io_kiocb *req, u64 user_data)
- {
- 	struct io_ring_ctx *ctx = req->ctx;
- 
-+	if (unlikely(ctx->flags & IORING_SETUP_IOPOLL))
-+		return -EINVAL;
-+
- 	io_cqring_add_event(ctx, user_data, 0, 0);
- 	io_free_req(req);
- 	return 0;
-@@ -489,6 +697,8 @@ static int io_fsync(struct io_kiocb *req, const struct io_uring_sqe *sqe,
- 	if (force_nonblock)
- 		return -EAGAIN;
- 
-+	if (unlikely(req->ctx->flags & IORING_SETUP_IOPOLL))
-+		return -EINVAL;
- 	if (unlikely(sqe->addr || sqe->ioprio))
- 		return -EINVAL;
- 
-@@ -540,7 +750,16 @@ static int __io_submit_sqe(struct io_ring_ctx *ctx, struct io_kiocb *req,
- 		break;
- 	}
- 
--	return ret;
-+	if (ret)
-+		return ret;
-+
-+	if (ctx->flags & IORING_SETUP_IOPOLL) {
-+		if (req->error == -EAGAIN)
-+			return -EAGAIN;
-+		io_iopoll_req_issued(req);
-+	}
-+
-+	return 0;
- }
- 
- static void io_sq_wq_submit_work(struct work_struct *work)
-@@ -763,6 +982,8 @@ static int __io_uring_enter(struct io_ring_ctx *ctx, unsigned to_submit,
- 			return submitted;
- 	}
- 	if (flags & IORING_ENTER_GETEVENTS) {
-+		unsigned nr_events = 0;
-+
- 		/*
- 		 * The application could have included the 'to_submit' count
- 		 * in how many events it wanted to wait for. If we failed to
-@@ -772,7 +993,10 @@ static int __io_uring_enter(struct io_ring_ctx *ctx, unsigned to_submit,
- 		if (submitted < to_submit)
- 			min_complete = min_t(unsigned, submitted, min_complete);
- 
--		ret = io_cqring_wait(ctx, min_complete, sig, sigsz);
-+		if (ctx->flags & IORING_SETUP_IOPOLL)
-+			ret = io_iopoll_check(ctx, &nr_events, min_complete);
++		if (is_bvec)
++			ret = __bio_iov_bvec_add_pages(bio, iter);
 +		else
-+			ret = io_cqring_wait(ctx, min_complete, sig, sigsz);
++			ret = __bio_iov_iter_get_pages(bio, iter);
+ 
+ 		if (unlikely(ret))
+ 			return bio->bi_vcnt > orig_vcnt ? 0 : ret;
+@@ -1634,7 +1671,8 @@ static void bio_dirty_fn(struct work_struct *work)
+ 		next = bio->bi_private;
+ 
+ 		bio_set_pages_dirty(bio);
+-		bio_release_pages(bio);
++		if (!bio_flagged(bio, BIO_NO_PAGE_REF))
++			bio_release_pages(bio);
+ 		bio_put(bio);
  	}
- 
- 	return submitted ? submitted : ret;
-@@ -873,6 +1097,8 @@ static void io_ring_ctx_free(struct io_ring_ctx *ctx)
- 	mmdrop(ctx->sqo_mm);
- 	put_files_struct(ctx->sqo_files);
- 
-+	io_iopoll_reap_events(ctx);
-+
- 	io_mem_free(ctx->sq_ring);
- 	io_mem_free(ctx->sq_sqes);
- 	io_mem_free(ctx->cq_ring);
-@@ -910,6 +1136,7 @@ static void io_ring_ctx_wait_and_kill(struct io_ring_ctx *ctx)
- 	percpu_ref_kill(&ctx->refs);
- 	mutex_unlock(&ctx->uring_lock);
- 
-+	io_iopoll_reap_events(ctx);
- 	wait_for_completion(&ctx->ctx_done);
- 	io_ring_ctx_free(ctx);
  }
-@@ -1131,7 +1358,7 @@ static long io_uring_setup(u32 entries, struct io_uring_params __user *params)
- 			return -EINVAL;
+@@ -1650,7 +1688,8 @@ void bio_check_pages_dirty(struct bio *bio)
+ 			goto defer;
  	}
  
--	if (p.flags)
-+	if (p.flags & ~IORING_SETUP_IOPOLL)
- 		return -EINVAL;
+-	bio_release_pages(bio);
++	if (!bio_flagged(bio, BIO_NO_PAGE_REF))
++		bio_release_pages(bio);
+ 	bio_put(bio);
+ 	return;
+ defer:
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 392e2bfb636f..051ab41d1c61 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -338,8 +338,9 @@ static void blkdev_bio_end_io(struct bio *bio)
+ 		struct bio_vec *bvec;
+ 		int i;
  
- 	ret = io_uring_create(entries, &p);
-diff --git a/include/uapi/linux/io_uring.h b/include/uapi/linux/io_uring.h
-index 0fca46f8fc37..4952fc921866 100644
---- a/include/uapi/linux/io_uring.h
-+++ b/include/uapi/linux/io_uring.h
-@@ -30,6 +30,11 @@ struct io_uring_sqe {
- 	__u64	__pad2[3];
- };
+-		bio_for_each_segment_all(bvec, bio, i)
+-			put_page(bvec->bv_page);
++		if (!bio_flagged(bio, BIO_NO_PAGE_REF))
++			bio_for_each_segment_all(bvec, bio, i)
++				put_page(bvec->bv_page);
+ 		bio_put(bio);
+ 	}
+ }
+diff --git a/fs/iomap.c b/fs/iomap.c
+index 4ee50b76b4a1..e5c48a0b20e0 100644
+--- a/fs/iomap.c
++++ b/fs/iomap.c
+@@ -1582,8 +1582,9 @@ static void iomap_dio_bio_end_io(struct bio *bio)
+ 		struct bio_vec *bvec;
+ 		int i;
  
-+/*
-+ * io_uring_setup() flags
-+ */
-+#define IORING_SETUP_IOPOLL	(1U << 0)	/* io_context is polled */
-+
- #define IORING_OP_NOP		0
- #define IORING_OP_READV		1
- #define IORING_OP_WRITEV	2
+-		bio_for_each_segment_all(bvec, bio, i)
+-			put_page(bvec->bv_page);
++		if (!bio_flagged(bio, BIO_NO_PAGE_REF))
++			bio_for_each_segment_all(bvec, bio, i)
++				put_page(bvec->bv_page);
+ 		bio_put(bio);
+ 	}
+ }
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index d66bf5f32610..791fee35df88 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -215,6 +215,7 @@ struct bio {
+ /*
+  * bio flags
+  */
++#define BIO_NO_PAGE_REF	0	/* don't put release vec pages */
+ #define BIO_SEG_VALID	1	/* bi_phys_segments valid */
+ #define BIO_CLONED	2	/* doesn't own data */
+ #define BIO_BOUNCED	3	/* bio is a bounce bio */
 -- 
 2.17.1
 
