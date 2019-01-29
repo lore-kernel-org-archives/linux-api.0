@@ -1,107 +1,60 @@
-From: Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
-Subject: Re: [RFD] A mount api that notices previous mounts
-Date: Tue, 29 Jan 2019 15:01:30 -0800
-Message-ID: <03e0993b-21db-1cc4-7a33-0236de7be20d@schaufler-ca.com>
-References: <87va2716mh.fsf@xmission.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH 12/18] io_uring: add support for pre-mapped user IO buffers
+Date: Wed, 30 Jan 2019 00:03:44 +0100
+Message-ID: <CAG48ez3x5x+P=8L1p-bHvcUnypeT1TizkXq2+Q0bCP0GdE-bog@mail.gmail.com>
+References: <20190129192702.3605-1-axboe@kernel.dk> <20190129192702.3605-13-axboe@kernel.dk>
+ <CAG48ez2VkeSEZA+9H4UAcg86uC77gU=UkTG8L1V58TuR9pDEqg@mail.gmail.com> <dd366179-c003-752f-743d-2bea4f6b796c@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <util-linux-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87va2716mh.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-Content-Language: en-US
-Sender: util-linux-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Karel Zak <kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, util-linux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <dd366179-c003-752f-743d-2bea4f6b796c@kernel.dk>
+Sender: owner-linux-aio@kvack.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-aio@kvack.org, linux-block@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, hch@lst.de, jmoyer@redhat.com, Avi Kivity <avi@scylladb.com>
 List-Id: linux-api@vger.kernel.org
 
-On 1/29/2019 1:44 PM, Eric W. Biederman wrote:
-> All,
+On Tue, Jan 29, 2019 at 11:56 PM Jens Axboe <axboe@kernel.dk> wrote:
+> On 1/29/19 3:44 PM, Jann Horn wrote:
+> > On Tue, Jan 29, 2019 at 8:27 PM Jens Axboe <axboe@kernel.dk> wrote:
+> >> If we have fixed user buffers, we can map them into the kernel when we
+> >> setup the io_context. That avoids the need to do get_user_pages() for
+> >> each and every IO.
+> >>
+> >> To utilize this feature, the application must call io_uring_register()
+> >> after having setup an io_uring context, passing in
+> >> IORING_REGISTER_BUFFERS as the opcode. The argument must be a pointer
+> >> to an iovec array, and the nr_args should contain how many iovecs the
+> >> application wishes to map.
+> >>
+> >> If successful, these buffers are now mapped into the kernel, eligible
+> >> for IO. To use these fixed buffers, the application must use the
+> >> IORING_OP_READ_FIXED and IORING_OP_WRITE_FIXED opcodes, and then
+> >> set sqe->index to the desired buffer index. sqe->addr..sqe->addr+seq->len
+> >> must point to somewhere inside the indexed buffer.
+> >>
+> >> The application may register buffers throughout the lifetime of the
+> >> io_uring context. It can call io_uring_register() with
+> >> IORING_UNREGISTER_BUFFERS as the opcode to unregister the current set of
+> >> buffers, and then register a new set. The application need not
+> >> unregister buffers explicitly before shutting down the io_uring context.
+[...]
+> >> +       imu = &ctx->user_bufs[index];
+> >> +       buf_addr = READ_ONCE(sqe->addr);
+> >> +       if (buf_addr < imu->ubuf || buf_addr + len > imu->ubuf + imu->len)
+> >
+> > This can wrap around if `buf_addr` or `len` is very big, right? Then
+> > you e.g. get past the first check because `buf_addr` is sufficiently
+> > big, and get past the second check because `buf_addr + len` wraps
+> > around and becomes small.
 >
-> With the existing mount API it is possible to mount a filesystem
-> like:
->
-> mount -t ext4 /dev/sda1 -o user_xattr /some/path
-> mount -t ext4 /dev/sda1 -o nouser_xattr /some/other/path
->
-> And have both mount commands succeed and have two mounts of the same
-> filesystem.  If the mounter is not attentive or the first mount is added
-> earlier it may not be immediately noticed that a mount option that is
-> needed for the correct operation or the security of the system is lost.
->
-> We have seen this failure mode with both devpts and proc.  So it is not
-> theoretical, and it has resulted in CVEs.
->
-> In some cases the existing mount API (such as a conflict between ro and
-> rw) handles this by returning -EBUSY.  So we may be able to correct this
-> in the existing mount API.  But it is always very tricky to to get
-> adequate testing for a change like that to avoid regressions, so I am
-> proposing we change this in the new mount api.
->
-> This has been brought up before and I have been told it is technically
-> infeasible to make this work.  To counter that I have sat down and
-> implemented it.
->
-> The basic idea is:
->  - get a handle to a filesystem
->    (passing enough options to uniquely identify the super block).
->    Also capture enough state in the file handle to let you know if
->    the file system has it's mount options changed between system calls.
->    (essentially this is just the fs code that calls sget)
->
->  - If the super block has not been configured allow setting the file
->    systems options.
->
->  - If the super block has already been configured require reading the
->    file systems mount options before setting/updating the file systems
->    mount options.
->
-> To complement that I have functionality that:
->  - Allows reading a file systems current mount options.
->  - Allows reading the mount options that are needed to get a handle to
->    the filesystem.  For most filesystems it is just the block device
->    name.  For nfs is is essentially all mount options.  For btrfs
->    it is the block device name, and the "devices=" mount option for
->    secondary block device names.
+> Good point. I wonder if we have a verification helper for something like
+> this?
 
-Are you taking the LSM specific mount options into account?
+check_add_overflow() exists, I guess that might help a bit. I don't
+think I've seen a more specific helper for this situation.
 
->
-> Please find below a tree where all of this is implemented and working.
-> Not all file systems have been converted but the most of the unconverted
-> ones are just a couple minutes work as I have converted all of the file
-> system mount helper routines.
->
-> Also please find below an example mount program that takes the same set
-> of mount options as mount(8) today and mounts filesystems with the
-> proposed new mount api.
->  - Without having any filesystem mount knowledge it sucessfully figures
->
-> out which system calls different mount options needs to be applied
->    to.
->
-> - Without having any filesystem specific knowledge in most cases it
->    can detect if a mount option you specify is already specified to an
->    existing mount or not.  For duplicates it can detect it ignores them.
->    For the other cases it fails the mount as it thinks the mount options
->    are different.
->
->  - Which demonstrates it safe to put the detection and remediation of
->    multiple mount commands resolving to the same filesystem in user
->    space.
->
-> I really don't care whose code gets used as long as it works.  I do very
-> much care that we don't add a new mount api that has the confusion flaws
-> of the existing mount api.
->
-> Along the way I have also detected a lot of room for improvement on the
-> mount path for filesystems.  Those cleanup patches are in my tree below
-> and will be extracting them and sending them along shortly.
->
-> Comments?
->
-> git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git no-losing-mount-options-proof-of-concept
->
->
->
-> Eric
->
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
