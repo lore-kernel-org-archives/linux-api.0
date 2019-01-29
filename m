@@ -1,71 +1,94 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH 10/18] io_uring: batch io_kiocb allocation
-Date: Tue, 29 Jan 2019 11:14:45 -0700
-Message-ID: <9e99b94e-dcd1-4c4d-1dc9-384b29f31528@kernel.dk>
+Subject: Re: [PATCH 07/18] io_uring: support for IO polling
+Date: Tue, 29 Jan 2019 11:31:51 -0700
+Message-ID: <f21fc281-bbaa-3af5-3d64-a55933f1cbfb@kernel.dk>
 References: <20190128213538.13486-1-axboe@kernel.dk>
- <20190128213538.13486-11-axboe@kernel.dk> <20190129172624.GB15347@lst.de>
+ <20190128213538.13486-8-axboe@kernel.dk> <20190129172414.GA15347@lst.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20190129172624.GB15347@lst.de>
+In-Reply-To: <20190129172414.GA15347@lst.de>
 Content-Language: en-US
 Sender: owner-linux-aio@kvack.org
 To: Christoph Hellwig <hch@lst.de>
 Cc: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-man@vger.kernel.org, linux-api@vger.kernel.org, jmoyer@redhat.com, avi@scylladb.com
 List-Id: linux-api@vger.kernel.org
 
-On 1/29/19 10:26 AM, Christoph Hellwig wrote:
->> -static struct io_kiocb *io_get_req(struct io_ring_ctx *ctx)
->> +static struct io_kiocb *io_get_req(struct io_ring_ctx *ctx,
->> +				   struct io_submit_state *state)
->>  {
->> +	gfp_t gfp = GFP_ATOMIC | __GFP_NOWARN;
+On 1/29/19 10:24 AM, Christoph Hellwig wrote:
+>>  
+>> @@ -118,12 +120,16 @@ struct io_kiocb {
+>>  	struct list_head	list;
+>>  	unsigned int		flags;
+>>  #define REQ_F_FORCE_NONBLOCK	1	/* inline submission attempt */
+>> +#define REQ_F_IOPOLL_COMPLETED	2	/* polled IO has completed */
+>> +#define REQ_F_IOPOLL_EAGAIN	4	/* submission got EAGAIN */
+>>  	u64			user_data;
+>> +	u64			res;
 > 
-> No actually in this patch, but why do we do GFP_ATOMIC allocations
-> here?  We aren't in irq context or under a spinlock.
+> Should this be ret or error instead?  res is kinda off.  A little
+> comment describing it won't hurt either.  Last but not least with
+> the actual errno value stored here we probably don't need the
+> REQ_F_IOPOLL_EAGAIN flag, do we?
 
-Just to avoid dipping into more expensive allocs. Probably not a big
-deal, I'll remove the atomic.
+Yes good point, that flag pre-dates us having the error in there. I'll
+rename the field, too.
 
+>> +	/*
+>> +	 * Only spin for completions if we don't have multiple devices hanging
+>> +	 * off our complete list, and we're under the requested amount.
+>> +	 */
+>> +	spin = !ctx->poll_multi_file && (*nr_events < min);
 > 
->> +	if (!state)
->> +		req = kmem_cache_alloc(req_cachep, gfp);
-> 
-> Add a
-> 		if (!req)
-> 			goto out;
-> 
-> plus the missing braces here..
-> 
->> +	else if (!state->free_reqs) {
->> +		size_t sz;
->> +		int ret;
+> no need for the braces here.
+
+Killed
+
+>> +static int io_iopoll_getevents(struct io_ring_ctx *ctx, unsigned int *nr_events,
+>> +				long min)
+>> +{
+>> +	int ret;
 >> +
->> +		sz = min_t(size_t, state->ios_left, ARRAY_SIZE(state->reqs));
->> +		ret = kmem_cache_alloc_bulk(req_cachep, gfp, sz,
->> +						state->reqs);
->> +		if (ret <= 0)
->> +			goto out;
->> +		state->free_reqs = ret - 1;
->> +		state->cur_req = 1;
->> +		req = state->reqs[0];
->> +	} else {
->> +		req = state->reqs[state->cur_req];
->> +		state->free_reqs--;
->> +		state->cur_req++;
->> +	}
+>> +	do {
+>> +		if (list_empty(&ctx->poll_list))
+>> +			return 0;
 >> +
->>  	if (req) {
->>  		req->ctx = ctx;
->>  		req->flags = 0;
->>  		return req;
->>  	}
+>> +		ret = io_do_iopoll(ctx, nr_events, min);
+>> +		if (ret < 0)
+>> +			break;
+>> +	} while (min && *nr_events < min);
+>> +
+>> +	if (ret < 0)
+>> +		return ret;
+>> +
+>> +	return *nr_events < min;
 > 
-> ... and we don't need this conditional, which would otherwise also
-> be in the fast path.
+> The code looks a little clumsy to me.  Why not:
+> 
+> 	while (!list_empty(&ctx->poll_list)) {
+> 		int ret = io_do_iopoll(ctx, nr_events, min);
+> 		if (ret)
+> 			return ret;
+> 
+> 		if (!min || *nr_events >= min)
+> 			return 0;
+> 	}
+> 
+> 	return 1;
 
-Good idea, done.
+I think you messed up the 0/1 here, how about this:
+
+	while (!list_empty(&ctx->poll_list)) {
+		int ret;
+
+		ret = io_do_iopoll(ctx, nr_events, min);
+		if (ret < 0)
+			return ret;
+		if (!min || *nr_events >= min)
+			return 1;
+	}
+
+	return 0;
 
 -- 
 Jens Axboe
