@@ -1,7 +1,7 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: [PATCH 04/18] iomap: wire up the iopoll method
-Date: Wed, 30 Jan 2019 14:55:26 -0700
-Message-ID: <20190130215540.20871-5-axboe@kernel.dk>
+Subject: [PATCH 01/18] fs: add an iopoll method to struct file_operations
+Date: Wed, 30 Jan 2019 14:55:23 -0700
+Message-ID: <20190130215540.20871-2-axboe@kernel.dk>
 References: <20190130215540.20871-1-axboe@kernel.dk>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20190130215540.20871-1-axboe@kernel.dk>
@@ -12,159 +12,62 @@ List-Id: linux-api@vger.kernel.org
 
 From: Christoph Hellwig <hch@lst.de>
 
-Store the request queue the last bio was submitted to in the iocb
-private data in addition to the cookie so that we find the right block
-device.  Also refactor the common direct I/O bio submission code into a
-nice little helper.
+This new methods is used to explicitly poll for I/O completion for an
+iocb.  It must be called for any iocb submitted asynchronously (that
+is with a non-null ki_complete) which has the IOCB_HIPRI flag set.
 
+The method is assisted by a new ki_cookie field in struct iocb to store
+the polling cookie.
+
+Reviewed-by: Johannes Thumshirn <jthumshirn@suse.de>
 Signed-off-by: Christoph Hellwig <hch@lst.de>
-
-Modified to use bio_set_polled().
-
 Signed-off-by: Jens Axboe <axboe@kernel.dk>
 ---
- fs/gfs2/file.c        |  2 ++
- fs/iomap.c            | 43 ++++++++++++++++++++++++++++---------------
- fs/xfs/xfs_file.c     |  1 +
- include/linux/iomap.h |  1 +
- 4 files changed, 32 insertions(+), 15 deletions(-)
+ Documentation/filesystems/vfs.txt | 3 +++
+ include/linux/fs.h                | 2 ++
+ 2 files changed, 5 insertions(+)
 
-diff --git a/fs/gfs2/file.c b/fs/gfs2/file.c
-index a2dea5bc0427..58a768e59712 100644
---- a/fs/gfs2/file.c
-+++ b/fs/gfs2/file.c
-@@ -1280,6 +1280,7 @@ const struct file_operations gfs2_file_fops = {
- 	.llseek		= gfs2_llseek,
- 	.read_iter	= gfs2_file_read_iter,
- 	.write_iter	= gfs2_file_write_iter,
-+	.iopoll		= iomap_dio_iopoll,
- 	.unlocked_ioctl	= gfs2_ioctl,
- 	.mmap		= gfs2_mmap,
- 	.open		= gfs2_open,
-@@ -1310,6 +1311,7 @@ const struct file_operations gfs2_file_fops_nolock = {
- 	.llseek		= gfs2_llseek,
- 	.read_iter	= gfs2_file_read_iter,
- 	.write_iter	= gfs2_file_write_iter,
-+	.iopoll		= iomap_dio_iopoll,
- 	.unlocked_ioctl	= gfs2_ioctl,
- 	.mmap		= gfs2_mmap,
- 	.open		= gfs2_open,
-diff --git a/fs/iomap.c b/fs/iomap.c
-index a3088fae567b..4ee50b76b4a1 100644
---- a/fs/iomap.c
-+++ b/fs/iomap.c
-@@ -1454,6 +1454,28 @@ struct iomap_dio {
- 	};
- };
+diff --git a/Documentation/filesystems/vfs.txt b/Documentation/filesystems/vfs.txt
+index 8dc8e9c2913f..761c6fd24a53 100644
+--- a/Documentation/filesystems/vfs.txt
++++ b/Documentation/filesystems/vfs.txt
+@@ -857,6 +857,7 @@ struct file_operations {
+ 	ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);
+ 	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
+ 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
++	int (*iopoll)(struct kiocb *kiocb, bool spin);
+ 	int (*iterate) (struct file *, struct dir_context *);
+ 	int (*iterate_shared) (struct file *, struct dir_context *);
+ 	__poll_t (*poll) (struct file *, struct poll_table_struct *);
+@@ -902,6 +903,8 @@ otherwise noted.
  
-+int iomap_dio_iopoll(struct kiocb *kiocb, bool spin)
-+{
-+	struct request_queue *q = READ_ONCE(kiocb->private);
+   write_iter: possibly asynchronous write with iov_iter as source
+ 
++  iopoll: called when aio wants to poll for completions on HIPRI iocbs
 +
-+	if (!q)
-+		return 0;
-+	return blk_poll(q, READ_ONCE(kiocb->ki_cookie), spin);
-+}
-+EXPORT_SYMBOL_GPL(iomap_dio_iopoll);
-+
-+static void iomap_dio_submit_bio(struct iomap_dio *dio, struct iomap *iomap,
-+		struct bio *bio)
-+{
-+	atomic_inc(&dio->ref);
-+
-+	if (dio->iocb->ki_flags & IOCB_HIPRI)
-+		bio_set_polled(bio, dio->iocb);
-+
-+	dio->submit.last_queue = bdev_get_queue(iomap->bdev);
-+	dio->submit.cookie = submit_bio(bio);
-+}
-+
- static ssize_t iomap_dio_complete(struct iomap_dio *dio)
- {
- 	struct kiocb *iocb = dio->iocb;
-@@ -1566,7 +1588,7 @@ static void iomap_dio_bio_end_io(struct bio *bio)
- 	}
- }
+   iterate: called when the VFS needs to read the directory contents
  
--static blk_qc_t
-+static void
- iomap_dio_zero(struct iomap_dio *dio, struct iomap *iomap, loff_t pos,
- 		unsigned len)
- {
-@@ -1580,15 +1602,10 @@ iomap_dio_zero(struct iomap_dio *dio, struct iomap *iomap, loff_t pos,
- 	bio->bi_private = dio;
- 	bio->bi_end_io = iomap_dio_bio_end_io;
+   iterate_shared: called when the VFS needs to read the directory contents
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 811c77743dad..ccb0b7a63aa5 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -310,6 +310,7 @@ struct kiocb {
+ 	int			ki_flags;
+ 	u16			ki_hint;
+ 	u16			ki_ioprio; /* See linux/ioprio.h */
++	unsigned int		ki_cookie; /* for ->iopoll */
+ } __randomize_layout;
  
--	if (dio->iocb->ki_flags & IOCB_HIPRI)
--		flags |= REQ_HIPRI;
--
- 	get_page(page);
- 	__bio_add_page(bio, page, len, 0);
- 	bio_set_op_attrs(bio, REQ_OP_WRITE, flags);
--
--	atomic_inc(&dio->ref);
--	return submit_bio(bio);
-+	iomap_dio_submit_bio(dio, iomap, bio);
- }
- 
- static loff_t
-@@ -1691,9 +1708,6 @@ iomap_dio_bio_actor(struct inode *inode, loff_t pos, loff_t length,
- 				bio_set_pages_dirty(bio);
- 		}
- 
--		if (dio->iocb->ki_flags & IOCB_HIPRI)
--			bio->bi_opf |= REQ_HIPRI;
--
- 		iov_iter_advance(dio->submit.iter, n);
- 
- 		dio->size += n;
-@@ -1701,11 +1715,7 @@ iomap_dio_bio_actor(struct inode *inode, loff_t pos, loff_t length,
- 		copied += n;
- 
- 		nr_pages = iov_iter_npages(&iter, BIO_MAX_PAGES);
--
--		atomic_inc(&dio->ref);
--
--		dio->submit.last_queue = bdev_get_queue(iomap->bdev);
--		dio->submit.cookie = submit_bio(bio);
-+		iomap_dio_submit_bio(dio, iomap, bio);
- 	} while (nr_pages);
- 
- 	/*
-@@ -1916,6 +1926,9 @@ iomap_dio_rw(struct kiocb *iocb, struct iov_iter *iter,
- 	if (dio->flags & IOMAP_DIO_WRITE_FUA)
- 		dio->flags &= ~IOMAP_DIO_NEED_SYNC;
- 
-+	WRITE_ONCE(iocb->ki_cookie, dio->submit.cookie);
-+	WRITE_ONCE(iocb->private, dio->submit.last_queue);
-+
- 	if (!atomic_dec_and_test(&dio->ref)) {
- 		if (!dio->wait_for_completion)
- 			return -EIOCBQUEUED;
-diff --git a/fs/xfs/xfs_file.c b/fs/xfs/xfs_file.c
-index e47425071e65..60c2da41f0fc 100644
---- a/fs/xfs/xfs_file.c
-+++ b/fs/xfs/xfs_file.c
-@@ -1203,6 +1203,7 @@ const struct file_operations xfs_file_operations = {
- 	.write_iter	= xfs_file_write_iter,
- 	.splice_read	= generic_file_splice_read,
- 	.splice_write	= iter_file_splice_write,
-+	.iopoll		= iomap_dio_iopoll,
- 	.unlocked_ioctl	= xfs_file_ioctl,
- #ifdef CONFIG_COMPAT
- 	.compat_ioctl	= xfs_file_compat_ioctl,
-diff --git a/include/linux/iomap.h b/include/linux/iomap.h
-index 9a4258154b25..0fefb5455bda 100644
---- a/include/linux/iomap.h
-+++ b/include/linux/iomap.h
-@@ -162,6 +162,7 @@ typedef int (iomap_dio_end_io_t)(struct kiocb *iocb, ssize_t ret,
- 		unsigned flags);
- ssize_t iomap_dio_rw(struct kiocb *iocb, struct iov_iter *iter,
- 		const struct iomap_ops *ops, iomap_dio_end_io_t end_io);
-+int iomap_dio_iopoll(struct kiocb *kiocb, bool spin);
- 
- #ifdef CONFIG_SWAP
- struct file;
+ static inline bool is_sync_kiocb(struct kiocb *kiocb)
+@@ -1786,6 +1787,7 @@ struct file_operations {
+ 	ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);
+ 	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
+ 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
++	int (*iopoll)(struct kiocb *kiocb, bool spin);
+ 	int (*iterate) (struct file *, struct dir_context *);
+ 	int (*iterate_shared) (struct file *, struct dir_context *);
+ 	__poll_t (*poll) (struct file *, struct poll_table_struct *);
 -- 
 2.17.1
 
