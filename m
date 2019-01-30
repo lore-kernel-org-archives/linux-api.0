@@ -1,37 +1,59 @@
-From: Jiri Kosina <jikos@kernel.org>
-Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
-Date: Wed, 30 Jan 2019 13:29:55 +0100 (CET)
-Message-ID: <nycvar.YFH.7.76.1901301328560.6626@cbobk.fhfr.pm>
-References: <nycvar.YFH.7.76.1901240009560.6626@cbobk.fhfr.pm> <CAHk-=wg+C65FJHB=Jx1OvuJP4kvpWdw+5G=XOXB6X_KB2XuofA@mail.gmail.com> <20190124002455.GA23181@nautica> <20190124124501.GA18012@nautica> <nycvar.YFH.7.76.1901241523500.6626@cbobk.fhfr.pm>
- <nycvar.YFH.7.76.1901272335040.6626@cbobk.fhfr.pm> <20190128000547.GA25155@nautica> <nycvar.YFH.7.76.1901300050550.6626@cbobk.fhfr.pm> <20190130090945.GS18811@dhcp22.suse.cz>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: [PATCH 2/3] mm/filemap: initiate readahead even if IOCB_NOWAIT is set for the I/O
+Date: Wed, 30 Jan 2019 13:44:19 +0100
+Message-ID: <20190130124420.1834-3-vbabka@suse.cz>
+References: <nycvar.YFH.7.76.1901051817390.16954@cbobk.fhfr.pm>
+ <20190130124420.1834-1-vbabka@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190130090945.GS18811@dhcp22.suse.cz>
+In-Reply-To: <20190130124420.1834-1-vbabka@suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Dominique Martinet <asmadeus@codewreck.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Josh Snyder <joshs@netflix.com>, Dave Chinner <david@fromorbit.com>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, Greg KH <gregkh@linuxfoundation.org>, Jann Horn <jannh@google.com>, Jiri Kosina <jkosina@suse.cz>, Dominique Martinet <asmadeus@codewreck.org>, Andy Lutomirski <luto@amacapital.net>, Dave Chinner <david@fromorbit.com>, Kevin Easton <kevin@guarana.org>, Matthew Wilcox <willy@infradead.org>, Cyril Hrubis <chrubis@suse.cz>, Tejun Heo <tj@kernel.org>, "Kirill A . Shutemov" <kirill@shutemov.name>, Daniel Gruss <daniel@gruss.cc>, Vlastimil Babka <vbabka@suse.cz>, Jiri Kosina <jikos@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 30 Jan 2019, Michal Hocko wrote:
+From: Jiri Kosina <jkosina@suse.cz>
 
-> > > I'm not sure why I'm the main recipient of that mail but answering 
-> > > because I am -- let's get these patches in through the regular -mm 
-> > > tree though
-> > 
-> > *prod to mm maintainers* (at least for an opinion)
-> 
-> Could you repost those patches please? The thread is long and it is not
-> really clear what is the most up-to-date state of patches (at least to
-> me).
+preadv2(RWF_NOWAIT) can be used to open a side-channel to pagecache contents, as
+it reveals metadata about residency of pages in pagecache.
 
-Vlastimil seems to have one extra patch to go on top, so we agreed that 
-he'll be sending that as a complete self-contained series (either as a 
-followup to the very first e-mail in this monsterthread, or completely 
-separately) shortly.
+If preadv2(RWF_NOWAIT) returns immediately, it provides a clear "page not
+resident" information, and vice versa.
 
-Thanks,
+Close that sidechannel by always initiating readahead on the cache if we
+encounter a cache miss for preadv2(RWF_NOWAIT); with that in place, probing
+the pagecache residency itself will actually populate the cache, making the
+sidechannel useless.
 
+Originally-by: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Dominique Martinet <asmadeus@codewreck.org>
+Cc: Andy Lutomirski <luto@amacapital.net>
+Cc: Dave Chinner <david@fromorbit.com>
+Cc: Kevin Easton <kevin@guarana.org>
+Cc: Matthew Wilcox <willy@infradead.org>
+Cc: Cyril Hrubis <chrubis@suse.cz>
+Cc: Tejun Heo <tj@kernel.org>
+Cc: Kirill A. Shutemov <kirill@shutemov.name>
+Cc: Daniel Gruss <daniel@gruss.cc>
+Signed-off-by: Jiri Kosina <jkosina@suse.cz>
+Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
+---
+ mm/filemap.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 9f5e323e883e..7bcdd36e629d 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -2075,8 +2075,6 @@ static ssize_t generic_file_buffered_read(struct kiocb *iocb,
+ 
+ 		page = find_get_page(mapping, index);
+ 		if (!page) {
+-			if (iocb->ki_flags & IOCB_NOWAIT)
+-				goto would_block;
+ 			page_cache_sync_readahead(mapping,
+ 					ra, filp,
+ 					index, last_index - index);
 -- 
-Jiri Kosina
-SUSE Labs
+2.20.1
