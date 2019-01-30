@@ -1,7 +1,7 @@
 From: Vlastimil Babka <vbabka@suse.cz>
-Subject: [PATCH 2/3] mm/filemap: initiate readahead even if IOCB_NOWAIT is set for the I/O
-Date: Wed, 30 Jan 2019 13:44:19 +0100
-Message-ID: <20190130124420.1834-3-vbabka@suse.cz>
+Subject: [PATCH 1/3] mm/mincore: make mincore() more conservative
+Date: Wed, 30 Jan 2019 13:44:18 +0100
+Message-ID: <20190130124420.1834-2-vbabka@suse.cz>
 References: <nycvar.YFH.7.76.1901051817390.16954@cbobk.fhfr.pm>
  <20190130124420.1834-1-vbabka@suse.cz>
 Mime-Version: 1.0
@@ -15,18 +15,21 @@ List-Id: linux-api@vger.kernel.org
 
 From: Jiri Kosina <jkosina@suse.cz>
 
-preadv2(RWF_NOWAIT) can be used to open a side-channel to pagecache contents, as
-it reveals metadata about residency of pages in pagecache.
+The semantics of what mincore() considers to be resident is not completely
+clear, but Linux has always (since 2.3.52, which is when mincore() was
+initially done) treated it as "page is available in page cache".
 
-If preadv2(RWF_NOWAIT) returns immediately, it provides a clear "page not
-resident" information, and vice versa.
+That's potentially a problem, as that [in]directly exposes meta-information
+about pagecache / memory mapping state even about memory not strictly belonging
+to the process executing the syscall, opening possibilities for sidechannel
+attacks.
 
-Close that sidechannel by always initiating readahead on the cache if we
-encounter a cache miss for preadv2(RWF_NOWAIT); with that in place, probing
-the pagecache residency itself will actually populate the cache, making the
-sidechannel useless.
+Change the semantics of mincore() so that it only reveals pagecache information
+for non-anonymous mappings that belog to files that the calling process could
+(if it tried to) successfully open for writing.
 
 Originally-by: Linus Torvalds <torvalds@linux-foundation.org>
+Originally-by: Dominique Martinet <asmadeus@codewreck.org>
 Cc: Dominique Martinet <asmadeus@codewreck.org>
 Cc: Andy Lutomirski <luto@amacapital.net>
 Cc: Dave Chinner <david@fromorbit.com>
@@ -39,21 +42,42 @@ Cc: Daniel Gruss <daniel@gruss.cc>
 Signed-off-by: Jiri Kosina <jkosina@suse.cz>
 Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
 ---
- mm/filemap.c | 2 --
- 1 file changed, 2 deletions(-)
+ mm/mincore.c | 15 ++++++++++++++-
+ 1 file changed, 14 insertions(+), 1 deletion(-)
 
-diff --git a/mm/filemap.c b/mm/filemap.c
-index 9f5e323e883e..7bcdd36e629d 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -2075,8 +2075,6 @@ static ssize_t generic_file_buffered_read(struct kiocb *iocb,
+diff --git a/mm/mincore.c b/mm/mincore.c
+index 218099b5ed31..747a4907a3ac 100644
+--- a/mm/mincore.c
++++ b/mm/mincore.c
+@@ -169,6 +169,14 @@ static int mincore_pte_range(pmd_t *pmd, unsigned long addr, unsigned long end,
+ 	return 0;
+ }
  
- 		page = find_get_page(mapping, index);
- 		if (!page) {
--			if (iocb->ki_flags & IOCB_NOWAIT)
--				goto would_block;
- 			page_cache_sync_readahead(mapping,
- 					ra, filp,
- 					index, last_index - index);
++static inline bool can_do_mincore(struct vm_area_struct *vma)
++{
++	return vma_is_anonymous(vma) ||
++		(vma->vm_file &&
++			(inode_owner_or_capable(file_inode(vma->vm_file))
++			 || inode_permission(file_inode(vma->vm_file), MAY_WRITE) == 0));
++}
++
+ /*
+  * Do a chunk of "sys_mincore()". We've already checked
+  * all the arguments, we hold the mmap semaphore: we should
+@@ -189,8 +197,13 @@ static long do_mincore(unsigned long addr, unsigned long pages, unsigned char *v
+ 	vma = find_vma(current->mm, addr);
+ 	if (!vma || addr < vma->vm_start)
+ 		return -ENOMEM;
+-	mincore_walk.mm = vma->vm_mm;
+ 	end = min(vma->vm_end, addr + (pages << PAGE_SHIFT));
++	if (!can_do_mincore(vma)) {
++		unsigned long pages = (end - addr) >> PAGE_SHIFT;
++		memset(vec, 1, pages);
++		return pages;
++	}
++	mincore_walk.mm = vma->vm_mm;
+ 	err = walk_page_range(addr, end, &mincore_walk);
+ 	if (err < 0)
+ 		return err;
 -- 
 2.20.1
