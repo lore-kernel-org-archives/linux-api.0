@@ -1,47 +1,75 @@
-From: Jiri Kosina <jikos@kernel.org>
-Subject: Re: [PATCH 2/3] mm/filemap: initiate readahead even if IOCB_NOWAIT
- is set for the I/O
-Date: Wed, 30 Jan 2019 16:15:55 +0100 (CET)
-Message-ID: <nycvar.YFH.7.76.1901301614501.6626@cbobk.fhfr.pm>
-References: <nycvar.YFH.7.76.1901051817390.16954@cbobk.fhfr.pm> <20190130124420.1834-1-vbabka@suse.cz> <20190130124420.1834-3-vbabka@suse.cz> <87munii3uj.fsf@oldenburg2.str.redhat.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCH 09/18] io_uring: use fget/fput_many() for file references
+Date: Wed, 30 Jan 2019 08:33:52 -0700
+Message-ID: <c0fd9a4c-e2ce-fa17-da95-a32b688f0ae0@kernel.dk>
+References: <20190129192702.3605-1-axboe@kernel.dk>
+ <20190129192702.3605-10-axboe@kernel.dk>
+ <CAG48ez3_1mY1Fb91Q3H-S2+4OiMsV5F9v78JX+YMjWqLteHpzw@mail.gmail.com>
+ <bceb5e2b-9634-1296-a2a9-ed521f0e31d4@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87munii3uj.fsf@oldenburg2.str.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>
-Cc: Vlastimil Babka <vbabka@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, Greg KH <gregkh@linuxfoundation.org>, Jann Horn <jannh@google.com>, Dominique Martinet <asmadeus@codewreck.org>, Andy Lutomirski <luto@amacapital.net>, Dave Chinner <david@fromorbit.com>, Kevin Easton <kevin@guarana.org>, Matthew Wilcox <willy@infradead.org>, Cyril Hrubis <chrubis@suse.cz>, Tejun Heo <tj@kernel.org>, "Kirill A . Shutemov" <kirill@shutemov.name>, Daniel Gruss <daniel@gruss.cc>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <bceb5e2b-9634-1296-a2a9-ed521f0e31d4@kernel.dk>
+Content-Language: en-US
+Sender: owner-linux-aio@kvack.org
+To: Jann Horn <jannh@google.com>
+Cc: linux-aio@kvack.org, linux-block@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, hch@lst.de, jmoyer@redhat.com, Avi Kivity <avi@scylladb.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 30 Jan 2019, Florian Weimer wrote:
-
-> > preadv2(RWF_NOWAIT) can be used to open a side-channel to pagecache
-> > contents, as it reveals metadata about residency of pages in
-> > pagecache.
-> >
-> > If preadv2(RWF_NOWAIT) returns immediately, it provides a clear "page
-> > not resident" information, and vice versa.
-> >
-> > Close that sidechannel by always initiating readahead on the cache if
-> > we encounter a cache miss for preadv2(RWF_NOWAIT); with that in place,
-> > probing the pagecache residency itself will actually populate the
-> > cache, making the sidechannel useless.
+On 1/29/19 4:44 PM, Jens Axboe wrote:
+> On 1/29/19 4:31 PM, Jann Horn wrote:
+>> On Tue, Jan 29, 2019 at 8:27 PM Jens Axboe <axboe@kernel.dk> wrote:
+>>> Add a separate io_submit_state structure, to cache some of the things
+>>> we need for IO submission.
+>>>
+>>> One such example is file reference batching. io_submit_state. We get as
+>>> many references as the number of sqes we are submitting, and drop
+>>> unused ones if we end up switching files. The assumption here is that
+>>> we're usually only dealing with one fd, and if there are multiple,
+>>> hopefuly they are at least somewhat ordered. Could trivially be extended
+>>> to cover multiple fds, if needed.
+>>>
+>>> On the completion side we do the same thing, except this is trivially
+>>> done just locally in io_iopoll_reap().
+>> [...]
+>>> +static void io_file_put(struct io_submit_state *state, struct file *file)
+>>> +{
+>>> +       if (!state) {
+>>> +               fput(file);
+>>> +       } else if (state->file) {
+>>> +               int diff = state->has_refs - state->used_refs;
+>>> +
+>>> +               if (diff)
+>>> +                       fput_many(state->file, diff);
+>>> +               state->file = NULL;
+>>> +       }
+>>> +}
+>>
+>> Hmm, this function confuses me.
+>> The state==NULL path works as I'd expect, it calls fput() on the file.
+>> But if `state!=NULL && state->file==NULL`, it does nothing, it never
+>> uses `file`.
+>> And if `state->file!=NULL`, it drops the excess bias on the file's
+>> refcount, but it doesn't drop the current reference - and again
+>> without even looking at `file`.
+>>
+>> So when io_prep_rw() uses io_file_get() to grab a reference on a file
+>> it hasn't seen before, it will acquire `ios_left` references and
+>> actually use one of them; then if it goes through the out_fput error
+>> path, it goes through the path for `state->file!=NULL`, drops
+>> `ios_left-1` references (leaving the refcount elevated by 1), and
+>> forgets about the file?
 > 
-> I think this needs to use a different flag because the semantics are so
-> much different.  If I understand this change correctly, previously,
-> RWF_NOWAIT essentially avoided any I/O, and now it does not.
+> I'll take a look, it's not impossible there's an off-by-one there.
 
-It still avoid synchronous I/O, due to this code still being in place:
-
-                if (!PageUptodate(page)) {
-                        if (iocb->ki_flags & IOCB_NOWAIT) {
-                                put_page(page);
-                                goto would_block;
-                        }
-
-but goes the would_block path only after initiating asynchronous 
-readahead.
+Fixed it!
 
 -- 
-Jiri Kosina
-SUSE Labs
+Jens Axboe
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
