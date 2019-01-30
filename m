@@ -1,7 +1,7 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: [PATCH 01/18] fs: add an iopoll method to struct file_operations
-Date: Wed, 30 Jan 2019 14:55:23 -0700
-Message-ID: <20190130215540.20871-2-axboe@kernel.dk>
+Subject: [PATCH 03/18] block: add bio_set_polled() helper
+Date: Wed, 30 Jan 2019 14:55:25 -0700
+Message-ID: <20190130215540.20871-4-axboe@kernel.dk>
 References: <20190130215540.20871-1-axboe@kernel.dk>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20190130215540.20871-1-axboe@kernel.dk>
@@ -10,64 +10,66 @@ To: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
 Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, Jens Axboe <axboe@kernel.dk>
 List-Id: linux-api@vger.kernel.org
 
-From: Christoph Hellwig <hch@lst.de>
+For the upcoming async polled IO, we can't sleep allocating requests.
+If we do, then we introduce a deadlock where the submitter already
+has async polled IO in-flight, but can't wait for them to complete
+since polled requests must be active found and reaped.
 
-This new methods is used to explicitly poll for I/O completion for an
-iocb.  It must be called for any iocb submitted asynchronously (that
-is with a non-null ki_complete) which has the IOCB_HIPRI flag set.
+Utilize the helper in the blockdev DIRECT_IO code.
 
-The method is assisted by a new ki_cookie field in struct iocb to store
-the polling cookie.
-
-Reviewed-by: Johannes Thumshirn <jthumshirn@suse.de>
-Signed-off-by: Christoph Hellwig <hch@lst.de>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
 Signed-off-by: Jens Axboe <axboe@kernel.dk>
 ---
- Documentation/filesystems/vfs.txt | 3 +++
- include/linux/fs.h                | 2 ++
- 2 files changed, 5 insertions(+)
+ fs/block_dev.c      |  4 ++--
+ include/linux/bio.h | 14 ++++++++++++++
+ 2 files changed, 16 insertions(+), 2 deletions(-)
 
-diff --git a/Documentation/filesystems/vfs.txt b/Documentation/filesystems/vfs.txt
-index 8dc8e9c2913f..761c6fd24a53 100644
---- a/Documentation/filesystems/vfs.txt
-+++ b/Documentation/filesystems/vfs.txt
-@@ -857,6 +857,7 @@ struct file_operations {
- 	ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);
- 	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
- 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
-+	int (*iopoll)(struct kiocb *kiocb, bool spin);
- 	int (*iterate) (struct file *, struct dir_context *);
- 	int (*iterate_shared) (struct file *, struct dir_context *);
- 	__poll_t (*poll) (struct file *, struct poll_table_struct *);
-@@ -902,6 +903,8 @@ otherwise noted.
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index f18d076a2596..392e2bfb636f 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -247,7 +247,7 @@ __blkdev_direct_IO_simple(struct kiocb *iocb, struct iov_iter *iter,
+ 		task_io_account_write(ret);
+ 	}
+ 	if (iocb->ki_flags & IOCB_HIPRI)
+-		bio.bi_opf |= REQ_HIPRI;
++		bio_set_polled(&bio, iocb);
  
-   write_iter: possibly asynchronous write with iov_iter as source
+ 	qc = submit_bio(&bio);
+ 	for (;;) {
+@@ -415,7 +415,7 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
+ 		nr_pages = iov_iter_npages(iter, BIO_MAX_PAGES);
+ 		if (!nr_pages) {
+ 			if (iocb->ki_flags & IOCB_HIPRI)
+-				bio->bi_opf |= REQ_HIPRI;
++				bio_set_polled(bio, iocb);
  
-+  iopoll: called when aio wants to poll for completions on HIPRI iocbs
+ 			qc = submit_bio(bio);
+ 			WRITE_ONCE(iocb->ki_cookie, qc);
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index 7380b094dcca..f6f0a2b3cbc8 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -823,5 +823,19 @@ static inline int bio_integrity_add_page(struct bio *bio, struct page *page,
+ 
+ #endif /* CONFIG_BLK_DEV_INTEGRITY */
+ 
++/*
++ * Mark a bio as polled. Note that for async polled IO, the caller must
++ * expect -EWOULDBLOCK if we cannot allocate a request (or other resources).
++ * We cannot block waiting for requests on polled IO, as those completions
++ * must be found by the caller. This is different than IRQ driven IO, where
++ * it's safe to wait for IO to complete.
++ */
++static inline void bio_set_polled(struct bio *bio, struct kiocb *kiocb)
++{
++	bio->bi_opf |= REQ_HIPRI;
++	if (!is_sync_kiocb(kiocb))
++		bio->bi_opf |= REQ_NOWAIT;
++}
 +
-   iterate: called when the VFS needs to read the directory contents
- 
-   iterate_shared: called when the VFS needs to read the directory contents
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 811c77743dad..ccb0b7a63aa5 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -310,6 +310,7 @@ struct kiocb {
- 	int			ki_flags;
- 	u16			ki_hint;
- 	u16			ki_ioprio; /* See linux/ioprio.h */
-+	unsigned int		ki_cookie; /* for ->iopoll */
- } __randomize_layout;
- 
- static inline bool is_sync_kiocb(struct kiocb *kiocb)
-@@ -1786,6 +1787,7 @@ struct file_operations {
- 	ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);
- 	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
- 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
-+	int (*iopoll)(struct kiocb *kiocb, bool spin);
- 	int (*iterate) (struct file *, struct dir_context *);
- 	int (*iterate_shared) (struct file *, struct dir_context *);
- 	__poll_t (*poll) (struct file *, struct poll_table_struct *);
+ #endif /* CONFIG_BLOCK */
+ #endif /* __LINUX_BIO_H */
 -- 
 2.17.1
 
