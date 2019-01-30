@@ -1,7 +1,7 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: [PATCH 08/18] fs: add fget_many() and fput_many()
-Date: Wed, 30 Jan 2019 14:55:30 -0700
-Message-ID: <20190130215540.20871-9-axboe@kernel.dk>
+Subject: [PATCH 07/18] io_uring: support for IO polling
+Date: Wed, 30 Jan 2019 14:55:29 -0700
+Message-ID: <20190130215540.20871-8-axboe@kernel.dk>
 References: <20190130215540.20871-1-axboe@kernel.dk>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20190130215540.20871-1-axboe@kernel.dk>
@@ -10,141 +10,424 @@ To: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
 Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, Jens Axboe <axboe@kernel.dk>
 List-Id: linux-api@vger.kernel.org
 
-Some uses cases repeatedly get and put references to the same file, but
-the only exposed interface is doing these one at the time. As each of
-these entail an atomic inc or dec on a shared structure, that cost can
-add up.
+Add support for a polled io_uring context. When a read or write is
+submitted to a polled context, the application must poll for completions
+on the CQ ring through io_uring_enter(2). Polled IO may not generate
+IRQ completions, hence they need to be actively found by the application
+itself.
 
-Add fget_many(), which works just like fget(), except it takes an
-argument for how many references to get on the file. Ditto fput_many(),
-which can drop an arbitrary number of references to a file.
+To use polling, io_uring_setup() must be used with the
+IORING_SETUP_IOPOLL flag being set. It is illegal to mix and match
+polled and non-polled IO on an io_uring.
 
-Reviewed-by: Christoph Hellwig <hch@lst.de>
 Signed-off-by: Jens Axboe <axboe@kernel.dk>
 ---
- fs/file.c            | 15 ++++++++++-----
- fs/file_table.c      |  9 +++++++--
- include/linux/file.h |  2 ++
- include/linux/fs.h   |  4 +++-
- 4 files changed, 22 insertions(+), 8 deletions(-)
+ fs/io_uring.c                 | 261 ++++++++++++++++++++++++++++++++--
+ include/uapi/linux/io_uring.h |   5 +
+ 2 files changed, 257 insertions(+), 9 deletions(-)
 
-diff --git a/fs/file.c b/fs/file.c
-index 3209ee271c41..97df385d6ab0 100644
---- a/fs/file.c
-+++ b/fs/file.c
-@@ -705,7 +705,7 @@ void do_close_on_exec(struct files_struct *files)
- 	spin_unlock(&files->file_lock);
+diff --git a/fs/io_uring.c b/fs/io_uring.c
+index bcd3a7c72142..90a745c34e8b 100644
+--- a/fs/io_uring.c
++++ b/fs/io_uring.c
+@@ -102,6 +102,14 @@ struct io_ring_ctx {
+ 
+ 	struct {
+ 		spinlock_t		completion_lock;
++		bool			poll_multi_file;
++		/*
++		 * ->poll_list is protected by the ctx->uring_lock for
++		 * io_uring instances that don't use IORING_SETUP_SQPOLL.
++		 * For SQPOLL, only the single threaded io_sq_thread() will
++		 * manipulate the list, hence no extra locking is needed there.
++		 */
++		struct list_head	poll_list;
+ 	} ____cacheline_aligned_in_smp;
+ };
+ 
+@@ -120,12 +128,15 @@ struct io_kiocb {
+ 	struct list_head	list;
+ 	unsigned int		flags;
+ #define REQ_F_FORCE_NONBLOCK	1	/* inline submission attempt */
++#define REQ_F_IOPOLL_COMPLETED	2	/* polled IO has completed */
+ 	u64			user_data;
++	u64			error;
+ 
+ 	struct work_struct	work;
+ };
+ 
+ #define IO_PLUG_THRESHOLD		2
++#define IO_IOPOLL_BATCH			8
+ 
+ static struct kmem_cache *req_cachep;
+ 
+@@ -157,6 +168,7 @@ static struct io_ring_ctx *io_ring_ctx_alloc(struct io_uring_params *p)
+ 	mutex_init(&ctx->uring_lock);
+ 	init_waitqueue_head(&ctx->wait);
+ 	spin_lock_init(&ctx->completion_lock);
++	INIT_LIST_HEAD(&ctx->poll_list);
+ 	return ctx;
  }
  
--static struct file *__fget(unsigned int fd, fmode_t mask)
-+static struct file *__fget(unsigned int fd, fmode_t mask, unsigned int refs)
- {
- 	struct files_struct *files = current->files;
- 	struct file *file;
-@@ -720,7 +720,7 @@ static struct file *__fget(unsigned int fd, fmode_t mask)
- 		 */
- 		if (file->f_mode & mask)
- 			file = NULL;
--		else if (!get_file_rcu(file))
-+		else if (!get_file_rcu_many(file, refs))
- 			goto loop;
- 	}
- 	rcu_read_unlock();
-@@ -728,15 +728,20 @@ static struct file *__fget(unsigned int fd, fmode_t mask)
- 	return file;
+@@ -251,12 +263,153 @@ static struct io_kiocb *io_get_req(struct io_ring_ctx *ctx)
+ 	return NULL;
  }
  
-+struct file *fget_many(unsigned int fd, unsigned int refs)
++static void io_free_req_many(struct io_ring_ctx *ctx, void **reqs, int *nr)
 +{
-+	return __fget(fd, FMODE_PATH, refs);
++	if (*nr) {
++		kmem_cache_free_bulk(req_cachep, *nr, reqs);
++		io_ring_drop_ctx_refs(ctx, *nr);
++		*nr = 0;
++	}
 +}
 +
- struct file *fget(unsigned int fd)
+ static void io_free_req(struct io_kiocb *req)
  {
--	return __fget(fd, FMODE_PATH);
-+	return __fget(fd, FMODE_PATH, 1);
- }
- EXPORT_SYMBOL(fget);
- 
- struct file *fget_raw(unsigned int fd)
- {
--	return __fget(fd, 0);
-+	return __fget(fd, 0, 1);
- }
- EXPORT_SYMBOL(fget_raw);
- 
-@@ -767,7 +772,7 @@ static unsigned long __fget_light(unsigned int fd, fmode_t mask)
- 			return 0;
- 		return (unsigned long)file;
- 	} else {
--		file = __fget(fd, mask);
-+		file = __fget(fd, mask, 1);
- 		if (!file)
- 			return 0;
- 		return FDPUT_FPUT | (unsigned long)file;
-diff --git a/fs/file_table.c b/fs/file_table.c
-index 5679e7fcb6b0..155d7514a094 100644
---- a/fs/file_table.c
-+++ b/fs/file_table.c
-@@ -326,9 +326,9 @@ void flush_delayed_fput(void)
- 
- static DECLARE_DELAYED_WORK(delayed_fput_work, delayed_fput);
- 
--void fput(struct file *file)
-+void fput_many(struct file *file, unsigned int refs)
- {
--	if (atomic_long_dec_and_test(&file->f_count)) {
-+	if (atomic_long_sub_and_test(refs, &file->f_count)) {
- 		struct task_struct *task = current;
- 
- 		if (likely(!in_interrupt() && !(task->flags & PF_KTHREAD))) {
-@@ -347,6 +347,11 @@ void fput(struct file *file)
- 	}
+ 	io_ring_drop_ctx_refs(req->ctx, 1);
+ 	kmem_cache_free(req_cachep, req);
  }
  
-+void fput(struct file *file)
++/*
++ * Find and free completed poll iocbs
++ */
++static void io_iopoll_complete(struct io_ring_ctx *ctx, unsigned int *nr_events,
++			       struct list_head *done)
 +{
-+	fput_many(file, 1);
++	void *reqs[IO_IOPOLL_BATCH];
++	struct io_kiocb *req;
++	int to_free = 0;
++
++	while (!list_empty(done)) {
++		req = list_first_entry(done, struct io_kiocb, list);
++		list_del(&req->list);
++
++		io_cqring_fill_event(ctx, req->user_data, req->error, 0);
++
++		reqs[to_free++] = req;
++		(*nr_events)++;
++
++		fput(req->rw.ki_filp);
++		if (to_free == ARRAY_SIZE(reqs))
++			io_free_req_many(ctx, reqs, &to_free);
++	}
++	io_commit_cqring(ctx);
++
++	io_free_req_many(ctx, reqs, &to_free);
 +}
 +
- /*
-  * synchronous analog of fput(); for kernel threads that might be needed
-  * in some umount() (and thus can't use flush_delayed_fput() without
-diff --git a/include/linux/file.h b/include/linux/file.h
-index 6b2fb032416c..3fcddff56bc4 100644
---- a/include/linux/file.h
-+++ b/include/linux/file.h
-@@ -13,6 +13,7 @@
- struct file;
- 
- extern void fput(struct file *);
-+extern void fput_many(struct file *, unsigned int);
- 
- struct file_operations;
- struct vfsmount;
-@@ -44,6 +45,7 @@ static inline void fdput(struct fd fd)
++static int io_do_iopoll(struct io_ring_ctx *ctx, unsigned int *nr_events,
++			long min)
++{
++	struct io_kiocb *req, *tmp;
++	LIST_HEAD(done);
++	bool spin;
++	int ret;
++
++	/*
++	 * Only spin for completions if we don't have multiple devices hanging
++	 * off our complete list, and we're under the requested amount.
++	 */
++	spin = !ctx->poll_multi_file && *nr_events < min;
++
++	ret = 0;
++	list_for_each_entry_safe(req, tmp, &ctx->poll_list, list) {
++		struct kiocb *kiocb = &req->rw;
++
++		/*
++		 * Move completed entries to our local list. If we find a
++		 * request that requires polling, break out and complete
++		 * the done list first, if we have entries there.
++		 */
++		if (req->flags & REQ_F_IOPOLL_COMPLETED) {
++			list_move_tail(&req->list, &done);
++			continue;
++		}
++		if (!list_empty(&done))
++			break;
++
++		ret = kiocb->ki_filp->f_op->iopoll(kiocb, spin);
++		if (ret < 0)
++			break;
++
++		if (ret && spin)
++			spin = false;
++		ret = 0;
++	}
++
++	if (!list_empty(&done))
++		io_iopoll_complete(ctx, nr_events, &done);
++
++	return ret;
++}
++
++/*
++ * Poll for a mininum of 'min' events. Note that if min == 0 we consider that a
++ * non-spinning poll check - we'll still enter the driver poll loop, but only
++ * as a non-spinning completion check.
++ */
++static int io_iopoll_getevents(struct io_ring_ctx *ctx, unsigned int *nr_events,
++				long min)
++{
++	while (!list_empty(&ctx->poll_list)) {
++		int ret;
++
++		ret = io_do_iopoll(ctx, nr_events, min);
++		if (ret < 0)
++			return ret;
++		if (!min || *nr_events >= min)
++			return 0;
++	}
++
++	return 1;
++}
++
++/*
++ * We can't just wait for polled events to come to us, we have to actively
++ * find and complete them.
++ */
++static void io_iopoll_reap_events(struct io_ring_ctx *ctx)
++{
++	if (!(ctx->flags & IORING_SETUP_IOPOLL))
++		return;
++
++	mutex_lock(&ctx->uring_lock);
++	while (!list_empty(&ctx->poll_list)) {
++		unsigned int nr_events = 0;
++
++		io_iopoll_getevents(ctx, &nr_events, 1);
++	}
++	mutex_unlock(&ctx->uring_lock);
++}
++
++static int io_iopoll_check(struct io_ring_ctx *ctx, unsigned *nr_events,
++			   long min)
++{
++	int ret = 0;
++
++	do {
++		int tmin = 0;
++
++		if (*nr_events < min)
++			tmin = min - *nr_events;
++
++		ret = io_iopoll_getevents(ctx, nr_events, tmin);
++		if (ret <= 0)
++			break;
++		ret = 0;
++	} while (!*nr_events || !need_resched());
++
++	return ret;
++}
++
+ static void kiocb_end_write(struct kiocb *kiocb)
+ {
+ 	if (kiocb->ki_flags & IOCB_WRITE) {
+@@ -283,9 +436,57 @@ static void io_complete_rw(struct kiocb *kiocb, long res, long res2)
+ 	io_free_req(req);
  }
  
- extern struct file *fget(unsigned int fd);
-+extern struct file *fget_many(unsigned int fd, unsigned int refs);
- extern struct file *fget_raw(unsigned int fd);
- extern unsigned long __fdget(unsigned int fd);
- extern unsigned long __fdget_raw(unsigned int fd);
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index ccb0b7a63aa5..acaad78b6781 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -952,7 +952,9 @@ static inline struct file *get_file(struct file *f)
- 	atomic_long_inc(&f->f_count);
- 	return f;
- }
--#define get_file_rcu(x) atomic_long_inc_not_zero(&(x)->f_count)
-+#define get_file_rcu_many(x, cnt)	\
-+	atomic_long_add_unless(&(x)->f_count, (cnt), 0)
-+#define get_file_rcu(x) get_file_rcu_many((x), 1)
- #define fput_atomic(x)	atomic_long_add_unless(&(x)->f_count, -1, 1)
- #define file_count(x)	atomic_long_read(&(x)->f_count)
++static void io_complete_rw_iopoll(struct kiocb *kiocb, long res, long res2)
++{
++	struct io_kiocb *req = container_of(kiocb, struct io_kiocb, rw);
++
++	kiocb_end_write(kiocb);
++
++	req->error = res;
++	if (res != -EAGAIN)
++		req->flags |= REQ_F_IOPOLL_COMPLETED;
++}
++
++/*
++ * After the iocb has been issued, it's safe to be found on the poll list.
++ * Adding the kiocb to the list AFTER submission ensures that we don't
++ * find it from a io_iopoll_getevents() thread before the issuer is done
++ * accessing the kiocb cookie.
++ */
++static void io_iopoll_req_issued(struct io_kiocb *req)
++{
++	struct io_ring_ctx *ctx = req->ctx;
++
++	/*
++	 * Track whether we have multiple files in our lists. This will impact
++	 * how we do polling eventually, not spinning if we're on potentially
++	 * different devices.
++	 */
++	if (list_empty(&ctx->poll_list)) {
++		ctx->poll_multi_file = false;
++	} else if (!ctx->poll_multi_file) {
++		struct io_kiocb *list_req;
++
++		list_req = list_first_entry(&ctx->poll_list, struct io_kiocb,
++						list);
++		if (list_req->rw.ki_filp != req->rw.ki_filp)
++			ctx->poll_multi_file = true;
++	}
++
++	/*
++	 * For fast devices, IO may have already completed. If it has, add
++	 * it to the front so we find it first.
++	 */
++	if (req->flags & REQ_F_IOPOLL_COMPLETED)
++		list_add(&req->list, &ctx->poll_list);
++	else
++		list_add_tail(&req->list, &ctx->poll_list);
++}
++
+ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe,
+ 		      bool force_nonblock)
+ {
++	struct io_ring_ctx *ctx = req->ctx;
+ 	struct kiocb *kiocb = &req->rw;
+ 	unsigned ioprio;
+ 	int fd, ret;
+@@ -315,12 +516,22 @@ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe,
+ 		kiocb->ki_flags |= IOCB_NOWAIT;
+ 		req->flags |= REQ_F_FORCE_NONBLOCK;
+ 	}
+-	if (kiocb->ki_flags & IOCB_HIPRI) {
+-		ret = -EINVAL;
+-		goto out_fput;
+-	}
++	if (ctx->flags & IORING_SETUP_IOPOLL) {
++		ret = -EOPNOTSUPP;
++		if (!(kiocb->ki_flags & IOCB_DIRECT) ||
++		    !kiocb->ki_filp->f_op->iopoll)
++			goto out_fput;
  
+-	kiocb->ki_complete = io_complete_rw;
++		req->error = 0;
++		kiocb->ki_flags |= IOCB_HIPRI;
++		kiocb->ki_complete = io_complete_rw_iopoll;
++	} else {
++		if (kiocb->ki_flags & IOCB_HIPRI) {
++			ret = -EINVAL;
++			goto out_fput;
++		}
++		kiocb->ki_complete = io_complete_rw;
++	}
+ 	return 0;
+ out_fput:
+ 	fput(kiocb->ki_filp);
+@@ -473,6 +684,9 @@ static int io_nop(struct io_kiocb *req, u64 user_data)
+ {
+ 	struct io_ring_ctx *ctx = req->ctx;
+ 
++	if (unlikely(ctx->flags & IORING_SETUP_IOPOLL))
++		return -EINVAL;
++
+ 	io_cqring_add_event(ctx, user_data, 0, 0);
+ 	io_free_req(req);
+ 	return 0;
+@@ -493,6 +707,8 @@ static int io_fsync(struct io_kiocb *req, const struct io_uring_sqe *sqe,
+ 	if (force_nonblock)
+ 		return -EAGAIN;
+ 
++	if (unlikely(req->ctx->flags & IORING_SETUP_IOPOLL))
++		return -EINVAL;
+ 	if (unlikely(sqe->addr || sqe->ioprio))
+ 		return -EINVAL;
+ 
+@@ -543,7 +759,16 @@ static int __io_submit_sqe(struct io_ring_ctx *ctx, struct io_kiocb *req,
+ 		break;
+ 	}
+ 
+-	return ret;
++	if (ret)
++		return ret;
++
++	if (ctx->flags & IORING_SETUP_IOPOLL) {
++		if (req->error == -EAGAIN)
++			return -EAGAIN;
++		io_iopoll_req_issued(req);
++	}
++
++	return 0;
+ }
+ 
+ static void io_sq_wq_submit_work(struct work_struct *work)
+@@ -572,7 +797,17 @@ static void io_sq_wq_submit_work(struct work_struct *work)
+ 	use_mm(ctx->sqo_mm);
+ 	set_fs(USER_DS);
+ 
+-	ret = __io_submit_sqe(ctx, req, s, false);
++	do {
++		ret = __io_submit_sqe(ctx, req, s, false);
++		/*
++		 * We can get EAGAIN for polled IO even though we're forcing
++		 * a sync submission from here, since we can't wait for
++		 * request slots on the block side.
++		 */
++		if (ret != -EAGAIN)
++			break;
++		cond_resched();
++	} while (1);
+ 
+ 	set_fs(old_fs);
+ 	unuse_mm(ctx->sqo_mm);
+@@ -767,6 +1002,8 @@ static int __io_uring_enter(struct io_ring_ctx *ctx, unsigned to_submit,
+ 			return submitted;
+ 	}
+ 	if (flags & IORING_ENTER_GETEVENTS) {
++		unsigned nr_events = 0;
++
+ 		/*
+ 		 * The application could have included the 'to_submit' count
+ 		 * in how many events it wanted to wait for. If we failed to
+@@ -776,7 +1013,10 @@ static int __io_uring_enter(struct io_ring_ctx *ctx, unsigned to_submit,
+ 		if (submitted < to_submit)
+ 			min_complete = min_t(unsigned, submitted, min_complete);
+ 
+-		ret = io_cqring_wait(ctx, min_complete, sig, sigsz);
++		if (ctx->flags & IORING_SETUP_IOPOLL)
++			ret = io_iopoll_check(ctx, &nr_events, min_complete);
++		else
++			ret = io_cqring_wait(ctx, min_complete, sig, sigsz);
+ 	}
+ 
+ 	return submitted ? submitted : ret;
+@@ -877,6 +1117,8 @@ static void io_ring_ctx_free(struct io_ring_ctx *ctx)
+ 	mmdrop(ctx->sqo_mm);
+ 	put_files_struct(ctx->sqo_files);
+ 
++	io_iopoll_reap_events(ctx);
++
+ 	io_mem_free(ctx->sq_ring);
+ 	io_mem_free(ctx->sq_sqes);
+ 	io_mem_free(ctx->cq_ring);
+@@ -914,6 +1156,7 @@ static void io_ring_ctx_wait_and_kill(struct io_ring_ctx *ctx)
+ 	percpu_ref_kill(&ctx->refs);
+ 	mutex_unlock(&ctx->uring_lock);
+ 
++	io_iopoll_reap_events(ctx);
+ 	wait_for_completion(&ctx->ctx_done);
+ 	io_ring_ctx_free(ctx);
+ }
+@@ -1135,7 +1378,7 @@ static long io_uring_setup(u32 entries, struct io_uring_params __user *params)
+ 			return -EINVAL;
+ 	}
+ 
+-	if (p.flags)
++	if (p.flags & ~IORING_SETUP_IOPOLL)
+ 		return -EINVAL;
+ 
+ 	ret = io_uring_create(entries, &p);
+diff --git a/include/uapi/linux/io_uring.h b/include/uapi/linux/io_uring.h
+index 0fca46f8fc37..4952fc921866 100644
+--- a/include/uapi/linux/io_uring.h
++++ b/include/uapi/linux/io_uring.h
+@@ -30,6 +30,11 @@ struct io_uring_sqe {
+ 	__u64	__pad2[3];
+ };
+ 
++/*
++ * io_uring_setup() flags
++ */
++#define IORING_SETUP_IOPOLL	(1U << 0)	/* io_context is polled */
++
+ #define IORING_OP_NOP		0
+ #define IORING_OP_READV		1
+ #define IORING_OP_WRITEV	2
 -- 
 2.17.1
 
