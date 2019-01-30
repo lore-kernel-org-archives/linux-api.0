@@ -1,35 +1,33 @@
-From: David Howells <dhowells@redhat.com>
+From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
 Subject: Re: [RFD] A mount api that notices previous mounts
-Date: Wed, 30 Jan 2019 13:01:54 +0000
-Message-ID: <9871.1548853314@warthog.procyon.org.uk>
-References: <20190130120654.q5zqcexquca7u337@ws.net.home> <87va2716mh.fsf@xmission.com>
+Date: Wed, 30 Jan 2019 07:24:00 -0600
+Message-ID: <877eemth1r.fsf@xmission.com>
+References: <87va2716mh.fsf@xmission.com>
+        <9151.1548852654@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190130120654.q5zqcexquca7u337@ws.net.home>
-Content-ID: <9870.1548853314.1@warthog.procyon.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Karel Zak <kzak@redhat.com>
-Cc: dhowells@redhat.com, "Eric W. Biederman" <ebiederm@xmission.com>, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, Al Viro <viro@ZenIV.linux.org.uk>, Miklos Szeredi <miklos@szeredi.hu>, Linus Torvalds <torvalds@linux-foundation.org>, util-linux@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>
+Content-Type: text/plain
+Return-path: <util-linux-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <9151.1548852654-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org> (David Howells's message
+        of "Wed, 30 Jan 2019 12:50:54 +0000")
+Sender: util-linux-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Karel Zak <kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, util-linux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-Karel Zak <kzak@redhat.com> wrote:
+David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
 
-> It seems more elegant is to ask for Nth option as expected by fsinfo().
+> You need to rebase on linus/master.  A bunch of your patches are obsoleted by
+> Al's security changes there.
 
-More elegant yes, but there's an issue with atomiticity[*].  I'm in the
-process of switching to something that returns you a single buffer with all
-the options in, but each key and each value is preceded by a length count.
+Before anything is merged definitely.
 
-The reasons for not using separator characters are:
+Al dealt with mount options from the LSMs in a slightly different way
+than I did.  At a practical level Als version of the changes to the LSMs
+and mine are you say po-tae-toe I say po-tah-toe differences so I don't
+see that influencing semantics up at the api level.
 
- (1) There's no separator char that cannot validly occur within an option[**].
+For purposes of disucssing an API (not of merging one) I chose to start
+with code I had a reasonable amount of testing against, so that other
+people could play with it without expecting trouble.
 
- (2) Makes it possible to return binary values if we need to.
-
-David
-
-[*] Atomic with respect to remount calls, that is.
-
-[**] Oh, and look at cifs where you can *change* the separator char during
-     option parsing ("sep=<char>").
+Eric
