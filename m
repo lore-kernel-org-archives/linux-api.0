@@ -1,77 +1,64 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: [PATCHSET v10] io_uring IO interface
-Date: Wed, 30 Jan 2019 14:55:22 -0700
-Message-ID: <20190130215540.20871-1-axboe@kernel.dk>
+Subject: [PATCH 02/18] block: wire up block device iopoll method
+Date: Wed, 30 Jan 2019 14:55:24 -0700
+Message-ID: <20190130215540.20871-3-axboe@kernel.dk>
+References: <20190130215540.20871-1-axboe@kernel.dk>
 Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <20190130215540.20871-1-axboe@kernel.dk>
 Sender: owner-linux-aio@kvack.org
 To: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
-Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com
+Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, Jens Axboe <axboe@kernel.dk>
 List-Id: linux-api@vger.kernel.org
 
-Keeping the review train hot, this has all review comments addressed
-from v9, with a few other fixes on top.
+From: Christoph Hellwig <hch@lst.de>
 
-Outside of review comments, this fixes a few annoyances with the
-SQPOLL thread. We now shut it down quick, regardless of idle setting,
-and I got rid of the silly need to park it for exit.
+Just call blk_poll on the iocb cookie, we can derive the block device
+from the inode trivially.
 
-Also fixed a case with SQPOLL where we'd get -EAGAIN due to request
-shortage in the block layer, and we didn't handle that properly. Now
-we do.
+Reviewed-by: Johannes Thumshirn <jthumshirn@suse.de>
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+---
+ fs/block_dev.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
-The liburing git repo now has a io_uring_setup(2) man page, but
-otherwise no changes. You can clone that here:
-
-git://git.kernel.dk/liburing
-
-Patches are against 5.0-rc4, and can also be found in my io_uring branch
-here:
-
-git://git.kernel.dk/linux-block io_uring
-
-Since v9:
-- Use FOLL_ANON instead of checking vmas for file backing
-- Fix bad nospec index limiter
-- Address various minor review comments
-- Fix drop extra file reference in case of submission error
-- Fix race with sqe->opcode and "needs mm" checks without sqe copy
-- Un-unionize io_kiocb->submit, from the async path it's almost
-  impossible to do this safely.
-- Clear io_kiocb->error for polled IO
-- Fix EAGAIN for polled IO and SQPOLL for the !force_nonblock case of
-  running out of block requests
-- Remove need for kthread parking
-- Ensure sqo thread exits as quickly as possible
-
-
- Documentation/filesystems/vfs.txt      |    3 +
- arch/x86/entry/syscalls/syscall_32.tbl |    3 +
- arch/x86/entry/syscalls/syscall_64.tbl |    3 +
- block/bio.c                            |   59 +-
- fs/Makefile                            |    1 +
- fs/block_dev.c                         |   19 +-
- fs/file.c                              |   15 +-
- fs/file_table.c                        |    9 +-
- fs/gfs2/file.c                         |    2 +
- fs/io_uring.c                          | 2611 ++++++++++++++++++++++++
- fs/iomap.c                             |   48 +-
- fs/xfs/xfs_file.c                      |    1 +
- include/linux/bio.h                    |   14 +
- include/linux/blk_types.h              |    1 +
- include/linux/file.h                   |    2 +
- include/linux/fs.h                     |    6 +-
- include/linux/iomap.h                  |    1 +
- include/linux/sched/user.h             |    2 +-
- include/linux/syscalls.h               |    8 +
- include/uapi/asm-generic/unistd.h      |    8 +-
- include/uapi/linux/io_uring.h          |  141 ++
- init/Kconfig                           |    9 +
- kernel/sys_ni.c                        |    3 +
- 23 files changed, 2928 insertions(+), 41 deletions(-)
-
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index 58a4c1217fa8..f18d076a2596 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -293,6 +293,14 @@ struct blkdev_dio {
+ 
+ static struct bio_set blkdev_dio_pool;
+ 
++static int blkdev_iopoll(struct kiocb *kiocb, bool wait)
++{
++	struct block_device *bdev = I_BDEV(kiocb->ki_filp->f_mapping->host);
++	struct request_queue *q = bdev_get_queue(bdev);
++
++	return blk_poll(q, READ_ONCE(kiocb->ki_cookie), wait);
++}
++
+ static void blkdev_bio_end_io(struct bio *bio)
+ {
+ 	struct blkdev_dio *dio = bio->bi_private;
+@@ -410,6 +418,7 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
+ 				bio->bi_opf |= REQ_HIPRI;
+ 
+ 			qc = submit_bio(bio);
++			WRITE_ONCE(iocb->ki_cookie, qc);
+ 			break;
+ 		}
+ 
+@@ -2076,6 +2085,7 @@ const struct file_operations def_blk_fops = {
+ 	.llseek		= block_llseek,
+ 	.read_iter	= blkdev_read_iter,
+ 	.write_iter	= blkdev_write_iter,
++	.iopoll		= blkdev_iopoll,
+ 	.mmap		= generic_file_mmap,
+ 	.fsync		= blkdev_fsync,
+ 	.unlocked_ioctl	= block_ioctl,
 -- 
-Jens Axboe
-
+2.17.1
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
