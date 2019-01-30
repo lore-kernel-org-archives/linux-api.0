@@ -1,55 +1,55 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
+From: ebiederm@xmission.com (Eric W. Biederman)
 Subject: Re: [RFD] A mount api that notices previous mounts
-Date: Wed, 30 Jan 2019 07:35:39 -0600
-Message-ID: <87h8dqs1xw.fsf@xmission.com>
-References: <20190130120654.q5zqcexquca7u337@ws.net.home>
-        <87va2716mh.fsf@xmission.com> <9871.1548853314@warthog.procyon.org.uk>
+Date: Wed, 30 Jan 2019 07:45:31 -0600
+Message-ID: <877eemqmx0.fsf@xmission.com>
+References: <87va2716mh.fsf@xmission.com>
+        <20190130120654.q5zqcexquca7u337@ws.net.home>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <util-linux-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <9871.1548853314-S6HVgzuS8uM4Awkfq6JHfwNdhmdF6hFW@public.gmane.org> (David Howells's message
-        of "Wed, 30 Jan 2019 13:01:54 +0000")
-Sender: util-linux-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: Karel Zak <kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, util-linux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190130120654.q5zqcexquca7u337@ws.net.home> (Karel Zak's
+        message of "Wed, 30 Jan 2019 13:06:54 +0100")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Karel Zak <kzak@redhat.com>
+Cc: linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, Al Viro <viro@ZenIV.linux.org.uk>, David Howells <dhowells@redhat.com>, Miklos Szeredi <miklos@szeredi.hu>, Linus Torvalds <torvalds@linux-foundation.org>, util-linux@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>
 List-Id: linux-api@vger.kernel.org
 
-David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> writes:
+Karel Zak <kzak@redhat.com> writes:
 
-> Karel Zak <kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org> wrote:
+> On Tue, Jan 29, 2019 at 03:44:22PM -0600, Eric W. Biederman wrote:
+>> so I am proposing we change this in the new mount api.
 >
->> It seems more elegant is to ask for Nth option as expected by fsinfo().
+> Well, this forces me to ask what the new API is? :-)
 >
-> More elegant yes, but there's an issue with atomiticity[*].  I'm in the
-> process of switching to something that returns you a single buffer with all
-> the options in, but each key and each value is preceded by a length count.
+> It seems that David uses fsconfig() and fsinfo() to set and get
+> mount options, and your patch introduces fsset() and fsoptions().
 >
-> The reasons for not using separator characters are:
+> IMHO differentiate between FS driver and FS instance is a good idea it
+> makes things more extendable. The sequence number in the instance is a
+> good example.
 >
->  (1) There's no separator char that cannot validly occur within an option[**].
-
-*Blink*  I had missed the cifs issue.  So yes we certainly need
-a better way to encode things in the buffer.  I just used a single
-string as an easy way to place everything in a buffer.
-
->  (2) Makes it possible to return binary values if we need to.
-
-I don't totally disagree with this.  But I will point out that
-except for coda passing a file descriptor there are no filesystems
-that currently take or need binary options.
-
-I suspect that as long as userspace supports /etc/fstab and we in turn
-support /proc/mounts there is going to be a lot of pressure to keep
-the majority of options so they  can be encoded in a string separated by
-commas.
-
-> David
+> But for me David's fsinfo() seems better that fsoptions() and
+> fsspecifier(). I'm not sure about "all mount options as one string"
+> From your example is pretty obvious how much energy is necessary to 
+> split and join the strings.
 >
-> [*] Atomic with respect to remount calls, that is.
+> It seems more elegant is to ask for Nth option as expected by fsinfo().
+> It also seems that fsinfo() is able to replace fsname() and fstype().
+>
+> It would be better to extend David's fsinfo() to work with FS instance
+> and to return specifiers. And use fsconfig() rather than fsset().
 
-There are also mount options that depend on each other and whose order
-matters with respect to other mount options extN's ("sb=<NNNN>") for
-example.
+As David has pointed out with cifs having a sep= option we need a better
+story of parsing the options in the kernel.
 
-> [**] Oh, and look at cifs where you can *change* the separator char during
->      option parsing ("sep=<char>").
+What my branch does is demonstrate there is at least one way we can
+avoid mount options being silently different from what userspace
+expects.
+
+Which means my branch is fine for looking at semantics and possible
+system calls, but not much else.
+
+I actually used multiple system calls just so I could avoid dealing
+with multi-plexor systems calls.
+
+Eric
