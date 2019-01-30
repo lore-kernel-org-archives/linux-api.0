@@ -1,52 +1,54 @@
-From: ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman)
-Subject: Re: [RFD] A mount api that notices previous mounts
-Date: Tue, 29 Jan 2019 19:23:12 -0600
-Message-ID: <87ef8vx7jz.fsf@xmission.com>
-References: <87va2716mh.fsf@xmission.com>
-        <03e0993b-21db-1cc4-7a33-0236de7be20d@schaufler-ca.com>
-        <87r2cvx7wz.fsf@xmission.com>
+From: Joseph Myers <joseph@codesourcery.com>
+Subject: Re: [RFC PATCH glibc 1/4] glibc: Perform rseq(2) registration at C
+ startup and thread creation (v6)
+Date: Wed, 30 Jan 2019 02:40:37 +0000
+Message-ID: <alpine.DEB.2.21.1901300231210.24454@digraph.polyomino.org.uk>
+References: <20190121213530.23803-1-mathieu.desnoyers@efficios.com> <632671842.3079.1548781059601.JavaMail.zimbra@efficios.com> <alpine.DEB.2.21.1901292153190.24454@digraph.polyomino.org.uk> <596949707.3888.1548812359874.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <util-linux-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <87r2cvx7wz.fsf-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org> (Eric W. Biederman's message of
-        "Tue, 29 Jan 2019 19:15:24 -0600")
-Sender: util-linux-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org>
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Al Viro <viro-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Miklos Szeredi <miklos-sUDqSbJrdHQHWmgEVkV9KA@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Karel Zak <kzak-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, util-linux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, LSM <linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="US-ASCII"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <596949707.3888.1548812359874.JavaMail.zimbra@efficios.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org (Eric W. Biederman) writes:
+On Tue, 29 Jan 2019, Mathieu Desnoyers wrote:
 
-> Casey Schaufler <casey-iSGtlc1asvQWG2LlvL+J4A@public.gmane.org> writes:
->> Are you taking the LSM specific mount options into account?
->
-> In the design yes, and I allow setting them.  It appears in the code
-> to retrieve the mount options I forgot to call security_sb_show_options.
->
-> For finding the super block that you are going to mount the LSM mount
-> options are not relevant.  Even nfs will not want to set those early as
-> they do not help determine the nfs super block.  So the only place where
-> there is anything interesting in my api is in reading back the security
-> options so they can be compared to the options the mounter is setting.
->
-> I will add the missing call to security_sb_show_options which is enough
-> to fix selinux.  Unfortunately smack does not currently implement
-> .sb_show_options.  Not implementing smack_sb_show_options means
-> /proc/mounts fails to match /etc/mtab which is a bug and it is likely
-> a real workd bug for the people who use smack and don't want to depend
-> on /etc/mtab, or are transitioning away from it.
->
-> Casey do you want to implement smack_sb_show_options or should I put it
-> on my todo list?
+> My thinking was to put the #error in the generic header, so architectures that
+> are not supported yet cannot build against rseq.h at all, so we don't end up
+> in a broken upgrade scenario. I'm open to alternative ways to do it though, as
+> long as we don't let not-yet-supported architectures build broken code.
 
-Oh.  I should add that I am always parsing the LSM mount options out so
-that there is not a chance of the individual filesystems implementing
-comflicting options even when there are no LSMs active.  Without that I
-am afraid we run the risk of having LSM mount otions in conflict with
-ordinary filesystems options at some point and by the time we discover
-it it would start introducing filesystem regressions.
+Any case with #error in installed glibc headers needs special-casing in 
+check-installed-headers.sh (and, thus, such errors are to be discouraged).
 
-That does help with stack though as there is no fundamental reason only
-one LSM could process mount options.
+Cases where architectures commonly need their own bits/ headers, 
+especially where those are likely to need updating for new kernel 
+versions, are also discouraged.  Furthermore, a normal check for glibc 
+headers updates needed for a new kernel version would only involve 
+examining uapi headers (and the non-uapi linux/socket.h for new address 
+families, an unfortunate existing wart in this area).  As far as I can 
+see, this value isn't defined in any uapi header, which makes it 
+especially likely to be missed in such a check.  Furthermore, I'm hoping 
+to add more glibc tests for consistency of such constants between glibc 
+and the kernel, to ensure any such updates missing are caught 
+automatically through test failures - but that doesn't work if the 
+constants in question aren't in a uapi header.
 
-Eric
+If this constant were in a uapi header, the glibc header could just 
+include that - is the issue that it's not actually an interface between 
+glibc and the kernel at all, but some kind of purely-userspace interface?
+
+We very definitely wish to keep to a minimum the cases where updates need 
+to be done separately in glibc by each architecture maintainer (that's 
+just a recipe for some updates getting missed accidentally) - meaning that 
+there needs to be a clear way in which someone can tell, globally for all 
+architectures, whether the set of such architecture-specific headers for 
+this constant in glibc is complete and current, and when it needs updating 
+(and this should be as similar to possible to such checks for any other 
+header constant).
+
+-- 
+Joseph S. Myers
+joseph@codesourcery.com
