@@ -1,39 +1,43 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH] mm/mincore: allow for making sys_mincore() privileged
-Date: Wed, 30 Jan 2019 10:09:45 +0100
-Message-ID: <20190130090945.GS18811@dhcp22.suse.cz>
-References: <nycvar.YFH.7.76.1901240009560.6626@cbobk.fhfr.pm>
- <CAHk-=wg+C65FJHB=Jx1OvuJP4kvpWdw+5G=XOXB6X_KB2XuofA@mail.gmail.com>
- <20190124002455.GA23181@nautica>
- <20190124124501.GA18012@nautica>
- <nycvar.YFH.7.76.1901241523500.6626@cbobk.fhfr.pm>
- <nycvar.YFH.7.76.1901272335040.6626@cbobk.fhfr.pm>
- <20190128000547.GA25155@nautica>
- <nycvar.YFH.7.76.1901300050550.6626@cbobk.fhfr.pm>
+From: Karel Zak <kzak@redhat.com>
+Subject: Re: [RFD] A mount api that notices previous mounts
+Date: Wed, 30 Jan 2019 13:06:54 +0100
+Message-ID: <20190130120654.q5zqcexquca7u337@ws.net.home>
+References: <87va2716mh.fsf@xmission.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <nycvar.YFH.7.76.1901300050550.6626@cbobk.fhfr.pm>
+In-Reply-To: <87va2716mh.fsf@xmission.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jiri Kosina <jikos@kernel.org>
-Cc: Dominique Martinet <asmadeus@codewreck.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Josh Snyder <joshs@netflix.com>, Dave Chinner <david@fromorbit.com>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Andrew Morton <akpm@linux-foundation.org>, Greg KH <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, Al Viro <viro@ZenIV.linux.org.uk>, David Howells <dhowells@redhat.com>, Miklos Szeredi <miklos@szeredi.hu>, Linus Torvalds <torvalds@linux-foundation.org>, util-linux@vger.kernel.org, Andy Lutomirski <luto@amacapital.net>
 List-Id: linux-api@vger.kernel.org
 
-On Wed 30-01-19 00:52:02, Jiri Kosina wrote:
-> On Mon, 28 Jan 2019, Dominique Martinet wrote:
-> 
-> > > So, any objections to aproaching it this way?
-> > 
-> > I'm not sure why I'm the main recipient of that mail but answering
-> > because I am -- let's get these patches in through the regular -mm tree
-> > though
-> 
-> *prod to mm maintainers* (at least for an opinion)
+On Tue, Jan 29, 2019 at 03:44:22PM -0600, Eric W. Biederman wrote:
+> so I am proposing we change this in the new mount api.
 
-Could you repost those patches please? The thread is long and it is not
-really clear what is the most up-to-date state of patches (at least to
-me).
+Well, this forces me to ask what the new API is? :-)
+
+It seems that David uses fsconfig() and fsinfo() to set and get
+mount options, and your patch introduces fsset() and fsoptions().
+
+IMHO differentiate between FS driver and FS instance is a good idea it
+makes things more extendable. The sequence number in the instance is a
+good example.
+
+But for me David's fsinfo() seems better that fsoptions() and
+fsspecifier(). I'm not sure about "all mount options as one string"
+>From your example is pretty obvious how much energy is necessary to 
+split and join the strings.
+
+It seems more elegant is to ask for Nth option as expected by fsinfo().
+It also seems that fsinfo() is able to replace fsname() and fstype().
+
+It would be better to extend David's fsinfo() to work with FS instance
+and to return specifiers. And use fsconfig() rather than fsset().
+
+    Karel
+
 -- 
-Michal Hocko
-SUSE Labs
+ Karel Zak  <kzak@redhat.com>
+ http://karelzak.blogspot.com
