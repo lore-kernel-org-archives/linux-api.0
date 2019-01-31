@@ -1,68 +1,94 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH 05/18] Add io_uring IO interface
-Date: Wed, 30 Jan 2019 21:11:46 -0800
-Message-ID: <CALCETrVwHcWcJB4r=14=uB2NHGasW+rRRWVoun6-UY_t3+AU2A@mail.gmail.com>
-References: <20190123153536.7081-1-axboe@kernel.dk> <20190123153536.7081-6-axboe@kernel.dk>
- <20190128145700.GA9795@lst.de> <CALCETrV30uN2qOUEf+kNGWdphBtps7K3rEk8_8+VAwdtPomRkQ@mail.gmail.com>
- <dab3fa32-3887-3264-9fe1-bc3b7abc58b3@kernel.dk>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH 1/3] mm/mincore: make mincore() more conservative
+Date: Thu, 31 Jan 2019 10:43:57 +0100
+Message-ID: <20190131094357.GQ18811@dhcp22.suse.cz>
+References: <nycvar.YFH.7.76.1901051817390.16954@cbobk.fhfr.pm>
+ <20190130124420.1834-1-vbabka@suse.cz>
+ <20190130124420.1834-2-vbabka@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <dab3fa32-3887-3264-9fe1-bc3b7abc58b3@kernel.dk>
-Sender: owner-linux-aio@kvack.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Andy Lutomirski <luto@kernel.org>, Christoph Hellwig <hch@lst.de>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, linux-aio@kvack.org, linux-block@vger.kernel.org, Jeff Moyer <jmoyer@redhat.com>, Avi Kivity <avi@scylladb.com>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190130124420.1834-2-vbabka@suse.cz>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vlastimil Babka <vbabka@suse.cz>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, Greg KH <gregkh@linuxfoundation.org>, Jann Horn <jannh@google.com>, Jiri Kosina <jkosina@suse.cz>, Dominique Martinet <asmadeus@codewreck.org>, Andy Lutomirski <luto@amacapital.net>, Dave Chinner <david@fromorbit.com>, Kevin Easton <kevin@guarana.org>, Matthew Wilcox <willy@infradead.org>, Cyril Hrubis <chrubis@suse.cz>, Tejun Heo <tj@kernel.org>, "Kirill A . Shutemov" <kirill@shutemov.name>, Daniel Gruss <daniel@gruss.cc>, Jiri Kosina <jikos@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
->>> On Jan 28, 2019, at 5:20 PM, Jens Axboe <axboe@kernel.dk> wrote:
->>>
->>> On 1/28/19 5:47 PM, Andy Lutomirski wrote:
->>> On Mon, Jan 28, 2019 at 6:57 AM Christoph Hellwig <hch@lst.de> wrote:
->>>
->>> [please make sure linux-api and linux-man are CCed on new syscalls
->>> so that we get API experts to review them]
->>
->>>> +static int io_import_iovec(struct io_ring_ctx *ctx, int rw,
->>>> +                        const struct io_uring_sqe *sqe,
->>>> +                        struct iovec **iovec, struct iov_iter *iter)
->>>> +{
->>>> +     void __user *buf = u64_to_user_ptr(sqe->addr);
->>>> +
->>>> +#ifdef CONFIG_COMPAT
->>>> +     if (ctx->compat)
->>>> +             return compat_import_iovec(rw, buf, sqe->len, UIO_FASTIOV,
->>>> +                                             iovec, iter);
->>>> +#endif
->>>
->>> I think we can just check in_compat_syscall() here, which means we
->>> can kill the ->compat member, and the separate compat version of the
->>> setup syscall.
->>
->> Since this whole API is new, I don't suppose you could introduce a
->> struct iovec64 or similar and just make the ABI be identical for
->> 64-bit and 32-bit code?
->
-> Sure, that would be straight forward. Is there a strong reason to do
-> so outside of "that would be nice"? It's not like it's a huge amount
-> of code.
+On Wed 30-01-19 13:44:18, Vlastimil Babka wrote:
+> From: Jiri Kosina <jkosina@suse.cz>
+> 
+> The semantics of what mincore() considers to be resident is not completely
+> clear, but Linux has always (since 2.3.52, which is when mincore() was
+> initially done) treated it as "page is available in page cache".
+> 
+> That's potentially a problem, as that [in]directly exposes meta-information
+> about pagecache / memory mapping state even about memory not strictly belonging
+> to the process executing the syscall, opening possibilities for sidechannel
+> attacks.
+> 
+> Change the semantics of mincore() so that it only reveals pagecache information
+> for non-anonymous mappings that belog to files that the calling process could
+> (if it tried to) successfully open for writing.
 
-Here are some minor-ish benefits:
+I agree that this is a better way than the original 574823bfab82
+("Change mincore() to count "mapped" pages rather than "cached" pages").
+One thing is still not clear to me though. Is the new owner/writeable
+check OK for the Netflix-like usecases? I mean does happycache have
+appropriate access to the cache data? I have tried to re-read the
+original thread but couldn't find any confirmation.
 
- - It avoids having a code path that is only used with 32 bit code on
-64 bit kernels and is therefore rarely tested.  (In this particular
-case, the code path doesn't diverge much, but for most compat
-syscalls, it's almost an entirely separate implementation of the main
-syscall code.)
+I nit below
 
- - It makes life easier for tools like strace.
+> Originally-by: Linus Torvalds <torvalds@linux-foundation.org>
+> Originally-by: Dominique Martinet <asmadeus@codewreck.org>
+> Cc: Dominique Martinet <asmadeus@codewreck.org>
+> Cc: Andy Lutomirski <luto@amacapital.net>
+> Cc: Dave Chinner <david@fromorbit.com>
+> Cc: Kevin Easton <kevin@guarana.org>
+> Cc: Matthew Wilcox <willy@infradead.org>
+> Cc: Cyril Hrubis <chrubis@suse.cz>
+> Cc: Tejun Heo <tj@kernel.org>
+> Cc: Kirill A. Shutemov <kirill@shutemov.name>
+> Cc: Daniel Gruss <daniel@gruss.cc>
+> Signed-off-by: Jiri Kosina <jkosina@suse.cz>
+> Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
 
- - It minimizes the chance of making a giant mess on x32, which isn't
-really native or compat.
+other than that looks good to me.
+Acked-by: Michal Hocko <mhocko@suse.com>
 
---Andy
+If this still doesn't help happycache kind of workloads then we should
+add a capability check IMO but this looks like a decent foundation to
+me.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+> ---
+>  mm/mincore.c | 15 ++++++++++++++-
+>  1 file changed, 14 insertions(+), 1 deletion(-)
+> 
+> diff --git a/mm/mincore.c b/mm/mincore.c
+> index 218099b5ed31..747a4907a3ac 100644
+> --- a/mm/mincore.c
+> +++ b/mm/mincore.c
+> @@ -169,6 +169,14 @@ static int mincore_pte_range(pmd_t *pmd, unsigned long addr, unsigned long end,
+>  	return 0;
+>  }
+>  
+> +static inline bool can_do_mincore(struct vm_area_struct *vma)
+> +{
+> +	return vma_is_anonymous(vma) ||
+> +		(vma->vm_file &&
+> +			(inode_owner_or_capable(file_inode(vma->vm_file))
+> +			 || inode_permission(file_inode(vma->vm_file), MAY_WRITE) == 0));
+> +}
+
+This is hard to read. Can we do
+	if (vma_is_anonymous(vma))
+		return true;
+	if (!vma->vm_file)
+		return false;
+	return inode_owner_or_capable(file_inode(vma->vm_file)) ||
+		inode_permission(file_inode(vma->vm_file), MAY_WRITE) == 0;
+
+-- 
+Michal Hocko
+SUSE Labs
