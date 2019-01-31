@@ -1,55 +1,77 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH glibc 1/4] glibc: Perform rseq(2) registration at C
- startup and thread creation (v6)
-Date: Thu, 31 Jan 2019 11:37:08 -0500 (EST)
-Message-ID: <19276261.499.1548952628477.JavaMail.zimbra@efficios.com>
-References: <20190121213530.23803-1-mathieu.desnoyers@efficios.com> <632671842.3079.1548781059601.JavaMail.zimbra@efficios.com> <alpine.DEB.2.21.1901292153190.24454@digraph.polyomino.org.uk> <596949707.3888.1548812359874.JavaMail.zimbra@efficios.com> <alpine.DEB.2.21.1901300231210.24454@digraph.polyomino.org.uk> <1832200535.4162.1548871426959.JavaMail.zimbra@efficios.com> <alpine.DEB.2.21.1901302104360.16754@digraph.polyomino.org.uk>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCH 05/18] Add io_uring IO interface
+Date: Thu, 31 Jan 2019 09:37:42 -0700
+Message-ID: <58f458d1-f2fd-5d7c-974a-06b35701d92d@kernel.dk>
+References: <20190123153536.7081-1-axboe@kernel.dk>
+ <20190123153536.7081-6-axboe@kernel.dk> <20190128145700.GA9795@lst.de>
+ <CALCETrV30uN2qOUEf+kNGWdphBtps7K3rEk8_8+VAwdtPomRkQ@mail.gmail.com>
+ <dab3fa32-3887-3264-9fe1-bc3b7abc58b3@kernel.dk>
+ <CALCETrVwHcWcJB4r=14=uB2NHGasW+rRRWVoun6-UY_t3+AU2A@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.21.1901302104360.16754@digraph.polyomino.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Joseph Myers <joseph@codesourcery.com>
-Cc: carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <CALCETrVwHcWcJB4r=14=uB2NHGasW+rRRWVoun6-UY_t3+AU2A@mail.gmail.com>
+Content-Language: en-US
+Sender: owner-linux-aio@kvack.org
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Christoph Hellwig <hch@lst.de>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, linux-aio@kvack.org, linux-block@vger.kernel.org, Jeff Moyer <jmoyer@redhat.com>, Avi Kivity <avi@scylladb.com>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Jan 30, 2019, at 4:10 PM, Joseph Myers joseph@codesourcery.com wrote:
-
-> On Wed, 30 Jan 2019, Mathieu Desnoyers wrote:
+On 1/30/19 10:11 PM, Andy Lutomirski wrote:
+>>>> On Jan 28, 2019, at 5:20 PM, Jens Axboe <axboe@kernel.dk> wrote:
+>>>>
+>>>> On 1/28/19 5:47 PM, Andy Lutomirski wrote:
+>>>> On Mon, Jan 28, 2019 at 6:57 AM Christoph Hellwig <hch@lst.de> wrote:
+>>>>
+>>>> [please make sure linux-api and linux-man are CCed on new syscalls
+>>>> so that we get API experts to review them]
+>>>
+>>>>> +static int io_import_iovec(struct io_ring_ctx *ctx, int rw,
+>>>>> +                        const struct io_uring_sqe *sqe,
+>>>>> +                        struct iovec **iovec, struct iov_iter *iter)
+>>>>> +{
+>>>>> +     void __user *buf = u64_to_user_ptr(sqe->addr);
+>>>>> +
+>>>>> +#ifdef CONFIG_COMPAT
+>>>>> +     if (ctx->compat)
+>>>>> +             return compat_import_iovec(rw, buf, sqe->len, UIO_FASTIOV,
+>>>>> +                                             iovec, iter);
+>>>>> +#endif
+>>>>
+>>>> I think we can just check in_compat_syscall() here, which means we
+>>>> can kill the ->compat member, and the separate compat version of the
+>>>> setup syscall.
+>>>
+>>> Since this whole API is new, I don't suppose you could introduce a
+>>> struct iovec64 or similar and just make the ABI be identical for
+>>> 64-bit and 32-bit code?
+>>
+>> Sure, that would be straight forward. Is there a strong reason to do
+>> so outside of "that would be nice"? It's not like it's a huge amount
+>> of code.
 > 
->> #if defined (__NR_rseq) && !defined (RSEQ_SIG)
->> # error "UAPI headers support rseq system call, but glibc does not define
->> RSEQ_SIG."
->> #endif
->> 
->> Would that take care of your concerns ?
+> Here are some minor-ish benefits:
 > 
-> That would of course need appropriate conditionals based on the most
-> recent kernel version for which a given glibc version has been updated, so
-> that using new kernel headers with an existing glibc release does not make
-> the build fail (cf. the test of syscall-names.list).
+>  - It avoids having a code path that is only used with 32 bit code on
+> 64 bit kernels and is therefore rarely tested.  (In this particular
+> case, the code path doesn't diverge much, but for most compat
+> syscalls, it's almost an entirely separate implementation of the main
+> syscall code.)
+> 
+>  - It makes life easier for tools like strace.
+> 
+>  - It minimizes the chance of making a giant mess on x32, which isn't
+> really native or compat.
 
-The test I hint at above would not be for the glibc build per se. It would
-be for a check that glibc implements support for all the system calls
-available in the kernel headers (if such a test target currently exists).
-
-> And being able to
-> write such a test only solves one half of the problem - it needs to be
-> easy to determine what value to put in that header in glibc for an
-> architecture that's newly gained support in the kernel, *without* needing
-> any architecture expertise.
-
-I'm afraid this requirement is incompatible with the nature of the RSEQ
-signature. This signature may be required to be a specific trap instruction
-by the architecture, so deciding on its value without architecture expertise
-is not possible.
-
-Thanks,
-
-Mathieu
+Not really anything major here, at least not to the extent that
+suffering the pain of having a different iovec for this is warranted.
 
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Jens Axboe
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
