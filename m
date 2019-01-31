@@ -1,70 +1,25 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH glibc 1/4] glibc: Perform rseq(2) registration at C
- startup and thread creation (v6)
-Date: Thu, 31 Jan 2019 11:53:32 -0500 (EST)
-Message-ID: <492954632.538.1548953612856.JavaMail.zimbra@efficios.com>
-References: <20190121213530.23803-1-mathieu.desnoyers@efficios.com> <632671842.3079.1548781059601.JavaMail.zimbra@efficios.com> <alpine.DEB.2.21.1901292153190.24454@digraph.polyomino.org.uk> <596949707.3888.1548812359874.JavaMail.zimbra@efficios.com> <alpine.DEB.2.21.1901300231210.24454@digraph.polyomino.org.uk> <1832200535.4162.1548871426959.JavaMail.zimbra@efficios.com> <alpine.DEB.2.21.1901302104360.16754@digraph.polyomino.org.uk> <19276261.499.1548952628477.JavaMail.zimbra@efficios.com>
+From: Josh Snyder <joshs@netflix.com>
+Subject: Re: [PATCH 1/3] mm/mincore: make mincore() more conservative
+Date: Thu, 31 Jan 2019 09:46:48 -0800
+Message-ID: <CA+t-nXQwU7q_2jVM+PY16wETRp9tBngcpWMtSnBz1u1ev-ZBig@mail.gmail.com>
+References: <nycvar.YFH.7.76.1901051817390.16954@cbobk.fhfr.pm>
+ <20190130124420.1834-1-vbabka@suse.cz> <20190130124420.1834-2-vbabka@suse.cz> <20190131094357.GQ18811@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <19276261.499.1548952628477.JavaMail.zimbra@efficios.com>
+In-Reply-To: <20190131094357.GQ18811@dhcp22.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Joseph Myers <joseph@codesourcery.com>
-Cc: carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Vlastimil Babka <vbabka@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, open list <linux-kernel@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Greg KH <gregkh@linuxfoundation.org>, Jann Horn <jannh@google.com>, Jiri Kosina <jkosina@suse.cz>, Dominique Martinet <asmadeus@codewreck.org>, Andy Lutomirski <luto@amacapital.net>, Dave Chinner <david@fromorbit.com>, Kevin Easton <kevin@guarana.org>, Matthew Wilcox <willy@infradead.org>, Cyril Hrubis <chrubis@suse.cz>, Tejun Heo <tj@kernel.org>, "Kirill A . Shutemov" <kirill@shutemov.name>, Daniel Gruss <daniel@gruss.cc>, Jiri Kosina <jikos@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Jan 31, 2019, at 11:37 AM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
+On Thu, Jan 31, 2019 at 1:44 AM Michal Hocko <mhocko@kernel.org> wrote:
+> One thing is still not clear to me though. Is the new owner/writeable
+> check OK for the Netflix-like usecases? I mean does happycache have
+> appropriate access to the cache data? I have tried to re-read the
+> original thread but couldn't find any confirmation.
 
-> ----- On Jan 30, 2019, at 4:10 PM, Joseph Myers joseph@codesourcery.com wrote:
-> 
->> On Wed, 30 Jan 2019, Mathieu Desnoyers wrote:
->> 
->>> #if defined (__NR_rseq) && !defined (RSEQ_SIG)
->>> # error "UAPI headers support rseq system call, but glibc does not define
->>> RSEQ_SIG."
->>> #endif
->>> 
->>> Would that take care of your concerns ?
->> 
->> That would of course need appropriate conditionals based on the most
->> recent kernel version for which a given glibc version has been updated, so
->> that using new kernel headers with an existing glibc release does not make
->> the build fail (cf. the test of syscall-names.list).
-> 
-> The test I hint at above would not be for the glibc build per se. It would
-> be for a check that glibc implements support for all the system calls
-> available in the kernel headers (if such a test target currently exists).
-> 
->> And being able to
->> write such a test only solves one half of the problem - it needs to be
->> easy to determine what value to put in that header in glibc for an
->> architecture that's newly gained support in the kernel, *without* needing
->> any architecture expertise.
-> 
-> I'm afraid this requirement is incompatible with the nature of the RSEQ
-> signature. This signature may be required to be a specific trap instruction
-> by the architecture, so deciding on its value without architecture expertise
-> is not possible.
+The owner/writable check will suit every database that I've ever used
+happycache with, including cassandra, postgres and git.
 
-Just to clarify a point: the "success criterion" I'm aiming for here is to
-provide a rseq integration that does not cause foreseeable user crashes on
-upgrade.
-
-I'm all for taking into account the maintenance burden on glibc maintainers as
-a metric in the implementation choices made, but at this point, I don't see
-how we can achieve success without introducing architecture headers for the
-RSEQ_SIG signature. If you have ideas on how to further minimize the maintenance
-burden for glibc maintainers while still meeting the success criterion, I'm all
-ears.
-
-Thanks,
-
-Mathieu
-
-
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Acked-by: Josh Snyder <joshs@netflix.com>
