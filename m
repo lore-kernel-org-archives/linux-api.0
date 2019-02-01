@@ -1,70 +1,75 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: [PATCHSET v11] io_uring IO interface
-Date: Fri,  1 Feb 2019 08:23:56 -0700
-Message-ID: <20190201152414.23296-1-axboe@kernel.dk>
+Subject: [PATCH 01/18] fs: add an iopoll method to struct file_operations
+Date: Fri,  1 Feb 2019 08:23:57 -0700
+Message-ID: <20190201152414.23296-2-axboe@kernel.dk>
+References: <20190201152414.23296-1-axboe@kernel.dk>
 Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <20190201152414.23296-1-axboe@kernel.dk>
 Sender: owner-linux-aio@kvack.org
 To: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
-Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com
+Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, Jens Axboe <axboe@kernel.dk>
 List-Id: linux-api@vger.kernel.org
 
-Here's v11 of the io_uring project. Main fixes in this release is a
-rework of how we grab the ctx->uring_lock, never using trylock for it in
-a user visible way. Outside of that, fixes around locking for the polled
-list when we hit -EAGAIN conditions on IO submit. This fixes list
-corruption issues with polling that some users have reported.
+From: Christoph Hellwig <hch@lst.de>
 
-As far as I'm concerned, this project is ready to get staged for 5.1.
-Please do review carefully so we can fix any minor nits that might still
-exist.
+This new methods is used to explicitly poll for I/O completion for an
+iocb.  It must be called for any iocb submitted asynchronously (that
+is with a non-null ki_complete) which has the IOCB_HIPRI flag set.
 
-The liburing git repo has a full set of man pages for this, though they
-could probably still use a bit of polish. I'd also like to see a
-io_uring(7) man page to describe the overall design of the project,
-expect that in the not-so-distant future. You can clone that here:
+The method is assisted by a new ki_cookie field in struct iocb to store
+the polling cookie.
 
-git://git.kernel.dk/liburing
+Reviewed-by: Johannes Thumshirn <jthumshirn@suse.de>
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+---
+ Documentation/filesystems/vfs.txt | 3 +++
+ include/linux/fs.h                | 2 ++
+ 2 files changed, 5 insertions(+)
 
-Patches are against 5.0-rc4, and can also be found in my io_uring branch
-here:
-
-git://git.kernel.dk/linux-block io_uring
-
-Changes since v10:
-- Rework uring_lock locking
-- Ensure that async contexts lock when fiddling with polled lists
-- Minor tweak to io_iopoll_check() continue looping condition
-- Fold __io_uring_enter() into io_uring_enter()
-
-
- Documentation/filesystems/vfs.txt      |    3 +
- arch/x86/entry/syscalls/syscall_32.tbl |    3 +
- arch/x86/entry/syscalls/syscall_64.tbl |    3 +
- block/bio.c                            |   59 +-
- fs/Makefile                            |    1 +
- fs/block_dev.c                         |   19 +-
- fs/file.c                              |   15 +-
- fs/file_table.c                        |    9 +-
- fs/gfs2/file.c                         |    2 +
- fs/io_uring.c                          | 2621 ++++++++++++++++++++++++
- fs/iomap.c                             |   48 +-
- fs/xfs/xfs_file.c                      |    1 +
- include/linux/bio.h                    |   14 +
- include/linux/blk_types.h              |    1 +
- include/linux/file.h                   |    2 +
- include/linux/fs.h                     |    6 +-
- include/linux/iomap.h                  |    1 +
- include/linux/sched/user.h             |    2 +-
- include/linux/syscalls.h               |    8 +
- include/uapi/asm-generic/unistd.h      |    8 +-
- include/uapi/linux/io_uring.h          |  141 ++
- init/Kconfig                           |    9 +
- kernel/sys_ni.c                        |    3 +
- 23 files changed, 2938 insertions(+), 41 deletions(-)
-
+diff --git a/Documentation/filesystems/vfs.txt b/Documentation/filesystems/vfs.txt
+index 8dc8e9c2913f..761c6fd24a53 100644
+--- a/Documentation/filesystems/vfs.txt
++++ b/Documentation/filesystems/vfs.txt
+@@ -857,6 +857,7 @@ struct file_operations {
+ 	ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);
+ 	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
+ 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
++	int (*iopoll)(struct kiocb *kiocb, bool spin);
+ 	int (*iterate) (struct file *, struct dir_context *);
+ 	int (*iterate_shared) (struct file *, struct dir_context *);
+ 	__poll_t (*poll) (struct file *, struct poll_table_struct *);
+@@ -902,6 +903,8 @@ otherwise noted.
+ 
+   write_iter: possibly asynchronous write with iov_iter as source
+ 
++  iopoll: called when aio wants to poll for completions on HIPRI iocbs
++
+   iterate: called when the VFS needs to read the directory contents
+ 
+   iterate_shared: called when the VFS needs to read the directory contents
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 811c77743dad..ccb0b7a63aa5 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -310,6 +310,7 @@ struct kiocb {
+ 	int			ki_flags;
+ 	u16			ki_hint;
+ 	u16			ki_ioprio; /* See linux/ioprio.h */
++	unsigned int		ki_cookie; /* for ->iopoll */
+ } __randomize_layout;
+ 
+ static inline bool is_sync_kiocb(struct kiocb *kiocb)
+@@ -1786,6 +1787,7 @@ struct file_operations {
+ 	ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);
+ 	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
+ 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
++	int (*iopoll)(struct kiocb *kiocb, bool spin);
+ 	int (*iterate) (struct file *, struct dir_context *);
+ 	int (*iterate_shared) (struct file *, struct dir_context *);
+ 	__poll_t (*poll) (struct file *, struct poll_table_struct *);
 -- 
-Jens Axboe
-
+2.17.1
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
