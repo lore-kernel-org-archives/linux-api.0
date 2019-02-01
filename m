@@ -1,44 +1,67 @@
-From: Al Viro <viro@zeniv.linux.org.uk>
+From: Florian Weimer <fweimer@redhat.com>
 Subject: Re: [PATCH 05/18] Add io_uring IO interface
-Date: Fri, 1 Feb 2019 18:05:42 +0000
-Message-ID: <20190201180541.GQ2217@ZenIV.linux.org.uk>
-References: <20190128213538.13486-1-axboe@kernel.dk>
- <20190128213538.13486-6-axboe@kernel.dk>
- <CAG48ez0vDqDH4ks7q4L3F+xt-4kVQrN1yw34QwFAmwQyy27FTw@mail.gmail.com>
- <e9326a77-54c5-e2b8-d9e5-663261462597@kernel.dk>
- <CAG48ez17NW0GJVRC6dFcHZTgQifFz5og1XCUbXkHKhr6f=j74Q@mail.gmail.com>
- <05cb18f7a97a6151c305cdb7240c4abc995aed59.camel@fb.com>
- <CAG48ez09iOOnPz83b6HxktYHTfouS2GD6i3PfQEjp8WCp+3-VA@mail.gmail.com>
- <CAG48ez0sJys=M1MR3DBd1DJ21-qHd2W7sB8+EvjhScWbtQnizA@mail.gmail.com>
+Date: Fri, 01 Feb 2019 19:20:57 +0100
+Message-ID: <871s4r8j5i.fsf@oldenburg2.str.redhat.com>
+References: <20190201152414.23296-1-axboe@kernel.dk>
+	<20190201152414.23296-6-axboe@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
 Return-path: <owner-linux-aio@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <CAG48ez0sJys=M1MR3DBd1DJ21-qHd2W7sB8+EvjhScWbtQnizA@mail.gmail.com>
+In-Reply-To: <20190201152414.23296-6-axboe@kernel.dk> (Jens Axboe's message of
+	"Fri, 1 Feb 2019 08:24:01 -0700")
 Sender: owner-linux-aio@kvack.org
-To: Jann Horn <jannh@google.com>
-Cc: Matt Mullins <mmullins@fb.com>, "axboe@kernel.dk" <axboe@kernel.dk>, linux-fsdevel@vger.kernel.org, "linux-aio@kvack.org" <linux-aio@kvack.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "jmoyer@redhat.com" <jmoyer@redhat.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "hch@lst.de" <hch@lst.de>, "linux-man@vger.kernel.org" <linux-man@vger.kernel.org>, "avi@scylladb.com" <avi@scylladb.com>
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org, hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Feb 01, 2019 at 06:23:27PM +0100, Jann Horn wrote:
+* Jens Axboe:
 
-> > Oh, yuck. Uuuh... can we make "struct files_struct" doubly-refcounted,
-> > like "struct mm_struct"? One reference type to keep the contents
-> > intact (the reference type you normally use, and the type used by
-> > uring when the thread is running), and one reference type to just keep
-> > the struct itself existing, but without preserving its contents
-> > (reference held consistently by the uring thread)?
-> 
-> Something like this (completely untested); and then instead of the
-> current get_files_struct(), you'd do get_files_struct_weak(), and
-> while the thread is running, it protects the files_struct from dying
-> with tryget_weak_files_struct() / put_files_struct().
-> 
-> Al, do you have opinions on this?
+> +/*
+> + * Filled with the offset for mmap(2)
+> + */
+> +struct io_sqring_offsets {
+> +	__u32 head;
+> +	__u32 tail;
+> +	__u32 ring_mask;
+> +	__u32 ring_entries;
+> +	__u32 flags;
+> +	__u32 dropped;
+> +	__u32 array;
+> +	__u32 resv[3];
+> +};
+> +
+> +struct io_cqring_offsets {
+> +	__u32 head;
+> +	__u32 tail;
+> +	__u32 ring_mask;
+> +	__u32 ring_entries;
+> +	__u32 overflow;
+> +	__u32 cqes;
+> +	__u32 resv[4];
+> +};
+> +
+> +/*
+> + * io_uring_enter(2) flags
+> + */
+> +#define IORING_ENTER_GETEVENTS	(1U << 0)
+> +
+> +/*
+> + * Passed in for io_uring_setup(2). Copied back with updated info on success
+> + */
+> +struct io_uring_params {
+> +	__u32 sq_entries;
+> +	__u32 cq_entries;
+> +	__u32 flags;
+> +	__u32 resv[7];
+> +	struct io_sqring_offsets sq_off;
+> +	struct io_cqring_offsets cq_off;
+> +};
 
-Yes, but they are not fit for polite company.  IMO the entire approach
-is FUBAR; I'll post more detailed review, but what I'd seen so far is
-a veto fodder.
+I still think it might be a good idea to have one reserved __u64 field
+for alignment purposes.
+
+Thanks,
+Florian
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
