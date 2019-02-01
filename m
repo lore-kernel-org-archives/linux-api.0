@@ -1,160 +1,146 @@
-From: "Darrick J. Wong" <darrick.wong@oracle.com>
-Subject: Re: [PATCH v4 3/3] fs: let filldir_t return bool instead of an error
- code
-Date: Thu, 31 Jan 2019 12:39:40 -0800
-Message-ID: <20190131203940.GA27972@magnolia>
-References: <20190118161440.220134-1-jannh@google.com>
- <20190118161440.220134-3-jannh@google.com>
- <20190120224059.GA4205@dastard>
- <CAG48ez3SgejgGbctHwxON1B1k26xk-z16xdozKZkx7=-Li0aHw@mail.gmail.com>
- <20190121222411.GD4205@dastard>
- <CAG48ez2UmgEkitbgyCCs9LLdgahweFFAJWCU_vcqES6YgN=gLw@mail.gmail.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [PATCH 2/3] mm/filemap: initiate readahead even if IOCB_NOWAIT
+ is set for the I/O
+Date: Fri, 1 Feb 2019 12:44:46 +1100
+Message-ID: <20190201014446.GU6173@dastard>
+References: <nycvar.YFH.7.76.1901051817390.16954@cbobk.fhfr.pm>
+ <20190130124420.1834-1-vbabka@suse.cz>
+ <20190130124420.1834-3-vbabka@suse.cz>
+ <20190131095644.GR18811@dhcp22.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAG48ez2UmgEkitbgyCCs9LLdgahweFFAJWCU_vcqES6YgN=gLw@mail.gmail.com>
+In-Reply-To: <20190131095644.GR18811@dhcp22.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: Dave Chinner <david@fromorbit.com>, Richard Henderson <rth@twiddle.net>, Ivan Kokshaysky <ink@jurassic.park.msu.ru>, Matt Turner <mattst88@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Theodore Ts'o <tytso@mit.edu>, Andreas Dilger <adilger.kernel@dilger.ca>, linux-alpha@vger.kernel.org, kernel list <linux-kernel@vger.kernel.org>, Pavel Machek <pavel@ucw.cz>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Vlastimil Babka <vbabka@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, Greg KH <gregkh@linuxfoundation.org>, Jann Horn <jannh@google.com>, Jiri Kosina <jkosina@suse.cz>, Dominique Martinet <asmadeus@codewreck.org>, Andy Lutomirski <luto@amacapital.net>, Kevin Easton <kevin@guarana.org>, Matthew Wilcox <willy@infradead.org>, Cyril Hrubis <chrubis@suse.cz>, Tejun Heo <tj@kernel.org>, "Kirill A . Shutemov" <kirill@shutemov.name>, Daniel Gruss <daniel@gruss.cc>, Jiri Kosina <jikos@kernel.org>, linux-fsdevel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jan 23, 2019 at 04:07:59PM +0100, Jann Horn wrote:
-> On Mon, Jan 21, 2019 at 11:24 PM Dave Chinner <david@fromorbit.com> wrote:
-> > On Mon, Jan 21, 2019 at 04:49:45PM +0100, Jann Horn wrote:
-> > > On Sun, Jan 20, 2019 at 11:41 PM Dave Chinner <david@fromorbit.com> wrote:
-> > > > On Fri, Jan 18, 2019 at 05:14:40PM +0100, Jann Horn wrote:
-> > > > > As Al Viro pointed out, many filldir_t functions return error codes, but
-> > > > > all callers of filldir_t functions just check whether the return value is
-> > > > > non-zero (to determine whether to continue reading the directory); more
-> > > > > precise errors have to be signalled via struct dir_context.
-> > > > > Change all filldir_t functions to return bool instead of int.
-> > > > >
-> > > > > Suggested-by: Al Viro <viro@zeniv.linux.org.uk>
-> > > > > Signed-off-by: Jann Horn <jannh@google.com>
-> > > > > ---
-> > > > >  arch/alpha/kernel/osf_sys.c | 12 +++----
-> > > > >  fs/afs/dir.c                | 30 +++++++++--------
-> > > > >  fs/ecryptfs/file.c          | 13 ++++----
-> > > > >  fs/exportfs/expfs.c         |  8 ++---
-> > > > >  fs/fat/dir.c                |  8 ++---
-> > > > >  fs/gfs2/export.c            |  6 ++--
-> > > > >  fs/nfsd/nfs4recover.c       |  8 ++---
-> > > > >  fs/nfsd/vfs.c               |  6 ++--
-> > > > >  fs/ocfs2/dir.c              | 10 +++---
-> > > > >  fs/ocfs2/journal.c          | 14 ++++----
-> > > > >  fs/overlayfs/readdir.c      | 24 +++++++-------
-> > > > >  fs/readdir.c                | 64 ++++++++++++++++++-------------------
-> > > > >  fs/reiserfs/xattr.c         | 20 ++++++------
-> > > > >  fs/xfs/scrub/dir.c          |  8 ++---
-> > > > >  fs/xfs/scrub/parent.c       |  4 +--
-> > > > >  include/linux/fs.h          | 10 +++---
-> > > > >  16 files changed, 125 insertions(+), 120 deletions(-)
-> > > > >
-> > > > > diff --git a/arch/alpha/kernel/osf_sys.c b/arch/alpha/kernel/osf_sys.c
-> > > > > index db1c2144d477..14e5ae0dac50 100644
-> > > > > --- a/arch/alpha/kernel/osf_sys.c
-> > > > > +++ b/arch/alpha/kernel/osf_sys.c
-> > > > > @@ -108,7 +108,7 @@ struct osf_dirent_callback {
-> > > > >       int error;
-> > > > >  };
-> > > > >
-> > > > > -static int
-> > > > > +static bool
-> > > > >  osf_filldir(struct dir_context *ctx, const char *name, int namlen,
-> > > > >           loff_t offset, u64 ino, unsigned int d_type)
-> > > > >  {
-> > > > > @@ -120,14 +120,14 @@ osf_filldir(struct dir_context *ctx, const char *name, int namlen,
-> > > > >
-> > > > >       buf->error = check_dirent_name(name, namlen);
-> > > > >       if (unlikely(buf->error))
-> > > > > -             return -EFSCORRUPTED;
-> > > > > +             return false;
-> > > > >       buf->error = -EINVAL;   /* only used if we fail */
-> > > > >       if (reclen > buf->count)
-> > > > > -             return -EINVAL;
-> > > > > +             return false;
-> > > >
-> > > > Oh, it's because the error being returned is being squashed by
-> > > > dir_emit():
-> > >
-> > > Yeah.
-> > >
-> > > > >  struct dir_context {
-> > > > > @@ -3469,17 +3471,17 @@ static inline bool dir_emit(struct dir_context *ctx,
-> > > > >                           const char *name, int namelen,
-> > > > >                           u64 ino, unsigned type)
-> > > > >  {
-> > > > > -     return ctx->actor(ctx, name, namelen, ctx->pos, ino, type) == 0;
-> > > > > +     return ctx->actor(ctx, name, namelen, ctx->pos, ino, type);
-> > > > >  }
-> > > >
-> > > > /me wonders if it would be cleaner to do:
-> > > >
-> > > > static inline bool dir_emit(...)
-> > > > {
-> > > >         buf->error = ctx->actor(....)
-> > > >         if (buf->error)
-> > > >                 return false;
-> > > >         return true;
-> > > > }
-> > > >
-> > > > And clean up all filldir actors just to return the error state
-> > > > rather than have to jump through hoops to stash the error state in
-> > > > the context buffer and return the error state?
-> > >
-> > > One negative thing about that, IMO, is that it mixes up the request
-> > > for termination of the loop and the presence of an error.
-> >
-> > Doesn't the code already do that, only worse?
+On Thu, Jan 31, 2019 at 10:56:44AM +0100, Michal Hocko wrote:
+> [Cc fs-devel]
 > 
-> The current code does that, yes. But with this patch, I think that's
-> not really the case anymore?
+> On Wed 30-01-19 13:44:19, Vlastimil Babka wrote:
+> > From: Jiri Kosina <jkosina@suse.cz>
+> > 
+> > preadv2(RWF_NOWAIT) can be used to open a side-channel to pagecache contents, as
+> > it reveals metadata about residency of pages in pagecache.
+> > 
+> > If preadv2(RWF_NOWAIT) returns immediately, it provides a clear "page not
+> > resident" information, and vice versa.
+> > 
+> > Close that sidechannel by always initiating readahead on the cache if we
+> > encounter a cache miss for preadv2(RWF_NOWAIT); with that in place, probing
+> > the pagecache residency itself will actually populate the cache, making the
+> > sidechannel useless.
 > 
-> > > > That then allows callers who want/need the full error info can
-> > > > continue to call ctx->actor directly,
-> > >
-> > > "continue to call ctx->actor directly"? I don't remember any code that
-> > > calls ctx->actor directly.
-> >
-> > ovl_fill_real().
-> 
-> Ah, right.
-> 
-> 
-> > And the XFS directory scrubber could probably make better use of the
-> > error return from ctx->actor when validating the directory contents
-> > rather than just calling dir_emit() and aborting the scan at the
-> > first error encountered. We eventually want to know exactly what
-> > error was encountered here to determine if it is safe to continue,
-> > not just a "stop processing" flag. e.g. a bad name length will need
-> > to stop traversal because we can't trust the underlying structure,
-> > but an invalid file type isn't a structural flaw that prevents us
-> > from continuing to traverse and check the rest of the directory....
-> 
-> Sorry, maybe I'm a bit dense right now, I don't get your point. Are
-> you talking about filesystem errors detected in the actor? If so,
-> doesn't it make *more* sense for non-fatal errors to put a note that
-> an error happened into the xchk_dir_ctx (if that information should be
-> kept around), then return a value that says "please continue"?
+> I guess the current wording doesn't disallow background IO to be
+> triggered for EAGAIN case. I am not sure whether that breaks clever
+> applications which try to perform larger IO for those cases though.
 
-As I understand the scrub code, we /do/ stash the error state elsewhere
-and set the xchk_dir_actor return value as appropriate to continue or
-stop the directory iteration.  Granted, it's not very nuanced since
-anything out of order sets the CORRUPT flag and aborts the iteration,
-but in principle xchk_dir_actor could set the scrub warning flag and
-return 0 if it wanted to.
+Actually, it does:
 
-(So maybe I'm dense too, but I don't know what Dave is talking
-about...?)
+RWF_NOWAIT (since Linux 4.14)
 
---D
+    Do  not  wait for data which is not immediately available.  If
+    this flag is specified, the preadv2() system call will return
+    instantly if it would have to read data from the backing storage
+    or wait for a lock.
 
-> Or are you talking about filesystem errors detected in the readdir
-> implementation? In that case, you're AFAICS going to need special-case
-> logic gated on ctx->actor==xchk_dir_actor anyway if you want the
-> scrubber to continue while readdir() stops.
+page_cache_sync_readahead() can block on page allocation, it calls
+->readpages() which means there are page locks and filesystem locks
+in play (e.g.  for block mapping), there's potential for blocking on
+metadata IO (both submission and completion) to read block maps, the
+data readahead can be submitted for IO so it can get stuck anywhere
+in the IO path, etc...
+
+Basically, it completely subverts the documented behaviour of
+RWF_NOWAIT.
+
+There are applications (like Samba (*)) that are planning to use
+this to avoid blocking their main processing threads on buffered
+IO. This change makes RWF_NOWAIT pretty much useless to them - it
+/was/ the only solution we had for reliably issuing non-blocking IO,
+with this patch it isn't a viable solution at all.
+
+(*) https://github.com/samba-team/samba/commit/6381044c0270a647c20935d22fd23f235d19b328
+
+IOWs, if this change goes through, it needs to be documented as an
+intentional behavioural bug in the preadv2 manpage so that userspace
+developers are aware of the new limitations of RWF_NOWAIT and should
+avoid it like the plague.
+
+But worse than that is nobody has bothered to (or ask someone
+familiar with the code to) do an audit of RWF_NOWAIT usage after I
+pointed out the behavioural issues. The one person who was engaged
+and /had done an audit/ got shouted down with so much bullshit they
+just walked away....
+
+So, I'll invite the incoherent, incandescent O_DIRECT rage flames of
+Linus to be unleashed again and point out the /other reference/ to
+IOCB_NOWAIT in mm/filemap.c. That is, in generic_file_read_iter(),
+in the *generic O_DIRECT read path*:
+
+	if (iocb->ki_flags & IOCB_DIRECT) {
+.....
+		if (iocb->ki_flags & IOCB_NOWAIT) {
+			if (filemap_range_has_page(mapping, iocb->ki_pos,
+						   iocb->ki_pos + count - 1))
+				return -EAGAIN;
+		} else {
+.....
+
+This page cache probe is about 100 lines of code down from the code
+that this patch modifies, in it's direct caller. It's not hard to
+find, I shouldn't have to point it out, nor have to explain how it
+makes this patch completely irrelevant.
+
+> > diff --git a/mm/filemap.c b/mm/filemap.c
+> > index 9f5e323e883e..7bcdd36e629d 100644
+> > --- a/mm/filemap.c
+> > +++ b/mm/filemap.c
+> > @@ -2075,8 +2075,6 @@ static ssize_t generic_file_buffered_read(struct kiocb *iocb,
+> >  
+> >  		page = find_get_page(mapping, index);
+> >  		if (!page) {
+> > -			if (iocb->ki_flags & IOCB_NOWAIT)
+> > -				goto would_block;
+> >  			page_cache_sync_readahead(mapping,
+> >  					ra, filp,
+> >  					index, last_index - index);
 > 
-> (But as I've said, I don't really care about this patch. If Al takes
-> patches 1 and 2 from this series, I'm happy; this patch is just in
-> response to <https://lore.kernel.org/lkml/20180731165112.GJ30522@ZenIV.linux.org.uk/>.)
+> Maybe a stupid question but I am not really familiar with this path but
+> what exactly does prevent a sync read down page_cache_sync_readahead
+> path?
+
+It's effectively useless as a workaround because you can avoid the
+readahead IO being issued relatively easily:
+
+void page_cache_sync_readahead(struct address_space *mapping,
+                               struct file_ra_state *ra, struct file *filp,
+                               pgoff_t offset, unsigned long req_size)
+{
+        /* no read-ahead */
+        if (!ra->ra_pages)
+                return;
+
+        if (blk_cgroup_congested())
+                return;
+....
+
+IOWs, we just have to issue enough IO to congest the block device (or,
+even easier, a rate-limited cgroup), and we can still use RWF_NOWAIT
+to probe the page cache. Or if we can convince ra->ra_pages to be
+zero (e.g. it's on bdi device with no readahead configured because
+it's real fast) then it doesn't work there, either.
+
+So this a) isn't a robust workaround, b) it breaks documented API
+semantics and c) isn't the only path to page cache probing via
+RWF_NOWAIT. It's just a new game of whack-a-mole.
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
