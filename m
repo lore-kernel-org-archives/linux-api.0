@@ -1,146 +1,119 @@
 From: Dave Chinner <david@fromorbit.com>
 Subject: Re: [PATCH 2/3] mm/filemap: initiate readahead even if IOCB_NOWAIT
  is set for the I/O
-Date: Fri, 1 Feb 2019 12:44:46 +1100
-Message-ID: <20190201014446.GU6173@dastard>
+Date: Fri, 1 Feb 2019 16:13:55 +1100
+Message-ID: <20190201051355.GV6173@dastard>
 References: <nycvar.YFH.7.76.1901051817390.16954@cbobk.fhfr.pm>
  <20190130124420.1834-1-vbabka@suse.cz>
  <20190130124420.1834-3-vbabka@suse.cz>
  <20190131095644.GR18811@dhcp22.suse.cz>
+ <nycvar.YFH.7.76.1901311114260.6626@cbobk.fhfr.pm>
+ <20190131102348.GT18811@dhcp22.suse.cz>
+ <CAHk-=wjkiNPWb97JXV6=J6DzscB1g7moGJ6G_nSe=AEbMugTNw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190131095644.GR18811@dhcp22.suse.cz>
+In-Reply-To: <CAHk-=wjkiNPWb97JXV6=J6DzscB1g7moGJ6G_nSe=AEbMugTNw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Vlastimil Babka <vbabka@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, Greg KH <gregkh@linuxfoundation.org>, Jann Horn <jannh@google.com>, Jiri Kosina <jkosina@suse.cz>, Dominique Martinet <asmadeus@codewreck.org>, Andy Lutomirski <luto@amacapital.net>, Kevin Easton <kevin@guarana.org>, Matthew Wilcox <willy@infradead.org>, Cyril Hrubis <chrubis@suse.cz>, Tejun Heo <tj@kernel.org>, "Kirill A . Shutemov" <kirill@shutemov.name>, Daniel Gruss <daniel@gruss.cc>, Jiri Kosina <jikos@kernel.org>, linux-fsdevel@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Michal Hocko <mhocko@kernel.org>, Jiri Kosina <jikos@kernel.org>, Vlastimil Babka <vbabka@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Greg KH <gregkh@linuxfoundation.org>, Jann Horn <jannh@google.com>, Dominique Martinet <asmadeus@codewreck.org>, Andy Lutomirski <luto@amacapital.net>, Kevin Easton <kevin@guarana.org>, Matthew Wilcox <willy@infradead.org>, Cyril Hrubis <chrubis@suse.cz>, Tejun Heo <tj@kernel.org>, "Kirill A . Shutemov" <kirill@shutemov.name>, Daniel Gruss <daniel@gruss.cc>, linux-fsdevel <linux-fsdevel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 31, 2019 at 10:56:44AM +0100, Michal Hocko wrote:
-> [Cc fs-devel]
+On Thu, Jan 31, 2019 at 09:54:16AM -0800, Linus Torvalds wrote:
+> On Thu, Jan 31, 2019 at 2:23 AM Michal Hocko <mhocko@kernel.org> wrote:
+> >
+> > OK, I guess my question was not precise. What does prevent taking fs
+> > locks down the path?
 > 
-> On Wed 30-01-19 13:44:19, Vlastimil Babka wrote:
-> > From: Jiri Kosina <jkosina@suse.cz>
-> > 
-> > preadv2(RWF_NOWAIT) can be used to open a side-channel to pagecache contents, as
-> > it reveals metadata about residency of pages in pagecache.
-> > 
-> > If preadv2(RWF_NOWAIT) returns immediately, it provides a clear "page not
-> > resident" information, and vice versa.
-> > 
-> > Close that sidechannel by always initiating readahead on the cache if we
-> > encounter a cache miss for preadv2(RWF_NOWAIT); with that in place, probing
-> > the pagecache residency itself will actually populate the cache, making the
-> > sidechannel useless.
-> 
-> I guess the current wording doesn't disallow background IO to be
-> triggered for EAGAIN case. I am not sure whether that breaks clever
-> applications which try to perform larger IO for those cases though.
+> IOCB_NOWAIT has never meant that, and will never mean it.
 
-Actually, it does:
+I think you're wrong, Linus. IOCB_NOWAIT was specifically designed
+to prevent blocking on filesystem locks during AIO submission. The
+initial commits spell that out pretty clearly:
 
-RWF_NOWAIT (since Linux 4.14)
+commit b745fafaf70c0a98a2e1e7ac8cb14542889ceb0e
+Author: Goldwyn Rodrigues <rgoldwyn@suse.com>
+Date:   Tue Jun 20 07:05:43 2017 -0500
 
-    Do  not  wait for data which is not immediately available.  If
-    this flag is specified, the preadv2() system call will return
-    instantly if it would have to read data from the backing storage
-    or wait for a lock.
+    fs: Introduce RWF_NOWAIT and FMODE_AIO_NOWAIT
+    
+    RWF_NOWAIT informs kernel to bail out if an AIO request will block
+    for reasons such as file allocations, or a writeback triggered,
+    or would block while allocating requests while performing
+    direct I/O.
+    
+    RWF_NOWAIT is translated to IOCB_NOWAIT for iocb->ki_flags.
+    
+    FMODE_AIO_NOWAIT is a flag which identifies the file opened is capable
+    of returning -EAGAIN if the AIO call will block. This must be set by
+    supporting filesystems in the ->open() call.
+    
+    Filesystems xfs, btrfs and ext4 would be supported in the following patches.
+    
+    Reviewed-by: Christoph Hellwig <hch@lst.de>
+    Reviewed-by: Jan Kara <jack@suse.cz>
+    Signed-off-by: Goldwyn Rodrigues <rgoldwyn@suse.com>
+    Signed-off-by: Jens Axboe <axboe@kernel.dk>
 
-page_cache_sync_readahead() can block on page allocation, it calls
-->readpages() which means there are page locks and filesystem locks
-in play (e.g.  for block mapping), there's potential for blocking on
-metadata IO (both submission and completion) to read block maps, the
-data readahead can be submitted for IO so it can get stuck anywhere
-in the IO path, etc...
+commit 29a5d29ec181ebdc98a26cedbd76ce9870248892
+Author: Goldwyn Rodrigues <rgoldwyn@suse.com>
+Date:   Tue Jun 20 07:05:48 2017 -0500
 
-Basically, it completely subverts the documented behaviour of
-RWF_NOWAIT.
+    xfs: nowait aio support
+    
+    If IOCB_NOWAIT is set, bail if the i_rwsem is not lockable
+    immediately.
+    
+    IF IOMAP_NOWAIT is set, return EAGAIN in xfs_file_iomap_begin
+    if it needs allocation either due to file extension, writing to a hole,
+    or COW or waiting for other DIOs to finish.
+    
+    Return -EAGAIN if we don't have extent list in memory.
+    
+    Signed-off-by: Goldwyn Rodrigues <rgoldwyn@suse.com>
+    Reviewed-by: Christoph Hellwig <hch@lst.de>
+    Reviewed-by: Darrick J. Wong <darrick.wong@oracle.com>
+    Signed-off-by: Jens Axboe <axboe@kernel.dk>
 
-There are applications (like Samba (*)) that are planning to use
-this to avoid blocking their main processing threads on buffered
-IO. This change makes RWF_NOWAIT pretty much useless to them - it
-/was/ the only solution we had for reliably issuing non-blocking IO,
-with this patch it isn't a viable solution at all.
+commit 728fbc0e10b7f3ce2ee043b32e3453fd5201c055
+Author: Goldwyn Rodrigues <rgoldwyn@suse.com>
+Date:   Tue Jun 20 07:05:47 2017 -0500
 
-(*) https://github.com/samba-team/samba/commit/6381044c0270a647c20935d22fd23f235d19b328
+    ext4: nowait aio support
+    
+    Return EAGAIN if any of the following checks fail for direct I/O:
+      + i_rwsem is lockable
+      + Writing beyond end of file (will trigger allocation)
+      + Blocks are not allocated at the write location
+    
+    Signed-off-by: Goldwyn Rodrigues <rgoldwyn@suse.com>
+    Reviewed-by: Jan Kara <jack@suse.cz>
+    Signed-off-by: Jens Axboe <axboe@kernel.dk>
 
-IOWs, if this change goes through, it needs to be documented as an
-intentional behavioural bug in the preadv2 manpage so that userspace
-developers are aware of the new limitations of RWF_NOWAIT and should
-avoid it like the plague.
+> We will never give user space those kinds of guarantees. We do locking
+> for various reasons.  For example, we'll do the mm lock just when
+> fetching/storing data from/to user space if there's a page fault.
 
-But worse than that is nobody has bothered to (or ask someone
-familiar with the code to) do an audit of RWF_NOWAIT usage after I
-pointed out the behavioural issues. The one person who was engaged
-and /had done an audit/ got shouted down with so much bullshit they
-just walked away....
+You are conflating "best effort non-blocking operation" with
+"atomic guarantee".  RWF_NOWAIT/IOCB_NOWAIT is the
+former, not the latter.
 
-So, I'll invite the incoherent, incandescent O_DIRECT rage flames of
-Linus to be unleashed again and point out the /other reference/ to
-IOCB_NOWAIT in mm/filemap.c. That is, in generic_file_read_iter(),
-in the *generic O_DIRECT read path*:
+i.e. RWF_NOWAIT addresses the "every second IO submission blocks"
+problems that AIO submission suffered from due to filesystem lock
+contention, not the rare and unusual things like  "page fault during
+get_user_pages in direct IO submission".  Maybe one day, but right
+now those rare cases are not pain points for applications that
+require nonblock AIO submission via RWF_NOWAIT.
 
-	if (iocb->ki_flags & IOCB_DIRECT) {
-.....
-		if (iocb->ki_flags & IOCB_NOWAIT) {
-			if (filemap_range_has_page(mapping, iocb->ki_pos,
-						   iocb->ki_pos + count - 1))
-				return -EAGAIN;
-		} else {
-.....
+> Or -
+> more obviously - we'll also check for - and sleep on - mandatory locks
+> in rw_verify_area().
 
-This page cache probe is about 100 lines of code down from the code
-that this patch modifies, in it's direct caller. It's not hard to
-find, I shouldn't have to point it out, nor have to explain how it
-makes this patch completely irrelevant.
+Well, only if you don't use fcntl(O_NONBLOCK) on the file to tell
+mandatory locking to fail with -EAGAIN instead of sleeping.
 
-> > diff --git a/mm/filemap.c b/mm/filemap.c
-> > index 9f5e323e883e..7bcdd36e629d 100644
-> > --- a/mm/filemap.c
-> > +++ b/mm/filemap.c
-> > @@ -2075,8 +2075,6 @@ static ssize_t generic_file_buffered_read(struct kiocb *iocb,
-> >  
-> >  		page = find_get_page(mapping, index);
-> >  		if (!page) {
-> > -			if (iocb->ki_flags & IOCB_NOWAIT)
-> > -				goto would_block;
-> >  			page_cache_sync_readahead(mapping,
-> >  					ra, filp,
-> >  					index, last_index - index);
-> 
-> Maybe a stupid question but I am not really familiar with this path but
-> what exactly does prevent a sync read down page_cache_sync_readahead
-> path?
-
-It's effectively useless as a workaround because you can avoid the
-readahead IO being issued relatively easily:
-
-void page_cache_sync_readahead(struct address_space *mapping,
-                               struct file_ra_state *ra, struct file *filp,
-                               pgoff_t offset, unsigned long req_size)
-{
-        /* no read-ahead */
-        if (!ra->ra_pages)
-                return;
-
-        if (blk_cgroup_congested())
-                return;
-....
-
-IOWs, we just have to issue enough IO to congest the block device (or,
-even easier, a rate-limited cgroup), and we can still use RWF_NOWAIT
-to probe the page cache. Or if we can convince ra->ra_pages to be
-zero (e.g. it's on bdi device with no readahead configured because
-it's real fast) then it doesn't work there, either.
-
-So this a) isn't a robust workaround, b) it breaks documented API
-semantics and c) isn't the only path to page cache probing via
-RWF_NOWAIT. It's just a new game of whack-a-mole.
-
-Cheers,
-
-Dave.
+-Dave.
 -- 
 Dave Chinner
 david@fromorbit.com
