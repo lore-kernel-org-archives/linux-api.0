@@ -1,236 +1,69 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCH 00/32] kernel: Introduce Time Namespace
-Date: Wed,  6 Feb 2019 00:10:34 +0000
-Message-ID: <20190206001107.16488-1-dima@arista.com>
+Subject: [PATCH 04/32] timens: Introduce CLOCK_BOOTTIME offset
+Date: Wed,  6 Feb 2019 00:10:38 +0000
+Message-ID: <20190206001107.16488-5-dima@arista.com>
+References: <20190206001107.16488-1-dima@arista.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190206001107.16488-1-dima@arista.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andrei Vagin <avagin@gmail.com>, Andy Lutomirski <luto@kernel.org>, Andy Tucker <agtucker@google.com>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
+Cc: Andrei Vagin <avagin@openvz.org>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@gmail.com>, Andy Lutomirski <luto@kernel.org>, Andy Tucker <agtucker@google.com>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Discussions around time namespace are there for a long time. The first
-attempt to implement it was in 2006 by Jeff Dike. From that time, the
-topic appears on and off in various discussions.
+From: Andrei Vagin <avagin@openvz.org>
 
-There are two main use cases for time namespaces:
-1. change date and time inside a container;
-2. adjust clocks for a container restored from a checkpoint.
+Adds boottime virtualisation for time namespace.
+Introduce timespec for boottime clock into timens offsets and wire
+clock_gettime() syscall.
 
-“It seems like this might be one of the last major obstacles keeping
-migration from being used in production systems, given that not all
-containers and connections can be migrated as long as a time dependency
-is capable of messing it up.” (by github.com/dav-ell)
+Signed-off-by: Andrei Vagin <avagin@gmail.com>
+Co-developed-by: Dmitry Safonov <dima@arista.com>
+Signed-off-by: Dmitry Safonov <dima@arista.com>
+---
+ include/linux/timens_offsets.h | 1 +
+ kernel/time/posix-timers.c     | 1 +
+ kernel/time_namespace.c        | 3 +++
+ 3 files changed, 5 insertions(+)
 
-The kernel provides access to several clocks: CLOCK_REALTIME,
-CLOCK_MONOTONIC, CLOCK_BOOTTIME. Last two clocks are monotonous, but the
-start points for them are not defined and are different for each
-system. When a container is migrated from one node to another, all
-clocks have to be restored into consistent states; in other words, they
-have to continue running from the same points where they have been
-dumped.
-
-The main idea of this patch set is adding per-namespace offsets for
-system clocks. When a process in a non-root time namespace requests
-time of a clock, a namespace offset is added to the current value of
-this clock and the sum is returned.
-
-All offsets are placed on a separate page, this allows us to map it as
-part of VVAR into user processes and use offsets from VDSO calls.
-
-Now offsets are implemented for CLOCK_MONOTONIC and CLOCK_BOOTTIME
-clocks.
-
-v2: There are two major changes from the previous version:
-
-* Two versions of the VDSO library to avoid a performance penalty for
-  host tasks outside time namespace (as suggested by Andy and Thomas).
-
-  As it has been discussed on timens RFC, adding a new conditional branch
-  `if (inside_time_ns)` on VDSO for all processes is undesirable.
-  It will add a penalty for everybody as branch predictor may mispredict
-  the jump. Also there are instruction cache lines wasted on cmp/jmp.
-
-  Those effects of introducing time namespace are very much unwanted
-  having in mind how much work have been spent on micro-optimisation
-  VDSO code.
-
-  Addressing those problems, there are two versions of VDSO's .so:
-  for host tasks (without any penalty) and for processes inside of time
-  namespace with clk_to_ns() that subtracts offsets from host's time.
-
-
-* Allow to set clock offsets for a namespace only before any processes
-  appear in it.
-
-  Now a time namespace looks similar to a pid namespace in a way how it is
-  created: unshare(CLONE_NEWTIME) system call creates a new time namespace,
-  but doesn't set it to the current process. Then all children of
-  the process will be born in the new time namespace, or a process can
-  use the setns() system call to join a namespace.
-
-  This scheme allows to create a new time namespaces, set clock offsets
-  and then populate the namespace with processes.
-
-Our performance measurements show that the price of VDSO's clock_gettime()
-in a child time namespace is about 8% with a hot CPU cache and about 90%
-with a cold CPU cache. There is no performance regression for host
-processes outside time namespace on those tests.
-
-We wrote two small benchmarks. The first one gettime_perf.c calls
-clock_gettime() in a loop for 3 seconds. It shows us performance with
-a hot CPU cache (more clock_gettime() cycles - the better):
-
-        | before     | CONFIG_TIME_NS=n | host        | inside timens
---------|------------|------------------|-------------|-------------
-cycles  | 139887013  | 139453003        | 139899785   | 128792458
-diff (%)| 100        | 99.7             | 100         | 92
-
-The second one gettime_perf_cold.c calls rdtsc, clock_gettime(), rdtsc
-and shows a difference between second and first rdtsc. The binary is
-called in a loop 1000 times, then calculate MODE for 1000 values.
-It should show us performance with a cold CPU cache
-(lesser tsc per cycle - the better):
-
-        | before     | CONFIG_TIME_NS=n | host        | inside timens
---------|------------|------------------|-------------|-------------
-tsc     | 6748       | 6718             | 6862        | 12682
-diff (%)| 100        | 99.6             | 101.7       | 188
-
-The numbers gathered on Intel(R) Core(TM) i5-6300U CPU @ 2.40GHz.
-
-Cc: Adrian Reber <adrian@lisas.de>
-Cc: Andrei Vagin <avagin@openvz.org>
-Cc: Andrei Vagin <avagin@gmail.com>
-Cc: Andy Lutomirski <luto@kernel.org>
-Cc: Andy Tucker <agtucker@google.com>
-Cc: Arnd Bergmann <arnd@arndb.de>
-Cc: Christian Brauner <christian.brauner@ubuntu.com>
-Cc: Cyrill Gorcunov <gorcunov@openvz.org>
-Cc: Dmitry Safonov <0x7f454c46@gmail.com>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: "H. Peter Anvin" <hpa@zytor.com>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Jeff Dike <jdike@addtoit.com>
-Cc: Oleg Nesterov <oleg@redhat.com>
-Cc: Pavel Emelyanov <xemul@virtuozzo.com>
-Cc: Shuah Khan <shuah@kernel.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: containers@lists.linux-foundation.org
-Cc: criu@openvz.org
-Cc: linux-api@vger.kernel.org
-Cc: x86@kernel.org
-
-Andrei Vagin (15):
-  ns: Introduce Time Namespace
-  timens: Add timens_offsets
-  timens: Introduce CLOCK_MONOTONIC offsets
-  timens: Introduce CLOCK_BOOTTIME offset
-  timerfd/timens: Take into account ns clock offsets
-  posix-timers/timens: Take into account clock offsets
-  timens/kernel: Take into account timens clock offsets in
-    clock_nanosleep
-  x86/vdso/timens: Add offsets page in vvar
-  timens/fs/proc: Introduce /proc/pid/timens_offsets
-  selftest/timens: Add a test for timerfd
-  selftest/timens: Add a test for clock_nanosleep()
-  selftest/timens: Add timer offsets test
-  selftests: Add a simple perf test for clock_gettime()
-  selftest/timens: Check that a right vdso is mapped after fork and exec
-  x86/vdso: Align VDSO functions by CPU L1 cache line
-
-Dmitry Safonov (17):
-  timens: Shift /proc/uptime
-  x86/vdso2c: Correct err messages on file opening
-  x86/vdso2c: Convert iterator to unsigned
-  x86/vdso/Makefile: Add vobjs32
-  x86/vdso: Build timens .so(s)
-  x86/VDSO: Build VDSO with -ffunction-sections
-  x86/vdso2c: Optionally produce linker script for vdso entries
-  x86/vdso: Generate vdso{,32}-timens.lds
-  x86/vdso2c: Sort vdso entries by addresses for linker script
-  x86/vdso.lds: Align !timens (host's) vdso.so entries
-  x86/vdso2c: Align LOCAL symbols between vdso{-timens,}.so
-  x86/vdso: Initialize timens 64-bit vdso
-  x86/vdso: Switch image on setns()/unshare()/clone()
-  timens: Add align for timens_offsets
-  selftest/timens: Add Time Namespace test for supported clocks
-  selftest/timens: Add procfs selftest
-  x86/vdso: Restrict splitting VVAR VMA
-
- MAINTAINERS                                   |   3 +
- arch/Kconfig                                  |   5 +
- arch/x86/Kconfig                              |   1 +
- arch/x86/entry/vdso/.gitignore                |   2 +
- arch/x86/entry/vdso/Makefile                  |  61 ++-
- arch/x86/entry/vdso/vclock_gettime-timens.c   |   6 +
- arch/x86/entry/vdso/vclock_gettime.c          |  42 +++
- arch/x86/entry/vdso/vdso-layout.lds.S         |  21 +-
- arch/x86/entry/vdso/vdso-timens.lds.S         |   7 +
- arch/x86/entry/vdso/vdso2c.c                  |  46 ++-
- arch/x86/entry/vdso/vdso2c.h                  |  52 ++-
- arch/x86/entry/vdso/vdso32/.gitignore         |   1 +
- arch/x86/entry/vdso/vdso32/sigreturn.S        |   2 +
- arch/x86/entry/vdso/vdso32/system_call.S      |   2 +-
- .../entry/vdso/vdso32/vclock_gettime-timens.c |   6 +
- .../x86/entry/vdso/vdso32/vdso32-timens.lds.S |   8 +
- arch/x86/entry/vdso/vma.c                     | 110 ++++++
- arch/x86/include/asm/vdso.h                   |   8 +
- fs/proc/base.c                                | 101 +++++
- fs/proc/namespaces.c                          |   4 +
- fs/proc/uptime.c                              |   3 +
- fs/timerfd.c                                  |  16 +-
- include/linux/nsproxy.h                       |   2 +
- include/linux/proc_ns.h                       |   2 +
- include/linux/time_namespace.h                |  91 +++++
- include/linux/timens_offsets.h                |  18 +
- include/linux/user_namespace.h                |   1 +
- include/uapi/linux/sched.h                    |   1 +
- init/Kconfig                                  |   8 +
- kernel/Makefile                               |   1 +
- kernel/fork.c                                 |   3 +-
- kernel/nsproxy.c                              |  41 ++-
- kernel/time/hrtimer.c                         |   8 +
- kernel/time/posix-timers.c                    |  24 +-
- kernel/time/posix-timers.h                    |   1 +
- kernel/time_namespace.c                       | 348 ++++++++++++++++++
- tools/testing/selftests/Makefile              |   1 +
- tools/testing/selftests/timens/.gitignore     |   7 +
- tools/testing/selftests/timens/Makefile       |  12 +
- .../selftests/timens/clock_nanosleep.c        |  99 +++++
- tools/testing/selftests/timens/config         |   1 +
- tools/testing/selftests/timens/exec.c         |  91 +++++
- tools/testing/selftests/timens/gettime_perf.c |  74 ++++
- .../selftests/timens/gettime_perf_cold.c      |  63 ++++
- tools/testing/selftests/timens/log.h          |  26 ++
- tools/testing/selftests/timens/procfs.c       | 142 +++++++
- tools/testing/selftests/timens/timens.c       | 191 ++++++++++
- tools/testing/selftests/timens/timens.h       |  63 ++++
- tools/testing/selftests/timens/timer.c        | 115 ++++++
- tools/testing/selftests/timens/timerfd.c      | 119 ++++++
- 50 files changed, 2008 insertions(+), 52 deletions(-)
- create mode 100644 arch/x86/entry/vdso/vclock_gettime-timens.c
- create mode 100644 arch/x86/entry/vdso/vdso-timens.lds.S
- create mode 100644 arch/x86/entry/vdso/vdso32/vclock_gettime-timens.c
- create mode 100644 arch/x86/entry/vdso/vdso32/vdso32-timens.lds.S
- create mode 100644 include/linux/time_namespace.h
- create mode 100644 include/linux/timens_offsets.h
- create mode 100644 kernel/time_namespace.c
- create mode 100644 tools/testing/selftests/timens/.gitignore
- create mode 100644 tools/testing/selftests/timens/Makefile
- create mode 100644 tools/testing/selftests/timens/clock_nanosleep.c
- create mode 100644 tools/testing/selftests/timens/config
- create mode 100644 tools/testing/selftests/timens/exec.c
- create mode 100644 tools/testing/selftests/timens/gettime_perf.c
- create mode 100644 tools/testing/selftests/timens/gettime_perf_cold.c
- create mode 100644 tools/testing/selftests/timens/log.h
- create mode 100644 tools/testing/selftests/timens/procfs.c
- create mode 100644 tools/testing/selftests/timens/timens.c
- create mode 100644 tools/testing/selftests/timens/timens.h
- create mode 100644 tools/testing/selftests/timens/timer.c
- create mode 100644 tools/testing/selftests/timens/timerfd.c
-
+diff --git a/include/linux/timens_offsets.h b/include/linux/timens_offsets.h
+index 248b0c0bb92a..777530c46852 100644
+--- a/include/linux/timens_offsets.h
++++ b/include/linux/timens_offsets.h
+@@ -4,6 +4,7 @@
+ 
+ struct timens_offsets {
+ 	struct timespec64  monotonic_time_offset;
++	struct timespec64  monotonic_boottime_offset;
+ };
+ 
+ #endif
+diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
+index b6d5145858a3..782708054df2 100644
+--- a/kernel/time/posix-timers.c
++++ b/kernel/time/posix-timers.c
+@@ -1314,6 +1314,7 @@ static const struct k_clock clock_tai = {
+ static const struct k_clock clock_boottime = {
+ 	.clock_getres		= posix_get_hrtimer_res,
+ 	.clock_get		= posix_get_boottime,
++	.clock_timens_adjust	= true,
+ 	.nsleep			= common_nsleep,
+ 	.timer_create		= common_timer_create,
+ 	.timer_set		= common_timer_set,
+diff --git a/kernel/time_namespace.c b/kernel/time_namespace.c
+index 57694be9e9db..36b31f234472 100644
+--- a/kernel/time_namespace.c
++++ b/kernel/time_namespace.c
+@@ -208,6 +208,9 @@ static void clock_timens_fixup(int clockid, struct timespec64 *val, bool to_ns)
+ 	case CLOCK_MONOTONIC_COARSE:
+ 		offsets = &ns_offsets->monotonic_time_offset;
+ 		break;
++	case CLOCK_BOOTTIME:
++		offsets = &ns_offsets->monotonic_boottime_offset;
++		break;
+ 	}
+ 
+ 	if (!offsets)
 -- 
 2.20.1
