@@ -1,125 +1,196 @@
-From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCH 02/32] timens: Add timens_offsets
-Date: Wed,  6 Feb 2019 00:10:36 +0000
-Message-ID: <20190206001107.16488-3-dima@arista.com>
-References: <20190206001107.16488-1-dima@arista.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCH 13/18] io_uring: add file set registration
+Date: Tue, 5 Feb 2019 17:27:29 -0700
+Message-ID: <0d2e5085-32ff-e86e-d628-6000071fd132@kernel.dk>
+References: <20190129192702.3605-1-axboe@kernel.dk>
+ <20190129192702.3605-14-axboe@kernel.dk>
+ <CAG48ez2kLWUEambWesQQaeVn_u=PtjuMeDUc49yamhYspfd7Sg@mail.gmail.com>
+ <20190204025612.GR2217@ZenIV.linux.org.uk>
+ <785c6db4-095e-65b0-ded5-72b41af5174e@kernel.dk>
+ <2b2137ed-8107-f7b6-f0ca-202dcfb87c97@kernel.dk>
+ <40b27e78-9ee8-1395-feb3-a73aac87c9a7@kernel.dk>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190206001107.16488-1-dima@arista.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Andrei Vagin <avagin@openvz.org>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@gmail.com>, Andy Lutomirski <luto@kernel.org>, Andy Tucker <agtucker@google.com>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <40b27e78-9ee8-1395-feb3-a73aac87c9a7@kernel.dk>
+Content-Language: en-US
+Sender: owner-linux-aio@kvack.org
+To: Al Viro <viro@zeniv.linux.org.uk>, Jann Horn <jannh@google.com>
+Cc: linux-aio@kvack.org, linux-block@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, linux-fsdevel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Andrei Vagin <avagin@openvz.org>
+On 2/5/19 12:08 PM, Jens Axboe wrote:
+> On 2/5/19 10:57 AM, Jens Axboe wrote:
+>> On 2/4/19 7:19 PM, Jens Axboe wrote:
+>>> On 2/3/19 7:56 PM, Al Viro wrote:
+>>>> On Wed, Jan 30, 2019 at 02:29:05AM +0100, Jann Horn wrote:
+>>>>> On Tue, Jan 29, 2019 at 8:27 PM Jens Axboe <axboe@kernel.dk> wrote:
+>>>>>> We normally have to fget/fput for each IO we do on a file. Even with
+>>>>>> the batching we do, the cost of the atomic inc/dec of the file usage
+>>>>>> count adds up.
+>>>>>>
+>>>>>> This adds IORING_REGISTER_FILES, and IORING_UNREGISTER_FILES opcodes
+>>>>>> for the io_uring_register(2) system call. The arguments passed in must
+>>>>>> be an array of __s32 holding file descriptors, and nr_args should hold
+>>>>>> the number of file descriptors the application wishes to pin for the
+>>>>>> duration of the io_uring context (or until IORING_UNREGISTER_FILES is
+>>>>>> called).
+>>>>>>
+>>>>>> When used, the application must set IOSQE_FIXED_FILE in the sqe->flags
+>>>>>> member. Then, instead of setting sqe->fd to the real fd, it sets sqe->fd
+>>>>>> to the index in the array passed in to IORING_REGISTER_FILES.
+>>>>>>
+>>>>>> Files are automatically unregistered when the io_uring context is
+>>>>>> torn down. An application need only unregister if it wishes to
+>>>>>> register a new set of fds.
+>>>>>
+>>>>> Crazy idea:
+>>>>>
+>>>>> Taking a step back, at a high level, basically this patch creates sort
+>>>>> of the same difference that you get when you compare the following
+>>>>> scenarios for normal multithreaded I/O in userspace:
+>>>>
+>>>>> This kinda makes me wonder whether this is really something that
+>>>>> should be implemented specifically for the io_uring API, or whether it
+>>>>> would make sense to somehow handle part of this in the generic VFS
+>>>>> code and give the user the ability to prepare a new files_struct that
+>>>>> can then be transferred to the worker thread, or something like
+>>>>> that... I'm not sure whether there's a particularly clean way to do
+>>>>> that though.
+>>>>
+>>>> Using files_struct for that opens a can of worms you really don't
+>>>> want to touch.
+>>>>
+>>>> Consider the following scenario with any variant of this interface:
+>>>> 	* create io_uring fd.
+>>>> 	* send an SCM_RIGHTS with that fd to AF_UNIX socket.
+>>>> 	* add the descriptor of that AF_UNIX socket to your fd
+>>>> 	* close AF_UNIX fd, close io_uring fd.
+>>>> Voila - you've got a shiny leak.  No ->release() is called for
+>>>> anyone (and you really don't want to do that on ->flush(), because
+>>>> otherwise a library helper doing e.g. system("/bin/date") will tear
+>>>> down all the io_uring in your process).  The socket is held by
+>>>> the reference you've stashed into io_uring (whichever way you do
+>>>> that).  io_uring is held by the reference you've stashed into
+>>>> SCM_RIGHTS datagram in queue of the socket.
+>>>>
+>>>> No matter what, you need net/unix/garbage.c to be aware of that stuff.
+>>>> And getting files_struct lifetime mixed into that would be beyond
+>>>> any reason.
+>>>>
+>>>> The only reason for doing that as a descriptor table would be
+>>>> avoiding the cost of fget() in whatever uses it, right?  Since
+>>>
+>>> Right, the only purpose of this patch is to avoid doing fget/fput for
+>>> each IO.
+>>>
+>>>> those are *not* the normal syscalls (and fdget() really should not
+>>>> be used anywhere other than the very top of syscall's call chain -
+>>>> that's another reason why tossing file_struct around like that
+>>>> is insane) and since the benefit is all due to the fact that it's
+>>>> *NOT* shared, *NOT* modified in parallel, etc., allowing us to
+>>>> treat file references as stable... why the hell use the descriptor
+>>>> tables at all?
+>>>
+>>> This one is not a regular system call, since we don't do fget, then IO,
+>>> then fput. We hang on to it. But for the non-registered case, it's very
+>>> much just like a regular read/write system call, where we fget to do IO
+>>> on it, then fput when we are done.
+>>>
+>>>> All you need is an array of struct file *, explicitly populated.
+>>>> With net/unix/garbage.c aware of such beasts.  Guess what?  We
+>>>> do have such an object already.  The one net/unix/garbage.c is
+>>>> working with.  SCM_RIGHTS datagrams, that is.
+>>>>
+>>>> IOW, can't we give those io_uring descriptors associated struct
+>>>> unix_sock?  No socket descriptors, no struct socket (probably),
+>>>> just the AF_UNIX-specific part thereof.  Then teach
+>>>> unix_inflight()/unix_notinflight() about getting unix_sock out
+>>>> of these guys (incidentally, both would seem to benefit from
+>>>> _not_ touching unix_gc_lock in case when there's no unix_sock
+>>>> attached to file we are dealing with - I might be missing
+>>>> something very subtle about barriers there, but it doesn't
+>>>> look likely).
+>>>
+>>> That might be workable, though I'm not sure we currently have helpers to
+>>> just explicitly create a unix_sock by itself. Not familiar with the
+>>> networking bits at all, I'll take a look.
+>>>
+>>>> And make that (i.e. registering the descriptors) mandatory.
+>>>
+>>> I don't want to make it mandatory, that's very inflexible for managing
+>>> tons of files. The registration is useful for specific cases where we
+>>> have high frequency of operations on a set of files. Besides, it'd make
+>>> the use of the API cumbersome as well for the basic case of just wanting
+>>> to do async IO.
+>>>
+>>>> Hell, combine that with creating io_uring fd, if we really
+>>>> care about the syscall count.  Benefits:
+>>>
+>>> We don't care about syscall count for setup as much. If you're doing
+>>> registration of a file set, you're expected to do a LOT of IO to those
+>>> files. Hence having an extra one for setup is not a concern. My concern
+>>> is just making it mandatory to do registration, I don't think that's a
+>>> workable alternative.
+>>>
+>>>> 	* no file_struct refcount wanking
+>>>> 	* no fget()/fput() (conditional, at that) from kernel
+>>>> threads
+>>>> 	* no CLOEXEC-dependent anything; just the teardown
+>>>> on the final fput(), whichever way it comes.
+>>>> 	* no fun with duelling garbage collectors.
+>>>
+>>> The fget/fput from a kernel thread can be solved by just hanging on to
+>>> the struct file * when we punt the IO. Right now we don't, which is a
+>>> little silly, that should be changed.
+>>>
+>>> Getting rid of the files_struct{} is doable.
+>>
+>> OK, I've reworked the initial parts to wire up the io_uring fd to the
+>> AF_UNIX garbage collection. As I made it to the file registration part,
+>> I wanted to wire up that too. But I don't think there's a need for that
+>> - if we have the io_uring fd appropriately protected, we'll be dropping
+>> our struct file ** array index when the io_uring fd is released. That
+>> should be adequate, we don't need the garbage collection to be aware of
+>> those individually.
+>>
+>> The only part I had to drop for now is the sq thread polling, as that
+>> depends on us carrying the files_struct. I'm going to fold that in
+>> shortly, but just make it be dependent on having registered files. That
+>> avoids needing to fget/fput for that case, and needing registered files
+>> for the sq side submission/polling is not a usability issue like it
+>> would be for the "normal" use cases.
+> 
+> Proof is in the pudding, here's the main commit introducing io_uring
+> and now wiring it up to the AF_UNIX garbage collection:
+> 
+> http://git.kernel.dk/cgit/linux-block/commit/?h=io_uring&id=158e6f42b67d0abe9ee84886b96ca8c4b3d3dfd5
+> 
+> How does that look? Outside of the inflight hookup, we simply retain
+> the file * for punting to the workqueue. This means that buffered
+> retry does NOT need to do fget/fput, so we don't need a files_struct
+> for that anymore.
+> 
+> In terms of the SQPOLL patch that's further down the series, it doesn't
+> allow that mode of operation without having fixed files enabled. That
+> eliminates the need for fget/fput from a kernel thread, and hence the
+> need to carry a files_struct around for that as well.
 
-Introduce offsets for time namespace. They will contain an adjustment
-needed to convert clocks to/from host's.
+This should be better, passes some basic testing, too:
 
-Allocate one page for each time namespace that will be premapped into
-userspace among vvar pages.
+http://git.kernel.dk/cgit/linux-block/commit/?h=io_uring&id=01a93aa784319a02ccfa6523371b93401c9e0073
 
-Signed-off-by: Andrei Vagin <avagin@openvz.org>
-Signed-off-by: Dmitry Safonov <dima@arista.com>
----
- MAINTAINERS                    |  1 +
- include/linux/time_namespace.h |  1 +
- include/linux/timens_offsets.h |  8 ++++++++
- kernel/time_namespace.c        | 14 ++++++++++++--
- 4 files changed, 22 insertions(+), 2 deletions(-)
- create mode 100644 include/linux/timens_offsets.h
+Verified that we're grabbing the right refs, and don't hold any
+ourselves. For the file registration, forbid registration of the
+io_uring fd, as that is pointless and will introduce a loop regardless
+of fd passing.
 
-diff --git a/MAINTAINERS b/MAINTAINERS
-index e03f160012e3..cc9054a74886 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -12145,6 +12145,7 @@ S:	Maintained
- F:	fs/timerfd.c
- F:	include/linux/timer*
- F:	include/linux/time_namespace.h
-+F:	include/linux/timens_offsets.h
- F:	kernel/time_namespace.c
- F:	kernel/time/*timer*
- 
-diff --git a/include/linux/time_namespace.h b/include/linux/time_namespace.h
-index 9507ed7072fe..b6985aa87479 100644
---- a/include/linux/time_namespace.h
-+++ b/include/linux/time_namespace.h
-@@ -8,6 +8,7 @@
- #include <linux/nsproxy.h>
- #include <linux/ns_common.h>
- #include <linux/err.h>
-+#include <linux/timens_offsets.h>
- 
- struct user_namespace;
- extern struct user_namespace init_user_ns;
-diff --git a/include/linux/timens_offsets.h b/include/linux/timens_offsets.h
-new file mode 100644
-index 000000000000..7d7cb68ea778
---- /dev/null
-+++ b/include/linux/timens_offsets.h
-@@ -0,0 +1,8 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+#ifndef _LINUX_TIME_OFFSETS_H
-+#define _LINUX_TIME_OFFSETS_H
-+
-+struct timens_offsets {
-+};
-+
-+#endif
-diff --git a/kernel/time_namespace.c b/kernel/time_namespace.c
-index 8c600df9771d..4828447721ec 100644
---- a/kernel/time_namespace.c
-+++ b/kernel/time_namespace.c
-@@ -13,6 +13,7 @@
- #include <linux/user_namespace.h>
- #include <linux/proc_ns.h>
- #include <linux/sched/task.h>
-+#include <linux/mm.h>
- 
- static struct ucounts *inc_time_namespaces(struct user_namespace *ns)
- {
-@@ -46,6 +47,7 @@ static struct time_namespace *clone_time_ns(struct user_namespace *user_ns,
- {
- 	struct time_namespace *ns;
- 	struct ucounts *ucounts;
-+	struct page *page;
- 	int err;
- 
- 	err = -ENOSPC;
-@@ -58,15 +60,22 @@ static struct time_namespace *clone_time_ns(struct user_namespace *user_ns,
- 	if (!ns)
- 		goto fail_dec;
- 
-+	page = alloc_page(GFP_KERNEL | __GFP_ZERO);
-+	if (!page)
-+		goto fail_free;
-+	ns->offsets = page_address(page);
-+	BUILD_BUG_ON(sizeof(*ns->offsets) > PAGE_SIZE);
-+
- 	err = ns_alloc_inum(&ns->ns);
- 	if (err)
--		goto fail_free;
-+		goto fail_page;
- 
- 	ns->ucounts = ucounts;
- 	ns->ns.ops = &timens_operations;
- 	ns->user_ns = get_user_ns(user_ns);
- 	return ns;
--
-+fail_page:
-+	free_page((unsigned long)ns->offsets);
- fail_free:
- 	kfree(ns);
- fail_dec:
-@@ -94,6 +103,7 @@ void free_time_ns(struct kref *kref)
- 	struct time_namespace *ns;
- 
- 	ns = container_of(kref, struct time_namespace, kref);
-+	free_page((unsigned long)ns->offsets);
- 	dec_time_namespaces(ns->ucounts);
- 	put_user_ns(ns->user_ns);
- 	ns_free_inum(&ns->ns);
 -- 
-2.20.1
+Jens Axboe
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
