@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCH 03/32] timens: Introduce CLOCK_MONOTONIC offsets
-Date: Wed,  6 Feb 2019 00:10:37 +0000
-Message-ID: <20190206001107.16488-4-dima@arista.com>
+Subject: [PATCH 02/32] timens: Add timens_offsets
+Date: Wed,  6 Feb 2019 00:10:36 +0000
+Message-ID: <20190206001107.16488-3-dima@arista.com>
 References: <20190206001107.16488-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,178 +14,112 @@ List-Id: linux-api@vger.kernel.org
 
 From: Andrei Vagin <avagin@openvz.org>
 
-Add monotonic time virtualisation for time namespace.
-Introduce timespec for monotionic clock into timens offsets and wire
-clock_gettime() syscall.
+Introduce offsets for time namespace. They will contain an adjustment
+needed to convert clocks to/from host's.
+
+Allocate one page for each time namespace that will be premapped into
+userspace among vvar pages.
 
 Signed-off-by: Andrei Vagin <avagin@openvz.org>
-Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- include/linux/time_namespace.h | 11 ++++++++++
- include/linux/timens_offsets.h |  1 +
- kernel/time/posix-timers.c     | 10 +++++++++
- kernel/time/posix-timers.h     |  1 +
- kernel/time_namespace.c        | 38 ++++++++++++++++++++++++++++++++++
- 5 files changed, 61 insertions(+)
+ MAINTAINERS                    |  1 +
+ include/linux/time_namespace.h |  1 +
+ include/linux/timens_offsets.h |  8 ++++++++
+ kernel/time_namespace.c        | 14 ++++++++++++--
+ 4 files changed, 22 insertions(+), 2 deletions(-)
+ create mode 100644 include/linux/timens_offsets.h
 
+diff --git a/MAINTAINERS b/MAINTAINERS
+index e03f160012e3..cc9054a74886 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -12145,6 +12145,7 @@ S:	Maintained
+ F:	fs/timerfd.c
+ F:	include/linux/timer*
+ F:	include/linux/time_namespace.h
++F:	include/linux/timens_offsets.h
+ F:	kernel/time_namespace.c
+ F:	kernel/time/*timer*
+ 
 diff --git a/include/linux/time_namespace.h b/include/linux/time_namespace.h
-index b6985aa87479..f1807d7f524d 100644
+index 9507ed7072fe..b6985aa87479 100644
 --- a/include/linux/time_namespace.h
 +++ b/include/linux/time_namespace.h
-@@ -41,6 +41,9 @@ static inline void put_time_ns(struct time_namespace *ns)
- }
+@@ -8,6 +8,7 @@
+ #include <linux/nsproxy.h>
+ #include <linux/ns_common.h>
+ #include <linux/err.h>
++#include <linux/timens_offsets.h>
  
- 
-+extern void timens_clock_to_host(int clockid, struct timespec64 *val);
-+extern void timens_clock_from_host(int clockid, struct timespec64 *val);
-+
- #else
- static inline struct time_namespace *get_time_ns(struct time_namespace *ns)
- {
-@@ -65,6 +68,14 @@ static inline int timens_on_fork(struct nsproxy *nsproxy, struct task_struct *ts
- 	return 0;
- }
- 
-+static inline void timens_clock_to_host(int clockid, struct timespec64 *val)
-+{
-+}
-+
-+static inline void timens_clock_from_host(int clockid, struct timespec64 *val)
-+{
-+}
-+
- #endif
- 
- #endif /* _LINUX_TIMENS_H */
+ struct user_namespace;
+ extern struct user_namespace init_user_ns;
 diff --git a/include/linux/timens_offsets.h b/include/linux/timens_offsets.h
-index 7d7cb68ea778..248b0c0bb92a 100644
---- a/include/linux/timens_offsets.h
+new file mode 100644
+index 000000000000..7d7cb68ea778
+--- /dev/null
 +++ b/include/linux/timens_offsets.h
-@@ -3,6 +3,7 @@
- #define _LINUX_TIME_OFFSETS_H
- 
- struct timens_offsets {
-+	struct timespec64  monotonic_time_offset;
- };
- 
- #endif
-diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
-index 0e84bb72a3da..b6d5145858a3 100644
---- a/kernel/time/posix-timers.c
-+++ b/kernel/time/posix-timers.c
-@@ -30,6 +30,7 @@
- #include <linux/hashtable.h>
- #include <linux/compat.h>
- #include <linux/nospec.h>
-+#include <linux/time_namespace.h>
- 
- #include "timekeeping.h"
- #include "posix-timers.h"
-@@ -1041,6 +1042,9 @@ SYSCALL_DEFINE2(clock_gettime, const clockid_t, which_clock,
- 
- 	error = kc->clock_get(which_clock, &kernel_tp);
- 
-+	if (!error && kc->clock_timens_adjust)
-+		timens_clock_from_host(which_clock, &kernel_tp);
+@@ -0,0 +1,8 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++#ifndef _LINUX_TIME_OFFSETS_H
++#define _LINUX_TIME_OFFSETS_H
 +
- 	if (!error && put_timespec64(&kernel_tp, tp))
- 		error = -EFAULT;
- 
-@@ -1117,6 +1121,9 @@ COMPAT_SYSCALL_DEFINE2(clock_gettime, clockid_t, which_clock,
- 
- 	err = kc->clock_get(which_clock, &ts);
- 
-+	if (!err && kc->clock_timens_adjust)
-+		timens_clock_from_host(which_clock, &ts);
++struct timens_offsets {
++};
 +
- 	if (!err && put_old_timespec32(&ts, tp))
- 		err = -EFAULT;
- 
-@@ -1259,6 +1266,7 @@ static const struct k_clock clock_realtime = {
- static const struct k_clock clock_monotonic = {
- 	.clock_getres		= posix_get_hrtimer_res,
- 	.clock_get		= posix_ktime_get_ts,
-+	.clock_timens_adjust	= true,
- 	.nsleep			= common_nsleep,
- 	.timer_create		= common_timer_create,
- 	.timer_set		= common_timer_set,
-@@ -1274,6 +1282,7 @@ static const struct k_clock clock_monotonic = {
- static const struct k_clock clock_monotonic_raw = {
- 	.clock_getres		= posix_get_hrtimer_res,
- 	.clock_get		= posix_get_monotonic_raw,
-+	.clock_timens_adjust	= true,
- };
- 
- static const struct k_clock clock_realtime_coarse = {
-@@ -1284,6 +1293,7 @@ static const struct k_clock clock_realtime_coarse = {
- static const struct k_clock clock_monotonic_coarse = {
- 	.clock_getres		= posix_get_coarse_res,
- 	.clock_get		= posix_get_monotonic_coarse,
-+	.clock_timens_adjust	= true,
- };
- 
- static const struct k_clock clock_tai = {
-diff --git a/kernel/time/posix-timers.h b/kernel/time/posix-timers.h
-index ddb21145211a..1cf306bde639 100644
---- a/kernel/time/posix-timers.h
-+++ b/kernel/time/posix-timers.h
-@@ -24,6 +24,7 @@ struct k_clock {
- 	int	(*timer_try_to_cancel)(struct k_itimer *timr);
- 	void	(*timer_arm)(struct k_itimer *timr, ktime_t expires,
- 			     bool absolute, bool sigev_none);
-+	bool	clock_timens_adjust;
- };
- 
- extern const struct k_clock clock_posix_cpu;
++#endif
 diff --git a/kernel/time_namespace.c b/kernel/time_namespace.c
-index 4828447721ec..57694be9e9db 100644
+index 8c600df9771d..4828447721ec 100644
 --- a/kernel/time_namespace.c
 +++ b/kernel/time_namespace.c
-@@ -191,6 +191,44 @@ static struct user_namespace *timens_owner(struct ns_common *ns)
- 	return to_time_ns(ns)->user_ns;
- }
+@@ -13,6 +13,7 @@
+ #include <linux/user_namespace.h>
+ #include <linux/proc_ns.h>
+ #include <linux/sched/task.h>
++#include <linux/mm.h>
  
-+static void clock_timens_fixup(int clockid, struct timespec64 *val, bool to_ns)
-+{
-+	struct timens_offsets *ns_offsets = current->nsproxy->time_ns->offsets;
-+	struct timespec64 *offsets = NULL;
+ static struct ucounts *inc_time_namespaces(struct user_namespace *ns)
+ {
+@@ -46,6 +47,7 @@ static struct time_namespace *clone_time_ns(struct user_namespace *user_ns,
+ {
+ 	struct time_namespace *ns;
+ 	struct ucounts *ucounts;
++	struct page *page;
+ 	int err;
+ 
+ 	err = -ENOSPC;
+@@ -58,15 +60,22 @@ static struct time_namespace *clone_time_ns(struct user_namespace *user_ns,
+ 	if (!ns)
+ 		goto fail_dec;
+ 
++	page = alloc_page(GFP_KERNEL | __GFP_ZERO);
++	if (!page)
++		goto fail_free;
++	ns->offsets = page_address(page);
++	BUILD_BUG_ON(sizeof(*ns->offsets) > PAGE_SIZE);
 +
-+	if (!ns_offsets)
-+		return;
-+
-+	if (val->tv_sec == 0 && val->tv_nsec == 0)
-+		return;
-+
-+	switch (clockid) {
-+	case CLOCK_MONOTONIC:
-+	case CLOCK_MONOTONIC_RAW:
-+	case CLOCK_MONOTONIC_COARSE:
-+		offsets = &ns_offsets->monotonic_time_offset;
-+		break;
-+	}
-+
-+	if (!offsets)
-+		return;
-+
-+	if (to_ns)
-+		*val = timespec64_add(*val, *offsets);
-+	else
-+		*val = timespec64_sub(*val, *offsets);
-+}
-+
-+void timens_clock_to_host(int clockid, struct timespec64 *val)
-+{
-+	clock_timens_fixup(clockid, val, false);
-+}
-+
-+void timens_clock_from_host(int clockid, struct timespec64 *val)
-+{
-+	clock_timens_fixup(clockid, val, true);
-+}
-+
- const struct proc_ns_operations timens_operations = {
- 	.name		= "time",
- 	.type		= CLONE_NEWTIME,
+ 	err = ns_alloc_inum(&ns->ns);
+ 	if (err)
+-		goto fail_free;
++		goto fail_page;
+ 
+ 	ns->ucounts = ucounts;
+ 	ns->ns.ops = &timens_operations;
+ 	ns->user_ns = get_user_ns(user_ns);
+ 	return ns;
+-
++fail_page:
++	free_page((unsigned long)ns->offsets);
+ fail_free:
+ 	kfree(ns);
+ fail_dec:
+@@ -94,6 +103,7 @@ void free_time_ns(struct kref *kref)
+ 	struct time_namespace *ns;
+ 
+ 	ns = container_of(kref, struct time_namespace, kref);
++	free_page((unsigned long)ns->offsets);
+ 	dec_time_namespaces(ns->ucounts);
+ 	put_user_ns(ns->user_ns);
+ 	ns_free_inum(&ns->ns);
 -- 
 2.20.1
