@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCH 04/32] timens: Introduce CLOCK_BOOTTIME offset
-Date: Wed,  6 Feb 2019 00:10:38 +0000
-Message-ID: <20190206001107.16488-5-dima@arista.com>
+Subject: [PATCH 05/32] timerfd/timens: Take into account ns clock offsets
+Date: Wed,  6 Feb 2019 00:10:39 +0000
+Message-ID: <20190206001107.16488-6-dima@arista.com>
 References: <20190206001107.16488-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -9,61 +9,68 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190206001107.16488-1-dima@arista.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Andrei Vagin <avagin@openvz.org>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@gmail.com>, Andy Lutomirski <luto@kernel.org>, Andy Tucker <agtucker@google.com>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
+Cc: Andrei Vagin <avagin@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Andy Tucker <agtucker@google.com>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Andrei Vagin <avagin@openvz.org>
+From: Andrei Vagin <avagin@gmail.com>
 
-Adds boottime virtualisation for time namespace.
-Introduce timespec for boottime clock into timens offsets and wire
-clock_gettime() syscall.
+Make timerfd respect timens offsets.
+Provide two helpers timens_clock_to_host() timens_clock_from_host() that
+are useful to wire up timens to different kernel subsystems.
+Following patches will use timens_clock_from_host(), added here for
+completeness.
 
-Signed-off-by: Andrei Vagin <avagin@gmail.com>
+Signed-off-by: Andrei Vagin <avagin@openvz.org>
 Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- include/linux/timens_offsets.h | 1 +
- kernel/time/posix-timers.c     | 1 +
- kernel/time_namespace.c        | 3 +++
- 3 files changed, 5 insertions(+)
+ fs/timerfd.c | 16 +++++++++++-----
+ 1 file changed, 11 insertions(+), 5 deletions(-)
 
-diff --git a/include/linux/timens_offsets.h b/include/linux/timens_offsets.h
-index 248b0c0bb92a..777530c46852 100644
---- a/include/linux/timens_offsets.h
-+++ b/include/linux/timens_offsets.h
-@@ -4,6 +4,7 @@
+diff --git a/fs/timerfd.c b/fs/timerfd.c
+index 803ca070d42e..c7ae1e371912 100644
+--- a/fs/timerfd.c
++++ b/fs/timerfd.c
+@@ -26,6 +26,7 @@
+ #include <linux/syscalls.h>
+ #include <linux/compat.h>
+ #include <linux/rcupdate.h>
++#include <linux/time_namespace.h>
  
- struct timens_offsets {
- 	struct timespec64  monotonic_time_offset;
-+	struct timespec64  monotonic_boottime_offset;
- };
+ struct timerfd_ctx {
+ 	union {
+@@ -433,22 +434,27 @@ SYSCALL_DEFINE2(timerfd_create, int, clockid, int, flags)
+ }
  
- #endif
-diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
-index b6d5145858a3..782708054df2 100644
---- a/kernel/time/posix-timers.c
-+++ b/kernel/time/posix-timers.c
-@@ -1314,6 +1314,7 @@ static const struct k_clock clock_tai = {
- static const struct k_clock clock_boottime = {
- 	.clock_getres		= posix_get_hrtimer_res,
- 	.clock_get		= posix_get_boottime,
-+	.clock_timens_adjust	= true,
- 	.nsleep			= common_nsleep,
- 	.timer_create		= common_timer_create,
- 	.timer_set		= common_timer_set,
-diff --git a/kernel/time_namespace.c b/kernel/time_namespace.c
-index 57694be9e9db..36b31f234472 100644
---- a/kernel/time_namespace.c
-+++ b/kernel/time_namespace.c
-@@ -208,6 +208,9 @@ static void clock_timens_fixup(int clockid, struct timespec64 *val, bool to_ns)
- 	case CLOCK_MONOTONIC_COARSE:
- 		offsets = &ns_offsets->monotonic_time_offset;
- 		break;
-+	case CLOCK_BOOTTIME:
-+		offsets = &ns_offsets->monotonic_boottime_offset;
-+		break;
- 	}
+ static int do_timerfd_settime(int ufd, int flags, 
+-		const struct itimerspec64 *new,
++		struct itimerspec64 *new,
+ 		struct itimerspec64 *old)
+ {
+ 	struct fd f;
+ 	struct timerfd_ctx *ctx;
+ 	int ret;
  
- 	if (!offsets)
+-	if ((flags & ~TFD_SETTIME_FLAGS) ||
+-		 !itimerspec64_valid(new))
+-		return -EINVAL;
+-
+ 	ret = timerfd_fget(ufd, &f);
+ 	if (ret)
+ 		return ret;
+ 	ctx = f.file->private_data;
+ 
++	if (flags & TFD_TIMER_ABSTIME)
++		timens_clock_to_host(ctx->clockid, &new->it_value);
++
++	if ((flags & ~TFD_SETTIME_FLAGS) ||
++		 !itimerspec64_valid(new)) {
++		fdput(f);
++		return -EINVAL;
++	}
++
+ 	if (isalarm(ctx) && !capable(CAP_WAKE_ALARM)) {
+ 		fdput(f);
+ 		return -EPERM;
 -- 
 2.20.1
