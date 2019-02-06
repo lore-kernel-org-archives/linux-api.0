@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCH 25/32] selftest/timens: Add a test for timerfd
-Date: Wed,  6 Feb 2019 00:10:59 +0000
-Message-ID: <20190206001107.16488-26-dima@arista.com>
+Subject: [PATCH 28/32] selftest/timens: Add timer offsets test
+Date: Wed,  6 Feb 2019 00:11:02 +0000
+Message-ID: <20190206001107.16488-29-dima@arista.com>
 References: <20190206001107.16488-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -9,50 +9,54 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190206001107.16488-1-dima@arista.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Andrei Vagin <avagin@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Andy Tucker <agtucker@google.com>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
+Cc: Andrei Vagin <avagin@openvz.org>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@gmail.com>, Andy Lutomirski <luto@kernel.org>, Andy Tucker <agtucker@google.com>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Andrei Vagin <avagin@gmail.com>
+From: Andrei Vagin <avagin@openvz.org>
 
-Check that timerfd_create() takes into account clock offsets.
+Check that timer_create() takes into account clock offsets.
 
 Signed-off-by: Andrei Vagin <avagin@gmail.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
  tools/testing/selftests/timens/.gitignore |   1 +
- tools/testing/selftests/timens/Makefile   |   2 +-
- tools/testing/selftests/timens/timerfd.c  | 119 ++++++++++++++++++++++
- 3 files changed, 121 insertions(+), 1 deletion(-)
- create mode 100644 tools/testing/selftests/timens/timerfd.c
+ tools/testing/selftests/timens/Makefile   |   3 +-
+ tools/testing/selftests/timens/timer.c    | 115 ++++++++++++++++++++++
+ 3 files changed, 118 insertions(+), 1 deletion(-)
+ create mode 100644 tools/testing/selftests/timens/timer.c
 
 diff --git a/tools/testing/selftests/timens/.gitignore b/tools/testing/selftests/timens/.gitignore
-index 27a693229ce1..b609f6ee9fb9 100644
+index 94ffdd9cead7..3b7eda8f35ce 100644
 --- a/tools/testing/selftests/timens/.gitignore
 +++ b/tools/testing/selftests/timens/.gitignore
-@@ -1 +1,2 @@
+@@ -1,4 +1,5 @@
+ clock_nanosleep
+ procfs
  timens
-+timerfd
++timer
+ timerfd
 diff --git a/tools/testing/selftests/timens/Makefile b/tools/testing/selftests/timens/Makefile
-index b877efb78974..66b90cd28e5c 100644
+index f96f50d1fef8..ae1ffd24cc43 100644
 --- a/tools/testing/selftests/timens/Makefile
 +++ b/tools/testing/selftests/timens/Makefile
-@@ -1,4 +1,4 @@
--TEST_GEN_PROGS := timens
-+TEST_GEN_PROGS := timens timerfd
+@@ -1,5 +1,6 @@
+-TEST_GEN_PROGS := timens timerfd clock_nanosleep procfs
++TEST_GEN_PROGS := timens timerfd timer clock_nanosleep procfs
  
  CFLAGS := -Wall -Werror
++LDFLAGS := -lrt
  
-diff --git a/tools/testing/selftests/timens/timerfd.c b/tools/testing/selftests/timens/timerfd.c
+ include ../lib.mk
+diff --git a/tools/testing/selftests/timens/timer.c b/tools/testing/selftests/timens/timer.c
 new file mode 100644
-index 000000000000..8ec2604d26c9
+index 000000000000..aeb5623d25e4
 --- /dev/null
-+++ b/tools/testing/selftests/timens/timerfd.c
-@@ -0,0 +1,119 @@
++++ b/tools/testing/selftests/timens/timer.c
+@@ -0,0 +1,115 @@
 +// SPDX-License-Identifier: GPL-2.0
 +#define _GNU_SOURCE
 +#include <sched.h>
 +
-+#include <sys/timerfd.h>
 +#include <sys/syscall.h>
 +#include <sys/types.h>
 +#include <sys/wait.h>
@@ -61,6 +65,8 @@ index 000000000000..8ec2604d26c9
 +#include <stdlib.h>
 +#include <stdio.h>
 +#include <stdint.h>
++#include <signal.h>
++#include <time.h>
 +
 +#include "log.h"
 +#include "timens.h"
@@ -69,12 +75,11 @@ index 000000000000..8ec2604d26c9
 +{
 +	struct itimerspec new_value;
 +	long long elapsed;
-+	int fd, i;
-+
-+	if (clock_gettime(clockid, &now))
-+		return pr_perror("clock_gettime");
++	timer_t fd;
++	int i;
 +
 +	for (i = 0; i < 2; i++) {
++		struct sigevent sevp = {.sigev_notify = SIGEV_NONE};
 +		int flags = 0;
 +
 +		new_value.it_value.tv_sec = 3600;
@@ -87,17 +92,15 @@ index 000000000000..8ec2604d26c9
 +			new_value.it_value.tv_nsec += now.tv_nsec;
 +		}
 +
-+		fd = timerfd_create(clockid, 0);
-+		if (fd == -1)
++		if (timer_create(clockid, &sevp, &fd) == -1)
 +			return pr_perror("timerfd_create");
 +
 +		if (i == 1)
-+			flags |= TFD_TIMER_ABSTIME;
-+
-+		if (timerfd_settime(fd, flags, &new_value, NULL))
++			flags |= TIMER_ABSTIME;
++		if (timer_settime(fd, flags, &new_value, NULL) == -1)
 +			return pr_perror("timerfd_settime");
 +
-+		if (timerfd_gettime(fd, &new_value))
++		if (timer_gettime(fd, &new_value) == -1)
 +			return pr_perror("timerfd_gettime");
 +
 +		elapsed = new_value.it_value.tv_sec;
@@ -106,8 +109,6 @@ index 000000000000..8ec2604d26c9
 +					      clockid, elapsed);
 +			return 1;
 +		}
-+
-+		close(fd);
 +	}
 +
 +	ksft_test_result_pass("clockid=%d\n", clockid);
