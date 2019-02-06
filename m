@@ -1,46 +1,49 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH 04/18] iomap: wire up the iopoll method
-Date: Wed, 6 Feb 2019 13:05:01 -0700
-Message-ID: <985ef5b8-1078-beb3-69a3-a3a4164d5541@kernel.dk>
-References: <20190201152414.23296-1-axboe@kernel.dk>
- <20190201152414.23296-5-axboe@kernel.dk> <1549040392.164323.2.camel@acm.org>
+From: Jiri Kosina <jikos@kernel.org>
+Subject: Re: [PATCH 3/3] mm/mincore: provide mapped status when cached status
+ is not allowed
+Date: Wed, 6 Feb 2019 21:14:26 +0100 (CET)
+Message-ID: <nycvar.YFH.7.76.1902062111120.11598@cbobk.fhfr.pm>
+References: <nycvar.YFH.7.76.1901051817390.16954@cbobk.fhfr.pm> <20190130124420.1834-1-vbabka@suse.cz> <20190130124420.1834-4-vbabka@suse.cz> <20190131100907.GS18811@dhcp22.suse.cz> <99ee4d3e-aeb2-0104-22be-b028938e7f88@suse.cz> <20190201091152.GG11599@dhcp22.suse.cz>
+ <e1478ab8-e009-9bdd-3866-f319bd7259a0@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <1549040392.164323.2.camel@acm.org>
-Content-Language: en-US
-Sender: owner-linux-aio@kvack.org
-To: Bart Van Assche <bvanassche@acm.org>, linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
-Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <e1478ab8-e009-9bdd-3866-f319bd7259a0@suse.cz>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vlastimil Babka <vbabka@suse.cz>, Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Michal Hocko <mhocko@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, Greg KH <gregkh@linuxfoundation.org>, Jann Horn <jannh@google.com>, Dominique Martinet <asmadeus@codewreck.org>, Andy Lutomirski <luto@amacapital.net>, Dave Chinner <david@fromorbit.com>, Kevin Easton <kevin@guarana.org>, Matthew Wilcox <willy@infradead.org>, Cyril Hrubis <chrubis@suse.cz>, Tejun Heo <tj@kernel.org>, "Kirill A . Shutemov" <kirill@shutemov.name>, Daniel Gruss <daniel@gruss.cc>, Josh Snyder <joshs@netflix.com>
 List-Id: linux-api@vger.kernel.org
 
-On 2/1/19 9:59 AM, Bart Van Assche wrote:
-> On Fri, 2019-02-01 at 08:24 -0700, Jens Axboe wrote:
->> +int iomap_dio_iopoll(struct kiocb *kiocb, bool spin)
->> +{
->> +	struct request_queue *q = READ_ONCE(kiocb->private);
->> +
->> +	if (!q)
->> +		return 0;
->> +	return blk_poll(q, READ_ONCE(kiocb->ki_cookie), spin);
->> +}
->> +EXPORT_SYMBOL_GPL(iomap_dio_iopoll);
-> 
-> How does this interact with block device removal? My understanding is that this
-> function can get called after a request has completed. Which mechanism, if any,
-> prevents that request queue 'q' is removed after kiocb->private has been read
-> and before blk_poll() is called?
+On Fri, 1 Feb 2019, Vlastimil Babka wrote:
 
-The completion event is split from the reap, the latter being the one that
-would put the file. So we're never going to call into ->iopoll() for a
-kiocb where we've done the file put.
+> > Well, but rss update will not tell you that the page has been faulted in
+> > which is the most interesting part.
+> 
+> Sure, but the patch doesn't add back that capability neither. It allows
+> to recognize page being reclaimed, and I argue you can infer that from
+> rss change as well. That change is mentioned in the last paragraph in
+> changelog, and I thought "add a hard to evaluate side channel" in your
+> reply referred to that. It doesn't add back the "original" side channel
+> to detect somebody else accessed a page.
+
+On Fri, 1 Feb 2019, Vlastimil Babka wrote:
+
+> > Is this really worth it? Do we know about any specific usecase that
+> > would benefit from this change? TBH I would rather wait for the report
+> > than add a hard to evaluate side channel.
+> 
+> Well it's not that complicated IMHO. Linus said it's worth trying, so
+> let's see how he likes the result. The side channel exists anyway as
+> long as process can e.g. check if its rss shrinked, and I doubt we are
+> going to remove that possibility.
+
+Linus, do you have any opinion here?
+
+I have a hunch that mm maintainers are keeping this on a backburner 
+because there might still open question(s) in the air.
+
+Thanks,
 
 -- 
-Jens Axboe
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+Jiri Kosina
+SUSE Labs
