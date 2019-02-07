@@ -1,7 +1,7 @@
-From: Al Viro <viro@zeniv.linux.org.uk>
+From: Jens Axboe <axboe@kernel.dk>
 Subject: Re: [PATCH 13/18] io_uring: add file set registration
-Date: Thu, 7 Feb 2019 16:30:47 +0000
-Message-ID: <20190207163047.GE2217@ZenIV.linux.org.uk>
+Date: Thu, 7 Feb 2019 09:35:19 -0700
+Message-ID: <eb9fa2d8-ffe2-0a35-a951-3e5581f00bd4@kernel.dk>
 References: <CAG48ez2kLWUEambWesQQaeVn_u=PtjuMeDUc49yamhYspfd7Sg@mail.gmail.com>
  <20190204025612.GR2217@ZenIV.linux.org.uk>
  <785c6db4-095e-65b0-ded5-72b41af5174e@kernel.dk>
@@ -12,59 +12,70 @@ References: <CAG48ez2kLWUEambWesQQaeVn_u=PtjuMeDUc49yamhYspfd7Sg@mail.gmail.com>
  <608c1102-5818-e38c-cfc7-b1cec5a1ecb4@kernel.dk>
  <20190207040547.GX2217@ZenIV.linux.org.uk>
  <51f167c6-aacc-dd5b-4481-7168c6f8b413@kernel.dk>
+ <20190207163047.GE2217@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-aio@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <51f167c6-aacc-dd5b-4481-7168c6f8b413@kernel.dk>
+In-Reply-To: <20190207163047.GE2217@ZenIV.linux.org.uk>
+Content-Language: en-US
 Sender: owner-linux-aio@kvack.org
-To: Jens Axboe <axboe@kernel.dk>
+To: Al Viro <viro@zeniv.linux.org.uk>
 Cc: Jann Horn <jannh@google.com>, linux-aio@kvack.org, linux-block@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, linux-fsdevel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Feb 07, 2019 at 09:14:41AM -0700, Jens Axboe wrote:
+On 2/7/19 9:30 AM, Al Viro wrote:
+> On Thu, Feb 07, 2019 at 09:14:41AM -0700, Jens Axboe wrote:
+> 
+>> I created a small app to do just that, and ran it and verified that
+>> ->release() is called and the io_uring is released as expected. This
+>> is run on the current -git branch, which has a socket backing for
+>> the io_uring fd itself, but not for the registered files.
+>>
+>> What am I missing here? Attaching the program as a reference.
+> 
+>> int main(int argc, char *argv[])
+>> {
+>> 	int sp[2], pid, ring_fd, ret;
+>>
+>> 	if (socketpair(AF_UNIX, SOCK_DGRAM, 0, sp) != 0) {
+>> 		perror("Failed to create Unix-domain socket pair\n");
+>> 		return 1;
+>> 	}
+>>
+>> 	ring_fd = get_ring_fd();
+>> 	if (ring_fd < 0)
+>> 		return 1;
+>>
+>> 	ret = io_uring_register_files(ring_fd, sp[0], sp[1]);
+>> 	if (ret < 0) {
+>> 		perror("register files");
+>> 		return 1;
+>> 	}
+>>
+>> 	pid = fork();
+>> 	if (pid) {
+>> 		printf("Sending fd %d\n", ring_fd);
+>>
+>> 		send_fd(sp[0], ring_fd);
+>> 	} else {
+>> 		int fd;
+>>
+>> 		fd = recv_fd(sp[1]);
+> 
+> Well, yes - once you receive it, you obviously have no references
+> sitting in SCM_RIGHTS anymore.
+> 
+> Get rid of recv_fd() there (along with fork(), while we are at it - what's
+> it for?) and just do send_fd + these 3 close (or just exit, for that matter).
 
-> I created a small app to do just that, and ran it and verified that
-> ->release() is called and the io_uring is released as expected. This
-> is run on the current -git branch, which has a socket backing for
-> the io_uring fd itself, but not for the registered files.
-> 
-> What am I missing here? Attaching the program as a reference.
+Ah got it, yes you are right, that does leak.
 
-> int main(int argc, char *argv[])
-> {
-> 	int sp[2], pid, ring_fd, ret;
-> 
-> 	if (socketpair(AF_UNIX, SOCK_DGRAM, 0, sp) != 0) {
-> 		perror("Failed to create Unix-domain socket pair\n");
-> 		return 1;
-> 	}
-> 
-> 	ring_fd = get_ring_fd();
-> 	if (ring_fd < 0)
-> 		return 1;
-> 
-> 	ret = io_uring_register_files(ring_fd, sp[0], sp[1]);
-> 	if (ret < 0) {
-> 		perror("register files");
-> 		return 1;
-> 	}
-> 
-> 	pid = fork();
-> 	if (pid) {
-> 		printf("Sending fd %d\n", ring_fd);
-> 
-> 		send_fd(sp[0], ring_fd);
-> 	} else {
-> 		int fd;
-> 
-> 		fd = recv_fd(sp[1]);
+Thanks for the other (very) detailed note, I'll add a socket backing for the
+registered files. I'll respond to the other details in there a bit later.
 
-Well, yes - once you receive it, you obviously have no references
-sitting in SCM_RIGHTS anymore.
-
-Get rid of recv_fd() there (along with fork(), while we are at it - what's
-it for?) and just do send_fd + these 3 close (or just exit, for that matter).
+-- 
+Jens Axboe
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
