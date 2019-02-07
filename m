@@ -1,9 +1,8 @@
-From: Miklos Szeredi <miklos@szeredi.hu>
+From: Al Viro <viro@zeniv.linux.org.uk>
 Subject: Re: [PATCH 13/18] io_uring: add file set registration
-Date: Thu, 7 Feb 2019 10:22:53 +0100
-Message-ID: <20190207092253.GD19821@veci.piliscsaba.redhat.com>
-References: <20190129192702.3605-1-axboe@kernel.dk>
- <20190129192702.3605-14-axboe@kernel.dk>
+Date: Thu, 7 Feb 2019 13:31:35 +0000
+Message-ID: <20190207133135.GZ2217@ZenIV.linux.org.uk>
+References: <20190129192702.3605-14-axboe@kernel.dk>
  <CAG48ez2kLWUEambWesQQaeVn_u=PtjuMeDUc49yamhYspfd7Sg@mail.gmail.com>
  <20190204025612.GR2217@ZenIV.linux.org.uk>
  <785c6db4-095e-65b0-ded5-72b41af5174e@kernel.dk>
@@ -12,131 +11,85 @@ References: <20190129192702.3605-1-axboe@kernel.dk>
  <20190206005638.GU2217@ZenIV.linux.org.uk>
  <8f124de2-d6da-d656-25e4-b4d9e58f880e@kernel.dk>
  <20190207040058.GW2217@ZenIV.linux.org.uk>
+ <20190207092253.GD19821@veci.piliscsaba.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <owner-linux-aio@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <20190207040058.GW2217@ZenIV.linux.org.uk>
+In-Reply-To: <20190207092253.GD19821@veci.piliscsaba.redhat.com>
 Sender: owner-linux-aio@kvack.org
-To: Al Viro <viro@zeniv.linux.org.uk>
+To: Miklos Szeredi <miklos@szeredi.hu>
 Cc: Jens Axboe <axboe@kernel.dk>, Jann Horn <jannh@google.com>, linux-aio@kvack.org, linux-block@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, linux-fsdevel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Feb 07, 2019 at 04:00:59AM +0000, Al Viro wrote:
+On Thu, Feb 07, 2019 at 10:22:53AM +0100, Miklos Szeredi wrote:
+> On Thu, Feb 07, 2019 at 04:00:59AM +0000, Al Viro wrote:
+> 
+> > So in theory it would be possible to have
+> > 	* thread A: sendmsg() has SCM_RIGHTS created and populated,
+> > complete with file refcount and ->inflight increments implied,
+> > at which point it gets preempted and loses the timeslice.
+> > 	* thread B: gets to run and removes all references
+> > from descriptor table it shares with thread A.
+> > 	* on another CPU we have garbage collector triggered;
+> > it determines the set of potentially unreachable unix_sock and
+> > everything in our SCM_RIGHTS _is_ in that set, now that no
+> > other references remain.
+> > 	* on the first CPU, thread A regains the timeslice
+> > and inserts its SCM_RIGHTS into queue.  And it does contain
+> > references to sockets from the candidate set of running
+> > garbage collector, confusing the hell out of it.
+> 
+> Reminds me: long time ago there was a bug report, and based on that I found a
+> bug in MSG_PEEK handling (not confirmed to have fixed the reported bug).  This
+> fix, although pretty simple, got lost somehow.  While unix gc code is in your
+> head, can you please review and I'll resend through davem?
 
-> So in theory it would be possible to have
-> 	* thread A: sendmsg() has SCM_RIGHTS created and populated,
-> complete with file refcount and ->inflight increments implied,
-> at which point it gets preempted and loses the timeslice.
-> 	* thread B: gets to run and removes all references
-> from descriptor table it shares with thread A.
-> 	* on another CPU we have garbage collector triggered;
-> it determines the set of potentially unreachable unix_sock and
-> everything in our SCM_RIGHTS _is_ in that set, now that no
-> other references remain.
-> 	* on the first CPU, thread A regains the timeslice
-> and inserts its SCM_RIGHTS into queue.  And it does contain
-> references to sockets from the candidate set of running
-> garbage collector, confusing the hell out of it.
+Umm...  I think the bug is real (something that looks like an eviction
+candidate, but actually is referenced from the reachable queue might
+get peeked via that queue, then have _its_ queue modified via new
+external reference, all between two passes over that queue, confusing the
+fuck out of unix_gc()), but I think the fix is an overkill...
 
-Reminds me: long time ago there was a bug report, and based on that I found a
-bug in MSG_PEEK handling (not confirmed to have fixed the reported bug).  This
-fix, although pretty simple, got lost somehow.  While unix gc code is in your
-head, can you please review and I'll resend through davem?
+Am I right assuming that this queue-modifying operation is accept(), removing
+an embryo unix_sock from the queue of listener and thus hiding SCM_RIGHTS in
+_its_ queue from scan_children()?
 
-Thanks,
-Miklos
----
+Let me think of it a bit, OK?  While we are at it, some questions from digging
+through the current net/unix/garbage.c:
+	1) is there any need for ->inflight to be atomic?  All accesses are under
+unix_gc_lock, after all...
+	2) pumping unix_gc on each sodding reference in SCM_RIGHTS (within
+unix_notinflight()/unix_inflight()) looks atrocious... wouldn't it be better to
+hold it over that loop?
+	3) unix_get_socket() probably ought to be static nowadays...
+	4) I wonder if in scan_inflight()/scan_children() we would be better
+off with explicit switch (by enum argument) instead of an indirect call.
+	5) do we really need UNIX_GC_MAYBE_CYCLE?  Looks like the only
+real use is in inc_inflight_move_tail(), and AFAICS it could bloody well
+have been
+	u->inflight++;
+	if (u->inflight == 1)	// just got from zero to non-zero
+		list_move_tail(&u->link, &gc_candidates);
+The logics there is "we'd found a reference to something that still was
+a candidate for eviction in a reachable SCM_RIGHTS, so it's actually
+reachable and needs to be scanned (and removed from the set of candidates);
+move to the end of list, so that the main loop gets around to it".
+If it *was* past the cursor in the list, there's no need to move it; if
+we got past it, it must've had zero ->inflight (or we would've removed
+it from the set back when we got past it).  Note that it's only called if
+UNIX_GC_CANDIDATE is set (i.e. if it's in the initial candidate set),
+so for this one ->inflight is guaranteed to mean the number of SCM_RIGHTS
+refs from outside of the current candidate set...
+	6) unix_get_socket() looks like it might benefit from another
+FMODE bit; not sure where it's best set, though - the obvious way would
+be SOCK_GC_CARES in sock->flags, set by e.g. unix_create1(), with
+sock_alloc_file() propagating it into file->f_mode.  Then unix_get_socket()
+would be able to bugger off with NULL for most of the references in
+SCM_RIGHTS, without looking into inode...
 
-From: Miklos Szeredi <mszeredi@redhat.com>
-Subject: af_unix: fix garbage collect vs. MSG_PEEK
-
-Gc assumes that in-flight sockets that don't have an external ref can't
-gain one while unix_gc_lock is held.  That is true because
-unix_notinflight() will be called before detaching fds, which takes
-unix_gc_lock.
-
-Only MSG_PEEK was somehow overlooked.  That one also clones the fds, also
-keeping them in the skb.  But through MSG_PEEK an external reference can
-definitely be gained without ever touching unix_gc_lock.
-
-This patch adds unix_gc_barrier() that waits for a garbage collect run to
-finish (if there is one), before actually installing the peeked in-flight
-files to file descriptors.  This prevents problems from a pure in-flight
-socket having its buffers modified while the garbage collect is taking
-place.
-
-Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
-Cc: <stable@vger.kernel.org>
----
- include/net/af_unix.h |    1 +
- net/unix/af_unix.c    |   15 +++++++++++++--
- net/unix/garbage.c    |    6 ++++++
- 3 files changed, 20 insertions(+), 2 deletions(-)
-
---- a/include/net/af_unix.h
-+++ b/include/net/af_unix.h
-@@ -12,6 +12,7 @@ void unix_inflight(struct user_struct *u
- void unix_notinflight(struct user_struct *user, struct file *fp);
- void unix_gc(void);
- void wait_for_unix_gc(void);
-+void unix_gc_barrier(void);
- struct sock *unix_get_socket(struct file *filp);
- struct sock *unix_peer_get(struct sock *sk);
- 
---- a/net/unix/af_unix.c
-+++ b/net/unix/af_unix.c
-@@ -1547,6 +1547,17 @@ static int unix_attach_fds(struct scm_co
- 	return 0;
- }
- 
-+static void unix_peek_fds(struct scm_cookie *scm, struct sk_buff *skb)
-+{
-+	scm->fp = scm_fp_dup(UNIXCB(skb).fp);
-+	/*
-+	 * During garbage collection it is assumed that in-flight sockets don't
-+	 * get a new external reference.  So we need to wait until current run
-+	 * finishes.
-+	 */
-+	unix_gc_barrier();
-+}
-+
- static int unix_scm_to_skb(struct scm_cookie *scm, struct sk_buff *skb, bool send_fds)
- {
- 	int err = 0;
-@@ -2171,7 +2182,7 @@ static int unix_dgram_recvmsg(struct soc
- 		sk_peek_offset_fwd(sk, size);
- 
- 		if (UNIXCB(skb).fp)
--			scm.fp = scm_fp_dup(UNIXCB(skb).fp);
-+			unix_peek_fds(&scm, skb);
- 	}
- 	err = (flags & MSG_TRUNC) ? skb->len - skip : size;
- 
-@@ -2412,7 +2423,7 @@ static int unix_stream_read_generic(stru
- 			/* It is questionable, see note in unix_dgram_recvmsg.
- 			 */
- 			if (UNIXCB(skb).fp)
--				scm.fp = scm_fp_dup(UNIXCB(skb).fp);
-+				unix_peek_fds(&scm, skb);
- 
- 			sk_peek_offset_fwd(sk, chunk);
- 
---- a/net/unix/garbage.c
-+++ b/net/unix/garbage.c
-@@ -267,6 +267,12 @@ void wait_for_unix_gc(void)
- 	wait_event(unix_gc_wait, gc_in_progress == false);
- }
- 
-+void unix_gc_barrier(void)
-+{
-+	spin_lock(&unix_gc_lock);
-+	spin_unlock(&unix_gc_lock);
-+}
-+
- /* The external entry point: unix_gc() */
- void unix_gc(void)
- {
+Comments?  IIRC, you'd done the last serious round of rewriting unix_gc()
+and friends...
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
