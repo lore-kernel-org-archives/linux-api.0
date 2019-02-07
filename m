@@ -1,25 +1,33 @@
-From: Keith Busch <keith.busch@intel.com>
+From: Jens Axboe <axboe@kernel.dk>
 Subject: Re: [PATCH 05/18] Add io_uring IO interface
-Date: Thu, 7 Feb 2019 13:15:09 -0700
-Message-ID: <20190207201508.GA31594@localhost.localdomain>
+Date: Thu, 7 Feb 2019 13:16:53 -0700
+Message-ID: <8acaf8cf-6b5f-1435-aaf1-50449c6a49fd@kernel.dk>
 References: <20190207195552.22770-1-axboe@kernel.dk>
  <20190207195552.22770-6-axboe@kernel.dk>
+ <20190207201508.GA31594@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-aio@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20190207195552.22770-6-axboe@kernel.dk>
+In-Reply-To: <20190207201508.GA31594@localhost.localdomain>
+Content-Language: en-US
 Sender: owner-linux-aio@kvack.org
-To: Jens Axboe <axboe@kernel.dk>
+To: Keith Busch <keith.busch@intel.com>
 Cc: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org, hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Feb 07, 2019 at 12:55:39PM -0700, Jens Axboe wrote:
-> IO submissions use the io_uring_sqe data structure, and completions
-> are generated in the form of io_uring_sqe data structures. 
-                                        ^^^
+On 2/7/19 1:15 PM, Keith Busch wrote:
+> On Thu, Feb 07, 2019 at 12:55:39PM -0700, Jens Axboe wrote:
+>> IO submissions use the io_uring_sqe data structure, and completions
+>> are generated in the form of io_uring_sqe data structures. 
+>                                         ^^^
+> 
+> Completions use _cqe, right?
 
-Completions use _cqe, right?
+They do indeed... Fixed the typo, thanks Keith.
+
+-- 
+Jens Axboe
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
