@@ -1,80 +1,77 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: [PATCHSET v12] io_uring IO interface
-Date: Thu,  7 Feb 2019 12:55:34 -0700
-Message-ID: <20190207195552.22770-1-axboe@kernel.dk>
+Subject: [PATCH 03/18] block: add bio_set_polled() helper
+Date: Thu,  7 Feb 2019 12:55:37 -0700
+Message-ID: <20190207195552.22770-4-axboe@kernel.dk>
+References: <20190207195552.22770-1-axboe@kernel.dk>
 Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <20190207195552.22770-1-axboe@kernel.dk>
 Sender: owner-linux-aio@kvack.org
 To: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
-Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk
+Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk, Jens Axboe <axboe@kernel.dk>
 List-Id: linux-api@vger.kernel.org
 
-Here's v12 of the io_uring project. This is the Al Viro special, where
-Al tries to beat into my head how UNIX fd passing will mess you up. I
-think we have all cases handled now. I've added the resulting test case
-into the liburing test/ directory.
+For the upcoming async polled IO, we can't sleep allocating requests.
+If we do, then we introduce a deadlock where the submitter already
+has async polled IO in-flight, but can't wait for them to complete
+since polled requests must be active found and reaped.
 
-Outside of that, various little cleanups and fixes, and a revert of
-using FOLL_ANON to map IO buffers. This makes it fail with huge pages,
-something that we can (and do want to) support. We're now back to just
-checking for a file backing in the vma.
+Utilize the helper in the blockdev DIRECT_IO code.
 
-As far as I'm concerned, this project is ready to get staged for 5.1.
-Please do review carefully so we can fix any minor nits that might still
-exist.
+Reviewed-by: Christoph Hellwig <hch@lst.de>
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+---
+ fs/block_dev.c      |  4 ++--
+ include/linux/bio.h | 14 ++++++++++++++
+ 2 files changed, 16 insertions(+), 2 deletions(-)
 
-The liburing git repo has a full set of man pages for this, though they
-could probably still use a bit of polish. I'd also like to see a
-io_uring(7) man page to describe the overall design of the project,
-expect that in the not-so-distant future. You can clone that here:
-
-git://git.kernel.dk/liburing
-
-Patches are against 5.0-rc5, and can also be found in my io_uring branch
-here:
-
-git://git.kernel.dk/linux-block io_uring
-
-Since v11:
-- Get rid of the need for storing a files_struct
-- Protect against release loop when UNIX fd passing is used
-- Retain kiocb state for EAGAIN async retry
-- Cleanup io memory accounting
-- Revert to using non-FOLL_ANON, as we do want to support huge pages
-- Fix uid leak
-- Address various review comments
-- Rebase on v5.0-rc5
-
- Documentation/filesystems/vfs.txt      |    3 +
- arch/x86/entry/syscalls/syscall_32.tbl |    3 +
- arch/x86/entry/syscalls/syscall_64.tbl |    3 +
- block/bio.c                            |   59 +-
- fs/Makefile                            |    1 +
- fs/block_dev.c                         |   19 +-
- fs/file.c                              |   15 +-
- fs/file_table.c                        |    9 +-
- fs/gfs2/file.c                         |    2 +
- fs/io_uring.c                          | 2741 ++++++++++++++++++++++++
- fs/iomap.c                             |   48 +-
- fs/xfs/xfs_file.c                      |    1 +
- include/linux/bio.h                    |   14 +
- include/linux/blk_types.h              |    1 +
- include/linux/file.h                   |    2 +
- include/linux/fs.h                     |   15 +-
- include/linux/iomap.h                  |    1 +
- include/linux/sched/user.h             |    2 +-
- include/linux/syscalls.h               |    8 +
- include/net/af_unix.h                  |    1 +
- include/uapi/asm-generic/unistd.h      |    8 +-
- include/uapi/linux/io_uring.h          |  142 ++
- init/Kconfig                           |    9 +
- kernel/sys_ni.c                        |    3 +
- net/unix/af_unix.c                     |    2 +-
- net/unix/garbage.c                     |    3 +
- 26 files changed, 3073 insertions(+), 42 deletions(-)
-
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index f18d076a2596..392e2bfb636f 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -247,7 +247,7 @@ __blkdev_direct_IO_simple(struct kiocb *iocb, struct iov_iter *iter,
+ 		task_io_account_write(ret);
+ 	}
+ 	if (iocb->ki_flags & IOCB_HIPRI)
+-		bio.bi_opf |= REQ_HIPRI;
++		bio_set_polled(&bio, iocb);
+ 
+ 	qc = submit_bio(&bio);
+ 	for (;;) {
+@@ -415,7 +415,7 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
+ 		nr_pages = iov_iter_npages(iter, BIO_MAX_PAGES);
+ 		if (!nr_pages) {
+ 			if (iocb->ki_flags & IOCB_HIPRI)
+-				bio->bi_opf |= REQ_HIPRI;
++				bio_set_polled(bio, iocb);
+ 
+ 			qc = submit_bio(bio);
+ 			WRITE_ONCE(iocb->ki_cookie, qc);
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index 7380b094dcca..f6f0a2b3cbc8 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -823,5 +823,19 @@ static inline int bio_integrity_add_page(struct bio *bio, struct page *page,
+ 
+ #endif /* CONFIG_BLK_DEV_INTEGRITY */
+ 
++/*
++ * Mark a bio as polled. Note that for async polled IO, the caller must
++ * expect -EWOULDBLOCK if we cannot allocate a request (or other resources).
++ * We cannot block waiting for requests on polled IO, as those completions
++ * must be found by the caller. This is different than IRQ driven IO, where
++ * it's safe to wait for IO to complete.
++ */
++static inline void bio_set_polled(struct bio *bio, struct kiocb *kiocb)
++{
++	bio->bi_opf |= REQ_HIPRI;
++	if (!is_sync_kiocb(kiocb))
++		bio->bi_opf |= REQ_NOWAIT;
++}
++
+ #endif /* CONFIG_BLOCK */
+ #endif /* __LINUX_BIO_H */
 -- 
-Jens Axboe
-
+2.17.1
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
