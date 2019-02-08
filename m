@@ -1,63 +1,88 @@
-From: Dmitry Safonov <0x7f454c46@gmail.com>
-Subject: Re: [PATCH 16/32] x86/vdso: Generate vdso{,32}-timens.lds
-Date: Fri, 8 Feb 2019 15:18:56 +0000
-Message-ID: <3f0ac089-387e-ab58-59e9-5f8cafa1573d@gmail.com>
-References: <20190206001107.16488-1-dima@arista.com>
- <20190206001107.16488-17-dima@arista.com>
- <a2bbe610-7553-0ba6-b58b-1013e034b8f6@rasmusvillemoes.dk>
- <alpine.DEB.2.21.1902081051410.1645@nanos.tec.linutronix.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.21.1902081051410.1645@nanos.tec.linutronix.de>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>, Rasmus Villemoes <linux@rasmusvillemoes.dk>
-Cc: Dmitry Safonov <dima@arista.com>, LKML <linux-kernel@vger.kernel.org>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andrei Vagin <avagin@gmail.com>, Andy Lutomirski <luto@kernel.org>, Andy Tucker <agtucker@google.com>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org, Vincenzo Frascino <vincenzo.frascino@arm.com>W
+From: Jens Axboe <axboe@kernel.dk>
+Subject: [PATCHSET v13] io_uring IO interface
+Date: Fri,  8 Feb 2019 10:34:04 -0700
+Message-ID: <20190208173423.27014-1-axboe@kernel.dk>
+Return-path: <owner-linux-aio@kvack.org>
+Sender: owner-linux-aio@kvack.org
+To: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
+Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk
 List-Id: linux-api@vger.kernel.org
 
-On 2/8/19 9:57 AM, Thomas Gleixner wrote:
-> On Thu, 7 Feb 2019, Rasmus Villemoes wrote:
-> 
-> Cc: + Vincenzo, Will
-> 
->> On 06/02/2019 01.10, Dmitry Safonov wrote:
->>> As it has been discussed on timens RFC, adding a new conditional branch
->>> `if (inside_time_ns)` on VDSO for all processes is undesirable.
->>> It will add a penalty for everybody as branch predictor may mispredict
->>> the jump. Also there are instruction cache lines wasted on cmp/jmp.
->>>
->>> Those effects of introducing time namespace are very much unwanted
->>> having in mind how much work have been spent on micro-optimisation
->>> vdso code.
->>>
->>> Addressing those problems, there are two versions of VDSO's .so:
->>> for host tasks (without any penalty) and for processes inside of time
->>> namespace with clk_to_ns() that subtracts offsets from host's time.
->>>
->>> Unfortunately, to allow changing VDSO VMA on a running process,
->>> the entry points to VDSO should have the same offsets (addresses).
->>> That's needed as i.e. application that calls setns() may have already
->>> resolved VDSO symbols in GOT/PLT.
->>
->> These (14-19, if I'm reading them right) seems to add quite a lot of
->> complexity and fragility to the build, and other architectures would
->> probably have to add something similar to their vdso builds.
-> 
-> Yes and we really want to avoid that. The VDSO implementations are
-> pointlessly different accross the architectures and there is effort on the
-> way to consolidate them:
-> 
->   https://lkml.kernel.org/r/20190115135539.24762-1-vincenzo.frascino@arm.com
-> 
-> I talked to Vincenzo earlier this week and he's working on a new version of
-> that. The timens stuff wants to go on top of the consolidation otherwise we
-> end up with another set of pointlessly different and differently broken
-> VDSO variants.
+Here's v13 of the io_uring project, hot on the heels of v12. v12 had
+a few silly regressions due to flipping things around for the SCM
+fd passing changes. v13 also decouples the SCM fd management from
+how many fixed files we support, so instead of a fairly random 253
+file limit, we now impose a 1024 file limit for a file set.
 
-That looks awesome!
-I've missed the tread about it, will catch the details.
+The AF_UNIX scm parts have been split into its own file. This was
+needed to prevent issues with CONFIG_UNIX=m, since io_uring is
+always builtin.
 
-Thanks much,
-          Dmitry
+Nothing major in here apart from that. Go forth and test and review,
+so we can hopefully get this queued up sooner rather than later.
+
+The liburing git repo has a full set of man pages for this, though they
+could probably still use a bit of polish. I'd also like to see a
+io_uring(7) man page to describe the overall design of the project,
+expect that in the not-so-distant future. You can clone that here:
+
+git://git.kernel.dk/liburing
+
+Patches are against 5.0-rc5, and can also be found in my io_uring branch
+here:
+
+git://git.kernel.dk/linux-block io_uring
+
+Changes since v12:
+- Fix release of uid struct at buffer unregister time
+- Fix leak of request for poll command on submission time errors
+- Allow huge pages for pre-mapped buffers
+- Use alloc_skb() instead of __alloc_skb()
+- Make max fixed files independent of SCM_MAX_FD (now 1024)
+- Use CONFIG_UNIX instead of CONFIG_NET
+- Export io_uring_get_socket for CONFIG_UNIX=m
+- Add net/unix/scm.c with the helpers io_uring needs
+- Disallow registering the io_uring fd to prevent a deadlock
+  with !CONFIG_UNIX
+
+ Documentation/filesystems/vfs.txt      |    3 +
+ arch/x86/entry/syscalls/syscall_32.tbl |    3 +
+ arch/x86/entry/syscalls/syscall_64.tbl |    3 +
+ block/bio.c                            |   59 +-
+ fs/Makefile                            |    1 +
+ fs/block_dev.c                         |   19 +-
+ fs/file.c                              |   15 +-
+ fs/file_table.c                        |    9 +-
+ fs/gfs2/file.c                         |    2 +
+ fs/io_uring.c                          | 2796 ++++++++++++++++++++++++
+ fs/iomap.c                             |   48 +-
+ fs/xfs/xfs_file.c                      |    1 +
+ include/linux/bio.h                    |   14 +
+ include/linux/blk_types.h              |    1 +
+ include/linux/file.h                   |    2 +
+ include/linux/fs.h                     |   15 +-
+ include/linux/iomap.h                  |    1 +
+ include/linux/sched/user.h             |    2 +-
+ include/linux/syscalls.h               |    8 +
+ include/net/af_unix.h                  |    1 +
+ include/uapi/asm-generic/unistd.h      |    8 +-
+ include/uapi/linux/io_uring.h          |  142 ++
+ init/Kconfig                           |    9 +
+ kernel/sys_ni.c                        |    3 +
+ net/unix/Kconfig                       |    5 +
+ net/unix/Makefile                      |    2 +
+ net/unix/af_unix.c                     |   63 +-
+ net/unix/garbage.c                     |   68 +-
+ net/unix/scm.c                         |  146 ++
+ net/unix/scm.h                         |   10 +
+ 30 files changed, 3291 insertions(+), 168 deletions(-)
+
+-- 
+Jens Axboe
+
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
