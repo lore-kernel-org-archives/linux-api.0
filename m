@@ -1,7 +1,7 @@
 From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: [PATCH v7 13/15] sched/core: uclamp: Propagate system defaults to root group
-Date: Fri,  8 Feb 2019 10:05:52 +0000
-Message-ID: <20190208100554.32196-14-patrick.bellasi@arm.com>
+Subject: [PATCH v7 10/15] sched/fair: uclamp: Add uclamp support to energy_compute()
+Date: Fri,  8 Feb 2019 10:05:49 +0000
+Message-ID: <20190208100554.32196-11-patrick.bellasi@arm.com>
 References: <20190208100554.32196-1-patrick.bellasi@arm.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,73 +12,217 @@ To: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kerne
 Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-The clamp values are not tunable at the level of the root task group.
-That's for two main reasons:
+The Energy Aware Scheduler (AES) estimates the energy impact of waking
+up a task on a given CPU. This estimation is based on:
+ a) an (active) power consumptions defined for each CPU frequency
+ b) an estimation of which frequency will be used on each CPU
+ c) an estimation of the busy time (utilization) of each CPU
 
- - the root group represents "system resources" which are always
-   entirely available from the cgroup standpoint.
+Utilization clamping can affect both b) and c) estimations. A CPU is
+expected to run:
+ - on an higher than required frequency, but for a shorter time, in case
+   its estimated utilization will be smaller then the minimum utilization
+   enforced by uclamp
+ - on a smaller than required frequency, but for a longer time, in case
+   its estimated utilization is bigger then the maximum utilization
+   enforced by uclamp
 
- - when tuning/restricting "system resources" makes sense, tuning must
-   be done using a system wide API which should also be available when
-   control groups are not.
+While effects on busy time for both boosted/capped tasks are already
+considered by compute_energy(), clamping effects on frequency selection
+are currently ignored by that function.
 
-When a system wide restriction is available, cgroups should be aware of
-its value in order to know exactly how much "system resources" are
-available for the subgroups.
+Fix it by considering how CPU clamp values will be affected by a
+task waking up and being RUNNABLE on that CPU.
 
-Utilization clamping supports already the concepts of:
+Do that by refactoring schedutil_freq_util() to take an additional
+task_struct* which allows EAS to evaluate the impact on clamp values of
+a task being eventually queued in a CPU. Clamp values are applied to the
+RT+CFS utilization only when a FREQUENCY_UTIL is required by
+compute_energy().
 
- - system defaults: which define the maximum possible clamp values
-   usable by tasks.
+Do note that switching from ENERGY_UTIL to FREQUENCY_UTIL in the
+computation of cpu_util signal implies that we are more likely to
+estimate the higherst OPP when a RT task is running in another CPU of
+the same performance domain. This can have an impact on energy
+estimation but:
+ - it's not easy to say which approach is better, since it quite likely
+   depends on the use case
+ - the original approach could still be obtained by setting a smaller
+   task-specific util_min whenever required
 
- - effective clamps: which allows a parent cgroup to constraint (maybe
-   temporarily) its descendants without losing the information related
-   to the values "requested" from them.
-
-Exploit these two concepts and bind them together in such a way that,
-whenever system default are tuned, the new values are propagated to
-(possibly) restrict or relax the "effective" value of nested cgroups.
+Since we are at that:
+ - rename schedutil_freq_util() into schedutil_cpu_util(),
+   since it's not only used for frequency selection.
+ - use "unsigned int" instead of "unsigned long" whenever the tracked
+   utilization value is not expected to overflow 32bit.
 
 Signed-off-by: Patrick Bellasi <patrick.bellasi@arm.com>
 Cc: Ingo Molnar <mingo@redhat.com>
 Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Tejun Heo <tj@kernel.org>
----
- kernel/sched/core.c | 15 +++++++++++++++
- 1 file changed, 15 insertions(+)
+Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 1e54517acd58..35e9f06af08d 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -990,6 +990,14 @@ static inline void uclamp_rq_dec(struct rq *rq, struct task_struct *p)
- 		uclamp_rq_dec_id(p, rq, clamp_id);
+---
+Changes in v7:
+ Message-ID: <20190122151404.5rtosic6puixado3@queper01-lin>
+ - add a note on side-effects due to the usage of FREQUENCY_UTIL for
+   performance domain frequency estimation
+ - add a similer note to this changelog
+---
+ kernel/sched/cpufreq_schedutil.c | 18 ++++++++-------
+ kernel/sched/fair.c              | 39 +++++++++++++++++++++++++++-----
+ kernel/sched/sched.h             | 18 ++++-----------
+ 3 files changed, 48 insertions(+), 27 deletions(-)
+
+diff --git a/kernel/sched/cpufreq_schedutil.c b/kernel/sched/cpufreq_schedutil.c
+index 70a8b87fa29c..fdad719fca8b 100644
+--- a/kernel/sched/cpufreq_schedutil.c
++++ b/kernel/sched/cpufreq_schedutil.c
+@@ -195,10 +195,11 @@ static unsigned int get_next_freq(struct sugov_policy *sg_policy,
+  * based on the task model parameters and gives the minimal utilization
+  * required to meet deadlines.
+  */
+-unsigned long schedutil_freq_util(int cpu, unsigned long util_cfs,
+-				  unsigned long max, enum schedutil_type type)
++unsigned int schedutil_cpu_util(int cpu, unsigned int util_cfs,
++				unsigned int max, enum schedutil_type type,
++				struct task_struct *p)
+ {
+-	unsigned long dl_util, util, irq;
++	unsigned int dl_util, util, irq;
+ 	struct rq *rq = cpu_rq(cpu);
+ 
+ 	if (!IS_BUILTIN(CONFIG_UCLAMP_TASK) &&
+@@ -229,7 +230,7 @@ unsigned long schedutil_freq_util(int cpu, unsigned long util_cfs,
+ 	 */
+ 	util = util_cfs + cpu_util_rt(rq);
+ 	if (type == FREQUENCY_UTIL)
+-		util = uclamp_util(rq, util);
++		util = uclamp_util_with(rq, util, p);
+ 
+ 	dl_util = cpu_util_dl(rq);
+ 
+@@ -283,13 +284,14 @@ unsigned long schedutil_freq_util(int cpu, unsigned long util_cfs,
+ static unsigned long sugov_get_util(struct sugov_cpu *sg_cpu)
+ {
+ 	struct rq *rq = cpu_rq(sg_cpu->cpu);
+-	unsigned long util = cpu_util_cfs(rq);
+-	unsigned long max = arch_scale_cpu_capacity(NULL, sg_cpu->cpu);
++	unsigned int util_cfs = cpu_util_cfs(rq);
++	unsigned int cpu_cap = arch_scale_cpu_capacity(NULL, sg_cpu->cpu);
+ 
+-	sg_cpu->max = max;
++	sg_cpu->max = cpu_cap;
+ 	sg_cpu->bw_dl = cpu_bw_dl(rq);
+ 
+-	return schedutil_freq_util(sg_cpu->cpu, util, max, FREQUENCY_UTIL);
++	return schedutil_cpu_util(sg_cpu->cpu, util_cfs, cpu_cap,
++				  FREQUENCY_UTIL, NULL);
  }
  
-+#ifdef CONFIG_UCLAMP_TASK_GROUP
-+static void cpu_util_update_hier(struct cgroup_subsys_state *css,
-+				 unsigned int clamp_id, unsigned int bucket_id,
-+				 unsigned int value);
-+#else
-+#define cpu_util_update_hier(...)
-+#endif
-+
- int sysctl_sched_uclamp_handler(struct ctl_table *table, int write,
- 				void __user *buffer, size_t *lenp,
- 				loff_t *ppos)
-@@ -1025,6 +1033,13 @@ int sysctl_sched_uclamp_handler(struct ctl_table *table, int write,
- 			uclamp_bucket_id(sysctl_sched_uclamp_util_max);
- 	}
+ /**
+diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
+index 8c0aa76af90a..f6b0808e01ad 100644
+--- a/kernel/sched/fair.c
++++ b/kernel/sched/fair.c
+@@ -6453,11 +6453,20 @@ static unsigned long cpu_util_next(int cpu, struct task_struct *p, int dst_cpu)
+ static long
+ compute_energy(struct task_struct *p, int dst_cpu, struct perf_domain *pd)
+ {
+-	long util, max_util, sum_util, energy = 0;
++	unsigned int max_util, cfs_util, cpu_util, cpu_cap;
++	unsigned long sum_util, energy = 0;
+ 	int cpu;
  
-+	cpu_util_update_hier(&root_task_group.css, UCLAMP_MIN,
-+			     uclamp_default[UCLAMP_MIN].bucket_id,
-+			     uclamp_default[UCLAMP_MIN].value);
-+	cpu_util_update_hier(&root_task_group.css, UCLAMP_MAX,
-+			     uclamp_default[UCLAMP_MAX].bucket_id,
-+			     uclamp_default[UCLAMP_MAX].value);
+ 	for (; pd; pd = pd->next) {
++		struct cpumask *pd_mask = perf_domain_span(pd);
 +
- 	/*
- 	 * Updating all the RUNNABLE task is expensive, keep it simple and do
- 	 * just a lazy update at each next enqueue time.
++		/*
++		 * The energy model mandate all the CPUs of a performance
++		 * domain have the same capacity.
++		 */
++		cpu_cap = arch_scale_cpu_capacity(NULL, cpumask_first(pd_mask));
+ 		max_util = sum_util = 0;
++
+ 		/*
+ 		 * The capacity state of CPUs of the current rd can be driven by
+ 		 * CPUs of another rd if they belong to the same performance
+@@ -6468,11 +6477,29 @@ compute_energy(struct task_struct *p, int dst_cpu, struct perf_domain *pd)
+ 		 * it will not appear in its pd list and will not be accounted
+ 		 * by compute_energy().
+ 		 */
+-		for_each_cpu_and(cpu, perf_domain_span(pd), cpu_online_mask) {
+-			util = cpu_util_next(cpu, p, dst_cpu);
+-			util = schedutil_energy_util(cpu, util);
+-			max_util = max(util, max_util);
+-			sum_util += util;
++		for_each_cpu_and(cpu, pd_mask, cpu_online_mask) {
++			cfs_util = cpu_util_next(cpu, p, dst_cpu);
++
++			/*
++			 * Busy time computation: utilization clamping is not
++			 * required since the ratio (sum_util / cpu_capacity)
++			 * is already enough to scale the EM reported power
++			 * consumption at the (eventually clamped) cpu_capacity.
++			 */
++			sum_util += schedutil_cpu_util(cpu, cfs_util, cpu_cap,
++						       ENERGY_UTIL, NULL);
++
++			/*
++			 * Performance domain frequency: utilization clamping
++			 * must be considered since it affects the selection
++			 * of the performance domain frequency.
++			 * NOTE: in case RT tasks are running, by default the
++			 * FREQUENCY_UTIL's utilization can be max OPP.
++			 */
++			cpu_util = schedutil_cpu_util(cpu, cfs_util, cpu_cap,
++						      FREQUENCY_UTIL,
++						      cpu == dst_cpu ? p : NULL);
++			max_util = max(max_util, cpu_util);
+ 		}
+ 
+ 		energy += em_pd_energy(pd->em_pd, max_util, sum_util);
+diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
+index de181b8a3a2a..b9acef080d99 100644
+--- a/kernel/sched/sched.h
++++ b/kernel/sched/sched.h
+@@ -2335,6 +2335,7 @@ static inline unsigned long capacity_orig_of(int cpu)
+ #endif
+ 
+ #ifdef CONFIG_CPU_FREQ_GOV_SCHEDUTIL
++
+ /**
+  * enum schedutil_type - CPU utilization type
+  * @FREQUENCY_UTIL:	Utilization used to select frequency
+@@ -2350,15 +2351,9 @@ enum schedutil_type {
+ 	ENERGY_UTIL,
+ };
+ 
+-unsigned long schedutil_freq_util(int cpu, unsigned long util_cfs,
+-				  unsigned long max, enum schedutil_type type);
+-
+-static inline unsigned long schedutil_energy_util(int cpu, unsigned long cfs)
+-{
+-	unsigned long max = arch_scale_cpu_capacity(NULL, cpu);
+-
+-	return schedutil_freq_util(cpu, cfs, max, ENERGY_UTIL);
+-}
++unsigned int schedutil_cpu_util(int cpu, unsigned int util_cfs,
++				unsigned int max, enum schedutil_type type,
++				struct task_struct *p);
+ 
+ static inline unsigned long cpu_bw_dl(struct rq *rq)
+ {
+@@ -2387,10 +2382,7 @@ static inline unsigned long cpu_util_rt(struct rq *rq)
+ 	return READ_ONCE(rq->avg_rt.util_avg);
+ }
+ #else /* CONFIG_CPU_FREQ_GOV_SCHEDUTIL */
+-static inline unsigned long schedutil_energy_util(int cpu, unsigned long cfs)
+-{
+-	return cfs;
+-}
++#define schedutil_cpu_util(cpu, util_cfs, max, type, p) 0
+ #endif
+ 
+ #ifdef CONFIG_HAVE_SCHED_AVG_IRQ
 -- 
 2.20.1
