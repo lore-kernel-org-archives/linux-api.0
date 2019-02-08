@@ -1,68 +1,37 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: [PATCH 19/19] io_uring: add io_uring_event cache hit information
-Date: Fri,  8 Feb 2019 10:34:23 -0700
-Message-ID: <20190208173423.27014-20-axboe@kernel.dk>
+From: David Miller <davem@davemloft.net>
+Subject: Re: [PATCH 13/19] net: split out functions related to registering
+ inflight socket files
+Date: Fri, 08 Feb 2019 11:49:09 -0800 (PST)
+Message-ID: <20190208.114909.2274258441884310233.davem@davemloft.net>
 References: <20190208173423.27014-1-axboe@kernel.dk>
+	<20190208173423.27014-14-axboe@kernel.dk>
+Mime-Version: 1.0
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20190208173423.27014-1-axboe@kernel.dk>
+In-Reply-To: <20190208173423.27014-14-axboe@kernel.dk>
 Sender: owner-linux-aio@kvack.org
-To: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
-Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk, Jens Axboe <axboe@kernel.dk>
+To: axboe@kernel.dk
+Cc: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org, hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk, netdev@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Add hint on whether a read was served out of the page cache, or if it
-hit media. This is useful for buffered async IO, O_DIRECT reads would
-never have this set (for obvious reasons).
+From: Jens Axboe <axboe@kernel.dk>
+Date: Fri,  8 Feb 2019 10:34:17 -0700
 
-If the read hit page cache, cqe->flags will have IOCQE_FLAG_CACHEHIT
-set.
+> We need this functionality for the io_uring file registration, but
+> we cannot rely on it since CONFIG_UNIX can be modular. Move the helpers
+> to a separate file, that's always builtin to the kernel if CONFIG_UNIX is
+> m/y.
+> 
+> No functional changes in this patch, just moving code around.
+> 
+> Cc: netdev@vger.kernel.org
+> Cc: David S. Miller <davem@davemloft.net>
+> Signed-off-by: Jens Axboe <axboe@kernel.dk>
 
-Signed-off-by: Jens Axboe <axboe@kernel.dk>
----
- fs/io_uring.c                 | 7 ++++++-
- include/uapi/linux/io_uring.h | 5 +++++
- 2 files changed, 11 insertions(+), 1 deletion(-)
+No objections on my end, feel free to merge this in with your series.
 
-diff --git a/fs/io_uring.c b/fs/io_uring.c
-index 175dac00eb47..48e864de5dca 100644
---- a/fs/io_uring.c
-+++ b/fs/io_uring.c
-@@ -583,11 +583,16 @@ static void io_fput(struct io_kiocb *req)
- static void io_complete_rw(struct kiocb *kiocb, long res, long res2)
- {
- 	struct io_kiocb *req = container_of(kiocb, struct io_kiocb, rw);
-+	unsigned ev_flags = 0;
- 
- 	kiocb_end_write(kiocb);
- 
- 	io_fput(req);
--	io_cqring_add_event(req->ctx, req->user_data, res, 0);
-+
-+	if (res > 0 && (req->flags & REQ_F_FORCE_NONBLOCK))
-+		ev_flags = IOCQE_FLAG_CACHEHIT;
-+
-+	io_cqring_add_event(req->ctx, req->user_data, res, ev_flags);
- 	io_free_req(req);
- }
- 
-diff --git a/include/uapi/linux/io_uring.h b/include/uapi/linux/io_uring.h
-index e23408692118..24906e99fdc7 100644
---- a/include/uapi/linux/io_uring.h
-+++ b/include/uapi/linux/io_uring.h
-@@ -69,6 +69,11 @@ struct io_uring_cqe {
- 	__u32	flags;
- };
- 
-+/*
-+ * io_uring_event->flags
-+ */
-+#define IOCQE_FLAG_CACHEHIT	(1U << 0)	/* IO did not hit media */
-+
- /*
-  * Magic offsets for the application to mmap the data it needs
-  */
--- 
-2.17.1
+Acked-by: David S. Miller <davem@davemloft.net>
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
