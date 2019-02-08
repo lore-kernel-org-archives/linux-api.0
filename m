@@ -1,53 +1,54 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH 03/32] timens: Introduce CLOCK_MONOTONIC offsets
-Date: Fri, 8 Feb 2019 10:46:35 +0100 (CET)
-Message-ID: <alpine.DEB.2.21.1902080859460.1645@nanos.tec.linutronix.de>
-References: <20190206001107.16488-1-dima@arista.com> <20190206001107.16488-4-dima@arista.com> <alpine.DEB.2.21.1902072225420.1645@nanos.tec.linutronix.de>
+Subject: Re: [PATCH 16/32] x86/vdso: Generate vdso{,32}-timens.lds
+Date: Fri, 8 Feb 2019 10:57:57 +0100 (CET)
+Message-ID: <alpine.DEB.2.21.1902081051410.1645@nanos.tec.linutronix.de>
+References: <20190206001107.16488-1-dima@arista.com> <20190206001107.16488-17-dima@arista.com> <a2bbe610-7553-0ba6-b58b-1013e034b8f6@rasmusvillemoes.dk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.21.1902072225420.1645@nanos.tec.linutronix.de>
+In-Reply-To: <a2bbe610-7553-0ba6-b58b-1013e034b8f6@rasmusvillemoes.dk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dmitry Safonov <dima@arista.com>
-Cc: linux-kernel@vger.kernel.org, Andrei Vagin <avagin@openvz.org>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@gmail.com>, Andy Lutomirski <luto@kernel.org>, Andy Tucker <agtucker@google.com>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
+To: Rasmus Villemoes <linux@rasmusvillemoes.dk>
+Cc: Dmitry Safonov <dima@arista.com>, LKML <linux-kernel@vger.kernel.org>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andrei Vagin <avagin@gmail.com>, Andy Lutomirski <luto@kernel.org>, Andy Tucker <agtucker@google.com>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org, Vincenzo
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 7 Feb 2019, Thomas Gleixner wrote:
-> Does this really need to be an out of line call? If you stick this into the
-> clock_get() implementations then it boils down to:
+On Thu, 7 Feb 2019, Rasmus Villemoes wrote:
+
+Cc: + Vincenzo, Will
+
+> On 06/02/2019 01.10, Dmitry Safonov wrote:
+> > As it has been discussed on timens RFC, adding a new conditional branch
+> > `if (inside_time_ns)` on VDSO for all processes is undesirable.
+> > It will add a penalty for everybody as branch predictor may mispredict
+> > the jump. Also there are instruction cache lines wasted on cmp/jmp.
+> > 
+> > Those effects of introducing time namespace are very much unwanted
+> > having in mind how much work have been spent on micro-optimisation
+> > vdso code.
+> > 
+> > Addressing those problems, there are two versions of VDSO's .so:
+> > for host tasks (without any penalty) and for processes inside of time
+> > namespace with clk_to_ns() that subtracts offsets from host's time.
+> > 
+> > Unfortunately, to allow changing VDSO VMA on a running process,
+> > the entry points to VDSO should have the same offsets (addresses).
+> > That's needed as i.e. application that calls setns() may have already
+> > resolved VDSO symbols in GOT/PLT.
 > 
-> static inline void timens_add_monotonic(struct timespec64 *ts)
-> {
-> 	struct timens_offsets *ns_offsets = current->nsproxy->time_ns->offsets;
-> 
-> 	if (ns_offsets)
-> 		*ts = timespec64_add(*ts, ns_offsets->monotonic_time_offset);
+> These (14-19, if I'm reading them right) seems to add quite a lot of
+> complexity and fragility to the build, and other architectures would
+> probably have to add something similar to their vdso builds.
 
-And this needs to be a special variant of
-timespec64-add_safe(). timespec64_add_safe() is not sufficient, because it
-assumes that both values are positive, which is not the case here..
+Yes and we really want to avoid that. The VDSO implementations are
+pointlessly different accross the architectures and there is effort on the
+way to consolidate them:
 
-In timer_set() implementations you move the timespec_valid() check after
-the add. That's wrong because you really want to check the input value from
-user space.
+  https://lkml.kernel.org/r/20190115135539.24762-1-vincenzo.frascino@arm.com
 
-Assume that the caller supplied value is valid and the adjustment brings it
-out of range then how should the caller understand why it it rejected?
-
-So timespec64_add_namespace() must check for under and overflow. But doing
-this with timespecs is a pain. I rather suggest to rework the whole thing
-so hrtimer_nanosleep() takes a ktime_t expiry value and move the conversion
-to the call sites. Then the whole offset magic becomes:
-
-   expires = timespec64_to_ktime(rqtp);
-
-   if (abstime)
-   	expires = timens_to_host_mono(expires);
-
-and that function can nicely do the underflow and overflow detection and
-cap the values to 0 on underflow and KTIME_MAX on overflow.
-
-Hmm?
+I talked to Vincenzo earlier this week and he's working on a new version of
+that. The timens stuff wants to go on top of the consolidation otherwise we
+end up with another set of pointlessly different and differently broken
+VDSO variants.
 
 Thanks,
 
