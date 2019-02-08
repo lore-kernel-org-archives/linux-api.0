@@ -1,7 +1,7 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: [PATCH 14/19] io_uring: add file set registration
-Date: Fri,  8 Feb 2019 10:34:18 -0700
-Message-ID: <20190208173423.27014-15-axboe@kernel.dk>
+Subject: [PATCH 15/19] io_uring: add submission polling
+Date: Fri,  8 Feb 2019 10:34:19 -0700
+Message-ID: <20190208173423.27014-16-axboe@kernel.dk>
 References: <20190208173423.27014-1-axboe@kernel.dk>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20190208173423.27014-1-axboe@kernel.dk>
@@ -10,460 +10,477 @@ To: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
 Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk, Jens Axboe <axboe@kernel.dk>
 List-Id: linux-api@vger.kernel.org
 
-We normally have to fget/fput for each IO we do on a file. Even with
-the batching we do, the cost of the atomic inc/dec of the file usage
-count adds up.
+This enables an application to do IO, without ever entering the kernel.
+By using the SQ ring to fill in new sqes and watching for completions
+on the CQ ring, we can submit and reap IOs without doing a single system
+call. The kernel side thread will poll for new submissions, and in case
+of HIPRI/polled IO, it'll also poll for completions.
 
-This adds IORING_REGISTER_FILES, and IORING_UNREGISTER_FILES opcodes
-for the io_uring_register(2) system call. The arguments passed in must
-be an array of __s32 holding file descriptors, and nr_args should hold
-the number of file descriptors the application wishes to pin for the
-duration of the io_uring instance (or until IORING_UNREGISTER_FILES is
-called).
+By default, we allow 1 second of active spinning. This can by changed
+by passing in a different grace period at io_uring_register(2) time.
+If the thread exceeds this idle time without having any work to do, it
+will set:
 
-When used, the application must set IOSQE_FIXED_FILE in the sqe->flags
-member. Then, instead of setting sqe->fd to the real fd, it sets sqe->fd
-to the index in the array passed in to IORING_REGISTER_FILES.
+sq_ring->flags |= IORING_SQ_NEED_WAKEUP.
 
-Files are automatically unregistered when the io_uring instance is torn
-down. An application need only unregister if it wishes to register a new
-set of fds.
+The application will have to call io_uring_enter() to start things back
+up again. If IO is kept busy, that will never be needed. Basically an
+application that has this feature enabled will guard it's
+io_uring_enter(2) call with:
+
+read_barrier();
+if (*sq_ring->flags & IORING_SQ_NEED_WAKEUP)
+	io_uring_enter(fd, 0, 0, IORING_ENTER_SQ_WAKEUP);
+
+instead of calling it unconditionally.
+
+It's mandatory to use fixed files with this feature. Failure to do so
+will result in the application getting an -EBADF CQ entry when
+submitting IO.
 
 Signed-off-by: Jens Axboe <axboe@kernel.dk>
 ---
- fs/io_uring.c                 | 256 ++++++++++++++++++++++++++++++----
- include/uapi/linux/io_uring.h |   9 +-
- 2 files changed, 235 insertions(+), 30 deletions(-)
+ fs/io_uring.c                 | 249 +++++++++++++++++++++++++++++++++-
+ include/uapi/linux/io_uring.h |  12 +-
+ 2 files changed, 253 insertions(+), 8 deletions(-)
 
 diff --git a/fs/io_uring.c b/fs/io_uring.c
-index 50c48e43d56e..244fb71e3424 100644
+index 244fb71e3424..e6b9cef4665d 100644
 --- a/fs/io_uring.c
 +++ b/fs/io_uring.c
-@@ -29,6 +29,7 @@
+@@ -24,6 +24,7 @@
+ #include <linux/percpu.h>
+ #include <linux/slab.h>
+ #include <linux/workqueue.h>
++#include <linux/kthread.h>
+ #include <linux/blkdev.h>
+ #include <linux/bvec.h>
  #include <linux/net.h>
- #include <net/sock.h>
- #include <net/af_unix.h>
-+#include <net/scm.h>
- #include <linux/anon_inodes.h>
- #include <linux/sched/mm.h>
- #include <linux/uaccess.h>
-@@ -41,6 +42,7 @@
- #include "internal.h"
- 
- #define IORING_MAX_ENTRIES	4096
-+#define IORING_MAX_FIXED_FILES	1024
- 
- struct io_uring {
- 	u32 head ____cacheline_aligned_in_smp;
-@@ -102,6 +104,14 @@ struct io_ring_ctx {
- 		struct fasync_struct	*cq_fasync;
+@@ -87,12 +88,16 @@ struct io_ring_ctx {
+ 		unsigned		cached_sq_head;
+ 		unsigned		sq_entries;
+ 		unsigned		sq_mask;
++		unsigned		sq_thread_idle;
+ 		struct io_uring_sqe	*sq_sqes;
  	} ____cacheline_aligned_in_smp;
  
-+	/*
-+	 * If used, fixed file set. Writers must ensure that ->refs is dead,
-+	 * readers must ensure that ->refs is alive as long as the file* is
-+	 * used. Only updated through io_uring_register(2).
-+	 */
-+	struct file		**user_files;
-+	unsigned		nr_user_files;
-+
- 	/* if used, fixed mapped user buffers */
- 	unsigned		nr_user_bufs;
- 	struct io_mapped_ubuf	*user_bufs;
-@@ -149,6 +159,7 @@ struct io_kiocb {
- 	unsigned int		flags;
- #define REQ_F_FORCE_NONBLOCK	1	/* inline submission attempt */
- #define REQ_F_IOPOLL_COMPLETED	2	/* polled IO has completed */
-+#define REQ_F_FIXED_FILE	4	/* ctx owns file */
- 	u64			user_data;
- 	u64			error;
+ 	/* IO offload */
+ 	struct workqueue_struct	*sqo_wq;
++	struct task_struct	*sqo_thread;	/* if using sq thread polling */
+ 	struct mm_struct	*sqo_mm;
++	wait_queue_head_t	sqo_wait;
++	unsigned		sqo_stop;
  
-@@ -376,15 +387,17 @@ static void io_iopoll_complete(struct io_ring_ctx *ctx, unsigned int *nr_events,
- 		 * Batched puts of the same file, to avoid dirtying the
- 		 * file usage count multiple times, if avoidable.
- 		 */
--		if (!file) {
--			file = req->rw.ki_filp;
--			file_count = 1;
--		} else if (file == req->rw.ki_filp) {
--			file_count++;
--		} else {
--			fput_many(file, file_count);
--			file = req->rw.ki_filp;
--			file_count = 1;
-+		if (!(req->flags & REQ_F_FIXED_FILE)) {
-+			if (!file) {
-+				file = req->rw.ki_filp;
-+				file_count = 1;
-+			} else if (file == req->rw.ki_filp) {
-+				file_count++;
-+			} else {
-+				fput_many(file, file_count);
-+				file = req->rw.ki_filp;
-+				file_count = 1;
-+			}
- 		}
+ 	struct {
+ 		/* CQ ring */
+@@ -147,6 +152,7 @@ struct sqe_submit {
+ 	unsigned short			index;
+ 	bool				has_user;
+ 	bool				needs_lock;
++	bool				needs_fixed_file;
+ };
  
- 		if (to_free == ARRAY_SIZE(reqs))
-@@ -516,13 +529,19 @@ static void kiocb_end_write(struct kiocb *kiocb)
- 	}
+ struct io_kiocb {
+@@ -299,6 +305,8 @@ static void io_cqring_add_event(struct io_ring_ctx *ctx, u64 ki_user_data,
+ 
+ 	if (waitqueue_active(&ctx->wait))
+ 		wake_up(&ctx->wait);
++	if (waitqueue_active(&ctx->sqo_wait))
++		wake_up(&ctx->sqo_wait);
  }
  
-+static void io_fput(struct io_kiocb *req)
-+{
-+	if (!(req->flags & REQ_F_FIXED_FILE))
-+		fput(req->rw.ki_filp);
-+}
-+
- static void io_complete_rw(struct kiocb *kiocb, long res, long res2)
- {
- 	struct io_kiocb *req = container_of(kiocb, struct io_kiocb, rw);
- 
- 	kiocb_end_write(kiocb);
- 
--	fput(kiocb->ki_filp);
-+	io_fput(req);
- 	io_cqring_add_event(req->ctx, req->user_data, res, 0);
- 	io_free_req(req);
+ static void io_ring_drop_ctx_refs(struct io_ring_ctx *ctx, unsigned refs)
+@@ -652,9 +660,10 @@ static bool io_file_supports_async(struct file *file)
+ 	return false;
  }
-@@ -638,19 +657,29 @@ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe,
+ 
+-static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe,
++static int io_prep_rw(struct io_kiocb *req, const struct sqe_submit *s,
+ 		      bool force_nonblock, struct io_submit_state *state)
  {
++	const struct io_uring_sqe *sqe = s->sqe;
  	struct io_ring_ctx *ctx = req->ctx;
  	struct kiocb *kiocb = &req->rw;
--	unsigned ioprio;
-+	unsigned ioprio, flags;
- 	int fd, ret;
- 
- 	/* For -EAGAIN retry, everything is already prepped */
- 	if (kiocb->ki_filp)
- 		return 0;
- 
-+	flags = READ_ONCE(sqe->flags);
- 	fd = READ_ONCE(sqe->fd);
--	kiocb->ki_filp = io_file_get(state, fd);
--	if (unlikely(!kiocb->ki_filp))
--		return -EBADF;
--	if (force_nonblock && !io_file_supports_async(kiocb->ki_filp))
--		force_nonblock = false;
-+
-+	if (flags & IOSQE_FIXED_FILE) {
-+		if (unlikely(!ctx->user_files ||
-+		    (unsigned) fd >= ctx->nr_user_files))
+ 	unsigned ioprio, flags;
+@@ -674,6 +683,8 @@ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe,
+ 		kiocb->ki_filp = ctx->user_files[fd];
+ 		req->flags |= REQ_F_FIXED_FILE;
+ 	} else {
++		if (s->needs_fixed_file)
 +			return -EBADF;
-+		kiocb->ki_filp = ctx->user_files[fd];
-+		req->flags |= REQ_F_FIXED_FILE;
-+	} else {
-+		kiocb->ki_filp = io_file_get(state, fd);
-+		if (unlikely(!kiocb->ki_filp))
-+			return -EBADF;
-+		if (force_nonblock && !io_file_supports_async(kiocb->ki_filp))
-+			force_nonblock = false;
-+	}
- 	kiocb->ki_pos = READ_ONCE(sqe->off);
- 	kiocb->ki_flags = iocb_flags(kiocb->ki_filp);
- 	kiocb->ki_hint = ki_hint_validate(file_write_hint(kiocb->ki_filp));
-@@ -690,10 +719,14 @@ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe,
- 	}
- 	return 0;
- out_fput:
--	/* in case of error, we didn't use this file reference. drop it. */
--	if (state)
--		state->used_refs--;
--	io_file_put(state, kiocb->ki_filp);
-+	if (!(flags & IOSQE_FIXED_FILE)) {
-+		/*
-+		 * in case of error, we didn't use this file reference. drop it.
-+		 */
-+		if (state)
-+			state->used_refs--;
-+		io_file_put(state, kiocb->ki_filp);
-+	}
- 	return ret;
- }
- 
-@@ -825,7 +858,7 @@ static ssize_t io_read(struct io_kiocb *req, const struct sqe_submit *s,
- out_fput:
- 	/* Hold on to the file for -EAGAIN */
- 	if (unlikely(ret && ret != -EAGAIN))
--		fput(file);
-+		io_fput(req);
- 	return ret;
- }
- 
-@@ -879,7 +912,7 @@ static ssize_t io_write(struct io_kiocb *req, const struct sqe_submit *s,
- 	kfree(iovec);
- out_fput:
- 	if (unlikely(ret))
--		fput(file);
-+		io_fput(req);
- 	return ret;
- }
- 
-@@ -905,7 +938,7 @@ static int io_fsync(struct io_kiocb *req, const struct io_uring_sqe *sqe,
- 	loff_t sqe_off = READ_ONCE(sqe->off);
- 	loff_t sqe_len = READ_ONCE(sqe->len);
- 	loff_t end = sqe_off + sqe_len;
--	unsigned fsync_flags;
-+	unsigned fsync_flags, flags;
+ 		kiocb->ki_filp = io_file_get(state, fd);
+ 		if (unlikely(!kiocb->ki_filp))
+ 			return -EBADF;
+@@ -827,7 +838,7 @@ static ssize_t io_read(struct io_kiocb *req, const struct sqe_submit *s,
  	struct file *file;
- 	int ret, fd;
- 
-@@ -923,14 +956,23 @@ static int io_fsync(struct io_kiocb *req, const struct io_uring_sqe *sqe,
- 		return -EINVAL;
- 
- 	fd = READ_ONCE(sqe->fd);
--	file = fget(fd);
-+	flags = READ_ONCE(sqe->flags);
-+
-+	if (flags & IOSQE_FIXED_FILE) {
-+		if (unlikely(!ctx->user_files || fd >= ctx->nr_user_files))
-+			return -EBADF;
-+		file = ctx->user_files[fd];
-+	} else {
-+		file = fget(fd);
-+	}
- 	if (unlikely(!file))
- 		return -EBADF;
- 
- 	ret = vfs_fsync_range(file, sqe_off, end > 0 ? end : LLONG_MAX,
- 				fsync_flags & IORING_FSYNC_DATASYNC);
- 
--	fput(file);
-+	if (!(flags & IOSQE_FIXED_FILE))
-+		fput(file);
- 	io_cqring_add_event(ctx, sqe->user_data, ret, 0);
- 	io_free_req(req);
- 	return 0;
-@@ -1067,7 +1109,7 @@ static int io_submit_sqe(struct io_ring_ctx *ctx, const struct sqe_submit *s,
  	ssize_t ret;
  
- 	/* enforce forwards compatibility on users */
--	if (unlikely(s->sqe->flags))
-+	if (unlikely(s->sqe->flags & ~IOSQE_FIXED_FILE))
- 		return -EINVAL;
+-	ret = io_prep_rw(req, s->sqe, force_nonblock, state);
++	ret = io_prep_rw(req, s, force_nonblock, state);
+ 	if (ret)
+ 		return ret;
+ 	file = kiocb->ki_filp;
+@@ -871,7 +882,7 @@ static ssize_t io_write(struct io_kiocb *req, const struct sqe_submit *s,
+ 	struct file *file;
+ 	ssize_t ret;
  
- 	req = io_get_req(ctx, state);
-@@ -1255,6 +1297,151 @@ static int io_cqring_wait(struct io_ring_ctx *ctx, int min_events,
- 	return ring->r.head == ring->r.tail ? ret : 0;
+-	ret = io_prep_rw(req, s->sqe, force_nonblock, state);
++	ret = io_prep_rw(req, s, force_nonblock, state);
+ 	if (ret)
+ 		return ret;
+ 	/* Hold on to the file for -EAGAIN */
+@@ -1061,6 +1072,7 @@ static void io_sq_wq_submit_work(struct work_struct *work)
+ 	user_data = READ_ONCE(s->sqe->user_data);
+ 	s->needs_lock = true;
+ 	s->has_user = false;
++	s->needs_fixed_file = false;
+ 
+ 	/*
+ 	 * If we're doing IO to fixed buffers, we don't need to get/set
+@@ -1215,6 +1227,170 @@ static bool io_get_sqring(struct io_ring_ctx *ctx, struct sqe_submit *s)
+ 	return false;
  }
  
-+static void __io_sqe_files_unregister(struct io_ring_ctx *ctx)
++static int io_submit_sqes(struct io_ring_ctx *ctx, struct sqe_submit *sqes,
++			  unsigned int nr, bool has_user, bool mm_fault)
 +{
-+#if defined(CONFIG_UNIX)
-+	if (ctx->ring_sock) {
-+		struct sock *sock = ctx->ring_sock->sk;
-+		struct sk_buff *skb;
++	struct io_submit_state state, *statep = NULL;
++	int ret, i, submitted = 0;
 +
-+		while ((skb = skb_dequeue(&sock->sk_receive_queue)) != NULL)
-+			kfree_skb(skb);
-+	}
-+#else
-+	int i;
-+
-+	for (i = 0; i < ctx->nr_user_files; i++)
-+		fput(ctx->user_files[i]);
-+#endif
-+}
-+
-+static int io_sqe_files_unregister(struct io_ring_ctx *ctx)
-+{
-+	if (!ctx->user_files)
-+		return -ENXIO;
-+
-+	__io_sqe_files_unregister(ctx);
-+	kfree(ctx->user_files);
-+	ctx->user_files = NULL;
-+	return 0;
-+}
-+
-+#if defined(CONFIG_UNIX)
-+static int __io_sqe_files_scm(struct io_ring_ctx *ctx, int nr, int offset)
-+{
-+	struct scm_fp_list *fpl;
-+	struct sk_buff *skb;
-+	int i;
-+
-+	fpl = kzalloc(sizeof(*fpl), GFP_KERNEL);
-+	if (!fpl)
-+		return -ENOMEM;
-+
-+	skb = alloc_skb(0, GFP_KERNEL);
-+	if (!skb) {
-+		kfree(fpl);
-+		return -ENOMEM;
++	if (nr > IO_PLUG_THRESHOLD) {
++		io_submit_state_start(&state, ctx, nr);
++		statep = &state;
 +	}
 +
-+	skb->sk = ctx->ring_sock->sk;
-+	skb->destructor = unix_destruct_scm;
-+
-+	fpl->user = get_uid(ctx->user);
 +	for (i = 0; i < nr; i++) {
-+		fpl->fp[i] = get_file(ctx->user_files[i + offset]);
-+		unix_inflight(fpl->user, fpl->fp[i]);
-+		fput(fpl->fp[i]);
-+	}
-+
-+	fpl->max = fpl->count = nr;
-+	UNIXCB(skb).fp = fpl;
-+	skb_queue_head(&ctx->ring_sock->sk->sk_receive_queue, skb);
-+	return 0;
-+}
-+
-+/*
-+ * If UNIX sockets are enabled, fd passing can cause a reference cycle which
-+ * causes regular reference counting to break down. We rely on the UNIX
-+ * garbage collection to take care of this problem for us.
-+ */
-+static int io_sqe_files_scm(struct io_ring_ctx *ctx)
-+{
-+	unsigned left, total;
-+	int ret = 0;
-+
-+	total = 0;
-+	left = ctx->nr_user_files;
-+	while (left) {
-+		unsigned this_files = min_t(unsigned, left, SCM_MAX_FD);
-+		int ret;
-+
-+		ret = __io_sqe_files_scm(ctx, this_files, total);
-+		if (ret)
-+			break;
-+		left -= this_files;
-+		total += this_files;
-+	}
-+
-+	return ret;
-+}
-+#else
-+static int io_sqe_files_scm(struct io_ring_ctx *ctx)
-+{
-+	return 0;
-+}
-+#endif
-+
-+static int io_sqe_files_register(struct io_ring_ctx *ctx, void __user *arg,
-+				 unsigned nr_args)
-+{
-+	__s32 __user *fds = (__s32 __user *) arg;
-+	int fd, ret = 0;
-+	unsigned i;
-+
-+	if (ctx->user_files)
-+		return -EBUSY;
-+	if (!nr_args)
-+		return -EINVAL;
-+	if (nr_args > IORING_MAX_FIXED_FILES)
-+		return -EMFILE;
-+
-+	ctx->user_files = kcalloc(nr_args, sizeof(struct file *), GFP_KERNEL);
-+	if (!ctx->user_files)
-+		return -ENOMEM;
-+
-+	for (i = 0; i < nr_args; i++) {
-+		ret = -EFAULT;
-+		if (copy_from_user(&fd, &fds[i], sizeof(fd)))
-+			break;
-+
-+		ctx->user_files[i] = fget(fd);
-+
-+		ret = -EBADF;
-+		if (!ctx->user_files[i])
-+			break;
-+		/*
-+		 * Don't allow io_uring instances to be registered. If UNIX
-+		 * isn't enabled, then this causes a reference cycle and this
-+		 * instance can never get freed. If UNIX is enabled we'll
-+		 * handle it just fine, but there's still no point in allowing
-+		 * a ring fd as it doesn't suppor regular read/write anyway.
-+		 */
-+		if (ctx->user_files[i]->f_op == &io_uring_fops) {
-+			fput(ctx->user_files[i]);
-+			break;
++		if (unlikely(mm_fault)) {
++			ret = -EFAULT;
++		} else {
++			sqes[i].has_user = has_user;
++			sqes[i].needs_lock = true;
++			sqes[i].needs_fixed_file = true;
++			ret = io_submit_sqe(ctx, &sqes[i], statep);
 +		}
-+		ctx->nr_user_files++;
-+		ret = 0;
++		if (!ret) {
++			submitted++;
++			continue;
++		}
++
++		io_cqring_add_event(ctx, sqes[i].sqe->user_data, ret, 0);
 +	}
 +
-+	if (!ret)
-+		ret = io_sqe_files_scm(ctx);
-+	if (ret)
-+		io_sqe_files_unregister(ctx);
++	if (statep)
++		io_submit_state_end(&state);
 +
-+	return ret;
++	return submitted;
 +}
 +
- static int io_sq_offload_start(struct io_ring_ctx *ctx)
- {
- 	int ret;
-@@ -1521,14 +1708,16 @@ static void io_ring_ctx_free(struct io_ring_ctx *ctx)
- 		destroy_workqueue(ctx->sqo_wq);
- 	if (ctx->sqo_mm)
- 		mmdrop(ctx->sqo_mm);
++static int io_sq_thread(void *data)
++{
++	struct sqe_submit sqes[IO_IOPOLL_BATCH];
++	struct io_ring_ctx *ctx = data;
++	struct mm_struct *cur_mm = NULL;
++	mm_segment_t old_fs;
++	DEFINE_WAIT(wait);
++	unsigned inflight;
++	unsigned long timeout;
++
++	old_fs = get_fs();
++	set_fs(USER_DS);
++
++	timeout = inflight = 0;
++	while (!kthread_should_stop() && !ctx->sqo_stop) {
++		bool all_fixed, mm_fault = false;
++		int i;
++
++		if (inflight) {
++			unsigned nr_events = 0;
++
++			if (ctx->flags & IORING_SETUP_IOPOLL) {
++				/*
++				 * We disallow the app entering submit/complete
++				 * with polling, but we still need to lock the
++				 * ring to prevent racing with polled issue
++				 * that got punted to a workqueue.
++				 */
++				mutex_lock(&ctx->uring_lock);
++				io_iopoll_check(ctx, &nr_events, 0);
++				mutex_unlock(&ctx->uring_lock);
++			} else {
++				/*
++				 * Normal IO, just pretend everything completed.
++				 * We don't have to poll completions for that.
++				 */
++				nr_events = inflight;
++			}
++
++			inflight -= nr_events;
++			if (!inflight)
++				timeout = jiffies + ctx->sq_thread_idle;
++		}
++
++		if (!io_get_sqring(ctx, &sqes[0])) {
++			/*
++			 * We're polling. If we're within the defined idle
++			 * period, then let us spin without work before going
++			 * to sleep.
++			 */
++			if (inflight || !time_after(jiffies, timeout)) {
++				cpu_relax();
++				continue;
++			}
++
++			/*
++			 * Drop cur_mm before scheduling, we can't hold it for
++			 * long periods (or over schedule()). Do this before
++			 * adding ourselves to the waitqueue, as the unuse/drop
++			 * may sleep.
++			 */
++			if (cur_mm) {
++				unuse_mm(cur_mm);
++				mmput(cur_mm);
++				cur_mm = NULL;
++			}
++
++			prepare_to_wait(&ctx->sqo_wait, &wait,
++						TASK_INTERRUPTIBLE);
++
++			/* Tell userspace we may need a wakeup call */
++			ctx->sq_ring->flags |= IORING_SQ_NEED_WAKEUP;
++			smp_wmb();
++
++			if (!io_get_sqring(ctx, &sqes[0])) {
++				if (kthread_should_stop()) {
++					finish_wait(&ctx->sqo_wait, &wait);
++					break;
++				}
++				if (signal_pending(current))
++					flush_signals(current);
++				schedule();
++				finish_wait(&ctx->sqo_wait, &wait);
++
++				ctx->sq_ring->flags &= ~IORING_SQ_NEED_WAKEUP;
++				smp_wmb();
++				continue;
++			}
++			finish_wait(&ctx->sqo_wait, &wait);
++
++			ctx->sq_ring->flags &= ~IORING_SQ_NEED_WAKEUP;
++			smp_wmb();
++		}
++
++		i = 0;
++		all_fixed = true;
++		do {
++			if (all_fixed && io_sqe_needs_user(sqes[i].sqe))
++				all_fixed = false;
++
++			i++;
++			if (i == ARRAY_SIZE(sqes))
++				break;
++		} while (io_get_sqring(ctx, &sqes[i]));
++
++		io_commit_sqring(ctx);
++
++		/* Unless all new commands are FIXED regions, grab mm */
++		if (!all_fixed && !cur_mm) {
++			mm_fault = !mmget_not_zero(ctx->sqo_mm);
++			if (!mm_fault) {
++				use_mm(ctx->sqo_mm);
++				cur_mm = ctx->sqo_mm;
++			}
++		}
++
++		inflight += io_submit_sqes(ctx, sqes, i, cur_mm != NULL,
++						mm_fault);
++	}
 +
 +	io_iopoll_reap_events(ctx);
-+	io_sqe_buffer_unregister(ctx);
-+	io_sqe_files_unregister(ctx);
 +
- #if defined(CONFIG_UNIX)
- 	if (ctx->ring_sock)
- 		sock_release(ctx->ring_sock);
- #endif
++	set_fs(old_fs);
++	if (cur_mm) {
++		unuse_mm(cur_mm);
++		mmput(cur_mm);
++	}
++	return 0;
++}
++
+ static int io_ring_submit(struct io_ring_ctx *ctx, unsigned int to_submit)
+ {
+ 	struct io_submit_state state, *statep = NULL;
+@@ -1233,6 +1409,7 @@ static int io_ring_submit(struct io_ring_ctx *ctx, unsigned int to_submit)
  
--	io_iopoll_reap_events(ctx);
--	io_sqe_buffer_unregister(ctx);
--
- 	io_mem_free(ctx->sq_ring);
- 	io_mem_free(ctx->sq_sqes);
- 	io_mem_free(ctx->cq_ring);
-@@ -1886,6 +2075,15 @@ static int __io_uring_register(struct io_ring_ctx *ctx, unsigned opcode,
- 			break;
- 		ret = io_sqe_buffer_unregister(ctx);
- 		break;
-+	case IORING_REGISTER_FILES:
-+		ret = io_sqe_files_register(ctx, arg, nr_args);
-+		break;
-+	case IORING_UNREGISTER_FILES:
+ 		s.has_user = true;
+ 		s.needs_lock = false;
++		s.needs_fixed_file = false;
+ 
+ 		ret = io_submit_sqe(ctx, &s, statep);
+ 		if (ret) {
+@@ -1442,13 +1619,47 @@ static int io_sqe_files_register(struct io_ring_ctx *ctx, void __user *arg,
+ 	return ret;
+ }
+ 
+-static int io_sq_offload_start(struct io_ring_ctx *ctx)
++static int io_sq_offload_start(struct io_ring_ctx *ctx,
++			       struct io_uring_params *p)
+ {
+ 	int ret;
+ 
++	init_waitqueue_head(&ctx->sqo_wait);
+ 	mmgrab(current->mm);
+ 	ctx->sqo_mm = current->mm;
+ 
++	ctx->sq_thread_idle = msecs_to_jiffies(p->sq_thread_idle);
++	if (!ctx->sq_thread_idle)
++		ctx->sq_thread_idle = HZ;
++
++	ret = -EINVAL;
++	if (!cpu_possible(p->sq_thread_cpu))
++		goto err;
++
++	if (ctx->flags & IORING_SETUP_SQPOLL) {
++		if (p->flags & IORING_SETUP_SQ_AFF) {
++			int cpu;
++
++			cpu = array_index_nospec(p->sq_thread_cpu, NR_CPUS);
++			ctx->sqo_thread = kthread_create_on_cpu(io_sq_thread,
++							ctx, cpu,
++							"io_uring-sq");
++		} else {
++			ctx->sqo_thread = kthread_create(io_sq_thread, ctx,
++							"io_uring-sq");
++		}
++		if (IS_ERR(ctx->sqo_thread)) {
++			ret = PTR_ERR(ctx->sqo_thread);
++			ctx->sqo_thread = NULL;
++			goto err;
++		}
++		wake_up_process(ctx->sqo_thread);
++	} else if (p->flags & IORING_SETUP_SQ_AFF) {
++		/* Can't have SQ_AFF without SQPOLL */
 +		ret = -EINVAL;
-+		if (arg || nr_args)
-+			break;
-+		ret = io_sqe_files_unregister(ctx);
-+		break;
- 	default:
- 		ret = -EINVAL;
- 		break;
++		goto err;
++	}
++
+ 	/* Do QD, or 2 * CPUS, whatever is smallest */
+ 	ctx->sqo_wq = alloc_workqueue("io_ring-wq", WQ_UNBOUND | WQ_FREEZABLE,
+ 			min(ctx->sq_entries - 1, 2 * num_online_cpus()));
+@@ -1459,6 +1670,12 @@ static int io_sq_offload_start(struct io_ring_ctx *ctx)
+ 
+ 	return 0;
+ err:
++	if (ctx->sqo_thread) {
++		ctx->sqo_stop = 1;
++		mb();
++		kthread_stop(ctx->sqo_thread);
++		ctx->sqo_thread = NULL;
++	}
+ 	mmdrop(ctx->sqo_mm);
+ 	ctx->sqo_mm = NULL;
+ 	return ret;
+@@ -1704,6 +1921,11 @@ static int io_sqe_buffer_register(struct io_ring_ctx *ctx, void __user *arg,
+ 
+ static void io_ring_ctx_free(struct io_ring_ctx *ctx)
+ {
++	if (ctx->sqo_thread) {
++		ctx->sqo_stop = 1;
++		mb();
++		kthread_stop(ctx->sqo_thread);
++	}
+ 	if (ctx->sqo_wq)
+ 		destroy_workqueue(ctx->sqo_wq);
+ 	if (ctx->sqo_mm)
+@@ -1811,7 +2033,7 @@ SYSCALL_DEFINE6(io_uring_enter, unsigned int, fd, u32, to_submit,
+ 	int submitted = 0;
+ 	struct fd f;
+ 
+-	if (flags & ~IORING_ENTER_GETEVENTS)
++	if (flags & ~(IORING_ENTER_GETEVENTS | IORING_ENTER_SQ_WAKEUP))
+ 		return -EINVAL;
+ 
+ 	f = fdget(fd);
+@@ -1827,6 +2049,18 @@ SYSCALL_DEFINE6(io_uring_enter, unsigned int, fd, u32, to_submit,
+ 	if (!percpu_ref_tryget(&ctx->refs))
+ 		goto out_fput;
+ 
++	/*
++	 * For SQ polling, the thread will do all submissions and completions.
++	 * Just return the requested submit count, and wake the thread if
++	 * we were asked to.
++	 */
++	if (ctx->flags & IORING_SETUP_SQPOLL) {
++		if (flags & IORING_ENTER_SQ_WAKEUP)
++			wake_up(&ctx->sqo_wait);
++		submitted = to_submit;
++		goto out_ctx;
++	}
++
+ 	if (to_submit) {
+ 		to_submit = min(to_submit, ctx->sq_entries);
+ 
+@@ -1990,7 +2224,7 @@ static int io_uring_create(unsigned entries, struct io_uring_params *p)
+ 	if (ret)
+ 		goto err;
+ 
+-	ret = io_sq_offload_start(ctx);
++	ret = io_sq_offload_start(ctx, p);
+ 	if (ret)
+ 		goto err;
+ 
+@@ -2038,7 +2272,8 @@ static long io_uring_setup(u32 entries, struct io_uring_params __user *params)
+ 			return -EINVAL;
+ 	}
+ 
+-	if (p.flags & ~IORING_SETUP_IOPOLL)
++	if (p.flags & ~(IORING_SETUP_IOPOLL | IORING_SETUP_SQPOLL |
++			IORING_SETUP_SQ_AFF))
+ 		return -EINVAL;
+ 
+ 	ret = io_uring_create(entries, &p);
 diff --git a/include/uapi/linux/io_uring.h b/include/uapi/linux/io_uring.h
-index cf28f7a11f12..6257478d55e9 100644
+index 6257478d55e9..0ec74bab8dbe 100644
 --- a/include/uapi/linux/io_uring.h
 +++ b/include/uapi/linux/io_uring.h
-@@ -16,7 +16,7 @@
+@@ -42,6 +42,8 @@ struct io_uring_sqe {
+  * io_uring_setup() flags
   */
- struct io_uring_sqe {
- 	__u8	opcode;		/* type of operation for this sqe */
--	__u8	flags;		/* as of now unused */
-+	__u8	flags;		/* IOSQE_ flags */
- 	__u16	ioprio;		/* ioprio for the request */
- 	__s32	fd;		/* file descriptor to do IO on */
- 	__u64	off;		/* offset into file */
-@@ -33,6 +33,11 @@ struct io_uring_sqe {
- 	};
+ #define IORING_SETUP_IOPOLL	(1U << 0)	/* io_context is polled */
++#define IORING_SETUP_SQPOLL	(1U << 1)	/* SQ poll thread */
++#define IORING_SETUP_SQ_AFF	(1U << 2)	/* sq_thread_cpu is valid */
+ 
+ #define IORING_OP_NOP		0
+ #define IORING_OP_READV		1
+@@ -86,6 +88,11 @@ struct io_sqring_offsets {
+ 	__u64 resv2;
  };
  
 +/*
-+ * sqe->flags
++ * sq_ring->flags
 + */
-+#define IOSQE_FIXED_FILE	(1U << 0)	/* use fixed fileset */
++#define IORING_SQ_NEED_WAKEUP	(1U << 0) /* needs io_uring_enter wakeup */
 +
- /*
-  * io_uring_setup() flags
+ struct io_cqring_offsets {
+ 	__u32 head;
+ 	__u32 tail;
+@@ -100,6 +107,7 @@ struct io_cqring_offsets {
+  * io_uring_enter(2) flags
   */
-@@ -113,5 +118,7 @@ struct io_uring_params {
-  */
- #define IORING_REGISTER_BUFFERS		0
- #define IORING_UNREGISTER_BUFFERS	1
-+#define IORING_REGISTER_FILES		2
-+#define IORING_UNREGISTER_FILES		3
+ #define IORING_ENTER_GETEVENTS	(1U << 0)
++#define IORING_ENTER_SQ_WAKEUP	(1U << 1)
  
- #endif
+ /*
+  * Passed in for io_uring_setup(2). Copied back with updated info on success
+@@ -108,7 +116,9 @@ struct io_uring_params {
+ 	__u32 sq_entries;
+ 	__u32 cq_entries;
+ 	__u32 flags;
+-	__u32 resv[7];
++	__u32 sq_thread_cpu;
++	__u32 sq_thread_idle;
++	__u32 resv[5];
+ 	struct io_sqring_offsets sq_off;
+ 	struct io_cqring_offsets cq_off;
+ };
 -- 
 2.17.1
 
