@@ -1,176 +1,411 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: [PATCH 11/19] block: implement bio helper to add iter bvec pages to bio
-Date: Fri,  8 Feb 2019 10:34:15 -0700
-Message-ID: <20190208173423.27014-12-axboe@kernel.dk>
+Subject: [PATCH 13/19] net: split out functions related to registering inflight socket files
+Date: Fri,  8 Feb 2019 10:34:17 -0700
+Message-ID: <20190208173423.27014-14-axboe@kernel.dk>
 References: <20190208173423.27014-1-axboe@kernel.dk>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20190208173423.27014-1-axboe@kernel.dk>
 Sender: owner-linux-aio@kvack.org
 To: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
-Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk, Jens Axboe <axboe@kernel.dk>
+Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk, Jens Axboe <axboe@kernel.dk>, netdev@vger.kernel.org, "David S . Miller" <davem@davemloft.net>
 List-Id: linux-api@vger.kernel.org
 
-For an ITER_BVEC, we can just iterate the iov and add the pages
-to the bio directly. This requires that the caller doesn't releases
-the pages on IO completion, we add a BIO_NO_PAGE_REF flag for that.
+We need this functionality for the io_uring file registration, but
+we cannot rely on it since CONFIG_UNIX can be modular. Move the helpers
+to a separate file, that's always builtin to the kernel if CONFIG_UNIX is
+m/y.
 
-The current two callers of bio_iov_iter_get_pages() are updated to
-check if they need to release pages on completion. This makes them
-work with bvecs that contain kernel mapped pages already.
+No functional changes in this patch, just moving code around.
 
-Reviewed-by: Christoph Hellwig <hch@lst.de>
+Cc: netdev@vger.kernel.org
+Cc: David S. Miller <davem@davemloft.net>
 Signed-off-by: Jens Axboe <axboe@kernel.dk>
 ---
- block/bio.c               | 59 ++++++++++++++++++++++++++++++++-------
- fs/block_dev.c            |  5 ++--
- fs/iomap.c                |  5 ++--
- include/linux/blk_types.h |  1 +
- 4 files changed, 56 insertions(+), 14 deletions(-)
+ include/net/af_unix.h |   1 +
+ net/unix/Kconfig      |   5 ++
+ net/unix/Makefile     |   2 +
+ net/unix/af_unix.c    |  63 +-----------------
+ net/unix/garbage.c    |  71 +-------------------
+ net/unix/scm.c        | 146 ++++++++++++++++++++++++++++++++++++++++++
+ net/unix/scm.h        |  10 +++
+ 7 files changed, 168 insertions(+), 130 deletions(-)
+ create mode 100644 net/unix/scm.c
+ create mode 100644 net/unix/scm.h
 
-diff --git a/block/bio.c b/block/bio.c
-index 4db1008309ed..330df572cfb8 100644
---- a/block/bio.c
-+++ b/block/bio.c
-@@ -828,6 +828,23 @@ int bio_add_page(struct bio *bio, struct page *page,
- }
- EXPORT_SYMBOL(bio_add_page);
+diff --git a/include/net/af_unix.h b/include/net/af_unix.h
+index ddbba838d048..3426d6dacc45 100644
+--- a/include/net/af_unix.h
++++ b/include/net/af_unix.h
+@@ -10,6 +10,7 @@
  
-+static int __bio_iov_bvec_add_pages(struct bio *bio, struct iov_iter *iter)
+ void unix_inflight(struct user_struct *user, struct file *fp);
+ void unix_notinflight(struct user_struct *user, struct file *fp);
++void unix_destruct_scm(struct sk_buff *skb);
+ void unix_gc(void);
+ void wait_for_unix_gc(void);
+ struct sock *unix_get_socket(struct file *filp);
+diff --git a/net/unix/Kconfig b/net/unix/Kconfig
+index 8b31ab85d050..3b9e450656a4 100644
+--- a/net/unix/Kconfig
++++ b/net/unix/Kconfig
+@@ -19,6 +19,11 @@ config UNIX
+ 
+ 	  Say Y unless you know what you are doing.
+ 
++config UNIX_SCM
++	bool
++	depends on UNIX
++	default y
++
+ config UNIX_DIAG
+ 	tristate "UNIX: socket monitoring interface"
+ 	depends on UNIX
+diff --git a/net/unix/Makefile b/net/unix/Makefile
+index ffd0a275c3a7..54e58cc4f945 100644
+--- a/net/unix/Makefile
++++ b/net/unix/Makefile
+@@ -10,3 +10,5 @@ unix-$(CONFIG_SYSCTL)	+= sysctl_net_unix.o
+ 
+ obj-$(CONFIG_UNIX_DIAG)	+= unix_diag.o
+ unix_diag-y		:= diag.o
++
++obj-$(CONFIG_UNIX_SCM)	+= scm.o
+diff --git a/net/unix/af_unix.c b/net/unix/af_unix.c
+index 74d1eed7cbd4..2ce32dbb2feb 100644
+--- a/net/unix/af_unix.c
++++ b/net/unix/af_unix.c
+@@ -119,6 +119,8 @@
+ #include <linux/freezer.h>
+ #include <linux/file.h>
+ 
++#include "scm.h"
++
+ struct hlist_head unix_socket_table[2 * UNIX_HASH_SIZE];
+ EXPORT_SYMBOL_GPL(unix_socket_table);
+ DEFINE_SPINLOCK(unix_table_lock);
+@@ -1486,67 +1488,6 @@ static int unix_getname(struct socket *sock, struct sockaddr *uaddr, int peer)
+ 	return err;
+ }
+ 
+-static void unix_detach_fds(struct scm_cookie *scm, struct sk_buff *skb)
+-{
+-	int i;
+-
+-	scm->fp = UNIXCB(skb).fp;
+-	UNIXCB(skb).fp = NULL;
+-
+-	for (i = scm->fp->count-1; i >= 0; i--)
+-		unix_notinflight(scm->fp->user, scm->fp->fp[i]);
+-}
+-
+-static void unix_destruct_scm(struct sk_buff *skb)
+-{
+-	struct scm_cookie scm;
+-	memset(&scm, 0, sizeof(scm));
+-	scm.pid  = UNIXCB(skb).pid;
+-	if (UNIXCB(skb).fp)
+-		unix_detach_fds(&scm, skb);
+-
+-	/* Alas, it calls VFS */
+-	/* So fscking what? fput() had been SMP-safe since the last Summer */
+-	scm_destroy(&scm);
+-	sock_wfree(skb);
+-}
+-
+-/*
+- * The "user->unix_inflight" variable is protected by the garbage
+- * collection lock, and we just read it locklessly here. If you go
+- * over the limit, there might be a tiny race in actually noticing
+- * it across threads. Tough.
+- */
+-static inline bool too_many_unix_fds(struct task_struct *p)
+-{
+-	struct user_struct *user = current_user();
+-
+-	if (unlikely(user->unix_inflight > task_rlimit(p, RLIMIT_NOFILE)))
+-		return !capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN);
+-	return false;
+-}
+-
+-static int unix_attach_fds(struct scm_cookie *scm, struct sk_buff *skb)
+-{
+-	int i;
+-
+-	if (too_many_unix_fds(current))
+-		return -ETOOMANYREFS;
+-
+-	/*
+-	 * Need to duplicate file references for the sake of garbage
+-	 * collection.  Otherwise a socket in the fps might become a
+-	 * candidate for GC while the skb is not yet queued.
+-	 */
+-	UNIXCB(skb).fp = scm_fp_dup(scm->fp);
+-	if (!UNIXCB(skb).fp)
+-		return -ENOMEM;
+-
+-	for (i = scm->fp->count - 1; i >= 0; i--)
+-		unix_inflight(scm->fp->user, scm->fp->fp[i]);
+-	return 0;
+-}
+-
+ static int unix_scm_to_skb(struct scm_cookie *scm, struct sk_buff *skb, bool send_fds)
+ {
+ 	int err = 0;
+diff --git a/net/unix/garbage.c b/net/unix/garbage.c
+index f81854d74c7d..8bbe1b8e4ff7 100644
+--- a/net/unix/garbage.c
++++ b/net/unix/garbage.c
+@@ -86,80 +86,13 @@
+ #include <net/scm.h>
+ #include <net/tcp_states.h>
+ 
++#include "scm.h"
++
+ /* Internal data structures and random procedures: */
+ 
+-static LIST_HEAD(gc_inflight_list);
+ static LIST_HEAD(gc_candidates);
+-static DEFINE_SPINLOCK(unix_gc_lock);
+ static DECLARE_WAIT_QUEUE_HEAD(unix_gc_wait);
+ 
+-unsigned int unix_tot_inflight;
+-
+-struct sock *unix_get_socket(struct file *filp)
+-{
+-	struct sock *u_sock = NULL;
+-	struct inode *inode = file_inode(filp);
+-
+-	/* Socket ? */
+-	if (S_ISSOCK(inode->i_mode) && !(filp->f_mode & FMODE_PATH)) {
+-		struct socket *sock = SOCKET_I(inode);
+-		struct sock *s = sock->sk;
+-
+-		/* PF_UNIX ? */
+-		if (s && sock->ops && sock->ops->family == PF_UNIX)
+-			u_sock = s;
+-	} else {
+-		/* Could be an io_uring instance */
+-		u_sock = io_uring_get_socket(filp);
+-	}
+-	return u_sock;
+-}
+-
+-/* Keep the number of times in flight count for the file
+- * descriptor if it is for an AF_UNIX socket.
+- */
+-
+-void unix_inflight(struct user_struct *user, struct file *fp)
+-{
+-	struct sock *s = unix_get_socket(fp);
+-
+-	spin_lock(&unix_gc_lock);
+-
+-	if (s) {
+-		struct unix_sock *u = unix_sk(s);
+-
+-		if (atomic_long_inc_return(&u->inflight) == 1) {
+-			BUG_ON(!list_empty(&u->link));
+-			list_add_tail(&u->link, &gc_inflight_list);
+-		} else {
+-			BUG_ON(list_empty(&u->link));
+-		}
+-		unix_tot_inflight++;
+-	}
+-	user->unix_inflight++;
+-	spin_unlock(&unix_gc_lock);
+-}
+-
+-void unix_notinflight(struct user_struct *user, struct file *fp)
+-{
+-	struct sock *s = unix_get_socket(fp);
+-
+-	spin_lock(&unix_gc_lock);
+-
+-	if (s) {
+-		struct unix_sock *u = unix_sk(s);
+-
+-		BUG_ON(!atomic_long_read(&u->inflight));
+-		BUG_ON(list_empty(&u->link));
+-
+-		if (atomic_long_dec_and_test(&u->inflight))
+-			list_del_init(&u->link);
+-		unix_tot_inflight--;
+-	}
+-	user->unix_inflight--;
+-	spin_unlock(&unix_gc_lock);
+-}
+-
+ static void scan_inflight(struct sock *x, void (*func)(struct unix_sock *),
+ 			  struct sk_buff_head *hitlist)
+ {
+diff --git a/net/unix/scm.c b/net/unix/scm.c
+new file mode 100644
+index 000000000000..ed1624588934
+--- /dev/null
++++ b/net/unix/scm.c
+@@ -0,0 +1,146 @@
++// SPDX-License-Identifier: GPL-2.0
++#include <linux/module.h>
++#include <linux/kernel.h>
++#include <linux/string.h>
++#include <linux/socket.h>
++#include <linux/net.h>
++#include <linux/fs.h>
++#include <net/af_unix.h>
++#include <net/scm.h>
++#include <linux/init.h>
++
++#include "scm.h"
++
++unsigned int unix_tot_inflight;
++
++LIST_HEAD(gc_inflight_list);
++DEFINE_SPINLOCK(unix_gc_lock);
++
++struct sock *unix_get_socket(struct file *filp)
 +{
-+	const struct bio_vec *bv = iter->bvec;
-+	unsigned int len;
-+	size_t size;
++	struct sock *u_sock = NULL;
++	struct inode *inode = file_inode(filp);
 +
-+	len = min_t(size_t, bv->bv_len, iter->count);
-+	size = bio_add_page(bio, bv->bv_page, len,
-+				bv->bv_offset + iter->iov_offset);
-+	if (size == len) {
-+		iov_iter_advance(iter, size);
-+		return 0;
++	/* Socket ? */
++	if (S_ISSOCK(inode->i_mode) && !(filp->f_mode & FMODE_PATH)) {
++		struct socket *sock = SOCKET_I(inode);
++		struct sock *s = sock->sk;
++
++		/* PF_UNIX ? */
++		if (s && sock->ops && sock->ops->family == PF_UNIX)
++			u_sock = s;
++	} else {
++		/* Could be an io_uring instance */
++		u_sock = io_uring_get_socket(filp);
 +	}
++	return u_sock;
++}
++EXPORT_SYMBOL(unix_get_socket);
 +
-+	return -EINVAL;
++/* Keep the number of times in flight count for the file
++ * descriptor if it is for an AF_UNIX socket.
++ */
++void unix_inflight(struct user_struct *user, struct file *fp)
++{
++	struct sock *s = unix_get_socket(fp);
++
++	spin_lock(&unix_gc_lock);
++
++	if (s) {
++		struct unix_sock *u = unix_sk(s);
++
++		if (atomic_long_inc_return(&u->inflight) == 1) {
++			BUG_ON(!list_empty(&u->link));
++			list_add_tail(&u->link, &gc_inflight_list);
++		} else {
++			BUG_ON(list_empty(&u->link));
++		}
++		unix_tot_inflight++;
++	}
++	user->unix_inflight++;
++	spin_unlock(&unix_gc_lock);
 +}
 +
- #define PAGE_PTRS_PER_BVEC     (sizeof(struct bio_vec) / sizeof(struct page *))
- 
- /**
-@@ -876,23 +893,43 @@ static int __bio_iov_iter_get_pages(struct bio *bio, struct iov_iter *iter)
- }
- 
- /**
-- * bio_iov_iter_get_pages - pin user or kernel pages and add them to a bio
-+ * bio_iov_iter_get_pages - add user or kernel pages to a bio
-  * @bio: bio to add pages to
-- * @iter: iov iterator describing the region to be mapped
-+ * @iter: iov iterator describing the region to be added
-+ *
-+ * This takes either an iterator pointing to user memory, or one pointing to
-+ * kernel pages (BVEC iterator). If we're adding user pages, we pin them and
-+ * map them into the kernel. On IO completion, the caller should put those
-+ * pages. If we're adding kernel pages, we just have to add the pages to the
-+ * bio directly. We don't grab an extra reference to those pages (the user
-+ * should already have that), and we don't put the page on IO completion.
-+ * The caller needs to check if the bio is flagged BIO_NO_PAGE_REF on IO
-+ * completion. If it isn't, then pages should be released.
-  *
-- * Pins pages from *iter and appends them to @bio's bvec array. The
-- * pages will have to be released using put_page() when done.
-  * The function tries, but does not guarantee, to pin as many pages as
-- * fit into the bio, or are requested in *iter, whatever is smaller.
-- * If MM encounters an error pinning the requested pages, it stops.
-- * Error is returned only if 0 pages could be pinned.
-+ * fit into the bio, or are requested in *iter, whatever is smaller. If
-+ * MM encounters an error pinning the requested pages, it stops. Error
-+ * is returned only if 0 pages could be pinned.
-  */
- int bio_iov_iter_get_pages(struct bio *bio, struct iov_iter *iter)
- {
-+	const bool is_bvec = iov_iter_is_bvec(iter);
- 	unsigned short orig_vcnt = bio->bi_vcnt;
- 
++void unix_notinflight(struct user_struct *user, struct file *fp)
++{
++	struct sock *s = unix_get_socket(fp);
++
++	spin_lock(&unix_gc_lock);
++
++	if (s) {
++		struct unix_sock *u = unix_sk(s);
++
++		BUG_ON(!atomic_long_read(&u->inflight));
++		BUG_ON(list_empty(&u->link));
++
++		if (atomic_long_dec_and_test(&u->inflight))
++			list_del_init(&u->link);
++		unix_tot_inflight--;
++	}
++	user->unix_inflight--;
++	spin_unlock(&unix_gc_lock);
++}
++
++/*
++ * The "user->unix_inflight" variable is protected by the garbage
++ * collection lock, and we just read it locklessly here. If you go
++ * over the limit, there might be a tiny race in actually noticing
++ * it across threads. Tough.
++ */
++static inline bool too_many_unix_fds(struct task_struct *p)
++{
++	struct user_struct *user = current_user();
++
++	if (unlikely(user->unix_inflight > task_rlimit(p, RLIMIT_NOFILE)))
++		return !capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN);
++	return false;
++}
++
++int unix_attach_fds(struct scm_cookie *scm, struct sk_buff *skb)
++{
++	int i;
++
++	if (too_many_unix_fds(current))
++		return -ETOOMANYREFS;
++
 +	/*
-+	 * If this is a BVEC iter, then the pages are kernel pages. Don't
-+	 * release them on IO completion.
++	 * Need to duplicate file references for the sake of garbage
++	 * collection.  Otherwise a socket in the fps might become a
++	 * candidate for GC while the skb is not yet queued.
 +	 */
-+	if (is_bvec)
-+		bio_set_flag(bio, BIO_NO_PAGE_REF);
++	UNIXCB(skb).fp = scm_fp_dup(scm->fp);
++	if (!UNIXCB(skb).fp)
++		return -ENOMEM;
 +
- 	do {
--		int ret = __bio_iov_iter_get_pages(bio, iter);
-+		int ret;
++	for (i = scm->fp->count - 1; i >= 0; i--)
++		unix_inflight(scm->fp->user, scm->fp->fp[i]);
++	return 0;
++}
++EXPORT_SYMBOL(unix_attach_fds);
 +
-+		if (is_bvec)
-+			ret = __bio_iov_bvec_add_pages(bio, iter);
-+		else
-+			ret = __bio_iov_iter_get_pages(bio, iter);
- 
- 		if (unlikely(ret))
- 			return bio->bi_vcnt > orig_vcnt ? 0 : ret;
-@@ -1634,7 +1671,8 @@ static void bio_dirty_fn(struct work_struct *work)
- 		next = bio->bi_private;
- 
- 		bio_set_pages_dirty(bio);
--		bio_release_pages(bio);
-+		if (!bio_flagged(bio, BIO_NO_PAGE_REF))
-+			bio_release_pages(bio);
- 		bio_put(bio);
- 	}
- }
-@@ -1650,7 +1688,8 @@ void bio_check_pages_dirty(struct bio *bio)
- 			goto defer;
- 	}
- 
--	bio_release_pages(bio);
-+	if (!bio_flagged(bio, BIO_NO_PAGE_REF))
-+		bio_release_pages(bio);
- 	bio_put(bio);
- 	return;
- defer:
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 392e2bfb636f..051ab41d1c61 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -338,8 +338,9 @@ static void blkdev_bio_end_io(struct bio *bio)
- 		struct bio_vec *bvec;
- 		int i;
- 
--		bio_for_each_segment_all(bvec, bio, i)
--			put_page(bvec->bv_page);
-+		if (!bio_flagged(bio, BIO_NO_PAGE_REF))
-+			bio_for_each_segment_all(bvec, bio, i)
-+				put_page(bvec->bv_page);
- 		bio_put(bio);
- 	}
- }
-diff --git a/fs/iomap.c b/fs/iomap.c
-index 2ac9eb746d44..9389cf0a1c6f 100644
---- a/fs/iomap.c
-+++ b/fs/iomap.c
-@@ -1591,8 +1591,9 @@ static void iomap_dio_bio_end_io(struct bio *bio)
- 		struct bio_vec *bvec;
- 		int i;
- 
--		bio_for_each_segment_all(bvec, bio, i)
--			put_page(bvec->bv_page);
-+		if (!bio_flagged(bio, BIO_NO_PAGE_REF))
-+			bio_for_each_segment_all(bvec, bio, i)
-+				put_page(bvec->bv_page);
- 		bio_put(bio);
- 	}
- }
-diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
-index d66bf5f32610..791fee35df88 100644
---- a/include/linux/blk_types.h
-+++ b/include/linux/blk_types.h
-@@ -215,6 +215,7 @@ struct bio {
- /*
-  * bio flags
-  */
-+#define BIO_NO_PAGE_REF	0	/* don't put release vec pages */
- #define BIO_SEG_VALID	1	/* bi_phys_segments valid */
- #define BIO_CLONED	2	/* doesn't own data */
- #define BIO_BOUNCED	3	/* bio is a bounce bio */
++void unix_detach_fds(struct scm_cookie *scm, struct sk_buff *skb)
++{
++	int i;
++
++	scm->fp = UNIXCB(skb).fp;
++	UNIXCB(skb).fp = NULL;
++
++	for (i = scm->fp->count-1; i >= 0; i--)
++		unix_notinflight(scm->fp->user, scm->fp->fp[i]);
++}
++EXPORT_SYMBOL(unix_detach_fds);
++
++void unix_destruct_scm(struct sk_buff *skb)
++{
++	struct scm_cookie scm;
++
++	memset(&scm, 0, sizeof(scm));
++	scm.pid  = UNIXCB(skb).pid;
++	if (UNIXCB(skb).fp)
++		unix_detach_fds(&scm, skb);
++
++	/* Alas, it calls VFS */
++	/* So fscking what? fput() had been SMP-safe since the last Summer */
++	scm_destroy(&scm);
++	sock_wfree(skb);
++}
+diff --git a/net/unix/scm.h b/net/unix/scm.h
+new file mode 100644
+index 000000000000..5a255a477f16
+--- /dev/null
++++ b/net/unix/scm.h
+@@ -0,0 +1,10 @@
++#ifndef NET_UNIX_SCM_H
++#define NET_UNIX_SCM_H
++
++extern struct list_head gc_inflight_list;
++extern spinlock_t unix_gc_lock;
++
++int unix_attach_fds(struct scm_cookie *scm, struct sk_buff *skb);
++void unix_detach_fds(struct scm_cookie *scm, struct sk_buff *skb);
++
++#endif
 -- 
 2.17.1
 
