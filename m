@@ -1,14 +1,14 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 14/19] io_uring: add file set registration
-Date: Sat, 9 Feb 2019 10:50:54 +0100
-Message-ID: <d9af9360-fc31-581c-c5c1-bd32bd4814af@suse.de>
+Subject: Re: [PATCH 15/19] io_uring: add submission polling
+Date: Sat, 9 Feb 2019 10:53:18 +0100
+Message-ID: <c2aecf8b-a203-9c66-7e77-4e9d7cec7216@suse.de>
 References: <20190208173423.27014-1-axboe@kernel.dk>
- <20190208173423.27014-15-axboe@kernel.dk>
+ <20190208173423.27014-16-axboe@kernel.dk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20190208173423.27014-15-axboe@kernel.dk>
+In-Reply-To: <20190208173423.27014-16-axboe@kernel.dk>
 Content-Language: en-US
 Sender: owner-linux-aio@kvack.org
 To: Jens Axboe <axboe@kernel.dk>, linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
@@ -16,37 +16,45 @@ Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenI
 List-Id: linux-api@vger.kernel.org
 
 On 2/8/19 6:34 PM, Jens Axboe wrote:
-> We normally have to fget/fput for each IO we do on a file. Even with
-> the batching we do, the cost of the atomic inc/dec of the file usage
-> count adds up.
+> This enables an application to do IO, without ever entering the kernel.
+> By using the SQ ring to fill in new sqes and watching for completions
+> on the CQ ring, we can submit and reap IOs without doing a single system
+> call. The kernel side thread will poll for new submissions, and in case
+> of HIPRI/polled IO, it'll also poll for completions.
 > 
-> This adds IORING_REGISTER_FILES, and IORING_UNREGISTER_FILES opcodes
-> for the io_uring_register(2) system call. The arguments passed in must
-> be an array of __s32 holding file descriptors, and nr_args should hold
-> the number of file descriptors the application wishes to pin for the
-> duration of the io_uring instance (or until IORING_UNREGISTER_FILES is
-> called).
+> By default, we allow 1 second of active spinning. This can by changed
+> by passing in a different grace period at io_uring_register(2) time.
+> If the thread exceeds this idle time without having any work to do, it
+> will set:
 > 
-> When used, the application must set IOSQE_FIXED_FILE in the sqe->flags
-> member. Then, instead of setting sqe->fd to the real fd, it sets sqe->fd
-> to the index in the array passed in to IORING_REGISTER_FILES.
+> sq_ring->flags |= IORING_SQ_NEED_WAKEUP.
 > 
-> Files are automatically unregistered when the io_uring instance is torn
-> down. An application need only unregister if it wishes to register a new
-> set of fds.
+> The application will have to call io_uring_enter() to start things back
+> up again. If IO is kept busy, that will never be needed. Basically an
+> application that has this feature enabled will guard it's
+> io_uring_enter(2) call with:
+> 
+> read_barrier();
+> if (*sq_ring->flags & IORING_SQ_NEED_WAKEUP)
+> 	io_uring_enter(fd, 0, 0, IORING_ENTER_SQ_WAKEUP);
+> 
+> instead of calling it unconditionally.
+> 
+> It's mandatory to use fixed files with this feature. Failure to do so
+> will result in the application getting an -EBADF CQ entry when
+> submitting IO.
 > 
 > Signed-off-by: Jens Axboe <axboe@kernel.dk>
 > ---
->   fs/io_uring.c                 | 256 ++++++++++++++++++++++++++++++----
->   include/uapi/linux/io_uring.h |   9 +-
->   2 files changed, 235 insertions(+), 30 deletions(-)
+>   fs/io_uring.c                 | 249 +++++++++++++++++++++++++++++++++-
+>   include/uapi/linux/io_uring.h |  12 +-
+>   2 files changed, 253 insertions(+), 8 deletions(-)
 > 
 Reviewed-by: Hannes Reinecke <hare@suse.com>
 
 Cheers,
 
 Hannes
-
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
