@@ -1,14 +1,14 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 08/19] fs: add fget_many() and fput_many()
-Date: Sat, 9 Feb 2019 10:41:04 +0100
-Message-ID: <25f32b18-54b9-0566-920b-2b90ef5ede72@suse.de>
+Subject: Re: [PATCH 09/19] io_uring: use fget/fput_many() for file references
+Date: Sat, 9 Feb 2019 10:42:53 +0100
+Message-ID: <b2fdc431-4ad3-9d15-39c8-9d0e7736fa22@suse.de>
 References: <20190208173423.27014-1-axboe@kernel.dk>
- <20190208173423.27014-9-axboe@kernel.dk>
+ <20190208173423.27014-10-axboe@kernel.dk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20190208173423.27014-9-axboe@kernel.dk>
+In-Reply-To: <20190208173423.27014-10-axboe@kernel.dk>
 Content-Language: en-US
 Sender: owner-linux-aio@kvack.org
 To: Jens Axboe <axboe@kernel.dk>, linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
@@ -16,23 +16,23 @@ Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenI
 List-Id: linux-api@vger.kernel.org
 
 On 2/8/19 6:34 PM, Jens Axboe wrote:
-> Some uses cases repeatedly get and put references to the same file, but
-> the only exposed interface is doing these one at the time. As each of
-> these entail an atomic inc or dec on a shared structure, that cost can
-> add up.
+> Add a separate io_submit_state structure, to cache some of the things
+> we need for IO submission.
 > 
-> Add fget_many(), which works just like fget(), except it takes an
-> argument for how many references to get on the file. Ditto fput_many(),
-> which can drop an arbitrary number of references to a file.
+> One such example is file reference batching. io_submit_state. We get as
+> many references as the number of sqes we are submitting, and drop
+> unused ones if we end up switching files. The assumption here is that
+> we're usually only dealing with one fd, and if there are multiple,
+> hopefuly they are at least somewhat ordered. Could trivially be extended
+> to cover multiple fds, if needed.
 > 
-> Reviewed-by: Christoph Hellwig <hch@lst.de>
+> On the completion side we do the same thing, except this is trivially
+> done just locally in io_iopoll_reap().
+> 
 > Signed-off-by: Jens Axboe <axboe@kernel.dk>
 > ---
->   fs/file.c            | 15 ++++++++++-----
->   fs/file_table.c      |  9 +++++++--
->   include/linux/file.h |  2 ++
->   include/linux/fs.h   |  4 +++-
->   4 files changed, 22 insertions(+), 8 deletions(-)
+>   fs/io_uring.c | 142 ++++++++++++++++++++++++++++++++++++++++++--------
+>   1 file changed, 121 insertions(+), 21 deletions(-)
 > 
 Reviewed-by: Hannes Reinecke <hare@suse.com>
 
