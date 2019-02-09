@@ -1,7 +1,7 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: [PATCH 06/19] io_uring: add fsync support
-Date: Sat,  9 Feb 2019 14:13:33 -0700
-Message-ID: <20190209211346.26060-7-axboe@kernel.dk>
+Subject: [PATCH 01/19] fs: add an iopoll method to struct file_operations
+Date: Sat,  9 Feb 2019 14:13:28 -0700
+Message-ID: <20190209211346.26060-2-axboe@kernel.dk>
 References: <20190209211346.26060-1-axboe@kernel.dk>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20190209211346.26060-1-axboe@kernel.dk>
@@ -12,125 +12,63 @@ List-Id: linux-api@vger.kernel.org
 
 From: Christoph Hellwig <hch@lst.de>
 
-Add a new fsync opcode, which either syncs a range if one is passed,
-or the whole file if the offset and length fields are both cleared
-to zero.  A flag is provided to use fdatasync semantics, that is only
-force out metadata which is required to retrieve the file data, but
-not others like metadata.
+This new methods is used to explicitly poll for I/O completion for an
+iocb.  It must be called for any iocb submitted asynchronously (that
+is with a non-null ki_complete) which has the IOCB_HIPRI flag set.
+
+The method is assisted by a new ki_cookie field in struct iocb to store
+the polling cookie.
 
 Reviewed-by: Hannes Reinecke <hare@suse.com>
+Reviewed-by: Johannes Thumshirn <jthumshirn@suse.de>
 Signed-off-by: Christoph Hellwig <hch@lst.de>
 Signed-off-by: Jens Axboe <axboe@kernel.dk>
 ---
- fs/io_uring.c                 | 54 +++++++++++++++++++++++++++++++++++
- include/uapi/linux/io_uring.h |  8 +++++-
- 2 files changed, 61 insertions(+), 1 deletion(-)
+ Documentation/filesystems/vfs.txt | 3 +++
+ include/linux/fs.h                | 2 ++
+ 2 files changed, 5 insertions(+)
 
-diff --git a/fs/io_uring.c b/fs/io_uring.c
-index bc6f819fdf8c..8af7093f0608 100644
---- a/fs/io_uring.c
-+++ b/fs/io_uring.c
-@@ -4,6 +4,7 @@
-  * supporting fast/efficient IO.
-  *
-  * Copyright (C) 2018-2019 Jens Axboe
-+ * Copyright (c) 2018-2019 Christoph Hellwig
-  */
- #include <linux/kernel.h>
- #include <linux/init.h>
-@@ -533,6 +534,56 @@ static int io_nop(struct io_kiocb *req, u64 user_data)
- 	return 0;
- }
+diff --git a/Documentation/filesystems/vfs.txt b/Documentation/filesystems/vfs.txt
+index 8dc8e9c2913f..761c6fd24a53 100644
+--- a/Documentation/filesystems/vfs.txt
++++ b/Documentation/filesystems/vfs.txt
+@@ -857,6 +857,7 @@ struct file_operations {
+ 	ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);
+ 	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
+ 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
++	int (*iopoll)(struct kiocb *kiocb, bool spin);
+ 	int (*iterate) (struct file *, struct dir_context *);
+ 	int (*iterate_shared) (struct file *, struct dir_context *);
+ 	__poll_t (*poll) (struct file *, struct poll_table_struct *);
+@@ -902,6 +903,8 @@ otherwise noted.
  
-+static int io_prep_fsync(struct io_kiocb *req, const struct io_uring_sqe *sqe)
-+{
-+	int fd;
-+
-+	/* Prep already done */
-+	if (req->rw.ki_filp)
-+		return 0;
-+
-+	if (unlikely(sqe->addr || sqe->ioprio))
-+		return -EINVAL;
-+
-+	fd = READ_ONCE(sqe->fd);
-+	req->rw.ki_filp = fget(fd);
-+	if (unlikely(!req->rw.ki_filp))
-+		return -EBADF;
-+
-+	return 0;
-+}
-+
-+static int io_fsync(struct io_kiocb *req, const struct io_uring_sqe *sqe,
-+		    bool force_nonblock)
-+{
-+	loff_t sqe_off = READ_ONCE(sqe->off);
-+	loff_t sqe_len = READ_ONCE(sqe->len);
-+	loff_t end = sqe_off + sqe_len;
-+	unsigned fsync_flags;
-+	int ret;
-+
-+	fsync_flags = READ_ONCE(sqe->fsync_flags);
-+	if (unlikely(fsync_flags & ~IORING_FSYNC_DATASYNC))
-+		return -EINVAL;
-+
-+	ret = io_prep_fsync(req, sqe);
-+	if (ret)
-+		return ret;
-+
-+	/* fsync always requires a blocking context */
-+	if (force_nonblock)
-+		return -EAGAIN;
-+
-+	ret = vfs_fsync_range(req->rw.ki_filp, sqe_off,
-+				end > 0 ? end : LLONG_MAX,
-+				fsync_flags & IORING_FSYNC_DATASYNC);
-+
-+	fput(req->rw.ki_filp);
-+	io_cqring_add_event(req->ctx, sqe->user_data, ret, 0);
-+	io_free_req(req);
-+	return 0;
-+}
-+
- static int __io_submit_sqe(struct io_ring_ctx *ctx, struct io_kiocb *req,
- 			   const struct sqe_submit *s, bool force_nonblock)
- {
-@@ -554,6 +605,9 @@ static int __io_submit_sqe(struct io_ring_ctx *ctx, struct io_kiocb *req,
- 	case IORING_OP_WRITEV:
- 		ret = io_write(req, s, force_nonblock);
- 		break;
-+	case IORING_OP_FSYNC:
-+		ret = io_fsync(req, s->sqe, force_nonblock);
-+		break;
- 	default:
- 		ret = -EINVAL;
- 		break;
-diff --git a/include/uapi/linux/io_uring.h b/include/uapi/linux/io_uring.h
-index ac692823d6f4..4589d56d0b68 100644
---- a/include/uapi/linux/io_uring.h
-+++ b/include/uapi/linux/io_uring.h
-@@ -24,7 +24,7 @@ struct io_uring_sqe {
- 	__u32	len;		/* buffer size or number of iovecs */
- 	union {
- 		__kernel_rwf_t	rw_flags;
--		__u32		__resv;
-+		__u32		fsync_flags;
- 	};
- 	__u64	user_data;	/* data to be passed back at completion time */
- 	__u64	__pad2[3];
-@@ -33,6 +33,12 @@ struct io_uring_sqe {
- #define IORING_OP_NOP		0
- #define IORING_OP_READV		1
- #define IORING_OP_WRITEV	2
-+#define IORING_OP_FSYNC		3
-+
-+/*
-+ * sqe->fsync_flags
-+ */
-+#define IORING_FSYNC_DATASYNC	(1U << 0)
+   write_iter: possibly asynchronous write with iov_iter as source
  
- /*
-  * IO completion data structure (Completion Queue Entry)
++  iopoll: called when aio wants to poll for completions on HIPRI iocbs
++
+   iterate: called when the VFS needs to read the directory contents
+ 
+   iterate_shared: called when the VFS needs to read the directory contents
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 29d8e2cfed0e..dedcc2e9265c 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -310,6 +310,7 @@ struct kiocb {
+ 	int			ki_flags;
+ 	u16			ki_hint;
+ 	u16			ki_ioprio; /* See linux/ioprio.h */
++	unsigned int		ki_cookie; /* for ->iopoll */
+ } __randomize_layout;
+ 
+ static inline bool is_sync_kiocb(struct kiocb *kiocb)
+@@ -1787,6 +1788,7 @@ struct file_operations {
+ 	ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);
+ 	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
+ 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
++	int (*iopoll)(struct kiocb *kiocb, bool spin);
+ 	int (*iterate) (struct file *, struct dir_context *);
+ 	int (*iterate_shared) (struct file *, struct dir_context *);
+ 	__poll_t (*poll) (struct file *, struct poll_table_struct *);
 -- 
 2.17.1
 
