@@ -1,79 +1,173 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: [PATCHSET v14] io_uring IO interface
-Date: Sat,  9 Feb 2019 14:13:27 -0700
-Message-ID: <20190209211346.26060-1-axboe@kernel.dk>
+Subject: [PATCH 04/19] iomap: wire up the iopoll method
+Date: Sat,  9 Feb 2019 14:13:31 -0700
+Message-ID: <20190209211346.26060-5-axboe@kernel.dk>
+References: <20190209211346.26060-1-axboe@kernel.dk>
 Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <20190209211346.26060-1-axboe@kernel.dk>
 Sender: owner-linux-aio@kvack.org
 To: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
-Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk
+Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk, Jens Axboe <axboe@kernel.dk>
 List-Id: linux-api@vger.kernel.org
 
-Another day, another spin. This is v14, and it fixes a few silly
-issues with fsync, mainly, but also various little fixes and tweaks
-all over the map.
+From: Christoph Hellwig <hch@lst.de>
 
-The liburing git repo has a full set of man pages for this, though they
-could probably still use a bit of polish. I'd also like to see a
-io_uring(7) man page to describe the overall design of the project,
-expect that in the not-so-distant future. You can clone that here:
+Store the request queue the last bio was submitted to in the iocb
+private data in addition to the cookie so that we find the right block
+device.  Also refactor the common direct I/O bio submission code into a
+nice little helper.
 
-git://git.kernel.dk/liburing
+Signed-off-by: Christoph Hellwig <hch@lst.de>
 
-Patches are against 5.0-rc5, and can also be found in my io_uring branch
-here:
+Modified to use bio_set_polled().
 
-git://git.kernel.dk/linux-block io_uring
+Reviewed-by: Hannes Reinecke <hare@suse.com>
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+---
+ fs/gfs2/file.c        |  2 ++
+ fs/iomap.c            | 43 ++++++++++++++++++++++++++++---------------
+ fs/xfs/xfs_file.c     |  1 +
+ include/linux/iomap.h |  1 +
+ 4 files changed, 32 insertions(+), 15 deletions(-)
 
-
-Changes since v13:
-- Use READ/WRITE_ONCE anywhere we touch the shared data
-- Cache if we need to account/unaccount memory
-- Fix fsync file grabbing
-- Fix oops with fsync and deferred async list
-- Fix final fput() of fixed files AFTER adding to socket
-- Use correct iterator to free fixed user bufs
-- up/down_read() for mmap_sem when mapping buffers
-- completion -> complete in Kconfig help entry
-- Ensure malicious app can't trick NOP into leaking a file
-- Add a few comments, address a few review comments
-
-
- Documentation/filesystems/vfs.txt      |    3 +
- arch/x86/entry/syscalls/syscall_32.tbl |    3 +
- arch/x86/entry/syscalls/syscall_64.tbl |    3 +
- block/bio.c                            |   59 +-
- fs/Makefile                            |    1 +
- fs/block_dev.c                         |   19 +-
- fs/file.c                              |   15 +-
- fs/file_table.c                        |    9 +-
- fs/gfs2/file.c                         |    2 +
- fs/io_uring.c                          | 2853 ++++++++++++++++++++++++
- fs/iomap.c                             |   48 +-
- fs/xfs/xfs_file.c                      |    1 +
- include/linux/bio.h                    |   14 +
- include/linux/blk_types.h              |    1 +
- include/linux/file.h                   |    2 +
- include/linux/fs.h                     |   15 +-
- include/linux/iomap.h                  |    1 +
- include/linux/sched/user.h             |    2 +-
- include/linux/syscalls.h               |    8 +
- include/net/af_unix.h                  |    1 +
- include/uapi/asm-generic/unistd.h      |    8 +-
- include/uapi/linux/io_uring.h          |  142 ++
- init/Kconfig                           |    9 +
- kernel/sys_ni.c                        |    3 +
- net/Makefile                           |    2 +-
- net/unix/Kconfig                       |    5 +
- net/unix/Makefile                      |    2 +
- net/unix/af_unix.c                     |   63 +-
- net/unix/garbage.c                     |   68 +-
- net/unix/scm.c                         |  151 ++
- net/unix/scm.h                         |   10 +
- 31 files changed, 3354 insertions(+), 169 deletions(-)
-
+diff --git a/fs/gfs2/file.c b/fs/gfs2/file.c
+index a2dea5bc0427..58a768e59712 100644
+--- a/fs/gfs2/file.c
++++ b/fs/gfs2/file.c
+@@ -1280,6 +1280,7 @@ const struct file_operations gfs2_file_fops = {
+ 	.llseek		= gfs2_llseek,
+ 	.read_iter	= gfs2_file_read_iter,
+ 	.write_iter	= gfs2_file_write_iter,
++	.iopoll		= iomap_dio_iopoll,
+ 	.unlocked_ioctl	= gfs2_ioctl,
+ 	.mmap		= gfs2_mmap,
+ 	.open		= gfs2_open,
+@@ -1310,6 +1311,7 @@ const struct file_operations gfs2_file_fops_nolock = {
+ 	.llseek		= gfs2_llseek,
+ 	.read_iter	= gfs2_file_read_iter,
+ 	.write_iter	= gfs2_file_write_iter,
++	.iopoll		= iomap_dio_iopoll,
+ 	.unlocked_ioctl	= gfs2_ioctl,
+ 	.mmap		= gfs2_mmap,
+ 	.open		= gfs2_open,
+diff --git a/fs/iomap.c b/fs/iomap.c
+index 897c60215dd1..2ac9eb746d44 100644
+--- a/fs/iomap.c
++++ b/fs/iomap.c
+@@ -1463,6 +1463,28 @@ struct iomap_dio {
+ 	};
+ };
+ 
++int iomap_dio_iopoll(struct kiocb *kiocb, bool spin)
++{
++	struct request_queue *q = READ_ONCE(kiocb->private);
++
++	if (!q)
++		return 0;
++	return blk_poll(q, READ_ONCE(kiocb->ki_cookie), spin);
++}
++EXPORT_SYMBOL_GPL(iomap_dio_iopoll);
++
++static void iomap_dio_submit_bio(struct iomap_dio *dio, struct iomap *iomap,
++		struct bio *bio)
++{
++	atomic_inc(&dio->ref);
++
++	if (dio->iocb->ki_flags & IOCB_HIPRI)
++		bio_set_polled(bio, dio->iocb);
++
++	dio->submit.last_queue = bdev_get_queue(iomap->bdev);
++	dio->submit.cookie = submit_bio(bio);
++}
++
+ static ssize_t iomap_dio_complete(struct iomap_dio *dio)
+ {
+ 	struct kiocb *iocb = dio->iocb;
+@@ -1575,7 +1597,7 @@ static void iomap_dio_bio_end_io(struct bio *bio)
+ 	}
+ }
+ 
+-static blk_qc_t
++static void
+ iomap_dio_zero(struct iomap_dio *dio, struct iomap *iomap, loff_t pos,
+ 		unsigned len)
+ {
+@@ -1589,15 +1611,10 @@ iomap_dio_zero(struct iomap_dio *dio, struct iomap *iomap, loff_t pos,
+ 	bio->bi_private = dio;
+ 	bio->bi_end_io = iomap_dio_bio_end_io;
+ 
+-	if (dio->iocb->ki_flags & IOCB_HIPRI)
+-		flags |= REQ_HIPRI;
+-
+ 	get_page(page);
+ 	__bio_add_page(bio, page, len, 0);
+ 	bio_set_op_attrs(bio, REQ_OP_WRITE, flags);
+-
+-	atomic_inc(&dio->ref);
+-	return submit_bio(bio);
++	iomap_dio_submit_bio(dio, iomap, bio);
+ }
+ 
+ static loff_t
+@@ -1700,9 +1717,6 @@ iomap_dio_bio_actor(struct inode *inode, loff_t pos, loff_t length,
+ 				bio_set_pages_dirty(bio);
+ 		}
+ 
+-		if (dio->iocb->ki_flags & IOCB_HIPRI)
+-			bio->bi_opf |= REQ_HIPRI;
+-
+ 		iov_iter_advance(dio->submit.iter, n);
+ 
+ 		dio->size += n;
+@@ -1710,11 +1724,7 @@ iomap_dio_bio_actor(struct inode *inode, loff_t pos, loff_t length,
+ 		copied += n;
+ 
+ 		nr_pages = iov_iter_npages(&iter, BIO_MAX_PAGES);
+-
+-		atomic_inc(&dio->ref);
+-
+-		dio->submit.last_queue = bdev_get_queue(iomap->bdev);
+-		dio->submit.cookie = submit_bio(bio);
++		iomap_dio_submit_bio(dio, iomap, bio);
+ 	} while (nr_pages);
+ 
+ 	/*
+@@ -1925,6 +1935,9 @@ iomap_dio_rw(struct kiocb *iocb, struct iov_iter *iter,
+ 	if (dio->flags & IOMAP_DIO_WRITE_FUA)
+ 		dio->flags &= ~IOMAP_DIO_NEED_SYNC;
+ 
++	WRITE_ONCE(iocb->ki_cookie, dio->submit.cookie);
++	WRITE_ONCE(iocb->private, dio->submit.last_queue);
++
+ 	/*
+ 	 * We are about to drop our additional submission reference, which
+ 	 * might be the last reference to the dio.  There are three three
+diff --git a/fs/xfs/xfs_file.c b/fs/xfs/xfs_file.c
+index e47425071e65..60c2da41f0fc 100644
+--- a/fs/xfs/xfs_file.c
++++ b/fs/xfs/xfs_file.c
+@@ -1203,6 +1203,7 @@ const struct file_operations xfs_file_operations = {
+ 	.write_iter	= xfs_file_write_iter,
+ 	.splice_read	= generic_file_splice_read,
+ 	.splice_write	= iter_file_splice_write,
++	.iopoll		= iomap_dio_iopoll,
+ 	.unlocked_ioctl	= xfs_file_ioctl,
+ #ifdef CONFIG_COMPAT
+ 	.compat_ioctl	= xfs_file_compat_ioctl,
+diff --git a/include/linux/iomap.h b/include/linux/iomap.h
+index 9a4258154b25..0fefb5455bda 100644
+--- a/include/linux/iomap.h
++++ b/include/linux/iomap.h
+@@ -162,6 +162,7 @@ typedef int (iomap_dio_end_io_t)(struct kiocb *iocb, ssize_t ret,
+ 		unsigned flags);
+ ssize_t iomap_dio_rw(struct kiocb *iocb, struct iov_iter *iter,
+ 		const struct iomap_ops *ops, iomap_dio_end_io_t end_io);
++int iomap_dio_iopoll(struct kiocb *kiocb, bool spin);
+ 
+ #ifdef CONFIG_SWAP
+ struct file;
 -- 
-Jens Axboe
-
+2.17.1
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
