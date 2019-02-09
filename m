@@ -1,242 +1,120 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH 12/19] io_uring: add support for pre-mapped user IO
- buffers
-Date: Fri, 8 Feb 2019 16:38:19 -0700
-Message-ID: <2ef04b12-6a4b-af25-cbf8-9dde79b0ec1e@kernel.dk>
+Subject: Re: [PATCH 14/19] io_uring: add file set registration
+Date: Fri, 8 Feb 2019 17:16:05 -0700
+Message-ID: <7a003733-a1aa-0f55-324d-4bf0360a5df9@kernel.dk>
 References: <20190208173423.27014-1-axboe@kernel.dk>
- <20190208173423.27014-13-axboe@kernel.dk>
- <CAG48ez0uH_muHobzpwFzdyBWCcWDxbnfpuxABntph6Te+tYxGg@mail.gmail.com>
+ <20190208173423.27014-15-axboe@kernel.dk>
+ <CAG48ez2Fp10zQ4Y-x4RJh3Cu=vABu9w8ZrAJThvkh6pr74ZiQw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <CAG48ez0uH_muHobzpwFzdyBWCcWDxbnfpuxABntph6Te+tYxGg@mail.gmail.com>
+In-Reply-To: <CAG48ez2Fp10zQ4Y-x4RJh3Cu=vABu9w8ZrAJThvkh6pr74ZiQw@mail.gmail.com>
 Content-Language: en-US
 Sender: owner-linux-aio@kvack.org
 To: Jann Horn <jannh@google.com>
 Cc: linux-aio@kvack.org, linux-block@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, hch@lst.de, jmoyer@redhat.com, Avi Kivity <avi@scylladb.com>, Al Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-On 2/8/19 3:54 PM, Jann Horn wrote:
+On 2/8/19 1:26 PM, Jann Horn wrote:
 > On Fri, Feb 8, 2019 at 6:35 PM Jens Axboe <axboe@kernel.dk> wrote:
->> If we have fixed user buffers, we can map them into the kernel when we
->> setup the io_uring. That avoids the need to do get_user_pages() for
->> each and every IO.
+>> We normally have to fget/fput for each IO we do on a file. Even with
+>> the batching we do, the cost of the atomic inc/dec of the file usage
+>> count adds up.
 >>
->> To utilize this feature, the application must call io_uring_register()
->> after having setup an io_uring instance, passing in
->> IORING_REGISTER_BUFFERS as the opcode. The argument must be a pointer to
->> an iovec array, and the nr_args should contain how many iovecs the
->> application wishes to map.
+>> This adds IORING_REGISTER_FILES, and IORING_UNREGISTER_FILES opcodes
+>> for the io_uring_register(2) system call. The arguments passed in must
+>> be an array of __s32 holding file descriptors, and nr_args should hold
+>> the number of file descriptors the application wishes to pin for the
+>> duration of the io_uring instance (or until IORING_UNREGISTER_FILES is
+>> called).
 >>
->> If successful, these buffers are now mapped into the kernel, eligible
->> for IO. To use these fixed buffers, the application must use the
->> IORING_OP_READ_FIXED and IORING_OP_WRITE_FIXED opcodes, and then
->> set sqe->index to the desired buffer index. sqe->addr..sqe->addr+seq->len
->> must point to somewhere inside the indexed buffer.
+>> When used, the application must set IOSQE_FIXED_FILE in the sqe->flags
+>> member. Then, instead of setting sqe->fd to the real fd, it sets sqe->fd
+>> to the index in the array passed in to IORING_REGISTER_FILES.
 >>
->> The application may register buffers throughout the lifetime of the
->> io_uring instance. It can call io_uring_register() with
->> IORING_UNREGISTER_BUFFERS as the opcode to unregister the current set of
->> buffers, and then register a new set. The application need not
->> unregister buffers explicitly before shutting down the io_uring
->> instance.
->>
->> It's perfectly valid to setup a larger buffer, and then sometimes only
->> use parts of it for an IO. As long as the range is within the originally
->> mapped region, it will work just fine.
->>
->> For now, buffers must not be file backed. If file backed buffers are
->> passed in, the registration will fail with -1/EOPNOTSUPP. This
->> restriction may be relaxed in the future.
->>
->> RLIMIT_MEMLOCK is used to check how much memory we can pin. A somewhat
->> arbitrary 1G per buffer size is also imposed.
-> [...]
->>  static int io_import_iovec(struct io_ring_ctx *ctx, int rw,
->>                            const struct sqe_submit *s, struct iovec **iovec,
->>                            struct iov_iter *iter)
->> @@ -711,6 +763,15 @@ static int io_import_iovec(struct io_ring_ctx *ctx, int rw,
->>         const struct io_uring_sqe *sqe = s->sqe;
->>         void __user *buf = u64_to_user_ptr(READ_ONCE(sqe->addr));
->>         size_t sqe_len = READ_ONCE(sqe->len);
->> +       u8 opcode;
+>> Files are automatically unregistered when the io_uring instance is torn
+>> down. An application need only unregister if it wishes to register a new
+>> set of fds.
 > 
-> (You could add a comment here if you want, something like "We're
-> reading ->opcode for the second time, but the first read doesn't care
-> whether it's _FIXED or not, so it doesn't matter whether ->opcode
-> changes concurrently. The first read does care about whether it is a
-> READ or a WRITE, so we don't trust this read for that purpose and
-> instead let the caller pass in the read/write flag.")
+> I think the overall concept here is still broken: You're giving the
+> user_files to the GC, and I think the GC can drop their refcounts, but
+> I don't see you actually getting feedback from the GC anywhere that
+> would let the GC break your references? E.g. in io_prep_rw() you grab
+> file pointers from ctx->user_files after simply checking
+> ctx->nr_user_files, and there is no path from the GC that touches
+> those fields. As far as I can tell, the GC is just going to go through
+> unix_destruct_scm() and drop references on your files, causing
+> use-after-free.
+> 
+> But the unix GC is complicated, and maybe I'm just missing something...
 
-Sure, I can add that.
+Only when the skb is released, which is either done when the io_uring
+is torn down (and then definitely safe), or if the socket is released,
+which is again also at a safe time.
 
->> +static int io_sqe_buffer_unregister(struct io_ring_ctx *ctx)
+>> +static void __io_sqe_files_unregister(struct io_ring_ctx *ctx)
 >> +{
->> +       int i, j;
+>> +#if defined(CONFIG_UNIX)
+>> +       if (ctx->ring_sock) {
+>> +               struct sock *sock = ctx->ring_sock->sk;
+>> +               struct sk_buff *skb;
 >> +
->> +       if (!ctx->user_bufs)
+>> +               while ((skb = skb_dequeue(&sock->sk_receive_queue)) != NULL)
+>> +                       kfree_skb(skb);
+>> +       }
+>> +#else
+>> +       int i;
+>> +
+>> +       for (i = 0; i < ctx->nr_user_files; i++)
+>> +               fput(ctx->user_files[i]);
+>> +#endif
+>> +}
+>> +
+>> +static int io_sqe_files_unregister(struct io_ring_ctx *ctx)
+>> +{
+>> +       if (!ctx->user_files)
 >> +               return -ENXIO;
 >> +
->> +       for (i = 0; i < ctx->sq_entries; i++) {
-> 
-> ->sq_entries? Shouldn't this be ->nr_user_bufs?
-
-It should! I swear I already fixed that, odd. Maybe that was somewhere
-else...
-
->> +               struct io_mapped_ubuf *imu = &ctx->user_bufs[i];
->> +
->> +               for (j = 0; j < imu->nr_bvecs; j++)
->> +                       put_page(imu->bvec[j].bv_page);
->> +
->> +               io_unaccount_mem(ctx->user, imu->nr_bvecs);
->> +               kfree(imu->bvec);
->> +               imu->nr_bvecs = 0;
->> +       }
->> +
->> +       kfree(ctx->user_bufs);
->> +       ctx->user_bufs = NULL;
-> 
-> (It isn't really necessary, but you could set nr_user_bufs=0 here.)
-
-Doesn't hurt to be defensive.
-
+>> +       __io_sqe_files_unregister(ctx);
+>> +       kfree(ctx->user_files);
+>> +       ctx->user_files = NULL;
 >> +       return 0;
 >> +}
-> [...]
->> +static int io_sqe_buffer_register(struct io_ring_ctx *ctx, void __user *arg,
->> +                                 unsigned nr_args)
+>> +
+>> +#if defined(CONFIG_UNIX)
+>> +static int __io_sqe_files_scm(struct io_ring_ctx *ctx, int nr, int offset)
 >> +{
->> +       struct vm_area_struct **vmas = NULL;
->> +       struct page **pages = NULL;
->> +       int i, j, got_pages = 0;
->> +       int ret = -EINVAL;
+>> +       struct scm_fp_list *fpl;
+>> +       struct sk_buff *skb;
+>> +       int i;
 >> +
->> +       if (ctx->user_bufs)
->> +               return -EBUSY;
->> +       if (!nr_args || nr_args > UIO_MAXIOV)
->> +               return -EINVAL;
->> +
->> +       ctx->user_bufs = kcalloc(nr_args, sizeof(struct io_mapped_ubuf),
->> +                                       GFP_KERNEL);
->> +       if (!ctx->user_bufs)
+>> +       fpl = kzalloc(sizeof(*fpl), GFP_KERNEL);
+>> +       if (!fpl)
 >> +               return -ENOMEM;
 >> +
->> +       for (i = 0; i < nr_args; i++) {
->> +               struct io_mapped_ubuf *imu = &ctx->user_bufs[i];
->> +               unsigned long off, start, end, ubuf;
->> +               int pret, nr_pages;
->> +               struct iovec iov;
->> +               size_t size;
+>> +       skb = alloc_skb(0, GFP_KERNEL);
+>> +       if (!skb) {
+>> +               kfree(fpl);
+>> +               return -ENOMEM;
+>> +       }
 >> +
->> +               ret = io_copy_iov(ctx, &iov, arg, i);
->> +               if (ret)
->> +                       break;
+>> +       skb->sk = ctx->ring_sock->sk;
+>> +       skb->destructor = unix_destruct_scm;
 >> +
->> +               /*
->> +                * Don't impose further limits on the size and buffer
->> +                * constraints here, we'll -EINVAL later when IO is
->> +                * submitted if they are wrong.
->> +                */
->> +               ret = -EFAULT;
->> +               if (!iov.iov_base || !iov.iov_len)
->> +                       goto err;
->> +
->> +               /* arbitrary limit, but we need something */
->> +               if (iov.iov_len > SZ_1G)
->> +                       goto err;
->> +
->> +               ubuf = (unsigned long) iov.iov_base;
->> +               end = (ubuf + iov.iov_len + PAGE_SIZE - 1) >> PAGE_SHIFT;
->> +               start = ubuf >> PAGE_SHIFT;
->> +               nr_pages = end - start;
->> +
->> +               ret = io_account_mem(ctx->user, nr_pages);
+>> +       fpl->user = get_uid(ctx->user);
+>> +       for (i = 0; i < nr; i++) {
+>> +               fpl->fp[i] = get_file(ctx->user_files[i + offset]);
+>> +               unix_inflight(fpl->user, fpl->fp[i]);
+>> +               fput(fpl->fp[i]);
 > 
-> Technically, this accounting is probably a bit off; I think if you
-> pass in a vector of 4K areas from 1G hugepages, you're going to pin
-> factor 0x40000 more memory than you think you're pinning.
-> (get_user_pages() counts references against the head page of a
-> compound page; nothing in the kernel can tell afterwards which part of
-> the hugepage you're using.) I'm not sure how much of a problem that
-> is, but it should probably at least be documented. Unless I'm just
-> missing something?
+> This pattern is almost always superfluous. You increment the file's
+> refcount, maybe insert the file into a list (essentially), and drop
+> the file's refcount back down. You're already holding a stable
+> reference, and you're not temporarily lending that to anyone else.
 
-No I think you are right, it doesn't account for the hugepage size if
-you pass in huge pages. I'll fix that up.
-
->> +               if (ret)
->> +                       goto err;
->> +
->> +               if (!pages || nr_pages > got_pages) {
->> +                       kfree(vmas);
->> +                       kfree(pages);
->> +                       pages = kmalloc_array(nr_pages, sizeof(struct page *),
->> +                                               GFP_KERNEL);
->> +                       vmas = kmalloc_array(nr_pages,
->> +                                       sizeof(struct vma_area_struct *),
->> +                                       GFP_KERNEL);
->> +                       if (!pages || !vmas) {
->> +                               ret = -ENOMEM;
->> +                               io_unaccount_mem(ctx->user, nr_pages);
->> +                               goto err;
->> +                       }
->> +                       got_pages = nr_pages;
->> +               }
->> +
->> +               imu->bvec = kmalloc_array(nr_pages, sizeof(struct bio_vec),
->> +                                               GFP_KERNEL);
->> +               if (!imu->bvec) {
->> +                       io_unaccount_mem(ctx->user, nr_pages);
->> +                       goto err;
->> +               }
->> +
->> +               down_write(&current->mm->mmap_sem);
-> 
-> Weren't you planning to make this down_read()?
-
-I think I accidentally messed that up when going back to not using
-FOLL_ANON. Fixed (again), thanks.
-
->> +               pret = get_user_pages_longterm(ubuf, nr_pages, FOLL_WRITE,
->> +                                               pages, vmas);
->> +               if (pret == nr_pages) {
->> +                       /* don't support file backed memory */
->> +                       for (j = 0; j < nr_pages; j++) {
->> +                               struct vm_area_struct *vma = vmas[j];
->> +
->> +                               if (vma->vm_file &&
->> +                                   !is_file_hugepages(vma->vm_file)) {
->> +                                       ret = -EOPNOTSUPP;
->> +                                       break;
->> +                               }
->> +                       }
->> +               } else {
->> +                       ret = pret < 0 ? pret : -EFAULT;
->> +               }
->> +               up_write(&current->mm->mmap_sem);
-> [...]
->> +}
-> [...]
->> diff --git a/include/linux/sched/user.h b/include/linux/sched/user.h
->> index 39ad98c09c58..c7b5f86b91a1 100644
->> --- a/include/linux/sched/user.h
->> +++ b/include/linux/sched/user.h
->> @@ -40,7 +40,7 @@ struct user_struct {
->>         kuid_t uid;
->>
->>  #if defined(CONFIG_PERF_EVENTS) || defined(CONFIG_BPF_SYSCALL) || \
->> -    defined(CONFIG_NET)
->> +    defined(CONFIG_NET) || defined(CONFIG_IO_URING)
->>         atomic_long_t locked_vm;
->>  #endif
-> 
-> You're already using locked_vm in patch 5, right? I think that means
-> that from patch 5 up to this patch, some kernel configs will fail to
-> build.
-
-Good point, I need to do this earlier now.
+Actually, this is me messing up. The fput() should be done AFTER
+adding to the socket. I'll fix that.
 
 -- 
 Jens Axboe
