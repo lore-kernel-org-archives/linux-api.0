@@ -1,7 +1,7 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: [PATCH 13/19] net: split out functions related to registering inflight socket files
-Date: Sat,  9 Feb 2019 14:13:40 -0700
-Message-ID: <20190209211346.26060-14-axboe@kernel.dk>
+Subject: [PATCH 15/19] io_uring: add submission polling
+Date: Sat,  9 Feb 2019 14:13:42 -0700
+Message-ID: <20190209211346.26060-16-axboe@kernel.dk>
 References: <20190209211346.26060-1-axboe@kernel.dk>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20190209211346.26060-1-axboe@kernel.dk>
@@ -10,421 +10,478 @@ To: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
 Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk, Jens Axboe <axboe@kernel.dk>
 List-Id: linux-api@vger.kernel.org
 
-We need this functionality for the io_uring file registration, but
-we cannot rely on it since CONFIG_UNIX can be modular. Move the helpers
-to a separate file, that's always builtin to the kernel if CONFIG_UNIX is
-m/y.
+This enables an application to do IO, without ever entering the kernel.
+By using the SQ ring to fill in new sqes and watching for completions
+on the CQ ring, we can submit and reap IOs without doing a single system
+call. The kernel side thread will poll for new submissions, and in case
+of HIPRI/polled IO, it'll also poll for completions.
 
-No functional changes in this patch, just moving code around.
+By default, we allow 1 second of active spinning. This can by changed
+by passing in a different grace period at io_uring_register(2) time.
+If the thread exceeds this idle time without having any work to do, it
+will set:
+
+sq_ring->flags |= IORING_SQ_NEED_WAKEUP.
+
+The application will have to call io_uring_enter() to start things back
+up again. If IO is kept busy, that will never be needed. Basically an
+application that has this feature enabled will guard it's
+io_uring_enter(2) call with:
+
+read_barrier();
+if (*sq_ring->flags & IORING_SQ_NEED_WAKEUP)
+	io_uring_enter(fd, 0, 0, IORING_ENTER_SQ_WAKEUP);
+
+instead of calling it unconditionally.
+
+It's mandatory to use fixed files with this feature. Failure to do so
+will result in the application getting an -EBADF CQ entry when
+submitting IO.
 
 Reviewed-by: Hannes Reinecke <hare@suse.com>
-Acked-by: David S. Miller <davem@davemloft.net>
 Signed-off-by: Jens Axboe <axboe@kernel.dk>
 ---
- include/net/af_unix.h |   1 +
- net/Makefile          |   2 +-
- net/unix/Kconfig      |   5 ++
- net/unix/Makefile     |   2 +
- net/unix/af_unix.c    |  63 +-----------------
- net/unix/garbage.c    |  71 +-------------------
- net/unix/scm.c        | 151 ++++++++++++++++++++++++++++++++++++++++++
- net/unix/scm.h        |  10 +++
- 8 files changed, 174 insertions(+), 131 deletions(-)
- create mode 100644 net/unix/scm.c
- create mode 100644 net/unix/scm.h
+ fs/io_uring.c                 | 249 +++++++++++++++++++++++++++++++++-
+ include/uapi/linux/io_uring.h |  12 +-
+ 2 files changed, 253 insertions(+), 8 deletions(-)
 
-diff --git a/include/net/af_unix.h b/include/net/af_unix.h
-index ddbba838d048..3426d6dacc45 100644
---- a/include/net/af_unix.h
-+++ b/include/net/af_unix.h
-@@ -10,6 +10,7 @@
+diff --git a/fs/io_uring.c b/fs/io_uring.c
+index c40a7ed2edd5..cd7ff2643292 100644
+--- a/fs/io_uring.c
++++ b/fs/io_uring.c
+@@ -24,6 +24,7 @@
+ #include <linux/percpu.h>
+ #include <linux/slab.h>
+ #include <linux/workqueue.h>
++#include <linux/kthread.h>
+ #include <linux/blkdev.h>
+ #include <linux/bvec.h>
+ #include <linux/net.h>
+@@ -88,12 +89,16 @@ struct io_ring_ctx {
+ 		unsigned		cached_sq_head;
+ 		unsigned		sq_entries;
+ 		unsigned		sq_mask;
++		unsigned		sq_thread_idle;
+ 		struct io_uring_sqe	*sq_sqes;
+ 	} ____cacheline_aligned_in_smp;
  
- void unix_inflight(struct user_struct *user, struct file *fp);
- void unix_notinflight(struct user_struct *user, struct file *fp);
-+void unix_destruct_scm(struct sk_buff *skb);
- void unix_gc(void);
- void wait_for_unix_gc(void);
- struct sock *unix_get_socket(struct file *filp);
-diff --git a/net/Makefile b/net/Makefile
-index bdaf53925acd..449fc0b221f8 100644
---- a/net/Makefile
-+++ b/net/Makefile
-@@ -18,7 +18,7 @@ obj-$(CONFIG_NETFILTER)		+= netfilter/
- obj-$(CONFIG_INET)		+= ipv4/
- obj-$(CONFIG_TLS)		+= tls/
- obj-$(CONFIG_XFRM)		+= xfrm/
--obj-$(CONFIG_UNIX)		+= unix/
-+obj-$(CONFIG_UNIX_SCM)		+= unix/
- obj-$(CONFIG_NET)		+= ipv6/
- obj-$(CONFIG_BPFILTER)		+= bpfilter/
- obj-$(CONFIG_PACKET)		+= packet/
-diff --git a/net/unix/Kconfig b/net/unix/Kconfig
-index 8b31ab85d050..3b9e450656a4 100644
---- a/net/unix/Kconfig
-+++ b/net/unix/Kconfig
-@@ -19,6 +19,11 @@ config UNIX
+ 	/* IO offload */
+ 	struct workqueue_struct	*sqo_wq;
++	struct task_struct	*sqo_thread;	/* if using sq thread polling */
+ 	struct mm_struct	*sqo_mm;
++	wait_queue_head_t	sqo_wait;
++	unsigned		sqo_stop;
  
- 	  Say Y unless you know what you are doing.
+ 	struct {
+ 		/* CQ ring */
+@@ -148,6 +153,7 @@ struct sqe_submit {
+ 	unsigned short			index;
+ 	bool				has_user;
+ 	bool				needs_lock;
++	bool				needs_fixed_file;
+ };
  
-+config UNIX_SCM
-+	bool
-+	depends on UNIX
-+	default y
-+
- config UNIX_DIAG
- 	tristate "UNIX: socket monitoring interface"
- 	depends on UNIX
-diff --git a/net/unix/Makefile b/net/unix/Makefile
-index ffd0a275c3a7..54e58cc4f945 100644
---- a/net/unix/Makefile
-+++ b/net/unix/Makefile
-@@ -10,3 +10,5 @@ unix-$(CONFIG_SYSCTL)	+= sysctl_net_unix.o
+ struct io_kiocb {
+@@ -303,6 +309,8 @@ static void io_cqring_add_event(struct io_ring_ctx *ctx, u64 ki_user_data,
  
- obj-$(CONFIG_UNIX_DIAG)	+= unix_diag.o
- unix_diag-y		:= diag.o
-+
-+obj-$(CONFIG_UNIX_SCM)	+= scm.o
-diff --git a/net/unix/af_unix.c b/net/unix/af_unix.c
-index 74d1eed7cbd4..2ce32dbb2feb 100644
---- a/net/unix/af_unix.c
-+++ b/net/unix/af_unix.c
-@@ -119,6 +119,8 @@
- #include <linux/freezer.h>
- #include <linux/file.h>
- 
-+#include "scm.h"
-+
- struct hlist_head unix_socket_table[2 * UNIX_HASH_SIZE];
- EXPORT_SYMBOL_GPL(unix_socket_table);
- DEFINE_SPINLOCK(unix_table_lock);
-@@ -1486,67 +1488,6 @@ static int unix_getname(struct socket *sock, struct sockaddr *uaddr, int peer)
- 	return err;
+ 	if (waitqueue_active(&ctx->wait))
+ 		wake_up(&ctx->wait);
++	if (waitqueue_active(&ctx->sqo_wait))
++		wake_up(&ctx->sqo_wait);
  }
  
--static void unix_detach_fds(struct scm_cookie *scm, struct sk_buff *skb)
--{
--	int i;
--
--	scm->fp = UNIXCB(skb).fp;
--	UNIXCB(skb).fp = NULL;
--
--	for (i = scm->fp->count-1; i >= 0; i--)
--		unix_notinflight(scm->fp->user, scm->fp->fp[i]);
--}
--
--static void unix_destruct_scm(struct sk_buff *skb)
--{
--	struct scm_cookie scm;
--	memset(&scm, 0, sizeof(scm));
--	scm.pid  = UNIXCB(skb).pid;
--	if (UNIXCB(skb).fp)
--		unix_detach_fds(&scm, skb);
--
--	/* Alas, it calls VFS */
--	/* So fscking what? fput() had been SMP-safe since the last Summer */
--	scm_destroy(&scm);
--	sock_wfree(skb);
--}
--
--/*
-- * The "user->unix_inflight" variable is protected by the garbage
-- * collection lock, and we just read it locklessly here. If you go
-- * over the limit, there might be a tiny race in actually noticing
-- * it across threads. Tough.
-- */
--static inline bool too_many_unix_fds(struct task_struct *p)
--{
--	struct user_struct *user = current_user();
--
--	if (unlikely(user->unix_inflight > task_rlimit(p, RLIMIT_NOFILE)))
--		return !capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN);
--	return false;
--}
--
--static int unix_attach_fds(struct scm_cookie *scm, struct sk_buff *skb)
--{
--	int i;
--
--	if (too_many_unix_fds(current))
--		return -ETOOMANYREFS;
--
--	/*
--	 * Need to duplicate file references for the sake of garbage
--	 * collection.  Otherwise a socket in the fps might become a
--	 * candidate for GC while the skb is not yet queued.
--	 */
--	UNIXCB(skb).fp = scm_fp_dup(scm->fp);
--	if (!UNIXCB(skb).fp)
--		return -ENOMEM;
--
--	for (i = scm->fp->count - 1; i >= 0; i--)
--		unix_inflight(scm->fp->user, scm->fp->fp[i]);
--	return 0;
--}
--
- static int unix_scm_to_skb(struct scm_cookie *scm, struct sk_buff *skb, bool send_fds)
+ static void io_ring_drop_ctx_refs(struct io_ring_ctx *ctx, unsigned refs)
+@@ -656,9 +664,10 @@ static bool io_file_supports_async(struct file *file)
+ 	return false;
+ }
+ 
+-static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe,
++static int io_prep_rw(struct io_kiocb *req, const struct sqe_submit *s,
+ 		      bool force_nonblock, struct io_submit_state *state)
  {
- 	int err = 0;
-diff --git a/net/unix/garbage.c b/net/unix/garbage.c
-index f81854d74c7d..8bbe1b8e4ff7 100644
---- a/net/unix/garbage.c
-+++ b/net/unix/garbage.c
-@@ -86,80 +86,13 @@
- #include <net/scm.h>
- #include <net/tcp_states.h>
++	const struct io_uring_sqe *sqe = s->sqe;
+ 	struct io_ring_ctx *ctx = req->ctx;
+ 	struct kiocb *kiocb = &req->rw;
+ 	unsigned ioprio, flags;
+@@ -678,6 +687,8 @@ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe,
+ 		kiocb->ki_filp = ctx->user_files[fd];
+ 		req->flags |= REQ_F_FIXED_FILE;
+ 	} else {
++		if (s->needs_fixed_file)
++			return -EBADF;
+ 		kiocb->ki_filp = io_file_get(state, fd);
+ 		if (unlikely(!kiocb->ki_filp))
+ 			return -EBADF;
+@@ -839,7 +850,7 @@ static ssize_t io_read(struct io_kiocb *req, const struct sqe_submit *s,
+ 	struct file *file;
+ 	ssize_t ret;
  
-+#include "scm.h"
-+
- /* Internal data structures and random procedures: */
+-	ret = io_prep_rw(req, s->sqe, force_nonblock, state);
++	ret = io_prep_rw(req, s, force_nonblock, state);
+ 	if (ret)
+ 		return ret;
+ 	file = kiocb->ki_filp;
+@@ -883,7 +894,7 @@ static ssize_t io_write(struct io_kiocb *req, const struct sqe_submit *s,
+ 	struct file *file;
+ 	ssize_t ret;
  
--static LIST_HEAD(gc_inflight_list);
- static LIST_HEAD(gc_candidates);
--static DEFINE_SPINLOCK(unix_gc_lock);
- static DECLARE_WAIT_QUEUE_HEAD(unix_gc_wait);
+-	ret = io_prep_rw(req, s->sqe, force_nonblock, state);
++	ret = io_prep_rw(req, s, force_nonblock, state);
+ 	if (ret)
+ 		return ret;
+ 	/* Hold on to the file for -EAGAIN */
+@@ -1102,6 +1113,7 @@ static void io_sq_wq_submit_work(struct work_struct *work)
+ 	user_data = READ_ONCE(s->sqe->user_data);
+ 	s->needs_lock = true;
+ 	s->has_user = false;
++	s->needs_fixed_file = false;
  
--unsigned int unix_tot_inflight;
--
--struct sock *unix_get_socket(struct file *filp)
--{
--	struct sock *u_sock = NULL;
--	struct inode *inode = file_inode(filp);
--
--	/* Socket ? */
--	if (S_ISSOCK(inode->i_mode) && !(filp->f_mode & FMODE_PATH)) {
--		struct socket *sock = SOCKET_I(inode);
--		struct sock *s = sock->sk;
--
--		/* PF_UNIX ? */
--		if (s && sock->ops && sock->ops->family == PF_UNIX)
--			u_sock = s;
--	} else {
--		/* Could be an io_uring instance */
--		u_sock = io_uring_get_socket(filp);
--	}
--	return u_sock;
--}
--
--/* Keep the number of times in flight count for the file
-- * descriptor if it is for an AF_UNIX socket.
-- */
--
--void unix_inflight(struct user_struct *user, struct file *fp)
--{
--	struct sock *s = unix_get_socket(fp);
--
--	spin_lock(&unix_gc_lock);
--
--	if (s) {
--		struct unix_sock *u = unix_sk(s);
--
--		if (atomic_long_inc_return(&u->inflight) == 1) {
--			BUG_ON(!list_empty(&u->link));
--			list_add_tail(&u->link, &gc_inflight_list);
--		} else {
--			BUG_ON(list_empty(&u->link));
--		}
--		unix_tot_inflight++;
--	}
--	user->unix_inflight++;
--	spin_unlock(&unix_gc_lock);
--}
--
--void unix_notinflight(struct user_struct *user, struct file *fp)
--{
--	struct sock *s = unix_get_socket(fp);
--
--	spin_lock(&unix_gc_lock);
--
--	if (s) {
--		struct unix_sock *u = unix_sk(s);
--
--		BUG_ON(!atomic_long_read(&u->inflight));
--		BUG_ON(list_empty(&u->link));
--
--		if (atomic_long_dec_and_test(&u->inflight))
--			list_del_init(&u->link);
--		unix_tot_inflight--;
--	}
--	user->unix_inflight--;
--	spin_unlock(&unix_gc_lock);
--}
--
- static void scan_inflight(struct sock *x, void (*func)(struct unix_sock *),
- 			  struct sk_buff_head *hitlist)
- {
-diff --git a/net/unix/scm.c b/net/unix/scm.c
-new file mode 100644
-index 000000000000..8c40f2b32392
---- /dev/null
-+++ b/net/unix/scm.c
-@@ -0,0 +1,151 @@
-+// SPDX-License-Identifier: GPL-2.0
-+#include <linux/module.h>
-+#include <linux/kernel.h>
-+#include <linux/string.h>
-+#include <linux/socket.h>
-+#include <linux/net.h>
-+#include <linux/fs.h>
-+#include <net/af_unix.h>
-+#include <net/scm.h>
-+#include <linux/init.h>
-+
-+#include "scm.h"
-+
-+unsigned int unix_tot_inflight;
-+EXPORT_SYMBOL(unix_tot_inflight);
-+
-+LIST_HEAD(gc_inflight_list);
-+EXPORT_SYMBOL(gc_inflight_list);
-+
-+DEFINE_SPINLOCK(unix_gc_lock);
-+EXPORT_SYMBOL(unix_gc_lock);
-+
-+struct sock *unix_get_socket(struct file *filp)
+ 	/*
+ 	 * If we're doing IO to fixed buffers, we don't need to get/set
+@@ -1256,6 +1268,170 @@ static bool io_get_sqring(struct io_ring_ctx *ctx, struct sqe_submit *s)
+ 	return false;
+ }
+ 
++static int io_submit_sqes(struct io_ring_ctx *ctx, struct sqe_submit *sqes,
++			  unsigned int nr, bool has_user, bool mm_fault)
 +{
-+	struct sock *u_sock = NULL;
-+	struct inode *inode = file_inode(filp);
++	struct io_submit_state state, *statep = NULL;
++	int ret, i, submitted = 0;
 +
-+	/* Socket ? */
-+	if (S_ISSOCK(inode->i_mode) && !(filp->f_mode & FMODE_PATH)) {
-+		struct socket *sock = SOCKET_I(inode);
-+		struct sock *s = sock->sk;
-+
-+		/* PF_UNIX ? */
-+		if (s && sock->ops && sock->ops->family == PF_UNIX)
-+			u_sock = s;
-+	} else {
-+		/* Could be an io_uring instance */
-+		u_sock = io_uring_get_socket(filp);
++	if (nr > IO_PLUG_THRESHOLD) {
++		io_submit_state_start(&state, ctx, nr);
++		statep = &state;
 +	}
-+	return u_sock;
-+}
-+EXPORT_SYMBOL(unix_get_socket);
 +
-+/* Keep the number of times in flight count for the file
-+ * descriptor if it is for an AF_UNIX socket.
-+ */
-+void unix_inflight(struct user_struct *user, struct file *fp)
-+{
-+	struct sock *s = unix_get_socket(fp);
-+
-+	spin_lock(&unix_gc_lock);
-+
-+	if (s) {
-+		struct unix_sock *u = unix_sk(s);
-+
-+		if (atomic_long_inc_return(&u->inflight) == 1) {
-+			BUG_ON(!list_empty(&u->link));
-+			list_add_tail(&u->link, &gc_inflight_list);
++	for (i = 0; i < nr; i++) {
++		if (unlikely(mm_fault)) {
++			ret = -EFAULT;
 +		} else {
-+			BUG_ON(list_empty(&u->link));
++			sqes[i].has_user = has_user;
++			sqes[i].needs_lock = true;
++			sqes[i].needs_fixed_file = true;
++			ret = io_submit_sqe(ctx, &sqes[i], statep);
 +		}
-+		unix_tot_inflight++;
++		if (!ret) {
++			submitted++;
++			continue;
++		}
++
++		io_cqring_add_event(ctx, sqes[i].sqe->user_data, ret, 0);
 +	}
-+	user->unix_inflight++;
-+	spin_unlock(&unix_gc_lock);
++
++	if (statep)
++		io_submit_state_end(&state);
++
++	return submitted;
 +}
 +
-+void unix_notinflight(struct user_struct *user, struct file *fp)
++static int io_sq_thread(void *data)
 +{
-+	struct sock *s = unix_get_socket(fp);
++	struct sqe_submit sqes[IO_IOPOLL_BATCH];
++	struct io_ring_ctx *ctx = data;
++	struct mm_struct *cur_mm = NULL;
++	mm_segment_t old_fs;
++	DEFINE_WAIT(wait);
++	unsigned inflight;
++	unsigned long timeout;
 +
-+	spin_lock(&unix_gc_lock);
++	old_fs = get_fs();
++	set_fs(USER_DS);
 +
-+	if (s) {
-+		struct unix_sock *u = unix_sk(s);
++	timeout = inflight = 0;
++	while (!kthread_should_stop() && !ctx->sqo_stop) {
++		bool all_fixed, mm_fault = false;
++		int i;
 +
-+		BUG_ON(!atomic_long_read(&u->inflight));
-+		BUG_ON(list_empty(&u->link));
++		if (inflight) {
++			unsigned nr_events = 0;
 +
-+		if (atomic_long_dec_and_test(&u->inflight))
-+			list_del_init(&u->link);
-+		unix_tot_inflight--;
++			if (ctx->flags & IORING_SETUP_IOPOLL) {
++				/*
++				 * We disallow the app entering submit/complete
++				 * with polling, but we still need to lock the
++				 * ring to prevent racing with polled issue
++				 * that got punted to a workqueue.
++				 */
++				mutex_lock(&ctx->uring_lock);
++				io_iopoll_check(ctx, &nr_events, 0);
++				mutex_unlock(&ctx->uring_lock);
++			} else {
++				/*
++				 * Normal IO, just pretend everything completed.
++				 * We don't have to poll completions for that.
++				 */
++				nr_events = inflight;
++			}
++
++			inflight -= nr_events;
++			if (!inflight)
++				timeout = jiffies + ctx->sq_thread_idle;
++		}
++
++		if (!io_get_sqring(ctx, &sqes[0])) {
++			/*
++			 * We're polling. If we're within the defined idle
++			 * period, then let us spin without work before going
++			 * to sleep.
++			 */
++			if (inflight || !time_after(jiffies, timeout)) {
++				cpu_relax();
++				continue;
++			}
++
++			/*
++			 * Drop cur_mm before scheduling, we can't hold it for
++			 * long periods (or over schedule()). Do this before
++			 * adding ourselves to the waitqueue, as the unuse/drop
++			 * may sleep.
++			 */
++			if (cur_mm) {
++				unuse_mm(cur_mm);
++				mmput(cur_mm);
++				cur_mm = NULL;
++			}
++
++			prepare_to_wait(&ctx->sqo_wait, &wait,
++						TASK_INTERRUPTIBLE);
++
++			/* Tell userspace we may need a wakeup call */
++			ctx->sq_ring->flags |= IORING_SQ_NEED_WAKEUP;
++			smp_wmb();
++
++			if (!io_get_sqring(ctx, &sqes[0])) {
++				if (kthread_should_stop()) {
++					finish_wait(&ctx->sqo_wait, &wait);
++					break;
++				}
++				if (signal_pending(current))
++					flush_signals(current);
++				schedule();
++				finish_wait(&ctx->sqo_wait, &wait);
++
++				ctx->sq_ring->flags &= ~IORING_SQ_NEED_WAKEUP;
++				smp_wmb();
++				continue;
++			}
++			finish_wait(&ctx->sqo_wait, &wait);
++
++			ctx->sq_ring->flags &= ~IORING_SQ_NEED_WAKEUP;
++			smp_wmb();
++		}
++
++		i = 0;
++		all_fixed = true;
++		do {
++			if (all_fixed && io_sqe_needs_user(sqes[i].sqe))
++				all_fixed = false;
++
++			i++;
++			if (i == ARRAY_SIZE(sqes))
++				break;
++		} while (io_get_sqring(ctx, &sqes[i]));
++
++		io_commit_sqring(ctx);
++
++		/* Unless all new commands are FIXED regions, grab mm */
++		if (!all_fixed && !cur_mm) {
++			mm_fault = !mmget_not_zero(ctx->sqo_mm);
++			if (!mm_fault) {
++				use_mm(ctx->sqo_mm);
++				cur_mm = ctx->sqo_mm;
++			}
++		}
++
++		inflight += io_submit_sqes(ctx, sqes, i, cur_mm != NULL,
++						mm_fault);
 +	}
-+	user->unix_inflight--;
-+	spin_unlock(&unix_gc_lock);
-+}
 +
-+/*
-+ * The "user->unix_inflight" variable is protected by the garbage
-+ * collection lock, and we just read it locklessly here. If you go
-+ * over the limit, there might be a tiny race in actually noticing
-+ * it across threads. Tough.
-+ */
-+static inline bool too_many_unix_fds(struct task_struct *p)
-+{
-+	struct user_struct *user = current_user();
++	io_iopoll_reap_events(ctx);
 +
-+	if (unlikely(user->unix_inflight > task_rlimit(p, RLIMIT_NOFILE)))
-+		return !capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN);
-+	return false;
-+}
-+
-+int unix_attach_fds(struct scm_cookie *scm, struct sk_buff *skb)
-+{
-+	int i;
-+
-+	if (too_many_unix_fds(current))
-+		return -ETOOMANYREFS;
-+
-+	/*
-+	 * Need to duplicate file references for the sake of garbage
-+	 * collection.  Otherwise a socket in the fps might become a
-+	 * candidate for GC while the skb is not yet queued.
-+	 */
-+	UNIXCB(skb).fp = scm_fp_dup(scm->fp);
-+	if (!UNIXCB(skb).fp)
-+		return -ENOMEM;
-+
-+	for (i = scm->fp->count - 1; i >= 0; i--)
-+		unix_inflight(scm->fp->user, scm->fp->fp[i]);
++	set_fs(old_fs);
++	if (cur_mm) {
++		unuse_mm(cur_mm);
++		mmput(cur_mm);
++	}
 +	return 0;
 +}
-+EXPORT_SYMBOL(unix_attach_fds);
 +
-+void unix_detach_fds(struct scm_cookie *scm, struct sk_buff *skb)
-+{
-+	int i;
+ static int io_ring_submit(struct io_ring_ctx *ctx, unsigned int to_submit)
+ {
+ 	struct io_submit_state state, *statep = NULL;
+@@ -1274,6 +1450,7 @@ static int io_ring_submit(struct io_ring_ctx *ctx, unsigned int to_submit)
+ 
+ 		s.has_user = true;
+ 		s.needs_lock = false;
++		s.needs_fixed_file = false;
+ 
+ 		ret = io_submit_sqe(ctx, &s, statep);
+ 		if (ret) {
+@@ -1486,13 +1663,47 @@ static int io_sqe_files_register(struct io_ring_ctx *ctx, void __user *arg,
+ 	return ret;
+ }
+ 
+-static int io_sq_offload_start(struct io_ring_ctx *ctx)
++static int io_sq_offload_start(struct io_ring_ctx *ctx,
++			       struct io_uring_params *p)
+ {
+ 	int ret;
+ 
++	init_waitqueue_head(&ctx->sqo_wait);
+ 	mmgrab(current->mm);
+ 	ctx->sqo_mm = current->mm;
+ 
++	ctx->sq_thread_idle = msecs_to_jiffies(p->sq_thread_idle);
++	if (!ctx->sq_thread_idle)
++		ctx->sq_thread_idle = HZ;
 +
-+	scm->fp = UNIXCB(skb).fp;
-+	UNIXCB(skb).fp = NULL;
++	ret = -EINVAL;
++	if (!cpu_possible(p->sq_thread_cpu))
++		goto err;
 +
-+	for (i = scm->fp->count-1; i >= 0; i--)
-+		unix_notinflight(scm->fp->user, scm->fp->fp[i]);
-+}
-+EXPORT_SYMBOL(unix_detach_fds);
++	if (ctx->flags & IORING_SETUP_SQPOLL) {
++		if (p->flags & IORING_SETUP_SQ_AFF) {
++			int cpu;
 +
-+void unix_destruct_scm(struct sk_buff *skb)
-+{
-+	struct scm_cookie scm;
++			cpu = array_index_nospec(p->sq_thread_cpu, NR_CPUS);
++			ctx->sqo_thread = kthread_create_on_cpu(io_sq_thread,
++							ctx, cpu,
++							"io_uring-sq");
++		} else {
++			ctx->sqo_thread = kthread_create(io_sq_thread, ctx,
++							"io_uring-sq");
++		}
++		if (IS_ERR(ctx->sqo_thread)) {
++			ret = PTR_ERR(ctx->sqo_thread);
++			ctx->sqo_thread = NULL;
++			goto err;
++		}
++		wake_up_process(ctx->sqo_thread);
++	} else if (p->flags & IORING_SETUP_SQ_AFF) {
++		/* Can't have SQ_AFF without SQPOLL */
++		ret = -EINVAL;
++		goto err;
++	}
 +
-+	memset(&scm, 0, sizeof(scm));
-+	scm.pid  = UNIXCB(skb).pid;
-+	if (UNIXCB(skb).fp)
-+		unix_detach_fds(&scm, skb);
+ 	/* Do QD, or 2 * CPUS, whatever is smallest */
+ 	ctx->sqo_wq = alloc_workqueue("io_ring-wq", WQ_UNBOUND | WQ_FREEZABLE,
+ 			min(ctx->sq_entries - 1, 2 * num_online_cpus()));
+@@ -1503,6 +1714,12 @@ static int io_sq_offload_start(struct io_ring_ctx *ctx)
+ 
+ 	return 0;
+ err:
++	if (ctx->sqo_thread) {
++		ctx->sqo_stop = 1;
++		mb();
++		kthread_stop(ctx->sqo_thread);
++		ctx->sqo_thread = NULL;
++	}
+ 	mmdrop(ctx->sqo_mm);
+ 	ctx->sqo_mm = NULL;
+ 	return ret;
+@@ -1750,6 +1967,11 @@ static int io_sqe_buffer_register(struct io_ring_ctx *ctx, void __user *arg,
+ 
+ static void io_ring_ctx_free(struct io_ring_ctx *ctx)
+ {
++	if (ctx->sqo_thread) {
++		ctx->sqo_stop = 1;
++		mb();
++		kthread_stop(ctx->sqo_thread);
++	}
+ 	if (ctx->sqo_wq)
+ 		destroy_workqueue(ctx->sqo_wq);
+ 	if (ctx->sqo_mm)
+@@ -1858,7 +2080,7 @@ SYSCALL_DEFINE6(io_uring_enter, unsigned int, fd, u32, to_submit,
+ 	int submitted = 0;
+ 	struct fd f;
+ 
+-	if (flags & ~IORING_ENTER_GETEVENTS)
++	if (flags & ~(IORING_ENTER_GETEVENTS | IORING_ENTER_SQ_WAKEUP))
+ 		return -EINVAL;
+ 
+ 	f = fdget(fd);
+@@ -1874,6 +2096,18 @@ SYSCALL_DEFINE6(io_uring_enter, unsigned int, fd, u32, to_submit,
+ 	if (!percpu_ref_tryget(&ctx->refs))
+ 		goto out_fput;
+ 
++	/*
++	 * For SQ polling, the thread will do all submissions and completions.
++	 * Just return the requested submit count, and wake the thread if
++	 * we were asked to.
++	 */
++	if (ctx->flags & IORING_SETUP_SQPOLL) {
++		if (flags & IORING_ENTER_SQ_WAKEUP)
++			wake_up(&ctx->sqo_wait);
++		submitted = to_submit;
++		goto out_ctx;
++	}
 +
-+	/* Alas, it calls VFS */
-+	/* So fscking what? fput() had been SMP-safe since the last Summer */
-+	scm_destroy(&scm);
-+	sock_wfree(skb);
-+}
-+EXPORT_SYMBOL(unix_destruct_scm);
-diff --git a/net/unix/scm.h b/net/unix/scm.h
-new file mode 100644
-index 000000000000..5a255a477f16
---- /dev/null
-+++ b/net/unix/scm.h
-@@ -0,0 +1,10 @@
-+#ifndef NET_UNIX_SCM_H
-+#define NET_UNIX_SCM_H
+ 	if (to_submit) {
+ 		to_submit = min(to_submit, ctx->sq_entries);
+ 
+@@ -2045,7 +2279,7 @@ static int io_uring_create(unsigned entries, struct io_uring_params *p)
+ 	if (ret)
+ 		goto err;
+ 
+-	ret = io_sq_offload_start(ctx);
++	ret = io_sq_offload_start(ctx, p);
+ 	if (ret)
+ 		goto err;
+ 
+@@ -2093,7 +2327,8 @@ static long io_uring_setup(u32 entries, struct io_uring_params __user *params)
+ 			return -EINVAL;
+ 	}
+ 
+-	if (p.flags & ~IORING_SETUP_IOPOLL)
++	if (p.flags & ~(IORING_SETUP_IOPOLL | IORING_SETUP_SQPOLL |
++			IORING_SETUP_SQ_AFF))
+ 		return -EINVAL;
+ 
+ 	ret = io_uring_create(entries, &p);
+diff --git a/include/uapi/linux/io_uring.h b/include/uapi/linux/io_uring.h
+index 6257478d55e9..0ec74bab8dbe 100644
+--- a/include/uapi/linux/io_uring.h
++++ b/include/uapi/linux/io_uring.h
+@@ -42,6 +42,8 @@ struct io_uring_sqe {
+  * io_uring_setup() flags
+  */
+ #define IORING_SETUP_IOPOLL	(1U << 0)	/* io_context is polled */
++#define IORING_SETUP_SQPOLL	(1U << 1)	/* SQ poll thread */
++#define IORING_SETUP_SQ_AFF	(1U << 2)	/* sq_thread_cpu is valid */
+ 
+ #define IORING_OP_NOP		0
+ #define IORING_OP_READV		1
+@@ -86,6 +88,11 @@ struct io_sqring_offsets {
+ 	__u64 resv2;
+ };
+ 
++/*
++ * sq_ring->flags
++ */
++#define IORING_SQ_NEED_WAKEUP	(1U << 0) /* needs io_uring_enter wakeup */
 +
-+extern struct list_head gc_inflight_list;
-+extern spinlock_t unix_gc_lock;
-+
-+int unix_attach_fds(struct scm_cookie *scm, struct sk_buff *skb);
-+void unix_detach_fds(struct scm_cookie *scm, struct sk_buff *skb);
-+
-+#endif
+ struct io_cqring_offsets {
+ 	__u32 head;
+ 	__u32 tail;
+@@ -100,6 +107,7 @@ struct io_cqring_offsets {
+  * io_uring_enter(2) flags
+  */
+ #define IORING_ENTER_GETEVENTS	(1U << 0)
++#define IORING_ENTER_SQ_WAKEUP	(1U << 1)
+ 
+ /*
+  * Passed in for io_uring_setup(2). Copied back with updated info on success
+@@ -108,7 +116,9 @@ struct io_uring_params {
+ 	__u32 sq_entries;
+ 	__u32 cq_entries;
+ 	__u32 flags;
+-	__u32 resv[7];
++	__u32 sq_thread_cpu;
++	__u32 sq_thread_idle;
++	__u32 resv[5];
+ 	struct io_sqring_offsets sq_off;
+ 	struct io_cqring_offsets cq_off;
+ };
 -- 
 2.17.1
 
