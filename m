@@ -1,60 +1,41 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 15/19] io_uring: add submission polling
-Date: Sat, 9 Feb 2019 10:53:18 +0100
-Message-ID: <c2aecf8b-a203-9c66-7e77-4e9d7cec7216@suse.de>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCH 12/19] io_uring: add support for pre-mapped user IO
+ buffers
+Date: Sat, 9 Feb 2019 09:50:04 -0700
+Message-ID: <7cb5df70-1179-c566-7c13-31e96c32d66b@kernel.dk>
 References: <20190208173423.27014-1-axboe@kernel.dk>
- <20190208173423.27014-16-axboe@kernel.dk>
+ <20190208173423.27014-13-axboe@kernel.dk>
+ <CAG48ez0uH_muHobzpwFzdyBWCcWDxbnfpuxABntph6Te+tYxGg@mail.gmail.com>
+ <2ef04b12-6a4b-af25-cbf8-9dde79b0ec1e@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20190208173423.27014-16-axboe@kernel.dk>
+In-Reply-To: <2ef04b12-6a4b-af25-cbf8-9dde79b0ec1e@kernel.dk>
 Content-Language: en-US
 Sender: owner-linux-aio@kvack.org
-To: Jens Axboe <axboe@kernel.dk>, linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
-Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk
+To: Jann Horn <jannh@google.com>
+Cc: linux-aio@kvack.org, linux-block@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, hch@lst.de, jmoyer@redhat.com, Avi Kivity <avi@scylladb.com>, Al Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-On 2/8/19 6:34 PM, Jens Axboe wrote:
-> This enables an application to do IO, without ever entering the kernel.
-> By using the SQ ring to fill in new sqes and watching for completions
-> on the CQ ring, we can submit and reap IOs without doing a single system
-> call. The kernel side thread will poll for new submissions, and in case
-> of HIPRI/polled IO, it'll also poll for completions.
+On 2/8/19 4:38 PM, Jens Axboe wrote:
+>> Technically, this accounting is probably a bit off; I think if you
+>> pass in a vector of 4K areas from 1G hugepages, you're going to pin
+>> factor 0x40000 more memory than you think you're pinning.
+>> (get_user_pages() counts references against the head page of a
+>> compound page; nothing in the kernel can tell afterwards which part of
+>> the hugepage you're using.) I'm not sure how much of a problem that
+>> is, but it should probably at least be documented. Unless I'm just
+>> missing something?
 > 
-> By default, we allow 1 second of active spinning. This can by changed
-> by passing in a different grace period at io_uring_register(2) time.
-> If the thread exceeds this idle time without having any work to do, it
-> will set:
-> 
-> sq_ring->flags |= IORING_SQ_NEED_WAKEUP.
-> 
-> The application will have to call io_uring_enter() to start things back
-> up again. If IO is kept busy, that will never be needed. Basically an
-> application that has this feature enabled will guard it's
-> io_uring_enter(2) call with:
-> 
-> read_barrier();
-> if (*sq_ring->flags & IORING_SQ_NEED_WAKEUP)
-> 	io_uring_enter(fd, 0, 0, IORING_ENTER_SQ_WAKEUP);
-> 
-> instead of calling it unconditionally.
-> 
-> It's mandatory to use fixed files with this feature. Failure to do so
-> will result in the application getting an -EBADF CQ entry when
-> submitting IO.
-> 
-> Signed-off-by: Jens Axboe <axboe@kernel.dk>
-> ---
->   fs/io_uring.c                 | 249 +++++++++++++++++++++++++++++++++-
->   include/uapi/linux/io_uring.h |  12 +-
->   2 files changed, 253 insertions(+), 8 deletions(-)
-> 
-Reviewed-by: Hannes Reinecke <hare@suse.com>
+> No I think you are right, it doesn't account for the hugepage size if
+> you pass in huge pages. I'll fix that up.
 
-Cheers,
+I made a note of it in the man page, I don't think this is unreasonable
+(or unexpected) behavior.
 
-Hannes
+-- 
+Jens Axboe
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
