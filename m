@@ -1,206 +1,132 @@
-From: Matt Mullins <mmullins@fb.com>
-Subject: Re: [PATCH 14/19] io_uring: add file set registration
-Date: Sun, 10 Feb 2019 19:55:09 +0000
-Message-ID: <9675b845856c14244c3cb8b5b35382d2fecff374.camel@fb.com>
-References: <20190209211346.26060-1-axboe@kernel.dk>
-	 <20190209211346.26060-15-axboe@kernel.dk>
-	 <f722cc1a73bd7615d71fb020e87e5439f59947d7.camel@fb.com>
-	 <73a49fa3-9c42-4b25-4a6c-75749e5c0cea@kernel.dk>
-	 <60e4c6a489549daad1fb2c5e8eee5496c668d79a.camel@fb.com>
-	 <9e3d7c97-f649-ddb5-4a6f-0ab66742fc86@kernel.dk>
-	 <a5a59573-1a61-a2a8-a8a1-24d729ab141a@kernel.dk>
+From: Christian Brauner <christian@brauner.io>
+Subject: [PATCH v4 1/3] sysctl: handle overflow in proc_get_long
+Date: Sun, 10 Feb 2019 21:39:41 +0100
+Message-ID: <20190210203943.8227-2-christian@brauner.io>
+References: <20190210203943.8227-1-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <a5a59573-1a61-a2a8-a8a1-24d729ab141a@kernel.dk>
-Content-Language: en-US
-Content-ID: <18083B279BD51B43AC238C01BE43A4D7@namprd15.prod.outlook.com>
-Sender: owner-linux-aio@kvack.org
-To: "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "axboe@kernel.dk" <axboe@kernel.dk>
-Cc: "hch@lst.de" <hch@lst.de>, "jannh@google.com" <jannh@google.com>, "viro@ZenIV.linux.org.uk" <viro@ZenIV.linux.org.uk>, "avi@scylladb.com" <avi@scylladb.com>, "jmoyer@redhat.com" <jmoyer@redhat.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190210203943.8227-1-christian@brauner.io>
+Sender: linux-kernel-owner@vger.kernel.org
+To: akpm@linux-foundation.org, keescook@chromium.org, linux-kernel@vger.kernel.org
+Cc: ebiederm@xmission.com, mcgrof@kernel.org, joe.lawrence@redhat.com, longman@redhat.com, linux@dominikbrodowski.net, viro@zeniv.linux.org.uk, adobriyan@gmail.com, linux-api@vger.kernel.org, Christian Brauner <christian@brauner.io>
 List-Id: linux-api@vger.kernel.org
 
-T24gU2F0LCAyMDE5LTAyLTA5IGF0IDE5OjU3IC0wNzAwLCBKZW5zIEF4Ym9lIHdyb3RlOg0KPiBP
-biAyLzkvMTkgNzozNCBQTSwgSmVucyBBeGJvZSB3cm90ZToNCj4gPiBPbiAyLzkvMTkgNjoxMSBQ
-TSwgTWF0dCBNdWxsaW5zIHdyb3RlOg0KPiA+ID4gT24gU2F0LCAyMDE5LTAyLTA5IGF0IDE3OjQ3
-IC0wNzAwLCBKZW5zIEF4Ym9lIHdyb3RlOg0KPiA+ID4gPiBPbiAyLzkvMTkgNDo1MiBQTSwgTWF0
-dCBNdWxsaW5zIHdyb3RlOg0KPiA+ID4gPiA+ID4gQEAgLTEyOTIsNiArMTMzOCwxNTQgQEAgc3Rh
-dGljIGludCBpb19jcXJpbmdfd2FpdChzdHJ1Y3QgaW9fcmluZ19jdHggKmN0eCwgaW50IG1pbl9l
-dmVudHMsDQo+ID4gPiA+ID4gPiAgCXJldHVybiBSRUFEX09OQ0UocmluZy0+ci5oZWFkKSA9PSBS
-RUFEX09OQ0UocmluZy0+ci50YWlsKSA/IHJldCA6IDA7DQo+ID4gPiA+ID4gPiAgfQ0KPiA+ID4g
-PiA+ID4gIA0KPiA+ID4gPiA+ID4gK3N0YXRpYyB2b2lkIF9faW9fc3FlX2ZpbGVzX3VucmVnaXN0
-ZXIoc3RydWN0IGlvX3JpbmdfY3R4ICpjdHgpDQo+ID4gPiA+ID4gPiArew0KPiA+ID4gPiA+ID4g
-KyNpZiBkZWZpbmVkKENPTkZJR19VTklYKQ0KPiA+ID4gPiA+ID4gKwlpZiAoY3R4LT5yaW5nX3Nv
-Y2spIHsNCj4gPiA+ID4gPiA+ICsJCXN0cnVjdCBzb2NrICpzb2NrID0gY3R4LT5yaW5nX3NvY2st
-PnNrOw0KPiA+ID4gPiA+ID4gKwkJc3RydWN0IHNrX2J1ZmYgKnNrYjsNCj4gPiA+ID4gPiA+ICsN
-Cj4gPiA+ID4gPiA+ICsJCXdoaWxlICgoc2tiID0gc2tiX2RlcXVldWUoJnNvY2stPnNrX3JlY2Vp
-dmVfcXVldWUpKSAhPSBOVUxMKQ0KPiA+ID4gPiA+IA0KPiA+ID4gPiA+IFNvbWV0aGluZydzIHN0
-aWxsIGEgYml0IG1lc3N5IHdpdGggZGVzdHJ1Y3Rpb24uICBJIGdldCBhIHRyYWNlYmFjayBoZXJl
-DQo+ID4gPiA+ID4gd2hpbGUgcnVubmluZw0KPiA+ID4gPiA+IA0KPiA+ID4gPiA+ICAgaW50IG1h
-aW4oKSB7DQo+ID4gPiA+ID4gICAgIHN0cnVjdCBpb191cmluZ19wYXJhbXMgdXJpbmdfcGFyYW1z
-ID0gew0KPiA+ID4gPiA+ICAgICAgICAgLmZsYWdzID0gSU9SSU5HX1NFVFVQX1NRUE9MTCB8IElP
-UklOR19TRVRVUF9JT1BPTEwsDQo+ID4gPiA+ID4gICAgIH07DQo+ID4gPiA+ID4gICAgIGludCB1
-cmluZ19mZCA9IA0KPiA+ID4gPiA+ICAgICAgICAgc3lzY2FsbCg0MjUgLyogaW9fdXJpbmdfc2V0
-dXAgKi8sIDE2LCAmdXJpbmdfcGFyYW1zKTsNCj4gPiA+ID4gPiAgICAgDQo+ID4gPiA+ID4gICAg
-IGNvbnN0IF9fczMyIGZkc1tdID0gezF9Ow0KPiA+ID4gPiA+ICAgICANCj4gPiA+ID4gPiAgICAg
-c3lzY2FsbCg0MjcgLyogaW9fdXJpbmdfcmVnaXN0ZXIgKi8sIHVyaW5nX2ZkLA0KPiA+ID4gPiA+
-ICAgICAgICAgICAgIElPUklOR19SRUdJU1RFUl9GSUxFUywgZmRzLCBzaXplb2YoZmRzKSAvIHNp
-emVvZigqZmRzKSk7DQo+ID4gPiA+ID4gICB9DQo+ID4gPiA+ID4gDQo+ID4gPiA+ID4gSSBlbmQg
-dXAgd2l0aCB0aGUgZm9sbG93aW5nIHNwZXc6DQo+ID4gPiA+ID4gDQo+ID4gPiA+ID4gWyAgMTk1
-Ljk4MzMyMl0gV0FSTklORzogQ1BVOiAxIFBJRDogMTkzOCBhdCAuLi9uZXQvdW5peC9hZl91bml4
-LmM6NTAwIHVuaXhfc29ja19kZXN0cnVjdG9yKzB4OTcvMHhjMA0KPiA+ID4gPiA+IFsgIDE5NS45
-ODk1NTZdIE1vZHVsZXMgbGlua2VkIGluOg0KPiA+ID4gPiA+IFsgIDE5NS45OTI3MzhdIENQVTog
-MSBQSUQ6IDE5MzggQ29tbTogYWlvX2J1ZmZlcmVkIFRhaW50ZWQ6IEcgICAgICAgIFcgICAgICAg
-ICA1LjAuMC1yYzUrICMzNzkNCj4gPiA+ID4gPiBbICAxOTYuMDAwOTI2XSBIYXJkd2FyZSBuYW1l
-OiBRRU1VIFN0YW5kYXJkIFBDIChpNDQwRlggKyBQSUlYLCAxOTk2KSwgQklPUyAxLjEwLjItMXVi
-dW50dTEgMDQvMDEvMjAxNA0KPiA+ID4gPiA+IFsgIDE5Ni4wMDgzMTZdIFJJUDogMDAxMDp1bml4
-X3NvY2tfZGVzdHJ1Y3RvcisweDk3LzB4YzANCj4gPiA+ID4gPiBbICAxOTYuMDEwOTEyXSBDb2Rl
-OiAzZiAzNyBmMyBmZiA1YiA1ZCBiZSAwMCAwMiAwMCAwMCA0OCBjNyBjNyA2YyA1YiA5YSA4MSBl
-OSA4YyAyYSA3MSBmZiA0OCA4OSBlZiBlOCBjNCBkYyA4NyBmZiBlYiBiZSAwZiAwYiA0OCA4MyA3
-YiA3MCAwMCA3NCA4YiA8MGY+IDBiIDQ4IDgzIGJiIDY4IDAyIDAwIDAwIDAwIDc0IDg5IDBmIDBi
-IGViIDg1IDQ4IDg5IGRlIDQ4IGM3IGM3DQo+ID4gPiA+ID4gWyAgMTk2LjAxODg4N10gUlNQOiAw
-MDE4OmZmZmZjOTAwMDA4YTdkNDAgRUZMQUdTOiAwMDAxMDI4Mg0KPiA+ID4gPiA+IFsgIDE5Ni4w
-MjA3NTRdIFJBWDogMDAwMDAwMDAwMDAwMDAwMCBSQlg6IGZmZmY4ODgxMzUxZGQwMDAgUkNYOiAw
-MDAwMDAwMDAwMDAwMDAwDQo+ID4gPiA+ID4gWyAgMTk2LjAyMjgxMV0gUkRYOiAwMDAwMDAwMDAw
-MDAwMDAxIFJTSTogMDAwMDAwMDAwMDAwMDI4MiBSREk6IDAwMDAwMDAwZmZmZmZmZmYNCj4gPiA+
-ID4gPiBbICAxOTYuMDI0OTAxXSBSQlA6IGZmZmY4ODgxMzUxZGQwMDAgUjA4OiAwMDAwMDAwMDAw
-MDI0MTIwIFIwOTogZmZmZmZmZmY4MTlhOTdmZQ0KPiA+ID4gPiA+IFsgIDE5Ni4wMjY5NzddIFIx
-MDogZmZmZmVhMDAwNGNmNjgwMCBSMTE6IDAwMDAwMDAwMDA1YjhkODAgUjEyOiBmZmZmZmZmZjgx
-Mjk0ZWMyDQo+ID4gPiA+ID4gWyAgMTk2LjAyOTExOV0gUjEzOiBmZmZmODg4MTM0ZTI3YjQwIFIx
-NDogZmZmZjg4ODEzYmIzMDdhMCBSMTU6IGZmZmY4ODgxMzNkNTk5MTANCj4gPiA+ID4gPiBbICAx
-OTYuMDMxMDcxXSBGUzogIDAwMDA3ZjFhOGE4YzM3NDAoMDAwMCkgR1M6ZmZmZjg4ODEzYmIwMDAw
-MCgwMDAwKSBrbmxHUzowMDAwMDAwMDAwMDAwMDAwDQo+ID4gPiA+ID4gWyAgMTk2LjAzMzA2OV0g
-Q1M6ICAwMDEwIERTOiAwMDAwIEVTOiAwMDAwIENSMDogMDAwMDAwMDA4MDA1MDAzMw0KPiA+ID4g
-PiA+IFsgIDE5Ni4wMzQ0MzhdIENSMjogMDAwMDdmMWE4YWJhNTkyMCBDUjM6IDAwMDAwMDAwMDI2
-MGUwMDQgQ1I0OiAwMDAwMDAwMDAwMzYwNmEwDQo+ID4gPiA+ID4gWyAgMTk2LjAzNjMxMF0gRFIw
-OiAwMDAwMDAwMDAwMDAwMDAwIERSMTogMDAwMDAwMDAwMDAwMDAwMCBEUjI6IDAwMDAwMDAwMDAw
-MDAwMDANCj4gPiA+ID4gPiBbICAxOTYuMDM4Mzk5XSBEUjM6IDAwMDAwMDAwMDAwMDAwMDAgRFI2
-OiAwMDAwMDAwMGZmZmUwZmYwIERSNzogMDAwMDAwMDAwMDAwMDQwMA0KPiA+ID4gPiA+IFsgIDE5
-Ni4wMzk3OTRdIENhbGwgVHJhY2U6DQo+ID4gPiA+ID4gWyAgMTk2LjA0MDI1OV0gIF9fc2tfZGVz
-dHJ1Y3QrMHgxYy8weDE1MA0KPiA+ID4gPiA+IFsgIDE5Ni4wNDA5NjRdICA/IGlvX3NxZV9maWxl
-c191bnJlZ2lzdGVyKzB4MzIvMHg3MA0KPiA+ID4gPiA+IFsgIDE5Ni4wNDE4NDFdICB1bml4X2Rl
-c3RydWN0X3NjbSsweDc2LzB4YTANCj4gPiA+ID4gPiBbICAxOTYuMDQyNTg3XSAgc2tiX3JlbGVh
-c2VfaGVhZF9zdGF0ZSsweDM4LzB4NjANCj4gPiA+ID4gPiBbICAxOTYuMDQzNDAxXSAgc2tiX3Jl
-bGVhc2VfYWxsKzB4OS8weDIwDQo+ID4gPiA+ID4gWyAgMTk2LjA0NDAzNF0gIGtmcmVlX3NrYisw
-eDJkLzB4YjANCj4gPiA+ID4gPiBbICAxOTYuMDQ0NjAzXSAgaW9fc3FlX2ZpbGVzX3VucmVnaXN0
-ZXIrMHgzMi8weDcwDQo+ID4gPiA+ID4gWyAgMTk2LjA0NTM4NV0gIGlvX3JpbmdfY3R4X3dhaXRf
-YW5kX2tpbGwrMHhmNi8weDFhMA0KPiA+ID4gPiA+IFsgIDE5Ni4wNDYyMjBdICBpb191cmluZ19y
-ZWxlYXNlKzB4MTcvMHgyMA0KPiA+ID4gPiA+IFsgIDE5Ni4wNDY4ODFdICBfX2ZwdXQrMHg5ZC8w
-eDFkMA0KPiA+ID4gPiA+IFsgIDE5Ni4wNDc0MjFdICB0YXNrX3dvcmtfcnVuKzB4N2EvMHg5MA0K
-PiA+ID4gPiA+IFsgIDE5Ni4wNDgwNDVdICBkb19leGl0KzB4MzAxLzB4YzIwDQo+ID4gPiA+ID4g
-WyAgMTk2LjA0ODYyNl0gID8gaGFuZGxlX21tX2ZhdWx0KzB4ZjMvMHgyMzANCj4gPiA+ID4gPiBb
-ICAxOTYuMDQ5MzIxXSAgZG9fZ3JvdXBfZXhpdCsweDM1LzB4YTANCj4gPiA+ID4gPiBbICAxOTYu
-MDQ5OTQ0XSAgX194NjRfc3lzX2V4aXRfZ3JvdXArMHhmLzB4MTANCj4gPiA+ID4gPiBbICAxOTYu
-MDUwNjU4XSAgZG9fc3lzY2FsbF82NCsweDNkLzB4ZjANCj4gPiA+ID4gPiBbICAxOTYuMDUxMzE3
-XSAgZW50cnlfU1lTQ0FMTF82NF9hZnRlcl9od2ZyYW1lKzB4NDQvMHhhOQ0KPiA+ID4gPiA+IFsg
-IDE5Ni4wNTIyMTddIFJJUDogMDAzMzoweDdmMWE4YWJhNTk1Ng0KPiA+ID4gPiA+IFsgIDE5Ni4w
-NTI4NTldIENvZGU6IEJhZCBSSVAgdmFsdWUuDQo+ID4gPiA+ID4gWyAgMTk2LjA1MzQ4OF0gUlNQ
-OiAwMDJiOjAwMDA3ZmZmYmRiY2FkMzggRUZMQUdTOiAwMDAwMDI0NiBPUklHX1JBWDogMDAwMDAw
-MDAwMDAwMDBlNw0KPiA+ID4gPiA+IFsgIDE5Ni4wNTQ5MDJdIFJBWDogZmZmZmZmZmZmZmZmZmZk
-YSBSQlg6IDAwMDA3ZjFhOGFjOTc1YzAgUkNYOiAwMDAwN2YxYThhYmE1OTU2DQo+ID4gPiA+ID4g
-WyAgMTk2LjA1NjEyNF0gUkRYOiAwMDAwMDAwMDAwMDAwMDAwIFJTSTogMDAwMDAwMDAwMDAwMDAz
-YyBSREk6IDAwMDAwMDAwMDAwMDAwMDANCj4gPiA+ID4gPiBbICAxOTYuMDU3MzQ4XSBSQlA6IDAw
-MDAwMDAwMDAwMDAwMDAgUjA4OiAwMDAwMDAwMDAwMDAwMGU3IFIwOTogZmZmZmZmZmZmZmZmZmY3
-OA0KPiA+ID4gPiA+IFsgIDE5Ni4wNTg1NzNdIFIxMDogMDAwMDdmZmZiZGJjYWJmOCBSMTE6IDAw
-MDAwMDAwMDAwMDAyNDYgUjEyOiAwMDAwN2YxYThhYzk3NWMwDQo+ID4gPiA+ID4gWyAgMTk2LjA1
-OTQ1OV0gUjEzOiAwMDAwMDAwMDAwMDAwMDAxIFIxNDogMDAwMDdmMWE4YWNhMDI4OCBSMTU6IDAw
-MDAwMDAwMDAwMDAwMDANCj4gPiA+ID4gPiBbICAxOTYuMDYwNzMxXSAtLS1bIGVuZCB0cmFjZSA4
-YTdlNDJmOTE5OWU1ZjkyIF0tLS0NCj4gPiA+ID4gPiBbICAxOTYuMDYyNjcxXSBXQVJOSU5HOiBD
-UFU6IDEgUElEOiAxOTM4IGF0IC4uL25ldC91bml4L2FmX3VuaXguYzo1MDEgdW5peF9zb2NrX2Rl
-c3RydWN0b3IrMHhhMy8weGMwDQo+ID4gPiA+ID4gWyAgMTk2LjA2NDM3Ml0gTW9kdWxlcyBsaW5r
-ZWQgaW46DQo+ID4gPiA+ID4gWyAgMTk2LjA2NDk2Nl0gQ1BVOiAxIFBJRDogMTkzOCBDb21tOiBh
-aW9fYnVmZmVyZWQgVGFpbnRlZDogRyAgICAgICAgVyAgICAgICAgIDUuMC4wLXJjNSsgIzM3OQ0K
-PiA+ID4gPiA+IFsgIDE5Ni4wNjY1NDZdIEhhcmR3YXJlIG5hbWU6IFFFTVUgU3RhbmRhcmQgUEMg
-KGk0NDBGWCArIFBJSVgsIDE5OTYpLCBCSU9TIDEuMTAuMi0xdWJ1bnR1MSAwNC8wMS8yMDE0DQo+
-ID4gPiA+ID4gWyAgMTk2LjA2ODIzNF0gUklQOiAwMDEwOnVuaXhfc29ja19kZXN0cnVjdG9yKzB4
-YTMvMHhjMA0KPiA+ID4gPiA+IFsgIDE5Ni4wNjg5OTldIENvZGU6IGM3IGM3IDZjIDViIDlhIDgx
-IGU5IDhjIDJhIDcxIGZmIDQ4IDg5IGVmIGU4IGM0IGRjIDg3IGZmIGViIGJlIDBmIDBiIDQ4IDgz
-IDdiIDcwIDAwIDc0IDhiIDBmIDBiIDQ4IDgzIGJiIDY4IDAyIDAwIDAwIDAwIDc0IDg5IDwwZj4g
-MGIgZWIgODUgNDggODkgZGUgNDggYzcgYzcgYTAgYzggNDIgODIgNWIgNWQgZTkgMzEgOGMgNzUg
-ZmYgMGYNCj4gPiA+ID4gPiBbICAxOTYuMDcyNTc3XSBSU1A6IDAwMTg6ZmZmZmM5MDAwMDhhN2Q0
-MCBFRkxBR1M6IDAwMDEwMjgyDQo+ID4gPiA+ID4gWyAgMTk2LjA3MzU5NV0gUkFYOiAwMDAwMDAw
-MDAwMDAwMDAwIFJCWDogZmZmZjg4ODEzNTFkZDAwMCBSQ1g6IDAwMDAwMDAwMDAwMDAwMDANCj4g
-PiA+ID4gPiBbICAxOTYuMDc0OTczXSBSRFg6IDAwMDAwMDAwMDAwMDAwMDEgUlNJOiAwMDAwMDAw
-MDAwMDAwMjgyIFJESTogMDAwMDAwMDBmZmZmZmZmZg0KPiA+ID4gPiA+IFsgIDE5Ni4wNzYzNDhd
-IFJCUDogZmZmZjg4ODEzNTFkZDAwMCBSMDg6IDAwMDAwMDAwMDAwMjQxMjAgUjA5OiBmZmZmZmZm
-ZjgxOWE5N2ZlDQo+ID4gPiA+ID4gWyAgMTk2LjA3NzcwOV0gUjEwOiBmZmZmZWEwMDA0Y2Y2ODAw
-IFIxMTogMDAwMDAwMDAwMDViOGQ4MCBSMTI6IGZmZmZmZmZmODEyOTRlYzINCj4gPiA+ID4gPiBb
-ICAxOTYuMDc5MDcyXSBSMTM6IGZmZmY4ODgxMzRlMjdiNDAgUjE0OiBmZmZmODg4MTNiYjMwN2Ew
-IFIxNTogZmZmZjg4ODEzM2Q1OTkxMA0KPiA+ID4gPiA+IFsgIDE5Ni4wODA0NDFdIEZTOiAgMDAw
-MDdmMWE4YThjMzc0MCgwMDAwKSBHUzpmZmZmODg4MTNiYjAwMDAwKDAwMDApIGtubEdTOjAwMDAw
-MDAwMDAwMDAwMDANCj4gPiA+ID4gPiBbICAxOTYuMDgyMDI2XSBDUzogIDAwMTAgRFM6IDAwMDAg
-RVM6IDAwMDAgQ1IwOiAwMDAwMDAwMDgwMDUwMDMzDQo+ID4gPiA+ID4gWyAgMTk2LjA4MzEzMV0g
-Q1IyOiAwMDAwN2ZiYzE5Zjk2NTUwIENSMzogMDAwMDAwMDEzOGQxZTAwMyBDUjQ6IDAwMDAwMDAw
-MDAzNjA2YTANCj4gPiA+ID4gPiBbICAxOTYuMDg0NTA1XSBEUjA6IDAwMDAwMDAwMDAwMDAwMDAg
-RFIxOiAwMDAwMDAwMDAwMDAwMDAwIERSMjogMDAwMDAwMDAwMDAwMDAwMA0KPiA+ID4gPiA+IFsg
-IDE5Ni4wODU4MjNdIERSMzogMDAwMDAwMDAwMDAwMDAwMCBEUjY6IDAwMDAwMDAwZmZmZTBmZjAg
-RFI3OiAwMDAwMDAwMDAwMDAwNDAwDQo+ID4gPiA+ID4gWyAgMTk2LjA4NzE4NV0gQ2FsbCBUcmFj
-ZToNCj4gPiA+ID4gPiBbICAxOTYuMDg3NjYyXSAgX19za19kZXN0cnVjdCsweDFjLzB4MTUwDQo+
-ID4gPiA+ID4gWyAgMTk2LjA4ODM3Nl0gID8gaW9fc3FlX2ZpbGVzX3VucmVnaXN0ZXIrMHgzMi8w
-eDcwDQo+ID4gPiA+ID4gWyAgMTk2LjA4OTI5OV0gIHVuaXhfZGVzdHJ1Y3Rfc2NtKzB4NzYvMHhh
-MA0KPiA+ID4gPiA+IFsgIDE5Ni4wOTAwNTldICBza2JfcmVsZWFzZV9oZWFkX3N0YXRlKzB4Mzgv
-MHg2MA0KPiA+ID4gPiA+IFsgIDE5Ni4wOTA5MjldICBza2JfcmVsZWFzZV9hbGwrMHg5LzB4MjAN
-Cj4gPiA+ID4gPiBbICAxOTYuMDkxNTUwXSAga2ZyZWVfc2tiKzB4MmQvMHhiMA0KPiA+ID4gPiA+
-IFsgIDE5Ni4wOTI3NDVdICBpb19zcWVfZmlsZXNfdW5yZWdpc3RlcisweDMyLzB4NzANCj4gPiA+
-ID4gPiBbICAxOTYuMDkzNTM1XSAgaW9fcmluZ19jdHhfd2FpdF9hbmRfa2lsbCsweGY2LzB4MWEw
-DQo+ID4gPiA+ID4gWyAgMTk2LjA5NDM1OF0gIGlvX3VyaW5nX3JlbGVhc2UrMHgxNy8weDIwDQo+
-ID4gPiA+ID4gWyAgMTk2LjA5NTAyOV0gIF9fZnB1dCsweDlkLzB4MWQwDQo+ID4gPiA+ID4gWyAg
-MTk2LjA5NTY2MF0gIHRhc2tfd29ya19ydW4rMHg3YS8weDkwDQo+ID4gPiA+ID4gWyAgMTk2LjA5
-NjMwN10gIGRvX2V4aXQrMHgzMDEvMHhjMjANCj4gPiA+ID4gPiBbICAxOTYuMDk2ODA4XSAgPyBo
-YW5kbGVfbW1fZmF1bHQrMHhmMy8weDIzMA0KPiA+ID4gPiA+IFsgIDE5Ni4wOTc1MDRdICBkb19n
-cm91cF9leGl0KzB4MzUvMHhhMA0KPiA+ID4gPiA+IFsgIDE5Ni4wOTgxMjZdICBfX3g2NF9zeXNf
-ZXhpdF9ncm91cCsweGYvMHgxMA0KPiA+ID4gPiA+IFsgIDE5Ni4wOTg4MzZdICBkb19zeXNjYWxs
-XzY0KzB4M2QvMHhmMA0KPiA+ID4gPiA+IFsgIDE5Ni4wOTk0NjBdICBlbnRyeV9TWVNDQUxMXzY0
-X2FmdGVyX2h3ZnJhbWUrMHg0NC8weGE5DQo+ID4gPiA+ID4gWyAgMTk2LjEwMDMzNF0gUklQOiAw
-MDMzOjB4N2YxYThhYmE1OTU2DQo+ID4gPiA+ID4gWyAgMTk2LjEwMDk1OF0gQ29kZTogQmFkIFJJ
-UCB2YWx1ZS4NCj4gPiA+ID4gPiBbICAxOTYuMTAxMjkzXSBSU1A6IDAwMmI6MDAwMDdmZmZiZGJj
-YWQzOCBFRkxBR1M6IDAwMDAwMjQ2IE9SSUdfUkFYOiAwMDAwMDAwMDAwMDAwMGU3DQo+ID4gPiA+
-ID4gWyAgMTk2LjEwMTkzM10gUkFYOiBmZmZmZmZmZmZmZmZmZmRhIFJCWDogMDAwMDdmMWE4YWM5
-NzVjMCBSQ1g6IDAwMDA3ZjFhOGFiYTU5NTYNCj4gPiA+ID4gPiBbICAxOTYuMTAyNTM1XSBSRFg6
-IDAwMDAwMDAwMDAwMDAwMDAgUlNJOiAwMDAwMDAwMDAwMDAwMDNjIFJESTogMDAwMDAwMDAwMDAw
-MDAwMA0KPiA+ID4gPiA+IFsgIDE5Ni4xMDMxMzddIFJCUDogMDAwMDAwMDAwMDAwMDAwMCBSMDg6
-IDAwMDAwMDAwMDAwMDAwZTcgUjA5OiBmZmZmZmZmZmZmZmZmZjc4DQo+ID4gPiA+ID4gWyAgMTk2
-LjEwMzczOV0gUjEwOiAwMDAwN2ZmZmJkYmNhYmY4IFIxMTogMDAwMDAwMDAwMDAwMDI0NiBSMTI6
-IDAwMDA3ZjFhOGFjOTc1YzANCj4gPiA+ID4gPiBbICAxOTYuMTA0NTI2XSBSMTM6IDAwMDAwMDAw
-MDAwMDAwMDEgUjE0OiAwMDAwN2YxYThhY2EwMjg4IFIxNTogMDAwMDAwMDAwMDAwMDAwMA0KPiA+
-ID4gPiA+IFsgIDE5Ni4xMDU3NzddIC0tLVsgZW5kIHRyYWNlIDhhN2U0MmY5MTk5ZTVmOTMgXS0t
-LQ0KPiA+ID4gPiA+IFsgIDE5Ni4xMDc1MzVdIHVuaXg6IEF0dGVtcHQgdG8gcmVsZWFzZSBhbGl2
-ZSB1bml4IHNvY2tldDogMDAwMDAwMDAzYjNjMWEzNA0KPiA+ID4gPiA+IA0KPiA+ID4gPiA+IHdo
-aWNoIGNvcnJlc3BvbmRzIHRvIHRoZSBXQVJOX09OczoNCj4gPiA+ID4gPiANCj4gPiA+ID4gPiAJ
-V0FSTl9PTighc2tfdW5oYXNoZWQoc2spKTsNCj4gPiA+ID4gPiAJV0FSTl9PTihzay0+c2tfc29j
-a2V0KTsNCj4gPiA+ID4gPiANCj4gPiA+ID4gPiBUaGlzIGRvZXNuJ3Qgc2VlbSB0byBoYXBwZW4g
-aWYgSSBvbWl0IHRoZSBjYWxsIHRvIGlvX3VyaW5nX3JlZ2lzdGVyLg0KPiA+ID4gPiANCj4gPiA+
-ID4gSHVoLCBJIGNhbid0IHJlcHJvZHVjZSB0aGF0IGhlcmUsIHRlYXJkb3duIHNlZW1zIHRvIHdv
-cmsganVzdCBmaW5lLiBJdA0KPiA+ID4gPiBsb29rcyBsaWtlIHRoZSBzb2NrZXQgaXMgZ2V0dGlu
-ZyB0b3JuIGRvd24gcHJlbWF0dXJlbHksIHdoZW4gd2UgZnJlZSB0aGUNCj4gPiA+ID4gc2tiLiBJ
-IHdvbmRlciBpZiB5b3UgaGF2ZSBzb21lIG5ldHdvcmtpbmcgb3B0aW9ucyBJIGRvbid0PyBXaGF0
-J3MgeW91cg0KPiA+ID4gPiAuY29uZmlnPw0KPiA+ID4gPiANCj4gPiA+IA0KPiA+ID4gSW50ZXJl
-c3RpbmcuICBBdHRhY2hlZCBpcyB0aGUgY29uZmlnIEknbSB1c2luZyB0byBidWlsZA0KPiA+ID4g
-YWYyMmQzMWY4YjA5ZmEzNmY1NzU2OWM5NWY0OTQzZmViYWFjYjJiMS4gIEknbGwga2VlcCBwbGF5
-aW5nIHdpdGggaXQgb24NCj4gPiA+IG15IGVuZCwgdG9vLCBtYXliZSBJJ3ZlIGdvdCBzb21ldGhp
-bmcgYmFkIGluIG15IGNjYWNoZS4NCj4gPiANCj4gPiBCaW5nbywgcmVwcm9kdWNlcyB3aXRoIHlv
-dXIgLmNvbmZpZy4gTG9va3MgbGlrZSB0aGUgaW9fdXJpbmcgaXMgcmVsZWFzZWQNCj4gPiBiYXNp
-Y2FsbHkgYXMgc29vbiBhcyB3ZSBxdWV1ZSB0aGUgc2tiIGluIHRoZSBzb2NrZXQuIEknbGwgdGFr
-ZSBhIGxvb2sgYXQNCj4gPiB0aGlzIHRvbW9ycm93Lg0KPiANCj4gT0ssIEkgdGhpbmsgSSBzZWUg
-aXQuIEFwcGFyZW50bHkgd2l0aCBteSBvcHRpb25zLCB0aGUgc2l6ZSBvZiB0aGUgc2tiIGlzDQo+
-IDAgd2hlbiBJIHBhc3MgaW4gMC4gV2l0aCB5b3VyIG9wdGlvbnMsIGl0J3Mgbm9uLXplcm8sIHdo
-aWNoIHdyZWFrcyBoYXZvYw0KPiBvbiB0aGUgcmVmIGNvdW50aW5nLg0KPiANCj4gVGhlIGJlbG93
-IHNob3VsZCBmaXggaXQuIEknbGwgZm9sZCB0aGlzIGluIG5vdy4NCj4gDQo+IGRpZmYgLS1naXQg
-YS9mcy9pb191cmluZy5jIGIvZnMvaW9fdXJpbmcuYw0KPiBpbmRleCBkN2ExMDQ4NGQ3NDguLmM4
-Nzk0YTExZGUzZSAxMDA2NDQNCj4gLS0tIGEvZnMvaW9fdXJpbmcuYw0KPiArKysgYi9mcy9pb191
-cmluZy5jDQo+IEBAIC0yMDA2LDYgKzIwMDYsNyBAQCBzdGF0aWMgaW50IF9faW9fc3FlX2ZpbGVz
-X3NjbShzdHJ1Y3QgaW9fcmluZ19jdHggKmN0eCwgaW50IG5yLCBpbnQgb2Zmc2V0KQ0KPiAgDQo+
-ICAJZnBsLT5tYXggPSBmcGwtPmNvdW50ID0gbnI7DQo+ICAJVU5JWENCKHNrYikuZnAgPSBmcGw7
-DQo+ICsJcmVmY291bnRfYWRkKHNrYi0+dHJ1ZXNpemUsICZjdHgtPnJpbmdfc29jay0+c2stPnNr
-X3dtZW1fYWxsb2MpOw0KPiAgCXNrYl9xdWV1ZV9oZWFkKCZjdHgtPnJpbmdfc29jay0+c2stPnNr
-X3JlY2VpdmVfcXVldWUsIHNrYik7DQo+ICANCj4gIAlmb3IgKGkgPSAwOyBpIDwgbnI7IGkrKykN
-Cj4gDQoNCkFoLWhhISAgSSBndWVzcyBJJ3ZlIG9wdGVkLWludG8gYW4gb3Zlci16ZWFsb3VzIG1l
-bW9yeSBhbGxvY2F0b3IgOikNCg0KVGVzdGVkLWJ5OiBNYXR0IE11bGxpbnMgPG1tdWxsaW5zQGZi
-LmNvbT4NCg==
+proc_get_long() is a funny function. It uses simple_strtoul() and for a
+good reason. proc_get_long() wants to always succeed the parse and return
+the maybe incorrect value and the trailing characters to check against a
+pre-defined list of acceptable trailing values.
+However, simple_strtoul() explicitly ignores overflows which can cause
+funny things like the following to happen:
 
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+echo 18446744073709551616 > /proc/sys/fs/file-max
+cat /proc/sys/fs/file-max
+0
+
+(Which will cause your system to silently die behind your back.)
+
+On the other hand kstrtoul() does do overflow detection but does not return
+the trailing characters, and also fails the parse when anything other than
+'\n' is a trailing character whereas proc_get_long() wants to be more
+lenient.
+
+Now, before adding another kstrtoul() function let's simply add a static
+parse strtoul_lenient() which:
+- fails on overflow with -ERANGE
+- returns the trailing characters to the caller
+
+The reason why we should fail on ERANGE is that we already do a partial
+fail on overflow right now. Namely, when the TMPBUFLEN is exceeded. So we
+already reject values such as 184467440737095516160 (21 chars) but accept
+values such as 18446744073709551616 (20 chars) but both are overflows. So
+we should just always reject 64bit overflows and not special-case this
+based on the number of chars.
+
+Acked-by: Kees Cook <keescook@chromium.org>
+Signed-off-by: Christian Brauner <christian@brauner.io>
+---
+/* Changelog */
+v3:
+- (Kees) s/#include <../lib/kstrtox.h>/#include "../lib/kstrtox.h"/g
+- (Kees) document strtoul_lenient()
+
+v2:
+- s/sysctl_cap_erange/sysctl_lenient/g
+- consistenly fail on overflow
+
+v1:
+- s/sysctl_strtoul_lenient/strtoul_cap_erange/g
+- (Al) remove bool overflow return argument from strtoul_cap_erange
+- (Al) return ULONG_MAX on ERANGE from strtoul_cap_erange
+- (Dominik) fix spelling in commit message
+---
+ kernel/sysctl.c | 40 +++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 39 insertions(+), 1 deletion(-)
+
+diff --git a/kernel/sysctl.c b/kernel/sysctl.c
+index ba4d9e85feb8..70581ade3555 100644
+--- a/kernel/sysctl.c
++++ b/kernel/sysctl.c
+@@ -67,6 +67,8 @@
+ #include <linux/bpf.h>
+ #include <linux/mount.h>
+ 
++#include "../lib/kstrtox.h"
++
+ #include <linux/uaccess.h>
+ #include <asm/processor.h>
+ 
+@@ -2092,6 +2094,41 @@ static void proc_skip_char(char **buf, size_t *size, const char v)
+ 	}
+ }
+ 
++/**
++ * strtoul_lenient - parse an ASCII formatted integer from a buffer and only
++ *                   fail on overflow
++ *
++ * @cp: kernel buffer containing the string to parse
++ * @endp: pointer to store the trailing characters
++ * @base: the base to use
++ * @res: where the parsed integer will be stored
++ *
++ * In case of success 0 is returned and @res will contain the parsed integer,
++ * @endp will hold any trailing characters.
++ * This function will fail the parse on overflow. If there wasn't an overflow
++ * the function will defer the decision what characters count as invalid to the
++ * caller.
++ */
++static int strtoul_lenient(const char *cp, char **endp, unsigned int base,
++			   unsigned long *res)
++{
++	unsigned long long result;
++	unsigned int rv;
++
++	cp = _parse_integer_fixup_radix(cp, &base);
++	rv = _parse_integer(cp, base, &result);
++	if ((rv & KSTRTOX_OVERFLOW) || (result != (unsigned long)result))
++		return -ERANGE;
++
++	cp += rv;
++
++	if (endp)
++		*endp = (char *)cp;
++
++	*res = (unsigned long)result;
++	return 0;
++}
++
+ #define TMPBUFLEN 22
+ /**
+  * proc_get_long - reads an ASCII formatted integer from a user buffer
+@@ -2135,7 +2172,8 @@ static int proc_get_long(char **buf, size_t *size,
+ 	if (!isdigit(*p))
+ 		return -EINVAL;
+ 
+-	*val = simple_strtoul(p, &p, 0);
++	if (strtoul_lenient(p, &p, 0, val))
++		return -EINVAL;
+ 
+ 	len = p - tmp;
+ 
+-- 
+2.20.1
