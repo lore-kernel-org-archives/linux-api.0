@@ -1,14 +1,15 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 17/19] io_uring: add support for IORING_OP_POLL
-Date: Sun, 10 Feb 2019 10:28:00 +0100
-Message-ID: <3f422430-4e91-316b-9f8a-8b7ff99aad56@suse.de>
+Subject: Re: [PATCH 18/19] io_uring: allow workqueue item to handle multiple
+ buffered requests
+Date: Sun, 10 Feb 2019 10:31:53 +0100
+Message-ID: <476b621e-85e2-35df-c1e3-50395ca4ebeb@suse.de>
 References: <20190209211346.26060-1-axboe@kernel.dk>
- <20190209211346.26060-18-axboe@kernel.dk>
+ <20190209211346.26060-19-axboe@kernel.dk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20190209211346.26060-18-axboe@kernel.dk>
+In-Reply-To: <20190209211346.26060-19-axboe@kernel.dk>
 Content-Language: en-US
 Sender: owner-linux-aio@kvack.org
 To: Jens Axboe <axboe@kernel.dk>, linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
@@ -16,31 +17,31 @@ Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenI
 List-Id: linux-api@vger.kernel.org
 
 On 2/9/19 10:13 PM, Jens Axboe wrote:
-> This is basically a direct port of bfe4037e722e, which implements a
-> one-shot poll command through aio. Description below is based on that
-> commit as well. However, instead of adding a POLL command and relying
-> on io_cancel(2) to remove it, we mimic the epoll(2) interface of
-> having a command to add a poll notification, IORING_OP_POLL_ADD,
-> and one to remove it again, IORING_OP_POLL_REMOVE.
+> Right now we punt any buffered request that ends up triggering an
+> -EAGAIN to an async workqueue. This works fine in terms of providing
+> async execution of them, but it also can create quite a lot of work
+> queue items. For sequentially buffered IO, it's advantageous to
+> serialize the issue of them. For reads, the first one will trigger a
+> read-ahead, and subsequent request merely end up waiting on later pages
+> to complete. For writes, devices usually respond better to streamed
+> sequential writes.
 > 
-> To poll for a file descriptor the application should submit an sqe of
-> type IORING_OP_POLL. It will poll the fd for the events specified in the
-> poll_events field.
+> Add state to track the last buffered request we punted to a work queue,
+> and if the next one is sequential to the previous, attempt to get the
+> previous work item to handle it. We limit the number of sequential
+> add-ons to the a multiple (8) of the max read-ahead size of the file.
+> This should be a good number for both reads and wries, as it defines the
+> max IO size the device can do directly.
 > 
-> Unlike poll or epoll without EPOLLONESHOT this interface always works in
-> one shot mode, that is once the sqe is completed, it will have to be
-> resubmitted.
+> This drastically cuts down on the number of context switches we need to
+> handle buffered sequential IO, and a basic test case of copying a big
+> file with io_uring sees a 5x speedup.
 > 
-> Based-on-code-from: Christoph Hellwig <hch@lst.de>
 > Signed-off-by: Jens Axboe <axboe@kernel.dk>
 > ---
->   fs/io_uring.c                 | 261 +++++++++++++++++++++++++++++++++-
->   include/uapi/linux/io_uring.h |   3 +
->   2 files changed, 263 insertions(+), 1 deletion(-)
+>   fs/io_uring.c | 269 ++++++++++++++++++++++++++++++++++++++++----------
+>   1 file changed, 218 insertions(+), 51 deletions(-)
 > 
-I still would like to be able to properly terminate the I/O on 
-aio_cancel. But this can probably be done in a later patch.
-
 Reviewed-by: Hannes Reinecke <hare@suse.com>
 
 Cheers,
