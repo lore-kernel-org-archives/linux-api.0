@@ -1,86 +1,70 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH 19/19] io_uring: add io_uring_event cache hit information
-Date: Sun, 10 Feb 2019 06:39:26 -0700
-Message-ID: <cf52bd37-4891-dfe3-8673-9a836e01b6c8@kernel.dk>
+Subject: Re: [PATCH 05/19] Add io_uring IO interface
+Date: Sun, 10 Feb 2019 07:19:08 -0700
+Message-ID: <eb713e6b-0fa4-852b-5a94-8e159aea0603@kernel.dk>
 References: <20190209211346.26060-1-axboe@kernel.dk>
- <20190209211346.26060-20-axboe@kernel.dk>
- <ca60183a-bb43-930c-8bf1-026c2528723d@suse.de>
+ <20190209211346.26060-6-axboe@kernel.dk>
+ <alpine.DEB.2.21.1902101048100.8784@nanos.tec.linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <ca60183a-bb43-930c-8bf1-026c2528723d@suse.de>
+In-Reply-To: <alpine.DEB.2.21.1902101048100.8784@nanos.tec.linutronix.de>
 Content-Language: en-US
 Sender: owner-linux-aio@kvack.org
-To: Hannes Reinecke <hare@suse.de>, linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
-Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org, hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk
 List-Id: linux-api@vger.kernel.org
 
-On 2/10/19 2:36 AM, Hannes Reinecke wrote:
-> On 2/9/19 10:13 PM, Jens Axboe wrote:
->> Add hint on whether a read was served out of the page cache, or if it
->> hit media. This is useful for buffered async IO, O_DIRECT reads would
->> never have this set (for obvious reasons).
->>
->> If the read hit page cache, cqe->flags will have IOCQE_FLAG_CACHEHIT
->> set.
->>
->> Signed-off-by: Jens Axboe <axboe@kernel.dk>
->> ---
->>   fs/io_uring.c                 | 7 ++++++-
->>   include/uapi/linux/io_uring.h | 5 +++++
->>   2 files changed, 11 insertions(+), 1 deletion(-)
->>
->> diff --git a/fs/io_uring.c b/fs/io_uring.c
->> index 11a549b5dcbf..d7a10484d748 100644
->> --- a/fs/io_uring.c
->> +++ b/fs/io_uring.c
->> @@ -587,11 +587,16 @@ static void io_fput(struct io_kiocb *req)
->>   static void io_complete_rw(struct kiocb *kiocb, long res, long res2)
->>   {
->>   	struct io_kiocb *req = container_of(kiocb, struct io_kiocb, rw);
->> +	unsigned ev_flags = 0;
->>   
->>   	kiocb_end_write(kiocb);
->>   
->>   	io_fput(req);
->> -	io_cqring_add_event(req->ctx, req->user_data, res, 0);
+On 2/10/19 5:03 AM, Thomas Gleixner wrote:
+> On Sat, 9 Feb 2019, Jens Axboe wrote:
+>> +static void io_commit_cqring(struct io_ring_ctx *ctx)
+>> +{
+>> +	struct io_cq_ring *ring = ctx->cq_ring;
 >> +
->> +	if (res > 0 && (req->flags & REQ_F_FORCE_NONBLOCK))
->> +		ev_flags = IOCQE_FLAG_CACHEHIT;
->> +
->> +	io_cqring_add_event(req->ctx, req->user_data, res, ev_flags);
->>   	io_free_req(req);
->>   }
->>   
->> diff --git a/include/uapi/linux/io_uring.h b/include/uapi/linux/io_uring.h
->> index e23408692118..24906e99fdc7 100644
->> --- a/include/uapi/linux/io_uring.h
->> +++ b/include/uapi/linux/io_uring.h
->> @@ -69,6 +69,11 @@ struct io_uring_cqe {
->>   	__u32	flags;
->>   };
->>
->> +/*
->> + * io_uring_event->flags
->> + */
->> +#define IOCQE_FLAG_CACHEHIT	(1U << 0)	/* IO did not hit media */
->> +
->>   /*
->>    * Magic offsets for the application to mmap the data it needs
->>    */
->>
+>> +	if (ctx->cached_cq_tail != READ_ONCE(ring->r.tail)) {
+>> +		/* order cqe stores with ring update */
 > 
-> Hmm. The point of this patch being ... what?
-> Just setting a newly introduced flag seems to be a bit pointless.
-> Unless it has some magic interaction with io_cqring_add_event().
-> But then that function would have had to have knowledge of that flag 
-> already, which would be ... odd.
+> This lacks a reference to the matching rmb()
+> 
+>> +		smp_wmb();
+>> +		WRITE_ONCE(ring->r.tail, ctx->cached_cq_tail);
+>> +		/* write side barrier of tail update, app has read side */
+> 
+> That's a bit meager. Can you please document the barriers which are paired
+> with user space barriers very elaborate?
 
-Not sure I follow your concern here. The kernel doesn't use the flag,
-we just set it. It's used to inform the application of whether or
-not the given read was a cachehit, or if it had to be served by
-media.
+Agree, I added a lengthier comment at the top of the file to explain the
+relationship between the kernel and application barriers.
+
+Also documented all of them explicitly now, or referenced the top
+comment.
+
+>> +		if (READ_ONCE(ring->r.head) != READ_ONCE(ring->r.tail))
+>> +			break;
+>> +
+> 
+> There are undocumented smp_wmb()'s in 'io_uring: Add submission polling' as
+> well. It's really hard to tell where the corresponding barriers are and
+> what they are supposed to order.
+
+Fixed those too.
+
+> Especially the barriers which are paired with user space barriers need some
+> careful documentation. What are the side effects if user space is missing a
+> barrier? Just user space seing unconsistent data or is there something
+> which goes the other way round and might cause havoc in the kernel?
+
+The only side effect is that the application may not proceed as quickly
+as it should, if it fails to notice a completion event come in. It'll
+lead to it calling io_cqring_wait() ultimately, through a system call,
+which will then ensure that it makes progress. But it may not have
+needed to do that system call at all, if it used the barriers correctly.
+
+I've also added a reference to the liburing git repo which has examples
+of how to do it.
+
+Thanks for your comments!
 
 -- 
 Jens Axboe
