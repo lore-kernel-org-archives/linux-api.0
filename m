@@ -1,15 +1,14 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 18/19] io_uring: allow workqueue item to handle multiple
- buffered requests
-Date: Sun, 10 Feb 2019 10:31:53 +0100
-Message-ID: <476b621e-85e2-35df-c1e3-50395ca4ebeb@suse.de>
+Subject: Re: [PATCH 19/19] io_uring: add io_uring_event cache hit information
+Date: Sun, 10 Feb 2019 10:36:57 +0100
+Message-ID: <ca60183a-bb43-930c-8bf1-026c2528723d@suse.de>
 References: <20190209211346.26060-1-axboe@kernel.dk>
- <20190209211346.26060-19-axboe@kernel.dk>
+ <20190209211346.26060-20-axboe@kernel.dk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20190209211346.26060-19-axboe@kernel.dk>
+In-Reply-To: <20190209211346.26060-20-axboe@kernel.dk>
 Content-Language: en-US
 Sender: owner-linux-aio@kvack.org
 To: Jens Axboe <axboe@kernel.dk>, linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
@@ -17,32 +16,66 @@ Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenI
 List-Id: linux-api@vger.kernel.org
 
 On 2/9/19 10:13 PM, Jens Axboe wrote:
-> Right now we punt any buffered request that ends up triggering an
-> -EAGAIN to an async workqueue. This works fine in terms of providing
-> async execution of them, but it also can create quite a lot of work
-> queue items. For sequentially buffered IO, it's advantageous to
-> serialize the issue of them. For reads, the first one will trigger a
-> read-ahead, and subsequent request merely end up waiting on later pages
-> to complete. For writes, devices usually respond better to streamed
-> sequential writes.
+> Add hint on whether a read was served out of the page cache, or if it
+> hit media. This is useful for buffered async IO, O_DIRECT reads would
+> never have this set (for obvious reasons).
 > 
-> Add state to track the last buffered request we punted to a work queue,
-> and if the next one is sequential to the previous, attempt to get the
-> previous work item to handle it. We limit the number of sequential
-> add-ons to the a multiple (8) of the max read-ahead size of the file.
-> This should be a good number for both reads and wries, as it defines the
-> max IO size the device can do directly.
-> 
-> This drastically cuts down on the number of context switches we need to
-> handle buffered sequential IO, and a basic test case of copying a big
-> file with io_uring sees a 5x speedup.
+> If the read hit page cache, cqe->flags will have IOCQE_FLAG_CACHEHIT
+> set.
 > 
 > Signed-off-by: Jens Axboe <axboe@kernel.dk>
 > ---
->   fs/io_uring.c | 269 ++++++++++++++++++++++++++++++++++++++++----------
->   1 file changed, 218 insertions(+), 51 deletions(-)
+>   fs/io_uring.c                 | 7 ++++++-
+>   include/uapi/linux/io_uring.h | 5 +++++
+>   2 files changed, 11 insertions(+), 1 deletion(-)
 > 
-Reviewed-by: Hannes Reinecke <hare@suse.com>
+> diff --git a/fs/io_uring.c b/fs/io_uring.c
+> index 11a549b5dcbf..d7a10484d748 100644
+> --- a/fs/io_uring.c
+> +++ b/fs/io_uring.c
+> @@ -587,11 +587,16 @@ static void io_fput(struct io_kiocb *req)
+>   static void io_complete_rw(struct kiocb *kiocb, long res, long res2)
+>   {
+>   	struct io_kiocb *req = container_of(kiocb, struct io_kiocb, rw);
+> +	unsigned ev_flags = 0;
+>   
+>   	kiocb_end_write(kiocb);
+>   
+>   	io_fput(req);
+> -	io_cqring_add_event(req->ctx, req->user_data, res, 0);
+> +
+> +	if (res > 0 && (req->flags & REQ_F_FORCE_NONBLOCK))
+> +		ev_flags = IOCQE_FLAG_CACHEHIT;
+> +
+> +	io_cqring_add_event(req->ctx, req->user_data, res, ev_flags);
+>   	io_free_req(req);
+>   }
+>   
+> diff --git a/include/uapi/linux/io_uring.h b/include/uapi/linux/io_uring.h
+> index e23408692118..24906e99fdc7 100644
+> --- a/include/uapi/linux/io_uring.h
+> +++ b/include/uapi/linux/io_uring.h
+> @@ -69,6 +69,11 @@ struct io_uring_cqe {
+>   	__u32	flags;
+>   };
+> 
+> +/*
+> + * io_uring_event->flags
+> + */
+> +#define IOCQE_FLAG_CACHEHIT	(1U << 0)	/* IO did not hit media */
+> +
+>   /*
+>    * Magic offsets for the application to mmap the data it needs
+>    */
+> 
+
+Hmm. The point of this patch being ... what?
+Just setting a newly introduced flag seems to be a bit pointless.
+Unless it has some magic interaction with io_cqring_add_event().
+But then that function would have had to have knowledge of that flag 
+already, which would be ... odd.
+
+Please clarify.
 
 Cheers,
 
