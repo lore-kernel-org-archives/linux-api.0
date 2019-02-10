@@ -1,85 +1,155 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 19/19] io_uring: add io_uring_event cache hit information
-Date: Sun, 10 Feb 2019 10:36:57 +0100
-Message-ID: <ca60183a-bb43-930c-8bf1-026c2528723d@suse.de>
-References: <20190209211346.26060-1-axboe@kernel.dk>
- <20190209211346.26060-20-axboe@kernel.dk>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH 05/19] Add io_uring IO interface
+Date: Sun, 10 Feb 2019 13:03:14 +0100 (CET)
+Message-ID: <alpine.DEB.2.21.1902101048100.8784@nanos.tec.linutronix.de>
+References: <20190209211346.26060-1-axboe@kernel.dk> <20190209211346.26060-6-axboe@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20190209211346.26060-20-axboe@kernel.dk>
-Content-Language: en-US
+In-Reply-To: <20190209211346.26060-6-axboe@kernel.dk>
 Sender: owner-linux-aio@kvack.org
-To: Jens Axboe <axboe@kernel.dk>, linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
-Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org, hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk
 List-Id: linux-api@vger.kernel.org
 
-On 2/9/19 10:13 PM, Jens Axboe wrote:
-> Add hint on whether a read was served out of the page cache, or if it
-> hit media. This is useful for buffered async IO, O_DIRECT reads would
-> never have this set (for obvious reasons).
-> 
-> If the read hit page cache, cqe->flags will have IOCQE_FLAG_CACHEHIT
-> set.
-> 
-> Signed-off-by: Jens Axboe <axboe@kernel.dk>
-> ---
->   fs/io_uring.c                 | 7 ++++++-
->   include/uapi/linux/io_uring.h | 5 +++++
->   2 files changed, 11 insertions(+), 1 deletion(-)
-> 
-> diff --git a/fs/io_uring.c b/fs/io_uring.c
-> index 11a549b5dcbf..d7a10484d748 100644
-> --- a/fs/io_uring.c
-> +++ b/fs/io_uring.c
-> @@ -587,11 +587,16 @@ static void io_fput(struct io_kiocb *req)
->   static void io_complete_rw(struct kiocb *kiocb, long res, long res2)
->   {
->   	struct io_kiocb *req = container_of(kiocb, struct io_kiocb, rw);
-> +	unsigned ev_flags = 0;
->   
->   	kiocb_end_write(kiocb);
->   
->   	io_fput(req);
-> -	io_cqring_add_event(req->ctx, req->user_data, res, 0);
+On Sat, 9 Feb 2019, Jens Axboe wrote:
+> +static void io_commit_cqring(struct io_ring_ctx *ctx)
+> +{
+> +	struct io_cq_ring *ring = ctx->cq_ring;
 > +
-> +	if (res > 0 && (req->flags & REQ_F_FORCE_NONBLOCK))
-> +		ev_flags = IOCQE_FLAG_CACHEHIT;
+> +	if (ctx->cached_cq_tail != READ_ONCE(ring->r.tail)) {
+> +		/* order cqe stores with ring update */
+
+This lacks a reference to the matching rmb()
+
+> +		smp_wmb();
+> +		WRITE_ONCE(ring->r.tail, ctx->cached_cq_tail);
+> +		/* write side barrier of tail update, app has read side */
+
+That's a bit meager. Can you please document the barriers which are paired
+with user space barriers very elaborate?
+
+> +		smp_wmb();
 > +
-> +	io_cqring_add_event(req->ctx, req->user_data, res, ev_flags);
->   	io_free_req(req);
->   }
->   
-> diff --git a/include/uapi/linux/io_uring.h b/include/uapi/linux/io_uring.h
-> index e23408692118..24906e99fdc7 100644
-> --- a/include/uapi/linux/io_uring.h
-> +++ b/include/uapi/linux/io_uring.h
-> @@ -69,6 +69,11 @@ struct io_uring_cqe {
->   	__u32	flags;
->   };
-> 
-> +/*
-> + * io_uring_event->flags
-> + */
-> +#define IOCQE_FLAG_CACHEHIT	(1U << 0)	/* IO did not hit media */
+> +		if (wq_has_sleeper(&ctx->cq_wait)) {
+> +			wake_up_interruptible(&ctx->cq_wait);
+> +			kill_fasync(&ctx->cq_fasync, SIGIO, POLL_IN);
+> +		}
+> +	}
+> +}
 > +
->   /*
->    * Magic offsets for the application to mmap the data it needs
->    */
-> 
+> +static struct io_uring_cqe *io_get_cqring(struct io_ring_ctx *ctx)
+> +{
+> +	struct io_cq_ring *ring = ctx->cq_ring;
+> +	unsigned tail;
+> +
+> +	tail = ctx->cached_cq_tail;
+> +	smp_rmb();
 
-Hmm. The point of this patch being ... what?
-Just setting a newly introduced flag seems to be a bit pointless.
-Unless it has some magic interaction with io_cqring_add_event().
-But then that function would have had to have knowledge of that flag 
-already, which would be ... odd.
+Undocumented barrier
 
-Please clarify.
+> +	if (tail + 1 == READ_ONCE(ring->r.head))
+> +		return NULL;
 
-Cheers,
+> +static void io_commit_sqring(struct io_ring_ctx *ctx)
+> +{
+> +	struct io_sq_ring *ring = ctx->sq_ring;
+> +
+> +	if (ctx->cached_sq_head != READ_ONCE(ring->r.head)) {
+> +		WRITE_ONCE(ring->r.head, ctx->cached_sq_head);
+> +		/* write side barrier of head update, app has read side */
 
-Hannes
+See above.
+
+> +		smp_wmb();
+> +	}
+> +}
+
+
+> +static bool io_get_sqring(struct io_ring_ctx *ctx, struct sqe_submit *s)
+> +{
+> +	struct io_sq_ring *ring = ctx->sq_ring;
+> +	unsigned head;
+> +
+> +	/*
+> +	 * The cached sq head (or cq tail) serves two purposes:
+> +	 *
+> +	 * 1) allows us to batch the cost of updating the user visible
+> +	 *    head updates.
+> +	 * 2) allows the kernel side to track the head on its own, even
+> +	 *    though the application is the one updating it.
+> +	 */
+> +	head = ctx->cached_sq_head;
+> +	smp_rmb();
+
+Undocumented barrier
+
+> +	if (head == READ_ONCE(ring->r.tail))
+> +		return false;
+> +
+> +	head = READ_ONCE(ring->array[head & ctx->sq_mask]);
+> +	if (head < ctx->sq_entries) {
+> +		s->index = head;
+> +		s->sqe = &ctx->sq_sqes[head];
+> +		ctx->cached_sq_head++;
+> +		return true;
+> +	}
+> +
+> +	/* drop invalid entries */
+> +	ctx->cached_sq_head++;
+> +	ring->dropped++;
+> +	smp_wmb();
+
+Undocumented barrier
+
+> +	return false;
+> +}
+> +
+
+> +static int io_cqring_wait(struct io_ring_ctx *ctx, int min_events,
+> +			  const sigset_t __user *sig, size_t sigsz)
+> +{
+> +	struct io_cq_ring *ring = ctx->cq_ring;
+> +	sigset_t ksigmask, sigsaved;
+> +	DEFINE_WAIT(wait);
+> +	int ret = 0;
+> +
+> +	smp_rmb();
+> +	if (READ_ONCE(ring->r.head) != READ_ONCE(ring->r.tail))
+> +		return 0;
+> +	if (!min_events)
+> +		return 0;
+> +
+> +	if (sig) {
+> +		ret = set_user_sigmask(sig, &ksigmask, &sigsaved, sigsz);
+> +		if (ret)
+> +			return ret;
+> +	}
+> +
+> +	do {
+> +		prepare_to_wait(&ctx->wait, &wait, TASK_INTERRUPTIBLE);
+> +
+> +		ret = 0;
+> +		smp_rmb();
+
+Undocumented barrier
+
+> +		if (READ_ONCE(ring->r.head) != READ_ONCE(ring->r.tail))
+> +			break;
+> +
+
+There are undocumented smp_wmb()'s in 'io_uring: Add submission polling' as
+well. It's really hard to tell where the corresponding barriers are and
+what they are supposed to order.
+
+Especially the barriers which are paired with user space barriers need some
+careful documentation. What are the side effects if user space is missing a
+barrier? Just user space seing unconsistent data or is there something
+which goes the other way round and might cause havoc in the kernel?
+
+Thanks,
+
+	tglx
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
