@@ -1,7 +1,7 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: [PATCH 09/19] io_uring: use fget/fput_many() for file references
-Date: Mon, 11 Feb 2019 12:00:39 -0700
-Message-ID: <20190211190049.7888-11-axboe@kernel.dk>
+Subject: [PATCH 13/19] net: split out functions related to registering inflight socket files
+Date: Mon, 11 Feb 2019 12:00:43 -0700
+Message-ID: <20190211190049.7888-15-axboe@kernel.dk>
 References: <20190211190049.7888-1-axboe@kernel.dk>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20190211190049.7888-1-axboe@kernel.dk>
@@ -10,322 +10,421 @@ To: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
 Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk, Jens Axboe <axboe@kernel.dk>
 List-Id: linux-api@vger.kernel.org
 
-Add a separate io_submit_state structure, to cache some of the things
-we need for IO submission.
+We need this functionality for the io_uring file registration, but
+we cannot rely on it since CONFIG_UNIX can be modular. Move the helpers
+to a separate file, that's always builtin to the kernel if CONFIG_UNIX is
+m/y.
 
-One such example is file reference batching. io_submit_state. We get as
-many references as the number of sqes we are submitting, and drop
-unused ones if we end up switching files. The assumption here is that
-we're usually only dealing with one fd, and if there are multiple,
-hopefuly they are at least somewhat ordered. Could trivially be extended
-to cover multiple fds, if needed.
-
-On the completion side we do the same thing, except this is trivially
-done just locally in io_iopoll_reap().
+No functional changes in this patch, just moving code around.
 
 Reviewed-by: Hannes Reinecke <hare@suse.com>
+Acked-by: David S. Miller <davem@davemloft.net>
 Signed-off-by: Jens Axboe <axboe@kernel.dk>
 ---
- fs/io_uring.c | 142 ++++++++++++++++++++++++++++++++++++++++++--------
- 1 file changed, 121 insertions(+), 21 deletions(-)
+ include/net/af_unix.h |   1 +
+ net/Makefile          |   2 +-
+ net/unix/Kconfig      |   5 ++
+ net/unix/Makefile     |   2 +
+ net/unix/af_unix.c    |  63 +-----------------
+ net/unix/garbage.c    |  71 +-------------------
+ net/unix/scm.c        | 151 ++++++++++++++++++++++++++++++++++++++++++
+ net/unix/scm.h        |  10 +++
+ 8 files changed, 174 insertions(+), 131 deletions(-)
+ create mode 100644 net/unix/scm.c
+ create mode 100644 net/unix/scm.h
 
-diff --git a/fs/io_uring.c b/fs/io_uring.c
-index 30efe5edf6aa..7358dd1dbf3f 100644
---- a/fs/io_uring.c
-+++ b/fs/io_uring.c
-@@ -165,6 +165,19 @@ struct io_kiocb {
- #define IO_PLUG_THRESHOLD		2
- #define IO_IOPOLL_BATCH			8
+diff --git a/include/net/af_unix.h b/include/net/af_unix.h
+index ddbba838d048..3426d6dacc45 100644
+--- a/include/net/af_unix.h
++++ b/include/net/af_unix.h
+@@ -10,6 +10,7 @@
  
-+struct io_submit_state {
-+	struct blk_plug		plug;
+ void unix_inflight(struct user_struct *user, struct file *fp);
+ void unix_notinflight(struct user_struct *user, struct file *fp);
++void unix_destruct_scm(struct sk_buff *skb);
+ void unix_gc(void);
+ void wait_for_unix_gc(void);
+ struct sock *unix_get_socket(struct file *filp);
+diff --git a/net/Makefile b/net/Makefile
+index bdaf53925acd..449fc0b221f8 100644
+--- a/net/Makefile
++++ b/net/Makefile
+@@ -18,7 +18,7 @@ obj-$(CONFIG_NETFILTER)		+= netfilter/
+ obj-$(CONFIG_INET)		+= ipv4/
+ obj-$(CONFIG_TLS)		+= tls/
+ obj-$(CONFIG_XFRM)		+= xfrm/
+-obj-$(CONFIG_UNIX)		+= unix/
++obj-$(CONFIG_UNIX_SCM)		+= unix/
+ obj-$(CONFIG_NET)		+= ipv6/
+ obj-$(CONFIG_BPFILTER)		+= bpfilter/
+ obj-$(CONFIG_PACKET)		+= packet/
+diff --git a/net/unix/Kconfig b/net/unix/Kconfig
+index 8b31ab85d050..3b9e450656a4 100644
+--- a/net/unix/Kconfig
++++ b/net/unix/Kconfig
+@@ -19,6 +19,11 @@ config UNIX
+ 
+ 	  Say Y unless you know what you are doing.
+ 
++config UNIX_SCM
++	bool
++	depends on UNIX
++	default y
++
+ config UNIX_DIAG
+ 	tristate "UNIX: socket monitoring interface"
+ 	depends on UNIX
+diff --git a/net/unix/Makefile b/net/unix/Makefile
+index ffd0a275c3a7..54e58cc4f945 100644
+--- a/net/unix/Makefile
++++ b/net/unix/Makefile
+@@ -10,3 +10,5 @@ unix-$(CONFIG_SYSCTL)	+= sysctl_net_unix.o
+ 
+ obj-$(CONFIG_UNIX_DIAG)	+= unix_diag.o
+ unix_diag-y		:= diag.o
++
++obj-$(CONFIG_UNIX_SCM)	+= scm.o
+diff --git a/net/unix/af_unix.c b/net/unix/af_unix.c
+index 74d1eed7cbd4..2ce32dbb2feb 100644
+--- a/net/unix/af_unix.c
++++ b/net/unix/af_unix.c
+@@ -119,6 +119,8 @@
+ #include <linux/freezer.h>
+ #include <linux/file.h>
+ 
++#include "scm.h"
++
+ struct hlist_head unix_socket_table[2 * UNIX_HASH_SIZE];
+ EXPORT_SYMBOL_GPL(unix_socket_table);
+ DEFINE_SPINLOCK(unix_table_lock);
+@@ -1486,67 +1488,6 @@ static int unix_getname(struct socket *sock, struct sockaddr *uaddr, int peer)
+ 	return err;
+ }
+ 
+-static void unix_detach_fds(struct scm_cookie *scm, struct sk_buff *skb)
+-{
+-	int i;
+-
+-	scm->fp = UNIXCB(skb).fp;
+-	UNIXCB(skb).fp = NULL;
+-
+-	for (i = scm->fp->count-1; i >= 0; i--)
+-		unix_notinflight(scm->fp->user, scm->fp->fp[i]);
+-}
+-
+-static void unix_destruct_scm(struct sk_buff *skb)
+-{
+-	struct scm_cookie scm;
+-	memset(&scm, 0, sizeof(scm));
+-	scm.pid  = UNIXCB(skb).pid;
+-	if (UNIXCB(skb).fp)
+-		unix_detach_fds(&scm, skb);
+-
+-	/* Alas, it calls VFS */
+-	/* So fscking what? fput() had been SMP-safe since the last Summer */
+-	scm_destroy(&scm);
+-	sock_wfree(skb);
+-}
+-
+-/*
+- * The "user->unix_inflight" variable is protected by the garbage
+- * collection lock, and we just read it locklessly here. If you go
+- * over the limit, there might be a tiny race in actually noticing
+- * it across threads. Tough.
+- */
+-static inline bool too_many_unix_fds(struct task_struct *p)
+-{
+-	struct user_struct *user = current_user();
+-
+-	if (unlikely(user->unix_inflight > task_rlimit(p, RLIMIT_NOFILE)))
+-		return !capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN);
+-	return false;
+-}
+-
+-static int unix_attach_fds(struct scm_cookie *scm, struct sk_buff *skb)
+-{
+-	int i;
+-
+-	if (too_many_unix_fds(current))
+-		return -ETOOMANYREFS;
+-
+-	/*
+-	 * Need to duplicate file references for the sake of garbage
+-	 * collection.  Otherwise a socket in the fps might become a
+-	 * candidate for GC while the skb is not yet queued.
+-	 */
+-	UNIXCB(skb).fp = scm_fp_dup(scm->fp);
+-	if (!UNIXCB(skb).fp)
+-		return -ENOMEM;
+-
+-	for (i = scm->fp->count - 1; i >= 0; i--)
+-		unix_inflight(scm->fp->user, scm->fp->fp[i]);
+-	return 0;
+-}
+-
+ static int unix_scm_to_skb(struct scm_cookie *scm, struct sk_buff *skb, bool send_fds)
+ {
+ 	int err = 0;
+diff --git a/net/unix/garbage.c b/net/unix/garbage.c
+index f81854d74c7d..8bbe1b8e4ff7 100644
+--- a/net/unix/garbage.c
++++ b/net/unix/garbage.c
+@@ -86,80 +86,13 @@
+ #include <net/scm.h>
+ #include <net/tcp_states.h>
+ 
++#include "scm.h"
++
+ /* Internal data structures and random procedures: */
+ 
+-static LIST_HEAD(gc_inflight_list);
+ static LIST_HEAD(gc_candidates);
+-static DEFINE_SPINLOCK(unix_gc_lock);
+ static DECLARE_WAIT_QUEUE_HEAD(unix_gc_wait);
+ 
+-unsigned int unix_tot_inflight;
+-
+-struct sock *unix_get_socket(struct file *filp)
+-{
+-	struct sock *u_sock = NULL;
+-	struct inode *inode = file_inode(filp);
+-
+-	/* Socket ? */
+-	if (S_ISSOCK(inode->i_mode) && !(filp->f_mode & FMODE_PATH)) {
+-		struct socket *sock = SOCKET_I(inode);
+-		struct sock *s = sock->sk;
+-
+-		/* PF_UNIX ? */
+-		if (s && sock->ops && sock->ops->family == PF_UNIX)
+-			u_sock = s;
+-	} else {
+-		/* Could be an io_uring instance */
+-		u_sock = io_uring_get_socket(filp);
+-	}
+-	return u_sock;
+-}
+-
+-/* Keep the number of times in flight count for the file
+- * descriptor if it is for an AF_UNIX socket.
+- */
+-
+-void unix_inflight(struct user_struct *user, struct file *fp)
+-{
+-	struct sock *s = unix_get_socket(fp);
+-
+-	spin_lock(&unix_gc_lock);
+-
+-	if (s) {
+-		struct unix_sock *u = unix_sk(s);
+-
+-		if (atomic_long_inc_return(&u->inflight) == 1) {
+-			BUG_ON(!list_empty(&u->link));
+-			list_add_tail(&u->link, &gc_inflight_list);
+-		} else {
+-			BUG_ON(list_empty(&u->link));
+-		}
+-		unix_tot_inflight++;
+-	}
+-	user->unix_inflight++;
+-	spin_unlock(&unix_gc_lock);
+-}
+-
+-void unix_notinflight(struct user_struct *user, struct file *fp)
+-{
+-	struct sock *s = unix_get_socket(fp);
+-
+-	spin_lock(&unix_gc_lock);
+-
+-	if (s) {
+-		struct unix_sock *u = unix_sk(s);
+-
+-		BUG_ON(!atomic_long_read(&u->inflight));
+-		BUG_ON(list_empty(&u->link));
+-
+-		if (atomic_long_dec_and_test(&u->inflight))
+-			list_del_init(&u->link);
+-		unix_tot_inflight--;
+-	}
+-	user->unix_inflight--;
+-	spin_unlock(&unix_gc_lock);
+-}
+-
+ static void scan_inflight(struct sock *x, void (*func)(struct unix_sock *),
+ 			  struct sk_buff_head *hitlist)
+ {
+diff --git a/net/unix/scm.c b/net/unix/scm.c
+new file mode 100644
+index 000000000000..8c40f2b32392
+--- /dev/null
++++ b/net/unix/scm.c
+@@ -0,0 +1,151 @@
++// SPDX-License-Identifier: GPL-2.0
++#include <linux/module.h>
++#include <linux/kernel.h>
++#include <linux/string.h>
++#include <linux/socket.h>
++#include <linux/net.h>
++#include <linux/fs.h>
++#include <net/af_unix.h>
++#include <net/scm.h>
++#include <linux/init.h>
++
++#include "scm.h"
++
++unsigned int unix_tot_inflight;
++EXPORT_SYMBOL(unix_tot_inflight);
++
++LIST_HEAD(gc_inflight_list);
++EXPORT_SYMBOL(gc_inflight_list);
++
++DEFINE_SPINLOCK(unix_gc_lock);
++EXPORT_SYMBOL(unix_gc_lock);
++
++struct sock *unix_get_socket(struct file *filp)
++{
++	struct sock *u_sock = NULL;
++	struct inode *inode = file_inode(filp);
++
++	/* Socket ? */
++	if (S_ISSOCK(inode->i_mode) && !(filp->f_mode & FMODE_PATH)) {
++		struct socket *sock = SOCKET_I(inode);
++		struct sock *s = sock->sk;
++
++		/* PF_UNIX ? */
++		if (s && sock->ops && sock->ops->family == PF_UNIX)
++			u_sock = s;
++	} else {
++		/* Could be an io_uring instance */
++		u_sock = io_uring_get_socket(filp);
++	}
++	return u_sock;
++}
++EXPORT_SYMBOL(unix_get_socket);
++
++/* Keep the number of times in flight count for the file
++ * descriptor if it is for an AF_UNIX socket.
++ */
++void unix_inflight(struct user_struct *user, struct file *fp)
++{
++	struct sock *s = unix_get_socket(fp);
++
++	spin_lock(&unix_gc_lock);
++
++	if (s) {
++		struct unix_sock *u = unix_sk(s);
++
++		if (atomic_long_inc_return(&u->inflight) == 1) {
++			BUG_ON(!list_empty(&u->link));
++			list_add_tail(&u->link, &gc_inflight_list);
++		} else {
++			BUG_ON(list_empty(&u->link));
++		}
++		unix_tot_inflight++;
++	}
++	user->unix_inflight++;
++	spin_unlock(&unix_gc_lock);
++}
++
++void unix_notinflight(struct user_struct *user, struct file *fp)
++{
++	struct sock *s = unix_get_socket(fp);
++
++	spin_lock(&unix_gc_lock);
++
++	if (s) {
++		struct unix_sock *u = unix_sk(s);
++
++		BUG_ON(!atomic_long_read(&u->inflight));
++		BUG_ON(list_empty(&u->link));
++
++		if (atomic_long_dec_and_test(&u->inflight))
++			list_del_init(&u->link);
++		unix_tot_inflight--;
++	}
++	user->unix_inflight--;
++	spin_unlock(&unix_gc_lock);
++}
++
++/*
++ * The "user->unix_inflight" variable is protected by the garbage
++ * collection lock, and we just read it locklessly here. If you go
++ * over the limit, there might be a tiny race in actually noticing
++ * it across threads. Tough.
++ */
++static inline bool too_many_unix_fds(struct task_struct *p)
++{
++	struct user_struct *user = current_user();
++
++	if (unlikely(user->unix_inflight > task_rlimit(p, RLIMIT_NOFILE)))
++		return !capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN);
++	return false;
++}
++
++int unix_attach_fds(struct scm_cookie *scm, struct sk_buff *skb)
++{
++	int i;
++
++	if (too_many_unix_fds(current))
++		return -ETOOMANYREFS;
 +
 +	/*
-+	 * File reference cache
++	 * Need to duplicate file references for the sake of garbage
++	 * collection.  Otherwise a socket in the fps might become a
++	 * candidate for GC while the skb is not yet queued.
 +	 */
-+	struct file		*file;
-+	unsigned int		fd;
-+	unsigned int		has_refs;
-+	unsigned int		used_refs;
-+	unsigned int		ios_left;
-+};
++	UNIXCB(skb).fp = scm_fp_dup(scm->fp);
++	if (!UNIXCB(skb).fp)
++		return -ENOMEM;
 +
- static struct kmem_cache *req_cachep;
- 
- static const struct file_operations io_uring_fops;
-@@ -332,9 +345,11 @@ static void io_iopoll_complete(struct io_ring_ctx *ctx, unsigned int *nr_events,
- 			       struct list_head *done)
- {
- 	void *reqs[IO_IOPOLL_BATCH];
-+	int file_count, to_free;
-+	struct file *file = NULL;
- 	struct io_kiocb *req;
--	int to_free = 0;
- 
-+	file_count = to_free = 0;
- 	while (!list_empty(done)) {
- 		req = list_first_entry(done, struct io_kiocb, list);
- 		list_del(&req->list);
-@@ -344,12 +359,28 @@ static void io_iopoll_complete(struct io_ring_ctx *ctx, unsigned int *nr_events,
- 		reqs[to_free++] = req;
- 		(*nr_events)++;
- 
--		fput(req->rw.ki_filp);
-+		/*
-+		 * Batched puts of the same file, to avoid dirtying the
-+		 * file usage count multiple times, if avoidable.
-+		 */
-+		if (!file) {
-+			file = req->rw.ki_filp;
-+			file_count = 1;
-+		} else if (file == req->rw.ki_filp) {
-+			file_count++;
-+		} else {
-+			fput_many(file, file_count);
-+			file = req->rw.ki_filp;
-+			file_count = 1;
-+		}
-+
- 		if (to_free == ARRAY_SIZE(reqs))
- 			io_free_req_many(ctx, reqs, &to_free);
- 	}
- 	io_commit_cqring(ctx);
- 
-+	if (file)
-+		fput_many(file, file_count);
- 	io_free_req_many(ctx, reqs, &to_free);
- }
- 
-@@ -530,6 +561,48 @@ static void io_iopoll_req_issued(struct io_kiocb *req)
- 		list_add_tail(&req->list, &ctx->poll_list);
- }
- 
-+static void io_file_put(struct io_submit_state *state, struct file *file)
-+{
-+	if (!state) {
-+		fput(file);
-+	} else if (state->file) {
-+		int diff = state->has_refs - state->used_refs;
-+
-+		if (diff)
-+			fput_many(state->file, diff);
-+		state->file = NULL;
-+	}
++	for (i = scm->fp->count - 1; i >= 0; i--)
++		unix_inflight(scm->fp->user, scm->fp->fp[i]);
++	return 0;
 +}
++EXPORT_SYMBOL(unix_attach_fds);
 +
-+/*
-+ * Get as many references to a file as we have IOs left in this submission,
-+ * assuming most submissions are for one file, or at least that each file
-+ * has more than one submission.
-+ */
-+static struct file *io_file_get(struct io_submit_state *state, int fd)
++void unix_detach_fds(struct scm_cookie *scm, struct sk_buff *skb)
 +{
-+	if (!state)
-+		return fget(fd);
++	int i;
 +
-+	if (state->file) {
-+		if (state->fd == fd) {
-+			state->used_refs++;
-+			state->ios_left--;
-+			return state->file;
-+		}
-+		io_file_put(state, NULL);
-+	}
-+	state->file = fget_many(fd, state->ios_left);
-+	if (!state->file)
-+		return NULL;
++	scm->fp = UNIXCB(skb).fp;
++	UNIXCB(skb).fp = NULL;
 +
-+	state->fd = fd;
-+	state->has_refs = state->ios_left;
-+	state->used_refs = 1;
-+	state->ios_left--;
-+	return state->file;
++	for (i = scm->fp->count-1; i >= 0; i--)
++		unix_notinflight(scm->fp->user, scm->fp->fp[i]);
 +}
++EXPORT_SYMBOL(unix_detach_fds);
 +
- /*
-  * If we tracked the file through the SCM inflight mechanism, we could support
-  * any file. For now, just ensure that anything potentially problematic is done
-@@ -548,7 +621,7 @@ static bool io_file_supports_async(struct file *file)
- }
- 
- static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe,
--		      bool force_nonblock)
-+		      bool force_nonblock, struct io_submit_state *state)
- {
- 	struct io_ring_ctx *ctx = req->ctx;
- 	struct kiocb *kiocb = &req->rw;
-@@ -560,7 +633,7 @@ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe,
- 		return 0;
- 
- 	fd = READ_ONCE(sqe->fd);
--	kiocb->ki_filp = fget(fd);
-+	kiocb->ki_filp = io_file_get(state, fd);
- 	if (unlikely(!kiocb->ki_filp))
- 		return -EBADF;
- 	if (force_nonblock && !io_file_supports_async(kiocb->ki_filp))
-@@ -604,7 +677,10 @@ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe,
- 	}
- 	return 0;
- out_fput:
--	fput(kiocb->ki_filp);
-+	/* in case of error, we didn't use this file reference. drop it. */
-+	if (state)
-+		state->used_refs--;
-+	io_file_put(state, kiocb->ki_filp);
- 	return ret;
- }
- 
-@@ -650,7 +726,7 @@ static int io_import_iovec(struct io_ring_ctx *ctx, int rw,
- }
- 
- static ssize_t io_read(struct io_kiocb *req, const struct sqe_submit *s,
--		       bool force_nonblock)
-+		       bool force_nonblock, struct io_submit_state *state)
- {
- 	struct iovec inline_vecs[UIO_FASTIOV], *iovec = inline_vecs;
- 	struct kiocb *kiocb = &req->rw;
-@@ -658,7 +734,7 @@ static ssize_t io_read(struct io_kiocb *req, const struct sqe_submit *s,
- 	struct file *file;
- 	ssize_t ret;
- 
--	ret = io_prep_rw(req, s->sqe, force_nonblock);
-+	ret = io_prep_rw(req, s->sqe, force_nonblock, state);
- 	if (ret)
- 		return ret;
- 	file = kiocb->ki_filp;
-@@ -694,7 +770,7 @@ static ssize_t io_read(struct io_kiocb *req, const struct sqe_submit *s,
- }
- 
- static ssize_t io_write(struct io_kiocb *req, const struct sqe_submit *s,
--			bool force_nonblock)
-+			bool force_nonblock, struct io_submit_state *state)
- {
- 	struct iovec inline_vecs[UIO_FASTIOV], *iovec = inline_vecs;
- 	struct kiocb *kiocb = &req->rw;
-@@ -702,7 +778,7 @@ static ssize_t io_write(struct io_kiocb *req, const struct sqe_submit *s,
- 	struct file *file;
- 	ssize_t ret;
- 
--	ret = io_prep_rw(req, s->sqe, force_nonblock);
-+	ret = io_prep_rw(req, s->sqe, force_nonblock, state);
- 	if (ret)
- 		return ret;
- 	/* Hold on to the file for -EAGAIN */
-@@ -826,7 +902,8 @@ static int io_fsync(struct io_kiocb *req, const struct io_uring_sqe *sqe,
- }
- 
- static int __io_submit_sqe(struct io_ring_ctx *ctx, struct io_kiocb *req,
--			   const struct sqe_submit *s, bool force_nonblock)
-+			   const struct sqe_submit *s, bool force_nonblock,
-+			   struct io_submit_state *state)
- {
- 	ssize_t ret;
- 	int opcode;
-@@ -841,10 +918,10 @@ static int __io_submit_sqe(struct io_ring_ctx *ctx, struct io_kiocb *req,
- 		ret = io_nop(req, req->user_data);
- 		break;
- 	case IORING_OP_READV:
--		ret = io_read(req, s, force_nonblock);
-+		ret = io_read(req, s, force_nonblock, state);
- 		break;
- 	case IORING_OP_WRITEV:
--		ret = io_write(req, s, force_nonblock);
-+		ret = io_write(req, s, force_nonblock, state);
- 		break;
- 	case IORING_OP_FSYNC:
- 		ret = io_fsync(req, s->sqe, force_nonblock);
-@@ -896,7 +973,7 @@ static void io_sq_wq_submit_work(struct work_struct *work)
- 	s->needs_lock = true;
- 
- 	do {
--		ret = __io_submit_sqe(ctx, req, s, false);
-+		ret = __io_submit_sqe(ctx, req, s, false, NULL);
- 		/*
- 		 * We can get EAGAIN for polled IO even though we're forcing
- 		 * a sync submission from here, since we can't wait for
-@@ -920,7 +997,8 @@ static void io_sq_wq_submit_work(struct work_struct *work)
- 	kfree(sqe);
- }
- 
--static int io_submit_sqe(struct io_ring_ctx *ctx, struct sqe_submit *s)
-+static int io_submit_sqe(struct io_ring_ctx *ctx, struct sqe_submit *s,
-+			 struct io_submit_state *state)
- {
- 	struct io_kiocb *req;
- 	ssize_t ret;
-@@ -935,7 +1013,7 @@ static int io_submit_sqe(struct io_ring_ctx *ctx, struct sqe_submit *s)
- 
- 	req->rw.ki_filp = NULL;
- 
--	ret = __io_submit_sqe(ctx, req, s, true);
-+	ret = __io_submit_sqe(ctx, req, s, true, state);
- 	if (ret == -EAGAIN) {
- 		struct io_uring_sqe *sqe_copy;
- 
-@@ -956,6 +1034,26 @@ static int io_submit_sqe(struct io_ring_ctx *ctx, struct sqe_submit *s)
- 	return ret;
- }
- 
-+/*
-+ * Batched submission is done, ensure local IO is flushed out.
-+ */
-+static void io_submit_state_end(struct io_submit_state *state)
++void unix_destruct_scm(struct sk_buff *skb)
 +{
-+	blk_finish_plug(&state->plug);
-+	io_file_put(state, NULL);
-+}
++	struct scm_cookie scm;
 +
-+/*
-+ * Start submission side cache.
-+ */
-+static void io_submit_state_start(struct io_submit_state *state,
-+				  struct io_ring_ctx *ctx, unsigned max_ios)
-+{
-+	blk_start_plug(&state->plug);
-+	state->file = NULL;
-+	state->ios_left = max_ios;
-+}
++	memset(&scm, 0, sizeof(scm));
++	scm.pid  = UNIXCB(skb).pid;
++	if (UNIXCB(skb).fp)
++		unix_detach_fds(&scm, skb);
 +
- static void io_commit_sqring(struct io_ring_ctx *ctx)
- {
- 	struct io_sq_ring *ring = ctx->sq_ring;
-@@ -1023,11 +1121,13 @@ static bool io_get_sqring(struct io_ring_ctx *ctx, struct sqe_submit *s)
- 
- static int io_ring_submit(struct io_ring_ctx *ctx, unsigned int to_submit)
- {
-+	struct io_submit_state state, *statep = NULL;
- 	int i, ret = 0, submit = 0;
--	struct blk_plug plug;
- 
--	if (to_submit > IO_PLUG_THRESHOLD)
--		blk_start_plug(&plug);
-+	if (to_submit > IO_PLUG_THRESHOLD) {
-+		io_submit_state_start(&state, ctx, to_submit);
-+		statep = &state;
-+	}
- 
- 	for (i = 0; i < to_submit; i++) {
- 		struct sqe_submit s;
-@@ -1038,7 +1138,7 @@ static int io_ring_submit(struct io_ring_ctx *ctx, unsigned int to_submit)
- 		s.has_user = true;
- 		s.needs_lock = false;
- 
--		ret = io_submit_sqe(ctx, &s);
-+		ret = io_submit_sqe(ctx, &s, statep);
- 		if (ret) {
- 			io_drop_sqring(ctx);
- 			break;
-@@ -1048,8 +1148,8 @@ static int io_ring_submit(struct io_ring_ctx *ctx, unsigned int to_submit)
- 	}
- 	io_commit_sqring(ctx);
- 
--	if (to_submit > IO_PLUG_THRESHOLD)
--		blk_finish_plug(&plug);
-+	if (statep)
-+		io_submit_state_end(statep);
- 
- 	return submit ? submit : ret;
- }
++	/* Alas, it calls VFS */
++	/* So fscking what? fput() had been SMP-safe since the last Summer */
++	scm_destroy(&scm);
++	sock_wfree(skb);
++}
++EXPORT_SYMBOL(unix_destruct_scm);
+diff --git a/net/unix/scm.h b/net/unix/scm.h
+new file mode 100644
+index 000000000000..5a255a477f16
+--- /dev/null
++++ b/net/unix/scm.h
+@@ -0,0 +1,10 @@
++#ifndef NET_UNIX_SCM_H
++#define NET_UNIX_SCM_H
++
++extern struct list_head gc_inflight_list;
++extern spinlock_t unix_gc_lock;
++
++int unix_attach_fds(struct scm_cookie *scm, struct sk_buff *skb);
++void unix_detach_fds(struct scm_cookie *scm, struct sk_buff *skb);
++
++#endif
 -- 
 2.17.1
 
