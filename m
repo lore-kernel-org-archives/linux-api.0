@@ -1,47 +1,39 @@
-From: Jonathan Corbet <corbet@lwn.net>
-Subject: Re: [PATCH 13/18] io_uring: add file set registration
-Date: Mon, 11 Feb 2019 13:33:35 -0700
-Message-ID: <20190211133335.2b114df8@lwn.net>
-References: <CAG48ez2kLWUEambWesQQaeVn_u=PtjuMeDUc49yamhYspfd7Sg@mail.gmail.com>
-	<20190204025612.GR2217@ZenIV.linux.org.uk>
-	<785c6db4-095e-65b0-ded5-72b41af5174e@kernel.dk>
-	<2b2137ed-8107-f7b6-f0ca-202dcfb87c97@kernel.dk>
-	<40b27e78-9ee8-1395-feb3-a73aac87c9a7@kernel.dk>
-	<20190206005638.GU2217@ZenIV.linux.org.uk>
-	<8f124de2-d6da-d656-25e4-b4d9e58f880e@kernel.dk>
-	<20190207040058.GW2217@ZenIV.linux.org.uk>
-	<73e23146-2138-5a46-46ed-9c7f1f912a04@kernel.dk>
-	<20190211085533.35190404@lwn.net>
-	<20190211173521.GI2217@ZenIV.linux.org.uk>
+From: Luis Chamberlain <mcgrof@kernel.org>
+Subject: Re: + sysctl-return-einval-if-val-violates-minmax.patch added to -mm
+ tree
+Date: Mon, 11 Feb 2019 13:25:23 -0800
+Message-ID: <20190211212523.GU11489@garbanzo.do-not-panic.com>
+References: <20190211210632.Nfd0f%akpm@linux-foundation.org>
+ <20190211211716.GA31039@avx2>
+ <20190211211917.kq2ahdkhoe36obhp@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8bit
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20190211173521.GI2217@ZenIV.linux.org.uk>
-Sender: owner-linux-aio@kvack.org
-To: Al Viro <viro@zeniv.linux.org.uk>
-Cc: Jens Axboe <axboe@kernel.dk>, Jann Horn <jannh@google.com>, linux-aio@kvack.org, linux-block@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, linux-fsdevel@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190211211917.kq2ahdkhoe36obhp@brauner.io>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christian Brauner <christian@brauner.io>
+Cc: Alexey Dobriyan <adobriyan@gmail.com>, akpm@linux-foundation.org, linux-kernel@vger.kernel.org, viro@zeniv.linux.org.uk, longman@redhat.com, linux@dominikbrodowski.net, keescook@chromium.org, joe.lawrence@redhat.com, ebiederm@xmission.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 11 Feb 2019 17:35:21 +0000
-Al Viro <viro@zeniv.linux.org.uk> wrote:
+On Mon, Feb 11, 2019 at 10:19:19PM +0100, Christian Brauner wrote:
+> On Tue, Feb 12, 2019 at 12:17:16AM +0300, Alexey Dobriyan wrote:
+> > On Mon, Feb 11, 2019 at 01:06:32PM -0800, akpm@linux-foundation.org wrote:
+> > 
+> > > @@ -2848,8 +2848,10 @@ static int __do_proc_doulongvec_minmax(v
+> > 
+> > > -			if ((min && val < *min) || (max && val > *max))
+> > > -				continue;
+> > > +			if ((min && val < *min) || (max && val > *max)) {
+> > > +				err = -EINVAL;
+> > 
+> > I was asked to return ERANGE in kstrto*().
+> 
+> I think we discussed ERANGE vs EINVAL and decided EINVAL because there
+> was precedence for other sysctls already.
 
-> If you turn that thing into a coherent text, I'd appreciate a chance
-> to take a look at the result and see if anything else needs to be
-> corrected...
+Can you do a proper audit and see?
 
-Thanks for the updated info!
+linux-api folks may care.
 
-I'm likely to do a watered-down version for some disreputable web site
-first; after that, I'll try to do it properly for Documentation/.  You'll
-certainly see the result in your inbox once it's ready to be looked at.
-
-Thanks,
-
-jon
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+ Luis
