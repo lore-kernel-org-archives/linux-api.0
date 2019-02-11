@@ -1,7 +1,7 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: [PATCH] io_uring: add io_uring_event cache hit information
-Date: Mon, 11 Feb 2019 12:00:31 -0700
-Message-ID: <20190211190049.7888-3-axboe@kernel.dk>
+Subject: [PATCH 03/19] block: add bio_set_polled() helper
+Date: Mon, 11 Feb 2019 12:00:33 -0700
+Message-ID: <20190211190049.7888-5-axboe@kernel.dk>
 References: <20190211190049.7888-1-axboe@kernel.dk>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20190211190049.7888-1-axboe@kernel.dk>
@@ -10,57 +10,67 @@ To: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
 Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk, Jens Axboe <axboe@kernel.dk>
 List-Id: linux-api@vger.kernel.org
 
-Add hint on whether a read was served out of the page cache, or if it
-hit media. This is useful for buffered async IO, O_DIRECT reads would
-never have this set (for obvious reasons).
+For the upcoming async polled IO, we can't sleep allocating requests.
+If we do, then we introduce a deadlock where the submitter already
+has async polled IO in-flight, but can't wait for them to complete
+since polled requests must be active found and reaped.
 
-If the read hit page cache, cqe->flags will have IOCQE_FLAG_CACHEHIT
-set.
+Utilize the helper in the blockdev DIRECT_IO code.
 
+Reviewed-by: Hannes Reinecke <hare@suse.com>
+Reviewed-by: Christoph Hellwig <hch@lst.de>
 Signed-off-by: Jens Axboe <axboe@kernel.dk>
 ---
- fs/io_uring.c                 | 7 ++++++-
- include/uapi/linux/io_uring.h | 5 +++++
- 2 files changed, 11 insertions(+), 1 deletion(-)
+ fs/block_dev.c      |  4 ++--
+ include/linux/bio.h | 14 ++++++++++++++
+ 2 files changed, 16 insertions(+), 2 deletions(-)
 
-diff --git a/fs/io_uring.c b/fs/io_uring.c
-index 00c7c11ca699..8114723517d6 100644
---- a/fs/io_uring.c
-+++ b/fs/io_uring.c
-@@ -611,11 +611,16 @@ static void io_fput(struct io_kiocb *req)
- static void io_complete_rw(struct kiocb *kiocb, long res, long res2)
- {
- 	struct io_kiocb *req = container_of(kiocb, struct io_kiocb, rw);
-+	unsigned ev_flags = 0;
+diff --git a/fs/block_dev.c b/fs/block_dev.c
+index f18d076a2596..392e2bfb636f 100644
+--- a/fs/block_dev.c
++++ b/fs/block_dev.c
+@@ -247,7 +247,7 @@ __blkdev_direct_IO_simple(struct kiocb *iocb, struct iov_iter *iter,
+ 		task_io_account_write(ret);
+ 	}
+ 	if (iocb->ki_flags & IOCB_HIPRI)
+-		bio.bi_opf |= REQ_HIPRI;
++		bio_set_polled(&bio, iocb);
  
- 	kiocb_end_write(kiocb);
+ 	qc = submit_bio(&bio);
+ 	for (;;) {
+@@ -415,7 +415,7 @@ __blkdev_direct_IO(struct kiocb *iocb, struct iov_iter *iter, int nr_pages)
+ 		nr_pages = iov_iter_npages(iter, BIO_MAX_PAGES);
+ 		if (!nr_pages) {
+ 			if (iocb->ki_flags & IOCB_HIPRI)
+-				bio->bi_opf |= REQ_HIPRI;
++				bio_set_polled(bio, iocb);
  
- 	io_fput(req);
--	io_cqring_add_event(req->ctx, req->user_data, res, 0);
-+
-+	if (res > 0 && (req->flags & REQ_F_FORCE_NONBLOCK))
-+		ev_flags = IOCQE_FLAG_CACHEHIT;
-+
-+	io_cqring_add_event(req->ctx, req->user_data, res, ev_flags);
- 	io_free_req(req);
- }
+ 			qc = submit_bio(bio);
+ 			WRITE_ONCE(iocb->ki_cookie, qc);
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index 7380b094dcca..f6f0a2b3cbc8 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -823,5 +823,19 @@ static inline int bio_integrity_add_page(struct bio *bio, struct page *page,
  
-diff --git a/include/uapi/linux/io_uring.h b/include/uapi/linux/io_uring.h
-index e23408692118..24906e99fdc7 100644
---- a/include/uapi/linux/io_uring.h
-+++ b/include/uapi/linux/io_uring.h
-@@ -69,6 +69,11 @@ struct io_uring_cqe {
- 	__u32	flags;
- };
+ #endif /* CONFIG_BLK_DEV_INTEGRITY */
  
 +/*
-+ * io_uring_event->flags
++ * Mark a bio as polled. Note that for async polled IO, the caller must
++ * expect -EWOULDBLOCK if we cannot allocate a request (or other resources).
++ * We cannot block waiting for requests on polled IO, as those completions
++ * must be found by the caller. This is different than IRQ driven IO, where
++ * it's safe to wait for IO to complete.
 + */
-+#define IOCQE_FLAG_CACHEHIT	(1U << 0)	/* IO did not hit media */
++static inline void bio_set_polled(struct bio *bio, struct kiocb *kiocb)
++{
++	bio->bi_opf |= REQ_HIPRI;
++	if (!is_sync_kiocb(kiocb))
++		bio->bi_opf |= REQ_NOWAIT;
++}
 +
- /*
-  * Magic offsets for the application to mmap the data it needs
-  */
+ #endif /* CONFIG_BLOCK */
+ #endif /* __LINUX_BIO_H */
 -- 
 2.17.1
 
