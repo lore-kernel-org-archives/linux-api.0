@@ -1,7 +1,7 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: [PATCH 16/19] io_uring: add io_kiocb ref count
-Date: Mon, 11 Feb 2019 12:00:46 -0700
-Message-ID: <20190211190049.7888-18-axboe@kernel.dk>
+Subject: [PATCH 19/19] io_uring: add io_uring_event cache hit information
+Date: Mon, 11 Feb 2019 12:00:49 -0700
+Message-ID: <20190211190049.7888-21-axboe@kernel.dk>
 References: <20190211190049.7888-1-axboe@kernel.dk>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20190211190049.7888-1-axboe@kernel.dk>
@@ -10,50 +10,57 @@ To: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
 Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk, Jens Axboe <axboe@kernel.dk>
 List-Id: linux-api@vger.kernel.org
 
-We'll use this for the POLL implementation. Regular requests will
-NOT be using references, so initialize it to 0. Any real use of
-the io_kiocb ref will initialize it to at least 2.
+Add hint on whether a read was served out of the page cache, or if it
+hit media. This is useful for buffered async IO, O_DIRECT reads would
+never have this set (for obvious reasons).
 
-Reviewed-by: Hannes Reinecke <hare@suse.com>
-Reviewed-by: Christoph Hellwig <hch@lst.de>
+If the read hit page cache, cqe->flags will have IOCQE_FLAG_CACHEHIT
+set.
+
 Signed-off-by: Jens Axboe <axboe@kernel.dk>
 ---
- fs/io_uring.c | 8 ++++++--
- 1 file changed, 6 insertions(+), 2 deletions(-)
+ fs/io_uring.c                 | 7 ++++++-
+ include/uapi/linux/io_uring.h | 5 +++++
+ 2 files changed, 11 insertions(+), 1 deletion(-)
 
 diff --git a/fs/io_uring.c b/fs/io_uring.c
-index 24c280076e81..33b6c6167595 100644
+index ce446f59f092..a4973af1c272 100644
 --- a/fs/io_uring.c
 +++ b/fs/io_uring.c
-@@ -184,6 +184,7 @@ struct io_kiocb {
- 	struct io_ring_ctx	*ctx;
- 	struct list_head	list;
- 	unsigned int		flags;
-+	refcount_t		refs;
- #define REQ_F_FORCE_NONBLOCK	1	/* inline submission attempt */
- #define REQ_F_IOPOLL_COMPLETED	2	/* polled IO has completed */
- #define REQ_F_FIXED_FILE	4	/* ctx owns file */
-@@ -377,6 +378,7 @@ static struct io_kiocb *io_get_req(struct io_ring_ctx *ctx,
- 
- 	req->ctx = ctx;
- 	req->flags = 0;
-+	refcount_set(&req->refs, 0);
- 	return req;
- out:
- 	io_ring_drop_ctx_refs(ctx, 1);
-@@ -394,8 +396,10 @@ static void io_free_req_many(struct io_ring_ctx *ctx, void **reqs, int *nr)
- 
- static void io_free_req(struct io_kiocb *req)
+@@ -611,11 +611,16 @@ static void io_fput(struct io_kiocb *req)
+ static void io_complete_rw(struct kiocb *kiocb, long res, long res2)
  {
--	io_ring_drop_ctx_refs(req->ctx, 1);
--	kmem_cache_free(req_cachep, req);
-+	if (!refcount_read(&req->refs) || refcount_dec_and_test(&req->refs)) {
-+		io_ring_drop_ctx_refs(req->ctx, 1);
-+		kmem_cache_free(req_cachep, req);
-+	}
+ 	struct io_kiocb *req = container_of(kiocb, struct io_kiocb, rw);
++	unsigned ev_flags = 0;
+ 
+ 	kiocb_end_write(kiocb);
+ 
+ 	io_fput(req);
+-	io_cqring_add_event(req->ctx, req->user_data, res, 0);
++
++	if (res > 0 && (req->flags & REQ_F_FORCE_NONBLOCK))
++		ev_flags = IOCQE_FLAG_CACHEHIT;
++
++	io_cqring_add_event(req->ctx, req->user_data, res, ev_flags);
+ 	io_free_req(req);
  }
  
+diff --git a/include/uapi/linux/io_uring.h b/include/uapi/linux/io_uring.h
+index e23408692118..24906e99fdc7 100644
+--- a/include/uapi/linux/io_uring.h
++++ b/include/uapi/linux/io_uring.h
+@@ -69,6 +69,11 @@ struct io_uring_cqe {
+ 	__u32	flags;
+ };
+ 
++/*
++ * io_uring_event->flags
++ */
++#define IOCQE_FLAG_CACHEHIT	(1U << 0)	/* IO did not hit media */
++
  /*
+  * Magic offsets for the application to mmap the data it needs
+  */
 -- 
 2.17.1
 
