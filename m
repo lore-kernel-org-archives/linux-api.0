@@ -1,8 +1,7 @@
 From: Eric Biggers <ebiggers@kernel.org>
-Subject: [RFC PATCH v2 10/20] fs/dcache.c: add
- shrink_dcache_inode()
-Date: Mon, 11 Feb 2019 09:27:28 -0800
-Message-ID: <20190211172738.4633-11-ebiggers@kernel.org>
+Subject: [RFC PATCH v2 17/20] ext4: wire up new fscrypt ioctls
+Date: Mon, 11 Feb 2019 09:27:35 -0800
+Message-ID: <20190211172738.4633-18-ebiggers@kernel.org>
 References: <20190211172738.4633-1-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,78 +22,58 @@ List-Id: linux-api@vger.kernel.org
 
 From: Eric Biggers <ebiggers@google.com>
 
-When a filesystem encryption key is removed, we need all files which had
-been "unlocked" (had ->i_crypt_info set up) with it to appear "locked"
-again.  This is most easily done by evicting the inodes.  This can
-currently be done using 'echo 2 > /proc/sys/vm/drop_caches'; however,
-that is overkill and not usable by non-root users.
+Wire up the new ioctls for adding and removing fscrypt keys to/from the
+filesystem, and the new ioctl for retrieving v2 encryption policies.
 
-To evict just the needed inodes we also need the ability to evict those
-inodes' dentries, since an inode is pinned by its dentries.  Therefore,
-add a function shrink_dcache_inode() which iterates through an inode's
-dentries and evicts any unused ones as well as any unused descendants
-(since there may be negative dentries pinning the inode's dentries).
+For more details see Documentation/filesystems/fscrypt.rst, as well as
+the fscrypt patches that added the implementation of these ioctls.
 
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
- fs/dcache.c            | 32 ++++++++++++++++++++++++++++++++
- include/linux/dcache.h |  1 +
- 2 files changed, 33 insertions(+)
+ fs/ext4/ioctl.c | 24 ++++++++++++++++++++++++
+ 1 file changed, 24 insertions(+)
 
-diff --git a/fs/dcache.c b/fs/dcache.c
-index 2593153471cf..6a7db8797b2d 100644
---- a/fs/dcache.c
-+++ b/fs/dcache.c
-@@ -1484,6 +1484,38 @@ void shrink_dcache_parent(struct dentry *parent)
- }
- EXPORT_SYMBOL(shrink_dcache_parent);
+diff --git a/fs/ext4/ioctl.c b/fs/ext4/ioctl.c
+index d26bcac291bb..c939dbd2f2ac 100644
+--- a/fs/ext4/ioctl.c
++++ b/fs/ext4/ioctl.c
+@@ -1020,6 +1020,26 @@ long ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+ 	case EXT4_IOC_GET_ENCRYPTION_POLICY:
+ 		return fscrypt_ioctl_get_policy(filp, (void __user *)arg);
  
-+/**
-+ * shrink_dcache_inode - prune dcache for inode
-+ * @inode: inode to prune
-+ *
-+ * Evict all unused aliases of the specified inode from the dcache.  This is
-+ * intended to be used when trying to evict a specific inode, since inodes are
-+ * pinned by their dentries.  We also have to descend to ->d_subdirs for each
-+ * alias, since aliases may be pinned by negative child dentries.
-+ */
-+void shrink_dcache_inode(struct inode *inode)
-+{
-+	for (;;) {
-+		struct select_data data;
-+		struct dentry *dentry;
++	case FS_IOC_GET_ENCRYPTION_POLICY_EX:
++		if (!ext4_has_feature_encrypt(sb))
++			return -EOPNOTSUPP;
++		return fscrypt_ioctl_get_policy_ex(filp, (void __user *)arg);
 +
-+		INIT_LIST_HEAD(&data.dispose);
-+		data.start = NULL;
-+		data.found = 0;
++	case FS_IOC_ADD_ENCRYPTION_KEY:
++		if (!ext4_has_feature_encrypt(sb))
++			return -EOPNOTSUPP;
++		return fscrypt_ioctl_add_key(filp, (void __user *)arg);
 +
-+		spin_lock(&inode->i_lock);
-+		hlist_for_each_entry(dentry, &inode->i_dentry, d_u.d_alias)
-+			d_walk(dentry, &data, select_collect);
-+		spin_unlock(&inode->i_lock);
++	case FS_IOC_REMOVE_ENCRYPTION_KEY:
++		if (!ext4_has_feature_encrypt(sb))
++			return -EOPNOTSUPP;
++		return fscrypt_ioctl_remove_key(filp, (const void __user *)arg);
 +
-+		if (!data.found)
-+			break;
++	case FS_IOC_GET_ENCRYPTION_KEY_STATUS:
++		if (!ext4_has_feature_encrypt(sb))
++			return -EOPNOTSUPP;
++		return fscrypt_ioctl_get_key_status(filp, (void __user *)arg);
 +
-+		shrink_dentry_list(&data.dispose);
-+		cond_resched();
-+	}
-+}
-+
- static enum d_walk_ret umount_check(void *_data, struct dentry *dentry)
- {
- 	/* it has busy descendents; complain about those instead */
-diff --git a/include/linux/dcache.h b/include/linux/dcache.h
-index ef4b70f64f33..c02dab98bc97 100644
---- a/include/linux/dcache.h
-+++ b/include/linux/dcache.h
-@@ -245,6 +245,7 @@ extern struct dentry * d_obtain_alias(struct inode *);
- extern struct dentry * d_obtain_root(struct inode *);
- extern void shrink_dcache_sb(struct super_block *);
- extern void shrink_dcache_parent(struct dentry *);
-+extern void shrink_dcache_inode(struct inode *);
- extern void shrink_dcache_for_umount(struct super_block *);
- extern void d_invalidate(struct dentry *);
- 
+ 	case EXT4_IOC_FSGETXATTR:
+ 	{
+ 		struct fsxattr fa;
+@@ -1138,6 +1158,10 @@ long ext4_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 	case EXT4_IOC_SET_ENCRYPTION_POLICY:
+ 	case EXT4_IOC_GET_ENCRYPTION_PWSALT:
+ 	case EXT4_IOC_GET_ENCRYPTION_POLICY:
++	case FS_IOC_GET_ENCRYPTION_POLICY_EX:
++	case FS_IOC_ADD_ENCRYPTION_KEY:
++	case FS_IOC_REMOVE_ENCRYPTION_KEY:
++	case FS_IOC_GET_ENCRYPTION_KEY_STATUS:
+ 	case EXT4_IOC_SHUTDOWN:
+ 	case FS_IOC_GETFSMAP:
+ 		break;
 -- 
 2.20.1
