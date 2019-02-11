@@ -1,8 +1,8 @@
 From: Eric Biggers <ebiggers@kernel.org>
-Subject: [RFC PATCH v2 08/20] fs/inode.c: export
- inode_lru_list_del()
-Date: Mon, 11 Feb 2019 09:27:26 -0800
-Message-ID: <20190211172738.4633-9-ebiggers@kernel.org>
+Subject: [RFC PATCH v2 05/20] fscrypt: add ->ci_inode to
+ fscrypt_info
+Date: Mon, 11 Feb 2019 09:27:23 -0800
+Message-ID: <20190211172738.4633-6-ebiggers@kernel.org>
 References: <20190211172738.4633-1-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,48 +23,52 @@ List-Id: linux-api@vger.kernel.org
 
 From: Eric Biggers <ebiggers@google.com>
 
-When a filesystem encryption key is removed, we need all files which had
-been "unlocked" (had ->i_crypt_info set up) with it to appear "locked"
-again.  This is most easily done by evicting the inodes.  This can
-currently be done using 'echo 2 > /proc/sys/vm/drop_caches'; however,
-that is overkill and not usable by non-root users.
+Add an inode back-pointer to 'struct fscrypt_info', such that
+inode->i_crypt_info->ci_inode == inode.
 
-In preparation for allowing fs/crypto/ to evict just the needed inodes,
-make inode_lru_list_del() non-static.
+This will be useful for:
+
+1. Evicting the inodes when a fscrypt key is removed, since we'll track
+   the inodes using a given key by linking their fscrypt_infos together,
+   rather than the inodes directly.  This avoids bloating 'struct inode'
+   with a new list_head.
+
+2. Simplifying the per-file key setup, since the inode pointer won't
+   have to be passed around everywhere just in case something goes wrong
+   and it's needed for fscrypt_warn().
 
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
- fs/inode.c         | 4 +---
- include/linux/fs.h | 1 +
- 2 files changed, 2 insertions(+), 3 deletions(-)
+ fs/crypto/fscrypt_private.h | 3 +++
+ fs/crypto/keyinfo.c         | 2 ++
+ 2 files changed, 5 insertions(+)
 
-diff --git a/fs/inode.c b/fs/inode.c
-index 0cd47fe0dbe5..037df483c9af 100644
---- a/fs/inode.c
-+++ b/fs/inode.c
-@@ -426,10 +426,8 @@ void inode_add_lru(struct inode *inode)
- 		inode_lru_list_add(inode);
- }
+diff --git a/fs/crypto/fscrypt_private.h b/fs/crypto/fscrypt_private.h
+index 52e09ef40bfa..ac24edfc297f 100644
+--- a/fs/crypto/fscrypt_private.h
++++ b/fs/crypto/fscrypt_private.h
+@@ -73,6 +73,9 @@ struct fscrypt_info {
+ 	 */
+ 	struct fscrypt_mode *ci_mode;
  
--
--static void inode_lru_list_del(struct inode *inode)
-+void inode_lru_list_del(struct inode *inode)
- {
--
- 	if (list_lru_del(&inode->i_sb->s_inode_lru, &inode->i_lru))
- 		this_cpu_dec(nr_unused);
- }
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 70d929ac89f9..326cbb044596 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -2986,6 +2986,7 @@ extern void unlock_new_inode(struct inode *);
- extern void discard_new_inode(struct inode *);
- extern unsigned int get_next_ino(void);
- extern void evict_inodes(struct super_block *sb);
-+extern void inode_lru_list_del(struct inode *inode);
++	/* Back-pointer to the inode */
++	struct inode *ci_inode;
++
+ 	/*
+ 	 * If non-NULL, then this inode uses a master key directly rather than a
+ 	 * derived key, and ci_ctfm will equal ci_master_key->mk_ctfm.
+diff --git a/fs/crypto/keyinfo.c b/fs/crypto/keyinfo.c
+index a8c1e886b0bc..6c1e675d4eef 100644
+--- a/fs/crypto/keyinfo.c
++++ b/fs/crypto/keyinfo.c
+@@ -542,6 +542,8 @@ int fscrypt_get_encryption_info(struct inode *inode)
+ 	if (!crypt_info)
+ 		return -ENOMEM;
  
- extern void __iget(struct inode * inode);
- extern void iget_failed(struct inode *);
++	crypt_info->ci_inode = inode;
++
+ 	crypt_info->ci_flags = ctx.flags;
+ 	crypt_info->ci_data_mode = ctx.contents_encryption_mode;
+ 	crypt_info->ci_filename_mode = ctx.filenames_encryption_mode;
 -- 
 2.20.1
