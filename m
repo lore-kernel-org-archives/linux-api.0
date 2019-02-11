@@ -1,81 +1,209 @@
-From: Jann Horn <jannh@google.com>
-Subject: [PATCH] mmap.2: describe the 5level paging hack
-Date: Mon, 11 Feb 2019 17:36:53 +0100
-Message-ID: <20190211163653.97742-1-jannh@google.com>
+From: Eric Biggers <ebiggers@kernel.org>
+Subject: [RFC PATCH v2 01/20] fs,
+ fscrypt: move uapi definitions to new header <linux/fscrypt.h>
+Date: Mon, 11 Feb 2019 09:27:19 -0800
+Message-ID: <20190211172738.4633-2-ebiggers@kernel.org>
+References: <20190211172738.4633-1-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: mtk.manpages@gmail.com, jannh@google.com
-Cc: linux-arch@vger.kernel.org, linux-man@vger.kernel.org, Catalin Marinas <catalin.marinas@arm.com>, linux-mm@kvack.org, Peter Zijlstra <peterz@infradead.org>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Will Deacon <will.deacon@arm.com>, linuxppc-dev@lists.ozlabs.org, Andy Lutomirski <luto@amacapital.net>, Dave Hansen <dave.hansen@intel.com>, Paul Mackerras <paulus@samba.org>, linux-arm-kernel@lists.infradead.org, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, linux-api@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
+Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org>
+In-Reply-To: <20190211172738.4633-1-ebiggers@kernel.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
+List-Post: <mailto:linux-mtd@lists.infradead.org>
+List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-mtd" <linux-mtd-bounces@lists.infradead.org>
+Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org
+To: linux-fscrypt@vger.kernel.org
+Cc: Satya Tangirala <satyat@google.com>, linux-api@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, keyrings@vger.kernel.org, linux-mtd@lists.infradead.org, linux-crypto@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, Paul Crowley <paulcrowley@google.com>
 List-Id: linux-api@vger.kernel.org
 
-The manpage is missing information about the compatibility hack for
-5-level paging that went in in 4.14, around commit ee00f4a32a76 ("x86/mm:
-Allow userspace have mappings above 47-bit"). Add some information about
-that.
+From: Eric Biggers <ebiggers@google.com>
 
-While I don't think any hardware supporting this is shipping yet (?), I
-think it's useful to try to write a manpage for this API, partly to
-figure out how usable that API actually is, and partly because when this
-hardware does ship, it'd be nice if distro manpages had information about
-how to use it.
+More fscrypt definitions are being added, and we shouldn't use a
+disproportionate amount of space in <linux/fs.h> for fscrypt stuff.
+So move the fscrypt definitions to a new header <linux/fscrypt.h>.
 
-Signed-off-by: Jann Horn <jannh@google.com>
+For source compatibility with existing userspace programs, <linux/fs.h>
+still includes the new header.
+
+Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
-This patch goes on top of the patch "[PATCH] mmap.2: fix description of
-treatment of the hint" that I just sent, but I'm not sending them in a
-series because I want the first one to go in, and I think this one might
-be a bit more controversial.
+ MAINTAINERS                  |  1 +
+ include/linux/fscrypt.h      |  1 +
+ include/uapi/linux/fs.h      | 54 ++-------------------------------
+ include/uapi/linux/fscrypt.h | 58 ++++++++++++++++++++++++++++++++++++
+ 4 files changed, 63 insertions(+), 51 deletions(-)
+ create mode 100644 include/uapi/linux/fscrypt.h
 
-It would be nice if the architecture maintainers and mm folks could have
-a look at this and check that what I wrote is right - I only looked at
-the source for this, I haven't tried it.
-
- man2/mmap.2 | 15 +++++++++++++++
- 1 file changed, 15 insertions(+)
-
-diff --git a/man2/mmap.2 b/man2/mmap.2
-index 8556bbfeb..977782fa8 100644
---- a/man2/mmap.2
-+++ b/man2/mmap.2
-@@ -67,6 +67,8 @@ is NULL,
- then the kernel chooses the (page-aligned) address
- at which to create the mapping;
- this is the most portable method of creating a new mapping.
-+On Linux, in this case, the kernel may limit the maximum address that can be
-+used for allocations to a legacy limit for compatibility reasons.
- If
- .I addr
- is not NULL,
-@@ -77,6 +79,19 @@ or equal to the value specified by
- and attempt to create the mapping there.
- If another mapping already exists there, the kernel picks a new
- address, independent of the hint.
-+However, if a hint above the architecture's legacy address limit is provided
-+(on x86-64: above 0x7ffffffff000, on arm64: above 0x1000000000000, on ppc64 with
-+book3s: above 0x7fffffffffff or 0x3fffffffffff, depending on page size), the
-+kernel is permitted to allocate mappings beyond the architecture's legacy
-+address limit. The availability of such addresses is hardware-dependent.
-+Therefore, if you want to be able to use the full virtual address space of
-+hardware that supports addresses beyond the legacy range, you need to specify an
-+address above that limit; however, for security reasons, you should avoid
-+specifying a fixed valid address outside the compatibility range,
-+since that would reduce the value of userspace address space layout
-+randomization. Therefore, it is recommended to specify an address
-+.I beyond
-+the end of the userspace address space.
- .\" Before Linux 2.6.24, the address was rounded up to the next page
- .\" boundary; since 2.6.24, it is rounded down!
- The address of the new mapping is returned as the result of the call.
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 51029a425dbe..f3c60ca897cc 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -6199,6 +6199,7 @@ T:	git git://git.kernel.org/pub/scm/linux/kernel/git/tytso/fscrypt.git
+ S:	Supported
+ F:	fs/crypto/
+ F:	include/linux/fscrypt*.h
++F:	include/uapi/linux/fscrypt.h
+ F:	Documentation/filesystems/fscrypt.rst
+ 
+ FSI-ATTACHED I2C DRIVER
+diff --git a/include/linux/fscrypt.h b/include/linux/fscrypt.h
+index e5194fc3983e..8b1e44421497 100644
+--- a/include/linux/fscrypt.h
++++ b/include/linux/fscrypt.h
+@@ -16,6 +16,7 @@
+ #include <linux/fs.h>
+ #include <linux/mm.h>
+ #include <linux/slab.h>
++#include <uapi/linux/fscrypt.h>
+ 
+ #define FS_CRYPTO_BLOCK_SIZE		16
+ 
+diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
+index 121e82ce296b..0f4e66b1bcd0 100644
+--- a/include/uapi/linux/fs.h
++++ b/include/uapi/linux/fs.h
+@@ -13,6 +13,9 @@
+ #include <linux/limits.h>
+ #include <linux/ioctl.h>
+ #include <linux/types.h>
++#ifndef __KERNEL__
++#include <linux/fscrypt.h>
++#endif
+ 
+ /* Use of MS_* flags within the kernel is restricted to core mount(2) code. */
+ #if !defined(__KERNEL__)
+@@ -212,57 +215,6 @@ struct fsxattr {
+ #define FS_IOC_GETFSLABEL		_IOR(0x94, 49, char[FSLABEL_MAX])
+ #define FS_IOC_SETFSLABEL		_IOW(0x94, 50, char[FSLABEL_MAX])
+ 
+-/*
+- * File system encryption support
+- */
+-/* Policy provided via an ioctl on the topmost directory */
+-#define FS_KEY_DESCRIPTOR_SIZE	8
+-
+-#define FS_POLICY_FLAGS_PAD_4		0x00
+-#define FS_POLICY_FLAGS_PAD_8		0x01
+-#define FS_POLICY_FLAGS_PAD_16		0x02
+-#define FS_POLICY_FLAGS_PAD_32		0x03
+-#define FS_POLICY_FLAGS_PAD_MASK	0x03
+-#define FS_POLICY_FLAG_DIRECT_KEY	0x04	/* use master key directly */
+-#define FS_POLICY_FLAGS_VALID		0x07
+-
+-/* Encryption algorithms */
+-#define FS_ENCRYPTION_MODE_INVALID		0
+-#define FS_ENCRYPTION_MODE_AES_256_XTS		1
+-#define FS_ENCRYPTION_MODE_AES_256_GCM		2
+-#define FS_ENCRYPTION_MODE_AES_256_CBC		3
+-#define FS_ENCRYPTION_MODE_AES_256_CTS		4
+-#define FS_ENCRYPTION_MODE_AES_128_CBC		5
+-#define FS_ENCRYPTION_MODE_AES_128_CTS		6
+-#define FS_ENCRYPTION_MODE_SPECK128_256_XTS	7 /* Removed, do not use. */
+-#define FS_ENCRYPTION_MODE_SPECK128_256_CTS	8 /* Removed, do not use. */
+-#define FS_ENCRYPTION_MODE_ADIANTUM		9
+-
+-struct fscrypt_policy {
+-	__u8 version;
+-	__u8 contents_encryption_mode;
+-	__u8 filenames_encryption_mode;
+-	__u8 flags;
+-	__u8 master_key_descriptor[FS_KEY_DESCRIPTOR_SIZE];
+-};
+-
+-#define FS_IOC_SET_ENCRYPTION_POLICY	_IOR('f', 19, struct fscrypt_policy)
+-#define FS_IOC_GET_ENCRYPTION_PWSALT	_IOW('f', 20, __u8[16])
+-#define FS_IOC_GET_ENCRYPTION_POLICY	_IOW('f', 21, struct fscrypt_policy)
+-
+-/* Parameters for passing an encryption key into the kernel keyring */
+-#define FS_KEY_DESC_PREFIX		"fscrypt:"
+-#define FS_KEY_DESC_PREFIX_SIZE		8
+-
+-/* Structure that userspace passes to the kernel keyring */
+-#define FS_MAX_KEY_SIZE			64
+-
+-struct fscrypt_key {
+-	__u32 mode;
+-	__u8 raw[FS_MAX_KEY_SIZE];
+-	__u32 size;
+-};
+-
+ /*
+  * Inode flags (FS_IOC_GETFLAGS / FS_IOC_SETFLAGS)
+  *
+diff --git a/include/uapi/linux/fscrypt.h b/include/uapi/linux/fscrypt.h
+new file mode 100644
+index 000000000000..193339cb53fd
+--- /dev/null
++++ b/include/uapi/linux/fscrypt.h
+@@ -0,0 +1,58 @@
++/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
++#ifndef _UAPI_LINUX_FSCRYPT_H
++#define _UAPI_LINUX_FSCRYPT_H
++
++#include <linux/types.h>
++
++/*
++ * File system encryption support
++ */
++/* Policy provided via an ioctl on the topmost directory */
++#define FS_KEY_DESCRIPTOR_SIZE	8
++
++#define FS_POLICY_FLAGS_PAD_4		0x00
++#define FS_POLICY_FLAGS_PAD_8		0x01
++#define FS_POLICY_FLAGS_PAD_16		0x02
++#define FS_POLICY_FLAGS_PAD_32		0x03
++#define FS_POLICY_FLAGS_PAD_MASK	0x03
++#define FS_POLICY_FLAG_DIRECT_KEY	0x04	/* use master key directly */
++#define FS_POLICY_FLAGS_VALID		0x07
++
++/* Encryption algorithms */
++#define FS_ENCRYPTION_MODE_INVALID		0
++#define FS_ENCRYPTION_MODE_AES_256_XTS		1
++#define FS_ENCRYPTION_MODE_AES_256_GCM		2
++#define FS_ENCRYPTION_MODE_AES_256_CBC		3
++#define FS_ENCRYPTION_MODE_AES_256_CTS		4
++#define FS_ENCRYPTION_MODE_AES_128_CBC		5
++#define FS_ENCRYPTION_MODE_AES_128_CTS		6
++#define FS_ENCRYPTION_MODE_SPECK128_256_XTS	7 /* Removed, do not use. */
++#define FS_ENCRYPTION_MODE_SPECK128_256_CTS	8 /* Removed, do not use. */
++#define FS_ENCRYPTION_MODE_ADIANTUM		9
++
++struct fscrypt_policy {
++	__u8 version;
++	__u8 contents_encryption_mode;
++	__u8 filenames_encryption_mode;
++	__u8 flags;
++	__u8 master_key_descriptor[FS_KEY_DESCRIPTOR_SIZE];
++};
++
++#define FS_IOC_SET_ENCRYPTION_POLICY	_IOR('f', 19, struct fscrypt_policy)
++#define FS_IOC_GET_ENCRYPTION_PWSALT	_IOW('f', 20, __u8[16])
++#define FS_IOC_GET_ENCRYPTION_POLICY	_IOW('f', 21, struct fscrypt_policy)
++
++/* Parameters for passing an encryption key into the kernel keyring */
++#define FS_KEY_DESC_PREFIX		"fscrypt:"
++#define FS_KEY_DESC_PREFIX_SIZE		8
++
++/* Structure that userspace passes to the kernel keyring */
++#define FS_MAX_KEY_SIZE			64
++
++struct fscrypt_key {
++	__u32 mode;
++	__u8 raw[FS_MAX_KEY_SIZE];
++	__u32 size;
++};
++
++#endif /* _UAPI_LINUX_FSCRYPT_H */
 -- 
-2.20.1.791.gb4d0f1c61a-goog
+2.20.1
+
+
+______________________________________________________
+Linux MTD discussion mailing list
+http://lists.infradead.org/mailman/listinfo/linux-mtd/
