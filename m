@@ -1,7 +1,7 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: [PATCH 12/19] io_uring: add support for pre-mapped user IO buffers
-Date: Mon, 11 Feb 2019 12:00:42 -0700
-Message-ID: <20190211190049.7888-14-axboe@kernel.dk>
+Subject: [PATCH 09/19] io_uring: use fget/fput_many() for file references
+Date: Mon, 11 Feb 2019 12:00:39 -0700
+Message-ID: <20190211190049.7888-11-axboe@kernel.dk>
 References: <20190211190049.7888-1-axboe@kernel.dk>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20190211190049.7888-1-axboe@kernel.dk>
@@ -10,635 +10,322 @@ To: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
 Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk, Jens Axboe <axboe@kernel.dk>
 List-Id: linux-api@vger.kernel.org
 
-If we have fixed user buffers, we can map them into the kernel when we
-setup the io_uring. That avoids the need to do get_user_pages() for
-each and every IO.
+Add a separate io_submit_state structure, to cache some of the things
+we need for IO submission.
 
-To utilize this feature, the application must call io_uring_register()
-after having setup an io_uring instance, passing in
-IORING_REGISTER_BUFFERS as the opcode. The argument must be a pointer to
-an iovec array, and the nr_args should contain how many iovecs the
-application wishes to map.
+One such example is file reference batching. io_submit_state. We get as
+many references as the number of sqes we are submitting, and drop
+unused ones if we end up switching files. The assumption here is that
+we're usually only dealing with one fd, and if there are multiple,
+hopefuly they are at least somewhat ordered. Could trivially be extended
+to cover multiple fds, if needed.
 
-If successful, these buffers are now mapped into the kernel, eligible
-for IO. To use these fixed buffers, the application must use the
-IORING_OP_READ_FIXED and IORING_OP_WRITE_FIXED opcodes, and then
-set sqe->index to the desired buffer index. sqe->addr..sqe->addr+seq->len
-must point to somewhere inside the indexed buffer.
-
-The application may register buffers throughout the lifetime of the
-io_uring instance. It can call io_uring_register() with
-IORING_UNREGISTER_BUFFERS as the opcode to unregister the current set of
-buffers, and then register a new set. The application need not
-unregister buffers explicitly before shutting down the io_uring
-instance.
-
-It's perfectly valid to setup a larger buffer, and then sometimes only
-use parts of it for an IO. As long as the range is within the originally
-mapped region, it will work just fine.
-
-For now, buffers must not be file backed. If file backed buffers are
-passed in, the registration will fail with -1/EOPNOTSUPP. This
-restriction may be relaxed in the future.
-
-RLIMIT_MEMLOCK is used to check how much memory we can pin. A somewhat
-arbitrary 1G per buffer size is also imposed.
+On the completion side we do the same thing, except this is trivially
+done just locally in io_iopoll_reap().
 
 Reviewed-by: Hannes Reinecke <hare@suse.com>
 Signed-off-by: Jens Axboe <axboe@kernel.dk>
 ---
- arch/x86/entry/syscalls/syscall_32.tbl |   1 +
- arch/x86/entry/syscalls/syscall_64.tbl |   1 +
- fs/io_uring.c                          | 373 ++++++++++++++++++++++++-
- include/linux/syscalls.h               |   2 +
- include/uapi/asm-generic/unistd.h      |   4 +-
- include/uapi/linux/io_uring.h          |  13 +-
- kernel/sys_ni.c                        |   1 +
- 7 files changed, 380 insertions(+), 15 deletions(-)
+ fs/io_uring.c | 142 ++++++++++++++++++++++++++++++++++++++++++--------
+ 1 file changed, 121 insertions(+), 21 deletions(-)
 
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index 481c126259e9..2eefd2a7c1ce 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -400,3 +400,4 @@
- 386	i386	rseq			sys_rseq			__ia32_sys_rseq
- 425	i386	io_uring_setup		sys_io_uring_setup		__ia32_sys_io_uring_setup
- 426	i386	io_uring_enter		sys_io_uring_enter		__ia32_sys_io_uring_enter
-+427	i386	io_uring_register	sys_io_uring_register		__ia32_sys_io_uring_register
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 6a32a430c8e0..65c026185e61 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -345,6 +345,7 @@
- 334	common	rseq			__x64_sys_rseq
- 425	common	io_uring_setup		__x64_sys_io_uring_setup
- 426	common	io_uring_enter		__x64_sys_io_uring_enter
-+427	common	io_uring_register	__x64_sys_io_uring_register
- 
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
 diff --git a/fs/io_uring.c b/fs/io_uring.c
-index e330252dc5de..0eba20d18f53 100644
+index 30efe5edf6aa..7358dd1dbf3f 100644
 --- a/fs/io_uring.c
 +++ b/fs/io_uring.c
-@@ -45,6 +45,7 @@
- #include <linux/slab.h>
- #include <linux/workqueue.h>
- #include <linux/blkdev.h>
-+#include <linux/bvec.h>
- #include <linux/net.h>
- #include <net/sock.h>
- #include <net/af_unix.h>
-@@ -52,6 +53,8 @@
- #include <linux/sched/mm.h>
- #include <linux/uaccess.h>
- #include <linux/nospec.h>
-+#include <linux/sizes.h>
-+#include <linux/hugetlb.h>
+@@ -165,6 +165,19 @@ struct io_kiocb {
+ #define IO_PLUG_THRESHOLD		2
+ #define IO_IOPOLL_BATCH			8
  
- #include <uapi/linux/io_uring.h>
- 
-@@ -81,6 +84,13 @@ struct io_cq_ring {
- 	struct io_uring_cqe	cqes[];
- };
- 
-+struct io_mapped_ubuf {
-+	u64		ubuf;
-+	size_t		len;
-+	struct		bio_vec *bvec;
-+	unsigned int	nr_bvecs;
++struct io_submit_state {
++	struct blk_plug		plug;
++
++	/*
++	 * File reference cache
++	 */
++	struct file		*file;
++	unsigned int		fd;
++	unsigned int		has_refs;
++	unsigned int		used_refs;
++	unsigned int		ios_left;
 +};
 +
- struct io_ring_ctx {
- 	struct {
- 		struct percpu_ref	refs;
-@@ -113,6 +123,10 @@ struct io_ring_ctx {
- 		struct fasync_struct	*cq_fasync;
- 	} ____cacheline_aligned_in_smp;
+ static struct kmem_cache *req_cachep;
  
-+	/* if used, fixed mapped user buffers */
-+	unsigned		nr_user_bufs;
-+	struct io_mapped_ubuf	*user_bufs;
+ static const struct file_operations io_uring_fops;
+@@ -332,9 +345,11 @@ static void io_iopoll_complete(struct io_ring_ctx *ctx, unsigned int *nr_events,
+ 			       struct list_head *done)
+ {
+ 	void *reqs[IO_IOPOLL_BATCH];
++	int file_count, to_free;
++	struct file *file = NULL;
+ 	struct io_kiocb *req;
+-	int to_free = 0;
+ 
++	file_count = to_free = 0;
+ 	while (!list_empty(done)) {
+ 		req = list_first_entry(done, struct io_kiocb, list);
+ 		list_del(&req->list);
+@@ -344,12 +359,28 @@ static void io_iopoll_complete(struct io_ring_ctx *ctx, unsigned int *nr_events,
+ 		reqs[to_free++] = req;
+ 		(*nr_events)++;
+ 
+-		fput(req->rw.ki_filp);
++		/*
++		 * Batched puts of the same file, to avoid dirtying the
++		 * file usage count multiple times, if avoidable.
++		 */
++		if (!file) {
++			file = req->rw.ki_filp;
++			file_count = 1;
++		} else if (file == req->rw.ki_filp) {
++			file_count++;
++		} else {
++			fput_many(file, file_count);
++			file = req->rw.ki_filp;
++			file_count = 1;
++		}
 +
- 	struct user_struct	*user;
- 
- 	struct completion	ctx_done;
-@@ -732,6 +746,46 @@ static inline void io_rw_done(struct kiocb *kiocb, ssize_t ret)
+ 		if (to_free == ARRAY_SIZE(reqs))
+ 			io_free_req_many(ctx, reqs, &to_free);
  	}
+ 	io_commit_cqring(ctx);
+ 
++	if (file)
++		fput_many(file, file_count);
+ 	io_free_req_many(ctx, reqs, &to_free);
  }
  
-+static int io_import_fixed(struct io_ring_ctx *ctx, int rw,
-+			   const struct io_uring_sqe *sqe,
-+			   struct iov_iter *iter)
+@@ -530,6 +561,48 @@ static void io_iopoll_req_issued(struct io_kiocb *req)
+ 		list_add_tail(&req->list, &ctx->poll_list);
+ }
+ 
++static void io_file_put(struct io_submit_state *state, struct file *file)
 +{
-+	size_t len = READ_ONCE(sqe->len);
-+	struct io_mapped_ubuf *imu;
-+	unsigned index, buf_index;
-+	size_t offset;
-+	u64 buf_addr;
++	if (!state) {
++		fput(file);
++	} else if (state->file) {
++		int diff = state->has_refs - state->used_refs;
 +
-+	/* attempt to use fixed buffers without having provided iovecs */
-+	if (unlikely(!ctx->user_bufs))
-+		return -EFAULT;
-+
-+	buf_index = READ_ONCE(sqe->buf_index);
-+	if (unlikely(buf_index >= ctx->nr_user_bufs))
-+		return -EFAULT;
-+
-+	index = array_index_nospec(buf_index, ctx->nr_user_bufs);
-+	imu = &ctx->user_bufs[index];
-+	buf_addr = READ_ONCE(sqe->addr);
-+
-+	/* overflow */
-+	if (buf_addr + len < buf_addr)
-+		return -EFAULT;
-+	/* not inside the mapped region */
-+	if (buf_addr < imu->ubuf || buf_addr + len > imu->ubuf + imu->len)
-+		return -EFAULT;
-+
-+	/*
-+	 * May not be a start of buffer, set size appropriately
-+	 * and advance us to the beginning.
-+	 */
-+	offset = buf_addr - imu->ubuf;
-+	iov_iter_bvec(iter, rw, imu->bvec, imu->nr_bvecs, offset + len);
-+	if (offset)
-+		iov_iter_advance(iter, offset);
-+	return 0;
++		if (diff)
++			fput_many(state->file, diff);
++		state->file = NULL;
++	}
 +}
 +
- static int io_import_iovec(struct io_ring_ctx *ctx, int rw,
- 			   const struct sqe_submit *s, struct iovec **iovec,
- 			   struct iov_iter *iter)
-@@ -739,6 +793,23 @@ static int io_import_iovec(struct io_ring_ctx *ctx, int rw,
- 	const struct io_uring_sqe *sqe = s->sqe;
- 	void __user *buf = u64_to_user_ptr(READ_ONCE(sqe->addr));
- 	size_t sqe_len = READ_ONCE(sqe->len);
-+	u8 opcode;
++/*
++ * Get as many references to a file as we have IOs left in this submission,
++ * assuming most submissions are for one file, or at least that each file
++ * has more than one submission.
++ */
++static struct file *io_file_get(struct io_submit_state *state, int fd)
++{
++	if (!state)
++		return fget(fd);
 +
-+	/*
-+	 * We're reading ->opcode for the second time, but the first read
-+	 * doesn't care whether it's _FIXED or not, so it doesn't matter
-+	 * whether ->opcode changes concurrently. The first read does care
-+	 * about whether it is a READ or a WRITE, so we don't trust this read
-+	 * for that purpose and instead let the caller pass in the read/write
-+	 * flag.
-+	 */
-+	opcode = READ_ONCE(sqe->opcode);
-+	if (opcode == IORING_OP_READ_FIXED ||
-+	    opcode == IORING_OP_WRITE_FIXED) {
-+		ssize_t ret = io_import_fixed(ctx, rw, sqe, iter);
-+		*iovec = NULL;
-+		return ret;
++	if (state->file) {
++		if (state->fd == fd) {
++			state->used_refs++;
++			state->ios_left--;
++			return state->file;
++		}
++		io_file_put(state, NULL);
 +	}
++	state->file = fget_many(fd, state->ios_left);
++	if (!state->file)
++		return NULL;
++
++	state->fd = fd;
++	state->has_refs = state->ios_left;
++	state->used_refs = 1;
++	state->ios_left--;
++	return state->file;
++}
++
+ /*
+  * If we tracked the file through the SCM inflight mechanism, we could support
+  * any file. For now, just ensure that anything potentially problematic is done
+@@ -548,7 +621,7 @@ static bool io_file_supports_async(struct file *file)
+ }
  
- 	if (!s->has_user)
- 		return EFAULT;
-@@ -886,7 +957,7 @@ static int io_prep_fsync(struct io_kiocb *req, const struct io_uring_sqe *sqe)
- 
- 	if (unlikely(req->ctx->flags & IORING_SETUP_IOPOLL))
- 		return -EINVAL;
--	if (unlikely(sqe->addr || sqe->ioprio))
-+	if (unlikely(sqe->addr || sqe->ioprio || sqe->buf_index))
- 		return -EINVAL;
+ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe,
+-		      bool force_nonblock)
++		      bool force_nonblock, struct io_submit_state *state)
+ {
+ 	struct io_ring_ctx *ctx = req->ctx;
+ 	struct kiocb *kiocb = &req->rw;
+@@ -560,7 +633,7 @@ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe,
+ 		return 0;
  
  	fd = READ_ONCE(sqe->fd);
-@@ -945,9 +1016,19 @@ static int __io_submit_sqe(struct io_ring_ctx *ctx, struct io_kiocb *req,
+-	kiocb->ki_filp = fget(fd);
++	kiocb->ki_filp = io_file_get(state, fd);
+ 	if (unlikely(!kiocb->ki_filp))
+ 		return -EBADF;
+ 	if (force_nonblock && !io_file_supports_async(kiocb->ki_filp))
+@@ -604,7 +677,10 @@ static int io_prep_rw(struct io_kiocb *req, const struct io_uring_sqe *sqe,
+ 	}
+ 	return 0;
+ out_fput:
+-	fput(kiocb->ki_filp);
++	/* in case of error, we didn't use this file reference. drop it. */
++	if (state)
++		state->used_refs--;
++	io_file_put(state, kiocb->ki_filp);
+ 	return ret;
+ }
+ 
+@@ -650,7 +726,7 @@ static int io_import_iovec(struct io_ring_ctx *ctx, int rw,
+ }
+ 
+ static ssize_t io_read(struct io_kiocb *req, const struct sqe_submit *s,
+-		       bool force_nonblock)
++		       bool force_nonblock, struct io_submit_state *state)
+ {
+ 	struct iovec inline_vecs[UIO_FASTIOV], *iovec = inline_vecs;
+ 	struct kiocb *kiocb = &req->rw;
+@@ -658,7 +734,7 @@ static ssize_t io_read(struct io_kiocb *req, const struct sqe_submit *s,
+ 	struct file *file;
+ 	ssize_t ret;
+ 
+-	ret = io_prep_rw(req, s->sqe, force_nonblock);
++	ret = io_prep_rw(req, s->sqe, force_nonblock, state);
+ 	if (ret)
+ 		return ret;
+ 	file = kiocb->ki_filp;
+@@ -694,7 +770,7 @@ static ssize_t io_read(struct io_kiocb *req, const struct sqe_submit *s,
+ }
+ 
+ static ssize_t io_write(struct io_kiocb *req, const struct sqe_submit *s,
+-			bool force_nonblock)
++			bool force_nonblock, struct io_submit_state *state)
+ {
+ 	struct iovec inline_vecs[UIO_FASTIOV], *iovec = inline_vecs;
+ 	struct kiocb *kiocb = &req->rw;
+@@ -702,7 +778,7 @@ static ssize_t io_write(struct io_kiocb *req, const struct sqe_submit *s,
+ 	struct file *file;
+ 	ssize_t ret;
+ 
+-	ret = io_prep_rw(req, s->sqe, force_nonblock);
++	ret = io_prep_rw(req, s->sqe, force_nonblock, state);
+ 	if (ret)
+ 		return ret;
+ 	/* Hold on to the file for -EAGAIN */
+@@ -826,7 +902,8 @@ static int io_fsync(struct io_kiocb *req, const struct io_uring_sqe *sqe,
+ }
+ 
+ static int __io_submit_sqe(struct io_ring_ctx *ctx, struct io_kiocb *req,
+-			   const struct sqe_submit *s, bool force_nonblock)
++			   const struct sqe_submit *s, bool force_nonblock,
++			   struct io_submit_state *state)
+ {
+ 	ssize_t ret;
+ 	int opcode;
+@@ -841,10 +918,10 @@ static int __io_submit_sqe(struct io_ring_ctx *ctx, struct io_kiocb *req,
  		ret = io_nop(req, req->user_data);
  		break;
  	case IORING_OP_READV:
-+		if (unlikely(s->sqe->buf_index))
-+			return -EINVAL;
- 		ret = io_read(req, s, force_nonblock, state);
+-		ret = io_read(req, s, force_nonblock);
++		ret = io_read(req, s, force_nonblock, state);
  		break;
  	case IORING_OP_WRITEV:
-+		if (unlikely(s->sqe->buf_index))
-+			return -EINVAL;
+-		ret = io_write(req, s, force_nonblock);
 +		ret = io_write(req, s, force_nonblock, state);
-+		break;
-+	case IORING_OP_READ_FIXED:
-+		ret = io_read(req, s, force_nonblock, state);
-+		break;
-+	case IORING_OP_WRITE_FIXED:
- 		ret = io_write(req, s, force_nonblock, state);
  		break;
  	case IORING_OP_FSYNC:
-@@ -976,28 +1057,46 @@ static int __io_submit_sqe(struct io_ring_ctx *ctx, struct io_kiocb *req,
- 	return 0;
- }
- 
-+static inline bool io_sqe_needs_user(const struct io_uring_sqe *sqe)
-+{
-+	u8 opcode = READ_ONCE(sqe->opcode);
-+
-+	return !(opcode == IORING_OP_READ_FIXED ||
-+		 opcode == IORING_OP_WRITE_FIXED);
-+}
-+
- static void io_sq_wq_submit_work(struct work_struct *work)
- {
- 	struct io_kiocb *req = container_of(work, struct io_kiocb, work);
- 	struct sqe_submit *s = &req->submit;
- 	const struct io_uring_sqe *sqe = s->sqe;
- 	struct io_ring_ctx *ctx = req->ctx;
--	mm_segment_t old_fs = get_fs();
-+	mm_segment_t old_fs;
-+	bool needs_user;
- 	int ret;
- 
- 	 /* Ensure we clear previously set forced non-block flag */
- 	req->flags &= ~REQ_F_FORCE_NONBLOCK;
- 	req->rw.ki_flags &= ~IOCB_NOWAIT;
- 
--	if (!mmget_not_zero(ctx->sqo_mm)) {
--		ret = -EFAULT;
--		goto err;
--	}
--
--	use_mm(ctx->sqo_mm);
--	set_fs(USER_DS);
--	s->has_user = true;
+ 		ret = io_fsync(req, s->sqe, force_nonblock);
+@@ -896,7 +973,7 @@ static void io_sq_wq_submit_work(struct work_struct *work)
  	s->needs_lock = true;
-+	s->has_user = false;
-+
-+	/*
-+	 * If we're doing IO to fixed buffers, we don't need to get/set
-+	 * user context
-+	 */
-+	needs_user = io_sqe_needs_user(s->sqe);
-+	if (needs_user) {
-+		if (!mmget_not_zero(ctx->sqo_mm)) {
-+			ret = -EFAULT;
-+			goto err;
-+		}
-+		use_mm(ctx->sqo_mm);
-+		old_fs = get_fs();
-+		set_fs(USER_DS);
-+		s->has_user = true;
-+	}
  
  	do {
- 		ret = __io_submit_sqe(ctx, req, s, false, NULL);
-@@ -1011,9 +1110,11 @@ static void io_sq_wq_submit_work(struct work_struct *work)
- 		cond_resched();
- 	} while (1);
- 
--	set_fs(old_fs);
--	unuse_mm(ctx->sqo_mm);
--	mmput(ctx->sqo_mm);
-+	if (needs_user) {
-+		set_fs(old_fs);
-+		unuse_mm(ctx->sqo_mm);
-+		mmput(ctx->sqo_mm);
-+	}
- err:
- 	if (ret) {
- 		io_cqring_add_event(ctx, sqe->user_data, ret, 0);
-@@ -1308,6 +1409,197 @@ static unsigned long ring_pages(unsigned sq_entries, unsigned cq_entries)
- 	return (bytes + PAGE_SIZE - 1) / PAGE_SIZE;
+-		ret = __io_submit_sqe(ctx, req, s, false);
++		ret = __io_submit_sqe(ctx, req, s, false, NULL);
+ 		/*
+ 		 * We can get EAGAIN for polled IO even though we're forcing
+ 		 * a sync submission from here, since we can't wait for
+@@ -920,7 +997,8 @@ static void io_sq_wq_submit_work(struct work_struct *work)
+ 	kfree(sqe);
  }
  
-+static int io_sqe_buffer_unregister(struct io_ring_ctx *ctx)
-+{
-+	int i, j;
-+
-+	if (!ctx->user_bufs)
-+		return -ENXIO;
-+
-+	for (i = 0; i < ctx->nr_user_bufs; i++) {
-+		struct io_mapped_ubuf *imu = &ctx->user_bufs[i];
-+
-+		for (j = 0; j < imu->nr_bvecs; j++)
-+			put_page(imu->bvec[j].bv_page);
-+
-+		if (ctx->account_mem)
-+			io_unaccount_mem(ctx->user, imu->nr_bvecs);
-+		kfree(imu->bvec);
-+		imu->nr_bvecs = 0;
-+	}
-+
-+	kfree(ctx->user_bufs);
-+	ctx->user_bufs = NULL;
-+	ctx->nr_user_bufs = 0;
-+	return 0;
-+}
-+
-+static int io_copy_iov(struct io_ring_ctx *ctx, struct iovec *dst,
-+		       void __user *arg, unsigned index)
-+{
-+	struct iovec __user *src;
-+
-+#ifdef CONFIG_COMPAT
-+	if (ctx->compat) {
-+		struct compat_iovec __user *ciovs;
-+		struct compat_iovec ciov;
-+
-+		ciovs = (struct compat_iovec __user *) arg;
-+		if (copy_from_user(&ciov, &ciovs[index], sizeof(ciov)))
-+			return -EFAULT;
-+
-+		dst->iov_base = (void __user *) (unsigned long) ciov.iov_base;
-+		dst->iov_len = ciov.iov_len;
-+		return 0;
-+	}
-+#endif
-+	src = (struct iovec __user *) arg;
-+	if (copy_from_user(dst, &src[index], sizeof(*dst)))
-+		return -EFAULT;
-+	return 0;
-+}
-+
-+static int io_sqe_buffer_register(struct io_ring_ctx *ctx, void __user *arg,
-+				  unsigned nr_args)
-+{
-+	struct vm_area_struct **vmas = NULL;
-+	struct page **pages = NULL;
-+	int i, j, got_pages = 0;
-+	int ret = -EINVAL;
-+
-+	if (ctx->user_bufs)
-+		return -EBUSY;
-+	if (!nr_args || nr_args > UIO_MAXIOV)
-+		return -EINVAL;
-+
-+	ctx->user_bufs = kcalloc(nr_args, sizeof(struct io_mapped_ubuf),
-+					GFP_KERNEL);
-+	if (!ctx->user_bufs)
-+		return -ENOMEM;
-+
-+	for (i = 0; i < nr_args; i++) {
-+		struct io_mapped_ubuf *imu = &ctx->user_bufs[i];
-+		unsigned long off, start, end, ubuf;
-+		int pret, nr_pages;
-+		struct iovec iov;
-+		size_t size;
-+
-+		ret = io_copy_iov(ctx, &iov, arg, i);
-+		if (ret)
-+			break;
-+
-+		/*
-+		 * Don't impose further limits on the size and buffer
-+		 * constraints here, we'll -EINVAL later when IO is
-+		 * submitted if they are wrong.
-+		 */
-+		ret = -EFAULT;
-+		if (!iov.iov_base || !iov.iov_len)
-+			goto err;
-+
-+		/* arbitrary limit, but we need something */
-+		if (iov.iov_len > SZ_1G)
-+			goto err;
-+
-+		ubuf = (unsigned long) iov.iov_base;
-+		end = (ubuf + iov.iov_len + PAGE_SIZE - 1) >> PAGE_SHIFT;
-+		start = ubuf >> PAGE_SHIFT;
-+		nr_pages = end - start;
-+
-+		if (ctx->account_mem) {
-+			ret = io_account_mem(ctx->user, nr_pages);
-+			if (ret)
-+				goto err;
-+		}
-+
-+		ret = 0;
-+		if (!pages || nr_pages > got_pages) {
-+			kfree(vmas);
-+			kfree(pages);
-+			pages = kmalloc_array(nr_pages, sizeof(struct page *),
-+						GFP_KERNEL);
-+			vmas = kmalloc_array(nr_pages,
-+					sizeof(struct vma_area_struct *),
-+					GFP_KERNEL);
-+			if (!pages || !vmas) {
-+				ret = -ENOMEM;
-+				if (ctx->account_mem)
-+					io_unaccount_mem(ctx->user, nr_pages);
-+				goto err;
-+			}
-+			got_pages = nr_pages;
-+		}
-+
-+		imu->bvec = kmalloc_array(nr_pages, sizeof(struct bio_vec),
-+						GFP_KERNEL);
-+		ret = -ENOMEM;
-+		if (!imu->bvec) {
-+			if (ctx->account_mem)
-+				io_unaccount_mem(ctx->user, nr_pages);
-+			goto err;
-+		}
-+
-+		ret = 0;
-+		down_read(&current->mm->mmap_sem);
-+		pret = get_user_pages_longterm(ubuf, nr_pages, FOLL_WRITE,
-+						pages, vmas);
-+		if (pret == nr_pages) {
-+			/* don't support file backed memory */
-+			for (j = 0; j < nr_pages; j++) {
-+				struct vm_area_struct *vma = vmas[j];
-+
-+				if (vma->vm_file &&
-+				    !is_file_hugepages(vma->vm_file)) {
-+					ret = -EOPNOTSUPP;
-+					break;
-+				}
-+			}
-+		} else {
-+			ret = pret < 0 ? pret : -EFAULT;
-+		}
-+		up_read(&current->mm->mmap_sem);
-+		if (ret) {
-+			/*
-+			 * if we did partial map, or found file backed vmas,
-+			 * release any pages we did get
-+			 */
-+			if (pret > 0) {
-+				for (j = 0; j < pret; j++)
-+					put_page(pages[j]);
-+			}
-+			if (ctx->account_mem)
-+				io_unaccount_mem(ctx->user, nr_pages);
-+			goto err;
-+		}
-+
-+		off = ubuf & ~PAGE_MASK;
-+		size = iov.iov_len;
-+		for (j = 0; j < nr_pages; j++) {
-+			size_t vec_len;
-+
-+			vec_len = min_t(size_t, size, PAGE_SIZE - off);
-+			imu->bvec[j].bv_page = pages[j];
-+			imu->bvec[j].bv_len = vec_len;
-+			imu->bvec[j].bv_offset = off;
-+			off = 0;
-+			size -= vec_len;
-+		}
-+		/* store original address for later verification */
-+		imu->ubuf = ubuf;
-+		imu->len = iov.iov_len;
-+		imu->nr_bvecs = nr_pages;
-+	}
-+	kfree(pages);
-+	kfree(vmas);
-+	ctx->nr_user_bufs = nr_args;
-+	return 0;
-+err:
-+	kfree(pages);
-+	kfree(vmas);
-+	io_sqe_buffer_unregister(ctx);
-+	return ret;
-+}
-+
- static void io_ring_ctx_free(struct io_ring_ctx *ctx)
+-static int io_submit_sqe(struct io_ring_ctx *ctx, struct sqe_submit *s)
++static int io_submit_sqe(struct io_ring_ctx *ctx, struct sqe_submit *s,
++			 struct io_submit_state *state)
  {
- 	if (ctx->sqo_wq)
-@@ -1316,6 +1608,7 @@ static void io_ring_ctx_free(struct io_ring_ctx *ctx)
- 		mmdrop(ctx->sqo_mm);
+ 	struct io_kiocb *req;
+ 	ssize_t ret;
+@@ -935,7 +1013,7 @@ static int io_submit_sqe(struct io_ring_ctx *ctx, struct sqe_submit *s)
  
- 	io_iopoll_reap_events(ctx);
-+	io_sqe_buffer_unregister(ctx);
+ 	req->rw.ki_filp = NULL;
  
- #if defined(CONFIG_UNIX)
- 	if (ctx->ring_sock)
-@@ -1677,6 +1970,60 @@ SYSCALL_DEFINE2(io_uring_setup, u32, entries,
- 	return io_uring_setup(entries, params);
+-	ret = __io_submit_sqe(ctx, req, s, true);
++	ret = __io_submit_sqe(ctx, req, s, true, state);
+ 	if (ret == -EAGAIN) {
+ 		struct io_uring_sqe *sqe_copy;
+ 
+@@ -956,6 +1034,26 @@ static int io_submit_sqe(struct io_ring_ctx *ctx, struct sqe_submit *s)
+ 	return ret;
  }
- 
-+static int __io_uring_register(struct io_ring_ctx *ctx, unsigned opcode,
-+			       void __user *arg, unsigned nr_args)
-+{
-+	int ret;
-+
-+	percpu_ref_kill(&ctx->refs);
-+	wait_for_completion(&ctx->ctx_done);
-+
-+	switch (opcode) {
-+	case IORING_REGISTER_BUFFERS:
-+		ret = io_sqe_buffer_register(ctx, arg, nr_args);
-+		break;
-+	case IORING_UNREGISTER_BUFFERS:
-+		ret = -EINVAL;
-+		if (arg || nr_args)
-+			break;
-+		ret = io_sqe_buffer_unregister(ctx);
-+		break;
-+	default:
-+		ret = -EINVAL;
-+		break;
-+	}
-+
-+	/* bring the ctx back to life */
-+	reinit_completion(&ctx->ctx_done);
-+	percpu_ref_reinit(&ctx->refs);
-+	return ret;
-+}
-+
-+SYSCALL_DEFINE4(io_uring_register, unsigned int, fd, unsigned int, opcode,
-+		void __user *, arg, unsigned int, nr_args)
-+{
-+	struct io_ring_ctx *ctx;
-+	long ret = -EBADF;
-+	struct fd f;
-+
-+	f = fdget(fd);
-+	if (!f.file)
-+		return -EBADF;
-+
-+	ret = -EOPNOTSUPP;
-+	if (f.file->f_op != &io_uring_fops)
-+		goto out_fput;
-+
-+	ctx = f.file->private_data;
-+
-+	mutex_lock(&ctx->uring_lock);
-+	ret = __io_uring_register(ctx, opcode, arg, nr_args);
-+	mutex_unlock(&ctx->uring_lock);
-+out_fput:
-+	fdput(f);
-+	return ret;
-+}
-+
- static int __init io_uring_init(void)
- {
- 	req_cachep = KMEM_CACHE(io_kiocb, SLAB_HWCACHE_ALIGN | SLAB_PANIC);
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 3072dbaa7869..3681c05ac538 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -315,6 +315,8 @@ asmlinkage long sys_io_uring_setup(u32 entries,
- asmlinkage long sys_io_uring_enter(unsigned int fd, u32 to_submit,
- 				u32 min_complete, u32 flags,
- 				const sigset_t __user *sig, size_t sigsz);
-+asmlinkage long sys_io_uring_register(unsigned int fd, unsigned int op,
-+				void __user *arg, unsigned int nr_args);
- 
- /* fs/xattr.c */
- asmlinkage long sys_setxattr(const char __user *path, const char __user *name,
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 87871e7b7ea7..d346229a1eb0 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -744,9 +744,11 @@ __SYSCALL(__NR_kexec_file_load,     sys_kexec_file_load)
- __SYSCALL(__NR_io_uring_setup, sys_io_uring_setup)
- #define __NR_io_uring_enter 426
- __SYSCALL(__NR_io_uring_enter, sys_io_uring_enter)
-+#define __NR_io_uring_register 427
-+__SYSCALL(__NR_io_uring_register, sys_io_uring_register)
- 
- #undef __NR_syscalls
--#define __NR_syscalls 427
-+#define __NR_syscalls 428
- 
- /*
-  * 32 bit systems traditionally used different
-diff --git a/include/uapi/linux/io_uring.h b/include/uapi/linux/io_uring.h
-index 5c457ea396e6..cf28f7a11f12 100644
---- a/include/uapi/linux/io_uring.h
-+++ b/include/uapi/linux/io_uring.h
-@@ -27,7 +27,10 @@ struct io_uring_sqe {
- 		__u32		fsync_flags;
- 	};
- 	__u64	user_data;	/* data to be passed back at completion time */
--	__u64	__pad2[3];
-+	union {
-+		__u16	buf_index;	/* index into fixed buffers, if used */
-+		__u64	__pad2[3];
-+	};
- };
- 
- /*
-@@ -39,6 +42,8 @@ struct io_uring_sqe {
- #define IORING_OP_READV		1
- #define IORING_OP_WRITEV	2
- #define IORING_OP_FSYNC		3
-+#define IORING_OP_READ_FIXED	4
-+#define IORING_OP_WRITE_FIXED	5
- 
- /*
-  * sqe->fsync_flags
-@@ -103,4 +108,10 @@ struct io_uring_params {
- 	struct io_cqring_offsets cq_off;
- };
  
 +/*
-+ * io_uring_register(2) opcodes and arguments
++ * Batched submission is done, ensure local IO is flushed out.
 + */
-+#define IORING_REGISTER_BUFFERS		0
-+#define IORING_UNREGISTER_BUFFERS	1
++static void io_submit_state_end(struct io_submit_state *state)
++{
++	blk_finish_plug(&state->plug);
++	io_file_put(state, NULL);
++}
 +
- #endif
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index ee5e523564bb..1bb6604dc19f 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -48,6 +48,7 @@ COND_SYSCALL_COMPAT(io_getevents);
- COND_SYSCALL_COMPAT(io_pgetevents);
- COND_SYSCALL(io_uring_setup);
- COND_SYSCALL(io_uring_enter);
-+COND_SYSCALL(io_uring_register);
++/*
++ * Start submission side cache.
++ */
++static void io_submit_state_start(struct io_submit_state *state,
++				  struct io_ring_ctx *ctx, unsigned max_ios)
++{
++	blk_start_plug(&state->plug);
++	state->file = NULL;
++	state->ios_left = max_ios;
++}
++
+ static void io_commit_sqring(struct io_ring_ctx *ctx)
+ {
+ 	struct io_sq_ring *ring = ctx->sq_ring;
+@@ -1023,11 +1121,13 @@ static bool io_get_sqring(struct io_ring_ctx *ctx, struct sqe_submit *s)
  
- /* fs/xattr.c */
+ static int io_ring_submit(struct io_ring_ctx *ctx, unsigned int to_submit)
+ {
++	struct io_submit_state state, *statep = NULL;
+ 	int i, ret = 0, submit = 0;
+-	struct blk_plug plug;
  
+-	if (to_submit > IO_PLUG_THRESHOLD)
+-		blk_start_plug(&plug);
++	if (to_submit > IO_PLUG_THRESHOLD) {
++		io_submit_state_start(&state, ctx, to_submit);
++		statep = &state;
++	}
+ 
+ 	for (i = 0; i < to_submit; i++) {
+ 		struct sqe_submit s;
+@@ -1038,7 +1138,7 @@ static int io_ring_submit(struct io_ring_ctx *ctx, unsigned int to_submit)
+ 		s.has_user = true;
+ 		s.needs_lock = false;
+ 
+-		ret = io_submit_sqe(ctx, &s);
++		ret = io_submit_sqe(ctx, &s, statep);
+ 		if (ret) {
+ 			io_drop_sqring(ctx);
+ 			break;
+@@ -1048,8 +1148,8 @@ static int io_ring_submit(struct io_ring_ctx *ctx, unsigned int to_submit)
+ 	}
+ 	io_commit_sqring(ctx);
+ 
+-	if (to_submit > IO_PLUG_THRESHOLD)
+-		blk_finish_plug(&plug);
++	if (statep)
++		io_submit_state_end(statep);
+ 
+ 	return submit ? submit : ret;
+ }
 -- 
 2.17.1
 
