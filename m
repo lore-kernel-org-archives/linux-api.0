@@ -1,7 +1,7 @@
 From: Jens Axboe <axboe@kernel.dk>
-Subject: [PATCH 01/19] fs: add an iopoll method to struct file_operations
-Date: Mon, 11 Feb 2019 12:00:30 -0700
-Message-ID: <20190211190049.7888-2-axboe@kernel.dk>
+Subject: [PATCH] io_uring: add io_uring_event cache hit information
+Date: Mon, 11 Feb 2019 12:00:31 -0700
+Message-ID: <20190211190049.7888-3-axboe@kernel.dk>
 References: <20190211190049.7888-1-axboe@kernel.dk>
 Return-path: <owner-linux-aio@kvack.org>
 In-Reply-To: <20190211190049.7888-1-axboe@kernel.dk>
@@ -10,65 +10,57 @@ To: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
 Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk, Jens Axboe <axboe@kernel.dk>
 List-Id: linux-api@vger.kernel.org
 
-From: Christoph Hellwig <hch@lst.de>
+Add hint on whether a read was served out of the page cache, or if it
+hit media. This is useful for buffered async IO, O_DIRECT reads would
+never have this set (for obvious reasons).
 
-This new methods is used to explicitly poll for I/O completion for an
-iocb.  It must be called for any iocb submitted asynchronously (that
-is with a non-null ki_complete) which has the IOCB_HIPRI flag set.
+If the read hit page cache, cqe->flags will have IOCQE_FLAG_CACHEHIT
+set.
 
-The method is assisted by a new ki_cookie field in struct iocb to store
-the polling cookie.
-
-Reviewed-by: Hannes Reinecke <hare@suse.com>
-Reviewed-by: Johannes Thumshirn <jthumshirn@suse.de>
-Signed-off-by: Christoph Hellwig <hch@lst.de>
 Signed-off-by: Jens Axboe <axboe@kernel.dk>
 ---
- Documentation/filesystems/vfs.txt | 3 +++
- include/linux/fs.h                | 2 ++
- 2 files changed, 5 insertions(+)
+ fs/io_uring.c                 | 7 ++++++-
+ include/uapi/linux/io_uring.h | 5 +++++
+ 2 files changed, 11 insertions(+), 1 deletion(-)
 
-diff --git a/Documentation/filesystems/vfs.txt b/Documentation/filesystems/vfs.txt
-index 8dc8e9c2913f..761c6fd24a53 100644
---- a/Documentation/filesystems/vfs.txt
-+++ b/Documentation/filesystems/vfs.txt
-@@ -857,6 +857,7 @@ struct file_operations {
- 	ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);
- 	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
- 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
-+	int (*iopoll)(struct kiocb *kiocb, bool spin);
- 	int (*iterate) (struct file *, struct dir_context *);
- 	int (*iterate_shared) (struct file *, struct dir_context *);
- 	__poll_t (*poll) (struct file *, struct poll_table_struct *);
-@@ -902,6 +903,8 @@ otherwise noted.
+diff --git a/fs/io_uring.c b/fs/io_uring.c
+index 00c7c11ca699..8114723517d6 100644
+--- a/fs/io_uring.c
++++ b/fs/io_uring.c
+@@ -611,11 +611,16 @@ static void io_fput(struct io_kiocb *req)
+ static void io_complete_rw(struct kiocb *kiocb, long res, long res2)
+ {
+ 	struct io_kiocb *req = container_of(kiocb, struct io_kiocb, rw);
++	unsigned ev_flags = 0;
  
-   write_iter: possibly asynchronous write with iov_iter as source
+ 	kiocb_end_write(kiocb);
  
-+  iopoll: called when aio wants to poll for completions on HIPRI iocbs
+ 	io_fput(req);
+-	io_cqring_add_event(req->ctx, req->user_data, res, 0);
 +
-   iterate: called when the VFS needs to read the directory contents
++	if (res > 0 && (req->flags & REQ_F_FORCE_NONBLOCK))
++		ev_flags = IOCQE_FLAG_CACHEHIT;
++
++	io_cqring_add_event(req->ctx, req->user_data, res, ev_flags);
+ 	io_free_req(req);
+ }
  
-   iterate_shared: called when the VFS needs to read the directory contents
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 29d8e2cfed0e..dedcc2e9265c 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -310,6 +310,7 @@ struct kiocb {
- 	int			ki_flags;
- 	u16			ki_hint;
- 	u16			ki_ioprio; /* See linux/ioprio.h */
-+	unsigned int		ki_cookie; /* for ->iopoll */
- } __randomize_layout;
+diff --git a/include/uapi/linux/io_uring.h b/include/uapi/linux/io_uring.h
+index e23408692118..24906e99fdc7 100644
+--- a/include/uapi/linux/io_uring.h
++++ b/include/uapi/linux/io_uring.h
+@@ -69,6 +69,11 @@ struct io_uring_cqe {
+ 	__u32	flags;
+ };
  
- static inline bool is_sync_kiocb(struct kiocb *kiocb)
-@@ -1787,6 +1788,7 @@ struct file_operations {
- 	ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);
- 	ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
- 	ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
-+	int (*iopoll)(struct kiocb *kiocb, bool spin);
- 	int (*iterate) (struct file *, struct dir_context *);
- 	int (*iterate_shared) (struct file *, struct dir_context *);
- 	__poll_t (*poll) (struct file *, struct poll_table_struct *);
++/*
++ * io_uring_event->flags
++ */
++#define IOCQE_FLAG_CACHEHIT	(1U << 0)	/* IO did not hit media */
++
+ /*
+  * Magic offsets for the application to mmap the data it needs
+  */
 -- 
 2.17.1
 
