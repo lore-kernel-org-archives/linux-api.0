@@ -1,95 +1,131 @@
-From: "Kirill A. Shutemov" <kirill@shutemov.name>
-Subject: Re: [PATCH] mmap.2: describe the 5level paging hack
-Date: Tue, 12 Feb 2019 12:41:48 +0300
-Message-ID: <20190212094148.qpd6wudyry5vzw3v@kshutemo-mobl1>
-References: <20190211163653.97742-1-jannh@google.com>
+From: Alan Jenkins <alan.christopher.jenkins@gmail.com>
+Subject: Re: [PATCH 13/18] io_uring: add file set registration
+Date: Tue, 12 Feb 2019 12:29:29 +0000
+Message-ID: <c2ef6663-3e15-d071-56e3-4afba7b2d778@gmail.com>
+References: <20190207195552.22770-1-axboe@kernel.dk>
+ <20190207195552.22770-14-axboe@kernel.dk>
+ <bfd383aa-24fb-35ae-eef5-545ab0f493c7@gmail.com>
+ <2ac73020-6ab0-e351-3a1a-180d0f1f801b@kernel.dk>
+ <02e71636-5b63-41e6-0ffd-646f305011c9@gmail.com>
+ <ad669e88-5a33-37e1-6d69-e2b182d89891@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-Content-Disposition: inline
-In-Reply-To: <20190211163653.97742-1-jannh@google.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Jann Horn <jannh@google.com>
-Cc: linux-arch@vger.kernel.org, linux-man@vger.kernel.org, Catalin Marinas <catalin.marinas@arm.com>, Dave Hansen <dave.hansen@intel.com>, Peter Zijlstra <peterz@infradead.org>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Will Deacon <will.deacon@arm.com>, linuxppc-dev@lists.ozlabs.org, Andy Lutomirski <luto@amacapital.net>, linux-mm@kvack.org, Paul Mackerras <paulus@samba.org>, mtk.manpages@gmail.com, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, linux-api@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, linux-arm-kernel@lists.infradead.org
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <ad669e88-5a33-37e1-6d69-e2b182d89891@kernel.dk>
+Content-Language: en-GB
+Sender: owner-linux-aio@kvack.org
+To: Jens Axboe <axboe@kernel.dk>, linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
+Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 11, 2019 at 05:36:53PM +0100, Jann Horn wrote:
-> The manpage is missing information about the compatibility hack for
-> 5-level paging that went in in 4.14, around commit ee00f4a32a76 ("x86/mm:
-> Allow userspace have mappings above 47-bit"). Add some information about
-> that.
-> 
-> While I don't think any hardware supporting this is shipping yet (?), I
-> think it's useful to try to write a manpage for this API, partly to
-> figure out how usable that API actually is, and partly because when this
-> hardware does ship, it'd be nice if distro manpages had information about
-> how to use it.
-> 
-> Signed-off-by: Jann Horn <jannh@google.com>
+On 08/02/2019 15:13, Jens Axboe wrote:
+> On 2/8/19 7:02 AM, Alan Jenkins wrote:
+>> On 08/02/2019 12:57, Jens Axboe wrote:
+>>> On 2/8/19 5:17 AM, Alan Jenkins wrote:
+>>>>> +static int io_sqe_files_scm(struct io_ring_ctx *ctx)
+>>>>> +{
+>>>>> +#if defined(CONFIG_NET)
+>>>>> +	struct scm_fp_list *fpl = ctx->user_files;
+>>>>> +	struct sk_buff *skb;
+>>>>> +	int i;
+>>>>> +
+>>>>> +	skb =  __alloc_skb(0, GFP_KERNEL, 0, NUMA_NO_NODE);
+>>>>> +	if (!skb)
+>>>>> +		return -ENOMEM;
+>>>>> +
+>>>>> +	skb->sk = ctx->ring_sock->sk;
+>>>>> +	skb->destructor = unix_destruct_scm;
+>>>>> +
+>>>>> +	fpl->user = get_uid(ctx->user);
+>>>>> +	for (i = 0; i < fpl->count; i++) {
+>>>>> +		get_file(fpl->fp[i]);
+>>>>> +		unix_inflight(fpl->user, fpl->fp[i]);
+>>>>> +		fput(fpl->fp[i]);
+>>>>> +	}
+>>>>> +
+>>>>> +	UNIXCB(skb).fp = fpl;
+>>>>> +	skb_queue_head(&ctx->ring_sock->sk->sk_receive_queue, skb);
+>>>> This code sounds elegant if you know about the existence of unix_gc(),
+>>>> but quite mysterious if you don't.  (E.g. why "inflight"?)  Could we
+>>>> have a brief comment, to comfort mortal readers on their journey?
+>>>>
+>>>> /* A message on a unix socket can hold a reference to a file. This can
+>>>> cause a reference cycle. So there is a garbage collector for unix
+>>>> sockets, which we hook into here. */
+>>> Yes that's a good idea, I've added a comment as to why we go through the
+>>> trouble of doing this socket + skb dance.
+>> Great, thanks.
+>>
+>>>> I think this is bypassing too_many_unix_fds() though?  I understood that
+>>>> was intended to bound kernel memory allocation, at least in principle.
+>>> As the code stands above, it'll cap it at 253. I'm just now reworking it
+>>> to NOT be limited to the SCM max fd count, but still impose a limit of
+>>> 1024 on the number of registered files. This is important to cap the
+>>> memory allocation attempt as well.
+>> I saw you were limiting to SCM_MAX_FD per io_uring.  On the other hand,
+>> there's no specific limit on the number of io_urings you can open (only
+>> the standard limits on fds).  So this would let you allocate hundreds of
+>> times more files than the previous limit RLIMIT_NOFILE...
+> But there is, the io_uring itself is under the memlock rlimit.
+>
+>> static inline bool too_many_unix_fds(struct task_struct *p)
+>> {
+>> 	struct user_struct *user = current_user();
+>>
+>> 	if (unlikely(user->unix_inflight > task_rlimit(p, RLIMIT_NOFILE)))
+>> 		return !capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN);
+>> 	return false;
+>> }
+>>
+>> RLIMIT_NOFILE is technically per-task, but here it is capping
+>> unix_inflight per-user.  So the way I look at this, the number of file
+>> descriptors per user is bounded by NOFILE * NPROC.  Then
+>> user->unix_inflight can have one additional process' worth (NOFILE) of
+>> "inflight" files.  (Plus SCM_MAX_FD slop, because too_many_fds() is only
+>> called once per SCM_RIGHTS).
+>>
+>> Because io_uring doesn't check too_many_unix_fds(), I think it will let
+>> you have about 253 (or 1024) more process' worth of open files. That
+>> could be big proportionally when RLIMIT_NPROC is low.
+>>
+>> I don't know if it matters.  It maybe reads like an oversight though.
+>>
+>> (If it does matter, it might be cleanest to change too_many_unix_fds()
+>> to get rid of the "slop".  Since that may be different between af_unix
+>> and io_uring; 253 v.s. 1024 or whatever. E.g. add a parameter for the
+>> number of inflight files we want to add.)
+> I don't think it matters. The files in the fixed file set have already
+> been opened by the application, so it counts towards the number of open
+> files that is allowed to have. I don't think we should impose further
+> limits on top of that.
 
-Thanks for doing this.
+A process can open one io_uring and 199 other files.  Register the 199 
+files in the io_uring, then close their file descriptors.  The main 
+NOFILE limit only counts file descriptors.  So then you can open one 
+io_uring, 198 other files, and repeat.
 
-> ---
-> This patch goes on top of the patch "[PATCH] mmap.2: fix description of
-> treatment of the hint" that I just sent, but I'm not sending them in a
-> series because I want the first one to go in, and I think this one might
-> be a bit more controversial.
-> 
-> It would be nice if the architecture maintainers and mm folks could have
-> a look at this and check that what I wrote is right - I only looked at
-> the source for this, I haven't tried it.
-> 
->  man2/mmap.2 | 15 +++++++++++++++
->  1 file changed, 15 insertions(+)
-> 
-> diff --git a/man2/mmap.2 b/man2/mmap.2
-> index 8556bbfeb..977782fa8 100644
-> --- a/man2/mmap.2
-> +++ b/man2/mmap.2
-> @@ -67,6 +67,8 @@ is NULL,
->  then the kernel chooses the (page-aligned) address
->  at which to create the mapping;
->  this is the most portable method of creating a new mapping.
-> +On Linux, in this case, the kernel may limit the maximum address that can be
-> +used for allocations to a legacy limit for compatibility reasons.
->  If
->  .I addr
->  is not NULL,
-> @@ -77,6 +79,19 @@ or equal to the value specified by
->  and attempt to create the mapping there.
->  If another mapping already exists there, the kernel picks a new
->  address, independent of the hint.
-> +However, if a hint above the architecture's legacy address limit is provided
-> +(on x86-64: above 0x7ffffffff000, on arm64: above 0x1000000000000, on ppc64 with
-> +book3s: above 0x7fffffffffff or 0x3fffffffffff, depending on page size), the
-> +kernel is permitted to allocate mappings beyond the architecture's legacy
-> +address limit. The availability of such addresses is hardware-dependent.
-> +Therefore, if you want to be able to use the full virtual address space of
-> +hardware that supports addresses beyond the legacy range, you need to specify an
-> +address above that limit; however, for security reasons, you should avoid
-> +specifying a fixed valid address outside the compatibility range,
-> +since that would reduce the value of userspace address space layout
-> +randomization. Therefore, it is recommended to specify an address
-> +.I beyond
-> +the end of the userspace address space.
+You're right, I had forgotten the memlock limit on io_uring.  That makes 
+it much less of a practical problem.
 
-It probably worth recommending (void *) -1 as such address.
+But it raises a second point.  It's not just that it lets users allocate 
+more files.  You might not want to be limited by user->unix_inflight.  
+But you are calling unix_inflight(), which increments it!  Then if 
+unix->inflight exceeds the NOFILE limit, you will avoid seeing any 
+errors with io_uring, but the user will not be able to send files over 
+unix sockets.
 
->  .\" Before Linux 2.6.24, the address was rounded up to the next page
->  .\" boundary; since 2.6.24, it is rounded down!
->  The address of the new mapping is returned as the result of the call.
-> -- 
-> 2.20.1.791.gb4d0f1c61a-goog
-> 
+So I think this is confusing to read, and confusing to troubleshoot if 
+the limit is ever hit.
 
--- 
- Kirill A. Shutemov
+I would be happy if io_uring didn't increment user->unix_inflight.  I'm 
+not sure what the best way is to arrange that.
+
+Regards
+Alan
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
