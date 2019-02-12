@@ -1,207 +1,135 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH 13/18] io_uring: add file set registration
-Date: Tue, 12 Feb 2019 14:10:23 -0700
-Message-ID: <af6c2501-9efb-4177-74be-cd82b2ce7d6b@kernel.dk>
-References: <20190207195552.22770-1-axboe@kernel.dk>
- <20190207195552.22770-14-axboe@kernel.dk>
- <bfd383aa-24fb-35ae-eef5-545ab0f493c7@gmail.com>
- <2ac73020-6ab0-e351-3a1a-180d0f1f801b@kernel.dk>
- <02e71636-5b63-41e6-0ffd-646f305011c9@gmail.com>
- <ad669e88-5a33-37e1-6d69-e2b182d89891@kernel.dk>
- <c2ef6663-3e15-d071-56e3-4afba7b2d778@gmail.com>
- <1f1dc8b8-ad8f-16d1-c688-0ab1ce2df378@kernel.dk>
- <6c7ea7da-ab56-f1b8-2399-c0579b4eceec@gmail.com>
- <a326cb39-d55d-8047-a916-1562b33af76a@kernel.dk>
- <b8555602-b2e7-c73b-b9bb-3b5f5569cfc7@gmail.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH 05/19] Add io_uring IO interface
+Date: Tue, 12 Feb 2019 22:42:31 +0100
+Message-ID: <CAG48ez2c=7f34AX_FFKTFFnNqJojULs9GwdqaMv=WO2tYLZE3g@mail.gmail.com>
+References: <20190208173423.27014-1-axboe@kernel.dk> <20190208173423.27014-6-axboe@kernel.dk>
+ <CAG48ez2Qc9XOApLRb5fnNiOjxaURO8vjZ-EHX7g25gje3weZ6A@mail.gmail.com> <42eea00c-81fb-2e28-d884-03be5bb229c8@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <b8555602-b2e7-c73b-b9bb-3b5f5569cfc7@gmail.com>
-Content-Language: en-US
+In-Reply-To: <42eea00c-81fb-2e28-d884-03be5bb229c8@kernel.dk>
 Sender: owner-linux-aio@kvack.org
-To: Alan Jenkins <alan.christopher.jenkins@gmail.com>, linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
-Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-aio@kvack.org, linux-block@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, hch@lst.de, jmoyer@redhat.com, Avi Kivity <avi@scylladb.com>, Al Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-On 2/12/19 1:23 PM, Alan Jenkins wrote:
-> On 12/02/2019 17:33, Jens Axboe wrote:
->> On 2/12/19 10:21 AM, Alan Jenkins wrote:
->>> On 12/02/2019 15:17, Jens Axboe wrote:
->>>> On 2/12/19 5:29 AM, Alan Jenkins wrote:
->>>>> On 08/02/2019 15:13, Jens Axboe wrote:
->>>>>> On 2/8/19 7:02 AM, Alan Jenkins wrote:
->>>>>>> On 08/02/2019 12:57, Jens Axboe wrote:
->>>>>>>> On 2/8/19 5:17 AM, Alan Jenkins wrote:
->>>>>>>>>> +static int io_sqe_files_scm(struct io_ring_ctx *ctx)
->>>>>>>>>> +{
->>>>>>>>>> +#if defined(CONFIG_NET)
->>>>>>>>>> +	struct scm_fp_list *fpl = ctx->user_files;
->>>>>>>>>> +	struct sk_buff *skb;
->>>>>>>>>> +	int i;
->>>>>>>>>> +
->>>>>>>>>> +	skb =  __alloc_skb(0, GFP_KERNEL, 0, NUMA_NO_NODE);
->>>>>>>>>> +	if (!skb)
->>>>>>>>>> +		return -ENOMEM;
->>>>>>>>>> +
->>>>>>>>>> +	skb->sk = ctx->ring_sock->sk;
->>>>>>>>>> +	skb->destructor = unix_destruct_scm;
->>>>>>>>>> +
->>>>>>>>>> +	fpl->user = get_uid(ctx->user);
->>>>>>>>>> +	for (i = 0; i < fpl->count; i++) {
->>>>>>>>>> +		get_file(fpl->fp[i]);
->>>>>>>>>> +		unix_inflight(fpl->user, fpl->fp[i]);
->>>>>>>>>> +		fput(fpl->fp[i]);
->>>>>>>>>> +	}
->>>>>>>>>> +
->>>>>>>>>> +	UNIXCB(skb).fp = fpl;
->>>>>>>>>> +	skb_queue_head(&ctx->ring_sock->sk->sk_receive_queue, skb);
->>>>>>>>> This code sounds elegant if you know about the existence of unix_gc(),
->>>>>>>>> but quite mysterious if you don't.  (E.g. why "inflight"?)  Could we
->>>>>>>>> have a brief comment, to comfort mortal readers on their journey?
->>>>>>>>>
->>>>>>>>> /* A message on a unix socket can hold a reference to a file. This can
->>>>>>>>> cause a reference cycle. So there is a garbage collector for unix
->>>>>>>>> sockets, which we hook into here. */
->>>>>>>> Yes that's a good idea, I've added a comment as to why we go through the
->>>>>>>> trouble of doing this socket + skb dance.
->>>>>>> Great, thanks.
->>>>>>>
->>>>>>>>> I think this is bypassing too_many_unix_fds() though?  I understood that
->>>>>>>>> was intended to bound kernel memory allocation, at least in principle.
->>>>>>>> As the code stands above, it'll cap it at 253. I'm just now reworking it
->>>>>>>> to NOT be limited to the SCM max fd count, but still impose a limit of
->>>>>>>> 1024 on the number of registered files. This is important to cap the
->>>>>>>> memory allocation attempt as well.
->>>>>>> I saw you were limiting to SCM_MAX_FD per io_uring.  On the other hand,
->>>>>>> there's no specific limit on the number of io_urings you can open (only
->>>>>>> the standard limits on fds).  So this would let you allocate hundreds of
->>>>>>> times more files than the previous limit RLIMIT_NOFILE...
->>>>>> But there is, the io_uring itself is under the memlock rlimit.
->>>>>>
->>>>>>> static inline bool too_many_unix_fds(struct task_struct *p)
->>>>>>> {
->>>>>>> 	struct user_struct *user = current_user();
->>>>>>>
->>>>>>> 	if (unlikely(user->unix_inflight > task_rlimit(p, RLIMIT_NOFILE)))
->>>>>>> 		return !capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN);
->>>>>>> 	return false;
->>>>>>> }
->>>>>>>
->>>>>>> RLIMIT_NOFILE is technically per-task, but here it is capping
->>>>>>> unix_inflight per-user.  So the way I look at this, the number of file
->>>>>>> descriptors per user is bounded by NOFILE * NPROC.  Then
->>>>>>> user->unix_inflight can have one additional process' worth (NOFILE) of
->>>>>>> "inflight" files.  (Plus SCM_MAX_FD slop, because too_many_fds() is only
->>>>>>> called once per SCM_RIGHTS).
->>>>>>>
->>>>>>> Because io_uring doesn't check too_many_unix_fds(), I think it will let
->>>>>>> you have about 253 (or 1024) more process' worth of open files. That
->>>>>>> could be big proportionally when RLIMIT_NPROC is low.
->>>>>>>
->>>>>>> I don't know if it matters.  It maybe reads like an oversight though.
->>>>>>>
->>>>>>> (If it does matter, it might be cleanest to change too_many_unix_fds()
->>>>>>> to get rid of the "slop".  Since that may be different between af_unix
->>>>>>> and io_uring; 253 v.s. 1024 or whatever. E.g. add a parameter for the
->>>>>>> number of inflight files we want to add.)
->>>>>> I don't think it matters. The files in the fixed file set have already
->>>>>> been opened by the application, so it counts towards the number of open
->>>>>> files that is allowed to have. I don't think we should impose further
->>>>>> limits on top of that.
->>>>> A process can open one io_uring and 199 other files.  Register the 199
->>>>> files in the io_uring, then close their file descriptors.  The main
->>>>> NOFILE limit only counts file descriptors.  So then you can open one
->>>>> io_uring, 198 other files, and repeat.
->>>>>
->>>>> You're right, I had forgotten the memlock limit on io_uring.  That makes
->>>>> it much less of a practical problem.
->>>>>
->>>>> But it raises a second point.  It's not just that it lets users allocate
->>>>> more files.  You might not want to be limited by user->unix_inflight.
->>>>> But you are calling unix_inflight(), which increments it!  Then if
->>>>> unix->inflight exceeds the NOFILE limit, you will avoid seeing any
->>>>> errors with io_uring, but the user will not be able to send files over
->>>>> unix sockets.
->>>>>
->>>>> So I think this is confusing to read, and confusing to troubleshoot if
->>>>> the limit is ever hit.
->>>>>
->>>>> I would be happy if io_uring didn't increment user->unix_inflight.  I'm
->>>>> not sure what the best way is to arrange that.
->>>> How about we just do something like the below? I think that's the saner
->>>> approach, rather than bypass user->unix_inflight. It's literally the
->>>> same thing.
->>>>
->>>>
->>>> diff --git a/fs/io_uring.c b/fs/io_uring.c
->>>> index a4973af1c272..5196b3aa935e 100644
->>>> --- a/fs/io_uring.c
->>>> +++ b/fs/io_uring.c
->>>> @@ -2041,6 +2041,13 @@ static int __io_sqe_files_scm(struct io_ring_ctx *ctx, int nr, int offset)
->>>>    	struct sk_buff *skb;
->>>>    	int i;
->>>>    
->>>> +	if (!capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN)) {
->>>> +		struct user_struct *user = ctx->user;
->>>> +
->>>> +		if (user->unix_inflight > task_rlimit(current, RLIMIT_NOFILE))
->>>> +			return -EMFILE;
->>>> +	}
->>>> +
->>>>    	fpl = kzalloc(sizeof(*fpl), GFP_KERNEL);
->>>>    	if (!fpl)
->>>>    		return -ENOMEM;
->>>>
->>>>
->>> Welp, you gave me exactly what I asked for.  So now I'd better be
->>> positive about it :-D.
->> ;-)
->>
->>> I hope this will be documented accurately, at least where the EMFILE
->>> result is explained for this syscall.
->> How's this:
->>
->> http://git.kernel.dk/cgit/liburing/commit/?id=37e48698a09aa1e37690f8fa6dfd8da69a48ee60
-> 
-> +.B EMFILE
-> +.BR IORING_REGISTER_FILES
-> +was specified and adding
-> +.I nr_args
-> +file references would exceed the maximum allowed number of files the process
-> +is allowed to have according to the
-> +.B
-> +RLIMIT_NOFILE
-> +resource limit and the caller does not have
-> +.B CAP_SYS_RESOURCE
-> +capability.
-> +.TP
-> 
-> I was struggling with this.  The POSIX part of RLIMIT_NOFILE is applied 
-> per-process.  But the part we're talking about here, the Linux-specific 
-> "unix_inflight" resource, is actually accounted per-user.  It's like 
-> RLIMIT_NPROC.  The value of RLIMIT_NPROC is per-process, but the 
-> resource it limits is counted in user->processes.
-> 
-> This subtlety of the NOFILE limit is not made clear in the text above, 
-> nor in unix(7), nor in getrlimit(2).  I would interpret all these docs 
-> as saying this limit is a per-process thing - I think they are misleading.
+On Sat, Feb 9, 2019 at 5:15 AM Jens Axboe <axboe@kernel.dk> wrote:
+> On 2/8/19 3:12 PM, Jann Horn wrote:
+> > On Fri, Feb 8, 2019 at 6:34 PM Jens Axboe <axboe@kernel.dk> wrote:
+> >> The submission queue (SQ) and completion queue (CQ) rings are shared
+> >> between the application and the kernel. This eliminates the need to
+> >> copy data back and forth to submit and complete IO.
+> >>
+> >> IO submissions use the io_uring_sqe data structure, and completions
+> >> are generated in the form of io_uring_cqe data structures. The SQ
+> >> ring is an index into the io_uring_sqe array, which makes it possible
+> >> to submit a batch of IOs without them being contiguous in the ring.
+> >> The CQ ring is always contiguous, as completion events are inherently
+> >> unordered, and hence any io_uring_cqe entry can point back to an
+> >> arbitrary submission.
+> >>
+> >> Two new system calls are added for this:
+> >>
+> >> io_uring_setup(entries, params)
+> >>         Sets up an io_uring instance for doing async IO. On success,
+> >>         returns a file descriptor that the application can mmap to
+> >>         gain access to the SQ ring, CQ ring, and io_uring_sqes.
+> >>
+> >> io_uring_enter(fd, to_submit, min_complete, flags, sigset, sigsetsize)
+> >>         Initiates IO against the rings mapped to this fd, or waits for
+> >>         them to complete, or both. The behavior is controlled by the
+> >>         parameters passed in. If 'to_submit' is non-zero, then we'll
+> >>         try and submit new IO. If IORING_ENTER_GETEVENTS is set, the
+> >>         kernel will wait for 'min_complete' events, if they aren't
+> >>         already available. It's valid to set IORING_ENTER_GETEVENTS
+> >>         and 'min_complete' == 0 at the same time, this allows the
+> >>         kernel to return already completed events without waiting
+> >>         for them. This is useful only for polling, as for IRQ
+> >>         driven IO, the application can just check the CQ ring
+> >>         without entering the kernel.
+> >>
+> >> With this setup, it's possible to do async IO with a single system
+> >> call. Future developments will enable polled IO with this interface,
+> >> and polled submission as well. The latter will enable an application
+> >> to do IO without doing ANY system calls at all.
+> >>
+> >> For IRQ driven IO, an application only needs to enter the kernel for
+> >> completions if it wants to wait for them to occur.
+> >>
+> >> Each io_uring is backed by a workqueue, to support buffered async IO
+> >> as well. We will only punt to an async context if the command would
+> >> need to wait for IO on the device side. Any data that can be accessed
+> >> directly in the page cache is done inline. This avoids the slowness
+> >> issue of usual threadpools, since cached data is accessed as quickly
+> >> as a sync interface.
+[...]
+> >> +static int io_submit_sqe(struct io_ring_ctx *ctx, const struct sqe_submit *s)
+> >> +{
+> >> +       struct io_kiocb *req;
+> >> +       ssize_t ret;
+> >> +
+> >> +       /* enforce forwards compatibility on users */
+> >> +       if (unlikely(s->sqe->flags))
+> >> +               return -EINVAL;
+> >> +
+> >> +       req = io_get_req(ctx);
+> >> +       if (unlikely(!req))
+> >> +               return -EAGAIN;
+> >> +
+> >> +       req->rw.ki_filp = NULL;
+> >> +
+> >> +       ret = __io_submit_sqe(ctx, req, s, true);
+> >> +       if (ret == -EAGAIN) {
+> >> +               memcpy(&req->submit, s, sizeof(*s));
+> >> +               INIT_WORK(&req->work, io_sq_wq_submit_work);
+> >> +               queue_work(ctx->sqo_wq, &req->work);
+> >> +               ret = 0;
+> >> +       }
+> >> +       if (ret)
+> >> +               io_free_req(req);
+> >> +
+> >> +       return ret;
+> >> +}
+> >> +
+> >> +static void io_commit_sqring(struct io_ring_ctx *ctx)
+> >> +{
+> >> +       struct io_sq_ring *ring = ctx->sq_ring;
+> >> +
+> >> +       if (ctx->cached_sq_head != ring->r.head) {
+> >> +               WRITE_ONCE(ring->r.head, ctx->cached_sq_head);
+> >> +               /* write side barrier of head update, app has read side */
+> >> +               smp_wmb();
+> >
+> > Can you elaborate on what this memory barrier is doing? Don't you need
+> > some sort of memory barrier *before* the WRITE_ONCE(), to ensure that
+> > nobody sees the updated head before you're done reading the submission
+> > queue entry? Or is that barrier elsewhere?
+>
+> The matching read barrier is in the application, it must do that before
+> reading ->head for the SQ ring.
+>
+> For the other barrier, since the ring->r.head now has a READ_ONCE(),
+> that should be all we need to ensure that loads are done.
 
-Fair point, I'll add an update to clearly state it's a per process
-limit.
+READ_ONCE() / WRITE_ONCE are not hardware memory barriers that enforce
+ordering with regard to concurrent execution on other cores. They are
+only compiler barriers, influencing the order in which the compiler
+emits things. (Well, unless you're on alpha, where READ_ONCE() implies
+a memory barrier that prevents reordering of dependent reads.)
 
-> IORING_MAX_FIXED_FILES is being raised to 1024, which is the same as the 
-> (soft limit) value for RLIMIT_NOFILE which the kernel sets for the init 
-> process.  I have an unjustifiable nervousness, that there will be some 
-> `fio` command, or a test written that maxes out IORING_REGISTER_FILES.  
-> When you do that, it will provoke unexpected failures e.g. in GUI apps.  
-> If we can't rule that out, the next best thing is a friendly man page.
+As far as I can tell, between the READ_ONCE(ring->array[...]) in
+io_get_sqring() and the WRITE_ONCE() in io_commit_sqring(), you have
+no *hardware* memory barrier that prevents reordering against
+concurrently running userspace code. As far as I can tell, the
+following could happen:
 
-If we apply the limit to sendmsg and friends, it should be applied here
-as well.
-
--- 
-Jens Axboe
+ - The kernel reads from ring->array in io_get_sqring(), then updates
+the head in io_commit_sqring(). The CPU reorders the memory accesses
+such that the write to the head becomes visible before the read from
+ring->array has completed.
+ - Userspace observes the write to the head and reuses the array slots
+the kernel has freed with the write, clobbering ring->array before the
+kernel reads from ring->array.
 
 --
 To unsubscribe, send a message with 'unsubscribe linux-aio' in
