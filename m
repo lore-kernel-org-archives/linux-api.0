@@ -1,124 +1,60 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [RFC PATCH v2 11/20] fscrypt: add
- FS_IOC_REMOVE_ENCRYPTION_KEY ioctl
-Date: Tue, 12 Feb 2019 11:03:57 +1100
-Message-ID: <20190212000357.GI20493@dastard>
-References: <20190211172738.4633-1-ebiggers@kernel.org>
- <20190211172738.4633-12-ebiggers@kernel.org>
- <20190211221249.GH20493@dastard>
- <20190211233128.GB226227@gmail.com>
+From: Jiri Kosina <jikos@kernel.org>
+Subject: Re: [PATCH 3/3] mm/mincore: provide mapped status when cached status
+ is not allowed
+Date: Tue, 12 Feb 2019 04:44:30 +0100 (CET)
+Message-ID: <nycvar.YFH.7.76.1902120440430.11598@cbobk.fhfr.pm>
+References: <nycvar.YFH.7.76.1901051817390.16954@cbobk.fhfr.pm> <20190130124420.1834-1-vbabka@suse.cz> <20190130124420.1834-4-vbabka@suse.cz> <20190131100907.GS18811@dhcp22.suse.cz> <99ee4d3e-aeb2-0104-22be-b028938e7f88@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-Content-Disposition: inline
-In-Reply-To: <20190211233128.GB226227@gmail.com>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: Satya Tangirala <satyat@google.com>, linux-api@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-fscrypt@vger.kernel.org, keyrings@vger.kernel.org, linux-mtd@lists.infradead.org, linux-crypto@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, Paul Crowley <paulcrowley@google.com>
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <99ee4d3e-aeb2-0104-22be-b028938e7f88@suse.cz>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vlastimil Babka <vbabka@suse.cz>
+Cc: Michal Hocko <mhocko@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, Greg KH <gregkh@linuxfoundation.org>, Jann Horn <jannh@google.com>, Dominique Martinet <asmadeus@codewreck.org>, Andy Lutomirski <luto@amacapital.net>, Dave Chinner <david@fromorbit.com>, Kevin Easton <kevin@guarana.org>, Matthew Wilcox <willy@infradead.org>, Cyril Hrubis <chrubis@suse.cz>, Tejun Heo <tj@kernel.org>, "Kirill A . Shutemov" <kirill@shutemov.name>, Daniel Gruss <daniel@gruss.cc>, Josh Snyder <joshs@netflix.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 11, 2019 at 03:31:29PM -0800, Eric Biggers wrote:
-> Hi Dave,
+On Fri, 1 Feb 2019, Vlastimil Babka wrote:
+
+> >> After "mm/mincore: make mincore() more conservative" we sometimes restrict the
+> >> information about page cache residency, which we have to do without breaking
+> >> existing userspace, if possible. We thus fake the resulting values as 1, which
+> >> should be safer than faking them as 0, as there might theoretically exist code
+> >> that would try to fault in the page(s) until mincore() returns 1.
+> >>
+> >> Faking 1 however means that such code would not fault in a page even if it was
+> >> not in page cache, with unwanted performance implications. We can improve the
+> >> situation by revisting the approach of 574823bfab82 ("Change mincore() to count
+> >> "mapped" pages rather than "cached" pages") but only applying it to cases where
+> >> page cache residency check is restricted. Thus mincore() will return 0 for an
+> >> unmapped page (which may or may not be resident in a pagecache), and 1 after
+> >> the process faults it in.
+> >>
+> >> One potential downside is that mincore() will be again able to recognize when a
+> >> previously mapped page was reclaimed. While that might be useful for some
+> >> attack scenarios, it's not as crucial as recognizing that somebody else faulted
+> >> the page in, and there are also other ways to recognize reclaimed pages anyway.
+> > 
+> > Is this really worth it? Do we know about any specific usecase that
+> > would benefit from this change? TBH I would rather wait for the report
+> > than add a hard to evaluate side channel.
 > 
-> On Tue, Feb 12, 2019 at 09:12:49AM +1100, Dave Chinner wrote:
-> > On Mon, Feb 11, 2019 at 09:27:29AM -0800, Eric Biggers wrote:
-> > 
-> > Indeed, this is exactly what ->drop_inode() is for.
-> > 
-> > Take this function:
-> > 
-> > > +static void evict_dentries_for_decrypted_inodes(struct fscrypt_master_key *mk)
-> > > +{
-> > > +	struct fscrypt_info *ci;
-> > > +	struct inode *inode;
-> > > +	struct inode *toput_inode = NULL;
-> > > +
-> > > +	spin_lock(&mk->mk_decrypted_inodes_lock);
-> > > +
-> > > +	list_for_each_entry(ci, &mk->mk_decrypted_inodes, ci_master_key_link) {
-> > > +		inode = ci->ci_inode;
-> > > +		spin_lock(&inode->i_lock);
-> > > +		if (inode->i_state & (I_FREEING | I_WILL_FREE | I_NEW)) {
-> > > +			spin_unlock(&inode->i_lock);
-> > > +			continue;
-> > > +		}
-> > > +		__iget(inode);
-> > > +		spin_unlock(&inode->i_lock);
-> > > +		spin_unlock(&mk->mk_decrypted_inodes_lock);
-> > > +
-> > > +		shrink_dcache_inode(inode);
-> > > +		iput(toput_inode);
-> > > +		toput_inode = inode;
-> > > +
-> > > +		spin_lock(&mk->mk_decrypted_inodes_lock);
-> > > +	}
-> > > +
-> > > +	spin_unlock(&mk->mk_decrypted_inodes_lock);
-> > > +	iput(toput_inode);
-> > > +}
-> > 
-> > It takes a new reference to each decrypted inode, and then drops it
-> > again after all the dentry cache references have been killed and
-> > we've got a reference to the next inode in the list.  Killing the
-> > dentry references to the inode means it should only have in-use
-> > references and the reference this function holds on it.
-> > 
-> > If the inode is not in use then there will be only one, and so it
-> > will fall into iput_final() and the ->drop_inode() function
-> > determines if the inode should be evicted from the cache and
-> > destroyed immediately.  IOWs, implement fscrypt_drop_inode() to do
-> > the right thing when the key has been destroyed, and you can get rid
-> > of all this crazy inode cache walk-and-invalidate hackery.
-> > 
-> 
-> Thanks for the feedback!  If I understand correctly, your suggestion is:
-> 
-> - Keep evict_dentries_for_decrypted_inodes() as-is, i.e. fscrypt would still
->   evict the dentries for all inodes in ->mk_decrypted_inodes.
->   (I don't see how it could work otherwise.)
-> 
-> - However, evict_decrypted_inodes() would be removed and fscrypt would not
->   directly evict the list of inodes.  Instead, the filesystem's ->drop_inode()
->   would be made to return 1 if the inode's master key has been removed.  Thus
->   each inode, if no longer in use, would end up getting evicted during the
->   iput() in evict_dentries_for_decrypted_inodes().
+> Well it's not that complicated IMHO. Linus said it's worth trying, so
+> let's see how he likes the result. The side channel exists anyway as
+> long as process can e.g. check if its rss shrinked, and I doubt we are
+> going to remove that possibility.
 
-*nod*
+So, where do we go from here?
 
-> I hadn't thought of this, and I think it would work; I'll try implementing it.
-> It would also have the advantage that if a key is removed while an inode is
-> still in-use, that inode will be evicted as soon as it's no longer in use rather
-> than waiting around until another FS_IOC_REMOVE_ENCRYPTION_KEY.
+Either Linus and Andrew like the mincore() return value tweak, or this 
+could be further discussed (*). But in either of the cases, I think 
+patches 1 and 2 should be at least queued for 5.1.
 
-*nod*
+(*) I'd personally include it as well, as I don't see how it would break 
+    anything, it's pretty straightforward, and brings back some sanity to
+    mincore() return value.
 
-> The ioctl will need a different way to determine whether any inodes couldn't be
-> evicted, but simply checking whether ->mk_decrypted_inodes ended up empty or not
-> should work.
+Thanks,
 
-*nod*
-
-> FWIW, originally I also considered leaving the inodes in the inode cache and
-> instead only freeing ->i_crypt_info and truncating the pagecache.  But I don't
-> see a way to do it even with this new idea; for one, ->drop_inode() is called
-> under ->i_lock.  So it seems that eviction is still the way to go.
-
-Yeah, eviction is by far the easiest way to deal with this. If it's
-being frequently referenced/written, the backing buffer should be in
-memory anyway and the next access simply has to re-instantiate the
-inode cache from the buffer and won't need to do IO.
-
-Cheers,
-
-Dave.
 -- 
-Dave Chinner
-david@fromorbit.com
+Jiri Kosina
+SUSE Labs
