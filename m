@@ -1,158 +1,66 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH 13/18] io_uring: add file set registration
-Date: Tue, 12 Feb 2019 08:17:14 -0700
-Message-ID: <1f1dc8b8-ad8f-16d1-c688-0ab1ce2df378@kernel.dk>
-References: <20190207195552.22770-1-axboe@kernel.dk>
- <20190207195552.22770-14-axboe@kernel.dk>
- <bfd383aa-24fb-35ae-eef5-545ab0f493c7@gmail.com>
- <2ac73020-6ab0-e351-3a1a-180d0f1f801b@kernel.dk>
- <02e71636-5b63-41e6-0ffd-646f305011c9@gmail.com>
- <ad669e88-5a33-37e1-6d69-e2b182d89891@kernel.dk>
- <c2ef6663-3e15-d071-56e3-4afba7b2d778@gmail.com>
+From: Jiri Kosina <jikos@kernel.org>
+Subject: Re: [PATCH 2/3] mm/filemap: initiate readahead even if IOCB_NOWAIT
+ is set for the I/O
+Date: Tue, 12 Feb 2019 16:48:56 +0100 (CET)
+Message-ID: <nycvar.YFH.7.76.1902121645470.11598@cbobk.fhfr.pm>
+References: <nycvar.YFH.7.76.1901051817390.16954@cbobk.fhfr.pm> <20190130124420.1834-1-vbabka@suse.cz> <20190130124420.1834-3-vbabka@suse.cz> <20190131095644.GR18811@dhcp22.suse.cz> <20190201014446.GU6173@dastard>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <c2ef6663-3e15-d071-56e3-4afba7b2d778@gmail.com>
-Content-Language: en-US
-Sender: owner-linux-aio@kvack.org
-To: Alan Jenkins <alan.christopher.jenkins@gmail.com>, linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org
-Cc: hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190201014446.GU6173@dastard>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dave Chinner <david@fromorbit.com>
+Cc: Michal Hocko <mhocko@kernel.org>, Vlastimil Babka <vbabka@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, Greg KH <gregkh@linuxfoundation.org>, Jann Horn <jannh@google.com>, Dominique Martinet <asmadeus@codewreck.org>, Andy Lutomirski <luto@amacapital.net>, Kevin Easton <kevin@guarana.org>, Matthew Wilcox <willy@infradead.org>, Cyril Hrubis <chrubis@suse.cz>, Tejun Heo <tj@kernel.org>, "Kirill A . Shutemov" <kirill@shutemov.name>, Daniel Gruss <daniel@gruss.cc>, linux-fsdevel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 2/12/19 5:29 AM, Alan Jenkins wrote:
-> On 08/02/2019 15:13, Jens Axboe wrote:
->> On 2/8/19 7:02 AM, Alan Jenkins wrote:
->>> On 08/02/2019 12:57, Jens Axboe wrote:
->>>> On 2/8/19 5:17 AM, Alan Jenkins wrote:
->>>>>> +static int io_sqe_files_scm(struct io_ring_ctx *ctx)
->>>>>> +{
->>>>>> +#if defined(CONFIG_NET)
->>>>>> +	struct scm_fp_list *fpl = ctx->user_files;
->>>>>> +	struct sk_buff *skb;
->>>>>> +	int i;
->>>>>> +
->>>>>> +	skb =  __alloc_skb(0, GFP_KERNEL, 0, NUMA_NO_NODE);
->>>>>> +	if (!skb)
->>>>>> +		return -ENOMEM;
->>>>>> +
->>>>>> +	skb->sk = ctx->ring_sock->sk;
->>>>>> +	skb->destructor = unix_destruct_scm;
->>>>>> +
->>>>>> +	fpl->user = get_uid(ctx->user);
->>>>>> +	for (i = 0; i < fpl->count; i++) {
->>>>>> +		get_file(fpl->fp[i]);
->>>>>> +		unix_inflight(fpl->user, fpl->fp[i]);
->>>>>> +		fput(fpl->fp[i]);
->>>>>> +	}
->>>>>> +
->>>>>> +	UNIXCB(skb).fp = fpl;
->>>>>> +	skb_queue_head(&ctx->ring_sock->sk->sk_receive_queue, skb);
->>>>> This code sounds elegant if you know about the existence of unix_gc(),
->>>>> but quite mysterious if you don't.  (E.g. why "inflight"?)  Could we
->>>>> have a brief comment, to comfort mortal readers on their journey?
->>>>>
->>>>> /* A message on a unix socket can hold a reference to a file. This can
->>>>> cause a reference cycle. So there is a garbage collector for unix
->>>>> sockets, which we hook into here. */
->>>> Yes that's a good idea, I've added a comment as to why we go through the
->>>> trouble of doing this socket + skb dance.
->>> Great, thanks.
->>>
->>>>> I think this is bypassing too_many_unix_fds() though?  I understood that
->>>>> was intended to bound kernel memory allocation, at least in principle.
->>>> As the code stands above, it'll cap it at 253. I'm just now reworking it
->>>> to NOT be limited to the SCM max fd count, but still impose a limit of
->>>> 1024 on the number of registered files. This is important to cap the
->>>> memory allocation attempt as well.
->>> I saw you were limiting to SCM_MAX_FD per io_uring.  On the other hand,
->>> there's no specific limit on the number of io_urings you can open (only
->>> the standard limits on fds).  So this would let you allocate hundreds of
->>> times more files than the previous limit RLIMIT_NOFILE...
->> But there is, the io_uring itself is under the memlock rlimit.
->>
->>> static inline bool too_many_unix_fds(struct task_struct *p)
->>> {
->>> 	struct user_struct *user = current_user();
->>>
->>> 	if (unlikely(user->unix_inflight > task_rlimit(p, RLIMIT_NOFILE)))
->>> 		return !capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN);
->>> 	return false;
->>> }
->>>
->>> RLIMIT_NOFILE is technically per-task, but here it is capping
->>> unix_inflight per-user.  So the way I look at this, the number of file
->>> descriptors per user is bounded by NOFILE * NPROC.  Then
->>> user->unix_inflight can have one additional process' worth (NOFILE) of
->>> "inflight" files.  (Plus SCM_MAX_FD slop, because too_many_fds() is only
->>> called once per SCM_RIGHTS).
->>>
->>> Because io_uring doesn't check too_many_unix_fds(), I think it will let
->>> you have about 253 (or 1024) more process' worth of open files. That
->>> could be big proportionally when RLIMIT_NPROC is low.
->>>
->>> I don't know if it matters.  It maybe reads like an oversight though.
->>>
->>> (If it does matter, it might be cleanest to change too_many_unix_fds()
->>> to get rid of the "slop".  Since that may be different between af_unix
->>> and io_uring; 253 v.s. 1024 or whatever. E.g. add a parameter for the
->>> number of inflight files we want to add.)
->> I don't think it matters. The files in the fixed file set have already
->> been opened by the application, so it counts towards the number of open
->> files that is allowed to have. I don't think we should impose further
->> limits on top of that.
-> 
-> A process can open one io_uring and 199 other files.  Register the 199 
-> files in the io_uring, then close their file descriptors.  The main 
-> NOFILE limit only counts file descriptors.  So then you can open one 
-> io_uring, 198 other files, and repeat.
-> 
-> You're right, I had forgotten the memlock limit on io_uring.  That makes 
-> it much less of a practical problem.
-> 
-> But it raises a second point.  It's not just that it lets users allocate 
-> more files.  You might not want to be limited by user->unix_inflight.  
-> But you are calling unix_inflight(), which increments it!  Then if 
-> unix->inflight exceeds the NOFILE limit, you will avoid seeing any 
-> errors with io_uring, but the user will not be able to send files over 
-> unix sockets.
-> 
-> So I think this is confusing to read, and confusing to troubleshoot if 
-> the limit is ever hit.
-> 
-> I would be happy if io_uring didn't increment user->unix_inflight.  I'm 
-> not sure what the best way is to arrange that.
+On Fri, 1 Feb 2019, Dave Chinner wrote:
 
-How about we just do something like the below? I think that's the saner
-approach, rather than bypass user->unix_inflight. It's literally the
-same thing.
+> So, I'll invite the incoherent, incandescent O_DIRECT rage flames of
+> Linus to be unleashed again and point out the /other reference/ to
+> IOCB_NOWAIT in mm/filemap.c. That is, in generic_file_read_iter(),
+> in the *generic O_DIRECT read path*:
+> 
+> 	if (iocb->ki_flags & IOCB_DIRECT) {
+> .....
+> 		if (iocb->ki_flags & IOCB_NOWAIT) {
+> 			if (filemap_range_has_page(mapping, iocb->ki_pos,
+> 						   iocb->ki_pos + count - 1))
+> 				return -EAGAIN;
+> 		} else {
+> .....
 
+OK, thanks Dave, this is a good point I've missed in this mail before 
+(probabably as I focused only on the aspect of disagreement what NONBLOCK 
+actually means :) ). I will look into fixing it for next iteration.
 
-diff --git a/fs/io_uring.c b/fs/io_uring.c
-index a4973af1c272..5196b3aa935e 100644
---- a/fs/io_uring.c
-+++ b/fs/io_uring.c
-@@ -2041,6 +2041,13 @@ static int __io_sqe_files_scm(struct io_ring_ctx *ctx, int nr, int offset)
- 	struct sk_buff *skb;
- 	int i;
- 
-+	if (!capable(CAP_SYS_RESOURCE) && !capable(CAP_SYS_ADMIN)) {
-+		struct user_struct *user = ctx->user;
-+
-+		if (user->unix_inflight > task_rlimit(current, RLIMIT_NOFILE))
-+			return -EMFILE;
-+	}
-+
- 	fpl = kzalloc(sizeof(*fpl), GFP_KERNEL);
- 	if (!fpl)
- 		return -ENOMEM;
+> It's effectively useless as a workaround because you can avoid the
+> readahead IO being issued relatively easily:
+> 
+> void page_cache_sync_readahead(struct address_space *mapping,
+>                                struct file_ra_state *ra, struct file *filp,
+>                                pgoff_t offset, unsigned long req_size)
+> {
+>         /* no read-ahead */
+>         if (!ra->ra_pages)
+>                 return;
+> 
+>         if (blk_cgroup_congested())
+>                 return;
+> ....
+> 
+> IOWs, we just have to issue enough IO to congest the block device (or,
+> even easier, a rate-limited cgroup), and we can still use RWF_NOWAIT
+> to probe the page cache. Or if we can convince ra->ra_pages to be
+> zero (e.g. it's on bdi device with no readahead configured because
+> it's real fast) then it doesn't work there, either.
 
+It's though questionable whether the noise level here wouldn't be too high 
+already for any sidechannel to work reliably. So I'd suggest to operate 
+under the assumption that it would be too noisy, unless anyone is able to 
+prove otherwise.
+
+Thanks,
 
 -- 
-Jens Axboe
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+Jiri Kosina
+SUSE Labs
