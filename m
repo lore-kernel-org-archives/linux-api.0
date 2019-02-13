@@ -1,264 +1,158 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH 05/19] Add io_uring IO interface
-Date: Tue, 12 Feb 2019 17:24:13 -0700
-Message-ID: <ad4c78cb-071f-dd6c-bc97-5e75cac05a0b@kernel.dk>
-References: <20190208173423.27014-1-axboe@kernel.dk>
- <CAG48ez2Qc9XOApLRb5fnNiOjxaURO8vjZ-EHX7g25gje3weZ6A@mail.gmail.com>
- <42eea00c-81fb-2e28-d884-03be5bb229c8@kernel.dk>
- <CAG48ez2c=7f34AX_FFKTFFnNqJojULs9GwdqaMv=WO2tYLZE3g@mail.gmail.com>
- <1ca9f039-c6f0-cae7-8484-7db0a4e4e213@kernel.dk>
- <f20b8e79-d10f-6316-561f-3c77cab71ee0@kernel.dk>
- <CAG48ez0rJU8bx4EFJwzXOpUX1C2J86pDFHtwEdvKf2K2tsWuig@mail.gmail.com>
- <041f1c67-b62e-a593-fdc0-b44e35a4da4e@kernel.dk>
- <7149d509-25a1-eb3b-b4c6-6bb2d7a87465@kernel.dk>
- <CAG48ez09zTXuxEJE4KKfv-9yeYPGbFm_b9YnYK70csTQ1UXiuA@mail.gmail.com>
- <beb052ba-2c4a-0201-d673-c7b8eef294dd@kernel.dk>
- <CAG48ez22G1orwZ43tZ6VK3rngQitar0qH9zJXdTv8kX2e2HqOQ@mail.gmail.com>
- <0641e74d-0277-9cdb-2b13-63ee60f9196d@kernel.dk>
- <CAG48ez3PESTFsySiZ1T2w-+4xo6mqkHRBv+Hgs2BKy-4w+7yug@mail.gmail.com>
- <e70a7451-2fb4-5800-500d-6ae46fbfe5f4@kernel.dk>
- <7452c409-f232-2017-9101-0cd6c6946d64@kernel.dk>
- <08141EFF-E805-405B-9970-ABFE9A1C3F58@amacapital.net>
+From: Aleksa Sarai <cyphar@cyphar.com>
+Subject: [PATCH v5 0/5] namei: vfs flags to restrict path resolution
+Date: Wed, 13 Feb 2019 14:08:46 +1100
+Message-ID: <20190213030851.1881-1-cyphar@cyphar.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8bit
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <08141EFF-E805-405B-9970-ABFE9A1C3F58@amacapital.net>
-Content-Language: en-US
-Sender: owner-linux-aio@kvack.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Jann Horn <jannh@google.com>, linux-aio@kvack.org, linux-block@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, hch@lst.de, jmoyer@redhat.com, Avi Kivity <avi@scylladb.com>, Al Viro <viro@zeniv.linux.org.uk>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>
+Cc: Aleksa Sarai <cyphar@cyphar.com>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>, Christian Brauner <christian@brauner.io>, David Drysdale <drysdale@google.com>, Tycho Andersen <tycho@tycho.ws>, Kees Cook <keescook@chromium.org>, containers@lists.linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 2/12/19 5:07 PM, Andy Lutomirski wrote:
-> 
-> 
->> On Feb 12, 2019, at 3:53 PM, Jens Axboe <axboe@kernel.dk> wrote:
->>
->>> On 2/12/19 4:46 PM, Jens Axboe wrote:
->>>> On 2/12/19 4:28 PM, Jann Horn wrote:
->>>>> On Wed, Feb 13, 2019 at 12:19 AM Jens Axboe <axboe@kernel.dk> wrote:
->>>>>
->>>>>> On 2/12/19 4:11 PM, Jann Horn wrote:
->>>>>>> On Wed, Feb 13, 2019 at 12:00 AM Jens Axboe <axboe@kernel.dk> wrote:
->>>>>>>
->>>>>>>> On 2/12/19 3:57 PM, Jann Horn wrote:
->>>>>>>>> On Tue, Feb 12, 2019 at 11:52 PM Jens Axboe <axboe@kernel.dk> wrote:
->>>>>>>>>
->>>>>>>>>> On 2/12/19 3:45 PM, Jens Axboe wrote:
->>>>>>>>>>> On 2/12/19 3:40 PM, Jann Horn wrote:
->>>>>>>>>>>> On Tue, Feb 12, 2019 at 11:06 PM Jens Axboe <axboe@kernel.dk> wrote:
->>>>>>>>>>>>
->>>>>>>>>>>>> On 2/12/19 3:03 PM, Jens Axboe wrote:
->>>>>>>>>>>>>> On 2/12/19 2:42 PM, Jann Horn wrote:
->>>>>>>>>>>>>>> On Sat, Feb 9, 2019 at 5:15 AM Jens Axboe <axboe@kernel.dk> wrote:
->>>>>>>>>>>>>>>> On 2/8/19 3:12 PM, Jann Horn wrote:
->>>>>>>>>>>>>>>>> On Fri, Feb 8, 2019 at 6:34 PM Jens Axboe <axboe@kernel.dk> wrote:
->>>>>>>>>>>>>>>>> The submission queue (SQ) and completion queue (CQ) rings are shared
->>>>>>>>>>>>>>>>> between the application and the kernel. This eliminates the need to
->>>>>>>>>>>>>>>>> copy data back and forth to submit and complete IO.
->>>>>>>>>>>>>>>>>
->>>>>>>>>>>>>>>>> IO submissions use the io_uring_sqe data structure, and completions
->>>>>>>>>>>>>>>>> are generated in the form of io_uring_cqe data structures. The SQ
->>>>>>>>>>>>>>>>> ring is an index into the io_uring_sqe array, which makes it possible
->>>>>>>>>>>>>>>>> to submit a batch of IOs without them being contiguous in the ring.
->>>>>>>>>>>>>>>>> The CQ ring is always contiguous, as completion events are inherently
->>>>>>>>>>>>>>>>> unordered, and hence any io_uring_cqe entry can point back to an
->>>>>>>>>>>>>>>>> arbitrary submission.
->>>>>>>>>>>>>>>>>
->>>>>>>>>>>>>>>>> Two new system calls are added for this:
->>>>>>>>>>>>>>>>>
->>>>>>>>>>>>>>>>> io_uring_setup(entries, params)
->>>>>>>>>>>>>>>>>        Sets up an io_uring instance for doing async IO. On success,
->>>>>>>>>>>>>>>>>        returns a file descriptor that the application can mmap to
->>>>>>>>>>>>>>>>>        gain access to the SQ ring, CQ ring, and io_uring_sqes.
->>>>>>>>>>>>>>>>>
->>>>>>>>>>>>>>>>> io_uring_enter(fd, to_submit, min_complete, flags, sigset, sigsetsize)
->>>>>>>>>>>>>>>>>        Initiates IO against the rings mapped to this fd, or waits for
->>>>>>>>>>>>>>>>>        them to complete, or both. The behavior is controlled by the
->>>>>>>>>>>>>>>>>        parameters passed in. If 'to_submit' is non-zero, then we'll
->>>>>>>>>>>>>>>>>        try and submit new IO. If IORING_ENTER_GETEVENTS is set, the
->>>>>>>>>>>>>>>>>        kernel will wait for 'min_complete' events, if they aren't
->>>>>>>>>>>>>>>>>        already available. It's valid to set IORING_ENTER_GETEVENTS
->>>>>>>>>>>>>>>>>        and 'min_complete' == 0 at the same time, this allows the
->>>>>>>>>>>>>>>>>        kernel to return already completed events without waiting
->>>>>>>>>>>>>>>>>        for them. This is useful only for polling, as for IRQ
->>>>>>>>>>>>>>>>>        driven IO, the application can just check the CQ ring
->>>>>>>>>>>>>>>>>        without entering the kernel.
->>>>>>>>>>>>>>>>>
->>>>>>>>>>>>>>>>> With this setup, it's possible to do async IO with a single system
->>>>>>>>>>>>>>>>> call. Future developments will enable polled IO with this interface,
->>>>>>>>>>>>>>>>> and polled submission as well. The latter will enable an application
->>>>>>>>>>>>>>>>> to do IO without doing ANY system calls at all.
->>>>>>>>>>>>>>>>>
->>>>>>>>>>>>>>>>> For IRQ driven IO, an application only needs to enter the kernel for
->>>>>>>>>>>>>>>>> completions if it wants to wait for them to occur.
->>>>>>>>>>>>>>>>>
->>>>>>>>>>>>>>>>> Each io_uring is backed by a workqueue, to support buffered async IO
->>>>>>>>>>>>>>>>> as well. We will only punt to an async context if the command would
->>>>>>>>>>>>>>>>> need to wait for IO on the device side. Any data that can be accessed
->>>>>>>>>>>>>>>>> directly in the page cache is done inline. This avoids the slowness
->>>>>>>>>>>>>>>>> issue of usual threadpools, since cached data is accessed as quickly
->>>>>>>>>>>>>>>>> as a sync interface.
->>>>>>>>>>>>>> [...]
->>>>>>>>>>>>>>>>> +static int io_submit_sqe(struct io_ring_ctx *ctx, const struct sqe_submit *s)
->>>>>>>>>>>>>>>>> +{
->>>>>>>>>>>>>>>>> +       struct io_kiocb *req;
->>>>>>>>>>>>>>>>> +       ssize_t ret;
->>>>>>>>>>>>>>>>> +
->>>>>>>>>>>>>>>>> +       /* enforce forwards compatibility on users */
->>>>>>>>>>>>>>>>> +       if (unlikely(s->sqe->flags))
->>>>>>>>>>>>>>>>> +               return -EINVAL;
->>>>>>>>>>>>>>>>> +
->>>>>>>>>>>>>>>>> +       req = io_get_req(ctx);
->>>>>>>>>>>>>>>>> +       if (unlikely(!req))
->>>>>>>>>>>>>>>>> +               return -EAGAIN;
->>>>>>>>>>>>>>>>> +
->>>>>>>>>>>>>>>>> +       req->rw.ki_filp = NULL;
->>>>>>>>>>>>>>>>> +
->>>>>>>>>>>>>>>>> +       ret = __io_submit_sqe(ctx, req, s, true);
->>>>>>>>>>>>>>>>> +       if (ret == -EAGAIN) {
->>>>>>>>>>>>>>>>> +               memcpy(&req->submit, s, sizeof(*s));
->>>>>>>>>>>>>>>>> +               INIT_WORK(&req->work, io_sq_wq_submit_work);
->>>>>>>>>>>>>>>>> +               queue_work(ctx->sqo_wq, &req->work);
->>>>>>>>>>>>>>>>> +               ret = 0;
->>>>>>>>>>>>>>>>> +       }
->>>>>>>>>>>>>>>>> +       if (ret)
->>>>>>>>>>>>>>>>> +               io_free_req(req);
->>>>>>>>>>>>>>>>> +
->>>>>>>>>>>>>>>>> +       return ret;
->>>>>>>>>>>>>>>>> +}
->>>>>>>>>>>>>>>>> +
->>>>>>>>>>>>>>>>> +static void io_commit_sqring(struct io_ring_ctx *ctx)
->>>>>>>>>>>>>>>>> +{
->>>>>>>>>>>>>>>>> +       struct io_sq_ring *ring = ctx->sq_ring;
->>>>>>>>>>>>>>>>> +
->>>>>>>>>>>>>>>>> +       if (ctx->cached_sq_head != ring->r.head) {
->>>>>>>>>>>>>>>>> +               WRITE_ONCE(ring->r.head, ctx->cached_sq_head);
->>>>>>>>>>>>>>>>> +               /* write side barrier of head update, app has read side */
->>>>>>>>>>>>>>>>> +               smp_wmb();
->>>>>>>>>>>>>>>>
->>>>>>>>>>>>>>>> Can you elaborate on what this memory barrier is doing? Don't you need
->>>>>>>>>>>>>>>> some sort of memory barrier *before* the WRITE_ONCE(), to ensure that
->>>>>>>>>>>>>>>> nobody sees the updated head before you're done reading the submission
->>>>>>>>>>>>>>>> queue entry? Or is that barrier elsewhere?
->>>>>>>>>>>>>>>
->>>>>>>>>>>>>>> The matching read barrier is in the application, it must do that before
->>>>>>>>>>>>>>> reading ->head for the SQ ring.
->>>>>>>>>>>>>>>
->>>>>>>>>>>>>>> For the other barrier, since the ring->r.head now has a READ_ONCE(),
->>>>>>>>>>>>>>> that should be all we need to ensure that loads are done.
->>>>>>>>>>>>>>
->>>>>>>>>>>>>> READ_ONCE() / WRITE_ONCE are not hardware memory barriers that enforce
->>>>>>>>>>>>>> ordering with regard to concurrent execution on other cores. They are
->>>>>>>>>>>>>> only compiler barriers, influencing the order in which the compiler
->>>>>>>>>>>>>> emits things. (Well, unless you're on alpha, where READ_ONCE() implies
->>>>>>>>>>>>>> a memory barrier that prevents reordering of dependent reads.)
->>>>>>>>>>>>>>
->>>>>>>>>>>>>> As far as I can tell, between the READ_ONCE(ring->array[...]) in
->>>>>>>>>>>>>> io_get_sqring() and the WRITE_ONCE() in io_commit_sqring(), you have
->>>>>>>>>>>>>> no *hardware* memory barrier that prevents reordering against
->>>>>>>>>>>>>> concurrently running userspace code. As far as I can tell, the
->>>>>>>>>>>>>> following could happen:
->>>>>>>>>>>>>>
->>>>>>>>>>>>>> - The kernel reads from ring->array in io_get_sqring(), then updates
->>>>>>>>>>>>>> the head in io_commit_sqring(). The CPU reorders the memory accesses
->>>>>>>>>>>>>> such that the write to the head becomes visible before the read from
->>>>>>>>>>>>>> ring->array has completed.
->>>>>>>>>>>>>> - Userspace observes the write to the head and reuses the array slots
->>>>>>>>>>>>>> the kernel has freed with the write, clobbering ring->array before the
->>>>>>>>>>>>>> kernel reads from ring->array.
->>>>>>>>>>>>>
->>>>>>>>>>>>> I'd say this is highly theoretical for the normal use case, as we
->>>>>>>>>>>>> will have submitted IO in between. Hence the load must have been done.
->>>>>>>>>>>
->>>>>>>>>>> Sorry, I'm confused. Who is "we", and which load are you referring to?
->>>>>>>>>>> io_sq_thread() goes directly from io_get_sqring() to
->>>>>>>>>>> io_commit_sqring(), with only a conditional io_sqe_needs_user() in
->>>>>>>>>>> between, if the `i == ARRAY_SIZE(sqes)` check triggers. There is no
->>>>>>>>>>> "submitting IO" in the middle.
->>>>>>>>>>
->>>>>>>>>> You are right, the patch I sent IS needed for the sq thread case! It's
->>>>>>>>>> only true for the "normal" case that we don't need the smp_mb() before
->>>>>>>>>> writing the sq ring head, as sqes are fully consumed at that point.
->>>>>>>>
->>>>>>>> Hmm... does that actually matter? As long as you don't have an
->>>>>>>> explicit barrier for this, the CPU could still reorder things, right?
->>>>>>>> Pull the store in front of everything else?
->>>>>>>
->>>>>>> If the IO has been submitted, by definition the loads have completed.
->>>>>>> At that point it should be fine to commit the ring head that the
->>>>>>> application sees.
->>>>>>
->>>>>> What exactly do you mean by "the IO has been submitted"? Are you
->>>>>> talking about interaction with hardware, or about the end of the
->>>>>> syscall, or something else?
->>>>>
->>>>> I mean that the loads from the sqe, which the IO is made of, have been
->>>>> done. That's what we care about here, right? The sqe has either been
->>>>> turned into an io request and has been submitted, or it has been copied.
->>>>
->>>> But they might not actually be done. AFAIU the CPU is allowed to do
->>>> the WRITE_ONCE of the head before doing any of the reads from the sqe
->>>> - loads and stores you do, as observed by a concurrently executing
->>>> thread, can happen in an order independent of the order in which you
->>>> write them in your code unless you use memory barriers. So the CPU
->>>> might decide to first write the new head, then do the read for
->>>> io_get_sqring(), and then do the __io_submit_sqe(), potentially
->>>> reading e.g. a IORING_OP_NOP opcode that has been written by
->>>> concurrently executing userspace after userspace has observed the
->>>> bumped head.
->>>
->>> For that to be possible, we'd need NO ordering in between the IO
->>> submission and when we write the sq ring head. A single spin lock
->>> should do it, right?
->>>
->>> It's not that I'm set against adding an smp_mb() to io_commit_sqring(),
->>> but I think we're going off the deep end a little bit here on
->>> theoretical vs what can practically happen.
->>>
->>> For the regular IO cases, we will have done at least one lock/unlock
->>> cycle. This is true for nops as well, and poll. The only case that could
->>> potentially NOT have one is the fsync, for the case where we punt and
->>> don't add it to existing work, we don't have any locking in between.
->>>
->>> I'll add the smp_mb() for peace of mind.
->>
->> For reference, folded in:
->>
->>
->> diff --git a/fs/io_uring.c b/fs/io_uring.c
->> index 8d68569f9ba9..755ff8f411da 100644
->> --- a/fs/io_uring.c
->> +++ b/fs/io_uring.c
->> @@ -1690,6 +1690,13 @@ static void io_commit_sqring(struct io_ring_ctx *ctx)
->>    struct io_sq_ring *ring = ctx->sq_ring;
->>
->>    if (ctx->cached_sq_head != READ_ONCE(ring->r.head)) {
->> +        /*
->> +         * Ensure any loads from the SQEs are done at this point,
->> +         * since once we write the new head, the application could
->> +         * write new data to them.
->> +         */
->> +        smp_mb();
->> +
->>        WRITE_ONCE(ring->r.head, ctx->cached_sq_head);
->>        /*
->>         * write side barrier of head update, app has read side. See
->>
->>
-> 
-> I haven’t followed the full set of machinations here, but would
-> smp_store_release() be sufficient?  It is a *lot* faster on some
-> architectures.
+Now that the holiday break is over, it's time to re-send this patch
+series (with a few additions, due to new information we got from
+CVE-2019-5736 -- which this patchset mostly protected against but had
+some holes with regards to #!-style scripts).
 
-Thanks for the hint, yes that looks more appropriate.
+Patch changelog:
+  v5:
+    * In response to CVE-2019-5736 (one of the vectors showed that
+      open(2)+fexec(3) cannot be used to scope binfmt_script's implicit
+      open_exec()), AT_* flags have been re-added and are now piped
+      through to binfmt_script (and other binfmt_* that use open_exec)
+      but are only supported for execveat(2) for now.
+  v4:
+    * Remove AT_* flag reservations, as they require more discussion.
+    * Switch to path_is_under() over __d_path() for breakout checking.
+    * Make O_XDEV no longer block openat("/tmp", "/", O_XDEV) -- dirfd
+      is now ignored for absolute paths to match other flags.
+    * Improve the dirfd_path_init() refactor and move it to a separate
+      commit.
+    * Remove reference to Linux-capsicum.
+    * Switch "proclink" name to "magic link".
+  v3: [resend]
+  v2:
+    * Made ".." resolution with AT_THIS_ROOT and AT_BENEATH safe(r) with
+      some semi-aggressive __d_path checking (see patch 3).
+    * Disallowed "proclinks" with AT_THIS_ROOT and AT_BENEATH, in the
+      hopes they can be re-enabled once safe.
+    * Removed the selftests as they will be reimplemented as xfstests.
+    * Removed stat(2) support, since you can already get it through
+      O_PATH and fstatat(2).
+
+The need for some sort of control over VFS's path resolution (to avoid
+malicious paths resulting in inadvertent breakouts) has been a very
+long-standing desire of many userspace applications. This patchset is a
+revival of Al Viro's old AT_NO_JUMPS[1,2] patchset (which was a variant
+of David Drysdale's O_BENEATH patchset[3] which was a spin-off of the
+Capsicum project[4]) with a few additions and changes made based on the
+previous discussion within [5] as well as others I felt were useful.
+
+In line with the conclusions of the original discussion of AT_NO_JUMPS,
+the flag has been split up into separate flags:
+
+  * O_XDEV blocks all mountpoint crossings (upwards, downwards, or
+    through absolute links). Absolute pathnames alone in openat(2) do
+    not trigger this.
+
+  * O_NOMAGICLINKS blocks resolution through /proc/$pid/fd-style links.
+    This is done by blocking the usage of nd_jump_link() during
+    resolution in a filesystem. The term "magic links" is used to match
+    with the only reference to these links in Documentation/, but I'm
+    happy to change the name.
+
+    It should be noted that this is different to the scope of O_NOFOLLOW
+    in that it applies to all path components. However, you can do
+    open(O_NOFOLLOW|O_NOMAGICLINKS|O_PATH) on a "magic link" and it will
+    *not* fail (assuming that no parent component was a "magic link"),
+    and you will have an fd for the "magic link".
+
+  * O_BENEATH disallows escapes to outside the starting dirfd's tree,
+    using techniques such as ".." or absolute links. Absolute paths in
+    openat(2) are also disallowed. Conceptually this flag is to ensure
+    you "stay below" a certain point in the filesystem tree -- but this
+    requires some additional to protect against various races that would
+    allow escape using ".." (see patch 4 for more detail).
+
+    Currently O_BENEATH implies O_NOMAGICLINKS, because it can trivially
+    beam you around the filesystem (breaking the protection). In future,
+    there might be similar safety checks as in patch 4, but that
+    requires more discussion.
+
+In addition, two new flags were added that expand on the above ideas:
+
+  * O_NOSYMLINKS does what it says on the tin. No symlink resolution is
+    allowed at all, including "magic links". Just as with O_NOMAGICLINKS
+    this can still be used with (O_PATH|O_NOFOLLOW) to open an fd for
+    the symlink as long as no parent path had a symlink component.
+
+  * O_THISROOT is an extension of O_BENEATH that, rather than blocking
+    attempts to move past the root, forces all such movements to be
+    scoped to the starting point. This provides chroot(2)-like
+    protection but without the cost of a chroot(2) for each filesystem
+    operation, as well as being safe against race attacks that chroot(2)
+    is not.
+
+    If a race is detected (as with O_BENEATH) then an error is
+    generated, and similar to O_BENEATH it is not permitted to cross
+    "magic links" with O_THISROOT.
+
+    The primary need for this is from container runtimes, which
+    currently need to do symlink scoping in userspace[6] when opening
+    paths in a potentially malicious container. There is a long list of
+    CVEs that could have bene mitigated by having O_THISROOT (such as
+    CVE-2017-1002101, CVE-2017-1002102, CVE-2018-15664, and
+    CVE-2019-5736, just to name a few).
+
+In addition, a mirror set of AT_* flags have been added (though
+currently these are only supported for execveat(2) -- and not for any
+other syscall). The need for these is explained in the final patch in
+the series (it's motivated by CVE-2019-5736).
+
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Eric Biederman <ebiederm@xmission.com>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: David Howells <dhowells@redhat.com>
+Cc: Jann Horn <jannh@google.com>
+Cc: Christian Brauner <christian@brauner.io>
+Cc: David Drysdale <drysdale@google.com>
+Cc: Tycho Andersen <tycho@tycho.ws>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: <containers@lists.linux-foundation.org>
+Cc: <linux-fsdevel@vger.kernel.org>
+Cc: <linux-api@vger.kernel.org>
+
+[1]: https://lwn.net/Articles/721443/
+[2]: https://lore.kernel.org/patchwork/patch/784221/
+[3]: https://lwn.net/Articles/619151/
+[4]: https://lwn.net/Articles/603929/
+[5]: https://lwn.net/Articles/723057/
+[6]: https://github.com/cyphar/filepath-securejoin
+
+Aleksa Sarai (5):
+  namei: split out nd->dfd handling to dirfd_path_init
+  namei: O_BENEATH-style path resolution flags
+  namei: O_THISROOT: chroot-like path resolution
+  namei: aggressively check for nd->root escape on ".." resolution
+  binfmt_*: scope path resolution of interpreters
+
+ fs/binfmt_elf.c                  |   2 +-
+ fs/binfmt_elf_fdpic.c            |   2 +-
+ fs/binfmt_em86.c                 |   4 +-
+ fs/binfmt_misc.c                 |   2 +-
+ fs/binfmt_script.c               |   2 +-
+ fs/exec.c                        |  26 +++-
+ fs/fcntl.c                       |   2 +-
+ fs/namei.c                       | 205 ++++++++++++++++++++++---------
+ fs/open.c                        |  13 +-
+ include/linux/binfmts.h          |   1 +
+ include/linux/fcntl.h            |   3 +-
+ include/linux/fs.h               |   9 +-
+ include/linux/namei.h            |   8 ++
+ include/uapi/asm-generic/fcntl.h |  17 +++
+ include/uapi/linux/fcntl.h       |   6 +
+ 15 files changed, 228 insertions(+), 74 deletions(-)
 
 -- 
-Jens Axboe
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+2.20.1
