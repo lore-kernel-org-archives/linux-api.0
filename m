@@ -1,231 +1,183 @@
-From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: [PATCH v5 5/5] binfmt_*: scope path resolution of interpreters
-Date: Wed, 13 Feb 2019 14:08:51 +1100
-Message-ID: <20190213030851.1881-6-cyphar@cyphar.com>
-References: <20190213030851.1881-1-cyphar@cyphar.com>
+From: Guillaume Nault <gnault@redhat.com>
+Subject: [PATCH net-next] sock: consistent handling of extreme
+ SO_SNDBUF/SO_RCVBUF values
+Date: Wed, 13 Feb 2019 04:30:34 +0100
+Message-ID: <2cb69b6987b6e23f8b8c1aa8dc524efa6bd53191.1550026643.git.gnault@redhat.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190213030851.1881-1-cyphar@cyphar.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>
-Cc: Aleksa Sarai <cyphar@cyphar.com>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Christian Brauner <christian@brauner.io>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, containers@lists.linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <netdev-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: netdev-owner@vger.kernel.org
+To: netdev@vger.kernel.org
+Cc: linux-api@vger.kernel.org, Eric Dumazet <edumazet@google.com>, Marcelo Leitner <mleitner@redhat.com>, Paolo Abeni <pabeni@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-The need to be able to scope path resolution of interpreters became
-clear with one of the possible vectors used in CVE-2019-5736 (which
-most major container runtimes were vulnerable to).
+SO_SNDBUF and SO_RCVBUF (and their *BUFFORCE version) may overflow or
+underflow their input value. This patch aims at providing explicit
+handling of these extreme cases, to get a clear behaviour even with
+values bigger than INT_MAX / 2 or lower than INT_MIN / 2.
 
-Naively, it might seem that openat(2) -- which supports path scoping --
-can be combined with execveat(AT_EMPTY_PATH) to trivially scope the
-binary being executed. Unfortunately, a "bad binary" (usually a symlink)
-could be written as a #!-style script with the symlink target as the
-interpreter -- which would be completely missed by just scoping the
-openat(2). An example of this being exploitable is CVE-2019-5736.
+For simplicity, only SO_SNDBUF and SO_SNDBUFFORCE are described here,
+but the same explanation and fix apply to SO_RCVBUF and SO_RCVBUFFORCE
+(with 'SNDBUF' replaced by 'RCVBUF' and 'wmem_max' by 'rmem_max').
 
-In order to get around this, we need to pass down to each binfmt_*
-implementation the scoping flags requested in execveat(2). In order to
-maintain backwards-compatibility we only pass the scoping AT_* flags.
+Overflow of positive values
+===========================
 
-To avoid breaking userspace (in the exceptionally rare cases where you
-have #!-scripts with a relative path being execveat(2)-ed with dfd !=
-AT_FDCWD), we only pass dfd down to binfmt_* if any of our new flags are
-set in execveat(2).
+When handling SO_SNDBUF or SO_SNDBUFFORCE, if 'val' exceeds
+INT_MAX / 2, the buffer size is set to its minimum value because
+'val * 2' overflows, and max_t() considers that it's smaller than
+SOCK_MIN_SNDBUF. For SO_SNDBUF, this can only happen with
+net.core.wmem_max > INT_MAX / 2.
 
-Signed-off-by: Aleksa Sarai <cyphar@cyphar.com>
+SO_SNDBUF and SO_SNDBUFFORCE are actually designed to let users probe
+for the maximum buffer size by setting an arbitrary large number that
+gets capped to the maximum allowed/possible size. Having the upper
+half of the positive integer space to potentially reduce the buffer
+size to its minimum value defeats this purpose.
+
+This patch caps the base value to INT_MAX / 2, so that bigger values
+don't overflow and keep setting the buffer size to its maximum.
+
+Underflow of negative values
+============================
+
+For negative numbers, SO_SNDBUF always considers them bigger than
+net.core.wmem_max, which is bounded by [SOCK_MIN_SNDBUF, INT_MAX].
+Therefore such values are set to net.core.wmem_max and we're back to
+the behaviour of positive integers described above (return maximum
+buffer size if wmem_max <= INT_MAX / 2, return SOCK_MIN_SNDBUF
+otherwise).
+
+However, SO_SNDBUFFORCE behaves differently. The user value is
+directly multiplied by two and compared with SOCK_MIN_SNDBUF. If
+'val * 2' doesn't underflow or if it underflows to a value smaller
+than SOCK_MIN_SNDBUF then buffer size is set to its minimum value.
+Otherwise the buffer size is set to the underflowed value.
+
+This patch treats negative values passed to SO_SNDBUFFORCE as null, to
+prevent underflows. Therefore negative values now always set the buffer
+size to its minimum value.
+
+Even though SO_SNDBUF behaves inconsistently by setting buffer size to
+the maximum value when passed a negative number, no attempt is made to
+modify this behaviour. There may exist some programs that rely on using
+negative numbers to set the maximum buffer size. Avoiding overflows
+because of extreme net.core.wmem_max values is the most we can do here.
+
+Summary of altered behaviours
+=============================
+
+val      : user-space value passed to setsockopt()
+val_uf   : the underflowed value resulting from doubling val when
+           val < INT_MIN / 2
+wmem_max : short for net.core.wmem_max
+val_cap  : min(val, wmem_max)
+min_len  : minimal buffer length (that is, SOCK_MIN_SNDBUF)
+max_len  : maximal possible buffer length, regardless of wmem_max (that
+           is, INT_MAX - 1)
+^^^^     : altered behaviour
+
+SO_SNDBUF:
++-------------------------+-------------+------------+----------------+
+|       CONDITION         | OLD RESULT  | NEW RESULT |    COMMENT     |
++-------------------------+-------------+------------+----------------+
+| val < 0 &&              |             |            | No overflow,   |
+| wmem_max <= INT_MAX/2   | wmem_max*2  | wmem_max*2 | keep original  |
+|                         |             |            | behaviour      |
++-------------------------+-------------+------------+----------------+
+| val < 0 &&              |             |            | Cap wmem_max   |
+| INT_MAX/2 < wmem_max    | min_len     | max_len    | to prevent     |
+|                         |             | ^^^^^^^    | overflow       |
++-------------------------+-------------+------------+----------------+
+| 0 <= val <= min_len/2   | min_len     | min_len    | Ordinary case  |
++-------------------------+-------------+------------+----------------+
+| min_len/2 < val &&      | val_cap*2   | val_cap*2  | Ordinary case  |
+| val_cap <= INT_MAX/2    |             |            |                |
++-------------------------+-------------+------------+----------------+
+| min_len < val &&        |             |            | Cap val_cap    |
+| INT_MAX/2 < val_cap     | min_len     | max_len    | again to       |
+| (implies that           |             | ^^^^^^^    | prevent        |
+| INT_MAX/2 < wmem_max)   |             |            | overflow       |
++-------------------------+-------------+------------+----------------+
+
+SO_SNDBUFFORCE:
++------------------------------+---------+---------+------------------+
+|          CONDITION           | BEFORE  | AFTER   |     COMMENT      |
+|                              | PATCH   | PATCH   |                  |
++------------------------------+---------+---------+------------------+
+| val < INT_MIN/2 &&           | min_len | min_len | Underflow with   |
+| val_uf <= min_len            |         |         | no consequence   |
++------------------------------+---------+---------+------------------+
+| val < INT_MIN/2 &&           | val_uf  | min_len | Set val to 0 to  |
+| val_uf > min_len             |         | ^^^^^^^ | avoid underflow  |
++------------------------------+---------+---------+------------------+
+| INT_MIN/2 <= val < 0         | min_len | min_len | No underflow     |
++------------------------------+---------+---------+------------------+
+| 0 <= val <= min_len/2        | min_len | min_len | Ordinary case    |
++------------------------------+---------+---------+------------------+
+| min_len/2 < val <= INT_MAX/2 | val*2   | val*2   | Ordinary case    |
++------------------------------+---------+---------+------------------+
+| INT_MAX/2 < val              | min_len | max_len | Cap val to       |
+|                              |         | ^^^^^^^ | prevent overflow |
++------------------------------+---------+---------+------------------+
+
+Signed-off-by: Guillaume Nault <gnault@redhat.com>
 ---
- fs/binfmt_elf.c            |  2 +-
- fs/binfmt_elf_fdpic.c      |  2 +-
- fs/binfmt_em86.c           |  4 ++--
- fs/binfmt_misc.c           |  2 +-
- fs/binfmt_script.c         |  2 +-
- fs/exec.c                  | 26 ++++++++++++++++++++++----
- include/linux/binfmts.h    |  1 +
- include/linux/fs.h         |  9 +++++++--
- include/uapi/linux/fcntl.h |  6 ++++++
- 9 files changed, 42 insertions(+), 12 deletions(-)
+ net/core/sock.c | 20 ++++++++++++++++++++
+ 1 file changed, 20 insertions(+)
 
-diff --git a/fs/binfmt_elf.c b/fs/binfmt_elf.c
-index 54207327f98f..eef86ffa38c8 100644
---- a/fs/binfmt_elf.c
-+++ b/fs/binfmt_elf.c
-@@ -777,7 +777,7 @@ static int load_elf_binary(struct linux_binprm *bprm)
- 			if (elf_interpreter[elf_ppnt->p_filesz - 1] != '\0')
- 				goto out_free_interp;
- 
--			interpreter = open_exec(elf_interpreter);
-+			interpreter = openat_exec(bprm->dfd, elf_interpreter, bprm->flags);
- 			retval = PTR_ERR(interpreter);
- 			if (IS_ERR(interpreter))
- 				goto out_free_interp;
-diff --git a/fs/binfmt_elf_fdpic.c b/fs/binfmt_elf_fdpic.c
-index b53bb3729ac1..c463c6428f77 100644
---- a/fs/binfmt_elf_fdpic.c
-+++ b/fs/binfmt_elf_fdpic.c
-@@ -263,7 +263,7 @@ static int load_elf_fdpic_binary(struct linux_binprm *bprm)
- 			kdebug("Using ELF interpreter %s", interpreter_name);
- 
- 			/* replace the program with the interpreter */
--			interpreter = open_exec(interpreter_name);
-+			interpreter = openat_exec(bprm->dfd, interpreter_name, bprm->flags);
- 			retval = PTR_ERR(interpreter);
- 			if (IS_ERR(interpreter)) {
- 				interpreter = NULL;
-diff --git a/fs/binfmt_em86.c b/fs/binfmt_em86.c
-index dd2d3f0cd55d..3ee46b0dc0d4 100644
---- a/fs/binfmt_em86.c
-+++ b/fs/binfmt_em86.c
-@@ -81,10 +81,10 @@ static int load_em86(struct linux_binprm *bprm)
- 
- 	/*
- 	 * OK, now restart the process with the interpreter's inode.
--	 * Note that we use open_exec() as the name is now in kernel
-+	 * Note that we use openat_exec() as the name is now in kernel
- 	 * space, and we don't need to copy it.
- 	 */
--	file = open_exec(interp);
-+	file = openat_exec(binprm->dfd, interp, binprm->flags);
- 	if (IS_ERR(file))
- 		return PTR_ERR(file);
- 
-diff --git a/fs/binfmt_misc.c b/fs/binfmt_misc.c
-index aa4a7a23ff99..573ef06ff5a1 100644
---- a/fs/binfmt_misc.c
-+++ b/fs/binfmt_misc.c
-@@ -209,7 +209,7 @@ static int load_misc_binary(struct linux_binprm *bprm)
- 		if (!IS_ERR(interp_file))
- 			deny_write_access(interp_file);
- 	} else {
--		interp_file = open_exec(fmt->interpreter);
-+		interp_file = openat_exec(bprm->dfd, fmt->interpreter, bprm->flags);
- 	}
- 	retval = PTR_ERR(interp_file);
- 	if (IS_ERR(interp_file))
-diff --git a/fs/binfmt_script.c b/fs/binfmt_script.c
-index d0078cbb718b..340f63635aac 100644
---- a/fs/binfmt_script.c
-+++ b/fs/binfmt_script.c
-@@ -102,7 +102,7 @@ static int load_script(struct linux_binprm *bprm)
- 	/*
- 	 * OK, now restart the process with the interpreter's dentry.
- 	 */
--	file = open_exec(i_name);
-+	file = openat_exec(bprm->dfd, i_name, bprm->flags);
- 	if (IS_ERR(file))
- 		return PTR_ERR(file);
- 
-diff --git a/fs/exec.c b/fs/exec.c
-index fb72d36f7823..244f57c3286d 100644
---- a/fs/exec.c
-+++ b/fs/exec.c
-@@ -846,12 +846,24 @@ static struct file *do_open_execat(int fd, struct filename *name, int flags)
- 		.lookup_flags = LOOKUP_FOLLOW,
- 	};
- 
--	if ((flags & ~(AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH)) != 0)
-+	if ((flags & ~(AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH | AT_BENEATH |
-+		       AT_XDEV | AT_NO_MAGICLINKS | AT_NO_SYMLINKS |
-+		       AT_THIS_ROOT)) != 0)
- 		return ERR_PTR(-EINVAL);
- 	if (flags & AT_SYMLINK_NOFOLLOW)
- 		open_exec_flags.lookup_flags &= ~LOOKUP_FOLLOW;
- 	if (flags & AT_EMPTY_PATH)
- 		open_exec_flags.lookup_flags |= LOOKUP_EMPTY;
-+	if (flags & AT_BENEATH)
-+		open_exec_flags.lookup_flags |= LOOKUP_BENEATH;
-+	if (flags & AT_XDEV)
-+		open_exec_flags.lookup_flags |= LOOKUP_XDEV;
-+	if (flags & AT_NO_MAGICLINKS)
-+		open_exec_flags.lookup_flags |= LOOKUP_NO_MAGICLINKS;
-+	if (flags & AT_NO_SYMLINKS)
-+		open_exec_flags.lookup_flags |= LOOKUP_NO_SYMLINKS;
-+	if (flags & AT_THIS_ROOT)
-+		open_exec_flags.lookup_flags |= LOOKUP_IN_ROOT;
- 
- 	file = do_filp_open(fd, name, &open_exec_flags);
- 	if (IS_ERR(file))
-@@ -879,18 +891,18 @@ static struct file *do_open_execat(int fd, struct filename *name, int flags)
- 	return ERR_PTR(err);
- }
- 
--struct file *open_exec(const char *name)
-+struct file *openat_exec(int dfd, const char *name, int flags)
- {
- 	struct filename *filename = getname_kernel(name);
- 	struct file *f = ERR_CAST(filename);
- 
- 	if (!IS_ERR(filename)) {
--		f = do_open_execat(AT_FDCWD, filename, 0);
-+		f = do_open_execat(dfd, filename, flags);
- 		putname(filename);
- 	}
- 	return f;
- }
--EXPORT_SYMBOL(open_exec);
-+EXPORT_SYMBOL(openat_exec);
- 
- int kernel_read_file(struct file *file, void **buf, loff_t *size,
- 		     loff_t max_size, enum kernel_read_file_id id)
-@@ -1762,6 +1774,12 @@ static int __do_execve_file(int fd, struct filename *filename,
- 
- 	sched_exec();
- 
-+	bprm->flags = flags & (AT_XDEV | AT_NO_MAGICLINKS | AT_NO_SYMLINKS |
-+			       AT_THIS_ROOT);
-+	bprm->dfd = AT_FDCWD;
-+	if (bprm->flags)
-+		bprm->dfd = fd;
+diff --git a/net/core/sock.c b/net/core/sock.c
+index 6aa2e7e0b4fb..5de90ed35968 100644
+--- a/net/core/sock.c
++++ b/net/core/sock.c
+@@ -713,6 +713,10 @@ int sock_setsockopt(struct socket *sock, int level, int optname,
+ 		 */
+ 		val = min_t(u32, val, sysctl_wmem_max);
+ set_sndbuf:
++		/* Ensure val * 2 fits into an int, to prevent max_t()
++		 * from treating it as a negative value.
++		 */
++		val = min_t(int, val, INT_MAX / 2);
+ 		sk->sk_userlocks |= SOCK_SNDBUF_LOCK;
+ 		sk->sk_sndbuf = max_t(int, val * 2, SOCK_MIN_SNDBUF);
+ 		/* Wake up sending tasks if we upped the value. */
+@@ -724,6 +728,12 @@ int sock_setsockopt(struct socket *sock, int level, int optname,
+ 			ret = -EPERM;
+ 			break;
+ 		}
 +
- 	bprm->file = file;
- 	if (!filename) {
- 		bprm->filename = "none";
-diff --git a/include/linux/binfmts.h b/include/linux/binfmts.h
-index 688ab0de7810..e4da2d36e97f 100644
---- a/include/linux/binfmts.h
-+++ b/include/linux/binfmts.h
-@@ -50,6 +50,7 @@ struct linux_binprm {
- 	unsigned int taso:1;
- #endif
- 	unsigned int recursion_depth; /* only for search_binary_handler() */
-+	int dfd, flags;		/* passed down to execat_open() */
- 	struct file * file;
- 	struct cred *cred;	/* new credentials */
- 	int unsafe;		/* how unsafe this exec is (mask of LSM_UNSAFE_*) */
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index 3e85cb8e8c20..a82c8dd44ad9 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -2937,8 +2937,13 @@ extern int kernel_read_file_from_fd(int, void **, loff_t *, loff_t,
- extern ssize_t kernel_read(struct file *, void *, size_t, loff_t *);
- extern ssize_t kernel_write(struct file *, const void *, size_t, loff_t *);
- extern ssize_t __kernel_write(struct file *, const void *, size_t, loff_t *);
--extern struct file * open_exec(const char *);
-- 
-+
-+extern struct file *openat_exec(int, const char *, int);
-+static inline struct file *open_exec(const char *name)
-+{
-+	return openat_exec(AT_FDCWD, name, 0);
-+}
-+
- /* fs/dcache.c -- generic fs support functions */
- extern bool is_subdir(struct dentry *, struct dentry *);
- extern bool path_is_under(const struct path *, const struct path *);
-diff --git a/include/uapi/linux/fcntl.h b/include/uapi/linux/fcntl.h
-index 6448cdd9a350..607bc98813e3 100644
---- a/include/uapi/linux/fcntl.h
-+++ b/include/uapi/linux/fcntl.h
-@@ -90,5 +90,11 @@
- #define AT_STATX_FORCE_SYNC	0x2000	/* - Force the attributes to be sync'd with the server */
- #define AT_STATX_DONT_SYNC	0x4000	/* - Don't sync attributes with the server */
++		/* No negative values (to prevent underflow, as val will be
++		 * multiplied by 2).
++		 */
++		if (val < 0)
++			val = 0;
+ 		goto set_sndbuf;
  
-+#define AT_RESOLUTION_TYPE	0xF8000 /* Type of path-resolution scoping we are applying. */
-+#define AT_BENEATH		0x08000 /* - Block "lexical" trickery like "..", symlinks, absolute paths, etc. */
-+#define AT_XDEV			0x10000 /* - Block mount-point crossings (includes bind-mounts). */
-+#define AT_NO_MAGICLINKS	0x20000 /* - Block procfs-style "magic" symlinks. */
-+#define AT_NO_SYMLINKS		0x40000 /* - Block all symlinks (implies AT_NO_MAGICLINKS). */
-+#define AT_THIS_ROOT		0x80000 /* - Scope ".." resolution to dirfd (like chroot(2)). */
+ 	case SO_RCVBUF:
+@@ -734,6 +744,10 @@ int sock_setsockopt(struct socket *sock, int level, int optname,
+ 		 */
+ 		val = min_t(u32, val, sysctl_rmem_max);
+ set_rcvbuf:
++		/* Ensure val * 2 fits into an int, to prevent max_t()
++		 * from treating it as a negative value.
++		 */
++		val = min_t(int, val, INT_MAX / 2);
+ 		sk->sk_userlocks |= SOCK_RCVBUF_LOCK;
+ 		/*
+ 		 * We double it on the way in to account for
+@@ -758,6 +772,12 @@ int sock_setsockopt(struct socket *sock, int level, int optname,
+ 			ret = -EPERM;
+ 			break;
+ 		}
++
++		/* No negative values (to prevent underflow, as val will be
++		 * multiplied by 2).
++		 */
++		if (val < 0)
++			val = 0;
+ 		goto set_rcvbuf;
  
- #endif /* _UAPI_LINUX_FCNTL_H */
+ 	case SO_KEEPALIVE:
 -- 
 2.20.1
