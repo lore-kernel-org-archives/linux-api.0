@@ -1,7 +1,7 @@
 From: Omar Sandoval <osandov@osandov.com>
-Subject: [RFC PATCH 3/6] Btrfs: add support for setting btime
-Date: Thu, 14 Feb 2019 02:00:10 -0800
-Message-ID: <60b83d5151d3c80bf73bb257b971aeb66120d4d5.1550136164.git.osandov@fb.com>
+Subject: [RFC PATCH 2/6] fs: add AT_UTIME_BTIME for utimensat()
+Date: Thu, 14 Feb 2019 02:00:09 -0800
+Message-ID: <383aea1b93edf69d4f96a898ef4878881867d33e.1550136164.git.osandov@fb.com>
 References: <cover.1550136164.git.osandov@fb.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,49 +14,182 @@ List-Id: linux-api@vger.kernel.org
 
 From: Omar Sandoval <osandov@fb.com>
 
-The Btrfs inode format has always included btime (under the name otime),
-so setting it is trivial.
+Now that we have a btime iattr, use it to allow updating btime from
+utimensat(). We do so by adding a new AT_UTIME_BTIME flag. Iff this flag
+is given, the btime is set to times[2] (unless times is NULL, in which
+case the current time is used).
 
 Signed-off-by: Omar Sandoval <osandov@fb.com>
 ---
- fs/btrfs/inode.c | 2 ++
- fs/btrfs/super.c | 4 ++--
- 2 files changed, 4 insertions(+), 2 deletions(-)
+ fs/utimes.c                | 86 +++++++++++++++++++++++---------------
+ include/uapi/linux/fcntl.h |  2 +
+ 2 files changed, 55 insertions(+), 33 deletions(-)
 
-diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
-index 5c349667c761..49ad777d8057 100644
---- a/fs/btrfs/inode.c
-+++ b/fs/btrfs/inode.c
-@@ -5153,6 +5153,8 @@ static int btrfs_setattr(struct dentry *dentry, struct iattr *attr)
+diff --git a/fs/utimes.c b/fs/utimes.c
+index bdcf2daf39c1..cb9fe77e5f91 100644
+--- a/fs/utimes.c
++++ b/fs/utimes.c
+@@ -16,7 +16,20 @@ static bool nsec_valid(long nsec)
+ 	return nsec >= 0 && nsec <= 999999999;
+ }
  
- 	if (attr->ia_valid) {
- 		setattr_copy(inode, attr);
-+		if (attr->ia_valid & ATTR_BTIME)
-+			BTRFS_I(inode)->i_otime = attr->ia_btime;
- 		inode_inc_iversion(inode);
- 		err = btrfs_dirty_inode(inode);
+-static int utimes_common(const struct path *path, struct timespec64 *times)
++static void init_time_attr(struct iattr *newattrs, struct timespec64 *time_attr,
++			   struct timespec64 time, unsigned int attr,
++			   unsigned int attr_set)
++{
++	if (time.tv_nsec == UTIME_OMIT) {
++		newattrs->ia_valid &= ~attr;
++	} else {
++		*time_attr = time;
++		newattrs->ia_valid |= attr_set;
++	}
++}
++
++static int utimes_common(const struct path *path, struct timespec64 *times,
++			 bool btime)
+ {
+ 	int error;
+ 	struct iattr newattrs;
+@@ -28,25 +41,21 @@ static int utimes_common(const struct path *path, struct timespec64 *times)
+ 		goto out;
  
-diff --git a/fs/btrfs/super.c b/fs/btrfs/super.c
-index 0a3f122dd61f..2af368cad2aa 100644
---- a/fs/btrfs/super.c
-+++ b/fs/btrfs/super.c
-@@ -2140,7 +2140,7 @@ static struct file_system_type btrfs_fs_type = {
- 	.name		= "btrfs",
- 	.mount		= btrfs_mount,
- 	.kill_sb	= btrfs_kill_super,
--	.fs_flags	= FS_REQUIRES_DEV | FS_BINARY_MOUNTDATA,
-+	.fs_flags	= FS_REQUIRES_DEV | FS_BINARY_MOUNTDATA | FS_HAS_BTIME,
- };
+ 	if (times && times[0].tv_nsec == UTIME_NOW &&
+-		     times[1].tv_nsec == UTIME_NOW)
++	    times[1].tv_nsec == UTIME_NOW &&
++	    (!btime || times[2].tv_nsec == UTIME_NOW))
+ 		times = NULL;
  
- static struct file_system_type btrfs_root_fs_type = {
-@@ -2148,7 +2148,7 @@ static struct file_system_type btrfs_root_fs_type = {
- 	.name		= "btrfs",
- 	.mount		= btrfs_mount_root,
- 	.kill_sb	= btrfs_kill_super,
--	.fs_flags	= FS_REQUIRES_DEV | FS_BINARY_MOUNTDATA,
-+	.fs_flags	= FS_REQUIRES_DEV | FS_BINARY_MOUNTDATA | FS_HAS_BTIME,
- };
+ 	newattrs.ia_valid = ATTR_CTIME | ATTR_MTIME | ATTR_ATIME;
++	if (btime)
++		newattrs.ia_valid |= ATTR_BTIME;
+ 	if (times) {
+-		if (times[0].tv_nsec == UTIME_OMIT)
+-			newattrs.ia_valid &= ~ATTR_ATIME;
+-		else if (times[0].tv_nsec != UTIME_NOW) {
+-			newattrs.ia_atime.tv_sec = times[0].tv_sec;
+-			newattrs.ia_atime.tv_nsec = times[0].tv_nsec;
+-			newattrs.ia_valid |= ATTR_ATIME_SET;
+-		}
+-
+-		if (times[1].tv_nsec == UTIME_OMIT)
+-			newattrs.ia_valid &= ~ATTR_MTIME;
+-		else if (times[1].tv_nsec != UTIME_NOW) {
+-			newattrs.ia_mtime.tv_sec = times[1].tv_sec;
+-			newattrs.ia_mtime.tv_nsec = times[1].tv_nsec;
+-			newattrs.ia_valid |= ATTR_MTIME_SET;
++		init_time_attr(&newattrs, &newattrs.ia_atime, times[0],
++			       ATTR_ATIME, ATTR_ATIME_SET);
++		init_time_attr(&newattrs, &newattrs.ia_mtime, times[1],
++			       ATTR_MTIME, ATTR_MTIME_SET);
++		if (btime) {
++			init_time_attr(&newattrs, &newattrs.ia_btime, times[2],
++				       ATTR_BTIME, ATTR_BTIME_SET);
+ 		}
+ 		/*
+ 		 * Tell setattr_prepare(), that this is an explicit time
+@@ -90,14 +99,16 @@ static int utimes_common(const struct path *path, struct timespec64 *times)
+ long do_utimes(int dfd, const char __user *filename, struct timespec64 *times,
+ 	       int flags)
+ {
++	bool btime = flags & AT_UTIME_BTIME;
+ 	int error = -EINVAL;
  
- MODULE_ALIAS_FS("btrfs");
+ 	if (times && (!nsec_valid(times[0].tv_nsec) ||
+-		      !nsec_valid(times[1].tv_nsec))) {
++		      !nsec_valid(times[1].tv_nsec) ||
++		      (btime && !nsec_valid(times[2].tv_nsec)))) {
+ 		goto out;
+ 	}
+ 
+-	if (flags & ~AT_SYMLINK_NOFOLLOW)
++	if (flags & ~(AT_SYMLINK_NOFOLLOW | AT_UTIME_BTIME))
+ 		goto out;
+ 
+ 	if (filename == NULL && dfd != AT_FDCWD) {
+@@ -111,7 +122,7 @@ long do_utimes(int dfd, const char __user *filename, struct timespec64 *times,
+ 		if (!f.file)
+ 			goto out;
+ 
+-		error = utimes_common(&f.file->f_path, times);
++		error = utimes_common(&f.file->f_path, times, btime);
+ 		fdput(f);
+ 	} else {
+ 		struct path path;
+@@ -124,7 +135,7 @@ long do_utimes(int dfd, const char __user *filename, struct timespec64 *times,
+ 		if (error)
+ 			goto out;
+ 
+-		error = utimes_common(&path, times);
++		error = utimes_common(&path, times, btime);
+ 		path_put(&path);
+ 		if (retry_estale(error, lookup_flags)) {
+ 			lookup_flags |= LOOKUP_REVAL;
+@@ -139,16 +150,20 @@ long do_utimes(int dfd, const char __user *filename, struct timespec64 *times,
+ SYSCALL_DEFINE4(utimensat, int, dfd, const char __user *, filename,
+ 		struct __kernel_timespec __user *, utimes, int, flags)
+ {
+-	struct timespec64 tstimes[2];
++	struct timespec64 tstimes[3];
+ 
+ 	if (utimes) {
+-		if ((get_timespec64(&tstimes[0], &utimes[0]) ||
+-			get_timespec64(&tstimes[1], &utimes[1])))
+-			return -EFAULT;
+-
++		int i, n = (flags & AT_UTIME_BTIME) ? 3 : 2;
++		bool all_omit = true;
++
++		for (i = 0; i < n; i++) {
++			if (get_timespec64(&tstimes[i], &utimes[i]))
++				return -EFAULT;
++			if (tstimes[i].tv_nsec != UTIME_OMIT)
++				all_omit = false;
++		}
+ 		/* Nothing to do, we must not even check the path.  */
+-		if (tstimes[0].tv_nsec == UTIME_OMIT &&
+-		    tstimes[1].tv_nsec == UTIME_OMIT)
++		if (all_omit)
+ 			return 0;
+ 	}
+ 
+@@ -242,14 +257,19 @@ COMPAT_SYSCALL_DEFINE2(utime, const char __user *, filename,
+ 
+ COMPAT_SYSCALL_DEFINE4(utimensat, unsigned int, dfd, const char __user *, filename, struct old_timespec32 __user *, t, int, flags)
+ {
+-	struct timespec64 tv[2];
++	struct timespec64 tv[3];
+ 
+ 	if  (t) {
+-		if (get_old_timespec32(&tv[0], &t[0]) ||
+-		    get_old_timespec32(&tv[1], &t[1]))
+-			return -EFAULT;
+-
+-		if (tv[0].tv_nsec == UTIME_OMIT && tv[1].tv_nsec == UTIME_OMIT)
++		int i, n = (flags & AT_UTIME_BTIME) ? 3 : 2;
++		bool all_omit = true;
++
++		for (i = 0; i < n; i++) {
++			if (get_old_timespec32(&tv[i], &t[i]))
++				return -EFAULT;
++			if (tv[i].tv_nsec != UTIME_OMIT)
++				all_omit = false;
++		}
++		if (all_omit)
+ 			return 0;
+ 	}
+ 	return do_utimes(dfd, filename, t ? tv : NULL, flags);
+diff --git a/include/uapi/linux/fcntl.h b/include/uapi/linux/fcntl.h
+index 6448cdd9a350..fc5b02439697 100644
+--- a/include/uapi/linux/fcntl.h
++++ b/include/uapi/linux/fcntl.h
+@@ -90,5 +90,7 @@
+ #define AT_STATX_FORCE_SYNC	0x2000	/* - Force the attributes to be sync'd with the server */
+ #define AT_STATX_DONT_SYNC	0x4000	/* - Don't sync attributes with the server */
+ 
++#define AT_UTIME_BTIME		0x8000	/* Also update file creation time */
++
+ 
+ #endif /* _UAPI_LINUX_FCNTL_H */
 -- 
 2.20.1
