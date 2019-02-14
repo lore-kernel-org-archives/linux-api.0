@@ -1,7 +1,7 @@
 From: Omar Sandoval <osandov@osandov.com>
-Subject: [PATCH] generic: add a test for AT_UTIME_BTIME
-Date: Thu, 14 Feb 2019 02:00:14 -0800
-Message-ID: <c0d9cb0b181db011a3068fb96bb85e732f508b73.1550138186.git.osandov@fb.com>
+Subject: [RFC PATCH 6/6] xfs: add support for setting btime
+Date: Thu, 14 Feb 2019 02:00:13 -0800
+Message-ID: <853e0dbdcd881e7dae13ada9dbb5924f6f5c4d9c.1550136164.git.osandov@fb.com>
 References: <cover.1550136164.git.osandov@fb.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,142 +14,92 @@ List-Id: linux-api@vger.kernel.org
 
 From: Omar Sandoval <osandov@fb.com>
 
-Test that on filesystems supporting btime, the timestamp is updated as
-expected.
+The XFS inode format includes btime (under the name crtime) in inode
+version 3. Also update the comments in libxfs to reflect that di_crtime
+can now change.
 
 Signed-off-by: Omar Sandoval <osandov@fb.com>
 ---
- common/rc             | 14 ++++++++++
- tests/generic/526     | 64 +++++++++++++++++++++++++++++++++++++++++++
- tests/generic/526.out | 14 ++++++++++
- tests/generic/group   |  1 +
- 4 files changed, 93 insertions(+)
- create mode 100755 tests/generic/526
- create mode 100644 tests/generic/526.out
+ fs/xfs/libxfs/xfs_format.h     |  2 +-
+ fs/xfs/libxfs/xfs_log_format.h |  2 +-
+ fs/xfs/xfs_iops.c              | 11 +++++++++--
+ fs/xfs/xfs_super.c             |  2 +-
+ 4 files changed, 12 insertions(+), 5 deletions(-)
 
-diff --git a/common/rc b/common/rc
-index b8ed1776..d2f43a21 100644
---- a/common/rc
-+++ b/common/rc
-@@ -3843,6 +3843,20 @@ _require_btime()
- 	rm -f $TEST_DIR/test_creation_time
+diff --git a/fs/xfs/libxfs/xfs_format.h b/fs/xfs/libxfs/xfs_format.h
+index 9bb3c48843ec..ff6cb860ae77 100644
+--- a/fs/xfs/libxfs/xfs_format.h
++++ b/fs/xfs/libxfs/xfs_format.h
+@@ -884,9 +884,9 @@ typedef struct xfs_dinode {
+ 	__be64		di_flags2;	/* more random flags */
+ 	__be32		di_cowextsize;	/* basic cow extent size for file */
+ 	__u8		di_pad2[12];	/* more padding for future expansion */
++	xfs_timestamp_t	di_crtime;	/* time created */
+ 
+ 	/* fields only written to during inode creation */
+-	xfs_timestamp_t	di_crtime;	/* time created */
+ 	__be64		di_ino;		/* inode number */
+ 	uuid_t		di_uuid;	/* UUID of the filesystem */
+ 
+diff --git a/fs/xfs/libxfs/xfs_log_format.h b/fs/xfs/libxfs/xfs_log_format.h
+index e5f97c69b320..5cb35b3db870 100644
+--- a/fs/xfs/libxfs/xfs_log_format.h
++++ b/fs/xfs/libxfs/xfs_log_format.h
+@@ -415,9 +415,9 @@ struct xfs_log_dinode {
+ 	uint64_t	di_flags2;	/* more random flags */
+ 	uint32_t	di_cowextsize;	/* basic cow extent size for file */
+ 	uint8_t		di_pad2[12];	/* more padding for future expansion */
++	xfs_ictimestamp_t di_crtime;	/* time created */
+ 
+ 	/* fields only written to during inode creation */
+-	xfs_ictimestamp_t di_crtime;	/* time created */
+ 	xfs_ino_t	di_ino;		/* inode number */
+ 	uuid_t		di_uuid;	/* UUID of the filesystem */
+ 
+diff --git a/fs/xfs/xfs_iops.c b/fs/xfs/xfs_iops.c
+index f48ffd7a8d3e..20570f61ffeb 100644
+--- a/fs/xfs/xfs_iops.c
++++ b/fs/xfs/xfs_iops.c
+@@ -582,6 +582,10 @@ xfs_setattr_time(
+ 		inode->i_ctime = iattr->ia_ctime;
+ 	if (iattr->ia_valid & ATTR_MTIME)
+ 		inode->i_mtime = iattr->ia_mtime;
++	if (iattr->ia_valid & ATTR_BTIME) {
++		ip->i_d.di_crtime.t_sec = iattr->ia_btime.tv_sec;
++		ip->i_d.di_crtime.t_nsec = iattr->ia_btime.tv_nsec;
++	}
  }
  
-+_require_utime_btime()
-+{
-+	_require_btime
-+	_require_xfs_io_command utimes
-+	testio=`$XFS_IO_PROG -f -c "utimes 0 0 0 0 0 0" "$TEST_DIR/$$.xfs_io" 2>&1`
-+	echo $testio | grep -q "expected 4 arguments" && \
-+		_notrun "xfs_io utimes btime support is missing"
-+	echo $testio | grep -q "Operation not supported" && \
-+		_notrun "updating inode creation time not supported by this filesystem"
-+	echo $testio | grep -q "Invalid" && \
-+		_notrun "updating inode creation time not supported by this kernel"
-+	rm -f $testfile > /dev/null 2>&1
-+}
-+
- _require_scratch_btime()
+ static int
+@@ -1025,11 +1029,14 @@ xfs_vn_setattr(
+ 	struct dentry		*dentry,
+ 	struct iattr		*iattr)
  {
- 	_require_scratch
-diff --git a/tests/generic/526 b/tests/generic/526
-new file mode 100755
-index 00000000..c2e47a27
---- /dev/null
-+++ b/tests/generic/526
-@@ -0,0 +1,64 @@
-+#! /bin/bash
-+# SPDX-License-Identifier: GPL-2.0
-+# Copyright (c) 2019 Omar Sandoval.  All Rights Reserved.
-+#
-+# FS QA Test 526
-+#
-+# Test basic AT_UTIME_BTIME functionality.
-+#
-+seq=`basename $0`
-+seqres=$RESULT_DIR/$seq
-+echo "QA output created by $seq"
++	struct inode		*inode = d_inode(dentry);
++	struct xfs_inode	*ip = XFS_I(inode);
+ 	int			error;
+ 
++	if ((iattr->ia_valid & ATTR_BTIME) && ip->i_d.di_version != 3)
++		return -EOPNOTSUPP;
 +
-+here=`pwd`
-+tmp=/tmp/$$
-+status=1	# failure is the default!
-+trap "_cleanup; exit \$status" 0 1 2 3 15
-+
-+_cleanup()
-+{
-+	cd /
-+	rm -f $tmp.*
-+	rm -f "$TEST_DIR/$$"
-+}
-+
-+# get standard environment, filters and checks
-+. ./common/rc
-+. ./common/filter
-+
-+# remove previous $seqres.full before test
-+rm -f $seqres.full
-+_supported_fs generic
-+_supported_os Linux
-+_require_test
-+_require_utime_btime
-+
-+SEC=683153828
-+UTIME_NOW=$(((1 << 30) - 1))
-+UTIME_OMIT=$(((1 << 30) - 2))
-+
-+touch "$TEST_DIR/$$"
-+
-+echo "Set btime"
-+$XFS_IO_PROG -c "utimes 0 $UTIME_OMIT 0 $UTIME_OMIT $SEC 0" "$TEST_DIR/$$"
-+$XFS_IO_PROG -c 'statx -r' "$TEST_DIR/$$" | grep btime
-+
-+echo "Set atime and mtime"
-+$XFS_IO_PROG -c "utimes 0 $UTIME_NOW 0 $UTIME_NOW" "$TEST_DIR/$$"
-+$XFS_IO_PROG -c 'statx -r' "$TEST_DIR/$$" | grep btime
-+
-+echo "Omit btime"
-+$XFS_IO_PROG -c "utimes 0 $UTIME_NOW 0 $UTIME_NOW 0 $UTIME_OMIT" "$TEST_DIR/$$"
-+$XFS_IO_PROG -c 'statx -r' "$TEST_DIR/$$" | grep btime
-+
-+echo "Cycle mount"
-+_test_cycle_mount
-+$XFS_IO_PROG -c 'statx -r' "$TEST_DIR/$$" | grep btime
-+
-+echo "Set btime to now"
-+$XFS_IO_PROG -c "utimes 0 $UTIME_OMIT 0 $UTIME_OMIT 0 $UTIME_NOW" "$TEST_DIR/$$"
-+# The timestamp changed, so this shouldn't output anything.
-+$XFS_IO_PROG -c 'statx -r' "$TEST_DIR/$$" | grep -w "$SEC"
-+
-+status=0
-+exit
-diff --git a/tests/generic/526.out b/tests/generic/526.out
-new file mode 100644
-index 00000000..f9ec18e9
---- /dev/null
-+++ b/tests/generic/526.out
-@@ -0,0 +1,14 @@
-+QA output created by 526
-+Set btime
-+stat.btime.tv_sec = 683153828
-+stat.btime.tv_nsec = 0
-+Set atime and mtime
-+stat.btime.tv_sec = 683153828
-+stat.btime.tv_nsec = 0
-+Omit btime
-+stat.btime.tv_sec = 683153828
-+stat.btime.tv_nsec = 0
-+Cycle mount
-+stat.btime.tv_sec = 683153828
-+stat.btime.tv_nsec = 0
-+Set btime to now
-diff --git a/tests/generic/group b/tests/generic/group
-index cfd003d3..2e0203fc 100644
---- a/tests/generic/group
-+++ b/tests/generic/group
-@@ -528,3 +528,4 @@
- 523 auto quick attr
- 524 auto quick
- 525 auto quick rw
-+526 auto quick
+ 	if (iattr->ia_valid & ATTR_SIZE) {
+-		struct inode		*inode = d_inode(dentry);
+-		struct xfs_inode	*ip = XFS_I(inode);
+ 		uint			iolock;
+ 
+ 		xfs_ilock(ip, XFS_MMAPLOCK_EXCL);
+diff --git a/fs/xfs/xfs_super.c b/fs/xfs/xfs_super.c
+index c9097cb0b955..54df86bc634b 100644
+--- a/fs/xfs/xfs_super.c
++++ b/fs/xfs/xfs_super.c
+@@ -1860,7 +1860,7 @@ static struct file_system_type xfs_fs_type = {
+ 	.name			= "xfs",
+ 	.mount			= xfs_fs_mount,
+ 	.kill_sb		= kill_block_super,
+-	.fs_flags		= FS_REQUIRES_DEV,
++	.fs_flags		= FS_REQUIRES_DEV | FS_HAS_BTIME,
+ };
+ MODULE_ALIAS_FS("xfs");
+ 
 -- 
 2.20.1
