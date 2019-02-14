@@ -1,10 +1,12 @@
 From: Omar Sandoval <osandov@osandov.com>
-Subject: [RFC PATCH 0/6] Allow setting file birth time with utimensat()
-Date: Thu, 14 Feb 2019 02:00:07 -0800
-Message-ID: <cover.1550136164.git.osandov@fb.com>
+Subject: [PATCH] utimensat2: document AT_UTIME_BTIME
+Date: Thu, 14 Feb 2019 02:00:15 -0800
+Message-ID: <4717a88b238f1f03272598295942ebe8f24c2939.1550138203.git.osandov@fb.com>
+References: <cover.1550136164.git.osandov@fb.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-btrfs-owner@vger.kernel.org>
+In-Reply-To: <cover.1550136164.git.osandov@fb.com>
 Sender: linux-btrfs-owner@vger.kernel.org
 To: linux-fsdevel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>
 Cc: kernel-team@fb.com, linux-api@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org
@@ -12,53 +14,73 @@ List-Id: linux-api@vger.kernel.org
 
 From: Omar Sandoval <osandov@fb.com>
 
-Hi,
+Signed-off-by: Omar Sandoval <osandov@fb.com>
+---
+ man2/utimensat.2 | 38 +++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 37 insertions(+), 1 deletion(-)
 
-Since statx was added in 4.11, userspace has had an interface for
-reading btime (file creation time), but no way to set it. This RFC patch
-series adds support for changing btime with utimensat(). Patch 1 adds
-the VFS infrastructure, patch 2 adds the support to utimensat() with a
-new flag, and the rest of the patches add filesystem support; I excluded
-CIFS for now because I don't have a CIFS setup to test it on.
-
-Updating btime is useful for at least a couple of use cases:
-
-- Backup/restore programs (my motivation for this feature is btrfs send)
-- File servers which interoperate with operating systems that allow
-  updating file creation time, including Mac OS [1] and Windows [2]
-
-I've also included a man page patch, xfs_io support, and an xfstest.
-
-Thoughts on the implementation or the interface?
-
-Thanks!
-
-1: https://developer.apple.com/library/archive/documentation/System/Conceptual/ManPages_iPhoneOS/man2/setattrlist.2.html
-2: https://docs.microsoft.com/en-us/windows/desktop/api/fileapi/nf-fileapi-setfiletime
-
-Omar Sandoval (6):
-  fs: add btime to struct iattr
-  fs: add AT_UTIME_BTIME for utimensat()
-  Btrfs: add support for setting btime
-  ext4: add support for setting btime
-  f2fs: add support for setting btime
-  xfs: add support for setting btime
-
- fs/attr.c                      |  6 +++
- fs/btrfs/inode.c               |  2 +
- fs/btrfs/super.c               |  4 +-
- fs/ext4/inode.c                | 15 +++++-
- fs/ext4/super.c                |  2 +-
- fs/f2fs/file.c                 | 19 ++++++--
- fs/f2fs/super.c                |  2 +-
- fs/utimes.c                    | 86 +++++++++++++++++++++-------------
- fs/xfs/libxfs/xfs_format.h     |  2 +-
- fs/xfs/libxfs/xfs_log_format.h |  2 +-
- fs/xfs/xfs_iops.c              | 11 ++++-
- fs/xfs/xfs_super.c             |  2 +-
- include/linux/fs.h             |  4 ++
- include/uapi/linux/fcntl.h     |  2 +
- 14 files changed, 111 insertions(+), 48 deletions(-)
-
+diff --git a/man2/utimensat.2 b/man2/utimensat.2
+index d61b43e96..3b7c62181 100644
+--- a/man2/utimensat.2
++++ b/man2/utimensat.2
+@@ -211,7 +211,7 @@ is ignored.
+ .PP
+ The
+ .I flags
+-field is a bit mask that may be 0, or include the following constant,
++field is a bit mask that may be 0, or include the following constants,
+ defined in
+ .IR <fcntl.h> :
+ .TP
+@@ -220,6 +220,36 @@ If
+ .I pathname
+ specifies a symbolic link, then update the timestamps of the link,
+ rather than the file to which it refers.
++.TP
++.B AT_UTIME_BTIME
++Also update the file's "creation time" (\fIbtime\fP). If
++.I times
++is not NULL, then its length must be at least 3, and
++.IR times [2]
++specifies the new creation time. The
++.I tv_nsec
++field may be
++.BR UTIME_NOW
++or
++.BR UTIME_OMIT ;
++this has the same meaning as for the first two timestamps.
++If
++.I times
++is NULL, then the creation time is set to the current time.
++.IP
++Not all filesystems store the file creation time; if a filesystem does not, an
++error is returned. At least the following filesystems store the creation time:
++.RS
++.IP * 3
++Btrfs
++.IP *
++ext4, if the filesystem was created with an inode size of at least 256
++.IP *
++F2FS, if the filesystem was created with the inode_crtime feature
++.IP *
++XFS, if the filesystem was created with the v5 format (i.e., with CRCs enabled)
++.HP
++Support for this flag was added in Linux 5.2.
+ .SH RETURN VALUE
+ On success,
+ .BR utimensat ()
+@@ -359,6 +389,12 @@ or, one of the prefix components of
+ .I pathname
+ is not a directory.
+ .TP
++.B EOPNOTSUPP
++.I flags
++contains
++.BR AT_UTIME_BTIME
++but the filesystem does not store the file creation time.
++.TP
+ .B EPERM
+ The caller attempted to change one or both timestamps to a value
+ other than the current time,
 -- 
 2.20.1
