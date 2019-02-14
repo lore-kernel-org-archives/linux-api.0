@@ -1,44 +1,86 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH v7 11/15] sched/core: uclamp: Extend CPU's cgroup
- controller
-Date: Thu, 14 Feb 2019 07:48:17 -0800
-Message-ID: <20190214154817.GN50184@devbig004.ftw2.facebook.com>
-References: <20190208100554.32196-1-patrick.bellasi@arm.com>
- <20190208100554.32196-12-patrick.bellasi@arm.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Keith Busch <keith.busch@intel.com>
+Subject: [PATCHv6 02/10] acpi: Add HMAT to generic parsing tables
+Date: Thu, 14 Feb 2019 10:10:09 -0700
+Message-ID: <20190214171017.9362-3-keith.busch@intel.com>
+References: <20190214171017.9362-1-keith.busch@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190208100554.32196-12-patrick.bellasi@arm.com>
+In-Reply-To: <20190214171017.9362-1-keith.busch@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Patrick Bellasi <patrick.bellasi@arm.com>
-Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
+To: linux-kernel@vger.kernel.org, linux-acpi@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rafael Wysocki <rafael@kernel.org>, Dave Hansen <dave.hansen@intel.com>, Dan Williams <dan.j.williams@intel.com>, Keith Busch <keith.busch@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Hello,
+The Heterogeneous Memory Attribute Table (HMAT) header has different
+field lengths than the existing parsing uses. Add the HMAT type to the
+parsing rules so it may be generically parsed.
 
-On Fri, Feb 08, 2019 at 10:05:50AM +0000, Patrick Bellasi wrote:
-> a) are available only for non-root nodes, both on default and legacy
->    hierarchies, while system wide clamps are defined by a generic
->    interface which does not depends on cgroups
-> 
-> b) do not enforce any constraints and/or dependencies between the parent
->    and its child nodes, thus relying:
->    - on permission settings defined by the system management software,
->      to define if subgroups can configure their clamp values
->    - on the delegation model, to ensure that effective clamps are
->      updated to consider both subgroup requests and parent group
->      constraints
+Cc: Dan Williams <dan.j.williams@intel.com>
+Reviewed-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+Signed-off-by: Keith Busch <keith.busch@intel.com>
+---
+ drivers/acpi/tables.c | 9 +++++++++
+ include/linux/acpi.h  | 1 +
+ 2 files changed, 10 insertions(+)
 
-I'm not sure about this hierarchical behavior.
-
-> c) have higher priority than task-specific clamps, defined via
->    sched_setattr(), thus allowing to control and restrict task requests
-
-and I have some other concerns about the interface, but let's discuss
-them once the !cgroup portion is settled.
-
-Thanks.
-
+diff --git a/drivers/acpi/tables.c b/drivers/acpi/tables.c
+index 967e1168becf..d9911cd55edc 100644
+--- a/drivers/acpi/tables.c
++++ b/drivers/acpi/tables.c
+@@ -51,6 +51,7 @@ static int acpi_apic_instance __initdata;
+ 
+ enum acpi_subtable_type {
+ 	ACPI_SUBTABLE_COMMON,
++	ACPI_SUBTABLE_HMAT,
+ };
+ 
+ struct acpi_subtable_entry {
+@@ -232,6 +233,8 @@ acpi_get_entry_type(struct acpi_subtable_entry *entry)
+ 	switch (entry->type) {
+ 	case ACPI_SUBTABLE_COMMON:
+ 		return entry->hdr->common.type;
++	case ACPI_SUBTABLE_HMAT:
++		return entry->hdr->hmat.type;
+ 	}
+ 	return 0;
+ }
+@@ -242,6 +245,8 @@ acpi_get_entry_length(struct acpi_subtable_entry *entry)
+ 	switch (entry->type) {
+ 	case ACPI_SUBTABLE_COMMON:
+ 		return entry->hdr->common.length;
++	case ACPI_SUBTABLE_HMAT:
++		return entry->hdr->hmat.length;
+ 	}
+ 	return 0;
+ }
+@@ -252,6 +257,8 @@ acpi_get_subtable_header_length(struct acpi_subtable_entry *entry)
+ 	switch (entry->type) {
+ 	case ACPI_SUBTABLE_COMMON:
+ 		return sizeof(entry->hdr->common);
++	case ACPI_SUBTABLE_HMAT:
++		return sizeof(entry->hdr->hmat);
+ 	}
+ 	return 0;
+ }
+@@ -259,6 +266,8 @@ acpi_get_subtable_header_length(struct acpi_subtable_entry *entry)
+ static enum acpi_subtable_type __init
+ acpi_get_subtable_type(char *id)
+ {
++	if (strncmp(id, ACPI_SIG_HMAT, 4) == 0)
++		return ACPI_SUBTABLE_HMAT;
+ 	return ACPI_SUBTABLE_COMMON;
+ }
+ 
+diff --git a/include/linux/acpi.h b/include/linux/acpi.h
+index 7c3c4ebaded6..53f93dff171c 100644
+--- a/include/linux/acpi.h
++++ b/include/linux/acpi.h
+@@ -143,6 +143,7 @@ enum acpi_address_range_id {
+ /* Table Handlers */
+ union acpi_subtable_headers {
+ 	struct acpi_subtable_header common;
++	struct acpi_hmat_structure hmat;
+ };
+ 
+ typedef int (*acpi_tbl_table_handler)(struct acpi_table_header *table);
 -- 
-tejun
+2.14.4
