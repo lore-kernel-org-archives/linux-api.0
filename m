@@ -1,7 +1,7 @@
 From: Omar Sandoval <osandov@osandov.com>
-Subject: [RFC PATCH 4/6] ext4: add support for setting btime
-Date: Thu, 14 Feb 2019 02:00:11 -0800
-Message-ID: <d78386ac6b970bcca531d1d87ae568bef92252be.1550136164.git.osandov@fb.com>
+Subject: [RFC PATCH 1/6] fs: add btime to struct iattr
+Date: Thu, 14 Feb 2019 02:00:08 -0800
+Message-ID: <338b960e32ae2bebcf45c738af42a979af112e12.1550136164.git.osandov@fb.com>
 References: <cover.1550136164.git.osandov@fb.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,77 +14,68 @@ List-Id: linux-api@vger.kernel.org
 
 From: Omar Sandoval <osandov@fb.com>
 
-The ext4 inode format includes btime (under the name crtime) if the
-inode is large enough (256 bytes).
+Add btime as an attribute that can be updated through notify_change() if
+the filesystem supports it, which is indicated by FS_HAS_BTIME in
+file_system_type->fs_flags.
 
 Signed-off-by: Omar Sandoval <osandov@fb.com>
 ---
- fs/ext4/inode.c | 15 +++++++++++++--
- fs/ext4/super.c |  2 +-
- 2 files changed, 14 insertions(+), 3 deletions(-)
+ fs/attr.c          | 6 ++++++
+ include/linux/fs.h | 4 ++++
+ 2 files changed, 10 insertions(+)
 
-diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
-index 34d7e0703cc6..7f4f83ef539d 100644
---- a/fs/ext4/inode.c
-+++ b/fs/ext4/inode.c
-@@ -5489,6 +5489,13 @@ static void ext4_wait_for_tail_page_commit(struct inode *inode)
- 	}
- }
+diff --git a/fs/attr.c b/fs/attr.c
+index d22e8187477f..4831ef479951 100644
+--- a/fs/attr.c
++++ b/fs/attr.c
+@@ -233,6 +233,10 @@ int notify_change(struct dentry * dentry, struct iattr * attr, struct inode **de
  
-+static bool ext4_inode_has_crtime(struct inode *inode)
-+{
-+	struct ext4_inode *raw_inode;
-+
-+	return EXT4_FITS_IN_INODE(raw_inode, EXT4_I(inode), i_crtime);
-+}
-+
- /*
-  * ext4_setattr()
-  *
-@@ -5520,6 +5527,9 @@ int ext4_setattr(struct dentry *dentry, struct iattr *attr)
- 	int orphan = 0;
- 	const unsigned int ia_valid = attr->ia_valid;
+ 	WARN_ON_ONCE(!inode_is_locked(inode));
  
-+	if ((ia_valid & ATTR_BTIME) && !ext4_inode_has_crtime(inode))
++	if ((ia_valid & ATTR_BTIME) &&
++	    !(inode->i_sb->s_type->fs_flags & FS_HAS_BTIME))
 +		return -EOPNOTSUPP;
 +
- 	if (unlikely(ext4_forced_shutdown(EXT4_SB(inode->i_sb))))
- 		return -EIO;
+ 	if (ia_valid & (ATTR_MODE | ATTR_UID | ATTR_GID | ATTR_TIMES_SET)) {
+ 		if (IS_IMMUTABLE(inode) || IS_APPEND(inode))
+ 			return -EPERM;
+@@ -267,6 +271,8 @@ int notify_change(struct dentry * dentry, struct iattr * attr, struct inode **de
+ 		attr->ia_atime = now;
+ 	if (!(ia_valid & ATTR_MTIME_SET))
+ 		attr->ia_mtime = now;
++	if (!(ia_valid & ATTR_BTIME_SET))
++		attr->ia_btime = now;
+ 	if (ia_valid & ATTR_KILL_PRIV) {
+ 		error = security_inode_need_killpriv(dentry);
+ 		if (error < 0)
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 29d8e2cfed0e..d66040f7740b 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -191,6 +191,8 @@ typedef int (dio_iodone_t)(struct kiocb *iocb, loff_t offset,
+ #define ATTR_OPEN	(1 << 15) /* Truncating from open(O_TRUNC) */
+ #define ATTR_TIMES_SET	(1 << 16)
+ #define ATTR_TOUCH	(1 << 17)
++#define ATTR_BTIME	(1 << 18)
++#define ATTR_BTIME_SET	(1 << 19)
  
-@@ -5671,6 +5681,8 @@ int ext4_setattr(struct dentry *dentry, struct iattr *attr)
+ /*
+  * Whiteout is represented by a char device.  The following constants define the
+@@ -217,6 +219,7 @@ struct iattr {
+ 	struct timespec64 ia_atime;
+ 	struct timespec64 ia_mtime;
+ 	struct timespec64 ia_ctime;
++	struct timespec64 ia_btime;
  
- 	if (!error) {
- 		setattr_copy(inode, attr);
-+		if (ia_valid & ATTR_BTIME)
-+			EXT4_I(inode)->i_crtime = attr->ia_btime;
- 		mark_inode_dirty(inode);
- 	}
- 
-@@ -5695,11 +5707,10 @@ int ext4_getattr(const struct path *path, struct kstat *stat,
- 		 u32 request_mask, unsigned int query_flags)
- {
- 	struct inode *inode = d_inode(path->dentry);
--	struct ext4_inode *raw_inode;
- 	struct ext4_inode_info *ei = EXT4_I(inode);
- 	unsigned int flags;
- 
--	if (EXT4_FITS_IN_INODE(raw_inode, ei, i_crtime)) {
-+	if (ext4_inode_has_crtime(inode)) {
- 		stat->result_mask |= STATX_BTIME;
- 		stat->btime.tv_sec = ei->i_crtime.tv_sec;
- 		stat->btime.tv_nsec = ei->i_crtime.tv_nsec;
-diff --git a/fs/ext4/super.c b/fs/ext4/super.c
-index fb12d3c17c1b..cdd3975de130 100644
---- a/fs/ext4/super.c
-+++ b/fs/ext4/super.c
-@@ -5976,7 +5976,7 @@ static struct file_system_type ext4_fs_type = {
- 	.name		= "ext4",
- 	.mount		= ext4_mount,
- 	.kill_sb	= kill_block_super,
--	.fs_flags	= FS_REQUIRES_DEV,
-+	.fs_flags	= FS_REQUIRES_DEV | FS_HAS_BTIME,
- };
- MODULE_ALIAS_FS("ext4");
- 
+ 	/*
+ 	 * Not an attribute, but an auxiliary info for filesystems wanting to
+@@ -2172,6 +2175,7 @@ struct file_system_type {
+ #define FS_BINARY_MOUNTDATA	2
+ #define FS_HAS_SUBTYPE		4
+ #define FS_USERNS_MOUNT		8	/* Can be mounted by userns root */
++#define FS_HAS_BTIME		16	/* Supports getting/setting btime. */
+ #define FS_RENAME_DOES_D_MOVE	32768	/* FS will handle d_move() during rename() internally. */
+ 	struct dentry *(*mount) (struct file_system_type *, int,
+ 		       const char *, void *);
 -- 
 2.20.1
