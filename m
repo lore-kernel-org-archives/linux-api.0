@@ -1,319 +1,112 @@
 From: Keith Busch <keith.busch@intel.com>
-Subject: [PATCHv6 03/10] acpi/hmat: Parse and report heterogeneous memory
-Date: Thu, 14 Feb 2019 10:10:10 -0700
-Message-ID: <20190214171017.9362-4-keith.busch@intel.com>
-References: <20190214171017.9362-1-keith.busch@intel.com>
+Subject: [PATCHv6 00/10] Heterogenous memory node attributes
+Date: Thu, 14 Feb 2019 10:10:07 -0700
+Message-ID: <20190214171017.9362-1-keith.busch@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190214171017.9362-1-keith.busch@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org, linux-acpi@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
 Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rafael Wysocki <rafael@kernel.org>, Dave Hansen <dave.hansen@intel.com>, Dan Williams <dan.j.williams@intel.com>, Keith Busch <keith.busch@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Systems may provide different memory types and export this information
-in the ACPI Heterogeneous Memory Attribute Table (HMAT). Parse these
-tables provided by the platform and report the memory access and caching
-attributes to the kernel messages.
+== Changes since v5 ==
 
-Reviewed-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
-Signed-off-by: Keith Busch <keith.busch@intel.com>
----
- drivers/acpi/Kconfig       |   1 +
- drivers/acpi/Makefile      |   1 +
- drivers/acpi/hmat/Kconfig  |   8 ++
- drivers/acpi/hmat/Makefile |   1 +
- drivers/acpi/hmat/hmat.c   | 236 +++++++++++++++++++++++++++++++++++++++++++++
- 5 files changed, 247 insertions(+)
+  Updated HMAT parsing to account for the recently released ACPI 6.3
+  changes.
+
+  HMAT attribute calculation overflow checks.
+
+  Fixed memory leak if HMAT parse fails.
+
+  Minor change to the patch order. All the base node attributes occur
+  before HMAT usage for these new node attributes to resolve a
+  dependency on a new struct.
+
+  Reporting failures to parse HMAT or allocate structures are elevated
+  to a NOTICE level from DEBUG. Any failure will result in just one
+  print so that it is obvious something may need to be investigated
+  rather than silently fail, but also not to be too alarming either.
+
+  Determining the cpu and memory node local relationships is quite
+  different this time (PATCH 7/10). The local relationship to a memory
+  target will be either *only* the node from the Initiator Proximity
+  Domain if provided, or if it is not provided, all the nodes that have
+  the same highest performance. Latency was chosen to take prioirty over
+  bandwidth when ranking performance.
+
+  Renamed "side_cache" to "memory_side_cache". The previous name was
+  ambiguous.
+
+  Removed "level" as an exported cache attribute. It was redundant with
+  the directory name anyway.
+
+  Minor changelog updates, added received reviews, and documentation
+  fixes.
+
+Just want to point out that I am sticking with struct device
+instead of using struct kobject embedded in the attribute tracking
+structures. Previous feedback was leaning either way on this point.
+
+== Background ==
+
+Platforms may provide multiple types of cpu attached system memory. The
+memory ranges for each type may have different characteristics that
+applications may wish to know about when considering what node they want
+their memory allocated from. 
+
+It had previously been difficult to describe these setups as memory
+rangers were generally lumped into the NUMA node of the CPUs. New
+platform attributes have been created and in use today that describe
+the more complex memory hierarchies that can be created.
+
+This series' objective is to provide the attributes from such systems
+that are useful for applications to know about, and readily usable with
+existing tools and libraries. Those applications may query performance
+attributes relative to a particular CPU they're running on in order to
+make more informed choices for where they want to allocate hot and cold
+data. This works with mbind() or the numactl library.
+
+Keith Busch (10):
+  acpi: Create subtable parsing infrastructure
+  acpi: Add HMAT to generic parsing tables
+  acpi/hmat: Parse and report heterogeneous memory
+  node: Link memory nodes to their compute nodes
+  node: Add heterogenous memory access attributes
+  node: Add memory-side caching attributes
+  acpi/hmat: Register processor domain to its memory
+  acpi/hmat: Register performance attributes
+  acpi/hmat: Register memory side cache attributes
+  doc/mm: New documentation for memory performance
+
+ Documentation/ABI/stable/sysfs-devices-node   |  89 +++-
+ Documentation/admin-guide/mm/numaperf.rst     | 164 +++++++
+ arch/arm64/kernel/acpi_numa.c                 |   2 +-
+ arch/arm64/kernel/smp.c                       |   4 +-
+ arch/ia64/kernel/acpi.c                       |  12 +-
+ arch/x86/kernel/acpi/boot.c                   |  36 +-
+ drivers/acpi/Kconfig                          |   1 +
+ drivers/acpi/Makefile                         |   1 +
+ drivers/acpi/hmat/Kconfig                     |   9 +
+ drivers/acpi/hmat/Makefile                    |   1 +
+ drivers/acpi/hmat/hmat.c                      | 677 ++++++++++++++++++++++++++
+ drivers/acpi/numa.c                           |  16 +-
+ drivers/acpi/scan.c                           |   4 +-
+ drivers/acpi/tables.c                         |  76 ++-
+ drivers/base/Kconfig                          |   8 +
+ drivers/base/node.c                           | 351 ++++++++++++-
+ drivers/irqchip/irq-gic-v2m.c                 |   2 +-
+ drivers/irqchip/irq-gic-v3-its-pci-msi.c      |   2 +-
+ drivers/irqchip/irq-gic-v3-its-platform-msi.c |   2 +-
+ drivers/irqchip/irq-gic-v3-its.c              |   6 +-
+ drivers/irqchip/irq-gic-v3.c                  |  10 +-
+ drivers/irqchip/irq-gic.c                     |   4 +-
+ drivers/mailbox/pcc.c                         |   2 +-
+ include/linux/acpi.h                          |   6 +-
+ include/linux/node.h                          |  60 ++-
+ 25 files changed, 1480 insertions(+), 65 deletions(-)
+ create mode 100644 Documentation/admin-guide/mm/numaperf.rst
  create mode 100644 drivers/acpi/hmat/Kconfig
  create mode 100644 drivers/acpi/hmat/Makefile
  create mode 100644 drivers/acpi/hmat/hmat.c
 
-diff --git a/drivers/acpi/Kconfig b/drivers/acpi/Kconfig
-index 90ff0a47c12e..b377f970adfd 100644
---- a/drivers/acpi/Kconfig
-+++ b/drivers/acpi/Kconfig
-@@ -465,6 +465,7 @@ config ACPI_REDUCED_HARDWARE_ONLY
- 	  If you are unsure what to do, do not enable this option.
- 
- source "drivers/acpi/nfit/Kconfig"
-+source "drivers/acpi/hmat/Kconfig"
- 
- source "drivers/acpi/apei/Kconfig"
- source "drivers/acpi/dptf/Kconfig"
-diff --git a/drivers/acpi/Makefile b/drivers/acpi/Makefile
-index bb857421c2e8..5d361e4e3405 100644
---- a/drivers/acpi/Makefile
-+++ b/drivers/acpi/Makefile
-@@ -80,6 +80,7 @@ obj-$(CONFIG_ACPI_PROCESSOR)	+= processor.o
- obj-$(CONFIG_ACPI)		+= container.o
- obj-$(CONFIG_ACPI_THERMAL)	+= thermal.o
- obj-$(CONFIG_ACPI_NFIT)		+= nfit/
-+obj-$(CONFIG_ACPI_HMAT)		+= hmat/
- obj-$(CONFIG_ACPI)		+= acpi_memhotplug.o
- obj-$(CONFIG_ACPI_HOTPLUG_IOAPIC) += ioapic.o
- obj-$(CONFIG_ACPI_BATTERY)	+= battery.o
-diff --git a/drivers/acpi/hmat/Kconfig b/drivers/acpi/hmat/Kconfig
-new file mode 100644
-index 000000000000..c9637e2e7514
---- /dev/null
-+++ b/drivers/acpi/hmat/Kconfig
-@@ -0,0 +1,8 @@
-+# SPDX-License-Identifier: GPL-2.0
-+config ACPI_HMAT
-+	bool "ACPI Heterogeneous Memory Attribute Table Support"
-+	depends on ACPI_NUMA
-+	help
-+	 If set, this option causes the kernel to set the memory NUMA node
-+	 relationships and access attributes in accordance with ACPI HMAT
-+	 (Heterogeneous Memory Attributes Table).
-diff --git a/drivers/acpi/hmat/Makefile b/drivers/acpi/hmat/Makefile
-new file mode 100644
-index 000000000000..e909051d3d00
---- /dev/null
-+++ b/drivers/acpi/hmat/Makefile
-@@ -0,0 +1 @@
-+obj-$(CONFIG_ACPI_HMAT) := hmat.o
-diff --git a/drivers/acpi/hmat/hmat.c b/drivers/acpi/hmat/hmat.c
-new file mode 100644
-index 000000000000..7a809f6a5119
---- /dev/null
-+++ b/drivers/acpi/hmat/hmat.c
-@@ -0,0 +1,236 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (c) 2019, Intel Corporation.
-+ *
-+ * Heterogeneous Memory Attributes Table (HMAT) representation
-+ *
-+ * This program parses and reports the platform's HMAT tables, and registers
-+ * the applicable attributes with the node's interfaces.
-+ */
-+
-+#include <linux/acpi.h>
-+#include <linux/bitops.h>
-+#include <linux/device.h>
-+#include <linux/init.h>
-+#include <linux/list.h>
-+#include <linux/node.h>
-+#include <linux/sysfs.h>
-+
-+static __initdata u8 hmat_revision;
-+
-+static __init const char *hmat_data_type(u8 type)
-+{
-+	switch (type) {
-+	case ACPI_HMAT_ACCESS_LATENCY:
-+		return "Access Latency";
-+	case ACPI_HMAT_READ_LATENCY:
-+		return "Read Latency";
-+	case ACPI_HMAT_WRITE_LATENCY:
-+		return "Write Latency";
-+	case ACPI_HMAT_ACCESS_BANDWIDTH:
-+		return "Access Bandwidth";
-+	case ACPI_HMAT_READ_BANDWIDTH:
-+		return "Read Bandwidth";
-+	case ACPI_HMAT_WRITE_BANDWIDTH:
-+		return "Write Bandwidth";
-+	default:
-+		return "Reserved";
-+	}
-+}
-+
-+static __init const char *hmat_data_type_suffix(u8 type)
-+{
-+	switch (type) {
-+	case ACPI_HMAT_ACCESS_LATENCY:
-+	case ACPI_HMAT_READ_LATENCY:
-+	case ACPI_HMAT_WRITE_LATENCY:
-+		return " nsec";
-+	case ACPI_HMAT_ACCESS_BANDWIDTH:
-+	case ACPI_HMAT_READ_BANDWIDTH:
-+	case ACPI_HMAT_WRITE_BANDWIDTH:
-+		return " MB/s";
-+	default:
-+		return "";
-+	}
-+}
-+
-+static __init u32 hmat_normalize(u16 entry, u64 base, u8 type)
-+{
-+	u32 value;
-+
-+	/*
-+	 * Check for invalid and overflow values
-+	 */
-+	if (entry == 0xffff || !entry)
-+		return 0;
-+	else if (base > (UINT_MAX / (entry)))
-+		return 0;
-+
-+	/*
-+	 * Divide by the base unit for version 1, convert latency from
-+	 * picosenonds to nanoseconds if revision 2.
-+	 */
-+	value = entry * base;
-+	if (hmat_revision == 1) {
-+		if (value < 10)
-+			return 0;
-+		value = DIV_ROUND_UP(value, 10);
-+	} else if (hmat_revision == 2) {
-+		switch (type) {
-+		case ACPI_HMAT_ACCESS_LATENCY:
-+		case ACPI_HMAT_READ_LATENCY:
-+		case ACPI_HMAT_WRITE_LATENCY:
-+			value = DIV_ROUND_UP(value, 1000);
-+			break;
-+		default:
-+			break;
-+		}
-+	}
-+	return value;
-+}
-+
-+static __init int hmat_parse_locality(union acpi_subtable_headers *header,
-+				      const unsigned long end)
-+{
-+	struct acpi_hmat_locality *hmat_loc = (void *)header;
-+	unsigned int init, targ, total_size, ipds, tpds;
-+	u32 *inits, *targs, value;
-+	u16 *entries;
-+	u8 type;
-+
-+	if (hmat_loc->header.length < sizeof(*hmat_loc)) {
-+		pr_notice("HMAT: Unexpected locality header length: %d\n",
-+			 hmat_loc->header.length);
-+		return -EINVAL;
-+	}
-+
-+	type = hmat_loc->data_type;
-+	ipds = hmat_loc->number_of_initiator_Pds;
-+	tpds = hmat_loc->number_of_target_Pds;
-+	total_size = sizeof(*hmat_loc) + sizeof(*entries) * ipds * tpds +
-+		     sizeof(*inits) * ipds + sizeof(*targs) * tpds;
-+	if (hmat_loc->header.length < total_size) {
-+		pr_notice("HMAT: Unexpected locality header length:%d, minimum required:%d\n",
-+			 hmat_loc->header.length, total_size);
-+		return -EINVAL;
-+	}
-+
-+	pr_info("HMAT: Locality: Flags:%02x Type:%s Initiator Domains:%d Target Domains:%d Base:%lld\n",
-+		hmat_loc->flags, hmat_data_type(type), ipds, tpds,
-+		hmat_loc->entry_base_unit);
-+
-+	inits = (u32 *)(hmat_loc + 1);
-+	targs = inits + ipds;
-+	entries = (u16 *)(targs + tpds);
-+	for (init = 0; init < ipds; init++) {
-+		for (targ = 0; targ < tpds; targ++) {
-+			value = hmat_normalize(entries[init * tpds + targ],
-+					       hmat_loc->entry_base_unit,
-+					       type);
-+			pr_info("  Initiator-Target[%d-%d]:%d%s\n",
-+				inits[init], targs[targ], value,
-+				hmat_data_type_suffix(type));
-+		}
-+	}
-+
-+	return 0;
-+}
-+
-+static __init int hmat_parse_cache(union acpi_subtable_headers *header,
-+				   const unsigned long end)
-+{
-+	struct acpi_hmat_cache *cache = (void *)header;
-+	u32 attrs;
-+
-+	if (cache->header.length < sizeof(*cache)) {
-+		pr_notice("HMAT: Unexpected cache header length: %d\n",
-+			 cache->header.length);
-+		return -EINVAL;
-+	}
-+
-+	attrs = cache->cache_attributes;
-+	pr_info("HMAT: Cache: Domain:%d Size:%llu Attrs:%08x SMBIOS Handles:%d\n",
-+		cache->memory_PD, cache->cache_size, attrs,
-+		cache->number_of_SMBIOShandles);
-+
-+	return 0;
-+}
-+
-+static int __init hmat_parse_address_range(union acpi_subtable_headers *header,
-+					   const unsigned long end)
-+{
-+	struct acpi_hmat_address_range *spa = (void *)header;
-+
-+	if (spa->header.length != sizeof(*spa)) {
-+		pr_notice("HMAT: Unexpected address range header length: %d\n",
-+			 spa->header.length);
-+		return -EINVAL;
-+	}
-+
-+	if (hmat_revision == 1)
-+		pr_info("HMAT: Memory (%#llx length %#llx) Flags:%04x Processor Domain:%d Memory Domain:%d\n",
-+			spa->physical_address_base, spa->physical_address_length,
-+			spa->flags, spa->processor_PD, spa->memory_PD);
-+	else
-+		pr_info("HMAT: Memory Flags:%04x Processor Domain:%d Memory Domain:%d\n",
-+			spa->flags, spa->processor_PD, spa->memory_PD);
-+
-+	return 0;
-+}
-+
-+static int __init hmat_parse_subtable(union acpi_subtable_headers *header,
-+				      const unsigned long end)
-+{
-+	struct acpi_hmat_structure *hdr = (void *)header;
-+
-+	if (!hdr)
-+		return -EINVAL;
-+
-+	switch (hdr->type) {
-+	case ACPI_HMAT_TYPE_ADDRESS_RANGE:
-+		return hmat_parse_address_range(header, end);
-+	case ACPI_HMAT_TYPE_LOCALITY:
-+		return hmat_parse_locality(header, end);
-+	case ACPI_HMAT_TYPE_CACHE:
-+		return hmat_parse_cache(header, end);
-+	default:
-+		return -EINVAL;
-+	}
-+}
-+
-+static __init int hmat_init(void)
-+{
-+	struct acpi_table_header *tbl;
-+	enum acpi_hmat_type i;
-+	acpi_status status;
-+
-+	if (srat_disabled())
-+		return 0;
-+
-+	status = acpi_get_table(ACPI_SIG_HMAT, 0, &tbl);
-+	if (ACPI_FAILURE(status))
-+		return 0;
-+
-+	hmat_revision = tbl->revision;
-+	switch (hmat_revision) {
-+	case 1:
-+	case 2:
-+		break;
-+	default:
-+		pr_notice("Ignoring HMAT: Unknown revision:%d\n", hmat_revision);
-+		goto out_put;
-+	}
-+
-+	for (i = ACPI_HMAT_TYPE_ADDRESS_RANGE; i < ACPI_HMAT_TYPE_RESERVED; i++) {
-+		if (acpi_table_parse_entries(ACPI_SIG_HMAT,
-+					     sizeof(struct acpi_table_hmat), i,
-+					     hmat_parse_subtable, 0) < 0) {
-+			pr_notice("Ignoring HMAT: Invalid table");
-+			goto out_put;
-+		}
-+	}
-+out_put:
-+	acpi_put_table(tbl);
-+	return 0;
-+}
-+subsys_initcall(hmat_init);
 -- 
 2.14.4
