@@ -1,7 +1,7 @@
 From: Omar Sandoval <osandov@osandov.com>
-Subject: [PATCH] utimensat2: document AT_UTIME_BTIME
-Date: Thu, 14 Feb 2019 02:00:15 -0800
-Message-ID: <4717a88b238f1f03272598295942ebe8f24c2939.1550138203.git.osandov@fb.com>
+Subject: [PATCH] xfs_io: add AT_UTIME_BTIME support
+Date: Thu, 14 Feb 2019 02:00:16 -0800
+Message-ID: <347edcff487b59d56844f51eb74a42220fac64c9.1550138137.git.osandov@fb.com>
 References: <cover.1550136164.git.osandov@fb.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,73 +14,121 @@ List-Id: linux-api@vger.kernel.org
 
 From: Omar Sandoval <osandov@fb.com>
 
+In order to test updating btime, make the utimes command optionally take
+the btime timestamp.
+
 Signed-off-by: Omar Sandoval <osandov@fb.com>
 ---
- man2/utimensat.2 | 38 +++++++++++++++++++++++++++++++++++++-
- 1 file changed, 37 insertions(+), 1 deletion(-)
+ io/utimes.c       | 41 +++++++++++++++++++++++++++++++----------
+ man/man8/xfs_io.8 |  5 +++--
+ 2 files changed, 34 insertions(+), 12 deletions(-)
 
-diff --git a/man2/utimensat.2 b/man2/utimensat.2
-index d61b43e96..3b7c62181 100644
---- a/man2/utimensat.2
-+++ b/man2/utimensat.2
-@@ -211,7 +211,7 @@ is ignored.
- .PP
- The
- .I flags
--field is a bit mask that may be 0, or include the following constant,
-+field is a bit mask that may be 0, or include the following constants,
- defined in
- .IR <fcntl.h> :
+diff --git a/io/utimes.c b/io/utimes.c
+index 40117472..72ce68f3 100644
+--- a/io/utimes.c
++++ b/io/utimes.c
+@@ -4,11 +4,18 @@
+  * All Rights Reserved.
+  */
+ 
++#include <fcntl.h>
++#include <sys/syscall.h>
++
+ #include "command.h"
+ #include "input.h"
+ #include "init.h"
+ #include "io.h"
+ 
++#ifndef AT_UTIME_BTIME
++#define AT_UTIME_BTIME 0x8000
++#endif
++
+ static cmdinfo_t utimes_cmd;
+ 
+ static void
+@@ -16,9 +23,10 @@ utimes_help(void)
+ {
+ 	printf(_(
+ "\n"
+-" Update file atime and mtime of the current file with nansecond precision.\n"
++" Update file atime, mtime, and optionally btime of the current file with\n"
++" nansecond precision.\n"
+ "\n"
+-" Usage: utimes atime_sec atime_nsec mtime_sec mtime_nsec.\n"
++" Usage: utimes atime_sec atime_nsec mtime_sec mtime_nsec [btime_sec btime_nsec]\n"
+ " *_sec: Seconds elapsed since 1970-01-01 00:00:00 UTC.\n"
+ " *_nsec: Nanoseconds since the corresponding *_sec.\n"
+ "\n"));
+@@ -29,9 +37,13 @@ utimes_f(
+ 	int		argc,
+ 	char		**argv)
+ {
+-	struct timespec t[2];
++	struct timespec t[3];
++	int flags = 0;
+ 	int result;
+ 
++	if (argc == 6)
++		return command_usage(&utimes_cmd);
++
+ 	/* Get the timestamps */
+ 	result = timespec_from_string(argv[1], argv[2], &t[0]);
+ 	if (result) {
+@@ -43,13 +55,22 @@ utimes_f(
+ 		fprintf(stderr, "Bad value for mtime\n");
+ 		return 0;
+ 	}
+-
+-	/* Call futimens to update time. */
+-	if (futimens(file->fd, t)) {
+-		perror("futimens");
+-		return 0;
++	if (argc == 7) {
++		result = timespec_from_string(argv[5], argv[6], &t[2]);
++		if (result) {
++			fprintf(stderr, "Bad value for btime\n");
++			return 0;
++		}
++		flags |= AT_UTIME_BTIME;
+ 	}
+ 
++	/*
++	 * Use syscall() because the glibc wrapper for utimensat() disallows a
++	 * NULL pathname.
++	 */
++	if (syscall(SYS_utimensat, file->fd, NULL, t, flags))
++		perror("utimensat");
++
+ 	return 0;
+ }
+ 
+@@ -59,9 +80,9 @@ utimes_init(void)
+ 	utimes_cmd.name = "utimes";
+ 	utimes_cmd.cfunc = utimes_f;
+ 	utimes_cmd.argmin = 4;
+-	utimes_cmd.argmax = 4;
++	utimes_cmd.argmax = 6;
+ 	utimes_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
+-	utimes_cmd.args = _("atime_sec atime_nsec mtime_sec mtime_nsec");
++	utimes_cmd.args = _("atime_sec atime_nsec mtime_sec mtime_nsec [btime_sec btime_nsec]");
+ 	utimes_cmd.oneline = _("Update file times of the current file");
+ 	utimes_cmd.help = utimes_help;
+ 
+diff --git a/man/man8/xfs_io.8 b/man/man8/xfs_io.8
+index fbf50df5..dbf8098b 100644
+--- a/man/man8/xfs_io.8
++++ b/man/man8/xfs_io.8
+@@ -827,8 +827,9 @@ verbose output will be printed.
+ .RE
+ .PD
  .TP
-@@ -220,6 +220,36 @@ If
- .I pathname
- specifies a symbolic link, then update the timestamps of the link,
- rather than the file to which it refers.
-+.TP
-+.B AT_UTIME_BTIME
-+Also update the file's "creation time" (\fIbtime\fP). If
-+.I times
-+is not NULL, then its length must be at least 3, and
-+.IR times [2]
-+specifies the new creation time. The
-+.I tv_nsec
-+field may be
-+.BR UTIME_NOW
-+or
-+.BR UTIME_OMIT ;
-+this has the same meaning as for the first two timestamps.
-+If
-+.I times
-+is NULL, then the creation time is set to the current time.
-+.IP
-+Not all filesystems store the file creation time; if a filesystem does not, an
-+error is returned. At least the following filesystems store the creation time:
-+.RS
-+.IP * 3
-+Btrfs
-+.IP *
-+ext4, if the filesystem was created with an inode size of at least 256
-+.IP *
-+F2FS, if the filesystem was created with the inode_crtime feature
-+.IP *
-+XFS, if the filesystem was created with the v5 format (i.e., with CRCs enabled)
-+.HP
-+Support for this flag was added in Linux 5.2.
- .SH RETURN VALUE
- On success,
- .BR utimensat ()
-@@ -359,6 +389,12 @@ or, one of the prefix components of
- .I pathname
- is not a directory.
- .TP
-+.B EOPNOTSUPP
-+.I flags
-+contains
-+.BR AT_UTIME_BTIME
-+but the filesystem does not store the file creation time.
-+.TP
- .B EPERM
- The caller attempted to change one or both timestamps to a value
- other than the current time,
+-.BI utimes " atime_sec atime_nsec mtime_sec mtime_nsec"
+-The utimes command changes the atime and mtime of the current file.
++.BI utimes " atime_sec atime_nsec mtime_sec mtime_nsec [btime_sec btime_nsec]"
++The utimes command changes the atime, mtime, and optionally btime of the
++current file.
+ sec uses UNIX timestamp notation and is the seconds elapsed since
+ 1970-01-01 00:00:00 UTC.
+ nsec is the nanoseconds since the sec. This value needs to be in
 -- 
 2.20.1
