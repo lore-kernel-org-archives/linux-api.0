@@ -1,7 +1,7 @@
 From: Omar Sandoval <osandov@osandov.com>
-Subject: [PATCH] xfs_io: add AT_UTIME_BTIME support
-Date: Thu, 14 Feb 2019 02:00:16 -0800
-Message-ID: <347edcff487b59d56844f51eb74a42220fac64c9.1550138137.git.osandov@fb.com>
+Subject: [RFC PATCH 5/6] f2fs: add support for setting btime
+Date: Thu, 14 Feb 2019 02:00:12 -0800
+Message-ID: <a1e3edfb36b1cc732aa1f6159343ce2562d118d3.1550136164.git.osandov@fb.com>
 References: <cover.1550136164.git.osandov@fb.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,121 +14,78 @@ List-Id: linux-api@vger.kernel.org
 
 From: Omar Sandoval <osandov@fb.com>
 
-In order to test updating btime, make the utimes command optionally take
-the btime timestamp.
+The f2fs inode format includes btime (under the name crtime) if the
+feature was enabled at mkfs time.
 
 Signed-off-by: Omar Sandoval <osandov@fb.com>
 ---
- io/utimes.c       | 41 +++++++++++++++++++++++++++++++----------
- man/man8/xfs_io.8 |  5 +++--
- 2 files changed, 34 insertions(+), 12 deletions(-)
+ fs/f2fs/file.c  | 19 +++++++++++++++----
+ fs/f2fs/super.c |  2 +-
+ 2 files changed, 16 insertions(+), 5 deletions(-)
 
-diff --git a/io/utimes.c b/io/utimes.c
-index 40117472..72ce68f3 100644
---- a/io/utimes.c
-+++ b/io/utimes.c
-@@ -4,11 +4,18 @@
-  * All Rights Reserved.
-  */
- 
-+#include <fcntl.h>
-+#include <sys/syscall.h>
-+
- #include "command.h"
- #include "input.h"
- #include "init.h"
- #include "io.h"
- 
-+#ifndef AT_UTIME_BTIME
-+#define AT_UTIME_BTIME 0x8000
-+#endif
-+
- static cmdinfo_t utimes_cmd;
- 
- static void
-@@ -16,9 +23,10 @@ utimes_help(void)
- {
- 	printf(_(
- "\n"
--" Update file atime and mtime of the current file with nansecond precision.\n"
-+" Update file atime, mtime, and optionally btime of the current file with\n"
-+" nansecond precision.\n"
- "\n"
--" Usage: utimes atime_sec atime_nsec mtime_sec mtime_nsec.\n"
-+" Usage: utimes atime_sec atime_nsec mtime_sec mtime_nsec [btime_sec btime_nsec]\n"
- " *_sec: Seconds elapsed since 1970-01-01 00:00:00 UTC.\n"
- " *_nsec: Nanoseconds since the corresponding *_sec.\n"
- "\n"));
-@@ -29,9 +37,13 @@ utimes_f(
- 	int		argc,
- 	char		**argv)
- {
--	struct timespec t[2];
-+	struct timespec t[3];
-+	int flags = 0;
- 	int result;
- 
-+	if (argc == 6)
-+		return command_usage(&utimes_cmd);
-+
- 	/* Get the timestamps */
- 	result = timespec_from_string(argv[1], argv[2], &t[0]);
- 	if (result) {
-@@ -43,13 +55,22 @@ utimes_f(
- 		fprintf(stderr, "Bad value for mtime\n");
- 		return 0;
- 	}
--
--	/* Call futimens to update time. */
--	if (futimens(file->fd, t)) {
--		perror("futimens");
--		return 0;
-+	if (argc == 7) {
-+		result = timespec_from_string(argv[5], argv[6], &t[2]);
-+		if (result) {
-+			fprintf(stderr, "Bad value for btime\n");
-+			return 0;
-+		}
-+		flags |= AT_UTIME_BTIME;
- 	}
- 
-+	/*
-+	 * Use syscall() because the glibc wrapper for utimensat() disallows a
-+	 * NULL pathname.
-+	 */
-+	if (syscall(SYS_utimensat, file->fd, NULL, t, flags))
-+		perror("utimensat");
-+
+diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
+index bba56b39dcc5..6064d3e42987 100644
+--- a/fs/f2fs/file.c
++++ b/fs/f2fs/file.c
+@@ -690,17 +690,23 @@ int f2fs_truncate(struct inode *inode)
  	return 0;
  }
  
-@@ -59,9 +80,9 @@ utimes_init(void)
- 	utimes_cmd.name = "utimes";
- 	utimes_cmd.cfunc = utimes_f;
- 	utimes_cmd.argmin = 4;
--	utimes_cmd.argmax = 4;
-+	utimes_cmd.argmax = 6;
- 	utimes_cmd.flags = CMD_NOMAP_OK | CMD_FOREIGN_OK;
--	utimes_cmd.args = _("atime_sec atime_nsec mtime_sec mtime_nsec");
-+	utimes_cmd.args = _("atime_sec atime_nsec mtime_sec mtime_nsec [btime_sec btime_nsec]");
- 	utimes_cmd.oneline = _("Update file times of the current file");
- 	utimes_cmd.help = utimes_help;
++static bool f2fs_inode_has_crtime(struct inode *inode)
++{
++	struct f2fs_inode *ri;
++
++	return (f2fs_has_extra_attr(inode) &&
++		f2fs_sb_has_inode_crtime(F2FS_I_SB(inode)) &&
++		F2FS_FITS_IN_INODE(ri, F2FS_I(inode)->i_extra_isize, i_crtime));
++}
++
+ int f2fs_getattr(const struct path *path, struct kstat *stat,
+ 		 u32 request_mask, unsigned int query_flags)
+ {
+ 	struct inode *inode = d_inode(path->dentry);
+ 	struct f2fs_inode_info *fi = F2FS_I(inode);
+-	struct f2fs_inode *ri;
+ 	unsigned int flags;
  
-diff --git a/man/man8/xfs_io.8 b/man/man8/xfs_io.8
-index fbf50df5..dbf8098b 100644
---- a/man/man8/xfs_io.8
-+++ b/man/man8/xfs_io.8
-@@ -827,8 +827,9 @@ verbose output will be printed.
- .RE
- .PD
- .TP
--.BI utimes " atime_sec atime_nsec mtime_sec mtime_nsec"
--The utimes command changes the atime and mtime of the current file.
-+.BI utimes " atime_sec atime_nsec mtime_sec mtime_nsec [btime_sec btime_nsec]"
-+The utimes command changes the atime, mtime, and optionally btime of the
-+current file.
- sec uses UNIX timestamp notation and is the seconds elapsed since
- 1970-01-01 00:00:00 UTC.
- nsec is the nanoseconds since the sec. This value needs to be in
+-	if (f2fs_has_extra_attr(inode) &&
+-			f2fs_sb_has_inode_crtime(F2FS_I_SB(inode)) &&
+-			F2FS_FITS_IN_INODE(ri, fi->i_extra_isize, i_crtime)) {
++	if (f2fs_inode_has_crtime(inode)) {
+ 		stat->result_mask |= STATX_BTIME;
+ 		stat->btime.tv_sec = fi->i_crtime.tv_sec;
+ 		stat->btime.tv_nsec = fi->i_crtime.tv_nsec;
+@@ -770,6 +776,9 @@ int f2fs_setattr(struct dentry *dentry, struct iattr *attr)
+ 	int err;
+ 	bool size_changed = false;
+ 
++	if ((attr->ia_valid & ATTR_BTIME) && !f2fs_inode_has_crtime(inode))
++		return -EOPNOTSUPP;
++
+ 	if (unlikely(f2fs_cp_error(F2FS_I_SB(inode))))
+ 		return -EIO;
+ 
+@@ -848,6 +857,8 @@ int f2fs_setattr(struct dentry *dentry, struct iattr *attr)
+ 	}
+ 
+ 	__setattr_copy(inode, attr);
++	if (attr->ia_valid & ATTR_BTIME)
++		F2FS_I(inode)->i_crtime = attr->ia_btime;
+ 
+ 	if (attr->ia_valid & ATTR_MODE) {
+ 		err = posix_acl_chmod(inode, f2fs_get_inode_mode(inode));
+diff --git a/fs/f2fs/super.c b/fs/f2fs/super.c
+index c46a1d4318d4..e32070c8cb27 100644
+--- a/fs/f2fs/super.c
++++ b/fs/f2fs/super.c
+@@ -3485,7 +3485,7 @@ static struct file_system_type f2fs_fs_type = {
+ 	.name		= "f2fs",
+ 	.mount		= f2fs_mount,
+ 	.kill_sb	= kill_f2fs_super,
+-	.fs_flags	= FS_REQUIRES_DEV,
++	.fs_flags	= FS_REQUIRES_DEV | FS_HAS_BTIME,
+ };
+ MODULE_ALIAS_FS("f2fs");
+ 
 -- 
 2.20.1
