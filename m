@@ -1,7 +1,7 @@
 From: Omar Sandoval <osandov@osandov.com>
-Subject: [RFC PATCH 2/6] fs: add AT_UTIME_BTIME for utimensat()
-Date: Thu, 14 Feb 2019 02:00:09 -0800
-Message-ID: <383aea1b93edf69d4f96a898ef4878881867d33e.1550136164.git.osandov@fb.com>
+Subject: [RFC PATCH 4/6] ext4: add support for setting btime
+Date: Thu, 14 Feb 2019 02:00:11 -0800
+Message-ID: <d78386ac6b970bcca531d1d87ae568bef92252be.1550136164.git.osandov@fb.com>
 References: <cover.1550136164.git.osandov@fb.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,182 +14,77 @@ List-Id: linux-api@vger.kernel.org
 
 From: Omar Sandoval <osandov@fb.com>
 
-Now that we have a btime iattr, use it to allow updating btime from
-utimensat(). We do so by adding a new AT_UTIME_BTIME flag. Iff this flag
-is given, the btime is set to times[2] (unless times is NULL, in which
-case the current time is used).
+The ext4 inode format includes btime (under the name crtime) if the
+inode is large enough (256 bytes).
 
 Signed-off-by: Omar Sandoval <osandov@fb.com>
 ---
- fs/utimes.c                | 86 +++++++++++++++++++++++---------------
- include/uapi/linux/fcntl.h |  2 +
- 2 files changed, 55 insertions(+), 33 deletions(-)
+ fs/ext4/inode.c | 15 +++++++++++++--
+ fs/ext4/super.c |  2 +-
+ 2 files changed, 14 insertions(+), 3 deletions(-)
 
-diff --git a/fs/utimes.c b/fs/utimes.c
-index bdcf2daf39c1..cb9fe77e5f91 100644
---- a/fs/utimes.c
-+++ b/fs/utimes.c
-@@ -16,7 +16,20 @@ static bool nsec_valid(long nsec)
- 	return nsec >= 0 && nsec <= 999999999;
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index 34d7e0703cc6..7f4f83ef539d 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -5489,6 +5489,13 @@ static void ext4_wait_for_tail_page_commit(struct inode *inode)
+ 	}
  }
  
--static int utimes_common(const struct path *path, struct timespec64 *times)
-+static void init_time_attr(struct iattr *newattrs, struct timespec64 *time_attr,
-+			   struct timespec64 time, unsigned int attr,
-+			   unsigned int attr_set)
++static bool ext4_inode_has_crtime(struct inode *inode)
 +{
-+	if (time.tv_nsec == UTIME_OMIT) {
-+		newattrs->ia_valid &= ~attr;
-+	} else {
-+		*time_attr = time;
-+		newattrs->ia_valid |= attr_set;
-+	}
++	struct ext4_inode *raw_inode;
++
++	return EXT4_FITS_IN_INODE(raw_inode, EXT4_I(inode), i_crtime);
 +}
 +
-+static int utimes_common(const struct path *path, struct timespec64 *times,
-+			 bool btime)
- {
- 	int error;
- 	struct iattr newattrs;
-@@ -28,25 +41,21 @@ static int utimes_common(const struct path *path, struct timespec64 *times)
- 		goto out;
+ /*
+  * ext4_setattr()
+  *
+@@ -5520,6 +5527,9 @@ int ext4_setattr(struct dentry *dentry, struct iattr *attr)
+ 	int orphan = 0;
+ 	const unsigned int ia_valid = attr->ia_valid;
  
- 	if (times && times[0].tv_nsec == UTIME_NOW &&
--		     times[1].tv_nsec == UTIME_NOW)
-+	    times[1].tv_nsec == UTIME_NOW &&
-+	    (!btime || times[2].tv_nsec == UTIME_NOW))
- 		times = NULL;
++	if ((ia_valid & ATTR_BTIME) && !ext4_inode_has_crtime(inode))
++		return -EOPNOTSUPP;
++
+ 	if (unlikely(ext4_forced_shutdown(EXT4_SB(inode->i_sb))))
+ 		return -EIO;
  
- 	newattrs.ia_valid = ATTR_CTIME | ATTR_MTIME | ATTR_ATIME;
-+	if (btime)
-+		newattrs.ia_valid |= ATTR_BTIME;
- 	if (times) {
--		if (times[0].tv_nsec == UTIME_OMIT)
--			newattrs.ia_valid &= ~ATTR_ATIME;
--		else if (times[0].tv_nsec != UTIME_NOW) {
--			newattrs.ia_atime.tv_sec = times[0].tv_sec;
--			newattrs.ia_atime.tv_nsec = times[0].tv_nsec;
--			newattrs.ia_valid |= ATTR_ATIME_SET;
--		}
--
--		if (times[1].tv_nsec == UTIME_OMIT)
--			newattrs.ia_valid &= ~ATTR_MTIME;
--		else if (times[1].tv_nsec != UTIME_NOW) {
--			newattrs.ia_mtime.tv_sec = times[1].tv_sec;
--			newattrs.ia_mtime.tv_nsec = times[1].tv_nsec;
--			newattrs.ia_valid |= ATTR_MTIME_SET;
-+		init_time_attr(&newattrs, &newattrs.ia_atime, times[0],
-+			       ATTR_ATIME, ATTR_ATIME_SET);
-+		init_time_attr(&newattrs, &newattrs.ia_mtime, times[1],
-+			       ATTR_MTIME, ATTR_MTIME_SET);
-+		if (btime) {
-+			init_time_attr(&newattrs, &newattrs.ia_btime, times[2],
-+				       ATTR_BTIME, ATTR_BTIME_SET);
- 		}
- 		/*
- 		 * Tell setattr_prepare(), that this is an explicit time
-@@ -90,14 +99,16 @@ static int utimes_common(const struct path *path, struct timespec64 *times)
- long do_utimes(int dfd, const char __user *filename, struct timespec64 *times,
- 	       int flags)
- {
-+	bool btime = flags & AT_UTIME_BTIME;
- 	int error = -EINVAL;
+@@ -5671,6 +5681,8 @@ int ext4_setattr(struct dentry *dentry, struct iattr *attr)
  
- 	if (times && (!nsec_valid(times[0].tv_nsec) ||
--		      !nsec_valid(times[1].tv_nsec))) {
-+		      !nsec_valid(times[1].tv_nsec) ||
-+		      (btime && !nsec_valid(times[2].tv_nsec)))) {
- 		goto out;
+ 	if (!error) {
+ 		setattr_copy(inode, attr);
++		if (ia_valid & ATTR_BTIME)
++			EXT4_I(inode)->i_crtime = attr->ia_btime;
+ 		mark_inode_dirty(inode);
  	}
  
--	if (flags & ~AT_SYMLINK_NOFOLLOW)
-+	if (flags & ~(AT_SYMLINK_NOFOLLOW | AT_UTIME_BTIME))
- 		goto out;
- 
- 	if (filename == NULL && dfd != AT_FDCWD) {
-@@ -111,7 +122,7 @@ long do_utimes(int dfd, const char __user *filename, struct timespec64 *times,
- 		if (!f.file)
- 			goto out;
- 
--		error = utimes_common(&f.file->f_path, times);
-+		error = utimes_common(&f.file->f_path, times, btime);
- 		fdput(f);
- 	} else {
- 		struct path path;
-@@ -124,7 +135,7 @@ long do_utimes(int dfd, const char __user *filename, struct timespec64 *times,
- 		if (error)
- 			goto out;
- 
--		error = utimes_common(&path, times);
-+		error = utimes_common(&path, times, btime);
- 		path_put(&path);
- 		if (retry_estale(error, lookup_flags)) {
- 			lookup_flags |= LOOKUP_REVAL;
-@@ -139,16 +150,20 @@ long do_utimes(int dfd, const char __user *filename, struct timespec64 *times,
- SYSCALL_DEFINE4(utimensat, int, dfd, const char __user *, filename,
- 		struct __kernel_timespec __user *, utimes, int, flags)
+@@ -5695,11 +5707,10 @@ int ext4_getattr(const struct path *path, struct kstat *stat,
+ 		 u32 request_mask, unsigned int query_flags)
  {
--	struct timespec64 tstimes[2];
-+	struct timespec64 tstimes[3];
+ 	struct inode *inode = d_inode(path->dentry);
+-	struct ext4_inode *raw_inode;
+ 	struct ext4_inode_info *ei = EXT4_I(inode);
+ 	unsigned int flags;
  
- 	if (utimes) {
--		if ((get_timespec64(&tstimes[0], &utimes[0]) ||
--			get_timespec64(&tstimes[1], &utimes[1])))
--			return -EFAULT;
--
-+		int i, n = (flags & AT_UTIME_BTIME) ? 3 : 2;
-+		bool all_omit = true;
-+
-+		for (i = 0; i < n; i++) {
-+			if (get_timespec64(&tstimes[i], &utimes[i]))
-+				return -EFAULT;
-+			if (tstimes[i].tv_nsec != UTIME_OMIT)
-+				all_omit = false;
-+		}
- 		/* Nothing to do, we must not even check the path.  */
--		if (tstimes[0].tv_nsec == UTIME_OMIT &&
--		    tstimes[1].tv_nsec == UTIME_OMIT)
-+		if (all_omit)
- 			return 0;
- 	}
+-	if (EXT4_FITS_IN_INODE(raw_inode, ei, i_crtime)) {
++	if (ext4_inode_has_crtime(inode)) {
+ 		stat->result_mask |= STATX_BTIME;
+ 		stat->btime.tv_sec = ei->i_crtime.tv_sec;
+ 		stat->btime.tv_nsec = ei->i_crtime.tv_nsec;
+diff --git a/fs/ext4/super.c b/fs/ext4/super.c
+index fb12d3c17c1b..cdd3975de130 100644
+--- a/fs/ext4/super.c
++++ b/fs/ext4/super.c
+@@ -5976,7 +5976,7 @@ static struct file_system_type ext4_fs_type = {
+ 	.name		= "ext4",
+ 	.mount		= ext4_mount,
+ 	.kill_sb	= kill_block_super,
+-	.fs_flags	= FS_REQUIRES_DEV,
++	.fs_flags	= FS_REQUIRES_DEV | FS_HAS_BTIME,
+ };
+ MODULE_ALIAS_FS("ext4");
  
-@@ -242,14 +257,19 @@ COMPAT_SYSCALL_DEFINE2(utime, const char __user *, filename,
- 
- COMPAT_SYSCALL_DEFINE4(utimensat, unsigned int, dfd, const char __user *, filename, struct old_timespec32 __user *, t, int, flags)
- {
--	struct timespec64 tv[2];
-+	struct timespec64 tv[3];
- 
- 	if  (t) {
--		if (get_old_timespec32(&tv[0], &t[0]) ||
--		    get_old_timespec32(&tv[1], &t[1]))
--			return -EFAULT;
--
--		if (tv[0].tv_nsec == UTIME_OMIT && tv[1].tv_nsec == UTIME_OMIT)
-+		int i, n = (flags & AT_UTIME_BTIME) ? 3 : 2;
-+		bool all_omit = true;
-+
-+		for (i = 0; i < n; i++) {
-+			if (get_old_timespec32(&tv[i], &t[i]))
-+				return -EFAULT;
-+			if (tv[i].tv_nsec != UTIME_OMIT)
-+				all_omit = false;
-+		}
-+		if (all_omit)
- 			return 0;
- 	}
- 	return do_utimes(dfd, filename, t ? tv : NULL, flags);
-diff --git a/include/uapi/linux/fcntl.h b/include/uapi/linux/fcntl.h
-index 6448cdd9a350..fc5b02439697 100644
---- a/include/uapi/linux/fcntl.h
-+++ b/include/uapi/linux/fcntl.h
-@@ -90,5 +90,7 @@
- #define AT_STATX_FORCE_SYNC	0x2000	/* - Force the attributes to be sync'd with the server */
- #define AT_STATX_DONT_SYNC	0x4000	/* - Don't sync attributes with the server */
- 
-+#define AT_UTIME_BTIME		0x8000	/* Also update file creation time */
-+
- 
- #endif /* _UAPI_LINUX_FCNTL_H */
 -- 
 2.20.1
