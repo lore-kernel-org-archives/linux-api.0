@@ -1,7 +1,7 @@
 From: Keith Busch <keith.busch@intel.com>
-Subject: [PATCHv6 10/10] doc/mm: New documentation for memory performance
-Date: Thu, 14 Feb 2019 10:10:17 -0700
-Message-ID: <20190214171017.9362-11-keith.busch@intel.com>
+Subject: [PATCHv6 06/10] node: Add memory-side caching attributes
+Date: Thu, 14 Feb 2019 10:10:13 -0700
+Message-ID: <20190214171017.9362-7-keith.busch@intel.com>
 References: <20190214171017.9362-1-keith.busch@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190214171017.9362-1-keith.busch@intel.com>
@@ -10,189 +10,301 @@ To: linux-kernel@vger.kernel.org, linux-acpi@vger.kernel.org, linux-mm@kvack.org
 Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rafael Wysocki <rafael@kernel.org>, Dave Hansen <dave.hansen@intel.com>, Dan Williams <dan.j.williams@intel.com>, Keith Busch <keith.busch@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Platforms may provide system memory where some physical address ranges
-perform differently than others, or is side cached by the system.
+System memory may have caches to help improve access speed to frequently
+requested address ranges. While the system provided cache is transparent
+to the software accessing these memory ranges, applications can optimize
+their own access based on cache attributes.
 
-Add documentation describing a high level overview of such systems and the
-perforamnce and caching attributes the kernel provides for applications
-wishing to query this information.
+Provide a new API for the kernel to register these memory-side caches
+under the memory node that provides it.
 
-Reviewed-by: Mike Rapoport <rppt@linux.ibm.com>
+The new sysfs representation is modeled from the existing cpu cacheinfo
+attributes, as seen from /sys/devices/system/cpu/<cpu>/cache/.  Unlike CPU
+cacheinfo though, the node cache level is reported from the view of the
+memory. A higher level number is nearer to the CPU, while lower levels
+are closer to the last level memory.
+
+The exported attributes are the cache size, the line size, associativity,
+and write back policy, and add the attributes for the system memory
+caches to sysfs stable documentation.
+
 Signed-off-by: Keith Busch <keith.busch@intel.com>
 ---
- Documentation/admin-guide/mm/numaperf.rst | 164 ++++++++++++++++++++++++++++++
- 1 file changed, 164 insertions(+)
- create mode 100644 Documentation/admin-guide/mm/numaperf.rst
+ Documentation/ABI/stable/sysfs-devices-node |  35 +++++++
+ drivers/base/node.c                         | 151 ++++++++++++++++++++++++++++
+ include/linux/node.h                        |  34 +++++++
+ 3 files changed, 220 insertions(+)
 
-diff --git a/Documentation/admin-guide/mm/numaperf.rst b/Documentation/admin-guide/mm/numaperf.rst
-new file mode 100644
-index 000000000000..be8a23bb075d
---- /dev/null
-+++ b/Documentation/admin-guide/mm/numaperf.rst
-@@ -0,0 +1,164 @@
-+.. _numaperf:
+diff --git a/Documentation/ABI/stable/sysfs-devices-node b/Documentation/ABI/stable/sysfs-devices-node
+index cd64b62152ba..5c88cb9ca14e 100644
+--- a/Documentation/ABI/stable/sysfs-devices-node
++++ b/Documentation/ABI/stable/sysfs-devices-node
+@@ -143,3 +143,38 @@ Contact:	Keith Busch <keith.busch@intel.com>
+ Description:
+ 		This node's write latency in nanoseconds when access
+ 		from nodes found in this class's linked initiators.
 +
-+=============
-+NUMA Locality
-+=============
++What:		/sys/devices/system/node/nodeX/memory_side_cache/indexY/
++Date:		December 2018
++Contact:	Keith Busch <keith.busch@intel.com>
++Description:
++		The directory containing attributes for the memory-side cache
++		level 'Y'.
 +
-+Some platforms may have multiple types of memory attached to a compute
-+node. These disparate memory ranges may share some characteristics, such
-+as CPU cache coherence, but may have different performance. For example,
-+different media types and buses affect bandwidth and latency.
++		The caches associativity: 0 for direct mapped, non-zero if
++What:		/sys/devices/system/node/nodeX/memory_side_cache/indexY/associativity
++Date:		December 2018
++Contact:	Keith Busch <keith.busch@intel.com>
++Description:
++		The caches associativity: 0 for direct mapped, non-zero if
++		indexed.
 +
-+A system supports such heterogeneous memory by grouping each memory type
-+under different domains, or "nodes", based on locality and performance
-+characteristics.  Some memory may share the same node as a CPU, and others
-+are provided as memory only nodes. While memory only nodes do not provide
-+CPUs, they may still be local to one or more compute nodes relative to
-+other nodes. The following diagram shows one such example of two compute
-+nodes with local memory and a memory only node for each of compute node:
++What:		/sys/devices/system/node/nodeX/memory_side_cache/indexY/line_size
++Date:		December 2018
++Contact:	Keith Busch <keith.busch@intel.com>
++Description:
++		The number of bytes accessed from the next cache level on a
++		cache miss.
 +
-+ +------------------+     +------------------+
-+ | Compute Node 0   +-----+ Compute Node 1   |
-+ | Local Node0 Mem  |     | Local Node1 Mem  |
-+ +--------+---------+     +--------+---------+
-+          |                        |
-+ +--------+---------+     +--------+---------+
-+ | Slower Node2 Mem |     | Slower Node3 Mem |
-+ +------------------+     +--------+---------+
++What:		/sys/devices/system/node/nodeX/memory_side_cache/indexY/size
++Date:		December 2018
++Contact:	Keith Busch <keith.busch@intel.com>
++Description:
++		The size of this memory side cache in bytes.
 +
-+A "memory initiator" is a node containing one or more devices such as
-+CPUs or separate memory I/O devices that can initiate memory requests.
-+A "memory target" is a node containing one or more physical address
-+ranges accessible from one or more memory initiators.
++What:		/sys/devices/system/node/nodeX/memory_side_cache/indexY/write_policy
++Date:		December 2018
++Contact:	Keith Busch <keith.busch@intel.com>
++Description:
++		The cache write policy: 0 for write-back, 1 for write-through,
++		other or unknown.
+diff --git a/drivers/base/node.c b/drivers/base/node.c
+index a1795c9c9f7d..575bad0e910d 100644
+--- a/drivers/base/node.c
++++ b/drivers/base/node.c
+@@ -205,6 +205,155 @@ void node_set_perf_attrs(unsigned int nid, struct node_hmem_attrs *hmem_attrs,
+ 		}
+ 	}
+ }
 +
-+When multiple memory initiators exist, they may not all have the same
-+performance when accessing a given memory target. Each initiator-target
-+pair may be organized into different ranked access classes to represent
-+this relationship. The highest performing initiator to a given target
-+is considered to be one of that target's local initiators, and given
-+the highest access class, 0. Any given target may have one or more
-+local initiators, and any given initiator may have multiple local
-+memory targets.
++/**
++ * struct node_cache_info - Internal tracking for memory node caches
++ * @dev:	Device represeting the cache level
++ * @node:	List element for tracking in the node
++ * @cache_attrs:Attributes for this cache level
++ */
++struct node_cache_info {
++	struct device dev;
++	struct list_head node;
++	struct node_cache_attrs cache_attrs;
++};
++#define to_cache_info(device) container_of(device, struct node_cache_info, dev)
 +
-+To aid applications matching memory targets with their initiators, the
-+kernel provides symlinks to each other. The following example lists the
-+relationship for the access class "0" memory initiators and targets, which is
-+the of nodes with the highest performing access relationship::
++#define CACHE_ATTR(name, fmt) 						\
++static ssize_t name##_show(struct device *dev,				\
++			   struct device_attribute *attr,		\
++			   char *buf)					\
++{									\
++	return sprintf(buf, fmt "\n", to_cache_info(dev)->cache_attrs.name);\
++}									\
++DEVICE_ATTR_RO(name);
 +
-+	# symlinks -v /sys/devices/system/node/nodeX/access0/targets/
-+	relative: /sys/devices/system/node/nodeX/access0/targets/nodeY -> ../../nodeY
++CACHE_ATTR(size, "%llu")
++CACHE_ATTR(line_size, "%u")
++CACHE_ATTR(associativity, "%u")
++CACHE_ATTR(write_policy, "%u")
 +
-+	# symlinks -v /sys/devices/system/node/nodeY/access0/initiators/
-+	relative: /sys/devices/system/node/nodeY/access0/initiators/nodeX -> ../../nodeX
++static struct attribute *cache_attrs[] = {
++	&dev_attr_associativity.attr,
++	&dev_attr_size.attr,
++	&dev_attr_line_size.attr,
++	&dev_attr_write_policy.attr,
++	NULL,
++};
++ATTRIBUTE_GROUPS(cache);
 +
-+================
-+NUMA Performance
-+================
++static void node_cache_release(struct device *dev)
++{
++	kfree(dev);
++}
 +
-+Applications may wish to consider which node they want their memory to
-+be allocated from based on the node's performance characteristics. If
-+the system provides these attributes, the kernel exports them under the
-+node sysfs hierarchy by appending the attributes directory under the
-+memory node's access class 0 initiators as follows::
++static void node_cacheinfo_release(struct device *dev)
++{
++	struct node_cache_info *info = to_cache_info(dev);
++	kfree(info);
++}
 +
-+	/sys/devices/system/node/nodeY/access0/initiators/
++static void node_init_cache_dev(struct node *node)
++{
++	struct device *dev;
 +
-+These attributes apply only when accessed from nodes that have the
-+are linked under the this access's inititiators.
++	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
++	if (!dev)
++		return;
 +
-+The performance characteristics the kernel provides for the local initiators
-+are exported are as follows::
++	dev->parent = &node->dev;
++	dev->release = node_cache_release;
++	if (dev_set_name(dev, "memory_side_cache"))
++		goto free_dev;
 +
-+	# tree -P "read*|write*" /sys/devices/system/node/nodeY/access0/initiators/
-+	/sys/devices/system/node/nodeY/access0/initiators/
-+	|-- read_bandwidth
-+	|-- read_latency
-+	|-- write_bandwidth
-+	`-- write_latency
++	if (device_register(dev))
++		goto free_name;
 +
-+The bandwidth attributes are provided in MiB/second.
++	pm_runtime_no_callbacks(dev);
++	node->cache_dev = dev;
++	return;
++free_name:
++	kfree_const(dev->kobj.name);
++free_dev:
++	kfree(dev);
++}
 +
-+The latency attributes are provided in nanoseconds.
++/**
++ * node_add_cache() - add cache attribute to a memory node
++ * @nid: Node identifier that has new cache attributes
++ * @cache_attrs: Attributes for the cache being added
++ */
++void node_add_cache(unsigned int nid, struct node_cache_attrs *cache_attrs)
++{
++	struct node_cache_info *info;
++	struct device *dev;
++	struct node *node;
 +
-+The values reported here correspond to the rated latency and bandwidth
-+for the platform.
++	if (!node_online(nid) || !node_devices[nid])
++		return;
 +
-+==========
-+NUMA Cache
-+==========
++	node = node_devices[nid];
++	list_for_each_entry(info, &node->cache_attrs, node) {
++		if (info->cache_attrs.level == cache_attrs->level) {
++			dev_warn(&node->dev,
++				"attempt to add duplicate cache level:%d\n",
++				cache_attrs->level);
++			return;
++		}
++	}
 +
-+System memory may be constructed in a hierarchy of elements with various
-+performance characteristics in order to provide large address space of
-+slower performing memory cached by a smaller higher performing memory. The
-+system physical addresses memory  initiators are aware of are provided
-+by the last memory level in the hierarchy. The system meanwhile uses
-+higher performing memory to transparently cache access to progressively
-+slower levels.
++	if (!node->cache_dev)
++		node_init_cache_dev(node);
++	if (!node->cache_dev)
++		return;
 +
-+The term "far memory" is used to denote the last level memory in the
-+hierarchy. Each increasing cache level provides higher performing
-+initiator access, and the term "near memory" represents the fastest
-+cache provided by the system.
++	info = kzalloc(sizeof(*info), GFP_KERNEL);
++	if (!info)
++		return;
 +
-+This numbering is different than CPU caches where the cache level (ex:
-+L1, L2, L3) uses a CPU-side view where each increased level is lower
-+performing. In contrast, the memory cache level is centric to the last
-+level memory, so the higher numbered cache level denotes memory nearer
-+to the CPU, and further from far memory.
++	dev = &info->dev;
++	dev->parent = node->cache_dev;
++	dev->release = node_cacheinfo_release;
++	dev->groups = cache_groups;
++	if (dev_set_name(dev, "index%d", cache_attrs->level))
++		goto free_cache;
 +
-+The memory-side caches are not directly addressable by software. When
-+software accesses a system address, the system will return it from the
-+near memory cache if it is present. If it is not present, the system
-+accesses the next level of memory until there is either a hit in that
-+cache level, or it reaches far memory.
++	info->cache_attrs = *cache_attrs;
++	if (device_register(dev)) {
++		dev_warn(&node->dev, "failed to add cache level:%d\n",
++			 cache_attrs->level);
++		goto free_name;
++	}
++	pm_runtime_no_callbacks(dev);
++	list_add_tail(&info->node, &node->cache_attrs);
++	return;
++free_name:
++	kfree_const(dev->kobj.name);
++free_cache:
++	kfree(info);
++}
 +
-+An application does not need to know about caching attributes in order
-+to use the system. Software may optionally query the memory cache
-+attributes in order to maximize the performance out of such a setup.
-+If the system provides a way for the kernel to discover this information,
-+for example with ACPI HMAT (Heterogeneous Memory Attribute Table),
-+the kernel will append these attributes to the NUMA node memory target.
++static void node_remove_caches(struct node *node)
++{
++	struct node_cache_info *info, *next;
 +
-+When the kernel first registers a memory cache with a node, the kernel
-+will create the following directory::
++	if (!node->cache_dev)
++		return;
 +
-+	/sys/devices/system/node/nodeX/memory_side_cache/
++	list_for_each_entry_safe(info, next, &node->cache_attrs, node) {
++		list_del(&info->node);
++		device_unregister(&info->dev);
++	}
++	device_unregister(node->cache_dev);
++}
 +
-+If that directory is not present, the system either does not not provide
-+a memory-side cache, or that information is not accessible to the kernel.
++static void node_init_caches(unsigned int nid)
++{
++	INIT_LIST_HEAD(&node_devices[nid]->cache_attrs);
++}
++#else
++static void node_init_caches(unsigned int nid) { }
++static void node_remove_caches(struct node *node) { }
+ #endif
+ 
+ #define K(x) ((x) << (PAGE_SHIFT - 10))
+@@ -489,6 +638,7 @@ void unregister_node(struct node *node)
+ {
+ 	hugetlb_unregister_node(node);		/* no-op, if memoryless node */
+ 	node_remove_accesses(node);
++	node_remove_caches(node);
+ 	device_unregister(&node->dev);
+ }
+ 
+@@ -780,6 +930,7 @@ int __register_one_node(int nid)
+ 	INIT_LIST_HEAD(&node_devices[nid]->access_list);
+ 	/* initialize work queue for memory hot plug */
+ 	init_node_hugetlb_work(nid);
++	node_init_caches(nid);
+ 
+ 	return error;
+ }
+diff --git a/include/linux/node.h b/include/linux/node.h
+index 2db077363d9c..9c88095b65c6 100644
+--- a/include/linux/node.h
++++ b/include/linux/node.h
+@@ -37,6 +37,36 @@ struct node_hmem_attrs {
+ };
+ void node_set_perf_attrs(unsigned int nid, struct node_hmem_attrs *hmem_attrs,
+ 			 unsigned access);
 +
-+The attributes for each level of cache is provided under its cache
-+level index::
++enum cache_associativity {
++	NODE_CACHE_DIRECT_MAP,
++	NODE_CACHE_INDEXED,
++	NODE_CACHE_OTHER,
++};
 +
-+	/sys/devices/system/node/nodeX/memory_side_cache/indexA/
-+	/sys/devices/system/node/nodeX/memory_side_cache/indexB/
-+	/sys/devices/system/node/nodeX/memory_side_cache/indexC/
++enum cache_write_policy {
++	NODE_CACHE_WRITE_BACK,
++	NODE_CACHE_WRITE_THROUGH,
++	NODE_CACHE_WRITE_OTHER,
++};
 +
-+Each cache level's directory provides its attributes. For example, the
-+following shows a single cache level and the attributes available for
-+software to query::
-+
-+	# tree sys/devices/system/node/node0/memory_side_cache/
-+	/sys/devices/system/node/node0/memory_side_cache/
-+	|-- index1
-+	|   |-- associativity
-+	|   |-- line_size
-+	|   |-- size
-+	|   `-- write_policy
-+
-+The "associativity" will be 0 if it is a direct-mapped cache, and non-zero
-+for any other indexed based, multi-way associativity.
-+
-+The "line_size" is the number of bytes accessed from the next cache
-+level on a miss.
-+
-+The "size" is the number of bytes provided by this cache level.
-+
-+The "write_policy" will be 0 for write-back, and non-zero for
-+write-through caching.
-+
-+========
-+See Also
-+========
-+.. [1] https://www.uefi.org/sites/default/files/resources/ACPI_6_2.pdf
-+       Section 5.2.27
++/**
++ * struct node_cache_attrs - system memory caching attributes
++ *
++ * @associativity:	The ways memory blocks may be placed in cache
++ * @write_policy:	Write back or write through policy
++ * @size:		Total size of cache in bytes
++ * @line_size:		Number of bytes fetched on a cache miss
++ * @level:		The cache hierarchy level
++ */
++struct node_cache_attrs {
++	enum cache_associativity associativity;
++	enum cache_write_policy write_policy;
++	u64 size;
++	u16 line_size;
++	u8 level;
++};
++void node_add_cache(unsigned int nid, struct node_cache_attrs *cache_attrs);
+ #endif
+ 
+ struct node {
+@@ -45,6 +75,10 @@ struct node {
+ #if defined(CONFIG_MEMORY_HOTPLUG_SPARSE) && defined(CONFIG_HUGETLBFS)
+ 	struct work_struct	node_work;
+ #endif
++#ifdef CONFIG_HMEM_REPORTING
++	struct list_head cache_attrs;
++	struct device *cache_dev;
++#endif
+ };
+ 
+ struct memory_block;
 -- 
 2.14.4
