@@ -1,116 +1,79 @@
-From: Omar Sandoval <osandov@osandov.com>
-Subject: Re: [RFC PATCH 0/6] Allow setting file birth time with utimensat()
-Date: Thu, 14 Feb 2019 22:59:47 -0800
-Message-ID: <20190215065947.GG9819@vader>
-References: <cover.1550136164.git.osandov@fb.com>
- <20190214220626.GV14116@dastard>
- <20190214231429.GE9819@vader>
- <20190215001657.GY14116@dastard>
+From: Michael Ellerman <mpe@ellerman.id.au>
+Subject: Re: [PATCH] mmap.2: describe the 5level paging hack
+Date: Fri, 15 Feb 2019 20:13:02 +1100
+Message-ID: <87sgwpct41.fsf@concordia.ellerman.id.au>
+References: <20190211163653.97742-1-jannh@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190215001657.GY14116@dastard>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Dave Chinner <david@fromorbit.com>
-Cc: linux-fsdevel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, kernel-team@fb.com, linux-api@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>, Steve French <sfrench@samba.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+In-Reply-To: <20190211163653.97742-1-jannh@google.com>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: Jann Horn <jannh@google.com>, mtk.manpages@gmail.comjannh@google.com
+Cc: linux-arch@vger.kernel.org, linux-man@vger.kernel.org, linux-mm@kvack.org, Peter Zijlstra <peterz@infradead.org>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, "Aneesh Kumar K.V" <aneesh.kumar@linux.ibm.com>, Will Deacon <will.deacon@arm.com>, linuxppc-dev@lists.ozlabs.org, Andy Lutomirski <luto@amacapital.net>, Dave Hansen <dave.hansen@intel.com>, Paul Mackerras <paulus@samba.org>, linux-arm-kernel@lists.infradead.org, Catalin Marinas <catalin.marinas@arm.com>, Andrew Morton <akpm@linux-foundation.org>, linux-api@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Feb 15, 2019 at 11:16:57AM +1100, Dave Chinner wrote:
-> On Thu, Feb 14, 2019 at 03:14:29PM -0800, Omar Sandoval wrote:
-> > On Fri, Feb 15, 2019 at 09:06:26AM +1100, Dave Chinner wrote:
-> > > On Thu, Feb 14, 2019 at 02:00:07AM -0800, Omar Sandoval wrote:
-> > > > From: Omar Sandoval <osandov@fb.com>
-> > > > 
-> > > > Hi,
-> > > > 
-> > > > Since statx was added in 4.11, userspace has had an interface for
-> > > > reading btime (file creation time), but no way to set it. This RFC patch
-> > > > series adds support for changing btime with utimensat(). Patch 1 adds
-> > > > the VFS infrastructure, patch 2 adds the support to utimensat() with a
-> > > > new flag, and the rest of the patches add filesystem support; I excluded
-> > > > CIFS for now because I don't have a CIFS setup to test it on.
-> > > > 
-> > > > Updating btime is useful for at least a couple of use cases:
-> > > > 
-> > > > - Backup/restore programs (my motivation for this feature is btrfs send)
-> > > > - File servers which interoperate with operating systems that allow
-> > > >   updating file creation time, including Mac OS [1] and Windows [2]
-> > > 
-> > > So you're adding an interface that allows users to change the create
-> > > time of files without needing any privileges?
-> > 
-> > I think it'd be reasonable to make this a privileged operation. I didn't
-> > for this initial submission for a couple of reasons:
-> > 
-> > 1. The precedent on Mac OS and Windows is that this isn't a privileged
-> >    operation.
-> 
-> Don't really care about them. Interop file servers that support these
-> operations on other OSs will need to be storing this info in xattrs
-> because they have to work on filesystems that don't support btime.
-> 
-> > 2. I knew there would be different opinions on this either way I went.
-> 
-> Yup.
-> 
-> > > Inode create time is forensic metadata in XFS  - information we use
-> > > for sequence of event and inode lifetime analysis during examination
-> > > of broken filesystem images and systems that have been broken into.
-> > > Just because it's exposed to userspace via statx(), it doesn't mean
-> > > that it is information that users should be allowed to change. i.e.
-> > > allowing users to be able to change the create time on files makes
-> > > it completely useless for the purpose it was added to XFS for...
-> > > 
-> > > And allowing root to change the create time doesn't really help,
-> > > because once you've broken into a system, this makes it really easy
-> > > to cover tracks
-> > 
-> > If the threat model is that the attacker has root, then they can
-> > overwrite the timestamp on disk anyways, no?
-> 
-> Modifying the block devicee under an active filesystem is fraught
-> with danger, and there's no guarantee it will work if the metadata
-> being modified is still active in memory. Corrupting the filesystem
-> is a sure way to get noticed....
-> 
-> > > (e.g. we can't find files that were created and
-> > > unlinked during the break in window anymore) and lay false
-> > > trails....
-> > 
-> > Fair point, although there's still ctime during the break-in window,
-> 
-> Unless you're smart enough to know how to trigger S_NOCMTIME or
-> FMODE_NOCMTIME....
-> 
-> > which I assume you'd be looking for anyways since files modified during
-> > the break-in window are also of interest.
-> 
-> ... and then that also can't be guaranteed. :/
-> 
-> > I see a few options, none of which are particularly nice:
-> > 
-> > 1. Filesystems like XFS could choose not to support setting btime even
-> >    if they support reading it.
-> > 2. XFS could add a second, writeable btime which is used for
-> >    statx/utimes when available (it would fit in di_pad2...).
-> > 3. We could add a btime_writable sysctl/mount option/mkfs option.
-> 
-> 4. create time remains a read-only field, and btrfs grows its own
-> special interface to twiddle it in btrfs-recv if it really is
-> necessary.
+Jann Horn <jannh@google.com> writes:
 
-I'm curious to hear what the ext4/f2fs/CIFS developers think. If no one
-else wants btime to be mutable, then I might as well make it
-Btrfs-specific. That is, assuming we reach consensus on the Btrfs side
-that btrfs receive should set btime.
+> The manpage is missing information about the compatibility hack for
+> 5-level paging that went in in 4.14, around commit ee00f4a32a76 ("x86/mm:
+> Allow userspace have mappings above 47-bit"). Add some information about
+> that.
 
-> I'm still not convinced that even backup/restore should be doing this,
-> because there's so much other metadata that is unique even on
-> restored files that it doesn't really make any sense to me to lie
-> about it being created in the past....
+Thanks for doing this.
 
-I suppose it depends on how you interpret btime: if it's strictly
-filesystem metadata, then it makes sense that it should be immutable; if
-it's metadata for the user's own purposes, then we should allow setting
-it.
+> While I don't think any hardware supporting this is shipping yet (?), I
+> think it's useful to try to write a manpage for this API, partly to
+> figure out how usable that API actually is, and partly because when this
+> hardware does ship, it'd be nice if distro manpages had information about
+> how to use it.
+>
+> Signed-off-by: Jann Horn <jannh@google.com>
+> ---
+> This patch goes on top of the patch "[PATCH] mmap.2: fix description of
+> treatment of the hint" that I just sent, but I'm not sending them in a
+> series because I want the first one to go in, and I think this one might
+> be a bit more controversial.
+>
+> It would be nice if the architecture maintainers and mm folks could have
+> a look at this and check that what I wrote is right - I only looked at
+> the source for this, I haven't tried it.
+>
+>  man2/mmap.2 | 15 +++++++++++++++
+>  1 file changed, 15 insertions(+)
+>
+> diff --git a/man2/mmap.2 b/man2/mmap.2
+> index 8556bbfeb..977782fa8 100644
+> --- a/man2/mmap.2
+> +++ b/man2/mmap.2
+> @@ -67,6 +67,8 @@ is NULL,
+>  then the kernel chooses the (page-aligned) address
+>  at which to create the mapping;
+>  this is the most portable method of creating a new mapping.
+> +On Linux, in this case, the kernel may limit the maximum address that can be
+> +used for allocations to a legacy limit for compatibility reasons.
+>  If
+>  .I addr
+>  is not NULL,
+> @@ -77,6 +79,19 @@ or equal to the value specified by
+>  and attempt to create the mapping there.
+>  If another mapping already exists there, the kernel picks a new
+>  address, independent of the hint.
+> +However, if a hint above the architecture's legacy address limit is provided
+> +(on x86-64: above 0x7ffffffff000, on arm64: above 0x1000000000000, on ppc64 with
+> +book3s: above 0x7fffffffffff or 0x3fffffffffff, depending on page size), the
+
+It doesn't depend on page size for ppc64(le). With 4K pages the user VM
+is always 64TB.
+
+So the only boundary for us is at 128T when using 64K pages.
+
+cheers
