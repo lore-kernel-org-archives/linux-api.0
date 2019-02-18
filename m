@@ -1,7 +1,7 @@
-From: Mike Rapoport <rppt@linux.ibm.com>
+From: "Kirill A. Shutemov" <kirill@shutemov.name>
 Subject: Re: mremap vs sysctl_max_map_count
-Date: Mon, 18 Feb 2019 12:29:29 +0200
-Message-ID: <20190218102928.GA25446@rapoport-lnx>
+Date: Mon, 18 Feb 2019 14:15:35 +0300
+Message-ID: <20190218111535.dxkm7w7c2edgl2lh@kshutemo-mobl1>
 References: <20190218083326.xsnx7cx2lxurbmux@d104.suse.de>
  <a11a10b5-4a31-2537-7b14-83f4b22e5f6c@suse.cz>
 Mime-Version: 1.0
@@ -65,25 +65,12 @@ On Mon, Feb 18, 2019 at 10:57:18AM +0100, Vlastimil Babka wrote:
 > too-small-to-fail in page allocator), but I'd try with the artificial
 > limits at least.
 
-The mremap_to() is called with mmap_sem hold, so there won't be a race.
+There's slight chance of false-postive -ENOMEM with upfront approach:
+unmapping can reduce number of VMAs so in some cases upfront check would
+fail something that could succeed otherwise.
 
-But it seems mremap_to() is not the only path to call do_munmap(). There is
-also an unmap in shrinking remap and possible move_vma() even with
-~MREMAP_FIXED.
-
-Maybe it'd make sense to check the limits right after taking the mmap_sem?
- 
-> > Before investing more time and giving it a shoot, I just wanted to bring
-> > this upstream to get feedback on this matter.
-> > 
-> > Thanks
-> > 
-> > [1] https://github.com/torvalds/linux/blob/master/mm/mremap.c#L519
-> > [2] https://github.com/torvalds/linux/blob/master/mm/mremap.c#L523
-> > [3] https://github.com/torvalds/linux/blob/master/mm/mremap.c#L338
-> > 
-> 
+We could check also what number of VMA unmap would free (if any). But it
+complicates the picture and I don't think worth it in the end.
 
 -- 
-Sincerely yours,
-Mike.
+ Kirill A. Shutemov
