@@ -1,73 +1,59 @@
-From: Brice Goglin <Brice.Goglin@inria.fr>
-Subject: Re: [PATCHv6 00/10] Heterogenous memory node attributes
-Date: Mon, 18 Feb 2019 15:25:31 +0100
-Message-ID: <f2add663-a9e1-86df-0afd-22ef03d3d943@inria.fr>
-References: <20190214171017.9362-1-keith.busch@intel.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: [PATCH 7/8] csky: Use latest system call ABI
+Date: Mon, 18 Feb 2019 22:07:11 +0100
+Message-ID: <20190218210712.3503891-8-arnd@arndb.de>
+References: <20190218210712.3503891-1-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190214171017.9362-1-keith.busch@intel.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Keith Busch <keith.busch@intel.com>, linux-kernel@vger.kernel.org, linux-acpi@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rafael Wysocki <rafael@kernel.org>, Dave Hansen <dave.hansen@intel.com>, Dan Williams <dan.j.williams@intel.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+In-Reply-To: <20190218210712.3503891-1-arnd@arndb.de>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: y2038@lists.linaro.org
+Cc: linux-arch@vger.kernel.org, uclinux-h8-devel@lists.sourceforge.jp, arnd@arndb.de, yury.norov@gmail.com, linux-api@vger.kernel.org, Palmer Dabbelt <palmer@sifive.com>, linux-kernel@vger.kernel.org, linux-riscv@lists.infradead.org, Vineet Gupta <vgupta@synopsys.com>, Guo Ren <guoren@kernel.org>, Greentime Hu <green.hu@gmail.com>, linux-hexagon@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Guan Xuetao <gxt@pku.edu.cn>, Stafford Horne <shorne@gmail.com>, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
+We don't yet have an upstream glibc port for csky, so there is no user
+space for the existing ABI, and we can remove the definitions for 32-bit
+time_t, off_t and struct resource.
 
-Le 14/02/2019 à 18:10, Keith Busch a écrit :
-> == Changes since v5 ==
->
->   Updated HMAT parsing to account for the recently released ACPI 6.3
->   changes.
->
->   HMAT attribute calculation overflow checks.
->
->   Fixed memory leak if HMAT parse fails.
->
->   Minor change to the patch order. All the base node attributes occur
->   before HMAT usage for these new node attributes to resolve a
->   dependency on a new struct.
->
->   Reporting failures to parse HMAT or allocate structures are elevated
->   to a NOTICE level from DEBUG. Any failure will result in just one
->   print so that it is obvious something may need to be investigated
->   rather than silently fail, but also not to be too alarming either.
->
->   Determining the cpu and memory node local relationships is quite
->   different this time (PATCH 7/10). The local relationship to a memory
->   target will be either *only* the node from the Initiator Proximity
->   Domain if provided, or if it is not provided, all the nodes that have
->   the same highest performance. Latency was chosen to take prioirty over
->   bandwidth when ranking performance.
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+ arch/csky/Kconfig                   | 1 -
+ arch/csky/include/uapi/asm/unistd.h | 2 --
+ 2 files changed, 3 deletions(-)
 
-
-Hello Keith
-
-I am trying to understand what this last paragraph means.
-
-Let's say I have a machine with DDR and NVDIMM both attached to the same
-socket, and I use Dave Hansen's kmem patchs to make the NVDIMM appear as
-"normal memory" in an additional NUMA node. Let's call node0 the DDR and
-node1 the NVDIMM kmem node.
-
-Now user-space wants to find out which CPUs are actually close to the
-NVDIMMs. My understanding is that SRAT says that CPUs are local to the
-DDR only. Hence /sys/devices/system/node/node1/cpumap says there are no
-CPU local to the NVDIMM. And HMAT won't change this, right?
-
-Will node1 contain access0/initiators/node0 to clarify that CPUs local
-to the NVDIMM are those of node0? Even if latency from node0 to node1
-latency is higher than node0 to node0?
-
-Another way to ask this: Is the latency/performance only used for
-distinguishing the local initiator CPUs among multiple CPU nodes
-accesing the same memory node? Or is it also used to distinguish the
-local memory target among multiple memories access by a single CPU node?
-
-The Intel machine I am currently testing patches on doesn't have a HMAT
-in 1-level-memory unfortunately.
-
-Thanks
-
-Brice
+diff --git a/arch/csky/Kconfig b/arch/csky/Kconfig
+index 6959e0b1e956..398113c845f5 100644
+--- a/arch/csky/Kconfig
++++ b/arch/csky/Kconfig
+@@ -1,6 +1,5 @@
+ config CSKY
+ 	def_bool y
+-	select ARCH_32BIT_OFF_T
+ 	select ARCH_HAS_SYNC_DMA_FOR_CPU
+ 	select ARCH_HAS_SYNC_DMA_FOR_DEVICE
+ 	select ARCH_USE_BUILTIN_BSWAP
+diff --git a/arch/csky/include/uapi/asm/unistd.h b/arch/csky/include/uapi/asm/unistd.h
+index ec60e49cea66..224c9a9ab45b 100644
+--- a/arch/csky/include/uapi/asm/unistd.h
++++ b/arch/csky/include/uapi/asm/unistd.h
+@@ -2,8 +2,6 @@
+ // Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
+ 
+ #define __ARCH_WANT_SYS_CLONE
+-#define __ARCH_WANT_SET_GET_RLIMIT
+-#define __ARCH_WANT_TIME32_SYSCALLS
+ #include <asm-generic/unistd.h>
+ 
+ #define __NR_set_thread_area	(__NR_arch_specific_syscall + 0)
+-- 
+2.20.0
