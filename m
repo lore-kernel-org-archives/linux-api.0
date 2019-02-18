@@ -1,66 +1,65 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [RFC PATCH 0/6] Allow setting file birth time with utimensat()
-Date: Sun, 17 Feb 2019 12:40:09 -0800
-Message-ID: <CALCETrWsCUTSbvwemKHB=8=pO4fwK2qD0boFEd4puBDkpb3F9g@mail.gmail.com>
-References: <cover.1550136164.git.osandov@fb.com> <20190214220626.GV14116@dastard>
- <6a9dc05a-0445-d0ab-0140-1de4fee7ba9b@gmail.com> <20190217175450.psaesabv3vlzvjv4@angband.pl>
+From: Oscar Salvador <osalvador@suse.de>
+Subject: mremap vs sysctl_max_map_count
+Date: Mon, 18 Feb 2019 09:33:31 +0100
+Message-ID: <20190218083326.xsnx7cx2lxurbmux@d104.suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <20190217175450.psaesabv3vlzvjv4@angband.pl>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Adam Borowski <kilobyte@angband.pl>
-Cc: Boaz Harrosh <openosd@gmail.com>, Dave Chinner <david@fromorbit.com>, Omar Sandoval <osandov@osandov.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>, Linux btrfs Developers List <linux-btrfs@vger.kernel.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: hughd@google.com, viro@zeniv.linux.org.uk, torvalds@linux-foundation.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Feb 17, 2019 at 9:55 AM Adam Borowski <kilobyte@angband.pl> wrote:
->
-> On Sun, Feb 17, 2019 at 06:35:25PM +0200, Boaz Harrosh wrote:
-> > On 15/02/19 00:06, Dave Chinner wrote:
-> > > So you're adding an interface that allows users to change the create
-> > > time of files without needing any privileges?
->
-> > > Inode create time is forensic metadata in XFS  - information we use
-> > > for sequence of event and inode lifetime analysis during examination
-> > > of broken filesystem images and systems that have been broken into.
->
-> > I think the difference in opinion here is that there are two totally
-> > different BTIme out in the world. For two somewhat opposite motivations
-> > and it seems they both try to be crammed into the same on disk space.
-> >
-> > One - Author creation time
-> > Two - Local creation time
->
-> > So it looks like both sides are correct trying to preserve their own guy?
->
-> I'd say that [2] is too easily gameable to be worth the effort.  You can
-> just change it on the disk.  That right now it'd take some skill to find the
-> right place to edit doesn't matter -- a tool to update the btime against
-> your wishes would need to be written just once.  Unlike btrfs, XFS doesn't
-> even have a chain of checksums all the way to the root.
->
-> On the other hand, [1] has a lot of uses.  It can also be preserved in
-> backups and version control (svnt and git-restore-mtime could be easily
-> extended).
->
-> I'd thus go with [2] -- any uses for [1] are better delegated to filesystem
-> specific tools.
->
 
-I started out in the Windows world, and I found it quite handy to
-right-click a file and see when it was created.  When I started using
-Linux, I saw things like this:
+Hi all,
 
-Access: 2019-02-16 22:19:32.024284060 -0800
-Modify: 2016-02-02 19:26:47.901766778 -0800
-Change: 2016-02-02 19:26:47.907766649 -0800
+I would like to bring up a topic that comes from an issue a customer of ours
+is facing with the mremap syscall + hitting the max_map_count threshold:
 
-and my mind boggled a bit.  Modify makes sense.  Change?  What's that?
- Why do I care?
+When passing the MREMAP_FIXED flag, mremap() calls mremap_to() which does the
+following:
 
-Adding "birth" makes sense, and I think that filesystem-agnostic
-backup tools *should* be able to write it.
+1) it unmaps the region where we want to put the new map:
+   (new_addr, new_addr + new_len] [1]
+2) IFF old_len > new_len, it unmaps the region:
+   (old_addr + new_len, (old_addr + new_len) + (old_len - new_len)] [2]
 
-So I'm highly in favor of this patch.  If XFS wants to disallow
-writing the birth time, fine, but I think that behavior should be
-overridable.
+Now, having gone through steps 1) and 2), we eventually call move_vma() to do
+the actual move.
+
+move_vma() checks if we are at least 4 maps below max_map_count, otherwise
+it bails out with -ENOMEM [3].
+The problem is that we might have already unmapped the vma's in steps 1) and 2),
+so it is not possible for userspace to figure out the state of the vma's after
+it gets -ENOMEM.
+
+- Did new_addr got unmaped?
+- Did part of the old_addr got unmaped?
+
+Because of that, it gets tricky for userspace to clean up properly on error
+path.
+
+While it is true that we can return -ENOMEM for more reasons
+(e.g: see vma_to_resize()->may_expand_vm()), I think that we might be able to
+pre-compute the number of maps that we are going add/release during the first
+two do_munmaps(), and check whether we are 4 maps below the threshold
+(as move_vma() does).
+Should not be the case, we can bail out early before we unmap anything, so we
+make sure the vma's are left untouched in case we are going to be short of maps.
+
+I am not sure if that is realistically doable, or there are limitations
+I overlooked, or we simply do not want to do that.
+
+Before investing more time and giving it a shoot, I just wanted to bring
+this upstream to get feedback on this matter.
+
+Thanks
+
+[1] https://github.com/torvalds/linux/blob/master/mm/mremap.c#L519
+[2] https://github.com/torvalds/linux/blob/master/mm/mremap.c#L523
+[3] https://github.com/torvalds/linux/blob/master/mm/mremap.c#L338
+
+-- 
+Oscar Salvador
+SUSE L3
