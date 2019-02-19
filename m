@@ -1,60 +1,28 @@
-From: Guo Ren <guoren@kernel.org>
-Subject: Re: [PATCH 7/8] csky: Use latest system call ABI
-Date: Tue, 19 Feb 2019 10:18:34 +0800
-Message-ID: <20190219021834.GA4495@guoren-Inspiron-7460>
-References: <20190218210712.3503891-1-arnd@arndb.de>
- <20190218210712.3503891-8-arnd@arndb.de>
+From: Matthew Wilcox <willy@infradead.org>
+Subject: Re: [RFC PATCH 0/6] Allow setting file birth time with utimensat()
+Date: Mon, 18 Feb 2019 20:04:47 -0800
+Message-ID: <20190219040447.GX12668@bombadil.infradead.org>
+References: <cover.1550136164.git.osandov@fb.com>
+ <20190214220626.GV14116@dastard>
+ <6a9dc05a-0445-d0ab-0140-1de4fee7ba9b@gmail.com>
+ <20190217175450.psaesabv3vlzvjv4@angband.pl>
+ <CALCETrWsCUTSbvwemKHB=8=pO4fwK2qD0boFEd4puBDkpb3F9g@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-btrfs-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190218210712.3503891-8-arnd@arndb.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>, Mao Han <han_mao@c-sky.com>
-Cc: y2038@lists.linaro.org, Thomas Gleixner <tglx@linutronix.de>, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, yury.norov@gmail.com, linux-arm-kernel@lists.infradead.org, linux-hexagon@vger.kernel.org, uclinux-h8-devel@lists.sourceforge.jp, Stafford Horne <shorne@gmail.com>, Vineet Gupta <vgupta@synopsys.com>, Palmer Dabbelt <palmer@sifive.com>, Greentime Hu <green.hu@gmail.com>, linux-riscv@lists.infradead.org, Guan Xuetao <gxt@pku.edu.cn>
+In-Reply-To: <CALCETrWsCUTSbvwemKHB=8=pO4fwK2qD0boFEd4puBDkpb3F9g@mail.gmail.com>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Adam Borowski <kilobyte@angband.pl>, Boaz Harrosh <openosd@gmail.com>, Dave Chinner <david@fromorbit.com>, Omar Sandoval <osandov@osandov.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>, Linux btrfs Developers List <linux-btrfs@vger.kernel.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Mao Han has merged csky port into glibc 2.29, so we should keep the
-__ARCH_WANT_TIME32_SYSCALLS.
+On Sun, Feb 17, 2019 at 12:40:09PM -0800, Andy Lutomirski wrote:
+> So I'm highly in favor of this patch.  If XFS wants to disallow
+> writing the birth time, fine, but I think that behavior should be
+> overridable.
 
-F.Y.I:
-han_mao@c-sky.com
-
-On Mon, Feb 18, 2019 at 10:07:11PM +0100, Arnd Bergmann wrote:
-> We don't yet have an upstream glibc port for csky, so there is no user
-> space for the existing ABI, and we can remove the definitions for 32-bit
-> time_t, off_t and struct resource.
-> 
-> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
-> ---
->  arch/csky/Kconfig                   | 1 -
->  arch/csky/include/uapi/asm/unistd.h | 2 --
->  2 files changed, 3 deletions(-)
-> 
-> diff --git a/arch/csky/Kconfig b/arch/csky/Kconfig
-> index 6959e0b1e956..398113c845f5 100644
-> --- a/arch/csky/Kconfig
-> +++ b/arch/csky/Kconfig
-> @@ -1,6 +1,5 @@
->  config CSKY
->  	def_bool y
-> -	select ARCH_32BIT_OFF_T
->  	select ARCH_HAS_SYNC_DMA_FOR_CPU
->  	select ARCH_HAS_SYNC_DMA_FOR_DEVICE
->  	select ARCH_USE_BUILTIN_BSWAP
-> diff --git a/arch/csky/include/uapi/asm/unistd.h b/arch/csky/include/uapi/asm/unistd.h
-> index ec60e49cea66..224c9a9ab45b 100644
-> --- a/arch/csky/include/uapi/asm/unistd.h
-> +++ b/arch/csky/include/uapi/asm/unistd.h
-> @@ -2,8 +2,6 @@
->  // Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
->  
->  #define __ARCH_WANT_SYS_CLONE
-> -#define __ARCH_WANT_SET_GET_RLIMIT
-Seems it's not related to y2038 issue. Is __ARCH_WANT_SET_GET_RLIMIT no
-use ?
-
-> -#define __ARCH_WANT_TIME32_SYSCALLS
-
-Best Regards
- Guo Ren
+Please, no.  We need to have consistent behaviour between at least
+Linux local filesystems.  Not "Chris thinks this is a good idea,
+while Dave and Ted think its a bad idea, so btrfs supports it and
+XFS and ext4 disallow it".
