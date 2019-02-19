@@ -1,132 +1,273 @@
-From: Oscar Salvador <osalvador@suse.de>
-Subject: Re: mremap vs sysctl_max_map_count
-Date: Tue, 19 Feb 2019 16:53:24 +0100
-Message-ID: <20190219155320.tkfkwvqk53tfdojt@d104.suse.de>
-References: <20190218083326.xsnx7cx2lxurbmux@d104.suse.de>
- <a11a10b5-4a31-2537-7b14-83f4b22e5f6c@suse.cz>
- <20190218111535.dxkm7w7c2edgl2lh@kshutemo-mobl1>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH 14/19] io_uring: add file set registration
+Date: Tue, 19 Feb 2019 17:12:31 +0100
+Message-ID: <CAG48ez25XYh1-SRw7HG-RXOz9xVZ0EXCumT_Csw0ER62K4Q1qw@mail.gmail.com>
+References: <20190211190049.7888-1-axboe@kernel.dk> <20190211190049.7888-16-axboe@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190218111535.dxkm7w7c2edgl2lh@kshutemo-mobl1>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Kirill A. Shutemov" <kirill@shutemov.name>
-Cc: Vlastimil Babka <vbabka@suse.cz>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, hughd@google.com, viro@zeniv.linux.org.uk, torvalds@linux-foundation.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <20190211190049.7888-16-axboe@kernel.dk>
+Sender: owner-linux-aio@kvack.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: linux-aio@kvack.org, linux-block@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, hch@lst.de, jmoyer@redhat.com, Avi Kivity <avi@scylladb.com>, Al Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 18, 2019 at 02:15:35PM +0300, Kirill A. Shutemov wrote:
-> On Mon, Feb 18, 2019 at 10:57:18AM +0100, Vlastimil Babka wrote:
-> > IMHO it makes sense to do all such resource limit checks upfront. It
-> > should all be protected by mmap_sem and thus stable, right? Even if it
-> > was racy, I'd think it's better to breach the limit a bit due to a race
-> > than bail out in the middle of operation. Being also resilient against
-> > "real" ENOMEM's due to e.g. failure to alocate a vma would be much
-> > harder perhaps (but maybe it's already mostly covered by the
-> > too-small-to-fail in page allocator), but I'd try with the artificial
-> > limits at least.
-> 
-> There's slight chance of false-postive -ENOMEM with upfront approach:
-> unmapping can reduce number of VMAs so in some cases upfront check would
-> fail something that could succeed otherwise.
-> 
-> We could check also what number of VMA unmap would free (if any). But it
-> complicates the picture and I don't think worth it in the end.
+On Mon, Feb 11, 2019 at 8:01 PM Jens Axboe <axboe@kernel.dk> wrote:
+> We normally have to fget/fput for each IO we do on a file. Even with
+> the batching we do, the cost of the atomic inc/dec of the file usage
+> count adds up.
+>
+> This adds IORING_REGISTER_FILES, and IORING_UNREGISTER_FILES opcodes
+> for the io_uring_register(2) system call. The arguments passed in must
+> be an array of __s32 holding file descriptors, and nr_args should hold
+> the number of file descriptors the application wishes to pin for the
+> duration of the io_uring instance (or until IORING_UNREGISTER_FILES is
+> called).
+>
+> When used, the application must set IOSQE_FIXED_FILE in the sqe->flags
+> member. Then, instead of setting sqe->fd to the real fd, it sets sqe->fd
+> to the index in the array passed in to IORING_REGISTER_FILES.
+>
+> Files are automatically unregistered when the io_uring instance is torn
+> down. An application need only unregister if it wishes to register a new
+> set of fds.
+>
+> Reviewed-by: Hannes Reinecke <hare@suse.com>
+> Signed-off-by: Jens Axboe <axboe@kernel.dk>
+> ---
+[...]
+> @@ -1335,6 +1379,161 @@ static int io_cqring_wait(struct io_ring_ctx *ctx, int min_events,
+>         return READ_ONCE(ring->r.head) == READ_ONCE(ring->r.tail) ? ret : 0;
+>  }
+>
+> +static void __io_sqe_files_unregister(struct io_ring_ctx *ctx)
+> +{
+> +#if defined(CONFIG_UNIX)
+> +       if (ctx->ring_sock) {
+> +               struct sock *sock = ctx->ring_sock->sk;
+> +               struct sk_buff *skb;
+> +
+> +               while ((skb = skb_dequeue(&sock->sk_receive_queue)) != NULL)
+> +                       kfree_skb(skb);
+> +       }
+> +#else
+> +       int i;
+> +
+> +       for (i = 0; i < ctx->nr_user_files; i++)
+> +               fput(ctx->user_files[i]);
+> +#endif
+> +}
+> +
+> +static int io_sqe_files_unregister(struct io_ring_ctx *ctx)
+> +{
+> +       if (!ctx->user_files)
+> +               return -ENXIO;
+> +
+> +       __io_sqe_files_unregister(ctx);
+> +       kfree(ctx->user_files);
+> +       ctx->user_files = NULL;
+> +       return 0;
+> +}
+> +
+> +#if defined(CONFIG_UNIX)
+> +/*
+> + * Ensure the UNIX gc is aware of our file set, so we are certain that
+> + * the io_uring can be safely unregistered on process exit, even if we have
+> + * loops in the file referencing.
+> + */
 
-I came up with an approach which tries to check how many vma's are we going
-to split and the number of vma's that we are going to free.
-I did several tests and it worked for me, but I am not sure if I overlooked
-something due to false assumptions.
-I am also not sure either if the extra code is worth, but from my POV
-it could avoid such cases where we unmap regions but move_vma()
-is not going to succeed at all.
+I still don't get how this is supposed to work. Quoting from an
+earlier version of the patch:
 
+|> I think the overall concept here is still broken: You're giving the
+|> user_files to the GC, and I think the GC can drop their refcounts, but
+|> I don't see you actually getting feedback from the GC anywhere that
+|> would let the GC break your references? E.g. in io_prep_rw() you grab
+|> file pointers from ctx->user_files after simply checking
+|> ctx->nr_user_files, and there is no path from the GC that touches
+|> those fields. As far as I can tell, the GC is just going to go through
+|> unix_destruct_scm() and drop references on your files, causing
+|> use-after-free.
+|>
+|> But the unix GC is complicated, and maybe I'm just missing something...
+|
+| Only when the skb is released, which is either done when the io_uring
+| is torn down (and then definitely safe), or if the socket is released,
+| which is again also at a safe time.
 
-It is not yet complete (sanity checks are missing), but I wanted to show it
-to see whether it is something that is worth spending time with:
+I'll try to add inline comments on my understanding of the code, maybe
+you can point out where exactly we're understanding it differently...
 
-diff --git a/mm/mremap.c b/mm/mremap.c
-index 3320616ed93f..f504c29d2af4 100644
---- a/mm/mremap.c
-+++ b/mm/mremap.c
-@@ -494,6 +494,51 @@ static struct vm_area_struct *vma_to_resize(unsigned long addr,
- 	return vma;
- }
- 
-+static int pre_compute_maps(unsigned long addr, unsigned long len)
-+{
-+	struct mm_struct *mm = current->mm;
-+	struct vm_area_struct *vma, *vma_end;
-+	unsigned long end;
-+	int maps_needed = 0;
-+
-+	end = addr + len;
-+
-+	vma = find_vma(mm, addr);
-+	if (!vma)
-+		return 0;
-+	vma_end = find_vma(mm, end);
-+
-+	if (addr >= vma->vm_start && end <= vma->vm_end) {
-+		/*
-+		 * Possible outcomes when dealing with a single vma:
-+		 * the vma will be entirely removed: map_count will be decremented by 1
-+		 * it needs to be split in 2 before unmapping: map_count not changed
-+		 * it needs to be split in 3 before unmapping: map_count incremented by 1
-+		 */
-+		if (addr > vma->vm_start && end < vma->vm_end)
-+			maps_needed++;
-+		else if (addr == vma->vm_start && end == vma->vm_end)
-+			maps_needed--;
-+	} else {
-+		struct vm_area_struct *tmp = vma;
-+		int vmas;
-+
-+		if (addr > tmp->vm_start)
-+			vmas = -1;
-+		else
-+			vmas = 0;
-+
-+		while (tmp != vma_end) {
-+			if (end >= tmp->vm_end)
-+				vmas++;
-+			tmp = tmp->vm_next;
-+		}
-+		maps_needed -= vmas;
-+	}
-+
-+	return maps_needed;
-+}
-+
- static unsigned long mremap_to(unsigned long addr, unsigned long old_len,
- 		unsigned long new_addr, unsigned long new_len, bool *locked,
- 		struct vm_userfaultfd_ctx *uf,
-@@ -516,6 +561,24 @@ static unsigned long mremap_to(unsigned long addr, unsigned long old_len,
- 	if (addr + old_len > new_addr && new_addr + new_len > addr)
- 		goto out;
- 
-+	/*
-+	 * Worst-scenario case is when a vma gets split in 3 before unmaping it.
-+	 * So, that would mean 2 (1 for new_addr and 1 for addr) more maps to
-+	 * the ones we already hold.
-+	 * If that is the case, let us check further if we are going to free
-+	 * enough to go beyond the check in move_vma().
-+	 */
-+	if ((mm->map_count + 2) >= sysctl_max_map_count - 3) {
-+		int maps_needed = 0;
-+
-+		maps_needed += pre_compute_maps(new_addr, new_len);
-+		if (old_len > new_len)
-+			maps_needed += pre_compute_maps(addr + new_len, old_len - new_len);
-+
-+		if ((mm->map_count + maps_needed) >= sysctl_max_map_count - 3)
-+			return -ENOMEM;
-+	}
-+
- 	ret = do_munmap(mm, new_addr, new_len, uf_unmap_early);
- 	if (ret)
- 		goto out;
-Thanks
--- 
-Oscar Salvador
-SUSE L3
+> +static int __io_sqe_files_scm(struct io_ring_ctx *ctx, int nr, int offset)
+> +{
+> +       struct sock *sk = ctx->ring_sock->sk;
+> +       struct scm_fp_list *fpl;
+> +       struct sk_buff *skb;
+> +       int i;
+> +
+> +       fpl = kzalloc(sizeof(*fpl), GFP_KERNEL);
+> +       if (!fpl)
+> +               return -ENOMEM;
+> +
+            // here we allocate a new `skb` with ->users==1
+> +       skb = alloc_skb(0, GFP_KERNEL);
+> +       if (!skb) {
+> +               kfree(fpl);
+> +               return -ENOMEM;
+> +       }
+> +
+> +       skb->sk = sk;
+            // set the skb's destructor, invoked when ->users drops to 0;
+            // destructor drops file refcounts
+> +       skb->destructor = unix_destruct_scm;
+> +
+> +       fpl->user = get_uid(ctx->user);
+> +       for (i = 0; i < nr; i++) {
+                    // grab a reference to each file for the skb
+> +               fpl->fp[i] = get_file(ctx->user_files[i + offset]);
+> +               unix_inflight(fpl->user, fpl->fp[i]);
+> +       }
+> +
+> +       fpl->max = fpl->count = nr;
+> +       UNIXCB(skb).fp = fpl;
+> +       refcount_add(skb->truesize, &sk->sk_wmem_alloc);
+            // put the skb in the sk_receive_queue, still with a refcount of 1.
+> +       skb_queue_head(&sk->sk_receive_queue, skb);
+> +
+            // drop a reference from each file; after this, only the
+skb owns references to files;
+            // the ctx->user_files entries borrow their lifetime from the skb
+> +       for (i = 0; i < nr; i++)
+> +               fput(fpl->fp[i]);
+> +
+> +       return 0;
+> +}
+
+So let's say you have a cyclic dependency where an io_uring points to
+a unix domain socket, and the unix domain socket points back at the
+uring. The last reference from outside the loop goes away when the
+user closes the uring's fd, but the uring's busypolling kernel thread
+is still running and busypolling for new submission queue entries.
+
+The GC can then come along and run scan_inflight(), detect that
+ctx->ring_sock->sk->sk_receive_queue contains a reference to a unix
+domain socket, and steal the skb (unlinking it from the ring_sock and
+linking it into the hitlist):
+
+__skb_unlink(skb, &x->sk_receive_queue);
+__skb_queue_tail(hitlist, skb);
+
+And then the hitlist will be processed by __skb_queue_purge(),
+dropping the refcount of the skb from 1 to 0. At that point, the unix
+domain socket can be freed, and you still have a pointer to it in
+ctx->user_files.
+
+> +
+> +/*
+> + * If UNIX sockets are enabled, fd passing can cause a reference cycle which
+> + * causes regular reference counting to break down. We rely on the UNIX
+> + * garbage collection to take care of this problem for us.
+> + */
+> +static int io_sqe_files_scm(struct io_ring_ctx *ctx)
+> +{
+> +       unsigned left, total;
+> +       int ret = 0;
+> +
+> +       total = 0;
+> +       left = ctx->nr_user_files;
+> +       while (left) {
+> +               unsigned this_files = min_t(unsigned, left, SCM_MAX_FD);
+> +               int ret;
+> +
+> +               ret = __io_sqe_files_scm(ctx, this_files, total);
+> +               if (ret)
+> +                       break;
+
+If we bail out in the middle of translating the ->user_files here, we
+have to make sure that we both destroy the already-created SKBs and
+drop our references on the files we haven't dealt with yet.
+
+> +               left -= this_files;
+> +               total += this_files;
+> +       }
+> +
+> +       return ret;
+> +}
+> +#else
+> +static int io_sqe_files_scm(struct io_ring_ctx *ctx)
+> +{
+> +       return 0;
+> +}
+> +#endif
+> +
+> +static int io_sqe_files_register(struct io_ring_ctx *ctx, void __user *arg,
+> +                                unsigned nr_args)
+> +{
+> +       __s32 __user *fds = (__s32 __user *) arg;
+> +       int fd, ret = 0;
+> +       unsigned i;
+> +
+> +       if (ctx->user_files)
+> +               return -EBUSY;
+> +       if (!nr_args)
+> +               return -EINVAL;
+> +       if (nr_args > IORING_MAX_FIXED_FILES)
+> +               return -EMFILE;
+> +
+> +       ctx->user_files = kcalloc(nr_args, sizeof(struct file *), GFP_KERNEL);
+> +       if (!ctx->user_files)
+> +               return -ENOMEM;
+> +
+> +       for (i = 0; i < nr_args; i++) {
+> +               ret = -EFAULT;
+> +               if (copy_from_user(&fd, &fds[i], sizeof(fd)))
+> +                       break;
+> +
+> +               ctx->user_files[i] = fget(fd);
+> +
+> +               ret = -EBADF;
+> +               if (!ctx->user_files[i])
+> +                       break;
+
+Let's say we hit this error condition after N successful loop
+iterations, on a kernel with CONFIG_UNIX. At that point, we've filled
+N file pointers into ctx->user_files[], and we've incremented
+ctx->nr_user_files up to N. Now we jump to the `if (ret)` branch,
+which goes into io_sqe_files_unregister(); but that's going to attempt
+to dequeue inflight files from ctx->ring_sock, so that's not going to
+work.
+
+> +               /*
+> +                * Don't allow io_uring instances to be registered. If UNIX
+> +                * isn't enabled, then this causes a reference cycle and this
+> +                * instance can never get freed. If UNIX is enabled we'll
+> +                * handle it just fine, but there's still no point in allowing
+> +                * a ring fd as it doesn't support regular read/write anyway.
+> +                */
+> +               if (ctx->user_files[i]->f_op == &io_uring_fops) {
+> +                       fput(ctx->user_files[i]);
+> +                       break;
+> +               }
+> +               ctx->nr_user_files++;
+
+I don't see anything that can set ctx->nr_user_files back down to
+zero; as far as I can tell, if you repeatedly register and unregister
+a set of files, ctx->nr_user_files will just grow, and since it's used
+as an upper bound for array accesses, that's bad.
+
+> +               ret = 0;
+> +       }
+> +
+> +       if (!ret)
+> +               ret = io_sqe_files_scm(ctx);
+> +       if (ret)
+> +               io_sqe_files_unregister(ctx);
+> +
+> +       return ret;
+> +}
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
