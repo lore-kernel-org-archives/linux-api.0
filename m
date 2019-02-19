@@ -1,32 +1,54 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH 4/8] asm-generic: Make time32 syscall numbers optional
-Date: Tue, 19 Feb 2019 21:29:01 +0100
-Message-ID: <CAK8P3a0UD7_omc4=o7VLaLKUX4Z1eWXU15TeqgvjXfhyv+7xCA@mail.gmail.com>
-References: <20190218210712.3503891-1-arnd@arndb.de> <20190218210712.3503891-5-arnd@arndb.de>
- <CAMuHMdVbz=_GFMnKx4PuxpmG9jpdA=Do2XnR3bY5wRZPM3G+Gw@mail.gmail.com>
+From: David Howells <dhowells@redhat.com>
+Subject: Re: [RFC PATCH 00/27] Containers and using authenticated filesystems
+Date: Tue, 19 Feb 2019 23:42:09 +0000
+Message-ID: <22055.1550619729@warthog.procyon.org.uk>
+References: <8736ojybw7.fsf@xmission.com> <155024683432.21651.14153938339749694146.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAMuHMdVbz=_GFMnKx4PuxpmG9jpdA=Do2XnR3bY5wRZPM3G+Gw@mail.gmail.com>
+In-Reply-To: <8736ojybw7.fsf@xmission.com>
+Content-ID: <22054.1550619729.1@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Geert Uytterhoeven <geert@linux-m68k.org>
-Cc: y2038 Mailman List <y2038@lists.linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Linux-Arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Yury Norov <yury.norov@gmail.com>, Linux ARM <linux-arm-kernel@lists.infradead.org>, "open list:QUALCOMM HEXAGON..." <linux-hexagon@vger.kernel.org>, "moderated list:H8/300 ARCHITECTURE" <uclinux-h8-devel@lists.sourceforge.jp>, Stafford Horne <shorne@gmail.com>, Vineet Gupta <vgupta@synopsys.com>, Palmer Dabbelt <palmer@sifive.com>, Guo Ren <guoren@kernel.org>, Greentime Hu <green.hu@gmail.com>, linux-riscv@lists.infradead.org, Guan Xuetao <gxt@pku.edu.cn>
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: dhowells@redhat.com, keyrings@vger.kernel.org, trond.myklebust@hammerspace.com, sfrench@samba.org, linux-security-module@vger.kernel.org, linux-nfs@vger.kernel.org, linux-cifs@vger.kernel.org, linux-fsdevel@vger.kernel.org, rgb@redhat.com, linux-kernel@vger.kernel.org, Linux Containers <containers@lists.linux-foundation.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 19, 2019 at 9:06 PM Geert Uytterhoeven <geert@linux-m68k.org> wrote:
->
-> Hi Arnd,
->
-> On Tue, Feb 19, 2019 at 3:34 AM Arnd Bergmann <arnd@arndb.de> wrote:
-> > We don't want new architectures to even provide the old 32-bit time_t
-> > based system calls any more, or define the syscall number macros.
-> >
-> > Add a new __ARCH_WANT_TIME32_SYSCALLS macro that gets enabled for all
-> > existing 32-bit architectures so we don't change any current behavior.
->
-> ... (only) 32-bit architectures using the generic syscall list, right?
+Eric W. Biederman <ebiederm@xmission.com> wrote:
 
-Correct, I've added a clarification in the commit text in my git tree now,
-thanks for the proofreading!
+> So you missed the main mailing lists for discussion of this kind of
+> thing
 
-       Arnd
+Yeah, sorry about that.  I was primarily aiming it at Trond and Steve as I'd
+like to consider how to go about interpolating request_key() into NFS and CIFS
+so that they can make use of the key-related facilities that this makes
+available with AFS.  And I was in a bit tight for time to mail it out before
+having to go out.  I know, excuses... ;-)
+
+> and the maintainer.
+
+That would be me.  I maintain keyrings.
+
+No one is listed in MAINTAINERS as owning namespaces.  If you feel that should
+be you, please add a record.
+
+> Looking at your description you are introducing a container id.
+
+Yes.  For audit logging, which was why I cc'd Richard.
+
+> You don't descibe which namespace your contianer id lives in.
+
+It doesn't.  Not everything has to have a namespace.  As you yourself pointed
+out, it should be globally unique, in which case the world is the namespace,
+maybe even the universe;-).
+
+> Without the container id living in a container this breaks
+> nested containers and process migration aka CRIU.
+
+As long as IDs are globally unique, why should break container migration?
+Having a kernel container object might even make CRIU easier.
+
+And what does "Without the container id living in a container" mean anyway?  I
+have IDs attached to containers.  A container can see the IDs of its child
+containers.  There should be no problem with nesting.
+
+David
