@@ -1,48 +1,89 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [RFC PATCH 0/6] Allow setting file birth time with utimensat()
-Date: Tue, 19 Feb 2019 15:28:19 +1100
-Message-ID: <20190219042818.GH14116@dastard>
-References: <cover.1550136164.git.osandov@fb.com>
- <20190214220626.GV14116@dastard>
- <6a9dc05a-0445-d0ab-0140-1de4fee7ba9b@gmail.com>
- <20190217175450.psaesabv3vlzvjv4@angband.pl>
- <CALCETrWsCUTSbvwemKHB=8=pO4fwK2qD0boFEd4puBDkpb3F9g@mail.gmail.com>
- <20190219040447.GX12668@bombadil.infradead.org>
+From: Geert Uytterhoeven <geert@linux-m68k.org>
+Subject: Re: [PATCH 2/8] 32-bit userspace ABI: introduce ARCH_32BIT_OFF_T
+ config option
+Date: Tue, 19 Feb 2019 09:56:19 +0100
+Message-ID: <CAMuHMdUb47nLkorUpQ1ohD-WMaEG7d3DBAs7JWA6rvgKTZAGGw@mail.gmail.com>
+References: <20190218210712.3503891-1-arnd@arndb.de> <20190218210712.3503891-3-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190219040447.GX12668@bombadil.infradead.org>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Matthew Wilcox <willy@infradead.org>
-Cc: Andy Lutomirski <luto@kernel.org>, Adam Borowski <kilobyte@angband.pl>, Boaz Harrosh <openosd@gmail.com>, Omar Sandoval <osandov@osandov.com>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>, Linux btrfs Developers List <linux-btrfs@vger.kernel.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190218210712.3503891-3-arnd@arndb.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>, Yury Norov <yury.norov@gmail.com>
+Cc: y2038 Mailman List <y2038@lists.linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Linux-Arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux ARM <linux-arm-kernel@lists.infradead.org>, "open list:QUALCOMM HEXAGON..." <linux-hexagon@vger.kernel.org>, "moderated list:H8/300 ARCHITECTURE" <uclinux-h8-devel@lists.sourceforge.jp>, Stafford Horne <shorne@gmail.com>, Vineet Gupta <vgupta@synopsys.com>, Palmer Dabbelt <palmer@sifive.com>, Guo Ren <guoren@kernel.org>, Greentime Hu <green.hu@gmail.com>, linux-riscv@lists.infradead.org, Guan Xuetao <gxt@pku.edu.cn>, Yury Norov <ynorov@caviumnetworks.com>, Yury Norov <ynorov@marvell.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 18, 2019 at 08:04:47PM -0800, Matthew Wilcox wrote:
-> On Sun, Feb 17, 2019 at 12:40:09PM -0800, Andy Lutomirski wrote:
-> > So I'm highly in favor of this patch.  If XFS wants to disallow
-> > writing the birth time, fine, but I think that behavior should be
-> > overridable.
-> 
-> Please, no.  We need to have consistent behaviour between at least
-> Linux local filesystems.  Not "Chris thinks this is a good idea,
-> while Dave and Ted think its a bad idea, so btrfs supports it and
-> XFS and ext4 disallow it".
+Hi Arnd, Yuri,
 
-And, quite frankly, this is the entire reason xattrs exist. i.e.
-so that generic file attributes can be stored persitently without
-each individual having to support them in their on-disk format.
+On Tue, Feb 19, 2019 at 3:35 AM Arnd Bergmann <arnd@arndb.de> wrote:
+> From: Yury Norov <ynorov@caviumnetworks.com>
+>
+> All new 32-bit architectures should have 64-bit userspace off_t type, but
+> existing architectures has 32-bit ones.
+>
+> To enforce the rule, new config option is added to arch/Kconfig that defaults
+> ARCH_32BIT_OFF_T to be disabled for new 32-bit architectures. All existing
+> 32-bit architectures enable it explicitly.
+>
+> New option affects force_o_largefile() behaviour. Namely, if userspace
+> off_t is 64-bits long, we have no reason to reject user to open big files.
+>
+> Note that even if architectures has only 64-bit off_t in the kernel
+> (arc, c6x, h8300, hexagon, nios2, openrisc, and unicore32),
+> a libc may use 32-bit off_t, and therefore want to limit the file size
+> to 4GB unless specified differently in the open flags.
+>
+> Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
+> Acked-by: Arnd Bergmann <arnd@arndb.de>
+> Signed-off-by: Yury Norov <ynorov@marvell.com>
+> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 
-I wish people would stop trying to implement stuff like this in
-filesystem code and instead added it to the VFS and stored it in VFS
-defined system xattrs so that it is common across all filesystems.
-It also means that backup applications can preserve them during file
-copies without really even being aware of their meaning, simply by
-copying all the xattrs on the file...
+>  arch/m68k/Kconfig       |  1 +
 
-Cheers,
+For m68k:
+Acked-by: Geert Uytterhoeven <geert@linux-m68k.org>
 
-Dave.
+> --- a/arch/Kconfig
+> +++ b/arch/Kconfig
+> @@ -276,6 +276,21 @@ config ARCH_THREAD_STACK_ALLOCATOR
+>  config ARCH_WANTS_DYNAMIC_TASK_STRUCT
+>         bool
+>
+> +config ARCH_32BIT_OFF_T
+> +       bool
+> +       depends on !64BIT
+> +       help
+> +         All new 32-bit architectures should have 64-bit off_t type on
+> +         userspace side which corresponds to the loff_t kernel type. This
+> +         is the requirement for modern ABIs. Some existing architectures
+> +         already have 32-bit off_t. This option is enabled for all such
+
+s/already/still/
+
+> +         architectures explicitly. Namely: arc, arm, blackfin, cris, frv,
+> +         h8300, hexagon, m32r, m68k, metag, microblaze, mips32, mn10300,
+> +         nios2, openrisc, parisc32, powerpc32, score, sh, sparc, tile32,
+> +         unicore32, x86_32 and xtensa. This is the complete list. Any
+
+Do we really need this list here?  It's intended to shrink only.
+It includes removed architectures (blackfin, cris, frv, m32r, metag,
+mn10300, score, tile32), but lacks several new ones affected by this
+patch (c6x, csky, nds32, riscv).
+
+> +         new 32-bit architecture should declare 64-bit off_t type on user
+> +         side and so should not enable this option.
+> +
+>  config HAVE_REGS_AND_STACK_ACCESS_API
+>         bool
+>         help
+
+Gr{oetje,eeting}s,
+
+                        Geert
+
 -- 
-Dave Chinner
-david@fromorbit.com
+Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k.org
+
+In personal conversations with technical people, I call myself a hacker. But
+when I'm talking to journalists I just say "programmer" or something like that.
+                                -- Linus Torvalds
