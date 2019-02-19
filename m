@@ -1,64 +1,84 @@
 From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH 7/8] csky: Use latest system call ABI
-Date: Tue, 19 Feb 2019 10:03:57 +0100
-Message-ID: <CAK8P3a0c6sNAPb_t2H9DbOi_antu4p5ncY76Vc6cFRZc=ZtiBg@mail.gmail.com>
-References: <20190218210712.3503891-1-arnd@arndb.de> <20190218210712.3503891-8-arnd@arndb.de>
- <20190219021834.GA4495@guoren-Inspiron-7460>
+Subject: Re: [PATCH 2/8] 32-bit userspace ABI: introduce ARCH_32BIT_OFF_T
+ config option
+Date: Tue, 19 Feb 2019 10:10:15 +0100
+Message-ID: <CAK8P3a3RTZDfc-4womPK2qbPTwuaP0Jin6Nzq6Ep3G4SnFpZvw@mail.gmail.com>
+References: <20190218210712.3503891-1-arnd@arndb.de> <20190218210712.3503891-3-arnd@arndb.de>
+ <CAMuHMdUb47nLkorUpQ1ohD-WMaEG7d3DBAs7JWA6rvgKTZAGGw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190219021834.GA4495@guoren-Inspiron-7460>
+In-Reply-To: <CAMuHMdUb47nLkorUpQ1ohD-WMaEG7d3DBAs7JWA6rvgKTZAGGw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Guo Ren <guoren@kernel.org>
-Cc: Mao Han <han_mao@c-sky.com>, y2038 Mailman List <y2038@lists.linaro.org>, Thomas Gleixner <tglx@linutronix.de>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Yury Norov <yury.norov@gmail.com>, Linux ARM <linux-arm-kernel@lists.infradead.org>, "open list:QUALCOMM HEXAGON..." <linux-hexagon@vger.kernel.org>, "moderated list:H8/300 ARCHITECTURE" <uclinux-h8-devel@lists.sourceforge.jp>, Stafford Horne <shorne@gmail.com>, Vineet Gupta <vgupta@synopsys.com>, Palmer Dabbelt <palmer@sifive.com>, Greentime Hu <green.hu@gmail.com>, linux-riscv@lists.infradead.org, Guan Xuetao <gxt@pku.edu.cn>, Joseph Myers <joseph@codesourcery.com>
+To: Geert Uytterhoeven <geert@linux-m68k.org>
+Cc: Yury Norov <yury.norov@gmail.com>, y2038 Mailman List <y2038@lists.linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Linux-Arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux ARM <linux-arm-kernel@lists.infradead.org>, "open list:QUALCOMM HEXAGON..." <linux-hexagon@vger.kernel.org>, "moderated list:H8/300 ARCHITECTURE" <uclinux-h8-devel@lists.sourceforge.jp>, Stafford Horne <shorne@gmail.com>, Vineet Gupta <vgupta@synopsys.com>, Palmer Dabbelt <palmer@sifive.com>, Guo Ren <guoren@kernel.org>, Greentime Hu <green.hu@gmail.com>, linux-riscv@lists.infradead.org, Guan Xuetao <gxt@pku.edu.cn>, Yury Norov <ynorov@caviumnetworks.com>, Yury Norov <ynorov@marvell.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 18, 2019 at 11:40 PM Joseph Myers <joseph@codesourcery.com> wrote:
+On Tue, Feb 19, 2019 at 9:56 AM Geert Uytterhoeven <geert@linux-m68k.org> wrote:
 >
-> On Mon, 18 Feb 2019, Arnd Bergmann wrote:
+> Hi Arnd, Yuri,
 >
-> > We don't yet have an upstream glibc port for csky, so there is no user
->
-> We do.  It's in 2.29.
-...
-On Tue, Feb 19, 2019 at 3:18 AM Guo Ren <guoren@kernel.org> wrote:
->
-> Mao Han has merged csky port into glibc 2.29, so we should keep the
-> __ARCH_WANT_TIME32_SYSCALLS.
-
-My mistake. I've dropped patch 7/8 from this series now.
-
-> > diff --git a/arch/csky/Kconfig b/arch/csky/Kconfig
-> > index 6959e0b1e956..398113c845f5 100644
-> > --- a/arch/csky/Kconfig
-> > +++ b/arch/csky/Kconfig
-> > @@ -1,6 +1,5 @@
-> >  config CSKY
-> >       def_bool y
-> > -     select ARCH_32BIT_OFF_T
-> >       select ARCH_HAS_SYNC_DMA_FOR_CPU
-> >       select ARCH_HAS_SYNC_DMA_FOR_DEVICE
-> >       select ARCH_USE_BUILTIN_BSWAP
-> > diff --git a/arch/csky/include/uapi/asm/unistd.h b/arch/csky/include/uapi/asm/unistd.h
-> > index ec60e49cea66..224c9a9ab45b 100644
-> > --- a/arch/csky/include/uapi/asm/unistd.h
-> > +++ b/arch/csky/include/uapi/asm/unistd.h
-> > @@ -2,8 +2,6 @@
-> >  // Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
+> On Tue, Feb 19, 2019 at 3:35 AM Arnd Bergmann <arnd@arndb.de> wrote:
+> > From: Yury Norov <ynorov@caviumnetworks.com>
 > >
-> >  #define __ARCH_WANT_SYS_CLONE
-> > -#define __ARCH_WANT_SET_GET_RLIMIT
-> Seems it's not related to y2038 issue. Is __ARCH_WANT_SET_GET_RLIMIT no
-> use ?
+> > All new 32-bit architectures should have 64-bit userspace off_t type, but
+> > existing architectures has 32-bit ones.
+> >
+> > To enforce the rule, new config option is added to arch/Kconfig that defaults
+> > ARCH_32BIT_OFF_T to be disabled for new 32-bit architectures. All existing
+> > 32-bit architectures enable it explicitly.
+> >
+> > New option affects force_o_largefile() behaviour. Namely, if userspace
+> > off_t is 64-bits long, we have no reason to reject user to open big files.
+> >
+> > Note that even if architectures has only 64-bit off_t in the kernel
+> > (arc, c6x, h8300, hexagon, nios2, openrisc, and unicore32),
+> > a libc may use 32-bit off_t, and therefore want to limit the file size
+> > to 4GB unless specified differently in the open flags.
+> >
+> > Signed-off-by: Yury Norov <ynorov@caviumnetworks.com>
+> > Acked-by: Arnd Bergmann <arnd@arndb.de>
+> > Signed-off-by: Yury Norov <ynorov@marvell.com>
+> > Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+>
+> >  arch/m68k/Kconfig       |  1 +
+>
+> For m68k:
+> Acked-by: Geert Uytterhoeven <geert@linux-m68k.org>
 
-In new architectures, we do not need to set CONFIG_ARCH_32BIT_OFF_T
-or __ARCH_WANT_SET_GET_RLIMIT, since we can assume that user
-space always uses a 64-bit off_t and a 'struct rlimit' matching the
-kernel's rlimit64, with the prlimit64() system call replacing both getrlimit
-and setrlimit on the kernel/user ABI side.
+Thanks!
 
-I don't know if glibc still uses the 32-bit off_t behavior or the old
-getrlimit/setrlimit, but if we're not also changing the time32 interfaces,
-the safest option seems to be to leave all three in place.
+> > --- a/arch/Kconfig
+> > +++ b/arch/Kconfig
+> > @@ -276,6 +276,21 @@ config ARCH_THREAD_STACK_ALLOCATOR
+> >  config ARCH_WANTS_DYNAMIC_TASK_STRUCT
+> >         bool
+> >
+> > +config ARCH_32BIT_OFF_T
+> > +       bool
+> > +       depends on !64BIT
+> > +       help
+> > +         All new 32-bit architectures should have 64-bit off_t type on
+> > +         userspace side which corresponds to the loff_t kernel type. This
+> > +         is the requirement for modern ABIs. Some existing architectures
+> > +         already have 32-bit off_t. This option is enabled for all such
+>
+> s/already/still/
+>
+> > +         architectures explicitly. Namely: arc, arm, blackfin, cris, frv,
+> > +         h8300, hexagon, m32r, m68k, metag, microblaze, mips32, mn10300,
+> > +         nios2, openrisc, parisc32, powerpc32, score, sh, sparc, tile32,
+> > +         unicore32, x86_32 and xtensa. This is the complete list. Any
+>
+> Do we really need this list here?  It's intended to shrink only.
+> It includes removed architectures (blackfin, cris, frv, m32r, metag,
+> mn10300, score, tile32), but lacks several new ones affected by this
+> patch (c6x, csky, nds32, riscv).
 
-     Arnd
+Right, I (finally)  took Yury's patch that was already several years old
+without checking this text (I did make sure all architectures are changed
+correctly).
+
+I'll just remove the list here.
+
+      Arnd
