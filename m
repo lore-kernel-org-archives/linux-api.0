@@ -1,62 +1,32 @@
-From: Geert Uytterhoeven <geert@linux-m68k.org>
-Subject: Re: [PATCH 4/8] asm-generic: Make time32 syscall numbers
-	optional
-Date: Tue, 19 Feb 2019 21:06:04 +0100
-Message-ID: <CAMuHMdVbz=_GFMnKx4PuxpmG9jpdA=Do2XnR3bY5wRZPM3G+Gw@mail.gmail.com>
-References: <20190218210712.3503891-1-arnd@arndb.de>
- <20190218210712.3503891-5-arnd@arndb.de>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH 4/8] asm-generic: Make time32 syscall numbers optional
+Date: Tue, 19 Feb 2019 21:29:01 +0100
+Message-ID: <CAK8P3a0UD7_omc4=o7VLaLKUX4Z1eWXU15TeqgvjXfhyv+7xCA@mail.gmail.com>
+References: <20190218210712.3503891-1-arnd@arndb.de> <20190218210712.3503891-5-arnd@arndb.de>
+ <CAMuHMdVbz=_GFMnKx4PuxpmG9jpdA=Do2XnR3bY5wRZPM3G+Gw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <20190218210712.3503891-5-arnd@arndb.de>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Linux-Arch <linux-arch@vger.kernel.org>, "moderated list:H8/300 ARCHITECTURE" <uclinux-h8-devel@lists.sourceforge.jp>, Yury Norov <yury.norov@gmail.com>, y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, Palmer Dabbelt <palmer@sifive.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-riscv@lists.infradead.org, Vineet Gupta <vgupta@synopsys.com>, Guo Ren <guoren@kernel.org>, Greentime Hu <green.hu@gmail.com>, "open list:QUALCOMM HEXAGON..." <linux-hexagon@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Guan Xuetao <gxt@pku.edu.cn>, Stafford Horne <shorne@gmail.com>, Linux ARM <linux-arm-kernel@lists.infradead.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAMuHMdVbz=_GFMnKx4PuxpmG9jpdA=Do2XnR3bY5wRZPM3G+Gw@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Geert Uytterhoeven <geert@linux-m68k.org>
+Cc: y2038 Mailman List <y2038@lists.linaro.org>, Thomas Gleixner <tglx@linutronix.de>, Linux-Arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Yury Norov <yury.norov@gmail.com>, Linux ARM <linux-arm-kernel@lists.infradead.org>, "open list:QUALCOMM HEXAGON..." <linux-hexagon@vger.kernel.org>, "moderated list:H8/300 ARCHITECTURE" <uclinux-h8-devel@lists.sourceforge.jp>, Stafford Horne <shorne@gmail.com>, Vineet Gupta <vgupta@synopsys.com>, Palmer Dabbelt <palmer@sifive.com>, Guo Ren <guoren@kernel.org>, Greentime Hu <green.hu@gmail.com>, linux-riscv@lists.infradead.org, Guan Xuetao <gxt@pku.edu.cn>
 List-Id: linux-api@vger.kernel.org
 
-SGkgQXJuZCwKCk9uIFR1ZSwgRmViIDE5LCAyMDE5IGF0IDM6MzQgQU0gQXJuZCBCZXJnbWFubiA8
-YXJuZEBhcm5kYi5kZT4gd3JvdGU6Cj4gV2UgZG9uJ3Qgd2FudCBuZXcgYXJjaGl0ZWN0dXJlcyB0
-byBldmVuIHByb3ZpZGUgdGhlIG9sZCAzMi1iaXQgdGltZV90Cj4gYmFzZWQgc3lzdGVtIGNhbGxz
-IGFueSBtb3JlLCBvciBkZWZpbmUgdGhlIHN5c2NhbGwgbnVtYmVyIG1hY3Jvcy4KPgo+IEFkZCBh
-IG5ldyBfX0FSQ0hfV0FOVF9USU1FMzJfU1lTQ0FMTFMgbWFjcm8gdGhhdCBnZXRzIGVuYWJsZWQg
-Zm9yIGFsbAo+IGV4aXN0aW5nIDMyLWJpdCBhcmNoaXRlY3R1cmVzIHNvIHdlIGRvbid0IGNoYW5n
-ZSBhbnkgY3VycmVudCBiZWhhdmlvci4KCi4uLiAob25seSkgMzItYml0IGFyY2hpdGVjdHVyZXMg
-dXNpbmcgdGhlIGdlbmVyaWMgc3lzY2FsbCBsaXN0LCByaWdodD8KCj4gU2luY2UgdGhpcyBzeW1i
-b2wgaXMgZXZhbHVhdGVkIGluIHVzZXIgc3BhY2UgYXMgd2VsbCwgd2UgY2Fubm90IHVzZQo+IGEg
-S2NvbmZpZyBDT05GSUdfKiBtYWNybyBidXQgaGF2ZSB0byBkZWZpbmUgaXQgaW4gdWFwaS9hc20v
-dW5pc3RkLmguCj4KPiBPbiA2NC1iaXQgYXJjaGl0ZWN0dXJlcywgdGhlIHNhbWUgc3lzdGVtIGNh
-bGwgbnVtYmVycyBtb3N0bHkgcmVmZXIgdG8KPiB0aGUgc3lzdGVtIGNhbGxzIHdlIHdhbnQgdG8g
-a2VlcCwgYXMgdGhleSBhbHJlYWR5IHBhc3MgNjQtYml0IHRpbWVfdC4KPgo+IEFzIG5ldyBhcmNo
-aXRlY3R1cmVzIG5vIGxvbmdlciBwcm92aWRlIHRoZXNlLCB3ZSBuZWVkIG5ldyBleGNlcHRpb25z
-Cj4gaW4gY2hlY2tzeXNjYWxscy5zaC4KPgo+IFNpZ25lZC1vZmYtYnk6IEFybmQgQmVyZ21hbm4g
-PGFybmRAYXJuZGIuZGU+Cj4gLS0tCj4gIGFyY2gvYXJjL2luY2x1ZGUvdWFwaS9hc20vdW5pc3Rk
-LmggICAgICAgfCAgMSArCj4gIGFyY2gvYXJtNjQvaW5jbHVkZS91YXBpL2FzbS91bmlzdGQuaCAg
-ICAgfCAgMSArCj4gIGFyY2gvYzZ4L2luY2x1ZGUvdWFwaS9hc20vdW5pc3RkLmggICAgICAgfCAg
-MSArCj4gIGFyY2gvY3NreS9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oICAgICAgfCAgMSArCj4g
-IGFyY2gvaDgzMDAvaW5jbHVkZS91YXBpL2FzbS91bmlzdGQuaCAgICAgfCAgMSArCj4gIGFyY2gv
-aGV4YWdvbi9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oICAgfCAgMSArCj4gIGFyY2gvbmRzMzIv
-aW5jbHVkZS91YXBpL2FzbS91bmlzdGQuaCAgICAgfCAgMSArCj4gIGFyY2gvbmlvczIvaW5jbHVk
-ZS91YXBpL2FzbS91bmlzdGQuaCAgICAgfCAgMSArCj4gIGFyY2gvb3BlbnJpc2MvaW5jbHVkZS91
-YXBpL2FzbS91bmlzdGQuaCAgfCAgMSArCj4gIGFyY2gvcmlzY3YvaW5jbHVkZS91YXBpL2FzbS91
-bmlzdGQuaCAgICAgfCAgMyArKwo+ICBhcmNoL3VuaWNvcmUzMi9pbmNsdWRlL3VhcGkvYXNtL3Vu
-aXN0ZC5oIHwgIDEgKwo+ICBpbmNsdWRlL3VhcGkvYXNtLWdlbmVyaWMvdW5pc3RkLmggICAgICAg
-IHwgMzYgKysrKysrKysrKysrKysrKysrKysrKysrCj4gIHNjcmlwdHMvY2hlY2tzeXNjYWxscy5z
-aCAgICAgICAgICAgICAgICAgfCAgNyArKysrKwo+ICAxMyBmaWxlcyBjaGFuZ2VkLCA1NiBpbnNl
-cnRpb25zKCspCgpHcntvZXRqZSxlZXRpbmd9cywKCiAgICAgICAgICAgICAgICAgICAgICAgIEdl
-ZXJ0CgotLSAKR2VlcnQgVXl0dGVyaG9ldmVuIC0tIFRoZXJlJ3MgbG90cyBvZiBMaW51eCBiZXlv
-bmQgaWEzMiAtLSBnZWVydEBsaW51eC1tNjhrLm9yZwoKSW4gcGVyc29uYWwgY29udmVyc2F0aW9u
-cyB3aXRoIHRlY2huaWNhbCBwZW9wbGUsIEkgY2FsbCBteXNlbGYgYSBoYWNrZXIuIEJ1dAp3aGVu
-IEknbSB0YWxraW5nIHRvIGpvdXJuYWxpc3RzIEkganVzdCBzYXkgInByb2dyYW1tZXIiIG9yIHNv
-bWV0aGluZyBsaWtlIHRoYXQuCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgLS0gTGlu
-dXMgVG9ydmFsZHMKX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X18KWTIwMzggbWFpbGluZyBsaXN0ClkyMDM4QGxpc3RzLmxpbmFyby5vcmcKaHR0cHM6Ly9saXN0
-cy5saW5hcm8ub3JnL21haWxtYW4vbGlzdGluZm8veTIwMzgK
+On Tue, Feb 19, 2019 at 9:06 PM Geert Uytterhoeven <geert@linux-m68k.org> wrote:
+>
+> Hi Arnd,
+>
+> On Tue, Feb 19, 2019 at 3:34 AM Arnd Bergmann <arnd@arndb.de> wrote:
+> > We don't want new architectures to even provide the old 32-bit time_t
+> > based system calls any more, or define the syscall number macros.
+> >
+> > Add a new __ARCH_WANT_TIME32_SYSCALLS macro that gets enabled for all
+> > existing 32-bit architectures so we don't change any current behavior.
+>
+> ... (only) 32-bit architectures using the generic syscall list, right?
+
+Correct, I've added a clarification in the commit text in my git tree now,
+thanks for the proofreading!
+
+       Arnd
