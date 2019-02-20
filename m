@@ -1,90 +1,75 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH 11/19] block: implement bio helper to add iter bvec pages
- to bio
-Date: Thu, 21 Feb 2019 06:58:57 +0800
-Message-ID: <20190220225856.GB28313@ming.t460p>
-References: <20190211190049.7888-1-axboe@kernel.dk>
- <20190211190049.7888-13-axboe@kernel.dk>
+From: Richard Weinberger <richard.weinberger@gmail.com>
+Subject: Re: [RFC PATCH v3 04/18] fs: add ->s_master_keys to
+ struct super_block
+Date: Thu, 21 Feb 2019 00:19:54 +0100
+Message-ID: <CAFLxGvxLYL1raaXZPyyMS7CUUak3L6GncZ_GKYz2SSsGHEHpnQ@mail.gmail.com>
+References: <20190220065249.32099-1-ebiggers@kernel.org>
+ <20190220065249.32099-5-ebiggers@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-aio@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20190211190049.7888-13-axboe@kernel.dk>
-Sender: owner-linux-aio@kvack.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org, hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@ZenIV.linux.org.uk
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+In-Reply-To: <20190220065249.32099-5-ebiggers@kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: Satya Tangirala <satyat@google.com>, "open list:ABI/API" <linux-api@vger.kernel.org>, linux-f2fs-devel@lists.sourceforge.net, linux-fscrypt@vger.kernel.org, keyrings@vger.kernel.org, linux-mtd@lists.infradead.org, linux-crypto@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-ext4@vger.kernel.org, Paul Crowley <paulcrowley@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 11, 2019 at 12:00:41PM -0700, Jens Axboe wrote:
-> For an ITER_BVEC, we can just iterate the iov and add the pages
-> to the bio directly. This requires that the caller doesn't releases
-> the pages on IO completion, we add a BIO_NO_PAGE_REF flag for that.
-> 
-> The current two callers of bio_iov_iter_get_pages() are updated to
-> check if they need to release pages on completion. This makes them
-> work with bvecs that contain kernel mapped pages already.
-> 
-> Reviewed-by: Hannes Reinecke <hare@suse.com>
-> Reviewed-by: Christoph Hellwig <hch@lst.de>
-> Signed-off-by: Jens Axboe <axboe@kernel.dk>
+On Wed, Feb 20, 2019 at 7:55 AM Eric Biggers <ebiggers@kernel.org> wrote:
+>
+> From: Eric Biggers <ebiggers@google.com>
+>
+> Add an ->s_master_keys keyring to 'struct super_block'.  New fscrypt
+> ioctls will allow adding and removing encryption keys from this keyring.
+> This will enable solving multiple interrelated problems with how fscrypt
+> keys are provided and managed currently, including:
+>
+> - Making the key status (which is currently per-process) match the
+>   filesystem-level status of which encrypted files are "unlocked".
+>
+> - Supporting a proper API to remove encryption keys, "locking" the
+>   corresponding encrypted files.
+>
+> - Caching an HMAC transform for each master key, allowing the use of
+>   HKDF while still retaining good performance.
+>
+> - Preventing denial of service via keyctl_invalidate().
+>
+> Similar to the existing ->s_cop, the keyring is added to the VFS-level
+> superblock struct rather than separately to the ext4, f2fs, and ubifs
+> superblock structs so that it can be used by the shared code in
+> fs/crypto/.  To minimize overhead, the keyring will only be allocated if
+> userspace actually adds a key; otherwise will stay NULL.
+>
+> Signed-off-by: Eric Biggers <ebiggers@google.com>
 > ---
->  block/bio.c               | 59 ++++++++++++++++++++++++++++++++-------
->  fs/block_dev.c            |  5 ++--
->  fs/iomap.c                |  5 ++--
->  include/linux/blk_types.h |  1 +
->  4 files changed, 56 insertions(+), 14 deletions(-)
-> 
-> diff --git a/block/bio.c b/block/bio.c
-> index 4db1008309ed..330df572cfb8 100644
-> --- a/block/bio.c
-> +++ b/block/bio.c
-> @@ -828,6 +828,23 @@ int bio_add_page(struct bio *bio, struct page *page,
->  }
->  EXPORT_SYMBOL(bio_add_page);
->  
-> +static int __bio_iov_bvec_add_pages(struct bio *bio, struct iov_iter *iter)
-> +{
-> +	const struct bio_vec *bv = iter->bvec;
-> +	unsigned int len;
-> +	size_t size;
-> +
-> +	len = min_t(size_t, bv->bv_len, iter->count);
-> +	size = bio_add_page(bio, bv->bv_page, len,
-> +				bv->bv_offset + iter->iov_offset);
+>  fs/super.c         | 3 +++
+>  include/linux/fs.h | 1 +
+>  2 files changed, 4 insertions(+)
+>
+> diff --git a/fs/super.c b/fs/super.c
+> index 48e25eba8465..7ca05dda905c 100644
+> --- a/fs/super.c
+> +++ b/fs/super.c
+> @@ -291,6 +291,9 @@ static void __put_super(struct super_block *s)
+>                 security_sb_free(s);
+>                 put_user_ns(s->s_user_ns);
+>                 kfree(s->s_subtype);
+> +#ifdef CONFIG_FS_ENCRYPTION
+> +               key_put(s->s_master_keys);
+> +#endif
 
-iter->iov_offset needs to be subtracted from 'len', looks
-the following delta change[1] is required, otherwise memory corruption
-can be observed when running xfstests over loop/dio.
+Please wrap this in a static inline function such that you can get rid
+of the ifdef here.
+Just like put_user_ns() does.
 
-Another interesting thing is that bio_add_page() is capable of
-adding multi contiguous pages actually, especially loop uses
-ITER_BVEC to pass multi-page bvecs. Even though pages in loop's
-ITER_BVEC may belong to user-space, looks it is still safe to not
-grab the page ref given it has been done by fs. 
-
-[1]
-diff --git a/block/bio.c b/block/bio.c
-index 3b49963676fc..df99bb3816a1 100644
---- a/block/bio.c
-+++ b/block/bio.c
-@@ -842,7 +842,10 @@ static int __bio_iov_bvec_add_pages(struct bio *bio, struct iov_iter *iter)
- 	unsigned int len;
- 	size_t size;
- 
--	len = min_t(size_t, bv->bv_len, iter->count);
-+	if (WARN_ON_ONCE(iter->iov_offset > bv->bv_len))
-+		return -EINVAL;
-+
-+	len = min_t(size_t, bv->bv_len - iter->iov_offset, iter->count);
- 	size = bio_add_page(bio, bv->bv_page, len,
- 				bv->bv_offset + iter->iov_offset);
- 	if (size == len) {
-
+-- 
 Thanks,
-Ming
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+//richard
