@@ -1,7 +1,8 @@
 From: Eric Biggers <ebiggers@kernel.org>
-Subject: [RFC PATCH v3 17/18] ubifs: wire up new fscrypt ioctls
-Date: Tue, 19 Feb 2019 22:52:48 -0800
-Message-ID: <20190220065249.32099-18-ebiggers@kernel.org>
+Subject: [RFC PATCH v3 10/18] fscrypt: add
+ FS_IOC_GET_ENCRYPTION_KEY_STATUS ioctl
+Date: Tue, 19 Feb 2019 22:52:41 -0800
+Message-ID: <20190220065249.32099-11-ebiggers@kernel.org>
 References: <20190220065249.32099-1-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,77 +23,175 @@ List-Id: linux-api@vger.kernel.org
 
 From: Eric Biggers <ebiggers@google.com>
 
-Wire up the new ioctls for adding and removing fscrypt keys to/from the
-filesystem, and the new ioctl for retrieving v2 encryption policies.
+Add a new fscrypt ioctl, FS_IOC_GET_ENCRYPTION_KEY_STATUS.  Given a key
+specified by 'struct fscrypt_key_specifier' (the same way a key is
+specified for the other fscrypt key management ioctls), it returns
+status information in a 'struct fscrypt_get_key_status_arg'.
 
-FS_IOC_REMOVE_ENCRYPTION_KEY also required making UBIFS use
-fscrypt_drop_inode().
+The main motivation for this is that applications need to be able to
+check whether an encrypted directory is "unlocked" or not, so that they
+can add the key if it is not, and avoid adding the key (which may
+involve prompting the user for a passphrase) if it already is.
 
-For more details see Documentation/filesystems/fscrypt.rst, as well as
-the fscrypt patches that added the implementation of these ioctls.
+It's possible to use some workarounds such as checking whether opening a
+regular file fails with ENOKEY, or checking whether the filenames "look
+like gibberish" or not.  However, no workaround is usable in all cases.
+
+Like the other key management ioctls, the keyrings syscalls may seem at
+first to be a good fit for this.  Unfortunately, they are not.  Even if
+we exposed the keyring ID of the ->s_master_keys keyring and gave
+everyone Search permission on it (note: currently the keyrings
+permission system would also allow everyone to "invalidate" the keyring
+too), the fscrypt keys have an additional state that doesn't map cleanly
+to the keyrings API: the secret can be removed, but we can be still
+tracking the files that were using the key, and the removal can be
+re-attempted or the secret added again.
+
+After later patches, some applications will also need a way to determine
+whether a key was added by the current user vs. by some other user.
+Reserved fields are included in fscrypt_get_key_status_arg for this and
+other future extensions.
 
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
- fs/ubifs/ioctl.c | 24 ++++++++++++++++++------
- fs/ubifs/super.c |  3 +++
- 2 files changed, 21 insertions(+), 6 deletions(-)
+ fs/crypto/keyring.c          | 60 ++++++++++++++++++++++++++++++++++++
+ include/linux/fscrypt.h      |  7 +++++
+ include/uapi/linux/fscrypt.h | 15 +++++++++
+ 3 files changed, 82 insertions(+)
 
-diff --git a/fs/ubifs/ioctl.c b/fs/ubifs/ioctl.c
-index 0f9c362a3402..5f4c4620f9c4 100644
---- a/fs/ubifs/ioctl.c
-+++ b/fs/ubifs/ioctl.c
-@@ -197,13 +197,21 @@ long ubifs_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
- 		return -EOPNOTSUPP;
- #endif
- 	}
--	case FS_IOC_GET_ENCRYPTION_POLICY: {
--#ifdef CONFIG_FS_ENCRYPTION
-+
-+	case FS_IOC_GET_ENCRYPTION_POLICY:
- 		return fscrypt_ioctl_get_policy(file, (void __user *)arg);
--#else
--		return -EOPNOTSUPP;
--#endif
--	}
-+
-+	case FS_IOC_GET_ENCRYPTION_POLICY_EX:
-+		return fscrypt_ioctl_get_policy_ex(file, (void __user *)arg);
-+
-+	case FS_IOC_ADD_ENCRYPTION_KEY:
-+		return fscrypt_ioctl_add_key(file, (void __user *)arg);
-+
-+	case FS_IOC_REMOVE_ENCRYPTION_KEY:
-+		return fscrypt_ioctl_remove_key(file, (const void __user *)arg);
-+
-+	case FS_IOC_GET_ENCRYPTION_KEY_STATUS:
-+		return fscrypt_ioctl_get_key_status(file, (void __user *)arg);
+diff --git a/fs/crypto/keyring.c b/fs/crypto/keyring.c
+index da1bfe5934eb..9be3e15d7ccb 100644
+--- a/fs/crypto/keyring.c
++++ b/fs/crypto/keyring.c
+@@ -11,6 +11,7 @@
+  *
+  * - FS_IOC_ADD_ENCRYPTION_KEY: add a key
+  * - FS_IOC_REMOVE_ENCRYPTION_KEY: remove a key
++ * - FS_IOC_GET_ENCRYPTION_KEY_STATUS: get key status
+  */
  
- 	default:
- 		return -ENOTTY;
-@@ -222,6 +230,10 @@ long ubifs_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
- 		break;
- 	case FS_IOC_SET_ENCRYPTION_POLICY:
- 	case FS_IOC_GET_ENCRYPTION_POLICY:
-+	case FS_IOC_GET_ENCRYPTION_POLICY_EX:
-+	case FS_IOC_ADD_ENCRYPTION_KEY:
-+	case FS_IOC_REMOVE_ENCRYPTION_KEY:
-+	case FS_IOC_GET_ENCRYPTION_KEY_STATUS:
- 		break;
- 	default:
- 		return -ENOIOCTLCMD;
-diff --git a/fs/ubifs/super.c b/fs/ubifs/super.c
-index 8dc2818fdd84..32937c887794 100644
---- a/fs/ubifs/super.c
-+++ b/fs/ubifs/super.c
-@@ -1982,6 +1982,9 @@ const struct super_operations ubifs_super_operations = {
- 	.destroy_inode = ubifs_destroy_inode,
- 	.put_super     = ubifs_put_super,
- 	.write_inode   = ubifs_write_inode,
-+#ifdef CONFIG_FS_ENCRYPTION
-+	.drop_inode    = fscrypt_drop_inode,
-+#endif
- 	.evict_inode   = ubifs_evict_inode,
- 	.statfs        = ubifs_statfs,
- 	.dirty_inode   = ubifs_dirty_inode,
+ #include <linux/key-type.h>
+@@ -476,6 +477,65 @@ int fscrypt_ioctl_remove_key(struct file *filp, const void __user *uarg)
+ }
+ EXPORT_SYMBOL_GPL(fscrypt_ioctl_remove_key);
+ 
++/*
++ * Retrieve the status of an fscrypt master encryption key.
++ *
++ * We set ->status to indicate whether the key is absent, present, or
++ * incompletely removed.  "Incompletely removed" means that the master key
++ * secret has been removed, but some files which had been unlocked with it are
++ * still in use.  This field allows applications to easily determine the state
++ * of an encrypted directory without using a hack such as trying to open a
++ * regular file in it (which can confuse the "incompletely removed" state with
++ * absent or present).
++ */
++int fscrypt_ioctl_get_key_status(struct file *filp, void __user *uarg)
++{
++	struct super_block *sb = file_inode(filp)->i_sb;
++	struct fscrypt_get_key_status_arg arg;
++	struct key *key;
++	struct fscrypt_master_key *mk;
++	int err;
++
++	if (copy_from_user(&arg, uarg, sizeof(arg)))
++		return -EFAULT;
++
++	if (!valid_key_spec(&arg.key_spec))
++		return -EINVAL;
++
++	if (memchr_inv(arg.__reserved, 0, sizeof(arg.__reserved)))
++		return -EINVAL;
++
++	memset(arg.__out_reserved, 0, sizeof(arg.__out_reserved));
++
++	key = fscrypt_find_master_key(sb, &arg.key_spec);
++	if (IS_ERR(key)) {
++		if (key != ERR_PTR(-ENOKEY))
++			return PTR_ERR(key);
++		arg.status = FSCRYPT_KEY_STATUS_ABSENT;
++		err = 0;
++		goto out;
++	}
++	mk = key->payload.data[0];
++	down_read(&key->sem);
++
++	if (!is_master_key_secret_present(&mk->mk_secret)) {
++		arg.status = FSCRYPT_KEY_STATUS_INCOMPLETELY_REMOVED;
++		err = 0;
++		goto out_release_key;
++	}
++
++	arg.status = FSCRYPT_KEY_STATUS_PRESENT;
++	err = 0;
++out_release_key:
++	up_read(&key->sem);
++	key_put(key);
++out:
++	if (!err && copy_to_user(uarg, &arg, sizeof(arg)))
++		err = -EFAULT;
++	return err;
++}
++EXPORT_SYMBOL_GPL(fscrypt_ioctl_get_key_status);
++
+ int __init fscrypt_init_keyring(void)
+ {
+ 	return register_key_type(&key_type_fscrypt);
+diff --git a/include/linux/fscrypt.h b/include/linux/fscrypt.h
+index c4fff46ce847..43ef149f5c05 100644
+--- a/include/linux/fscrypt.h
++++ b/include/linux/fscrypt.h
+@@ -115,6 +115,7 @@ extern int fscrypt_inherit_context(struct inode *, struct inode *,
+ /* keyring.c */
+ extern int fscrypt_ioctl_add_key(struct file *filp, void __user *arg);
+ extern int fscrypt_ioctl_remove_key(struct file *filp, const void __user *arg);
++extern int fscrypt_ioctl_get_key_status(struct file *filp, void __user *arg);
+ 
+ /* keysetup.c */
+ extern int fscrypt_get_encryption_info(struct inode *);
+@@ -329,6 +330,12 @@ static inline int fscrypt_ioctl_remove_key(struct file *filp,
+ 	return -EOPNOTSUPP;
+ }
+ 
++static inline int fscrypt_ioctl_get_key_status(struct file *filp,
++					       void __user *arg)
++{
++	return -EOPNOTSUPP;
++}
++
+ /* keysetup.c */
+ static inline int fscrypt_get_encryption_info(struct inode *inode)
+ {
+diff --git a/include/uapi/linux/fscrypt.h b/include/uapi/linux/fscrypt.h
+index 3302a407131e..042e70a4ff7e 100644
+--- a/include/uapi/linux/fscrypt.h
++++ b/include/uapi/linux/fscrypt.h
+@@ -71,11 +71,26 @@ struct fscrypt_remove_key_arg {
+ 	__u32 __reserved[6];
+ };
+ 
++/* Struct passed to FS_IOC_GET_ENCRYPTION_KEY_STATUS */
++struct fscrypt_get_key_status_arg {
++	/* input */
++	struct fscrypt_key_specifier key_spec;
++	__u32 __reserved[6];
++
++	/* output */
++#define FSCRYPT_KEY_STATUS_ABSENT		1
++#define FSCRYPT_KEY_STATUS_PRESENT		2
++#define FSCRYPT_KEY_STATUS_INCOMPLETELY_REMOVED	3
++	__u32 status;
++	__u32 __out_reserved[15];
++};
++
+ #define FS_IOC_SET_ENCRYPTION_POLICY	  _IOR('f', 19, struct fscrypt_policy)
+ #define FS_IOC_GET_ENCRYPTION_PWSALT	  _IOW('f', 20, __u8[16])
+ #define FS_IOC_GET_ENCRYPTION_POLICY	  _IOW('f', 21, struct fscrypt_policy)
+ #define FS_IOC_ADD_ENCRYPTION_KEY	 _IOWR('f', 23, struct fscrypt_add_key_arg)
+ #define FS_IOC_REMOVE_ENCRYPTION_KEY	  _IOW('f', 24, struct fscrypt_remove_key_arg)
++#define FS_IOC_GET_ENCRYPTION_KEY_STATUS _IOWR('f', 25, struct fscrypt_get_key_status_arg)
+ 
+ /**********************************************************************/
+ 
 -- 
 2.20.1
