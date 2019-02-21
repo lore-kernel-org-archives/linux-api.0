@@ -1,60 +1,74 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCHSET v15] io_uring IO interface
-Date: Thu, 21 Feb 2019 10:48:22 -0700
-Message-ID: <e9b96cd8-71a1-d5bc-e3cf-8248f9654deb@kernel.dk>
-References: <20190211190049.7888-1-axboe@kernel.dk>
- <20190221121022.7867-1-marek@cloudflare.com>
+From: Eric Biggers <ebiggers@kernel.org>
+Subject: Re: [RFC PATCH v3 07/18] fscrypt: add
+ FS_IOC_ADD_ENCRYPTION_KEY ioctl
+Date: Thu, 21 Feb 2019 10:42:03 -0800
+Message-ID: <20190221184203.GB140206@gmail.com>
+References: <20190220065249.32099-1-ebiggers@kernel.org>
+ <CAFLxGvy7WsV7Qo42yTbsZf9YnW563a0k6Yx2-NmASNtoektu_Q@mail.gmail.com>
+ <20190221054938.GA12467@sol.localdomain>
+ <2024630.T9XyBPH5Ub@blindfold>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20190221121022.7867-1-marek@cloudflare.com>
-Content-Language: en-US
-Sender: owner-linux-aio@kvack.org
-To: Marek Majkowski <marek@cloudflare.com>
-Cc: avi@scylladb.com, hch@lst.de, jannh@google.com, jmoyer@redhat.com, linux-aio@kvack.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, viro@ZenIV.linux.org.uk
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+Content-Disposition: inline
+In-Reply-To: <2024630.T9XyBPH5Ub@blindfold>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+To: Richard Weinberger <richard@nod.at>
+Cc: linux-ext4@vger.kernel.org, "open list:ABI/API" <linux-api@vger.kernel.org>, linux-f2fs-devel@lists.sourceforge.net, linux-fscrypt@vger.kernel.org, keyrings@vger.kernel.org, linux-mtd@lists.infradead.org, linux-crypto@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Satya Tangirala <satyat@google.com>, Paul Crowley <paulcrowley@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On 2/21/19 5:10 AM, Marek Majkowski wrote:
->> From: Jens Axboe <axboe@kernel.dk>
->> Subject: [PATCHSET v15] io_uring IO interface
->> Message-ID: <20190211190049.7888-1-axboe@kernel.dk> (raw)
->>
->> Some final tweaks, mostly cosmetic, but also two important fixes:
->>
->> 1) Ensure that we account the skb appropriately against the socket.
->>    Some network config options apparently return is an skb with
->>    ->truesize != 0 when allocated with a size of 0, ensure we add
->>    those as references against sock->sk_wmem_alloc. Reported by
->>    Matt Mullins.
+On Thu, Feb 21, 2019 at 10:33:12AM +0100, Richard Weinberger wrote:
+> Eric,
 > 
-> Jens,
+> Am Donnerstag, 21. Februar 2019, 06:49:39 CET schrieb Eric Biggers:
+> > Hi Richard,
+> > 
+> > On Thu, Feb 21, 2019 at 12:52:38AM +0100, Richard Weinberger wrote:
+> > > On Wed, Feb 20, 2019 at 7:55 AM Eric Biggers <ebiggers@kernel.org> wrote:
+> > > > +#define FSCRYPT_FS_KEYRING_DESCRIPTION_SIZE    \
+> > > > +       (CONST_STRLEN("fscrypt-") + FIELD_SIZEOF(struct super_block, s_id))
+> > > > +
+> > > > +#define FSCRYPT_MK_DESCRIPTION_SIZE    (2 * FSCRYPT_KEY_DESCRIPTOR_SIZE + 1)
+> > > > +
+> > > > +static void format_fs_keyring_description(
+> > > > +                       char description[FSCRYPT_FS_KEYRING_DESCRIPTION_SIZE],
+> > > > +                       const struct super_block *sb)
+> > > > +{
+> > > > +       sprintf(description, "fscrypt-%s", sb->s_id);
+> > > > +}
+> > > 
+> > > I fear ->s_id is not the right thing.
+> > > For filesystems such as ext4 ->s_id is the name of the backing block device,
+> > > so it is per filesysem instance unique.
+> > > But this is not guaranteed. For UBIFS ->s_id is just "ubifs", always.
+> > > So the names will clash.
+> > > 
+> > 
+> > What name do you suggest using for UBIFS filesystems?  The keyring name could be
+> > set by the filesystem via a fscrypt_operations callback if needed.
 > 
-> I tried using io_uring with network sockets. It seem to be doing the
-> right thing. One bit is missing though: "flags" as in recv(2).
+> IMHO the BDI name should be used. 
 > 
-> In perfect world I would like to specify at least:
->  - MSG_DONTWAIT
->  - MSG_WAITALL
->  - MSG_NOSIGNAL
+> > Note that the keyring name isn't particularly important, since the ioctls will
+> > work regardless.  But we might as well choose something logical, since the
+> > keyring name will still show up in /proc/keys.
 > 
-> Right now, unless I'm missing something, io_uring_sqe doesn't have a
-> place where we could store these. "flags" is needed for any
-> non-trivial network I/O.
+> I'm not done with reviewing your patches, but will it be possible to use keyctl?
+> For the a unique name is helpful. :)
+> 
 
-We have flags for sqes, depending on the type. You can add to the
-union that already holds rw_flags/fsync_flags/poll_events? There's
-also a (smaller) flags field that applies for all types, which
-currently only holds the fixed file flag.
+Not for adding keys, removing keys, or getting a key's status -- those are what
+the ioctls are for.
 
-If you're talking on a per-syscall type of flag, io_uring_enter(2)
-does take a flags member.
+See e.g. the discussion in patch 7 ("fscrypt: add FS_IOC_ADD_ENCRYPTION_KEY
+ioctl") for why the keyrings syscalls are a poor fit for fscrypt.
 
--- 
-Jens Axboe
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+- Eric
