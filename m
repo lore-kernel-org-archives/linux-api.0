@@ -1,86 +1,71 @@
-From: Oscar Salvador <osalvador@suse.de>
-Subject: [RFC PATCH] mm,mremap: Bail out earlier in mremap_to under map pressure
-Date: Thu, 21 Feb 2019 09:54:06 +0100
-Message-ID: <20190221085406.10852-1-osalvador@suse.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-mm@kvack.org
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, hughd@google.com, kirill@shutemov.name, vbabka@suse.cz, joel@joelfernandes.org, jglisse@redhat.com, yang.shi@linux.alibaba.com, mgorman@techsingularity.net, Oscar Salvador <osalvador@suse.de>
+From: Richard Weinberger <richard@nod.at>
+Subject: Re: [RFC PATCH v3 07/18] fscrypt: add FS_IOC_ADD_ENCRYPTION_KEY ioctl
+Date: Thu, 21 Feb 2019 10:33:12 +0100
+Message-ID: <2024630.T9XyBPH5Ub@blindfold>
+References: <20190220065249.32099-1-ebiggers@kernel.org>
+ <CAFLxGvy7WsV7Qo42yTbsZf9YnW563a0k6Yx2-NmASNtoektu_Q@mail.gmail.com>
+ <20190221054938.GA12467@sol.localdomain>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org>
+In-Reply-To: <20190221054938.GA12467@sol.localdomain>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
+List-Post: <mailto:linux-mtd@lists.infradead.org>
+List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-mtd" <linux-mtd-bounces@lists.infradead.org>
+Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org
+To: Eric Biggers <ebiggers@kernel.org>, linux-fscrypt@vger.kernel.org
+Cc: linux-ext4@vger.kernel.org, "open list:ABI/API" <linux-api@vger.kernel.org>, linux-f2fs-devel@lists.sourceforge.net, keyrings@vger.kernel.org, linux-mtd@lists.infradead.org, linux-crypto@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Satya Tangirala <satyat@google.com>, Paul Crowley <paulcrowley@google.com>
 List-Id: linux-api@vger.kernel.org
 
-When using mremap() syscall in addition to MREMAP_FIXED flag,
-mremap() calls mremap_to() which does the following:
+Eric,
 
-1) unmaps the destination region where we are going to move the map
-2) If the new region is going to be smaller, we unmap the last part
-   of the old region
+Am Donnerstag, 21. Februar 2019, 06:49:39 CET schrieb Eric Biggers:
+> Hi Richard,
+> 
+> On Thu, Feb 21, 2019 at 12:52:38AM +0100, Richard Weinberger wrote:
+> > On Wed, Feb 20, 2019 at 7:55 AM Eric Biggers <ebiggers@kernel.org> wrote:
+> > > +#define FSCRYPT_FS_KEYRING_DESCRIPTION_SIZE    \
+> > > +       (CONST_STRLEN("fscrypt-") + FIELD_SIZEOF(struct super_block, s_id))
+> > > +
+> > > +#define FSCRYPT_MK_DESCRIPTION_SIZE    (2 * FSCRYPT_KEY_DESCRIPTOR_SIZE + 1)
+> > > +
+> > > +static void format_fs_keyring_description(
+> > > +                       char description[FSCRYPT_FS_KEYRING_DESCRIPTION_SIZE],
+> > > +                       const struct super_block *sb)
+> > > +{
+> > > +       sprintf(description, "fscrypt-%s", sb->s_id);
+> > > +}
+> > 
+> > I fear ->s_id is not the right thing.
+> > For filesystems such as ext4 ->s_id is the name of the backing block device,
+> > so it is per filesysem instance unique.
+> > But this is not guaranteed. For UBIFS ->s_id is just "ubifs", always.
+> > So the names will clash.
+> > 
+> 
+> What name do you suggest using for UBIFS filesystems?  The keyring name could be
+> set by the filesystem via a fscrypt_operations callback if needed.
 
-Then, we will eventually call move_vma() to do the actual move.
+IMHO the BDI name should be used. 
 
-move_vma() checks whether we are at least 4 maps below max_map_count
-before going further, otherwise it bails out with -ENOMEM.
-The problem is that we might have already unmapped the vma's in steps
-1) and 2), so it is not possible for userspace to figure out the state
-of the vma's after it gets -ENOMEM, and it gets tricky for userspace
-to clean up properly on error path.
+> Note that the keyring name isn't particularly important, since the ioctls will
+> work regardless.  But we might as well choose something logical, since the
+> keyring name will still show up in /proc/keys.
 
-While it is true that we can return -ENOMEM for more reasons
-(e.g: see may_expand_vm() or move_page_tables()), I think that we can
-avoid this scenario in concret if we check early in mremap_to() if the
-operation has high chances to succeed map-wise.
+I'm not done with reviewing your patches, but will it be possible to use keyctl?
+For the a unique name is helpful. :)
 
-Should not be that the case, we can bail out before we even try to unmap
-anything, so we make sure the vma's are left untouched in case we are likely
-to be short of maps.
+Thanks,
+//richard
 
-The thumb-rule now is to rely on the worst-scenario case we can have.
-That is when both vma's (old region and new region) are going to be split
-in 3, so we get two more maps to the ones we already hold (one per each).
-If current map count + 2 maps still leads us to 4 maps below the threshold,
-we are going to pass the check in move_vma().
 
-Of course, this is not free, as it might generate false positives when it is
-true that we are tight map-wise, but the unmap operation can release several
-vma's leading us to a good state.
 
-Because of that I am sending this as a RFC.
-Another approach was also investigated [1], but it may be too much hassle
-for what it brings.
-
-[1] https://lore.kernel.org/lkml/20190219155320.tkfkwvqk53tfdojt@d104.suse.de/
-
-Signed-off-by: Oscar Salvador <osalvador@suse.de>
----
- mm/mremap.c | 17 +++++++++++++++++
- 1 file changed, 17 insertions(+)
-
-diff --git a/mm/mremap.c b/mm/mremap.c
-index 3320616ed93f..e3edef6b7a12 100644
---- a/mm/mremap.c
-+++ b/mm/mremap.c
-@@ -516,6 +516,23 @@ static unsigned long mremap_to(unsigned long addr, unsigned long old_len,
- 	if (addr + old_len > new_addr && new_addr + new_len > addr)
- 		goto out;
- 
-+	/*
-+	 * move_vma() need us to stay 4 maps below the threshold, otherwise
-+	 * it will bail out at the very beginning.
-+	 * That is a problem if we have already unmaped the regions here
-+	 * (new_addr, and old_addr), because userspace will not know the
-+	 * state of the vma's after it gets -ENOMEM.
-+	 * So, to avoid such scenario we can pre-compute if the whole
-+	 * operation has high chances to success map-wise.
-+	 * Worst-scenario case is when both vma's (new_addr and old_addr) get
-+	 * split in 3 before unmaping it.
-+	 * That means 2 more maps (1 for each) to the ones we already hold.
-+	 * Check whether current map count plus 2 still leads us to 4 maps below
-+	 * the threshold, otherwise return -ENOMEM here to be more safe.
-+	 */
-+	if ((mm->map_count + 2) >= sysctl_max_map_count - 3)
-+		return -ENOMEM;
-+
- 	ret = do_munmap(mm, new_addr, new_len, uf_unmap_early);
- 	if (ret)
- 		goto out;
--- 
-2.13.7
+______________________________________________________
+Linux MTD discussion mailing list
+http://lists.infradead.org/mailman/listinfo/linux-mtd/
