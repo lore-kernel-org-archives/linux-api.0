@@ -1,46 +1,41 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCHv6 06/10] node: Add memory-side caching attributes
-Date: Fri, 22 Feb 2019 10:20:08 -0800
-Message-ID: <CAPcyv4itkDiPYAqkT4e0i8nQXKAEZCUQsFk8jACEJ__tZwUh3Q@mail.gmail.com>
-References: <20190214171017.9362-1-keith.busch@intel.com> <20190214171017.9362-7-keith.busch@intel.com>
- <29336223-b86e-3aca-ee5a-276d1c404b96@inria.fr> <20190222180944.GD10237@localhost.localdomain>
+From: Keith Busch <keith.busch@intel.com>
+Subject: Re: [PATCHv6 07/10] acpi/hmat: Register processor domain to its
+ memory
+Date: Fri, 22 Feb 2019 11:48:31 -0700
+Message-ID: <20190222184831.GF10237@localhost.localdomain>
+References: <20190214171017.9362-1-keith.busch@intel.com>
+ <20190214171017.9362-8-keith.busch@intel.com>
+ <CAJZ5v0gjv0DZvYMTPBLnUmMtu8=g0zFd4x-cpP11Kzv+6XCwUw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190222180944.GD10237@localhost.localdomain>
+Content-Disposition: inline
+In-Reply-To: <CAJZ5v0gjv0DZvYMTPBLnUmMtu8=g0zFd4x-cpP11Kzv+6XCwUw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Keith Busch <keith.busch@intel.com>
-Cc: Brice Goglin <Brice.Goglin@inria.fr>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux ACPI <linux-acpi@vger.kernel.org>, Linux MM <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rafael Wysocki <rafael@kernel.org>, Dave Hansen <dave.hansen@intel.com>
+To: "Rafael J. Wysocki" <rafael@kernel.org>
+Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, ACPI Devel Maling List <linux-acpi@vger.kernel.org>, Linux Memory Management List <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Dave Hansen <dave.hansen@intel.com>, Dan Williams <dan.j.williams@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Feb 22, 2019 at 10:09 AM Keith Busch <keith.busch@intel.com> wrote:
->
-> On Fri, Feb 22, 2019 at 11:12:38AM +0100, Brice Goglin wrote:
-> > Le 14/02/2019 =C3=A0 18:10, Keith Busch a =C3=A9crit :
-> > > +What:              /sys/devices/system/node/nodeX/memory_side_cache/=
-indexY/size
-> > > +Date:              December 2018
-> > > +Contact:   Keith Busch <keith.busch@intel.com>
-> > > +Description:
-> > > +           The size of this memory side cache in bytes.
-> >
-> >
-> > Hello Keith,
-> >
-> > CPU-side cache size is reported in kilobytes:
-> >
-> > $ cat
-> > /sys/devices/system/cpu/cpu0/cache/index*/size
-> >
-> > 32K
-> > 32K
-> > 256K
-> > 4096K
-> >
-> > Can you do the same of memory-side caches instead of reporting bytes?
->
-> Ok, will do.
+On Wed, Feb 20, 2019 at 11:02:01PM +0100, Rafael J. Wysocki wrote:
+> On Thu, Feb 14, 2019 at 6:10 PM Keith Busch <keith.busch@intel.com> wrote:
+> >  config ACPI_HMAT
+> >         bool "ACPI Heterogeneous Memory Attribute Table Support"
+> >         depends on ACPI_NUMA
+> > +       select HMEM_REPORTING
+> 
+> If you want to do this here, I'm not sure that defining HMEM_REPORTING
+> as a user-selectable option is a good idea.  In particular, I don't
+> really think that setting ACPI_HMAT without it makes a lot of sense.
+> Apart from this, the patch looks reasonable to me.
 
-Ugh, please no. Don't optimize sysfs for human consumption. That 'K'
-now needs to be parsed.
+I'm trying to implement based on the feedback, but I'm a little confused.
+
+As I have it at the moment, HMEM_REPORTING is not user-prompted, so
+another option needs to turn it on. I have ACPI_HMAT do that here.
+
+So when you say it's a bad idea to make HMEM_REPORTING user selectable,
+isn't it already not user selectable?
+
+If I do it the other way around, that's going to make HMEM_REPORTING
+complicated if a non-ACPI implementation wants to report HMEM
+properties.
