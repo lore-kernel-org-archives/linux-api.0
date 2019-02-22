@@ -1,99 +1,42 @@
-From: Marek Majkowski <marek@cloudflare.com>
-Subject: Re: [PATCHSET v15] io_uring IO interface
-Date: Fri, 22 Feb 2019 16:01:00 +0100
-Message-ID: <CAJPywTLGBRviKYSf+AQg-0eOZ3pnyTFEhr28no9Zrh8ftsSxmQ@mail.gmail.com>
-References: <20190211190049.7888-1-axboe@kernel.dk> <20190221121022.7867-1-marek@cloudflare.com>
- <e9b96cd8-71a1-d5bc-e3cf-8248f9654deb@kernel.dk>
+From: Keith Busch <keith.busch@intel.com>
+Subject: Re: [PATCHv6 06/10] node: Add memory-side caching attributes
+Date: Fri, 22 Feb 2019 11:09:45 -0700
+Message-ID: <20190222180944.GD10237@localhost.localdomain>
+References: <20190214171017.9362-1-keith.busch@intel.com>
+ <20190214171017.9362-7-keith.busch@intel.com>
+ <29336223-b86e-3aca-ee5a-276d1c404b96@inria.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <e9b96cd8-71a1-d5bc-e3cf-8248f9654deb@kernel.dk>
-Sender: owner-linux-aio@kvack.org
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Avi Kivity <avi@scylladb.com>, hch@lst.de, Jann Horn <jannh@google.com>, jmoyer@redhat.com, linux-aio@kvack.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, viro@zeniv.linux.org.uk
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <29336223-b86e-3aca-ee5a-276d1c404b96@inria.fr>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Brice Goglin <Brice.Goglin@inria.fr>
+Cc: linux-kernel@vger.kernel.org, linux-acpi@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rafael Wysocki <rafael@kernel.org>, Dave Hansen <dave.hansen@intel.com>, Dan Williams <dan.j.williams@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Feb 21, 2019 at 6:48 PM Jens Axboe <axboe@kernel.dk> wrote:
->
-> On 2/21/19 5:10 AM, Marek Majkowski wrote:
-> >> From: Jens Axboe <axboe@kernel.dk>
-> >> Subject: [PATCHSET v15] io_uring IO interface
-> >> Message-ID: <20190211190049.7888-1-axboe@kernel.dk> (raw)
-> >>
-> >> Some final tweaks, mostly cosmetic, but also two important fixes:
-> >>
-> >> 1) Ensure that we account the skb appropriately against the socket.
-> >>    Some network config options apparently return is an skb with
-> >>    ->truesize != 0 when allocated with a size of 0, ensure we add
-> >>    those as references against sock->sk_wmem_alloc. Reported by
-> >>    Matt Mullins.
-> >
-> > Jens,
-> >
-> > I tried using io_uring with network sockets. It seem to be doing the
-> > right thing. One bit is missing though: "flags" as in recv(2).
-> >
-> > In perfect world I would like to specify at least:
-> >  - MSG_DONTWAIT
-> >  - MSG_WAITALL
-> >  - MSG_NOSIGNAL
-> >
-> > Right now, unless I'm missing something, io_uring_sqe doesn't have a
-> > place where we could store these. "flags" is needed for any
-> > non-trivial network I/O.
->
-> We have flags for sqes, depending on the type. You can add to the
-> union that already holds rw_flags/fsync_flags/poll_events? There's
-> also a (smaller) flags field that applies for all types, which
-> currently only holds the fixed file flag.
+On Fri, Feb 22, 2019 at 11:12:38AM +0100, Brice Goglin wrote:
+> Le 14/02/2019 à 18:10, Keith Busch a écrit :
+> > +What:		/sys/devices/system/node/nodeX/memory_side_cache/indexY/size
+> > +Date:		December 2018
+> > +Contact:	Keith Busch <keith.busch@intel.com>
+> > +Description:
+> > +		The size of this memory side cache in bytes.
+> 
+> 
+> Hello Keith,
+> 
+> CPU-side cache size is reported in kilobytes:
+> 
+> $ cat
+> /sys/devices/system/cpu/cpu0/cache/index*/size                                             
+> 
+> 32K
+> 32K
+> 256K
+> 4096K
+> 
+> Can you do the same of memory-side caches instead of reporting bytes?
 
-The "sqe->flags" right now is used by the IOSQE_FIXED_FILE which has
-the same value as MSG_OOB.
-
-Sticking recv/send flags into the "rw_flags" union perhaps could work,
-barring the discussion about naming. The obvious names don't make
-sense. recv_flags, send_flags or socket_flags don't sound right.
-
-If we tried to add networking stuff to io_uring (for batchinig and async), then:
- - send()/recv() could work, only needs the "flags" field
- - sendmsg()/recvmsg() likewise
- - sendto()/recvfrom() require two more pointers: (struct sockaddr
-*dest_addr, socklen_t addrlen)
- - sendmmsg() / recvmmsg() are perhaps irrelevant
-
-Non-blocking stuff like socket(), setsockopt(), bind() perhaps don't
-need to be considered, although could benefit from batching.
-
-Not sure what to think about connect() and accept(). In the
-prehistoric days there seem to have been an attempt to add socket
-things to libaio struct iocb. See:
-
-https://code.woboq.org/linux/include/libaio.h.html#iocb::(anonymous)::saddr
-
-struct iocb {
-    ...
-    union {
-        ...
-        struct io_iocb_sockaddr    saddr;
-    } u;
-};
-
-Are there chances of reserving space for two pointers in io_uring_sqe,
-which could be used for sendto/recvfrom/accept if we decided to add
-more network support?
-
-Cheers,
-    Marek
-
-> If you're talking on a per-syscall type of flag, io_uring_enter(2)
-> does take a flags member.
->
-> --
-> Jens Axboe
->
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+Ok, will do.
