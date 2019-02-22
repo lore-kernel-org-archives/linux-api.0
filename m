@@ -1,59 +1,46 @@
-From: Omar Sandoval <osandov@osandov.com>
-Subject: Re: [RFC PATCH 0/6] Allow setting file birth time with utimensat()
-Date: Fri, 22 Feb 2019 11:00:48 -0800
-Message-ID: <20190222190048.GA29624@vader>
-References: <cover.1550136164.git.osandov@fb.com>
- <20190214220626.GV14116@dastard>
- <20190214231429.GE9819@vader>
- <20190215001657.GY14116@dastard>
- <20190215065947.GG9819@vader>
- <72A04438-5991-4A60-8AAB-021A41DE6711@dilger.ca>
- <20190218221820.GF14116@dastard>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [PATCHv6 07/10] acpi/hmat: Register processor domain to its memory
+Date: Fri, 22 Feb 2019 11:21:37 -0800
+Message-ID: <CAPcyv4jpP0CP-QxWDc_E1QwL736PLwh8ZPrnKJzVnYrAk++93g@mail.gmail.com>
+References: <20190214171017.9362-1-keith.busch@intel.com> <20190214171017.9362-8-keith.busch@intel.com>
+ <CAJZ5v0gjv0DZvYMTPBLnUmMtu8=g0zFd4x-cpP11Kzv+6XCwUw@mail.gmail.com> <20190222184831.GF10237@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190218221820.GF14116@dastard>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Dave Chinner <david@fromorbit.com>
-Cc: Andreas Dilger <adilger@dilger.ca>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, kernel-team@fb.com, Linux API <linux-api@vger.kernel.org>, linux-btrfs <linux-btrfs@vger.kernel.org>, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org, Theodore Ts'o <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>, Steve French <sfrench@samba.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190222184831.GF10237@localhost.localdomain>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Keith Busch <keith.busch@intel.com>
+Cc: "Rafael J. Wysocki" <rafael@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, ACPI Devel Maling List <linux-acpi@vger.kernel.org>, Linux Memory Management List <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Dave Hansen <dave.hansen@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Feb 19, 2019 at 09:18:20AM +1100, Dave Chinner wrote:
-> On Sat, Feb 16, 2019 at 06:57:45PM -0700, Andreas Dilger wrote:
-> > While it may be a bit of a stretch to call this "forensic evidence", making
-> 
-> We do forensic analysis of corrupt filesystems looking for evidence
-> of what went wrong, not just looking for evidence of what happened
-> on systems that have been broken into.
-> 
-> > it hard to change from except via total root compromise by a skilled hacker
-> > is very useful.
-> 
-> *nod*.
-> 
-> > If this were to go in (which I'm not in favour of), then there would need to
-> > be a CONFIG and/or runtime knob to turn it off (or better to only turn it on),
-> > similar to how FIPS and other security options can only go in one direction.
-> 
-> The problem here is that "inode birth time" is being conflated with
-> "user document creation time". These two things are very different.
-> 
-> i.e. One is filesystem internal information and is not related to
-> when the original copy of the data in the file was created, the
-> other is user specified metadata that is related to the file data
-> contents and needs to travel with the data, not the filesystem.
-> 
-> IMO, trying to make one on-disk field hold two different types of
-> information defeats one or the other purpose, and nobody knows which
-> one the field stores for any given file.
-> 
-> I'd suggest that "authored date" should be a generic system xattr so
-> most filesystems support it, not just those that have a birth time
-> field on disk. Sure, modify it through utimesat() and expose it
-> through statx() (as authored time, not birth time), but store it a
-> system xattr rather than an internal filesystem metadata field that
-> requires was never intended to be user modifiable.
+On Fri, Feb 22, 2019 at 10:48 AM Keith Busch <keith.busch@intel.com> wrote:
+>
+> On Wed, Feb 20, 2019 at 11:02:01PM +0100, Rafael J. Wysocki wrote:
+> > On Thu, Feb 14, 2019 at 6:10 PM Keith Busch <keith.busch@intel.com> wrote:
+> > >  config ACPI_HMAT
+> > >         bool "ACPI Heterogeneous Memory Attribute Table Support"
+> > >         depends on ACPI_NUMA
+> > > +       select HMEM_REPORTING
+> >
+> > If you want to do this here, I'm not sure that defining HMEM_REPORTING
+> > as a user-selectable option is a good idea.  In particular, I don't
+> > really think that setting ACPI_HMAT without it makes a lot of sense.
+> > Apart from this, the patch looks reasonable to me.
+>
+> I'm trying to implement based on the feedback, but I'm a little confused.
+>
+> As I have it at the moment, HMEM_REPORTING is not user-prompted, so
+> another option needs to turn it on. I have ACPI_HMAT do that here.
+>
+> So when you say it's a bad idea to make HMEM_REPORTING user selectable,
+> isn't it already not user selectable?
+>
+> If I do it the other way around, that's going to make HMEM_REPORTING
+> complicated if a non-ACPI implementation wants to report HMEM
+> properties.
 
-It seems that this is the general consensus, so I'll look into
-implementing this functionality as an xattr.
+Agree. If a platform supports these HMEM properties then they should
+be reported. ACPI_HMAT is that opt-in for ACPI based platforms, and
+other archs can do something similar. It's not clear that one would
+ever want to opt-in to HMAT support and opt-out of reporting any of it
+to userspace.
