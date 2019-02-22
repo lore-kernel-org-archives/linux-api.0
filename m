@@ -1,7 +1,7 @@
 From: Brice Goglin <Brice.Goglin@inria.fr>
 Subject: Re: [PATCHv6 06/10] node: Add memory-side caching attributes
-Date: Fri, 22 Feb 2019 11:12:38 +0100
-Message-ID: <29336223-b86e-3aca-ee5a-276d1c404b96@inria.fr>
+Date: Fri, 22 Feb 2019 11:22:12 +0100
+Message-ID: <16221be9-2f60-3a39-fd6c-5299cd94dc02@inria.fr>
 References: <20190214171017.9362-1-keith.busch@intel.com>
  <20190214171017.9362-7-keith.busch@intel.com>
 Mime-Version: 1.0
@@ -64,35 +64,13 @@ Le 14/02/2019 à 18:10, Keith Busch a écrit :
 > +Description:
 > +		The caches associativity: 0 for direct mapped, non-zero if
 > +		indexed.
-> +
-> +What:		/sys/devices/system/node/nodeX/memory_side_cache/indexY/line_size
-> +Date:		December 2018
-> +Contact:	Keith Busch <keith.busch@intel.com>
-> +Description:
-> +		The number of bytes accessed from the next cache level on a
-> +		cache miss.
-> +
-> +What:		/sys/devices/system/node/nodeX/memory_side_cache/indexY/size
-> +Date:		December 2018
-> +Contact:	Keith Busch <keith.busch@intel.com>
-> +Description:
-> +		The size of this memory side cache in bytes.
 
 
-Hello Keith,
+Should we rename "associativity" into "indexing" or something else?
 
-CPU-side cache size is reported in kilobytes:
-
-$ cat
-/sys/devices/system/cpu/cpu0/cache/index*/size                                             
-
-32K
-32K
-256K
-4096K
-
-Can you do the same of memory-side caches instead of reporting bytes?
-
-Thanks
+When I see "associativity" that contains 0, I tend to interpret this as
+the associativity value itself, which would mean fully-associative here
+(as in CPU-side cache "ways_of_associativity" attribute), while actually
+0 means direct-mapped (ie 1-associative) with yout semantics.
 
 Brice
