@@ -1,103 +1,34 @@
-From: "Kirill A. Shutemov" <kirill@shutemov.name>
-Subject: Re: [RFC PATCH] mm,mremap: Bail out earlier in mremap_to under map
- pressure
-Date: Fri, 22 Feb 2019 16:01:25 +0300
-Message-ID: <20190222130125.apa2ysnahgfuj2vx@kshutemo-mobl1>
-References: <20190221085406.10852-1-osalvador@suse.de>
+From: David Sterba <dsterba@suse.cz>
+Subject: Re: [RFC PATCH 0/6] Allow setting file birth time with utimensat()
+Date: Fri, 22 Feb 2019 16:02:27 +0100
+Message-ID: <20190222150227.GF9874@twin.jikos.cz>
+References: <cover.1550136164.git.osandov@fb.com>
+Reply-To: dsterba@suse.cz
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-btrfs-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190221085406.10852-1-osalvador@suse.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Oscar Salvador <osalvador@suse.de>
-Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, hughd@google.com, vbabka@suse.cz, joel@joelfernandes.org, jglisse@redhat.com, yang.shi@linux.alibaba.com, mgorman@techsingularity.net
+In-Reply-To: <cover.1550136164.git.osandov@fb.com>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Omar Sandoval <osandov@osandov.com>
+Cc: linux-fsdevel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, kernel-team@fb.com, linux-api@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Feb 21, 2019 at 09:54:06AM +0100, Oscar Salvador wrote:
-> When using mremap() syscall in addition to MREMAP_FIXED flag,
-> mremap() calls mremap_to() which does the following:
+On Thu, Feb 14, 2019 at 02:00:07AM -0800, Omar Sandoval wrote:
+> From: Omar Sandoval <osandov@fb.com>
+> Since statx was added in 4.11, userspace has had an interface for
+> reading btime (file creation time), but no way to set it. This RFC patch
+> series adds support for changing btime with utimensat(). Patch 1 adds
+> the VFS infrastructure, patch 2 adds the support to utimensat() with a
+> new flag, and the rest of the patches add filesystem support; I excluded
+> CIFS for now because I don't have a CIFS setup to test it on.
 > 
-> 1) unmaps the destination region where we are going to move the map
-> 2) If the new region is going to be smaller, we unmap the last part
->    of the old region
+> Updating btime is useful for at least a couple of use cases:
 > 
-> Then, we will eventually call move_vma() to do the actual move.
-> 
-> move_vma() checks whether we are at least 4 maps below max_map_count
-> before going further, otherwise it bails out with -ENOMEM.
-> The problem is that we might have already unmapped the vma's in steps
-> 1) and 2), so it is not possible for userspace to figure out the state
-> of the vma's after it gets -ENOMEM, and it gets tricky for userspace
-> to clean up properly on error path.
-> 
-> While it is true that we can return -ENOMEM for more reasons
-> (e.g: see may_expand_vm() or move_page_tables()), I think that we can
-> avoid this scenario in concret if we check early in mremap_to() if the
-> operation has high chances to succeed map-wise.
-> 
-> Should not be that the case, we can bail out before we even try to unmap
-> anything, so we make sure the vma's are left untouched in case we are likely
-> to be short of maps.
-> 
-> The thumb-rule now is to rely on the worst-scenario case we can have.
-> That is when both vma's (old region and new region) are going to be split
-> in 3, so we get two more maps to the ones we already hold (one per each).
-> If current map count + 2 maps still leads us to 4 maps below the threshold,
-> we are going to pass the check in move_vma().
-> 
-> Of course, this is not free, as it might generate false positives when it is
-> true that we are tight map-wise, but the unmap operation can release several
-> vma's leading us to a good state.
-> 
-> Because of that I am sending this as a RFC.
-> Another approach was also investigated [1], but it may be too much hassle
-> for what it brings.
+> - Backup/restore programs (my motivation for this feature is btrfs send)
+> - File servers which interoperate with operating systems that allow
+>   updating file creation time, including Mac OS [1] and Windows [2]
 
-I believe we don't need the check in move_vma() with this patch. Or do we?
-
-> 
-> [1] https://lore.kernel.org/lkml/20190219155320.tkfkwvqk53tfdojt@d104.suse.de/
-> 
-> Signed-off-by: Oscar Salvador <osalvador@suse.de>
-> ---
->  mm/mremap.c | 17 +++++++++++++++++
->  1 file changed, 17 insertions(+)
-> 
-> diff --git a/mm/mremap.c b/mm/mremap.c
-> index 3320616ed93f..e3edef6b7a12 100644
-> --- a/mm/mremap.c
-> +++ b/mm/mremap.c
-> @@ -516,6 +516,23 @@ static unsigned long mremap_to(unsigned long addr, unsigned long old_len,
->  	if (addr + old_len > new_addr && new_addr + new_len > addr)
->  		goto out;
->  
-> +	/*
-> +	 * move_vma() need us to stay 4 maps below the threshold, otherwise
-> +	 * it will bail out at the very beginning.
-> +	 * That is a problem if we have already unmaped the regions here
-> +	 * (new_addr, and old_addr), because userspace will not know the
-> +	 * state of the vma's after it gets -ENOMEM.
-> +	 * So, to avoid such scenario we can pre-compute if the whole
-> +	 * operation has high chances to success map-wise.
-> +	 * Worst-scenario case is when both vma's (new_addr and old_addr) get
-> +	 * split in 3 before unmaping it.
-> +	 * That means 2 more maps (1 for each) to the ones we already hold.
-> +	 * Check whether current map count plus 2 still leads us to 4 maps below
-> +	 * the threshold, otherwise return -ENOMEM here to be more safe.
-> +	 */
-> +	if ((mm->map_count + 2) >= sysctl_max_map_count - 3)
-
-Nit: redundant parentheses around 'mm->map_count + 2'.
-
-> +		return -ENOMEM;
-> +
->  	ret = do_munmap(mm, new_addr, new_len, uf_unmap_early);
->  	if (ret)
->  		goto out;
-> -- 
-> 2.13.7
-> 
-
--- 
- Kirill A. Shutemov
+I don't have anything new to add to what has been said in the thread.
+The creation time is property of the filesystem and if user wants to
+track additional metadata, then as external attributes.
