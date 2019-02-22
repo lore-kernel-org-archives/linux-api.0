@@ -1,34 +1,99 @@
-From: David Sterba <dsterba@suse.cz>
-Subject: Re: [RFC PATCH 0/6] Allow setting file birth time with utimensat()
-Date: Fri, 22 Feb 2019 16:02:27 +0100
-Message-ID: <20190222150227.GF9874@twin.jikos.cz>
-References: <cover.1550136164.git.osandov@fb.com>
-Reply-To: dsterba@suse.cz
+From: Marek Majkowski <marek@cloudflare.com>
+Subject: Re: [PATCHSET v15] io_uring IO interface
+Date: Fri, 22 Feb 2019 16:01:00 +0100
+Message-ID: <CAJPywTLGBRviKYSf+AQg-0eOZ3pnyTFEhr28no9Zrh8ftsSxmQ@mail.gmail.com>
+References: <20190211190049.7888-1-axboe@kernel.dk> <20190221121022.7867-1-marek@cloudflare.com>
+ <e9b96cd8-71a1-d5bc-e3cf-8248f9654deb@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <cover.1550136164.git.osandov@fb.com>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Omar Sandoval <osandov@osandov.com>
-Cc: linux-fsdevel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, kernel-team@fb.com, linux-api@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-xfs@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <e9b96cd8-71a1-d5bc-e3cf-8248f9654deb@kernel.dk>
+Sender: owner-linux-aio@kvack.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Avi Kivity <avi@scylladb.com>, hch@lst.de, Jann Horn <jannh@google.com>, jmoyer@redhat.com, linux-aio@kvack.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, viro@zeniv.linux.org.uk
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Feb 14, 2019 at 02:00:07AM -0800, Omar Sandoval wrote:
-> From: Omar Sandoval <osandov@fb.com>
-> Since statx was added in 4.11, userspace has had an interface for
-> reading btime (file creation time), but no way to set it. This RFC patch
-> series adds support for changing btime with utimensat(). Patch 1 adds
-> the VFS infrastructure, patch 2 adds the support to utimensat() with a
-> new flag, and the rest of the patches add filesystem support; I excluded
-> CIFS for now because I don't have a CIFS setup to test it on.
-> 
-> Updating btime is useful for at least a couple of use cases:
-> 
-> - Backup/restore programs (my motivation for this feature is btrfs send)
-> - File servers which interoperate with operating systems that allow
->   updating file creation time, including Mac OS [1] and Windows [2]
+On Thu, Feb 21, 2019 at 6:48 PM Jens Axboe <axboe@kernel.dk> wrote:
+>
+> On 2/21/19 5:10 AM, Marek Majkowski wrote:
+> >> From: Jens Axboe <axboe@kernel.dk>
+> >> Subject: [PATCHSET v15] io_uring IO interface
+> >> Message-ID: <20190211190049.7888-1-axboe@kernel.dk> (raw)
+> >>
+> >> Some final tweaks, mostly cosmetic, but also two important fixes:
+> >>
+> >> 1) Ensure that we account the skb appropriately against the socket.
+> >>    Some network config options apparently return is an skb with
+> >>    ->truesize != 0 when allocated with a size of 0, ensure we add
+> >>    those as references against sock->sk_wmem_alloc. Reported by
+> >>    Matt Mullins.
+> >
+> > Jens,
+> >
+> > I tried using io_uring with network sockets. It seem to be doing the
+> > right thing. One bit is missing though: "flags" as in recv(2).
+> >
+> > In perfect world I would like to specify at least:
+> >  - MSG_DONTWAIT
+> >  - MSG_WAITALL
+> >  - MSG_NOSIGNAL
+> >
+> > Right now, unless I'm missing something, io_uring_sqe doesn't have a
+> > place where we could store these. "flags" is needed for any
+> > non-trivial network I/O.
+>
+> We have flags for sqes, depending on the type. You can add to the
+> union that already holds rw_flags/fsync_flags/poll_events? There's
+> also a (smaller) flags field that applies for all types, which
+> currently only holds the fixed file flag.
 
-I don't have anything new to add to what has been said in the thread.
-The creation time is property of the filesystem and if user wants to
-track additional metadata, then as external attributes.
+The "sqe->flags" right now is used by the IOSQE_FIXED_FILE which has
+the same value as MSG_OOB.
+
+Sticking recv/send flags into the "rw_flags" union perhaps could work,
+barring the discussion about naming. The obvious names don't make
+sense. recv_flags, send_flags or socket_flags don't sound right.
+
+If we tried to add networking stuff to io_uring (for batchinig and async), then:
+ - send()/recv() could work, only needs the "flags" field
+ - sendmsg()/recvmsg() likewise
+ - sendto()/recvfrom() require two more pointers: (struct sockaddr
+*dest_addr, socklen_t addrlen)
+ - sendmmsg() / recvmmsg() are perhaps irrelevant
+
+Non-blocking stuff like socket(), setsockopt(), bind() perhaps don't
+need to be considered, although could benefit from batching.
+
+Not sure what to think about connect() and accept(). In the
+prehistoric days there seem to have been an attempt to add socket
+things to libaio struct iocb. See:
+
+https://code.woboq.org/linux/include/libaio.h.html#iocb::(anonymous)::saddr
+
+struct iocb {
+    ...
+    union {
+        ...
+        struct io_iocb_sockaddr    saddr;
+    } u;
+};
+
+Are there chances of reserving space for two pointers in io_uring_sqe,
+which could be used for sendto/recvfrom/accept if we decided to add
+more network support?
+
+Cheers,
+    Marek
+
+> If you're talking on a per-syscall type of flag, io_uring_enter(2)
+> does take a flags member.
+>
+> --
+> Jens Axboe
+>
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
