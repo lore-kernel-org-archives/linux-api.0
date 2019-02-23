@@ -1,165 +1,107 @@
-From: Martin Lau <kafai@fb.com>
-Subject: Re: [PATCH 1/3] bpf: add helper to check for a valid SYN cookie
-Date: Sat, 23 Feb 2019 00:44:34 +0000
-Message-ID: <20190223004431.osqrn3u3lp7a6zww@kafai-mbp.dhcp.thefacebook.com>
-References: <20190222095057.9442-1-lmb@cloudflare.com>
- <20190222095057.9442-2-lmb@cloudflare.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20190222095057.9442-2-lmb@cloudflare.com>
-Content-Language: en-US
-Content-ID: <9CF7E04E313A75459CCC8D131CB08202@namprd15.prod.outlook.com>
-Sender: netdev-owner@vger.kernel.org
-To: Lorenz Bauer <lmb@cloudflare.com>
-Cc: "ast@kernel.org" <ast@kernel.org>, "daniel@iogearbox.net" <daniel@iogearbox.net>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+From: Andreas Dilger <adilger@dilger.ca>
+Subject: Re: [RFC PATCH 0/6] Allow setting file birth time with utimensat()
+Date: Sat, 23 Feb 2019 10:32:37 -0800
+Message-ID: <80675DA8-062B-4A31-ACC9-449AC55D1847@dilger.ca>
+References: <cover.1550136164.git.osandov@fb.com>
+ <20190214220626.GV14116@dastard> <20190214231429.GE9819@vader>
+ <20190215001657.GY14116@dastard> <20190215065947.GG9819@vader>
+ <72A04438-5991-4A60-8AAB-021A41DE6711@dilger.ca>
+ <20190218221820.GF14116@dastard> <20190222190048.GA29624@vader>
+Mime-Version: 1.0 (Mac OS X Mail 10.3 \(3273\))
+Content-Type: multipart/signed;
+ boundary="Apple-Mail=_87B4C2F2-8451-4D21-B0CF-FBF2A4C6CE5D";
+ protocol="application/pgp-signature"; micalg=pgp-sha256
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+In-Reply-To: <20190222190048.GA29624@vader>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Omar Sandoval <osandov@osandov.com>
+Cc: Dave Chinner <david@fromorbit.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, kernel-team@fb.com, Linux API <linux-api@vger.kernel.org>, linux-btrfs <linux-btrfs@vger.kernel.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, linux-f2fs-devel@lists.sourceforge.net, linux-xfs <linux-xfs@vger.kernel.org>, Theodore Ts'o <tytso@mit.edu>, Jaegeuk Kim <jaegeuk@kernel.org>, Steve French <sfrench@samba.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Feb 22, 2019 at 09:50:55AM +0000, Lorenz Bauer wrote:
-> Using bpf_sk_lookup_tcp it's possible to ascertain whether a packet belon=
-gs
-> to a known connection. However, there is one corner case: no sockets are
-> created if SYN cookies are active. This means that the final ACK in the
-> 3WHS is misclassified.
->=20
-> Using the helper, we can look up the listening socket via bpf_sk_lookup_t=
-cp
-> and then check whether a packet is a valid SYN cookie ACK.
->=20
-> Signed-off-by: Lorenz Bauer <lmb@cloudflare.com>
-> ---
->  include/uapi/linux/bpf.h | 18 ++++++++++-
->  net/core/filter.c        | 68 ++++++++++++++++++++++++++++++++++++++++
->  2 files changed, 85 insertions(+), 1 deletion(-)
->=20
-> diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
-> index bcdd2474eee7..bc2af87e9621 100644
-> --- a/include/uapi/linux/bpf.h
-> +++ b/include/uapi/linux/bpf.h
-> @@ -2359,6 +2359,21 @@ union bpf_attr {
->   *	Return
->   *		A **struct bpf_tcp_sock** pointer on success, or NULL in
->   *		case of failure.
-> + *
-> + * int bpf_sk_check_syncookie(struct bpf_sock *sk, void *iph, u32 iph_le=
-n, struct tcphdr *th, u32 th_len)
-> + * 	Description
-> + * 		Check whether iph and th contain a valid SYN cookie ACK for
-> + * 		the listening socket in sk.
-> + *
-> + * 		iph points to the start of the IPv4 or IPv6 header, while
-> + * 		iph_len contains sizeof(struct iphdr) or sizeof(struct ip6hdr).
-> + *
-> + * 		th points to the start of the TCP header, while th_len contains
-> + * 		sizeof(struct tcphdr).
-> + *
-> + * 	Return
-> + * 		0 if iph and th are a valid SYN cookie ACK, or a negative error
-> + * 		otherwise.
->   */
->  #define __BPF_FUNC_MAPPER(FN)		\
->  	FN(unspec),			\
-> @@ -2457,7 +2472,8 @@ union bpf_attr {
->  	FN(spin_lock),			\
->  	FN(spin_unlock),		\
->  	FN(sk_fullsock),		\
-> -	FN(tcp_sock),
-> +	FN(tcp_sock),			\
-> +	FN(sk_check_syncookie),
-> =20
->  /* integer value in 'imm' field of BPF_CALL instruction selects which he=
-lper
->   * function eBPF program intends to call
-> diff --git a/net/core/filter.c b/net/core/filter.c
-> index 85749f6ec789..9e68897cc7ed 100644
-> --- a/net/core/filter.c
-> +++ b/net/core/filter.c
-> @@ -5426,6 +5426,70 @@ static const struct bpf_func_proto bpf_tcp_sock_pr=
-oto =3D {
->  	.arg1_type	=3D ARG_PTR_TO_SOCK_COMMON,
->  };
-> =20
-> +BPF_CALL_5(bpf_sk_check_syncookie, struct sock *, sk, void *, iph, u32, =
-iph_len,
-s/bpf_sk_check_syncookie/bpf_tcp_check_syncookie/
 
-> +	   struct tcphdr *, th, u32, th_len)
-> +{
-> +#if IS_ENABLED(CONFIG_SYN_COOKIES)
-nit. "#ifdef CONFIG_SYN_COOKIES" such that it is clear it is a bool kconfig=
-.
+--Apple-Mail=_87B4C2F2-8451-4D21-B0CF-FBF2A4C6CE5D
+Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;
+	charset=us-ascii
 
-> +	u32 cookie;
-> +	int ret;
-> +
-> +	if (unlikely(th_len < sizeof(*th)))
-> +		return -EINVAL;
-> +
-> +	/* sk_listener() allows TCP_NEW_SYN_RECV, which makes no sense here. */
-> +	if (sk->sk_protocol !=3D IPPROTO_TCP || sk->sk_state !=3D TCP_LISTEN)
->From the test program in patch 3, the "sk" here is obtained from
-bpf_sk_lookup_tcp() which does a sk_to_full_sk() before returning.
-AFAICT, meaning bpf_sk_lookup_tcp() will return the listening sk
-even if there is a request_sock.  Does it make sense to check
-syncookie if there is already a request_sock?
 
-> +		return -EINVAL;
-> +
-> +	if (!sock_net(sk)->ipv4.sysctl_tcp_syncookies)
-Should tcp_synq_no_recent_overflow(tp) be checked also?
+> On Feb 22, 2019, at 11:00 AM, Omar Sandoval <osandov@osandov.com> wrote:
+> 
+> On Tue, Feb 19, 2019 at 09:18:20AM +1100, Dave Chinner wrote:
+>> On Sat, Feb 16, 2019 at 06:57:45PM -0700, Andreas Dilger wrote:
+>>> While it may be a bit of a stretch to call this "forensic evidence",
+>> 
+>> We do forensic analysis of corrupt filesystems looking for evidence
+>> of what went wrong, not just looking for evidence of what happened
+>> on systems that have been broken into.
+>> 
+>>> making it hard to change from except via total root compromise by a
+>>> skilled hacker is very useful.
+>> 
+>> *nod*.
+>> 
+>>> If this were to go in (which I'm not in favour of), then there would
+>>> need to be a CONFIG and/or runtime knob to turn it off (or better to
+>>> only turn it on), similar to how FIPS and other security options can
+>>> only go in one direction.
+>> 
+>> The problem here is that "inode birth time" is being conflated with
+>> "user document creation time". These two things are very different.
+>> 
+>> i.e. One is filesystem internal information and is not related to
+>> when the original copy of the data in the file was created, the
+>> other is user specified metadata that is related to the file data
+>> contents and needs to travel with the data, not the filesystem.
+>> 
+>> IMO, trying to make one on-disk field hold two different types of
+>> information defeats one or the other purpose, and nobody knows which
+>> one the field stores for any given file.
+>> 
+>> I'd suggest that "authored date" should be a generic system xattr so
+>> most filesystems support it, not just those that have a birth time
+>> field on disk. Sure, modify it through utimesat() and expose it
+>> through statx() (as authored time, not birth time), but store it a
+>> system xattr rather than an internal filesystem metadata field that
+>> requires was never intended to be user modifiable.
+> 
+> It seems that this is the general consensus, so I'll look into
+> implementing this functionality as an xattr.
 
-> +		return -EINVAL;
-> +
-> +	if (!th->ack || th->rst)
-How about th->syn?
+I would recommend to look at how Samba is storing these attributes
+today, and do the same thing, maybe add support into GNU coreutils
+to handle this transparently.
 
-> +		return -ENOENT;
-> +
-> +	cookie =3D ntohl(th->ack_seq) - 1;
-> +
-> +	switch (sk->sk_family) {
-> +	case AF_INET:
-> +		if (unlikely(iph_len < sizeof(struct iphdr)))
-> +			return -EINVAL;
-> +
-> +		ret =3D __cookie_v4_check((struct iphdr *)iph, th, cookie);
-> +		break;
-> +
-> +#if IS_ENABLED(CONFIG_IPV6)
-> +	case AF_INET6:
-> +		if (unlikely(iph_len < sizeof(struct ipv6hdr)))
-> +			return -EINVAL;
-> +
-> +		ret =3D __cookie_v6_check((struct ipv6hdr *)iph, th, cookie);
-> +		break;
-> +#endif /* CONFIG_IPV6 */
-> +
-> +	default:
-> +		return -EPROTONOSUPPORT;
-> +	}
-> +
-> +	if (ret > 0)
-> +		return 0;
-> +
-> +	return -ENOENT;
-> +#else
-> +	return -ENOTSUP;
-> +#endif
-> +}
-> +
-> +static const struct bpf_func_proto bpf_sk_check_syncookie_proto =3D {
-> +	.func		=3D bpf_sk_check_syncookie,
-> +	.gpl_only	=3D true,
-> +	.pkt_access	=3D true,
-> +	.ret_type	=3D RET_INTEGER,
-> +	.arg1_type	=3D ARG_PTR_TO_SOCKET,
-I think it should be ARG_PTR_TO_TCP_SOCK
+Cheers, Andreas
 
-> +	.arg2_type	=3D ARG_PTR_TO_MEM,
-> +	.arg3_type	=3D ARG_CONST_SIZE,
-> +	.arg4_type	=3D ARG_PTR_TO_MEM,
-> +	.arg5_type	=3D ARG_CONST_SIZE,
-> +};
-> +
->  #endif /* CONFIG_INET */
+
+
+
+
+
+--Apple-Mail=_87B4C2F2-8451-4D21-B0CF-FBF2A4C6CE5D
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment;
+	filename=signature.asc
+Content-Type: application/pgp-signature;
+	name=signature.asc
+Content-Description: Message signed with OpenPGP
+
+-----BEGIN PGP SIGNATURE-----
+Comment: GPGTools - http://gpgtools.org
+
+iQIzBAEBCAAdFiEEDb73u6ZejP5ZMprvcqXauRfMH+AFAlxxkcUACgkQcqXauRfM
+H+C9Xw//X1n0jOmRTE6hBjU23kQZyxxsgJVPhG+wekrSO2IixYt9aKoeRWnL/Umq
+4o9LvCkUB0bs40X6kr+r8K/QfjJt9tKlUSxZ80F159ecEPfJAUO9ZOvjPOt1jeA3
+hlPoOwPziYNht90m8Sc9WpYN0qmtN1021rcU8hwBbaX31DBs6JEUj4MxO2Oo8XA/
+C+eiORtc6EBqsVUF38V8ln3b384C51//1WqG2/HMlWxbzNILK8jkV71slD7xb7Vj
+lkgHXcJKK8uDs+908XqNnjtn+qs2HpyJxQ4N46EIEE5PNStbDfSluBHTG7ME4TqH
+GB9ezg2wEh1cSjGsg3Vx4jFsKow+esxWAruZYlW36k1MmBucd1ALSSuJ6IfC2WrZ
+8iGnpUaLmLvlnlSKeIgv6nkZppYCbY9DHfZFmn5GoOtCDCZvi0QgFo17Nf/SifeD
+nP6lp8Mt9Jlymrpc8qTbxfM0e4cO2Zp9gPkzFKIwXrp4sMBBGcnC8+cHRKgIX56h
+M/cM49ApzP08XRSf9kClLnkEMOnMxEvf3kXySqd3yyqJnG5X9xotdiGNldQMTcnc
+Rq83fqRrMJShOIHwvqFnDmsqGOvPdWN56mBMEjKNbQ2Yj2OPybJMVaRcIURs0iLs
+A64oEE8lLjK+PdMkugInBhfu0gSxYVScA1r/CSBIgTKmp21LfTo=
+=UOd0
+-----END PGP SIGNATURE-----
+
+--Apple-Mail=_87B4C2F2-8451-4D21-B0CF-FBF2A4C6CE5D--
