@@ -1,79 +1,100 @@
-From: "Kirill A. Shutemov" <kirill@shutemov.name>
-Subject: Re: [RFC PATCH] mm,mremap: Bail out earlier in mremap_to under map
- pressure
-Date: Mon, 25 Feb 2019 15:16:01 +0300
-Message-ID: <20190225121601.k4g7cabebeemthae@kshutemo-mobl1>
-References: <20190221085406.10852-1-osalvador@suse.de>
- <20190222130125.apa2ysnahgfuj2vx@kshutemo-mobl1>
- <cfc53e5a-a403-a732-69d2-1f96b8416f6d@suse.cz>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: [PATCH] mmap.2: describe the 5level paging hack
+Date: Mon, 25 Feb 2019 15:55:04 +0100
+Message-ID: <f89de711-d73b-96be-75b6-0e9054022708@gmail.com>
+References: <20190211163653.97742-1-jannh@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <cfc53e5a-a403-a732-69d2-1f96b8416f6d@suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: Oscar Salvador <osalvador@suse.de>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, hughd@google.com, joel@joelfernandes.org, jglisse@redhat.com, yang.shi@linux.alibaba.com, mgorman@techsingularity.net
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+In-Reply-To: <20190211163653.97742-1-jannh@google.com>
+Content-Language: en-US
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: Jann Horn <jannh@google.com>
+Cc: linux-arch@vger.kernel.org, linux-man@vger.kernel.org, Catalin Marinas <catalin.marinas@arm.com>, Dave Hansen <dave.hansen@intel.com>, Peter Zijlstra <peterz@infradead.org>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Will Deacon <will.deacon@arm.com>, linuxppc-dev@lists.ozlabs.org, Andy Lutomirski <luto@amacapital.net>, linux-mm@kvack.org, Paul Mackerras <paulus@samba.org>, mtk.manpages@gmail.com, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, linux-api@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 25, 2019 at 12:46:46PM +0100, Vlastimil Babka wrote:
-> On 2/22/19 2:01 PM, Kirill A. Shutemov wrote:
-> > On Thu, Feb 21, 2019 at 09:54:06AM +0100, Oscar Salvador wrote:
-> >> When using mremap() syscall in addition to MREMAP_FIXED flag,
-> >> mremap() calls mremap_to() which does the following:
-> >>
-> >> 1) unmaps the destination region where we are going to move the map
-> >> 2) If the new region is going to be smaller, we unmap the last part
-> >>    of the old region
-> >>
-> >> Then, we will eventually call move_vma() to do the actual move.
-> >>
-> >> move_vma() checks whether we are at least 4 maps below max_map_count
-> >> before going further, otherwise it bails out with -ENOMEM.
-> >> The problem is that we might have already unmapped the vma's in steps
-> >> 1) and 2), so it is not possible for userspace to figure out the state
-> >> of the vma's after it gets -ENOMEM, and it gets tricky for userspace
-> >> to clean up properly on error path.
-> >>
-> >> While it is true that we can return -ENOMEM for more reasons
-> >> (e.g: see may_expand_vm() or move_page_tables()), I think that we can
-> >> avoid this scenario in concret if we check early in mremap_to() if the
-> >> operation has high chances to succeed map-wise.
-> >>
-> >> Should not be that the case, we can bail out before we even try to unmap
-> >> anything, so we make sure the vma's are left untouched in case we are likely
-> >> to be short of maps.
-> >>
-> >> The thumb-rule now is to rely on the worst-scenario case we can have.
-> >> That is when both vma's (old region and new region) are going to be split
-> >> in 3, so we get two more maps to the ones we already hold (one per each).
-> >> If current map count + 2 maps still leads us to 4 maps below the threshold,
-> >> we are going to pass the check in move_vma().
-> >>
-> >> Of course, this is not free, as it might generate false positives when it is
-> >> true that we are tight map-wise, but the unmap operation can release several
-> >> vma's leading us to a good state.
-> >>
-> >> Because of that I am sending this as a RFC.
-> >> Another approach was also investigated [1], but it may be too much hassle
-> >> for what it brings.
-> > 
-> > I believe we don't need the check in move_vma() with this patch. Or do we?
+On 2/11/19 5:36 PM, Jann Horn wrote:
+> The manpage is missing information about the compatibility hack for
+> 5-level paging that went in in 4.14, around commit ee00f4a32a76 ("x86/mm:
+> Allow userspace have mappings above 47-bit"). Add some information about
+> that.
 > 
-> move_vma() can be also called directly from SYSCALL_DEFINE5(mremap) for
-> the non-MMAP_FIXED case. So unless there's further refactoring, the
-> check is still needed.
-
-Okay, makes sense.
-
-> >>
-> >> [1] https://lore.kernel.org/lkml/20190219155320.tkfkwvqk53tfdojt@d104.suse.de/
-> >>
-> >> Signed-off-by: Oscar Salvador <osalvador@suse.de>
+> While I don't think any hardware supporting this is shipping yet (?), I
+> think it's useful to try to write a manpage for this API, partly to
+> figure out how usable that API actually is, and partly because when this
+> hardware does ship, it'd be nice if distro manpages had information about
+> how to use it.
 > 
-> Acked-by: Vlastimil Babka <vbabka@suse.cz>
+> Signed-off-by: Jann Horn <jannh@google.com>
+> ---
+> This patch goes on top of the patch "[PATCH] mmap.2: fix description of
+> treatment of the hint" that I just sent, but I'm not sending them in a
+> series because I want the first one to go in, and I think this one might
+> be a bit more controversial.
+> 
+> It would be nice if the architecture maintainers and mm folks could have
+> a look at this and check that what I wrote is right - I only looked at
+> the source for this, I haven't tried it.
+> 
+>  man2/mmap.2 | 15 +++++++++++++++
+>  1 file changed, 15 insertions(+)
+> 
+> diff --git a/man2/mmap.2 b/man2/mmap.2
+> index 8556bbfeb..977782fa8 100644
+> --- a/man2/mmap.2
+> +++ b/man2/mmap.2
+> @@ -67,6 +67,8 @@ is NULL,
+>  then the kernel chooses the (page-aligned) address
+>  at which to create the mapping;
+>  this is the most portable method of creating a new mapping.
+> +On Linux, in this case, the kernel may limit the maximum address that can be
+> +used for allocations to a legacy limit for compatibility reasons.
+>  If
+>  .I addr
+>  is not NULL,
+> @@ -77,6 +79,19 @@ or equal to the value specified by
+>  and attempt to create the mapping there.
+>  If another mapping already exists there, the kernel picks a new
+>  address, independent of the hint.
+> +However, if a hint above the architecture's legacy address limit is provided
+> +(on x86-64: above 0x7ffffffff000, on arm64: above 0x1000000000000, on ppc64 with
+> +book3s: above 0x7fffffffffff or 0x3fffffffffff, depending on page size), the
+> +kernel is permitted to allocate mappings beyond the architecture's legacy
+> +address limit. The availability of such addresses is hardware-dependent.
+> +Therefore, if you want to be able to use the full virtual address space of
+> +hardware that supports addresses beyond the legacy range, you need to specify an
+> +address above that limit; however, for security reasons, you should avoid
+> +specifying a fixed valid address outside the compatibility range,
+> +since that would reduce the value of userspace address space layout
+> +randomization. Therefore, it is recommended to specify an address
+> +.I beyond
+> +the end of the userspace address space.
+>  .\" Before Linux 2.6.24, the address was rounded up to the next page
+>  .\" boundary; since 2.6.24, it is rounded down!
+>  The address of the new mapping is returned as the result of the call.
+>
 
-Acked-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+Hi Jann,
+
+A few comments came in on this patch. Is there anything from
+those comments that should be rolled into the text?
+
+Thanks,
+
+Michael
+
+
 
 -- 
- Kirill A. Shutemov
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
