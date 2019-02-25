@@ -1,96 +1,65 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH] mmap.2: describe the 5level paging hack
-Date: Mon, 25 Feb 2019 16:02:48 +0100
-Message-ID: <CAG48ez2h6eavM9YWXYa69OLY7mFFKn1KN=roH2dZJCi7PSSmuQ@mail.gmail.com>
-References: <20190211163653.97742-1-jannh@google.com>
- <f89de711-d73b-96be-75b6-0e9054022708@gmail.com>
+From: Keith Busch <keith.busch@intel.com>
+Subject: Re: [PATCHv6 07/10] acpi/hmat: Register processor domain to its
+ memory
+Date: Mon, 25 Feb 2019 09:51:18 -0700
+Message-ID: <20190225165118.GK10237@localhost.localdomain>
+References: <20190214171017.9362-1-keith.busch@intel.com>
+ <20190214171017.9362-8-keith.busch@intel.com>
+ <CAJZ5v0gjv0DZvYMTPBLnUmMtu8=g0zFd4x-cpP11Kzv+6XCwUw@mail.gmail.com>
+ <20190222184831.GF10237@localhost.localdomain>
+ <CAJZ5v0hfQ5HWT0kfaOxSbpJvdqotsMWVBCZ6wiL4Tnuy+O5O7Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <f89de711-d73b-96be-75b6-0e9054022708@gmail.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Cc: linux-arch <linux-arch@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, Catalin Marinas <catalin.marinas@arm.com>, Linux-MM <linux-mm@kvack.org>, Peter Zijlstra <peterz@infradead.org>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Will Deacon <will.deacon@arm.com>, linuxppc-dev@lists.ozlabs.org, Andy Lutomirski <luto@amacapital.net>, Dave Hansen <dave.hansen@intel.com>, Paul Mackerras <paulus@samba.org>, linux-arm-kernel@lists.infradead.org, Michael Ellerman <mpe@ellerman.id.au>, Andrew Morton <akpm@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Thomas Gleixner <tglx@linutronix.de>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAJZ5v0hfQ5HWT0kfaOxSbpJvdqotsMWVBCZ6wiL4Tnuy+O5O7Q@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Rafael J. Wysocki" <rafael@kernel.org>
+Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, ACPI Devel Maling List <linux-acpi@vger.kernel.org>, Linux Memory Management List <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Dave Hansen <dave.hansen@intel.com>, Dan Williams <dan.j.williams@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 25, 2019 at 3:55 PM Michael Kerrisk (man-pages)
-<mtk.manpages@gmail.com> wrote:
-> On 2/11/19 5:36 PM, Jann Horn wrote:
-> > The manpage is missing information about the compatibility hack for
-> > 5-level paging that went in in 4.14, around commit ee00f4a32a76 ("x86/mm:
-> > Allow userspace have mappings above 47-bit"). Add some information about
-> > that.
-> >
-> > While I don't think any hardware supporting this is shipping yet (?), I
-> > think it's useful to try to write a manpage for this API, partly to
-> > figure out how usable that API actually is, and partly because when this
-> > hardware does ship, it'd be nice if distro manpages had information about
-> > how to use it.
-> >
-> > Signed-off-by: Jann Horn <jannh@google.com>
-> > ---
-> > This patch goes on top of the patch "[PATCH] mmap.2: fix description of
-> > treatment of the hint" that I just sent, but I'm not sending them in a
-> > series because I want the first one to go in, and I think this one might
-> > be a bit more controversial.
-> >
-> > It would be nice if the architecture maintainers and mm folks could have
-> > a look at this and check that what I wrote is right - I only looked at
-> > the source for this, I haven't tried it.
-> >
-> >  man2/mmap.2 | 15 +++++++++++++++
-> >  1 file changed, 15 insertions(+)
-> >
-> > diff --git a/man2/mmap.2 b/man2/mmap.2
-> > index 8556bbfeb..977782fa8 100644
-> > --- a/man2/mmap.2
-> > +++ b/man2/mmap.2
-> > @@ -67,6 +67,8 @@ is NULL,
-> >  then the kernel chooses the (page-aligned) address
-> >  at which to create the mapping;
-> >  this is the most portable method of creating a new mapping.
-> > +On Linux, in this case, the kernel may limit the maximum address that can be
-> > +used for allocations to a legacy limit for compatibility reasons.
-> >  If
-> >  .I addr
-> >  is not NULL,
-> > @@ -77,6 +79,19 @@ or equal to the value specified by
-> >  and attempt to create the mapping there.
-> >  If another mapping already exists there, the kernel picks a new
-> >  address, independent of the hint.
-> > +However, if a hint above the architecture's legacy address limit is provided
-> > +(on x86-64: above 0x7ffffffff000, on arm64: above 0x1000000000000, on ppc64 with
-> > +book3s: above 0x7fffffffffff or 0x3fffffffffff, depending on page size), the
-> > +kernel is permitted to allocate mappings beyond the architecture's legacy
-> > +address limit. The availability of such addresses is hardware-dependent.
-> > +Therefore, if you want to be able to use the full virtual address space of
-> > +hardware that supports addresses beyond the legacy range, you need to specify an
-> > +address above that limit; however, for security reasons, you should avoid
-> > +specifying a fixed valid address outside the compatibility range,
-> > +since that would reduce the value of userspace address space layout
-> > +randomization. Therefore, it is recommended to specify an address
-> > +.I beyond
-> > +the end of the userspace address space.
-> >  .\" Before Linux 2.6.24, the address was rounded up to the next page
-> >  .\" boundary; since 2.6.24, it is rounded down!
-> >  The address of the new mapping is returned as the result of the call.
-> >
->
-> Hi Jann,
->
-> A few comments came in on this patch. Is there anything from
-> those comments that should be rolled into the text?
+On Sun, Feb 24, 2019 at 08:59:45PM +0100, Rafael J. Wysocki wrote:
+> On Fri, Feb 22, 2019 at 7:48 PM Keith Busch <keith.busch@intel.com> wrote:
+> > If I do it the other way around, that's going to make HMEM_REPORTING
+> > complicated if a non-ACPI implementation wants to report HMEM
+> > properties.
+> 
+> But the mitigations that Dave was talking about get in the way, don't they?
+> 
+> Say there is another Kconfig option,CACHE_MITIGATIONS, to enable them.
+> Then you want ACPI_HMAT to be set when that it set and you also want
+> ACPI_HMAT to be set when HMEM_REPORTING and ACPI_NUMA are both set.
+> 
+> OTOH, you may not want HMEM_REPORTING to be set when CACHE_MITIGATIONS
+> is set, but that causes ACPI_HMAT to be set and which means that
+> ACPI_HMAT alone will not be sufficient to determine the
+> HMEM_REPORTING value.
 
-Hi!
+I can't think of when we'd want to suppress reporting these attributes
+to user space, but I can split HMAT enabling so it doesn't depend on
+HMEM_REPORTING just in case there really is an in-kernel user that
+definitely does not want the same attributes exported.
 
-Yeah, I think all the feedback on the patch were good points, and I'll
-have to integrate that into my patch.
+> Now, if you prompt for HMEM_REPORTING and make it depend on ACPI_NUMA,
+> then ACPI_HMAT can be selected by that (regardless of the
+> CACHE_MITIGATIONS value).
+> 
+> And if someone wants to use HMEM_REPORTING without ACPI_NUMA, it can
+> be made depend on whatever new option is there for that non-ACPI
+> mechanism.
+> 
+> There might be a problem if someone wanted to enable the alternative
+> way of HMEM_REPORTING if ACPI_NUMA was set (in which case HMAT would
+> have to be ignored even if it was present), but in that case there
+> would need to be an explicit way to choose between HMAT and non-HMAT
+> anyway.
+> 
+> In any case, I prefer providers to be selected by consumers and not
+> the other way around, in case there are multiple consumers for one
+> provider.
+
+Well, the HMEM_REPORTING fundamentally has no dependency on any of these
+things and I've put some effort into making this part provider agnostic.
+I will change it if this concern is gating acceptance, but I don't
+think it's as intuitive for generic interfaces to be the selector for
+implementation specific providers.
