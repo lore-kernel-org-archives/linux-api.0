@@ -1,57 +1,71 @@
-From: "Rafael J. Wysocki" <rafael@kernel.org>
-Subject: Re: [PATCHv6 07/10] acpi/hmat: Register processor domain to its memory
-Date: Sun, 24 Feb 2019 21:07:03 +0100
-Message-ID: <CAJZ5v0gyEJ59qSno_MKjr97zeYaLp=v1=ZYz1twM1eZJCP_DTw@mail.gmail.com>
-References: <20190214171017.9362-1-keith.busch@intel.com> <20190214171017.9362-8-keith.busch@intel.com>
- <CAJZ5v0gjv0DZvYMTPBLnUmMtu8=g0zFd4x-cpP11Kzv+6XCwUw@mail.gmail.com>
- <20190222184831.GF10237@localhost.localdomain> <CAPcyv4jpP0CP-QxWDc_E1QwL736PLwh8ZPrnKJzVnYrAk++93g@mail.gmail.com>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [RFC PATCH] mm,mremap: Bail out earlier in mremap_to under map
+ pressure
+Date: Mon, 25 Feb 2019 12:46:46 +0100
+Message-ID: <cfc53e5a-a403-a732-69d2-1f96b8416f6d@suse.cz>
+References: <20190221085406.10852-1-osalvador@suse.de>
+ <20190222130125.apa2ysnahgfuj2vx@kshutemo-mobl1>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAPcyv4jpP0CP-QxWDc_E1QwL736PLwh8ZPrnKJzVnYrAk++93g@mail.gmail.com>
+In-Reply-To: <20190222130125.apa2ysnahgfuj2vx@kshutemo-mobl1>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dan Williams <dan.j.williams@intel.com>
-Cc: Keith Busch <keith.busch@intel.com>, "Rafael J. Wysocki" <rafael@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, ACPI Devel Maling List <linux-acpi@vger.kernel.org>, Linux Memory Management List <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Dave Hansen <dave.hansen@intel.com>
+To: "Kirill A. Shutemov" <kirill@shutemov.name>, Oscar Salvador <osalvador@suse.de>
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, hughd@google.com, joel@joelfernandes.org, jglisse@redhat.com, yang.shi@linux.alibaba.com, mgorman@techsingularity.net
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Feb 22, 2019 at 8:21 PM Dan Williams <dan.j.williams@intel.com> wrote:
->
-> On Fri, Feb 22, 2019 at 10:48 AM Keith Busch <keith.busch@intel.com> wrote:
-> >
-> > On Wed, Feb 20, 2019 at 11:02:01PM +0100, Rafael J. Wysocki wrote:
-> > > On Thu, Feb 14, 2019 at 6:10 PM Keith Busch <keith.busch@intel.com> wrote:
-> > > >  config ACPI_HMAT
-> > > >         bool "ACPI Heterogeneous Memory Attribute Table Support"
-> > > >         depends on ACPI_NUMA
-> > > > +       select HMEM_REPORTING
-> > >
-> > > If you want to do this here, I'm not sure that defining HMEM_REPORTING
-> > > as a user-selectable option is a good idea.  In particular, I don't
-> > > really think that setting ACPI_HMAT without it makes a lot of sense.
-> > > Apart from this, the patch looks reasonable to me.
-> >
-> > I'm trying to implement based on the feedback, but I'm a little confused.
-> >
-> > As I have it at the moment, HMEM_REPORTING is not user-prompted, so
-> > another option needs to turn it on. I have ACPI_HMAT do that here.
-> >
-> > So when you say it's a bad idea to make HMEM_REPORTING user selectable,
-> > isn't it already not user selectable?
-> >
-> > If I do it the other way around, that's going to make HMEM_REPORTING
-> > complicated if a non-ACPI implementation wants to report HMEM
-> > properties.
->
-> Agree. If a platform supports these HMEM properties then they should
-> be reported.
+On 2/22/19 2:01 PM, Kirill A. Shutemov wrote:
+> On Thu, Feb 21, 2019 at 09:54:06AM +0100, Oscar Salvador wrote:
+>> When using mremap() syscall in addition to MREMAP_FIXED flag,
+>> mremap() calls mremap_to() which does the following:
+>>
+>> 1) unmaps the destination region where we are going to move the map
+>> 2) If the new region is going to be smaller, we unmap the last part
+>>    of the old region
+>>
+>> Then, we will eventually call move_vma() to do the actual move.
+>>
+>> move_vma() checks whether we are at least 4 maps below max_map_count
+>> before going further, otherwise it bails out with -ENOMEM.
+>> The problem is that we might have already unmapped the vma's in steps
+>> 1) and 2), so it is not possible for userspace to figure out the state
+>> of the vma's after it gets -ENOMEM, and it gets tricky for userspace
+>> to clean up properly on error path.
+>>
+>> While it is true that we can return -ENOMEM for more reasons
+>> (e.g: see may_expand_vm() or move_page_tables()), I think that we can
+>> avoid this scenario in concret if we check early in mremap_to() if the
+>> operation has high chances to succeed map-wise.
+>>
+>> Should not be that the case, we can bail out before we even try to unmap
+>> anything, so we make sure the vma's are left untouched in case we are likely
+>> to be short of maps.
+>>
+>> The thumb-rule now is to rely on the worst-scenario case we can have.
+>> That is when both vma's (old region and new region) are going to be split
+>> in 3, so we get two more maps to the ones we already hold (one per each).
+>> If current map count + 2 maps still leads us to 4 maps below the threshold,
+>> we are going to pass the check in move_vma().
+>>
+>> Of course, this is not free, as it might generate false positives when it is
+>> true that we are tight map-wise, but the unmap operation can release several
+>> vma's leading us to a good state.
+>>
+>> Because of that I am sending this as a RFC.
+>> Another approach was also investigated [1], but it may be too much hassle
+>> for what it brings.
+> 
+> I believe we don't need the check in move_vma() with this patch. Or do we?
 
-Well, I'm not sure if everybody is in agreement on that.
+move_vma() can be also called directly from SYSCALL_DEFINE5(mremap) for
+the non-MMAP_FIXED case. So unless there's further refactoring, the
+check is still needed.
 
-> ACPI_HMAT is that opt-in for ACPI based platforms, and
-> other archs can do something similar. It's not clear that one would
-> ever want to opt-in to HMAT support and opt-out of reporting any of it
-> to userspace.
+>>
+>> [1] https://lore.kernel.org/lkml/20190219155320.tkfkwvqk53tfdojt@d104.suse.de/
+>>
+>> Signed-off-by: Oscar Salvador <osalvador@suse.de>
 
-In my view, ACPI_HMAT need not be an opt-in in the first place.  The
-only reason to avoid compiling HMAT parsing it would be if there were
-no users of it in the kernel IMO.
+Acked-by: Vlastimil Babka <vbabka@suse.cz>
