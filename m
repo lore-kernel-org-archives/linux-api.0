@@ -1,104 +1,82 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: [GIT PULL] y2038: additional syscall ABI cleanup
-Date: Mon, 25 Feb 2019 21:03:00 +0100
-Message-ID: <CAK8P3a1ZZkBu0zhfATv12OeCtyE5hjSpqt=BOLqkh75U18Z0aA@mail.gmail.com>
+From: "Rafael J. Wysocki" <rafael@kernel.org>
+Subject: Re: [PATCHv6 07/10] acpi/hmat: Register processor domain to its memory
+Date: Mon, 25 Feb 2019 23:30:21 +0100
+Message-ID: <CAJZ5v0h+YN=QYReLoeYMqM82Z1eaEk2kEy6jZ94JVe=-By8gTg@mail.gmail.com>
+References: <20190214171017.9362-1-keith.busch@intel.com> <20190214171017.9362-8-keith.busch@intel.com>
+ <CAJZ5v0gjv0DZvYMTPBLnUmMtu8=g0zFd4x-cpP11Kzv+6XCwUw@mail.gmail.com>
+ <20190222184831.GF10237@localhost.localdomain> <CAJZ5v0hfQ5HWT0kfaOxSbpJvdqotsMWVBCZ6wiL4Tnuy+O5O7Q@mail.gmail.com>
+ <20190225165118.GK10237@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190225165118.GK10237@localhost.localdomain>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: y2038 Mailman List <y2038@lists.linaro.org>, linux-riscv@lists.infradead.org, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Palmer Dabbelt <palmer@sifive.com>
+To: Keith Busch <keith.busch@intel.com>
+Cc: "Rafael J. Wysocki" <rafael@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, ACPI Devel Maling List <linux-acpi@vger.kernel.org>, Linux Memory Management List <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Dave Hansen <dave.hansen@intel.com>, Dan Williams <dan.j.williams@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-The following changes since commit 48166e6ea47d23984f0b481ca199250e1ce0730a:
+On Mon, Feb 25, 2019 at 5:51 PM Keith Busch <keith.busch@intel.com> wrote:
+>
+> On Sun, Feb 24, 2019 at 08:59:45PM +0100, Rafael J. Wysocki wrote:
+> > On Fri, Feb 22, 2019 at 7:48 PM Keith Busch <keith.busch@intel.com> wrote:
+> > > If I do it the other way around, that's going to make HMEM_REPORTING
+> > > complicated if a non-ACPI implementation wants to report HMEM
+> > > properties.
+> >
+> > But the mitigations that Dave was talking about get in the way, don't they?
+> >
+> > Say there is another Kconfig option,CACHE_MITIGATIONS, to enable them.
+> > Then you want ACPI_HMAT to be set when that it set and you also want
+> > ACPI_HMAT to be set when HMEM_REPORTING and ACPI_NUMA are both set.
+> >
+> > OTOH, you may not want HMEM_REPORTING to be set when CACHE_MITIGATIONS
+> > is set, but that causes ACPI_HMAT to be set and which means that
+> > ACPI_HMAT alone will not be sufficient to determine the
+> > HMEM_REPORTING value.
+>
+> I can't think of when we'd want to suppress reporting these attributes
+> to user space, but I can split HMAT enabling so it doesn't depend on
+> HMEM_REPORTING just in case there really is an in-kernel user that
+> definitely does not want the same attributes exported.
 
-  y2038: add 64-bit time_t syscalls to all 32-bit architectures
-(2019-02-07 00:13:28 +0100)
+I'd rather simplify HMAT enabling than make it more complicated, so
+splitting it would be worse than what you have already IMO.
 
-are available in the Git repository at:
+> > Now, if you prompt for HMEM_REPORTING and make it depend on ACPI_NUMA,
+> > then ACPI_HMAT can be selected by that (regardless of the
+> > CACHE_MITIGATIONS value).
+> >
+> > And if someone wants to use HMEM_REPORTING without ACPI_NUMA, it can
+> > be made depend on whatever new option is there for that non-ACPI
+> > mechanism.
+> >
+> > There might be a problem if someone wanted to enable the alternative
+> > way of HMEM_REPORTING if ACPI_NUMA was set (in which case HMAT would
+> > have to be ignored even if it was present), but in that case there
+> > would need to be an explicit way to choose between HMAT and non-HMAT
+> > anyway.
+> >
+> > In any case, I prefer providers to be selected by consumers and not
+> > the other way around, in case there are multiple consumers for one
+> > provider.
+>
+> Well, the HMEM_REPORTING fundamentally has no dependency on any of these
+> things and I've put some effort into making this part provider agnostic.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/arnd/playground.git
-tags/y2038-syscall-abi
+Which I agree with.
 
-for you to fetch changes up to d4c08b9776b392e20efc6198ebe1bc8ec1911d9b:
+> I will change it if this concern is gating acceptance, but I don't
+> think it's as intuitive for generic interfaces to be the selector for
+> implementation specific providers.
 
-  riscv: Use latest system call ABI (2019-02-25 20:53:52 +0100)
+That is sort of a chicken-and-egg issue about what is more fundamental
+that could be discussed forever. :-)
 
-----------------------------------------------------------------
-y2038: additional syscall ABI cleanup
+My original point was that if you regard ACPI_HMAT as the more
+fundamental thing, then you should prompt for it and select
+HMEM_REPORTING automatically from there.  Or the other way around if
+you regard HMEM_REPORTING as more fundamental.  Prompting for both of
+them may lead to issues.
 
-This is a follow-up to the y2038 syscall patches already merged in the tip
-tree.  As the final 32-bit RISC-V syscall ABI is still being decided on,
-this is the last chance to make a few corrections to leave out interfaces
-based on 32-bit time_t along with the old off_t and rlimit types.
-
-The series achieves this in a few steps:
-
-- A couple of bug fixes for minor regressions I introduced
-  in the original series
-
-- A couple of older patches from Yury Norov that I had never
-  merged in the past, these fix up the openat/open_by_handle_at and
-  getrlimit/setrlimit syscalls to disallow the old versions of off_t
-  and rlimit.
-
-- Hiding the deprecated system calls behind an #ifdef in
-  include/uapi/asm-generic/unistd.h
-
-- Change arch/riscv to drop all these ABIs.
-
-Originally, the plan was to also leave these out on C-Sky, but that now
-has a glibc port that uses the older interfaces, so we need to leave
-them in place.
-
-----------------------------------------------------------------
-
-Arnd Bergmann (4):
-      asm-generic: Make time32 syscall numbers optional
-      unicore32: Fix __ARCH_WANT_STAT64 definition
-      checksyscalls: fix up mq_timedreceive and stat exceptions
-      riscv: Use latest system call ABI
-
-Yury Norov (3):
-      compat ABI: use non-compat openat and open_by_handle_at variants
-      32-bit userspace ABI: introduce ARCH_32BIT_OFF_T config option
-      asm-generic: Drop getrlimit and setrlimit syscalls from default list
-
- arch/Kconfig                             | 10 ++++++++++
- arch/arc/Kconfig                         |  1 +
- arch/arc/include/uapi/asm/unistd.h       |  2 ++
- arch/arm/Kconfig                         |  1 +
- arch/arm64/include/uapi/asm/unistd.h     |  2 ++
- arch/c6x/Kconfig                         |  1 +
- arch/c6x/include/uapi/asm/unistd.h       |  2 ++
- arch/csky/Kconfig                        |  1 +
- arch/csky/include/uapi/asm/unistd.h      |  2 ++
- arch/h8300/Kconfig                       |  1 +
- arch/h8300/include/uapi/asm/unistd.h     |  2 ++
- arch/hexagon/Kconfig                     |  1 +
- arch/hexagon/include/uapi/asm/unistd.h   |  2 ++
- arch/m68k/Kconfig                        |  1 +
- arch/microblaze/Kconfig                  |  1 +
- arch/mips/Kconfig                        |  1 +
- arch/nds32/Kconfig                       |  1 +
- arch/nds32/include/uapi/asm/unistd.h     |  2 ++
- arch/nios2/Kconfig                       |  1 +
- arch/nios2/include/uapi/asm/unistd.h     |  2 ++
- arch/openrisc/Kconfig                    |  1 +
- arch/openrisc/include/uapi/asm/unistd.h  |  2 ++
- arch/parisc/Kconfig                      |  1 +
- arch/powerpc/Kconfig                     |  1 +
- arch/riscv/include/uapi/asm/unistd.h     |  1 +
- arch/riscv/kernel/vdso/Makefile          |  2 ++
- arch/sh/Kconfig                          |  1 +
- arch/sparc/Kconfig                       |  1 +
- arch/unicore32/Kconfig                   |  1 +
- arch/unicore32/include/uapi/asm/unistd.h |  4 +++-
- arch/x86/Kconfig                         |  1 +
- arch/x86/um/Kconfig                      |  1 +
- arch/xtensa/Kconfig                      |  1 +
- include/linux/fcntl.h                    |  2 +-
- include/uapi/asm-generic/unistd.h        | 46
-+++++++++++++++++++++++++++++++++++++++++++---
- scripts/checksyscalls.sh                 | 15 ++++++++++++---
- 36 files changed, 110 insertions(+), 8 deletions(-)
+As long as that is taken into account, I'm basically fine with any of
+the two choices.
