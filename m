@@ -1,62 +1,104 @@
-From: Palmer Dabbelt <palmer@sifive.com>
-Subject: Re: [PATCH 8/8] riscv: Use latest system call ABI
-Date: Mon, 25 Feb 2019 11:19:11 -0800
-Message-ID: <CANs6eMkY09Q-5m0venYjuu5zbuGhPpH23VuGw8Ct_nc0m7aVTg@mail.gmail.com>
-References: <20190218210712.3503891-1-arnd@arndb.de>
- <20190218210712.3503891-9-arnd@arndb.de>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: [GIT PULL] y2038: additional syscall ABI cleanup
+Date: Mon, 25 Feb 2019 21:03:00 +0100
+Message-ID: <CAK8P3a1ZZkBu0zhfATv12OeCtyE5hjSpqt=BOLqkh75U18Z0aA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <20190218210712.3503891-9-arnd@arndb.de>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: linux-arch@vger.kernel.org, uclinux-h8-devel@lists.sourceforge.jp, yury.norov@gmail.com, y2038@lists.linaro.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-riscv@lists.infradead.org, Vineet Gupta <vgupta@synopsys.com>, Guo Ren <guoren@kernel.org>, Greentime Hu <green.hu@gmail.com>, linux-hexagon@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Guan Xuetao <gxt@pku.edu.cn>, Stafford Horne <shorne@gmail.com>, linux-arm-kernel@lists.infradead.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: y2038 Mailman List <y2038@lists.linaro.org>, linux-riscv@lists.infradead.org, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Palmer Dabbelt <palmer@sifive.com>
 List-Id: linux-api@vger.kernel.org
 
-T24gTW9uLCBGZWIgMTgsIDIwMTkgYXQgMTowNyBQTSBBcm5kIEJlcmdtYW5uIDxhcm5kQGFybmRi
-LmRlPiB3cm90ZToKCj4gV2UgZG9uJ3QgeWV0IGhhdmUgYW4gdXBzdHJlYW0gZ2xpYmMgcG9ydCBm
-b3IgcmlzY3YsIHNvIHRoZXJlIGlzIG5vIHVzZXIKPiBzcGFjZSBmb3IgdGhlIGV4aXN0aW5nIEFC
-SSwgYW5kIHdlIGNhbiByZW1vdmUgdGhlIGRlZmluaXRpb25zIGZvciAzMi1iaXQKPiB0aW1lX3Qs
-IG9mZl90IGFuZCBzdHJ1Y3QgcmVzb3VyY2UgYW5kIHN5c3RlbSBjYWxscyBiYXNlZCBvbiB0aGVt
-LAo+IGluY2x1ZGluZyB0aGUgdmRzby4KPgo+IFNpZ25lZC1vZmYtYnk6IEFybmQgQmVyZ21hbm4g
-PGFybmRAYXJuZGIuZGU+Cj4gLS0tCj4gIGFyY2gvcmlzY3YvS2NvbmZpZyAgICAgICAgICAgICAg
-ICAgICB8IDEgLQo+ICBhcmNoL3Jpc2N2L2luY2x1ZGUvdWFwaS9hc20vdW5pc3RkLmggfCA1ICst
-LS0tCj4gIGFyY2gvcmlzY3Yva2VybmVsL3Zkc28vTWFrZWZpbGUgICAgICB8IDIgKysKPiAgMyBm
-aWxlcyBjaGFuZ2VkLCAzIGluc2VydGlvbnMoKyksIDUgZGVsZXRpb25zKC0pCj4KPiBkaWZmIC0t
-Z2l0IGEvYXJjaC9yaXNjdi9LY29uZmlnIGIvYXJjaC9yaXNjdi9LY29uZmlnCj4gaW5kZXggMDlm
-YTNhODdiZjMwLi5mZWVlYWE2MDY5N2MgMTAwNjQ0Cj4gLS0tIGEvYXJjaC9yaXNjdi9LY29uZmln
-Cj4gKysrIGIvYXJjaC9yaXNjdi9LY29uZmlnCj4gQEAgLTExLDcgKzExLDYgQEAgY29uZmlnIDMy
-QklUCj4KPiAgY29uZmlnIFJJU0NWCj4gICAgICAgICBkZWZfYm9vbCB5Cj4gLSAgICAgICBzZWxl
-Y3QgQVJDSF8zMkJJVF9PRkZfVCBpZiAhNjRCSVQKPiAgICAgICAgICMgZXZlbiBvbiAzMi1iaXQs
-IHBoeXNpY2FsIChhbmQgRE1BKSBhZGRyZXNzZXMgYXJlID4gMzItYml0cwo+ICAgICAgICAgc2Vs
-ZWN0IFBIWVNfQUREUl9UXzY0QklUCj4gICAgICAgICBzZWxlY3QgT0YKPiBkaWZmIC0tZ2l0IGEv
-YXJjaC9yaXNjdi9pbmNsdWRlL3VhcGkvYXNtL3VuaXN0ZC5oCj4gYi9hcmNoL3Jpc2N2L2luY2x1
-ZGUvdWFwaS9hc20vdW5pc3RkLmgKPiBpbmRleCA0ODZhMjg4YjQ1NGMuLjBlMmVlZWIxZmQyNyAx
-MDA2NDQKPiAtLS0gYS9hcmNoL3Jpc2N2L2luY2x1ZGUvdWFwaS9hc20vdW5pc3RkLmgKPiArKysg
-Yi9hcmNoL3Jpc2N2L2luY2x1ZGUvdWFwaS9hc20vdW5pc3RkLmgKPiBAQCAtMTcsMTEgKzE3LDgg
-QEAKPgo+ICAjaWZkZWYgX19MUDY0X18KPiAgI2RlZmluZSBfX0FSQ0hfV0FOVF9ORVdfU1RBVAo+
-IC0jZW5kaWYgLyogX19MUDY0X18gKi8KPiAgI2RlZmluZSBfX0FSQ0hfV0FOVF9TRVRfR0VUX1JM
-SU1JVAo+IC0jaWZuZGVmIF9fTFA2NF9fCj4gLSNkZWZpbmUgX19BUkNIX1dBTlRfVElNRTMyX1NZ
-U0NBTExTCj4gLSNlbmRpZgo+ICsjZW5kaWYgLyogX19MUDY0X18gKi8KPgo+ICAjaW5jbHVkZSA8
-YXNtLWdlbmVyaWMvdW5pc3RkLmg+Cj4KPiBkaWZmIC0tZ2l0IGEvYXJjaC9yaXNjdi9rZXJuZWwv
-dmRzby9NYWtlZmlsZQo+IGIvYXJjaC9yaXNjdi9rZXJuZWwvdmRzby9NYWtlZmlsZQo+IGluZGV4
-IGVlZDFjMTM3ZjYxOC4uZmVjNjJiMjRkZjg5IDEwMDY0NAo+IC0tLSBhL2FyY2gvcmlzY3Yva2Vy
-bmVsL3Zkc28vTWFrZWZpbGUKPiArKysgYi9hcmNoL3Jpc2N2L2tlcm5lbC92ZHNvL01ha2VmaWxl
-Cj4gQEAgLTIsOSArMiwxMSBAQAo+Cj4gICMgU3ltYm9scyBwcmVzZW50IGluIHRoZSB2ZHNvCj4g
-IHZkc28tc3ltcyAgPSBydF9zaWdyZXR1cm4KPiAraWZkZWYgQ09ORklHXzY0QklUCj4gIHZkc28t
-c3ltcyArPSBnZXR0aW1lb2ZkYXkKPiAgdmRzby1zeW1zICs9IGNsb2NrX2dldHRpbWUKPiAgdmRz
-by1zeW1zICs9IGNsb2NrX2dldHJlcwo+ICtlbmRpZgo+ICB2ZHNvLXN5bXMgKz0gZ2V0Y3B1Cj4g
-IHZkc28tc3ltcyArPSBmbHVzaF9pY2FjaGUKPgo+IC0tCj4gMi4yMC4wCj4KClJldmlld2VkLWJ5
-OiBQYWxtZXIgRGFiYmVsdCA8cGFsbWVyQHNpZml2ZS5jb20+Cl9fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fClkyMDM4IG1haWxpbmcgbGlzdApZMjAzOEBsaXN0
-cy5saW5hcm8ub3JnCmh0dHBzOi8vbGlzdHMubGluYXJvLm9yZy9tYWlsbWFuL2xpc3RpbmZvL3ky
-MDM4Cg==
+The following changes since commit 48166e6ea47d23984f0b481ca199250e1ce0730a:
+
+  y2038: add 64-bit time_t syscalls to all 32-bit architectures
+(2019-02-07 00:13:28 +0100)
+
+are available in the Git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/arnd/playground.git
+tags/y2038-syscall-abi
+
+for you to fetch changes up to d4c08b9776b392e20efc6198ebe1bc8ec1911d9b:
+
+  riscv: Use latest system call ABI (2019-02-25 20:53:52 +0100)
+
+----------------------------------------------------------------
+y2038: additional syscall ABI cleanup
+
+This is a follow-up to the y2038 syscall patches already merged in the tip
+tree.  As the final 32-bit RISC-V syscall ABI is still being decided on,
+this is the last chance to make a few corrections to leave out interfaces
+based on 32-bit time_t along with the old off_t and rlimit types.
+
+The series achieves this in a few steps:
+
+- A couple of bug fixes for minor regressions I introduced
+  in the original series
+
+- A couple of older patches from Yury Norov that I had never
+  merged in the past, these fix up the openat/open_by_handle_at and
+  getrlimit/setrlimit syscalls to disallow the old versions of off_t
+  and rlimit.
+
+- Hiding the deprecated system calls behind an #ifdef in
+  include/uapi/asm-generic/unistd.h
+
+- Change arch/riscv to drop all these ABIs.
+
+Originally, the plan was to also leave these out on C-Sky, but that now
+has a glibc port that uses the older interfaces, so we need to leave
+them in place.
+
+----------------------------------------------------------------
+
+Arnd Bergmann (4):
+      asm-generic: Make time32 syscall numbers optional
+      unicore32: Fix __ARCH_WANT_STAT64 definition
+      checksyscalls: fix up mq_timedreceive and stat exceptions
+      riscv: Use latest system call ABI
+
+Yury Norov (3):
+      compat ABI: use non-compat openat and open_by_handle_at variants
+      32-bit userspace ABI: introduce ARCH_32BIT_OFF_T config option
+      asm-generic: Drop getrlimit and setrlimit syscalls from default list
+
+ arch/Kconfig                             | 10 ++++++++++
+ arch/arc/Kconfig                         |  1 +
+ arch/arc/include/uapi/asm/unistd.h       |  2 ++
+ arch/arm/Kconfig                         |  1 +
+ arch/arm64/include/uapi/asm/unistd.h     |  2 ++
+ arch/c6x/Kconfig                         |  1 +
+ arch/c6x/include/uapi/asm/unistd.h       |  2 ++
+ arch/csky/Kconfig                        |  1 +
+ arch/csky/include/uapi/asm/unistd.h      |  2 ++
+ arch/h8300/Kconfig                       |  1 +
+ arch/h8300/include/uapi/asm/unistd.h     |  2 ++
+ arch/hexagon/Kconfig                     |  1 +
+ arch/hexagon/include/uapi/asm/unistd.h   |  2 ++
+ arch/m68k/Kconfig                        |  1 +
+ arch/microblaze/Kconfig                  |  1 +
+ arch/mips/Kconfig                        |  1 +
+ arch/nds32/Kconfig                       |  1 +
+ arch/nds32/include/uapi/asm/unistd.h     |  2 ++
+ arch/nios2/Kconfig                       |  1 +
+ arch/nios2/include/uapi/asm/unistd.h     |  2 ++
+ arch/openrisc/Kconfig                    |  1 +
+ arch/openrisc/include/uapi/asm/unistd.h  |  2 ++
+ arch/parisc/Kconfig                      |  1 +
+ arch/powerpc/Kconfig                     |  1 +
+ arch/riscv/include/uapi/asm/unistd.h     |  1 +
+ arch/riscv/kernel/vdso/Makefile          |  2 ++
+ arch/sh/Kconfig                          |  1 +
+ arch/sparc/Kconfig                       |  1 +
+ arch/unicore32/Kconfig                   |  1 +
+ arch/unicore32/include/uapi/asm/unistd.h |  4 +++-
+ arch/x86/Kconfig                         |  1 +
+ arch/x86/um/Kconfig                      |  1 +
+ arch/xtensa/Kconfig                      |  1 +
+ include/linux/fcntl.h                    |  2 +-
+ include/uapi/asm-generic/unistd.h        | 46
++++++++++++++++++++++++++++++++++++++++++++---
+ scripts/checksyscalls.sh                 | 15 ++++++++++++---
+ 36 files changed, 110 insertions(+), 8 deletions(-)
