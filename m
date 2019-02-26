@@ -1,239 +1,87 @@
-From: Martin Lau <kafai@fb.com>
-Subject: Re: [PATCH 1/3] bpf: add helper to check for a valid SYN cookie
-Date: Tue, 26 Feb 2019 05:37:55 +0000
-Message-ID: <20190226053751.flbhnbp4gkocfh7a@kafai-mbp.dhcp.thefacebook.com>
-References: <20190222095057.9442-1-lmb@cloudflare.com>
- <20190222095057.9442-2-lmb@cloudflare.com>
- <20190223004431.osqrn3u3lp7a6zww@kafai-mbp.dhcp.thefacebook.com>
- <CACAyw9_smq+c8rUt3ONk+J28CzPefuEOgs8at3q9_5s3zN0_1w@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <CACAyw9_smq+c8rUt3ONk+J28CzPefuEOgs8at3q9_5s3zN0_1w@mail.gmail.com>
-Content-Language: en-US
-Content-ID: <20B4B7D2518AF340884F3104F8B08CA8@namprd15.prod.outlook.com>
-Sender: netdev-owner@vger.kernel.org
-To: Lorenz Bauer <lmb@cloudflare.com>
-Cc: "ast@kernel.org" <ast@kernel.org>, "daniel@iogearbox.net" <daniel@iogearbox.net>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+From: Oscar Salvador <osalvador@suse.de>
+Subject: [PATCH] mm,mremap: Bail out earlier in mremap_to under map pressure
+Date: Tue, 26 Feb 2019 10:13:14 +0100
+Message-ID: <20190226091314.18446-1-osalvador@suse.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: akpm@linux-foundation.org
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, hughd@google.com, kirill@shutemov.name, vbabka@suse.cz, joel@joelfernandes.org, jglisse@redhat.com, yang.shi@linux.alibaba.com, mgorman@techsingularity.net, Oscar Salvador <osalvador@suse.de>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Feb 25, 2019 at 06:26:42PM +0000, Lorenz Bauer wrote:
-> On Sat, 23 Feb 2019 at 00:44, Martin Lau <kafai@fb.com> wrote:
-> >
-> > On Fri, Feb 22, 2019 at 09:50:55AM +0000, Lorenz Bauer wrote:
-> > > Using bpf_sk_lookup_tcp it's possible to ascertain whether a packet b=
-elongs
-> > > to a known connection. However, there is one corner case: no sockets =
-are
-> > > created if SYN cookies are active. This means that the final ACK in t=
-he
-> > > 3WHS is misclassified.
-> > >
-> > > Using the helper, we can look up the listening socket via bpf_sk_look=
-up_tcp
-> > > and then check whether a packet is a valid SYN cookie ACK.
-> > >
-> > > Signed-off-by: Lorenz Bauer <lmb@cloudflare.com>
-> > > ---
-> > >  include/uapi/linux/bpf.h | 18 ++++++++++-
-> > >  net/core/filter.c        | 68 ++++++++++++++++++++++++++++++++++++++=
-++
-> > >  2 files changed, 85 insertions(+), 1 deletion(-)
-> > >
-> > > diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
-> > > index bcdd2474eee7..bc2af87e9621 100644
-> > > --- a/include/uapi/linux/bpf.h
-> > > +++ b/include/uapi/linux/bpf.h
-> > > @@ -2359,6 +2359,21 @@ union bpf_attr {
-> > >   *   Return
-> > >   *           A **struct bpf_tcp_sock** pointer on success, or NULL i=
-n
-> > >   *           case of failure.
-> > > + *
-> > > + * int bpf_sk_check_syncookie(struct bpf_sock *sk, void *iph, u32 ip=
-h_len, struct tcphdr *th, u32 th_len)
-> > > + *   Description
-> > > + *           Check whether iph and th contain a valid SYN cookie ACK=
- for
-> > > + *           the listening socket in sk.
-> > > + *
-> > > + *           iph points to the start of the IPv4 or IPv6 header, whi=
-le
-> > > + *           iph_len contains sizeof(struct iphdr) or sizeof(struct =
-ip6hdr).
-> > > + *
-> > > + *           th points to the start of the TCP header, while th_len =
-contains
-> > > + *           sizeof(struct tcphdr).
-> > > + *
-> > > + *   Return
-> > > + *           0 if iph and th are a valid SYN cookie ACK, or a negati=
-ve error
-> > > + *           otherwise.
-> > >   */
-> > >  #define __BPF_FUNC_MAPPER(FN)                \
-> > >       FN(unspec),                     \
-> > > @@ -2457,7 +2472,8 @@ union bpf_attr {
-> > >       FN(spin_lock),                  \
-> > >       FN(spin_unlock),                \
-> > >       FN(sk_fullsock),                \
-> > > -     FN(tcp_sock),
-> > > +     FN(tcp_sock),                   \
-> > > +     FN(sk_check_syncookie),
-> > >
-> > >  /* integer value in 'imm' field of BPF_CALL instruction selects whic=
-h helper
-> > >   * function eBPF program intends to call
-> > > diff --git a/net/core/filter.c b/net/core/filter.c
-> > > index 85749f6ec789..9e68897cc7ed 100644
-> > > --- a/net/core/filter.c
-> > > +++ b/net/core/filter.c
-> > > @@ -5426,6 +5426,70 @@ static const struct bpf_func_proto bpf_tcp_soc=
-k_proto =3D {
-> > >       .arg1_type      =3D ARG_PTR_TO_SOCK_COMMON,
-> > >  };
-> > >
-> > > +BPF_CALL_5(bpf_sk_check_syncookie, struct sock *, sk, void *, iph, u=
-32, iph_len,
-> > s/bpf_sk_check_syncookie/bpf_tcp_check_syncookie/>
-> >
-> > > +        struct tcphdr *, th, u32, th_len)
-> > > +{
-> > > +#if IS_ENABLED(CONFIG_SYN_COOKIES)
-> > nit. "#ifdef CONFIG_SYN_COOKIES" such that it is clear it is a bool kco=
-nfig.
-> >
-> > > +     u32 cookie;
-> > > +     int ret;
-> > > +
-> > > +     if (unlikely(th_len < sizeof(*th)))
-> > > +             return -EINVAL;
-> > > +
-> > > +     /* sk_listener() allows TCP_NEW_SYN_RECV, which makes no sense =
-here. */
-> > > +     if (sk->sk_protocol !=3D IPPROTO_TCP || sk->sk_state !=3D TCP_L=
-ISTEN)
-> > From the test program in patch 3, the "sk" here is obtained from
-> > bpf_sk_lookup_tcp() which does a sk_to_full_sk() before returning.
-> > AFAICT, meaning bpf_sk_lookup_tcp() will return the listening sk
-> > even if there is a request_sock.  Does it make sense to check
-> > syncookie if there is already a request_sock?
->=20
-> No, that doesn't make a lot of sense. I hadn't realised that
-> sk_lookup_tcp only returns full sockets.
-> This means we need a way to detect that there is a request sock for a
-> given tuple.
->=20
-> * adding a reqsk_exists(tuple) helper means we have to pay the lookup cos=
-t twice
-> * drop the sk argument and do the necessary lookups in the helper
-> itself, but that also
->   wastes a call to __inet_lookup_listener
-> * skip sk_to_full_sk() in a helper and return RET_PTR_TO_SOCK_COMMON,
->   but that violates a bunch of assumptions (e.g. calling bpf_sk_release o=
-n them)
-How about creating a new lookup helper, bpf_sk"c"_lookup_tcp,
-that does not call sk_to_full_sk() before returning.
-Its ".ret_type" will be RET_PTR_TO_SOCK_COMMON_OR_NULL which its
-reference(-counting) state has to be tracked in the verifier also.
-Mainly in check_helper_call(), iirc.
+When using mremap() syscall in addition to MREMAP_FIXED flag,
+mremap() calls mremap_to() which does the following:
 
-The bpf_prog can then check bpf_sock->state for TCP_LISTEN,
-call bpf_tcp_sock() to get the TCP listener sock and pass to
-the bpf_tcp_check_syncookie()
+1) unmaps the destination region where we are going to move the map
+2) If the new region is going to be smaller, we unmap the last part
+   of the old region
 
->=20
-> For context: ultimately we want use this to answer the question: does
-> this (encapsulated)
-> packet contain a payload destined to a local socket? Amongst the edge
-> cases we need to
-> handle are ICMP Packet Too Big messages and SYN cookies. A solution
-> would be to hide
-> all this in an "uber" helper that takes pointers to the L3 / L4
-> headers and returns a verdict,
-> but that seems a bit gross.
-Please include this use case in the commit message.
-It is useful.
+Then, we will eventually call move_vma() to do the actual move.
 
->=20
-> >
-> > > +             return -EINVAL;
-> > > +
-> > > +     if (!sock_net(sk)->ipv4.sysctl_tcp_syncookies)
-> > Should tcp_synq_no_recent_overflow(tp) be checked also?
-> >
->=20
-> Yes, not sure how that slipped out.
->=20
-> > > +             return -EINVAL;
-> > > +
-> > > +     if (!th->ack || th->rst)
-> > How about th->syn?
-> >
->=20
-> Yes, I missed the fact that the callers in tcp_ipv{4,6}.c check this.
->=20
-> > > +             return -ENOENT;
-> > > +
-> > > +     cookie =3D ntohl(th->ack_seq) - 1;
-> > > +
-> > > +     switch (sk->sk_family) {
-> > > +     case AF_INET:
-> > > +             if (unlikely(iph_len < sizeof(struct iphdr)))
-> > > +                     return -EINVAL;
-> > > +
-> > > +             ret =3D __cookie_v4_check((struct iphdr *)iph, th, cook=
-ie);
-> > > +             break;
-> > > +
-> > > +#if IS_ENABLED(CONFIG_IPV6)
-> > > +     case AF_INET6:
-> > > +             if (unlikely(iph_len < sizeof(struct ipv6hdr)))
-> > > +                     return -EINVAL;
-> > > +
-> > > +             ret =3D __cookie_v6_check((struct ipv6hdr *)iph, th, co=
-okie);
-> > > +             break;
-> > > +#endif /* CONFIG_IPV6 */
-> > > +
-> > > +     default:
-> > > +             return -EPROTONOSUPPORT;
-> > > +     }
-> > > +
-> > > +     if (ret > 0)
-> > > +             return 0;
-> > > +
-> > > +     return -ENOENT;
-> > > +#else
-> > > +     return -ENOTSUP;
-> > > +#endif
-> > > +}
-> > > +
-> > > +static const struct bpf_func_proto bpf_sk_check_syncookie_proto =3D =
-{
-> > > +     .func           =3D bpf_sk_check_syncookie,
-> > > +     .gpl_only       =3D true,
-> > > +     .pkt_access     =3D true,
-> > > +     .ret_type       =3D RET_INTEGER,
-> > > +     .arg1_type      =3D ARG_PTR_TO_SOCKET,
-> > I think it should be ARG_PTR_TO_TCP_SOCK
-> >
-> > > +     .arg2_type      =3D ARG_PTR_TO_MEM,
-> > > +     .arg3_type      =3D ARG_CONST_SIZE,
-> > > +     .arg4_type      =3D ARG_PTR_TO_MEM,
-> > > +     .arg5_type      =3D ARG_CONST_SIZE,
-> > > +};
-> > > +
-> > >  #endif /* CONFIG_INET */
->=20
->=20
->=20
-> --=20
-> Lorenz Bauer  |  Systems Engineer
-> 25 Lavington St., London SE1 0NZ
->=20
-> https://urldefense.proofpoint.com/v2/url?u=3Dhttp-3A__www.cloudflare.com&=
-d=3DDwIBaQ&c=3D5VD0RTtNlTh3ycd41b3MUw&r=3DVQnoQ7LvghIj0gVEaiQSUw&m=3DxhDwvX=
-3iD-mbqSrx-L8XQNaZiYFZzMWNo_2Y38Z9j34&s=3DI4Ag3HflabFppFv7UtMp8WnMVSqCDW0W2=
-8ziWIvuwDE&e=3D
+move_vma() checks whether we are at least 4 maps below max_map_count
+before going further, otherwise it bails out with -ENOMEM.
+The problem is that we might have already unmapped the vma's in steps
+1) and 2), so it is not possible for userspace to figure out the state
+of the vma's after it gets -ENOMEM, and it gets tricky for userspace
+to clean up properly on error path.
+
+While it is true that we can return -ENOMEM for more reasons
+(e.g: see may_expand_vm() or move_page_tables()), I think that we can
+avoid this scenario in concret if we check early in mremap_to() if the
+operation has high chances to succeed map-wise.
+
+Should not be that the case, we can bail out before we even try to unmap
+anything, so we make sure the vma's are left untouched in case we are likely
+to be short of maps.
+
+The thumb-rule now is to rely on the worst-scenario case we can have.
+That is when both vma's (old region and new region) are going to be split
+in 3, so we get two more maps to the ones we already hold (one per each).
+If current map count + 2 maps still leads us to 4 maps below the threshold,
+we are going to pass the check in move_vma().
+
+Of course, this is not free, as it might generate false positives when it is
+true that we are tight map-wise, but the unmap operation can release several
+vma's leading us to a good state.
+
+Another approach was also investigated [1], but it may be too much hassle
+for what it brings.
+
+[1] https://lore.kernel.org/lkml/20190219155320.tkfkwvqk53tfdojt@d104.suse.de/
+
+Signed-off-by: Oscar Salvador <osalvador@suse.de>
+Acked-by: Vlastimil Babka <vbabka@suse.cz>
+Acked-by: Kirill A. Shutemov <kirill.shutemov@linux.intel.com>
+---
+ mm/mremap.c | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/mm/mremap.c b/mm/mremap.c
+index 3320616ed93f..e3edef6b7a12 100644
+--- a/mm/mremap.c
++++ b/mm/mremap.c
+@@ -516,6 +516,23 @@ static unsigned long mremap_to(unsigned long addr, unsigned long old_len,
+ 	if (addr + old_len > new_addr && new_addr + new_len > addr)
+ 		goto out;
+ 
++	/*
++	 * move_vma() need us to stay 4 maps below the threshold, otherwise
++	 * it will bail out at the very beginning.
++	 * That is a problem if we have already unmaped the regions here
++	 * (new_addr, and old_addr), because userspace will not know the
++	 * state of the vma's after it gets -ENOMEM.
++	 * So, to avoid such scenario we can pre-compute if the whole
++	 * operation has high chances to success map-wise.
++	 * Worst-scenario case is when both vma's (new_addr and old_addr) get
++	 * split in 3 before unmaping it.
++	 * That means 2 more maps (1 for each) to the ones we already hold.
++	 * Check whether current map count plus 2 still leads us to 4 maps below
++	 * the threshold, otherwise return -ENOMEM here to be more safe.
++	 */
++	if ((mm->map_count + 2) >= sysctl_max_map_count - 3)
++		return -ENOMEM;
++
+ 	ret = do_munmap(mm, new_addr, new_len, uf_unmap_early);
+ 	if (ret)
+ 		goto out;
+-- 
+2.13.7
