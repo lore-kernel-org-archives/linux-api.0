@@ -1,121 +1,239 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH 11/19] block: implement bio helper to add iter bvec pages
- to bio
-Date: Mon, 25 Feb 2019 21:34:36 -0700
-Message-ID: <aa1184bb-b482-0637-21e4-1ddb0e7aea90@kernel.dk>
-References: <20190211190049.7888-1-axboe@kernel.dk>
- <20190211190049.7888-13-axboe@kernel.dk> <20190220225856.GB28313@ming.t460p>
- <b143e8c3-33d5-5f09-c441-98b3bf326d81@kernel.dk>
- <20190226034613.GA676@sol.localdomain>
+From: Martin Lau <kafai@fb.com>
+Subject: Re: [PATCH 1/3] bpf: add helper to check for a valid SYN cookie
+Date: Tue, 26 Feb 2019 05:37:55 +0000
+Message-ID: <20190226053751.flbhnbp4gkocfh7a@kafai-mbp.dhcp.thefacebook.com>
+References: <20190222095057.9442-1-lmb@cloudflare.com>
+ <20190222095057.9442-2-lmb@cloudflare.com>
+ <20190223004431.osqrn3u3lp7a6zww@kafai-mbp.dhcp.thefacebook.com>
+ <CACAyw9_smq+c8rUt3ONk+J28CzPefuEOgs8at3q9_5s3zN0_1w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <20190226034613.GA676@sol.localdomain>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <CACAyw9_smq+c8rUt3ONk+J28CzPefuEOgs8at3q9_5s3zN0_1w@mail.gmail.com>
 Content-Language: en-US
-Sender: owner-linux-aio@kvack.org
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: Ming Lei <ming.lei@redhat.com>, linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org, hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@zeniv.linux.org.uk
+Content-ID: <20B4B7D2518AF340884F3104F8B08CA8@namprd15.prod.outlook.com>
+Sender: netdev-owner@vger.kernel.org
+To: Lorenz Bauer <lmb@cloudflare.com>
+Cc: "ast@kernel.org" <ast@kernel.org>, "daniel@iogearbox.net" <daniel@iogearbox.net>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 2/25/19 8:46 PM, Eric Biggers wrote:
-> Hi Jens,
-> 
-> On Thu, Feb 21, 2019 at 10:45:27AM -0700, Jens Axboe wrote:
->> On 2/20/19 3:58 PM, Ming Lei wrote:
->>> On Mon, Feb 11, 2019 at 12:00:41PM -0700, Jens Axboe wrote:
->>>> For an ITER_BVEC, we can just iterate the iov and add the pages
->>>> to the bio directly. This requires that the caller doesn't releases
->>>> the pages on IO completion, we add a BIO_NO_PAGE_REF flag for that.
->>>>
->>>> The current two callers of bio_iov_iter_get_pages() are updated to
->>>> check if they need to release pages on completion. This makes them
->>>> work with bvecs that contain kernel mapped pages already.
->>>>
->>>> Reviewed-by: Hannes Reinecke <hare@suse.com>
->>>> Reviewed-by: Christoph Hellwig <hch@lst.de>
->>>> Signed-off-by: Jens Axboe <axboe@kernel.dk>
->>>> ---
->>>>  block/bio.c               | 59 ++++++++++++++++++++++++++++++++-------
->>>>  fs/block_dev.c            |  5 ++--
->>>>  fs/iomap.c                |  5 ++--
->>>>  include/linux/blk_types.h |  1 +
->>>>  4 files changed, 56 insertions(+), 14 deletions(-)
->>>>
->>>> diff --git a/block/bio.c b/block/bio.c
->>>> index 4db1008309ed..330df572cfb8 100644
->>>> --- a/block/bio.c
->>>> +++ b/block/bio.c
->>>> @@ -828,6 +828,23 @@ int bio_add_page(struct bio *bio, struct page *page,
->>>>  }
->>>>  EXPORT_SYMBOL(bio_add_page);
->>>>  
->>>> +static int __bio_iov_bvec_add_pages(struct bio *bio, struct iov_iter *iter)
->>>> +{
->>>> +	const struct bio_vec *bv = iter->bvec;
->>>> +	unsigned int len;
->>>> +	size_t size;
->>>> +
->>>> +	len = min_t(size_t, bv->bv_len, iter->count);
->>>> +	size = bio_add_page(bio, bv->bv_page, len,
->>>> +				bv->bv_offset + iter->iov_offset);
->>>
->>> iter->iov_offset needs to be subtracted from 'len', looks
->>> the following delta change[1] is required, otherwise memory corruption
->>> can be observed when running xfstests over loop/dio.
->>
->> Thanks, I folded this in.
->>
->> -- 
->> Jens Axboe
->>
-> 
-> syzkaller started hitting a crash on linux-next starting with this commit, and
-> it still occurs even with your latest version that has Ming's fix folded in.
-> Specifically, commit a566653ab5ab80a from your io_uring branch with commit date
-> Sun Feb 24 08:20:53 2019 -0700.
-> 
-> Reproducer:
-> 
-> #define _GNU_SOURCE
-> #include <fcntl.h>
-> #include <linux/loop.h>
-> #include <sys/ioctl.h>
-> #include <sys/sendfile.h>
-> #include <sys/syscall.h>
-> #include <unistd.h>
-> 
-> int main(void)
-> {
->         int memfd, loopfd;
-> 
->         memfd = syscall(__NR_memfd_create, "foo", 0);
-> 
->         pwrite(memfd, "\xa8", 1, 4096);
-> 
->         loopfd = open("/dev/loop0", O_RDWR|O_DIRECT);
-> 
->         ioctl(loopfd, LOOP_SET_FD, memfd);
-> 
->         sendfile(loopfd, loopfd, NULL, 1000000);
-> }
-> 
-> 
-> Crash:
-> 
-> page:ffffea0001a6aab8 count:0 mapcount:0 mapping:0000000000000000 index:0x0
-> flags: 0x100000000000000()
-> raw: 0100000000000000 ffffea0001ad2c50 ffff88807fca49d0 0000000000000000
-> raw: 0000000000000000 0000000000000000 00000000ffffffff
-> page dumped because: VM_BUG_ON_PAGE(page_ref_count(page) == 0)
+On Mon, Feb 25, 2019 at 06:26:42PM +0000, Lorenz Bauer wrote:
+> On Sat, 23 Feb 2019 at 00:44, Martin Lau <kafai@fb.com> wrote:
+> >
+> > On Fri, Feb 22, 2019 at 09:50:55AM +0000, Lorenz Bauer wrote:
+> > > Using bpf_sk_lookup_tcp it's possible to ascertain whether a packet b=
+elongs
+> > > to a known connection. However, there is one corner case: no sockets =
+are
+> > > created if SYN cookies are active. This means that the final ACK in t=
+he
+> > > 3WHS is misclassified.
+> > >
+> > > Using the helper, we can look up the listening socket via bpf_sk_look=
+up_tcp
+> > > and then check whether a packet is a valid SYN cookie ACK.
+> > >
+> > > Signed-off-by: Lorenz Bauer <lmb@cloudflare.com>
+> > > ---
+> > >  include/uapi/linux/bpf.h | 18 ++++++++++-
+> > >  net/core/filter.c        | 68 ++++++++++++++++++++++++++++++++++++++=
+++
+> > >  2 files changed, 85 insertions(+), 1 deletion(-)
+> > >
+> > > diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
+> > > index bcdd2474eee7..bc2af87e9621 100644
+> > > --- a/include/uapi/linux/bpf.h
+> > > +++ b/include/uapi/linux/bpf.h
+> > > @@ -2359,6 +2359,21 @@ union bpf_attr {
+> > >   *   Return
+> > >   *           A **struct bpf_tcp_sock** pointer on success, or NULL i=
+n
+> > >   *           case of failure.
+> > > + *
+> > > + * int bpf_sk_check_syncookie(struct bpf_sock *sk, void *iph, u32 ip=
+h_len, struct tcphdr *th, u32 th_len)
+> > > + *   Description
+> > > + *           Check whether iph and th contain a valid SYN cookie ACK=
+ for
+> > > + *           the listening socket in sk.
+> > > + *
+> > > + *           iph points to the start of the IPv4 or IPv6 header, whi=
+le
+> > > + *           iph_len contains sizeof(struct iphdr) or sizeof(struct =
+ip6hdr).
+> > > + *
+> > > + *           th points to the start of the TCP header, while th_len =
+contains
+> > > + *           sizeof(struct tcphdr).
+> > > + *
+> > > + *   Return
+> > > + *           0 if iph and th are a valid SYN cookie ACK, or a negati=
+ve error
+> > > + *           otherwise.
+> > >   */
+> > >  #define __BPF_FUNC_MAPPER(FN)                \
+> > >       FN(unspec),                     \
+> > > @@ -2457,7 +2472,8 @@ union bpf_attr {
+> > >       FN(spin_lock),                  \
+> > >       FN(spin_unlock),                \
+> > >       FN(sk_fullsock),                \
+> > > -     FN(tcp_sock),
+> > > +     FN(tcp_sock),                   \
+> > > +     FN(sk_check_syncookie),
+> > >
+> > >  /* integer value in 'imm' field of BPF_CALL instruction selects whic=
+h helper
+> > >   * function eBPF program intends to call
+> > > diff --git a/net/core/filter.c b/net/core/filter.c
+> > > index 85749f6ec789..9e68897cc7ed 100644
+> > > --- a/net/core/filter.c
+> > > +++ b/net/core/filter.c
+> > > @@ -5426,6 +5426,70 @@ static const struct bpf_func_proto bpf_tcp_soc=
+k_proto =3D {
+> > >       .arg1_type      =3D ARG_PTR_TO_SOCK_COMMON,
+> > >  };
+> > >
+> > > +BPF_CALL_5(bpf_sk_check_syncookie, struct sock *, sk, void *, iph, u=
+32, iph_len,
+> > s/bpf_sk_check_syncookie/bpf_tcp_check_syncookie/>
+> >
+> > > +        struct tcphdr *, th, u32, th_len)
+> > > +{
+> > > +#if IS_ENABLED(CONFIG_SYN_COOKIES)
+> > nit. "#ifdef CONFIG_SYN_COOKIES" such that it is clear it is a bool kco=
+nfig.
+> >
+> > > +     u32 cookie;
+> > > +     int ret;
+> > > +
+> > > +     if (unlikely(th_len < sizeof(*th)))
+> > > +             return -EINVAL;
+> > > +
+> > > +     /* sk_listener() allows TCP_NEW_SYN_RECV, which makes no sense =
+here. */
+> > > +     if (sk->sk_protocol !=3D IPPROTO_TCP || sk->sk_state !=3D TCP_L=
+ISTEN)
+> > From the test program in patch 3, the "sk" here is obtained from
+> > bpf_sk_lookup_tcp() which does a sk_to_full_sk() before returning.
+> > AFAICT, meaning bpf_sk_lookup_tcp() will return the listening sk
+> > even if there is a request_sock.  Does it make sense to check
+> > syncookie if there is already a request_sock?
+>=20
+> No, that doesn't make a lot of sense. I hadn't realised that
+> sk_lookup_tcp only returns full sockets.
+> This means we need a way to detect that there is a request sock for a
+> given tuple.
+>=20
+> * adding a reqsk_exists(tuple) helper means we have to pay the lookup cos=
+t twice
+> * drop the sk argument and do the necessary lookups in the helper
+> itself, but that also
+>   wastes a call to __inet_lookup_listener
+> * skip sk_to_full_sk() in a helper and return RET_PTR_TO_SOCK_COMMON,
+>   but that violates a bunch of assumptions (e.g. calling bpf_sk_release o=
+n them)
+How about creating a new lookup helper, bpf_sk"c"_lookup_tcp,
+that does not call sk_to_full_sk() before returning.
+Its ".ret_type" will be RET_PTR_TO_SOCK_COMMON_OR_NULL which its
+reference(-counting) state has to be tracked in the verifier also.
+Mainly in check_helper_call(), iirc.
 
-I see what this is, I'll cut a fix for this tomorrow.
+The bpf_prog can then check bpf_sock->state for TCP_LISTEN,
+call bpf_tcp_sock() to get the TCP listener sock and pass to
+the bpf_tcp_check_syncookie()
 
--- 
-Jens Axboe
+>=20
+> For context: ultimately we want use this to answer the question: does
+> this (encapsulated)
+> packet contain a payload destined to a local socket? Amongst the edge
+> cases we need to
+> handle are ICMP Packet Too Big messages and SYN cookies. A solution
+> would be to hide
+> all this in an "uber" helper that takes pointers to the L3 / L4
+> headers and returns a verdict,
+> but that seems a bit gross.
+Please include this use case in the commit message.
+It is useful.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+>=20
+> >
+> > > +             return -EINVAL;
+> > > +
+> > > +     if (!sock_net(sk)->ipv4.sysctl_tcp_syncookies)
+> > Should tcp_synq_no_recent_overflow(tp) be checked also?
+> >
+>=20
+> Yes, not sure how that slipped out.
+>=20
+> > > +             return -EINVAL;
+> > > +
+> > > +     if (!th->ack || th->rst)
+> > How about th->syn?
+> >
+>=20
+> Yes, I missed the fact that the callers in tcp_ipv{4,6}.c check this.
+>=20
+> > > +             return -ENOENT;
+> > > +
+> > > +     cookie =3D ntohl(th->ack_seq) - 1;
+> > > +
+> > > +     switch (sk->sk_family) {
+> > > +     case AF_INET:
+> > > +             if (unlikely(iph_len < sizeof(struct iphdr)))
+> > > +                     return -EINVAL;
+> > > +
+> > > +             ret =3D __cookie_v4_check((struct iphdr *)iph, th, cook=
+ie);
+> > > +             break;
+> > > +
+> > > +#if IS_ENABLED(CONFIG_IPV6)
+> > > +     case AF_INET6:
+> > > +             if (unlikely(iph_len < sizeof(struct ipv6hdr)))
+> > > +                     return -EINVAL;
+> > > +
+> > > +             ret =3D __cookie_v6_check((struct ipv6hdr *)iph, th, co=
+okie);
+> > > +             break;
+> > > +#endif /* CONFIG_IPV6 */
+> > > +
+> > > +     default:
+> > > +             return -EPROTONOSUPPORT;
+> > > +     }
+> > > +
+> > > +     if (ret > 0)
+> > > +             return 0;
+> > > +
+> > > +     return -ENOENT;
+> > > +#else
+> > > +     return -ENOTSUP;
+> > > +#endif
+> > > +}
+> > > +
+> > > +static const struct bpf_func_proto bpf_sk_check_syncookie_proto =3D =
+{
+> > > +     .func           =3D bpf_sk_check_syncookie,
+> > > +     .gpl_only       =3D true,
+> > > +     .pkt_access     =3D true,
+> > > +     .ret_type       =3D RET_INTEGER,
+> > > +     .arg1_type      =3D ARG_PTR_TO_SOCKET,
+> > I think it should be ARG_PTR_TO_TCP_SOCK
+> >
+> > > +     .arg2_type      =3D ARG_PTR_TO_MEM,
+> > > +     .arg3_type      =3D ARG_CONST_SIZE,
+> > > +     .arg4_type      =3D ARG_PTR_TO_MEM,
+> > > +     .arg5_type      =3D ARG_CONST_SIZE,
+> > > +};
+> > > +
+> > >  #endif /* CONFIG_INET */
+>=20
+>=20
+>=20
+> --=20
+> Lorenz Bauer  |  Systems Engineer
+> 25 Lavington St., London SE1 0NZ
+>=20
+> https://urldefense.proofpoint.com/v2/url?u=3Dhttp-3A__www.cloudflare.com&=
+d=3DDwIBaQ&c=3D5VD0RTtNlTh3ycd41b3MUw&r=3DVQnoQ7LvghIj0gVEaiQSUw&m=3DxhDwvX=
+3iD-mbqSrx-L8XQNaZiYFZzMWNo_2Y38Z9j34&s=3DI4Ag3HflabFppFv7UtMp8WnMVSqCDW0W2=
+8ziWIvuwDE&e=3D
