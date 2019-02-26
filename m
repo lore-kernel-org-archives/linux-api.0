@@ -1,126 +1,62 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH 11/19] block: implement bio helper to add iter bvec pages
- to bio
-Date: Tue, 26 Feb 2019 08:54:10 -0700
-Message-ID: <1652577e-787b-638e-625d-c200fb144a9d@kernel.dk>
-References: <20190211190049.7888-1-axboe@kernel.dk>
- <20190211190049.7888-13-axboe@kernel.dk> <20190220225856.GB28313@ming.t460p>
- <b143e8c3-33d5-5f09-c441-98b3bf326d81@kernel.dk>
- <20190226034613.GA676@sol.localdomain>
- <aa1184bb-b482-0637-21e4-1ddb0e7aea90@kernel.dk>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH] mm,mremap: Bail out earlier in mremap_to under map
+ pressure
+Date: Tue, 26 Feb 2019 14:04:28 -0800
+Message-ID: <20190226140428.3e7c8188eda6a54f9da08c43@linux-foundation.org>
+References: <20190226091314.18446-1-osalvador@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <owner-linux-aio@kvack.org>
-In-Reply-To: <aa1184bb-b482-0637-21e4-1ddb0e7aea90@kernel.dk>
-Content-Language: en-US
-Sender: owner-linux-aio@kvack.org
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: Ming Lei <ming.lei@redhat.com>, linux-aio@kvack.org, linux-block@vger.kernel.org, linux-api@vger.kernel.org, hch@lst.de, jmoyer@redhat.com, avi@scylladb.com, jannh@google.com, viro@zeniv.linux.org.uk
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190226091314.18446-1-osalvador@suse.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Oscar Salvador <osalvador@suse.de>
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, hughd@google.com, kirill@shutemov.name, vbabka@suse.cz, joel@joelfernandes.org, jglisse@redhat.com, yang.shi@linux.alibaba.com, mgorman@techsingularity.net
 List-Id: linux-api@vger.kernel.org
 
-On 2/25/19 9:34 PM, Jens Axboe wrote:
-> On 2/25/19 8:46 PM, Eric Biggers wrote:
->> Hi Jens,
->>
->> On Thu, Feb 21, 2019 at 10:45:27AM -0700, Jens Axboe wrote:
->>> On 2/20/19 3:58 PM, Ming Lei wrote:
->>>> On Mon, Feb 11, 2019 at 12:00:41PM -0700, Jens Axboe wrote:
->>>>> For an ITER_BVEC, we can just iterate the iov and add the pages
->>>>> to the bio directly. This requires that the caller doesn't releases
->>>>> the pages on IO completion, we add a BIO_NO_PAGE_REF flag for that.
->>>>>
->>>>> The current two callers of bio_iov_iter_get_pages() are updated to
->>>>> check if they need to release pages on completion. This makes them
->>>>> work with bvecs that contain kernel mapped pages already.
->>>>>
->>>>> Reviewed-by: Hannes Reinecke <hare@suse.com>
->>>>> Reviewed-by: Christoph Hellwig <hch@lst.de>
->>>>> Signed-off-by: Jens Axboe <axboe@kernel.dk>
->>>>> ---
->>>>>  block/bio.c               | 59 ++++++++++++++++++++++++++++++++-------
->>>>>  fs/block_dev.c            |  5 ++--
->>>>>  fs/iomap.c                |  5 ++--
->>>>>  include/linux/blk_types.h |  1 +
->>>>>  4 files changed, 56 insertions(+), 14 deletions(-)
->>>>>
->>>>> diff --git a/block/bio.c b/block/bio.c
->>>>> index 4db1008309ed..330df572cfb8 100644
->>>>> --- a/block/bio.c
->>>>> +++ b/block/bio.c
->>>>> @@ -828,6 +828,23 @@ int bio_add_page(struct bio *bio, struct page *page,
->>>>>  }
->>>>>  EXPORT_SYMBOL(bio_add_page);
->>>>>  
->>>>> +static int __bio_iov_bvec_add_pages(struct bio *bio, struct iov_iter *iter)
->>>>> +{
->>>>> +	const struct bio_vec *bv = iter->bvec;
->>>>> +	unsigned int len;
->>>>> +	size_t size;
->>>>> +
->>>>> +	len = min_t(size_t, bv->bv_len, iter->count);
->>>>> +	size = bio_add_page(bio, bv->bv_page, len,
->>>>> +				bv->bv_offset + iter->iov_offset);
->>>>
->>>> iter->iov_offset needs to be subtracted from 'len', looks
->>>> the following delta change[1] is required, otherwise memory corruption
->>>> can be observed when running xfstests over loop/dio.
->>>
->>> Thanks, I folded this in.
->>>
->>> -- 
->>> Jens Axboe
->>>
->>
->> syzkaller started hitting a crash on linux-next starting with this commit, and
->> it still occurs even with your latest version that has Ming's fix folded in.
->> Specifically, commit a566653ab5ab80a from your io_uring branch with commit date
->> Sun Feb 24 08:20:53 2019 -0700.
->>
->> Reproducer:
->>
->> #define _GNU_SOURCE
->> #include <fcntl.h>
->> #include <linux/loop.h>
->> #include <sys/ioctl.h>
->> #include <sys/sendfile.h>
->> #include <sys/syscall.h>
->> #include <unistd.h>
->>
->> int main(void)
->> {
->>         int memfd, loopfd;
->>
->>         memfd = syscall(__NR_memfd_create, "foo", 0);
->>
->>         pwrite(memfd, "\xa8", 1, 4096);
->>
->>         loopfd = open("/dev/loop0", O_RDWR|O_DIRECT);
->>
->>         ioctl(loopfd, LOOP_SET_FD, memfd);
->>
->>         sendfile(loopfd, loopfd, NULL, 1000000);
->> }
->>
->>
->> Crash:
->>
->> page:ffffea0001a6aab8 count:0 mapcount:0 mapping:0000000000000000 index:0x0
->> flags: 0x100000000000000()
->> raw: 0100000000000000 ffffea0001ad2c50 ffff88807fca49d0 0000000000000000
->> raw: 0000000000000000 0000000000000000 00000000ffffffff
->> page dumped because: VM_BUG_ON_PAGE(page_ref_count(page) == 0)
+On Tue, 26 Feb 2019 10:13:14 +0100 Oscar Salvador <osalvador@suse.de> wrote:
+
+> When using mremap() syscall in addition to MREMAP_FIXED flag,
+> mremap() calls mremap_to() which does the following:
 > 
-> I see what this is, I'll cut a fix for this tomorrow.
+> 1) unmaps the destination region where we are going to move the map
+> 2) If the new region is going to be smaller, we unmap the last part
+>    of the old region
+> 
+> Then, we will eventually call move_vma() to do the actual move.
+> 
+> move_vma() checks whether we are at least 4 maps below max_map_count
+> before going further, otherwise it bails out with -ENOMEM.
+> The problem is that we might have already unmapped the vma's in steps
+> 1) and 2), so it is not possible for userspace to figure out the state
+> of the vma's after it gets -ENOMEM, and it gets tricky for userspace
+> to clean up properly on error path.
+> 
+> While it is true that we can return -ENOMEM for more reasons
+> (e.g: see may_expand_vm() or move_page_tables()), I think that we can
+> avoid this scenario in concret if we check early in mremap_to() if the
+> operation has high chances to succeed map-wise.
+> 
+> Should not be that the case, we can bail out before we even try to unmap
+> anything, so we make sure the vma's are left untouched in case we are likely
+> to be short of maps.
+> 
+> The thumb-rule now is to rely on the worst-scenario case we can have.
+> That is when both vma's (old region and new region) are going to be split
+> in 3, so we get two more maps to the ones we already hold (one per each).
+> If current map count + 2 maps still leads us to 4 maps below the threshold,
+> we are going to pass the check in move_vma().
+> 
+> Of course, this is not free, as it might generate false positives when it is
+> true that we are tight map-wise, but the unmap operation can release several
+> vma's leading us to a good state.
+> 
+> Another approach was also investigated [1], but it may be too much hassle
+> for what it brings.
+> 
 
-Folded in a fix for this, it's in my current io_uring branch and my for-next
-branch.
+How is this going to affect existing userspace which is aware of the
+current behaviour?
 
--- 
-Jens Axboe
-
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+And how does it affect your existing cleanup code, come to that?  Does
+it work as well or better after this change?
