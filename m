@@ -1,7 +1,7 @@
 From: Keith Busch <keith.busch@intel.com>
-Subject: [PATCHv7 05/10] node: Add heterogenous memory access attributes
-Date: Wed, 27 Feb 2019 15:50:33 -0700
-Message-ID: <20190227225038.20438-6-keith.busch@intel.com>
+Subject: [PATCHv7 03/10] acpi/hmat: Parse and report heterogeneous memory
+Date: Wed, 27 Feb 2019 15:50:31 -0700
+Message-ID: <20190227225038.20438-4-keith.busch@intel.com>
 References: <20190227225038.20438-1-keith.busch@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190227225038.20438-1-keith.busch@intel.com>
@@ -10,213 +10,310 @@ To: linux-kernel@vger.kernel.org, linux-acpi@vger.kernel.org, linux-mm@kvack.org
 Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rafael Wysocki <rafael@kernel.org>, Dave Hansen <dave.hansen@intel.com>, Dan Williams <dan.j.williams@intel.com>, Keith Busch <keith.busch@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Heterogeneous memory systems provide memory nodes with different latency
-and bandwidth performance attributes. Provide a new kernel interface
-for subsystems to register the attributes under the memory target
-node's initiator access class. If the system provides this information,
-applications may query these attributes when deciding which node to
-request memory.
+Systems may provide different memory types and export this information
+in the ACPI Heterogeneous Memory Attribute Table (HMAT). Parse these
+tables provided by the platform and report the memory access and caching
+attributes to the kernel messages.
 
-The following example shows the new sysfs hierarchy for a node exporting
-performance attributes:
-
-  # tree -P "read*|write*"/sys/devices/system/node/nodeY/accessZ/initiators/
-  /sys/devices/system/node/nodeY/accessZ/initiators/
-  |-- read_bandwidth
-  |-- read_latency
-  |-- write_bandwidth
-  `-- write_latency
-
-The bandwidth is exported as MB/s and latency is reported in
-nanoseconds. The values are taken from the platform as reported by the
-manufacturer.
-
-Memory accesses from an initiator node that is not one of the memory's
-access "Z" initiator nodes linked in the same directory may observe
-different performance than reported here. When a subsystem makes use
-of this interface, initiators of a different access number may not have
-the same performance relative to initiators in other access numbers, or
-omitted from the any access class' initiators.
-
-Descriptions for memory access initiator performance access attributes
-are added to sysfs stable documentation.
-
+Reviewed-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
 Signed-off-by: Keith Busch <keith.busch@intel.com>
 ---
- Documentation/ABI/stable/sysfs-devices-node | 28 ++++++++++++++
- drivers/base/Kconfig                        |  8 ++++
- drivers/base/node.c                         | 59 +++++++++++++++++++++++++++++
- include/linux/node.h                        | 26 +++++++++++++
- 4 files changed, 121 insertions(+)
+ drivers/acpi/Kconfig       |   1 +
+ drivers/acpi/Makefile      |   1 +
+ drivers/acpi/hmat/Kconfig  |   7 ++
+ drivers/acpi/hmat/Makefile |   1 +
+ drivers/acpi/hmat/hmat.c   | 237 +++++++++++++++++++++++++++++++++++++++++++++
+ 5 files changed, 247 insertions(+)
+ create mode 100644 drivers/acpi/hmat/Kconfig
+ create mode 100644 drivers/acpi/hmat/Makefile
+ create mode 100644 drivers/acpi/hmat/hmat.c
 
-diff --git a/Documentation/ABI/stable/sysfs-devices-node b/Documentation/ABI/stable/sysfs-devices-node
-index fb843222a281..41cb9345e1e0 100644
---- a/Documentation/ABI/stable/sysfs-devices-node
-+++ b/Documentation/ABI/stable/sysfs-devices-node
-@@ -114,3 +114,31 @@ Contact:	Keith Busch <keith.busch@intel.com>
- Description:
- 		The directory containing symlinks to memory targets that
- 		this initiator node has class "Y" access.
-+
-+What:		/sys/devices/system/node/nodeX/accessY/initiators/read_bandwidth
-+Date:		December 2018
-+Contact:	Keith Busch <keith.busch@intel.com>
-+Description:
-+		This node's read bandwidth in MB/s when accessed from
-+		nodes found in this access class's linked initiators.
-+
-+What:		/sys/devices/system/node/nodeX/accessY/initiators/read_latency
-+Date:		December 2018
-+Contact:	Keith Busch <keith.busch@intel.com>
-+Description:
-+		This node's read latency in nanoseconds when accessed
-+		from nodes found in this access class's linked initiators.
-+
-+What:		/sys/devices/system/node/nodeX/accessY/initiators/write_bandwidth
-+Date:		December 2018
-+Contact:	Keith Busch <keith.busch@intel.com>
-+Description:
-+		This node's write bandwidth in MB/s when accessed from
-+		found in this access class's linked initiators.
-+
-+What:		/sys/devices/system/node/nodeX/accessY/initiators/write_latency
-+Date:		December 2018
-+Contact:	Keith Busch <keith.busch@intel.com>
-+Description:
-+		This node's write latency in nanoseconds when access
-+		from nodes found in this class's linked initiators.
-diff --git a/drivers/base/Kconfig b/drivers/base/Kconfig
-index 059700ea3521..a7438a58c250 100644
---- a/drivers/base/Kconfig
-+++ b/drivers/base/Kconfig
-@@ -149,6 +149,14 @@ config DEBUG_TEST_DRIVER_REMOVE
- 	  unusable. You should say N here unless you are explicitly looking to
- 	  test this functionality.
+diff --git a/drivers/acpi/Kconfig b/drivers/acpi/Kconfig
+index 4e015c77e48e..283ee94224c6 100644
+--- a/drivers/acpi/Kconfig
++++ b/drivers/acpi/Kconfig
+@@ -475,6 +475,7 @@ config ACPI_REDUCED_HARDWARE_ONLY
+ 	  If you are unsure what to do, do not enable this option.
  
-+config HMEM_REPORTING
-+	bool
-+	default n
-+	depends on NUMA
+ source "drivers/acpi/nfit/Kconfig"
++source "drivers/acpi/hmat/Kconfig"
+ 
+ source "drivers/acpi/apei/Kconfig"
+ source "drivers/acpi/dptf/Kconfig"
+diff --git a/drivers/acpi/Makefile b/drivers/acpi/Makefile
+index bb857421c2e8..5d361e4e3405 100644
+--- a/drivers/acpi/Makefile
++++ b/drivers/acpi/Makefile
+@@ -80,6 +80,7 @@ obj-$(CONFIG_ACPI_PROCESSOR)	+= processor.o
+ obj-$(CONFIG_ACPI)		+= container.o
+ obj-$(CONFIG_ACPI_THERMAL)	+= thermal.o
+ obj-$(CONFIG_ACPI_NFIT)		+= nfit/
++obj-$(CONFIG_ACPI_HMAT)		+= hmat/
+ obj-$(CONFIG_ACPI)		+= acpi_memhotplug.o
+ obj-$(CONFIG_ACPI_HOTPLUG_IOAPIC) += ioapic.o
+ obj-$(CONFIG_ACPI_BATTERY)	+= battery.o
+diff --git a/drivers/acpi/hmat/Kconfig b/drivers/acpi/hmat/Kconfig
+new file mode 100644
+index 000000000000..2f7111b7af62
+--- /dev/null
++++ b/drivers/acpi/hmat/Kconfig
+@@ -0,0 +1,7 @@
++# SPDX-License-Identifier: GPL-2.0
++config ACPI_HMAT
++	bool "ACPI Heterogeneous Memory Attribute Table Support"
++	depends on ACPI_NUMA
 +	help
-+	  Enable reporting for heterogenous memory access attributes under
-+	  their non-uniform memory nodes.
-+
- source "drivers/base/test/Kconfig"
- 
- config SYS_HYPERVISOR
-diff --git a/drivers/base/node.c b/drivers/base/node.c
-index 6f4097680580..2de546a040a5 100644
---- a/drivers/base/node.c
-+++ b/drivers/base/node.c
-@@ -71,6 +71,9 @@ struct node_access_nodes {
- 	struct device		dev;
- 	struct list_head	list_node;
- 	unsigned		access;
-+#ifdef CONFIG_HMEM_REPORTING
-+	struct node_hmem_attrs	hmem_attrs;
-+#endif
- };
- #define to_access_nodes(dev) container_of(dev, struct node_access_nodes, dev)
- 
-@@ -148,6 +151,62 @@ static struct node_access_nodes *node_init_node_access(struct node *node,
- 	return NULL;
- }
- 
-+#ifdef CONFIG_HMEM_REPORTING
-+#define ACCESS_ATTR(name) 						   \
-+static ssize_t name##_show(struct device *dev,				   \
-+			   struct device_attribute *attr,		   \
-+			   char *buf)					   \
-+{									   \
-+	return sprintf(buf, "%u\n", to_access_nodes(dev)->hmem_attrs.name); \
-+}									   \
-+static DEVICE_ATTR_RO(name);
-+
-+ACCESS_ATTR(read_bandwidth)
-+ACCESS_ATTR(read_latency)
-+ACCESS_ATTR(write_bandwidth)
-+ACCESS_ATTR(write_latency)
-+
-+static struct attribute *access_attrs[] = {
-+	&dev_attr_read_bandwidth.attr,
-+	&dev_attr_read_latency.attr,
-+	&dev_attr_write_bandwidth.attr,
-+	&dev_attr_write_latency.attr,
-+	NULL,
-+};
-+
-+/**
-+ * node_set_perf_attrs - Set the performance values for given access class
-+ * @nid: Node identifier to be set
-+ * @hmem_attrs: Heterogeneous memory performance attributes
-+ * @access: The access class the for the given attributes
++	 If set, this option has the kernel parse and report the
++	 platform's ACPI HMAT (Heterogeneous Memory Attributes Table).
+diff --git a/drivers/acpi/hmat/Makefile b/drivers/acpi/hmat/Makefile
+new file mode 100644
+index 000000000000..e909051d3d00
+--- /dev/null
++++ b/drivers/acpi/hmat/Makefile
+@@ -0,0 +1 @@
++obj-$(CONFIG_ACPI_HMAT) := hmat.o
+diff --git a/drivers/acpi/hmat/hmat.c b/drivers/acpi/hmat/hmat.c
+new file mode 100644
+index 000000000000..99f711420f6d
+--- /dev/null
++++ b/drivers/acpi/hmat/hmat.c
+@@ -0,0 +1,237 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Copyright (c) 2019, Intel Corporation.
++ *
++ * Heterogeneous Memory Attributes Table (HMAT) representation
++ *
++ * This program parses and reports the platform's HMAT tables, and registers
++ * the applicable attributes with the node's interfaces.
 + */
-+void node_set_perf_attrs(unsigned int nid, struct node_hmem_attrs *hmem_attrs,
-+			 unsigned access)
++
++#include <linux/acpi.h>
++#include <linux/bitops.h>
++#include <linux/device.h>
++#include <linux/init.h>
++#include <linux/list.h>
++#include <linux/node.h>
++#include <linux/sysfs.h>
++
++static __initdata u8 hmat_revision;
++
++static __init const char *hmat_data_type(u8 type)
 +{
-+	struct node_access_nodes *c;
-+	struct node *node;
-+	int i;
++	switch (type) {
++	case ACPI_HMAT_ACCESS_LATENCY:
++		return "Access Latency";
++	case ACPI_HMAT_READ_LATENCY:
++		return "Read Latency";
++	case ACPI_HMAT_WRITE_LATENCY:
++		return "Write Latency";
++	case ACPI_HMAT_ACCESS_BANDWIDTH:
++		return "Access Bandwidth";
++	case ACPI_HMAT_READ_BANDWIDTH:
++		return "Read Bandwidth";
++	case ACPI_HMAT_WRITE_BANDWIDTH:
++		return "Write Bandwidth";
++	default:
++		return "Reserved";
++	}
++}
 +
-+	if (WARN_ON_ONCE(!node_online(nid)))
-+		return;
++static __init const char *hmat_data_type_suffix(u8 type)
++{
++	switch (type) {
++	case ACPI_HMAT_ACCESS_LATENCY:
++	case ACPI_HMAT_READ_LATENCY:
++	case ACPI_HMAT_WRITE_LATENCY:
++		return " nsec";
++	case ACPI_HMAT_ACCESS_BANDWIDTH:
++	case ACPI_HMAT_READ_BANDWIDTH:
++	case ACPI_HMAT_WRITE_BANDWIDTH:
++		return " MB/s";
++	default:
++		return "";
++	}
++}
 +
-+	node = node_devices[nid];
-+	c = node_init_node_access(node, access);
-+	if (!c)
-+		return;
++static __init u32 hmat_normalize(u16 entry, u64 base, u8 type)
++{
++	u32 value;
 +
-+	c->hmem_attrs = *hmem_attrs;
-+	for (i = 0; access_attrs[i] != NULL; i++) {
-+		if (sysfs_add_file_to_group(&c->dev.kobj, access_attrs[i],
-+					    "initiators")) {
-+			pr_info("failed to add performance attribute to node %d\n",
-+				nid);
++	/*
++	 * Check for invalid and overflow values
++	 */
++	if (entry == 0xffff || !entry)
++		return 0;
++	else if (base > (UINT_MAX / (entry)))
++		return 0;
++
++	/*
++	 * Divide by the base unit for version 1, convert latency from
++	 * picosenonds to nanoseconds if revision 2.
++	 */
++	value = entry * base;
++	if (hmat_revision == 1) {
++		if (value < 10)
++			return 0;
++		value = DIV_ROUND_UP(value, 10);
++	} else if (hmat_revision == 2) {
++		switch (type) {
++		case ACPI_HMAT_ACCESS_LATENCY:
++		case ACPI_HMAT_READ_LATENCY:
++		case ACPI_HMAT_WRITE_LATENCY:
++			value = DIV_ROUND_UP(value, 1000);
++			break;
++		default:
 +			break;
 +		}
 +	}
++	return value;
 +}
-+#endif
 +
- #define K(x) ((x) << (PAGE_SHIFT - 10))
- static ssize_t node_read_meminfo(struct device *dev,
- 			struct device_attribute *attr, char *buf)
-diff --git a/include/linux/node.h b/include/linux/node.h
-index f34688a203c1..45e14e1e0c18 100644
---- a/include/linux/node.h
-+++ b/include/linux/node.h
-@@ -20,6 +20,32 @@
- #include <linux/list.h>
- #include <linux/workqueue.h>
- 
-+/**
-+ * struct node_hmem_attrs - heterogeneous memory performance attributes
-+ *
-+ * @read_bandwidth:	Read bandwidth in MB/s
-+ * @write_bandwidth:	Write bandwidth in MB/s
-+ * @read_latency:	Read latency in nanoseconds
-+ * @write_latency:	Write latency in nanoseconds
-+ */
-+struct node_hmem_attrs {
-+	unsigned int read_bandwidth;
-+	unsigned int write_bandwidth;
-+	unsigned int read_latency;
-+	unsigned int write_latency;
-+};
-+
-+#ifdef CONFIG_HMEM_REPORTING
-+void node_set_perf_attrs(unsigned int nid, struct node_hmem_attrs *hmem_attrs,
-+			 unsigned access);
-+#else
-+static inline void node_set_perf_attrs(unsigned int nid,
-+				       struct node_hmem_attrs *hmem_attrs,
-+				       unsigned access)
++static __init int hmat_parse_locality(union acpi_subtable_headers *header,
++				      const unsigned long end)
 +{
-+}
-+#endif
++	struct acpi_hmat_locality *hmat_loc = (void *)header;
++	unsigned int init, targ, total_size, ipds, tpds;
++	u32 *inits, *targs, value;
++	u16 *entries;
++	u8 type;
 +
- struct node {
- 	struct device	dev;
- 	struct list_head access_list;
++	if (hmat_loc->header.length < sizeof(*hmat_loc)) {
++		pr_notice("HMAT: Unexpected locality header length: %d\n",
++			 hmat_loc->header.length);
++		return -EINVAL;
++	}
++
++	type = hmat_loc->data_type;
++	ipds = hmat_loc->number_of_initiator_Pds;
++	tpds = hmat_loc->number_of_target_Pds;
++	total_size = sizeof(*hmat_loc) + sizeof(*entries) * ipds * tpds +
++		     sizeof(*inits) * ipds + sizeof(*targs) * tpds;
++	if (hmat_loc->header.length < total_size) {
++		pr_notice("HMAT: Unexpected locality header length:%d, minimum required:%d\n",
++			 hmat_loc->header.length, total_size);
++		return -EINVAL;
++	}
++
++	pr_info("HMAT: Locality: Flags:%02x Type:%s Initiator Domains:%d Target Domains:%d Base:%lld\n",
++		hmat_loc->flags, hmat_data_type(type), ipds, tpds,
++		hmat_loc->entry_base_unit);
++
++	inits = (u32 *)(hmat_loc + 1);
++	targs = inits + ipds;
++	entries = (u16 *)(targs + tpds);
++	for (init = 0; init < ipds; init++) {
++		for (targ = 0; targ < tpds; targ++) {
++			value = hmat_normalize(entries[init * tpds + targ],
++					       hmat_loc->entry_base_unit,
++					       type);
++			pr_info("  Initiator-Target[%d-%d]:%d%s\n",
++				inits[init], targs[targ], value,
++				hmat_data_type_suffix(type));
++		}
++	}
++
++	return 0;
++}
++
++static __init int hmat_parse_cache(union acpi_subtable_headers *header,
++				   const unsigned long end)
++{
++	struct acpi_hmat_cache *cache = (void *)header;
++	u32 attrs;
++
++	if (cache->header.length < sizeof(*cache)) {
++		pr_notice("HMAT: Unexpected cache header length: %d\n",
++			 cache->header.length);
++		return -EINVAL;
++	}
++
++	attrs = cache->cache_attributes;
++	pr_info("HMAT: Cache: Domain:%d Size:%llu Attrs:%08x SMBIOS Handles:%d\n",
++		cache->memory_PD, cache->cache_size, attrs,
++		cache->number_of_SMBIOShandles);
++
++	return 0;
++}
++
++static int __init hmat_parse_address_range(union acpi_subtable_headers *header,
++					   const unsigned long end)
++{
++	struct acpi_hmat_proximity_domain *p = (void *)header;
++	struct memory_target *target = NULL;
++
++	if (p->header.length != sizeof(*p)) {
++		pr_notice("HMAT: Unexpected address range header length: %d\n",
++			 p->header.length);
++		return -EINVAL;
++	}
++
++	if (hmat_revision == 1)
++		pr_info("HMAT: Memory (%#llx length %#llx) Flags:%04x Processor Domain:%d Memory Domain:%d\n",
++			p->reserved3, p->reserved4, p->flags, p->processor_PD,
++			p->memory_PD);
++	else
++		pr_info("HMAT: Memory Flags:%04x Processor Domain:%d Memory Domain:%d\n",
++			p->flags, p->processor_PD, p->memory_PD);
++
++	return 0;
++}
++
++static int __init hmat_parse_subtable(union acpi_subtable_headers *header,
++				      const unsigned long end)
++{
++	struct acpi_hmat_structure *hdr = (void *)header;
++
++	if (!hdr)
++		return -EINVAL;
++
++	switch (hdr->type) {
++	case ACPI_HMAT_TYPE_ADDRESS_RANGE:
++		return hmat_parse_address_range(header, end);
++	case ACPI_HMAT_TYPE_LOCALITY:
++		return hmat_parse_locality(header, end);
++	case ACPI_HMAT_TYPE_CACHE:
++		return hmat_parse_cache(header, end);
++	default:
++		return -EINVAL;
++	}
++}
++
++static __init int hmat_init(void)
++{
++	struct acpi_table_header *tbl;
++	enum acpi_hmat_type i;
++	acpi_status status;
++
++	if (srat_disabled())
++		return 0;
++
++	status = acpi_get_table(ACPI_SIG_HMAT, 0, &tbl);
++	if (ACPI_FAILURE(status))
++		return 0;
++
++	hmat_revision = tbl->revision;
++	switch (hmat_revision) {
++	case 1:
++	case 2:
++		break;
++	default:
++		pr_notice("Ignoring HMAT: Unknown revision:%d\n", hmat_revision);
++		goto out_put;
++	}
++
++	for (i = ACPI_HMAT_TYPE_ADDRESS_RANGE; i < ACPI_HMAT_TYPE_RESERVED; i++) {
++		if (acpi_table_parse_entries(ACPI_SIG_HMAT,
++					     sizeof(struct acpi_table_hmat), i,
++					     hmat_parse_subtable, 0) < 0) {
++			pr_notice("Ignoring HMAT: Invalid table");
++			goto out_put;
++		}
++	}
++out_put:
++	acpi_put_table(tbl);
++	return 0;
++}
++subsys_initcall(hmat_init);
 -- 
 2.14.4
