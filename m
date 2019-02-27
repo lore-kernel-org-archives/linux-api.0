@@ -1,319 +1,190 @@
-From: Keith Busch <keith.busch@intel.com>
-Subject: [PATCHv7 03/10] acpi/hmat: Parse and report heterogeneous memory
-Date: Wed, 27 Feb 2019 15:50:31 -0700
-Message-ID: <20190227225038.20438-4-keith.busch@intel.com>
-References: <20190227225038.20438-1-keith.busch@intel.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190227225038.20438-1-keith.busch@intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-acpi@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rafael Wysocki <rafael@kernel.org>, Dave Hansen <dave.hansen@intel.com>, Dan Williams <dan.j.williams@intel.com>, Keith Busch <keith.busch@intel.com>
+From: Ming Lei <ming.lei@redhat.com>
+Subject: Re: [PATCH 11/19] block: implement bio helper to add iter bvec pages
+ to bio
+Date: Thu, 28 Feb 2019 07:35:32 +0800
+Message-ID: <20190227233531.GB13319@ming.t460p>
+References: <b143e8c3-33d5-5f09-c441-98b3bf326d81@kernel.dk>
+ <20190226034613.GA676@sol.localdomain>
+ <aa1184bb-b482-0637-21e4-1ddb0e7aea90@kernel.dk>
+ <1652577e-787b-638e-625d-c200fb144a9d@kernel.dk>
+ <CACVXFVNOFA8_p+hVvaCffWAQ7+dgn++0b4Wn3naJzyNZN=CoFg@mail.gmail.com>
+ <09820845-07cb-5153-e1c5-59ed185db26f@kernel.dk>
+ <20190227015336.GD16802@ming.t460p>
+ <e4dace7b-6a6f-2606-9a7e-8ae3c97c26b0@kernel.dk>
+ <20190227022144.GE16802@ming.t460p>
+ <b54683e8-fbff-01ab-db98-c35de8e00e9f@kernel.dk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <owner-linux-aio@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <b54683e8-fbff-01ab-db98-c35de8e00e9f@kernel.dk>
+Sender: owner-linux-aio@kvack.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Ming Lei <tom.leiming@gmail.com>, Eric Biggers <ebiggers@kernel.org>, "open list:AIO" <linux-aio@kvack.org>, linux-block <linux-block@vger.kernel.org>, linux-api@vger.kernel.org, Christoph Hellwig <hch@lst.de>, Jeff Moyer <jmoyer@redhat.com>, Avi Kivity <avi@scylladb.com>, jannh@google.com, Al Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-Systems may provide different memory types and export this information
-in the ACPI Heterogeneous Memory Attribute Table (HMAT). Parse these
-tables provided by the platform and report the memory access and caching
-attributes to the kernel messages.
+On Tue, Feb 26, 2019 at 07:28:54PM -0700, Jens Axboe wrote:
+> On 2/26/19 7:21 PM, Ming Lei wrote:
+> > On Tue, Feb 26, 2019 at 06:57:16PM -0700, Jens Axboe wrote:
+> >> On 2/26/19 6:53 PM, Ming Lei wrote:
+> >>> On Tue, Feb 26, 2019 at 06:47:54PM -0700, Jens Axboe wrote:
+> >>>> On 2/26/19 6:21 PM, Ming Lei wrote:
+> >>>>> On Tue, Feb 26, 2019 at 11:56 PM Jens Axboe <axboe@kernel.dk> wrote:
+> >>>>>>
+> >>>>>> On 2/25/19 9:34 PM, Jens Axboe wrote:
+> >>>>>>> On 2/25/19 8:46 PM, Eric Biggers wrote:
+> >>>>>>>> Hi Jens,
+> >>>>>>>>
+> >>>>>>>> On Thu, Feb 21, 2019 at 10:45:27AM -0700, Jens Axboe wrote:
+> >>>>>>>>> On 2/20/19 3:58 PM, Ming Lei wrote:
+> >>>>>>>>>> On Mon, Feb 11, 2019 at 12:00:41PM -0700, Jens Axboe wrote:
+> >>>>>>>>>>> For an ITER_BVEC, we can just iterate the iov and add the pages
+> >>>>>>>>>>> to the bio directly. This requires that the caller doesn't releases
+> >>>>>>>>>>> the pages on IO completion, we add a BIO_NO_PAGE_REF flag for that.
+> >>>>>>>>>>>
+> >>>>>>>>>>> The current two callers of bio_iov_iter_get_pages() are updated to
+> >>>>>>>>>>> check if they need to release pages on completion. This makes them
+> >>>>>>>>>>> work with bvecs that contain kernel mapped pages already.
+> >>>>>>>>>>>
+> >>>>>>>>>>> Reviewed-by: Hannes Reinecke <hare@suse.com>
+> >>>>>>>>>>> Reviewed-by: Christoph Hellwig <hch@lst.de>
+> >>>>>>>>>>> Signed-off-by: Jens Axboe <axboe@kernel.dk>
+> >>>>>>>>>>> ---
+> >>>>>>>>>>>  block/bio.c               | 59 ++++++++++++++++++++++++++++++++-------
+> >>>>>>>>>>>  fs/block_dev.c            |  5 ++--
+> >>>>>>>>>>>  fs/iomap.c                |  5 ++--
+> >>>>>>>>>>>  include/linux/blk_types.h |  1 +
+> >>>>>>>>>>>  4 files changed, 56 insertions(+), 14 deletions(-)
+> >>>>>>>>>>>
+> >>>>>>>>>>> diff --git a/block/bio.c b/block/bio.c
+> >>>>>>>>>>> index 4db1008309ed..330df572cfb8 100644
+> >>>>>>>>>>> --- a/block/bio.c
+> >>>>>>>>>>> +++ b/block/bio.c
+> >>>>>>>>>>> @@ -828,6 +828,23 @@ int bio_add_page(struct bio *bio, struct page *page,
+> >>>>>>>>>>>  }
+> >>>>>>>>>>>  EXPORT_SYMBOL(bio_add_page);
+> >>>>>>>>>>>
+> >>>>>>>>>>> +static int __bio_iov_bvec_add_pages(struct bio *bio, struct iov_iter *iter)
+> >>>>>>>>>>> +{
+> >>>>>>>>>>> + const struct bio_vec *bv = iter->bvec;
+> >>>>>>>>>>> + unsigned int len;
+> >>>>>>>>>>> + size_t size;
+> >>>>>>>>>>> +
+> >>>>>>>>>>> + len = min_t(size_t, bv->bv_len, iter->count);
+> >>>>>>>>>>> + size = bio_add_page(bio, bv->bv_page, len,
+> >>>>>>>>>>> +                         bv->bv_offset + iter->iov_offset);
+> >>>>>>>>>>
+> >>>>>>>>>> iter->iov_offset needs to be subtracted from 'len', looks
+> >>>>>>>>>> the following delta change[1] is required, otherwise memory corruption
+> >>>>>>>>>> can be observed when running xfstests over loop/dio.
+> >>>>>>>>>
+> >>>>>>>>> Thanks, I folded this in.
+> >>>>>>>>>
+> >>>>>>>>> --
+> >>>>>>>>> Jens Axboe
+> >>>>>>>>>
+> >>>>>>>>
+> >>>>>>>> syzkaller started hitting a crash on linux-next starting with this commit, and
+> >>>>>>>> it still occurs even with your latest version that has Ming's fix folded in.
+> >>>>>>>> Specifically, commit a566653ab5ab80a from your io_uring branch with commit date
+> >>>>>>>> Sun Feb 24 08:20:53 2019 -0700.
+> >>>>>>>>
+> >>>>>>>> Reproducer:
+> >>>>>>>>
+> >>>>>>>> #define _GNU_SOURCE
+> >>>>>>>> #include <fcntl.h>
+> >>>>>>>> #include <linux/loop.h>
+> >>>>>>>> #include <sys/ioctl.h>
+> >>>>>>>> #include <sys/sendfile.h>
+> >>>>>>>> #include <sys/syscall.h>
+> >>>>>>>> #include <unistd.h>
+> >>>>>>>>
+> >>>>>>>> int main(void)
+> >>>>>>>> {
+> >>>>>>>>         int memfd, loopfd;
+> >>>>>>>>
+> >>>>>>>>         memfd = syscall(__NR_memfd_create, "foo", 0);
+> >>>>>>>>
+> >>>>>>>>         pwrite(memfd, "\xa8", 1, 4096);
+> >>>>>>>>
+> >>>>>>>>         loopfd = open("/dev/loop0", O_RDWR|O_DIRECT);
+> >>>>>>>>
+> >>>>>>>>         ioctl(loopfd, LOOP_SET_FD, memfd);
+> >>>>>>>>
+> >>>>>>>>         sendfile(loopfd, loopfd, NULL, 1000000);
+> >>>>>>>> }
+> >>>>>>>>
+> >>>>>>>>
+> >>>>>>>> Crash:
+> >>>>>>>>
+> >>>>>>>> page:ffffea0001a6aab8 count:0 mapcount:0 mapping:0000000000000000 index:0x0
+> >>>>>>>> flags: 0x100000000000000()
+> >>>>>>>> raw: 0100000000000000 ffffea0001ad2c50 ffff88807fca49d0 0000000000000000
+> >>>>>>>> raw: 0000000000000000 0000000000000000 00000000ffffffff
+> >>>>>>>> page dumped because: VM_BUG_ON_PAGE(page_ref_count(page) == 0)
+> >>>>>>>
+> >>>>>>> I see what this is, I'll cut a fix for this tomorrow.
+> >>>>>>
+> >>>>>> Folded in a fix for this, it's in my current io_uring branch and my for-next
+> >>>>>> branch.
+> >>>>>
+> >>>>> Hi Jens,
+> >>>>>
+> >>>>> I saw the following change is added:
+> >>>>>
+> >>>>> + if (size == len) {
+> >>>>> + /*
+> >>>>> + * For the normal O_DIRECT case, we could skip grabbing this
+> >>>>> + * reference and then not have to put them again when IO
+> >>>>> + * completes. But this breaks some in-kernel users, like
+> >>>>> + * splicing to/from a loop device, where we release the pipe
+> >>>>> + * pages unconditionally. If we can fix that case, we can
+> >>>>> + * get rid of the get here and the need to call
+> >>>>> + * bio_release_pages() at IO completion time.
+> >>>>> + */
+> >>>>> + get_page(bv->bv_page);
+> >>>>>
+> >>>>> Now the 'bv' may point to more than one page, so the following one may be
+> >>>>> needed:
+> >>>>>
+> >>>>> int i;
+> >>>>> struct bvec_iter_all iter_all;
+> >>>>> struct bio_vec *tmp;
+> >>>>>
+> >>>>> mp_bvec_for_each_segment(tmp, bv, i, iter_all)
+> >>>>>       get_page(tmp->bv_page);
+> >>>>
+> >>>> I guess that would be the safest, even if we don't currently have more
+> >>>> than one page in there. I'll fix it up.
+> >>>
+> >>> It is easy to see multipage bvec from loop, :-)
+> >>
+> >> Speaking of this, I took a quick look at why we've now regressed a lot
+> >> on IOPS perf with the multipage work. It looks like it's all related to
+> >> the (much) fatter setup around iteration, which is related to this very
+> >> topic too.
+> >>
+> >> Basically setup of things like bio_for_each_bvec() and indexing through
+> >> nth_page() is MUCH slower than before.
+> > 
+> > But bio_for_each_bvec() needn't nth_page(), and only bio_for_each_segment()
+> > needs that. However, bio_for_each_segment() isn't called from
+> > blk_queue_split() and blk_rq_map_sg().
+> > 
+> > One issue is that bio_for_each_bvec() still advances by page size
+> > instead of bvec->len, I guess that is the problem, will cook a patch
+> > for your test.
+> 
+> Probably won't make a difference for my test case...
 
-Reviewed-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
-Signed-off-by: Keith Busch <keith.busch@intel.com>
----
- drivers/acpi/Kconfig       |   1 +
- drivers/acpi/Makefile      |   1 +
- drivers/acpi/hmat/Kconfig  |   7 ++
- drivers/acpi/hmat/Makefile |   1 +
- drivers/acpi/hmat/hmat.c   | 237 +++++++++++++++++++++++++++++++++++++++++++++
- 5 files changed, 247 insertions(+)
- create mode 100644 drivers/acpi/hmat/Kconfig
- create mode 100644 drivers/acpi/hmat/Makefile
- create mode 100644 drivers/acpi/hmat/hmat.c
+The thing is that bvec_iter_len() becomes much slower than before,
+I will work a patch for you soon.
 
-diff --git a/drivers/acpi/Kconfig b/drivers/acpi/Kconfig
-index 4e015c77e48e..283ee94224c6 100644
---- a/drivers/acpi/Kconfig
-+++ b/drivers/acpi/Kconfig
-@@ -475,6 +475,7 @@ config ACPI_REDUCED_HARDWARE_ONLY
- 	  If you are unsure what to do, do not enable this option.
- 
- source "drivers/acpi/nfit/Kconfig"
-+source "drivers/acpi/hmat/Kconfig"
- 
- source "drivers/acpi/apei/Kconfig"
- source "drivers/acpi/dptf/Kconfig"
-diff --git a/drivers/acpi/Makefile b/drivers/acpi/Makefile
-index bb857421c2e8..5d361e4e3405 100644
---- a/drivers/acpi/Makefile
-+++ b/drivers/acpi/Makefile
-@@ -80,6 +80,7 @@ obj-$(CONFIG_ACPI_PROCESSOR)	+= processor.o
- obj-$(CONFIG_ACPI)		+= container.o
- obj-$(CONFIG_ACPI_THERMAL)	+= thermal.o
- obj-$(CONFIG_ACPI_NFIT)		+= nfit/
-+obj-$(CONFIG_ACPI_HMAT)		+= hmat/
- obj-$(CONFIG_ACPI)		+= acpi_memhotplug.o
- obj-$(CONFIG_ACPI_HOTPLUG_IOAPIC) += ioapic.o
- obj-$(CONFIG_ACPI_BATTERY)	+= battery.o
-diff --git a/drivers/acpi/hmat/Kconfig b/drivers/acpi/hmat/Kconfig
-new file mode 100644
-index 000000000000..2f7111b7af62
---- /dev/null
-+++ b/drivers/acpi/hmat/Kconfig
-@@ -0,0 +1,7 @@
-+# SPDX-License-Identifier: GPL-2.0
-+config ACPI_HMAT
-+	bool "ACPI Heterogeneous Memory Attribute Table Support"
-+	depends on ACPI_NUMA
-+	help
-+	 If set, this option has the kernel parse and report the
-+	 platform's ACPI HMAT (Heterogeneous Memory Attributes Table).
-diff --git a/drivers/acpi/hmat/Makefile b/drivers/acpi/hmat/Makefile
-new file mode 100644
-index 000000000000..e909051d3d00
---- /dev/null
-+++ b/drivers/acpi/hmat/Makefile
-@@ -0,0 +1 @@
-+obj-$(CONFIG_ACPI_HMAT) := hmat.o
-diff --git a/drivers/acpi/hmat/hmat.c b/drivers/acpi/hmat/hmat.c
-new file mode 100644
-index 000000000000..99f711420f6d
---- /dev/null
-+++ b/drivers/acpi/hmat/hmat.c
-@@ -0,0 +1,237 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Copyright (c) 2019, Intel Corporation.
-+ *
-+ * Heterogeneous Memory Attributes Table (HMAT) representation
-+ *
-+ * This program parses and reports the platform's HMAT tables, and registers
-+ * the applicable attributes with the node's interfaces.
-+ */
-+
-+#include <linux/acpi.h>
-+#include <linux/bitops.h>
-+#include <linux/device.h>
-+#include <linux/init.h>
-+#include <linux/list.h>
-+#include <linux/node.h>
-+#include <linux/sysfs.h>
-+
-+static __initdata u8 hmat_revision;
-+
-+static __init const char *hmat_data_type(u8 type)
-+{
-+	switch (type) {
-+	case ACPI_HMAT_ACCESS_LATENCY:
-+		return "Access Latency";
-+	case ACPI_HMAT_READ_LATENCY:
-+		return "Read Latency";
-+	case ACPI_HMAT_WRITE_LATENCY:
-+		return "Write Latency";
-+	case ACPI_HMAT_ACCESS_BANDWIDTH:
-+		return "Access Bandwidth";
-+	case ACPI_HMAT_READ_BANDWIDTH:
-+		return "Read Bandwidth";
-+	case ACPI_HMAT_WRITE_BANDWIDTH:
-+		return "Write Bandwidth";
-+	default:
-+		return "Reserved";
-+	}
-+}
-+
-+static __init const char *hmat_data_type_suffix(u8 type)
-+{
-+	switch (type) {
-+	case ACPI_HMAT_ACCESS_LATENCY:
-+	case ACPI_HMAT_READ_LATENCY:
-+	case ACPI_HMAT_WRITE_LATENCY:
-+		return " nsec";
-+	case ACPI_HMAT_ACCESS_BANDWIDTH:
-+	case ACPI_HMAT_READ_BANDWIDTH:
-+	case ACPI_HMAT_WRITE_BANDWIDTH:
-+		return " MB/s";
-+	default:
-+		return "";
-+	}
-+}
-+
-+static __init u32 hmat_normalize(u16 entry, u64 base, u8 type)
-+{
-+	u32 value;
-+
-+	/*
-+	 * Check for invalid and overflow values
-+	 */
-+	if (entry == 0xffff || !entry)
-+		return 0;
-+	else if (base > (UINT_MAX / (entry)))
-+		return 0;
-+
-+	/*
-+	 * Divide by the base unit for version 1, convert latency from
-+	 * picosenonds to nanoseconds if revision 2.
-+	 */
-+	value = entry * base;
-+	if (hmat_revision == 1) {
-+		if (value < 10)
-+			return 0;
-+		value = DIV_ROUND_UP(value, 10);
-+	} else if (hmat_revision == 2) {
-+		switch (type) {
-+		case ACPI_HMAT_ACCESS_LATENCY:
-+		case ACPI_HMAT_READ_LATENCY:
-+		case ACPI_HMAT_WRITE_LATENCY:
-+			value = DIV_ROUND_UP(value, 1000);
-+			break;
-+		default:
-+			break;
-+		}
-+	}
-+	return value;
-+}
-+
-+static __init int hmat_parse_locality(union acpi_subtable_headers *header,
-+				      const unsigned long end)
-+{
-+	struct acpi_hmat_locality *hmat_loc = (void *)header;
-+	unsigned int init, targ, total_size, ipds, tpds;
-+	u32 *inits, *targs, value;
-+	u16 *entries;
-+	u8 type;
-+
-+	if (hmat_loc->header.length < sizeof(*hmat_loc)) {
-+		pr_notice("HMAT: Unexpected locality header length: %d\n",
-+			 hmat_loc->header.length);
-+		return -EINVAL;
-+	}
-+
-+	type = hmat_loc->data_type;
-+	ipds = hmat_loc->number_of_initiator_Pds;
-+	tpds = hmat_loc->number_of_target_Pds;
-+	total_size = sizeof(*hmat_loc) + sizeof(*entries) * ipds * tpds +
-+		     sizeof(*inits) * ipds + sizeof(*targs) * tpds;
-+	if (hmat_loc->header.length < total_size) {
-+		pr_notice("HMAT: Unexpected locality header length:%d, minimum required:%d\n",
-+			 hmat_loc->header.length, total_size);
-+		return -EINVAL;
-+	}
-+
-+	pr_info("HMAT: Locality: Flags:%02x Type:%s Initiator Domains:%d Target Domains:%d Base:%lld\n",
-+		hmat_loc->flags, hmat_data_type(type), ipds, tpds,
-+		hmat_loc->entry_base_unit);
-+
-+	inits = (u32 *)(hmat_loc + 1);
-+	targs = inits + ipds;
-+	entries = (u16 *)(targs + tpds);
-+	for (init = 0; init < ipds; init++) {
-+		for (targ = 0; targ < tpds; targ++) {
-+			value = hmat_normalize(entries[init * tpds + targ],
-+					       hmat_loc->entry_base_unit,
-+					       type);
-+			pr_info("  Initiator-Target[%d-%d]:%d%s\n",
-+				inits[init], targs[targ], value,
-+				hmat_data_type_suffix(type));
-+		}
-+	}
-+
-+	return 0;
-+}
-+
-+static __init int hmat_parse_cache(union acpi_subtable_headers *header,
-+				   const unsigned long end)
-+{
-+	struct acpi_hmat_cache *cache = (void *)header;
-+	u32 attrs;
-+
-+	if (cache->header.length < sizeof(*cache)) {
-+		pr_notice("HMAT: Unexpected cache header length: %d\n",
-+			 cache->header.length);
-+		return -EINVAL;
-+	}
-+
-+	attrs = cache->cache_attributes;
-+	pr_info("HMAT: Cache: Domain:%d Size:%llu Attrs:%08x SMBIOS Handles:%d\n",
-+		cache->memory_PD, cache->cache_size, attrs,
-+		cache->number_of_SMBIOShandles);
-+
-+	return 0;
-+}
-+
-+static int __init hmat_parse_address_range(union acpi_subtable_headers *header,
-+					   const unsigned long end)
-+{
-+	struct acpi_hmat_proximity_domain *p = (void *)header;
-+	struct memory_target *target = NULL;
-+
-+	if (p->header.length != sizeof(*p)) {
-+		pr_notice("HMAT: Unexpected address range header length: %d\n",
-+			 p->header.length);
-+		return -EINVAL;
-+	}
-+
-+	if (hmat_revision == 1)
-+		pr_info("HMAT: Memory (%#llx length %#llx) Flags:%04x Processor Domain:%d Memory Domain:%d\n",
-+			p->reserved3, p->reserved4, p->flags, p->processor_PD,
-+			p->memory_PD);
-+	else
-+		pr_info("HMAT: Memory Flags:%04x Processor Domain:%d Memory Domain:%d\n",
-+			p->flags, p->processor_PD, p->memory_PD);
-+
-+	return 0;
-+}
-+
-+static int __init hmat_parse_subtable(union acpi_subtable_headers *header,
-+				      const unsigned long end)
-+{
-+	struct acpi_hmat_structure *hdr = (void *)header;
-+
-+	if (!hdr)
-+		return -EINVAL;
-+
-+	switch (hdr->type) {
-+	case ACPI_HMAT_TYPE_ADDRESS_RANGE:
-+		return hmat_parse_address_range(header, end);
-+	case ACPI_HMAT_TYPE_LOCALITY:
-+		return hmat_parse_locality(header, end);
-+	case ACPI_HMAT_TYPE_CACHE:
-+		return hmat_parse_cache(header, end);
-+	default:
-+		return -EINVAL;
-+	}
-+}
-+
-+static __init int hmat_init(void)
-+{
-+	struct acpi_table_header *tbl;
-+	enum acpi_hmat_type i;
-+	acpi_status status;
-+
-+	if (srat_disabled())
-+		return 0;
-+
-+	status = acpi_get_table(ACPI_SIG_HMAT, 0, &tbl);
-+	if (ACPI_FAILURE(status))
-+		return 0;
-+
-+	hmat_revision = tbl->revision;
-+	switch (hmat_revision) {
-+	case 1:
-+	case 2:
-+		break;
-+	default:
-+		pr_notice("Ignoring HMAT: Unknown revision:%d\n", hmat_revision);
-+		goto out_put;
-+	}
-+
-+	for (i = ACPI_HMAT_TYPE_ADDRESS_RANGE; i < ACPI_HMAT_TYPE_RESERVED; i++) {
-+		if (acpi_table_parse_entries(ACPI_SIG_HMAT,
-+					     sizeof(struct acpi_table_hmat), i,
-+					     hmat_parse_subtable, 0) < 0) {
-+			pr_notice("Ignoring HMAT: Invalid table");
-+			goto out_put;
-+		}
-+	}
-+out_put:
-+	acpi_put_table(tbl);
-+	return 0;
-+}
-+subsys_initcall(hmat_init);
--- 
-2.14.4
+Thanks,
+Ming
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
