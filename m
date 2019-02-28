@@ -1,48 +1,36 @@
-From: Joel Fernandes <joel@joelfernandes.org>
-Subject: Re: [PATCH] mm,mremap: Bail out earlier in mremap_to under map pressure
-Date: Thu, 28 Feb 2019 12:44:11 -0800
-Message-ID: <CAEXW_YQFDJUjHmjE+aF6RkBxO8fzF2j5M1Tufj12MUuvouyOsA@mail.gmail.com>
-References: <20190226091314.18446-1-osalvador@suse.de> <20190226140428.3e7c8188eda6a54f9da08c43@linux-foundation.org>
- <20190227213205.5wdjucqdgfqx33tr@d104.suse.de> <5edcfeb8-4f53-0fe6-1e5b-c1e485f91d0d@suse.cz>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH] numa: Change get_mempolicy() to use nr_node_ids instead
+ of MAX_NUMNODES
+Date: Thu, 28 Feb 2019 21:43:56 +0100
+Message-ID: <adaf3f9c-ac69-9a0d-962c-a21d6e003fbd@suse.cz>
+References: <20190211180245.22295-1-rcampbell@nvidia.com>
+ <20190211112759.a7441b3486ea0b26dec40786@linux-foundation.org>
+ <32575d26-b141-6985-833a-12d48c0dce6a@suse.cz>
+ <20190228111110.564d84f62a1b294ca5b1f9df@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5edcfeb8-4f53-0fe6-1e5b-c1e485f91d0d@suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: Oscar Salvador <osalvador@suse.de>, Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Hugh Dickins <hughd@google.com>, "Kirill A. Shutemov" <kirill@shutemov.name>, jglisse@redhat.com, Yang Shi <yang.shi@linux.alibaba.com>, mgorman@techsingularity.net
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <20190228111110.564d84f62a1b294ca5b1f9df@linux-foundation.org>
+Content-Language: en-US
+Sender: stable-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: rcampbell@nvidia.com, linux-mm@kvack.org, Waiman Long <longman@redhat.com>, Linux API <linux-api@vger.kernel.org>, Alexander Duyck <alexander.duyck@gmail.com>, Andi Kleen <ak@linux.intel.com>, Florian Weimer <fweimer@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, "stable@vger.kernel.org" <stable@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Feb 28, 2019 at 12:06 AM Vlastimil Babka <vbabka@suse.cz> wrote:
->
-> On 2/27/19 10:32 PM, Oscar Salvador wrote:
-> > On Tue, Feb 26, 2019 at 02:04:28PM -0800, Andrew Morton wrote:
-> >> How is this going to affect existing userspace which is aware of the
-> >> current behaviour?
-> >
-> > Well, current behavior is not really predictable.
-> > Our customer was "surprised" that the call to mremap() failed, but the regions
-> > got unmapped nevertheless.
-> > They found it the hard way when they got a segfault when trying to write to those
-> > regions when cleaning up.
-> >
-> > As I said in the changelog, the possibility for false positives exists, due to
-> > the fact that we might get rid of several vma's when unmapping, but I do not
-> > expect existing userspace applications to start failing.
-> > Should be that the case, we can revert the patch, it is not that it adds a lot
-> > of churn.
->
-> Hopefully the only program that would start failing would be a LTP test
-> testing the current behavior near the limit (if such test exists). And
-> that can be adjusted.
->
+On 2/28/19 8:11 PM, Andrew Morton wrote:
+>>> Secondly, 4fb8e5b89bcbbb ("include/linux/nodemask.h: use nr_node_ids
+>>> (not MAX_NUMNODES) in __nodemask_pr_numnodes()") introduced a
+>>
+>> There's no such commit, that sha was probably from linux-next. The patch is
+>> still in mmotm [1]. Luckily, I would say. Maybe Linus or some automation could
+>> run some script to check for bogus Fixes tags before accepting patches?
+> 
+> Ah, that's a relief.
+> 
+> How about we just drop "include/linux/nodemask.h: use nr_node_ids (not
+> MAX_NUMNODES) in __nodemask_pr_numnodes()"
+> (https://ozlabs.org/~akpm/mmotm/broken-out/include-linux-nodemaskh-use-nr_node_ids-not-max_numnodes-in-__nodemask_pr_numnodes.patch)?
+> It's just a cosmetic thing, really.
 
-IMO the original behavior is itself probably not a big issue because
-if userspace wanted to mremap over something, it was prepared to lose
-the "over something" mapping anyway. So it does seem to be a stretch
-to call the behavior a "bug". Still I agree with the patch that mremap
-should not leave any side effects after returning error.
-
-thanks,
-
- - Joel
+Yeah the risk of breaking something is not worth it, IMHO.
