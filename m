@@ -1,425 +1,335 @@
 From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCH man-pages] Add rseq manpage
-Date: Thu, 28 Feb 2019 09:42:58 +0100
-Message-ID: <f6512944-26e1-6231-87b3-b30a2017b4b8@gmail.com>
-References: <20181206144228.9656-1-mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH 2/2] seccomp.2: document userspace notification
+Date: Thu, 28 Feb 2019 13:52:19 +0100
+Message-ID: <2cea5fec-e73e-5749-18af-15c35a4bd23c@gmail.com>
+References: <20181213001106.15268-1-tycho@tycho.ws>
+ <20181213001106.15268-3-tycho@tycho.ws>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20181206144228.9656-1-mathieu.desnoyers@efficios.com>
+In-Reply-To: <20181213001106.15268-3-tycho@tycho.ws>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: mtk.manpages@gmail.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will
+To: Tycho Andersen <tycho@tycho.ws>, "Serge E. Hallyn" <serge@hallyn.com>
+Cc: mtk.manpages@gmail.com, linux-man@vger.kernel.org, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Jann Horn <jann@thejh.net>, Oleg Nesterov <oleg@redhat.com>, Christian Brauner <christian@brauner.io>, "Eric W. Biederman" <ebiederm@xmission.com>, Containers <containers@lists.linux-foundation.org>, Aleksa Sarai <asarai@suse.de>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>
 List-Id: linux-api@vger.kernel.org
 
-On 12/6/18 3:42 PM, Mathieu Desnoyers wrote:
-> [ Michael, rseq(2) was merged into 4.18. Can you have a look at this
->   patch which adds rseq documentation to the man-pages project ? ]
-Hi Matthieu
+[widening CC to the same scope as the code patches]
 
-Sorry for the long delay. I've merged this page into a private
-branch and have done quite a lot of editing. I have many
-questions :-).
+Hello Tycho,
 
-In the first instance, I think it is probably best to have
-a free-form text discussion rather than firing patches
-back and forward. Could you take a look at the questions below
-and respond?
+Sorry for the late response on this. Could you amend/rebase your patches
+in light of the below please.
+
+And anyone's comment on my "big picture" text  at the foot of this
+mail would be very welcome.
+
+On 12/13/18 1:11 AM, Tycho Andersen wrote:
+> Here's some documentation on how to use the userspace notification. I tried
+> to mention the biggest TOCTOU gotcha, but the pointer to the sample is
+> really the best thing, 
+
+Cough! No, the "best thing" really is a good sample program *and* really
+good documentation :-).
+
+> as it has actual code and many comments about what's
+> going on.
+> 
+> Signed-off-by: Tycho Andersen <tycho@tycho.ws>
+> CC: Kees Cook <keescook@chromium.org>
+> ---
+>  man2/seccomp.2 | 85 +++++++++++++++++++++++++++++++++++++++++++++++++-
+>  1 file changed, 84 insertions(+), 1 deletion(-)
+> 
+> diff --git a/man2/seccomp.2 b/man2/seccomp.2
+> index d69187783..fef8914bf 100644
+> --- a/man2/seccomp.2
+> +++ b/man2/seccomp.2
+> @@ -228,6 +228,13 @@ An administrator may override this filter flag by preventing specific
+>  actions from being logged via the
+>  .IR /proc/sys/kernel/seccomp/actions_logged
+>  file.
+> +.TP
+> +.BR SECCOMP_FILTER_FLAG_NEW_LISTENER " (since Linux 4.21)"
+> +With this flag, a new userspace notification fd is returned on success. When
+> +this filter returns
+> +.BR SECCOMP_RET_USER_NOTIF
+> +a notification will be sent to this fd. See "Userspace Notification" below for
+
+s/fd/file descriptor/ throughout please.
+
+> +more details.
+
+I think the description here could be better worded as something like:
+
+    SECCOMP_FILTER_FLAG_NEW_LISTENER
+        Register a new filter, as usual, but on success return a
+        new file descriptor that provides user-space notifications.
+        When the filter returns SECCOMP_RET_USER_NOTIF, a notification
+        will be provided via this file descriptor. The close-on-exec
+        flag is automatically set on the new file descriptor. ...
+
+>  .RE
+>  .TP
+>  .BR SECCOMP_GET_ACTION_AVAIL " (since Linux 4.14)"
+> @@ -606,6 +613,17 @@ file.
+>  .TP
+>  .BR SECCOMP_RET_ALLOW
+>  This value results in the system call being executed.
+> +.TP
+> +.BR SECCOMP_RET_USER_NOTIF " (since Linux 4.21)"
+
+Please see the start of this hanging list in the manual page.
+Can you confirm that SECCOMP_RET_USER_NOTIF really is the lowest
+in the precedence order of all of the filter return values?
+
+> +Forwards the syscall to an attached listener in userspace to allow userspace to
+
+s/syscall/system call throughout please.
+
+> +decide what to do with the syscall. If there is no attached listener (either
+> +because the filter was not installed with the
+> +.BR SECCOMP_FILTER_FLAG_NEW_LISTENER
+> +or because the fd was closed), the filter returns
+> +.BR ENOSYS
+> +similar to what happens when a filter returns
+> +.BR SECCOMP_RET_TRACE
+> +and there is no tracer. See "Userspace Notification" below for more details.
+>  .PP
+>  If an action value other than one of the above is specified,
+>  then the filter action is treated as either
+> @@ -693,10 +711,75 @@ Otherwise, if kernel auditing is enabled and the process is being audited
+>  the action is logged.
+>  .IP *
+>  Otherwise, the action is not logged.
+> +.SS Userspace Notification
+> +Interactin userspace notification functionality in seccomp is primarily done
+> +via file descriptor. 
+
+That sentence is somewhat garbled. Even if I correct the typo, 
+I still don't really understand it. Could you try again?
+(Or, take a look at my "big picture" text at the foot of this mail.)
+
+> This file descriptor can be obtained by passing
+> +.BR SECCOMP_FILTER_FLAG_NEW_LISTENER
+> +as a filter flag when installing a new filter.
+> +.PP
+> +Once an fd is obtained, userspace can wait for events using
+> +.BR poll ()
+
+and presumably select() and epoll?
+
+What kind of notification event do poll(2)/epoll(7)/select(2) provide?
+It looks to be POLLIN/EPOLLIN/readable. Is that correct?
+These details should be noted here. More generally, my assumption
+is that you can use poll(2)/epoll(7)/select(2) to find out about the
+availability of an event, and then use SECCOMP_IOCTL_NOTIF_RECV
+to read that event. Correct? The text needs to be more explicit on
+this.
+
+> +or
+> +.BR ioctl ().
+> +The supported
+> +.BR ioctl ()
+> +operations on a notification fd are:
+> +.TP
+> +.BR SECCOMP_IOCTL_NOTIF_RECV
+> +The argument to this command should be a pointer to a struct seccomp_notif:
+> +.IP
+> +.in +4n
+> +.EX
+> +struct seccomp_notif {
+> +    __u64 id;
+> +    __u32 pid;
+> +    __u32 flags;
+> +    struct seccomp_data data;
+> +};
+> +.EE
+> +.in
+> +.IP
+> +The id field is a filter-unique id for this syscall, and should be supplied in
+> +the response. It can additionally be used in
+> +.BR SECCOMP_IOCTL_ID_VALID
+> +to test whether or not the request is still alive. The pid here is the pid of
+> +the task as visible from the listener's pid namespace. If the pid is not
+> +visible, it is 0. Flags is unused right now. 
+
+So, is 'flags' explicitly zeroed by the kernel? the manual page should note
+this.
+
+> struct seccomp_data is the same
+> +data that would be passed to a filter running in the kernel.
+
+What are the semantics if multiple monitoring processes are employing
+SECCOMP_IOCTL_NOTIF_RECV? Does only one of them get awoken? (Which one?)
+Or do they all get woken up and get a 'struct seccomp_notif'? The semantics
+should be detailed here.
+
+> +.TP
+> +.BR SECCOMP_IOCTL_NOTIF_SEND
+> +The argument to this command should be a pointer to a struct seccomp_notif_resp:
+> +.IP
+> +.in +4n
+> +.EX
+> +struct seccomp_notif_resp {
+> +    __u64 id;
+> +    __s64 val;
+> +    __s32 error;
+> +    __u32 flags;
+> +};
+> +.EE
+> +.in
+> +.IP
+> +The id should be the id from struct seccomp_notif; if error is non-zero, it is
+> +used as the return value, otherwise val is. Flags must be 0 right now.
+
+There really isn't enough detail here to help the reader understand. What
+is the purpose of 'error' vs 'val'? In particular, I'm assuming that the
+monitoring process has (at least) two choices with respect to the system 
+call being made by the target process:
+
+(1) Cause the system call to fail with an error.
+(2) Allow the system call to proceed.
+
+How are 'error' and 'val' used in these two cases?
+Are there more than these two cases? How else is 'val' used?
+
+Also, what happens if the monitoring process does a SECCOMP_IOCTL_NOTIF_RECV,
+but does not subsequently do a SECCOMP_IOCTL_NOTIF_SEND? This should be
+detailed in the manual page.
+
+What are the semantics if multiple monitoring processes are employing
+SECCOMP_IOCTL_NOTIF_SEND? An error for all but the first? The semantics
+should be detailed here. 
+
+> +.TP
+> +.BR SECCOMP_IOCTL_NOTIF_ID_VALID
+> +The argument to this command is just the id to be tested. There is a pid reuse
+> +issue where a task may make a syscall, die, its pid get re-used, and the
+> +listener may operate on the wrong pid. So the process for handling modifying a
+> +pid's state in some way would be to open the pid's resources (/proc/pid/mem or
+> +similar), do this call to verify that the id is still valid, and then use the
+> +resource. See the sample below for more detail.
+> +.PP
+> +A complete example is available in the kernel tree at
+> +.IR samples/seccomp/user-trap.c .
+>  .SH RETURN VALUE
+>  On success,
+>  .BR seccomp ()
+> -returns 0.
+> +returns 0, unless
+> +.BR SECCOMP_FILTER_FLAG_NEW_LISTENER
+> +was specified, in which case it returns the fd number for the new listener fd.
+>  On error, if
+>  .BR SECCOMP_FILTER_FLAG_TSYNC
+>  was used,
+
+More generally though, I'm struggling with this patch because "the 
+big picture" is lacking. Here's my estimate of what I think that
+picture is:
+
+[[
+Instead of having the seccomp() filter decision being made
+within the filter itself, it is possible to pass off the
+decision making to a (different) user-space process that
+makes the decision. This is done using the following steps.
+
+1. The "target process" (i.e., process that will
+   establish a seccomp filter) and the process that will make
+   decisions about system calls ("the monitoring process")
+   establish a connection using a UNIX domain socket. This
+   socket will subsequently be used to exchange a file
+   descriptor.
+
+2. The "target process" establishes a seccomp BPF filter in the
+   usual manner, but with two notable differences:
+
+   * The seccomp() 'flags' argument includes the flag
+     SECCOMP_FILTER_FLAG_NEW_LISTENER. Consequently, the return 
+     value  of a successful seccomp() call is a new "listening"
+     file descriptor that can be used for monitoring.
+   * In cases where it is needed, the BPF filter returns the
+     special action SECCOMP_RET_USER_NOTIF. This return value
+     will trigger a notification event.
+     
+3. The "target process" passes the "listening file descriptor"
+   to the "monitoring process" via the UNIX domain socket.
+
+4. The target process then performs its workload, which includes
+   system calls that will be controlled by the BPF filter.
+   Whenever one of these system calls causes the BPF filter to
+   return SECCOMP_RET_USER_NOTIF, a notification event is
+   generated on the listening file descriptor.
+
+5. The monitoring process will receive notification events
+   on the listening file descriptor. These events are returned
+   as structures of type 'seccomp_notif'. Because this structure
+   and its size may evolve over kernel version, the monitoring
+   process must first determine the size of this structure using
+   the seccomp() SECCOMP_GET_NOTIF_SIZES operation, which
+   returns a structure of type 'seccomp_notif_sizes'. The
+   monitoring process allocates a buffer of size
+   'seccomp_notif_sizes.seccomp_notif' bytes to receive 
+   monitoring events. In addition,the monitoring process
+   allocates another buffer of size 
+   'seccomp_notif_sizes.seccomp_notif_resp' bytes for the
+   response (a 'struct seccomp_notif_resp') that it will
+   provide to the kernel in order to advise how the system
+   call being made by the target process shall be treated.
+
+6. The monitoring process can now repeatedly monitor the
+   listening file descriptor.
+
+   When a SECCOMP_RET_USER_NOTIF-triggered event occurs,
+   the file descriptor will test as readable for 
+   poll(2)/epoll(7)/select(2). The call
+
+       ioctl(listenfd, SECCOMP_IOCTL_NOTIF_RECV, reqptr)
+
+   can be used to read info on the event; this operation
+   blocks until an event is available. It populates
+   the 'struct seccomp_notif' pointed to by the third
+   argument with information about the system call
+   that is being attempted by the target process.
+   
+7. The monitoring process can use the information in the
+   'struct seccomp_notif' to make a determination about the
+   system call being made by the target process. This
+   structure includes a 'data' field that is the same
+   'struct seccomp_data' that is passed to a BPF filter.
+
+   In addition, the monitoring process may make use of other 
+   information that is available from user space. For example, 
+   it may inspect the memory of the target process (whose PID
+   is provided in the 'struct seccomp_notif') using
+   /proc/PID/mem, which includes inspecting the values
+   pointed to by system call arguments (whose location is
+   available 'seccomp_notif.data.args). However, when using
+   the target process PID in this way, one must guard against
+   PID re-use race conditions using the seccomp()
+   SECCOMP_IOCTL_NOTIF_ID_VALID operation.
+
+8. Having arrived at a decision about the target process's
+   system call, the monitoring process can inform the kernel
+   of its decision using the operation
+
+       ioctl(listenfd, SECCOMP_IOCTL_NOTIF_SEND, respptr)
+
+   where the third argument is a pointer to a
+   'struct seccomp_notif_resp'. [Some more details
+   needed here, but I still don't yet understand fully
+   the semantics of the 'error' and 'val' fields.]
+
+I'd like to include text along the above lines at the start of
+the "Userspace Notification" section. Could you take a look at
+the above and let me know any errors, improved terminology, or
+other improvements generally. I'll then work that text into
+the page.
 
 Thanks,
 
 Michael
-
-
-RSEQ(2)                    Linux Programmer's Manual                   RSEQ(2)
-
-NAME
-       rseq - Restartable sequences and CPU number cache
-
-SYNOPSIS
-       #include <linux/rseq.h>
-
-       int rseq(struct rseq *rseq, uint32_t rseq_len, int flags, uint32_t sig);
-
-DESCRIPTION
-       ┌─────────────────────────────────────────────────────┐
-       │FIXME                                                │
-       ├─────────────────────────────────────────────────────┤
-       │Imagine  you  are  someone who is pretty new to this │
-       │idea...  What is notably lacking from this  page  is │
-       │an overview explaining:                              │
-       │                                                     │
-       │    * What a restartable sequence actually is.       │
-       │                                                     │
-       │    * An outline of the steps to perform when using  │
-       │    restartable sequences / rseq(2).                 │
-       │                                                     │
-       │I.e.,  something  along  the  lines  of Jon Corbet's │
-       │https://lwn.net/Articles/697979/.  Can you  come  up │
-       │with something? (Part of it might be at the start of │
-       │this page, and the rest in NOTES; it need not be all │
-       │in one place.)                                       │
-       └─────────────────────────────────────────────────────┘
-       The  rseq()  ABI  accelerates  user-space operations on per-CPU data by
-       defining a shared data structure ABI between each user-space thread and
-       the kernel.
-
-       It allows user-space to perform update operations on per-CPU data with‐
-       out requiring heavy-weight atomic operations.
-
-       ┌─────────────────────────────────────────────────────┐
-       │FIXME                                                │
-       ├─────────────────────────────────────────────────────┤
-       │In the following para: "a  hardware  execution  con‐ │
-       │text"?   What  is  the contrast being drawn here? It │
-       │would be good to state it more explicitly.           │
-       └─────────────────────────────────────────────────────┘
-       The term CPU used in this documentation refers to a hardware  execution
-       context.
-
-       Restartable  sequences are atomic with respect to preemption (making it
-       atomic with respect to other threads running on the same CPU), as  well
-       as  signal delivery (user-space execution contexts nested over the same
-       thread).  They either complete atomically with respect to preemption on
-       the current CPU and signal delivery, or they are aborted.
-
-       ┌─────────────────────────────────────────────────────┐
-       │FIXME                                                │
-       ├─────────────────────────────────────────────────────┤
-       │In  the  preceding sentence, we need a definition of │
-       │"current CPU".                                       │
-       └─────────────────────────────────────────────────────┘
-
-       ┌─────────────────────────────────────────────────────┐
-       │FIXME                                                │
-       ├─────────────────────────────────────────────────────┤
-       │In the following, does "It  is"  means  "Restartable │
-       │sequences are"?                                      │
-       └─────────────────────────────────────────────────────┘
-       It is suited for update operations on per-CPU data.
-
-       ┌─────────────────────────────────────────────────────┐
-       │FIXME                                                │
-       ├─────────────────────────────────────────────────────┤
-       │In  the  following,  does "It is" means "Restartable │
-       │sequences are"?                                      │
-       └─────────────────────────────────────────────────────┘
-       It can be used on data  structures  shared  between  threads  within  a
-       process, and on data structures shared between threads across different
-       processes.
-
-       Some examples of operations that can be accelerated or improved by this
-       ABI:
-
-       · Memory allocator per-CPU free-lists
-
-       · Querying the current CPU number
-
-       · Incrementing per-CPU counters
-
-       · Modifying data protected by per-CPU spinlocks
-
-       · Inserting/removing elements in per-CPU linked-lists
-
-       · Writing/reading per-CPU ring buffers content
-
-       · Accurately  reading performance monitoring unit counters with respect
-         to thread migration
-
-       Restartable sequences must not perform  system  calls.   Doing  so  may
-       result in termination of the process by a segmentation fault.
-
-       The rseq argument is a pointer to the thread-local rseq structure to be
-       shared between kernel and user-space.  The layout of this structure  is
-       shown below.
-
-       The rseq_len argument is the size of the struct rseq to register.
-
-       The  flags  argument is 0 for registration, or RSEQ_FLAG_UNREGISTER for
-       unregistration.
-
-       The sig argument is the 32-bit signature  to  be  expected  before  the
-       abort handler code.
-
-   The rseq structure
-       The  struct  rseq  is aligned on a 32-byte boundary.  This structure is
-       extensible.  Its size is passed as parameter to the rseq() system call.
-
-       ┌─────────────────────────────────────────────────────┐
-       │FIXME                                                │
-       ├─────────────────────────────────────────────────────┤
-       │Below, I added the structure definition (in abbrevi‐ │
-       │ated form).  Is there any reason not to do this?     │
-       └─────────────────────────────────────────────────────┘
-
-           struct rseq {
-               __u32             cpu_id_start;
-               __u32             cpu_id;
-               union {
-                   __u64 ptr64;
-           #ifdef __LP64__
-                   __u64 ptr;
-           #else
-                   ....
-           #endif
-               }                 rseq_cs;
-               __u32             flags;
-           } __attribute__((aligned(4 * sizeof(__u64))));
-
-       ┌─────────────────────────────────────────────────────┐
-       │FIXME                                                │
-       ├─────────────────────────────────────────────────────┤
-       │In  the  text  below, I think it would be helpful to │
-       │explicitly note which of these fields are set by the │
-       │kernel  (on  return from the reseq() call) and which │
-       │are set by the caller (before  calling  rseq()).  Is │
-       │the following correct:                               │
-       │                                                     │
-       │    cpu_id_start - initialized by caller to possible │
-       │    CPU number (e.g., 0), updated by kernel          │
-       │    on return                                        │
-       │                                                     │
-       │    cpu_id - initialized to -1 by caller,            │
-       │    updated by kernel on return                      │
-       │                                                     │
-       │    rseq_cs - initialized by caller, either to NULL  │
-       │    or a pointer to an 'rseq_cs' structure           │
-       │    that is initialized by the caller                │
-       │                                                     │
-       │    flags - initialized by caller, used by kernel    │
-       └─────────────────────────────────────────────────────┘
-
-       The structure fields are as follows:
-
-       ┌─────────────────────────────────────────────────────┐
-       │FIXME                                                │
-       ├─────────────────────────────────────────────────────┤
-       │In  the  following paragraph, and in later places, I │
-       │changed "current thread" to "calling thread". Okay?  │
-       └─────────────────────────────────────────────────────┘
-
-       cpu_id_start
-              Optimistic cache of the CPU number on which the  calling  thread
-              is  running.  The value in this field is guaranteed to always be
-              a possible CPU number, even when rseq is not  initialized.   The
-              value  it  contains  should  always  be confirmed by reading the
-              cpu_id field.
-
-              ┌─────────────────────────────────────────────────────┐
-              │FIXME                                                │
-              ├─────────────────────────────────────────────────────┤
-              │What does the last sentence mean?                    │
-              └─────────────────────────────────────────────────────┘
-
-              This field is an optimistic cache in the sense that it is always
-              guaranteed  to hold a valid CPU number in the range [0..(nr_pos‐
-              sible_cpus - 1)].  It can therefore be loaded by user-space  and
-              used  as  an offset in per-CPU data structures without having to
-              check whether its value is within the valid bounds  compared  to
-              the number of possible CPUs in the system.
-
-              For  user-space  applications  executed on a kernel without rseq
-              support, the cpu_id_start field stays initialized at 0, which is
-              indeed  a  valid CPU number.  It is therefore valid to use it as
-              an offset in per-CPU data structures, and only validate  whether
-              it's  actually  the  current CPU number by comparing it with the
-              cpu_id field within the rseq critical section.
-
-              If the kernel does not provide rseq support, that  cpu_id  field
-              stays  initialized  at  -1,  so  the comparison always fails, as
-              intended.  It is then up to user-space to use a fall-back mecha‐
-              nism, considering that rseq is not available.
-
-              ┌─────────────────────────────────────────────────────┐
-              │FIXME                                                │
-              ├─────────────────────────────────────────────────────┤
-              │The  last  sentence is rather difficult to grok. Can │
-              │we say some more here?                               │
-              └─────────────────────────────────────────────────────┘
-
-       cpu_id Cache of the CPU number on which the calling thread is  running.
-              -1 if uninitialized.
-
-       rseq_cs
-              The  rseq_cs  field  is a pointer to a struct rseq_cs (described
-              below).  It is NULL when no rseq assembly block critical section
-              is  active  for  the  calling  thread.  Setting it to point to a
-              critical section descriptor (struct rseq_cs) marks the beginning
-              of the critical section.
-
-       flags  Flags  indicating  the  restart behavior for the calling thread.
-              This is mainly used for debugging purposes.  Can be either:
-
-              RSEQ_CS_FLAG_NO_RESTART_ON_PREEMPT
-
-              RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL
-
-              RSEQ_CS_FLAG_NO_RESTART_ON_MIGRATE
-
-       ┌─────────────────────────────────────────────────────┐
-       │FIXME                                                │
-       ├─────────────────────────────────────────────────────┤
-       │Each of the above values needs an explanation.       │
-       │                                                     │
-       │Is it correct that only one of  the  values  may  be │
-       │specified in 'flags'? I ask because in the 'rseq_cs' │
-       │structure below, the 'flags' field  is  a  bit  mask │
-       │where  any  combination  of  these flags may be ORed │
-       │together.                                            │
-       │                                                     │
-       └─────────────────────────────────────────────────────┘
-
-   The rseq_cs structure
-       The struct rseq_cs is aligned on a 32-byte boundary  and  has  a  fixed
-       size of 32 bytes.
-
-       ┌─────────────────────────────────────────────────────┐
-       │FIXME                                                │
-       ├─────────────────────────────────────────────────────┤
-       │Below, I added the structure definition (in abbrevi‐ │
-       │ated form).  Is there any reason not to do this?     │
-       └─────────────────────────────────────────────────────┘
-
-           struct rseq_cs {
-               __u32   version;
-               __u32   flags;
-               __u64   start_ip;
-               __u64   post_commit_offset;
-               __u64   abort_ip;
-           } __attribute__((aligned(4 * sizeof(__u64))));
-
-       The structure fields are as follows:
-
-       version
-              Version of this structure.
-
-              ┌─────────────────────────────────────────────────────┐
-              │FIXME                                                │
-              ├─────────────────────────────────────────────────────┤
-              │What does 'version' need to be initialized to?       │
-              └─────────────────────────────────────────────────────┘
-
-       flags  Flags indicating the restart behavior of this structure.  Can be
-              a combination of:
-
-              RSEQ_CS_FLAG_NO_RESTART_ON_PREEMPT
-
-              RSEQ_CS_FLAG_NO_RESTART_ON_SIGNAL
-
-              RSEQ_CS_FLAG_NO_RESTART_ON_MIGRATE
-
-       ┌─────────────────────────────────────────────────────┐
-       │FIXME                                                │
-       ├─────────────────────────────────────────────────────┤
-       │Each of the above values needs an explanation.       │
-       └─────────────────────────────────────────────────────┘
-
-       start_ip
-              Instruction  pointer  address  of  the  first instruction of the
-              sequence of consecutive assembly instructions.
-
-       post_commit_offset
-              Offset (from start_ip address) of the  address  after  the  last
-              instruction  of  the  sequence  of consecutive assembly instruc‐
-              tions.
-
-       abort_ip
-              Instruction pointer address where to move the execution flow  in
-              case  of  abort of the sequence of consecutive assembly instruc‐
-              tions.
-
-NOTES
-       A single library per process  should  keep  the  rseq  structure  in  a
-       thread-local  storage variable.  The cpu_id field should be initialized
-       to -1, and the cpu_id_start field should be initialized to  a  possible
-       CPU value (typically 0).
-
-       Each  thread  is responsible for registering and unregistering its rseq
-       structure.  No more than one rseq structure address can  be  registered
-       per thread at a given time.
-
-       ┌─────────────────────────────────────────────────────┐
-       │FIXME                                                │
-       ├─────────────────────────────────────────────────────┤
-       │In  the  following paragraph, what is the difference │
-       │between "freed" and "reclaim"?  I'm  supposing  they │
-       │mean the same thing, but it's not clear. And if they │
-       │do mean the same thing, then the first two sentences │
-       │appear to contain contradictory information.         │
-       └─────────────────────────────────────────────────────┘
-
-       Memory  of a registered rseq object must not be freed before the thread
-       exits.  Reclaim of rseq object's memory must only be done after  either
-       an explicit rseq unregistration is performed or after the thread exits.
-       Keep in mind that the implementation of  the  Thread-Local  Storage  (C
-       language  __thread)  lifetime  does  not guarantee existence of the TLS
-       area up until the thread exits.
-
-       In a typical usage scenario, the thread registering the rseq  structure
-       will be performing loads and stores from/to that structure.  It is how‐
-       ever also allowed to read that structure from other threads.  The  rseq
-       field  updates performed by the kernel provide relaxed atomicity seman‐
-       tics, which guarantee that  other  threads  performing  relaxed  atomic
-       reads of the CPU number cache will always observe a consistent value.
-
-       ┌─────────────────────────────────────────────────────┐
-       │FIXME                                                │
-       ├─────────────────────────────────────────────────────┤
-       │In  the  preceding  paragraph, can we reasonably add │
-       │some words to explain "relaxed atomicity  semantics" │
-       │and "relaxed atomic reads"?                          │
-       └─────────────────────────────────────────────────────┘
-
-RETURN VALUE
-       A  return  value of 0 indicates success.  On error, -1 is returned, and
-       errno is set appropriately.
-
-ERRORS
-       EBUSY  Restartable sequence is already registered for this thread.
-
-       EFAULT rseq is an invalid address.
-
-       EINVAL Either flags contains an invalid  value,  or  rseq  contains  an
-              address which is not appropriately aligned, or rseq_len contains
-              a size that does not match the size received on registration.
-
-              ┌─────────────────────────────────────────────────────┐
-              │FIXME                                                │
-              ├─────────────────────────────────────────────────────┤
-              │The last case "rseq_len contains a  size  that  does │
-              │not  match  the  size  received on registration" can │
-              │occur only on RSEQ_FLAG_UNREGISTER, tight?           │
-              └─────────────────────────────────────────────────────┘
-
-       ENOSYS The rseq() system call is not implemented by this kernel.
-
-       EPERM  The sig argument on unregistration does not match the  signature
-              received on registration.
-
-VERSIONS
-       The rseq() system call was added in Linux 4.18.
-
-       ┌─────────────────────────────────────────────────────┐
-       │FIXME                                                │
-       ├─────────────────────────────────────────────────────┤
-       │What is the current state of library support?        │
-       └─────────────────────────────────────────────────────┘
-
-CONFORMING TO
-       rseq() is Linux-specific.
-
-       ┌─────────────────────────────────────────────────────┐
-       │FIXME                                                │
-       ├─────────────────────────────────────────────────────┤
-       │Is  there  any  example  code that can reasonably be │
-       │included in this manual page? Or some  example  code │
-       │that can be referred to?                             │
-       └─────────────────────────────────────────────────────┘
-
-SEE ALSO
-       sched_getcpu(3), membarrier(2)
 
 -- 
 Michael Kerrisk
