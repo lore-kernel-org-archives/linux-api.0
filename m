@@ -1,80 +1,66 @@
 From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
 Subject: Re: [PATCH 2/2] seccomp.2: document userspace notification
-Date: Fri, 1 Mar 2019 16:13:46 +0100
-Message-ID: <7a101bfc-b045-35f8-aa3f-a18ecc896fc8@gmail.com>
+Date: Fri, 1 Mar 2019 16:16:27 +0100
+Message-ID: <052d73e2-c786-a760-f03a-a07b5772de5a@gmail.com>
 References: <20181213001106.15268-1-tycho@tycho.ws>
  <20181213001106.15268-3-tycho@tycho.ws>
  <2cea5fec-e73e-5749-18af-15c35a4bd23c@gmail.com>
- <e7a5abd9-f7b7-e077-221a-4c3ef7b818df@gmail.com>
- <20190301145341.GD7413@cisco>
+ <20190301145310.GC7413@cisco>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190301145341.GD7413@cisco>
+In-Reply-To: <20190301145310.GC7413@cisco>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 To: Tycho Andersen <tycho@tycho.ws>
 Cc: mtk.manpages@gmail.com, "Serge E. Hallyn" <serge@hallyn.com>, linux-man@vger.kernel.org, Kees Cook <keescook@chromium.org>, Linux API <linux-api@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>, Jann Horn <jann@thejh.net>, Oleg Nesterov <oleg@redhat.com>, Christian Brauner <christian@brauner.io>, "Eric W. Biederman" <ebiederm@xmission.com>, Containers <containers@lists.linux-foundation.org>, Aleksa Sarai <asarai@suse.de>, Tyler Hicks <tyhicks@canonical.com>, Akihiro Suda <suda.akihiro@lab.ntt.co.jp>
 List-Id: linux-api@vger.kernel.org
 
+Hello Tycho,
+
 On 3/1/19 3:53 PM, Tycho Andersen wrote:
-> On Thu, Feb 28, 2019 at 02:25:55PM +0100, Michael Kerrisk (man-pages) wrote:
->>> 7. The monitoring process can use the information in the
->>>    'struct seccomp_notif' to make a determination about the
->>>    system call being made by the target process. This
->>>    structure includes a 'data' field that is the same
->>>    'struct seccomp_data' that is passed to a BPF filter.
->>>
->>>    In addition, the monitoring process may make use of other 
->>>    information that is available from user space. For example, 
->>>    it may inspect the memory of the target process (whose PID
->>>    is provided in the 'struct seccomp_notif') using
->>>    /proc/PID/mem, which includes inspecting the values
->>>    pointed to by system call arguments (whose location is
->>>    available 'seccomp_notif.data.args). However, when using
->>>    the target process PID in this way, one must guard against
->>>    PID re-use race conditions using the seccomp()
->>>    SECCOMP_IOCTL_NOTIF_ID_VALID operation.
->>>
->>> 8. Having arrived at a decision about the target process's
->>>    system call, the monitoring process can inform the kernel
->>>    of its decision using the operation
->>>
->>>        ioctl(listenfd, SECCOMP_IOCTL_NOTIF_SEND, respptr)
->>>
->>>    where the third argument is a pointer to a
->>>    'struct seccomp_notif_resp'. [Some more details
->>>    needed here, but I still don't yet understand fully
->>>    the semantics of the 'error' and 'val' fields.]
+> On Thu, Feb 28, 2019 at 01:52:19PM +0100, Michael Kerrisk (man-pages) wrote:
+>>> +a notification will be sent to this fd. See "Userspace Notification" below for
 >>
->> So clearly, I misunderstood these last two steps.
+>> s/fd/file descriptor/ throughout please.
+> 
+> Will do.
+> 
+>>> +more details.
 >>
->> (7) is something like: discover information in userspace
->> as required; perform userspace actions if appropriate
->> (perhaps doing the system call operation "on behalf of" the
->> target process).
+>> I think the description here could be better worded as something like:
 >>
+>>     SECCOMP_FILTER_FLAG_NEW_LISTENER
+>>         Register a new filter, as usual, but on success return a
+>>         new file descriptor that provides user-space notifications.
+>>         When the filter returns SECCOMP_RET_USER_NOTIF, a notification
+>>         will be provided via this file descriptor. The close-on-exec
+>>         flag is automatically set on the new file descriptor. ...
 >>
->> (8) is something like:
->>    set 'error' and 'val' to return info to the target process:
->>     * error != 0 ==> make it look like the syscall failed,
->>       with 'errno' set to that value
+>>>  .RE
+>>>  .TP
+>>>  .BR SECCOMP_GET_ACTION_AVAIL " (since Linux 4.14)"
+>>> @@ -606,6 +613,17 @@ file.
+>>>  .TP
+>>>  .BR SECCOMP_RET_ALLOW
+>>>  This value results in the system call being executed.
+>>> +.TP
+>>> +.BR SECCOMP_RET_USER_NOTIF " (since Linux 4.21)"
+>>
+>> Please see the start of this hanging list in the manual page.
+>> Can you confirm that SECCOMP_RET_USER_NOTIF really is the lowest
+>> in the precedence order of all of the filter return values?
+> 
+> Oh, no, I didn't realize it was in a particular order. I'll switch it.
 
-That piece should be amended:
-error < 0 ==> make it look like syscall failed.
-error > 0 ==> make it look like the syscall succeeded 
-       and returned 'error'
+Just for my immediate education (I'm experimenting right now),
+where/how does it fit in the precedence order?
 
-Is that really supposed to happen?
-
->>     * error == 0 ==> make it look like the syscall succeeded 
->>       and returned 'val'
 
 Thanks,
 
 Michael
-
 
 -- 
 Michael Kerrisk
