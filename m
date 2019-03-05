@@ -1,46 +1,58 @@
-From: Jann Horn <jannh@google.com>
+From: Borislav Petkov <bp@alien8.de>
 Subject: Re: [PATCH] x86: Deprecate a.out support
-Date: Tue, 5 Mar 2019 17:30:13 +0100
-Message-ID: <CAG48ez0=AWipDy+aDBtxwEs6h8AmiBnfoU7GMi=_yW3sS14MNQ@mail.gmail.com>
+Date: Tue, 5 Mar 2019 18:31:34 +0100
+Message-ID: <20190305173134.GE8256@zn.tnic>
 References: <CAG48ez1RVd5mQ_Pb6eygQESaZhpQz765OAZYSoPE0kPqfZEXQg@mail.gmail.com>
- <20190305091904.GB8256@zn.tnic> <20190305122218.GD13380@bombadil.infradead.org>
- <20190305134347.4be2449c@alans-desktop> <20190305145717.GD8256@zn.tnic> <CAHk-=wi2E4kugAW7BQwNSVwYHOr=B_9EgzBRMpQ2+1dxAqydDg@mail.gmail.com>
+ <20190305091904.GB8256@zn.tnic>
+ <20190305122218.GD13380@bombadil.infradead.org>
+ <20190305134347.4be2449c@alans-desktop>
+ <20190305145717.GD8256@zn.tnic>
+ <CAHk-=wi2E4kugAW7BQwNSVwYHOr=B_9EgzBRMpQ2+1dxAqydDg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
 In-Reply-To: <CAHk-=wi2E4kugAW7BQwNSVwYHOr=B_9EgzBRMpQ2+1dxAqydDg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Borislav Petkov <bp@alien8.de>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Matthew Wilcox <willy@infradead.org>, Al Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, kernel list <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Richard Weinberger <richard@nod.at>, Anton Ivanov <anton.ivanov@cambridgegreys.com>
+Cc: Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, kernel list <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Richard Weinberger <richard@nod.at>, Anton Ivanov <anton.ivanov@cambridgegreys.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 5, 2019 at 5:22 PM Linus Torvalds
-<torvalds@linux-foundation.org> wrote:
-> On Tue, Mar 5, 2019 at 6:59 AM Borislav Petkov <bp@alien8.de> wrote:
-> > We can at least deprecate it on x86...
->
-> I'd prefer to try to deprecate a.out core dumping first.. That's the
-> part that is actually broken, no?
->
-> In fact, I'd be happy to deprecate a.out entirely, but if somebody
-> _does_ complain, I'd like to be able to bring it back without the core
-> dumping.
->
-> Because I think the likeliihood that anybody cares about a.out core
-> dumps is basically zero. While the likelihood that we have some odd
-> old binary that is still a.out is slightly above zero.
->
-> So I'd be much happier with this if it was a two-stage thing where we
-> just delete a.out core dumping entirely first, and then deprecate even
-> running a.out binaries separately.
->
+On Tue, Mar 05, 2019 at 08:22:21AM -0800, Linus Torvalds wrote:
 > Because I think all the known *bugs* we had were with the core dumping
 > code, weren't they?
->
-> Removing it looks trivial. Untested patch attached.
 
-We might want to also delete the then-unused aout_dump_thread()
-implementations from the various arch trees. We probably want to
-delete arch/*/include/asm/a.out-core.h, since that seems to be the
-only thing these headers do, and the only thing that uses them is
-fs/binfmt_aout.c?
+Well, I'm aware of only this one I fixed but who knows what else has
+bitrotten out there through the years...
+
+> Removing it looks trivial. Untested patch attached.
+> 
+> Then I'd be much happier with your "let's deprecate a.out entirely" as
+> a second patch, because I think it's a unrelated issue and much more
+> likely to have somebody pipe up and say "hey, I have this sequence
+> that generates executables dynamically, and I use a.out because it's
+> much simpler than ELF, and now it's broken". Or something.
+
+Hohumm, yap, it all makes sense to me. That's definitely the safer
+approach without us having to revert patches later.
+
+So how do you wanna handle this?
+
+I guess the easiest would be if you apply your patch directly now and
+add the a.out phase-out strategy we're going for in its commit message
+so that people are aware of what we're doing.
+
+This will allow for other arch maintainers to delete
+arch/*/include/asm/a.out-core.h, Jann mentions in the other mail, after
+-rc1 is cut.
+
+And then I'll carry any other patches through the tip tree ontop of -rc1
+too.
+
+Thx.
+
+-- 
+Regards/Gruss,
+    Boris.
+
+Good mailing practices for 400: avoid top-posting and trim the reply.
