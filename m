@@ -1,80 +1,63 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [PATCH for 5.1 0/3] Restartable Sequences updates for 5.1
-Date: Tue, 5 Mar 2019 15:18:35 -0500 (EST)
-Message-ID: <1689743723.311.1551817115045.JavaMail.zimbra@efficios.com>
-References: <20190305194755.2602-1-mathieu.desnoyers@efficios.com>
+From: Yury Norov <yury.norov@gmail.com>
+Subject: Re: [PATCH v9 00/24] ILP32 for ARM64
+Date: Tue, 5 Mar 2019 23:56:20 +0300
+Message-ID: <20190305205620.GA3805@yury-thinkpad>
+References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190305194755.2602-1-mathieu.desnoyers@efficios.com>
+Content-Disposition: inline
+In-Reply-To: <20180516081910.10067-1-ynorov@caviumnetworks.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael
+To: Yury Norov <ynorov@caviumnetworks.com>
+Cc: Catalin Marinas <catalin.marinas@arm.com>, Arnd Bergmann <arnd@arndb.de>, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Adam Borowski <kilobyte@angband.pl>, Alexander Graf <agraf@suse.de>, Alexey Klimov <klimov.linux@gmail.com>, Andreas Schwab <schwab@suse.de>, Andrew Pinski <pinskia@gmail.com>, Bamvor Zhangjian <bamv2005@gmail.com>, Chris Metcalf <cmetcalf@mellanox.com>, Christoph Muellner <christoph.muellner@theobroma-systems.com>, Dave Martin <Dave.Martin@arm.com>, "David S . Miller" <davem@davemloft.net>, Florian Weimer <fweimer@redhat.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, James Hogan <jame>
 List-Id: linux-api@vger.kernel.org
 
------ On Mar 5, 2019, at 2:47 PM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
+On Wed, May 16, 2018 at 11:18:45AM +0300, Yury Norov wrote:
+> This series enables AARCH64 with ILP32 mode.
+> 
+> As supporting work, it introduces ARCH_32BIT_OFF_T configuration
+> option that is enabled for existing 32-bit architectures but disabled
+> for new arches (so 64-bit off_t userspace type is used by new userspace).
+> Also it deprecates getrlimit and setrlimit syscalls prior to prlimit64.
+> 
+> Based on kernel v4.16. Tested with LTP, glibc testsuite, trinity, lmbench,
+> CPUSpec.
+> 
+> This series on github: 
+> https://github.com/norov/linux/tree/ilp32-4.16
+> Linaro toolchain:
+> http://snapshots.linaro.org/components/toolchain/binaries/7.3-2018.04-rc1/aarch64-linux-gnu_ilp32/
+> Debian repo:
+> http://people.linaro.org/~wookey/ilp32/
+> OpenSUSE repo:
+> https://build.opensuse.org/project/show/devel:ARM:Factory:Contrib:ILP32
+> 
+> Changes:
+> v3: https://lkml.org/lkml/2014/9/3/704
+> v4: https://lkml.org/lkml/2015/4/13/691
+> v5: https://lkml.org/lkml/2015/9/29/911
+> v6: https://lkml.org/lkml/2016/5/23/661
+> v7: https://lkml.org/lkml/2017/1/9/213
+> v8: https://lkml.org/lkml/2017/6/19/624
+> v9: - rebased on top of v4.16;
+>     - signal subsystem reworked to avoid code duplication, as requested
+>       by Dave Martin (patches 18 and 20);
+>     - new files introduced in series use SPDX notation for license;
+>     - linux-api and linux-arch CCed as the series changes kernel ABI;
+>     - checkpatch and other minor fixes.
+>     - Zhou Chengming's reported-by for patch 2 and signed-off-by for
+>       patch 21 removed because his email became invalid. Zhou, please
+>       share your new email.
 
-> Those changes aiming at 5.1 include one comment cleanup, the removal of
-> the rseq_len field from the task struct which serves no purpose
-> considering that the struct size is fixed by the ABI, and a selftest
-> improvement adapting the number of threads to the number of detected
-> CPUs, which is nicer for smaller systems.
+Hi all,
 
-For those interested, here is a status update on how things are evolving
-in terms of rseq Linux ecosystem integration:
+This is the 5.0-based version.
+https://github.com/norov/linux/tree/ilp32-5.0
 
-I've been working with glibc maintainers for the past months to get rseq
-registration integrated into glibc. The patchset is awaiting feedback
-from glibc maintainers at this point. An important part of that integration
-is the user-level ABI defining interaction between the executable and
-libraries wishing to register rseq within the same process. This is needed
-because the rseq system call only supports a single rseq registration per
-thread (this was done on purpose). If all goes well we should see rseq
-integration in glibc as part of the glibc 2.30 release in August 2019.
+Since 4.20:
+ - all new files are consistently GPL2.0-licensed;
+ - AUDIT_ARCH_AARCH64ILP32 added to let syscall_get_arch()
+   differentiate ARM64/ILP32 from ARM64/ILP32.
 
-For those interested in upcoming rseq kernel patches I have ready, those are
-available at [1].
-
-The main reason why we're not seeing more users of rseq out there right now
-is because the user-level ABI to interact between libc, applications, and
-early adopter libraries needs to be specified before projects start using
-rseq. An early adopter of rseq should not be incompatible with a glibc
-which introduces rseq registration support.
-
-Once glibc integration is done, here are a few things I have ready:
-
-* NUMA node ID in TLS
-
-Having the NUMA node ID available in a TLS variable would allow glibc to
-perform interesting NUMA performance improvements within its locking
-implementation, so I have a patch adding NUMA node ID support to rseq
-as a new rseq system call flag.
-
-* Adaptative mutex improvements
-
-I have done a prototype using rseq to implement an adaptative mutex which
-can detect preemption using a rseq critical section. This ensures the
-thread doesn't continue to busy-loop after it returns from preemption, and
-calls sys_futex() instead. This is part of a user-space prototype branch [2],
-and does not require any kernel change.
-
-* cpu_opv system call
-
-Use-cases requiring access to remote per-cpu data such as memory migration
-in a memory allocator and access to specific per-cpu buffers from a
-ring-buffer consumer will end up requiring this additional system call.
-I'm awaiting a broader adoption of rseq (which depends on glibc integration)
-for simpler use-cases before pushing the cpu_opv system call again.
-
-Thanks,
-
-Mathieu
-
-[1] https://git.kernel.org/pub/scm/linux/kernel/git/rseq/linux-rseq.git/
-[2] https://github.com/compudj/rseq-test/blob/adapt-lock/test-rseq-adaptative-lock.c
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Yury
