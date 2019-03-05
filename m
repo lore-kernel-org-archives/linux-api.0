@@ -1,63 +1,29 @@
-From: Yury Norov <yury.norov@gmail.com>
-Subject: Re: [PATCH v9 00/24] ILP32 for ARM64
-Date: Tue, 5 Mar 2019 23:56:20 +0300
-Message-ID: <20190305205620.GA3805@yury-thinkpad>
-References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH for 5.1 0/3] Restartable Sequences updates for 5.1
+Date: Tue, 5 Mar 2019 22:49:59 +0100
+Message-ID: <20190305214958.GP32477@hirez.programming.kicks-ass.net>
+References: <20190305194755.2602-1-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20180516081910.10067-1-ynorov@caviumnetworks.com>
+In-Reply-To: <20190305194755.2602-1-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yury Norov <ynorov@caviumnetworks.com>
-Cc: Catalin Marinas <catalin.marinas@arm.com>, Arnd Bergmann <arnd@arndb.de>, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Adam Borowski <kilobyte@angband.pl>, Alexander Graf <agraf@suse.de>, Alexey Klimov <klimov.linux@gmail.com>, Andreas Schwab <schwab@suse.de>, Andrew Pinski <pinskia@gmail.com>, Bamvor Zhangjian <bamv2005@gmail.com>, Chris Metcalf <cmetcalf@mellanox.com>, Christoph Muellner <christoph.muellner@theobroma-systems.com>, Dave Martin <Dave.Martin@arm.com>, "David S . Miller" <davem@davemloft.net>, Florian Weimer <fweimer@redhat.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, James Hogan <jame>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@gm>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 16, 2018 at 11:18:45AM +0300, Yury Norov wrote:
-> This series enables AARCH64 with ILP32 mode.
+On Tue, Mar 05, 2019 at 02:47:52PM -0500, Mathieu Desnoyers wrote:
+> Mathieu Desnoyers (3):
+>   rseq: cleanup: Reflect removal of event counter in comments
+>   rseq: cleanup: remove rseq_len from task_struct
+>   rseq/selftests: Adapt number of threads to the number of detected cpus
 > 
-> As supporting work, it introduces ARCH_32BIT_OFF_T configuration
-> option that is enabled for existing 32-bit architectures but disabled
-> for new arches (so 64-bit off_t userspace type is used by new userspace).
-> Also it deprecates getrlimit and setrlimit syscalls prior to prlimit64.
-> 
-> Based on kernel v4.16. Tested with LTP, glibc testsuite, trinity, lmbench,
-> CPUSpec.
-> 
-> This series on github: 
-> https://github.com/norov/linux/tree/ilp32-4.16
-> Linaro toolchain:
-> http://snapshots.linaro.org/components/toolchain/binaries/7.3-2018.04-rc1/aarch64-linux-gnu_ilp32/
-> Debian repo:
-> http://people.linaro.org/~wookey/ilp32/
-> OpenSUSE repo:
-> https://build.opensuse.org/project/show/devel:ARM:Factory:Contrib:ILP32
-> 
-> Changes:
-> v3: https://lkml.org/lkml/2014/9/3/704
-> v4: https://lkml.org/lkml/2015/4/13/691
-> v5: https://lkml.org/lkml/2015/9/29/911
-> v6: https://lkml.org/lkml/2016/5/23/661
-> v7: https://lkml.org/lkml/2017/1/9/213
-> v8: https://lkml.org/lkml/2017/6/19/624
-> v9: - rebased on top of v4.16;
->     - signal subsystem reworked to avoid code duplication, as requested
->       by Dave Martin (patches 18 and 20);
->     - new files introduced in series use SPDX notation for license;
->     - linux-api and linux-arch CCed as the series changes kernel ABI;
->     - checkpatch and other minor fixes.
->     - Zhou Chengming's reported-by for patch 2 and signed-off-by for
->       patch 21 removed because his email became invalid. Zhou, please
->       share your new email.
+>  arch/arm/kernel/signal.c                       | 3 +--
+>  arch/x86/kernel/signal.c                       | 5 +----
+>  include/linux/sched.h                          | 4 ----
+>  kernel/rseq.c                                  | 9 +++------
+>  tools/testing/selftests/rseq/run_param_test.sh | 7 +++++--
+>  5 files changed, 10 insertions(+), 18 deletions(-)
 
-Hi all,
-
-This is the 5.0-based version.
-https://github.com/norov/linux/tree/ilp32-5.0
-
-Since 4.20:
- - all new files are consistently GPL2.0-licensed;
- - AUDIT_ARCH_AARCH64ILP32 added to let syscall_get_arch()
-   differentiate ARM64/ILP32 from ARM64/ILP32.
-
-Yury
+Acked-by: Peter Zijlstra (Intel) <peterz@infradead.org>
