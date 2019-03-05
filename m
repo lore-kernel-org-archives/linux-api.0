@@ -1,44 +1,34 @@
-From: Borislav Petkov <bp@alien8.de>
-Subject: Re: [PATCH] x86: Deprecate a.out support
-Date: Tue, 5 Mar 2019 19:18:08 +0100
-Message-ID: <20190305181808.GH8256@zn.tnic>
-References: <CAG48ez1RVd5mQ_Pb6eygQESaZhpQz765OAZYSoPE0kPqfZEXQg@mail.gmail.com>
- <20190305091904.GB8256@zn.tnic>
- <20190305122218.GD13380@bombadil.infradead.org>
- <20190305134347.4be2449c@alans-desktop>
- <20190305145717.GD8256@zn.tnic>
- <CAHk-=wi2E4kugAW7BQwNSVwYHOr=B_9EgzBRMpQ2+1dxAqydDg@mail.gmail.com>
- <20190305173134.GE8256@zn.tnic>
- <CAHk-=wg0bY=RFhD4NW9x++fC0bME=_-9xM3kexGGM3gefHQTyQ@mail.gmail.com>
- <20190305181138.GG8256@zn.tnic>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [PATCH for 5.1 0/3] Restartable Sequences updates for 5.1
+Date: Tue,  5 Mar 2019 14:47:52 -0500
+Message-ID: <20190305194755.2602-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190305181138.GG8256@zn.tnic>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, kernel list <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Richard Weinberger <richard@nod.at>, Anton Ivanov <anton.ivanov@cambridgegreys.com>, linux-alpha@vger.kernel.org, linux-m68k@lists.linux-m68k.org
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@g>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 05, 2019 at 07:11:38PM +0100, Borislav Petkov wrote:
-> I guess you could Cc arch maintainers with the a.out-core.h removal
-> patch to see if anyone screams.
+Those changes aiming at 5.1 include one comment cleanup, the removal of
+the rseq_len field from the task struct which serves no purpose
+considering that the struct size is fixed by the ABI, and a selftest
+improvement adapting the number of threads to the number of detected
+CPUs, which is nicer for smaller systems.
 
-And they're like two for which we need confirmation:
+Thanks,
 
-$ git ls-files | grep a.out-core.h
-arch/alpha/include/asm/a.out-core.h
-arch/m68k/include/asm/a.out-core.h
-arch/um/include/asm/a.out-core.h
-arch/x86/include/asm/a.out-core.h
+Mathieu
 
-um and x86 are clear.
+Mathieu Desnoyers (3):
+  rseq: cleanup: Reflect removal of event counter in comments
+  rseq: cleanup: remove rseq_len from task_struct
+  rseq/selftests: Adapt number of threads to the number of detected cpus
 
-Adding alpha and m68k MLs to Cc.
+ arch/arm/kernel/signal.c                       | 3 +--
+ arch/x86/kernel/signal.c                       | 5 +----
+ include/linux/sched.h                          | 4 ----
+ kernel/rseq.c                                  | 9 +++------
+ tools/testing/selftests/rseq/run_param_test.sh | 7 +++++--
+ 5 files changed, 10 insertions(+), 18 deletions(-)
 
 -- 
-Regards/Gruss,
-    Boris.
-
-Good mailing practices for 400: avoid top-posting and trim the reply.
+2.11.0
