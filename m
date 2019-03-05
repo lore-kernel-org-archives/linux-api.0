@@ -1,7 +1,7 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH for 5.1 2/3] rseq: cleanup: remove rseq_len from task_struct
-Date: Tue,  5 Mar 2019 14:47:54 -0500
-Message-ID: <20190305194755.2602-3-mathieu.desnoyers@efficios.com>
+Subject: [PATCH for 5.1 1/3] rseq: cleanup: Reflect removal of event counter in comments
+Date: Tue,  5 Mar 2019 14:47:53 -0500
+Message-ID: <20190305194755.2602-2-mathieu.desnoyers@efficios.com>
 References: <20190305194755.2602-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190305194755.2602-1-mathieu.desnoyers@efficios.com>
@@ -10,18 +10,9 @@ To: Thomas Gleixner <tglx@linutronix.de>
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@g>
 List-Id: linux-api@vger.kernel.org
 
-The rseq system call, when invoked with flags of "0" or
-"RSEQ_FLAG_UNREGISTER" values, expects the rseq_len parameter to
-be equal to sizeof(struct rseq), which is fixed-size and fixed-layout,
-specified in uapi linux/rseq.h.
-
-Expecting a fixed size for rseq_len is a design choice that ensures
-multiple libraries and application defining __rseq_abi in the same
-process agree on its exact size.
-
-Considering that this size is and will always be the same value, there
-is no point in saving this value within task_struct rseq_len. Remove
-this field from task_struct.
+The "event counter" was removed from rseq before it was merged upstream.
+However, a few comments in the source code still refer to it. Adapt the
+comments to match reality.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
@@ -42,84 +33,56 @@ CC: Andrew Morton <akpm@linux-foundation.org>
 CC: Russell King <linux@arm.linux.org.uk>
 CC: Catalin Marinas <catalin.marinas@arm.com>
 CC: Will Deacon <will.deacon@arm.com>
-CC: Michael Kerrisk <mtk.manpages@gmail.com>
 CC: Boqun Feng <boqun.feng@gmail.com>
-CC: linux-api@vger.kernel.org
 ---
- include/linux/sched.h | 4 ----
- kernel/rseq.c         | 6 ++----
- 2 files changed, 2 insertions(+), 8 deletions(-)
+ arch/arm/kernel/signal.c | 3 +--
+ arch/x86/kernel/signal.c | 5 +----
+ kernel/rseq.c            | 3 +--
+ 3 files changed, 3 insertions(+), 8 deletions(-)
 
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index f9b43c989577..e355688fa82c 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -1059,7 +1059,6 @@ struct task_struct {
+diff --git a/arch/arm/kernel/signal.c b/arch/arm/kernel/signal.c
+index 76bb8de6bf6b..be5edfdde558 100644
+--- a/arch/arm/kernel/signal.c
++++ b/arch/arm/kernel/signal.c
+@@ -549,8 +549,7 @@ static void handle_signal(struct ksignal *ksig, struct pt_regs *regs)
+ 	int ret;
  
- #ifdef CONFIG_RSEQ
- 	struct rseq __user *rseq;
--	u32 rseq_len;
- 	u32 rseq_sig;
  	/*
- 	 * RmW on rseq_event_mask must be performed atomically
-@@ -1852,12 +1851,10 @@ static inline void rseq_fork(struct task_struct *t, unsigned long clone_flags)
- {
- 	if (clone_flags & CLONE_THREAD) {
- 		t->rseq = NULL;
--		t->rseq_len = 0;
- 		t->rseq_sig = 0;
- 		t->rseq_event_mask = 0;
- 	} else {
- 		t->rseq = current->rseq;
--		t->rseq_len = current->rseq_len;
- 		t->rseq_sig = current->rseq_sig;
- 		t->rseq_event_mask = current->rseq_event_mask;
- 	}
-@@ -1866,7 +1863,6 @@ static inline void rseq_fork(struct task_struct *t, unsigned long clone_flags)
- static inline void rseq_execve(struct task_struct *t)
- {
- 	t->rseq = NULL;
--	t->rseq_len = 0;
- 	t->rseq_sig = 0;
- 	t->rseq_event_mask = 0;
- }
+-	 * Increment event counter and perform fixup for the pre-signal
+-	 * frame.
++	 * Perform fixup for the pre-signal frame.
+ 	 */
+ 	rseq_signal_deliver(ksig, regs);
+ 
+diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
+index 08dfd4c1a4f9..22c233b509da 100644
+--- a/arch/x86/kernel/signal.c
++++ b/arch/x86/kernel/signal.c
+@@ -688,10 +688,7 @@ setup_rt_frame(struct ksignal *ksig, struct pt_regs *regs)
+ 	sigset_t *set = sigmask_to_save();
+ 	compat_sigset_t *cset = (compat_sigset_t *) set;
+ 
+-	/*
+-	 * Increment event counter and perform fixup for the pre-signal
+-	 * frame.
+-	 */
++	/* Perform fixup for the pre-signal frame. */
+ 	rseq_signal_deliver(ksig, regs);
+ 
+ 	/* Set up the stack frame */
 diff --git a/kernel/rseq.c b/kernel/rseq.c
-index 849afe749131..9424ee90589e 100644
+index 25e9a7b60eba..849afe749131 100644
 --- a/kernel/rseq.c
 +++ b/kernel/rseq.c
-@@ -313,7 +313,7 @@ SYSCALL_DEFINE4(rseq, struct rseq __user *, rseq, u32, rseq_len,
- 		/* Unregister rseq for current thread. */
- 		if (current->rseq != rseq || !current->rseq)
- 			return -EINVAL;
--		if (current->rseq_len != rseq_len)
-+		if (rseq_len != sizeof(*rseq))
- 			return -EINVAL;
- 		if (current->rseq_sig != sig)
- 			return -EPERM;
-@@ -321,7 +321,6 @@ SYSCALL_DEFINE4(rseq, struct rseq __user *, rseq, u32, rseq_len,
- 		if (ret)
- 			return ret;
- 		current->rseq = NULL;
--		current->rseq_len = 0;
- 		current->rseq_sig = 0;
- 		return 0;
- 	}
-@@ -335,7 +334,7 @@ SYSCALL_DEFINE4(rseq, struct rseq __user *, rseq, u32, rseq_len,
- 		 * the provided address differs from the prior
- 		 * one.
- 		 */
--		if (current->rseq != rseq || current->rseq_len != rseq_len)
-+		if (current->rseq != rseq || rseq_len != sizeof(*rseq))
- 			return -EINVAL;
- 		if (current->rseq_sig != sig)
- 			return -EPERM;
-@@ -353,7 +352,6 @@ SYSCALL_DEFINE4(rseq, struct rseq __user *, rseq, u32, rseq_len,
- 	if (!access_ok(rseq, rseq_len))
- 		return -EFAULT;
- 	current->rseq = rseq;
--	current->rseq_len = rseq_len;
- 	current->rseq_sig = sig;
- 	/*
- 	 * If rseq was previously inactive, and has just been
+@@ -254,8 +254,7 @@ static int rseq_ip_fixup(struct pt_regs *regs)
+  * - signal delivery,
+  * and return to user-space.
+  *
+- * This is how we can ensure that the entire rseq critical section,
+- * consisting of both the C part and the assembly instruction sequence,
++ * This is how we can ensure that the entire rseq critical section
+  * will issue the commit instruction only if executed atomically with
+  * respect to other threads scheduled on the same CPU, and with respect
+  * to signal handlers.
 -- 
 2.11.0
