@@ -1,88 +1,80 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH for 5.1 1/3] rseq: cleanup: Reflect removal of event counter in comments
-Date: Tue,  5 Mar 2019 14:47:53 -0500
-Message-ID: <20190305194755.2602-2-mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH for 5.1 0/3] Restartable Sequences updates for 5.1
+Date: Tue, 5 Mar 2019 15:18:35 -0500 (EST)
+Message-ID: <1689743723.311.1551817115045.JavaMail.zimbra@efficios.com>
 References: <20190305194755.2602-1-mathieu.desnoyers@efficios.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190305194755.2602-1-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Thomas Gleixner <tglx@linutronix.de>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@g>
+Cc: linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael
 List-Id: linux-api@vger.kernel.org
 
-The "event counter" was removed from rseq before it was merged upstream.
-However, a few comments in the source code still refer to it. Adapt the
-comments to match reality.
+----- On Mar 5, 2019, at 2:47 PM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
 
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-CC: Peter Zijlstra <peterz@infradead.org>
-CC: Paul Turner <pjt@google.com>
-CC: Thomas Gleixner <tglx@linutronix.de>
-CC: Andy Lutomirski <luto@amacapital.net>
-CC: Andi Kleen <andi@firstfloor.org>
-CC: Dave Watson <davejwatson@fb.com>
-CC: Chris Lameter <cl@linux.com>
-CC: Ingo Molnar <mingo@redhat.com>
-CC: "H. Peter Anvin" <hpa@zytor.com>
-CC: Ben Maurer <bmaurer@fb.com>
-CC: Steven Rostedt <rostedt@goodmis.org>
-CC: Josh Triplett <josh@joshtriplett.org>
-CC: Linus Torvalds <torvalds@linux-foundation.org>
-CC: Andrew Morton <akpm@linux-foundation.org>
-CC: Russell King <linux@arm.linux.org.uk>
-CC: Catalin Marinas <catalin.marinas@arm.com>
-CC: Will Deacon <will.deacon@arm.com>
-CC: Boqun Feng <boqun.feng@gmail.com>
----
- arch/arm/kernel/signal.c | 3 +--
- arch/x86/kernel/signal.c | 5 +----
- kernel/rseq.c            | 3 +--
- 3 files changed, 3 insertions(+), 8 deletions(-)
+> Those changes aiming at 5.1 include one comment cleanup, the removal of
+> the rseq_len field from the task struct which serves no purpose
+> considering that the struct size is fixed by the ABI, and a selftest
+> improvement adapting the number of threads to the number of detected
+> CPUs, which is nicer for smaller systems.
 
-diff --git a/arch/arm/kernel/signal.c b/arch/arm/kernel/signal.c
-index 76bb8de6bf6b..be5edfdde558 100644
---- a/arch/arm/kernel/signal.c
-+++ b/arch/arm/kernel/signal.c
-@@ -549,8 +549,7 @@ static void handle_signal(struct ksignal *ksig, struct pt_regs *regs)
- 	int ret;
- 
- 	/*
--	 * Increment event counter and perform fixup for the pre-signal
--	 * frame.
-+	 * Perform fixup for the pre-signal frame.
- 	 */
- 	rseq_signal_deliver(ksig, regs);
- 
-diff --git a/arch/x86/kernel/signal.c b/arch/x86/kernel/signal.c
-index 08dfd4c1a4f9..22c233b509da 100644
---- a/arch/x86/kernel/signal.c
-+++ b/arch/x86/kernel/signal.c
-@@ -688,10 +688,7 @@ setup_rt_frame(struct ksignal *ksig, struct pt_regs *regs)
- 	sigset_t *set = sigmask_to_save();
- 	compat_sigset_t *cset = (compat_sigset_t *) set;
- 
--	/*
--	 * Increment event counter and perform fixup for the pre-signal
--	 * frame.
--	 */
-+	/* Perform fixup for the pre-signal frame. */
- 	rseq_signal_deliver(ksig, regs);
- 
- 	/* Set up the stack frame */
-diff --git a/kernel/rseq.c b/kernel/rseq.c
-index 25e9a7b60eba..849afe749131 100644
---- a/kernel/rseq.c
-+++ b/kernel/rseq.c
-@@ -254,8 +254,7 @@ static int rseq_ip_fixup(struct pt_regs *regs)
-  * - signal delivery,
-  * and return to user-space.
-  *
-- * This is how we can ensure that the entire rseq critical section,
-- * consisting of both the C part and the assembly instruction sequence,
-+ * This is how we can ensure that the entire rseq critical section
-  * will issue the commit instruction only if executed atomically with
-  * respect to other threads scheduled on the same CPU, and with respect
-  * to signal handlers.
+For those interested, here is a status update on how things are evolving
+in terms of rseq Linux ecosystem integration:
+
+I've been working with glibc maintainers for the past months to get rseq
+registration integrated into glibc. The patchset is awaiting feedback
+from glibc maintainers at this point. An important part of that integration
+is the user-level ABI defining interaction between the executable and
+libraries wishing to register rseq within the same process. This is needed
+because the rseq system call only supports a single rseq registration per
+thread (this was done on purpose). If all goes well we should see rseq
+integration in glibc as part of the glibc 2.30 release in August 2019.
+
+For those interested in upcoming rseq kernel patches I have ready, those are
+available at [1].
+
+The main reason why we're not seeing more users of rseq out there right now
+is because the user-level ABI to interact between libc, applications, and
+early adopter libraries needs to be specified before projects start using
+rseq. An early adopter of rseq should not be incompatible with a glibc
+which introduces rseq registration support.
+
+Once glibc integration is done, here are a few things I have ready:
+
+* NUMA node ID in TLS
+
+Having the NUMA node ID available in a TLS variable would allow glibc to
+perform interesting NUMA performance improvements within its locking
+implementation, so I have a patch adding NUMA node ID support to rseq
+as a new rseq system call flag.
+
+* Adaptative mutex improvements
+
+I have done a prototype using rseq to implement an adaptative mutex which
+can detect preemption using a rseq critical section. This ensures the
+thread doesn't continue to busy-loop after it returns from preemption, and
+calls sys_futex() instead. This is part of a user-space prototype branch [2],
+and does not require any kernel change.
+
+* cpu_opv system call
+
+Use-cases requiring access to remote per-cpu data such as memory migration
+in a memory allocator and access to specific per-cpu buffers from a
+ring-buffer consumer will end up requiring this additional system call.
+I'm awaiting a broader adoption of rseq (which depends on glibc integration)
+for simpler use-cases before pushing the cpu_opv system call again.
+
+Thanks,
+
+Mathieu
+
+[1] https://git.kernel.org/pub/scm/linux/kernel/git/rseq/linux-rseq.git/
+[2] https://github.com/compudj/rseq-test/blob/adapt-lock/test-rseq-adaptative-lock.c
+
 -- 
-2.11.0
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
