@@ -1,98 +1,182 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [PATCH for 5.1 0/3] Restartable Sequences updates for 5.1
-Date: Wed, 6 Mar 2019 12:00:59 -0500 (EST)
-Message-ID: <228767171.901.1551891659003.JavaMail.zimbra@efficios.com>
-References: <20190305194755.2602-1-mathieu.desnoyers@efficios.com> <1689743723.311.1551817115045.JavaMail.zimbra@efficios.com> <20190305215848.GQ32477@hirez.programming.kicks-ass.net> <486623963.509.1551825130539.JavaMail.zimbra@efficios.com> <20190306083039.GS32477@hirez.programming.kicks-ass.net>
+From: Alexey Gladkov <gladkov.alexey@gmail.com>
+Subject: [PATCH v1] moduleparam: Save information about built-in modules in
+ separate file
+Date: Wed, 6 Mar 2019 17:54:25 +0100
+Message-ID: <20190306165425.GD14017@MacBook-PC.fortress>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/signed; micalg=pgp-sha1;
+        protocol="application/pgp-signature"; boundary="0OWHXb1mYLuhj1Ox"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190306083039.GS32477@hirez.programming.kicks-ass.net>
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: "H.J. Lu" <hjl.tools@gmail.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>Catalin Marinas <c>
+To: linux-kernel@vger.kernel.org, linux-kbuild@vger.kernel.org, linux-api@vger.kernel.org
+Cc: "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>, "Dmitry V. Levin" <ldv@altlinux.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Mar 6, 2019, at 3:30 AM, Peter Zijlstra peterz@infradead.org wrote:
 
-> On Tue, Mar 05, 2019 at 05:32:10PM -0500, Mathieu Desnoyers wrote:
-> 
->> >> * Adaptative mutex improvements
->> >> 
->> >> I have done a prototype using rseq to implement an adaptative mutex which
->> >> can detect preemption using a rseq critical section. This ensures the
->> >> thread doesn't continue to busy-loop after it returns from preemption, and
->> >> calls sys_futex() instead. This is part of a user-space prototype branch [2],
->> >> and does not require any kernel change.
->> > 
->> > I'm still not convinced that is actually the right way to go about
->> > things. The kernel heuristic is spin while the _owner_ runs, and we
->> > don't get preempted, obviously.
->> > 
->> > And the only userspace spinning that makes sense is to cover the cost of
->> > the syscall. Now Obviously PTI wrecked everything, but before that
->> > syscalls were actually plenty fast and you didn't need many cmpxchg
->> > cycles to amortize the syscall itself -- which could then do kernel side
->> > adaptive spinning (when required).
->> 
->> Indeed with PTI the system calls are back to their slow self. ;)
->> 
->> You point about owner is interesting. Perhaps there is one tweak that I
->> should add in there. We could write the owner thread ID in the lock word.
-> 
-> This is already required for PI (and I think robust) futexes. There have
-> been proposals for FUTEX_LOCK and FUTEX_UNLOCK (!PI) primitives that
-> require the same.
-> 
-> Waiman had some patches; but I think all went under because 'important'
-> stuff happened.
-> 
->> When trying to grab a lock, one of a few situations can happen:
->> 
->> - It's unlocked, so we grab it by storing our thread ID,
->> - It's locked, and we can fetch the CPU number of the thread owning it
->>   if we can access its (struct rseq *)->cpu_id through a lookup using its
->>   thread ID, We can then check whether it's the same CPU we are running on.
-> 
-> That might just work with threads (private futexes; which are the
-> majority these these I think), but will obviously not work with regular
-> (shared) futexes.
+--0OWHXb1mYLuhj1Ox
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-If we have enough space available either in the lock word or just nearby,
-we could write the CPU number that was current when the thread owning
-the lock grabbed it. Considering that it should be infrequent that threads
-get migrated to other CPUs while holding the lock, it might be a good enough
-heuristic to figure out whether a thread needs to busy-wait or immediately
-call futex.
+Problem:
 
-Writing the CPU number would work both for private and shared futexes.
+When a kernel module is compiled as a separate module, some important
+information about the kernel module is available via .modinfo section of
+the module.  In contrast, when the kernel module is compiled into the
+kernel, that information is not available.
 
-> 
->>   - If so, we _know_ we should let the owner run, so we call futex right away,
->>     no spinning. We can even boost it for priority inheritance mutexes,
->>   - If it's owned by a thread which was last running on a different CPU,
->>     then it may make sense to actively try to grab the lock by spinning
->>     up to a certain number of loops (which can be either fixed or adaptative).
->>     After that limit, call futex. If preempted while looping, call futex.
->> 
->> Do you see this as an improvement over what exists today, or am I
->> on the wrong track ?
-> 
-> That's probably better than what they have today. Last time I looked at
-> libc pthread I got really sad -- arguably that was a long time ago, and
-> some of that stuff is because POSIX, but still.
-> 
-> Some day we should redesign all that.. futex2 etc.
+Information about built-in modules is necessary in the following cases:
 
-It sounds like an interesting topic to bring up at the next LPC! In the
-meantime, a good start would be to state the desiderata of what requirements
-should be covered by this redesign.
+1. When it is necessary to find out what additional parameters can be
+passed to the kernel at boot time.
 
-Thanks,
+2. When you need to know which module names and their aliases are in
+the kernel. This is very useful for creating an initrd image.
 
-Mathieu
+Proposal:
 
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+The proposed patch does not remove .modinfo section with module
+information from the vmlinux at the build time and saves it into a
+separate file after kernel linking. So, the kernel does not increase in
+size and no additional information remains in it. Information is stored
+in the same format as in the separate modules (null-terminated string
+array). Because the .modinfo section is already exported with a separate
+modules, we are not creating a new API.
+
+It can be easily read in the userspace:
+
+$ tr '\0' '\n' < kernel.builtin.modinfo
+ext4.softdep=3Dpre: crc32c
+ext4.license=3DGPL
+ext4.description=3DFourth Extended Filesystem
+ext4.author=3DRemy Card, Stephen Tweedie, Andrew Morton, Andreas Dilger, Th=
+eodore Ts'o and others
+ext4.alias=3Dfs-ext4
+ext4.alias=3Dext3
+ext4.alias=3Dfs-ext3
+ext4.alias=3Dext2
+ext4.alias=3Dfs-ext2
+md_mod.alias=3Dblock-major-9-*
+md_mod.alias=3Dmd
+md_mod.description=3DMD RAID framework
+md_mod.license=3DGPL
+md_mod.parmtype=3Dcreate_on_open:bool
+md_mod.parmtype=3Dstart_dirty_degraded:int
+=2E..
+
+Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
+Signed-off-by: Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>
+---
+ Makefile                    |  1 +
+ include/linux/moduleparam.h | 12 +++++-------
+ scripts/link-vmlinux.sh     |  8 ++++++++
+ 3 files changed, 14 insertions(+), 7 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index d5713e7b1e50..971102194c92 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1288,6 +1288,7 @@ _modinst_:
+ 	fi
+ 	@cp -f $(objtree)/modules.order $(MODLIB)/
+ 	@cp -f $(objtree)/modules.builtin $(MODLIB)/
++	@cp -f $(objtree)/kernel.builtin.modinfo $(MODLIB)/
+ 	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.modinst
+=20
+ # This depmod is only for convenience to give the initial
+diff --git a/include/linux/moduleparam.h b/include/linux/moduleparam.h
+index ba36506db4fb..5ba250d9172a 100644
+--- a/include/linux/moduleparam.h
++++ b/include/linux/moduleparam.h
+@@ -10,23 +10,21 @@
+    module name. */
+ #ifdef MODULE
+ #define MODULE_PARAM_PREFIX /* empty */
++#define __MODULE_INFO_PREFIX /* empty */
+ #else
+ #define MODULE_PARAM_PREFIX KBUILD_MODNAME "."
++/* We cannot use MODULE_PARAM_PREFIX because some modules override it. */
++#define __MODULE_INFO_PREFIX KBUILD_MODNAME "."
+ #endif
+=20
+ /* Chosen so that structs with an unsigned long line up. */
+ #define MAX_PARAM_PREFIX_LEN (64 - sizeof(unsigned long))
+=20
+-#ifdef MODULE
+ #define __MODULE_INFO(tag, name, info)					  \
+ static const char __UNIQUE_ID(name)[]					  \
+   __used __attribute__((section(".modinfo"), unused, aligned(1)))	  \
+-  =3D __stringify(tag) "=3D" info
+-#else  /* !MODULE */
+-/* This struct is here for syntactic coherency, it is not used */
+-#define __MODULE_INFO(tag, name, info)					  \
+-  struct __UNIQUE_ID(name) {}
+-#endif
++  =3D __MODULE_INFO_PREFIX __stringify(tag) "=3D" info
++
+ #define __MODULE_PARM_TYPE(name, _type)					  \
+   __MODULE_INFO(parmtype, name##type, #name ":" _type)
+=20
+diff --git a/scripts/link-vmlinux.sh b/scripts/link-vmlinux.sh
+index c8cf45362bd6..399d7e4d11ec 100755
+--- a/scripts/link-vmlinux.sh
++++ b/scripts/link-vmlinux.sh
+@@ -258,10 +258,12 @@ if [ -n "${CONFIG_KALLSYMS}" ]; then
+=20
+ 	# step 1
+ 	vmlinux_link "" .tmp_vmlinux1
++	"${OBJCOPY}" -R .modinfo .tmp_vmlinux1
+ 	kallsyms .tmp_vmlinux1 .tmp_kallsyms1.o
+=20
+ 	# step 2
+ 	vmlinux_link .tmp_kallsyms1.o .tmp_vmlinux2
++	"${OBJCOPY}" -R .modinfo .tmp_vmlinux2
+ 	kallsyms .tmp_vmlinux2 .tmp_kallsyms2.o
+=20
+ 	# step 3
+@@ -273,6 +275,7 @@ if [ -n "${CONFIG_KALLSYMS}" ]; then
+ 		kallsyms_vmlinux=3D.tmp_vmlinux3
+=20
+ 		vmlinux_link .tmp_kallsyms2.o .tmp_vmlinux3
++		"${OBJCOPY}" -R .modinfo .tmp_vmlinux3
+=20
+ 		kallsyms .tmp_vmlinux3 .tmp_kallsyms3.o
+ 	fi
+@@ -281,6 +284,11 @@ fi
+ info LD vmlinux
+ vmlinux_link "${kallsymso}" vmlinux
+=20
++info MODINFO kernel.builtin.modinfo
++"${OBJCOPY}" -j .modinfo -O binary vmlinux kernel.builtin.modinfo
++chmod 444 kernel.builtin.modinfo
++"${OBJCOPY}" -R .modinfo vmlinux
++
+ if [ -n "${CONFIG_BUILDTIME_EXTABLE_SORT}" ]; then
+ 	info SORTEX vmlinux
+ 	sortextable vmlinux
+--=20
+2.19.2
+
+
+--0OWHXb1mYLuhj1Ox
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIcBAEBAgAGBQJcf/s1AAoJEKRaulRM/9Q0u+oP/1vxXnWlVM43EVSoQes8LsAd
+P9mLCkEWPWdAyTnlCgcPwOetr2drGfh1rX8mhC4YLM0zCZ4LVUJybXLZbZU1K7Ue
+pGfywG5ac3+ux4d/tcemShRfoiEbt4pfAwNoDJmeFBRct9wjXVjPwiLckEmOSk6f
+Rp7aEIr/qtThhofAqe4ycSp+FW4V39pa+qg5DpmYiPxjqGsMcPW5jUUBP0d/j1u5
+Ojo+ExKnYy7WLXI212fH3XuHCAyoTUPn9uYRyYwiZ2XLdPtEQzf5jI8MAxbU7HLF
+oDxPBITOFLlqTWYm0M29aGNsx2HFNSFHKzKbjV0CuOonVJql2kl1zIzEBfGJ1bPd
+WKyX/XhIZpF8p2nKSylbad985t+24SpCDFonriduaesMFgyyTORxoW6HF6QDjo27
+i4/RqxYGNanTDn/FV70+zbyhu5r0/Ph+i/bKc+BSWcvuTFTSgzEjkZ+GsLIzjE3J
+2P5jJQa8QFboJLiN0iMrUQE4UbiWscCf/4azeWndnNlDiMtAkNt0q5eqhqo4qbAK
+NQJLkjNjuBBYeC+XeoNdE5sE/8ieC870yGS0GTTyilKUNCbZllXvertrVZ5H1c0Q
+ImI9/10n1CxOqe/ssHrKi/C1nsDdZ+Gr8uG3PhdgTZLOFroFhZDVzC2BPoGSGQ2t
+d2EdYqiSg1WbF8cOfXLY
+=bKn9
+-----END PGP SIGNATURE-----
+
+--0OWHXb1mYLuhj1Ox--
