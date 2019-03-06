@@ -1,41 +1,40 @@
-From: Jiri Kosina <jikos@kernel.org>
-Subject: Re: [PATCH 0/3] mincore() and IOCB_NOWAIT adjustments
-Date: Wed, 6 Mar 2019 13:11:39 +0100 (CET)
-Message-ID: <nycvar.YFH.7.76.1903061310170.19912@cbobk.fhfr.pm>
-References: <nycvar.YFH.7.76.1901051817390.16954@cbobk.fhfr.pm> <20190130124420.1834-1-vbabka@suse.cz>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: a.out coredumping: fix or delete?
+Date: Wed, 6 Mar 2019 13:25:17 +0100 (CET)
+Message-ID: <alpine.DEB.2.21.1903061323030.1646@nanos.tec.linutronix.de>
+References: <CAG48ez1RVd5mQ_Pb6eygQESaZhpQz765OAZYSoPE0kPqfZEXQg@mail.gmail.com> <20190305091904.GB8256@zn.tnic> <20190305122218.GD13380@bombadil.infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190130124420.1834-1-vbabka@suse.cz>
+In-Reply-To: <20190305122218.GD13380@bombadil.infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Vlastimil Babka <vbabka@suse.cz>, Andrew Morton <akpm@linux-foundation.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, Greg KH <gregkh@linuxfoundation.org>, Jann Horn <jannh@google.com>, Andy Lutomirski <luto@amacapital.net>, Cyril Hrubis <chrubis@suse.cz>, Daniel Gruss <daniel@gruss.cc>, Dave Chinner <david@fromorbit.com>, Dominique Martinet <asmadeus@codewreck.org>, Kevin Easton <kevin@guarana.org>, "Kirill A. Shutemov" <kirill@shutemov.name>, Matthew Wilcox <willy@infradead.org>, Tejun Heo <tj@kernel.org>
+To: Matthew Wilcox <willy@infradead.org>
+Cc: Borislav Petkov <bp@alien8.de>, Jann Horn <jannh@google.com>, Al Viro <viro@zeniv.linux.org.uk>, kernel list <linux-kernel@vger.kernel.org>, linux-fsdevel@vger.kernel.org, the arch/x86 maintainers <x86@kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 30 Jan 2019, Vlastimil Babka wrote:
-
-> I've collected the patches from the discussion for formal posting. The first
-> two should be settled already, third one is the possible improvement I've
-> mentioned earlier, where only in restricted case we resort to existence of page
-> table mapping (the original and later reverted approach from Linus) instead of
-> faking the result completely. Review and testing welcome.
+On Tue, 5 Mar 2019, Matthew Wilcox wrote:
+> On Tue, Mar 05, 2019 at 10:19:04AM +0100, Borislav Petkov wrote:
+> > On Sat, Mar 02, 2019 at 12:57:30AM +0100, Jann Horn wrote:
+> > > In theory, Linux can dump cores for a.out binaries. In practice, that
+> > > code is pretty bitrotten and buggy. Does anyone want that code so much
+> > > that they'd like to fix it, or can we just delete it?
+> > 
+> > I was asking myself the same question while doing
+> > 
+> >   10970e1b4be9 ("x86/a.out: Clear the dump structure initially")
+> > 
+> > especially since it is kinda hard to get the toolchain to even create an
+> > a.out executable - your script to create one case-in-point.
 > 
-> The consensus seems to be going through -mm tree for 5.1, unless Linus wants
-> them alredy for 5.0.
-> 
-> Jiri Kosina (2):
->   mm/mincore: make mincore() more conservative
->   mm/filemap: initiate readahead even if IOCB_NOWAIT is set for the I/O
-> 
-> Vlastimil Babka (1):
->   mm/mincore: provide mapped status when cached status is not allowed
+> It's been 25 years since Linux added support for ELF.  Can we just
+> delete the a.out support entirely now?  According to the Linux-ELF HOWTO,
+> support was added in 1.1.52 (August 1994).  It's pretty much necromancy
+> at this point.
 
-Andrew,
+The Kernel-Necrophilia cult members might disagree. :)
 
-could you please take at least the correct and straightforward fix for 
-mincore() before we figure out how to deal with the slightly less 
-practical RWF_NOWAIT? Thanks.
+But yes, good riddance.
 
--- 
-Jiri Kosina
-SUSE Labs
+Thanks,
+
+	tglx
