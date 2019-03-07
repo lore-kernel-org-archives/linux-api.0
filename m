@@ -1,50 +1,120 @@
-From: Jiri Kosina <jikos@kernel.org>
-Subject: Re: [PATCH 1/3] mm/mincore: make mincore() more conservative
-Date: Thu, 7 Mar 2019 06:46:00 +0100 (CET)
-Message-ID: <nycvar.YFH.7.76.1903070643560.19912@cbobk.fhfr.pm>
-References: <nycvar.YFH.7.76.1901051817390.16954@cbobk.fhfr.pm> <20190130124420.1834-1-vbabka@suse.cz> <20190130124420.1834-2-vbabka@suse.cz> <20190306151351.f8ae1acae51ccad1a3537284@linux-foundation.org> <nycvar.YFH.7.76.1903070047360.19912@cbobk.fhfr.pm>
- <20190307004036.GA16785@nautica>
+From: Brice Goglin <Brice.Goglin@inria.fr>
+Subject: Re: [PATCHv6 07/10] acpi/hmat: Register processor domain to its
+ memory
+Date: Thu, 7 Mar 2019 12:49:15 +0100
+Message-ID: <8fb27d2c-2165-7029-6ea1-94fc379b3be7@inria.fr>
+References: <20190214171017.9362-1-keith.busch@intel.com>
+ <20190214171017.9362-8-keith.busch@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190307004036.GA16785@nautica>
+In-Reply-To: <20190214171017.9362-8-keith.busch@intel.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dominique Martinet <asmadeus@codewreck.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>, Linus Torvalds <torvalds@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, Greg KH <gregkh@linuxfoundation.org>, Jann Horn <jannh@google.com>, Andy Lutomirski <luto@amacapital.net>, Dave Chinner <david@fromorbit.com>, Kevin Easton <kevin@guarana.org>, Matthew Wilcox <willy@infradead.org>, Cyril Hrubis <chrubis@suse.cz>, Tejun Heo <tj@kernel.org>, "Kirill A . Shutemov" <kirill@shutemov.name>, Daniel Gruss <daniel@gruss.cc>
+To: Keith Busch <keith.busch@intel.com>, linux-kernel@vger.kernel.org, linux-acpi@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rafael Wysocki <rafael@kernel.org>, Dave Hansen <dave.hansen@intel.com>, Dan Williams <dan.j.williams@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 7 Mar 2019, Dominique Martinet wrote:
+Le 14/02/2019 à 18:10, Keith Busch a écrit :
+> If the HMAT Subsystem Address Range provides a valid processor proximity
+> domain for a memory domain, or a processor domain matches the performance
+> access of the valid processor proximity domain, register the memory
+> target with that initiator so this relationship will be visible under
+> the node's sysfs directory.
+>
+> By registering only the best performing relationships, this provides the
+> most useful information applications may want to know when considering
+> which CPU they should run on for a given memory node, or which memory
+> node they should allocate memory from for a given CPU.
+>
+> Since HMAT requires valid address ranges have an equivalent SRAT entry,
+> verify each memory target satisfies this requirement.
+>
+> Signed-off-by: Keith Busch <keith.busch@intel.com>
 
-> > > 
-> > > 	addr = 4095
-> > > 	vma->vm_end = 4096
-> > > 	pages = 1000
-> > > 
-> > > then `end' is 4096 and `(end - addr) << PAGE_SHIFT' is zero, but it
-> > > should have been 1.
-> > 
-> > Good catch! It should rather be something like
-> > 
-> > 	unsigned long pages = (end >> PAGE_SHIFT) - (addr >> PAGE_SHIFT);
-> 
-> That would be 0 for addr = 0 and vma->vm_end = 1; I assume we would
-> still want to count that as one page.
+[...]
 
-Yeah, that was bogus as well, ETOOTIRED yesterday, sorry for the noise. 
-Both the variants are off.
+> +static __init struct memory_initiator *find_mem_initiator(unsigned int cpu_pxm)
+> +{
+> +	struct memory_initiator *intitator;
+> +
+> +	list_for_each_entry(intitator, &initiators, node)
+> +		if (intitator->processor_pxm == cpu_pxm)
+> +			return intitator;
+> +	return NULL;
+> +}
 
-> I'm not too familiar with this area of the code, but I think there's a
-> handy macro we can use for this, perhaps
->   DIV_ROUND_UP(end - addr, PAGE_SIZE) ?
-> 
-> kernel/kexec_core.c has defined PAGE_COUNT() which seems more
-> appropriate but I do not see a global equivalent
-> #define PAGE_COUNT(x) (((x) + PAGE_SIZE - 1) >> PAGE_SHIFT)
+Typo intitator -> initiator
 
-I'll fix that up when doing the other changes requested by Andrew.
+> +static __init void alloc_memory_initiator(unsigned int cpu_pxm)
+> +{
+> +	struct memory_initiator *intitator;
+> +
+> +	if (pxm_to_node(cpu_pxm) == NUMA_NO_NODE)
+> +		return;
+> +
+> +	intitator = find_mem_initiator(cpu_pxm);
+> +	if (intitator)
+> +		return;
+> +
+> +	intitator = kzalloc(sizeof(*intitator), GFP_KERNEL);
+> +	if (!intitator)
+> +		return;
+> +
+> +	intitator->processor_pxm = cpu_pxm;
+> +	list_add_tail(&intitator->node, &initiators);
+> +}
 
-Thanks,
+Same typo
 
--- 
-Jiri Kosina
-SUSE Labs
+
+> +static __init void hmat_register_target_initiators(struct memory_target *target)
+> +{
+> +	static DECLARE_BITMAP(p_nodes, MAX_NUMNODES);
+> +	struct memory_initiator *initiator;
+> +	unsigned int mem_nid, cpu_nid;
+> +	struct memory_locality *loc = NULL;
+> +	u32 best = 0;
+> +	int i;
+> +
+> +	if (target->processor_pxm == PXM_INVAL)
+> +		return;
+
+
+This test above looks wrong to me. First, it means that either you
+return from here, or from the next branch below, hence the loop that
+looks for best performance is dead code. Secondly, it means that memory
+targets without a PXM never get an initiator.
+
+I verified that removing this test makes things look better on my HMAT
+tests.
+
+
+> +	mem_nid = pxm_to_node(target->memory_pxm);
+> +
+> +	/*
+> +	 * If the Address Range Structure provides a local processor pxm, link
+> +	 * only that one. Otherwise, find the best performance attribtes and
+> +	 * register all initiators that match.
+> +	 */
+> +	if (target->processor_pxm != PXM_INVAL) {
+> +		cpu_nid = pxm_to_node(target->processor_pxm);
+> +		register_memory_node_under_compute_node(mem_nid, cpu_nid, 0);
+> +		return;
+> +	}
+
+
+This seems to contradict your first paragraph in the header where you say
+
+"or a processor domain matches the performance access of the valid processor proximity domain".
+
+By returning here, you're only keeping the the local PXM and ignoring
+other initiators that may have the same performance.
+
+I am testing a HMAT where one memory target has same performance to two
+processor proxdomains. If no processor proxdomain is set in the HMAT for
+this target, I get two initiators as expected. If proxdomain is
+explicitly set in the HMAT, I get only that one as initiator.
+
+Brice
