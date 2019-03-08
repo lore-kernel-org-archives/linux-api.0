@@ -1,329 +1,336 @@
 From: Jonathan Cameron <jonathan.cameron@huawei.com>
-Subject: Re: [PATCHv7 06/10] node: Add memory-side caching attributes
-Date: Fri, 8 Mar 2019 16:21:39 +0000
-Message-ID: <20190308162139.00004ed5@huawei.com>
+Subject: Re: [PATCHv7 03/10] acpi/hmat: Parse and report heterogeneous
+ memory
+Date: Fri, 8 Mar 2019 17:25:46 +0000
+Message-ID: <20190308172546.000050f5@huawei.com>
 References: <20190227225038.20438-1-keith.busch@intel.com>
-        <20190227225038.20438-7-keith.busch@intel.com>
+        <20190227225038.20438-4-keith.busch@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="US-ASCII"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190227225038.20438-7-keith.busch@intel.com>
+In-Reply-To: <20190227225038.20438-4-keith.busch@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Keith Busch <keith.busch@intel.com>
 Cc: linux-kernel@vger.kernel.org, linux-acpi@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rafael Wysocki <rafael@kernel.org>, Dave Hansen <dave.hansen@intel.com>, Dan Williams <dan.j.williams@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 27 Feb 2019 15:50:34 -0700
+On Wed, 27 Feb 2019 15:50:31 -0700
 Keith Busch <keith.busch@intel.com> wrote:
 
-> System memory may have caches to help improve access speed to frequently
-> requested address ranges. While the system provided cache is transparent
-> to the software accessing these memory ranges, applications can optimize
-> their own access based on cache attributes.
+> Systems may provide different memory types and export this information
+> in the ACPI Heterogeneous Memory Attribute Table (HMAT). Parse these
+> tables provided by the platform and report the memory access and caching
+> attributes to the kernel messages.
 > 
-> Provide a new API for the kernel to register these memory-side caches
-> under the memory node that provides it.
-> 
-> The new sysfs representation is modeled from the existing cpu cacheinfo
-> attributes, as seen from /sys/devices/system/cpu/<cpu>/cache/.  Unlike CPU
-> cacheinfo though, the node cache level is reported from the view of the
-> memory. A higher level number is nearer to the CPU, while lower levels
-> are closer to the last level memory.
-> 
-> The exported attributes are the cache size, the line size, associativity
-> indexing, and write back policy, and add the attributes for the system
-> memory caches to sysfs stable documentation.
-> 
+> Reviewed-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
 > Signed-off-by: Keith Busch <keith.busch@intel.com>
+Hi Keith,
 
-One utterly trivial point inline that git am pointed out.
+Trivial unused variable that could do with tidying up...
 
-J
+Thanks,
+
+Jonathan
+
 > ---
->  Documentation/ABI/stable/sysfs-devices-node |  34 +++++++
->  drivers/base/node.c                         | 151 ++++++++++++++++++++++++++++
->  include/linux/node.h                        |  39 +++++++
->  3 files changed, 224 insertions(+)
+>  drivers/acpi/Kconfig       |   1 +
+>  drivers/acpi/Makefile      |   1 +
+>  drivers/acpi/hmat/Kconfig  |   7 ++
+>  drivers/acpi/hmat/Makefile |   1 +
+>  drivers/acpi/hmat/hmat.c   | 237 +++++++++++++++++++++++++++++++++++++++++++++
+>  5 files changed, 247 insertions(+)
+>  create mode 100644 drivers/acpi/hmat/Kconfig
+>  create mode 100644 drivers/acpi/hmat/Makefile
+>  create mode 100644 drivers/acpi/hmat/hmat.c
 > 
-> diff --git a/Documentation/ABI/stable/sysfs-devices-node b/Documentation/ABI/stable/sysfs-devices-node
-> index 41cb9345e1e0..970fef47e6cd 100644
-> --- a/Documentation/ABI/stable/sysfs-devices-node
-> +++ b/Documentation/ABI/stable/sysfs-devices-node
-> @@ -142,3 +142,37 @@ Contact:	Keith Busch <keith.busch@intel.com>
->  Description:
->  		This node's write latency in nanoseconds when access
->  		from nodes found in this class's linked initiators.
-> +
-> +What:		/sys/devices/system/node/nodeX/memory_side_cache/indexY/
-> +Date:		December 2018
-> +Contact:	Keith Busch <keith.busch@intel.com>
-> +Description:
-> +		The directory containing attributes for the memory-side cache
-> +		level 'Y'.
-> +
-> +What:		/sys/devices/system/node/nodeX/memory_side_cache/indexY/indexing
-> +Date:		December 2018
-> +Contact:	Keith Busch <keith.busch@intel.com>
-> +Description:
-> +		The caches associativity indexing: 0 for direct mapped,
-> +		non-zero if indexed.
-> +
-> +What:		/sys/devices/system/node/nodeX/memory_side_cache/indexY/line_size
-> +Date:		December 2018
-> +Contact:	Keith Busch <keith.busch@intel.com>
-> +Description:
-> +		The number of bytes accessed from the next cache level on a
-> +		cache miss.
-> +
-> +What:		/sys/devices/system/node/nodeX/memory_side_cache/indexY/size
-> +Date:		December 2018
-> +Contact:	Keith Busch <keith.busch@intel.com>
-> +Description:
-> +		The size of this memory side cache in bytes.
-> +
-> +What:		/sys/devices/system/node/nodeX/memory_side_cache/indexY/write_policy
-> +Date:		December 2018
-> +Contact:	Keith Busch <keith.busch@intel.com>
-> +Description:
-> +		The cache write policy: 0 for write-back, 1 for write-through,
-> +		other or unknown.
-> diff --git a/drivers/base/node.c b/drivers/base/node.c
-> index 2de546a040a5..8598fcbd2a17 100644
-> --- a/drivers/base/node.c
-> +++ b/drivers/base/node.c
-> @@ -205,6 +205,155 @@ void node_set_perf_attrs(unsigned int nid, struct node_hmem_attrs *hmem_attrs,
->  		}
->  	}
->  }
-> +
-> +/**
-> + * struct node_cache_info - Internal tracking for memory node caches
-> + * @dev:	Device represeting the cache level
-> + * @node:	List element for tracking in the node
-> + * @cache_attrs:Attributes for this cache level
+> diff --git a/drivers/acpi/Kconfig b/drivers/acpi/Kconfig
+> index 4e015c77e48e..283ee94224c6 100644
+> --- a/drivers/acpi/Kconfig
+> +++ b/drivers/acpi/Kconfig
+> @@ -475,6 +475,7 @@ config ACPI_REDUCED_HARDWARE_ONLY
+>  	  If you are unsure what to do, do not enable this option.
+>  
+>  source "drivers/acpi/nfit/Kconfig"
+> +source "drivers/acpi/hmat/Kconfig"
+>  
+>  source "drivers/acpi/apei/Kconfig"
+>  source "drivers/acpi/dptf/Kconfig"
+> diff --git a/drivers/acpi/Makefile b/drivers/acpi/Makefile
+> index bb857421c2e8..5d361e4e3405 100644
+> --- a/drivers/acpi/Makefile
+> +++ b/drivers/acpi/Makefile
+> @@ -80,6 +80,7 @@ obj-$(CONFIG_ACPI_PROCESSOR)	+= processor.o
+>  obj-$(CONFIG_ACPI)		+= container.o
+>  obj-$(CONFIG_ACPI_THERMAL)	+= thermal.o
+>  obj-$(CONFIG_ACPI_NFIT)		+= nfit/
+> +obj-$(CONFIG_ACPI_HMAT)		+= hmat/
+>  obj-$(CONFIG_ACPI)		+= acpi_memhotplug.o
+>  obj-$(CONFIG_ACPI_HOTPLUG_IOAPIC) += ioapic.o
+>  obj-$(CONFIG_ACPI_BATTERY)	+= battery.o
+> diff --git a/drivers/acpi/hmat/Kconfig b/drivers/acpi/hmat/Kconfig
+> new file mode 100644
+> index 000000000000..2f7111b7af62
+> --- /dev/null
+> +++ b/drivers/acpi/hmat/Kconfig
+> @@ -0,0 +1,7 @@
+> +# SPDX-License-Identifier: GPL-2.0
+> +config ACPI_HMAT
+> +	bool "ACPI Heterogeneous Memory Attribute Table Support"
+> +	depends on ACPI_NUMA
+> +	help
+> +	 If set, this option has the kernel parse and report the
+> +	 platform's ACPI HMAT (Heterogeneous Memory Attributes Table).
+> diff --git a/drivers/acpi/hmat/Makefile b/drivers/acpi/hmat/Makefile
+> new file mode 100644
+> index 000000000000..e909051d3d00
+> --- /dev/null
+> +++ b/drivers/acpi/hmat/Makefile
+> @@ -0,0 +1 @@
+> +obj-$(CONFIG_ACPI_HMAT) := hmat.o
+> diff --git a/drivers/acpi/hmat/hmat.c b/drivers/acpi/hmat/hmat.c
+> new file mode 100644
+> index 000000000000..99f711420f6d
+> --- /dev/null
+> +++ b/drivers/acpi/hmat/hmat.c
+> @@ -0,0 +1,237 @@
+> +// SPDX-License-Identifier: GPL-2.0
+> +/*
+> + * Copyright (c) 2019, Intel Corporation.
+> + *
+> + * Heterogeneous Memory Attributes Table (HMAT) representation
+> + *
+> + * This program parses and reports the platform's HMAT tables, and registers
+> + * the applicable attributes with the node's interfaces.
 > + */
-> +struct node_cache_info {
-> +	struct device dev;
-> +	struct list_head node;
-> +	struct node_cache_attrs cache_attrs;
-> +};
-> +#define to_cache_info(device) container_of(device, struct node_cache_info, dev)
 > +
-> +#define CACHE_ATTR(name, fmt) 						\
-> +static ssize_t name##_show(struct device *dev,				\
-> +			   struct device_attribute *attr,		\
-> +			   char *buf)					\
-> +{									\
-> +	return sprintf(buf, fmt "\n", to_cache_info(dev)->cache_attrs.name);\
-> +}									\
-> +DEVICE_ATTR_RO(name);
+> +#include <linux/acpi.h>
+> +#include <linux/bitops.h>
+> +#include <linux/device.h>
+> +#include <linux/init.h>
+> +#include <linux/list.h>
+> +#include <linux/node.h>
+> +#include <linux/sysfs.h>
 > +
-> +CACHE_ATTR(size, "%llu")
-> +CACHE_ATTR(line_size, "%u")
-> +CACHE_ATTR(indexing, "%u")
-> +CACHE_ATTR(write_policy, "%u")
+> +static __initdata u8 hmat_revision;
 > +
-> +static struct attribute *cache_attrs[] = {
-> +	&dev_attr_indexing.attr,
-> +	&dev_attr_size.attr,
-> +	&dev_attr_line_size.attr,
-> +	&dev_attr_write_policy.attr,
-> +	NULL,
-> +};
-> +ATTRIBUTE_GROUPS(cache);
-> +
-> +static void node_cache_release(struct device *dev)
+> +static __init const char *hmat_data_type(u8 type)
 > +{
-> +	kfree(dev);
+> +	switch (type) {
+> +	case ACPI_HMAT_ACCESS_LATENCY:
+> +		return "Access Latency";
+> +	case ACPI_HMAT_READ_LATENCY:
+> +		return "Read Latency";
+> +	case ACPI_HMAT_WRITE_LATENCY:
+> +		return "Write Latency";
+> +	case ACPI_HMAT_ACCESS_BANDWIDTH:
+> +		return "Access Bandwidth";
+> +	case ACPI_HMAT_READ_BANDWIDTH:
+> +		return "Read Bandwidth";
+> +	case ACPI_HMAT_WRITE_BANDWIDTH:
+> +		return "Write Bandwidth";
+> +	default:
+> +		return "Reserved";
+> +	}
 > +}
 > +
-> +static void node_cacheinfo_release(struct device *dev)
+> +static __init const char *hmat_data_type_suffix(u8 type)
 > +{
-> +	struct node_cache_info *info = to_cache_info(dev);
-> +	kfree(info);
+> +	switch (type) {
+> +	case ACPI_HMAT_ACCESS_LATENCY:
+> +	case ACPI_HMAT_READ_LATENCY:
+> +	case ACPI_HMAT_WRITE_LATENCY:
+> +		return " nsec";
+> +	case ACPI_HMAT_ACCESS_BANDWIDTH:
+> +	case ACPI_HMAT_READ_BANDWIDTH:
+> +	case ACPI_HMAT_WRITE_BANDWIDTH:
+> +		return " MB/s";
+> +	default:
+> +		return "";
+> +	}
 > +}
 > +
-> +static void node_init_cache_dev(struct node *node)
+> +static __init u32 hmat_normalize(u16 entry, u64 base, u8 type)
 > +{
-> +	struct device *dev;
+> +	u32 value;
 > +
-> +	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
-> +	if (!dev)
-> +		return;
+> +	/*
+> +	 * Check for invalid and overflow values
+> +	 */
+> +	if (entry == 0xffff || !entry)
+> +		return 0;
+> +	else if (base > (UINT_MAX / (entry)))
+> +		return 0;
 > +
-> +	dev->parent = &node->dev;
-> +	dev->release = node_cache_release;
-> +	if (dev_set_name(dev, "memory_side_cache"))
-> +		goto free_dev;
-> +
-> +	if (device_register(dev))
-> +		goto free_name;
-> +
-> +	pm_runtime_no_callbacks(dev);
-> +	node->cache_dev = dev;
-> +	return;
-> +free_name:
-> +	kfree_const(dev->kobj.name);
-> +free_dev:
-> +	kfree(dev);
+> +	/*
+> +	 * Divide by the base unit for version 1, convert latency from
+> +	 * picosenonds to nanoseconds if revision 2.
+> +	 */
+> +	value = entry * base;
+> +	if (hmat_revision == 1) {
+> +		if (value < 10)
+> +			return 0;
+> +		value = DIV_ROUND_UP(value, 10);
+> +	} else if (hmat_revision == 2) {
+> +		switch (type) {
+> +		case ACPI_HMAT_ACCESS_LATENCY:
+> +		case ACPI_HMAT_READ_LATENCY:
+> +		case ACPI_HMAT_WRITE_LATENCY:
+> +			value = DIV_ROUND_UP(value, 1000);
+> +			break;
+> +		default:
+> +			break;
+> +		}
+> +	}
+> +	return value;
 > +}
 > +
-> +/**
-> + * node_add_cache() - add cache attribute to a memory node
-> + * @nid: Node identifier that has new cache attributes
-> + * @cache_attrs: Attributes for the cache being added
-> + */
-> +void node_add_cache(unsigned int nid, struct node_cache_attrs *cache_attrs)
+> +static __init int hmat_parse_locality(union acpi_subtable_headers *header,
+> +				      const unsigned long end)
 > +{
-> +	struct node_cache_info *info;
-> +	struct device *dev;
-> +	struct node *node;
+> +	struct acpi_hmat_locality *hmat_loc = (void *)header;
+> +	unsigned int init, targ, total_size, ipds, tpds;
+> +	u32 *inits, *targs, value;
+> +	u16 *entries;
+> +	u8 type;
 > +
-> +	if (!node_online(nid) || !node_devices[nid])
-> +		return;
+> +	if (hmat_loc->header.length < sizeof(*hmat_loc)) {
+> +		pr_notice("HMAT: Unexpected locality header length: %d\n",
+> +			 hmat_loc->header.length);
+> +		return -EINVAL;
+> +	}
 > +
-> +	node = node_devices[nid];
-> +	list_for_each_entry(info, &node->cache_attrs, node) {
-> +		if (info->cache_attrs.level == cache_attrs->level) {
-> +			dev_warn(&node->dev,
-> +				"attempt to add duplicate cache level:%d\n",
-> +				cache_attrs->level);
-> +			return;
+> +	type = hmat_loc->data_type;
+> +	ipds = hmat_loc->number_of_initiator_Pds;
+> +	tpds = hmat_loc->number_of_target_Pds;
+> +	total_size = sizeof(*hmat_loc) + sizeof(*entries) * ipds * tpds +
+> +		     sizeof(*inits) * ipds + sizeof(*targs) * tpds;
+> +	if (hmat_loc->header.length < total_size) {
+> +		pr_notice("HMAT: Unexpected locality header length:%d, minimum required:%d\n",
+> +			 hmat_loc->header.length, total_size);
+> +		return -EINVAL;
+> +	}
+> +
+> +	pr_info("HMAT: Locality: Flags:%02x Type:%s Initiator Domains:%d Target Domains:%d Base:%lld\n",
+> +		hmat_loc->flags, hmat_data_type(type), ipds, tpds,
+> +		hmat_loc->entry_base_unit);
+> +
+> +	inits = (u32 *)(hmat_loc + 1);
+> +	targs = inits + ipds;
+> +	entries = (u16 *)(targs + tpds);
+> +	for (init = 0; init < ipds; init++) {
+> +		for (targ = 0; targ < tpds; targ++) {
+> +			value = hmat_normalize(entries[init * tpds + targ],
+> +					       hmat_loc->entry_base_unit,
+> +					       type);
+> +			pr_info("  Initiator-Target[%d-%d]:%d%s\n",
+> +				inits[init], targs[targ], value,
+> +				hmat_data_type_suffix(type));
 > +		}
 > +	}
 > +
-> +	if (!node->cache_dev)
-> +		node_init_cache_dev(node);
-> +	if (!node->cache_dev)
-> +		return;
+> +	return 0;
+> +}
 > +
-> +	info = kzalloc(sizeof(*info), GFP_KERNEL);
-> +	if (!info)
-> +		return;
+> +static __init int hmat_parse_cache(union acpi_subtable_headers *header,
+> +				   const unsigned long end)
+> +{
+> +	struct acpi_hmat_cache *cache = (void *)header;
+> +	u32 attrs;
 > +
-> +	dev = &info->dev;
-> +	dev->parent = node->cache_dev;
-> +	dev->release = node_cacheinfo_release;
-> +	dev->groups = cache_groups;
-> +	if (dev_set_name(dev, "index%d", cache_attrs->level))
-> +		goto free_cache;
-> +
-> +	info->cache_attrs = *cache_attrs;
-> +	if (device_register(dev)) {
-> +		dev_warn(&node->dev, "failed to add cache level:%d\n",
-> +			 cache_attrs->level);
-> +		goto free_name;
+> +	if (cache->header.length < sizeof(*cache)) {
+> +		pr_notice("HMAT: Unexpected cache header length: %d\n",
+> +			 cache->header.length);
+> +		return -EINVAL;
 > +	}
-> +	pm_runtime_no_callbacks(dev);
-> +	list_add_tail(&info->node, &node->cache_attrs);
-> +	return;
-> +free_name:
-> +	kfree_const(dev->kobj.name);
-> +free_cache:
-> +	kfree(info);
+> +
+> +	attrs = cache->cache_attributes;
+> +	pr_info("HMAT: Cache: Domain:%d Size:%llu Attrs:%08x SMBIOS Handles:%d\n",
+> +		cache->memory_PD, cache->cache_size, attrs,
+> +		cache->number_of_SMBIOShandles);
+> +
+> +	return 0;
 > +}
 > +
-> +static void node_remove_caches(struct node *node)
+> +static int __init hmat_parse_address_range(union acpi_subtable_headers *header,
+> +					   const unsigned long end)
 > +{
-> +	struct node_cache_info *info, *next;
-> +
-> +	if (!node->cache_dev)
-> +		return;
-> +
-> +	list_for_each_entry_safe(info, next, &node->cache_attrs, node) {
-> +		list_del(&info->node);
-> +		device_unregister(&info->dev);
-> +	}
-> +	device_unregister(node->cache_dev);
-> +}
-> +
-> +static void node_init_caches(unsigned int nid)
-> +{
-> +	INIT_LIST_HEAD(&node_devices[nid]->cache_attrs);
-> +}
-> +#else
-> +static void node_init_caches(unsigned int nid) { }
-> +static void node_remove_caches(struct node *node) { }
->  #endif
->  
->  #define K(x) ((x) << (PAGE_SHIFT - 10))
-> @@ -489,6 +638,7 @@ void unregister_node(struct node *node)
->  {
->  	hugetlb_unregister_node(node);		/* no-op, if memoryless node */
->  	node_remove_accesses(node);
-> +	node_remove_caches(node);
->  	device_unregister(&node->dev);
->  }
->  
-> @@ -781,6 +931,7 @@ int __register_one_node(int nid)
->  	INIT_LIST_HEAD(&node_devices[nid]->access_list);
->  	/* initialize work queue for memory hot plug */
->  	init_node_hugetlb_work(nid);
-> +	node_init_caches(nid);
->  
->  	return error;
->  }
-> diff --git a/include/linux/node.h b/include/linux/node.h
-> index 45e14e1e0c18..8fa350e01acc 100644
-> --- a/include/linux/node.h
-> +++ b/include/linux/node.h
-> @@ -35,10 +35,45 @@ struct node_hmem_attrs {
->  	unsigned int write_latency;
->  };
->  
-> +enum cache_indexing {
-> +	NODE_CACHE_DIRECT_MAP,
-> +	NODE_CACHE_INDEXED,
-> +	NODE_CACHE_OTHER,
-> +};
-> +
-> +enum cache_write_policy {
-> +	NODE_CACHE_WRITE_BACK,
-> +	NODE_CACHE_WRITE_THROUGH,
-> +	NODE_CACHE_WRITE_OTHER,
-> +};
-> +
-> +/**
-> + * struct node_cache_attrs - system memory caching attributes
-> + *
-> + * @indexing:		The ways memory blocks may be placed in cache
-> + * @write_policy:	Write back or write through policy
-> + * @size:		Total size of cache in bytes
-> + * @line_size:		Number of bytes fetched on a cache miss
-> + * @level:		The cache hierarchy level
-> + */
-> +struct node_cache_attrs {
-> +	enum cache_indexing indexing;
-> +	enum cache_write_policy write_policy;
-> +	u64 size;
-> +	u16 line_size;
-> +	u8 level;
-> +};
-> +
->  #ifdef CONFIG_HMEM_REPORTING
-> +void node_add_cache(unsigned int nid, struct node_cache_attrs *cache_attrs);
->  void node_set_perf_attrs(unsigned int nid, struct node_hmem_attrs *hmem_attrs,
->  			 unsigned access);
->  #else
-> +static inline void node_add_cache(unsigned int nid,
-> +				  struct node_cache_attrs *cache_attrs)
-> +{
-> +} 
-There is a stray space at the end of the line above...
+> +	struct acpi_hmat_proximity_domain *p = (void *)header;
+> +	struct memory_target *target = NULL;
+
+Not used anywhere.
 
 > +
->  static inline void node_set_perf_attrs(unsigned int nid,
->  				       struct node_hmem_attrs *hmem_attrs,
->  				       unsigned access)
-> @@ -52,6 +87,10 @@ struct node {
->  #if defined(CONFIG_MEMORY_HOTPLUG_SPARSE) && defined(CONFIG_HUGETLBFS)
->  	struct work_struct	node_work;
->  #endif
-> +#ifdef CONFIG_HMEM_REPORTING
-> +	struct list_head cache_attrs;
-> +	struct device *cache_dev;
-> +#endif
->  };
->  
->  struct memory_block;
+> +	if (p->header.length != sizeof(*p)) {
+> +		pr_notice("HMAT: Unexpected address range header length: %d\n",
+> +			 p->header.length);
+> +		return -EINVAL;
+> +	}
+> +
+> +	if (hmat_revision == 1)
+> +		pr_info("HMAT: Memory (%#llx length %#llx) Flags:%04x Processor Domain:%d Memory Domain:%d\n",
+> +			p->reserved3, p->reserved4, p->flags, p->processor_PD,
+> +			p->memory_PD);
+> +	else
+> +		pr_info("HMAT: Memory Flags:%04x Processor Domain:%d Memory Domain:%d\n",
+> +			p->flags, p->processor_PD, p->memory_PD);
+> +
+> +	return 0;
+> +}
+> +
+> +static int __init hmat_parse_subtable(union acpi_subtable_headers *header,
+> +				      const unsigned long end)
+> +{
+> +	struct acpi_hmat_structure *hdr = (void *)header;
+> +
+> +	if (!hdr)
+> +		return -EINVAL;
+> +
+> +	switch (hdr->type) {
+> +	case ACPI_HMAT_TYPE_ADDRESS_RANGE:
+> +		return hmat_parse_address_range(header, end);
+> +	case ACPI_HMAT_TYPE_LOCALITY:
+> +		return hmat_parse_locality(header, end);
+> +	case ACPI_HMAT_TYPE_CACHE:
+> +		return hmat_parse_cache(header, end);
+> +	default:
+> +		return -EINVAL;
+> +	}
+> +}
+> +
+> +static __init int hmat_init(void)
+> +{
+> +	struct acpi_table_header *tbl;
+> +	enum acpi_hmat_type i;
+> +	acpi_status status;
+> +
+> +	if (srat_disabled())
+> +		return 0;
+> +
+> +	status = acpi_get_table(ACPI_SIG_HMAT, 0, &tbl);
+> +	if (ACPI_FAILURE(status))
+> +		return 0;
+> +
+> +	hmat_revision = tbl->revision;
+> +	switch (hmat_revision) {
+> +	case 1:
+> +	case 2:
+> +		break;
+> +	default:
+> +		pr_notice("Ignoring HMAT: Unknown revision:%d\n", hmat_revision);
+> +		goto out_put;
+> +	}
+> +
+> +	for (i = ACPI_HMAT_TYPE_ADDRESS_RANGE; i < ACPI_HMAT_TYPE_RESERVED; i++) {
+> +		if (acpi_table_parse_entries(ACPI_SIG_HMAT,
+> +					     sizeof(struct acpi_table_hmat), i,
+> +					     hmat_parse_subtable, 0) < 0) {
+> +			pr_notice("Ignoring HMAT: Invalid table");
+> +			goto out_put;
+> +		}
+> +	}
+> +out_put:
+> +	acpi_put_table(tbl);
+> +	return 0;
+> +}
+> +subsys_initcall(hmat_init);
