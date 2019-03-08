@@ -1,200 +1,329 @@
-From: Ming Lei <ming.lei@redhat.com>
-Subject: Re: [PATCH 11/19] block: implement bio helper to add iter bvec pages
- to bio
-Date: Fri, 8 Mar 2019 17:12:28 +0800
-Message-ID: <20190308091116.GA10956@ming.t460p>
-References: <20190226034613.GA676@sol.localdomain>
- <aa1184bb-b482-0637-21e4-1ddb0e7aea90@kernel.dk>
- <1652577e-787b-638e-625d-c200fb144a9d@kernel.dk>
- <CACVXFVNOFA8_p+hVvaCffWAQ7+dgn++0b4Wn3naJzyNZN=CoFg@mail.gmail.com>
- <09820845-07cb-5153-e1c5-59ed185db26f@kernel.dk>
- <20190227015336.GD16802@ming.t460p>
- <e4dace7b-6a6f-2606-9a7e-8ae3c97c26b0@kernel.dk>
- <20190227022144.GE16802@ming.t460p>
- <b54683e8-fbff-01ab-db98-c35de8e00e9f@kernel.dk>
- <20190308075522.GA12445@lst.de>
+From: Jonathan Cameron <jonathan.cameron@huawei.com>
+Subject: Re: [PATCHv7 06/10] node: Add memory-side caching attributes
+Date: Fri, 8 Mar 2019 16:21:39 +0000
+Message-ID: <20190308162139.00004ed5@huawei.com>
+References: <20190227225038.20438-1-keith.busch@intel.com>
+        <20190227225038.20438-7-keith.busch@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <owner-linux-aio@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20190308075522.GA12445@lst.de>
-Sender: owner-linux-aio@kvack.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Jens Axboe <axboe@kernel.dk>, Ming Lei <tom.leiming@gmail.com>, Eric Biggers <ebiggers@kernel.org>, "open list:AIO" <linux-aio@kvack.org>, linux-block <linux-block@vger.kernel.org>, linux-api@vger.kernel.org, Jeff Moyer <jmoyer@redhat.com>, Avi Kivity <avi@scylladb.com>, jannh@google.com, Al Viro <viro@zeniv.linux.org.uk>
+Content-Type: text/plain; charset="US-ASCII"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190227225038.20438-7-keith.busch@intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Keith Busch <keith.busch@intel.com>
+Cc: linux-kernel@vger.kernel.org, linux-acpi@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rafael Wysocki <rafael@kernel.org>, Dave Hansen <dave.hansen@intel.com>, Dan Williams <dan.j.williams@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 08, 2019 at 08:55:22AM +0100, Christoph Hellwig wrote:
-> On Tue, Feb 26, 2019 at 07:28:54PM -0700, Jens Axboe wrote:
-> > On 2/26/19 7:21 PM, Ming Lei wrote:
-> > > On Tue, Feb 26, 2019 at 06:57:16PM -0700, Jens Axboe wrote:
-> > >> On 2/26/19 6:53 PM, Ming Lei wrote:
-> > >>> On Tue, Feb 26, 2019 at 06:47:54PM -0700, Jens Axboe wrote:
-> > >>>> On 2/26/19 6:21 PM, Ming Lei wrote:
-> > >>>>> On Tue, Feb 26, 2019 at 11:56 PM Jens Axboe <axboe@kernel.dk> wrote:
-> > >>>>>>
-> > >>>>>> On 2/25/19 9:34 PM, Jens Axboe wrote:
-> > >>>>>>> On 2/25/19 8:46 PM, Eric Biggers wrote:
-> > >>>>>>>> Hi Jens,
-> > >>>>>>>>
-> > >>>>>>>> On Thu, Feb 21, 2019 at 10:45:27AM -0700, Jens Axboe wrote:
-> > >>>>>>>>> On 2/20/19 3:58 PM, Ming Lei wrote:
-> > >>>>>>>>>> On Mon, Feb 11, 2019 at 12:00:41PM -0700, Jens Axboe wrote:
-> > >>>>>>>>>>> For an ITER_BVEC, we can just iterate the iov and add the pages
-> > >>>>>>>>>>> to the bio directly. This requires that the caller doesn't releases
-> > >>>>>>>>>>> the pages on IO completion, we add a BIO_NO_PAGE_REF flag for that.
-> > >>>>>>>>>>>
-> > >>>>>>>>>>> The current two callers of bio_iov_iter_get_pages() are updated to
-> > >>>>>>>>>>> check if they need to release pages on completion. This makes them
-> > >>>>>>>>>>> work with bvecs that contain kernel mapped pages already.
-> > >>>>>>>>>>>
-> > >>>>>>>>>>> Reviewed-by: Hannes Reinecke <hare@suse.com>
-> > >>>>>>>>>>> Reviewed-by: Christoph Hellwig <hch@lst.de>
-> > >>>>>>>>>>> Signed-off-by: Jens Axboe <axboe@kernel.dk>
-> > >>>>>>>>>>> ---
-> > >>>>>>>>>>>  block/bio.c               | 59 ++++++++++++++++++++++++++++++++-------
-> > >>>>>>>>>>>  fs/block_dev.c            |  5 ++--
-> > >>>>>>>>>>>  fs/iomap.c                |  5 ++--
-> > >>>>>>>>>>>  include/linux/blk_types.h |  1 +
-> > >>>>>>>>>>>  4 files changed, 56 insertions(+), 14 deletions(-)
-> > >>>>>>>>>>>
-> > >>>>>>>>>>> diff --git a/block/bio.c b/block/bio.c
-> > >>>>>>>>>>> index 4db1008309ed..330df572cfb8 100644
-> > >>>>>>>>>>> --- a/block/bio.c
-> > >>>>>>>>>>> +++ b/block/bio.c
-> > >>>>>>>>>>> @@ -828,6 +828,23 @@ int bio_add_page(struct bio *bio, struct page *page,
-> > >>>>>>>>>>>  }
-> > >>>>>>>>>>>  EXPORT_SYMBOL(bio_add_page);
-> > >>>>>>>>>>>
-> > >>>>>>>>>>> +static int __bio_iov_bvec_add_pages(struct bio *bio, struct iov_iter *iter)
-> > >>>>>>>>>>> +{
-> > >>>>>>>>>>> + const struct bio_vec *bv = iter->bvec;
-> > >>>>>>>>>>> + unsigned int len;
-> > >>>>>>>>>>> + size_t size;
-> > >>>>>>>>>>> +
-> > >>>>>>>>>>> + len = min_t(size_t, bv->bv_len, iter->count);
-> > >>>>>>>>>>> + size = bio_add_page(bio, bv->bv_page, len,
-> > >>>>>>>>>>> +                         bv->bv_offset + iter->iov_offset);
-> > >>>>>>>>>>
-> > >>>>>>>>>> iter->iov_offset needs to be subtracted from 'len', looks
-> > >>>>>>>>>> the following delta change[1] is required, otherwise memory corruption
-> > >>>>>>>>>> can be observed when running xfstests over loop/dio.
-> > >>>>>>>>>
-> > >>>>>>>>> Thanks, I folded this in.
-> > >>>>>>>>>
-> > >>>>>>>>> --
-> > >>>>>>>>> Jens Axboe
-> > >>>>>>>>>
-> > >>>>>>>>
-> > >>>>>>>> syzkaller started hitting a crash on linux-next starting with this commit, and
-> > >>>>>>>> it still occurs even with your latest version that has Ming's fix folded in.
-> > >>>>>>>> Specifically, commit a566653ab5ab80a from your io_uring branch with commit date
-> > >>>>>>>> Sun Feb 24 08:20:53 2019 -0700.
-> > >>>>>>>>
-> > >>>>>>>> Reproducer:
-> > >>>>>>>>
-> > >>>>>>>> #define _GNU_SOURCE
-> > >>>>>>>> #include <fcntl.h>
-> > >>>>>>>> #include <linux/loop.h>
-> > >>>>>>>> #include <sys/ioctl.h>
-> > >>>>>>>> #include <sys/sendfile.h>
-> > >>>>>>>> #include <sys/syscall.h>
-> > >>>>>>>> #include <unistd.h>
-> > >>>>>>>>
-> > >>>>>>>> int main(void)
-> > >>>>>>>> {
-> > >>>>>>>>         int memfd, loopfd;
-> > >>>>>>>>
-> > >>>>>>>>         memfd = syscall(__NR_memfd_create, "foo", 0);
-> > >>>>>>>>
-> > >>>>>>>>         pwrite(memfd, "\xa8", 1, 4096);
-> > >>>>>>>>
-> > >>>>>>>>         loopfd = open("/dev/loop0", O_RDWR|O_DIRECT);
-> > >>>>>>>>
-> > >>>>>>>>         ioctl(loopfd, LOOP_SET_FD, memfd);
-> > >>>>>>>>
-> > >>>>>>>>         sendfile(loopfd, loopfd, NULL, 1000000);
-> > >>>>>>>> }
-> > >>>>>>>>
-> > >>>>>>>>
-> > >>>>>>>> Crash:
-> > >>>>>>>>
-> > >>>>>>>> page:ffffea0001a6aab8 count:0 mapcount:0 mapping:0000000000000000 index:0x0
-> > >>>>>>>> flags: 0x100000000000000()
-> > >>>>>>>> raw: 0100000000000000 ffffea0001ad2c50 ffff88807fca49d0 0000000000000000
-> > >>>>>>>> raw: 0000000000000000 0000000000000000 00000000ffffffff
-> > >>>>>>>> page dumped because: VM_BUG_ON_PAGE(page_ref_count(page) == 0)
-> > >>>>>>>
-> > >>>>>>> I see what this is, I'll cut a fix for this tomorrow.
-> > >>>>>>
-> > >>>>>> Folded in a fix for this, it's in my current io_uring branch and my for-next
-> > >>>>>> branch.
-> > >>>>>
-> > >>>>> Hi Jens,
-> > >>>>>
-> > >>>>> I saw the following change is added:
-> > >>>>>
-> > >>>>> + if (size == len) {
-> > >>>>> + /*
-> > >>>>> + * For the normal O_DIRECT case, we could skip grabbing this
-> > >>>>> + * reference and then not have to put them again when IO
-> > >>>>> + * completes. But this breaks some in-kernel users, like
-> > >>>>> + * splicing to/from a loop device, where we release the pipe
-> > >>>>> + * pages unconditionally. If we can fix that case, we can
-> > >>>>> + * get rid of the get here and the need to call
-> > >>>>> + * bio_release_pages() at IO completion time.
-> > >>>>> + */
-> > >>>>> + get_page(bv->bv_page);
-> > >>>>>
-> > >>>>> Now the 'bv' may point to more than one page, so the following one may be
-> > >>>>> needed:
-> > >>>>>
-> > >>>>> int i;
-> > >>>>> struct bvec_iter_all iter_all;
-> > >>>>> struct bio_vec *tmp;
-> > >>>>>
-> > >>>>> mp_bvec_for_each_segment(tmp, bv, i, iter_all)
-> > >>>>>       get_page(tmp->bv_page);
-> > >>>>
-> > > Some following optimization can be done, such as removing
-> > > biovec_phys_mergeable() from blk_bio_segment_split().
-> > 
-> > I think we really need a fast path for <= PAGE_SIZE IOs, to the extent
-> > that it is possible. But iteration startup cost is a problem in a lot of
-> > spots, and a split fast path will only help a bit for that specific
-> > case.
+On Wed, 27 Feb 2019 15:50:34 -0700
+Keith Busch <keith.busch@intel.com> wrote:
+
+> System memory may have caches to help improve access speed to frequently
+> requested address ranges. While the system provided cache is transparent
+> to the software accessing these memory ranges, applications can optimize
+> their own access based on cache attributes.
 > 
-> FYI, I've got a nice fast path for the driver side in nvme here, but
-> I'll need to do some more testing before submitting it:
+> Provide a new API for the kernel to register these memory-side caches
+> under the memory node that provides it.
 > 
-> http://git.infradead.org/users/hch/block.git/shortlog/refs/heads/nvme-optimize-single-segment-io
+> The new sysfs representation is modeled from the existing cpu cacheinfo
+> attributes, as seen from /sys/devices/system/cpu/<cpu>/cache/.  Unlike CPU
+> cacheinfo though, the node cache level is reported from the view of the
+> memory. A higher level number is nearer to the CPU, while lower levels
+> are closer to the last level memory.
 > 
-> But in the block layer I think one major issue is all the phys_segments
-> crap.  What we really should do is to remove bi_phys_segments and all
-> the front/back segment crap and only do the calculation of the actual
-> per-bio segments once, just before adding the bio to the segment.
-
-I have enabled multi-page bvec for passthrough IO in the following:
-
-https://github.com/ming1/linux/commits/v5.0-blk-for-blk_post_mp
-
-in which .bi_phys_segments becomes same with .bi_vcnt for passthrough bio.
-
-Also intra-bvec merging in one bio has been killed, then only the merge
-between bios is required, and seems we still need front/back segment size,
-especially some use cases(such as mkfs) may make lots of small mergeable bios.
-
+> The exported attributes are the cache size, the line size, associativity
+> indexing, and write back policy, and add the attributes for the system
+> memory caches to sysfs stable documentation.
 > 
-> And don't bother with it at all unless the driver has weird segment
-> size or boundary limitations.
+> Signed-off-by: Keith Busch <keith.busch@intel.com>
 
-It should be easy to observe that .bv_len is bigger than max segment
-size.
+One utterly trivial point inline that git am pointed out.
 
-Thanks,
-Ming
+J
+> ---
+>  Documentation/ABI/stable/sysfs-devices-node |  34 +++++++
+>  drivers/base/node.c                         | 151 ++++++++++++++++++++++++++++
+>  include/linux/node.h                        |  39 +++++++
+>  3 files changed, 224 insertions(+)
+> 
+> diff --git a/Documentation/ABI/stable/sysfs-devices-node b/Documentation/ABI/stable/sysfs-devices-node
+> index 41cb9345e1e0..970fef47e6cd 100644
+> --- a/Documentation/ABI/stable/sysfs-devices-node
+> +++ b/Documentation/ABI/stable/sysfs-devices-node
+> @@ -142,3 +142,37 @@ Contact:	Keith Busch <keith.busch@intel.com>
+>  Description:
+>  		This node's write latency in nanoseconds when access
+>  		from nodes found in this class's linked initiators.
+> +
+> +What:		/sys/devices/system/node/nodeX/memory_side_cache/indexY/
+> +Date:		December 2018
+> +Contact:	Keith Busch <keith.busch@intel.com>
+> +Description:
+> +		The directory containing attributes for the memory-side cache
+> +		level 'Y'.
+> +
+> +What:		/sys/devices/system/node/nodeX/memory_side_cache/indexY/indexing
+> +Date:		December 2018
+> +Contact:	Keith Busch <keith.busch@intel.com>
+> +Description:
+> +		The caches associativity indexing: 0 for direct mapped,
+> +		non-zero if indexed.
+> +
+> +What:		/sys/devices/system/node/nodeX/memory_side_cache/indexY/line_size
+> +Date:		December 2018
+> +Contact:	Keith Busch <keith.busch@intel.com>
+> +Description:
+> +		The number of bytes accessed from the next cache level on a
+> +		cache miss.
+> +
+> +What:		/sys/devices/system/node/nodeX/memory_side_cache/indexY/size
+> +Date:		December 2018
+> +Contact:	Keith Busch <keith.busch@intel.com>
+> +Description:
+> +		The size of this memory side cache in bytes.
+> +
+> +What:		/sys/devices/system/node/nodeX/memory_side_cache/indexY/write_policy
+> +Date:		December 2018
+> +Contact:	Keith Busch <keith.busch@intel.com>
+> +Description:
+> +		The cache write policy: 0 for write-back, 1 for write-through,
+> +		other or unknown.
+> diff --git a/drivers/base/node.c b/drivers/base/node.c
+> index 2de546a040a5..8598fcbd2a17 100644
+> --- a/drivers/base/node.c
+> +++ b/drivers/base/node.c
+> @@ -205,6 +205,155 @@ void node_set_perf_attrs(unsigned int nid, struct node_hmem_attrs *hmem_attrs,
+>  		}
+>  	}
+>  }
+> +
+> +/**
+> + * struct node_cache_info - Internal tracking for memory node caches
+> + * @dev:	Device represeting the cache level
+> + * @node:	List element for tracking in the node
+> + * @cache_attrs:Attributes for this cache level
+> + */
+> +struct node_cache_info {
+> +	struct device dev;
+> +	struct list_head node;
+> +	struct node_cache_attrs cache_attrs;
+> +};
+> +#define to_cache_info(device) container_of(device, struct node_cache_info, dev)
+> +
+> +#define CACHE_ATTR(name, fmt) 						\
+> +static ssize_t name##_show(struct device *dev,				\
+> +			   struct device_attribute *attr,		\
+> +			   char *buf)					\
+> +{									\
+> +	return sprintf(buf, fmt "\n", to_cache_info(dev)->cache_attrs.name);\
+> +}									\
+> +DEVICE_ATTR_RO(name);
+> +
+> +CACHE_ATTR(size, "%llu")
+> +CACHE_ATTR(line_size, "%u")
+> +CACHE_ATTR(indexing, "%u")
+> +CACHE_ATTR(write_policy, "%u")
+> +
+> +static struct attribute *cache_attrs[] = {
+> +	&dev_attr_indexing.attr,
+> +	&dev_attr_size.attr,
+> +	&dev_attr_line_size.attr,
+> +	&dev_attr_write_policy.attr,
+> +	NULL,
+> +};
+> +ATTRIBUTE_GROUPS(cache);
+> +
+> +static void node_cache_release(struct device *dev)
+> +{
+> +	kfree(dev);
+> +}
+> +
+> +static void node_cacheinfo_release(struct device *dev)
+> +{
+> +	struct node_cache_info *info = to_cache_info(dev);
+> +	kfree(info);
+> +}
+> +
+> +static void node_init_cache_dev(struct node *node)
+> +{
+> +	struct device *dev;
+> +
+> +	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+> +	if (!dev)
+> +		return;
+> +
+> +	dev->parent = &node->dev;
+> +	dev->release = node_cache_release;
+> +	if (dev_set_name(dev, "memory_side_cache"))
+> +		goto free_dev;
+> +
+> +	if (device_register(dev))
+> +		goto free_name;
+> +
+> +	pm_runtime_no_callbacks(dev);
+> +	node->cache_dev = dev;
+> +	return;
+> +free_name:
+> +	kfree_const(dev->kobj.name);
+> +free_dev:
+> +	kfree(dev);
+> +}
+> +
+> +/**
+> + * node_add_cache() - add cache attribute to a memory node
+> + * @nid: Node identifier that has new cache attributes
+> + * @cache_attrs: Attributes for the cache being added
+> + */
+> +void node_add_cache(unsigned int nid, struct node_cache_attrs *cache_attrs)
+> +{
+> +	struct node_cache_info *info;
+> +	struct device *dev;
+> +	struct node *node;
+> +
+> +	if (!node_online(nid) || !node_devices[nid])
+> +		return;
+> +
+> +	node = node_devices[nid];
+> +	list_for_each_entry(info, &node->cache_attrs, node) {
+> +		if (info->cache_attrs.level == cache_attrs->level) {
+> +			dev_warn(&node->dev,
+> +				"attempt to add duplicate cache level:%d\n",
+> +				cache_attrs->level);
+> +			return;
+> +		}
+> +	}
+> +
+> +	if (!node->cache_dev)
+> +		node_init_cache_dev(node);
+> +	if (!node->cache_dev)
+> +		return;
+> +
+> +	info = kzalloc(sizeof(*info), GFP_KERNEL);
+> +	if (!info)
+> +		return;
+> +
+> +	dev = &info->dev;
+> +	dev->parent = node->cache_dev;
+> +	dev->release = node_cacheinfo_release;
+> +	dev->groups = cache_groups;
+> +	if (dev_set_name(dev, "index%d", cache_attrs->level))
+> +		goto free_cache;
+> +
+> +	info->cache_attrs = *cache_attrs;
+> +	if (device_register(dev)) {
+> +		dev_warn(&node->dev, "failed to add cache level:%d\n",
+> +			 cache_attrs->level);
+> +		goto free_name;
+> +	}
+> +	pm_runtime_no_callbacks(dev);
+> +	list_add_tail(&info->node, &node->cache_attrs);
+> +	return;
+> +free_name:
+> +	kfree_const(dev->kobj.name);
+> +free_cache:
+> +	kfree(info);
+> +}
+> +
+> +static void node_remove_caches(struct node *node)
+> +{
+> +	struct node_cache_info *info, *next;
+> +
+> +	if (!node->cache_dev)
+> +		return;
+> +
+> +	list_for_each_entry_safe(info, next, &node->cache_attrs, node) {
+> +		list_del(&info->node);
+> +		device_unregister(&info->dev);
+> +	}
+> +	device_unregister(node->cache_dev);
+> +}
+> +
+> +static void node_init_caches(unsigned int nid)
+> +{
+> +	INIT_LIST_HEAD(&node_devices[nid]->cache_attrs);
+> +}
+> +#else
+> +static void node_init_caches(unsigned int nid) { }
+> +static void node_remove_caches(struct node *node) { }
+>  #endif
+>  
+>  #define K(x) ((x) << (PAGE_SHIFT - 10))
+> @@ -489,6 +638,7 @@ void unregister_node(struct node *node)
+>  {
+>  	hugetlb_unregister_node(node);		/* no-op, if memoryless node */
+>  	node_remove_accesses(node);
+> +	node_remove_caches(node);
+>  	device_unregister(&node->dev);
+>  }
+>  
+> @@ -781,6 +931,7 @@ int __register_one_node(int nid)
+>  	INIT_LIST_HEAD(&node_devices[nid]->access_list);
+>  	/* initialize work queue for memory hot plug */
+>  	init_node_hugetlb_work(nid);
+> +	node_init_caches(nid);
+>  
+>  	return error;
+>  }
+> diff --git a/include/linux/node.h b/include/linux/node.h
+> index 45e14e1e0c18..8fa350e01acc 100644
+> --- a/include/linux/node.h
+> +++ b/include/linux/node.h
+> @@ -35,10 +35,45 @@ struct node_hmem_attrs {
+>  	unsigned int write_latency;
+>  };
+>  
+> +enum cache_indexing {
+> +	NODE_CACHE_DIRECT_MAP,
+> +	NODE_CACHE_INDEXED,
+> +	NODE_CACHE_OTHER,
+> +};
+> +
+> +enum cache_write_policy {
+> +	NODE_CACHE_WRITE_BACK,
+> +	NODE_CACHE_WRITE_THROUGH,
+> +	NODE_CACHE_WRITE_OTHER,
+> +};
+> +
+> +/**
+> + * struct node_cache_attrs - system memory caching attributes
+> + *
+> + * @indexing:		The ways memory blocks may be placed in cache
+> + * @write_policy:	Write back or write through policy
+> + * @size:		Total size of cache in bytes
+> + * @line_size:		Number of bytes fetched on a cache miss
+> + * @level:		The cache hierarchy level
+> + */
+> +struct node_cache_attrs {
+> +	enum cache_indexing indexing;
+> +	enum cache_write_policy write_policy;
+> +	u64 size;
+> +	u16 line_size;
+> +	u8 level;
+> +};
+> +
+>  #ifdef CONFIG_HMEM_REPORTING
+> +void node_add_cache(unsigned int nid, struct node_cache_attrs *cache_attrs);
+>  void node_set_perf_attrs(unsigned int nid, struct node_hmem_attrs *hmem_attrs,
+>  			 unsigned access);
+>  #else
+> +static inline void node_add_cache(unsigned int nid,
+> +				  struct node_cache_attrs *cache_attrs)
+> +{
+> +} 
+There is a stray space at the end of the line above...
 
---
-To unsubscribe, send a message with 'unsubscribe linux-aio' in
-the body to majordomo@kvack.org.  For more info on Linux AIO,
-see: http://www.kvack.org/aio/
-Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
+> +
+>  static inline void node_set_perf_attrs(unsigned int nid,
+>  				       struct node_hmem_attrs *hmem_attrs,
+>  				       unsigned access)
+> @@ -52,6 +87,10 @@ struct node {
+>  #if defined(CONFIG_MEMORY_HOTPLUG_SPARSE) && defined(CONFIG_HUGETLBFS)
+>  	struct work_struct	node_work;
+>  #endif
+> +#ifdef CONFIG_HMEM_REPORTING
+> +	struct list_head cache_attrs;
+> +	struct device *cache_dev;
+> +#endif
+>  };
+>  
+>  struct memory_block;
