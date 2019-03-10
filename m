@@ -1,76 +1,38 @@
-From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: Re: [PATCH RESEND v5 2/5] namei: O_BENEATH-style path resolution
- flags
-Date: Sun, 10 Mar 2019 23:12:22 +1100
-Message-ID: <20190310121222.p5x5gxi3t3sy7p23@yavin>
-References: <20190306191244.8691-1-cyphar@cyphar.com>
- <20190306191244.8691-3-cyphar@cyphar.com>
- <CAHk-=wgGKWRTgSYKkgMEf1QOg0PZSpmBha+2LCHCBOar0e8cug@mail.gmail.com>
- <20190309172631.ygfdhrn4rcwkgfmk@brauner.io>
- <CAHk-=whMuk-b6rzhbF2=vVNOuEZk8-opRJ1fD07a9ztQ+V97Aw@mail.gmail.com>
+From: Matt Turner <mattst88@gmail.com>
+Subject: Re: [PATCH] x86: Deprecate a.out support
+Date: Sun, 10 Mar 2019 14:37:00 -0700
+Message-ID: <CAEdQ38G5M3vq9pGBV1iyEViO7JhFuXk5g+VCs-vUH+Z62kNqgQ@mail.gmail.com>
+References: <CAG48ez1RVd5mQ_Pb6eygQESaZhpQz765OAZYSoPE0kPqfZEXQg@mail.gmail.com>
+ <20190305091904.GB8256@zn.tnic> <20190305122218.GD13380@bombadil.infradead.org>
+ <20190305134347.4be2449c@alans-desktop> <20190305145717.GD8256@zn.tnic>
+ <CAHk-=wi2E4kugAW7BQwNSVwYHOr=B_9EgzBRMpQ2+1dxAqydDg@mail.gmail.com>
+ <20190305173134.GE8256@zn.tnic> <CAHk-=wg0bY=RFhD4NW9x++fC0bME=_-9xM3kexGGM3gefHQTyQ@mail.gmail.com>
+ <20190305181138.GG8256@zn.tnic> <20190305181808.GH8256@zn.tnic>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="qidgb2d5gkyjstpk"
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHk-=whMuk-b6rzhbF2=vVNOuEZk8-opRJ1fD07a9ztQ+V97Aw@mail.gmail.com>
+In-Reply-To: <20190305181808.GH8256@zn.tnic>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Christian Brauner <christian@brauner.io>, Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Eric Biederman <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, David Drysdale <drysdale@google.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Jann Horn <jannh@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, containers@lists.linux-foundation.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>
+To: Borislav Petkov <bp@alien8.de>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, kernel list <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Richard Weinberger <richard@nod.at>, Anton Ivanov <anton.ivanov@cambridgegreys.com>, linux-alpha <linux-alpha@vger.kernel.org>, linux-m68k@lists.linux-m68k.org
 List-Id: linux-api@vger.kernel.org
 
+On Tue, Mar 5, 2019 at 11:04 AM Borislav Petkov <bp@alien8.de> wrote:
+>
+> On Tue, Mar 05, 2019 at 07:11:38PM +0100, Borislav Petkov wrote:
+> > I guess you could Cc arch maintainers with the a.out-core.h removal
+> > patch to see if anyone screams.
+>
+> And they're like two for which we need confirmation:
+>
+> $ git ls-files | grep a.out-core.h
+> arch/alpha/include/asm/a.out-core.h
+> arch/m68k/include/asm/a.out-core.h
+> arch/um/include/asm/a.out-core.h
+> arch/x86/include/asm/a.out-core.h
+>
+> um and x86 are clear.
+>
+> Adding alpha and m68k MLs to Cc.
 
---qidgb2d5gkyjstpk
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-On 2019-03-09, Linus Torvalds <torvalds@linux-foundation.org> wrote:
-> On Sat, Mar 9, 2019 at 9:26 AM Christian Brauner <christian@brauner.io> w=
-rote:
-> > Aside from that I want to point out that it is non-trivial to do this in
-> > user space.
->=20
-> Oh, absolutely agreed. It's easy to do it in the kernel, and doing it
-> anywhere else ends up having horrible races that the kernel has to
-> deal with and has long solved anyway.
-
-We've seen in the past few years, there are also plenty of CVEs from the
-container runtime side of things which show that some of these races are
-also exploitable. Even with some of the most convoluted O_PATH "fd
-re-opening" trickery, it's incredibly difficult to both scope symlinks
-inside a container and safely detect cases where you've been tricked by
-a malicious actor.
-
-> I've only seen this (2/5) patch, so I won't comment on the other ones,
-> but this still makes sense to me.
-
-I'll make sure to add you to the series Cc if/when there's a v6.
-
---=20
-Aleksa Sarai
-Senior Software Engineer (Containers)
-SUSE Linux GmbH
-<https://www.cyphar.com/>
-
---qidgb2d5gkyjstpk
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAABCAAdFiEEb6Gz4/mhjNy+aiz1Snvnv3Dem58FAlyE/yEACgkQSnvnv3De
-m5/PhQ//VnslIB/uTSS+k6C/M/G8DH5OUhDYC0DJNwIEFBKgXKY9COO28DKVpoWO
-iLYAqhbYXgTKqpjOi5bYJvX7kCuz4zHpMhMXgpWwbXg8dJ748D/qZTmdr/N8I75M
-eQwqxh5Io/2/8EjXXyhDdkq4lSPDT+iPjbrmeaZlKLpqVwFufJb2pAkrJNjWkkgE
-CKKYl6rqaXBy9QFcVrSbCqCsnE+HdNfhRxfO/VfcyjAfEDHQxMKzO/+X2JBBh34B
-+vxBHyZ5vlwNCUXEg4qfkeeRN8EZYcvh+aq95cwxlWbNw8FKVyAIb+tCF9VD25+z
-ta4FfwnCd2mOumQErw57dkqAiwAIeWnVIFqzazGfkFAWEXWBVzq6/4KfKmK3U6Lq
-zWxI2JnnR8XViL18EhKg2l2hQfeU0Ba1WUu46AMJM2VLBSivG65ADNktM2Vl8PZM
-WqinqScExdUxa47uzrfbiUZBBzzekm77Th/a773RoaG6ap/sL0lrwSVnQS+nU5HE
-TnDrnWu/hdqaJSgMYpMaftKE04q9MEyr8VAnKaHc44mnLCZziwAEGcRArngRi5PZ
-1rZ6OcmQf5DkluGyJfg/gzZ47XOpu91JNAXKQFihVERUzSFocncylDvlPMw5LdEZ
-qIOEX+6dPXo+g9SODVO1T4XI8qBZ9VPKEyMbORarpgIKMRGaQbQ=
-=4U9I
------END PGP SIGNATURE-----
-
---qidgb2d5gkyjstpk--
+I'm not aware of a reason to keep a.out support on alpha.
