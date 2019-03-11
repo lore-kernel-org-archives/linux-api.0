@@ -1,153 +1,51 @@
-From: Keith Busch <kbusch@kernel.org>
-Subject: Re: [PATCHv7 10/10] doc/mm: New documentation for memory performance
-Date: Mon, 11 Mar 2019 14:16:33 -0600
-Message-ID: <20190311201632.GG10411@localhost.localdomain>
-References: <20190227225038.20438-1-keith.busch@intel.com>
- <20190227225038.20438-11-keith.busch@intel.com>
- <20190311113843.00006b47@huawei.com>
+From: Matt Turner <mattst88@gmail.com>
+Subject: Re: [PATCH] x86: Deprecate a.out support
+Date: Mon, 11 Mar 2019 13:50:21 -0700
+Message-ID: <CAEdQ38F3RxBXB2ow3L7F4vQd5JnJLPJ-mEqCK5ENV7NDQO9eJQ@mail.gmail.com>
+References: <CAG48ez1RVd5mQ_Pb6eygQESaZhpQz765OAZYSoPE0kPqfZEXQg@mail.gmail.com>
+ <20190305091904.GB8256@zn.tnic> <20190305122218.GD13380@bombadil.infradead.org>
+ <20190305134347.4be2449c@alans-desktop> <20190305145717.GD8256@zn.tnic>
+ <CAHk-=wi2E4kugAW7BQwNSVwYHOr=B_9EgzBRMpQ2+1dxAqydDg@mail.gmail.com>
+ <20190305173134.GE8256@zn.tnic> <CAHk-=wg0bY=RFhD4NW9x++fC0bME=_-9xM3kexGGM3gefHQTyQ@mail.gmail.com>
+ <20190305181138.GG8256@zn.tnic> <20190305181808.GH8256@zn.tnic>
+ <CAEdQ38G5M3vq9pGBV1iyEViO7JhFuXk5g+VCs-vUH+Z62kNqgQ@mail.gmail.com>
+ <CAHk-=wgt7M6yA5BJCJo0nF22WgPJnN8CvViL9CAJmd+S+Civ6w@mail.gmail.com>
+ <yw1xa7i14btw.fsf@mansr.com> <CAHk-=whD1SumZUBQeuMT-GcciwPxg_jW_TsPAmokYp3sGGCGhA@mail.gmail.com>
+ <yw1x5zsp473a.fsf@mansr.com> <CAHk-=wiU7xacTqDfm-x29-meyJWNd_X95K0T8FQMcDgy-yo3Qw@mail.gmail.com>
+ <yw1x1s3d42ia.fsf@mansr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190311113843.00006b47@huawei.com>
+In-Reply-To: <yw1x1s3d42ia.fsf@mansr.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jonathan Cameron <jonathan.cameron@huawei.com>
-Cc: "Busch, Keith" <keith.busch@intel.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-acpi@vger.kernel.org" <linux-acpi@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rafael Wysocki <rafael@kernel.org>, "Hansen, Dave" <dave.hansen@intel.com>, "Williams, Dan J" <dan.j.williams@intel.com>
+To: =?UTF-8?B?TcOlbnMgUnVsbGfDpXJk?= <mans@mansr.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, kernel list <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Richard Weinberger <richard@nod.at>, Anton Ivanov <anton.ivanov@cambridgegreys.com>, linux-alpha <linux-alpha@vger.kernel.org>, linux-m68k@lists.linux-m68k.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 11, 2019 at 04:38:43AM -0700, Jonathan Cameron wrote:
-> On Wed, 27 Feb 2019 15:50:38 -0700
-> Keith Busch <keith.busch@intel.com> wrote:
-> 
-> > Platforms may provide system memory where some physical address ranges
-> > perform differently than others, or is side cached by the system.
-> The magic 'side cached' term still here in the patch description, ideally
-> wants cleaning up.
-> 
-> > 
-> > Add documentation describing a high level overview of such systems and the
-> > perforamnce and caching attributes the kernel provides for applications
-> performance
-> 
-> > wishing to query this information.
-> > 
-> > Reviewed-by: Mike Rapoport <rppt@linux.ibm.com>
-> > Signed-off-by: Keith Busch <keith.busch@intel.com>
-> 
-> A few comments inline. Mostly the weird corner cases that I miss understood
-> in one of the earlier versions of the code.
-> 
-> Whilst I think perhaps that one section could be tweaked a tiny bit I'm basically
-> happy with this if you don't want to.
-> 
-> Reviewed-by: Jonathan Cameron <Jonathan.Cameron@huawei.com>
-> 
-> > ---
-> >  Documentation/admin-guide/mm/numaperf.rst | 164 ++++++++++++++++++++++++++++++
-> >  1 file changed, 164 insertions(+)
-> >  create mode 100644 Documentation/admin-guide/mm/numaperf.rst
-> > 
-> > diff --git a/Documentation/admin-guide/mm/numaperf.rst b/Documentation/admin-guide/mm/numaperf.rst
-> > new file mode 100644
-> > index 000000000000..d32756b9be48
-> > --- /dev/null
-> > +++ b/Documentation/admin-guide/mm/numaperf.rst
-> > @@ -0,0 +1,164 @@
-> > +.. _numaperf:
-> > +
-> > +=============
-> > +NUMA Locality
-> > +=============
-> > +
-> > +Some platforms may have multiple types of memory attached to a compute
-> > +node. These disparate memory ranges may share some characteristics, such
-> > +as CPU cache coherence, but may have different performance. For example,
-> > +different media types and buses affect bandwidth and latency.
-> > +
-> > +A system supports such heterogeneous memory by grouping each memory type
-> > +under different domains, or "nodes", based on locality and performance
-> > +characteristics.  Some memory may share the same node as a CPU, and others
-> > +are provided as memory only nodes. While memory only nodes do not provide
-> > +CPUs, they may still be local to one or more compute nodes relative to
-> > +other nodes. The following diagram shows one such example of two compute
-> > +nodes with local memory and a memory only node for each of compute node:
-> > +
-> > + +------------------+     +------------------+
-> > + | Compute Node 0   +-----+ Compute Node 1   |
-> > + | Local Node0 Mem  |     | Local Node1 Mem  |
-> > + +--------+---------+     +--------+---------+
-> > +          |                        |
-> > + +--------+---------+     +--------+---------+
-> > + | Slower Node2 Mem |     | Slower Node3 Mem |
-> > + +------------------+     +--------+---------+
-> > +
-> > +A "memory initiator" is a node containing one or more devices such as
-> > +CPUs or separate memory I/O devices that can initiate memory requests.
-> > +A "memory target" is a node containing one or more physical address
-> > +ranges accessible from one or more memory initiators.
-> > +
-> > +When multiple memory initiators exist, they may not all have the same
-> > +performance when accessing a given memory target. Each initiator-target
-> > +pair may be organized into different ranked access classes to represent
-> > +this relationship. 
-> 
-> This concept is a bit vague at the moment. Largely because only access0
-> is actually defined.  We should definitely keep a close eye on any others
-> that are defined in future to make sure this text is still valid.
-> 
-> I can certainly see it being used for different ideas of 'best' rather
-> than simply best and second best etc.
+On Mon, Mar 11, 2019 at 12:47 PM M=C3=A5ns Rullg=C3=A5rd <mans@mansr.com> w=
+rote:
+>
+> Linus Torvalds <torvalds@linux-foundation.org> writes:
+>
+> > On Mon, Mar 11, 2019 at 11:08 AM M=C3=A5ns Rullg=C3=A5rd <mans@mansr.co=
+m> wrote:
+> >>
+> >> The latest version I have is 5.1, and that uses ECOFF.
+> >
+> > ECOFF _is_ a.out as far as Linux is concerned.
+> >
+> > So Linux basically treats ECOFF as "regular a.out with just some
+> > header extensions".
+> >
+> > We don't have any specific support for ECOFF.
+> >
+> > I _think_. Again, it's been years and years.
+>
+> Right, which is why killing a.out entirely would have the unfortunate
+> effect of also removing the OSF/1 compatibility on Alpha.
+>
+> If we are to support Alpha as an architecture at all, it makes sense to
+> support the things people actually use it for.
 
-I tried to make the interface flexible to future extension, but I'm
-still not sure how potential users would want to see something like
-all pair-wise attributes, so I had some trouble trying to capture that
-in words.
- 
-> > The highest performing initiator to a given target
-> > +is considered to be one of that target's local initiators, and given
-> > +the highest access class, 0. Any given target may have one or more
-> > +local initiators, and any given initiator may have multiple local
-> > +memory targets.
-> > +
-> > +To aid applications matching memory targets with their initiators, the
-> > +kernel provides symlinks to each other. The following example lists the
-> > +relationship for the access class "0" memory initiators and targets, which is
-> > +the of nodes with the highest performing access relationship::
-> > +
-> > +	# symlinks -v /sys/devices/system/node/nodeX/access0/targets/
-> > +	relative: /sys/devices/system/node/nodeX/access0/targets/nodeY -> ../../nodeY
-> 
-> So this one perhaps needs a bit more description - I would put it after initiators
-> which precisely fits the description you have here now.
-> 
-> "targets contains those nodes for which this initiator is the best possible initiator."
-> 
-> which is subtly different form
-> 
-> "targets contains those nodes to which this node has the highest
-> performing access characteristics."
-> 
-> For example in my test case:
-> * 4 nodes with local memory and cpu, 1 node remote and equal distant from all of the
->   initiators,
-> 
-> targets for the compute nodes contains both themselves and the remote node, to which
-> the characteristics are of course worse. As you point out before, we need to look
-> in 
-> node0/access0/targets/node0/access0/initiators 
-> node0/access0/targets/node4/access0/initiators 
-> to get the relevant characteristics and work out that node0 is 'nearer' itself
-> (obviously this is a bit of a silly case, but we could have no memory node0 and
-> be talking about node4 and node5.
-> 
-> I am happy with the actual interface, this is just a question about whether we can tweak
-> this text to be slightly clearer.
-
-Sure, I mention this in patch 4's commit message. Probably worth
-repeating here:
-
-    A memory initiator may have multiple memory targets in the same access
-    class. The target memory's initiators in a given class indicate the
-    nodes access characteristics share the same performance relative to other
-    linked initiator nodes. Each target within an initiator's access class,
-    though, do not necessarily perform the same as each other.
+I agree. I was not aware that a.out was effectively the same as ECOFF.
