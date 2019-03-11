@@ -1,224 +1,70 @@
-From: Keith Busch <keith.busch@intel.com>
-Subject: [PATCHv8 05/10] node: Add heterogenous memory access attributes
-Date: Mon, 11 Mar 2019 14:56:01 -0600
-Message-ID: <20190311205606.11228-6-keith.busch@intel.com>
-References: <20190311205606.11228-1-keith.busch@intel.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH] x86: Deprecate a.out support
+Date: Mon, 11 Mar 2019 22:34:26 +0100
+Message-ID: <CAK8P3a031d9mSOxVmCAGcrbdaCE8N3R4e2Smtxp-Z+cautTAvg@mail.gmail.com>
+References: <CAG48ez1RVd5mQ_Pb6eygQESaZhpQz765OAZYSoPE0kPqfZEXQg@mail.gmail.com>
+ <20190305091904.GB8256@zn.tnic> <20190305122218.GD13380@bombadil.infradead.org>
+ <20190305134347.4be2449c@alans-desktop> <20190305145717.GD8256@zn.tnic>
+ <CAHk-=wi2E4kugAW7BQwNSVwYHOr=B_9EgzBRMpQ2+1dxAqydDg@mail.gmail.com>
+ <20190305173134.GE8256@zn.tnic> <CAHk-=wg0bY=RFhD4NW9x++fC0bME=_-9xM3kexGGM3gefHQTyQ@mail.gmail.com>
+ <20190305181138.GG8256@zn.tnic> <20190305181808.GH8256@zn.tnic>
+ <CAEdQ38G5M3vq9pGBV1iyEViO7JhFuXk5g+VCs-vUH+Z62kNqgQ@mail.gmail.com>
+ <CAHk-=wgt7M6yA5BJCJo0nF22WgPJnN8CvViL9CAJmd+S+Civ6w@mail.gmail.com>
+ <yw1xa7i14btw.fsf@mansr.com> <CAHk-=whD1SumZUBQeuMT-GcciwPxg_jW_TsPAmokYp3sGGCGhA@mail.gmail.com>
+ <yw1x5zsp473a.fsf@mansr.com> <CAHk-=wiU7xacTqDfm-x29-meyJWNd_X95K0T8FQMcDgy-yo3Qw@mail.gmail.com>
+ <yw1x1s3d42ia.fsf@mansr.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190311205606.11228-1-keith.busch@intel.com>
+In-Reply-To: <yw1x1s3d42ia.fsf@mansr.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-acpi@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rafael Wysocki <rafael@kernel.org>, Dave Hansen <dave.hansen@intel.com>, Dan Williams <dan.j.williams@intel.com>, Jonathan Cameron <jonathan.cameron@huawei.com>, Brice Goglin <Brice.Goglin@inria.fr>, Keith Busch <keith.busch@intel.com>
+To: =?UTF-8?B?TcOlbnMgUnVsbGfDpXJk?= <mans@mansr.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Matt Turner <mattst88@gmail.com>, Borislav Petkov <bp@alien8.de>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, kernel list <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Richard Weinberger <richard@nod.at>, Anton Ivanov <anton.ivanov@cambridgegreys.com>, linux-alpha <linux-alpha@vger.kernel.org>, linux-m68k <linux-m68k@lists.linux-m68k.org>
 List-Id: linux-api@vger.kernel.org
 
-Heterogeneous memory systems provide memory nodes with different latency
-and bandwidth performance attributes. Provide a new kernel interface
-for subsystems to register the attributes under the memory target
-node's initiator access class. If the system provides this information,
-applications may query these attributes when deciding which node to
-request memory.
+On Mon, Mar 11, 2019 at 8:47 PM Måns Rullgård <mans@mansr.com> wrote:
+> Linus Torvalds <torvalds@linux-foundation.org> writes:
+> > On Mon, Mar 11, 2019 at 11:08 AM Måns Rullgård <mans@mansr.com> wrote:
+> >>
+> >> The latest version I have is 5.1, and that uses ECOFF.
+> >
+> > ECOFF _is_ a.out as far as Linux is concerned.
+> >
+> > So Linux basically treats ECOFF as "regular a.out with just some
+> > header extensions".
+> >
+> > We don't have any specific support for ECOFF.
+> >
+> > I _think_. Again, it's been years and years.
+>
+> Right, which is why killing a.out entirely would have the unfortunate
+> effect of also removing the OSF/1 compatibility on Alpha.
+>
+> If we are to support Alpha as an architecture at all, it makes sense to
+> support the things people actually use it for.
+>
+> Now, personally I can live without it.  I just don't like to see
+> features removed without due consideration.
 
-The following example shows the new sysfs hierarchy for a node exporting
-performance attributes:
+The main historic use case I've heard of was running Netscape
+Navigator on Alpha Linux, before there was an open source version.
+Doing this today to connect to the open internet is probably
+a bit pointless, but there may be other use cases.
 
-  # tree -P "read*|write*"/sys/devices/system/node/nodeY/accessZ/initiators/
-  /sys/devices/system/node/nodeY/accessZ/initiators/
-  |-- read_bandwidth
-  |-- read_latency
-  |-- write_bandwidth
-  `-- write_latency
+Looking at the system call table in the kernel
+(arch/alpha/kernel/syscalls/syscall.tbl), we seem to support a
+specific subset that was required for a set of applications, and
+not much more. Old system calls (osf_old_open, osf_execve,
+osf_old_sigaction) are listed but not implemented, and the same
+is true for most of the later calls (osf_fuser, osf_sigsendset,
+osf_waitid, osf_signal, ...), just the ones in the middle are there.
+This would also indicate that it never really worked as a
+general-purpose emulation layer but was only there for a specific
+set of applications.
 
-The bandwidth is exported as MB/s and latency is reported in
-nanoseconds. The values are taken from the platform as reported by the
-manufacturer.
+Another data point I have is that osf1 emulation was broken
+between linux-4.13 and linux-4.16 without anyone noticing, see
+47669fb6b595 ("alpha: osf_sys.c: fix put_tv32 regression").
 
-Memory accesses from an initiator node that is not one of the memory's
-access "Z" initiator nodes linked in the same directory may observe
-different performance than reported here. When a subsystem makes use
-of this interface, initiators of a different access number may not have
-the same performance relative to initiators in other access numbers, or
-omitted from the any access class' initiators.
-
-Descriptions for memory access initiator performance access attributes
-are added to sysfs stable documentation.
-
-Acked-by: Jonathan Cameron <Jonathan.Cameron@huawei.com>
-Tested-by: Jonathan Cameron <Jonathan.Cameron@huawei.com>
-Signed-off-by: Keith Busch <keith.busch@intel.com>
----
- Documentation/ABI/stable/sysfs-devices-node | 28 ++++++++++++++
- drivers/base/Kconfig                        |  8 ++++
- drivers/base/node.c                         | 59 +++++++++++++++++++++++++++++
- include/linux/node.h                        | 26 +++++++++++++
- 4 files changed, 121 insertions(+)
-
-diff --git a/Documentation/ABI/stable/sysfs-devices-node b/Documentation/ABI/stable/sysfs-devices-node
-index 433bcc04e542..735a40a3f9b2 100644
---- a/Documentation/ABI/stable/sysfs-devices-node
-+++ b/Documentation/ABI/stable/sysfs-devices-node
-@@ -114,3 +114,31 @@ Contact:	Keith Busch <keith.busch@intel.com>
- Description:
- 		The directory containing symlinks to memory targets that
- 		this initiator node has class "Y" access.
-+
-+What:		/sys/devices/system/node/nodeX/accessY/initiators/read_bandwidth
-+Date:		December 2018
-+Contact:	Keith Busch <keith.busch@intel.com>
-+Description:
-+		This node's read bandwidth in MB/s when accessed from
-+		nodes found in this access class's linked initiators.
-+
-+What:		/sys/devices/system/node/nodeX/accessY/initiators/read_latency
-+Date:		December 2018
-+Contact:	Keith Busch <keith.busch@intel.com>
-+Description:
-+		This node's read latency in nanoseconds when accessed
-+		from nodes found in this access class's linked initiators.
-+
-+What:		/sys/devices/system/node/nodeX/accessY/initiators/write_bandwidth
-+Date:		December 2018
-+Contact:	Keith Busch <keith.busch@intel.com>
-+Description:
-+		This node's write bandwidth in MB/s when accessed from
-+		found in this access class's linked initiators.
-+
-+What:		/sys/devices/system/node/nodeX/accessY/initiators/write_latency
-+Date:		December 2018
-+Contact:	Keith Busch <keith.busch@intel.com>
-+Description:
-+		This node's write latency in nanoseconds when access
-+		from nodes found in this class's linked initiators.
-diff --git a/drivers/base/Kconfig b/drivers/base/Kconfig
-index 059700ea3521..a7438a58c250 100644
---- a/drivers/base/Kconfig
-+++ b/drivers/base/Kconfig
-@@ -149,6 +149,14 @@ config DEBUG_TEST_DRIVER_REMOVE
- 	  unusable. You should say N here unless you are explicitly looking to
- 	  test this functionality.
- 
-+config HMEM_REPORTING
-+	bool
-+	default n
-+	depends on NUMA
-+	help
-+	  Enable reporting for heterogenous memory access attributes under
-+	  their non-uniform memory nodes.
-+
- source "drivers/base/test/Kconfig"
- 
- config SYS_HYPERVISOR
-diff --git a/drivers/base/node.c b/drivers/base/node.c
-index 6f4097680580..2de546a040a5 100644
---- a/drivers/base/node.c
-+++ b/drivers/base/node.c
-@@ -71,6 +71,9 @@ struct node_access_nodes {
- 	struct device		dev;
- 	struct list_head	list_node;
- 	unsigned		access;
-+#ifdef CONFIG_HMEM_REPORTING
-+	struct node_hmem_attrs	hmem_attrs;
-+#endif
- };
- #define to_access_nodes(dev) container_of(dev, struct node_access_nodes, dev)
- 
-@@ -148,6 +151,62 @@ static struct node_access_nodes *node_init_node_access(struct node *node,
- 	return NULL;
- }
- 
-+#ifdef CONFIG_HMEM_REPORTING
-+#define ACCESS_ATTR(name) 						   \
-+static ssize_t name##_show(struct device *dev,				   \
-+			   struct device_attribute *attr,		   \
-+			   char *buf)					   \
-+{									   \
-+	return sprintf(buf, "%u\n", to_access_nodes(dev)->hmem_attrs.name); \
-+}									   \
-+static DEVICE_ATTR_RO(name);
-+
-+ACCESS_ATTR(read_bandwidth)
-+ACCESS_ATTR(read_latency)
-+ACCESS_ATTR(write_bandwidth)
-+ACCESS_ATTR(write_latency)
-+
-+static struct attribute *access_attrs[] = {
-+	&dev_attr_read_bandwidth.attr,
-+	&dev_attr_read_latency.attr,
-+	&dev_attr_write_bandwidth.attr,
-+	&dev_attr_write_latency.attr,
-+	NULL,
-+};
-+
-+/**
-+ * node_set_perf_attrs - Set the performance values for given access class
-+ * @nid: Node identifier to be set
-+ * @hmem_attrs: Heterogeneous memory performance attributes
-+ * @access: The access class the for the given attributes
-+ */
-+void node_set_perf_attrs(unsigned int nid, struct node_hmem_attrs *hmem_attrs,
-+			 unsigned access)
-+{
-+	struct node_access_nodes *c;
-+	struct node *node;
-+	int i;
-+
-+	if (WARN_ON_ONCE(!node_online(nid)))
-+		return;
-+
-+	node = node_devices[nid];
-+	c = node_init_node_access(node, access);
-+	if (!c)
-+		return;
-+
-+	c->hmem_attrs = *hmem_attrs;
-+	for (i = 0; access_attrs[i] != NULL; i++) {
-+		if (sysfs_add_file_to_group(&c->dev.kobj, access_attrs[i],
-+					    "initiators")) {
-+			pr_info("failed to add performance attribute to node %d\n",
-+				nid);
-+			break;
-+		}
-+	}
-+}
-+#endif
-+
- #define K(x) ((x) << (PAGE_SHIFT - 10))
- static ssize_t node_read_meminfo(struct device *dev,
- 			struct device_attribute *attr, char *buf)
-diff --git a/include/linux/node.h b/include/linux/node.h
-index bb288817ed33..4139d728f8b3 100644
---- a/include/linux/node.h
-+++ b/include/linux/node.h
-@@ -20,6 +20,32 @@
- #include <linux/list.h>
- #include <linux/workqueue.h>
- 
-+/**
-+ * struct node_hmem_attrs - heterogeneous memory performance attributes
-+ *
-+ * @read_bandwidth:	Read bandwidth in MB/s
-+ * @write_bandwidth:	Write bandwidth in MB/s
-+ * @read_latency:	Read latency in nanoseconds
-+ * @write_latency:	Write latency in nanoseconds
-+ */
-+struct node_hmem_attrs {
-+	unsigned int read_bandwidth;
-+	unsigned int write_bandwidth;
-+	unsigned int read_latency;
-+	unsigned int write_latency;
-+};
-+
-+#ifdef CONFIG_HMEM_REPORTING
-+void node_set_perf_attrs(unsigned int nid, struct node_hmem_attrs *hmem_attrs,
-+			 unsigned access);
-+#else
-+static inline void node_set_perf_attrs(unsigned int nid,
-+				       struct node_hmem_attrs *hmem_attrs,
-+				       unsigned access)
-+{
-+}
-+#endif
-+
- struct node {
- 	struct device	dev;
- 	struct list_head access_list;
--- 
-2.14.4
+      Arnd
