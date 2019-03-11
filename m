@@ -1,115 +1,48 @@
-From: Jonathan Cameron <jonathan.cameron@huawei.com>
-Subject: Re: [PATCHv7 00/10] Heterogenous memory node attributes
-Date: Mon, 11 Mar 2019 11:47:37 +0000
-Message-ID: <20190311114459.00006f3d@huawei.com>
-References: <20190227225038.20438-1-keith.busch@intel.com>
+From: =?iso-8859-1?Q?M=E5ns_Rullg=E5rd?= <mans@mansr.com>
+Subject: Re: [PATCH] x86: Deprecate a.out support
+Date: Mon, 11 Mar 2019 16:26:03 +0000
+Message-ID: <yw1xa7i14btw.fsf@mansr.com>
+References: <CAG48ez1RVd5mQ_Pb6eygQESaZhpQz765OAZYSoPE0kPqfZEXQg@mail.gmail.com>
+        <20190305091904.GB8256@zn.tnic>
+        <20190305122218.GD13380@bombadil.infradead.org>
+        <20190305134347.4be2449c@alans-desktop>
+        <20190305145717.GD8256@zn.tnic>
+        <CAHk-=wi2E4kugAW7BQwNSVwYHOr=B_9EgzBRMpQ2+1dxAqydDg@mail.gmail.com>
+        <20190305173134.GE8256@zn.tnic>
+        <CAHk-=wg0bY=RFhD4NW9x++fC0bME=_-9xM3kexGGM3gefHQTyQ@mail.gmail.com>
+        <20190305181138.GG8256@zn.tnic> <20190305181808.GH8256@zn.tnic>
+        <CAEdQ38G5M3vq9pGBV1iyEViO7JhFuXk5g+VCs-vUH+Z62kNqgQ@mail.gmail.com>
+        <CAHk-=wgt7M6yA5BJCJo0nF22WgPJnN8CvViL9CAJmd+S+Civ6w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190227225038.20438-1-keith.busch@intel.com>
+In-Reply-To: <CAHk-=wgt7M6yA5BJCJo0nF22WgPJnN8CvViL9CAJmd+S+Civ6w@mail.gmail.com>
+        (Linus Torvalds's message of "Sun, 10 Mar 2019 15:40:20 -0700")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Keith Busch <keith.busch@intel.com>
-Cc: linux-kernel@vger.kernel.org, linux-acpi@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rafael Wysocki <rafael@kernel.org>, Dave Hansen <dave.hansen@intel.com>, Dan Williams <dan.j.williams@intel.com>, linuxarm@huawei.com
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Matt Turner <mattst88@gmail.com>, Borislav Petkov <bp@alien8.de>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, kernel list <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Richard Weinberger <richard@nod.at>, Anton Ivanov <anton.ivanov@cambridgegreys.com>, linux-alpha <linux-alpha@vger.kernel.org>, linux-m68k@lists.linux-m68k.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 27 Feb 2019 15:50:28 -0700
-Keith Busch <keith.busch@intel.com> wrote:
+Linus Torvalds <torvalds@linux-foundation.org> writes:
 
-> == Changes since v6 ==
-> 
->   Updated to linux-next, which has a change to the HMAT structures to
->   account for ACPI revision 6.3.
-> 
->   Changed memory-side cache "associativity" attribute to "indexing"
-> 
-> 
-> Regarding the Kconfig, I am having the implementation specific as a user
-> selectable option, and the generic interface, HMEM_REPORTING, is not a
-> user prompt. I just wanted to clarify the point that there's only one.
-> 
-> 
-> == Background ==
-> 
-> Platforms may provide multiple types of cpu attached system memory. The
-> memory ranges for each type may have different characteristics that
-> applications may wish to know about when considering what node they want
-> their memory allocated from. 
-> 
-> It had previously been difficult to describe these setups as memory
-> rangers were generally lumped into the NUMA node of the CPUs. New
-> platform attributes have been created and in use today that describe
-> the more complex memory hierarchies that can be created.
-> 
-> This series' objective is to provide the attributes from such systems
-> that are useful for applications to know about, and readily usable with
-> existing tools and libraries. Those applications may query performance
-> attributes relative to a particular CPU they're running on in order to
-> make more informed choices for where they want to allocate hot and cold
-> data. This works with mbind() or the numactl library.
+> On Sun, Mar 10, 2019 at 2:37 PM Matt Turner <mattst88@gmail.com> wrote:
+>>
+>> I'm not aware of a reason to keep a.out support on alpha.
+>
+> Hmm. I was looking at removing a.out support entirely, but it's
+> actually fairly incestuous on alpha.
+>
+> For example, arch/alpha/boot/tools/objstrip.c very much has some a.out
+> support in it. Maybe it can just be removed entirely.
+>
+> There's also an a.out.h include in arch/alpha/kernel/binfmt_loader.c.
+>
+> Finally, note that CONFIG_OSF4_COMPAT also no longer makes sense
+> without a.out support.
 
-Hi Keith,
+Anyone running an Alpha machine likely also has some old OSF/1 binaries
+they may wish to use.  It would be a shame to remove this feature, IMO.
 
-Great to see this 'nearly' good to go.
-
-For those that were too small / trivial to deserve a reviewed-by
-Acked-by: Jonathan Cameron <Jonathan.Cameron@huawei.com>
-
-Subject to that one tweak in patch 7,
-Tested-by: Jonathan Cameron <Jonathan.Cameron@huawei.com>
-
-Note that my tests were very limited for the memory-side caches
-and not exactly comprehensive for the access attributes either.
-
-They focused on the cases I care about rather than putting together
-a fuller test suite.  That is probably worth doing at some point though
-not sure I'll get to it any time soon.
-
-Thanks,
-
-Jonathan
-
-> 
-> Keith Busch (10):
->   acpi: Create subtable parsing infrastructure
->   acpi: Add HMAT to generic parsing tables
->   acpi/hmat: Parse and report heterogeneous memory
->   node: Link memory nodes to their compute nodes
->   node: Add heterogenous memory access attributes
->   node: Add memory-side caching attributes
->   acpi/hmat: Register processor domain to its memory
->   acpi/hmat: Register performance attributes
->   acpi/hmat: Register memory side cache attributes
->   doc/mm: New documentation for memory performance
-> 
->  Documentation/ABI/stable/sysfs-devices-node   |  87 +++-
->  Documentation/admin-guide/mm/numaperf.rst     | 164 +++++++
->  arch/arm64/kernel/acpi_numa.c                 |   2 +-
->  arch/arm64/kernel/smp.c                       |   4 +-
->  arch/ia64/kernel/acpi.c                       |  14 +-
->  arch/x86/kernel/acpi/boot.c                   |  36 +-
->  drivers/acpi/Kconfig                          |   1 +
->  drivers/acpi/Makefile                         |   1 +
->  drivers/acpi/hmat/Kconfig                     |  11 +
->  drivers/acpi/hmat/Makefile                    |   1 +
->  drivers/acpi/hmat/hmat.c                      | 670 ++++++++++++++++++++++++++
->  drivers/acpi/numa.c                           |  16 +-
->  drivers/acpi/scan.c                           |   4 +-
->  drivers/acpi/tables.c                         |  76 ++-
->  drivers/base/Kconfig                          |   8 +
->  drivers/base/node.c                           | 352 +++++++++++++-
->  drivers/irqchip/irq-gic-v2m.c                 |   2 +-
->  drivers/irqchip/irq-gic-v3-its-pci-msi.c      |   2 +-
->  drivers/irqchip/irq-gic-v3-its-platform-msi.c |   2 +-
->  drivers/irqchip/irq-gic-v3-its.c              |   6 +-
->  drivers/irqchip/irq-gic-v3.c                  |  10 +-
->  drivers/irqchip/irq-gic.c                     |   4 +-
->  drivers/mailbox/pcc.c                         |   2 +-
->  include/linux/acpi.h                          |   6 +-
->  include/linux/node.h                          |  72 ++-
->  25 files changed, 1487 insertions(+), 66 deletions(-)
->  create mode 100644 Documentation/admin-guide/mm/numaperf.rst
->  create mode 100644 drivers/acpi/hmat/Kconfig
->  create mode 100644 drivers/acpi/hmat/Makefile
->  create mode 100644 drivers/acpi/hmat/hmat.c
-> 
+-- 
+Måns Rullgård
