@@ -1,61 +1,547 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH] x86: Deprecate a.out support
-Date: Mon, 11 Mar 2019 12:02:33 +0100
-Message-ID: <CAK8P3a2cc0QoG8=y343vXaVQHHayJKT_hSLRDPx-awRdB1MutA@mail.gmail.com>
-References: <CAG48ez1RVd5mQ_Pb6eygQESaZhpQz765OAZYSoPE0kPqfZEXQg@mail.gmail.com>
- <20190305091904.GB8256@zn.tnic> <20190305122218.GD13380@bombadil.infradead.org>
- <20190305134347.4be2449c@alans-desktop> <20190305145717.GD8256@zn.tnic>
- <CAHk-=wi2E4kugAW7BQwNSVwYHOr=B_9EgzBRMpQ2+1dxAqydDg@mail.gmail.com>
- <20190305173134.GE8256@zn.tnic> <CAHk-=wg0bY=RFhD4NW9x++fC0bME=_-9xM3kexGGM3gefHQTyQ@mail.gmail.com>
- <20190305181138.GG8256@zn.tnic> <20190305181808.GH8256@zn.tnic>
- <CAEdQ38G5M3vq9pGBV1iyEViO7JhFuXk5g+VCs-vUH+Z62kNqgQ@mail.gmail.com> <CAHk-=wgt7M6yA5BJCJo0nF22WgPJnN8CvViL9CAJmd+S+Civ6w@mail.gmail.com>
+From: Jonathan Cameron <jonathan.cameron@huawei.com>
+Subject: Re: [PATCHv7 07/10] acpi/hmat: Register processor domain to its
+ memory
+Date: Mon, 11 Mar 2019 11:20:41 +0000
+Message-ID: <20190311112041.000015ba@huawei.com>
+References: <20190227225038.20438-1-keith.busch@intel.com>
+        <20190227225038.20438-8-keith.busch@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="US-ASCII"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=wgt7M6yA5BJCJo0nF22WgPJnN8CvViL9CAJmd+S+Civ6w@mail.gmail.com>
+In-Reply-To: <20190227225038.20438-8-keith.busch@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Matt Turner <mattst88@gmail.com>, Borislav Petkov <bp@alien8.de>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, kernel list <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Richard Weinberger <richard@nod.at>, Anton Ivanov <anton.ivanov@cambridgegreys.com>, linux-alpha <linux-alpha@vger.kernel.org>, linux-m68k <linux-m68k@lists.linux-m68k.org>
+To: Keith Busch <keith.busch@intel.com>
+Cc: linux-kernel@vger.kernel.org, linux-acpi@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rafael Wysocki <rafael@kernel.org>, Dave Hansen <dave.hansen@intel.com>, Dan Williams <dan.j.williams@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Mar 10, 2019 at 11:46 PM Linus Torvalds
-<torvalds@linux-foundation.org> wrote:
->
-> On Sun, Mar 10, 2019 at 2:37 PM Matt Turner <mattst88@gmail.com> wrote:
-> >
-> > I'm not aware of a reason to keep a.out support on alpha.
->
-> Hmm. I was looking at removing a.out support entirely, but it's
-> actually fairly incestuous on alpha.
->
-> For example, arch/alpha/boot/tools/objstrip.c very much has some a.out
-> support in it. Maybe it can just be removed entirely.
->
-> There's also an a.out.h include in arch/alpha/kernel/binfmt_loader.c.
->
-> Finally, note that CONFIG_OSF4_COMPAT also no longer makes sense
-> without a.out support.
->
-> So this attached patch does not compile on alpha, but it's been many
-> many years since I had an alpha to test with, so I'm stuck.
->
-> Matt, can you fill in the details and complete this patch?
+On Wed, 27 Feb 2019 15:50:35 -0700
+Keith Busch <keith.busch@intel.com> wrote:
 
-I wonder if we could remove the osf time32 compat code as well,
-this was one of the areas that kept causing problems with the y2038
-rework. (I think it's all good now, but it's never been tested as far as I
-can tell).
+> If the HMAT Subsystem Address Range provides a valid processor proximity
+> domain for a memory domain, or a processor domain matches the performance
+> access of the valid processor proximity domain, register the memory
+> target with that initiator so this relationship will be visible under
+> the node's sysfs directory.
+> 
+> Since HMAT requires valid address ranges have an equivalent SRAT entry,
+> verify each memory target satisfies this requirement.
+> 
+> Signed-off-by: Keith Busch <keith.busch@intel.com>
+Hi Keith,
 
-For some syscalls (e.g. brk, mmap, getxuid, ...) we definitely need to
-keep the osf1 version, since it is the only supported ABI.
+I have that test case with a single remote memory only node and it is ending
+up with no associated initiators.
 
-I just looked up some really old source trees and found that glibc-2.1
-was the first release to use 64-bit time_t the way we do it today,
-as implemented in [1], so all Debian and SuSE releases for alpha
-had it, but any ELF binaries built on Red Hat Linux 4.x and 5.x
-(released 1996 through 1998) or earlier would use 32-bit time_t
-osf1 syscalls. Red Hat 2.x and 3.x were a.out based on alpha.
+I made a minor modification inline and it works as expected.
 
-      Arnd
+With that change
 
-[1] https://repo.or.cz/glibc/history.git/commitdiff/64819b5c3a94e81e4
+Reviewed-by: Jonathan Cameron <Jonathan.Cameron@huawei.com>
+
+Jonathan
+> ---
+>  drivers/acpi/hmat/Kconfig |   3 +-
+>  drivers/acpi/hmat/hmat.c  | 395 +++++++++++++++++++++++++++++++++++++++++++++-
+>  2 files changed, 396 insertions(+), 2 deletions(-)
+> 
+> diff --git a/drivers/acpi/hmat/Kconfig b/drivers/acpi/hmat/Kconfig
+> index 2f7111b7af62..13cddd612a52 100644
+> --- a/drivers/acpi/hmat/Kconfig
+> +++ b/drivers/acpi/hmat/Kconfig
+> @@ -4,4 +4,5 @@ config ACPI_HMAT
+>  	depends on ACPI_NUMA
+>  	help
+>  	 If set, this option has the kernel parse and report the
+> -	 platform's ACPI HMAT (Heterogeneous Memory Attributes Table).
+> +	 platform's ACPI HMAT (Heterogeneous Memory Attributes Table),
+> +	 and register memory initiators with their targets.
+> diff --git a/drivers/acpi/hmat/hmat.c b/drivers/acpi/hmat/hmat.c
+> index 99f711420f6d..bb6a11653729 100644
+> --- a/drivers/acpi/hmat/hmat.c
+> +++ b/drivers/acpi/hmat/hmat.c
+> @@ -13,11 +13,105 @@
+>  #include <linux/device.h>
+>  #include <linux/init.h>
+>  #include <linux/list.h>
+> +#include <linux/list_sort.h>
+>  #include <linux/node.h>
+>  #include <linux/sysfs.h>
+>  
+>  static __initdata u8 hmat_revision;
+>  
+> +static __initdata LIST_HEAD(targets);
+> +static __initdata LIST_HEAD(initiators);
+> +static __initdata LIST_HEAD(localities);
+> +
+> +/*
+> + * The defined enum order is used to prioritize attributes to break ties when
+> + * selecting the best performing node.
+> + */
+> +enum locality_types {
+> +	WRITE_LATENCY,
+> +	READ_LATENCY,
+> +	WRITE_BANDWIDTH,
+> +	READ_BANDWIDTH,
+> +};
+> +
+> +static struct memory_locality *localities_types[4];
+> +
+> +struct memory_target {
+> +	struct list_head node;
+> +	unsigned int memory_pxm;
+> +	unsigned int processor_pxm;
+> +	struct node_hmem_attrs hmem_attrs;
+> +};
+> +
+> +struct memory_initiator {
+> +	struct list_head node;
+> +	unsigned int processor_pxm;
+> +};
+> +
+> +struct memory_locality {
+> +	struct list_head node;
+> +	struct acpi_hmat_locality *hmat_loc;
+> +};
+> +
+> +static __init struct memory_initiator *find_mem_initiator(unsigned int cpu_pxm)
+> +{
+> +	struct memory_initiator *intitator;
+> +
+> +	list_for_each_entry(intitator, &initiators, node)
+> +		if (intitator->processor_pxm == cpu_pxm)
+> +			return intitator;
+> +	return NULL;
+> +}
+> +
+> +static __init struct memory_target *find_mem_target(unsigned int mem_pxm)
+> +{
+> +	struct memory_target *target;
+> +
+> +	list_for_each_entry(target, &targets, node)
+> +		if (target->memory_pxm == mem_pxm)
+> +			return target;
+> +	return NULL;
+> +}
+> +
+> +static __init void alloc_memory_initiator(unsigned int cpu_pxm)
+> +{
+> +	struct memory_initiator *intitator;
+> +
+> +	if (pxm_to_node(cpu_pxm) == NUMA_NO_NODE)
+> +		return;
+> +
+> +	intitator = find_mem_initiator(cpu_pxm);
+> +	if (intitator)
+> +		return;
+> +
+> +	intitator = kzalloc(sizeof(*intitator), GFP_KERNEL);
+> +	if (!intitator)
+> +		return;
+> +
+> +	intitator->processor_pxm = cpu_pxm;
+> +	list_add_tail(&intitator->node, &initiators);
+> +}
+> +
+> +static __init void alloc_memory_target(unsigned int mem_pxm)
+> +{
+> +	struct memory_target *target;
+> +
+> +	if (pxm_to_node(mem_pxm) == NUMA_NO_NODE)
+> +		return;
+> +
+> +	target = find_mem_target(mem_pxm);
+> +	if (target)
+> +		return;
+> +
+> +	target = kzalloc(sizeof(*target), GFP_KERNEL);
+> +	if (!target)
+> +		return;
+> +
+> +	target->memory_pxm = mem_pxm;
+> +	target->processor_pxm = PXM_INVAL;
+> +	list_add_tail(&target->node, &targets);
+> +}
+> +
+>  static __init const char *hmat_data_type(u8 type)
+>  {
+>  	switch (type) {
+> @@ -89,14 +183,83 @@ static __init u32 hmat_normalize(u16 entry, u64 base, u8 type)
+>  	return value;
+>  }
+>  
+> +static __init void hmat_update_target_access(struct memory_target *target,
+> +					     u8 type, u32 value)
+> +{
+> +	switch (type) {
+> +	case ACPI_HMAT_ACCESS_LATENCY:
+> +		target->hmem_attrs.read_latency = value;
+> +		target->hmem_attrs.write_latency = value;
+> +		break;
+> +	case ACPI_HMAT_READ_LATENCY:
+> +		target->hmem_attrs.read_latency = value;
+> +		break;
+> +	case ACPI_HMAT_WRITE_LATENCY:
+> +		target->hmem_attrs.write_latency = value;
+> +		break;
+> +	case ACPI_HMAT_ACCESS_BANDWIDTH:
+> +		target->hmem_attrs.read_bandwidth = value;
+> +		target->hmem_attrs.write_bandwidth = value;
+> +		break;
+> +	case ACPI_HMAT_READ_BANDWIDTH:
+> +		target->hmem_attrs.read_bandwidth = value;
+> +		break;
+> +	case ACPI_HMAT_WRITE_BANDWIDTH:
+> +		target->hmem_attrs.write_bandwidth = value;
+> +		break;
+> +	default:
+> +		break;
+> +	}
+> +}
+> +
+> +static __init void hmat_add_locality(struct acpi_hmat_locality *hmat_loc)
+> +{
+> +	struct memory_locality *loc;
+> +
+> +	loc = kzalloc(sizeof(*loc), GFP_KERNEL);
+> +	if (!loc) {
+> +		pr_notice_once("Failed to allocate HMAT locality\n");
+> +		return;
+> +	}
+> +
+> +	loc->hmat_loc = hmat_loc;
+> +	list_add_tail(&loc->node, &localities);
+> +
+> +	switch (hmat_loc->data_type) {
+> +	case ACPI_HMAT_ACCESS_LATENCY:
+> +		localities_types[READ_LATENCY] = loc;
+> +		localities_types[WRITE_LATENCY] = loc;
+> +		break;
+> +	case ACPI_HMAT_READ_LATENCY:
+> +		localities_types[READ_LATENCY] = loc;
+> +		break;
+> +	case ACPI_HMAT_WRITE_LATENCY:
+> +		localities_types[WRITE_LATENCY] = loc;
+> +		break;
+> +	case ACPI_HMAT_ACCESS_BANDWIDTH:
+> +		localities_types[READ_BANDWIDTH] = loc;
+> +		localities_types[WRITE_BANDWIDTH] = loc;
+> +		break;
+> +	case ACPI_HMAT_READ_BANDWIDTH:
+> +		localities_types[READ_BANDWIDTH] = loc;
+> +		break;
+> +	case ACPI_HMAT_WRITE_BANDWIDTH:
+> +		localities_types[WRITE_BANDWIDTH] = loc;
+> +		break;
+> +	default:
+> +		break;
+> +	}
+> +}
+> +
+>  static __init int hmat_parse_locality(union acpi_subtable_headers *header,
+>  				      const unsigned long end)
+>  {
+>  	struct acpi_hmat_locality *hmat_loc = (void *)header;
+> +	struct memory_target *target;
+>  	unsigned int init, targ, total_size, ipds, tpds;
+>  	u32 *inits, *targs, value;
+>  	u16 *entries;
+> -	u8 type;
+> +	u8 type, mem_hier;
+>  
+>  	if (hmat_loc->header.length < sizeof(*hmat_loc)) {
+>  		pr_notice("HMAT: Unexpected locality header length: %d\n",
+> @@ -105,6 +268,7 @@ static __init int hmat_parse_locality(union acpi_subtable_headers *header,
+>  	}
+>  
+>  	type = hmat_loc->data_type;
+> +	mem_hier = hmat_loc->flags & ACPI_HMAT_MEMORY_HIERARCHY;
+>  	ipds = hmat_loc->number_of_initiator_Pds;
+>  	tpds = hmat_loc->number_of_target_Pds;
+>  	total_size = sizeof(*hmat_loc) + sizeof(*entries) * ipds * tpds +
+> @@ -123,6 +287,7 @@ static __init int hmat_parse_locality(union acpi_subtable_headers *header,
+>  	targs = inits + ipds;
+>  	entries = (u16 *)(targs + tpds);
+>  	for (init = 0; init < ipds; init++) {
+> +		alloc_memory_initiator(inits[init]);
+>  		for (targ = 0; targ < tpds; targ++) {
+>  			value = hmat_normalize(entries[init * tpds + targ],
+>  					       hmat_loc->entry_base_unit,
+> @@ -130,9 +295,18 @@ static __init int hmat_parse_locality(union acpi_subtable_headers *header,
+>  			pr_info("  Initiator-Target[%d-%d]:%d%s\n",
+>  				inits[init], targs[targ], value,
+>  				hmat_data_type_suffix(type));
+> +
+> +			if (mem_hier == ACPI_HMAT_MEMORY) {
+> +				target = find_mem_target(targs[targ]);
+> +				if (target && target->processor_pxm == inits[init])
+> +					hmat_update_target_access(target, type, value);
+> +			}
+>  		}
+>  	}
+>  
+> +	if (mem_hier == ACPI_HMAT_MEMORY)
+> +		hmat_add_locality(hmat_loc);
+> +
+>  	return 0;
+>  }
+>  
+> @@ -176,6 +350,23 @@ static int __init hmat_parse_address_range(union acpi_subtable_headers *header,
+>  		pr_info("HMAT: Memory Flags:%04x Processor Domain:%d Memory Domain:%d\n",
+>  			p->flags, p->processor_PD, p->memory_PD);
+>  
+> +	if (p->flags & ACPI_HMAT_MEMORY_PD_VALID) {
+> +		target = find_mem_target(p->memory_PD);
+> +		if (!target) {
+> +			pr_debug("HMAT: Memory Domain missing from SRAT\n");
+> +			return -EINVAL;
+> +		}
+> +	}
+> +	if (target && p->flags & ACPI_HMAT_PROCESSOR_PD_VALID) {
+> +		int p_node = pxm_to_node(p->processor_PD);
+> +
+> +		if (p_node == NUMA_NO_NODE) {
+> +			pr_debug("HMAT: Invalid Processor Domain\n");
+> +			return -EINVAL;
+> +		}
+> +		target->processor_pxm = p_node;
+> +	}
+> +
+>  	return 0;
+>  }
+>  
+> @@ -199,6 +390,195 @@ static int __init hmat_parse_subtable(union acpi_subtable_headers *header,
+>  	}
+>  }
+>  
+> +static __init int srat_parse_mem_affinity(union acpi_subtable_headers *header,
+> +					  const unsigned long end)
+> +{
+> +	struct acpi_srat_mem_affinity *ma = (void *)header;
+> +
+> +	if (!ma)
+> +		return -EINVAL;
+> +	if (!(ma->flags & ACPI_SRAT_MEM_ENABLED))
+> +		return 0;
+> +	alloc_memory_target(ma->proximity_domain);
+> +	return 0;
+> +}
+> +
+> +static __init u32 hmat_initiator_perf(struct memory_target *target,
+> +			       struct memory_initiator *initiator,
+> +			       struct acpi_hmat_locality *hmat_loc)
+> +{
+> +	unsigned int ipds, tpds, i, idx = 0, tdx = 0;
+> +	u32 *inits, *targs;
+> +	u16 *entries;
+> +
+> +	ipds = hmat_loc->number_of_initiator_Pds;
+> +	tpds = hmat_loc->number_of_target_Pds;
+> +	inits = (u32 *)(hmat_loc + 1);
+> +	targs = inits + ipds;
+> +	entries = (u16 *)(targs + tpds);
+> +
+> +	for (i = 0; i < ipds; i++) {
+> +		if (inits[i] == initiator->processor_pxm) {
+> +			idx = i;
+> +			break;
+> +		}
+> +	}
+> +
+> +	if (i == ipds)
+> +		return 0;
+> +
+> +	for (i = 0; i < tpds; i++) {
+> +		if (targs[i] == target->memory_pxm) {
+> +			tdx = i;
+> +			break;
+> +		}
+> +	}
+> +	if (i == tpds)
+> +		return 0;
+> +
+> +	return hmat_normalize(entries[idx * tpds + tdx],
+> +			      hmat_loc->entry_base_unit,
+> +			      hmat_loc->data_type);
+> +}
+> +
+> +static __init bool hmat_update_best(u8 type, u32 value, u32 *best)
+> +{
+> +	bool updated = false;
+> +
+> +	if (!value)
+> +		return false;
+> +
+> +	switch (type) {
+> +	case ACPI_HMAT_ACCESS_LATENCY:
+> +	case ACPI_HMAT_READ_LATENCY:
+> +	case ACPI_HMAT_WRITE_LATENCY:
+> +		if (!*best || *best > value) {
+> +			*best = value;
+> +			updated = true;
+> +		}
+> +		break;
+> +	case ACPI_HMAT_ACCESS_BANDWIDTH:
+> +	case ACPI_HMAT_READ_BANDWIDTH:
+> +	case ACPI_HMAT_WRITE_BANDWIDTH:
+> +		if (!*best || *best < value) {
+> +			*best = value;
+> +			updated = true;
+> +		}
+> +		break;
+> +	}
+> +
+> +	return updated;
+> +}
+> +
+> +static int initiator_cmp(void *priv, struct list_head *a, struct list_head *b)
+> +{
+> +	struct memory_initiator *ia;
+> +	struct memory_initiator *ib;
+> +	unsigned long *p_nodes = priv;
+> +
+> +	ia = list_entry(a, struct memory_initiator, node);
+> +	ib = list_entry(b, struct memory_initiator, node);
+> +
+> +	set_bit(ia->processor_pxm, p_nodes);
+> +	set_bit(ib->processor_pxm, p_nodes);
+> +
+> +	return ia->processor_pxm - ib->processor_pxm;
+> +}
+> +
+> +static __init void hmat_register_target_initiators(struct memory_target *target)
+> +{
+> +	static DECLARE_BITMAP(p_nodes, MAX_NUMNODES);
+> +	struct memory_initiator *initiator;
+> +	unsigned int mem_nid, cpu_nid;
+> +	struct memory_locality *loc = NULL;
+> +	u32 best = 0;
+> +	int i;
+> +
+(upshot of the below is I removed this test :)
+> +	if (target->processor_pxm == PXM_INVAL)
+> +		return;
+
+This doesn't look right.  We check first if it is invalid  and return....
+
+> +
+> +	mem_nid = pxm_to_node(target->memory_pxm);
+> +
+> +	/*
+> +	 * If the Address Range Structure provides a local processor pxm, link
+> +	 * only that one. Otherwise, find the best performance attribtes and
+> +	 * register all initiators that match.
+> +	 */
+> +	if (target->processor_pxm != PXM_INVAL) {
+
+Here we check the other path...
+
+> +		cpu_nid = pxm_to_node(target->processor_pxm);
+> +		register_memory_node_under_compute_node(mem_nid, cpu_nid, 0);
+> +		return;
+> +	}
+> +
+
+So we can't get here.
+
+
+> +	if (list_empty(&localities))
+> +		return;
+> +
+> +	/*
+> +	 * We need the initiator list iteration sorted so we can use
+> +	 * bitmap_clear for previously set initiators when we find a better
+> +	 * memory accessor. We'll also use the sorting to prime the candidate
+> +	 * nodes with known initiators.
+> +	 */
+> +	bitmap_zero(p_nodes, MAX_NUMNODES);
+> +	list_sort(p_nodes, &initiators, initiator_cmp);
+> +	for (i = WRITE_LATENCY; i <= READ_BANDWIDTH; i++) {
+> +		loc = localities_types[i];
+> +		if (!loc)
+> +			continue;
+> +
+> +		best = 0;
+> +		list_for_each_entry(initiator, &initiators, node) {
+> +			u32 value;
+> +
+> +			if (!test_bit(initiator->processor_pxm, p_nodes))
+> +				continue;
+> +
+> +			value = hmat_initiator_perf(target, initiator, loc->hmat_loc);
+> +			if (hmat_update_best(loc->hmat_loc->data_type, value, &best))
+> +				bitmap_clear(p_nodes, 0, initiator->processor_pxm);
+> +			if (value != best)
+> +				clear_bit(initiator->processor_pxm, p_nodes);
+> +		}
+> +		if (best)
+> +			hmat_update_target_access(target, loc->hmat_loc->data_type, best);
+> +	}
+> +
+> +	for_each_set_bit(i, p_nodes, MAX_NUMNODES) {
+> +		cpu_nid = pxm_to_node(i);
+> +		register_memory_node_under_compute_node(mem_nid, cpu_nid, 0);
+> +	}
+> +}
+> +
+> +static __init void hmat_register_targets(void)
+> +{
+> +	struct memory_target *target;
+> +
+> +	list_for_each_entry(target, &targets, node)
+> +		hmat_register_target_initiators(target);
+> +}
+> +
+> +static __init void hmat_free_structures(void)
+> +{
+> +	struct memory_target *target, *tnext;
+> +	struct memory_locality *loc, *lnext;
+> +	struct memory_initiator *intitator, *inext;
+> +
+> +	list_for_each_entry_safe(target, tnext, &targets, node) {
+> +		list_del(&target->node);
+> +		kfree(target);
+> +	}
+> +
+> +	list_for_each_entry_safe(intitator, inext, &initiators, node) {
+> +		list_del(&intitator->node);
+> +		kfree(intitator);
+> +	}
+> +
+> +	list_for_each_entry_safe(loc, lnext, &localities, node) {
+> +		list_del(&loc->node);
+> +		kfree(loc);
+> +	}
+> +}
+> +
+>  static __init int hmat_init(void)
+>  {
+>  	struct acpi_table_header *tbl;
+> @@ -208,6 +588,17 @@ static __init int hmat_init(void)
+>  	if (srat_disabled())
+>  		return 0;
+>  
+> +	status = acpi_get_table(ACPI_SIG_SRAT, 0, &tbl);
+> +	if (ACPI_FAILURE(status))
+> +		return 0;
+> +
+> +	if (acpi_table_parse_entries(ACPI_SIG_SRAT,
+> +				sizeof(struct acpi_table_srat),
+> +				ACPI_SRAT_TYPE_MEMORY_AFFINITY,
+> +				srat_parse_mem_affinity, 0) < 0)
+> +		goto out_put;
+> +	acpi_put_table(tbl);
+> +
+>  	status = acpi_get_table(ACPI_SIG_HMAT, 0, &tbl);
+>  	if (ACPI_FAILURE(status))
+>  		return 0;
+> @@ -230,7 +621,9 @@ static __init int hmat_init(void)
+>  			goto out_put;
+>  		}
+>  	}
+> +	hmat_register_targets();
+>  out_put:
+> +	hmat_free_structures();
+>  	acpi_put_table(tbl);
+>  	return 0;
+>  }
