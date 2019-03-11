@@ -1,51 +1,92 @@
-From: Matt Turner <mattst88@gmail.com>
-Subject: Re: [PATCH] x86: Deprecate a.out support
-Date: Mon, 11 Mar 2019 13:50:21 -0700
-Message-ID: <CAEdQ38F3RxBXB2ow3L7F4vQd5JnJLPJ-mEqCK5ENV7NDQO9eJQ@mail.gmail.com>
-References: <CAG48ez1RVd5mQ_Pb6eygQESaZhpQz765OAZYSoPE0kPqfZEXQg@mail.gmail.com>
- <20190305091904.GB8256@zn.tnic> <20190305122218.GD13380@bombadil.infradead.org>
- <20190305134347.4be2449c@alans-desktop> <20190305145717.GD8256@zn.tnic>
- <CAHk-=wi2E4kugAW7BQwNSVwYHOr=B_9EgzBRMpQ2+1dxAqydDg@mail.gmail.com>
- <20190305173134.GE8256@zn.tnic> <CAHk-=wg0bY=RFhD4NW9x++fC0bME=_-9xM3kexGGM3gefHQTyQ@mail.gmail.com>
- <20190305181138.GG8256@zn.tnic> <20190305181808.GH8256@zn.tnic>
- <CAEdQ38G5M3vq9pGBV1iyEViO7JhFuXk5g+VCs-vUH+Z62kNqgQ@mail.gmail.com>
- <CAHk-=wgt7M6yA5BJCJo0nF22WgPJnN8CvViL9CAJmd+S+Civ6w@mail.gmail.com>
- <yw1xa7i14btw.fsf@mansr.com> <CAHk-=whD1SumZUBQeuMT-GcciwPxg_jW_TsPAmokYp3sGGCGhA@mail.gmail.com>
- <yw1x5zsp473a.fsf@mansr.com> <CAHk-=wiU7xacTqDfm-x29-meyJWNd_X95K0T8FQMcDgy-yo3Qw@mail.gmail.com>
- <yw1x1s3d42ia.fsf@mansr.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+From: Keith Busch <keith.busch@intel.com>
+Subject: [PATCHv8 00/10] Heterogenous memory node attributes
+Date: Mon, 11 Mar 2019 14:55:56 -0600
+Message-ID: <20190311205606.11228-1-keith.busch@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <yw1x1s3d42ia.fsf@mansr.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: =?UTF-8?B?TcOlbnMgUnVsbGfDpXJk?= <mans@mansr.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, kernel list <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Richard Weinberger <richard@nod.at>, Anton Ivanov <anton.ivanov@cambridgegreys.com>, linux-alpha <linux-alpha@vger.kernel.org>, linux-m68k@lists.linux-m68k.org
+To: linux-kernel@vger.kernel.org, linux-acpi@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rafael Wysocki <rafael@kernel.org>, Dave Hansen <dave.hansen@intel.com>, Dan Williams <dan.j.williams@intel.com>, Jonathan Cameron <jonathan.cameron@huawei.com>, Brice Goglin <Brice.Goglin@inria.fr>, Keith Busch <keith.busch@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 11, 2019 at 12:47 PM M=C3=A5ns Rullg=C3=A5rd <mans@mansr.com> w=
-rote:
->
-> Linus Torvalds <torvalds@linux-foundation.org> writes:
->
-> > On Mon, Mar 11, 2019 at 11:08 AM M=C3=A5ns Rullg=C3=A5rd <mans@mansr.co=
-m> wrote:
-> >>
-> >> The latest version I have is 5.1, and that uses ECOFF.
-> >
-> > ECOFF _is_ a.out as far as Linux is concerned.
-> >
-> > So Linux basically treats ECOFF as "regular a.out with just some
-> > header extensions".
-> >
-> > We don't have any specific support for ECOFF.
-> >
-> > I _think_. Again, it's been years and years.
->
-> Right, which is why killing a.out entirely would have the unfortunate
-> effect of also removing the OSF/1 compatibility on Alpha.
->
-> If we are to support Alpha as an architecture at all, it makes sense to
-> support the things people actually use it for.
+== Changes since v7 ==
 
-I agree. I was not aware that a.out was effectively the same as ECOFF.
+  Fixed an early return that prevented reporting HMAT when there are no
+  direct attached initiators.
+
+  Fixed introducing a variable that was unused until several patches
+  later.
+
+  Miscellaneous typos, editorial clarifications, and whitespace fixups.
+
+  Merged to most current linux-next.
+
+  Added received review, test, and ack by's.
+
+I've published a git tree available on this branch:
+
+  https://git.kernel.org/pub/scm/linux/kernel/git/kbusch/linux.git/log/?h=hmat-v8
+
+== Background ==
+
+Platforms may provide multiple types of cpu attached system memory. The
+memory ranges for each type may have different characteristics that
+applications may wish to know about when considering what node they want
+their memory allocated from.
+
+It had previously been difficult to describe these setups as memory
+rangers were generally lumped into the NUMA node of the CPUs. New
+platform attributes have been created and in use today that describe
+the more complex memory hierarchies that can be created.
+
+This series' objective is to provide the attributes from such systems
+that are useful for applications to know about, and readily usable with
+existing tools and libraries. Those applications may query performance
+attributes relative to a particular CPU they're running on in order to
+make more informed choices for where they want to allocate hot and cold
+data. This works with mbind() or the numactl library.
+
+Keith Busch (10):
+  acpi: Create subtable parsing infrastructure
+  acpi: Add HMAT to generic parsing tables
+  acpi/hmat: Parse and report heterogeneous memory
+  node: Link memory nodes to their compute nodes
+  node: Add heterogenous memory access attributes
+  node: Add memory-side caching attributes
+  acpi/hmat: Register processor domain to its memory
+  acpi/hmat: Register performance attributes
+  acpi/hmat: Register memory side cache attributes
+  doc/mm: New documentation for memory performance
+
+ Documentation/ABI/stable/sysfs-devices-node   |  87 +++-
+ Documentation/admin-guide/mm/numaperf.rst     | 169 +++++++
+ arch/arm64/kernel/acpi_numa.c                 |   2 +-
+ arch/arm64/kernel/smp.c                       |   4 +-
+ arch/ia64/kernel/acpi.c                       |  16 +-
+ arch/x86/kernel/acpi/boot.c                   |  36 +-
+ drivers/acpi/Kconfig                          |   1 +
+ drivers/acpi/Makefile                         |   1 +
+ drivers/acpi/hmat/Kconfig                     |  11 +
+ drivers/acpi/hmat/Makefile                    |   1 +
+ drivers/acpi/hmat/hmat.c                      | 666 ++++++++++++++++++++++++++
+ drivers/acpi/numa.c                           |  16 +-
+ drivers/acpi/scan.c                           |   4 +-
+ drivers/acpi/tables.c                         |  76 ++-
+ drivers/base/Kconfig                          |   8 +
+ drivers/base/node.c                           | 352 +++++++++++++-
+ drivers/irqchip/irq-gic-v2m.c                 |   2 +-
+ drivers/irqchip/irq-gic-v3-its-pci-msi.c      |   2 +-
+ drivers/irqchip/irq-gic-v3-its-platform-msi.c |   2 +-
+ drivers/irqchip/irq-gic-v3-its.c              |   6 +-
+ drivers/irqchip/irq-gic-v3.c                  |  10 +-
+ drivers/irqchip/irq-gic.c                     |   4 +-
+ drivers/mailbox/pcc.c                         |   2 +-
+ include/linux/acpi.h                          |   6 +-
+ include/linux/node.h                          |  71 +++
+ 25 files changed, 1489 insertions(+), 66 deletions(-)
+ create mode 100644 Documentation/admin-guide/mm/numaperf.rst
+ create mode 100644 drivers/acpi/hmat/Kconfig
+ create mode 100644 drivers/acpi/hmat/Makefile
+ create mode 100644 drivers/acpi/hmat/hmat.c
+
+-- 
+2.14.4
