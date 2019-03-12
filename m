@@ -1,47 +1,61 @@
-From: Brice Goglin <Brice.Goglin@inria.fr>
-Subject: Re: [PATCHv8 00/10] Heterogenous memory node attributes
-Date: Tue, 12 Mar 2019 00:06:54 +0100
-Message-ID: <1220029b-98eb-270e-2d11-30223ac25984@inria.fr>
-References: <20190311205606.11228-1-keith.busch@intel.com>
+From: Michael Cree <mcree@orcon.net.nz>
+Subject: Re: [PATCH] x86: Deprecate a.out support
+Date: Tue, 12 Mar 2019 19:38:24 +1300
+Message-ID: <20190312063824.wx7vow22cc35co77@tower>
+References: <20190305181808.GH8256@zn.tnic>
+ <CAEdQ38G5M3vq9pGBV1iyEViO7JhFuXk5g+VCs-vUH+Z62kNqgQ@mail.gmail.com>
+ <CAHk-=wgt7M6yA5BJCJo0nF22WgPJnN8CvViL9CAJmd+S+Civ6w@mail.gmail.com>
+ <yw1xa7i14btw.fsf@mansr.com>
+ <CAHk-=whD1SumZUBQeuMT-GcciwPxg_jW_TsPAmokYp3sGGCGhA@mail.gmail.com>
+ <yw1x5zsp473a.fsf@mansr.com>
+ <CAHk-=wiU7xacTqDfm-x29-meyJWNd_X95K0T8FQMcDgy-yo3Qw@mail.gmail.com>
+ <yw1x1s3d42ia.fsf@mansr.com>
+ <CAK8P3a031d9mSOxVmCAGcrbdaCE8N3R4e2Smtxp-Z+cautTAvg@mail.gmail.com>
+ <CAEdQ38HSKy+muCwAk9w0yNCt649HVja1Pe+yY23-4zBjDvWFRA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190311205606.11228-1-keith.busch@intel.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <CAEdQ38HSKy+muCwAk9w0yNCt649HVja1Pe+yY23-4zBjDvWFRA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Keith Busch <keith.busch@intel.com>, linux-kernel@vger.kernel.org, linux-acpi@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rafael Wysocki <rafael@kernel.org>, Dave Hansen <dave.hansen@intel.com>, Dan Williams <dan.j.williams@intel.com>, Jonathan Cameron <jonathan.cameron@huawei.com>
+To: Matt Turner <mattst88@gmail.com>
+Cc: Arnd Bergmann <arnd@arndb.de>, =?iso-8859-1?Q?M=E5ns_Rullg=E5rd?= <mans@mansr.com>, Linus Torvalds <torvalds@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, kernel list <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Richard Weinberger <richard@nod.at>, Anton Ivanov <anton.ivanov@cambridgegreys.com>, linux-alpha <linux-alpha@vger.kernel.org>, linux-m68k <linux-m68k@lists.linux-m68k.org>
 List-Id: linux-api@vger.kernel.org
 
-Le 11/03/2019 Ã  21:55, Keith Busch a Ã©critÂ :
-> == Changes since v7 ==
->
->   Fixed an early return that prevented reporting HMAT when there are no
->   direct attached initiators.
->
->   Fixed introducing a variable that was unused until several patches
->   later.
->
->   Miscellaneous typos, editorial clarifications, and whitespace fixups.
->
->   Merged to most current linux-next.
->
->   Added received review, test, and ack by's.
+On Mon, Mar 11, 2019 at 03:11:55PM -0700, Matt Turner wrote:
+> On Mon, Mar 11, 2019 at 2:34 PM Arnd Bergmann <arnd@arndb.de> wrote:
+> > On Mon, Mar 11, 2019 at 8:47 PM Måns Rullgård <mans@mansr.com> wrote:
+> > > Linus Torvalds <torvalds@linux-foundation.org> writes:
+> > > > On Mon, Mar 11, 2019 at 11:08 AM Måns Rullgård <mans@mansr.com> wrote:
+> > > > We don't have any specific support for ECOFF.
+> > > >
+> > > > I _think_. Again, it's been years and years.
 
+I agree. I personally have never run any OSF/1 executables on
+Linux Alpha and have no interest in doing so.
 
-Tested-by: Brice Goglin <Brice.Goglin@inria.fr>
+> > The main historic use case I've heard of was running Netscape
+> > Navigator on Alpha Linux, before there was an open source version.
+> > Doing this today to connect to the open internet is probably
+> > a bit pointless, but there may be other use cases.
+> 
+> The best use case I know of is to run their C compiler. Måns sent
+> patches in fact to make it work.
+> 
+> There is a Linux version of the same compiler but I have a vague
+> memory that it's broken in various ways that the Tru64 version is
+> not.
 
-I tested this series with several manually-created HMATs.
+The last time I tried the Compaq C compiler for Alpha-Linux it still
+worked, well, that is, the compiler worked, but the library header
+files are broken and haven't worked with glibc for a long time.  So
+it is only useful as a free-standing compiler.
 
-I already have user-space support in hwloc for reading initiator
-symlinks and memory-side cache information.
+In the past it also produced better code than gcc, but gcc is now
+so vastly improved w.r.t. optimisation and compliance to more recent
+standards, that I would be surprised if there is any real use for
+the Compaq compiler.
 
-Looks good.
-
-
-Given the feedback I sent, patches 06 and 07 even deserve
-
-Reviewed-by: Brice Goglin <Brice.Goglin@inria.fr>
-
-Brice
+Cheers,
+Michael.
