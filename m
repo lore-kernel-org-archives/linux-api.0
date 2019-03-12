@@ -1,153 +1,164 @@
-From: Dietmar Eggemann <dietmar.eggemann@arm.com>
-Subject: Re: [PATCH v7 01/15] sched/core: uclamp: Add CPU's clamp buckets
- refcounting
-Date: Tue, 12 Mar 2019 13:52:49 +0100
-Message-ID: <21171fa0-7fd5-ebbf-dd48-d6668ed563af@arm.com>
-References: <20190208100554.32196-1-patrick.bellasi@arm.com>
- <20190208100554.32196-2-patrick.bellasi@arm.com>
+From: Jonathan Cameron <jonathan.cameron@huawei.com>
+Subject: Re: [PATCHv7 10/10] doc/mm: New documentation for memory
+ performance
+Date: Tue, 12 Mar 2019 13:37:56 +0000
+Message-ID: <20190312133756.000066c7@huawei.com>
+References: <20190227225038.20438-1-keith.busch@intel.com>
+        <20190227225038.20438-11-keith.busch@intel.com>
+        <20190311113843.00006b47@huawei.com>
+        <20190311201632.GG10411@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset="US-ASCII"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190208100554.32196-2-patrick.bellasi@arm.com>
-Content-Language: en-GB
+In-Reply-To: <20190311201632.GG10411@localhost.localdomain>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Patrick Bellasi <patrick.bellasi@arm.com>, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
+To: Keith Busch <kbusch@kernel.org>
+Cc: "Busch, Keith" <keith.busch@intel.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-acpi@vger.kernel.org" <linux-acpi@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rafael Wysocki <rafael@kernel.org>, "Hansen, Dave" <dave.hansen@intel.com>, "Williams, Dan J" <dan.j.williams@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On 2/8/19 11:05 AM, Patrick Bellasi wrote:
+On Mon, 11 Mar 2019 14:16:33 -0600
+Keith Busch <kbusch@kernel.org> wrote:
 
-[...]
+> On Mon, Mar 11, 2019 at 04:38:43AM -0700, Jonathan Cameron wrote:
+> > On Wed, 27 Feb 2019 15:50:38 -0700
+> > Keith Busch <keith.busch@intel.com> wrote:
+> >   
+> > > Platforms may provide system memory where some physical address ranges
+> > > perform differently than others, or is side cached by the system.  
+> > The magic 'side cached' term still here in the patch description, ideally
+> > wants cleaning up.
+> >   
+> > > 
+> > > Add documentation describing a high level overview of such systems and the
+> > > perforamnce and caching attributes the kernel provides for applications  
+> > performance
+> >   
+> > > wishing to query this information.
+> > > 
+> > > Reviewed-by: Mike Rapoport <rppt@linux.ibm.com>
+> > > Signed-off-by: Keith Busch <keith.busch@intel.com>  
+> > 
+> > A few comments inline. Mostly the weird corner cases that I miss understood
+> > in one of the earlier versions of the code.
+> > 
+> > Whilst I think perhaps that one section could be tweaked a tiny bit I'm basically
+> > happy with this if you don't want to.
+> > 
+> > Reviewed-by: Jonathan Cameron <Jonathan.Cameron@huawei.com>
+> >   
+> > > ---
+> > >  Documentation/admin-guide/mm/numaperf.rst | 164 ++++++++++++++++++++++++++++++
+> > >  1 file changed, 164 insertions(+)
+> > >  create mode 100644 Documentation/admin-guide/mm/numaperf.rst
+> > > 
+> > > diff --git a/Documentation/admin-guide/mm/numaperf.rst b/Documentation/admin-guide/mm/numaperf.rst
+> > > new file mode 100644
+> > > index 000000000000..d32756b9be48
+> > > --- /dev/null
+> > > +++ b/Documentation/admin-guide/mm/numaperf.rst
+> > > @@ -0,0 +1,164 @@
+> > > +.. _numaperf:
+> > > +
+> > > +=============
+> > > +NUMA Locality
+> > > +=============
+> > > +
+> > > +Some platforms may have multiple types of memory attached to a compute
+> > > +node. These disparate memory ranges may share some characteristics, such
+> > > +as CPU cache coherence, but may have different performance. For example,
+> > > +different media types and buses affect bandwidth and latency.
+> > > +
+> > > +A system supports such heterogeneous memory by grouping each memory type
+> > > +under different domains, or "nodes", based on locality and performance
+> > > +characteristics.  Some memory may share the same node as a CPU, and others
+> > > +are provided as memory only nodes. While memory only nodes do not provide
+> > > +CPUs, they may still be local to one or more compute nodes relative to
+> > > +other nodes. The following diagram shows one such example of two compute
+> > > +nodes with local memory and a memory only node for each of compute node:
+> > > +
+> > > + +------------------+     +------------------+
+> > > + | Compute Node 0   +-----+ Compute Node 1   |
+> > > + | Local Node0 Mem  |     | Local Node1 Mem  |
+> > > + +--------+---------+     +--------+---------+
+> > > +          |                        |
+> > > + +--------+---------+     +--------+---------+
+> > > + | Slower Node2 Mem |     | Slower Node3 Mem |
+> > > + +------------------+     +--------+---------+
+> > > +
+> > > +A "memory initiator" is a node containing one or more devices such as
+> > > +CPUs or separate memory I/O devices that can initiate memory requests.
+> > > +A "memory target" is a node containing one or more physical address
+> > > +ranges accessible from one or more memory initiators.
+> > > +
+> > > +When multiple memory initiators exist, they may not all have the same
+> > > +performance when accessing a given memory target. Each initiator-target
+> > > +pair may be organized into different ranked access classes to represent
+> > > +this relationship.   
+> > 
+> > This concept is a bit vague at the moment. Largely because only access0
+> > is actually defined.  We should definitely keep a close eye on any others
+> > that are defined in future to make sure this text is still valid.
+> > 
+> > I can certainly see it being used for different ideas of 'best' rather
+> > than simply best and second best etc.  
+> 
+> I tried to make the interface flexible to future extension, but I'm
+> still not sure how potential users would want to see something like
+> all pair-wise attributes, so I had some trouble trying to capture that
+> in words.
 
-> +config UCLAMP_BUCKETS_COUNT
-> +	int "Number of supported utilization clamp buckets"
-> +	range 5 20
-> +	default 5
-> +	depends on UCLAMP_TASK
-> +	help
-> +	  Defines the number of clamp buckets to use. The range of each bucket
-> +	  will be SCHED_CAPACITY_SCALE/UCLAMP_BUCKETS_COUNT. The higher the
-> +	  number of clamp buckets the finer their granularity and the higher
-> +	  the precision of clamping aggregation and tracking at run-time.
-> +
-> +	  For example, with the default configuration we will have 5 clamp
-> +	  buckets tracking 20% utilization each. A 25% boosted tasks will be
-> +	  refcounted in the [20..39]% bucket and will set the bucket clamp
-> +	  effective value to 25%.
-> +	  If a second 30% boosted task should be co-scheduled on the same CPU,
-> +	  that task will be refcounted in the same bucket of the first task and
-> +	  it will boost the bucket clamp effective value to 30%.
-> +	  The clamp effective value of a bucket is reset to its nominal value
-> +	  (20% in the example above) when there are anymore tasks refcounted in
+Agreed, it is definitely non obvious.  We might end up with something
+totally different like Jerome is proposing anyway.  Let's address
+this when it happens!
 
-this sounds weird.
-
-[...]
-
-> +static inline unsigned int uclamp_bucket_value(unsigned int clamp_value)
-> +{
-> +	return UCLAMP_BUCKET_DELTA * uclamp_bucket_id(clamp_value);
-> +}
-
-Soemthing like uclamp_bucket_nominal_value() should be clearer.
-
-> +static inline void uclamp_rq_update(struct rq *rq, unsigned int clamp_id)
-> +{
-> +	struct uclamp_bucket *bucket = rq->uclamp[clamp_id].bucket;
-> +	unsigned int max_value = uclamp_none(clamp_id);
-> +	unsigned int bucket_id;
-
-unsigned int bucket_id = UCLAMP_BUCKETS;
-
-> +
-> +	/*
-> +	 * Both min and max clamps are MAX aggregated, thus the topmost
-> +	 * bucket with some tasks defines the rq's clamp value.
-> +	 */
-> +	bucket_id = UCLAMP_BUCKETS;
-
-to get rid of this line?
-
-> +	do {
-> +		--bucket_id;
-> +		if (!rq->uclamp[clamp_id].bucket[bucket_id].tasks)
-
-if (!bucket[bucket_id].tasks)
-
-[...]
-
-> +/*
-> + * When a task is enqueued on a rq, the clamp bucket currently defined by the
-> + * task's uclamp::bucket_id is reference counted on that rq. This also
-> + * immediately updates the rq's clamp value if required.
-> + *
-> + * Since tasks know their specific value requested from user-space, we track
-> + * within each bucket the maximum value for tasks refcounted in that bucket.
-> + * This provide a further aggregation (local clamping) which allows to track
-
-s/This provide/This provides
-
-> + * within each bucket the exact "requested" clamp value whenever all tasks
-> + * RUNNABLE in that bucket require the same clamp.
-> + */
-> +static inline void uclamp_rq_inc_id(struct task_struct *p, struct rq *rq,
-> +				    unsigned int clamp_id)
-> +{
-> +	unsigned int bucket_id = p->uclamp[clamp_id].bucket_id;
-> +	unsigned int rq_clamp, bkt_clamp, tsk_clamp;
-
-Wouldn't it be easier to have a pointer to the task's and rq's uclamp 
-structure as well to the bucket?
-
--       unsigned int bucket_id = p->uclamp[clamp_id].bucket_id;
-+       struct uclamp_se *uc_se = &p->uclamp[clamp_id];
-+       struct uclamp_rq *uc_rq = &rq->uclamp[clamp_id];
-+       struct uclamp_bucket *bucket = &uc_rq->bucket[uc_se->bucket_id];
-
-The code in uclamp_rq_inc_id() and uclamp_rq_dec_id() for example 
-becomes much more readable.
-
-[...]
-
->   struct sched_class {
->   	const struct sched_class *next;
->   
-> +#ifdef CONFIG_UCLAMP_TASK
-> +	int uclamp_enabled;
-> +#endif
-> +
->   	void (*enqueue_task) (struct rq *rq, struct task_struct *p, int flags);
->   	void (*dequeue_task) (struct rq *rq, struct task_struct *p, int flags);
-> -	void (*yield_task)   (struct rq *rq);
-> -	bool (*yield_to_task)(struct rq *rq, struct task_struct *p, bool preempt);
->   
->   	void (*check_preempt_curr)(struct rq *rq, struct task_struct *p, int flags);
->   
-> @@ -1685,7 +1734,6 @@ struct sched_class {
->   	void (*set_curr_task)(struct rq *rq);
->   	void (*task_tick)(struct rq *rq, struct task_struct *p, int queued);
->   	void (*task_fork)(struct task_struct *p);
-> -	void (*task_dead)(struct task_struct *p);
->   
->   	/*
->   	 * The switched_from() call is allowed to drop rq->lock, therefore we
-> @@ -1702,12 +1750,17 @@ struct sched_class {
->   
->   	void (*update_curr)(struct rq *rq);
->   
-> +	void (*yield_task)   (struct rq *rq);
-> +	bool (*yield_to_task)(struct rq *rq, struct task_struct *p, bool preempt);
-> +
->   #define TASK_SET_GROUP		0
->   #define TASK_MOVE_GROUP		1
->   
->   #ifdef CONFIG_FAIR_GROUP_SCHED
->   	void (*task_change_group)(struct task_struct *p, int type);
->   #endif
-> +
-> +	void (*task_dead)(struct task_struct *p);
-
-Why do you move yield_task, yield_to_task and task_dead here?
-
-[...]
+>  
+> > > The highest performing initiator to a given target
+> > > +is considered to be one of that target's local initiators, and given
+> > > +the highest access class, 0. Any given target may have one or more
+> > > +local initiators, and any given initiator may have multiple local
+> > > +memory targets.
+> > > +
+> > > +To aid applications matching memory targets with their initiators, the
+> > > +kernel provides symlinks to each other. The following example lists the
+> > > +relationship for the access class "0" memory initiators and targets, which is
+> > > +the of nodes with the highest performing access relationship::
+> > > +
+> > > +	# symlinks -v /sys/devices/system/node/nodeX/access0/targets/
+> > > +	relative: /sys/devices/system/node/nodeX/access0/targets/nodeY -> ../../nodeY  
+> > 
+> > So this one perhaps needs a bit more description - I would put it after initiators
+> > which precisely fits the description you have here now.
+> > 
+> > "targets contains those nodes for which this initiator is the best possible initiator."
+> > 
+> > which is subtly different form
+> > 
+> > "targets contains those nodes to which this node has the highest
+> > performing access characteristics."
+> > 
+> > For example in my test case:
+> > * 4 nodes with local memory and cpu, 1 node remote and equal distant from all of the
+> >   initiators,
+> > 
+> > targets for the compute nodes contains both themselves and the remote node, to which
+> > the characteristics are of course worse. As you point out before, we need to look
+> > in 
+> > node0/access0/targets/node0/access0/initiators 
+> > node0/access0/targets/node4/access0/initiators 
+> > to get the relevant characteristics and work out that node0 is 'nearer' itself
+> > (obviously this is a bit of a silly case, but we could have no memory node0 and
+> > be talking about node4 and node5.
+> > 
+> > I am happy with the actual interface, this is just a question about whether we can tweak
+> > this text to be slightly clearer.  
+> 
+> Sure, I mention this in patch 4's commit message. Probably worth
+> repeating here:
+> 
+>     A memory initiator may have multiple memory targets in the same access
+>     class. The target memory's initiators in a given class indicate the
+>     nodes access characteristics share the same performance relative to other
+>     linked initiator nodes. Each target within an initiator's access class,
+>     though, do not necessarily perform the same as each other.
+That sounds good to me.
