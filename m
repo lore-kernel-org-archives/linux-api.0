@@ -1,98 +1,165 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH v7 03/15] sched/core: uclamp: Add system default clamps
-Date: Wed, 13 Mar 2019 15:32:40 +0100
-Message-ID: <20190313143240.GH5922@hirez.programming.kicks-ass.net>
+From: Patrick Bellasi <patrick.bellasi@arm.com>
+Subject: Re: [PATCH v7 01/15] sched/core: uclamp: Add CPU's clamp buckets
+ refcounting
+Date: Wed, 13 Mar 2019 15:15:35 +0000
+Message-ID: <20190313151535.q5ivsuywvwkewrk5@e110439-lin>
 References: <20190208100554.32196-1-patrick.bellasi@arm.com>
- <20190208100554.32196-4-patrick.bellasi@arm.com>
+ <20190208100554.32196-2-patrick.bellasi@arm.com>
+ <21171fa0-7fd5-ebbf-dd48-d6668ed563af@arm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190208100554.32196-4-patrick.bellasi@arm.com>
+In-Reply-To: <21171fa0-7fd5-ebbf-dd48-d6668ed563af@arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Patrick Bellasi <patrick.bellasi@arm.com>
-Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
+To: Dietmar Eggemann <dietmar.eggemann@arm.com>
+Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Feb 08, 2019 at 10:05:42AM +0000, Patrick Bellasi wrote:
+On 12-Mar 13:52, Dietmar Eggemann wrote:
+> On 2/8/19 11:05 AM, Patrick Bellasi wrote:
+> 
+> [...]
+> 
+> > +config UCLAMP_BUCKETS_COUNT
+> > +	int "Number of supported utilization clamp buckets"
+> > +	range 5 20
+> > +	default 5
+> > +	depends on UCLAMP_TASK
+> > +	help
+> > +	  Defines the number of clamp buckets to use. The range of each bucket
+> > +	  will be SCHED_CAPACITY_SCALE/UCLAMP_BUCKETS_COUNT. The higher the
+> > +	  number of clamp buckets the finer their granularity and the higher
+> > +	  the precision of clamping aggregation and tracking at run-time.
+> > +
+> > +	  For example, with the default configuration we will have 5 clamp
+> > +	  buckets tracking 20% utilization each. A 25% boosted tasks will be
+> > +	  refcounted in the [20..39]% bucket and will set the bucket clamp
+> > +	  effective value to 25%.
+> > +	  If a second 30% boosted task should be co-scheduled on the same CPU,
+> > +	  that task will be refcounted in the same bucket of the first task and
+> > +	  it will boost the bucket clamp effective value to 30%.
+> > +	  The clamp effective value of a bucket is reset to its nominal value
+> > +	  (20% in the example above) when there are anymore tasks refcounted in
+> 
+> this sounds weird.
 
-> diff --git a/include/linux/sched.h b/include/linux/sched.h
-> index 45460e7a3eee..447261cd23ba 100644
-> --- a/include/linux/sched.h
-> +++ b/include/linux/sched.h
-> @@ -584,14 +584,32 @@ struct sched_dl_entity {
->   * Utilization clamp for a scheduling entity
->   * @value:		clamp value "requested" by a se
->   * @bucket_id:		clamp bucket corresponding to the "requested" value
-> + * @effective:		clamp value and bucket actually "assigned" to the se
-> + * @active:		the se is currently refcounted in a rq's bucket
->   *
-> + * Both bucket_id and effective::bucket_id are the index of the clamp bucket
-> + * matching the corresponding clamp value which are pre-computed and stored to
-> + * avoid expensive integer divisions from the fast path.
-> + *
-> + * The active bit is set whenever a task has got an effective::value assigned,
-> + * which can be different from the user requested clamp value. This allows to
-> + * know a task is actually refcounting the rq's effective::bucket_id bucket.
->   */
->  struct uclamp_se {
-> +	/* Clamp value "requested" by a scheduling entity */
->  	unsigned int value		: bits_per(SCHED_CAPACITY_SCALE);
->  	unsigned int bucket_id		: bits_per(UCLAMP_BUCKETS);
-> +	unsigned int active		: 1;
-> +	/*
-> +	 * Clamp value "obtained" by a scheduling entity.
-> +	 *
-> +	 * This cache the actual clamp value, possibly enforced by system
-> +	 * default clamps, a task is subject to while enqueued in a rq.
-> +	 */
-> +	struct {
-> +		unsigned int value	: bits_per(SCHED_CAPACITY_SCALE);
-> +		unsigned int bucket_id	: bits_per(UCLAMP_BUCKETS);
-> +	} effective;
+Why ?
 
-I still think that this effective thing is backwards.
+> 
+> [...]
+> 
+> > +static inline unsigned int uclamp_bucket_value(unsigned int clamp_value)
+> > +{
+> > +	return UCLAMP_BUCKET_DELTA * uclamp_bucket_id(clamp_value);
+> > +}
+> 
+> Soemthing like uclamp_bucket_nominal_value() should be clearer.
 
-The existing code already used @value and @bucket_id as 'effective' and
-you're now changing all that again. This really doesn't make sense to
-me.
+Maybe... can update it in v8
 
-Also; if you don't add it inside struct uclamp_se, but add a second
-instance,
+> > +static inline void uclamp_rq_update(struct rq *rq, unsigned int clamp_id)
+> > +{
+> > +	struct uclamp_bucket *bucket = rq->uclamp[clamp_id].bucket;
+> > +	unsigned int max_value = uclamp_none(clamp_id);
+> > +	unsigned int bucket_id;
+> 
+> unsigned int bucket_id = UCLAMP_BUCKETS;
+> 
+> > +
+> > +	/*
+> > +	 * Both min and max clamps are MAX aggregated, thus the topmost
+> > +	 * bucket with some tasks defines the rq's clamp value.
+> > +	 */
+> > +	bucket_id = UCLAMP_BUCKETS;
+> 
+> to get rid of this line?
 
->  };
->  #endif /* CONFIG_UCLAMP_TASK */
->  
+I put it on a different line as a justfication for the loop variable
+initialization described in the comment above.
 
+> 
+> > +	do {
+> > +		--bucket_id;
+> > +		if (!rq->uclamp[clamp_id].bucket[bucket_id].tasks)
+> 
+> if (!bucket[bucket_id].tasks)
 
-> @@ -803,6 +811,70 @@ static inline void uclamp_rq_update(struct rq *rq, unsigned int clamp_id,
->  	WRITE_ONCE(rq->uclamp[clamp_id].value, max_value);
->  }
->  
-> +/*
-> + * The effective clamp bucket index of a task depends on, by increasing
-> + * priority:
-> + * - the task specific clamp value, when explicitly requested from userspace
-> + * - the system default clamp value, defined by the sysadmin
-> + *
-> + * As a side effect, update the task's effective value:
-> + *    task_struct::uclamp::effective::value
-> + * to represent the clamp value of the task effective bucket index.
-> + */
-> +static inline void
-> +uclamp_effective_get(struct task_struct *p, unsigned int clamp_id,
-> +		     unsigned int *clamp_value, unsigned int *bucket_id)
-> +{
-> +	/* Task specific clamp value */
-> +	*bucket_id = p->uclamp[clamp_id].bucket_id;
-> +	*clamp_value = p->uclamp[clamp_id].value;
-> +
-> +	/* Always apply system default restrictions */
-> +	if (unlikely(*clamp_value > uclamp_default[clamp_id].value)) {
-> +		*clamp_value = uclamp_default[clamp_id].value;
-> +		*bucket_id = uclamp_default[clamp_id].bucket_id;
-> +	}
-> +}
+Right... that's some leftover from the last refactoring!
 
-you can avoid horrors like this and simply return a struct uclamp_se by
-value.
+[...]
+
+> > + * within each bucket the exact "requested" clamp value whenever all tasks
+> > + * RUNNABLE in that bucket require the same clamp.
+> > + */
+> > +static inline void uclamp_rq_inc_id(struct task_struct *p, struct rq *rq,
+> > +				    unsigned int clamp_id)
+> > +{
+> > +	unsigned int bucket_id = p->uclamp[clamp_id].bucket_id;
+> > +	unsigned int rq_clamp, bkt_clamp, tsk_clamp;
+> 
+> Wouldn't it be easier to have a pointer to the task's and rq's uclamp
+> structure as well to the bucket?
+> 
+> -       unsigned int bucket_id = p->uclamp[clamp_id].bucket_id;
+> +       struct uclamp_se *uc_se = &p->uclamp[clamp_id];
+> +       struct uclamp_rq *uc_rq = &rq->uclamp[clamp_id];
+> +       struct uclamp_bucket *bucket = &uc_rq->bucket[uc_se->bucket_id];
+
+I think I went back/forth a couple of times in using pointer or the
+extended version, which both have pros and cons.
+
+I personally prefer the pointers as you suggest but I've got the
+impression in the past that since everybody cleared "basic C trainings"
+it's not so difficult to read the code above too.
+
+> The code in uclamp_rq_inc_id() and uclamp_rq_dec_id() for example becomes
+> much more readable.
+
+Agree... let's try to switch once again in v8 and see ;)
+
+> [...]
+> 
+> >   struct sched_class {
+> >   	const struct sched_class *next;
+> > +#ifdef CONFIG_UCLAMP_TASK
+> > +	int uclamp_enabled;
+> > +#endif
+> > +
+> >   	void (*enqueue_task) (struct rq *rq, struct task_struct *p, int flags);
+> >   	void (*dequeue_task) (struct rq *rq, struct task_struct *p, int flags);
+> > -	void (*yield_task)   (struct rq *rq);
+> > -	bool (*yield_to_task)(struct rq *rq, struct task_struct *p, bool preempt);
+> >   	void (*check_preempt_curr)(struct rq *rq, struct task_struct *p, int flags);
+> > @@ -1685,7 +1734,6 @@ struct sched_class {
+> >   	void (*set_curr_task)(struct rq *rq);
+> >   	void (*task_tick)(struct rq *rq, struct task_struct *p, int queued);
+> >   	void (*task_fork)(struct task_struct *p);
+> > -	void (*task_dead)(struct task_struct *p);
+> >   	/*
+> >   	 * The switched_from() call is allowed to drop rq->lock, therefore we
+> > @@ -1702,12 +1750,17 @@ struct sched_class {
+> >   	void (*update_curr)(struct rq *rq);
+> > +	void (*yield_task)   (struct rq *rq);
+> > +	bool (*yield_to_task)(struct rq *rq, struct task_struct *p, bool preempt);
+> > +
+> >   #define TASK_SET_GROUP		0
+> >   #define TASK_MOVE_GROUP		1
+> >   #ifdef CONFIG_FAIR_GROUP_SCHED
+> >   	void (*task_change_group)(struct task_struct *p, int type);
+> >   #endif
+> > +
+> > +	void (*task_dead)(struct task_struct *p);
+> 
+> Why do you move yield_task, yield_to_task and task_dead here?
+
+Since I'm adding a new field at the beginning of the struct, which is
+used at enqueue/dequeue time, this is to ensure that all the
+callbacks used in these paths are grouped together and don't fall
+across a cache line... but yes, that's supposed to be a
+micro-optimization which I can skip in this patch.
+
+-- 
+#include <best/regards.h>
+
+Patrick Bellasi
