@@ -1,7 +1,7 @@
 From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: [PATCH v7 03/15] sched/core: uclamp: Add system default clamps
-Date: Wed, 13 Mar 2019 21:13:42 +0100
-Message-ID: <20190313201342.GV2482@worktop.programming.kicks-ass.net>
+Date: Wed, 13 Mar 2019 21:18:21 +0100
+Message-ID: <20190313201821.GW2482@worktop.programming.kicks-ass.net>
 References: <20190208100554.32196-1-patrick.bellasi@arm.com>
  <20190208100554.32196-4-patrick.bellasi@arm.com>
 Mime-Version: 1.0
@@ -15,55 +15,16 @@ Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kerne
 List-Id: linux-api@vger.kernel.org
 
 On Fri, Feb 08, 2019 at 10:05:42AM +0000, Patrick Bellasi wrote:
-> +int sysctl_sched_uclamp_handler(struct ctl_table *table, int write,
-> +				void __user *buffer, size_t *lenp,
-> +				loff_t *ppos)
+> +static void uclamp_fork(struct task_struct *p)
 > +{
-> +	int old_min, old_max;
-> +	int result = 0;
-
-Should this not have an internal mutex to serialize concurrent usage?
-See for example sched_rt_handler().
-
+> +	unsigned int clamp_id;
 > +
-> +	old_min = sysctl_sched_uclamp_util_min;
-> +	old_max = sysctl_sched_uclamp_util_max;
+> +	if (unlikely(!p->sched_class->uclamp_enabled))
+> +		return;
 > +
-> +	result = proc_dointvec(table, write, buffer, lenp, ppos);
-> +	if (result)
-> +		goto undo;
-> +	if (!write)
-> +		goto done;
-> +
-> +	if (sysctl_sched_uclamp_util_min > sysctl_sched_uclamp_util_max ||
-> +	    sysctl_sched_uclamp_util_max > SCHED_CAPACITY_SCALE) {
-> +		result = -EINVAL;
-> +		goto undo;
-> +	}
-> +
-> +	if (old_min != sysctl_sched_uclamp_util_min) {
-> +		uclamp_default[UCLAMP_MIN].value =
-> +			sysctl_sched_uclamp_util_min;
-> +		uclamp_default[UCLAMP_MIN].bucket_id =
-> +			uclamp_bucket_id(sysctl_sched_uclamp_util_min);
-> +	}
-> +	if (old_max != sysctl_sched_uclamp_util_max) {
-> +		uclamp_default[UCLAMP_MAX].value =
-> +			sysctl_sched_uclamp_util_max;
-> +		uclamp_default[UCLAMP_MAX].bucket_id =
-> +			uclamp_bucket_id(sysctl_sched_uclamp_util_max);
-> +	}
-> +
-> +	/*
-> +	 * Updating all the RUNNABLE task is expensive, keep it simple and do
-> +	 * just a lazy update at each next enqueue time.
-> +	 */
-> +	goto done;
-> +
-> +undo:
-> +	sysctl_sched_uclamp_util_min = old_min;
-> +	sysctl_sched_uclamp_util_max = old_max;
-> +done:
-> +
-> +	return result;
+> +	for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id)
+> +		p->uclamp[clamp_id].active = false;
 > +}
+
+Because in that case .active == false, and copy_process() will have done
+thr right thing?
