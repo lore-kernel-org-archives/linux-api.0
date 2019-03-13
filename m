@@ -1,8 +1,8 @@
 From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: [PATCH v7 01/15] sched/core: uclamp: Add CPU's clamp buckets
  refcounting
-Date: Wed, 13 Mar 2019 20:30:56 +0100
-Message-ID: <20190313193056.GP2482@worktop.programming.kicks-ass.net>
+Date: Wed, 13 Mar 2019 20:39:16 +0100
+Message-ID: <20190313193916.GQ2482@worktop.programming.kicks-ass.net>
 References: <20190208100554.32196-1-patrick.bellasi@arm.com>
  <20190208100554.32196-2-patrick.bellasi@arm.com>
  <20190313135238.GC5922@hirez.programming.kicks-ass.net>
@@ -19,27 +19,52 @@ List-Id: linux-api@vger.kernel.org
 
 On Wed, Mar 13, 2019 at 03:59:54PM +0000, Patrick Bellasi wrote:
 > On 13-Mar 14:52, Peter Zijlstra wrote:
-> > > +static inline void uclamp_rq_dec_id(struct task_struct *p, struct rq *rq,
-> > > +				    unsigned int clamp_id)
-> > > +{
-> > > +	unsigned int bucket_id = p->uclamp[clamp_id].bucket_id;
-> > > +	unsigned int rq_clamp, bkt_clamp;
-> > > +
-> > > +	SCHED_WARN_ON(!rq->uclamp[clamp_id].bucket[bucket_id].tasks);
-> > > +	if (likely(rq->uclamp[clamp_id].bucket[bucket_id].tasks))
-> > > +		rq->uclamp[clamp_id].bucket[bucket_id].tasks--;
-> > > +
-> > > +	/*
-> > > +	 * Keep "local clamping" simple and accept to (possibly) overboost
-> > > +	 * still RUNNABLE tasks in the same bucket.
-> > > +	 */
-> > > +	if (likely(rq->uclamp[clamp_id].bucket[bucket_id].tasks))
-> > > +		return;
-> > 
-> > (Oh man, I hope that generates semi sane code; long live CSE passes I
-> > suppose)
-> 
-> What do you mean ?
 
-that does: 'rq->uclamp[clamp_id].bucket[bucket_id].tasks' three times in
-a row. And yes the compiler _should_ dtrt, but....
+> Because of backetization, we potentially end up tracking tasks with
+> different requested clamp values in the same bucket.
+> 
+> For example, with 20% bucket size, we can have:
+>   Task1: util_min=25%
+>   Task2: util_min=35%
+> accounted in the same bucket.
+
+> > Given all that, what is to stop the bucket value to climbing to
+> > uclamp_bucket_value(+1)-1 and staying there (provided there's someone
+> > runnable)?
+> 
+> Nothing... but that's an expected consequence of bucketization.
+
+No, it is not.
+
+> > Why are we doing this... ?
+> 
+> You can either decide to:
+> 
+>  a) always boost tasks to just the bucket nominal value
+>     thus always penalizing both Task1 and Task2 of the example above
+
+This is the expected behaviour. When was the last time your histogram
+did something like b?
+
+>  b) always boost tasks to the bucket "max" value
+>     thus always overboosting both Task1 and Task2 of the example above
+> 
+> The solution above instead has a very good property: in systems
+> where you have only few and well defined clamp values we always
+> provide the exact boost.
+> 
+> For example, if your system requires only 23% and 47% boost values
+> (totally random numbers), then you can always get the exact boost
+> required using just 3 bucksts or ~33% size each.
+> 
+> In systems where you don't know which boost values you will have, you
+> can still defined the maximum overboost granularity you accept for
+> each task by just tuning the number of clamp groups. For example, with
+> 20 groups you can have a 5% max overboost.
+
+Maybe, but this is not a direct concequence of buckets, but an
+additional heuristic that might work well in this case.
+
+Maybe split this out in a separate patch? So start with the trivial
+bucket, and then do this change on top with the above few paragraphs as
+changelog?
