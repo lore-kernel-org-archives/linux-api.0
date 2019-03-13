@@ -1,12 +1,12 @@
 From: "Rafael J. Wysocki" <rafael@kernel.org>
-Subject: Re: [PATCHv8 06/10] node: Add memory-side caching attributes
-Date: Thu, 14 Mar 2019 00:18:09 +0100
-Message-ID: <CAJZ5v0jsFoAxOvUjBx0w+-3v8Y5QhRgxGJEqcGQ38XoPmP=a_A@mail.gmail.com>
-References: <20190311205606.11228-1-keith.busch@intel.com> <20190311205606.11228-7-keith.busch@intel.com>
+Subject: Re: [PATCHv8 07/10] acpi/hmat: Register processor domain to its memory
+Date: Thu, 14 Mar 2019 00:22:58 +0100
+Message-ID: <CAJZ5v0iO0ArbyXRZX5MKSf10SY+HRKkaRs7SUmo+KdA0ecOLHQ@mail.gmail.com>
+References: <20190311205606.11228-1-keith.busch@intel.com> <20190311205606.11228-8-keith.busch@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190311205606.11228-7-keith.busch@intel.com>
+In-Reply-To: <20190311205606.11228-8-keith.busch@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Keith Busch <keith.busch@intel.com>
 Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, ACPI Devel Maling List <linux-acpi@vger.kernel.org>, Linux Memory Management List <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rafael Wysocki <rafael@kernel.org>, Dave Hansen <dave.hansen@intel.com>, Dan Williams <dan.j.williams@intel.com>, Jonathan Cameron <jonathan.cameron@huawei.com>, Brice Goglin <Brice.Goglin@inria.fr>
@@ -14,313 +14,518 @@ List-Id: linux-api@vger.kernel.org
 
 On Mon, Mar 11, 2019 at 9:55 PM Keith Busch <keith.busch@intel.com> wrote:
 >
-> System memory may have caches to help improve access speed to frequently
-> requested address ranges. While the system provided cache is transparent
-> to the software accessing these memory ranges, applications can optimize
-> their own access based on cache attributes.
+> If the HMAT Subsystem Address Range provides a valid processor proximity
+> domain for a memory domain, or a processor domain matches the performance
+> access of the valid processor proximity domain, register the memory
+> target with that initiator so this relationship will be visible under
+> the node's sysfs directory.
 >
-> Provide a new API for the kernel to register these memory-side caches
-> under the memory node that provides it.
+> Since HMAT requires valid address ranges have an equivalent SRAT entry,
+> verify each memory target satisfies this requirement.
 >
-> The new sysfs representation is modeled from the existing cpu cacheinfo
-> attributes, as seen from /sys/devices/system/cpu/<cpu>/cache/.  Unlike CPU
-> cacheinfo though, the node cache level is reported from the view of the
-> memory. A higher level number is nearer to the CPU, while lower levels
-> are closer to the last level memory.
->
-> The exported attributes are the cache size, the line size, associativity
-> indexing, and write back policy, and add the attributes for the system
-> memory caches to sysfs stable documentation.
->
+> Reviewed-by: Jonathan Cameron <Jonathan.Cameron@huawei.com>
 > Signed-off-by: Keith Busch <keith.busch@intel.com>
 
-Reviewed-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+Acked-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
 
 > ---
->  Documentation/ABI/stable/sysfs-devices-node |  34 +++++++
->  drivers/base/node.c                         | 151 ++++++++++++++++++++++++++++
->  include/linux/node.h                        |  39 +++++++
->  3 files changed, 224 insertions(+)
+>  drivers/acpi/hmat/Kconfig |   3 +-
+>  drivers/acpi/hmat/hmat.c  | 392 +++++++++++++++++++++++++++++++++++++++++++++-
+>  2 files changed, 393 insertions(+), 2 deletions(-)
 >
-> diff --git a/Documentation/ABI/stable/sysfs-devices-node b/Documentation/ABI/stable/sysfs-devices-node
-> index 735a40a3f9b2..f7ce68fbd4b9 100644
-> --- a/Documentation/ABI/stable/sysfs-devices-node
-> +++ b/Documentation/ABI/stable/sysfs-devices-node
-> @@ -142,3 +142,37 @@ Contact:   Keith Busch <keith.busch@intel.com>
->  Description:
->                 This node's write latency in nanoseconds when access
->                 from nodes found in this class's linked initiators.
+> diff --git a/drivers/acpi/hmat/Kconfig b/drivers/acpi/hmat/Kconfig
+> index 2f7111b7af62..13cddd612a52 100644
+> --- a/drivers/acpi/hmat/Kconfig
+> +++ b/drivers/acpi/hmat/Kconfig
+> @@ -4,4 +4,5 @@ config ACPI_HMAT
+>         depends on ACPI_NUMA
+>         help
+>          If set, this option has the kernel parse and report the
+> -        platform's ACPI HMAT (Heterogeneous Memory Attributes Table).
+> +        platform's ACPI HMAT (Heterogeneous Memory Attributes Table),
+> +        and register memory initiators with their targets.
+> diff --git a/drivers/acpi/hmat/hmat.c b/drivers/acpi/hmat/hmat.c
+> index 4758beb3b2c1..01a6eddac6f7 100644
+> --- a/drivers/acpi/hmat/hmat.c
+> +++ b/drivers/acpi/hmat/hmat.c
+> @@ -13,11 +13,105 @@
+>  #include <linux/device.h>
+>  #include <linux/init.h>
+>  #include <linux/list.h>
+> +#include <linux/list_sort.h>
+>  #include <linux/node.h>
+>  #include <linux/sysfs.h>
+>
+>  static __initdata u8 hmat_revision;
+>
+> +static __initdata LIST_HEAD(targets);
+> +static __initdata LIST_HEAD(initiators);
+> +static __initdata LIST_HEAD(localities);
 > +
-> +What:          /sys/devices/system/node/nodeX/memory_side_cache/indexY/
-> +Date:          December 2018
-> +Contact:       Keith Busch <keith.busch@intel.com>
-> +Description:
-> +               The directory containing attributes for the memory-side cache
-> +               level 'Y'.
+> +/*
+> + * The defined enum order is used to prioritize attributes to break ties when
+> + * selecting the best performing node.
+> + */
+> +enum locality_types {
+> +       WRITE_LATENCY,
+> +       READ_LATENCY,
+> +       WRITE_BANDWIDTH,
+> +       READ_BANDWIDTH,
+> +};
 > +
-> +What:          /sys/devices/system/node/nodeX/memory_side_cache/indexY/indexing
-> +Date:          December 2018
-> +Contact:       Keith Busch <keith.busch@intel.com>
-> +Description:
-> +               The caches associativity indexing: 0 for direct mapped,
-> +               non-zero if indexed.
+> +static struct memory_locality *localities_types[4];
 > +
-> +What:          /sys/devices/system/node/nodeX/memory_side_cache/indexY/line_size
-> +Date:          December 2018
-> +Contact:       Keith Busch <keith.busch@intel.com>
-> +Description:
-> +               The number of bytes accessed from the next cache level on a
-> +               cache miss.
+> +struct memory_target {
+> +       struct list_head node;
+> +       unsigned int memory_pxm;
+> +       unsigned int processor_pxm;
+> +       struct node_hmem_attrs hmem_attrs;
+> +};
 > +
-> +What:          /sys/devices/system/node/nodeX/memory_side_cache/indexY/size
-> +Date:          December 2018
-> +Contact:       Keith Busch <keith.busch@intel.com>
-> +Description:
-> +               The size of this memory side cache in bytes.
+> +struct memory_initiator {
+> +       struct list_head node;
+> +       unsigned int processor_pxm;
+> +};
 > +
-> +What:          /sys/devices/system/node/nodeX/memory_side_cache/indexY/write_policy
-> +Date:          December 2018
-> +Contact:       Keith Busch <keith.busch@intel.com>
-> +Description:
-> +               The cache write policy: 0 for write-back, 1 for write-through,
-> +               other or unknown.
-> diff --git a/drivers/base/node.c b/drivers/base/node.c
-> index 2de546a040a5..8598fcbd2a17 100644
-> --- a/drivers/base/node.c
-> +++ b/drivers/base/node.c
-> @@ -205,6 +205,155 @@ void node_set_perf_attrs(unsigned int nid, struct node_hmem_attrs *hmem_attrs,
+> +struct memory_locality {
+> +       struct list_head node;
+> +       struct acpi_hmat_locality *hmat_loc;
+> +};
+> +
+> +static __init struct memory_initiator *find_mem_initiator(unsigned int cpu_pxm)
+> +{
+> +       struct memory_initiator *initiator;
+> +
+> +       list_for_each_entry(initiator, &initiators, node)
+> +               if (initiator->processor_pxm == cpu_pxm)
+> +                       return initiator;
+> +       return NULL;
+> +}
+> +
+> +static __init struct memory_target *find_mem_target(unsigned int mem_pxm)
+> +{
+> +       struct memory_target *target;
+> +
+> +       list_for_each_entry(target, &targets, node)
+> +               if (target->memory_pxm == mem_pxm)
+> +                       return target;
+> +       return NULL;
+> +}
+> +
+> +static __init void alloc_memory_initiator(unsigned int cpu_pxm)
+> +{
+> +       struct memory_initiator *initiator;
+> +
+> +       if (pxm_to_node(cpu_pxm) == NUMA_NO_NODE)
+> +               return;
+> +
+> +       initiator = find_mem_initiator(cpu_pxm);
+> +       if (initiator)
+> +               return;
+> +
+> +       initiator = kzalloc(sizeof(*initiator), GFP_KERNEL);
+> +       if (!initiator)
+> +               return;
+> +
+> +       initiator->processor_pxm = cpu_pxm;
+> +       list_add_tail(&initiator->node, &initiators);
+> +}
+> +
+> +static __init void alloc_memory_target(unsigned int mem_pxm)
+> +{
+> +       struct memory_target *target;
+> +
+> +       if (pxm_to_node(mem_pxm) == NUMA_NO_NODE)
+> +               return;
+> +
+> +       target = find_mem_target(mem_pxm);
+> +       if (target)
+> +               return;
+> +
+> +       target = kzalloc(sizeof(*target), GFP_KERNEL);
+> +       if (!target)
+> +               return;
+> +
+> +       target->memory_pxm = mem_pxm;
+> +       target->processor_pxm = PXM_INVAL;
+> +       list_add_tail(&target->node, &targets);
+> +}
+> +
+>  static __init const char *hmat_data_type(u8 type)
+>  {
+>         switch (type) {
+> @@ -89,14 +183,83 @@ static __init u32 hmat_normalize(u16 entry, u64 base, u8 type)
+>         return value;
+>  }
+>
+> +static __init void hmat_update_target_access(struct memory_target *target,
+> +                                            u8 type, u32 value)
+> +{
+> +       switch (type) {
+> +       case ACPI_HMAT_ACCESS_LATENCY:
+> +               target->hmem_attrs.read_latency = value;
+> +               target->hmem_attrs.write_latency = value;
+> +               break;
+> +       case ACPI_HMAT_READ_LATENCY:
+> +               target->hmem_attrs.read_latency = value;
+> +               break;
+> +       case ACPI_HMAT_WRITE_LATENCY:
+> +               target->hmem_attrs.write_latency = value;
+> +               break;
+> +       case ACPI_HMAT_ACCESS_BANDWIDTH:
+> +               target->hmem_attrs.read_bandwidth = value;
+> +               target->hmem_attrs.write_bandwidth = value;
+> +               break;
+> +       case ACPI_HMAT_READ_BANDWIDTH:
+> +               target->hmem_attrs.read_bandwidth = value;
+> +               break;
+> +       case ACPI_HMAT_WRITE_BANDWIDTH:
+> +               target->hmem_attrs.write_bandwidth = value;
+> +               break;
+> +       default:
+> +               break;
+> +       }
+> +}
+> +
+> +static __init void hmat_add_locality(struct acpi_hmat_locality *hmat_loc)
+> +{
+> +       struct memory_locality *loc;
+> +
+> +       loc = kzalloc(sizeof(*loc), GFP_KERNEL);
+> +       if (!loc) {
+> +               pr_notice_once("Failed to allocate HMAT locality\n");
+> +               return;
+> +       }
+> +
+> +       loc->hmat_loc = hmat_loc;
+> +       list_add_tail(&loc->node, &localities);
+> +
+> +       switch (hmat_loc->data_type) {
+> +       case ACPI_HMAT_ACCESS_LATENCY:
+> +               localities_types[READ_LATENCY] = loc;
+> +               localities_types[WRITE_LATENCY] = loc;
+> +               break;
+> +       case ACPI_HMAT_READ_LATENCY:
+> +               localities_types[READ_LATENCY] = loc;
+> +               break;
+> +       case ACPI_HMAT_WRITE_LATENCY:
+> +               localities_types[WRITE_LATENCY] = loc;
+> +               break;
+> +       case ACPI_HMAT_ACCESS_BANDWIDTH:
+> +               localities_types[READ_BANDWIDTH] = loc;
+> +               localities_types[WRITE_BANDWIDTH] = loc;
+> +               break;
+> +       case ACPI_HMAT_READ_BANDWIDTH:
+> +               localities_types[READ_BANDWIDTH] = loc;
+> +               break;
+> +       case ACPI_HMAT_WRITE_BANDWIDTH:
+> +               localities_types[WRITE_BANDWIDTH] = loc;
+> +               break;
+> +       default:
+> +               break;
+> +       }
+> +}
+> +
+>  static __init int hmat_parse_locality(union acpi_subtable_headers *header,
+>                                       const unsigned long end)
+>  {
+>         struct acpi_hmat_locality *hmat_loc = (void *)header;
+> +       struct memory_target *target;
+>         unsigned int init, targ, total_size, ipds, tpds;
+>         u32 *inits, *targs, value;
+>         u16 *entries;
+> -       u8 type;
+> +       u8 type, mem_hier;
+>
+>         if (hmat_loc->header.length < sizeof(*hmat_loc)) {
+>                 pr_notice("HMAT: Unexpected locality header length: %d\n",
+> @@ -105,6 +268,7 @@ static __init int hmat_parse_locality(union acpi_subtable_headers *header,
+>         }
+>
+>         type = hmat_loc->data_type;
+> +       mem_hier = hmat_loc->flags & ACPI_HMAT_MEMORY_HIERARCHY;
+>         ipds = hmat_loc->number_of_initiator_Pds;
+>         tpds = hmat_loc->number_of_target_Pds;
+>         total_size = sizeof(*hmat_loc) + sizeof(*entries) * ipds * tpds +
+> @@ -123,6 +287,7 @@ static __init int hmat_parse_locality(union acpi_subtable_headers *header,
+>         targs = inits + ipds;
+>         entries = (u16 *)(targs + tpds);
+>         for (init = 0; init < ipds; init++) {
+> +               alloc_memory_initiator(inits[init]);
+>                 for (targ = 0; targ < tpds; targ++) {
+>                         value = hmat_normalize(entries[init * tpds + targ],
+>                                                hmat_loc->entry_base_unit,
+> @@ -130,9 +295,18 @@ static __init int hmat_parse_locality(union acpi_subtable_headers *header,
+>                         pr_info("  Initiator-Target[%d-%d]:%d%s\n",
+>                                 inits[init], targs[targ], value,
+>                                 hmat_data_type_suffix(type));
+> +
+> +                       if (mem_hier == ACPI_HMAT_MEMORY) {
+> +                               target = find_mem_target(targs[targ]);
+> +                               if (target && target->processor_pxm == inits[init])
+> +                                       hmat_update_target_access(target, type, value);
+> +                       }
 >                 }
 >         }
+>
+> +       if (mem_hier == ACPI_HMAT_MEMORY)
+> +               hmat_add_locality(hmat_loc);
+> +
+>         return 0;
 >  }
+>
+> @@ -160,6 +334,7 @@ static int __init hmat_parse_proximity_domain(union acpi_subtable_headers *heade
+>                                               const unsigned long end)
+>  {
+>         struct acpi_hmat_proximity_domain *p = (void *)header;
+> +       struct memory_target *target;
+>
+>         if (p->header.length != sizeof(*p)) {
+>                 pr_notice("HMAT: Unexpected address range header length: %d\n",
+> @@ -175,6 +350,23 @@ static int __init hmat_parse_proximity_domain(union acpi_subtable_headers *heade
+>                 pr_info("HMAT: Memory Flags:%04x Processor Domain:%d Memory Domain:%d\n",
+>                         p->flags, p->processor_PD, p->memory_PD);
+>
+> +       if (p->flags & ACPI_HMAT_MEMORY_PD_VALID) {
+> +               target = find_mem_target(p->memory_PD);
+> +               if (!target) {
+> +                       pr_debug("HMAT: Memory Domain missing from SRAT\n");
+> +                       return -EINVAL;
+> +               }
+> +       }
+> +       if (target && p->flags & ACPI_HMAT_PROCESSOR_PD_VALID) {
+> +               int p_node = pxm_to_node(p->processor_PD);
 > +
-> +/**
-> + * struct node_cache_info - Internal tracking for memory node caches
-> + * @dev:       Device represeting the cache level
-> + * @node:      List element for tracking in the node
-> + * @cache_attrs:Attributes for this cache level
-> + */
-> +struct node_cache_info {
-> +       struct device dev;
-> +       struct list_head node;
-> +       struct node_cache_attrs cache_attrs;
-> +};
-> +#define to_cache_info(device) container_of(device, struct node_cache_info, dev)
+> +               if (p_node == NUMA_NO_NODE) {
+> +                       pr_debug("HMAT: Invalid Processor Domain\n");
+> +                       return -EINVAL;
+> +               }
+> +               target->processor_pxm = p_node;
+> +       }
 > +
-> +#define CACHE_ATTR(name, fmt)                                          \
-> +static ssize_t name##_show(struct device *dev,                         \
-> +                          struct device_attribute *attr,               \
-> +                          char *buf)                                   \
-> +{                                                                      \
-> +       return sprintf(buf, fmt "\n", to_cache_info(dev)->cache_attrs.name);\
-> +}                                                                      \
-> +DEVICE_ATTR_RO(name);
-> +
-> +CACHE_ATTR(size, "%llu")
-> +CACHE_ATTR(line_size, "%u")
-> +CACHE_ATTR(indexing, "%u")
-> +CACHE_ATTR(write_policy, "%u")
-> +
-> +static struct attribute *cache_attrs[] = {
-> +       &dev_attr_indexing.attr,
-> +       &dev_attr_size.attr,
-> +       &dev_attr_line_size.attr,
-> +       &dev_attr_write_policy.attr,
-> +       NULL,
-> +};
-> +ATTRIBUTE_GROUPS(cache);
-> +
-> +static void node_cache_release(struct device *dev)
+>         return 0;
+>  }
+>
+> @@ -198,6 +390,191 @@ static int __init hmat_parse_subtable(union acpi_subtable_headers *header,
+>         }
+>  }
+>
+> +static __init int srat_parse_mem_affinity(union acpi_subtable_headers *header,
+> +                                         const unsigned long end)
 > +{
-> +       kfree(dev);
+> +       struct acpi_srat_mem_affinity *ma = (void *)header;
+> +
+> +       if (!ma)
+> +               return -EINVAL;
+> +       if (!(ma->flags & ACPI_SRAT_MEM_ENABLED))
+> +               return 0;
+> +       alloc_memory_target(ma->proximity_domain);
+> +       return 0;
 > +}
 > +
-> +static void node_cacheinfo_release(struct device *dev)
+> +static __init u32 hmat_initiator_perf(struct memory_target *target,
+> +                              struct memory_initiator *initiator,
+> +                              struct acpi_hmat_locality *hmat_loc)
 > +{
-> +       struct node_cache_info *info = to_cache_info(dev);
-> +       kfree(info);
-> +}
+> +       unsigned int ipds, tpds, i, idx = 0, tdx = 0;
+> +       u32 *inits, *targs;
+> +       u16 *entries;
 > +
-> +static void node_init_cache_dev(struct node *node)
-> +{
-> +       struct device *dev;
+> +       ipds = hmat_loc->number_of_initiator_Pds;
+> +       tpds = hmat_loc->number_of_target_Pds;
+> +       inits = (u32 *)(hmat_loc + 1);
+> +       targs = inits + ipds;
+> +       entries = (u16 *)(targs + tpds);
 > +
-> +       dev = kzalloc(sizeof(*dev), GFP_KERNEL);
-> +       if (!dev)
-> +               return;
-> +
-> +       dev->parent = &node->dev;
-> +       dev->release = node_cache_release;
-> +       if (dev_set_name(dev, "memory_side_cache"))
-> +               goto free_dev;
-> +
-> +       if (device_register(dev))
-> +               goto free_name;
-> +
-> +       pm_runtime_no_callbacks(dev);
-> +       node->cache_dev = dev;
-> +       return;
-> +free_name:
-> +       kfree_const(dev->kobj.name);
-> +free_dev:
-> +       kfree(dev);
-> +}
-> +
-> +/**
-> + * node_add_cache() - add cache attribute to a memory node
-> + * @nid: Node identifier that has new cache attributes
-> + * @cache_attrs: Attributes for the cache being added
-> + */
-> +void node_add_cache(unsigned int nid, struct node_cache_attrs *cache_attrs)
-> +{
-> +       struct node_cache_info *info;
-> +       struct device *dev;
-> +       struct node *node;
-> +
-> +       if (!node_online(nid) || !node_devices[nid])
-> +               return;
-> +
-> +       node = node_devices[nid];
-> +       list_for_each_entry(info, &node->cache_attrs, node) {
-> +               if (info->cache_attrs.level == cache_attrs->level) {
-> +                       dev_warn(&node->dev,
-> +                               "attempt to add duplicate cache level:%d\n",
-> +                               cache_attrs->level);
-> +                       return;
+> +       for (i = 0; i < ipds; i++) {
+> +               if (inits[i] == initiator->processor_pxm) {
+> +                       idx = i;
+> +                       break;
 > +               }
 > +       }
 > +
-> +       if (!node->cache_dev)
-> +               node_init_cache_dev(node);
-> +       if (!node->cache_dev)
-> +               return;
+> +       if (i == ipds)
+> +               return 0;
 > +
-> +       info = kzalloc(sizeof(*info), GFP_KERNEL);
-> +       if (!info)
-> +               return;
-> +
-> +       dev = &info->dev;
-> +       dev->parent = node->cache_dev;
-> +       dev->release = node_cacheinfo_release;
-> +       dev->groups = cache_groups;
-> +       if (dev_set_name(dev, "index%d", cache_attrs->level))
-> +               goto free_cache;
-> +
-> +       info->cache_attrs = *cache_attrs;
-> +       if (device_register(dev)) {
-> +               dev_warn(&node->dev, "failed to add cache level:%d\n",
-> +                        cache_attrs->level);
-> +               goto free_name;
+> +       for (i = 0; i < tpds; i++) {
+> +               if (targs[i] == target->memory_pxm) {
+> +                       tdx = i;
+> +                       break;
+> +               }
 > +       }
-> +       pm_runtime_no_callbacks(dev);
-> +       list_add_tail(&info->node, &node->cache_attrs);
-> +       return;
-> +free_name:
-> +       kfree_const(dev->kobj.name);
-> +free_cache:
-> +       kfree(info);
+> +       if (i == tpds)
+> +               return 0;
+> +
+> +       return hmat_normalize(entries[idx * tpds + tdx],
+> +                             hmat_loc->entry_base_unit,
+> +                             hmat_loc->data_type);
 > +}
 > +
-> +static void node_remove_caches(struct node *node)
+> +static __init bool hmat_update_best(u8 type, u32 value, u32 *best)
 > +{
-> +       struct node_cache_info *info, *next;
+> +       bool updated = false;
 > +
-> +       if (!node->cache_dev)
+> +       if (!value)
+> +               return false;
+> +
+> +       switch (type) {
+> +       case ACPI_HMAT_ACCESS_LATENCY:
+> +       case ACPI_HMAT_READ_LATENCY:
+> +       case ACPI_HMAT_WRITE_LATENCY:
+> +               if (!*best || *best > value) {
+> +                       *best = value;
+> +                       updated = true;
+> +               }
+> +               break;
+> +       case ACPI_HMAT_ACCESS_BANDWIDTH:
+> +       case ACPI_HMAT_READ_BANDWIDTH:
+> +       case ACPI_HMAT_WRITE_BANDWIDTH:
+> +               if (!*best || *best < value) {
+> +                       *best = value;
+> +                       updated = true;
+> +               }
+> +               break;
+> +       }
+> +
+> +       return updated;
+> +}
+> +
+> +static int initiator_cmp(void *priv, struct list_head *a, struct list_head *b)
+> +{
+> +       struct memory_initiator *ia;
+> +       struct memory_initiator *ib;
+> +       unsigned long *p_nodes = priv;
+> +
+> +       ia = list_entry(a, struct memory_initiator, node);
+> +       ib = list_entry(b, struct memory_initiator, node);
+> +
+> +       set_bit(ia->processor_pxm, p_nodes);
+> +       set_bit(ib->processor_pxm, p_nodes);
+> +
+> +       return ia->processor_pxm - ib->processor_pxm;
+> +}
+> +
+> +static __init void hmat_register_target_initiators(struct memory_target *target)
+> +{
+> +       static DECLARE_BITMAP(p_nodes, MAX_NUMNODES);
+> +       struct memory_initiator *initiator;
+> +       unsigned int mem_nid, cpu_nid;
+> +       struct memory_locality *loc = NULL;
+> +       u32 best = 0;
+> +       int i;
+> +
+> +       mem_nid = pxm_to_node(target->memory_pxm);
+> +       /*
+> +        * If the Address Range Structure provides a local processor pxm, link
+> +        * only that one. Otherwise, find the best performance attributes and
+> +        * register all initiators that match.
+> +        */
+> +       if (target->processor_pxm != PXM_INVAL) {
+> +               cpu_nid = pxm_to_node(target->processor_pxm);
+> +               register_memory_node_under_compute_node(mem_nid, cpu_nid, 0);
+> +               return;
+> +       }
+> +
+> +       if (list_empty(&localities))
 > +               return;
 > +
-> +       list_for_each_entry_safe(info, next, &node->cache_attrs, node) {
-> +               list_del(&info->node);
-> +               device_unregister(&info->dev);
+> +       /*
+> +        * We need the initiator list sorted so we can use bitmap_clear for
+> +        * previously set initiators when we find a better memory accessor.
+> +        * We'll also use the sorting to prime the candidate nodes with known
+> +        * initiators.
+> +        */
+> +       bitmap_zero(p_nodes, MAX_NUMNODES);
+> +       list_sort(p_nodes, &initiators, initiator_cmp);
+> +       for (i = WRITE_LATENCY; i <= READ_BANDWIDTH; i++) {
+> +               loc = localities_types[i];
+> +               if (!loc)
+> +                       continue;
+> +
+> +               best = 0;
+> +               list_for_each_entry(initiator, &initiators, node) {
+> +                       u32 value;
+> +
+> +                       if (!test_bit(initiator->processor_pxm, p_nodes))
+> +                               continue;
+> +
+> +                       value = hmat_initiator_perf(target, initiator, loc->hmat_loc);
+> +                       if (hmat_update_best(loc->hmat_loc->data_type, value, &best))
+> +                               bitmap_clear(p_nodes, 0, initiator->processor_pxm);
+> +                       if (value != best)
+> +                               clear_bit(initiator->processor_pxm, p_nodes);
+> +               }
+> +               if (best)
+> +                       hmat_update_target_access(target, loc->hmat_loc->data_type, best);
 > +       }
-> +       device_unregister(node->cache_dev);
+> +
+> +       for_each_set_bit(i, p_nodes, MAX_NUMNODES) {
+> +               cpu_nid = pxm_to_node(i);
+> +               register_memory_node_under_compute_node(mem_nid, cpu_nid, 0);
+> +       }
 > +}
 > +
-> +static void node_init_caches(unsigned int nid)
+> +static __init void hmat_register_targets(void)
 > +{
-> +       INIT_LIST_HEAD(&node_devices[nid]->cache_attrs);
+> +       struct memory_target *target;
+> +
+> +       list_for_each_entry(target, &targets, node)
+> +               hmat_register_target_initiators(target);
 > +}
-> +#else
-> +static void node_init_caches(unsigned int nid) { }
-> +static void node_remove_caches(struct node *node) { }
->  #endif
->
->  #define K(x) ((x) << (PAGE_SHIFT - 10))
-> @@ -489,6 +638,7 @@ void unregister_node(struct node *node)
+> +
+> +static __init void hmat_free_structures(void)
+> +{
+> +       struct memory_target *target, *tnext;
+> +       struct memory_locality *loc, *lnext;
+> +       struct memory_initiator *initiator, *inext;
+> +
+> +       list_for_each_entry_safe(target, tnext, &targets, node) {
+> +               list_del(&target->node);
+> +               kfree(target);
+> +       }
+> +
+> +       list_for_each_entry_safe(initiator, inext, &initiators, node) {
+> +               list_del(&initiator->node);
+> +               kfree(initiator);
+> +       }
+> +
+> +       list_for_each_entry_safe(loc, lnext, &localities, node) {
+> +               list_del(&loc->node);
+> +               kfree(loc);
+> +       }
+> +}
+> +
+>  static __init int hmat_init(void)
 >  {
->         hugetlb_unregister_node(node);          /* no-op, if memoryless node */
->         node_remove_accesses(node);
-> +       node_remove_caches(node);
->         device_unregister(&node->dev);
+>         struct acpi_table_header *tbl;
+> @@ -207,6 +584,17 @@ static __init int hmat_init(void)
+>         if (srat_disabled())
+>                 return 0;
+>
+> +       status = acpi_get_table(ACPI_SIG_SRAT, 0, &tbl);
+> +       if (ACPI_FAILURE(status))
+> +               return 0;
+> +
+> +       if (acpi_table_parse_entries(ACPI_SIG_SRAT,
+> +                               sizeof(struct acpi_table_srat),
+> +                               ACPI_SRAT_TYPE_MEMORY_AFFINITY,
+> +                               srat_parse_mem_affinity, 0) < 0)
+> +               goto out_put;
+> +       acpi_put_table(tbl);
+> +
+>         status = acpi_get_table(ACPI_SIG_HMAT, 0, &tbl);
+>         if (ACPI_FAILURE(status))
+>                 return 0;
+> @@ -229,7 +617,9 @@ static __init int hmat_init(void)
+>                         goto out_put;
+>                 }
+>         }
+> +       hmat_register_targets();
+>  out_put:
+> +       hmat_free_structures();
+>         acpi_put_table(tbl);
+>         return 0;
 >  }
->
-> @@ -781,6 +931,7 @@ int __register_one_node(int nid)
->         INIT_LIST_HEAD(&node_devices[nid]->access_list);
->         /* initialize work queue for memory hot plug */
->         init_node_hugetlb_work(nid);
-> +       node_init_caches(nid);
->
->         return error;
->  }
-> diff --git a/include/linux/node.h b/include/linux/node.h
-> index 4139d728f8b3..1a557c589ecb 100644
-> --- a/include/linux/node.h
-> +++ b/include/linux/node.h
-> @@ -35,10 +35,45 @@ struct node_hmem_attrs {
->         unsigned int write_latency;
->  };
->
-> +enum cache_indexing {
-> +       NODE_CACHE_DIRECT_MAP,
-> +       NODE_CACHE_INDEXED,
-> +       NODE_CACHE_OTHER,
-> +};
-> +
-> +enum cache_write_policy {
-> +       NODE_CACHE_WRITE_BACK,
-> +       NODE_CACHE_WRITE_THROUGH,
-> +       NODE_CACHE_WRITE_OTHER,
-> +};
-> +
-> +/**
-> + * struct node_cache_attrs - system memory caching attributes
-> + *
-> + * @indexing:          The ways memory blocks may be placed in cache
-> + * @write_policy:      Write back or write through policy
-> + * @size:              Total size of cache in bytes
-> + * @line_size:         Number of bytes fetched on a cache miss
-> + * @level:             The cache hierarchy level
-> + */
-> +struct node_cache_attrs {
-> +       enum cache_indexing indexing;
-> +       enum cache_write_policy write_policy;
-> +       u64 size;
-> +       u16 line_size;
-> +       u8 level;
-> +};
-> +
->  #ifdef CONFIG_HMEM_REPORTING
-> +void node_add_cache(unsigned int nid, struct node_cache_attrs *cache_attrs);
->  void node_set_perf_attrs(unsigned int nid, struct node_hmem_attrs *hmem_attrs,
->                          unsigned access);
->  #else
-> +static inline void node_add_cache(unsigned int nid,
-> +                                 struct node_cache_attrs *cache_attrs)
-> +{
-> +}
-> +
->  static inline void node_set_perf_attrs(unsigned int nid,
->                                        struct node_hmem_attrs *hmem_attrs,
->                                        unsigned access)
-> @@ -53,6 +88,10 @@ struct node {
->  #if defined(CONFIG_MEMORY_HOTPLUG_SPARSE) && defined(CONFIG_HUGETLBFS)
->         struct work_struct      node_work;
->  #endif
-> +#ifdef CONFIG_HMEM_REPORTING
-> +       struct list_head cache_attrs;
-> +       struct device *cache_dev;
-> +#endif
->  };
->
->  struct memory_block;
 > --
 > 2.14.4
 >
