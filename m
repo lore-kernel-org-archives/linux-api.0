@@ -1,59 +1,45 @@
-From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: Re: [PATCH v7 02/15] sched/core: uclamp: Enforce last task UCLAMP_MAX
-Date: Wed, 13 Mar 2019 18:29:55 +0000
-Message-ID: <20190313182955.2ivdehfa4pxorqcg@e110439-lin>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH v7 01/15] sched/core: uclamp: Add CPU's clamp buckets
+ refcounting
+Date: Wed, 13 Mar 2019 20:30:56 +0100
+Message-ID: <20190313193056.GP2482@worktop.programming.kicks-ass.net>
 References: <20190208100554.32196-1-patrick.bellasi@arm.com>
- <20190208100554.32196-3-patrick.bellasi@arm.com>
- <20190313141008.GF5922@hirez.programming.kicks-ass.net>
- <20190313162051.djiu5dwc5ahp5p5p@e110439-lin>
- <20190313172911.GH5996@hirez.programming.kicks-ass.net>
+ <20190208100554.32196-2-patrick.bellasi@arm.com>
+ <20190313135238.GC5922@hirez.programming.kicks-ass.net>
+ <20190313155954.jse2tyn5iqxm6wle@e110439-lin>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190313172911.GH5996@hirez.programming.kicks-ass.net>
+In-Reply-To: <20190313155954.jse2tyn5iqxm6wle@e110439-lin>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
+To: Patrick Bellasi <patrick.bellasi@arm.com>
 Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On 13-Mar 18:29, Peter Zijlstra wrote:
-> On Wed, Mar 13, 2019 at 04:20:51PM +0000, Patrick Bellasi wrote:
-> > On 13-Mar 15:10, Peter Zijlstra wrote:
-> > > On Fri, Feb 08, 2019 at 10:05:41AM +0000, Patrick Bellasi wrote:
-> > > > +uclamp_idle_value(struct rq *rq, unsigned int clamp_id, unsigned int clamp_value)
-> > > > +{
-> > > > +	/*
-> > > > +	 * Avoid blocked utilization pushing up the frequency when we go
-> > > > +	 * idle (which drops the max-clamp) by retaining the last known
-> > > > +	 * max-clamp.
-> > > > +	 */
-> > > > +	if (clamp_id == UCLAMP_MAX) {
-> > > > +		rq->uclamp_flags |= UCLAMP_FLAG_IDLE;
-> > > > +		return clamp_value;
-> > > > +	}
-> > > > +
-> > > > +	return uclamp_none(UCLAMP_MIN);
-> > > 
-> > > That's a very complicated way or writing: return 0, right?
+On Wed, Mar 13, 2019 at 03:59:54PM +0000, Patrick Bellasi wrote:
+> On 13-Mar 14:52, Peter Zijlstra wrote:
+> > > +static inline void uclamp_rq_dec_id(struct task_struct *p, struct rq *rq,
+> > > +				    unsigned int clamp_id)
+> > > +{
+> > > +	unsigned int bucket_id = p->uclamp[clamp_id].bucket_id;
+> > > +	unsigned int rq_clamp, bkt_clamp;
+> > > +
+> > > +	SCHED_WARN_ON(!rq->uclamp[clamp_id].bucket[bucket_id].tasks);
+> > > +	if (likely(rq->uclamp[clamp_id].bucket[bucket_id].tasks))
+> > > +		rq->uclamp[clamp_id].bucket[bucket_id].tasks--;
+> > > +
+> > > +	/*
+> > > +	 * Keep "local clamping" simple and accept to (possibly) overboost
+> > > +	 * still RUNNABLE tasks in the same bucket.
+> > > +	 */
+> > > +	if (likely(rq->uclamp[clamp_id].bucket[bucket_id].tasks))
+> > > +		return;
 > > 
-> > In my mind it's just a simple way to hardcode values in just one place.
-> > 
-> > In the current implementation uclamp_none(UCLAMP_MIN) is 0 and the
-> > compiler is not in trubles to inline a 0 there.
-> > 
-> > Is it really so disgusting ?
+> > (Oh man, I hope that generates semi sane code; long live CSE passes I
+> > suppose)
 > 
-> Not disguisting per se, just complicated. It had me go back and check
-> wth uclamp_none() did again.
+> What do you mean ?
 
-Yes, I see... every time I read it I just consider that uclamp_none()
-it's just returning whatever is (or will be) the "non clamped" value
-for the specified clamp index.
-
-If it's ok with you, I would keep the code above as it is now.
-
--- 
-#include <best/regards.h>
-
-Patrick Bellasi
+that does: 'rq->uclamp[clamp_id].bucket[bucket_id].tasks' three times in
+a row. And yes the compiler _should_ dtrt, but....
