@@ -1,65 +1,36 @@
 From: Patrick Bellasi <patrick.bellasi@arm.com>
 Subject: Re: [PATCH v7 01/15] sched/core: uclamp: Add CPU's clamp buckets
  refcounting
-Date: Wed, 13 Mar 2019 15:23:59 +0000
-Message-ID: <20190313152359.lkyzel7fakjoi5hu@e110439-lin>
+Date: Wed, 13 Mar 2019 15:28:31 +0000
+Message-ID: <20190313152831.aqkvdrdoffiyu5pp@e110439-lin>
 References: <20190208100554.32196-1-patrick.bellasi@arm.com>
  <20190208100554.32196-2-patrick.bellasi@arm.com>
- <20190313140925.GE5922@hirez.programming.kicks-ass.net>
+ <20190313140603.GD5922@hirez.programming.kicks-ass.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190313140925.GE5922@hirez.programming.kicks-ass.net>
+In-Reply-To: <20190313140603.GD5922@hirez.programming.kicks-ass.net>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Peter Zijlstra <peterz@infradead.org>
 Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On 13-Mar 15:09, Peter Zijlstra wrote:
+On 13-Mar 15:06, Peter Zijlstra wrote:
 > On Fri, Feb 08, 2019 at 10:05:40AM +0000, Patrick Bellasi wrote:
-> > +static inline unsigned int uclamp_none(int clamp_id)
+> > +static void __init init_uclamp(void)
 > > +{
-> > +	if (clamp_id == UCLAMP_MIN)
-> > +		return 0;
-> > +	return SCHED_CAPACITY_SCALE;
-> > +}
+> > +	unsigned int clamp_id;
+> > +	int cpu;
 > > +
-> > +static inline void uclamp_rq_update(struct rq *rq, unsigned int clamp_id)
-> > +{
-> > +	struct uclamp_bucket *bucket = rq->uclamp[clamp_id].bucket;
-> > +	unsigned int max_value = uclamp_none(clamp_id);
-> 
-> That's 1024 for uclamp_max
-> 
-> > +	unsigned int bucket_id;
+> > +	for_each_possible_cpu(cpu)
+> > +		memset(&cpu_rq(cpu)->uclamp, 0, sizeof(struct uclamp_rq));
 > > +
-> > +	/*
-> > +	 * Both min and max clamps are MAX aggregated, thus the topmost
-> > +	 * bucket with some tasks defines the rq's clamp value.
-> > +	 */
-> > +	bucket_id = UCLAMP_BUCKETS;
-> > +	do {
-> > +		--bucket_id;
-> > +		if (!rq->uclamp[clamp_id].bucket[bucket_id].tasks)
-> > +			continue;
-> > +		max_value = bucket[bucket_id].value;
 > 
-> but this will then _lower_ it. That's not a MAX aggregate.
+> Is that really needed? Doesn't rq come from .bss ?
 
-For uclamp_max we want max_value=1024 when there are no active tasks,
-which means: no max clamp enforced on CFS/RT "idle" cpus.
-
-If instead there are active RT/CFS tasks then we want the clamp value
-of the max group, which means: MAX aggregate active clamps.
-
-That's what the code above does and the comment says.
-
-> > +		break;
-> > +	} while (bucket_id);
-> > +
-> > +	WRITE_ONCE(rq->uclamp[clamp_id].value, max_value);
-> > +}
+Will check better... I've just assumed not since in sched_init() we
+already have tons of rq's related zero initializations.
 
 -- 
 #include <best/regards.h>
