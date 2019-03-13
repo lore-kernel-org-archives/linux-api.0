@@ -1,52 +1,34 @@
 From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH v7 01/15] sched/core: uclamp: Add CPU's clamp buckets
- refcounting
-Date: Wed, 13 Mar 2019 15:09:25 +0100
-Message-ID: <20190313140925.GE5922@hirez.programming.kicks-ass.net>
+Subject: Re: [PATCH v7 02/15] sched/core: uclamp: Enforce last task UCLAMP_MAX
+Date: Wed, 13 Mar 2019 15:10:08 +0100
+Message-ID: <20190313141008.GF5922@hirez.programming.kicks-ass.net>
 References: <20190208100554.32196-1-patrick.bellasi@arm.com>
- <20190208100554.32196-2-patrick.bellasi@arm.com>
+ <20190208100554.32196-3-patrick.bellasi@arm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190208100554.32196-2-patrick.bellasi@arm.com>
+In-Reply-To: <20190208100554.32196-3-patrick.bellasi@arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Patrick Bellasi <patrick.bellasi@arm.com>
 Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Feb 08, 2019 at 10:05:40AM +0000, Patrick Bellasi wrote:
-> +static inline unsigned int uclamp_none(int clamp_id)
+On Fri, Feb 08, 2019 at 10:05:41AM +0000, Patrick Bellasi wrote:
+> +uclamp_idle_value(struct rq *rq, unsigned int clamp_id, unsigned int clamp_value)
 > +{
-> +	if (clamp_id == UCLAMP_MIN)
-> +		return 0;
-> +	return SCHED_CAPACITY_SCALE;
-> +}
-> +
-> +static inline void uclamp_rq_update(struct rq *rq, unsigned int clamp_id)
-> +{
-> +	struct uclamp_bucket *bucket = rq->uclamp[clamp_id].bucket;
-> +	unsigned int max_value = uclamp_none(clamp_id);
-
-That's 1024 for uclamp_max
-
-> +	unsigned int bucket_id;
-> +
 > +	/*
-> +	 * Both min and max clamps are MAX aggregated, thus the topmost
-> +	 * bucket with some tasks defines the rq's clamp value.
+> +	 * Avoid blocked utilization pushing up the frequency when we go
+> +	 * idle (which drops the max-clamp) by retaining the last known
+> +	 * max-clamp.
 > +	 */
-> +	bucket_id = UCLAMP_BUCKETS;
-> +	do {
-> +		--bucket_id;
-> +		if (!rq->uclamp[clamp_id].bucket[bucket_id].tasks)
-> +			continue;
-> +		max_value = bucket[bucket_id].value;
-
-but this will then _lower_ it. That's not a MAX aggregate.
-
-> +		break;
-> +	} while (bucket_id);
+> +	if (clamp_id == UCLAMP_MAX) {
+> +		rq->uclamp_flags |= UCLAMP_FLAG_IDLE;
+> +		return clamp_value;
+> +	}
 > +
-> +	WRITE_ONCE(rq->uclamp[clamp_id].value, max_value);
+> +	return uclamp_none(UCLAMP_MIN);
+
+That's a very complicated way or writing: return 0, right?
+
 > +}
