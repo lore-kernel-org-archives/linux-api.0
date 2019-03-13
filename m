@@ -1,8 +1,8 @@
 From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: [PATCH v7 01/15] sched/core: uclamp: Add CPU's clamp buckets
  refcounting
-Date: Wed, 13 Mar 2019 15:06:03 +0100
-Message-ID: <20190313140603.GD5922@hirez.programming.kicks-ass.net>
+Date: Wed, 13 Mar 2019 15:09:25 +0100
+Message-ID: <20190313140925.GE5922@hirez.programming.kicks-ass.net>
 References: <20190208100554.32196-1-patrick.bellasi@arm.com>
  <20190208100554.32196-2-patrick.bellasi@arm.com>
 Mime-Version: 1.0
@@ -16,13 +16,37 @@ Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kerne
 List-Id: linux-api@vger.kernel.org
 
 On Fri, Feb 08, 2019 at 10:05:40AM +0000, Patrick Bellasi wrote:
-> +static void __init init_uclamp(void)
+> +static inline unsigned int uclamp_none(int clamp_id)
 > +{
-> +	unsigned int clamp_id;
-> +	int cpu;
+> +	if (clamp_id == UCLAMP_MIN)
+> +		return 0;
+> +	return SCHED_CAPACITY_SCALE;
+> +}
 > +
-> +	for_each_possible_cpu(cpu)
-> +		memset(&cpu_rq(cpu)->uclamp, 0, sizeof(struct uclamp_rq));
-> +
+> +static inline void uclamp_rq_update(struct rq *rq, unsigned int clamp_id)
+> +{
+> +	struct uclamp_bucket *bucket = rq->uclamp[clamp_id].bucket;
+> +	unsigned int max_value = uclamp_none(clamp_id);
 
-Is that really needed? Doesn't rq come from .bss ?
+That's 1024 for uclamp_max
+
+> +	unsigned int bucket_id;
+> +
+> +	/*
+> +	 * Both min and max clamps are MAX aggregated, thus the topmost
+> +	 * bucket with some tasks defines the rq's clamp value.
+> +	 */
+> +	bucket_id = UCLAMP_BUCKETS;
+> +	do {
+> +		--bucket_id;
+> +		if (!rq->uclamp[clamp_id].bucket[bucket_id].tasks)
+> +			continue;
+> +		max_value = bucket[bucket_id].value;
+
+but this will then _lower_ it. That's not a MAX aggregate.
+
+> +		break;
+> +	} while (bucket_id);
+> +
+> +	WRITE_ONCE(rq->uclamp[clamp_id].value, max_value);
+> +}
