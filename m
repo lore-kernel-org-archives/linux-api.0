@@ -1,65 +1,69 @@
-From: Suren Baghdasaryan <surenb@google.com>
-Subject: Re: [PATCH v7 01/15] sched/core: uclamp: Add CPU's clamp buckets refcounting
-Date: Thu, 14 Mar 2019 09:39:09 -0700
-Message-ID: <CAJuCfpEWCcWj=B2SPai2pQt+wcjsAhEfVV1O+H0A+_fqLCnb8Q@mail.gmail.com>
+From: Patrick Bellasi <patrick.bellasi@arm.com>
+Subject: Re: [PATCH v7 02/15] sched/core: uclamp: Enforce last task UCLAMP_MAX
+Date: Thu, 14 Mar 2019 17:06:19 +0000
+Message-ID: <20190314170619.rt6yhelj3y6dzypu@e110439-lin>
 References: <20190208100554.32196-1-patrick.bellasi@arm.com>
- <20190208100554.32196-2-patrick.bellasi@arm.com> <CAJuCfpGAZ6XxJj=e-wVzGx3zmRRLPs=wXm8K0BcjWOm5hM0FcQ@mail.gmail.com>
- <20190314144600.2ulpeipad7jbxyiy@e110439-lin> <CAJuCfpFDVi7O+yqQ+F0DT3pRZN=BtRD8NyUH5Tys0VVkd9JAGg@mail.gmail.com>
- <20190314154052.345v74snhtc4cqbe@e110439-lin>
+ <20190208100554.32196-3-patrick.bellasi@arm.com>
+ <20190313141253.GG5922@hirez.programming.kicks-ass.net>
+ <20190313161646.fp2gswuqgzi7z7ow@e110439-lin>
+ <CAJuCfpH2QPgB3D+qsbF7gzDhrD4Y6oo3Q-b8iwtUxZe-dDWR7Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190314154052.345v74snhtc4cqbe@e110439-lin>
+Content-Disposition: inline
+In-Reply-To: <CAJuCfpH2QPgB3D+qsbF7gzDhrD4Y6oo3Q-b8iwtUxZe-dDWR7Q@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Patrick Bellasi <patrick.bellasi@arm.com>
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>
+To: Suren Baghdasaryan <surenb@google.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, LKML <linux-kernel@vger.kernel.org>, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 14, 2019 at 8:41 AM Patrick Bellasi <patrick.bellasi@arm.com> wrote:
->
-> On 14-Mar 08:29, Suren Baghdasaryan wrote:
-> > On Thu, Mar 14, 2019 at 7:46 AM Patrick Bellasi <patrick.bellasi@arm.com> wrote:
-> > > On 13-Mar 14:32, Suren Baghdasaryan wrote:
-> > > > On Fri, Feb 8, 2019 at 2:06 AM Patrick Bellasi <patrick.bellasi@arm.com> wrote:
->
-> [...]
->
-> > > > > The rq::uclamp::bucket[clamp_id][] array is scanned every time we need
-> > > > > to find a new MAX aggregated clamp value for a clamp_id. This operation
-> > > > > is required only when we dequeue the last task of a clamp bucket
-> > > > > tracking the current MAX aggregated clamp value. In these cases, the CPU
-> > > > > is either entering IDLE or going to schedule a less boosted or more
-> > > > > clamped task.
->
-> The following:
->
-> > > > > The expected number of different clamp values, configured at build time,
-> > > > > is small enough to fit the full unordered array into a single cache
-> > > > > line.
->
-> will read:
->
-> The expected number of different clamp values, configured at build time,
-> is small enough to fit the full unordered array into a single cache
-> line for the default UCLAMP_BUCKETS configuration of 7 buckets.
+On 13-Mar 17:29, Suren Baghdasaryan wrote:
+> On Wed, Mar 13, 2019 at 9:16 AM Patrick Bellasi <patrick.bellasi@arm.com> wrote:
+> >
+> > On 13-Mar 15:12, Peter Zijlstra wrote:
+> > > On Fri, Feb 08, 2019 at 10:05:41AM +0000, Patrick Bellasi wrote:
+> > > > +static inline void uclamp_idle_reset(struct rq *rq, unsigned int clamp_id,
+> > > > +                                unsigned int clamp_value)
+> > > > +{
+> > > > +   /* Reset max-clamp retention only on idle exit */
+> > > > +   if (!(rq->uclamp_flags & UCLAMP_FLAG_IDLE))
+> > > > +           return;
+> > > > +
+> > > > +   WRITE_ONCE(rq->uclamp[clamp_id].value, clamp_value);
+> > > > +
+> > > > +   /*
+> > > > +    * This function is called for both UCLAMP_MIN (before) and UCLAMP_MAX
+> > > > +    * (after). The idle flag is reset only the second time, when we know
+> > > > +    * that UCLAMP_MIN has been already updated.
+> > >
+> > > Why do we care? That is, what is this comment trying to tell us.
+> >
+> > Right, the code is clear enough, I'll remove this comment.
+> 
+> It would be probably even clearer if rq->uclamp_flags &=
+> ~UCLAMP_FLAG_IDLE is done from inside uclamp_rq_inc after
+> uclamp_rq_inc_id for both clamps is called.
 
-I think keeping default to be 5 is good. As you mentioned it's a nice
-round number and keeping it at the minimum also hints that this is not
-a free resource and the more buckets you use the more you pay.
-Documentation might say "to fit the full unordered array into a single
-cache line for configurations of up to 7 buckets".
+Good point! I'll move it there to have something like:
 
-> [...]
->
-> > Got it. From reading the documentation at the beginning my impression
-> > was that whatever value I choose within allowed 5-20 range it would
-> > still fit in a cache line. To disambiguate it might be worse
-> > mentioning that this is true for the default value or for values up to
-> > 7. Thanks!
->
-> Right, I hope the above proposed change helps to clarify that.
->
-> --
-> #include <best/regards.h>
->
-> Patrick Bellasi
+---8<---
+static inline void uclamp_rq_inc(struct rq *rq, struct task_struct *p)
+{
+	unsigned int clamp_id;
+
+	if (unlikely(!p->sched_class->uclamp_enabled))
+		return;
+
+	for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id)
+		uclamp_rq_inc_id(p, rq, clamp_id);
+
+	/* Reset clamp holding when we have at least one RUNNABLE task */
+	if (rq->uclamp_flags & UCLAMP_FLAG_IDLE)
+		rq->uclamp_flags &= ~UCLAMP_FLAG_IDLE;
+}
+---8<---
+
+-- 
+#include <best/regards.h>
+
+Patrick Bellasi
