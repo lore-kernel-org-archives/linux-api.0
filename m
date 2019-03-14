@@ -1,42 +1,45 @@
-From: Florian Weimer <fw@deneb.enyo.de>
-Subject: Re: [PATCH] y2038: fix socket.h header inclusion
-Date: Thu, 14 Mar 2019 19:37:15 +0100
-Message-ID: <87k1h1fgkk.fsf@mid.deneb.enyo.de>
-References: <20190311153857.563743-1-arnd@arndb.de>
-Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20190311153857.563743-1-arnd@arndb.de> (Arnd Bergmann's message
-        of "Mon, 11 Mar 2019 16:38:17 +0100")
-Sender: netdev-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: "David S . Miller" <davem@davemloft.net>, Deepa Dinamani <deepa.kernel@gmail.com>, Willem de Bruijn <willemb@google.com>, linux-alpha@vger.kernel.org, linux-arch@vger.kernel.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, sparclinux@vger.kernel.org, Laura Abbott <labbott@redhat.com>, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH 0/2] rseq/selftests: debugger single-stepping helper sections
+Date: Thu, 14 Mar 2019 15:03:44 -0400
+Message-ID: <20190314190346.24744-1-mathieu.desnoyers@efficios.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Michael Kerrisk <mtk.manpages@g>
 List-Id: linux-api@vger.kernel.org
 
-* Arnd Bergmann:
+Hi,
 
-> diff --git a/arch/alpha/include/uapi/asm/socket.h b/arch/alpha/include/uapi/asm/socket.h
-> index 0d0fddb7e738..976e89b116e5 100644
-> --- a/arch/alpha/include/uapi/asm/socket.h
-> +++ b/arch/alpha/include/uapi/asm/socket.h
-> @@ -2,8 +2,8 @@
->  #ifndef _UAPI_ASM_SOCKET_H
->  #define _UAPI_ASM_SOCKET_H
->  
-> +#include <linux/posix_types.h>
->  #include <asm/sockios.h>
-> -#include <asm/bitsperlong.h>
+Those RFC patches improves the rseq selftests to properly expose data
+sections helping debuggers to step over rseq critical sections.
 
-This breaks POSIX conformance in glibc because the
-<linux/posix_types.h> header is not namespace clean.  It contains the
-identifiers fds_bits and val:
+* Add a new __rseq_exit_point_array section describing all rseq critical
+  section exit points so debuggers can properly step over those. This is
+  based on discussions with gdb and DynamoRIO developers.
 
-	unsigned long fds_bits[__FD_SETSIZE / (8 * sizeof(long))];
+* The __rseq_table section contains structures that are aligned on 32
+  bytes, and in some cases the entries may not be aligned with the
+  beginning of the section. Rename this section to __rseq_cs, and create
+  a new __rseq_cs_ptr_array section containing packed 64-bit pointers to
+  those __rseq_cs entries.
 
-        int     val[2];
+Thanks,
 
-We could duplicate some of the SO_* constants for POSIX mode in glibc,
-but it would be nice to avoid that.
+Mathieu
 
-Is there a different way of fixing this on the kernel side that avoids
-including <linux/posix_types.h>?
+
+Mathieu Desnoyers (2):
+  rseq/selftests: Add __rseq_exit_point_array section for debuggers
+  rseq/selftests: Introduce __rseq_cs_ptr_array, rename __rseq_table to
+    __rseq_cs
+
+ tools/testing/selftests/rseq/rseq-arm.h   |  80 +++++++++++++++++++----
+ tools/testing/selftests/rseq/rseq-arm64.h |  57 +++++++++++++++-
+ tools/testing/selftests/rseq/rseq-mips.h  |  81 +++++++++++++++++++----
+ tools/testing/selftests/rseq/rseq-ppc.h   |  80 +++++++++++++++++++++--
+ tools/testing/selftests/rseq/rseq-s390.h  |  65 +++++++++++++++++-
+ tools/testing/selftests/rseq/rseq-x86.h   | 105 +++++++++++++++++++++++++++++-
+ 6 files changed, 435 insertions(+), 33 deletions(-)
+
+-- 
+2.11.0
