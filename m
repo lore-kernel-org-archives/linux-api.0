@@ -1,69 +1,37 @@
-From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: Re: [PATCH v7 02/15] sched/core: uclamp: Enforce last task UCLAMP_MAX
-Date: Thu, 14 Mar 2019 17:06:19 +0000
-Message-ID: <20190314170619.rt6yhelj3y6dzypu@e110439-lin>
-References: <20190208100554.32196-1-patrick.bellasi@arm.com>
- <20190208100554.32196-3-patrick.bellasi@arm.com>
- <20190313141253.GG5922@hirez.programming.kicks-ass.net>
- <20190313161646.fp2gswuqgzi7z7ow@e110439-lin>
- <CAJuCfpH2QPgB3D+qsbF7gzDhrD4Y6oo3Q-b8iwtUxZe-dDWR7Q@mail.gmail.com>
+From: Miguel Ojeda <miguel.ojeda.sandonis@gmail.com>
+Subject: Re: [PATCH] x86: Deprecate a.out support
+Date: Thu, 14 Mar 2019 19:38:23 +0100
+Message-ID: <CANiq72=Hvvw7QCKMquWmefKz1OLUrYoDZUHRT2XKUEwTfsLv4Q@mail.gmail.com>
+References: <CAG48ez1RVd5mQ_Pb6eygQESaZhpQz765OAZYSoPE0kPqfZEXQg@mail.gmail.com>
+ <20190305091904.GB8256@zn.tnic> <20190305122218.GD13380@bombadil.infradead.org>
+ <20190305134347.4be2449c@alans-desktop> <20190305145717.GD8256@zn.tnic>
+ <CAHk-=wi2E4kugAW7BQwNSVwYHOr=B_9EgzBRMpQ2+1dxAqydDg@mail.gmail.com>
+ <20190305173134.GE8256@zn.tnic> <CAHk-=wg0bY=RFhD4NW9x++fC0bME=_-9xM3kexGGM3gefHQTyQ@mail.gmail.com>
+ <20190305181138.GG8256@zn.tnic> <20190305181808.GH8256@zn.tnic>
+ <CAEdQ38G5M3vq9pGBV1iyEViO7JhFuXk5g+VCs-vUH+Z62kNqgQ@mail.gmail.com>
+ <CAHk-=wgt7M6yA5BJCJo0nF22WgPJnN8CvViL9CAJmd+S+Civ6w@mail.gmail.com>
+ <yw1xa7i14btw.fsf@mansr.com> <CAHk-=whD1SumZUBQeuMT-GcciwPxg_jW_TsPAmokYp3sGGCGhA@mail.gmail.com>
+ <yw1x5zsp473a.fsf@mansr.com> <CAHk-=wiU7xacTqDfm-x29-meyJWNd_X95K0T8FQMcDgy-yo3Qw@mail.gmail.com>
+ <yw1x1s3d42ia.fsf@mansr.com> <CAK8P3a031d9mSOxVmCAGcrbdaCE8N3R4e2Smtxp-Z+cautTAvg@mail.gmail.com>
+ <CAHk-=wj3v41CWH+3ry3+vrkjAEcyGojtevpsZDbiXVvpv1nTkA@mail.gmail.com> <CAMuHMdU76V=p8GLqVdChx+Sa_aPZ9BMCnnzmzWonqEq4Xe+LEQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAJuCfpH2QPgB3D+qsbF7gzDhrD4Y6oo3Q-b8iwtUxZe-dDWR7Q@mail.gmail.com>
+In-Reply-To: <CAMuHMdU76V=p8GLqVdChx+Sa_aPZ9BMCnnzmzWonqEq4Xe+LEQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Suren Baghdasaryan <surenb@google.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, LKML <linux-kernel@vger.kernel.org>, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>
+To: Geert Uytterhoeven <geert@linux-m68k.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, =?UTF-8?B?TcOlbnMgUnVsbGfDpXJk?= <mans@mansr.com>, Matt Turner <mattst88@gmail.com>, Borislav Petkov <bp@alien8.de>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, kernel list <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Richard Weinberger <richard@nod.at>, Anton Ivanov <anton.ivanov@cambridgegreys.com>, linux-alpha <linux-alpha@vger.kernel.org>, linux-m68k <linux-m68k@lists.l>
 List-Id: linux-api@vger.kernel.org
 
-On 13-Mar 17:29, Suren Baghdasaryan wrote:
-> On Wed, Mar 13, 2019 at 9:16 AM Patrick Bellasi <patrick.bellasi@arm.com> wrote:
-> >
-> > On 13-Mar 15:12, Peter Zijlstra wrote:
-> > > On Fri, Feb 08, 2019 at 10:05:41AM +0000, Patrick Bellasi wrote:
-> > > > +static inline void uclamp_idle_reset(struct rq *rq, unsigned int clamp_id,
-> > > > +                                unsigned int clamp_value)
-> > > > +{
-> > > > +   /* Reset max-clamp retention only on idle exit */
-> > > > +   if (!(rq->uclamp_flags & UCLAMP_FLAG_IDLE))
-> > > > +           return;
-> > > > +
-> > > > +   WRITE_ONCE(rq->uclamp[clamp_id].value, clamp_value);
-> > > > +
-> > > > +   /*
-> > > > +    * This function is called for both UCLAMP_MIN (before) and UCLAMP_MAX
-> > > > +    * (after). The idle flag is reset only the second time, when we know
-> > > > +    * that UCLAMP_MIN has been already updated.
-> > >
-> > > Why do we care? That is, what is this comment trying to tell us.
-> >
-> > Right, the code is clear enough, I'll remove this comment.
-> 
-> It would be probably even clearer if rq->uclamp_flags &=
-> ~UCLAMP_FLAG_IDLE is done from inside uclamp_rq_inc after
-> uclamp_rq_inc_id for both clamps is called.
+On Tue, Mar 12, 2019 at 9:46 AM Geert Uytterhoeven <geert@linux-m68k.org> wrote:
+>
+> Yeah, the alphas on the server side, powering AltaVista, are also long
+> gone...
 
-Good point! I'll move it there to have something like:
+As usual with these things, people can still use older Linux releases
+for a very long time. If they really need it (e.g. commercially), they
+have the reference code and can bring it up to speed again relatively
+easily. It is not as if they have no way to submit it back again.
 
----8<---
-static inline void uclamp_rq_inc(struct rq *rq, struct task_struct *p)
-{
-	unsigned int clamp_id;
-
-	if (unlikely(!p->sched_class->uclamp_enabled))
-		return;
-
-	for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id)
-		uclamp_rq_inc_id(p, rq, clamp_id);
-
-	/* Reset clamp holding when we have at least one RUNNABLE task */
-	if (rq->uclamp_flags & UCLAMP_FLAG_IDLE)
-		rq->uclamp_flags &= ~UCLAMP_FLAG_IDLE;
-}
----8<---
-
--- 
-#include <best/regards.h>
-
-Patrick Bellasi
+Cheers,
+Miguel
