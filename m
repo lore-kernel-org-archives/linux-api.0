@@ -1,54 +1,24 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH v7 01/15] sched/core: uclamp: Add CPU's clamp buckets
- refcounting
-Date: Thu, 14 Mar 2019 20:18:49 +0100
-Message-ID: <20190314191849.GB6058@hirez.programming.kicks-ass.net>
-References: <20190208100554.32196-1-patrick.bellasi@arm.com>
- <20190208100554.32196-2-patrick.bellasi@arm.com>
- <20190313134022.GB5922@hirez.programming.kicks-ass.net>
- <20190313161229.pkib2tmjass5chtb@e110439-lin>
- <20190313194838.GS2482@worktop.programming.kicks-ass.net>
- <20190314121315.juqpsqu5cwouuqpp@e110439-lin>
- <20190314133211.GJ5996@hirez.programming.kicks-ass.net>
- <20190314150753.lzu6uftirxnhdv4y@e110439-lin>
+From: "Joel Fernandes (Google)" <joel@joelfernandes.org>
+Subject: [PATCH -manpage 0/2]
+Date: Thu, 14 Mar 2019 17:48:42 -0400
+Message-ID: <20190314214844.207430-1-joel@joelfernandes.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190314150753.lzu6uftirxnhdv4y@e110439-lin>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Patrick Bellasi <patrick.bellasi@arm.com>
-Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
+To: linux-kernel@vger.kernel.org, mtk.manpages@gmail.com
+Cc: "Joel Fernandes (Google)" <joel@joelfernandes.org>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, dancol@google.com, Jann Horn <jannh@google.com>, John Stultz <john.stultz@linaro.org>, kernel-team@android.com, linux-api@vger.kernel.org, linux-man@vger.kernel.org, linux-mm@kvack.org, Matthew Wilcox <willy@infradead.org>, Mike Kravetz <mike.kravetz@oracle.com>, Shuah Khan <shuah@kernel.org>, Stephen Rothwell <sfr@canb.auug.org.au>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 14, 2019 at 03:07:53PM +0000, Patrick Bellasi wrote:
-> On 14-Mar 14:32, Peter Zijlstra wrote:
-> > On Thu, Mar 14, 2019 at 12:13:15PM +0000, Patrick Bellasi wrote:
-> > > > I'd be most impressed if they pull this off. Check the generated code
-> > > > and see I suppose :-)
-> > > 
-> > > On x86 the code generated looks exactly the same:
-> > > 
-> > >    https://godbolt.org/z/PjmA7k
-> > 
-> > Argh, they do mult by inverse to avoid the division, and can do this
-> > because its a constant.
-> > 
-> > And then yes, your arm version looks worse.
-> 
-> your "arm version" is worst then x86, or "your version" is worse?
-> 
-> IOW, should I keep the code as the original? Do you prefer your
-> version? Or... we don't really care...
+This documentation is for F_SEAL_FUTURE_WRITE patches that are in linux-next.
 
-Yeah, keep the original, it didn't matter on x86 and arm regressed with
-my version.
+Joel Fernandes (Google) (2):
+fcntl.2: Update manpage with new memfd F_SEAL_FUTURE_WRITE seal
+memfd_create.2: Update manpage with new memfd F_SEAL_FUTURE_WRITE seal
 
-> > It does what I expected with -Os, but as Rutland said the other day,
-> > that stands for Optimize for Sadness.
-> 
-> Yes, I guess we cannot optimize for all flags... however, just let me
-> know what you prefer and I'll put that version in ;)
+man2/fcntl.2        | 15 +++++++++++++++
+man2/memfd_create.2 | 15 ++++++++++++++-
+2 files changed, 29 insertions(+), 1 deletion(-)
 
-Yeah, don't bother optimizing for -Os, it generally creates atrocious
-crap, hence Rutland calling it 'Optimize for Sadness'.
+--
+2.21.0.360.g471c308f928-goog
