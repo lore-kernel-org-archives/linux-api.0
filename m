@@ -1,90 +1,83 @@
 From: Patrick Bellasi <patrick.bellasi@arm.com>
 Subject: Re: [PATCH v7 01/15] sched/core: uclamp: Add CPU's clamp buckets
  refcounting
-Date: Thu, 14 Mar 2019 11:18:49 +0000
-Message-ID: <20190314111849.gx6bl6myfjtaan7r@e110439-lin>
+Date: Thu, 14 Mar 2019 11:45:51 +0000
+Message-ID: <20190314114551.6kfozh6rpw5mornb@e110439-lin>
 References: <20190208100554.32196-1-patrick.bellasi@arm.com>
  <20190208100554.32196-2-patrick.bellasi@arm.com>
- <20190313135238.GC5922@hirez.programming.kicks-ass.net>
- <20190313155954.jse2tyn5iqxm6wle@e110439-lin>
- <20190313193916.GQ2482@worktop.programming.kicks-ass.net>
+ <20190313140925.GE5922@hirez.programming.kicks-ass.net>
+ <20190313152359.lkyzel7fakjoi5hu@e110439-lin>
+ <20190313194619.GR2482@worktop.programming.kicks-ass.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190313193916.GQ2482@worktop.programming.kicks-ass.net>
+In-Reply-To: <20190313194619.GR2482@worktop.programming.kicks-ass.net>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Peter Zijlstra <peterz@infradead.org>
 Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On 13-Mar 20:39, Peter Zijlstra wrote:
-> On Wed, Mar 13, 2019 at 03:59:54PM +0000, Patrick Bellasi wrote:
-> > On 13-Mar 14:52, Peter Zijlstra wrote:
+On 13-Mar 20:46, Peter Zijlstra wrote:
+> On Wed, Mar 13, 2019 at 03:23:59PM +0000, Patrick Bellasi wrote:
+> > On 13-Mar 15:09, Peter Zijlstra wrote:
+> > > On Fri, Feb 08, 2019 at 10:05:40AM +0000, Patrick Bellasi wrote:
 > 
-> > Because of backetization, we potentially end up tracking tasks with
-> > different requested clamp values in the same bucket.
+> > > > +static inline void uclamp_rq_update(struct rq *rq, unsigned int clamp_id)
+> > > > +{
+> > > > +	struct uclamp_bucket *bucket = rq->uclamp[clamp_id].bucket;
+> > > > +	unsigned int max_value = uclamp_none(clamp_id);
+> > > 
+> > > That's 1024 for uclamp_max
+> > > 
+> > > > +	unsigned int bucket_id;
+> > > > +
+> > > > +	/*
+> > > > +	 * Both min and max clamps are MAX aggregated, thus the topmost
+> > > > +	 * bucket with some tasks defines the rq's clamp value.
+> > > > +	 */
+> > > > +	bucket_id = UCLAMP_BUCKETS;
+> > > > +	do {
+> > > > +		--bucket_id;
+> > > > +		if (!rq->uclamp[clamp_id].bucket[bucket_id].tasks)
+> > > > +			continue;
+> > > > +		max_value = bucket[bucket_id].value;
+> > > 
+> > > but this will then _lower_ it. That's not a MAX aggregate.
 > > 
-> > For example, with 20% bucket size, we can have:
-> >   Task1: util_min=25%
-> >   Task2: util_min=35%
-> > accounted in the same bucket.
+> > For uclamp_max we want max_value=1024 when there are no active tasks,
+> > which means: no max clamp enforced on CFS/RT "idle" cpus.
+> > 
+> > If instead there are active RT/CFS tasks then we want the clamp value
+> > of the max group, which means: MAX aggregate active clamps.
+> > 
+> > That's what the code above does and the comment says.
 > 
-> > > Given all that, what is to stop the bucket value to climbing to
-> > > uclamp_bucket_value(+1)-1 and staying there (provided there's someone
-> > > runnable)?
-> > 
-> > Nothing... but that's an expected consequence of bucketization.
+> That's (obviously) not how I read it.... maybe something like:
 > 
-> No, it is not.
+> static inline void uclamp_rq_update(struct rq *rq, unsigned int clamp_id)
+> {
+> 	struct uclamp_bucket *bucket = rq->uclamp[clamp_id].bucket;
+> 	int i;
 > 
-> > > Why are we doing this... ?
-> > 
-> > You can either decide to:
-> > 
-> >  a) always boost tasks to just the bucket nominal value
-> >     thus always penalizing both Task1 and Task2 of the example above
+> 	/*
+> 	 * Since both min and max clamps are max aggregated, find the
+> 	 * top most bucket with tasks in.
+> 	 */
+> 	for (i = UCLMAP_BUCKETS-1; i>=0; i--) {
+> 		if (!bucket[i].tasks)
+> 			continue;
+> 		return bucket[i].value;
+> 	}
 > 
-> This is the expected behaviour. When was the last time your histogram
-> did something like b?
-
-Right, I see what you mean... strictly speaking histograms always do a
-floor aggregation.
-
-> >  b) always boost tasks to the bucket "max" value
-> >     thus always overboosting both Task1 and Task2 of the example above
-> > 
-> > The solution above instead has a very good property: in systems
-> > where you have only few and well defined clamp values we always
-> > provide the exact boost.
-> > 
-> > For example, if your system requires only 23% and 47% boost values
-> > (totally random numbers), then you can always get the exact boost
-> > required using just 3 bucksts or ~33% size each.
-> > 
-> > In systems where you don't know which boost values you will have, you
-> > can still defined the maximum overboost granularity you accept for
-> > each task by just tuning the number of clamp groups. For example, with
-> > 20 groups you can have a 5% max overboost.
+> 	/* No tasks -- default clamp value */
+> 	return uclamp_none(clamp_id);
+> }
 > 
-> Maybe, but this is not a direct concequence of buckets, but an
-> additional heuristic that might work well in this case.
+> would make it clearer?
 
-Right... that's the point.
-
-We started with mapping to be able to track exact clamp values.
-Then we switched to linear mapping to remove the complexity of
-mapping, but we would like to still have the possibility to track
-exact numbers whenever possible.
-
-> Maybe split this out in a separate patch? So start with the trivial
-> bucket, and then do this change on top with the above few paragraphs as
-> changelog?
-
-That's doable, otherwise maybe we can just add the above paragraphs to
-the changelog of this patch. But give your comment above I assume you
-prefer to split it out... just let me know otherwise.
-
+Fine for me, I'll then change the name in something else since that's
+not more an "_update" by moving the WRITE_ONCE into the caller.
 
 -- 
 #include <best/regards.h>
