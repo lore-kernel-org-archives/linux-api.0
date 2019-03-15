@@ -1,152 +1,116 @@
-From: Alexey Gladkov <gladkov.alexey@gmail.com>
-Subject: [RESEND PATCH v1] moduleparam: Save information about built-in
- modules in separate file
-Date: Fri, 15 Mar 2019 11:10:13 +0100
-Message-ID: <20190315101013.GN8455@Legion-PC.fortress>
+From: Patrick Bellasi <patrick.bellasi@arm.com>
+Subject: Re: [PATCH v7 03/15] sched/core: uclamp: Add system default clamps
+Date: Fri, 15 Mar 2019 13:41:39 +0000
+Message-ID: <20190315134139.hrw22zaut3shfs4d@e110439-lin>
+References: <20190208100554.32196-1-patrick.bellasi@arm.com>
+ <20190208100554.32196-4-patrick.bellasi@arm.com>
+ <20190313143240.GH5922@hirez.programming.kicks-ass.net>
+ <20190313170940.ngiafkmiijryhl2k@e110439-lin>
+ <20190313201010.GU2482@worktop.programming.kicks-ass.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
+In-Reply-To: <20190313201010.GU2482@worktop.programming.kicks-ass.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Masahiro Yamada <yamada.masahiro@socionext.com>, Michal Marek <michal.lkml@markovi.net>
-Cc: linux-kernel@vger.kernel.org, linux-kbuild@vger.kernel.org, linux-api@vger.kernel.org, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>, "Dmitry V. Levin" <ldv@altlinux.org>
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Problem:
+On 13-Mar 21:10, Peter Zijlstra wrote:
+> On Wed, Mar 13, 2019 at 05:09:40PM +0000, Patrick Bellasi wrote:
+> 
+> > Yes, that should be possible... will look into splitting this out in
+> > v8 to have something like:
+> > 
+> > ---8<---
+> > struct uclamp_req {
+> > 	/* Clamp value "requested" by a scheduling entity */
+> > 	unsigned int value		: bits_per(SCHED_CAPACITY_SCALE);
+> > 	unsigned int bucket_id		: bits_per(UCLAMP_BUCKETS);
+> > 	unsigned int active		: 1;
+> > 	unsigned int user_defined	: 1;
+> > }
+> > 
+> > struct uclamp_eff {
+> > 	unsigned int value	        : bits_per(SCHED_CAPACITY_SCALE);
+> > 	unsigned int bucket_id	        : bits_per(UCLAMP_BUCKETS);
+> > }
+> 
+> No, have _1_ type. There is no point what so ever to splitting this.
+> 
+> Also, what's @user_defined about, I don't think I've seen that in the
+> parent patch.
 
-When a kernel module is compiled as a separate module, some important
-information about the kernel module is available via .modinfo section of
-the module.  In contrast, when the kernel module is compiled into the
-kernel, that information is not available.
+That's a flag added by one of the following patches, but with the
+change you are suggesting below...
 
-Information about built-in modules is necessary in the following cases:
+> > struct task_struct {
+> >         // ...
+> >         #ifdef CONFIG_UCLAMP_TASK
+> >                 struct uclamp_req uclamp_req[UCLAMP_CNT];
+> >                 struct uclamp_eff uclamp_eff[UCLAMP_CNT];
+> 
+> 		struct uclamp_se uclamp[UCLAMP_CNT];
+> 		struct uclamp_se uclamp_req[UCLAMP_CNT];
+> 
+> Where the first is the very same introduced in patch #1, and leaving it
+> in place avoids having to update the sites already using that (or start
+> #1 with the _eff name to avoid having to change things around?).
+> 
+> >         #endif
+> >         // ...
+> > }
+> > 
+> > static inline struct uclamp_eff
+> > uclamp_eff_get(struct task_struct *p, unsigned int clamp_id)
+> > {
+> >         struct uclamp_eff uc_eff = p->uclamp_eff[clamp_id];
+> 
+> just this ^, these lines seem like a superfluous duplication:
+> 
+> > 	uc_eff.bucket_id = p->uclamp_req[clamp_id].bucket_id;
+> > 	uc_eff.value = p->uclamp_req[clamp_id].value;
+> 
+> 
+> > 	if (unlikely(uc_eff.clamp_value > uclamp_default[clamp_id].value)) {
+> > 		uc_eff.clamp_value = uclamp_default[clamp_id].value;
+> > 		uc_eff.bucket_id = uclamp_default[clamp_id].bucket_id;
+> 
+> and:
+> 
+> 		uc = uclamp_default[clamp_id];
 
-1. When it is necessary to find out what additional parameters can be
-passed to the kernel at boot time.
+... with things like the above line it becomes quite tricky to exploit
+the uclamp_se bitfield to track additional flags.
 
-2. When you need to know which module names and their aliases are in
-the kernel. This is very useful for creating an initrd image.
+I'll try to remove the need for the "user_defined" flag, as long as we
+have only the "active" you we can still manage to keep it in uclamp_se.
 
-Proposal:
+If instead we really need more flags, we will likely have to move them
+into a separate bitfield. :/
 
-The proposed patch does not remove .modinfo section with module
-information from the vmlinux at the build time and saves it into a
-separate file after kernel linking. So, the kernel does not increase in
-size and no additional information remains in it. Information is stored
-in the same format as in the separate modules (null-terminated string
-array). Because the .modinfo section is already exported with a separate
-modules, we are not creating a new API.
+> 
+> > 	}
+> > 
+> >         return uc_eff;
+> > }
+> > 
+> > static inline void
+> > uclamp_eff_set(struct task_struct *p, unsigned int clamp_id)
+> > {
+> >         p->uclamp_eff[clamp_id] = uclamp_eff_get(p, clamp_id);
+> > }
+> > ---8<---
+> > 
+> > Is that what you mean ?
+> 
+> Getting there :-)
 
-It can be easily read in the userspace:
+Yeah... let see :)
 
-$ tr '\0' '\n' < kernel.builtin.modinfo
-ext4.softdep=pre: crc32c
-ext4.license=GPL
-ext4.description=Fourth Extended Filesystem
-ext4.author=Remy Card, Stephen Tweedie, Andrew Morton, Andreas Dilger, Theodore Ts'o and others
-ext4.alias=fs-ext4
-ext4.alias=ext3
-ext4.alias=fs-ext3
-ext4.alias=ext2
-ext4.alias=fs-ext2
-md_mod.alias=block-major-9-*
-md_mod.alias=md
-md_mod.description=MD RAID framework
-md_mod.license=GPL
-md_mod.parmtype=create_on_open:bool
-md_mod.parmtype=start_dirty_degraded:int
-...
 
-Co-Developed-by: Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>
-Signed-off-by: Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>
-Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
----
- Makefile                    |  1 +
- include/linux/moduleparam.h | 12 +++++-------
- scripts/link-vmlinux.sh     |  8 ++++++++
- 3 files changed, 14 insertions(+), 7 deletions(-)
-
-diff --git a/Makefile b/Makefile
-index d5713e7b1e50..971102194c92 100644
---- a/Makefile
-+++ b/Makefile
-@@ -1288,6 +1288,7 @@ _modinst_:
- 	fi
- 	@cp -f $(objtree)/modules.order $(MODLIB)/
- 	@cp -f $(objtree)/modules.builtin $(MODLIB)/
-+	@cp -f $(objtree)/kernel.builtin.modinfo $(MODLIB)/
- 	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.modinst
- 
- # This depmod is only for convenience to give the initial
-diff --git a/include/linux/moduleparam.h b/include/linux/moduleparam.h
-index ba36506db4fb..5ba250d9172a 100644
---- a/include/linux/moduleparam.h
-+++ b/include/linux/moduleparam.h
-@@ -10,23 +10,21 @@
-    module name. */
- #ifdef MODULE
- #define MODULE_PARAM_PREFIX /* empty */
-+#define __MODULE_INFO_PREFIX /* empty */
- #else
- #define MODULE_PARAM_PREFIX KBUILD_MODNAME "."
-+/* We cannot use MODULE_PARAM_PREFIX because some modules override it. */
-+#define __MODULE_INFO_PREFIX KBUILD_MODNAME "."
- #endif
- 
- /* Chosen so that structs with an unsigned long line up. */
- #define MAX_PARAM_PREFIX_LEN (64 - sizeof(unsigned long))
- 
--#ifdef MODULE
- #define __MODULE_INFO(tag, name, info)					  \
- static const char __UNIQUE_ID(name)[]					  \
-   __used __attribute__((section(".modinfo"), unused, aligned(1)))	  \
--  = __stringify(tag) "=" info
--#else  /* !MODULE */
--/* This struct is here for syntactic coherency, it is not used */
--#define __MODULE_INFO(tag, name, info)					  \
--  struct __UNIQUE_ID(name) {}
--#endif
-+  = __MODULE_INFO_PREFIX __stringify(tag) "=" info
-+
- #define __MODULE_PARM_TYPE(name, _type)					  \
-   __MODULE_INFO(parmtype, name##type, #name ":" _type)
- 
-diff --git a/scripts/link-vmlinux.sh b/scripts/link-vmlinux.sh
-index c8cf45362bd6..399d7e4d11ec 100755
---- a/scripts/link-vmlinux.sh
-+++ b/scripts/link-vmlinux.sh
-@@ -258,10 +258,12 @@ if [ -n "${CONFIG_KALLSYMS}" ]; then
- 
- 	# step 1
- 	vmlinux_link "" .tmp_vmlinux1
-+	"${OBJCOPY}" -R .modinfo .tmp_vmlinux1
- 	kallsyms .tmp_vmlinux1 .tmp_kallsyms1.o
- 
- 	# step 2
- 	vmlinux_link .tmp_kallsyms1.o .tmp_vmlinux2
-+	"${OBJCOPY}" -R .modinfo .tmp_vmlinux2
- 	kallsyms .tmp_vmlinux2 .tmp_kallsyms2.o
- 
- 	# step 3
-@@ -273,6 +275,7 @@ if [ -n "${CONFIG_KALLSYMS}" ]; then
- 		kallsyms_vmlinux=.tmp_vmlinux3
- 
- 		vmlinux_link .tmp_kallsyms2.o .tmp_vmlinux3
-+		"${OBJCOPY}" -R .modinfo .tmp_vmlinux3
- 
- 		kallsyms .tmp_vmlinux3 .tmp_kallsyms3.o
- 	fi
-@@ -281,6 +284,11 @@ fi
- info LD vmlinux
- vmlinux_link "${kallsymso}" vmlinux
- 
-+info MODINFO kernel.builtin.modinfo
-+"${OBJCOPY}" -j .modinfo -O binary vmlinux kernel.builtin.modinfo
-+chmod 444 kernel.builtin.modinfo
-+"${OBJCOPY}" -R .modinfo vmlinux
-+
- if [ -n "${CONFIG_BUILDTIME_EXTABLE_SORT}" ]; then
- 	info SORTEX vmlinux
- 	sortextable vmlinux
 -- 
-2.19.2
+#include <best/regards.h>
+
+Patrick Bellasi
