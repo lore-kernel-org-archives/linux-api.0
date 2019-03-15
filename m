@@ -1,71 +1,152 @@
-From: "Joel Fernandes (Google)" <joel@joelfernandes.org>
-Subject: [PATCH -manpage 2/2] memfd_create.2: Update manpage with new memfd F_SEAL_FUTURE_WRITE seal
-Date: Thu, 14 Mar 2019 17:48:44 -0400
-Message-ID: <20190314214844.207430-3-joel@joelfernandes.org>
-References: <20190314214844.207430-1-joel@joelfernandes.org>
+From: Alexey Gladkov <gladkov.alexey@gmail.com>
+Subject: [RESEND PATCH v1] moduleparam: Save information about built-in
+ modules in separate file
+Date: Fri, 15 Mar 2019 11:10:13 +0100
+Message-ID: <20190315101013.GN8455@Legion-PC.fortress>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190314214844.207430-1-joel@joelfernandes.org>
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, mtk.manpages@gmail.com
-Cc: "Joel Fernandes (Google)" <joel@joelfernandes.org>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, dancol@google.com, Jann Horn <jannh@google.com>, John Stultz <john.stultz@linaro.org>, kernel-team@android.com, linux-api@vger.kernel.org, linux-man@vger.kernel.org, linux-mm@kvack.org, Matthew Wilcox <willy@infradead.org>, Mike Kravetz <mike.kravetz@oracle.com>, Shuah Khan <shuah@kernel.org>, Stephen Rothwell <sfr@canb.auug.org.au>
+To: Masahiro Yamada <yamada.masahiro@socionext.com>, Michal Marek <michal.lkml@markovi.net>
+Cc: linux-kernel@vger.kernel.org, linux-kbuild@vger.kernel.org, linux-api@vger.kernel.org, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>, "Dmitry V. Levin" <ldv@altlinux.org>
 List-Id: linux-api@vger.kernel.org
 
-More details of the seal can be found in the LKML patch:
-https://lore.kernel.org/lkml/20181120052137.74317-1-joel@joelfernandes.org/T/#t
+Problem:
 
-Signed-off-by: Joel Fernandes (Google) <joel@joelfernandes.org>
+When a kernel module is compiled as a separate module, some important
+information about the kernel module is available via .modinfo section of
+the module.  In contrast, when the kernel module is compiled into the
+kernel, that information is not available.
+
+Information about built-in modules is necessary in the following cases:
+
+1. When it is necessary to find out what additional parameters can be
+passed to the kernel at boot time.
+
+2. When you need to know which module names and their aliases are in
+the kernel. This is very useful for creating an initrd image.
+
+Proposal:
+
+The proposed patch does not remove .modinfo section with module
+information from the vmlinux at the build time and saves it into a
+separate file after kernel linking. So, the kernel does not increase in
+size and no additional information remains in it. Information is stored
+in the same format as in the separate modules (null-terminated string
+array). Because the .modinfo section is already exported with a separate
+modules, we are not creating a new API.
+
+It can be easily read in the userspace:
+
+$ tr '\0' '\n' < kernel.builtin.modinfo
+ext4.softdep=pre: crc32c
+ext4.license=GPL
+ext4.description=Fourth Extended Filesystem
+ext4.author=Remy Card, Stephen Tweedie, Andrew Morton, Andreas Dilger, Theodore Ts'o and others
+ext4.alias=fs-ext4
+ext4.alias=ext3
+ext4.alias=fs-ext3
+ext4.alias=ext2
+ext4.alias=fs-ext2
+md_mod.alias=block-major-9-*
+md_mod.alias=md
+md_mod.description=MD RAID framework
+md_mod.license=GPL
+md_mod.parmtype=create_on_open:bool
+md_mod.parmtype=start_dirty_degraded:int
+...
+
+Co-Developed-by: Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>
+Signed-off-by: Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>
+Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
 ---
- man2/memfd_create.2 | 15 ++++++++++++++-
- 1 file changed, 14 insertions(+), 1 deletion(-)
+ Makefile                    |  1 +
+ include/linux/moduleparam.h | 12 +++++-------
+ scripts/link-vmlinux.sh     |  8 ++++++++
+ 3 files changed, 14 insertions(+), 7 deletions(-)
 
-diff --git a/man2/memfd_create.2 b/man2/memfd_create.2
-index 15b1362f5525..3b7f032407ed 100644
---- a/man2/memfd_create.2
-+++ b/man2/memfd_create.2
-@@ -280,7 +280,15 @@ in order to restrict further modifications on the file.
- (If placing the seal
- .BR F_SEAL_WRITE ,
- then it will be necessary to first unmap the shared writable mapping
--created in the previous step.)
-+created in the previous step. Otherwise, behavior similar to
-+.BR F_SEAL_WRITE
-+can be achieved, by using
-+.BR F_SEAL_FUTURE_WRITE
-+which will prevent future writes via
-+.BR mmap (2)
-+and
-+.BR write (2)
-+from succeeding, while keeping existing shared writable mappings).
- .IP 4.
- A second process obtains a file descriptor for the
- .BR tmpfs (5)
-@@ -425,6 +433,7 @@ main(int argc, char *argv[])
-         fprintf(stderr, "\et\etg \- F_SEAL_GROW\en");
-         fprintf(stderr, "\et\ets \- F_SEAL_SHRINK\en");
-         fprintf(stderr, "\et\etw \- F_SEAL_WRITE\en");
-+        fprintf(stderr, "\et\etW \- F_SEAL_FUTURE_WRITE\en");
-         fprintf(stderr, "\et\etS \- F_SEAL_SEAL\en");
-         exit(EXIT_FAILURE);
-     }
-@@ -463,6 +472,8 @@ main(int argc, char *argv[])
-             seals |= F_SEAL_SHRINK;
-         if (strchr(seals_arg, \(aqw\(aq) != NULL)
-             seals |= F_SEAL_WRITE;
-+        if (strchr(seals_arg, \(aqW\(aq) != NULL)
-+            seals |= F_SEAL_FUTURE_WRITE;
-         if (strchr(seals_arg, \(aqS\(aq) != NULL)
-             seals |= F_SEAL_SEAL;
+diff --git a/Makefile b/Makefile
+index d5713e7b1e50..971102194c92 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1288,6 +1288,7 @@ _modinst_:
+ 	fi
+ 	@cp -f $(objtree)/modules.order $(MODLIB)/
+ 	@cp -f $(objtree)/modules.builtin $(MODLIB)/
++	@cp -f $(objtree)/kernel.builtin.modinfo $(MODLIB)/
+ 	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.modinst
  
-@@ -518,6 +529,8 @@ main(int argc, char *argv[])
-         printf(" GROW");
-     if (seals & F_SEAL_WRITE)
-         printf(" WRITE");
-+    if (seals & F_SEAL_FUTURE_WRITE)
-+        printf(" FUTURE_WRITE");
-     if (seals & F_SEAL_SHRINK)
-         printf(" SHRINK");
-     printf("\en");
+ # This depmod is only for convenience to give the initial
+diff --git a/include/linux/moduleparam.h b/include/linux/moduleparam.h
+index ba36506db4fb..5ba250d9172a 100644
+--- a/include/linux/moduleparam.h
++++ b/include/linux/moduleparam.h
+@@ -10,23 +10,21 @@
+    module name. */
+ #ifdef MODULE
+ #define MODULE_PARAM_PREFIX /* empty */
++#define __MODULE_INFO_PREFIX /* empty */
+ #else
+ #define MODULE_PARAM_PREFIX KBUILD_MODNAME "."
++/* We cannot use MODULE_PARAM_PREFIX because some modules override it. */
++#define __MODULE_INFO_PREFIX KBUILD_MODNAME "."
+ #endif
+ 
+ /* Chosen so that structs with an unsigned long line up. */
+ #define MAX_PARAM_PREFIX_LEN (64 - sizeof(unsigned long))
+ 
+-#ifdef MODULE
+ #define __MODULE_INFO(tag, name, info)					  \
+ static const char __UNIQUE_ID(name)[]					  \
+   __used __attribute__((section(".modinfo"), unused, aligned(1)))	  \
+-  = __stringify(tag) "=" info
+-#else  /* !MODULE */
+-/* This struct is here for syntactic coherency, it is not used */
+-#define __MODULE_INFO(tag, name, info)					  \
+-  struct __UNIQUE_ID(name) {}
+-#endif
++  = __MODULE_INFO_PREFIX __stringify(tag) "=" info
++
+ #define __MODULE_PARM_TYPE(name, _type)					  \
+   __MODULE_INFO(parmtype, name##type, #name ":" _type)
+ 
+diff --git a/scripts/link-vmlinux.sh b/scripts/link-vmlinux.sh
+index c8cf45362bd6..399d7e4d11ec 100755
+--- a/scripts/link-vmlinux.sh
++++ b/scripts/link-vmlinux.sh
+@@ -258,10 +258,12 @@ if [ -n "${CONFIG_KALLSYMS}" ]; then
+ 
+ 	# step 1
+ 	vmlinux_link "" .tmp_vmlinux1
++	"${OBJCOPY}" -R .modinfo .tmp_vmlinux1
+ 	kallsyms .tmp_vmlinux1 .tmp_kallsyms1.o
+ 
+ 	# step 2
+ 	vmlinux_link .tmp_kallsyms1.o .tmp_vmlinux2
++	"${OBJCOPY}" -R .modinfo .tmp_vmlinux2
+ 	kallsyms .tmp_vmlinux2 .tmp_kallsyms2.o
+ 
+ 	# step 3
+@@ -273,6 +275,7 @@ if [ -n "${CONFIG_KALLSYMS}" ]; then
+ 		kallsyms_vmlinux=.tmp_vmlinux3
+ 
+ 		vmlinux_link .tmp_kallsyms2.o .tmp_vmlinux3
++		"${OBJCOPY}" -R .modinfo .tmp_vmlinux3
+ 
+ 		kallsyms .tmp_vmlinux3 .tmp_kallsyms3.o
+ 	fi
+@@ -281,6 +284,11 @@ fi
+ info LD vmlinux
+ vmlinux_link "${kallsymso}" vmlinux
+ 
++info MODINFO kernel.builtin.modinfo
++"${OBJCOPY}" -j .modinfo -O binary vmlinux kernel.builtin.modinfo
++chmod 444 kernel.builtin.modinfo
++"${OBJCOPY}" -R .modinfo vmlinux
++
+ if [ -n "${CONFIG_BUILDTIME_EXTABLE_SORT}" ]; then
+ 	info SORTEX vmlinux
+ 	sortextable vmlinux
 -- 
-2.21.0.360.g471c308f928-goog
+2.19.2
