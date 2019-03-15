@@ -1,181 +1,60 @@
-From: Richard Guy Briggs <rgb@redhat.com>
-Subject: [PATCH ghak90 V5 10/10] audit: NETFILTER_PKT: record each container
-	ID associated with a netNS
-Date: Fri, 15 Mar 2019 14:29:58 -0400
-Message-ID: <56127b2a5b82f15cb0d0f040502c2e3bb6945f30.1552665316.git.rgb@redhat.com>
-References: <cover.1552665316.git.rgb@redhat.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH] y2038: fix socket.h header inclusion
+Date: Fri, 15 Mar 2019 21:30:25 +0100
+Message-ID: <CAK8P3a1r8GRC7GTHHqWY-PUn=9rWB-7+Qo=7txanbEjGZ-wppw@mail.gmail.com>
+References: <20190311153857.563743-1-arnd@arndb.de> <87k1h1fgkk.fsf@mid.deneb.enyo.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-audit-bounces@redhat.com>
-In-Reply-To: <cover.1552665316.git.rgb@redhat.com>
-In-Reply-To: <cover.1552665316.git.rgb@redhat.com>
-References: <cover.1552665316.git.rgb@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/linux-audit>,
-	<mailto:linux-audit-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/linux-audit>
-List-Post: <mailto:linux-audit@redhat.com>
-List-Help: <mailto:linux-audit-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/linux-audit>,
-	<mailto:linux-audit-request@redhat.com?subject=subscribe>
-Sender: linux-audit-bounces@redhat.com
-Errors-To: linux-audit-bounces@redhat.com
-To: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org
-Cc: nhorman@tuxdriver.com, Richard Guy Briggs <rgb@redhat.com>, dhowells@redhat.com, ebiederm@xmission.com, simo@redhat.com, eparis@parisplace.org, serge@hallyn.com
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <87k1h1fgkk.fsf@mid.deneb.enyo.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Florian Weimer <fw@deneb.enyo.de>
+Cc: "David S . Miller" <davem@davemloft.net>, Deepa Dinamani <deepa.kernel@gmail.com>, Willem de Bruijn <willemb@google.com>, alpha <linux-alpha@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, linux-mips@vger.kernel.org, Parisc List <linux-parisc@vger.kernel.org>, sparclinux <sparclinux@vger.kernel.org>, Laura Abbott <labbott@redhat.com>, Networking <netdev@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Add audit container identifier auxiliary record(s) to NETFILTER_PKT
-event standalone records.  Iterate through all potential audit container
-identifiers associated with a network namespace.
+On Thu, Mar 14, 2019 at 7:41 PM Florian Weimer <fw@deneb.enyo.de> wrote:
+>
+> * Arnd Bergmann:
+>
+> > diff --git a/arch/alpha/include/uapi/asm/socket.h b/arch/alpha/include/uapi/asm/socket.h
+> > index 0d0fddb7e738..976e89b116e5 100644
+> > --- a/arch/alpha/include/uapi/asm/socket.h
+> > +++ b/arch/alpha/include/uapi/asm/socket.h
+> > @@ -2,8 +2,8 @@
+> >  #ifndef _UAPI_ASM_SOCKET_H
+> >  #define _UAPI_ASM_SOCKET_H
+> >
+> > +#include <linux/posix_types.h>
+> >  #include <asm/sockios.h>
+> > -#include <asm/bitsperlong.h>
+>
+> This breaks POSIX conformance in glibc because the
+> <linux/posix_types.h> header is not namespace clean.  It contains the
+> identifiers fds_bits and val:
+>
+>         unsigned long fds_bits[__FD_SETSIZE / (8 * sizeof(long))];
+>
+>         int     val[2];
 
-Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
----
- include/linux/audit.h    |  5 +++++
- kernel/audit.c           | 41 +++++++++++++++++++++++++++++++++++++++++
- net/netfilter/nft_log.c  | 11 +++++++++--
- net/netfilter/xt_AUDIT.c | 11 +++++++++--
- 4 files changed, 64 insertions(+), 4 deletions(-)
+What is problematic about the struct members here? I had thought that
+only the struct names have to be in a namespace to be usable here,
+but not the members.
 
-diff --git a/include/linux/audit.h b/include/linux/audit.h
-index 70255c2dfb9f..723e2d020228 100644
---- a/include/linux/audit.h
-+++ b/include/linux/audit.h
-@@ -214,6 +214,8 @@ static inline u64 audit_get_contid(struct task_struct *tsk)
- extern void audit_netns_contid_del(struct net *net, u64 contid);
- extern void audit_switch_task_namespaces(struct nsproxy *ns,
- 					 struct task_struct *p);
-+extern void audit_log_netns_contid_list(struct net *net,
-+					struct audit_context *context);
- 
- extern u32 audit_enabled;
- #else /* CONFIG_AUDIT */
-@@ -290,6 +292,9 @@ static inline void audit_netns_contid_del(struct net *net, u64 contid)
- static inline void audit_switch_task_namespaces(struct nsproxy *ns,
- 						struct task_struct *p)
- { }
-+static inline void audit_log_netns_contid_list(struct net *net,
-+					       struct audit_context *context)
-+{ }
- 
- #define audit_enabled AUDIT_OFF
- #endif /* CONFIG_AUDIT */
-diff --git a/kernel/audit.c b/kernel/audit.c
-index 7fa3194f5342..80ed323feeb5 100644
---- a/kernel/audit.c
-+++ b/kernel/audit.c
-@@ -451,6 +451,47 @@ void audit_switch_task_namespaces(struct nsproxy *ns, struct task_struct *p)
- 		audit_netns_contid_add(new->net_ns, contid);
- }
- 
-+/**
-+ * audit_log_netns_contid_list - List contids for the given network namespace
-+ * @net: the network namespace of interest
-+ * @context: the audit context to use
-+ *
-+ * Description:
-+ * Issues a CONTAINER_ID record with a CSV list of contids associated
-+ * with a network namespace to accompany a NETFILTER_PKT record.
-+ */
-+void audit_log_netns_contid_list(struct net *net, struct audit_context *context)
-+{
-+	struct audit_buffer *ab = NULL;
-+	struct audit_contid *cont;
-+	bool first = true;
-+	struct audit_net *aunet;
-+
-+	/* Generate AUDIT_CONTAINER_ID record with container ID CSV list */
-+	rcu_read_lock();
-+	aunet = net_generic(net, audit_net_id);
-+	if (!aunet)
-+		goto out;
-+	list_for_each_entry_rcu(cont, &aunet->contid_list, list) {
-+		if (first) {
-+			ab = audit_log_start(context, GFP_ATOMIC,
-+					     AUDIT_CONTAINER_ID);
-+			if (!ab) {
-+				audit_log_lost("out of memory in audit_log_netns_contid_list");
-+				goto out;
-+			}
-+			audit_log_format(ab, "contid=");
-+		} else 
-+			audit_log_format(ab, ",");
-+		audit_log_format(ab, "%llu", cont->id);
-+		first = false;
-+	}
-+	audit_log_end(ab);
-+out:
-+	rcu_read_unlock();
-+}
-+EXPORT_SYMBOL(audit_log_netns_contid_list);
-+
- void audit_panic(const char *message)
- {
- 	switch (audit_failure) {
-diff --git a/net/netfilter/nft_log.c b/net/netfilter/nft_log.c
-index 655187bed5d8..bdb1ec2368a7 100644
---- a/net/netfilter/nft_log.c
-+++ b/net/netfilter/nft_log.c
-@@ -69,13 +69,16 @@ static void nft_log_eval_audit(const struct nft_pktinfo *pkt)
- 	struct sk_buff *skb = pkt->skb;
- 	struct audit_buffer *ab;
- 	int fam = -1;
-+	struct audit_context *context;
-+	struct net *net;
- 
- 	if (!audit_enabled)
- 		return;
- 
--	ab = audit_log_start(NULL, GFP_ATOMIC, AUDIT_NETFILTER_PKT);
-+	context = audit_alloc_local(GFP_ATOMIC);
-+	ab = audit_log_start(context, GFP_ATOMIC, AUDIT_NETFILTER_PKT);
- 	if (!ab)
--		return;
-+		goto errout;
- 
- 	audit_log_format(ab, "mark=%#x", skb->mark);
- 
-@@ -102,6 +105,10 @@ static void nft_log_eval_audit(const struct nft_pktinfo *pkt)
- 		audit_log_format(ab, " saddr=? daddr=? proto=-1");
- 
- 	audit_log_end(ab);
-+	net = xt_net(&pkt->xt);
-+	audit_log_netns_contid_list(net, context);
-+errout:
-+	audit_free_context(context);
- }
- 
- static void nft_log_eval(const struct nft_expr *expr,
-diff --git a/net/netfilter/xt_AUDIT.c b/net/netfilter/xt_AUDIT.c
-index af883f1b64f9..a3e547435f13 100644
---- a/net/netfilter/xt_AUDIT.c
-+++ b/net/netfilter/xt_AUDIT.c
-@@ -71,10 +71,13 @@ static bool audit_ip6(struct audit_buffer *ab, struct sk_buff *skb)
- {
- 	struct audit_buffer *ab;
- 	int fam = -1;
-+	struct audit_context *context;
-+	struct net *net;
- 
- 	if (audit_enabled == AUDIT_OFF)
--		goto errout;
--	ab = audit_log_start(NULL, GFP_ATOMIC, AUDIT_NETFILTER_PKT);
-+		goto out;
-+	context = audit_alloc_local(GFP_ATOMIC);
-+	ab = audit_log_start(context, GFP_ATOMIC, AUDIT_NETFILTER_PKT);
- 	if (ab == NULL)
- 		goto errout;
- 
-@@ -104,7 +107,11 @@ static bool audit_ip6(struct audit_buffer *ab, struct sk_buff *skb)
- 
- 	audit_log_end(ab);
- 
-+	net = xt_net(par);
-+	audit_log_netns_contid_list(net, context);
- errout:
-+	audit_free_context(context);
-+out:
- 	return XT_CONTINUE;
- }
- 
--- 
-1.8.3.1
+The only part that might be problematic is
+
+#undef __FD_SETSIZE
+#define __FD_SETSIZE    1024
+
+but we already get that from a number of other inclusions of
+linux/posix_types.h. Is this what you mean?
+
+> We could duplicate some of the SO_* constants for POSIX mode in glibc,
+> but it would be nice to avoid that.
+>
+> Is there a different way of fixing this on the kernel side that avoids
+> including <linux/posix_types.h>?
+
+We could use asm/posix_types.h instead of linux/posix_types.h,
+would that address your concern?
+
+       Arnd
