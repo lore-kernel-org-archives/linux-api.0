@@ -1,130 +1,72 @@
-From: Neil Horman <nhorman@tuxdriver.com>
-Subject: Re: [PATCH ghak90 V5 04/10] audit: log container info of syscalls
-Date: Sat, 16 Mar 2019 18:44:37 -0400
-Message-ID: <20190316224437.GA4119@hmswarspite.think-freely.org>
-References: <cover.1552665316.git.rgb@redhat.com>
- <85fcd0a81adef25cb60b2e479bbb380e76dbf999.1552665316.git.rgb@redhat.com>
+From: Deepa Dinamani <deepa.kernel@gmail.com>
+Subject: Re: [PATCH] y2038: fix socket.h header inclusion
+Date: Sun, 17 Mar 2019 11:20:06 -0700
+Message-ID: <CABeXuvrEecSAkBuN-SmAbGwhLWNCC+bA1=X78fm8xMyw8=hm6Q@mail.gmail.com>
+References: <20190311153857.563743-1-arnd@arndb.de> <87k1h1fgkk.fsf@mid.deneb.enyo.de>
+ <CAK8P3a1r8GRC7GTHHqWY-PUn=9rWB-7+Qo=7txanbEjGZ-wppw@mail.gmail.com> <87a7hvded7.fsf@mid.deneb.enyo.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <netdev-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <85fcd0a81adef25cb60b2e479bbb380e76dbf999.1552665316.git.rgb@redhat.com>
-Sender: netdev-owner@vger.kernel.org
-To: Richard Guy Briggs <rgb@redhat.com>
-Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, Paul Moore <paul@paul-moore.com>, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, eparis@parisplace.org, serge@hallyn.com, ebiederm@xmission.com
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <87a7hvded7.fsf@mid.deneb.enyo.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Florian Weimer <fw@deneb.enyo.de>
+Cc: Arnd Bergmann <arnd@arndb.de>, "David S . Miller" <davem@davemloft.net>, Willem de Bruijn <willemb@google.com>, alpha <linux-alpha@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, linux-mips@vger.kernel.org, Parisc List <linux-parisc@vger.kernel.org>, sparclinux <sparclinux@vger.kernel.org>, Laura Abbott <labbott@redhat.com>, Networking <netdev@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 15, 2019 at 02:29:52PM -0400, Richard Guy Briggs wrote:
-> Create a new audit record AUDIT_CONTAINER_ID to document the audit
-> container identifier of a process if it is present.
-> 
-> Called from audit_log_exit(), syscalls are covered.
-> 
-> A sample raw event:
-> type=SYSCALL msg=audit(1519924845.499:257): arch=c000003e syscall=257 success=yes exit=3 a0=ffffff9c a1=56374e1cef30 a2=241 a3=1b6 items=2 ppid=606 pid=635 auid=0 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=pts0 ses=3 comm="bash" exe="/usr/bin/bash" subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 key="tmpcontainerid"
-> type=CWD msg=audit(1519924845.499:257): cwd="/root"
-> type=PATH msg=audit(1519924845.499:257): item=0 name="/tmp/" inode=13863 dev=00:27 mode=041777 ouid=0 ogid=0 rdev=00:00 obj=system_u:object_r:tmp_t:s0 nametype= PARENT cap_fp=0 cap_fi=0 cap_fe=0 cap_fver=0
-> type=PATH msg=audit(1519924845.499:257): item=1 name="/tmp/tmpcontainerid" inode=17729 dev=00:27 mode=0100644 ouid=0 ogid=0 rdev=00:00 obj=unconfined_u:object_r:user_tmp_t:s0 nametype=CREATE cap_fp=0 cap_fi=0 cap_fe=0 cap_fver=0
-> type=PROCTITLE msg=audit(1519924845.499:257): proctitle=62617368002D6300736C65657020313B206563686F2074657374203E202F746D702F746D70636F6E7461696E65726964
-> type=CONTAINER_ID msg=audit(1519924845.499:257): contid=123458
-> 
-> See: https://github.com/linux-audit/audit-kernel/issues/90
-> See: https://github.com/linux-audit/audit-userspace/issues/51
-> See: https://github.com/linux-audit/audit-testsuite/issues/64
-> See: https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container-ID
-> Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> Acked-by: Serge Hallyn <serge@hallyn.com>
-> Acked-by: Steve Grubb <sgrubb@redhat.com>
-> Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> ---
->  include/linux/audit.h      |  5 +++++
->  include/uapi/linux/audit.h |  1 +
->  kernel/audit.c             | 21 +++++++++++++++++++++
->  kernel/auditsc.c           |  2 ++
->  4 files changed, 29 insertions(+)
-> 
-> diff --git a/include/linux/audit.h b/include/linux/audit.h
-> index 301337776193..43438192ca2a 100644
-> --- a/include/linux/audit.h
-> +++ b/include/linux/audit.h
-> @@ -199,6 +199,8 @@ static inline u64 audit_get_contid(struct task_struct *tsk)
->  	return tsk->audit->contid;
->  }
->  
-> +extern void audit_log_contid(struct audit_context *context, u64 contid);
-> +
->  extern u32 audit_enabled;
->  #else /* CONFIG_AUDIT */
->  static inline int audit_alloc(struct task_struct *task)
-> @@ -265,6 +267,9 @@ static inline u64 audit_get_contid(struct task_struct *tsk)
->  	return AUDIT_CID_UNSET;
->  }
->  
-> +static inline void audit_log_contid(struct audit_context *context, u64 contid)
-> +{ }
-> +
->  #define audit_enabled AUDIT_OFF
->  #endif /* CONFIG_AUDIT */
->  
-> diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
-> index d475cf3b4d7f..a6383e28b2c8 100644
-> --- a/include/uapi/linux/audit.h
-> +++ b/include/uapi/linux/audit.h
-> @@ -115,6 +115,7 @@
->  #define AUDIT_REPLACE		1329	/* Replace auditd if this packet unanswerd */
->  #define AUDIT_KERN_MODULE	1330	/* Kernel Module events */
->  #define AUDIT_FANOTIFY		1331	/* Fanotify access decision */
-> +#define AUDIT_CONTAINER_ID	1332	/* Container ID */
->  
->  #define AUDIT_AVC		1400	/* SE Linux avc denial or grant */
->  #define AUDIT_SELINUX_ERR	1401	/* Internal SE Linux Errors */
-> diff --git a/kernel/audit.c b/kernel/audit.c
-> index b5c702abeb42..8cc0e88d7f2a 100644
-> --- a/kernel/audit.c
-> +++ b/kernel/audit.c
-> @@ -2127,6 +2127,27 @@ void audit_log_session_info(struct audit_buffer *ab)
->  	audit_log_format(ab, "auid=%u ses=%u", auid, sessionid);
->  }
->  
-> +/*
-> + * audit_log_contid - report container info
-> + * @context: task or local context for record
-> + * @contid: container ID to report
-> + */
-> +void audit_log_contid(struct audit_context *context, u64 contid)
-> +{
-> +	struct audit_buffer *ab;
-> +
-> +	if (!audit_contid_valid(contid))
-> +		return;
-> +	/* Generate AUDIT_CONTAINER_ID record with container ID */
-> +	ab = audit_log_start(context, GFP_KERNEL, AUDIT_CONTAINER_ID);
-> +	if (!ab)
-> +		return;
-> +	audit_log_format(ab, "contid=%llu", contid);
-> +	audit_log_end(ab);
-> +	return;
-> +}
-> +EXPORT_SYMBOL(audit_log_contid);
-> +
->  void audit_log_key(struct audit_buffer *ab, char *key)
->  {
->  	audit_log_format(ab, " key=");
-> diff --git a/kernel/auditsc.c b/kernel/auditsc.c
-> index 8090eff7868d..a8c8b44b954d 100644
-> --- a/kernel/auditsc.c
-> +++ b/kernel/auditsc.c
-> @@ -1548,6 +1548,8 @@ static void audit_log_exit(void)
->  
->  	audit_log_proctitle();
->  
-> +	audit_log_contid(context, audit_get_contid(current));
-> +
->  	/* Send end of event record to help user space know we are finished */
->  	ab = audit_log_start(context, GFP_KERNEL, AUDIT_EOE);
->  	if (ab)
-> -- 
-> 1.8.3.1
-> 
-> 
-Acked-by: Neil Horman <nhorman@tuxdriver.com>
+On Fri, Mar 15, 2019 at 2:20 PM Florian Weimer <fw@deneb.enyo.de> wrote:
+>
+> * Arnd Bergmann:
+>
+> > On Thu, Mar 14, 2019 at 7:41 PM Florian Weimer <fw@deneb.enyo.de> wrote:
+> >>
+> >> * Arnd Bergmann:
+> >>
+> >> > diff --git a/arch/alpha/include/uapi/asm/socket.h
+> >> > b/arch/alpha/include/uapi/asm/socket.h
+> >> > index 0d0fddb7e738..976e89b116e5 100644
+> >> > --- a/arch/alpha/include/uapi/asm/socket.h
+> >> > +++ b/arch/alpha/include/uapi/asm/socket.h
+> >> > @@ -2,8 +2,8 @@
+> >> >  #ifndef _UAPI_ASM_SOCKET_H
+> >> >  #define _UAPI_ASM_SOCKET_H
+> >> >
+> >> > +#include <linux/posix_types.h>
+> >> >  #include <asm/sockios.h>
+> >> > -#include <asm/bitsperlong.h>
+> >>
+> >> This breaks POSIX conformance in glibc because the
+> >> <linux/posix_types.h> header is not namespace clean.  It contains the
+> >> identifiers fds_bits and val:
+> >>
+> >>         unsigned long fds_bits[__FD_SETSIZE / (8 * sizeof(long))];
+> >>
+> >>         int     val[2];
+> >
+> > What is problematic about the struct members here? I had thought that
+> > only the struct names have to be in a namespace to be usable here,
+> > but not the members.
+>
+> According POSIX, a user can do this:
+>
+> #define fds_bits 1024
+>
+> before including the <sys/socket.h> header file.  Similarly for val.
+>
+> Since glibc pulls in <asm/socket.h> indirectly, the result is a parse
+> error, even though the programmer did nothing wrong (fds_bits is not
+> an identifier used by POSIX, nor is it in the implementation
+> namespace, ans <sys/socket.h> is a POSIX header).
+>
+> > We could use asm/posix_types.h instead of linux/posix_types.h,
+> > would that address your concern?
+>
+> It should fix the fds_bits case, I think.  But
+> <asm-generic/posix_types.h> still uses val, so that part of the issue
+> remains.
+
+Would moving kernel namespace types(__kernel prefix) to a different
+header file(kernel_types.h?) and then including this from
+linux/posix_types.h.
+And, for socket.h just including kernel_types.h make sense?
+
+-Deepa
