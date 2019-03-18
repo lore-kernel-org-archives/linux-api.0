@@ -1,33 +1,105 @@
-From: Florian Weimer <fw@deneb.enyo.de>
-Subject: Re: [PATCH] y2038: fix socket.h header inclusion
-Date: Mon, 18 Mar 2019 10:21:28 +0100
-Message-ID: <87o968y1uv.fsf@mid.deneb.enyo.de>
-References: <20190311153857.563743-1-arnd@arndb.de>
-        <87k1h1fgkk.fsf@mid.deneb.enyo.de>
-        <CAK8P3a1r8GRC7GTHHqWY-PUn=9rWB-7+Qo=7txanbEjGZ-wppw@mail.gmail.com>
-        <87a7hvded7.fsf@mid.deneb.enyo.de>
-        <CABeXuvrEecSAkBuN-SmAbGwhLWNCC+bA1=X78fm8xMyw8=hm6Q@mail.gmail.com>
-        <CAK8P3a22n5L45Gknqd=2zinVGqRovkk0OABmGLJbGcmg8xXd+A@mail.gmail.com>
+From: Neil Horman <nhorman@tuxdriver.com>
+Subject: Re: [PATCH ghak90 V5 03/10] audit: read container ID of a process
+Date: Mon, 18 Mar 2019 07:10:03 -0400
+Message-ID: <20190318111003.GA7364@hmswarspite.think-freely.org>
+References: <cover.1552665316.git.rgb@redhat.com>
+ <25543e3db4d8f3853119f92c09a60664555249a2.1552665316.git.rgb@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <CAK8P3a22n5L45Gknqd=2zinVGqRovkk0OABmGLJbGcmg8xXd+A@mail.gmail.com>
-        (Arnd Bergmann's message of "Mon, 18 Mar 2019 09:27:46 +0100")
-Sender: netdev-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Deepa Dinamani <deepa.kernel@gmail.com>, "David S . Miller" <davem@davemloft.net>, Willem de Bruijn <willemb@google.com>, alpha <linux-alpha@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, linux-mips@vger.kernel.org, Parisc List <linux-parisc@vger.kernel.org>, sparclinux <sparclinux@vger.kernel.org>, Laura Abbott <labbott@redhat.com>, Networking <netdev@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Josh Boyer <jwboyer@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Jeff Law <law@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <25543e3db4d8f3853119f92c09a60664555249a2.1552665316.git.rgb@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Richard Guy Briggs <rgb@redhat.com>
+Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, Paul Moore <paul@paul-moore.com>, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, eparis@parisplace.org, serge@hallyn.com, ebiederm@xmission.com
 List-Id: linux-api@vger.kernel.org
 
-* Arnd Bergmann:
+On Fri, Mar 15, 2019 at 02:29:51PM -0400, Richard Guy Briggs wrote:
+> Add support for reading the audit container identifier from the proc
+> filesystem.
+> 
+> This is a read from the proc entry of the form
+> /proc/PID/audit_containerid where PID is the process ID of the task
+> whose audit container identifier is sought.
+> 
+> The read expects up to a u64 value (unset: 18446744073709551615).
+> 
+> This read requires CAP_AUDIT_CONTROL.
+> 
+> Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> Acked-by: Serge Hallyn <serge@hallyn.com>
+> ---
+>  fs/proc/base.c | 23 +++++++++++++++++++++--
+>  1 file changed, 21 insertions(+), 2 deletions(-)
+> 
+> diff --git a/fs/proc/base.c b/fs/proc/base.c
+> index 2505c46c8701..0b833cbdf5b6 100644
+> --- a/fs/proc/base.c
+> +++ b/fs/proc/base.c
+> @@ -1295,6 +1295,24 @@ static ssize_t proc_sessionid_read(struct file * file, char __user * buf,
+>  	.llseek		= generic_file_llseek,
+>  };
+>  
+> +static ssize_t proc_contid_read(struct file *file, char __user *buf,
+> +				  size_t count, loff_t *ppos)
+> +{
+> +	struct inode *inode = file_inode(file);
+> +	struct task_struct *task = get_proc_task(inode);
+> +	ssize_t length;
+> +	char tmpbuf[TMPBUFLEN*2];
+> +
+Sorry, didn't notice this previously, but..
+Why *2 here?  Its not wrong per-se, but would it be better to just change
+TMPBUFLEN to be 22 bytes unilaterally?  Its only ever used on stack calls that
+arent that deep, and then you won't have to think about adjusting this call site
+if you ever change the value of TMPBUFLEN in the future.
 
-> Should we just remove __kernel_fd_set from the exported headers and
-> define the internal fd_set directly in include/linux/types.h? (Adding the
-> folks from the old thread to Cc).
+I'm fine with doing this in another patch later, but it seems like a worthwhile
+cleanup
 
-The type is used in the sanitizers, but incorrectly.  They assume that
-FD_SETSIZE is always 1024.  (The existence of __kernel_fd_set is
-itself somewhat questionable because it leads to such bugs.)  Moving
-around the type could cause a build failure in the sanitizers, but I'm
-not entirely clear how the UAPI headers are included there.
+functionality looks good beyond that nit.
 
-Otherwise, I couldn't find any uses.
+> +	if (!task)
+> +		return -ESRCH;
+> +	/* if we don't have caps, reject */
+> +	if (!capable(CAP_AUDIT_CONTROL))
+> +		return -EPERM;
+> +	length = scnprintf(tmpbuf, TMPBUFLEN*2, "%llu", audit_get_contid(task));
+> +	put_task_struct(task);
+> +	return simple_read_from_buffer(buf, count, ppos, tmpbuf, length);
+> +}
+> +
+>  static ssize_t proc_contid_write(struct file *file, const char __user *buf,
+>  				   size_t count, loff_t *ppos)
+>  {
+> @@ -1325,6 +1343,7 @@ static ssize_t proc_contid_write(struct file *file, const char __user *buf,
+>  }
+>  
+>  static const struct file_operations proc_contid_operations = {
+> +	.read		= proc_contid_read,
+>  	.write		= proc_contid_write,
+>  	.llseek		= generic_file_llseek,
+>  };
+> @@ -3039,7 +3058,7 @@ static int proc_stack_depth(struct seq_file *m, struct pid_namespace *ns,
+>  #ifdef CONFIG_AUDIT
+>  	REG("loginuid",   S_IWUSR|S_IRUGO, proc_loginuid_operations),
+>  	REG("sessionid",  S_IRUGO, proc_sessionid_operations),
+> -	REG("audit_containerid", S_IWUSR, proc_contid_operations),
+> +	REG("audit_containerid", S_IWUSR|S_IRUSR, proc_contid_operations),
+>  #endif
+>  #ifdef CONFIG_FAULT_INJECTION
+>  	REG("make-it-fail", S_IRUGO|S_IWUSR, proc_fault_inject_operations),
+> @@ -3428,7 +3447,7 @@ static int proc_tid_comm_permission(struct inode *inode, int mask)
+>  #ifdef CONFIG_AUDIT
+>  	REG("loginuid",  S_IWUSR|S_IRUGO, proc_loginuid_operations),
+>  	REG("sessionid",  S_IRUGO, proc_sessionid_operations),
+> -	REG("audit_containerid", S_IWUSR, proc_contid_operations),
+> +	REG("audit_containerid", S_IWUSR|S_IRUSR, proc_contid_operations),
+>  #endif
+>  #ifdef CONFIG_FAULT_INJECTION
+>  	REG("make-it-fail", S_IRUGO|S_IWUSR, proc_fault_inject_operations),
+> -- 
+> 1.8.3.1
+> 
+> 
+Acked-by: Neil Horman <nhorman@tuxdriver.com>
