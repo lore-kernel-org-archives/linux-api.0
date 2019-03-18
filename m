@@ -1,68 +1,61 @@
-From: Florian Weimer <fw@deneb.enyo.de>
-Subject: Re: [PATCH] y2038: fix socket.h header inclusion
-Date: Mon, 18 Mar 2019 14:12:57 +0100
-Message-ID: <877ecwwckm.fsf@mid.deneb.enyo.de>
-References: <20190311153857.563743-1-arnd@arndb.de>
-        <87k1h1fgkk.fsf@mid.deneb.enyo.de>
-        <CAK8P3a1r8GRC7GTHHqWY-PUn=9rWB-7+Qo=7txanbEjGZ-wppw@mail.gmail.com>
-        <87a7hvded7.fsf@mid.deneb.enyo.de>
-        <CABeXuvrEecSAkBuN-SmAbGwhLWNCC+bA1=X78fm8xMyw8=hm6Q@mail.gmail.com>
-        <CAK8P3a22n5L45Gknqd=2zinVGqRovkk0OABmGLJbGcmg8xXd+A@mail.gmail.com>
-        <87o968y1uv.fsf@mid.deneb.enyo.de>
-        <CAK8P3a1DzRhiuNxBeQaTYSX1NhCaN6+B0Ya7aeGfxUGj35LFhw@mail.gmail.com>
+From: Patrick Bellasi <patrick.bellasi@arm.com>
+Subject: Re: [PATCH v7 03/15] sched/core: uclamp: Add system default clamps
+Date: Mon, 18 Mar 2019 14:21:52 +0000
+Message-ID: <20190318142152.44biczhoby44xlfz@e110439-lin>
+References: <20190208100554.32196-1-patrick.bellasi@arm.com>
+ <20190208100554.32196-4-patrick.bellasi@arm.com>
+ <20190313201821.GW2482@worktop.programming.kicks-ass.net>
+ <20190318121804.tr3myhtgczvovmkq@e110439-lin>
+ <20190318131050.GQ6058@hirez.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAK8P3a1DzRhiuNxBeQaTYSX1NhCaN6+B0Ya7aeGfxUGj35LFhw@mail.gmail.com>
-        (Arnd Bergmann's message of "Mon, 18 Mar 2019 13:56:37 +0100")
+Content-Disposition: inline
+In-Reply-To: <20190318131050.GQ6058@hirez.programming.kicks-ass.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Deepa Dinamani <deepa.kernel@gmail.com>, "David S . Miller" <davem@davemloft.net>, Willem de Bruijn <willemb@google.com>, alpha <linux-alpha@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, linux-mips@vger.kernel.org, Parisc List <linux-parisc@vger.kernel.org>, sparclinux <sparclinux@vger.kernel.org>, Laura Abbott <labbott@redhat.com>, Networking <netdev@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Josh Boyer <jwboyer@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Jeff Law <law@redhat.com>
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-* Arnd Bergmann:
+On 18-Mar 14:10, Peter Zijlstra wrote:
+> On Mon, Mar 18, 2019 at 12:18:04PM +0000, Patrick Bellasi wrote:
+> > On 13-Mar 21:18, Peter Zijlstra wrote:
+> > > On Fri, Feb 08, 2019 at 10:05:42AM +0000, Patrick Bellasi wrote:
+> > > > +static void uclamp_fork(struct task_struct *p)
+> > > > +{
+> > > > +	unsigned int clamp_id;
+> > > > +
+> > > > +	if (unlikely(!p->sched_class->uclamp_enabled))
+> > > > +		return;
+> > > > +
+> > > > +	for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id)
+> > > > +		p->uclamp[clamp_id].active = false;
+> > > > +}
+> > > 
+> > > Because in that case .active == false, and copy_process() will have done
+> > > thr right thing?
+> > 
+> > Don't really get what you mean here? :/
+> 
+> Why don't we have to set .active=false when
+> !sched_class->uclamp_enabled?
 
-> On Mon, Mar 18, 2019 at 10:25 AM Florian Weimer <fw@deneb.enyo.de> wrote:
->>
->> * Arnd Bergmann:
->>
->> > Should we just remove __kernel_fd_set from the exported headers and
->> > define the internal fd_set directly in include/linux/types.h? (Adding the
->> > folks from the old thread to Cc).
->>
->> The type is used in the sanitizers, but incorrectly.  They assume that
->> FD_SETSIZE is always 1024.  (The existence of __kernel_fd_set is
->> itself somewhat questionable because it leads to such bugs.)
->> Moving around the type could cause a build failure in the sanitizers, but I'm
->> not entirely clear how the UAPI headers are included there.
->
-> It looks like sanitizer_platform_limits_posix.cc includes
-> linux/posix_types.h to ensure that __kernel_fd_set is the same
-> size as __sanitizer___kernel_fd_set, and then it uses the
-> latter afterwards.
->
-> What I don't see here is what kind of operation is actually done
-> on the data, I only see a cast to void.
+Ok, got it.
 
-I think it is used to assert that the select family of system calls
-writes to the 1024 bits for each of the passed pointers.  Which is not
-actually true—the write size is controlled by the file descriptor
-count argument.
+In principle because:
+- FAIR and RT will have uclamp_enabled
+- DL cannot fork
 
-> If libsanitizer actually does
-> anything interesting here, we should definitely fix it to use the
-> correct size, especially since this is actually something that
-> can trigger a buffer overflow in subtle ways when used carelessly.
-> See for example [1], which we still have not addressed
+... thus, yes, it seems that the check above is not necessary anyway.
 
-The footnote is missing.
+Moreover, as per one of your comments in another message, we still need
+to cover the "reset on fork" case for FAIR and RT. Thus, I'm going to
+completely remove the support check in uclamp_fork and we always reset
+active for all classes.
 
-> For this specific use (and probably others like it), renaming the
-> fds_bits member to __kernel_fds_bits or something like that
-> would keep user space still compiling. That would only break
-> if someone was using __kernel_fd_set, and actually doing
-> bit operations on it. glibc uses '__fds_bits' unless __USE_XOPEN
-> is set, so maybe we should use use that name unconditionally.
+Cheers!
 
-Please use something that is more obviously Linux-specific.
+-- 
+#include <best/regards.h>
+
+Patrick Bellasi
