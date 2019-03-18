@@ -1,89 +1,121 @@
 From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: Re: [PATCH v7 10/15] sched/fair: uclamp: Add uclamp support to
- energy_compute()
-Date: Mon, 18 Mar 2019 15:19:00 +0000
-Message-ID: <20190318151900.p2lm2ys4qx7yfjhs@e110439-lin>
+Subject: Re: [PATCH v7 12/15] sched/core: uclamp: Propagate parent clamps
+Date: Mon, 18 Mar 2019 16:54:30 +0000
+Message-ID: <20190318165430.n222vuq4tv3ntbod@e110439-lin>
 References: <20190208100554.32196-1-patrick.bellasi@arm.com>
- <20190208100554.32196-11-patrick.bellasi@arm.com>
- <20190306172124.tpr32k6hawos7a3g@queper01-lin>
+ <20190208100554.32196-13-patrick.bellasi@arm.com>
+ <CAJuCfpHTtokPFHu3KHYGj9arbPYn6ZZ=-qNpmVPrDwhPvnA9Ow@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190306172124.tpr32k6hawos7a3g@queper01-lin>
+In-Reply-To: <CAJuCfpHTtokPFHu3KHYGj9arbPYn6ZZ=-qNpmVPrDwhPvnA9Ow@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Quentin Perret <quentin.perret@arm.com>
-Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
+To: Suren Baghdasaryan <surenb@google.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On 06-Mar 17:21, Quentin Perret wrote:
-
-[...]
-
-> > Since we are at that:
-> >  - rename schedutil_freq_util() into schedutil_cpu_util(),
-> >    since it's not only used for frequency selection.
-> >  - use "unsigned int" instead of "unsigned long" whenever the tracked
-> >    utilization value is not expected to overflow 32bit.
+On 14-Mar 09:17, Suren Baghdasaryan wrote:
+> On Fri, Feb 8, 2019 at 2:06 AM Patrick Bellasi <patrick.bellasi@arm.com> wrote:
+> >
+> > In order to properly support hierarchical resources control, the cgroup
+> > delegation model requires that attribute writes from a child group never
+> > fail but still are (potentially) constrained based on parent's assigned
+> > resources. This requires to properly propagate and aggregate parent
+> > attributes down to its descendants.
+> >
+> > Let's implement this mechanism by adding a new "effective" clamp value
+> > for each task group. The effective clamp value is defined as the smaller
+> > value between the clamp value of a group and the effective clamp value
+> > of its parent. This is the actual clamp value enforced on tasks in a
+> > task group.
 > 
-> We use unsigned long all over the place right ? All the task_util*()
-> functions return unsigned long, the capacity-related functions too, and
-> util_avg is an unsigned long in sched_avg. So I'm not sure if we want to
-> do this TBH.
-
-For utilization we never need more then an "unsigned int" as storage
-class. Even at RQ level, 32bits allows +4mln tasks.
-
-However we started with long and keep going on with that, this was
-just an attempt to incrementally fix that whenever we do some
-changes or we add some new code.
-But, perhaps a single whole sale update patch would fit better this
-job in case we really wanna do it at some point.
-
-I'll drop this change in v8 and keep this patch focused on functional
-bits, don't want to risk to sidetrack the discussion again.
-
-[...]
-
-> > @@ -283,13 +284,14 @@ unsigned long schedutil_freq_util(int cpu, unsigned long util_cfs,
-> >  static unsigned long sugov_get_util(struct sugov_cpu *sg_cpu)
-> >  {
-> >  	struct rq *rq = cpu_rq(sg_cpu->cpu);
-> > -	unsigned long util = cpu_util_cfs(rq);
-> > -	unsigned long max = arch_scale_cpu_capacity(NULL, sg_cpu->cpu);
-> > +	unsigned int util_cfs = cpu_util_cfs(rq);
-> > +	unsigned int cpu_cap = arch_scale_cpu_capacity(NULL, sg_cpu->cpu);
+> In patch 10 in this series you mentioned "b) do not enforce any
+> constraints and/or dependencies between the parent and its child
+> nodes"
 > 
-> Do you really need this one ? What's wrong with 'max' :-) ?
+> This patch seems to change that behavior. If so, should it be documented?
 
-Being a pretty "generic" and thus confusing name is not enough? :)
+Not, I actually have to update the changelog of that patch.
 
-Anyway, same reasoning as above and same conclusions: I'll drop the
-renaming so that we don't sidetrack the discussion on v8.
+What I mean is that we do not enforce constraints among "requested"
+values thus ensuring that each sub-group can always request a clamp
+value.
+Of course, if it gets that value or not depends on parent constraints,
+which are propagated down the hierarchy under the form of "effective"
+values by cpu_util_update_heir()
+
+I'll fix the changelog in patch 10 which seems to be confusing for
+Tejun too.
 
 [...]
 
-> > diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-> > index de181b8a3a2a..b9acef080d99 100644
-> > --- a/kernel/sched/sched.h
-> > +++ b/kernel/sched/sched.h
-> > @@ -2335,6 +2335,7 @@ static inline unsigned long capacity_orig_of(int cpu)
-> >  #endif
-> > 
-> >  #ifdef CONFIG_CPU_FREQ_GOV_SCHEDUTIL
+> > @@ -7011,6 +7029,53 @@ static void cpu_cgroup_attach(struct cgroup_taskset *tset)
+> >  }
+> >
+> >  #ifdef CONFIG_UCLAMP_TASK_GROUP
+> > +static void cpu_util_update_hier(struct cgroup_subsys_state *css,
+> 
+> s/cpu_util_update_hier/cpu_util_update_heir ?
+
+Mmm... why?
+
+That "_hier" stands for "hierarchical".
+
+However, since there we update the effective values, maybe I can
+better rename it in "_eff" ?
+
+> > +                                unsigned int clamp_id, unsigned int bucket_id,
+> > +                                unsigned int value)
+> > +{
+> > +       struct cgroup_subsys_state *top_css = css;
+> > +       struct uclamp_se *uc_se, *uc_parent;
 > > +
-> >  /**
-> >   * enum schedutil_type - CPU utilization type
-> 
-> Since you're using this enum unconditionally in fair.c, you should to
-> move it out of the #ifdef CONFIG_CPU_FREQ_GOV_SCHEDUTIL block, I think.
-> 
-> >   * @FREQUENCY_UTIL:	Utilization used to select frequency
-> > @@ -2350,15 +2351,9 @@ enum schedutil_type {
-> >  	ENERGY_UTIL,
-> >  };
+> > +       css_for_each_descendant_pre(css, top_css) {
+> > +               /*
+> > +                * The first visited task group is top_css, which clamp value
+> > +                * is the one passed as parameter. For descendent task
+> > +                * groups we consider their current value.
+> > +                */
+> > +               uc_se = &css_tg(css)->uclamp[clamp_id];
+> > +               if (css != top_css) {
+> > +                       value = uc_se->value;
+> > +                       bucket_id = uc_se->effective.bucket_id;
+> > +               }
+> > +               uc_parent = NULL;
+> > +               if (css_tg(css)->parent)
+> > +                       uc_parent = &css_tg(css)->parent->uclamp[clamp_id];
+> > +
+> > +               /*
+> > +                * Skip the whole subtrees if the current effective clamp is
+> > +                * already matching the TG's clamp value.
+> > +                * In this case, all the subtrees already have top_value, or a
+> > +                * more restrictive value, as effective clamp.
+> > +                */
+> > +               if (uc_se->effective.value == value &&
+> > +                   uc_parent && uc_parent->effective.value >= value) {
+> > +                       css = css_rightmost_descendant(css);
+> > +                       continue;
+> > +               }
+> > +
+> > +               /* Propagate the most restrictive effective value */
+> > +               if (uc_parent && uc_parent->effective.value < value) {
+> > +                       value = uc_parent->effective.value;
+> > +                       bucket_id = uc_parent->effective.bucket_id;
+> > +               }
+> > +               if (uc_se->effective.value == value)
+> > +                       continue;
+> > +
+> > +               uc_se->effective.value = value;
+> > +               uc_se->effective.bucket_id = bucket_id;
+> > +       }
+> > +}
+> > +
+> >  static int cpu_util_min_write_u64(struct cgroup_subsys_state *css,
+> >                                   struct cftype *cftype, u64 min_value)
+> >  {
 
-Good point, will do!
+[...]
 
 Cheers,
 Patrick
