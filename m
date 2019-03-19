@@ -1,89 +1,31 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH] uapi: avoid namespace conflict in linux/posix_types.h
-Date: Tue, 19 Mar 2019 17:51:09 +0100
-Message-ID: <20190319165123.3967889-1-arnd@arndb.de>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH v2 1/1] userfaultfd/sysctl: add
+ vm.unprivileged_userfaultfd
+Date: Tue, 19 Mar 2019 11:02:36 -0700
+Message-ID: <20190319110236.b6169d6b469a587a852c7e09@linux-foundation.org>
+References: <20190319030722.12441-1-peterx@redhat.com>
+        <20190319030722.12441-2-peterx@redhat.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190319030722.12441-2-peterx@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-api@vger.kernel.org
-Cc: linux-arch@vger.kernel.org, netdev@vger.kernel.org, Laura Abbott <labbott@redhat.com>, Arnd Bergmann <arnd@arndb.de>, Florian Weimer <fw@deneb.enyo.de>, Paul Burton <pburton@wavecomp.com>, Deepa Dinamani <deepa.kernel@gmail.com>, linux-kernel@vger.kernel.org
+To: Peter Xu <peterx@redhat.com>
+Cc: linux-kernel@vger.kernel.org, Paolo Bonzini <pbonzini@redhat.com>, Hugh Dickins <hughd@google.com>, Luis Chamberlain <mcgrof@kernel.org>, Maxime Coquelin <maxime.coquelin@redhat.com>, Maya Gokhale <gokhale2@llnl.gov>, Jerome Glisse <jglisse@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Johannes Weiner <hannes@cmpxchg.org>, Martin Cracauer <cracauer@cons.org>, Denis Plotnikov <dplotnikov@virtuozzo.com>, linux-mm@kvack.org, Marty McFadden <mcfadden8@llnl.gov>, Mike Kravetz <mike.kravetz@oracle.com>, Andrea Arcangeli <aarcange@redhat.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Kees Cook <keescook@chromium.org>, Mel Gorman <mgorman@suse.de>, "Kirill A . Shutemov" <kirill@shutemov.name>, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Florian Weimer points out an issue with including linux/posix_types.h
-from arbitrary other headers: if an application has defined a macro
-named 'fds_bits', it may stop compiling after a change in the kernel
-headers. Since fds_bits is a non-reserved identifier in C, that is
-considered a bug in the kernel headers.
+On Tue, 19 Mar 2019 11:07:22 +0800 Peter Xu <peterx@redhat.com> wrote:
 
-The structure definition does not really seem to be helpful here,
-as the kernel no longer provides macros to manipulate it.
+> Add a global sysctl knob "vm.unprivileged_userfaultfd" to control
+> whether userfaultfd is allowed by unprivileged users.  When this is
+> set to zero, only privileged users (root user, or users with the
+> CAP_SYS_PTRACE capability) will be able to use the userfaultfd
+> syscalls.
 
-The only user of the structure that we could find was in libsanitize.
-This usage is actually broken, as discussed in the email thread,
-but this means we cannot just remove the definition from the exported
-headers, but we can use the __kernel_* namespace for it, to avoid
-the namespace conflict. The kernel itself just uses bit operations
-on the typedef without accessing the field by name.
-This change should also help with the many other kernel headers that
-include linux/posix_types.h directly or through linux/types.h.
+Please send along a full description of why you believe Linux needs
+this feature, for me to add to the changelog.  What is the benefit to
+our users?  How will it be used?
 
-Similarly, the definition of __kernel_fsid_t uses a structure with
-field identifier 'val' that may have the same problem. Again, user
-space should not rely on the specific field name but instead treat
-an fsid_t as an opaque identifier. I'm using an #ifdef __KERNEL__
-guard here to save us from having to change all kernel code accessing
-the field.
-Glibc has changed this from 'val' to '__val' back in 1996/97 when
-they moved away from using the kernel types directly, it it
-is likely that nothing uses __kernel_fsid_t any more. MIPS still
-has another copy of __kernel_fsid_t, but that is in the process
-of being removed as well.
-
-Link: https://lore.kernel.org/lkml/87a7hvded7.fsf@mid.deneb.enyo.de/
-Link: https://lore.kernel.org/lkml/20190314173900.25454-1-paul.burton@mips.com/
-Cc: Florian Weimer <fw@deneb.enyo.de>
-Cc: Paul Burton <pburton@wavecomp.com>
-Fixes: a623a7a1a567 ("y2038: fix socket.h header inclusion")
-Signed-off-by: Arnd Bergmann <arnd@arndb.de>
----
-There was another bug report for the same change just now, so
-I wouldn't apply this patch yet before we have fully understood
-the other issue. Sending this for review now since the two
-problems are most likely independent.
----
- include/uapi/asm-generic/posix_types.h | 4 ++++
- include/uapi/linux/posix_types.h       | 2 +-
- 2 files changed, 5 insertions(+), 1 deletion(-)
-
-diff --git a/include/uapi/asm-generic/posix_types.h b/include/uapi/asm-generic/posix_types.h
-index f0733a26ebfc..2a8c68ac88ca 100644
---- a/include/uapi/asm-generic/posix_types.h
-+++ b/include/uapi/asm-generic/posix_types.h
-@@ -77,7 +77,11 @@ typedef __kernel_long_t	__kernel_ptrdiff_t;
- 
- #ifndef __kernel_fsid_t
- typedef struct {
-+#ifdef __KERNEL__
- 	int	val[2];
-+#else
-+	int	__kernel_val[2];
-+#endif
- } __kernel_fsid_t;
- #endif
- 
-diff --git a/include/uapi/linux/posix_types.h b/include/uapi/linux/posix_types.h
-index 9a7a740b35a2..a5a5cfc38bbf 100644
---- a/include/uapi/linux/posix_types.h
-+++ b/include/uapi/linux/posix_types.h
-@@ -23,7 +23,7 @@
- #define __FD_SETSIZE	1024
- 
- typedef struct {
--	unsigned long fds_bits[__FD_SETSIZE / (8 * sizeof(long))];
-+	unsigned long __kernel_fds_bits[__FD_SETSIZE / (8 * sizeof(long))];
- } __kernel_fd_set;
- 
- /* Type of a signal handler.  */
--- 
-2.20.0
+etcetera.  As it was presented I'm seeing no justification for adding
+the patch!
