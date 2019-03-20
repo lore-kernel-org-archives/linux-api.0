@@ -1,7 +1,7 @@
 From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: [PATCH RESEND v5 3/5] namei: O_THISROOT: chroot-like path resolution
-Date: Thu, 21 Mar 2019 01:37:15 +1100
-Message-ID: <20190320143717.2523-4-cyphar@cyphar.com>
+Subject: [PATCH RESEND v5 5/5] binfmt_*: scope path resolution of interpreters
+Date: Thu, 21 Mar 2019 01:37:17 +1100
+Message-ID: <20190320143717.2523-6-cyphar@cyphar.com>
 References: <20190320143717.2523-1-cyphar@cyphar.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -9,160 +9,223 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190320143717.2523-1-cyphar@cyphar.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>
-Cc: Aleksa Sarai <cyphar@cyphar.com>, Eric Biederman <ebiederm@xmission.com>, Christian Brauner <christian@brauner.io>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Jann Horn <jannh@google.com>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, Linus Torvalds <torvalds@linux-foundation.org>, containers@lists.linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org
+Cc: Aleksa Sarai <cyphar@cyphar.com>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Christian Brauner <christian@brauner.io>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, Linus Torvalds <torvalds@linux-foundation.org>, containers@lists.linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The primary motivation for the need for this flag is container runtimes
-which have to interact with malicious root filesystems in the host
-namespaces. One of the first requirements for a container runtime to be
-secure against a malicious rootfs is that they correctly scope symlinks
-(that is, they should be scoped as though they are chroot(2)ed into the
-container's rootfs) and ".."-style paths[*]. The already-existing O_XDEV
-and O_NOMAGICLINKS[**] help defend against other potential attacks in a
-malicious rootfs scenario.
+The need to be able to scope path resolution of interpreters became
+clear with one of the possible vectors used in CVE-2019-5736 (which
+most major container runtimes were vulnerable to).
 
-Currently most container runtimes try to do this resolution in
-userspace[1], causing many potential race conditions. In addition, the
-"obvious" alternative (actually performing a {ch,pivot_}root(2))
-requires a fork+exec (for some runtimes) which is *very* costly if
-necessary for every filesystem operation involving a container.
+Naively, it might seem that openat(2) -- which supports path scoping --
+can be combined with execveat(AT_EMPTY_PATH) to trivially scope the
+binary being executed. Unfortunately, a "bad binary" (usually a symlink)
+could be written as a #!-style script with the symlink target as the
+interpreter -- which would be completely missed by just scoping the
+openat(2). An example of this being exploitable is CVE-2019-5736.
 
-[*] At the moment, ".." and "magic link" jumping are disallowed for the
-    same reason it is disabled for O_BENEATH -- currently it is not safe
-    to allow it. Future patches may enable it unconditionally once we
-    have resolved the possible races (for "..") and semantics (for
-    "magic link" jumping).
+In order to get around this, we need to pass down to each binfmt_*
+implementation the scoping flags requested in execveat(2). In order to
+maintain backwards-compatibility we only pass the scoping AT_* flags.
 
-The most significant openat(2) semantic change with O_THISROOT is that
-absolute pathnames no longer cause dirfd to be ignored completely. The
-rationale is that O_THISROOT must necessarily chroot-scope symlinks with
-absolute paths to dirfd, and so doing it for the base path seems to be
-the most consistent behaviour (and also avoids foot-gunning users who
-want to scope paths that are absolute).
+To avoid breaking userspace (in the exceptionally rare cases where you
+have #!-scripts with a relative path being execveat(2)-ed with dfd !=
+AT_FDCWD), we only pass dfd down to binfmt_* if any of our new flags are
+set in execveat(2).
 
-Currently this is only enabled for openat(2), and similar to O_BENEATH
-and family requires more discussion about extending it to more *at(2)
-syscalls as well as extending AT_EMPTY_PATH support.
-
-[1]: https://github.com/cyphar/filepath-securejoin
-
-Cc: Eric Biederman <ebiederm@xmission.com>
-Cc: Christian Brauner <christian@brauner.io>
-Cc: Kees Cook <keescook@chromium.org>
 Signed-off-by: Aleksa Sarai <cyphar@cyphar.com>
 ---
- fs/fcntl.c                       | 2 +-
- fs/namei.c                       | 6 +++---
- fs/open.c                        | 4 +++-
- include/linux/fcntl.h            | 2 +-
- include/linux/namei.h            | 1 +
- include/uapi/asm-generic/fcntl.h | 3 +++
- 6 files changed, 12 insertions(+), 6 deletions(-)
+ fs/binfmt_elf.c            |  2 +-
+ fs/binfmt_elf_fdpic.c      |  2 +-
+ fs/binfmt_em86.c           |  4 ++--
+ fs/binfmt_misc.c           |  2 +-
+ fs/binfmt_script.c         |  2 +-
+ fs/exec.c                  | 26 ++++++++++++++++++++++----
+ include/linux/binfmts.h    |  1 +
+ include/linux/fs.h         |  9 +++++++--
+ include/uapi/linux/fcntl.h |  6 ++++++
+ 9 files changed, 42 insertions(+), 12 deletions(-)
 
-diff --git a/fs/fcntl.c b/fs/fcntl.c
-index f782e99700f0..a6b4565a903d 100644
---- a/fs/fcntl.c
-+++ b/fs/fcntl.c
-@@ -1031,7 +1031,7 @@ static int __init fcntl_init(void)
- 	 * Exceptions: O_NONBLOCK is a two bit define on parisc; O_NDELAY
- 	 * is defined as O_NONBLOCK on some platforms and not on others.
+diff --git a/fs/binfmt_elf.c b/fs/binfmt_elf.c
+index 54207327f98f..eef86ffa38c8 100644
+--- a/fs/binfmt_elf.c
++++ b/fs/binfmt_elf.c
+@@ -777,7 +777,7 @@ static int load_elf_binary(struct linux_binprm *bprm)
+ 			if (elf_interpreter[elf_ppnt->p_filesz - 1] != '\0')
+ 				goto out_free_interp;
+ 
+-			interpreter = open_exec(elf_interpreter);
++			interpreter = openat_exec(bprm->dfd, elf_interpreter, bprm->flags);
+ 			retval = PTR_ERR(interpreter);
+ 			if (IS_ERR(interpreter))
+ 				goto out_free_interp;
+diff --git a/fs/binfmt_elf_fdpic.c b/fs/binfmt_elf_fdpic.c
+index b53bb3729ac1..c463c6428f77 100644
+--- a/fs/binfmt_elf_fdpic.c
++++ b/fs/binfmt_elf_fdpic.c
+@@ -263,7 +263,7 @@ static int load_elf_fdpic_binary(struct linux_binprm *bprm)
+ 			kdebug("Using ELF interpreter %s", interpreter_name);
+ 
+ 			/* replace the program with the interpreter */
+-			interpreter = open_exec(interpreter_name);
++			interpreter = openat_exec(bprm->dfd, interpreter_name, bprm->flags);
+ 			retval = PTR_ERR(interpreter);
+ 			if (IS_ERR(interpreter)) {
+ 				interpreter = NULL;
+diff --git a/fs/binfmt_em86.c b/fs/binfmt_em86.c
+index dd2d3f0cd55d..3ee46b0dc0d4 100644
+--- a/fs/binfmt_em86.c
++++ b/fs/binfmt_em86.c
+@@ -81,10 +81,10 @@ static int load_em86(struct linux_binprm *bprm)
+ 
+ 	/*
+ 	 * OK, now restart the process with the interpreter's inode.
+-	 * Note that we use open_exec() as the name is now in kernel
++	 * Note that we use openat_exec() as the name is now in kernel
+ 	 * space, and we don't need to copy it.
  	 */
--	BUILD_BUG_ON(25 - 1 /* for O_RDONLY being 0 */ !=
-+	BUILD_BUG_ON(26 - 1 /* for O_RDONLY being 0 */ !=
- 		HWEIGHT32(
- 			(VALID_OPEN_FLAGS & ~(O_NONBLOCK | O_NDELAY)) |
- 			__FMODE_EXEC | __FMODE_NONOTIFY));
-diff --git a/fs/namei.c b/fs/namei.c
-index c9a07a8c005a..798eb1702a0c 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -1097,7 +1097,7 @@ const char *get_link(struct nameidata *nd)
- 			if (unlikely(nd->flags & LOOKUP_NO_MAGICLINKS))
- 				return ERR_PTR(-ELOOP);
- 			/* Not currently safe. */
--			if (unlikely(nd->flags & LOOKUP_BENEATH))
-+			if (unlikely(nd->flags & (LOOKUP_BENEATH | LOOKUP_IN_ROOT)))
- 				return ERR_PTR(-EXDEV);
- 		}
- 		if (IS_ERR_OR_NULL(res))
-@@ -1746,7 +1746,7 @@ static inline int handle_dots(struct nameidata *nd, int type)
- 		 * cause our parent to have moved outside of the root and us to skip
- 		 * over it.
- 		 */
--		if (unlikely(nd->flags & LOOKUP_BENEATH))
-+		if (unlikely(nd->flags & (LOOKUP_BENEATH | LOOKUP_IN_ROOT)))
- 			return -EXDEV;
- 		if (!nd->root.mnt)
- 			set_root(nd);
-@@ -2297,7 +2297,7 @@ static const char *path_init(struct nameidata *nd, unsigned flags)
+-	file = open_exec(interp);
++	file = openat_exec(binprm->dfd, interp, binprm->flags);
+ 	if (IS_ERR(file))
+ 		return PTR_ERR(file);
  
- 	nd->m_seq = read_seqbegin(&mount_lock);
- 
--	if (unlikely(nd->flags & LOOKUP_BENEATH)) {
-+	if (unlikely(nd->flags & (LOOKUP_BENEATH | LOOKUP_IN_ROOT))) {
- 		error = dirfd_path_init(nd);
- 		if (unlikely(error))
- 			return ERR_PTR(error);
-diff --git a/fs/open.c b/fs/open.c
-index 3e73f940f56e..5914aed2fac8 100644
---- a/fs/open.c
-+++ b/fs/open.c
-@@ -960,7 +960,7 @@ static inline int build_open_flags(int flags, umode_t mode, struct open_flags *o
- 		 * cannot have anything other than the below set of flags
- 		 */
- 		flags &= O_DIRECTORY | O_NOFOLLOW | O_PATH | O_BENEATH |
--			 O_XDEV | O_NOSYMLINKS | O_NOMAGICLINKS;
-+			 O_XDEV | O_NOSYMLINKS | O_NOMAGICLINKS | O_THISROOT;
- 		acc_mode = 0;
+diff --git a/fs/binfmt_misc.c b/fs/binfmt_misc.c
+index aa4a7a23ff99..573ef06ff5a1 100644
+--- a/fs/binfmt_misc.c
++++ b/fs/binfmt_misc.c
+@@ -209,7 +209,7 @@ static int load_misc_binary(struct linux_binprm *bprm)
+ 		if (!IS_ERR(interp_file))
+ 			deny_write_access(interp_file);
+ 	} else {
+-		interp_file = open_exec(fmt->interpreter);
++		interp_file = openat_exec(bprm->dfd, fmt->interpreter, bprm->flags);
  	}
+ 	retval = PTR_ERR(interp_file);
+ 	if (IS_ERR(interp_file))
+diff --git a/fs/binfmt_script.c b/fs/binfmt_script.c
+index d0078cbb718b..340f63635aac 100644
+--- a/fs/binfmt_script.c
++++ b/fs/binfmt_script.c
+@@ -102,7 +102,7 @@ static int load_script(struct linux_binprm *bprm)
+ 	/*
+ 	 * OK, now restart the process with the interpreter's dentry.
+ 	 */
+-	file = open_exec(i_name);
++	file = openat_exec(bprm->dfd, i_name, bprm->flags);
+ 	if (IS_ERR(file))
+ 		return PTR_ERR(file);
  
-@@ -997,6 +997,8 @@ static inline int build_open_flags(int flags, umode_t mode, struct open_flags *o
- 		lookup_flags |= LOOKUP_NO_MAGICLINKS;
- 	if (flags & O_NOSYMLINKS)
- 		lookup_flags |= LOOKUP_NO_SYMLINKS;
-+	if (flags & O_THISROOT)
-+		lookup_flags |= LOOKUP_IN_ROOT;
- 	op->lookup_flags = lookup_flags;
- 	return 0;
+diff --git a/fs/exec.c b/fs/exec.c
+index bcf383730bea..e63063b2de23 100644
+--- a/fs/exec.c
++++ b/fs/exec.c
+@@ -846,12 +846,24 @@ static struct file *do_open_execat(int fd, struct filename *name, int flags)
+ 		.lookup_flags = LOOKUP_FOLLOW,
+ 	};
+ 
+-	if ((flags & ~(AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH)) != 0)
++	if ((flags & ~(AT_SYMLINK_NOFOLLOW | AT_EMPTY_PATH | AT_BENEATH |
++		       AT_XDEV | AT_NO_MAGICLINKS | AT_NO_SYMLINKS |
++		       AT_THIS_ROOT)) != 0)
+ 		return ERR_PTR(-EINVAL);
+ 	if (flags & AT_SYMLINK_NOFOLLOW)
+ 		open_exec_flags.lookup_flags &= ~LOOKUP_FOLLOW;
+ 	if (flags & AT_EMPTY_PATH)
+ 		open_exec_flags.lookup_flags |= LOOKUP_EMPTY;
++	if (flags & AT_BENEATH)
++		open_exec_flags.lookup_flags |= LOOKUP_BENEATH;
++	if (flags & AT_XDEV)
++		open_exec_flags.lookup_flags |= LOOKUP_XDEV;
++	if (flags & AT_NO_MAGICLINKS)
++		open_exec_flags.lookup_flags |= LOOKUP_NO_MAGICLINKS;
++	if (flags & AT_NO_SYMLINKS)
++		open_exec_flags.lookup_flags |= LOOKUP_NO_SYMLINKS;
++	if (flags & AT_THIS_ROOT)
++		open_exec_flags.lookup_flags |= LOOKUP_IN_ROOT;
+ 
+ 	file = do_filp_open(fd, name, &open_exec_flags);
+ 	if (IS_ERR(file))
+@@ -879,18 +891,18 @@ static struct file *do_open_execat(int fd, struct filename *name, int flags)
+ 	return ERR_PTR(err);
  }
-diff --git a/include/linux/fcntl.h b/include/linux/fcntl.h
-index 864399c2fdd2..46c92bbfce4a 100644
---- a/include/linux/fcntl.h
-+++ b/include/linux/fcntl.h
-@@ -10,7 +10,7 @@
- 	 O_APPEND | O_NDELAY | O_NONBLOCK | O_NDELAY | __O_SYNC | O_DSYNC | \
- 	 FASYNC	| O_DIRECT | O_LARGEFILE | O_DIRECTORY | O_NOFOLLOW | \
- 	 O_NOATIME | O_CLOEXEC | O_PATH | __O_TMPFILE | O_BENEATH | O_XDEV | \
--	 O_NOMAGICLINKS | O_NOSYMLINKS)
-+	 O_NOMAGICLINKS | O_NOSYMLINKS | O_THISROOT)
  
- #ifndef force_o_largefile
- #define force_o_largefile() (BITS_PER_LONG != 32)
-diff --git a/include/linux/namei.h b/include/linux/namei.h
-index 82b5039d27a6..0969313b518f 100644
---- a/include/linux/namei.h
-+++ b/include/linux/namei.h
-@@ -53,6 +53,7 @@ enum {LAST_NORM, LAST_ROOT, LAST_DOT, LAST_DOTDOT, LAST_BIND};
- #define LOOKUP_NO_MAGICLINKS	0x040000 /* No /proc/$pid/fd/ "symlink" crossing. */
- #define LOOKUP_NO_SYMLINKS	0x080000 /* No symlink crossing *at all*.
- 					    Implies LOOKUP_NO_MAGICLINKS. */
-+#define LOOKUP_IN_ROOT		0x100000 /* Treat dirfd as %current->fs->root. */
+-struct file *open_exec(const char *name)
++struct file *openat_exec(int dfd, const char *name, int flags)
+ {
+ 	struct filename *filename = getname_kernel(name);
+ 	struct file *f = ERR_CAST(filename);
  
- extern int path_pts(struct path *path);
+ 	if (!IS_ERR(filename)) {
+-		f = do_open_execat(AT_FDCWD, filename, 0);
++		f = do_open_execat(dfd, filename, flags);
+ 		putname(filename);
+ 	}
+ 	return f;
+ }
+-EXPORT_SYMBOL(open_exec);
++EXPORT_SYMBOL(openat_exec);
  
-diff --git a/include/uapi/asm-generic/fcntl.h b/include/uapi/asm-generic/fcntl.h
-index ba53e0836cd4..3d0fe0de2ba2 100644
---- a/include/uapi/asm-generic/fcntl.h
-+++ b/include/uapi/asm-generic/fcntl.h
-@@ -110,6 +110,9 @@
- #ifndef O_NOSYMLINKS
- #define O_NOSYMLINKS	01000000000 /* - Block all symlinks (implies AT_NO_MAGICLINKS). */
+ int kernel_read_file(struct file *file, void **buf, loff_t *size,
+ 		     loff_t max_size, enum kernel_read_file_id id)
+@@ -1762,6 +1774,12 @@ static int __do_execve_file(int fd, struct filename *filename,
+ 
+ 	sched_exec();
+ 
++	bprm->flags = flags & (AT_XDEV | AT_NO_MAGICLINKS | AT_NO_SYMLINKS |
++			       AT_THIS_ROOT);
++	bprm->dfd = AT_FDCWD;
++	if (bprm->flags)
++		bprm->dfd = fd;
++
+ 	bprm->file = file;
+ 	if (!filename) {
+ 		bprm->filename = "none";
+diff --git a/include/linux/binfmts.h b/include/linux/binfmts.h
+index 688ab0de7810..e4da2d36e97f 100644
+--- a/include/linux/binfmts.h
++++ b/include/linux/binfmts.h
+@@ -50,6 +50,7 @@ struct linux_binprm {
+ 	unsigned int taso:1;
  #endif
-+#ifndef O_THISROOT
-+#define O_THISROOT	02000000000 /* - Scope ".." resolution to dirfd (like chroot(2)). */
-+#endif
+ 	unsigned int recursion_depth; /* only for search_binary_handler() */
++	int dfd, flags;		/* passed down to execat_open() */
+ 	struct file * file;
+ 	struct cred *cred;	/* new credentials */
+ 	int unsafe;		/* how unsafe this exec is (mask of LSM_UNSAFE_*) */
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index 3e85cb8e8c20..a82c8dd44ad9 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -2937,8 +2937,13 @@ extern int kernel_read_file_from_fd(int, void **, loff_t *, loff_t,
+ extern ssize_t kernel_read(struct file *, void *, size_t, loff_t *);
+ extern ssize_t kernel_write(struct file *, const void *, size_t, loff_t *);
+ extern ssize_t __kernel_write(struct file *, const void *, size_t, loff_t *);
+-extern struct file * open_exec(const char *);
+- 
++
++extern struct file *openat_exec(int, const char *, int);
++static inline struct file *open_exec(const char *name)
++{
++	return openat_exec(AT_FDCWD, name, 0);
++}
++
+ /* fs/dcache.c -- generic fs support functions */
+ extern bool is_subdir(struct dentry *, struct dentry *);
+ extern bool path_is_under(const struct path *, const struct path *);
+diff --git a/include/uapi/linux/fcntl.h b/include/uapi/linux/fcntl.h
+index 6448cdd9a350..607bc98813e3 100644
+--- a/include/uapi/linux/fcntl.h
++++ b/include/uapi/linux/fcntl.h
+@@ -90,5 +90,11 @@
+ #define AT_STATX_FORCE_SYNC	0x2000	/* - Force the attributes to be sync'd with the server */
+ #define AT_STATX_DONT_SYNC	0x4000	/* - Don't sync attributes with the server */
  
- #define F_DUPFD		0	/* dup */
- #define F_GETFD		1	/* get close_on_exec */
++#define AT_RESOLUTION_TYPE	0xF8000 /* Type of path-resolution scoping we are applying. */
++#define AT_BENEATH		0x08000 /* - Block "lexical" trickery like "..", symlinks, absolute paths, etc. */
++#define AT_XDEV			0x10000 /* - Block mount-point crossings (includes bind-mounts). */
++#define AT_NO_MAGICLINKS	0x20000 /* - Block procfs-style "magic" symlinks. */
++#define AT_NO_SYMLINKS		0x40000 /* - Block all symlinks (implies AT_NO_MAGICLINKS). */
++#define AT_THIS_ROOT		0x80000 /* - Scope ".." resolution to dirfd (like chroot(2)). */
+ 
+ #endif /* _UAPI_LINUX_FCNTL_H */
 -- 
 2.21.0
