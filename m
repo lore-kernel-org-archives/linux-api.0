@@ -1,326 +1,158 @@
-From: Masahiro Yamada <yamada.masahiro@socionext.com>
-Subject: Re: [RESEND PATCH v1] moduleparam: Save information about built-in
- modules in separate file
-Date: Wed, 20 Mar 2019 17:54:35 +0900
-Message-ID: <CAK7LNATuuAHav=RJ8oAQNyj1THR1bazWY-+6hOJ6EM+V-WOW5A@mail.gmail.com>
-References: <20190315101013.GN8455@Legion-PC.fortress>
+From: Aleksa Sarai <cyphar@cyphar.com>
+Subject: [PATCH RESEND v5 0/5] namei: vfs flags to restrict path resolution
+Date: Thu, 21 Mar 2019 01:37:12 +1100
+Message-ID: <20190320143717.2523-1-cyphar@cyphar.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190315101013.GN8455@Legion-PC.fortress>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alexey Gladkov <gladkov.alexey@gmail.com>
-Cc: Michal Marek <michal.lkml@markovi.net>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux Kbuild mailing list <linux-kbuild@vger.kernel.org>, linux-api@vger.kernel.org, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>, "Dmitry V. Levin" <ldv@altlinux.org>
+To: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>
+Cc: Aleksa Sarai <cyphar@cyphar.com>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>, Christian Brauner <christian@brauner.io>, David Drysdale <drysdale@google.com>, Tycho Andersen <tycho@tycho.ws>, Kees Cook <keescook@chromium.org>, containers@lists.linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, Linus Torvalds <torvalds@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 15, 2019 at 7:10 PM Alexey Gladkov <gladkov.alexey@gmail.com> wrote:
->
-> Problem:
->
-> When a kernel module is compiled as a separate module, some important
-> information about the kernel module is available via .modinfo section of
-> the module.  In contrast, when the kernel module is compiled into the
-> kernel, that information is not available.
->
-> Information about built-in modules is necessary in the following cases:
->
-> 1. When it is necessary to find out what additional parameters can be
-> passed to the kernel at boot time.
->
-> 2. When you need to know which module names and their aliases are in
-> the kernel. This is very useful for creating an initrd image.
->
-> Proposal:
->
-> The proposed patch does not remove .modinfo section with module
-> information from the vmlinux at the build time and saves it into a
-> separate file after kernel linking. So, the kernel does not increase in
-> size and no additional information remains in it. Information is stored
-> in the same format as in the separate modules (null-terminated string
-> array). Because the .modinfo section is already exported with a separate
-> modules, we are not creating a new API.
->
-> It can be easily read in the userspace:
->
-> $ tr '\0' '\n' < kernel.builtin.modinfo
-> ext4.softdep=pre: crc32c
-> ext4.license=GPL
-> ext4.description=Fourth Extended Filesystem
-> ext4.author=Remy Card, Stephen Tweedie, Andrew Morton, Andreas Dilger, Theodore Ts'o and others
-> ext4.alias=fs-ext4
-> ext4.alias=ext3
-> ext4.alias=fs-ext3
-> ext4.alias=ext2
-> ext4.alias=fs-ext2
-> md_mod.alias=block-major-9-*
-> md_mod.alias=md
-> md_mod.description=MD RAID framework
-> md_mod.license=GPL
-> md_mod.parmtype=create_on_open:bool
-> md_mod.parmtype=start_dirty_degraded:int
-> ...
->
-> Co-Developed-by: Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>
-> Signed-off-by: Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>
-> Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
-> ---
+Now that the holiday break is over, it's time to re-send this patch
+series (with a few additions, due to new information we got from
+CVE-2019-5736 -- which this patchset mostly protected against but had
+some holes with regards to #!-style scripts).
 
+Patch changelog:
+  v5:
+    * In response to CVE-2019-5736 (one of the vectors showed that
+      open(2)+fexec(3) cannot be used to scope binfmt_script's implicit
+      open_exec()), AT_* flags have been re-added and are now piped
+      through to binfmt_script (and other binfmt_* that use open_exec)
+      but are only supported for execveat(2) for now.
+  v4:
+    * Remove AT_* flag reservations, as they require more discussion.
+    * Switch to path_is_under() over __d_path() for breakout checking.
+    * Make O_XDEV no longer block openat("/tmp", "/", O_XDEV) -- dirfd
+      is now ignored for absolute paths to match other flags.
+    * Improve the dirfd_path_init() refactor and move it to a separate
+      commit.
+    * Remove reference to Linux-capsicum.
+    * Switch "proclink" name to "magic link".
+  v3: [resend]
+  v2:
+    * Made ".." resolution with AT_THIS_ROOT and AT_BENEATH safe(r) with
+      some semi-aggressive __d_path checking (see patch 3).
+    * Disallowed "proclinks" with AT_THIS_ROOT and AT_BENEATH, in the
+      hopes they can be re-enabled once safe.
+    * Removed the selftests as they will be reimplemented as xfstests.
+    * Removed stat(2) support, since you can already get it through
+      O_PATH and fstatat(2).
 
-I just started to take a look.
+The need for some sort of control over VFS's path resolution (to avoid
+malicious paths resulting in inadvertent breakouts) has been a very
+long-standing desire of many userspace applications. This patchset is a
+revival of Al Viro's old AT_NO_JUMPS[1,2] patchset (which was a variant
+of David Drysdale's O_BENEATH patchset[3] which was a spin-off of the
+Capsicum project[4]) with a few additions and changes made based on the
+previous discussion within [5] as well as others I felt were useful.
 
-I was able to compile it for x86,
-but got tons of warnings for powerpc.
+In line with the conclusions of the original discussion of AT_NO_JUMPS,
+the flag has been split up into separate flags:
 
-Anyway, you do not need to send v2 soon.
-Please give me some more time for the through review.
+  * O_XDEV blocks all mountpoint crossings (upwards, downwards, or
+    through absolute links). Absolute pathnames alone in openat(2) do
+    not trigger this.
 
+  * O_NOMAGICLINKS blocks resolution through /proc/$pid/fd-style links.
+    This is done by blocking the usage of nd_jump_link() during
+    resolution in a filesystem. The term "magic links" is used to match
+    with the only reference to these links in Documentation/, but I'm
+    happy to change the name.
 
+    It should be noted that this is different to the scope of O_NOFOLLOW
+    in that it applies to all path components. However, you can do
+    open(O_NOFOLLOW|O_NOMAGICLINKS|O_PATH) on a "magic link" and it will
+    *not* fail (assuming that no parent component was a "magic link"),
+    and you will have an fd for the "magic link".
 
-The following is what I got by
-"make -j8 ARCH=powerpc CROSS_COMPILE=powerpc-linux-  defconfig  all"
+  * O_BENEATH disallows escapes to outside the starting dirfd's tree,
+    using techniques such as ".." or absolute links. Absolute paths in
+    openat(2) are also disallowed. Conceptually this flag is to ensure
+    you "stay below" a certain point in the filesystem tree -- but this
+    requires some additional to protect against various races that would
+    allow escape using ".." (see patch 4 for more detail).
 
+    Currently O_BENEATH implies O_NOMAGICLINKS, because it can trivially
+    beam you around the filesystem (breaking the protection). In future,
+    there might be similar safety checks as in patch 4, but that
+    requires more discussion.
 
-...
-  CC [M]  drivers/scsi/st.o
-  AR      drivers/scsi/built-in.a
-  AR      drivers/built-in.a
-  GEN     .version
-  CHK     include/generated/compile.h
-  UPD     include/generated/compile.h
-  CC      init/version.o
-  AR      init/built-in.a
-  LD      vmlinux.o
-  MODPOST vmlinux.o
-powerpc-linux-ld: warning: orphan section `.gnu.hash' from `linker
-stubs' being placed in section `.gnu.hash'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`arch/powerpc/platforms/pseries/pseries_energy.o' being placed in
-section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`arch/powerpc/platforms/pseries/cmm.o' being placed in section
-`.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`arch/powerpc/platforms/pasemi/gpio_mdio.o' being placed in section
-`.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`kernel/workqueue.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`kernel/printk/printk.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`kernel/irq/spurious.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`kernel/rcu/update.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`kernel/rcu/srcutree.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`kernel/rcu/tree.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`kernel/module.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`kernel/configs.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/binfmt_script.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/binfmt_elf.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/compat_binfmt_elf.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/mbcache.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/nfs_common/nfsacl.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/nfs_common/grace.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/ext4/super.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/ext2/super.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/jbd2/journal.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/fat/inode.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/fat/namei_msdos.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/isofs/inode.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/nfs/dir.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/nfs/inode.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/nfs/super.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/nfs/nfs2super.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/nfs/nfs3super.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/nfs/nfs4super.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/exportfs/expfs.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/lockd/svc.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/nls/nls_base.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/nls/nls_cp437.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/nls/nls_ascii.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/nls/nls_iso8859-1.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/nls/nls_utf8.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/xfs/xfs_super.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/debugfs/inode.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`fs/tracefs/inode.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`crypto/api.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`crypto/crypto_wq.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`crypto/algapi.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`crypto/aead.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`crypto/blkcipher.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`crypto/skcipher.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`crypto/ahash.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`crypto/shash.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`crypto/akcipher.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`crypto/kpp.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`crypto/acompress.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`crypto/scompress.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`crypto/algboss.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`crypto/testmgr.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`crypto/hmac.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`crypto/crypto_null.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`crypto/sha256_generic.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`crypto/aes_generic.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`crypto/crc32c_generic.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`crypto/rng.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`block/bsg.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`block/mq-deadline.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`block/kyber-iosched.o' being placed in section `.modinfo'.
-powerpc-linux-ld: warning: orphan section `.modinfo' from
-`lib/btree.o' being placed in section `.modinfo'.
+In addition, two new flags were added that expand on the above ideas:
 
-...
+  * O_NOSYMLINKS does what it says on the tin. No symlink resolution is
+    allowed at all, including "magic links". Just as with O_NOMAGICLINKS
+    this can still be used with (O_PATH|O_NOFOLLOW) to open an fd for
+    the symlink as long as no parent path had a symlink component.
 
+  * O_THISROOT is an extension of O_BENEATH that, rather than blocking
+    attempts to move past the root, forces all such movements to be
+    scoped to the starting point. This provides chroot(2)-like
+    protection but without the cost of a chroot(2) for each filesystem
+    operation, as well as being safe against race attacks that chroot(2)
+    is not.
 
+    If a race is detected (as with O_BENEATH) then an error is
+    generated, and similar to O_BENEATH it is not permitted to cross
+    "magic links" with O_THISROOT.
 
+    The primary need for this is from container runtimes, which
+    currently need to do symlink scoping in userspace[6] when opening
+    paths in a potentially malicious container. There is a long list of
+    CVEs that could have bene mitigated by having O_THISROOT (such as
+    CVE-2017-1002101, CVE-2017-1002102, CVE-2018-15664, and
+    CVE-2019-5736, just to name a few).
 
+In addition, a mirror set of AT_* flags have been added (though
+currently these are only supported for execveat(2) -- and not for any
+other syscall). The need for these is explained in the final patch in
+the series (it's motivated by CVE-2019-5736).
 
->  Makefile                    |  1 +
->  include/linux/moduleparam.h | 12 +++++-------
->  scripts/link-vmlinux.sh     |  8 ++++++++
->  3 files changed, 14 insertions(+), 7 deletions(-)
->
-> diff --git a/Makefile b/Makefile
-> index d5713e7b1e50..971102194c92 100644
-> --- a/Makefile
-> +++ b/Makefile
-> @@ -1288,6 +1288,7 @@ _modinst_:
->         fi
->         @cp -f $(objtree)/modules.order $(MODLIB)/
->         @cp -f $(objtree)/modules.builtin $(MODLIB)/
-> +       @cp -f $(objtree)/kernel.builtin.modinfo $(MODLIB)/
->         $(Q)$(MAKE) -f $(srctree)/scripts/Makefile.modinst
->
->  # This depmod is only for convenience to give the initial
-> diff --git a/include/linux/moduleparam.h b/include/linux/moduleparam.h
-> index ba36506db4fb..5ba250d9172a 100644
-> --- a/include/linux/moduleparam.h
-> +++ b/include/linux/moduleparam.h
-> @@ -10,23 +10,21 @@
->     module name. */
->  #ifdef MODULE
->  #define MODULE_PARAM_PREFIX /* empty */
-> +#define __MODULE_INFO_PREFIX /* empty */
->  #else
->  #define MODULE_PARAM_PREFIX KBUILD_MODNAME "."
-> +/* We cannot use MODULE_PARAM_PREFIX because some modules override it. */
-> +#define __MODULE_INFO_PREFIX KBUILD_MODNAME "."
->  #endif
->
->  /* Chosen so that structs with an unsigned long line up. */
->  #define MAX_PARAM_PREFIX_LEN (64 - sizeof(unsigned long))
->
-> -#ifdef MODULE
->  #define __MODULE_INFO(tag, name, info)                                   \
->  static const char __UNIQUE_ID(name)[]                                    \
->    __used __attribute__((section(".modinfo"), unused, aligned(1)))        \
-> -  = __stringify(tag) "=" info
-> -#else  /* !MODULE */
-> -/* This struct is here for syntactic coherency, it is not used */
-> -#define __MODULE_INFO(tag, name, info)                                   \
-> -  struct __UNIQUE_ID(name) {}
-> -#endif
-> +  = __MODULE_INFO_PREFIX __stringify(tag) "=" info
-> +
->  #define __MODULE_PARM_TYPE(name, _type)                                          \
->    __MODULE_INFO(parmtype, name##type, #name ":" _type)
->
-> diff --git a/scripts/link-vmlinux.sh b/scripts/link-vmlinux.sh
-> index c8cf45362bd6..399d7e4d11ec 100755
-> --- a/scripts/link-vmlinux.sh
-> +++ b/scripts/link-vmlinux.sh
-> @@ -258,10 +258,12 @@ if [ -n "${CONFIG_KALLSYMS}" ]; then
->
->         # step 1
->         vmlinux_link "" .tmp_vmlinux1
-> +       "${OBJCOPY}" -R .modinfo .tmp_vmlinux1
->         kallsyms .tmp_vmlinux1 .tmp_kallsyms1.o
->
->         # step 2
->         vmlinux_link .tmp_kallsyms1.o .tmp_vmlinux2
-> +       "${OBJCOPY}" -R .modinfo .tmp_vmlinux2
->         kallsyms .tmp_vmlinux2 .tmp_kallsyms2.o
->
->         # step 3
-> @@ -273,6 +275,7 @@ if [ -n "${CONFIG_KALLSYMS}" ]; then
->                 kallsyms_vmlinux=.tmp_vmlinux3
->
->                 vmlinux_link .tmp_kallsyms2.o .tmp_vmlinux3
-> +               "${OBJCOPY}" -R .modinfo .tmp_vmlinux3
->
->                 kallsyms .tmp_vmlinux3 .tmp_kallsyms3.o
->         fi
-> @@ -281,6 +284,11 @@ fi
->  info LD vmlinux
->  vmlinux_link "${kallsymso}" vmlinux
->
-> +info MODINFO kernel.builtin.modinfo
-> +"${OBJCOPY}" -j .modinfo -O binary vmlinux kernel.builtin.modinfo
-> +chmod 444 kernel.builtin.modinfo
-> +"${OBJCOPY}" -R .modinfo vmlinux
-> +
->  if [ -n "${CONFIG_BUILDTIME_EXTABLE_SORT}" ]; then
->         info SORTEX vmlinux
->         sortextable vmlinux
-> --
-> 2.19.2
->
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Eric Biederman <ebiederm@xmission.com>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: David Howells <dhowells@redhat.com>
+Cc: Jann Horn <jannh@google.com>
+Cc: Christian Brauner <christian@brauner.io>
+Cc: David Drysdale <drysdale@google.com>
+Cc: Tycho Andersen <tycho@tycho.ws>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: <containers@lists.linux-foundation.org>
+Cc: <linux-fsdevel@vger.kernel.org>
+Cc: <linux-api@vger.kernel.org>
 
+[1]: https://lwn.net/Articles/721443/
+[2]: https://lore.kernel.org/patchwork/patch/784221/
+[3]: https://lwn.net/Articles/619151/
+[4]: https://lwn.net/Articles/603929/
+[5]: https://lwn.net/Articles/723057/
+[6]: https://github.com/cyphar/filepath-securejoin
+
+Aleksa Sarai (5):
+  namei: split out nd->dfd handling to dirfd_path_init
+  namei: O_BENEATH-style path resolution flags
+  namei: O_THISROOT: chroot-like path resolution
+  namei: aggressively check for nd->root escape on ".." resolution
+  binfmt_*: scope path resolution of interpreters
+
+ fs/binfmt_elf.c                  |   2 +-
+ fs/binfmt_elf_fdpic.c            |   2 +-
+ fs/binfmt_em86.c                 |   4 +-
+ fs/binfmt_misc.c                 |   2 +-
+ fs/binfmt_script.c               |   2 +-
+ fs/exec.c                        |  26 +++-
+ fs/fcntl.c                       |   2 +-
+ fs/namei.c                       | 205 ++++++++++++++++++++++---------
+ fs/open.c                        |  13 +-
+ include/linux/binfmts.h          |   1 +
+ include/linux/fcntl.h            |   3 +-
+ include/linux/fs.h               |   9 +-
+ include/linux/namei.h            |   8 ++
+ include/uapi/asm-generic/fcntl.h |  17 +++
+ include/uapi/linux/fcntl.h       |   6 +
+ 15 files changed, 228 insertions(+), 74 deletions(-)
 
 -- 
-Best Regards
-Masahiro Yamada
+2.21.0
