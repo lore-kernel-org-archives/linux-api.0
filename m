@@ -1,45 +1,66 @@
-From: Andrea Arcangeli <aarcange@redhat.com>
-Subject: Re: [PATCH v2 1/1] userfaultfd/sysctl: add
- vm.unprivileged_userfaultfd
-Date: Wed, 20 Mar 2019 15:01:12 -0400
-Message-ID: <20190320190112.GD23793@redhat.com>
-References: <20190319030722.12441-1-peterx@redhat.com>
- <20190319030722.12441-2-peterx@redhat.com>
- <20190319110236.b6169d6b469a587a852c7e09@linux-foundation.org>
- <20190319182822.GK2727@work-vm>
+From: David Miller <davem@davemloft.net>
+Subject: Re: [net-next PATCH v3 4/8] net: Change return type of
+ sk_busy_loop from bool to void
+Date: Wed, 20 Mar 2019 12:40:11 -0700 (PDT)
+Message-ID: <20190320.124011.1280345923671369921.davem@davemloft.net>
+References: <20170324164902.15226.48358.stgit@localhost.localdomain>
+        <20170324170812.15226.97497.stgit@localhost.localdomain>
+        <CALMXkpb3MfLbNoBgLJc0rgMDbPg9yOevKOiq9N8pzVw-aeNb3g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190319182822.GK2727@work-vm>
+In-Reply-To: <CALMXkpb3MfLbNoBgLJc0rgMDbPg9yOevKOiq9N8pzVw-aeNb3g@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Dr. David Alan Gilbert" <dgilbert@redhat.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Peter Xu <peterx@redhat.com>, linux-kernel@vger.kernel.org, Paolo Bonzini <pbonzini@redhat.com>, Hugh Dickins <hughd@google.com>, Luis Chamberlain <mcgrof@kernel.org>, Maxime Coquelin <maxime.coquelin@redhat.com>, Maya Gokhale <gokhale2@llnl.gov>, Jerome Glisse <jglisse@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Johannes Weiner <hannes@cmpxchg.org>, Martin Cracauer <cracauer@cons.org>, Denis Plotnikov <dplotnikov@virtuozzo.com>, linux-mm@kvack.org, Marty McFadden <mcfadden8@llnl.gov>, Mike Kravetz <mike.kravetz@oracle.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Kees Cook <keescook@chromium.org>, Mel Gorman <mgorman@suse.de>, "Kirill A . Shutemov" <kirill@shutemov.name>, linux-api@vger.ker
+To: christoph.paasch@gmail.com
+Cc: alexander.duyck@gmail.com, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, sridhar.samudrala@intel.com, edumazet@google.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hello,
+From: Christoph Paasch <christoph.paasch@gmail.com>
+Date: Wed, 20 Mar 2019 11:35:31 -0700
 
-On Tue, Mar 19, 2019 at 06:28:23PM +0000, Dr. David Alan Gilbert wrote:
-> ---
-> Userfaultfd can be misued to make it easier to exploit existing use-after-free
-> (and similar) bugs that might otherwise only make a short window
-> or race condition available.  By using userfaultfd to stall a kernel
-> thread, a malicious program can keep some state, that it wrote, stable
-> for an extended period, which it can then access using an existing
-> exploit.   While it doesn't cause the exploit itself, and while it's not
-> the only thing that can stall a kernel thread when accessing a memory location,
-> it's one of the few that never needs priviledge.
+> On Fri, Mar 24, 2017 at 3:23 PM Alexander Duyck
+> <alexander.duyck@gmail.com> wrote:
+>> diff --git a/net/core/datagram.c b/net/core/datagram.c
+>> index ea633342ab0d..4608aa245410 100644
+>> --- a/net/core/datagram.c
+>> +++ b/net/core/datagram.c
+>> @@ -256,8 +256,12 @@ struct sk_buff *__skb_try_recv_datagram(struct sock *sk, unsigned int flags,
+>>                 }
+>>
+>>                 spin_unlock_irqrestore(&queue->lock, cpu_flags);
+>> -       } while (sk_can_busy_loop(sk) &&
+>> -                sk_busy_loop(sk, flags & MSG_DONTWAIT));
+>> +
+>> +               if (!sk_can_busy_loop(sk))
+>> +                       break;
+>> +
+>> +               sk_busy_loop(sk, flags & MSG_DONTWAIT);
+>> +       } while (!skb_queue_empty(&sk->sk_receive_queue));
 > 
-> Add a flag, allowing userfaultfd to be restricted, so that in general 
-> it won't be useable by arbitrary user programs, but in environments that
-> require userfaultfd it can be turned back on.
+> since this change I am hitting stalls where it's looping in this
+> while-loop with syzkaller.
+> 
+> It worked prior to this change because sk->sk_napi_id was not set thus
+> sk_busy_loop would make us get out of the loop.
+> 
+> Now, it keeps on looping because there is an skb in the queue with
+> skb->len == 0 and we are peeking with an offset, thus
+> __skb_try_recv_from_queue will return NULL and thus we have no way of
+> getting out of the loop.
+> 
+> I'm not sure what would be the best way to fix it. I don't see why we
+> end up with an skb in the list with skb->len == 0. So, shooting a
+> quick e-mail, maybe somebody has an idea :-)
+> 
+> I have the syzkaller-reproducer if needed.
 
-The default in the patch leaves userfaultfd enabled to all users, so
-it may be clearer to reverse the last sentence to "in hardened
-environments it allows to restrict userfaultfd to privileged processes.".
+Just for the record, __skb_try_recv_datagram() and it's friend
+__skb_try_recv_from_queue() are my least favorite functions in the
+entire tree for the past year or so.
 
-We can also make example that 'While this is not a kernel issue, in
-practice unless you also "chmod u-s /usr/bin/fusermount" there's no
-tangible benefit in removing privileges for userfaultfd, other than
-probabilistic ones by decreasig the attack surface of the kernel, but
-that would be better be achieved through SECCOMP and not globally.'.
+Their current design, and how they assume things about the
+implementation of SKB queues, together result in all the weird
+problems we keep fixing in them.
+
+There has to be a much better way to do this.
