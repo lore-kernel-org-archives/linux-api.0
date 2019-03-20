@@ -1,166 +1,203 @@
-From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: [PATCH RESEND v5 4/5] namei: aggressively check for nd->root escape on ".." resolution
-Date: Thu, 21 Mar 2019 01:37:16 +1100
-Message-ID: <20190320143717.2523-5-cyphar@cyphar.com>
-References: <20190320143717.2523-1-cyphar@cyphar.com>
+From: Christoph Paasch <christoph.paasch@gmail.com>
+Subject: Re: [net-next PATCH v3 4/8] net: Change return type of sk_busy_loop
+ from bool to void
+Date: Wed, 20 Mar 2019 11:35:31 -0700
+Message-ID: <CALMXkpb3MfLbNoBgLJc0rgMDbPg9yOevKOiq9N8pzVw-aeNb3g@mail.gmail.com>
+References: <20170324164902.15226.48358.stgit@localhost.localdomain> <20170324170812.15226.97497.stgit@localhost.localdomain>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190320143717.2523-1-cyphar@cyphar.com>
+In-Reply-To: <20170324170812.15226.97497.stgit@localhost.localdomain>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>
-Cc: Aleksa Sarai <cyphar@cyphar.com>, Jann Horn <jannh@google.com>, Kees Cook <keescook@chromium.org>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Christian Brauner <christian@brauner.io>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, Linus Torvalds <torvalds@linux-foundation.org>, containers@lists.linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org
+To: Alexander Duyck <alexander.duyck@gmail.com>
+Cc: netdev <netdev@vger.kernel.org>, linux-kernel@vger.kernel.org, sridhar.samudrala@intel.com, Eric Dumazet <edumazet@google.com>, David Miller <davem@davemloft.net>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This patch allows for O_BENEATH and O_THISROOT to safely permit ".."
-resolution (in the case of O_BENEATH the resolution will still fail if
-".." resolution would resolve a path outside of the root -- while
-O_THISROOT will chroot(2)-style scope it). "magic link" jumps are still
-disallowed entirely because now they could result in inconsistent
-behaviour if resolution encounters a subsequent "..".
+Hello,
 
-The need for this patch is explained by observing there is a fairly
-easy-to-exploit race condition with chroot(2) (and thus by extension
-O_THISROOT and O_BENEATH) where a rename(2) of a path can be used to
-"skip over" nd->root and thus escape to the filesystem above nd->root.
+On Fri, Mar 24, 2017 at 3:23 PM Alexander Duyck
+<alexander.duyck@gmail.com> wrote:
+>
+> From: Alexander Duyck <alexander.h.duyck@intel.com>
+>
+> >From what I can tell there is only a couple spots where we are actually
+> checking the return value of sk_busy_loop. As there are only a few
+> consumers of that data, and the data being checked for can be replaced
+> with a check for !skb_queue_empty() we might as well just pull the code
+> out of sk_busy_loop and place it in the spots that actually need it.
+>
+> Signed-off-by: Alexander Duyck <alexander.h.duyck@intel.com>
+> Acked-by: Eric Dumazet <edumazet@google.com>
+> ---
+>  include/net/busy_poll.h |    5 ++---
+>  net/core/datagram.c     |    8 ++++++--
+>  net/core/dev.c          |   25 +++++++++++--------------
+>  net/sctp/socket.c       |    9 ++++++---
+>  4 files changed, 25 insertions(+), 22 deletions(-)
+>
+> diff --git a/include/net/busy_poll.h b/include/net/busy_poll.h
+> index b82d6ba70a14..c55760f4820f 100644
+> --- a/include/net/busy_poll.h
+> +++ b/include/net/busy_poll.h
+> @@ -74,7 +74,7 @@ static inline bool busy_loop_timeout(unsigned long end_time)
+>         return time_after(now, end_time);
+>  }
+>
+> -bool sk_busy_loop(struct sock *sk, int nonblock);
+> +void sk_busy_loop(struct sock *sk, int nonblock);
+>
+>  #else /* CONFIG_NET_RX_BUSY_POLL */
+>  static inline unsigned long net_busy_loop_on(void)
+> @@ -97,9 +97,8 @@ static inline bool busy_loop_timeout(unsigned long end_time)
+>         return true;
+>  }
+>
+> -static inline bool sk_busy_loop(struct sock *sk, int nonblock)
+> +static inline void sk_busy_loop(struct sock *sk, int nonblock)
+>  {
+> -       return false;
+>  }
+>
+>  #endif /* CONFIG_NET_RX_BUSY_POLL */
+> diff --git a/net/core/datagram.c b/net/core/datagram.c
+> index ea633342ab0d..4608aa245410 100644
+> --- a/net/core/datagram.c
+> +++ b/net/core/datagram.c
+> @@ -256,8 +256,12 @@ struct sk_buff *__skb_try_recv_datagram(struct sock *sk, unsigned int flags,
+>                 }
+>
+>                 spin_unlock_irqrestore(&queue->lock, cpu_flags);
+> -       } while (sk_can_busy_loop(sk) &&
+> -                sk_busy_loop(sk, flags & MSG_DONTWAIT));
+> +
+> +               if (!sk_can_busy_loop(sk))
+> +                       break;
+> +
+> +               sk_busy_loop(sk, flags & MSG_DONTWAIT);
+> +       } while (!skb_queue_empty(&sk->sk_receive_queue));
 
-  thread1 [attacker]:
-    for (;;)
-      renameat2(AT_FDCWD, "/a/b/c", AT_FDCWD, "/a/d", RENAME_EXCHANGE);
-  thread2 [victim]:
-    for (;;)
-      openat(dirb, "b/c/../../etc/shadow", O_THISROOT);
+since this change I am hitting stalls where it's looping in this
+while-loop with syzkaller.
 
-With fairly significant regularity, thread2 will resolve to
-"/etc/shadow" rather than "/a/b/etc/shadow". There is also a similar
-(though somewhat more privileged) attack using MS_MOVE.
+It worked prior to this change because sk->sk_napi_id was not set thus
+sk_busy_loop would make us get out of the loop.
 
-With this patch, such cases will be detected *during* ".." resolution
-(which is the weak point of chroot(2) -- since walking *into* a
-subdirectory tautologically cannot result in you walking *outside*
-nd->root -- except through a bind-mount or "magic link"). By detecting
-this at ".." resolution (rather than checking only at the end of the
-entire resolution) we can both correct escapes by jumping back to the
-root (in the case of O_THISROOT), as well as avoid revealing to
-attackers the structure of the filesystem outside of the root (through
-timing attacks for instance).
+Now, it keeps on looping because there is an skb in the queue with
+skb->len == 0 and we are peeking with an offset, thus
+__skb_try_recv_from_queue will return NULL and thus we have no way of
+getting out of the loop.
 
-In order to avoid a quadratic lookup with each ".." entry, we only
-activate the slow path if a write through &rename_lock or &mount_lock
-have occurred during path resolution (&rename_lock and &mount_lock are
-re-taken to further optimise the lookup). Since the primary attack being
-protected against is MS_MOVE or rename(2), not doing additional checks
-unless a mount or rename have occurred avoids making the common case
-slow.
+I'm not sure what would be the best way to fix it. I don't see why we
+end up with an skb in the list with skb->len == 0. So, shooting a
+quick e-mail, maybe somebody has an idea :-)
 
-The use of path_is_under() here might seem suspect, but on further
-inspection of the most important race (a path was *inside* the root but
-is now *outside*), there appears to be no attack potential. If
-path_is_under() occurs before the rename, then the path will be resolved
-but since the path was originally inside the root there is no escape.
-Subsequent ".." jumps are guaranteed to check path_is_under() (by
-construction, &rename_lock or &mount_lock must have been taken by the
-attacker after path_is_under() returned in the victim), and thus will
-not be able to escape from the previously-inside-root path. Walking down
-is still safe since the entire subtree was moved (either by rename(2) or
-MS_MOVE) and because (as discussed above) walking down is safe.
+I have the syzkaller-reproducer if needed.
 
-Cc: Al Viro <viro@zeniv.linux.org.uk>
-Cc: Jann Horn <jannh@google.com>
-Cc: Kees Cook <keescook@chromium.org>
-Signed-off-by: Aleksa Sarai <cyphar@cyphar.com>
----
- fs/namei.c | 48 +++++++++++++++++++++++++++++++++---------------
- 1 file changed, 33 insertions(+), 15 deletions(-)
+Thanks,
+Christoph
 
-diff --git a/fs/namei.c b/fs/namei.c
-index 798eb1702a0c..af06b10b13a0 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -493,7 +493,7 @@ struct nameidata {
- 	struct path	root;
- 	struct inode	*inode; /* path.dentry.d_inode */
- 	unsigned int	flags;
--	unsigned	seq, m_seq;
-+	unsigned	seq, m_seq, r_seq;
- 	int		last_type;
- 	unsigned	depth;
- 	int		total_link_count;
-@@ -1741,19 +1741,35 @@ static inline int may_lookup(struct nameidata *nd)
- static inline int handle_dots(struct nameidata *nd, int type)
- {
- 	if (type == LAST_DOTDOT) {
--		/*
--		 * LOOKUP_BENEATH resolving ".." is not currently safe -- races can
--		 * cause our parent to have moved outside of the root and us to skip
--		 * over it.
--		 */
--		if (unlikely(nd->flags & (LOOKUP_BENEATH | LOOKUP_IN_ROOT)))
--			return -EXDEV;
-+		int error = 0;
-+
- 		if (!nd->root.mnt)
- 			set_root(nd);
--		if (nd->flags & LOOKUP_RCU) {
--			return follow_dotdot_rcu(nd);
--		} else
--			return follow_dotdot(nd);
-+		if (nd->flags & LOOKUP_RCU)
-+			error = follow_dotdot_rcu(nd);
-+		else
-+			error = follow_dotdot(nd);
-+		if (error)
-+			return error;
-+
-+		if (unlikely(nd->flags & (LOOKUP_BENEATH | LOOKUP_IN_ROOT))) {
-+			bool m_retry = read_seqretry(&mount_lock, nd->m_seq);
-+			bool r_retry = read_seqretry(&rename_lock, nd->r_seq);
-+
-+			/*
-+			 * Don't bother checking unless there's a racing
-+			 * rename(2) or MS_MOVE.
-+			 */
-+			if (likely(!m_retry && !r_retry))
-+				return 0;
-+
-+			if (m_retry && !(nd->flags & LOOKUP_RCU))
-+				nd->m_seq = read_seqbegin(&mount_lock);
-+			if (r_retry)
-+				nd->r_seq = read_seqbegin(&rename_lock);
-+			if (!path_is_under(&nd->path, &nd->root))
-+				return -EXDEV;
-+		}
- 	}
- 	return 0;
- }
-@@ -2274,6 +2290,11 @@ static const char *path_init(struct nameidata *nd, unsigned flags)
- 	nd->last_type = LAST_ROOT; /* if there are only slashes... */
- 	nd->flags = flags | LOOKUP_JUMPED | LOOKUP_PARENT;
- 	nd->depth = 0;
-+
-+	nd->m_seq = read_seqbegin(&mount_lock);
-+	if (unlikely(flags & (LOOKUP_BENEATH | LOOKUP_IN_ROOT)))
-+		nd->r_seq = read_seqbegin(&rename_lock);
-+
- 	if (flags & LOOKUP_ROOT) {
- 		struct dentry *root = nd->root.dentry;
- 		struct inode *inode = root->d_inode;
-@@ -2284,7 +2305,6 @@ static const char *path_init(struct nameidata *nd, unsigned flags)
- 		if (flags & LOOKUP_RCU) {
- 			nd->seq = __read_seqcount_begin(&nd->path.dentry->d_seq);
- 			nd->root_seq = nd->seq;
--			nd->m_seq = read_seqbegin(&mount_lock);
- 		} else {
- 			path_get(&nd->path);
- 		}
-@@ -2295,8 +2315,6 @@ static const char *path_init(struct nameidata *nd, unsigned flags)
- 	nd->path.mnt = NULL;
- 	nd->path.dentry = NULL;
- 
--	nd->m_seq = read_seqbegin(&mount_lock);
--
- 	if (unlikely(nd->flags & (LOOKUP_BENEATH | LOOKUP_IN_ROOT))) {
- 		error = dirfd_path_init(nd);
- 		if (unlikely(error))
--- 
-2.21.0
+
+
+>
+>         error = -EAGAIN;
+>
+> diff --git a/net/core/dev.c b/net/core/dev.c
+> index ab337bf5bbf4..af70eb6ba682 100644
+> --- a/net/core/dev.c
+> +++ b/net/core/dev.c
+> @@ -5060,21 +5060,19 @@ static void busy_poll_stop(struct napi_struct *napi, void *have_poll_lock)
+>                 do_softirq();
+>  }
+>
+> -bool sk_busy_loop(struct sock *sk, int nonblock)
+> +void sk_busy_loop(struct sock *sk, int nonblock)
+>  {
+>         unsigned long end_time = !nonblock ? sk_busy_loop_end_time(sk) : 0;
+>         int (*napi_poll)(struct napi_struct *napi, int budget);
+>         void *have_poll_lock = NULL;
+>         struct napi_struct *napi;
+>         unsigned int napi_id;
+> -       int rc;
+>
+>  restart:
+>         napi_id = READ_ONCE(sk->sk_napi_id);
+>         if (napi_id < MIN_NAPI_ID)
+> -               return 0;
+> +               return;
+>
+> -       rc = false;
+>         napi_poll = NULL;
+>
+>         rcu_read_lock();
+> @@ -5085,7 +5083,8 @@ bool sk_busy_loop(struct sock *sk, int nonblock)
+>
+>         preempt_disable();
+>         for (;;) {
+> -               rc = 0;
+> +               int work = 0;
+> +
+>                 local_bh_disable();
+>                 if (!napi_poll) {
+>                         unsigned long val = READ_ONCE(napi->state);
+> @@ -5103,12 +5102,12 @@ bool sk_busy_loop(struct sock *sk, int nonblock)
+>                         have_poll_lock = netpoll_poll_lock(napi);
+>                         napi_poll = napi->poll;
+>                 }
+> -               rc = napi_poll(napi, BUSY_POLL_BUDGET);
+> -               trace_napi_poll(napi, rc, BUSY_POLL_BUDGET);
+> +               work = napi_poll(napi, BUSY_POLL_BUDGET);
+> +               trace_napi_poll(napi, work, BUSY_POLL_BUDGET);
+>  count:
+> -               if (rc > 0)
+> +               if (work > 0)
+>                         __NET_ADD_STATS(sock_net(sk),
+> -                                       LINUX_MIB_BUSYPOLLRXPACKETS, rc);
+> +                                       LINUX_MIB_BUSYPOLLRXPACKETS, work);
+>                 local_bh_enable();
+>
+>                 if (nonblock || !skb_queue_empty(&sk->sk_receive_queue) ||
+> @@ -5121,9 +5120,9 @@ bool sk_busy_loop(struct sock *sk, int nonblock)
+>                         preempt_enable();
+>                         rcu_read_unlock();
+>                         cond_resched();
+> -                       rc = !skb_queue_empty(&sk->sk_receive_queue);
+> -                       if (rc || busy_loop_timeout(end_time))
+> -                               return rc;
+> +                       if (!skb_queue_empty(&sk->sk_receive_queue) ||
+> +                           busy_loop_timeout(end_time))
+> +                               return;
+>                         goto restart;
+>                 }
+>                 cpu_relax();
+> @@ -5131,10 +5130,8 @@ bool sk_busy_loop(struct sock *sk, int nonblock)
+>         if (napi_poll)
+>                 busy_poll_stop(napi, have_poll_lock);
+>         preempt_enable();
+> -       rc = !skb_queue_empty(&sk->sk_receive_queue);
+>  out:
+>         rcu_read_unlock();
+> -       return rc;
+>  }
+>  EXPORT_SYMBOL(sk_busy_loop);
+>
+> diff --git a/net/sctp/socket.c b/net/sctp/socket.c
+> index 72cc3ecf6516..ccc08fc39722 100644
+> --- a/net/sctp/socket.c
+> +++ b/net/sctp/socket.c
+> @@ -7518,9 +7518,12 @@ struct sk_buff *sctp_skb_recv_datagram(struct sock *sk, int flags,
+>                 if (sk->sk_shutdown & RCV_SHUTDOWN)
+>                         break;
+>
+> -               if (sk_can_busy_loop(sk) &&
+> -                   sk_busy_loop(sk, noblock))
+> -                       continue;
+> +               if (sk_can_busy_loop(sk)) {
+> +                       sk_busy_loop(sk, noblock);
+> +
+> +                       if (!skb_queue_empty(&sk->sk_receive_queue))
+> +                               continue;
+> +               }
+>
+>                 /* User doesn't want to wait.  */
+>                 error = -EAGAIN;
+>
