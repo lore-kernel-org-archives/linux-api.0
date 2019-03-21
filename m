@@ -1,53 +1,155 @@
-From: Jan Kara <jack@suse.cz>
-Subject: [PATCH] fanotify: Make wait for permission events interruptible
-Date: Thu, 21 Mar 2019 16:11:42 +0100
-Message-ID: <20190321151142.17104-1-jack@suse.cz>
+From: Alexander Duyck <alexander.duyck@gmail.com>
+Subject: Re: [net-next PATCH v3 4/8] net: Change return type of sk_busy_loop
+ from bool to void
+Date: Thu, 21 Mar 2019 09:43:22 -0700
+Message-ID: <CAKgT0Uc68jsuPHKbxxFpeMCQAo2M69DhzA_XGw7Kvou4H3eHPg@mail.gmail.com>
+References: <20170324164902.15226.48358.stgit@localhost.localdomain>
+ <20170324170812.15226.97497.stgit@localhost.localdomain> <CALMXkpb3MfLbNoBgLJc0rgMDbPg9yOevKOiq9N8pzVw-aeNb3g@mail.gmail.com>
+ <e532fdb97e142eca2484e5abbeca4c30d11fbad6.camel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <e532fdb97e142eca2484e5abbeca4c30d11fbad6.camel@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-fsdevel@vger.kernel.org
-Cc: Orion Poplawski <orion@nwra.com>, Vivek Trivedi <t.vivek@samsung.com>, Amir Goldstein <amir73il@gmail.com>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, Jan Kara <jack@suse.cz>
+To: Paolo Abeni <pabeni@redhat.com>
+Cc: Christoph Paasch <christoph.paasch@gmail.com>, netdev <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "Samudrala, Sridhar" <sridhar.samudrala@intel.com>, Eric Dumazet <edumazet@google.com>, David Miller <davem@davemloft.net>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Switch waiting for response to fanotify permission events interruptible.
-This allows e.g. the system to be suspended while there are some
-fanotify permission events pending (which is reportedly pretty common
-when for example AV solution is in use). However just making the wait
-interruptible can result in e.g. open(2) returning -EINTR where
-previously such error code never happened in practice. To avoid
-confusion of userspace due to this error code, return -ERESTARTNOINTR
-instead.
+On Thu, Mar 21, 2019 at 2:45 AM Paolo Abeni <pabeni@redhat.com> wrote:
+>
+> Hi,
+>
+> On Wed, 2019-03-20 at 11:35 -0700, Christoph Paasch wrote:
+> > Hello,
+> >
+> > On Fri, Mar 24, 2017 at 3:23 PM Alexander Duyck
+> > <alexander.duyck@gmail.com> wrote:
+> > > From: Alexander Duyck <alexander.h.duyck@intel.com>
+> > >
+> > > > From what I can tell there is only a couple spots where we are actually
+> > > checking the return value of sk_busy_loop. As there are only a few
+> > > consumers of that data, and the data being checked for can be replaced
+> > > with a check for !skb_queue_empty() we might as well just pull the code
+> > > out of sk_busy_loop and place it in the spots that actually need it.
+> > >
+> > > Signed-off-by: Alexander Duyck <alexander.h.duyck@intel.com>
+> > > Acked-by: Eric Dumazet <edumazet@google.com>
+> > > ---
+> > >  include/net/busy_poll.h |    5 ++---
+> > >  net/core/datagram.c     |    8 ++++++--
+> > >  net/core/dev.c          |   25 +++++++++++--------------
+> > >  net/sctp/socket.c       |    9 ++++++---
+> > >  4 files changed, 25 insertions(+), 22 deletions(-)
+> > >
+> > > diff --git a/include/net/busy_poll.h b/include/net/busy_poll.h
+> > > index b82d6ba70a14..c55760f4820f 100644
+> > > --- a/include/net/busy_poll.h
+> > > +++ b/include/net/busy_poll.h
+> > > @@ -74,7 +74,7 @@ static inline bool busy_loop_timeout(unsigned long end_time)
+> > >         return time_after(now, end_time);
+> > >  }
+> > >
+> > > -bool sk_busy_loop(struct sock *sk, int nonblock);
+> > > +void sk_busy_loop(struct sock *sk, int nonblock);
+> > >
+> > >  #else /* CONFIG_NET_RX_BUSY_POLL */
+> > >  static inline unsigned long net_busy_loop_on(void)
+> > > @@ -97,9 +97,8 @@ static inline bool busy_loop_timeout(unsigned long end_time)
+> > >         return true;
+> > >  }
+> > >
+> > > -static inline bool sk_busy_loop(struct sock *sk, int nonblock)
+> > > +static inline void sk_busy_loop(struct sock *sk, int nonblock)
+> > >  {
+> > > -       return false;
+> > >  }
+> > >
+> > >  #endif /* CONFIG_NET_RX_BUSY_POLL */
+> > > diff --git a/net/core/datagram.c b/net/core/datagram.c
+> > > index ea633342ab0d..4608aa245410 100644
+> > > --- a/net/core/datagram.c
+> > > +++ b/net/core/datagram.c
+> > > @@ -256,8 +256,12 @@ struct sk_buff *__skb_try_recv_datagram(struct
+> > > sock *sk, unsigned int flags,
+> > >                 }
+> > >
+> > >                 spin_unlock_irqrestore(&queue->lock, cpu_flags);
+> > > -       } while (sk_can_busy_loop(sk) &&
+> > > -                sk_busy_loop(sk, flags & MSG_DONTWAIT));
+> > > +
+> > > +               if (!sk_can_busy_loop(sk))
+> > > +                       break;
+> > > +
+> > > +               sk_busy_loop(sk, flags & MSG_DONTWAIT);
+> > > +       } while (!skb_queue_empty(&sk->sk_receive_queue));
+> >
+> > since this change I am hitting stalls where it's looping in this
+> > while-loop with syzkaller.
+> >
+> > It worked prior to this change because sk->sk_napi_id was not set thus
+> > sk_busy_loop would make us get out of the loop.
+> >
+> > Now, it keeps on looping because there is an skb in the queue with
+> > skb->len == 0 and we are peeking with an offset, thus
+> > __skb_try_recv_from_queue will return NULL and thus we have no way of
+> > getting out of the loop.
+> >
+> > I'm not sure what would be the best way to fix it. I don't see why we
+> > end up with an skb in the list with skb->len == 0. So, shooting a
+> > quick e-mail, maybe somebody has an idea :-)
+> >
+> > I have the syzkaller-reproducer if needed.
+>
+> IIRC we can have 0 len UDP packet sitting on sk_receive_queue since:
+>
+> commit e6afc8ace6dd5cef5e812f26c72579da8806f5ac
+> Author: samanthakumar <samanthakumar@google.com>
+> Date:   Tue Apr 5 12:41:15 2016 -0400
+>
+>     udp: remove headers from UDP packets before queueing
+>
+> Both __skb_try_recv_datagram() and napi_busy_loop() assume that we
+> received some packets if the queue is not empty. When peeking such
+> assumption is not true, we should check if the last packet is changed,
+> as __skb_recv_datagram() already does. So I *think* the root cause of
+> this issue is older than Alex's patch.
 
-Signed-off-by: Jan Kara <jack@suse.cz>
----
- fs/notify/fanotify/fanotify.c | 11 +++++++++--
- 1 file changed, 9 insertions(+), 2 deletions(-)
+I agree.
 
-Orion, can you give this patch some testing with your usecase? Also if anybody
-sees any issue with returning -ERESTARTNOINTR I have missed, please speak up.
+> The following - completely untested - should avoid the unbounded loop,
+> but it's not a complete fix, I *think* we should also change
+> sk_busy_loop_end() in a similar way, but that is a little more complex
+> due to the additional indirections.
 
-diff --git a/fs/notify/fanotify/fanotify.c b/fs/notify/fanotify/fanotify.c
-index 6b9c27548997..eb790853844b 100644
---- a/fs/notify/fanotify/fanotify.c
-+++ b/fs/notify/fanotify/fanotify.c
-@@ -92,10 +92,17 @@ static int fanotify_get_response(struct fsnotify_group *group,
- 
- 	pr_debug("%s: group=%p event=%p\n", __func__, group, event);
- 
--	ret = wait_event_killable(group->fanotify_data.access_waitq,
--				  event->state == FAN_EVENT_ANSWERED);
-+	ret = wait_event_interruptible(group->fanotify_data.access_waitq,
-+				       event->state == FAN_EVENT_ANSWERED);
- 	/* Signal pending? */
- 	if (ret < 0) {
-+		/*
-+		 * Force restarting a syscall so that this is mostly invisible
-+		 * for userspace which is not prepared for handling EINTR e.g.
-+		 * from open(2).
-+		 */
-+		if (ret == -ERESTARTSYS)
-+			ret = -ERESTARTNOINTR;
- 		spin_lock(&group->notification_lock);
- 		/* Event reported to userspace and no answer yet? */
- 		if (event->state == FAN_EVENT_REPORTED) {
--- 
-2.16.4
+As far as sk_busy_loop_end we could look at just forking sk_busy_loop
+and writing a separate implementation for datagram sockets that uses a
+different loop_end function. It shouldn't take much to change since
+all we would need to do is pass a structure containing the sk and last
+pointers instead of just passing the sk directly as the loop_end
+argument.
+
+> Could you please test it?
+>
+> Any feedback welcome!
+
+The change below looks good to me.
+
+> Could you please test it?
+>
+> Paolo
+> ---
+> diff --git a/net/core/datagram.c b/net/core/datagram.c
+> index b2651bb6d2a3..e657289db4ac 100644
+> --- a/net/core/datagram.c
+> +++ b/net/core/datagram.c
+> @@ -279,7 +279,7 @@ struct sk_buff *__skb_try_recv_datagram(struct sock
+> *sk, unsigned int flags,
+>                         break;
+>
+>                 sk_busy_loop(sk, flags & MSG_DONTWAIT);
+> -       } while (!skb_queue_empty(&sk->sk_receive_queue));
+> +       } while (sk->sk_receive_queue.prev != *last);
+>
+>         error = -EAGAIN;
+>
+>
