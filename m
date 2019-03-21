@@ -1,29 +1,50 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH RESEND v5 0/5] namei: vfs flags to restrict path resolution
-Date: Thu, 21 Mar 2019 10:06:38 -0700
-Message-ID: <CALCETrV-Q4qZXGeavBPQbF6-VVz7hqvjRkbhFeYmbGiQgu5Omg@mail.gmail.com>
-References: <20190320143717.2523-1-cyphar@cyphar.com>
+From: Andrea Arcangeli <aarcange@redhat.com>
+Subject: Re: [PATCH v2 1/1] userfaultfd/sysctl: add
+ vm.unprivileged_userfaultfd
+Date: Thu, 21 Mar 2019 17:06:17 -0400
+Message-ID: <20190321210617.GB22094@redhat.com>
+References: <20190319030722.12441-1-peterx@redhat.com>
+ <20190319030722.12441-2-peterx@redhat.com>
+ <20190319110236.b6169d6b469a587a852c7e09@linux-foundation.org>
+ <20190319182822.GK2727@work-vm>
+ <20190320190112.GD23793@redhat.com>
+ <20190321134335.GB1146@42.do-not-panic.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190320143717.2523-1-cyphar@cyphar.com>
+Content-Disposition: inline
+In-Reply-To: <20190321134335.GB1146@42.do-not-panic.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>, Christian Brauner <christian@brauner.io>, David Drysdale <drysdale@google.com>, Tycho Andersen <tycho@tycho.ws>, Kees Cook <keescook@chromium.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>
+To: Luis Chamberlain <mcgrof@kernel.org>
+Cc: "Dr. David Alan Gilbert" <dgilbert@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Peter Xu <peterx@redhat.com>, linux-kernel@vger.kernel.org, Paolo Bonzini <pbonzini@redhat.com>, Hugh Dickins <hughd@google.com>, Maxime Coquelin <maxime.coquelin@redhat.com>, Maya Gokhale <gokhale2@llnl.gov>, Jerome Glisse <jglisse@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Johannes Weiner <hannes@cmpxchg.org>, Martin Cracauer <cracauer@cons.org>, Denis Plotnikov <dplotnikov@virtuozzo.com>, linux-mm@kvack.org, Marty McFadden <mcfadden8@llnl.gov>, Mike Kravetz <mike.kravetz@oracle.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Kees Cook <keescook@chromium.org>, Mel Gorman <mgorman@suse.de>, "Kirill A . Shutemov" <kirill@shutemov.name>, linux-ap
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 20, 2019 at 7:38 AM Aleksa Sarai <cyphar@cyphar.com> wrote:
->
-> Now that the holiday break is over, it's time to re-send this patch
-> series (with a few additions, due to new information we got from
-> CVE-2019-5736 -- which this patchset mostly protected against but had
-> some holes with regards to #!-style scripts).
+Hello,
 
-I generally like this, but, as Linus pointed out, it will be
-unfortunate if application authors see this as just another
-non-portable weird Linux API and don't use it.  Would it be worthwhile
-to put some thought into making it an API that other OSes might be
-willing to implement?  As it stands, the openat(2) flags are getting
-rather crazy in this patch set.
+On Thu, Mar 21, 2019 at 01:43:35PM +0000, Luis Chamberlain wrote:
+> On Wed, Mar 20, 2019 at 03:01:12PM -0400, Andrea Arcangeli wrote:
+> > but
+> > that would be better be achieved through SECCOMP and not globally.'.
+> 
+> That begs the question why not use seccomp for this? What if everyone
+> decided to add a knob for all syscalls to do the same? For the commit
+> log, why is it OK then to justify a knob for this syscall?
 
-Aleksa had a resolveat(2) proposal that really didn't seem too bad.
+That's a good point and it's obviously more secure because you can
+block a lot more than just bpf and userfaultfd: however not all
+syscalls have CONFIG_USERFAULTFD=n or CONFIG_BPF_SYSCALL=n that you
+can set to =n at build time, then they'll return -ENOSYS (implemented
+as sys_ni_syscall in the =n case).
+
+The point of the bpf (already included upstream) and userfaultfd
+(proposed) sysctl is to avoid users having to rebuild the kernel if
+they want to harden their setup without being forced to run all
+containers under seccomp, just like they could by setting those two
+config options "=n" at build time.
+
+So you can see it like allowing a runtime selection of
+CONFIG_USERFAULTFD and CONFIG_BPF_SYSCALL without the kernel build
+time config forcing the decision on behalf of the end user.
+
+Thanks,
+Andrea
