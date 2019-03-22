@@ -1,170 +1,185 @@
-From: Christoph Paasch <christoph.paasch@gmail.com>
-Subject: Re: [net-next PATCH v3 4/8] net: Change return type of sk_busy_loop
- from bool to void
-Date: Thu, 21 Mar 2019 23:05:27 -0400
-Message-ID: <CALMXkpZ_eB+aRx3+aKM5Bs4RwDfzPNX+XneESo2-yuMPjHV5-Q@mail.gmail.com>
-References: <20170324164902.15226.48358.stgit@localhost.localdomain>
- <20170324170812.15226.97497.stgit@localhost.localdomain> <CALMXkpb3MfLbNoBgLJc0rgMDbPg9yOevKOiq9N8pzVw-aeNb3g@mail.gmail.com>
- <e532fdb97e142eca2484e5abbeca4c30d11fbad6.camel@redhat.com> <CAKgT0Uc68jsuPHKbxxFpeMCQAo2M69DhzA_XGw7Kvou4H3eHPg@mail.gmail.com>
+From: "Dmitry V. Levin" <ldv@altlinux.org>
+Subject: [PATCH linux-next v8 0/7] ptrace: add PTRACE_GET_SYSCALL_INFO request
+Date: Fri, 22 Mar 2019 07:14:09 +0300
+Message-ID: <20190322041409.GA27266@altlinux.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <CAKgT0Uc68jsuPHKbxxFpeMCQAo2M69DhzA_XGw7Kvou4H3eHPg@mail.gmail.com>
-Sender: netdev-owner@vger.kernel.org
-To: Alexander Duyck <alexander.duyck@gmail.com>, Paolo Abeni <pabeni@redhat.com>
-Cc: netdev <netdev@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "Samudrala, Sridhar" <sridhar.samudrala@intel.com>, Eric Dumazet <edumazet@google.com>, David Miller <davem@davemloft.net>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@kernel.org>
+Cc: Elvira Khabirova <lineprinter@altlinux.org>, Eugene Syromyatnikov <esyr@redhat.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Greentime Hu <green.hu@gmail.com>, Helge Deller <deller@gmx.de>, "James E.J. Bottomley" <jejb@parisc-linux.org>, James Hogan <jhogan@kernel.org>, Kees Cook <keescook@chromium.org>, Michael Ellerman <mpe@ellerman.id.au>, Paul Burton <paul.burton@mips.com>, Paul Mackerras <paulus@samba.org>, Ralf Baechle <ralf@linux-mips.org>, Richard Kuo <rkuo@codeaurora.org>, Shuah Khan <shuah@kernel.org>, Vincent Chen <deanbo422@gmail.com>, linux-api@vger.kernel.org, linux-hexagon@vger.kernel.org, linux-kselftest@vger.kernel.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-kernel@vg
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+PTRACE_GET_SYSCALL_INFO is a generic ptrace API that lets ptracer obtain
+details of the syscall the tracee is blocked in.
 
-On Thu, Mar 21, 2019 at 12:43 PM Alexander Duyck
-<alexander.duyck@gmail.com> wrote:
->
-> On Thu, Mar 21, 2019 at 2:45 AM Paolo Abeni <pabeni@redhat.com> wrote:
-> >
-> > Hi,
-> >
-> > On Wed, 2019-03-20 at 11:35 -0700, Christoph Paasch wrote:
-> > > Hello,
-> > >
-> > > On Fri, Mar 24, 2017 at 3:23 PM Alexander Duyck
-> > > <alexander.duyck@gmail.com> wrote:
-> > > > From: Alexander Duyck <alexander.h.duyck@intel.com>
-> > > >
-> > > > > From what I can tell there is only a couple spots where we are actually
-> > > > checking the return value of sk_busy_loop. As there are only a few
-> > > > consumers of that data, and the data being checked for can be replaced
-> > > > with a check for !skb_queue_empty() we might as well just pull the code
-> > > > out of sk_busy_loop and place it in the spots that actually need it.
-> > > >
-> > > > Signed-off-by: Alexander Duyck <alexander.h.duyck@intel.com>
-> > > > Acked-by: Eric Dumazet <edumazet@google.com>
-> > > > ---
-> > > >  include/net/busy_poll.h |    5 ++---
-> > > >  net/core/datagram.c     |    8 ++++++--
-> > > >  net/core/dev.c          |   25 +++++++++++--------------
-> > > >  net/sctp/socket.c       |    9 ++++++---
-> > > >  4 files changed, 25 insertions(+), 22 deletions(-)
-> > > >
-> > > > diff --git a/include/net/busy_poll.h b/include/net/busy_poll.h
-> > > > index b82d6ba70a14..c55760f4820f 100644
-> > > > --- a/include/net/busy_poll.h
-> > > > +++ b/include/net/busy_poll.h
-> > > > @@ -74,7 +74,7 @@ static inline bool busy_loop_timeout(unsigned long end_time)
-> > > >         return time_after(now, end_time);
-> > > >  }
-> > > >
-> > > > -bool sk_busy_loop(struct sock *sk, int nonblock);
-> > > > +void sk_busy_loop(struct sock *sk, int nonblock);
-> > > >
-> > > >  #else /* CONFIG_NET_RX_BUSY_POLL */
-> > > >  static inline unsigned long net_busy_loop_on(void)
-> > > > @@ -97,9 +97,8 @@ static inline bool busy_loop_timeout(unsigned long end_time)
-> > > >         return true;
-> > > >  }
-> > > >
-> > > > -static inline bool sk_busy_loop(struct sock *sk, int nonblock)
-> > > > +static inline void sk_busy_loop(struct sock *sk, int nonblock)
-> > > >  {
-> > > > -       return false;
-> > > >  }
-> > > >
-> > > >  #endif /* CONFIG_NET_RX_BUSY_POLL */
-> > > > diff --git a/net/core/datagram.c b/net/core/datagram.c
-> > > > index ea633342ab0d..4608aa245410 100644
-> > > > --- a/net/core/datagram.c
-> > > > +++ b/net/core/datagram.c
-> > > > @@ -256,8 +256,12 @@ struct sk_buff *__skb_try_recv_datagram(struct
-> > > > sock *sk, unsigned int flags,
-> > > >                 }
-> > > >
-> > > >                 spin_unlock_irqrestore(&queue->lock, cpu_flags);
-> > > > -       } while (sk_can_busy_loop(sk) &&
-> > > > -                sk_busy_loop(sk, flags & MSG_DONTWAIT));
-> > > > +
-> > > > +               if (!sk_can_busy_loop(sk))
-> > > > +                       break;
-> > > > +
-> > > > +               sk_busy_loop(sk, flags & MSG_DONTWAIT);
-> > > > +       } while (!skb_queue_empty(&sk->sk_receive_queue));
-> > >
-> > > since this change I am hitting stalls where it's looping in this
-> > > while-loop with syzkaller.
-> > >
-> > > It worked prior to this change because sk->sk_napi_id was not set thus
-> > > sk_busy_loop would make us get out of the loop.
-> > >
-> > > Now, it keeps on looping because there is an skb in the queue with
-> > > skb->len == 0 and we are peeking with an offset, thus
-> > > __skb_try_recv_from_queue will return NULL and thus we have no way of
-> > > getting out of the loop.
-> > >
-> > > I'm not sure what would be the best way to fix it. I don't see why we
-> > > end up with an skb in the list with skb->len == 0. So, shooting a
-> > > quick e-mail, maybe somebody has an idea :-)
-> > >
-> > > I have the syzkaller-reproducer if needed.
-> >
-> > IIRC we can have 0 len UDP packet sitting on sk_receive_queue since:
-> >
-> > commit e6afc8ace6dd5cef5e812f26c72579da8806f5ac
-> > Author: samanthakumar <samanthakumar@google.com>
-> > Date:   Tue Apr 5 12:41:15 2016 -0400
-> >
-> >     udp: remove headers from UDP packets before queueing
-> >
-> > Both __skb_try_recv_datagram() and napi_busy_loop() assume that we
-> > received some packets if the queue is not empty. When peeking such
-> > assumption is not true, we should check if the last packet is changed,
-> > as __skb_recv_datagram() already does. So I *think* the root cause of
-> > this issue is older than Alex's patch.
->
-> I agree.
->
-> > The following - completely untested - should avoid the unbounded loop,
-> > but it's not a complete fix, I *think* we should also change
-> > sk_busy_loop_end() in a similar way, but that is a little more complex
-> > due to the additional indirections.
->
-> As far as sk_busy_loop_end we could look at just forking sk_busy_loop
-> and writing a separate implementation for datagram sockets that uses a
-> different loop_end function. It shouldn't take much to change since
-> all we would need to do is pass a structure containing the sk and last
-> pointers instead of just passing the sk directly as the loop_end
-> argument.
->
-> > Could you please test it?
-> >
-> > Any feedback welcome!
->
-> The change below looks good to me.
+There are two reasons for a special syscall-related ptrace request.
 
-I just tried it out. Worked for me!
+Firstly, with the current ptrace API there are cases when ptracer cannot
+retrieve necessary information about syscalls.  Some examples include:
+* The notorious int-0x80-from-64-bit-task issue.  See [1] for details.
+In short, if a 64-bit task performs a syscall through int 0x80, its tracer
+has no reliable means to find out that the syscall was, in fact,
+a compat syscall, and misidentifies it.
+* Syscall-enter-stop and syscall-exit-stop look the same for the tracer.
+Common practice is to keep track of the sequence of ptrace-stops in order
+not to mix the two syscall-stops up.  But it is not as simple as it looks;
+for example, strace had a (just recently fixed) long-standing bug where
+attaching strace to a tracee that is performing the execve system call
+led to the tracer identifying the following syscall-exit-stop as
+syscall-enter-stop, which messed up all the state tracking.
+* Since the introduction of commit 84d77d3f06e7e8dea057d10e8ec77ad71f721be3
+("ptrace: Don't allow accessing an undumpable mm"), both PTRACE_PEEKDATA
+and process_vm_readv become unavailable when the process dumpable flag
+is cleared.  On such architectures as ia64 this results in all syscall
+arguments being unavailable for the tracer.
 
-You can add my Tested-by if you do a formal patch-submission:
+Secondly, ptracers also have to support a lot of arch-specific code for
+obtaining information about the tracee.  For some architectures, this
+requires a ptrace(PTRACE_PEEKUSER, ...) invocation for every syscall
+argument and return value.
 
-Tested-by: Christoph Paasch <cpaasch@apple.com>
+PTRACE_GET_SYSCALL_INFO returns the following structure:
 
+struct ptrace_syscall_info {
+	__u8 op;	/* PTRACE_SYSCALL_INFO_* */
+	__u32 arch __attribute__((__aligned__(sizeof(__u32))));
+	__u64 instruction_pointer;
+	__u64 stack_pointer;
+	union {
+		struct {
+			__u64 nr;
+			__u64 args[6];
+		} entry;
+		struct {
+			__s64 rval;
+			__u8 is_error;
+		} exit;
+		struct {
+			__u64 nr;
+			__u64 args[6];
+			__u32 ret_data;
+		} seccomp;
+	};
+};
 
-Christoph
+The structure was chosen according to [2], except for the following
+changes:
+* seccomp substructure was added as a superset of entry substructure;
+* the type of nr field was changed from int to __u64 because syscall
+numbers are, as a practical matter, 64 bits;
+* stack_pointer field was added along with instruction_pointer field
+since it is readily available and can save the tracer from extra
+PTRACE_GETREGS/PTRACE_GETREGSET calls;
+* arch is always initialized to aid with tracing system calls
+* such as execve();
+* instruction_pointer and stack_pointer are always initialized
+so they could be easily obtained for non-syscall stops;
+* a boolean is_error field was added along with rval field, this way
+the tracer can more reliably distinguish a return value
+from an error value.
 
->
-> > Could you please test it?
-> >
-> > Paolo
-> > ---
-> > diff --git a/net/core/datagram.c b/net/core/datagram.c
-> > index b2651bb6d2a3..e657289db4ac 100644
-> > --- a/net/core/datagram.c
-> > +++ b/net/core/datagram.c
-> > @@ -279,7 +279,7 @@ struct sk_buff *__skb_try_recv_datagram(struct sock
-> > *sk, unsigned int flags,
-> >                         break;
-> >
-> >                 sk_busy_loop(sk, flags & MSG_DONTWAIT);
-> > -       } while (!skb_queue_empty(&sk->sk_receive_queue));
-> > +       } while (sk->sk_receive_queue.prev != *last);
-> >
-> >         error = -EAGAIN;
-> >
-> >
+strace has been ported to PTRACE_GET_SYSCALL_INFO.
+Starting with release 4.26, strace uses PTRACE_GET_SYSCALL_INFO API
+as the preferred mechanism of obtaining syscall information.
+
+[1] https://lore.kernel.org/lkml/CA+55aFzcSVmdDj9Lh_gdbz1OzHyEm6ZrGPBDAJnywm2LF_eVyg@mail.gmail.com/
+[2] https://lore.kernel.org/lkml/CAObL_7GM0n80N7J_DFw_eQyfLyzq+sf4y2AvsCCV88Tb3AwEHA@mail.gmail.com/
+
+---
+
+Notes:
+    v8:
+    * Moved syscall_get_arch() specific patches to a separate patchset
+      which is now merged into audit/next tree.
+    * Rebased to linux-next.
+    * Moved ptrace_get_syscall_info code under #ifdef CONFIG_HAVE_ARCH_TRACEHOOK,
+      narrowing down the set of architectures supported by this implementation
+      back to those 19 that enable CONFIG_HAVE_ARCH_TRACEHOOK because
+      I failed to get all syscall_get_*(), instruction_pointer(),
+      and user_stack_pointer() functions implemented on some niche
+      architectures.  This leaves the following architectures out:
+      alpha, h8300, m68k, microblaze, and unicore32.
+
+    v7:
+    * Rebased to v5.0-rc1.
+    * 5 arch-specific preparatory patches out of 25 have been merged
+      into v5.0-rc1 via arch trees.
+
+    v6:
+    * Add syscall_get_arguments and syscall_set_arguments wrappers
+      to asm-generic/syscall.h, requested by Geert.
+    * Change PTRACE_GET_SYSCALL_INFO return code: do not take trailing paddings
+      into account, use the end of the last field of the structure being written.
+    * Change struct ptrace_syscall_info:
+      * remove .frame_pointer field, is is not needed and not portable;
+      * make .arch field explicitly aligned, remove no longer needed
+        padding before .arch field;
+      * remove trailing pads, they are no longer needed.
+
+    v5:
+    * Merge separate series and patches into the single series.
+    * Change PTRACE_EVENTMSG_SYSCALL_{ENTRY,EXIT} values as requested by Oleg.
+    * Change struct ptrace_syscall_info: generalize instruction_pointer,
+      stack_pointer, and frame_pointer fields by moving them from
+      ptrace_syscall_info.{entry,seccomp} substructures to ptrace_syscall_info
+      and initializing them for all stops.
+    * Add PTRACE_SYSCALL_INFO_NONE, set it when not in a syscall stop,
+      so e.g. "strace -i" could use PTRACE_SYSCALL_INFO_SECCOMP to obtain
+      instruction_pointer when the tracee is in a signal stop.
+    * Patch all remaining architectures to provide all necessary
+      syscall_get_* functions.
+    * Make available for all architectures: do not conditionalize on
+      CONFIG_HAVE_ARCH_TRACEHOOK since all syscall_get_* functions
+      are implemented on all architectures.
+    * Add a test for PTRACE_GET_SYSCALL_INFO to selftests/ptrace.
+    
+    v4:
+    * Do not introduce task_struct.ptrace_event,
+      use child->last_siginfo->si_code instead.
+    * Implement PTRACE_SYSCALL_INFO_SECCOMP and ptrace_syscall_info.seccomp
+      support along with PTRACE_SYSCALL_INFO_{ENTRY,EXIT} and
+      ptrace_syscall_info.{entry,exit}.
+    
+    v3:
+    * Change struct ptrace_syscall_info.
+    * Support PTRACE_EVENT_SECCOMP by adding ptrace_event to task_struct.
+    * Add proper defines for ptrace_syscall_info.op values.
+    * Rename PT_SYSCALL_IS_ENTERING and PT_SYSCALL_IS_EXITING to
+      PTRACE_EVENTMSG_SYSCALL_ENTRY and PTRACE_EVENTMSG_SYSCALL_EXIT
+    * and move them to uapi.
+    
+    v2:
+    * Do not use task->ptrace.
+    * Replace entry_info.is_compat with entry_info.arch, use syscall_get_arch().
+    * Use addr argument of sys_ptrace to get expected size of the struct;
+      return full size of the struct.
+
+Dmitry V. Levin (6):
+  nds32: fix asm/syscall.h
+  hexagon: define syscall_get_error() and syscall_get_return_value()
+  mips: define syscall_get_error()
+  parisc: define syscall_get_error()
+  powerpc: define syscall_get_error()
+  selftests/ptrace: add a test case for PTRACE_GET_SYSCALL_INFO
+
+Elvira Khabirova (1):
+  ptrace: add PTRACE_GET_SYSCALL_INFO request
+
+ arch/hexagon/include/asm/syscall.h            |  14 +
+ arch/mips/include/asm/syscall.h               |   6 +
+ arch/nds32/include/asm/syscall.h              |  29 +-
+ arch/parisc/include/asm/syscall.h             |   7 +
+ arch/powerpc/include/asm/syscall.h            |  10 +
+ include/linux/tracehook.h                     |   9 +-
+ include/uapi/linux/ptrace.h                   |  35 +++
+ kernel/ptrace.c                               | 103 ++++++-
+ tools/testing/selftests/ptrace/.gitignore     |   1 +
+ tools/testing/selftests/ptrace/Makefile       |   2 +-
+ .../selftests/ptrace/get_syscall_info.c       | 271 ++++++++++++++++++
+ 11 files changed, 471 insertions(+), 16 deletions(-)
+ create mode 100644 tools/testing/selftests/ptrace/get_syscall_info.c
+
+-- 
+ldv
