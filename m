@@ -1,15 +1,29 @@
-From: "Dmitry V. Levin" <ldv@altlinux.org>
-Subject: [PATCH linux-next v8 0/7] ptrace: add PTRACE_GET_SYSCALL_INFO request
-Date: Fri, 22 Mar 2019 07:14:09 +0300
-Message-ID: <20190322041409.GA27266@altlinux.org>
+From: "Dmitry V. Levin" <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
+Subject: [PATCH linux-next v8 6/7] ptrace: add PTRACE_GET_SYSCALL_INFO request
+Date: Fri, 22 Mar 2019 07:16:15 +0300
+Message-ID: <20190322041615.GG27266@altlinux.org>
+References: <20190322041409.GA27266@altlinux.org>
+Reply-To: strace development discussions <strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <strace-devel-bounces-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@kernel.org>
-Cc: Elvira Khabirova <lineprinter@altlinux.org>, Eugene Syromyatnikov <esyr@redhat.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Greentime Hu <green.hu@gmail.com>, Helge Deller <deller@gmx.de>, "James E.J. Bottomley" <jejb@parisc-linux.org>, James Hogan <jhogan@kernel.org>, Kees Cook <keescook@chromium.org>, Michael Ellerman <mpe@ellerman.id.au>, Paul Burton <paul.burton@mips.com>, Paul Mackerras <paulus@samba.org>, Ralf Baechle <ralf@linux-mips.org>, Richard Kuo <rkuo@codeaurora.org>, Shuah Khan <shuah@kernel.org>, Vincent Chen <deanbo422@gmail.com>, linux-api@vger.kernel.org, linux-hexagon@vger.kernel.org, linux-kselftest@vger.kernel.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-kernel@vg
+In-Reply-To: <20190322041409.GA27266-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
+List-Unsubscribe: <https://lists.strace.io/mailman/options/strace-devel>,
+ <mailto:strace-devel-request-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.strace.io/pipermail/strace-devel/>
+List-Post: <mailto:strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
+List-Help: <mailto:strace-devel-request-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.strace.io/mailman/listinfo/strace-devel>,
+ <mailto:strace-devel-request-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org?subject=subscribe>
+Errors-To: strace-devel-bounces-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org
+Sender: "Strace-devel" <strace-devel-bounces-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org>
+To: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Eugene Syromyatnikov <esyr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
+
+From: Elvira Khabirova <lineprinter-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
 
 PTRACE_GET_SYSCALL_INFO is a generic ptrace API that lets ptracer obtain
 details of the syscall the tracee is blocked in.
@@ -40,59 +54,36 @@ obtaining information about the tracee.  For some architectures, this
 requires a ptrace(PTRACE_PEEKUSER, ...) invocation for every syscall
 argument and return value.
 
-PTRACE_GET_SYSCALL_INFO returns the following structure:
+ptrace(2) man page:
 
-struct ptrace_syscall_info {
-	__u8 op;	/* PTRACE_SYSCALL_INFO_* */
-	__u32 arch __attribute__((__aligned__(sizeof(__u32))));
-	__u64 instruction_pointer;
-	__u64 stack_pointer;
-	union {
-		struct {
-			__u64 nr;
-			__u64 args[6];
-		} entry;
-		struct {
-			__s64 rval;
-			__u8 is_error;
-		} exit;
-		struct {
-			__u64 nr;
-			__u64 args[6];
-			__u32 ret_data;
-		} seccomp;
-	};
-};
+long ptrace(enum __ptrace_request request, pid_t pid,
+            void *addr, void *data);
+...
+PTRACE_GET_SYSCALL_INFO
+       Retrieve information about the syscall that caused the stop.
+       The information is placed into the buffer pointed by "data"
+       argument, which should be a pointer to a buffer of type
+       "struct ptrace_syscall_info".
+       The "addr" argument contains the size of the buffer pointed to
+       by "data" argument (i.e., sizeof(struct ptrace_syscall_info)).
+       The return value contains the number of bytes available
+       to be written by the kernel.
+       If the size of data to be written by the kernel exceeds the size
+       specified by "addr" argument, the output is truncated.
 
-The structure was chosen according to [2], except for the following
-changes:
-* seccomp substructure was added as a superset of entry substructure;
-* the type of nr field was changed from int to __u64 because syscall
-numbers are, as a practical matter, 64 bits;
-* stack_pointer field was added along with instruction_pointer field
-since it is readily available and can save the tracer from extra
-PTRACE_GETREGS/PTRACE_GETREGSET calls;
-* arch is always initialized to aid with tracing system calls
-* such as execve();
-* instruction_pointer and stack_pointer are always initialized
-so they could be easily obtained for non-syscall stops;
-* a boolean is_error field was added along with rval field, this way
-the tracer can more reliably distinguish a return value
-from an error value.
-
-strace has been ported to PTRACE_GET_SYSCALL_INFO.
-Starting with release 4.26, strace uses PTRACE_GET_SYSCALL_INFO API
-as the preferred mechanism of obtaining syscall information.
-
-[1] https://lore.kernel.org/lkml/CA+55aFzcSVmdDj9Lh_gdbz1OzHyEm6ZrGPBDAJnywm2LF_eVyg@mail.gmail.com/
-[2] https://lore.kernel.org/lkml/CAObL_7GM0n80N7J_DFw_eQyfLyzq+sf4y2AvsCCV88Tb3AwEHA@mail.gmail.com/
-
+Co-authored-by: Dmitry V. Levin <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
+Reviewed-by: Oleg Nesterov <oleg-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Reviewed-by: Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>
+Cc: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Eugene Syromyatnikov <esyr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org
+Signed-off-by: Elvira Khabirova <lineprinter-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
+Signed-off-by: Dmitry V. Levin <ldv-u2l5PoMzF/Vg9hUCZPvPmw@public.gmane.org>
 ---
 
 Notes:
     v8:
-    * Moved syscall_get_arch() specific patches to a separate patchset
-      which is now merged into audit/next tree.
     * Rebased to linux-next.
     * Moved ptrace_get_syscall_info code under #ifdef CONFIG_HAVE_ARCH_TRACEHOOK,
       narrowing down the set of architectures supported by this implementation
@@ -101,15 +92,10 @@ Notes:
       and user_stack_pointer() functions implemented on some niche
       architectures.  This leaves the following architectures out:
       alpha, h8300, m68k, microblaze, and unicore32.
-
-    v7:
-    * Rebased to v5.0-rc1.
-    * 5 arch-specific preparatory patches out of 25 have been merged
-      into v5.0-rc1 via arch trees.
-
+    
+    v7: unchanged
+    
     v6:
-    * Add syscall_get_arguments and syscall_set_arguments wrappers
-      to asm-generic/syscall.h, requested by Geert.
     * Change PTRACE_GET_SYSCALL_INFO return code: do not take trailing paddings
       into account, use the end of the last field of the structure being written.
     * Change struct ptrace_syscall_info:
@@ -117,9 +103,8 @@ Notes:
       * make .arch field explicitly aligned, remove no longer needed
         padding before .arch field;
       * remove trailing pads, they are no longer needed.
-
+    
     v5:
-    * Merge separate series and patches into the single series.
     * Change PTRACE_EVENTMSG_SYSCALL_{ENTRY,EXIT} values as requested by Oleg.
     * Change struct ptrace_syscall_info: generalize instruction_pointer,
       stack_pointer, and frame_pointer fields by moving them from
@@ -128,12 +113,9 @@ Notes:
     * Add PTRACE_SYSCALL_INFO_NONE, set it when not in a syscall stop,
       so e.g. "strace -i" could use PTRACE_SYSCALL_INFO_SECCOMP to obtain
       instruction_pointer when the tracee is in a signal stop.
-    * Patch all remaining architectures to provide all necessary
-      syscall_get_* functions.
     * Make available for all architectures: do not conditionalize on
       CONFIG_HAVE_ARCH_TRACEHOOK since all syscall_get_* functions
       are implemented on all architectures.
-    * Add a test for PTRACE_GET_SYSCALL_INFO to selftests/ptrace.
     
     v4:
     * Do not introduce task_struct.ptrace_event,
@@ -156,30 +138,235 @@ Notes:
     * Use addr argument of sys_ptrace to get expected size of the struct;
       return full size of the struct.
 
-Dmitry V. Levin (6):
-  nds32: fix asm/syscall.h
-  hexagon: define syscall_get_error() and syscall_get_return_value()
-  mips: define syscall_get_error()
-  parisc: define syscall_get_error()
-  powerpc: define syscall_get_error()
-  selftests/ptrace: add a test case for PTRACE_GET_SYSCALL_INFO
+ include/linux/tracehook.h   |   9 ++--
+ include/uapi/linux/ptrace.h |  35 ++++++++++++
+ kernel/ptrace.c             | 103 +++++++++++++++++++++++++++++++++++-
+ 3 files changed, 143 insertions(+), 4 deletions(-)
 
-Elvira Khabirova (1):
-  ptrace: add PTRACE_GET_SYSCALL_INFO request
-
- arch/hexagon/include/asm/syscall.h            |  14 +
- arch/mips/include/asm/syscall.h               |   6 +
- arch/nds32/include/asm/syscall.h              |  29 +-
- arch/parisc/include/asm/syscall.h             |   7 +
- arch/powerpc/include/asm/syscall.h            |  10 +
- include/linux/tracehook.h                     |   9 +-
- include/uapi/linux/ptrace.h                   |  35 +++
- kernel/ptrace.c                               | 103 ++++++-
- tools/testing/selftests/ptrace/.gitignore     |   1 +
- tools/testing/selftests/ptrace/Makefile       |   2 +-
- .../selftests/ptrace/get_syscall_info.c       | 271 ++++++++++++++++++
- 11 files changed, 471 insertions(+), 16 deletions(-)
- create mode 100644 tools/testing/selftests/ptrace/get_syscall_info.c
-
+diff --git a/include/linux/tracehook.h b/include/linux/tracehook.h
+index df20f8bdbfa3..6bc7a3d58e2f 100644
+--- a/include/linux/tracehook.h
++++ b/include/linux/tracehook.h
+@@ -57,13 +57,15 @@ struct linux_binprm;
+ /*
+  * ptrace report for syscall entry and exit looks identical.
+  */
+-static inline int ptrace_report_syscall(struct pt_regs *regs)
++static inline int ptrace_report_syscall(struct pt_regs *regs,
++					unsigned long message)
+ {
+ 	int ptrace = current->ptrace;
+ 
+ 	if (!(ptrace & PT_PTRACED))
+ 		return 0;
+ 
++	current->ptrace_message = message;
+ 	ptrace_notify(SIGTRAP | ((ptrace & PT_TRACESYSGOOD) ? 0x80 : 0));
+ 
+ 	/*
+@@ -76,6 +78,7 @@ static inline int ptrace_report_syscall(struct pt_regs *regs)
+ 		current->exit_code = 0;
+ 	}
+ 
++	current->ptrace_message = 0;
+ 	return fatal_signal_pending(current);
+ }
+ 
+@@ -101,7 +104,7 @@ static inline int ptrace_report_syscall(struct pt_regs *regs)
+ static inline __must_check int tracehook_report_syscall_entry(
+ 	struct pt_regs *regs)
+ {
+-	return ptrace_report_syscall(regs);
++	return ptrace_report_syscall(regs, PTRACE_EVENTMSG_SYSCALL_ENTRY);
+ }
+ 
+ /**
+@@ -126,7 +129,7 @@ static inline void tracehook_report_syscall_exit(struct pt_regs *regs, int step)
+ 	if (step)
+ 		user_single_step_report(regs);
+ 	else
+-		ptrace_report_syscall(regs);
++		ptrace_report_syscall(regs, PTRACE_EVENTMSG_SYSCALL_EXIT);
+ }
+ 
+ /**
+diff --git a/include/uapi/linux/ptrace.h b/include/uapi/linux/ptrace.h
+index d5a1b8a492b9..a71b6e3b03eb 100644
+--- a/include/uapi/linux/ptrace.h
++++ b/include/uapi/linux/ptrace.h
+@@ -73,6 +73,41 @@ struct seccomp_metadata {
+ 	__u64 flags;		/* Output: filter's flags */
+ };
+ 
++#define PTRACE_GET_SYSCALL_INFO		0x420e
++#define PTRACE_SYSCALL_INFO_NONE	0
++#define PTRACE_SYSCALL_INFO_ENTRY	1
++#define PTRACE_SYSCALL_INFO_EXIT	2
++#define PTRACE_SYSCALL_INFO_SECCOMP	3
++
++struct ptrace_syscall_info {
++	__u8 op;	/* PTRACE_SYSCALL_INFO_* */
++	__u32 arch __attribute__((__aligned__(sizeof(__u32))));
++	__u64 instruction_pointer;
++	__u64 stack_pointer;
++	union {
++		struct {
++			__u64 nr;
++			__u64 args[6];
++		} entry;
++		struct {
++			__s64 rval;
++			__u8 is_error;
++		} exit;
++		struct {
++			__u64 nr;
++			__u64 args[6];
++			__u32 ret_data;
++		} seccomp;
++	};
++};
++
++/*
++ * These values are stored in task->ptrace_message
++ * by tracehook_report_syscall_* to describe the current syscall-stop.
++ */
++#define PTRACE_EVENTMSG_SYSCALL_ENTRY	1
++#define PTRACE_EVENTMSG_SYSCALL_EXIT	2
++
+ /* Read signals from a shared (process wide) queue */
+ #define PTRACE_PEEKSIGINFO_SHARED	(1 << 0)
+ 
+diff --git a/kernel/ptrace.c b/kernel/ptrace.c
+index 6f357f4fc859..c4a1317410f4 100644
+--- a/kernel/ptrace.c
++++ b/kernel/ptrace.c
+@@ -31,6 +31,10 @@
+ #include <linux/compat.h>
+ #include <linux/sched/signal.h>
+ 
++#ifdef CONFIG_HAVE_ARCH_TRACEHOOK
++#include <asm/syscall.h>	/* For syscall_get_* */
++#endif
++
+ /*
+  * Access another process' address space via ptrace.
+  * Source/target buffer must be kernel space,
+@@ -879,7 +883,100 @@ static int ptrace_regset(struct task_struct *task, int req, unsigned int type,
+  * to ensure no machine forgets it.
+  */
+ EXPORT_SYMBOL_GPL(task_user_regset_view);
+-#endif
++
++static unsigned long
++ptrace_get_syscall_info_entry(struct task_struct *child, struct pt_regs *regs,
++			      struct ptrace_syscall_info *info)
++{
++	unsigned long args[ARRAY_SIZE(info->entry.args)];
++	int i;
++
++	info->op = PTRACE_SYSCALL_INFO_ENTRY;
++	info->entry.nr = syscall_get_nr(child, regs);
++	syscall_get_arguments(child, regs, 0, ARRAY_SIZE(args), args);
++	for (i = 0; i < ARRAY_SIZE(args); i++)
++		info->entry.args[i] = args[i];
++
++	/* args is the last field in struct ptrace_syscall_info.entry */
++	return offsetofend(struct ptrace_syscall_info, entry.args);
++}
++
++static unsigned long
++ptrace_get_syscall_info_seccomp(struct task_struct *child, struct pt_regs *regs,
++				struct ptrace_syscall_info *info)
++{
++	/*
++	 * As struct ptrace_syscall_info.entry is currently a subset
++	 * of struct ptrace_syscall_info.seccomp, it makes sense to
++	 * initialize that subset using ptrace_get_syscall_info_entry().
++	 * This can be reconsidered in the future if these structures
++	 * diverge significantly enough.
++	 */
++	ptrace_get_syscall_info_entry(child, regs, info);
++	info->op = PTRACE_SYSCALL_INFO_SECCOMP;
++	info->seccomp.ret_data = child->ptrace_message;
++
++	/* ret_data is the last field in struct ptrace_syscall_info.seccomp */
++	return offsetofend(struct ptrace_syscall_info, seccomp.ret_data);
++}
++
++static unsigned long
++ptrace_get_syscall_info_exit(struct task_struct *child, struct pt_regs *regs,
++			     struct ptrace_syscall_info *info)
++{
++	info->op = PTRACE_SYSCALL_INFO_EXIT;
++	info->exit.rval = syscall_get_error(child, regs);
++	info->exit.is_error = !!info->exit.rval;
++	if (!info->exit.is_error)
++		info->exit.rval = syscall_get_return_value(child, regs);
++
++	/* is_error is the last field in struct ptrace_syscall_info.exit */
++	return offsetofend(struct ptrace_syscall_info, exit.is_error);
++}
++
++static int
++ptrace_get_syscall_info(struct task_struct *child, unsigned long user_size,
++			void __user *datavp)
++{
++	struct pt_regs *regs = task_pt_regs(child);
++	struct ptrace_syscall_info info = {
++		.op = PTRACE_SYSCALL_INFO_NONE,
++		.arch = syscall_get_arch(child),
++		.instruction_pointer = instruction_pointer(regs),
++		.stack_pointer = user_stack_pointer(regs),
++	};
++	unsigned long actual_size = offsetof(struct ptrace_syscall_info, entry);
++	unsigned long write_size;
++
++	/*
++	 * This does not need lock_task_sighand() to access
++	 * child->last_siginfo because ptrace_freeze_traced()
++	 * called earlier by ptrace_check_attach() ensures that
++	 * the tracee cannot go away and clear its last_siginfo.
++	 */
++	switch (child->last_siginfo ? child->last_siginfo->si_code : 0) {
++	case SIGTRAP | 0x80:
++		switch (child->ptrace_message) {
++		case PTRACE_EVENTMSG_SYSCALL_ENTRY:
++			actual_size = ptrace_get_syscall_info_entry(child, regs,
++								    &info);
++			break;
++		case PTRACE_EVENTMSG_SYSCALL_EXIT:
++			actual_size = ptrace_get_syscall_info_exit(child, regs,
++								   &info);
++			break;
++		}
++		break;
++	case SIGTRAP | (PTRACE_EVENT_SECCOMP << 8):
++		actual_size = ptrace_get_syscall_info_seccomp(child, regs,
++							      &info);
++		break;
++	}
++
++	write_size = min(actual_size, user_size);
++	return copy_to_user(datavp, &info, write_size) ? -EFAULT : actual_size;
++}
++#endif /* CONFIG_HAVE_ARCH_TRACEHOOK */
+ 
+ int ptrace_request(struct task_struct *child, long request,
+ 		   unsigned long addr, unsigned long data)
+@@ -1096,6 +1193,10 @@ int ptrace_request(struct task_struct *child, long request,
+ 			ret = __put_user(kiov.iov_len, &uiov->iov_len);
+ 		break;
+ 	}
++
++	case PTRACE_GET_SYSCALL_INFO:
++		ret = ptrace_get_syscall_info(child, addr, datavp);
++		break;
+ #endif
+ 
+ 	case PTRACE_SECCOMP_GET_FILTER:
 -- 
 ldv
+-- 
+Strace-devel mailing list
+Strace-devel-3+4lAyCyj6AWlMsSdNXQLw@public.gmane.org
+https://lists.strace.io/mailman/listinfo/strace-devel
