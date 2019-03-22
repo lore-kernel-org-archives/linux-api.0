@@ -1,112 +1,89 @@
-From: Carlos O'Donell <codonell@redhat.com>
-Subject: Re: [PATCH 2/4] glibc: sched_getcpu(): use rseq cpu_id TLS on Linux
-Date: Fri, 22 Mar 2019 16:13:52 -0400
-Message-ID: <fc431a95-789a-6c02-13d0-d0d01916ee99@redhat.com>
-References: <20190212194253.1951-1-mathieu.desnoyers@efficios.com>
- <20190212194253.1951-3-mathieu.desnoyers@efficios.com>
+From: Richard Weinberger <richard@nod.at>
+Subject: Re: [RFC PATCH v3 07/18] fscrypt: add
+ FS_IOC_ADD_ENCRYPTION_KEY ioctl
+Date: Fri, 22 Mar 2019 23:02:49 +0100
+Message-ID: <4190811.5ckf3pJJgb@blindfold>
+References: <20190220065249.32099-1-ebiggers@kernel.org>
+ <20190221184203.GB140206@gmail.com> <20190318230830.GA40545@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190212194253.1951-3-mathieu.desnoyers@efficios.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Carlos O'Donell <carlos@redhat.com>
-Cc: Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha@sourceware.org, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+In-Reply-To: <20190318230830.GA40545@gmail.com>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: linux-ext4@vger.kernel.org, "open list:ABI/API" <linux-api@vger.kernel.org>, linux-f2fs-devel@lists.sourceforge.net, linux-fscrypt@vger.kernel.org, keyrings@vger.kernel.org, linux-mtd@lists.infradead.org, linux-crypto@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Satya Tangirala <satyat@google.com>, Paul Crowley <paulcrowley@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On 2/12/19 2:42 PM, Mathieu Desnoyers wrote:
-> When available, use the cpu_id field from __rseq_abi on Linux to
-> implement sched_getcpu(). Fall-back on the vgetcpu vDSO if unavailable.
-> 
-> Benchmarks:
-> 
-> x86-64: Intel E5-2630 v3@2.40GHz, 16-core, hyperthreading
+Ericm
 
-This patch looks good to me for master, but is blocked on patch 1/4
-being reworked.
+Am Dienstag, 19. M=E4rz 2019, 00:08:31 CET schrieb Eric Biggers:
+> I tried using sb->s_bdi->name, but it's still "ubifs" for all UBIFS files=
+ystems.
 
-Reviewed-by: Carlos O'Donell <carlos@redhat.com>
+hmpf.
+ =
 
-> glibc sched_getcpu():                     13.7 ns (baseline)
-> glibc sched_getcpu() using rseq:           2.5 ns (speedup:  5.5x)
-> inline load cpuid from __rseq_abi TLS:     0.8 ns (speedup: 17.1x)
-> 
-> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-> CC: Carlos O'Donell <carlos@redhat.com>
-> CC: Florian Weimer <fweimer@redhat.com>
-> CC: Joseph Myers <joseph@codesourcery.com>
-> CC: Szabolcs Nagy <szabolcs.nagy@arm.com>
-> CC: Thomas Gleixner <tglx@linutronix.de>
-> CC: Ben Maurer <bmaurer@fb.com>
-> CC: Peter Zijlstra <peterz@infradead.org>
-> CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-> CC: Boqun Feng <boqun.feng@gmail.com>
-> CC: Will Deacon <will.deacon@arm.com>
-> CC: Dave Watson <davejwatson@fb.com>
-> CC: Paul Turner <pjt@google.com>
-> CC: libc-alpha@sourceware.org
-> CC: linux-kernel@vger.kernel.org
-> CC: linux-api@vger.kernel.org
-> ---
->   sysdeps/unix/sysv/linux/sched_getcpu.c | 25 +++++++++++++++++++++++--
->   1 file changed, 23 insertions(+), 2 deletions(-)
-> 
-> diff --git a/sysdeps/unix/sysv/linux/sched_getcpu.c b/sysdeps/unix/sysv/linux/sched_getcpu.c
-> index fb0d317f83..8bfb03778b 100644
-> --- a/sysdeps/unix/sysv/linux/sched_getcpu.c
-> +++ b/sysdeps/unix/sysv/linux/sched_getcpu.c
-> @@ -24,8 +24,8 @@
->   #endif
->   #include <sysdep-vdso.h>
->   
-> -int
-> -sched_getcpu (void)
-> +static int
-> +vsyscall_sched_getcpu (void)
+> Perhaps there's a way you can make ->s_id for UBIFS unique?  There are al=
+ready
+> existing places that log ->s_id, so perhaps you should do it anyway regar=
+dless
+> of this patchset?
 
-OK.
+Yes, let me implement that.
+ubifs does:
+super_setup_bdi_name(sb, "ubifs_%d_%d", c->vi.ubi_num, c->vi.vol_id);
 
->   {
->   #ifdef __NR_getcpu
->     unsigned int cpu;
-> @@ -37,3 +37,24 @@ sched_getcpu (void)
->     return -1;
->   #endif
->   }
-> +
-> +#ifdef __NR_rseq
-> +#include <linux/rseq.h>
-> +
-> +extern __attribute__ ((tls_model ("initial-exec")))
-> +__thread volatile struct rseq __rseq_abi;
+So, I try to set ->s_id also to ubifs_%d_%d.
 
-OK.
+> > > =
 
-> +
-> +int
-> +sched_getcpu (void)
-> +{
-> +  int cpu_id = __rseq_abi.cpu_id;
-> +
-> +  return cpu_id >= 0 ? cpu_id : vsyscall_sched_getcpu ();
+> > > > Note that the keyring name isn't particularly important, since the =
+ioctls will
+> > > > work regardless.  But we might as well choose something logical, si=
+nce the
+> > > > keyring name will still show up in /proc/keys.
+> > > =
 
-OK. Impressive :-)
+> > > I'm not done with reviewing your patches, but will it be possible to =
+use keyctl?
+> > > For the a unique name is helpful. :)
+> > > =
 
-> +}
-> +#else
-> +int
-> +sched_getcpu (void)
-> +{
-> +  return vsyscall_sched_getcpu ();
+> > =
 
-OK.
+> > Not for adding keys, removing keys, or getting a key's status -- those =
+are what
+> > the ioctls are for.
+> > =
 
-> +}
-> +#endif
-> 
+> > See e.g. the discussion in patch 7 ("fscrypt: add FS_IOC_ADD_ENCRYPTION=
+_KEY
+> > ioctl") for why the keyrings syscalls are a poor fit for fscrypt.
+> > =
 
+> =
 
--- 
-Cheers,
-Carlos.
+> Anyway, perhaps I should reconsider whether fscrypt should even use the k=
+eyrings
+> subsystem at all, even just "internally", as its quirks still leak out a =
+bit.
+> I'd prefer a nice clean API without any quirks like having to name the ke=
+yrings
+> and assign SELinux labels to the keys just to make the keyrings subsystem=
+ happy.
+
+IMHO the keys subsytem is a good fit. For example for stuff like this one:
+https://www.mail-archive.com/linux-kernel@vger.kernel.org/msg1945778.html
+
+We use UBIFS on many embedded systems with crypto hardware.
+
+Thanks,
+//richard
