@@ -1,79 +1,139 @@
 From: Jonathan Kowalski <bl0pbl33p@gmail.com>
-Subject: Re: [PATCH 0/4] pid: add pidctl()
-Date: Mon, 25 Mar 2019 18:19:16 +0000
-Message-ID: <CAGLj2rE1f4x36KFUjFLiFq8tF1RUmFuCSRTg_tCQ9W2G6LtizA@mail.gmail.com>
-References: <20190325162052.28987-1-christian@brauner.io> <CAKOZueuJSAiKU7fZR2FNDKKCktdyE-sADtWprpsNMAqYQvD9Jw@mail.gmail.com>
- <20190325173614.GB25975@google.com> <CAKOZuetbZOs1Yur4OrW6hh3wVYdoKNkSqTszbpTWnuRBTmT9zA@mail.gmail.com>
+Subject: Re: [PATCH 3/4] signal: support pidctl() with pidfd_send_signal()
+Date: Mon, 25 Mar 2019 18:28:53 +0000
+Message-ID: <CAGLj2rGTK2xLhDhBjh1wSpAiuxbLBt-AwREB5kA8LeW4JFzgsg@mail.gmail.com>
+References: <20190325162052.28987-1-christian@brauner.io> <20190325162052.28987-4-christian@brauner.io>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAKOZuetbZOs1Yur4OrW6hh3wVYdoKNkSqTszbpTWnuRBTmT9zA@mail.gmail.com>
+In-Reply-To: <20190325162052.28987-4-christian@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Colascione <dancol@google.com>
-Cc: Joel Fernandes <joel@joelfernandes.org>, Christian Brauner <christian@brauner.io>, Jann Horn <jannh@google.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthus>
+To: Christian Brauner <christian@brauner.io>
+Cc: Jann Horn <jannh@google.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 25, 2019 at 5:53 PM Daniel Colascione <dancol@google.com> wrote:
+On Mon, Mar 25, 2019 at 4:21 PM Christian Brauner <christian@brauner.io> wrote:
 >
-> [..snip..]
+> Let pidfd_send_signal() use pidfds retrieved via pidctl(). With this patch
+> pidfd_send_signal() becomes independent of procfs. This fullfils the
+> request made when we merged the pidfd_send_signal() patchset. The
+> pidfd_send_signal() syscall is now always available allowing for it to be
+> used by users without procfs mounted or even users without procfs support
+> compiled into the kernel.
 >
-> I don't like the idea of having one kind of pollfd be pollable and
-> another not. Such an interface would be confusing for users. If, as
-> you suggest below, we instead make the procfs-less FD the only thing
-> we call a "pidfd", then this proposal becomes less confusing and more
-> viable.
-
-That's certainly on the table, we remove the ability to open
-/proc/<PID> and use the dir fd with pidfd_send_signal. I'm in favor of
-this.
-
-> > But.. one thing we could do for Daniel usecase is if a /proc/pid directory fd
-> > can be translated into a "pidfd" using another syscall or even a node, like
-> > /proc/pid/handle or something. I think this is what Christian suggested in
-> > the previous threads.
+> Signed-off-by: Christian Brauner <christian@brauner.io>
+> Reviewed-by: David Howells <dhowells@redhat.com>
+> Acked-by: Serge Hallyn <serge@hallyn.com>
+> Cc: Arnd Bergmann <arnd@arndb.de>
+> Cc: "Eric W. Biederman" <ebiederm@xmission.com>
+> Cc: Kees Cook <keescook@chromium.org>
+> Cc: Alexey Dobriyan <adobriyan@gmail.com>
+> Cc: Thomas Gleixner <tglx@linutronix.de>
+> Cc: Jann Horn <jannh@google.com
+> Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+> Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+> Cc: Jonathan Kowalski <bl0pbl33p@gmail.com>
+> Cc: "Dmitry V. Levin" <ldv@altlinux.org>
+> Cc: Andy Lutomirsky <luto@kernel.org>
+> Cc: Andrew Morton <akpm@linux-foundation.org>
+> Cc: Oleg Nesterov <oleg@redhat.com>
+> Cc: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>
+> Cc: Aleksa Sarai <cyphar@cyphar.com>
+> Cc: Al Viro <viro@zeniv.linux.org.uk>
+> ---
+>  kernel/signal.c | 20 +++++++++-----------
+>  kernel/sys_ni.c |  3 ---
+>  2 files changed, 9 insertions(+), 14 deletions(-)
 >
-> /proc/pid/handle, if I understand correctly, "translates" a
-> procfs-based pidfd to a non-pidfd one. The needed interface would have
-> to perform the opposite translation, providing a procfs directory for
-> a given pidfd.
+> diff --git a/kernel/signal.c b/kernel/signal.c
+> index b7953934aa99..d77183be1677 100644
+> --- a/kernel/signal.c
+> +++ b/kernel/signal.c
+> @@ -3513,7 +3513,6 @@ SYSCALL_DEFINE2(kill, pid_t, pid, int, sig)
+>         return kill_something_info(sig, &info, pid);
+>  }
 >
-> > And also for the translation the other way, add a syscall or modify
-> > translate_fd or something, to covert a anon_inode pidfd into a /proc/pid
-> > directory fd. Then the user is welcomed to do openat(2) on _that_ directory fd.
-> > Then we modify pidfd_send_signal to only send signals to pure pidfd fds, not
-> > to /proc/pid directory fds.
+> -#ifdef CONFIG_PROC_FS
+>  /*
+>   * Verify that the signaler and signalee either are in the same pid namespace
+>   * or that the signaler's pid namespace is an ancestor of the signalee's pid
+> @@ -3521,16 +3520,13 @@ SYSCALL_DEFINE2(kill, pid_t, pid, int, sig)
+>   */
+>  static bool access_pidfd_pidns(struct pid *pid)
+
+If it is agreed upon to remove the ability of using /proc/<PID> as a
+pidfd pidfd_send_signal accepts, is lifting this check acceptable?
+
+The system call as is does not allow for a process to acquire a pidfd
+without being in an ancestor namespace or the same namespace. Thus,
+there are good reasons to allow for this to work and be able to work
+around the limitations imposed by pid namespaces if userspace
+explicitly decides to do so, by passing around the pidfd to some other
+process.
+
+Also, you would need to translate this only once, when filling in the
+structure. The other process is bound to its pid ns as long as it is
+alive, therefore it would be simple without having to do anything
+fancy at read side (unlike unix sockets).
+
+>  {
+> +       int ret;
+>         struct pid_namespace *active = task_active_pid_ns(current);
+>         struct pid_namespace *p = ns_of_pid(pid);
 >
-> This approach would work, but there's one subtlety to take into
-> account: which procfs? You'd want to take, as inputs, 1) the procfs
-> root you want, and 2) the pidfd, this way you could return to the user
-> a directory FD in the right procfs.
+> -       for (;;) {
+> -               if (!p)
+> -                       return false;
+> -               if (p == active)
+> -                       break;
+> -               p = p->parent;
+> -       }
+> +       ret = pidnscmp(active, p);
+> +       if (ret < 0)
+> +               return false;
 >
-
-I don't think metadata access is in the scope of such a pidfd itself.
-
-> > Should we work on patches for these? Please let us know if this idea makes
-> > sense and thanks a lot for adding us to the review as well.
+>         return true;
+>  }
+> @@ -3581,12 +3577,15 @@ SYSCALL_DEFINE4(pidfd_send_signal, int, pidfd, int, sig,
+>         if (flags)
+>                 return -EINVAL;
 >
-> I would strongly prefer that we not merge pidctl (or whatever it is)
-> without a story for metadata access, be it your suggestion or
-> something else.
-
-IMO, this is out of scope for a process handle. Hence, the need for
-metadata access musn't stall it as is.
-
-If you really need this, the pid this pidfd is mapped to can be
-exposed through fdinfo (which is perfectly fine for your case as you
-use /proc anyway). This means you can reliably determine if you're
-opening it for the same pid (and it hasn't been recycled) because this
-pidfd will be pollable for state change (in the future). Exposing it
-through fdinfo isn't a problem, pid ns is bound to the process during
-its lifetime, it's a process creation time property, so the value
-isn't going to change anyway. So you can do all metadata access you
-want subsequently.
-
-The upshot is that this same pidfd can then be returned from a future
-extension of clone(2) Christian is planning to work on. It is still
-undecided whether this fd should be only readable by the parent
-process or everyone (which would just be a matter of changing the
-access mode depending on the caller), but that we can discuss all that
-when the patchset is posted.
+> -       f = fdget_raw(pidfd);
+> +       f = fdget(pidfd);
+>         if (!f.file)
+>                 return -EBADF;
+>
+>         /* Is this a pidfd? */
+> -       pid = tgid_pidfd_to_pid(f.file);
+> +       if (f.file->f_op == &pidfd_fops)
+> +               pid = f.file->private_data;
+> +       else
+> +               pid = tgid_pidfd_to_pid(f.file);
+>         if (IS_ERR(pid)) {
+>                 ret = PTR_ERR(pid);
+>                 goto err;
+> @@ -3625,7 +3624,6 @@ SYSCALL_DEFINE4(pidfd_send_signal, int, pidfd, int, sig,
+>         fdput(f);
+>         return ret;
+>  }
+> -#endif /* CONFIG_PROC_FS */
+>
+>  static int
+>  do_send_specific(pid_t tgid, pid_t pid, int sig, struct kernel_siginfo *info)
+> diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+> index d21f4befaea4..4d9ae5ea6caf 100644
+> --- a/kernel/sys_ni.c
+> +++ b/kernel/sys_ni.c
+> @@ -167,9 +167,6 @@ COND_SYSCALL(syslog);
+>
+>  /* kernel/sched/core.c */
+>
+> -/* kernel/signal.c */
+> -COND_SYSCALL(pidfd_send_signal);
+> -
+>  /* kernel/sys.c */
+>  COND_SYSCALL(setregid);
+>  COND_SYSCALL(setgid);
+> --
+> 2.21.0
+>
