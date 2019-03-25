@@ -1,129 +1,151 @@
 From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH 2/4] pid: add pidctl()
-Date: Mon, 25 Mar 2019 20:59:30 +0100
-Message-ID: <20190325195929.4ptq3lnm6bkvtvxx@brauner.io>
+Subject: Re: [PATCH 3/4] signal: support pidctl() with pidfd_send_signal()
+Date: Mon, 25 Mar 2019 21:05:54 +0100
+Message-ID: <20190325200552.fs4exsj3fsls7adu@brauner.io>
 References: <20190325162052.28987-1-christian@brauner.io>
- <20190325162052.28987-3-christian@brauner.io>
- <071b12db-f84e-8666-d70a-1b6cce71f9c0@nextfour.com>
+ <20190325162052.28987-4-christian@brauner.io>
+ <CAGLj2rGTK2xLhDhBjh1wSpAiuxbLBt-AwREB5kA8LeW4JFzgsg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <071b12db-f84e-8666-d70a-1b6cce71f9c0@nextfour.com>
+In-Reply-To: <CAGLj2rGTK2xLhDhBjh1wSpAiuxbLBt-AwREB5kA8LeW4JFzgsg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mika =?utf-8?B?UGVudHRpbMOk?= <mika.penttila@nextfour.com>
-Cc: "jannh@google.com" <jannh@google.com>, "khlebnikov@yandex-team.ru" <khlebnikov@yandex-team.ru>, "luto@kernel.org" <luto@kernel.org>, "dhowells@redhat.com" <dhowells@redhat.com>, "serge@hallyn.com" <serge@hallyn.com>, "ebiederm@xmission.com" <ebiederm@xmission.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "arnd@arndb.de" <arnd@arndb.de>, "keescook@chromium.org" <keescook@chromium.org>, "adobriyan@gmail.com" <adobriyan@gmail.com>, "tglx@linutronix.de" <tglx@linutronix.de>, "mtk.manpages@gmail.com" <mtk.manpages@gmail.com>, "bl0pbl33p@gmail.com" <bl0pbl33p@gmail.com>, "ldv@altlinux.org" <ldv@altlinux.org>, "akpm@linux-foundation.org" <akpm@linux-foundation.org>"oleg@redhat.com" <o>
+To: Jonathan Kowalski <bl0pbl33p@gmail.com>
+Cc: Jann Horn <jannh@google.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 25, 2019 at 05:20:54PM +0000, Mika Penttilä wrote:
-> Hi!
-> 
-> 
-> > +SYSCALL_DEFINE5(pidctl, unsigned int, cmd, pid_t, pid, int, source, int, target,
-> > +		unsigned int, flags)
-> > +{
-> > +	struct pid_namespace *source_ns = NULL, *target_ns = NULL;
-> > +	struct pid *struct_pid;
-> > +	pid_t result;
-> > +
-> > +	switch (cmd) {
-> > +	case PIDCMD_QUERY_PIDNS:
-> > +		if (pid != 0)
-> > +			return -EINVAL;
-> > +		pid = 1;
-> > +		/* fall through */
-> > +	case PIDCMD_QUERY_PID:
-> > +		if (flags != 0)
-> > +			return -EINVAL;
-> > +		break;
-> > +	case PIDCMD_GET_PIDFD:
-> > +		if (flags & ~PIDCTL_CLOEXEC)
-> > +			return -EINVAL;
-> > +		break;
-> > +	default:
-> > +		return -EOPNOTSUPP;
-> > +	}
-> > +
-> > +	source_ns = get_pid_ns_by_fd(source);
-> > +	result = PTR_ERR(source_ns);
-> > +	if (IS_ERR(source_ns))
-> > +		goto err_source;
-> > +
-> > +	target_ns = get_pid_ns_by_fd(target);
-> > +	result = PTR_ERR(target_ns);
-> > +	if (IS_ERR(target_ns))
-> > +		goto err_target;
-> > +
-> > +	if (cmd == PIDCMD_QUERY_PIDNS) {
-> > +		result = pidns_related(source_ns, target_ns);
-> > +	} else {
-> > +		rcu_read_lock();
-> > +		struct_pid = find_pid_ns(pid, source_ns);
-> > +		result = struct_pid ? pid_nr_ns(struct_pid, target_ns) : -ESRCH;
-> 
-> Should you do get_pid(struct_pid) here to keep it alive till 
-> pidfd_create_fd() ?
-
-Yes, indeed. You and Jann both pointed this out! Thank you.
-
-> 
-> > +		rcu_read_unlock();
-> > +
-> > +		if (cmd == PIDCMD_GET_PIDFD) {
-> > +			int cloexec = (flags & PIDCTL_CLOEXEC) ? O_CLOEXEC : 0;
-> > +			if (result > 0)
-> > +				result = pidfd_create_fd(struct_pid, cloexec);
-> > +			else if (result == 0)
-> > +				result = -ENOENT;
-> > +		}
-> > +	}
-> > +
-> > +	if (target)
-> > +		put_pid_ns(target_ns);
-> > +err_target:
-> > +	if (source)
-> > +		put_pid_ns(source_ns);
-> > +err_source:
-> > +	return result;
-> > +}
-> > +
-> >  void __init pid_idr_init(void)
-> >  {
-> >  	/* Verify no one has done anything silly: */
-> > diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
-> > index aa6e72fb7c08..1c863fb3d55a 100644
-> > --- a/kernel/pid_namespace.c
-> > +++ b/kernel/pid_namespace.c
-> > @@ -429,6 +429,31 @@ static struct ns_common *pidns_get_parent(struct ns_common *ns)
-> >  	return &get_pid_ns(pid_ns)->ns;
+On Mon, Mar 25, 2019 at 06:28:53PM +0000, Jonathan Kowalski wrote:
+> On Mon, Mar 25, 2019 at 4:21 PM Christian Brauner <christian@brauner.io> wrote:
+> >
+> > Let pidfd_send_signal() use pidfds retrieved via pidctl(). With this patch
+> > pidfd_send_signal() becomes independent of procfs. This fullfils the
+> > request made when we merged the pidfd_send_signal() patchset. The
+> > pidfd_send_signal() syscall is now always available allowing for it to be
+> > used by users without procfs mounted or even users without procfs support
+> > compiled into the kernel.
+> >
+> > Signed-off-by: Christian Brauner <christian@brauner.io>
+> > Reviewed-by: David Howells <dhowells@redhat.com>
+> > Acked-by: Serge Hallyn <serge@hallyn.com>
+> > Cc: Arnd Bergmann <arnd@arndb.de>
+> > Cc: "Eric W. Biederman" <ebiederm@xmission.com>
+> > Cc: Kees Cook <keescook@chromium.org>
+> > Cc: Alexey Dobriyan <adobriyan@gmail.com>
+> > Cc: Thomas Gleixner <tglx@linutronix.de>
+> > Cc: Jann Horn <jannh@google.com
+> > Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+> > Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+> > Cc: Jonathan Kowalski <bl0pbl33p@gmail.com>
+> > Cc: "Dmitry V. Levin" <ldv@altlinux.org>
+> > Cc: Andy Lutomirsky <luto@kernel.org>
+> > Cc: Andrew Morton <akpm@linux-foundation.org>
+> > Cc: Oleg Nesterov <oleg@redhat.com>
+> > Cc: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>
+> > Cc: Aleksa Sarai <cyphar@cyphar.com>
+> > Cc: Al Viro <viro@zeniv.linux.org.uk>
+> > ---
+> >  kernel/signal.c | 20 +++++++++-----------
+> >  kernel/sys_ni.c |  3 ---
+> >  2 files changed, 9 insertions(+), 14 deletions(-)
+> >
+> > diff --git a/kernel/signal.c b/kernel/signal.c
+> > index b7953934aa99..d77183be1677 100644
+> > --- a/kernel/signal.c
+> > +++ b/kernel/signal.c
+> > @@ -3513,7 +3513,6 @@ SYSCALL_DEFINE2(kill, pid_t, pid, int, sig)
+> >         return kill_something_info(sig, &info, pid);
 > >  }
-> >  
-> > +/**
-> > + * pidnscmp - Determine if @ancestor is ancestor of @descendant
-> > + * @ancestor:   pidns suspected to be the ancestor of @descendant
-> > + * @descendant: pidns suspected to be the descendant of @ancestor
-> > + *
-> > + * Returns -1 if @ancestor is not an ancestor of @descendant,
-> > + * 0 if @ancestor is the same pidns as @descendant, 1 if @ancestor
-> > + * is an ancestor of @descendant.
-> > + */
-> > +int pidnscmp(struct pid_namespace *ancestor, struct pid_namespace *descendant)
-> > +{
-> > +	if (ancestor == descendant)
-> > +		return 0;
-> > +
-> > +	for (;;) {
-> > +		if (!descendant)
-> > +			return -1;
-> > +		if (descendant == ancestor)
-> > +			break;
-> > +		descendant = descendant->parent;
-> > +	}
-> > +
-> > +	return 1;
-> > +}
-> > +
-> >  static struct user_namespace *pidns_owner(struct ns_common *ns)
+> >
+> > -#ifdef CONFIG_PROC_FS
+> >  /*
+> >   * Verify that the signaler and signalee either are in the same pid namespace
+> >   * or that the signaler's pid namespace is an ancestor of the signalee's pid
+> > @@ -3521,16 +3520,13 @@ SYSCALL_DEFINE2(kill, pid_t, pid, int, sig)
+> >   */
+> >  static bool access_pidfd_pidns(struct pid *pid)
+> 
+> If it is agreed upon to remove the ability of using /proc/<PID> as a
+> pidfd pidfd_send_signal accepts, is lifting this check acceptable?
+> 
+> The system call as is does not allow for a process to acquire a pidfd
+> without being in an ancestor namespace or the same namespace. Thus,
+> there are good reasons to allow for this to work and be able to work
+> around the limitations imposed by pid namespaces if userspace
+> explicitly decides to do so, by passing around the pidfd to some other
+> process.
+
+The original problem with this was - I think - that we hadn't settled
+what certain values in struct siginfo_t should be set to when signaling
+e.g. into ancestor pid namespaces. And if we did, we need to hook into
+a widely used function in the kernel (I don't have the appropriate
+thread handy atm) and we decided to punt on this until userspace really
+needs this feature.
+
+> 
+> Also, you would need to translate this only once, when filling in the
+> structure. The other process is bound to its pid ns as long as it is
+> alive, therefore it would be simple without having to do anything
+> fancy at read side (unlike unix sockets).
+> 
 > >  {
-> >  	return to_pid_ns(ns)->user_ns;
+> > +       int ret;
+> >         struct pid_namespace *active = task_active_pid_ns(current);
+> >         struct pid_namespace *p = ns_of_pid(pid);
+> >
+> > -       for (;;) {
+> > -               if (!p)
+> > -                       return false;
+> > -               if (p == active)
+> > -                       break;
+> > -               p = p->parent;
+> > -       }
+> > +       ret = pidnscmp(active, p);
+> > +       if (ret < 0)
+> > +               return false;
+> >
+> >         return true;
+> >  }
+> > @@ -3581,12 +3577,15 @@ SYSCALL_DEFINE4(pidfd_send_signal, int, pidfd, int, sig,
+> >         if (flags)
+> >                 return -EINVAL;
+> >
+> > -       f = fdget_raw(pidfd);
+> > +       f = fdget(pidfd);
+> >         if (!f.file)
+> >                 return -EBADF;
+> >
+> >         /* Is this a pidfd? */
+> > -       pid = tgid_pidfd_to_pid(f.file);
+> > +       if (f.file->f_op == &pidfd_fops)
+> > +               pid = f.file->private_data;
+> > +       else
+> > +               pid = tgid_pidfd_to_pid(f.file);
+> >         if (IS_ERR(pid)) {
+> >                 ret = PTR_ERR(pid);
+> >                 goto err;
+> > @@ -3625,7 +3624,6 @@ SYSCALL_DEFINE4(pidfd_send_signal, int, pidfd, int, sig,
+> >         fdput(f);
+> >         return ret;
+> >  }
+> > -#endif /* CONFIG_PROC_FS */
+> >
+> >  static int
+> >  do_send_specific(pid_t tgid, pid_t pid, int sig, struct kernel_siginfo *info)
+> > diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+> > index d21f4befaea4..4d9ae5ea6caf 100644
+> > --- a/kernel/sys_ni.c
+> > +++ b/kernel/sys_ni.c
+> > @@ -167,9 +167,6 @@ COND_SYSCALL(syslog);
+> >
+> >  /* kernel/sched/core.c */
+> >
+> > -/* kernel/signal.c */
+> > -COND_SYSCALL(pidfd_send_signal);
+> > -
+> >  /* kernel/sys.c */
+> >  COND_SYSCALL(setregid);
+> >  COND_SYSCALL(setgid);
+> > --
+> > 2.21.0
+> >
