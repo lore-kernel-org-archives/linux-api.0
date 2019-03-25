@@ -1,180 +1,129 @@
 From: Christian Brauner <christian@brauner.io>
 Subject: Re: [PATCH 2/4] pid: add pidctl()
-Date: Mon, 25 Mar 2019 20:58:45 +0100
-Message-ID: <20190325195844.lrf7kgutlyv77vmu@brauner.io>
+Date: Mon, 25 Mar 2019 20:59:30 +0100
+Message-ID: <20190325195929.4ptq3lnm6bkvtvxx@brauner.io>
 References: <20190325162052.28987-1-christian@brauner.io>
  <20190325162052.28987-3-christian@brauner.io>
- <CAG48ez24xPM4f7ty=8k5p6_gVWd-bEUSxca5Ngy5svHgarhz+w@mail.gmail.com>
+ <071b12db-f84e-8666-d70a-1b6cce71f9c0@nextfour.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAG48ez24xPM4f7ty=8k5p6_gVWd-bEUSxca5Ngy5svHgarhz+w@mail.gmail.com>
+In-Reply-To: <071b12db-f84e-8666-d70a-1b6cce71f9c0@nextfour.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, bl0pbl33p@gmail.com, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, cyphar@cyphar.com, Al Viro <viro@zeniv.linux.org.uk>, "Joel Fernandes (Google)" <joe>
+To: Mika =?utf-8?B?UGVudHRpbMOk?= <mika.penttila@nextfour.com>
+Cc: "jannh@google.com" <jannh@google.com>, "khlebnikov@yandex-team.ru" <khlebnikov@yandex-team.ru>, "luto@kernel.org" <luto@kernel.org>, "dhowells@redhat.com" <dhowells@redhat.com>, "serge@hallyn.com" <serge@hallyn.com>, "ebiederm@xmission.com" <ebiederm@xmission.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "arnd@arndb.de" <arnd@arndb.de>, "keescook@chromium.org" <keescook@chromium.org>, "adobriyan@gmail.com" <adobriyan@gmail.com>, "tglx@linutronix.de" <tglx@linutronix.de>, "mtk.manpages@gmail.com" <mtk.manpages@gmail.com>, "bl0pbl33p@gmail.com" <bl0pbl33p@gmail.com>, "ldv@altlinux.org" <ldv@altlinux.org>, "akpm@linux-foundation.org" <akpm@linux-foundation.org>"oleg@redhat.com" <o>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 25, 2019 at 07:18:42PM +0100, Jann Horn wrote:
-> On Mon, Mar 25, 2019 at 5:21 PM Christian Brauner <christian@brauner.io> wrote:
-> > The pidctl() syscalls builds on, extends, and improves translate_pid() [4].
-> > I quote Konstantins original patchset first that has already been acked and
-> > picked up by Eric before and whose functionality is preserved in this
-> > syscall:
-> [...]
-> > +
-> > +static struct pid_namespace *get_pid_ns_by_fd(int fd)
-> > +{
-> > +       struct pid_namespace *pidns = ERR_PTR(-EINVAL);
-> > +
-> > +       if (fd >= 0) {
-> > +#ifdef CONFIG_PID_NS
-> > +               struct ns_common *ns;
-> > +               struct file *file = proc_ns_fget(fd);
-> > +               if (IS_ERR(file))
-> > +                       return ERR_CAST(file);
-> > +
-> > +               ns = get_proc_ns(file_inode(file));
-> > +               if (ns->ops->type == CLONE_NEWPID)
-> > +                       pidns = get_pid_ns(
-> > +                               container_of(ns, struct pid_namespace, ns));
+On Mon, Mar 25, 2019 at 05:20:54PM +0000, Mika Penttilä wrote:
+> Hi!
 > 
-> This increments the refcount of the pidns...
-
-I didn't touch that code. That's taken over from the orginial patchset.
-Thanks for catching this.
-
 > 
-> > +
-> > +               fput(file);
-> > +#endif
-> > +       } else {
-> > +               pidns = task_active_pid_ns(current);
-> 
-> ... but this doesn't. That's pretty subtle; could you please put a
-> comment on top of this function that points this out? Or even better,
-> change the function to always take a reference, so that the caller
-> doesn't have to worry about figuring this out.
-
-Always taking a reference sounds more correct. Will do.
-
-> 
-> > +       }
-> > +
-> > +       return pidns;
-> > +}
-> [...]
 > > +SYSCALL_DEFINE5(pidctl, unsigned int, cmd, pid_t, pid, int, source, int, target,
-> > +               unsigned int, flags)
+> > +		unsigned int, flags)
 > > +{
-> > +       struct pid_namespace *source_ns = NULL, *target_ns = NULL;
-> > +       struct pid *struct_pid;
-> > +       pid_t result;
+> > +	struct pid_namespace *source_ns = NULL, *target_ns = NULL;
+> > +	struct pid *struct_pid;
+> > +	pid_t result;
 > > +
-> > +       switch (cmd) {
-> > +       case PIDCMD_QUERY_PIDNS:
-> > +               if (pid != 0)
-> > +                       return -EINVAL;
-> > +               pid = 1;
-> > +               /* fall through */
-> > +       case PIDCMD_QUERY_PID:
-> > +               if (flags != 0)
-> > +                       return -EINVAL;
-> > +               break;
-> > +       case PIDCMD_GET_PIDFD:
-> > +               if (flags & ~PIDCTL_CLOEXEC)
-> > +                       return -EINVAL;
-> > +               break;
-> > +       default:
-> > +               return -EOPNOTSUPP;
-> > +       }
+> > +	switch (cmd) {
+> > +	case PIDCMD_QUERY_PIDNS:
+> > +		if (pid != 0)
+> > +			return -EINVAL;
+> > +		pid = 1;
+> > +		/* fall through */
+> > +	case PIDCMD_QUERY_PID:
+> > +		if (flags != 0)
+> > +			return -EINVAL;
+> > +		break;
+> > +	case PIDCMD_GET_PIDFD:
+> > +		if (flags & ~PIDCTL_CLOEXEC)
+> > +			return -EINVAL;
+> > +		break;
+> > +	default:
+> > +		return -EOPNOTSUPP;
+> > +	}
 > > +
-> > +       source_ns = get_pid_ns_by_fd(source);
-> > +       result = PTR_ERR(source_ns);
+> > +	source_ns = get_pid_ns_by_fd(source);
+> > +	result = PTR_ERR(source_ns);
+> > +	if (IS_ERR(source_ns))
+> > +		goto err_source;
+> > +
+> > +	target_ns = get_pid_ns_by_fd(target);
+> > +	result = PTR_ERR(target_ns);
+> > +	if (IS_ERR(target_ns))
+> > +		goto err_target;
+> > +
+> > +	if (cmd == PIDCMD_QUERY_PIDNS) {
+> > +		result = pidns_related(source_ns, target_ns);
+> > +	} else {
+> > +		rcu_read_lock();
+> > +		struct_pid = find_pid_ns(pid, source_ns);
+> > +		result = struct_pid ? pid_nr_ns(struct_pid, target_ns) : -ESRCH;
 > 
-> I very much dislike using PTR_ERR() on pointers before checking
-> whether they contain an error value or not. I understand that the
-> result of this won't actually be used, but it still seems weird to
-> have what is essentially a cast of a potentially valid pointer to a
-> potentially smaller integer here.
-> 
-> Could you maybe move the PTR_ERR() into the error branch? Like so:
+> Should you do get_pid(struct_pid) here to keep it alive till 
+> pidfd_create_fd() ?
 
-Will do!
-
-> 
-> if (IS_ERR(source_ns)) {
->   result = PTR_ERR(source_ns);
->   goto err_source;
-> }
-> 
-> > +       if (IS_ERR(source_ns))
-> > +               goto err_source;
-> > +
-> > +       target_ns = get_pid_ns_by_fd(target);
-> > +       result = PTR_ERR(target_ns);
-> > +       if (IS_ERR(target_ns))
-> > +               goto err_target;
-> > +
-> > +       if (cmd == PIDCMD_QUERY_PIDNS) {
-> > +               result = pidns_related(source_ns, target_ns);
-> > +       } else {
-> > +               rcu_read_lock();
-> > +               struct_pid = find_pid_ns(pid, source_ns);
-> 
-> find_pid_ns() doesn't take a reference on its return value, the return
-> value is only pinned into memory by the RCU read-side critical
-> section...
-> 
-> > +               result = struct_pid ? pid_nr_ns(struct_pid, target_ns) : -ESRCH;
-> > +               rcu_read_unlock();
-> 
-> ... which ends here, making struct_pid a dangling pointer...
-> 
-> > +
-> > +               if (cmd == PIDCMD_GET_PIDFD) {
-> > +                       int cloexec = (flags & PIDCTL_CLOEXEC) ? O_CLOEXEC : 0;
-> > +                       if (result > 0)
-> > +                               result = pidfd_create_fd(struct_pid, cloexec);
-> 
-> ... and then here you continue to use struct_pid. That seems bogus.
-
-I'll just take a reference to struct pid once I found it to prevent that
-from happening.
+Yes, indeed. You and Jann both pointed this out! Thank you.
 
 > 
-> > +                       else if (result == 0)
-> > +                               result = -ENOENT;
-> 
-> You don't need to have flags for this for new syscalls, you can just
-> make everything O_CLOEXEC; if someone wants to preserve an fd across
-> execve(), they can just clear that bit with fcntl(). (I thiiink it was
-> Andy Lutomirski who said that before regarding another syscall? But my
-> memory of that is pretty foggy, might've been someone else.)
-
-If that's the way going forward this is fine with me!
-
-> 
-> > +               }
-> > +       }
+> > +		rcu_read_unlock();
 > > +
-> > +       if (target)
-> > +               put_pid_ns(target_ns);
+> > +		if (cmd == PIDCMD_GET_PIDFD) {
+> > +			int cloexec = (flags & PIDCTL_CLOEXEC) ? O_CLOEXEC : 0;
+> > +			if (result > 0)
+> > +				result = pidfd_create_fd(struct_pid, cloexec);
+> > +			else if (result == 0)
+> > +				result = -ENOENT;
+> > +		}
+> > +	}
+> > +
+> > +	if (target)
+> > +		put_pid_ns(target_ns);
 > > +err_target:
-> > +       if (source)
-> > +               put_pid_ns(source_ns);
-> 
-> I think you probably intended to check for "if (target >= 0)" and "if
-> (source >= 0)" instead of these conditions, matching the condition in
-> get_pid_ns_by_fd()? The current code looks as if it will leave the
-> refcount one too high when used with target==0 or source==0, and leave
-> the refcount one too low when used with target==-1 or source==-1.
-> Anyway, as stated above, I think it would be simpler to
-> unconditionally take a reference instead.
-
-Yep.
-
-> 
+> > +	if (source)
+> > +		put_pid_ns(source_ns);
 > > +err_source:
-> > +       return result;
+> > +	return result;
 > > +}
+> > +
+> >  void __init pid_idr_init(void)
+> >  {
+> >  	/* Verify no one has done anything silly: */
+> > diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
+> > index aa6e72fb7c08..1c863fb3d55a 100644
+> > --- a/kernel/pid_namespace.c
+> > +++ b/kernel/pid_namespace.c
+> > @@ -429,6 +429,31 @@ static struct ns_common *pidns_get_parent(struct ns_common *ns)
+> >  	return &get_pid_ns(pid_ns)->ns;
+> >  }
+> >  
+> > +/**
+> > + * pidnscmp - Determine if @ancestor is ancestor of @descendant
+> > + * @ancestor:   pidns suspected to be the ancestor of @descendant
+> > + * @descendant: pidns suspected to be the descendant of @ancestor
+> > + *
+> > + * Returns -1 if @ancestor is not an ancestor of @descendant,
+> > + * 0 if @ancestor is the same pidns as @descendant, 1 if @ancestor
+> > + * is an ancestor of @descendant.
+> > + */
+> > +int pidnscmp(struct pid_namespace *ancestor, struct pid_namespace *descendant)
+> > +{
+> > +	if (ancestor == descendant)
+> > +		return 0;
+> > +
+> > +	for (;;) {
+> > +		if (!descendant)
+> > +			return -1;
+> > +		if (descendant == ancestor)
+> > +			break;
+> > +		descendant = descendant->parent;
+> > +	}
+> > +
+> > +	return 1;
+> > +}
+> > +
+> >  static struct user_namespace *pidns_owner(struct ns_common *ns)
+> >  {
+> >  	return to_pid_ns(ns)->user_ns;
