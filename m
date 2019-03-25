@@ -1,105 +1,272 @@
-From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: Re: [PATCH RESEND v5 0/5] namei: vfs flags to restrict path
- resolution
-Date: Tue, 26 Mar 2019 00:04:29 +1100
-Message-ID: <20190325130429.dbrgjxnvq3w5cpb3@yavin>
-References: <20190320143717.2523-1-cyphar@cyphar.com>
- <CALCETrV-Q4qZXGeavBPQbF6-VVz7hqvjRkbhFeYmbGiQgu5Omg@mail.gmail.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH 1/4] glibc: Perform rseq(2) registration at C startup
+ and thread creation (v7)
+Date: Mon, 25 Mar 2019 11:54:32 -0400 (EDT)
+Message-ID: <1965431879.7576.1553529272844.JavaMail.zimbra@efficios.com>
+References: <20190212194253.1951-1-mathieu.desnoyers@efficios.com> <20190212194253.1951-2-mathieu.desnoyers@efficios.com> <5166fbe9-cfe0-8554-abc7-4fc844cf2765@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="57yveyjfb6o3za6g"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrV-Q4qZXGeavBPQbF6-VVz7hqvjRkbhFeYmbGiQgu5Omg@mail.gmail.com>
+In-Reply-To: <5166fbe9-cfe0-8554-abc7-4fc844cf2765@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Eric Biederman <ebiederm@xmission.com>, Jann Horn <jannh@google.com>, Christian Brauner <christian@brauner.io>, David Drysdale <drysdale@google.com>, Tycho Andersen <tycho@tycho.ws>, Kees Cook <keescook@chromium.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, Linus Torvalds <torvalds@linux-fo>
+To: Carlos O'Donell <codonell@redhat.com>, Paul Burton <paul.burton@mips.com>, Will Deacon <will.deacon@arm.com>, Boqun Feng <boqun.feng@gmail.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Vasily Gorbik <gor@linux.ibm.com>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Russell King <linux@armlinux.org.uk>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>
+Cc: carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+Hi Carlos,
 
---57yveyjfb6o3za6g
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+----- On Mar 22, 2019, at 4:09 PM, Carlos O'Donell codonell@redhat.com wrote:
 
-On 2019-03-21, Andy Lutomirski <luto@kernel.org> wrote:
-> On Wed, Mar 20, 2019 at 7:38 AM Aleksa Sarai <cyphar@cyphar.com> wrote:
-> > Now that the holiday break is over, it's time to re-send this patch
-> > series (with a few additions, due to new information we got from
-> > CVE-2019-5736 -- which this patchset mostly protected against but had
-> > some holes with regards to #!-style scripts).
->=20
-> I generally like this, but, as Linus pointed out, it will be
-> unfortunate if application authors see this as just another
-> non-portable weird Linux API and don't use it.  Would it be worthwhile
-> to put some thought into making it an API that other OSes might be
-> willing to implement?  As it stands, the openat(2) flags are getting
-> rather crazy in this patch set.
->=20
-> Aleksa had a resolveat(2) proposal that really didn't seem too bad.
+[...]
 
-I agree having a bunch of O_* flags for resolution feels quite ugly (and
-crazy) -- but the last time I pitched resolveat(2) the reaction was
-lukewarm to say the least. It's basically an O_PATHv2 and I don't know
-how popular that suggestion might be. I wouldn't mind pitching it again
-though (now that I have a better idea of how to handle some of the UX
-worries I had).
+I took care of all your comments for an upcoming round of patches, except the
+following that remain open (see answer inline). I'm adding Linux maintainers
+for ARM, aarch64, MIPS, powerpc, s390, x86 in CC to discuss the choice of
+code signature prior to the abort handler for each of those architectures.
 
-But, if we have a resolveat(2) we'll need to add O_EMPTYPATH support for
-openat(2) so that you can open scoped paths without using the
-/proc/self/fd/$n trick. However, you run into reopening permission
-issues (as we saw in CVE-2019-5736 and countless other CVEs). There
-might be a solution for this which Andy and I have talked about
-off-list.
+[...]
 
-There is also the problem of the execveat(2) attack -- which is dealt
-with in patch 5 of this series. In order to scope #!-script resolution
-we need to have AT_* flags for the same resolution restriction
-(defeating the point of a resolveat(2) slightly).
+>> diff --git a/NEWS b/NEWS
+>> index 912a9bdc0f..0608c60f7d 100644
+>> --- a/NEWS
+>> +++ b/NEWS
+>> @@ -5,6 +5,17 @@ See the end for copying conditions.
+>>   Please send GNU C library bug reports via <https://sourceware.org/bugzilla/>
+>>   using `glibc' in the "product" field.
+>>   
+>> +Version 2.30
+>> +
+>> +Major new features:
+>> +
+>> +* Support for automatically registering threads with the Linux rseq(2)
+>> +  system call has been added. This system call is implemented starting
+>> +  from Linux 4.18. In order to be activated, it requires that glibc is built
+>> +  against kernel headers that include this system call, and that glibc
+>> +  detects availability of that system call at runtime.
+> 
+> What benefit does the feature have for users? Can you talk about that please?
+> Why would a user want to use it. Please feel free to link to an external
+> reference.
 
-There is an argument that we shouldn't need AT_THIS_ROOT or AT_BENEATH
-support (because ideally you should be doing execve(2) in a pivot_root
-anyway) but AT_NO_MAGICLINKS is pretty important -- since it allows you
-to block the circumvention mm->dumpable in certain situations (as we saw
-in CVE-2019-5736).
+Would the following text work ?
 
-The solution Andy and I have discussed is a way to make fd-reopening (a
-seemingly little-known trick outside of container runtimes) much safer
-such that we don't need mitigations like AT_NO_MAGICLINKS on
-execveat(2). If we assume that idea works out (I'm still trying to get a
-working patch for that idea) then resolveat(2) would be sufficient and
-we don't need AT_* flags on execveat(2).
+Version 2.30
 
-tl;dr: I think resolveat(2) is much nicer, and assuming it's not an
-	   unpopular idea I think we should go for it. But there are several
-	   other threads of discussion that we might want to have first
-	   (such as how to improve the fd-reopening design so it's safer
-	   before we expose it to everyone).
+Major new features:
 
---=20
-Aleksa Sarai
-Senior Software Engineer (Containers)
-SUSE Linux GmbH
-<https://www.cyphar.com/>
+* Support for automatically registering threads with the Linux rseq(2)
+  system call has been added.  This system call is implemented starting
+  from Linux 4.18.  The Restartable Sequences ABI accelerates user-space
+  operations on per-cpu data.  It allows user-space to perform updates
+  on per-cpu data without requiring heavy-weight atomic operations. See
+  https://www.efficios.com/blog/2019/02/08/linux-restartable-sequences/
+  for further explanation.
 
---57yveyjfb6o3za6g
-Content-Type: application/pgp-signature; name="signature.asc"
+  In order to be activated, it requires that glibc is built against
+  kernel headers that include this system call, and that glibc detects
+  availability of that system call at runtime.
 
------BEGIN PGP SIGNATURE-----
 
-iQIzBAABCAAdFiEEb6Gz4/mhjNy+aiz1Snvnv3Dem58FAlyY0doACgkQSnvnv3De
-m5/H1Q//S6p57BAirsEx/gjAUOkKIGGK1zQ034Jjplmx7/gAOWKECS86LhV9c6We
-IBDVMVXfeG+iL7yRT7lk2wRTwpeB4DBrqrqD2lpDj2dhzB8b8yzPU4rY027k5r+e
-L/caAoPI6X0NX1nyFiK3MkuQtUNR0GbBI1LOwdwcxFDH0SrCNOrJMCD2VSOtVo5Z
-ktHED0T7KIEDdwS9ZTvEw4yhaxyWhoNGj/V5uU8av1Hbceq8MIxW+Y7aUytr9l4d
-XT0VJWaC9cjEuZWzmZDuZlqTFKFuiupHgE22O4prPJZOAhOMiqrQr76hbSz1ChbN
-iFsHU7JYnUcFd1rPhKwI25kKq2eGWvaj0VLCylQ/ZluMRLPrD3blYJYB9BYIaSss
-XVn9rjdRJG5t3tNKOMEDF9GYuVAE5w9Y+ZZJ1l8eZlUf3C7V6jISDkzvtfYu7xs+
-ish7dFWE3CKrrMJR9eR2zQ0ZoFicCPxBkp7beThQ7JVV24gno7EMS+wF7NdNHKFc
-HwWq6hk1e9wh2FHxQfvloBlFr2FV+lGWhFNFdZ0LzOFJu5Swa1BsPn93KoHi2T7F
-5XK+WAQBtzWuq7J8GN8T9LlhMlXs11QH6FKzt/vsuwEV35M3F4tKgur81bfkdsau
-w+prkX7aetu9qGthO9AFicPDXOXY6HyBcPTDMbGNkHz2/zILvpY=
-=Hj/g
------END PGP SIGNATURE-----
+For reference the assembly code I'm pointing at below can be found
+in the Linux selftests under:
 
---57yveyjfb6o3za6g--
+tools/testing/selftests/rseq/rseq-*.h
+
+>> +++ b/sysdeps/unix/sysv/linux/arm/bits/rseq.h
+[...]
+>> +
+>> +/* Signature required before each abort handler code.  */
+>> +#define RSEQ_SIG 0x53053053
+> 
+> Why isn't this an arm specific op code? Does the user have to mark this
+> up as part of a constant pool when placing it in front of the abort handler
+> to avoid disassembling the constant as code? This was at one point required
+> to get gdb to work properly.
+> 
+
+For arm, the abort is defined as:
+
+#define __RSEQ_ASM_DEFINE_ABORT(table_label, label, teardown,           \
+                                abort_label, version, flags,            \
+                                start_ip, post_commit_offset, abort_ip) \
+                ".balign 32\n\t"                                        \
+                __rseq_str(table_label) ":\n\t"                         \
+                ".word " __rseq_str(version) ", " __rseq_str(flags) "\n\t" \
+                ".word " __rseq_str(start_ip) ", 0x0, " __rseq_str(post_commit_offset) ", 0x0, " __rseq_str(abort_ip) ", 0x0\n\t" \
+                ".word " __rseq_str(RSEQ_SIG) "\n\t"                    \
+                __rseq_str(label) ":\n\t"                               \
+                teardown                                                \
+                "b %l[" __rseq_str(abort_label) "]\n\t"
+
+Which contains a copy of the struct rseq_cs for that critical section
+close to the actual critical section, within the code, followed by the
+signature. The reason why we have a copy of the struct rseq_cs there is
+to speed up entry into the critical section by using the "adr" instruction
+to compute the address to store into __rseq_cs->rseq_cs.
+
+AFAIU, a literal pool on ARM is defined as something which is always
+jumped over (never executed), which is the case here. We always have
+an unconditional branch instruction ("b") skipping over each
+RSEQ_ASM_DEFINE_ABORT().
+
+Therefore, given that the signature is part of a literal pool on ARM,
+it can be any value we choose and should not need to be an actual valid
+instruction.
+
+aarch64 defines the abort as:
+
+#define RSEQ_ASM_DEFINE_ABORT(label, abort_label)                               \
+        "       b       222f\n"                                                 \
+        "       .inst   "       __rseq_str(RSEQ_SIG) "\n"                       \
+        __rseq_str(label) ":\n"                                                 \
+        "       b       %l[" __rseq_str(abort_label) "]\n"                      \
+        "222:\n"
+
+Where the signature actually maps to a valid instruction. Considering that
+aarch64 also have literal pools, and we branch over the signature, I wonder
+why it's so important to ensure the signature is a valid trap instruction.
+Perhaps Will Deacon can enlighten us ?
+
+
+[...]
+>> +++ b/sysdeps/unix/sysv/linux/bits/rseq.h
+>> @@ -0,0 +1,24 @@
+[...]
+>> +
+>> +/* Each architecture supporting rseq should define RSEQ_SIG as a 32-bit
+>> +   signature inserted before each rseq abort label in the code section.  */
+> 
+> Needs a huge explanation about RSEQ_SIG and the reasons why it's per-arch.
+> 
+> Basically cut-and-paste what you wrote to libc-alpha about this.
+
+Updated to:
+
+/* RSEQ_SIG is a signature required before each abort handler code.
+
+   It is a 32-bit value that maps to actual architecture code compiled
+   into applications and libraries. It needs to be defined for each
+   architecture. When choosing this value, it needs to be taken into
+   account that generating invalid instructions may have ill effects on
+   tools like objdump, and may also have impact on the CPU speculative
+   execution efficiency in some cases.  */
+
+
+[...]
+>> +++ b/sysdeps/unix/sysv/linux/mips/bits/rseq.h
+[...]
+>> +
+>> +/* Signature required before each abort handler code.  */
+>> +#define RSEQ_SIG 0x53053053
+> 
+> Why isn't this a mips-specific op code?
+
+MIPS also has a literal pool just before the abort handler, and it
+jumps over it. My understanding is that we can use any signature value
+we want, and it does not need to be a valid instruction, similarly to ARM:
+
+#define __RSEQ_ASM_DEFINE_ABORT(table_label, label, teardown, \
+                                abort_label, version, flags, \
+                                start_ip, post_commit_offset, abort_ip) \
+                ".balign 32\n\t" \
+                __rseq_str(table_label) ":\n\t" \
+                ".word " __rseq_str(version) ", " __rseq_str(flags) "\n\t" \
+                LONG " " U32_U64_PAD(__rseq_str(start_ip)) "\n\t" \
+                LONG " " U32_U64_PAD(__rseq_str(post_commit_offset)) "\n\t" \
+                LONG " " U32_U64_PAD(__rseq_str(abort_ip)) "\n\t" \
+                ".word " __rseq_str(RSEQ_SIG) "\n\t" \
+                __rseq_str(label) ":\n\t" \
+                teardown \
+                "b %l[" __rseq_str(abort_label) "]\n\t"
+
+Perhaps Paul Burton can confirm this ?
+
+[...]
+>> +++ b/sysdeps/unix/sysv/linux/powerpc/bits/rseq.h
+[...]
+>> +/* Signature required before each abort handler code.  */
+>> +#define RSEQ_SIG 0x53053053
+> 
+> Why isn't this an opcode specific to power?
+
+On powerpc 32/64, the abort is placed in a __rseq_failure executable section:
+
+#define RSEQ_ASM_DEFINE_ABORT(label, abort_label)                               \
+                ".pushsection __rseq_failure, \"ax\"\n\t"                       \
+                ".long " __rseq_str(RSEQ_SIG) "\n\t"                            \
+                __rseq_str(label) ":\n\t"                                       \
+                "b %l[" __rseq_str(abort_label) "]\n\t"                         \
+                ".popsection\n\t"
+
+That section only contains snippets of those trampolines. Arguably, it would be
+good if disassemblers could find valid instructions there. Boqun Feng could perhaps
+shed some light on this signature choice ? Now would be a good time to decide
+once and for all whether a valid instruction would be a better choice.
+
+[...]
+>> +++ b/sysdeps/unix/sysv/linux/s390/bits/rseq.h
+[...]
+>> +
+>> +/* Signature required before each abort handler code.  */
+>> +#define RSEQ_SIG 0x53053053
+> 
+> Why not a s390 specific value here?
+
+s390 also has the abort handler in a __rseq_failure section:
+
+#define RSEQ_ASM_DEFINE_ABORT(label, teardown, abort_label)             \
+                ".pushsection __rseq_failure, \"ax\"\n\t"               \
+                ".long " __rseq_str(RSEQ_SIG) "\n\t"                    \
+                __rseq_str(label) ":\n\t"                               \
+                teardown                                                \
+                "j %l[" __rseq_str(abort_label) "]\n\t"                 \
+                ".popsection\n\t"
+
+Same question applies as powerpc: since disassemblers will try to decode
+that instruction, would it be better to define it as a valid one ?
+
+[...]
+>> +++ b/sysdeps/unix/sysv/linux/x86/bits/rseq.h
+[...]
+>> +/* Signature required before each abort handler code.  */
+>> +#define RSEQ_SIG 0x53053053
+> 
+> Why not an x86-specific op code?
+
+On x86, we use this 4-byte signature as operand to a "no-op" instruction
+taking 4-byte immediate operand:
+
+x86-32:
+
+#define RSEQ_ASM_DEFINE_ABORT(label, teardown, abort_label)             \
+                ".pushsection __rseq_failure, \"ax\"\n\t"               \
+                /* Disassembler-friendly signature: nopl <sig>. */      \
+                ".byte 0x0f, 0x1f, 0x05\n\t"                            \
+                ".long " __rseq_str(RSEQ_SIG) "\n\t"                    \
+                __rseq_str(label) ":\n\t"                               \
+                teardown                                                \
+                "jmp %l[" __rseq_str(abort_label) "]\n\t"               \
+                ".popsection\n\t"
+
+
+x86-64:
+
+#define RSEQ_ASM_DEFINE_ABORT(label, teardown, abort_label)             \
+                ".pushsection __rseq_failure, \"ax\"\n\t"               \
+                /* Disassembler-friendly signature: nopl <sig>(%rip). */\
+                ".byte 0x0f, 0x1f, 0x05\n\t"                            \
+                ".long " __rseq_str(RSEQ_SIG) "\n\t"                    \
+                __rseq_str(label) ":\n\t"                               \
+                teardown                                                \
+                "jmp %l[" __rseq_str(abort_label) "]\n\t"               \
+                ".popsection\n\t"
+
+Thanks,
+
+Mathieu
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
