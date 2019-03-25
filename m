@@ -1,89 +1,72 @@
-From: Richard Weinberger <richard@nod.at>
-Subject: Re: [RFC PATCH v3 07/18] fscrypt: add
- FS_IOC_ADD_ENCRYPTION_KEY ioctl
-Date: Fri, 22 Mar 2019 23:02:49 +0100
-Message-ID: <4190811.5ckf3pJJgb@blindfold>
-References: <20190220065249.32099-1-ebiggers@kernel.org>
- <20190221184203.GB140206@gmail.com> <20190318230830.GA40545@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-In-Reply-To: <20190318230830.GA40545@gmail.com>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: linux-ext4@vger.kernel.org, "open list:ABI/API" <linux-api@vger.kernel.org>, linux-f2fs-devel@lists.sourceforge.net, linux-fscrypt@vger.kernel.org, keyrings@vger.kernel.org, linux-mtd@lists.infradead.org, linux-crypto@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Satya Tangirala <satyat@google.com>, Paul Crowley <paulcrowley@google.com>
+From: Wu Hao <hao.wu@intel.com>
+Subject: [PATCH 00/17] add new features for FPGA DFL drivers
+Date: Mon, 25 Mar 2019 11:07:27 +0800
+Message-ID: <1553483264-5379-1-git-send-email-hao.wu@intel.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, Wu Hao <hao.wu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Ericm
+This patchset adds more features support for FPGA Device Feature List
+(DFL) drivers, including PR enhancement, virtualization support based
+on PCIe SRIOV, private features to Port, private features to FME, and
+enhancement to DFL framework. Please refer to details in below list.
 
-Am Dienstag, 19. M=E4rz 2019, 00:08:31 CET schrieb Eric Biggers:
-> I tried using sb->s_bdi->name, but it's still "ubifs" for all UBIFS files=
-ystems.
+Patch 1: A bug fixing to current dfl-fme-mgr driver.
+Patch 2-3: add 512bit data width PR support.
+Patch 4-6: add virtualization support based on PCIe SRIOV.
+Patch 7-8: add new AFU state and userclock related sysfs to dfl-afu.
+Patch 9-10: enhancement to DFL framework in order to support id_table.
+Patch 11: add error reporting private feature support to dfl-afu.
+Patch 12: add STP (SignalTap) private feature support to dfl-afu.
+Patch 13: add capability sysfs interfaces to dfl-fme.
+Patch 14: add thermal management private feature support to dfl-fme.
+Patch 15: add power management private feature support to dfl-fme.
+Patch 16: add global error reporitng private feature support to dfl-fme.
+Patch 17: add performance reporting support to dfl-fme.
 
-hmpf.
- =
+Wu Hao (17):
+  fpga: dfl-fme-mgr: fix FME_PR_INTFC_ID register address.
+  fpga: dfl: fme: align PR buffer size per PR datawidth
+  fpga: dfl: fme: support 512bit data width PR
+  Documentation: fpga: dfl: add descriptions for virtualization and new
+    interfaces.
+  fpga: dfl: fme: add DFL_FPGA_FME_PORT_RELEASE/ASSIGN ioctl support.
+  fpga: dfl: pci: enable SRIOV support.
+  fpga: dfl: afu: add AFU state related sysfs interfaces
+  fpga: dfl: afu: add userclock sysfs interfaces.
+  fpga: dfl: add id_table for dfl private feature driver
+  fpga: dfl: afu: export __port_enable/disable function.
+  fpga: dfl: afu: add error reporting support.
+  fpga: dfl: afu: add STP (SignalTap) support
+  fpga: dfl: fme: add capability sysfs interfaces
+  fpga: dfl: fme: add thermal management support
+  fpga: dfl: fme: add power management support
+  fpga: dfl: fme: add global error reporting support
+  fpga: dfl: fme: add performance reporting support
 
-> Perhaps there's a way you can make ->s_id for UBIFS unique?  There are al=
-ready
-> existing places that log ->s_id, so perhaps you should do it anyway regar=
-dless
-> of this patchset?
+ Documentation/ABI/testing/sysfs-platform-dfl-fme  | 279 +++++++
+ Documentation/ABI/testing/sysfs-platform-dfl-port |  94 +++
+ Documentation/fpga/dfl.txt                        | 115 +++
+ drivers/fpga/Makefile                             |   4 +-
+ drivers/fpga/dfl-afu-error.c                      | 225 +++++
+ drivers/fpga/dfl-afu-main.c                       | 335 +++++++-
+ drivers/fpga/dfl-afu.h                            |   7 +
+ drivers/fpga/dfl-fme-error.c                      | 390 +++++++++
+ drivers/fpga/dfl-fme-main.c                       | 583 ++++++++++++-
+ drivers/fpga/dfl-fme-mgr.c                        |  79 +-
+ drivers/fpga/dfl-fme-perf.c                       | 950 ++++++++++++++++++++++
+ drivers/fpga/dfl-fme-pr.c                         |  64 +-
+ drivers/fpga/dfl-fme.h                            |   9 +-
+ drivers/fpga/dfl-pci.c                            |  40 +
+ drivers/fpga/dfl.c                                | 170 +++-
+ drivers/fpga/dfl.h                                |  56 +-
+ include/uapi/linux/fpga-dfl.h                     |  32 +
+ 17 files changed, 3355 insertions(+), 77 deletions(-)
+ create mode 100644 drivers/fpga/dfl-afu-error.c
+ create mode 100644 drivers/fpga/dfl-fme-error.c
+ create mode 100644 drivers/fpga/dfl-fme-perf.c
 
-Yes, let me implement that.
-ubifs does:
-super_setup_bdi_name(sb, "ubifs_%d_%d", c->vi.ubi_num, c->vi.vol_id);
-
-So, I try to set ->s_id also to ubifs_%d_%d.
-
-> > > =
-
-> > > > Note that the keyring name isn't particularly important, since the =
-ioctls will
-> > > > work regardless.  But we might as well choose something logical, si=
-nce the
-> > > > keyring name will still show up in /proc/keys.
-> > > =
-
-> > > I'm not done with reviewing your patches, but will it be possible to =
-use keyctl?
-> > > For the a unique name is helpful. :)
-> > > =
-
-> > =
-
-> > Not for adding keys, removing keys, or getting a key's status -- those =
-are what
-> > the ioctls are for.
-> > =
-
-> > See e.g. the discussion in patch 7 ("fscrypt: add FS_IOC_ADD_ENCRYPTION=
-_KEY
-> > ioctl") for why the keyrings syscalls are a poor fit for fscrypt.
-> > =
-
-> =
-
-> Anyway, perhaps I should reconsider whether fscrypt should even use the k=
-eyrings
-> subsystem at all, even just "internally", as its quirks still leak out a =
-bit.
-> I'd prefer a nice clean API without any quirks like having to name the ke=
-yrings
-> and assign SELinux labels to the keys just to make the keyrings subsystem=
- happy.
-
-IMHO the keys subsytem is a good fit. For example for stuff like this one:
-https://www.mail-archive.com/linux-kernel@vger.kernel.org/msg1945778.html
-
-We use UBIFS on many embedded systems with crypto hardware.
-
-Thanks,
-//richard
+-- 
+2.7.4
