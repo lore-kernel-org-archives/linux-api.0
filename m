@@ -1,171 +1,264 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH 04/17] Documentation: fpga: dfl: add descriptions for virtualization and new interfaces.
-Date: Mon, 25 Mar 2019 11:07:31 +0800
-Message-ID: <1553483264-5379-5-git-send-email-hao.wu@intel.com>
+Subject: [PATCH 07/17] fpga: dfl: afu: add AFU state related sysfs interfaces
+Date: Mon, 25 Mar 2019 11:07:34 +0800
+Message-ID: <1553483264-5379-8-git-send-email-hao.wu@intel.com>
 References: <1553483264-5379-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1553483264-5379-1-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, Wu Hao <hao.wu@intel.com>, Xu Yilun <yilun.xu@intel.com>
+Cc: linux-api@vger.kernel.org, Wu Hao <hao.wu@intel.com>, Ananda Ravuri <ananda.ravuri@intel.com>, Xu Yilun <yilun.xu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds virtualization support description for DFL based
-FPGA devices (based on PCIe SRIOV), and introductions to new
-interfaces added by new dfl private features.
+This patch introduces more sysfs interfaces for Accelerated
+Function Unit (AFU). These interfaces allow users to read
+current AFU Power State (APx), read / clear AFU Power (APx)
+events which are sticky to identify transient APx state,
+and manage AFU's LTR (latency tolerance reporting).
 
+Signed-off-by: Ananda Ravuri <ananda.ravuri@intel.com>
 Signed-off-by: Xu Yilun <yilun.xu@intel.com>
 Signed-off-by: Wu Hao <hao.wu@intel.com>
 ---
- Documentation/fpga/dfl.txt | 115 +++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 115 insertions(+)
+ Documentation/ABI/testing/sysfs-platform-dfl-port |  30 +++++
+ drivers/fpga/dfl-afu-main.c                       | 144 ++++++++++++++++++++++
+ drivers/fpga/dfl.h                                |  11 ++
+ 3 files changed, 185 insertions(+)
 
-diff --git a/Documentation/fpga/dfl.txt b/Documentation/fpga/dfl.txt
-index 6df4621..360c1d9 100644
---- a/Documentation/fpga/dfl.txt
-+++ b/Documentation/fpga/dfl.txt
-@@ -84,6 +84,8 @@ The following functions are exposed through ioctls:
-  Get driver API version (DFL_FPGA_GET_API_VERSION)
-  Check for extensions (DFL_FPGA_CHECK_EXTENSION)
-  Program bitstream (DFL_FPGA_FME_PORT_PR)
-+ Assign port to PF (DFL_FPGA_FME_PORT_ASSIGN)
-+ Release port from PF (DFL_FPGA_FME_PORT_RELEASE)
+diff --git a/Documentation/ABI/testing/sysfs-platform-dfl-port b/Documentation/ABI/testing/sysfs-platform-dfl-port
+index 6a92dda..f0c4e92 100644
+--- a/Documentation/ABI/testing/sysfs-platform-dfl-port
++++ b/Documentation/ABI/testing/sysfs-platform-dfl-port
+@@ -14,3 +14,33 @@ Description:	Read-only. User can program different PR bitstreams to FPGA
+ 		Accelerator Function Unit (AFU) for different functions. It
+ 		returns uuid which could be used to identify which PR bitstream
+ 		is programmed in this AFU.
++
++What:		/sys/bus/platform/devices/dfl-port.0/power_state
++Date:		March 2019
++KernelVersion:	5.2
++Contact:	Wu Hao <hao.wu@intel.com>
++Description:	Read-only. It reports the APx (AFU Power) state, different APx
++		means different throttling level. When reading this file, it
++		returns "0" - Normal / "1" - AP1 / "2" - AP2 / "6" - AP6.
++
++What:		/sys/bus/platform/devices/dfl-port.0/ap1_event
++Date:		March 2019
++KernelVersion:	5.2
++Contact:	Wu Hao <hao.wu@intel.com>
++Description:	Read-write. Read or set 1 to clear AP1 (AFU Power State 1)
++		event. It's used to indicate transient AP1 state.
++
++What:		/sys/bus/platform/devices/dfl-port.0/ap2_event
++Date:		March 2019
++KernelVersion:	5.2
++Contact:	Wu Hao <hao.wu@intel.com>
++Description:	Read-write. Read or set 1 to clear AP2 (AFU Power State 2)
++		event. It's used to indicate transient AP2 state.
++
++What:		/sys/bus/platform/devices/dfl-port.0/ltr
++Date:		March 2019
++KernelVersion:	5.2
++Contact:	Wu Hao <hao.wu@intel.com>
++Description:	Read-write. Read and set AFU latency tolerance reporting value.
++		Set ltr to 1 if the AFU can tolerate latency >= 40us or set it
++		to 0 if it is latency sensitive.
+diff --git a/drivers/fpga/dfl-afu-main.c b/drivers/fpga/dfl-afu-main.c
+index 02baa6a..2ffec06 100644
+--- a/drivers/fpga/dfl-afu-main.c
++++ b/drivers/fpga/dfl-afu-main.c
+@@ -21,6 +21,8 @@
  
- More functions are exposed through sysfs
- (/sys/class/fpga_region/regionX/dfl-fme.n/):
-@@ -99,6 +101,24 @@ More functions are exposed through sysfs
-      one FPGA device may have more than one port, this sysfs interface indicates
-      how many ports the FPGA device has.
+ #include "dfl-afu.h"
  
-+ Power management (power_mgmt/)
-+     power management sysfs interfaces allow user to read power management
-+     information (power consumption, power limits, throttling thresholds,
-+     thresholds status, etc) and configure power thresholds for different
-+     throttling levels.
++#define DRV_VERSION	"0.8"
 +
-+ Thermal management (thermal_mgmt/)
-+     thermal management sysfs interfaces allow user to read temperature,
-+     thresholds, thresholds status and other thermal related information.
-+
-+ Global error reporting management (errors/)
-+     error reporting sysfs interfaces allow user to read errors detected by the
-+     hardware, and clear the logged errors.
-+
-+ Performance counters (perf/)
-+     performance counters sysfs interfaces allow user to use different counters
-+     to get performance data.
-+
+ /**
+  * port_enable - enable a port
+  * @pdev: port platform device.
+@@ -141,8 +143,149 @@ id_show(struct device *dev, struct device_attribute *attr, char *buf)
+ }
+ static DEVICE_ATTR_RO(id);
  
- FIU - PORT
- ==========
-@@ -139,6 +159,10 @@ More functions are exposed through sysfs:
-  Read Accelerator GUID (afu_id)
-      afu_id indicates which PR bitstream is programmed to this AFU.
++static ssize_t
++ltr_show(struct device *dev, struct device_attribute *attr, char *buf)
++{
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
++	void __iomem *base;
++	u64 v;
++
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_HEADER);
++
++	mutex_lock(&pdata->lock);
++	v = readq(base + PORT_HDR_CTRL);
++	mutex_unlock(&pdata->lock);
++
++	return scnprintf(buf, PAGE_SIZE, "%x\n",
++			 (u8)FIELD_GET(PORT_CTRL_LATENCY, v));
++}
++
++static ssize_t
++ltr_store(struct device *dev, struct device_attribute *attr,
++	  const char *buf, size_t count)
++{
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
++	void __iomem *base;
++	u8 ltr;
++	u64 v;
++
++	if (kstrtou8(buf, 0, &ltr) || ltr > 1)
++		return -EINVAL;
++
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_HEADER);
++
++	mutex_lock(&pdata->lock);
++	v = readq(base + PORT_HDR_CTRL);
++	v &= ~PORT_CTRL_LATENCY;
++	v |= FIELD_PREP(PORT_CTRL_LATENCY, ltr);
++	writeq(v, base + PORT_HDR_CTRL);
++	mutex_unlock(&pdata->lock);
++
++	return count;
++}
++static DEVICE_ATTR_RW(ltr);
++
++static ssize_t
++ap1_event_show(struct device *dev, struct device_attribute *attr, char *buf)
++{
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
++	void __iomem *base;
++	u64 v;
++
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_HEADER);
++
++	mutex_lock(&pdata->lock);
++	v = readq(base + PORT_HDR_STS);
++	mutex_unlock(&pdata->lock);
++
++	return scnprintf(buf, PAGE_SIZE, "%x\n",
++			 (u8)FIELD_GET(PORT_STS_AP1_EVT, v));
++}
++
++static ssize_t
++ap1_event_store(struct device *dev, struct device_attribute *attr,
++		const char *buf, size_t count)
++{
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
++	void __iomem *base;
++	u8 ap1_event;
++
++	if (kstrtou8(buf, 0, &ap1_event) || ap1_event != 1)
++		return -EINVAL;
++
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_HEADER);
++
++	mutex_lock(&pdata->lock);
++	writeq(PORT_STS_AP1_EVT, base + PORT_HDR_STS);
++	mutex_unlock(&pdata->lock);
++
++	return count;
++}
++static DEVICE_ATTR_RW(ap1_event);
++
++static ssize_t
++ap2_event_show(struct device *dev, struct device_attribute *attr,
++	       char *buf)
++{
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
++	void __iomem *base;
++	u64 v;
++
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_HEADER);
++
++	mutex_lock(&pdata->lock);
++	v = readq(base + PORT_HDR_STS);
++	mutex_unlock(&pdata->lock);
++
++	return scnprintf(buf, PAGE_SIZE, "%x\n",
++			 (u8)FIELD_GET(PORT_STS_AP2_EVT, v));
++}
++
++static ssize_t
++ap2_event_store(struct device *dev, struct device_attribute *attr,
++		const char *buf, size_t count)
++{
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
++	void __iomem *base;
++	u8 ap2_event;
++
++	if (kstrtou8(buf, 0, &ap2_event) || ap2_event != 1)
++		return -EINVAL;
++
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_HEADER);
++
++	mutex_lock(&pdata->lock);
++	writeq(PORT_STS_AP2_EVT, base + PORT_HDR_STS);
++	mutex_unlock(&pdata->lock);
++
++	return count;
++}
++static DEVICE_ATTR_RW(ap2_event);
++
++static ssize_t
++power_state_show(struct device *dev, struct device_attribute *attr, char *buf)
++{
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
++	void __iomem *base;
++	u64 v;
++
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_HEADER);
++
++	mutex_lock(&pdata->lock);
++	v = readq(base + PORT_HDR_STS);
++	mutex_unlock(&pdata->lock);
++
++	return scnprintf(buf, PAGE_SIZE, "0x%x\n",
++			 (u8)FIELD_GET(PORT_STS_PWR_STATE, v));
++}
++static DEVICE_ATTR_RO(power_state);
++
+ static const struct attribute *port_hdr_attrs[] = {
+ 	&dev_attr_id.attr,
++	&dev_attr_ltr.attr,
++	&dev_attr_ap1_event.attr,
++	&dev_attr_ap2_event.attr,
++	&dev_attr_power_state.attr,
+ 	NULL,
+ };
  
-+ Error reporting (errors/)
-+     error reporting sysfs interfaces allow user to read port/afu errors
-+     detected by the hardware, and clear the logged errors.
-+
+@@ -634,3 +777,4 @@ MODULE_DESCRIPTION("FPGA Accelerated Function Unit driver");
+ MODULE_AUTHOR("Intel Corporation");
+ MODULE_LICENSE("GPL v2");
+ MODULE_ALIAS("platform:dfl-port");
++MODULE_VERSION(DRV_VERSION);
+diff --git a/drivers/fpga/dfl.h b/drivers/fpga/dfl.h
+index 1350e8e..1525098 100644
+--- a/drivers/fpga/dfl.h
++++ b/drivers/fpga/dfl.h
+@@ -119,6 +119,7 @@
+ #define PORT_HDR_NEXT_AFU	NEXT_AFU
+ #define PORT_HDR_CAP		0x30
+ #define PORT_HDR_CTRL		0x38
++#define PORT_HDR_STS		0x40
  
- DFL Framework Overview
- ======================
-@@ -212,6 +236,97 @@ the compat_id exposed by the target FPGA region. This check is usually done by
- userspace before calling the reconfiguration IOCTL.
- 
- 
-+FPGA virtualization - PCIe SRIOV
-+================================
-+This section describes the virtualization support on DFL based FPGA device to
-+enable accessing an accelerator from applications running in a virtual machine
-+(VM). This section only describes the PCIe based FPGA device with SRIOV support.
+ /* Port Capability Register Bitfield */
+ #define PORT_CAP_PORT_NUM	GENMASK_ULL(1, 0)	/* ID of this port */
+@@ -130,6 +131,16 @@
+ /* Latency tolerance reporting. '1' >= 40us, '0' < 40us.*/
+ #define PORT_CTRL_LATENCY	BIT_ULL(2)
+ #define PORT_CTRL_SFTRST_ACK	BIT_ULL(4)		/* HW ack for reset */
 +
-+Features supported by the particular FPGA device are exposed through Device
-+Feature Lists, as illustrated below:
++/* Port Status Register Bitfield */
++#define PORT_STS_AP2_EVT	BIT_ULL(13)		/* AP2 event detected */
++#define PORT_STS_AP1_EVT	BIT_ULL(12)		/* AP1 event detected */
++#define PORT_STS_PWR_STATE	GENMASK_ULL(11, 8)	/* AFU power states */
++#define PORT_STS_PWR_STATE_NORM 0
++#define PORT_STS_PWR_STATE_AP1	1			/* 50% throttling */
++#define PORT_STS_PWR_STATE_AP2	2			/* 90% throttling */
++#define PORT_STS_PWR_STATE_AP6	6			/* 100% throttling */
 +
-+  +-------------------------------+  +-------------+
-+  |              PF               |  |     VF      |
-+  +-------------------------------+  +-------------+
-+      ^            ^         ^              ^
-+      |            |         |              |
-++-----|------------|---------|--------------|-------+
-+|     |            |         |              |       |
-+|  +-----+     +-------+ +-------+      +-------+   |
-+|  | FME |     | Port0 | | Port1 |      | Port2 |   |
-+|  +-----+     +-------+ +-------+      +-------+   |
-+|                  ^         ^              ^       |
-+|                  |         |              |       |
-+|              +-------+ +------+       +-------+   |
-+|              |  AFU  | |  AFU |       |  AFU  |   |
-+|              +-------+ +------+       +-------+   |
-+|                                                   |
-+|            DFL based FPGA PCIe Device             |
-++---------------------------------------------------+
-+
-+FME is always accessed through the physical function (PF).
-+
-+Ports (and related AFUs) are accessed via PF by default, but could be exposed
-+through virtual function (VF) devices via PCIe SRIOV. Each VF only contains
-+1 Port and 1 AFU for isolation. Users could assign individual VFs (accelerators)
-+created via PCIe SRIOV interface, to virtual machines.
-+
-+The driver organization in virtualization case is illustrated below:
-+
-+  +-------++------++------+             |
-+  | FME   || FME  || FME  |             |
-+  | FPGA  || FPGA || FPGA |             |
-+  |Manager||Bridge||Region|             |
-+  +-------++------++------+             |
-+  +-----------------------+  +--------+ |             +--------+
-+  |          FME          |  |  AFU   | |             |  AFU   |
-+  |         Module        |  | Module | |             | Module |
-+  +-----------------------+  +--------+ |             +--------+
-+        +-----------------------+       |       +-----------------------+
-+        | FPGA Container Device |       |       | FPGA Container Device |
-+        |  (FPGA Base Region)   |       |       |  (FPGA Base Region)   |
-+        +-----------------------+       |       +-----------------------+
-+          +------------------+          |         +------------------+
-+          | FPGA PCIE Module |          | Virtual | FPGA PCIE Module |
-+          +------------------+   Host   | Machine +------------------+
-+ -------------------------------------- | ------------------------------
-+           +---------------+            |          +---------------+
-+           | PCI PF Device |            |          | PCI VF Device |
-+           +---------------+            |          +---------------+
-+
-+FPGA PCIe device driver is always loaded first once a FPGA PCIe PF or VF device
-+is detected. It:
-+
-+	a) finish enumeration on both FPGA PCIe PF and VF device using common
-+	   interfaces from DFL framework.
-+	b) supports SRIOV.
-+
-+The FME device driver plays a management role in this driver architecture, it
-+provides ioctls to release Port from PF and assign Port to PF. After release
-+a port from PF, then it's safe to expose this port through a VF via PCIe SRIOV
-+sysfs interface.
-+
-+To enable accessing an accelerator from applications running in a VM, the
-+respective AFU's port needs to be assigned to a VF using the following steps:
-+
-+	a) The PF owns all AFU ports by default. Any port that needs to be
-+	   reassigned to a VF must first be released through the
-+	   DFL_FPGA_FME_PORT_RELEASE ioctl on the FME device.
-+
-+	b) Once N ports are released from PF, then user can use command below
-+	   to enable SRIOV and VFs. Each VF owns only one Port with AFU.
-+
-+	   echo N > $PCI_DEVICE_PATH/sriov_numvfs
-+
-+	c) Pass through the VFs to VMs
-+
-+	d) The AFU under VF is accessible from applications in VM (using the
-+	   same driver inside the VF).
-+
-+Note that an FME can't be assigned to a VF, thus PR and other management
-+functions are only available via the PF.
-+
-+
- Device enumeration
- ==================
- This section introduces how applications enumerate the fpga device from
+ /**
+  * struct dfl_fpga_port_ops - port ops
+  *
 -- 
 2.7.4
