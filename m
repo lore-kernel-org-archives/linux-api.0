@@ -1,7 +1,7 @@
-From: Jonathan Kowalski <bl0pbl33p@gmail.com>
+From: Jann Horn <jannh@google.com>
 Subject: Re: [PATCH 0/4] pid: add pidctl()
-Date: Mon, 25 Mar 2019 21:14:54 +0000
-Message-ID: <CAGLj2rGMHfNkRKmb1+BFTuJb+wpXg09so-52Hsb0tMiQ0beMfA@mail.gmail.com>
+Date: Mon, 25 Mar 2019 22:15:22 +0100
+Message-ID: <CAG48ez2Fy1tFyZqy7bVwG=aBJnwm1mdZgHzchFiguzufctw03Q@mail.gmail.com>
 References: <20190325162052.28987-1-christian@brauner.io> <CAKOZueuJSAiKU7fZR2FNDKKCktdyE-sADtWprpsNMAqYQvD9Jw@mail.gmail.com>
  <20190325173614.GB25975@google.com> <CAKOZuetbZOs1Yur4OrW6hh3wVYdoKNkSqTszbpTWnuRBTmT9zA@mail.gmail.com>
  <CAGLj2rE1f4x36KFUjFLiFq8tF1RUmFuCSRTg_tCQ9W2G6LtizA@mail.gmail.com>
@@ -14,24 +14,47 @@ Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <CAGLj2rE7k-p=ZniyV6bDm-VbhAdzSSwxYcVV=X_Rsky5nixGvw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
+To: Jonathan Kowalski <bl0pbl33p@gmail.com>
 Cc: Daniel Colascione <dancol@google.com>, Joel Fernandes <joel@joelfernandes.org>, Christian Brauner <christian@brauner.io>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathn>
 List-Id: linux-api@vger.kernel.org
 
-Also,  extending this further, instead of new ioctl flags over to
-translate a tidfd one might introduce later for thread targetted
-signals (which would still be a pidfd in the struct pid terms, but
-with a bit set in its reference to target the selected TID in
-particular), you could resolve this neatly to the proc entry of the
-task itself, which would be subject to restrictions similar to a
-regular open call, minus all the races involved.
+On Mon, Mar 25, 2019 at 9:40 PM Jonathan Kowalski <bl0pbl33p@gmail.com> wrote:
+> On Mon, Mar 25, 2019 at 8:34 PM Jann Horn <jannh@google.com> wrote:
+> >
+> >  [...SNIP...]
+> >
+> > Please don't do that. /proc/$pid/fd refers to the set of file
+> > descriptors the process has open, and semantically doesn't have much
+> > to do with the identity of the process. If you want to have a procfs
+> > directory entry for getting a pidfd, please add a new entry. (Although
+> > I don't see the point in adding a new procfs entry for this when you
+> > could instead have an ioctl or syscall operating on the procfs
+> > directory fd.)
+>
+> There is no new entry. What I was saying (and I should have been
+> clearer) is that the existing entry for the fd when open'd with
+> O_DIRECTORY makes the kernel resolve the symlink to /proc/<PID> of the
+> process it maps to, so it would become:
+>
+>   int dirfd = open("/proc/self/fd/3", O_DIRECTORY|O_CLOEXEC);
 
-This also means you can get rid of having to support the /proc/<PID>
-dir fd in pidfd_send_signal, because there is no incentive to, any
-longer. The kernel now has just one pidfd object, well scoped in its
-purpose, and this "feature" is tied to procfs itself, disabling which
-takes away the feature as well.
+That still seems really weird. This magically overloads O_DIRECTORY,
+which means "fail if the thing is not a directory", to suddenly have
+an entirely different meaning for one magical special type of file. On
+top of that, unlike an ioctl or a new syscall, it doesn't convey
+explicit intent and increases the risk of confused deputy issues.
 
-Otherwise, the ioctl will be conditionally available and/or work only
-when procfs is present, and you'd tie procfs to pidfds eternally as
-ABI.
+> This also means you cannot cross the filesystem boundry, the said
+> process needs to have a visible entry (which would mean hidepid= and
+> gid= based access controls are honored), and you can only open the
+> dirfd of a process in the current ns (as the PID will not map to an
+> existent process if the pidfd maps to a process not in the same or
+> children pid ns, in fdinfo it lists -1 in the pid field (we might not
+> even need fdinfo anymore)).
+
+AFAICS that doesn't have anything to do with whether you do this as a
+syscall, as an ioctl, or as a jumped symlink. The kernel would have to
+do the same security checks in any of those cases - only a classic,
+non-jumped symlink would implicitly go through the existing permission
+checks. And if you implement this with a non-jumped symlink, you get
+races.
