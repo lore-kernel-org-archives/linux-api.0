@@ -1,45 +1,40 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH 3/4] signal: support pidctl() with pidfd_send_signal()
-Date: Mon, 25 Mar 2019 19:39:25 +0100
-Message-ID: <CAG48ez1QSJTOb-DAQuVpa5feUe9K-pr8aYuyd=yXg0n9eSg-LQ@mail.gmail.com>
-References: <20190325162052.28987-1-christian@brauner.io> <20190325162052.28987-4-christian@brauner.io>
+From: Alan Tull <atull@kernel.org>
+Subject: Re: [PATCH 03/17] fpga: dfl: fme: support 512bit data width PR
+Date: Mon, 25 Mar 2019 13:48:52 -0500
+Message-ID: <CANk1AXTCbR3E=WFUvyHx3BDFwV19djuhC=qBpxQHT46qGgwWJA@mail.gmail.com>
+References: <1553483264-5379-1-git-send-email-hao.wu@intel.com> <1553483264-5379-4-git-send-email-hao.wu@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190325162052.28987-4-christian@brauner.io>
+In-Reply-To: <1553483264-5379-4-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian@brauner.io>
-Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, bl0pbl33p@gmail.com, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, cyphar@cyphar.com, Al Viro <viro@zeniv.linux.org.uk>, "Joel Fernandes (Google)" <joe>
+To: Wu Hao <hao.wu@intel.com>
+Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Ananda Ravuri <ananda.ravuri@intel.com>, Xu Yilun <yilun.xu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 25, 2019 at 5:21 PM Christian Brauner <christian@brauner.io> wrote:
-> Let pidfd_send_signal() use pidfds retrieved via pidctl(). With this patch
-> pidfd_send_signal() becomes independent of procfs. This fullfils the
-> request made when we merged the pidfd_send_signal() patchset. The
-> pidfd_send_signal() syscall is now always available allowing for it to be
-> used by users without procfs mounted or even users without procfs support
-> compiled into the kernel.
-[...]
->  static bool access_pidfd_pidns(struct pid *pid)
->  {
-> +       int ret;
->         struct pid_namespace *active = task_active_pid_ns(current);
->         struct pid_namespace *p = ns_of_pid(pid);
->
-> -       for (;;) {
-> -               if (!p)
-> -                       return false;
-> -               if (p == active)
-> -                       break;
-> -               p = p->parent;
-> -       }
-> +       ret = pidnscmp(active, p);
-> +       if (ret < 0)
-> +               return false;
->
->         return true;
->  }
+On Sun, Mar 24, 2019 at 10:23 PM Wu Hao <hao.wu@intel.com> wrote:
 
-Nit, if we keep this function: "if (...) return false; return true;"
-seems like an antipattern to me. How about "return ret >= 0", or even
-"return pidnscmp(active, p) >= 0"?
+Hi Hao,
+
+This looks fine.
+
+>
+> In early partial reconfiguration private feature, it only
+> supports 32bit data width when writing data to hardware for
+> PR. 512bit data width PR support is an important optimization
+> for some specific solutions (e.g. XEON with FPGA integrated),
+> it allows driver to use AVX512 instruction to improve the
+> performance of partial reconfiguration. e.g. programming one
+> 100MB bitstream image via this 512bit data width PR hardware
+> only takes ~300ms, but 32bit revision requires ~3s per test
+> result.
+>
+> Please note now this optimization is only done on revision 2
+> of this PR private feature which is only used in integrated
+> solution that AVX512 is always supported.
+>
+> Signed-off-by: Ananda Ravuri <ananda.ravuri@intel.com>
+> Signed-off-by: Xu Yilun <yilun.xu@intel.com>
+> Signed-off-by: Wu Hao <hao.wu@intel.com>
+
+Acked-by: Alan Tull <atull@kernel.org>
