@@ -1,156 +1,79 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH 2/4] pid: add pidctl()
-Date: Mon, 25 Mar 2019 19:18:42 +0100
-Message-ID: <CAG48ez24xPM4f7ty=8k5p6_gVWd-bEUSxca5Ngy5svHgarhz+w@mail.gmail.com>
-References: <20190325162052.28987-1-christian@brauner.io> <20190325162052.28987-3-christian@brauner.io>
+From: Jonathan Kowalski <bl0pbl33p@gmail.com>
+Subject: Re: [PATCH 0/4] pid: add pidctl()
+Date: Mon, 25 Mar 2019 18:19:16 +0000
+Message-ID: <CAGLj2rE1f4x36KFUjFLiFq8tF1RUmFuCSRTg_tCQ9W2G6LtizA@mail.gmail.com>
+References: <20190325162052.28987-1-christian@brauner.io> <CAKOZueuJSAiKU7fZR2FNDKKCktdyE-sADtWprpsNMAqYQvD9Jw@mail.gmail.com>
+ <20190325173614.GB25975@google.com> <CAKOZuetbZOs1Yur4OrW6hh3wVYdoKNkSqTszbpTWnuRBTmT9zA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190325162052.28987-3-christian@brauner.io>
+In-Reply-To: <CAKOZuetbZOs1Yur4OrW6hh3wVYdoKNkSqTszbpTWnuRBTmT9zA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian@brauner.io>, Andy Lutomirski <luto@kernel.org>
-Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, bl0pbl33p@gmail.com, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, cyphar@cyphar.com, Al Viro <viro@zeniv.linux.org.uk>, "Joel Fernandes (Google)" <joel@joelfernandes.org>, Daniel
+To: Daniel Colascione <dancol@google.com>
+Cc: Joel Fernandes <joel@joelfernandes.org>, Christian Brauner <christian@brauner.io>, Jann Horn <jannh@google.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthus>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 25, 2019 at 5:21 PM Christian Brauner <christian@brauner.io> wrote:
-> The pidctl() syscalls builds on, extends, and improves translate_pid() [4].
-> I quote Konstantins original patchset first that has already been acked and
-> picked up by Eric before and whose functionality is preserved in this
-> syscall:
-[...]
-> +
-> +static struct pid_namespace *get_pid_ns_by_fd(int fd)
-> +{
-> +       struct pid_namespace *pidns = ERR_PTR(-EINVAL);
-> +
-> +       if (fd >= 0) {
-> +#ifdef CONFIG_PID_NS
-> +               struct ns_common *ns;
-> +               struct file *file = proc_ns_fget(fd);
-> +               if (IS_ERR(file))
-> +                       return ERR_CAST(file);
-> +
-> +               ns = get_proc_ns(file_inode(file));
-> +               if (ns->ops->type == CLONE_NEWPID)
-> +                       pidns = get_pid_ns(
-> +                               container_of(ns, struct pid_namespace, ns));
+On Mon, Mar 25, 2019 at 5:53 PM Daniel Colascione <dancol@google.com> wrote:
+>
+> [..snip..]
+>
+> I don't like the idea of having one kind of pollfd be pollable and
+> another not. Such an interface would be confusing for users. If, as
+> you suggest below, we instead make the procfs-less FD the only thing
+> we call a "pidfd", then this proposal becomes less confusing and more
+> viable.
 
-This increments the refcount of the pidns...
+That's certainly on the table, we remove the ability to open
+/proc/<PID> and use the dir fd with pidfd_send_signal. I'm in favor of
+this.
 
-> +
-> +               fput(file);
-> +#endif
-> +       } else {
-> +               pidns = task_active_pid_ns(current);
+> > But.. one thing we could do for Daniel usecase is if a /proc/pid directory fd
+> > can be translated into a "pidfd" using another syscall or even a node, like
+> > /proc/pid/handle or something. I think this is what Christian suggested in
+> > the previous threads.
+>
+> /proc/pid/handle, if I understand correctly, "translates" a
+> procfs-based pidfd to a non-pidfd one. The needed interface would have
+> to perform the opposite translation, providing a procfs directory for
+> a given pidfd.
+>
+> > And also for the translation the other way, add a syscall or modify
+> > translate_fd or something, to covert a anon_inode pidfd into a /proc/pid
+> > directory fd. Then the user is welcomed to do openat(2) on _that_ directory fd.
+> > Then we modify pidfd_send_signal to only send signals to pure pidfd fds, not
+> > to /proc/pid directory fds.
+>
+> This approach would work, but there's one subtlety to take into
+> account: which procfs? You'd want to take, as inputs, 1) the procfs
+> root you want, and 2) the pidfd, this way you could return to the user
+> a directory FD in the right procfs.
+>
 
-... but this doesn't. That's pretty subtle; could you please put a
-comment on top of this function that points this out? Or even better,
-change the function to always take a reference, so that the caller
-doesn't have to worry about figuring this out.
+I don't think metadata access is in the scope of such a pidfd itself.
 
-> +       }
-> +
-> +       return pidns;
-> +}
-[...]
-> +SYSCALL_DEFINE5(pidctl, unsigned int, cmd, pid_t, pid, int, source, int, target,
-> +               unsigned int, flags)
-> +{
-> +       struct pid_namespace *source_ns = NULL, *target_ns = NULL;
-> +       struct pid *struct_pid;
-> +       pid_t result;
-> +
-> +       switch (cmd) {
-> +       case PIDCMD_QUERY_PIDNS:
-> +               if (pid != 0)
-> +                       return -EINVAL;
-> +               pid = 1;
-> +               /* fall through */
-> +       case PIDCMD_QUERY_PID:
-> +               if (flags != 0)
-> +                       return -EINVAL;
-> +               break;
-> +       case PIDCMD_GET_PIDFD:
-> +               if (flags & ~PIDCTL_CLOEXEC)
-> +                       return -EINVAL;
-> +               break;
-> +       default:
-> +               return -EOPNOTSUPP;
-> +       }
-> +
-> +       source_ns = get_pid_ns_by_fd(source);
-> +       result = PTR_ERR(source_ns);
+> > Should we work on patches for these? Please let us know if this idea makes
+> > sense and thanks a lot for adding us to the review as well.
+>
+> I would strongly prefer that we not merge pidctl (or whatever it is)
+> without a story for metadata access, be it your suggestion or
+> something else.
 
-I very much dislike using PTR_ERR() on pointers before checking
-whether they contain an error value or not. I understand that the
-result of this won't actually be used, but it still seems weird to
-have what is essentially a cast of a potentially valid pointer to a
-potentially smaller integer here.
+IMO, this is out of scope for a process handle. Hence, the need for
+metadata access musn't stall it as is.
 
-Could you maybe move the PTR_ERR() into the error branch? Like so:
+If you really need this, the pid this pidfd is mapped to can be
+exposed through fdinfo (which is perfectly fine for your case as you
+use /proc anyway). This means you can reliably determine if you're
+opening it for the same pid (and it hasn't been recycled) because this
+pidfd will be pollable for state change (in the future). Exposing it
+through fdinfo isn't a problem, pid ns is bound to the process during
+its lifetime, it's a process creation time property, so the value
+isn't going to change anyway. So you can do all metadata access you
+want subsequently.
 
-if (IS_ERR(source_ns)) {
-  result = PTR_ERR(source_ns);
-  goto err_source;
-}
-
-> +       if (IS_ERR(source_ns))
-> +               goto err_source;
-> +
-> +       target_ns = get_pid_ns_by_fd(target);
-> +       result = PTR_ERR(target_ns);
-> +       if (IS_ERR(target_ns))
-> +               goto err_target;
-> +
-> +       if (cmd == PIDCMD_QUERY_PIDNS) {
-> +               result = pidns_related(source_ns, target_ns);
-> +       } else {
-> +               rcu_read_lock();
-> +               struct_pid = find_pid_ns(pid, source_ns);
-
-find_pid_ns() doesn't take a reference on its return value, the return
-value is only pinned into memory by the RCU read-side critical
-section...
-
-> +               result = struct_pid ? pid_nr_ns(struct_pid, target_ns) : -ESRCH;
-> +               rcu_read_unlock();
-
-... which ends here, making struct_pid a dangling pointer...
-
-> +
-> +               if (cmd == PIDCMD_GET_PIDFD) {
-> +                       int cloexec = (flags & PIDCTL_CLOEXEC) ? O_CLOEXEC : 0;
-> +                       if (result > 0)
-> +                               result = pidfd_create_fd(struct_pid, cloexec);
-
-... and then here you continue to use struct_pid. That seems bogus.
-
-> +                       else if (result == 0)
-> +                               result = -ENOENT;
-
-You don't need to have flags for this for new syscalls, you can just
-make everything O_CLOEXEC; if someone wants to preserve an fd across
-execve(), they can just clear that bit with fcntl(). (I thiiink it was
-Andy Lutomirski who said that before regarding another syscall? But my
-memory of that is pretty foggy, might've been someone else.)
-
-> +               }
-> +       }
-> +
-> +       if (target)
-> +               put_pid_ns(target_ns);
-> +err_target:
-> +       if (source)
-> +               put_pid_ns(source_ns);
-
-I think you probably intended to check for "if (target >= 0)" and "if
-(source >= 0)" instead of these conditions, matching the condition in
-get_pid_ns_by_fd()? The current code looks as if it will leave the
-refcount one too high when used with target==0 or source==0, and leave
-the refcount one too low when used with target==-1 or source==-1.
-Anyway, as stated above, I think it would be simpler to
-unconditionally take a reference instead.
-
-> +err_source:
-> +       return result;
-> +}
+The upshot is that this same pidfd can then be returned from a future
+extension of clone(2) Christian is planning to work on. It is still
+undecided whether this fd should be only readable by the parent
+process or everyone (which would just be a matter of changing the
+access mode depending on the caller), but that we can discuss all that
+when the patchset is posted.
