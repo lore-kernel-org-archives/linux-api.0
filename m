@@ -1,69 +1,52 @@
-From: =?utf-8?B?TWlrYSBQZW50dGlsw6Q=?= <mika.penttila@nextfour.com>
-Subject: Re: [PATCH 2/4] pid: add pidctl()
-Date: Mon, 25 Mar 2019 17:20:54 +0000
-Message-ID: <071b12db-f84e-8666-d70a-1b6cce71f9c0@nextfour.com>
-References: <20190325162052.28987-1-christian@brauner.io>
- <20190325162052.28987-3-christian@brauner.io>
+From: Alan Tull <atull@kernel.org>
+Subject: Re: [PATCH 01/17] fpga: dfl-fme-mgr: fix FME_PR_INTFC_ID register address.
+Date: Mon, 25 Mar 2019 12:28:22 -0500
+Message-ID: <CANk1AXRCdd_AwXj1aMwzu7ff4yxuBtN21mju62skbJnhXDwtcw@mail.gmail.com>
+References: <1553483264-5379-1-git-send-email-hao.wu@intel.com> <1553483264-5379-2-git-send-email-hao.wu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190325162052.28987-3-christian@brauner.io>
-Content-Language: en-US
-Content-ID: <68237FF34021B848A408F67553864965@eurprd03.prod.outlook.com>
+In-Reply-To: <1553483264-5379-2-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian@brauner.io>, "jannh@google.com" <jannh@google.com>, "khlebnikov@yandex-team.ru" <khlebnikov@yandex-team.ru>, "luto@kernel.org" <luto@kernel.org>, "dhowells@redhat.com" <dhowells@redhat.com>, "serge@hallyn.com" <serge@hallyn.com>, "ebiederm@xmission.com" <ebiederm@xmission.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
-Cc: "arnd@arndb.de" <arnd@arndb.de>, "keescook@chromium.org" <keescook@chromium.org>, "adobriyan@gmail.com" <adobriyan@gmail.com>, "tglx@linutronix.de" <tglx@linutronix.de>, "mtk.manpages@gmail.com" <mtk.manpages@gmail.com>, "bl0pbl33p@gmail.com" <bl0pbl33p@gmail.com>, "ldv@altlinux.org" <ldv@altlinux.org>, "akpm@linux-foundation.org" <akpm@linux-foundation.org>, "oleg@redhat.com" <oleg@redhat.com>, "nagarathnam.muthusamy@oracle.com" <nagarathnam.muthusamy@oracle.com>, "cyphar@cyphar.com" <cyphar@cyphar.com>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "joel@joelfernandes.org" <joel@joelfernandes.org>, "dancol@google.com" <dancol@google.com>
+To: Wu Hao <hao.wu@intel.com>
+Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-SGkhDQoNCg0KPiArU1lTQ0FMTF9ERUZJTkU1KHBpZGN0bCwgdW5zaWduZWQgaW50LCBjbWQsIHBp
-ZF90LCBwaWQsIGludCwgc291cmNlLCBpbnQsIHRhcmdldCwNCj4gKwkJdW5zaWduZWQgaW50LCBm
-bGFncykNCj4gK3sNCj4gKwlzdHJ1Y3QgcGlkX25hbWVzcGFjZSAqc291cmNlX25zID0gTlVMTCwg
-KnRhcmdldF9ucyA9IE5VTEw7DQo+ICsJc3RydWN0IHBpZCAqc3RydWN0X3BpZDsNCj4gKwlwaWRf
-dCByZXN1bHQ7DQo+ICsNCj4gKwlzd2l0Y2ggKGNtZCkgew0KPiArCWNhc2UgUElEQ01EX1FVRVJZ
-X1BJRE5TOg0KPiArCQlpZiAocGlkICE9IDApDQo+ICsJCQlyZXR1cm4gLUVJTlZBTDsNCj4gKwkJ
-cGlkID0gMTsNCj4gKwkJLyogZmFsbCB0aHJvdWdoICovDQo+ICsJY2FzZSBQSURDTURfUVVFUllf
-UElEOg0KPiArCQlpZiAoZmxhZ3MgIT0gMCkNCj4gKwkJCXJldHVybiAtRUlOVkFMOw0KPiArCQli
-cmVhazsNCj4gKwljYXNlIFBJRENNRF9HRVRfUElERkQ6DQo+ICsJCWlmIChmbGFncyAmIH5QSURD
-VExfQ0xPRVhFQykNCj4gKwkJCXJldHVybiAtRUlOVkFMOw0KPiArCQlicmVhazsNCj4gKwlkZWZh
-dWx0Og0KPiArCQlyZXR1cm4gLUVPUE5PVFNVUFA7DQo+ICsJfQ0KPiArDQo+ICsJc291cmNlX25z
-ID0gZ2V0X3BpZF9uc19ieV9mZChzb3VyY2UpOw0KPiArCXJlc3VsdCA9IFBUUl9FUlIoc291cmNl
-X25zKTsNCj4gKwlpZiAoSVNfRVJSKHNvdXJjZV9ucykpDQo+ICsJCWdvdG8gZXJyX3NvdXJjZTsN
-Cj4gKw0KPiArCXRhcmdldF9ucyA9IGdldF9waWRfbnNfYnlfZmQodGFyZ2V0KTsNCj4gKwlyZXN1
-bHQgPSBQVFJfRVJSKHRhcmdldF9ucyk7DQo+ICsJaWYgKElTX0VSUih0YXJnZXRfbnMpKQ0KPiAr
-CQlnb3RvIGVycl90YXJnZXQ7DQo+ICsNCj4gKwlpZiAoY21kID09IFBJRENNRF9RVUVSWV9QSURO
-Uykgew0KPiArCQlyZXN1bHQgPSBwaWRuc19yZWxhdGVkKHNvdXJjZV9ucywgdGFyZ2V0X25zKTsN
-Cj4gKwl9IGVsc2Ugew0KPiArCQlyY3VfcmVhZF9sb2NrKCk7DQo+ICsJCXN0cnVjdF9waWQgPSBm
-aW5kX3BpZF9ucyhwaWQsIHNvdXJjZV9ucyk7DQo+ICsJCXJlc3VsdCA9IHN0cnVjdF9waWQgPyBw
-aWRfbnJfbnMoc3RydWN0X3BpZCwgdGFyZ2V0X25zKSA6IC1FU1JDSDsNCg0KU2hvdWxkIHlvdSBk
-byBnZXRfcGlkKHN0cnVjdF9waWQpIGhlcmUgdG8ga2VlcCBpdCBhbGl2ZSB0aWxsIA0KcGlkZmRf
-Y3JlYXRlX2ZkKCkgPw0KDQo+ICsJCXJjdV9yZWFkX3VubG9jaygpOw0KPiArDQo+ICsJCWlmIChj
-bWQgPT0gUElEQ01EX0dFVF9QSURGRCkgew0KPiArCQkJaW50IGNsb2V4ZWMgPSAoZmxhZ3MgJiBQ
-SURDVExfQ0xPRVhFQykgPyBPX0NMT0VYRUMgOiAwOw0KPiArCQkJaWYgKHJlc3VsdCA+IDApDQo+
-ICsJCQkJcmVzdWx0ID0gcGlkZmRfY3JlYXRlX2ZkKHN0cnVjdF9waWQsIGNsb2V4ZWMpOw0KPiAr
-CQkJZWxzZSBpZiAocmVzdWx0ID09IDApDQo+ICsJCQkJcmVzdWx0ID0gLUVOT0VOVDsNCj4gKwkJ
-fQ0KPiArCX0NCj4gKw0KPiArCWlmICh0YXJnZXQpDQo+ICsJCXB1dF9waWRfbnModGFyZ2V0X25z
-KTsNCj4gK2Vycl90YXJnZXQ6DQo+ICsJaWYgKHNvdXJjZSkNCj4gKwkJcHV0X3BpZF9ucyhzb3Vy
-Y2VfbnMpOw0KPiArZXJyX3NvdXJjZToNCj4gKwlyZXR1cm4gcmVzdWx0Ow0KPiArfQ0KPiArDQo+
-ICB2b2lkIF9faW5pdCBwaWRfaWRyX2luaXQodm9pZCkNCj4gIHsNCj4gIAkvKiBWZXJpZnkgbm8g
-b25lIGhhcyBkb25lIGFueXRoaW5nIHNpbGx5OiAqLw0KPiBkaWZmIC0tZ2l0IGEva2VybmVsL3Bp
-ZF9uYW1lc3BhY2UuYyBiL2tlcm5lbC9waWRfbmFtZXNwYWNlLmMNCj4gaW5kZXggYWE2ZTcyZmI3
-YzA4Li4xYzg2M2ZiM2Q1NWEgMTAwNjQ0DQo+IC0tLSBhL2tlcm5lbC9waWRfbmFtZXNwYWNlLmMN
-Cj4gKysrIGIva2VybmVsL3BpZF9uYW1lc3BhY2UuYw0KPiBAQCAtNDI5LDYgKzQyOSwzMSBAQCBz
-dGF0aWMgc3RydWN0IG5zX2NvbW1vbiAqcGlkbnNfZ2V0X3BhcmVudChzdHJ1Y3QgbnNfY29tbW9u
-ICpucykNCj4gIAlyZXR1cm4gJmdldF9waWRfbnMocGlkX25zKS0+bnM7DQo+ICB9DQo+ICANCj4g
-Ky8qKg0KPiArICogcGlkbnNjbXAgLSBEZXRlcm1pbmUgaWYgQGFuY2VzdG9yIGlzIGFuY2VzdG9y
-IG9mIEBkZXNjZW5kYW50DQo+ICsgKiBAYW5jZXN0b3I6ICAgcGlkbnMgc3VzcGVjdGVkIHRvIGJl
-IHRoZSBhbmNlc3RvciBvZiBAZGVzY2VuZGFudA0KPiArICogQGRlc2NlbmRhbnQ6IHBpZG5zIHN1
-c3BlY3RlZCB0byBiZSB0aGUgZGVzY2VuZGFudCBvZiBAYW5jZXN0b3INCj4gKyAqDQo+ICsgKiBS
-ZXR1cm5zIC0xIGlmIEBhbmNlc3RvciBpcyBub3QgYW4gYW5jZXN0b3Igb2YgQGRlc2NlbmRhbnQs
-DQo+ICsgKiAwIGlmIEBhbmNlc3RvciBpcyB0aGUgc2FtZSBwaWRucyBhcyBAZGVzY2VuZGFudCwg
-MSBpZiBAYW5jZXN0b3INCj4gKyAqIGlzIGFuIGFuY2VzdG9yIG9mIEBkZXNjZW5kYW50Lg0KPiAr
-ICovDQo+ICtpbnQgcGlkbnNjbXAoc3RydWN0IHBpZF9uYW1lc3BhY2UgKmFuY2VzdG9yLCBzdHJ1
-Y3QgcGlkX25hbWVzcGFjZSAqZGVzY2VuZGFudCkNCj4gK3sNCj4gKwlpZiAoYW5jZXN0b3IgPT0g
-ZGVzY2VuZGFudCkNCj4gKwkJcmV0dXJuIDA7DQo+ICsNCj4gKwlmb3IgKDs7KSB7DQo+ICsJCWlm
-ICghZGVzY2VuZGFudCkNCj4gKwkJCXJldHVybiAtMTsNCj4gKwkJaWYgKGRlc2NlbmRhbnQgPT0g
-YW5jZXN0b3IpDQo+ICsJCQlicmVhazsNCj4gKwkJZGVzY2VuZGFudCA9IGRlc2NlbmRhbnQtPnBh
-cmVudDsNCj4gKwl9DQo+ICsNCj4gKwlyZXR1cm4gMTsNCj4gK30NCj4gKw0KPiAgc3RhdGljIHN0
-cnVjdCB1c2VyX25hbWVzcGFjZSAqcGlkbnNfb3duZXIoc3RydWN0IG5zX2NvbW1vbiAqbnMpDQo+
-ICB7DQo+ICAJcmV0dXJuIHRvX3BpZF9ucyhucyktPnVzZXJfbnM7DQo=
+On Sun, Mar 24, 2019 at 10:23 PM Wu Hao <hao.wu@intel.com> wrote:
+
+Hi Hao,
+
+>
+> FME_PR_INTFC_ID is used as compat_id for fpga manager and region,
+> but high 64 bits and low 64 bits of the compat_id are swapped by
+> mistake. This patch fixes this problem by fixing register address.
+>
+> Signed-off-by: Wu Hao <hao.wu@intel.com>
+
+Acked-by: Alan Tull <atull@kernel.org>
+
+Thanks,
+Alan
+
+> ---
+>  drivers/fpga/dfl-fme-mgr.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
+>
+> diff --git a/drivers/fpga/dfl-fme-mgr.c b/drivers/fpga/dfl-fme-mgr.c
+> index 76f3770..b3f7eee 100644
+> --- a/drivers/fpga/dfl-fme-mgr.c
+> +++ b/drivers/fpga/dfl-fme-mgr.c
+> @@ -30,8 +30,8 @@
+>  #define FME_PR_STS             0x10
+>  #define FME_PR_DATA            0x18
+>  #define FME_PR_ERR             0x20
+> -#define FME_PR_INTFC_ID_H      0xA8
+> -#define FME_PR_INTFC_ID_L      0xB0
+> +#define FME_PR_INTFC_ID_L      0xA8
+> +#define FME_PR_INTFC_ID_H      0xB0
+>
+>  /* FME PR Control Register Bitfield */
+>  #define FME_PR_CTRL_PR_RST     BIT_ULL(0)  /* Reset PR engine */
+> --
+> 2.7.4
+>
