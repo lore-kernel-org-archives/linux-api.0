@@ -1,100 +1,69 @@
-From: Daniel Colascione <dancol@google.com>
-Subject: Re: [PATCH 0/4] pid: add pidctl()
-Date: Mon, 25 Mar 2019 10:07:22 -0700
-Message-ID: <CAKOZuestyk-mMFujBK7i=uqTcSGOReP5SZVmSH7Hp2iKqBDMBQ@mail.gmail.com>
-References: <20190325162052.28987-1-christian@brauner.io> <CAKOZueuJSAiKU7fZR2FNDKKCktdyE-sADtWprpsNMAqYQvD9Jw@mail.gmail.com>
- <8075dfac-94d2-b8c5-e37a-afe9b88bb48e@yandex-team.ru>
+From: =?utf-8?B?TWlrYSBQZW50dGlsw6Q=?= <mika.penttila@nextfour.com>
+Subject: Re: [PATCH 2/4] pid: add pidctl()
+Date: Mon, 25 Mar 2019 17:20:54 +0000
+Message-ID: <071b12db-f84e-8666-d70a-1b6cce71f9c0@nextfour.com>
+References: <20190325162052.28987-1-christian@brauner.io>
+ <20190325162052.28987-3-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <8075dfac-94d2-b8c5-e37a-afe9b88bb48e@yandex-team.ru>
+In-Reply-To: <20190325162052.28987-3-christian@brauner.io>
+Content-Language: en-US
+Content-ID: <68237FF34021B848A408F67553864965@eurprd03.prod.outlook.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Cc: Christian Brauner <christian@brauner.io>, Jann Horn <jannh@google.com>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, bl0pbl33p@gmail.com, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, nagarathnam.muthusamy@oracle.com, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>, Joel
+To: Christian Brauner <christian@brauner.io>, "jannh@google.com" <jannh@google.com>, "khlebnikov@yandex-team.ru" <khlebnikov@yandex-team.ru>, "luto@kernel.org" <luto@kernel.org>, "dhowells@redhat.com" <dhowells@redhat.com>, "serge@hallyn.com" <serge@hallyn.com>, "ebiederm@xmission.com" <ebiederm@xmission.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Cc: "arnd@arndb.de" <arnd@arndb.de>, "keescook@chromium.org" <keescook@chromium.org>, "adobriyan@gmail.com" <adobriyan@gmail.com>, "tglx@linutronix.de" <tglx@linutronix.de>, "mtk.manpages@gmail.com" <mtk.manpages@gmail.com>, "bl0pbl33p@gmail.com" <bl0pbl33p@gmail.com>, "ldv@altlinux.org" <ldv@altlinux.org>, "akpm@linux-foundation.org" <akpm@linux-foundation.org>, "oleg@redhat.com" <oleg@redhat.com>, "nagarathnam.muthusamy@oracle.com" <nagarathnam.muthusamy@oracle.com>, "cyphar@cyphar.com" <cyphar@cyphar.com>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, "joel@joelfernandes.org" <joel@joelfernandes.org>, "dancol@google.com" <dancol@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 25, 2019 at 10:05 AM Konstantin Khlebnikov
-<khlebnikov@yandex-team.ru> wrote:
-> On 25.03.2019 19:48, Daniel Colascione wrote:
-> > On Mon, Mar 25, 2019 at 9:21 AM Christian Brauner <christian@brauner.io> wrote:
-> >> The pidctl() syscalls builds on, extends, and improves translate_pid() [4].
-> >> I quote Konstantins original patchset first that has already been acked and
-> >> picked up by Eric before and whose functionality is preserved in this
-> >> syscall. Multiple people have asked when this patchset will be sent in
-> >> for merging (cf. [1], [2]). It has recently been revived by Nagarathnam
-> >> Muthusamy from Oracle [3].
-> >>
-> >> The intention of the original translate_pid() syscall was twofold:
-> >> 1. Provide translation of pids between pid namespaces
-> >> 2. Provide implicit pid namespace introspection
-> >>
-> >> Both functionalities are preserved. The latter task has been improved
-> >> upon though. In the original version of the pachset passing pid as 1
-> >> would allow to deterimine the relationship between the pid namespaces.
-> >> This is inherhently racy. If pid 1 inside a pid namespace has died it
-> >> would report false negatives. For example, if pid 1 inside of the target
-> >> pid namespace already died, it would report that the target pid
-> >> namespace cannot be reached from the source pid namespace because it
-> >> couldn't find the pid inside of the target pid namespace and thus
-> >> falsely report to the user that the two pid namespaces are not related.
-> >> This problem is simple to avoid. In the new version we simply walk the
-> >> list of ancestors and check whether the namespace are related to each
-> >> other. By doing it this way we can reliably report what the relationship
-> >> between two pid namespace file descriptors looks like.
-> >>
-> >> Additionally, this syscall has been extended to allow the retrieval of
-> >> pidfds independent of procfs. These pidfds can e.g. be used with the new
-> >> pidfd_send_signal() syscall we recently merged. The ability to retrieve
-> >> pidfds independent of procfs had already been requested in the
-> >> pidfd_send_signal patchset by e.g. Andrew [4] and later again by Alexey
-> >> [5]. A use-case where a kernel is compiled without procfs but where
-> >> pidfds are still useful has been outlined by Andy in [6]. Regular
-> >> anon-inode based file descriptors are used that stash a reference to
-> >> struct pid in file->private_data and drop that reference on close.
-> >>
-> >> With this translate_pid() has three closely related but still distinct
-> >> functionalities. To clarify the semantics and to make it easier for
-> >> userspace to use the syscall it has:
-> >> - gained a command argument and three commands clearly reflecting the
-> >>    distinct functionalities (PIDCMD_QUERY_PID, PIDCMD_QUERY_PIDNS,
-> >>    PIDCMD_GET_PIDFD).
-> >> - been renamed to pidctl()
-> >
-> > Having made these changes, you've built a general-purpose command
-> > command multiplexer, not one operation that happens to be flexible.
-> > The general-purpose command multiplexer is a common antipattern:
-> > multiplexers make it hard to talk about different kernel-provided
-> > operations using the common vocabulary we use to distinguish
-> > kernel-related operations, the system call number. socketcall, for
-> > example, turned out to be cumbersome for users like SELinux policy
-> > writers. People had to do work work later to split socketcall into
-> > fine-grained system calls. Please split the pidctl system call so that
-> > the design is clean from the start and we avoid work later. System
-> > calls are cheap.
-> >
-> > Also, I'm still confused about how metadata access is supposed to work
-> > for these procfs-less pidfs. If I use PIDCMD_GET_PIDFD on a process,
-> > You snipped out a portion of a previous email in which I asked about
-> > your thoughts on this question. With the PIDCMD_GET_PIDFD command in
-> > place, we have two different kinds of file descriptors for processes,
-> > one derived from procfs and one that's independent. The former works
-> > with openat(2). The latter does not. To be very specific; if I'm
-> > writing a function that accepts a pidfd and I get a pidfd that comes
-> > from PIDCMD_GET_PIDFD, how am I supposed to get the equivalent of
-> > smaps or oom_score_adj or statm for the named process in a race-free
-> > manner?
-> >
->
-> Task metadata could be exposed via "pages" identified by offset:
->
-> struct pidfd_stats stats;
->
-> pread(pidfd, &stats, sizeof(stats), PIDFD_STATS_OFFSET);
->
-> I'm not sure that we need yet another binary procfs.
-> But it will be faster than current text-based for sure.
-
-There are many options. I have some detailed thoughts on several of
-them, but long design emails seem rather unwelcome. Right now, I'd
-like to hear how Christian intends his patch set to address this use
-case.
+SGkhDQoNCg0KPiArU1lTQ0FMTF9ERUZJTkU1KHBpZGN0bCwgdW5zaWduZWQgaW50LCBjbWQsIHBp
+ZF90LCBwaWQsIGludCwgc291cmNlLCBpbnQsIHRhcmdldCwNCj4gKwkJdW5zaWduZWQgaW50LCBm
+bGFncykNCj4gK3sNCj4gKwlzdHJ1Y3QgcGlkX25hbWVzcGFjZSAqc291cmNlX25zID0gTlVMTCwg
+KnRhcmdldF9ucyA9IE5VTEw7DQo+ICsJc3RydWN0IHBpZCAqc3RydWN0X3BpZDsNCj4gKwlwaWRf
+dCByZXN1bHQ7DQo+ICsNCj4gKwlzd2l0Y2ggKGNtZCkgew0KPiArCWNhc2UgUElEQ01EX1FVRVJZ
+X1BJRE5TOg0KPiArCQlpZiAocGlkICE9IDApDQo+ICsJCQlyZXR1cm4gLUVJTlZBTDsNCj4gKwkJ
+cGlkID0gMTsNCj4gKwkJLyogZmFsbCB0aHJvdWdoICovDQo+ICsJY2FzZSBQSURDTURfUVVFUllf
+UElEOg0KPiArCQlpZiAoZmxhZ3MgIT0gMCkNCj4gKwkJCXJldHVybiAtRUlOVkFMOw0KPiArCQli
+cmVhazsNCj4gKwljYXNlIFBJRENNRF9HRVRfUElERkQ6DQo+ICsJCWlmIChmbGFncyAmIH5QSURD
+VExfQ0xPRVhFQykNCj4gKwkJCXJldHVybiAtRUlOVkFMOw0KPiArCQlicmVhazsNCj4gKwlkZWZh
+dWx0Og0KPiArCQlyZXR1cm4gLUVPUE5PVFNVUFA7DQo+ICsJfQ0KPiArDQo+ICsJc291cmNlX25z
+ID0gZ2V0X3BpZF9uc19ieV9mZChzb3VyY2UpOw0KPiArCXJlc3VsdCA9IFBUUl9FUlIoc291cmNl
+X25zKTsNCj4gKwlpZiAoSVNfRVJSKHNvdXJjZV9ucykpDQo+ICsJCWdvdG8gZXJyX3NvdXJjZTsN
+Cj4gKw0KPiArCXRhcmdldF9ucyA9IGdldF9waWRfbnNfYnlfZmQodGFyZ2V0KTsNCj4gKwlyZXN1
+bHQgPSBQVFJfRVJSKHRhcmdldF9ucyk7DQo+ICsJaWYgKElTX0VSUih0YXJnZXRfbnMpKQ0KPiAr
+CQlnb3RvIGVycl90YXJnZXQ7DQo+ICsNCj4gKwlpZiAoY21kID09IFBJRENNRF9RVUVSWV9QSURO
+Uykgew0KPiArCQlyZXN1bHQgPSBwaWRuc19yZWxhdGVkKHNvdXJjZV9ucywgdGFyZ2V0X25zKTsN
+Cj4gKwl9IGVsc2Ugew0KPiArCQlyY3VfcmVhZF9sb2NrKCk7DQo+ICsJCXN0cnVjdF9waWQgPSBm
+aW5kX3BpZF9ucyhwaWQsIHNvdXJjZV9ucyk7DQo+ICsJCXJlc3VsdCA9IHN0cnVjdF9waWQgPyBw
+aWRfbnJfbnMoc3RydWN0X3BpZCwgdGFyZ2V0X25zKSA6IC1FU1JDSDsNCg0KU2hvdWxkIHlvdSBk
+byBnZXRfcGlkKHN0cnVjdF9waWQpIGhlcmUgdG8ga2VlcCBpdCBhbGl2ZSB0aWxsIA0KcGlkZmRf
+Y3JlYXRlX2ZkKCkgPw0KDQo+ICsJCXJjdV9yZWFkX3VubG9jaygpOw0KPiArDQo+ICsJCWlmIChj
+bWQgPT0gUElEQ01EX0dFVF9QSURGRCkgew0KPiArCQkJaW50IGNsb2V4ZWMgPSAoZmxhZ3MgJiBQ
+SURDVExfQ0xPRVhFQykgPyBPX0NMT0VYRUMgOiAwOw0KPiArCQkJaWYgKHJlc3VsdCA+IDApDQo+
+ICsJCQkJcmVzdWx0ID0gcGlkZmRfY3JlYXRlX2ZkKHN0cnVjdF9waWQsIGNsb2V4ZWMpOw0KPiAr
+CQkJZWxzZSBpZiAocmVzdWx0ID09IDApDQo+ICsJCQkJcmVzdWx0ID0gLUVOT0VOVDsNCj4gKwkJ
+fQ0KPiArCX0NCj4gKw0KPiArCWlmICh0YXJnZXQpDQo+ICsJCXB1dF9waWRfbnModGFyZ2V0X25z
+KTsNCj4gK2Vycl90YXJnZXQ6DQo+ICsJaWYgKHNvdXJjZSkNCj4gKwkJcHV0X3BpZF9ucyhzb3Vy
+Y2VfbnMpOw0KPiArZXJyX3NvdXJjZToNCj4gKwlyZXR1cm4gcmVzdWx0Ow0KPiArfQ0KPiArDQo+
+ICB2b2lkIF9faW5pdCBwaWRfaWRyX2luaXQodm9pZCkNCj4gIHsNCj4gIAkvKiBWZXJpZnkgbm8g
+b25lIGhhcyBkb25lIGFueXRoaW5nIHNpbGx5OiAqLw0KPiBkaWZmIC0tZ2l0IGEva2VybmVsL3Bp
+ZF9uYW1lc3BhY2UuYyBiL2tlcm5lbC9waWRfbmFtZXNwYWNlLmMNCj4gaW5kZXggYWE2ZTcyZmI3
+YzA4Li4xYzg2M2ZiM2Q1NWEgMTAwNjQ0DQo+IC0tLSBhL2tlcm5lbC9waWRfbmFtZXNwYWNlLmMN
+Cj4gKysrIGIva2VybmVsL3BpZF9uYW1lc3BhY2UuYw0KPiBAQCAtNDI5LDYgKzQyOSwzMSBAQCBz
+dGF0aWMgc3RydWN0IG5zX2NvbW1vbiAqcGlkbnNfZ2V0X3BhcmVudChzdHJ1Y3QgbnNfY29tbW9u
+ICpucykNCj4gIAlyZXR1cm4gJmdldF9waWRfbnMocGlkX25zKS0+bnM7DQo+ICB9DQo+ICANCj4g
+Ky8qKg0KPiArICogcGlkbnNjbXAgLSBEZXRlcm1pbmUgaWYgQGFuY2VzdG9yIGlzIGFuY2VzdG9y
+IG9mIEBkZXNjZW5kYW50DQo+ICsgKiBAYW5jZXN0b3I6ICAgcGlkbnMgc3VzcGVjdGVkIHRvIGJl
+IHRoZSBhbmNlc3RvciBvZiBAZGVzY2VuZGFudA0KPiArICogQGRlc2NlbmRhbnQ6IHBpZG5zIHN1
+c3BlY3RlZCB0byBiZSB0aGUgZGVzY2VuZGFudCBvZiBAYW5jZXN0b3INCj4gKyAqDQo+ICsgKiBS
+ZXR1cm5zIC0xIGlmIEBhbmNlc3RvciBpcyBub3QgYW4gYW5jZXN0b3Igb2YgQGRlc2NlbmRhbnQs
+DQo+ICsgKiAwIGlmIEBhbmNlc3RvciBpcyB0aGUgc2FtZSBwaWRucyBhcyBAZGVzY2VuZGFudCwg
+MSBpZiBAYW5jZXN0b3INCj4gKyAqIGlzIGFuIGFuY2VzdG9yIG9mIEBkZXNjZW5kYW50Lg0KPiAr
+ICovDQo+ICtpbnQgcGlkbnNjbXAoc3RydWN0IHBpZF9uYW1lc3BhY2UgKmFuY2VzdG9yLCBzdHJ1
+Y3QgcGlkX25hbWVzcGFjZSAqZGVzY2VuZGFudCkNCj4gK3sNCj4gKwlpZiAoYW5jZXN0b3IgPT0g
+ZGVzY2VuZGFudCkNCj4gKwkJcmV0dXJuIDA7DQo+ICsNCj4gKwlmb3IgKDs7KSB7DQo+ICsJCWlm
+ICghZGVzY2VuZGFudCkNCj4gKwkJCXJldHVybiAtMTsNCj4gKwkJaWYgKGRlc2NlbmRhbnQgPT0g
+YW5jZXN0b3IpDQo+ICsJCQlicmVhazsNCj4gKwkJZGVzY2VuZGFudCA9IGRlc2NlbmRhbnQtPnBh
+cmVudDsNCj4gKwl9DQo+ICsNCj4gKwlyZXR1cm4gMTsNCj4gK30NCj4gKw0KPiAgc3RhdGljIHN0
+cnVjdCB1c2VyX25hbWVzcGFjZSAqcGlkbnNfb3duZXIoc3RydWN0IG5zX2NvbW1vbiAqbnMpDQo+
+ICB7DQo+ICAJcmV0dXJuIHRvX3BpZF9ucyhucyktPnVzZXJfbnM7DQo=
