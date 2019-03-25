@@ -1,336 +1,105 @@
-From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH 03/17] fpga: dfl: fme: support 512bit data width PR
-Date: Mon, 25 Mar 2019 11:07:30 +0800
-Message-ID: <1553483264-5379-4-git-send-email-hao.wu@intel.com>
-References: <1553483264-5379-1-git-send-email-hao.wu@intel.com>
+From: Aleksa Sarai <cyphar@cyphar.com>
+Subject: Re: [PATCH RESEND v5 0/5] namei: vfs flags to restrict path
+ resolution
+Date: Tue, 26 Mar 2019 00:04:29 +1100
+Message-ID: <20190325130429.dbrgjxnvq3w5cpb3@yavin>
+References: <20190320143717.2523-1-cyphar@cyphar.com>
+ <CALCETrV-Q4qZXGeavBPQbF6-VVz7hqvjRkbhFeYmbGiQgu5Omg@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="57yveyjfb6o3za6g"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1553483264-5379-1-git-send-email-hao.wu@intel.com>
+Content-Disposition: inline
+In-Reply-To: <CALCETrV-Q4qZXGeavBPQbF6-VVz7hqvjRkbhFeYmbGiQgu5Omg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, Wu Hao <hao.wu@intel.com>, Ananda Ravuri <ananda.ravuri@intel.com>, Xu Yilun <yilun.xu@intel.com>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Eric Biederman <ebiederm@xmission.com>, Jann Horn <jannh@google.com>, Christian Brauner <christian@brauner.io>, David Drysdale <drysdale@google.com>, Tycho Andersen <tycho@tycho.ws>, Kees Cook <keescook@chromium.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, Linus Torvalds <torvalds@linux-fo>
 List-Id: linux-api@vger.kernel.org
 
-In early partial reconfiguration private feature, it only
-supports 32bit data width when writing data to hardware for
-PR. 512bit data width PR support is an important optimization
-for some specific solutions (e.g. XEON with FPGA integrated),
-it allows driver to use AVX512 instruction to improve the
-performance of partial reconfiguration. e.g. programming one
-100MB bitstream image via this 512bit data width PR hardware
-only takes ~300ms, but 32bit revision requires ~3s per test
-result.
 
-Please note now this optimization is only done on revision 2
-of this PR private feature which is only used in integrated
-solution that AVX512 is always supported.
+--57yveyjfb6o3za6g
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Signed-off-by: Ananda Ravuri <ananda.ravuri@intel.com>
-Signed-off-by: Xu Yilun <yilun.xu@intel.com>
-Signed-off-by: Wu Hao <hao.wu@intel.com>
----
- drivers/fpga/dfl-fme-main.c |  3 ++
- drivers/fpga/dfl-fme-mgr.c  | 75 +++++++++++++++++++++++++++++++++++++--------
- drivers/fpga/dfl-fme-pr.c   | 45 ++++++++++++++++-----------
- drivers/fpga/dfl-fme.h      |  2 ++
- drivers/fpga/dfl.h          |  5 +++
- 5 files changed, 99 insertions(+), 31 deletions(-)
+On 2019-03-21, Andy Lutomirski <luto@kernel.org> wrote:
+> On Wed, Mar 20, 2019 at 7:38 AM Aleksa Sarai <cyphar@cyphar.com> wrote:
+> > Now that the holiday break is over, it's time to re-send this patch
+> > series (with a few additions, due to new information we got from
+> > CVE-2019-5736 -- which this patchset mostly protected against but had
+> > some holes with regards to #!-style scripts).
+>=20
+> I generally like this, but, as Linus pointed out, it will be
+> unfortunate if application authors see this as just another
+> non-portable weird Linux API and don't use it.  Would it be worthwhile
+> to put some thought into making it an API that other OSes might be
+> willing to implement?  As it stands, the openat(2) flags are getting
+> rather crazy in this patch set.
+>=20
+> Aleksa had a resolveat(2) proposal that really didn't seem too bad.
 
-diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-main.c
-index 086ad24..076d74f 100644
---- a/drivers/fpga/dfl-fme-main.c
-+++ b/drivers/fpga/dfl-fme-main.c
-@@ -21,6 +21,8 @@
- #include "dfl.h"
- #include "dfl-fme.h"
- 
-+#define DRV_VERSION	"0.8"
-+
- static ssize_t ports_num_show(struct device *dev,
- 			      struct device_attribute *attr, char *buf)
- {
-@@ -277,3 +279,4 @@ MODULE_DESCRIPTION("FPGA Management Engine driver");
- MODULE_AUTHOR("Intel Corporation");
- MODULE_LICENSE("GPL v2");
- MODULE_ALIAS("platform:dfl-fme");
-+MODULE_VERSION(DRV_VERSION);
-diff --git a/drivers/fpga/dfl-fme-mgr.c b/drivers/fpga/dfl-fme-mgr.c
-index b3f7eee..027d457 100644
---- a/drivers/fpga/dfl-fme-mgr.c
-+++ b/drivers/fpga/dfl-fme-mgr.c
-@@ -22,14 +22,18 @@
- #include <linux/io-64-nonatomic-lo-hi.h>
- #include <linux/fpga/fpga-mgr.h>
- 
-+#include "dfl.h"
- #include "dfl-fme-pr.h"
- 
-+#define DRV_VERSION	"0.8"
-+
- /* FME Partial Reconfiguration Sub Feature Register Set */
- #define FME_PR_DFH		0x0
- #define FME_PR_CTRL		0x8
- #define FME_PR_STS		0x10
- #define FME_PR_DATA		0x18
- #define FME_PR_ERR		0x20
-+#define FME_PR_512_DATA		0x40 /* Data Register for 512bit datawidth PR */
- #define FME_PR_INTFC_ID_L	0xA8
- #define FME_PR_INTFC_ID_H	0xB0
- 
-@@ -67,8 +71,31 @@
- #define PR_WAIT_TIMEOUT   8000000
- #define PR_HOST_STATUS_IDLE	0
- 
-+#if defined(CONFIG_X86) && defined(CONFIG_AS_AVX512)
-+
-+#include <asm/fpu/api.h>
-+
-+static inline void copy512(void *src, void __iomem *dst)
-+{
-+	kernel_fpu_begin();
-+
-+	asm volatile("vmovdqu64 (%0), %%zmm0;"
-+		     "vmovntdq %%zmm0, (%1);"
-+		     :
-+		     : "r"(src), "r"(dst));
-+
-+	kernel_fpu_end();
-+}
-+#else
-+static inline void copy512(void *src, void __iomem *dst)
-+{
-+	WARN_ON_ONCE(1);
-+}
-+#endif
-+
- struct fme_mgr_priv {
- 	void __iomem *ioaddr;
-+	unsigned int pr_datawidth;
- 	u64 pr_error;
- };
- 
-@@ -169,7 +196,7 @@ static int fme_mgr_write(struct fpga_manager *mgr,
- 	struct fme_mgr_priv *priv = mgr->priv;
- 	void __iomem *fme_pr = priv->ioaddr;
- 	u64 pr_ctrl, pr_status, pr_data;
--	int delay = 0, pr_credit, i = 0;
-+	int ret = 0, delay = 0, pr_credit;
- 
- 	dev_dbg(dev, "start request\n");
- 
-@@ -181,9 +208,9 @@ static int fme_mgr_write(struct fpga_manager *mgr,
- 
- 	/*
- 	 * driver can push data to PR hardware using PR_DATA register once HW
--	 * has enough pr_credit (> 1), pr_credit reduces one for every 32bit
--	 * pr data write to PR_DATA register. If pr_credit <= 1, driver needs
--	 * to wait for enough pr_credit from hardware by polling.
-+	 * has enough pr_credit (> 1), pr_credit reduces one for every pr data
-+	 * width write to PR_DATA register. If pr_credit <= 1, driver needs to
-+	 * wait for enough pr_credit from hardware by polling.
- 	 */
- 	pr_status = readq(fme_pr + FME_PR_STS);
- 	pr_credit = FIELD_GET(FME_PR_STS_PR_CREDIT, pr_status);
-@@ -192,7 +219,8 @@ static int fme_mgr_write(struct fpga_manager *mgr,
- 		while (pr_credit <= 1) {
- 			if (delay++ > PR_WAIT_TIMEOUT) {
- 				dev_err(dev, "PR_CREDIT timeout\n");
--				return -ETIMEDOUT;
-+				ret = -ETIMEDOUT;
-+				goto done;
- 			}
- 			udelay(1);
- 
-@@ -200,21 +228,32 @@ static int fme_mgr_write(struct fpga_manager *mgr,
- 			pr_credit = FIELD_GET(FME_PR_STS_PR_CREDIT, pr_status);
- 		}
- 
--		if (count < 4) {
-+		if (count < priv->pr_datawidth) {
- 			dev_err(dev, "Invalid PR bitstream size\n");
- 			return -EINVAL;
- 		}
- 
--		pr_data = 0;
--		pr_data |= FIELD_PREP(FME_PR_DATA_PR_DATA_RAW,
--				      *(((u32 *)buf) + i));
--		writeq(pr_data, fme_pr + FME_PR_DATA);
--		count -= 4;
-+		switch (priv->pr_datawidth) {
-+		case 4:
-+			pr_data = 0;
-+			pr_data |= FIELD_PREP(FME_PR_DATA_PR_DATA_RAW,
-+					*((u32 *)buf));
-+			writeq(pr_data, fme_pr + FME_PR_DATA);
-+			break;
-+		case 64:
-+			copy512((void *)buf, fme_pr + FME_PR_512_DATA);
-+			break;
-+		default:
-+			ret = -EFAULT;
-+			goto done;
-+		}
-+		buf += priv->pr_datawidth;
-+		count -= priv->pr_datawidth;
- 		pr_credit--;
--		i++;
- 	}
- 
--	return 0;
-+done:
-+	return ret;
- }
- 
- static int fme_mgr_write_complete(struct fpga_manager *mgr,
-@@ -302,6 +341,15 @@ static int fme_mgr_probe(struct platform_device *pdev)
- 			return PTR_ERR(priv->ioaddr);
- 	}
- 
-+	/*
-+	 * Only revision 2 supports 512bit datawidth for better performance,
-+	 * other revisions use default 32bit datawidth.
-+	 */
-+	if (dfl_feature_revision(priv->ioaddr) == 2)
-+		priv->pr_datawidth = 64;
-+	else
-+		priv->pr_datawidth = 4;
-+
- 	compat_id = devm_kzalloc(dev, sizeof(*compat_id), GFP_KERNEL);
- 	if (!compat_id)
- 		return -ENOMEM;
-@@ -342,3 +390,4 @@ MODULE_DESCRIPTION("FPGA Manager for DFL FPGA Management Engine");
- MODULE_AUTHOR("Intel Corporation");
- MODULE_LICENSE("GPL v2");
- MODULE_ALIAS("platform:dfl-fme-mgr");
-+MODULE_VERSION(DRV_VERSION);
-diff --git a/drivers/fpga/dfl-fme-pr.c b/drivers/fpga/dfl-fme-pr.c
-index c1fb1fe..8a0e46a 100644
---- a/drivers/fpga/dfl-fme-pr.c
-+++ b/drivers/fpga/dfl-fme-pr.c
-@@ -83,7 +83,7 @@ static int fme_pr(struct platform_device *pdev, unsigned long arg)
- 	if (copy_from_user(&port_pr, argp, minsz))
- 		return -EFAULT;
- 
--	if (port_pr.argsz < minsz || port_pr.flags)
-+	if (port_pr.argsz < minsz || port_pr.flags || !port_pr.buffer_size)
- 		return -EINVAL;
- 
- 	/* get fme header region */
-@@ -101,15 +101,25 @@ static int fme_pr(struct platform_device *pdev, unsigned long arg)
- 		       port_pr.buffer_size))
- 		return -EFAULT;
- 
-+	mutex_lock(&pdata->lock);
-+	fme = dfl_fpga_pdata_get_private(pdata);
-+	/* fme device has been unregistered. */
-+	if (!fme) {
-+		ret = -EINVAL;
-+		goto unlock_exit;
-+	}
-+
- 	/*
- 	 * align PR buffer per PR bandwidth, as HW ignores the extra padding
- 	 * data automatically.
- 	 */
--	length = ALIGN(port_pr.buffer_size, 4);
-+	length = ALIGN(port_pr.buffer_size, fme->pr_datawidth);
- 
- 	buf = vmalloc(length);
--	if (!buf)
--		return -ENOMEM;
-+	if (!buf) {
-+		ret = -ENOMEM;
-+		goto unlock_exit;
-+	}
- 
- 	if (copy_from_user(buf,
- 			   (void __user *)(unsigned long)port_pr.buffer_address,
-@@ -127,18 +137,10 @@ static int fme_pr(struct platform_device *pdev, unsigned long arg)
- 
- 	info->flags |= FPGA_MGR_PARTIAL_RECONFIG;
- 
--	mutex_lock(&pdata->lock);
--	fme = dfl_fpga_pdata_get_private(pdata);
--	/* fme device has been unregistered. */
--	if (!fme) {
--		ret = -EINVAL;
--		goto unlock_exit;
--	}
--
- 	region = dfl_fme_region_find(fme, port_pr.port_id);
- 	if (!region) {
- 		ret = -EINVAL;
--		goto unlock_exit;
-+		goto free_exit;
- 	}
- 
- 	fpga_image_info_free(region->info);
-@@ -159,13 +161,10 @@ static int fme_pr(struct platform_device *pdev, unsigned long arg)
- 		fpga_bridges_put(&region->bridge_list);
- 
- 	put_device(&region->dev);
--unlock_exit:
--	mutex_unlock(&pdata->lock);
- free_exit:
- 	vfree(buf);
--	if (copy_to_user((void __user *)arg, &port_pr, minsz))
--		return -EFAULT;
--
-+unlock_exit:
-+	mutex_unlock(&pdata->lock);
- 	return ret;
- }
- 
-@@ -391,6 +390,16 @@ static int pr_mgmt_init(struct platform_device *pdev,
- 	mutex_lock(&pdata->lock);
- 	priv = dfl_fpga_pdata_get_private(pdata);
- 
-+	/*
-+	 * Initialize PR data width.
-+	 * Only revision 2 supports 512bit datawidth for better performance,
-+	 * other revisions use default 32bit datawidth.
-+	 */
-+	if (dfl_feature_revision(feature->ioaddr) == 2)
-+		priv->pr_datawidth = 64;
-+	else
-+		priv->pr_datawidth = 4;
-+
- 	/* Initialize the region and bridge sub device list */
- 	INIT_LIST_HEAD(&priv->region_list);
- 	INIT_LIST_HEAD(&priv->bridge_list);
-diff --git a/drivers/fpga/dfl-fme.h b/drivers/fpga/dfl-fme.h
-index 5394a21..de20755 100644
---- a/drivers/fpga/dfl-fme.h
-+++ b/drivers/fpga/dfl-fme.h
-@@ -21,12 +21,14 @@
- /**
-  * struct dfl_fme - dfl fme private data
-  *
-+ * @pr_datawidth: data width for partial reconfiguration.
-  * @mgr: FME's FPGA manager platform device.
-  * @region_list: linked list of FME's FPGA regions.
-  * @bridge_list: linked list of FME's FPGA bridges.
-  * @pdata: fme platform device's pdata.
-  */
- struct dfl_fme {
-+	int pr_datawidth;
- 	struct platform_device *mgr;
- 	struct list_head region_list;
- 	struct list_head bridge_list;
-diff --git a/drivers/fpga/dfl.h b/drivers/fpga/dfl.h
-index a8b869e..8851c6c 100644
---- a/drivers/fpga/dfl.h
-+++ b/drivers/fpga/dfl.h
-@@ -331,6 +331,11 @@ static inline bool dfl_feature_is_port(void __iomem *base)
- 		(FIELD_GET(DFH_ID, v) == DFH_ID_FIU_PORT);
- }
- 
-+static inline u8 dfl_feature_revision(void __iomem *base)
-+{
-+	return (u8)FIELD_GET(DFH_REVISION, readq(base + DFH));
-+}
-+
- /**
-  * struct dfl_fpga_enum_info - DFL FPGA enumeration information
-  *
--- 
-2.7.4
+I agree having a bunch of O_* flags for resolution feels quite ugly (and
+crazy) -- but the last time I pitched resolveat(2) the reaction was
+lukewarm to say the least. It's basically an O_PATHv2 and I don't know
+how popular that suggestion might be. I wouldn't mind pitching it again
+though (now that I have a better idea of how to handle some of the UX
+worries I had).
+
+But, if we have a resolveat(2) we'll need to add O_EMPTYPATH support for
+openat(2) so that you can open scoped paths without using the
+/proc/self/fd/$n trick. However, you run into reopening permission
+issues (as we saw in CVE-2019-5736 and countless other CVEs). There
+might be a solution for this which Andy and I have talked about
+off-list.
+
+There is also the problem of the execveat(2) attack -- which is dealt
+with in patch 5 of this series. In order to scope #!-script resolution
+we need to have AT_* flags for the same resolution restriction
+(defeating the point of a resolveat(2) slightly).
+
+There is an argument that we shouldn't need AT_THIS_ROOT or AT_BENEATH
+support (because ideally you should be doing execve(2) in a pivot_root
+anyway) but AT_NO_MAGICLINKS is pretty important -- since it allows you
+to block the circumvention mm->dumpable in certain situations (as we saw
+in CVE-2019-5736).
+
+The solution Andy and I have discussed is a way to make fd-reopening (a
+seemingly little-known trick outside of container runtimes) much safer
+such that we don't need mitigations like AT_NO_MAGICLINKS on
+execveat(2). If we assume that idea works out (I'm still trying to get a
+working patch for that idea) then resolveat(2) would be sufficient and
+we don't need AT_* flags on execveat(2).
+
+tl;dr: I think resolveat(2) is much nicer, and assuming it's not an
+	   unpopular idea I think we should go for it. But there are several
+	   other threads of discussion that we might want to have first
+	   (such as how to improve the fd-reopening design so it's safer
+	   before we expose it to everyone).
+
+--=20
+Aleksa Sarai
+Senior Software Engineer (Containers)
+SUSE Linux GmbH
+<https://www.cyphar.com/>
+
+--57yveyjfb6o3za6g
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAABCAAdFiEEb6Gz4/mhjNy+aiz1Snvnv3Dem58FAlyY0doACgkQSnvnv3De
+m5/H1Q//S6p57BAirsEx/gjAUOkKIGGK1zQ034Jjplmx7/gAOWKECS86LhV9c6We
+IBDVMVXfeG+iL7yRT7lk2wRTwpeB4DBrqrqD2lpDj2dhzB8b8yzPU4rY027k5r+e
+L/caAoPI6X0NX1nyFiK3MkuQtUNR0GbBI1LOwdwcxFDH0SrCNOrJMCD2VSOtVo5Z
+ktHED0T7KIEDdwS9ZTvEw4yhaxyWhoNGj/V5uU8av1Hbceq8MIxW+Y7aUytr9l4d
+XT0VJWaC9cjEuZWzmZDuZlqTFKFuiupHgE22O4prPJZOAhOMiqrQr76hbSz1ChbN
+iFsHU7JYnUcFd1rPhKwI25kKq2eGWvaj0VLCylQ/ZluMRLPrD3blYJYB9BYIaSss
+XVn9rjdRJG5t3tNKOMEDF9GYuVAE5w9Y+ZZJ1l8eZlUf3C7V6jISDkzvtfYu7xs+
+ish7dFWE3CKrrMJR9eR2zQ0ZoFicCPxBkp7beThQ7JVV24gno7EMS+wF7NdNHKFc
+HwWq6hk1e9wh2FHxQfvloBlFr2FV+lGWhFNFdZ0LzOFJu5Swa1BsPn93KoHi2T7F
+5XK+WAQBtzWuq7J8GN8T9LlhMlXs11QH6FKzt/vsuwEV35M3F4tKgur81bfkdsau
+w+prkX7aetu9qGthO9AFicPDXOXY6HyBcPTDMbGNkHz2/zILvpY=
+=Hj/g
+-----END PGP SIGNATURE-----
+
+--57yveyjfb6o3za6g--
