@@ -1,108 +1,154 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH 0/4] pid: add pidctl()
-Date: Mon, 25 Mar 2019 21:15:45 +0100
-Message-ID: <20190325201544.7o2kwuie3infcblp@brauner.io>
-References: <20190325162052.28987-1-christian@brauner.io>
- <CAKOZueuJSAiKU7fZR2FNDKKCktdyE-sADtWprpsNMAqYQvD9Jw@mail.gmail.com>
- <20190325173614.GB25975@google.com>
+From: Daniel Colascione <dancol@google.com>
+Subject: Re: pidfd design
+Date: Mon, 25 Mar 2019 13:23:21 -0700
+Message-ID: <CAKOZueuNGn31QYpRa5G-OP_S=G3f9TBQ-w27giABn7UVgPQ8Ng@mail.gmail.com>
+References: <20190319231020.tdcttojlbmx57gke@brauner.io> <20190320015249.GC129907@google.com>
+ <CAKOZuetJzg_EiyuK7Pa13X3LKuBbreg7zJ5g4uQv_uV4wpmZjg@mail.gmail.com>
+ <20190320035953.mnhax3vd47ya4zzm@brauner.io> <CAKOZuet3-VhmC3oHtEbPPvdiar_k_QXTf0TkgmH9LiwmW-_oNA@mail.gmail.com>
+ <4A06C5BB-9171-4E70-BE31-9574B4083A9F@joelfernandes.org> <20190320182649.spryp5uaeiaxijum@brauner.io>
+ <CAKOZuevHbQtrq+Nb-jw1L7O72BmAzcXmbUnfnseeXZjX4PE4tg@mail.gmail.com>
+ <20190320185156.7bq775vvtsxqlzfn@brauner.io> <CALCETrXO=V=+qEdLDVPf8eCgLZiB9bOTrUfe0V-U-tUZoeoRDA@mail.gmail.com>
+ <20190320191412.5ykyast3rgotz3nu@brauner.io> <CAKOZuesRwQ4=Svu1KgHWY=HZSS8mF8uFmuzuVOSH0QpJoy7a5w@mail.gmail.com>
+ <CALCETrUFrFKC2YTLH7ViM_7XPYk3LNmNiaz6s8wtWo1pmJQXzg@mail.gmail.com> <CAG48ez3VMjLJBC_F3BxC2sc2s-28NdsrUduR=jX66XH0w2O-Qg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190325173614.GB25975@google.com>
+In-Reply-To: <CAG48ez3VMjLJBC_F3BxC2sc2s-28NdsrUduR=jX66XH0w2O-Qg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Joel Fernandes <joel@joelfernandes.org>
-Cc: Daniel Colascione <dancol@google.com>, Jann Horn <jannh@google.com>, khlebnikov@yandex-team.ru, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, bl0pbl33p@gmail.com, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, nagarathnam.muthusamy@oracle.com, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.or>
+To: Jann Horn <jannh@google.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Christian Brauner <christian@brauner.io>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Steven Rostedt <rostedt@goodmis.org>, Sultan Alsawaf <sultan@kerneltoast.com>, Tim Murray <timmurray@google.com>, Michal Hocko <mhocko@kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, =?UTF-8?B?QXJ2ZSBIasO4bm5ldsOlZw==?= <arve@android.com>, Todd Kjos <tkjos@android.com>, Martijn Coenen <maco@android.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, LKML <linux-kernel@vger.kernel.org>, "open list:ANDROID DRIVERS" <devel@driverdev.osuosl.org>, kernel-team <kernel-team@android.com>, Oleg Nesterov <oleg@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 25, 2019 at 01:36:14PM -0400, Joel Fernandes wrote:
-> On Mon, Mar 25, 2019 at 09:48:43AM -0700, Daniel Colascione wrote:
-> > On Mon, Mar 25, 2019 at 9:21 AM Christian Brauner <christian@brauner.io> wrote:
-> > > The pidctl() syscalls builds on, extends, and improves translate_pid() [4].
-> > > I quote Konstantins original patchset first that has already been acked and
-> > > picked up by Eric before and whose functionality is preserved in this
-> > > syscall. Multiple people have asked when this patchset will be sent in
-> > > for merging (cf. [1], [2]). It has recently been revived by Nagarathnam
-> > > Muthusamy from Oracle [3].
+On Mon, Mar 25, 2019 at 1:14 PM Jann Horn <jannh@google.com> wrote:
+>
+> On Mon, Mar 25, 2019 at 8:44 PM Andy Lutomirski <luto@kernel.org> wrote:
+> > On Wed, Mar 20, 2019 at 12:40 PM Daniel Colascione <dancol@google.com> wrote:
+> > > On Wed, Mar 20, 2019 at 12:14 PM Christian Brauner <christian@brauner.io> wrote:
+> > > > On Wed, Mar 20, 2019 at 11:58:57AM -0700, Andy Lutomirski wrote:
+> > > > > On Wed, Mar 20, 2019 at 11:52 AM Christian Brauner <christian@brauner.io> wrote:
+> > > > > >
+> > > > > > You're misunderstanding. Again, I said in my previous mails it should
+> > > > > > accept pidfds optionally as arguments, yes. But I don't want it to
+> > > > > > return the status fds that you previously wanted pidfd_wait() to return.
+> > > > > > I really want to see Joel's pidfd_wait() patchset and have more people
+> > > > > > review the actual code.
+> > > > >
+> > > > > Just to make sure that no one is forgetting a material security consideration:
+> > > >
+> > > > Andy, thanks for commenting!
+> > > >
+> > > > >
+> > > > > $ ls /proc/self
+> > > > > attr             exe        mountinfo      projid_map    status
+> > > > > autogroup        fd         mounts         root          syscall
+> > > > > auxv             fdinfo     mountstats     sched         task
+> > > > > cgroup           gid_map    net            schedstat     timers
+> > > > > clear_refs       io         ns             sessionid     timerslack_ns
+> > > > > cmdline          latency    numa_maps      setgroups     uid_map
+> > > > > comm             limits     oom_adj        smaps         wchan
+> > > > > coredump_filter  loginuid   oom_score      smaps_rollup
+> > > > > cpuset           map_files  oom_score_adj  stack
+> > > > > cwd              maps       pagemap        stat
+> > > > > environ          mem        personality    statm
+> > > > >
+> > > > > A bunch of this stuff makes sense to make accessible through a syscall
+> > > > > interface that we expect to be used even in sandboxes.  But a bunch of
+> > > > > it does not.  For example, *_map, mounts, mountstats, and net are all
+> > > > > namespace-wide things that certain policies expect to be unavailable.
+> > > > > stack, for example, is a potential attack surface.  Etc.
 > > >
-> > > The intention of the original translate_pid() syscall was twofold:
-> > > 1. Provide translation of pids between pid namespaces
-> > > 2. Provide implicit pid namespace introspection
+> > > If you can access these files sources via open(2) on /proc/<pid>, you
+> > > should be able to access them via a pidfd. If you can't, you
+> > > shouldn't. Which /proc? The one you'd get by mounting procfs. I don't
+> > > see how pidfd makes any material changes to anyone's security. As far
+> > > as I'm concerned, if a sandbox can't mount /proc at all, it's just a
+> > > broken and unsupported configuration.
+> >
+> > It's not "broken and unsupported".  I know of an actual working,
+> > deployed container-ish sandbox that does exactly this.  I would also
+> > guess that quite a few not-at-all-container-like sandboxes work like
+> > this.  (The obvious seccomp + unshare + pivot_root
+> > deny-myself-access-to-lots-of-things trick results in no /proc, which
+> > is by dsign.)
+> >
 > > >
-> > > Both functionalities are preserved. The latter task has been improved
-> > > upon though. In the original version of the pachset passing pid as 1
-> > > would allow to deterimine the relationship between the pid namespaces.
-> > > This is inherhently racy. If pid 1 inside a pid namespace has died it
-> > > would report false negatives. For example, if pid 1 inside of the target
-> > > pid namespace already died, it would report that the target pid
-> > > namespace cannot be reached from the source pid namespace because it
-> > > couldn't find the pid inside of the target pid namespace and thus
-> > > falsely report to the user that the two pid namespaces are not related.
-> > > This problem is simple to avoid. In the new version we simply walk the
-> > > list of ancestors and check whether the namespace are related to each
-> > > other. By doing it this way we can reliably report what the relationship
-> > > between two pid namespace file descriptors looks like.
+> > > An actual threat model and real thought paid to access capabilities
+> > > would help. Almost everything around the interaction of Linux kernel
+> > > namespaces and security feels like a jumble of ad-hoc patches added as
+> > > afterthoughts in response to random objections.
+> >
+> > I fully agree.  But if you start thinking for real about access
+> > capabilities, there's no way that you're going to conclude that a
+> > capability to access some process implies a capability to access the
+> > settings of its network namespace.
+> >
 > > >
-> > > Additionally, this syscall has been extended to allow the retrieval of
-> > > pidfds independent of procfs. These pidfds can e.g. be used with the new
-> > > pidfd_send_signal() syscall we recently merged. The ability to retrieve
-> > > pidfds independent of procfs had already been requested in the
-> > > pidfd_send_signal patchset by e.g. Andrew [4] and later again by Alexey
-> > > [5]. A use-case where a kernel is compiled without procfs but where
-> > > pidfds are still useful has been outlined by Andy in [6]. Regular
-> > > anon-inode based file descriptors are used that stash a reference to
-> > > struct pid in file->private_data and drop that reference on close.
+> > > >> All these new APIs either need to
+> > > > > return something more restrictive than a proc dirfd or they need to
+> > > > > follow the same rules.
 > > >
-> > > With this translate_pid() has three closely related but still distinct
-> > > functionalities. To clarify the semantics and to make it easier for
-> > > userspace to use the syscall it has:
-> > > - gained a command argument and three commands clearly reflecting the
-> > >   distinct functionalities (PIDCMD_QUERY_PID, PIDCMD_QUERY_PIDNS,
-> > >   PIDCMD_GET_PIDFD).
-> > > - been renamed to pidctl()
-> > 
-> [snip]
-> > Also, I'm still confused about how metadata access is supposed to work
-> > for these procfs-less pidfs. If I use PIDCMD_GET_PIDFD on a process,
-> > You snipped out a portion of a previous email in which I asked about
-> > your thoughts on this question. With the PIDCMD_GET_PIDFD command in
-> > place, we have two different kinds of file descriptors for processes,
-> > one derived from procfs and one that's independent. The former works
-> > with openat(2). The latter does not. To be very specific; if I'm
-> > writing a function that accepts a pidfd and I get a pidfd that comes
-> > from PIDCMD_GET_PIDFD, how am I supposed to get the equivalent of
-> > smaps or oom_score_adj or statm for the named process in a race-free
-> > manner?
-> 
-> This is true, that such usecase will not be supportable.  But the advantage
-> on the other hand, is that suchs "pidfd" can be made pollable or readable in
-> the future. Potentially allowing us to return exit status without a new
-> syscall (?). And we can add IOCTLs to the pidfd descriptor which we cannot do
-> with proc.
-> 
-> But.. one thing we could do for Daniel usecase is if a /proc/pid directory fd
-> can be translated into a "pidfd" using another syscall or even a node, like
-> /proc/pid/handle or something. I think this is what Christian suggested in
-> the previous threads.
+> >
+> > ...
+> >
+> > > What's special about libraries? How is a library any worse-off using
+> > > openat(2) on a pidfd than it would be just opening the file called
+> > > "/proc/$apid"?
+> >
+> > Because most libraries actually work, right now, without /proc.  Even
+> > libraries that spawn subprocesses.  If we make the new API have the
+> > property that it doesn't work if you're in a non-root user namespace
+> > and /proc isn't mounted, the result will be an utter mess.
+> >
+> > >
+> > > > > Yes, this is unfortunate, but it is indeed the current situation.  I
+> > > > > suppose that we could return magic restricted dirfds, or we could
+> > > > > return things that aren't dirfds and all and have some API that gives
+> > > > > you the dirfd associated with a procfd but only if you can see
+> > > > > /proc/PID.
+> > > >
+> > > > What would be your opinion to having a
+> > > > /proc/<pid>/handle
+> > > > file instead of having a dirfd. Essentially, what I initially proposed
+> > > > at LPC. The change on what we currently have in master would be:
+> > > > https://gist.github.com/brauner/59eec91550c5624c9999eaebd95a70df
+> > >
+> > > And how do you propose, given one of these handle objects, getting a
+> > > process's current priority, or its current oom score, or its list of
+> > > memory maps? As I mentioned in my original email, and which nobody has
+> > > addressed, if you don't use a dirfd as your process handle or you
+> > > don't provide an easy way to get one of these proc directory FDs, you
+> > > need to duplicate a lot of metadata access interfaces.
+> >
+> > An API that takes a process handle object and an fd pointing at /proc
+> > (the root of the proc fs) and gives you back a proc dirfd would do the
+> > trick.  You could do this with no new kernel features at all if you're
+> > willing to read the pid, call openat(2), and handle the races in user
+> > code.
+>
+> This seems like something that might be a good fit for two ioctls?
 
-Andy - and Jann who I just talked to - have proposed solutions for this.
-Jann's idea is similar to what you suggested, Joel. You could e.g. do an
-ioctl() handler for /proc that would give you a dirfd back for a given
-pidfd. The advantage is that pidfd_clone() can then give back pidfds
-without having to care in what procfs the process is supposed to live.
-That makes things a lot easier. But pidfds for the general case should
-be anon inodes. It's clean, it's simple and it is way more secure.
+As an aside, we had a long discussion about why fundamental facilities
+like this should be system calls, not ioctls. I think the arguments
+still apply.
 
-> 
-> And also for the translation the other way, add a syscall or modify
-> translate_fd or something, to covert a anon_inode pidfd into a /proc/pid
-> directory fd. Then the user is welcomed to do openat(2) on _that_ directory fd.
-> Then we modify pidfd_send_signal to only send signals to pure pidfd fds, not
-> to /proc/pid directory fds.
-> 
-> Should we work on patches for these? Please let us know if this idea makes
-> sense and thanks a lot for adding us to the review as well.
-> 
-> Best,
-> 
->  - Joel
+> One ioctl on procfs roots to translate pidfds into that procfs,
+> subject to both the normal lookup permission checks and only working
+> if the pidfd has a translation into the procfs:
+>
+> int proc_root_fd = open("/proc", O_RDONLY);
+> int proc_dir_fd = ioctl(proc_root_fd, PROC_PIDFD_TO_PROCFSFD, pidfd);
+>
+> And one ioctl on procfs directories to translate from PGIDs and PIDs to pidfds:
+>
+> int proc_pgid_fd = open("/proc/self", O_RDONLY);
+> int self_pg_pidfd = ioctl(proc_pgid_fd, PROC_PROCFSFD_TO_PIDFD, 0);
+> int proc_pid_fd = open("/proc/thread-self", O_RDONLY);
+> int self_p_pidfd = ioctl(proc_pid_fd, PROC_PROCFSFD_TO_PIDFD, 0);
+>
+>
+> And then, as you proposed, the new sys_clone() can just return a
+> pidfd, and you can convert it into a procfs fd yourself if you want.
+
+I think that's the consensus we reached on the other thread. The
+O_DIRECTORY open on /proc/self/fd/mypidfd seems like it'd work well
+enough.
