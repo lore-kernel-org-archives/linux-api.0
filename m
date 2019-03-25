@@ -1,120 +1,154 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH 13/17] fpga: dfl: fme: add capability sysfs interfaces
-Date: Mon, 25 Mar 2019 11:07:40 +0800
-Message-ID: <1553483264-5379-14-git-send-email-hao.wu@intel.com>
+Subject: [PATCH 06/17] fpga: dfl: pci: enable SRIOV support.
+Date: Mon, 25 Mar 2019 11:07:33 +0800
+Message-ID: <1553483264-5379-7-git-send-email-hao.wu@intel.com>
 References: <1553483264-5379-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1553483264-5379-1-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, Wu Hao <hao.wu@intel.com>, Luwei Kang <luwei.kang@intel.com>, Xu Yilun <yilun.xu@intel.com>
+Cc: linux-api@vger.kernel.org, Wu Hao <hao.wu@intel.com>, Zhang Yi Z <yi.z.zhang@intel.com>, Xu Yilun <yilun.xu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds 3 read-only sysfs interfaces for FPGA Management Engine
-(FME) block for capabilities including cache_size, fabric_version and
-socket_id.
+This patch enables the standard sriov support. It allows user to
+enable SRIOV (and VFs), then user could pass through accelerators
+(VFs) into virtual machine or use VFs directly in host.
 
-Signed-off-by: Luwei Kang <luwei.kang@intel.com>
+Signed-off-by: Zhang Yi Z <yi.z.zhang@intel.com>
 Signed-off-by: Xu Yilun <yilun.xu@intel.com>
 Signed-off-by: Wu Hao <hao.wu@intel.com>
 ---
- Documentation/ABI/testing/sysfs-platform-dfl-fme | 23 ++++++++++++
- drivers/fpga/dfl-fme-main.c                      | 48 ++++++++++++++++++++++++
- 2 files changed, 71 insertions(+)
+ drivers/fpga/dfl-pci.c | 40 ++++++++++++++++++++++++++++++++++++++++
+ drivers/fpga/dfl.c     | 41 +++++++++++++++++++++++++++++++++++++++++
+ drivers/fpga/dfl.h     |  1 +
+ 3 files changed, 82 insertions(+)
 
-diff --git a/Documentation/ABI/testing/sysfs-platform-dfl-fme b/Documentation/ABI/testing/sysfs-platform-dfl-fme
-index 8fa4feb..b8327e9 100644
---- a/Documentation/ABI/testing/sysfs-platform-dfl-fme
-+++ b/Documentation/ABI/testing/sysfs-platform-dfl-fme
-@@ -21,3 +21,26 @@ Contact:	Wu Hao <hao.wu@intel.com>
- Description:	Read-only. It returns Bitstream (static FPGA region) meta
- 		data, which includes the synthesis date, seed and other
- 		information of this static FPGA region.
-+
-+What:		/sys/bus/platform/devices/dfl-fme.0/cache_size
-+Date:		March 2019
-+KernelVersion:  5.2
-+Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read-only. It returns cache size of this FPGA device.
-+
-+What:		/sys/bus/platform/devices/dfl-fme.0/fabric_version
-+Date:		March 2019
-+KernelVersion:  5.2
-+Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read-only. It returns fabric version of this FPGA device.
-+		Userspace applications need this information to select
-+		best data channels per different fabric design.
-+
-+What:		/sys/bus/platform/devices/dfl-fme.0/socket_id
-+Date:		March 2019
-+KernelVersion:  5.2
-+Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read-only. It returns socket_id to indicate which socket
-+		this FPGA belongs to, only valid for integrated solution.
-+		User only needs this information, in case standard numa node
-+		can't provide correct information.
-diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-main.c
-index 38c6342..8339ee8 100644
---- a/drivers/fpga/dfl-fme-main.c
-+++ b/drivers/fpga/dfl-fme-main.c
-@@ -75,10 +75,58 @@ static ssize_t bitstream_metadata_show(struct device *dev,
+diff --git a/drivers/fpga/dfl-pci.c b/drivers/fpga/dfl-pci.c
+index 66b5720..2fa571b 100644
+--- a/drivers/fpga/dfl-pci.c
++++ b/drivers/fpga/dfl-pci.c
+@@ -223,8 +223,46 @@ int cci_pci_probe(struct pci_dev *pcidev, const struct pci_device_id *pcidevid)
+ 	return ret;
  }
- static DEVICE_ATTR_RO(bitstream_metadata);
  
-+static ssize_t cache_size_show(struct device *dev,
-+			       struct device_attribute *attr, char *buf)
++static int cci_pci_sriov_configure(struct pci_dev *pcidev, int num_vfs)
 +{
-+	void __iomem *base;
-+	u64 v;
++	struct cci_drvdata *drvdata = pci_get_drvdata(pcidev);
++	struct dfl_fpga_cdev *cdev = drvdata->cdev;
++	int ret = 0;
 +
-+	base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_HEADER);
++	mutex_lock(&cdev->lock);
 +
-+	v = readq(base + FME_HDR_CAP);
++	if (!num_vfs) {
++		/*
++		 * disable SRIOV and then put released ports back to default
++		 * PF access mode.
++		 */
++		pci_disable_sriov(pcidev);
 +
-+	return scnprintf(buf, PAGE_SIZE, "%u\n",
-+			 (unsigned int)FIELD_GET(FME_CAP_CACHE_SIZE, v));
++		__dfl_fpga_cdev_config_port_vf(cdev, false);
++
++	} else if (cdev->released_port_num == num_vfs) {
++		/*
++		 * only enable SRIOV if cdev has matched released ports, put
++		 * released ports into VF access mode firstly.
++		 */
++		__dfl_fpga_cdev_config_port_vf(cdev, true);
++
++		ret = pci_enable_sriov(pcidev, num_vfs);
++		if (ret)
++			__dfl_fpga_cdev_config_port_vf(cdev, false);
++	} else {
++		ret = -EINVAL;
++	}
++
++	mutex_unlock(&cdev->lock);
++	return ret;
 +}
-+static DEVICE_ATTR_RO(cache_size);
 +
-+static ssize_t fabric_version_show(struct device *dev,
-+				   struct device_attribute *attr, char *buf)
-+{
-+	void __iomem *base;
-+	u64 v;
+ static void cci_pci_remove(struct pci_dev *pcidev)
+ {
++	if (dev_is_pf(&pcidev->dev))
++		cci_pci_sriov_configure(pcidev, 0);
 +
-+	base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_HEADER);
-+
-+	v = readq(base + FME_HDR_CAP);
-+
-+	return scnprintf(buf, PAGE_SIZE, "%u\n",
-+			 (unsigned int)FIELD_GET(FME_CAP_FABRIC_VERID, v));
-+}
-+static DEVICE_ATTR_RO(fabric_version);
-+
-+static ssize_t socket_id_show(struct device *dev,
-+			      struct device_attribute *attr, char *buf)
-+{
-+	void __iomem *base;
-+	u64 v;
-+
-+	base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_HEADER);
-+
-+	v = readq(base + FME_HDR_CAP);
-+
-+	return scnprintf(buf, PAGE_SIZE, "%u\n",
-+			 (unsigned int)FIELD_GET(FME_CAP_SOCKET_ID, v));
-+}
-+static DEVICE_ATTR_RO(socket_id);
-+
- static const struct attribute *fme_hdr_attrs[] = {
- 	&dev_attr_ports_num.attr,
- 	&dev_attr_bitstream_id.attr,
- 	&dev_attr_bitstream_metadata.attr,
-+	&dev_attr_cache_size.attr,
-+	&dev_attr_fabric_version.attr,
-+	&dev_attr_socket_id.attr,
- 	NULL,
+ 	cci_remove_feature_devs(pcidev);
+ 	pci_disable_pcie_error_reporting(pcidev);
+ }
+@@ -234,6 +272,7 @@ static struct pci_driver cci_pci_driver = {
+ 	.id_table = cci_pcie_id_tbl,
+ 	.probe = cci_pci_probe,
+ 	.remove = cci_pci_remove,
++	.sriov_configure = cci_pci_sriov_configure,
  };
  
+ module_pci_driver(cci_pci_driver);
+@@ -241,3 +280,4 @@ module_pci_driver(cci_pci_driver);
+ MODULE_DESCRIPTION("FPGA DFL PCIe Device Driver");
+ MODULE_AUTHOR("Intel Corporation");
+ MODULE_LICENSE("GPL v2");
++MODULE_VERSION(DRV_VERSION);
+diff --git a/drivers/fpga/dfl.c b/drivers/fpga/dfl.c
+index a6b6d38..c5aa287 100644
+--- a/drivers/fpga/dfl.c
++++ b/drivers/fpga/dfl.c
+@@ -1098,6 +1098,47 @@ int dfl_fpga_cdev_config_port(struct dfl_fpga_cdev *cdev,
+ }
+ EXPORT_SYMBOL_GPL(dfl_fpga_cdev_config_port);
+ 
++static void config_port_vf(struct device *fme_dev, int port_id, bool is_vf)
++{
++	void __iomem *base;
++	u64 v;
++
++	base = dfl_get_feature_ioaddr_by_id(fme_dev, FME_FEATURE_ID_HEADER);
++
++	v = readq(base + FME_HDR_PORT_OFST(port_id));
++
++	v &= ~FME_PORT_OFST_ACC_CTRL;
++	v |= FIELD_PREP(FME_PORT_OFST_ACC_CTRL,
++			is_vf ? FME_PORT_OFST_ACC_VF : FME_PORT_OFST_ACC_PF);
++
++	writeq(v, base + FME_HDR_PORT_OFST(port_id));
++}
++
++/**
++ * __dfl_fpga_cdev_config_port_vf - configure port to VF access mode
++ *
++ * @cdev: parent container device.
++ * @if_vf: true for VF access mode, and false for PF access mode
++ *
++ * Return: 0 on success, negative error code otherwise.
++ *
++ * This function is needed in sriov configuration routine. It could be used to
++ * configures the released ports access mode to VF or PF.
++ * The caller needs to hold lock for protection.
++ */
++void __dfl_fpga_cdev_config_port_vf(struct dfl_fpga_cdev *cdev, bool is_vf)
++{
++	struct dfl_feature_platform_data *pdata;
++
++	list_for_each_entry(pdata, &cdev->port_dev_list, node) {
++		if (device_is_registered(&pdata->dev->dev))
++			continue;
++
++		config_port_vf(cdev->fme_dev, pdata->id, is_vf);
++	}
++}
++EXPORT_SYMBOL_GPL(__dfl_fpga_cdev_config_port_vf);
++
+ static int __init dfl_fpga_init(void)
+ {
+ 	int ret;
+diff --git a/drivers/fpga/dfl.h b/drivers/fpga/dfl.h
+index 63f39ab..1350e8e 100644
+--- a/drivers/fpga/dfl.h
++++ b/drivers/fpga/dfl.h
+@@ -421,5 +421,6 @@ dfl_fpga_cdev_find_port(struct dfl_fpga_cdev *cdev, void *data,
+ 
+ int dfl_fpga_cdev_config_port(struct dfl_fpga_cdev *cdev,
+ 			      u32 port_id, bool release);
++void __dfl_fpga_cdev_config_port_vf(struct dfl_fpga_cdev *cdev, bool is_vf);
+ 
+ #endif /* __FPGA_DFL_H */
 -- 
 2.7.4
