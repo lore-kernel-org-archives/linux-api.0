@@ -1,7 +1,7 @@
-From: Daniel Colascione <dancol@google.com>
+From: Jann Horn <jannh@google.com>
 Subject: Re: [PATCH 0/4] pid: add pidctl()
-Date: Mon, 25 Mar 2019 14:17:09 -0700
-Message-ID: <CAKOZuevWPTuiGGcYiQoo2VJL-2mN1J9aPmR9gaCFy6uxJN24HQ@mail.gmail.com>
+Date: Mon, 25 Mar 2019 22:19:26 +0100
+Message-ID: <CAG48ez0K9xcSf28rXOy3k0dEL3b_4b-DfcdCO=JO7vVZeJoBcA@mail.gmail.com>
 References: <20190325162052.28987-1-christian@brauner.io> <CAKOZueuJSAiKU7fZR2FNDKKCktdyE-sADtWprpsNMAqYQvD9Jw@mail.gmail.com>
  <20190325173614.GB25975@google.com> <20190325201544.7o2kwuie3infcblp@brauner.io>
  <20190325211132.GA6494@google.com>
@@ -11,11 +11,10 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190325211132.GA6494@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Joel Fernandes <joel@joelfernandes.org>
-Cc: Christian Brauner <christian@brauner.io>, Jann Horn <jannh@google.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Jonathan Kowalski <bl0pbl33p@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthus>
+Cc: Christian Brauner <christian@brauner.io>, Daniel Colascione <dancol@google.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Jonathan Kowalski <bl0pbl33p@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathn>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 25, 2019 at 2:11 PM Joel Fernandes <joel@joelfernandes.org> wrote:
->
+On Mon, Mar 25, 2019 at 10:11 PM Joel Fernandes <joel@joelfernandes.org> wrote:
 > On Mon, Mar 25, 2019 at 09:15:45PM +0100, Christian Brauner wrote:
 > > On Mon, Mar 25, 2019 at 01:36:14PM -0400, Joel Fernandes wrote:
 > > > On Mon, Mar 25, 2019 at 09:48:43AM -0700, Daniel Colascione wrote:
@@ -99,30 +98,15 @@ On Mon, Mar 25, 2019 at 2:11 PM Joel Fernandes <joel@joelfernandes.org> wrote:
 >
 > Also for the "blocking on pid exit status" usecase, instead of adding a new
 > syscall like pidfd_wait, lets just make that a new IOCTL to the
-
-Please, no ioctls.
-
 > file_operations of the anon_inode pidfd file. This will lets us specify
-> exactly what to wait on (wait on death or wait on zombie) and lets us
+> exactly what to wait on (wait on death or wait on zombie) and lets us avoid
+> having a new syscall and create new fd just for waiting. Let me know if you
+> disagree, but otherwise I am thinking of modifying my patches that way and
+> avoid adding a new syscall.
 
-I don't like per-open-file-description state. Ever try to set
-O_NONBLOCK on standard input? It results in a broken terminal
-configuration. pidfd wait mode would be similar. Processes and
-intraprocess components share file descriptors all the time for
-various reasons, and making the wait mode specific to the open file
-description causes "spooky action at a distance" and bugs. If you need
-a configurable wait mode, you should create a new open file
-description that encodes that wait mode for its entire lifetime.
-
-> avoid
-> having a new syscall
-
-Please stop using the "this lets us avoid making a new system call"
-justification for interface design. System calls are cheap to add, and
-going to lengths to avoid making a new system call frequently makes
-interfaces worse in various ways.
-
-> and create new fd just for waiting.
-
-I think it's fine to make a new FD for waiting, especially if you only
-need a new FD for a non-default wait mode.
+But often you don't just want to wait for a single thing to happen;
+you want to wait for many things at once, and react as soon as any one
+of them happens. This is why the kernel has epoll and all the other
+"wait for event on FD" APIs. If waiting for a process isn't possible
+with fd-based APIs like epoll, users of this API have to spin up
+useless helper threads.
