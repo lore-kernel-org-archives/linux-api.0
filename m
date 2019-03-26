@@ -1,7 +1,7 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V31 25/25] debugfs: Disable open() when kernel is locked down
-Date: Tue, 26 Mar 2019 11:27:41 -0700
-Message-ID: <20190326182742.16950-26-matthewgarrett@google.com>
+Subject: [PATCH V31 21/25] Lock down kprobes when in confidentiality mode
+Date: Tue, 26 Mar 2019 11:27:37 -0700
+Message-ID: <20190326182742.16950-22-matthewgarrett@google.com>
 References: <20190326182742.16950-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -9,46 +9,39 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190326182742.16950-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-api@vger.kernel.org, luto@kernel.org, Matthew Garrett <mjg59@google.com>, gregkh@linuxfoundation.org
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-api@vger.kernel.org, luto@kernel.org, Alexei Starovoitov <alexei.starovoitov@gmail.com>, Matthew Garrett <mjg59@google.com>, "Naveen N . Rao" <naveen.n.rao@linux.ibm.com>, Anil S Keshavamurthy <anil.s.keshavamurthy@intel.com>, davem@davemloft.net, Masami Hiramatsu <mhiramat@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Matthew Garrett <mjg59@google.com>
+From: David Howells <dhowells@redhat.com>
 
-debugfs has not been meaningfully audited in terms of ensuring that
-userland cannot trample over the kernel. At Greg's request, disable
-access to it entirely when the kernel is locked down. This is done at
-open() time rather than init time as the kernel lockdown status may be
-made stricter at runtime.
+Disallow the creation of kprobes when the kernel is locked down in
+confidentiality mode by preventing their registration.  This prevents
+kprobes from being used to access kernel memory to steal crypto data.
 
+Reported-by: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Matthew Garrett <mjg59@google.com>
-Cc: gregkh@linuxfoundation.org
+Cc: Naveen N. Rao <naveen.n.rao@linux.ibm.com>
+Cc: Anil S Keshavamurthy <anil.s.keshavamurthy@intel.com>
+Cc: davem@davemloft.net
+Cc: Masami Hiramatsu <mhiramat@kernel.org>
 ---
- fs/debugfs/file.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+ kernel/kprobes.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/fs/debugfs/file.c b/fs/debugfs/file.c
-index 4fce1da7db23..9ae12ef29ba0 100644
---- a/fs/debugfs/file.c
-+++ b/fs/debugfs/file.c
-@@ -142,6 +142,9 @@ static int open_proxy_open(struct inode *inode, struct file *filp)
- 	const struct file_operations *real_fops = NULL;
- 	int r;
+diff --git a/kernel/kprobes.c b/kernel/kprobes.c
+index f4ddfdd2d07e..b9781bd2db8c 100644
+--- a/kernel/kprobes.c
++++ b/kernel/kprobes.c
+@@ -1552,6 +1552,9 @@ int register_kprobe(struct kprobe *p)
+ 	struct module *probed_mod;
+ 	kprobe_opcode_t *addr;
  
-+	if (kernel_is_locked_down("debugfs", LOCKDOWN_INTEGRITY))
++	if (kernel_is_locked_down("Use of kprobes", LOCKDOWN_CONFIDENTIALITY))
 +		return -EPERM;
 +
- 	r = debugfs_file_get(dentry);
- 	if (r)
- 		return r == -EIO ? -ENOENT : r;
-@@ -267,6 +270,9 @@ static int full_proxy_open(struct inode *inode, struct file *filp)
- 	struct file_operations *proxy_fops = NULL;
- 	int r;
- 
-+	if (kernel_is_locked_down("debugfs", LOCKDOWN_INTEGRITY))
-+		return -EPERM;
-+
- 	r = debugfs_file_get(dentry);
- 	if (r)
- 		return r == -EIO ? -ENOENT : r;
+ 	/* Adjust probe address from symbol */
+ 	addr = kprobe_addr(p);
+ 	if (IS_ERR(addr))
 -- 
 2.21.0.392.gf8f6787159e-goog
