@@ -1,25 +1,25 @@
 From: Christian Brauner <christian@brauner.io>
 Subject: Re: [PATCH v1 2/4] pid: add pidctl()
-Date: Tue, 26 Mar 2019 17:43:55 +0100
-Message-ID: <20190326164354.qecuzkqz6ic2433i@brauner.io>
+Date: Tue, 26 Mar 2019 17:46:35 +0100
+Message-ID: <20190326164634.ba5dko6weazp3zyd@brauner.io>
 References: <20190326155513.26964-1-christian@brauner.io>
  <20190326155513.26964-3-christian@brauner.io>
  <CAKOZuet18Lc+N7NaXN=cOcg_q8CxDkhYVss9enVhh6RBRUXpjg@mail.gmail.com>
  <20190326162337.o256x7hiodu2qfyg@brauner.io>
  <20190326163142.4eh5qpgiqvygf26w@brauner.io>
  <20190326163452.uku4bgkessxzxvai@brauner.io>
- <CAKOZuetcp=UPRWDkLUxLTmu-vqdN6qSmN9=0uP8MUuwyLoYfEA@mail.gmail.com>
+ <CALCETrXdyTxJZBXR02Dd=fnZYNLxFYgiJfnJCONBK5khy7JPVQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAKOZuetcp=UPRWDkLUxLTmu-vqdN6qSmN9=0uP8MUuwyLoYfEA@mail.gmail.com>
+In-Reply-To: <CALCETrXdyTxJZBXR02Dd=fnZYNLxFYgiJfnJCONBK5khy7JPVQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Colascione <dancol@google.com>
-Cc: Jann Horn <jannh@google.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Jonathan Kowalski <bl0pbl33p@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, Aleksa Sarai <cyphar@cyph>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Daniel Colascione <dancol@google.com>, Jann Horn <jannh@google.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Jonathan Kowalski <bl0pbl33p@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, Aleksa Sarai <cyphar@>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 26, 2019 at 09:38:31AM -0700, Daniel Colascione wrote:
+On Tue, Mar 26, 2019 at 09:42:59AM -0700, Andy Lutomirski wrote:
 > On Tue, Mar 26, 2019 at 9:34 AM Christian Brauner <christian@brauner.io> wrote:
 > >
 > > On Tue, Mar 26, 2019 at 05:31:42PM +0100, Christian Brauner wrote:
@@ -62,18 +62,16 @@ On Tue, Mar 26, 2019 at 09:38:31AM -0700, Daniel Colascione wrote:
 > > probably rather:
 > >
 > > int pidfd = pidfd_open(-1, 4, PIDFD_TO_PROCFD);
-> > int procfd = pidfd_open(-1, 4, PROCFD_TO_PIDFD);
-> > int pidfd = pidfd_open(1234, -1, 0);
 > 
-> These three operations look like three related but distinct functions
-> to me, and in the second case, the "pidfd_open" name is a bit of a
-> misnomer. IMHO, the presence of an "operation name" field in any API
-> is usually a good indication that we're looking at a family of related
-> APIs, not a single coherent operation.
+> Do you mean:
+> 
+> int procrootfd = open("/proc", O_DIRECTORY | O_RDONLY);
+> int procfd = pidfd_open(procrootfd, pidfd, PIDFD_TO_PROCFD);
+> 
+> or do you have some other solution in mind to avoid the security problem?
 
-So I'm happy to accommodate the need for a clean api even though I
-disagree that what we have in pidctl() is unclean.
-But I will not start sending a pile of syscalls. There is nothing
-necessarily wrong to group related APIs together. By these standards the
-new mount API would need to be like 30 different syscalls, same for
-keyring management.
+Yes, we need the proc root obviously. I just jotted this down.
+
+We probably would need where one of the fds can refer to the proc root.
+
+pidfd_open(pid_t, int fd, int fd, 0)
