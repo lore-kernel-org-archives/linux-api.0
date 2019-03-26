@@ -1,8 +1,7 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V31 03/25] Restrict /dev/{mem,kmem,port} when the kernel is
- locked down
-Date: Tue, 26 Mar 2019 11:27:19 -0700
-Message-ID: <20190326182742.16950-4-matthewgarrett@google.com>
+Subject: [PATCH V31 05/25] Copy secure_boot flag in boot params across kexec reboot
+Date: Tue, 26 Mar 2019 11:27:21 -0700
+Message-ID: <20190326182742.16950-6-matthewgarrett@google.com>
 References: <20190326182742.16950-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -10,40 +9,41 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190326182742.16950-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-api@vger.kernel.org, luto@kernel.org, Matthew Garrett <mjg59@srcf.ucam.org>, Matthew Garrett <mjg59@google.com>, x86@kernel.org
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-api@vger.kernel.org, luto@kernel.org, Dave Young <dyoung@redhat.com>, Matthew Garrett <mjg59@google.com>, kexec@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-From: Matthew Garrett <mjg59@srcf.ucam.org>
+From: Dave Young <dyoung@redhat.com>
 
-Allowing users to read and write to core kernel memory makes it possible
-for the kernel to be subverted, avoiding module loading restrictions, and
-also to steal cryptographic information.
+Kexec reboot in case secure boot being enabled does not keep the secure
+boot mode in new kernel, so later one can load unsigned kernel via legacy
+kexec_load.  In this state, the system is missing the protections provided
+by secure boot.
 
-Disallow /dev/mem and /dev/kmem from being opened this when the kernel has
-been locked down to prevent this.
+Adding a patch to fix this by retain the secure_boot flag in original
+kernel.
 
-Also disallow /dev/port from being opened to prevent raw ioport access and
-thus DMA from being used to accomplish the same thing.
+secure_boot flag in boot_params is set in EFI stub, but kexec bypasses the
+stub.  Fixing this issue by copying secure_boot flag across kexec reboot.
 
+Signed-off-by: Dave Young <dyoung@redhat.com>
 Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Matthew Garrett <mjg59@google.com>
-Cc: x86@kernel.org
+cc: kexec@lists.infradead.org
 ---
- drivers/char/mem.c | 2 ++
- 1 file changed, 2 insertions(+)
+ arch/x86/kernel/kexec-bzimage64.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/drivers/char/mem.c b/drivers/char/mem.c
-index b08dc50f9f26..67b85939b1bd 100644
---- a/drivers/char/mem.c
-+++ b/drivers/char/mem.c
-@@ -786,6 +786,8 @@ static loff_t memory_lseek(struct file *file, loff_t offset, int orig)
+diff --git a/arch/x86/kernel/kexec-bzimage64.c b/arch/x86/kernel/kexec-bzimage64.c
+index 278cd07228dd..d49554b948fd 100644
+--- a/arch/x86/kernel/kexec-bzimage64.c
++++ b/arch/x86/kernel/kexec-bzimage64.c
+@@ -179,6 +179,7 @@ setup_efi_state(struct boot_params *params, unsigned long params_load_addr,
+ 	if (efi_enabled(EFI_OLD_MEMMAP))
+ 		return 0;
  
- static int open_port(struct inode *inode, struct file *filp)
- {
-+	if (kernel_is_locked_down("/dev/mem,kmem,port", LOCKDOWN_INTEGRITY))
-+		return -EPERM;
- 	return capable(CAP_SYS_RAWIO) ? 0 : -EPERM;
- }
- 
++	params->secure_boot = boot_params.secure_boot;
+ 	ei->efi_loader_signature = current_ei->efi_loader_signature;
+ 	ei->efi_systab = current_ei->efi_systab;
+ 	ei->efi_systab_hi = current_ei->efi_systab_hi;
 -- 
 2.21.0.392.gf8f6787159e-goog
