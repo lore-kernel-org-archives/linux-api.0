@@ -1,7 +1,7 @@
-From: Daniel Colascione <dancol@google.com>
+From: Andy Lutomirski <luto@kernel.org>
 Subject: Re: [PATCH v1 2/4] pid: add pidctl()
-Date: Tue, 26 Mar 2019 09:38:31 -0700
-Message-ID: <CAKOZuetcp=UPRWDkLUxLTmu-vqdN6qSmN9=0uP8MUuwyLoYfEA@mail.gmail.com>
+Date: Tue, 26 Mar 2019 09:42:59 -0700
+Message-ID: <CALCETrXdyTxJZBXR02Dd=fnZYNLxFYgiJfnJCONBK5khy7JPVQ@mail.gmail.com>
 References: <20190326155513.26964-1-christian@brauner.io> <20190326155513.26964-3-christian@brauner.io>
  <CAKOZuet18Lc+N7NaXN=cOcg_q8CxDkhYVss9enVhh6RBRUXpjg@mail.gmail.com>
  <20190326162337.o256x7hiodu2qfyg@brauner.io> <20190326163142.4eh5qpgiqvygf26w@brauner.io>
@@ -12,7 +12,7 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190326163452.uku4bgkessxzxvai@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Christian Brauner <christian@brauner.io>
-Cc: Jann Horn <jannh@google.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Jonathan Kowalski <bl0pbl33p@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, Aleksa Sarai <cyphar@cyph>
+Cc: Daniel Colascione <dancol@google.com>, Jann Horn <jannh@google.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Jonathan Kowalski <bl0pbl33p@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy>
 List-Id: linux-api@vger.kernel.org
 
 On Tue, Mar 26, 2019 at 9:34 AM Christian Brauner <christian@brauner.io> wrote:
@@ -57,11 +57,10 @@ On Tue, Mar 26, 2019 at 9:34 AM Christian Brauner <christian@brauner.io> wrote:
 > probably rather:
 >
 > int pidfd = pidfd_open(-1, 4, PIDFD_TO_PROCFD);
-> int procfd = pidfd_open(-1, 4, PROCFD_TO_PIDFD);
-> int pidfd = pidfd_open(1234, -1, 0);
 
-These three operations look like three related but distinct functions
-to me, and in the second case, the "pidfd_open" name is a bit of a
-misnomer. IMHO, the presence of an "operation name" field in any API
-is usually a good indication that we're looking at a family of related
-APIs, not a single coherent operation.
+Do you mean:
+
+int procrootfd = open("/proc", O_DIRECTORY | O_RDONLY);
+int procfd = pidfd_open(procrootfd, pidfd, PIDFD_TO_PROCFD);
+
+or do you have some other solution in mind to avoid the security problem?
