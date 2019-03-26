@@ -1,8 +1,8 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V31 12/25] x86/msr: Restrict MSR access when the kernel is
- locked down
-Date: Tue, 26 Mar 2019 11:27:28 -0700
-Message-ID: <20190326182742.16950-13-matthewgarrett@google.com>
+Subject: [PATCH V31 14/25] acpi: Ignore acpi_rsdp kernel param when the kernel
+ has been locked down
+Date: Tue, 26 Mar 2019 11:27:30 -0700
+Message-ID: <20190326182742.16950-15-matthewgarrett@google.com>
 References: <20190326182742.16950-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -10,49 +10,37 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190326182742.16950-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-api@vger.kernel.org, luto@kernel.org, Matthew Garrett <mjg59@srcf.ucam.org>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>, Thomas Gleixner <tglx@linutronix.de>, x86@kernel.org
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-api@vger.kernel.org, luto@kernel.org, Josh Boyer <jwboyer@redhat.com>, Matthew Garrett <mjg59@google.com>, Dave Young <dyoung@redhat.com>, linux-acpi@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Matthew Garrett <mjg59@srcf.ucam.org>
+From: Josh Boyer <jwboyer@redhat.com>
 
-Writing to MSRs should not be allowed if the kernel is locked down, since
-it could lead to execution of arbitrary code in kernel mode.  Based on a
-patch by Kees Cook.
+This option allows userspace to pass the RSDP address to the kernel, which
+makes it possible for a user to modify the workings of hardware .  Reject
+the option when the kernel is locked down.
 
-Signed-off-by: Matthew Garrett <mjg59@google.com>
+Signed-off-by: Josh Boyer <jwboyer@redhat.com>
 Signed-off-by: David Howells <dhowells@redhat.com>
-Acked-by: Kees Cook <keescook@chromium.org>
-Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
-cc: x86@kernel.org
+Signed-off-by: Matthew Garrett <mjg59@google.com>
+cc: Dave Young <dyoung@redhat.com>
+cc: linux-acpi@vger.kernel.org
 ---
- arch/x86/kernel/msr.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ drivers/acpi/osl.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/arch/x86/kernel/msr.c b/arch/x86/kernel/msr.c
-index 4588414e2561..731be1be52b6 100644
---- a/arch/x86/kernel/msr.c
-+++ b/arch/x86/kernel/msr.c
-@@ -84,6 +84,9 @@ static ssize_t msr_write(struct file *file, const char __user *buf,
- 	int err = 0;
- 	ssize_t bytes = 0;
+diff --git a/drivers/acpi/osl.c b/drivers/acpi/osl.c
+index f29e427d0d1d..cd5bba7b8eb3 100644
+--- a/drivers/acpi/osl.c
++++ b/drivers/acpi/osl.c
+@@ -194,7 +194,8 @@ acpi_physical_address __init acpi_os_get_root_pointer(void)
+ 	acpi_physical_address pa;
  
-+	if (kernel_is_locked_down("Direct MSR access", LOCKDOWN_INTEGRITY))
-+		return -EPERM;
-+
- 	if (count % 8)
- 		return -EINVAL;	/* Invalid chunk size */
- 
-@@ -135,6 +138,11 @@ static long msr_ioctl(struct file *file, unsigned int ioc, unsigned long arg)
- 			err = -EFAULT;
- 			break;
- 		}
-+		if (kernel_is_locked_down("Direct MSR access",
-+					  LOCKDOWN_INTEGRITY)) {
-+			err = -EPERM;
-+			break;
-+		}
- 		err = wrmsr_safe_regs_on_cpu(cpu, regs);
- 		if (err)
- 			break;
+ #ifdef CONFIG_KEXEC
+-	if (acpi_rsdp)
++	if (acpi_rsdp && !kernel_is_locked_down("ACPI RSDP specification",
++						LOCKDOWN_INTEGRITY))
+ 		return acpi_rsdp;
+ #endif
+ 	pa = acpi_arch_get_root_pointer();
 -- 
 2.21.0.392.gf8f6787159e-goog
