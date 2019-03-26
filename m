@@ -1,58 +1,62 @@
-From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V31 11/25] x86: Lock down IO port access when the kernel is
+From: Matthew Garrett <matthewgarrett-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: [PATCH V31 04/25] kexec_load: Disable at runtime if the kernel is
  locked down
-Date: Tue, 26 Mar 2019 11:27:27 -0700
-Message-ID: <20190326182742.16950-12-matthewgarrett@google.com>
+Date: Tue, 26 Mar 2019 11:27:20 -0700
+Message-ID: <20190326182742.16950-5-matthewgarrett@google.com>
 References: <20190326182742.16950-1-matthewgarrett@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190326182742.16950-1-matthewgarrett@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-api@vger.kernel.org, luto@kernel.org, Matthew Garrett <mjg59@srcf.ucam.org>, Matthew Garrett <mjg59@google.com>, x86@kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <kexec-bounces+glkk-kexec=m.gmane.org-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
+In-Reply-To: <20190326182742.16950-1-matthewgarrett-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/kexec>,
+ <mailto:kexec-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/kexec/>
+List-Post: <mailto:kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
+List-Help: <mailto:kexec-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/kexec>,
+ <mailto:kexec-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=subscribe>
+Sender: "kexec" <kexec-bounces-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
+Errors-To: kexec-bounces+glkk-kexec=m.gmane.org-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+To: jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org
+Cc: Matthew Garrett <mjg59-1xO5oi07KQx4cg9Nei1l7Q@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Matthew Garrett <mjg59-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Dave Young <dyoung-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Matthew Garrett <mjg59@srcf.ucam.org>
+From: Matthew Garrett <mjg59-1xO5oi07KQx4cg9Nei1l7Q@public.gmane.org>
 
-IO port access would permit users to gain access to PCI configuration
-registers, which in turn (on a lot of hardware) give access to MMIO
-register space. This would potentially permit root to trigger arbitrary
-DMA, so lock it down by default.
+The kexec_load() syscall permits the loading and execution of arbitrary
+code in ring 0, which is something that lock-down is meant to prevent. It
+makes sense to disable kexec_load() in this situation.
 
-This also implicitly locks down the KDADDIO, KDDELIO, KDENABIO and
-KDDISABIO console ioctls.
+This does not affect kexec_file_load() syscall which can check for a
+signature on the image to be booted.
 
-Signed-off-by: Matthew Garrett <mjg59@google.com>
-Signed-off-by: David Howells <dhowells@redhat.com>
-cc: x86@kernel.org
+Signed-off-by: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Signed-off-by: Matthew Garrett <mjg59-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Acked-by: Dave Young <dyoung-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+cc: kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
 ---
- arch/x86/kernel/ioport.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+ kernel/kexec.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-diff --git a/arch/x86/kernel/ioport.c b/arch/x86/kernel/ioport.c
-index 0fe1c8782208..febbd7eb847c 100644
---- a/arch/x86/kernel/ioport.c
-+++ b/arch/x86/kernel/ioport.c
-@@ -31,7 +31,8 @@ long ksys_ioperm(unsigned long from, unsigned long num, int turn_on)
+diff --git a/kernel/kexec.c b/kernel/kexec.c
+index 68559808fdfa..57047acc9a36 100644
+--- a/kernel/kexec.c
++++ b/kernel/kexec.c
+@@ -207,6 +207,14 @@ static inline int kexec_load_check(unsigned long nr_segments,
+ 	if (result < 0)
+ 		return result;
  
- 	if ((from + num <= from) || (from + num > IO_BITMAP_BITS))
- 		return -EINVAL;
--	if (turn_on && !capable(CAP_SYS_RAWIO))
-+	if (turn_on && (!capable(CAP_SYS_RAWIO) ||
-+			kernel_is_locked_down("ioperm", LOCKDOWN_INTEGRITY)))
- 		return -EPERM;
- 
++	/*
++	 * kexec can be used to circumvent module loading restrictions, so
++	 * prevent loading in that case
++	 */
++	if (kernel_is_locked_down("kexec of unsigned images",
++				  LOCKDOWN_INTEGRITY))
++		return -EPERM;
++
  	/*
-@@ -126,7 +127,8 @@ SYSCALL_DEFINE1(iopl, unsigned int, level)
- 		return -EINVAL;
- 	/* Trying to gain more privileges? */
- 	if (level > old) {
--		if (!capable(CAP_SYS_RAWIO))
-+		if (!capable(CAP_SYS_RAWIO) ||
-+		    kernel_is_locked_down("iopl", LOCKDOWN_INTEGRITY))
- 			return -EPERM;
- 	}
- 	regs->flags = (regs->flags & ~X86_EFLAGS_IOPL) |
+ 	 * Verify we have a legal set of flags
+ 	 * This leaves us room for future extensions.
 -- 
 2.21.0.392.gf8f6787159e-goog
