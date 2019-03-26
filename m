@@ -1,86 +1,92 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: pidfd design
-Date: Mon, 25 Mar 2019 17:24:49 -0700
-Message-ID: <CALCETrUSaj+iTEOgEvy30eiCi2+FoN8+bq2BjJmamCjJ4yeBjA@mail.gmail.com>
-References: <20190320185156.7bq775vvtsxqlzfn@brauner.io> <CALCETrXO=V=+qEdLDVPf8eCgLZiB9bOTrUfe0V-U-tUZoeoRDA@mail.gmail.com>
- <20190320191412.5ykyast3rgotz3nu@brauner.io> <CAKOZuesRwQ4=Svu1KgHWY=HZSS8mF8uFmuzuVOSH0QpJoy7a5w@mail.gmail.com>
- <CALCETrUFrFKC2YTLH7ViM_7XPYk3LNmNiaz6s8wtWo1pmJQXzg@mail.gmail.com>
- <CAG48ez3VMjLJBC_F3BxC2sc2s-28NdsrUduR=jX66XH0w2O-Qg@mail.gmail.com>
- <CAKOZueuNGn31QYpRa5G-OP_S=G3f9TBQ-w27giABn7UVgPQ8Ng@mail.gmail.com>
- <CALCETrV-52TXKbAim06Fr7vvFeOvk0SczneeV_Rtqr6-LN7-GQ@mail.gmail.com>
- <20190325234547.wo6lyimrp52qie5p@brauner.io> <CALCETrXfNV5marXSEDGm6F03DNC2a_M+NE94=GxEbH9oJyWkYA@mail.gmail.com>
- <20190326001231.3tnhhlvzg26mof33@brauner.io>
+From: Wu Hao <hao.wu@intel.com>
+Subject: Re: [PATCH 02/17] fpga: dfl: fme: align PR buffer size per PR
+ datawidth
+Date: Tue, 26 Mar 2019 08:28:52 +0800
+Message-ID: <20190326002852.GA2901@hao-dev>
+References: <1553483264-5379-1-git-send-email-hao.wu@intel.com>
+ <1553483264-5379-3-git-send-email-hao.wu@intel.com>
+ <CANk1AXSUMkfQu8QnN-T0B5qeA4vaGxDTvGur9EGyLbGsBFBeKQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190326001231.3tnhhlvzg26mof33@brauner.io>
+Content-Disposition: inline
+In-Reply-To: <CANk1AXSUMkfQu8QnN-T0B5qeA4vaGxDTvGur9EGyLbGsBFBeKQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian@brauner.io>
-Cc: Andy Lutomirski <luto@kernel.org>, Daniel Colascione <dancol@google.com>, Jann Horn <jannh@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Steven Rostedt <rostedt@goodmis.org>, Sultan Alsawaf <sultan@kerneltoast.com>, Tim Murray <timmurray@google.com>, Michal Hocko <mhocko@kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, =?UTF-8?B?QXJ2ZSBIasO4bm5ldsOlZw==?= <arve@android.com>, Todd Kjos <tkjos@android.com>, Martijn Coenen <maco@android.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, LKML <linux-kernel@vger.kernel.org>, "open list:ANDROID DRIVERS" <devel@driverdev.osuosl.org>, kernel-team <kernel-team@android.com>, Oleg Nesterov <oleg@redhat.com>
+To: Alan Tull <atull@kernel.org>
+Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Xu Yilun <yilun.xu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 25, 2019 at 5:12 PM Christian Brauner <christian@brauner.io> wrote:
->
-> On Mon, Mar 25, 2019 at 05:00:17PM -0700, Andy Lutomirski wrote:
-> > On Mon, Mar 25, 2019 at 4:45 PM Christian Brauner <christian@brauner.io> wrote:
-> > >
-> > > On Mon, Mar 25, 2019 at 04:42:14PM -0700, Andy Lutomirski wrote:
-> > > > On Mon, Mar 25, 2019 at 1:23 PM Daniel Colascione <dancol@google.com> wrote:
-> > > > >
-> > > > > On Mon, Mar 25, 2019 at 1:14 PM Jann Horn <jannh@google.com> wrote:
-> > > > > >
-> > > > > > On Mon, Mar 25, 2019 at 8:44 PM Andy Lutomirski <luto@kernel.org> wrote:
-> > > >
-> > > > > > One ioctl on procfs roots to translate pidfds into that procfs,
-> > > > > > subject to both the normal lookup permission checks and only working
-> > > > > > if the pidfd has a translation into the procfs:
-> > > > > >
-> > > > > > int proc_root_fd = open("/proc", O_RDONLY);
-> > > > > > int proc_dir_fd = ioctl(proc_root_fd, PROC_PIDFD_TO_PROCFSFD, pidfd);
-> > > > > >
-> > > > > > And one ioctl on procfs directories to translate from PGIDs and PIDs to pidfds:
-> > > > > >
-> > > > > > int proc_pgid_fd = open("/proc/self", O_RDONLY);
-> > > > > > int self_pg_pidfd = ioctl(proc_pgid_fd, PROC_PROCFSFD_TO_PIDFD, 0);
-> > > > > > int proc_pid_fd = open("/proc/thread-self", O_RDONLY);
-> > > > > > int self_p_pidfd = ioctl(proc_pid_fd, PROC_PROCFSFD_TO_PIDFD, 0);
-> > > > > >
-> > > >
-> > > > This sounds okay to me.  Or we could make it so that a procfs
-> > > > directory fd also works as a pidfd, but that seems more likely to be
-> > > > problematic than just allowing two-way translation like this
-> > > >
-> > > > > >
-> > > > > > And then, as you proposed, the new sys_clone() can just return a
-> > > > > > pidfd, and you can convert it into a procfs fd yourself if you want.
-> > > > >
-> > > > > I think that's the consensus we reached on the other thread. The
-> > > > > O_DIRECTORY open on /proc/self/fd/mypidfd seems like it'd work well
-> > > > > enough.
-> > > >
-> > > > I must have missed this particular email.
-> > > >
-> > > > IMO, if /proc/self/fd/mypidfd allows O_DIRECTORY open to work, then it
-> > > > really ought to do function just like /proc/self/fd/mypidfd/. and
-> > > > /proc/self/fd/mypidfd/status should work.  And these latter two
-> > > > options seem nutty.
-> > > >
-> > > > Also, this O_DIRECTORY thing is missing the entire point of the ioctl
-> > > > interface -- it doesn't require procfs access.
-> > >
-> > > The other option was to encode the pid in the callers pid namespace into
-> > > the pidfd's fdinfo so that you can parse it out and open /proc/<pid>.
-> > > You'd just need an event on the pidfd to tell you when the process has
-> > > died. Jonathan and I just discussed this.
+On Mon, Mar 25, 2019 at 12:50:40PM -0500, Alan Tull wrote:
+> On Sun, Mar 24, 2019 at 10:23 PM Wu Hao <hao.wu@intel.com> wrote:
+> 
+> Hi Hao,
+> 
+> Looks good, one question below.
+> 
 > >
-> > From an application developer's POV, the ioctl interface sounds much,
-> > much nicer.
->
-> Some people are strongly against ioctl()s some don't. I'm not against
-> them so both options are fine with me if people can agree.
+> > Current driver checks if input bitstream file size is aligned or
+> > not per PR data width (default 32bits). It requires one additional
+> > step for end user when they generate the bitstream file, padding
+> > extra zeros to bitstream file to align its size per PR data width,
+> > but they don't have to as hardware will drop extra padding bytes
+> > automatically.
+> >
+> > In order to simplify the user steps, this patch aligns PR buffer
+> > size per PR data width in driver, to allow user to pass unaligned
+> > size bitstream files to driver.
+> >
+> > Signed-off-by: Xu Yilun <yilun.xu@intel.com>
+> > Signed-off-by: Wu Hao <hao.wu@intel.com>
+> > ---
+> >  drivers/fpga/dfl-fme-pr.c | 14 +++++++++-----
+> >  1 file changed, 9 insertions(+), 5 deletions(-)
+> >
+> > diff --git a/drivers/fpga/dfl-fme-pr.c b/drivers/fpga/dfl-fme-pr.c
+> > index d9ca955..c1fb1fe 100644
+> > --- a/drivers/fpga/dfl-fme-pr.c
+> > +++ b/drivers/fpga/dfl-fme-pr.c
+> > @@ -74,6 +74,7 @@ static int fme_pr(struct platform_device *pdev, unsigned long arg)
+> >         struct dfl_fme *fme;
+> >         unsigned long minsz;
+> >         void *buf = NULL;
+> > +       size_t length;
+> >         int ret = 0;
+> >         u64 v;
+> >
+> > @@ -85,9 +86,6 @@ static int fme_pr(struct platform_device *pdev, unsigned long arg)
+> >         if (port_pr.argsz < minsz || port_pr.flags)
+> >                 return -EINVAL;
+> >
+> > -       if (!IS_ALIGNED(port_pr.buffer_size, 4))
+> > -               return -EINVAL;
+> > -
+> >         /* get fme header region */
+> >         fme_hdr = dfl_get_feature_ioaddr_by_id(&pdev->dev,
+> >                                                FME_FEATURE_ID_HEADER);
+> > @@ -103,7 +101,13 @@ static int fme_pr(struct platform_device *pdev, unsigned long arg)
+> >                        port_pr.buffer_size))
+> >                 return -EFAULT;
+> >
+> > -       buf = vmalloc(port_pr.buffer_size);
+> > +       /*
+> > +        * align PR buffer per PR bandwidth, as HW ignores the extra padding
+> > +        * data automatically.
+> > +        */
+> > +       length = ALIGN(port_pr.buffer_size, 4);
+> > +
+> > +       buf = vmalloc(length);
+> 
+> Since it may not be completely filled, would it be worthwhile to alloc
+> a zero'ed buff?
 >
 
-There are certainly non-ioctl equivalents that are functionally
-equivalent.  For example, there could be a syscall
-procfs_open_pidfd(procfs_fd, pid_fd).  I personally don't really mind
-ioctl() when it's really an operation on an fd.
+Hi Alan,
+
+Thanks for the review, acutally per spec, hw doesn't care about the
+extra padding data. So for now, i guess we don't need this.
+
+Thanks
+Hao
+
+> Alan
+> 
