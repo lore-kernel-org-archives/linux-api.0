@@ -1,41 +1,72 @@
-From: Joel Fernandes <joel@joelfernandes.org>
-Subject: Re: [PATCH v1 2/4] pid: add pidctl()
-Date: Tue, 26 Mar 2019 14:47:47 -0400
-Message-ID: <20190326184747.GB114492@google.com>
-References: <20190326155513.26964-1-christian@brauner.io>
- <20190326155513.26964-3-christian@brauner.io>
- <20190326170601.GA101741@google.com>
- <20190326172231.daa5a53lxf6nz6jn@brauner.io>
- <20190326181012.GA138478@google.com>
- <20190326181929.eypk2hzprdltcrqd@brauner.io>
+From: James Morris <jmorris@namei.org>
+Subject: Re: [PATCH 23/27] bpf: Restrict kernel image access functions when
+ the kernel is locked down
+Date: Wed, 27 Mar 2019 05:57:07 +1100 (AEDT)
+Message-ID: <alpine.LRH.2.21.1903270523240.5235@namei.org>
+References: <20190325220954.29054-1-matthewgarrett@google.com> <20190325220954.29054-24-matthewgarrett@google.com> <20190325164221.5d8687bd@shemminger-XPS-13-9360> <CALCETrU=EqqRwyQGBT0=_N9-E_pBM53=z+WJrd9OzV7g6xJa0A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190326181929.eypk2hzprdltcrqd@brauner.io>
+In-Reply-To: <CALCETrU=EqqRwyQGBT0=_N9-E_pBM53=z+WJrd9OzV7g6xJa0A@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian@brauner.io>
-Cc: jannh@google.com, khlebnikov@yandex-team.ru, luto@kernel.org, dhowells@redhat.com, serge@hallyn.com, ebiederm@xmission.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, arnd@arndb.de, keescook@chromium.org, adobriyan@gmail.com, tglx@linutronix.de, mtk.manpages@gmail.com, bl0pbl33p@gmail.com, ldv@altlinux.org, akpm@linux-foundation.org, oleg@redhat.com, nagarathnam.muthusamy@oracle.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, dancol@google.com
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Stephen Hemminger <stephen@networkplumber.org>, Linux API <linux-api@vger.kernel.org>, Matthew Garrett <matthewgarrett@google.com>, LSM List <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Alexei Starovoitov <alexei.starovoitov@gmail.com>, Network Development <netdev@vger.kernel.org>, Chun-Yi Lee <jlee@suse.com>, Daniel Borkmann <daniel@iogearbox.net>, Kees Cook <keescook@chromium.org>, Will Drewry <wad@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 26, 2019 at 07:19:30PM +0100, Christian Brauner wrote:
-[snip]
-> > > > I am actually supportive of Daniel's view that by combining too many
-> > > > arguments into a single syscall, becomes confusing and sometimes some
-> > > > arguments have to be forced to 0 in the single shoe-horned syscall. Like you
-> > > 
-> > > There's a difference between an ioctl() and say seccomp() which this is
-> > > close to:
-> > > int seccomp(unsigned int operation, unsigned int flags, void *args);
-> > > The point is that the functionality is closely related not just randomly
-> > > unrelated stuff. But as I said I'm more than willing to compromise.
-> > 
-> > Sounds great, yeah whatever makes sense.
+On Mon, 25 Mar 2019, Andy Lutomirski wrote:
+
+> A while back, I suggested an approach to actually make this stuff
+> mergeable: submit a patch series that adds lockdown mode, enables it
+> by command line option (and maybe sysctl) *only* and has either no
+> effect or only a token effect.  Then we can add actual features to
+> lockdown mode one at a time and review them separately.
+
+This makes sense to me.
+
 > 
-> In case I haven't said this enough: I really appreciate the discussion
-> and in general the help on this. That probably sometimes gets lost in
-> mails sometimes. :)
+> And I'm going to complain loudly unless two things change about this
+> whole thing:
+> 
+> 1. Lockdown mode becomes three states, not a boolean.  The states are:
+> no lockdown, best-effort-to-protect-kernel-integrity, and
+> best-effort-to-protect-kernel-secrecy-and-integrity.  And this BPF
+> mess illustrates why: most users will really strongly object to
+> turning off BPF when they actually just want to protect kernel
+> integrity.  And as far as I know, things like Secure Boot policy will
+> mostly care about integrity, not secrecy, and tracing and such should
+> work on a normal locked-down kernel.  So I think we need this knob.
 
-I appreciate you saying that and thanks for the work on this :)
+Another approach would be to make this entirely policy based:
 
- - Joel
+- Assign an ID to each lockdown point
+- Implement a policy mechanism where each ID is mapped to 0 or 1
+- Allow this policy to be specified statically or dynamically
+
+So, 
+
+	kernel_is_locked_down("ioperm")
+
+becomes
+
+	kernel_is_locked_down(LOCKDOWN_IOPERM)
+
+and this function checks e.g.
+
+	if (lockdown_polcy[id]) {
+		fail or warn;
+        }
+
+Thoughts?
+
+
+> 2. All the proponents of this series, and the documentation, needs to
+> document that it's best effort.  There will always be security bugs,
+> and there will always be things we miss.
+
+Right.  Maintaining this feature will be an ongoing effort, and if its not 
+actively maintained, it will bitrot and become useless.
+
+
+-- 
+James Morris
+<jmorris@namei.org>
