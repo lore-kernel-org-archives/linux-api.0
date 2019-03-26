@@ -1,7 +1,7 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V31 21/25] Lock down kprobes when in confidentiality mode
-Date: Tue, 26 Mar 2019 11:27:37 -0700
-Message-ID: <20190326182742.16950-22-matthewgarrett@google.com>
+Subject: [PATCH V31 19/25] x86/mmiotrace: Lock down the testmmiotrace module
+Date: Tue, 26 Mar 2019 11:27:35 -0700
+Message-ID: <20190326182742.16950-20-matthewgarrett@google.com>
 References: <20190326182742.16950-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -9,39 +9,42 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190326182742.16950-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-api@vger.kernel.org, luto@kernel.org, Alexei Starovoitov <alexei.starovoitov@gmail.com>, Matthew Garrett <mjg59@google.com>, "Naveen N . Rao" <naveen.n.rao@linux.ibm.com>, Anil S Keshavamurthy <anil.s.keshavamurthy@intel.com>, davem@davemloft.net, Masami Hiramatsu <mhiramat@kernel.org>
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-api@vger.kernel.org, luto@kernel.org, Thomas Gleixner <tglx@linutronix.de>, Matthew Garrett <mjg59@google.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
 From: David Howells <dhowells@redhat.com>
 
-Disallow the creation of kprobes when the kernel is locked down in
-confidentiality mode by preventing their registration.  This prevents
-kprobes from being used to access kernel memory to steal crypto data.
+The testmmiotrace module shouldn't be permitted when the kernel is locked
+down as it can be used to arbitrarily read and write MMIO space. This is
+a runtime check rather than buildtime in order to allow configurations
+where the same kernel may be run in both locked down or permissive modes
+depending on local policy.
 
-Reported-by: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Signed-off-by: David Howells <dhowells@redhat.com>
+Suggested-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: David Howells <dhowells@redhat.com
 Signed-off-by: Matthew Garrett <mjg59@google.com>
-Cc: Naveen N. Rao <naveen.n.rao@linux.ibm.com>
-Cc: Anil S Keshavamurthy <anil.s.keshavamurthy@intel.com>
-Cc: davem@davemloft.net
-Cc: Masami Hiramatsu <mhiramat@kernel.org>
+cc: Thomas Gleixner <tglx@linutronix.de>
+cc: Steven Rostedt <rostedt@goodmis.org>
+cc: Ingo Molnar <mingo@kernel.org>
+cc: "H. Peter Anvin" <hpa@zytor.com>
+cc: x86@kernel.org
 ---
- kernel/kprobes.c | 3 +++
+ arch/x86/mm/testmmiotrace.c | 3 +++
  1 file changed, 3 insertions(+)
 
-diff --git a/kernel/kprobes.c b/kernel/kprobes.c
-index f4ddfdd2d07e..b9781bd2db8c 100644
---- a/kernel/kprobes.c
-+++ b/kernel/kprobes.c
-@@ -1552,6 +1552,9 @@ int register_kprobe(struct kprobe *p)
- 	struct module *probed_mod;
- 	kprobe_opcode_t *addr;
+diff --git a/arch/x86/mm/testmmiotrace.c b/arch/x86/mm/testmmiotrace.c
+index f6ae6830b341..9e8ad665f354 100644
+--- a/arch/x86/mm/testmmiotrace.c
++++ b/arch/x86/mm/testmmiotrace.c
+@@ -115,6 +115,9 @@ static int __init init(void)
+ {
+ 	unsigned long size = (read_far) ? (8 << 20) : (16 << 10);
  
-+	if (kernel_is_locked_down("Use of kprobes", LOCKDOWN_CONFIDENTIALITY))
++	if (kernel_is_locked_down("MMIO trace testing", LOCKDOWN_INTEGRITY))
 +		return -EPERM;
 +
- 	/* Adjust probe address from symbol */
- 	addr = kprobe_addr(p);
- 	if (IS_ERR(addr))
+ 	if (mmio_address == 0) {
+ 		pr_err("you have to use the module argument mmio_address.\n");
+ 		pr_err("DO NOT LOAD THIS MODULE UNLESS YOU REALLY KNOW WHAT YOU ARE DOING!\n");
 -- 
 2.21.0.392.gf8f6787159e-goog
