@@ -1,73 +1,68 @@
 From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: pidfd design
-Date: Mon, 25 Mar 2019 17:00:17 -0700
-Message-ID: <CALCETrXfNV5marXSEDGm6F03DNC2a_M+NE94=GxEbH9oJyWkYA@mail.gmail.com>
-References: <20190320182649.spryp5uaeiaxijum@brauner.io> <CAKOZuevHbQtrq+Nb-jw1L7O72BmAzcXmbUnfnseeXZjX4PE4tg@mail.gmail.com>
- <20190320185156.7bq775vvtsxqlzfn@brauner.io> <CALCETrXO=V=+qEdLDVPf8eCgLZiB9bOTrUfe0V-U-tUZoeoRDA@mail.gmail.com>
- <20190320191412.5ykyast3rgotz3nu@brauner.io> <CAKOZuesRwQ4=Svu1KgHWY=HZSS8mF8uFmuzuVOSH0QpJoy7a5w@mail.gmail.com>
- <CALCETrUFrFKC2YTLH7ViM_7XPYk3LNmNiaz6s8wtWo1pmJQXzg@mail.gmail.com>
- <CAG48ez3VMjLJBC_F3BxC2sc2s-28NdsrUduR=jX66XH0w2O-Qg@mail.gmail.com>
- <CAKOZueuNGn31QYpRa5G-OP_S=G3f9TBQ-w27giABn7UVgPQ8Ng@mail.gmail.com>
- <CALCETrV-52TXKbAim06Fr7vvFeOvk0SczneeV_Rtqr6-LN7-GQ@mail.gmail.com> <20190325234547.wo6lyimrp52qie5p@brauner.io>
+Subject: Re: [PATCH 23/27] bpf: Restrict kernel image access functions when
+ the kernel is locked down
+Date: Mon, 25 Mar 2019 17:10:00 -0700
+Message-ID: <CALCETrU=EqqRwyQGBT0=_N9-E_pBM53=z+WJrd9OzV7g6xJa0A@mail.gmail.com>
+References: <20190325220954.29054-1-matthewgarrett@google.com>
+ <20190325220954.29054-24-matthewgarrett@google.com> <20190325164221.5d8687bd@shemminger-XPS-13-9360>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190325234547.wo6lyimrp52qie5p@brauner.io>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian@brauner.io>
-Cc: Andy Lutomirski <luto@kernel.org>, Daniel Colascione <dancol@google.com>, Jann Horn <jannh@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Steven Rostedt <rostedt@goodmis.org>, Sultan Alsawaf <sultan@kerneltoast.com>, Tim Murray <timmurray@google.com>, Michal Hocko <mhocko@kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, =?UTF-8?B?QXJ2ZSBIasO4bm5ldsOlZw==?= <arve@android.com>, Todd Kjos <tkjos@android.com>, Martijn Coenen <maco@android.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, LKML <linux-kernel@vger.kernel.org>, "open list:ANDROID DRIVERS" <devel@driverdev.osuosl.org>, kernel-team <kernel-team@android.com>, Oleg Nesterov <oleg@redhat.com>
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20190325164221.5d8687bd@shemminger-XPS-13-9360>
+Sender: netdev-owner@vger.kernel.org
+To: Stephen Hemminger <stephen@networkplumber.org>, Linux API <linux-api@vger.kernel.org>
+Cc: Matthew Garrett <matthewgarrett@google.com>, James Morris <jmorris@namei.org>, LSM List <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Alexei Starovoitov <alexei.starovoitov@gmail.com>, Network Development <netdev@vger.kernel.org>, Chun-Yi Lee <jlee@suse.com>, Daniel Borkmann <daniel@iogearbox.net>, Kees Cook <keescook@chromium.org>, Will Drewry <wad@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 25, 2019 at 4:45 PM Christian Brauner <christian@brauner.io> wrote:
+On Mon, Mar 25, 2019 at 4:42 PM Stephen Hemminger
+<stephen@networkplumber.org> wrote:
 >
-> On Mon, Mar 25, 2019 at 04:42:14PM -0700, Andy Lutomirski wrote:
-> > On Mon, Mar 25, 2019 at 1:23 PM Daniel Colascione <dancol@google.com> wrote:
-> > >
-> > > On Mon, Mar 25, 2019 at 1:14 PM Jann Horn <jannh@google.com> wrote:
-> > > >
-> > > > On Mon, Mar 25, 2019 at 8:44 PM Andy Lutomirski <luto@kernel.org> wrote:
-> >
-> > > > One ioctl on procfs roots to translate pidfds into that procfs,
-> > > > subject to both the normal lookup permission checks and only working
-> > > > if the pidfd has a translation into the procfs:
-> > > >
-> > > > int proc_root_fd = open("/proc", O_RDONLY);
-> > > > int proc_dir_fd = ioctl(proc_root_fd, PROC_PIDFD_TO_PROCFSFD, pidfd);
-> > > >
-> > > > And one ioctl on procfs directories to translate from PGIDs and PIDs to pidfds:
-> > > >
-> > > > int proc_pgid_fd = open("/proc/self", O_RDONLY);
-> > > > int self_pg_pidfd = ioctl(proc_pgid_fd, PROC_PROCFSFD_TO_PIDFD, 0);
-> > > > int proc_pid_fd = open("/proc/thread-self", O_RDONLY);
-> > > > int self_p_pidfd = ioctl(proc_pid_fd, PROC_PROCFSFD_TO_PIDFD, 0);
-> > > >
-> >
-> > This sounds okay to me.  Or we could make it so that a procfs
-> > directory fd also works as a pidfd, but that seems more likely to be
-> > problematic than just allowing two-way translation like this
-> >
-> > > >
-> > > > And then, as you proposed, the new sys_clone() can just return a
-> > > > pidfd, and you can convert it into a procfs fd yourself if you want.
-> > >
-> > > I think that's the consensus we reached on the other thread. The
-> > > O_DIRECTORY open on /proc/self/fd/mypidfd seems like it'd work well
-> > > enough.
-> >
-> > I must have missed this particular email.
-> >
-> > IMO, if /proc/self/fd/mypidfd allows O_DIRECTORY open to work, then it
-> > really ought to do function just like /proc/self/fd/mypidfd/. and
-> > /proc/self/fd/mypidfd/status should work.  And these latter two
-> > options seem nutty.
-> >
-> > Also, this O_DIRECTORY thing is missing the entire point of the ioctl
-> > interface -- it doesn't require procfs access.
+> On Mon, 25 Mar 2019 15:09:50 -0700
+> Matthew Garrett <matthewgarrett@google.com> wrote:
 >
-> The other option was to encode the pid in the callers pid namespace into
-> the pidfd's fdinfo so that you can parse it out and open /proc/<pid>.
-> You'd just need an event on the pidfd to tell you when the process has
-> died. Jonathan and I just discussed this.
+> > From: David Howells <dhowells@redhat.com>
+> >
+> > There are some bpf functions can be used to read kernel memory:
+> > bpf_probe_read, bpf_probe_write_user and bpf_trace_printk.  These allow
+> > private keys in kernel memory (e.g. the hibernation image signing key) to
+> > be read by an eBPF program and kernel memory to be altered without
+> > restriction.
+> >
+> > Completely prohibit the use of BPF when the kernel is locked down.
+> >
+> > Suggested-by: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+> > Signed-off-by: David Howells <dhowells@redhat.com>
+> > cc: netdev@vger.kernel.org
+> > cc: Chun-Yi Lee <jlee@suse.com>
+> > cc: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+> > Cc: Daniel Borkmann <daniel@iogearbox.net>
+> > Signed-off-by: Matthew Garrett <matthewgarrett@google.com>
+>
+> Wouldn't this mean that Seccomp won't work in locked down mode?
 
->From an application developer's POV, the ioctl interface sounds much,
-much nicer.
+I wasn't cc'd on this series, nor was linux-api, so it's awkward to review.
+
+A while back, I suggested an approach to actually make this stuff
+mergeable: submit a patch series that adds lockdown mode, enables it
+by command line option (and maybe sysctl) *only* and has either no
+effect or only a token effect.  Then we can add actual features to
+lockdown mode one at a time and review them separately.
+
+And I'm going to complain loudly unless two things change about this
+whole thing:
+
+1. Lockdown mode becomes three states, not a boolean.  The states are:
+no lockdown, best-effort-to-protect-kernel-integrity, and
+best-effort-to-protect-kernel-secrecy-and-integrity.  And this BPF
+mess illustrates why: most users will really strongly object to
+turning off BPF when they actually just want to protect kernel
+integrity.  And as far as I know, things like Secure Boot policy will
+mostly care about integrity, not secrecy, and tracing and such should
+work on a normal locked-down kernel.  So I think we need this knob.
+
+2. All the proponents of this series, and the documentation, needs to
+document that it's best effort.  There will always be security bugs,
+and there will always be things we miss.
+
+
+--Andy
