@@ -1,7 +1,7 @@
 From: Christian Brauner <christian@brauner.io>
-Subject: [PATCH v1 2/4] pid: add pidctl()
-Date: Tue, 26 Mar 2019 16:55:11 +0100
-Message-ID: <20190326155513.26964-3-christian@brauner.io>
+Subject: [PATCH v1 1/4] Make anon_inodes unconditional
+Date: Tue, 26 Mar 2019 16:55:10 +0100
+Message-ID: <20190326155513.26964-2-christian@brauner.io>
 References: <20190326155513.26964-1-christian@brauner.io>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,545 +12,308 @@ To: jannh@google.com, khlebnikov@yandex-team.ru, luto@kernel.org, dhowells@redha
 Cc: arnd@arndb.de, keescook@chromium.org, adobriyan@gmail.com, tglx@linutronix.de, mtk.manpages@gmail.com, bl0pbl33p@gmail.com, ldv@altlinux.org, akpm@linux-foundation.org, oleg@redhat.com, nagarathnam.muthusamy@oracle.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, joel@joelfernandes.org, dancol@google.com, Christian Brauner <christian@brauner.io>
 List-Id: linux-api@vger.kernel.org
 
-The pidctl() syscalls builds on, extends, and improves translate_pid() [4].
-I quote Konstantins original patchset first that has already been acked and
-picked up by Eric before and whose functionality is preserved in this
-syscall:
+From: David Howells <dhowells@redhat.com>
 
-"Each process have different pids, one for each pid namespace it belongs.
- When interaction happens within single pid-ns translation isn't required.
- More complicated scenarios needs special handling.
+Make the anon_inodes facility unconditional so that it can be used by core
+VFS code and the pidctl() syscall.
 
- For example:
- - reading pid-files or logs written inside container with pid namespace
- - writing logs with internal pids outside container for pushing them into
- - attaching with ptrace to tasks from different pid namespace
-
- Generally speaking, any cross pid-ns API with pids needs translation.
-
- Currently there are several interfaces that could be used here:
-
- Pid namespaces are identified by device and inode of /proc/[pid]/ns/pid.
-
- Pids for nested pid namespaces are shown in file /proc/[pid]/status.
- In some cases pid translation could be easily done using this information.
- Backward translation requires scanning all tasks and becomes really
- complicated for deeper namespace nesting.
-
- Unix socket automatically translates pid attached to SCM_CREDENTIALS.
- This requires CAP_SYS_ADMIN for sending arbitrary pids and entering
- into pid namespace, this expose process and could be insecure."
-
-The original patchset allowed two distinct operations implicitly:
-- discovering whether pid namespaces (pidns) have a parent-child
-  relationship
-- translating a pid from a source pidns into a target pidns
-
-Both tasks are accomplished in the original patchset by passing a pid
-along. If the pid argument is passed as 1 the relationship between two pid
-namespaces can be discovered.
-The syscall will gain a lot clearer syntax and will be easier to use for
-userspace if the task it is asked to perform is passed through a
-command argument. Additionally, it allows us to remove an intrinsic race
-caused by using the pid argument as a way to discover the relationship
-between pid namespaces.
-This patch introduces three commands:
-
-/* PIDCMD_QUERY_PID */
-PIDCMD_QUERY_PID allows to translate a pid between pid namespaces.
-Given a source pid namespace fd return the pid of the process in the target
-namespace:
-1. pidctl(PIDCMD_QUERY_PID, pid, source_fd, -1, 0)
-  - retrieve pidns identified by source_fd
-  - retrieve struct pid identifed by pid in pidns identified by source_fd
-  - retrieve callers pidns
-  - return pid in callers pidns
-
-2. pidctl(PIDCMD_QUERY_PID, pid, -1, target_fd, 0)
-  - retrieve callers pidns
-  - retrieve struct pid identifed by pid in callers pidns
-  - retrieve pidns identified by target_fd
-  - return pid in pidns identified by target_fd
-
-3. pidctl(PIDCMD_QUERY_PID, 1, source_fd, -1, 0)
-  - retrieve pidns identified by source_fd
-  - retrieve struct pid identifed by init task in pidns identified by source_fd
-  - retrieve callers pidns
-  - return pid of init task of pidns identified by source_fd in callers pidns
-
-4. pidctl(PIDCMD_QUERY_PID, pid, source_fd, target_fd, 0)
-  - retrieve pidns identified by source_fd
-  - retrieve struct pid identifed by pid in pidns identified by source_fd
-  - retrieve pidns identified by target_fd
-  - check whether struct pid can be found in pidns identified by target_fd
-  - return pid in pidns identified by target_fd
-
-/* PIDCMD_QUERY_PIDNS */
-PIDCMD_QUERY_PIDNS allows to determine the relationship between pid
-namespaces.
-In the original version of the pachset passing pid as 1 would allow to
-deterimine the relationship between the pid namespaces. This is inherhently
-racy. If pid 1 inside a pid namespace has died it would report false
-negatives. For example, if pid 1 inside of the target pid namespace already
-died, it would report that the target pid namespace cannot be reached from
-the source pid namespace because it couldn't find the pid inside of the
-target pid namespace and thus falsely report to the user that the two pid
-namespaces are not related. This problem is simple to avoid. In the new
-version we simply walk the list of ancestors and check whether the
-namespace are related to each other. By doing it this way we can reliably
-report what the relationship between two pid namespace file descriptors
-looks like.
-
-1. pidctl(PIDCMD_QUERY_PIDNS, 0, ns_fd1, ns_fd1, 0) == 0
-   - pidns_of(ns_fd1) and pidns_of(ns_fd2) are unrelated to each other
-
-2. pidctl(PIDCMD_QUERY_PIDNS, 0, ns_fd1, ns_fd2, 0) == 1
-   - pidns_of(ns_fd1) == pidns_of(ns_fd2)
-
-3. pidctl(PIDCMD_QUERY_PIDNS, 0, ns_fd1, ns_fd2, 0) == 2
-   - pidns_of(ns_fd1) is ancestor of pidns_of(ns_fd2)
-
-4. pidctl(PIDCMD_QUERY_PIDNS, 0, ns_fd1, ns_fd2, 0) == 3
-   - pidns_of(ns_fd2) is ancestor of pidns_of(ns_fd1)
-
-These two commands - PIDCMD_QUERY_PID and PIDCMD_QUERY_PIDNS - cover and
-improve the functionality expressed implicitly in translate_pid() before.
-
-/* PIDCMD_GET_PIDFD */
-This command allows to retrieve file descriptors for processes and removes
-the dependency of pidfds and thereby the pidfd_send_signal() syscall on
-procfs. First, multiple people have expressed a desire to do this even when
-pidfd_send_signal() was merged. It is even recorded in the commit message
-for pidfd_send_signal() itself
-(cf. commit 3eb39f47934f9d5a3027fe00d906a45fe3a15fad):
-Q-06: (Andrew Morton [1])
-      Is there a cleaner way of obtaining the fd? Another syscall perhaps.
-A-06: Userspace can already trivially retrieve file descriptors from procfs
-      so this is something that we will need to support anyway. Hence,
-      there's no immediate need to add another syscalls just to make
-      pidfd_send_signal() not dependent on the presence of procfs. However,
-      adding a syscalls to get such file descriptors is planned for a
-      future patchset (cf. [1]).
-Alexey made a similar request (cf. [2]).
-Additionally, Andy made an additional, idependent argument that we should
-go forward with non-proc-dirfd file descriptors for the sake of security
-and extensibility (cf. [3]).
-
-The pidfds are not associated with a specific pid namespaces but rather
-only with struct pid. What the pidctl() syscall enforces is that when a
-caller wants to retrieve a pidfd file descriptor for a pid in a given
-target pid namespace the caller 
-- must have been given access to two file descriptors referring
-  to target and source pid namespace
-- the source pid namespace must be an ancestor of the target pid
-  namespace
-- the pid must be translatable from the source pid namespace into the
-  target pid namespace
-
-1. pidctl(PIDCMD_GET_PIDFD, pid, source_fd, -1, 0)
-  - retrieve pidns identified by source_fd
-  - retrieve struct pid identifed by pid in pidns identified by source_fd
-  - retrieve callers pidns
-  - return pidfd
-
-2. pidctl(PIDCMD_GET_PIDFD, pid, -1, target_fd, 0)
-  - retrieve callers pidns
-  - retrieve struct pid identifed by pid in callers pidns
-  - retrieve pidns identified by target_fd
-  - return pidfd
-
-3. pidctl(PIDCMD_GET_PIDFD, 1, source_fd, -1, 0)
-  - retrieve pidns identified by source_fd
-  - retrieve struct pid identifed by init task in pidns identified by
-    source_fd
-  - retrieve callers pidns
-  - return pidfd
-
-4. pidctl(PIDCMD_GET_PIDFD, pid, source_fd, target_fd, 0)
-  - retrieve pidns identified by source_fd
-  - retrieve struct pid identifed by pid in pidns identified by source_fd
-  - retrieve pidns identified by target_fd
-  - check whether struct pid can be found in pidns identified by target_fd
-  - return pidfd
-
-These pidfds are allocated using anon_inode_getfd(), are O_CLOEXEC by
-default and can be used with the pidfd_send_signal() syscall. They are not
-dirfds and as such have the advantage that we can make them pollable or
-readable in the future if we see a need to do so (which I'm pretty sure we
-will eventually). Currently they do not support any advanced operations.
-
-/* References */
-[1]: https://lore.kernel.org/lkml/20181228233725.722tdfgijxcssg76@brauner.io/
-[2]: https://lore.kernel.org/lkml/20190320203910.GA2842@avx2/
-[3]: https://lore.kernel.org/lkml/CALCETrXO=V=+qEdLDVPf8eCgLZiB9bOTrUfe0V-U-tUZoeoRDA@mail.gmail.com/
-[4]: https://lore.kernel.org/lkml/20181109034919.GA21681@altlinux.org/
-
-Signed-off-by: Christian Brauner <christian@brauner.io>
-Signed-off-by: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
 Signed-off-by: David Howells <dhowells@redhat.com>
-Acked-by: Serge Hallyn <serge@hallyn.com>
-Cc: Arnd Bergmann <arnd@arndb.de>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Alexey Dobriyan <adobriyan@gmail.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Jann Horn <jannh@google.com
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Cc: Jonathan Kowalski <bl0pbl33p@gmail.com>
-Cc: "Dmitry V. Levin" <ldv@altlinux.org>
-Cc: Andy Lutomirsky <luto@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Oleg Nesterov <oleg@redhat.com>
-Cc: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>
-Cc: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>
+Signed-off-by: Al Viro <viro@zeniv.linux.org.uk>
+[christian@brauner.io: adapt commit message to mention pidctl()]
+Signed-off-by: Christian Brauner <christian@brauner.io>
 ---
-/* changelog */
-v1:
-- Jann Horn <jannh@google.com> in [1]:
-  - always increment refcount for pidns in get_pid_ns_by_fd()
-  - use PTR_ERR() after IS_ERR() not before
-  - take reference on struct pid to avoid dangling pointer after rcu
-    read-side critical section
-  - simplify logic to put_pid_ns() when exiting functions
-  - make pidfds O_CLOEXEC by default
-  - remove useless no_llseek assignment in pidfd_fops
-- Christian Brauner <christian@brauner.io>
-  - return -ESRCH if process cannot be found in source pidns and -ENOENT if
-    it cannot be found in target pidns for both PIDCMD_QUERY_PID and
-    PIDCMD_QUERY_PIDNS to unify semantics
+ arch/arm/kvm/Kconfig       |  1 -
+ arch/arm64/kvm/Kconfig     |  1 -
+ arch/mips/kvm/Kconfig      |  1 -
+ arch/powerpc/kvm/Kconfig   |  1 -
+ arch/s390/kvm/Kconfig      |  1 -
+ arch/x86/Kconfig           |  1 -
+ arch/x86/kvm/Kconfig       |  1 -
+ drivers/base/Kconfig       |  1 -
+ drivers/char/tpm/Kconfig   |  1 -
+ drivers/dma-buf/Kconfig    |  1 -
+ drivers/gpio/Kconfig       |  1 -
+ drivers/iio/Kconfig        |  1 -
+ drivers/infiniband/Kconfig |  1 -
+ drivers/vfio/Kconfig       |  1 -
+ fs/Makefile                |  2 +-
+ fs/notify/fanotify/Kconfig |  1 -
+ fs/notify/inotify/Kconfig  |  1 -
+ init/Kconfig               | 10 ----------
+ 18 files changed, 1 insertion(+), 27 deletions(-)
 
-[changelog-1]: https://lore.kernel.org/lkml/CAG48ez24xPM4f7ty=8k5p6_gVWd-bEUSxca5Ngy5svHgarhz+w@mail.gmail.com
----
- arch/x86/entry/syscalls/syscall_32.tbl |   1 +
- arch/x86/entry/syscalls/syscall_64.tbl |   1 +
- include/linux/pid.h                    |   2 +
- include/linux/pid_namespace.h          |   8 ++
- include/linux/syscalls.h               |   2 +
- include/uapi/linux/wait.h              |  14 +++
- kernel/pid.c                           | 161 +++++++++++++++++++++++++
- kernel/pid_namespace.c                 |  25 ++++
- 8 files changed, 214 insertions(+)
-
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index 1f9607ed087c..afc5a8997140 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -433,3 +433,4 @@
- 425	i386	io_uring_setup		sys_io_uring_setup		__ia32_sys_io_uring_setup
- 426	i386	io_uring_enter		sys_io_uring_enter		__ia32_sys_io_uring_enter
- 427	i386	io_uring_register	sys_io_uring_register		__ia32_sys_io_uring_register
-+428	i386	pidctl			sys_pidctl			__ia32_sys_pidctl
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 92ee0b4378d4..8ef25d9a003d 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -349,6 +349,7 @@
- 425	common	io_uring_setup		__x64_sys_io_uring_setup
- 426	common	io_uring_enter		__x64_sys_io_uring_enter
- 427	common	io_uring_register	__x64_sys_io_uring_register
-+428	common	pidctl			__x64_sys_pidctl
+diff --git a/arch/arm/kvm/Kconfig b/arch/arm/kvm/Kconfig
+index 3f5320f46de2..f591026347a5 100644
+--- a/arch/arm/kvm/Kconfig
++++ b/arch/arm/kvm/Kconfig
+@@ -22,7 +22,6 @@ config KVM
+ 	bool "Kernel-based Virtual Machine (KVM) support"
+ 	depends on MMU && OF
+ 	select PREEMPT_NOTIFIERS
+-	select ANON_INODES
+ 	select ARM_GIC
+ 	select ARM_GIC_V3
+ 	select ARM_GIC_V3_ITS
+diff --git a/arch/arm64/kvm/Kconfig b/arch/arm64/kvm/Kconfig
+index a3f85624313e..a67121d419a2 100644
+--- a/arch/arm64/kvm/Kconfig
++++ b/arch/arm64/kvm/Kconfig
+@@ -23,7 +23,6 @@ config KVM
+ 	depends on OF
+ 	select MMU_NOTIFIER
+ 	select PREEMPT_NOTIFIERS
+-	select ANON_INODES
+ 	select HAVE_KVM_CPU_RELAX_INTERCEPT
+ 	select HAVE_KVM_ARCH_TLB_FLUSH_ALL
+ 	select KVM_MMIO
+diff --git a/arch/mips/kvm/Kconfig b/arch/mips/kvm/Kconfig
+index 4528bc9c3cb1..eac25aef21e0 100644
+--- a/arch/mips/kvm/Kconfig
++++ b/arch/mips/kvm/Kconfig
+@@ -21,7 +21,6 @@ config KVM
+ 	depends on MIPS_FP_SUPPORT
+ 	select EXPORT_UASM
+ 	select PREEMPT_NOTIFIERS
+-	select ANON_INODES
+ 	select KVM_GENERIC_DIRTYLOG_READ_PROTECT
+ 	select HAVE_KVM_VCPU_ASYNC_IOCTL
+ 	select KVM_MMIO
+diff --git a/arch/powerpc/kvm/Kconfig b/arch/powerpc/kvm/Kconfig
+index bfdde04e4905..f53997a8ca62 100644
+--- a/arch/powerpc/kvm/Kconfig
++++ b/arch/powerpc/kvm/Kconfig
+@@ -20,7 +20,6 @@ if VIRTUALIZATION
+ config KVM
+ 	bool
+ 	select PREEMPT_NOTIFIERS
+-	select ANON_INODES
+ 	select HAVE_KVM_EVENTFD
+ 	select HAVE_KVM_VCPU_ASYNC_IOCTL
+ 	select SRCU
+diff --git a/arch/s390/kvm/Kconfig b/arch/s390/kvm/Kconfig
+index 767453faacfc..1816ee48eadd 100644
+--- a/arch/s390/kvm/Kconfig
++++ b/arch/s390/kvm/Kconfig
+@@ -21,7 +21,6 @@ config KVM
+ 	prompt "Kernel-based Virtual Machine (KVM) support"
+ 	depends on HAVE_KVM
+ 	select PREEMPT_NOTIFIERS
+-	select ANON_INODES
+ 	select HAVE_KVM_CPU_RELAX_INTERCEPT
+ 	select HAVE_KVM_VCPU_ASYNC_IOCTL
+ 	select HAVE_KVM_EVENTFD
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index c1f9b3cf437c..18f2c954464e 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -44,7 +44,6 @@ config X86
+ 	#
+ 	select ACPI_LEGACY_TABLES_LOOKUP	if ACPI
+ 	select ACPI_SYSTEM_POWER_STATES_SUPPORT	if ACPI
+-	select ANON_INODES
+ 	select ARCH_32BIT_OFF_T			if X86_32
+ 	select ARCH_CLOCKSOURCE_DATA
+ 	select ARCH_CLOCKSOURCE_INIT
+diff --git a/arch/x86/kvm/Kconfig b/arch/x86/kvm/Kconfig
+index 72fa955f4a15..fc042419e670 100644
+--- a/arch/x86/kvm/Kconfig
++++ b/arch/x86/kvm/Kconfig
+@@ -27,7 +27,6 @@ config KVM
+ 	depends on X86_LOCAL_APIC
+ 	select PREEMPT_NOTIFIERS
+ 	select MMU_NOTIFIER
+-	select ANON_INODES
+ 	select HAVE_KVM_IRQCHIP
+ 	select HAVE_KVM_IRQFD
+ 	select IRQ_BYPASS_MANAGER
+diff --git a/drivers/base/Kconfig b/drivers/base/Kconfig
+index 059700ea3521..03f067da12ee 100644
+--- a/drivers/base/Kconfig
++++ b/drivers/base/Kconfig
+@@ -174,7 +174,6 @@ source "drivers/base/regmap/Kconfig"
+ config DMA_SHARED_BUFFER
+ 	bool
+ 	default n
+-	select ANON_INODES
+ 	select IRQ_WORK
+ 	help
+ 	  This option enables the framework for buffer-sharing between
+diff --git a/drivers/char/tpm/Kconfig b/drivers/char/tpm/Kconfig
+index 536e55d3919f..f3e4bc490cf0 100644
+--- a/drivers/char/tpm/Kconfig
++++ b/drivers/char/tpm/Kconfig
+@@ -157,7 +157,6 @@ config TCG_CRB
+ config TCG_VTPM_PROXY
+ 	tristate "VTPM Proxy Interface"
+ 	depends on TCG_TPM
+-	select ANON_INODES
+ 	---help---
+ 	  This driver proxies for an emulated TPM (vTPM) running in userspace.
+ 	  A device /dev/vtpmx is provided that creates a device pair
+diff --git a/drivers/dma-buf/Kconfig b/drivers/dma-buf/Kconfig
+index 2e5a0faa2cb1..3fc9c2efc583 100644
+--- a/drivers/dma-buf/Kconfig
++++ b/drivers/dma-buf/Kconfig
+@@ -3,7 +3,6 @@ menu "DMABUF options"
+ config SYNC_FILE
+ 	bool "Explicit Synchronization Framework"
+ 	default n
+-	select ANON_INODES
+ 	select DMA_SHARED_BUFFER
+ 	---help---
+ 	  The Sync File Framework adds explicit syncronization via
+diff --git a/drivers/gpio/Kconfig b/drivers/gpio/Kconfig
+index 3f50526a771f..0f91600c27ae 100644
+--- a/drivers/gpio/Kconfig
++++ b/drivers/gpio/Kconfig
+@@ -12,7 +12,6 @@ config ARCH_HAVE_CUSTOM_GPIO_H
  
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-diff --git a/include/linux/pid.h b/include/linux/pid.h
-index b6f4ba16065a..3c8ef5a199ca 100644
---- a/include/linux/pid.h
-+++ b/include/linux/pid.h
-@@ -66,6 +66,8 @@ struct pid
+ menuconfig GPIOLIB
+ 	bool "GPIO Support"
+-	select ANON_INODES
+ 	help
+ 	  This enables GPIO support through the generic GPIO library.
+ 	  You only need to enable this, if you also want to enable
+diff --git a/drivers/iio/Kconfig b/drivers/iio/Kconfig
+index d08aeb41cd07..1dec0fecb6ef 100644
+--- a/drivers/iio/Kconfig
++++ b/drivers/iio/Kconfig
+@@ -4,7 +4,6 @@
  
- extern struct pid init_struct_pid;
+ menuconfig IIO
+ 	tristate "Industrial I/O support"
+-	select ANON_INODES
+ 	help
+ 	  The industrial I/O subsystem provides a unified framework for
+ 	  drivers for many different types of embedded sensors using a
+diff --git a/drivers/infiniband/Kconfig b/drivers/infiniband/Kconfig
+index a1fb840de45d..d318bab25860 100644
+--- a/drivers/infiniband/Kconfig
++++ b/drivers/infiniband/Kconfig
+@@ -25,7 +25,6 @@ config INFINIBAND_USER_MAD
  
-+extern const struct file_operations pidfd_fops;
-+
- static inline struct pid *get_pid(struct pid *pid)
- {
- 	if (pid)
-diff --git a/include/linux/pid_namespace.h b/include/linux/pid_namespace.h
-index 49538b172483..c5aae8151287 100644
---- a/include/linux/pid_namespace.h
-+++ b/include/linux/pid_namespace.h
-@@ -64,6 +64,8 @@ extern struct pid_namespace *copy_pid_ns(unsigned long flags,
- extern void zap_pid_ns_processes(struct pid_namespace *pid_ns);
- extern int reboot_pid_ns(struct pid_namespace *pid_ns, int cmd);
- extern void put_pid_ns(struct pid_namespace *ns);
-+extern int pidnscmp(struct pid_namespace *ancestor,
-+		    struct pid_namespace *descendant);
+ config INFINIBAND_USER_ACCESS
+ 	tristate "InfiniBand userspace access (verbs and CM)"
+-	select ANON_INODES
+ 	depends on MMU
+ 	---help---
+ 	  Userspace InfiniBand access support.  This enables the
+diff --git a/drivers/vfio/Kconfig b/drivers/vfio/Kconfig
+index 9de5ed38da83..3798d77d131c 100644
+--- a/drivers/vfio/Kconfig
++++ b/drivers/vfio/Kconfig
+@@ -22,7 +22,6 @@ menuconfig VFIO
+ 	tristate "VFIO Non-Privileged userspace driver framework"
+ 	depends on IOMMU_API
+ 	select VFIO_IOMMU_TYPE1 if (X86 || S390 || ARM || ARM64)
+-	select ANON_INODES
+ 	help
+ 	  VFIO provides a framework for secure userspace device drivers.
+ 	  See Documentation/vfio.txt for more details.
+diff --git a/fs/Makefile b/fs/Makefile
+index 427fec226fae..35945f8139e6 100644
+--- a/fs/Makefile
++++ b/fs/Makefile
+@@ -25,7 +25,7 @@ obj-$(CONFIG_PROC_FS) += proc_namespace.o
  
- #else /* !CONFIG_PID_NS */
- #include <linux/err.h>
-@@ -94,6 +96,12 @@ static inline int reboot_pid_ns(struct pid_namespace *pid_ns, int cmd)
- {
- 	return 0;
- }
-+
-+static inline int pidnscmp(struct pid_namespace *ancestor,
-+			   struct pid_namespace *descendant)
-+{
-+	return 0;
-+}
- #endif /* CONFIG_PID_NS */
+ obj-y				+= notify/
+ obj-$(CONFIG_EPOLL)		+= eventpoll.o
+-obj-$(CONFIG_ANON_INODES)	+= anon_inodes.o
++obj-y				+= anon_inodes.o
+ obj-$(CONFIG_SIGNALFD)		+= signalfd.o
+ obj-$(CONFIG_TIMERFD)		+= timerfd.o
+ obj-$(CONFIG_EVENTFD)		+= eventfd.o
+diff --git a/fs/notify/fanotify/Kconfig b/fs/notify/fanotify/Kconfig
+index 735bfb2e9190..521dc91d2cb5 100644
+--- a/fs/notify/fanotify/Kconfig
++++ b/fs/notify/fanotify/Kconfig
+@@ -1,7 +1,6 @@
+ config FANOTIFY
+ 	bool "Filesystem wide access notification"
+ 	select FSNOTIFY
+-	select ANON_INODES
+ 	select EXPORTFS
+ 	default n
+ 	---help---
+diff --git a/fs/notify/inotify/Kconfig b/fs/notify/inotify/Kconfig
+index b981fc0c8379..0161c74e76e2 100644
+--- a/fs/notify/inotify/Kconfig
++++ b/fs/notify/inotify/Kconfig
+@@ -1,6 +1,5 @@
+ config INOTIFY_USER
+ 	bool "Inotify support for userspace"
+-	select ANON_INODES
+ 	select FSNOTIFY
+ 	default y
+ 	---help---
+diff --git a/init/Kconfig b/init/Kconfig
+index 4592bf7997c0..be8f97e37a76 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1171,9 +1171,6 @@ config LD_DEAD_CODE_DATA_ELIMINATION
+ config SYSCTL
+ 	bool
  
- extern struct pid_namespace *task_active_pid_ns(struct task_struct *tsk);
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index e446806a561f..a4c8c59f7c8f 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -929,6 +929,8 @@ asmlinkage long sys_clock_adjtime32(clockid_t which_clock,
- 				struct old_timex32 __user *tx);
- asmlinkage long sys_syncfs(int fd);
- asmlinkage long sys_setns(int fd, int nstype);
-+asmlinkage long sys_pidctl(unsigned int cmd, pid_t pid, int source, int target,
-+			   unsigned int flags);
- asmlinkage long sys_sendmmsg(int fd, struct mmsghdr __user *msg,
- 			     unsigned int vlen, unsigned flags);
- asmlinkage long sys_process_vm_readv(pid_t pid,
-diff --git a/include/uapi/linux/wait.h b/include/uapi/linux/wait.h
-index ac49a220cf2a..e9564ec06b07 100644
---- a/include/uapi/linux/wait.h
-+++ b/include/uapi/linux/wait.h
-@@ -18,5 +18,19 @@
- #define P_PID		1
- #define P_PGID		2
+-config ANON_INODES
+-	bool
+-
+ config HAVE_UID16
+ 	bool
  
-+/* Commands to pass to pidctl() */
-+enum pidcmd {
-+	PIDCMD_QUERY_PID   = 0, /* Get pid in target pid namespace */
-+	PIDCMD_QUERY_PIDNS = 1, /* Determine relationship between pid namespaces */
-+	PIDCMD_GET_PIDFD   = 2, /* Get pidfd for a process */
-+};
-+
-+/* Return values of PIDCMD_QUERY_PIDNS */
-+enum pidcmd_query_pidns {
-+	PIDNS_UNRELATED          = 0, /* The pid namespaces are unrelated */
-+	PIDNS_EQUAL              = 1, /* The pid namespaces are equal */
-+	PIDNS_SOURCE_IS_ANCESTOR = 2, /* Source pid namespace is ancestor of target pid namespace */
-+	PIDNS_TARGET_IS_ANCESTOR = 3, /* Target pid namespace is ancestor of source pid namespace */
-+};
+@@ -1378,14 +1375,12 @@ config HAVE_FUTEX_CMPXCHG
+ config EPOLL
+ 	bool "Enable eventpoll support" if EXPERT
+ 	default y
+-	select ANON_INODES
+ 	help
+ 	  Disabling this option will cause the kernel to be built without
+ 	  support for epoll family of system calls.
  
- #endif /* _UAPI_LINUX_WAIT_H */
-diff --git a/kernel/pid.c b/kernel/pid.c
-index 20881598bdfa..3213a137a63e 100644
---- a/kernel/pid.c
-+++ b/kernel/pid.c
-@@ -26,6 +26,7 @@
-  *
-  */
+ config SIGNALFD
+ 	bool "Enable signalfd() system call" if EXPERT
+-	select ANON_INODES
+ 	default y
+ 	help
+ 	  Enable the signalfd() system call that allows to receive signals
+@@ -1395,7 +1390,6 @@ config SIGNALFD
  
-+#include <linux/anon_inodes.h>
- #include <linux/mm.h>
- #include <linux/export.h>
- #include <linux/slab.h>
-@@ -40,6 +41,7 @@
- #include <linux/proc_fs.h>
- #include <linux/sched/task.h>
- #include <linux/idr.h>
-+#include <linux/wait.h>
+ config TIMERFD
+ 	bool "Enable timerfd() system call" if EXPERT
+-	select ANON_INODES
+ 	default y
+ 	help
+ 	  Enable the timerfd() system call that allows to receive timer
+@@ -1405,7 +1399,6 @@ config TIMERFD
  
- struct pid init_struct_pid = {
- 	.count 		= ATOMIC_INIT(1),
-@@ -451,6 +453,165 @@ struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
- 	return idr_get_next(&ns->idr, &nr);
- }
+ config EVENTFD
+ 	bool "Enable eventfd() system call" if EXPERT
+-	select ANON_INODES
+ 	default y
+ 	help
+ 	  Enable the eventfd() system call that allows to receive both
+@@ -1516,7 +1509,6 @@ config KALLSYMS_BASE_RELATIVE
+ # syscall, maps, verifier
+ config BPF_SYSCALL
+ 	bool "Enable bpf() system call"
+-	select ANON_INODES
+ 	select BPF
+ 	select IRQ_WORK
+ 	default n
+@@ -1533,7 +1525,6 @@ config BPF_JIT_ALWAYS_ON
  
-+static int pidfd_release(struct inode *inode, struct file *file)
-+{
-+	struct pid *pid = file->private_data;
-+
-+	if (pid) {
-+		file->private_data = NULL;
-+		put_pid(pid);
-+	}
-+
-+	return 0;
-+}
-+
-+const struct file_operations pidfd_fops = {
-+	.release = pidfd_release,
-+};
-+
-+static int pidfd_create_fd(struct pid *pid, unsigned int o_flags)
-+{
-+	int fd;
-+
-+	fd = anon_inode_getfd("pidfd", &pidfd_fops, get_pid(pid), O_RDWR | o_flags);
-+	if (fd < 0)
-+		put_pid(pid);
-+
-+	return fd;
-+}
-+
-+static struct pid_namespace *get_pid_ns_by_fd(int fd)
-+{
-+	struct pid_namespace *pidns = ERR_PTR(-EINVAL);
-+
-+	if (fd >= 0) {
-+#ifdef CONFIG_PID_NS
-+		struct ns_common *ns;
-+		struct file *file = proc_ns_fget(fd);
-+		if (IS_ERR(file))
-+			return ERR_CAST(file);
-+
-+		ns = get_proc_ns(file_inode(file));
-+		if (ns->ops->type == CLONE_NEWPID) {
-+			pidns = container_of(ns, struct pid_namespace, ns);
-+			get_pid_ns(pidns);
-+		}
-+
-+		fput(file);
-+#endif
-+	} else {
-+		pidns = task_active_pid_ns(current);
-+		get_pid_ns(pidns);
-+	}
-+
-+	return pidns;
-+}
-+
-+static int pidns_related(struct pid_namespace *source,
-+			 struct pid_namespace *target)
-+{
-+	int query;
-+
-+	query = pidnscmp(source, target);
-+	switch (query) {
-+	case 0:
-+		return PIDNS_EQUAL;
-+	case 1:
-+		return PIDNS_SOURCE_IS_ANCESTOR;
-+	}
-+
-+	query = pidnscmp(target, source);
-+	if (query == 1)
-+		return PIDNS_TARGET_IS_ANCESTOR;
-+
-+	return PIDNS_UNRELATED;
-+}
-+
-+/*
-+ * pidctl - perform operations on pids
-+ * @cmd:    command to execute
-+ * @pid:    pid for translation
-+ * @source: pid-ns file descriptor or -1 for active namespace
-+ * @target: pid-ns file descriptor or -1 for active namesapce
-+ * @flags:  flags to pass
-+ *
-+ * If cmd is PIDCMD_QUERY_PID translates pid between pid namespaces
-+ * identified by @source and @target. Returns pid if process has pid in
-+ * @target, -ESRCH if process does not have a pid in @source, -ENOENT if
-+ * process has no pid in @target.
-+ *
-+ * If cmd is PIDCMD_QUERY_PIDNS determines the relations between two pid
-+ * namespaces. Returns 2 if @source is an ancestor pid namespace
-+ * of @target, 1 if @source and @target refer to the same pid namespace,
-+ * 3 if @target is an ancestor pid namespace of @source, 0 if they have
-+ * no parent-child relationship in either direction.
-+ *
-+ * If cmd is PIDCMD_GET_PIDFD returns pidfd for process in @target pid
-+ * namespace. Returns pidfd if process has pid in @target, -ESRCH if
-+ * process does not have a pid in @source, -ENOENT if process does not
-+ * have a pid in @target pid namespace.
-+ *
-+ */
-+SYSCALL_DEFINE5(pidctl, unsigned int, cmd, pid_t, pid, int, source, int, target,
-+		unsigned int, flags)
-+{
-+	struct pid_namespace *source_ns = NULL, *target_ns = NULL;
-+	struct pid *struct_pid;
-+	pid_t result;
-+
-+	if (flags)
-+		return -EINVAL;
-+
-+	switch (cmd) {
-+	case PIDCMD_QUERY_PID:
-+		break;
-+	case PIDCMD_QUERY_PIDNS:
-+		if (pid)
-+			return -EINVAL;
-+		break;
-+	case PIDCMD_GET_PIDFD:
-+		break;
-+	default:
-+		return -EOPNOTSUPP;
-+	}
-+
-+	source_ns = get_pid_ns_by_fd(source);
-+	if (IS_ERR(source_ns))
-+		return PTR_ERR(source_ns);
-+
-+	target_ns = get_pid_ns_by_fd(target);
-+	if (IS_ERR(target_ns)) {
-+		put_pid_ns(source_ns);
-+		return PTR_ERR(target_ns);
-+	}
-+
-+	if (cmd == PIDCMD_QUERY_PIDNS) {
-+		result = pidns_related(source_ns, target_ns);
-+	} else {
-+		rcu_read_lock();
-+		struct_pid = get_pid(find_pid_ns(pid, source_ns));
-+		rcu_read_unlock();
-+
-+		if (struct_pid)
-+			result = pid_nr_ns(struct_pid, target_ns);
-+		else
-+			result = -ESRCH;
-+
-+		if (cmd == PIDCMD_GET_PIDFD && (result > 0))
-+			result = pidfd_create_fd(struct_pid, O_CLOEXEC);
-+
-+		if (!result)
-+			result = -ENOENT;
-+
-+		put_pid(struct_pid);
-+	}
-+
-+	put_pid_ns(target_ns);
-+	put_pid_ns(source_ns);
-+
-+	return result;
-+}
-+
- void __init pid_idr_init(void)
- {
- 	/* Verify no one has done anything silly: */
-diff --git a/kernel/pid_namespace.c b/kernel/pid_namespace.c
-index aa6e72fb7c08..1c863fb3d55a 100644
---- a/kernel/pid_namespace.c
-+++ b/kernel/pid_namespace.c
-@@ -429,6 +429,31 @@ static struct ns_common *pidns_get_parent(struct ns_common *ns)
- 	return &get_pid_ns(pid_ns)->ns;
- }
- 
-+/**
-+ * pidnscmp - Determine if @ancestor is ancestor of @descendant
-+ * @ancestor:   pidns suspected to be the ancestor of @descendant
-+ * @descendant: pidns suspected to be the descendant of @ancestor
-+ *
-+ * Returns -1 if @ancestor is not an ancestor of @descendant,
-+ * 0 if @ancestor is the same pidns as @descendant, 1 if @ancestor
-+ * is an ancestor of @descendant.
-+ */
-+int pidnscmp(struct pid_namespace *ancestor, struct pid_namespace *descendant)
-+{
-+	if (ancestor == descendant)
-+		return 0;
-+
-+	for (;;) {
-+		if (!descendant)
-+			return -1;
-+		if (descendant == ancestor)
-+			break;
-+		descendant = descendant->parent;
-+	}
-+
-+	return 1;
-+}
-+
- static struct user_namespace *pidns_owner(struct ns_common *ns)
- {
- 	return to_pid_ns(ns)->user_ns;
+ config USERFAULTFD
+ 	bool "Enable userfaultfd() system call"
+-	select ANON_INODES
+ 	depends on MMU
+ 	help
+ 	  Enable the userfaultfd() system call that allows to intercept and
+@@ -1600,7 +1591,6 @@ config PERF_EVENTS
+ 	bool "Kernel performance events and counters"
+ 	default y if PROFILING
+ 	depends on HAVE_PERF_EVENTS
+-	select ANON_INODES
+ 	select IRQ_WORK
+ 	select SRCU
+ 	help
 -- 
 2.21.0
