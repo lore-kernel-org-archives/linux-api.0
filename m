@@ -1,37 +1,82 @@
-From: Alex Williamson <alex.williamson@redhat.com>
-Subject: Re: [PATCH V31 10/25] PCI: Lock down BAR access when the kernel is
- locked down
-Date: Tue, 26 Mar 2019 15:19:03 -0600
-Message-ID: <20190326151903.257724d5@x1.home>
-References: <20190326182742.16950-1-matthewgarrett@google.com>
-        <20190326182742.16950-11-matthewgarrett@google.com>
-        <CALCETrW43Syz-deM-fGUCbWfA8tcsoCJJ5XqjFhpg+d0sNYDRA@mail.gmail.com>
+From: Scott Wood <swood@redhat.com>
+Subject: Re: [PATCH 03/17] fpga: dfl: fme: support 512bit data width PR
+Date: Tue, 26 Mar 2019 16:22:34 -0500
+Message-ID: <580c6c604d3915c105f076fc7f22ab5da98598fc.camel@redhat.com>
+References: <1553483264-5379-1-git-send-email-hao.wu@intel.com>
+         <1553483264-5379-4-git-send-email-hao.wu@intel.com>
+         <127a9356a7bf597d35dd361f2b16bf80460f0370.camel@redhat.com>
+         <655bf2991a4f8bf6a473c91218d6dba7748520aa.camel@redhat.com>
+         <CANk1AXSBHAudsLfNkSK1OuE6R9bogo6jW9bYmmZdvweTt3eCiA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrW43Syz-deM-fGUCbWfA8tcsoCJJ5XqjFhpg+d0sNYDRA@mail.gmail.com>
+In-Reply-To: <CANk1AXSBHAudsLfNkSK1OuE6R9bogo6jW9bYmmZdvweTt3eCiA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Matthew Garrett <matthewgarrett@google.com>, James Morris <jmorris@namei.org>, LSM List <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>, Matthew Garrett <mjg59@srcf.ucam.org>, Matthew Garrett <mjg59@google.com>, Bjorn Helgaas <bhelgaas@google.com>, linux-pci@vger.kernel.org
+To: Alan Tull <atull@kernel.org>
+Cc: Wu Hao <hao.wu@intel.com>, Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Ananda Ravuri <ananda.ravuri@intel.com>, Xu Yilun <yilun.xu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 26 Mar 2019 13:55:39 -0700
-Andy Lutomirski <luto@kernel.org> wrote:
-
-> On Tue, Mar 26, 2019 at 11:28 AM Matthew Garrett
-> <matthewgarrett@google.com> wrote:
-> >
-> > From: Matthew Garrett <mjg59@srcf.ucam.org>
-> >
-> > Any hardware that can potentially generate DMA has to be locked down in
-> > order to avoid it being possible for an attacker to modify kernel code,
-> > allowing them to circumvent disabled module loading or module signing.
-> > Default to paranoid - in future we can potentially relax this for
-> > sufficiently IOMMU-isolated devices.  
+On Tue, 2019-03-26 at 14:33 -0500, Alan Tull wrote:
+> On Mon, Mar 25, 2019 at 5:58 PM Scott Wood <swood@redhat.com> wrote:
 > 
-> Does this break vfio?
+> Hi Scott,
+> 
+> > On Mon, 2019-03-25 at 17:53 -0500, Scott Wood wrote:
+> > > On Mon, 2019-03-25 at 11:07 +0800, Wu Hao wrote:
+> > > > +#if defined(CONFIG_X86) && defined(CONFIG_AS_AVX512)
+> > > > +
+> > > > +#include <asm/fpu/api.h>
+> > > > +
+> > > > +static inline void copy512(void *src, void __iomem *dst)
+> > > > +{
+> > > > +   kernel_fpu_begin();
+> > > > +
+> > > > +   asm volatile("vmovdqu64 (%0), %%zmm0;"
+> > > > +                "vmovntdq %%zmm0, (%1);"
+> > > > +                :
+> > > > +                : "r"(src), "r"(dst));
+> > > > +
+> > > > +   kernel_fpu_end();
+> > > > +}
+> > > 
+> > > Shouldn't there be some sort of check that AVX512 is actually
+> > > supported
+> > > on the running system?
+> > > 
+> > > Also, src should be const, and the asm statement should have a memory
+> > > clobber.
+> > > 
+> > > > +#else
+> > > > +static inline void copy512(void *src, void __iomem *dst)
+> > > > +{
+> > > > +   WARN_ON_ONCE(1);
+> > > > +}
+> > > > +#endif
+> > > 
+> > > Likewise, this will be called if a revision 2 device is used on non-
+> > > x86
+> > > (or on x86 with an old binutils).  The driver should fall back to 32-
+> > > bit
+> > > in such cases.
+> > 
+> > Sorry, I missed the comment about revision 2 only being on integrated
+> > devices -- but will that always be the case?  Seems worthwhile to check
+> > for
+> > AVX512 support anyway.  And there's still the possibility of being built
+> > with an old binutils such that CONFIG_AS_AVX512 is not set, or running
+> > on a
+> > kernel where avx512 was disabled via a boot option.
+> 
+> The code checks for CONFIG_AS_AVX512 above.
 
-No, vfio provides its own interface to pci config space.  Thanks,
+That just indicates that binutils supports it.  Plus, the code does not
+check for CONFIG_AS_AVX512 when deciding whether to set pr_datawidth to 64
+(and thus call copy512), so you'll get a WARN_ON rather than falling back to
+32-bit.
 
-Alex
+> What boot option are you referring to?
+
+clearcpuid=304
+
+-Scott
