@@ -1,7 +1,7 @@
 From: Christian Brauner <christian@brauner.io>
-Subject: [PATCH v1 1/4] Make anon_inodes unconditional
-Date: Tue, 26 Mar 2019 16:55:10 +0100
-Message-ID: <20190326155513.26964-2-christian@brauner.io>
+Subject: [PATCH v1 4/4] tests: add pidctl() tests
+Date: Tue, 26 Mar 2019 16:55:13 +0100
+Message-ID: <20190326155513.26964-5-christian@brauner.io>
 References: <20190326155513.26964-1-christian@brauner.io>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,308 +12,594 @@ To: jannh@google.com, khlebnikov@yandex-team.ru, luto@kernel.org, dhowells@redha
 Cc: arnd@arndb.de, keescook@chromium.org, adobriyan@gmail.com, tglx@linutronix.de, mtk.manpages@gmail.com, bl0pbl33p@gmail.com, ldv@altlinux.org, akpm@linux-foundation.org, oleg@redhat.com, nagarathnam.muthusamy@oracle.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, joel@joelfernandes.org, dancol@google.com, Christian Brauner <christian@brauner.io>
 List-Id: linux-api@vger.kernel.org
 
-From: David Howells <dhowells@redhat.com>
+This adds test cases for all three subcommands and verifies that they
+succeed and fail as expected.
+Additionally, the tests verify that pidctl() pidfds are correctly useable
+with pidfd_send_signal().
 
-Make the anon_inodes facility unconditional so that it can be used by core
-VFS code and the pidctl() syscall.
-
-Signed-off-by: David Howells <dhowells@redhat.com>
-Signed-off-by: Al Viro <viro@zeniv.linux.org.uk>
-[christian@brauner.io: adapt commit message to mention pidctl()]
 Signed-off-by: Christian Brauner <christian@brauner.io>
+Cc: Arnd Bergmann <arnd@arndb.de>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Alexey Dobriyan <adobriyan@gmail.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Jann Horn <jannh@google.com
+Cc: David Howells <dhowells@redhat.com>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+Cc: Jonathan Kowalski <bl0pbl33p@gmail.com>
+Cc: "Dmitry V. Levin" <ldv@altlinux.org>
+Cc: Andy Lutomirsky <luto@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Oleg Nesterov <oleg@redhat.com>
+Cc: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>
+Cc: Aleksa Sarai <cyphar@cyphar.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>
 ---
- arch/arm/kvm/Kconfig       |  1 -
- arch/arm64/kvm/Kconfig     |  1 -
- arch/mips/kvm/Kconfig      |  1 -
- arch/powerpc/kvm/Kconfig   |  1 -
- arch/s390/kvm/Kconfig      |  1 -
- arch/x86/Kconfig           |  1 -
- arch/x86/kvm/Kconfig       |  1 -
- drivers/base/Kconfig       |  1 -
- drivers/char/tpm/Kconfig   |  1 -
- drivers/dma-buf/Kconfig    |  1 -
- drivers/gpio/Kconfig       |  1 -
- drivers/iio/Kconfig        |  1 -
- drivers/infiniband/Kconfig |  1 -
- drivers/vfio/Kconfig       |  1 -
- fs/Makefile                |  2 +-
- fs/notify/fanotify/Kconfig |  1 -
- fs/notify/inotify/Kconfig  |  1 -
- init/Kconfig               | 10 ----------
- 18 files changed, 1 insertion(+), 27 deletions(-)
+/* changelog */
+v1:
+- Christian Brauner <christian@brauner.io>:
+  - adapt to changing pidfds to CLOEXEC by default
+---
+ tools/testing/selftests/pidfd/Makefile      |   2 +-
+ tools/testing/selftests/pidfd/pidctl_test.c | 537 ++++++++++++++++++++
+ 2 files changed, 538 insertions(+), 1 deletion(-)
+ create mode 100644 tools/testing/selftests/pidfd/pidctl_test.c
 
-diff --git a/arch/arm/kvm/Kconfig b/arch/arm/kvm/Kconfig
-index 3f5320f46de2..f591026347a5 100644
---- a/arch/arm/kvm/Kconfig
-+++ b/arch/arm/kvm/Kconfig
-@@ -22,7 +22,6 @@ config KVM
- 	bool "Kernel-based Virtual Machine (KVM) support"
- 	depends on MMU && OF
- 	select PREEMPT_NOTIFIERS
--	select ANON_INODES
- 	select ARM_GIC
- 	select ARM_GIC_V3
- 	select ARM_GIC_V3_ITS
-diff --git a/arch/arm64/kvm/Kconfig b/arch/arm64/kvm/Kconfig
-index a3f85624313e..a67121d419a2 100644
---- a/arch/arm64/kvm/Kconfig
-+++ b/arch/arm64/kvm/Kconfig
-@@ -23,7 +23,6 @@ config KVM
- 	depends on OF
- 	select MMU_NOTIFIER
- 	select PREEMPT_NOTIFIERS
--	select ANON_INODES
- 	select HAVE_KVM_CPU_RELAX_INTERCEPT
- 	select HAVE_KVM_ARCH_TLB_FLUSH_ALL
- 	select KVM_MMIO
-diff --git a/arch/mips/kvm/Kconfig b/arch/mips/kvm/Kconfig
-index 4528bc9c3cb1..eac25aef21e0 100644
---- a/arch/mips/kvm/Kconfig
-+++ b/arch/mips/kvm/Kconfig
-@@ -21,7 +21,6 @@ config KVM
- 	depends on MIPS_FP_SUPPORT
- 	select EXPORT_UASM
- 	select PREEMPT_NOTIFIERS
--	select ANON_INODES
- 	select KVM_GENERIC_DIRTYLOG_READ_PROTECT
- 	select HAVE_KVM_VCPU_ASYNC_IOCTL
- 	select KVM_MMIO
-diff --git a/arch/powerpc/kvm/Kconfig b/arch/powerpc/kvm/Kconfig
-index bfdde04e4905..f53997a8ca62 100644
---- a/arch/powerpc/kvm/Kconfig
-+++ b/arch/powerpc/kvm/Kconfig
-@@ -20,7 +20,6 @@ if VIRTUALIZATION
- config KVM
- 	bool
- 	select PREEMPT_NOTIFIERS
--	select ANON_INODES
- 	select HAVE_KVM_EVENTFD
- 	select HAVE_KVM_VCPU_ASYNC_IOCTL
- 	select SRCU
-diff --git a/arch/s390/kvm/Kconfig b/arch/s390/kvm/Kconfig
-index 767453faacfc..1816ee48eadd 100644
---- a/arch/s390/kvm/Kconfig
-+++ b/arch/s390/kvm/Kconfig
-@@ -21,7 +21,6 @@ config KVM
- 	prompt "Kernel-based Virtual Machine (KVM) support"
- 	depends on HAVE_KVM
- 	select PREEMPT_NOTIFIERS
--	select ANON_INODES
- 	select HAVE_KVM_CPU_RELAX_INTERCEPT
- 	select HAVE_KVM_VCPU_ASYNC_IOCTL
- 	select HAVE_KVM_EVENTFD
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index c1f9b3cf437c..18f2c954464e 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -44,7 +44,6 @@ config X86
- 	#
- 	select ACPI_LEGACY_TABLES_LOOKUP	if ACPI
- 	select ACPI_SYSTEM_POWER_STATES_SUPPORT	if ACPI
--	select ANON_INODES
- 	select ARCH_32BIT_OFF_T			if X86_32
- 	select ARCH_CLOCKSOURCE_DATA
- 	select ARCH_CLOCKSOURCE_INIT
-diff --git a/arch/x86/kvm/Kconfig b/arch/x86/kvm/Kconfig
-index 72fa955f4a15..fc042419e670 100644
---- a/arch/x86/kvm/Kconfig
-+++ b/arch/x86/kvm/Kconfig
-@@ -27,7 +27,6 @@ config KVM
- 	depends on X86_LOCAL_APIC
- 	select PREEMPT_NOTIFIERS
- 	select MMU_NOTIFIER
--	select ANON_INODES
- 	select HAVE_KVM_IRQCHIP
- 	select HAVE_KVM_IRQFD
- 	select IRQ_BYPASS_MANAGER
-diff --git a/drivers/base/Kconfig b/drivers/base/Kconfig
-index 059700ea3521..03f067da12ee 100644
---- a/drivers/base/Kconfig
-+++ b/drivers/base/Kconfig
-@@ -174,7 +174,6 @@ source "drivers/base/regmap/Kconfig"
- config DMA_SHARED_BUFFER
- 	bool
- 	default n
--	select ANON_INODES
- 	select IRQ_WORK
- 	help
- 	  This option enables the framework for buffer-sharing between
-diff --git a/drivers/char/tpm/Kconfig b/drivers/char/tpm/Kconfig
-index 536e55d3919f..f3e4bc490cf0 100644
---- a/drivers/char/tpm/Kconfig
-+++ b/drivers/char/tpm/Kconfig
-@@ -157,7 +157,6 @@ config TCG_CRB
- config TCG_VTPM_PROXY
- 	tristate "VTPM Proxy Interface"
- 	depends on TCG_TPM
--	select ANON_INODES
- 	---help---
- 	  This driver proxies for an emulated TPM (vTPM) running in userspace.
- 	  A device /dev/vtpmx is provided that creates a device pair
-diff --git a/drivers/dma-buf/Kconfig b/drivers/dma-buf/Kconfig
-index 2e5a0faa2cb1..3fc9c2efc583 100644
---- a/drivers/dma-buf/Kconfig
-+++ b/drivers/dma-buf/Kconfig
-@@ -3,7 +3,6 @@ menu "DMABUF options"
- config SYNC_FILE
- 	bool "Explicit Synchronization Framework"
- 	default n
--	select ANON_INODES
- 	select DMA_SHARED_BUFFER
- 	---help---
- 	  The Sync File Framework adds explicit syncronization via
-diff --git a/drivers/gpio/Kconfig b/drivers/gpio/Kconfig
-index 3f50526a771f..0f91600c27ae 100644
---- a/drivers/gpio/Kconfig
-+++ b/drivers/gpio/Kconfig
-@@ -12,7 +12,6 @@ config ARCH_HAVE_CUSTOM_GPIO_H
+diff --git a/tools/testing/selftests/pidfd/Makefile b/tools/testing/selftests/pidfd/Makefile
+index deaf8073bc06..29dfa29b3afa 100644
+--- a/tools/testing/selftests/pidfd/Makefile
++++ b/tools/testing/selftests/pidfd/Makefile
+@@ -1,6 +1,6 @@
+ CFLAGS += -g -I../../../../usr/include/
  
- menuconfig GPIOLIB
- 	bool "GPIO Support"
--	select ANON_INODES
- 	help
- 	  This enables GPIO support through the generic GPIO library.
- 	  You only need to enable this, if you also want to enable
-diff --git a/drivers/iio/Kconfig b/drivers/iio/Kconfig
-index d08aeb41cd07..1dec0fecb6ef 100644
---- a/drivers/iio/Kconfig
-+++ b/drivers/iio/Kconfig
-@@ -4,7 +4,6 @@
+-TEST_GEN_PROGS := pidfd_test
++TEST_GEN_PROGS := pidfd_test pidctl_test
  
- menuconfig IIO
- 	tristate "Industrial I/O support"
--	select ANON_INODES
- 	help
- 	  The industrial I/O subsystem provides a unified framework for
- 	  drivers for many different types of embedded sensors using a
-diff --git a/drivers/infiniband/Kconfig b/drivers/infiniband/Kconfig
-index a1fb840de45d..d318bab25860 100644
---- a/drivers/infiniband/Kconfig
-+++ b/drivers/infiniband/Kconfig
-@@ -25,7 +25,6 @@ config INFINIBAND_USER_MAD
+ include ../lib.mk
  
- config INFINIBAND_USER_ACCESS
- 	tristate "InfiniBand userspace access (verbs and CM)"
--	select ANON_INODES
- 	depends on MMU
- 	---help---
- 	  Userspace InfiniBand access support.  This enables the
-diff --git a/drivers/vfio/Kconfig b/drivers/vfio/Kconfig
-index 9de5ed38da83..3798d77d131c 100644
---- a/drivers/vfio/Kconfig
-+++ b/drivers/vfio/Kconfig
-@@ -22,7 +22,6 @@ menuconfig VFIO
- 	tristate "VFIO Non-Privileged userspace driver framework"
- 	depends on IOMMU_API
- 	select VFIO_IOMMU_TYPE1 if (X86 || S390 || ARM || ARM64)
--	select ANON_INODES
- 	help
- 	  VFIO provides a framework for secure userspace device drivers.
- 	  See Documentation/vfio.txt for more details.
-diff --git a/fs/Makefile b/fs/Makefile
-index 427fec226fae..35945f8139e6 100644
---- a/fs/Makefile
-+++ b/fs/Makefile
-@@ -25,7 +25,7 @@ obj-$(CONFIG_PROC_FS) += proc_namespace.o
- 
- obj-y				+= notify/
- obj-$(CONFIG_EPOLL)		+= eventpoll.o
--obj-$(CONFIG_ANON_INODES)	+= anon_inodes.o
-+obj-y				+= anon_inodes.o
- obj-$(CONFIG_SIGNALFD)		+= signalfd.o
- obj-$(CONFIG_TIMERFD)		+= timerfd.o
- obj-$(CONFIG_EVENTFD)		+= eventfd.o
-diff --git a/fs/notify/fanotify/Kconfig b/fs/notify/fanotify/Kconfig
-index 735bfb2e9190..521dc91d2cb5 100644
---- a/fs/notify/fanotify/Kconfig
-+++ b/fs/notify/fanotify/Kconfig
-@@ -1,7 +1,6 @@
- config FANOTIFY
- 	bool "Filesystem wide access notification"
- 	select FSNOTIFY
--	select ANON_INODES
- 	select EXPORTFS
- 	default n
- 	---help---
-diff --git a/fs/notify/inotify/Kconfig b/fs/notify/inotify/Kconfig
-index b981fc0c8379..0161c74e76e2 100644
---- a/fs/notify/inotify/Kconfig
-+++ b/fs/notify/inotify/Kconfig
-@@ -1,6 +1,5 @@
- config INOTIFY_USER
- 	bool "Inotify support for userspace"
--	select ANON_INODES
- 	select FSNOTIFY
- 	default y
- 	---help---
-diff --git a/init/Kconfig b/init/Kconfig
-index 4592bf7997c0..be8f97e37a76 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -1171,9 +1171,6 @@ config LD_DEAD_CODE_DATA_ELIMINATION
- config SYSCTL
- 	bool
- 
--config ANON_INODES
--	bool
--
- config HAVE_UID16
- 	bool
- 
-@@ -1378,14 +1375,12 @@ config HAVE_FUTEX_CMPXCHG
- config EPOLL
- 	bool "Enable eventpoll support" if EXPERT
- 	default y
--	select ANON_INODES
- 	help
- 	  Disabling this option will cause the kernel to be built without
- 	  support for epoll family of system calls.
- 
- config SIGNALFD
- 	bool "Enable signalfd() system call" if EXPERT
--	select ANON_INODES
- 	default y
- 	help
- 	  Enable the signalfd() system call that allows to receive signals
-@@ -1395,7 +1390,6 @@ config SIGNALFD
- 
- config TIMERFD
- 	bool "Enable timerfd() system call" if EXPERT
--	select ANON_INODES
- 	default y
- 	help
- 	  Enable the timerfd() system call that allows to receive timer
-@@ -1405,7 +1399,6 @@ config TIMERFD
- 
- config EVENTFD
- 	bool "Enable eventfd() system call" if EXPERT
--	select ANON_INODES
- 	default y
- 	help
- 	  Enable the eventfd() system call that allows to receive both
-@@ -1516,7 +1509,6 @@ config KALLSYMS_BASE_RELATIVE
- # syscall, maps, verifier
- config BPF_SYSCALL
- 	bool "Enable bpf() system call"
--	select ANON_INODES
- 	select BPF
- 	select IRQ_WORK
- 	default n
-@@ -1533,7 +1525,6 @@ config BPF_JIT_ALWAYS_ON
- 
- config USERFAULTFD
- 	bool "Enable userfaultfd() system call"
--	select ANON_INODES
- 	depends on MMU
- 	help
- 	  Enable the userfaultfd() system call that allows to intercept and
-@@ -1600,7 +1591,6 @@ config PERF_EVENTS
- 	bool "Kernel performance events and counters"
- 	default y if PROFILING
- 	depends on HAVE_PERF_EVENTS
--	select ANON_INODES
- 	select IRQ_WORK
- 	select SRCU
- 	help
+diff --git a/tools/testing/selftests/pidfd/pidctl_test.c b/tools/testing/selftests/pidfd/pidctl_test.c
+new file mode 100644
+index 000000000000..a39d3cd81089
+--- /dev/null
++++ b/tools/testing/selftests/pidfd/pidctl_test.c
+@@ -0,0 +1,537 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++
++#define _GNU_SOURCE
++#include <errno.h>
++#include <fcntl.h>
++#include <linux/types.h>
++#include <linux/wait.h>
++#include <sched.h>
++#include <signal.h>
++#include <stdbool.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <syscall.h>
++#include <sys/mount.h>
++#include <sys/prctl.h>
++#include <sys/wait.h>
++#include <unistd.h>
++
++#include "../kselftest.h"
++
++static int parent_pidns_fd = -1;
++static pid_t parent_pidns_pid = 0;
++
++static int child_pidns_fd = -1;
++static pid_t child_pidns_pid = 0;
++
++static int cousin_pidns_fd = -1;
++static pid_t cousin_pidns_pid = 0;
++
++static bool pidns_supported = false;
++
++static inline int sys_pidfd_send_signal(int pidfd, int sig, siginfo_t *info,
++					unsigned int flags)
++{
++	return syscall(__NR_pidfd_send_signal, pidfd, sig, info, flags);
++}
++
++static inline int sys_pidctl(unsigned int cmd, pid_t pid, int source,
++			     int target, unsigned int flags)
++{
++	return syscall(__NR_pidctl, cmd, pid, source, target, flags);
++}
++
++struct cr_clone_arg {
++	char stack[128] __attribute__((aligned(16)));
++	char stack_ptr[0];
++};
++
++static int child_pidns_creator(void *args)
++{
++	(void)prctl(PR_SET_PDEATHSIG, SIGKILL);
++	while (1)
++		sleep(5);
++
++	exit(0);
++}
++
++static int prepare_pid_namespaces(void)
++{
++	char path[512];
++	struct cr_clone_arg ca;
++	pid_t pid;
++
++	parent_pidns_fd = open("/proc/self/ns/pid", O_RDONLY | O_CLOEXEC);
++	if (parent_pidns_fd < 0) {
++		ksft_print_msg("failed to open current pid namespace");
++		return -1;
++	}
++	parent_pidns_pid = getpid();
++
++	pid = clone(child_pidns_creator, ca.stack_ptr, CLONE_NEWPID | SIGCHLD,
++		    NULL);
++	if (pid < 0) {
++		ksft_print_msg("failed to clone child-pidns process in new pid namespace");
++		return -1;
++	}
++
++	snprintf(path, sizeof(path), "/proc/%d/ns/pid", pid);
++
++	child_pidns_fd = open(path, O_RDONLY | O_CLOEXEC);
++	if (child_pidns_fd < 0) {
++		ksft_print_msg("failed to open pid namespace");
++		return -1;
++	}
++	child_pidns_pid = pid;
++
++	pid = clone(child_pidns_creator, ca.stack_ptr, CLONE_NEWPID | SIGCHLD,
++		    NULL);
++	if (pid < 0) {
++		ksft_print_msg("failed to clone cousin-pidns process in new pid namespace");
++		return -1;
++	}
++
++	snprintf(path, sizeof(path), "/proc/%d/ns/pid", pid);
++
++	cousin_pidns_fd = open(path, O_RDONLY | O_CLOEXEC);
++	if (cousin_pidns_fd < 0) {
++		ksft_print_msg("failed to open cousin pid namespace");
++		return -1;
++	}
++	cousin_pidns_pid = pid;
++
++	return 0;
++}
++
++static int test_pidcmd_query_pid(void)
++{
++	const char *test_name = "pidctl PIDCMD_QUERY_PID";
++	pid_t pid, self;
++	int parent_pidns_fd2;
++
++	self = getpid();
++
++	pid = sys_pidctl(PIDCMD_QUERY_PID, self, -1, -1, 1);
++	if (pid >= 0) {
++		ksft_print_msg("%s test %d: managed to pass invalid flag\n",
++			       test_name, ksft_test_num());
++		return -1;
++	}
++
++	pid = sys_pidctl(PIDCMD_QUERY_PID, self, -1, -1, 0);
++	if (!pid || (pid != self)) {
++		ksft_print_msg("%s test %d: argument pid %d, translated pid %d\n",
++			       test_name, ksft_test_num(), self, pid);
++		return -1;
++	}
++	ksft_inc_pass_cnt();
++
++	if (!pidns_supported)
++		goto out;
++
++	parent_pidns_fd2 = open("/proc/self/ns/pid", O_RDONLY | O_CLOEXEC);
++	if (parent_pidns_fd2 < 0) {
++		ksft_print_msg("%s test %d: Failed to open current pid namespace\n",
++			       test_name, ksft_test_num());
++		return -1;
++	}
++
++	pid = sys_pidctl(PIDCMD_QUERY_PID, self, parent_pidns_fd,
++			 parent_pidns_fd2, 0);
++	if (!pid || (pid != self)) {
++		ksft_print_msg("%s test %d: argument pid %d, translated pid %d\n",
++			       test_name, ksft_test_num(), self, pid);
++		close(parent_pidns_fd2);
++		return -1;
++	}
++	ksft_inc_pass_cnt();
++
++	pid = sys_pidctl(PIDCMD_QUERY_PID, self, -1, parent_pidns_fd2, 0);
++	if (!pid || (pid != self)) {
++		ksft_print_msg("%s test %d: argument pid %d, translated pid %d\n",
++			       test_name, ksft_test_num(), self, pid);
++		close(parent_pidns_fd2);
++		return -1;
++	}
++	ksft_inc_pass_cnt();
++
++	pid = sys_pidctl(PIDCMD_QUERY_PID, self, parent_pidns_fd, -1, 0);
++	if (!pid || (pid != self)) {
++		ksft_print_msg("%s test %d: argument pid %d, translated pid %d\n",
++			       test_name, ksft_test_num(), self, pid);
++		close(parent_pidns_fd2);
++		return -1;
++	}
++	ksft_inc_pass_cnt();
++
++	close(parent_pidns_fd2);
++
++	pid = sys_pidctl(PIDCMD_QUERY_PID, self, parent_pidns_fd,
++			 child_pidns_fd, 0);
++	if (pid >= 0 || ((pid < 0) && (errno != ENOENT))) {
++		ksft_print_msg("%s test %d: argument pid %d, translated pid %d\n",
++			       test_name, ksft_test_num(), self, pid);
++		return -1;
++	}
++	ksft_inc_pass_cnt();
++
++	pid = sys_pidctl(PIDCMD_QUERY_PID, self, child_pidns_fd,
++			 parent_pidns_fd, 0);
++	if (pid >= 0 || ((pid < 0) && (errno != ESRCH))) {
++		ksft_print_msg("%s test %d: argument pid %d, translated pid %d\n",
++			       test_name, ksft_test_num(), self, pid);
++		return -1;
++	}
++	ksft_inc_pass_cnt();
++
++	pid = sys_pidctl(PIDCMD_QUERY_PID, child_pidns_pid, parent_pidns_fd,
++			 child_pidns_fd, 0);
++	if (pid != 1) {
++		ksft_print_msg("%s test %d: argument pid %d, translated pid %d\n",
++			       test_name, ksft_test_num(), child_pidns_pid, pid);
++		return -1;
++	}
++	ksft_inc_pass_cnt();
++
++	pid = sys_pidctl(PIDCMD_QUERY_PID, 1, child_pidns_fd, parent_pidns_fd,
++			 0);
++	if (pid != child_pidns_pid) {
++		ksft_print_msg("%s test %d: argument pid %d, translated pid %d\n",
++			       test_name, ksft_test_num(), 1, pid);
++		return -1;
++	}
++	ksft_inc_pass_cnt();
++
++	pid = sys_pidctl(PIDCMD_QUERY_PID, 1, child_pidns_fd, cousin_pidns_fd, 0);
++	if (pid >= 0 || ((pid < 0) && (errno != ENOENT))) {
++		ksft_print_msg("%s test %d: argument pid %d, translated pid %d\n",
++			       test_name, ksft_test_num(), 1, pid);
++		return -1;
++	}
++	ksft_inc_pass_cnt();
++
++	pid = sys_pidctl(PIDCMD_QUERY_PID, cousin_pidns_pid, child_pidns_fd,
++			 cousin_pidns_fd, 0);
++	if (pid >= 0 || ((pid < 0) && (errno != ESRCH))) {
++		ksft_print_msg("%s test %d: argument pid %d, translated pid %d\n",
++			       test_name, ksft_test_num(), cousin_pidns_pid, pid);
++		return -1;
++	}
++	ksft_inc_pass_cnt();
++
++out:
++	ksft_test_result_pass("%s test: passed\n", test_name);
++	return 0;
++}
++
++static int test_pidcmd_query_pidns(void)
++{
++	const char *test_name = "pidctl PIDCMD_QUERY_PIDNS";
++	int parent_pidns_fd2;
++	int query;
++
++	query = sys_pidctl(PIDCMD_QUERY_PIDNS, 0, -1, -1, 1);
++	if (query >= 0) {
++		ksft_print_msg("%s test %d: managed to pass invalid flag\n",
++			       test_name, ksft_test_num());
++		return -1;
++	}
++	ksft_inc_pass_cnt();
++
++	query = sys_pidctl(PIDCMD_QUERY_PIDNS, 1234, -1, -1, 0);
++	if (query >= 0)
++		ksft_print_msg("%s test %d: managed to pass invalid pid argument\n",
++			test_name, ksft_test_num());
++	ksft_inc_pass_cnt();
++
++	if (!pidns_supported)
++		goto out;
++
++	parent_pidns_fd2 = open("/proc/self/ns/pid", O_RDONLY | O_CLOEXEC);
++	if (parent_pidns_fd2 < 0) {
++		ksft_print_msg("%s test %d: Failed to open second pid namespace file descriptor\n",
++			       test_name, ksft_test_num());
++		return -1;
++	}
++
++	query = sys_pidctl(PIDCMD_QUERY_PIDNS, 0, parent_pidns_fd,
++			   parent_pidns_fd2, 0);
++	close(parent_pidns_fd2);
++	if (query != PIDNS_EQUAL) {
++		ksft_print_msg("%s test %d: failed to detect that pid namespaces are identical %d\n",
++			       test_name, ksft_test_num(), query);
++		return -1;
++	}
++	ksft_inc_pass_cnt();
++
++	query = sys_pidctl(PIDCMD_QUERY_PIDNS, 0, parent_pidns_fd,
++			   child_pidns_fd, 0);
++	if (query != PIDNS_SOURCE_IS_ANCESTOR) {
++		ksft_print_msg("%s test %d: failed to detect that source pid namespace is ancestor of target pid namespace %d\n",
++			       test_name, ksft_test_num(), query);
++		return -1;
++	}
++	ksft_inc_pass_cnt();
++
++	query = sys_pidctl(PIDCMD_QUERY_PIDNS, 0, child_pidns_fd,
++			   parent_pidns_fd, 0);
++	if (query != PIDNS_TARGET_IS_ANCESTOR) {
++		ksft_print_msg("%s test %d: failed to detect that target pid namespace is ancestor of source pid namespace %d\n",
++			       test_name, ksft_test_num(), query);
++		return -1;
++	}
++	ksft_inc_pass_cnt();
++
++	query = sys_pidctl(PIDCMD_QUERY_PIDNS, 0, child_pidns_fd,
++			   cousin_pidns_fd, 0);
++	if (query != PIDNS_UNRELATED) {
++		ksft_print_msg("%s test %d: failed to detect that pid namespace are not related %d\n",
++			       test_name, ksft_test_num(), query);
++		return -1;
++	}
++	ksft_inc_pass_cnt();
++
++	query = sys_pidctl(PIDCMD_QUERY_PIDNS, 0, child_pidns_fd,
++			   cousin_pidns_fd, 0);
++	if (query != PIDNS_UNRELATED) {
++		ksft_print_msg("%s test %d: failed to detect that pid namespace are not related %d\n",
++			       test_name, ksft_test_num(), query);
++		return -1;
++	}
++	ksft_inc_pass_cnt();
++
++out:
++	ksft_test_result_pass("%s test: passed\n", test_name);
++	return 0;
++}
++
++static int test_pidcmd_get_pidfd(void)
++{
++	const char *test_name = "pidctl PIDCMD_GET_PIDFD";
++	pid_t self;
++	int pidfd, parent_pidns_fd2;
++
++	self = getpid();
++
++	pidfd = sys_pidctl(PIDCMD_GET_PIDFD, self, -1, -1, 0);
++	if (pidfd < 0) {
++		ksft_print_msg("%s test %d: failed to pass valid flag\n",
++			       test_name, ksft_test_num());
++		return -1;
++	}
++	close(pidfd);
++	ksft_inc_pass_cnt();
++
++	if (!pidns_supported)
++		goto out;
++
++	parent_pidns_fd2 = open("/proc/self/ns/pid", O_RDONLY | O_CLOEXEC);
++	if (parent_pidns_fd2 < 0) {
++		ksft_print_msg("%s test %d: Failed to open current pid namespace\n",
++			       test_name, ksft_test_num());
++		return -1;
++	}
++
++	pidfd = sys_pidctl(PIDCMD_GET_PIDFD, self, parent_pidns_fd,
++			   parent_pidns_fd2, 0);
++	if (pidfd < 0) {
++		ksft_print_msg("%s test %d: failed to retrieve pidfd\n",
++			       test_name, ksft_test_num());
++		close(parent_pidns_fd2);
++		return -1;
++	}
++	close(pidfd);
++	ksft_inc_pass_cnt();
++
++	pidfd = sys_pidctl(PIDCMD_GET_PIDFD, self, -1, parent_pidns_fd2, 0);
++	if (pidfd < 0) {
++		ksft_print_msg("%s test %d: failed to retrieve pidfd\n",
++			       test_name, ksft_test_num());
++		close(parent_pidns_fd2);
++		return -1;
++	}
++	close(pidfd);
++	ksft_inc_pass_cnt();
++
++	pidfd = sys_pidctl(PIDCMD_GET_PIDFD, self, parent_pidns_fd, -1, 0);
++	if (pidfd < 0) {
++		ksft_print_msg("%s test %d: failed to retrieve pidfd\n",
++			       test_name, ksft_test_num());
++		close(parent_pidns_fd2);
++		return -1;
++	}
++	close(pidfd);
++	ksft_inc_pass_cnt();
++
++	close(parent_pidns_fd2);
++
++	pidfd = sys_pidctl(PIDCMD_GET_PIDFD, self, parent_pidns_fd,
++			   child_pidns_fd, 0);
++	if (pidfd >= 0 || ((pidfd < 0) && (errno != ENOENT))) {
++		ksft_print_msg("%s test %d: succeeded to retrieve pidfd but should've failed %s\n",
++			       test_name, ksft_test_num(), strerror(errno));
++		return -1;
++	}
++	ksft_inc_pass_cnt();
++
++	pidfd = sys_pidctl(PIDCMD_GET_PIDFD, self, child_pidns_fd,
++			   parent_pidns_fd, 0);
++	if (pidfd >= 0 || ((pidfd < 0) && (errno != ESRCH))) {
++		ksft_print_msg("%s test %d: succeeded to retrieve pidfd but should've failed %s\n",
++			       test_name, ksft_test_num(), strerror(errno));
++		return -1;
++	}
++	ksft_inc_pass_cnt();
++
++	pidfd = sys_pidctl(PIDCMD_GET_PIDFD, 1, child_pidns_fd, parent_pidns_fd, 0);
++	if (pidfd < 0) {
++		ksft_print_msg("%s test %d: failed to retrieve pidfd\n",
++			       test_name, ksft_test_num());
++		return -1;
++	}
++	close(pidfd);
++	ksft_inc_pass_cnt();
++
++	pidfd = sys_pidctl(PIDCMD_GET_PIDFD, 1, child_pidns_fd, cousin_pidns_fd, 0);
++	if (pidfd >= 0 || ((pidfd < 0) && (errno != ENOENT))) {
++		ksft_print_msg("%s test %d: succeeded to retrieve pidfd but should've failed %s\n",
++			       test_name, ksft_test_num(), strerror(errno));
++		return -1;
++	}
++	ksft_inc_pass_cnt();
++
++	pidfd = sys_pidctl(PIDCMD_GET_PIDFD, cousin_pidns_pid, child_pidns_fd,
++			   cousin_pidns_fd, 0);
++	if (pidfd >= 0 || ((pidfd < 0) && (errno != ESRCH))) {
++		ksft_print_msg("%s test %d: succeeded to retrieve pidfd but should've failed %s\n",
++			       test_name, ksft_test_num(), strerror(errno));
++		return -1;
++	}
++	ksft_inc_pass_cnt();
++
++out:
++	ksft_test_result_pass("%s test: passed\n", test_name);
++	return 0;
++}
++
++static void test_pidctl_pidfd_send_signal(void)
++{
++	const char *test_name = "pidctl with pidfd_send_signal";
++	int child_pidfd, cousin_pidfd, ret;
++
++	child_pidfd = sys_pidctl(PIDCMD_GET_PIDFD, child_pidns_pid, -1, -1, 0);
++	if (child_pidfd < 0)
++		ksft_print_msg("%s test %d: failed to retrieve pidfd\n",
++			       test_name, ksft_test_num());
++	ksft_inc_pass_cnt();
++
++	ret = sys_pidfd_send_signal(child_pidfd, SIGKILL, NULL, 0);
++	if (ret < 0) {
++		kill(child_pidns_pid, SIGKILL);
++		ksft_print_msg("%s test %d: failed to send signal via pidfd\n",
++			       test_name, ksft_test_num());
++	}
++	ksft_inc_pass_cnt();
++
++	cousin_pidfd = sys_pidctl(PIDCMD_GET_PIDFD, cousin_pidns_pid, -1, -1, 0);
++	if (cousin_pidfd < 0)
++		ksft_print_msg("%s test %d: failed to retrieve pidfd\n",
++			       test_name, ksft_test_num());
++	ksft_inc_pass_cnt();
++
++	ret = sys_pidfd_send_signal(cousin_pidfd, SIGKILL, NULL, 0);
++	if (ret < 0) {
++		kill(cousin_pidfd, SIGKILL);
++		ksft_print_msg("%s test %d: failed to send signal via pidfd\n",
++			       test_name, ksft_test_num());
++	}
++	ksft_inc_pass_cnt();
++
++	ksft_test_result_pass("%s test: passed\n", test_name);
++}
++
++int wait_for_pid(pid_t pid)
++{
++	int status, ret;
++
++again:
++	ret = waitpid(pid, &status, 0);
++	if (ret == -1) {
++		if (errno == EINTR)
++			goto again;
++
++		return -1;
++	}
++
++	if (ret != pid)
++		goto again;
++
++	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
++		return -1;
++
++	return 0;
++}
++
++int main(int argc, char **argv)
++{
++	int ret;
++	pid_t pid;
++
++	pid = fork();
++	if (pid < 0)
++		ksft_exit_fail_msg("Failed to create new process\n");
++
++	if (pid == 0) {
++		if (unshare(CLONE_NEWPID) < 0)
++			exit(EXIT_FAILURE);
++
++		exit(EXIT_SUCCESS);
++	}
++
++	if (!wait_for_pid(pid))
++		pidns_supported = true;
++
++	ksft_print_header();
++
++	if (pidns_supported)
++		prepare_pid_namespaces();
++	else
++		ksft_print_msg(
++			"kernel does not support pid namespaces: skipping pid namespace parts of testsuite");
++
++	ret = test_pidcmd_query_pid();
++	if (ret < 0) {
++		ksft_print_msg("PIDCMD_QUERY_PID tests failed");
++		goto on_error;
++	}
++
++	ret = test_pidcmd_query_pidns();
++	if (ret < 0) {
++		ksft_print_msg("PIDCMD_QUERY_PIDNS tests failed");
++		goto on_error;
++	}
++
++	ret = test_pidcmd_get_pidfd();
++	if (ret < 0) {
++		ksft_print_msg("PIDCMD_GET_PIDFD tests failed");
++		goto on_error;
++	}
++
++	ret = 0;
++
++on_error:
++	if (pidns_supported)
++		test_pidctl_pidfd_send_signal();
++
++	if (parent_pidns_fd >= 0)
++		close(parent_pidns_fd);
++
++	if (child_pidns_fd >= 0)
++		close(child_pidns_fd);
++
++	if (cousin_pidns_fd >= 0)
++		close(cousin_pidns_fd);
++
++	return !ret ? ksft_exit_pass() : ksft_exit_fail();
++}
 -- 
 2.21.0
