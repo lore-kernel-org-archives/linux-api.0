@@ -1,199 +1,185 @@
-From: Alexey Gladkov <gladkov.alexey@gmail.com>
-Subject: Re: [RESEND PATCH v1] moduleparam: Save information about built-in
- modules in separate file
-Date: Tue, 26 Mar 2019 18:24:12 +0100
-Message-ID: <20190326172411.GA15936@Legion-PC.fortress>
-References: <20190315101013.GN8455@Legion-PC.fortress>
- <CAK7LNATsm23e_CuyfFw7_CR8xZQ3HnwNHCXhEm_zQZU2PUGK5A@mail.gmail.com>
+From: Joel Fernandes <joel@joelfernandes.org>
+Subject: Re: [PATCH v1 2/4] pid: add pidctl()
+Date: Tue, 26 Mar 2019 14:10:12 -0400
+Message-ID: <20190326181012.GA138478@google.com>
+References: <20190326155513.26964-1-christian@brauner.io>
+ <20190326155513.26964-3-christian@brauner.io>
+ <20190326170601.GA101741@google.com>
+ <20190326172231.daa5a53lxf6nz6jn@brauner.io>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAK7LNATsm23e_CuyfFw7_CR8xZQ3HnwNHCXhEm_zQZU2PUGK5A@mail.gmail.com>
+In-Reply-To: <20190326172231.daa5a53lxf6nz6jn@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Masahiro Yamada <yamada.masahiro@socionext.com>
-Cc: Michal Marek <michal.lkml@markovi.net>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux Kbuild mailing list <linux-kbuild@vger.kernel.org>, linux-api@vger.kernel.org, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>, "Dmitry V. Levin" <ldv@altlinux.org>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Rusty Russell <rusty@rustcorp.com.au>, Jessica Yu <jeyu@kernel.org>
+To: Christian Brauner <christian@brauner.io>
+Cc: jannh@google.com, khlebnikov@yandex-team.ru, luto@kernel.org, dhowells@redhat.com, serge@hallyn.com, ebiederm@xmission.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, arnd@arndb.de, keescook@chromium.org, adobriyan@gmail.com, tglx@linutronix.de, mtk.manpages@gmail.com, bl0pbl33p@gmail.com, ldv@altlinux.org, akpm@linux-foundation.org, oleg@redhat.com, nagarathnam.muthusamy@oracle.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, dancol@google.com
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 22, 2019 at 02:34:12PM +0900, Masahiro Yamada wrote:
-> Hi.
+On Tue, Mar 26, 2019 at 06:22:33PM +0100, Christian Brauner wrote:
+> On Tue, Mar 26, 2019 at 01:06:01PM -0400, Joel Fernandes wrote:
+> > On Tue, Mar 26, 2019 at 04:55:11PM +0100, Christian Brauner wrote:
+> > > The pidctl() syscalls builds on, extends, and improves translate_pid() [4].
+> > > I quote Konstantins original patchset first that has already been acked and
+> > > picked up by Eric before and whose functionality is preserved in this
+> > > syscall:
+> > > 
+> > > "Each process have different pids, one for each pid namespace it belongs.
+> > >  When interaction happens within single pid-ns translation isn't required.
+> > >  More complicated scenarios needs special handling.
+> > > 
+> > >  For example:
+> > >  - reading pid-files or logs written inside container with pid namespace
+> > >  - writing logs with internal pids outside container for pushing them into
+> > >  - attaching with ptrace to tasks from different pid namespace
+> > > 
+> > >  Generally speaking, any cross pid-ns API with pids needs translation.
+> > > 
+> > >  Currently there are several interfaces that could be used here:
+> > > 
+> > >  Pid namespaces are identified by device and inode of /proc/[pid]/ns/pid.
+> > > 
+> > >  Pids for nested pid namespaces are shown in file /proc/[pid]/status.
+> > >  In some cases pid translation could be easily done using this information.
+> > >  Backward translation requires scanning all tasks and becomes really
+> > >  complicated for deeper namespace nesting.
+> > > 
+> > >  Unix socket automatically translates pid attached to SCM_CREDENTIALS.
+> > >  This requires CAP_SYS_ADMIN for sending arbitrary pids and entering
+> > >  into pid namespace, this expose process and could be insecure."
+> > > 
+> > > The original patchset allowed two distinct operations implicitly:
+> > > - discovering whether pid namespaces (pidns) have a parent-child
+> > >   relationship
+> > > - translating a pid from a source pidns into a target pidns
+> > > 
+> > > Both tasks are accomplished in the original patchset by passing a pid
+> > > along. If the pid argument is passed as 1 the relationship between two pid
+> > > namespaces can be discovered.
+> > > The syscall will gain a lot clearer syntax and will be easier to use for
+> > > userspace if the task it is asked to perform is passed through a
+> > > command argument. Additionally, it allows us to remove an intrinsic race
+> > > caused by using the pid argument as a way to discover the relationship
+> > > between pid namespaces.
+> > > This patch introduces three commands:
+> > > 
+> > > /* PIDCMD_QUERY_PID */
+> > > PIDCMD_QUERY_PID allows to translate a pid between pid namespaces.
+> > > Given a source pid namespace fd return the pid of the process in the target
+> > > namespace:
+> > 
+> > Could we call this PIDCMD_TRANSLATE_PID please? QUERY is confusing/ambigious
+> > IMO (see below).
 > 
-> (added some people to CC)
-> 
-> 
-> On Fri, Mar 15, 2019 at 7:10 PM Alexey Gladkov <gladkov.alexey@gmail.com> wrote:
-> >
-> > Problem:
-> >
-> > When a kernel module is compiled as a separate module, some important
-> > information about the kernel module is available via .modinfo section of
-> > the module.  In contrast, when the kernel module is compiled into the
-> > kernel, that information is not available.
-> 
-> 
-> I might be missing something, but
-> vmlinux provides info of builtin modules
-> in /sys/module/.
+> Yes, doesn't matter to me too much what we call it.
 
-No. There are definitely not all modules. I have a builtin sha256_generic,
-but I can't find him in the /sys/module.
+Ok.
 
-> (Looks like currently only module_param and MODULE_VERSION)
+> > > 1. pidctl(PIDCMD_QUERY_PID, pid, source_fd, -1, 0)
+> > >   - retrieve pidns identified by source_fd
+> > >   - retrieve struct pid identifed by pid in pidns identified by source_fd
+> > >   - retrieve callers pidns
+> > >   - return pid in callers pidns
+> > > 
+> > > 2. pidctl(PIDCMD_QUERY_PID, pid, -1, target_fd, 0)
+> > >   - retrieve callers pidns
+> > >   - retrieve struct pid identifed by pid in callers pidns
+> > >   - retrieve pidns identified by target_fd
+> > >   - return pid in pidns identified by target_fd
+> > > 
+> > > 3. pidctl(PIDCMD_QUERY_PID, 1, source_fd, -1, 0)
+> > >   - retrieve pidns identified by source_fd
+> > >   - retrieve struct pid identifed by init task in pidns identified by source_fd
+> > >   - retrieve callers pidns
+> > >   - return pid of init task of pidns identified by source_fd in callers pidns
+> > > 
+> > > 4. pidctl(PIDCMD_QUERY_PID, pid, source_fd, target_fd, 0)
+> > >   - retrieve pidns identified by source_fd
+> > >   - retrieve struct pid identifed by pid in pidns identified by source_fd
+> > >   - retrieve pidns identified by target_fd
+> > >   - check whether struct pid can be found in pidns identified by target_fd
+> > >   - return pid in pidns identified by target_fd
+> > > 
+> > > /* PIDCMD_QUERY_PIDNS */
+> > > PIDCMD_QUERY_PIDNS allows to determine the relationship between pid
+> > > namespaces.
+> > > In the original version of the pachset passing pid as 1 would allow to
+> > > deterimine the relationship between the pid namespaces. This is inherhently
+> > > racy. If pid 1 inside a pid namespace has died it would report false
+> > > negatives. For example, if pid 1 inside of the target pid namespace already
+> > > died, it would report that the target pid namespace cannot be reached from
+> > > the source pid namespace because it couldn't find the pid inside of the
+> > > target pid namespace and thus falsely report to the user that the two pid
+> > > namespaces are not related. This problem is simple to avoid. In the new
+> > > version we simply walk the list of ancestors and check whether the
+> > > namespace are related to each other. By doing it this way we can reliably
+> > > report what the relationship between two pid namespace file descriptors
+> > > looks like.
+> > > 
+> > > 1. pidctl(PIDCMD_QUERY_PIDNS, 0, ns_fd1, ns_fd1, 0) == 0
+> > >    - pidns_of(ns_fd1) and pidns_of(ns_fd2) are unrelated to each other
+> > > 
+> > > 2. pidctl(PIDCMD_QUERY_PIDNS, 0, ns_fd1, ns_fd2, 0) == 1
+> > >    - pidns_of(ns_fd1) == pidns_of(ns_fd2)
+> > > 
+> > > 3. pidctl(PIDCMD_QUERY_PIDNS, 0, ns_fd1, ns_fd2, 0) == 2
+> > >    - pidns_of(ns_fd1) is ancestor of pidns_of(ns_fd2)
+> > > 
+> > > 4. pidctl(PIDCMD_QUERY_PIDNS, 0, ns_fd1, ns_fd2, 0) == 3
+> > >    - pidns_of(ns_fd2) is ancestor of pidns_of(ns_fd1)
+> > 
+> > Why not call this PIDCMD_COMPARE_PIDNS, since a comparison is what you're doing.
 > 
-> This patch is not exactly the same, but I see a kind of overwrap.
-> I'd like to be sure if we want this new scheme.
+> Same.
 
-The /sys/module is only for running kernel. One of my use cases is
-to create an initrd for a new kernel.
+Ok, glad we agree on it.
 
+> > 
+> > Again QUERY is ambigious here. Above you called QUERY to translate something,
+> > now you're calling QUERY to mean compare something. I suggest to be explicit
+> > about the operation PIDCMD_<OPERATION>_<OPERAND-TYPE>.
+> > 
+> > Arguably, 2 syscalls for this is cleaner:
+> > pid_compare_namespaces(ns_fd1, ns_fd2);
+> > pid_translate(pid, ns_fd1, nds_fd2);
 > 
-> > Information about built-in modules is necessary in the following cases:
-> >
-> > 1. When it is necessary to find out what additional parameters can be
-> > passed to the kernel at boot time.
-> 
-> 
-> Actually, /sys/module/<module>/parameters/
-> exposes this information.
-> 
-> Doesn't it work for your purpose?
+> I don't think we want to send out pid_compare_namespaces() as a separate
+> syscall. If that's the consensus I'd rather just drop this functionality
+> completely.
 
-No, since creating an initrd needs to know all the modalias before
-I get the sysfs for new kernel. Also there are no modalias at all.
+I mean, if pid-namespace fd comparison functionality is not needed in
+userspace, why add it all. I suggest to drop it if not needed and can be
+considered for addition later when needed.
 
-> > 2. When you need to know which module names and their aliases are in
-> > the kernel. This is very useful for creating an initrd image.
-> >
-> > Proposal:
-> >
-> > The proposed patch does not remove .modinfo section with module
-> > information from the vmlinux at the build time and saves it into a
-> > separate file after kernel linking. So, the kernel does not increase in
-> > size and no additional information remains in it. Information is stored
-> > in the same format as in the separate modules (null-terminated string
-> > array). Because the .modinfo section is already exported with a separate
-> > modules, we are not creating a new API.
-> >
-> > It can be easily read in the userspace:
-> >
-> > $ tr '\0' '\n' < kernel.builtin.modinfo
-> > ext4.softdep=pre: crc32c
-> > ext4.license=GPL
-> > ext4.description=Fourth Extended Filesystem
-> > ext4.author=Remy Card, Stephen Tweedie, Andrew Morton, Andreas Dilger, Theodore Ts'o and others
-> > ext4.alias=fs-ext4
-> > ext4.alias=ext3
-> > ext4.alias=fs-ext3
-> > ext4.alias=ext2
-> > ext4.alias=fs-ext2
-> > md_mod.alias=block-major-9-*
-> > md_mod.alias=md
-> > md_mod.description=MD RAID framework
-> > md_mod.license=GPL
-> > md_mod.parmtype=create_on_open:bool
-> > md_mod.parmtype=start_dirty_degraded:int
-> > ...
-> >
-> > Co-Developed-by: Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>
-> > Signed-off-by: Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>
-> > Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
-> > ---
-> >  Makefile                    |  1 +
-> >  include/linux/moduleparam.h | 12 +++++-------
-> >  scripts/link-vmlinux.sh     |  8 ++++++++
-> >  3 files changed, 14 insertions(+), 7 deletions(-)
-> >
-> > diff --git a/Makefile b/Makefile
-> > index d5713e7b1e50..971102194c92 100644
-> > --- a/Makefile
-> > +++ b/Makefile
-> > @@ -1288,6 +1288,7 @@ _modinst_:
-> >         fi
-> >         @cp -f $(objtree)/modules.order $(MODLIB)/
-> >         @cp -f $(objtree)/modules.builtin $(MODLIB)/
-> > +       @cp -f $(objtree)/kernel.builtin.modinfo $(MODLIB)/
-> >         $(Q)$(MAKE) -f $(srctree)/scripts/Makefile.modinst
-> >
-> >  # This depmod is only for convenience to give the initial
-> > diff --git a/include/linux/moduleparam.h b/include/linux/moduleparam.h
-> > index ba36506db4fb..5ba250d9172a 100644
-> > --- a/include/linux/moduleparam.h
-> > +++ b/include/linux/moduleparam.h
-> > @@ -10,23 +10,21 @@
-> >     module name. */
-> >  #ifdef MODULE
-> >  #define MODULE_PARAM_PREFIX /* empty */
-> > +#define __MODULE_INFO_PREFIX /* empty */
-> >  #else
-> >  #define MODULE_PARAM_PREFIX KBUILD_MODNAME "."
-> > +/* We cannot use MODULE_PARAM_PREFIX because some modules override it. */
-> > +#define __MODULE_INFO_PREFIX KBUILD_MODNAME "."
-> >  #endif
-> >
-> >  /* Chosen so that structs with an unsigned long line up. */
-> >  #define MAX_PARAM_PREFIX_LEN (64 - sizeof(unsigned long))
-> >
-> > -#ifdef MODULE
-> >  #define __MODULE_INFO(tag, name, info)                                   \
-> >  static const char __UNIQUE_ID(name)[]                                    \
-> >    __used __attribute__((section(".modinfo"), unused, aligned(1)))        \
-> > -  = __stringify(tag) "=" info
-> > -#else  /* !MODULE */
-> > -/* This struct is here for syntactic coherency, it is not used */
-> > -#define __MODULE_INFO(tag, name, info)                                   \
-> > -  struct __UNIQUE_ID(name) {}
-> > -#endif
-> > +  = __MODULE_INFO_PREFIX __stringify(tag) "=" info
-> > +
-> >  #define __MODULE_PARM_TYPE(name, _type)                                          \
-> >    __MODULE_INFO(parmtype, name##type, #name ":" _type)
-> >
-> > diff --git a/scripts/link-vmlinux.sh b/scripts/link-vmlinux.sh
-> > index c8cf45362bd6..399d7e4d11ec 100755
-> > --- a/scripts/link-vmlinux.sh
-> > +++ b/scripts/link-vmlinux.sh
-> > @@ -258,10 +258,12 @@ if [ -n "${CONFIG_KALLSYMS}" ]; then
-> >
-> >         # step 1
-> >         vmlinux_link "" .tmp_vmlinux1
-> > +       "${OBJCOPY}" -R .modinfo .tmp_vmlinux1
-> >         kallsyms .tmp_vmlinux1 .tmp_kallsyms1.o
-> >
-> >         # step 2
-> >         vmlinux_link .tmp_kallsyms1.o .tmp_vmlinux2
-> > +       "${OBJCOPY}" -R .modinfo .tmp_vmlinux2
-> >         kallsyms .tmp_vmlinux2 .tmp_kallsyms2.o
-> >
-> >         # step 3
-> > @@ -273,6 +275,7 @@ if [ -n "${CONFIG_KALLSYMS}" ]; then
-> >                 kallsyms_vmlinux=.tmp_vmlinux3
-> >
-> >                 vmlinux_link .tmp_kallsyms2.o .tmp_vmlinux3
-> > +               "${OBJCOPY}" -R .modinfo .tmp_vmlinux3
-> >
-> >                 kallsyms .tmp_vmlinux3 .tmp_kallsyms3.o
-> >         fi
-> > @@ -281,6 +284,11 @@ fi
-> >  info LD vmlinux
-> >  vmlinux_link "${kallsymso}" vmlinux
-> >
-> > +info MODINFO kernel.builtin.modinfo
-> > +"${OBJCOPY}" -j .modinfo -O binary vmlinux kernel.builtin.modinfo
-> > +chmod 444 kernel.builtin.modinfo
-> > +"${OBJCOPY}" -R .modinfo vmlinux
-> > +
-> >  if [ -n "${CONFIG_BUILDTIME_EXTABLE_SORT}" ]; then
-> >         info SORTEX vmlinux
-> >         sortextable vmlinux
-> > --
-> > 2.19.2
-> >
-> 
-> 
-> -- 
-> Best Regards
-> Masahiro Yamada
-> 
+Then you're just left with GET_PID and TRANSLATE_PID which we know we do need.
 
--- 
-Rgrds, legion
+> > > These two commands - PIDCMD_QUERY_PID and PIDCMD_QUERY_PIDNS - cover and
+> > > improve the functionality expressed implicitly in translate_pid() before.
+> > > 
+> > > /* PIDCMD_GET_PIDFD */
+> > 
+> > And this can be a third syscall:
+> > pidfd_translate(pid, ns_fd1, ns_fd2).
+> 
+> Sigh, yes. But I honestly want other people other than us to come out
+> and say "yes, please send a PR to Linus with three separate syscalls for
+> very closely related functionality". There's a difference between "this
+> is how we would ideally like to do it" and "this is what is common
+> practice and will likely get accepted". But I'm really not opposed to it
+> per se.
+
+Ok.
+
+> > I am actually supportive of Daniel's view that by combining too many
+> > arguments into a single syscall, becomes confusing and sometimes some
+> > arguments have to be forced to 0 in the single shoe-horned syscall. Like you
+> 
+> There's a difference between an ioctl() and say seccomp() which this is
+> close to:
+> int seccomp(unsigned int operation, unsigned int flags, void *args);
+> The point is that the functionality is closely related not just randomly
+> unrelated stuff. But as I said I'm more than willing to compromise.
+
+Sounds great, yeah whatever makes sense.
+
+Thanks.
