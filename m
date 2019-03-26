@@ -1,115 +1,243 @@
-From: Alan Tull <atull@kernel.org>
-Subject: Re: [PATCH 03/17] fpga: dfl: fme: support 512bit data width PR
-Date: Tue, 26 Mar 2019 14:33:54 -0500
-Message-ID: <CANk1AXSBHAudsLfNkSK1OuE6R9bogo6jW9bYmmZdvweTt3eCiA@mail.gmail.com>
-References: <1553483264-5379-1-git-send-email-hao.wu@intel.com>
- <1553483264-5379-4-git-send-email-hao.wu@intel.com> <127a9356a7bf597d35dd361f2b16bf80460f0370.camel@redhat.com>
- <655bf2991a4f8bf6a473c91218d6dba7748520aa.camel@redhat.com>
+From: Joel Fernandes <joel@joelfernandes.org>
+Subject: Re: [PATCH v1 2/4] pid: add pidctl()
+Date: Tue, 26 Mar 2019 15:51:51 -0400
+Message-ID: <20190326195151.GD114492@google.com>
+References: <20190326155513.26964-1-christian@brauner.io>
+ <20190326155513.26964-3-christian@brauner.io>
+ <20190326170601.GA101741@google.com>
+ <20190326172231.daa5a53lxf6nz6jn@brauner.io>
+ <20190326181012.GA138478@google.com>
+ <20190326191942.jyqpk3ehpbvhgvyz@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <655bf2991a4f8bf6a473c91218d6dba7748520aa.camel@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20190326191942.jyqpk3ehpbvhgvyz@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Scott Wood <swood@redhat.com>
-Cc: Wu Hao <hao.wu@intel.com>, Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Ananda Ravuri <ananda.ravuri@intel.com>, Xu Yilun <yilun.xu@intel.com>
+To: Christian Brauner <christian@brauner.io>
+Cc: jannh@google.com, khlebnikov@yandex-team.ru, luto@kernel.org, dhowells@redhat.com, serge@hallyn.com, ebiederm@xmission.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, arnd@arndb.de, keescook@chromium.org, adobriyan@gmail.com, tglx@linutronix.de, mtk.manpages@gmail.com, bl0pbl33p@gmail.com, ldv@altlinux.org, akpm@linux-foundation.org, oleg@redhat.com, nagarathnam.muthusamy@oracle.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, dancol@google.com
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 25, 2019 at 5:58 PM Scott Wood <swood@redhat.com> wrote:
+On Tue, Mar 26, 2019 at 08:19:43PM +0100, Christian Brauner wrote:
+> On Tue, Mar 26, 2019 at 02:10:12PM -0400, Joel Fernandes wrote:
+> > On Tue, Mar 26, 2019 at 06:22:33PM +0100, Christian Brauner wrote:
+> > > On Tue, Mar 26, 2019 at 01:06:01PM -0400, Joel Fernandes wrote:
+> > > > On Tue, Mar 26, 2019 at 04:55:11PM +0100, Christian Brauner wrote:
+> > > > > The pidctl() syscalls builds on, extends, and improves translate_pid() [4].
+> > > > > I quote Konstantins original patchset first that has already been acked and
+> > > > > picked up by Eric before and whose functionality is preserved in this
+> > > > > syscall:
+> > > > > 
+> > > > > "Each process have different pids, one for each pid namespace it belongs.
+> > > > >  When interaction happens within single pid-ns translation isn't required.
+> > > > >  More complicated scenarios needs special handling.
+> > > > > 
+> > > > >  For example:
+> > > > >  - reading pid-files or logs written inside container with pid namespace
+> > > > >  - writing logs with internal pids outside container for pushing them into
+> > > > >  - attaching with ptrace to tasks from different pid namespace
+> > > > > 
+> > > > >  Generally speaking, any cross pid-ns API with pids needs translation.
+> > > > > 
+> > > > >  Currently there are several interfaces that could be used here:
+> > > > > 
+> > > > >  Pid namespaces are identified by device and inode of /proc/[pid]/ns/pid.
+> > > > > 
+> > > > >  Pids for nested pid namespaces are shown in file /proc/[pid]/status.
+> > > > >  In some cases pid translation could be easily done using this information.
+> > > > >  Backward translation requires scanning all tasks and becomes really
+> > > > >  complicated for deeper namespace nesting.
+> > > > > 
+> > > > >  Unix socket automatically translates pid attached to SCM_CREDENTIALS.
+> > > > >  This requires CAP_SYS_ADMIN for sending arbitrary pids and entering
+> > > > >  into pid namespace, this expose process and could be insecure."
+> > > > > 
+> > > > > The original patchset allowed two distinct operations implicitly:
+> > > > > - discovering whether pid namespaces (pidns) have a parent-child
+> > > > >   relationship
+> > > > > - translating a pid from a source pidns into a target pidns
+> > > > > 
+> > > > > Both tasks are accomplished in the original patchset by passing a pid
+> > > > > along. If the pid argument is passed as 1 the relationship between two pid
+> > > > > namespaces can be discovered.
+> > > > > The syscall will gain a lot clearer syntax and will be easier to use for
+> > > > > userspace if the task it is asked to perform is passed through a
+> > > > > command argument. Additionally, it allows us to remove an intrinsic race
+> > > > > caused by using the pid argument as a way to discover the relationship
+> > > > > between pid namespaces.
+> > > > > This patch introduces three commands:
+> > > > > 
+> > > > > /* PIDCMD_QUERY_PID */
+> > > > > PIDCMD_QUERY_PID allows to translate a pid between pid namespaces.
+> > > > > Given a source pid namespace fd return the pid of the process in the target
+> > > > > namespace:
+> > > > 
+> > > > Could we call this PIDCMD_TRANSLATE_PID please? QUERY is confusing/ambigious
+> > > > IMO (see below).
+> > > 
+> > > Yes, doesn't matter to me too much what we call it.
+> > 
+> > Ok.
+> > 
+> > > > > 1. pidctl(PIDCMD_QUERY_PID, pid, source_fd, -1, 0)
+> > > > >   - retrieve pidns identified by source_fd
+> > > > >   - retrieve struct pid identifed by pid in pidns identified by source_fd
+> > > > >   - retrieve callers pidns
+> > > > >   - return pid in callers pidns
+> > > > > 
+> > > > > 2. pidctl(PIDCMD_QUERY_PID, pid, -1, target_fd, 0)
+> > > > >   - retrieve callers pidns
+> > > > >   - retrieve struct pid identifed by pid in callers pidns
+> > > > >   - retrieve pidns identified by target_fd
+> > > > >   - return pid in pidns identified by target_fd
+> > > > > 
+> > > > > 3. pidctl(PIDCMD_QUERY_PID, 1, source_fd, -1, 0)
+> > > > >   - retrieve pidns identified by source_fd
+> > > > >   - retrieve struct pid identifed by init task in pidns identified by source_fd
+> > > > >   - retrieve callers pidns
+> > > > >   - return pid of init task of pidns identified by source_fd in callers pidns
+> > > > > 
+> > > > > 4. pidctl(PIDCMD_QUERY_PID, pid, source_fd, target_fd, 0)
+> > > > >   - retrieve pidns identified by source_fd
+> > > > >   - retrieve struct pid identifed by pid in pidns identified by source_fd
+> > > > >   - retrieve pidns identified by target_fd
+> > > > >   - check whether struct pid can be found in pidns identified by target_fd
+> > > > >   - return pid in pidns identified by target_fd
+> > > > > 
+> > > > > /* PIDCMD_QUERY_PIDNS */
+> > > > > PIDCMD_QUERY_PIDNS allows to determine the relationship between pid
+> > > > > namespaces.
+> > > > > In the original version of the pachset passing pid as 1 would allow to
+> > > > > deterimine the relationship between the pid namespaces. This is inherhently
+> > > > > racy. If pid 1 inside a pid namespace has died it would report false
+> > > > > negatives. For example, if pid 1 inside of the target pid namespace already
+> > > > > died, it would report that the target pid namespace cannot be reached from
+> > > > > the source pid namespace because it couldn't find the pid inside of the
+> > > > > target pid namespace and thus falsely report to the user that the two pid
+> > > > > namespaces are not related. This problem is simple to avoid. In the new
+> > > > > version we simply walk the list of ancestors and check whether the
+> > > > > namespace are related to each other. By doing it this way we can reliably
+> > > > > report what the relationship between two pid namespace file descriptors
+> > > > > looks like.
+> > > > > 
+> > > > > 1. pidctl(PIDCMD_QUERY_PIDNS, 0, ns_fd1, ns_fd1, 0) == 0
+> > > > >    - pidns_of(ns_fd1) and pidns_of(ns_fd2) are unrelated to each other
+> > > > > 
+> > > > > 2. pidctl(PIDCMD_QUERY_PIDNS, 0, ns_fd1, ns_fd2, 0) == 1
+> > > > >    - pidns_of(ns_fd1) == pidns_of(ns_fd2)
+> > > > > 
+> > > > > 3. pidctl(PIDCMD_QUERY_PIDNS, 0, ns_fd1, ns_fd2, 0) == 2
+> > > > >    - pidns_of(ns_fd1) is ancestor of pidns_of(ns_fd2)
+> > > > > 
+> > > > > 4. pidctl(PIDCMD_QUERY_PIDNS, 0, ns_fd1, ns_fd2, 0) == 3
+> > > > >    - pidns_of(ns_fd2) is ancestor of pidns_of(ns_fd1)
+> > > > 
+> > > > Why not call this PIDCMD_COMPARE_PIDNS, since a comparison is what you're doing.
+> > > 
+> > > Same.
+> > 
+> > Ok, glad we agree on it.
+> > 
+> > > > 
+> > > > Again QUERY is ambigious here. Above you called QUERY to translate something,
+> > > > now you're calling QUERY to mean compare something. I suggest to be explicit
+> > > > about the operation PIDCMD_<OPERATION>_<OPERAND-TYPE>.
+> > > > 
+> > > > Arguably, 2 syscalls for this is cleaner:
+> > > > pid_compare_namespaces(ns_fd1, ns_fd2);
+> > > > pid_translate(pid, ns_fd1, nds_fd2);
+> > > 
+> > > I don't think we want to send out pid_compare_namespaces() as a separate
+> > > syscall. If that's the consensus I'd rather just drop this functionality
+> > > completely.
+> > 
+> > I mean, if pid-namespace fd comparison functionality is not needed in
+> > userspace, why add it all. I suggest to drop it if not needed and can be
+> > considered for addition later when needed.
+> > 
+> > Then you're just left with GET_PID and TRANSLATE_PID which we know we do need.
+> > 
+> > > > > These two commands - PIDCMD_QUERY_PID and PIDCMD_QUERY_PIDNS - cover and
+> > > > > improve the functionality expressed implicitly in translate_pid() before.
+> > > > > 
+> > > > > /* PIDCMD_GET_PIDFD */
+> > > > 
+> > > > And this can be a third syscall:
+> > > > pidfd_translate(pid, ns_fd1, ns_fd2).
+> > > 
+> > > Sigh, yes. But I honestly want other people other than us to come out
+> > > and say "yes, please send a PR to Linus with three separate syscalls for
+> > > very closely related functionality". There's a difference between "this
+> > > is how we would ideally like to do it" and "this is what is common
+> > > practice and will likely get accepted". But I'm really not opposed to it
+> > > per se.
+> > 
+> > Ok.
+> > 
+> > > > I am actually supportive of Daniel's view that by combining too many
+> > > > arguments into a single syscall, becomes confusing and sometimes some
+> > > > arguments have to be forced to 0 in the single shoe-horned syscall. Like you
+> > > 
+> > > There's a difference between an ioctl() and say seccomp() which this is
+> > > close to:
+> > > int seccomp(unsigned int operation, unsigned int flags, void *args);
+> > > The point is that the functionality is closely related not just randomly
+> > > unrelated stuff. But as I said I'm more than willing to compromise.
+> > 
+> > Sounds great, yeah whatever makes sense.
+> 
+> One option is to do the following which removes the cmd argument all
+> together in favor of a flag GET_PIDFD:
+> 
+> +SYSCALL_DEFINE4(pidfd_translate, pid_t, pid, int, source, int, target,
+> +               unsigned int, flags)
+> +{
 
-Hi Scott,
+Yes that's also fine. But would it not be better to just add the flags as an
+extra parameter to translate_pid syscall, telling it what to translate to
+(pidfd or pid)?
 
->
-> On Mon, 2019-03-25 at 17:53 -0500, Scott Wood wrote:
-> > On Mon, 2019-03-25 at 11:07 +0800, Wu Hao wrote:
-> > > In early partial reconfiguration private feature, it only
-> > > supports 32bit data width when writing data to hardware for
-> > > PR. 512bit data width PR support is an important optimization
-> > > for some specific solutions (e.g. XEON with FPGA integrated),
-> > > it allows driver to use AVX512 instruction to improve the
-> > > performance of partial reconfiguration. e.g. programming one
-> > > 100MB bitstream image via this 512bit data width PR hardware
-> > > only takes ~300ms, but 32bit revision requires ~3s per test
-> > > result.
-> > >
-> > > Please note now this optimization is only done on revision 2
-> > > of this PR private feature which is only used in integrated
-> > > solution that AVX512 is always supported.
-> > >
-> > > Signed-off-by: Ananda Ravuri <ananda.ravuri@intel.com>
-> > > Signed-off-by: Xu Yilun <yilun.xu@intel.com>
-> > > Signed-off-by: Wu Hao <hao.wu@intel.com>
-> > > ---
-> > >  drivers/fpga/dfl-fme-main.c |  3 ++
-> > >  drivers/fpga/dfl-fme-mgr.c  | 75 +++++++++++++++++++++++++++++++++++++-
-> > > --
-> > > -----
-> > >  drivers/fpga/dfl-fme-pr.c   | 45 ++++++++++++++++-----------
-> > >  drivers/fpga/dfl-fme.h      |  2 ++
-> > >  drivers/fpga/dfl.h          |  5 +++
-> > >  5 files changed, 99 insertions(+), 31 deletions(-)
-> > >
-> > > diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-main.c
-> > > index 086ad24..076d74f 100644
-> > > --- a/drivers/fpga/dfl-fme-main.c
-> > > +++ b/drivers/fpga/dfl-fme-main.c
-> > > @@ -21,6 +21,8 @@
-> > >  #include "dfl.h"
-> > >  #include "dfl-fme.h"
-> > >
-> > > +#define DRV_VERSION        "0.8"
-> >
-> > What is this going to be used for?  Under what circumstances will the
-> > driver version be bumped?  What does it have to do with 512-bit writes?
-> >
-> > > +#if defined(CONFIG_X86) && defined(CONFIG_AS_AVX512)
-> > > +
-> > > +#include <asm/fpu/api.h>
-> > > +
-> > > +static inline void copy512(void *src, void __iomem *dst)
-> > > +{
-> > > +   kernel_fpu_begin();
-> > > +
-> > > +   asm volatile("vmovdqu64 (%0), %%zmm0;"
-> > > +                "vmovntdq %%zmm0, (%1);"
-> > > +                :
-> > > +                : "r"(src), "r"(dst));
-> > > +
-> > > +   kernel_fpu_end();
-> > > +}
-> >
-> > Shouldn't there be some sort of check that AVX512 is actually supported
-> > on the running system?
-> >
-> > Also, src should be const, and the asm statement should have a memory
-> > clobber.
-> >
-> > > +#else
-> > > +static inline void copy512(void *src, void __iomem *dst)
-> > > +{
-> > > +   WARN_ON_ONCE(1);
-> > > +}
-> > > +#endif
-> >
-> > Likewise, this will be called if a revision 2 device is used on non-x86
-> > (or on x86 with an old binutils).  The driver should fall back to 32-bit
-> > in such cases.
->
-> Sorry, I missed the comment about revision 2 only being on integrated
-> devices -- but will that always be the case?  Seems worthwhile to check for
-> AVX512 support anyway.  And there's still the possibility of being built
-> with an old binutils such that CONFIG_AS_AVX512 is not set, or running on a
-> kernel where avx512 was disabled via a boot option.
+thanks,
 
-The code checks for CONFIG_AS_AVX512 above.
+ - Joel
 
-What boot option are you referring to?
 
-Alan
 
->
-> What about future revisions >= 2?  Currently the driver will treat them as
-> if they were revision < 2.  Is that intended?
->
-> -Scott
->
->
+> +       struct pid_namespace *source_ns, *target_ns;
+> +       struct pid *struct_pid;
+> +       pid_t result;
+> +
+> +       if (flags & ~GET_PIDFD)
+> +               return -EINVAL;
+> +
+> +       source_ns = get_pid_ns_by_fd(source);
+> +       if (IS_ERR(source_ns))
+> +               return PTR_ERR(source_ns);
+> +
+> +       target_ns = get_pid_ns_by_fd(target);
+> +       if (IS_ERR(target_ns)) {
+> +               put_pid_ns(source_ns);
+> +               return PTR_ERR(target_ns);
+> +       }
+> +
+> +       rcu_read_lock();
+> +       struct_pid = get_pid(find_pid_ns(pid, source_ns));
+> +       rcu_read_unlock();
+> +
+> +       if (struct_pid)
+> +               result = pid_nr_ns(struct_pid, target_ns);
+> +       else
+> +               result = -ESRCH;
+> +
+> +       if ((flags & GET_PIDFD) && (result > 0))
+> +               result = pidfd_create_fd(struct_pid, O_CLOEXEC);
+> +
+> +       if (!result)
+> +               result = -ENOENT;
+> +
+> +       put_pid(struct_pid);
+> +       put_pid_ns(target_ns);
+> +       put_pid_ns(source_ns);
+> +
+> +       return result;
+> +}
