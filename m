@@ -1,8 +1,7 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V31 07/25] kexec_file: Restrict at runtime if the kernel is
- locked down
-Date: Tue, 26 Mar 2019 11:27:23 -0700
-Message-ID: <20190326182742.16950-8-matthewgarrett@google.com>
+Subject: [PATCH V31 09/25] uswsusp: Disable when the kernel is locked down
+Date: Tue, 26 Mar 2019 11:27:25 -0700
+Message-ID: <20190326182742.16950-10-matthewgarrett@google.com>
 References: <20190326182742.16950-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -10,45 +9,37 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190326182742.16950-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-api@vger.kernel.org, luto@kernel.org, Jiri Bohac <jbohac@suse.cz>, Matthew Garrett <mjg59@google.com>, kexec@lists.infradead.org
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-api@vger.kernel.org, luto@kernel.org, Matthew Garrett <mjg59@srcf.ucam.org>, Matthew Garrett <mjg59@google.com>, linux-pm@vger.kernel.org, pavel@ucw.cz, rjw@rjwysocki.net
 List-Id: linux-api@vger.kernel.org
 
-From: Jiri Bohac <jbohac@suse.cz>
+From: Matthew Garrett <mjg59@srcf.ucam.org>
 
-When KEXEC_SIG is not enabled, kernel should not load images through
-kexec_file systemcall if the kernel is locked down.
+uswsusp allows a user process to dump and then restore kernel state, which
+makes it possible to modify the running kernel.  Disable this if the kernel
+is locked down.
 
-[Modified by David Howells to fit with modifications to the previous patch
- and to return -EPERM if the kernel is locked down for consistency with
- other lockdowns. Modified by Matthew Garrett to remove the IMA
- integration, which will be replaced by integrating with the IMA
- architecture policy patches.]
-
-Signed-off-by: Jiri Bohac <jbohac@suse.cz>
 Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Matthew Garrett <mjg59@google.com>
-Reviewed-by: Jiri Bohac <jbohac@suse.cz>
-cc: kexec@lists.infradead.org
+cc: linux-pm@vger.kernel.org
+Cc: pavel@ucw.cz
+Cc: rjw@rjwysocki.net
 ---
- kernel/kexec_file.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+ kernel/power/user.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/kernel/kexec_file.c b/kernel/kexec_file.c
-index 67f3a866eabe..a1cc37c8b43b 100644
---- a/kernel/kexec_file.c
-+++ b/kernel/kexec_file.c
-@@ -239,6 +239,12 @@ kimage_file_prepare_segments(struct kimage *image, int kernel_fd, int initrd_fd,
- 		}
+diff --git a/kernel/power/user.c b/kernel/power/user.c
+index 2d8b60a3c86b..99e13fd13237 100644
+--- a/kernel/power/user.c
++++ b/kernel/power/user.c
+@@ -52,6 +52,9 @@ static int snapshot_open(struct inode *inode, struct file *filp)
+ 	if (!hibernation_available())
+ 		return -EPERM;
  
- 		ret = 0;
++	if (kernel_is_locked_down("/dev/snapshot", LOCKDOWN_INTEGRITY))
++		return -EPERM;
 +
-+		if (kernel_is_locked_down(reason, LOCKDOWN_INTEGRITY)) {
-+			ret = -EPERM;
-+			goto out;
-+		}
-+
- 		break;
+ 	lock_system_sleep();
  
- 		/* All other errors are fatal, including nomem, unparseable
+ 	if (!atomic_add_unless(&snapshot_device_available, -1, 0)) {
 -- 
 2.21.0.392.gf8f6787159e-goog
