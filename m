@@ -1,47 +1,41 @@
-From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V31 08/25] hibernate: Disable when the kernel is locked down
-Date: Tue, 26 Mar 2019 11:27:24 -0700
-Message-ID: <20190326182742.16950-9-matthewgarrett@google.com>
-References: <20190326182742.16950-1-matthewgarrett@google.com>
+From: Joel Fernandes <joel@joelfernandes.org>
+Subject: Re: [PATCH v1 2/4] pid: add pidctl()
+Date: Tue, 26 Mar 2019 14:47:47 -0400
+Message-ID: <20190326184747.GB114492@google.com>
+References: <20190326155513.26964-1-christian@brauner.io>
+ <20190326155513.26964-3-christian@brauner.io>
+ <20190326170601.GA101741@google.com>
+ <20190326172231.daa5a53lxf6nz6jn@brauner.io>
+ <20190326181012.GA138478@google.com>
+ <20190326181929.eypk2hzprdltcrqd@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190326182742.16950-1-matthewgarrett@google.com>
+Content-Disposition: inline
+In-Reply-To: <20190326181929.eypk2hzprdltcrqd@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-api@vger.kernel.org, luto@kernel.org, Josh Boyer <jwboyer@fedoraproject.org>, Matthew Garrett <mjg59@google.com>, rjw@rjwysocki.net, pavel@ucw.cz, linux-pm@vger.kernel.org
+To: Christian Brauner <christian@brauner.io>
+Cc: jannh@google.com, khlebnikov@yandex-team.ru, luto@kernel.org, dhowells@redhat.com, serge@hallyn.com, ebiederm@xmission.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, arnd@arndb.de, keescook@chromium.org, adobriyan@gmail.com, tglx@linutronix.de, mtk.manpages@gmail.com, bl0pbl33p@gmail.com, ldv@altlinux.org, akpm@linux-foundation.org, oleg@redhat.com, nagarathnam.muthusamy@oracle.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, dancol@google.com
 List-Id: linux-api@vger.kernel.org
 
-From: Josh Boyer <jwboyer@fedoraproject.org>
+On Tue, Mar 26, 2019 at 07:19:30PM +0100, Christian Brauner wrote:
+[snip]
+> > > > I am actually supportive of Daniel's view that by combining too many
+> > > > arguments into a single syscall, becomes confusing and sometimes some
+> > > > arguments have to be forced to 0 in the single shoe-horned syscall. Like you
+> > > 
+> > > There's a difference between an ioctl() and say seccomp() which this is
+> > > close to:
+> > > int seccomp(unsigned int operation, unsigned int flags, void *args);
+> > > The point is that the functionality is closely related not just randomly
+> > > unrelated stuff. But as I said I'm more than willing to compromise.
+> > 
+> > Sounds great, yeah whatever makes sense.
+> 
+> In case I haven't said this enough: I really appreciate the discussion
+> and in general the help on this. That probably sometimes gets lost in
+> mails sometimes. :)
 
-There is currently no way to verify the resume image when returning
-from hibernate.  This might compromise the signed modules trust model,
-so until we can work with signed hibernate images we disable it when the
-kernel is locked down.
+I appreciate you saying that and thanks for the work on this :)
 
-Signed-off-by: Josh Boyer <jwboyer@fedoraproject.org>
-Signed-off-by: David Howells <dhowells@redhat.com>
-Signed-off-by: Matthew Garrett <mjg59@google.com>
-Cc: rjw@rjwysocki.net
-Cc: pavel@ucw.cz
-cc: linux-pm@vger.kernel.org
----
- kernel/power/hibernate.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
-
-diff --git a/kernel/power/hibernate.c b/kernel/power/hibernate.c
-index abef759de7c8..928b198cfa26 100644
---- a/kernel/power/hibernate.c
-+++ b/kernel/power/hibernate.c
-@@ -70,7 +70,8 @@ static const struct platform_hibernation_ops *hibernation_ops;
- 
- bool hibernation_available(void)
- {
--	return (nohibernate == 0);
-+	return nohibernate == 0 && !kernel_is_locked_down("Hibernation",
-+							  LOCKDOWN_INTEGRITY);
- }
- 
- /**
--- 
-2.21.0.392.gf8f6787159e-goog
+ - Joel
