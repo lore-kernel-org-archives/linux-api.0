@@ -1,30 +1,37 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH V31 11/25] x86: Lock down IO port access when the kernel
- is locked down
-Date: Tue, 26 Mar 2019 13:56:49 -0700
-Message-ID: <CALCETrVjhHbJ+41fY9ra7YBm42ingOZ0_XjY=xAxLUU8n0U=9Q@mail.gmail.com>
-References: <20190326182742.16950-1-matthewgarrett@google.com> <20190326182742.16950-12-matthewgarrett@google.com>
+From: Alex Williamson <alex.williamson@redhat.com>
+Subject: Re: [PATCH V31 10/25] PCI: Lock down BAR access when the kernel is
+ locked down
+Date: Tue, 26 Mar 2019 15:19:03 -0600
+Message-ID: <20190326151903.257724d5@x1.home>
+References: <20190326182742.16950-1-matthewgarrett@google.com>
+        <20190326182742.16950-11-matthewgarrett@google.com>
+        <CALCETrW43Syz-deM-fGUCbWfA8tcsoCJJ5XqjFhpg+d0sNYDRA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190326182742.16950-12-matthewgarrett@google.com>
+In-Reply-To: <CALCETrW43Syz-deM-fGUCbWfA8tcsoCJJ5XqjFhpg+d0sNYDRA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Matthew Garrett <matthewgarrett@google.com>
-Cc: James Morris <jmorris@namei.org>, LSM List <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>, Andrew Lutomirski <luto@kernel.org>, Matthew Garrett <mjg59@srcf.ucam.org>, Matthew Garrett <mjg59@google.com>, X86 ML <x86@kernel.org>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Matthew Garrett <matthewgarrett@google.com>, James Morris <jmorris@namei.org>, LSM List <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>, Matthew Garrett <mjg59@srcf.ucam.org>, Matthew Garrett <mjg59@google.com>, Bjorn Helgaas <bhelgaas@google.com>, linux-pci@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 26, 2019 at 11:28 AM Matthew Garrett
-<matthewgarrett@google.com> wrote:
->
-> From: Matthew Garrett <mjg59@srcf.ucam.org>
->
-> IO port access would permit users to gain access to PCI configuration
-> registers, which in turn (on a lot of hardware) give access to MMIO
-> register space. This would potentially permit root to trigger arbitrary
-> DMA, so lock it down by default.
->
-> This also implicitly locks down the KDADDIO, KDDELIO, KDENABIO and
-> KDDISABIO console ioctls.
->
+On Tue, 26 Mar 2019 13:55:39 -0700
+Andy Lutomirski <luto@kernel.org> wrote:
 
-Reviewed-by: Andy Lutomirski <luto@kernel.org>
+> On Tue, Mar 26, 2019 at 11:28 AM Matthew Garrett
+> <matthewgarrett@google.com> wrote:
+> >
+> > From: Matthew Garrett <mjg59@srcf.ucam.org>
+> >
+> > Any hardware that can potentially generate DMA has to be locked down in
+> > order to avoid it being possible for an attacker to modify kernel code,
+> > allowing them to circumvent disabled module loading or module signing.
+> > Default to paranoid - in future we can potentially relax this for
+> > sufficiently IOMMU-isolated devices.  
+> 
+> Does this break vfio?
+
+No, vfio provides its own interface to pci config space.  Thanks,
+
+Alex
