@@ -1,146 +1,249 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH 2/4] pid: add pidfd_open()
-Date: Wed, 27 Mar 2019 22:34:05 +0100
-Message-ID: <20190327213404.pv4wqtkjbufkx36u@brauner.io>
-References: <20190327162147.23198-1-christian@brauner.io>
- <20190327162147.23198-3-christian@brauner.io>
- <CAGLj2rG8xMMt8-+r-pauA_qi4aun2y_kBZMCZGkXWQsKJrb-Ww@mail.gmail.com>
+From: Ondrej Mosnacek <omosnace@redhat.com>
+Subject: Re: [PATCH ghak90 V5 08/10] audit: add containerid filtering
+Date: Wed, 27 Mar 2019 22:41:24 +0100
+Message-ID: <CAFqZXNu7d28D=2G0jjAmrYAyKzYgkeGGLwRB1ekvteUbA9G_tw@mail.gmail.com>
+References: <cover.1552665316.git.rgb@redhat.com> <3f02f7b56d2fba2918ff6fe90fcfa3ae558faff8.1552665316.git.rgb@redhat.com>
+ <CAFqZXNt0O8b54isxuXv1fbtv+UKRw0Lnyut2n0FGFEMme-SdkQ@mail.gmail.com> <20190318234716.4moownrpylloiu3g@madcap2.tricolour.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAGLj2rG8xMMt8-+r-pauA_qi4aun2y_kBZMCZGkXWQsKJrb-Ww@mail.gmail.com>
+In-Reply-To: <20190318234716.4moownrpylloiu3g@madcap2.tricolour.ca>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jonathan Kowalski <bl0pbl33p@gmail.com>
-Cc: Jann Horn <jannh@google.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>
+To: Richard Guy Briggs <rgb@redhat.com>
+Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, Paul Moore <paul@paul-moore.com>, Steve Grubb <sgrubb@redhat.com>, David Howells <dhowells@redhat.com>, Simo Sorce <simo@redhat.com>, Eric Paris <eparis@parisplace.org>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W . Biederman" <ebiederm@xmission.com>, nhorman@tuxdriver.com
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 27, 2019 at 07:38:13PM +0000, Jonathan Kowalski wrote:
-> Christian,
-> 
-> Giving this some thought, it looks fine to me, but I am not convinced
-> this should take a pid argument. I much prefer if obtaining a pidfd
+On Tue, Mar 19, 2019 at 12:47 AM Richard Guy Briggs <rgb@redhat.com> wrote:
+> On 2019-03-18 21:02, Ondrej Mosnacek wrote:
+> > On Fri, Mar 15, 2019 at 7:35 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> > >
+> > > Implement audit container identifier filtering using the AUDIT_CONTID
+> > > field name to send an 8-character string representing a u64 since the
+> > > value field is only u32.
+> > >
+> > > Sending it as two u32 was considered, but gathering and comparing two
+> > > fields was more complex.
+> > >
+> > > The feature indicator is AUDIT_FEATURE_BITMAP_CONTAINERID.
+> > >
+> > > See: https://github.com/linux-audit/audit-kernel/issues/91
+> > > See: https://github.com/linux-audit/audit-userspace/issues/40
+> > > See: https://github.com/linux-audit/audit-testsuite/issues/64
+> > > See: https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container-ID
+> > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> > > Acked-by: Serge Hallyn <serge@hallyn.com>
+> > > ---
+> > >  include/linux/audit.h      |  1 +
+> > >  include/uapi/linux/audit.h |  5 ++++-
+> > >  kernel/audit.h             |  1 +
+> > >  kernel/auditfilter.c       | 47 ++++++++++++++++++++++++++++++++++++++++++++++
+> > >  kernel/auditsc.c           |  3 +++
+> > >  5 files changed, 56 insertions(+), 1 deletion(-)
+> > >
+> > > diff --git a/include/linux/audit.h b/include/linux/audit.h
+> > > index 6db5aba7cc01..fa19fa408931 100644
+> > > --- a/include/linux/audit.h
+> > > +++ b/include/linux/audit.h
+> > > @@ -77,6 +77,7 @@ struct audit_field {
+> > >         u32                             type;
+> > >         union {
+> > >                 u32                     val;
+> > > +               u64                     val64;
+> > >                 kuid_t                  uid;
+> > >                 kgid_t                  gid;
+> > >                 struct {
+> > > diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
+> > > index a6383e28b2c8..741ab6f38294 100644
+> > > --- a/include/uapi/linux/audit.h
+> > > +++ b/include/uapi/linux/audit.h
+> > > @@ -265,6 +265,7 @@
+> > >  #define AUDIT_LOGINUID_SET     24
+> > >  #define AUDIT_SESSIONID        25      /* Session ID */
+> > >  #define AUDIT_FSTYPE   26      /* FileSystem Type */
+> > > +#define AUDIT_CONTID   27      /* Container ID */
+> > >
+> > >                                 /* These are ONLY useful when checking
+> > >                                  * at syscall exit time (AUDIT_AT_EXIT). */
+> > > @@ -345,6 +346,7 @@ enum {
+> > >  #define AUDIT_FEATURE_BITMAP_SESSIONID_FILTER  0x00000010
+> > >  #define AUDIT_FEATURE_BITMAP_LOST_RESET                0x00000020
+> > >  #define AUDIT_FEATURE_BITMAP_FILTER_FS         0x00000040
+> > > +#define AUDIT_FEATURE_BITMAP_CONTAINERID       0x00000080
+> > >
+> > >  #define AUDIT_FEATURE_BITMAP_ALL (AUDIT_FEATURE_BITMAP_BACKLOG_LIMIT | \
+> > >                                   AUDIT_FEATURE_BITMAP_BACKLOG_WAIT_TIME | \
+> > > @@ -352,7 +354,8 @@ enum {
+> > >                                   AUDIT_FEATURE_BITMAP_EXCLUDE_EXTEND | \
+> > >                                   AUDIT_FEATURE_BITMAP_SESSIONID_FILTER | \
+> > >                                   AUDIT_FEATURE_BITMAP_LOST_RESET | \
+> > > -                                 AUDIT_FEATURE_BITMAP_FILTER_FS)
+> > > +                                 AUDIT_FEATURE_BITMAP_FILTER_FS | \
+> > > +                                 AUDIT_FEATURE_BITMAP_CONTAINERID)
+> > >
+> > >  /* deprecated: AUDIT_VERSION_* */
+> > >  #define AUDIT_VERSION_LATEST           AUDIT_FEATURE_BITMAP_ALL
+> > > diff --git a/kernel/audit.h b/kernel/audit.h
+> > > index 2a1a8b8a8019..3a40b608bf8d 100644
+> > > --- a/kernel/audit.h
+> > > +++ b/kernel/audit.h
+> > > @@ -230,6 +230,7 @@ static inline int audit_hash_ino(u32 ino)
+> > >
+> > >  extern int audit_match_class(int class, unsigned syscall);
+> > >  extern int audit_comparator(const u32 left, const u32 op, const u32 right);
+> > > +extern int audit_comparator64(const u64 left, const u32 op, const u64 right);
+> > >  extern int audit_uid_comparator(kuid_t left, u32 op, kuid_t right);
+> > >  extern int audit_gid_comparator(kgid_t left, u32 op, kgid_t right);
+> > >  extern int parent_len(const char *path);
+> > > diff --git a/kernel/auditfilter.c b/kernel/auditfilter.c
+> > > index add360b46b38..516b8e58959e 100644
+> > > --- a/kernel/auditfilter.c
+> > > +++ b/kernel/auditfilter.c
+> > > @@ -410,6 +410,7 @@ static int audit_field_valid(struct audit_entry *entry, struct audit_field *f)
+> > >         /* FALL THROUGH */
+> > >         case AUDIT_ARCH:
+> > >         case AUDIT_FSTYPE:
+> > > +       case AUDIT_CONTID:
+> > >                 if (f->op != Audit_not_equal && f->op != Audit_equal)
+> > >                         return -EINVAL;
+> > >                 break;
+> > > @@ -582,6 +583,14 @@ static struct audit_entry *audit_data_to_entry(struct audit_rule_data *data,
+> > >                         }
+> > >                         entry->rule.exe = audit_mark;
+> > >                         break;
+> > > +               case AUDIT_CONTID:
+> > > +                       if (f->val != sizeof(u64))
+> > > +                               goto exit_free;
+> > > +                       str = audit_unpack_string(&bufp, &remain, f->val);
+> > > +                       if (IS_ERR(str))
+> > > +                               goto exit_free;
+> > > +                       f->val64 = ((u64 *)str)[0];
+> > > +                       break;
+> > >                 }
+> > >         }
+> > >
+> > > @@ -664,6 +673,11 @@ static struct audit_rule_data *audit_krule_to_data(struct audit_krule *krule)
+> > >                         data->buflen += data->values[i] =
+> > >                                 audit_pack_string(&bufp, audit_mark_path(krule->exe));
+> > >                         break;
+> > > +               case AUDIT_CONTID:
+> > > +                       data->buflen += data->values[i] = sizeof(u64);
+> > > +                       for (i = 0; i < sizeof(u64); i++)
+> > > +                               ((char *)bufp)[i] = ((char *)&f->val64)[i];
+> >
+> > How about just:
+> >
+> > memcpy(bufp, &f->val64, sizeof(u64));
+> >
+> > instead of the awkward for loop? It is simpler and also more in line
+> > with the code in audit_pack_string().
+>
+> I'll grant you that.  I'll use that instead.
 
-The signatures for pidfd_open() you're suggesting are conflicting. Even
-taking into account that you're referring to Andy's version:
+Assuming the above tweak will be done, you can add:
 
-int procfd = pidfd_open(procrootfd, pidfd, PIDFD_TO_PROCFD); //name
+Reviewed-by: Ondrej Mosnacek <omosnace@redhat.com>
 
-the "not convinced this should take a pid argument" confuses me wrt to
-the proposed second signature:
+>
+> > Also, doesn't this loop interfere with the outer loop that also uses
+> > 'i' as the control variable?
+>
+> Yes, it does.  Thank you for catching that.  Doing a auditctl -l reveals
+> this.
+>
+> > > +                       break;
+> > >                 case AUDIT_LOGINUID_SET:
+> > >                         if (krule->pflags & AUDIT_LOGINUID_LEGACY && !f->val) {
+> > >                                 data->fields[i] = AUDIT_LOGINUID;
+> > > @@ -750,6 +764,10 @@ static int audit_compare_rule(struct audit_krule *a, struct audit_krule *b)
+> > >                         if (!gid_eq(a->fields[i].gid, b->fields[i].gid))
+> > >                                 return 1;
+> > >                         break;
+> > > +               case AUDIT_CONTID:
+> > > +                       if (a->fields[i].val64 != b->fields[i].val64)
+> > > +                               return 1;
+> > > +                       break;
+> > >                 default:
+> > >                         if (a->fields[i].val != b->fields[i].val)
+> > >                                 return 1;
+> > > @@ -1206,6 +1224,31 @@ int audit_comparator(u32 left, u32 op, u32 right)
+> > >         }
+> > >  }
+> > >
+> > > +int audit_comparator64(u64 left, u32 op, u64 right)
+> > > +{
+> > > +       switch (op) {
+> > > +       case Audit_equal:
+> > > +               return (left == right);
+> > > +       case Audit_not_equal:
+> > > +               return (left != right);
+> > > +       case Audit_lt:
+> > > +               return (left < right);
+> > > +       case Audit_le:
+> > > +               return (left <= right);
+> > > +       case Audit_gt:
+> > > +               return (left > right);
+> > > +       case Audit_ge:
+> > > +               return (left >= right);
+> > > +       case Audit_bitmask:
+> > > +               return (left & right);
+> > > +       case Audit_bittest:
+> > > +               return ((left & right) == right);
+> > > +       default:
+> > > +               BUG();
+> > > +               return 0;
+> > > +       }
+> > > +}
+> > > +
+> > >  int audit_uid_comparator(kuid_t left, u32 op, kuid_t right)
+> > >  {
+> > >         switch (op) {
+> > > @@ -1344,6 +1387,10 @@ int audit_filter(int msgtype, unsigned int listtype)
+> > >                                 result = audit_comparator(audit_loginuid_set(current),
+> > >                                                           f->op, f->val);
+> > >                                 break;
+> > > +                       case AUDIT_CONTID:
+> > > +                               result = audit_comparator64(audit_get_contid(current),
+> > > +                                                             f->op, f->val64);
+> > > +                               break;
+> > >                         case AUDIT_MSGTYPE:
+> > >                                 result = audit_comparator(msgtype, f->op, f->val);
+> > >                                 break;
+> > > diff --git a/kernel/auditsc.c b/kernel/auditsc.c
+> > > index aa5d13b4fbbb..2d74238e9638 100644
+> > > --- a/kernel/auditsc.c
+> > > +++ b/kernel/auditsc.c
+> > > @@ -616,6 +616,9 @@ static int audit_filter_rules(struct task_struct *tsk,
+> > >                 case AUDIT_LOGINUID_SET:
+> > >                         result = audit_comparator(audit_loginuid_set(tsk), f->op, f->val);
+> > >                         break;
+> > > +               case AUDIT_CONTID:
+> > > +                       result = audit_comparator64(audit_get_contid(tsk), f->op, f->val64);
+> > > +                       break;
+> > >                 case AUDIT_SUBJ_USER:
+> > >                 case AUDIT_SUBJ_ROLE:
+> > >                 case AUDIT_SUBJ_TYPE:
+> > > --
+> > > 1.8.3.1
+> > >
+> >
+> >
+> > --
+> > Ondrej Mosnacek <omosnace at redhat dot com>
+> > Associate Software Engineer, Security Technologies
+> > Red Hat, Inc.
+>
+> - RGB
+>
+> --
+> Richard Guy Briggs <rgb@redhat.com>
+> Sr. S/W Engineer, Kernel Security, Base Operating Systems
+> Remote, Ottawa, Red Hat Canada
+> IRC: rgb, SunRaycer
+> Voice: +1.647.777.2635, Internal: (81) 32635
 
-pidfd_open(pid_t pid, int ns, unsigned int flags);
 
-> goes in the translation stuff, that has very real usecases, and you
-> would end up duplicating the same thing over in two places.
-> 
-> If the /proc/<PID> dir fd of a pidfd is relative to its procrootfd, a
-> pid's pidfd is also relative to its namespace. Currently, you change
 
-Pass a /proc/<pid> file descriptor that you have been given access to to
-pidfd_open() and retrieve a pidfd to that process.
-
-> things which would mean I now have to setns and spawn a child that
-> passes me back the pidfd for a pid in the said namespace.
-
-There are two scenarios:
-- you're in a cousin pid namespace
-- you're in an ancestor pid namespace
-
-If you're in an ancestor pid namespace you can just get a pidfd based on
-the pid of the process in your namespace. If you're in a cousin
-pid namespace it seems reasonable that you have to do a setns to get a
-pidfd. After all, you're not able to see any pids in there by default.
-If you want pidfd to a cousin pid namespace prove that you can access it
-by attaching to the owning user namespace of the pid namespace and get
-your pidfd.
-
-> 
-> I prefer Andy's version of
-> 
->   int procrootfd = open("/proc", O_DIRECTORY | O_RDONLY);
->   int procfd = pidfd_open(procrootfd, pidfd, PIDFD_TO_PROCFD); //name
-> this procfd_open, maybe
-> 
-> This is just a nicer race free openat.
-> 
-> But, Joel and you agreed that it makes sense to split out the
-> translation stuff out of pidfds.
-
-I don't quite remember that part.
-
-I honestly think that the version proposed here covers for the most part
-what we want and provides a decent compromise by avoiding ioctl()s for
-the translation bits, allows us to not split this into multiple
-syscalls, and also allows retrieving pidfds from other pid namespaces
-provided that one has gotten access to a file descriptor for
-/proc/<pid>. If really needed at some point - I doubt we will - you
-can extend pidfd_open() to take the flag CLONE_NEWPID:
-
-int pidfd = pidfd_open(pid, pid_ns_fd, -1, CLONE_NEWPID);
-
-and get pidfd for another pid namespace back.
-
-Christian
-
-> 
-> My suggestion would be to extend ioctl_ns(2) then. It already provides
-> a (rather clumsy) mechanism to determine the relationship by comparing
-> st_dev and st_ino, which userspace can do itself for two namespace
-> descriptors. For translation, you can extend this namespace ioctl
-> (there is one to get a owner UID, you could add one to get a relative
-> PID).
-> 
-> Then, your pidfd call will be:
-> 
-> pidfd_open(pid_t pid, int ns, unsigned int flags);
-> 
-> You would also be able to compile out anything procfs related (include
-> the new API to procfs dir fd translation), otherwise, the way to open
-> pidfds is in this call, and without CONFIG_PROC_FS=Y, this is as good
-> as pidfd_open(pid_t pid) (of which a better version I propose above).
-> The new API should be its own thing, and the procfs translation tuple
-> its own thing, tied to the proc fs option. pidfds need not have any
-> relation to /proc.
-
-They don't have a relation to procfs right now in this syscall. Works
-fine without procfs. That's the point.
-
-> 
-> For this procfd conversion system call, I would also lift any
-> namespace related restrictions if you are planning to, given the
-> constraint that I can only open a pidfd from an ancestor namespace
-> with the new pidfd_open system call, or acquire it through a
-> cooperative userspace process by fd passing otherwise, and I need the
-> /proc root fd, having both only permits me to open the said process's
-> /proc/<PID> dir fd subject to normal access restrictions. This means
-> the simplified procfd_open can be used to do metadata access without
-> even talking of PIDs at all, your process could live in its own world
-> and, given it has the authority to open the /proc directory, be able
-> to purely collect metadata based on the two file descriptors it is
-> given.
-> 
-> Once you have the restriction in the same call that allows you to open
-> a pidfd for an addressable PID from the given namespace fd, you can
-> finally remove the restriction to signal across namespaces once the
-> siginfo stuff is sorted out, as that will only work when you
-> explicitly push the fd into a sandbox, the process cannot get it out
-> of thin air on its own (and you already mentioned it has nothing to do
-> with security). What I do worry about is one can use NS_GET_PARENT
-> ioctl to get the parent pidns if the owning userns is the same, and
-> just passing that gives me back a pidfd for the task. **So, you might
-> want to add the constraint that the PID is actually reachable by the
-> current task as well, apart from being reachable in the passed in
-> namespace.**
-> 
-> Lastly, I also see no need of /proc/<PID> dir fd to pidfd conversion,
-> I would even recommend getting rid of that, so we only have one type
-> of pidfd, the anon inode one. What is the usecase behind that? It
-> would only be needed if you did not have a way to be able to metadata
-> access through a pidfd, which would be the case only prior to this
-> patch.
-> 
-> I think this would simplify a lot of things, and ioctl_ns(2) is
-> probably already the place to do comparison operations and query
-> operations on hierarichal namespaces, just adding the relative PID bit
-> will make it gain feature parity with translate_pid.
+-- 
+Ondrej Mosnacek <omosnace at redhat dot com>
+Software Engineer, Security Technologies
+Red Hat, Inc.
