@@ -1,66 +1,106 @@
-From: Wu Hao <hao.wu@intel.com>
+From: Scott Wood <swood@redhat.com>
 Subject: Re: [PATCH 03/17] fpga: dfl: fme: support 512bit data width PR
-Date: Wed, 27 Mar 2019 14:03:34 +0800
-Message-ID: <20190327060334.GA13084@hao-dev>
+Date: Wed, 27 Mar 2019 01:19:29 -0500
+Message-ID: <fd78636fb37cfcb725b22bb6a5f7576fa61a00a7.camel@redhat.com>
 References: <1553483264-5379-1-git-send-email-hao.wu@intel.com>
- <1553483264-5379-4-git-send-email-hao.wu@intel.com>
- <127a9356a7bf597d35dd361f2b16bf80460f0370.camel@redhat.com>
- <655bf2991a4f8bf6a473c91218d6dba7748520aa.camel@redhat.com>
- <CANk1AXSBHAudsLfNkSK1OuE6R9bogo6jW9bYmmZdvweTt3eCiA@mail.gmail.com>
- <580c6c604d3915c105f076fc7f22ab5da98598fc.camel@redhat.com>
- <20190327043743.GA20968@hao-dev>
- <29827fcdcdd4fb46b680a6bd184b44fca638666e.camel@redhat.com>
+         <1553483264-5379-4-git-send-email-hao.wu@intel.com>
+         <127a9356a7bf597d35dd361f2b16bf80460f0370.camel@redhat.com>
+         <655bf2991a4f8bf6a473c91218d6dba7748520aa.camel@redhat.com>
+         <20190327051040.GB20968@hao-dev>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <29827fcdcdd4fb46b680a6bd184b44fca638666e.camel@redhat.com>
+In-Reply-To: <20190327051040.GB20968@hao-dev>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Scott Wood <swood@redhat.com>
-Cc: Alan Tull <atull@kernel.org>, Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Ananda Ravuri <ananda.ravuri@intel.com>, Xu Yilun <yilun.xu@intel.com>
+To: Wu Hao <hao.wu@intel.com>
+Cc: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Ananda Ravuri <ananda.ravuri@intel.com>, Xu Yilun <yilun.xu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 27, 2019 at 01:10:31AM -0500, Scott Wood wrote:
-> On Wed, 2019-03-27 at 12:37 +0800, Wu Hao wrote:
-> > On Tue, Mar 26, 2019 at 04:22:34PM -0500, Scott Wood wrote:
-> > > On Tue, 2019-03-26 at 14:33 -0500, Alan Tull wrote:
-> > > > On Mon, Mar 25, 2019 at 5:58 PM Scott Wood <swood@redhat.com> wrote:
-> > > > > > 
-> > > > Hi Scott,
+On Wed, 2019-03-27 at 13:10 +0800, Wu Hao wrote:
+> On Mon, Mar 25, 2019 at 05:58:36PM -0500, Scott Wood wrote:
+> > On Mon, 2019-03-25 at 17:53 -0500, Scott Wood wrote:
+> > > On Mon, 2019-03-25 at 11:07 +0800, Wu Hao wrote:
+> > > > In early partial reconfiguration private feature, it only
+> > > > supports 32bit data width when writing data to hardware for
+> > > > PR. 512bit data width PR support is an important optimization
+> > > > for some specific solutions (e.g. XEON with FPGA integrated),
+> > > > it allows driver to use AVX512 instruction to improve the
+> > > > performance of partial reconfiguration. e.g. programming one
+> > > > 100MB bitstream image via this 512bit data width PR hardware
+> > > > only takes ~300ms, but 32bit revision requires ~3s per test
+> > > > result.
 > > > > 
-> > > > > On Mon, 2019-03-25 at 17:53 -0500, Scott Wood wrote:
-> > > > > > On Mon, 2019-03-25 at 11:07 +0800, Wu Hao wrote:
-> > > > > > > +#else
-> > > > > > > +static inline void copy512(void *src, void __iomem *dst)
-> > > > > > > +{
-> > > > > > > +   WARN_ON_ONCE(1);
-> > > > > > > +}
-> > > > > > > +#endif
-> > > > > > 
-> Likewise, this will be called if a revision 2 device is used on non-
-> > > > > > x86
-> > > > > > (or on x86 with an old binutils).  The driver should fall back to
-> > > > > > 32-
-> > > > > > bit
-> > > > > > in such cases.
+> > > > Please note now this optimization is only done on revision 2
+> > > > of this PR private feature which is only used in integrated
+> > > > solution that AVX512 is always supported.
+> > > > 
+> > > > Signed-off-by: Ananda Ravuri <ananda.ravuri@intel.com>
+> > > > Signed-off-by: Xu Yilun <yilun.xu@intel.com>
+> > > > Signed-off-by: Wu Hao <hao.wu@intel.com>
+> > > > ---
+> > > >  drivers/fpga/dfl-fme-main.c |  3 ++
+> > > >  drivers/fpga/dfl-fme-mgr.c  | 75
+> > > > +++++++++++++++++++++++++++++++++++++-
+> > > > --
+> > > > -----
+> > > >  drivers/fpga/dfl-fme-pr.c   | 45 ++++++++++++++++-----------
+> > > >  drivers/fpga/dfl-fme.h      |  2 ++
+> > > >  drivers/fpga/dfl.h          |  5 +++
+> > > >  5 files changed, 99 insertions(+), 31 deletions(-)
+> > > > 
+> > > > diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-
+> > > > main.c
+> > > > index 086ad24..076d74f 100644
+> > > > --- a/drivers/fpga/dfl-fme-main.c
+> > > > +++ b/drivers/fpga/dfl-fme-main.c
+> > > > @@ -21,6 +21,8 @@
+> > > >  #include "dfl.h"
+> > > >  #include "dfl-fme.h"
+> > > >  
+> > > > +#define DRV_VERSION	"0.8"
+> > > 
+> > > What is this going to be used for?  Under what circumstances will the
+> > > driver version be bumped?  What does it have to do with 512-bit
+> > > writes?
+> 
+> This patchset adds more features to this driver, so i would like to add
+> a DRV_VERSION there as an initial one. In the future, if some new features
+> or extensions for existing features (e.g. new revision of a private
+> feature)
+> are added we need to bump this version.
+
+This doesn't seem like a good way of advertising API availability... Besides
+being awkward to query, what happens if a distro kernel has backported some
+features but not others that came before?  What does it advertise?
+
+I'd suggest some sort of feature flag mechanism that can be queried via
+ioctl (e.g. along the lines of KVM capabilities), if "try the API and fall
+back if it fails" is unsatisfactory.
+
+Plus, if it's about new APIs being exposed, this doesn't seem like the right
+patch for it to be in...
+
+> > Sorry, I missed the comment about revision 2 only being on integrated
+> > devices -- but will that always be the case?  Seems worthwhile to check
+> > for
+> > AVX512 support anyway.  And there's still the possibility of being built
+> > with an old binutils such that CONFIG_AS_AVX512 is not set, or running
+> > on a
+> > kernel where avx512 was disabled via a boot option.
 > > 
-> > Unfortunately revision 2 is only for integrated FPGA solution, and it
-> > doesn't
-> > support any fallback solution (original 32bit data partial reconfiguration
-> > is
-> > not supported any more), so driver has to WARN in such path.
+> > What about future revisions >= 2?  Currently the driver will treat them
+> > as
+> > if they were revision < 2.  Is that intended?
 > 
-> >From the commit message it seemed like this was just an optimization, not
-> something necessary to support revision 2.
-> 
-> If there's no way to program the device without AVX512, then printing an
-> error message and returning an error to userspace would be better than
-> WARN_ON, since it's not actually a kernel bug.
+> Yes, it's intended. Currently we don't have any hardware with revisions >
+> 2,
+> and support new revisions may need new code. :)  e.g. currently revision
+> is
+> used to tell 32bit vs 512bit PR, but in future revisions, it may have new
+> capability registers for this purpose.
 
-Fair enough. Will do. Thanks for the suggestion.
+The driver should refuse to bind to unrecognized revisions, if they're not
+expected to be compatible.
 
-Hao
-
-> 
-> -Scott
-> 
+-Scott
