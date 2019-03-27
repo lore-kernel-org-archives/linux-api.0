@@ -1,146 +1,135 @@
-From: Ondrej Mosnacek <omosnace@redhat.com>
-Subject: Re: [PATCH ghak90 V5 04/10] audit: log container info of syscalls
-Date: Wed, 27 Mar 2019 22:01:25 +0100
-Message-ID: <CAFqZXNvM+d_MKGVykLtcHkwwZhO_UOYACJQu-92tEOvkk7uMrQ@mail.gmail.com>
-References: <cover.1552665316.git.rgb@redhat.com> <85fcd0a81adef25cb60b2e479bbb380e76dbf999.1552665316.git.rgb@redhat.com>
+From: Christian Brauner <christian@brauner.io>
+Subject: Re: [PATCH 2/4] pid: add pidfd_open()
+Date: Wed, 27 Mar 2019 22:02:35 +0100
+Message-ID: <20190327210234.po2t3m3575tqdcac@brauner.io>
+References: <20190327162147.23198-1-christian@brauner.io>
+ <20190327162147.23198-3-christian@brauner.io>
+ <CAG48ez2QgRQKYeNDpacLGCOuNKVM1g=1PK3KzzO2Uoyn2cKXaQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <85fcd0a81adef25cb60b2e479bbb380e76dbf999.1552665316.git.rgb@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <CAG48ez2QgRQKYeNDpacLGCOuNKVM1g=1PK3KzzO2Uoyn2cKXaQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Guy Briggs <rgb@redhat.com>
-Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, Paul Moore <paul@paul-moore.com>, Steve Grubb <sgrubb@redhat.com>, David Howells <dhowells@redhat.com>, Simo Sorce <simo@redhat.com>, Eric Paris <eparis@parisplace.org>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W . Biederman" <ebiederm@xmission.com>, nhorman@tuxdriver.com
+To: Jann Horn <jannh@google.com>
+Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Jonathan Kowalski <bl0pbl33p@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.li>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 15, 2019 at 7:34 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> Create a new audit record AUDIT_CONTAINER_ID to document the audit
-> container identifier of a process if it is present.
->
-> Called from audit_log_exit(), syscalls are covered.
->
-> A sample raw event:
-> type=SYSCALL msg=audit(1519924845.499:257): arch=c000003e syscall=257 success=yes exit=3 a0=ffffff9c a1=56374e1cef30 a2=241 a3=1b6 items=2 ppid=606 pid=635 auid=0 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=pts0 ses=3 comm="bash" exe="/usr/bin/bash" subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 key="tmpcontainerid"
-> type=CWD msg=audit(1519924845.499:257): cwd="/root"
-> type=PATH msg=audit(1519924845.499:257): item=0 name="/tmp/" inode=13863 dev=00:27 mode=041777 ouid=0 ogid=0 rdev=00:00 obj=system_u:object_r:tmp_t:s0 nametype= PARENT cap_fp=0 cap_fi=0 cap_fe=0 cap_fver=0
-> type=PATH msg=audit(1519924845.499:257): item=1 name="/tmp/tmpcontainerid" inode=17729 dev=00:27 mode=0100644 ouid=0 ogid=0 rdev=00:00 obj=unconfined_u:object_r:user_tmp_t:s0 nametype=CREATE cap_fp=0 cap_fi=0 cap_fe=0 cap_fver=0
-> type=PROCTITLE msg=audit(1519924845.499:257): proctitle=62617368002D6300736C65657020313B206563686F2074657374203E202F746D702F746D70636F6E7461696E65726964
-> type=CONTAINER_ID msg=audit(1519924845.499:257): contid=123458
->
-> See: https://github.com/linux-audit/audit-kernel/issues/90
-> See: https://github.com/linux-audit/audit-userspace/issues/51
-> See: https://github.com/linux-audit/audit-testsuite/issues/64
-> See: https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container-ID
-> Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> Acked-by: Serge Hallyn <serge@hallyn.com>
-> Acked-by: Steve Grubb <sgrubb@redhat.com>
-> Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+On Wed, Mar 27, 2019 at 06:07:54PM +0100, Jann Horn wrote:
+> On Wed, Mar 27, 2019 at 5:22 PM Christian Brauner <christian@brauner.io> wrote:
+> > pidfd_open() allows to retrieve pidfds for processes and removes the
+> > dependency of pidfd on procfs. Multiple people have expressed a desire to
+> > do this even when pidfd_send_signal() was merged. It is even recorded in
+> [...]
+> > IF PROCFD_TO_PIDFD is passed as a flag together with a file descriptor to a
+> > /proc mount in a given pid namespace and a pidfd pidfd_open() will return a
+> > file descriptor to the corresponding /proc/<pid> directory in procfs
+> > mounts' pid namespace. pidfd_open() is very careful to verify that the pid
+> 
+> nit: s/mounts'/mount's/
 
-Barring one minor nit below,
+Thanks.
 
-Reviewed-by: Ondrej Mosnacek <omosnace@redhat.com>
+> 
+> > hasn't been recycled in between.
+> > IF PIDFD_TO_PROCFD is passed as a flag together with a file descriptor
+> > referencing a /proc/<pid> directory a pidfd referencing the struct pid
+> > stashed in /proc/<pid> of the process will be returned.
+> 
+> nit: s/of the process //?
 
-> ---
->  include/linux/audit.h      |  5 +++++
->  include/uapi/linux/audit.h |  1 +
->  kernel/audit.c             | 21 +++++++++++++++++++++
->  kernel/auditsc.c           |  2 ++
->  4 files changed, 29 insertions(+)
->
-> diff --git a/include/linux/audit.h b/include/linux/audit.h
-> index 301337776193..43438192ca2a 100644
-> --- a/include/linux/audit.h
-> +++ b/include/linux/audit.h
-> @@ -199,6 +199,8 @@ static inline u64 audit_get_contid(struct task_struct *tsk)
->         return tsk->audit->contid;
->  }
->
-> +extern void audit_log_contid(struct audit_context *context, u64 contid);
-> +
->  extern u32 audit_enabled;
->  #else /* CONFIG_AUDIT */
->  static inline int audit_alloc(struct task_struct *task)
-> @@ -265,6 +267,9 @@ static inline u64 audit_get_contid(struct task_struct *tsk)
->         return AUDIT_CID_UNSET;
->  }
->
-> +static inline void audit_log_contid(struct audit_context *context, u64 contid)
-> +{ }
-> +
->  #define audit_enabled AUDIT_OFF
->  #endif /* CONFIG_AUDIT */
->
-> diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
-> index d475cf3b4d7f..a6383e28b2c8 100644
-> --- a/include/uapi/linux/audit.h
-> +++ b/include/uapi/linux/audit.h
-> @@ -115,6 +115,7 @@
->  #define AUDIT_REPLACE          1329    /* Replace auditd if this packet unanswerd */
->  #define AUDIT_KERN_MODULE      1330    /* Kernel Module events */
->  #define AUDIT_FANOTIFY         1331    /* Fanotify access decision */
-> +#define AUDIT_CONTAINER_ID     1332    /* Container ID */
->
->  #define AUDIT_AVC              1400    /* SE Linux avc denial or grant */
->  #define AUDIT_SELINUX_ERR      1401    /* Internal SE Linux Errors */
-> diff --git a/kernel/audit.c b/kernel/audit.c
-> index b5c702abeb42..8cc0e88d7f2a 100644
-> --- a/kernel/audit.c
-> +++ b/kernel/audit.c
-> @@ -2127,6 +2127,27 @@ void audit_log_session_info(struct audit_buffer *ab)
->         audit_log_format(ab, "auid=%u ses=%u", auid, sessionid);
->  }
->
-> +/*
-> + * audit_log_contid - report container info
-> + * @context: task or local context for record
-> + * @contid: container ID to report
-> + */
-> +void audit_log_contid(struct audit_context *context, u64 contid)
-> +{
-> +       struct audit_buffer *ab;
-> +
-> +       if (!audit_contid_valid(contid))
-> +               return;
-> +       /* Generate AUDIT_CONTAINER_ID record with container ID */
-> +       ab = audit_log_start(context, GFP_KERNEL, AUDIT_CONTAINER_ID);
-> +       if (!ab)
-> +               return;
-> +       audit_log_format(ab, "contid=%llu", contid);
+Yes.
 
-Just realized that you *might* get a compiler/static checker warning
-since u64 could technically be something else than unsigned long long
-on some arches... maybe this is not case in the kernel, but might be
-safer to cast it to unsigned long long before passing to
-audit_log_format(). Possibly there are similar occurrences in previous
-(later) patches that I didn't (won't) notice.
+> 
+> > The pidfd_open() syscalls in that manner resembles openat() as it uses a
+> 
+> nit: s/syscalls/syscall/
 
-> +       audit_log_end(ab);
-> +       return;
-> +}
-> +EXPORT_SYMBOL(audit_log_contid);
-> +
->  void audit_log_key(struct audit_buffer *ab, char *key)
->  {
->         audit_log_format(ab, " key=");
-> diff --git a/kernel/auditsc.c b/kernel/auditsc.c
-> index 8090eff7868d..a8c8b44b954d 100644
-> --- a/kernel/auditsc.c
-> +++ b/kernel/auditsc.c
-> @@ -1548,6 +1548,8 @@ static void audit_log_exit(void)
->
->         audit_log_proctitle();
->
-> +       audit_log_contid(context, audit_get_contid(current));
-> +
->         /* Send end of event record to help user space know we are finished */
->         ab = audit_log_start(context, GFP_KERNEL, AUDIT_EOE);
->         if (ab)
-> --
-> 1.8.3.1
->
+Thanks.
 
+> 
+> [...]
+> > diff --git a/kernel/pid.c b/kernel/pid.c
+> > index 20881598bdfa..c9e24e726aba 100644
+> > --- a/kernel/pid.c
+> > +++ b/kernel/pid.c
+> [...]
+> > +static struct file *pidfd_open_proc_pid(const struct file *procf, pid_t pid,
+> > +                                       const struct pid *pidfd_pid)
+> > +{
+> > +       char name[11]; /* int to strlen + \0 */
+> 
+> nit: The comment is a bit off; an unconstrained int needs 1+10+1
+> bytes, I think? minus sign, 10 digits, nullbyte? But of course that
+> can't actually happen here.
 
--- 
-Ondrej Mosnacek <omosnace at redhat dot com>
-Software Engineer, Security Technologies
-Red Hat, Inc.
+Yes, the comment is misleading.
+
+> 
+> > +       struct file *file;
+> > +       struct pid *proc_pid;
+> > +
+> > +       snprintf(name, sizeof(name), "%d", pid);
+> > +       file = file_open_root(procf->f_path.dentry, procf->f_path.mnt, name,
+> > +                             O_DIRECTORY | O_NOFOLLOW, 0);
+> 
+> Maybe explicitly write the implied O_RDONLY (which is 0) here for clarity?
+
+Yes.
+
+> 
+> [...]
+> > +static int pidfd_to_procfd(pid_t pid, int procfd, int pidfd)
+> > +{
+> > +       long fd;
+> > +       pid_t ns_pid;
+> > +       struct fd fdproc, fdpid;
+> > +       struct file *file = NULL;
+> > +       struct pid *pidfd_pid = NULL;
+> > +       struct pid_namespace *proc_pid_ns = NULL;
+> > +
+> > +       fdproc = fdget(procfd);
+> > +       if (!fdproc.file)
+> > +               return -EBADF;
+> > +
+> > +       fdpid = fdget(pidfd);
+> > +       if (!fdpid.file) {
+> > +               fdput(fdpid);
+> 
+> Typo: s/fdput(fdpid)/fdput(fdproc)/
+
+Good catch!
+
+> 
+> [...]
+> > +SYSCALL_DEFINE4(pidfd_open, pid_t, pid, int, procfd, int, pidfd, unsigned int,
+> > +               flags)
+> [...]
+> > +       if (!flags) {
+> [...]
+> > +               rcu_read_lock();
+> > +               pidfd_pid = get_pid(find_pid_ns(pid, task_active_pid_ns(current)));
+> > +               rcu_read_unlock();
+> 
+> The previous three lines are equivalent to `pidfd_pid = find_get_pid(pid)`.
+
+Perfect, will replace.
+
+> 
+> > +               fd = pidfd_create_fd(pidfd_pid, O_CLOEXEC);
+> 
+> Nit: You could hardcode O_CLOEXEC in pidfd_create_fd() and get rid of
+> the second function argument if you want to.
+
+Hm, let me rename this to pidfd_create_cloexec(pidfd_pid) then.
+
+> 
+> > +               put_pid(pidfd_pid);
+> > +       } else if (flags & PIDFD_TO_PROCFD) {
+> [...]
+> > +               fd = pidfd_to_procfd(pid, procfd, pidfd);
+> 
+> The `pid` argument of pidfd_to_procfd() looks unused, maybe it makes
+> sense to get rid of that?
+
+Yes.
