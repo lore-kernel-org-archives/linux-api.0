@@ -1,267 +1,93 @@
-From: Andrei Vagin <avagin@gmail.com>
-Subject: [PATCH RFC] x86/asm: Introduce static_retcall(s)
-Date: Wed, 27 Mar 2019 11:06:30 -0700
-Message-ID: <20190327180630.14366-1-avagin@gmail.com>
-References: <20190327175957.GA9309@gmail.com>
+From: Jonathan Kowalski <bl0pbl33p@gmail.com>
+Subject: Re: [PATCH 2/4] pid: add pidfd_open()
+Date: Wed, 27 Mar 2019 19:38:13 +0000
+Message-ID: <CAGLj2rG8xMMt8-+r-pauA_qi4aun2y_kBZMCZGkXWQsKJrb-Ww@mail.gmail.com>
+References: <20190327162147.23198-1-christian@brauner.io> <20190327162147.23198-3-christian@brauner.io>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190327175957.GA9309@gmail.com>
+In-Reply-To: <20190327162147.23198-3-christian@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: Dmitry Safonov <dima@arista.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, LKML <linux-kernel@vger.kernel.org>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Andy Tucker <agtucker@google.com>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
+To: Christian Brauner <christian@brauner.io>
+Cc: Jann Horn <jannh@google.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-From: Dmitry Safonov <dima@arista.com>
+Christian,
 
-Provide framework to overwrite tail call in a function with return.
+Giving this some thought, it looks fine to me, but I am not convinced
+this should take a pid argument. I much prefer if obtaining a pidfd
+goes in the translation stuff, that has very real usecases, and you
+would end up duplicating the same thing over in two places.
 
-XXX: split vdso/generic part
+If the /proc/<PID> dir fd of a pidfd is relative to its procrootfd, a
+pid's pidfd is also relative to its namespace. Currently, you change
+things which would mean I now have to setns and spawn a child that
+passes me back the pidfd for a pid in the said namespace.
 
-Signed-off-by: Dmitry Safonov <dima@arista.com>
-Signed-off-by: Andrei Vagin <avagin@gmail.com>
----
- arch/x86/entry/vdso/vclock_gettime.c  | 19 ++++++----
- arch/x86/entry/vdso/vdso-layout.lds.S |  1 +
- arch/x86/entry/vdso/vdso2c.h          | 11 +++++-
- arch/x86/entry/vdso/vma.c             | 22 +++++++++++
- arch/x86/include/asm/static_retcall.h | 54 +++++++++++++++++++++++++++
- arch/x86/include/asm/vdso.h           |  1 +
- 6 files changed, 99 insertions(+), 9 deletions(-)
- create mode 100644 arch/x86/include/asm/static_retcall.h
+I prefer Andy's version of
 
-diff --git a/arch/x86/entry/vdso/vclock_gettime.c b/arch/x86/entry/vdso/vclock_gettime.c
-index cb55bd994497..9416f1ee6b73 100644
---- a/arch/x86/entry/vdso/vclock_gettime.c
-+++ b/arch/x86/entry/vdso/vclock_gettime.c
-@@ -18,6 +18,7 @@
- #include <asm/msr.h>
- #include <asm/pvclock.h>
- #include <asm/mshyperv.h>
-+#include <asm/static_retcall.h>
- #include <linux/math64.h>
- #include <linux/time.h>
- #include <linux/kernel.h>
-@@ -39,7 +40,7 @@ extern u8 hvclock_page
- 	__attribute__((visibility("hidden")));
- #endif
- 
--#ifdef BUILD_VDSO_TIME_NS
-+#ifdef CONFIG_TIME_NS
- extern u8 timens_page
- 	__attribute__((visibility("hidden")));
- #endif
-@@ -145,9 +146,9 @@ notrace static inline u64 vgetcyc(int mode)
- 	return U64_MAX;
- }
- 
-+#ifdef CONFIG_TIME_NS
- notrace static __always_inline void clk_to_ns(clockid_t clk, struct timespec *ts)
- {
--#ifdef BUILD_VDSO_TIME_NS
- 	struct timens_offsets *timens = (struct timens_offsets *) &timens_page;
- 	struct timespec64 *offset64;
- 
-@@ -173,9 +174,13 @@ notrace static __always_inline void clk_to_ns(clockid_t clk, struct timespec *ts
- 		ts->tv_nsec += NSEC_PER_SEC;
- 		ts->tv_sec--;
- 	}
--
--#endif
- }
-+#define _static_retcall static_retcall
-+#define _static_retcall_int static_retcall_int
-+#else
-+#define _static_retcall(...)
-+#define _static_retcall_int(...)
-+#endif
- 
- notrace static int do_hres(clockid_t clk, struct timespec *ts)
- {
-@@ -203,9 +208,7 @@ notrace static int do_hres(clockid_t clk, struct timespec *ts)
- 	ts->tv_sec = sec + __iter_div_u64_rem(ns, NSEC_PER_SEC, &ns);
- 	ts->tv_nsec = ns;
- 
--	clk_to_ns(clk, ts);
--
--	return 0;
-+	_static_retcall_int(0, clk_to_ns, clk, ts);
- }
- 
- notrace static void do_coarse(clockid_t clk, struct timespec *ts)
-@@ -219,7 +222,7 @@ notrace static void do_coarse(clockid_t clk, struct timespec *ts)
- 		ts->tv_nsec = base->nsec;
- 	} while (unlikely(gtod_read_retry(gtod, seq)));
- 
--	clk_to_ns(clk, ts);
-+	_static_retcall(clk_to_ns, clk, ts);
- }
- 
- notrace int __vdso_clock_gettime(clockid_t clock, struct timespec *ts)
-diff --git a/arch/x86/entry/vdso/vdso-layout.lds.S b/arch/x86/entry/vdso/vdso-layout.lds.S
-index ba216527e59f..075cae6f33bf 100644
---- a/arch/x86/entry/vdso/vdso-layout.lds.S
-+++ b/arch/x86/entry/vdso/vdso-layout.lds.S
-@@ -45,6 +45,7 @@ SECTIONS
- 	.gnu.version	: { *(.gnu.version) }
- 	.gnu.version_d	: { *(.gnu.version_d) }
- 	.gnu.version_r	: { *(.gnu.version_r) }
-+	__retcall_table	: { *(__retcall_table) }	:text
- 
- 	.dynamic	: { *(.dynamic) }		:text	:dynamic
- 
-diff --git a/arch/x86/entry/vdso/vdso2c.h b/arch/x86/entry/vdso/vdso2c.h
-index 660f725a02c1..ae91567fd567 100644
---- a/arch/x86/entry/vdso/vdso2c.h
-+++ b/arch/x86/entry/vdso/vdso2c.h
-@@ -16,7 +16,7 @@ static void BITSFUNC(go)(void *raw_addr, size_t raw_len,
- 	unsigned int i, syms_nr;
- 	unsigned long j;
- 	ELF(Shdr) *symtab_hdr = NULL, *strtab_hdr, *secstrings_hdr,
--		*alt_sec = NULL;
-+		*alt_sec = NULL, *retcall_sec = NULL;
- 	ELF(Dyn) *dyn = 0, *dyn_end = 0;
- 	const char *secstrings;
- 	INT_BITS syms[NSYMS] = {};
-@@ -78,6 +78,9 @@ static void BITSFUNC(go)(void *raw_addr, size_t raw_len,
- 		if (!strcmp(secstrings + GET_LE(&sh->sh_name),
- 			    ".altinstructions"))
- 			alt_sec = sh;
-+		if (!strcmp(secstrings + GET_LE(&sh->sh_name),
-+			    "__retcall_table"))
-+			retcall_sec  = sh;
- 	}
- 
- 	if (!symtab_hdr)
-@@ -165,6 +168,12 @@ static void BITSFUNC(go)(void *raw_addr, size_t raw_len,
- 		fprintf(outfile, "\t.alt_len = %lu,\n",
- 			(unsigned long)GET_LE(&alt_sec->sh_size));
- 	}
-+	if (retcall_sec) {
-+		fprintf(outfile, "\t.retcall = %lu,\n",
-+			(unsigned long)GET_LE(&retcall_sec->sh_offset));
-+		fprintf(outfile, "\t.retcall_len = %lu,\n",
-+			(unsigned long)GET_LE(&retcall_sec->sh_size));
-+	}
- 	for (i = 0; i < NSYMS; i++) {
- 		if (required_syms[i].export && syms[i])
- 			fprintf(outfile, "\t.sym_%s = %" PRIi64 ",\n",
-diff --git a/arch/x86/entry/vdso/vma.c b/arch/x86/entry/vdso/vma.c
-index 0b8d9f6f0ce3..b4ea7a2ebfed 100644
---- a/arch/x86/entry/vdso/vma.c
-+++ b/arch/x86/entry/vdso/vma.c
-@@ -25,6 +25,7 @@
- #include <asm/cpufeature.h>
- #include <asm/mshyperv.h>
- #include <asm/page.h>
-+#include <asm/static_retcall.h>
- #include <asm/tlb.h>
- 
- #if defined(CONFIG_X86_64)
-@@ -38,6 +39,25 @@ static __init int vdso_setup(char *s)
- __setup("vdso=", vdso_setup);
- #endif
- 
-+static __init int apply_retcalls(struct retcall_entry *ent, unsigned long nr)
-+{
-+	while (nr--) {
-+		void *call_addr	= (void *)ent + ent->call;
-+		void *ret_addr	= (void *)ent + ent->ret;
-+		size_t ret_sz	= ent->out - ent->ret;
-+
-+		if (WARN_ON(ret_sz > PAGE_SIZE))
-+			goto next;
-+
-+		memcpy(call_addr, ret_addr, ret_sz);
-+
-+next:
-+		ent++;
-+	}
-+
-+	return 0;
-+}
-+
- void __init init_vdso_image(struct vdso_image *image)
- {
- 	BUG_ON(image->size % PAGE_SIZE != 0);
-@@ -51,6 +71,8 @@ void __init init_vdso_image(struct vdso_image *image)
- 		return;
- 
- 	memcpy(image->text_timens, image->text, image->size);
-+	apply_retcalls((struct retcall_entry *)(image->text + image->retcall),
-+			image->retcall_len / sizeof(struct retcall_entry));
- #endif
- }
- 
-diff --git a/arch/x86/include/asm/static_retcall.h b/arch/x86/include/asm/static_retcall.h
-new file mode 100644
-index 000000000000..fdb13795b74d
---- /dev/null
-+++ b/arch/x86/include/asm/static_retcall.h
-@@ -0,0 +1,54 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ *  Copyright (C) 2019  Dmitry Safonov, Andrey Vagin
-+ */
-+
-+#ifndef _ASM_X86_STATIC_RETCALL_H
-+#define _ASM_X86_STATIC_RETCALL_H
-+
-+struct retcall_entry {
-+	u16 call;
-+	u16 ret;
-+	u16 out;
-+};
-+
-+#define static_retcall(func, ...)					\
-+	do {								\
-+		asm_volatile_goto(					\
-+			".pushsection __retcall_table, \"aw\" \n\t"	\
-+			"2: .word %l[l_call] - 2b\n\t"			\
-+			".word %l[l_return] - 2b\n\t"			\
-+			".word %l[l_out] - 2b\n\t"			\
-+			".popsection"					\
-+			: : : : l_call, l_return, l_out);		\
-+l_call:									\
-+		func(__VA_ARGS__);					\
-+l_return:								\
-+		return;							\
-+		annotate_reachable();					\
-+l_out:									\
-+		nop();							\
-+		return;							\
-+	} while(0)
-+
-+#define static_retcall_int(ret, func, ...)				\
-+	do {								\
-+		asm_volatile_goto(					\
-+			".pushsection __retcall_table, \"aw\" \n\t"	\
-+			_ASM_ALIGN "\n\t"				\
-+			"2: .word %l[l_call] - 2b\n\t"			\
-+			".word %l[l_return] - 2b\n\t"			\
-+			".word %l[l_out] - 2b\n\t"			\
-+			".popsection"					\
-+			: : : : l_call, l_return, l_out);		\
-+l_call:									\
-+		func(__VA_ARGS__);					\
-+l_return:								\
-+		return ret;						\
-+		annotate_reachable();					\
-+l_out:									\
-+		nop();							\
-+		return ret;						\
-+	} while(0)
-+
-+#endif
-diff --git a/arch/x86/include/asm/vdso.h b/arch/x86/include/asm/vdso.h
-index 583133446874..acdf70bf814b 100644
---- a/arch/x86/include/asm/vdso.h
-+++ b/arch/x86/include/asm/vdso.h
-@@ -16,6 +16,7 @@ struct vdso_image {
- 	unsigned long size;   /* Always a multiple of PAGE_SIZE */
- 
- 	unsigned long alt, alt_len;
-+	unsigned long retcall, retcall_len;
- 
- 	long sym_vvar_start;  /* Negative offset to the vvar area */
- 
--- 
-2.20.1
+  int procrootfd = open("/proc", O_DIRECTORY | O_RDONLY);
+  int procfd = pidfd_open(procrootfd, pidfd, PIDFD_TO_PROCFD); //name
+this procfd_open, maybe
+
+This is just a nicer race free openat.
+
+But, Joel and you agreed that it makes sense to split out the
+translation stuff out of pidfds.
+
+My suggestion would be to extend ioctl_ns(2) then. It already provides
+a (rather clumsy) mechanism to determine the relationship by comparing
+st_dev and st_ino, which userspace can do itself for two namespace
+descriptors. For translation, you can extend this namespace ioctl
+(there is one to get a owner UID, you could add one to get a relative
+PID).
+
+Then, your pidfd call will be:
+
+pidfd_open(pid_t pid, int ns, unsigned int flags);
+
+You would also be able to compile out anything procfs related (include
+the new API to procfs dir fd translation), otherwise, the way to open
+pidfds is in this call, and without CONFIG_PROC_FS=Y, this is as good
+as pidfd_open(pid_t pid) (of which a better version I propose above).
+The new API should be its own thing, and the procfs translation tuple
+its own thing, tied to the proc fs option. pidfds need not have any
+relation to /proc.
+
+For this procfd conversion system call, I would also lift any
+namespace related restrictions if you are planning to, given the
+constraint that I can only open a pidfd from an ancestor namespace
+with the new pidfd_open system call, or acquire it through a
+cooperative userspace process by fd passing otherwise, and I need the
+/proc root fd, having both only permits me to open the said process's
+/proc/<PID> dir fd subject to normal access restrictions. This means
+the simplified procfd_open can be used to do metadata access without
+even talking of PIDs at all, your process could live in its own world
+and, given it has the authority to open the /proc directory, be able
+to purely collect metadata based on the two file descriptors it is
+given.
+
+Once you have the restriction in the same call that allows you to open
+a pidfd for an addressable PID from the given namespace fd, you can
+finally remove the restriction to signal across namespaces once the
+siginfo stuff is sorted out, as that will only work when you
+explicitly push the fd into a sandbox, the process cannot get it out
+of thin air on its own (and you already mentioned it has nothing to do
+with security). What I do worry about is one can use NS_GET_PARENT
+ioctl to get the parent pidns if the owning userns is the same, and
+just passing that gives me back a pidfd for the task. **So, you might
+want to add the constraint that the PID is actually reachable by the
+current task as well, apart from being reachable in the passed in
+namespace.**
+
+Lastly, I also see no need of /proc/<PID> dir fd to pidfd conversion,
+I would even recommend getting rid of that, so we only have one type
+of pidfd, the anon inode one. What is the usecase behind that? It
+would only be needed if you did not have a way to be able to metadata
+access through a pidfd, which would be the case only prior to this
+patch.
+
+I think this would simplify a lot of things, and ioctl_ns(2) is
+probably already the place to do comparison operations and query
+operations on hierarichal namespaces, just adding the relative PID bit
+will make it gain feature parity with translate_pid.
