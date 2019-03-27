@@ -1,105 +1,73 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH 2/4] pid: add pidfd_open()
-Date: Wed, 27 Mar 2019 18:07:54 +0100
-Message-ID: <CAG48ez2QgRQKYeNDpacLGCOuNKVM1g=1PK3KzzO2Uoyn2cKXaQ@mail.gmail.com>
-References: <20190327162147.23198-1-christian@brauner.io> <20190327162147.23198-3-christian@brauner.io>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH V31 25/25] debugfs: Disable open() when kernel is locked down
+Date: Wed, 27 Mar 2019 10:39:53 -0700
+Message-ID: <CALCETrUW=r=xyr4pGiGnn9zUEevf=z6PP3111Ds6qguV5SjYUQ@mail.gmail.com>
+References: <20190326182742.16950-1-matthewgarrett@google.com>
+ <20190326182742.16950-26-matthewgarrett@google.com> <CALCETrXDF2c2-gnOyNTnEn-uPAZp0AaSB_PB8e2y8jf7zo=Cyg@mail.gmail.com>
+ <20190327003057.GA27311@kroah.com> <CALCETrVDDf4dj3Md1Nxc5P_NCToXGnAbEO3bGfwgKSfeVmU4Kw@mail.gmail.com>
+ <20190327050615.GA548@kroah.com> <16124107-70D3-4CA0-9766-36FC6DC10128@amacapital.net>
+ <20190327053342.GA17484@kroah.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190327162147.23198-3-christian@brauner.io>
+In-Reply-To: <20190327053342.GA17484@kroah.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian@brauner.io>
-Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Jonathan Kowalski <bl0pbl33p@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.li>
+To: Greg KH <gregkh@linuxfoundation.org>
+Cc: Andy Lutomirski <luto@kernel.org>, Matthew Garrett <matthewgarrett@google.com>, James Morris <jmorris@namei.org>, LSM List <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>, Matthew Garrett <mjg59@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 27, 2019 at 5:22 PM Christian Brauner <christian@brauner.io> wrote:
-> pidfd_open() allows to retrieve pidfds for processes and removes the
-> dependency of pidfd on procfs. Multiple people have expressed a desire to
-> do this even when pidfd_send_signal() was merged. It is even recorded in
-[...]
-> IF PROCFD_TO_PIDFD is passed as a flag together with a file descriptor to a
-> /proc mount in a given pid namespace and a pidfd pidfd_open() will return a
-> file descriptor to the corresponding /proc/<pid> directory in procfs
-> mounts' pid namespace. pidfd_open() is very careful to verify that the pid
+On Tue, Mar 26, 2019 at 10:33 PM Greg KH <gregkh@linuxfoundation.org> wrote:
+>
+> On Tue, Mar 26, 2019 at 10:29:41PM -0700, Andy Lutomirski wrote:
+> >
+> >
+> > > On Mar 26, 2019, at 10:06 PM, Greg KH <gregkh@linuxfoundation.org> wrote:
+> > >
+> > >> On Tue, Mar 26, 2019 at 09:29:14PM -0700, Andy Lutomirski wrote:
+> > >>> On Tue, Mar 26, 2019 at 5:31 PM Greg KH <gregkh@linuxfoundation.org> wrote:
+> > >>>
+> > >>>> On Tue, Mar 26, 2019 at 12:20:24PM -0700, Andy Lutomirski wrote:
+> > >>>> On Tue, Mar 26, 2019 at 11:28 AM Matthew Garrett
+> > >>>> <matthewgarrett@google.com> wrote:
+> > >>>>>
+> > >>>>> From: Matthew Garrett <mjg59@google.com>
+> > >>>>>
+> > >>>>> debugfs has not been meaningfully audited in terms of ensuring that
+> > >>>>> userland cannot trample over the kernel. At Greg's request, disable
+> > >>>>> access to it entirely when the kernel is locked down. This is done at
+> > >>>>> open() time rather than init time as the kernel lockdown status may be
+> > >>>>> made stricter at runtime.
+> > >>>>
+> > >>>> Ugh.  Some of those files are very useful.  Could this perhaps still
+> > >>>> allow O_RDONLY if we're in INTEGRITY mode?
+> > >>>
+> > >>> Useful for what?  Debugging, sure, but for "normal operation", no kernel
+> > >>> functionality should ever require debugfs.  If it does, that's a bug and
+> > >>> should be fixed.
+> > >>>
+> > >>
+> > >> I semi-regularly read files in debugfs to diagnose things, and I think
+> > >> it would be good for this to work on distro kernels.
+> > >
+> > > Doing that for debugging is wonderful.  People who want this type of
+> > > "lock down" are trading potential security for diagnositic ability.
+> > >
+> >
+> > I think you may be missing the point of splitting lockdown to separate integrity and confidentiality.  Can you actually think of a case where *reading* a debugfs file can take over a kernel?
+>
+> Reading a debugfs file can expose loads of things that can help take
+> over a kernel, or at least make it easier.  Pointer addresses, internal
+> system state, loads of other fun things.  And before 4.14 or so, it was
+> pretty trivial to use it to oops the kernel as well (not an issue here
+> anymore, but people are right to be nervous).
+>
+> Personally, I think these are all just "confidentiality" type things,
+> but who really knows given the wild-west nature of debugfs (which is as
+> designed).  And given that I think this patch series just crazy anyway,
+> I really don't care :)
+>
 
-nit: s/mounts'/mount's/
-
-> hasn't been recycled in between.
-> IF PIDFD_TO_PROCFD is passed as a flag together with a file descriptor
-> referencing a /proc/<pid> directory a pidfd referencing the struct pid
-> stashed in /proc/<pid> of the process will be returned.
-
-nit: s/of the process //?
-
-> The pidfd_open() syscalls in that manner resembles openat() as it uses a
-
-nit: s/syscalls/syscall/
-
-[...]
-> diff --git a/kernel/pid.c b/kernel/pid.c
-> index 20881598bdfa..c9e24e726aba 100644
-> --- a/kernel/pid.c
-> +++ b/kernel/pid.c
-[...]
-> +static struct file *pidfd_open_proc_pid(const struct file *procf, pid_t pid,
-> +                                       const struct pid *pidfd_pid)
-> +{
-> +       char name[11]; /* int to strlen + \0 */
-
-nit: The comment is a bit off; an unconstrained int needs 1+10+1
-bytes, I think? minus sign, 10 digits, nullbyte? But of course that
-can't actually happen here.
-
-> +       struct file *file;
-> +       struct pid *proc_pid;
-> +
-> +       snprintf(name, sizeof(name), "%d", pid);
-> +       file = file_open_root(procf->f_path.dentry, procf->f_path.mnt, name,
-> +                             O_DIRECTORY | O_NOFOLLOW, 0);
-
-Maybe explicitly write the implied O_RDONLY (which is 0) here for clarity?
-
-[...]
-> +static int pidfd_to_procfd(pid_t pid, int procfd, int pidfd)
-> +{
-> +       long fd;
-> +       pid_t ns_pid;
-> +       struct fd fdproc, fdpid;
-> +       struct file *file = NULL;
-> +       struct pid *pidfd_pid = NULL;
-> +       struct pid_namespace *proc_pid_ns = NULL;
-> +
-> +       fdproc = fdget(procfd);
-> +       if (!fdproc.file)
-> +               return -EBADF;
-> +
-> +       fdpid = fdget(pidfd);
-> +       if (!fdpid.file) {
-> +               fdput(fdpid);
-
-Typo: s/fdput(fdpid)/fdput(fdproc)/
-
-[...]
-> +SYSCALL_DEFINE4(pidfd_open, pid_t, pid, int, procfd, int, pidfd, unsigned int,
-> +               flags)
-[...]
-> +       if (!flags) {
-[...]
-> +               rcu_read_lock();
-> +               pidfd_pid = get_pid(find_pid_ns(pid, task_active_pid_ns(current)));
-> +               rcu_read_unlock();
-
-The previous three lines are equivalent to `pidfd_pid = find_get_pid(pid)`.
-
-> +               fd = pidfd_create_fd(pidfd_pid, O_CLOEXEC);
-
-Nit: You could hardcode O_CLOEXEC in pidfd_create_fd() and get rid of
-the second function argument if you want to.
-
-> +               put_pid(pidfd_pid);
-> +       } else if (flags & PIDFD_TO_PROCFD) {
-[...]
-> +               fd = pidfd_to_procfd(pid, procfd, pidfd);
-
-The `pid` argument of pidfd_to_procfd() looks unused, maybe it makes
-sense to get rid of that?
+As far as I'm concerned, preventing root from crashing the system
+should not be a design goal of lockdown at all.  And I think that the
+"integrity" mode should be as non-annoying as possible, so I think we
+should allow reading from debugfs.
