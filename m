@@ -1,102 +1,58 @@
-From: Wu Hao <hao.wu@intel.com>
+From: Scott Wood <swood@redhat.com>
 Subject: Re: [PATCH 03/17] fpga: dfl: fme: support 512bit data width PR
-Date: Wed, 27 Mar 2019 13:46:37 +0800
-Message-ID: <20190327054637.GC20968@hao-dev>
+Date: Wed, 27 Mar 2019 01:10:31 -0500
+Message-ID: <29827fcdcdd4fb46b680a6bd184b44fca638666e.camel@redhat.com>
 References: <1553483264-5379-1-git-send-email-hao.wu@intel.com>
- <1553483264-5379-4-git-send-email-hao.wu@intel.com>
- <127a9356a7bf597d35dd361f2b16bf80460f0370.camel@redhat.com>
+         <1553483264-5379-4-git-send-email-hao.wu@intel.com>
+         <127a9356a7bf597d35dd361f2b16bf80460f0370.camel@redhat.com>
+         <655bf2991a4f8bf6a473c91218d6dba7748520aa.camel@redhat.com>
+         <CANk1AXSBHAudsLfNkSK1OuE6R9bogo6jW9bYmmZdvweTt3eCiA@mail.gmail.com>
+         <580c6c604d3915c105f076fc7f22ab5da98598fc.camel@redhat.com>
+         <20190327043743.GA20968@hao-dev>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <127a9356a7bf597d35dd361f2b16bf80460f0370.camel@redhat.com>
+In-Reply-To: <20190327043743.GA20968@hao-dev>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Scott Wood <swood@redhat.com>
-Cc: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Ananda Ravuri <ananda.ravuri@intel.com>, Xu Yilun <yilun.xu@intel.com>
+To: Wu Hao <hao.wu@intel.com>
+Cc: Alan Tull <atull@kernel.org>, Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Ananda Ravuri <ananda.ravuri@intel.com>, Xu Yilun <yilun.xu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 25, 2019 at 05:53:50PM -0500, Scott Wood wrote:
-> On Mon, 2019-03-25 at 11:07 +0800, Wu Hao wrote:
-> > @@ -200,21 +228,32 @@ static int fme_mgr_write(struct fpga_manager *mgr,
-> >  			pr_credit = FIELD_GET(FME_PR_STS_PR_CREDIT,
-> > pr_status);
-> >  		}
-> >  
-> > -		if (count < 4) {
-> > +		if (count < priv->pr_datawidth) {
-> >  			dev_err(dev, "Invalid PR bitstream size\n");
-> >  			return -EINVAL;
+On Wed, 2019-03-27 at 12:37 +0800, Wu Hao wrote:
+> On Tue, Mar 26, 2019 at 04:22:34PM -0500, Scott Wood wrote:
+> > On Tue, 2019-03-26 at 14:33 -0500, Alan Tull wrote:
+> > > On Mon, Mar 25, 2019 at 5:58 PM Scott Wood <swood@redhat.com> wrote:
+> > > > > 
+> > > Hi Scott,
+> > > 
+> > > > On Mon, 2019-03-25 at 17:53 -0500, Scott Wood wrote:
+> > > > > On Mon, 2019-03-25 at 11:07 +0800, Wu Hao wrote:
+> > > > > > +#else
+> > > > > > +static inline void copy512(void *src, void __iomem *dst)
+> > > > > > +{
+> > > > > > +   WARN_ON_ONCE(1);
+> > > > > > +}
+> > > > > > +#endif
+> > > > > 
+Likewise, this will be called if a revision 2 device is used on non-
+> > > > > x86
+> > > > > (or on x86 with an old binutils).  The driver should fall back to
+> > > > > 32-
+> > > > > bit
+> > > > > in such cases.
 > 
-> Shouldn't this have become a WARN_ON in patch 2 given that the kernel
-> already pads the buffer?
+> Unfortunately revision 2 is only for integrated FPGA solution, and it
+> doesn't
+> support any fallback solution (original 32bit data partial reconfiguration
+> is
+> not supported any more), so driver has to WARN in such path.
 
-Thanks a lot for the review and comments.
+>From the commit message it seemed like this was just an optimization, not
+something necessary to support revision 2.
 
-I agree. it's better to use WARN_ON this place.
+If there's no way to program the device without AVX512, then printing an
+error message and returning an error to userspace would be better than
+WARN_ON, since it's not actually a kernel bug.
 
-> 
-> >  		}
-> >  
-> > -		pr_data = 0;
-> > -		pr_data |= FIELD_PREP(FME_PR_DATA_PR_DATA_RAW,
-> > -				      *(((u32 *)buf) + i));
-> > -		writeq(pr_data, fme_pr + FME_PR_DATA);
-> > -		count -= 4;
-> > +		switch (priv->pr_datawidth) {
-> > +		case 4:
-> > +			pr_data = 0;
-> > +			pr_data |= FIELD_PREP(FME_PR_DATA_PR_DATA_RAW,
-> > +					*((u32 *)buf));
-> 
-> I know it's not new, but why not just "pr_data = FIELD..."?  Const should
-> also be preserved in the cast, and you can drop one set of parentheses.
-
-Yes, agree, will fix this.
-
-> 
-> > +			writeq(pr_data, fme_pr + FME_PR_DATA);
-> > +			break;
-> > +		case 64:
-> > +			copy512((void *)buf, fme_pr + FME_PR_512_DATA);
-> > +			break;
-> 
-> Unnecessary cast.
-
-Will fix this.
-
-> 
-> > +		default:
-> > +			ret = -EFAULT;
-> > +			goto done;
-> 
-> How is it EFAULT?  Any other value for pr_datawidth should be WARN_ON
-> since it's set by kernel code.
-
-Agree, will fix this in the next version.
-
-> 
-> > @@ -159,13 +161,10 @@ static int fme_pr(struct platform_device *pdev,
-> > unsigned long arg)
-> >  		fpga_bridges_put(&region->bridge_list);
-> >  
-> >  	put_device(&region->dev);
-> > -unlock_exit:
-> > -	mutex_unlock(&pdata->lock);
-> >  free_exit:
-> >  	vfree(buf);
-> > -	if (copy_to_user((void __user *)arg, &port_pr, minsz))
-> > -		return -EFAULT;
-> > -
-> 
-> Why is the copy_to_user being removed?
-
-This code is not needed at all but added by mistake i think.
-
-Sorry, i should move these code into a separated patch with proper comments
-to avoid confusion.
-
-Thanks
-Hao
-
-> 
-> -Scott
+-Scott
