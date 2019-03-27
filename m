@@ -1,28 +1,72 @@
-From: Matthew Garrett <mjg59@google.com>
-Subject: Re: [PATCH V31 25/25] debugfs: Disable open() when kernel is locked down
-Date: Wed, 27 Mar 2019 10:42:18 -0700
-Message-ID: <CACdnJus=zXgmNas+XVkWfe+ohAHEGMYLtfuYe0TH-eE=4p0oRw@mail.gmail.com>
-References: <20190326182742.16950-1-matthewgarrett@google.com>
- <20190326182742.16950-26-matthewgarrett@google.com> <CALCETrXDF2c2-gnOyNTnEn-uPAZp0AaSB_PB8e2y8jf7zo=Cyg@mail.gmail.com>
- <20190327003057.GA27311@kroah.com> <CALCETrVDDf4dj3Md1Nxc5P_NCToXGnAbEO3bGfwgKSfeVmU4Kw@mail.gmail.com>
- <20190327050615.GA548@kroah.com> <16124107-70D3-4CA0-9766-36FC6DC10128@amacapital.net>
- <20190327053342.GA17484@kroah.com> <CALCETrUW=r=xyr4pGiGnn9zUEevf=z6PP3111Ds6qguV5SjYUQ@mail.gmail.com>
+From: Yann Droneaud <ydroneaud@opteya.com>
+Subject: Re: [PATCH 2/4] pid: add pidfd_open()
+Date: Wed, 27 Mar 2019 18:21:24 +0100
+Message-ID: <9254286c02dbe883c14e38ed2af0022d36b17355.camel@opteya.com>
+References: <20190327162147.23198-1-christian@brauner.io>
+         <20190327162147.23198-3-christian@brauner.io>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrUW=r=xyr4pGiGnn9zUEevf=z6PP3111Ds6qguV5SjYUQ@mail.gmail.com>
+In-Reply-To: <20190327162147.23198-3-christian@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Greg KH <gregkh@linuxfoundation.org>, James Morris <jmorris@namei.org>, LSM List <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>
+To: Christian Brauner <christian@brauner.io>, jannh@google.com, khlebnikov@yandex-team.ru, luto@kernel.org, dhowells@redhat.com, serge@hallyn.com, ebiederm@xmission.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: arnd@arndb.de, keescook@chromium.org, adobriyan@gmail.com, tglx@linutronix.de, mtk.manpages@gmail.com, bl0pbl33p@gmail.com, ldv@altlinux.org, akpm@linux-foundation.org, oleg@redhat.com, nagarathnam.muthusamy@oracle.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, joel@joelfernandes.org, dancol@google.com
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 27, 2019 at 10:40 AM Andy Lutomirski <luto@kernel.org> wrote:
-> As far as I'm concerned, preventing root from crashing the system
-> should not be a design goal of lockdown at all.  And I think that the
-> "integrity" mode should be as non-annoying as possible, so I think we
-> should allow reading from debugfs.
+Le mercredi 27 mars 2019 à 17:21 +0100, Christian Brauner a écrit :
 
-I have no horse in this game - I'm happy to bring back the previous
-approach for integrity mode and block reads entirely in
-confidentiality mode, but I'd rather not spend another release cycle
-arguing about it.
+> diff --git a/kernel/pid.c b/kernel/pid.c
+> index 20881598bdfa..c9e24e726aba 100644
+> --- a/kernel/pid.c
+> +++ b/kernel/pid.c
+> @@ -26,8 +26,10 @@
+> +SYSCALL_DEFINE4(pidfd_open, pid_t, pid, int, procfd, int, pidfd,
+> unsigned int,
+> +		flags)
+> +{
+> +	long fd = -EINVAL;
+> +
+> +	if (flags & ~(PIDFD_TO_PROCFD | PROCFD_TO_PIDFD))
+> +		return -EINVAL;
+> +
+> +	if (!flags) {
+> +		struct pid *pidfd_pid;
+> +
+> +		if (pid <= 0)
+> +			return -EINVAL;
+> +
+> +		if (procfd != -1 || pidfd != -1)
+> +			return -EINVAL;
+> +
+> +		rcu_read_lock();
+> +		pidfd_pid = get_pid(find_pid_ns(pid, task_active_pid_ns(current)));
+> +		rcu_read_unlock();
+> +
+> +		fd = pidfd_create_fd(pidfd_pid, O_CLOEXEC);
+> +		put_pid(pidfd_pid);
+> +	} else if (flags & PIDFD_TO_PROCFD) {
+
+[...]
+
+> +	} else if (flags & PROCFD_TO_PIDFD) {
+> +		if (flags & ~PROCFD_TO_PIDFD)
+> +			return -EINVAL;
+> +
+> +		if (pid != -1)
+> +			return -EINVAL;
+> +
+> +		if (pidfd >= 0)
+> 
+
+I think it can be stricter with:
+
+                if (pidfd != -1)
+
+(and match the check done for flag == 0).
+
+Regards.
+
+-- 
+Yann Droneaud
+OPTEYA
