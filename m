@@ -1,102 +1,112 @@
-From: Alexey Gladkov <gladkov.alexey@gmail.com>
-Subject: Re: [RESEND PATCH v1] moduleparam: Save information about built-in
- modules in separate file
-Date: Wed, 27 Mar 2019 17:04:40 +0100
-Message-ID: <20190327160440.GE15936@Legion-PC.fortress>
-References: <20190315101013.GN8455@Legion-PC.fortress>
- <CAK7LNATsm23e_CuyfFw7_CR8xZQ3HnwNHCXhEm_zQZU2PUGK5A@mail.gmail.com>
- <20190326172411.GA15936@Legion-PC.fortress>
- <20190327154025.GB23293@linux-8ccs>
+From: Christian Brauner <christian@brauner.io>
+Subject: [PATCH 0/4] pidfd_open()
+Date: Wed, 27 Mar 2019 17:21:43 +0100
+Message-ID: <20190327162147.23198-1-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190327154025.GB23293@linux-8ccs>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jessica Yu <jeyu@kernel.org>
-Cc: Masahiro Yamada <yamada.masahiro@socionext.com>, Michal Marek <michal.lkml@markovi.net>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux Kbuild mailing list <linux-kbuild@vger.kernel.org>, linux-api@vger.kernel.org, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>, "Dmitry V. Levin" <ldv@altlinux.org>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Rusty Russell <rusty@rustcorp.com.au>, Lucas De Marchi <lucas.de.marchi@gmail.com>
+To: jannh@google.com, khlebnikov@yandex-team.ru, luto@kernel.org, dhowells@redhat.com, serge@hallyn.com, ebiederm@xmission.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: arnd@arndb.de, keescook@chromium.org, adobriyan@gmail.com, tglx@linutronix.de, mtk.manpages@gmail.com, bl0pbl33p@gmail.com, ldv@altlinux.org, akpm@linux-foundation.org, oleg@redhat.com, nagarathnam.muthusamy@oracle.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, joel@joelfernandes.org, dancol@google.com, Christian Brauner <christian@brauner.io>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 27, 2019 at 04:40:25PM +0100, Jessica Yu wrote:
-> +++ Alexey Gladkov [26/03/19 18:24 +0100]:
-> >On Fri, Mar 22, 2019 at 02:34:12PM +0900, Masahiro Yamada wrote:
-> >> Hi.
-> >>
-> >> (added some people to CC)
-> 
-> (Thanks Masahiro for the CC!)
-> 
-> >>
-> >> On Fri, Mar 15, 2019 at 7:10 PM Alexey Gladkov <gladkov.alexey@gmail.com> wrote:
-> >> >
-> >> > Problem:
-> >> >
-> >> > When a kernel module is compiled as a separate module, some important
-> >> > information about the kernel module is available via .modinfo section of
-> >> > the module.  In contrast, when the kernel module is compiled into the
-> >> > kernel, that information is not available.
-> >>
-> >>
-> >> I might be missing something, but
-> >> vmlinux provides info of builtin modules
-> >> in /sys/module/.
-> >
-> >No. There are definitely not all modules. I have a builtin sha256_generic,
-> >but I can't find him in the /sys/module.
-> 
-> Yeah, you'll only find builtin modules under /sys/module/ if it has any module
-> parameters, otherwise you won't find it there. As Masahiro already mentioned,
-> if a builtin module has any parameters, they would be accessible under /sys/module/.
-> 
-> >> (Looks like currently only module_param and MODULE_VERSION)
-> >>
-> >> This patch is not exactly the same, but I see a kind of overwrap.
-> >> I'd like to be sure if we want this new scheme.
-> >
-> >The /sys/module is only for running kernel. One of my use cases is
-> >to create an initrd for a new kernel.
-> >
-> >>
-> >> > Information about built-in modules is necessary in the following cases:
-> >> >
-> >> > 1. When it is necessary to find out what additional parameters can be
-> >> > passed to the kernel at boot time.
-> >>
-> >>
-> >> Actually, /sys/module/<module>/parameters/
-> >> exposes this information.
-> >>
-> >> Doesn't it work for your purpose?
-> >
-> >No, since creating an initrd needs to know all the modalias before
-> >I get the sysfs for new kernel. Also there are no modalias at all.
-> >
-> >> > 2. When you need to know which module names and their aliases are in
-> >> > the kernel. This is very useful for creating an initrd image.
-> >> >
-> 
-> Hm, I do see one possible additional use-case for preserving module alias
-> information for built-in modules - modprobe will currently error (I think,
-> correct me if I'm wrong) if we try invoking modprobe with an alias of a
-> built-in module, simply because this information is not in modules.builtin or
-> modules.alias.
+Hey,
 
-Yes. Patch for modprobe in my todo list. The reason I didn’t do it was
-because I wasn’t sure that the file format was final.
+After the discussion over the last days, this is a fresh approach to
+getting pidfds independent of the translate_pid() patchset.
 
-> Since kbuild already outputs modules.builtin, I would suggest outputting
-> something like a modules.builtin.alias file (and I guess maybe a modules.builtin.param
-> file too if that's deemed useful), in a format that is consumable by kmod/modprobe,
-> so that modprobing an alias of a built-in module doesn't produce an error. I
-> think this should be easy to do if we keep and parse the resulting .modinfo for
-> builtin modules. This is just an idea, opinions welcome. I've added Lucas to CC
-> in case he has any thoughts.
+pidfd_open() allows to retrieve pidfds for processes and removes the
+dependency of pidfd on procfs.
+These pidfds are allocated using anon_inode_getfd(), are O_CLOEXEC by
+default and can be used with the pidfd_send_signal() syscall. They are not
+dirfds and as such have the advantage that we can make them pollable or
+readable in the future if we see a need to do so. Currently they do not
+support any advanced operations. The pidfds are not associated with a
+specific pid namespaces but rather only reference struct pid of a given
+process in their private_data member.
 
-You don't like kernel.builtin.modinfo ?
+One of the oustanding issues has been how to get information about a given
+process if pidfds are regular file descriptors and do not provide access to
+the process /proc/<pid> directory.
+Various solutions have been proposed. The one that most people prefer is to
+be able to retrieve a file descriptor to /proc/<pid> based on a pidfd (and
+the other way around).
+IF PROCFD_TO_PIDFD is passed as a flag together with a file descriptor to a
+/proc mount in a given pid namespace and a pidfd pidfd_open() will return a
+file descriptor to the corresponding /proc/<pid> directory in procfs
+mounts' pid namespace. pidfd_open() is very careful to verify that the pid
+hasn't been recycled in between.
+IF PIDFD_TO_PROCFD is passed as a flag together with a file descriptor
+referencing a /proc/<pid> directory a pidfd referencing the struct pid
+stashed in /proc/<pid> of the process will be returned.
+The pidfd_open() syscalls in that manner resembles openat() as it uses a
+flag argument to modify what type of file descriptor will be returned.
 
-It is much easier to create and it has almost the same format as the
-modules. So I think it will be easier to parse in kmod.
+The pidfd_open() implementation together with the flags argument strikes me
+as an elegant compromise between splitting this into multiple syscalls and
+avoiding ioctls().
+
+Note that this patchset also includes Al's and David's commit to make anon
+inodes unconditional. The original intention is to make it possible to use
+anon inodes in core vfs functions. pidctl() has the same requirement so
+David suggested I sent this in alongside this patch. Both are informed of
+this.
+
+The syscall comes with appropriate basic testing.
+
+/* Examples */
+// Retrieve pidfd
+int pidfd = pidfd_open(1234, -1, -1, 0);
+
+// Retrieve /proc/<pid> handle for pidfd
+int procfd = open("/proc", O_DIRECTORY | O_RDONLY | O_CLOEXEC);
+int procpidfd = pidfd_open(-1, procfd, pidfd, PIDFD_TO_PROCFD);
+
+// Retrieve pidfd for /proc/<pid>
+int procpidfd = open("/proc/1234", O_DIRECTORY | O_RDONLY | O_CLOEXEC);
+int pidfd = pidfd_open(-1, procpidfd, -1, PROCFD_TO_PIDFD);
+
+Thanks!
+Christian
+
+Christian Brauner (3):
+  pid: add pidfd_open()
+  signal: support pidfd_open() with pidfd_send_signal()
+  tests: add pidfd_open() tests
+
+David Howells (1):
+  Make anon_inodes unconditional
+
+ arch/arm/kvm/Kconfig                          |   1 -
+ arch/arm64/kvm/Kconfig                        |   1 -
+ arch/mips/kvm/Kconfig                         |   1 -
+ arch/powerpc/kvm/Kconfig                      |   1 -
+ arch/s390/kvm/Kconfig                         |   1 -
+ arch/x86/Kconfig                              |   1 -
+ arch/x86/entry/syscalls/syscall_32.tbl        |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl        |   1 +
+ arch/x86/kvm/Kconfig                          |   1 -
+ drivers/base/Kconfig                          |   1 -
+ drivers/char/tpm/Kconfig                      |   1 -
+ drivers/dma-buf/Kconfig                       |   1 -
+ drivers/gpio/Kconfig                          |   1 -
+ drivers/iio/Kconfig                           |   1 -
+ drivers/infiniband/Kconfig                    |   1 -
+ drivers/vfio/Kconfig                          |   1 -
+ fs/Makefile                                   |   2 +-
+ fs/notify/fanotify/Kconfig                    |   1 -
+ fs/notify/inotify/Kconfig                     |   1 -
+ include/linux/pid.h                           |   2 +
+ include/linux/syscalls.h                      |   2 +
+ include/uapi/linux/wait.h                     |   3 +
+ init/Kconfig                                  |  10 -
+ kernel/pid.c                                  | 247 ++++++++++++++++++
+ kernel/signal.c                               |  14 +-
+ kernel/sys_ni.c                               |   3 -
+ tools/testing/selftests/pidfd/Makefile        |   2 +-
+ .../testing/selftests/pidfd/pidfd_open_test.c | 201 ++++++++++++++
+ 28 files changed, 469 insertions(+), 35 deletions(-)
+ create mode 100644 tools/testing/selftests/pidfd/pidfd_open_test.c
 
 -- 
-Rgrds, legion
+2.21.0
