@@ -1,25 +1,25 @@
-From: Greg KH <gregkh@linuxfoundation.org>
-Subject: Re: [PATCH V31 25/25] debugfs: Disable open() when kernel is locked
- down
-Date: Wed, 27 Mar 2019 11:35:20 +0900
-Message-ID: <20190327023520.GA20766@kroah.com>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH V31 25/25] debugfs: Disable open() when kernel is locked down
+Date: Tue, 26 Mar 2019 21:29:14 -0700
+Message-ID: <CALCETrVDDf4dj3Md1Nxc5P_NCToXGnAbEO3bGfwgKSfeVmU4Kw@mail.gmail.com>
 References: <20190326182742.16950-1-matthewgarrett@google.com>
- <20190326182742.16950-26-matthewgarrett@google.com>
- <20190327003130.GB27311@kroah.com>
- <CACdnJuvBJmCRnzT=4qh9cmNkRNHi3Xfha5xqUqYu8cgCRrtsqQ@mail.gmail.com>
+ <20190326182742.16950-26-matthewgarrett@google.com> <CALCETrXDF2c2-gnOyNTnEn-uPAZp0AaSB_PB8e2y8jf7zo=Cyg@mail.gmail.com>
+ <20190327003057.GA27311@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CACdnJuvBJmCRnzT=4qh9cmNkRNHi3Xfha5xqUqYu8cgCRrtsqQ@mail.gmail.com>
+In-Reply-To: <20190327003057.GA27311@kroah.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Matthew Garrett <mjg59@google.com>
-Cc: James Morris <jmorris@namei.org>, LSM List <linux-security-module@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@kernel.org>
+To: Greg KH <gregkh@linuxfoundation.org>
+Cc: Andy Lutomirski <luto@kernel.org>, Matthew Garrett <matthewgarrett@google.com>, James Morris <jmorris@namei.org>, LSM List <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>, Matthew Garrett <mjg59@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 26, 2019 at 07:06:36PM -0700, Matthew Garrett wrote:
-> On Tue, Mar 26, 2019 at 5:31 PM Greg KH <gregkh@linuxfoundation.org> wrote:
-> > On Tue, Mar 26, 2019 at 11:27:41AM -0700, Matthew Garrett wrote:
+On Tue, Mar 26, 2019 at 5:31 PM Greg KH <gregkh@linuxfoundation.org> wrote:
+>
+> On Tue, Mar 26, 2019 at 12:20:24PM -0700, Andy Lutomirski wrote:
+> > On Tue, Mar 26, 2019 at 11:28 AM Matthew Garrett
+> > <matthewgarrett@google.com> wrote:
+> > >
 > > > From: Matthew Garrett <mjg59@google.com>
 > > >
 > > > debugfs has not been meaningfully audited in terms of ensuring that
@@ -27,20 +27,14 @@ On Tue, Mar 26, 2019 at 07:06:36PM -0700, Matthew Garrett wrote:
 > > > access to it entirely when the kernel is locked down. This is done at
 > > > open() time rather than init time as the kernel lockdown status may be
 > > > made stricter at runtime.
-> 
-> (snip)
-> 
-> > Why allow all this, why not just abort the registering of the filesystem
-> > with the vfs core so it can't even be mounted?
-> 
-> As mentioned in the commit message, because the lockdown state can be
-> made stricter at runtime - blocking at mount time would be
-> inconsistent if the machine is locked down afterwards. We could
-> potentially assert that it's the admin's responsibility to ensure that
-> debugfs isn't mounted at the point of policy being made stricter?
+> >
+> > Ugh.  Some of those files are very useful.  Could this perhaps still
+> > allow O_RDONLY if we're in INTEGRITY mode?
+>
+> Useful for what?  Debugging, sure, but for "normal operation", no kernel
+> functionality should ever require debugfs.  If it does, that's a bug and
+> should be fixed.
+>
 
-Ugh, I can not read, sorry, neverind.
-
-The patch is fine as-is.
-
-greg k-h
+I semi-regularly read files in debugfs to diagnose things, and I think
+it would be good for this to work on distro kernels.
