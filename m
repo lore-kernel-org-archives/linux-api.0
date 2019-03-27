@@ -1,73 +1,102 @@
-From: Greg KH <gregkh@linuxfoundation.org>
-Subject: Re: [PATCH V31 25/25] debugfs: Disable open() when kernel is locked
- down
-Date: Wed, 27 Mar 2019 14:33:42 +0900
-Message-ID: <20190327053342.GA17484@kroah.com>
-References: <20190326182742.16950-1-matthewgarrett@google.com>
- <20190326182742.16950-26-matthewgarrett@google.com>
- <CALCETrXDF2c2-gnOyNTnEn-uPAZp0AaSB_PB8e2y8jf7zo=Cyg@mail.gmail.com>
- <20190327003057.GA27311@kroah.com>
- <CALCETrVDDf4dj3Md1Nxc5P_NCToXGnAbEO3bGfwgKSfeVmU4Kw@mail.gmail.com>
- <20190327050615.GA548@kroah.com>
- <16124107-70D3-4CA0-9766-36FC6DC10128@amacapital.net>
+From: Wu Hao <hao.wu@intel.com>
+Subject: Re: [PATCH 03/17] fpga: dfl: fme: support 512bit data width PR
+Date: Wed, 27 Mar 2019 13:46:37 +0800
+Message-ID: <20190327054637.GC20968@hao-dev>
+References: <1553483264-5379-1-git-send-email-hao.wu@intel.com>
+ <1553483264-5379-4-git-send-email-hao.wu@intel.com>
+ <127a9356a7bf597d35dd361f2b16bf80460f0370.camel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <16124107-70D3-4CA0-9766-36FC6DC10128@amacapital.net>
+In-Reply-To: <127a9356a7bf597d35dd361f2b16bf80460f0370.camel@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Andy Lutomirski <luto@kernel.org>, Matthew Garrett <matthewgarrett@google.com>, James Morris <jmorris@namei.org>, LSM List <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>, Matthew Garrett <mjg59@google.com>
+To: Scott Wood <swood@redhat.com>
+Cc: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Ananda Ravuri <ananda.ravuri@intel.com>, Xu Yilun <yilun.xu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Mar 26, 2019 at 10:29:41PM -0700, Andy Lutomirski wrote:
+On Mon, Mar 25, 2019 at 05:53:50PM -0500, Scott Wood wrote:
+> On Mon, 2019-03-25 at 11:07 +0800, Wu Hao wrote:
+> > @@ -200,21 +228,32 @@ static int fme_mgr_write(struct fpga_manager *mgr,
+> >  			pr_credit = FIELD_GET(FME_PR_STS_PR_CREDIT,
+> > pr_status);
+> >  		}
+> >  
+> > -		if (count < 4) {
+> > +		if (count < priv->pr_datawidth) {
+> >  			dev_err(dev, "Invalid PR bitstream size\n");
+> >  			return -EINVAL;
 > 
+> Shouldn't this have become a WARN_ON in patch 2 given that the kernel
+> already pads the buffer?
+
+Thanks a lot for the review and comments.
+
+I agree. it's better to use WARN_ON this place.
+
 > 
-> > On Mar 26, 2019, at 10:06 PM, Greg KH <gregkh@linuxfoundation.org> wrote:
-> > 
-> >> On Tue, Mar 26, 2019 at 09:29:14PM -0700, Andy Lutomirski wrote:
-> >>> On Tue, Mar 26, 2019 at 5:31 PM Greg KH <gregkh@linuxfoundation.org> wrote:
-> >>> 
-> >>>> On Tue, Mar 26, 2019 at 12:20:24PM -0700, Andy Lutomirski wrote:
-> >>>> On Tue, Mar 26, 2019 at 11:28 AM Matthew Garrett
-> >>>> <matthewgarrett@google.com> wrote:
-> >>>>> 
-> >>>>> From: Matthew Garrett <mjg59@google.com>
-> >>>>> 
-> >>>>> debugfs has not been meaningfully audited in terms of ensuring that
-> >>>>> userland cannot trample over the kernel. At Greg's request, disable
-> >>>>> access to it entirely when the kernel is locked down. This is done at
-> >>>>> open() time rather than init time as the kernel lockdown status may be
-> >>>>> made stricter at runtime.
-> >>>> 
-> >>>> Ugh.  Some of those files are very useful.  Could this perhaps still
-> >>>> allow O_RDONLY if we're in INTEGRITY mode?
-> >>> 
-> >>> Useful for what?  Debugging, sure, but for "normal operation", no kernel
-> >>> functionality should ever require debugfs.  If it does, that's a bug and
-> >>> should be fixed.
-> >>> 
-> >> 
-> >> I semi-regularly read files in debugfs to diagnose things, and I think
-> >> it would be good for this to work on distro kernels.
-> > 
-> > Doing that for debugging is wonderful.  People who want this type of
-> > "lock down" are trading potential security for diagnositic ability.
-> > 
+> >  		}
+> >  
+> > -		pr_data = 0;
+> > -		pr_data |= FIELD_PREP(FME_PR_DATA_PR_DATA_RAW,
+> > -				      *(((u32 *)buf) + i));
+> > -		writeq(pr_data, fme_pr + FME_PR_DATA);
+> > -		count -= 4;
+> > +		switch (priv->pr_datawidth) {
+> > +		case 4:
+> > +			pr_data = 0;
+> > +			pr_data |= FIELD_PREP(FME_PR_DATA_PR_DATA_RAW,
+> > +					*((u32 *)buf));
 > 
-> I think you may be missing the point of splitting lockdown to separate integrity and confidentiality.  Can you actually think of a case where *reading* a debugfs file can take over a kernel?
+> I know it's not new, but why not just "pr_data = FIELD..."?  Const should
+> also be preserved in the cast, and you can drop one set of parentheses.
 
-Reading a debugfs file can expose loads of things that can help take
-over a kernel, or at least make it easier.  Pointer addresses, internal
-system state, loads of other fun things.  And before 4.14 or so, it was
-pretty trivial to use it to oops the kernel as well (not an issue here
-anymore, but people are right to be nervous).
+Yes, agree, will fix this.
 
-Personally, I think these are all just "confidentiality" type things,
-but who really knows given the wild-west nature of debugfs (which is as
-designed).  And given that I think this patch series just crazy anyway,
-I really don't care :)
+> 
+> > +			writeq(pr_data, fme_pr + FME_PR_DATA);
+> > +			break;
+> > +		case 64:
+> > +			copy512((void *)buf, fme_pr + FME_PR_512_DATA);
+> > +			break;
+> 
+> Unnecessary cast.
 
-thanks,
+Will fix this.
 
-greg k-h
+> 
+> > +		default:
+> > +			ret = -EFAULT;
+> > +			goto done;
+> 
+> How is it EFAULT?  Any other value for pr_datawidth should be WARN_ON
+> since it's set by kernel code.
+
+Agree, will fix this in the next version.
+
+> 
+> > @@ -159,13 +161,10 @@ static int fme_pr(struct platform_device *pdev,
+> > unsigned long arg)
+> >  		fpga_bridges_put(&region->bridge_list);
+> >  
+> >  	put_device(&region->dev);
+> > -unlock_exit:
+> > -	mutex_unlock(&pdata->lock);
+> >  free_exit:
+> >  	vfree(buf);
+> > -	if (copy_to_user((void __user *)arg, &port_pr, minsz))
+> > -		return -EFAULT;
+> > -
+> 
+> Why is the copy_to_user being removed?
+
+This code is not needed at all but added by mistake i think.
+
+Sorry, i should move these code into a separated patch with proper comments
+to avoid confusion.
+
+Thanks
+Hao
+
+> 
+> -Scott
