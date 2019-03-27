@@ -1,111 +1,28 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: [PATCH 3/4] signal: support pidfd_open() with pidfd_send_signal()
-Date: Wed, 27 Mar 2019 17:21:46 +0100
-Message-ID: <20190327162147.23198-4-christian@brauner.io>
-References: <20190327162147.23198-1-christian@brauner.io>
+From: James Morris <jmorris@namei.org>
+Subject: Re: [PATCH V31 25/25] debugfs: Disable open() when kernel is locked
+ down
+Date: Thu, 28 Mar 2019 03:53:32 +1100 (AEDT)
+Message-ID: <alpine.LRH.2.21.1903280353120.31119@namei.org>
+References: <20190326182742.16950-1-matthewgarrett@google.com> <20190326182742.16950-26-matthewgarrett@google.com> <CALCETrXDF2c2-gnOyNTnEn-uPAZp0AaSB_PB8e2y8jf7zo=Cyg@mail.gmail.com> <20190327003057.GA27311@kroah.com> <CALCETrVDDf4dj3Md1Nxc5P_NCToXGnAbEO3bGfwgKSfeVmU4Kw@mail.gmail.com>
+ <20190327050615.GA548@kroah.com> <16124107-70D3-4CA0-9766-36FC6DC10128@amacapital.net> <20190327053342.GA17484@kroah.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190327162147.23198-1-christian@brauner.io>
+In-Reply-To: <20190327053342.GA17484@kroah.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: jannh@google.com, khlebnikov@yandex-team.ru, luto@kernel.org, dhowells@redhat.com, serge@hallyn.com, ebiederm@xmission.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: arnd@arndb.de, keescook@chromium.org, adobriyan@gmail.com, tglx@linutronix.de, mtk.manpages@gmail.com, bl0pbl33p@gmail.com, ldv@altlinux.org, akpm@linux-foundation.org, oleg@redhat.com, nagarathnam.muthusamy@oracle.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, joel@joelfernandes.org, dancol@google.com, Christian Brauner <christian@brauner.io>
+To: Greg KH <gregkh@linuxfoundation.org>
+Cc: Andy Lutomirski <luto@amacapital.net>, Andy Lutomirski <luto@kernel.org>, Matthew Garrett <matthewgarrett@google.com>, LSM List <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>, Matthew Garrett <mjg59@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Let pidfd_send_signal() use pidfds retrieved via pidfd_open(). With this
-patch pidfd_send_signal() becomes independent of procfs. This fullfils the
-request made when we merged the pidfd_send_signal() patchset. The
-pidfd_send_signal() syscall is now always available allowing for it to be
-used by users without procfs mounted or even users without procfs support
-compiled into the kernel.
+On Wed, 27 Mar 2019, Greg KH wrote:
 
-Signed-off-by: Christian Brauner <christian@brauner.io>
-Reviewed-by: David Howells <dhowells@redhat.com>
-Acked-by: Serge Hallyn <serge@hallyn.com>
-Cc: Arnd Bergmann <arnd@arndb.de>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Alexey Dobriyan <adobriyan@gmail.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Jann Horn <jannh@google.com
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Cc: Jonathan Kowalski <bl0pbl33p@gmail.com>
-Cc: "Dmitry V. Levin" <ldv@altlinux.org>
-Cc: Andy Lutomirsky <luto@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Oleg Nesterov <oleg@redhat.com>
-Cc: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>
-Cc: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>
----
- kernel/signal.c | 14 ++++++++++----
- kernel/sys_ni.c |  3 ---
- 2 files changed, 10 insertions(+), 7 deletions(-)
+> Personally, I think these are all just "confidentiality" type things,
+> but who really knows given the wild-west nature of debugfs (which is as
+> designed).  And given that I think this patch series just crazy anyway,
+> I really don't care :)
 
-diff --git a/kernel/signal.c b/kernel/signal.c
-index b7953934aa99..eb97d0cc6ef7 100644
---- a/kernel/signal.c
-+++ b/kernel/signal.c
-@@ -3513,7 +3513,6 @@ SYSCALL_DEFINE2(kill, pid_t, pid, int, sig)
- 	return kill_something_info(sig, &info, pid);
- }
- 
--#ifdef CONFIG_PROC_FS
- /*
-  * Verify that the signaler and signalee either are in the same pid namespace
-  * or that the signaler's pid namespace is an ancestor of the signalee's pid
-@@ -3550,6 +3549,14 @@ static int copy_siginfo_from_user_any(kernel_siginfo_t *kinfo, siginfo_t *info)
- 	return copy_siginfo_from_user(kinfo, info);
- }
- 
-+static struct pid *pidfd_to_pid(const struct file *file)
-+{
-+	if (file->f_op == &pidfd_fops)
-+		return file->private_data;
-+
-+	return tgid_pidfd_to_pid(file);
-+}
-+
- /**
-  * sys_pidfd_send_signal - send a signal to a process through a task file
-  *                          descriptor
-@@ -3581,12 +3588,12 @@ SYSCALL_DEFINE4(pidfd_send_signal, int, pidfd, int, sig,
- 	if (flags)
- 		return -EINVAL;
- 
--	f = fdget_raw(pidfd);
-+	f = fdget(pidfd);
- 	if (!f.file)
- 		return -EBADF;
- 
- 	/* Is this a pidfd? */
--	pid = tgid_pidfd_to_pid(f.file);
-+	pid = pidfd_to_pid(f.file);
- 	if (IS_ERR(pid)) {
- 		ret = PTR_ERR(pid);
- 		goto err;
-@@ -3625,7 +3632,6 @@ SYSCALL_DEFINE4(pidfd_send_signal, int, pidfd, int, sig,
- 	fdput(f);
- 	return ret;
- }
--#endif /* CONFIG_PROC_FS */
- 
- static int
- do_send_specific(pid_t tgid, pid_t pid, int sig, struct kernel_siginfo *info)
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index d21f4befaea4..4d9ae5ea6caf 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -167,9 +167,6 @@ COND_SYSCALL(syslog);
- 
- /* kernel/sched/core.c */
- 
--/* kernel/signal.c */
--COND_SYSCALL(pidfd_send_signal);
--
- /* kernel/sys.c */
- COND_SYSCALL(setregid);
- COND_SYSCALL(setgid);
+Why do you think it's crazy?
+
 -- 
-2.21.0
+James Morris
+<jmorris@namei.org>
