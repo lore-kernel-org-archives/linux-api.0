@@ -1,35 +1,80 @@
 From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH 4/4] tests: add pidfd_open() tests
-Date: Wed, 27 Mar 2019 21:55:38 +0100
-Message-ID: <20190327205536.xa47wrwgwfqqnocg@brauner.io>
+Subject: Re: [PATCH 2/4] pid: add pidfd_open()
+Date: Wed, 27 Mar 2019 21:59:23 +0100
+Message-ID: <20190327205922.ajkkylqft6tp5cf7@brauner.io>
 References: <20190327162147.23198-1-christian@brauner.io>
- <20190327162147.23198-5-christian@brauner.io>
- <CAGXu5jL-3XbFzT-1qzEiXE+DTPi_xi7dEtyAMTwBJU0BqrFeKQ@mail.gmail.com>
+ <20190327162147.23198-3-christian@brauner.io>
+ <9254286c02dbe883c14e38ed2af0022d36b17355.camel@opteya.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAGXu5jL-3XbFzT-1qzEiXE+DTPi_xi7dEtyAMTwBJU0BqrFeKQ@mail.gmail.com>
+In-Reply-To: <9254286c02dbe883c14e38ed2af0022d36b17355.camel@opteya.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Jann Horn <jannh@google.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, bl0pbl33p@gmail.com, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, nagarathnam.muthusamy@oracle.com, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>, Joel Fernandes <joel@joelfernandes.org>, Daniel
+To: Yann Droneaud <ydroneaud@opteya.com>
+Cc: jannh@google.com, khlebnikov@yandex-team.ru, luto@kernel.org, dhowells@redhat.com, serge@hallyn.com, ebiederm@xmission.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, arnd@arndb.de, keescook@chromium.org, adobriyan@gmail.com, tglx@linutronix.de, mtk.manpages@gmail.com, bl0pbl33p@gmail.com, ldv@altlinux.org, akpm@linux-foundation.org, oleg@redhat.com, nagarathnam.muthusamy@oracle.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, joel@joelfernandes.org, dancol@google.com
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 27, 2019 at 12:36:46PM -0700, Kees Cook wrote:
-> On Wed, Mar 27, 2019 at 9:22 AM Christian Brauner <christian@brauner.io> wrote:
-> >
-> > This adds a simple test case for pidfd_open().
+On Wed, Mar 27, 2019 at 06:21:24PM +0100, Yann Droneaud wrote:
+> Le mercredi 27 mars 2019 à 17:21 +0100, Christian Brauner a écrit :
 > 
-> Thank you for the tests. :) It might be nice to see more extensive
-> negative testing -- making sure pids aren't reachable from mismatched
+> > diff --git a/kernel/pid.c b/kernel/pid.c
+> > index 20881598bdfa..c9e24e726aba 100644
+> > --- a/kernel/pid.c
+> > +++ b/kernel/pid.c
+> > @@ -26,8 +26,10 @@
+> > +SYSCALL_DEFINE4(pidfd_open, pid_t, pid, int, procfd, int, pidfd,
+> > unsigned int,
+> > +		flags)
+> > +{
+> > +	long fd = -EINVAL;
+> > +
+> > +	if (flags & ~(PIDFD_TO_PROCFD | PROCFD_TO_PIDFD))
+> > +		return -EINVAL;
+> > +
+> > +	if (!flags) {
+> > +		struct pid *pidfd_pid;
+> > +
+> > +		if (pid <= 0)
+> > +			return -EINVAL;
+> > +
+> > +		if (procfd != -1 || pidfd != -1)
+> > +			return -EINVAL;
+> > +
+> > +		rcu_read_lock();
+> > +		pidfd_pid = get_pid(find_pid_ns(pid, task_active_pid_ns(current)));
+> > +		rcu_read_unlock();
+> > +
+> > +		fd = pidfd_create_fd(pidfd_pid, O_CLOEXEC);
+> > +		put_pid(pidfd_pid);
+> > +	} else if (flags & PIDFD_TO_PROCFD) {
+> 
+> [...]
+> 
+> > +	} else if (flags & PROCFD_TO_PIDFD) {
+> > +		if (flags & ~PROCFD_TO_PIDFD)
+> > +			return -EINVAL;
+> > +
+> > +		if (pid != -1)
+> > +			return -EINVAL;
+> > +
+> > +		if (pidfd >= 0)
+> > 
+> 
+> I think it can be stricter with:
+> 
+>                 if (pidfd != -1)
 
-There'll be more tests for sure! Once people say that they are happy
-with the design I can put in the effort to expand the tests to more
-elaborate scenarios. :)
+Yes.
 
-> pid namespaces, etc, but this gets us basic regression testing. Also,
-> you might save some copy/paste code using kselftest_harness.h's
-> interfaces.
+> 
+> (and match the check done for flag == 0).
+> 
+> Regards.
 > 
 > -- 
-> Kees Cook
+> Yann Droneaud
+> OPTEYA
+> 
+> 
