@@ -1,79 +1,146 @@
-From: Ondrej Mosnacek <omosnace@redhat.com>
-Subject: Re: [PATCH ghak90 V5 07/10] audit: add containerid support for user records
-Date: Wed, 27 Mar 2019 22:30:46 +0100
-Message-ID: <CAFqZXNu2NRJg-cy_b=ig4o7v6+3dV1kGp8QtKRcVbtBxrapDMQ@mail.gmail.com>
-References: <cover.1552665316.git.rgb@redhat.com> <e724de2037db0fd72fef7154c83615a742417d31.1552665316.git.rgb@redhat.com>
+From: Christian Brauner <christian@brauner.io>
+Subject: Re: [PATCH 2/4] pid: add pidfd_open()
+Date: Wed, 27 Mar 2019 22:34:05 +0100
+Message-ID: <20190327213404.pv4wqtkjbufkx36u@brauner.io>
+References: <20190327162147.23198-1-christian@brauner.io>
+ <20190327162147.23198-3-christian@brauner.io>
+ <CAGLj2rG8xMMt8-+r-pauA_qi4aun2y_kBZMCZGkXWQsKJrb-Ww@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <e724de2037db0fd72fef7154c83615a742417d31.1552665316.git.rgb@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <CAGLj2rG8xMMt8-+r-pauA_qi4aun2y_kBZMCZGkXWQsKJrb-Ww@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Guy Briggs <rgb@redhat.com>
-Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, Paul Moore <paul@paul-moore.com>, Steve Grubb <sgrubb@redhat.com>, David Howells <dhowells@redhat.com>, Simo Sorce <simo@redhat.com>, Eric Paris <eparis@parisplace.org>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W . Biederman" <ebiederm@xmission.com>, nhorman@tuxdriver.com
+To: Jonathan Kowalski <bl0pbl33p@gmail.com>
+Cc: Jann Horn <jannh@google.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 15, 2019 at 7:34 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> Add audit container identifier auxiliary record to user event standalone
-> records.
->
-> Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+On Wed, Mar 27, 2019 at 07:38:13PM +0000, Jonathan Kowalski wrote:
+> Christian,
+> 
+> Giving this some thought, it looks fine to me, but I am not convinced
+> this should take a pid argument. I much prefer if obtaining a pidfd
 
-Reviewed-by: Ondrej Mosnacek <omosnace@redhat.com>
+The signatures for pidfd_open() you're suggesting are conflicting. Even
+taking into account that you're referring to Andy's version:
 
-> ---
->  kernel/audit.c | 13 ++++++-------
->  1 file changed, 6 insertions(+), 7 deletions(-)
->
-> diff --git a/kernel/audit.c b/kernel/audit.c
-> index cfa659b3f6c4..cf448599ef34 100644
-> --- a/kernel/audit.c
-> +++ b/kernel/audit.c
-> @@ -1142,12 +1142,6 @@ static void audit_log_common_recv_msg(struct audit_context *context,
->         audit_log_task_context(*ab);
->  }
->
-> -static inline void audit_log_user_recv_msg(struct audit_buffer **ab,
-> -                                          u16 msg_type)
-> -{
-> -       audit_log_common_recv_msg(NULL, ab, msg_type);
-> -}
-> -
->  int is_audit_feature_set(int i)
->  {
->         return af.features & AUDIT_FEATURE_TO_MASK(i);
-> @@ -1409,13 +1403,16 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
->
->                 err = audit_filter(msg_type, AUDIT_FILTER_USER);
->                 if (err == 1) { /* match or error */
-> +                       struct audit_context *context;
-> +
->                         err = 0;
->                         if (msg_type == AUDIT_USER_TTY) {
->                                 err = tty_audit_push();
->                                 if (err)
->                                         break;
->                         }
-> -                       audit_log_user_recv_msg(&ab, msg_type);
-> +                       context = audit_alloc_local(GFP_KERNEL);
-> +                       audit_log_common_recv_msg(context, &ab, msg_type);
->                         if (msg_type != AUDIT_USER_TTY)
->                                 audit_log_format(ab, " msg='%.*s'",
->                                                  AUDIT_MESSAGE_TEXT_MAX,
-> @@ -1431,6 +1428,8 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
->                                 audit_log_n_untrustedstring(ab, data, size);
->                         }
->                         audit_log_end(ab);
-> +                       audit_log_contid(context, audit_get_contid(current));
-> +                       audit_free_context(context);
->                 }
->                 break;
->         case AUDIT_ADD_RULE:
-> --
-> 1.8.3.1
->
+int procfd = pidfd_open(procrootfd, pidfd, PIDFD_TO_PROCFD); //name
 
+the "not convinced this should take a pid argument" confuses me wrt to
+the proposed second signature:
 
--- 
-Ondrej Mosnacek <omosnace at redhat dot com>
-Software Engineer, Security Technologies
-Red Hat, Inc.
+pidfd_open(pid_t pid, int ns, unsigned int flags);
+
+> goes in the translation stuff, that has very real usecases, and you
+> would end up duplicating the same thing over in two places.
+> 
+> If the /proc/<PID> dir fd of a pidfd is relative to its procrootfd, a
+> pid's pidfd is also relative to its namespace. Currently, you change
+
+Pass a /proc/<pid> file descriptor that you have been given access to to
+pidfd_open() and retrieve a pidfd to that process.
+
+> things which would mean I now have to setns and spawn a child that
+> passes me back the pidfd for a pid in the said namespace.
+
+There are two scenarios:
+- you're in a cousin pid namespace
+- you're in an ancestor pid namespace
+
+If you're in an ancestor pid namespace you can just get a pidfd based on
+the pid of the process in your namespace. If you're in a cousin
+pid namespace it seems reasonable that you have to do a setns to get a
+pidfd. After all, you're not able to see any pids in there by default.
+If you want pidfd to a cousin pid namespace prove that you can access it
+by attaching to the owning user namespace of the pid namespace and get
+your pidfd.
+
+> 
+> I prefer Andy's version of
+> 
+>   int procrootfd = open("/proc", O_DIRECTORY | O_RDONLY);
+>   int procfd = pidfd_open(procrootfd, pidfd, PIDFD_TO_PROCFD); //name
+> this procfd_open, maybe
+> 
+> This is just a nicer race free openat.
+> 
+> But, Joel and you agreed that it makes sense to split out the
+> translation stuff out of pidfds.
+
+I don't quite remember that part.
+
+I honestly think that the version proposed here covers for the most part
+what we want and provides a decent compromise by avoiding ioctl()s for
+the translation bits, allows us to not split this into multiple
+syscalls, and also allows retrieving pidfds from other pid namespaces
+provided that one has gotten access to a file descriptor for
+/proc/<pid>. If really needed at some point - I doubt we will - you
+can extend pidfd_open() to take the flag CLONE_NEWPID:
+
+int pidfd = pidfd_open(pid, pid_ns_fd, -1, CLONE_NEWPID);
+
+and get pidfd for another pid namespace back.
+
+Christian
+
+> 
+> My suggestion would be to extend ioctl_ns(2) then. It already provides
+> a (rather clumsy) mechanism to determine the relationship by comparing
+> st_dev and st_ino, which userspace can do itself for two namespace
+> descriptors. For translation, you can extend this namespace ioctl
+> (there is one to get a owner UID, you could add one to get a relative
+> PID).
+> 
+> Then, your pidfd call will be:
+> 
+> pidfd_open(pid_t pid, int ns, unsigned int flags);
+> 
+> You would also be able to compile out anything procfs related (include
+> the new API to procfs dir fd translation), otherwise, the way to open
+> pidfds is in this call, and without CONFIG_PROC_FS=Y, this is as good
+> as pidfd_open(pid_t pid) (of which a better version I propose above).
+> The new API should be its own thing, and the procfs translation tuple
+> its own thing, tied to the proc fs option. pidfds need not have any
+> relation to /proc.
+
+They don't have a relation to procfs right now in this syscall. Works
+fine without procfs. That's the point.
+
+> 
+> For this procfd conversion system call, I would also lift any
+> namespace related restrictions if you are planning to, given the
+> constraint that I can only open a pidfd from an ancestor namespace
+> with the new pidfd_open system call, or acquire it through a
+> cooperative userspace process by fd passing otherwise, and I need the
+> /proc root fd, having both only permits me to open the said process's
+> /proc/<PID> dir fd subject to normal access restrictions. This means
+> the simplified procfd_open can be used to do metadata access without
+> even talking of PIDs at all, your process could live in its own world
+> and, given it has the authority to open the /proc directory, be able
+> to purely collect metadata based on the two file descriptors it is
+> given.
+> 
+> Once you have the restriction in the same call that allows you to open
+> a pidfd for an addressable PID from the given namespace fd, you can
+> finally remove the restriction to signal across namespaces once the
+> siginfo stuff is sorted out, as that will only work when you
+> explicitly push the fd into a sandbox, the process cannot get it out
+> of thin air on its own (and you already mentioned it has nothing to do
+> with security). What I do worry about is one can use NS_GET_PARENT
+> ioctl to get the parent pidns if the owning userns is the same, and
+> just passing that gives me back a pidfd for the task. **So, you might
+> want to add the constraint that the PID is actually reachable by the
+> current task as well, apart from being reachable in the passed in
+> namespace.**
+> 
+> Lastly, I also see no need of /proc/<PID> dir fd to pidfd conversion,
+> I would even recommend getting rid of that, so we only have one type
+> of pidfd, the anon inode one. What is the usecase behind that? It
+> would only be needed if you did not have a way to be able to metadata
+> access through a pidfd, which would be the case only prior to this
+> patch.
+> 
+> I think this would simplify a lot of things, and ioctl_ns(2) is
+> probably already the place to do comparison operations and query
+> operations on hierarichal namespaces, just adding the relative PID bit
+> will make it gain feature parity with translate_pid.
