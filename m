@@ -1,121 +1,54 @@
-From: Wu Hao <hao.wu@intel.com>
-Subject: Re: [PATCH 03/17] fpga: dfl: fme: support 512bit data width PR
-Date: Wed, 27 Mar 2019 15:10:06 +0800
-Message-ID: <20190327071006.GA18685@hao-dev>
-References: <1553483264-5379-1-git-send-email-hao.wu@intel.com>
- <1553483264-5379-4-git-send-email-hao.wu@intel.com>
- <127a9356a7bf597d35dd361f2b16bf80460f0370.camel@redhat.com>
- <655bf2991a4f8bf6a473c91218d6dba7748520aa.camel@redhat.com>
- <20190327051040.GB20968@hao-dev>
- <fd78636fb37cfcb725b22bb6a5f7576fa61a00a7.camel@redhat.com>
+From: Martin Schwidefsky <schwidefsky@de.ibm.com>
+Subject: Re: [PATCH 1/4] glibc: Perform rseq(2) registration at C startup
+ and thread creation (v7)
+Date: Wed, 27 Mar 2019 10:16:08 +0100
+Message-ID: <20190327101608.77b0de6f@mschwideX1>
+References: <20190212194253.1951-1-mathieu.desnoyers@efficios.com>
+        <20190212194253.1951-2-mathieu.desnoyers@efficios.com>
+        <5166fbe9-cfe0-8554-abc7-4fc844cf2765@redhat.com>
+        <1965431879.7576.1553529272844.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <fd78636fb37cfcb725b22bb6a5f7576fa61a00a7.camel@redhat.com>
+In-Reply-To: <1965431879.7576.1553529272844.JavaMail.zimbra@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Scott Wood <swood@redhat.com>
-Cc: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Ananda Ravuri <ananda.ravuri@intel.com>, Xu Yilun <yilun.xu@intel.com>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Carlos O'Donell <codonell@redhat.com>, Paul Burton <paul.burton@mips.com>, Will Deacon <will.deacon@arm.com>, Boqun Feng <boqun.feng@gmail.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Vasily Gorbik <gor@linux.ibm.com>, Russell King <linux@armlinux.org.uk>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Dave Watson <davejwatson>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 27, 2019 at 01:19:29AM -0500, Scott Wood wrote:
-> On Wed, 2019-03-27 at 13:10 +0800, Wu Hao wrote:
-> > On Mon, Mar 25, 2019 at 05:58:36PM -0500, Scott Wood wrote:
-> > > On Mon, 2019-03-25 at 17:53 -0500, Scott Wood wrote:
-> > > > On Mon, 2019-03-25 at 11:07 +0800, Wu Hao wrote:
-> > > > > In early partial reconfiguration private feature, it only
-> > > > > supports 32bit data width when writing data to hardware for
-> > > > > PR. 512bit data width PR support is an important optimization
-> > > > > for some specific solutions (e.g. XEON with FPGA integrated),
-> > > > > it allows driver to use AVX512 instruction to improve the
-> > > > > performance of partial reconfiguration. e.g. programming one
-> > > > > 100MB bitstream image via this 512bit data width PR hardware
-> > > > > only takes ~300ms, but 32bit revision requires ~3s per test
-> > > > > result.
-> > > > > 
-> > > > > Please note now this optimization is only done on revision 2
-> > > > > of this PR private feature which is only used in integrated
-> > > > > solution that AVX512 is always supported.
-> > > > > 
-> > > > > Signed-off-by: Ananda Ravuri <ananda.ravuri@intel.com>
-> > > > > Signed-off-by: Xu Yilun <yilun.xu@intel.com>
-> > > > > Signed-off-by: Wu Hao <hao.wu@intel.com>
-> > > > > ---
-> > > > >  drivers/fpga/dfl-fme-main.c |  3 ++
-> > > > >  drivers/fpga/dfl-fme-mgr.c  | 75
-> > > > > +++++++++++++++++++++++++++++++++++++-
-> > > > > --
-> > > > > -----
-> > > > >  drivers/fpga/dfl-fme-pr.c   | 45 ++++++++++++++++-----------
-> > > > >  drivers/fpga/dfl-fme.h      |  2 ++
-> > > > >  drivers/fpga/dfl.h          |  5 +++
-> > > > >  5 files changed, 99 insertions(+), 31 deletions(-)
-> > > > > 
-> > > > > diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-
-> > > > > main.c
-> > > > > index 086ad24..076d74f 100644
-> > > > > --- a/drivers/fpga/dfl-fme-main.c
-> > > > > +++ b/drivers/fpga/dfl-fme-main.c
-> > > > > @@ -21,6 +21,8 @@
-> > > > >  #include "dfl.h"
-> > > > >  #include "dfl-fme.h"
-> > > > >  
-> > > > > +#define DRV_VERSION	"0.8"
-> > > > 
-> > > > What is this going to be used for?  Under what circumstances will the
-> > > > driver version be bumped?  What does it have to do with 512-bit
-> > > > writes?
+On Mon, 25 Mar 2019 11:54:32 -0400 (EDT)
+Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
+
+> >> +++ b/sysdeps/unix/sysv/linux/s390/bits/rseq.h  
+> [...]
+> >> +
+> >> +/* Signature required before each abort handler code.  */
+> >> +#define RSEQ_SIG 0x53053053  
 > > 
-> > This patchset adds more features to this driver, so i would like to add
-> > a DRV_VERSION there as an initial one. In the future, if some new features
-> > or extensions for existing features (e.g. new revision of a private
-> > feature)
-> > are added we need to bump this version.
+> > Why not a s390 specific value here?  
 > 
-> This doesn't seem like a good way of advertising API availability... Besides
-> being awkward to query, what happens if a distro kernel has backported some
-> features but not others that came before?  What does it advertise?
-
-DRV_VERSION here is not used for API availablity. :)
-
-> I'd suggest some sort of feature flag mechanism that can be queried via
-> ioctl (e.g. along the lines of KVM capabilities), if "try the API and fall
-> back if it fails" is unsatisfactory.
+> s390 also has the abort handler in a __rseq_failure section:
 > 
-> Plus, if it's about new APIs being exposed, this doesn't seem like the right
-> patch for it to be in...
-
-Actually this patch doesn't introduce new APIs, I am trying to make this
-transparent to endusers. That means users don't need to know it's a 32bit
-PR or a faster 512bit one, they still use the same IOCTL interface for PR.
-
-the API_VERSION and CHECK_EXTENSION ioctls have been defined, but I think
-at least we don't need to bump them for this change. How do you think?
-
+> #define RSEQ_ASM_DEFINE_ABORT(label, teardown, abort_label)             \
+>                 ".pushsection __rseq_failure, \"ax\"\n\t"               \
+>                 ".long " __rseq_str(RSEQ_SIG) "\n\t"                    \
+>                 __rseq_str(label) ":\n\t"                               \
+>                 teardown                                                \
+>                 "j %l[" __rseq_str(abort_label) "]\n\t"                 \
+>                 ".popsection\n\t"
 > 
-> > > Sorry, I missed the comment about revision 2 only being on integrated
-> > > devices -- but will that always be the case?  Seems worthwhile to check
-> > > for
-> > > AVX512 support anyway.  And there's still the possibility of being built
-> > > with an old binutils such that CONFIG_AS_AVX512 is not set, or running
-> > > on a
-> > > kernel where avx512 was disabled via a boot option.
-> > > 
-> > > What about future revisions >= 2?  Currently the driver will treat them
-> > > as
-> > > if they were revision < 2.  Is that intended?
-> > 
-> > Yes, it's intended. Currently we don't have any hardware with revisions >
-> > 2,
-> > and support new revisions may need new code. :)  e.g. currently revision
-> > is
-> > used to tell 32bit vs 512bit PR, but in future revisions, it may have new
-> > capability registers for this purpose.
+> Same question applies as powerpc: since disassemblers will try to decode
+> that instruction, would it be better to define it as a valid one ?
 > 
-> The driver should refuse to bind to unrecognized revisions, if they're not
-> expected to be compatible.
+> [...]
 
-Yes, agree.
+A 4-byte sequence starting with 0x53 is decoded as a "diebr" instruction.
+And please replace that "j %l[...]" with a "jg %l[...]", the branch target
+range of the "j" instruction is 64K, not enough for the general case.
 
-Thanks
-Hao
+-- 
+blue skies,
+   Martin.
+
+"Reality continues to ruin my life." - Calvin.
