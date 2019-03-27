@@ -1,7 +1,7 @@
 From: Christian Brauner <christian@brauner.io>
-Subject: [PATCH v1 3/4] signal: support pidfd_open() with pidfd_send_signal()
-Date: Wed, 27 Mar 2019 23:19:09 +0100
-Message-ID: <20190327221910.5897-4-christian@brauner.io>
+Subject: [PATCH v1 4/4] tests: add pidfd_open() tests
+Date: Wed, 27 Mar 2019 23:19:10 +0100
+Message-ID: <20190327221910.5897-5-christian@brauner.io>
 References: <20190327221910.5897-1-christian@brauner.io>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,22 +12,16 @@ To: jannh@google.com, khlebnikov@yandex-team.ru, luto@kernel.org, dhowells@redha
 Cc: arnd@arndb.de, keescook@chromium.org, adobriyan@gmail.com, tglx@linutronix.de, mtk.manpages@gmail.com, bl0pbl33p@gmail.com, ldv@altlinux.org, akpm@linux-foundation.org, oleg@redhat.com, nagarathnam.muthusamy@oracle.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, joel@joelfernandes.org, dancol@google.com, Christian Brauner <christian@brauner.io>
 List-Id: linux-api@vger.kernel.org
 
-Let pidfd_send_signal() use pidfds retrieved via pidfd_open(). With this
-patch pidfd_send_signal() becomes independent of procfs. This fullfils the
-request made when we merged the pidfd_send_signal() patchset. The
-pidfd_send_signal() syscall is now always available allowing for it to be
-used by users without procfs mounted or even users without procfs support
-compiled into the kernel.
+This adds a simple test case for pidfd_open().
 
 Signed-off-by: Christian Brauner <christian@brauner.io>
-Reviewed-by: David Howells <dhowells@redhat.com>
-Acked-by: Serge Hallyn <serge@hallyn.com>
 Cc: Arnd Bergmann <arnd@arndb.de>
 Cc: "Eric W. Biederman" <ebiederm@xmission.com>
 Cc: Kees Cook <keescook@chromium.org>
 Cc: Alexey Dobriyan <adobriyan@gmail.com>
 Cc: Thomas Gleixner <tglx@linutronix.de>
 Cc: Jann Horn <jannh@google.com
+Cc: David Howells <dhowells@redhat.com>
 Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
 Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
 Cc: Jonathan Kowalski <bl0pbl33p@gmail.com>
@@ -39,73 +33,229 @@ Cc: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>
 Cc: Aleksa Sarai <cyphar@cyphar.com>
 Cc: Al Viro <viro@zeniv.linux.org.uk>
 ---
- kernel/signal.c | 14 ++++++++++----
- kernel/sys_ni.c |  3 ---
- 2 files changed, 10 insertions(+), 7 deletions(-)
+ tools/testing/selftests/pidfd/Makefile        |   2 +-
+ .../testing/selftests/pidfd/pidfd_open_test.c | 201 ++++++++++++++++++
+ 2 files changed, 202 insertions(+), 1 deletion(-)
+ create mode 100644 tools/testing/selftests/pidfd/pidfd_open_test.c
 
-diff --git a/kernel/signal.c b/kernel/signal.c
-index b7953934aa99..eb97d0cc6ef7 100644
---- a/kernel/signal.c
-+++ b/kernel/signal.c
-@@ -3513,7 +3513,6 @@ SYSCALL_DEFINE2(kill, pid_t, pid, int, sig)
- 	return kill_something_info(sig, &info, pid);
- }
+diff --git a/tools/testing/selftests/pidfd/Makefile b/tools/testing/selftests/pidfd/Makefile
+index deaf8073bc06..b36c0be70848 100644
+--- a/tools/testing/selftests/pidfd/Makefile
++++ b/tools/testing/selftests/pidfd/Makefile
+@@ -1,6 +1,6 @@
+ CFLAGS += -g -I../../../../usr/include/
  
--#ifdef CONFIG_PROC_FS
- /*
-  * Verify that the signaler and signalee either are in the same pid namespace
-  * or that the signaler's pid namespace is an ancestor of the signalee's pid
-@@ -3550,6 +3549,14 @@ static int copy_siginfo_from_user_any(kernel_siginfo_t *kinfo, siginfo_t *info)
- 	return copy_siginfo_from_user(kinfo, info);
- }
+-TEST_GEN_PROGS := pidfd_test
++TEST_GEN_PROGS := pidfd_test pidfd_open_test
  
-+static struct pid *pidfd_to_pid(const struct file *file)
-+{
-+	if (file->f_op == &pidfd_fops)
-+		return file->private_data;
+ include ../lib.mk
+ 
+diff --git a/tools/testing/selftests/pidfd/pidfd_open_test.c b/tools/testing/selftests/pidfd/pidfd_open_test.c
+new file mode 100644
+index 000000000000..07a262a9ef2c
+--- /dev/null
++++ b/tools/testing/selftests/pidfd/pidfd_open_test.c
+@@ -0,0 +1,201 @@
++/* SPDX-License-Identifier: GPL-2.0 */
 +
-+	return tgid_pidfd_to_pid(file);
++#define _GNU_SOURCE
++#include <errno.h>
++#include <fcntl.h>
++#include <inttypes.h>
++#include <limits.h>
++#include <linux/types.h>
++#include <linux/wait.h>
++#include <sched.h>
++#include <signal.h>
++#include <stdbool.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <syscall.h>
++#include <sys/mount.h>
++#include <sys/prctl.h>
++#include <sys/wait.h>
++#include <unistd.h>
++
++#include "../kselftest.h"
++
++static inline int sys_pidfd_open(pid_t pid, int procfd, int pidfd,
++				 unsigned int flags)
++{
++	return syscall(__NR_pidfd_open, pid, procfd, pidfd, flags);
 +}
 +
- /**
-  * sys_pidfd_send_signal - send a signal to a process through a task file
-  *                          descriptor
-@@ -3581,12 +3588,12 @@ SYSCALL_DEFINE4(pidfd_send_signal, int, pidfd, int, sig,
- 	if (flags)
- 		return -EINVAL;
- 
--	f = fdget_raw(pidfd);
-+	f = fdget(pidfd);
- 	if (!f.file)
- 		return -EBADF;
- 
- 	/* Is this a pidfd? */
--	pid = tgid_pidfd_to_pid(f.file);
-+	pid = pidfd_to_pid(f.file);
- 	if (IS_ERR(pid)) {
- 		ret = PTR_ERR(pid);
- 		goto err;
-@@ -3625,7 +3632,6 @@ SYSCALL_DEFINE4(pidfd_send_signal, int, pidfd, int, sig,
- 	fdput(f);
- 	return ret;
- }
--#endif /* CONFIG_PROC_FS */
- 
- static int
- do_send_specific(pid_t tgid, pid_t pid, int sig, struct kernel_siginfo *info)
-diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-index d21f4befaea4..4d9ae5ea6caf 100644
---- a/kernel/sys_ni.c
-+++ b/kernel/sys_ni.c
-@@ -167,9 +167,6 @@ COND_SYSCALL(syslog);
- 
- /* kernel/sched/core.c */
- 
--/* kernel/signal.c */
--COND_SYSCALL(pidfd_send_signal);
--
- /* kernel/sys.c */
- COND_SYSCALL(setregid);
- COND_SYSCALL(setgid);
++static int safe_int(const char *numstr, int *converted)
++{
++	char *err = NULL;
++	signed long int sli;
++
++	errno = 0;
++	sli = strtol(numstr, &err, 0);
++	if (errno == ERANGE && (sli == LONG_MAX || sli == LONG_MIN))
++		return -ERANGE;
++
++	if (errno != 0 && sli == 0)
++		return -EINVAL;
++
++	if (err == numstr || *err != '\0')
++		return -EINVAL;
++
++	if (sli > INT_MAX || sli < INT_MIN)
++		return -ERANGE;
++
++	*converted = (int)sli;
++	return 0;
++}
++
++static int char_left_gc(const char *buffer, size_t len)
++{
++	size_t i;
++
++	for (i = 0; i < len; i++) {
++		if (buffer[i] == ' ' ||
++		    buffer[i] == '\t')
++			continue;
++
++		return i;
++	}
++
++	return 0;
++}
++
++static int char_right_gc(const char *buffer, size_t len)
++{
++	int i;
++
++	for (i = len - 1; i >= 0; i--) {
++		if (buffer[i] == ' '  ||
++		    buffer[i] == '\t' ||
++		    buffer[i] == '\n' ||
++		    buffer[i] == '\0')
++			continue;
++
++		return i + 1;
++	}
++
++	return 0;
++}
++
++static char *trim_whitespace_in_place(char *buffer)
++{
++	buffer += char_left_gc(buffer, strlen(buffer));
++	buffer[char_right_gc(buffer, strlen(buffer))] = '\0';
++	return buffer;
++}
++
++static pid_t get_pid_from_status_file(int *fd)
++{
++	int ret;
++	FILE *f;
++	size_t n = 0;
++	pid_t result = -1;
++	char *line = NULL;
++
++	/* fd now belongs to FILE and will be closed by fclose() */
++	f = fdopen(*fd, "r");
++	if (!f)
++		return -1;
++
++	while (getline(&line, &n, f) != -1) {
++		char *numstr;
++
++		if (strncmp(line, "Pid:", 4))
++			continue;
++
++		numstr = trim_whitespace_in_place(line + 4);
++		ret = safe_int(numstr, &result);
++		if (ret < 0)
++			goto out;
++
++		break;
++	}
++
++out:
++	free(line);
++	fclose(f);
++	*fd = -1;
++	return result;
++}
++
++int main(int argc, char **argv)
++{
++	int ret = 1;
++	int pidfd = -1, pidfd2 = -1, procfd = -1, procpidfd = -1, statusfd = -1;
++	pid_t pid;
++
++	pidfd = sys_pidfd_open(getpid(), -1, -1, 0);
++	if (pidfd < 0) {
++		ksft_print_msg("%s - failed to open pidfd\n", strerror(errno));
++		goto on_error;
++	}
++
++	procfd = open("/proc", O_DIRECTORY | O_RDONLY | O_CLOEXEC);
++	if (procfd < 0) {
++		ksft_print_msg("%s - failed to open /proc\n", strerror(errno));
++		goto on_error;
++	}
++
++	procpidfd = sys_pidfd_open(-1, procfd, pidfd, PIDFD_TO_PROCFD);
++	if (procpidfd < 0) {
++		ksft_print_msg(
++			"%s - failed to retrieve /proc/<pid> from pidfd\n",
++			strerror(errno));
++		goto on_error;
++	}
++
++	pidfd2 = sys_pidfd_open(-1, procpidfd, -1, PROCFD_TO_PIDFD);
++	if (pidfd2 < 0) {
++		ksft_print_msg(
++			"%s - failed to retrieve  pidfd from procpidfd\n",
++			strerror(errno));
++		goto on_error;
++	}
++
++	statusfd = openat(procpidfd, "status", O_CLOEXEC | O_RDONLY);
++	if (statusfd < 0) {
++		ksft_print_msg("%s - failed to open /proc/<pid>/status\n",
++			       strerror(errno));
++		goto on_error;
++	}
++
++	pid = get_pid_from_status_file(&statusfd);
++	if (pid < 0) {
++		ksft_print_msg(
++			"%s - failed to retrieve pid from /proc/<pid>/status\n",
++			strerror(errno));
++		goto on_error;
++	}
++
++	if (pid != getpid()) {
++		ksft_print_msg(
++			"%s - actual pid %d does not equal retrieved pid from /proc/<pid>/status\n",
++			strerror(errno), pid, getpid());
++		goto on_error;
++	}
++
++	ret = 0;
++
++on_error:
++	if (pidfd >= 0)
++		close(pidfd);
++
++	if (pidfd2 >= 0)
++		close(pidfd2);
++
++	if (procfd >= 0)
++		close(procfd);
++
++	if (procpidfd >= 0)
++		close(procpidfd);
++
++	if (statusfd >= 0)
++		close(statusfd);
++
++	return !ret ? ksft_exit_pass() : ksft_exit_fail();
++}
 -- 
 2.21.0
