@@ -1,93 +1,39 @@
 From: Christian Brauner <christian@brauner.io>
-Subject: Re: pidfd design
-Date: Thu, 28 Mar 2019 10:21:21 +0100
-Message-ID: <20190328092119.bzyjp4a6mk7yfoep@brauner.io>
-References: <20190320191412.5ykyast3rgotz3nu@brauner.io>
- <CAKOZuesRwQ4=Svu1KgHWY=HZSS8mF8uFmuzuVOSH0QpJoy7a5w@mail.gmail.com>
- <CALCETrUFrFKC2YTLH7ViM_7XPYk3LNmNiaz6s8wtWo1pmJQXzg@mail.gmail.com>
- <CAG48ez3VMjLJBC_F3BxC2sc2s-28NdsrUduR=jX66XH0w2O-Qg@mail.gmail.com>
- <CAKOZueuNGn31QYpRa5G-OP_S=G3f9TBQ-w27giABn7UVgPQ8Ng@mail.gmail.com>
- <CALCETrV-52TXKbAim06Fr7vvFeOvk0SczneeV_Rtqr6-LN7-GQ@mail.gmail.com>
- <20190325234547.wo6lyimrp52qie5p@brauner.io>
- <CALCETrXfNV5marXSEDGm6F03DNC2a_M+NE94=GxEbH9oJyWkYA@mail.gmail.com>
- <20190326001231.3tnhhlvzg26mof33@brauner.io>
- <CALCETrUSaj+iTEOgEvy30eiCi2+FoN8+bq2BjJmamCjJ4yeBjA@mail.gmail.com>
+Subject: Re: [PATCH 2/4] pid: add pidfd_open()
+Date: Thu, 28 Mar 2019 11:38:15 +0100
+Message-ID: <20190328103813.eogszrqbitw3e7k7@brauner.io>
+References: <20190327162147.23198-1-christian@brauner.io>
+ <20190327162147.23198-3-christian@brauner.io>
+ <CAGLj2rG8xMMt8-+r-pauA_qi4aun2y_kBZMCZGkXWQsKJrb-Ww@mail.gmail.com>
+ <20190327213404.pv4wqtkjbufkx36u@brauner.io>
+ <CAGLj2rHpYAOGz0h0k2pS4JwFSQkMmRSUWxa4BtO+7BUMD21vdQ@mail.gmail.com>
+ <20190327222543.huugotqcew6jyytv@brauner.io>
+ <CAGLj2rG0Sbho6MnPSmcS73Xj=oG92E4W_QLRu4dD8NfweoUm5Q@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CALCETrUSaj+iTEOgEvy30eiCi2+FoN8+bq2BjJmamCjJ4yeBjA@mail.gmail.com>
+In-Reply-To: <CAGLj2rG0Sbho6MnPSmcS73Xj=oG92E4W_QLRu4dD8NfweoUm5Q@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Daniel Colascione <dancol@google.com>, Jann Horn <jannh@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Steven Rostedt <rostedt@goodmis.org>, Sultan Alsawaf <sultan@kerneltoast.com>, Tim Murray <timmurray@google.com>, Michal Hocko <mhocko@kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Arve =?utf-8?B?SGrDuG5uZXbDpWc=?= <arve@android.com>, Todd Kjos <tkjos@android.com>, Martijn Coenen <maco@android.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, LKML <linux-kernel@vger.kernel.org>, "open list:ANDROID DRIVERS" <devel@driverdev.osuosl.org>, kernel-team <kernel-team@android.com>, Oleg Nesterov <oleg@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>K
+To: Jonathan Kowalski <bl0pbl33p@gmail.com>
+Cc: Jann Horn <jannh@google.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 25, 2019 at 05:24:49PM -0700, Andy Lutomirski wrote:
-> On Mon, Mar 25, 2019 at 5:12 PM Christian Brauner <christian@brauner.io> wrote:
-> >
-> > On Mon, Mar 25, 2019 at 05:00:17PM -0700, Andy Lutomirski wrote:
-> > > On Mon, Mar 25, 2019 at 4:45 PM Christian Brauner <christian@brauner.io> wrote:
-> > > >
-> > > > On Mon, Mar 25, 2019 at 04:42:14PM -0700, Andy Lutomirski wrote:
-> > > > > On Mon, Mar 25, 2019 at 1:23 PM Daniel Colascione <dancol@google.com> wrote:
-> > > > > >
-> > > > > > On Mon, Mar 25, 2019 at 1:14 PM Jann Horn <jannh@google.com> wrote:
-> > > > > > >
-> > > > > > > On Mon, Mar 25, 2019 at 8:44 PM Andy Lutomirski <luto@kernel.org> wrote:
-> > > > >
-> > > > > > > One ioctl on procfs roots to translate pidfds into that procfs,
-> > > > > > > subject to both the normal lookup permission checks and only working
-> > > > > > > if the pidfd has a translation into the procfs:
-> > > > > > >
-> > > > > > > int proc_root_fd = open("/proc", O_RDONLY);
-> > > > > > > int proc_dir_fd = ioctl(proc_root_fd, PROC_PIDFD_TO_PROCFSFD, pidfd);
-> > > > > > >
-> > > > > > > And one ioctl on procfs directories to translate from PGIDs and PIDs to pidfds:
-> > > > > > >
-> > > > > > > int proc_pgid_fd = open("/proc/self", O_RDONLY);
-> > > > > > > int self_pg_pidfd = ioctl(proc_pgid_fd, PROC_PROCFSFD_TO_PIDFD, 0);
-> > > > > > > int proc_pid_fd = open("/proc/thread-self", O_RDONLY);
-> > > > > > > int self_p_pidfd = ioctl(proc_pid_fd, PROC_PROCFSFD_TO_PIDFD, 0);
-> > > > > > >
-> > > > >
-> > > > > This sounds okay to me.  Or we could make it so that a procfs
-> > > > > directory fd also works as a pidfd, but that seems more likely to be
-> > > > > problematic than just allowing two-way translation like this
-> > > > >
-> > > > > > >
-> > > > > > > And then, as you proposed, the new sys_clone() can just return a
-> > > > > > > pidfd, and you can convert it into a procfs fd yourself if you want.
-> > > > > >
-> > > > > > I think that's the consensus we reached on the other thread. The
-> > > > > > O_DIRECTORY open on /proc/self/fd/mypidfd seems like it'd work well
-> > > > > > enough.
-> > > > >
-> > > > > I must have missed this particular email.
-> > > > >
-> > > > > IMO, if /proc/self/fd/mypidfd allows O_DIRECTORY open to work, then it
-> > > > > really ought to do function just like /proc/self/fd/mypidfd/. and
-> > > > > /proc/self/fd/mypidfd/status should work.  And these latter two
-> > > > > options seem nutty.
-> > > > >
-> > > > > Also, this O_DIRECTORY thing is missing the entire point of the ioctl
-> > > > > interface -- it doesn't require procfs access.
-> > > >
-> > > > The other option was to encode the pid in the callers pid namespace into
-> > > > the pidfd's fdinfo so that you can parse it out and open /proc/<pid>.
-> > > > You'd just need an event on the pidfd to tell you when the process has
-> > > > died. Jonathan and I just discussed this.
-> > >
-> > > From an application developer's POV, the ioctl interface sounds much,
-> > > much nicer.
-> >
-> > Some people are strongly against ioctl()s some don't. I'm not against
-> > them so both options are fine with me if people can agree.
-> >
-> 
-> There are certainly non-ioctl equivalents that are functionally
-> equivalent.  For example, there could be a syscall
-> procfs_open_pidfd(procfs_fd, pid_fd).  I personally don't really mind
-> ioctl() when it's really an operation on an fd.
+> All that said, thanks for the work on this once again. My intention is
+> just that we don't end up with an API that could have been done better
+> and be cleaner to use for potential users in the coming years.
 
-I totally missed that mail somehow.
-Yes, I agree that an ioctl() makes sense for that.
+Thanks for your input on all of this. I still don't find multiplexers in
+the style of seccomp()/fsconfig()/keyctl() to be a problem since they
+deal with a specific task. They are very much different from ioctl()s in
+that regard. But since Joel, you, and Daniel found the pidctl() approach
+not very nice I dropped it. The interface needs to be satisfactory for
+all of us especially since Android and other system managers will be the
+main consumers.
+So let's split this into pidfd_open(pid_t pid, unsigned int flags) which
+allows to cleanly get pidfds independent procfs and do the translation
+to procpidfds in an ioctl() as we've discussed in prior threads. This
+should also accommodate comments and ideas from Andy and Jann.
+I'm coding this up now.
+
+Christian
