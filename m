@@ -1,114 +1,100 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [PATCH 1/4] glibc: Perform rseq(2) registration at C startup
- and thread creation (v7)
-Date: Thu, 28 Mar 2019 11:42:58 -0400 (EDT)
-Message-ID: <37506383.12659.1553787778500.JavaMail.zimbra@efficios.com>
-References: <20190212194253.1951-1-mathieu.desnoyers@efficios.com> <20190212194253.1951-2-mathieu.desnoyers@efficios.com> <5166fbe9-cfe0-8554-abc7-4fc844cf2765@redhat.com> <1965431879.7576.1553529272844.JavaMail.zimbra@efficios.com> <20190327101608.77b0de6f@mschwideX1> <4021516e-6a1e-166d-a4f6-e961e6f94cc4@redhat.com> <20190328084948.6486fa67@mschwideX1>
+From: Paul Moore <paul@paul-moore.com>
+Subject: Re: [PATCH ghak90 V5 09/10] audit: add support for containerid to
+ network namespaces
+Date: Thu, 28 Mar 2019 11:46:17 -0400
+Message-ID: <CAHC9VhQYVSrX1Ng7hZejkGSq6ZXtqi+SKmpARASJ4P2_2i3-4w@mail.gmail.com>
+References: <cover.1552665316.git.rgb@redhat.com> <27473c84a274c64871cfa8e3636deaf05603c978.1552665316.git.rgb@redhat.com>
+ <CAFqZXNskwTub5Bm_HZqr02VPB4s79CcgAVX8VE2vQYP07-qssg@mail.gmail.com> <20190328011202.6raixwzdimn5b4zk@madcap2.tricolour.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190328084948.6486fa67@mschwideX1>
+In-Reply-To: <20190328011202.6raixwzdimn5b4zk@madcap2.tricolour.ca>
 Sender: linux-kernel-owner@vger.kernel.org
-To: schwidefsky <schwidefsky@de.ibm.com>
-Cc: Carlos O'Donell <codonell@redhat.com>, Paul Burton <paul.burton@mips.com>, Will Deacon <will.deacon@arm.com>, Boqun Feng <boqun.feng@gmail.com>, heiko carstens <heiko.carstens@de.ibm.com>, gor <gor@linux.ibm.com>, "Russell King, ARM Linux" <linux@armlinux.org.uk>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Dave Watson <davejwatso>
+To: Richard Guy Briggs <rgb@redhat.com>
+Cc: Ondrej Mosnacek <omosnace@redhat.com>, nhorman@tuxdriver.com, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, LKML <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Linux-Audit Mailing List <linux-audit@redhat.com>, netfilter-devel@vger.kernel.org, "Eric W . Biederman" <ebiederm@xmission.com>, Simo Sorce <simo@redhat.com>, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, Eric Paris <eparis@parisplace.org>, "Serge E. Hallyn" <serge@hallyn.com>
 List-Id: linux-api@vger.kernel.org
 
------ On Mar 28, 2019, at 3:49 AM, schwidefsky schwidefsky@de.ibm.com wrote:
+On Wed, Mar 27, 2019 at 9:12 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+>
+> On 2019-03-27 23:42, Ondrej Mosnacek wrote:
+> > On Fri, Mar 15, 2019 at 7:35 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> > > Audit events could happen in a network namespace outside of a task
+> > > context due to packets received from the net that trigger an auditing
+> > > rule prior to being associated with a running task.  The network
+> > > namespace could be in use by multiple containers by association to the
+> > > tasks in that network namespace.  We still want a way to attribute
+> > > these events to any potential containers.  Keep a list per network
+> > > namespace to track these audit container identifiiers.
+> > >
+> > > Add/increment the audit container identifier on:
+> > > - initial setting of the audit container identifier via /proc
+> > > - clone/fork call that inherits an audit container identifier
+> > > - unshare call that inherits an audit container identifier
+> > > - setns call that inherits an audit container identifier
+> > > Delete/decrement the audit container identifier on:
+> > > - an inherited audit container identifier dropped when child set
+> > > - process exit
+> > > - unshare call that drops a net namespace
+> > > - setns call that drops a net namespace
+> > >
+> > > See: https://github.com/linux-audit/audit-kernel/issues/92
+> > > See: https://github.com/linux-audit/audit-testsuite/issues/64
+> > > See: https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container-ID
+> > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> > > ---
+> > >  include/linux/audit.h | 19 ++++++++++++
+> > >  kernel/audit.c        | 86 +++++++++++++++++++++++++++++++++++++++++++++++++--
+> > >  kernel/nsproxy.c      |  4 +++
+> > >  3 files changed, 106 insertions(+), 3 deletions(-)
+> > >
+> > > diff --git a/include/linux/audit.h b/include/linux/audit.h
+> > > index fa19fa408931..70255c2dfb9f 100644
+> > > --- a/include/linux/audit.h
+> > > +++ b/include/linux/audit.h
+> > > @@ -27,6 +27,7 @@
+> > >  #include <linux/ptrace.h>
+> > >  #include <linux/namei.h>  /* LOOKUP_* */
+> > >  #include <uapi/linux/audit.h>
+> > > +#include <linux/refcount.h>
+> > >
+> > >  #define AUDIT_INO_UNSET ((unsigned long)-1)
+> > >  #define AUDIT_DEV_UNSET ((dev_t)-1)
+> > > @@ -99,6 +100,13 @@ struct audit_task_info {
+> > >
+> > >  extern struct audit_task_info init_struct_audit;
+> > >
+> > > +struct audit_contid {
+> > > +       struct list_head        list;
+> > > +       u64                     id;
+> > > +       refcount_t              refcount;
+> >
+> > Hm, since we only ever touch the refcount under a spinlock, I wonder
+> > if we could just make it a regular unsigned int (we don't need the
+> > atomicity guarantees). OTOH, refcount_t comes with some extra overflow
+> > checking, so it's probably better to leave it as is...
+>
+> Since the update is done using rcu-safe methods, do we even need the
+> spin_lock?  Neil?  Paul?
 
-> On Wed, 27 Mar 2019 16:38:32 -0400
-> "Carlos O'Donell" <codonell@redhat.com> wrote:
-> 
->> On 3/27/19 5:16 AM, Martin Schwidefsky wrote:
->> > On Mon, 25 Mar 2019 11:54:32 -0400 (EDT)
->> > Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
->> >   
->> >>>> +++ b/sysdeps/unix/sysv/linux/s390/bits/rseq.h
->> >> [...]
->> >>>> +
->> >>>> +/* Signature required before each abort handler code.  */
->> >>>> +#define RSEQ_SIG 0x53053053
->> >>>
->> >>> Why not a s390 specific value here?
->> >>
->> >> s390 also has the abort handler in a __rseq_failure section:
->> >>
->> >> #define RSEQ_ASM_DEFINE_ABORT(label, teardown, abort_label)             \
->> >>                  ".pushsection __rseq_failure, \"ax\"\n\t"               \
->> >>                  ".long " __rseq_str(RSEQ_SIG) "\n\t"                    \
->> >>                  __rseq_str(label) ":\n\t"                               \
->> >>                  teardown                                                \
->> >>                  "j %l[" __rseq_str(abort_label) "]\n\t"                 \
->> >>                  ".popsection\n\t"
->> >>
->> >> Same question applies as powerpc: since disassemblers will try to decode
->> >> that instruction, would it be better to define it as a valid one ?
->> >>
->> >> [...]
->> > 
->> > A 4-byte sequence starting with 0x53 is decoded as a "diebr" instruction.
->> > And please replace that "j %l[...]" with a "jg %l[...]", the branch target
->> > range of the "j" instruction is 64K, not enough for the general case.
->> 
->> Why was this particular operated selected?
+As discussed, the refcount field is protected against simultaneous
+writes by the spinlock that protects additions/removals from the list
+as a whole so I don't believe the refcount_t atomicity is critical in
+this regard.
 
-The 0x53053053 signature was selected by myself on x86, where it is a
-4-byte operand to a no-op instruction. That value looks like "SEQSEQSE"
-in hexadecimal. The goal was to have an uncommon code signature value.
+Where it gets tricky, and I can't say I'm 100% confident on my answer
+here, is if refcount was a regular int and we wanted to access it
+outside of a spinlock (to be clear, it doesn't look like this patch
+currently does this).  With RCU, if refcount was a regular int
+(unsigned or otherwise), I believe it would be possible for different
+threads of execution to potentially see different values of refcount
+(assuming one thread was adding/removing from the list).  Using a
+refcount_t would protect against this, alternatively, taking the
+spinlock should also protect against this.
 
-Then it has been used as-is on arm and mips within literal pools (which seems
-fine), and also on s390 and powerpc where those seem to generate invalid
-instruction within a separate code section.
-
-I'm mainly concerned about the choice of this value on s390 and powerpc.
-
->>   
->> So on s390 the RSEQ_SIG will show up as an unexpected "divide to integer"
->> instruction that can't be reached by any control flow?
->> 
->> Can we use a NOP with a unique value in an immediate operand?
->> 
->> The goal being to have something that won't confuse during a debug
->> session, or that the debugger can ignore (like constant pools on Arm)
-> 
-> I was looking at the wrong table in regard to opcode 0x53. The pattern
-> 0x53...... is not a known instruction as far as the disassembler is
-> concerned. As Mathieu pointed out "diebr" is actually 0xb353....
-> Sorry about the confusion.
-> 
-> But why do we need this value in the first place if it can not be reached?
-
-One reason is to help disassemblers in tools like objdump, gdb, and so on.
-
-Another reason for making this a valid instruction is if the CPU speculative
-execution can be helped by making this instruction a valid one, even though
-it's not reachable through normal execution. (this appears to be important
-at least on aarch64)
-
-However, we want that instruction to be an uncommon one, to reduce the chances
-that an attacker can use the rseq abort mechanism to redirect execution to
-an unrelated code block that would happen to follow that same 4-byte signature.
-For instance, I would not use a no-op which is typically generated by compilers
-there.
-
-In summary:
-
-* x86: Uses a no-op instruction ending with a 4-byte operand.
-* aarch64: Uses a trap instruction which also has a seldom-used operand value.
-* arm: The signature is in a literal pool (there is a jump over the signature).
-* mips: The signature is in a literal pool (there is a jump over the signature).
-* powerpc: the signature is an unreachable invalid(?) instruction within an
-  executable section.
-* s390: the signature is an unreachable invalid instruction within an executable
-  section.
-
-Thanks,
-
-Mathieu
-
-
+As we all know, RCU can be tricky at times, so I may be off on the
+above; if I am, please provide an explanation so I (and likely others
+as well) can learn a little bit more. :)
 
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+paul moore
+www.paul-moore.com
