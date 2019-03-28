@@ -1,42 +1,44 @@
-From: Greg KH <gregkh@linuxfoundation.org>
-Subject: Re: [RESEND PATCH v1] moduleparam: Save information about built-in
- modules in separate file
-Date: Thu, 28 Mar 2019 19:45:46 +0100
-Message-ID: <20190328184546.GB23800@kroah.com>
-References: <20190315101013.GN8455@Legion-PC.fortress>
- <CAK7LNATsm23e_CuyfFw7_CR8xZQ3HnwNHCXhEm_zQZU2PUGK5A@mail.gmail.com>
- <20190326172411.GA15936@Legion-PC.fortress>
- <20190327154025.GB23293@linux-8ccs>
- <CAKi4VA+14kihzGFbMT623BwMbZEzgYU6+jz8MpR9jqoC059oog@mail.gmail.com>
+From: Alan Tull <atull@kernel.org>
+Subject: Re: [PATCH 02/17] fpga: dfl: fme: align PR buffer size per PR datawidth
+Date: Thu, 28 Mar 2019 13:50:11 -0500
+Message-ID: <CANk1AXRZWgZFrShr=AVeoW2SP8zGA_Gv4eOw4Dvko_hXi_ivHQ@mail.gmail.com>
+References: <1553483264-5379-1-git-send-email-hao.wu@intel.com>
+ <1553483264-5379-3-git-send-email-hao.wu@intel.com> <CANk1AXSUMkfQu8QnN-T0B5qeA4vaGxDTvGur9EGyLbGsBFBeKQ@mail.gmail.com>
+ <20190326002852.GA2901@hao-dev>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAKi4VA+14kihzGFbMT623BwMbZEzgYU6+jz8MpR9jqoC059oog@mail.gmail.com>
+In-Reply-To: <20190326002852.GA2901@hao-dev>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Lucas De Marchi <lucas.de.marchi@gmail.com>
-Cc: Jessica Yu <jeyu@kernel.org>, Alexey Gladkov <gladkov.alexey@gmail.com>, Masahiro Yamada <yamada.masahiro@socionext.com>, Michal Marek <michal.lkml@markovi.net>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux Kbuild mailing list <linux-kbuild@vger.kernel.org>, linux-api@vger.kernel.org, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>, "Dmitry V. Levin" <ldv@altlinux.org>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Rusty Russell <rusty@rustcorp.com.au>, linux-modules <linux-modules@vger.kernel.org>
+To: Wu Hao <hao.wu@intel.com>
+Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Xu Yilun <yilun.xu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 28, 2019 at 10:41:59AM -0700, Lucas De Marchi wrote:
-> On Wed, Mar 27, 2019 at 8:40 AM Jessica Yu <jeyu@kernel.org> wrote:
-> > >No. There are definitely not all modules. I have a builtin sha256_generic,
-> > >but I can't find him in the /sys/module.
+On Mon, Mar 25, 2019 at 7:44 PM Wu Hao <hao.wu@intel.com> wrote:
+>
+> On Mon, Mar 25, 2019 at 12:50:40PM -0500, Alan Tull wrote:
+> > On Sun, Mar 24, 2019 at 10:23 PM Wu Hao <hao.wu@intel.com> wrote:
 > >
-> > Yeah, you'll only find builtin modules under /sys/module/ if it has any module
-> > parameters, otherwise you won't find it there. As Masahiro already mentioned,
-> > if a builtin module has any parameters, they would be accessible under /sys/module/.
-> 
-> Could we please change that and add the sysfs entry regardless of
-> what's being discussed here? Not having the entry there simply because
-> we don't have parameters for that module always annoyed me.
+> > Hi Hao,
+> >
+> > Looks good, one question below.
+> >
+> > >
+> > > Current driver checks if input bitstream file size is aligned or
+> > > not per PR data width (default 32bits). It requires one additional
+> > > step for end user when they generate the bitstream file, padding
+> > > extra zeros to bitstream file to align its size per PR data width,
+> > > but they don't have to as hardware will drop extra padding bytes
+> > > automatically.
+> > >
+> > > In order to simplify the user steps, this patch aligns PR buffer
+> > > size per PR data width in driver, to allow user to pass unaligned
+> > > size bitstream files to driver.
+> > >
+> > > Signed-off-by: Xu Yilun <yilun.xu@intel.com>
+> > > Signed-off-by: Wu Hao <hao.wu@intel.com>
 
-What is the sysfs directory going to show?  Will it just be empty?
+Acked-by: Alan Tull <atull@kernel.org>
 
-Feel free to send a patch for this, but from what I remember, it wasn't
-the easiest thing to do for some reason.  But given that the code was
-implemented before git was, I can't quite remember.
-
-thanks,
-
-greg k-h
+Thanks,
+Alan
