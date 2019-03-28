@@ -1,38 +1,42 @@
-From: Matthew Garrett <mjg59@google.com>
-Subject: Re: [PATCH 23/27] bpf: Restrict kernel image access functions when
- the kernel is locked down
-Date: Thu, 28 Mar 2019 11:07:58 -0700
-Message-ID: <CACdnJusbi1jB+G0wMcj43wNik9Fiv3QCc8v30ztrFWg5-P-0iQ@mail.gmail.com>
-References: <20190325220954.29054-1-matthewgarrett@google.com>
- <20190325220954.29054-24-matthewgarrett@google.com> <20190325164221.5d8687bd@shemminger-XPS-13-9360>
- <CALCETrU=EqqRwyQGBT0=_N9-E_pBM53=z+WJrd9OzV7g6xJa0A@mail.gmail.com>
- <alpine.LRH.2.21.1903270523240.5235@namei.org> <CALCETrUZ+oP0xxNt4mwN=AZA+zvkkfPZiAsFmAuqUD48pOHbBg@mail.gmail.com>
- <alpine.LRH.2.21.1903281403540.27561@namei.org>
+From: Greg KH <gregkh@linuxfoundation.org>
+Subject: Re: [RESEND PATCH v1] moduleparam: Save information about built-in
+ modules in separate file
+Date: Thu, 28 Mar 2019 19:45:46 +0100
+Message-ID: <20190328184546.GB23800@kroah.com>
+References: <20190315101013.GN8455@Legion-PC.fortress>
+ <CAK7LNATsm23e_CuyfFw7_CR8xZQ3HnwNHCXhEm_zQZU2PUGK5A@mail.gmail.com>
+ <20190326172411.GA15936@Legion-PC.fortress>
+ <20190327154025.GB23293@linux-8ccs>
+ <CAKi4VA+14kihzGFbMT623BwMbZEzgYU6+jz8MpR9jqoC059oog@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.21.1903281403540.27561@namei.org>
+Content-Disposition: inline
+In-Reply-To: <CAKi4VA+14kihzGFbMT623BwMbZEzgYU6+jz8MpR9jqoC059oog@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: James Morris <jmorris@namei.org>
-Cc: Andy Lutomirski <luto@kernel.org>, Stephen Hemminger <stephen@networkplumber.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Alexei Starovoitov <alexei.starovoitov@gmail.com>, Network Development <netdev@vger.kernel.org>, Chun-Yi Lee <jlee@suse.com>, Daniel Borkmann <daniel@iogearbox.net>, Kees Cook <keescook@chromium.org>, Will Drewry <wad@chromium.org>
+To: Lucas De Marchi <lucas.de.marchi@gmail.com>
+Cc: Jessica Yu <jeyu@kernel.org>, Alexey Gladkov <gladkov.alexey@gmail.com>, Masahiro Yamada <yamada.masahiro@socionext.com>, Michal Marek <michal.lkml@markovi.net>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux Kbuild mailing list <linux-kbuild@vger.kernel.org>, linux-api@vger.kernel.org, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>, "Dmitry V. Levin" <ldv@altlinux.org>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Rusty Russell <rusty@rustcorp.com.au>, linux-modules <linux-modules@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Mar 27, 2019 at 8:15 PM James Morris <jmorris@namei.org> wrote:
-> OTOH, this seems like a combination of mechanism and policy. The 3 modes
-> are a help here, but I wonder if they may be too coarse grained still,
-> e.g. if someone wants to allow a specific mechanism according to their own
-> threat model and mitigations.
+On Thu, Mar 28, 2019 at 10:41:59AM -0700, Lucas De Marchi wrote:
+> On Wed, Mar 27, 2019 at 8:40 AM Jessica Yu <jeyu@kernel.org> wrote:
+> > >No. There are definitely not all modules. I have a builtin sha256_generic,
+> > >but I can't find him in the /sys/module.
+> >
+> > Yeah, you'll only find builtin modules under /sys/module/ if it has any module
+> > parameters, otherwise you won't find it there. As Masahiro already mentioned,
+> > if a builtin module has any parameters, they would be accessible under /sys/module/.
+> 
+> Could we please change that and add the sysfs entry regardless of
+> what's being discussed here? Not having the entry there simply because
+> we don't have parameters for that module always annoyed me.
 
-In general the interfaces blocked by these patches could also be
-blocked with an LSM, and I'd guess that people with more fine-grained
-requirements would probably take that approach.
+What is the sysfs directory going to show?  Will it just be empty?
 
-> Secure boot gives you some assurance of the static state of the system at
-> boot time, and lockdown is certainly useful (with or without secure boot),
-> but it's not a complete solution to runtime kernel integrity protection by
-> any stretch of the imagination.  I'm concerned about it being perceived as
-> such.
+Feel free to send a patch for this, but from what I remember, it wasn't
+the easiest thing to do for some reason.  But given that the code was
+implemented before git was, I can't quite remember.
 
-What do you think the functionality gaps are in terms of ensuring
-kernel integrity (other than kernel flaws that allow the restrictions
-to be bypassed)?
+thanks,
+
+greg k-h
