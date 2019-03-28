@@ -1,44 +1,48 @@
-From: Alan Tull <atull@kernel.org>
-Subject: Re: [PATCH 02/17] fpga: dfl: fme: align PR buffer size per PR datawidth
-Date: Thu, 28 Mar 2019 13:50:11 -0500
-Message-ID: <CANk1AXRZWgZFrShr=AVeoW2SP8zGA_Gv4eOw4Dvko_hXi_ivHQ@mail.gmail.com>
-References: <1553483264-5379-1-git-send-email-hao.wu@intel.com>
- <1553483264-5379-3-git-send-email-hao.wu@intel.com> <CANk1AXSUMkfQu8QnN-T0B5qeA4vaGxDTvGur9EGyLbGsBFBeKQ@mail.gmail.com>
- <20190326002852.GA2901@hao-dev>
+From: James Morris <jmorris@namei.org>
+Subject: Re: [PATCH 23/27] bpf: Restrict kernel image access functions when
+ the kernel is locked down
+Date: Fri, 29 Mar 2019 06:23:30 +1100 (AEDT)
+Message-ID: <alpine.LRH.2.21.1903290621350.1769@namei.org>
+References: <20190325220954.29054-1-matthewgarrett@google.com> <20190325220954.29054-24-matthewgarrett@google.com> <20190325164221.5d8687bd@shemminger-XPS-13-9360> <CALCETrU=EqqRwyQGBT0=_N9-E_pBM53=z+WJrd9OzV7g6xJa0A@mail.gmail.com> <alpine.LRH.2.21.1903270523240.5235@namei.org>
+ <CALCETrUZ+oP0xxNt4mwN=AZA+zvkkfPZiAsFmAuqUD48pOHbBg@mail.gmail.com> <alpine.LRH.2.21.1903281403540.27561@namei.org> <CACdnJusbi1jB+G0wMcj43wNik9Fiv3QCc8v30ztrFWg5-P-0iQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190326002852.GA2901@hao-dev>
+In-Reply-To: <CACdnJusbi1jB+G0wMcj43wNik9Fiv3QCc8v30ztrFWg5-P-0iQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Wu Hao <hao.wu@intel.com>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Xu Yilun <yilun.xu@intel.com>
+To: Matthew Garrett <mjg59@google.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Stephen Hemminger <stephen@networkplumber.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Alexei Starovoitov <alexei.starovoitov@gmail.com>, Network Development <netdev@vger.kernel.org>, Chun-Yi Lee <jlee@suse.com>, Daniel Borkmann <daniel@iogearbox.net>, Kees Cook <keescook@chromium.org>, Will Drewry <wad@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 25, 2019 at 7:44 PM Wu Hao <hao.wu@intel.com> wrote:
->
-> On Mon, Mar 25, 2019 at 12:50:40PM -0500, Alan Tull wrote:
-> > On Sun, Mar 24, 2019 at 10:23 PM Wu Hao <hao.wu@intel.com> wrote:
-> >
-> > Hi Hao,
-> >
-> > Looks good, one question below.
-> >
-> > >
-> > > Current driver checks if input bitstream file size is aligned or
-> > > not per PR data width (default 32bits). It requires one additional
-> > > step for end user when they generate the bitstream file, padding
-> > > extra zeros to bitstream file to align its size per PR data width,
-> > > but they don't have to as hardware will drop extra padding bytes
-> > > automatically.
-> > >
-> > > In order to simplify the user steps, this patch aligns PR buffer
-> > > size per PR data width in driver, to allow user to pass unaligned
-> > > size bitstream files to driver.
-> > >
-> > > Signed-off-by: Xu Yilun <yilun.xu@intel.com>
-> > > Signed-off-by: Wu Hao <hao.wu@intel.com>
+On Thu, 28 Mar 2019, Matthew Garrett wrote:
 
-Acked-by: Alan Tull <atull@kernel.org>
+> On Wed, Mar 27, 2019 at 8:15 PM James Morris <jmorris@namei.org> wrote:
+> > OTOH, this seems like a combination of mechanism and policy. The 3 modes
+> > are a help here, but I wonder if they may be too coarse grained still,
+> > e.g. if someone wants to allow a specific mechanism according to their own
+> > threat model and mitigations.
+> 
+> In general the interfaces blocked by these patches could also be
+> blocked with an LSM, and I'd guess that people with more fine-grained
+> requirements would probably take that approach.
 
-Thanks,
-Alan
+So... I have to ask, why not use LSM for this in the first place?
+
+Either with an existing module or perhaps a lockdown LSM?
+
+> 
+> > Secure boot gives you some assurance of the static state of the system at
+> > boot time, and lockdown is certainly useful (with or without secure boot),
+> > but it's not a complete solution to runtime kernel integrity protection by
+> > any stretch of the imagination.  I'm concerned about it being perceived as
+> > such.
+> 
+> What do you think the functionality gaps are in terms of ensuring
+> kernel integrity (other than kernel flaws that allow the restrictions
+> to be bypassed)?
+
+I don't know of any non-flaw gaps.
+
+-- 
+James Morris
+<jmorris@namei.org>
