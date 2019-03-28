@@ -1,183 +1,114 @@
-From: Ondrej Mosnacek <omosnace@redhat.com>
-Subject: Re: [PATCH ghak90 V5 10/10] audit: NETFILTER_PKT: record each
- container ID associated with a netNS
-Date: Wed, 27 Mar 2019 23:52:44 +0100
-Message-ID: <CAFqZXNsV=XFRRqKnkwQqwuVuJ3rtrbS-88__6hKo=igwxE8+vg@mail.gmail.com>
-References: <cover.1552665316.git.rgb@redhat.com> <56127b2a5b82f15cb0d0f040502c2e3bb6945f30.1552665316.git.rgb@redhat.com>
+From: Jonathan Kowalski <bl0pbl33p@gmail.com>
+Subject: Re: [PATCH 2/4] pid: add pidfd_open()
+Date: Thu, 28 Mar 2019 00:42:10 +0000
+Message-ID: <CAGLj2rG0Sbho6MnPSmcS73Xj=oG92E4W_QLRu4dD8NfweoUm5Q@mail.gmail.com>
+References: <20190327162147.23198-1-christian@brauner.io> <20190327162147.23198-3-christian@brauner.io>
+ <CAGLj2rG8xMMt8-+r-pauA_qi4aun2y_kBZMCZGkXWQsKJrb-Ww@mail.gmail.com>
+ <20190327213404.pv4wqtkjbufkx36u@brauner.io> <CAGLj2rHpYAOGz0h0k2pS4JwFSQkMmRSUWxa4BtO+7BUMD21vdQ@mail.gmail.com>
+ <20190327222543.huugotqcew6jyytv@brauner.io>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <56127b2a5b82f15cb0d0f040502c2e3bb6945f30.1552665316.git.rgb@redhat.com>
+In-Reply-To: <20190327222543.huugotqcew6jyytv@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Guy Briggs <rgb@redhat.com>
-Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, Paul Moore <paul@paul-moore.com>, Steve Grubb <sgrubb@redhat.com>, David Howells <dhowells@redhat.com>, Simo Sorce <simo@redhat.com>, Eric Paris <eparis@parisplace.org>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W . Biederman" <ebiederm@xmission.com>, nhorman@tuxdriver.com
+To: Christian Brauner <christian@brauner.io>
+Cc: Jann Horn <jannh@google.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 15, 2019 at 7:35 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> Add audit container identifier auxiliary record(s) to NETFILTER_PKT
-> event standalone records.  Iterate through all potential audit container
-> identifiers associated with a network namespace.
->
-> Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+pidfd_open is open pidfd for pid relative to pidns, so a better
+analogy is that it is like openat for a relative pathname wrt dirfd.
+O_DIRECTORY is analogous to what type of object, so a TIDFD flag in
+the future which interprets pid (pathname) as thread id only and pins
+that specific struct pid. That has now limited you to the specific
+object and operations you can perform on said object with other pidfd
+APIs.
 
-Reviewed-by: Ondrej Mosnacek <omosnace@redhat.com>
+procfd_open in my proposed signature is just a fancy race free openat
+on the corresponding pid of the pidfd relative to the procrootfd
+(which becomes the dirfd if i were doing it in userspace), which might
+as well been implemented in userspace if things were not racy. Andy
+suggested something similar.
 
-(Just note another "%llu"/u64 occurence, in case you plan to add the casts.)
+My point is, when I am talking of the pidfd API, procfs is irrelevant.
+You are thinking of it as a process directory and a process file, I am
+thinking of it in terms of a process object and the proc dir fd as an
+file system based interface to query process state (through read)
+which is why I object to them being usable with pidfd_send_signal as
+well, in principle. In the future, people may use task_diag for the
+same purpose or a different interface, to work around its limitations.
+This would just be another interface of the kernel to query process
+state, not representative of the process object itself. Hence, keeping
+the pidfd to procfd translation entirely separate (as already
+suggested) sounds much, much better to me.
 
-> ---
->  include/linux/audit.h    |  5 +++++
->  kernel/audit.c           | 41 +++++++++++++++++++++++++++++++++++++++++
->  net/netfilter/nft_log.c  | 11 +++++++++--
->  net/netfilter/xt_AUDIT.c | 11 +++++++++--
->  4 files changed, 64 insertions(+), 4 deletions(-)
->
-> diff --git a/include/linux/audit.h b/include/linux/audit.h
-> index 70255c2dfb9f..723e2d020228 100644
-> --- a/include/linux/audit.h
-> +++ b/include/linux/audit.h
-> @@ -214,6 +214,8 @@ static inline u64 audit_get_contid(struct task_struct *tsk)
->  extern void audit_netns_contid_del(struct net *net, u64 contid);
->  extern void audit_switch_task_namespaces(struct nsproxy *ns,
->                                          struct task_struct *p);
-> +extern void audit_log_netns_contid_list(struct net *net,
-> +                                       struct audit_context *context);
->
->  extern u32 audit_enabled;
->  #else /* CONFIG_AUDIT */
-> @@ -290,6 +292,9 @@ static inline void audit_netns_contid_del(struct net *net, u64 contid)
->  static inline void audit_switch_task_namespaces(struct nsproxy *ns,
->                                                 struct task_struct *p)
->  { }
-> +static inline void audit_log_netns_contid_list(struct net *net,
-> +                                              struct audit_context *context)
-> +{ }
->
->  #define audit_enabled AUDIT_OFF
->  #endif /* CONFIG_AUDIT */
-> diff --git a/kernel/audit.c b/kernel/audit.c
-> index 7fa3194f5342..80ed323feeb5 100644
-> --- a/kernel/audit.c
-> +++ b/kernel/audit.c
-> @@ -451,6 +451,47 @@ void audit_switch_task_namespaces(struct nsproxy *ns, struct task_struct *p)
->                 audit_netns_contid_add(new->net_ns, contid);
->  }
->
-> +/**
-> + * audit_log_netns_contid_list - List contids for the given network namespace
-> + * @net: the network namespace of interest
-> + * @context: the audit context to use
-> + *
-> + * Description:
-> + * Issues a CONTAINER_ID record with a CSV list of contids associated
-> + * with a network namespace to accompany a NETFILTER_PKT record.
-> + */
-> +void audit_log_netns_contid_list(struct net *net, struct audit_context *context)
-> +{
-> +       struct audit_buffer *ab = NULL;
-> +       struct audit_contid *cont;
-> +       bool first = true;
-> +       struct audit_net *aunet;
-> +
-> +       /* Generate AUDIT_CONTAINER_ID record with container ID CSV list */
-> +       rcu_read_lock();
-> +       aunet = net_generic(net, audit_net_id);
-> +       if (!aunet)
-> +               goto out;
-> +       list_for_each_entry_rcu(cont, &aunet->contid_list, list) {
-> +               if (first) {
-> +                       ab = audit_log_start(context, GFP_ATOMIC,
-> +                                            AUDIT_CONTAINER_ID);
-> +                       if (!ab) {
-> +                               audit_log_lost("out of memory in audit_log_netns_contid_list");
-> +                               goto out;
-> +                       }
-> +                       audit_log_format(ab, "contid=");
-> +               } else
-> +                       audit_log_format(ab, ",");
-> +               audit_log_format(ab, "%llu", cont->id);
-> +               first = false;
-> +       }
-> +       audit_log_end(ab);
-> +out:
-> +       rcu_read_unlock();
-> +}
-> +EXPORT_SYMBOL(audit_log_netns_contid_list);
-> +
->  void audit_panic(const char *message)
->  {
->         switch (audit_failure) {
-> diff --git a/net/netfilter/nft_log.c b/net/netfilter/nft_log.c
-> index 655187bed5d8..bdb1ec2368a7 100644
-> --- a/net/netfilter/nft_log.c
-> +++ b/net/netfilter/nft_log.c
-> @@ -69,13 +69,16 @@ static void nft_log_eval_audit(const struct nft_pktinfo *pkt)
->         struct sk_buff *skb = pkt->skb;
->         struct audit_buffer *ab;
->         int fam = -1;
-> +       struct audit_context *context;
-> +       struct net *net;
->
->         if (!audit_enabled)
->                 return;
->
-> -       ab = audit_log_start(NULL, GFP_ATOMIC, AUDIT_NETFILTER_PKT);
-> +       context = audit_alloc_local(GFP_ATOMIC);
-> +       ab = audit_log_start(context, GFP_ATOMIC, AUDIT_NETFILTER_PKT);
->         if (!ab)
-> -               return;
-> +               goto errout;
->
->         audit_log_format(ab, "mark=%#x", skb->mark);
->
-> @@ -102,6 +105,10 @@ static void nft_log_eval_audit(const struct nft_pktinfo *pkt)
->                 audit_log_format(ab, " saddr=? daddr=? proto=-1");
->
->         audit_log_end(ab);
-> +       net = xt_net(&pkt->xt);
-> +       audit_log_netns_contid_list(net, context);
-> +errout:
-> +       audit_free_context(context);
->  }
->
->  static void nft_log_eval(const struct nft_expr *expr,
-> diff --git a/net/netfilter/xt_AUDIT.c b/net/netfilter/xt_AUDIT.c
-> index af883f1b64f9..a3e547435f13 100644
-> --- a/net/netfilter/xt_AUDIT.c
-> +++ b/net/netfilter/xt_AUDIT.c
-> @@ -71,10 +71,13 @@ static bool audit_ip6(struct audit_buffer *ab, struct sk_buff *skb)
->  {
->         struct audit_buffer *ab;
->         int fam = -1;
-> +       struct audit_context *context;
-> +       struct net *net;
->
->         if (audit_enabled == AUDIT_OFF)
-> -               goto errout;
-> -       ab = audit_log_start(NULL, GFP_ATOMIC, AUDIT_NETFILTER_PKT);
-> +               goto out;
-> +       context = audit_alloc_local(GFP_ATOMIC);
-> +       ab = audit_log_start(context, GFP_ATOMIC, AUDIT_NETFILTER_PKT);
->         if (ab == NULL)
->                 goto errout;
->
-> @@ -104,7 +107,11 @@ static bool audit_ip6(struct audit_buffer *ab, struct sk_buff *skb)
->
->         audit_log_end(ab);
->
-> +       net = xt_net(par);
-> +       audit_log_netns_contid_list(net, context);
->  errout:
-> +       audit_free_context(context);
-> +out:
->         return XT_CONTINUE;
->  }
->
-> --
-> 1.8.3.1
->
+The pidfd API and related calls are untouched and unaffected by
+presence, absence of procfs or not (they are, but you do unrelated
+stuff in the same system call). To me atleast, munging opening (and
+then changing what the procfd means to support the flag use case),
+having flags like PIDFD_TO_PROCFD that will work only without
+CLONE_NEWPID, then having eg. GET_TIDFID that may work with
+CLONE_NEWPID, etc.
 
+I find this interface confusing.
 
--- 
-Ondrej Mosnacek <omosnace at redhat dot com>
-Software Engineer, Security Technologies
-Red Hat, Inc.
+I have a few steps when starting to work with a pidfd:
+
+1. Acquire
+
+pidfd_open(pid, ns, flags) or pidfd_clone(...)
+
+2. Operate
+
+pidfd_send_signal(...)
+
+For those who need a race free way to open the correct /proc/<PID> for
+a pidfd relative to a /proc dir fd, for the purposes of metadata
+access, you will have procfd_open, which is in the kernel because the
+same thing is racy to do in userspace.
+
+Otherwise, pidfd_open in this patchset is this and also a polymorphic
+system call that can become procfd_open in my example when passed a
+flag. It is doing vastly different things given the presence and
+absence of options. This is similar to a multiplexor again, but it
+looks more confusing. You have to mask options.
+
+pidfd_open currently:
+
+pidfd_open(pid, -1, -1, 0); gets pidfd in current active ns
+pidfd_open(-1, procrootfd, pidfd, PIDFD_TO_PROCFD); returns dir fd of
+/proc/<PID> it maps to rel. to proc rootfd
+pidfd_open(-1, nsfd, pidfd, CLONE_NEWPID); as you propose this
+searches pid in pidns pinned by nsfd, and returns a pidfd file
+descriptor.
+
+Extend this to threads in the future, and the combination and
+permutation starts getting confusing. Based on the flag, it is
+entirely changing what will it work upon, and what it will do.
+
+I can reasonably summarise my pidfd_open and procfd_open in their man
+page in one line:
+
+pidfd_open(pid, ns, flags) returns pidfd for pid, searching it in the
+pidns pinned by ns fd, and flags will determine further if this is
+thread local or process local (i.e. tid or tgid, and tgid == tid for
+single threaded) (in the future) (so you could do thread directed
+signals by passing a flag to pidfd_send_signal and this pidfd).
+
+Your call without CONFIG_PROC_FS will be literally this, but a few
+options will have to be set as -1.
+
+procfd_open(procrootfd, pidfd, flags), returns the proc dir fd for the
+pid/tid depending on if the pidfd is thread local, process local, hint
+it in flags, etc. It is just a race free wrapper around an openat in
+userspace, undergoing the same access control checks.
+
+Yes, pidfd_open as it is now works *just fine*, but it is more
+confusing to use and discuss. The conclusion from the previous
+discussion also seemed to be to split pidctl's PIDCMD_GET_PIDFD into
+its own thing, and provide a translation from pidfd to its proc dir fd
+on its own. Then, translate_pid can be its own thing, or you could
+extend ioctl_ns(2) if you want.
+
+All that said, thanks for the work on this once again. My intention is
+just that we don't end up with an API that could have been done better
+and be cleaner to use for potential users in the coming years.
