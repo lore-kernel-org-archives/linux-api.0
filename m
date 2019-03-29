@@ -1,159 +1,133 @@
-From: Neil Horman <nhorman@tuxdriver.com>
-Subject: Re: [PATCH ghak90 V5 09/10] audit: add support for containerid to
- network namespaces
-Date: Fri, 29 Mar 2019 10:50:17 -0400
-Message-ID: <20190329120403.GA30213@hmswarspite.think-freely.org>
-References: <cover.1552665316.git.rgb@redhat.com>
- <27473c84a274c64871cfa8e3636deaf05603c978.1552665316.git.rgb@redhat.com>
- <CAFqZXNskwTub5Bm_HZqr02VPB4s79CcgAVX8VE2vQYP07-qssg@mail.gmail.com>
- <20190328011202.6raixwzdimn5b4zk@madcap2.tricolour.ca>
- <CAHC9VhQYVSrX1Ng7hZejkGSq6ZXtqi+SKmpARASJ4P2_2i3-4w@mail.gmail.com>
- <20190328214023.qpszfvxbrjlldmmt@madcap2.tricolour.ca>
+From: Christian Brauner <christian@brauner.io>
+Subject: [PATCH v2 0/5] pid: add pidfd_open()
+Date: Fri, 29 Mar 2019 16:54:20 +0100
+Message-ID: <20190329155425.26059-1-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190328214023.qpszfvxbrjlldmmt@madcap2.tricolour.ca>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Guy Briggs <rgb@redhat.com>
-Cc: Paul Moore <paul@paul-moore.com>, Ondrej Mosnacek <omosnace@redhat.com>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, LKML <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Linux-Audit Mailing List <linux-audit@redhat.com>, netfilter-devel@vger.kernel.org, "Eric W . Biederman" <ebiederm@xmission.com>, Simo Sorce <simo@redhat.com>, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, Eric Paris <eparis@parisplace.org>, "Serge E. Hallyn" <serge@hallyn.com>
+To: jannh@google.com, luto@kernel.org, dhowells@redhat.com, serge@hallyn.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: arnd@arndb.de, ebiederm@xmission.com, khlebnikov@yandex-team.ru, keescook@chromium.org, adobriyan@gmail.com, tglx@linutronix.de, mtk.manpages@gmail.com, bl0pbl33p@gmail.com, ldv@altlinux.org, akpm@linux-foundation.org, oleg@redhat.com, nagarathnam.muthusamy@oracle.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, joel@joelfernandes.org, dancol@google.com, Christian Brauner <christian@brauner.io>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 28, 2019 at 05:40:23PM -0400, Richard Guy Briggs wrote:
-> On 2019-03-28 11:46, Paul Moore wrote:
-> > On Wed, Mar 27, 2019 at 9:12 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> > >
-> > > On 2019-03-27 23:42, Ondrej Mosnacek wrote:
-> > > > On Fri, Mar 15, 2019 at 7:35 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> > > > > Audit events could happen in a network namespace outside of a task
-> > > > > context due to packets received from the net that trigger an auditing
-> > > > > rule prior to being associated with a running task.  The network
-> > > > > namespace could be in use by multiple containers by association to the
-> > > > > tasks in that network namespace.  We still want a way to attribute
-> > > > > these events to any potential containers.  Keep a list per network
-> > > > > namespace to track these audit container identifiiers.
-> > > > >
-> > > > > Add/increment the audit container identifier on:
-> > > > > - initial setting of the audit container identifier via /proc
-> > > > > - clone/fork call that inherits an audit container identifier
-> > > > > - unshare call that inherits an audit container identifier
-> > > > > - setns call that inherits an audit container identifier
-> > > > > Delete/decrement the audit container identifier on:
-> > > > > - an inherited audit container identifier dropped when child set
-> > > > > - process exit
-> > > > > - unshare call that drops a net namespace
-> > > > > - setns call that drops a net namespace
-> > > > >
-> > > > > See: https://github.com/linux-audit/audit-kernel/issues/92
-> > > > > See: https://github.com/linux-audit/audit-testsuite/issues/64
-> > > > > See: https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container-ID
-> > > > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> > > > > ---
-> > > > >  include/linux/audit.h | 19 ++++++++++++
-> > > > >  kernel/audit.c        | 86 +++++++++++++++++++++++++++++++++++++++++++++++++--
-> > > > >  kernel/nsproxy.c      |  4 +++
-> > > > >  3 files changed, 106 insertions(+), 3 deletions(-)
-> > > > >
-> > > > > diff --git a/include/linux/audit.h b/include/linux/audit.h
-> > > > > index fa19fa408931..70255c2dfb9f 100644
-> > > > > --- a/include/linux/audit.h
-> > > > > +++ b/include/linux/audit.h
-> > > > > @@ -27,6 +27,7 @@
-> > > > >  #include <linux/ptrace.h>
-> > > > >  #include <linux/namei.h>  /* LOOKUP_* */
-> > > > >  #include <uapi/linux/audit.h>
-> > > > > +#include <linux/refcount.h>
-> > > > >
-> > > > >  #define AUDIT_INO_UNSET ((unsigned long)-1)
-> > > > >  #define AUDIT_DEV_UNSET ((dev_t)-1)
-> > > > > @@ -99,6 +100,13 @@ struct audit_task_info {
-> > > > >
-> > > > >  extern struct audit_task_info init_struct_audit;
-> > > > >
-> > > > > +struct audit_contid {
-> > > > > +       struct list_head        list;
-> > > > > +       u64                     id;
-> > > > > +       refcount_t              refcount;
-> > > >
-> > > > Hm, since we only ever touch the refcount under a spinlock, I wonder
-> > > > if we could just make it a regular unsigned int (we don't need the
-> > > > atomicity guarantees). OTOH, refcount_t comes with some extra overflow
-> > > > checking, so it's probably better to leave it as is...
-> > >
-> > > Since the update is done using rcu-safe methods, do we even need the
-> > > spin_lock?  Neil?  Paul?
-> > 
-> > As discussed, the refcount field is protected against simultaneous
-> > writes by the spinlock that protects additions/removals from the list
-> > as a whole so I don't believe the refcount_t atomicity is critical in
-> > this regard.
-> > 
-> > Where it gets tricky, and I can't say I'm 100% confident on my answer
-> > here, is if refcount was a regular int and we wanted to access it
-> > outside of a spinlock (to be clear, it doesn't look like this patch
-> > currently does this).  With RCU, if refcount was a regular int
-> > (unsigned or otherwise), I believe it would be possible for different
-> > threads of execution to potentially see different values of refcount
-> > (assuming one thread was adding/removing from the list).  Using a
-> > refcount_t would protect against this, alternatively, taking the
-> > spinlock should also protect against this.
-> 
-> Ok, from the above it isn't clear to me if you are happy with the
-> current code or would prefer any changes, or from below that you still
-> need to work it through to make a pronouncement.  It sounds to me you
-> would be ok with *either* spinlock *or* refcount_t, but don't see the
-> need for both.
-> 
-I'll reiterate I think we should keep the refcount type just as it is, not for
-safetys sake, but for readability and convienience.
+/* Introduction */
+This adds the pidfd_open() syscall.
+pidfd_open() allows to retrieve file descriptors for a given pid. This
+includes both file descriptors for processes and file descriptors for
+threads.
 
-Because the refcount currently only is used on add and delete operations
-(implying it is only read in paths where its also modified), we need to
-guarantee atomicity against multiple parallel writes.  We already have that
-guarantee because every path in which we call
-refcount_set/refcount_inc/refcount_dec_and_test occurs under the protection of
-the list spin lock, and so from that standpoint we don't need the additional
-guarantees offered by the refcount_t type.
+With the addition of this syscalls pidfds become independent of procfs just
+as pids are. Of course, if CONFIG_PROC_FS is not set then metadata access
+for processes will not be possible but everything else will just work fine.
+In addition, this allows us to remove the dependency of pidfd_send_signal()
+on procfs and enable it unconditionally.
+With the ability to call pidfd_open() on tids we can now add a flag to
+pidfd_send_signal() to signal to a specific thread capturing the
+functionality of tgkill() and related thread-focused signal syscalls.
 
-However, if it were to be converted to an int type, we would have to replace the
-refcount_dec_and_test call with this:
-if (x == 0)
-   warn_on_underflow
-   return
-x -= 1;
-if (x == 0)
-   preform_operations_to_free_list_entry
+The desire to lift the restriction for pidfds on procfs has been expressed
+by multiple people (cf. the commit message of commit
+3eb39f47934f9d5a3027fe00d906a45fe3a15fad and [2]).
 
-I find refcount_dec_and_test to be far easier to read and maintain, and you
-still have to do all of this under the protection of a spin lock, to protect
-against multiple writes.  And if you ever find that you are adding a pure read
-side query of the refcount, you would need to hold the spin lock there as well,
-instead of just using the available refcount_read api call
+/* Signature */
+int pidfd_open(pid_t pid, unsigned int flags);
 
-Yeah, you would save a few cycles if you didn't use an atomic type here, but
-we're only talking about paths from user space making system calls executing
-here (no high volume per packet receive paths or anything), and these paths have
-already taken a few locks (the list lock, the task lock, etc), so eliminating
-this one atomic isn't going to amount to anything.  Lets leave it as it is and
-buy ourselves the extra code readability.
+/* pidfds are anon inode file descriptors */
+These pidfds are allocated using anon_inode_getfd(), are O_CLOEXEC by
+default and can be used with the pidfd_send_signal() syscall. They are not
+dirfds and as such have the advantage that we can make them pollable or
+readable in the future if we see a need to do so. The pidfds are not
+associated with a specific pid namespaces but rather only reference struct
+pid of a given process in their private_data member.
+Additionally, Andy made an argument that we should go forward with
+non-proc-dirfd file descriptors for the sake of security and extensibility
+(cf. [3]). This will unblock or help move along work on pidfd_wait which
+is currently ongoing.
 
-Neil
+/* Process Metadata Access */
+One of the oustanding issues has been how to get information about a given
+process if pidfds are regular file descriptors and do not provide access to
+the process /proc/<pid> directory.
+Various solutions have been proposed. The one that most people prefer is to
+be able to retrieve a file descriptor to /proc/<pid> based on a pidfd
+(cf. [5]). The prefered solution for how to do this has been to implement
+an ioctl that for pidfds that translates a pidfd into a dirfd for
+/proc/<pid>. This has been implemented in this patchset as well. If
+PIDFD_GET_PROCFD is passed as a command to an ioctl() taking a pidfd and an
+fd referring to a procfs directory as an argument a corresponding dirfd to
+/proc/<pid> can be retrieved.
+The ioctl() makes very sure that the struct pid associated with the
+/proc/<pid> fd is identical to the struct pid stashed in the pidfd. This
+ensures that we avoid pid recycling issues.
 
-> > As we all know, RCU can be tricky at times, so I may be off on the
-> > above; if I am, please provide an explanation so I (and likely others
-> > as well) can learn a little bit more. :)
-> > 
-> > -- 
-> > paul moore
-> > www.paul-moore.com
-> 
-> - RGB
-> 
-> --
-> Richard Guy Briggs <rgb@redhat.com>
-> Sr. S/W Engineer, Kernel Security, Base Operating Systems
-> Remote, Ottawa, Red Hat Canada
-> IRC: rgb, SunRaycer
-> Voice: +1.647.777.2635, Internal: (81) 32635
-> 
-> 
+/* Testing */
+The patchset comes with tests (which btw. I consider mandatory with
+every feature-patch that intends to go through the pidfd tree):
+- test that no invalid flags can be passed to pidfd_open()
+- test that no invalid pid can be passed to pidfd_open()
+- test that a pidfd can be retrieved with pidfd_open()
+- test whether a pidfd can be converted into an fd to /proc/<pid> to get
+  metadata access
+- test that a pidfd retrieved based on a pid that has been recycled cannot
+  be converted into /proc/<pid> for that recycled pid
+
+/* Example */
+int pidfd = pidfd_open(1234, 0);
+int procfd = open("/proc", O_DIRECTORY | O_RDONLY | O_CLOEXEC);
+int procpidfd = ioctl(pidfd, PIDFD_GET_PROCFD, procfd);
+int statusfd = openat(procpidfd, "status", O_RDONLY | O_CLOEXEC);
+int ret = read(statusfd, buf, sizeof(buf));
+ret = pidfd_send_signal(pidfd, SIGKILL, NULL, 0);
+
+/* References */
+[1]: https://lore.kernel.org/lkml/20181228233725.722tdfgijxcssg76@brauner.io/
+[2]: https://lore.kernel.org/lkml/20190320203910.GA2842@avx2/
+[3]: https://lore.kernel.org/lkml/CALCETrXO=V=+qEdLDVPf8eCgLZiB9bOTrUfe0V-U-tUZoeoRDA@mail.gmail.com
+[4]: https://lore.kernel.org/lkml/CAHk-=wgmKZm-fESEiLq_W37sKpqCY89nQkPNfWhvF_CQ1ANgcw@mail.gmail.com
+[5]: https://lore.kernel.org/lkml/533075A9-A6CF-4549-AFC8-B90505B198FD@joelfernandes.org
+
+Christian Brauner (4):
+  pid: add pidfd_open()
+  signal: support pidfd_open() with pidfd_send_signal()
+  signal: PIDFD_SIGNAL_TID threads via pidfds
+  tests: add pidfd_open() tests
+
+David Howells (1):
+  Make anon_inodes unconditional
+
+ arch/arm/kvm/Kconfig                          |   1 -
+ arch/arm64/kvm/Kconfig                        |   1 -
+ arch/mips/kvm/Kconfig                         |   1 -
+ arch/powerpc/kvm/Kconfig                      |   1 -
+ arch/s390/kvm/Kconfig                         |   1 -
+ arch/x86/Kconfig                              |   1 -
+ arch/x86/entry/syscalls/syscall_32.tbl        |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl        |   1 +
+ arch/x86/kvm/Kconfig                          |   1 -
+ drivers/base/Kconfig                          |   1 -
+ drivers/char/tpm/Kconfig                      |   1 -
+ drivers/dma-buf/Kconfig                       |   1 -
+ drivers/gpio/Kconfig                          |   1 -
+ drivers/iio/Kconfig                           |   1 -
+ drivers/infiniband/Kconfig                    |   1 -
+ drivers/vfio/Kconfig                          |   1 -
+ fs/Makefile                                   |   2 +-
+ fs/notify/fanotify/Kconfig                    |   1 -
+ fs/notify/inotify/Kconfig                     |   1 -
+ include/linux/pid.h                           |   2 +
+ include/linux/syscalls.h                      |   1 +
+ include/uapi/linux/wait.h                     |   5 +
+ init/Kconfig                                  |  10 -
+ kernel/pid.c                                  | 181 +++++++++
+ kernel/signal.c                               | 130 +++++--
+ kernel/sys_ni.c                               |   3 -
+ tools/testing/selftests/pidfd/Makefile        |   2 +-
+ tools/testing/selftests/pidfd/pidfd.h         |  57 +++
+ .../testing/selftests/pidfd/pidfd_open_test.c | 361 ++++++++++++++++++
+ tools/testing/selftests/pidfd/pidfd_test.c    |  41 +-
+ 30 files changed, 701 insertions(+), 112 deletions(-)
+ create mode 100644 tools/testing/selftests/pidfd/pidfd.h
+ create mode 100644 tools/testing/selftests/pidfd/pidfd_open_test.c
+
+-- 
+2.21.0
