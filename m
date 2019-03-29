@@ -1,7 +1,7 @@
 From: Christian Brauner <christian@brauner.io>
-Subject: [PATCH v2 1/5] Make anon_inodes unconditional
-Date: Fri, 29 Mar 2019 16:54:21 +0100
-Message-ID: <20190329155425.26059-2-christian@brauner.io>
+Subject: [PATCH v2 5/5] tests: add pidfd_open() tests
+Date: Fri, 29 Mar 2019 16:54:25 +0100
+Message-ID: <20190329155425.26059-6-christian@brauner.io>
 References: <20190329155425.26059-1-christian@brauner.io>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,308 +12,556 @@ To: jannh@google.com, luto@kernel.org, dhowells@redhat.com, serge@hallyn.com, li
 Cc: arnd@arndb.de, ebiederm@xmission.com, khlebnikov@yandex-team.ru, keescook@chromium.org, adobriyan@gmail.com, tglx@linutronix.de, mtk.manpages@gmail.com, bl0pbl33p@gmail.com, ldv@altlinux.org, akpm@linux-foundation.org, oleg@redhat.com, nagarathnam.muthusamy@oracle.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, joel@joelfernandes.org, dancol@google.com, Christian Brauner <christian@brauner.io>
 List-Id: linux-api@vger.kernel.org
 
-From: David Howells <dhowells@redhat.com>
+This adds testing for pidfd_open():
+- test that no invalid flags can be passed to pidfd_open()
+- test that no invalid pid can be passed to pidfd_open()
+- test that a pidfd can be retrieved with pidfd_open()
+- test whether a pidfd can be converted into an fd to /proc/<pid> to get
+  metadata access
+- test that a pidfd retrieved based on a pid that has been recycled cannot
+  be converted into /proc/<pid> for that recycled pid
 
-Make the anon_inodes facility unconditional so that it can be used by core
-VFS code and the pidfd_open() syscall.
-
-Signed-off-by: David Howells <dhowells@redhat.com>
-Signed-off-by: Al Viro <viro@zeniv.linux.org.uk>
-[christian@brauner.io: adapt commit message to mention pidfd_open()]
 Signed-off-by: Christian Brauner <christian@brauner.io>
+Cc: Arnd Bergmann <arnd@arndb.de>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Alexey Dobriyan <adobriyan@gmail.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Jann Horn <jannh@google.com
+Cc: David Howells <dhowells@redhat.com>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+Cc: Jonathan Kowalski <bl0pbl33p@gmail.com>
+Cc: "Dmitry V. Levin" <ldv@altlinux.org>
+Cc: Andy Lutomirsky <luto@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Oleg Nesterov <oleg@redhat.com>
+Cc: Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>
+Cc: Aleksa Sarai <cyphar@cyphar.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>
 ---
- arch/arm/kvm/Kconfig       |  1 -
- arch/arm64/kvm/Kconfig     |  1 -
- arch/mips/kvm/Kconfig      |  1 -
- arch/powerpc/kvm/Kconfig   |  1 -
- arch/s390/kvm/Kconfig      |  1 -
- arch/x86/Kconfig           |  1 -
- arch/x86/kvm/Kconfig       |  1 -
- drivers/base/Kconfig       |  1 -
- drivers/char/tpm/Kconfig   |  1 -
- drivers/dma-buf/Kconfig    |  1 -
- drivers/gpio/Kconfig       |  1 -
- drivers/iio/Kconfig        |  1 -
- drivers/infiniband/Kconfig |  1 -
- drivers/vfio/Kconfig       |  1 -
- fs/Makefile                |  2 +-
- fs/notify/fanotify/Kconfig |  1 -
- fs/notify/inotify/Kconfig  |  1 -
- init/Kconfig               | 10 ----------
- 18 files changed, 1 insertion(+), 27 deletions(-)
+ tools/testing/selftests/pidfd/Makefile        |   2 +-
+ tools/testing/selftests/pidfd/pidfd.h         |  57 +++
+ .../testing/selftests/pidfd/pidfd_open_test.c | 361 ++++++++++++++++++
+ tools/testing/selftests/pidfd/pidfd_test.c    |  41 +-
+ 4 files changed, 420 insertions(+), 41 deletions(-)
+ create mode 100644 tools/testing/selftests/pidfd/pidfd.h
+ create mode 100644 tools/testing/selftests/pidfd/pidfd_open_test.c
 
-diff --git a/arch/arm/kvm/Kconfig b/arch/arm/kvm/Kconfig
-index 3f5320f46de2..f591026347a5 100644
---- a/arch/arm/kvm/Kconfig
-+++ b/arch/arm/kvm/Kconfig
-@@ -22,7 +22,6 @@ config KVM
- 	bool "Kernel-based Virtual Machine (KVM) support"
- 	depends on MMU && OF
- 	select PREEMPT_NOTIFIERS
--	select ANON_INODES
- 	select ARM_GIC
- 	select ARM_GIC_V3
- 	select ARM_GIC_V3_ITS
-diff --git a/arch/arm64/kvm/Kconfig b/arch/arm64/kvm/Kconfig
-index a3f85624313e..a67121d419a2 100644
---- a/arch/arm64/kvm/Kconfig
-+++ b/arch/arm64/kvm/Kconfig
-@@ -23,7 +23,6 @@ config KVM
- 	depends on OF
- 	select MMU_NOTIFIER
- 	select PREEMPT_NOTIFIERS
--	select ANON_INODES
- 	select HAVE_KVM_CPU_RELAX_INTERCEPT
- 	select HAVE_KVM_ARCH_TLB_FLUSH_ALL
- 	select KVM_MMIO
-diff --git a/arch/mips/kvm/Kconfig b/arch/mips/kvm/Kconfig
-index 4528bc9c3cb1..eac25aef21e0 100644
---- a/arch/mips/kvm/Kconfig
-+++ b/arch/mips/kvm/Kconfig
-@@ -21,7 +21,6 @@ config KVM
- 	depends on MIPS_FP_SUPPORT
- 	select EXPORT_UASM
- 	select PREEMPT_NOTIFIERS
--	select ANON_INODES
- 	select KVM_GENERIC_DIRTYLOG_READ_PROTECT
- 	select HAVE_KVM_VCPU_ASYNC_IOCTL
- 	select KVM_MMIO
-diff --git a/arch/powerpc/kvm/Kconfig b/arch/powerpc/kvm/Kconfig
-index bfdde04e4905..f53997a8ca62 100644
---- a/arch/powerpc/kvm/Kconfig
-+++ b/arch/powerpc/kvm/Kconfig
-@@ -20,7 +20,6 @@ if VIRTUALIZATION
- config KVM
- 	bool
- 	select PREEMPT_NOTIFIERS
--	select ANON_INODES
- 	select HAVE_KVM_EVENTFD
- 	select HAVE_KVM_VCPU_ASYNC_IOCTL
- 	select SRCU
-diff --git a/arch/s390/kvm/Kconfig b/arch/s390/kvm/Kconfig
-index 767453faacfc..1816ee48eadd 100644
---- a/arch/s390/kvm/Kconfig
-+++ b/arch/s390/kvm/Kconfig
-@@ -21,7 +21,6 @@ config KVM
- 	prompt "Kernel-based Virtual Machine (KVM) support"
- 	depends on HAVE_KVM
- 	select PREEMPT_NOTIFIERS
--	select ANON_INODES
- 	select HAVE_KVM_CPU_RELAX_INTERCEPT
- 	select HAVE_KVM_VCPU_ASYNC_IOCTL
- 	select HAVE_KVM_EVENTFD
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index c1f9b3cf437c..18f2c954464e 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -44,7 +44,6 @@ config X86
- 	#
- 	select ACPI_LEGACY_TABLES_LOOKUP	if ACPI
- 	select ACPI_SYSTEM_POWER_STATES_SUPPORT	if ACPI
--	select ANON_INODES
- 	select ARCH_32BIT_OFF_T			if X86_32
- 	select ARCH_CLOCKSOURCE_DATA
- 	select ARCH_CLOCKSOURCE_INIT
-diff --git a/arch/x86/kvm/Kconfig b/arch/x86/kvm/Kconfig
-index 72fa955f4a15..fc042419e670 100644
---- a/arch/x86/kvm/Kconfig
-+++ b/arch/x86/kvm/Kconfig
-@@ -27,7 +27,6 @@ config KVM
- 	depends on X86_LOCAL_APIC
- 	select PREEMPT_NOTIFIERS
- 	select MMU_NOTIFIER
--	select ANON_INODES
- 	select HAVE_KVM_IRQCHIP
- 	select HAVE_KVM_IRQFD
- 	select IRQ_BYPASS_MANAGER
-diff --git a/drivers/base/Kconfig b/drivers/base/Kconfig
-index 059700ea3521..03f067da12ee 100644
---- a/drivers/base/Kconfig
-+++ b/drivers/base/Kconfig
-@@ -174,7 +174,6 @@ source "drivers/base/regmap/Kconfig"
- config DMA_SHARED_BUFFER
- 	bool
- 	default n
--	select ANON_INODES
- 	select IRQ_WORK
- 	help
- 	  This option enables the framework for buffer-sharing between
-diff --git a/drivers/char/tpm/Kconfig b/drivers/char/tpm/Kconfig
-index 536e55d3919f..f3e4bc490cf0 100644
---- a/drivers/char/tpm/Kconfig
-+++ b/drivers/char/tpm/Kconfig
-@@ -157,7 +157,6 @@ config TCG_CRB
- config TCG_VTPM_PROXY
- 	tristate "VTPM Proxy Interface"
- 	depends on TCG_TPM
--	select ANON_INODES
- 	---help---
- 	  This driver proxies for an emulated TPM (vTPM) running in userspace.
- 	  A device /dev/vtpmx is provided that creates a device pair
-diff --git a/drivers/dma-buf/Kconfig b/drivers/dma-buf/Kconfig
-index 2e5a0faa2cb1..3fc9c2efc583 100644
---- a/drivers/dma-buf/Kconfig
-+++ b/drivers/dma-buf/Kconfig
-@@ -3,7 +3,6 @@ menu "DMABUF options"
- config SYNC_FILE
- 	bool "Explicit Synchronization Framework"
- 	default n
--	select ANON_INODES
- 	select DMA_SHARED_BUFFER
- 	---help---
- 	  The Sync File Framework adds explicit syncronization via
-diff --git a/drivers/gpio/Kconfig b/drivers/gpio/Kconfig
-index 3f50526a771f..0f91600c27ae 100644
---- a/drivers/gpio/Kconfig
-+++ b/drivers/gpio/Kconfig
-@@ -12,7 +12,6 @@ config ARCH_HAVE_CUSTOM_GPIO_H
+diff --git a/tools/testing/selftests/pidfd/Makefile b/tools/testing/selftests/pidfd/Makefile
+index deaf8073bc06..b36c0be70848 100644
+--- a/tools/testing/selftests/pidfd/Makefile
++++ b/tools/testing/selftests/pidfd/Makefile
+@@ -1,6 +1,6 @@
+ CFLAGS += -g -I../../../../usr/include/
  
- menuconfig GPIOLIB
- 	bool "GPIO Support"
--	select ANON_INODES
- 	help
- 	  This enables GPIO support through the generic GPIO library.
- 	  You only need to enable this, if you also want to enable
-diff --git a/drivers/iio/Kconfig b/drivers/iio/Kconfig
-index d08aeb41cd07..1dec0fecb6ef 100644
---- a/drivers/iio/Kconfig
-+++ b/drivers/iio/Kconfig
-@@ -4,7 +4,6 @@
+-TEST_GEN_PROGS := pidfd_test
++TEST_GEN_PROGS := pidfd_test pidfd_open_test
  
- menuconfig IIO
- 	tristate "Industrial I/O support"
--	select ANON_INODES
- 	help
- 	  The industrial I/O subsystem provides a unified framework for
- 	  drivers for many different types of embedded sensors using a
-diff --git a/drivers/infiniband/Kconfig b/drivers/infiniband/Kconfig
-index a1fb840de45d..d318bab25860 100644
---- a/drivers/infiniband/Kconfig
-+++ b/drivers/infiniband/Kconfig
-@@ -25,7 +25,6 @@ config INFINIBAND_USER_MAD
+ include ../lib.mk
  
- config INFINIBAND_USER_ACCESS
- 	tristate "InfiniBand userspace access (verbs and CM)"
--	select ANON_INODES
- 	depends on MMU
- 	---help---
- 	  Userspace InfiniBand access support.  This enables the
-diff --git a/drivers/vfio/Kconfig b/drivers/vfio/Kconfig
-index 9de5ed38da83..3798d77d131c 100644
---- a/drivers/vfio/Kconfig
-+++ b/drivers/vfio/Kconfig
-@@ -22,7 +22,6 @@ menuconfig VFIO
- 	tristate "VFIO Non-Privileged userspace driver framework"
- 	depends on IOMMU_API
- 	select VFIO_IOMMU_TYPE1 if (X86 || S390 || ARM || ARM64)
--	select ANON_INODES
- 	help
- 	  VFIO provides a framework for secure userspace device drivers.
- 	  See Documentation/vfio.txt for more details.
-diff --git a/fs/Makefile b/fs/Makefile
-index 427fec226fae..35945f8139e6 100644
---- a/fs/Makefile
-+++ b/fs/Makefile
-@@ -25,7 +25,7 @@ obj-$(CONFIG_PROC_FS) += proc_namespace.o
+diff --git a/tools/testing/selftests/pidfd/pidfd.h b/tools/testing/selftests/pidfd/pidfd.h
+new file mode 100644
+index 000000000000..8452e910463f
+--- /dev/null
++++ b/tools/testing/selftests/pidfd/pidfd.h
+@@ -0,0 +1,57 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++
++#ifndef __PIDFD_H
++#define __PIDFD_H
++
++#define _GNU_SOURCE
++#include <errno.h>
++#include <fcntl.h>
++#include <sched.h>
++#include <signal.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <syscall.h>
++#include <sys/mount.h>
++
++#include "../kselftest.h"
++
++/*
++ * The kernel reserves 300 pids via RESERVED_PIDS in kernel/pid.c
++ * That means, when it wraps around any pid < 300 will be skipped.
++ * So we need to use a pid > 300 in order to test recycling.
++ */
++#define PID_RECYCLE 1000
++
++/*
++ * Define a few custom error codes for the child process to clearly indicate
++ * what is happening. This way we can tell the difference between a system
++ * error, a test error, etc.
++ */
++#define PIDFD_PASS 0
++#define PIDFD_FAIL 1
++#define PIDFD_ERROR 2
++#define PIDFD_SKIP 3
++#define PIDFD_XFAIL 4
++
++int wait_for_pid(pid_t pid)
++{
++	int status, ret;
++
++again:
++	ret = waitpid(pid, &status, 0);
++	if (ret == -1) {
++		if (errno == EINTR)
++			goto again;
++
++		return -1;
++	}
++
++	if (!WIFEXITED(status))
++		return -1;
++
++	return WEXITSTATUS(status);
++}
++
++
++#endif /* __PIDFD_H */
+diff --git a/tools/testing/selftests/pidfd/pidfd_open_test.c b/tools/testing/selftests/pidfd/pidfd_open_test.c
+new file mode 100644
+index 000000000000..ebe7a96cc8d6
+--- /dev/null
++++ b/tools/testing/selftests/pidfd/pidfd_open_test.c
+@@ -0,0 +1,361 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++
++#define _GNU_SOURCE
++#include <errno.h>
++#include <fcntl.h>
++#include <inttypes.h>
++#include <limits.h>
++#include <linux/types.h>
++#include <linux/wait.h>
++#include <sched.h>
++#include <signal.h>
++#include <stdbool.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <syscall.h>
++#include <sys/mount.h>
++#include <sys/prctl.h>
++#include <sys/wait.h>
++#include <unistd.h>
++
++#include "pidfd.h"
++#include "../kselftest.h"
++
++static inline int sys_pidfd_open(pid_t pid, unsigned int flags)
++{
++	return syscall(__NR_pidfd_open, pid, flags);
++}
++
++static int safe_int(const char *numstr, int *converted)
++{
++	char *err = NULL;
++	signed long int sli;
++
++	errno = 0;
++	sli = strtol(numstr, &err, 0);
++	if (errno == ERANGE && (sli == LONG_MAX || sli == LONG_MIN))
++		return -ERANGE;
++
++	if (errno != 0 && sli == 0)
++		return -EINVAL;
++
++	if (err == numstr || *err != '\0')
++		return -EINVAL;
++
++	if (sli > INT_MAX || sli < INT_MIN)
++		return -ERANGE;
++
++	*converted = (int)sli;
++	return 0;
++}
++
++static int char_left_gc(const char *buffer, size_t len)
++{
++	size_t i;
++
++	for (i = 0; i < len; i++) {
++		if (buffer[i] == ' ' ||
++		    buffer[i] == '\t')
++			continue;
++
++		return i;
++	}
++
++	return 0;
++}
++
++static int char_right_gc(const char *buffer, size_t len)
++{
++	int i;
++
++	for (i = len - 1; i >= 0; i--) {
++		if (buffer[i] == ' '  ||
++		    buffer[i] == '\t' ||
++		    buffer[i] == '\n' ||
++		    buffer[i] == '\0')
++			continue;
++
++		return i + 1;
++	}
++
++	return 0;
++}
++
++static char *trim_whitespace_in_place(char *buffer)
++{
++	buffer += char_left_gc(buffer, strlen(buffer));
++	buffer[char_right_gc(buffer, strlen(buffer))] = '\0';
++	return buffer;
++}
++
++static pid_t get_pid_from_status_file(int *fd, const char *key, size_t keylen)
++{
++	int ret;
++	FILE *f;
++	size_t n = 0;
++	pid_t result = -1;
++	char *line = NULL;
++
++	/* fd now belongs to FILE and will be closed by fclose() */
++	f = fdopen(*fd, "r");
++	if (!f)
++		return -1;
++
++	while (getline(&line, &n, f) != -1) {
++		char *numstr;
++
++		if (strncmp(line, key, keylen))
++			continue;
++
++		numstr = trim_whitespace_in_place(line + 4);
++		ret = safe_int(numstr, &result);
++		if (ret < 0)
++			goto out;
++
++		break;
++	}
++
++out:
++	free(line);
++	fclose(f);
++	*fd = -1;
++	return result;
++}
++
++static int set_ns_last_pid(void)
++{
++	int fd;
++	ssize_t bytes;
++
++	fd = open("/proc/sys/kernel/ns_last_pid", O_WRONLY | O_CLOEXEC);
++	if (fd < 0) {
++		ksft_print_msg("failed to open \"/proc/sys/kernel/ns_last_pid\"n");
++		return -1;
++	}
++
++	bytes = write(fd, "999", sizeof("999") - 1);
++	close(fd);
++	if (bytes < 0 || (size_t)bytes != (sizeof("999") - 1))
++		return -1;
++
++	return 0;
++}
++
++static int test_pidfd_to_procfd_recycled_pid_fail(void)
++{
++	const char *test_name = "pidfd_open pidfd to procfd conversion on pid recycling";
++	int ret;
++	pid_t pid1;
++
++	ret = unshare(CLONE_NEWPID);
++	if (ret < 0)
++		ksft_exit_fail_msg("%s test: Failed to unshare pid namespace\n",
++				   test_name);
++
++	ret = unshare(CLONE_NEWNS);
++	if (ret < 0)
++		ksft_exit_fail_msg(
++			"%s test: Failed to unshare mount namespace\n",
++			test_name);
++
++	ret = mount(NULL, "/", NULL, MS_REC | MS_PRIVATE, 0);
++	if (ret < 0)
++		ksft_exit_fail_msg("%s test: Failed to remount / private\n",
++				   test_name);
++
++	/* pid 1 in new pid namespace */
++	pid1 = fork();
++	if (pid1 < 0)
++		ksft_exit_fail_msg("%s test: Failed to create new process\n",
++				   test_name);
++
++	/*
++	 * This is lazy with file descriptor closing in the child process but
++	 * it doesn't matter since we are very short-lived anyway and the
++	 * cleanup would just be more complexity in this test.
++	 */
++	if (pid1 == 0) {
++		int pidfd, procpidfd, procfd, ret;
++		pid_t pid2;
++
++
++		(void)umount2("/proc", MNT_DETACH);
++		ret = mount("proc", "/proc", "proc", 0, NULL);
++		if (ret < 0) {
++			ksft_print_msg("failed to mount a fresh /proc instance\n");
++			_exit(PIDFD_ERROR);
++		}
++
++		/* get pidfd for pid 1000 */
++		if (set_ns_last_pid() < 0) {
++			ksft_print_msg("failed to set ns_last_pid\n");
++			_exit(PIDFD_ERROR);
++		}
++
++		pid2 = fork();
++		if (pid2 < 0) {
++			ksft_print_msg("failed to create new process\n");
++			_exit(PIDFD_ERROR);
++		}
++
++		if (pid2 == 0)
++			_exit(PIDFD_PASS);
++
++		if (pid2 == PID_RECYCLE) {
++			pidfd = sys_pidfd_open(pid2, 0);
++		} else {
++			ksft_print_msg("failed to create process with pid %d\n",
++				       PID_RECYCLE);
++			_exit(PIDFD_ERROR);
++		}
++
++		if (wait_for_pid(pid2))
++			_exit(PIDFD_ERROR);
++
++		if (pidfd < 0)
++			_exit(PIDFD_ERROR);
++
++		/* recycle pid 1000 */
++		if (set_ns_last_pid() < 0) {
++			ksft_print_msg("failed to set ns_last_pid\n");
++			_exit(PIDFD_ERROR);
++		}
++
++		pid2 = fork();
++		if (pid2 < 0) {
++			ksft_print_msg("failed to create new process\n");
++			_exit(PIDFD_ERROR);
++		}
++
++		if (pid2 == 0)
++			_exit(PIDFD_PASS);
++
++		if (pid2 != PID_RECYCLE) {
++			ksft_print_msg("failed to recycle pid %d\n",
++				       PID_RECYCLE);
++			_exit(PIDFD_ERROR);
++		}
++
++		/*
++		 * Now PID_RECYCLE is in zombie state since we have not waited
++		 * on it yet, but it might have already exited. This ensures
++		 * that the /proc/<pid> directory stays around.
++		 */
++		procfd = open("/proc", O_DIRECTORY | O_RDONLY | O_CLOEXEC);
++		if (procfd < 0) {
++			ksft_print_msg("%s - failed to open /proc\n",
++				       strerror(errno));
++			_exit(PIDFD_ERROR);
++		}
++
++		procpidfd = ioctl(pidfd, PIDFD_GET_PROCFD, procfd);
++		if (procpidfd >= 0) {
++			ksft_print_msg(
++				"managed to get access to /proc/<pid> of recycled pid\n");
++			_exit(PIDFD_ERROR);
++		}
++
++		if (wait_for_pid(pid2))
++			_exit(PIDFD_ERROR);
++
++		_exit(PIDFD_PASS);
++	}
++
++	if (wait_for_pid(pid1) != 0)
++		return -1;
++
++	ksft_test_result_pass("%s test: passed\n", test_name);
++	ksft_inc_pass_cnt();
++	return 0;
++}
++
++int main(int argc, char **argv)
++{
++	int ret = 1;
++	int pidfd = -1, procfd = -1, procpidfd = -1, statusfd = -1;
++	pid_t pid;
++
++	pidfd = sys_pidfd_open(-1, 0);
++	if (pidfd >= 0) {
++		ksft_print_msg(
++			"%s - succeeded to open pidfd for invalid pid -1\n",
++			strerror(errno));
++		goto on_error;
++	}
++	ksft_test_result_pass("do not allow invalid pid test: passed\n");
++	ksft_inc_pass_cnt();
++
++	pidfd = sys_pidfd_open(getpid(), 1);
++	if (pidfd >= 0) {
++		ksft_print_msg(
++			"%s - succeeded to open pidfd with invalid flag value specified\n",
++			strerror(errno));
++		goto on_error;
++	}
++	ksft_test_result_pass("do not allow invalid flag test: passed\n");
++	ksft_inc_pass_cnt();
++
++	pidfd = sys_pidfd_open(getpid(), 0);
++	if (pidfd < 0) {
++		ksft_print_msg("%s - failed to open pidfd\n", strerror(errno));
++		goto on_error;
++	}
++	ksft_test_result_pass("open a new pidfd test: passed\n");
++	ksft_inc_pass_cnt();
++
++	procfd = open("/proc", O_DIRECTORY | O_RDONLY | O_CLOEXEC);
++	if (procfd < 0) {
++		ksft_print_msg("%s - failed to open /proc\n", strerror(errno));
++		goto on_error;
++	}
++
++	procpidfd = ioctl(pidfd, PIDFD_GET_PROCFD, procfd);
++	if (procpidfd < 0) {
++		ksft_print_msg(
++			"%s - failed to retrieve /proc/<pid> from pidfd\n",
++			strerror(errno));
++		goto on_error;
++	}
++
++	statusfd = openat(procpidfd, "status", O_CLOEXEC | O_RDONLY);
++	if (statusfd < 0) {
++		ksft_print_msg("%s - failed to open /proc/<pid>/status\n",
++			       strerror(errno));
++		goto on_error;
++	}
++
++	pid = get_pid_from_status_file(&statusfd, "Pid:", sizeof("Pid:") - 1);
++	if (pid < 0) {
++		ksft_print_msg(
++			"%s - failed to retrieve pid from /proc/<pid>/status\n",
++			strerror(errno));
++		goto on_error;
++	}
++
++	if (pid != getpid()) {
++		ksft_print_msg(
++			"%s - actual pid %d does not equal retrieved pid from /proc/<pid>/status\n",
++			strerror(errno), pid, getpid());
++		goto on_error;
++	}
++	ksft_test_result_pass("convert pidfd to /proc/<pid> fd test: passed\n");
++	ksft_inc_pass_cnt();
++
++	ret = test_pidfd_to_procfd_recycled_pid_fail();
++
++on_error:
++	if (pidfd >= 0)
++		close(pidfd);
++
++	if (procfd >= 0)
++		close(procfd);
++
++	if (procpidfd >= 0)
++		close(procpidfd);
++
++	if (statusfd >= 0)
++		close(statusfd);
++
++	return !ret ? ksft_exit_pass() : ksft_exit_fail();
++}
+diff --git a/tools/testing/selftests/pidfd/pidfd_test.c b/tools/testing/selftests/pidfd/pidfd_test.c
+index d59378a93782..f01de87249c9 100644
+--- a/tools/testing/selftests/pidfd/pidfd_test.c
++++ b/tools/testing/selftests/pidfd/pidfd_test.c
+@@ -14,6 +14,7 @@
+ #include <sys/wait.h>
+ #include <unistd.h>
  
- obj-y				+= notify/
- obj-$(CONFIG_EPOLL)		+= eventpoll.o
--obj-$(CONFIG_ANON_INODES)	+= anon_inodes.o
-+obj-y				+= anon_inodes.o
- obj-$(CONFIG_SIGNALFD)		+= signalfd.o
- obj-$(CONFIG_TIMERFD)		+= timerfd.o
- obj-$(CONFIG_EVENTFD)		+= eventfd.o
-diff --git a/fs/notify/fanotify/Kconfig b/fs/notify/fanotify/Kconfig
-index 735bfb2e9190..521dc91d2cb5 100644
---- a/fs/notify/fanotify/Kconfig
-+++ b/fs/notify/fanotify/Kconfig
-@@ -1,7 +1,6 @@
- config FANOTIFY
- 	bool "Filesystem wide access notification"
- 	select FSNOTIFY
--	select ANON_INODES
- 	select EXPORTFS
- 	default n
- 	---help---
-diff --git a/fs/notify/inotify/Kconfig b/fs/notify/inotify/Kconfig
-index b981fc0c8379..0161c74e76e2 100644
---- a/fs/notify/inotify/Kconfig
-+++ b/fs/notify/inotify/Kconfig
-@@ -1,6 +1,5 @@
- config INOTIFY_USER
- 	bool "Inotify support for userspace"
--	select ANON_INODES
- 	select FSNOTIFY
- 	default y
- 	---help---
-diff --git a/init/Kconfig b/init/Kconfig
-index 4592bf7997c0..be8f97e37a76 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -1171,9 +1171,6 @@ config LD_DEAD_CODE_DATA_ELIMINATION
- config SYSCTL
- 	bool
++#include "pidfd.h"
+ #include "../kselftest.h"
  
--config ANON_INODES
--	bool
+ static inline int sys_pidfd_send_signal(int pidfd, int sig, siginfo_t *info,
+@@ -62,28 +63,6 @@ static int test_pidfd_send_signal_simple_success(void)
+ 	return 0;
+ }
+ 
+-static int wait_for_pid(pid_t pid)
+-{
+-	int status, ret;
 -
- config HAVE_UID16
- 	bool
+-again:
+-	ret = waitpid(pid, &status, 0);
+-	if (ret == -1) {
+-		if (errno == EINTR)
+-			goto again;
+-
+-		return -1;
+-	}
+-
+-	if (ret != pid)
+-		goto again;
+-
+-	if (!WIFEXITED(status))
+-		return -1;
+-
+-	return WEXITSTATUS(status);
+-}
+-
+ static int test_pidfd_send_signal_exited_fail(void)
+ {
+ 	int pidfd, ret, saved_errno;
+@@ -128,13 +107,6 @@ static int test_pidfd_send_signal_exited_fail(void)
+ 	return 0;
+ }
  
-@@ -1378,14 +1375,12 @@ config HAVE_FUTEX_CMPXCHG
- config EPOLL
- 	bool "Enable eventpoll support" if EXPERT
- 	default y
--	select ANON_INODES
- 	help
- 	  Disabling this option will cause the kernel to be built without
- 	  support for epoll family of system calls.
+-/*
+- * The kernel reserves 300 pids via RESERVED_PIDS in kernel/pid.c
+- * That means, when it wraps around any pid < 300 will be skipped.
+- * So we need to use a pid > 300 in order to test recycling.
+- */
+-#define PID_RECYCLE 1000
+-
+ /*
+  * Maximum number of cycles we allow. This is equivalent to PID_MAX_DEFAULT.
+  * If users set a higher limit or we have cycled PIDFD_MAX_DEFAULT number of
+@@ -143,17 +115,6 @@ static int test_pidfd_send_signal_exited_fail(void)
+  */
+ #define PIDFD_MAX_DEFAULT 0x8000
  
- config SIGNALFD
- 	bool "Enable signalfd() system call" if EXPERT
--	select ANON_INODES
- 	default y
- 	help
- 	  Enable the signalfd() system call that allows to receive signals
-@@ -1395,7 +1390,6 @@ config SIGNALFD
- 
- config TIMERFD
- 	bool "Enable timerfd() system call" if EXPERT
--	select ANON_INODES
- 	default y
- 	help
- 	  Enable the timerfd() system call that allows to receive timer
-@@ -1405,7 +1399,6 @@ config TIMERFD
- 
- config EVENTFD
- 	bool "Enable eventfd() system call" if EXPERT
--	select ANON_INODES
- 	default y
- 	help
- 	  Enable the eventfd() system call that allows to receive both
-@@ -1516,7 +1509,6 @@ config KALLSYMS_BASE_RELATIVE
- # syscall, maps, verifier
- config BPF_SYSCALL
- 	bool "Enable bpf() system call"
--	select ANON_INODES
- 	select BPF
- 	select IRQ_WORK
- 	default n
-@@ -1533,7 +1525,6 @@ config BPF_JIT_ALWAYS_ON
- 
- config USERFAULTFD
- 	bool "Enable userfaultfd() system call"
--	select ANON_INODES
- 	depends on MMU
- 	help
- 	  Enable the userfaultfd() system call that allows to intercept and
-@@ -1600,7 +1591,6 @@ config PERF_EVENTS
- 	bool "Kernel performance events and counters"
- 	default y if PROFILING
- 	depends on HAVE_PERF_EVENTS
--	select ANON_INODES
- 	select IRQ_WORK
- 	select SRCU
- 	help
+-/*
+- * Define a few custom error codes for the child process to clearly indicate
+- * what is happening. This way we can tell the difference between a system
+- * error, a test error, etc.
+- */
+-#define PIDFD_PASS 0
+-#define PIDFD_FAIL 1
+-#define PIDFD_ERROR 2
+-#define PIDFD_SKIP 3
+-#define PIDFD_XFAIL 4
+-
+ static int test_pidfd_send_signal_recycled_pid_fail(void)
+ {
+ 	int i, ret;
 -- 
 2.21.0
