@@ -1,113 +1,64 @@
-From: Dan Williams <dan.j.williams@intel.com>
-Subject: Re: [PATCHv8 07/10] acpi/hmat: Register processor domain to its memory
-Date: Fri, 29 Mar 2019 14:15:03 -0700
-Message-ID: <CAPcyv4j5bLiUtmjdnjt7KNOtNm4sRHWp=5T3m1bWD=U1zBXeqQ@mail.gmail.com>
-References: <20190311205606.11228-1-keith.busch@intel.com> <20190311205606.11228-8-keith.busch@intel.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH v2 2/5] pid: add pidfd_open()
+Date: Sat, 30 Mar 2019 00:45:46 +0100
+Message-ID: <CAG48ez0Arzdtjxj9zVVTaL=T6tX16e6OcR75rtk9mavCbnMK6w@mail.gmail.com>
+References: <20190329155425.26059-1-christian@brauner.io> <20190329155425.26059-3-christian@brauner.io>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190311205606.11228-8-keith.busch@intel.com>
+In-Reply-To: <20190329155425.26059-3-christian@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Keith Busch <keith.busch@intel.com>
-Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux ACPI <linux-acpi@vger.kernel.org>, Linux MM <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rafael Wysocki <rafael@kernel.org>, Dave Hansen <dave.hansen@intel.com>, Jonathan Cameron <jonathan.cameron@huawei.com>, Brice Goglin <Brice.Goglin@inria.fr>
+To: Christian Brauner <christian@brauner.io>
+Cc: Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, Linux API <linux-api@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Jonathan Kowalski <bl0pbl33p@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.li>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 11, 2019 at 1:55 PM Keith Busch <keith.busch@intel.com> wrote:
->
-> If the HMAT Subsystem Address Range provides a valid processor proximity
-> domain for a memory domain, or a processor domain matches the performance
-> access of the valid processor proximity domain, register the memory
-> target with that initiator so this relationship will be visible under
-> the node's sysfs directory.
->
-> Since HMAT requires valid address ranges have an equivalent SRAT entry,
-> verify each memory target satisfies this requirement.
->
-> Reviewed-by: Jonathan Cameron <Jonathan.Cameron@huawei.com>
-> Signed-off-by: Keith Busch <keith.busch@intel.com>
-> ---
->  drivers/acpi/hmat/Kconfig |   3 +-
->  drivers/acpi/hmat/hmat.c  | 392 +++++++++++++++++++++++++++++++++++++++++++++-
->  2 files changed, 393 insertions(+), 2 deletions(-)
->
-> diff --git a/drivers/acpi/hmat/Kconfig b/drivers/acpi/hmat/Kconfig
-> index 2f7111b7af62..13cddd612a52 100644
-> --- a/drivers/acpi/hmat/Kconfig
-> +++ b/drivers/acpi/hmat/Kconfig
-> @@ -4,4 +4,5 @@ config ACPI_HMAT
->         depends on ACPI_NUMA
->         help
->          If set, this option has the kernel parse and report the
-> -        platform's ACPI HMAT (Heterogeneous Memory Attributes Table).
-> +        platform's ACPI HMAT (Heterogeneous Memory Attributes Table),
-> +        and register memory initiators with their targets.
-> diff --git a/drivers/acpi/hmat/hmat.c b/drivers/acpi/hmat/hmat.c
-> index 4758beb3b2c1..01a6eddac6f7 100644
-> --- a/drivers/acpi/hmat/hmat.c
-> +++ b/drivers/acpi/hmat/hmat.c
-> @@ -13,11 +13,105 @@
->  #include <linux/device.h>
->  #include <linux/init.h>
->  #include <linux/list.h>
-> +#include <linux/list_sort.h>
->  #include <linux/node.h>
->  #include <linux/sysfs.h>
->
->  static __initdata u8 hmat_revision;
->
-> +static __initdata LIST_HEAD(targets);
-> +static __initdata LIST_HEAD(initiators);
-> +static __initdata LIST_HEAD(localities);
-> +
-> +/*
-> + * The defined enum order is used to prioritize attributes to break ties when
-> + * selecting the best performing node.
-> + */
-> +enum locality_types {
-> +       WRITE_LATENCY,
-> +       READ_LATENCY,
-> +       WRITE_BANDWIDTH,
-> +       READ_BANDWIDTH,
-> +};
-> +
-> +static struct memory_locality *localities_types[4];
-> +
-> +struct memory_target {
-> +       struct list_head node;
-> +       unsigned int memory_pxm;
-> +       unsigned int processor_pxm;
-> +       struct node_hmem_attrs hmem_attrs;
-> +};
-> +
-> +struct memory_initiator {
-> +       struct list_head node;
-> +       unsigned int processor_pxm;
-> +};
-> +
-> +struct memory_locality {
-> +       struct list_head node;
-> +       struct acpi_hmat_locality *hmat_loc;
-> +};
-> +
-> +static __init struct memory_initiator *find_mem_initiator(unsigned int cpu_pxm)
+On Fri, Mar 29, 2019 at 4:54 PM Christian Brauner <christian@brauner.io> wrote:
+> /* Introduction */
+> This adds the pidfd_open() syscall.
+> pidfd_open() allows to retrieve file descriptors for a given pid. This
+> includes both file descriptors for processes and file descriptors for
+> threads.
+
+Looks good to me, overall. Apart from a few nits below:
+Reviewed-by: Jann Horn <jannh@google.com>
+
+[...]
+> diff --git a/kernel/pid.c b/kernel/pid.c
+> index 20881598bdfa..8c9e15e0e463 100644
+> --- a/kernel/pid.c
+> +++ b/kernel/pid.c
+[...]
+> +static struct file *pidfd_open_proc_pid(const struct file *procf, pid_t pid,
+> +                                       const struct pid *pidfd_pid)
 > +{
-> +       struct memory_initiator *initiator;
-> +
-> +       list_for_each_entry(initiator, &initiators, node)
-> +               if (initiator->processor_pxm == cpu_pxm)
-> +                       return initiator;
-> +       return NULL;
+> +       char name[12]; /* int to strlen + \0 but with */
+
+nit: comment suddenly ends at "but with"?
+
+[...]
 > +}
 > +
-> +static __init struct memory_target *find_mem_target(unsigned int mem_pxm)
+> +static inline int pidfd_to_procfd(int procfd, struct file *pidfd_file)
 > +{
-> +       struct memory_target *target;
-> +
-> +       list_for_each_entry(target, &targets, node)
-> +               if (target->memory_pxm == mem_pxm)
-> +                       return target;
-> +       return NULL;
+> +       long fd;
 
-The above implementation assumes that every SRAT entry has a unique
-@mem_pxm. I don't think that's valid if the memory map is sparse,
-right?
+nit: This should probably be an int?
+
+[...]
+> +       return fd;
+> +}
+[...]
+> +static long pidfd_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+> +{
+> +       int procfd = arg;
+
+nit: I think it'd be semantically cleaner to move this assignment into
+the switch case, but I don't feel about it strongly.
+
+> +       switch (cmd) {
+> +       case PIDFD_GET_PROCFD:
+> +               return pidfd_to_procfd(procfd, file);
+> +       default:
+> +               return -ENOTTY;
+> +       }
+> +}
