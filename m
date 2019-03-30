@@ -1,201 +1,57 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH v2 4/5] signal: PIDFD_SIGNAL_TID threads via pidfds
-Date: Sat, 30 Mar 2019 02:42:31 +0100
-Message-ID: <20190330014230.w3k6tz6xxxjlycod@brauner.io>
-References: <20190329155425.26059-1-christian@brauner.io>
- <20190329155425.26059-5-christian@brauner.io>
- <CAG48ez0=Q2CzgTGLiEU7F9B=gS-58VrpKz2XQ369cemo2FJdbQ@mail.gmail.com>
- <20190330012229.yt3hecmgaj2r6vp7@brauner.io>
- <20190330013416.vnidfkjbsxxhzslm@brauner.io>
+From: Daniel Colascione <dancol@google.com>
+Subject: Re: [PATCH 2/4] pid: add pidfd_open()
+Date: Fri, 29 Mar 2019 22:35:20 -0700
+Message-ID: <CAKOZueusdFurOb_uFZ3PDmZeJvYvHVKMx6=TpiWPERkKRiHfiw@mail.gmail.com>
+References: <20190327162147.23198-1-christian@brauner.io> <20190327162147.23198-3-christian@brauner.io>
+ <CAGLj2rG8xMMt8-+r-pauA_qi4aun2y_kBZMCZGkXWQsKJrb-Ww@mail.gmail.com>
+ <20190327213404.pv4wqtkjbufkx36u@brauner.io> <CAGLj2rHpYAOGz0h0k2pS4JwFSQkMmRSUWxa4BtO+7BUMD21vdQ@mail.gmail.com>
+ <20190327222543.huugotqcew6jyytv@brauner.io> <CAGLj2rG0Sbho6MnPSmcS73Xj=oG92E4W_QLRu4dD8NfweoUm5Q@mail.gmail.com>
+ <20190328103813.eogszrqbitw3e7k7@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190330013416.vnidfkjbsxxhzslm@brauner.io>
+In-Reply-To: <20190328103813.eogszrqbitw3e7k7@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, Linux API <linux-api@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Jonathan Kowalski <bl0pbl33p@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.li>
+To: Christian Brauner <christian@brauner.io>
+Cc: Jonathan Kowalski <bl0pbl33p@gmail.com>, Jann Horn <jannh@google.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, Aleksa Sarai <cyphar@cyph>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Mar 30, 2019 at 02:34:16AM +0100, Christian Brauner wrote:
-> On Sat, Mar 30, 2019 at 02:22:29AM +0100, Christian Brauner wrote:
-> > On Sat, Mar 30, 2019 at 02:06:34AM +0100, Jann Horn wrote:
-> > > On Fri, Mar 29, 2019 at 4:54 PM Christian Brauner <christian@brauner.io> wrote:
-> > > > With the addition of pidfd_open() it is possible for users to reference a
-> > > > specific thread by doing:
-> > > >
-> > > > int pidfd = pidfd_open(<tid>, 0);
-> > > >
-> > > > This means we can extend pidfd_send_signal() to signal a specific thread.
-> > > > As promised in the commit for pidfd_send_signal() [1] the extension is
-> > > > based on a flag argument, i.e. the scope of the signal delivery is based on
-> > > > the flag argument, not on the type of file descriptor.
-> > > > To this end the flag PIDFD_SIGNAL_TID is added. With this change we now
-> > > > cover most of the functionality of all the other signal sending functions
-> > > > combined:
-> > > [...]
-> > > > diff --git a/include/uapi/linux/wait.h b/include/uapi/linux/wait.h
-> > > > index d6c7c0701997..b72f0ef84fe5 100644
-> > > > --- a/include/uapi/linux/wait.h
-> > > > +++ b/include/uapi/linux/wait.h
-> > > [...]
-> > > > +/* Flags to pass to pidfd_send_signal */
-> > > > +#define PIDFD_SIGNAL_TID 1 /* Send signal to specific thread */
-> > > 
-> > > nit: s/1/1U/; the flags argument is an `unsigned int`
-> > 
-> > Will change.
-> > 
-> > > 
-> > > >  #endif /* _UAPI_LINUX_WAIT_H */
-> > > > diff --git a/kernel/signal.c b/kernel/signal.c
-> > > > index eb97d0cc6ef7..9f93da85b2b9 100644
-> > > > --- a/kernel/signal.c
-> > > > +++ b/kernel/signal.c
-> > > [...]
-> > > > +static int pidfd_send_signal_specific(struct pid *pid, int sig,
-> > > > +                                     struct kernel_siginfo *info)
-> > > > +{
-> > > > +       struct task_struct *p;
-> > > > +       int error = -ESRCH;
-> > > > +
-> > > > +       rcu_read_lock();
-> > > > +       p = pid_task(pid, PIDTYPE_PID);
-> > > > +       if (p)
-> > > > +               error = __do_send_specific(p, sig, info);
-> > > > +       rcu_read_unlock();
-> > > > +
-> > > > +       return error;
-> > > > +}
-> > > > +
-> > > >  /**
-> > > > - * sys_pidfd_send_signal - send a signal to a process through a task file
-> > > > - *                          descriptor
-> > > > + * sys_pidfd_send_signal - send a signal to a process through a pidfd
-> > > > +
-> > > >   * @pidfd:  the file descriptor of the process
-> > > >   * @sig:    signal to be sent
-> > > >   * @info:   the signal info
-> > > >   * @flags:  future flags to be passed
-> > > 
-> > > nit: comment is outdated, it isn't "future flags" anymore
-> > 
-> > Will remove.
-> > 
-> > > 
-> > > [...]
-> > > > + *   rt_tgsigqueueinfo(<tgid>, <tid>, <sig>, <uinfo>)
-> > > > + * - pidfd_send_signal(<pidfd>, <sig>, <info>, PIDFD_SIGNAL_TID);
-> > > > + *   which is equivalent to
-> > > > + *   rt_tgsigqueueinfo(<tgid>, <tid>, <sig>, <uinfo>)
-> > > > + *
-> > > >   * In order to extend the syscall to threads and process groups the @flags
-> > > >   * argument should be used. In essence, the @flags argument will determine
-> > > >   * what is signaled and not the file descriptor itself. Put in other words,
-> > > 
-> > > nit: again, outdated comment about @flags
-> > 
-> > Will update.
-> > 
-> > > 
-> > > [...]
-> > > > @@ -3626,43 +3695,16 @@ SYSCALL_DEFINE4(pidfd_send_signal, int, pidfd, int, sig,
-> > > >                 prepare_kill_siginfo(sig, &kinfo);
-> > > >         }
-> > > >
-> > > > -       ret = kill_pid_info(sig, &kinfo, pid);
-> > > > +       if (flags & PIDFD_SIGNAL_TID)
-> > > > +               ret = pidfd_send_signal_specific(pid, sig, &kinfo);
-> > > > +       else
-> > > > +               ret = kill_pid_info(sig, &kinfo, pid);
-> > > 
-> > > nit: maybe give pidfd_send_signal_specific() and kill_pid_info() the
-> > > same signatures, since they perform similar operations with the same
-> > > argument types?
-> > 
-> > Yes, let's do
-> > pidfd_send_signal_specific.(pid, sig, &kinfo);
-> > kill_pid_info..............(pid, sig, &kinfo);
-> > 
-> > so it matches the argument order of the syscalls itself too.
-> 
-> Strike that. We should do:
-> pidfd_send_signal_specific.(sig, &kinfo, pid);
-> kill_pid_info..............(sig, &kinfo, pid);
-> 
-> because kill_pid_info() is called in multiple places so we would
-> needlessly shovle code around.
-> 
-> > 
-> > > 
-> > > Something that was already kinda weird in the existing code, but is
-> > > getting worse with TIDs is the handling of SI_USER with siginfo.
-> > 
-> > Right, that's what we discussed earlier.
-> > 
-> > > Copying context lines from above here:
-> > > 
-> > >         if (info) {
-> > >                 ret = copy_siginfo_from_user_any(&kinfo, info);
-> > >                 if (unlikely(ret))
-> > >                         goto err;
-> > >                 ret = -EINVAL;
-> > >                 if (unlikely(sig != kinfo.si_signo))
-> > >                         goto err;
-> > >                 if ((task_pid(current) != pid) &&
-> > >                     (kinfo.si_code >= 0 || kinfo.si_code == SI_TKILL)) {
-> > >                         /* Only allow sending arbitrary signals to yourself. */
-> > >                         ret = -EPERM;
-> > >                         if (kinfo.si_code != SI_USER)
-> > >                                 goto err;
-> > >                         /* Turn this into a regular kill signal. */
-> > >                         prepare_kill_siginfo(sig, &kinfo);
-> > >                 }
-> > >         } else {
-> > >                 prepare_kill_siginfo(sig, &kinfo);
-> > >         }
-> > > 
-> > > So for signals to PIDs, the rule is that if you send siginfo with
-> > > SI_USER to yourself, the siginfo is preserved; otherwise the kernel
-> > > silently clobbers it. That's already kind of weird - silent behavior
-> > 
-> > Clobbers as in "silently replaces it whatever it seems fit?
-> > 
-> > > difference depending on a security check. But now, for signals to
-> > > threads, I think the result is going to be that signalling the thread
-> > > group leader preserves information, and signalling any other thread
-> > > clobbers it? If so, that seems bad.
-> > > 
-> > > do_rt_sigqueueinfo() seems to have the same issue, from a glance - but
-> > > there, at least the error case is just a -EPERM, not a silent behavior
-> > > difference.
-> > > 
-> > > Would it make sense to refuse sending siginfo with SI_USER to
-> > > non-current? If you actually want to send a normal SI_USER signal, you
-> > 
-> > Yeah.
-> > 
-> > > can use info==NULL, right? That should create wrongness parity with
-> > > do_rt_sigqueueinfo().
-> > 
-> > So you'd just do (just doing it non-elegantly rn):
-> > if ((task_pid(current) != pid) &&
-> >     (kinfo.si_code >= 0 || kinfo.si_code == SI_TKILL)) {
-> >         ret = -EPERM;
-> >         goto err;
-> > }
-> > 
-> > > To improve things further, I guess you'd have to move the comparison
-> > > against current into pidfd_send_signal_specific(), or move the task
-> > > lookup out of it, or something like that?
-> > 
-> > Looks like a sane suggestion to me. Would you care to send a patch for
-> > that? This is clearly a bugfix suitable for 5.1 so I'd rather not wait
-> > until 5.2.
+On Thu, Mar 28, 2019 at 3:38 AM Christian Brauner <christian@brauner.io> wrote:
+>
+> > All that said, thanks for the work on this once again. My intention is
+> > just that we don't end up with an API that could have been done better
+> > and be cleaner to use for potential users in the coming years.
+>
+> Thanks for your input on all of this. I still don't find multiplexers in
+> the style of seccomp()/fsconfig()/keyctl() to be a problem since they
+> deal with a specific task. They are very much different from ioctl()s in
+> that regard. But since Joel, you, and Daniel found the pidctl() approach
+> not very nice I dropped it. The interface needs to be satisfactory for
+> all of us especially since Android and other system managers will be the
+> main consumers.
 
-Sorry, that was probably unclear. I was referring to:
+Thanks.
 
-> > > Would it make sense to refuse sending siginfo with SI_USER to
-> > > non-current? If you actually want to send a normal SI_USER signal, you
+> So let's split this into pidfd_open(pid_t pid, unsigned int flags) which
+> allows to cleanly get pidfds independent procfs and do the translation
+> to procpidfds in an ioctl() as we've discussed in prior threads. This
 
-This makes perfect sense as a bugfix for 5.1 imo.
+I sustain my objection to adding an ioctl. Compared to a system call,
+an ioctl has a more rigid interface, greater susceptibility to
+programmer error (due to the same ioctl control code potentially doing
+different things for different file types), longer path length, and
+more awkward filtering/monitoring/auditing/tracing. We've discussed
+this issue at length before, and I thought we all agreed to use system
+calls, not ioctl, for core kernel functionality. So why is an ioctl
+suddenly back on the table? The way I see it, an ioctl has no
+advantages except for 1) conserving system call numbers, which are not
+scarce, and 2) avoiding the system call number coordination problem
+(and the coordination problem isn't a factor for core kernel code). I
+don't understand everyone's reluctance to add new system calls. What
+am I missing? Why would we give up all the advantages that a system
+call gives us?
+
+I also don't understand Andy's argument on the other thread that an
+ioctl is okay if it's an "operation on an FD" --- *most* system calls
+are operations on FDs. We don't have an ioctl for sendmsg(2) and it's
+an "operation on an FD".
