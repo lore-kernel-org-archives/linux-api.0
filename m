@@ -1,166 +1,98 @@
-From: Jonathan Kowalski <bl0pbl33p@gmail.com>
-Subject: Re: [PATCH 2/4] pid: add pidfd_open()
-Date: Sat, 30 Mar 2019 14:30:44 +0000
-Message-ID: <CAGLj2rGFOv-AcHSuxF2YBz=WKNi7iLGp3i5KzAq7E1fo14B9Lg@mail.gmail.com>
-References: <20190327162147.23198-1-christian@brauner.io> <20190327162147.23198-3-christian@brauner.io>
- <CAGLj2rG8xMMt8-+r-pauA_qi4aun2y_kBZMCZGkXWQsKJrb-Ww@mail.gmail.com>
- <20190327213404.pv4wqtkjbufkx36u@brauner.io> <CAGLj2rHpYAOGz0h0k2pS4JwFSQkMmRSUWxa4BtO+7BUMD21vdQ@mail.gmail.com>
- <20190327222543.huugotqcew6jyytv@brauner.io> <CAGLj2rG0Sbho6MnPSmcS73Xj=oG92E4W_QLRu4dD8NfweoUm5Q@mail.gmail.com>
- <20190328103813.eogszrqbitw3e7k7@brauner.io> <CAKOZueusdFurOb_uFZ3PDmZeJvYvHVKMx6=TpiWPERkKRiHfiw@mail.gmail.com>
- <CAGLj2rEtgiJfmKgo4bJvmBYp1Y5f1SELVfEu7Ayfi62zOAxjGQ@mail.gmail.com> <CAKOZuesjdfNptM9Pt_uzsDVefW6LXhHPHG2a3rJRAe0rpeWX6g@mail.gmail.com>
+From: Christian Brauner <christian@brauner.io>
+Subject: Re: [PATCH v2 2/5] pid: add pidfd_open()
+Date: Sat, 30 Mar 2019 15:37:27 +0100
+Message-ID: <20190330143726.6aaxz4sctu3pzpyx@brauner.io>
+References: <20190329155425.26059-1-christian@brauner.io>
+ <20190329155425.26059-3-christian@brauner.io>
+ <f0d590b96b7d11ae21a9a06040b8ffa85fa74e2a.camel@bitron.ch>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAKOZuesjdfNptM9Pt_uzsDVefW6LXhHPHG2a3rJRAe0rpeWX6g@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <f0d590b96b7d11ae21a9a06040b8ffa85fa74e2a.camel@bitron.ch>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Colascione <dancol@google.com>
-Cc: Christian Brauner <christian@brauner.io>, Jann Horn <jannh@google.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, Aleksa Sarai <cyphar@cyp>
+To: =?utf-8?B?SsO8cmc=?= Billeter <j@bitron.ch>, torvalds@linux-foundation.org
+Cc: jannh@google.com, luto@kernel.org, dhowells@redhat.com, serge@hallyn.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, arnd@arndb.de, ebiederm@xmission.com, khlebnikov@yandex-team.ru, keescook@chromium.org, adobriyan@gmail.com, tglx@linutronix.de, mtk.manpages@gmail.com, bl0pbl33p@gmail.com, ldv@altlinux.org, akpm@linux-foundation.org, oleg@redhat.com, nagarathnam.muthusamy@oracle.com, cyphar@cyphar.com, viro@zeniv.linux.org.uk, joel@joelfernandes.org, dancol@google.com
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Mar 30, 2019 at 7:39 AM Daniel Colascione <dancol@google.com> wrote:
->
->  [SNIP]
->
-> Thanks again.
->
-> I agree that the operation we're discussing has a simple signature,
-> but signature flexibility isn't the only reason to prefer a system
-> call over an ioctl. There are other reasons for preferring system
-> calls to ioctls (safety, tracing, etc.) that apply even if the
-> operation we're discussing has a relatively simple signature: for
-> example, every system call has a distinct and convenient ftrace event,
-> but ioctls don't; strace filtering Just Works on a
-> system-call-by-system-call basis, but it doesn't for ioctls; and
+On Sat, Mar 30, 2019 at 12:53:57PM +0100, Jürg Billeter wrote:
+> On Fri, 2019-03-29 at 16:54 +0100, Christian Brauner wrote:
+> > diff --git a/include/uapi/linux/wait.h b/include/uapi/linux/wait.h
+> > index ac49a220cf2a..d6c7c0701997 100644
+> > --- a/include/uapi/linux/wait.h
+> > +++ b/include/uapi/linux/wait.h
+> > @@ -18,5 +18,7 @@
+> >  #define P_PID		1
+> >  #define P_PGID		2
+> >  
+> > +/* Get a file descriptor for /proc/<pid> of the corresponding pidfd
+> > */
+> > +#define PIDFD_GET_PROCFD _IOR('p', 1, int)
+> >  
+> >  #endif /* _UAPI_LINUX_WAIT_H */
+> 
+> This is missing an entry in Documentation/ioctl/ioctl-number.txt and is
+> actually conflicting with existing entries.
 
-It does for those with a unique number.
+Thanks. Yes, Jann mentioned this too.
 
-> documentation for system calls is much more discoverable (e.g., man
-> -k) than documentation for ioctls. Even if the distinction doesn't
-> matter much, IMHO, it still matters a little, enough to favor a system
-> call without an offsetting advantage for the ioctl option.
+> 
+> However, I'd actually prefer a syscall to allow strict whitelisting via
+> seccomp and avoid the other ioctl disadvantages that Daniel has already
+> mentioned.
 
-It will be alongside other I/O operations in the pidfd man page.
+You can filter ioctls with seccomp.
 
->
-> > If you start adding a system call for every specific operation on file
-> > descriptors, it *will* become a problem.
->
-> I'm not sure what you mean. Do you mean that adding a top-level system
-> call for every operation that might apply to one specific kind of file
-> descriptor would lead, as the overall result, to the kernel having
-> enough system calls to cause negative consequences? I'm not sure I
-> agree, but accepting this idea for the sake of discussion: shouldn't
-> we be more okay with system calls for features present on almost all
-> systems --- like procfs --- even if we punt to ioctls very rarely-used
-> functionality, e.g., some hypothetical special squeak noise that you
-> could get some specific 1995 adlib clone to make?
+I have compromised quite a bit now and I think what we have is perfectly
+fine. a single clean syscalls pidfd_open() that lets you get pidfds for
+threads and thread-group leaders independent of procfs and a clean,
+simple fd->fd converstion ioctl() that is a property of the f_ops of the
+pidfd to get an fd to /proc/<pid> for metadata access. Btw, this being a
+part of the pidfd f_ops seems strikingly elegant to me. Because it
+expresses the notion that the metadata is implicitly part of the pidfd
+nicely. But I might just be dumb.
 
-Consider if we were to do:
+I do not see the need to add another syscall that is conditional on
+CONFIG_PROC_FS and only does a pidfd to /proc/<pid>-fd conversion.
+That's almost the definition of what an ioctl() is most suited for.
 
-int procpidfd_open(int pidfd, int procrootfd);
+I get the opposition to multiplexers but consider if we where to oppose
+all of them. Let's leave ioctls out and just look at a few widely used
+multiplexer syscalls:
 
-This system call is useless besides a very specific operation for a
-very specific usecase on a file descriptor. Then, you figure you might
-want to support procpidfd back to pidfd (although YAGNI), so you will
-add a CMD or flags argument now,
+1. seccomp()
+   - number of supported commands:   4
 
-int procpidfd_open(int pidfd, int procrootfd/procpidfd, unsigned int flags);
+2. prctl()
+   - number of supported commands:  45
 
-  int procpidfd = procpidfd_open(fd, procrootfd, PIDFD_TO_PROCPIDFD);
-  int pidfd = procpidfd_open(-1, procpidfd, PROCPIDFD_TO_PIDFD);
+3. keyctl()
+   - number of supported commands:  25
 
-vs procpidfd2pidfd(int procpidfd); if you did not foresee the need.
-Then, you want pidfd2pid, and so on.
+4. bpf()
+   - number of supported commands:  18
 
-If you don't, you will have to add a command interface in the new
-system call, which changes parameters depending on the flags. This is
-already starting to get ugly. In the end, it's a matter of taste, this
-pattern if exploited leads to endless proliferation of the system call
-interface, often ridden with short-sighted APIs, because you cannot
-know if you want a focused call or a command style call. ioctl is
-already a command interface, and 10 system calls for each command is
-_NOT_ nice, from a user perspective.
+5. proposed fsconfig()
+   - number of supported commands:   8
 
->
-> > Besides, the translation is
-> > just there because it is racy to do in userspace,  it is not some well
-> > defined core kernel functionality.
-> > Therefore, it is just a way to
-> > enter the kernel to do the openat in a race free and safe manner.
->
-> I agree that the translation has to be done in the kernel, not
-> userspace, and that the kernel must provide to userspace some
-> interface for requesting that the translation happen: we're just
-> discussing the shape of this interface. Shouldn't all interfaces
-> provided by the kernel to userspace be equally well defined? I'm not
-> sure that the internal simplicity of the operation matters much
-> either. There are already explicit system calls for some
-> simple-to-implement things, e.g., timerfd_gettime. It's worth noting
-> that timerfd is (IIRC), like procfs, a feature that's both ubiquitous
-> and optional.
+Total Number of required syscalls: 100
 
-It is well defined, it has a well defined signature, and it will error
-out if you don't use it properly. Again, what it does is very limited
-and niche. I am not sure it warrants a system call of its own.
+That means for bpf() alone Linux would have had to gain *18* additional
+single syscalls and for the new mount api only for configuring a mount
+context 8 additional syscalls would need to be pulled.
+That all hinges on the argument that "syscalls are cheap" and that
+running out of syscall numbers is not a real problem because there is a
+patchset that lifts this restriction _eventually_. That patchset hasn't
+been merged yet and I have not even seen it sent out yet. So we're still
+short of syscall numbers. _Even_ if this patchset would have landed,
+adding 26 syscalls for two apis seems excessive.
+So unless Linus jumps in here (Cced) and says that he's fine that the
+pidfd to /proc/<pid>-fd conversion is suited for yet another syscalls
+what we have here is perfectly acceptable.
+Again, as I've said before I don't see the point in sending piles of
+syscalls when it is not really justified and I find none of the
+arguments against this implementation we have here right now very
+convincing.
 
-timerfd_gettime was an afterthought anyway, that's probably not a good
-example (it was more to just match the POSIX timers interface as the
-original timerfd never had support for querying, so the split into two
-steps, create and initialize, you could argue one could do it without
-a syscall, but it still has a well defined argument list, and
-accepting elaborate data structures into an ioctl is not a good
-interface to plumb, so that's easily justified).
-
-It's much like socket and setsockopt/getsockopt in nature. I would
-even say APIs separating creation and configuration age well and are
-better, but a process doesn't fit such a model cleanly.
-
->
-> > As is, the facility being provided through an ioctl on the pidfd is
-> > not something I'd consider a problem.
->
-> You're right that from a signature perspective, using an ioctl isn't a
-> problem. I just want to make sure we take into account the other,
-> non-signature advantages that system calls have over ioctls.
->
-> > I think the translation stuff
-> > should also probably be an extension of ioctl_ns(2) (but I wouldn't be
-> > opposed if translate_pid is resurrected as is).
-> > For anything more involved than ioctl(pidfd, PIDFD_TO_PROCFD,
-> > procrootfd), I'd agree that a system call would be a cleaner
-> > interface, otherwise, if you cannot generalise it, using ioctls as a
-> > command interface is probably the better tradeoff here.
->
-> Sure: I just want to better understand everyone else's thought process
-> here, having been frustrated with things like the termios ioctls being
-> ioctls.
-
-On that note, I don't buy the safety argument here, or the seccomp argument.
-
-You need to consider what this is, on a case by case basis.
-
-ioctl(pidfd, PIDFD_TO_PROCFD, procrootfd);
-
-See? You need /proc's root fd to be able to get to the /proc/<PID> dir
-fd, in a race free manner. You don't need to have the overhead of
-filtering to contain access, as privilege is bound to descriptors.
-
-However, an ioctl to do pidfd_send_signal would have indeed been
-problematic, it takes in structures, it has a very core use case, and
-a very compelling advantage over existing signal sending APIs.
-
-On the point, using file descriptors, you can safely delegate metadata
-access to a process it has a pidfd open for, without /proc being in
-its mount namespace (which was what Andy was after). File descriptors
-are acting as capabilities, so if you don't leak the /proc's root fd
-to the process, you can be assured it wouldn't be able to do any
-metadata access (and you don't have /proc mounted).
-
-*No need* to blacklist the ioctl or the system call, as it wouldn't
-work anyway. *This* is a good interface, with little to no overhead
-for security. So whether this is an ioctl or a system call doesn't
-matter at all, because it doesn't suffer from all those cases where
-you really want to avoid ioctls and do a well scoped system call as an
-entrypoint instead.
-
-There is not much incentive to it, really.
+Christian
