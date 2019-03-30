@@ -1,208 +1,166 @@
-From: Richard Guy Briggs <rgb@redhat.com>
-Subject: Re: [PATCH ghak90 V5 05/10] audit: add containerid support for
- ptrace and signals
-Date: Sat, 30 Mar 2019 08:55:36 -0400
-Message-ID: <20190330125536.mipbgw2hjewz3zem@madcap2.tricolour.ca>
-References: <cover.1552665316.git.rgb@redhat.com>
- <a5a612bff629574cf4b678e7c7a9315e0e60a27c.1552665316.git.rgb@redhat.com>
- <CAFqZXNuMjvds9OKoj--zgn5j8CGuW55ZGhTPHtKGb+ZOR6B2-A@mail.gmail.com>
- <20190328020410.pl7odjknw7robdk3@madcap2.tricolour.ca>
+From: Jonathan Kowalski <bl0pbl33p@gmail.com>
+Subject: Re: [PATCH 2/4] pid: add pidfd_open()
+Date: Sat, 30 Mar 2019 14:30:44 +0000
+Message-ID: <CAGLj2rGFOv-AcHSuxF2YBz=WKNi7iLGp3i5KzAq7E1fo14B9Lg@mail.gmail.com>
+References: <20190327162147.23198-1-christian@brauner.io> <20190327162147.23198-3-christian@brauner.io>
+ <CAGLj2rG8xMMt8-+r-pauA_qi4aun2y_kBZMCZGkXWQsKJrb-Ww@mail.gmail.com>
+ <20190327213404.pv4wqtkjbufkx36u@brauner.io> <CAGLj2rHpYAOGz0h0k2pS4JwFSQkMmRSUWxa4BtO+7BUMD21vdQ@mail.gmail.com>
+ <20190327222543.huugotqcew6jyytv@brauner.io> <CAGLj2rG0Sbho6MnPSmcS73Xj=oG92E4W_QLRu4dD8NfweoUm5Q@mail.gmail.com>
+ <20190328103813.eogszrqbitw3e7k7@brauner.io> <CAKOZueusdFurOb_uFZ3PDmZeJvYvHVKMx6=TpiWPERkKRiHfiw@mail.gmail.com>
+ <CAGLj2rEtgiJfmKgo4bJvmBYp1Y5f1SELVfEu7Ayfi62zOAxjGQ@mail.gmail.com> <CAKOZuesjdfNptM9Pt_uzsDVefW6LXhHPHG2a3rJRAe0rpeWX6g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190328020410.pl7odjknw7robdk3@madcap2.tricolour.ca>
+In-Reply-To: <CAKOZuesjdfNptM9Pt_uzsDVefW6LXhHPHG2a3rJRAe0rpeWX6g@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Ondrej Mosnacek <omosnace@redhat.com>
-Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, Paul Moore <paul@paul-moore.com>, Steve Grubb <sgrubb@redhat.com>, David Howells <dhowells@redhat.com>, Simo Sorce <simo@redhat.com>, Eric Paris <eparis@parisplace.org>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W . Biederman" <ebiederm@xmission.com>, nhorman@tuxdriver.com
+To: Daniel Colascione <dancol@google.com>
+Cc: Christian Brauner <christian@brauner.io>, Jann Horn <jannh@google.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Nagarathnam Muthusamy <nagarathnam.muthusamy@oracle.com>, Aleksa Sarai <cyphar@cyp>
 List-Id: linux-api@vger.kernel.org
 
-On 2019-03-27 22:04, Richard Guy Briggs wrote:
-> On 2019-03-27 22:17, Ondrej Mosnacek wrote:
-> > On Fri, Mar 15, 2019 at 7:34 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> > > Add audit container identifier support to ptrace and signals.  In
-> > > particular, the "ref" field provides a way to label the auxiliary record
-> > > to which it is associated.
-> > >
-> > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> > > Acked-by: Serge Hallyn <serge@hallyn.com>
-> > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> > > ---
-> > >  include/linux/audit.h |  1 +
-> > >  kernel/audit.c        |  2 ++
-> > >  kernel/audit.h        |  2 ++
-> > >  kernel/auditsc.c      | 23 +++++++++++++++++------
-> > >  4 files changed, 22 insertions(+), 6 deletions(-)
-> > >
-> > > diff --git a/include/linux/audit.h b/include/linux/audit.h
-> > > index 43438192ca2a..ebd6625ca80e 100644
-> > > --- a/include/linux/audit.h
-> > > +++ b/include/linux/audit.h
-> > > @@ -35,6 +35,7 @@ struct audit_sig_info {
-> > >         uid_t           uid;
-> > >         pid_t           pid;
-> > >         char            ctx[0];
-> > > +       u64             cid;
-> > >  };
-> > 
-> > It seems like this structure implicitly defines the format of some
-> > message that is sent to userspace... If so, how will userspace detect
-> > that a new format (including the cid) is being used? Even assuming the
-> > fixed order as pointed out by Neil, the message still seems to be
-> > variable-sized so userspace cannot even use the length to infer that.
-> > Am I missing something here? (I hope I am :)
-> 
-> How humble of you again.  No, you're not missing something.  This ends
-> up being an api change...  That can be fixed in userspace by checking
-> for AUDIT_FEATURE_BITMAP_CONTAINERID, but how do we make a newer kernel
-> not break an older userspace...  I think this was the original rationale
-> for adding it after the ctx but totally missing the fact that the latter
-> is a variable-length field.
+On Sat, Mar 30, 2019 at 7:39 AM Daniel Colascione <dancol@google.com> wrote:
+>
+>  [SNIP]
+>
+> Thanks again.
+>
+> I agree that the operation we're discussing has a simple signature,
+> but signature flexibility isn't the only reason to prefer a system
+> call over an ioctl. There are other reasons for preferring system
+> calls to ioctls (safety, tracing, etc.) that apply even if the
+> operation we're discussing has a relatively simple signature: for
+> example, every system call has a distinct and convenient ftrace event,
+> but ioctls don't; strace filtering Just Works on a
+> system-call-by-system-call basis, but it doesn't for ioctls; and
 
-The way to address this on Steve Grubb's advice is to create a new
-message type that incorporates a new struct with the structure above,
-leaving the old one with the old message type deprecated.  I've coded
-this up along with userspace support.
+It does for those with a unique number.
 
-> This patch really should be split into audit_sig_cid changes in a patch
-> by itself and target_cid changes which could go with the second and
-> fourth patches.
+> documentation for system calls is much more discoverable (e.g., man
+> -k) than documentation for ioctls. Even if the distinction doesn't
+> matter much, IMHO, it still matters a little, enough to favor a system
+> call without an offsetting advantage for the ioctl option.
 
-I've also done this which Paul had already asked for, not quite in this
-form.
+It will be alongside other I/O operations in the pidfd man page.
 
-I believe this addresses all the outstanding issues.
+>
+> > If you start adding a system call for every specific operation on file
+> > descriptors, it *will* become a problem.
+>
+> I'm not sure what you mean. Do you mean that adding a top-level system
+> call for every operation that might apply to one specific kind of file
+> descriptor would lead, as the overall result, to the kernel having
+> enough system calls to cause negative consequences? I'm not sure I
+> agree, but accepting this idea for the sake of discussion: shouldn't
+> we be more okay with system calls for features present on almost all
+> systems --- like procfs --- even if we punt to ioctls very rarely-used
+> functionality, e.g., some hypothetical special squeak noise that you
+> could get some specific 1995 adlib clone to make?
 
-> > >  struct audit_buffer;
-> > > diff --git a/kernel/audit.c b/kernel/audit.c
-> > > index 8cc0e88d7f2a..cfa659b3f6c4 100644
-> > > --- a/kernel/audit.c
-> > > +++ b/kernel/audit.c
-> > > @@ -138,6 +138,7 @@ struct audit_net {
-> > >  kuid_t         audit_sig_uid = INVALID_UID;
-> > >  pid_t          audit_sig_pid = -1;
-> > >  u32            audit_sig_sid = 0;
-> > > +u64            audit_sig_cid = AUDIT_CID_UNSET;
-> > >
-> > >  /* Records can be lost in several ways:
-> > >     0) [suppressed in audit_alloc]
-> > > @@ -1515,6 +1516,7 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
-> > >                         memcpy(sig_data->ctx, ctx, len);
-> > >                         security_release_secctx(ctx, len);
-> > >                 }
-> > > +               sig_data->cid = audit_sig_cid;
-> > >                 audit_send_reply(skb, seq, AUDIT_SIGNAL_INFO, 0, 0,
-> > >                                  sig_data, sizeof(*sig_data) + len);
-> > >                 kfree(sig_data);
-> > > diff --git a/kernel/audit.h b/kernel/audit.h
-> > > index c00e2ee3c6b3..c5ac6436317e 100644
-> > > --- a/kernel/audit.h
-> > > +++ b/kernel/audit.h
-> > > @@ -148,6 +148,7 @@ struct audit_context {
-> > >         kuid_t              target_uid;
-> > >         unsigned int        target_sessionid;
-> > >         u32                 target_sid;
-> > > +       u64                 target_cid;
-> > >         char                target_comm[TASK_COMM_LEN];
-> > >
-> > >         struct audit_tree_refs *trees, *first_trees;
-> > > @@ -344,6 +345,7 @@ extern void audit_filter_inodes(struct task_struct *tsk,
-> > >  extern pid_t audit_sig_pid;
-> > >  extern kuid_t audit_sig_uid;
-> > >  extern u32 audit_sig_sid;
-> > > +extern u64 audit_sig_cid;
-> > >
-> > >  extern int audit_filter(int msgtype, unsigned int listtype);
-> > >
-> > > diff --git a/kernel/auditsc.c b/kernel/auditsc.c
-> > > index a8c8b44b954d..f04e115df5dc 100644
-> > > --- a/kernel/auditsc.c
-> > > +++ b/kernel/auditsc.c
-> > > @@ -113,6 +113,7 @@ struct audit_aux_data_pids {
-> > >         kuid_t                  target_uid[AUDIT_AUX_PIDS];
-> > >         unsigned int            target_sessionid[AUDIT_AUX_PIDS];
-> > >         u32                     target_sid[AUDIT_AUX_PIDS];
-> > > +       u64                     target_cid[AUDIT_AUX_PIDS];
-> > >         char                    target_comm[AUDIT_AUX_PIDS][TASK_COMM_LEN];
-> > >         int                     pid_count;
-> > >  };
-> > > @@ -1514,7 +1515,7 @@ static void audit_log_exit(void)
-> > >         for (aux = context->aux_pids; aux; aux = aux->next) {
-> > >                 struct audit_aux_data_pids *axs = (void *)aux;
-> > >
-> > > -               for (i = 0; i < axs->pid_count; i++)
-> > > +               for (i = 0; i < axs->pid_count; i++) {
-> > >                         if (audit_log_pid_context(context, axs->target_pid[i],
-> > >                                                   axs->target_auid[i],
-> > >                                                   axs->target_uid[i],
-> > > @@ -1522,14 +1523,20 @@ static void audit_log_exit(void)
-> > >                                                   axs->target_sid[i],
-> > >                                                   axs->target_comm[i]))
-> > >                                 call_panic = 1;
-> > > +                       audit_log_contid(context, axs->target_cid[i]);
-> > > +               }
-> > >         }
-> > >
-> > > -       if (context->target_pid &&
-> > > -           audit_log_pid_context(context, context->target_pid,
-> > > -                                 context->target_auid, context->target_uid,
-> > > -                                 context->target_sessionid,
-> > > -                                 context->target_sid, context->target_comm))
-> > > +       if (context->target_pid) {
-> > > +               if (audit_log_pid_context(context, context->target_pid,
-> > > +                                         context->target_auid,
-> > > +                                         context->target_uid,
-> > > +                                         context->target_sessionid,
-> > > +                                         context->target_sid,
-> > > +                                         context->target_comm))
-> > >                         call_panic = 1;
-> > > +               audit_log_contid(context, context->target_cid);
-> > > +       }
-> > >
-> > >         if (context->pwd.dentry && context->pwd.mnt) {
-> > >                 ab = audit_log_start(context, GFP_KERNEL, AUDIT_CWD);
-> > > @@ -2360,6 +2367,7 @@ void __audit_ptrace(struct task_struct *t)
-> > >         context->target_uid = task_uid(t);
-> > >         context->target_sessionid = audit_get_sessionid(t);
-> > >         security_task_getsecid(t, &context->target_sid);
-> > > +       context->target_cid = audit_get_contid(t);
-> > >         memcpy(context->target_comm, t->comm, TASK_COMM_LEN);
-> > >  }
-> > >
-> > > @@ -2387,6 +2395,7 @@ int audit_signal_info(int sig, struct task_struct *t)
-> > >                 else
-> > >                         audit_sig_uid = uid;
-> > >                 security_task_getsecid(current, &audit_sig_sid);
-> > > +               audit_sig_cid = audit_get_contid(current);
-> > >         }
-> > >
-> > >         if (!audit_signals || audit_dummy_context())
-> > > @@ -2400,6 +2409,7 @@ int audit_signal_info(int sig, struct task_struct *t)
-> > >                 ctx->target_uid = t_uid;
-> > >                 ctx->target_sessionid = audit_get_sessionid(t);
-> > >                 security_task_getsecid(t, &ctx->target_sid);
-> > > +               ctx->target_cid = audit_get_contid(t);
-> > >                 memcpy(ctx->target_comm, t->comm, TASK_COMM_LEN);
-> > >                 return 0;
-> > >         }
-> > > @@ -2421,6 +2431,7 @@ int audit_signal_info(int sig, struct task_struct *t)
-> > >         axp->target_uid[axp->pid_count] = t_uid;
-> > >         axp->target_sessionid[axp->pid_count] = audit_get_sessionid(t);
-> > >         security_task_getsecid(t, &axp->target_sid[axp->pid_count]);
-> > > +       axp->target_cid[axp->pid_count] = audit_get_contid(t);
-> > >         memcpy(axp->target_comm[axp->pid_count], t->comm, TASK_COMM_LEN);
-> > >         axp->pid_count++;
-> > >
-> > 
-> > Ondrej Mosnacek <omosnace at redhat dot com>
-> 
-> - RGB
+Consider if we were to do:
 
-- RGB
+int procpidfd_open(int pidfd, int procrootfd);
 
---
-Richard Guy Briggs <rgb@redhat.com>
-Sr. S/W Engineer, Kernel Security, Base Operating Systems
-Remote, Ottawa, Red Hat Canada
-IRC: rgb, SunRaycer
-Voice: +1.647.777.2635, Internal: (81) 32635
+This system call is useless besides a very specific operation for a
+very specific usecase on a file descriptor. Then, you figure you might
+want to support procpidfd back to pidfd (although YAGNI), so you will
+add a CMD or flags argument now,
+
+int procpidfd_open(int pidfd, int procrootfd/procpidfd, unsigned int flags);
+
+  int procpidfd = procpidfd_open(fd, procrootfd, PIDFD_TO_PROCPIDFD);
+  int pidfd = procpidfd_open(-1, procpidfd, PROCPIDFD_TO_PIDFD);
+
+vs procpidfd2pidfd(int procpidfd); if you did not foresee the need.
+Then, you want pidfd2pid, and so on.
+
+If you don't, you will have to add a command interface in the new
+system call, which changes parameters depending on the flags. This is
+already starting to get ugly. In the end, it's a matter of taste, this
+pattern if exploited leads to endless proliferation of the system call
+interface, often ridden with short-sighted APIs, because you cannot
+know if you want a focused call or a command style call. ioctl is
+already a command interface, and 10 system calls for each command is
+_NOT_ nice, from a user perspective.
+
+>
+> > Besides, the translation is
+> > just there because it is racy to do in userspace,  it is not some well
+> > defined core kernel functionality.
+> > Therefore, it is just a way to
+> > enter the kernel to do the openat in a race free and safe manner.
+>
+> I agree that the translation has to be done in the kernel, not
+> userspace, and that the kernel must provide to userspace some
+> interface for requesting that the translation happen: we're just
+> discussing the shape of this interface. Shouldn't all interfaces
+> provided by the kernel to userspace be equally well defined? I'm not
+> sure that the internal simplicity of the operation matters much
+> either. There are already explicit system calls for some
+> simple-to-implement things, e.g., timerfd_gettime. It's worth noting
+> that timerfd is (IIRC), like procfs, a feature that's both ubiquitous
+> and optional.
+
+It is well defined, it has a well defined signature, and it will error
+out if you don't use it properly. Again, what it does is very limited
+and niche. I am not sure it warrants a system call of its own.
+
+timerfd_gettime was an afterthought anyway, that's probably not a good
+example (it was more to just match the POSIX timers interface as the
+original timerfd never had support for querying, so the split into two
+steps, create and initialize, you could argue one could do it without
+a syscall, but it still has a well defined argument list, and
+accepting elaborate data structures into an ioctl is not a good
+interface to plumb, so that's easily justified).
+
+It's much like socket and setsockopt/getsockopt in nature. I would
+even say APIs separating creation and configuration age well and are
+better, but a process doesn't fit such a model cleanly.
+
+>
+> > As is, the facility being provided through an ioctl on the pidfd is
+> > not something I'd consider a problem.
+>
+> You're right that from a signature perspective, using an ioctl isn't a
+> problem. I just want to make sure we take into account the other,
+> non-signature advantages that system calls have over ioctls.
+>
+> > I think the translation stuff
+> > should also probably be an extension of ioctl_ns(2) (but I wouldn't be
+> > opposed if translate_pid is resurrected as is).
+> > For anything more involved than ioctl(pidfd, PIDFD_TO_PROCFD,
+> > procrootfd), I'd agree that a system call would be a cleaner
+> > interface, otherwise, if you cannot generalise it, using ioctls as a
+> > command interface is probably the better tradeoff here.
+>
+> Sure: I just want to better understand everyone else's thought process
+> here, having been frustrated with things like the termios ioctls being
+> ioctls.
+
+On that note, I don't buy the safety argument here, or the seccomp argument.
+
+You need to consider what this is, on a case by case basis.
+
+ioctl(pidfd, PIDFD_TO_PROCFD, procrootfd);
+
+See? You need /proc's root fd to be able to get to the /proc/<PID> dir
+fd, in a race free manner. You don't need to have the overhead of
+filtering to contain access, as privilege is bound to descriptors.
+
+However, an ioctl to do pidfd_send_signal would have indeed been
+problematic, it takes in structures, it has a very core use case, and
+a very compelling advantage over existing signal sending APIs.
+
+On the point, using file descriptors, you can safely delegate metadata
+access to a process it has a pidfd open for, without /proc being in
+its mount namespace (which was what Andy was after). File descriptors
+are acting as capabilities, so if you don't leak the /proc's root fd
+to the process, you can be assured it wouldn't be able to do any
+metadata access (and you don't have /proc mounted).
+
+*No need* to blacklist the ioctl or the system call, as it wouldn't
+work anyway. *This* is a good interface, with little to no overhead
+for security. So whether this is an ioctl or a system call doesn't
+matter at all, because it doesn't suffer from all those cases where
+you really want to avoid ioctls and do a well scoped system call as an
+entrypoint instead.
+
+There is not much incentive to it, really.
