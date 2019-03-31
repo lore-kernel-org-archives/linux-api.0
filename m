@@ -1,7 +1,7 @@
 From: Christian Brauner <christian@brauner.io>
 Subject: Re: [PATCH v2 0/5] pid: add pidfd_open()
-Date: Sun, 31 Mar 2019 23:10:42 +0200
-Message-ID: <20190331211041.vht7dnqg4e4bilr2@brauner.io>
+Date: Sun, 31 Mar 2019 23:19:31 +0200
+Message-ID: <20190331211930.wxkqhfvexdupfem6@brauner.io>
 References: <20190329155425.26059-1-christian@brauner.io>
  <CAHk-=wjq4dTPcz-qsvhpm5F42SDHCoqEWv1V=rs_kt6MC=ZThA@mail.gmail.com>
  <BCD99947-5F55-4116-8F74-D6832E50340B@brauner.io>
@@ -11,58 +11,86 @@ References: <20190329155425.26059-1-christian@brauner.io>
  <20190330171215.3yrfxwodstmgzmxy@brauner.io>
  <CAHk-=whF6gnRVbJaArZna4e=tejfrzmNQtRbWjnuSSKpBn+jQg@mail.gmail.com>
  <132107F4-F56B-4D6E-9E00-A6F7C092E6BD@amacapital.net>
- <CAHk-=wiaLtH41Mc5qAjOeCWavPqV0DhS581KYa0QBt8uraTK1Q@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAHk-=wiaLtH41Mc5qAjOeCWavPqV0DhS581KYa0QBt8uraTK1Q@mail.gmail.com>
+In-Reply-To: <132107F4-F56B-4D6E-9E00-A6F7C092E6BD@amacapital.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Andy Lutomirski <luto@amacapital.net>, Daniel Colascione <dancol@google.com>, Jann Horn <jannh@google.com>, Andrew Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Jonathan Kowalski <bl0pbl33p@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@red>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Daniel Colascione <dancol@google.com>, Jann Horn <jannh@google.com>, Andrew Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Jonathan Kowalski <bl0pbl33p@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Mar 31, 2019 at 02:03:25PM -0700, Linus Torvalds wrote:
-> On Sun, Mar 31, 2019 at 1:38 PM Andy Lutomirski <luto@amacapital.net> wrote:
-> >
-> > openat(fd to pidfd’s proc directory, “status”, ...);
-> >
-> > And we want a non-utterly-crappy way to do this.  The ioctl is certainly ugly, but it *works*.
+On Sun, Mar 31, 2019 at 02:09:03PM -0600, Andy Lutomirski wrote:
 > 
-> It's beyond clunky. It's a disgrace.
 > 
-> If people really want equivalency between open("/proc/%d") and some
-> new pidfd_open(), then just *make* the two equivalent.
+> > On Mar 30, 2019, at 11:24 AM, Linus Torvalds <torvalds@linux-foundation.org> wrote:
+> > 
+> >> On Sat, Mar 30, 2019 at 10:12 AM Christian Brauner <christian@brauner.io> wrote:
+> >> 
+> >> 
+> >> To clarify, what the Android guys really wanted to be part of the api is
+> >> a way to get race-free access to metadata associated with a given pidfd.
+> >> And the idea was that *if and only if procfs is mounted* you could do:
+> >> 
+> >> int pidfd = pidfd_open(1234, 0);
+> >> 
+> >> int procfd = open("/proc", O_RDONLY | O_CLOEXEC);
+> >> int procpidfd = ioctl(pidfd, PIDFD_TO_PROCFD, procfd);
+> > 
+> > And my claim is that this is three system calls - one of them very
+> > hacky - to just do
+> > 
+> >    int pidfd = open("/proc/%d", O_PATH);
+> 
+> Hi Linus-
+> 
+> I want to re-check this because I think Christian’s example was bad.  I proposed these ioctls, but that wasn’t the intended use.  The real point is:
 
-I don't think that we want or can make them equivalent since that would
-mean we depend on procfs. If userspace really wants to turn a pidfd into
-an fd for /proc/<pid> then they can be burdened to do so by parsing out
-the pid relative to their procfs pid namespace from the pidfds fdinfo:
+Getting metadata access was pushed as essential originally which is why
+this ioctl() came up in the first place. The concerns about
+CLONE_PIDFD were not relevant when this came up [1]:
 
-int pidfd = pidfd_open(pid, 0);
-int pid = parse_fdinfo("/proc/self/fdinfo/<pidfd>");
-int procpidfd = open("/proc/<pid>", ...);
+<quote>
+> And how do you propose, given one of these handle objects, getting a
+> process's current priority, or its current oom score, or its list of
+> memory maps? As I mentioned in my original email, and which nobody has
+> addressed, if you don't use a dirfd as your process handle or you
+> don't provide an easy way to get one of these proc directory FDs, you
+> need to duplicate a lot of metadata access interfaces.
 
-/* Test if process still exists by sending signal 0 through our pidfd. */
-int ret = pidfd_send_signal(pid, 0, NULL, PIDFD_SIGNAL_THREAD);
-if (ret < 0 && errno == ESRCH) {
-        /* pid has been recycled and procpidfd refers to another process */
-}
+An API that takes a process handle object and an fd pointing at /proc
+(the root of the proc fs) and gives you back a proc dirfd would do the
+trick.  You could do this with no new kernel features at all if you're
+willing to read the pid, call openat(2), and handle the races in user
+code.
+<quote>
 
-it's race free and no ioctl() is needed.
+[1]: https://lore.kernel.org/lkml/CALCETrUFrFKC2YTLH7ViM_7XPYk3LNmNiaz6s8wtWo1pmJQXzg@mail.gmail.com/
 
 > 
-> No effing crappy ioctl idiocy to create one from the other. Just make
-> the damn things be the exact same thing (and then if we extend clone()
-> to return one, make that return the same exact thing too).
+> int pidfd = new_improved_clone(...);
 > 
-> Btw, we have several clone bits left:
+> To be useful, this type of API *must* work without proc mounted.
 > 
->  - if we don't have CLONE_PARENT set, the low 8 bits are still available
+> And, later:
 > 
->  - ignoring that, wehave bit #12 free: It used to be CLONE_IDLETASK
-> long long ago, but it was always kernel-only so it's never been
-> exposed as a user space bit.
-
-That's good to know.
+> openat(fd to pidfd’s proc directory, “status”, ...);
+> 
+> And we want a non-utterly-crappy way to do this.  The ioctl is certainly ugly, but it *works*.
+> 
+> Another approach is:
+> 
+> pid_t pid = pidfd_get_pid(pidfd);
+> sprintf(buf, “/proc/%d”, pid);
+> int procfd = open(buf, O_PATH);
+> if (pidfd_get_pid(pidfd) != pid) {
+>   we lose;
+> }
+> 
+> But this is clunky.
+> 
+> Do you think the clunky version is okay, or do you have a suggestion for making it better?
+> 
+> —Andy
