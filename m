@@ -1,74 +1,71 @@
-From: Jonathan Kowalski <bl0pbl33p@gmail.com>
+From: Andy Lutomirski <luto@amacapital.net>
 Subject: Re: [PATCH v2 0/5] pid: add pidfd_open()
-Date: Sun, 31 Mar 2019 16:33:48 +0100
-Message-ID: <CAGLj2rELekFugPJ8OGH8wxFabmZ1UJBORwywpZrStKjohTF63A@mail.gmail.com>
-References: <20190329155425.26059-1-christian@brauner.io> <CAHk-=wjq4dTPcz-qsvhpm5F42SDHCoqEWv1V=rs_kt6MC=ZThA@mail.gmail.com>
- <CAKOZueuDWWYtg9gUpUgTG2k-gVPE1KBEkstr5eP=FC2EzdmaoA@mail.gmail.com>
- <CAHk-=wjka0W1g3asQp2H=5ot=kkS-Mp+Cx6KHr0rNkGFfCOLYA@mail.gmail.com>
- <CAHk-=wi1kQDVN22qv7M=bWU+CngZZXcPAMKCsDZMeuY3k2tkyg@mail.gmail.com>
- <20190331010716.GA189578@google.com> <CAG48ez387kGbD_dLqEbZ1U9rKFbfP0EF9cMVjQT6nwc9=Y9CNw@mail.gmail.com>
- <20190331040810.GB189578@google.com> <CAG48ez2gb94SqS30Ai4+VBHhnzBp5Po9_u00nMrvUW6Wqq6hPA@mail.gmail.com>
- <CAHk-=wiZ40LVjnXSi9iHLE_-ZBsWFGCgdmNiYZUXn1-V5YBg2g@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Date: Sun, 31 Mar 2019 14:09:03 -0600
+Message-ID: <132107F4-F56B-4D6E-9E00-A6F7C092E6BD@amacapital.net>
+References: <20190329155425.26059-1-christian@brauner.io> <CAHk-=wjq4dTPcz-qsvhpm5F42SDHCoqEWv1V=rs_kt6MC=ZThA@mail.gmail.com> <BCD99947-5F55-4116-8F74-D6832E50340B@brauner.io> <CAHk-=whcA0kAWGqet9oJdyttjhP7J4PcU2Ly=n_Qyo6rMJNxRg@mail.gmail.com> <CAKOZuevv_QgvzmusA+yey76vo4hn9bEVwud2RumuOr0K4++15A@mail.gmail.com> <CAHk-=wj0o8BiUrYiM5ZcTS6JxBh1M60O36Ms8-EqLQ139=1L4g@mail.gmail.com> <20190330171215.3yrfxwodstmgzmxy@brauner.io> <CAHk-=whF6gnRVbJaArZna4e=tejfrzmNQtRbWjnuSSKpBn+jQg@mail.gmail.com>
+Mime-Version: 1.0 (1.0)
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=wiZ40LVjnXSi9iHLE_-ZBsWFGCgdmNiYZUXn1-V5YBg2g@mail.gmail.com>
+In-Reply-To: <CAHk-=whF6gnRVbJaArZna4e=tejfrzmNQtRbWjnuSSKpBn+jQg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Jann Horn <jannh@google.com>, Joel Fernandes <joel@joelfernandes.org>, Daniel Colascione <dancol@google.com>, Christian Brauner <christian@brauner.io>, Andrew Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@>
+Cc: Christian Brauner <christian@brauner.io>, Daniel Colascione <dancol@google.com>, Jann Horn <jannh@google.com>, Andrew Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Jonathan Kowalski <bl0pbl33p@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Mar 31, 2019 at 3:59 PM Linus Torvalds
-<torvalds@linux-foundation.org> wrote:
->
-> On Sat, Mar 30, 2019 at 9:47 PM Jann Horn <jannh@google.com> wrote:
-> >
-> > Sure, given a pidfd_clone() syscall, as long as the parent of the
-> > process is giving you a pidfd for it and you don't have to deal with
-> > grandchildren created by fork() calls outside your control, that
-> > works.
->
-> Don't do pidfd_clone() and pidfd_wait().
->
-> Both of those existing system calls already get a "flags" argument.
-> Just make a WPIDFD (for waitid) and CLONE_PIDFD (for clone) bit, and
-> make the existing system calls just take/return a pidfd.
 
-clone is out of flags, so there will have to be a new system call.
 
-I am not sure about the waitid bit. Are you suggesting it takes a
-pidfd and waits using it? I was thinking if we could make the pidfd
-itself pollable and readable for exit status. At pidfd_open time, you
-pass the flag and only if you're a parent you get a readable instance,
-if not, a pollable one for everyone (eg. for an indirect child as a
-reaper), and it fails for threads.
+> On Mar 30, 2019, at 11:24 AM, Linus Torvalds <torvalds@linux-foundation.or=
+g> wrote:
+>=20
+>> On Sat, Mar 30, 2019 at 10:12 AM Christian Brauner <christian@brauner.io>=
+ wrote:
+>>=20
+>>=20
+>> To clarify, what the Android guys really wanted to be part of the api is
+>> a way to get race-free access to metadata associated with a given pidfd.
+>> And the idea was that *if and only if procfs is mounted* you could do:
+>>=20
+>> int pidfd =3D pidfd_open(1234, 0);
+>>=20
+>> int procfd =3D open("/proc", O_RDONLY | O_CLOEXEC);
+>> int procpidfd =3D ioctl(pidfd, PIDFD_TO_PROCFD, procfd);
+>=20
+> And my claim is that this is three system calls - one of them very
+> hacky - to just do
+>=20
+>    int pidfd =3D open("/proc/%d", O_PATH);
 
-Then, the pidfd clone2 returns can also be polled and read from.
+Hi Linus-
 
-The main pain point is, currently when I ptrace from a thread a
-process, I need to use waitpid (waitid throws away ptrace critical
-information), and since ptrace works on a thread by thread basis, only
-the attached thread can do the waitpid. This means I cannot do
-anything else from the attached thread concurrently. waitfd was
-supposed to solve this (back in 2009) but it never made it in, and
-clone4 from Josh Triplett did something similar (returned exit status
-over the clonefd).
+I want to re-check this because I think Christian=E2=80=99s example was bad.=
+  I proposed these ioctls, but that wasn=E2=80=99t the intended use.  The re=
+al point is:
 
-FreeBSD's process descriptors are also pollable (which is where all
-this work was originally inspired from) and it would help with
-adoption if semantics were similar. Besides that, it would help
-libraries to be able to host their own set of children without
-affecting the entire process's waiting logic oe mucking with the
-SIGCHLD handler (you wouldn't need signals).
+int pidfd =3D new_improved_clone(...);
 
->
-> Side note: we could (should?) also make the default maxpid just be
-> larger. It needs to fit in an 'int', but MAXINT instead of 65535 would
-> likely alreadt make a lot of these attacks harder.
->
-> There was some really old legacy reason why we actually limited it to
-> 65535 originally.  It was old and crufty even back when..
->
->                Linus
->
->               Linus
+To be useful, this type of API *must* work without proc mounted.
+
+And, later:
+
+openat(fd to pidfd=E2=80=99s proc directory, =E2=80=9Cstatus=E2=80=9D, ...);=
+
+
+And we want a non-utterly-crappy way to do this.  The ioctl is certainly ugl=
+y, but it *works*.
+
+Another approach is:
+
+pid_t pid =3D pidfd_get_pid(pidfd);
+sprintf(buf, =E2=80=9C/proc/%d=E2=80=9D, pid);
+int procfd =3D open(buf, O_PATH);
+if (pidfd_get_pid(pidfd) !=3D pid) {
+  we lose;
+}
+
+But this is clunky.
+
+Do you think the clunky version is okay, or do you have a suggestion for mak=
+ing it better?
+
+=E2=80=94Andy
