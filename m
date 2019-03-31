@@ -1,142 +1,66 @@
-From: Neil Horman <nhorman@tuxdriver.com>
-Subject: Re: [PATCH ghak90 V5 09/10] audit: add support for containerid to
- network namespaces
-Date: Sat, 30 Mar 2019 22:11:56 -0400
-Message-ID: <20190330125748.GA2869@hmswarspite.think-freely.org>
-References: <cover.1552665316.git.rgb@redhat.com>
- <27473c84a274c64871cfa8e3636deaf05603c978.1552665316.git.rgb@redhat.com>
- <CAFqZXNskwTub5Bm_HZqr02VPB4s79CcgAVX8VE2vQYP07-qssg@mail.gmail.com>
- <20190328011202.6raixwzdimn5b4zk@madcap2.tricolour.ca>
- <CAHC9VhQYVSrX1Ng7hZejkGSq6ZXtqi+SKmpARASJ4P2_2i3-4w@mail.gmail.com>
- <20190328214023.qpszfvxbrjlldmmt@madcap2.tricolour.ca>
- <CAHC9VhQiFw32s9QNK4WQDM6rbWHqOhm1AVa2JvY=19V4S+=YhA@mail.gmail.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH v2 0/5] pid: add pidfd_open()
+Date: Sun, 31 Mar 2019 04:34:57 +0200
+Message-ID: <CAG48ez387kGbD_dLqEbZ1U9rKFbfP0EF9cMVjQT6nwc9=Y9CNw@mail.gmail.com>
+References: <20190329155425.26059-1-christian@brauner.io> <CAHk-=wjq4dTPcz-qsvhpm5F42SDHCoqEWv1V=rs_kt6MC=ZThA@mail.gmail.com>
+ <CAKOZueuDWWYtg9gUpUgTG2k-gVPE1KBEkstr5eP=FC2EzdmaoA@mail.gmail.com>
+ <CAHk-=wjka0W1g3asQp2H=5ot=kkS-Mp+Cx6KHr0rNkGFfCOLYA@mail.gmail.com>
+ <CAHk-=wi1kQDVN22qv7M=bWU+CngZZXcPAMKCsDZMeuY3k2tkyg@mail.gmail.com> <20190331010716.GA189578@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHC9VhQiFw32s9QNK4WQDM6rbWHqOhm1AVa2JvY=19V4S+=YhA@mail.gmail.com>
+In-Reply-To: <20190331010716.GA189578@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Moore <paul@paul-moore.com>
-Cc: Richard Guy Briggs <rgb@redhat.com>, Ondrej Mosnacek <omosnace@redhat.com>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, LKML <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Linux-Audit Mailing List <linux-audit@redhat.com>, netfilter-devel@vger.kernel.org, "Eric W . Biederman" <ebiederm@xmission.com>, Simo Sorce <simo@redhat.com>, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, Eric Paris <eparis@parisplace.org>, "Serge E. Hallyn" <serge@hallyn.com>
+To: Joel Fernandes <joel@joelfernandes.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Daniel Colascione <dancol@google.com>, Christian Brauner <christian@brauner.io>, Andrew Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Jonathan Kowalski <bl0pbl33p@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Ol
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 28, 2019 at 06:00:21PM -0400, Paul Moore wrote:
-> On Thu, Mar 28, 2019 at 5:40 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> > On 2019-03-28 11:46, Paul Moore wrote:
-> > > On Wed, Mar 27, 2019 at 9:12 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> > > >
-> > > > On 2019-03-27 23:42, Ondrej Mosnacek wrote:
-> > > > > On Fri, Mar 15, 2019 at 7:35 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> > > > > > Audit events could happen in a network namespace outside of a task
-> > > > > > context due to packets received from the net that trigger an auditing
-> > > > > > rule prior to being associated with a running task.  The network
-> > > > > > namespace could be in use by multiple containers by association to the
-> > > > > > tasks in that network namespace.  We still want a way to attribute
-> > > > > > these events to any potential containers.  Keep a list per network
-> > > > > > namespace to track these audit container identifiiers.
-> > > > > >
-> > > > > > Add/increment the audit container identifier on:
-> > > > > > - initial setting of the audit container identifier via /proc
-> > > > > > - clone/fork call that inherits an audit container identifier
-> > > > > > - unshare call that inherits an audit container identifier
-> > > > > > - setns call that inherits an audit container identifier
-> > > > > > Delete/decrement the audit container identifier on:
-> > > > > > - an inherited audit container identifier dropped when child set
-> > > > > > - process exit
-> > > > > > - unshare call that drops a net namespace
-> > > > > > - setns call that drops a net namespace
-> > > > > >
-> > > > > > See: https://github.com/linux-audit/audit-kernel/issues/92
-> > > > > > See: https://github.com/linux-audit/audit-testsuite/issues/64
-> > > > > > See: https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container-ID
-> > > > > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> > > > > > ---
-> > > > > >  include/linux/audit.h | 19 ++++++++++++
-> > > > > >  kernel/audit.c        | 86 +++++++++++++++++++++++++++++++++++++++++++++++++--
-> > > > > >  kernel/nsproxy.c      |  4 +++
-> > > > > >  3 files changed, 106 insertions(+), 3 deletions(-)
-> > > > > >
-> > > > > > diff --git a/include/linux/audit.h b/include/linux/audit.h
-> > > > > > index fa19fa408931..70255c2dfb9f 100644
-> > > > > > --- a/include/linux/audit.h
-> > > > > > +++ b/include/linux/audit.h
-> > > > > > @@ -27,6 +27,7 @@
-> > > > > >  #include <linux/ptrace.h>
-> > > > > >  #include <linux/namei.h>  /* LOOKUP_* */
-> > > > > >  #include <uapi/linux/audit.h>
-> > > > > > +#include <linux/refcount.h>
-> > > > > >
-> > > > > >  #define AUDIT_INO_UNSET ((unsigned long)-1)
-> > > > > >  #define AUDIT_DEV_UNSET ((dev_t)-1)
-> > > > > > @@ -99,6 +100,13 @@ struct audit_task_info {
-> > > > > >
-> > > > > >  extern struct audit_task_info init_struct_audit;
-> > > > > >
-> > > > > > +struct audit_contid {
-> > > > > > +       struct list_head        list;
-> > > > > > +       u64                     id;
-> > > > > > +       refcount_t              refcount;
-> > > > >
-> > > > > Hm, since we only ever touch the refcount under a spinlock, I wonder
-> > > > > if we could just make it a regular unsigned int (we don't need the
-> > > > > atomicity guarantees). OTOH, refcount_t comes with some extra overflow
-> > > > > checking, so it's probably better to leave it as is...
-> > > >
-> > > > Since the update is done using rcu-safe methods, do we even need the
-> > > > spin_lock?  Neil?  Paul?
-> > >
-> > > As discussed, the refcount field is protected against simultaneous
-> > > writes by the spinlock that protects additions/removals from the list
-> > > as a whole so I don't believe the refcount_t atomicity is critical in
-> > > this regard.
-> > >
-> > > Where it gets tricky, and I can't say I'm 100% confident on my answer
-> > > here, is if refcount was a regular int and we wanted to access it
-> > > outside of a spinlock (to be clear, it doesn't look like this patch
-> > > currently does this).  With RCU, if refcount was a regular int
-> > > (unsigned or otherwise), I believe it would be possible for different
-> > > threads of execution to potentially see different values of refcount
-> > > (assuming one thread was adding/removing from the list).  Using a
-> > > refcount_t would protect against this, alternatively, taking the
-> > > spinlock should also protect against this.
-> >
-> > Ok, from the above it isn't clear to me if you are happy with the
-> > current code or would prefer any changes, or from below that you still
-> > need to work it through to make a pronouncement.  It sounds to me you
-> > would be ok with *either* spinlock *or* refcount_t, but don't see the
-> > need for both.
-> 
-> To be fair you didn't ask if I was "happy" with the approach above,
-> you asked if we needed the spinlock/refcount_t.  I believe I answered
-> that question as comprehensively as I could, but perhaps you wanted a
-> hard yes or no?  In that case, since refcount_t is obviously safer, I
-> would stick with that for now just to limit the number of possible
-> failures.  If someone smarter than you or I comes along and
-> definitively says you are 100% safe to use an int, then go ahead and
-> use an int.
-> 
-> Beyond that, I'm still in the process of reviewing your patches, but I
-> haven't finished yet, so no "pronouncement" or whatever you want to
-> call it.
-> 
+On Sun, Mar 31, 2019 at 3:07 AM Joel Fernandes <joel@joelfernandes.org> wrote:
+> As I said I don't really care about "pidfd" solving any racing issues with
+> /proc/<pid>/* accesses - because I still find it hard to imagine that the pid
+> number can be reused easily from the time you know which <pid> to deal with,
+> to the time when you want to read, say, the /proc/<pid>/status file.
 
-We definately need the spinlock, as its not meant to protect the refcount
-alterations, its meant to protect parallel modifications to the list pointers.
-Without the spinlock, the list can become corrupted (protecting the refcount is
-just a byproduct).
+There have been several Android security bugs related to PID reuse.
 
-Because of that byproduct, the atomicity of the refcount isn't required, and so
-we could modify it to be an int or some other non-atomic ordinal type, but as I
-noted, I don't think thats a good idea.  The refcount type helps denote clearly
-what the variable is used for, making it more readable, and given the relative
-non-performance critical path that the reference count is read/written in, and
-the relatively more expensive locking we are already doing there, I think there
-is more value in using the refcount to make the code legible than making
-marginally more performant by altering it to be an int type.
+> I am yet
+> to see any real data to show that such overflow happens - you literally need
+> 32k process deaths and forks in such a short time frame
 
-Neil
+This seems very inaccurate to me.
 
-> -- 
-> paul moore
-> www.paul-moore.com
-> 
+The time frame in which the PID has to wrap around is not the time
+between process death and use of the PID. It is the time between *the
+creation* of the old process and the use of the PID. Consider the
+following sequence of events:
+
+ - process A starts with PID 1000
+ - some time passes in which some process repeatedly forks, with PIDs
+wrapping around to 999
+ - process B starts an attempt to access process A (using PID 1000)
+ - process A dies
+ - process C spawns with PID 1000
+ - process B accidentally accesses process C
+
+Also, it's probably worth clarifying that here, "processes" means "threads".
+
+If there are a lot of active processes, that reduces the number of
+times you have to clone() to get the PID to wrap around.
+
+> and on 64-bit, that
+> number is really high
+
+Which number is really high on 64-bit? Checking on a walleye phone,
+pid_max is still only 32768:
+
+walleye:/ # cat /proc/sys/kernel/pid_max
+32768
+walleye:/ #
+
+> that its not even an issue. And if this is really an
+> issue, then you can just open a handle to /proc/<pid> at process creation
+> time and keep it around. If the <pid> is reused, you can still use openat(2)
+> on that handle without any races.
+
+But not if you want to implement something like killall in a
+race-free way, for example.
