@@ -1,42 +1,57 @@
-From: Keith Busch <kbusch@kernel.org>
-Subject: Re: [PATCHv8 07/10] acpi/hmat: Register processor domain to its
- memory
-Date: Sun, 31 Mar 2019 23:00:16 -0600
-Message-ID: <20190401050016.GA16792@localhost.localdomain>
-References: <20190311205606.11228-1-keith.busch@intel.com>
- <20190311205606.11228-8-keith.busch@intel.com>
- <CAPcyv4j5bLiUtmjdnjt7KNOtNm4sRHWp=5T3m1bWD=U1zBXeqQ@mail.gmail.com>
+From: Al Viro <viro@zeniv.linux.org.uk>
+Subject: Re: [PATCH v2 0/5] pid: add pidfd_open()
+Date: Mon, 1 Apr 2019 07:37:42 +0100
+Message-ID: <20190401063741.GH2217@ZenIV.linux.org.uk>
+References: <CAHk-=whF6gnRVbJaArZna4e=tejfrzmNQtRbWjnuSSKpBn+jQg@mail.gmail.com>
+ <132107F4-F56B-4D6E-9E00-A6F7C092E6BD@amacapital.net>
+ <CAHk-=wiaLtH41Mc5qAjOeCWavPqV0DhS581KYa0QBt8uraTK1Q@mail.gmail.com>
+ <20190331211041.vht7dnqg4e4bilr2@brauner.io>
+ <CAHk-=wi3AE1-iRQ_7LOeSMNAMrGxRdC=gTjD30duVw4XRchcNQ@mail.gmail.com>
+ <20190331220259.qntxynluk765hpnt@brauner.io>
+ <CAHk-=wh0jgRkZiNdFD96Zpjx+_G+NVSHieAt+QgWCQBJ2A-5Aw@mail.gmail.com>
+ <CAHk-=whw1cnWPSWw1tHXT5xTMbnJFbCtx9_re6U1RZ_7LE9gXA@mail.gmail.com>
+ <20190401000937.GG2217@ZenIV.linux.org.uk>
+ <CAHk-=wi39-Ozq5zb22s7ZB4J_Nd6nTwE_9A3+qjp5nCY4iTSEg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAPcyv4j5bLiUtmjdnjt7KNOtNm4sRHWp=5T3m1bWD=U1zBXeqQ@mail.gmail.com>
+In-Reply-To: <CAHk-=wi39-Ozq5zb22s7ZB4J_Nd6nTwE_9A3+qjp5nCY4iTSEg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dan Williams <dan.j.williams@intel.com>
-Cc: Keith Busch <keith.busch@intel.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux ACPI <linux-acpi@vger.kernel.org>, Linux MM <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rafael Wysocki <rafael@kernel.org>, Dave Hansen <dave.hansen@intel.com>, Jonathan Cameron <jonathan.cameron@huawei.com>, Brice Goglin <Brice.Goglin@inria.fr>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Christian Brauner <christian@brauner.io>, Andy Lutomirski <luto@amacapital.net>, Daniel Colascione <dancol@google.com>, Jann Horn <jannh@google.com>, Andrew Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Jonathan Kowalski <bl0pbl33p@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linu>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 29, 2019 at 02:15:03PM -0700, Dan Williams wrote:
-> On Mon, Mar 11, 2019 at 1:55 PM Keith Busch <keith.busch@intel.com> wrote:
-> > +static __init struct memory_target *find_mem_target(unsigned int mem_pxm)
-> > +{
-> > +       struct memory_target *target;
-> > +
-> > +       list_for_each_entry(target, &targets, node)
-> > +               if (target->memory_pxm == mem_pxm)
-> > +                       return target;
-> > +       return NULL;
-> 
-> The above implementation assumes that every SRAT entry has a unique
-> @mem_pxm. I don't think that's valid if the memory map is sparse,
-> right?
+On Sun, Mar 31, 2019 at 05:18:10PM -0700, Linus Torvalds wrote:
 
-Oh, we don't really care if multiple entries report the same PXM. We do
-assume there may be multiple entires with the same PXM and have tested
-this, but we're just allocating one memory target per unique memory
-PXM and consider multiple entires comprise the same memory target. That
-is okay if since we only need to identify unique PXMs and have no use
-for the adderss ranges that make up that target, which is the case
-for this series. I see you have a future use that has address ranges
-considerations, so separate targets for sparse ranges can definitely
-be added.
+> Yeah, I would like to see the actual aio.c pull request and the
+> use-after-free fixes. All the patches look fine, I just don't have the
+> final end result..
+
+use-after-free fixes: ceph is already in mainline, Daniel's bpf fix is in
+bpf tree (1da6c4d9140c "bpf: fix use after free in bpf_evict_inode"),
+the rest is in vfs.git#fixes.
+
+The following changes since commit 9e98c678c2d6ae3a17cb2de55d17f69dddaa231b:
+
+  Linux 5.1-rc1 (2019-03-17 14:22:26 -0700)
+
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/viro/vfs.git fixes
+
+for you to fetch changes up to 93b919da64c15b90953f96a536e5e61df896ca57:
+
+  debugfs: fix use-after-free on symlink traversal (2019-04-01 00:31:02 -0400)
+
+----------------------------------------------------------------
+Al Viro (3):
+      jffs2: fix use-after-free on symlink traversal
+      ubifs: fix use-after-free on symlink traversal
+      debugfs: fix use-after-free on symlink traversal
+
+ fs/debugfs/inode.c   | 13 +++++++++----
+ fs/jffs2/readinode.c |  5 -----
+ fs/jffs2/super.c     |  5 ++++-
+ fs/ubifs/super.c     |  4 +---
+ 4 files changed, 14 insertions(+), 13 deletions(-)
