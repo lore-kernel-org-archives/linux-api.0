@@ -1,108 +1,84 @@
-From: Richard Guy Briggs <rgb@redhat.com>
-Subject: Re: [PATCH ghak90 V5 10/10] audit: NETFILTER_PKT: record each
-	container ID associated with a netNS
-Date: Mon, 1 Apr 2019 13:50:13 -0400
-Message-ID: <20190401175013.it2xwndd62svycwl@madcap2.tricolour.ca>
-References: <cover.1552665316.git.rgb@redhat.com>
-	<56127b2a5b82f15cb0d0f040502c2e3bb6945f30.1552665316.git.rgb@redhat.com>
-	<CAHC9VhQpNGaWeb7dY4ooPKXRoGBd9Ri_Z_ZPpoKun4gUhXDOGA@mail.gmail.com>
+From: Paul Moore <paul@paul-moore.com>
+Subject: Re: [PATCH ghak90 V5 06/10] audit: add support for non-syscall
+ auxiliary records
+Date: Mon, 1 Apr 2019 14:57:39 -0400
+Message-ID: <CAHC9VhTL=zSQ2tO440w+vvX3TPsGtwqL6dWwUHVe0WnHVKqVpA@mail.gmail.com>
+References: <cover.1552665316.git.rgb@redhat.com> <700e4313571f86cc0cdcb7310fbe060f02c7c2db.1552665316.git.rgb@redhat.com>
+ <CAHC9VhRWUvG6DwiPn4o+vt=fgGfY+JmG8m78M8CeyGYxF2yRXQ@mail.gmail.com> <20190401174432.fjnvotpvdrfujoy7@madcap2.tricolour.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-audit-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <CAHC9VhQpNGaWeb7dY4ooPKXRoGBd9Ri_Z_ZPpoKun4gUhXDOGA@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/linux-audit>,
-	<mailto:linux-audit-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/linux-audit>
-List-Post: <mailto:linux-audit@redhat.com>
-List-Help: <mailto:linux-audit-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/linux-audit>,
-	<mailto:linux-audit-request@redhat.com?subject=subscribe>
-Sender: linux-audit-bounces@redhat.com
-Errors-To: linux-audit-bounces@redhat.com
-To: Paul Moore <paul@paul-moore.com>
-Cc: nhorman@tuxdriver.com, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, LKML <linux-kernel@vger.kernel.org>, dhowells@redhat.com, Linux-Audit Mailing List <linux-audit@redhat.com>, netfilter-devel@vger.kernel.org, ebiederm@xmission.com, simo@redhat.com, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190401174432.fjnvotpvdrfujoy7@madcap2.tricolour.ca>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Richard Guy Briggs <rgb@redhat.com>
+Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com
 List-Id: linux-api@vger.kernel.org
 
-On 2019-04-01 10:50, Paul Moore wrote:
-> On Fri, Mar 15, 2019 at 2:35 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> > Add audit container identifier auxiliary record(s) to NETFILTER_PKT
-> > event standalone records.  Iterate through all potential audit container
-> > identifiers associated with a network namespace.
+On Mon, Apr 1, 2019 at 1:44 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> On 2019-04-01 10:49, Paul Moore wrote:
+> > On Fri, Mar 15, 2019 at 2:34 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> > > Standalone audit records have the timestamp and serial number generated
+> > > on the fly and as such are unique, making them standalone.  This new
+> > > function audit_alloc_local() generates a local audit context that will
+> > > be used only for a standalone record and its auxiliary record(s).  The
+> > > context is discarded immediately after the local associated records are
+> > > produced.
+> > >
+> > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> > > Acked-by: Serge Hallyn <serge@hallyn.com>
+> > > ---
+> > >  include/linux/audit.h |  8 ++++++++
+> > >  kernel/audit.h        |  1 +
+> > >  kernel/auditsc.c      | 35 ++++++++++++++++++++++++++++++-----
+> > >  3 files changed, 39 insertions(+), 5 deletions(-)
 > >
-> > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> > ---
-> >  include/linux/audit.h    |  5 +++++
-> >  kernel/audit.c           | 41 +++++++++++++++++++++++++++++++++++++++++
-> >  net/netfilter/nft_log.c  | 11 +++++++++--
-> >  net/netfilter/xt_AUDIT.c | 11 +++++++++--
-> >  4 files changed, 64 insertions(+), 4 deletions(-)
-> 
-> ...
-> 
-> > diff --git a/kernel/audit.c b/kernel/audit.c
-> > index 7fa3194f5342..80ed323feeb5 100644
-> > --- a/kernel/audit.c
-> > +++ b/kernel/audit.c
-> > @@ -451,6 +451,47 @@ void audit_switch_task_namespaces(struct nsproxy *ns, struct task_struct *p)
-> >                 audit_netns_contid_add(new->net_ns, contid);
-> >  }
+> > ...
 > >
-> > +/**
-> > + * audit_log_netns_contid_list - List contids for the given network namespace
-> > + * @net: the network namespace of interest
-> > + * @context: the audit context to use
-> > + *
-> > + * Description:
-> > + * Issues a CONTAINER_ID record with a CSV list of contids associated
-> > + * with a network namespace to accompany a NETFILTER_PKT record.
-> > + */
-> > +void audit_log_netns_contid_list(struct net *net, struct audit_context *context)
-> > +{
-> > +       struct audit_buffer *ab = NULL;
-> > +       struct audit_contid *cont;
-> > +       bool first = true;
-> > +       struct audit_net *aunet;
-> > +
-> > +       /* Generate AUDIT_CONTAINER_ID record with container ID CSV list */
-> > +       rcu_read_lock();
-> > +       aunet = net_generic(net, audit_net_id);
-> > +       if (!aunet)
-> > +               goto out;
-> > +       list_for_each_entry_rcu(cont, &aunet->contid_list, list) {
-> > +               if (first) {
-> 
-> This is borderline nit-picky, but it seems like we could get rid of
-> "first" and just check to see if "ab" is still NULL.
+> > > diff --git a/include/linux/audit.h b/include/linux/audit.h
+> > > index ebd6625ca80e..6db5aba7cc01 100644
+> > > --- a/include/linux/audit.h
+> > > +++ b/include/linux/audit.h
+> > > @@ -285,6 +285,8 @@ static inline void audit_log_contid(struct audit_context *context, u64 contid)
+> > >
+> > >  /* These are defined in auditsc.c */
+> > >                                 /* Public API */
+> > > +extern struct audit_context *audit_alloc_local(gfp_t gfpflags);
+> > > +extern void audit_free_context(struct audit_context *context);
+> > >  extern void __audit_syscall_entry(int major, unsigned long a0, unsigned long a1,
+> > >                                   unsigned long a2, unsigned long a3);
+> > >  extern void __audit_syscall_exit(int ret_success, long ret_value);
+> > > @@ -512,6 +514,12 @@ static inline void audit_fanotify(unsigned int response)
+> > >  extern int audit_n_rules;
+> > >  extern int audit_signals;
+> > >  #else /* CONFIG_AUDITSYSCALL */
+> > > +static inline struct audit_context *audit_alloc_local(gfp_t gfpflags)
+> > > +{
+> > > +       return NULL;
+> > > +}
+> > > +static inline void audit_free_context(struct audit_context *context)
+> > > +{ }
+> > >  static inline void audit_syscall_entry(int major, unsigned long a0,
+> > >                                        unsigned long a1, unsigned long a2,
+> > >                                        unsigned long a3)
+> > > diff --git a/kernel/audit.h b/kernel/audit.h
+> > > index c5ac6436317e..2a1a8b8a8019 100644
+> > > --- a/kernel/audit.h
+> > > +++ b/kernel/audit.h
+> > > @@ -111,6 +111,7 @@ struct audit_proctitle {
+> > >  struct audit_context {
+> > >         int                 dummy;      /* must be the first element */
+> > >         int                 in_syscall; /* 1 if task is in a syscall */
+> > > +       bool                local;      /* local context needed */
+> >
+> > It's very possible I've missed it, but "local" never gets used in any
+> > meaningful way in this patchset does it?
+>
+> It is used in audit_alloc_local() to signal to audit_get_stamp() that in
+> absence of a syscall flag, check for a local flag to continue rather
+> than return.
 
-Yes, this is a better way, thank you.
+I'm guessing you meant auditsc_get_stamp()?  If so, okay.
 
-> > +                       ab = audit_log_start(context, GFP_ATOMIC,
-> > +                                            AUDIT_CONTAINER_ID);
-> > +                       if (!ab) {
-> > +                               audit_log_lost("out of memory in audit_log_netns_contid_list");
-> > +                               goto out;
-> > +                       }
-> > +                       audit_log_format(ab, "contid=");
-> > +               } else
-> > +                       audit_log_format(ab, ",");
-> > +               audit_log_format(ab, "%llu", cont->id);
-> > +               first = false;
-> > +       }
-> > +       audit_log_end(ab);
-> > +out:
-> > +       rcu_read_unlock();
-> > +}
-> > +EXPORT_SYMBOL(audit_log_netns_contid_list);
-> 
-> paul moore
-
-- RGB
-
---
-Richard Guy Briggs <rgb@redhat.com>
-Sr. S/W Engineer, Kernel Security, Base Operating Systems
-Remote, Ottawa, Red Hat Canada
-IRC: rgb, SunRaycer
-Voice: +1.647.777.2635, Internal: (81) 32635
+-- 
+paul moore
+www.paul-moore.com
