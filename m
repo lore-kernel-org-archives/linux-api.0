@@ -1,47 +1,108 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [PATCH v2 0/5] pid: add pidfd_open()
-Date: Mon, 1 Apr 2019 10:32:41 -0700
-Message-ID: <CAHk-=wgXsK1X=PUaHNT9V-h+v2maB1bLA0P3XHXBNRa0e299XQ@mail.gmail.com>
-References: <CAHk-=whcA0kAWGqet9oJdyttjhP7J4PcU2Ly=n_Qyo6rMJNxRg@mail.gmail.com>
- <CAKOZuevv_QgvzmusA+yey76vo4hn9bEVwud2RumuOr0K4++15A@mail.gmail.com>
- <CAHk-=wj0o8BiUrYiM5ZcTS6JxBh1M60O36Ms8-EqLQ139=1L4g@mail.gmail.com>
- <20190330171215.3yrfxwodstmgzmxy@brauner.io> <CAHk-=whF6gnRVbJaArZna4e=tejfrzmNQtRbWjnuSSKpBn+jQg@mail.gmail.com>
- <132107F4-F56B-4D6E-9E00-A6F7C092E6BD@amacapital.net> <CAHk-=wiaLtH41Mc5qAjOeCWavPqV0DhS581KYa0QBt8uraTK1Q@mail.gmail.com>
- <20190331211041.vht7dnqg4e4bilr2@brauner.io> <CAHk-=wi3AE1-iRQ_7LOeSMNAMrGxRdC=gTjD30duVw4XRchcNQ@mail.gmail.com>
- <18C7FCB9-2CBA-4237-94BB-9C4395A2106B@amacapital.net> <20190401114059.7gdsvcqyoz2o5bbz@yavin>
- <CAHk-=wgKqBQznZdTQaM6yQ+_5dcz-+q8=2sbQsAoDh55hQTLMA@mail.gmail.com>
- <CAKOZuev4Q4CY0-2rUpTujSKMVJ9L9Exv=_divFC0G0_OaQHaGw@mail.gmail.com>
- <CAGLj2rF85hZLAR79oEA1dQARadw1OHr8bxqCLbvO6g9B6ou2Qw@mail.gmail.com>
- <CAKOZuetovU9NawSjUfGTAwXVfnmKC9GFtmS8FxAE5Hjmzq0HHA@mail.gmail.com>
- <CAHk-=wjgENV0pT8=MjB1UVBeWCrECCNXv15AKKX7Kfg7Eak7qw@mail.gmail.com> <CAKOZuet2QCoW1XMpTAzXS868PhF-gh14czFn4gwE4A=oX=Yr8w@mail.gmail.com>
+From: Richard Guy Briggs <rgb@redhat.com>
+Subject: Re: [PATCH ghak90 V5 10/10] audit: NETFILTER_PKT: record each
+	container ID associated with a netNS
+Date: Mon, 1 Apr 2019 13:50:13 -0400
+Message-ID: <20190401175013.it2xwndd62svycwl@madcap2.tricolour.ca>
+References: <cover.1552665316.git.rgb@redhat.com>
+	<56127b2a5b82f15cb0d0f040502c2e3bb6945f30.1552665316.git.rgb@redhat.com>
+	<CAHC9VhQpNGaWeb7dY4ooPKXRoGBd9Ri_Z_ZPpoKun4gUhXDOGA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAKOZuet2QCoW1XMpTAzXS868PhF-gh14czFn4gwE4A=oX=Yr8w@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Colascione <dancol@google.com>
-Cc: Jonathan Kowalski <bl0pbl33p@gmail.com>, Aleksa Sarai <cyphar@cyphar.com>, Andy Lutomirski <luto@amacapital.net>, Christian Brauner <christian@brauner.io>, Jann Horn <jannh@google.com>, Andrew Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-fou>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-audit-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <CAHC9VhQpNGaWeb7dY4ooPKXRoGBd9Ri_Z_ZPpoKun4gUhXDOGA@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/linux-audit>,
+	<mailto:linux-audit-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/linux-audit>
+List-Post: <mailto:linux-audit@redhat.com>
+List-Help: <mailto:linux-audit-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/linux-audit>,
+	<mailto:linux-audit-request@redhat.com?subject=subscribe>
+Sender: linux-audit-bounces@redhat.com
+Errors-To: linux-audit-bounces@redhat.com
+To: Paul Moore <paul@paul-moore.com>
+Cc: nhorman@tuxdriver.com, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, LKML <linux-kernel@vger.kernel.org>, dhowells@redhat.com, Linux-Audit Mailing List <linux-audit@redhat.com>, netfilter-devel@vger.kernel.org, ebiederm@xmission.com, simo@redhat.com, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 1, 2019 at 9:45 AM Daniel Colascione <dancol@google.com> wrote:
->
-> But doesn't the CSIGNAL approach still require that libraries somehow
-> coordinate which non-SIGCHLD signal they use?
+On 2019-04-01 10:50, Paul Moore wrote:
+> On Fri, Mar 15, 2019 at 2:35 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> > Add audit container identifier auxiliary record(s) to NETFILTER_PKT
+> > event standalone records.  Iterate through all potential audit container
+> > identifiers associated with a network namespace.
+> >
+> > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> > ---
+> >  include/linux/audit.h    |  5 +++++
+> >  kernel/audit.c           | 41 +++++++++++++++++++++++++++++++++++++++++
+> >  net/netfilter/nft_log.c  | 11 +++++++++--
+> >  net/netfilter/xt_AUDIT.c | 11 +++++++++--
+> >  4 files changed, 64 insertions(+), 4 deletions(-)
+> 
+> ...
+> 
+> > diff --git a/kernel/audit.c b/kernel/audit.c
+> > index 7fa3194f5342..80ed323feeb5 100644
+> > --- a/kernel/audit.c
+> > +++ b/kernel/audit.c
+> > @@ -451,6 +451,47 @@ void audit_switch_task_namespaces(struct nsproxy *ns, struct task_struct *p)
+> >                 audit_netns_contid_add(new->net_ns, contid);
+> >  }
+> >
+> > +/**
+> > + * audit_log_netns_contid_list - List contids for the given network namespace
+> > + * @net: the network namespace of interest
+> > + * @context: the audit context to use
+> > + *
+> > + * Description:
+> > + * Issues a CONTAINER_ID record with a CSV list of contids associated
+> > + * with a network namespace to accompany a NETFILTER_PKT record.
+> > + */
+> > +void audit_log_netns_contid_list(struct net *net, struct audit_context *context)
+> > +{
+> > +       struct audit_buffer *ab = NULL;
+> > +       struct audit_contid *cont;
+> > +       bool first = true;
+> > +       struct audit_net *aunet;
+> > +
+> > +       /* Generate AUDIT_CONTAINER_ID record with container ID CSV list */
+> > +       rcu_read_lock();
+> > +       aunet = net_generic(net, audit_net_id);
+> > +       if (!aunet)
+> > +               goto out;
+> > +       list_for_each_entry_rcu(cont, &aunet->contid_list, list) {
+> > +               if (first) {
+> 
+> This is borderline nit-picky, but it seems like we could get rid of
+> "first" and just check to see if "ab" is still NULL.
 
-Yes. As mentioned, this was seldom used.
+Yes, this is a better way, thank you.
 
-In some cases it's ok, eg aio would just specify the signal in
-sigev_signo (except it was never fleshed out to have sival_ptr etc
-because nobody ever did it, afaik).
+> > +                       ab = audit_log_start(context, GFP_ATOMIC,
+> > +                                            AUDIT_CONTAINER_ID);
+> > +                       if (!ab) {
+> > +                               audit_log_lost("out of memory in audit_log_netns_contid_list");
+> > +                               goto out;
+> > +                       }
+> > +                       audit_log_format(ab, "contid=");
+> > +               } else
+> > +                       audit_log_format(ab, ",");
+> > +               audit_log_format(ab, "%llu", cont->id);
+> > +               first = false;
+> > +       }
+> > +       audit_log_end(ab);
+> > +out:
+> > +       rcu_read_unlock();
+> > +}
+> > +EXPORT_SYMBOL(audit_log_netns_contid_list);
+> 
+> paul moore
 
-> (Signal coordination a separate problem, unfortunately.)
+- RGB
 
-Yeah, in several cases you would just want to signal a handler
-directly, not an index into handlers.
-
-Anyway, I'm just saying that the whole "reap children" part is not
-necessarily tied to the pidfd thing. And honestly, nobody ever does
-anything like that anyway in practice, because of all the other issues
-it causes that you'll hit.
-
-                 Linus
+--
+Richard Guy Briggs <rgb@redhat.com>
+Sr. S/W Engineer, Kernel Security, Base Operating Systems
+Remote, Ottawa, Red Hat Canada
+IRC: rgb, SunRaycer
+Voice: +1.647.777.2635, Internal: (81) 32635
