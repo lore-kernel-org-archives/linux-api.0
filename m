@@ -1,53 +1,42 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v2 0/5] pid: add pidfd_open()
-Date: Sun, 31 Mar 2019 20:13:38 -0600
-Message-ID: <18C7FCB9-2CBA-4237-94BB-9C4395A2106B@amacapital.net>
-References: <20190329155425.26059-1-christian@brauner.io> <CAHk-=wjq4dTPcz-qsvhpm5F42SDHCoqEWv1V=rs_kt6MC=ZThA@mail.gmail.com> <BCD99947-5F55-4116-8F74-D6832E50340B@brauner.io> <CAHk-=whcA0kAWGqet9oJdyttjhP7J4PcU2Ly=n_Qyo6rMJNxRg@mail.gmail.com> <CAKOZuevv_QgvzmusA+yey76vo4hn9bEVwud2RumuOr0K4++15A@mail.gmail.com> <CAHk-=wj0o8BiUrYiM5ZcTS6JxBh1M60O36Ms8-EqLQ139=1L4g@mail.gmail.com> <20190330171215.3yrfxwodstmgzmxy@brauner.io> <CAHk-=whF6gnRVbJaArZna4e=tejfrzmNQtRbWjnuSSKpBn+jQg@mail.gmail.com> <132107F4-F56B-4D6E-9E00-A6F7C092E6BD@amacapital.net> <CAHk-=wiaLtH41Mc5qAjOeCWavPqV0DhS581KYa0QBt8uraTK1Q@mail.gmail.com> <20190331211041.vht7dnqg4e4bilr2@brauner.io> <CAHk-=wi3AE1-iRQ_7LOeSMNAMrGxRdC=gTjD30duVw4XRchcNQ@mail.gmail.com>
-Mime-Version: 1.0 (1.0)
-Content-Type: text/plain;
-        charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+From: Keith Busch <kbusch@kernel.org>
+Subject: Re: [PATCHv8 07/10] acpi/hmat: Register processor domain to its
+ memory
+Date: Sun, 31 Mar 2019 23:00:16 -0600
+Message-ID: <20190401050016.GA16792@localhost.localdomain>
+References: <20190311205606.11228-1-keith.busch@intel.com>
+ <20190311205606.11228-8-keith.busch@intel.com>
+ <CAPcyv4j5bLiUtmjdnjt7KNOtNm4sRHWp=5T3m1bWD=U1zBXeqQ@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=wi3AE1-iRQ_7LOeSMNAMrGxRdC=gTjD30duVw4XRchcNQ@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <CAPcyv4j5bLiUtmjdnjt7KNOtNm4sRHWp=5T3m1bWD=U1zBXeqQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Christian Brauner <christian@brauner.io>, Daniel Colascione <dancol@google.com>, Jann Horn <jannh@google.com>, Andrew Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Jonathan Kowalski <bl0pbl33p@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@>
+To: Dan Williams <dan.j.williams@intel.com>
+Cc: Keith Busch <keith.busch@intel.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux ACPI <linux-acpi@vger.kernel.org>, Linux MM <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rafael Wysocki <rafael@kernel.org>, Dave Hansen <dave.hansen@intel.com>, Jonathan Cameron <jonathan.cameron@huawei.com>, Brice Goglin <Brice.Goglin@inria.fr>
 List-Id: linux-api@vger.kernel.org
 
+On Fri, Mar 29, 2019 at 02:15:03PM -0700, Dan Williams wrote:
+> On Mon, Mar 11, 2019 at 1:55 PM Keith Busch <keith.busch@intel.com> wrote:
+> > +static __init struct memory_target *find_mem_target(unsigned int mem_pxm)
+> > +{
+> > +       struct memory_target *target;
+> > +
+> > +       list_for_each_entry(target, &targets, node)
+> > +               if (target->memory_pxm == mem_pxm)
+> > +                       return target;
+> > +       return NULL;
+> 
+> The above implementation assumes that every SRAT entry has a unique
+> @mem_pxm. I don't think that's valid if the memory map is sparse,
+> right?
 
-
-> On Mar 31, 2019, at 3:17 PM, Linus Torvalds <torvalds@linux-foundation.org=
-> wrote:
->=20
->> On Sun, Mar 31, 2019 at 2:10 PM Christian Brauner <christian@brauner.io> w=
-rote:
->>=20
->> I don't think that we want or can make them equivalent since that would
->> mean we depend on procfs.
->=20
-> Sure we can.
->=20
-> If /proc is enabled, then you always do that dance YOU ALREADY WROTE
-> THE CODE FOR to do the stupid ioctl.
->=20
-> And if /procfs isn't enabled, then you don't do that.
->=20
-> Ta-daa. Done. No stupid ioctl, and now /proc and pidfd_open() return
-> the same damn thing.
->=20
-> And guess what? If /proc isn't enabled, then obviously pidfd_open()
-> gives you the /proc-less thing, but at least there is no crazy "two
-> different file descriptors for the same thing" situation, because then
-> the /proc one doesn't exist.
->=20
-
-I wish we could do this, and, in a clean design, it would be a no-brainer.  B=
-ut /proc has too much baggage.  Just to mention two such things, there=E2=80=
-=99s =E2=80=9Cnet=E2=80=9D and =E2=80=9C../sys=E2=80=9D.  This crud is why w=
-e have all kinds of crazy rules that prevent programs in sandboxes from maki=
-ng a new mounts and mounting /proc in it.  If we make it possible to clone a=
- new process and this access /proc without having /proc mounted, we=E2=80=99=
-ll open up a big can of worms.
-
-Maybe we could have a sanitized view of /proc and make a pidfd be a director=
-y fd pointing at that.=
+Oh, we don't really care if multiple entries report the same PXM. We do
+assume there may be multiple entires with the same PXM and have tested
+this, but we're just allocating one memory target per unique memory
+PXM and consider multiple entires comprise the same memory target. That
+is okay if since we only need to identify unique PXMs and have no use
+for the adderss ranges that make up that target, which is the case
+for this series. I see you have a future use that has address ranges
+considerations, so separate targets for sparse ranges can definitely
+be added.
