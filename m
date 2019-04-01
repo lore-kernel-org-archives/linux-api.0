@@ -1,7 +1,7 @@
-From: Jonathan Kowalski <bl0pbl33p@gmail.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
 Subject: Re: [PATCH v2 0/5] pid: add pidfd_open()
-Date: Mon, 1 Apr 2019 17:27:39 +0100
-Message-ID: <CAGLj2rHdv1rvx++Vf5LaAnZENMoq2+b-OPYmgGMnuOnaCzav3A@mail.gmail.com>
+Date: Mon, 1 Apr 2019 09:29:56 -0700
+Message-ID: <CAHk-=wjgENV0pT8=MjB1UVBeWCrECCNXv15AKKX7Kfg7Eak7qw@mail.gmail.com>
 References: <CAHk-=whcA0kAWGqet9oJdyttjhP7J4PcU2Ly=n_Qyo6rMJNxRg@mail.gmail.com>
  <CAKOZuevv_QgvzmusA+yey76vo4hn9bEVwud2RumuOr0K4++15A@mail.gmail.com>
  <CAHk-=wj0o8BiUrYiM5ZcTS6JxBh1M60O36Ms8-EqLQ139=1L4g@mail.gmail.com>
@@ -11,66 +11,45 @@ References: <CAHk-=whcA0kAWGqet9oJdyttjhP7J4PcU2Ly=n_Qyo6rMJNxRg@mail.gmail.com>
  <18C7FCB9-2CBA-4237-94BB-9C4395A2106B@amacapital.net> <20190401114059.7gdsvcqyoz2o5bbz@yavin>
  <CAHk-=wgKqBQznZdTQaM6yQ+_5dcz-+q8=2sbQsAoDh55hQTLMA@mail.gmail.com>
  <CAKOZuev4Q4CY0-2rUpTujSKMVJ9L9Exv=_divFC0G0_OaQHaGw@mail.gmail.com>
- <CAGLj2rF85hZLAR79oEA1dQARadw1OHr8bxqCLbvO6g9B6ou2Qw@mail.gmail.com> <CAHk-=wi1UEsMv5wmBZB5S+5YiCbxd-AtVsoz1TfuD-KrdcLQew@mail.gmail.com>
+ <CAGLj2rF85hZLAR79oEA1dQARadw1OHr8bxqCLbvO6g9B6ou2Qw@mail.gmail.com> <CAKOZuetovU9NawSjUfGTAwXVfnmKC9GFtmS8FxAE5Hjmzq0HHA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=wi1UEsMv5wmBZB5S+5YiCbxd-AtVsoz1TfuD-KrdcLQew@mail.gmail.com>
+In-Reply-To: <CAKOZuetovU9NawSjUfGTAwXVfnmKC9GFtmS8FxAE5Hjmzq0HHA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Daniel Colascione <dancol@google.com>, Aleksa Sarai <cyphar@cyphar.com>, Andy Lutomirski <luto@amacapital.net>, Christian Brauner <christian@brauner.io>, Jann Horn <jannh@google.com>, Andrew Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-found>
+To: Daniel Colascione <dancol@google.com>
+Cc: Jonathan Kowalski <bl0pbl33p@gmail.com>, Aleksa Sarai <cyphar@cyphar.com>, Andy Lutomirski <luto@amacapital.net>, Christian Brauner <christian@brauner.io>, Jann Horn <jannh@google.com>, Andrew Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-fou>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 1, 2019 at 5:15 PM Linus Torvalds
-<torvalds@linux-foundation.org> wrote:
+On Mon, Apr 1, 2019 at 9:22 AM Daniel Colascione <dancol@google.com> wrote:
 >
-> On Mon, Apr 1, 2019 at 9:07 AM Jonathan Kowalski <bl0pbl33p@gmail.com> wrote:
-> >
-> > With the POLLHUP model on a simple pidfd, you'd know when the process
-> > you were referring to is dead (and one can map POLLPRI to dead and
-> > POLLHUP to zombie, etc).
->
-> Adding ->poll() to the pidfd should be easy. Again, it would be
-> trivially be made to work for the directory fd you get from
-> /proc/<pid> too.
->
-> Yeah, yeah, pollable directories are odd, but the vfs layer doesn't
-> care about things like "is this a directory or not". It will just call
-> the f_op->poll() method.
+> There's a subtlety: suppose I'm a library and I want to create a
+> private subprocess. I use the new clone facility, whatever it is, and
+> get a pidfd back. I need to be able to read the child's exit status
+> even if the child exits before clone returns in the parent. Doesn't
+> this requirement imply that the pidfd, kernel-side, contain something
+> a bit more than a struct pid?
 
-I know, Andy even sent a patch for that long back. The question is,
-this sure solves the immediate usecase, but it inhibits some very
-powerful (and natural) things from being realised in the future, and
-makes some choices harder.
+Note that clone() has always supported this, but it has basically
+never been used.
 
-Currently, pidfd_send_signal doesn't work across PID namespaces. It
-would be possible to make it work, but some things need to be taken
-care of, precisely, that one allows a task to open pidfds for tasks
-*it* can see. Why? because you essentially isolate the PID namespace,
-so your open() for this namespace suddenly doesn't start opening
-things it cannot see through some other namespace (i.e. /proc),
-precisely how you cannot open sockets in network namespaces from the
-outside, though if you can setns, you should be able to (same with
-pidfds). This makes for a nice delegation model, I can essentially put
-a task in a namespace with no other tasks, keep pushing pidfds into
-the damn thing, and subject to kernel permissions and capabilities it
-can yield in the owner userns, signal the said task. You can extend
-this to ptrace and other things, by making them accept a pidfd. This
-means userspace has to explicitly pass such descriptors around to make
-this work, like it does today (and how I can use an open socket and
-accept connections whilst living in totally isolated network
-namespace).
+One of the early thinkings behind clone() was that it could be used
+for basically "AIO in user space", by having exactly these kinds of
+library-private internal subthreads that are hidden as real threads.
 
-Besides that, /proc comes with too much stuff, it should be possible
-to go from pidfd to /proc/<PID> and do whatever you wish to, but
-atleast two things that require varying levels of capabilities of
-inspection, the latter of which can be isolated by mount namespaces
-even if the process would usially be allowed to peek into it and read
-the entire thing, do not end being munged together. I can choose to
-pass both, but if /proc dir fds *are* pidfds, you need the entire
-complexity of masking and whatnot (which would be usable on its own,
-no doubt), making directory descriptors pollable and readable, etc
-etc.
+It's why we have that special CSIGNAL mask for setting the exit
+signal. It doesn't *just* set the signal to be sent when the thread
+exits - setting the signal to something else than SIGCHLD actually
+changes behavior in other ways too.
 
->
->               Linus
+In particular a non-SIGCHLD thread won't be found by a regular
+"waitpid()". You have to explicitly wait for it with __WCLONE (which
+in turn is supposed to be used with the explicit pid to be waited
+for).
+
+Now, none of this was ever really used. The people who wanted AIO
+wanted the brain-damaged POSIX kind of AIO, not something cool and
+clever. So I suspect the whole exit-signal thing was just used for
+random small per-project things.
+
+              Linus
