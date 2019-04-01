@@ -1,86 +1,40 @@
-From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [PATCH ghak90 V5 10/10] audit: NETFILTER_PKT: record each
- container ID associated with a netNS
-Date: Mon, 1 Apr 2019 10:50:11 -0400
-Message-ID: <CAHC9VhQpNGaWeb7dY4ooPKXRoGBd9Ri_Z_ZPpoKun4gUhXDOGA@mail.gmail.com>
-References: <cover.1552665316.git.rgb@redhat.com> <56127b2a5b82f15cb0d0f040502c2e3bb6945f30.1552665316.git.rgb@redhat.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH v2 0/5] pid: add pidfd_open()
+Date: Mon, 1 Apr 2019 08:36:26 -0700
+Message-ID: <CAHk-=wgKqBQznZdTQaM6yQ+_5dcz-+q8=2sbQsAoDh55hQTLMA@mail.gmail.com>
+References: <CAHk-=whcA0kAWGqet9oJdyttjhP7J4PcU2Ly=n_Qyo6rMJNxRg@mail.gmail.com>
+ <CAKOZuevv_QgvzmusA+yey76vo4hn9bEVwud2RumuOr0K4++15A@mail.gmail.com>
+ <CAHk-=wj0o8BiUrYiM5ZcTS6JxBh1M60O36Ms8-EqLQ139=1L4g@mail.gmail.com>
+ <20190330171215.3yrfxwodstmgzmxy@brauner.io> <CAHk-=whF6gnRVbJaArZna4e=tejfrzmNQtRbWjnuSSKpBn+jQg@mail.gmail.com>
+ <132107F4-F56B-4D6E-9E00-A6F7C092E6BD@amacapital.net> <CAHk-=wiaLtH41Mc5qAjOeCWavPqV0DhS581KYa0QBt8uraTK1Q@mail.gmail.com>
+ <20190331211041.vht7dnqg4e4bilr2@brauner.io> <CAHk-=wi3AE1-iRQ_7LOeSMNAMrGxRdC=gTjD30duVw4XRchcNQ@mail.gmail.com>
+ <18C7FCB9-2CBA-4237-94BB-9C4395A2106B@amacapital.net> <20190401114059.7gdsvcqyoz2o5bbz@yavin>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <56127b2a5b82f15cb0d0f040502c2e3bb6945f30.1552665316.git.rgb@redhat.com>
+In-Reply-To: <20190401114059.7gdsvcqyoz2o5bbz@yavin>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Guy Briggs <rgb@redhat.com>
-Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com
+To: Aleksa Sarai <cyphar@cyphar.com>
+Cc: Andy Lutomirski <luto@amacapital.net>, Christian Brauner <christian@brauner.io>, Daniel Colascione <dancol@google.com>, Jann Horn <jannh@google.com>, Andrew Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Jonathan Kowalski <bl0pbl33p@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linu>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 15, 2019 at 2:35 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> Add audit container identifier auxiliary record(s) to NETFILTER_PKT
-> event standalone records.  Iterate through all potential audit container
-> identifiers associated with a network namespace.
+On Mon, Apr 1, 2019 at 4:41 AM Aleksa Sarai <cyphar@cyphar.com> wrote:
 >
-> Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> ---
->  include/linux/audit.h    |  5 +++++
->  kernel/audit.c           | 41 +++++++++++++++++++++++++++++++++++++++++
->  net/netfilter/nft_log.c  | 11 +++++++++--
->  net/netfilter/xt_AUDIT.c | 11 +++++++++--
->  4 files changed, 64 insertions(+), 4 deletions(-)
+> Eric pitched a procfs2 which would *just* be the PIDs some time ago (in
+> an attempt to make it possible one day to mount /proc inside a container
+> without adding a bunch of masked paths), though it was just an idea and
+> I don't know if he ever had a patch for it.
 
-...
+I wonder if we really want a fill procfs2, or maybe we could just make
+the pidfd readable (yes, it's a directory file descriptor, but we
+could allow reading).
 
-> diff --git a/kernel/audit.c b/kernel/audit.c
-> index 7fa3194f5342..80ed323feeb5 100644
-> --- a/kernel/audit.c
-> +++ b/kernel/audit.c
-> @@ -451,6 +451,47 @@ void audit_switch_task_namespaces(struct nsproxy *ns, struct task_struct *p)
->                 audit_netns_contid_add(new->net_ns, contid);
->  }
->
-> +/**
-> + * audit_log_netns_contid_list - List contids for the given network namespace
-> + * @net: the network namespace of interest
-> + * @context: the audit context to use
-> + *
-> + * Description:
-> + * Issues a CONTAINER_ID record with a CSV list of contids associated
-> + * with a network namespace to accompany a NETFILTER_PKT record.
-> + */
-> +void audit_log_netns_contid_list(struct net *net, struct audit_context *context)
-> +{
-> +       struct audit_buffer *ab = NULL;
-> +       struct audit_contid *cont;
-> +       bool first = true;
-> +       struct audit_net *aunet;
-> +
-> +       /* Generate AUDIT_CONTAINER_ID record with container ID CSV list */
-> +       rcu_read_lock();
-> +       aunet = net_generic(net, audit_net_id);
-> +       if (!aunet)
-> +               goto out;
-> +       list_for_each_entry_rcu(cont, &aunet->contid_list, list) {
-> +               if (first) {
+What are the *actual* use cases for opening /proc files through it? If
+it's really just for a small subset that android wants to do this
+(getting basic process state like "running" etc), rather than anything
+else, then we could skip the whole /proc linking entirely and go the
+other way instead (ie open_pidfd() would get that limited IO model,
+and we could make the /proc directory node get the same limited IO
+model).
 
-This is borderline nit-picky, but it seems like we could get rid of
-"first" and just check to see if "ab" is still NULL.
-
-> +                       ab = audit_log_start(context, GFP_ATOMIC,
-> +                                            AUDIT_CONTAINER_ID);
-> +                       if (!ab) {
-> +                               audit_log_lost("out of memory in audit_log_netns_contid_list");
-> +                               goto out;
-> +                       }
-> +                       audit_log_format(ab, "contid=");
-> +               } else
-> +                       audit_log_format(ab, ",");
-> +               audit_log_format(ab, "%llu", cont->id);
-> +               first = false;
-> +       }
-> +       audit_log_end(ab);
-> +out:
-> +       rcu_read_unlock();
-> +}
-> +EXPORT_SYMBOL(audit_log_netns_contid_list);
-
--- 
-paul moore
-www.paul-moore.com
+                  Linus
