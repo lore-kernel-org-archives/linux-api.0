@@ -1,7 +1,8 @@
 From: Andrew Murray <andrew.murray@arm.com>
-Subject: [PATCH v3 4/7] arm64: Expose DC CVADP to userspace
-Date: Mon,  1 Apr 2019 11:45:12 +0100
-Message-ID: <20190401104515.39775-5-andrew.murray@arm.com>
+Subject: [PATCH v3 5/7] arm64: add CVADP support to the cache maintenance
+ helper
+Date: Mon,  1 Apr 2019 11:45:13 +0100
+Message-ID: <20190401104515.39775-6-andrew.murray@arm.com>
 References: <20190401104515.39775-1-andrew.murray@arm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -21,70 +22,31 @@ To: Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>
 Cc: Mark Rutland <mark.rutland@arm.com>, libc-alpha@sourceware.org, Szabolcs Nagy <Szabolcs.Nagy@arm.com>, linux-api@vger.kernel.org, Phil Blundell <pb@pbcl.net>, dave.martin@arm.com, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-ARMv8.5 builds upon the ARMv8.2 DC CVAP instruction by introducing a DC
-CVADP instruction which cleans the data cache to the point of deep
-persistence. Let's expose this support via the arm64 ELF hwcaps.
+Allow users of dcache_by_line_op to specify cvadp as an op.
 
 Signed-off-by: Andrew Murray <andrew.murray@arm.com>
 ---
- Documentation/arm64/elf_hwcaps.txt  | 4 ++++
- arch/arm64/include/uapi/asm/hwcap.h | 5 +++++
- arch/arm64/kernel/cpufeature.c      | 1 +
- arch/arm64/kernel/cpuinfo.c         | 1 +
- 4 files changed, 11 insertions(+)
+ arch/arm64/include/asm/assembler.h | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/Documentation/arm64/elf_hwcaps.txt b/Documentation/arm64/elf_hwcaps.txt
-index 13d6691b37be..c605757dd4db 100644
---- a/Documentation/arm64/elf_hwcaps.txt
-+++ b/Documentation/arm64/elf_hwcaps.txt
-@@ -135,6 +135,10 @@ HWCAP_DCPOP
- 
-     Functionality implied by ID_AA64ISAR1_EL1.DPB == 0b0001.
- 
-+HWCAP2_DCPODP
-+
-+    Functionality implied by ID_AA64ISAR1_EL1.DPB == 0b0010.
-+
- HWCAP_SHA3
- 
-     Functionality implied by ID_AA64ISAR0_EL1.SHA3 == 0b0001.
-diff --git a/arch/arm64/include/uapi/asm/hwcap.h b/arch/arm64/include/uapi/asm/hwcap.h
-index 453b45af80b7..d64af3913a9e 100644
---- a/arch/arm64/include/uapi/asm/hwcap.h
-+++ b/arch/arm64/include/uapi/asm/hwcap.h
-@@ -53,4 +53,9 @@
- #define HWCAP_PACA		(1 << 30)
- #define HWCAP_PACG		(1UL << 31)
- 
-+/*
-+ * HWCAP2 flags - for AT_HWCAP2
-+ */
-+#define HWCAP2_DCPODP		(1 << 0)
-+
- #endif /* _UAPI__ASM_HWCAP_H */
-diff --git a/arch/arm64/kernel/cpufeature.c b/arch/arm64/kernel/cpufeature.c
-index 84ca52fa75e5..5e27d2dbe45e 100644
---- a/arch/arm64/kernel/cpufeature.c
-+++ b/arch/arm64/kernel/cpufeature.c
-@@ -1590,6 +1590,7 @@ static const struct arm64_cpu_capabilities arm64_elf_hwcaps[] = {
- 	HWCAP_CAP(SYS_ID_AA64PFR0_EL1, ID_AA64PFR0_ASIMD_SHIFT, FTR_SIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_ASIMDHP),
- 	HWCAP_CAP(SYS_ID_AA64PFR0_EL1, ID_AA64PFR0_DIT_SHIFT, FTR_SIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_DIT),
- 	HWCAP_CAP(SYS_ID_AA64ISAR1_EL1, ID_AA64ISAR1_DPB_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_DCPOP),
-+	HWCAP_CAP(SYS_ID_AA64ISAR1_EL1, ID_AA64ISAR1_DPB_SHIFT, FTR_UNSIGNED, 2, CAP_HWCAP, KERNEL_HWCAP_DCPODP),
- 	HWCAP_CAP(SYS_ID_AA64ISAR1_EL1, ID_AA64ISAR1_JSCVT_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_JSCVT),
- 	HWCAP_CAP(SYS_ID_AA64ISAR1_EL1, ID_AA64ISAR1_FCMA_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_FCMA),
- 	HWCAP_CAP(SYS_ID_AA64ISAR1_EL1, ID_AA64ISAR1_LRCPC_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_LRCPC),
-diff --git a/arch/arm64/kernel/cpuinfo.c b/arch/arm64/kernel/cpuinfo.c
-index 810db95f293f..093ca53ce1d1 100644
---- a/arch/arm64/kernel/cpuinfo.c
-+++ b/arch/arm64/kernel/cpuinfo.c
-@@ -85,6 +85,7 @@ static const char *const hwcap_str[] = {
- 	"sb",
- 	"paca",
- 	"pacg",
-+	"dcpodp",
- 	NULL
- };
- 
+diff --git a/arch/arm64/include/asm/assembler.h b/arch/arm64/include/asm/assembler.h
+index c5308d01e228..d50caf0e6b64 100644
+--- a/arch/arm64/include/asm/assembler.h
++++ b/arch/arm64/include/asm/assembler.h
+@@ -407,10 +407,14 @@ alternative_endif
+ 	.ifc	\op, cvap
+ 	sys	3, c7, c12, 1, \kaddr	// dc cvap
+ 	.else
++	.ifc	\op, cvadp
++	sys	3, c7, c13, 1, \kaddr	// dc cvadp
++	.else
+ 	dc	\op, \kaddr
+ 	.endif
+ 	.endif
+ 	.endif
++	.endif
+ 	add	\kaddr, \kaddr, \tmp1
+ 	cmp	\kaddr, \size
+ 	b.lo	9998b
 -- 
 2.21.0
