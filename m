@@ -1,65 +1,46 @@
-From: Al Viro <viro@zeniv.linux.org.uk>
+From: Yann Droneaud <ydroneaud@opteya.com>
 Subject: Re: [PATCH v2 0/5] pid: add pidfd_open()
-Date: Mon, 1 Apr 2019 07:41:53 +0100
-Message-ID: <20190401064153.GI2217@ZenIV.linux.org.uk>
-References: <132107F4-F56B-4D6E-9E00-A6F7C092E6BD@amacapital.net>
- <CAHk-=wiaLtH41Mc5qAjOeCWavPqV0DhS581KYa0QBt8uraTK1Q@mail.gmail.com>
- <20190331211041.vht7dnqg4e4bilr2@brauner.io>
- <CAHk-=wi3AE1-iRQ_7LOeSMNAMrGxRdC=gTjD30duVw4XRchcNQ@mail.gmail.com>
- <20190331220259.qntxynluk765hpnt@brauner.io>
- <CAHk-=wh0jgRkZiNdFD96Zpjx+_G+NVSHieAt+QgWCQBJ2A-5Aw@mail.gmail.com>
- <CAHk-=whw1cnWPSWw1tHXT5xTMbnJFbCtx9_re6U1RZ_7LE9gXA@mail.gmail.com>
- <20190401000937.GG2217@ZenIV.linux.org.uk>
- <CAHk-=wi39-Ozq5zb22s7ZB4J_Nd6nTwE_9A3+qjp5nCY4iTSEg@mail.gmail.com>
- <20190401063741.GH2217@ZenIV.linux.org.uk>
+Date: Mon, 01 Apr 2019 10:47:11 +0200
+Message-ID: <65440fd9977a2e1f0467b7ece38240e5dac2b736.camel@opteya.com>
+References: <CAKOZuevv_QgvzmusA+yey76vo4hn9bEVwud2RumuOr0K4++15A@mail.gmail.com>
+         <CAHk-=wj0o8BiUrYiM5ZcTS6JxBh1M60O36Ms8-EqLQ139=1L4g@mail.gmail.com>
+         <20190330171215.3yrfxwodstmgzmxy@brauner.io>
+         <CAHk-=whF6gnRVbJaArZna4e=tejfrzmNQtRbWjnuSSKpBn+jQg@mail.gmail.com>
+         <132107F4-F56B-4D6E-9E00-A6F7C092E6BD@amacapital.net>
+         <CAHk-=wiaLtH41Mc5qAjOeCWavPqV0DhS581KYa0QBt8uraTK1Q@mail.gmail.com>
+         <20190331211041.vht7dnqg4e4bilr2@brauner.io>
+         <CAHk-=wi3AE1-iRQ_7LOeSMNAMrGxRdC=gTjD30duVw4XRchcNQ@mail.gmail.com>
+         <20190331220259.qntxynluk765hpnt@brauner.io>
+         <CAHk-=wh0jgRkZiNdFD96Zpjx+_G+NVSHieAt+QgWCQBJ2A-5Aw@mail.gmail.com>
+         <20190331223355.vfbnnkmevl63etvv@brauner.io>
+         <CAG48ez0OnfkrEc5SmeaPpuv2aQ31kxkoFeaSVFwu7z1m=tN-9g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190401063741.GH2217@ZenIV.linux.org.uk>
+In-Reply-To: <CAG48ez0OnfkrEc5SmeaPpuv2aQ31kxkoFeaSVFwu7z1m=tN-9g@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Christian Brauner <christian@brauner.io>, Andy Lutomirski <luto@amacapital.net>, Daniel Colascione <dancol@google.com>, Jann Horn <jannh@google.com>, Andrew Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Jonathan Kowalski <bl0pbl33p@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linu>
+To: Jann Horn <jannh@google.com>, Christian Brauner <christian@brauner.io>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Daniel Colascione <dancol@google.com>, Andrew Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Jonathan Kowalski <bl0pbl33p@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 01, 2019 at 07:37:42AM +0100, Al Viro wrote:
-> On Sun, Mar 31, 2019 at 05:18:10PM -0700, Linus Torvalds wrote:
-> 
-> > Yeah, I would like to see the actual aio.c pull request and the
-> > use-after-free fixes. All the patches look fine, I just don't have the
-> > final end result..
-> 
-> use-after-free fixes: ceph is already in mainline, Daniel's bpf fix is in
-> bpf tree (1da6c4d9140c "bpf: fix use after free in bpf_evict_inode"),
-> the rest is in vfs.git#fixes.
+Hi,
 
-... and aio stuff is
+Le lundi 01 avril 2019 à 02:52 +0200, Jann Horn a écrit :
 
-The following changes since commit 9e98c678c2d6ae3a17cb2de55d17f69dddaa231b:
+> One minor detail to keep in mind for the future is that in a
+> straightforward implementation of this concept, if a non-capable
+> process is running in a mount namespace, but in the initial network
+> namespace, without any reachable /proc mount, it will be able to look
+> at information about other processes' network connections by first
+> using pidfd_open() on itself or by using clone(CLONE_PIDFD), then
+> looking at the "net" directory under the resulting file descriptor.
 
-  Linux 5.1-rc1 (2019-03-17 14:22:26 -0700)
+I also think it would punch a hole in chroot() ... (but in 2019, nobody
+should rely on it for security purpose).
 
-are available in the git repository at:
+Regards.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/viro/vfs.git work.aio
-
-for you to fetch changes up to 7316b49c2a117ca0611bc9af779d2108b764a7f9:
-
-  aio: move sanity checks and request allocation to io_submit_one() (2019-03-17 20:52:32 -0400)
-
-----------------------------------------------------------------
-Al Viro (8):
-      aio: fold lookup_kiocb() into its sole caller
-      aio: keep io_event in aio_kiocb
-      aio: store event at final iocb_put()
-      Fix aio_poll() races
-      make aio_read()/aio_write() return int
-      aio: move dropping ->ki_eventfd into iocb_destroy()
-      deal with get_reqs_available() in aio_get_req() itself
-      aio: move sanity checks and request allocation to io_submit_one()
-
-Linus Torvalds (1):
-      pin iocb through aio.
-
- fs/aio.c | 338 ++++++++++++++++++++++++++++-----------------------------------
- 1 file changed, 150 insertions(+), 188 deletions(-)
+-- 
+Yann Droneaud
+OPTEYA
