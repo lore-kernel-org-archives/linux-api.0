@@ -1,87 +1,47 @@
-From: Richard Guy Briggs <rgb@redhat.com>
-Subject: Re: [PATCH ghak90 V5 06/10] audit: add support for non-syscall
- auxiliary records
-Date: Mon, 1 Apr 2019 13:44:32 -0400
-Message-ID: <20190401174432.fjnvotpvdrfujoy7@madcap2.tricolour.ca>
-References: <cover.1552665316.git.rgb@redhat.com>
- <700e4313571f86cc0cdcb7310fbe060f02c7c2db.1552665316.git.rgb@redhat.com>
- <CAHC9VhRWUvG6DwiPn4o+vt=fgGfY+JmG8m78M8CeyGYxF2yRXQ@mail.gmail.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH v2 0/5] pid: add pidfd_open()
+Date: Mon, 1 Apr 2019 10:32:41 -0700
+Message-ID: <CAHk-=wgXsK1X=PUaHNT9V-h+v2maB1bLA0P3XHXBNRa0e299XQ@mail.gmail.com>
+References: <CAHk-=whcA0kAWGqet9oJdyttjhP7J4PcU2Ly=n_Qyo6rMJNxRg@mail.gmail.com>
+ <CAKOZuevv_QgvzmusA+yey76vo4hn9bEVwud2RumuOr0K4++15A@mail.gmail.com>
+ <CAHk-=wj0o8BiUrYiM5ZcTS6JxBh1M60O36Ms8-EqLQ139=1L4g@mail.gmail.com>
+ <20190330171215.3yrfxwodstmgzmxy@brauner.io> <CAHk-=whF6gnRVbJaArZna4e=tejfrzmNQtRbWjnuSSKpBn+jQg@mail.gmail.com>
+ <132107F4-F56B-4D6E-9E00-A6F7C092E6BD@amacapital.net> <CAHk-=wiaLtH41Mc5qAjOeCWavPqV0DhS581KYa0QBt8uraTK1Q@mail.gmail.com>
+ <20190331211041.vht7dnqg4e4bilr2@brauner.io> <CAHk-=wi3AE1-iRQ_7LOeSMNAMrGxRdC=gTjD30duVw4XRchcNQ@mail.gmail.com>
+ <18C7FCB9-2CBA-4237-94BB-9C4395A2106B@amacapital.net> <20190401114059.7gdsvcqyoz2o5bbz@yavin>
+ <CAHk-=wgKqBQznZdTQaM6yQ+_5dcz-+q8=2sbQsAoDh55hQTLMA@mail.gmail.com>
+ <CAKOZuev4Q4CY0-2rUpTujSKMVJ9L9Exv=_divFC0G0_OaQHaGw@mail.gmail.com>
+ <CAGLj2rF85hZLAR79oEA1dQARadw1OHr8bxqCLbvO6g9B6ou2Qw@mail.gmail.com>
+ <CAKOZuetovU9NawSjUfGTAwXVfnmKC9GFtmS8FxAE5Hjmzq0HHA@mail.gmail.com>
+ <CAHk-=wjgENV0pT8=MjB1UVBeWCrECCNXv15AKKX7Kfg7Eak7qw@mail.gmail.com> <CAKOZuet2QCoW1XMpTAzXS868PhF-gh14czFn4gwE4A=oX=Yr8w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <netdev-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHC9VhRWUvG6DwiPn4o+vt=fgGfY+JmG8m78M8CeyGYxF2yRXQ@mail.gmail.com>
-Sender: netdev-owner@vger.kernel.org
-To: Paul Moore <paul@paul-moore.com>
-Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAKOZuet2QCoW1XMpTAzXS868PhF-gh14czFn4gwE4A=oX=Yr8w@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Daniel Colascione <dancol@google.com>
+Cc: Jonathan Kowalski <bl0pbl33p@gmail.com>, Aleksa Sarai <cyphar@cyphar.com>, Andy Lutomirski <luto@amacapital.net>, Christian Brauner <christian@brauner.io>, Jann Horn <jannh@google.com>, Andrew Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-fou>
 List-Id: linux-api@vger.kernel.org
 
-On 2019-04-01 10:49, Paul Moore wrote:
-> On Fri, Mar 15, 2019 at 2:34 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> > Standalone audit records have the timestamp and serial number generated
-> > on the fly and as such are unique, making them standalone.  This new
-> > function audit_alloc_local() generates a local audit context that will
-> > be used only for a standalone record and its auxiliary record(s).  The
-> > context is discarded immediately after the local associated records are
-> > produced.
-> >
-> > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> > Acked-by: Serge Hallyn <serge@hallyn.com>
-> > ---
-> >  include/linux/audit.h |  8 ++++++++
-> >  kernel/audit.h        |  1 +
-> >  kernel/auditsc.c      | 35 ++++++++++++++++++++++++++++++-----
-> >  3 files changed, 39 insertions(+), 5 deletions(-)
-> 
-> ...
-> 
-> > diff --git a/include/linux/audit.h b/include/linux/audit.h
-> > index ebd6625ca80e..6db5aba7cc01 100644
-> > --- a/include/linux/audit.h
-> > +++ b/include/linux/audit.h
-> > @@ -285,6 +285,8 @@ static inline void audit_log_contid(struct audit_context *context, u64 contid)
-> >
-> >  /* These are defined in auditsc.c */
-> >                                 /* Public API */
-> > +extern struct audit_context *audit_alloc_local(gfp_t gfpflags);
-> > +extern void audit_free_context(struct audit_context *context);
-> >  extern void __audit_syscall_entry(int major, unsigned long a0, unsigned long a1,
-> >                                   unsigned long a2, unsigned long a3);
-> >  extern void __audit_syscall_exit(int ret_success, long ret_value);
-> > @@ -512,6 +514,12 @@ static inline void audit_fanotify(unsigned int response)
-> >  extern int audit_n_rules;
-> >  extern int audit_signals;
-> >  #else /* CONFIG_AUDITSYSCALL */
-> > +static inline struct audit_context *audit_alloc_local(gfp_t gfpflags)
-> > +{
-> > +       return NULL;
-> > +}
-> > +static inline void audit_free_context(struct audit_context *context)
-> > +{ }
-> >  static inline void audit_syscall_entry(int major, unsigned long a0,
-> >                                        unsigned long a1, unsigned long a2,
-> >                                        unsigned long a3)
-> > diff --git a/kernel/audit.h b/kernel/audit.h
-> > index c5ac6436317e..2a1a8b8a8019 100644
-> > --- a/kernel/audit.h
-> > +++ b/kernel/audit.h
-> > @@ -111,6 +111,7 @@ struct audit_proctitle {
-> >  struct audit_context {
-> >         int                 dummy;      /* must be the first element */
-> >         int                 in_syscall; /* 1 if task is in a syscall */
-> > +       bool                local;      /* local context needed */
-> 
-> It's very possible I've missed it, but "local" never gets used in any
-> meaningful way in this patchset does it?
+On Mon, Apr 1, 2019 at 9:45 AM Daniel Colascione <dancol@google.com> wrote:
+>
+> But doesn't the CSIGNAL approach still require that libraries somehow
+> coordinate which non-SIGCHLD signal they use?
 
-It is used in audit_alloc_local() to signal to audit_get_stamp() that in
-absence of a syscall flag, check for a local flag to continue rather
-than return.
+Yes. As mentioned, this was seldom used.
 
-> >         enum audit_state    state, current_state;
-> >         unsigned int        serial;     /* serial number for record */
-> >         int                 major;      /* syscall number */
-> 
-> paul moore
+In some cases it's ok, eg aio would just specify the signal in
+sigev_signo (except it was never fleshed out to have sival_ptr etc
+because nobody ever did it, afaik).
 
-- RGB
+> (Signal coordination a separate problem, unfortunately.)
+
+Yeah, in several cases you would just want to signal a handler
+directly, not an index into handlers.
+
+Anyway, I'm just saying that the whole "reap children" part is not
+necessarily tied to the pidfd thing. And honestly, nobody ever does
+anything like that anyway in practice, because of all the other issues
+it causes that you'll hit.
+
+                 Linus
