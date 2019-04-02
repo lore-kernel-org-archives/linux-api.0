@@ -1,38 +1,93 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: Re: [PATCHv8 00/10] Heterogenous memory node attributes
-Date: Tue, 2 Apr 2019 16:56:28 +0200
-Message-ID: <20190402145628.GA16110@kroah.com>
-References: <20190311205606.11228-1-keith.busch@intel.com>
- <20190315175049.GA18389@localhost.localdomain>
- <20190316030407.GA1607@kroah.com>
+From: Dave Martin <Dave.Martin@arm.com>
+Subject: Re: [PATCH v3 3/7] arm64: HWCAP: encapsulate elf_hwcap
+Date: Tue, 2 Apr 2019 15:58:21 +0100
+Message-ID: <20190402145821.GH3567@e103592.cambridge.arm.com>
+References: <20190401104515.39775-1-andrew.murray@arm.com>
+ <20190401104515.39775-4-andrew.murray@arm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <libc-alpha-return-101113-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
 Content-Disposition: inline
-In-Reply-To: <20190316030407.GA1607@kroah.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Keith Busch <kbusch@kernel.org>
-Cc: Keith Busch <keith.busch@intel.com>, linux-kernel@vger.kernel.org, linux-acpi@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org, Rafael Wysocki <rafael@kernel.org>, Dave Hansen <dave.hansen@intel.com>, Dan Williams <dan.j.williams@intel.com>, Jonathan Cameron <jonathan.cameron@huawei.com>, Brice Goglin <Brice.Goglin@inria.fr>
+In-Reply-To: <20190401104515.39775-4-andrew.murray@arm.com>
+To: Andrew Murray <andrew.murray@arm.com>
+Cc: Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Szabolcs Nagy <Szabolcs.Nagy@arm.com>, linux-arm-kernel@lists.infradead.org, Mark Rutland <mark.rutland@arm.com>, Phil Blundell <pb@pbcl.net>, libc-alpha@sourceware.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Mar 15, 2019 at 08:04:07PM -0700, Greg Kroah-Hartman wrote:
-> On Fri, Mar 15, 2019 at 11:50:57AM -0600, Keith Busch wrote:
-> > Hi Greg,
-> > 
-> > Just wanted to check with you on how we may proceed with this series.
-> > The main feature is exporting new sysfs attributes through driver core,
-> > so I think it makes most sense to go through you unless you'd prefer
-> > this go through a different route.
-> > 
-> > The proposed interface has been pretty stable for a while now, and we've
-> > received reviews, acks and tests on all patches. Please let me know if
-> > there is anything else you'd like to see from this series, or if you
-> > just need more time to get around to this.
+On Mon, Apr 01, 2019 at 11:45:11AM +0100, Andrew Murray wrote:
+> The introduction of AT_HWCAP2 introduced accessors which ensure that
+> hwcap features are set and tested appropriately.
 > 
-> I can't do anything with patches until after -rc1 is out, sorry.  Once
-> that happens I'll work to dig through my pending queue and will review
-> these then.
+> Let's now mandate access to elf_hwcap via these accessors by making
+> elf_hwcap static within cpufeature.c.
 
-Sorry for the delay, all now queued up, thanks!
+Looks reasonable except for a couple of minor nits below.
 
-greg k-h
+I had wondered whether putting these accessors out of line would affect
+any hot paths, but I can't see these used from anything that looks like
+a hot path.  So we're probably fine.
+
+cpus_have_const_cap() is preferred for places where this matters,
+anyway.
+
+[...]
+
+> diff --git a/arch/arm64/kernel/cpufeature.c b/arch/arm64/kernel/cpufeature.c
+> index 986ceeacd19f..84ca52fa75e5 100644
+> --- a/arch/arm64/kernel/cpufeature.c
+> +++ b/arch/arm64/kernel/cpufeature.c
+> @@ -35,8 +35,7 @@
+>  #include <asm/traps.h>
+>  #include <asm/virt.h>
+>  
+> -unsigned long elf_hwcap __read_mostly;
+> -EXPORT_SYMBOL_GPL(elf_hwcap);
+> +static unsigned long elf_hwcap __read_mostly;
+
+Now that this doesn't correspond directly to ELF_HWCAP any more and we
+hide it, can we rename it to avoid confusion?
+
+Maybe "kernel_hwcap"?
+
+>  #ifdef CONFIG_COMPAT
+>  #define COMPAT_ELF_HWCAP_DEFAULT	\
+> @@ -1947,6 +1946,35 @@ bool this_cpu_has_cap(unsigned int n)
+>  	return false;
+>  }
+>  
+> +void cpu_set_feature(unsigned int num)
+> +{
+> +	WARN_ON(num >= MAX_CPU_FEATURES);
+> +	elf_hwcap |= BIT(num);
+> +}
+> +EXPORT_SYMBOL_GPL(cpu_set_feature);
+> +
+> +bool cpu_have_feature(unsigned int num)
+> +{
+> +	WARN_ON(num >= MAX_CPU_FEATURES);
+> +	return elf_hwcap & BIT(num);
+> +}
+> +EXPORT_SYMBOL_GPL(cpu_have_feature);
+> +
+> +unsigned long cpu_get_elf_hwcap(void)
+> +{
+> +	/*
+> +	 * We currently only populate the first 32 bits of AT_HWCAP. Please
+> +	 * note that for userspace compatibility we guarantee that bit 62
+> +	 * will always be returned as 0.
+> +	 */
+
+Presumably also bit 63?
+
+It is reasonable to say this here, but I think there should also be a
+note in Documentation/arm64/elf_hwcaps.txt.
+
+[...]
+
+Cheers
+---Dave
