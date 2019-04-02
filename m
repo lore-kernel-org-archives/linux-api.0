@@ -1,7 +1,7 @@
 From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: [PATCH v8 08/16] sched/core: uclamp: Set default clamps for RT tasks
-Date: Tue,  2 Apr 2019 11:41:44 +0100
-Message-ID: <20190402104153.25404-9-patrick.bellasi@arm.com>
+Subject: [PATCH v8 09/16] sched/cpufreq: uclamp: Add clamps for FAIR and RT tasks
+Date: Tue,  2 Apr 2019 11:41:45 +0100
+Message-ID: <20190402104153.25404-10-patrick.bellasi@arm.com>
 References: <20190402104153.25404-1-patrick.bellasi@arm.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,74 +12,139 @@ To: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kerne
 Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-By default FAIR tasks start without clamps, i.e. neither boosted nor
-capped, and they run at the best frequency matching their utilization
-demand.  This default behavior does not fit RT tasks which instead are
-expected to run at the maximum available frequency, if not otherwise
-required by explicitly capping them.
+Each time a frequency update is required via schedutil, a frequency is
+selected to (possibly) satisfy the utilization reported by each
+scheduling class and irqs. However, when utilization clamping is in use,
+the frequency selection should consider userspace utilization clamping
+hints.  This will allow, for example, to:
 
-Enforce the correct behavior for RT tasks by setting util_min to max
-whenever:
+ - boost tasks which are directly affecting the user experience
+   by running them at least at a minimum "requested" frequency
 
- 1. the task is switched to the RT class and it does not already have a
-    user-defined clamp value assigned.
+ - cap low priority tasks not directly affecting the user experience
+   by running them only up to a maximum "allowed" frequency
 
- 2. an RT task is forked from a parent with RESET_ON_FORK set.
+These constraints are meant to support a per-task based tuning of the
+frequency selection thus supporting a fine grained definition of
+performance boosting vs energy saving strategies in kernel space.
 
-NOTE: utilization clamp values are cross scheduling class attributes and
-thus they are never changed/reset once a value has been explicitly
-defined from user-space.
+Add support to clamp the utilization of RUNNABLE FAIR and RT tasks
+within the boundaries defined by their aggregated utilization clamp
+constraints.
+
+Do that by considering the max(min_util, max_util) to give boosted tasks
+the performance they need even when they happen to be co-scheduled with
+other capped tasks.
 
 Signed-off-by: Patrick Bellasi <patrick.bellasi@arm.com>
 Cc: Ingo Molnar <mingo@redhat.com>
 Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
 ---
- kernel/sched/core.c | 26 ++++++++++++++++++++++++++
- 1 file changed, 26 insertions(+)
+ kernel/sched/cpufreq_schedutil.c | 15 ++++++++++++---
+ kernel/sched/fair.c              |  4 ++++
+ kernel/sched/rt.c                |  4 ++++
+ kernel/sched/sched.h             | 23 +++++++++++++++++++++++
+ 4 files changed, 43 insertions(+), 3 deletions(-)
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index bdebdabe9bc4..71c9dd6487b1 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -1042,6 +1042,28 @@ static int uclamp_validate(struct task_struct *p,
- static void __setscheduler_uclamp(struct task_struct *p,
- 				  const struct sched_attr *attr)
- {
-+	unsigned int clamp_id;
+diff --git a/kernel/sched/cpufreq_schedutil.c b/kernel/sched/cpufreq_schedutil.c
+index 033ec7c45f13..70a8b87fa29c 100644
+--- a/kernel/sched/cpufreq_schedutil.c
++++ b/kernel/sched/cpufreq_schedutil.c
+@@ -201,8 +201,10 @@ unsigned long schedutil_freq_util(int cpu, unsigned long util_cfs,
+ 	unsigned long dl_util, util, irq;
+ 	struct rq *rq = cpu_rq(cpu);
+ 
+-	if (type == FREQUENCY_UTIL && rt_rq_is_runnable(&rq->rt))
++	if (!IS_BUILTIN(CONFIG_UCLAMP_TASK) &&
++	    type == FREQUENCY_UTIL && rt_rq_is_runnable(&rq->rt)) {
+ 		return max;
++	}
+ 
+ 	/*
+ 	 * Early check to see if IRQ/steal time saturates the CPU, can be
+@@ -218,9 +220,16 @@ unsigned long schedutil_freq_util(int cpu, unsigned long util_cfs,
+ 	 * CFS tasks and we use the same metric to track the effective
+ 	 * utilization (PELT windows are synchronized) we can directly add them
+ 	 * to obtain the CPU's actual utilization.
++	 *
++	 * CFS and RT utilization can be boosted or capped, depending on
++	 * utilization clamp constraints requested by currently RUNNABLE
++	 * tasks.
++	 * When there are no CFS RUNNABLE tasks, clamps are released and
++	 * frequency will be gracefully reduced with the utilization decay.
+ 	 */
+-	util = util_cfs;
+-	util += cpu_util_rt(rq);
++	util = util_cfs + cpu_util_rt(rq);
++	if (type == FREQUENCY_UTIL)
++		util = uclamp_util(rq, util);
+ 
+ 	dl_util = cpu_util_dl(rq);
+ 
+diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
+index 8213ff6e365d..1ac98204de86 100644
+--- a/kernel/sched/fair.c
++++ b/kernel/sched/fair.c
+@@ -10617,6 +10617,10 @@ const struct sched_class fair_sched_class = {
+ #ifdef CONFIG_FAIR_GROUP_SCHED
+ 	.task_change_group	= task_change_group_fair,
+ #endif
++
++#ifdef CONFIG_UCLAMP_TASK
++	.uclamp_enabled		= 1,
++#endif
+ };
+ 
+ #ifdef CONFIG_SCHED_DEBUG
+diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
+index 90fa23d36565..d968f7209656 100644
+--- a/kernel/sched/rt.c
++++ b/kernel/sched/rt.c
+@@ -2400,6 +2400,10 @@ const struct sched_class rt_sched_class = {
+ 	.switched_to		= switched_to_rt,
+ 
+ 	.update_curr		= update_curr_rt,
++
++#ifdef CONFIG_UCLAMP_TASK
++	.uclamp_enabled		= 1,
++#endif
+ };
+ 
+ #ifdef CONFIG_RT_GROUP_SCHED
+diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
+index d8b182f1782c..b4c13f3beb2f 100644
+--- a/kernel/sched/sched.h
++++ b/kernel/sched/sched.h
+@@ -2275,6 +2275,29 @@ static inline void cpufreq_update_util(struct rq *rq, unsigned int flags)
+ static inline void cpufreq_update_util(struct rq *rq, unsigned int flags) {}
+ #endif /* CONFIG_CPU_FREQ */
+ 
++#ifdef CONFIG_UCLAMP_TASK
++static inline unsigned int uclamp_util(struct rq *rq, unsigned int util)
++{
++	unsigned int min_util = READ_ONCE(rq->uclamp[UCLAMP_MIN].value);
++	unsigned int max_util = READ_ONCE(rq->uclamp[UCLAMP_MAX].value);
 +
 +	/*
-+	 * On scheduling class change, reset to default clamps for tasks
-+	 * without a task-specific value.
++	 * Since CPU's {min,max}_util clamps are MAX aggregated considering
++	 * RUNNABLE tasks with _different_ clamps, we can end up with an
++	 * inversion. Fix it now when the clamps are applied.
 +	 */
-+	for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id) {
-+		struct uclamp_se *uc_se = &p->uclamp_req[clamp_id];
-+		unsigned int clamp_value = uclamp_none(clamp_id);
++	if (unlikely(min_util >= max_util))
++		return min_util;
 +
-+		/* Keep using defined clamps across class changes */
-+		if (uc_se->user_defined)
-+			continue;
++	return clamp(util, min_util, max_util);
++}
++#else /* CONFIG_UCLAMP_TASK */
++static inline unsigned int uclamp_util(struct rq *rq, unsigned int util)
++{
++	return util;
++}
++#endif /* CONFIG_UCLAMP_TASK */
 +
-+		/* By default, RT tasks always get 100% boost */
-+		if (unlikely(rt_task(p) && clamp_id == UCLAMP_MIN))
-+			clamp_value = uclamp_none(UCLAMP_MAX);
-+
-+		uc_se->bucket_id = uclamp_bucket_id(clamp_value);
-+		uc_se->value = clamp_value;
-+	}
-+
- 	if (likely(!(attr->sched_flags & SCHED_FLAG_UTIL_CLAMP)))
- 		return;
- 
-@@ -1077,6 +1099,10 @@ static void uclamp_fork(struct task_struct *p)
- 	for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id) {
- 		unsigned int clamp_value = uclamp_none(clamp_id);
- 
-+		/* By default, RT tasks always get 100% boost */
-+		if (unlikely(rt_task(p) && clamp_id == UCLAMP_MIN))
-+			clamp_value = uclamp_none(UCLAMP_MAX);
-+
- 		p->uclamp_req[clamp_id].user_defined = false;
- 		p->uclamp_req[clamp_id].value = clamp_value;
- 		p->uclamp_req[clamp_id].bucket_id = uclamp_bucket_id(clamp_value);
+ #ifdef arch_scale_freq_capacity
+ # ifndef arch_scale_freq_invariant
+ #  define arch_scale_freq_invariant()	true
 -- 
 2.20.1
