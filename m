@@ -1,43 +1,194 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [PATCH 1/4] glibc: Perform rseq(2) registration at C startup and thread creation (v7)
-Date: Tue, 02 Apr 2019 09:08:04 +0200
-Message-ID: <87pnq4zxyj.fsf@oldenburg2.str.redhat.com>
-References: <20190212194253.1951-1-mathieu.desnoyers@efficios.com>
-	<20190212194253.1951-2-mathieu.desnoyers@efficios.com>
-	<5166fbe9-cfe0-8554-abc7-4fc844cf2765@redhat.com>
-	<1965431879.7576.1553529272844.JavaMail.zimbra@efficios.com>
-	<87lg0tosfz.fsf@concordia.ellerman.id.au>
+From: Patrick Bellasi <patrick.bellasi@arm.com>
+Subject: [PATCH v8 00/16] Add utilization clamping support
+Date: Tue,  2 Apr 2019 11:41:36 +0100
+Message-ID: <20190402104153.25404-1-patrick.bellasi@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <libc-alpha-return-101109-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-In-Reply-To: <87lg0tosfz.fsf@concordia.ellerman.id.au> (Michael Ellerman's
-	message of "Tue, 02 Apr 2019 17:02:40 +1100")
-To: Michael Ellerman <mpe@ellerman.id.au>
-Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Carlos O'Donell <codonell@redhat.com>, Paul Burton <paul.burton@mips.com>, Will Deacon <will.deacon@arm.com>, Boqun Feng <boqun.feng@gmail.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Vasily Gorbik <gor@linux.ibm.com>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Russell King <linux@armlinux.org.uk>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Dave Watson <davejwatson@fb.co>m, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vge>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-* Michael Ellerman:
+Hi all, this is a respin of:
 
-> I'm a bit vague on what we're trying to do here.
->
-> But it seems like you want some sort of "eye catcher" prior to the branch?
->
-> That value is a valid instruction on current CPUs (rlwimi.
-> r5,r24,6,1,9), and even if it wasn't it could become one in future.
->
-> If you change it to 0x8053530 that is both a valid instruction and is a
-> nop (conditional trap immediate but with no conditions set).
+   https://lore.kernel.org/lkml/20190208100554.32196-1-patrick.bellasi@arm.com/
 
-I think we need something that is very unlikely to appear in the
-instruction stream.  It's just a marker.  The instruction will never be
-executed, and it does not have to be a trap, either (I believe that a
-standard trap instruction would be a bad choice).
+which includes the following main changes:
 
-Thanks,
-Florian
+ - remove "bucket local boosting" code and move it into a dedicated patch
+ - refactor uclamp_rq_update() to make it cleaner
+ - s/uclamp_rq_update/uclamp_rq_max_value/ and move update into caller
+ - update changelog to clarify the configuration fitting in one cache line
+ - s/uclamp_bucket_value/uclamp_bucket_base_value/
+ - update UCLAMP_BUCKET_DELTA to use DIV_ROUND_CLOSEST()
+ - moved flag reset into uclamp_rq_inc()
+ - add "requested" values uclamp_se instance beside the existing "effective"
+   values instance
+ - rename uclamp_effective_{get,assign}() into uclamp_eff_{get,set}()
+ - make uclamp_eff_get() return the new "effective" values by copy
+ - run uclamp_fork() code independently from the class being supported
+ - add sysctl_sched_uclamp_handler()'s internal mutex to serialize concurrent
+   usages
+ - make schedutil_type visible on !CONFIG_CPU_FREQ_GOV_SCHEDUTIL
+ - drop optional renamings
+ - keep using unsigned long for utilization
+ - update first cgroup patch's changelog to make it more clear
+
+Thanks for all the valuable comments, almost there... :?
+
+Cheers Patrick
+
+
+Series Organization
+===================
+
+The series is organized into these main sections:
+
+ - Patches [01-07]: Per task (primary) API
+ - Patches [08-09]: Schedutil integration for FAIR and RT tasks
+ - Patches [10-11]: Integration with EAS's energy_compute()
+ - Patches [12-16]: Per task group (secondary) API
+
+It is based on today's tip/sched/core and the full tree is available here:
+
+   git://linux-arm.org/linux-pb.git   lkml/utilclamp_v8
+   http://www.linux-arm.org/git?p=linux-pb.git;a=shortlog;h=refs/heads/lkml/utilclamp_v8
+
+
+Newcomer's Short Abstract
+=========================
+
+The Linux scheduler tracks a "utilization" signal for each scheduling entity
+(SE), e.g. tasks, to know how much CPU time they use. This signal allows the
+scheduler to know how "big" a task is and, in principle, it can support
+advanced task placement strategies by selecting the best CPU to run a task.
+Some of these strategies are represented by the Energy Aware Scheduler [3].
+
+When the schedutil cpufreq governor is in use, the utilization signal allows
+the Linux scheduler to also drive frequency selection. The CPU utilization
+signal, which represents the aggregated utilization of tasks scheduled on that
+CPU, is used to select the frequency which best fits the workload generated by
+the tasks.
+
+The current translation of utilization values into a frequency selection is
+simple: we go to max for RT tasks or to the minimum frequency which can
+accommodate the utilization of DL+FAIR tasks.
+However, utilisation values by themselves cannot convey the desired
+power/performance behaviours of each task as intended by user-space.
+As such they are not ideally suited for task placement decisions.
+
+Task placement and frequency selection policies in the kernel can be improved
+by taking into consideration hints coming from authorised user-space elements,
+like for example the Android middleware or more generally any "System
+Management Software" (SMS) framework.
+
+Utilization clamping is a mechanism which allows to "clamp" (i.e. filter) the
+utilization generated by RT and FAIR tasks within a range defined by user-space.
+The clamped utilization value can then be used, for example, to enforce a
+minimum and/or maximum frequency depending on which tasks are active on a CPU.
+
+The main use-cases for utilization clamping are:
+
+ - boosting: better interactive response for small tasks which
+   are affecting the user experience.
+
+   Consider for example the case of a small control thread for an external
+   accelerator (e.g. GPU, DSP, other devices). Here, from the task utilization
+   the scheduler does not have a complete view of what the task's requirements
+   are and, if it's a small utilization task, it keeps selecting a more energy
+   efficient CPU, with smaller capacity and lower frequency, thus negatively
+   impacting the overall time required to complete task activations.
+
+ - capping: increase energy efficiency for background tasks not affecting the
+   user experience.
+
+   Since running on a lower capacity CPU at a lower frequency is more energy
+   efficient, when the completion time is not a main goal, then capping the
+   utilization considered for certain (maybe big) tasks can have positive
+   effects, both on energy consumption and thermal headroom.
+   This feature allows also to make RT tasks more energy friendly on mobile
+   systems where running them on high capacity CPUs and at the maximum
+   frequency is not required.
+
+>From these two use-cases, it's worth noticing that frequency selection
+biasing, introduced by patches 9 and 10 of this series, is just one possible
+usage of utilization clamping. Another compelling extension of utilization
+clamping is in helping the scheduler in macking tasks placement decisions.
+
+Utilization is (also) a task specific property the scheduler uses to know
+how much CPU bandwidth a task requires, at least as long as there is idle time.
+Thus, the utilization clamp values, defined either per-task or per-task_group,
+can represent tasks to the scheduler as being bigger (or smaller) than what
+they actually are.
+
+Utilization clamping thus enables interesting additional optimizations, for
+example on asymmetric capacity systems like Arm big.LITTLE and DynamIQ CPUs,
+where:
+
+ - boosting: try to run small/foreground tasks on higher-capacity CPUs to
+   complete them faster despite being less energy efficient.
+
+ - capping: try to run big/background tasks on low-capacity CPUs to save power
+   and thermal headroom for more important tasks
+
+This series does not present this additional usage of utilization clamping but
+it's an integral part of the EAS feature set, where [1] is one of its main
+components.
+
+Android kernels use SchedTune, a solution similar to utilization clamping, to
+bias both 'frequency selection' and 'task placement'. This series provides the
+foundation to add similar features to mainline while focusing, for the
+time being, just on schedutil integration.
+
+
+References
+==========
+
+[1] "Expressing per-task/per-cgroup performance hints"
+     Linux Plumbers Conference 2018
+     https://linuxplumbersconf.org/event/2/contributions/128/
+
+[2] Message-ID: <20180911162827.GJ1100574@devbig004.ftw2.facebook.com>
+    https://lore.kernel.org/lkml/20180911162827.GJ1100574@devbig004.ftw2.facebook.com/
+
+[3] https://lore.kernel.org/lkml/20181203095628.11858-1-quentin.perret@arm.com/
+
+
+Patrick Bellasi (16):
+  sched/core: uclamp: Add CPU's clamp buckets refcounting
+  sched/core: Add bucket local max tracking
+  sched/core: uclamp: Enforce last task's UCLAMP_MAX
+  sched/core: uclamp: Add system default clamps
+  sched/core: Allow sched_setattr() to use the current policy
+  sched/core: uclamp: Extend sched_setattr() to support utilization
+    clamping
+  sched/core: uclamp: Reset uclamp values on RESET_ON_FORK
+  sched/core: uclamp: Set default clamps for RT tasks
+  sched/cpufreq: uclamp: Add clamps for FAIR and RT tasks
+  sched/core: uclamp: Add uclamp_util_with()
+  sched/fair: uclamp: Add uclamp support to energy_compute()
+  sched/core: uclamp: Extend CPU's cgroup controller
+  sched/core: uclamp: Propagate parent clamps
+  sched/core: uclamp: Propagate system defaults to root group
+  sched/core: uclamp: Use TG's clamps to restrict TASK's clamps
+  sched/core: uclamp: Update CPU's refcount on TG's clamp changes
+
+ Documentation/admin-guide/cgroup-v2.rst |  46 ++
+ include/linux/log2.h                    |  37 ++
+ include/linux/sched.h                   |  58 ++
+ include/linux/sched/sysctl.h            |  11 +
+ include/linux/sched/topology.h          |   6 -
+ include/uapi/linux/sched.h              |  16 +-
+ include/uapi/linux/sched/types.h        |  66 +-
+ init/Kconfig                            |  75 +++
+ kernel/sched/core.c                     | 791 +++++++++++++++++++++++-
+ kernel/sched/cpufreq_schedutil.c        |  22 +-
+ kernel/sched/fair.c                     |  44 +-
+ kernel/sched/rt.c                       |   4 +
+ kernel/sched/sched.h                    | 123 +++-
+ kernel/sysctl.c                         |  16 +
+ 14 files changed, 1270 insertions(+), 45 deletions(-)
+
+-- 
+2.20.1
