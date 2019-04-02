@@ -1,7 +1,7 @@
 From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: [PATCH v8 07/16] sched/core: uclamp: Reset uclamp values on RESET_ON_FORK
-Date: Tue,  2 Apr 2019 11:41:43 +0100
-Message-ID: <20190402104153.25404-8-patrick.bellasi@arm.com>
+Subject: [PATCH v8 08/16] sched/core: uclamp: Set default clamps for RT tasks
+Date: Tue,  2 Apr 2019 11:41:44 +0100
+Message-ID: <20190402104153.25404-9-patrick.bellasi@arm.com>
 References: <20190402104153.25404-1-patrick.bellasi@arm.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,48 +12,74 @@ To: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kerne
 Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-A forked tasks gets the same clamp values of its parent however, when
-the RESET_ON_FORK flag is set on parent, e.g. via:
+By default FAIR tasks start without clamps, i.e. neither boosted nor
+capped, and they run at the best frequency matching their utilization
+demand.  This default behavior does not fit RT tasks which instead are
+expected to run at the maximum available frequency, if not otherwise
+required by explicitly capping them.
 
-   sys_sched_setattr()
-      sched_setattr()
-         __sched_setscheduler(attr::SCHED_FLAG_RESET_ON_FORK)
+Enforce the correct behavior for RT tasks by setting util_min to max
+whenever:
 
-the new forked task is expected to start with all attributes reset to
-default values.
+ 1. the task is switched to the RT class and it does not already have a
+    user-defined clamp value assigned.
 
-Do that for utilization clamp values too by checking the reset request
-from the existing uclamp_fork() call which already provides the required
-initialization for other uclamp related bits.
+ 2. an RT task is forked from a parent with RESET_ON_FORK set.
+
+NOTE: utilization clamp values are cross scheduling class attributes and
+thus they are never changed/reset once a value has been explicitly
+defined from user-space.
 
 Signed-off-by: Patrick Bellasi <patrick.bellasi@arm.com>
 Cc: Ingo Molnar <mingo@redhat.com>
 Cc: Peter Zijlstra <peterz@infradead.org>
 ---
- kernel/sched/core.c | 11 +++++++++++
- 1 file changed, 11 insertions(+)
+ kernel/sched/core.c | 26 ++++++++++++++++++++++++++
+ 1 file changed, 26 insertions(+)
 
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 68aed32e8ec7..bdebdabe9bc4 100644
+index bdebdabe9bc4..71c9dd6487b1 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -1070,6 +1070,17 @@ static void uclamp_fork(struct task_struct *p)
- 
- 	for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id)
- 		p->uclamp[clamp_id].active = false;
+@@ -1042,6 +1042,28 @@ static int uclamp_validate(struct task_struct *p,
+ static void __setscheduler_uclamp(struct task_struct *p,
+ 				  const struct sched_attr *attr)
+ {
++	unsigned int clamp_id;
 +
-+	if (likely(!p->sched_reset_on_fork))
-+		return;
-+
++	/*
++	 * On scheduling class change, reset to default clamps for tasks
++	 * without a task-specific value.
++	 */
 +	for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id) {
++		struct uclamp_se *uc_se = &p->uclamp_req[clamp_id];
 +		unsigned int clamp_value = uclamp_none(clamp_id);
 +
-+		p->uclamp_req[clamp_id].user_defined = false;
-+		p->uclamp_req[clamp_id].value = clamp_value;
-+		p->uclamp_req[clamp_id].bucket_id = uclamp_bucket_id(clamp_value);
++		/* Keep using defined clamps across class changes */
++		if (uc_se->user_defined)
++			continue;
++
++		/* By default, RT tasks always get 100% boost */
++		if (unlikely(rt_task(p) && clamp_id == UCLAMP_MIN))
++			clamp_value = uclamp_none(UCLAMP_MAX);
++
++		uc_se->bucket_id = uclamp_bucket_id(clamp_value);
++		uc_se->value = clamp_value;
 +	}
- }
++
+ 	if (likely(!(attr->sched_flags & SCHED_FLAG_UTIL_CLAMP)))
+ 		return;
  
- static void __init init_uclamp(void)
+@@ -1077,6 +1099,10 @@ static void uclamp_fork(struct task_struct *p)
+ 	for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id) {
+ 		unsigned int clamp_value = uclamp_none(clamp_id);
+ 
++		/* By default, RT tasks always get 100% boost */
++		if (unlikely(rt_task(p) && clamp_id == UCLAMP_MIN))
++			clamp_value = uclamp_none(UCLAMP_MAX);
++
+ 		p->uclamp_req[clamp_id].user_defined = false;
+ 		p->uclamp_req[clamp_id].value = clamp_value;
+ 		p->uclamp_req[clamp_id].bucket_id = uclamp_bucket_id(clamp_value);
 -- 
 2.20.1
