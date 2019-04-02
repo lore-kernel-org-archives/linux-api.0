@@ -1,7 +1,7 @@
 From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: [PATCH v8 12/16] sched/core: uclamp: Extend CPU's cgroup controller
-Date: Tue,  2 Apr 2019 11:41:48 +0100
-Message-ID: <20190402104153.25404-13-patrick.bellasi@arm.com>
+Subject: [PATCH v8 13/16] sched/core: uclamp: Propagate parent clamps
+Date: Tue,  2 Apr 2019 11:41:49 +0100
+Message-ID: <20190402104153.25404-14-patrick.bellasi@arm.com>
 References: <20190402104153.25404-1-patrick.bellasi@arm.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,366 +12,320 @@ To: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kerne
 Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-The cgroup CPU bandwidth controller allows to assign a specified
-(maximum) bandwidth to the tasks of a group. However this bandwidth is
-defined and enforced only on a temporal base, without considering the
-actual frequency a CPU is running on. Thus, the amount of computation
-completed by a task within an allocated bandwidth can be very different
-depending on the actual frequency the CPU is running that task.
-The amount of computation can be affected also by the specific CPU a
-task is running on, especially when running on asymmetric capacity
-systems like Arm's big.LITTLE.
+In order to properly support hierarchical resources control, the cgroup
+delegation model requires that attribute writes from a child group never
+fail but still are (potentially) constrained based on parent's assigned
+resources. This requires to properly propagate and aggregate parent
+attributes down to its descendants.
 
-With the availability of schedutil, the scheduler is now able
-to drive frequency selections based on actual task utilization.
-Moreover, the utilization clamping support provides a mechanism to
-bias the frequency selection operated by schedutil depending on
-constraints assigned to the tasks currently RUNNABLE on a CPU.
+Let's implement this mechanism by adding a new "effective" clamp value
+for each task group. The effective clamp value is defined as the smaller
+value between the clamp value of a group and the effective clamp value
+of its parent. This is the actual clamp value enforced on tasks in a
+task group.
 
-Giving the mechanisms described above, it is now possible to extend the
-cpu controller to specify the minimum (or maximum) utilization which
-should be considered for tasks RUNNABLE on a cpu.
-This makes it possible to better defined the actual computational
-power assigned to task groups, thus improving the cgroup CPU bandwidth
-controller which is currently based just on time constraints.
-
-Extend the CPU controller with a couple of new attributes util.{min,max}
-which allows to enforce utilization boosting and capping for all the
-tasks in a group. Specifically:
-
-- util.min: defines the minimum utilization which should be considered
-	    i.e. the RUNNABLE tasks of this group will run at least at a
-		 minimum frequency which corresponds to the util.min
-		 utilization
-
-- util.max: defines the maximum utilization which should be considered
-	    i.e. the RUNNABLE tasks of this group will run up to a
-		 maximum frequency which corresponds to the util.max
-		 utilization
-
-These attributes:
-
-a) are available only for non-root nodes, both on default and legacy
-   hierarchies, while system wide clamps are defined by a generic
-   interface which does not depends on cgroups. This system wide
-   interface enforces constraints on tasks in the root node.
-
-b) enforce effective constraints at each level of the hierarchy which
-   are a restriction of the group requests considering its parent's
-   effective constraints. Root group effective constraints are defined
-   by the system wide interface.
-   This mechanism allows each (non-root) level of the hierarchy to:
-   - request whatever clamp values it would like to get
-   - effectively get only up to the maximum amount allowed by its parent
-
-c) have higher priority than task-specific clamps, defined via
-   sched_setattr(), thus allowing to control and restrict task requests
-
-Add two new attributes to the cpu controller to collect "requested"
-clamp values. Allow that at each non-root level of the hierarchy.
-Validate local consistency by enforcing util.min < util.max.
-Keep it simple by do not caring now about "effective" values computation
-and propagation along the hierarchy.
+Since it can be interesting for userspace, e.g. system management
+software, to know exactly what the currently propagated/enforced
+configuration is, the effective clamp values are exposed to user-space
+by means of a new pair of read-only attributes
+cpu.util.{min,max}.effective.
 
 Signed-off-by: Patrick Bellasi <patrick.bellasi@arm.com>
 Cc: Ingo Molnar <mingo@redhat.com>
 Cc: Peter Zijlstra <peterz@infradead.org>
 Cc: Tejun Heo <tj@kernel.org>
 
---
-Changes in v8:
- Message-ID: <20190214154817.GN50184@devbig004.ftw2.facebook.com>
- - update changelog description for points b), c) and following paragraph
 ---
- Documentation/admin-guide/cgroup-v2.rst |  27 +++++
- init/Kconfig                            |  22 ++++
- kernel/sched/core.c                     | 142 +++++++++++++++++++++++-
- kernel/sched/sched.h                    |   6 +
- 4 files changed, 196 insertions(+), 1 deletion(-)
+Changes in v8:
+ Message-ID: <20190313201010.GU2482@worktop.programming.kicks-ass.net>
+ - to be aligned with the changes in the above message:
+   add "effective" values uclamp_se instance beside the existing
+   "requested" values instance
+ Message-ID: <20190318165430.n222vuq4tv3ntbod@e110439-lin>
+ - s/cpu_util_update_hier/cpu_util_update_eff/
+---
+ Documentation/admin-guide/cgroup-v2.rst |  19 +++++
+ kernel/sched/core.c                     | 108 ++++++++++++++++++++++--
+ kernel/sched/sched.h                    |   2 +
+ 3 files changed, 124 insertions(+), 5 deletions(-)
 
 diff --git a/Documentation/admin-guide/cgroup-v2.rst b/Documentation/admin-guide/cgroup-v2.rst
-index 7bf3f129c68b..47710a77f4fa 100644
+index 47710a77f4fa..7aad2435e961 100644
 --- a/Documentation/admin-guide/cgroup-v2.rst
 +++ b/Documentation/admin-guide/cgroup-v2.rst
-@@ -909,6 +909,12 @@ controller implements weight and absolute bandwidth limit models for
- normal scheduling policy and absolute bandwidth allocation model for
- realtime scheduling policy.
+@@ -990,6 +990,16 @@ All time durations are in microseconds.
+         values similar to the sched_setattr(2). This minimum utilization
+         value is used to clamp the task specific minimum utilization clamp.
  
-+Cycles distribution is based, by default, on a temporal base and it
-+does not account for the frequency at which tasks are executed.
-+The (optional) utilization clamping support allows to enforce a minimum
-+bandwidth, which should always be provided by a CPU, and a maximum bandwidth,
-+which should never be exceeded by a CPU.
++  cpu.util.min.effective
++        A read-only single value file which exists on non-root cgroups and
++        reports minimum utilization clamp value currently enforced on a task
++        group.
 +
- WARNING: cgroup2 doesn't yet support control of realtime processes and
- the cpu controller can only be enabled when all RT processes are in
- the root cgroup.  Be aware that system management software may already
-@@ -974,6 +980,27 @@ All time durations are in microseconds.
- 	Shows pressure stall information for CPU. See
- 	Documentation/accounting/psi.txt for details.
++        The actual minimum utilization in the range [0, 1024].
++
++        This value can be lower then cpu.util.min in case a parent cgroup
++        allows only smaller minimum utilization values.
++
+   cpu.util.max
+         A read-write single value file which exists on non-root cgroups.
+         The default is "1024". i.e. no utilization capping
+@@ -1000,6 +1010,15 @@ All time durations are in microseconds.
+         values similar to the sched_setattr(2). This maximum utilization
+         value is used to clamp the task specific maximum utilization clamp.
  
-+  cpu.util.min
-+        A read-write single value file which exists on non-root cgroups.
-+        The default is "0", i.e. no utilization boosting.
++  cpu.util.max.effective
++        A read-only single value file which exists on non-root cgroups and
++        reports maximum utilization clamp value currently enforced on a task
++        group.
 +
-+        The requested minimum utilization in the range [0, 1024].
++        The actual maximum utilization in the range [0, 1024].
 +
-+        This interface allows reading and setting minimum utilization clamp
-+        values similar to the sched_setattr(2). This minimum utilization
-+        value is used to clamp the task specific minimum utilization clamp.
-+
-+  cpu.util.max
-+        A read-write single value file which exists on non-root cgroups.
-+        The default is "1024". i.e. no utilization capping
-+
-+        The requested maximum utilization in the range [0, 1024].
-+
-+        This interface allows reading and setting maximum utilization clamp
-+        values similar to the sched_setattr(2). This maximum utilization
-+        value is used to clamp the task specific maximum utilization clamp.
-+
-+
++        This value can be lower then cpu.util.max in case a parent cgroup
++        is enforcing a more restrictive clamping on max utilization.
+ 
  
  Memory
- ------
-diff --git a/init/Kconfig b/init/Kconfig
-index 7439cbf4d02e..33006e8de996 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -877,6 +877,28 @@ config RT_GROUP_SCHED
- 
- endif #CGROUP_SCHED
- 
-+config UCLAMP_TASK_GROUP
-+	bool "Utilization clamping per group of tasks"
-+	depends on CGROUP_SCHED
-+	depends on UCLAMP_TASK
-+	default n
-+	help
-+	  This feature enables the scheduler to track the clamped utilization
-+	  of each CPU based on RUNNABLE tasks currently scheduled on that CPU.
-+
-+	  When this option is enabled, the user can specify a min and max
-+	  CPU bandwidth which is allowed for each single task in a group.
-+	  The max bandwidth allows to clamp the maximum frequency a task
-+	  can use, while the min bandwidth allows to define a minimum
-+	  frequency a task will always use.
-+
-+	  When task group based utilization clamping is enabled, an eventually
-+	  specified task-specific clamp value is constrained by the cgroup
-+	  specified clamp value. Both minimum and maximum task clamping cannot
-+	  be bigger than the corresponding clamping defined at task group level.
-+
-+	  If in doubt, say N.
-+
- config CGROUP_PIDS
- 	bool "PIDs controller"
- 	help
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 71c9dd6487b1..aeed2dd315cc 100644
+index aeed2dd315cc..e09cf8881567 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -1130,8 +1130,12 @@ static void __init init_uclamp(void)
- 	/* System defaults allow max clamp values for both indexes */
- 	uc_max.value = uclamp_none(UCLAMP_MAX);
- 	uc_max.bucket_id = uclamp_bucket_id(uc_max.value);
+@@ -733,6 +733,18 @@ static void set_load_weight(struct task_struct *p, bool update_load)
+ }
+ 
+ #ifdef CONFIG_UCLAMP_TASK
++/*
++ * Serializes updates of utilization clamp values
++ *
++ * The (slow-path) user-space triggers utilization clamp value updates which
++ * can require updates on (fast-path) scheduler's data structures used to
++ * support enqueue/dequeue operations.
++ * While the per-CPU rq lock protects fast-path update operations, user-space
++ * requests are serialized using a mutex to reduce the risk of conflicting
++ * updates or API abuses.
++ */
++static DEFINE_MUTEX(uclamp_mutex);
++
+ /* Max allowed minimum utilization */
+ unsigned int sysctl_sched_uclamp_util_min = SCHED_CAPACITY_SCALE;
+ 
+@@ -1115,6 +1127,8 @@ static void __init init_uclamp(void)
+ 	unsigned int clamp_id;
+ 	int cpu;
+ 
++	mutex_init(&uclamp_mutex);
++
+ 	for_each_possible_cpu(cpu) {
+ 		memset(&cpu_rq(cpu)->uclamp, 0, sizeof(struct uclamp_rq));
+ 		cpu_rq(cpu)->uclamp_flags = 0;
+@@ -1134,6 +1148,7 @@ static void __init init_uclamp(void)
+ 		uclamp_default[clamp_id] = uc_max;
+ #ifdef CONFIG_UCLAMP_TASK_GROUP
+ 		root_task_group.uclamp_req[clamp_id] = uc_max;
++		root_task_group.uclamp[clamp_id] = uc_max;
+ #endif
+ 	}
+ }
+@@ -6730,8 +6745,10 @@ static inline int alloc_uclamp_sched_group(struct task_group *tg,
+ #ifdef CONFIG_UCLAMP_TASK_GROUP
+ 	int clamp_id;
+ 
 -	for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id)
 +	for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id) {
- 		uclamp_default[clamp_id] = uc_max;
-+#ifdef CONFIG_UCLAMP_TASK_GROUP
-+		root_task_group.uclamp_req[clamp_id] = uc_max;
-+#endif
+ 		tg->uclamp_req[clamp_id] = parent->uclamp_req[clamp_id];
++		tg->uclamp[clamp_id] = parent->uclamp[clamp_id];
 +	}
+ #endif
+ 
+ 	return 1;
+@@ -6984,6 +7001,44 @@ static void cpu_cgroup_attach(struct cgroup_taskset *tset)
  }
  
- #else /* CONFIG_UCLAMP_TASK */
-@@ -6720,6 +6724,19 @@ void ia64_set_curr_task(int cpu, struct task_struct *p)
- /* task_group_lock serializes the addition/removal of task groups */
- static DEFINE_SPINLOCK(task_group_lock);
- 
-+static inline int alloc_uclamp_sched_group(struct task_group *tg,
-+					   struct task_group *parent)
+ #ifdef CONFIG_UCLAMP_TASK_GROUP
++static void cpu_util_update_eff(struct cgroup_subsys_state *css,
++				unsigned int clamp_id)
 +{
-+#ifdef CONFIG_UCLAMP_TASK_GROUP
-+	int clamp_id;
++	struct cgroup_subsys_state *top_css = css;
++	struct uclamp_se *uc_se, *uc_parent;
++	unsigned int value;
 +
-+	for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id)
-+		tg->uclamp_req[clamp_id] = parent->uclamp_req[clamp_id];
-+#endif
++	css_for_each_descendant_pre(css, top_css) {
++		value = css_tg(css)->uclamp_req[clamp_id].value;
 +
-+	return 1;
++		uc_parent = NULL;
++		if (css_tg(css)->parent)
++			uc_parent = &css_tg(css)->parent->uclamp[clamp_id];
++
++		/*
++		 * Skip the whole subtrees if the current effective clamp is
++		 * already matching the TG's clamp value.
++		 * In this case, all the subtrees already have top_value, or a
++		 * more restrictive value, as effective clamp.
++		 */
++		uc_se = &css_tg(css)->uclamp[clamp_id];
++		if (uc_se->value == value &&
++		    uc_parent && uc_parent->value >= value) {
++			css = css_rightmost_descendant(css);
++			continue;
++		}
++
++		/* Propagate the most restrictive effective value */
++		if (uc_parent && uc_parent->value < value)
++			value = uc_parent->value;
++		if (uc_se->value == value)
++			continue;
++
++		uc_se->value = value;
++		uc_se->bucket_id = uclamp_bucket_id(value);
++	}
 +}
 +
- static void sched_free_group(struct task_group *tg)
+ static int cpu_util_min_write_u64(struct cgroup_subsys_state *css,
+ 				  struct cftype *cftype, u64 min_value)
  {
- 	free_fair_sched_group(tg);
-@@ -6743,6 +6760,9 @@ struct task_group *sched_create_group(struct task_group *parent)
- 	if (!alloc_rt_sched_group(tg, parent))
- 		goto err;
+@@ -6993,6 +7048,7 @@ static int cpu_util_min_write_u64(struct cgroup_subsys_state *css,
+ 	if (min_value > SCHED_CAPACITY_SCALE)
+ 		return -ERANGE;
  
-+	if (!alloc_uclamp_sched_group(tg, parent))
-+		goto err;
++	mutex_lock(&uclamp_mutex);
+ 	rcu_read_lock();
+ 
+ 	tg = css_tg(css);
+@@ -7011,8 +7067,12 @@ static int cpu_util_min_write_u64(struct cgroup_subsys_state *css,
+ 	tg->uclamp_req[UCLAMP_MIN].value = min_value;
+ 	tg->uclamp_req[UCLAMP_MIN].bucket_id = uclamp_bucket_id(min_value);
+ 
++	/* Update effective clamps to track the most restrictive value */
++	cpu_util_update_eff(css, UCLAMP_MIN);
 +
- 	return tg;
+ out:
+ 	rcu_read_unlock();
++	mutex_unlock(&uclamp_mutex);
  
- err:
-@@ -6963,6 +6983,100 @@ static void cpu_cgroup_attach(struct cgroup_taskset *tset)
- 		sched_move_task(task);
+ 	return ret;
+ }
+@@ -7026,6 +7086,7 @@ static int cpu_util_max_write_u64(struct cgroup_subsys_state *css,
+ 	if (max_value > SCHED_CAPACITY_SCALE)
+ 		return -ERANGE;
+ 
++	mutex_lock(&uclamp_mutex);
+ 	rcu_read_lock();
+ 
+ 	tg = css_tg(css);
+@@ -7044,21 +7105,28 @@ static int cpu_util_max_write_u64(struct cgroup_subsys_state *css,
+ 	tg->uclamp_req[UCLAMP_MAX].value = max_value;
+ 	tg->uclamp_req[UCLAMP_MAX].bucket_id = uclamp_bucket_id(max_value);
+ 
++	/* Update effective clamps to track the most restrictive value */
++	cpu_util_update_eff(css, UCLAMP_MAX);
++
+ out:
+ 	rcu_read_unlock();
++	mutex_unlock(&uclamp_mutex);
+ 
+ 	return ret;
  }
  
-+#ifdef CONFIG_UCLAMP_TASK_GROUP
-+static int cpu_util_min_write_u64(struct cgroup_subsys_state *css,
-+				  struct cftype *cftype, u64 min_value)
-+{
-+	struct task_group *tg;
-+	int ret = 0;
-+
-+	if (min_value > SCHED_CAPACITY_SCALE)
-+		return -ERANGE;
-+
-+	rcu_read_lock();
-+
-+	tg = css_tg(css);
-+	if (tg == &root_task_group) {
-+		ret = -EINVAL;
-+		goto out;
-+	}
-+	if (tg->uclamp_req[UCLAMP_MIN].value == min_value)
-+		goto out;
-+	if (tg->uclamp_req[UCLAMP_MAX].value < min_value) {
-+		ret = -EINVAL;
-+		goto out;
-+	}
-+
-+	/* Update tg's "requested" clamp value */
-+	tg->uclamp_req[UCLAMP_MIN].value = min_value;
-+	tg->uclamp_req[UCLAMP_MIN].bucket_id = uclamp_bucket_id(min_value);
-+
-+out:
-+	rcu_read_unlock();
-+
-+	return ret;
+ static inline u64 cpu_uclamp_read(struct cgroup_subsys_state *css,
+-				  enum uclamp_id clamp_id)
++				  enum uclamp_id clamp_id,
++				  bool effective)
+ {
+ 	struct task_group *tg;
+ 	u64 util_clamp;
+ 
+ 	rcu_read_lock();
+ 	tg = css_tg(css);
+-	util_clamp = tg->uclamp_req[clamp_id].value;
++	util_clamp = effective
++		? tg->uclamp[clamp_id].value
++		: tg->uclamp_req[clamp_id].value;
+ 	rcu_read_unlock();
+ 
+ 	return util_clamp;
+@@ -7067,13 +7135,25 @@ static inline u64 cpu_uclamp_read(struct cgroup_subsys_state *css,
+ static u64 cpu_util_min_read_u64(struct cgroup_subsys_state *css,
+ 				 struct cftype *cft)
+ {
+-	return cpu_uclamp_read(css, UCLAMP_MIN);
++	return cpu_uclamp_read(css, UCLAMP_MIN, false);
+ }
+ 
+ static u64 cpu_util_max_read_u64(struct cgroup_subsys_state *css,
+ 				 struct cftype *cft)
+ {
+-	return cpu_uclamp_read(css, UCLAMP_MAX);
++	return cpu_uclamp_read(css, UCLAMP_MAX, false);
 +}
 +
-+static int cpu_util_max_write_u64(struct cgroup_subsys_state *css,
-+				  struct cftype *cftype, u64 max_value)
++static u64 cpu_util_min_effective_read_u64(struct cgroup_subsys_state *css,
++					   struct cftype *cft)
 +{
-+	struct task_group *tg;
-+	int ret = 0;
-+
-+	if (max_value > SCHED_CAPACITY_SCALE)
-+		return -ERANGE;
-+
-+	rcu_read_lock();
-+
-+	tg = css_tg(css);
-+	if (tg == &root_task_group) {
-+		ret = -EINVAL;
-+		goto out;
-+	}
-+	if (tg->uclamp_req[UCLAMP_MAX].value == max_value)
-+		goto out;
-+	if (tg->uclamp_req[UCLAMP_MIN].value > max_value) {
-+		ret = -EINVAL;
-+		goto out;
-+	}
-+
-+	/* Update tg's "requested" clamp value */
-+	tg->uclamp_req[UCLAMP_MAX].value = max_value;
-+	tg->uclamp_req[UCLAMP_MAX].bucket_id = uclamp_bucket_id(max_value);
-+
-+out:
-+	rcu_read_unlock();
-+
-+	return ret;
++	return cpu_uclamp_read(css, UCLAMP_MIN, true);
 +}
 +
-+static inline u64 cpu_uclamp_read(struct cgroup_subsys_state *css,
-+				  enum uclamp_id clamp_id)
++static u64 cpu_util_max_effective_read_u64(struct cgroup_subsys_state *css,
++					   struct cftype *cft)
 +{
-+	struct task_group *tg;
-+	u64 util_clamp;
-+
-+	rcu_read_lock();
-+	tg = css_tg(css);
-+	util_clamp = tg->uclamp_req[clamp_id].value;
-+	rcu_read_unlock();
-+
-+	return util_clamp;
-+}
-+
-+static u64 cpu_util_min_read_u64(struct cgroup_subsys_state *css,
-+				 struct cftype *cft)
-+{
-+	return cpu_uclamp_read(css, UCLAMP_MIN);
-+}
-+
-+static u64 cpu_util_max_read_u64(struct cgroup_subsys_state *css,
-+				 struct cftype *cft)
-+{
-+	return cpu_uclamp_read(css, UCLAMP_MAX);
-+}
-+#endif /* CONFIG_UCLAMP_TASK_GROUP */
-+
- #ifdef CONFIG_FAIR_GROUP_SCHED
- static int cpu_shares_write_u64(struct cgroup_subsys_state *css,
- 				struct cftype *cftype, u64 shareval)
-@@ -7300,6 +7414,18 @@ static struct cftype cpu_legacy_files[] = {
- 		.read_u64 = cpu_rt_period_read_uint,
- 		.write_u64 = cpu_rt_period_write_uint,
++	return cpu_uclamp_read(css, UCLAMP_MAX, true);
+ }
+ #endif /* CONFIG_UCLAMP_TASK_GROUP */
+ 
+@@ -7421,11 +7501,19 @@ static struct cftype cpu_legacy_files[] = {
+ 		.read_u64 = cpu_util_min_read_u64,
+ 		.write_u64 = cpu_util_min_write_u64,
  	},
-+#endif
-+#ifdef CONFIG_UCLAMP_TASK_GROUP
 +	{
-+		.name = "util.min",
-+		.read_u64 = cpu_util_min_read_u64,
-+		.write_u64 = cpu_util_min_write_u64,
++		.name = "util.min.effective",
++		.read_u64 = cpu_util_min_effective_read_u64,
 +	},
+ 	{
+ 		.name = "util.max",
+ 		.read_u64 = cpu_util_max_read_u64,
+ 		.write_u64 = cpu_util_max_write_u64,
+ 	},
 +	{
-+		.name = "util.max",
-+		.read_u64 = cpu_util_max_read_u64,
-+		.write_u64 = cpu_util_max_write_u64,
++		.name = "util.max.effective",
++		.read_u64 = cpu_util_max_effective_read_u64,
 +	},
  #endif
  	{ }	/* Terminate */
  };
-@@ -7467,6 +7593,20 @@ static struct cftype cpu_files[] = {
- 		.seq_show = cpu_max_show,
- 		.write = cpu_max_write,
+@@ -7601,12 +7689,22 @@ static struct cftype cpu_files[] = {
+ 		.read_u64 = cpu_util_min_read_u64,
+ 		.write_u64 = cpu_util_min_write_u64,
  	},
-+#endif
-+#ifdef CONFIG_UCLAMP_TASK_GROUP
 +	{
-+		.name = "util.min",
++		.name = "util.min.effective",
 +		.flags = CFTYPE_NOT_ON_ROOT,
-+		.read_u64 = cpu_util_min_read_u64,
-+		.write_u64 = cpu_util_min_write_u64,
++		.read_u64 = cpu_util_min_effective_read_u64,
 +	},
+ 	{
+ 		.name = "util.max",
+ 		.flags = CFTYPE_NOT_ON_ROOT,
+ 		.read_u64 = cpu_util_max_read_u64,
+ 		.write_u64 = cpu_util_max_write_u64,
+ 	},
 +	{
-+		.name = "util.max",
++		.name = "util.max.effective",
 +		.flags = CFTYPE_NOT_ON_ROOT,
-+		.read_u64 = cpu_util_max_read_u64,
-+		.write_u64 = cpu_util_max_write_u64,
++		.read_u64 = cpu_util_max_effective_read_u64,
 +	},
  #endif
  	{ }	/* terminate */
  };
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index 6ae3628248eb..b46b6912beba 100644
+index b46b6912beba..b0d4c5e98305 100644
 --- a/kernel/sched/sched.h
 +++ b/kernel/sched/sched.h
-@@ -399,6 +399,12 @@ struct task_group {
+@@ -403,6 +403,8 @@ struct task_group {
+ #ifdef CONFIG_UCLAMP_TASK_GROUP
+ 	/* Clamp values requested for a task group */
+ 	struct uclamp_se	uclamp_req[UCLAMP_CNT];
++	/* Effective clamp values used for a task group */
++	struct uclamp_se	uclamp[UCLAMP_CNT];
  #endif
  
- 	struct cfs_bandwidth	cfs_bandwidth;
-+
-+#ifdef CONFIG_UCLAMP_TASK_GROUP
-+	/* Clamp values requested for a task group */
-+	struct uclamp_se	uclamp_req[UCLAMP_CNT];
-+#endif
-+
  };
- 
- #ifdef CONFIG_FAIR_GROUP_SCHED
 -- 
 2.20.1
