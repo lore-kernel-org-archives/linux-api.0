@@ -1,7 +1,7 @@
 From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: [PATCH v8 01/16] sched/core: uclamp: Add CPU's clamp buckets refcounting
-Date: Tue,  2 Apr 2019 11:41:37 +0100
-Message-ID: <20190402104153.25404-2-patrick.bellasi@arm.com>
+Subject: [PATCH v8 02/16] sched/core: Add bucket local max tracking
+Date: Tue,  2 Apr 2019 11:41:38 +0100
+Message-ID: <20190402104153.25404-3-patrick.bellasi@arm.com>
 References: <20190402104153.25404-1-patrick.bellasi@arm.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,550 +12,135 @@ To: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kerne
 Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Utilization clamping allows to clamp the CPU's utilization within a
-[util_min, util_max] range, depending on the set of RUNNABLE tasks on
-that CPU. Each task references two "clamp buckets" defining its minimum
-and maximum (util_{min,max}) utilization "clamp values". A CPU's clamp
-bucket is active if there is at least one RUNNABLE tasks enqueued on
-that CPU and refcounting that bucket.
+Because of bucketization, different task-specific clamp values are
+tracked in the same bucket.  For example, with 20% bucket size and
+assuming to have:
+  Task1: util_min=25%
+  Task2: util_min=35%
+both tasks will be refcounted in the [20..39]% bucket and always boosted
+only up to 20% thus implementing a simple floor aggregation normally
+used in histograms.
 
-When a task is {en,de}queued {on,from} a rq, the set of active clamp
-buckets on that CPU can change. If the set of active clamp buckets
-changes for a CPU a new "aggregated" clamp value is computed for that
-CPU. This is because each clamp bucket enforces a different utilization
-clamp value.
+In systems with only few and well-defined clamp values, it would be
+useful to track the exact clamp value required by a task whenever
+possible. For example, if a system requires only 23% and 47% boost
+values then it's possible to track the exact boost required by each
+task using only 3 buckets of ~33% size each.
 
-Clamp values are always MAX aggregated for both util_min and util_max.
-This ensures that no task can affect the performance of other
-co-scheduled tasks which are more boosted (i.e. with higher util_min
-clamp) or less capped (i.e. with higher util_max clamp).
+Introduce a mechanism to max aggregate the requested clamp values of
+RUNNABLE tasks in the same bucket. Keep it simple by resetting the
+bucket value to its base value only when a bucket becomes inactive.
+Allow a limited and controlled overboosting margin for tasks recounted
+in the same bucket.
 
-A tasks has:
-   task_struct::uclamp[clamp_id]::bucket_id
-to track the "bucket index" of the CPU's clamp bucket it refcounts while
-enqueued, for each clamp index (clamp_id).
+In systems where the boost values are not known in advance, it is still
+possible to control the maximum acceptable overboosting margin by tuning
+the number of clamp groups. For example, 20 groups ensure a 5% maximum
+overboost.
 
-A runqueue has:
-   rq::uclamp[clamp_id]::bucket[bucket_id].tasks
-to track how many RUNNABLE tasks on that CPU refcount each
-clamp bucket (bucket_id) of a clamp index (clamp_id).
-It also has a:
-   rq::uclamp[clamp_id]::bucket[bucket_id].value
-to track the clamp value of each clamp bucket (bucket_id) of a clamp
-index (clamp_id).
-
-The rq::uclamp::bucket[clamp_id][] array is scanned every time it's
-needed to find a new MAX aggregated clamp value for a clamp_id. This
-operation is required only when it's dequeued the last task of a clamp
-bucket tracking the current MAX aggregated clamp value. In this case,
-the CPU is either entering IDLE or going to schedule a less boosted or
-more clamped task.
-The expected number of different clamp values configured at build time
-is small enough to fit the full unordered array into a single cache
-line, for configurations of up to 7 buckets.
-
-Add to struct rq the basic data structures required to refcount the
-number of RUNNABLE tasks for each clamp bucket. Add also the max
-aggregation required to update the rq's clamp value at each
-enqueue/dequeue event.
-
-Use a simple linear mapping of clamp values into clamp buckets.
-Pre-compute and cache bucket_id to avoid integer divisions at
-enqueue/dequeue time.
+Remove the rq bucket initialization code since a correct bucket value
+is now computed when a task is refcounted into a CPU's rq.
 
 Signed-off-by: Patrick Bellasi <patrick.bellasi@arm.com>
 Cc: Ingo Molnar <mingo@redhat.com>
 Cc: Peter Zijlstra <peterz@infradead.org>
 
----
+--
 Changes in v8:
- Message-ID: <20190314111849.gx6bl6myfjtaan7r@e110439-lin>
- - remove "bucket local boosting" code and move it into a dedicated
-   patch
- Message-ID: <20190313161229.pkib2tmjass5chtb@e110439-lin>
- - refactored uclamp_rq_update() code to make code cleaner
- Message-ID: <20190314122256.7wb3ydswpkfmntvf@e110439-lin>
- - s/uclamp_rq_update/uclamp_rq_max_value/ and move update into caller
- Message-ID: <CAJuCfpEWCcWj=B2SPai2pQt+wcjsAhEfVV1O+H0A+_fqLCnb8Q@mail.gmail.com>
- - update changelog to clarify the configuration fitting in one cache line
- Message-ID: <20190314145456.5qpxchfltfauqaem@e110439-lin>
- - s/uclamp_bucket_value/uclamp_bucket_base_value/
- Message-ID: <20190313113757.aeaksz5akv6y5uep@e110439-lin>
- - update UCLAMP_BUCKET_DELTA to use DIV_ROUND_CLOSEST()
+ Message-ID: <20190313193916.GQ2482@worktop.programming.kicks-ass.net>
+ - split this code out from the previous patch
 ---
- include/linux/log2.h           |  37 ++++++++
- include/linux/sched.h          |  39 ++++++++
- include/linux/sched/topology.h |   6 --
- init/Kconfig                   |  53 +++++++++++
- kernel/sched/core.c            | 160 +++++++++++++++++++++++++++++++++
- kernel/sched/sched.h           |  51 +++++++++++
- 6 files changed, 340 insertions(+), 6 deletions(-)
+ kernel/sched/core.c | 46 ++++++++++++++++++++++++++-------------------
+ 1 file changed, 27 insertions(+), 19 deletions(-)
 
-diff --git a/include/linux/log2.h b/include/linux/log2.h
-index 2af7f77866d0..e2db25734532 100644
---- a/include/linux/log2.h
-+++ b/include/linux/log2.h
-@@ -224,4 +224,41 @@ int __order_base_2(unsigned long n)
- 		ilog2((n) - 1) + 1) :		\
- 	__order_base_2(n)			\
- )
-+
-+static inline __attribute__((const))
-+int __bits_per(unsigned long n)
-+{
-+	if (n < 2)
-+		return 1;
-+	if (is_power_of_2(n))
-+		return order_base_2(n) + 1;
-+	return order_base_2(n);
-+}
-+
-+/**
-+ * bits_per - calculate the number of bits required for the argument
-+ * @n: parameter
-+ *
-+ * This is constant-capable and can be used for compile time
-+ * initiaizations, e.g bitfields.
-+ *
-+ * The first few values calculated by this routine:
-+ * bf(0) = 1
-+ * bf(1) = 1
-+ * bf(2) = 2
-+ * bf(3) = 2
-+ * bf(4) = 3
-+ * ... and so on.
-+ */
-+#define bits_per(n)				\
-+(						\
-+	__builtin_constant_p(n) ? (		\
-+		((n) == 0 || (n) == 1) ? 1 : (	\
-+		((n) & (n - 1)) == 0 ?		\
-+			ilog2((n) - 1) + 2 :	\
-+			ilog2((n) - 1) + 1	\
-+		)				\
-+	) :					\
-+	__bits_per(n)				\
-+)
- #endif /* _LINUX_LOG2_H */
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 18696a194e06..0c0dd7aac8e9 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -281,6 +281,18 @@ struct vtime {
- 	u64			gtime;
- };
- 
-+/*
-+ * Utilization clamp constraints.
-+ * @UCLAMP_MIN:	Minimum utilization
-+ * @UCLAMP_MAX:	Maximum utilization
-+ * @UCLAMP_CNT:	Utilization clamp constraints count
-+ */
-+enum uclamp_id {
-+	UCLAMP_MIN = 0,
-+	UCLAMP_MAX,
-+	UCLAMP_CNT
-+};
-+
- struct sched_info {
- #ifdef CONFIG_SCHED_INFO
- 	/* Cumulative counters: */
-@@ -312,6 +324,10 @@ struct sched_info {
- # define SCHED_FIXEDPOINT_SHIFT		10
- # define SCHED_FIXEDPOINT_SCALE		(1L << SCHED_FIXEDPOINT_SHIFT)
- 
-+/* Increase resolution of cpu_capacity calculations */
-+# define SCHED_CAPACITY_SHIFT		SCHED_FIXEDPOINT_SHIFT
-+# define SCHED_CAPACITY_SCALE		(1L << SCHED_CAPACITY_SHIFT)
-+
- struct load_weight {
- 	unsigned long			weight;
- 	u32				inv_weight;
-@@ -560,6 +576,25 @@ struct sched_dl_entity {
- 	struct hrtimer inactive_timer;
- };
- 
-+#ifdef CONFIG_UCLAMP_TASK
-+/* Number of utilization clamp buckets (shorter alias) */
-+#define UCLAMP_BUCKETS CONFIG_UCLAMP_BUCKETS_COUNT
-+
-+/*
-+ * Utilization clamp for a scheduling entity
-+ * @value:		clamp value "assigned" to a se
-+ * @bucket_id:		bucket index corresponding to the "assigned" value
-+ *
-+ * The bucket_id is the index of the clamp bucket matching the clamp value
-+ * which is pre-computed and stored to avoid expensive integer divisions from
-+ * the fast path.
-+ */
-+struct uclamp_se {
-+	unsigned int value		: bits_per(SCHED_CAPACITY_SCALE);
-+	unsigned int bucket_id		: bits_per(UCLAMP_BUCKETS);
-+};
-+#endif /* CONFIG_UCLAMP_TASK */
-+
- union rcu_special {
- 	struct {
- 		u8			blocked;
-@@ -640,6 +675,10 @@ struct task_struct {
- #endif
- 	struct sched_dl_entity		dl;
- 
-+#ifdef CONFIG_UCLAMP_TASK
-+	struct uclamp_se		uclamp[UCLAMP_CNT];
-+#endif
-+
- #ifdef CONFIG_PREEMPT_NOTIFIERS
- 	/* List of struct preempt_notifier: */
- 	struct hlist_head		preempt_notifiers;
-diff --git a/include/linux/sched/topology.h b/include/linux/sched/topology.h
-index 57c7ed3fe465..bb5d77d45b09 100644
---- a/include/linux/sched/topology.h
-+++ b/include/linux/sched/topology.h
-@@ -6,12 +6,6 @@
- 
- #include <linux/sched/idle.h>
- 
--/*
-- * Increase resolution of cpu_capacity calculations
-- */
--#define SCHED_CAPACITY_SHIFT	SCHED_FIXEDPOINT_SHIFT
--#define SCHED_CAPACITY_SCALE	(1L << SCHED_CAPACITY_SHIFT)
--
- /*
-  * sched-domains (multiprocessor balancing) declarations:
-  */
-diff --git a/init/Kconfig b/init/Kconfig
-index c9386a365eea..7439cbf4d02e 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -651,6 +651,59 @@ config HAVE_UNSTABLE_SCHED_CLOCK
- config GENERIC_SCHED_CLOCK
- 	bool
- 
-+menu "Scheduler features"
-+
-+config UCLAMP_TASK
-+	bool "Enable utilization clamping for RT/FAIR tasks"
-+	depends on CPU_FREQ_GOV_SCHEDUTIL
-+	help
-+	  This feature enables the scheduler to track the clamped utilization
-+	  of each CPU based on RUNNABLE tasks scheduled on that CPU.
-+
-+	  With this option, the user can specify the min and max CPU
-+	  utilization allowed for RUNNABLE tasks. The max utilization defines
-+	  the maximum frequency a task should use while the min utilization
-+	  defines the minimum frequency it should use.
-+
-+	  Both min and max utilization clamp values are hints to the scheduler,
-+	  aiming at improving its frequency selection policy, but they do not
-+	  enforce or grant any specific bandwidth for tasks.
-+
-+	  If in doubt, say N.
-+
-+config UCLAMP_BUCKETS_COUNT
-+	int "Number of supported utilization clamp buckets"
-+	range 5 20
-+	default 5
-+	depends on UCLAMP_TASK
-+	help
-+	  Defines the number of clamp buckets to use. The range of each bucket
-+	  will be SCHED_CAPACITY_SCALE/UCLAMP_BUCKETS_COUNT. The higher the
-+	  number of clamp buckets the finer their granularity and the higher
-+	  the precision of clamping aggregation and tracking at run-time.
-+
-+	  For example, with the minimum configuration value we will have 5
-+	  clamp buckets tracking 20% utilization each. A 25% boosted tasks will
-+	  be refcounted in the [20..39]% bucket and will set the bucket clamp
-+	  effective value to 25%.
-+	  If a second 30% boosted task should be co-scheduled on the same CPU,
-+	  that task will be refcounted in the same bucket of the first task and
-+	  it will boost the bucket clamp effective value to 30%.
-+	  The clamp effective value of a bucket is reset to its nominal value
-+	  (20% in the example above) when there are no more tasks refcounted in
-+	  that bucket.
-+
-+	  An additional boost/capping margin can be added to some tasks. In the
-+	  example above the 25% task will be boosted to 30% until it exits the
-+	  CPU. If that should be considered not acceptable on certain systems,
-+	  it's always possible to reduce the margin by increasing the number of
-+	  clamp buckets to trade off used memory for run-time tracking
-+	  precision.
-+
-+	  If in doubt, use the default value.
-+
-+endmenu
-+
- #
- # For architectures that want to enable the support for NUMA-affine scheduler
- # balancing logic:
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 6b2c055564b5..032211b72110 100644
+index 032211b72110..6e1beae5f348 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -732,6 +732,162 @@ static void set_load_weight(struct task_struct *p, bool update_load)
- 	}
- }
+@@ -778,6 +778,11 @@ unsigned int uclamp_rq_max_value(struct rq *rq, unsigned int clamp_id)
+  * When a task is enqueued on a rq, the clamp bucket currently defined by the
+  * task's uclamp::bucket_id is refcounted on that rq. This also immediately
+  * updates the rq's clamp value if required.
++ *
++ * Tasks can have a task-specific value requested from user-space, track
++ * within each bucket the maximum value for tasks refcounted in it.
++ * This "local max aggregation" allows to track the exact "requested" value
++ * for each bucket when all its RUNNABLE tasks require the same clamp.
+  */
+ static inline void uclamp_rq_inc_id(struct task_struct *p, struct rq *rq,
+ 				    unsigned int clamp_id)
+@@ -789,8 +794,15 @@ static inline void uclamp_rq_inc_id(struct task_struct *p, struct rq *rq,
+ 	bucket = &uc_rq->bucket[uc_se->bucket_id];
+ 	bucket->tasks++;
  
-+#ifdef CONFIG_UCLAMP_TASK
-+
-+/* Integer rounded range for each bucket */
-+#define UCLAMP_BUCKET_DELTA DIV_ROUND_CLOSEST(SCHED_CAPACITY_SCALE, UCLAMP_BUCKETS)
-+
-+static inline unsigned int uclamp_bucket_id(unsigned int clamp_value)
-+{
-+	return clamp_value / UCLAMP_BUCKET_DELTA;
-+}
-+
-+static inline unsigned int uclamp_bucket_base_value(unsigned int clamp_value)
-+{
-+	return UCLAMP_BUCKET_DELTA * uclamp_bucket_id(clamp_value);
-+}
-+
-+static inline unsigned int uclamp_none(int clamp_id)
-+{
-+	if (clamp_id == UCLAMP_MIN)
-+		return 0;
-+	return SCHED_CAPACITY_SCALE;
-+}
-+
-+static inline
-+unsigned int uclamp_rq_max_value(struct rq *rq, unsigned int clamp_id)
-+{
-+	struct uclamp_bucket *bucket = rq->uclamp[clamp_id].bucket;
-+	int bucket_id = UCLAMP_BUCKETS - 1;
-+
 +	/*
-+	 * Since both min and max clamps are max aggregated, find the
-+	 * top most bucket with tasks in.
++	 * Local max aggregation: rq buckets always track the max
++	 * "requested" clamp value of its RUNNABLE tasks.
 +	 */
-+	for ( ; bucket_id >= 0; bucket_id--) {
-+		if (!bucket[bucket_id].tasks)
-+			continue;
-+		return bucket[bucket_id].value;
-+	}
++	if (uc_se->value > bucket->value)
++		bucket->value = uc_se->value;
 +
-+	/* No tasks -- default clamp values */
-+	return uclamp_none(clamp_id);
-+}
-+
-+/*
-+ * When a task is enqueued on a rq, the clamp bucket currently defined by the
-+ * task's uclamp::bucket_id is refcounted on that rq. This also immediately
-+ * updates the rq's clamp value if required.
-+ */
-+static inline void uclamp_rq_inc_id(struct task_struct *p, struct rq *rq,
-+				    unsigned int clamp_id)
-+{
-+	struct uclamp_rq *uc_rq = &rq->uclamp[clamp_id];
-+	struct uclamp_se *uc_se = &p->uclamp[clamp_id];
-+	struct uclamp_bucket *bucket;
-+
-+	bucket = &uc_rq->bucket[uc_se->bucket_id];
-+	bucket->tasks++;
-+
-+	if (uc_se->value > READ_ONCE(uc_rq->value))
-+		WRITE_ONCE(uc_rq->value, bucket->value);
-+}
-+
-+/*
-+ * When a task is dequeued from a rq, the clamp bucket refcounted by the task
-+ * is released. If this is the last task reference counting the rq's max
-+ * active clamp value, then the rq's clamp value is updated.
-+ *
-+ * Both refcounted tasks and rq's cached clamp values are expected to be
-+ * always valid. If it's detected they are not, as defensive programming,
-+ * enforce the expected state and warn.
-+ */
-+static inline void uclamp_rq_dec_id(struct task_struct *p, struct rq *rq,
-+				    unsigned int clamp_id)
-+{
-+	struct uclamp_rq *uc_rq = &rq->uclamp[clamp_id];
-+	struct uclamp_se *uc_se = &p->uclamp[clamp_id];
-+	struct uclamp_bucket *bucket;
-+	unsigned int rq_clamp;
-+
-+	bucket = &uc_rq->bucket[uc_se->bucket_id];
-+	SCHED_WARN_ON(!bucket->tasks);
-+	if (likely(bucket->tasks))
-+		bucket->tasks--;
-+
-+	if (likely(bucket->tasks))
-+		return;
-+
-+	rq_clamp = READ_ONCE(uc_rq->value);
-+	/*
-+	 * Defensive programming: this should never happen. If it happens,
-+	 * e.g. due to future modification, warn and fixup the expected value.
-+	 */
-+	SCHED_WARN_ON(bucket->value > rq_clamp);
-+	if (bucket->value >= rq_clamp)
-+		WRITE_ONCE(uc_rq->value, uclamp_rq_max_value(rq, clamp_id));
-+}
-+
-+static inline void uclamp_rq_inc(struct rq *rq, struct task_struct *p)
-+{
-+	unsigned int clamp_id;
-+
-+	if (unlikely(!p->sched_class->uclamp_enabled))
-+		return;
-+
-+	for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id)
-+		uclamp_rq_inc_id(p, rq, clamp_id);
-+}
-+
-+static inline void uclamp_rq_dec(struct rq *rq, struct task_struct *p)
-+{
-+	unsigned int clamp_id;
-+
-+	if (unlikely(!p->sched_class->uclamp_enabled))
-+		return;
-+
-+	for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id)
-+		uclamp_rq_dec_id(p, rq, clamp_id);
-+}
-+
-+static void __init init_uclamp(void)
-+{
-+	unsigned int clamp_id;
-+	int cpu;
-+
-+	for_each_possible_cpu(cpu) {
-+		struct uclamp_bucket *bucket;
-+		struct uclamp_rq *uc_rq;
-+		unsigned int bucket_id;
-+
-+		memset(&cpu_rq(cpu)->uclamp, 0, sizeof(struct uclamp_rq));
-+
-+		for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id) {
-+			uc_rq = &cpu_rq(cpu)->uclamp[clamp_id];
-+
-+			bucket_id = 1;
-+			while (bucket_id < UCLAMP_BUCKETS) {
-+				bucket = &uc_rq->bucket[bucket_id];
-+				bucket->value = bucket_id * UCLAMP_BUCKET_DELTA;
-+				++bucket_id;
-+			}
-+		}
-+	}
-+
-+	for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id) {
-+		struct uclamp_se *uc_se = &init_task.uclamp[clamp_id];
-+
-+		uc_se->value = uclamp_none(clamp_id);
-+		uc_se->bucket_id = uclamp_bucket_id(uc_se->value);
-+	}
-+}
-+
-+#else /* CONFIG_UCLAMP_TASK */
-+static inline void uclamp_rq_inc(struct rq *rq, struct task_struct *p) { }
-+static inline void uclamp_rq_dec(struct rq *rq, struct task_struct *p) { }
-+static inline void init_uclamp(void) { }
-+#endif /* CONFIG_UCLAMP_TASK */
-+
- static inline void enqueue_task(struct rq *rq, struct task_struct *p, int flags)
- {
- 	if (!(flags & ENQUEUE_NOCLOCK))
-@@ -742,6 +898,7 @@ static inline void enqueue_task(struct rq *rq, struct task_struct *p, int flags)
- 		psi_enqueue(p, flags & ENQUEUE_WAKEUP);
- 	}
- 
-+	uclamp_rq_inc(rq, p);
- 	p->sched_class->enqueue_task(rq, p, flags);
+ 	if (uc_se->value > READ_ONCE(uc_rq->value))
+-		WRITE_ONCE(uc_rq->value, bucket->value);
++		WRITE_ONCE(uc_rq->value, uc_se->value);
  }
  
-@@ -755,6 +912,7 @@ static inline void dequeue_task(struct rq *rq, struct task_struct *p, int flags)
- 		psi_dequeue(p, flags & DEQUEUE_SLEEP);
- 	}
- 
-+	uclamp_rq_dec(rq, p);
- 	p->sched_class->dequeue_task(rq, p, flags);
- }
- 
-@@ -6088,6 +6246,8 @@ void __init sched_init(void)
- 
- 	psi_init();
- 
-+	init_uclamp();
-+
- 	scheduler_running = 1;
- }
- 
-diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index 71208b67e58a..c3d1ae1e7eec 100644
---- a/kernel/sched/sched.h
-+++ b/kernel/sched/sched.h
-@@ -797,6 +797,48 @@ extern void rto_push_irq_work_func(struct irq_work *work);
- #endif
- #endif /* CONFIG_SMP */
- 
-+#ifdef CONFIG_UCLAMP_TASK
-+/*
-+ * struct uclamp_bucket - Utilization clamp bucket
-+ * @value: utilization clamp value for tasks on this clamp bucket
-+ * @tasks: number of RUNNABLE tasks on this clamp bucket
-+ *
-+ * Keep track of how many tasks are RUNNABLE for a given utilization
-+ * clamp value.
-+ */
-+struct uclamp_bucket {
-+	unsigned long value : bits_per(SCHED_CAPACITY_SCALE);
-+	unsigned long tasks : BITS_PER_LONG - bits_per(SCHED_CAPACITY_SCALE);
-+};
-+
-+/*
-+ * struct uclamp_rq - rq's utilization clamp
-+ * @value: currently active clamp values for a rq
-+ * @bucket: utilization clamp buckets affecting a rq
-+ *
-+ * Keep track of RUNNABLE tasks on a rq to aggregate their clamp values.
-+ * A clamp value is affecting a rq when there is at least one task RUNNABLE
-+ * (or actually running) with that value.
-+ *
-+ * There are up to UCLAMP_CNT possible different clamp values, currently there
-+ * are only two: minmum utilization and maximum utilization.
-+ *
-+ * All utilization clamping values are MAX aggregated, since:
-+ * - for util_min: we want to run the CPU at least at the max of the minimum
-+ *   utilization required by its currently RUNNABLE tasks.
-+ * - for util_max: we want to allow the CPU to run up to the max of the
-+ *   maximum utilization allowed by its currently RUNNABLE tasks.
-+ *
-+ * Since on each system we expect only a limited number of different
-+ * utilization clamp values (UCLAMP_BUCKETS), use a simple array to track
-+ * the metrics required to compute all the per-rq utilization clamp values.
-+ */
-+struct uclamp_rq {
-+	unsigned int value;
-+	struct uclamp_bucket bucket[UCLAMP_BUCKETS];
-+};
-+#endif /* CONFIG_UCLAMP_TASK */
-+
  /*
-  * This is the main, per-CPU runqueue data structure.
-  *
-@@ -835,6 +877,11 @@ struct rq {
- 	unsigned long		nr_load_updates;
- 	u64			nr_switches;
+@@ -815,6 +827,12 @@ static inline void uclamp_rq_dec_id(struct task_struct *p, struct rq *rq,
+ 	if (likely(bucket->tasks))
+ 		bucket->tasks--;
  
-+#ifdef CONFIG_UCLAMP_TASK
-+	/* Utilization clamp values based on CPU's RUNNABLE tasks */
-+	struct uclamp_rq	uclamp[UCLAMP_CNT] ____cacheline_aligned;
-+#endif
-+
- 	struct cfs_rq		cfs;
- 	struct rt_rq		rt;
- 	struct dl_rq		dl;
-@@ -1649,6 +1696,10 @@ extern const u32		sched_prio_to_wmult[40];
- struct sched_class {
- 	const struct sched_class *next;
++	/*
++	 * Keep "local max aggregation" simple and accept to (possibly)
++	 * overboost some RUNNABLE tasks in the same bucket.
++	 * The rq clamp bucket value is reset to its base value whenever
++	 * there are no more RUNNABLE tasks refcounting it.
++	 */
+ 	if (likely(bucket->tasks))
+ 		return;
  
-+#ifdef CONFIG_UCLAMP_TASK
-+	int uclamp_enabled;
-+#endif
-+
- 	void (*enqueue_task) (struct rq *rq, struct task_struct *p, int flags);
- 	void (*dequeue_task) (struct rq *rq, struct task_struct *p, int flags);
- 	void (*yield_task)   (struct rq *rq);
+@@ -824,8 +842,14 @@ static inline void uclamp_rq_dec_id(struct task_struct *p, struct rq *rq,
+ 	 * e.g. due to future modification, warn and fixup the expected value.
+ 	 */
+ 	SCHED_WARN_ON(bucket->value > rq_clamp);
+-	if (bucket->value >= rq_clamp)
++	if (bucket->value >= rq_clamp) {
++		/*
++		 * Reset clamp bucket value to its nominal value whenever
++		 * there are anymore RUNNABLE tasks refcounting it.
++		 */
++		bucket->value = uclamp_bucket_base_value(bucket->value);
+ 		WRITE_ONCE(uc_rq->value, uclamp_rq_max_value(rq, clamp_id));
++	}
+ }
+ 
+ static inline void uclamp_rq_inc(struct rq *rq, struct task_struct *p)
+@@ -855,25 +879,9 @@ static void __init init_uclamp(void)
+ 	unsigned int clamp_id;
+ 	int cpu;
+ 
+-	for_each_possible_cpu(cpu) {
+-		struct uclamp_bucket *bucket;
+-		struct uclamp_rq *uc_rq;
+-		unsigned int bucket_id;
+-
++	for_each_possible_cpu(cpu)
+ 		memset(&cpu_rq(cpu)->uclamp, 0, sizeof(struct uclamp_rq));
+ 
+-		for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id) {
+-			uc_rq = &cpu_rq(cpu)->uclamp[clamp_id];
+-
+-			bucket_id = 1;
+-			while (bucket_id < UCLAMP_BUCKETS) {
+-				bucket = &uc_rq->bucket[bucket_id];
+-				bucket->value = bucket_id * UCLAMP_BUCKET_DELTA;
+-				++bucket_id;
+-			}
+-		}
+-	}
+-
+ 	for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id) {
+ 		struct uclamp_se *uc_se = &init_task.uclamp[clamp_id];
+ 
 -- 
 2.20.1
