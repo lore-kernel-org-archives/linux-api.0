@@ -1,114 +1,98 @@
-From: Moritz Fischer <mdf@kernel.org>
-Subject: Re: [PATCH 10/17] fpga: dfl: afu: export __port_enable/disable
- function.
-Date: Tue, 2 Apr 2019 08:50:18 -0700
-Message-ID: <20190402155018.GA1453@archbook>
-References: <1553483264-5379-1-git-send-email-hao.wu@intel.com>
- <1553483264-5379-11-git-send-email-hao.wu@intel.com>
+From: Dave Martin <Dave.Martin@arm.com>
+Subject: Re: [PATCH v3 3/7] arm64: HWCAP: encapsulate elf_hwcap
+Date: Tue, 2 Apr 2019 16:55:58 +0100
+Message-ID: <20190402155558.GK3567@e103592.cambridge.arm.com>
+References: <20190401104515.39775-1-andrew.murray@arm.com>
+ <20190401104515.39775-4-andrew.murray@arm.com>
+ <20190402145821.GH3567@e103592.cambridge.arm.com>
+ <20190402150654.GD53702@e119886-lin.cambridge.arm.com>
+ <8f47d948-e5cd-68ab-b340-d40d3b11a3f5@arm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <libc-alpha-return-101119-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
 Content-Disposition: inline
-In-Reply-To: <1553483264-5379-11-git-send-email-hao.wu@intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Wu Hao <hao.wu@intel.com>
-Cc: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Xu Yilun <yilun.xu@intel.com>
+In-Reply-To: <8f47d948-e5cd-68ab-b340-d40d3b11a3f5@arm.com>
+To: Suzuki K Poulose <suzuki.poulose@arm.com>
+Cc: andrew.murray@arm.com, mark.rutland@arm.com, libc-alpha@sourceware.org, Szabolcs.Nagy@arm.com, catalin.marinas@arm.com, will.deacon@arm.com, pb@pbcl.net, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Mar 25, 2019 at 11:07:37AM +0800, Wu Hao wrote:
-> As these two functions are used by other private features. e.g.
-> in error reporting private feature, it requires to check port status
-> and reset port for error clearing.
+On Tue, Apr 02, 2019 at 04:32:57PM +0100, Suzuki K Poulose wrote:
+> Hi,
 > 
-> Signed-off-by: Xu Yilun <yilun.xu@intel.com>
-> Signed-off-by: Wu Hao <hao.wu@intel.com>
-Acked-by: Moritz Fischer <mdf@kernel.org>
-> ---
->  drivers/fpga/dfl-afu-main.c | 25 ++++++++++++++-----------
->  drivers/fpga/dfl-afu.h      |  3 +++
->  2 files changed, 17 insertions(+), 11 deletions(-)
+> On 02/04/2019 16:06, Andrew Murray wrote:
+> >On Tue, Apr 02, 2019 at 03:58:21PM +0100, Dave Martin wrote:
+> >>On Mon, Apr 01, 2019 at 11:45:11AM +0100, Andrew Murray wrote:
+> >>>The introduction of AT_HWCAP2 introduced accessors which ensure that
+> >>>hwcap features are set and tested appropriately.
+> >>>
+> >>>Let's now mandate access to elf_hwcap via these accessors by making
+> >>>elf_hwcap static within cpufeature.c.
+> >>
+> >>Looks reasonable except for a couple of minor nits below.
+> >>
+> >>I had wondered whether putting these accessors out of line would affect
+> >>any hot paths, but I can't see these used from anything that looks like
+> >>a hot path.  So we're probably fine.
+> >>
+> >>cpus_have_const_cap() is preferred for places where this matters,
+> >>anyway.
 > 
-> diff --git a/drivers/fpga/dfl-afu-main.c b/drivers/fpga/dfl-afu-main.c
-> index 2916876..e727d9b 100644
-> --- a/drivers/fpga/dfl-afu-main.c
-> +++ b/drivers/fpga/dfl-afu-main.c
-> @@ -24,14 +24,16 @@
->  #define DRV_VERSION	"0.8"
->  
->  /**
-> - * port_enable - enable a port
-> + * __port_enable - enable a port
->   * @pdev: port platform device.
->   *
->   * Enable Port by clear the port soft reset bit, which is set by default.
->   * The AFU is unable to respond to any MMIO access while in reset.
-> - * port_enable function should only be used after port_disable function.
-> + * __port_enable function should only be used after __port_disable function.
-> + *
-> + * The caller needs to hold lock for protection.
->   */
-> -static void port_enable(struct platform_device *pdev)
-> +void __port_enable(struct platform_device *pdev)
->  {
->  	struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
->  	void __iomem *base;
-> @@ -54,13 +56,14 @@ static void port_enable(struct platform_device *pdev)
->  #define RST_POLL_TIMEOUT 1000 /* us */
->  
->  /**
-> - * port_disable - disable a port
-> + * __port_disable - disable a port
->   * @pdev: port platform device.
->   *
-> - * Disable Port by setting the port soft reset bit, it puts the port into
-> - * reset.
-> + * Disable Port by setting the port soft reset bit, it puts the port into reset.
-> + *
-> + * The caller needs to hold lock for protection.
->   */
-> -static int port_disable(struct platform_device *pdev)
-> +int __port_disable(struct platform_device *pdev)
->  {
->  	struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
->  	void __iomem *base;
-> @@ -106,9 +109,9 @@ static int __port_reset(struct platform_device *pdev)
->  {
->  	int ret;
->  
-> -	ret = port_disable(pdev);
-> +	ret = __port_disable(pdev);
->  	if (!ret)
-> -		port_enable(pdev);
-> +		__port_enable(pdev);
->  
->  	return ret;
->  }
-> @@ -810,9 +813,9 @@ static int port_enable_set(struct platform_device *pdev, bool enable)
->  
->  	mutex_lock(&pdata->lock);
->  	if (enable)
-> -		port_enable(pdev);
-> +		__port_enable(pdev);
->  	else
-> -		ret = port_disable(pdev);
-> +		ret = __port_disable(pdev);
->  	mutex_unlock(&pdata->lock);
->  
->  	return ret;
-> diff --git a/drivers/fpga/dfl-afu.h b/drivers/fpga/dfl-afu.h
-> index 0c7630a..35e60c5 100644
-> --- a/drivers/fpga/dfl-afu.h
-> +++ b/drivers/fpga/dfl-afu.h
-> @@ -79,6 +79,9 @@ struct dfl_afu {
->  	struct dfl_feature_platform_data *pdata;
->  };
->  
-> +void __port_enable(struct platform_device *pdev);
-> +int __port_disable(struct platform_device *pdev);
-> +
->  void afu_mmio_region_init(struct dfl_feature_platform_data *pdata);
->  int afu_mmio_region_add(struct dfl_feature_platform_data *pdata,
->  			u32 region_index, u64 region_size, u64 phys, u32 flags);
-> -- 
-> 2.7.4
+> Btw, thats for cpu_hwcaps, which is completely different from elf_hwcaps.
+
+Sure, I meant: where we need to test something fast, we can have a
+cpucap for it, rather than rely on the ELF hwcaps.
+
+In practice, we already follow this pattern today: ELF hwcap flags are
+tested in a few places, but I don't see anything that is fast-path.
+
 > 
+> >>
+> >>[...]
+> >>
+> >>>diff --git a/arch/arm64/kernel/cpufeature.c b/arch/arm64/kernel/cpufeature.c
+> >>>index 986ceeacd19f..84ca52fa75e5 100644
+> >>>--- a/arch/arm64/kernel/cpufeature.c
+> >>>+++ b/arch/arm64/kernel/cpufeature.c
+> >>>@@ -35,8 +35,7 @@
+> >>>  #include <asm/traps.h>
+> >>>  #include <asm/virt.h>
+> >>>-unsigned long elf_hwcap __read_mostly;
+> >>>-EXPORT_SYMBOL_GPL(elf_hwcap);
+> >>>+static unsigned long elf_hwcap __read_mostly;
+> >>
+> >>Now that this doesn't correspond directly to ELF_HWCAP any more and we
+> >>hide it, can we rename it to avoid confusion?
+> >>
+> >>Maybe "kernel_hwcap"?
+> >
+> >Yes this seems reasonable.
+> 
+> nit:
+> 
+> As mentioned above we have "cpu_hwcaps" for the features only internally
+> by the kernel. Naming it "kernel_hwcap" kind of looses the hint that the
+> major purpose is for userspace consumption and could easily confuse with
+> the poorly named "cpu_hwcaps" which should have been called kernel_hwcaps.
+> 
+> How about "user_hwcaps" ? Or preferrably something closer to that.
+
+Yes, that may be better.
+
+Of course, we also have this naming in all the KERNEL_HWCAP #defined now.
+
+Since kernel_hwcap is just a static variable now, maybe it's sufficient
+to stick a comment next to it explaining what it is (and what it isn't).
+"user_hwcaps" still implies that this might be the userspace view of the
+flags, which it isn't.
+
+But I don't feel strongly about this.  If someone wants to make a
+decision, I'm happy to defer to it.
+
+Cheers
+---Dave
