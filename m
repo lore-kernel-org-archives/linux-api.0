@@ -1,236 +1,82 @@
-From: Moritz Fischer <mdf@kernel.org>
-Subject: Re: [PATCH 09/17] fpga: dfl: add id_table for dfl private feature
- driver
-Date: Tue, 2 Apr 2019 08:09:56 -0700
-Message-ID: <20190402150956.GC15773@archbook>
-References: <1553483264-5379-1-git-send-email-hao.wu@intel.com>
- <1553483264-5379-10-git-send-email-hao.wu@intel.com>
+From: Suzuki K Poulose <suzuki.poulose@arm.com>
+Subject: Re: [PATCH v3 3/7] arm64: HWCAP: encapsulate elf_hwcap
+Date: Tue, 2 Apr 2019 16:32:57 +0100
+Message-ID: <8f47d948-e5cd-68ab-b340-d40d3b11a3f5@arm.com>
+References: <20190401104515.39775-1-andrew.murray@arm.com>
+ <20190401104515.39775-4-andrew.murray@arm.com>
+ <20190402145821.GH3567@e103592.cambridge.arm.com>
+ <20190402150654.GD53702@e119886-lin.cambridge.arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1553483264-5379-10-git-send-email-hao.wu@intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Wu Hao <hao.wu@intel.com>
-Cc: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Xu Yilun <yilun.xu@intel.com>
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+In-Reply-To: <20190402150654.GD53702@e119886-lin.cambridge.arm.com>
+Content-Language: en-US
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: andrew.murray@arm.com, dave.martin@arm.com
+Cc: mark.rutland@arm.com, libc-alpha@sourceware.org, Szabolcs.Nagy@arm.com, catalin.marinas@arm.com, will.deacon@arm.com, pb@pbcl.net, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Wu,
+Hi,
 
-On Mon, Mar 25, 2019 at 11:07:36AM +0800, Wu Hao wrote:
-> This patch adds id_table for each dfl private feature driver,
-> it allows to reuse same private feature driver to match and support
-> multiple dfl private features.
+On 02/04/2019 16:06, Andrew Murray wrote:
+> On Tue, Apr 02, 2019 at 03:58:21PM +0100, Dave Martin wrote:
+>> On Mon, Apr 01, 2019 at 11:45:11AM +0100, Andrew Murray wrote:
+>>> The introduction of AT_HWCAP2 introduced accessors which ensure that
+>>> hwcap features are set and tested appropriately.
+>>>
+>>> Let's now mandate access to elf_hwcap via these accessors by making
+>>> elf_hwcap static within cpufeature.c.
+>>
+>> Looks reasonable except for a couple of minor nits below.
+>>
+>> I had wondered whether putting these accessors out of line would affect
+>> any hot paths, but I can't see these used from anything that looks like
+>> a hot path.  So we're probably fine.
+>>
+>> cpus_have_const_cap() is preferred for places where this matters,
+>> anyway.
+
+Btw, thats for cpu_hwcaps, which is completely different from elf_hwcaps.
+
+>>
+>> [...]
+>>
+>>> diff --git a/arch/arm64/kernel/cpufeature.c b/arch/arm64/kernel/cpufeature.c
+>>> index 986ceeacd19f..84ca52fa75e5 100644
+>>> --- a/arch/arm64/kernel/cpufeature.c
+>>> +++ b/arch/arm64/kernel/cpufeature.c
+>>> @@ -35,8 +35,7 @@
+>>>   #include <asm/traps.h>
+>>>   #include <asm/virt.h>
+>>>   
+>>> -unsigned long elf_hwcap __read_mostly;
+>>> -EXPORT_SYMBOL_GPL(elf_hwcap);
+>>> +static unsigned long elf_hwcap __read_mostly;
+>>
+>> Now that this doesn't correspond directly to ELF_HWCAP any more and we
+>> hide it, can we rename it to avoid confusion?
+>>
+>> Maybe "kernel_hwcap"?
 > 
-> Signed-off-by: Xu Yilun <yilun.xu@intel.com>
-> Signed-off-by: Wu Hao <hao.wu@intel.com>
-Acked-by: Moritz Fischer <mdf@kernel.org>
-> ---
->  drivers/fpga/dfl-afu-main.c | 14 ++++++++++++--
->  drivers/fpga/dfl-fme-main.c | 11 ++++++++---
->  drivers/fpga/dfl-fme-pr.c   |  7 ++++++-
->  drivers/fpga/dfl-fme.h      |  3 ++-
->  drivers/fpga/dfl.c          | 21 +++++++++++++++++++--
->  drivers/fpga/dfl.h          | 21 +++++++++++++++------
->  6 files changed, 62 insertions(+), 15 deletions(-)
-> 
-> diff --git a/drivers/fpga/dfl-afu-main.c b/drivers/fpga/dfl-afu-main.c
-> index 82fd80a..2916876 100644
-> --- a/drivers/fpga/dfl-afu-main.c
-> +++ b/drivers/fpga/dfl-afu-main.c
-> @@ -440,6 +440,11 @@ port_hdr_ioctl(struct platform_device *pdev, struct dfl_feature *feature,
->  	return ret;
->  }
->  
-> +static const struct dfl_feature_id port_hdr_id_table[] = {
-> +	{.id = PORT_FEATURE_ID_HEADER,},
-> +	{0,}
-> +};
-> +
->  static const struct dfl_feature_ops port_hdr_ops = {
->  	.init = port_hdr_init,
->  	.uinit = port_hdr_uinit,
-> @@ -500,6 +505,11 @@ static void port_afu_uinit(struct platform_device *pdev,
->  	sysfs_remove_files(&pdev->dev.kobj, port_afu_attrs);
->  }
->  
-> +static const struct dfl_feature_id port_afu_id_table[] = {
-> +	{.id = PORT_FEATURE_ID_AFU,},
-> +	{0,}
-> +};
-> +
->  static const struct dfl_feature_ops port_afu_ops = {
->  	.init = port_afu_init,
->  	.uinit = port_afu_uinit,
-> @@ -507,11 +517,11 @@ static const struct dfl_feature_ops port_afu_ops = {
->  
->  static struct dfl_feature_driver port_feature_drvs[] = {
->  	{
-> -		.id = PORT_FEATURE_ID_HEADER,
-> +		.id_table = port_hdr_id_table,
->  		.ops = &port_hdr_ops,
->  	},
->  	{
-> -		.id = PORT_FEATURE_ID_AFU,
-> +		.id_table = port_afu_id_table,
->  		.ops = &port_afu_ops,
->  	},
->  	{
-> diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-main.c
-> index 8b2a337..38c6342 100644
-> --- a/drivers/fpga/dfl-fme-main.c
-> +++ b/drivers/fpga/dfl-fme-main.c
-> @@ -158,6 +158,11 @@ static long fme_hdr_ioctl(struct platform_device *pdev,
->  	return -ENODEV;
->  }
->  
-> +static const struct dfl_feature_id fme_hdr_id_table[] = {
-> +	{.id = FME_FEATURE_ID_HEADER,},
-> +	{0,}
-> +};
-> +
->  static const struct dfl_feature_ops fme_hdr_ops = {
->  	.init = fme_hdr_init,
->  	.uinit = fme_hdr_uinit,
-> @@ -166,12 +171,12 @@ static const struct dfl_feature_ops fme_hdr_ops = {
->  
->  static struct dfl_feature_driver fme_feature_drvs[] = {
->  	{
-> -		.id = FME_FEATURE_ID_HEADER,
-> +		.id_table = fme_hdr_id_table,
->  		.ops = &fme_hdr_ops,
->  	},
->  	{
-> -		.id = FME_FEATURE_ID_PR_MGMT,
-> -		.ops = &pr_mgmt_ops,
-> +		.id_table = fme_pr_mgmt_id_table,
-> +		.ops = &fme_pr_mgmt_ops,
->  	},
->  	{
->  		.ops = NULL,
-> diff --git a/drivers/fpga/dfl-fme-pr.c b/drivers/fpga/dfl-fme-pr.c
-> index 8a0e46a..b054ac6 100644
-> --- a/drivers/fpga/dfl-fme-pr.c
-> +++ b/drivers/fpga/dfl-fme-pr.c
-> @@ -482,7 +482,12 @@ static long fme_pr_ioctl(struct platform_device *pdev,
->  	return ret;
->  }
->  
-> -const struct dfl_feature_ops pr_mgmt_ops = {
-> +const struct dfl_feature_id fme_pr_mgmt_id_table[] = {
-> +	{.id = FME_FEATURE_ID_PR_MGMT,},
-> +	{0}
-> +};
-> +
-> +const struct dfl_feature_ops fme_pr_mgmt_ops = {
->  	.init = pr_mgmt_init,
->  	.uinit = pr_mgmt_uinit,
->  	.ioctl = fme_pr_ioctl,
-> diff --git a/drivers/fpga/dfl-fme.h b/drivers/fpga/dfl-fme.h
-> index de20755..7a021c4 100644
-> --- a/drivers/fpga/dfl-fme.h
-> +++ b/drivers/fpga/dfl-fme.h
-> @@ -35,6 +35,7 @@ struct dfl_fme {
->  	struct dfl_feature_platform_data *pdata;
->  };
->  
-> -extern const struct dfl_feature_ops pr_mgmt_ops;
-> +extern const struct dfl_feature_ops fme_pr_mgmt_ops;
-> +extern const struct dfl_feature_id fme_pr_mgmt_id_table[];
->  
->  #endif /* __DFL_FME_H */
-> diff --git a/drivers/fpga/dfl.c b/drivers/fpga/dfl.c
-> index c5aa287..65f91ef 100644
-> --- a/drivers/fpga/dfl.c
-> +++ b/drivers/fpga/dfl.c
-> @@ -14,6 +14,8 @@
->  
->  #include "dfl.h"
->  
-> +#define DRV_VERSION	"0.8"
-> +
->  static DEFINE_MUTEX(dfl_id_mutex);
->  
->  /*
-> @@ -274,6 +276,21 @@ static int dfl_feature_instance_init(struct platform_device *pdev,
->  	return ret;
->  }
->  
-> +static bool dfl_feature_drv_match(struct dfl_feature *feature,
-> +				  struct dfl_feature_driver *driver)
-> +{
-> +	const struct dfl_feature_id *ids = driver->id_table;
-> +
-> +	if (ids) {
-> +		while (ids->id) {
-> +			if (ids->id == feature->id)
-> +				return true;
-> +			ids++;
-> +		}
-> +	}
-> +	return false;
-> +}
-> +
->  /**
->   * dfl_fpga_dev_feature_init - init for sub features of dfl feature device
->   * @pdev: feature device.
-> @@ -294,8 +311,7 @@ int dfl_fpga_dev_feature_init(struct platform_device *pdev,
->  
->  	while (drv->ops) {
->  		dfl_fpga_dev_for_each_feature(pdata, feature) {
-> -			/* match feature and drv using id */
-> -			if (feature->id == drv->id) {
-> +			if (dfl_feature_drv_match(feature, drv)) {
->  				ret = dfl_feature_instance_init(pdev, pdata,
->  								feature, drv);
->  				if (ret)
-> @@ -1164,3 +1180,4 @@ module_exit(dfl_fpga_exit);
->  MODULE_DESCRIPTION("FPGA Device Feature List (DFL) Support");
->  MODULE_AUTHOR("Intel Corporation");
->  MODULE_LICENSE("GPL v2");
-> +MODULE_VERSION(DRV_VERSION);
-> diff --git a/drivers/fpga/dfl.h b/drivers/fpga/dfl.h
-> index 3c5dc3a..fbc57f0 100644
-> --- a/drivers/fpga/dfl.h
-> +++ b/drivers/fpga/dfl.h
-> @@ -30,8 +30,8 @@
->  /* plus one for fme device */
->  #define MAX_DFL_FEATURE_DEV_NUM    (MAX_DFL_FPGA_PORT_NUM + 1)
->  
-> -/* Reserved 0x0 for Header Group Register and 0xff for AFU */
-> -#define FEATURE_ID_FIU_HEADER		0x0
-> +/* Reserved 0xfe for Header Group Register and 0xff for AFU */
-> +#define FEATURE_ID_FIU_HEADER		0xfe
->  #define FEATURE_ID_AFU			0xff
->  
->  #define FME_FEATURE_ID_HEADER		FEATURE_ID_FIU_HEADER
-> @@ -169,13 +169,22 @@ void dfl_fpga_port_ops_put(struct dfl_fpga_port_ops *ops);
->  int dfl_fpga_check_port_id(struct platform_device *pdev, void *pport_id);
->  
->  /**
-> - * struct dfl_feature_driver - sub feature's driver
-> + * struct dfl_feature_id - dfl private feature id
->   *
-> - * @id: sub feature id.
-> - * @ops: ops of this sub feature.
-> + * @id: unique dfl private feature id.
->   */
-> -struct dfl_feature_driver {
-> +struct dfl_feature_id {
->  	u64 id;
-> +};
-> +
-> +/**
-> + * struct dfl_feature_driver - dfl private feature driver
-> + *
-> + * @id_table: id_table for dfl private features supported by this driver.
-> + * @ops: ops of this dfl private feature driver.
-> + */
-> +struct dfl_feature_driver {
-> +	const struct dfl_feature_id *id_table;
->  	const struct dfl_feature_ops *ops;
->  };
->  
-> -- 
-> 2.7.4
-> 
+> Yes this seems reasonable.
+
+nit:
+
+As mentioned above we have "cpu_hwcaps" for the features only internally
+by the kernel. Naming it "kernel_hwcap" kind of looses the hint that the
+major purpose is for userspace consumption and could easily confuse with
+the poorly named "cpu_hwcaps" which should have been called kernel_hwcaps.
+
+How about "user_hwcaps" ? Or preferrably something closer to that.
+
+Cheers
+Suzuki
