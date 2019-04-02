@@ -1,100 +1,45 @@
-From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: [PATCH v8 16/16] sched/core: uclamp: Update CPU's refcount on TG's clamp changes
-Date: Tue,  2 Apr 2019 11:41:52 +0100
-Message-ID: <20190402104153.25404-17-patrick.bellasi@arm.com>
-References: <20190402104153.25404-1-patrick.bellasi@arm.com>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: [PATCH v2 0/5] pid: add pidfd_open()
+Date: Tue, 02 Apr 2019 13:03:24 +0200
+Message-ID: <878swsr7nn.fsf@oldenburg2.str.redhat.com>
+References: <CAHk-=whcA0kAWGqet9oJdyttjhP7J4PcU2Ly=n_Qyo6rMJNxRg@mail.gmail.com>
+        <CAKOZuevv_QgvzmusA+yey76vo4hn9bEVwud2RumuOr0K4++15A@mail.gmail.com>
+        <CAHk-=wj0o8BiUrYiM5ZcTS6JxBh1M60O36Ms8-EqLQ139=1L4g@mail.gmail.com>
+        <20190330171215.3yrfxwodstmgzmxy@brauner.io>
+        <CAHk-=whF6gnRVbJaArZna4e=tejfrzmNQtRbWjnuSSKpBn+jQg@mail.gmail.com>
+        <132107F4-F56B-4D6E-9E00-A6F7C092E6BD@amacapital.net>
+        <CAHk-=wiaLtH41Mc5qAjOeCWavPqV0DhS581KYa0QBt8uraTK1Q@mail.gmail.com>
+        <20190331211041.vht7dnqg4e4bilr2@brauner.io>
+        <CAHk-=wi3AE1-iRQ_7LOeSMNAMrGxRdC=gTjD30duVw4XRchcNQ@mail.gmail.com>
+        <18C7FCB9-2CBA-4237-94BB-9C4395A2106B@amacapital.net>
+        <20190401114059.7gdsvcqyoz2o5bbz@yavin>
+        <CAHk-=wgKqBQznZdTQaM6yQ+_5dcz-+q8=2sbQsAoDh55hQTLMA@mail.gmail.com>
+        <CAKOZuev4Q4CY0-2rUpTujSKMVJ9L9Exv=_divFC0G0_OaQHaGw@mail.gmail.com>
+        <CAGLj2rF85hZLAR79oEA1dQARadw1OHr8bxqCLbvO6g9B6ou2Qw@mail.gmail.com>
+        <CAKOZuetovU9NawSjUfGTAwXVfnmKC9GFtmS8FxAE5Hjmzq0HHA@mail.gmail.com>
+        <CAHk-=wjgENV0pT8=MjB1UVBeWCrECCNXv15AKKX7Kfg7Eak7qw@mail.gmail.com>
+        <CAKOZuet2QCoW1XMpTAzXS868PhF-gh14czFn4gwE4A=oX=Yr8w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190402104153.25404-1-patrick.bellasi@arm.com>
+In-Reply-To: <CAKOZuet2QCoW1XMpTAzXS868PhF-gh14czFn4gwE4A=oX=Yr8w@mail.gmail.com>
+        (Daniel Colascione's message of "Mon, 1 Apr 2019 09:45:22 -0700")
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
+To: Daniel Colascione <dancol@google.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Jonathan Kowalski <bl0pbl33p@gmail.com>, Aleksa Sarai <cyphar@cyphar.com>, Andy Lutomirski <luto@amacapital.net>, Christian Brauner <christian@brauner.io>, Jann Horn <jannh@google.com>, Andrew Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On updates of task group (TG) clamp values, ensure that these new values
-are enforced on all RUNNABLE tasks of the task group, i.e. all RUNNABLE
-tasks are immediately boosted and/or clamped as requested.
+* Daniel Colascione:
 
-Do that by slightly refactoring uclamp_bucket_inc(). An additional
-parameter *cgroup_subsys_state (css) is used to walk the list of tasks
-in the TGs and update the RUNNABLE ones. Do that by taking the rq
-lock for each task, the same mechanism used for cpu affinity masks
-updates.
+> But doesn't the CSIGNAL approach still require that libraries somehow
+> coordinate which non-SIGCHLD signal they use? (Signal coordination a
+> separate problem, unfortunately.)
 
-Signed-off-by: Patrick Bellasi <patrick.bellasi@arm.com>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Tejun Heo <tj@kernel.org>
----
- kernel/sched/core.c | 48 +++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 48 insertions(+)
+There's already an allocation mechanism for realtime signals in glibc,
+via __libc_allocate_rtsig.  I don't know what it is about: It's clearly
+intended as an external interface, yet there isn't a declaration in any
+installed header file.  ALSA has some optional code to use it, but I
+don't think distributions compile ALSA in that way; it always uses SIGIO.
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 423d74ed47f6..d686b2f1c0e5 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -1006,6 +1006,51 @@ static inline void uclamp_rq_dec(struct rq *rq, struct task_struct *p)
- 		uclamp_rq_dec_id(p, rq, clamp_id);
- }
- 
-+static inline void
-+uclamp_update_active(struct task_struct *p, unsigned int clamp_id)
-+{
-+	struct rq_flags rf;
-+	struct rq *rq;
-+
-+	/*
-+	 * Lock the task and the rq where the task is (or was) queued.
-+	 *
-+	 * We might lock the (previous) rq of a !RUNNABLE task, but that's the
-+	 * price to pay to safely serialize util_{min,max} updates with
-+	 * enqueues, dequeues and migration operations.
-+	 * This is the same locking schema used by __set_cpus_allowed_ptr().
-+	 */
-+	rq = task_rq_lock(p, &rf);
-+
-+	/*
-+	 * Setting the clamp bucket is serialized by task_rq_lock().
-+	 * If the task is not yet RUNNABLE and its task_struct is not
-+	 * affecting a valid clamp bucket, the next time it's enqueued,
-+	 * it will already see the updated clamp bucket value.
-+	 */
-+	if (!p->uclamp[clamp_id].active)
-+		goto done;
-+
-+	uclamp_rq_dec_id(p, rq, clamp_id);
-+	uclamp_rq_inc_id(p, rq, clamp_id);
-+
-+done:
-+
-+	task_rq_unlock(rq, p, &rf);
-+}
-+
-+static inline void
-+uclamp_update_active_tasks(struct cgroup_subsys_state *css, int clamp_id)
-+{
-+	struct css_task_iter it;
-+	struct task_struct *p;
-+
-+	css_task_iter_start(css, 0, &it);
-+	while ((p = css_task_iter_next(&it)))
-+		uclamp_update_active(p, clamp_id);
-+	css_task_iter_end(&it);
-+}
-+
- #ifdef CONFIG_UCLAMP_TASK_GROUP
- static void cpu_util_update_eff(struct cgroup_subsys_state *css,
- 				unsigned int clamp_id);
-@@ -7072,6 +7117,9 @@ static void cpu_util_update_eff(struct cgroup_subsys_state *css,
- 
- 		uc_se->value = value;
- 		uc_se->bucket_id = uclamp_bucket_id(value);
-+
-+		/* Immediately update descendants RUNNABLE tasks */
-+		uclamp_update_active_tasks(css, clamp_id);
- 	}
- }
- 
--- 
-2.20.1
+Thanks,
+Florian
