@@ -1,66 +1,144 @@
-From: Andrew Murray <andrew.murray@arm.com>
-Subject: [PATCH v4 6/6] arm64: Advertise ARM64_HAS_DCPODP cpu feature
-Date: Wed,  3 Apr 2019 11:56:28 +0100
-Message-ID: <20190403105628.39798-7-andrew.murray@arm.com>
-References: <20190403105628.39798-1-andrew.murray@arm.com>
+From: Masahiro Yamada <yamada.masahiro@socionext.com>
+Subject: Re: [RESEND PATCH v1] moduleparam: Save information about built-in
+ modules in separate file
+Date: Wed, 3 Apr 2019 20:30:55 +0900
+Message-ID: <CAK7LNARAMXmoWw=ZUSRSYoH=gCsHhXiN9m_yPoH+mMMhW93bxw@mail.gmail.com>
+References: <20190315101013.GN8455@Legion-PC.fortress> <CAK7LNATsm23e_CuyfFw7_CR8xZQ3HnwNHCXhEm_zQZU2PUGK5A@mail.gmail.com>
+ <20190326172411.GA15936@Legion-PC.fortress> <20190327154025.GB23293@linux-8ccs>
+ <20190327160440.GE15936@Legion-PC.fortress>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <libc-alpha-return-101156-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-In-Reply-To: <20190403105628.39798-1-andrew.murray@arm.com>
-To: Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>
-Cc: Szabolcs Nagy <Szabolcs.Nagy@arm.com>, dave.martin@arm.com, linux-arm-kernel@lists.infradead.org, Mark Rutland <mark.rutland@arm.com>, Phil Blundell <pb@pbcl.net>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, Suzuki K Poulose <suzuki.poulose@arm.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190327160440.GE15936@Legion-PC.fortress>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alexey Gladkov <gladkov.alexey@gmail.com>
+Cc: Jessica Yu <jeyu@kernel.org>, Michal Marek <michal.lkml@markovi.net>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux Kbuild mailing list <linux-kbuild@vger.kernel.org>, linux-api@vger.kernel.org, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>, "Dmitry V. Levin" <ldv@altlinux.org>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Rusty Russell <rusty@rustcorp.com.au>, Lucas De Marchi <lucas.de.marchi@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Advertise ARM64_HAS_DCPODP when both DC CVAP and DC CVADP are supported.
+On Thu, Mar 28, 2019 at 1:04 AM Alexey Gladkov <gladkov.alexey@gmail.com> w=
+rote:
+>
+> On Wed, Mar 27, 2019 at 04:40:25PM +0100, Jessica Yu wrote:
+> > +++ Alexey Gladkov [26/03/19 18:24 +0100]:
+> > >On Fri, Mar 22, 2019 at 02:34:12PM +0900, Masahiro Yamada wrote:
+> > >> Hi.
+> > >>
+> > >> (added some people to CC)
+> >
+> > (Thanks Masahiro for the CC!)
+> >
+> > >>
+> > >> On Fri, Mar 15, 2019 at 7:10 PM Alexey Gladkov <gladkov.alexey@gmail=
+.com> wrote:
+> > >> >
+> > >> > Problem:
+> > >> >
+> > >> > When a kernel module is compiled as a separate module, some import=
+ant
+> > >> > information about the kernel module is available via .modinfo sect=
+ion of
+> > >> > the module.  In contrast, when the kernel module is compiled into =
+the
+> > >> > kernel, that information is not available.
+> > >>
+> > >>
+> > >> I might be missing something, but
+> > >> vmlinux provides info of builtin modules
+> > >> in /sys/module/.
+> > >
+> > >No. There are definitely not all modules. I have a builtin sha256_gene=
+ric,
+> > >but I can't find him in the /sys/module.
+> >
+> > Yeah, you'll only find builtin modules under /sys/module/ if it has any=
+ module
+> > parameters, otherwise you won't find it there. As Masahiro already ment=
+ioned,
+> > if a builtin module has any parameters, they would be accessible under =
+/sys/module/.
+> >
+> > >> (Looks like currently only module_param and MODULE_VERSION)
+> > >>
+> > >> This patch is not exactly the same, but I see a kind of overwrap.
+> > >> I'd like to be sure if we want this new scheme.
+> > >
+> > >The /sys/module is only for running kernel. One of my use cases is
+> > >to create an initrd for a new kernel.
+> > >
+> > >>
+> > >> > Information about built-in modules is necessary in the following c=
+ases:
+> > >> >
+> > >> > 1. When it is necessary to find out what additional parameters can=
+ be
+> > >> > passed to the kernel at boot time.
+> > >>
+> > >>
+> > >> Actually, /sys/module/<module>/parameters/
+> > >> exposes this information.
+> > >>
+> > >> Doesn't it work for your purpose?
+> > >
+> > >No, since creating an initrd needs to know all the modalias before
+> > >I get the sysfs for new kernel. Also there are no modalias at all.
+> > >
+> > >> > 2. When you need to know which module names and their aliases are =
+in
+> > >> > the kernel. This is very useful for creating an initrd image.
+> > >> >
+> >
+> > Hm, I do see one possible additional use-case for preserving module ali=
+as
+> > information for built-in modules - modprobe will currently error (I thi=
+nk,
+> > correct me if I'm wrong) if we try invoking modprobe with an alias of a
+> > built-in module, simply because this information is not in modules.buil=
+tin or
+> > modules.alias.
+>
+> Yes. Patch for modprobe in my todo list. The reason I didn=E2=80=99t do i=
+t was
+> because I wasn=E2=80=99t sure that the file format was final.
+>
+> > Since kbuild already outputs modules.builtin, I would suggest outputtin=
+g
+> > something like a modules.builtin.alias file (and I guess maybe a module=
+s.builtin.param
+> > file too if that's deemed useful), in a format that is consumable by km=
+od/modprobe,
+> > so that modprobing an alias of a built-in module doesn't produce an err=
+or. I
+> > think this should be easy to do if we keep and parse the resulting .mod=
+info for
+> > builtin modules. This is just an idea, opinions welcome. I've added Luc=
+as to CC
+> > in case he has any thoughts.
+>
+> You don't like kernel.builtin.modinfo ?
 
-Even though we don't use this feature now, we provide it for consistency
-with DCPOP and anticipate it being used in the future.
 
-Signed-off-by: Andrew Murray <andrew.murray@arm.com>
----
- arch/arm64/include/asm/cpucaps.h | 3 ++-
- arch/arm64/kernel/cpufeature.c   | 9 +++++++++
- 2 files changed, 11 insertions(+), 1 deletion(-)
+Naming is often the most difficult thing. :)
 
-diff --git a/arch/arm64/include/asm/cpucaps.h b/arch/arm64/include/asm/cpucaps.h
-index f6a76e43f39e..defdc67d9ab4 100644
---- a/arch/arm64/include/asm/cpucaps.h
-+++ b/arch/arm64/include/asm/cpucaps.h
-@@ -61,7 +61,8 @@
- #define ARM64_HAS_GENERIC_AUTH_ARCH		40
- #define ARM64_HAS_GENERIC_AUTH_IMP_DEF		41
- #define ARM64_HAS_IRQ_PRIO_MASKING		42
-+#define ARM64_HAS_DCPODP			43
- 
--#define ARM64_NCAPS				43
-+#define ARM64_NCAPS				44
- 
- #endif /* __ASM_CPUCAPS_H */
-diff --git a/arch/arm64/kernel/cpufeature.c b/arch/arm64/kernel/cpufeature.c
-index f8b682a3a9f4..4ee5d63281ae 100644
---- a/arch/arm64/kernel/cpufeature.c
-+++ b/arch/arm64/kernel/cpufeature.c
-@@ -1340,6 +1340,15 @@ static const struct arm64_cpu_capabilities arm64_features[] = {
- 		.field_pos = ID_AA64ISAR1_DPB_SHIFT,
- 		.min_field_value = 1,
- 	},
-+	{
-+		.desc = "Data cache clean to Point of Deep Persistence",
-+		.capability = ARM64_HAS_DCPODP,
-+		.type = ARM64_CPUCAP_SYSTEM_FEATURE,
-+		.matches = has_cpuid_feature,
-+		.sys_reg = SYS_ID_AA64ISAR1_EL1,
-+		.field_pos = ID_AA64ISAR1_DPB_SHIFT,
-+		.min_field_value = 2,
-+	},
- #endif
- #ifdef CONFIG_ARM64_SVE
- 	{
--- 
-2.21.0
+IMHO, 'kernel' and 'builtin' have a similar meaning here.
+Is 'kernel.builtin' unnecessarily too long?
+
+
+Perhaps, another idea is:
+
+'builtin.alias' instead of 'modules.builtin.alias'
+if we want a separate file in the same format.
+
+
+In hindsight, 'modules.builtin' should have been
+'builtin.order', I think.
+
+
+
+
+> It is much easier to create and it has almost the same format as the
+> modules. So I think it will be easier to parse in kmod.
+
+--=20
+Best Regards
+Masahiro Yamada
