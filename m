@@ -1,248 +1,106 @@
-From: Masahiro Yamada <yamada.masahiro@socionext.com>
-Subject: Re: [RESEND PATCH v1] moduleparam: Save information about built-in
- modules in separate file
-Date: Wed, 3 Apr 2019 19:48:09 +0900
-Message-ID: <CAK7LNAQnPhT-C5Xzgb_x=ev3xsve_zzBQgLN+spvT8pJyv0F+A@mail.gmail.com>
-References: <20190315101013.GN8455@Legion-PC.fortress> <CAK7LNATsm23e_CuyfFw7_CR8xZQ3HnwNHCXhEm_zQZU2PUGK5A@mail.gmail.com>
- <20190326172411.GA15936@Legion-PC.fortress> <CAK7LNARd75HS_aBZgH0YhR-w1kipr0rn7g1VGOjWev8giO04tg@mail.gmail.com>
+From: Andrew Murray <andrew.murray@arm.com>
+Subject: [PATCH v4 0/6] arm64: Initial support for CVADP
+Date: Wed,  3 Apr 2019 11:56:22 +0100
+Message-ID: <20190403105628.39798-1-andrew.murray@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAK7LNARd75HS_aBZgH0YhR-w1kipr0rn7g1VGOjWev8giO04tg@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alexey Gladkov <gladkov.alexey@gmail.com>
-Cc: Michal Marek <michal.lkml@markovi.net>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux Kbuild mailing list <linux-kbuild@vger.kernel.org>, linux-api@vger.kernel.org, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>, "Dmitry V. Levin" <ldv@altlinux.org>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Rusty Russell <rusty@rustcorp.com.au>, Jessica Yu <jeyu@kernel.org>
+Content-Transfer-Encoding: 8bit
+Return-path: <libc-alpha-return-101150-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+To: Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>
+Cc: Szabolcs Nagy <Szabolcs.Nagy@arm.com>, dave.martin@arm.com, linux-arm-kernel@lists.infradead.org, Mark Rutland <mark.rutland@arm.com>, Phil Blundell <pb@pbcl.net>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, Suzuki K Poulose <suzuki.poulose@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 3, 2019 at 7:45 PM Masahiro Yamada
-<yamada.masahiro@socionext.com> wrote:
->
-> Hi.
->
-> Sorry for the delay.
-> I added some comments from the
-> build system point of view.
->
->
-> On Wed, Mar 27, 2019 at 2:24 AM Alexey Gladkov <gladkov.alexey@gmail.com> wrote:
-> >
-> > On Fri, Mar 22, 2019 at 02:34:12PM +0900, Masahiro Yamada wrote:
-> > > Hi.
-> > >
-> > > (added some people to CC)
-> > >
-> > >
-> > > On Fri, Mar 15, 2019 at 7:10 PM Alexey Gladkov <gladkov.alexey@gmail.com> wrote:
-> > > >
-> > > > Problem:
-> > > >
-> > > > When a kernel module is compiled as a separate module, some important
-> > > > information about the kernel module is available via .modinfo section of
-> > > > the module.  In contrast, when the kernel module is compiled into the
-> > > > kernel, that information is not available.
-> > >
-> > >
-> > > I might be missing something, but
-> > > vmlinux provides info of builtin modules
-> > > in /sys/module/.
-> >
-> > No. There are definitely not all modules. I have a builtin sha256_generic,
-> > but I can't find him in the /sys/module.
-> >
-> > > (Looks like currently only module_param and MODULE_VERSION)
-> > >
-> > > This patch is not exactly the same, but I see a kind of overwrap.
-> > > I'd like to be sure if we want this new scheme.
-> >
-> > The /sys/module is only for running kernel. One of my use cases is
-> > to create an initrd for a new kernel.
-> >
-> > >
-> > > > Information about built-in modules is necessary in the following cases:
-> > > >
-> > > > 1. When it is necessary to find out what additional parameters can be
-> > > > passed to the kernel at boot time.
-> > >
-> > >
-> > > Actually, /sys/module/<module>/parameters/
-> > > exposes this information.
-> > >
-> > > Doesn't it work for your purpose?
-> >
-> > No, since creating an initrd needs to know all the modalias before
-> > I get the sysfs for new kernel. Also there are no modalias at all.
-> >
-> > > > 2. When you need to know which module names and their aliases are in
-> > > > the kernel. This is very useful for creating an initrd image.
-> > > >
-> > > > Proposal:
-> > > >
-> > > > The proposed patch does not remove .modinfo section with module
-> > > > information from the vmlinux at the build time and saves it into a
-> > > > separate file after kernel linking. So, the kernel does not increase in
-> > > > size and no additional information remains in it. Information is stored
-> > > > in the same format as in the separate modules (null-terminated string
-> > > > array). Because the .modinfo section is already exported with a separate
-> > > > modules, we are not creating a new API.
-> > > >
-> > > > It can be easily read in the userspace:
-> > > >
-> > > > $ tr '\0' '\n' < kernel.builtin.modinfo
-> > > > ext4.softdep=pre: crc32c
-> > > > ext4.license=GPL
-> > > > ext4.description=Fourth Extended Filesystem
-> > > > ext4.author=Remy Card, Stephen Tweedie, Andrew Morton, Andreas Dilger, Theodore Ts'o and others
-> > > > ext4.alias=fs-ext4
-> > > > ext4.alias=ext3
-> > > > ext4.alias=fs-ext3
-> > > > ext4.alias=ext2
-> > > > ext4.alias=fs-ext2
-> > > > md_mod.alias=block-major-9-*
-> > > > md_mod.alias=md
-> > > > md_mod.description=MD RAID framework
-> > > > md_mod.license=GPL
-> > > > md_mod.parmtype=create_on_open:bool
-> > > > md_mod.parmtype=start_dirty_degraded:int
-> > > > ...
-> > > >
-> > > > Co-Developed-by: Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>
-> > > > Signed-off-by: Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>
-> > > > Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
-> > > > ---
-> > > >  Makefile                    |  1 +
-> > > >  include/linux/moduleparam.h | 12 +++++-------
-> > > >  scripts/link-vmlinux.sh     |  8 ++++++++
-> > > >  3 files changed, 14 insertions(+), 7 deletions(-)
-> > > >
-> > > > diff --git a/Makefile b/Makefile
-> > > > index d5713e7b1e50..971102194c92 100644
-> > > > --- a/Makefile
-> > > > +++ b/Makefile
-> > > > @@ -1288,6 +1288,7 @@ _modinst_:
-> > > >         fi
-> > > >         @cp -f $(objtree)/modules.order $(MODLIB)/
-> > > >         @cp -f $(objtree)/modules.builtin $(MODLIB)/
-> > > > +       @cp -f $(objtree)/kernel.builtin.modinfo $(MODLIB)/
->
->
-> This file should be cleaned up by 'make clean'.
->
-> Please add CLEAN_FILES around line 1336.
->
->
-> # Directories & files removed with 'make clean'
-> CLEAN_DIRS  += $(MODVERDIR) include/ksym
-> CLEAN_FILES += ...
->
->
->
->
-> Also, shouldn't it be added to .gitignore?
->
->
->
->
-> > > >         $(Q)$(MAKE) -f $(srctree)/scripts/Makefile.modinst
-> > > >
-> > > >  # This depmod is only for convenience to give the initial
-> > > > diff --git a/include/linux/moduleparam.h b/include/linux/moduleparam.h
-> > > > index ba36506db4fb..5ba250d9172a 100644
-> > > > --- a/include/linux/moduleparam.h
-> > > > +++ b/include/linux/moduleparam.h
-> > > > @@ -10,23 +10,21 @@
-> > > >     module name. */
-> > > >  #ifdef MODULE
-> > > >  #define MODULE_PARAM_PREFIX /* empty */
-> > > > +#define __MODULE_INFO_PREFIX /* empty */
-> > > >  #else
-> > > >  #define MODULE_PARAM_PREFIX KBUILD_MODNAME "."
-> > > > +/* We cannot use MODULE_PARAM_PREFIX because some modules override it. */
-> > > > +#define __MODULE_INFO_PREFIX KBUILD_MODNAME "."
-> > > >  #endif
-> > > >
-> > > >  /* Chosen so that structs with an unsigned long line up. */
-> > > >  #define MAX_PARAM_PREFIX_LEN (64 - sizeof(unsigned long))
-> > > >
-> > > > -#ifdef MODULE
-> > > >  #define __MODULE_INFO(tag, name, info)                                   \
-> > > >  static const char __UNIQUE_ID(name)[]                                    \
-> > > >    __used __attribute__((section(".modinfo"), unused, aligned(1)))        \
-> > > > -  = __stringify(tag) "=" info
-> > > > -#else  /* !MODULE */
-> > > > -/* This struct is here for syntactic coherency, it is not used */
-> > > > -#define __MODULE_INFO(tag, name, info)                                   \
-> > > > -  struct __UNIQUE_ID(name) {}
-> > > > -#endif
-> > > > +  = __MODULE_INFO_PREFIX __stringify(tag) "=" info
-> > > > +
-> > > >  #define __MODULE_PARM_TYPE(name, _type)                                          \
-> > > >    __MODULE_INFO(parmtype, name##type, #name ":" _type)
-> > > >
-> > > > diff --git a/scripts/link-vmlinux.sh b/scripts/link-vmlinux.sh
-> > > > index c8cf45362bd6..399d7e4d11ec 100755
-> > > > --- a/scripts/link-vmlinux.sh
-> > > > +++ b/scripts/link-vmlinux.sh
-> > > > @@ -258,10 +258,12 @@ if [ -n "${CONFIG_KALLSYMS}" ]; then
-> > > >
-> > > >         # step 1
-> > > >         vmlinux_link "" .tmp_vmlinux1
-> > > > +       "${OBJCOPY}" -R .modinfo .tmp_vmlinux1
-> > > >         kallsyms .tmp_vmlinux1 .tmp_kallsyms1.o
-> > > >
-> > > >         # step 2
-> > > >         vmlinux_link .tmp_kallsyms1.o .tmp_vmlinux2
-> > > > +       "${OBJCOPY}" -R .modinfo .tmp_vmlinux2
-> > > >         kallsyms .tmp_vmlinux2 .tmp_kallsyms2.o
-> > > >
-> > > >         # step 3
-> > > > @@ -273,6 +275,7 @@ if [ -n "${CONFIG_KALLSYMS}" ]; then
-> > > >                 kallsyms_vmlinux=.tmp_vmlinux3
-> > > >
-> > > >                 vmlinux_link .tmp_kallsyms2.o .tmp_vmlinux3
-> > > > +               "${OBJCOPY}" -R .modinfo .tmp_vmlinux3
-> > > >
-> > > >                 kallsyms .tmp_vmlinux3 .tmp_kallsyms3.o
-> > > >         fi
-> > > > @@ -281,6 +284,11 @@ fi
-> > > >  info LD vmlinux
-> > > >  vmlinux_link "${kallsymso}" vmlinux
-> > > >
-> > > > +info MODINFO kernel.builtin.modinfo
-> > > > +"${OBJCOPY}" -j .modinfo -O binary vmlinux kernel.builtin.modinfo
-> > > > +chmod 444 kernel.builtin.modinfo
-> > > > +"${OBJCOPY}" -R .modinfo vmlinux
-> > > > +
-> > > >  if [ -n "${CONFIG_BUILDTIME_EXTABLE_SORT}" ]; then
-> > > >         info SORTEX vmlinux
-> > > >         sortextable vmlinux
->
->
->
-> As I pointed out before, I see lots of warnings for powerpc.
->
-> How about extracting modinfo before linking vmlinux?
-> You can extract it from vmlinux.o instead,
-> and discard it in the linker script.
->
->
-> diff --git a/scripts/link-vmlinux.sh b/scripts/link-vmlinux.sh
-> index dc0e8c5..994cd47 100755
-> --- a/scripts/link-vmlinux.sh
-> +++ b/scripts/link-vmlinux.sh
-> @@ -193,6 +193,9 @@ modpost_link vmlinux.o
->  # modpost vmlinux.o to check for section mismatches
->  ${MAKE} -f "${srctree}/scripts/Makefile.modpost" vmlinux.o
->
-> +info MODINFO kernel.builtin.modinfo
-> +"${OBJCOPY}" -j .modinfo -O binary vmlinux kernel.builtin.modinfo
+ARMv8.5 introduces a DC CVADP instruction which cleans the data cache to
+the point of deep persistence. This series makes the instruction
+available to userspace and advertises the presence of this CPU feature.
 
-Oops, this should be:
+At present when CONFIG_ARM64_PMEM is enabled and the CVAP feature is
+present (ARMv8.2) the CVAP instruction is used (from memcpy_flushcache
+and arch_wb_cache_pmem). No changes have been made to use CVADP in
+these functions or similar.
 
-"${OBJCOPY}" -j .modinfo -O binary vmlinux.o kernel.builtin.modinfo
+As we have moved beyond 32 capabilities we now begin using AT_HWCAP2
+for userspace.
+
+Tested as follows:
+
+$ dmesg | grep "Deep"
+[    0.166496] CPU features: detected: Data cache clean to Point of Deep Persistence
+
+$ LD_SHOW_AUXV=1 sleep 2>&1 | grep AT_HWCAP
+AT_HWCAP:        ef91ff87
+AT_HWCAP2:       0x1
+
+Changes since v3:
+
+ - Rebased onto v5.1-rc3
+
+ - Add macros for mapping uapi HWCAPs to KERNEL_HWCAPs
+
+ - Squash AT_HWCAP2 documentation into AT_HWCAP2 patch
+
+ - Reorder series to allow HWCAP changes to be taken without
+   CVADP (if needed)
+
+ - Additional comments, changes to comments and commit
+   messages
+
+Changes since v2:
+
+ - Rebased onto v5.1-rc2
+
+ - Renamed cpu_{have,set}_feature_name to cpu_{have,set}_named_feature
+
+ - Add additional comments and update kernel Documentation
+
+Changes since v1:
+
+ - Rebased onto v5.0-rc7
+
+ - Introduced cpu_{have,set}_feature_name to eliminate use of
+   KERNEL_HWCAP prefix
+
+ - Hard coded MAX_CPU_FEATURES and added a WARN_ON
+
+ - Minor comment and tab/spacing changes
+
+ - Use elf_hwcap for all 64 caps in the kernel instead of
+   a new elf_hwcap2
 
 
+Andrew Murray (6):
+  arm64: HWCAP: add support for AT_HWCAP2
+  arm64: HWCAP: encapsulate elf_hwcap
+  arm64: Handle trapped DC CVADP
+  arm64: Expose DC CVADP to userspace
+  arm64: add CVADP support to the cache maintenance helper
+  arm64: Advertise ARM64_HAS_DCPODP cpu feature
 
+ Documentation/arm64/elf_hwcaps.txt       |  18 +++-
+ arch/arm64/crypto/aes-ce-ccm-glue.c      |   2 +-
+ arch/arm64/crypto/aes-neonbs-glue.c      |   2 +-
+ arch/arm64/crypto/chacha-neon-glue.c     |   2 +-
+ arch/arm64/crypto/crct10dif-ce-glue.c    |   4 +-
+ arch/arm64/crypto/ghash-ce-glue.c        |   8 +-
+ arch/arm64/crypto/nhpoly1305-neon-glue.c |   2 +-
+ arch/arm64/crypto/sha256-glue.c          |   4 +-
+ arch/arm64/include/asm/assembler.h       |   4 +
+ arch/arm64/include/asm/cpucaps.h         |   3 +-
+ arch/arm64/include/asm/cpufeature.h      |  21 ++---
+ arch/arm64/include/asm/esr.h             |   3 +-
+ arch/arm64/include/asm/hwcap.h           |  53 ++++++++++-
+ arch/arm64/include/uapi/asm/hwcap.h      |   7 +-
+ arch/arm64/kernel/cpufeature.c           | 109 +++++++++++++++--------
+ arch/arm64/kernel/cpuinfo.c              |   3 +-
+ arch/arm64/kernel/fpsimd.c               |   4 +-
+ arch/arm64/kernel/traps.c                |   3 +
+ drivers/clocksource/arm_arch_timer.c     |   8 ++
+ 19 files changed, 189 insertions(+), 71 deletions(-)
 
 -- 
-Best Regards
-Masahiro Yamada
+2.21.0
