@@ -1,163 +1,131 @@
-From: Dave Martin <Dave.Martin@arm.com>
-Subject: Re: [PATCH v4 1/6] arm64: HWCAP: add support for AT_HWCAP2
-Date: Wed, 3 Apr 2019 17:33:03 +0100
-Message-ID: <20190403163302.GV3567@e103592.cambridge.arm.com>
-References: <20190403105628.39798-1-andrew.murray@arm.com>
- <20190403105628.39798-2-andrew.murray@arm.com>
- <20190403132112.GP3567@e103592.cambridge.arm.com>
- <20190403160622.GM53702@e119886-lin.cambridge.arm.com>
+From: Wu Hao <hao.wu@intel.com>
+Subject: Re: [PATCH 14/17] fpga: dfl: fme: add thermal management support
+Date: Thu, 4 Apr 2019 00:31:47 +0800
+Message-ID: <20190403163147.GA28570@hao-dev>
+References: <1553483264-5379-1-git-send-email-hao.wu@intel.com>
+ <1553483264-5379-15-git-send-email-hao.wu@intel.com>
+ <20190402145925.GA15773@archbook>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <libc-alpha-return-101167-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190403160622.GM53702@e119886-lin.cambridge.arm.com>
-To: Andrew Murray <andrew.murray@arm.com>
-Cc: Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Szabolcs Nagy <Szabolcs.Nagy@arm.com>, linux-arm-kernel@lists.infradead.org, Mark Rutland <mark.rutland@arm.com>, Phil Blundell <pb@pbcl.net>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, Suzuki K Poulose <suzuki.poulose@arm.com>
+In-Reply-To: <20190402145925.GA15773@archbook>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Moritz Fischer <mdf@kernel.org>
+Cc: atull@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Luwei Kang <luwei.kang@intel.com>, Russ Weight <russell.h.weight@intel.com>, Xu Yilun <yilun.xu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 03, 2019 at 05:06:23PM +0100, Andrew Murray wrote:
-> On Wed, Apr 03, 2019 at 02:21:12PM +0100, Dave Martin wrote:
-> > On Wed, Apr 03, 2019 at 11:56:23AM +0100, Andrew Murray wrote:
-> > > As we will exhaust the first 32 bits of AT_HWCAP let's start
-> > > exposing AT_HWCAP2 to userspace to give us up to 64 caps.
-> > > 
-> > > Whilst it's possible to use the remaining 32 bits of AT_HWCAP, we
-> > > prefer to expand into AT_HWCAP2 in order to provide a consistent
-> > > view to userspace between ILP32 and LP64. However internal to the
-> > > kernel we prefer to continue to use the full space of elf_hwcap.
-> > > 
-> > > To reduce complexity and allow for future expansion, we now
-> > > represent hwcaps in the kernel as ordinals and use a
-> > > KERNEL_HWCAP_ prefix. This allows us to support automatic feature
-> > > based module loading for all our hwcaps.
-> > > 
-> > > We introduce cpu_set_feature to set hwcaps which complements the
-> > > existing cpu_have_feature helper. These helpers allow us to clean
-> > > up existing direct uses of elf_hwcap and reduce any future effort
-> > > required to move beyond 64 caps.
-> > > 
-> > > For convenience we also introduce cpu_{have,set}_named_feature which
-> > > makes use of the cpu_feature macro to allow providing a hwcap name
-> > > without a {KERNEL_}HWCAP_ prefix.
-> > > 
-> > > Signed-off-by: Andrew Murray <andrew.murray@arm.com>
+On Tue, Apr 02, 2019 at 07:59:25AM -0700, Moritz Fischer wrote:
+> Hi Wu,
+> 
+> On Mon, Mar 25, 2019 at 11:07:41AM +0800, Wu Hao wrote:
+> > This patch adds support to thermal management private feature for DFL
+> > FPGA Management Engine (FME). As thermal throttling is handled by
+> > hardware automatically per pre-defined thresholds, this private
+> > feature driver only provides read-only sysfs interfaces for user
+> > to read temperature, thresholds, threshold policy and other info.
 > > 
-> > [...]
+> > Signed-off-by: Luwei Kang <luwei.kang@intel.com>
+> > Signed-off-by: Russ Weight <russell.h.weight@intel.com>
+> > Signed-off-by: Xu Yilun <yilun.xu@intel.com>
+> > Signed-off-by: Wu Hao <hao.wu@intel.com>
+> > ---
+> >  Documentation/ABI/testing/sysfs-platform-dfl-fme |  56 +++++++
+> >  drivers/fpga/dfl-fme-main.c                      | 202 +++++++++++++++++++++++
+> >  2 files changed, 258 insertions(+)
 > > 
-> > > diff --git a/arch/arm64/include/asm/hwcap.h b/arch/arm64/include/asm/hwcap.h
-> > > index 400b80b49595..1f38a2740f7a 100644
-> > > --- a/arch/arm64/include/asm/hwcap.h
-> > > +++ b/arch/arm64/include/asm/hwcap.h
-> > > @@ -39,12 +39,61 @@
-> > >  #define COMPAT_HWCAP2_SHA2	(1 << 3)
-> > >  #define COMPAT_HWCAP2_CRC32	(1 << 4)
-> > >  
-> > > +/*
-> > > + * For userspace we represent hwcaps as a collection of HWCAP{,2}_x bitfields
-> > > + * as described in uapi/asm/hwcap.h. For the kernel we represent hwcaps as
-> > > + * natural numbers (in a single range of size MAX_CPU_FEATURES) defined here
-> > > + * with prefix KERNEL_HWCAP_ mapped to their HWCAP{,2}_x counterpart.
-> > > + *
-> > > + * Hwcaps should be set and tested within the kernel via the
-> > > + * cpu_{set,have}_named_feature(feature) where feature is the unique suffix
-> > > + * of KERNEL_HWCAP_{feature}.
-> > > + */
-> > > +#define __khwcap_feature(x)		ilog2(HWCAP_ ## x)
-> > 
-> > Hmm, I didn't spot this before, but we should probably include
-> > <linux/log2.h>.  This isn't asm-friendly however.
+> > diff --git a/Documentation/ABI/testing/sysfs-platform-dfl-fme b/Documentation/ABI/testing/sysfs-platform-dfl-fme
+> > index b8327e9..d3aeb88 100644
+> > --- a/Documentation/ABI/testing/sysfs-platform-dfl-fme
+> > +++ b/Documentation/ABI/testing/sysfs-platform-dfl-fme
+> > @@ -44,3 +44,59 @@ Description:	Read-only. It returns socket_id to indicate which socket
+> >  		this FPGA belongs to, only valid for integrated solution.
+> >  		User only needs this information, in case standard numa node
+> >  		can't provide correct information.
+> > +
+> > +What:		/sys/bus/platform/devices/dfl-fme.0/thermal_mgmt/temperature
+> > +Date:		March 2019
+> > +KernelVersion:  5.2
+> > +Contact:	Wu Hao <hao.wu@intel.com>
+> > +Description:	Read-only. It returns temperature (in Celsius) of this FPGA
+> > +		device.
+> > +
+> > +What:		/sys/bus/platform/devices/dfl-fme.0/thermal_mgmt/threshold1
+> > +Date:		March 2019
+> > +KernelVersion:  5.2
+> > +Contact:	Wu Hao <hao.wu@intel.com>
+> > +Description:	Read-only. Read this file to get the temperature threshold1
+> > +		(in Celsius).
+> > +
+> > +What:		/sys/bus/platform/devices/dfl-fme.0/thermal_mgmt/threshold2
+> > +Date:		March 2019
+> > +KernelVersion:  5.2
+> > +Contact:	Wu Hao <hao.wu@intel.com>
+> > +Description:	Read-only. Read this file to get the temperature threshold2
+> > +		(in Celsius).
+> > +
+> > +What:		/sys/bus/platform/devices/dfl-fme.0/thermal_mgmt/trip_threshold
+> > +Date:		March 2019
+> > +KernelVersion:  5.2
+> > +Contact:	Wu Hao <hao.wu@intel.com>
+> > +Description:	Read-only. It returns trip threshold (in Celsius), once FPGA
+> > +		temperature reaches trip threshold, it triggers a fatal event
+> > +		to board management controller (BMC) to shutdown FPGA.
+> > +
+> > +What:		/sys/bus/platform/devices/dfl-fme.0/thermal_mgmt/threshold1_status
+> > +Date:		March 2019
+> > +KernelVersion:  5.2
+> > +Contact:	Wu Hao <hao.wu@intel.com>
+> > +Description:	Read-only. It returns 1 if temperature reaches threshold1,
+> > +		otherwise 0. Once temperature reaches threshold1, hardware
+> > +		will automatically enter throttling state (AP1 - 50%
+> > +		or AP2 - 90% throttling, see 'threshold1_policy').
+> > +
+> > +What:		/sys/bus/platform/devices/dfl-fme.0/thermal_mgmt/threshold2_status
+> > +Date:		March 2019
+> > +KernelVersion:  5.2
+> > +Contact:	Wu Hao <hao.wu@intel.com>
+> > +Description:	Read-only. It returns 1 if temperature reaches threshold2,
+> > +		otherwise 0. Once temperature reaches threshold2, hardware
+> > +		will automatically enter the deepest throttling state (AP6
+> > +		- 100% throttling).
+> > +
+> > +What:		/sys/bus/platform/devices/dfl-fme.0/thermal_mgmt/threshold1_policy
+> > +Date:		March 2019
+> > +KernelVersion:  5.2
+> > +Contact:	Wu Hao <hao.wu@intel.com>
+> > +Description:	Read-only. Read this file to get the policy of temperature
+> > +		threshold1. It only supports two value (policy):
+> > +		    0 - AP2 state (90% throttling)
+> > +		    1 - AP1 state (50% throttling)
 > 
-> Doh!
+> These look like they could directly map to the linux thermal framework,
+> any reason you can't use the thermal framework?
 > 
-> > 
-> > <asm/hwcap.h> gets included (unnecessarily?) by arch/arm64/mm/proc.S and
-> > arch/arm64/include/uapi/asm/ptrace.h.
+> The trip stuff literally maps 1:1 to what a thermal driver does, I think
+> that's something you'd wanna consider.
 > 
-> I also can't see any reason why either of these files includes hwcap.h...
 
-Maybe we could just drop that include from proc.S.
+Hi Moritz,
 
-> > Rather than risk breaking a UAPI header, can we remove the ilog2() here
-> > and add it back into cpu_feature() where it was originally?
-> 
-> No I don't think we can. 
+Thanks a lot for the suggestion, actually I feel that the trip points in thermal
+zone are used to indicate cooling actions required for thermal software either
+in kernel or userspace. But in this case, such FPGA hardware handles cooling
+automatically (yes, driver only expose Read-only sysfs for information), so
+software doesn't need to take care of this at all. For this purpose, it seems
+that we don't have to put these thresholds as trip points. And per my
+understanding, if people use such FPGA device, then they may need to know
+what's the current hardware throttling behavior, e.g. 50% vs 90%. These
+information can't be provided by standard thermal zone sysfs, so anyway user
+needs these sysfs interfaces to know it. But it seems that we still could
+create a thermal zone without trip points, it could help if user wants to
+connect some external cooling devices via userspace thermal daemon, they can
+define whatever trip points they like to activate the external cooling 
+device. I will consider this further more and come up with a new patch in
+v2 patchset.
 
-Agreed: userspace may be relying (however unwisely) on getting the
-hwcaps as a side-effect of <uapi/asm/ptrace.h>, so we can't do much
-about that one without taking a risk.
+Thanks
+Hao
 
-> > There may be a reason why this didn't work that I've forgotten...
-> 
-> We need the UAPI HWCAP_xx's to be bitfields and we've decided that we should
-> limit them to 32 bits. Thus UAPI HWCAP2_xx's will also live within the first
-> 32 bits meaning that we can't distinguish between them based on their value.
-> 
-> This isn't ideal within the kernel, as it means if we store the value
-> anywhere (such as struct arm64_cpu_capabilities) then we need to also store
-> some additional information to identify if it's AT_HWCAP or AT_HWCAP2.
-
-But we could keep shadow kernel #defines that (for hwcap2) are shifted
-up by 32 bits?  This required anything that deals with hwcap numbers to
-cope with them being giant numbers that fit in an unsigned long, not
-just small intergers (which possibly doesn't work without core changes?)
-
-> In some cases (automatic hwcap based module loading) it's not possible to work
-> around this - which is why arm32 can only support this for their elf_hwcap2.
-> The approach this series takes allows automatic module loading to work based
-> on any hwcap.
-> 
-> The solutions I can come up with at the moment are:
-> 
->  - hard code the mapping without ilog2, as follows, though this is error
->    prone
-> 
-> #define KERNEL_HWCAP_ASIMD              2
-> 
->  - Move the #ifndef __ASSEMBLY__ in include/asm/hwcap.h above the definitions
->    of KERNEL_HWCAP_xx and include <linux/log2.h> under __ASSEMBLY__. This works
->    but we can't test for hwcaps in assembly - maybe this isn't a problem?
-
-Since this is a kernel header, this is probably OK: is asm needs the
-hwcaps, sooner or later someone will need to fix it.
-
-Possibly there are out-of-tree drivers relying on using the hwcaps from
-assembly, but that's probably their own problem.
-
-So, either move the #ifndef for simplicity, or introduce the ordinals
-into <uapi/asm/hwcap.h>:
-
-#define __HWCAP_NR_FP		0
-#define __HWCAP_NR_ASIMD	1
-#define __HWCAP_NR_EVTSTRM	2
-
-...
-
-#define HWCAP_FP	(1UL << __HWCAP_NR_FP)
-#define HWCAP_ASIMD 	(1UL << __HWCAP_NR_ASIMD)
-#define HWCAP_EVTSTRM	(1UL << __HWCAP_NR_EVTSTRM)
-
-...
-
-#define __HWCAP2_NR_DCPODP	0
-
-#define HWCAP2_DCPODP	(1UL << __HWCAP2_NR_DCPODP)
-
-...
-
-then use the __HWCAP{,2}_NR_ constants directly place of the
-KERNEL_HWCAP_ #defines, or define the KERNEL_HWCAP defined in terms of
-them.
-
-This is a noisy approach though, and I'm not totally convinced it's
-better.
-
-What do you think?
-
-Cheers
----Dave
+> Cheers,
+> Moritz
