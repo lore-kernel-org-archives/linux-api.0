@@ -1,144 +1,96 @@
-From: Masahiro Yamada <yamada.masahiro@socionext.com>
-Subject: Re: [RESEND PATCH v1] moduleparam: Save information about built-in
- modules in separate file
-Date: Wed, 3 Apr 2019 20:30:55 +0900
-Message-ID: <CAK7LNARAMXmoWw=ZUSRSYoH=gCsHhXiN9m_yPoH+mMMhW93bxw@mail.gmail.com>
-References: <20190315101013.GN8455@Legion-PC.fortress> <CAK7LNATsm23e_CuyfFw7_CR8xZQ3HnwNHCXhEm_zQZU2PUGK5A@mail.gmail.com>
- <20190326172411.GA15936@Legion-PC.fortress> <20190327154025.GB23293@linux-8ccs>
- <20190327160440.GE15936@Legion-PC.fortress>
+From: Dave Martin <Dave.Martin@arm.com>
+Subject: Re: [PATCH v4 1/6] arm64: HWCAP: add support for AT_HWCAP2
+Date: Wed, 3 Apr 2019 14:21:12 +0100
+Message-ID: <20190403132112.GP3567@e103592.cambridge.arm.com>
+References: <20190403105628.39798-1-andrew.murray@arm.com>
+ <20190403105628.39798-2-andrew.murray@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190327160440.GE15936@Legion-PC.fortress>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alexey Gladkov <gladkov.alexey@gmail.com>
-Cc: Jessica Yu <jeyu@kernel.org>, Michal Marek <michal.lkml@markovi.net>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux Kbuild mailing list <linux-kbuild@vger.kernel.org>, linux-api@vger.kernel.org, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>, "Dmitry V. Levin" <ldv@altlinux.org>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Rusty Russell <rusty@rustcorp.com.au>, Lucas De Marchi <lucas.de.marchi@gmail.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+Content-Disposition: inline
+In-Reply-To: <20190403105628.39798-2-andrew.murray@arm.com>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: Andrew Murray <andrew.murray@arm.com>
+Cc: Mark Rutland <mark.rutland@arm.com>, libc-alpha@sourceware.org, Suzuki K Poulose <suzuki.poulose@arm.com>, Szabolcs Nagy <Szabolcs.Nagy@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Phil Blundell <pb@pbcl.net>, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Mar 28, 2019 at 1:04 AM Alexey Gladkov <gladkov.alexey@gmail.com> w=
-rote:
->
-> On Wed, Mar 27, 2019 at 04:40:25PM +0100, Jessica Yu wrote:
-> > +++ Alexey Gladkov [26/03/19 18:24 +0100]:
-> > >On Fri, Mar 22, 2019 at 02:34:12PM +0900, Masahiro Yamada wrote:
-> > >> Hi.
-> > >>
-> > >> (added some people to CC)
-> >
-> > (Thanks Masahiro for the CC!)
-> >
-> > >>
-> > >> On Fri, Mar 15, 2019 at 7:10 PM Alexey Gladkov <gladkov.alexey@gmail=
-.com> wrote:
-> > >> >
-> > >> > Problem:
-> > >> >
-> > >> > When a kernel module is compiled as a separate module, some import=
-ant
-> > >> > information about the kernel module is available via .modinfo sect=
-ion of
-> > >> > the module.  In contrast, when the kernel module is compiled into =
-the
-> > >> > kernel, that information is not available.
-> > >>
-> > >>
-> > >> I might be missing something, but
-> > >> vmlinux provides info of builtin modules
-> > >> in /sys/module/.
-> > >
-> > >No. There are definitely not all modules. I have a builtin sha256_gene=
-ric,
-> > >but I can't find him in the /sys/module.
-> >
-> > Yeah, you'll only find builtin modules under /sys/module/ if it has any=
- module
-> > parameters, otherwise you won't find it there. As Masahiro already ment=
-ioned,
-> > if a builtin module has any parameters, they would be accessible under =
-/sys/module/.
-> >
-> > >> (Looks like currently only module_param and MODULE_VERSION)
-> > >>
-> > >> This patch is not exactly the same, but I see a kind of overwrap.
-> > >> I'd like to be sure if we want this new scheme.
-> > >
-> > >The /sys/module is only for running kernel. One of my use cases is
-> > >to create an initrd for a new kernel.
-> > >
-> > >>
-> > >> > Information about built-in modules is necessary in the following c=
-ases:
-> > >> >
-> > >> > 1. When it is necessary to find out what additional parameters can=
- be
-> > >> > passed to the kernel at boot time.
-> > >>
-> > >>
-> > >> Actually, /sys/module/<module>/parameters/
-> > >> exposes this information.
-> > >>
-> > >> Doesn't it work for your purpose?
-> > >
-> > >No, since creating an initrd needs to know all the modalias before
-> > >I get the sysfs for new kernel. Also there are no modalias at all.
-> > >
-> > >> > 2. When you need to know which module names and their aliases are =
-in
-> > >> > the kernel. This is very useful for creating an initrd image.
-> > >> >
-> >
-> > Hm, I do see one possible additional use-case for preserving module ali=
-as
-> > information for built-in modules - modprobe will currently error (I thi=
-nk,
-> > correct me if I'm wrong) if we try invoking modprobe with an alias of a
-> > built-in module, simply because this information is not in modules.buil=
-tin or
-> > modules.alias.
->
-> Yes. Patch for modprobe in my todo list. The reason I didn=E2=80=99t do i=
-t was
-> because I wasn=E2=80=99t sure that the file format was final.
->
-> > Since kbuild already outputs modules.builtin, I would suggest outputtin=
-g
-> > something like a modules.builtin.alias file (and I guess maybe a module=
-s.builtin.param
-> > file too if that's deemed useful), in a format that is consumable by km=
-od/modprobe,
-> > so that modprobing an alias of a built-in module doesn't produce an err=
-or. I
-> > think this should be easy to do if we keep and parse the resulting .mod=
-info for
-> > builtin modules. This is just an idea, opinions welcome. I've added Luc=
-as to CC
-> > in case he has any thoughts.
->
-> You don't like kernel.builtin.modinfo ?
+On Wed, Apr 03, 2019 at 11:56:23AM +0100, Andrew Murray wrote:
+> As we will exhaust the first 32 bits of AT_HWCAP let's start
+> exposing AT_HWCAP2 to userspace to give us up to 64 caps.
+> 
+> Whilst it's possible to use the remaining 32 bits of AT_HWCAP, we
+> prefer to expand into AT_HWCAP2 in order to provide a consistent
+> view to userspace between ILP32 and LP64. However internal to the
+> kernel we prefer to continue to use the full space of elf_hwcap.
+> 
+> To reduce complexity and allow for future expansion, we now
+> represent hwcaps in the kernel as ordinals and use a
+> KERNEL_HWCAP_ prefix. This allows us to support automatic feature
+> based module loading for all our hwcaps.
+> 
+> We introduce cpu_set_feature to set hwcaps which complements the
+> existing cpu_have_feature helper. These helpers allow us to clean
+> up existing direct uses of elf_hwcap and reduce any future effort
+> required to move beyond 64 caps.
+> 
+> For convenience we also introduce cpu_{have,set}_named_feature which
+> makes use of the cpu_feature macro to allow providing a hwcap name
+> without a {KERNEL_}HWCAP_ prefix.
+> 
+> Signed-off-by: Andrew Murray <andrew.murray@arm.com>
 
+[...]
 
-Naming is often the most difficult thing. :)
+> diff --git a/arch/arm64/include/asm/hwcap.h b/arch/arm64/include/asm/hwcap.h
+> index 400b80b49595..1f38a2740f7a 100644
+> --- a/arch/arm64/include/asm/hwcap.h
+> +++ b/arch/arm64/include/asm/hwcap.h
+> @@ -39,12 +39,61 @@
+>  #define COMPAT_HWCAP2_SHA2	(1 << 3)
+>  #define COMPAT_HWCAP2_CRC32	(1 << 4)
+>  
+> +/*
+> + * For userspace we represent hwcaps as a collection of HWCAP{,2}_x bitfields
+> + * as described in uapi/asm/hwcap.h. For the kernel we represent hwcaps as
+> + * natural numbers (in a single range of size MAX_CPU_FEATURES) defined here
+> + * with prefix KERNEL_HWCAP_ mapped to their HWCAP{,2}_x counterpart.
+> + *
+> + * Hwcaps should be set and tested within the kernel via the
+> + * cpu_{set,have}_named_feature(feature) where feature is the unique suffix
+> + * of KERNEL_HWCAP_{feature}.
+> + */
+> +#define __khwcap_feature(x)		ilog2(HWCAP_ ## x)
 
-IMHO, 'kernel' and 'builtin' have a similar meaning here.
-Is 'kernel.builtin' unnecessarily too long?
+Hmm, I didn't spot this before, but we should probably include
+<linux/log2.h>.  This isn't asm-friendly however.
 
+<asm/hwcap.h> gets included (unnecessarily?) by arch/arm64/mm/proc.S and
+arch/arm64/include/uapi/asm/ptrace.h.
 
-Perhaps, another idea is:
+Rather than risk breaking a UAPI header, can we remove the ilog2() here
+and add it back into cpu_feature() where it was originally?
 
-'builtin.alias' instead of 'modules.builtin.alias'
-if we want a separate file in the same format.
+There may be a reason why this didn't work that I've forgotten...
 
+cpufeatures is the only place where we use the KERNEL_HWCAP_foo flags
+directly.
 
-In hindsight, 'modules.builtin' should have been
-'builtin.order', I think.
+> +#define KERNEL_HWCAP_FP			__khwcap_feature(FP)
+> +#define KERNEL_HWCAP_ASIMD		__khwcap_feature(ASIMD)
+> +#define KERNEL_HWCAP_EVTSTRM		__khwcap_feature(EVTSTRM)
 
+[...]
 
+Otherwise, looks OK to me.
 
-
-> It is much easier to create and it has almost the same format as the
-> modules. So I think it will be easier to parse in kmod.
-
---=20
-Best Regards
-Masahiro Yamada
+Cheers
+---Dave
