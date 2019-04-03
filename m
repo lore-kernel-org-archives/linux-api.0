@@ -1,100 +1,69 @@
 From: Andrew Murray <andrew.murray@arm.com>
-Subject: Re: [PATCH v3 6/7] arm64: Advertise ARM64_HAS_DCPODP cpu feature
-Date: Wed, 3 Apr 2019 10:23:42 +0100
-Message-ID: <20190403092342.GI53702@e119886-lin.cambridge.arm.com>
+Subject: Re: [PATCH v3 2/7] arm64: HWCAP: add support for AT_HWCAP2
+Date: Wed, 3 Apr 2019 10:29:52 +0100
+Message-ID: <20190403092951.GJ53702@e119886-lin.cambridge.arm.com>
 References: <20190401104515.39775-1-andrew.murray@arm.com>
- <20190401104515.39775-7-andrew.murray@arm.com>
- <20190402145958.GJ3567@e103592.cambridge.arm.com>
+ <20190401104515.39775-3-andrew.murray@arm.com>
+ <20190402145831.GI3567@e103592.cambridge.arm.com>
+ <20190403083255.GG53702@e119886-lin.cambridge.arm.com>
+ <20190403091118.GL3567@e103592.cambridge.arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <libc-alpha-return-101146-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
 Content-Disposition: inline
-In-Reply-To: <20190402145958.GJ3567@e103592.cambridge.arm.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+In-Reply-To: <20190403091118.GL3567@e103592.cambridge.arm.com>
 To: Dave Martin <Dave.Martin@arm.com>
-Cc: Mark Rutland <mark.rutland@arm.com>, libc-alpha@sourceware.org, Szabolcs Nagy <Szabolcs.Nagy@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Phil Blundell <pb@pbcl.net>, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org
+Cc: Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Szabolcs Nagy <Szabolcs.Nagy@arm.com>, linux-arm-kernel@lists.infradead.org, Mark Rutland <mark.rutland@arm.com>, Phil Blundell <pb@pbcl.net>, libc-alpha@sourceware.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 02, 2019 at 03:59:58PM +0100, Dave Martin wrote:
-> On Mon, Apr 01, 2019 at 11:45:14AM +0100, Andrew Murray wrote:
-> > Advertise ARM64_HAS_DCPOP when both DC CVAP and DC CVADP are supported.
+On Wed, Apr 03, 2019 at 10:11:20AM +0100, Dave Martin wrote:
+> On Wed, Apr 03, 2019 at 09:32:55AM +0100, Andrew Murray wrote:
+> > On Tue, Apr 02, 2019 at 03:58:31PM +0100, Dave Martin wrote:
+> > > On Mon, Apr 01, 2019 at 11:45:10AM +0100, Andrew Murray wrote:
 > 
-> Do you mean ARM64_HAS_DCPODP?
+> [...]
+> 
+> > > > diff --git a/drivers/clocksource/arm_arch_timer.c b/drivers/clocksource/arm_arch_timer.c
+> > > > index aa4ec53281ce..6cc8aff83805 100644
+> > > > --- a/drivers/clocksource/arm_arch_timer.c
+> > > > +++ b/drivers/clocksource/arm_arch_timer.c
+> > > > @@ -833,7 +833,11 @@ static void arch_timer_evtstrm_enable(int divider)
+> > > >  	cntkctl |= (divider << ARCH_TIMER_EVT_TRIGGER_SHIFT)
+> > > >  			| ARCH_TIMER_VIRT_EVT_EN;
+> > > >  	arch_timer_set_cntkctl(cntkctl);
+> > > > +#ifdef CONFIG_ARM64
+> > > > +	cpu_set_named_feature(EVTSTRM);
+> > > > +#else
+> > > >  	elf_hwcap |= HWCAP_EVTSTRM;
+> > > > +#endif
+> > > 
+> > > I wonder whether we can have a generic definition for this:
+> > > 
+> > > #define cpu_set_named_feature(x) (elf_hwcap |= HWCAP_ ## x)
+> > 
+> > You mean specific to arm32?
+> > 
+> > I will do this, along with a cpu_get_named_feature - but I think I'd prefer
+> > to do this in a separate series.
+> 
+> Yes, we could do that.  We could also do it more widely, but it's
+> probably not worth the overhead of doing it.
 
-Yes I did - good catch.
-
-> 
-> And do we need this?  This capability flag doesn't currently appear to
-> be used for anything (which makes me wonder whether it _should_ be wired
-> up to something in the kernel).
-> 
-> Do we expect the kernel to do something special with this in the future?
-> 
-> OTOH, we get a nice printk when the feature is detected, and the code
-> size cost is insignificant.  So, if there's a reasonable expectation that
-> we will use it someday, I don't see a big problem with having it.
-
-Yes it's not currently used, so I'm happy to drop this patch if people prefer
-that - however it does complement the existing DCPOP cap which is present.
+I had considered this as well but also determined that it wouldn't give
+much gain.
 
 Thanks,
 
 Andrew Murray
 
 > 
+> [...]
+> 
 > Cheers
 > ---Dave
-> 
-> > 
-> > Signed-off-by: Andrew Murray <andrew.murray@arm.com>
-> > ---
-> >  arch/arm64/include/asm/cpucaps.h | 3 ++-
-> >  arch/arm64/kernel/cpufeature.c   | 9 +++++++++
-> >  2 files changed, 11 insertions(+), 1 deletion(-)
-> > 
-> > diff --git a/arch/arm64/include/asm/cpucaps.h b/arch/arm64/include/asm/cpucaps.h
-> > index f6a76e43f39e..defdc67d9ab4 100644
-> > --- a/arch/arm64/include/asm/cpucaps.h
-> > +++ b/arch/arm64/include/asm/cpucaps.h
-> > @@ -61,7 +61,8 @@
-> >  #define ARM64_HAS_GENERIC_AUTH_ARCH		40
-> >  #define ARM64_HAS_GENERIC_AUTH_IMP_DEF		41
-> >  #define ARM64_HAS_IRQ_PRIO_MASKING		42
-> > +#define ARM64_HAS_DCPODP			43
-> >  
-> > -#define ARM64_NCAPS				43
-> > +#define ARM64_NCAPS				44
-> >  
-> >  #endif /* __ASM_CPUCAPS_H */
-> > diff --git a/arch/arm64/kernel/cpufeature.c b/arch/arm64/kernel/cpufeature.c
-> > index 5e27d2dbe45e..c74b25895c43 100644
-> > --- a/arch/arm64/kernel/cpufeature.c
-> > +++ b/arch/arm64/kernel/cpufeature.c
-> > @@ -1339,6 +1339,15 @@ static const struct arm64_cpu_capabilities arm64_features[] = {
-> >  		.field_pos = ID_AA64ISAR1_DPB_SHIFT,
-> >  		.min_field_value = 1,
-> >  	},
-> > +	{
-> > +		.desc = "Data cache clean to Point of Deep Persistence",
-> > +		.capability = ARM64_HAS_DCPODP,
-> > +		.type = ARM64_CPUCAP_SYSTEM_FEATURE,
-> > +		.matches = has_cpuid_feature,
-> > +		.sys_reg = SYS_ID_AA64ISAR1_EL1,
-> > +		.field_pos = ID_AA64ISAR1_DPB_SHIFT,
-> > +		.min_field_value = 2,
-> > +	},
-> >  #endif
-> >  #ifdef CONFIG_ARM64_SVE
-> >  	{
-> > -- 
-> > 2.21.0
-> > 
