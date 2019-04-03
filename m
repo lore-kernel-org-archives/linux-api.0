@@ -1,12 +1,12 @@
 From: Dave Martin <Dave.Martin@arm.com>
-Subject: Re: [PATCH v4 2/6] arm64: HWCAP: encapsulate elf_hwcap
-Date: Wed, 3 Apr 2019 14:21:21 +0100
-Message-ID: <20190403132121.GQ3567@e103592.cambridge.arm.com>
+Subject: Re: [PATCH v4 3/6] arm64: Handle trapped DC CVADP
+Date: Wed, 3 Apr 2019 14:21:31 +0100
+Message-ID: <20190403132131.GR3567@e103592.cambridge.arm.com>
 References: <20190403105628.39798-1-andrew.murray@arm.com>
- <20190403105628.39798-3-andrew.murray@arm.com>
+ <20190403105628.39798-4-andrew.murray@arm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <libc-alpha-return-101158-glibc-alpha=m.gmane.org@sourceware.org>
+Return-path: <libc-alpha-return-101159-glibc-alpha=m.gmane.org@sourceware.org>
 List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
 List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
 List-Archive: <http://sourceware.org/ml/libc-alpha/>
@@ -14,143 +14,58 @@ List-Post: <mailto:libc-alpha@sourceware.org>
 List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
 Sender: libc-alpha-owner@sourceware.org
 Content-Disposition: inline
-In-Reply-To: <20190403105628.39798-3-andrew.murray@arm.com>
+In-Reply-To: <20190403105628.39798-4-andrew.murray@arm.com>
 To: Andrew Murray <andrew.murray@arm.com>
 Cc: Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Szabolcs Nagy <Szabolcs.Nagy@arm.com>, linux-arm-kernel@lists.infradead.org, Mark Rutland <mark.rutland@arm.com>, Phil Blundell <pb@pbcl.net>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, Suzuki K Poulose <suzuki.poulose@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 03, 2019 at 11:56:24AM +0100, Andrew Murray wrote:
-> The introduction of AT_HWCAP2 introduced accessors which ensure that
-> hwcap features are set and tested appropriately.
+On Wed, Apr 03, 2019 at 11:56:25AM +0100, Andrew Murray wrote:
+> The ARMv8.5 DC CVADP instruction may be trapped to EL1 via
+> SCTLR_EL1.UCI therefore let's provide a handler for it.
 > 
-> Let's now mandate access to elf_hwcap via these accessors by making
-> elf_hwcap static within cpufeature.c.
+> Just like the CVAP instruction we use a 'sys' instruction instead of
+> the 'dc' alias to avoid build issues with older toolchains.
 > 
 > Signed-off-by: Andrew Murray <andrew.murray@arm.com>
+> Reviewed-by: Mark Rutland <mark.rutland@arm.com>
 
 Reviewed-by: Dave Martin <Dave.Martin@arm.com>
 
 > ---
->  arch/arm64/include/asm/cpufeature.h | 15 ++++---------
->  arch/arm64/include/asm/hwcap.h      |  7 +++---
->  arch/arm64/kernel/cpufeature.c      | 33 +++++++++++++++++++++++++++--
->  3 files changed, 38 insertions(+), 17 deletions(-)
+>  arch/arm64/include/asm/esr.h | 3 ++-
+>  arch/arm64/kernel/traps.c    | 3 +++
+>  2 files changed, 5 insertions(+), 1 deletion(-)
 > 
-> diff --git a/arch/arm64/include/asm/cpufeature.h b/arch/arm64/include/asm/cpufeature.h
-> index 347c17046668..a3f028f82def 100644
-> --- a/arch/arm64/include/asm/cpufeature.h
-> +++ b/arch/arm64/include/asm/cpufeature.h
-> @@ -392,19 +392,12 @@ extern DECLARE_BITMAP(boot_capabilities, ARM64_NPATCHABLE);
->  	for_each_set_bit(cap, cpu_hwcaps, ARM64_NCAPS)
->  
->  bool this_cpu_has_cap(unsigned int cap);
-> +void cpu_set_feature(unsigned int num);
-> +bool cpu_have_feature(unsigned int num);
-> +unsigned long cpu_get_elf_hwcap(void);
-> +unsigned long cpu_get_elf_hwcap2(void);
->  
-> -static inline void cpu_set_feature(unsigned int num)
-> -{
-> -	WARN_ON(num >= MAX_CPU_FEATURES);
-> -	elf_hwcap |= BIT(num);
-> -}
->  #define cpu_set_named_feature(name) cpu_set_feature(cpu_feature(name))
-> -
-> -static inline bool cpu_have_feature(unsigned int num)
-> -{
-> -	WARN_ON(num >= MAX_CPU_FEATURES);
-> -	return elf_hwcap & BIT(num);
-> -}
->  #define cpu_have_named_feature(name) cpu_have_feature(cpu_feature(name))
->  
->  /* System capability check for constant caps */
-> diff --git a/arch/arm64/include/asm/hwcap.h b/arch/arm64/include/asm/hwcap.h
-> index 1f38a2740f7a..509ee0d2fa0f 100644
-> --- a/arch/arm64/include/asm/hwcap.h
-> +++ b/arch/arm64/include/asm/hwcap.h
-> @@ -17,6 +17,7 @@
->  #define __ASM_HWCAP_H
->  
->  #include <uapi/asm/hwcap.h>
-> +#include <asm/cpufeature.h>
->  
->  #define COMPAT_HWCAP_HALF	(1 << 1)
->  #define COMPAT_HWCAP_THUMB	(1 << 2)
-> @@ -86,14 +87,13 @@
->  #define __khwcap2_feature(x)		(ilog2(HWCAP2_ ## x) + 32)
->  
->  #ifndef __ASSEMBLY__
-> -#include <linux/kernel.h>
->  
+> diff --git a/arch/arm64/include/asm/esr.h b/arch/arm64/include/asm/esr.h
+> index 52233f00d53d..07d5c026a0b3 100644
+> --- a/arch/arm64/include/asm/esr.h
+> +++ b/arch/arm64/include/asm/esr.h
+> @@ -198,9 +198,10 @@
 >  /*
->   * This yields a mask that user programs can use to figure out what
->   * instruction set this cpu supports.
+>   * User space cache operations have the following sysreg encoding
+>   * in System instructions.
+> - * op0=1, op1=3, op2=1, crn=7, crm={ 5, 10, 11, 12, 14 }, WRITE (L=0)
+> + * op0=1, op1=3, op2=1, crn=7, crm={ 5, 10, 11, 12, 13, 14 }, WRITE (L=0)
 >   */
-> -#define ELF_HWCAP		lower_32_bits(elf_hwcap)
-> -#define ELF_HWCAP2		upper_32_bits(elf_hwcap)
-> +#define ELF_HWCAP		cpu_get_elf_hwcap()
-> +#define ELF_HWCAP2		cpu_get_elf_hwcap2()
->  
->  #ifdef CONFIG_COMPAT
->  #define COMPAT_ELF_HWCAP	(compat_elf_hwcap)
-> @@ -109,6 +109,5 @@ enum {
->  #endif
->  };
->  
-> -extern unsigned long elf_hwcap;
->  #endif
->  #endif
-> diff --git a/arch/arm64/kernel/cpufeature.c b/arch/arm64/kernel/cpufeature.c
-> index 986ceeacd19f..a655d1bb1186 100644
-> --- a/arch/arm64/kernel/cpufeature.c
-> +++ b/arch/arm64/kernel/cpufeature.c
-> @@ -35,8 +35,8 @@
->  #include <asm/traps.h>
->  #include <asm/virt.h>
->  
-> -unsigned long elf_hwcap __read_mostly;
-> -EXPORT_SYMBOL_GPL(elf_hwcap);
-> +/* Kernel representation of AT_HWCAP and AT_HWCAP2 */
-> +static unsigned long elf_hwcap __read_mostly;
->  
->  #ifdef CONFIG_COMPAT
->  #define COMPAT_ELF_HWCAP_DEFAULT	\
-> @@ -1947,6 +1947,35 @@ bool this_cpu_has_cap(unsigned int n)
->  	return false;
->  }
->  
-> +void cpu_set_feature(unsigned int num)
-> +{
-> +	WARN_ON(num >= MAX_CPU_FEATURES);
-> +	elf_hwcap |= BIT(num);
-> +}
-> +EXPORT_SYMBOL_GPL(cpu_set_feature);
-> +
-> +bool cpu_have_feature(unsigned int num)
-> +{
-> +	WARN_ON(num >= MAX_CPU_FEATURES);
-> +	return elf_hwcap & BIT(num);
-> +}
-> +EXPORT_SYMBOL_GPL(cpu_have_feature);
-> +
-> +unsigned long cpu_get_elf_hwcap(void)
-> +{
-> +	/*
-> +	 * We currently only populate the first 32 bits of AT_HWCAP. Please
-> +	 * note that for userspace compatibility we guarantee that bits 62
-> +	 * and 63 will always be returned as 0.
-> +	 */
-> +	return lower_32_bits(elf_hwcap);
-> +}
-> +
-> +unsigned long cpu_get_elf_hwcap2(void)
-> +{
-> +	return upper_32_bits(elf_hwcap);
-> +}
-> +
->  static void __init setup_system_capabilities(void)
->  {
->  	/*
+>  #define ESR_ELx_SYS64_ISS_CRM_DC_CIVAC	14
+> +#define ESR_ELx_SYS64_ISS_CRM_DC_CVADP	13
+>  #define ESR_ELx_SYS64_ISS_CRM_DC_CVAP	12
+>  #define ESR_ELx_SYS64_ISS_CRM_DC_CVAU	11
+>  #define ESR_ELx_SYS64_ISS_CRM_DC_CVAC	10
+> diff --git a/arch/arm64/kernel/traps.c b/arch/arm64/kernel/traps.c
+> index 8ad119c3f665..f66e1ddbe4a7 100644
+> --- a/arch/arm64/kernel/traps.c
+> +++ b/arch/arm64/kernel/traps.c
+> @@ -459,6 +459,9 @@ static void user_cache_maint_handler(unsigned int esr, struct pt_regs *regs)
+>  	case ESR_ELx_SYS64_ISS_CRM_DC_CVAC:	/* DC CVAC, gets promoted */
+>  		__user_cache_maint("dc civac", address, ret);
+>  		break;
+> +	case ESR_ELx_SYS64_ISS_CRM_DC_CVADP:	/* DC CVADP */
+> +		__user_cache_maint("sys 3, c7, c13, 1", address, ret);
+> +		break;
+>  	case ESR_ELx_SYS64_ISS_CRM_DC_CVAP:	/* DC CVAP */
+>  		__user_cache_maint("sys 3, c7, c12, 1", address, ret);
+>  		break;
 > -- 
 > 2.21.0
 > 
