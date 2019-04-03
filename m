@@ -1,52 +1,64 @@
-From: Dave Martin <Dave.Martin@arm.com>
-Subject: Re: [PATCH v3 2/7] arm64: HWCAP: add support for AT_HWCAP2
-Date: Wed, 3 Apr 2019 10:35:35 +0100
-Message-ID: <20190403093535.GO3567@e103592.cambridge.arm.com>
+From: Andrew Murray <andrew.murray@arm.com>
+Subject: Re: [PATCH v3 6/7] arm64: Advertise ARM64_HAS_DCPODP cpu feature
+Date: Wed, 3 Apr 2019 10:57:12 +0100
+Message-ID: <20190403095711.GK53702@e119886-lin.cambridge.arm.com>
 References: <20190401104515.39775-1-andrew.murray@arm.com>
- <20190401104515.39775-3-andrew.murray@arm.com>
- <20190402145831.GI3567@e103592.cambridge.arm.com>
- <20190403083255.GG53702@e119886-lin.cambridge.arm.com>
- <20190403091118.GL3567@e103592.cambridge.arm.com>
- <20190403092951.GJ53702@e119886-lin.cambridge.arm.com>
+ <20190401104515.39775-7-andrew.murray@arm.com>
+ <20190402145958.GJ3567@e103592.cambridge.arm.com>
+ <20190403092342.GI53702@e119886-lin.cambridge.arm.com>
+ <20190403093242.GN3567@e103592.cambridge.arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <libc-alpha-return-101148-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
 Content-Disposition: inline
-In-Reply-To: <20190403092951.GJ53702@e119886-lin.cambridge.arm.com>
-To: Andrew Murray <andrew.murray@arm.com>
-Cc: Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Szabolcs Nagy <Szabolcs.Nagy@arm.com>, linux-arm-kernel@lists.infradead.org, Mark Rutland <mark.rutland@arm.com>, Phil Blundell <pb@pbcl.net>, libc-alpha@sourceware.org, linux-api@vger.kernel.org
+In-Reply-To: <20190403093242.GN3567@e103592.cambridge.arm.com>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: Dave Martin <Dave.Martin@arm.com>
+Cc: Mark Rutland <mark.rutland@arm.com>, libc-alpha@sourceware.org, Szabolcs Nagy <Szabolcs.Nagy@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>, Phil Blundell <pb@pbcl.net>, linux-api@vger.kernel.org, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 03, 2019 at 10:29:52AM +0100, Andrew Murray wrote:
-> On Wed, Apr 03, 2019 at 10:11:20AM +0100, Dave Martin wrote:
-> > On Wed, Apr 03, 2019 at 09:32:55AM +0100, Andrew Murray wrote:
-> > > On Tue, Apr 02, 2019 at 03:58:31PM +0100, Dave Martin wrote:
-
-[...]
-
-> > > > I wonder whether we can have a generic definition for this:
-> > > > 
-> > > > #define cpu_set_named_feature(x) (elf_hwcap |= HWCAP_ ## x)
+On Wed, Apr 03, 2019 at 10:32:43AM +0100, Dave Martin wrote:
+> On Wed, Apr 03, 2019 at 10:23:42AM +0100, Andrew Murray wrote:
+> > On Tue, Apr 02, 2019 at 03:59:58PM +0100, Dave Martin wrote:
+> > > On Mon, Apr 01, 2019 at 11:45:14AM +0100, Andrew Murray wrote:
+> > > > Advertise ARM64_HAS_DCPOP when both DC CVAP and DC CVADP are supported.
 > > > 
-> > > You mean specific to arm32?
-> > > 
-> > > I will do this, along with a cpu_get_named_feature - but I think
-> > > I'd prefer to do this in a separate series.
+> > > Do you mean ARM64_HAS_DCPODP?
 > > 
-> > Yes, we could do that.  We could also do it more widely, but it's
-> > probably not worth the overhead of doing it.
+> > Yes I did - good catch.
+> > 
+> > > 
+> > > And do we need this?  This capability flag doesn't currently appear to
+> > > be used for anything (which makes me wonder whether it _should_ be wired
+> > > up to something in the kernel).
+> > > 
+> > > Do we expect the kernel to do something special with this in the future?
+> > > 
+> > > OTOH, we get a nice printk when the feature is detected, and the code
+> > > size cost is insignificant.  So, if there's a reasonable expectation that
+> > > we will use it someday, I don't see a big problem with having it.
+> > 
+> > Yes it's not currently used, so I'm happy to drop this patch if people prefer
+> > that - however it does complement the existing DCPOP cap which is present.
 > 
-> I had considered this as well but also determined that it wouldn't give
-> much gain.
+> OK, sounds fine.
+> 
+> Maybe add a note in the commit message that this is here for consistency
+> with DCPOP, and we anticipate it being used in the future.
 
-Yep, agreed.  It can always be done later if it turns out to be useful
-for someone.
+OK thanks,
 
-Cheers
----Dave
+Andrew Murray
+
+> 
+> Cheers
+> ---Dave
