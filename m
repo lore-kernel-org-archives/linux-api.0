@@ -1,7 +1,8 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V32 02/27] Enforce module signatures if the kernel is locked down
-Date: Wed,  3 Apr 2019 17:32:24 -0700
-Message-ID: <20190404003249.14356-3-matthewgarrett@google.com>
+Subject: [PATCH V32 04/27] kexec_load: Disable at runtime if the kernel is
+ locked down
+Date: Wed,  3 Apr 2019 17:32:26 -0700
+Message-ID: <20190404003249.14356-5-matthewgarrett@google.com>
 References: <20190404003249.14356-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -9,104 +10,44 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190404003249.14356-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-api@vger.kernel.org, luto@kernel.org, Matthew Garrett <matthewgarrett@google.com>, Jessica Yu <jeyu@kernel.org>
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-api@vger.kernel.org, luto@kernel.org, Matthew Garrett <mjg59@srcf.ucam.org>, Matthew Garrett <mjg59@google.com>, Dave Young <dyoung@redhat.com>, kexec@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-From: David Howells <dhowells@redhat.com>
+From: Matthew Garrett <mjg59@srcf.ucam.org>
 
-If the kernel is locked down, require that all modules have valid
-signatures that we can verify.
+The kexec_load() syscall permits the loading and execution of arbitrary
+code in ring 0, which is something that lock-down is meant to prevent. It
+makes sense to disable kexec_load() in this situation.
 
-I have adjusted the errors generated:
-
- (1) If there's no signature (ENODATA) or we can't check it (ENOPKG,
-     ENOKEY), then:
-
-     (a) If signatures are enforced then EKEYREJECTED is returned.
-
-     (b) If there's no signature or we can't check it, but the kernel is
-	 locked down then EPERM is returned (this is then consistent with
-	 other lockdown cases).
-
- (2) If the signature is unparseable (EBADMSG, EINVAL), the signature fails
-     the check (EKEYREJECTED) or a system error occurs (eg. ENOMEM), we
-     return the error we got.
-
-Note that the X.509 code doesn't check for key expiry as the RTC might not
-be valid or might not have been transferred to the kernel's clock yet.
-
- [Modified by Matthew Garrett to remove the IMA integration. This will
-  be replaced with integration with the IMA architecture policy
-  patchset.]
+This does not affect kexec_file_load() syscall which can check for a
+signature on the image to be booted.
 
 Signed-off-by: David Howells <dhowells@redhat.com>
-Signed-off-by: Matthew Garrett <matthewgarrett@google.com>
-Cc: Jessica Yu <jeyu@kernel.org>
+Signed-off-by: Matthew Garrett <mjg59@google.com>
+Acked-by: Dave Young <dyoung@redhat.com>
+cc: kexec@lists.infradead.org
 ---
- kernel/module.c | 39 ++++++++++++++++++++++++++++++++-------
- 1 file changed, 32 insertions(+), 7 deletions(-)
+ kernel/kexec.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-diff --git a/kernel/module.c b/kernel/module.c
-index 2ad1b5239910..deea9d2763f8 100644
---- a/kernel/module.c
-+++ b/kernel/module.c
-@@ -2767,8 +2767,9 @@ static inline void kmemleak_load_module(const struct module *mod,
- #ifdef CONFIG_MODULE_SIG
- static int module_sig_check(struct load_info *info, int flags)
- {
--	int err = -ENOKEY;
-+	int err = -ENODATA;
- 	const unsigned long markerlen = sizeof(MODULE_SIG_STRING) - 1;
-+	const char *reason;
- 	const void *mod = info->hdr;
+diff --git a/kernel/kexec.c b/kernel/kexec.c
+index 68559808fdfa..57047acc9a36 100644
+--- a/kernel/kexec.c
++++ b/kernel/kexec.c
+@@ -207,6 +207,14 @@ static inline int kexec_load_check(unsigned long nr_segments,
+ 	if (result < 0)
+ 		return result;
  
- 	/*
-@@ -2783,16 +2784,40 @@ static int module_sig_check(struct load_info *info, int flags)
- 		err = mod_verify_sig(mod, info);
- 	}
- 
--	if (!err) {
-+	switch (err) {
-+	case 0:
- 		info->sig_ok = true;
- 		return 0;
--	}
- 
--	/* Not having a signature is only an error if we're strict. */
--	if (err == -ENOKEY && !is_module_sig_enforced())
--		err = 0;
-+		/* We don't permit modules to be loaded into trusted kernels
-+		 * without a valid signature on them, but if we're not
-+		 * enforcing, certain errors are non-fatal.
-+		 */
-+	case -ENODATA:
-+		reason = "Loading of unsigned module";
-+		goto decide;
-+	case -ENOPKG:
-+		reason = "Loading of module with unsupported crypto";
-+		goto decide;
-+	case -ENOKEY:
-+		reason = "Loading of module with unavailable key";
-+	decide:
-+		if (is_module_sig_enforced()) {
-+			pr_notice("%s is rejected\n", reason);
-+			return -EKEYREJECTED;
-+		}
- 
--	return err;
-+		if (kernel_is_locked_down(reason, LOCKDOWN_INTEGRITY))
-+			return -EPERM;
-+		return 0;
++	/*
++	 * kexec can be used to circumvent module loading restrictions, so
++	 * prevent loading in that case
++	 */
++	if (kernel_is_locked_down("kexec of unsigned images",
++				  LOCKDOWN_INTEGRITY))
++		return -EPERM;
 +
-+		/* All other errors are fatal, including nomem, unparseable
-+		 * signatures and signature check failures - even if signatures
-+		 * aren't required.
-+		 */
-+	default:
-+		return err;
-+	}
- }
- #else /* !CONFIG_MODULE_SIG */
- static int module_sig_check(struct load_info *info, int flags)
+ 	/*
+ 	 * Verify we have a legal set of flags
+ 	 * This leaves us room for future extensions.
 -- 
 2.21.0.392.gf8f6787159e-goog
