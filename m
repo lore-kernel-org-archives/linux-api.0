@@ -1,59 +1,58 @@
-From: Matthew Garrett <matthewgarrett-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: [PATCH V32 05/27] Copy secure_boot flag in boot params across kexec
- reboot
-Date: Wed,  3 Apr 2019 17:32:27 -0700
-Message-ID: <20190404003249.14356-6-matthewgarrett@google.com>
+From: Matthew Garrett <matthewgarrett@google.com>
+Subject: [PATCH V32 12/27] x86/msr: Restrict MSR access when the kernel is
+ locked down
+Date: Wed,  3 Apr 2019 17:32:34 -0700
+Message-ID: <20190404003249.14356-13-matthewgarrett@google.com>
 References: <20190404003249.14356-1-matthewgarrett@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <kexec-bounces+glkk-kexec=m.gmane.org-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
-In-Reply-To: <20190404003249.14356-1-matthewgarrett-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/kexec>,
- <mailto:kexec-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/kexec/>
-List-Post: <mailto:kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
-List-Help: <mailto:kexec-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/kexec>,
- <mailto:kexec-request-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org?subject=subscribe>
-Sender: "kexec" <kexec-bounces-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org>
-Errors-To: kexec-bounces+glkk-kexec=m.gmane.org-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
-To: jmorris-gx6/JNMH7DfYtjvyW6yDsg@public.gmane.org
-Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Matthew Garrett <mjg59-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-security-module-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Dave Young <dyoung-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190404003249.14356-1-matthewgarrett@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: jmorris@namei.org
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-api@vger.kernel.org, luto@kernel.org, Matthew Garrett <mjg59@srcf.ucam.org>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>, Thomas Gleixner <tglx@linutronix.de>, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Dave Young <dyoung-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+From: Matthew Garrett <mjg59@srcf.ucam.org>
 
-Kexec reboot in case secure boot being enabled does not keep the secure
-boot mode in new kernel, so later one can load unsigned kernel via legacy
-kexec_load.  In this state, the system is missing the protections provided
-by secure boot.
+Writing to MSRs should not be allowed if the kernel is locked down, since
+it could lead to execution of arbitrary code in kernel mode.  Based on a
+patch by Kees Cook.
 
-Adding a patch to fix this by retain the secure_boot flag in original
-kernel.
-
-secure_boot flag in boot_params is set in EFI stub, but kexec bypasses the
-stub.  Fixing this issue by copying secure_boot flag across kexec reboot.
-
-Signed-off-by: Dave Young <dyoung-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Signed-off-by: David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Signed-off-by: Matthew Garrett <mjg59-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-cc: kexec-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org
+Signed-off-by: Matthew Garrett <mjg59@google.com>
+Signed-off-by: David Howells <dhowells@redhat.com>
+Acked-by: Kees Cook <keescook@chromium.org>
+Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+cc: x86@kernel.org
 ---
- arch/x86/kernel/kexec-bzimage64.c | 1 +
- 1 file changed, 1 insertion(+)
+ arch/x86/kernel/msr.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-diff --git a/arch/x86/kernel/kexec-bzimage64.c b/arch/x86/kernel/kexec-bzimage64.c
-index 278cd07228dd..d49554b948fd 100644
---- a/arch/x86/kernel/kexec-bzimage64.c
-+++ b/arch/x86/kernel/kexec-bzimage64.c
-@@ -179,6 +179,7 @@ setup_efi_state(struct boot_params *params, unsigned long params_load_addr,
- 	if (efi_enabled(EFI_OLD_MEMMAP))
- 		return 0;
+diff --git a/arch/x86/kernel/msr.c b/arch/x86/kernel/msr.c
+index 4588414e2561..731be1be52b6 100644
+--- a/arch/x86/kernel/msr.c
++++ b/arch/x86/kernel/msr.c
+@@ -84,6 +84,9 @@ static ssize_t msr_write(struct file *file, const char __user *buf,
+ 	int err = 0;
+ 	ssize_t bytes = 0;
  
-+	params->secure_boot = boot_params.secure_boot;
- 	ei->efi_loader_signature = current_ei->efi_loader_signature;
- 	ei->efi_systab = current_ei->efi_systab;
- 	ei->efi_systab_hi = current_ei->efi_systab_hi;
++	if (kernel_is_locked_down("Direct MSR access", LOCKDOWN_INTEGRITY))
++		return -EPERM;
++
+ 	if (count % 8)
+ 		return -EINVAL;	/* Invalid chunk size */
+ 
+@@ -135,6 +138,11 @@ static long msr_ioctl(struct file *file, unsigned int ioc, unsigned long arg)
+ 			err = -EFAULT;
+ 			break;
+ 		}
++		if (kernel_is_locked_down("Direct MSR access",
++					  LOCKDOWN_INTEGRITY)) {
++			err = -EPERM;
++			break;
++		}
+ 		err = wrmsr_safe_regs_on_cpu(cpu, regs);
+ 		if (err)
+ 			break;
 -- 
 2.21.0.392.gf8f6787159e-goog
