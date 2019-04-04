@@ -1,8 +1,8 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V32 12/27] x86/msr: Restrict MSR access when the kernel is
+Subject: [PATCH V32 15/27] acpi: Disable ACPI table override if the kernel is
  locked down
-Date: Wed,  3 Apr 2019 17:32:34 -0700
-Message-ID: <20190404003249.14356-13-matthewgarrett@google.com>
+Date: Wed,  3 Apr 2019 17:32:37 -0700
+Message-ID: <20190404003249.14356-16-matthewgarrett@google.com>
 References: <20190404003249.14356-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -10,49 +10,44 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190404003249.14356-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-api@vger.kernel.org, luto@kernel.org, Matthew Garrett <mjg59@srcf.ucam.org>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>, Thomas Gleixner <tglx@linutronix.de>, x86@kernel.org
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-api@vger.kernel.org, luto@kernel.org, Linn Crosetto <linn@hpe.com>, Matthew Garrett <mjg59@google.com>, linux-acpi@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Matthew Garrett <mjg59@srcf.ucam.org>
+From: Linn Crosetto <linn@hpe.com>
 
-Writing to MSRs should not be allowed if the kernel is locked down, since
-it could lead to execution of arbitrary code in kernel mode.  Based on a
-patch by Kees Cook.
+>From the kernel documentation (initrd_table_override.txt):
 
-Signed-off-by: Matthew Garrett <mjg59@google.com>
+  If the ACPI_INITRD_TABLE_OVERRIDE compile option is true, it is possible
+  to override nearly any ACPI table provided by the BIOS with an
+  instrumented, modified one.
+
+When lockdown is enabled, the kernel should disallow any unauthenticated
+changes to kernel space.  ACPI tables contain code invoked by the kernel,
+so do not allow ACPI tables to be overridden if the kernel is locked down.
+
+Signed-off-by: Linn Crosetto <linn@hpe.com>
 Signed-off-by: David Howells <dhowells@redhat.com>
-Acked-by: Kees Cook <keescook@chromium.org>
-Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
-cc: x86@kernel.org
+Signed-off-by: Matthew Garrett <mjg59@google.com>
+cc: linux-acpi@vger.kernel.org
 ---
- arch/x86/kernel/msr.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
+ drivers/acpi/tables.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-diff --git a/arch/x86/kernel/msr.c b/arch/x86/kernel/msr.c
-index 4588414e2561..731be1be52b6 100644
---- a/arch/x86/kernel/msr.c
-+++ b/arch/x86/kernel/msr.c
-@@ -84,6 +84,9 @@ static ssize_t msr_write(struct file *file, const char __user *buf,
- 	int err = 0;
- 	ssize_t bytes = 0;
+diff --git a/drivers/acpi/tables.c b/drivers/acpi/tables.c
+index 48eabb6c2d4f..0dc561210c86 100644
+--- a/drivers/acpi/tables.c
++++ b/drivers/acpi/tables.c
+@@ -531,6 +531,11 @@ void __init acpi_table_upgrade(void)
+ 	if (table_nr == 0)
+ 		return;
  
-+	if (kernel_is_locked_down("Direct MSR access", LOCKDOWN_INTEGRITY))
-+		return -EPERM;
++	if (kernel_is_locked_down("ACPI table override", LOCKDOWN_INTEGRITY)) {
++		pr_notice("kernel is locked down, ignoring table override\n");
++		return;
++	}
 +
- 	if (count % 8)
- 		return -EINVAL;	/* Invalid chunk size */
- 
-@@ -135,6 +138,11 @@ static long msr_ioctl(struct file *file, unsigned int ioc, unsigned long arg)
- 			err = -EFAULT;
- 			break;
- 		}
-+		if (kernel_is_locked_down("Direct MSR access",
-+					  LOCKDOWN_INTEGRITY)) {
-+			err = -EPERM;
-+			break;
-+		}
- 		err = wrmsr_safe_regs_on_cpu(cpu, regs);
- 		if (err)
- 			break;
+ 	acpi_tables_addr =
+ 		memblock_find_in_range(0, ACPI_TABLE_UPGRADE_MAX_PHYS,
+ 				       all_tables_size, PAGE_SIZE);
 -- 
 2.21.0.392.gf8f6787159e-goog
