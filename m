@@ -1,8 +1,7 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V32 24/27] kexec: Allow kexec_file() with appropriate IMA
- policy when locked down
-Date: Wed,  3 Apr 2019 17:32:46 -0700
-Message-ID: <20190404003249.14356-25-matthewgarrett@google.com>
+Subject: [PATCH V32 26/27] debugfs: Restrict debugfs when the kernel is locked down
+Date: Wed,  3 Apr 2019 17:32:48 -0700
+Message-ID: <20190404003249.14356-27-matthewgarrett@google.com>
 References: <20190404003249.14356-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -10,149 +9,166 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190404003249.14356-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-api@vger.kernel.org, luto@kernel.org, Matthew Garrett <matthewgarrett@google.com>, Matthew Garrett <mjg59@google.com>, Mimi Zohar <zohar@linux.ibm.com>, Dmitry Kasatkin <dmitry.kasatkin@gmail.com>, linux-integrity@vger.kernel.org
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-api@vger.kernel.org, luto@kernel.org, Andy Shevchenko <andy.shevchenko@gmail.com>, acpi4asus-user@lists.sourceforge.net, platform-driver-x86@vger.kernel.org, Matthew Garrett <mjg59@srcf.ucam.org>, Thomas Gleixner <tglx@linutronix.de>, Matthew Garrett <matthewgarrett@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Systems in lockdown mode should block the kexec of untrusted kernels.
-For x86 and ARM we can ensure that a kernel is trustworthy by validating
-a PE signature, but this isn't possible on other architectures. On those
-platforms we can use IMA digital signatures instead. Add a function to
-determine whether IMA has or will verify signatures for a given event type,
-and if so permit kexec_file() even if the kernel is otherwise locked down.
-This is restricted to cases where CONFIG_INTEGRITY_TRUSTED_KEYRING is set
-in order to prevent an attacker from loading additional keys at runtime.
+From: David Howells <dhowells@redhat.com>
 
-Signed-off-by: Matthew Garrett <mjg59@google.com>
-Acked-by: Mimi Zohar <zohar@linux.ibm.com>
-Cc: Dmitry Kasatkin <dmitry.kasatkin@gmail.com>
-Cc: linux-integrity@vger.kernel.org
+Disallow opening of debugfs files that might be used to muck around when
+the kernel is locked down as various drivers give raw access to hardware
+through debugfs.  Given the effort of auditing all 2000 or so files and
+manually fixing each one as necessary, I've chosen to apply a heuristic
+instead.  The following changes are made:
+
+ (1) chmod and chown are disallowed on debugfs objects (though the root dir
+     can be modified by mount and remount, but I'm not worried about that).
+
+ (2) When the kernel is locked down, only files with the following criteria
+     are permitted to be opened:
+
+	- The file must have mode 00444
+	- The file must not have ioctl methods
+	- The file must not have mmap
+
+ (3) When the kernel is locked down, files may only be opened for reading.
+
+Normal device interaction should be done through configfs, sysfs or a
+miscdev, not debugfs.
+
+Note that this makes it unnecessary to specifically lock down show_dsts(),
+show_devs() and show_call() in the asus-wmi driver.
+
+I would actually prefer to lock down all files by default and have the
+the files unlocked by the creator.  This is tricky to manage correctly,
+though, as there are 19 creation functions and ~1600 call sites (some of
+them in loops scanning tables).
+
+Signed-off-by: David Howells <dhowells@redhat.com>
+cc: Andy Shevchenko <andy.shevchenko@gmail.com>
+cc: acpi4asus-user@lists.sourceforge.net
+cc: platform-driver-x86@vger.kernel.org
+cc: Matthew Garrett <mjg59@srcf.ucam.org>
+cc: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Matthew Garrett <matthewgarrett@google.com>
 ---
- include/linux/ima.h                 |  9 ++++++
- kernel/kexec_file.c                 |  7 +++-
- security/integrity/ima/ima.h        |  2 ++
- security/integrity/ima/ima_main.c   |  2 +-
- security/integrity/ima/ima_policy.c | 50 +++++++++++++++++++++++++++++
- 5 files changed, 68 insertions(+), 2 deletions(-)
+ fs/debugfs/file.c  | 28 ++++++++++++++++++++++++++++
+ fs/debugfs/inode.c | 30 ++++++++++++++++++++++++++++--
+ 2 files changed, 56 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/ima.h b/include/linux/ima.h
-index b5e16b8c50b7..60007b86f4fc 100644
---- a/include/linux/ima.h
-+++ b/include/linux/ima.h
-@@ -127,4 +127,13 @@ static inline int ima_inode_removexattr(struct dentry *dentry,
- 	return 0;
+diff --git a/fs/debugfs/file.c b/fs/debugfs/file.c
+index 4fce1da7db23..2d18e7711fca 100644
+--- a/fs/debugfs/file.c
++++ b/fs/debugfs/file.c
+@@ -136,6 +136,25 @@ void debugfs_file_put(struct dentry *dentry)
  }
- #endif /* CONFIG_IMA_APPRAISE */
-+
-+#if defined(CONFIG_IMA_APPRAISE) && defined(CONFIG_INTEGRITY_TRUSTED_KEYRING)
-+extern bool ima_appraise_signature(enum kernel_read_file_id func);
-+#else
-+static inline bool ima_appraise_signature(enum kernel_read_file_id func)
-+{
-+	return false;
-+}
-+#endif /* CONFIG_IMA_APPRAISE && CONFIG_INTEGRITY_TRUSTED_KEYRING */
- #endif /* _LINUX_IMA_H */
-diff --git a/kernel/kexec_file.c b/kernel/kexec_file.c
-index a1cc37c8b43b..7599039623a7 100644
---- a/kernel/kexec_file.c
-+++ b/kernel/kexec_file.c
-@@ -240,7 +240,12 @@ kimage_file_prepare_segments(struct kimage *image, int kernel_fd, int initrd_fd,
+ EXPORT_SYMBOL_GPL(debugfs_file_put);
  
- 		ret = 0;
- 
--		if (kernel_is_locked_down(reason, LOCKDOWN_INTEGRITY)) {
-+		/* If IMA is guaranteed to appraise a signature on the kexec
-+		 * image, permit it even if the kernel is otherwise locked
-+		 * down.
-+		 */
-+		if (!ima_appraise_signature(READING_KEXEC_IMAGE) &&
-+		    kernel_is_locked_down(reason, LOCKDOWN_INTEGRITY)) {
- 			ret = -EPERM;
- 			goto out;
- 		}
-diff --git a/security/integrity/ima/ima.h b/security/integrity/ima/ima.h
-index cc12f3449a72..fe03cc6f1ca4 100644
---- a/security/integrity/ima/ima.h
-+++ b/security/integrity/ima/ima.h
-@@ -115,6 +115,8 @@ struct ima_kexec_hdr {
- 	u64 count;
- };
- 
-+extern const int read_idmap[];
-+
- #ifdef CONFIG_HAVE_IMA_KEXEC
- void ima_load_kexec_buffer(void);
- #else
-diff --git a/security/integrity/ima/ima_main.c b/security/integrity/ima/ima_main.c
-index 4ffac4f5c647..106f06dee9d1 100644
---- a/security/integrity/ima/ima_main.c
-+++ b/security/integrity/ima/ima_main.c
-@@ -442,7 +442,7 @@ int ima_read_file(struct file *file, enum kernel_read_file_id read_id)
- 	return 0;
- }
- 
--static const int read_idmap[READING_MAX_ID] = {
-+const int read_idmap[READING_MAX_ID] = {
- 	[READING_FIRMWARE] = FIRMWARE_CHECK,
- 	[READING_FIRMWARE_PREALLOC_BUFFER] = FIRMWARE_CHECK,
- 	[READING_MODULE] = MODULE_CHECK,
-diff --git a/security/integrity/ima/ima_policy.c b/security/integrity/ima/ima_policy.c
-index 122797023bdb..f8f1cdb74a4f 100644
---- a/security/integrity/ima/ima_policy.c
-+++ b/security/integrity/ima/ima_policy.c
-@@ -1341,3 +1341,53 @@ int ima_policy_show(struct seq_file *m, void *v)
- 	return 0;
- }
- #endif	/* CONFIG_IMA_READ_POLICY */
-+
-+#if defined(CONFIG_IMA_APPRAISE) && defined(CONFIG_INTEGRITY_TRUSTED_KEYRING)
 +/*
-+ * ima_appraise_signature: whether IMA will appraise a given function using
-+ * an IMA digital signature. This is restricted to cases where the kernel
-+ * has a set of built-in trusted keys in order to avoid an attacker simply
-+ * loading additional keys.
++ * Only permit access to world-readable files when the kernel is locked down.
++ * We also need to exclude any file that has ways to write or alter it as root
++ * can bypass the permissions check.
 + */
-+bool ima_appraise_signature(enum kernel_read_file_id id)
++static bool debugfs_is_locked_down(struct inode *inode,
++				   struct file *filp,
++				   const struct file_operations *real_fops)
 +{
-+	struct ima_rule_entry *entry;
-+	bool found = false;
-+	enum ima_hooks func;
-+
-+	if (id >= READING_MAX_ID)
++	if ((inode->i_mode & 07777) == 0444 &&
++	    !(filp->f_mode & FMODE_WRITE) &&
++	    !real_fops->unlocked_ioctl &&
++	    !real_fops->compat_ioctl &&
++	    !real_fops->mmap)
 +		return false;
 +
-+	func = read_idmap[id] ?: FILE_CHECK;
-+
-+	rcu_read_lock();
-+	list_for_each_entry_rcu(entry, ima_rules, list) {
-+		if (entry->action != APPRAISE)
-+			continue;
-+
-+		/*
-+		 * A generic entry will match, but otherwise require that it
-+		 * match the func we're looking for
-+		 */
-+		if (entry->func && entry->func != func)
-+			continue;
-+
-+		/*
-+		 * We require this to be a digital signature, not a raw IMA
-+		 * hash.
-+		 */
-+		if (entry->flags & IMA_DIGSIG_REQUIRED)
-+			found = true;
-+
-+		/*
-+		 * We've found a rule that matches, so break now even if it
-+		 * didn't require a digital signature - a later rule that does
-+		 * won't override it, so would be a false positive.
-+		 */
-+		break;
-+	}
-+
-+	rcu_read_unlock();
-+	return found;
++	return kernel_is_locked_down("debugfs", LOCKDOWN_INTEGRITY);
 +}
-+#endif /* CONFIG_IMA_APPRAISE && CONFIG_INTEGRITY_TRUSTED_KEYRING */
++
+ static int open_proxy_open(struct inode *inode, struct file *filp)
+ {
+ 	struct dentry *dentry = F_DENTRY(filp);
+@@ -147,6 +166,11 @@ static int open_proxy_open(struct inode *inode, struct file *filp)
+ 		return r == -EIO ? -ENOENT : r;
+ 
+ 	real_fops = debugfs_real_fops(filp);
++
++	r = -EPERM;
++	if (debugfs_is_locked_down(inode, filp, real_fops))
++		goto out;
++
+ 	real_fops = fops_get(real_fops);
+ 	if (!real_fops) {
+ 		/* Huh? Module did not clean up after itself at exit? */
+@@ -272,6 +296,10 @@ static int full_proxy_open(struct inode *inode, struct file *filp)
+ 		return r == -EIO ? -ENOENT : r;
+ 
+ 	real_fops = debugfs_real_fops(filp);
++	r = -EPERM;
++	if (debugfs_is_locked_down(inode, filp, real_fops))
++		goto out;
++
+ 	real_fops = fops_get(real_fops);
+ 	if (!real_fops) {
+ 		/* Huh? Module did not cleanup after itself at exit? */
+diff --git a/fs/debugfs/inode.c b/fs/debugfs/inode.c
+index 13b01351dd1c..4b877cb1431d 100644
+--- a/fs/debugfs/inode.c
++++ b/fs/debugfs/inode.c
+@@ -32,6 +32,31 @@ static struct vfsmount *debugfs_mount;
+ static int debugfs_mount_count;
+ static bool debugfs_registered;
+ 
++/*
++ * Don't allow access attributes to be changed whilst the kernel is locked down
++ * so that we can use the file mode as part of a heuristic to determine whether
++ * to lock down individual files.
++ */
++static int debugfs_setattr(struct dentry *dentry, struct iattr *ia)
++{
++	if ((ia->ia_valid & (ATTR_MODE | ATTR_UID | ATTR_GID)) &&
++	    kernel_is_locked_down("debugfs", LOCKDOWN_INTEGRITY))
++		return -EPERM;
++	return simple_setattr(dentry, ia);
++}
++
++static const struct inode_operations debugfs_file_inode_operations = {
++	.setattr	= debugfs_setattr,
++};
++static const struct inode_operations debugfs_dir_inode_operations = {
++	.lookup		= simple_lookup,
++	.setattr	= debugfs_setattr,
++};
++static const struct inode_operations debugfs_symlink_inode_operations = {
++	.get_link	= simple_get_link,
++	.setattr	= debugfs_setattr,
++};
++
+ static struct inode *debugfs_get_inode(struct super_block *sb)
+ {
+ 	struct inode *inode = new_inode(sb);
+@@ -356,6 +381,7 @@ static struct dentry *__debugfs_create_file(const char *name, umode_t mode,
+ 	inode->i_mode = mode;
+ 	inode->i_private = data;
+ 
++	inode->i_op = &debugfs_file_inode_operations;
+ 	inode->i_fop = proxy_fops;
+ 	dentry->d_fsdata = (void *)((unsigned long)real_fops |
+ 				DEBUGFS_FSDATA_IS_REAL_FOPS_BIT);
+@@ -513,7 +539,7 @@ struct dentry *debugfs_create_dir(const char *name, struct dentry *parent)
+ 		return failed_creating(dentry);
+ 
+ 	inode->i_mode = S_IFDIR | S_IRWXU | S_IRUGO | S_IXUGO;
+-	inode->i_op = &simple_dir_inode_operations;
++	inode->i_op = &debugfs_dir_inode_operations;
+ 	inode->i_fop = &simple_dir_operations;
+ 
+ 	/* directory inodes start off with i_nlink == 2 (for "." entry) */
+@@ -608,7 +634,7 @@ struct dentry *debugfs_create_symlink(const char *name, struct dentry *parent,
+ 		return failed_creating(dentry);
+ 	}
+ 	inode->i_mode = S_IFLNK | S_IRWXUGO;
+-	inode->i_op = &simple_symlink_inode_operations;
++	inode->i_op = &debugfs_symlink_inode_operations;
+ 	inode->i_link = link;
+ 	d_instantiate(dentry, inode);
+ 	return end_creating(dentry);
 -- 
 2.21.0.392.gf8f6787159e-goog
