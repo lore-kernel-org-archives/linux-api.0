@@ -1,60 +1,81 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [PATCH 1/4] glibc: Perform rseq(2) registration at C startup and thread creation (v7)
-Date: Fri, 05 Apr 2019 11:16:08 +0200
-Message-ID: <87y34o4xt3.fsf@oldenburg2.str.redhat.com>
-References: <20190212194253.1951-1-mathieu.desnoyers@efficios.com>
-        <20190212194253.1951-2-mathieu.desnoyers@efficios.com>
-        <5166fbe9-cfe0-8554-abc7-4fc844cf2765@redhat.com>
-        <1965431879.7576.1553529272844.JavaMail.zimbra@efficios.com>
-        <87lg0tosfz.fsf@concordia.ellerman.id.au>
-        <87pnq4zxyj.fsf@oldenburg2.str.redhat.com>
-        <ce6f9db3-bf85-7aec-4bae-998e6fd629e1@redhat.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH] sched/core: expand sched_getaffinity(2) to return number
+ of CPUs
+Date: Fri, 5 Apr 2019 11:26:57 +0200
+Message-ID: <20190405092657.GD4038@hirez.programming.kicks-ass.net>
+References: <20190403200809.GA13876@avx2>
+ <20190404084249.GS4038@hirez.programming.kicks-ass.net>
+ <20190404180230.GA14800@avx2>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <ce6f9db3-bf85-7aec-4bae-998e6fd629e1@redhat.com> (Carlos
-        O'Donell's message of "Thu, 4 Apr 2019 16:32:53 -0400")
+Content-Disposition: inline
+In-Reply-To: <20190404180230.GA14800@avx2>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Carlos O'Donell <codonell@redhat.com>
-Cc: Michael Ellerman <mpe@ellerman.id.au>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Paul Burton <paul.burton@mips.com>, Will Deacon <will.deacon@arm.com>, Boqun Feng <boqun.feng@gmail.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Vasily Gorbik <gor@linux.ibm.com>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Russell King <linux@armlinux.org.uk>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Dave
+To: Alexey Dobriyan <adobriyan@gmail.com>
+Cc: mingo@redhat.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-* Carlos O'Donell:
+On Thu, Apr 04, 2019 at 09:02:30PM +0300, Alexey Dobriyan wrote:
+> On Thu, Apr 04, 2019 at 10:42:49AM +0200, Peter Zijlstra wrote:
+> > On Wed, Apr 03, 2019 at 11:08:09PM +0300, Alexey Dobriyan wrote:
+> > > Currently there is no easy way to get the number of CPUs on the system.
+> > 
+> > And this patch doesn't change that :-)
+> 
+> It does! Application or a library could do one idempotent system call
+> in a constructor.
 
-> On 4/2/19 3:08 AM, Florian Weimer wrote:
->> * Michael Ellerman:
->>
->>> I'm a bit vague on what we're trying to do here.
->>>
->>> But it seems like you want some sort of "eye catcher" prior to the branch?
->>>
->>> That value is a valid instruction on current CPUs (rlwimi.
->>> r5,r24,6,1,9), and even if it wasn't it could become one in future.
->>>
->>> If you change it to 0x8053530 that is both a valid instruction and is a
->>> nop (conditional trap immediate but with no conditions set).
->>
->> I think we need something that is very unlikely to appear in the
->> instruction stream.  It's just a marker.  The instruction will never be
->> executed, and it does not have to be a trap, either (I believe that a
->> standard trap instruction would be a bad choice).
->
-> I assume you want to avoid a standard trap instruction because it would
-> be common, and so not meet the intent of the RSEQ_SIG choice as being something
-> that is *uncommon* right?
+You said: "get the number of CPUs on the system", but what this call
+actually returns is: "size of CPU bitmask", these two things are
+distinctly not the same.
 
-Ideally, RSEQ_SIG would be something that does not show up in the
-instruction stream at all, so that it is a reliable marker for the start
-of an rseq handler.  I assume the intent here is that the kernel
-provides some validation on the program counter it reads from the rseq
-area, so that we do not end up with some easily-abused gadget in every
-process image.
+> > The point is that nr_cpu_ids is the length of the bitmap, but does not
+> > contain information on how many CPUs are in the system. Consider the
+> > case where the bitmap is sparse.
+> 
+> I understand that but how do you ship number of CPUs _and_ possible mask
+> in one go?
 
-> It is valuable that it be a trap, particularly for constant pools because
-> it means that a jump into the constant pool will trap.
+You don't, possible mask is unrelated to number of CPUs and both are
+unrelated to bitmap size.
 
-Sorry, I don't understand why this matters in this context.  Would you
-please elaborate?
+In particular:
 
-Thanks,
-Florian
+  nr_cpus <= nr_possible_cpus <= nr_cpumask_bits
+
+In absurdum an architecture could choose to iterate its CPUs as
+1024*cpuid, just for giggles. Then suppose it has two sockets, and 16
+CPUs per socket and only the second socket is populated.
+
+The we get:
+
+  nr_cpumask_bits = 32k
+  nr_possible_cpus = 32
+  nr_cpus = 16
+
+see what I mean?
+
+Now, luckily we typically don't have crap like that, but I suspect that
+with a little creative ACPI table magic we could actually get something
+slightly less absurd but still non-trivial even on x86.
+
+Also see how num_possible_cpus() is defined as
+cpumask_weight(cpu_possible_mask), which is very much not nr_cpu_ids in
+the generic case.
+
+> > > Nobody seems to parse "/sys/devices/system/cpu/possible".
+> > > Even if someone does, parsing sysfs is much slower than necessary.
+> > 
+> > True; but I suppose glibc already does lots of that anyway, right? It
+> > does contain the right information.
+> 
+> sched_getaffinity(3) does sched_getaffinity(2) + memset()
+> 
+> sysconf(_SC_NPROCESSORS_ONLN) does "/sys/devices/system/cpu/online"
+> 
+> sysconf(_SC_NPROCESSORS_CONF) does readdir("/sys/devices/system/cpu")
+> which is 5 syscalls. I'm not sure which cpumask readdir represents.
+
+It counts the number of CPUs, which is strictly not the same as the
+bitmap size.
