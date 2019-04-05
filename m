@@ -1,81 +1,54 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH v13 1/3] /proc/pid/status: Add support for architecture
- specific output
-Date: Fri, 5 Apr 2019 21:32:35 +0200 (CEST)
-Message-ID: <alpine.DEB.2.21.1904052129371.1802@nanos.tec.linutronix.de>
-References: <20190224044400.34975-1-aubrey.li@linux.intel.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH v13 2/3] x86,/proc/pid/status: Add AVX-512 usage elapsed time
+Date: Fri, 5 Apr 2019 22:27:08 +0200
+Message-ID: <CAG48ez2hJvjRD-immEJ9uJAY1WRth3pMf0Qz8bApRke05kC+2Q@mail.gmail.com>
+References: <20190224044400.34975-1-aubrey.li@linux.intel.com> <20190224044400.34975-2-aubrey.li@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190224044400.34975-1-aubrey.li@linux.intel.com>
+In-Reply-To: <20190224044400.34975-2-aubrey.li@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Aubrey Li <aubrey.li@linux.intel.com>
-Cc: mingo@redhat.com, Peter Zijlstra <peterz@infradead.org>, "H. Peter Anvin" <hpa@zytor.com>, ak@linux.intel.com, tim.c.chen@linux.intel.com, dave.hansen@intel.com, arjan@linux.intel.com, aubrey.li@intel.com, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, tim.c.chen@linux.intel.com, Dave Hansen <dave.hansen@intel.com>, Arjan van de Ven <arjan@linux.intel.com>, aubrey.li@intel.com, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, 24 Feb 2019, Aubrey Li wrote:
+On Fri, Apr 5, 2019 at 10:02 PM Aubrey Li <aubrey.li@linux.intel.com> wrote:
+> AVX-512 components use could cause core turbo frequency drop. So
+> it's useful to expose AVX-512 usage elapsed time as a heuristic hint
+> for the user space job scheduler to cluster the AVX-512 using tasks
+> together.
+>
+> Tensorflow example:
+> $ while [ 1 ]; do cat /proc/pid/status | grep AVX; sleep 1; done
+> AVX512_elapsed_ms:      4
+> AVX512_elapsed_ms:      8
+> AVX512_elapsed_ms:      4
+>
+> This means that 4 milliseconds have elapsed since the AVX512 usage
+> of tensorflow task was detected when the task was scheduled out.
+>
+> Or:
+> $ cat /proc/pid/status | grep AVX512_elapsed_ms
+> AVX512_elapsed_ms:      -1
 
-> The architecture specific information of the running processes could
-> be useful to the userland. Add support to examine process architecture
-> specific information externally.
-> 
-> Signed-off-by: Aubrey Li <aubrey.li@linux.intel.com>
-> Cc: Peter Zijlstra <peterz@infradead.org>
-> Cc: Andi Kleen <ak@linux.intel.com>
-> Cc: Tim Chen <tim.c.chen@linux.intel.com>
-> Cc: Dave Hansen <dave.hansen@intel.com>
-> Cc: Arjan van de Ven <arjan@linux.intel.com>
+(Very nitpicky, feel free to ignore: If you change the /proc/pid to
+/proc/tid in the commit message, it becomes clearer that this status
+is really per-task/thread, not per-process/threadgroup.)
 
-This really lacks
-
-Cc: Linux API <linux-api@vger.kernel.org>
-Cc: Alexey Dobriyan <adobriyan@gmail.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-
-Cc'ed now.
-
-> ---
->  fs/proc/array.c         | 5 +++++
->  include/linux/proc_fs.h | 2 ++
->  2 files changed, 7 insertions(+)
-> 
-> diff --git a/fs/proc/array.c b/fs/proc/array.c
-> index 9d428d5a0ac8..ea7a981f289c 100644
-> --- a/fs/proc/array.c
-> +++ b/fs/proc/array.c
-> @@ -401,6 +401,10 @@ static inline void task_thp_status(struct seq_file *m, struct mm_struct *mm)
->  	seq_printf(m, "THP_enabled:\t%d\n", thp_enabled);
->  }
->  
-> +void __weak arch_proc_pid_status(struct seq_file *m, struct task_struct *task)
-> +{
-> +}
+[...]
 > +
->  int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
->  			struct pid *pid, struct task_struct *task)
->  {
-> @@ -424,6 +428,7 @@ int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
->  	task_cpus_allowed(m, task);
->  	cpuset_task_status_allowed(m, task);
->  	task_context_switch_counts(m, task);
-> +	arch_proc_pid_status(m, task);
->  	return 0;
->  }
->  
-> diff --git a/include/linux/proc_fs.h b/include/linux/proc_fs.h
-> index d0e1f1522a78..1de9ba1b064f 100644
-> --- a/include/linux/proc_fs.h
-> +++ b/include/linux/proc_fs.h
-> @@ -73,6 +73,8 @@ struct proc_dir_entry *proc_create_net_single_write(const char *name, umode_t mo
->  						    int (*show)(struct seq_file *, void *),
->  						    proc_write_t write,
->  						    void *data);
-> +/* Add support for architecture specific output in /proc/pid/status */
-> +extern void arch_proc_pid_status(struct seq_file *m, struct task_struct *task);
->  
->  #else /* CONFIG_PROC_FS */
->  
-> -- 
-> 2.17.1
-> 
-> 
+> +/*
+> + * Report the amount of time elapsed in millisecond since last AVX512
+> + * use in the task.
+> + */
+> +static void avx512_status(struct seq_file *m, struct task_struct *task)
+> +{
+> +       unsigned long timestamp = task->thread.fpu.avx512_timestamp;
+
+This is theoretically a data race, right? Should this have a READ_ONCE() on it?
+
+Is there something that zeroes out the avx512_timestamp on
+fork()/clone(), or will every child inherit the avx512 timestamp? As
+far as I can tell, the timestamp is inherited; I think it would be
+nicer to zero it out at that point. Either way, It might be worth
+documenting this decision.
