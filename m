@@ -1,45 +1,81 @@
-From: Carlos O'Donell <codonell@redhat.com>
-Subject: Re: [PATCH 1/4] glibc: Perform rseq(2) registration at C startup and
- thread creation (v7)
-Date: Fri, 5 Apr 2019 11:40:16 -0400
-Message-ID: <43f97ddb-c8df-27ea-9517-63252ebd3183@redhat.com>
-References: <20190212194253.1951-1-mathieu.desnoyers@efficios.com>
- <20190212194253.1951-2-mathieu.desnoyers@efficios.com>
- <5166fbe9-cfe0-8554-abc7-4fc844cf2765@redhat.com>
- <1965431879.7576.1553529272844.JavaMail.zimbra@efficios.com>
- <87lg0tosfz.fsf@concordia.ellerman.id.au>
- <87pnq4zxyj.fsf@oldenburg2.str.redhat.com>
- <ce6f9db3-bf85-7aec-4bae-998e6fd629e1@redhat.com>
- <87y34o4xt3.fsf@oldenburg2.str.redhat.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH v13 1/3] /proc/pid/status: Add support for architecture
+ specific output
+Date: Fri, 5 Apr 2019 21:32:35 +0200 (CEST)
+Message-ID: <alpine.DEB.2.21.1904052129371.1802@nanos.tec.linutronix.de>
+References: <20190224044400.34975-1-aubrey.li@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87y34o4xt3.fsf@oldenburg2.str.redhat.com>
-Content-Language: en-US
+In-Reply-To: <20190224044400.34975-1-aubrey.li@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>
-Cc: Michael Ellerman <mpe@ellerman.id.au>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Paul Burton <paul.burton@mips.com>, Will Deacon <will.deacon@arm.com>, Boqun Feng <boqun.feng@gmail.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Vasily Gorbik <gor@linux.ibm.com>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Russell King <linux@armlinux.org.uk>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Dave
+To: Aubrey Li <aubrey.li@linux.intel.com>
+Cc: mingo@redhat.com, Peter Zijlstra <peterz@infradead.org>, "H. Peter Anvin" <hpa@zytor.com>, ak@linux.intel.com, tim.c.chen@linux.intel.com, dave.hansen@intel.com, arjan@linux.intel.com, aubrey.li@intel.com, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On 4/5/19 5:16 AM, Florian Weimer wrote:
-> * Carlos O'Donell:
->> It is valuable that it be a trap, particularly for constant pools because
->> it means that a jump into the constant pool will trap.
+On Sun, 24 Feb 2019, Aubrey Li wrote:
+
+> The architecture specific information of the running processes could
+> be useful to the userland. Add support to examine process architecture
+> specific information externally.
 > 
-> Sorry, I don't understand why this matters in this context.  Would you
-> please elaborate?
+> Signed-off-by: Aubrey Li <aubrey.li@linux.intel.com>
+> Cc: Peter Zijlstra <peterz@infradead.org>
+> Cc: Andi Kleen <ak@linux.intel.com>
+> Cc: Tim Chen <tim.c.chen@linux.intel.com>
+> Cc: Dave Hansen <dave.hansen@intel.com>
+> Cc: Arjan van de Ven <arjan@linux.intel.com>
 
-Sorry, I wasn't very clear.
+This really lacks
 
-My point is only that any accidental jumps, either with off-by-one (like you
-fixed in gcc/glibc's signal unwinding most recently), result in a process fault
-rather than executing RSEQ_SIG as a valid instruction *and then* continuing
-onwards to the handler.
+Cc: Linux API <linux-api@vger.kernel.org>
+Cc: Alexey Dobriyan <adobriyan@gmail.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>
 
-A process fault is achieved either by a trap, or an invalid instruction, or
-a privileged insn (like suggested for MIPS in this thread).
+Cc'ed now.
 
--- 
-Cheers,
-Carlos.
+> ---
+>  fs/proc/array.c         | 5 +++++
+>  include/linux/proc_fs.h | 2 ++
+>  2 files changed, 7 insertions(+)
+> 
+> diff --git a/fs/proc/array.c b/fs/proc/array.c
+> index 9d428d5a0ac8..ea7a981f289c 100644
+> --- a/fs/proc/array.c
+> +++ b/fs/proc/array.c
+> @@ -401,6 +401,10 @@ static inline void task_thp_status(struct seq_file *m, struct mm_struct *mm)
+>  	seq_printf(m, "THP_enabled:\t%d\n", thp_enabled);
+>  }
+>  
+> +void __weak arch_proc_pid_status(struct seq_file *m, struct task_struct *task)
+> +{
+> +}
+> +
+>  int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
+>  			struct pid *pid, struct task_struct *task)
+>  {
+> @@ -424,6 +428,7 @@ int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
+>  	task_cpus_allowed(m, task);
+>  	cpuset_task_status_allowed(m, task);
+>  	task_context_switch_counts(m, task);
+> +	arch_proc_pid_status(m, task);
+>  	return 0;
+>  }
+>  
+> diff --git a/include/linux/proc_fs.h b/include/linux/proc_fs.h
+> index d0e1f1522a78..1de9ba1b064f 100644
+> --- a/include/linux/proc_fs.h
+> +++ b/include/linux/proc_fs.h
+> @@ -73,6 +73,8 @@ struct proc_dir_entry *proc_create_net_single_write(const char *name, umode_t mo
+>  						    int (*show)(struct seq_file *, void *),
+>  						    proc_write_t write,
+>  						    void *data);
+> +/* Add support for architecture specific output in /proc/pid/status */
+> +extern void arch_proc_pid_status(struct seq_file *m, struct task_struct *task);
+>  
+>  #else /* CONFIG_PROC_FS */
+>  
+> -- 
+> 2.17.1
+> 
+> 
