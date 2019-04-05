@@ -1,116 +1,115 @@
-From: Paul Burton <paul.burton@mips.com>
-Subject: Re: [PATCH 1/4] glibc: Perform rseq(2) registration at C startup and
- thread creation (v7)
-Date: Thu, 4 Apr 2019 21:41:57 +0000
-Message-ID: <20190404214151.6ogrm34dok52az4h@pburton-laptop>
-References: <20190212194253.1951-1-mathieu.desnoyers@efficios.com>
- <20190212194253.1951-2-mathieu.desnoyers@efficios.com>
- <5166fbe9-cfe0-8554-abc7-4fc844cf2765@redhat.com>
- <1965431879.7576.1553529272844.JavaMail.zimbra@efficios.com>
- <602718e0-7375-deb7-b6e6-2d17022173c5@redhat.com>
+From: Paul Moore <paul@paul-moore.com>
+Subject: Re: [PATCH ghak90 V5 09/10] audit: add support for containerid to
+ network namespaces
+Date: Thu, 4 Apr 2019 22:06:10 -0400
+Message-ID: <CAHC9VhSf_7RH96dNhVhifs3uqEZf0Uq=Qi5TgqdVtUskiqYQ4Q@mail.gmail.com>
+References: <cover.1552665316.git.rgb@redhat.com> <27473c84a274c64871cfa8e3636deaf05603c978.1552665316.git.rgb@redhat.com>
+ <CAHC9VhQpk6cFZckQH+LQmQmirVzLm_GH57ZD3-76y-59G=DocQ@mail.gmail.com>
+ <20190402113150.GA17593@hmswarspite.think-freely.org> <20190404214006.jcgmjb4u6iobu42s@madcap2.tricolour.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <602718e0-7375-deb7-b6e6-2d17022173c5@redhat.com>
-Content-Language: en-US
-Content-ID: <47586F22A0E5294EB6EF62269E5C9848@namprd22.prod.outlook.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Carlos O'Donell <codonell@redhat.com>
-Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Will Deacon <will.deacon@arm.com>, Boqun Feng <boqun.feng@gmail.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Vasily Gorbik <gor@linux.ibm.com>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Russell King <linux@armlinux.org.uk>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Dave
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20190404214006.jcgmjb4u6iobu42s@madcap2.tricolour.ca>
+Sender: netdev-owner@vger.kernel.org
+To: Richard Guy Briggs <rgb@redhat.com>
+Cc: Neil Horman <nhorman@tuxdriver.com>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, LKML <linux-kernel@vger.kernel.org>, dhowells@redhat.com, Linux-Audit Mailing List <linux-audit@redhat.com>, netfilter-devel@vger.kernel.org, ebiederm@xmission.com, simo@redhat.com, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Carlos / all,
+On Thu, Apr 4, 2019 at 5:40 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> On 2019-04-02 07:31, Neil Horman wrote:
+> > On Mon, Apr 01, 2019 at 10:50:03AM -0400, Paul Moore wrote:
+> > > On Fri, Mar 15, 2019 at 2:35 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> > > > Audit events could happen in a network namespace outside of a task
+> > > > context due to packets received from the net that trigger an auditing
+> > > > rule prior to being associated with a running task.  The network
+> > > > namespace could be in use by multiple containers by association to the
+> > > > tasks in that network namespace.  We still want a way to attribute
+> > > > these events to any potential containers.  Keep a list per network
+> > > > namespace to track these audit container identifiiers.
+> > > >
+> > > > Add/increment the audit container identifier on:
+> > > > - initial setting of the audit container identifier via /proc
+> > > > - clone/fork call that inherits an audit container identifier
+> > > > - unshare call that inherits an audit container identifier
+> > > > - setns call that inherits an audit container identifier
+> > > > Delete/decrement the audit container identifier on:
+> > > > - an inherited audit container identifier dropped when child set
+> > > > - process exit
+> > > > - unshare call that drops a net namespace
+> > > > - setns call that drops a net namespace
+> > > >
+> > > > See: https://github.com/linux-audit/audit-kernel/issues/92
+> > > > See: https://github.com/linux-audit/audit-testsuite/issues/64
+> > > > See: https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container-ID
+> > > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> > > > ---
+> > > >  include/linux/audit.h | 19 ++++++++++++
+> > > >  kernel/audit.c        | 86 +++++++++++++++++++++++++++++++++++++++++++++++++--
+> > > >  kernel/nsproxy.c      |  4 +++
+> > > >  3 files changed, 106 insertions(+), 3 deletions(-)
 
-On Thu, Apr 04, 2019 at 04:50:08PM -0400, Carlos O'Donell wrote:
-> > > > +/* Signature required before each abort handler code.  */
-> > > > +#define RSEQ_SIG 0x53053053
-> > >=20
-> > > Why isn't this a mips-specific op code?
-> >=20
-> > MIPS also has a literal pool just before the abort handler, and it
-> > jumps over it. My understanding is that we can use any signature value
-> > we want, and it does not need to be a valid instruction, similarly to A=
-RM:
-> >=20
-> > #define __RSEQ_ASM_DEFINE_ABORT(table_label, label, teardown, \
-> >                                  abort_label, version, flags, \
-> >                                  start_ip, post_commit_offset, abort_ip=
-) \
-> >                  ".balign 32\n\t" \
-> >                  __rseq_str(table_label) ":\n\t" \
-> >                  ".word " __rseq_str(version) ", " __rseq_str(flags) "\=
-n\t" \
-> >                  LONG " " U32_U64_PAD(__rseq_str(start_ip)) "\n\t" \
-> >                  LONG " " U32_U64_PAD(__rseq_str(post_commit_offset)) "=
-\n\t" \
-> >                  LONG " " U32_U64_PAD(__rseq_str(abort_ip)) "\n\t" \
-> >                  ".word " __rseq_str(RSEQ_SIG) "\n\t" \
-> >                  __rseq_str(label) ":\n\t" \
-> >                  teardown \
-> >                  "b %l[" __rseq_str(abort_label) "]\n\t"
-> >=20
-> > Perhaps Paul Burton can confirm this ?
->=20
-> Yes please.
->=20
-> You also want to avoid the value being a valid MIPS insn that's common.
->=20
-> Did you check that?
+...
 
-This does not decode as a standard MIPS instruction, though it does
-decode for both the microMIPS (ori) & nanoMIPS (lwxs; sll) ISAs.
+> > > > +               list_for_each_entry_rcu(cont, contid_list, list)
+> > > > +                       if (cont->id == contid) {
+> > > > +                               refcount_inc(&cont->refcount);
+> > > > +                               goto out;
+> > > > +                       }
+> > > > +       cont = kmalloc(sizeof(struct audit_contid), GFP_ATOMIC);
+> > >
+> > > If you had to guess, what do you think is going to be more common:
+> > > bumping the refcount of an existing entry in the list, or adding a new
+> > > entry?  I'm asking because I always get a little nervous when doing
+> > > allocations while holding a spinlock.  Yes, you are doing it with
+> > > GFP_ATOMIC, but it still seems like something to try and avoid if this
+> > > is going to approach 50%.  However, if the new entry is rare then the
+> > > extra work of always doing the allocation before taking the lock and
+> > > then freeing it afterwards might be a bad tradeoff.
+> > >
+> > I think this is another way of asking, will multiple processes exist in the same
+> > network namespace?  That is to say, will we expect a process to create a net
+> > namespace, and then have other processes enter that namespace (thereby
+> > triggering multiple calls to audit_netns_contid_add with the same net pointer
+> > and cont id).  Given that the kubernetes notion of a pod is almost by definition
+> > multiple containers sharing a network namespace, I think the answer is that we
+> > will be strongly biased towards the refcount_inc case, rather than the kmalloc
+> > case.  I could be wrong, but I think this is likely already in the optimized
+> > order.
+>
+> I had a stab at doing a GFP_KERNEL alloc before the spinlock and releasing it
+> after if it wasn't needed (in Patch#1 below).  I also went one step further and
+> converted it to kmem_cache (in Patch#2 below).
+>
+> > > My gut feeling says we might do about as many allocations as refcount
+> > > bumps, but I could be thinking about this wrong.
+> > >
+> > > Moving the allocation outside the spinlock might also open the door to
+> > > doing this as GFP_KERNEL, which is a good thing, but I haven't looked
+> > > at the callers to see if that is possible (it may not be).  That's an
+> > > exercise left to the patch author (if he hasn't done that already).
+>
+> Both appear to work, but after successfully running both the contid test and
+> audit_testsuite, once I start to push that test system a bit harder I end up
+> with a deadlock warning.
+>
+> I am having trouble understanding why since it happens both without and with
+> the kmem_cache options, so it must be another part of the code that is
+> triggering it.  The task_lock is being held at this point in
+> audit_set_contid().  I haven't tried changing this alloc over to a GFP_ATOMIC
+> to see if that prevents it, just as a debugging check...
+> At this point, I'm inclined to leave it as it was without these two patches
+> since it works and there doesn't seem to be an obvious best way given the
+> uncertainty of the potential workloads.
 
-I imagine I copied the value from another architecture when porting, and
-since it doesn't get executed it seemed fine.
+I'm definitely not a mm expert, but I wonder if you might be able to
+get this working using GFP_NOFS, but I see just now that they
+recommend you *not* use GFP_NOFS; even if this did solve the problem,
+it's probably not the right approach.
 
-One maybe nicer option along the same lines would be 0x72736571 or
-0x71657372 (ASCII 'rseq') neither of which decode as a MIPS instruction.
+I'm okay with leaving it as-is with GFP_ATOMIC.  My original response
+to this was more of a question about optimizing for a given use case,
+having something that works is far more important.
 
-> I think the order of preference is:
->=20
-> 1.  An uncommon insn (with random immediate values), in a literal pool, t=
-hat is
->     not a useful ROP/JOP sequence (very uncommon)
-
-For that option on MIPS we could do something like:
-
-  sll $0, $0, 31     # effectively a nop, but looks weird
-
-> 2a. A uncommon TRAP hopefully with some immediate data encoded (maybe unc=
-ommon)
-
-Our break instruction has a 19b immediate in nanoMIPS (20b for microMIPS
-& classic MIPS) so that could be something like:
-
-  break 0x7273       # ASCII 'rs'
-
-That's pretty unlikely to be seen in normal code, or the teq instruction
-has a rarely used code field (4b in microMIPS, 5b in nanoMIPS, 10b in
-classic MIPS) that's meaningless to hardware so something like this
-would be possible:
-
-  teq $0, $0, 0x8    # ASCII backspace
-
-> 2b. A NOP to avoid affecting speculative execution (maybe uncommon)
->=20
-> With 2a/2b being roughly equivalent depending on speculative execution po=
-licy.
-
-There are a bunch of potential odd looking nops possible, one of which
-would be the sll I mentioned above.
-
-Another option would be to use a priveleged instruction which userland
-code can't execute & should normally never contain. That would decode as
-a valid instruction & effectively behave like a trap instruction but
-look very odd to anyone reading disassembled code. eg:
-
-  mfc0 $0, 13        # Try to read the cause register; take SIGILL
-
-In order to handle MIPS vs microMIPS vs nanoMIPS differences I'm
-thinking it may be best to switch to one of these real instructions that
-looks strange. The ugly part would be the nest of #ifdef's to deal with
-endianness & ISA when defining it as a number...
-
-Thanks,
-    Paul
+-- 
+paul moore
+www.paul-moore.com
