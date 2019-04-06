@@ -1,78 +1,81 @@
-From: "Li, Aubrey" <aubrey.li@linux.intel.com>
-Subject: Re: [PATCH v13 2/3] x86,/proc/pid/status: Add AVX-512 usage elapsed
- time
-Date: Sat, 6 Apr 2019 23:41:57 +0800
-Message-ID: <d118f16e-0d8c-956f-9057-26e463ce3e60@linux.intel.com>
-References: <20190224044400.34975-1-aubrey.li@linux.intel.com>
- <20190224044400.34975-2-aubrey.li@linux.intel.com>
- <CAG48ez2hJvjRD-immEJ9uJAY1WRth3pMf0Qz8bApRke05kC+2Q@mail.gmail.com>
+From: Alexey Dobriyan <adobriyan@gmail.com>
+Subject: Re: [PATCH] sched/core: expand sched_getaffinity(2) to return number
+ of CPUs
+Date: Sat, 6 Apr 2019 22:48:25 +0300
+Message-ID: <20190406194825.GA5106@avx2>
+References: <20190403200809.GA13876@avx2>
+ <20190404084249.GS4038@hirez.programming.kicks-ass.net>
+ <87wok83gfs.fsf@oldenburg2.str.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAG48ez2hJvjRD-immEJ9uJAY1WRth3pMf0Qz8bApRke05kC+2Q@mail.gmail.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <87wok83gfs.fsf@oldenburg2.str.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, tim.c.chen@linux.intel.com, Dave Hansen <dave.hansen@intel.com>, Arjan van de Ven <arjan@linux.intel.com>, aubrey.li@intel.com, kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>
+To: Florian Weimer <fweimer@redhat.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, mingo@redhat.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 2019/4/6 4:27, Jann Horn wrote:
-> On Fri, Apr 5, 2019 at 10:02 PM Aubrey Li <aubrey.li@linux.intel.com> wrote:
->> AVX-512 components use could cause core turbo frequency drop. So
->> it's useful to expose AVX-512 usage elapsed time as a heuristic hint
->> for the user space job scheduler to cluster the AVX-512 using tasks
->> together.
->>
->> Tensorflow example:
->> $ while [ 1 ]; do cat /proc/pid/status | grep AVX; sleep 1; done
->> AVX512_elapsed_ms:      4
->> AVX512_elapsed_ms:      8
->> AVX512_elapsed_ms:      4
->>
->> This means that 4 milliseconds have elapsed since the AVX512 usage
->> of tensorflow task was detected when the task was scheduled out.
->>
->> Or:
->> $ cat /proc/pid/status | grep AVX512_elapsed_ms
->> AVX512_elapsed_ms:      -1
+On Fri, Apr 05, 2019 at 12:16:39PM +0200, Florian Weimer wrote:
+> * Peter Zijlstra:
 > 
-> (Very nitpicky, feel free to ignore: If you change the /proc/pid to
-> /proc/tid in the commit message, it becomes clearer that this status
-> is really per-task/thread, not per-process/threadgroup.)
-
-Thanks, I'll refine.
-
+> > On Wed, Apr 03, 2019 at 11:08:09PM +0300, Alexey Dobriyan wrote:
+> >> Currently there is no easy way to get the number of CPUs on the system.
 > 
-> [...]
->> +
->> +/*
->> + * Report the amount of time elapsed in millisecond since last AVX512
->> + * use in the task.
->> + */
->> +static void avx512_status(struct seq_file *m, struct task_struct *task)
->> +{
->> +       unsigned long timestamp = task->thread.fpu.avx512_timestamp;
+> The size of the affinity mask is only related to the number of CPUs in
+> the system in such a way that the number of CPUs cannot be larger than
+> the number of bits in the affinity mask.
 > 
-> This is theoretically a data race, right? Should this have a READ_ONCE() on it?
-
-Thanks, I'll refine.
-
+> >> Glibc in particular shipped with 1024 CPUs support maximum at some point
+> >> which is quite surprising as glibc maitainers should know better.
 > 
-> Is there something that zeroes out the avx512_timestamp on
-> fork()/clone(), or will every child inherit the avx512 timestamp? As
-> far as I can tell, the timestamp is inherited; I think it would be
-> nicer to zero it out at that point. Either way, It might be worth
-> documenting this decision.
+> This dates back to a time when the kernel was never going to support
+> more than 1024 CPUs.
 > 
+> A lot of distribution kernels still enforce a hard limit, which papers
+> over firmware bugs which tell the kernel that the system can be
+> hot-plugged to a ridiculous number of sockets/CPUs.
+> 
+> >> Another group dynamically grow buffer until cpumask fits. This is
+> >> inefficient as multiple system calls are done.
+> >> 
+> >> Nobody seems to parse "/sys/devices/system/cpu/possible".
+> >> Even if someone does, parsing sysfs is much slower than necessary.
+> >
+> > True; but I suppose glibc already does lots of that anyway, right? It
+> > does contain the right information.
+> 
+> If I recall correctly my last investigation,
+> /sys/devices/system/cpu/possible does not reflect the size of the
+> affinity mask, either.
+> 
+> >> Patch overloads sched_getaffinity(len=0) to simply return "nr_cpu_ids".
+> >> This will make gettting CPU mask require at most 2 system calls
+> >> and will eliminate unnecessary code.
+> >> 
+> >> len=0 is chosen so that
+> >> * passing zeroes is the simplest thing
+> >> 
+> >> 	syscall(__NR_sched_getaffinity, 0, 0, NULL)
+> >> 
+> >>   will simply do the right thing,
+> >> 
+> >> * old kernels returned -EINVAL unconditionally.
+> >> 
+> >> Note: glibc segfaults upon exiting from system call because it tries to
+> >> clear the rest of the buffer if return value is positive, so
+> >> applications will have to use syscall(3).
+> >> Good news is that it proves noone uses sched_getaffinity(pid, 0, NULL).
+> 
+> Given that old kernels fail with EINVAL, that evidence is fairly
+> restricted.
+> 
+> I'm not sure if it's a good idea to overload this interface.  I expect
+> that users will want to call sched_getaffinity (the system call wrapper)
+> with cpusetsize == 0 to query the value, so there will be pressure on
+> glibc to remove the memset.  At that point we have an API that obscurely
+> fails with old glibc versions, but suceeds with newer ones, which isn't
+> great.
 
-This timestamp is not inherited, see below:
-
-_do_fork()
-->copy_process()
--->dup_task_struct()
---->arch_dup_task_struct()
----->fpu__copy()
-
-Thanks,
--Aubrey
+I can do "if (len == 536870912)" so that bit count overflows on old
+kernels into EINVAL and is unlikely to be used ever.
