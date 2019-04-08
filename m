@@ -1,55 +1,50 @@
 From: "Li, Aubrey" <aubrey.li@linux.intel.com>
 Subject: Re: [PATCH v13 1/3] /proc/pid/status: Add support for architecture
  specific output
-Date: Mon, 8 Apr 2019 08:38:40 +0800
-Message-ID: <c9662fea-faaf-beb3-246a-c60dad6d7420@linux.intel.com>
+Date: Mon, 8 Apr 2019 08:45:28 +0800
+Message-ID: <d1931260-cdae-8270-80ad-080cf103789a@linux.intel.com>
 References: <20190224044400.34975-1-aubrey.li@linux.intel.com>
  <alpine.DEB.2.21.1904052129371.1802@nanos.tec.linutronix.de>
- <CALCETrVhpqZiBe6zvK+z6HmD9AhK_O_O=2H=PYzBHid4C=SMYQ@mail.gmail.com>
+ <20190406214143.GA21551@avx2>
+ <7cd8fa2d-301a-5c96-ce3d-3dc373a5d8f5@linux.intel.com>
+ <20190407154622.GA16004@avx2>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrVhpqZiBe6zvK+z6HmD9AhK_O_O=2H=PYzBHid4C=SMYQ@mail.gmail.com>
+In-Reply-To: <20190407154622.GA16004@avx2>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>, Thomas Gleixner <tglx@linutronix.de>
-Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, Tim Chen <tim.c.chen@linux.intel.com>, Dave Hansen <dave.hansen@intel.com>, Arjan van de Ven <arjan@linux.intel.com>, aubrey.li@intel.com, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>
+To: Alexey Dobriyan <adobriyan@gmail.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>, mingo@redhat.com, Peter Zijlstra <peterz@infradead.org>, "H. Peter Anvin" <hpa@zytor.com>, ak@linux.intel.com, tim.c.chen@linux.intel.com, dave.hansen@intel.com, arjan@linux.intel.com, aubrey.li@intel.com, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On 2019/4/8 1:34, Andy Lutomirski wrote:
-> On Fri, Apr 5, 2019 at 12:32 PM Thomas Gleixner <tglx@linutronix.de> wrote:
->>
->> On Sun, 24 Feb 2019, Aubrey Li wrote:
->>
->>> The architecture specific information of the running processes could
->>> be useful to the userland. Add support to examine process architecture
->>> specific information externally.
+On 2019/4/7 23:46, Alexey Dobriyan wrote:
+> On Sun, Apr 07, 2019 at 09:02:38PM +0800, Li, Aubrey wrote:
+>> On 2019/4/7 5:41, Alexey Dobriyan wrote:
+>>> On Fri, Apr 05, 2019 at 09:32:35PM +0200, Thomas Gleixner wrote:
+>>>>> +/* Add support for architecture specific output in /proc/pid/status */
+>>>>> +extern void arch_proc_pid_status(struct seq_file *m, struct task_struct *task);
+>>>      ^^^^^^
 >>>
->>> Signed-off-by: Aubrey Li <aubrey.li@linux.intel.com>
->>> Cc: Peter Zijlstra <peterz@infradead.org>
->>> Cc: Andi Kleen <ak@linux.intel.com>
->>> Cc: Tim Chen <tim.c.chen@linux.intel.com>
->>> Cc: Dave Hansen <dave.hansen@intel.com>
->>> Cc: Arjan van de Ven <arjan@linux.intel.com>
+>>> Unnecessary extern.
+>>>
+>> The linkage is default extern, but with this functions and variables
+>> can be treated the same way.
 >>
->> This really lacks
->>
->> Cc: Linux API <linux-api@vger.kernel.org>
->> Cc: Alexey Dobriyan <adobriyan@gmail.com>
->> Cc: Andrew Morton <akpm@linux-foundation.org>
->>
->> Cc'ed now.
->>
+>> Is it mandatory not to use it explicitly? ./script/checkpatch.pl did
+>> not report this.
 > 
-> I certainly understand why you want to expose this info, but would it
-> make more sense to instead add an arch_status file in /proc with
-> architecture-specific info?  Or maybe an x86_status field for x86
-> status, etc.
+> "extern" is only necessary for variables. For prototypes, it is more typing
+> and more characters on the screen.
 > 
-
-I tried this, but no other architecture showed interest in arch_status
-under /proc.
+> checkpatch.pl doesn't report it because opening floodgates is not the plan.
+> 
+> Yours,
+> 	Extern Police.
+>
+ 
+No problem, Mr. Police, I can remove it in the next version.
 
 Thanks,
 -Aubrey
