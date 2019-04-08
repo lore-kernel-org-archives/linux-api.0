@@ -1,160 +1,190 @@
-From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: Re: [PATCH v8 01/16] sched/core: uclamp: Add CPU's clamp buckets
- refcounting
-Date: Mon, 8 Apr 2019 12:49:08 +0100
-Message-ID: <20190408114908.evij7pqml6ltqtnl@e110439-lin>
-References: <20190402104153.25404-1-patrick.bellasi@arm.com>
- <20190402104153.25404-2-patrick.bellasi@arm.com>
- <CAJuCfpFdDK+xYZDq+TDVjRUcF8BTqeXWvF2Wex8n7nB-O5qH1g@mail.gmail.com>
+From: "Dmitry V. Levin" <ldv@altlinux.org>
+Subject: [PATCH linux-next v9 0/7] ptrace: add PTRACE_GET_SYSCALL_INFO request
+Date: Mon, 8 Apr 2019 20:40:36 +0300
+Message-ID: <20190408174036.GA11889@altlinux.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAJuCfpFdDK+xYZDq+TDVjRUcF8BTqeXWvF2Wex8n7nB-O5qH1g@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Suren Baghdasaryan <surenb@google.com>
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>
+To: Stephen Rothwell <sfr@canb.auug.org.au>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@kernel.org>
+Cc: Elvira Khabirova <lineprinter@altlinux.org>, Eugene Syromyatnikov <esyr@redhat.com>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Greentime Hu <green.hu@gmail.com>, Helge Deller <deller@gmx.de>, "James E.J. Bottomley" <jejb@parisc-linux.org>, James Hogan <jhogan@kernel.org>, Kees Cook <keescook@chromium.org>, Michael Ellerman <mpe@ellerman.id.au>, Paul Burton <paul.burton@mips.com>, Paul Mackerras <paulus@samba.org>, Ralf Baechle <ralf@linux-mips.org>, Richard Kuo <rkuo@codeaurora.org>, Shuah Khan <shuah@kernel.org>, Vincent Chen <deanbo422@gmail.com>, linux-api@vger.kernel.org, linux-hexagon@vger.kernel.org, linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lis
 List-Id: linux-api@vger.kernel.org
 
-On 06-Apr 16:51, Suren Baghdasaryan wrote:
-> On Tue, Apr 2, 2019 at 3:42 AM Patrick Bellasi <patrick.bellasi@arm.com> wrote:
+[I suggest to stop waiting for more acks and merge this into linux-next as is.]
 
-[...]
+PTRACE_GET_SYSCALL_INFO is a generic ptrace API that lets ptracer obtain
+details of the syscall the tracee is blocked in.
 
-> > + * The first few values calculated by this routine:
-> > + * bf(0) = 1
-> > + * bf(1) = 1
-> > + * bf(2) = 2
-> > + * bf(3) = 2
-> > + * bf(4) = 3
-> > + * ... and so on.
-> > + */
-> > +#define bits_per(n)                            \
-> > +(                                              \
-> > +       __builtin_constant_p(n) ? (             \
-> > +               ((n) == 0 || (n) == 1) ? 1 : (  \
-> > +               ((n) & (n - 1)) == 0 ?          \
-> 
-> missing braces around 'n'
-> -               ((n) & (n - 1)) == 0 ?          \
-> +               ((n) & ((n) - 1)) == 0 ?          \
-> 
-> > +                       ilog2((n) - 1) + 2 :    \
-> > +                       ilog2((n) - 1) + 1      \
-> 
-> Isn't this "((n) & ((n) - 1)) == 0 ?  ilog2((n) - 1) + 2 : ilog2((n) -
-> 1) + 1" expression equivalent to a simple "ilog2(n) + 1"?
+There are two reasons for a special syscall-related ptrace request.
 
-Right, since we already have n=0 and n=1 as special cases, what you
-propose should work for all n>=2.
+Firstly, with the current ptrace API there are cases when ptracer cannot
+retrieve necessary information about syscalls.  Some examples include:
+* The notorious int-0x80-from-64-bit-task issue.  See [1] for details.
+In short, if a 64-bit task performs a syscall through int 0x80, its tracer
+has no reliable means to find out that the syscall was, in fact,
+a compat syscall, and misidentifies it.
+* Syscall-enter-stop and syscall-exit-stop look the same for the tracer.
+Common practice is to keep track of the sequence of ptrace-stops in order
+not to mix the two syscall-stops up.  But it is not as simple as it looks;
+for example, strace had a (just recently fixed) long-standing bug where
+attaching strace to a tracee that is performing the execve system call
+led to the tracer identifying the following syscall-exit-stop as
+syscall-enter-stop, which messed up all the state tracking.
+* Since the introduction of commit 84d77d3f06e7e8dea057d10e8ec77ad71f721be3
+("ptrace: Don't allow accessing an undumpable mm"), both PTRACE_PEEKDATA
+and process_vm_readv become unavailable when the process dumpable flag
+is cleared.  On such architectures as ia64 this results in all syscall
+arguments being unavailable for the tracer.
 
-> 
-> > +               )                               \
-> > +       ) :                                     \
-> > +       __bits_per(n)                           \
-> > +)
-> >  #endif /* _LINUX_LOG2_H */
+Secondly, ptracers also have to support a lot of arch-specific code for
+obtaining information about the tracee.  For some architectures, this
+requires a ptrace(PTRACE_PEEKUSER, ...) invocation for every syscall
+argument and return value.
 
-[...]
+PTRACE_GET_SYSCALL_INFO returns the following structure:
 
-> > +static inline unsigned int uclamp_bucket_base_value(unsigned int clamp_value)
-> 
-> Where are you using uclamp_bucket_base_value()? I would expect its
-> usage somewhere inside uclamp_rq_dec_id() when the last task in the
-> bucket is dequeued but I don't see it...
+struct ptrace_syscall_info {
+	__u8 op;	/* PTRACE_SYSCALL_INFO_* */
+	__u32 arch __attribute__((__aligned__(sizeof(__u32))));
+	__u64 instruction_pointer;
+	__u64 stack_pointer;
+	union {
+		struct {
+			__u64 nr;
+			__u64 args[6];
+		} entry;
+		struct {
+			__s64 rval;
+			__u8 is_error;
+		} exit;
+		struct {
+			__u64 nr;
+			__u64 args[6];
+			__u32 ret_data;
+		} seccomp;
+	};
+};
 
-This behavior is not move into a dedicated patch, as per Peter
-request:
+The structure was chosen according to [2], except for the following
+changes:
+* seccomp substructure was added as a superset of entry substructure;
+* the type of nr field was changed from int to __u64 because syscall
+numbers are, as a practical matter, 64 bits;
+* stack_pointer field was added along with instruction_pointer field
+since it is readily available and can save the tracer from extra
+PTRACE_GETREGS/PTRACE_GETREGSET calls;
+* arch is always initialized to aid with tracing system calls
+* such as execve();
+* instruction_pointer and stack_pointer are always initialized
+so they could be easily obtained for non-syscall stops;
+* a boolean is_error field was added along with rval field, this way
+the tracer can more reliably distinguish a return value
+from an error value.
 
-   Message-ID: <20190314111849.gx6bl6myfjtaan7r@e110439-lin>
+strace has been ported to PTRACE_GET_SYSCALL_INFO.
+Starting with release 4.26, strace uses PTRACE_GET_SYSCALL_INFO API
+as the preferred mechanism of obtaining syscall information.
 
-This functions was left here to support a the intialization code in
-init_uclamp() but... I notice know I'm doing the initialization in a
-different way thus, I'll move it into the following patch.
+[1] https://lore.kernel.org/lkml/CA+55aFzcSVmdDj9Lh_gdbz1OzHyEm6ZrGPBDAJnywm2LF_eVyg@mail.gmail.com/
+[2] https://lore.kernel.org/lkml/CAObL_7GM0n80N7J_DFw_eQyfLyzq+sf4y2AvsCCV88Tb3AwEHA@mail.gmail.com/
 
-> > +{
-> > +       return UCLAMP_BUCKET_DELTA * uclamp_bucket_id(clamp_value);
-> > +}
-> > +
+---
 
-[...]
+Notes:
+    v9:
+    * Rebased to linux-next again due to syscall_get_arguments() signature change.
 
-> > +static inline void uclamp_rq_dec_id(struct task_struct *p, struct rq *rq,
-> > +                                   unsigned int clamp_id)
-> > +{
-> > +       struct uclamp_rq *uc_rq = &rq->uclamp[clamp_id];
-> > +       struct uclamp_se *uc_se = &p->uclamp[clamp_id];
-> > +       struct uclamp_bucket *bucket;
-> > +       unsigned int rq_clamp;
-> > +
-> > +       bucket = &uc_rq->bucket[uc_se->bucket_id];
-> > +       SCHED_WARN_ON(!bucket->tasks);
-> > +       if (likely(bucket->tasks))
-> > +               bucket->tasks--;
-> > +
-> > +       if (likely(bucket->tasks))
-> 
-> Shouldn't you adjust bucket->value if the remaining tasks in the
-> bucket have a lower clamp value than the task that was just removed?
+    v8:
+    * Moved syscall_get_arch() specific patches to a separate patchset
+      which is now merged into audit/next tree.
+    * Rebased to linux-next.
+    * Moved ptrace_get_syscall_info code under #ifdef CONFIG_HAVE_ARCH_TRACEHOOK,
+      narrowing down the set of architectures supported by this implementation
+      back to those 19 that enable CONFIG_HAVE_ARCH_TRACEHOOK because
+      I failed to get all syscall_get_*(), instruction_pointer(),
+      and user_stack_pointer() functions implemented on some niche
+      architectures.  This leaves the following architectures out:
+      alpha, h8300, m68k, microblaze, and unicore32.
 
-No, this is never done. As long as a bucket is not empty/idle we never
-reset it to its nominal value. In this patch specifically, the value
-is never changed since we moved the "local max tracking" bits into a
-dedicated patch.
+    v7:
+    * Rebased to v5.0-rc1.
+    * 5 arch-specific preparatory patches out of 25 have been merged
+      into v5.0-rc1 via arch trees.
 
-> > +               return;
-> > +
-> > +       rq_clamp = READ_ONCE(uc_rq->value);
-> > +       /*
-> > +        * Defensive programming: this should never happen. If it happens,
-> > +        * e.g. due to future modification, warn and fixup the expected value.
-> > +        */
-> > +       SCHED_WARN_ON(bucket->value > rq_clamp);
-> > +       if (bucket->value >= rq_clamp)
-> > +               WRITE_ONCE(uc_rq->value, uclamp_rq_max_value(rq, clamp_id));
-> > +}
+    v6:
+    * Add syscall_get_arguments and syscall_set_arguments wrappers
+      to asm-generic/syscall.h, requested by Geert.
+    * Change PTRACE_GET_SYSCALL_INFO return code: do not take trailing paddings
+      into account, use the end of the last field of the structure being written.
+    * Change struct ptrace_syscall_info:
+      * remove .frame_pointer field, is is not needed and not portable;
+      * make .arch field explicitly aligned, remove no longer needed
+        padding before .arch field;
+      * remove trailing pads, they are no longer needed.
 
-[...]
+    v5:
+    * Merge separate series and patches into the single series.
+    * Change PTRACE_EVENTMSG_SYSCALL_{ENTRY,EXIT} values as requested by Oleg.
+    * Change struct ptrace_syscall_info: generalize instruction_pointer,
+      stack_pointer, and frame_pointer fields by moving them from
+      ptrace_syscall_info.{entry,seccomp} substructures to ptrace_syscall_info
+      and initializing them for all stops.
+    * Add PTRACE_SYSCALL_INFO_NONE, set it when not in a syscall stop,
+      so e.g. "strace -i" could use PTRACE_SYSCALL_INFO_SECCOMP to obtain
+      instruction_pointer when the tracee is in a signal stop.
+    * Patch all remaining architectures to provide all necessary
+      syscall_get_* functions.
+    * Make available for all architectures: do not conditionalize on
+      CONFIG_HAVE_ARCH_TRACEHOOK since all syscall_get_* functions
+      are implemented on all architectures.
+    * Add a test for PTRACE_GET_SYSCALL_INFO to selftests/ptrace.
+    
+    v4:
+    * Do not introduce task_struct.ptrace_event,
+      use child->last_siginfo->si_code instead.
+    * Implement PTRACE_SYSCALL_INFO_SECCOMP and ptrace_syscall_info.seccomp
+      support along with PTRACE_SYSCALL_INFO_{ENTRY,EXIT} and
+      ptrace_syscall_info.{entry,exit}.
+    
+    v3:
+    * Change struct ptrace_syscall_info.
+    * Support PTRACE_EVENT_SECCOMP by adding ptrace_event to task_struct.
+    * Add proper defines for ptrace_syscall_info.op values.
+    * Rename PT_SYSCALL_IS_ENTERING and PT_SYSCALL_IS_EXITING to
+      PTRACE_EVENTMSG_SYSCALL_ENTRY and PTRACE_EVENTMSG_SYSCALL_EXIT
+    * and move them to uapi.
+    
+    v2:
+    * Do not use task->ptrace.
+    * Replace entry_info.is_compat with entry_info.arch, use syscall_get_arch().
+    * Use addr argument of sys_ptrace to get expected size of the struct;
+      return full size of the struct.
 
-> > +static void __init init_uclamp(void)
-> > +{
-> > +       unsigned int clamp_id;
-> > +       int cpu;
-> > +
-> > +       for_each_possible_cpu(cpu) {
-> > +               struct uclamp_bucket *bucket;
-> > +               struct uclamp_rq *uc_rq;
-> > +               unsigned int bucket_id;
-> > +
-> > +               memset(&cpu_rq(cpu)->uclamp, 0, sizeof(struct uclamp_rq));
-> > +
-> > +               for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id) {
-> > +                       uc_rq = &cpu_rq(cpu)->uclamp[clamp_id];
-> > +
-> > +                       bucket_id = 1;
-> > +                       while (bucket_id < UCLAMP_BUCKETS) {
-> > +                               bucket = &uc_rq->bucket[bucket_id];
-> > +                               bucket->value = bucket_id * UCLAMP_BUCKET_DELTA;
-> > +                               ++bucket_id;
-> > +                       }
-> > +               }
-> > +       }
+Dmitry V. Levin (6):
+  nds32: fix asm/syscall.h # waiting for ack since early January
+  hexagon: define syscall_get_error() and syscall_get_return_value() # waiting for ack since November
+  mips: define syscall_get_error() # acked
+  parisc: define syscall_get_error() # acked
+  powerpc: define syscall_get_error() # waiting for ack since early December
+  selftests/ptrace: add a test case for PTRACE_GET_SYSCALL_INFO
 
-All the initialization code above is not more required after the next
-patch introducing "local max tracking".
+Elvira Khabirova (1):
+  ptrace: add PTRACE_GET_SYSCALL_INFO request # reviewed
 
-> > +
-> > +       for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id) {
-> > +               struct uclamp_se *uc_se = &init_task.uclamp[clamp_id];
-> > +
-> > +               uc_se->value = uclamp_none(clamp_id);
-> > +               uc_se->bucket_id = uclamp_bucket_id(uc_se->value);
-> > +       }
-> > +}
-
-[...]
+ arch/hexagon/include/asm/syscall.h            |  14 +
+ arch/mips/include/asm/syscall.h               |   6 +
+ arch/nds32/include/asm/syscall.h              |  27 +-
+ arch/parisc/include/asm/syscall.h             |   7 +
+ arch/powerpc/include/asm/syscall.h            |  10 +
+ include/linux/tracehook.h                     |   9 +-
+ include/uapi/linux/ptrace.h                   |  35 +++
+ kernel/ptrace.c                               | 103 ++++++-
+ tools/testing/selftests/ptrace/.gitignore     |   1 +
+ tools/testing/selftests/ptrace/Makefile       |   2 +-
+ .../selftests/ptrace/get_syscall_info.c       | 271 ++++++++++++++++++
+ 11 files changed, 470 insertions(+), 15 deletions(-)
+ create mode 100644 tools/testing/selftests/ptrace/get_syscall_info.c
 
 -- 
-#include <best/regards.h>
-
-Patrick Bellasi
+ldv
