@@ -1,68 +1,56 @@
-From: "Li, Aubrey" <aubrey.li@linux.intel.com>
-Subject: Re: [PATCH v13 1/3] /proc/pid/status: Add support for architecture
- specific output
-Date: Mon, 8 Apr 2019 10:33:33 +0800
-Message-ID: <c0dcd47a-b155-8523-0d7d-a25dd3cc665c@linux.intel.com>
-References: <20190224044400.34975-1-aubrey.li@linux.intel.com>
- <alpine.DEB.2.21.1904052129371.1802@nanos.tec.linutronix.de>
- <CALCETrVhpqZiBe6zvK+z6HmD9AhK_O_O=2H=PYzBHid4C=SMYQ@mail.gmail.com>
- <c9662fea-faaf-beb3-246a-c60dad6d7420@linux.intel.com>
- <CALCETrVxkcn=R+T-9P3CNkEiRwUGmttem52vykBcYhVSYWwh8A@mail.gmail.com>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: [PATCH] sched/core: expand sched_getaffinity(2) to return number of CPUs
+Date: Mon, 08 Apr 2019 09:49:35 +0200
+Message-ID: <878swlszqo.fsf@oldenburg2.str.redhat.com>
+References: <20190403200809.GA13876@avx2>
+        <20190404084249.GS4038@hirez.programming.kicks-ass.net>
+        <87wok83gfs.fsf@oldenburg2.str.redhat.com>
+        <20190406194825.GA5106@avx2>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrVxkcn=R+T-9P3CNkEiRwUGmttem52vykBcYhVSYWwh8A@mail.gmail.com>
-Content-Language: en-US
+In-Reply-To: <20190406194825.GA5106@avx2> (Alexey Dobriyan's message of "Sat,
+        6 Apr 2019 22:48:25 +0300")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, Tim Chen <tim.c.chen@linux.intel.com>, Dave Hansen <dave.hansen@intel.com>, Arjan van de Ven <arjan@linux.intel.com>, aubrey.li@intel.com, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>
+To: Alexey Dobriyan <adobriyan@gmail.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, mingo@redhat.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 2019/4/8 9:52, Andy Lutomirski wrote:
-> On Sun, Apr 7, 2019 at 5:38 PM Li, Aubrey <aubrey.li@linux.intel.com> wrote:
->>
->> On 2019/4/8 1:34, Andy Lutomirski wrote:
->>> On Fri, Apr 5, 2019 at 12:32 PM Thomas Gleixner <tglx@linutronix.de> wrote:
->>>>
->>>> On Sun, 24 Feb 2019, Aubrey Li wrote:
->>>>
->>>>> The architecture specific information of the running processes could
->>>>> be useful to the userland. Add support to examine process architecture
->>>>> specific information externally.
->>>>>
->>>>> Signed-off-by: Aubrey Li <aubrey.li@linux.intel.com>
->>>>> Cc: Peter Zijlstra <peterz@infradead.org>
->>>>> Cc: Andi Kleen <ak@linux.intel.com>
->>>>> Cc: Tim Chen <tim.c.chen@linux.intel.com>
->>>>> Cc: Dave Hansen <dave.hansen@intel.com>
->>>>> Cc: Arjan van de Ven <arjan@linux.intel.com>
->>>>
->>>> This really lacks
->>>>
->>>> Cc: Linux API <linux-api@vger.kernel.org>
->>>> Cc: Alexey Dobriyan <adobriyan@gmail.com>
->>>> Cc: Andrew Morton <akpm@linux-foundation.org>
->>>>
->>>> Cc'ed now.
->>>>
->>>
->>> I certainly understand why you want to expose this info, but would it
->>> make more sense to instead add an arch_status file in /proc with
->>> architecture-specific info?  Or maybe an x86_status field for x86
->>> status, etc.
->>>
->>
->> I tried this, but no other architecture showed interest in arch_status
->> under /proc.
->>
-> 
-> Why is that a problem?  It could exist on x86 and not exist on other
-> arches until needed.
-> 
+* Alexey Dobriyan:
 
-I placed it in tid_base_stuff, under live_patch entry, so it exists for
-all arches, is there a better way to do this?
+>> >> Patch overloads sched_getaffinity(len=0) to simply return "nr_cpu_ids".
+>> >> This will make gettting CPU mask require at most 2 system calls
+>> >> and will eliminate unnecessary code.
+>> >> 
+>> >> len=0 is chosen so that
+>> >> * passing zeroes is the simplest thing
+>> >> 
+>> >> 	syscall(__NR_sched_getaffinity, 0, 0, NULL)
+>> >> 
+>> >>   will simply do the right thing,
+>> >> 
+>> >> * old kernels returned -EINVAL unconditionally.
+>> >> 
+>> >> Note: glibc segfaults upon exiting from system call because it tries to
+>> >> clear the rest of the buffer if return value is positive, so
+>> >> applications will have to use syscall(3).
+>> >> Good news is that it proves noone uses sched_getaffinity(pid, 0, NULL).
+>> 
+>> Given that old kernels fail with EINVAL, that evidence is fairly
+>> restricted.
+>> 
+>> I'm not sure if it's a good idea to overload this interface.  I expect
+>> that users will want to call sched_getaffinity (the system call wrapper)
+>> with cpusetsize == 0 to query the value, so there will be pressure on
+>> glibc to remove the memset.  At that point we have an API that obscurely
+>> fails with old glibc versions, but suceeds with newer ones, which isn't
+>> great.
+>
+> I can do "if (len == 536870912)" so that bit count overflows on old
+> kernels into EINVAL and is unlikely to be used ever.
+
+I don't see how this solves this particular issue.  It will still result
+in a mysterious crash if programs use an updated system call wrapper.
 
 Thanks,
--Aubrey
+Florian
