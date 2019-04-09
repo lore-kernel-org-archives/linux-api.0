@@ -1,69 +1,255 @@
-From: Andrew Murray <andrew.murray@arm.com>
-Subject: [PATCH v5 6/6] arm64: Advertise ARM64_HAS_DCPODP cpu feature
-Date: Tue,  9 Apr 2019 10:52:45 +0100
-Message-ID: <20190409095245.42524-7-andrew.murray@arm.com>
-References: <20190409095245.42524-1-andrew.murray@arm.com>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: [PATCH] Linux: Define struct termios2 in <termios.h> under _GNU_SOURCE [BZ #10339]
+Date: Tue, 09 Apr 2019 12:47:30 +0200
+Message-ID: <875zrnlakd.fsf@oldenburg2.str.redhat.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <libc-alpha-return-101261-glibc-alpha=m.gmane.org@sourceware.org>
+Content-Type: text/plain
+Return-path: <libc-alpha-return-101263-glibc-alpha=m.gmane.org@sourceware.org>
 List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
 List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
 List-Archive: <http://sourceware.org/ml/libc-alpha/>
 List-Post: <mailto:libc-alpha@sourceware.org>
 List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
 Sender: libc-alpha-owner@sourceware.org
-In-Reply-To: <20190409095245.42524-1-andrew.murray@arm.com>
-To: Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>
-Cc: Szabolcs Nagy <Szabolcs.Nagy@arm.com>, dave.martin@arm.com, linux-arm-kernel@lists.infradead.org, Mark Rutland <mark.rutland@arm.com>, Phil Blundell <pb@pbcl.net>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, Suzuki K Poulose <suzuki.poulose@arm.com>, Dave Martin <Dave.Martin@arm.com>
+To: libc-alpha@sourceware.org
+Cc: hpa@zytor.com, adhemerval.zanella@linaro.org, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org
 List-Id: linux-api@vger.kernel.org
 
-Advertise ARM64_HAS_DCPODP when both DC CVAP and DC CVADP are supported.
+struct termios2 is required for setting arbitrary baud rates on serial
+ports.  <sys/ioctl.h> and <linux/termios.h> have conflicting
+definitions in the existing termios definitions, which means that it
+is currently very difficult to use TCGETS2/TCSETS2 and struct termios2
+with glibc.  Providing a definition within glibc resolves this problem.
 
-Even though we don't use this feature now, we provide it for consistency
-with DCPOP and anticipate it being used in the future.
+This does not completely address bug 10339, but it at least exposes
+the current kernel functionality in this area.
 
-Signed-off-by: Andrew Murray <andrew.murray@arm.com>
-Reviewed-by: Dave Martin <Dave.Martin@arm.com>
-Reviewed-by: Suzuki K Poulose <suzuki.poulose@arm.com>
----
- arch/arm64/include/asm/cpucaps.h |  3 ++-
- arch/arm64/kernel/cpufeature.c   | 10 ++++++++++
- 2 files changed, 12 insertions(+), 1 deletion(-)
+Support for struct termios2 is architecture-specific in the kernel.
+Support on alpha was only added in Linux 4.20.  POWER support is
+currently missing.  The expectation is that the kernel will eventually
+use the generic UAPI definition for struct termios2.
 
-diff --git a/arch/arm64/include/asm/cpucaps.h b/arch/arm64/include/asm/cpucaps.h
-index f6a76e43f39e..defdc67d9ab4 100644
---- a/arch/arm64/include/asm/cpucaps.h
-+++ b/arch/arm64/include/asm/cpucaps.h
-@@ -61,7 +61,8 @@
- #define ARM64_HAS_GENERIC_AUTH_ARCH		40
- #define ARM64_HAS_GENERIC_AUTH_IMP_DEF		41
- #define ARM64_HAS_IRQ_PRIO_MASKING		42
-+#define ARM64_HAS_DCPODP			43
+2019-04-09  Florian Weimer  <fweimer@redhat.com>
+
+	[BZ #10339]
+	Linux: Define struct termios2 in <termios.h> under _GNU_SOURCE.
+	* sysdeps/unix/sysv/linux/Makefile [$(subdir) == termios] (tests):
+	Add tst-termios2.
+	* sysdeps/unix/sysv/linux/tst-termios2.c: New file.
+	* sysdeps/unix/sysv/linux/bits/termios2-struct.h: Likewise.
+	* sysdeps/unix/sysv/linux/bits/termios.h [__USE_GNU]: Include it.
+	* sysdeps/unix/sysv/linux/alpha/bits/termios2-struct.h: New file.
+	* sysdeps/unix/sysv/linux/sparc/bits/termios2-struct.h: Likewise.
+
+diff --git a/NEWS b/NEWS
+index b58e2469d4..5e6ecb9c7d 100644
+--- a/NEWS
++++ b/NEWS
+@@ -18,6 +18,9 @@ Major new features:
  
--#define ARM64_NCAPS				43
-+#define ARM64_NCAPS				44
+ * On Linux, the gettid function has been added.
  
- #endif /* __ASM_CPUCAPS_H */
-diff --git a/arch/arm64/kernel/cpufeature.c b/arch/arm64/kernel/cpufeature.c
-index f8b682a3a9f4..9d18e45311fd 100644
---- a/arch/arm64/kernel/cpufeature.c
-+++ b/arch/arm64/kernel/cpufeature.c
-@@ -1340,6 +1340,16 @@ static const struct arm64_cpu_capabilities arm64_features[] = {
- 		.field_pos = ID_AA64ISAR1_DPB_SHIFT,
- 		.min_field_value = 1,
- 	},
-+	{
-+		.desc = "Data cache clean to Point of Deep Persistence",
-+		.capability = ARM64_HAS_DCPODP,
-+		.type = ARM64_CPUCAP_SYSTEM_FEATURE,
-+		.matches = has_cpuid_feature,
-+		.sys_reg = SYS_ID_AA64ISAR1_EL1,
-+		.sign = FTR_UNSIGNED,
-+		.field_pos = ID_AA64ISAR1_DPB_SHIFT,
-+		.min_field_value = 2,
-+	},
- #endif
- #ifdef CONFIG_ARM64_SVE
- 	{
--- 
-2.21.0
++* On Linux, <termios.h> now provides a definition of struct termios2 with
++  the _GNU_SOURCE feature test macro.
++
+ * Minguo (Republic of China) calendar support has been added as an
+   alternative calendar for the following locales: zh_TW, cmn_TW, hak_TW,
+   nan_TW, lzh_TW.
+diff --git a/sysdeps/unix/sysv/linux/Makefile b/sysdeps/unix/sysv/linux/Makefile
+index 52ac6ad484..4cb5e4f0d2 100644
+--- a/sysdeps/unix/sysv/linux/Makefile
++++ b/sysdeps/unix/sysv/linux/Makefile
+@@ -156,6 +156,7 @@ endif
+ 
+ ifeq ($(subdir),termios)
+ sysdep_headers += termio.h
++tests += tst-termios2
+ endif
+ 
+ ifeq ($(subdir),posix)
+diff --git a/sysdeps/unix/sysv/linux/alpha/bits/termios2-struct.h b/sysdeps/unix/sysv/linux/alpha/bits/termios2-struct.h
+new file mode 100644
+index 0000000000..5f09445e23
+--- /dev/null
++++ b/sysdeps/unix/sysv/linux/alpha/bits/termios2-struct.h
+@@ -0,0 +1,33 @@
++/* struct termios2 definition.  Linux/alpha version.
++   Copyright (C) 2019 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library.  If not, see
++   <http://www.gnu.org/licenses/>.  */
++
++#ifndef _TERMIOS_H
++# error "Never include <bits/termios2-struct.h> directly; use <termios.h> instead."
++#endif
++
++struct termios2
++{
++  tcflag_t c_iflag;
++  tcflag_t c_oflag;
++  tcflag_t c_cflag;
++  tcflag_t c_lflag;
++  cc_t c_cc[NCCS];
++  cc_t c_line;
++  speed_t c_ispeed;
++  speed_t c_ospeed;
++};
+diff --git a/sysdeps/unix/sysv/linux/bits/termios.h b/sysdeps/unix/sysv/linux/bits/termios.h
+index 997231cd03..45ac7affdf 100644
+--- a/sysdeps/unix/sysv/linux/bits/termios.h
++++ b/sysdeps/unix/sysv/linux/bits/termios.h
+@@ -25,6 +25,10 @@ typedef unsigned int	speed_t;
+ typedef unsigned int	tcflag_t;
+ 
+ #include <bits/termios-struct.h>
++#ifdef __USE_GNU
++# include <bits/termios2-struct.h>
++#endif
++
+ #include <bits/termios-c_cc.h>
+ #include <bits/termios-c_iflag.h>
+ #include <bits/termios-c_oflag.h>
+diff --git a/sysdeps/unix/sysv/linux/bits/termios2-struct.h b/sysdeps/unix/sysv/linux/bits/termios2-struct.h
+new file mode 100644
+index 0000000000..5a48e45ef3
+--- /dev/null
++++ b/sysdeps/unix/sysv/linux/bits/termios2-struct.h
+@@ -0,0 +1,33 @@
++/* struct termios2 definition.  Linux/generic version.
++   Copyright (C) 2019 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library.  If not, see
++   <http://www.gnu.org/licenses/>.  */
++
++#ifndef _TERMIOS_H
++# error "Never include <bits/termios2-struct.h> directly; use <termios.h> instead."
++#endif
++
++struct termios2
++{
++  tcflag_t c_iflag;
++  tcflag_t c_oflag;
++  tcflag_t c_cflag;
++  tcflag_t c_lflag;
++  cc_t c_line;
++  cc_t c_cc[NCCS];
++  speed_t c_ispeed;
++  speed_t c_ospeed;
++};
+diff --git a/sysdeps/unix/sysv/linux/sparc/bits/termios2-struct.h b/sysdeps/unix/sysv/linux/sparc/bits/termios2-struct.h
+new file mode 100644
+index 0000000000..7c889e575c
+--- /dev/null
++++ b/sysdeps/unix/sysv/linux/sparc/bits/termios2-struct.h
+@@ -0,0 +1,33 @@
++/* struct termios2 definition.  Linux/sparc version.
++   Copyright (C) 2019 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library.  If not, see
++   <http://www.gnu.org/licenses/>.  */
++
++#ifndef _TERMIOS_H
++# error "Never include <bits/termios2-struct.h> directly; use <termios.h> instead."
++#endif
++
++struct termios2
++{
++  tcflag_t c_iflag;
++  tcflag_t c_oflag;
++  tcflag_t c_cflag;
++  tcflag_t c_lflag;
++  cc_t c_line;
++  cc_t c_cc[NCCS + 2];
++  speed_t c_ispeed;
++  speed_t c_ospeed;
++};
+diff --git a/sysdeps/unix/sysv/linux/tst-termios2.c b/sysdeps/unix/sysv/linux/tst-termios2.c
+new file mode 100644
+index 0000000000..82326a1288
+--- /dev/null
++++ b/sysdeps/unix/sysv/linux/tst-termios2.c
+@@ -0,0 +1,48 @@
++/* Minimal test of struct termios2 definition.
++   Copyright (C) 2019 Free Software Foundation, Inc.
++   This file is part of the GNU C Library.
++
++   The GNU C Library is free software; you can redistribute it and/or
++   modify it under the terms of the GNU Lesser General Public
++   License as published by the Free Software Foundation; either
++   version 2.1 of the License, or (at your option) any later version.
++
++   The GNU C Library is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++   Lesser General Public License for more details.
++
++   You should have received a copy of the GNU Lesser General Public
++   License along with the GNU C Library.  If not, see
++   <http://www.gnu.org/licenses/>.  */
++
++#include <termios.h>
++#include <sys/ioctl.h>
++
++/* This function is never executed, but must be compiled successfully.
++   Accessing serial ports in the test suite is problematic because
++   they likely correspond with low-level system functionality.  */
++void
++not_executed (int fd)
++{
++  /* Avoid a compilation failure if TCGETS2, TCSETS2 are not
++     defined.  */
++#if defined (TCGETS2) && defined (TCSETS2)
++  struct termios2 ti;
++  ioctl (fd, TCGETS2, &ti);
++  ioctl (fd, TCSETS2, &ti);
++#endif
++}
++
++static int
++do_test (void)
++{
++  /* Fail at run time if TCGETS2 or TCSETS2 is not defined.  */
++#if defined (TCGETS2) && defined (TCSETS2)
++  return 0;
++#else
++  return 1;
++#endif
++}
++
++#include <support/test-driver.c>
