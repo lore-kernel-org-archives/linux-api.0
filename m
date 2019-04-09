@@ -1,11 +1,11 @@
 From: Andrew Murray <andrew.murray@arm.com>
-Subject: [PATCH v5 1/6] arm64: HWCAP: add support for AT_HWCAP2
-Date: Tue,  9 Apr 2019 10:52:40 +0100
-Message-ID: <20190409095245.42524-2-andrew.murray@arm.com>
+Subject: [PATCH v5 2/6] arm64: HWCAP: encapsulate elf_hwcap
+Date: Tue,  9 Apr 2019 10:52:41 +0100
+Message-ID: <20190409095245.42524-3-andrew.murray@arm.com>
 References: <20190409095245.42524-1-andrew.murray@arm.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <libc-alpha-return-101256-glibc-alpha=m.gmane.org@sourceware.org>
+Return-path: <libc-alpha-return-101257-glibc-alpha=m.gmane.org@sourceware.org>
 List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
 List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
 List-Archive: <http://sourceware.org/ml/libc-alpha/>
@@ -14,495 +14,140 @@ List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#f
 Sender: libc-alpha-owner@sourceware.org
 In-Reply-To: <20190409095245.42524-1-andrew.murray@arm.com>
 To: Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>
-Cc: Szabolcs Nagy <Szabolcs.Nagy@arm.com>, dave.martin@arm.com, linux-arm-kernel@lists.infradead.org, Mark Rutland <mark.rutland@arm.com>, Phil Blundell <pb@pbcl.net>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, Suzuki K Poulose <suzuki.poulose@arm.com>
+Cc: Szabolcs Nagy <Szabolcs.Nagy@arm.com>, dave.martin@arm.com, linux-arm-kernel@lists.infradead.org, Mark Rutland <mark.rutland@arm.com>, Phil Blundell <pb@pbcl.net>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, Suzuki K Poulose <suzuki.poulose@arm.com>, Dave Martin <Dave.Martin@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-As we will exhaust the first 32 bits of AT_HWCAP let's start
-exposing AT_HWCAP2 to userspace to give us up to 64 caps.
+The introduction of AT_HWCAP2 introduced accessors which ensure that
+hwcap features are set and tested appropriately.
 
-Whilst it's possible to use the remaining 32 bits of AT_HWCAP, we
-prefer to expand into AT_HWCAP2 in order to provide a consistent
-view to userspace between ILP32 and LP64. However internal to the
-kernel we prefer to continue to use the full space of elf_hwcap.
-
-To reduce complexity and allow for future expansion, we now
-represent hwcaps in the kernel as ordinals and use a
-KERNEL_HWCAP_ prefix. This allows us to support automatic feature
-based module loading for all our hwcaps.
-
-We introduce cpu_set_feature to set hwcaps which complements the
-existing cpu_have_feature helper. These helpers allow us to clean
-up existing direct uses of elf_hwcap and reduce any future effort
-required to move beyond 64 caps.
-
-For convenience we also introduce cpu_{have,set}_named_feature which
-makes use of the cpu_feature macro to allow providing a hwcap name
-without a {KERNEL_}HWCAP_ prefix.
+Let's now mandate access to elf_hwcap via these accessors by making
+elf_hwcap static within cpufeature.c.
 
 Signed-off-by: Andrew Murray <andrew.murray@arm.com>
+Reviewed-by: Dave Martin <Dave.Martin@arm.com>
+Reviewed-by: Suzuki K Poulose <suzuki.poulose@arm.com>
 ---
- Documentation/arm64/elf_hwcaps.txt       | 14 +++--
- arch/arm64/crypto/aes-ce-ccm-glue.c      |  2 +-
- arch/arm64/crypto/aes-neonbs-glue.c      |  2 +-
- arch/arm64/crypto/chacha-neon-glue.c     |  2 +-
- arch/arm64/crypto/crct10dif-ce-glue.c    |  4 +-
- arch/arm64/crypto/ghash-ce-glue.c        |  8 +--
- arch/arm64/crypto/nhpoly1305-neon-glue.c |  2 +-
- arch/arm64/crypto/sha256-glue.c          |  4 +-
- arch/arm64/include/asm/cpufeature.h      | 22 ++++----
- arch/arm64/include/asm/hwcap.h           | 52 ++++++++++++++++++-
- arch/arm64/include/uapi/asm/hwcap.h      |  2 +-
- arch/arm64/kernel/cpufeature.c           | 66 ++++++++++++------------
- arch/arm64/kernel/cpuinfo.c              |  2 +-
- arch/arm64/kernel/fpsimd.c               |  4 +-
- drivers/clocksource/arm_arch_timer.c     |  8 +++
- 15 files changed, 131 insertions(+), 63 deletions(-)
+ arch/arm64/include/asm/cpufeature.h | 15 ++++---------
+ arch/arm64/include/asm/hwcap.h      |  7 +++---
+ arch/arm64/kernel/cpufeature.c      | 33 +++++++++++++++++++++++++++--
+ 3 files changed, 38 insertions(+), 17 deletions(-)
 
-diff --git a/Documentation/arm64/elf_hwcaps.txt b/Documentation/arm64/elf_hwcaps.txt
-index 13d6691b37be..c04f8e87bab8 100644
---- a/Documentation/arm64/elf_hwcaps.txt
-+++ b/Documentation/arm64/elf_hwcaps.txt
-@@ -13,9 +13,9 @@ architected discovery mechanism available to userspace code at EL0. The
- kernel exposes the presence of these features to userspace through a set
- of flags called hwcaps, exposed in the auxilliary vector.
- 
--Userspace software can test for features by acquiring the AT_HWCAP entry
--of the auxilliary vector, and testing whether the relevant flags are
--set, e.g.
-+Userspace software can test for features by acquiring the AT_HWCAP or
-+AT_HWCAP2 entry of the auxiliary vector, and testing whether the relevant
-+flags are set, e.g.
- 
- bool floating_point_is_present(void)
- {
-@@ -194,3 +194,11 @@ HWCAP_PACG
-     Functionality implied by ID_AA64ISAR1_EL1.GPA == 0b0001 or
-     ID_AA64ISAR1_EL1.GPI == 0b0001, as described by
-     Documentation/arm64/pointer-authentication.txt.
-+
-+
-+4. Unused AT_HWCAP bits
-+-----------------------
-+
-+Each AT_HWCAP and AT_HWCAP2 entry provides for up to 32 hwcaps contained
-+in bits [31:0]. For interoperation with userspace we guarantee that bits
-+62 and 63 of AT_HWCAP will always be returned as 0.
-diff --git a/arch/arm64/crypto/aes-ce-ccm-glue.c b/arch/arm64/crypto/aes-ce-ccm-glue.c
-index 5fc6f51908fd..036ea77f83bc 100644
---- a/arch/arm64/crypto/aes-ce-ccm-glue.c
-+++ b/arch/arm64/crypto/aes-ce-ccm-glue.c
-@@ -372,7 +372,7 @@ static struct aead_alg ccm_aes_alg = {
- 
- static int __init aes_mod_init(void)
- {
--	if (!(elf_hwcap & HWCAP_AES))
-+	if (!cpu_have_named_feature(AES))
- 		return -ENODEV;
- 	return crypto_register_aead(&ccm_aes_alg);
- }
-diff --git a/arch/arm64/crypto/aes-neonbs-glue.c b/arch/arm64/crypto/aes-neonbs-glue.c
-index e7a95a566462..bf1b321ff4c1 100644
---- a/arch/arm64/crypto/aes-neonbs-glue.c
-+++ b/arch/arm64/crypto/aes-neonbs-glue.c
-@@ -440,7 +440,7 @@ static int __init aes_init(void)
- 	int err;
- 	int i;
- 
--	if (!(elf_hwcap & HWCAP_ASIMD))
-+	if (!cpu_have_named_feature(ASIMD))
- 		return -ENODEV;
- 
- 	err = crypto_register_skciphers(aes_algs, ARRAY_SIZE(aes_algs));
-diff --git a/arch/arm64/crypto/chacha-neon-glue.c b/arch/arm64/crypto/chacha-neon-glue.c
-index bece1d85bd81..cb054f51c917 100644
---- a/arch/arm64/crypto/chacha-neon-glue.c
-+++ b/arch/arm64/crypto/chacha-neon-glue.c
-@@ -173,7 +173,7 @@ static struct skcipher_alg algs[] = {
- 
- static int __init chacha_simd_mod_init(void)
- {
--	if (!(elf_hwcap & HWCAP_ASIMD))
-+	if (!cpu_have_named_feature(ASIMD))
- 		return -ENODEV;
- 
- 	return crypto_register_skciphers(algs, ARRAY_SIZE(algs));
-diff --git a/arch/arm64/crypto/crct10dif-ce-glue.c b/arch/arm64/crypto/crct10dif-ce-glue.c
-index dd325829ee44..e81d5bd555c0 100644
---- a/arch/arm64/crypto/crct10dif-ce-glue.c
-+++ b/arch/arm64/crypto/crct10dif-ce-glue.c
-@@ -101,7 +101,7 @@ static struct shash_alg crc_t10dif_alg[] = {{
- 
- static int __init crc_t10dif_mod_init(void)
- {
--	if (elf_hwcap & HWCAP_PMULL)
-+	if (cpu_have_named_feature(PMULL))
- 		return crypto_register_shashes(crc_t10dif_alg,
- 					       ARRAY_SIZE(crc_t10dif_alg));
- 	else
-@@ -111,7 +111,7 @@ static int __init crc_t10dif_mod_init(void)
- 
- static void __exit crc_t10dif_mod_exit(void)
- {
--	if (elf_hwcap & HWCAP_PMULL)
-+	if (cpu_have_named_feature(PMULL))
- 		crypto_unregister_shashes(crc_t10dif_alg,
- 					  ARRAY_SIZE(crc_t10dif_alg));
- 	else
-diff --git a/arch/arm64/crypto/ghash-ce-glue.c b/arch/arm64/crypto/ghash-ce-glue.c
-index 791ad422c427..4e69bb78ea89 100644
---- a/arch/arm64/crypto/ghash-ce-glue.c
-+++ b/arch/arm64/crypto/ghash-ce-glue.c
-@@ -704,10 +704,10 @@ static int __init ghash_ce_mod_init(void)
- {
- 	int ret;
- 
--	if (!(elf_hwcap & HWCAP_ASIMD))
-+	if (!cpu_have_named_feature(ASIMD))
- 		return -ENODEV;
- 
--	if (elf_hwcap & HWCAP_PMULL)
-+	if (cpu_have_named_feature(PMULL))
- 		ret = crypto_register_shashes(ghash_alg,
- 					      ARRAY_SIZE(ghash_alg));
- 	else
-@@ -717,7 +717,7 @@ static int __init ghash_ce_mod_init(void)
- 	if (ret)
- 		return ret;
- 
--	if (elf_hwcap & HWCAP_PMULL) {
-+	if (cpu_have_named_feature(PMULL)) {
- 		ret = crypto_register_aead(&gcm_aes_alg);
- 		if (ret)
- 			crypto_unregister_shashes(ghash_alg,
-@@ -728,7 +728,7 @@ static int __init ghash_ce_mod_init(void)
- 
- static void __exit ghash_ce_mod_exit(void)
- {
--	if (elf_hwcap & HWCAP_PMULL)
-+	if (cpu_have_named_feature(PMULL))
- 		crypto_unregister_shashes(ghash_alg, ARRAY_SIZE(ghash_alg));
- 	else
- 		crypto_unregister_shash(ghash_alg);
-diff --git a/arch/arm64/crypto/nhpoly1305-neon-glue.c b/arch/arm64/crypto/nhpoly1305-neon-glue.c
-index 22cc32ac9448..38a589044b6c 100644
---- a/arch/arm64/crypto/nhpoly1305-neon-glue.c
-+++ b/arch/arm64/crypto/nhpoly1305-neon-glue.c
-@@ -56,7 +56,7 @@ static struct shash_alg nhpoly1305_alg = {
- 
- static int __init nhpoly1305_mod_init(void)
- {
--	if (!(elf_hwcap & HWCAP_ASIMD))
-+	if (!cpu_have_named_feature(ASIMD))
- 		return -ENODEV;
- 
- 	return crypto_register_shash(&nhpoly1305_alg);
-diff --git a/arch/arm64/crypto/sha256-glue.c b/arch/arm64/crypto/sha256-glue.c
-index 4aedeaefd61f..0cccdb9cc2c0 100644
---- a/arch/arm64/crypto/sha256-glue.c
-+++ b/arch/arm64/crypto/sha256-glue.c
-@@ -173,7 +173,7 @@ static int __init sha256_mod_init(void)
- 	if (ret)
- 		return ret;
- 
--	if (elf_hwcap & HWCAP_ASIMD) {
-+	if (cpu_have_named_feature(ASIMD)) {
- 		ret = crypto_register_shashes(neon_algs, ARRAY_SIZE(neon_algs));
- 		if (ret)
- 			crypto_unregister_shashes(algs, ARRAY_SIZE(algs));
-@@ -183,7 +183,7 @@ static int __init sha256_mod_init(void)
- 
- static void __exit sha256_mod_fini(void)
- {
--	if (elf_hwcap & HWCAP_ASIMD)
-+	if (cpu_have_named_feature(ASIMD))
- 		crypto_unregister_shashes(neon_algs, ARRAY_SIZE(neon_algs));
- 	crypto_unregister_shashes(algs, ARRAY_SIZE(algs));
- }
 diff --git a/arch/arm64/include/asm/cpufeature.h b/arch/arm64/include/asm/cpufeature.h
-index e505e1fbd2b9..347c17046668 100644
+index 347c17046668..a3f028f82def 100644
 --- a/arch/arm64/include/asm/cpufeature.h
 +++ b/arch/arm64/include/asm/cpufeature.h
-@@ -14,15 +14,8 @@
- #include <asm/hwcap.h>
- #include <asm/sysreg.h>
- 
--/*
-- * In the arm64 world (as in the ARM world), elf_hwcap is used both internally
-- * in the kernel and for user space to keep track of which optional features
-- * are supported by the current system. So let's map feature 'x' to HWCAP_x.
-- * Note that HWCAP_x constants are bit fields so we need to take the log.
-- */
--
--#define MAX_CPU_FEATURES	(8 * sizeof(elf_hwcap))
--#define cpu_feature(x)		ilog2(HWCAP_ ## x)
-+#define MAX_CPU_FEATURES	64
-+#define cpu_feature(x)		KERNEL_HWCAP_ ## x
- 
- #ifndef __ASSEMBLY__
- 
-@@ -400,10 +393,19 @@ extern DECLARE_BITMAP(boot_capabilities, ARM64_NPATCHABLE);
+@@ -392,19 +392,12 @@ extern DECLARE_BITMAP(boot_capabilities, ARM64_NPATCHABLE);
+ 	for_each_set_bit(cap, cpu_hwcaps, ARM64_NCAPS)
  
  bool this_cpu_has_cap(unsigned int cap);
++void cpu_set_feature(unsigned int num);
++bool cpu_have_feature(unsigned int num);
++unsigned long cpu_get_elf_hwcap(void);
++unsigned long cpu_get_elf_hwcap2(void);
  
-+static inline void cpu_set_feature(unsigned int num)
+-static inline void cpu_set_feature(unsigned int num)
+-{
+-	WARN_ON(num >= MAX_CPU_FEATURES);
+-	elf_hwcap |= BIT(num);
+-}
+ #define cpu_set_named_feature(name) cpu_set_feature(cpu_feature(name))
+-
+-static inline bool cpu_have_feature(unsigned int num)
+-{
+-	WARN_ON(num >= MAX_CPU_FEATURES);
+-	return elf_hwcap & BIT(num);
+-}
+ #define cpu_have_named_feature(name) cpu_have_feature(cpu_feature(name))
+ 
+ /* System capability check for constant caps */
+diff --git a/arch/arm64/include/asm/hwcap.h b/arch/arm64/include/asm/hwcap.h
+index beb53a00eb16..d0d4e163c50b 100644
+--- a/arch/arm64/include/asm/hwcap.h
++++ b/arch/arm64/include/asm/hwcap.h
+@@ -17,6 +17,7 @@
+ #define __ASM_HWCAP_H
+ 
+ #include <uapi/asm/hwcap.h>
++#include <asm/cpufeature.h>
+ 
+ #define COMPAT_HWCAP_HALF	(1 << 1)
+ #define COMPAT_HWCAP_THUMB	(1 << 2)
+@@ -40,7 +41,6 @@
+ #define COMPAT_HWCAP2_CRC32	(1 << 4)
+ 
+ #ifndef __ASSEMBLY__
+-#include <linux/kernel.h>
+ #include <linux/log2.h>
+ 
+ /*
+@@ -93,8 +93,8 @@
+  * This yields a mask that user programs can use to figure out what
+  * instruction set this cpu supports.
+  */
+-#define ELF_HWCAP		lower_32_bits(elf_hwcap)
+-#define ELF_HWCAP2		upper_32_bits(elf_hwcap)
++#define ELF_HWCAP		cpu_get_elf_hwcap()
++#define ELF_HWCAP2		cpu_get_elf_hwcap2()
+ 
+ #ifdef CONFIG_COMPAT
+ #define COMPAT_ELF_HWCAP	(compat_elf_hwcap)
+@@ -110,6 +110,5 @@ enum {
+ #endif
+ };
+ 
+-extern unsigned long elf_hwcap;
+ #endif
+ #endif
+diff --git a/arch/arm64/kernel/cpufeature.c b/arch/arm64/kernel/cpufeature.c
+index 986ceeacd19f..a655d1bb1186 100644
+--- a/arch/arm64/kernel/cpufeature.c
++++ b/arch/arm64/kernel/cpufeature.c
+@@ -35,8 +35,8 @@
+ #include <asm/traps.h>
+ #include <asm/virt.h>
+ 
+-unsigned long elf_hwcap __read_mostly;
+-EXPORT_SYMBOL_GPL(elf_hwcap);
++/* Kernel representation of AT_HWCAP and AT_HWCAP2 */
++static unsigned long elf_hwcap __read_mostly;
+ 
+ #ifdef CONFIG_COMPAT
+ #define COMPAT_ELF_HWCAP_DEFAULT	\
+@@ -1947,6 +1947,35 @@ bool this_cpu_has_cap(unsigned int n)
+ 	return false;
+ }
+ 
++void cpu_set_feature(unsigned int num)
 +{
 +	WARN_ON(num >= MAX_CPU_FEATURES);
 +	elf_hwcap |= BIT(num);
 +}
-+#define cpu_set_named_feature(name) cpu_set_feature(cpu_feature(name))
++EXPORT_SYMBOL_GPL(cpu_set_feature);
 +
- static inline bool cpu_have_feature(unsigned int num)
- {
--	return elf_hwcap & (1UL << num);
++bool cpu_have_feature(unsigned int num)
++{
 +	WARN_ON(num >= MAX_CPU_FEATURES);
 +	return elf_hwcap & BIT(num);
- }
-+#define cpu_have_named_feature(name) cpu_have_feature(cpu_feature(name))
- 
- /* System capability check for constant caps */
- static inline bool __cpus_have_const_cap(int num)
-diff --git a/arch/arm64/include/asm/hwcap.h b/arch/arm64/include/asm/hwcap.h
-index 400b80b49595..beb53a00eb16 100644
---- a/arch/arm64/include/asm/hwcap.h
-+++ b/arch/arm64/include/asm/hwcap.h
-@@ -40,11 +40,61 @@
- #define COMPAT_HWCAP2_CRC32	(1 << 4)
- 
- #ifndef __ASSEMBLY__
-+#include <linux/kernel.h>
-+#include <linux/log2.h>
++}
++EXPORT_SYMBOL_GPL(cpu_have_feature);
 +
-+/*
-+ * For userspace we represent hwcaps as a collection of HWCAP{,2}_x bitfields
-+ * as described in uapi/asm/hwcap.h. For the kernel we represent hwcaps as
-+ * natural numbers (in a single range of size MAX_CPU_FEATURES) defined here
-+ * with prefix KERNEL_HWCAP_ mapped to their HWCAP{,2}_x counterpart.
-+ *
-+ * Hwcaps should be set and tested within the kernel via the
-+ * cpu_{set,have}_named_feature(feature) where feature is the unique suffix
-+ * of KERNEL_HWCAP_{feature}.
-+ */
-+#define __khwcap_feature(x)		ilog2(HWCAP_ ## x)
-+#define KERNEL_HWCAP_FP			__khwcap_feature(FP)
-+#define KERNEL_HWCAP_ASIMD		__khwcap_feature(ASIMD)
-+#define KERNEL_HWCAP_EVTSTRM		__khwcap_feature(EVTSTRM)
-+#define KERNEL_HWCAP_AES		__khwcap_feature(AES)
-+#define KERNEL_HWCAP_PMULL		__khwcap_feature(PMULL)
-+#define KERNEL_HWCAP_SHA1		__khwcap_feature(SHA1)
-+#define KERNEL_HWCAP_SHA2		__khwcap_feature(SHA2)
-+#define KERNEL_HWCAP_CRC32		__khwcap_feature(CRC32)
-+#define KERNEL_HWCAP_ATOMICS		__khwcap_feature(ATOMICS)
-+#define KERNEL_HWCAP_FPHP		__khwcap_feature(FPHP)
-+#define KERNEL_HWCAP_ASIMDHP		__khwcap_feature(ASIMDHP)
-+#define KERNEL_HWCAP_CPUID		__khwcap_feature(CPUID)
-+#define KERNEL_HWCAP_ASIMDRDM		__khwcap_feature(ASIMDRDM)
-+#define KERNEL_HWCAP_JSCVT		__khwcap_feature(JSCVT)
-+#define KERNEL_HWCAP_FCMA		__khwcap_feature(FCMA)
-+#define KERNEL_HWCAP_LRCPC		__khwcap_feature(LRCPC)
-+#define KERNEL_HWCAP_DCPOP		__khwcap_feature(DCPOP)
-+#define KERNEL_HWCAP_SHA3		__khwcap_feature(SHA3)
-+#define KERNEL_HWCAP_SM3		__khwcap_feature(SM3)
-+#define KERNEL_HWCAP_SM4		__khwcap_feature(SM4)
-+#define KERNEL_HWCAP_ASIMDDP		__khwcap_feature(ASIMDDP)
-+#define KERNEL_HWCAP_SHA512		__khwcap_feature(SHA512)
-+#define KERNEL_HWCAP_SVE		__khwcap_feature(SVE)
-+#define KERNEL_HWCAP_ASIMDFHM		__khwcap_feature(ASIMDFHM)
-+#define KERNEL_HWCAP_DIT		__khwcap_feature(DIT)
-+#define KERNEL_HWCAP_USCAT		__khwcap_feature(USCAT)
-+#define KERNEL_HWCAP_ILRCPC		__khwcap_feature(ILRCPC)
-+#define KERNEL_HWCAP_FLAGM		__khwcap_feature(FLAGM)
-+#define KERNEL_HWCAP_SSBS		__khwcap_feature(SSBS)
-+#define KERNEL_HWCAP_SB			__khwcap_feature(SB)
-+#define KERNEL_HWCAP_PACA		__khwcap_feature(PACA)
-+#define KERNEL_HWCAP_PACG		__khwcap_feature(PACG)
++unsigned long cpu_get_elf_hwcap(void)
++{
++	/*
++	 * We currently only populate the first 32 bits of AT_HWCAP. Please
++	 * note that for userspace compatibility we guarantee that bits 62
++	 * and 63 will always be returned as 0.
++	 */
++	return lower_32_bits(elf_hwcap);
++}
 +
-+#define __khwcap2_feature(x)		(ilog2(HWCAP2_ ## x) + 32)
++unsigned long cpu_get_elf_hwcap2(void)
++{
++	return upper_32_bits(elf_hwcap);
++}
 +
- /*
-  * This yields a mask that user programs can use to figure out what
-  * instruction set this cpu supports.
-  */
--#define ELF_HWCAP		(elf_hwcap)
-+#define ELF_HWCAP		lower_32_bits(elf_hwcap)
-+#define ELF_HWCAP2		upper_32_bits(elf_hwcap)
- 
- #ifdef CONFIG_COMPAT
- #define COMPAT_ELF_HWCAP	(compat_elf_hwcap)
-diff --git a/arch/arm64/include/uapi/asm/hwcap.h b/arch/arm64/include/uapi/asm/hwcap.h
-index 5f0750c2199c..453b45af80b7 100644
---- a/arch/arm64/include/uapi/asm/hwcap.h
-+++ b/arch/arm64/include/uapi/asm/hwcap.h
-@@ -18,7 +18,7 @@
- #define _UAPI__ASM_HWCAP_H
- 
- /*
-- * HWCAP flags - for elf_hwcap (in kernel) and AT_HWCAP
-+ * HWCAP flags - for AT_HWCAP
-  */
- #define HWCAP_FP		(1 << 0)
- #define HWCAP_ASIMD		(1 << 1)
-diff --git a/arch/arm64/kernel/cpufeature.c b/arch/arm64/kernel/cpufeature.c
-index 4061de10cea6..986ceeacd19f 100644
---- a/arch/arm64/kernel/cpufeature.c
-+++ b/arch/arm64/kernel/cpufeature.c
-@@ -1571,39 +1571,39 @@ static const struct arm64_cpu_capabilities ptr_auth_hwcap_gen_matches[] = {
- #endif
- 
- static const struct arm64_cpu_capabilities arm64_elf_hwcaps[] = {
--	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_AES_SHIFT, FTR_UNSIGNED, 2, CAP_HWCAP, HWCAP_PMULL),
--	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_AES_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, HWCAP_AES),
--	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_SHA1_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, HWCAP_SHA1),
--	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_SHA2_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, HWCAP_SHA2),
--	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_SHA2_SHIFT, FTR_UNSIGNED, 2, CAP_HWCAP, HWCAP_SHA512),
--	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_CRC32_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, HWCAP_CRC32),
--	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_ATOMICS_SHIFT, FTR_UNSIGNED, 2, CAP_HWCAP, HWCAP_ATOMICS),
--	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_RDM_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, HWCAP_ASIMDRDM),
--	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_SHA3_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, HWCAP_SHA3),
--	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_SM3_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, HWCAP_SM3),
--	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_SM4_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, HWCAP_SM4),
--	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_DP_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, HWCAP_ASIMDDP),
--	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_FHM_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, HWCAP_ASIMDFHM),
--	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_TS_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, HWCAP_FLAGM),
--	HWCAP_CAP(SYS_ID_AA64PFR0_EL1, ID_AA64PFR0_FP_SHIFT, FTR_SIGNED, 0, CAP_HWCAP, HWCAP_FP),
--	HWCAP_CAP(SYS_ID_AA64PFR0_EL1, ID_AA64PFR0_FP_SHIFT, FTR_SIGNED, 1, CAP_HWCAP, HWCAP_FPHP),
--	HWCAP_CAP(SYS_ID_AA64PFR0_EL1, ID_AA64PFR0_ASIMD_SHIFT, FTR_SIGNED, 0, CAP_HWCAP, HWCAP_ASIMD),
--	HWCAP_CAP(SYS_ID_AA64PFR0_EL1, ID_AA64PFR0_ASIMD_SHIFT, FTR_SIGNED, 1, CAP_HWCAP, HWCAP_ASIMDHP),
--	HWCAP_CAP(SYS_ID_AA64PFR0_EL1, ID_AA64PFR0_DIT_SHIFT, FTR_SIGNED, 1, CAP_HWCAP, HWCAP_DIT),
--	HWCAP_CAP(SYS_ID_AA64ISAR1_EL1, ID_AA64ISAR1_DPB_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, HWCAP_DCPOP),
--	HWCAP_CAP(SYS_ID_AA64ISAR1_EL1, ID_AA64ISAR1_JSCVT_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, HWCAP_JSCVT),
--	HWCAP_CAP(SYS_ID_AA64ISAR1_EL1, ID_AA64ISAR1_FCMA_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, HWCAP_FCMA),
--	HWCAP_CAP(SYS_ID_AA64ISAR1_EL1, ID_AA64ISAR1_LRCPC_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, HWCAP_LRCPC),
--	HWCAP_CAP(SYS_ID_AA64ISAR1_EL1, ID_AA64ISAR1_LRCPC_SHIFT, FTR_UNSIGNED, 2, CAP_HWCAP, HWCAP_ILRCPC),
--	HWCAP_CAP(SYS_ID_AA64ISAR1_EL1, ID_AA64ISAR1_SB_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, HWCAP_SB),
--	HWCAP_CAP(SYS_ID_AA64MMFR2_EL1, ID_AA64MMFR2_AT_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, HWCAP_USCAT),
-+	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_AES_SHIFT, FTR_UNSIGNED, 2, CAP_HWCAP, KERNEL_HWCAP_PMULL),
-+	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_AES_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_AES),
-+	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_SHA1_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_SHA1),
-+	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_SHA2_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_SHA2),
-+	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_SHA2_SHIFT, FTR_UNSIGNED, 2, CAP_HWCAP, KERNEL_HWCAP_SHA512),
-+	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_CRC32_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_CRC32),
-+	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_ATOMICS_SHIFT, FTR_UNSIGNED, 2, CAP_HWCAP, KERNEL_HWCAP_ATOMICS),
-+	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_RDM_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_ASIMDRDM),
-+	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_SHA3_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_SHA3),
-+	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_SM3_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_SM3),
-+	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_SM4_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_SM4),
-+	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_DP_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_ASIMDDP),
-+	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_FHM_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_ASIMDFHM),
-+	HWCAP_CAP(SYS_ID_AA64ISAR0_EL1, ID_AA64ISAR0_TS_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_FLAGM),
-+	HWCAP_CAP(SYS_ID_AA64PFR0_EL1, ID_AA64PFR0_FP_SHIFT, FTR_SIGNED, 0, CAP_HWCAP, KERNEL_HWCAP_FP),
-+	HWCAP_CAP(SYS_ID_AA64PFR0_EL1, ID_AA64PFR0_FP_SHIFT, FTR_SIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_FPHP),
-+	HWCAP_CAP(SYS_ID_AA64PFR0_EL1, ID_AA64PFR0_ASIMD_SHIFT, FTR_SIGNED, 0, CAP_HWCAP, KERNEL_HWCAP_ASIMD),
-+	HWCAP_CAP(SYS_ID_AA64PFR0_EL1, ID_AA64PFR0_ASIMD_SHIFT, FTR_SIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_ASIMDHP),
-+	HWCAP_CAP(SYS_ID_AA64PFR0_EL1, ID_AA64PFR0_DIT_SHIFT, FTR_SIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_DIT),
-+	HWCAP_CAP(SYS_ID_AA64ISAR1_EL1, ID_AA64ISAR1_DPB_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_DCPOP),
-+	HWCAP_CAP(SYS_ID_AA64ISAR1_EL1, ID_AA64ISAR1_JSCVT_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_JSCVT),
-+	HWCAP_CAP(SYS_ID_AA64ISAR1_EL1, ID_AA64ISAR1_FCMA_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_FCMA),
-+	HWCAP_CAP(SYS_ID_AA64ISAR1_EL1, ID_AA64ISAR1_LRCPC_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_LRCPC),
-+	HWCAP_CAP(SYS_ID_AA64ISAR1_EL1, ID_AA64ISAR1_LRCPC_SHIFT, FTR_UNSIGNED, 2, CAP_HWCAP, KERNEL_HWCAP_ILRCPC),
-+	HWCAP_CAP(SYS_ID_AA64ISAR1_EL1, ID_AA64ISAR1_SB_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_SB),
-+	HWCAP_CAP(SYS_ID_AA64MMFR2_EL1, ID_AA64MMFR2_AT_SHIFT, FTR_UNSIGNED, 1, CAP_HWCAP, KERNEL_HWCAP_USCAT),
- #ifdef CONFIG_ARM64_SVE
--	HWCAP_CAP(SYS_ID_AA64PFR0_EL1, ID_AA64PFR0_SVE_SHIFT, FTR_UNSIGNED, ID_AA64PFR0_SVE, CAP_HWCAP, HWCAP_SVE),
-+	HWCAP_CAP(SYS_ID_AA64PFR0_EL1, ID_AA64PFR0_SVE_SHIFT, FTR_UNSIGNED, ID_AA64PFR0_SVE, CAP_HWCAP, KERNEL_HWCAP_SVE),
- #endif
--	HWCAP_CAP(SYS_ID_AA64PFR1_EL1, ID_AA64PFR1_SSBS_SHIFT, FTR_UNSIGNED, ID_AA64PFR1_SSBS_PSTATE_INSNS, CAP_HWCAP, HWCAP_SSBS),
-+	HWCAP_CAP(SYS_ID_AA64PFR1_EL1, ID_AA64PFR1_SSBS_SHIFT, FTR_UNSIGNED, ID_AA64PFR1_SSBS_PSTATE_INSNS, CAP_HWCAP, KERNEL_HWCAP_SSBS),
- #ifdef CONFIG_ARM64_PTR_AUTH
--	HWCAP_MULTI_CAP(ptr_auth_hwcap_addr_matches, CAP_HWCAP, HWCAP_PACA),
--	HWCAP_MULTI_CAP(ptr_auth_hwcap_gen_matches, CAP_HWCAP, HWCAP_PACG),
-+	HWCAP_MULTI_CAP(ptr_auth_hwcap_addr_matches, CAP_HWCAP, KERNEL_HWCAP_PACA),
-+	HWCAP_MULTI_CAP(ptr_auth_hwcap_gen_matches, CAP_HWCAP, KERNEL_HWCAP_PACG),
- #endif
- 	{},
- };
-@@ -1623,7 +1623,7 @@ static void __init cap_set_elf_hwcap(const struct arm64_cpu_capabilities *cap)
+ static void __init setup_system_capabilities(void)
  {
- 	switch (cap->hwcap_type) {
- 	case CAP_HWCAP:
--		elf_hwcap |= cap->hwcap;
-+		cpu_set_feature(cap->hwcap);
- 		break;
- #ifdef CONFIG_COMPAT
- 	case CAP_COMPAT_HWCAP:
-@@ -1646,7 +1646,7 @@ static bool cpus_have_elf_hwcap(const struct arm64_cpu_capabilities *cap)
- 
- 	switch (cap->hwcap_type) {
- 	case CAP_HWCAP:
--		rc = (elf_hwcap & cap->hwcap) != 0;
-+		rc = cpu_have_feature(cap->hwcap);
- 		break;
- #ifdef CONFIG_COMPAT
- 	case CAP_COMPAT_HWCAP:
-@@ -1667,7 +1667,7 @@ static bool cpus_have_elf_hwcap(const struct arm64_cpu_capabilities *cap)
- static void __init setup_elf_hwcaps(const struct arm64_cpu_capabilities *hwcaps)
- {
- 	/* We support emulation of accesses to CPU ID feature registers */
--	elf_hwcap |= HWCAP_CPUID;
-+	cpu_set_named_feature(CPUID);
- 	for (; hwcaps->matches; hwcaps++)
- 		if (hwcaps->matches(hwcaps, cpucap_default_scope(hwcaps)))
- 			cap_set_elf_hwcap(hwcaps);
-diff --git a/arch/arm64/kernel/cpuinfo.c b/arch/arm64/kernel/cpuinfo.c
-index ca0685f33900..810db95f293f 100644
---- a/arch/arm64/kernel/cpuinfo.c
-+++ b/arch/arm64/kernel/cpuinfo.c
-@@ -167,7 +167,7 @@ static int c_show(struct seq_file *m, void *v)
- #endif /* CONFIG_COMPAT */
- 		} else {
- 			for (j = 0; hwcap_str[j]; j++)
--				if (elf_hwcap & (1 << j))
-+				if (cpu_have_feature(j))
- 					seq_printf(m, " %s", hwcap_str[j]);
- 		}
- 		seq_puts(m, "\n");
-diff --git a/arch/arm64/kernel/fpsimd.c b/arch/arm64/kernel/fpsimd.c
-index 5ebe73b69961..735cf1f8b109 100644
---- a/arch/arm64/kernel/fpsimd.c
-+++ b/arch/arm64/kernel/fpsimd.c
-@@ -1258,14 +1258,14 @@ static inline void fpsimd_hotplug_init(void) { }
-  */
- static int __init fpsimd_init(void)
- {
--	if (elf_hwcap & HWCAP_FP) {
-+	if (cpu_have_named_feature(FP)) {
- 		fpsimd_pm_init();
- 		fpsimd_hotplug_init();
- 	} else {
- 		pr_notice("Floating-point is not implemented\n");
- 	}
- 
--	if (!(elf_hwcap & HWCAP_ASIMD))
-+	if (!cpu_have_named_feature(ASIMD))
- 		pr_notice("Advanced SIMD is not implemented\n");
- 
- 	return sve_sysctl_init();
-diff --git a/drivers/clocksource/arm_arch_timer.c b/drivers/clocksource/arm_arch_timer.c
-index aa4ec53281ce..6cc8aff83805 100644
---- a/drivers/clocksource/arm_arch_timer.c
-+++ b/drivers/clocksource/arm_arch_timer.c
-@@ -833,7 +833,11 @@ static void arch_timer_evtstrm_enable(int divider)
- 	cntkctl |= (divider << ARCH_TIMER_EVT_TRIGGER_SHIFT)
- 			| ARCH_TIMER_VIRT_EVT_EN;
- 	arch_timer_set_cntkctl(cntkctl);
-+#ifdef CONFIG_ARM64
-+	cpu_set_named_feature(EVTSTRM);
-+#else
- 	elf_hwcap |= HWCAP_EVTSTRM;
-+#endif
- #ifdef CONFIG_COMPAT
- 	compat_elf_hwcap |= COMPAT_HWCAP_EVTSTRM;
- #endif
-@@ -1055,7 +1059,11 @@ static int arch_timer_cpu_pm_notify(struct notifier_block *self,
- 	} else if (action == CPU_PM_ENTER_FAILED || action == CPU_PM_EXIT) {
- 		arch_timer_set_cntkctl(__this_cpu_read(saved_cntkctl));
- 
-+#ifdef CONFIG_ARM64
-+		if (cpu_have_named_feature(EVTSTRM))
-+#else
- 		if (elf_hwcap & HWCAP_EVTSTRM)
-+#endif
- 			cpumask_set_cpu(smp_processor_id(), &evtstrm_available);
- 	}
- 	return NOTIFY_OK;
+ 	/*
 -- 
 2.21.0
