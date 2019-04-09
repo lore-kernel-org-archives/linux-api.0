@@ -1,131 +1,284 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [PATCH 1/4] glibc: Perform rseq(2) registration at C startup
- and thread creation (v7)
-Date: Tue, 9 Apr 2019 12:40:31 -0400 (EDT)
-Message-ID: <1788266905.2400.1554828031463.JavaMail.zimbra@efficios.com>
-References: <20190212194253.1951-1-mathieu.desnoyers@efficios.com> <20190212194253.1951-2-mathieu.desnoyers@efficios.com> <5166fbe9-cfe0-8554-abc7-4fc844cf2765@redhat.com> <1965431879.7576.1553529272844.JavaMail.zimbra@efficios.com> <602718e0-7375-deb7-b6e6-2d17022173c5@redhat.com> <20190404214151.6ogrm34dok52az4h@pburton-laptop>
+From: hpa@zytor.com
+Subject: Re: [PATCH] Linux: Define struct termios2 in <termios.h> under _GNU_SOURCE [BZ #10339]
+Date: Tue, 09 Apr 2019 09:02:06 -0600
+Message-ID: <EF5CE34B-1A82-4391-B07E-DB832814AD1C@zytor.com>
+References: <875zrnlakd.fsf@oldenburg2.str.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190404214151.6ogrm34dok52az4h@pburton-laptop>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Burton <paul.burton@mips.com>
-Cc: Carlos O'Donell <codonell@redhat.com>, Will Deacon <will.deacon@arm.com>, Boqun Feng <boqun.feng@gmail.com>, heiko carstens <heiko.carstens@de.ibm.com>, gor <gor@linux.ibm.com>, schwidefsky <schwidefsky@de.ibm.com>, "Russell King, ARM Linux" <linux@armlinux.org.uk>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Dave Watson <davejwatson@fb.c>
+Content-Type: text/plain;
+ charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <libc-alpha-return-101284-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+In-Reply-To: <875zrnlakd.fsf@oldenburg2.str.redhat.com>
+To: Florian Weimer <fweimer@redhat.com>, libc-alpha@sourceware.org
+Cc: adhemerval.zanella@linaro.org, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org
 List-Id: linux-api@vger.kernel.org
 
------ On Apr 4, 2019, at 5:41 PM, Paul Burton paul.burton@mips.com wrote:
+On April 9, 2019 4:47:30 AM MDT, Florian Weimer <fweimer@redhat=2Ecom> wrot=
+e:
+>struct termios2 is required for setting arbitrary baud rates on serial
+>ports=2E  <sys/ioctl=2Eh> and <linux/termios=2Eh> have conflicting
+>definitions in the existing termios definitions, which means that it
+>is currently very difficult to use TCGETS2/TCSETS2 and struct termios2
+>with glibc=2E  Providing a definition within glibc resolves this problem=
+=2E
+>
+>This does not completely address bug 10339, but it at least exposes
+>the current kernel functionality in this area=2E
+>
+>Support for struct termios2 is architecture-specific in the kernel=2E
+>Support on alpha was only added in Linux 4=2E20=2E  POWER support is
+>currently missing=2E  The expectation is that the kernel will eventually
+>use the generic UAPI definition for struct termios2=2E
+>
+>2019-04-09  Florian Weimer  <fweimer@redhat=2Ecom>
+>
+>	[BZ #10339]
+>	Linux: Define struct termios2 in <termios=2Eh> under _GNU_SOURCE=2E
+>	* sysdeps/unix/sysv/linux/Makefile [$(subdir) =3D=3D termios] (tests):
+>	Add tst-termios2=2E
+>	* sysdeps/unix/sysv/linux/tst-termios2=2Ec: New file=2E
+>	* sysdeps/unix/sysv/linux/bits/termios2-struct=2Eh: Likewise=2E
+>	* sysdeps/unix/sysv/linux/bits/termios=2Eh [__USE_GNU]: Include it=2E
+>	* sysdeps/unix/sysv/linux/alpha/bits/termios2-struct=2Eh: New file=2E
+>	* sysdeps/unix/sysv/linux/sparc/bits/termios2-struct=2Eh: Likewise=2E
+>
+>diff --git a/NEWS b/NEWS
+>index b58e2469d4=2E=2E5e6ecb9c7d 100644
+>--- a/NEWS
+>+++ b/NEWS
+>@@ -18,6 +18,9 @@ Major new features:
+>=20
+> * On Linux, the gettid function has been added=2E
+>=20
+>+* On Linux, <termios=2Eh> now provides a definition of struct termios2
+>with
+>+  the _GNU_SOURCE feature test macro=2E
+>+
+> * Minguo (Republic of China) calendar support has been added as an
+> alternative calendar for the following locales: zh_TW, cmn_TW, hak_TW,
+>   nan_TW, lzh_TW=2E
+>diff --git a/sysdeps/unix/sysv/linux/Makefile
+>b/sysdeps/unix/sysv/linux/Makefile
+>index 52ac6ad484=2E=2E4cb5e4f0d2 100644
+>--- a/sysdeps/unix/sysv/linux/Makefile
+>+++ b/sysdeps/unix/sysv/linux/Makefile
+>@@ -156,6 +156,7 @@ endif
+>=20
+> ifeq ($(subdir),termios)
+> sysdep_headers +=3D termio=2Eh
+>+tests +=3D tst-termios2
+> endif
+>=20
+> ifeq ($(subdir),posix)
+>diff --git a/sysdeps/unix/sysv/linux/alpha/bits/termios2-struct=2Eh
+>b/sysdeps/unix/sysv/linux/alpha/bits/termios2-struct=2Eh
+>new file mode 100644
+>index 0000000000=2E=2E5f09445e23
+>--- /dev/null
+>+++ b/sysdeps/unix/sysv/linux/alpha/bits/termios2-struct=2Eh
+>@@ -0,0 +1,33 @@
+>+/* struct termios2 definition=2E  Linux/alpha version=2E
+>+   Copyright (C) 2019 Free Software Foundation, Inc=2E
+>+   This file is part of the GNU C Library=2E
+>+
+>+   The GNU C Library is free software; you can redistribute it and/or
+>+   modify it under the terms of the GNU Lesser General Public
+>+   License as published by the Free Software Foundation; either
+>+   version 2=2E1 of the License, or (at your option) any later version=
+=2E
+>+
+>+   The GNU C Library is distributed in the hope that it will be
+>useful,
+>+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+>+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE=2E  See the GNU
+>+   Lesser General Public License for more details=2E
+>+
+>+   You should have received a copy of the GNU Lesser General Public
+>+   License along with the GNU C Library=2E  If not, see
+>+   <http://www=2Egnu=2Eorg/licenses/>=2E  */
+>+
+>+#ifndef _TERMIOS_H
+>+# error "Never include <bits/termios2-struct=2Eh> directly; use
+><termios=2Eh> instead=2E"
+>+#endif
+>+
+>+struct termios2
+>+{
+>+  tcflag_t c_iflag;
+>+  tcflag_t c_oflag;
+>+  tcflag_t c_cflag;
+>+  tcflag_t c_lflag;
+>+  cc_t c_cc[NCCS];
+>+  cc_t c_line;
+>+  speed_t c_ispeed;
+>+  speed_t c_ospeed;
+>+};
+>diff --git a/sysdeps/unix/sysv/linux/bits/termios=2Eh
+>b/sysdeps/unix/sysv/linux/bits/termios=2Eh
+>index 997231cd03=2E=2E45ac7affdf 100644
+>--- a/sysdeps/unix/sysv/linux/bits/termios=2Eh
+>+++ b/sysdeps/unix/sysv/linux/bits/termios=2Eh
+>@@ -25,6 +25,10 @@ typedef unsigned int	speed_t;
+> typedef unsigned int	tcflag_t;
+>=20
+> #include <bits/termios-struct=2Eh>
+>+#ifdef __USE_GNU
+>+# include <bits/termios2-struct=2Eh>
+>+#endif
+>+
+> #include <bits/termios-c_cc=2Eh>
+> #include <bits/termios-c_iflag=2Eh>
+> #include <bits/termios-c_oflag=2Eh>
+>diff --git a/sysdeps/unix/sysv/linux/bits/termios2-struct=2Eh
+>b/sysdeps/unix/sysv/linux/bits/termios2-struct=2Eh
+>new file mode 100644
+>index 0000000000=2E=2E5a48e45ef3
+>--- /dev/null
+>+++ b/sysdeps/unix/sysv/linux/bits/termios2-struct=2Eh
+>@@ -0,0 +1,33 @@
+>+/* struct termios2 definition=2E  Linux/generic version=2E
+>+   Copyright (C) 2019 Free Software Foundation, Inc=2E
+>+   This file is part of the GNU C Library=2E
+>+
+>+   The GNU C Library is free software; you can redistribute it and/or
+>+   modify it under the terms of the GNU Lesser General Public
+>+   License as published by the Free Software Foundation; either
+>+   version 2=2E1 of the License, or (at your option) any later version=
+=2E
+>+
+>+   The GNU C Library is distributed in the hope that it will be
+>useful,
+>+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+>+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE=2E  See the GNU
+>+   Lesser General Public License for more details=2E
+>+
+>+   You should have received a copy of the GNU Lesser General Public
+>+   License along with the GNU C Library=2E  If not, see
+>+   <http://www=2Egnu=2Eorg/licenses/>=2E  */
+>+
+>+#ifndef _TERMIOS_H
+>+# error "Never include <bits/termios2-struct=2Eh> directly; use
+><termios=2Eh> instead=2E"
+>+#endif
+>+
+>+struct termios2
+>+{
+>+  tcflag_t c_iflag;
+>+  tcflag_t c_oflag;
+>+  tcflag_t c_cflag;
+>+  tcflag_t c_lflag;
+>+  cc_t c_line;
+>+  cc_t c_cc[NCCS];
+>+  speed_t c_ispeed;
+>+  speed_t c_ospeed;
+>+};
+>diff --git a/sysdeps/unix/sysv/linux/sparc/bits/termios2-struct=2Eh
+>b/sysdeps/unix/sysv/linux/sparc/bits/termios2-struct=2Eh
+>new file mode 100644
+>index 0000000000=2E=2E7c889e575c
+>--- /dev/null
+>+++ b/sysdeps/unix/sysv/linux/sparc/bits/termios2-struct=2Eh
+>@@ -0,0 +1,33 @@
+>+/* struct termios2 definition=2E  Linux/sparc version=2E
+>+   Copyright (C) 2019 Free Software Foundation, Inc=2E
+>+   This file is part of the GNU C Library=2E
+>+
+>+   The GNU C Library is free software; you can redistribute it and/or
+>+   modify it under the terms of the GNU Lesser General Public
+>+   License as published by the Free Software Foundation; either
+>+   version 2=2E1 of the License, or (at your option) any later version=
+=2E
+>+
+>+   The GNU C Library is distributed in the hope that it will be
+>useful,
+>+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+>+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE=2E  See the GNU
+>+   Lesser General Public License for more details=2E
+>+
+>+   You should have received a copy of the GNU Lesser General Public
+>+   License along with the GNU C Library=2E  If not, see
+>+   <http://www=2Egnu=2Eorg/licenses/>=2E  */
+>+
+>+#ifndef _TERMIOS_H
+>+# error "Never include <bits/termios2-struct=2Eh> directly; use
+><termios=2Eh> instead=2E"
+>+#endif
+>+
+>+struct termios2
+>+{
+>+  tcflag_t c_iflag;
+>+  tcflag_t c_oflag;
+>+  tcflag_t c_cflag;
+>+  tcflag_t c_lflag;
+>+  cc_t c_line;
+>+  cc_t c_cc[NCCS + 2];
+>+  speed_t c_ispeed;
+>+  speed_t c_ospeed;
+>+};
+>diff --git a/sysdeps/unix/sysv/linux/tst-termios2=2Ec
+>b/sysdeps/unix/sysv/linux/tst-termios2=2Ec
+>new file mode 100644
+>index 0000000000=2E=2E82326a1288
+>--- /dev/null
+>+++ b/sysdeps/unix/sysv/linux/tst-termios2=2Ec
+>@@ -0,0 +1,48 @@
+>+/* Minimal test of struct termios2 definition=2E
+>+   Copyright (C) 2019 Free Software Foundation, Inc=2E
+>+   This file is part of the GNU C Library=2E
+>+
+>+   The GNU C Library is free software; you can redistribute it and/or
+>+   modify it under the terms of the GNU Lesser General Public
+>+   License as published by the Free Software Foundation; either
+>+   version 2=2E1 of the License, or (at your option) any later version=
+=2E
+>+
+>+   The GNU C Library is distributed in the hope that it will be
+>useful,
+>+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+>+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE=2E  See the GNU
+>+   Lesser General Public License for more details=2E
+>+
+>+   You should have received a copy of the GNU Lesser General Public
+>+   License along with the GNU C Library=2E  If not, see
+>+   <http://www=2Egnu=2Eorg/licenses/>=2E  */
+>+
+>+#include <termios=2Eh>
+>+#include <sys/ioctl=2Eh>
+>+
+>+/* This function is never executed, but must be compiled successfully=2E
+>+   Accessing serial ports in the test suite is problematic because
+>+   they likely correspond with low-level system functionality=2E  */
+>+void
+>+not_executed (int fd)
+>+{
+>+  /* Avoid a compilation failure if TCGETS2, TCSETS2 are not
+>+     defined=2E  */
+>+#if defined (TCGETS2) && defined (TCSETS2)
+>+  struct termios2 ti;
+>+  ioctl (fd, TCGETS2, &ti);
+>+  ioctl (fd, TCSETS2, &ti);
+>+#endif
+>+}
+>+
+>+static int
+>+do_test (void)
+>+{
+>+  /* Fail at run time if TCGETS2 or TCSETS2 is not defined=2E  */
+>+#if defined (TCGETS2) && defined (TCSETS2)
+>+  return 0;
+>+#else
+>+  return 1;
+>+#endif
+>+}
+>+
+>+#include <support/test-driver=2Ec>
 
-> Hi Carlos / all,
-> 
-> On Thu, Apr 04, 2019 at 04:50:08PM -0400, Carlos O'Donell wrote:
->> > > > +/* Signature required before each abort handler code.  */
->> > > > +#define RSEQ_SIG 0x53053053
->> > > 
->> > > Why isn't this a mips-specific op code?
->> > 
->> > MIPS also has a literal pool just before the abort handler, and it
->> > jumps over it. My understanding is that we can use any signature value
->> > we want, and it does not need to be a valid instruction, similarly to ARM:
->> > 
->> > #define __RSEQ_ASM_DEFINE_ABORT(table_label, label, teardown, \
->> >                                  abort_label, version, flags, \
->> >                                  start_ip, post_commit_offset, abort_ip) \
->> >                  ".balign 32\n\t" \
->> >                  __rseq_str(table_label) ":\n\t" \
->> >                  ".word " __rseq_str(version) ", " __rseq_str(flags) "\n\t" \
->> >                  LONG " " U32_U64_PAD(__rseq_str(start_ip)) "\n\t" \
->> >                  LONG " " U32_U64_PAD(__rseq_str(post_commit_offset)) "\n\t" \
->> >                  LONG " " U32_U64_PAD(__rseq_str(abort_ip)) "\n\t" \
->> >                  ".word " __rseq_str(RSEQ_SIG) "\n\t" \
->> >                  __rseq_str(label) ":\n\t" \
->> >                  teardown \
->> >                  "b %l[" __rseq_str(abort_label) "]\n\t"
->> > 
->> > Perhaps Paul Burton can confirm this ?
->> 
->> Yes please.
->> 
->> You also want to avoid the value being a valid MIPS insn that's common.
->> 
->> Did you check that?
-> 
-> This does not decode as a standard MIPS instruction, though it does
-> decode for both the microMIPS (ori) & nanoMIPS (lwxs; sll) ISAs.
-> 
-> I imagine I copied the value from another architecture when porting, and
-> since it doesn't get executed it seemed fine.
-> 
-> One maybe nicer option along the same lines would be 0x72736571 or
-> 0x71657372 (ASCII 'rseq') neither of which decode as a MIPS instruction.
-> 
->> I think the order of preference is:
->> 
->> 1.  An uncommon insn (with random immediate values), in a literal pool, that is
->>     not a useful ROP/JOP sequence (very uncommon)
-> 
-> For that option on MIPS we could do something like:
-> 
->  sll $0, $0, 31     # effectively a nop, but looks weird
-> 
->> 2a. A uncommon TRAP hopefully with some immediate data encoded (maybe uncommon)
-> 
-> Our break instruction has a 19b immediate in nanoMIPS (20b for microMIPS
-> & classic MIPS) so that could be something like:
-> 
->  break 0x7273       # ASCII 'rs'
-> 
-> That's pretty unlikely to be seen in normal code, or the teq instruction
-> has a rarely used code field (4b in microMIPS, 5b in nanoMIPS, 10b in
-> classic MIPS) that's meaningless to hardware so something like this
-> would be possible:
-> 
->  teq $0, $0, 0x8    # ASCII backspace
-> 
->> 2b. A NOP to avoid affecting speculative execution (maybe uncommon)
->> 
->> With 2a/2b being roughly equivalent depending on speculative execution policy.
-> 
-> There are a bunch of potential odd looking nops possible, one of which
-> would be the sll I mentioned above.
-> 
-> Another option would be to use a priveleged instruction which userland
-> code can't execute & should normally never contain. That would decode as
-> a valid instruction & effectively behave like a trap instruction but
-> look very odd to anyone reading disassembled code. eg:
-> 
->  mfc0 $0, 13        # Try to read the cause register; take SIGILL
-> 
-> In order to handle MIPS vs microMIPS vs nanoMIPS differences I'm
-> thinking it may be best to switch to one of these real instructions that
-> looks strange. The ugly part would be the nest of #ifdef's to deal with
-> endianness & ISA when defining it as a number...
-
-Note that we can have different signatures for each sub-architecture, as
-long as they don't have to co-exist within the same process.
-
-Ideally we'd need a patch on top of the Linux kernel
-tools/testing/selftests/rseq/rseq-mips.h file that updates
-the signature value. I think the current discussion leads us
-towards a trap with unlikely immediate operand. Note that we
-can special-case with #ifdef for each sub-architecture and endianness
-if need be.
-
-/*
- * TODO: document trap instruction objdump output on each sub-architecture
- * instruction sets.
- */
-#define RSEQ_SIG 0x########
-
-Should we do anything specific for big/little endian ? Is the byte order
-of the instruction encoding the same as data ?
-
-Thanks,
-
-Mathieu
-
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+PowerPC doesn't need it at all=2E
+--=20
+Sent from my Android device with K-9 Mail=2E Please excuse my brevity=2E
