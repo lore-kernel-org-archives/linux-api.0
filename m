@@ -1,68 +1,114 @@
-From: Alan Modra <amodra@gmail.com>
-Subject: Re: [PATCH 1/4] glibc: Perform rseq(2) registration at C startup and
- thread creation (v7)
-Date: Tue, 9 Apr 2019 18:59:48 +0930
-Message-ID: <20190409092948.GA14424@bubble.grove.modra.org>
-References: <5166fbe9-cfe0-8554-abc7-4fc844cf2765@redhat.com>
- <1965431879.7576.1553529272844.JavaMail.zimbra@efficios.com>
- <87lg0tosfz.fsf@concordia.ellerman.id.au>
- <87pnq4zxyj.fsf@oldenburg2.str.redhat.com>
- <ce6f9db3-bf85-7aec-4bae-998e6fd629e1@redhat.com>
- <87y34o4xt3.fsf@oldenburg2.str.redhat.com>
- <43f97ddb-c8df-27ea-9517-63252ebd3183@redhat.com>
- <877ec4pam2.fsf@linux.ibm.com>
- <ce9fbc66-5eb9-0fa9-99fa-5abfe00ddfc2@redhat.com>
- <877ec3yffq.fsf@concordia.ellerman.id.au>
+From: Andrew Murray <andrew.murray@arm.com>
+Subject: [PATCH v5 0/6] arm64: Initial support for CVADP
+Date: Tue,  9 Apr 2019 10:52:39 +0100
+Message-ID: <20190409095245.42524-1-andrew.murray@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <877ec3yffq.fsf@concordia.ellerman.id.au>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Michael Ellerman <mpe@ellerman.id.au>
-Cc: Carlos O'Donell <codonell@redhat.com>, Tulio Magno Quites Machado Filho <tuliom@ascii.art.br>, Florian Weimer <fweimer@redhat.com>, Michael Meissner <meissner@linux.ibm.com>, Peter Bergner <bergner@vnet.ibm.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Paul Burton <paul.burton@mips.com>, Will Deacon <will.deacon@arm.com>, Boqun Feng <boqun.feng@gmail.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Vasily Gorbik <gor@linux.ibm.com>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Russell King <linux@armlinux.org.uk>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.>
+Content-Transfer-Encoding: 8bit
+Return-path: <libc-alpha-return-101255-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+To: Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>
+Cc: Szabolcs Nagy <Szabolcs.Nagy@arm.com>, dave.martin@arm.com, linux-arm-kernel@lists.infradead.org, Mark Rutland <mark.rutland@arm.com>, Phil Blundell <pb@pbcl.net>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, Suzuki K Poulose <suzuki.poulose@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 09, 2019 at 02:23:53PM +1000, Michael Ellerman wrote:
-> I'd much rather we use a trap with a specific immediate value. Otherwise
-> someone's going to waste time one day puzzling over why userspace is
-> doing mtmsr.
+ARMv8.5 introduces a DC CVADP instruction which cleans the data cache to
+the point of deep persistence. This series makes the instruction
+available to userspace and advertises the presence of this CPU feature.
 
-It's data.  We have other data in executable sections.  Anyone who
-wonders about odd disassembly just hasn't realized they are
-disassembling data.
+At present when CONFIG_ARM64_PMEM is enabled and the CVAP feature is
+present (ARMv8.2) the CVAP instruction is used (from memcpy_flushcache
+and arch_wb_cache_pmem). No changes have been made to use CVADP in
+these functions or similar.
 
-> It would also complicate things if we ever wanted to emulate mtmsr.
+As we have moved beyond 32 capabilities we now begin using AT_HWCAP2
+for userspace.
 
-No, because it won't be executed.  If I understand correctly, the only
-reason to choose an illegal, trap or privileged insn is to halt
-execution earlier rather than later when a program goes off in the
-weeds.
+Tested as follows:
 
-> If we want something that is a trap rather than a nop then use 0x0fe50553.
-> 
-> That's "compare the value in r5 with 0x553 and then trap unconditionally".
-> 
-> It shows up in objdump as:
-> 
->     10000000:	53 05 e5 0f 	twui    r5,1363
-> 
-> 
-> The immediate can be anything, I chose that value to mimic the x86 value
-> Mathieu mentioned.
-> 
-> There's no reason that instruction would ever be generated because the
-> immediate value serves no purpose. So it satisfies the "very unlikely
-> to appear" criteria AFAICS.
+$ dmesg | grep "Deep"
+[    0.166496] CPU features: detected: Data cache clean to Point of Deep Persistence
 
-Yes, looks fine to me, except that in VLE mode (do we care?)
-".long 0x0fe50553" disassembles as
-   0:	0f e5       	se_cmphl r5,r30
-   2:	05 53       	se_mullw r3,r5
-No illegal/trap/privileged insn there.
+$ LD_SHOW_AUXV=1 sleep 2>&1 | grep AT_HWCAP
+AT_HWCAP:        ef91ff87
+AT_HWCAP2:       0x1
 
-".long 0x0fe5000b" might be better to cover VLE.
+Changes since v4:
+
+ - Rebased onto v5.1-rc4
+
+ - Add missing .sign field to cpufeature
+
+ - Include <linux/log2.h> where needed
+
+Changes since v3:
+
+ - Rebased onto v5.1-rc3
+
+ - Add macros for mapping uapi HWCAPs to KERNEL_HWCAPs
+
+ - Squash AT_HWCAP2 documentation into AT_HWCAP2 patch
+
+ - Reorder series to allow HWCAP changes to be taken without
+   CVADP (if needed)
+
+ - Additional comments, changes to comments and commit
+   messages
+
+Changes since v2:
+
+ - Rebased onto v5.1-rc2
+
+ - Renamed cpu_{have,set}_feature_name to cpu_{have,set}_named_feature
+
+ - Add additional comments and update kernel Documentation
+
+Changes since v1:
+
+ - Rebased onto v5.0-rc7
+
+ - Introduced cpu_{have,set}_feature_name to eliminate use of
+   KERNEL_HWCAP prefix
+
+ - Hard coded MAX_CPU_FEATURES and added a WARN_ON
+
+ - Minor comment and tab/spacing changes
+
+ - Use elf_hwcap for all 64 caps in the kernel instead of
+   a new elf_hwcap2
+
+
+Andrew Murray (6):
+  arm64: HWCAP: add support for AT_HWCAP2
+  arm64: HWCAP: encapsulate elf_hwcap
+  arm64: Handle trapped DC CVADP
+  arm64: Expose DC CVADP to userspace
+  arm64: add CVADP support to the cache maintenance helper
+  arm64: Advertise ARM64_HAS_DCPODP cpu feature
+
+ Documentation/arm64/elf_hwcaps.txt       |  18 +++-
+ arch/arm64/crypto/aes-ce-ccm-glue.c      |   2 +-
+ arch/arm64/crypto/aes-neonbs-glue.c      |   2 +-
+ arch/arm64/crypto/chacha-neon-glue.c     |   2 +-
+ arch/arm64/crypto/crct10dif-ce-glue.c    |   4 +-
+ arch/arm64/crypto/ghash-ce-glue.c        |   8 +-
+ arch/arm64/crypto/nhpoly1305-neon-glue.c |   2 +-
+ arch/arm64/crypto/sha256-glue.c          |   4 +-
+ arch/arm64/include/asm/assembler.h       |   4 +
+ arch/arm64/include/asm/cpucaps.h         |   3 +-
+ arch/arm64/include/asm/cpufeature.h      |  21 ++---
+ arch/arm64/include/asm/esr.h             |   3 +-
+ arch/arm64/include/asm/hwcap.h           |  54 ++++++++++-
+ arch/arm64/include/uapi/asm/hwcap.h      |   7 +-
+ arch/arm64/kernel/cpufeature.c           | 110 +++++++++++++++--------
+ arch/arm64/kernel/cpuinfo.c              |   3 +-
+ arch/arm64/kernel/fpsimd.c               |   4 +-
+ arch/arm64/kernel/traps.c                |   3 +
+ drivers/clocksource/arm_arch_timer.c     |   8 ++
+ 19 files changed, 191 insertions(+), 71 deletions(-)
 
 -- 
-Alan Modra
-Australia Development Lab, IBM
+2.21.0
