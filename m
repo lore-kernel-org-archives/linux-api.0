@@ -1,7 +1,7 @@
 From: Richard Guy Briggs <rgb@redhat.com>
-Subject: [PATCH ghak90 V6 03/10] audit: read container ID of a process
-Date: Mon,  8 Apr 2019 23:39:10 -0400
-Message-ID: <846df5e5bf5a49094fede082a2ace135ab6f5772.1554732921.git.rgb@redhat.com>
+Subject: [PATCH ghak90 V6 04/10] audit: log container info of syscalls
+Date: Mon,  8 Apr 2019 23:39:11 -0400
+Message-ID: <f4a49f7c949e5df80c339a3fe5c4c2303b12bf23.1554732921.git.rgb@redhat.com>
 References: <cover.1554732921.git.rgb@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1554732921.git.rgb@redhat.com>
@@ -12,88 +12,152 @@ To: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audi
 Cc: Paul Moore <paul@paul-moore.com>, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, eparis@parisplace.org, serge@hallyn.com, ebiederm@xmission.com, nhorman@tuxdriver.com, Richard Guy Briggs <rgb@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Add support for reading the audit container identifier from the proc
-filesystem.
+Create a new audit record AUDIT_CONTAINER_ID to document the audit
+container identifier of a process if it is present.
 
-This is a read from the proc entry of the form
-/proc/PID/audit_containerid where PID is the process ID of the task
-whose audit container identifier is sought.
+Called from audit_log_exit(), syscalls are covered.
 
-The read expects up to a u64 value (unset: 18446744073709551615).
+A sample raw event:
+type=SYSCALL msg=audit(1519924845.499:257): arch=c000003e syscall=257 success=yes exit=3 a0=ffffff9c a1=56374e1cef30 a2=241 a3=1b6 items=2 ppid=606 pid=635 auid=0 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=pts0 ses=3 comm="bash" exe="/usr/bin/bash" subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 key="tmpcontainerid"
+type=CWD msg=audit(1519924845.499:257): cwd="/root"
+type=PATH msg=audit(1519924845.499:257): item=0 name="/tmp/" inode=13863 dev=00:27 mode=041777 ouid=0 ogid=0 rdev=00:00 obj=system_u:object_r:tmp_t:s0 nametype= PARENT cap_fp=0 cap_fi=0 cap_fe=0 cap_fver=0
+type=PATH msg=audit(1519924845.499:257): item=1 name="/tmp/tmpcontainerid" inode=17729 dev=00:27 mode=0100644 ouid=0 ogid=0 rdev=00:00 obj=unconfined_u:object_r:user_tmp_t:s0 nametype=CREATE cap_fp=0 cap_fi=0 cap_fe=0 cap_fver=0
+type=PROCTITLE msg=audit(1519924845.499:257): proctitle=62617368002D6300736C65657020313B206563686F2074657374203E202F746D702F746D70636F6E7461696E65726964
+type=CONTAINER_ID msg=audit(1519924845.499:257): contid=123458
 
-This read requires CAP_AUDIT_CONTROL.
-
+Please see the github audit kernel issue for the main feature:
+  https://github.com/linux-audit/audit-kernel/issues/90
+Please see the github audit userspace issue for supporting additions:
+  https://github.com/linux-audit/audit-userspace/issues/51
+Please see the github audit testsuiite issue for the test case:
+  https://github.com/linux-audit/audit-testsuite/issues/64
+Please see the github audit wiki for the feature overview:
+  https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container-ID
 Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
 Acked-by: Serge Hallyn <serge@hallyn.com>
+Acked-by: Steve Grubb <sgrubb@redhat.com>
 Acked-by: Neil Horman <nhorman@tuxdriver.com>
 Reviewed-by: Ondrej Mosnacek <omosnace@redhat.com>
 ---
- fs/proc/base.c | 25 ++++++++++++++++++++++---
- 1 file changed, 22 insertions(+), 3 deletions(-)
+ include/linux/audit.h      |  5 +++++
+ include/uapi/linux/audit.h |  1 +
+ kernel/audit.c             | 20 ++++++++++++++++++++
+ kernel/auditsc.c           | 20 ++++++++++++++------
+ 4 files changed, 40 insertions(+), 6 deletions(-)
 
-diff --git a/fs/proc/base.c b/fs/proc/base.c
-index 43fd0c4b87de..acc70239d0cb 100644
---- a/fs/proc/base.c
-+++ b/fs/proc/base.c
-@@ -1211,7 +1211,7 @@ static ssize_t oom_score_adj_write(struct file *file, const char __user *buf,
- };
- 
- #ifdef CONFIG_AUDIT
--#define TMPBUFLEN 11
-+#define TMPBUFLEN 21
- static ssize_t proc_loginuid_read(struct file * file, char __user * buf,
- 				  size_t count, loff_t *ppos)
- {
-@@ -1295,6 +1295,24 @@ static ssize_t proc_sessionid_read(struct file * file, char __user * buf,
- 	.llseek		= generic_file_llseek,
- };
- 
-+static ssize_t proc_contid_read(struct file *file, char __user *buf,
-+				  size_t count, loff_t *ppos)
-+{
-+	struct inode *inode = file_inode(file);
-+	struct task_struct *task = get_proc_task(inode);
-+	ssize_t length;
-+	char tmpbuf[TMPBUFLEN];
-+
-+	if (!task)
-+		return -ESRCH;
-+	/* if we don't have caps, reject */
-+	if (!capable(CAP_AUDIT_CONTROL))
-+		return -EPERM;
-+	length = scnprintf(tmpbuf, TMPBUFLEN, "%llu", audit_get_contid(task));
-+	put_task_struct(task);
-+	return simple_read_from_buffer(buf, count, ppos, tmpbuf, length);
-+}
-+
- static ssize_t proc_contid_write(struct file *file, const char __user *buf,
- 				   size_t count, loff_t *ppos)
- {
-@@ -1325,6 +1343,7 @@ static ssize_t proc_contid_write(struct file *file, const char __user *buf,
+diff --git a/include/linux/audit.h b/include/linux/audit.h
+index 301337776193..43438192ca2a 100644
+--- a/include/linux/audit.h
++++ b/include/linux/audit.h
+@@ -199,6 +199,8 @@ static inline u64 audit_get_contid(struct task_struct *tsk)
+ 	return tsk->audit->contid;
  }
  
- static const struct file_operations proc_contid_operations = {
-+	.read		= proc_contid_read,
- 	.write		= proc_contid_write,
- 	.llseek		= generic_file_llseek,
- };
-@@ -3067,7 +3086,7 @@ static int proc_stack_depth(struct seq_file *m, struct pid_namespace *ns,
- #ifdef CONFIG_AUDIT
- 	REG("loginuid",   S_IWUSR|S_IRUGO, proc_loginuid_operations),
- 	REG("sessionid",  S_IRUGO, proc_sessionid_operations),
--	REG("audit_containerid", S_IWUSR, proc_contid_operations),
-+	REG("audit_containerid", S_IWUSR|S_IRUSR, proc_contid_operations),
- #endif
- #ifdef CONFIG_FAULT_INJECTION
- 	REG("make-it-fail", S_IRUGO|S_IWUSR, proc_fault_inject_operations),
-@@ -3466,7 +3485,7 @@ static int proc_tid_comm_permission(struct inode *inode, int mask)
- #ifdef CONFIG_AUDIT
- 	REG("loginuid",  S_IWUSR|S_IRUGO, proc_loginuid_operations),
- 	REG("sessionid",  S_IRUGO, proc_sessionid_operations),
--	REG("audit_containerid", S_IWUSR, proc_contid_operations),
-+	REG("audit_containerid", S_IWUSR|S_IRUSR, proc_contid_operations),
- #endif
- #ifdef CONFIG_FAULT_INJECTION
- 	REG("make-it-fail", S_IRUGO|S_IWUSR, proc_fault_inject_operations),
++extern void audit_log_contid(struct audit_context *context, u64 contid);
++
+ extern u32 audit_enabled;
+ #else /* CONFIG_AUDIT */
+ static inline int audit_alloc(struct task_struct *task)
+@@ -265,6 +267,9 @@ static inline u64 audit_get_contid(struct task_struct *tsk)
+ 	return AUDIT_CID_UNSET;
+ }
+ 
++static inline void audit_log_contid(struct audit_context *context, u64 contid)
++{ }
++
+ #define audit_enabled AUDIT_OFF
+ #endif /* CONFIG_AUDIT */
+ 
+diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
+index 4a6a8bf1de32..55fde9970762 100644
+--- a/include/uapi/linux/audit.h
++++ b/include/uapi/linux/audit.h
+@@ -115,6 +115,7 @@
+ #define AUDIT_REPLACE		1329	/* Replace auditd if this packet unanswerd */
+ #define AUDIT_KERN_MODULE	1330	/* Kernel Module events */
+ #define AUDIT_FANOTIFY		1331	/* Fanotify access decision */
++#define AUDIT_CONTAINER_ID	1332	/* Container ID */
+ 
+ #define AUDIT_AVC		1400	/* SE Linux avc denial or grant */
+ #define AUDIT_SELINUX_ERR	1401	/* Internal SE Linux Errors */
+diff --git a/kernel/audit.c b/kernel/audit.c
+index 182b0f2c183d..3e0af53f3c4d 100644
+--- a/kernel/audit.c
++++ b/kernel/audit.c
+@@ -2127,6 +2127,26 @@ void audit_log_session_info(struct audit_buffer *ab)
+ 	audit_log_format(ab, "auid=%u ses=%u", auid, sessionid);
+ }
+ 
++/*
++ * audit_log_contid - report container info
++ * @context: task or local context for record
++ * @contid: container ID to report
++ */
++void audit_log_contid(struct audit_context *context, u64 contid)
++{
++	struct audit_buffer *ab;
++
++	if (!audit_contid_valid(contid))
++		return;
++	/* Generate AUDIT_CONTAINER_ID record with container ID */
++	ab = audit_log_start(context, GFP_KERNEL, AUDIT_CONTAINER_ID);
++	if (!ab)
++		return;
++	audit_log_format(ab, "contid=%llu", (unsigned long long)contid);
++	audit_log_end(ab);
++}
++EXPORT_SYMBOL(audit_log_contid);
++
+ void audit_log_key(struct audit_buffer *ab, char *key)
+ {
+ 	audit_log_format(ab, " key=");
+diff --git a/kernel/auditsc.c b/kernel/auditsc.c
+index 1f7edf035b16..eea445b7a181 100644
+--- a/kernel/auditsc.c
++++ b/kernel/auditsc.c
+@@ -1523,7 +1523,7 @@ static void audit_log_exit(void)
+ 	for (aux = context->aux_pids; aux; aux = aux->next) {
+ 		struct audit_aux_data_pids *axs = (void *)aux;
+ 
+-		for (i = 0; i < axs->pid_count; i++)
++		for (i = 0; i < axs->pid_count; i++) {
+ 			if (audit_log_pid_context(context, axs->target_pid[i],
+ 						  axs->target_auid[i],
+ 						  axs->target_uid[i],
+@@ -1531,14 +1531,20 @@ static void audit_log_exit(void)
+ 						  axs->target_sid[i],
+ 						  axs->target_comm[i]))
+ 				call_panic = 1;
++			audit_log_contid(context, axs->target_cid[i]);
++		}
+ 	}
+ 
+-	if (context->target_pid &&
+-	    audit_log_pid_context(context, context->target_pid,
+-				  context->target_auid, context->target_uid,
+-				  context->target_sessionid,
+-				  context->target_sid, context->target_comm))
++	if (context->target_pid) {
++		if (audit_log_pid_context(context, context->target_pid,
++					  context->target_auid,
++					  context->target_uid,
++					  context->target_sessionid,
++					  context->target_sid,
++					  context->target_comm))
+ 			call_panic = 1;
++		audit_log_contid(context, context->target_cid);
++	}
+ 
+ 	if (context->pwd.dentry && context->pwd.mnt) {
+ 		ab = audit_log_start(context, GFP_KERNEL, AUDIT_CWD);
+@@ -1557,6 +1563,8 @@ static void audit_log_exit(void)
+ 
+ 	audit_log_proctitle();
+ 
++	audit_log_contid(context, audit_get_contid(current));
++
+ 	/* Send end of event record to help user space know we are finished */
+ 	ab = audit_log_start(context, GFP_KERNEL, AUDIT_EOE);
+ 	if (ab)
 -- 
 1.8.3.1
