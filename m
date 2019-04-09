@@ -1,255 +1,183 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: [PATCH] Linux: Define struct termios2 in <termios.h> under _GNU_SOURCE [BZ #10339]
-Date: Tue, 09 Apr 2019 12:47:30 +0200
-Message-ID: <875zrnlakd.fsf@oldenburg2.str.redhat.com>
+From: Ondrej Mosnacek <omosnace@redhat.com>
+Subject: Re: [PATCH ghak90 V6 05/10] audit: add contid support for signalling
+ the audit daemon
+Date: Tue, 9 Apr 2019 14:57:50 +0200
+Message-ID: <CAFqZXNvZTb-OrCHugEc2TrW57EX_f_+absARpR1bUBN3_uavdQ@mail.gmail.com>
+References: <cover.1554732921.git.rgb@redhat.com> <baa5f3c6d4aa7f9fec903ebb51949f3ac743d067.1554732921.git.rgb@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <libc-alpha-return-101263-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-To: libc-alpha@sourceware.org
-Cc: hpa@zytor.com, adhemerval.zanella@linaro.org, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <baa5f3c6d4aa7f9fec903ebb51949f3ac743d067.1554732921.git.rgb@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Richard Guy Briggs <rgb@redhat.com>
+Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, Paul Moore <paul@paul-moore.com>, Steve Grubb <sgrubb@redhat.com>, David Howells <dhowells@redhat.com>, Simo Sorce <simo@redhat.com>, Eric Paris <eparis@parisplace.org>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W . Biederman" <ebiederm@xmission.com>, nhorman@tuxdriver.com
 List-Id: linux-api@vger.kernel.org
 
-struct termios2 is required for setting arbitrary baud rates on serial
-ports.  <sys/ioctl.h> and <linux/termios.h> have conflicting
-definitions in the existing termios definitions, which means that it
-is currently very difficult to use TCGETS2/TCSETS2 and struct termios2
-with glibc.  Providing a definition within glibc resolves this problem.
+On Tue, Apr 9, 2019 at 5:40 AM Richard Guy Briggs <rgb@redhat.com> wrote:
+> Add audit container identifier support to the action of signalling the
+> audit daemon.
+>
+> Since this would need to add an element to the audit_sig_info struct,
+> a new record type AUDIT_SIGNAL_INFO2 was created with a new
+> audit_sig_info2 struct.  Corresponding support is required in the
+> userspace code to reflect the new record request and reply type.
+> An older userspace won't break since it won't know to request this
+> record type.
+>
+> Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
 
-This does not completely address bug 10339, but it at least exposes
-the current kernel functionality in this area.
+This looks good to me.
 
-Support for struct termios2 is architecture-specific in the kernel.
-Support on alpha was only added in Linux 4.20.  POWER support is
-currently missing.  The expectation is that the kernel will eventually
-use the generic UAPI definition for struct termios2.
+Reviewed-by: Ondrej Mosnacek <omosnace@redhat.com>
 
-2019-04-09  Florian Weimer  <fweimer@redhat.com>
+Although I'm wondering if we shouldn't try to future-proof the
+AUDIT_SIGNAL_INFO2 format somehow, so that we don't need to add
+another AUDIT_SIGNAL_INFO3 when the need arises to add yet-another
+identifier to it... The simplest solution I can come up with is to add
+a "version" field at the beginning (set to 2 initially), then v<N>_len
+at the beginning of data for version <N>. But maybe this is too
+complicated for too little gain...
 
-	[BZ #10339]
-	Linux: Define struct termios2 in <termios.h> under _GNU_SOURCE.
-	* sysdeps/unix/sysv/linux/Makefile [$(subdir) == termios] (tests):
-	Add tst-termios2.
-	* sysdeps/unix/sysv/linux/tst-termios2.c: New file.
-	* sysdeps/unix/sysv/linux/bits/termios2-struct.h: Likewise.
-	* sysdeps/unix/sysv/linux/bits/termios.h [__USE_GNU]: Include it.
-	* sysdeps/unix/sysv/linux/alpha/bits/termios2-struct.h: New file.
-	* sysdeps/unix/sysv/linux/sparc/bits/termios2-struct.h: Likewise.
+> ---
+>  include/linux/audit.h       |  7 +++++++
+>  include/uapi/linux/audit.h  |  1 +
+>  kernel/audit.c              | 27 +++++++++++++++++++++++++++
+>  kernel/audit.h              |  1 +
+>  kernel/auditsc.c            |  1 +
+>  security/selinux/nlmsgtab.c |  1 +
+>  6 files changed, 38 insertions(+)
+>
+> diff --git a/include/linux/audit.h b/include/linux/audit.h
+> index 43438192ca2a..c2dec9157463 100644
+> --- a/include/linux/audit.h
+> +++ b/include/linux/audit.h
+> @@ -37,6 +37,13 @@ struct audit_sig_info {
+>         char            ctx[0];
+>  };
+>
+> +struct audit_sig_info2 {
+> +       uid_t           uid;
+> +       pid_t           pid;
+> +       u64             cid;
+> +       char            ctx[0];
+> +};
+> +
+>  struct audit_buffer;
+>  struct audit_context;
+>  struct inode;
+> diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
+> index 55fde9970762..10cc67926cf1 100644
+> --- a/include/uapi/linux/audit.h
+> +++ b/include/uapi/linux/audit.h
+> @@ -72,6 +72,7 @@
+>  #define AUDIT_SET_FEATURE      1018    /* Turn an audit feature on or off */
+>  #define AUDIT_GET_FEATURE      1019    /* Get which features are enabled */
+>  #define AUDIT_CONTAINER_OP     1020    /* Define the container id and info */
+> +#define AUDIT_SIGNAL_INFO2     1021    /* Get info auditd signal sender */
+>
+>  #define AUDIT_FIRST_USER_MSG   1100    /* Userspace messages mostly uninteresting to kernel */
+>  #define AUDIT_USER_AVC         1107    /* We filter this differently */
+> diff --git a/kernel/audit.c b/kernel/audit.c
+> index 3e0af53f3c4d..87e1d367f98c 100644
+> --- a/kernel/audit.c
+> +++ b/kernel/audit.c
+> @@ -138,6 +138,7 @@ struct audit_net {
+>  kuid_t         audit_sig_uid = INVALID_UID;
+>  pid_t          audit_sig_pid = -1;
+>  u32            audit_sig_sid = 0;
+> +u64            audit_sig_cid = AUDIT_CID_UNSET;
+>
+>  /* Records can be lost in several ways:
+>     0) [suppressed in audit_alloc]
+> @@ -1097,6 +1098,7 @@ static int audit_netlink_ok(struct sk_buff *skb, u16 msg_type)
+>         case AUDIT_ADD_RULE:
+>         case AUDIT_DEL_RULE:
+>         case AUDIT_SIGNAL_INFO:
+> +       case AUDIT_SIGNAL_INFO2:
+>         case AUDIT_TTY_GET:
+>         case AUDIT_TTY_SET:
+>         case AUDIT_TRIM:
+> @@ -1260,6 +1262,7 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
+>         struct audit_buffer     *ab;
+>         u16                     msg_type = nlh->nlmsg_type;
+>         struct audit_sig_info   *sig_data;
+> +       struct audit_sig_info2  *sig_data2;
+>         char                    *ctx = NULL;
+>         u32                     len;
+>
+> @@ -1519,6 +1522,30 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
+>                                  sig_data, sizeof(*sig_data) + len);
+>                 kfree(sig_data);
+>                 break;
+> +       case AUDIT_SIGNAL_INFO2:
+> +               len = 0;
+> +               if (audit_sig_sid) {
+> +                       err = security_secid_to_secctx(audit_sig_sid, &ctx, &len);
+> +                       if (err)
+> +                               return err;
+> +               }
+> +               sig_data2 = kmalloc(sizeof(*sig_data2) + len, GFP_KERNEL);
+> +               if (!sig_data2) {
+> +                       if (audit_sig_sid)
+> +                               security_release_secctx(ctx, len);
+> +                       return -ENOMEM;
+> +               }
+> +               sig_data2->uid = from_kuid(&init_user_ns, audit_sig_uid);
+> +               sig_data2->pid = audit_sig_pid;
+> +               if (audit_sig_sid) {
+> +                       memcpy(sig_data2->ctx, ctx, len);
+> +                       security_release_secctx(ctx, len);
+> +               }
+> +               sig_data2->cid = audit_sig_cid;
+> +               audit_send_reply(skb, seq, AUDIT_SIGNAL_INFO2, 0, 0,
+> +                                sig_data2, sizeof(*sig_data2) + len);
+> +               kfree(sig_data2);
+> +               break;
+>         case AUDIT_TTY_GET: {
+>                 struct audit_tty_status s;
+>                 unsigned int t;
+> diff --git a/kernel/audit.h b/kernel/audit.h
+> index e2912924af0d..c5ac6436317e 100644
+> --- a/kernel/audit.h
+> +++ b/kernel/audit.h
+> @@ -345,6 +345,7 @@ extern void audit_filter_inodes(struct task_struct *tsk,
+>  extern pid_t audit_sig_pid;
+>  extern kuid_t audit_sig_uid;
+>  extern u32 audit_sig_sid;
+> +extern u64 audit_sig_cid;
+>
+>  extern int audit_filter(int msgtype, unsigned int listtype);
+>
+> diff --git a/kernel/auditsc.c b/kernel/auditsc.c
+> index eea445b7a181..0a29a00feaf1 100644
+> --- a/kernel/auditsc.c
+> +++ b/kernel/auditsc.c
+> @@ -2405,6 +2405,7 @@ int audit_signal_info(int sig, struct task_struct *t)
+>                 else
+>                         audit_sig_uid = uid;
+>                 security_task_getsecid(current, &audit_sig_sid);
+> +               audit_sig_cid = audit_get_contid(current);
+>         }
+>
+>         if (!audit_signals || audit_dummy_context())
+> diff --git a/security/selinux/nlmsgtab.c b/security/selinux/nlmsgtab.c
+> index 9cec81209617..682fe7397762 100644
+> --- a/security/selinux/nlmsgtab.c
+> +++ b/security/selinux/nlmsgtab.c
+> @@ -132,6 +132,7 @@ struct nlmsg_perm {
+>         { AUDIT_DEL_RULE,       NETLINK_AUDIT_SOCKET__NLMSG_WRITE    },
+>         { AUDIT_USER,           NETLINK_AUDIT_SOCKET__NLMSG_RELAY    },
+>         { AUDIT_SIGNAL_INFO,    NETLINK_AUDIT_SOCKET__NLMSG_READ     },
+> +       { AUDIT_SIGNAL_INFO2,   NETLINK_AUDIT_SOCKET__NLMSG_READ     },
+>         { AUDIT_TRIM,           NETLINK_AUDIT_SOCKET__NLMSG_WRITE    },
+>         { AUDIT_MAKE_EQUIV,     NETLINK_AUDIT_SOCKET__NLMSG_WRITE    },
+>         { AUDIT_TTY_GET,        NETLINK_AUDIT_SOCKET__NLMSG_READ     },
+> --
+> 1.8.3.1
+>
 
-diff --git a/NEWS b/NEWS
-index b58e2469d4..5e6ecb9c7d 100644
---- a/NEWS
-+++ b/NEWS
-@@ -18,6 +18,9 @@ Major new features:
- 
- * On Linux, the gettid function has been added.
- 
-+* On Linux, <termios.h> now provides a definition of struct termios2 with
-+  the _GNU_SOURCE feature test macro.
-+
- * Minguo (Republic of China) calendar support has been added as an
-   alternative calendar for the following locales: zh_TW, cmn_TW, hak_TW,
-   nan_TW, lzh_TW.
-diff --git a/sysdeps/unix/sysv/linux/Makefile b/sysdeps/unix/sysv/linux/Makefile
-index 52ac6ad484..4cb5e4f0d2 100644
---- a/sysdeps/unix/sysv/linux/Makefile
-+++ b/sysdeps/unix/sysv/linux/Makefile
-@@ -156,6 +156,7 @@ endif
- 
- ifeq ($(subdir),termios)
- sysdep_headers += termio.h
-+tests += tst-termios2
- endif
- 
- ifeq ($(subdir),posix)
-diff --git a/sysdeps/unix/sysv/linux/alpha/bits/termios2-struct.h b/sysdeps/unix/sysv/linux/alpha/bits/termios2-struct.h
-new file mode 100644
-index 0000000000..5f09445e23
---- /dev/null
-+++ b/sysdeps/unix/sysv/linux/alpha/bits/termios2-struct.h
-@@ -0,0 +1,33 @@
-+/* struct termios2 definition.  Linux/alpha version.
-+   Copyright (C) 2019 Free Software Foundation, Inc.
-+   This file is part of the GNU C Library.
-+
-+   The GNU C Library is free software; you can redistribute it and/or
-+   modify it under the terms of the GNU Lesser General Public
-+   License as published by the Free Software Foundation; either
-+   version 2.1 of the License, or (at your option) any later version.
-+
-+   The GNU C Library is distributed in the hope that it will be useful,
-+   but WITHOUT ANY WARRANTY; without even the implied warranty of
-+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-+   Lesser General Public License for more details.
-+
-+   You should have received a copy of the GNU Lesser General Public
-+   License along with the GNU C Library.  If not, see
-+   <http://www.gnu.org/licenses/>.  */
-+
-+#ifndef _TERMIOS_H
-+# error "Never include <bits/termios2-struct.h> directly; use <termios.h> instead."
-+#endif
-+
-+struct termios2
-+{
-+  tcflag_t c_iflag;
-+  tcflag_t c_oflag;
-+  tcflag_t c_cflag;
-+  tcflag_t c_lflag;
-+  cc_t c_cc[NCCS];
-+  cc_t c_line;
-+  speed_t c_ispeed;
-+  speed_t c_ospeed;
-+};
-diff --git a/sysdeps/unix/sysv/linux/bits/termios.h b/sysdeps/unix/sysv/linux/bits/termios.h
-index 997231cd03..45ac7affdf 100644
---- a/sysdeps/unix/sysv/linux/bits/termios.h
-+++ b/sysdeps/unix/sysv/linux/bits/termios.h
-@@ -25,6 +25,10 @@ typedef unsigned int	speed_t;
- typedef unsigned int	tcflag_t;
- 
- #include <bits/termios-struct.h>
-+#ifdef __USE_GNU
-+# include <bits/termios2-struct.h>
-+#endif
-+
- #include <bits/termios-c_cc.h>
- #include <bits/termios-c_iflag.h>
- #include <bits/termios-c_oflag.h>
-diff --git a/sysdeps/unix/sysv/linux/bits/termios2-struct.h b/sysdeps/unix/sysv/linux/bits/termios2-struct.h
-new file mode 100644
-index 0000000000..5a48e45ef3
---- /dev/null
-+++ b/sysdeps/unix/sysv/linux/bits/termios2-struct.h
-@@ -0,0 +1,33 @@
-+/* struct termios2 definition.  Linux/generic version.
-+   Copyright (C) 2019 Free Software Foundation, Inc.
-+   This file is part of the GNU C Library.
-+
-+   The GNU C Library is free software; you can redistribute it and/or
-+   modify it under the terms of the GNU Lesser General Public
-+   License as published by the Free Software Foundation; either
-+   version 2.1 of the License, or (at your option) any later version.
-+
-+   The GNU C Library is distributed in the hope that it will be useful,
-+   but WITHOUT ANY WARRANTY; without even the implied warranty of
-+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-+   Lesser General Public License for more details.
-+
-+   You should have received a copy of the GNU Lesser General Public
-+   License along with the GNU C Library.  If not, see
-+   <http://www.gnu.org/licenses/>.  */
-+
-+#ifndef _TERMIOS_H
-+# error "Never include <bits/termios2-struct.h> directly; use <termios.h> instead."
-+#endif
-+
-+struct termios2
-+{
-+  tcflag_t c_iflag;
-+  tcflag_t c_oflag;
-+  tcflag_t c_cflag;
-+  tcflag_t c_lflag;
-+  cc_t c_line;
-+  cc_t c_cc[NCCS];
-+  speed_t c_ispeed;
-+  speed_t c_ospeed;
-+};
-diff --git a/sysdeps/unix/sysv/linux/sparc/bits/termios2-struct.h b/sysdeps/unix/sysv/linux/sparc/bits/termios2-struct.h
-new file mode 100644
-index 0000000000..7c889e575c
---- /dev/null
-+++ b/sysdeps/unix/sysv/linux/sparc/bits/termios2-struct.h
-@@ -0,0 +1,33 @@
-+/* struct termios2 definition.  Linux/sparc version.
-+   Copyright (C) 2019 Free Software Foundation, Inc.
-+   This file is part of the GNU C Library.
-+
-+   The GNU C Library is free software; you can redistribute it and/or
-+   modify it under the terms of the GNU Lesser General Public
-+   License as published by the Free Software Foundation; either
-+   version 2.1 of the License, or (at your option) any later version.
-+
-+   The GNU C Library is distributed in the hope that it will be useful,
-+   but WITHOUT ANY WARRANTY; without even the implied warranty of
-+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-+   Lesser General Public License for more details.
-+
-+   You should have received a copy of the GNU Lesser General Public
-+   License along with the GNU C Library.  If not, see
-+   <http://www.gnu.org/licenses/>.  */
-+
-+#ifndef _TERMIOS_H
-+# error "Never include <bits/termios2-struct.h> directly; use <termios.h> instead."
-+#endif
-+
-+struct termios2
-+{
-+  tcflag_t c_iflag;
-+  tcflag_t c_oflag;
-+  tcflag_t c_cflag;
-+  tcflag_t c_lflag;
-+  cc_t c_line;
-+  cc_t c_cc[NCCS + 2];
-+  speed_t c_ispeed;
-+  speed_t c_ospeed;
-+};
-diff --git a/sysdeps/unix/sysv/linux/tst-termios2.c b/sysdeps/unix/sysv/linux/tst-termios2.c
-new file mode 100644
-index 0000000000..82326a1288
---- /dev/null
-+++ b/sysdeps/unix/sysv/linux/tst-termios2.c
-@@ -0,0 +1,48 @@
-+/* Minimal test of struct termios2 definition.
-+   Copyright (C) 2019 Free Software Foundation, Inc.
-+   This file is part of the GNU C Library.
-+
-+   The GNU C Library is free software; you can redistribute it and/or
-+   modify it under the terms of the GNU Lesser General Public
-+   License as published by the Free Software Foundation; either
-+   version 2.1 of the License, or (at your option) any later version.
-+
-+   The GNU C Library is distributed in the hope that it will be useful,
-+   but WITHOUT ANY WARRANTY; without even the implied warranty of
-+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-+   Lesser General Public License for more details.
-+
-+   You should have received a copy of the GNU Lesser General Public
-+   License along with the GNU C Library.  If not, see
-+   <http://www.gnu.org/licenses/>.  */
-+
-+#include <termios.h>
-+#include <sys/ioctl.h>
-+
-+/* This function is never executed, but must be compiled successfully.
-+   Accessing serial ports in the test suite is problematic because
-+   they likely correspond with low-level system functionality.  */
-+void
-+not_executed (int fd)
-+{
-+  /* Avoid a compilation failure if TCGETS2, TCSETS2 are not
-+     defined.  */
-+#if defined (TCGETS2) && defined (TCSETS2)
-+  struct termios2 ti;
-+  ioctl (fd, TCGETS2, &ti);
-+  ioctl (fd, TCSETS2, &ti);
-+#endif
-+}
-+
-+static int
-+do_test (void)
-+{
-+  /* Fail at run time if TCGETS2 or TCSETS2 is not defined.  */
-+#if defined (TCGETS2) && defined (TCSETS2)
-+  return 0;
-+#else
-+  return 1;
-+#endif
-+}
-+
-+#include <support/test-driver.c>
+
+--
+Ondrej Mosnacek <omosnace at redhat dot com>
+Software Engineer, Security Technologies
+Red Hat, Inc.
