@@ -1,29 +1,80 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [PATCH] Linux: Define struct termios2 in <termios.h> under _GNU_SOURCE [BZ #10339]
-Date: Tue, 09 Apr 2019 18:04:53 +0200
-Message-ID: <87y34ji2qi.fsf@oldenburg2.str.redhat.com>
-References: <875zrnlakd.fsf@oldenburg2.str.redhat.com>
-	<CA8DB086-0ABB-4E37-93F3-89A64B8012DF@zytor.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH 1/4] glibc: Perform rseq(2) registration at C startup
+ and thread creation (v7)
+Date: Tue, 9 Apr 2019 12:33:55 -0400 (EDT)
+Message-ID: <1123305370.2393.1554827635212.JavaMail.zimbra@efficios.com>
+References: <20190212194253.1951-1-mathieu.desnoyers@efficios.com> <87lg0tosfz.fsf@concordia.ellerman.id.au> <87pnq4zxyj.fsf@oldenburg2.str.redhat.com> <ce6f9db3-bf85-7aec-4bae-998e6fd629e1@redhat.com> <87y34o4xt3.fsf@oldenburg2.str.redhat.com> <43f97ddb-c8df-27ea-9517-63252ebd3183@redhat.com> <877ec4pam2.fsf@linux.ibm.com> <ce9fbc66-5eb9-0fa9-99fa-5abfe00ddfc2@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <libc-alpha-return-101278-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-In-Reply-To: <CA8DB086-0ABB-4E37-93F3-89A64B8012DF@zytor.com> (hpa's message
-	of "Tue, 09 Apr 2019 09:07:11 -0600")
-To: hpa@zytor.com
-Cc: libc-alpha@sourceware.org, adhemerval.zanella@linaro.org, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <ce9fbc66-5eb9-0fa9-99fa-5abfe00ddfc2@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Carlos O'Donell <codonell@redhat.com>
+Cc: Tulio Magno Quites Machado Filho <tuliom@ascii.art.br>, Florian Weimer <fweimer@redhat.com>, Michael Meissner <meissner@linux.ibm.com>, Alan Modra <amodra@gmail.com>, Peter Bergner <bergner@vnet.ibm.com>, Michael Ellerman <mpe@ellerman.id.au>, Paul Burton <paul.burton@mips.com>, Will Deacon <will.deacon@arm.com>, Boqun Feng <boqun.feng@gmail.com>, heiko carstens <heiko.carstens@de.ibm.com>, gor <gor@linux.ibm.com>, schwidefsky <schwidefsky@de.ibm.com>, "Russell King, ARM Linux" <linux@armlinux.org.uk>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tg>
 List-Id: linux-api@vger.kernel.org
 
-* hpa:
+----- On Apr 8, 2019, at 5:45 PM, Carlos O'Donell codonell@redhat.com wrote:
 
-> Anything blocking the POC code I provided?
+> On 4/8/19 3:20 PM, Tulio Magno Quites Machado Filho wrote:
+>> Carlos O'Donell <codonell@redhat.com> writes:
+>> 
+>>> On 4/5/19 5:16 AM, Florian Weimer wrote:
+>>>> * Carlos O'Donell:
+>>>>> It is valuable that it be a trap, particularly for constant pools because
+>>>>> it means that a jump into the constant pool will trap.
+>>>>
+>>>> Sorry, I don't understand why this matters in this context.  Would you
+>>>> please elaborate?
+>>>
+>>> Sorry, I wasn't very clear.
+>>>
+>>> My point is only that any accidental jumps, either with off-by-one (like you
+>>> fixed in gcc/glibc's signal unwinding most recently), result in a process fault
+>>> rather than executing RSEQ_SIG as a valid instruction *and then* continuing
+>>> onwards to the handler.
+>>>
+>>> A process fault is achieved either by a trap, or an invalid instruction, or
+>>> a privileged insn (like suggested for MIPS in this thread).
+>> 
+>> In that case, mtmsr (Move to Machine State Register) seems a good candidate.
+>> 
+>> mtmsr is available both on 32 and 64 bits since their first implementations.
+>> 
+>> It's a privileged instruction and should never appear in userspace
+>> code (causes SIGILL).
+>> 
+>> Any comments?
+>  
+> That seems good to me.
+> 
+> Mathieu,
+> 
+> What's required to move this forward for POWER?
 
-I don't recall that, sorry.  Would you please provide a reference?
+First, we need to decide whether we need rseq to support more than
+one signature per process to cover the VLE extension. If so, we'd
+need to extend rseq with a new flag for future kernels.
+
+Then, ideally, we'd need a patch on top of the Linux kernel
+tools/testing/selftests/rseq/rseq-ppc.h file that updates
+the signature value. I think the current discussion leads us
+towards a trap:
+
+/*
+ * TODO: document instruction objdump output on each architecture and VLE
+ * instruction sets.
+ */
+#define RSEQ_SIG 0x0fe5000b
+
+Should we do anything specific for big/little endian ? Is the byte order
+of the instruction encoding the same as data ?
 
 Thanks,
-Florian
+
+Mathieu
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
