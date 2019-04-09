@@ -1,163 +1,161 @@
 From: Richard Guy Briggs <rgb@redhat.com>
-Subject: [PATCH ghak90 V6 04/10] audit: log container info of syscalls
-Date: Mon,  8 Apr 2019 23:39:11 -0400
-Message-ID: <f4a49f7c949e5df80c339a3fe5c4c2303b12bf23.1554732921.git.rgb@redhat.com>
+Subject: [PATCH ghak90 V6 05/10] audit: add contid support for signalling the audit daemon
+Date: Mon,  8 Apr 2019 23:39:12 -0400
+Message-ID: <baa5f3c6d4aa7f9fec903ebb51949f3ac743d067.1554732921.git.rgb@redhat.com>
 References: <cover.1554732921.git.rgb@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <netdev-owner@vger.kernel.org>
 In-Reply-To: <cover.1554732921.git.rgb@redhat.com>
 In-Reply-To: <cover.1554732921.git.rgb@redhat.com>
 References: <cover.1554732921.git.rgb@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: netdev-owner@vger.kernel.org
 To: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org
 Cc: Paul Moore <paul@paul-moore.com>, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, eparis@parisplace.org, serge@hallyn.com, ebiederm@xmission.com, nhorman@tuxdriver.com, Richard Guy Briggs <rgb@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Create a new audit record AUDIT_CONTAINER_ID to document the audit
-container identifier of a process if it is present.
+Add audit container identifier support to the action of signalling the
+audit daemon.
 
-Called from audit_log_exit(), syscalls are covered.
+Since this would need to add an element to the audit_sig_info struct,
+a new record type AUDIT_SIGNAL_INFO2 was created with a new
+audit_sig_info2 struct.  Corresponding support is required in the
+userspace code to reflect the new record request and reply type.
+An older userspace won't break since it won't know to request this
+record type.
 
-A sample raw event:
-type=SYSCALL msg=audit(1519924845.499:257): arch=c000003e syscall=257 success=yes exit=3 a0=ffffff9c a1=56374e1cef30 a2=241 a3=1b6 items=2 ppid=606 pid=635 auid=0 uid=0 gid=0 euid=0 suid=0 fsuid=0 egid=0 sgid=0 fsgid=0 tty=pts0 ses=3 comm="bash" exe="/usr/bin/bash" subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 key="tmpcontainerid"
-type=CWD msg=audit(1519924845.499:257): cwd="/root"
-type=PATH msg=audit(1519924845.499:257): item=0 name="/tmp/" inode=13863 dev=00:27 mode=041777 ouid=0 ogid=0 rdev=00:00 obj=system_u:object_r:tmp_t:s0 nametype= PARENT cap_fp=0 cap_fi=0 cap_fe=0 cap_fver=0
-type=PATH msg=audit(1519924845.499:257): item=1 name="/tmp/tmpcontainerid" inode=17729 dev=00:27 mode=0100644 ouid=0 ogid=0 rdev=00:00 obj=unconfined_u:object_r:user_tmp_t:s0 nametype=CREATE cap_fp=0 cap_fi=0 cap_fe=0 cap_fver=0
-type=PROCTITLE msg=audit(1519924845.499:257): proctitle=62617368002D6300736C65657020313B206563686F2074657374203E202F746D702F746D70636F6E7461696E65726964
-type=CONTAINER_ID msg=audit(1519924845.499:257): contid=123458
-
-Please see the github audit kernel issue for the main feature:
-  https://github.com/linux-audit/audit-kernel/issues/90
-Please see the github audit userspace issue for supporting additions:
-  https://github.com/linux-audit/audit-userspace/issues/51
-Please see the github audit testsuiite issue for the test case:
-  https://github.com/linux-audit/audit-testsuite/issues/64
-Please see the github audit wiki for the feature overview:
-  https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container-ID
 Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-Acked-by: Serge Hallyn <serge@hallyn.com>
-Acked-by: Steve Grubb <sgrubb@redhat.com>
-Acked-by: Neil Horman <nhorman@tuxdriver.com>
-Reviewed-by: Ondrej Mosnacek <omosnace@redhat.com>
 ---
- include/linux/audit.h      |  5 +++++
- include/uapi/linux/audit.h |  1 +
- kernel/audit.c             | 20 ++++++++++++++++++++
- kernel/auditsc.c           | 20 ++++++++++++++------
- 4 files changed, 40 insertions(+), 6 deletions(-)
+ include/linux/audit.h       |  7 +++++++
+ include/uapi/linux/audit.h  |  1 +
+ kernel/audit.c              | 27 +++++++++++++++++++++++++++
+ kernel/audit.h              |  1 +
+ kernel/auditsc.c            |  1 +
+ security/selinux/nlmsgtab.c |  1 +
+ 6 files changed, 38 insertions(+)
 
 diff --git a/include/linux/audit.h b/include/linux/audit.h
-index 301337776193..43438192ca2a 100644
+index 43438192ca2a..c2dec9157463 100644
 --- a/include/linux/audit.h
 +++ b/include/linux/audit.h
-@@ -199,6 +199,8 @@ static inline u64 audit_get_contid(struct task_struct *tsk)
- 	return tsk->audit->contid;
- }
+@@ -37,6 +37,13 @@ struct audit_sig_info {
+ 	char		ctx[0];
+ };
  
-+extern void audit_log_contid(struct audit_context *context, u64 contid);
++struct audit_sig_info2 {
++	uid_t		uid;
++	pid_t		pid;
++	u64		cid;
++	char		ctx[0];
++};
 +
- extern u32 audit_enabled;
- #else /* CONFIG_AUDIT */
- static inline int audit_alloc(struct task_struct *task)
-@@ -265,6 +267,9 @@ static inline u64 audit_get_contid(struct task_struct *tsk)
- 	return AUDIT_CID_UNSET;
- }
- 
-+static inline void audit_log_contid(struct audit_context *context, u64 contid)
-+{ }
-+
- #define audit_enabled AUDIT_OFF
- #endif /* CONFIG_AUDIT */
- 
+ struct audit_buffer;
+ struct audit_context;
+ struct inode;
 diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
-index 4a6a8bf1de32..55fde9970762 100644
+index 55fde9970762..10cc67926cf1 100644
 --- a/include/uapi/linux/audit.h
 +++ b/include/uapi/linux/audit.h
-@@ -115,6 +115,7 @@
- #define AUDIT_REPLACE		1329	/* Replace auditd if this packet unanswerd */
- #define AUDIT_KERN_MODULE	1330	/* Kernel Module events */
- #define AUDIT_FANOTIFY		1331	/* Fanotify access decision */
-+#define AUDIT_CONTAINER_ID	1332	/* Container ID */
+@@ -72,6 +72,7 @@
+ #define AUDIT_SET_FEATURE	1018	/* Turn an audit feature on or off */
+ #define AUDIT_GET_FEATURE	1019	/* Get which features are enabled */
+ #define AUDIT_CONTAINER_OP	1020	/* Define the container id and info */
++#define AUDIT_SIGNAL_INFO2	1021	/* Get info auditd signal sender */
  
- #define AUDIT_AVC		1400	/* SE Linux avc denial or grant */
- #define AUDIT_SELINUX_ERR	1401	/* Internal SE Linux Errors */
+ #define AUDIT_FIRST_USER_MSG	1100	/* Userspace messages mostly uninteresting to kernel */
+ #define AUDIT_USER_AVC		1107	/* We filter this differently */
 diff --git a/kernel/audit.c b/kernel/audit.c
-index 182b0f2c183d..3e0af53f3c4d 100644
+index 3e0af53f3c4d..87e1d367f98c 100644
 --- a/kernel/audit.c
 +++ b/kernel/audit.c
-@@ -2127,6 +2127,26 @@ void audit_log_session_info(struct audit_buffer *ab)
- 	audit_log_format(ab, "auid=%u ses=%u", auid, sessionid);
- }
+@@ -138,6 +138,7 @@ struct audit_net {
+ kuid_t		audit_sig_uid = INVALID_UID;
+ pid_t		audit_sig_pid = -1;
+ u32		audit_sig_sid = 0;
++u64		audit_sig_cid = AUDIT_CID_UNSET;
  
-+/*
-+ * audit_log_contid - report container info
-+ * @context: task or local context for record
-+ * @contid: container ID to report
-+ */
-+void audit_log_contid(struct audit_context *context, u64 contid)
-+{
-+	struct audit_buffer *ab;
-+
-+	if (!audit_contid_valid(contid))
-+		return;
-+	/* Generate AUDIT_CONTAINER_ID record with container ID */
-+	ab = audit_log_start(context, GFP_KERNEL, AUDIT_CONTAINER_ID);
-+	if (!ab)
-+		return;
-+	audit_log_format(ab, "contid=%llu", (unsigned long long)contid);
-+	audit_log_end(ab);
-+}
-+EXPORT_SYMBOL(audit_log_contid);
-+
- void audit_log_key(struct audit_buffer *ab, char *key)
- {
- 	audit_log_format(ab, " key=");
+ /* Records can be lost in several ways:
+    0) [suppressed in audit_alloc]
+@@ -1097,6 +1098,7 @@ static int audit_netlink_ok(struct sk_buff *skb, u16 msg_type)
+ 	case AUDIT_ADD_RULE:
+ 	case AUDIT_DEL_RULE:
+ 	case AUDIT_SIGNAL_INFO:
++	case AUDIT_SIGNAL_INFO2:
+ 	case AUDIT_TTY_GET:
+ 	case AUDIT_TTY_SET:
+ 	case AUDIT_TRIM:
+@@ -1260,6 +1262,7 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
+ 	struct audit_buffer	*ab;
+ 	u16			msg_type = nlh->nlmsg_type;
+ 	struct audit_sig_info   *sig_data;
++	struct audit_sig_info2  *sig_data2;
+ 	char			*ctx = NULL;
+ 	u32			len;
+ 
+@@ -1519,6 +1522,30 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
+ 				 sig_data, sizeof(*sig_data) + len);
+ 		kfree(sig_data);
+ 		break;
++	case AUDIT_SIGNAL_INFO2:
++		len = 0;
++		if (audit_sig_sid) {
++			err = security_secid_to_secctx(audit_sig_sid, &ctx, &len);
++			if (err)
++				return err;
++		}
++		sig_data2 = kmalloc(sizeof(*sig_data2) + len, GFP_KERNEL);
++		if (!sig_data2) {
++			if (audit_sig_sid)
++				security_release_secctx(ctx, len);
++			return -ENOMEM;
++		}
++		sig_data2->uid = from_kuid(&init_user_ns, audit_sig_uid);
++		sig_data2->pid = audit_sig_pid;
++		if (audit_sig_sid) {
++			memcpy(sig_data2->ctx, ctx, len);
++			security_release_secctx(ctx, len);
++		}
++		sig_data2->cid = audit_sig_cid;
++		audit_send_reply(skb, seq, AUDIT_SIGNAL_INFO2, 0, 0,
++				 sig_data2, sizeof(*sig_data2) + len);
++		kfree(sig_data2);
++		break;
+ 	case AUDIT_TTY_GET: {
+ 		struct audit_tty_status s;
+ 		unsigned int t;
+diff --git a/kernel/audit.h b/kernel/audit.h
+index e2912924af0d..c5ac6436317e 100644
+--- a/kernel/audit.h
++++ b/kernel/audit.h
+@@ -345,6 +345,7 @@ extern void audit_filter_inodes(struct task_struct *tsk,
+ extern pid_t audit_sig_pid;
+ extern kuid_t audit_sig_uid;
+ extern u32 audit_sig_sid;
++extern u64 audit_sig_cid;
+ 
+ extern int audit_filter(int msgtype, unsigned int listtype);
+ 
 diff --git a/kernel/auditsc.c b/kernel/auditsc.c
-index 1f7edf035b16..eea445b7a181 100644
+index eea445b7a181..0a29a00feaf1 100644
 --- a/kernel/auditsc.c
 +++ b/kernel/auditsc.c
-@@ -1523,7 +1523,7 @@ static void audit_log_exit(void)
- 	for (aux = context->aux_pids; aux; aux = aux->next) {
- 		struct audit_aux_data_pids *axs = (void *)aux;
- 
--		for (i = 0; i < axs->pid_count; i++)
-+		for (i = 0; i < axs->pid_count; i++) {
- 			if (audit_log_pid_context(context, axs->target_pid[i],
- 						  axs->target_auid[i],
- 						  axs->target_uid[i],
-@@ -1531,14 +1531,20 @@ static void audit_log_exit(void)
- 						  axs->target_sid[i],
- 						  axs->target_comm[i]))
- 				call_panic = 1;
-+			audit_log_contid(context, axs->target_cid[i]);
-+		}
+@@ -2405,6 +2405,7 @@ int audit_signal_info(int sig, struct task_struct *t)
+ 		else
+ 			audit_sig_uid = uid;
+ 		security_task_getsecid(current, &audit_sig_sid);
++		audit_sig_cid = audit_get_contid(current);
  	}
  
--	if (context->target_pid &&
--	    audit_log_pid_context(context, context->target_pid,
--				  context->target_auid, context->target_uid,
--				  context->target_sessionid,
--				  context->target_sid, context->target_comm))
-+	if (context->target_pid) {
-+		if (audit_log_pid_context(context, context->target_pid,
-+					  context->target_auid,
-+					  context->target_uid,
-+					  context->target_sessionid,
-+					  context->target_sid,
-+					  context->target_comm))
- 			call_panic = 1;
-+		audit_log_contid(context, context->target_cid);
-+	}
- 
- 	if (context->pwd.dentry && context->pwd.mnt) {
- 		ab = audit_log_start(context, GFP_KERNEL, AUDIT_CWD);
-@@ -1557,6 +1563,8 @@ static void audit_log_exit(void)
- 
- 	audit_log_proctitle();
- 
-+	audit_log_contid(context, audit_get_contid(current));
-+
- 	/* Send end of event record to help user space know we are finished */
- 	ab = audit_log_start(context, GFP_KERNEL, AUDIT_EOE);
- 	if (ab)
+ 	if (!audit_signals || audit_dummy_context())
+diff --git a/security/selinux/nlmsgtab.c b/security/selinux/nlmsgtab.c
+index 9cec81209617..682fe7397762 100644
+--- a/security/selinux/nlmsgtab.c
++++ b/security/selinux/nlmsgtab.c
+@@ -132,6 +132,7 @@ struct nlmsg_perm {
+ 	{ AUDIT_DEL_RULE,	NETLINK_AUDIT_SOCKET__NLMSG_WRITE    },
+ 	{ AUDIT_USER,		NETLINK_AUDIT_SOCKET__NLMSG_RELAY    },
+ 	{ AUDIT_SIGNAL_INFO,	NETLINK_AUDIT_SOCKET__NLMSG_READ     },
++	{ AUDIT_SIGNAL_INFO2,	NETLINK_AUDIT_SOCKET__NLMSG_READ     },
+ 	{ AUDIT_TRIM,		NETLINK_AUDIT_SOCKET__NLMSG_WRITE    },
+ 	{ AUDIT_MAKE_EQUIV,	NETLINK_AUDIT_SOCKET__NLMSG_WRITE    },
+ 	{ AUDIT_TTY_GET,	NETLINK_AUDIT_SOCKET__NLMSG_READ     },
 -- 
 1.8.3.1
