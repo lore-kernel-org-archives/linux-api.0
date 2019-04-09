@@ -1,76 +1,72 @@
-From: Tulio Magno Quites Machado Filho <tuliom@ascii.art.br>
-Subject: Re: [PATCH 1/4] glibc: Perform rseq(2) registration at C startup and thread creation (v7)
-Date: Tue, 09 Apr 2019 10:58:34 -0300
-Message-ID: <871s2bp9f9.fsf@linux.ibm.com>
-References: <5166fbe9-cfe0-8554-abc7-4fc844cf2765@redhat.com> <1965431879.7576.1553529272844.JavaMail.zimbra@efficios.com> <87lg0tosfz.fsf@concordia.ellerman.id.au> <87pnq4zxyj.fsf@oldenburg2.str.redhat.com> <ce6f9db3-bf85-7aec-4bae-998e6fd629e1@redhat.com> <87y34o4xt3.fsf@oldenburg2.str.redhat.com> <43f97ddb-c8df-27ea-9517-63252ebd3183@redhat.com> <877ec4pam2.fsf@linux.ibm.com> <ce9fbc66-5eb9-0fa9-99fa-5abfe00ddfc2@redhat.com> <877ec3yffq.fsf@concordia.ellerman.id.au> <20190409092948.GA14424@bubble.grove.modra.org>
+From: Ondrej Mosnacek <omosnace@redhat.com>
+Subject: Re: [PATCH ghak90 V6 05/10] audit: add contid support for signalling
+ the audit daemon
+Date: Tue, 9 Apr 2019 16:00:49 +0200
+Message-ID: <CAFqZXNvzOOjXt7p7dgP14D6TeNKPkSULdtdhapYs5d1H366YjQ@mail.gmail.com>
+References: <cover.1554732921.git.rgb@redhat.com> <baa5f3c6d4aa7f9fec903ebb51949f3ac743d067.1554732921.git.rgb@redhat.com>
+ <CAFqZXNvZTb-OrCHugEc2TrW57EX_f_+absARpR1bUBN3_uavdQ@mail.gmail.com>
+ <CAHC9VhRbxefdpTX5ct+1=uccv9b2GH+imDPPbB90RBWSjMcgbA@mail.gmail.com> <20190409134852.GB15660@hmswarspite.think-freely.org>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <libc-alpha-return-101273-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-In-Reply-To: <20190409092948.GA14424@bubble.grove.modra.org>
-To: Alan Modra <amodra@gmail.com>, Michael Ellerman <mpe@ellerman.id.au>
-Cc: Carlos O'Donell <codonell@redhat.com>, Florian Weimer <fweimer@redhat.com>, Michael Meissner <meissner@linux.ibm.com>, Peter Bergner <bergner@vnet.ibm.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Paul Burton <paul.burton@mips.com>, Will Deacon <will.deacon@arm.com>, Boqun Feng <boqun.feng@gmail.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Vasily Gorbik <gor@linux.ibm.com>, Martin Schwidefsky <schwidefsky@de.ibm.com>, Russell King <linux@armlinux.org.uk>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <pet erz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Dave Watson <davejwatson@fb.c>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190409134852.GB15660@hmswarspite.think-freely.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Neil Horman <nhorman@tuxdriver.com>
+Cc: Paul Moore <paul@paul-moore.com>, Richard Guy Briggs <rgb@redhat.com>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, Steve Grubb <sgrubb@redhat.com>, David Howells <dhowells@redhat.com>, Simo Sorce <simo@redhat.com>, Eric Paris <eparis@parisplace.org>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W . Biederman" <ebiederm@xmission.com>
 List-Id: linux-api@vger.kernel.org
 
-Alan Modra <amodra@gmail.com> writes:
+On Tue, Apr 9, 2019 at 3:49 PM Neil Horman <nhorman@tuxdriver.com> wrote:
+> On Tue, Apr 09, 2019 at 09:40:58AM -0400, Paul Moore wrote:
+> > On Tue, Apr 9, 2019 at 8:58 AM Ondrej Mosnacek <omosnace@redhat.com> wrote:
+> > >
+> > > On Tue, Apr 9, 2019 at 5:40 AM Richard Guy Briggs <rgb@redhat.com> wrote:
+> > > > Add audit container identifier support to the action of signalling the
+> > > > audit daemon.
+> > > >
+> > > > Since this would need to add an element to the audit_sig_info struct,
+> > > > a new record type AUDIT_SIGNAL_INFO2 was created with a new
+> > > > audit_sig_info2 struct.  Corresponding support is required in the
+> > > > userspace code to reflect the new record request and reply type.
+> > > > An older userspace won't break since it won't know to request this
+> > > > record type.
+> > > >
+> > > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> > >
+> > > This looks good to me.
+> > >
+> > > Reviewed-by: Ondrej Mosnacek <omosnace@redhat.com>
+> > >
+> > > Although I'm wondering if we shouldn't try to future-proof the
+> > > AUDIT_SIGNAL_INFO2 format somehow, so that we don't need to add
+> > > another AUDIT_SIGNAL_INFO3 when the need arises to add yet-another
+> > > identifier to it... The simplest solution I can come up with is to add
+> > > a "version" field at the beginning (set to 2 initially), then v<N>_len
+> > > at the beginning of data for version <N>. But maybe this is too
+> > > complicated for too little gain...
+> >
+> > FWIW, I believe the long term solution to this is the fabled netlink
+> > attribute approach that we haven't talked about in some time, but I
+> > keep dreaming about (it has been mostly on the back burner becasue 1)
+> > time and 2) didn't want to impact the audit container ID work).  While
+> > I'm not opposed to trying to make things like this a bit more robust
+> > by adding version fields and similar things, there are still so many
+> > (so very many) problems with the audit kernel/userspace interface that
+> > still need to be addressed.
+> >
+>
+> Agreed, this change as-is is in keeping with the message structure that audit
+> has today, and so is ok with me, but the long term goal should be a conversion
+> to netlink attributes for all audit messages.  Thats a big undertaking and
+> should be addressed separately though.
 
-> On Tue, Apr 09, 2019 at 02:23:53PM +1000, Michael Ellerman wrote:
->> I'd much rather we use a trap with a specific immediate value. Otherwise
->> someone's going to waste time one day puzzling over why userspace is
->> doing mtmsr.
->
-> It's data.  We have other data in executable sections.  Anyone who
-> wonders about odd disassembly just hasn't realized they are
-> disassembling data.
->
->> It would also complicate things if we ever wanted to emulate mtmsr.
->
-> No, because it won't be executed.  If I understand correctly, the only
-> reason to choose an illegal, trap or privileged insn is to halt
-> execution earlier rather than later when a program goes off in the
-> weeds.
->
->> If we want something that is a trap rather than a nop then use 0x0fe50553.
->> 
->> That's "compare the value in r5 with 0x553 and then trap unconditionally".
->> 
->> It shows up in objdump as:
->> 
->>     10000000:	53 05 e5 0f 	twui    r5,1363
->> 
->> 
->> The immediate can be anything, I chose that value to mimic the x86 value
->> Mathieu mentioned.
->> 
->> There's no reason that instruction would ever be generated because the
->> immediate value serves no purpose. So it satisfies the "very unlikely
->> to appear" criteria AFAICS.
->
-> Yes, looks fine to me, except that in VLE mode (do we care?)
-> ".long 0x0fe50553" disassembles as
->    0:	0f e5       	se_cmphl r5,r30
->    2:	05 53       	se_mullw r3,r5
-> No illegal/trap/privileged insn there.
->
-> ".long 0x0fe5000b" might be better to cover VLE.
-
-Looks good for me too.
-
-Actually, it better fits what Carlos O'Donnell had requested:
-
->>> I think the order of preference is:
->>> 
->>> 1.  An uncommon insn (with random immediate values), in a literal pool, that is
->>>      not a useful ROP/JOP sequence (very uncommon)
->>> 2a. A uncommon TRAP hopefully with some immediate data encoded (maybe uncommon)
->>> 2b. A NOP to avoid affecting speculative execution (maybe uncommon)
->>> 
->>> With 2a/2b being roughly equivalent depending on speculative execution policy.
+Yeah, you both have a good point that doing it now and only for this
+message is not necessarily better than not doing it at all. And doing
+a general overhaul is out of scope for this series, obviously. I
+didn't really mind the current solution before and I mind it even less
+now, so consider me satisfied :) I was really just thinking out
+loud...
 
 -- 
-Tulio Magno
+Ondrej Mosnacek <omosnace at redhat dot com>
+Software Engineer, Security Technologies
+Red Hat, Inc.
