@@ -1,24 +1,23 @@
 From: Paul Moore <paul@paul-moore.com>
 Subject: Re: [PATCH ghak90 V6 05/10] audit: add contid support for signalling
  the audit daemon
-Date: Tue, 9 Apr 2019 10:07:22 -0400
-Message-ID: <CAHC9VhQ2DAfaHcSUoE3vTtSzGL5TtRuLZgGrt4TyG44pKuBD7g@mail.gmail.com>
+Date: Tue, 9 Apr 2019 10:08:35 -0400
+Message-ID: <CAHC9VhS9EwnfS8BxL__mQrgYywTOgrXdnW=4zCiM_DYJc4U5+g@mail.gmail.com>
 References: <cover.1554732921.git.rgb@redhat.com> <baa5f3c6d4aa7f9fec903ebb51949f3ac743d067.1554732921.git.rgb@redhat.com>
  <CAFqZXNvZTb-OrCHugEc2TrW57EX_f_+absARpR1bUBN3_uavdQ@mail.gmail.com>
- <CAHC9VhRbxefdpTX5ct+1=uccv9b2GH+imDPPbB90RBWSjMcgbA@mail.gmail.com> <20190409134852.GB15660@hmswarspite.think-freely.org>
+ <CAHC9VhRbxefdpTX5ct+1=uccv9b2GH+imDPPbB90RBWSjMcgbA@mail.gmail.com> <20190409135304.rgkcpgya6h3ciphy@madcap2.tricolour.ca>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190409134852.GB15660@hmswarspite.think-freely.org>
+In-Reply-To: <20190409135304.rgkcpgya6h3ciphy@madcap2.tricolour.ca>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Neil Horman <nhorman@tuxdriver.com>
-Cc: Ondrej Mosnacek <omosnace@redhat.com>, Richard Guy Briggs <rgb@redhat.com>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, Steve Grubb <sgrubb@redhat.com>, David Howells <dhowells@redhat.com>, Simo Sorce <simo@redhat.com>, Eric Paris <eparis@parisplace.org>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W . Biederman" <ebiederm@xmission.com>
+To: Richard Guy Briggs <rgb@redhat.com>
+Cc: Ondrej Mosnacek <omosnace@redhat.com>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, Steve Grubb <sgrubb@redhat.com>, David Howells <dhowells@redhat.com>, Simo Sorce <simo@redhat.com>, Eric Paris <eparis@parisplace.org>, "Serge E. Hallyn" <serge@hallyn.com>, "Eric W . Biederman" <ebiederm@xmission.com>, nhorman@tuxdriver.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 9, 2019 at 9:49 AM Neil Horman <nhorman@tuxdriver.com> wrote:
-> On Tue, Apr 09, 2019 at 09:40:58AM -0400, Paul Moore wrote:
+On Tue, Apr 9, 2019 at 9:53 AM Richard Guy Briggs <rgb@redhat.com> wrote:
+> On 2019-04-09 09:40, Paul Moore wrote:
 > > On Tue, Apr 9, 2019 at 8:58 AM Ondrej Mosnacek <omosnace@redhat.com> wrote:
-> > >
 > > > On Tue, Apr 9, 2019 at 5:40 AM Richard Guy Briggs <rgb@redhat.com> wrote:
 > > > > Add audit container identifier support to the action of signalling the
 > > > > audit daemon.
@@ -53,20 +52,18 @@ On Tue, Apr 9, 2019 at 9:49 AM Neil Horman <nhorman@tuxdriver.com> wrote:
 > > (so very many) problems with the audit kernel/userspace interface that
 > > still need to be addressed.
 >
-> Agreed, this change as-is is in keeping with the message structure that audit
-> has today, and so is ok with me, but the long term goal should be a conversion
-> to netlink attributes for all audit messages.  Thats a big undertaking and
-> should be addressed separately though.
+> While this particular message type is used very infrequently, adding a
+> version field to every message type strikes me as a huge overhead for
+> the small likelihood of the format needing to change.
+>
+> I'd prefer to just key it off the AUDIT_FEATURE_BITMAP or some other
+> easily detectable change in this distinguishing feature, such as the
+> presence of /proc/self/audit_containerid, which is what I've done in the
+> accompanying userspace patchset that I'm preparing to post that works
+> with this change.
 
-You've likely missed all the conversations around this from some time
-ago, but this is the direction I want us to go towards eventually, and
-yes, this is a huge undertaking (much larger than the audit container
-ID work) that will need to be done in stages.
-
-The first step is moving away from audit_log_format() to an in-kernel
-audit API that separates the data from the record format; I've got a
-lot of ideas on that, but as I said earlier, it's mostly on the back
-burner so it doesn't hold up the audit container ID work.
+That's fine.  As I said, I'm not overly worried about this; I view
+this as a bit of a necessary hack.
 
 -- 
 paul moore
