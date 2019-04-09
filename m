@@ -1,53 +1,56 @@
-From: Jens Axboe <axboe@kernel.dk>
+From: Chris Mason <clm@fb.com>
 Subject: Re: [PATCH] io_uring: add support for barrier fsync
-Date: Tue, 9 Apr 2019 12:23:34 -0600
-Message-ID: <5f8d9644-9e8f-c9d2-611e-4b144c62539c@kernel.dk>
+Date: Tue, 9 Apr 2019 18:42:55 +0000
+Message-ID: <5BF7FDDE-212E-4F9A-9B50-26BDA99E952A@fb.com>
 References: <7c7276e4-8ffa-495a-6abf-926a58ee899e@kernel.dk>
  <20190409181742.GA24925@infradead.org>
+ <5f8d9644-9e8f-c9d2-611e-4b144c62539c@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190409181742.GA24925@infradead.org>
+In-Reply-To: <5f8d9644-9e8f-c9d2-611e-4b144c62539c@kernel.dk>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: linux-fsdevel <linux-fsdevel@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Christoph Hellwig <hch@infradead.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 4/9/19 12:17 PM, Christoph Hellwig wrote:
-> On Tue, Apr 09, 2019 at 10:27:43AM -0600, Jens Axboe wrote:
->> It's a quite common use case to issue a bunch of writes, then an fsync
->> or fdatasync when they complete. Since io_uring doesn't guarantee any
->> type of ordering, the application must track issued writes and wait
->> with the fsync issue until they have completed.
->>
->> Add an IORING_FSYNC_BARRIER flag that helps with this so the application
->> doesn't have to do this manually. If this flag is set for the fsync
->> request, we won't issue it until pending IO has already completed.
-> 
-> I think we need a much more detailed explanation of the semantics,
-> preferably in man page format.
-> 
-> Barrier at least in Linux traditionally means all previously submitted
-> requests have finished and no new ones are started until the
-> barrier request finishes, which is very heavy handed.  Is that what
-> this is supposed to do?  If not what are the exact guarantees vs
-> ordering and or barrier semantics?
-
-The patch description isn't that great, and maybe the naming isn't that
-intuitive either. The way it's implemented, the fsync will NOT be issued
-until previously issued IOs have completed. That means both reads and
-writes, since there's no way to wait for just one.  In terms of
-semantics, any previously submitted writes will have completed before
-this fsync is issued. The barrier fsync has no ordering wrt future
-writes, no ordering is implied there. Hence:
-
-W1, W2, W3, FSYNC_W_BARRIER, W4, W5
-
-W1..3 will have been completed by the hardware side before we start
-FSYNC_W_BARRIER. We don't wait with issuing W4..5 until after the fsync
-completes, no ordering is provided there.
-
--- 
-Jens Axboe
+T24gOSBBcHIgMjAxOSwgYXQgMTQ6MjMsIEplbnMgQXhib2Ugd3JvdGU6DQoNCj4gT24gNC85LzE5
+IDEyOjE3IFBNLCBDaHJpc3RvcGggSGVsbHdpZyB3cm90ZToNCj4+IE9uIFR1ZSwgQXByIDA5LCAy
+MDE5IGF0IDEwOjI3OjQzQU0gLTA2MDAsIEplbnMgQXhib2Ugd3JvdGU6DQo+Pj4gSXQncyBhIHF1
+aXRlIGNvbW1vbiB1c2UgY2FzZSB0byBpc3N1ZSBhIGJ1bmNoIG9mIHdyaXRlcywgdGhlbiBhbiAN
+Cj4+PiBmc3luYw0KPj4+IG9yIGZkYXRhc3luYyB3aGVuIHRoZXkgY29tcGxldGUuIFNpbmNlIGlv
+X3VyaW5nIGRvZXNuJ3QgZ3VhcmFudGVlIA0KPj4+IGFueQ0KPj4+IHR5cGUgb2Ygb3JkZXJpbmcs
+IHRoZSBhcHBsaWNhdGlvbiBtdXN0IHRyYWNrIGlzc3VlZCB3cml0ZXMgYW5kIHdhaXQNCj4+PiB3
+aXRoIHRoZSBmc3luYyBpc3N1ZSB1bnRpbCB0aGV5IGhhdmUgY29tcGxldGVkLg0KPj4+DQo+Pj4g
+QWRkIGFuIElPUklOR19GU1lOQ19CQVJSSUVSIGZsYWcgdGhhdCBoZWxwcyB3aXRoIHRoaXMgc28g
+dGhlIA0KPj4+IGFwcGxpY2F0aW9uDQo+Pj4gZG9lc24ndCBoYXZlIHRvIGRvIHRoaXMgbWFudWFs
+bHkuIElmIHRoaXMgZmxhZyBpcyBzZXQgZm9yIHRoZSBmc3luYw0KPj4+IHJlcXVlc3QsIHdlIHdv
+bid0IGlzc3VlIGl0IHVudGlsIHBlbmRpbmcgSU8gaGFzIGFscmVhZHkgY29tcGxldGVkLg0KPj4N
+Cj4+IEkgdGhpbmsgd2UgbmVlZCBhIG11Y2ggbW9yZSBkZXRhaWxlZCBleHBsYW5hdGlvbiBvZiB0
+aGUgc2VtYW50aWNzLA0KPj4gcHJlZmVyYWJseSBpbiBtYW4gcGFnZSBmb3JtYXQuDQo+Pg0KPj4g
+QmFycmllciBhdCBsZWFzdCBpbiBMaW51eCB0cmFkaXRpb25hbGx5IG1lYW5zIGFsbCBwcmV2aW91
+c2x5IA0KPj4gc3VibWl0dGVkDQo+PiByZXF1ZXN0cyBoYXZlIGZpbmlzaGVkIGFuZCBubyBuZXcg
+b25lcyBhcmUgc3RhcnRlZCB1bnRpbCB0aGUNCj4+IGJhcnJpZXIgcmVxdWVzdCBmaW5pc2hlcywg
+d2hpY2ggaXMgdmVyeSBoZWF2eSBoYW5kZWQuICBJcyB0aGF0IHdoYXQNCj4+IHRoaXMgaXMgc3Vw
+cG9zZWQgdG8gZG8/ICBJZiBub3Qgd2hhdCBhcmUgdGhlIGV4YWN0IGd1YXJhbnRlZXMgdnMNCj4+
+IG9yZGVyaW5nIGFuZCBvciBiYXJyaWVyIHNlbWFudGljcz8NCj4NCj4gVGhlIHBhdGNoIGRlc2Ny
+aXB0aW9uIGlzbid0IHRoYXQgZ3JlYXQsIGFuZCBtYXliZSB0aGUgbmFtaW5nIGlzbid0IA0KPiB0
+aGF0DQo+IGludHVpdGl2ZSBlaXRoZXIuIFRoZSB3YXkgaXQncyBpbXBsZW1lbnRlZCwgdGhlIGZz
+eW5jIHdpbGwgTk9UIGJlIA0KPiBpc3N1ZWQNCj4gdW50aWwgcHJldmlvdXNseSBpc3N1ZWQgSU9z
+IGhhdmUgY29tcGxldGVkLiBUaGF0IG1lYW5zIGJvdGggcmVhZHMgYW5kDQo+IHdyaXRlcywgc2lu
+Y2UgdGhlcmUncyBubyB3YXkgdG8gd2FpdCBmb3IganVzdCBvbmUuICBJbiB0ZXJtcyBvZg0KPiBz
+ZW1hbnRpY3MsIGFueSBwcmV2aW91c2x5IHN1Ym1pdHRlZCB3cml0ZXMgd2lsbCBoYXZlIGNvbXBs
+ZXRlZCBiZWZvcmUNCj4gdGhpcyBmc3luYyBpcyBpc3N1ZWQuIFRoZSBiYXJyaWVyIGZzeW5jIGhh
+cyBubyBvcmRlcmluZyB3cnQgZnV0dXJlDQo+IHdyaXRlcywgbm8gb3JkZXJpbmcgaXMgaW1wbGll
+ZCB0aGVyZS4gSGVuY2U6DQo+DQo+IFcxLCBXMiwgVzMsIEZTWU5DX1dfQkFSUklFUiwgVzQsIFc1
+DQo+DQo+IFcxLi4zIHdpbGwgaGF2ZSBiZWVuIGNvbXBsZXRlZCBieSB0aGUgaGFyZHdhcmUgc2lk
+ZSBiZWZvcmUgd2Ugc3RhcnQNCj4gRlNZTkNfV19CQVJSSUVSLiBXZSBkb24ndCB3YWl0IHdpdGgg
+aXNzdWluZyBXNC4uNSB1bnRpbCBhZnRlciB0aGUgDQo+IGZzeW5jDQo+IGNvbXBsZXRlcywgbm8g
+b3JkZXJpbmcgaXMgcHJvdmlkZWQgdGhlcmUuDQoNCkxvb2tpbmcgYXQgdGhlIHBhdGNoLCB3aHkg
+aXMgZnN5bmMgc3BlY2lhbD8gIFNlZW1zIGxpa2UgeW91IGNvdWxkIGFkZCANCnRoaXMgb3JkZXJp
+bmcgYml0IHRvIGFueSB3cml0ZT8NCg0KV2hpbGUgeW91J3JlIGhlcmUsIGRvIHlvdSB3YW50IHRv
+IGFkZCBhIHdheSB0byBGVUEvY2FjaGUgZmx1c2g/ICANCkJhc2ljYWxseSB0aGUgcmVzdCBvZiB3
+aGF0IHVzZXIgbGFuZCB3b3VsZCBuZWVkIHRvIG1ha2UgdGhlaXIgb3duIA0Kd3JpdGUtYmFjay1j
+YWNoZS1zYWZlIGltcGxlbWVudGF0aW9uLg0KDQotY2hyaXMNCg==
