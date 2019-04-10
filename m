@@ -1,18 +1,49 @@
 From: Aubrey Li <aubrey.li@linux.intel.com>
-Subject: [PATCH v14 1/3] /proc/pid/status: Add support for architecture specific output
-Date: Wed, 10 Apr 2019 09:53:23 +0800
-Message-ID: <20190410015326.24500-1-aubrey.li@linux.intel.com>
+Subject: [PATCH v14 2/3] x86,/proc/pid/status: Add AVX-512 usage elapsed time
+Date: Wed, 10 Apr 2019 09:53:24 +0800
+Message-ID: <20190410015326.24500-2-aubrey.li@linux.intel.com>
+References: <20190410015326.24500-1-aubrey.li@linux.intel.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190410015326.24500-1-aubrey.li@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: tglx@linutronix.de, mingo@redhat.com, peterz@infradead.org, hpa@zytor.com
 Cc: ak@linux.intel.com, tim.c.chen@linux.intel.com, dave.hansen@intel.com, arjan@linux.intel.com, adobriyan@gmail.com, akpm@linux-foundation.org, aubrey.li@intel.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Aubrey Li <aubrey.li@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-The architecture specific information of the running processes could
-be useful to the userland. Add support to examine process architecture
-specific information externally.
+AVX-512 components use could cause core turbo frequency drop. So
+it's useful to expose AVX-512 usage elapsed time as a heuristic hint
+for the user space job scheduler to cluster the AVX-512 using tasks
+together.
+
+Tensorflow example:
+$ while [ 1 ]; do cat /proc/tid/status | grep AVX; sleep 1; done
+AVX512_elapsed_ms:      4
+AVX512_elapsed_ms:      8
+AVX512_elapsed_ms:      4
+
+This means that 4 milliseconds have elapsed since the AVX512 usage
+of tensorflow task was detected when the task was scheduled out.
+
+Or:
+$ cat /proc/tid/status | grep AVX512_elapsed_ms
+AVX512_elapsed_ms:      -1
+
+The number '-1' indicates that no AVX512 usage recorded before
+thus the task unlikely has frequency drop issue.
+
+User space tools may want to further check by:
+
+$ perf stat --pid <pid> -e core_power.lvl2_turbo_license -- sleep 1
+
+ Performance counter stats for process id '3558':
+
+     3,251,565,961      core_power.lvl2_turbo_license
+
+       1.004031387 seconds time elapsed
+
+Non-zero counter value confirms that the task causes frequency drop.
 
 Signed-off-by: Aubrey Li <aubrey.li@linux.intel.com>
 Cc: Peter Zijlstra <peterz@infradead.org>
@@ -24,45 +55,65 @@ Cc: Linux API <linux-api@vger.kernel.org>
 Cc: Alexey Dobriyan <adobriyan@gmail.com>
 Cc: Andrew Morton <akpm@linux-foundation.org>
 ---
- fs/proc/array.c         | 5 +++++
- include/linux/proc_fs.h | 2 ++
- 2 files changed, 7 insertions(+)
+ arch/x86/kernel/fpu/xstate.c | 42 ++++++++++++++++++++++++++++++++++++
+ 1 file changed, 42 insertions(+)
 
-diff --git a/fs/proc/array.c b/fs/proc/array.c
-index 2edbb657f859..331592a61718 100644
---- a/fs/proc/array.c
-+++ b/fs/proc/array.c
-@@ -401,6 +401,10 @@ static inline void task_thp_status(struct seq_file *m, struct mm_struct *mm)
- 	seq_printf(m, "THP_enabled:\t%d\n", thp_enabled);
- }
+diff --git a/arch/x86/kernel/fpu/xstate.c b/arch/x86/kernel/fpu/xstate.c
+index d7432c2b1051..5e55ed9584ab 100644
+--- a/arch/x86/kernel/fpu/xstate.c
++++ b/arch/x86/kernel/fpu/xstate.c
+@@ -7,6 +7,8 @@
+ #include <linux/cpu.h>
+ #include <linux/mman.h>
+ #include <linux/pkeys.h>
++#include <linux/seq_file.h>
++#include <linux/proc_fs.h>
  
-+void __weak arch_proc_pid_status(struct seq_file *m, struct task_struct *task)
-+{
-+}
-+
- int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
- 			struct pid *pid, struct task_struct *task)
- {
-@@ -424,6 +428,7 @@ int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
- 	task_cpus_allowed(m, task);
- 	cpuset_task_status_allowed(m, task);
- 	task_context_switch_counts(m, task);
-+	arch_proc_pid_status(m, task);
+ #include <asm/fpu/api.h>
+ #include <asm/fpu/internal.h>
+@@ -1243,3 +1245,43 @@ int copy_user_to_xstate(struct xregs_state *xsave, const void __user *ubuf)
+ 
  	return 0;
  }
- 
-diff --git a/include/linux/proc_fs.h b/include/linux/proc_fs.h
-index 52a283ba0465..bf4328cb58ed 100644
---- a/include/linux/proc_fs.h
-+++ b/include/linux/proc_fs.h
-@@ -74,6 +74,8 @@ struct proc_dir_entry *proc_create_net_single_write(const char *name, umode_t mo
- 						    proc_write_t write,
- 						    void *data);
- extern struct pid *tgid_pidfd_to_pid(const struct file *file);
-+/* Add support for architecture specific output in /proc/pid/status */
-+void arch_proc_pid_status(struct seq_file *m, struct task_struct *task);
- 
- #else /* CONFIG_PROC_FS */
- 
++
++/*
++ * Report the amount of time elapsed in millisecond since last AVX512
++ * use in the task.
++ */
++static void avx512_status(struct seq_file *m, struct task_struct *task)
++{
++	unsigned long timestamp = READ_ONCE(task->thread.fpu.avx512_timestamp);
++	long delta;
++
++	if (!timestamp) {
++		/*
++		 * Report -1 if no AVX512 usage
++		 */
++		delta = -1;
++	} else {
++		delta = (long)(jiffies - timestamp);
++		/*
++		 * Cap to LONG_MAX if time difference > LONG_MAX
++		 */
++		if (delta < 0)
++			delta = LONG_MAX;
++		delta = jiffies_to_msecs(delta);
++	}
++
++	seq_put_decimal_ll(m, "AVX512_elapsed_ms:\t", delta);
++	seq_putc(m, '\n');
++}
++
++/*
++ * Report architecture specific information
++ */
++void arch_proc_pid_status(struct seq_file *m, struct task_struct *task)
++{
++	/*
++	 * Report AVX512 state if the processor and build option supported.
++	 */
++	if (cpu_feature_enabled(X86_FEATURE_AVX512F))
++		avx512_status(m, task);
++}
 -- 
 2.21.0
