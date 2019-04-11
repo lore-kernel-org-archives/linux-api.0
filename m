@@ -1,54 +1,27 @@
-From: Adhemerval Zanella <adhemerval.zanella@linaro.org>
-Subject: Re: [PATCH] Linux: Define struct termios2 in <termios.h> under
- _GNU_SOURCE [BZ #10339]
-Date: Thu, 11 Apr 2019 09:53:30 -0300
-Message-ID: <db468a0f-4a7b-d251-601f-428885275d08@linaro.org>
-References: <875zrnlakd.fsf@oldenburg2.str.redhat.com>
- <284e9c76-2411-b8f4-c4bc-c25c60c04cf7@linaro.org>
- <87imvker6t.fsf@oldenburg2.str.redhat.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [RFC PATCH] fork: add CLONE_PIDFD
+Date: Thu, 11 Apr 2019 09:50:47 -0700
+Message-ID: <CAHk-=wifyY+XGNW=ZC4MyTHD14w81F8JjQNH-GaGAm2RxZ_S8Q@mail.gmail.com>
+References: <20190410234045.29846-1-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <libc-alpha-return-101343-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-In-Reply-To: <87imvker6t.fsf@oldenburg2.str.redhat.com>
-To: Florian Weimer <fweimer@redhat.com>
-Cc: libc-alpha@sourceware.org, hpa@zytor.com, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190410234045.29846-1-christian@brauner.io>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christian Brauner <christian@brauner.io>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Jann Horn <jannh@google.com>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Andrew Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Jonathan Kowalski <bl0pbl33p@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <cyphar@cyphar.com>, Joel Fernandes <joel@joelfernandes.org>, Daniel
 List-Id: linux-api@vger.kernel.org
 
+On Wed, Apr 10, 2019 at 4:43 PM Christian Brauner <christian@brauner.io> wrote:
+>
+> RFC-2:
+> This alternative patchset uses anonymous file descriptors instead of
+> file descriptors from /proc/<pid>.
 
+I think I prefer this one. Your diffstat makes it look bigger, but
+that's because you added the example code to use this to that rfc..
 
-On 11/04/2019 08:07, Florian Weimer wrote:
-> * Adhemerval Zanella:
-> 
->> This allows us to adjust the baud rates to non-standard values using termios
->> interfaces without to resorting to add new headers and use a different API
->> (ioctl).
-> 
-> How much symbol versioning will be required for this change?
+Plus making anon_inodes unconditional makes sense anyway.  They are
+always selected in practice to begin with.
 
-I think all interfaces that have termios as input for sparc and mips 
-(tcgetattr, tcsetattr, cfmakeraw, cfgetispeed, cfgetospeed, cfsetispeed,
-cfsetospeed, cfsetspeed).
-
-Alpha will also need to use termios1 for pre-4.20 kernels.
-
-> 
->> As Peter Anvin has indicated, he create a POC [1] with the aforementioned
->> new interfaces.  It has not been rebased against master, more specially against
->> my termios refactor to simplify the multiple architecture header definitions,
->> but I intend to use as a base.
-> 
-> Reference [1] is still missing. 8-(
-
-Oops... it is https://git.zytor.com/users/hpa/glibc/termbaud.git/log/?h=wip.termbaud
-
-> 
-> Thanks,
-> Florian
-> 
+               Linus
