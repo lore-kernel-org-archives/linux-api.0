@@ -1,62 +1,150 @@
-From: Daniel Colascione <dancol@google.com>
-Subject: Re: [RFC PATCH] fork: add CLONE_PIDFD
-Date: Wed, 10 Apr 2019 17:12:00 -0700
-Message-ID: <CAKOZuevU8Ke1jmnmdzzSEjb0GXfaCd_YVAm7ezGc5hy6xM8bxg@mail.gmail.com>
-References: <20190410234045.29846-1-christian@brauner.io>
+From: "Li, Aubrey" <aubrey.li@linux.intel.com>
+Subject: Re: [PATCH v14 1/3] /proc/pid/status: Add support for architecture
+ specific output
+Date: Thu, 11 Apr 2019 09:02:30 +0800
+Message-ID: <3c2a8a1a-ed4b-348e-f06f-f71dbf64bbba@linux.intel.com>
+References: <20190410015326.24500-1-aubrey.li@linux.intel.com>
+ <CALCETrWV9SVDGQmzvZuub4aOPGyVqx7gPdk6D0s2_7j471jT_g@mail.gmail.com>
+ <89957461-ec42-f041-a7e9-2452b2e83d39@linux.intel.com>
+ <CALCETrWD4H8zZVD+Mk+=1VWmYNWx=aC7w+LOi8KqoSpAFgD--Q@mail.gmail.com>
+ <d9e9f68e-e8bb-7e53-9909-d86f5f73f617@linux.intel.com>
+ <39318cc8-340f-5366-f1d6-e7dcbb6ba595@linux.intel.com>
+ <CALCETrUPHg8b-aRpo3NhaedGMJgQxOJjgQN_9fjubnDWEzo+aA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190410234045.29846-1-christian@brauner.io>
+In-Reply-To: <CALCETrUPHg8b-aRpo3NhaedGMJgQxOJjgQN_9fjubnDWEzo+aA@mail.gmail.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian@brauner.io>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Jann Horn <jannh@google.com>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Jonathan Kowalski <bl0pbl33p@gmail.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <cyphar@cyphar.com>, Joel
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, Tim Chen <tim.c.chen@linux.intel.com>, Dave Hansen <dave.hansen@intel.com>, Arjan van de Ven <arjan@linux.intel.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, aubrey.li@intel.com, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Thanks for trying it both ways.
+On 2019/4/10 22:54, Andy Lutomirski wrote:
+> On Tue, Apr 9, 2019 at 8:40 PM Li, Aubrey <aubrey.li@linux.intel.com> wrote:
+>>
+>> On 2019/4/10 10:36, Li, Aubrey wrote:
+>>> On 2019/4/10 10:25, Andy Lutomirski wrote:
+>>>> On Tue, Apr 9, 2019 at 7:20 PM Li, Aubrey <aubrey.li@linux.intel.com> wrote:
+>>>>>
+>>>>> On 2019/4/10 9:58, Andy Lutomirski wrote:
+>>>>>> On Tue, Apr 9, 2019 at 6:55 PM Aubrey Li <aubrey.li@linux.intel.com> wrote:
+>>>>>>>
+>>>>>>> The architecture specific information of the running processes could
+>>>>>>> be useful to the userland. Add support to examine process architecture
+>>>>>>> specific information externally.
+>>>>>>>
+>>>>>>> Signed-off-by: Aubrey Li <aubrey.li@linux.intel.com>
+>>>>>>> Cc: Peter Zijlstra <peterz@infradead.org>
+>>>>>>> Cc: Andi Kleen <ak@linux.intel.com>
+>>>>>>> Cc: Tim Chen <tim.c.chen@linux.intel.com>
+>>>>>>> Cc: Dave Hansen <dave.hansen@intel.com>
+>>>>>>> Cc: Arjan van de Ven <arjan@linux.intel.com>
+>>>>>>> Cc: Linux API <linux-api@vger.kernel.org>
+>>>>>>> Cc: Alexey Dobriyan <adobriyan@gmail.com>
+>>>>>>> Cc: Andrew Morton <akpm@linux-foundation.org>
+>>>>>>> ---
+>>>>>>>  fs/proc/array.c         | 5 +++++
+>>>>>>>  include/linux/proc_fs.h | 2 ++
+>>>>>>>  2 files changed, 7 insertions(+)
+>>>>>>>
+>>>>>>> diff --git a/fs/proc/array.c b/fs/proc/array.c
+>>>>>>> index 2edbb657f859..331592a61718 100644
+>>>>>>> --- a/fs/proc/array.c
+>>>>>>> +++ b/fs/proc/array.c
+>>>>>>> @@ -401,6 +401,10 @@ static inline void task_thp_status(struct seq_file *m, struct mm_struct *mm)
+>>>>>>>         seq_printf(m, "THP_enabled:\t%d\n", thp_enabled);
+>>>>>>>  }
+>>>>>>>
+>>>>>>> +void __weak arch_proc_pid_status(struct seq_file *m, struct task_struct *task)
+>>>>>>> +{
+>>>>>>> +}
+>>>>>>
+>>>>>> This pointlessly bloats other architectures.  Do this instead in an
+>>>>>> appropriate header:
+>>>>>>
+>>>>>> #ifndef arch_proc_pid_status
+>>>>>> static inline void arch_proc_pid_status(...)
+>>>>>> {
+>>>>>> }
+>>>>>> #endif
+>>>>>>
+>>>>>
+>>>>> I saw a bunch of similar weak functions, is it not acceptable?
+>>>>>
+>>>>> fs/proc$ grep weak *.c
+>>>>> cpuinfo.c:__weak void arch_freq_prepare_all(void)
+>>>>> meminfo.c:void __attribute__((weak)) arch_report_meminfo(struct seq_file *m)
+>>>>> vmcore.c:int __weak elfcorehdr_alloc(unsigned long long *addr, unsigned long long *size)
+>>>>> vmcore.c:void __weak elfcorehdr_free(unsigned long long addr)
+>>>>> vmcore.c:ssize_t __weak elfcorehdr_read(char *buf, size_t count, u64 *ppos)
+>>>>> vmcore.c:ssize_t __weak elfcorehdr_read_notes(char *buf, size_t count, u64 *ppos)
+>>>>> vmcore.c:int __weak remap_oldmem_pfn_range(struct vm_area_struct *vma,
+>>>>> vmcore.c:ssize_t __weak
+>>>>
+>>>> I think they're acceptable, but I don't personally like them.
+>>>>
+>>>
+>>> okay, let me try to see if I can refine it in an appropriate way.
+>>
+>> Hi Andy,
+>>
+>> Is this what you want?
+>>
+>> Thanks,
+>> -Aubrey
+>>
+>> ====================================================================
+>> diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
+>> index 2bb3a648fc12..82d77d3aefff 100644
+>> --- a/arch/x86/include/asm/processor.h
+>> +++ b/arch/x86/include/asm/processor.h
+>> @@ -990,5 +990,8 @@ enum l1tf_mitigations {
+>>  };
+>>
+>>  extern enum l1tf_mitigations l1tf_mitigation;
+>> +/* Add support for architecture specific output in /proc/pid/status */
+>> +void arch_proc_pid_status(struct seq_file *m, struct task_struct *task);
+>> +#define arch_proc_pid_status arch_proc_pid_status
+>>
+>>  #endif /* _ASM_X86_PROCESSOR_H */
+>> diff --git a/fs/proc/array.c b/fs/proc/array.c
+>> index 2edbb657f859..fd65a6ba2864 100644
+>> --- a/fs/proc/array.c
+>> +++ b/fs/proc/array.c
+>> @@ -401,6 +401,11 @@ static inline void task_thp_status(struct seq_file *m, struct mm_struct *mm)
+>>         seq_printf(m, "THP_enabled:\t%d\n", thp_enabled);
+>>  }
+>>
+>> +/* Add support for architecture specific output in /proc/pid/status */
+>> +#ifndef arch_proc_pid_status
+>> +#define arch_proc_pid_status(m, task)
+>> +#endif
+>> +
+>>  int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
+>>                         struct pid *pid, struct task_struct *task)
+>>  {
+>> @@ -424,6 +429,7 @@ int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
+>>         task_cpus_allowed(m, task);
+>>         cpuset_task_status_allowed(m, task);
+>>         task_context_switch_counts(m, task);
+>> +       arch_proc_pid_status(m, task);
+>>         return 0;
+>>  }
+>>
+> 
+> Yes.  But I still think it would be nicer to separate the arch stuff
+> into its own file.  Others might reasonably disagree with me.
+> 
+I like arch_status, I proposed but no other arch shows interesting in it.
 
-On Wed, Apr 10, 2019 at 4:43 PM Christian Brauner <christian@brauner.io> wrote:
->
-> Hey Linus,
->
-> This is an RFC for adding a new CLONE_PIDFD flag to clone() as
-> previously discussed.
-> While implementing this Jann and I ran into additional complexity that
-> prompted us to send out an initial RFC patchset to make sure we still
-> think going forward with the current implementation is a good idea and
-> also provide an alternative approach:
->
-> RFC-1:
-> This is an RFC for the implementation of pidfds as /proc/<pid> file
-> descriptors.
-> The tricky part here is that we need to retrieve a file descriptor for
-> /proc/<pid> before clone's point of no return. Otherwise, we need to fail
-> the creation of a process that has already passed all barriers and is
-> visible in userspace. Getting that file descriptor then becomes a rather
-> intricate dance including allocating a detached dentry that we need to
-> commit once attach_pid() has been called.
-> Note that this RFC only includes the logic we think is needed to return
-> /proc/<pid> file descriptors from clone. It does *not* yet include the even
-> more complex logic needed to restrict procfs itself. And the additional
-> logic needed to prevent attacks such as openat(pidfd, "..", ...) and access
-> to /proc/<pid>/net/ on top of the procfs restriction.
+I think the problem is similar for x86_status, it does not make sense for
+those x86 platform without AVX512 to have an empty arch file. I personally
+don't like [arch]_status because the code may become unclean if more arches
+added in future.
 
-Why would filtering proc be all that complicated? Wouldn't it just be
-adding a "sensitive" flag to struct pid_entry and skipping entries
-with that flag when constructing proc entries?
+Maybe it's too early to have a separated arch staff file for now.
 
-> There are a couple of reasons why we stopped short of this and decided to
-> sent out an RFC first:
-> - Even the initial part of getting file descriptors from /proc/<pid> out
->   of clone() required rather complex code that struck us as very
->   inelegant and heavy (which granted, might partially caused by not seeing
->   a cleaner way to implement this). Thus, it felt like we needed to see
->   whether this is even remotely considered acceptable.
-> - While discussing further aspects of this approach with Al we received
->   rather substantiated opposition to exposing even more codepaths to
->   procfs.
-> - Restricting access to procfs properly requires a lot of invasive work
->   even touching core vfs functions such as
->   follow_dotdot()/follow_dotdot_rcu() which also caused 2.
-
-Wasn't an internal bind mount supposed to take care of the parent
-traversal problem?
+Thanks,
+-Aubrey
