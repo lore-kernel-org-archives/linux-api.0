@@ -1,441 +1,75 @@
-From: Wu Hao <hao.wu@intel.com>
-Subject: Re: [PATCH 15/17] fpga: dfl: fme: add power management support
-Date: Fri, 12 Apr 2019 10:50:19 +0800
-Message-ID: <20190412025019.GA27997@hao-dev>
-References: <1553483264-5379-1-git-send-email-hao.wu@intel.com>
- <1553483264-5379-16-git-send-email-hao.wu@intel.com>
- <CANk1AXTji9qm0Nfbme+2=nR-PNavnv__GwzDRazhH78hYkWN6g@mail.gmail.com>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: [PATCH] Linux: Define struct termios2 in <termios.h> under _GNU_SOURCE [BZ #10339]
+Date: Fri, 12 Apr 2019 09:50:41 +0200
+Message-ID: <87lg0fbr1q.fsf@oldenburg2.str.redhat.com>
+References: <875zrnlakd.fsf@oldenburg2.str.redhat.com>
+	<284e9c76-2411-b8f4-c4bc-c25c60c04cf7@linaro.org>
+	<87imvker6t.fsf@oldenburg2.str.redhat.com>
+	<db468a0f-4a7b-d251-601f-428885275d08@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CANk1AXTji9qm0Nfbme+2=nR-PNavnv__GwzDRazhH78hYkWN6g@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alan Tull <atull@kernel.org>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Luwei Kang <luwei.kang@intel.com>, Xu Yilun <yilun.xu@intel.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <libc-alpha-return-101350-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+In-Reply-To: <db468a0f-4a7b-d251-601f-428885275d08@linaro.org> (Adhemerval
+	Zanella's message of "Thu, 11 Apr 2019 09:53:30 -0300")
+To: Adhemerval Zanella <adhemerval.zanella@linaro.org>
+Cc: libc-alpha@sourceware.org, hpa@zytor.com, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 11, 2019 at 03:07:35PM -0500, Alan Tull wrote:
-> On Sun, Mar 24, 2019 at 10:24 PM Wu Hao <hao.wu@intel.com> wrote:
-> 
-> Hi Hao,
-> 
-> >
-> > This patch adds support for power management private feature under
-> > FPGA Management Engine (FME), sysfs interfaces are introduced for
-> > different power management functions, users could use these sysfs
-> > interface to get current number of consumed power, throttling
-> 
-> How about
-> s/number/measurement/
-> ?
+* Adhemerval Zanella:
 
-Sounds better. : )
+> On 11/04/2019 08:07, Florian Weimer wrote:
+>> * Adhemerval Zanella:
+>>=20
+>>> This allows us to adjust the baud rates to non-standard values using te=
+rmios
+>>> interfaces without to resorting to add new headers and use a different =
+API
+>>> (ioctl).
+>>=20
+>> How much symbol versioning will be required for this change?
+>
+> I think all interfaces that have termios as input for sparc and mips=20
+> (tcgetattr, tcsetattr, cfmakeraw, cfgetispeed, cfgetospeed, cfsetispeed,
+> cfsetospeed, cfsetspeed).
+>
+> Alpha will also need to use termios1 for pre-4.20 kernels.
 
-> 
-> > thresholds, threshold status and other information, and configure
-> > different value for throttling thresholds too.
-> >
-> > Signed-off-by: Luwei Kang <luwei.kang@intel.com>
-> > Signed-off-by: Xu Yilun <yilun.xu@intel.com>
-> > Signed-off-by: Wu Hao <hao.wu@intel.com>
-> > ---
-> >  Documentation/ABI/testing/sysfs-platform-dfl-fme |  56 +++++
-> >  drivers/fpga/dfl-fme-main.c                      | 257 +++++++++++++++++++++++
-> >  2 files changed, 313 insertions(+)
-> >
-> > diff --git a/Documentation/ABI/testing/sysfs-platform-dfl-fme b/Documentation/ABI/testing/sysfs-platform-dfl-fme
-> > index d3aeb88..4b6448f 100644
-> > --- a/Documentation/ABI/testing/sysfs-platform-dfl-fme
-> > +++ b/Documentation/ABI/testing/sysfs-platform-dfl-fme
-> > @@ -100,3 +100,59 @@ Description:       Read-only. Read this file to get the policy of temperature
-> >                 threshold1. It only supports two value (policy):
-> >                     0 - AP2 state (90% throttling)
-> >                     1 - AP1 state (50% throttling)
-> > +
-> > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/consumed
-> > +Date:          March 2019
-> > +KernelVersion:  5.2
-> > +Contact:       Wu Hao <hao.wu@intel.com>
-> > +Description:   Read-only. It returns current power consumed by FPGA.
-> 
-> What are the units?
-> 
-> > +
-> > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/threshold1
-> > +Date:          March 2019
-> > +KernelVersion:  5.2
-> > +Contact:       Wu Hao <hao.wu@intel.com>
-> > +Description:   Read-Write. Read/Write this file to get/set current power
-> > +               threshold1 in Watts.
-> 
-> Perhaps document error codes here and for threshold2 below.
-> 
-> > +
-> > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/threshold2
-> > +Date:          March 2019
-> > +KernelVersion:  5.2
-> > +Contact:       Wu Hao <hao.wu@intel.com>
-> > +Description:   Read-Write. Read/Write this file to get/set current power
-> > +               threshold2 in Watts.
-> > +
-> > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/threshold1_status
-> > +Date:          March 2019
-> > +KernelVersion:  5.2
-> > +Contact:       Wu Hao <hao.wu@intel.com>
-> > +Description:   Read-only. It returns 1 if power consumption reaches the
-> > +               threshold1, otherwise 0.
-> 
-> I'm used to things like this requiring user to reset the status, so it
-> may be worth making it explicit that it will return to zero if
-> consumption drops below threshold if that's what's happening here.
-> If it's correct, perhaps could just say something like 'returns 1 if
-> power consumption is currently at or above threshold1, otherwise 0'
-> 
-> > +
-> > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/threshold2_status
-> > +Date:          March 2019
-> > +KernelVersion:  5.2
-> > +Contact:       Wu Hao <hao.wu@intel.com>
-> > +Description:   Read-only. It returns 1 if power consumption reaches the
-> > +               threshold2, otherwise 0.
-> 
-> Same here.
+So only new symbol versions there?  Hmm.
 
-Sure, will fix all above comments in this sysfs doc.
+>>> As Peter Anvin has indicated, he create a POC [1] with the aforemention=
+ed
+>>> new interfaces.  It has not been rebased against master, more specially=
+ against
+>>> my termios refactor to simplify the multiple architecture header defini=
+tions,
+>>> but I intend to use as a base.
+>>=20
+>> Reference [1] is still missing. 8-(
+>
+> Oops... it is https://git.zytor.com/users/hpa/glibc/termbaud.git/log/?h=
+=3Dwip.termbaud
 
-> 
-> > +
-> > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/ltr
-> > +Date:          March 2019
-> > +KernelVersion:  5.2
-> > +Contact:       Wu Hao <hao.wu@intel.com>
-> > +Description:   Read-only. Read this file to get current Latency Tolerance
-> > +               Reporting (ltr) value, it's only valid for integrated
-> > +               solution as it blocks CPU on low power state.
-> 
-> If we're not on the integrated solution, it returns a value but it is
-> not really real?
+This doesn't really illuminate things.  =E2=80=9CDrop explicit baud setting
+interfaces in favor of cfenc|decspeed()=E2=80=9D removes the new symbol ver=
+sion
+for the cf* functions.
 
-Currently only integrated solution is implementing this private feature, other
-devices e.g. Intel PAC card is not using this private feature, so user will
-not see these sysfs interfaces at all.
+My gut feeling is that it's safer to add new interfaces, based on the
+actual kernel/userspace interface, rather than trying to fix up existing
+interfaces with symbol versioning.  The main reason is that code
+involving serial interfaces is difficult to test, so it will take years
+until we find the last application broken by the glibc interface bump.
 
-If in the future, other devices want
+I don't feel strongly about this.  This came out of a request for
+enabling TCGETS2 support downstream.  If I can't fix this upstream, I
+will just reject that request.
 
-> 
-> > +
-> > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/xeon_limit
-> > +Date:          March 2019
-> > +KernelVersion:  5.2
-> > +Contact:       Wu Hao <hao.wu@intel.com>
-> > +Description:   Read-only. Read this file to get power limit for xeon, it
-> > +               is only valid for integrated solution.
-> > +
-> > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/fpga_limit
-> > +Date:          March 2019
-> > +KernelVersion:  5.2
-> > +Contact:       Wu Hao <hao.wu@intel.com>
-> > +Description:   Read-only. Read this file to get power limit for fpga, it
-> > +               is only valid for integrated solution.
-> > diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-main.c
-> > index 449a17d..dafa6580 100644
-> > --- a/drivers/fpga/dfl-fme-main.c
-> > +++ b/drivers/fpga/dfl-fme-main.c
-> > @@ -415,6 +415,259 @@ static const struct dfl_feature_ops fme_thermal_mgmt_ops = {
-> >         .uinit = fme_thermal_mgmt_uinit,
-> >  };
-> >
-> > +#define FME_PWR_STATUS         0x8
-> > +#define FME_LATENCY_TOLERANCE  BIT_ULL(18)
-> > +#define PWR_CONSUMED           GENMASK_ULL(17, 0)
-> > +
-> > +#define FME_PWR_THRESHOLD      0x10
-> > +#define PWR_THRESHOLD1         GENMASK_ULL(6, 0)       /* in Watts */
-> > +#define PWR_THRESHOLD2         GENMASK_ULL(14, 8)      /* in Watts */
-> > +#define PWR_THRESHOLD_MAX      0x7f
-> > +#define PWR_THRESHOLD1_STATUS  BIT_ULL(16)
-> > +#define PWR_THRESHOLD2_STATUS  BIT_ULL(17)
-> > +
-> > +#define FME_PWR_XEON_LIMIT     0x18
-> > +#define XEON_PWR_LIMIT         GENMASK_ULL(14, 0)
-> > +#define XEON_PWR_EN            BIT_ULL(15)
-> > +#define FME_PWR_FPGA_LIMIT     0x20
-> > +#define FPGA_PWR_LIMIT         GENMASK_ULL(14, 0)
-> > +#define FPGA_PWR_EN            BIT_ULL(15)
-> > +
-> > +#define POWER_ATTR(_name, _mode, _show, _store)        \
-> > +struct device_attribute power_attr_##_name =           \
-> > +       __ATTR(_name, _mode, _show, _store)
-> > +
-> > +#define POWER_ATTR_RO(_name, _show)                    \
-> > +       POWER_ATTR(_name, 0444, _show, NULL)
-> > +
-> > +#define POWER_ATTR_RW(_name, _show, _store)            \
-> > +       POWER_ATTR(_name, 0644, _show, _store)
-> 
-> Are these #defines necessary?  Seems like you could just use DEVICE_ATTR*
-
-Actually it adds a prefix power_attr_xxx there to avoid name conflicts with
-other ones from different private features, e.g. for the thermal threshold.
-
-> 
-> > +
-> > +static ssize_t pwr_consumed_show(struct device *dev,
-> > +                                struct device_attribute *attr, char *buf)
-> > +{
-> > +       void __iomem *base;
-> > +       u64 v;
-> > +
-> > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
-> > +
-> > +       v = readq(base + FME_PWR_STATUS);
-> > +
-> > +       return scnprintf(buf, PAGE_SIZE, "%u\n",
-> > +                        (unsigned int)FIELD_GET(PWR_CONSUMED, v));
-> > +}
-> > +static POWER_ATTR_RO(consumed, pwr_consumed_show);
-> > +
-> > +static ssize_t pwr_threshold1_show(struct device *dev,
-> > +                                  struct device_attribute *attr, char *buf)
-> > +{
-> > +       void __iomem *base;
-> > +       u64 v;
-> > +
-> > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
-> > +
-> > +       v = readq(base + FME_PWR_THRESHOLD);
-> > +
-> > +       return scnprintf(buf, PAGE_SIZE, "%u\n",
-> > +                        (unsigned int)FIELD_GET(PWR_THRESHOLD1, v));
-> > +}
-> > +
-> > +static ssize_t pwr_threshold1_store(struct device *dev,
-> > +                                   struct device_attribute *attr,
-> > +                                   const char *buf, size_t count)
-> > +{
-> > +       struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
-> > +       void __iomem *base;
-> > +       u8 threshold;
-> > +       int ret;
-> > +       u64 v;
-> > +
-> > +       ret = kstrtou8(buf, 0, &threshold);
-> > +       if (ret)
-> > +               return ret;
-> > +
-> > +       if (threshold > PWR_THRESHOLD_MAX)
-> > +               return -EINVAL;
-> > +
-> > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
-> > +
-> > +       mutex_lock(&pdata->lock);
-> > +       v = readq(base + FME_PWR_THRESHOLD);
-> > +       v &= ~PWR_THRESHOLD1;
-> > +       v |= FIELD_PREP(PWR_THRESHOLD1, threshold);
-> > +       writeq(v, base + FME_PWR_THRESHOLD);
-> > +       mutex_unlock(&pdata->lock);
-> > +
-> > +       return count;
-> > +}
-> > +static POWER_ATTR_RW(threshold1, pwr_threshold1_show, pwr_threshold1_store);
-> > +
-> > +static ssize_t pwr_threshold2_show(struct device *dev,
-> > +                                  struct device_attribute *attr, char *buf)
-> > +{
-> > +       void __iomem *base;
-> > +       u64 v;
-> > +
-> > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
-> > +
-> > +       v = readq(base + FME_PWR_THRESHOLD);
-> > +
-> > +       return scnprintf(buf, PAGE_SIZE, "%u\n",
-> > +                        (unsigned int)FIELD_GET(PWR_THRESHOLD2, v));
-> > +}
-> > +
-> > +static ssize_t pwr_threshold2_store(struct device *dev,
-> > +                                   struct device_attribute *attr,
-> > +                                   const char *buf, size_t count)
-> > +{
-> > +       struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
-> > +       void __iomem *base;
-> > +       u8 threshold;
-> > +       int ret;
-> > +       u64 v;
-> > +
-> > +       ret = kstrtou8(buf, 0, &threshold);
-> > +       if (ret)
-> > +               return ret;
-> > +
-> > +       if (threshold > PWR_THRESHOLD_MAX)
-> > +               return -EINVAL;
-> > +
-> > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
-> > +
-> > +       mutex_lock(&pdata->lock);
-> > +       v = readq(base + FME_PWR_THRESHOLD);
-> > +       v &= ~PWR_THRESHOLD2;
-> > +       v |= FIELD_PREP(PWR_THRESHOLD2, threshold);
-> > +       writeq(v, base + FME_PWR_THRESHOLD);
-> > +       mutex_unlock(&pdata->lock);
-> > +
-> > +       return count;
-> > +}
-> > +static POWER_ATTR_RW(threshold2, pwr_threshold2_show, pwr_threshold2_store);
-> > +
-> > +static ssize_t pwr_threshold1_status_show(struct device *dev,
-> > +                                         struct device_attribute *attr,
-> > +                                         char *buf)
-> > +{
-> > +       void __iomem *base;
-> > +       u64 v;
-> > +
-> > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
-> > +
-> > +       v = readq(base + FME_PWR_THRESHOLD);
-> > +
-> > +       return scnprintf(buf, PAGE_SIZE, "%u\n",
-> > +                        (unsigned int)FIELD_GET(PWR_THRESHOLD1_STATUS, v));
-> > +}
-> > +static POWER_ATTR_RO(threshold1_status, pwr_threshold1_status_show);
-> > +
-> > +static ssize_t pwr_threshold2_status_show(struct device *dev,
-> > +                                         struct device_attribute *attr,
-> > +                                         char *buf)
-> > +{
-> > +       void __iomem *base;
-> > +       u64 v;
-> > +
-> > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
-> > +
-> > +       v = readq(base + FME_PWR_THRESHOLD);
-> > +
-> > +       return scnprintf(buf, PAGE_SIZE, "%u\n",
-> > +                        (unsigned int)FIELD_GET(PWR_THRESHOLD2_STATUS, v));
-> > +}
-> > +static POWER_ATTR_RO(threshold2_status, pwr_threshold2_status_show);
-> > +
-> > +static ssize_t ltr_show(struct device *dev,
-> > +                       struct device_attribute *attr, char *buf)
-> > +{
-> > +       void __iomem *base;
-> > +       u64 v;
-> > +
-> > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
-> > +
-> > +       v = readq(base + FME_PWR_STATUS);
-> > +
-> > +       return scnprintf(buf, PAGE_SIZE, "%u\n",
-> > +                        (unsigned int)FIELD_GET(FME_LATENCY_TOLERANCE, v));
-> > +}
-> > +static POWER_ATTR_RO(ltr, ltr_show);
-> > +
-> > +static ssize_t xeon_limit_show(struct device *dev,
-> > +                              struct device_attribute *attr, char *buf)
-> > +{
-> > +       void __iomem *base;
-> > +       u16 xeon_limit = 0;
-> > +       u64 v;
-> > +
-> > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
-> > +
-> > +       v = readq(base + FME_PWR_XEON_LIMIT);
-> > +
-> > +       if (FIELD_GET(XEON_PWR_EN, v))
-> > +               xeon_limit = FIELD_GET(XEON_PWR_LIMIT, v);
-> > +
-> > +       return scnprintf(buf, PAGE_SIZE, "%u\n", xeon_limit);
-> > +}
-> > +static POWER_ATTR_RO(xeon_limit, xeon_limit_show);
-> > +
-> > +static ssize_t fpga_limit_show(struct device *dev,
-> > +                              struct device_attribute *attr, char *buf)
-> > +{
-> > +       void __iomem *base;
-> > +       u16 fpga_limit = 0;
-> > +       u64 v;
-> > +
-> > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
-> > +
-> > +       v = readq(base + FME_PWR_FPGA_LIMIT);
-> > +
-> > +       if (FIELD_GET(FPGA_PWR_EN, v))
-> > +               fpga_limit = FIELD_GET(FPGA_PWR_LIMIT, v);
-> > +
-> > +       return scnprintf(buf, PAGE_SIZE, "%u\n", fpga_limit);
-> > +}
-> > +static POWER_ATTR_RO(fpga_limit, fpga_limit_show);
-> > +
-> > +static struct attribute *power_mgmt_attrs[] = {
-> > +       &power_attr_consumed.attr,
-> > +       &power_attr_threshold1.attr,
-> > +       &power_attr_threshold2.attr,
-> > +       &power_attr_threshold1_status.attr,
-> > +       &power_attr_threshold2_status.attr,
-> > +       &power_attr_xeon_limit.attr,
-> > +       &power_attr_fpga_limit.attr,
-> > +       &power_attr_ltr.attr,
-> 
-> This is a nit, but I would expect to see these listed in the same
-> order as their show/store functions above.  So ltr_attr would come
-> between threshold2_status_attr and xeon_limit_attr.
-
-Sure, it does make sense.
-
-> 
-> > +       NULL,
-> > +};
-> > +
-> > +static struct attribute_group power_mgmt_attr_group = {
-> > +       .attrs  = power_mgmt_attrs,
-> > +       .name   = "power_mgmt",
-> > +};
-> > +
-> > +static int fme_power_mgmt_init(struct platform_device *pdev,
-> > +                              struct dfl_feature *feature)
-> > +{
-> > +       return sysfs_create_group(&pdev->dev.kobj, &power_mgmt_attr_group);
-> > +}
-> > +
-> > +static void fme_power_mgmt_uinit(struct platform_device *pdev,
-> > +                                struct dfl_feature *feature)
-> > +{
-> > +       sysfs_remove_group(&pdev->dev.kobj, &power_mgmt_attr_group);
-> > +}
-> > +
-> > +static const struct dfl_feature_id fme_power_mgmt_id_table[] = {
-> > +       {.id = FME_FEATURE_ID_POWER_MGMT,},
-> > +       {0,}
-> > +};
-> > +
-> > +static const struct dfl_feature_ops fme_power_mgmt_ops = {
-> > +       .init = fme_power_mgmt_init,
-> > +       .uinit = fme_power_mgmt_uinit,
-> > +};
-> > +
-> >  static struct dfl_feature_driver fme_feature_drvs[] = {
-> >         {
-> >                 .id_table = fme_hdr_id_table,
-> > @@ -429,6 +682,10 @@ static struct dfl_feature_driver fme_feature_drvs[] = {
-> >                 .ops = &fme_thermal_mgmt_ops,
-> >         },
-> >         {
-> > +               .id_table = fme_power_mgmt_id_table,
-> > +               .ops = &fme_power_mgmt_ops,
-> > +       },
-> > +       {
-> >                 .ops = NULL,
-> >         },
-> >  };
-> > --
-> > 2.7.4
-> >
-
-Thanks a lot for the review and comments. :)
-
-Hao
-
-> 
-> Thanks,
-> Alan
+Thanks,
+Florian
