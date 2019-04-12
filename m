@@ -1,59 +1,425 @@
-From: Yurii Pavlovskyi <yurii.pavlovskyi@gmail.com>
-Subject: Re: [PATCH v2 10/11] platform/x86: asus-wmi: Switch fan boost mode
-Date: Fri, 12 Apr 2019 22:50:47 +0200
-Message-ID: <01fca675-29a3-6959-58a6-d5420ace30df@gmail.com>
-References: <a8dd77f3-1e28-6416-5f04-aff44d5bb6d6@gmail.com>
- <72b3e0aa-d53a-8a82-1505-f4f00aa2bb46@gmail.com>
- <fecb4870-7875-a524-bf6d-3108e25af888@gmail.com>
- <CAD8Lp45ivFJiW0FZo+ZOyUdpV1JFwPg=o7rx7eyp_YdSAbRRkg@mail.gmail.com>
+From: Moritz Fischer <moritz.fischer.private@gmail.com>
+Subject: Re: [PATCH 15/17] fpga: dfl: fme: add power management support
+Date: Fri, 12 Apr 2019 14:05:21 -0700
+Message-ID: <CAJYdmeOMm0xTRbKTS68M4uiHJLfphPXNo+eFYguda+SuwnkqmQ@mail.gmail.com>
+References: <1553483264-5379-1-git-send-email-hao.wu@intel.com>
+ <1553483264-5379-16-git-send-email-hao.wu@intel.com> <CANk1AXTji9qm0Nfbme+2=nR-PNavnv__GwzDRazhH78hYkWN6g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAD8Lp45ivFJiW0FZo+ZOyUdpV1JFwPg=o7rx7eyp_YdSAbRRkg@mail.gmail.com>
-Content-Language: en-US
+In-Reply-To: <CANk1AXTji9qm0Nfbme+2=nR-PNavnv__GwzDRazhH78hYkWN6g@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Drake <drake@endlessm.com>
-Cc: Corentin Chary <corentin.chary@gmail.com>, Darren Hart <dvhart@infradead.org>, Andy Shevchenko <andy@infradead.org>, acpi4asus-user <acpi4asus-user@lists.sourceforge.net>, Platform Driver <platform-driver-x86@vger.kernel.org>, Linux Kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Endless Linux Upstreaming Team <linux@endlessm.com>
+To: Alan Tull <atull@kernel.org>
+Cc: Wu Hao <hao.wu@intel.com>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Luwei Kang <luwei.kang@intel.com>, Xu Yilun <yilun.xu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On 12.04.19 10:03, Daniel Drake wrote:
-> On Thu, Apr 11, 2019 at 1:47 PM Yurii Pavlovskyi
-> <yurii.pavlovskyi@gmail.com> wrote:
->> * 0x00 - is normal,
->> * 0x01 - is obviously turbo by the amount of noise, might be useful to
->> avoid CPU frequency throttling on high load,
->> * 0x02 - the meaning is unknown at the time as modes are not named
->> in the vendor documentation, but it does look like a quiet mode as CPU
->> temperature does increase about 10 degrees on maximum load.
-> 
-> I'm curious which vendor documentation you're working with here.
+Hi Hao,
 
-That would be user manual for FX505 series, which is pretty minimalistic.
-It says it has a fan mode switch key and that's it. Following up on your
-comment, I've searched more and actually did found their names hidden in
-marketing web page on the website. You're right, they call them balanced,
-overboost and silent there.
+this looks suspiciously like a hwmon driver ;-)
 
-> From the spec,
-> 0 = normal
-> 1 = overboost
-> 2 = silent
+https://www.kernel.org/doc/Documentation/hwmon/hwmon-kernel-api.txt
 
-> Also you can use DSTS on the 0x00110018 device to check the exact
-> capabilities supported, which you should use to refine which modes can
-> be cycled through.
-> Bit 0 = overboost supported
-> Bit 1 = silent supported
-> 
-> Thanks
-> Daniel
-> 
+Cheers,
+Moritz
 
-Thanks! I was guessing that the 3 in DSTS must've meant something.
 
-Appreciate your comments! Will definitely implement them. I'm going to post
-the v3 patch series approximately middle of next week.
-
-Best regards,
-Yurii
+On Thu, Apr 11, 2019 at 1:08 PM Alan Tull <atull@kernel.org> wrote:
+>
+> On Sun, Mar 24, 2019 at 10:24 PM Wu Hao <hao.wu@intel.com> wrote:
+>
+> Hi Hao,
+>
+> >
+> > This patch adds support for power management private feature under
+> > FPGA Management Engine (FME), sysfs interfaces are introduced for
+> > different power management functions, users could use these sysfs
+> > interface to get current number of consumed power, throttling
+>
+> How about
+> s/number/measurement/
+> ?
+>
+> > thresholds, threshold status and other information, and configure
+> > different value for throttling thresholds too.
+> >
+> > Signed-off-by: Luwei Kang <luwei.kang@intel.com>
+> > Signed-off-by: Xu Yilun <yilun.xu@intel.com>
+> > Signed-off-by: Wu Hao <hao.wu@intel.com>
+> > ---
+> >  Documentation/ABI/testing/sysfs-platform-dfl-fme |  56 +++++
+> >  drivers/fpga/dfl-fme-main.c                      | 257 +++++++++++++++++++++++
+> >  2 files changed, 313 insertions(+)
+> >
+> > diff --git a/Documentation/ABI/testing/sysfs-platform-dfl-fme b/Documentation/ABI/testing/sysfs-platform-dfl-fme
+> > index d3aeb88..4b6448f 100644
+> > --- a/Documentation/ABI/testing/sysfs-platform-dfl-fme
+> > +++ b/Documentation/ABI/testing/sysfs-platform-dfl-fme
+> > @@ -100,3 +100,59 @@ Description:       Read-only. Read this file to get the policy of temperature
+> >                 threshold1. It only supports two value (policy):
+> >                     0 - AP2 state (90% throttling)
+> >                     1 - AP1 state (50% throttling)
+> > +
+> > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/consumed
+> > +Date:          March 2019
+> > +KernelVersion:  5.2
+> > +Contact:       Wu Hao <hao.wu@intel.com>
+> > +Description:   Read-only. It returns current power consumed by FPGA.
+>
+> What are the units?
+>
+> > +
+> > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/threshold1
+> > +Date:          March 2019
+> > +KernelVersion:  5.2
+> > +Contact:       Wu Hao <hao.wu@intel.com>
+> > +Description:   Read-Write. Read/Write this file to get/set current power
+> > +               threshold1 in Watts.
+>
+> Perhaps document error codes here and for threshold2 below.
+>
+> > +
+> > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/threshold2
+> > +Date:          March 2019
+> > +KernelVersion:  5.2
+> > +Contact:       Wu Hao <hao.wu@intel.com>
+> > +Description:   Read-Write. Read/Write this file to get/set current power
+> > +               threshold2 in Watts.
+> > +
+> > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/threshold1_status
+> > +Date:          March 2019
+> > +KernelVersion:  5.2
+> > +Contact:       Wu Hao <hao.wu@intel.com>
+> > +Description:   Read-only. It returns 1 if power consumption reaches the
+> > +               threshold1, otherwise 0.
+>
+> I'm used to things like this requiring user to reset the status, so it
+> may be worth making it explicit that it will return to zero if
+> consumption drops below threshold if that's what's happening here.
+> If it's correct, perhaps could just say something like 'returns 1 if
+> power consumption is currently at or above threshold1, otherwise 0'
+>
+> > +
+> > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/threshold2_status
+> > +Date:          March 2019
+> > +KernelVersion:  5.2
+> > +Contact:       Wu Hao <hao.wu@intel.com>
+> > +Description:   Read-only. It returns 1 if power consumption reaches the
+> > +               threshold2, otherwise 0.
+>
+> Same here.
+>
+> > +
+> > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/ltr
+> > +Date:          March 2019
+> > +KernelVersion:  5.2
+> > +Contact:       Wu Hao <hao.wu@intel.com>
+> > +Description:   Read-only. Read this file to get current Latency Tolerance
+> > +               Reporting (ltr) value, it's only valid for integrated
+> > +               solution as it blocks CPU on low power state.
+>
+> If we're not on the integrated solution, it returns a value but it is
+> not really real?
+>
+> > +
+> > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/xeon_limit
+> > +Date:          March 2019
+> > +KernelVersion:  5.2
+> > +Contact:       Wu Hao <hao.wu@intel.com>
+> > +Description:   Read-only. Read this file to get power limit for xeon, it
+> > +               is only valid for integrated solution.
+> > +
+> > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/fpga_limit
+> > +Date:          March 2019
+> > +KernelVersion:  5.2
+> > +Contact:       Wu Hao <hao.wu@intel.com>
+> > +Description:   Read-only. Read this file to get power limit for fpga, it
+> > +               is only valid for integrated solution.
+> > diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-main.c
+> > index 449a17d..dafa6580 100644
+> > --- a/drivers/fpga/dfl-fme-main.c
+> > +++ b/drivers/fpga/dfl-fme-main.c
+> > @@ -415,6 +415,259 @@ static const struct dfl_feature_ops fme_thermal_mgmt_ops = {
+> >         .uinit = fme_thermal_mgmt_uinit,
+> >  };
+> >
+> > +#define FME_PWR_STATUS         0x8
+> > +#define FME_LATENCY_TOLERANCE  BIT_ULL(18)
+> > +#define PWR_CONSUMED           GENMASK_ULL(17, 0)
+> > +
+> > +#define FME_PWR_THRESHOLD      0x10
+> > +#define PWR_THRESHOLD1         GENMASK_ULL(6, 0)       /* in Watts */
+> > +#define PWR_THRESHOLD2         GENMASK_ULL(14, 8)      /* in Watts */
+> > +#define PWR_THRESHOLD_MAX      0x7f
+> > +#define PWR_THRESHOLD1_STATUS  BIT_ULL(16)
+> > +#define PWR_THRESHOLD2_STATUS  BIT_ULL(17)
+> > +
+> > +#define FME_PWR_XEON_LIMIT     0x18
+> > +#define XEON_PWR_LIMIT         GENMASK_ULL(14, 0)
+> > +#define XEON_PWR_EN            BIT_ULL(15)
+> > +#define FME_PWR_FPGA_LIMIT     0x20
+> > +#define FPGA_PWR_LIMIT         GENMASK_ULL(14, 0)
+> > +#define FPGA_PWR_EN            BIT_ULL(15)
+> > +
+> > +#define POWER_ATTR(_name, _mode, _show, _store)        \
+> > +struct device_attribute power_attr_##_name =           \
+> > +       __ATTR(_name, _mode, _show, _store)
+> > +
+> > +#define POWER_ATTR_RO(_name, _show)                    \
+> > +       POWER_ATTR(_name, 0444, _show, NULL)
+> > +
+> > +#define POWER_ATTR_RW(_name, _show, _store)            \
+> > +       POWER_ATTR(_name, 0644, _show, _store)
+>
+> Are these #defines necessary?  Seems like you could just use DEVICE_ATTR*
+>
+> > +
+> > +static ssize_t pwr_consumed_show(struct device *dev,
+> > +                                struct device_attribute *attr, char *buf)
+> > +{
+> > +       void __iomem *base;
+> > +       u64 v;
+> > +
+> > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
+> > +
+> > +       v = readq(base + FME_PWR_STATUS);
+> > +
+> > +       return scnprintf(buf, PAGE_SIZE, "%u\n",
+> > +                        (unsigned int)FIELD_GET(PWR_CONSUMED, v));
+> > +}
+> > +static POWER_ATTR_RO(consumed, pwr_consumed_show);
+> > +
+> > +static ssize_t pwr_threshold1_show(struct device *dev,
+> > +                                  struct device_attribute *attr, char *buf)
+> > +{
+> > +       void __iomem *base;
+> > +       u64 v;
+> > +
+> > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
+> > +
+> > +       v = readq(base + FME_PWR_THRESHOLD);
+> > +
+> > +       return scnprintf(buf, PAGE_SIZE, "%u\n",
+> > +                        (unsigned int)FIELD_GET(PWR_THRESHOLD1, v));
+> > +}
+> > +
+> > +static ssize_t pwr_threshold1_store(struct device *dev,
+> > +                                   struct device_attribute *attr,
+> > +                                   const char *buf, size_t count)
+> > +{
+> > +       struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
+> > +       void __iomem *base;
+> > +       u8 threshold;
+> > +       int ret;
+> > +       u64 v;
+> > +
+> > +       ret = kstrtou8(buf, 0, &threshold);
+> > +       if (ret)
+> > +               return ret;
+> > +
+> > +       if (threshold > PWR_THRESHOLD_MAX)
+> > +               return -EINVAL;
+> > +
+> > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
+> > +
+> > +       mutex_lock(&pdata->lock);
+> > +       v = readq(base + FME_PWR_THRESHOLD);
+> > +       v &= ~PWR_THRESHOLD1;
+> > +       v |= FIELD_PREP(PWR_THRESHOLD1, threshold);
+> > +       writeq(v, base + FME_PWR_THRESHOLD);
+> > +       mutex_unlock(&pdata->lock);
+> > +
+> > +       return count;
+> > +}
+> > +static POWER_ATTR_RW(threshold1, pwr_threshold1_show, pwr_threshold1_store);
+> > +
+> > +static ssize_t pwr_threshold2_show(struct device *dev,
+> > +                                  struct device_attribute *attr, char *buf)
+> > +{
+> > +       void __iomem *base;
+> > +       u64 v;
+> > +
+> > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
+> > +
+> > +       v = readq(base + FME_PWR_THRESHOLD);
+> > +
+> > +       return scnprintf(buf, PAGE_SIZE, "%u\n",
+> > +                        (unsigned int)FIELD_GET(PWR_THRESHOLD2, v));
+> > +}
+> > +
+> > +static ssize_t pwr_threshold2_store(struct device *dev,
+> > +                                   struct device_attribute *attr,
+> > +                                   const char *buf, size_t count)
+> > +{
+> > +       struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
+> > +       void __iomem *base;
+> > +       u8 threshold;
+> > +       int ret;
+> > +       u64 v;
+> > +
+> > +       ret = kstrtou8(buf, 0, &threshold);
+> > +       if (ret)
+> > +               return ret;
+> > +
+> > +       if (threshold > PWR_THRESHOLD_MAX)
+> > +               return -EINVAL;
+> > +
+> > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
+> > +
+> > +       mutex_lock(&pdata->lock);
+> > +       v = readq(base + FME_PWR_THRESHOLD);
+> > +       v &= ~PWR_THRESHOLD2;
+> > +       v |= FIELD_PREP(PWR_THRESHOLD2, threshold);
+> > +       writeq(v, base + FME_PWR_THRESHOLD);
+> > +       mutex_unlock(&pdata->lock);
+> > +
+> > +       return count;
+> > +}
+> > +static POWER_ATTR_RW(threshold2, pwr_threshold2_show, pwr_threshold2_store);
+> > +
+> > +static ssize_t pwr_threshold1_status_show(struct device *dev,
+> > +                                         struct device_attribute *attr,
+> > +                                         char *buf)
+> > +{
+> > +       void __iomem *base;
+> > +       u64 v;
+> > +
+> > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
+> > +
+> > +       v = readq(base + FME_PWR_THRESHOLD);
+> > +
+> > +       return scnprintf(buf, PAGE_SIZE, "%u\n",
+> > +                        (unsigned int)FIELD_GET(PWR_THRESHOLD1_STATUS, v));
+> > +}
+> > +static POWER_ATTR_RO(threshold1_status, pwr_threshold1_status_show);
+> > +
+> > +static ssize_t pwr_threshold2_status_show(struct device *dev,
+> > +                                         struct device_attribute *attr,
+> > +                                         char *buf)
+> > +{
+> > +       void __iomem *base;
+> > +       u64 v;
+> > +
+> > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
+> > +
+> > +       v = readq(base + FME_PWR_THRESHOLD);
+> > +
+> > +       return scnprintf(buf, PAGE_SIZE, "%u\n",
+> > +                        (unsigned int)FIELD_GET(PWR_THRESHOLD2_STATUS, v));
+> > +}
+> > +static POWER_ATTR_RO(threshold2_status, pwr_threshold2_status_show);
+> > +
+> > +static ssize_t ltr_show(struct device *dev,
+> > +                       struct device_attribute *attr, char *buf)
+> > +{
+> > +       void __iomem *base;
+> > +       u64 v;
+> > +
+> > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
+> > +
+> > +       v = readq(base + FME_PWR_STATUS);
+> > +
+> > +       return scnprintf(buf, PAGE_SIZE, "%u\n",
+> > +                        (unsigned int)FIELD_GET(FME_LATENCY_TOLERANCE, v));
+> > +}
+> > +static POWER_ATTR_RO(ltr, ltr_show);
+> > +
+> > +static ssize_t xeon_limit_show(struct device *dev,
+> > +                              struct device_attribute *attr, char *buf)
+> > +{
+> > +       void __iomem *base;
+> > +       u16 xeon_limit = 0;
+> > +       u64 v;
+> > +
+> > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
+> > +
+> > +       v = readq(base + FME_PWR_XEON_LIMIT);
+> > +
+> > +       if (FIELD_GET(XEON_PWR_EN, v))
+> > +               xeon_limit = FIELD_GET(XEON_PWR_LIMIT, v);
+> > +
+> > +       return scnprintf(buf, PAGE_SIZE, "%u\n", xeon_limit);
+> > +}
+> > +static POWER_ATTR_RO(xeon_limit, xeon_limit_show);
+> > +
+> > +static ssize_t fpga_limit_show(struct device *dev,
+> > +                              struct device_attribute *attr, char *buf)
+> > +{
+> > +       void __iomem *base;
+> > +       u16 fpga_limit = 0;
+> > +       u64 v;
+> > +
+> > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
+> > +
+> > +       v = readq(base + FME_PWR_FPGA_LIMIT);
+> > +
+> > +       if (FIELD_GET(FPGA_PWR_EN, v))
+> > +               fpga_limit = FIELD_GET(FPGA_PWR_LIMIT, v);
+> > +
+> > +       return scnprintf(buf, PAGE_SIZE, "%u\n", fpga_limit);
+> > +}
+> > +static POWER_ATTR_RO(fpga_limit, fpga_limit_show);
+> > +
+> > +static struct attribute *power_mgmt_attrs[] = {
+> > +       &power_attr_consumed.attr,
+> > +       &power_attr_threshold1.attr,
+> > +       &power_attr_threshold2.attr,
+> > +       &power_attr_threshold1_status.attr,
+> > +       &power_attr_threshold2_status.attr,
+> > +       &power_attr_xeon_limit.attr,
+> > +       &power_attr_fpga_limit.attr,
+> > +       &power_attr_ltr.attr,
+>
+> This is a nit, but I would expect to see these listed in the same
+> order as their show/store functions above.  So ltr_attr would come
+> between threshold2_status_attr and xeon_limit_attr.
+>
+> > +       NULL,
+> > +};
+> > +
+> > +static struct attribute_group power_mgmt_attr_group = {
+> > +       .attrs  = power_mgmt_attrs,
+> > +       .name   = "power_mgmt",
+> > +};
+> > +
+> > +static int fme_power_mgmt_init(struct platform_device *pdev,
+> > +                              struct dfl_feature *feature)
+> > +{
+> > +       return sysfs_create_group(&pdev->dev.kobj, &power_mgmt_attr_group);
+> > +}
+> > +
+> > +static void fme_power_mgmt_uinit(struct platform_device *pdev,
+> > +                                struct dfl_feature *feature)
+> > +{
+> > +       sysfs_remove_group(&pdev->dev.kobj, &power_mgmt_attr_group);
+> > +}
+> > +
+> > +static const struct dfl_feature_id fme_power_mgmt_id_table[] = {
+> > +       {.id = FME_FEATURE_ID_POWER_MGMT,},
+> > +       {0,}
+> > +};
+> > +
+> > +static const struct dfl_feature_ops fme_power_mgmt_ops = {
+> > +       .init = fme_power_mgmt_init,
+> > +       .uinit = fme_power_mgmt_uinit,
+> > +};
+> > +
+> >  static struct dfl_feature_driver fme_feature_drvs[] = {
+> >         {
+> >                 .id_table = fme_hdr_id_table,
+> > @@ -429,6 +682,10 @@ static struct dfl_feature_driver fme_feature_drvs[] = {
+> >                 .ops = &fme_thermal_mgmt_ops,
+> >         },
+> >         {
+> > +               .id_table = fme_power_mgmt_id_table,
+> > +               .ops = &fme_power_mgmt_ops,
+> > +       },
+> > +       {
+> >                 .ops = NULL,
+> >         },
+> >  };
+> > --
+> > 2.7.4
+> >
+>
+> Thanks,
+> Alan
