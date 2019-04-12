@@ -1,75 +1,39 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [PATCH] Linux: Define struct termios2 in <termios.h> under _GNU_SOURCE [BZ #10339]
-Date: Fri, 12 Apr 2019 09:50:41 +0200
-Message-ID: <87lg0fbr1q.fsf@oldenburg2.str.redhat.com>
-References: <875zrnlakd.fsf@oldenburg2.str.redhat.com>
-	<284e9c76-2411-b8f4-c4bc-c25c60c04cf7@linaro.org>
-	<87imvker6t.fsf@oldenburg2.str.redhat.com>
-	<db468a0f-4a7b-d251-601f-428885275d08@linaro.org>
+From: Daniel Drake <drake@endlessm.com>
+Subject: Re: [PATCH v2 10/11] platform/x86: asus-wmi: Switch fan boost mode
+Date: Fri, 12 Apr 2019 16:03:17 +0800
+Message-ID: <CAD8Lp45ivFJiW0FZo+ZOyUdpV1JFwPg=o7rx7eyp_YdSAbRRkg@mail.gmail.com>
+References: <a8dd77f3-1e28-6416-5f04-aff44d5bb6d6@gmail.com>
+ <72b3e0aa-d53a-8a82-1505-f4f00aa2bb46@gmail.com> <fecb4870-7875-a524-bf6d-3108e25af888@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <libc-alpha-return-101350-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-In-Reply-To: <db468a0f-4a7b-d251-601f-428885275d08@linaro.org> (Adhemerval
-	Zanella's message of "Thu, 11 Apr 2019 09:53:30 -0300")
-To: Adhemerval Zanella <adhemerval.zanella@linaro.org>
-Cc: libc-alpha@sourceware.org, hpa@zytor.com, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <fecb4870-7875-a524-bf6d-3108e25af888@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Yurii Pavlovskyi <yurii.pavlovskyi@gmail.com>
+Cc: Corentin Chary <corentin.chary@gmail.com>, Darren Hart <dvhart@infradead.org>, Andy Shevchenko <andy@infradead.org>, acpi4asus-user <acpi4asus-user@lists.sourceforge.net>, Platform Driver <platform-driver-x86@vger.kernel.org>, Linux Kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Endless Linux Upstreaming Team <linux@endlessm.com>
 List-Id: linux-api@vger.kernel.org
 
-* Adhemerval Zanella:
+On Thu, Apr 11, 2019 at 1:47 PM Yurii Pavlovskyi
+<yurii.pavlovskyi@gmail.com> wrote:
+> * 0x00 - is normal,
+> * 0x01 - is obviously turbo by the amount of noise, might be useful to
+> avoid CPU frequency throttling on high load,
+> * 0x02 - the meaning is unknown at the time as modes are not named
+> in the vendor documentation, but it does look like a quiet mode as CPU
+> temperature does increase about 10 degrees on maximum load.
 
-> On 11/04/2019 08:07, Florian Weimer wrote:
->> * Adhemerval Zanella:
->>=20
->>> This allows us to adjust the baud rates to non-standard values using te=
-rmios
->>> interfaces without to resorting to add new headers and use a different =
-API
->>> (ioctl).
->>=20
->> How much symbol versioning will be required for this change?
->
-> I think all interfaces that have termios as input for sparc and mips=20
-> (tcgetattr, tcsetattr, cfmakeraw, cfgetispeed, cfgetospeed, cfsetispeed,
-> cfsetospeed, cfsetspeed).
->
-> Alpha will also need to use termios1 for pre-4.20 kernels.
+I'm curious which vendor documentation you're working with here.
 
-So only new symbol versions there?  Hmm.
+>From the spec,
+0 = normal
+1 = overboost
+2 = silent
 
->>> As Peter Anvin has indicated, he create a POC [1] with the aforemention=
-ed
->>> new interfaces.  It has not been rebased against master, more specially=
- against
->>> my termios refactor to simplify the multiple architecture header defini=
-tions,
->>> but I intend to use as a base.
->>=20
->> Reference [1] is still missing. 8-(
->
-> Oops... it is https://git.zytor.com/users/hpa/glibc/termbaud.git/log/?h=
-=3Dwip.termbaud
+Also you can use DSTS on the 0x00110018 device to check the exact
+capabilities supported, which you should use to refine which modes can
+be cycled through.
+Bit 0 = overboost supported
+Bit 1 = silent supported
 
-This doesn't really illuminate things.  =E2=80=9CDrop explicit baud setting
-interfaces in favor of cfenc|decspeed()=E2=80=9D removes the new symbol ver=
-sion
-for the cf* functions.
-
-My gut feeling is that it's safer to add new interfaces, based on the
-actual kernel/userspace interface, rather than trying to fix up existing
-interfaces with symbol versioning.  The main reason is that code
-involving serial interfaces is difficult to test, so it will take years
-until we find the last application broken by the glibc interface bump.
-
-I don't feel strongly about this.  This came out of a request for
-enabling TCGETS2 support downstream.  If I can't fix this upstream, I
-will just reject that request.
-
-Thanks,
-Florian
+Thanks
+Daniel
