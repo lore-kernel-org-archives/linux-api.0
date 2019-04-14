@@ -1,71 +1,124 @@
-From: Amir Goldstein <amir73il@gmail.com>
-Subject: Re: [PATCH] new flag COPY_FILE_RANGE_FILESIZE for copy_file_range()
-Date: Sun, 14 Apr 2019 10:10:16 +0300
-Message-ID: <CAOQ4uxgkE+Ls+Sff1ptWtFwpT3dZrRayXsr4wX4Z9bZ=28Vxhw@mail.gmail.com>
-References: <20190413205439.9623-1-shawn@git.icu> <20190414010254.GA7408@magnolia>
+From: Christian Brauner <christian@brauner.io>
+Subject: [PATCH 0/4] clone: add CLONE_PIDFD
+Date: Sun, 14 Apr 2019 22:14:32 +0200
+Message-ID: <20190414201436.19502-1-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190414010254.GA7408@magnolia>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Shawn Landden <shawn@git.icu>
-Cc: linux-api@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, "Darrick J. Wong" <darrick.wong@oracle.com>
+To: torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, jannh@google.com, dhowells@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: serge@hallyn.com, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, tglx@linutronix.de, mtk.manpages@gmail.com, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, joel@joelfernandes.org, dancol@google.com, Christian Brauner <christian@brauner.io>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Apr 14, 2019 at 4:04 AM Darrick J. Wong <darrick.wong@oracle.com> wrote:
->
-> On Sat, Apr 13, 2019 at 03:54:39PM -0500, Shawn Landden wrote:
->
-> /me pulls out his close-reading glasses and the copy_file_range manpage...
->
-> > If flags includes COPY_FILE_RANGE_FILESIZE then the length
-> > copied is the length of the file. off_in and off_out are
-> > ignored.  len must be 0 or the file size.
->
-> They're ignored?  As in the copy operation reads the number of bytes in
-> the file referenced by fd_in from fd_in at its current position and is
-> writes that out to fd_out at its current position?  I don't see why I
-> would want such an operation...
->
-> ...but I can see how people could make use of a CFR_ENTIRE_FILE that
-> would check that both file descriptors are actually regular files, and
-> if so copy the entire contents of the fd_in file into the same position
-> in the fd_out file, and then set the fd_out file's length to match.  If
-> @off_in or @off_out are non-NULL then they'll be updated to the new EOFs
-> if the copy completes succesfully and @len can be anything.
->
+Hey Linus,
 
-IDGI. In what way would that be helpful?
-Would the syscall fail if it cannot copy entire file (like clone_file_range)
-or return bytes copied?
-If latter, then user will have to call syscall again until getting 0
-return value.
-User can already call copy_file_range with len=SSIZE_MAX and get almost
-the same thing.
-Unless the idea is to optimize for less syscalls for copying very large files??
-In that case, MAX_RW_COUNT limit for this syscall would need to be relaxed.
+This patchset makes it possible to retrieve pid file descriptors at
+process creation time by introducing the new flag CLONE_PIDFD to the
+clone() system call as previously discussed.
 
-While on the subject, something that has been discussed in the past is that
-copy_file_range() and sendfile() of a large file are not killable, so that is
-that should be fixed, especially if the interface is going to be used to copy
-more data in-kernel.
+As decided last week [1] Jann and I have refined the implementation of
+pidfds as anonymous inodes. Based on last weeks RFC we have only tweaked
+documentation and naming, as well as making the sample program how to
+get easy metadata access from a pidfd a little cleaner and more paranoid
+when checking for errors.
+The sample program can also serve as a test for the patchset.
 
-IOW, the motivation of the patch is not clear to me:
+When clone is called with CLONE_PIDFD a pidfd instead of a pid will be
+returned. To make it possible for users of CLONE_PIDFD to apply standard
+error checking that is common all across userspace, file descriptor
+numbering for pidfds starts at 1 and not 0. This has the major advantage
+that users can do:
 
-> This implementation saves a call to stat() in the common case
+int pidfd = clone(CLONE_PIDFD);
+if (pidfd < 0) {
+       /* handle error */
+       exit(EXIT_FAILURE):
+}
 
-What is the real life workload where this micro optimization would
-have any affect?
+if (pidfd == 0) {
+       /* child */
+       exit(EXIT_SUCCESS);
+}
 
-> It does not fix any race conditions, but that is possible in the future
-> with this interface.
+/* parent */
+exit(EXIT_SUCCESS);
 
-Then please present a plan or an implementation of how that interface
-can solve race conditions and if that is the only motivation for the
-interface than I do not see why we should merge the interface before
-the implementation.
+We have also taken care that pidfds are created *after* the fd table has
+been unshared to not leak pidfds into child processes.
+pidfd creation during clone is split into two distinct steps:
+1. preparing both an fd and a file referencing struct pid for fd_install()
+2. fd_install()ing the pidfd
+Step 1. is performed before clone's point of no return and especially
+before write_lock_irq(&tasklist_lock) is taken.
+Performing 1. before clone's point of no return ensures that we don't
+need to fail a process that is already visible to userspace when pidfd
+creation fails. Step 2. happens after attach_pid() is performed and the
+process is visible to userspace.
+Technically, we could have also performed step 1. and 2. together before
+clone's point of no return and then calling close on the file descriptor
+on failure. This would slightly increase code-locality but it is
+semantically more correct and clean to bring the pidfd into existence
+once the process is fully attached and not before.
 
-Please let me know if I am missing something.
+The actual code for CLONE_PIDFD in patch 2 is completely confined to
+fork.c (apart from the CLONE_PIDFD definition of course) and is rather
+small and hopefully good to review. 
 
-Thanks,
-Amir.
+The additional changes listed under David's name in the diffstat below
+are here to make anon_inodes available unconditionally. They are needed
+for the new mount api and thus for core vfs code in addition to pidfds.
+David knows this and he has informed Al that this patch is sent out
+here. The changes themselves are rather automatic.
+
+As promised I have also contacted Joel who has sent a patchset to make
+pidfds pollable. He has been informed and is happy to port his patchset
+once we have moved forward [2].
+Jann and I currently plan to target this patchset for inclusion in the 5.2
+merge window.
+
+Thanks!
+Jann & Christian
+
+[1]: https://lore.kernel.org/lkml/CAHk-=wifyY+XGNW=ZC4MyTHD14w81F8JjQNH-GaGAm2RxZ_S8Q@mail.gmail.com/
+[2]: https://lore.kernel.org/lkml/20190411200059.GA75190@google.com/
+
+Christian Brauner (3):
+  clone: add CLONE_PIDFD
+  signal: support CLONE_PIDFD with pidfd_send_signal
+  samples: show race-free pidfd metadata access
+
+David Howells (1):
+  Make anon_inodes unconditional
+
+ arch/arm/kvm/Kconfig           |   1 -
+ arch/arm64/kvm/Kconfig         |   1 -
+ arch/mips/kvm/Kconfig          |   1 -
+ arch/powerpc/kvm/Kconfig       |   1 -
+ arch/s390/kvm/Kconfig          |   1 -
+ arch/x86/Kconfig               |   1 -
+ arch/x86/kvm/Kconfig           |   1 -
+ drivers/base/Kconfig           |   1 -
+ drivers/char/tpm/Kconfig       |   1 -
+ drivers/dma-buf/Kconfig        |   1 -
+ drivers/gpio/Kconfig           |   1 -
+ drivers/iio/Kconfig            |   1 -
+ drivers/infiniband/Kconfig     |   1 -
+ drivers/vfio/Kconfig           |   1 -
+ fs/Makefile                    |   2 +-
+ fs/notify/fanotify/Kconfig     |   1 -
+ fs/notify/inotify/Kconfig      |   1 -
+ include/linux/pid.h            |   2 +
+ include/uapi/linux/sched.h     |   1 +
+ init/Kconfig                   |  10 --
+ kernel/fork.c                  | 117 +++++++++++++++++++++-
+ kernel/signal.c                |  14 ++-
+ kernel/sys_ni.c                |   3 -
+ samples/Makefile               |   2 +-
+ samples/pidfd/Makefile         |   6 ++
+ samples/pidfd/pidfd-metadata.c | 172 +++++++++++++++++++++++++++++++++
+ 26 files changed, 305 insertions(+), 40 deletions(-)
+ create mode 100644 samples/pidfd/Makefile
+ create mode 100644 samples/pidfd/pidfd-metadata.c
+
+-- 
+2.21.0
