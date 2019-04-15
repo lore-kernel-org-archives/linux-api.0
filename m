@@ -1,40 +1,72 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [PATCH] Linux: Define struct termios2 in <termios.h> under _GNU_SOURCE [BZ #10339]
-Date: Mon, 15 Apr 2019 14:28:48 +0200
-Message-ID: <87lg0b311b.fsf@oldenburg2.str.redhat.com>
-References: <875zrnlakd.fsf@oldenburg2.str.redhat.com>
-	<284e9c76-2411-b8f4-c4bc-c25c60c04cf7@linaro.org>
-	<87imvker6t.fsf@oldenburg2.str.redhat.com>
-	<db468a0f-4a7b-d251-601f-428885275d08@linaro.org>
-	<87lg0fbr1q.fsf@oldenburg2.str.redhat.com>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH 2/4] clone: add CLONE_PIDFD
+Date: Mon, 15 Apr 2019 15:24:16 +0200
+Message-ID: <20190415132416.GB22204@redhat.com>
+References: <20190414201436.19502-1-christian@brauner.io>
+ <20190414201436.19502-3-christian@brauner.io>
+ <20190415105209.GA22204@redhat.com>
+ <20190415114204.ydczeuwmi74wfsuv@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <libc-alpha-return-101380-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-In-Reply-To: <87lg0fbr1q.fsf@oldenburg2.str.redhat.com> (Florian Weimer's
-	message of "Fri, 12 Apr 2019 09:50:41 +0200")
-To: Adhemerval Zanella <adhemerval.zanella@linaro.org>
-Cc: libc-alpha@sourceware.org, hpa@zytor.com, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190415114204.ydczeuwmi74wfsuv@brauner.io>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christian Brauner <christian@brauner.io>
+Cc: torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, jannh@google.com, dhowells@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, serge@hallyn.com, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, tglx@linutronix.de, mtk.manpages@gmail.com, akpm@linux-foundation.org, cyphar@cyphar.com, joel@joelfernandes.org, dancol@google.com
 List-Id: linux-api@vger.kernel.org
 
-* Florian Weimer:
-
-> My gut feeling is that it's safer to add new interfaces, based on the
-> actual kernel/userspace interface, rather than trying to fix up existing
-> interfaces with symbol versioning.  The main reason is that code
-> involving serial interfaces is difficult to test, so it will take years
-> until we find the last application broken by the glibc interface bump.
+On 04/15, Christian Brauner wrote:
 >
-> I don't feel strongly about this.  This came out of a request for
-> enabling TCGETS2 support downstream.  If I can't fix this upstream, I
-> will just reject that request.
+> > CLONE_PARENT_SETTID doesn't look very usefule, so what if we add
+> >
+> > 	if ((clone_flags & (CLONE_PIDFD|CLONE_PARENT_SETTID)) ==
+> > 	                   (CLONE_PIDFD|CLONE_PARENT_SETTID))
+> > 		return ERR_PTR(-EINVAL);
+> >
+> > at the start of copy_process() ?
+> >
+> > Then it can do
+> >
+> > 	if (clone_flags & CLONE_PIDFD) {
+> > 		retval = pidfd_create(pid, &pidfdf);
+> > 		if (retval < 0)
+> > 			goto bad_fork_free_pid;
+> > 		retval = put_user(retval, parent_tidptr)
+> > 		if (retval < 0)
+> > 			goto bad_fork_free_pid;
+> > 	}
+>
+> Uhhh Oleg, that is nifty. I have to say I like that a lot. This would
+> let us return the pid and the pidfd in one go and we can also start
+> pidfd numbering at 0.
 
-Any further comments on this matter?
+Christian, sorry if it was already discussed, but I can't force myself to
+read all the previous discussions ;)
 
-Thanks,
-Florian
+If we forget about CONFIG_PROC_FS, why do we really want to create a file?
+
+
+Suppose we add a global u64 counter incremented by copy_process and reported
+in /proc/$pid/status. Suppose that clone(CLONE_PIDFD) writes this counter to
+*parent_tidptr. Let's denote this counter as UNIQ_PID.
+
+Now, if you want to (say) safely kill a task and you have its UNIQ_PID, you
+can do
+
+	kill_by_pid_uniq(int pid, u64 uniq_pid)
+	{
+		pidfd = open("/proc/$pid", O_DIRECTORY);
+
+		status = openat(pidfd, "status");
+		u64 this_uniq_pid = ... read UNIQ_PID from status ...;
+
+		if (uniq_pid != this_uniq_pid)
+			return;
+
+		pidfd_send_signal(pidfd);
+	}
+
+Why else do we want pidfd?
+
+Oleg.
