@@ -1,123 +1,193 @@
-From: Jonathan Kowalski <bl0pbl33p@gmail.com>
-Subject: Re: RFC: on adding new CLONE_* flags [WAS Re: [PATCH 0/4] clone: add CLONE_PIDFD]
-Date: Mon, 15 Apr 2019 22:27:04 +0100
-Message-ID: <CAGLj2rEOfW=3wis3YWomWK1AVDdCX6DMqbvSHXba3-x=kpkcNA@mail.gmail.com>
-References: <20190414201436.19502-1-christian@brauner.io> <dc05ffe3-c2ff-8b3e-d181-e0cc620bf91d@metux.net>
- <20190415195911.z7b7miwsj67ha54y@yavin> <CALCETrWxMnaPvwicqkMLswMynWvJVteazD-bFv3ZnBKWp-1joQ@mail.gmail.com>
+From: "Dmitry V. Levin" <ldv@altlinux.org>
+Subject: [PATCH linux-next v10 0/7] ptrace: add PTRACE_GET_SYSCALL_INFO
+ request
+Date: Tue, 16 Apr 2019 02:43:07 +0300
+Message-ID: <20190415234307.GA9364@altlinux.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrWxMnaPvwicqkMLswMynWvJVteazD-bFv3ZnBKWp-1joQ@mail.gmail.com>
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Aleksa Sarai <cyphar@cyphar.com>, "Enrico Weigelt, metux IT consult" <lkml@metux.net>, Christian Brauner <christian@brauner.io>, Linus Torvalds <torvalds@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Jann Horn <jannh@google.com>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Joel Fernandes <joel@joelfernandes.org>, Daniel Colascione <dancol@google.com>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Elvira Khabirova <lineprinter@altlinux.org>, Eugene Syromyatnikov <esyr@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@kernel.org>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Greentime Hu <greentime@andestech.com>, Helge Deller <deller@gmx.de>, "James E.J. Bottomley" <jejb@parisc-linux.org>, James Hogan <jhogan@kernel.org>, Kees Cook <keescook@chromium.org>, Michael Ellerman <mpe@ellerman.id.au>, Paul Burton <paul.burton@mips.com>, Paul Mackerras <paulus@samba.org>, Ralf Baechle <ralf@linux-mips.org>, Richard Kuo <rkuo@codeaurora.org>, Shuah Khan <shuah@kernel.org>, Vincent Chen <deanbo422@gmail.com>, linux-api@vger.kernel.org, linux-hexagon@vger.kernel.org, linux-kernel@vger.kernel.org, linux-kselftest@vger.kerne
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 15, 2019 at 9:34 PM Andy Lutomirski <luto@kernel.org> wrote:
->
-> On Mon, Apr 15, 2019 at 12:59 PM Aleksa Sarai <cyphar@cyphar.com> wrote:
-> >
-> > On 2019-04-15, Enrico Weigelt, metux IT consult <lkml@metux.net> wrote:
-> > > > This patchset makes it possible to retrieve pid file descriptors at
-> > > > process creation time by introducing the new flag CLONE_PIDFD to the
-> > > > clone() system call as previously discussed.
-> > >
-> > > Sorry, for highjacking this thread, but I'm curious on what things to
-> > > consider when introducing new CLONE_* flags.
-> > >
-> > > The reason I'm asking is:
-> > >
-> > > I'm working on implementing plan9-like fs namespaces, where unprivileged
-> > > processes can change their own namespace at will. For that, certain
-> > > traditional unix'ish things have to be disabled, most notably suid.
-> > > As forbidding suid can be helpful in other scenarios, too, I thought
-> > > about making this its own feature. Doing that switch on clone() seems
-> > > a nice place for that, IMHO.
-> >
-> > Just spit-balling -- is no_new_privs not sufficient for this usecase?
-> > Not granting privileges such as setuid during execve(2) is the main
-> > point of that flag.
-> >
->
-> I would personally *love* it if distros started setting no_new_privs
-> for basically all processes.  And pidfd actually gets us part of the
-> way toward a straightforward way to make sudo and su still work in a
-> no_new_privs world: su could call into a daemon that would spawn the
-> privileged task, and su would get a (read-only!) pidfd back and then
-> wait for the fd and exit.  I suppose that, done naively, this might
-> cause some odd effects with respect to tty handling, but I bet it's
-> solveable.  I suppose it would be nifty if there were a way for a
+[Andrew, could you take this patchset into your tree, please?]
 
-Hmm, isn't what you're describing roughly what systemd-run -t does? It
-will serialize the argument list, ask PID 1 to create a transient unit
-(go through the polkit stuff), and then set the stdout/stderr and
-stdin of the service to your tty, make it the controlling terminal of
-the process and
-reset it. So I guess it should work with sudo/su just fine too.
+PTRACE_GET_SYSCALL_INFO is a generic ptrace API that lets ptracer obtain
+details of the syscall the tracee is blocked in.
 
-There is also s6-sudod (and a s6-sudoc client to it) that works in a
-similar fashion, though it's a lot less fancy.
+There are two reasons for a special syscall-related ptrace request.
 
-> process, by mutual agreement, to reparent itself to an unrelated
-> process.
->
-> Anyway, clone(2) is an enormous mess.  Surely the right solution here
-> is to have a whole new process creation API that takes a big,
-> extensible struct as an argument, and supports *at least* the full
-> abilities of posix_spawn() and ideally covers all the use cases for
-> fork() + do stuff + exec().  It would be nifty if this API also had a
-> way to say "add no_new_privs and therefore enable extra functionality
-> that doesn't work without no_new_privs".  This functionality would
-> include things like returning a future extra-privileged pidfd that
-> gives ptrace-like access.
+Firstly, with the current ptrace API there are cases when ptracer cannot
+retrieve necessary information about syscalls.  Some examples include:
+* The notorious int-0x80-from-64-bit-task issue.  See [1] for details.
+In short, if a 64-bit task performs a syscall through int 0x80, its tracer
+has no reliable means to find out that the syscall was, in fact,
+a compat syscall, and misidentifies it.
+* Syscall-enter-stop and syscall-exit-stop look the same for the tracer.
+Common practice is to keep track of the sequence of ptrace-stops in order
+not to mix the two syscall-stops up.  But it is not as simple as it looks;
+for example, strace had a (just recently fixed) long-standing bug where
+attaching strace to a tracee that is performing the execve system call
+led to the tracer identifying the following syscall-exit-stop as
+syscall-enter-stop, which messed up all the state tracking.
+* Since the introduction of commit 84d77d3f06e7e8dea057d10e8ec77ad71f721be3
+("ptrace: Don't allow accessing an undumpable mm"), both PTRACE_PEEKDATA
+and process_vm_readv become unavailable when the process dumpable flag
+is cleared.  On such architectures as ia64 this results in all syscall
+arguments being unavailable for the tracer.
 
-My idea was that this intent could be supplied at clone time, you
-could attach ptrace access modes to a pidfd (we could make those a bit
-granular, perhaps) and any API that takes PIDs and checks against the
-caller's ptrace access mode could instead derive so from the pidfd.
-Since killing is a bit convoluted due to setuid binaries, that should
-work if one is CAP_KILL capable in the owning userns of the task, and
-if not that, has permissions to kill and the target has NNP set. This
-would allow you to bind kill privileges in a way that is compatible
-with both worlds, the upshot being NNP allows for the functionality to
-be available to a lot more of userspace. Ofcourse, this would require
-a new clone version, possibly with taking a clone2 struct which sets a
-few parameters for the process and the flags for the pidfd.
+Secondly, ptracers also have to support a lot of arch-specific code for
+obtaining information about the tracee.  For some architectures, this
+requires a ptrace(PTRACE_PEEKUSER, ...) invocation for every syscall
+argument and return value.
 
-Another point is that you have a pidfd_open (or something else) that
-can create multiple pidfds from a pidfd obtained at clone time and
-create pidfds with varying level of rights. It can also work by taking
-a TID to open a pidfd for an external task (and then for all the
-rights you wish to acquire on it, check against your ambient
-authority).
+PTRACE_GET_SYSCALL_INFO returns the following structure:
 
-(Actually, in general, having FMODE_* style bits spanning all methods
-a file descriptor can take (through system calls), with the type of
-object as key (class containing a set), and be able to enable/disable
-them and seal them would be a useful addition, this all happening at
-the struct file level instead of inode level sealing in memfds).
+struct ptrace_syscall_info {
+	__u8 op;	/* PTRACE_SYSCALL_INFO_* */
+	__u32 arch __attribute__((__aligned__(sizeof(__u32))));
+	__u64 instruction_pointer;
+	__u64 stack_pointer;
+	union {
+		struct {
+			__u64 nr;
+			__u64 args[6];
+		} entry;
+		struct {
+			__s64 rval;
+			__u8 is_error;
+		} exit;
+		struct {
+			__u64 nr;
+			__u64 args[6];
+			__u32 ret_data;
+		} seccomp;
+	};
+};
 
->
-> As basic examples, the improved process creation API should take a
-> list of dup2() operations to perform, fds to remove the O_CLOEXEC flag
-> from, fds to close (or, maybe even better, a list of fds to *not*
-> close), a list of rlimit changes to make, a list of signal changes to
-> make, the ability to set sid, pgrp, uid, gid (as in
-> setresuid/setresgid), the ability to do capset() operations, etc.  The
-> posix_spawn() API, for all that it's rather complicated, covers a
-> bunch of the basics pretty well.
->
-> Sharing the parent's VM, signal set, fd table, etc, should all be
-> options, but they should default to *off*.
+The structure was chosen according to [2], except for the following
+changes:
+* seccomp substructure was added as a superset of entry substructure;
+* the type of nr field was changed from int to __u64 because syscall
+numbers are, as a practical matter, 64 bits;
+* stack_pointer field was added along with instruction_pointer field
+since it is readily available and can save the tracer from extra
+PTRACE_GETREGS/PTRACE_GETREGSET calls;
+* arch is always initialized to aid with tracing system calls
+* such as execve();
+* instruction_pointer and stack_pointer are always initialized
+so they could be easily obtained for non-syscall stops;
+* a boolean is_error field was added along with rval field, this way
+the tracer can more reliably distinguish a return value
+from an error value.
 
-Historical note: Plan 9's rfork has RFC* flags for resources like
-namespace/env/fd table, which means supplying those means you start
-with an clean/empty view of that resource.
+strace has been ported to PTRACE_GET_SYSCALL_INFO.
+Starting with release 4.26, strace uses PTRACE_GET_SYSCALL_INFO API
+as the preferred mechanism of obtaining syscall information.
 
+[1] https://lore.kernel.org/lkml/CA+55aFzcSVmdDj9Lh_gdbz1OzHyEm6ZrGPBDAJnywm2LF_eVyg@mail.gmail.com/
+[2] https://lore.kernel.org/lkml/CAObL_7GM0n80N7J_DFw_eQyfLyzq+sf4y2AvsCCV88Tb3AwEHA@mail.gmail.com/
 
->
-> (Many other operating systems allow one to create a process and gain a
-> capability to do all kinds of things to that process.  It's a
-> generally good idea.)
->
-> --Andy
+---
+
+Notes:
+    v10: added more Acked-by.
+
+    v9:
+    * Rebased to linux-next again due to syscall_get_arguments() signature change.
+
+    v8:
+    * Moved syscall_get_arch() specific patches to a separate patchset
+      which is now merged into audit/next tree.
+    * Rebased to linux-next.
+    * Moved ptrace_get_syscall_info code under #ifdef CONFIG_HAVE_ARCH_TRACEHOOK,
+      narrowing down the set of architectures supported by this implementation
+      back to those 19 that enable CONFIG_HAVE_ARCH_TRACEHOOK because
+      I failed to get all syscall_get_*(), instruction_pointer(),
+      and user_stack_pointer() functions implemented on some niche
+      architectures.  This leaves the following architectures out:
+      alpha, h8300, m68k, microblaze, and unicore32.
+
+    v7:
+    * Rebased to v5.0-rc1.
+    * 5 arch-specific preparatory patches out of 25 have been merged
+      into v5.0-rc1 via arch trees.
+
+    v6:
+    * Add syscall_get_arguments and syscall_set_arguments wrappers
+      to asm-generic/syscall.h, requested by Geert.
+    * Change PTRACE_GET_SYSCALL_INFO return code: do not take trailing paddings
+      into account, use the end of the last field of the structure being written.
+    * Change struct ptrace_syscall_info:
+      * remove .frame_pointer field, is is not needed and not portable;
+      * make .arch field explicitly aligned, remove no longer needed
+        padding before .arch field;
+      * remove trailing pads, they are no longer needed.
+
+    v5:
+    * Merge separate series and patches into the single series.
+    * Change PTRACE_EVENTMSG_SYSCALL_{ENTRY,EXIT} values as requested by Oleg.
+    * Change struct ptrace_syscall_info: generalize instruction_pointer,
+      stack_pointer, and frame_pointer fields by moving them from
+      ptrace_syscall_info.{entry,seccomp} substructures to ptrace_syscall_info
+      and initializing them for all stops.
+    * Add PTRACE_SYSCALL_INFO_NONE, set it when not in a syscall stop,
+      so e.g. "strace -i" could use PTRACE_SYSCALL_INFO_SECCOMP to obtain
+      instruction_pointer when the tracee is in a signal stop.
+    * Patch all remaining architectures to provide all necessary
+      syscall_get_* functions.
+    * Make available for all architectures: do not conditionalize on
+      CONFIG_HAVE_ARCH_TRACEHOOK since all syscall_get_* functions
+      are implemented on all architectures.
+    * Add a test for PTRACE_GET_SYSCALL_INFO to selftests/ptrace.
+    
+    v4:
+    * Do not introduce task_struct.ptrace_event,
+      use child->last_siginfo->si_code instead.
+    * Implement PTRACE_SYSCALL_INFO_SECCOMP and ptrace_syscall_info.seccomp
+      support along with PTRACE_SYSCALL_INFO_{ENTRY,EXIT} and
+      ptrace_syscall_info.{entry,exit}.
+    
+    v3:
+    * Change struct ptrace_syscall_info.
+    * Support PTRACE_EVENT_SECCOMP by adding ptrace_event to task_struct.
+    * Add proper defines for ptrace_syscall_info.op values.
+    * Rename PT_SYSCALL_IS_ENTERING and PT_SYSCALL_IS_EXITING to
+      PTRACE_EVENTMSG_SYSCALL_ENTRY and PTRACE_EVENTMSG_SYSCALL_EXIT
+    * and move them to uapi.
+    
+    v2:
+    * Do not use task->ptrace.
+    * Replace entry_info.is_compat with entry_info.arch, use syscall_get_arch().
+    * Use addr argument of sys_ptrace to get expected size of the struct;
+      return full size of the struct.
+
+Dmitry V. Levin (6):
+  nds32: fix asm/syscall.h # acked
+  hexagon: define syscall_get_error() and syscall_get_return_value() # waiting for ack since November
+  mips: define syscall_get_error() # acked
+  parisc: define syscall_get_error() # acked
+  powerpc: define syscall_get_error() # waiting for ack since early December
+  selftests/ptrace: add a test case for PTRACE_GET_SYSCALL_INFO # acked
+
+Elvira Khabirova (1):
+  ptrace: add PTRACE_GET_SYSCALL_INFO request # reviewed
+
+ arch/hexagon/include/asm/syscall.h            |  14 +
+ arch/mips/include/asm/syscall.h               |   6 +
+ arch/nds32/include/asm/syscall.h              |  27 +-
+ arch/parisc/include/asm/syscall.h             |   7 +
+ arch/powerpc/include/asm/syscall.h            |  10 +
+ include/linux/tracehook.h                     |   9 +-
+ include/uapi/linux/ptrace.h                   |  35 +++
+ kernel/ptrace.c                               | 103 ++++++-
+ tools/testing/selftests/ptrace/.gitignore     |   1 +
+ tools/testing/selftests/ptrace/Makefile       |   2 +-
+ .../selftests/ptrace/get_syscall_info.c       | 271 ++++++++++++++++++
+ 11 files changed, 470 insertions(+), 15 deletions(-)
+ create mode 100644 tools/testing/selftests/ptrace/get_syscall_info.c
+
+-- 
+ldv
