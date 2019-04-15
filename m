@@ -1,450 +1,123 @@
-From: Alan Tull <atull@kernel.org>
-Subject: Re: [PATCH 15/17] fpga: dfl: fme: add power management support
-Date: Mon, 15 Apr 2019 16:17:48 -0500
-Message-ID: <CANk1AXRv+2cv1sJTyHD3ajgHVvda7y7t6DVvw47vAnTp4KF0yw@mail.gmail.com>
-References: <1553483264-5379-1-git-send-email-hao.wu@intel.com>
- <1553483264-5379-16-git-send-email-hao.wu@intel.com> <CANk1AXTji9qm0Nfbme+2=nR-PNavnv__GwzDRazhH78hYkWN6g@mail.gmail.com>
- <20190412025019.GA27997@hao-dev>
+From: Jonathan Kowalski <bl0pbl33p@gmail.com>
+Subject: Re: RFC: on adding new CLONE_* flags [WAS Re: [PATCH 0/4] clone: add CLONE_PIDFD]
+Date: Mon, 15 Apr 2019 22:27:04 +0100
+Message-ID: <CAGLj2rEOfW=3wis3YWomWK1AVDdCX6DMqbvSHXba3-x=kpkcNA@mail.gmail.com>
+References: <20190414201436.19502-1-christian@brauner.io> <dc05ffe3-c2ff-8b3e-d181-e0cc620bf91d@metux.net>
+ <20190415195911.z7b7miwsj67ha54y@yavin> <CALCETrWxMnaPvwicqkMLswMynWvJVteazD-bFv3ZnBKWp-1joQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190412025019.GA27997@hao-dev>
+In-Reply-To: <CALCETrWxMnaPvwicqkMLswMynWvJVteazD-bFv3ZnBKWp-1joQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Wu Hao <hao.wu@intel.com>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Luwei Kang <luwei.kang@intel.com>, Xu Yilun <yilun.xu@intel.com>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Aleksa Sarai <cyphar@cyphar.com>, "Enrico Weigelt, metux IT consult" <lkml@metux.net>, Christian Brauner <christian@brauner.io>, Linus Torvalds <torvalds@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Jann Horn <jannh@google.com>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Joel Fernandes <joel@joelfernandes.org>, Daniel Colascione <dancol@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 11, 2019 at 10:06 PM Wu Hao <hao.wu@intel.com> wrote:
+On Mon, Apr 15, 2019 at 9:34 PM Andy Lutomirski <luto@kernel.org> wrote:
 >
-> On Thu, Apr 11, 2019 at 03:07:35PM -0500, Alan Tull wrote:
-> > On Sun, Mar 24, 2019 at 10:24 PM Wu Hao <hao.wu@intel.com> wrote:
+> On Mon, Apr 15, 2019 at 12:59 PM Aleksa Sarai <cyphar@cyphar.com> wrote:
 > >
-> > Hi Hao,
-> >
+> > On 2019-04-15, Enrico Weigelt, metux IT consult <lkml@metux.net> wrote:
+> > > > This patchset makes it possible to retrieve pid file descriptors at
+> > > > process creation time by introducing the new flag CLONE_PIDFD to the
+> > > > clone() system call as previously discussed.
 > > >
-> > > This patch adds support for power management private feature under
-> > > FPGA Management Engine (FME), sysfs interfaces are introduced for
-> > > different power management functions, users could use these sysfs
-> > > interface to get current number of consumed power, throttling
-> >
-> > How about
-> > s/number/measurement/
-> > ?
->
-> Sounds better. : )
->
-> >
-> > > thresholds, threshold status and other information, and configure
-> > > different value for throttling thresholds too.
+> > > Sorry, for highjacking this thread, but I'm curious on what things to
+> > > consider when introducing new CLONE_* flags.
 > > >
-> > > Signed-off-by: Luwei Kang <luwei.kang@intel.com>
-> > > Signed-off-by: Xu Yilun <yilun.xu@intel.com>
-> > > Signed-off-by: Wu Hao <hao.wu@intel.com>
-> > > ---
-> > >  Documentation/ABI/testing/sysfs-platform-dfl-fme |  56 +++++
-> > >  drivers/fpga/dfl-fme-main.c                      | 257 +++++++++++++++++++++++
-> > >  2 files changed, 313 insertions(+)
+> > > The reason I'm asking is:
 > > >
-> > > diff --git a/Documentation/ABI/testing/sysfs-platform-dfl-fme b/Documentation/ABI/testing/sysfs-platform-dfl-fme
-> > > index d3aeb88..4b6448f 100644
-> > > --- a/Documentation/ABI/testing/sysfs-platform-dfl-fme
-> > > +++ b/Documentation/ABI/testing/sysfs-platform-dfl-fme
-> > > @@ -100,3 +100,59 @@ Description:       Read-only. Read this file to get the policy of temperature
-> > >                 threshold1. It only supports two value (policy):
-> > >                     0 - AP2 state (90% throttling)
-> > >                     1 - AP1 state (50% throttling)
-> > > +
-> > > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/consumed
-> > > +Date:          March 2019
-> > > +KernelVersion:  5.2
-> > > +Contact:       Wu Hao <hao.wu@intel.com>
-> > > +Description:   Read-only. It returns current power consumed by FPGA.
+> > > I'm working on implementing plan9-like fs namespaces, where unprivileged
+> > > processes can change their own namespace at will. For that, certain
+> > > traditional unix'ish things have to be disabled, most notably suid.
+> > > As forbidding suid can be helpful in other scenarios, too, I thought
+> > > about making this its own feature. Doing that switch on clone() seems
+> > > a nice place for that, IMHO.
 > >
-> > What are the units?
+> > Just spit-balling -- is no_new_privs not sufficient for this usecase?
+> > Not granting privileges such as setuid during execve(2) is the main
+> > point of that flag.
 > >
-> > > +
-> > > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/threshold1
-> > > +Date:          March 2019
-> > > +KernelVersion:  5.2
-> > > +Contact:       Wu Hao <hao.wu@intel.com>
-> > > +Description:   Read-Write. Read/Write this file to get/set current power
-> > > +               threshold1 in Watts.
-> >
-> > Perhaps document error codes here and for threshold2 below.
-> >
-> > > +
-> > > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/threshold2
-> > > +Date:          March 2019
-> > > +KernelVersion:  5.2
-> > > +Contact:       Wu Hao <hao.wu@intel.com>
-> > > +Description:   Read-Write. Read/Write this file to get/set current power
-> > > +               threshold2 in Watts.
-> > > +
-> > > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/threshold1_status
-> > > +Date:          March 2019
-> > > +KernelVersion:  5.2
-> > > +Contact:       Wu Hao <hao.wu@intel.com>
-> > > +Description:   Read-only. It returns 1 if power consumption reaches the
-> > > +               threshold1, otherwise 0.
-> >
-> > I'm used to things like this requiring user to reset the status, so it
-> > may be worth making it explicit that it will return to zero if
-> > consumption drops below threshold if that's what's happening here.
-> > If it's correct, perhaps could just say something like 'returns 1 if
-> > power consumption is currently at or above threshold1, otherwise 0'
-> >
-> > > +
-> > > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/threshold2_status
-> > > +Date:          March 2019
-> > > +KernelVersion:  5.2
-> > > +Contact:       Wu Hao <hao.wu@intel.com>
-> > > +Description:   Read-only. It returns 1 if power consumption reaches the
-> > > +               threshold2, otherwise 0.
-> >
-> > Same here.
 >
-> Sure, will fix all above comments in this sysfs doc.
->
-> >
-> > > +
-> > > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/ltr
-> > > +Date:          March 2019
-> > > +KernelVersion:  5.2
-> > > +Contact:       Wu Hao <hao.wu@intel.com>
-> > > +Description:   Read-only. Read this file to get current Latency Tolerance
-> > > +               Reporting (ltr) value, it's only valid for integrated
-> > > +               solution as it blocks CPU on low power state.
-> >
-> > If we're not on the integrated solution, it returns a value but it is
-> > not really real?
->
-> Currently only integrated solution is implementing this private feature, other
-> devices e.g. Intel PAC card is not using this private feature, so user will
-> not see these sysfs interfaces at all.
+> I would personally *love* it if distros started setting no_new_privs
+> for basically all processes.  And pidfd actually gets us part of the
+> way toward a straightforward way to make sudo and su still work in a
+> no_new_privs world: su could call into a daemon that would spawn the
+> privileged task, and su would get a (read-only!) pidfd back and then
+> wait for the fd and exit.  I suppose that, done naively, this might
+> cause some odd effects with respect to tty handling, but I bet it's
+> solveable.  I suppose it would be nifty if there were a way for a
 
-OK then perhaps the "it's only valid for integrated solution as it
-blocks CPU on low power state" explanation doesn't need to be here and
-can lead to confusion.
+Hmm, isn't what you're describing roughly what systemd-run -t does? It
+will serialize the argument list, ask PID 1 to create a transient unit
+(go through the polkit stuff), and then set the stdout/stderr and
+stdin of the service to your tty, make it the controlling terminal of
+the process and
+reset it. So I guess it should work with sudo/su just fine too.
+
+There is also s6-sudod (and a s6-sudoc client to it) that works in a
+similar fashion, though it's a lot less fancy.
+
+> process, by mutual agreement, to reparent itself to an unrelated
+> process.
+>
+> Anyway, clone(2) is an enormous mess.  Surely the right solution here
+> is to have a whole new process creation API that takes a big,
+> extensible struct as an argument, and supports *at least* the full
+> abilities of posix_spawn() and ideally covers all the use cases for
+> fork() + do stuff + exec().  It would be nifty if this API also had a
+> way to say "add no_new_privs and therefore enable extra functionality
+> that doesn't work without no_new_privs".  This functionality would
+> include things like returning a future extra-privileged pidfd that
+> gives ptrace-like access.
+
+My idea was that this intent could be supplied at clone time, you
+could attach ptrace access modes to a pidfd (we could make those a bit
+granular, perhaps) and any API that takes PIDs and checks against the
+caller's ptrace access mode could instead derive so from the pidfd.
+Since killing is a bit convoluted due to setuid binaries, that should
+work if one is CAP_KILL capable in the owning userns of the task, and
+if not that, has permissions to kill and the target has NNP set. This
+would allow you to bind kill privileges in a way that is compatible
+with both worlds, the upshot being NNP allows for the functionality to
+be available to a lot more of userspace. Ofcourse, this would require
+a new clone version, possibly with taking a clone2 struct which sets a
+few parameters for the process and the flags for the pidfd.
+
+Another point is that you have a pidfd_open (or something else) that
+can create multiple pidfds from a pidfd obtained at clone time and
+create pidfds with varying level of rights. It can also work by taking
+a TID to open a pidfd for an external task (and then for all the
+rights you wish to acquire on it, check against your ambient
+authority).
+
+(Actually, in general, having FMODE_* style bits spanning all methods
+a file descriptor can take (through system calls), with the type of
+object as key (class containing a set), and be able to enable/disable
+them and seal them would be a useful addition, this all happening at
+the struct file level instead of inode level sealing in memfds).
 
 >
-> If in the future, other devices want
+> As basic examples, the improved process creation API should take a
+> list of dup2() operations to perform, fds to remove the O_CLOEXEC flag
+> from, fds to close (or, maybe even better, a list of fds to *not*
+> close), a list of rlimit changes to make, a list of signal changes to
+> make, the ability to set sid, pgrp, uid, gid (as in
+> setresuid/setresgid), the ability to do capset() operations, etc.  The
+> posix_spawn() API, for all that it's rather complicated, covers a
+> bunch of the basics pretty well.
 >
-> >
-> > > +
-> > > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/xeon_limit
-> > > +Date:          March 2019
-> > > +KernelVersion:  5.2
-> > > +Contact:       Wu Hao <hao.wu@intel.com>
-> > > +Description:   Read-only. Read this file to get power limit for xeon, it
-> > > +               is only valid for integrated solution.
-> > > +
-> > > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/fpga_limit
-> > > +Date:          March 2019
-> > > +KernelVersion:  5.2
-> > > +Contact:       Wu Hao <hao.wu@intel.com>
-> > > +Description:   Read-only. Read this file to get power limit for fpga, it
-> > > +               is only valid for integrated solution.
-> > > diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-main.c
-> > > index 449a17d..dafa6580 100644
-> > > --- a/drivers/fpga/dfl-fme-main.c
-> > > +++ b/drivers/fpga/dfl-fme-main.c
-> > > @@ -415,6 +415,259 @@ static const struct dfl_feature_ops fme_thermal_mgmt_ops = {
-> > >         .uinit = fme_thermal_mgmt_uinit,
-> > >  };
-> > >
-> > > +#define FME_PWR_STATUS         0x8
-> > > +#define FME_LATENCY_TOLERANCE  BIT_ULL(18)
-> > > +#define PWR_CONSUMED           GENMASK_ULL(17, 0)
-> > > +
-> > > +#define FME_PWR_THRESHOLD      0x10
-> > > +#define PWR_THRESHOLD1         GENMASK_ULL(6, 0)       /* in Watts */
-> > > +#define PWR_THRESHOLD2         GENMASK_ULL(14, 8)      /* in Watts */
-> > > +#define PWR_THRESHOLD_MAX      0x7f
-> > > +#define PWR_THRESHOLD1_STATUS  BIT_ULL(16)
-> > > +#define PWR_THRESHOLD2_STATUS  BIT_ULL(17)
-> > > +
-> > > +#define FME_PWR_XEON_LIMIT     0x18
-> > > +#define XEON_PWR_LIMIT         GENMASK_ULL(14, 0)
-> > > +#define XEON_PWR_EN            BIT_ULL(15)
-> > > +#define FME_PWR_FPGA_LIMIT     0x20
-> > > +#define FPGA_PWR_LIMIT         GENMASK_ULL(14, 0)
-> > > +#define FPGA_PWR_EN            BIT_ULL(15)
-> > > +
-> > > +#define POWER_ATTR(_name, _mode, _show, _store)        \
-> > > +struct device_attribute power_attr_##_name =           \
-> > > +       __ATTR(_name, _mode, _show, _store)
-> > > +
-> > > +#define POWER_ATTR_RO(_name, _show)                    \
-> > > +       POWER_ATTR(_name, 0444, _show, NULL)
-> > > +
-> > > +#define POWER_ATTR_RW(_name, _show, _store)            \
-> > > +       POWER_ATTR(_name, 0644, _show, _store)
-> >
-> > Are these #defines necessary?  Seems like you could just use DEVICE_ATTR*
->
-> Actually it adds a prefix power_attr_xxx there to avoid name conflicts with
-> other ones from different private features, e.g. for the thermal threshold.
+> Sharing the parent's VM, signal set, fd table, etc, should all be
+> options, but they should default to *off*.
 
-Ah yes, I see it now, thanks.
+Historical note: Plan 9's rfork has RFC* flags for resources like
+namespace/env/fd table, which means supplying those means you start
+with an clean/empty view of that resource.
+
 
 >
-> >
-> > > +
-> > > +static ssize_t pwr_consumed_show(struct device *dev,
-> > > +                                struct device_attribute *attr, char *buf)
-> > > +{
-> > > +       void __iomem *base;
-> > > +       u64 v;
-> > > +
-> > > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
-> > > +
-> > > +       v = readq(base + FME_PWR_STATUS);
-> > > +
-> > > +       return scnprintf(buf, PAGE_SIZE, "%u\n",
-> > > +                        (unsigned int)FIELD_GET(PWR_CONSUMED, v));
-> > > +}
-> > > +static POWER_ATTR_RO(consumed, pwr_consumed_show);
-> > > +
-> > > +static ssize_t pwr_threshold1_show(struct device *dev,
-> > > +                                  struct device_attribute *attr, char *buf)
-> > > +{
-> > > +       void __iomem *base;
-> > > +       u64 v;
-> > > +
-> > > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
-> > > +
-> > > +       v = readq(base + FME_PWR_THRESHOLD);
-> > > +
-> > > +       return scnprintf(buf, PAGE_SIZE, "%u\n",
-> > > +                        (unsigned int)FIELD_GET(PWR_THRESHOLD1, v));
-> > > +}
-> > > +
-> > > +static ssize_t pwr_threshold1_store(struct device *dev,
-> > > +                                   struct device_attribute *attr,
-> > > +                                   const char *buf, size_t count)
-> > > +{
-> > > +       struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
-> > > +       void __iomem *base;
-> > > +       u8 threshold;
-> > > +       int ret;
-> > > +       u64 v;
-> > > +
-> > > +       ret = kstrtou8(buf, 0, &threshold);
-> > > +       if (ret)
-> > > +               return ret;
-> > > +
-> > > +       if (threshold > PWR_THRESHOLD_MAX)
-> > > +               return -EINVAL;
-> > > +
-> > > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
-> > > +
-> > > +       mutex_lock(&pdata->lock);
-> > > +       v = readq(base + FME_PWR_THRESHOLD);
-> > > +       v &= ~PWR_THRESHOLD1;
-> > > +       v |= FIELD_PREP(PWR_THRESHOLD1, threshold);
-> > > +       writeq(v, base + FME_PWR_THRESHOLD);
-> > > +       mutex_unlock(&pdata->lock);
-> > > +
-> > > +       return count;
-> > > +}
-> > > +static POWER_ATTR_RW(threshold1, pwr_threshold1_show, pwr_threshold1_store);
-> > > +
-> > > +static ssize_t pwr_threshold2_show(struct device *dev,
-> > > +                                  struct device_attribute *attr, char *buf)
-> > > +{
-> > > +       void __iomem *base;
-> > > +       u64 v;
-> > > +
-> > > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
-> > > +
-> > > +       v = readq(base + FME_PWR_THRESHOLD);
-> > > +
-> > > +       return scnprintf(buf, PAGE_SIZE, "%u\n",
-> > > +                        (unsigned int)FIELD_GET(PWR_THRESHOLD2, v));
-> > > +}
-> > > +
-> > > +static ssize_t pwr_threshold2_store(struct device *dev,
-> > > +                                   struct device_attribute *attr,
-> > > +                                   const char *buf, size_t count)
-> > > +{
-> > > +       struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
-> > > +       void __iomem *base;
-> > > +       u8 threshold;
-> > > +       int ret;
-> > > +       u64 v;
-> > > +
-> > > +       ret = kstrtou8(buf, 0, &threshold);
-> > > +       if (ret)
-> > > +               return ret;
-> > > +
-> > > +       if (threshold > PWR_THRESHOLD_MAX)
-> > > +               return -EINVAL;
-> > > +
-> > > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
-> > > +
-> > > +       mutex_lock(&pdata->lock);
-> > > +       v = readq(base + FME_PWR_THRESHOLD);
-> > > +       v &= ~PWR_THRESHOLD2;
-> > > +       v |= FIELD_PREP(PWR_THRESHOLD2, threshold);
-> > > +       writeq(v, base + FME_PWR_THRESHOLD);
-> > > +       mutex_unlock(&pdata->lock);
-> > > +
-> > > +       return count;
-> > > +}
-> > > +static POWER_ATTR_RW(threshold2, pwr_threshold2_show, pwr_threshold2_store);
-> > > +
-> > > +static ssize_t pwr_threshold1_status_show(struct device *dev,
-> > > +                                         struct device_attribute *attr,
-> > > +                                         char *buf)
-> > > +{
-> > > +       void __iomem *base;
-> > > +       u64 v;
-> > > +
-> > > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
-> > > +
-> > > +       v = readq(base + FME_PWR_THRESHOLD);
-> > > +
-> > > +       return scnprintf(buf, PAGE_SIZE, "%u\n",
-> > > +                        (unsigned int)FIELD_GET(PWR_THRESHOLD1_STATUS, v));
-> > > +}
-> > > +static POWER_ATTR_RO(threshold1_status, pwr_threshold1_status_show);
-> > > +
-> > > +static ssize_t pwr_threshold2_status_show(struct device *dev,
-> > > +                                         struct device_attribute *attr,
-> > > +                                         char *buf)
-> > > +{
-> > > +       void __iomem *base;
-> > > +       u64 v;
-> > > +
-> > > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
-> > > +
-> > > +       v = readq(base + FME_PWR_THRESHOLD);
-> > > +
-> > > +       return scnprintf(buf, PAGE_SIZE, "%u\n",
-> > > +                        (unsigned int)FIELD_GET(PWR_THRESHOLD2_STATUS, v));
-> > > +}
-> > > +static POWER_ATTR_RO(threshold2_status, pwr_threshold2_status_show);
-> > > +
-> > > +static ssize_t ltr_show(struct device *dev,
-> > > +                       struct device_attribute *attr, char *buf)
-> > > +{
-> > > +       void __iomem *base;
-> > > +       u64 v;
-> > > +
-> > > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
-> > > +
-> > > +       v = readq(base + FME_PWR_STATUS);
-> > > +
-> > > +       return scnprintf(buf, PAGE_SIZE, "%u\n",
-> > > +                        (unsigned int)FIELD_GET(FME_LATENCY_TOLERANCE, v));
-> > > +}
-> > > +static POWER_ATTR_RO(ltr, ltr_show);
-> > > +
-> > > +static ssize_t xeon_limit_show(struct device *dev,
-> > > +                              struct device_attribute *attr, char *buf)
-> > > +{
-> > > +       void __iomem *base;
-> > > +       u16 xeon_limit = 0;
-> > > +       u64 v;
-> > > +
-> > > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
-> > > +
-> > > +       v = readq(base + FME_PWR_XEON_LIMIT);
-> > > +
-> > > +       if (FIELD_GET(XEON_PWR_EN, v))
-> > > +               xeon_limit = FIELD_GET(XEON_PWR_LIMIT, v);
-> > > +
-> > > +       return scnprintf(buf, PAGE_SIZE, "%u\n", xeon_limit);
-> > > +}
-> > > +static POWER_ATTR_RO(xeon_limit, xeon_limit_show);
-> > > +
-> > > +static ssize_t fpga_limit_show(struct device *dev,
-> > > +                              struct device_attribute *attr, char *buf)
-> > > +{
-> > > +       void __iomem *base;
-> > > +       u16 fpga_limit = 0;
-> > > +       u64 v;
-> > > +
-> > > +       base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_POWER_MGMT);
-> > > +
-> > > +       v = readq(base + FME_PWR_FPGA_LIMIT);
-> > > +
-> > > +       if (FIELD_GET(FPGA_PWR_EN, v))
-> > > +               fpga_limit = FIELD_GET(FPGA_PWR_LIMIT, v);
-> > > +
-> > > +       return scnprintf(buf, PAGE_SIZE, "%u\n", fpga_limit);
-> > > +}
-> > > +static POWER_ATTR_RO(fpga_limit, fpga_limit_show);
-> > > +
-> > > +static struct attribute *power_mgmt_attrs[] = {
-> > > +       &power_attr_consumed.attr,
-> > > +       &power_attr_threshold1.attr,
-> > > +       &power_attr_threshold2.attr,
-> > > +       &power_attr_threshold1_status.attr,
-> > > +       &power_attr_threshold2_status.attr,
-> > > +       &power_attr_xeon_limit.attr,
-> > > +       &power_attr_fpga_limit.attr,
-> > > +       &power_attr_ltr.attr,
-> >
-> > This is a nit, but I would expect to see these listed in the same
-> > order as their show/store functions above.  So ltr_attr would come
-> > between threshold2_status_attr and xeon_limit_attr.
+> (Many other operating systems allow one to create a process and gain a
+> capability to do all kinds of things to that process.  It's a
+> generally good idea.)
 >
-> Sure, it does make sense.
->
-> >
-> > > +       NULL,
-> > > +};
-> > > +
-> > > +static struct attribute_group power_mgmt_attr_group = {
-> > > +       .attrs  = power_mgmt_attrs,
-> > > +       .name   = "power_mgmt",
-> > > +};
-> > > +
-> > > +static int fme_power_mgmt_init(struct platform_device *pdev,
-> > > +                              struct dfl_feature *feature)
-> > > +{
-> > > +       return sysfs_create_group(&pdev->dev.kobj, &power_mgmt_attr_group);
-> > > +}
-> > > +
-> > > +static void fme_power_mgmt_uinit(struct platform_device *pdev,
-> > > +                                struct dfl_feature *feature)
-> > > +{
-> > > +       sysfs_remove_group(&pdev->dev.kobj, &power_mgmt_attr_group);
-> > > +}
-> > > +
-> > > +static const struct dfl_feature_id fme_power_mgmt_id_table[] = {
-> > > +       {.id = FME_FEATURE_ID_POWER_MGMT,},
-> > > +       {0,}
-> > > +};
-> > > +
-> > > +static const struct dfl_feature_ops fme_power_mgmt_ops = {
-> > > +       .init = fme_power_mgmt_init,
-> > > +       .uinit = fme_power_mgmt_uinit,
-> > > +};
-> > > +
-> > >  static struct dfl_feature_driver fme_feature_drvs[] = {
-> > >         {
-> > >                 .id_table = fme_hdr_id_table,
-> > > @@ -429,6 +682,10 @@ static struct dfl_feature_driver fme_feature_drvs[] = {
-> > >                 .ops = &fme_thermal_mgmt_ops,
-> > >         },
-> > >         {
-> > > +               .id_table = fme_power_mgmt_id_table,
-> > > +               .ops = &fme_power_mgmt_ops,
-> > > +       },
-> > > +       {
-> > >                 .ops = NULL,
-> > >         },
-> > >  };
-> > > --
-> > > 2.7.4
-> > >
->
-> Thanks a lot for the review and comments. :)
->
-> Hao
->
-> >
-> > Thanks,
-> > Alan
+> --Andy
