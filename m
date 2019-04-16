@@ -1,31 +1,68 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [RFC PATCH v1 1/5] fs: Add support for an O_MAYEXEC flag on sys_open()
-Date: Tue, 16 Apr 2019 13:49:39 +0200
-Message-ID: <87wojuxj8s.fsf@oldenburg2.str.redhat.com>
-References: <20181212081712.32347-1-mic@digikod.net>
-        <20181212081712.32347-2-mic@digikod.net>
-        <20181212144306.GA19945@quack2.suse.cz> <3452959.b6JmBh7Lnt@x2>
+From: Adhemerval Zanella <adhemerval.zanella@linaro.org>
+Subject: Re: [PATCH] Linux: Define struct termios2 in <termios.h> under
+ _GNU_SOURCE [BZ #10339]
+Date: Tue, 16 Apr 2019 09:11:05 -0300
+Message-ID: <6ffef0ec-d479-e61d-079e-2b0882142afd@linaro.org>
+References: <875zrnlakd.fsf@oldenburg2.str.redhat.com>
+ <284e9c76-2411-b8f4-c4bc-c25c60c04cf7@linaro.org>
+ <87imvker6t.fsf@oldenburg2.str.redhat.com>
+ <db468a0f-4a7b-d251-601f-428885275d08@linaro.org>
+ <87lg0fbr1q.fsf@oldenburg2.str.redhat.com>
+ <A278227C-039B-49F4-B80D-650B785AE225@zytor.com>
+ <87lg0az2xk.fsf@oldenburg2.str.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <3452959.b6JmBh7Lnt@x2> (Steve Grubb's message of "Mon, 15 Apr
-        2019 14:47:49 -0400")
-Sender: linux-kernel-owner@vger.kernel.org
-To: Steve Grubb <sgrubb@redhat.com>
-Cc: Jan Kara <jack@suse.cz>, =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mic@digikod.net>, linux-kernel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, James Morris <jmorris@namei.org>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mickael.salaun@ssi.gouv.fr>, Mimi Zohar <zohar@linux.ibm.com>, Philippe =?utf-8?Q?Tr=C3=A9buchet?= <philippe.trebuchet@ssi.gouv.fr>, Shuah Khan <shuah@kernel.org>, Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>, Vincent Strubel <vincent.strubel@ssi.gouv.fr>, Yves-Alexis Perez <yves-alexis.perez@ssi.gouv.fr>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vge
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <libc-alpha-return-101425-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+In-Reply-To: <87lg0az2xk.fsf@oldenburg2.str.redhat.com>
+To: Florian Weimer <fweimer@redhat.com>, hpa@zytor.com
+Cc: libc-alpha@sourceware.org, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org
 List-Id: linux-api@vger.kernel.org
 
-* Steve Grubb:
 
-> This flag that is being proposed means that you would have to patch all 
-> interpreters to use it. If you are sure that upstreams will accept that, why 
-> not just change the policy to interpreters shouldn't execute anything unless 
-> the execute bit is set? That is simpler and doesn't need a kernel change. And 
-> setting the execute bit is an auditable event.
 
-I think we need something like O_MAYEXEC so that security policies can
-be enforced and noexec mounts can be detected.  I don't think it's a
-good idea to do this in userspace, especially the latter.
+On 16/04/2019 06:59, Florian Weimer wrote:
+> * hpa:
+> 
+>> Using symbol versioning doesn't really help much since the real
+>> problem is that struct termios can be passed around in userspace, and
+>> the interfaces between user space libraries don't have any
+>> versioning. However, my POC code deals with that too by only seeing
+>> BOTHER when necessary, so if the structure is extended garbage in the
+>> extra fields will be ignored unless new baud rates are in use.
+> 
+> That still doesn't solve the problem of changing struct offsets after a
+> struct field of type struct termios.
 
-Thanks,
-Florian
+We will need symbol versioning at least on sparc, since currently it 
+defines NCSS 17 and termios-c_cc.h defines 16 control characters (there 
+is no space to squeeze more fields one termios).  ANd The WIP branch
+gratuitously change the termios struct size on the architecture.  
+
+I am not sure which would be the best option to avoid the the user space 
+libraries compatibility issue. It is unlikely to happen, it would require
+one to use old libraries along with newer libraries build against a newer
+glibc.  Not sure how often this scenarios arises in realworld (specially
+on sparc).
+
+I think MIPS would be fine to lower NCSS to 24, as WIP branch does.  And
+alpha is also fine since it already provides the c_* fields.
+
+> 
+>> Exporting termios2 to user space feels a bit odd at this stage as it
+>> would only be usable as a fallback on old glibc. Call it
+>> kernel_termios2 at least.
+> 
+> I'm not sure why we should do that?  The kernel calls it struct termios2
+> in its UAPI headers.  If that name is not appropriate, it should be
+> changed first in the UAPI headers.
+> 
+> Thanks,
+> Florian
+> 
