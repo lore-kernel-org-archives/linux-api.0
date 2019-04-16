@@ -1,127 +1,43 @@
-From: Will Deacon <will.deacon@arm.com>
-Subject: Re: [PATCH v5 1/6] arm64: HWCAP: add support for AT_HWCAP2
-Date: Tue, 16 Apr 2019 14:51:57 +0100
-Message-ID: <20190416135157.GH3313@fuggles.cambridge.arm.com>
-References: <20190409095245.42524-1-andrew.murray@arm.com>
- <20190409095245.42524-2-andrew.murray@arm.com>
+From: Steve Grubb <sgrubb@redhat.com>
+Subject: Re: [RFC PATCH v1 1/5] fs: Add support for an O_MAYEXEC flag on sys_open()
+Date: Tue, 16 Apr 2019 11:34:07 -0400
+Message-ID: <2361288.r9sZr2NHLB@x2>
+References: <20181212081712.32347-1-mic@digikod.net> <3452959.b6JmBh7Lnt@x2> <87wojuxj8s.fsf@oldenburg2.str.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <libc-alpha-return-101429-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-Content-Disposition: inline
-In-Reply-To: <20190409095245.42524-2-andrew.murray@arm.com>
-To: Andrew Murray <andrew.murray@arm.com>
-Cc: Catalin Marinas <catalin.marinas@arm.com>, Szabolcs Nagy <Szabolcs.Nagy@arm.com>, dave.martin@arm.com, linux-arm-kernel@lists.infradead.org, Mark Rutland <mark.rutland@arm.com>, Phil Blundell <pb@pbcl.net>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, Suzuki K Poulose <suzuki.poulose@arm.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <87wojuxj8s.fsf@oldenburg2.str.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Florian Weimer <fweimer@redhat.com>
+Cc: Jan Kara <jack@suse.cz>, =?ISO-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>, linux-kernel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, James Morris <jmorris@namei.org>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, =?ISO-8859-1?Q?Micka=EBl_Sala=FCn?= <mickael.salaun@ssi.gouv.fr>, Mimi Zohar <zohar@linux.ibm.com>, Philippe =?ISO-8859-1?Q?Tr=E9buchet?= <philippe.trebuchet@ssi.gouv.fr>, Shuah Khan <shuah@kernel.org>, Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>, Vincent Strubel <vincent.strubel@ssi.gouv.fr>, Yves-Alexis Perez <yves-alexis.perez@ssi.gouv.fr>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vge
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 09, 2019 at 10:52:40AM +0100, Andrew Murray wrote:
-> As we will exhaust the first 32 bits of AT_HWCAP let's start
-> exposing AT_HWCAP2 to userspace to give us up to 64 caps.
+On Tuesday, April 16, 2019 7:49:39 AM EDT Florian Weimer wrote:
+> * Steve Grubb:
+> > This flag that is being proposed means that you would have to patch all
+> > interpreters to use it. If you are sure that upstreams will accept that,
+> > why not just change the policy to interpreters shouldn't execute
+> > anything unless the execute bit is set? That is simpler and doesn't need
+> > a kernel change. And setting the execute bit is an auditable event.
 > 
-> Whilst it's possible to use the remaining 32 bits of AT_HWCAP, we
-> prefer to expand into AT_HWCAP2 in order to provide a consistent
-> view to userspace between ILP32 and LP64. However internal to the
-> kernel we prefer to continue to use the full space of elf_hwcap.
-> 
-> To reduce complexity and allow for future expansion, we now
-> represent hwcaps in the kernel as ordinals and use a
-> KERNEL_HWCAP_ prefix. This allows us to support automatic feature
-> based module loading for all our hwcaps.
-> 
-> We introduce cpu_set_feature to set hwcaps which complements the
-> existing cpu_have_feature helper. These helpers allow us to clean
-> up existing direct uses of elf_hwcap and reduce any future effort
-> required to move beyond 64 caps.
-> 
-> For convenience we also introduce cpu_{have,set}_named_feature which
-> makes use of the cpu_feature macro to allow providing a hwcap name
-> without a {KERNEL_}HWCAP_ prefix.
-> 
-> Signed-off-by: Andrew Murray <andrew.murray@arm.com>
-> ---
->  Documentation/arm64/elf_hwcaps.txt       | 14 +++--
->  arch/arm64/crypto/aes-ce-ccm-glue.c      |  2 +-
->  arch/arm64/crypto/aes-neonbs-glue.c      |  2 +-
->  arch/arm64/crypto/chacha-neon-glue.c     |  2 +-
->  arch/arm64/crypto/crct10dif-ce-glue.c    |  4 +-
->  arch/arm64/crypto/ghash-ce-glue.c        |  8 +--
->  arch/arm64/crypto/nhpoly1305-neon-glue.c |  2 +-
->  arch/arm64/crypto/sha256-glue.c          |  4 +-
->  arch/arm64/include/asm/cpufeature.h      | 22 ++++----
->  arch/arm64/include/asm/hwcap.h           | 52 ++++++++++++++++++-
->  arch/arm64/include/uapi/asm/hwcap.h      |  2 +-
->  arch/arm64/kernel/cpufeature.c           | 66 ++++++++++++------------
->  arch/arm64/kernel/cpuinfo.c              |  2 +-
->  arch/arm64/kernel/fpsimd.c               |  4 +-
->  drivers/clocksource/arm_arch_timer.c     |  8 +++
->  15 files changed, 131 insertions(+), 63 deletions(-)
-> 
-> diff --git a/Documentation/arm64/elf_hwcaps.txt b/Documentation/arm64/elf_hwcaps.txt
-> index 13d6691b37be..c04f8e87bab8 100644
-> --- a/Documentation/arm64/elf_hwcaps.txt
-> +++ b/Documentation/arm64/elf_hwcaps.txt
-> @@ -13,9 +13,9 @@ architected discovery mechanism available to userspace code at EL0. The
->  kernel exposes the presence of these features to userspace through a set
->  of flags called hwcaps, exposed in the auxilliary vector.
->  
-> -Userspace software can test for features by acquiring the AT_HWCAP entry
-> -of the auxilliary vector, and testing whether the relevant flags are
-> -set, e.g.
-> +Userspace software can test for features by acquiring the AT_HWCAP or
-> +AT_HWCAP2 entry of the auxiliary vector, and testing whether the relevant
-> +flags are set, e.g.
->  
->  bool floating_point_is_present(void)
->  {
-> @@ -194,3 +194,11 @@ HWCAP_PACG
->      Functionality implied by ID_AA64ISAR1_EL1.GPA == 0b0001 or
->      ID_AA64ISAR1_EL1.GPI == 0b0001, as described by
->      Documentation/arm64/pointer-authentication.txt.
-> +
-> +
-> +4. Unused AT_HWCAP bits
-> +-----------------------
-> +
-> +Each AT_HWCAP and AT_HWCAP2 entry provides for up to 32 hwcaps contained
-> +in bits [31:0]. For interoperation with userspace we guarantee that bits
-> +62 and 63 of AT_HWCAP will always be returned as 0.
+> I think we need something like O_MAYEXEC so that security policies can
+> be enforced and noexec mounts can be detected.
 
-I'm a little nervous about the first sentence here, since it could be
-taken to mean that we will never allocate 61:32. Mind if I drop it?
+Application whitelisting can already today stop unknown software without 
+needing O_MAYEXEC.
 
-> diff --git a/drivers/clocksource/arm_arch_timer.c b/drivers/clocksource/arm_arch_timer.c
-> index aa4ec53281ce..6cc8aff83805 100644
-> --- a/drivers/clocksource/arm_arch_timer.c
-> +++ b/drivers/clocksource/arm_arch_timer.c
-> @@ -833,7 +833,11 @@ static void arch_timer_evtstrm_enable(int divider)
->  	cntkctl |= (divider << ARCH_TIMER_EVT_TRIGGER_SHIFT)
->  			| ARCH_TIMER_VIRT_EVT_EN;
->  	arch_timer_set_cntkctl(cntkctl);
-> +#ifdef CONFIG_ARM64
-> +	cpu_set_named_feature(EVTSTRM);
-> +#else
->  	elf_hwcap |= HWCAP_EVTSTRM;
-> +#endif
->  #ifdef CONFIG_COMPAT
->  	compat_elf_hwcap |= COMPAT_HWCAP_EVTSTRM;
->  #endif
-> @@ -1055,7 +1059,11 @@ static int arch_timer_cpu_pm_notify(struct notifier_block *self,
->  	} else if (action == CPU_PM_ENTER_FAILED || action == CPU_PM_EXIT) {
->  		arch_timer_set_cntkctl(__this_cpu_read(saved_cntkctl));
->  
-> +#ifdef CONFIG_ARM64
-> +		if (cpu_have_named_feature(EVTSTRM))
-> +#else
->  		if (elf_hwcap & HWCAP_EVTSTRM)
-> +#endif
+> I don't think it's a good idea to do this in userspace, especially the
+> latter.
 
-I think this is an indication that the abstraction isn't quite right and
-should probably be done in an arch-helped via asm/arch_timer.h. However,
-that can be done as a separate patch later on.
+The problem is that passing O_MAYEXEC is opt-in. You can use ptrace/seccomp/
+bpf/LD_PRELOAD/LD_AUDIT to remove that bit from an otherwise normal program. 
+This does not require privs to do so.
 
-Will
+But let's consider that this comes to pass and every interpreter is updated 
+and IMA can see the O_MAYEXEC flag. Attackers now simply pivot to running 
+programs via stdin. It never touches disk and therefore nothing enforces 
+security policy. This already is among the most common ways that malware runs 
+today to evade detection.
+
+-Steve
