@@ -1,60 +1,47 @@
-From: Andrew Donnellan <andrew.donnellan@au1.ibm.com>
-Subject: Re: [PATCH V32 01/27] Add the ability to lock down access to the
- running kernel image
-Date: Tue, 16 Apr 2019 18:40:08 +1000
-Message-ID: <059c523e-926c-24ee-0935-198031712145@au1.ibm.com>
-References: <20190404003249.14356-1-matthewgarrett@google.com>
- <20190404003249.14356-2-matthewgarrett@google.com>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: [PATCH] Linux: Define struct termios2 in <termios.h> under _GNU_SOURCE [BZ #10339]
+Date: Tue, 16 Apr 2019 11:59:03 +0200
+Message-ID: <87lg0az2xk.fsf@oldenburg2.str.redhat.com>
+References: <875zrnlakd.fsf@oldenburg2.str.redhat.com>
+	<284e9c76-2411-b8f4-c4bc-c25c60c04cf7@linaro.org>
+	<87imvker6t.fsf@oldenburg2.str.redhat.com>
+	<db468a0f-4a7b-d251-601f-428885275d08@linaro.org>
+	<87lg0fbr1q.fsf@oldenburg2.str.redhat.com>
+	<A278227C-039B-49F4-B80D-650B785AE225@zytor.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190404003249.14356-2-matthewgarrett@google.com>
-Content-Language: en-AU
-Sender: linux-kernel-owner@vger.kernel.org
-To: Matthew Garrett <matthewgarrett@google.com>, jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-api@vger.kernel.org, luto@kernel.org, linuxppc-dev <linuxppc-dev@lists.ozlabs.org>, Michael Ellerman <mpe@ellerman.id.au>, Daniel Axtens <dja@axtens.net>, cmr <cmr@informatik.wtf>
+Content-Type: text/plain
+Return-path: <libc-alpha-return-101424-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+In-Reply-To: <A278227C-039B-49F4-B80D-650B785AE225@zytor.com> (hpa's message
+	of "Mon, 15 Apr 2019 08:53:02 -0700")
+To: hpa@zytor.com
+Cc: Adhemerval Zanella <adhemerval.zanella@linaro.org>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org
 List-Id: linux-api@vger.kernel.org
 
-On 4/4/19 11:32 am, Matthew Garrett wrote:
-> diff --git a/Documentation/ABI/testing/lockdown b/Documentation/ABI/testing/lockdown
-> new file mode 100644
-> index 000000000000..5bd51e20917a
-> --- /dev/null
-> +++ b/Documentation/ABI/testing/lockdown
-> @@ -0,0 +1,19 @@
-> +What:		security/lockdown
-> +Date:		March 2019
-> +Contact:	Matthew Garrett <mjg59@google.com>
-> +Description:
-> +		If CONFIG_LOCK_DOWN_KERNEL is enabled, the kernel can be
-> +		moved to a more locked down state at runtime by writing to
-> +		this attribute. Valid values are:
-> +
-> +		integrity:
-> +			The kernel will disable functionality that allows
-> +			userland to modify the running kernel image, other
-> +			than through the loading or execution of appropriately
-> +			signed objects.
-> +
-> +		confidentiality:
-> +			The kernel will disable all functionality disabled by
-> +			the integrity mode, but additionally will disable
-> +			features that potentially permit userland to obtain
-> +			confidential information stored within the kernel.
+* hpa:
 
-[+ linuxppc, mpe, dja, cmr]
+> Using symbol versioning doesn't really help much since the real
+> problem is that struct termios can be passed around in userspace, and
+> the interfaces between user space libraries don't have any
+> versioning. However, my POC code deals with that too by only seeing
+> BOTHER when necessary, so if the structure is extended garbage in the
+> extra fields will be ignored unless new baud rates are in use.
 
-I'm thinking about whether we should lock down the powerpc xmon debug 
-monitor - intuitively, I think the answer is yes if for no other reason 
-than Least Astonishment, when lockdown is enabled you probably don't 
-expect xmon to keep letting you access kernel memory.
+That still doesn't solve the problem of changing struct offsets after a
+struct field of type struct termios.
 
-Semantically though, xmon is not a userspace process - it's in kernel 
-and reads debug commands/outputs debug data directly from/to the 
-console. Is that a threat vector that this series cares about?
+> Exporting termios2 to user space feels a bit odd at this stage as it
+> would only be usable as a fallback on old glibc. Call it
+> kernel_termios2 at least.
 
+I'm not sure why we should do that?  The kernel calls it struct termios2
+in its UAPI headers.  If that name is not appropriate, it should be
+changed first in the UAPI headers.
 
--- 
-Andrew Donnellan              OzLabs, ADL Canberra
-andrew.donnellan@au1.ibm.com  IBM Australia Limited
+Thanks,
+Florian
