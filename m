@@ -1,7 +1,7 @@
 From: Christian Brauner <christian@brauner.io>
-Subject: [PATCH v1 1/4] Make anon_inodes unconditional
-Date: Tue, 16 Apr 2019 19:02:30 +0200
-Message-ID: <20190416170233.10208-2-christian@brauner.io>
+Subject: [PATCH v1 2/4] clone: add CLONE_PIDFD
+Date: Tue, 16 Apr 2019 19:02:31 +0200
+Message-ID: <20190416170233.10208-3-christian@brauner.io>
 References: <20190416170233.10208-1-christian@brauner.io>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,311 +12,304 @@ To: torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, jannh@google.com, dh
 Cc: serge@hallyn.com, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, tglx@linutronix.de, mtk.manpages@gmail.com, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, joel@joelfernandes.org, dancol@google.com, Christian Brauner <christian@brauner.io>
 List-Id: linux-api@vger.kernel.org
 
-From: David Howells <dhowells@redhat.com>
+This patchset makes it possible to retrieve pid file descriptors at process
+creation time by introducing the new flag CLONE_PIDFD to the clone() system
+call. Linus originally suggested to implement this as a new flag to clone()
+instead of making it a separate system call. As spotted by Linus, there is
+exactly one bit for clone() left.
 
-Make the anon_inodes facility unconditional so that it can be used by core
-VFS code and pidfd code.
+CLONE_PIDFD creates file descriptors based on the anonymous inode
+implementation in the kernel that will also be used to implement the new
+mount api. They serve as a simple opaque handle on pids. Logically, this
+makes it possible to interpret a pidfd differently, narrowing or widening
+the scope of various operations (e.g. signal sending). Thus, a pidfd cannot
+just refer to a tgid, but also a tid, or in theory - given appropriate flag
+arguments in relevant syscalls - a process group or session. A pidfd does
+not represent a privilege. This does not imply it cannot ever be that way
+but for now this is not the case.
 
-Signed-off-by: David Howells <dhowells@redhat.com>
-Signed-off-by: Al Viro <viro@zeniv.linux.org.uk>
-[christian@brauner.io: adapt commit message to mention pidfds]
+A pidfd comes with additional information in fdinfo if the kernel supports
+procfs. The fdinfo file contains the pid of the process in the callers pid
+namespace in the same format as the procfs status file, i.e. "Pid:\t%d".
+
+As suggested by Oleg, with CLONE_PIDFD the pidfd is returned in the fourth
+argument of clone. This has the advantage that we can give back the
+associated pid and the pidfd at the same time.
+
+To remove worries about missing metadata access this patchset comes with a
+sample program that illustrates how a combination of CLONE_PIDFD, and
+pidfd_send_signal() can be used to gain race-free access to process
+metadata through /proc/<pid>. The sample program can easily be translated
+into a helper that would be suitable for inclusion in libc so that users
+don't have to worry about writing it themselves.
+
+Suggested-by: Linus Torvalds <torvalds@linux-foundation.org>
 Signed-off-by: Christian Brauner <christian@brauner.io>
+Signed-off-by: Jann Horn <jann@thejh.net>
+Cc: Arnd Bergmann <arnd@arndb.de>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: David Howells <dhowells@redhat.com>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: Andy Lutomirsky <luto@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Oleg Nesterov <oleg@redhat.com>
+Cc: Aleksa Sarai <cyphar@cyphar.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Al Viro <viro@zeniv.linux.org.uk>
 ---
 /* changelog */
-v1: patch unchanged
+v1:
+- Oleg Nesterov <oleg@redhat.com>:
+  - return pidfd in fourth argument of clone
+    This way we can return the pid and the pidfd at the same time to the
+    caller and can also start pid file descriptor numbering at 0 as is
+    customary for file descriptors.
+- Christian Brauner <christian@brauner.io>:
+  - update comments to reflect changes based on Oleg's idea
 ---
- arch/arm/kvm/Kconfig       |  1 -
- arch/arm64/kvm/Kconfig     |  1 -
- arch/mips/kvm/Kconfig      |  1 -
- arch/powerpc/kvm/Kconfig   |  1 -
- arch/s390/kvm/Kconfig      |  1 -
- arch/x86/Kconfig           |  1 -
- arch/x86/kvm/Kconfig       |  1 -
- drivers/base/Kconfig       |  1 -
- drivers/char/tpm/Kconfig   |  1 -
- drivers/dma-buf/Kconfig    |  1 -
- drivers/gpio/Kconfig       |  1 -
- drivers/iio/Kconfig        |  1 -
- drivers/infiniband/Kconfig |  1 -
- drivers/vfio/Kconfig       |  1 -
- fs/Makefile                |  2 +-
- fs/notify/fanotify/Kconfig |  1 -
- fs/notify/inotify/Kconfig  |  1 -
- init/Kconfig               | 10 ----------
- 18 files changed, 1 insertion(+), 27 deletions(-)
+ include/linux/pid.h        |   2 +
+ include/uapi/linux/sched.h |   1 +
+ kernel/fork.c              | 121 +++++++++++++++++++++++++++++++++++--
+ 3 files changed, 120 insertions(+), 4 deletions(-)
 
-diff --git a/arch/arm/kvm/Kconfig b/arch/arm/kvm/Kconfig
-index 3f5320f46de2..f591026347a5 100644
---- a/arch/arm/kvm/Kconfig
-+++ b/arch/arm/kvm/Kconfig
-@@ -22,7 +22,6 @@ config KVM
- 	bool "Kernel-based Virtual Machine (KVM) support"
- 	depends on MMU && OF
- 	select PREEMPT_NOTIFIERS
--	select ANON_INODES
- 	select ARM_GIC
- 	select ARM_GIC_V3
- 	select ARM_GIC_V3_ITS
-diff --git a/arch/arm64/kvm/Kconfig b/arch/arm64/kvm/Kconfig
-index a3f85624313e..a67121d419a2 100644
---- a/arch/arm64/kvm/Kconfig
-+++ b/arch/arm64/kvm/Kconfig
-@@ -23,7 +23,6 @@ config KVM
- 	depends on OF
- 	select MMU_NOTIFIER
- 	select PREEMPT_NOTIFIERS
--	select ANON_INODES
- 	select HAVE_KVM_CPU_RELAX_INTERCEPT
- 	select HAVE_KVM_ARCH_TLB_FLUSH_ALL
- 	select KVM_MMIO
-diff --git a/arch/mips/kvm/Kconfig b/arch/mips/kvm/Kconfig
-index 4528bc9c3cb1..eac25aef21e0 100644
---- a/arch/mips/kvm/Kconfig
-+++ b/arch/mips/kvm/Kconfig
-@@ -21,7 +21,6 @@ config KVM
- 	depends on MIPS_FP_SUPPORT
- 	select EXPORT_UASM
- 	select PREEMPT_NOTIFIERS
--	select ANON_INODES
- 	select KVM_GENERIC_DIRTYLOG_READ_PROTECT
- 	select HAVE_KVM_VCPU_ASYNC_IOCTL
- 	select KVM_MMIO
-diff --git a/arch/powerpc/kvm/Kconfig b/arch/powerpc/kvm/Kconfig
-index bfdde04e4905..f53997a8ca62 100644
---- a/arch/powerpc/kvm/Kconfig
-+++ b/arch/powerpc/kvm/Kconfig
-@@ -20,7 +20,6 @@ if VIRTUALIZATION
- config KVM
- 	bool
- 	select PREEMPT_NOTIFIERS
--	select ANON_INODES
- 	select HAVE_KVM_EVENTFD
- 	select HAVE_KVM_VCPU_ASYNC_IOCTL
- 	select SRCU
-diff --git a/arch/s390/kvm/Kconfig b/arch/s390/kvm/Kconfig
-index 767453faacfc..1816ee48eadd 100644
---- a/arch/s390/kvm/Kconfig
-+++ b/arch/s390/kvm/Kconfig
-@@ -21,7 +21,6 @@ config KVM
- 	prompt "Kernel-based Virtual Machine (KVM) support"
- 	depends on HAVE_KVM
- 	select PREEMPT_NOTIFIERS
--	select ANON_INODES
- 	select HAVE_KVM_CPU_RELAX_INTERCEPT
- 	select HAVE_KVM_VCPU_ASYNC_IOCTL
- 	select HAVE_KVM_EVENTFD
-diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 5ad92419be19..7a70fb58b2d0 100644
---- a/arch/x86/Kconfig
-+++ b/arch/x86/Kconfig
-@@ -44,7 +44,6 @@ config X86
- 	#
- 	select ACPI_LEGACY_TABLES_LOOKUP	if ACPI
- 	select ACPI_SYSTEM_POWER_STATES_SUPPORT	if ACPI
--	select ANON_INODES
- 	select ARCH_32BIT_OFF_T			if X86_32
- 	select ARCH_CLOCKSOURCE_DATA
- 	select ARCH_CLOCKSOURCE_INIT
-diff --git a/arch/x86/kvm/Kconfig b/arch/x86/kvm/Kconfig
-index 72fa955f4a15..fc042419e670 100644
---- a/arch/x86/kvm/Kconfig
-+++ b/arch/x86/kvm/Kconfig
-@@ -27,7 +27,6 @@ config KVM
- 	depends on X86_LOCAL_APIC
- 	select PREEMPT_NOTIFIERS
- 	select MMU_NOTIFIER
--	select ANON_INODES
- 	select HAVE_KVM_IRQCHIP
- 	select HAVE_KVM_IRQFD
- 	select IRQ_BYPASS_MANAGER
-diff --git a/drivers/base/Kconfig b/drivers/base/Kconfig
-index 059700ea3521..03f067da12ee 100644
---- a/drivers/base/Kconfig
-+++ b/drivers/base/Kconfig
-@@ -174,7 +174,6 @@ source "drivers/base/regmap/Kconfig"
- config DMA_SHARED_BUFFER
- 	bool
- 	default n
--	select ANON_INODES
- 	select IRQ_WORK
- 	help
- 	  This option enables the framework for buffer-sharing between
-diff --git a/drivers/char/tpm/Kconfig b/drivers/char/tpm/Kconfig
-index 536e55d3919f..f3e4bc490cf0 100644
---- a/drivers/char/tpm/Kconfig
-+++ b/drivers/char/tpm/Kconfig
-@@ -157,7 +157,6 @@ config TCG_CRB
- config TCG_VTPM_PROXY
- 	tristate "VTPM Proxy Interface"
- 	depends on TCG_TPM
--	select ANON_INODES
- 	---help---
- 	  This driver proxies for an emulated TPM (vTPM) running in userspace.
- 	  A device /dev/vtpmx is provided that creates a device pair
-diff --git a/drivers/dma-buf/Kconfig b/drivers/dma-buf/Kconfig
-index 2e5a0faa2cb1..3fc9c2efc583 100644
---- a/drivers/dma-buf/Kconfig
-+++ b/drivers/dma-buf/Kconfig
-@@ -3,7 +3,6 @@ menu "DMABUF options"
- config SYNC_FILE
- 	bool "Explicit Synchronization Framework"
- 	default n
--	select ANON_INODES
- 	select DMA_SHARED_BUFFER
- 	---help---
- 	  The Sync File Framework adds explicit syncronization via
-diff --git a/drivers/gpio/Kconfig b/drivers/gpio/Kconfig
-index 3f50526a771f..0f91600c27ae 100644
---- a/drivers/gpio/Kconfig
-+++ b/drivers/gpio/Kconfig
-@@ -12,7 +12,6 @@ config ARCH_HAVE_CUSTOM_GPIO_H
+diff --git a/include/linux/pid.h b/include/linux/pid.h
+index b6f4ba16065a..3c8ef5a199ca 100644
+--- a/include/linux/pid.h
++++ b/include/linux/pid.h
+@@ -66,6 +66,8 @@ struct pid
  
- menuconfig GPIOLIB
- 	bool "GPIO Support"
--	select ANON_INODES
- 	help
- 	  This enables GPIO support through the generic GPIO library.
- 	  You only need to enable this, if you also want to enable
-diff --git a/drivers/iio/Kconfig b/drivers/iio/Kconfig
-index d08aeb41cd07..1dec0fecb6ef 100644
---- a/drivers/iio/Kconfig
-+++ b/drivers/iio/Kconfig
-@@ -4,7 +4,6 @@
+ extern struct pid init_struct_pid;
  
- menuconfig IIO
- 	tristate "Industrial I/O support"
--	select ANON_INODES
- 	help
- 	  The industrial I/O subsystem provides a unified framework for
- 	  drivers for many different types of embedded sensors using a
-diff --git a/drivers/infiniband/Kconfig b/drivers/infiniband/Kconfig
-index a1fb840de45d..d318bab25860 100644
---- a/drivers/infiniband/Kconfig
-+++ b/drivers/infiniband/Kconfig
-@@ -25,7 +25,6 @@ config INFINIBAND_USER_MAD
++extern const struct file_operations pidfd_fops;
++
+ static inline struct pid *get_pid(struct pid *pid)
+ {
+ 	if (pid)
+diff --git a/include/uapi/linux/sched.h b/include/uapi/linux/sched.h
+index 22627f80063e..ed4ee170bee2 100644
+--- a/include/uapi/linux/sched.h
++++ b/include/uapi/linux/sched.h
+@@ -10,6 +10,7 @@
+ #define CLONE_FS	0x00000200	/* set if fs info shared between processes */
+ #define CLONE_FILES	0x00000400	/* set if open files shared between processes */
+ #define CLONE_SIGHAND	0x00000800	/* set if signal handlers and blocked signals shared */
++#define CLONE_PIDFD	0x00001000	/* set if a pidfd should be placed in parent */
+ #define CLONE_PTRACE	0x00002000	/* set if we want to let tracing continue on the child too */
+ #define CLONE_VFORK	0x00004000	/* set if the parent wants the child to wake it up on mm_release */
+ #define CLONE_PARENT	0x00008000	/* set if we want to have the same parent as the cloner */
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 9dcd18aa210b..8eab00cc9c37 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -11,6 +11,7 @@
+  * management can be a bitch. See 'mm/memory.c': 'copy_page_range()'
+  */
  
- config INFINIBAND_USER_ACCESS
- 	tristate "InfiniBand userspace access (verbs and CM)"
--	select ANON_INODES
- 	depends on MMU
- 	---help---
- 	  Userspace InfiniBand access support.  This enables the
-diff --git a/drivers/vfio/Kconfig b/drivers/vfio/Kconfig
-index 9de5ed38da83..3798d77d131c 100644
---- a/drivers/vfio/Kconfig
-+++ b/drivers/vfio/Kconfig
-@@ -22,7 +22,6 @@ menuconfig VFIO
- 	tristate "VFIO Non-Privileged userspace driver framework"
- 	depends on IOMMU_API
- 	select VFIO_IOMMU_TYPE1 if (X86 || S390 || ARM || ARM64)
--	select ANON_INODES
- 	help
- 	  VFIO provides a framework for secure userspace device drivers.
- 	  See Documentation/vfio.txt for more details.
-diff --git a/fs/Makefile b/fs/Makefile
-index 427fec226fae..35945f8139e6 100644
---- a/fs/Makefile
-+++ b/fs/Makefile
-@@ -25,7 +25,7 @@ obj-$(CONFIG_PROC_FS) += proc_namespace.o
++#include <linux/anon_inodes.h>
+ #include <linux/slab.h>
+ #include <linux/sched/autogroup.h>
+ #include <linux/sched/mm.h>
+@@ -21,8 +22,10 @@
+ #include <linux/sched/task.h>
+ #include <linux/sched/task_stack.h>
+ #include <linux/sched/cputime.h>
++#include <linux/seq_file.h>
+ #include <linux/rtmutex.h>
+ #include <linux/init.h>
++#include <linux/fsnotify.h>
+ #include <linux/unistd.h>
+ #include <linux/module.h>
+ #include <linux/vmalloc.h>
+@@ -1662,6 +1665,81 @@ static inline void rcu_copy_process(struct task_struct *p)
+ #endif /* #ifdef CONFIG_TASKS_RCU */
+ }
  
- obj-y				+= notify/
- obj-$(CONFIG_EPOLL)		+= eventpoll.o
--obj-$(CONFIG_ANON_INODES)	+= anon_inodes.o
-+obj-y				+= anon_inodes.o
- obj-$(CONFIG_SIGNALFD)		+= signalfd.o
- obj-$(CONFIG_TIMERFD)		+= timerfd.o
- obj-$(CONFIG_EVENTFD)		+= eventfd.o
-diff --git a/fs/notify/fanotify/Kconfig b/fs/notify/fanotify/Kconfig
-index 735bfb2e9190..521dc91d2cb5 100644
---- a/fs/notify/fanotify/Kconfig
-+++ b/fs/notify/fanotify/Kconfig
-@@ -1,7 +1,6 @@
- config FANOTIFY
- 	bool "Filesystem wide access notification"
- 	select FSNOTIFY
--	select ANON_INODES
- 	select EXPORTFS
- 	default n
- 	---help---
-diff --git a/fs/notify/inotify/Kconfig b/fs/notify/inotify/Kconfig
-index b981fc0c8379..0161c74e76e2 100644
---- a/fs/notify/inotify/Kconfig
-+++ b/fs/notify/inotify/Kconfig
-@@ -1,6 +1,5 @@
- config INOTIFY_USER
- 	bool "Inotify support for userspace"
--	select ANON_INODES
- 	select FSNOTIFY
- 	default y
- 	---help---
-diff --git a/init/Kconfig b/init/Kconfig
-index 4592bf7997c0..be8f97e37a76 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -1171,9 +1171,6 @@ config LD_DEAD_CODE_DATA_ELIMINATION
- config SYSCTL
- 	bool
++static int pidfd_release(struct inode *inode, struct file *file)
++{
++	struct pid *pid = file->private_data;
++
++	file->private_data = NULL;
++	put_pid(pid);
++	return 0;
++}
++
++#ifdef CONFIG_PROC_FS
++static void pidfd_show_fdinfo(struct seq_file *m, struct file *f)
++{
++	struct pid_namespace *ns = proc_pid_ns(file_inode(m->file));
++	struct pid *pid = f->private_data;
++
++	seq_put_decimal_ull(m, "Pid:\t", pid_nr_ns(pid, ns));
++	seq_putc(m, '\n');
++}
++#endif
++
++const struct file_operations pidfd_fops = {
++	.release = pidfd_release,
++#ifdef CONFIG_PROC_FS
++	.show_fdinfo = pidfd_show_fdinfo,
++#endif
++};
++
++/**
++ * pidfd_create() - Create a new pid file descriptor.
++ *
++ * @pid:  struct pid that the pidfd will reference
++ * @file: struct file referencing @pid to return to caller
++ *
++ * This creates a new pid file descriptor with the O_CLOEXEC flag set.
++ *
++ * Note, that this function can only be called after the fd table has
++ * been unshared to avoid leaking the pidfd to the new process.
++ *
++ * Return: On success, a cloexec pidfd ready to be installed through
++ *         fd_install() will be returned. The corresponding file will be
++ *         returned through @file.
++ *         On error, a negative errno number will be returned.
++ */
++static int pidfd_create(struct pid *pid, struct file **file)
++{
++	unsigned int flags = O_RDWR | O_CLOEXEC;
++	int error, fd;
++	struct file *f;
++
++	error = get_unused_fd_flags(flags);
++	if (error < 0)
++		return error;
++	fd = error;
++
++	f = anon_inode_getfile("pidfd", &pidfd_fops, get_pid(pid), flags);
++	if (IS_ERR(f)) {
++		put_pid(pid);
++		error = PTR_ERR(f);
++		goto err_put_unused_fd;
++	}
++
++	*file = f;
++	return fd;
++
++err_put_unused_fd:
++	put_unused_fd(fd);
++	return error;
++}
++
++static inline void pidfd_put(int fd, struct file *file)
++{
++	put_unused_fd(fd);
++	fput(file);
++}
++
+ /*
+  * This creates a new process as a copy of the old one,
+  * but does not actually start it yet.
+@@ -1674,15 +1752,17 @@ static __latent_entropy struct task_struct *copy_process(
+ 					unsigned long clone_flags,
+ 					unsigned long stack_start,
+ 					unsigned long stack_size,
++					int __user *parent_tidptr,
+ 					int __user *child_tidptr,
+ 					struct pid *pid,
+ 					int trace,
+ 					unsigned long tls,
+ 					int node)
+ {
+-	int retval;
++	int pidfd = -1, retval;
+ 	struct task_struct *p;
+ 	struct multiprocess_signals delayed;
++	struct file *pidfdf = NULL;
  
--config ANON_INODES
--	bool
--
- config HAVE_UID16
- 	bool
+ 	/*
+ 	 * Don't allow sharing the root directory with processes in a different
+@@ -1730,6 +1810,19 @@ static __latent_entropy struct task_struct *copy_process(
+ 			return ERR_PTR(-EINVAL);
+ 	}
  
-@@ -1378,14 +1375,12 @@ config HAVE_FUTEX_CMPXCHG
- config EPOLL
- 	bool "Enable eventpoll support" if EXPERT
- 	default y
--	select ANON_INODES
- 	help
- 	  Disabling this option will cause the kernel to be built without
- 	  support for epoll family of system calls.
++	/* Pidfds will be returned through parent_tidptr. */
++	if ((clone_flags & (CLONE_PIDFD | CLONE_PARENT_SETTID)) ==
++	    (CLONE_PIDFD | CLONE_PARENT_SETTID))
++		return ERR_PTR(-EINVAL);
++
++	/*
++	 * Ensure that we can potentially reuse CLONE_DETACHED for
++	 * CLONE_PIDFD in the future.
++	 */
++	if ((clone_flags & (CLONE_PIDFD | CLONE_DETACHED)) ==
++	    (CLONE_PIDFD | CLONE_DETACHED))
++		return ERR_PTR(-EINVAL);
++
+ 	/*
+ 	 * Force any signals received before this point to be delivered
+ 	 * before the fork happens.  Collect up signals sent to multiple
+@@ -1936,6 +2029,18 @@ static __latent_entropy struct task_struct *copy_process(
+ 		}
+ 	}
  
- config SIGNALFD
- 	bool "Enable signalfd() system call" if EXPERT
--	select ANON_INODES
- 	default y
- 	help
- 	  Enable the signalfd() system call that allows to receive signals
-@@ -1395,7 +1390,6 @@ config SIGNALFD
++	/*
++	 * This has to happen after we've potentially unshared the file
++	 * descriptor table (so that the pidfd doesn't leak into the child
++	 * if the fd table isn't shared).
++	 */
++	if (clone_flags & CLONE_PIDFD) {
++		retval = pidfd_create(pid, &pidfdf);
++		if (retval < 0)
++			goto bad_fork_free_pid;
++		pidfd = retval;
++	}
++
+ #ifdef CONFIG_BLOCK
+ 	p->plug = NULL;
+ #endif
+@@ -1996,7 +2101,7 @@ static __latent_entropy struct task_struct *copy_process(
+ 	 */
+ 	retval = cgroup_can_fork(p);
+ 	if (retval)
+-		goto bad_fork_free_pid;
++		goto bad_fork_put_pidfd;
  
- config TIMERFD
- 	bool "Enable timerfd() system call" if EXPERT
--	select ANON_INODES
- 	default y
- 	help
- 	  Enable the timerfd() system call that allows to receive timer
-@@ -1405,7 +1399,6 @@ config TIMERFD
+ 	/*
+ 	 * From this point on we must avoid any synchronous user-space
+@@ -2097,6 +2202,11 @@ static __latent_entropy struct task_struct *copy_process(
+ 	syscall_tracepoint_update(p);
+ 	write_unlock_irq(&tasklist_lock);
  
- config EVENTFD
- 	bool "Enable eventfd() system call" if EXPERT
--	select ANON_INODES
- 	default y
- 	help
- 	  Enable the eventfd() system call that allows to receive both
-@@ -1516,7 +1509,6 @@ config KALLSYMS_BASE_RELATIVE
- # syscall, maps, verifier
- config BPF_SYSCALL
- 	bool "Enable bpf() system call"
--	select ANON_INODES
- 	select BPF
- 	select IRQ_WORK
- 	default n
-@@ -1533,7 +1525,6 @@ config BPF_JIT_ALWAYS_ON
++	if (clone_flags & CLONE_PIDFD) {
++		fd_install(pidfd, pidfdf);
++		put_user(pidfd, parent_tidptr);
++	}
++
+ 	proc_fork_connector(p);
+ 	cgroup_post_fork(p);
+ 	cgroup_threadgroup_change_end(current);
+@@ -2111,6 +2221,9 @@ static __latent_entropy struct task_struct *copy_process(
+ 	spin_unlock(&current->sighand->siglock);
+ 	write_unlock_irq(&tasklist_lock);
+ 	cgroup_cancel_fork(p);
++bad_fork_put_pidfd:
++	if (clone_flags & CLONE_PIDFD)
++		pidfd_put(pidfd, pidfdf);
+ bad_fork_free_pid:
+ 	cgroup_threadgroup_change_end(current);
+ 	if (pid != &init_struct_pid)
+@@ -2176,7 +2289,7 @@ static inline void init_idle_pids(struct task_struct *idle)
+ struct task_struct *fork_idle(int cpu)
+ {
+ 	struct task_struct *task;
+-	task = copy_process(CLONE_VM, 0, 0, NULL, &init_struct_pid, 0, 0,
++	task = copy_process(CLONE_VM, 0, 0, NULL, NULL, &init_struct_pid, 0, 0,
+ 			    cpu_to_node(cpu));
+ 	if (!IS_ERR(task)) {
+ 		init_idle_pids(task);
+@@ -2223,7 +2336,7 @@ long _do_fork(unsigned long clone_flags,
+ 			trace = 0;
+ 	}
  
- config USERFAULTFD
- 	bool "Enable userfaultfd() system call"
--	select ANON_INODES
- 	depends on MMU
- 	help
- 	  Enable the userfaultfd() system call that allows to intercept and
-@@ -1600,7 +1591,6 @@ config PERF_EVENTS
- 	bool "Kernel performance events and counters"
- 	default y if PROFILING
- 	depends on HAVE_PERF_EVENTS
--	select ANON_INODES
- 	select IRQ_WORK
- 	select SRCU
- 	help
+-	p = copy_process(clone_flags, stack_start, stack_size,
++	p = copy_process(clone_flags, stack_start, stack_size, parent_tidptr,
+ 			 child_tidptr, NULL, trace, tls, NUMA_NO_NODE);
+ 	add_latent_entropy();
+ 
 -- 
 2.21.0
