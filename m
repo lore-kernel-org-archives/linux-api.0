@@ -1,92 +1,54 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: RFC: on adding new CLONE_* flags [WAS Re: [PATCH 0/4] clone: add CLONE_PIDFD]
-Date: Mon, 15 Apr 2019 16:58:52 -0700
-Message-ID: <CALCETrV42Ot+pGjeGO23WozwiEFpdaLZibSA10GXNy+Fbi-dNg@mail.gmail.com>
-References: <20190414201436.19502-1-christian@brauner.io> <dc05ffe3-c2ff-8b3e-d181-e0cc620bf91d@metux.net>
- <20190415195911.z7b7miwsj67ha54y@yavin> <CALCETrWxMnaPvwicqkMLswMynWvJVteazD-bFv3ZnBKWp-1joQ@mail.gmail.com>
- <CAGLj2rEOfW=3wis3YWomWK1AVDdCX6DMqbvSHXba3-x=kpkcNA@mail.gmail.com>
+From: Jon Masters <jcm@jonmasters.org>
+Subject: Re: [PATCH] x86: Deprecate a.out support
+Date: Mon, 15 Apr 2019 23:19:47 -0400
+Message-ID: <cb8451f5-e49f-a389-2b78-d6f8265ccecf@jonmasters.org>
+References: <CAG48ez1RVd5mQ_Pb6eygQESaZhpQz765OAZYSoPE0kPqfZEXQg@mail.gmail.com>
+ <20190305091904.GB8256@zn.tnic>
+ <20190305122218.GD13380@bombadil.infradead.org>
+ <20190305134347.4be2449c@alans-desktop> <20190305145717.GD8256@zn.tnic>
+ <CAHk-=wi2E4kugAW7BQwNSVwYHOr=B_9EgzBRMpQ2+1dxAqydDg@mail.gmail.com>
+ <20190305173134.GE8256@zn.tnic>
+ <CAHk-=wg0bY=RFhD4NW9x++fC0bME=_-9xM3kexGGM3gefHQTyQ@mail.gmail.com>
+ <20190305181138.GG8256@zn.tnic> <20190305181808.GH8256@zn.tnic>
+ <CAEdQ38G5M3vq9pGBV1iyEViO7JhFuXk5g+VCs-vUH+Z62kNqgQ@mail.gmail.com>
+ <CAHk-=wgt7M6yA5BJCJo0nF22WgPJnN8CvViL9CAJmd+S+Civ6w@mail.gmail.com>
+ <yw1xa7i14btw.fsf@mansr.com>
+ <CAHk-=whD1SumZUBQeuMT-GcciwPxg_jW_TsPAmokYp3sGGCGhA@mail.gmail.com>
+ <yw1x5zsp473a.fsf@mansr.com>
+ <CAHk-=wiU7xacTqDfm-x29-meyJWNd_X95K0T8FQMcDgy-yo3Qw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAGLj2rEOfW=3wis3YWomWK1AVDdCX6DMqbvSHXba3-x=kpkcNA@mail.gmail.com>
+In-Reply-To: <CAHk-=wiU7xacTqDfm-x29-meyJWNd_X95K0T8FQMcDgy-yo3Qw@mail.gmail.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jonathan Kowalski <bl0pbl33p@gmail.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Aleksa Sarai <cyphar@cyphar.com>, "Enrico Weigelt, metux IT consult" <lkml@metux.net>, Christian Brauner <christian@brauner.io>, Linus Torvalds <torvalds@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Jann Horn <jannh@google.com>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Joel Fernandes <joel@joelfernandes.org>, Daniel
+To: Linus Torvalds <torvalds@linux-foundation.org>, =?UTF-8?B?TcOlbnMgUnVsbGfDpXJk?= <mans@mansr.com>
+Cc: Matt Turner <mattst88@gmail.com>, Borislav Petkov <bp@alien8.de>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, kernel list <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Richard Weinberger <richard@nod.at>, Anton Ivanov <anton.ivanov@cambridgegreys.com>, linux-alpha <linux-alpha@vger.kernel.org>, linux-m68k@lists.linux-m68k.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 15, 2019 at 2:26 PM Jonathan Kowalski <bl0pbl33p@gmail.com> wrote:
->
-> On Mon, Apr 15, 2019 at 9:34 PM Andy Lutomirski <luto@kernel.org> wrote:
-> > I would personally *love* it if distros started setting no_new_privs
-> > for basically all processes.  And pidfd actually gets us part of the
-> > way toward a straightforward way to make sudo and su still work in a
-> > no_new_privs world: su could call into a daemon that would spawn the
-> > privileged task, and su would get a (read-only!) pidfd back and then
-> > wait for the fd and exit.  I suppose that, done naively, this might
-> > cause some odd effects with respect to tty handling, but I bet it's
-> > solveable.  I suppose it would be nifty if there were a way for a
->
-> Hmm, isn't what you're describing roughly what systemd-run -t does? It
-> will serialize the argument list, ask PID 1 to create a transient unit
-> (go through the polkit stuff), and then set the stdout/stderr and
-> stdin of the service to your tty, make it the controlling terminal of
-> the process and
-> reset it. So I guess it should work with sudo/su just fine too.
->
-> There is also s6-sudod (and a s6-sudoc client to it) that works in a
-> similar fashion, though it's a lot less fancy.
+Hi Linus,
 
-Cute.  Now we just distros to work out the kinks and to ship these as
-sudo and su :)
+I'm Jon, and I just bought my first Alpha. What can I say, I was late to
+the party, and I probably need to get out more. Actually, I wanted it
+for its memory consistency model, or (some would say) lack thereof.
 
->
-> > process, by mutual agreement, to reparent itself to an unrelated
-> > process.
-> >
-> > Anyway, clone(2) is an enormous mess.  Surely the right solution here
-> > is to have a whole new process creation API that takes a big,
-> > extensible struct as an argument, and supports *at least* the full
-> > abilities of posix_spawn() and ideally covers all the use cases for
-> > fork() + do stuff + exec().  It would be nifty if this API also had a
-> > way to say "add no_new_privs and therefore enable extra functionality
-> > that doesn't work without no_new_privs".  This functionality would
-> > include things like returning a future extra-privileged pidfd that
-> > gives ptrace-like access.
->
-> My idea was that this intent could be supplied at clone time, you
-> could attach ptrace access modes to a pidfd (we could make those a bit
-> granular, perhaps) and any API that takes PIDs and checks against the
-> caller's ptrace access mode could instead derive so from the pidfd.
-> Since killing is a bit convoluted due to setuid binaries, that should
-> work if one is CAP_KILL capable in the owning userns of the task, and
-> if not that, has permissions to kill and the target has NNP set.
+On 3/11/19 3:03 PM, Linus Torvalds wrote:
+> On Mon, Mar 11, 2019 at 11:08 AM Måns Rullgård <mans@mansr.com> wrote:
+>>
+>> The latest version I have is 5.1, and that uses ECOFF.
+> 
+> ECOFF _is_ a.out as far as Linux is concerned.
+> 
+> So Linux basically treats ECOFF as "regular a.out with just some
+> header extensions".
+> 
+> We don't have any specific support for ECOFF.
+> 
+> I _think_. Again, it's been years and years.
 
-This CAP_KILL trick makes me nervous.  This particular permission is
-really quite powerful, and it would need some analysis to conclude
-that it's not *more* powerful than CAP_KILL.
+...so removing a.out would break various boot tooling as well. I'm still
+working on getting my Miata up and running upstream kernels (should be
+shortly) but I'm happy to help out testing any proposals.
 
-> This
-> would allow you to bind kill privileges in a way that is compatible
-> with both worlds, the upshot being NNP allows for the functionality to
-> be available to a lot more of userspace. Ofcourse, this would require
-> a new clone version, possibly with taking a clone2 struct which sets a
-> few parameters for the process and the flags for the pidfd.
->
-> Another point is that you have a pidfd_open (or something else) that
-> can create multiple pidfds from a pidfd obtained at clone time and
-> create pidfds with varying level of rights. It can also work by taking
-> a TID to open a pidfd for an external task (and then for all the
-> rights you wish to acquire on it, check against your ambient
-> authority).
-
-Indeed.
-
->
-> (Actually, in general, having FMODE_* style bits spanning all methods
-> a file descriptor can take (through system calls), with the type of
-> object as key (class containing a set), and be able to enable/disable
-> them and seal them would be a useful addition, this all happening at
-> the struct file level instead of inode level sealing in memfds).
-
-At the risk of saying a dirty word, the Windows API works quite a bit
-like this :)
+Jon.
