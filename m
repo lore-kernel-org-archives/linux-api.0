@@ -1,142 +1,125 @@
-From: Dave Martin <Dave.Martin@arm.com>
-Subject: Re: [PATCH v5 1/6] arm64: HWCAP: add support for AT_HWCAP2
-Date: Tue, 16 Apr 2019 17:30:41 +0100
-Message-ID: <20190416163041.GU3567@e103592.cambridge.arm.com>
-References: <20190409095245.42524-1-andrew.murray@arm.com>
- <20190409095245.42524-2-andrew.murray@arm.com>
- <20190416135157.GH3313@fuggles.cambridge.arm.com>
+From: Christian Brauner <christian@brauner.io>
+Subject: [PATCH v1 0/4] clone: add CLONE_PIDFD
+Date: Tue, 16 Apr 2019 19:02:29 +0200
+Message-ID: <20190416170233.10208-1-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <libc-alpha-return-101430-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-Content-Disposition: inline
-In-Reply-To: <20190416135157.GH3313@fuggles.cambridge.arm.com>
-To: Will Deacon <will.deacon@arm.com>
-Cc: Andrew Murray <andrew.murray@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Szabolcs Nagy <Szabolcs.Nagy@arm.com>, linux-arm-kernel@lists.infradead.org, Mark Rutland <mark.rutland@arm.com>, Phil Blundell <pb@pbcl.net>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, Suzuki K Poulose <suzuki.poulose@arm.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, jannh@google.com, dhowells@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: serge@hallyn.com, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, tglx@linutronix.de, mtk.manpages@gmail.com, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, joel@joelfernandes.org, dancol@google.com, Christian Brauner <christian@brauner.io>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 16, 2019 at 02:51:57PM +0100, Will Deacon wrote:
-> On Tue, Apr 09, 2019 at 10:52:40AM +0100, Andrew Murray wrote:
-> > As we will exhaust the first 32 bits of AT_HWCAP let's start
-> > exposing AT_HWCAP2 to userspace to give us up to 64 caps.
-> > 
-> > Whilst it's possible to use the remaining 32 bits of AT_HWCAP, we
-> > prefer to expand into AT_HWCAP2 in order to provide a consistent
-> > view to userspace between ILP32 and LP64. However internal to the
-> > kernel we prefer to continue to use the full space of elf_hwcap.
-> > 
-> > To reduce complexity and allow for future expansion, we now
-> > represent hwcaps in the kernel as ordinals and use a
-> > KERNEL_HWCAP_ prefix. This allows us to support automatic feature
-> > based module loading for all our hwcaps.
-> > 
-> > We introduce cpu_set_feature to set hwcaps which complements the
-> > existing cpu_have_feature helper. These helpers allow us to clean
-> > up existing direct uses of elf_hwcap and reduce any future effort
-> > required to move beyond 64 caps.
-> > 
-> > For convenience we also introduce cpu_{have,set}_named_feature which
-> > makes use of the cpu_feature macro to allow providing a hwcap name
-> > without a {KERNEL_}HWCAP_ prefix.
-> > 
-> > Signed-off-by: Andrew Murray <andrew.murray@arm.com>
-> > ---
-> >  Documentation/arm64/elf_hwcaps.txt       | 14 +++--
-> >  arch/arm64/crypto/aes-ce-ccm-glue.c      |  2 +-
-> >  arch/arm64/crypto/aes-neonbs-glue.c      |  2 +-
-> >  arch/arm64/crypto/chacha-neon-glue.c     |  2 +-
-> >  arch/arm64/crypto/crct10dif-ce-glue.c    |  4 +-
-> >  arch/arm64/crypto/ghash-ce-glue.c        |  8 +--
-> >  arch/arm64/crypto/nhpoly1305-neon-glue.c |  2 +-
-> >  arch/arm64/crypto/sha256-glue.c          |  4 +-
-> >  arch/arm64/include/asm/cpufeature.h      | 22 ++++----
-> >  arch/arm64/include/asm/hwcap.h           | 52 ++++++++++++++++++-
-> >  arch/arm64/include/uapi/asm/hwcap.h      |  2 +-
-> >  arch/arm64/kernel/cpufeature.c           | 66 ++++++++++++------------
-> >  arch/arm64/kernel/cpuinfo.c              |  2 +-
-> >  arch/arm64/kernel/fpsimd.c               |  4 +-
-> >  drivers/clocksource/arm_arch_timer.c     |  8 +++
-> >  15 files changed, 131 insertions(+), 63 deletions(-)
-> > 
-> > diff --git a/Documentation/arm64/elf_hwcaps.txt b/Documentation/arm64/elf_hwcaps.txt
-> > index 13d6691b37be..c04f8e87bab8 100644
-> > --- a/Documentation/arm64/elf_hwcaps.txt
-> > +++ b/Documentation/arm64/elf_hwcaps.txt
-> > @@ -13,9 +13,9 @@ architected discovery mechanism available to userspace code at EL0. The
-> >  kernel exposes the presence of these features to userspace through a set
-> >  of flags called hwcaps, exposed in the auxilliary vector.
-> >  
-> > -Userspace software can test for features by acquiring the AT_HWCAP entry
-> > -of the auxilliary vector, and testing whether the relevant flags are
-> > -set, e.g.
-> > +Userspace software can test for features by acquiring the AT_HWCAP or
-> > +AT_HWCAP2 entry of the auxiliary vector, and testing whether the relevant
-> > +flags are set, e.g.
-> >  
-> >  bool floating_point_is_present(void)
-> >  {
-> > @@ -194,3 +194,11 @@ HWCAP_PACG
-> >      Functionality implied by ID_AA64ISAR1_EL1.GPA == 0b0001 or
-> >      ID_AA64ISAR1_EL1.GPI == 0b0001, as described by
-> >      Documentation/arm64/pointer-authentication.txt.
-> > +
-> > +
-> > +4. Unused AT_HWCAP bits
-> > +-----------------------
-> > +
-> > +Each AT_HWCAP and AT_HWCAP2 entry provides for up to 32 hwcaps contained
-> > +in bits [31:0]. For interoperation with userspace we guarantee that bits
-> > +62 and 63 of AT_HWCAP will always be returned as 0.
-> 
-> I'm a little nervous about the first sentence here, since it could be
-> taken to mean that we will never allocate 61:32. Mind if I drop it?
+Hey,
 
-Ack: I don't think we want to say explicitly that we will never use
-those bits, apart from AT_HWCAP[63:62] for which there are specific
-reasons.
+This is v1.
+The only significant change is to have pidfds returned in the fourth
+argument of clone allowing us to return a pidfd and its pid to the
+caller at the same time. This has various advantages:
+- callers get the associated pid for the pidfd without additional
+  parsing 
+  This makes it easier for userspce to get metadata access through
+  procfs.
+- the type of the return value for clone() remains unchanged
+  (was changed to return an fd in the previous iteration)
+- pid file descriptor numbering can start at 0 as is customary for
+  file descriptors
+  (was changed to start at 1 in the previous patchset to not break
+   fork()-like error checking when returning pidfds)
+- finally, the patchset has gotten smaller
 
-(For now of course, we won't use them.)
+The patchset makes it possible to retrieve pid file descriptors at
+process creation time by introducing the new flag CLONE_PIDFD to the
+clone() system call as previously discussed.
 
-> > diff --git a/drivers/clocksource/arm_arch_timer.c b/drivers/clocksource/arm_arch_timer.c
-> > index aa4ec53281ce..6cc8aff83805 100644
-> > --- a/drivers/clocksource/arm_arch_timer.c
-> > +++ b/drivers/clocksource/arm_arch_timer.c
-> > @@ -833,7 +833,11 @@ static void arch_timer_evtstrm_enable(int divider)
-> >  	cntkctl |= (divider << ARCH_TIMER_EVT_TRIGGER_SHIFT)
-> >  			| ARCH_TIMER_VIRT_EVT_EN;
-> >  	arch_timer_set_cntkctl(cntkctl);
-> > +#ifdef CONFIG_ARM64
-> > +	cpu_set_named_feature(EVTSTRM);
-> > +#else
-> >  	elf_hwcap |= HWCAP_EVTSTRM;
-> > +#endif
-> >  #ifdef CONFIG_COMPAT
-> >  	compat_elf_hwcap |= COMPAT_HWCAP_EVTSTRM;
-> >  #endif
-> > @@ -1055,7 +1059,11 @@ static int arch_timer_cpu_pm_notify(struct notifier_block *self,
-> >  	} else if (action == CPU_PM_ENTER_FAILED || action == CPU_PM_EXIT) {
-> >  		arch_timer_set_cntkctl(__this_cpu_read(saved_cntkctl));
-> >  
-> > +#ifdef CONFIG_ARM64
-> > +		if (cpu_have_named_feature(EVTSTRM))
-> > +#else
-> >  		if (elf_hwcap & HWCAP_EVTSTRM)
-> > +#endif
-> 
-> I think this is an indication that the abstraction isn't quite right and
-> should probably be done in an arch-helped via asm/arch_timer.h. However,
-> that can be done as a separate patch later on.
+As decided last week [1] Jann and I have refined the implementation of
+pidfds as anonymous inodes. Based on last weeks RFC we have only tweaked
+documentation and naming, as well as making the sample program how to
+get easy metadata access from a pidfd a little cleaner and more paranoid
+when checking for errors.
+The sample program can also serve as a test for the patchset.
 
-It probably does make sense to add an arch-specific helper for that.
+When clone is called with CLONE_PIDFD a pidfd will be returned in the
+fourth argument of clone. This is based on an idea from Oleg. It allows
+us to return a pidfd and the associated pid to the caller at the same
+time.
 
-Given that we don't want to encourage this kind of poking about in
-elf_hwcap.  It might make sense to have a single-purpose helper just for
-checking this flag.
+We have taken care that pidfds are created *after* the fd table has
+been unshared to not leak pidfds into child processes.
+pidfd creation during clone is split into two distinct steps:
+1. preparing both an fd and a file referencing struct pid for fd_install()
+2. fd_install()ing the pidfd
+Step 1. is performed before clone's point of no return and especially
+before write_lock_irq(&tasklist_lock) is taken.
+Performing 1. before clone's point of no return ensures that we don't
+need to fail a process that is already visible to userspace when pidfd
+creation fails. Step 2. happens after attach_pid() is performed and the
+process is visible to userspace.
+Technically, we could have also performed step 1. and 2. together before
+clone's point of no return and then calling close on the file descriptor
+on failure. This would slightly increase code-locality but it is
+semantically more correct and clean to bring the pidfd into existence
+once the process is fully attached and not before.
 
-Cheers
----Dave
+The actual code for CLONE_PIDFD in patch 2 is completely confined to
+fork.c (apart from the CLONE_PIDFD definition of course) and is rather
+small and hopefully good to review.
+
+The additional changes listed under David's name in the diffstat below
+are here to make anon_inodes available unconditionally. They are needed
+for the new mount api and thus for core vfs code in addition to pidfds.
+David knows this and he has informed Al that this patch is sent out
+here. The changes themselves are rather automatic.
+
+As promised I have also contacted Joel who has sent a patchset to make
+pidfds pollable. He has been informed and is happy to port his patchset
+once we have moved forward [2].
+Jann and I currently plan to target this patchset for inclusion in the 5.2
+merge window.
+
+Thanks!
+Jann & Christian
+
+[1]: https://lore.kernel.org/lkml/CAHk-=wifyY+XGNW=ZC4MyTHD14w81F8JjQNH-GaGAm2RxZ_S8Q@mail.gmail.com/
+[2]: https://lore.kernel.org/lkml/20190411200059.GA75190@google.com/
+
+Christian Brauner (3):
+  clone: add CLONE_PIDFD
+  signal: support CLONE_PIDFD with pidfd_send_signal
+  samples: show race-free pidfd metadata access
+
+David Howells (1):
+  Make anon_inodes unconditional
+
+ arch/arm/kvm/Kconfig           |   1 -
+ arch/arm64/kvm/Kconfig         |   1 -
+ arch/mips/kvm/Kconfig          |   1 -
+ arch/powerpc/kvm/Kconfig       |   1 -
+ arch/s390/kvm/Kconfig          |   1 -
+ arch/x86/Kconfig               |   1 -
+ arch/x86/kvm/Kconfig           |   1 -
+ drivers/base/Kconfig           |   1 -
+ drivers/char/tpm/Kconfig       |   1 -
+ drivers/dma-buf/Kconfig        |   1 -
+ drivers/gpio/Kconfig           |   1 -
+ drivers/iio/Kconfig            |   1 -
+ drivers/infiniband/Kconfig     |   1 -
+ drivers/vfio/Kconfig           |   1 -
+ fs/Makefile                    |   2 +-
+ fs/notify/fanotify/Kconfig     |   1 -
+ fs/notify/inotify/Kconfig      |   1 -
+ include/linux/pid.h            |   2 +
+ include/uapi/linux/sched.h     |   1 +
+ init/Kconfig                   |  10 ---
+ kernel/fork.c                  | 121 +++++++++++++++++++++++++++++++--
+ kernel/signal.c                |  14 ++--
+ kernel/sys_ni.c                |   3 -
+ samples/Makefile               |   2 +-
+ samples/pidfd/Makefile         |   6 ++
+ samples/pidfd/pidfd-metadata.c | 112 ++++++++++++++++++++++++++++++
+ 26 files changed, 250 insertions(+), 39 deletions(-)
+ create mode 100644 samples/pidfd/Makefile
+ create mode 100644 samples/pidfd/pidfd-metadata.c
+
+-- 
+2.21.0
