@@ -1,54 +1,55 @@
-From: Jon Masters <jcm@jonmasters.org>
-Subject: Re: [PATCH] x86: Deprecate a.out support
-Date: Mon, 15 Apr 2019 23:19:47 -0400
-Message-ID: <cb8451f5-e49f-a389-2b78-d6f8265ccecf@jonmasters.org>
-References: <CAG48ez1RVd5mQ_Pb6eygQESaZhpQz765OAZYSoPE0kPqfZEXQg@mail.gmail.com>
- <20190305091904.GB8256@zn.tnic>
- <20190305122218.GD13380@bombadil.infradead.org>
- <20190305134347.4be2449c@alans-desktop> <20190305145717.GD8256@zn.tnic>
- <CAHk-=wi2E4kugAW7BQwNSVwYHOr=B_9EgzBRMpQ2+1dxAqydDg@mail.gmail.com>
- <20190305173134.GE8256@zn.tnic>
- <CAHk-=wg0bY=RFhD4NW9x++fC0bME=_-9xM3kexGGM3gefHQTyQ@mail.gmail.com>
- <20190305181138.GG8256@zn.tnic> <20190305181808.GH8256@zn.tnic>
- <CAEdQ38G5M3vq9pGBV1iyEViO7JhFuXk5g+VCs-vUH+Z62kNqgQ@mail.gmail.com>
- <CAHk-=wgt7M6yA5BJCJo0nF22WgPJnN8CvViL9CAJmd+S+Civ6w@mail.gmail.com>
- <yw1xa7i14btw.fsf@mansr.com>
- <CAHk-=whD1SumZUBQeuMT-GcciwPxg_jW_TsPAmokYp3sGGCGhA@mail.gmail.com>
- <yw1x5zsp473a.fsf@mansr.com>
- <CAHk-=wiU7xacTqDfm-x29-meyJWNd_X95K0T8FQMcDgy-yo3Qw@mail.gmail.com>
+From: Aubrey Li <aubrey.li@linux.intel.com>
+Subject: [PATCH v15 1/3] /proc/pid/status: Add support for architecture specific output
+Date: Tue, 16 Apr 2019 14:32:48 +0800
+Message-ID: <20190416063250.7514-1-aubrey.li@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=wiU7xacTqDfm-x29-meyJWNd_X95K0T8FQMcDgy-yo3Qw@mail.gmail.com>
-Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>, =?UTF-8?B?TcOlbnMgUnVsbGfDpXJk?= <mans@mansr.com>
-Cc: Matt Turner <mattst88@gmail.com>, Borislav Petkov <bp@alien8.de>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Matthew Wilcox <willy@infradead.org>, Jann Horn <jannh@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Thomas Gleixner <tglx@linutronix.de>, kernel list <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Richard Weinberger <richard@nod.at>, Anton Ivanov <anton.ivanov@cambridgegreys.com>, linux-alpha <linux-alpha@vger.kernel.org>, linux-m68k@lists.linux-m68k.org
+To: tglx@linutronix.de, mingo@redhat.com, peterz@infradead.org, hpa@zytor.com
+Cc: ak@linux.intel.com, tim.c.chen@linux.intel.com, dave.hansen@intel.com, arjan@linux.intel.com, adobriyan@gmail.com, akpm@linux-foundation.org, aubrey.li@intel.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Aubrey Li <aubrey.li@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Linus,
+The architecture specific information of the running processes could
+be useful to the userland. Add support to examine process architecture
+specific information externally.
 
-I'm Jon, and I just bought my first Alpha. What can I say, I was late to
-the party, and I probably need to get out more. Actually, I wanted it
-for its memory consistency model, or (some would say) lack thereof.
+Signed-off-by: Aubrey Li <aubrey.li@linux.intel.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Andi Kleen <ak@linux.intel.com>
+Cc: Tim Chen <tim.c.chen@linux.intel.com>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Arjan van de Ven <arjan@linux.intel.com>
+Cc: Linux API <linux-api@vger.kernel.org>
+Cc: Alexey Dobriyan <adobriyan@gmail.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+---
+ fs/proc/array.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-On 3/11/19 3:03 PM, Linus Torvalds wrote:
-> On Mon, Mar 11, 2019 at 11:08 AM Måns Rullgård <mans@mansr.com> wrote:
->>
->> The latest version I have is 5.1, and that uses ECOFF.
-> 
-> ECOFF _is_ a.out as far as Linux is concerned.
-> 
-> So Linux basically treats ECOFF as "regular a.out with just some
-> header extensions".
-> 
-> We don't have any specific support for ECOFF.
-> 
-> I _think_. Again, it's been years and years.
-
-...so removing a.out would break various boot tooling as well. I'm still
-working on getting my Miata up and running upstream kernels (should be
-shortly) but I'm happy to help out testing any proposals.
-
-Jon.
+diff --git a/fs/proc/array.c b/fs/proc/array.c
+index 2edbb657f859..87bc7e882d35 100644
+--- a/fs/proc/array.c
++++ b/fs/proc/array.c
+@@ -96,6 +96,11 @@
+ #include <asm/processor.h>
+ #include "internal.h"
+ 
++/* Add support for architecture specific output in /proc/pid/status */
++#ifndef	arch_proc_pid_status
++#define	arch_proc_pid_status(m, task)
++#endif
++
+ void proc_task_name(struct seq_file *m, struct task_struct *p, bool escape)
+ {
+ 	char *buf;
+@@ -424,6 +429,7 @@ int proc_pid_status(struct seq_file *m, struct pid_namespace *ns,
+ 	task_cpus_allowed(m, task);
+ 	cpuset_task_status_allowed(m, task);
+ 	task_context_switch_counts(m, task);
++	arch_proc_pid_status(m, task);
+ 	return 0;
+ }
+ 
+-- 
+2.21.0
