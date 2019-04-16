@@ -1,133 +1,60 @@
-From: Aubrey Li <aubrey.li@linux.intel.com>
-Subject: [PATCH v15 2/3] x86,/proc/pid/status: Add AVX-512 usage elapsed time
-Date: Tue, 16 Apr 2019 14:32:49 +0800
-Message-ID: <20190416063250.7514-2-aubrey.li@linux.intel.com>
-References: <20190416063250.7514-1-aubrey.li@linux.intel.com>
+From: Andrew Donnellan <andrew.donnellan@au1.ibm.com>
+Subject: Re: [PATCH V32 01/27] Add the ability to lock down access to the
+ running kernel image
+Date: Tue, 16 Apr 2019 18:40:08 +1000
+Message-ID: <059c523e-926c-24ee-0935-198031712145@au1.ibm.com>
+References: <20190404003249.14356-1-matthewgarrett@google.com>
+ <20190404003249.14356-2-matthewgarrett@google.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190416063250.7514-1-aubrey.li@linux.intel.com>
+In-Reply-To: <20190404003249.14356-2-matthewgarrett@google.com>
+Content-Language: en-AU
 Sender: linux-kernel-owner@vger.kernel.org
-To: tglx@linutronix.de, mingo@redhat.com, peterz@infradead.org, hpa@zytor.com
-Cc: ak@linux.intel.com, tim.c.chen@linux.intel.com, dave.hansen@intel.com, arjan@linux.intel.com, adobriyan@gmail.com, akpm@linux-foundation.org, aubrey.li@intel.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Aubrey Li <aubrey.li@linux.intel.com>
+To: Matthew Garrett <matthewgarrett@google.com>, jmorris@namei.org
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-api@vger.kernel.org, luto@kernel.org, linuxppc-dev <linuxppc-dev@lists.ozlabs.org>, Michael Ellerman <mpe@ellerman.id.au>, Daniel Axtens <dja@axtens.net>, cmr <cmr@informatik.wtf>
 List-Id: linux-api@vger.kernel.org
 
-AVX-512 components use could cause core turbo frequency drop. So
-it's useful to expose AVX-512 usage elapsed time as a heuristic hint
-for the user space job scheduler to cluster the AVX-512 using tasks
-together.
+On 4/4/19 11:32 am, Matthew Garrett wrote:
+> diff --git a/Documentation/ABI/testing/lockdown b/Documentation/ABI/testing/lockdown
+> new file mode 100644
+> index 000000000000..5bd51e20917a
+> --- /dev/null
+> +++ b/Documentation/ABI/testing/lockdown
+> @@ -0,0 +1,19 @@
+> +What:		security/lockdown
+> +Date:		March 2019
+> +Contact:	Matthew Garrett <mjg59@google.com>
+> +Description:
+> +		If CONFIG_LOCK_DOWN_KERNEL is enabled, the kernel can be
+> +		moved to a more locked down state at runtime by writing to
+> +		this attribute. Valid values are:
+> +
+> +		integrity:
+> +			The kernel will disable functionality that allows
+> +			userland to modify the running kernel image, other
+> +			than through the loading or execution of appropriately
+> +			signed objects.
+> +
+> +		confidentiality:
+> +			The kernel will disable all functionality disabled by
+> +			the integrity mode, but additionally will disable
+> +			features that potentially permit userland to obtain
+> +			confidential information stored within the kernel.
 
-Tensorflow example:
-$ while [ 1 ]; do cat /proc/tid/status | grep AVX; sleep 1; done
-AVX512_elapsed_ms:      4
-AVX512_elapsed_ms:      8
-AVX512_elapsed_ms:      4
+[+ linuxppc, mpe, dja, cmr]
 
-This means that 4 milliseconds have elapsed since the AVX512 usage
-of tensorflow task was detected when the task was scheduled out.
+I'm thinking about whether we should lock down the powerpc xmon debug 
+monitor - intuitively, I think the answer is yes if for no other reason 
+than Least Astonishment, when lockdown is enabled you probably don't 
+expect xmon to keep letting you access kernel memory.
 
-Or:
-$ cat /proc/tid/status | grep AVX512_elapsed_ms
-AVX512_elapsed_ms:      -1
+Semantically though, xmon is not a userspace process - it's in kernel 
+and reads debug commands/outputs debug data directly from/to the 
+console. Is that a threat vector that this series cares about?
 
-The number '-1' indicates that no AVX512 usage recorded before
-thus the task unlikely has frequency drop issue.
 
-User space tools may want to further check by:
-
-$ perf stat --pid <pid> -e core_power.lvl2_turbo_license -- sleep 1
-
- Performance counter stats for process id '3558':
-
-     3,251,565,961      core_power.lvl2_turbo_license
-
-       1.004031387 seconds time elapsed
-
-Non-zero counter value confirms that the task causes frequency drop.
-
-Signed-off-by: Aubrey Li <aubrey.li@linux.intel.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Andi Kleen <ak@linux.intel.com>
-Cc: Tim Chen <tim.c.chen@linux.intel.com>
-Cc: Dave Hansen <dave.hansen@intel.com>
-Cc: Arjan van de Ven <arjan@linux.intel.com>
-Cc: Linux API <linux-api@vger.kernel.org>
-Cc: Alexey Dobriyan <adobriyan@gmail.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>
----
- arch/x86/include/asm/processor.h |  4 +++
- arch/x86/kernel/fpu/xstate.c     | 42 ++++++++++++++++++++++++++++++++
- 2 files changed, 46 insertions(+)
-
-diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
-index 2bb3a648fc12..5a7271ab78d8 100644
---- a/arch/x86/include/asm/processor.h
-+++ b/arch/x86/include/asm/processor.h
-@@ -991,4 +991,8 @@ enum l1tf_mitigations {
- 
- extern enum l1tf_mitigations l1tf_mitigation;
- 
-+/* Add support for architecture specific output in /proc/pid/status */
-+void arch_proc_pid_status(struct seq_file *m, struct task_struct *task);
-+#define arch_proc_pid_status arch_proc_pid_status
-+
- #endif /* _ASM_X86_PROCESSOR_H */
-diff --git a/arch/x86/kernel/fpu/xstate.c b/arch/x86/kernel/fpu/xstate.c
-index d7432c2b1051..5e55ed9584ab 100644
---- a/arch/x86/kernel/fpu/xstate.c
-+++ b/arch/x86/kernel/fpu/xstate.c
-@@ -7,6 +7,8 @@
- #include <linux/cpu.h>
- #include <linux/mman.h>
- #include <linux/pkeys.h>
-+#include <linux/seq_file.h>
-+#include <linux/proc_fs.h>
- 
- #include <asm/fpu/api.h>
- #include <asm/fpu/internal.h>
-@@ -1243,3 +1245,43 @@ int copy_user_to_xstate(struct xregs_state *xsave, const void __user *ubuf)
- 
- 	return 0;
- }
-+
-+/*
-+ * Report the amount of time elapsed in millisecond since last AVX512
-+ * use in the task.
-+ */
-+static void avx512_status(struct seq_file *m, struct task_struct *task)
-+{
-+	unsigned long timestamp = READ_ONCE(task->thread.fpu.avx512_timestamp);
-+	long delta;
-+
-+	if (!timestamp) {
-+		/*
-+		 * Report -1 if no AVX512 usage
-+		 */
-+		delta = -1;
-+	} else {
-+		delta = (long)(jiffies - timestamp);
-+		/*
-+		 * Cap to LONG_MAX if time difference > LONG_MAX
-+		 */
-+		if (delta < 0)
-+			delta = LONG_MAX;
-+		delta = jiffies_to_msecs(delta);
-+	}
-+
-+	seq_put_decimal_ll(m, "AVX512_elapsed_ms:\t", delta);
-+	seq_putc(m, '\n');
-+}
-+
-+/*
-+ * Report architecture specific information
-+ */
-+void arch_proc_pid_status(struct seq_file *m, struct task_struct *task)
-+{
-+	/*
-+	 * Report AVX512 state if the processor and build option supported.
-+	 */
-+	if (cpu_feature_enabled(X86_FEATURE_AVX512F))
-+		avx512_status(m, task);
-+}
 -- 
-2.21.0
+Andrew Donnellan              OzLabs, ADL Canberra
+andrew.donnellan@au1.ibm.com  IBM Australia Limited
