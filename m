@@ -1,61 +1,42 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: RFC: on adding new CLONE_* flags [WAS Re: [PATCH 0/4] clone: add CLONE_PIDFD]
-Date: Tue, 16 Apr 2019 14:31:44 -0700
-Message-ID: <CALCETrWWoEvnzx6oLTEajBmiArScX5sSt74o2VO+aTiwEi_9mQ@mail.gmail.com>
-References: <20190414201436.19502-1-christian@brauner.io> <dc05ffe3-c2ff-8b3e-d181-e0cc620bf91d@metux.net>
- <20190415195911.z7b7miwsj67ha54y@yavin> <CALCETrWxMnaPvwicqkMLswMynWvJVteazD-bFv3ZnBKWp-1joQ@mail.gmail.com>
- <c783a83a-01a1-9813-e2f7-0516cf7a1c16@metux.net>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH v15 1/3] /proc/pid/status: Add support for architecture
+ specific output
+Date: Tue, 16 Apr 2019 16:01:43 -0700
+Message-ID: <20190416160143.8292ced993dc803aae7fa0da@linux-foundation.org>
+References: <20190416063250.7514-1-aubrey.li@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <c783a83a-01a1-9813-e2f7-0516cf7a1c16@metux.net>
+In-Reply-To: <20190416063250.7514-1-aubrey.li@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Enrico Weigelt, metux IT consult" <lkml@metux.net>
-Cc: Andy Lutomirski <luto@kernel.org>, Aleksa Sarai <cyphar@cyphar.com>, Christian Brauner <christian@brauner.io>, Linus Torvalds <torvalds@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Jann Horn <jannh@google.com>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Joel Fernandes <joel@joelfernandes.org>, Daniel Colascione <dancol@google.com>
+To: Aubrey Li <aubrey.li@linux.intel.com>
+Cc: tglx@linutronix.de, mingo@redhat.com, peterz@infradead.org, hpa@zytor.com, ak@linux.intel.com, tim.c.chen@linux.intel.com, dave.hansen@intel.com, arjan@linux.intel.com, adobriyan@gmail.com, aubrey.li@intel.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 16, 2019 at 11:46 AM Enrico Weigelt, metux IT consult
-<lkml@metux.net> wrote:
->
-> On 15.04.19 22:29, Andy Lutomirski wrote:
->
-> <snip>
->
-> > I would personally *love* it if distros started setting no_new_privs> for basically all processes.
->
-> Maybe a pam module for that would be fine.
-> But this should be configurable per-user, as so many things still rely
-> on suid.
->
-> Actually, I'd like to move all authentication / privilege switching
-> to factotum (login(1), sshd, etc then also could run as unprivileged
-> users).
->
-> > And pidfd actually gets us part of the> way toward a straightforward way to make sudo and su still work in a>
-> no_new_privs world: su could call into a daemon that would spawn the>
-> privileged task, and su would get a (read-only!) pidfd back and then>
-> wait for the fd and exit.
->
-> How exactly would the pidfd improve this scenario ?
-> IMHO, would just need to pass the inherited fd's to that daemon (eg.
-> via unix socket) which then sets them up in the new child process.
->
+On Tue, 16 Apr 2019 14:32:48 +0800 Aubrey Li <aubrey.li@linux.intel.com> wrote:
 
-It makes it easier to wait until the privileged program exits.
-Without pidfd, you can't just wait(2) because the program that gets
-spawned isn't a child.  With pidfd, the daemon can pass the pidfd
-back.  Without pidfd, of course, you can wait by asking the daemon to
-tell you when the program exits, but that's a uglier IMO.
+> The architecture specific information of the running processes could
+> be useful to the userland. Add support to examine process architecture
+> specific information externally.
 
-> > I suppose that, done naively, this might> cause some odd effects with respect to tty handling, but I bet it's>
-> solveable.
->
-> Yes, signals and process groups would be a bit tricky. Some signals
-> could be transmitted in a similar way as ssh does.
->
-> But: how can we handle things like cgroups ?
+The implementation looks just fine to me.  Have you had any feedback on
+the overall desirability of adding this feature?
 
-Find a secure way to tell the daemon what cgroups to use?
+> --- a/fs/proc/array.c
+> +++ b/fs/proc/array.c
+> @@ -96,6 +96,11 @@
+>  #include <asm/processor.h>
+>  #include "internal.h"
+>  
+> +/* Add support for architecture specific output in /proc/pid/status */
+> +#ifndef	arch_proc_pid_status
+> +#define	arch_proc_pid_status(m, task)
+> +#endif
 
+To this I suggest adding
 
---Andy
+/* arch_proc_pid_status() must be defined in asm/processor.h */
+
+Because we've regularly had different architectures defining such things
+in different headers, resulting in a mess.
