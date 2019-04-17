@@ -1,60 +1,55 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [RFC PATCH v1 1/5] fs: Add support for an O_MAYEXEC flag on sys_open()
-Date: Wed, 17 Apr 2019 12:01:03 +0200
-Message-ID: <875zrd7xy8.fsf@oldenburg2.str.redhat.com>
-References: <20181212081712.32347-1-mic@digikod.net> <3452959.b6JmBh7Lnt@x2>
-        <87wojuxj8s.fsf@oldenburg2.str.redhat.com> <2361288.r9sZr2NHLB@x2>
+From: "Li, Aubrey" <aubrey.li@linux.intel.com>
+Subject: Re: [PATCH v15 1/3] /proc/pid/status: Add support for architecture
+ specific output
+Date: Wed, 17 Apr 2019 18:07:17 +0800
+Message-ID: <a3c19a36-9b0b-e48b-6d1f-9f4b654df615@linux.intel.com>
+References: <20190416063250.7514-1-aubrey.li@linux.intel.com>
+ <20190416160143.8292ced993dc803aae7fa0da@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <2361288.r9sZr2NHLB@x2> (Steve Grubb's message of "Tue, 16 Apr
-        2019 11:34:07 -0400")
+In-Reply-To: <20190416160143.8292ced993dc803aae7fa0da@linux-foundation.org>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Steve Grubb <sgrubb@redhat.com>
-Cc: Jan Kara <jack@suse.cz>, =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mic@digikod.net>, linux-kernel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, James Morris <jmorris@namei.org>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mickael.salaun@ssi.gouv.fr>, Mimi Zohar <zohar@linux.ibm.com>, Philippe =?utf-8?Q?Tr=C3=A9buchet?= <philippe.trebuchet@ssi.gouv.fr>, Shuah Khan <shuah@kernel.org>, Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>, Vincent Strubel <vincent.strubel@ssi.gouv.fr>, Yves-Alexis Perez <yves-alexis.perez@ssi.gouv.fr>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vge
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: tglx@linutronix.de, mingo@redhat.com, peterz@infradead.org, hpa@zytor.com, ak@linux.intel.com, tim.c.chen@linux.intel.com, dave.hansen@intel.com, arjan@linux.intel.com, adobriyan@gmail.com, aubrey.li@intel.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-* Steve Grubb:
+On 2019/4/17 7:01, Andrew Morton wrote:
+> On Tue, 16 Apr 2019 14:32:48 +0800 Aubrey Li <aubrey.li@linux.intel.com> wrote:
+> 
+>> The architecture specific information of the running processes could
+>> be useful to the userland. Add support to examine process architecture
+>> specific information externally.
+> 
+> The implementation looks just fine to me.  Have you had any feedback on
+> the overall desirability of adding this feature?
+> 
+This is orientated by the customer's complain. When the customer colocated
+their latency critical tasks with AVX512 tasks, the latency critical tasks
+were affected due to core frequency slowing down by AVX512 use. So we propose
+this interface for the user space tools to identify AVX512 using task and
+apply user space dispatching policy. We may have subsequent effort based on
+this proposal.
 
-> On Tuesday, April 16, 2019 7:49:39 AM EDT Florian Weimer wrote:
->> * Steve Grubb:
->> > This flag that is being proposed means that you would have to patch all
->> > interpreters to use it. If you are sure that upstreams will accept that,
->> > why not just change the policy to interpreters shouldn't execute
->> > anything unless the execute bit is set? That is simpler and doesn't need
->> > a kernel change. And setting the execute bit is an auditable event.
->> 
->> I think we need something like O_MAYEXEC so that security policies can
->> be enforced and noexec mounts can be detected.
->
-> Application whitelisting can already today stop unknown software without 
-> needing O_MAYEXEC.
+>> --- a/fs/proc/array.c
+>> +++ b/fs/proc/array.c
+>> @@ -96,6 +96,11 @@
+>>  #include <asm/processor.h>
+>>  #include "internal.h"
+>>  
+>> +/* Add support for architecture specific output in /proc/pid/status */
+>> +#ifndef	arch_proc_pid_status
+>> +#define	arch_proc_pid_status(m, task)
+>> +#endif
+> 
+> To this I suggest adding
+> 
+> /* arch_proc_pid_status() must be defined in asm/processor.h */
+> 
+> Because we've regularly had different architectures defining such things
+> in different headers, resulting in a mess.
 
-I'm somewhat interested in using this to add a proper check for
-executability to explicit dynamic loader invocations.  In other words,
-this
-
-  /lib64/ld-linux-x86-64.so.2 /path/to/noexec/fs/program
-
-should refuse to run the program if the program is located on a file
-system mounted with the noexec attribute.
-
-> The problem is that passing O_MAYEXEC is opt-in. You can use ptrace/seccomp/
-> bpf/LD_PRELOAD/LD_AUDIT to remove that bit from an otherwise normal program. 
-> This does not require privs to do so.
-
-That doesn't really help with the above.
-
-> But let's consider that this comes to pass and every interpreter is
-> updated and IMA can see the O_MAYEXEC flag. Attackers now simply pivot
-> to running programs via stdin. It never touches disk and therefore
-> nothing enforces security policy. This already is among the most
-> common ways that malware runs today to evade detection.
-
-Are you referring to Windows malware using Powershell?
-
-I'm not sure this is applicable to Linux.  We do not have much
-behavioral monitoring anyway.
-
-Thanks,
-Florian
+Thanks, I'll add it in the next version.
+-Aubrey
