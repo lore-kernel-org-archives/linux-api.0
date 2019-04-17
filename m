@@ -1,47 +1,65 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: RFC: on adding new CLONE_* flags [WAS Re: [PATCH 0/4] clone: add CLONE_PIDFD]
-Date: Wed, 17 Apr 2019 09:46:49 -0700
-Message-ID: <DA79A567-A002-4935-80A3-AB273C750AFD@amacapital.net>
-References: <20190414201436.19502-1-christian@brauner.io> <dc05ffe3-c2ff-8b3e-d181-e0cc620bf91d@metux.net> <20190415195911.z7b7miwsj67ha54y@yavin> <CALCETrWxMnaPvwicqkMLswMynWvJVteazD-bFv3ZnBKWp-1joQ@mail.gmail.com> <87v9zc6cz2.fsf@oldenburg2.str.redhat.com>
-Mime-Version: 1.0 (1.0)
+From: Christian Brauner <christian@brauner.io>
+Subject: Re: [PATCH v1 3/4] signal: support CLONE_PIDFD with pidfd_send_signal
+Date: Wed, 17 Apr 2019 17:36:32 +0200
+Message-ID: <B0F3DFB1-B9B5-478C-89BB-75CBC7719D3B@brauner.io>
+References: <20190416170233.10208-1-christian@brauner.io> <20190416170233.10208-4-christian@brauner.io> <20190417140106.GG32622@redhat.com> <20190417141144.k2kmg7hd7pdpywyw@brauner.io> <20190417152055.GJ32622@redhat.com>
+Mime-Version: 1.0
 Content-Type: text/plain;
-        charset=utf-8
+ charset=utf-8
 Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87v9zc6cz2.fsf@oldenburg2.str.redhat.com>
+In-Reply-To: <20190417152055.GJ32622@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Aleksa Sarai <cyphar@cyphar.com>, "Enrico Weigelt, metux IT consult" <lkml@metux.net>, Christian Brauner <christian@brauner.io>, Linus Torvalds <torvalds@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Jann Horn <jannh@google.com>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Joel Fernandes <joel@joelfernandes.org>, Daniel
+To: Oleg Nesterov <oleg@redhat.com>
+Cc: torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, jannh@google.com, dhowells@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, serge@hallyn.com, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, tglx@linutronix.de, mtk.manpages@gmail.com, akpm@linux-foundation.org, cyphar@cyphar.com, joel@joelfernandes.org, dancol@google.com
 List-Id: linux-api@vger.kernel.org
 
+On April 17, 2019 5:20:55 PM GMT+02:00, Oleg Nesterov <oleg@redhat=2Ecom> w=
+rote:
+>On 04/17, Christian Brauner wrote:
+>>
+>> On Wed, Apr 17, 2019 at 04:01:06PM +0200, Oleg Nesterov wrote:
+>> > On 04/16, Christian Brauner wrote:
+>> > >
+>> > > @@ -3581,12 +3588,12 @@ SYSCALL_DEFINE4(pidfd_send_signal, int,
+>pidfd, int, sig,
+>> > >  	if (flags)
+>> > >  		return -EINVAL;
+>> > >
+>> > > -	f =3D fdget_raw(pidfd);
+>> > > +	f =3D fdget(pidfd);
+>> >
+>> > could you explain this change?
+>> >
+>> > I am just curious, I don't understand why should we disallow O_PATH
+>and how
+>> > this connects to this patch=2E
+>>
+>> Sending a signal through a pidfd is considered to be on a par with a
+>> "write" to that pidfd=2E
+>
+>OK, but how this connects to "support pidfds" ?
+>
+>> Additionally, we use the fops associated with the fd to detect
+>whether
+>> it is actually a pidfd or not=2E This is not possible with O_PATH since
+>> f_ops will be set to dummy fops=2E
+>
+>indeed=2E=2E=2E I didn't know this, thanks!
+>
+>But this means that pidfd_send_signal() will return -EBADF with or
+>without
+>this change; pidfd_to_pid() will return -EBADF even if fdget_raw()
+>suceeds,
+>right?
+>
+>To clarify, I am not arguing=2E I am trying to understand why exactly do
+>we
+>need this s/fdget_raw/fdget/ change and, why it doesn't come as a
+>separate
+>patch=2E Can you add a note into the changelog?
 
+I should split this into a separate patch indeed=2E
+Let me do that for v2=2E
 
-> On Apr 17, 2019, at 5:19 AM, Florian Weimer <fweimer@redhat.com> wrote:
->=20
-> * Andy Lutomirski:
->=20
->> I would personally *love* it if distros started setting no_new_privs
->> for basically all processes.
->=20
-> Wouldn't no_new_privs inhibit all security transitions, including those
-> that reduce privileges?  And therefore effectively reduce security?
-
-In principle, you still can reduce privileges with no_new_privs.  SELinux ha=
-s a whole mechanism for privilege-reducing transitions on exec that works in=
- no_new_privs mode. Also, all the traditional privilege dropping techniques w=
-ork =E2=80=94 setresuid(), unshare(), etc are all unaffected.
-
->=20
->> There seems to be some demand to be able to do large
-> parts of container setup using posix_spawn, so we'll probably add
-> support for things like writing to arbitrary files eventually.  And of
-> course, proper error reporting, so that you can figure out which file
-> creation action failed.
->=20
-
-ISTM the way to handle this is to have a way to make a container, set it up,=
- and then clone/spawn into it.  The current unshare() API is severely awkwar=
-d.
-
-Maybe the new better kernel spawn API shouldn=E2=80=99t support unshare-like=
- semantics at all and should instead work like setns().=
+Christian
