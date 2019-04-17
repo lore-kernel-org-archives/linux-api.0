@@ -1,133 +1,62 @@
-From: Aubrey Li <aubrey.li@linux.intel.com>
-Subject: [PATCH v16 2/3] x86,/proc/pid/status: Add AVX-512 usage elapsed time
-Date: Wed, 17 Apr 2019 18:18:39 +0800
-Message-ID: <20190417101840.2926-2-aubrey.li@linux.intel.com>
-References: <20190417101840.2926-1-aubrey.li@linux.intel.com>
+From: "Enrico Weigelt, metux IT consult" <lkml@metux.net>
+Subject: Re: RFC: on adding new CLONE_* flags [WAS Re: [PATCH 0/4] clone: add
+ CLONE_PIDFD]
+Date: Wed, 17 Apr 2019 14:03:16 +0200
+Message-ID: <e58d1694-c143-3465-512d-43301422bd8b@metux.net>
+References: <20190414201436.19502-1-christian@brauner.io>
+ <dc05ffe3-c2ff-8b3e-d181-e0cc620bf91d@metux.net>
+ <20190415195911.z7b7miwsj67ha54y@yavin>
+ <CALCETrWxMnaPvwicqkMLswMynWvJVteazD-bFv3ZnBKWp-1joQ@mail.gmail.com>
+ <c783a83a-01a1-9813-e2f7-0516cf7a1c16@metux.net>
+ <CALCETrWWoEvnzx6oLTEajBmiArScX5sSt74o2VO+aTiwEi_9mQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190417101840.2926-1-aubrey.li@linux.intel.com>
+In-Reply-To: <CALCETrWWoEvnzx6oLTEajBmiArScX5sSt74o2VO+aTiwEi_9mQ@mail.gmail.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: tglx@linutronix.de, mingo@redhat.com, peterz@infradead.org, hpa@zytor.com
-Cc: ak@linux.intel.com, tim.c.chen@linux.intel.com, dave.hansen@intel.com, arjan@linux.intel.com, adobriyan@gmail.com, akpm@linux-foundation.org, aubrey.li@intel.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Aubrey Li <aubrey.li@linux.intel.com>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Aleksa Sarai <cyphar@cyphar.com>, Christian Brauner <christian@brauner.io>, Linus Torvalds <torvalds@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Jann Horn <jannh@google.com>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Joel Fernandes <joel@joelfernandes.org>, Daniel Colascione <dancol@google.com>
 List-Id: linux-api@vger.kernel.org
 
-AVX-512 components use could cause core turbo frequency drop. So
-it's useful to expose AVX-512 usage elapsed time as a heuristic hint
-for the user space job scheduler to cluster the AVX-512 using tasks
-together.
+On 16.04.19 23:31, Andy Lutomirski wrote:
 
-Tensorflow example:
-$ while [ 1 ]; do cat /proc/tid/status | grep AVX; sleep 1; done
-AVX512_elapsed_ms:      4
-AVX512_elapsed_ms:      8
-AVX512_elapsed_ms:      4
+>> How exactly would the pidfd improve this scenario ?
+>> IMHO, would just need to pass the inherited fd's to that daemon (eg.
+>> via unix socket) which then sets them up in the new child process.
+> 
+> It makes it easier to wait until the privileged program exits.
+> Without pidfd, you can't just wait(2) because the program that gets
+> spawned isn't a child.  
 
-This means that 4 milliseconds have elapsed since the AVX512 usage
-of tensorflow task was detected when the task was scheduled out.
+Ah, that is a cool thing !
+I suppose that also works across namespaces ?
 
-Or:
-$ cat /proc/tid/status | grep AVX512_elapsed_ms
-AVX512_elapsed_ms:      -1
+What other things can be done via pidfd ?
 
-The number '-1' indicates that no AVX512 usage recorded before
-thus the task unlikely has frequency drop issue.
+>> But: how can we handle things like cgroups ?
+> 
+> Find a secure way to tell the daemon what cgroups to use?
 
-User space tools may want to further check by:
+hmm, do we have some fd-handle to cgroups ?
+In that case a process could send a handle of his cgroup to some
+other process (eg. some "login" deamon) allowing him to join in.
 
-$ perf stat --pid <pid> -e core_power.lvl2_turbo_license -- sleep 1
+We could look at cgroups more as kind of capabilities instead of
+limitations (eg. things like: members of cgroup "net-foo1" are
+granted n% of network bandwith, etc). That would open up completely
+new approaches to security and resource control :)
 
- Performance counter stats for process id '3558':
+It could go even further: anybody can create new cgroups within his
+own, narrow down some limits and pass this to some other agent that
+acts on behalf of him and is allowed to use his share of the system
+resources for that.
 
-     3,251,565,961      core_power.lvl2_turbo_license
 
-       1.004031387 seconds time elapsed
+--mtx
 
-Non-zero counter value confirms that the task causes frequency drop.
-
-Signed-off-by: Aubrey Li <aubrey.li@linux.intel.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Andi Kleen <ak@linux.intel.com>
-Cc: Tim Chen <tim.c.chen@linux.intel.com>
-Cc: Dave Hansen <dave.hansen@intel.com>
-Cc: Arjan van de Ven <arjan@linux.intel.com>
-Cc: Linux API <linux-api@vger.kernel.org>
-Cc: Alexey Dobriyan <adobriyan@gmail.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>
----
- arch/x86/include/asm/processor.h |  4 +++
- arch/x86/kernel/fpu/xstate.c     | 42 ++++++++++++++++++++++++++++++++
- 2 files changed, 46 insertions(+)
-
-diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
-index 2bb3a648fc12..5a7271ab78d8 100644
---- a/arch/x86/include/asm/processor.h
-+++ b/arch/x86/include/asm/processor.h
-@@ -991,4 +991,8 @@ enum l1tf_mitigations {
- 
- extern enum l1tf_mitigations l1tf_mitigation;
- 
-+/* Add support for architecture specific output in /proc/pid/status */
-+void arch_proc_pid_status(struct seq_file *m, struct task_struct *task);
-+#define arch_proc_pid_status arch_proc_pid_status
-+
- #endif /* _ASM_X86_PROCESSOR_H */
-diff --git a/arch/x86/kernel/fpu/xstate.c b/arch/x86/kernel/fpu/xstate.c
-index d7432c2b1051..5e55ed9584ab 100644
---- a/arch/x86/kernel/fpu/xstate.c
-+++ b/arch/x86/kernel/fpu/xstate.c
-@@ -7,6 +7,8 @@
- #include <linux/cpu.h>
- #include <linux/mman.h>
- #include <linux/pkeys.h>
-+#include <linux/seq_file.h>
-+#include <linux/proc_fs.h>
- 
- #include <asm/fpu/api.h>
- #include <asm/fpu/internal.h>
-@@ -1243,3 +1245,43 @@ int copy_user_to_xstate(struct xregs_state *xsave, const void __user *ubuf)
- 
- 	return 0;
- }
-+
-+/*
-+ * Report the amount of time elapsed in millisecond since last AVX512
-+ * use in the task.
-+ */
-+static void avx512_status(struct seq_file *m, struct task_struct *task)
-+{
-+	unsigned long timestamp = READ_ONCE(task->thread.fpu.avx512_timestamp);
-+	long delta;
-+
-+	if (!timestamp) {
-+		/*
-+		 * Report -1 if no AVX512 usage
-+		 */
-+		delta = -1;
-+	} else {
-+		delta = (long)(jiffies - timestamp);
-+		/*
-+		 * Cap to LONG_MAX if time difference > LONG_MAX
-+		 */
-+		if (delta < 0)
-+			delta = LONG_MAX;
-+		delta = jiffies_to_msecs(delta);
-+	}
-+
-+	seq_put_decimal_ll(m, "AVX512_elapsed_ms:\t", delta);
-+	seq_putc(m, '\n');
-+}
-+
-+/*
-+ * Report architecture specific information
-+ */
-+void arch_proc_pid_status(struct seq_file *m, struct task_struct *task)
-+{
-+	/*
-+	 * Report AVX512 state if the processor and build option supported.
-+	 */
-+	if (cpu_feature_enabled(X86_FEATURE_AVX512F))
-+		avx512_status(m, task);
-+}
 -- 
-2.21.0
+Enrico Weigelt, metux IT consult
+Free software and Linux embedded engineering
+info@metux.net -- +49-151-27565287
