@@ -1,55 +1,95 @@
-From: Oleg Nesterov <oleg@redhat.com>
-Subject: Re: [PATCH v1 3/4] signal: support CLONE_PIDFD with pidfd_send_signal
-Date: Wed, 17 Apr 2019 17:20:55 +0200
-Message-ID: <20190417152055.GJ32622@redhat.com>
-References: <20190416170233.10208-1-christian@brauner.io>
- <20190416170233.10208-4-christian@brauner.io>
- <20190417140106.GG32622@redhat.com>
- <20190417141144.k2kmg7hd7pdpywyw@brauner.io>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH 1/5] glibc: Perform rseq(2) registration at C startup
+ and thread creation (v8)
+Date: Wed, 17 Apr 2019 11:59:29 -0400 (EDT)
+Message-ID: <364803063.586.1555516769056.JavaMail.zimbra@efficios.com>
+References: <20190416173216.9028-1-mathieu.desnoyers@efficios.com> <20190416173216.9028-2-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190417141144.k2kmg7hd7pdpywyw@brauner.io>
+In-Reply-To: <20190416173216.9028-2-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian@brauner.io>
-Cc: torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, jannh@google.com, dhowells@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, serge@hallyn.com, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, tglx@linutronix.de, mtk.manpages@gmail.com, akpm@linux-foundation.org, cyphar@cyphar.com, joel@joelfernandes.org, dancol@google.com
+To: carlos <carlos@redhat.com>, Will Deacon <will.deacon@arm.com>
+Cc: Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 04/17, Christian Brauner wrote:
->
-> On Wed, Apr 17, 2019 at 04:01:06PM +0200, Oleg Nesterov wrote:
-> > On 04/16, Christian Brauner wrote:
-> > >
-> > > @@ -3581,12 +3588,12 @@ SYSCALL_DEFINE4(pidfd_send_signal, int, pidfd, int, sig,
-> > >  	if (flags)
-> > >  		return -EINVAL;
-> > >
-> > > -	f = fdget_raw(pidfd);
-> > > +	f = fdget(pidfd);
-> >
-> > could you explain this change?
-> >
-> > I am just curious, I don't understand why should we disallow O_PATH and how
-> > this connects to this patch.
->
-> Sending a signal through a pidfd is considered to be on a par with a
-> "write" to that pidfd.
+----- On Apr 16, 2019, at 1:32 PM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
 
-OK, but how this connects to "support pidfds" ?
+[...]
+> diff --git a/sysdeps/unix/sysv/linux/aarch64/bits/rseq.h
+> b/sysdeps/unix/sysv/linux/aarch64/bits/rseq.h
+> new file mode 100644
+> index 0000000000..b02471a89a
+> --- /dev/null
+> +++ b/sysdeps/unix/sysv/linux/aarch64/bits/rseq.h
+> @@ -0,0 +1,32 @@
+> +/* Restartable Sequences Linux aarch64 architecture header.
+> +
+> +   Copyright (C) 2019 Free Software Foundation, Inc.
+> +
+> +   The GNU C Library is free software; you can redistribute it and/or
+> +   modify it under the terms of the GNU Lesser General Public
+> +   License as published by the Free Software Foundation; either
+> +   version 2.1 of the License, or (at your option) any later version.
+> +
+> +   The GNU C Library is distributed in the hope that it will be useful,
+> +   but WITHOUT ANY WARRANTY; without even the implied warranty of
+> +   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+> +   Lesser General Public License for more details.
+> +
+> +   You should have received a copy of the GNU Lesser General Public
+> +   License along with the GNU C Library; if not, see
+> +   <http://www.gnu.org/licenses/>.  */
+> +
+> +#ifndef _SYS_RSEQ_H
+> +# error "Never use <bits/rseq.h> directly; include <sys/rseq.h> instead."
+> +#endif
+> +
+> +/* RSEQ_SIG is a signature required before each abort handler code.
+> +
+> +   It is a 32-bit value that maps to actual architecture code compiled
+> +   into applications and libraries. It needs to be defined for each
+> +   architecture. When choosing this value, it needs to be taken into
+> +   account that generating invalid instructions may have ill effects on
+> +   tools like objdump, and may also have impact on the CPU speculative
+> +   execution efficiency in some cases.  */
+> +
+> +#define RSEQ_SIG 0xd428bc00	/* BRK #0x45E0.  */
 
-> Additionally, we use the fops associated with the fd to detect whether
-> it is actually a pidfd or not. This is not possible with O_PATH since
-> f_ops will be set to dummy fops.
+After further investigation, we should probably do the following
+to handle compiling with -mbig-endian on aarch64, which generates
+binaries with mixed code vs data endianness (little endian code,
+big endian data):
 
-indeed... I didn't know this, thanks!
+#ifdef __ARM_BIG_ENDIAN
+#define RSEQ_SIG 0x00bc28d4	/* BRK #0x45E0.  */
+#else
+#define RSEQ_SIG 0xd428bc00	/* BRK #0x45E0.  */
+#endif
 
-But this means that pidfd_send_signal() will return -EBADF with or without
-this change; pidfd_to_pid() will return -EBADF even if fdget_raw() suceeds,
-right?
+Else mismatch between code endianness for the generated
+signatures and data endianness for the RSEQ_SIG parameter
+passed to the rseq registration will trigger application
+segmentation faults when the kernel try to abort rseq
+critical sections.
 
-To clarify, I am not arguing. I am trying to understand why exactly do we
-need this s/fdget_raw/fdget/ change and, why it doesn't come as a separate
-patch. Can you add a note into the changelog?
+For ARM32, the situation is a bit more complex. Only armv6+
+generates mixed-endianness code vs data with -mbig-endian.
+Prior to armv6, the code and data endianness matches. Therefore,
+I plan to #ifdef the reversed endianness handling with:
 
-Oleg.
+#if __ARM_ARCH >= 6 && __ARM_BIG_ENDIAN
+
+on arm32.
+
+Thoughts ?
+
+Thanks,
+
+Mathieu
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
