@@ -1,65 +1,38 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH v1 3/4] signal: support CLONE_PIDFD with pidfd_send_signal
-Date: Wed, 17 Apr 2019 17:36:32 +0200
-Message-ID: <B0F3DFB1-B9B5-478C-89BB-75CBC7719D3B@brauner.io>
-References: <20190416170233.10208-1-christian@brauner.io> <20190416170233.10208-4-christian@brauner.io> <20190417140106.GG32622@redhat.com> <20190417141144.k2kmg7hd7pdpywyw@brauner.io> <20190417152055.GJ32622@redhat.com>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH v15 1/3] /proc/pid/status: Add support for architecture
+ specific output
+Date: Wed, 17 Apr 2019 12:45:18 -0700
+Message-ID: <CALCETrUjF9PBmkzH1J86vw4ZW785DP7FtcT+gcSrx29=BUnjoQ@mail.gmail.com>
+References: <20190416063250.7514-1-aubrey.li@linux.intel.com> <20190416160143.8292ced993dc803aae7fa0da@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain;
- charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190417152055.GJ32622@redhat.com>
+In-Reply-To: <20190416160143.8292ced993dc803aae7fa0da@linux-foundation.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>
-Cc: torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, jannh@google.com, dhowells@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, serge@hallyn.com, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, tglx@linutronix.de, mtk.manpages@gmail.com, akpm@linux-foundation.org, cyphar@cyphar.com, joel@joelfernandes.org, dancol@google.com
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Aubrey Li <aubrey.li@linux.intel.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, Tim Chen <tim.c.chen@linux.intel.com>, Dave Hansen <dave.hansen@intel.com>, Arjan van de Ven <arjan@linux.intel.com>, Alexey Dobriyan <adobriyan@gmail.com>, aubrey.li@intel.com, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On April 17, 2019 5:20:55 PM GMT+02:00, Oleg Nesterov <oleg@redhat=2Ecom> w=
-rote:
->On 04/17, Christian Brauner wrote:
->>
->> On Wed, Apr 17, 2019 at 04:01:06PM +0200, Oleg Nesterov wrote:
->> > On 04/16, Christian Brauner wrote:
->> > >
->> > > @@ -3581,12 +3588,12 @@ SYSCALL_DEFINE4(pidfd_send_signal, int,
->pidfd, int, sig,
->> > >  	if (flags)
->> > >  		return -EINVAL;
->> > >
->> > > -	f =3D fdget_raw(pidfd);
->> > > +	f =3D fdget(pidfd);
->> >
->> > could you explain this change?
->> >
->> > I am just curious, I don't understand why should we disallow O_PATH
->and how
->> > this connects to this patch=2E
->>
->> Sending a signal through a pidfd is considered to be on a par with a
->> "write" to that pidfd=2E
+On Tue, Apr 16, 2019 at 4:01 PM Andrew Morton <akpm@linux-foundation.org> wrote:
 >
->OK, but how this connects to "support pidfds" ?
+> On Tue, 16 Apr 2019 14:32:48 +0800 Aubrey Li <aubrey.li@linux.intel.com> wrote:
 >
->> Additionally, we use the fops associated with the fd to detect
->whether
->> it is actually a pidfd or not=2E This is not possible with O_PATH since
->> f_ops will be set to dummy fops=2E
+> > The architecture specific information of the running processes could
+> > be useful to the userland. Add support to examine process architecture
+> > specific information externally.
 >
->indeed=2E=2E=2E I didn't know this, thanks!
->
->But this means that pidfd_send_signal() will return -EBADF with or
->without
->this change; pidfd_to_pid() will return -EBADF even if fdget_raw()
->suceeds,
->right?
->
->To clarify, I am not arguing=2E I am trying to understand why exactly do
->we
->need this s/fdget_raw/fdget/ change and, why it doesn't come as a
->separate
->patch=2E Can you add a note into the changelog?
+> The implementation looks just fine to me.  Have you had any feedback on
+> the overall desirability of adding this feature?
 
-I should split this into a separate patch indeed=2E
-Let me do that for v2=2E
+I think I've been the most outspoken, and my not-all-that-strong
+opinion is that I don't really like it.  /proc/PID/status is already a
+bit of a mess, and I don't think we really want it to be a mess that
+is different on different architectures.  Hence my suggestion of
+/proc/PID/x86_status instead.  Or we could do /proc/PID/arch_status, I
+suppose, and make sure that everything in it is namespaced.  (We could
+easily end up with a situation where status fields from more than one
+architecture are present.  Think i386 + x86_64.  Thata's also the case
+where qemu userspace emulation is used to run binaries meant for one
+architecture on a different architecture's kernel.)
 
-Christian
+--Andy
