@@ -1,108 +1,55 @@
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mickael.salaun@ssi.gouv.fr>
-Subject: Re: [RFC PATCH v1 1/5] fs: Add support for an O_MAYEXEC flag on
- sys_open()
-Date: Wed, 17 Apr 2019 17:04:41 +0200
-Message-ID: <7da3a491-232a-5a02-63a2-65aa9df413ea@ssi.gouv.fr>
-References: <20181212081712.32347-1-mic@digikod.net> <3452959.b6JmBh7Lnt@x2>
- <87wojuxj8s.fsf@oldenburg2.str.redhat.com> <2361288.r9sZr2NHLB@x2>
- <875zrd7xy8.fsf@oldenburg2.str.redhat.com>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH v1 3/4] signal: support CLONE_PIDFD with pidfd_send_signal
+Date: Wed, 17 Apr 2019 17:20:55 +0200
+Message-ID: <20190417152055.GJ32622@redhat.com>
+References: <20190416170233.10208-1-christian@brauner.io>
+ <20190416170233.10208-4-christian@brauner.io>
+ <20190417140106.GG32622@redhat.com>
+ <20190417141144.k2kmg7hd7pdpywyw@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <875zrd7xy8.fsf@oldenburg2.str.redhat.com>
-Content-Language: en-GB
+Content-Disposition: inline
+In-Reply-To: <20190417141144.k2kmg7hd7pdpywyw@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>, Steve Grubb <sgrubb@redhat.com>
-Cc: Jan Kara <jack@suse.cz>, =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>, linux-kernel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, James Morris <jmorris@namei.org>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Mimi Zohar <zohar@linux.ibm.com>, =?UTF-8?Q?Philippe_Tr=c3=a9buchet?= <philippe.trebuchet@ssi.gouv.fr>, Shuah Khan <shuah@kernel.org>, Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>, Vincent Strubel <vincent.strubel@ssi.gouv.fr>, Yves-Alexis Perez <yves-alexis.perez@ssi.gouv.fr>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.orgMatt
+To: Christian Brauner <christian@brauner.io>
+Cc: torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, jannh@google.com, dhowells@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, serge@hallyn.com, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, tglx@linutronix.de, mtk.manpages@gmail.com, akpm@linux-foundation.org, cyphar@cyphar.com, joel@joelfernandes.org, dancol@google.com
 List-Id: linux-api@vger.kernel.org
 
-
-On 17/04/2019 12:01, Florian Weimer wrote:
-> * Steve Grubb:
+On 04/17, Christian Brauner wrote:
 >
->> On Tuesday, April 16, 2019 7:49:39 AM EDT Florian Weimer wrote:
->>> * Steve Grubb:
->>>> This flag that is being proposed means that you would have to patch al=
-l
->>>> interpreters to use it. If you are sure that upstreams will accept tha=
-t,
->>>> why not just change the policy to interpreters shouldn't execute
->>>> anything unless the execute bit is set? That is simpler and doesn't ne=
-ed
->>>> a kernel change. And setting the execute bit is an auditable event.
->>>
->>> I think we need something like O_MAYEXEC so that security policies can
->>> be enforced and noexec mounts can be detected.
->>
->> Application whitelisting can already today stop unknown software without
->> needing O_MAYEXEC.
-
-Whitelisting may be a lot of thing (path/TPE, signed binaries=E2=80=A6), bu=
-t
-being able to handle this with a global system configuration (instead of
-app-specific hardcoded configuration) is a good idea. ;)
-
+> On Wed, Apr 17, 2019 at 04:01:06PM +0200, Oleg Nesterov wrote:
+> > On 04/16, Christian Brauner wrote:
+> > >
+> > > @@ -3581,12 +3588,12 @@ SYSCALL_DEFINE4(pidfd_send_signal, int, pidfd, int, sig,
+> > >  	if (flags)
+> > >  		return -EINVAL;
+> > >
+> > > -	f = fdget_raw(pidfd);
+> > > +	f = fdget(pidfd);
+> >
+> > could you explain this change?
+> >
+> > I am just curious, I don't understand why should we disallow O_PATH and how
+> > this connects to this patch.
 >
-> I'm somewhat interested in using this to add a proper check for
-> executability to explicit dynamic loader invocations.  In other words,
-> this
->
->   /lib64/ld-linux-x86-64.so.2 /path/to/noexec/fs/program
->
-> should refuse to run the program if the program is located on a file
-> system mounted with the noexec attribute.
+> Sending a signal through a pidfd is considered to be on a par with a
+> "write" to that pidfd.
 
-What if a sysadmin need to do this on an executable mount point? Being
-able to enforce a security policy according to a configuration may fit
-to much more use cases.
+OK, but how this connects to "support pidfds" ?
 
->
->> The problem is that passing O_MAYEXEC is opt-in. You can use ptrace/secc=
-omp/
->> bpf/LD_PRELOAD/LD_AUDIT to remove that bit from an otherwise normal prog=
-ram.
->> This does not require privs to do so.
->
-> That doesn't really help with the above.
+> Additionally, we use the fops associated with the fd to detect whether
+> it is actually a pidfd or not. This is not possible with O_PATH since
+> f_ops will be set to dummy fops.
 
-Right, ptrace/LD_PRELOAD and so on must be addressed by something else
-than only O_MAYEXEC.
+indeed... I didn't know this, thanks!
 
->
->> But let's consider that this comes to pass and every interpreter is
->> updated and IMA can see the O_MAYEXEC flag. Attackers now simply pivot
->> to running programs via stdin. It never touches disk and therefore
->> nothing enforces security policy. This already is among the most
->> common ways that malware runs today to evade detection.
+But this means that pidfd_send_signal() will return -EBADF with or without
+this change; pidfd_to_pid() will return -EBADF even if fdget_raw() suceeds,
+right?
 
-As my previous reply, use cases like stdin may be restricted as well.
+To clarify, I am not arguing. I am trying to understand why exactly do we
+need this s/fdget_raw/fdget/ change and, why it doesn't come as a separate
+patch. Can you add a note into the changelog?
 
->
-> Are you referring to Windows malware using Powershell?
->
-> I'm not sure this is applicable to Linux.  We do not have much
-> behavioral monitoring anyway.
->
-> Thanks,
-> Florian
->
-
---
-Micka=C3=ABl Sala=C3=BCn
-ANSSI/SDE/ST/LAM
-
-Les donn=C3=A9es =C3=A0 caract=C3=A8re personnel recueillies et trait=C3=A9=
-es dans le cadre de cet =C3=A9change, le sont =C3=A0 seule fin d=E2=80=99ex=
-=C3=A9cution d=E2=80=99une relation professionnelle et s=E2=80=99op=C3=A8re=
-nt dans cette seule finalit=C3=A9 et pour la dur=C3=A9e n=C3=A9cessaire =C3=
-=A0 cette relation. Si vous souhaitez faire usage de vos droits de consulta=
-tion, de rectification et de suppression de vos donn=C3=A9es, veuillez cont=
-acter contact.rgpd@sgdsn.gouv.fr. Si vous avez re=C3=A7u ce message par err=
-eur, nous vous remercions d=E2=80=99en informer l=E2=80=99exp=C3=A9diteur e=
-t de d=C3=A9truire le message. The personal data collected and processed du=
-ring this exchange aims solely at completing a business relationship and is=
- limited to the necessary duration of that relationship. If you wish to use=
- your rights of consultation, rectification and deletion of your data, plea=
-se contact: contact.rgpd@sgdsn.gouv.fr. If you have received this message i=
-n error, we thank you for informing the sender and destroying the message.
+Oleg.
