@@ -1,136 +1,60 @@
-From: Wu Hao <hao.wu@intel.com>
-Subject: Re: [PATCH 15/17] fpga: dfl: fme: add power management support
-Date: Wed, 17 Apr 2019 15:36:54 +0800
-Message-ID: <20190417073654.GB23258@hao-dev>
-References: <1553483264-5379-1-git-send-email-hao.wu@intel.com>
- <1553483264-5379-16-git-send-email-hao.wu@intel.com>
- <CANk1AXTji9qm0Nfbme+2=nR-PNavnv__GwzDRazhH78hYkWN6g@mail.gmail.com>
- <20190412025019.GA27997@hao-dev>
- <CANk1AXRv+2cv1sJTyHD3ajgHVvda7y7t6DVvw47vAnTp4KF0yw@mail.gmail.com>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: [RFC PATCH v1 1/5] fs: Add support for an O_MAYEXEC flag on sys_open()
+Date: Wed, 17 Apr 2019 12:01:03 +0200
+Message-ID: <875zrd7xy8.fsf@oldenburg2.str.redhat.com>
+References: <20181212081712.32347-1-mic@digikod.net> <3452959.b6JmBh7Lnt@x2>
+        <87wojuxj8s.fsf@oldenburg2.str.redhat.com> <2361288.r9sZr2NHLB@x2>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CANk1AXRv+2cv1sJTyHD3ajgHVvda7y7t6DVvw47vAnTp4KF0yw@mail.gmail.com>
+In-Reply-To: <2361288.r9sZr2NHLB@x2> (Steve Grubb's message of "Tue, 16 Apr
+        2019 11:34:07 -0400")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alan Tull <atull@kernel.org>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Luwei Kang <luwei.kang@intel.com>, Xu Yilun <yilun.xu@intel.com>
+To: Steve Grubb <sgrubb@redhat.com>
+Cc: Jan Kara <jack@suse.cz>, =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mic@digikod.net>, linux-kernel@vger.kernel.org, Al Viro <viro@zeniv.linux.org.uk>, James Morris <jmorris@namei.org>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mickael.salaun@ssi.gouv.fr>, Mimi Zohar <zohar@linux.ibm.com>, Philippe =?utf-8?Q?Tr=C3=A9buchet?= <philippe.trebuchet@ssi.gouv.fr>, Shuah Khan <shuah@kernel.org>, Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>, Vincent Strubel <vincent.strubel@ssi.gouv.fr>, Yves-Alexis Perez <yves-alexis.perez@ssi.gouv.fr>, kernel-hardening@lists.openwall.com, linux-api@vger.kernel.org, linux-security-module@vge
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 15, 2019 at 04:17:48PM -0500, Alan Tull wrote:
-> On Thu, Apr 11, 2019 at 10:06 PM Wu Hao <hao.wu@intel.com> wrote:
-> >
-> > On Thu, Apr 11, 2019 at 03:07:35PM -0500, Alan Tull wrote:
-> > > On Sun, Mar 24, 2019 at 10:24 PM Wu Hao <hao.wu@intel.com> wrote:
-> > >
-> > > Hi Hao,
-> > >
-> > > >
-> > > > This patch adds support for power management private feature under
-> > > > FPGA Management Engine (FME), sysfs interfaces are introduced for
-> > > > different power management functions, users could use these sysfs
-> > > > interface to get current number of consumed power, throttling
-> > >
-> > > How about
-> > > s/number/measurement/
-> > > ?
-> >
-> > Sounds better. : )
-> >
-> > >
-> > > > thresholds, threshold status and other information, and configure
-> > > > different value for throttling thresholds too.
-> > > >
-> > > > Signed-off-by: Luwei Kang <luwei.kang@intel.com>
-> > > > Signed-off-by: Xu Yilun <yilun.xu@intel.com>
-> > > > Signed-off-by: Wu Hao <hao.wu@intel.com>
-> > > > ---
-> > > >  Documentation/ABI/testing/sysfs-platform-dfl-fme |  56 +++++
-> > > >  drivers/fpga/dfl-fme-main.c                      | 257 +++++++++++++++++++++++
-> > > >  2 files changed, 313 insertions(+)
-> > > >
-> > > > diff --git a/Documentation/ABI/testing/sysfs-platform-dfl-fme b/Documentation/ABI/testing/sysfs-platform-dfl-fme
-> > > > index d3aeb88..4b6448f 100644
-> > > > --- a/Documentation/ABI/testing/sysfs-platform-dfl-fme
-> > > > +++ b/Documentation/ABI/testing/sysfs-platform-dfl-fme
-> > > > @@ -100,3 +100,59 @@ Description:       Read-only. Read this file to get the policy of temperature
-> > > >                 threshold1. It only supports two value (policy):
-> > > >                     0 - AP2 state (90% throttling)
-> > > >                     1 - AP1 state (50% throttling)
-> > > > +
-> > > > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/consumed
-> > > > +Date:          March 2019
-> > > > +KernelVersion:  5.2
-> > > > +Contact:       Wu Hao <hao.wu@intel.com>
-> > > > +Description:   Read-only. It returns current power consumed by FPGA.
-> > >
-> > > What are the units?
-> > >
-> > > > +
-> > > > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/threshold1
-> > > > +Date:          March 2019
-> > > > +KernelVersion:  5.2
-> > > > +Contact:       Wu Hao <hao.wu@intel.com>
-> > > > +Description:   Read-Write. Read/Write this file to get/set current power
-> > > > +               threshold1 in Watts.
-> > >
-> > > Perhaps document error codes here and for threshold2 below.
-> > >
-> > > > +
-> > > > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/threshold2
-> > > > +Date:          March 2019
-> > > > +KernelVersion:  5.2
-> > > > +Contact:       Wu Hao <hao.wu@intel.com>
-> > > > +Description:   Read-Write. Read/Write this file to get/set current power
-> > > > +               threshold2 in Watts.
-> > > > +
-> > > > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/threshold1_status
-> > > > +Date:          March 2019
-> > > > +KernelVersion:  5.2
-> > > > +Contact:       Wu Hao <hao.wu@intel.com>
-> > > > +Description:   Read-only. It returns 1 if power consumption reaches the
-> > > > +               threshold1, otherwise 0.
-> > >
-> > > I'm used to things like this requiring user to reset the status, so it
-> > > may be worth making it explicit that it will return to zero if
-> > > consumption drops below threshold if that's what's happening here.
-> > > If it's correct, perhaps could just say something like 'returns 1 if
-> > > power consumption is currently at or above threshold1, otherwise 0'
-> > >
-> > > > +
-> > > > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/threshold2_status
-> > > > +Date:          March 2019
-> > > > +KernelVersion:  5.2
-> > > > +Contact:       Wu Hao <hao.wu@intel.com>
-> > > > +Description:   Read-only. It returns 1 if power consumption reaches the
-> > > > +               threshold2, otherwise 0.
-> > >
-> > > Same here.
-> >
-> > Sure, will fix all above comments in this sysfs doc.
-> >
-> > >
-> > > > +
-> > > > +What:          /sys/bus/platform/devices/dfl-fme.0/power_mgmt/ltr
-> > > > +Date:          March 2019
-> > > > +KernelVersion:  5.2
-> > > > +Contact:       Wu Hao <hao.wu@intel.com>
-> > > > +Description:   Read-only. Read this file to get current Latency Tolerance
-> > > > +               Reporting (ltr) value, it's only valid for integrated
-> > > > +               solution as it blocks CPU on low power state.
-> > >
-> > > If we're not on the integrated solution, it returns a value but it is
-> > > not really real?
-> >
-> > Currently only integrated solution is implementing this private feature, other
-> > devices e.g. Intel PAC card is not using this private feature, so user will
-> > not see these sysfs interfaces at all.
-> 
-> OK then perhaps the "it's only valid for integrated solution as it
-> blocks CPU on low power state" explanation doesn't need to be here and
-> can lead to confusion.
-> 
+* Steve Grubb:
 
-Sure, will fix it in the next version. Thanks!
+> On Tuesday, April 16, 2019 7:49:39 AM EDT Florian Weimer wrote:
+>> * Steve Grubb:
+>> > This flag that is being proposed means that you would have to patch all
+>> > interpreters to use it. If you are sure that upstreams will accept that,
+>> > why not just change the policy to interpreters shouldn't execute
+>> > anything unless the execute bit is set? That is simpler and doesn't need
+>> > a kernel change. And setting the execute bit is an auditable event.
+>> 
+>> I think we need something like O_MAYEXEC so that security policies can
+>> be enforced and noexec mounts can be detected.
+>
+> Application whitelisting can already today stop unknown software without 
+> needing O_MAYEXEC.
 
-Hao
+I'm somewhat interested in using this to add a proper check for
+executability to explicit dynamic loader invocations.  In other words,
+this
+
+  /lib64/ld-linux-x86-64.so.2 /path/to/noexec/fs/program
+
+should refuse to run the program if the program is located on a file
+system mounted with the noexec attribute.
+
+> The problem is that passing O_MAYEXEC is opt-in. You can use ptrace/seccomp/
+> bpf/LD_PRELOAD/LD_AUDIT to remove that bit from an otherwise normal program. 
+> This does not require privs to do so.
+
+That doesn't really help with the above.
+
+> But let's consider that this comes to pass and every interpreter is
+> updated and IMA can see the O_MAYEXEC flag. Attackers now simply pivot
+> to running programs via stdin. It never touches disk and therefore
+> nothing enforces security policy. This already is among the most
+> common ways that malware runs today to evade detection.
+
+Are you referring to Windows malware using Powershell?
+
+I'm not sure this is applicable to Linux.  We do not have much
+behavioral monitoring anyway.
+
+Thanks,
+Florian
