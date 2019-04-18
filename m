@@ -1,7 +1,7 @@
 From: Christian Brauner <christian@brauner.io>
-Subject: [PATCH v2 5/5] samples: show race-free pidfd metadata access
-Date: Thu, 18 Apr 2019 12:18:41 +0200
-Message-ID: <20190418101841.4476-6-christian@brauner.io>
+Subject: [PATCH v2 1/5] Make anon_inodes unconditional
+Date: Thu, 18 Apr 2019 12:18:37 +0200
+Message-ID: <20190418101841.4476-2-christian@brauner.io>
 References: <20190418101841.4476-1-christian@brauner.io>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,202 +12,312 @@ To: torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, jannh@google.com, dh
 Cc: serge@hallyn.com, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, tglx@linutronix.de, mtk.manpages@gmail.com, akpm@linux-foundation.org, cyphar@cyphar.com, joel@joelfernandes.org, dancol@google.com, Christian Brauner <christian@brauner.io>
 List-Id: linux-api@vger.kernel.org
 
-This is a sample program showing userspace how to get race-free access to
-process metadata from a pidfd. It is rather easy to do and userspace can
-actually simply reuse code that currently parses a process's status file in
-procfs.
-The program can easily be extended into a generic helper suitable for
-inclusion in a libc to make it even easier for userspace to gain metadata
-access.
+From: David Howells <dhowells@redhat.com>
 
-Since this came up in a discussion since this API is going to be used in
-various service managers. A lot of programs will have a whitelist seccomp
-filter that returns EPERM for all new syscalls. This means that programs
-might get confused if CLONE_PIDFD works but the later pidfd_send_signal()
-syscall doesn't. Hence, here's a ahead of time check that
-pidfd_send_signal() is supported:
+Make the anon_inodes facility unconditional so that it can be used by core
+VFS code and pidfd code.
 
-bool pidfd_send_signal_supported()
-{
-        int procfd = open("/proc/self", O_DIRECTORY | O_RDONLY | O_CLOEXEC);
-        if (procfd < 0)
-                return false;
-
-        /* pidfd_send_signal() should never fail this test. So it must
-         * mean it is not available or blocked by an LSM or seccomp or
-         * other. So * fallback to using pids in this case.
-         */
-        return pidfd_send_signal(procfd, 0, NULL, 0) == 0;
-}
-
+Signed-off-by: David Howells <dhowells@redhat.com>
+Signed-off-by: Al Viro <viro@zeniv.linux.org.uk>
+[christian@brauner.io: adapt commit message to mention pidfds]
 Signed-off-by: Christian Brauner <christian@brauner.io>
-Signed-off-by: Jann Horn <jann@thejh.net>
-Cc: Arnd Bergmann <arnd@arndb.de>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: David Howells <dhowells@redhat.com>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Cc: Andy Lutomirsky <luto@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Oleg Nesterov <oleg@redhat.com>
-Cc: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Al Viro <viro@zeniv.linux.org.uk>
 ---
 /* changelog */
-v1:
-- Christian Brauner <christian@brauner.io>:
-  - adapt sample program to changes in how CLONE_PIDFD returns the pidfd
-    With Oleg's suggestion we can simplify the program even more.
+v1: patch unchanged
 v2: patch unchanged
 ---
- samples/Makefile               |   2 +-
- samples/pidfd/Makefile         |   6 ++
- samples/pidfd/pidfd-metadata.c | 112 +++++++++++++++++++++++++++++++++
- 3 files changed, 119 insertions(+), 1 deletion(-)
- create mode 100644 samples/pidfd/Makefile
- create mode 100644 samples/pidfd/pidfd-metadata.c
+ arch/arm/kvm/Kconfig       |  1 -
+ arch/arm64/kvm/Kconfig     |  1 -
+ arch/mips/kvm/Kconfig      |  1 -
+ arch/powerpc/kvm/Kconfig   |  1 -
+ arch/s390/kvm/Kconfig      |  1 -
+ arch/x86/Kconfig           |  1 -
+ arch/x86/kvm/Kconfig       |  1 -
+ drivers/base/Kconfig       |  1 -
+ drivers/char/tpm/Kconfig   |  1 -
+ drivers/dma-buf/Kconfig    |  1 -
+ drivers/gpio/Kconfig       |  1 -
+ drivers/iio/Kconfig        |  1 -
+ drivers/infiniband/Kconfig |  1 -
+ drivers/vfio/Kconfig       |  1 -
+ fs/Makefile                |  2 +-
+ fs/notify/fanotify/Kconfig |  1 -
+ fs/notify/inotify/Kconfig  |  1 -
+ init/Kconfig               | 10 ----------
+ 18 files changed, 1 insertion(+), 27 deletions(-)
 
-diff --git a/samples/Makefile b/samples/Makefile
-index b1142a958811..fadadb1c3b05 100644
---- a/samples/Makefile
-+++ b/samples/Makefile
-@@ -3,4 +3,4 @@
- obj-$(CONFIG_SAMPLES)	+= kobject/ kprobes/ trace_events/ livepatch/ \
- 			   hw_breakpoint/ kfifo/ kdb/ hidraw/ rpmsg/ seccomp/ \
- 			   configfs/ connector/ v4l/ trace_printk/ \
--			   vfio-mdev/ statx/ qmi/ binderfs/
-+			   vfio-mdev/ statx/ qmi/ binderfs/ pidfd/
-diff --git a/samples/pidfd/Makefile b/samples/pidfd/Makefile
-new file mode 100644
-index 000000000000..0ff97784177a
---- /dev/null
-+++ b/samples/pidfd/Makefile
-@@ -0,0 +1,6 @@
-+# SPDX-License-Identifier: GPL-2.0
-+
-+hostprogs-y := pidfd-metadata
-+always := $(hostprogs-y)
-+HOSTCFLAGS_pidfd-metadata.o += -I$(objtree)/usr/include
-+all: pidfd-metadata
-diff --git a/samples/pidfd/pidfd-metadata.c b/samples/pidfd/pidfd-metadata.c
-new file mode 100644
-index 000000000000..bd8456fc4c0e
---- /dev/null
-+++ b/samples/pidfd/pidfd-metadata.c
-@@ -0,0 +1,112 @@
-+// SPDX-License-Identifier: GPL-2.0
-+
-+#define _GNU_SOURCE
-+#include <err.h>
-+#include <errno.h>
-+#include <fcntl.h>
-+#include <inttypes.h>
-+#include <limits.h>
-+#include <sched.h>
-+#include <signal.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <sys/stat.h>
-+#include <sys/syscall.h>
-+#include <sys/types.h>
-+#include <sys/wait.h>
-+#include <unistd.h>
-+
-+#ifndef CLONE_PIDFD
-+#define CLONE_PIDFD 0x00001000
-+#endif
-+
-+static int do_child(void *args)
-+{
-+	printf("%d\n", getpid());
-+	_exit(EXIT_SUCCESS);
-+}
-+
-+static pid_t pidfd_clone(int flags, int *pidfd)
-+{
-+	size_t stack_size = 1024;
-+	char *stack[1024] = { 0 };
-+
-+#ifdef __ia64__
-+	return __clone2(do_child, stack, stack_size, flags | SIGCHLD, NULL, pidfd);
-+#else
-+	return clone(do_child, stack + stack_size, flags | SIGCHLD, NULL, pidfd);
-+#endif
-+}
-+
-+static inline int sys_pidfd_send_signal(int pidfd, int sig, siginfo_t *info,
-+					unsigned int flags)
-+{
-+	return syscall(__NR_pidfd_send_signal, pidfd, sig, info, flags);
-+}
-+
-+static int pidfd_metadata_fd(pid_t pid, int pidfd)
-+{
-+	int procfd, ret;
-+	char path[100];
-+
-+	snprintf(path, sizeof(path), "/proc/%d", pid);
-+	procfd = open(path, O_DIRECTORY | O_RDONLY | O_CLOEXEC);
-+	if (procfd < 0) {
-+		warn("Failed to open %s\n", path);
-+		return -1;
-+	}
-+
-+	/*
-+	 * Verify that the pid has not been recycled and our /proc/<pid> handle
-+	 * is still valid.
-+	 */
-+	ret = sys_pidfd_send_signal(pidfd, 0, NULL, 0);
-+	if (ret < 0) {
-+		switch (errno) {
-+		case EPERM:
-+			/* Process exists, just not allowed to signal it. */
-+			break;
-+		default:
-+			warn("Failed to signal process\n");
-+			close(procfd);
-+			procfd = -1;
-+		}
-+	}
-+
-+	return procfd;
-+}
-+
-+int main(int argc, char *argv[])
-+{
-+	int ret = EXIT_FAILURE;
-+	char buf[4096] = { 0 };
-+	pid_t pid;
-+	int pidfd, procfd, statusfd;
-+	ssize_t bytes;
-+
-+	pid = pidfd_clone(CLONE_PIDFD, &pidfd);
-+	if (pid < 0)
-+		exit(ret);
-+
-+	procfd = pidfd_metadata_fd(pid, pidfd);
-+	close(pidfd);
-+	if (procfd < 0)
-+		goto out;
-+
-+	statusfd = openat(procfd, "status", O_RDONLY | O_CLOEXEC);
-+	close(procfd);
-+	if (statusfd < 0)
-+		goto out;
-+
-+	bytes = read(statusfd, buf, sizeof(buf));
-+	if (bytes > 0)
-+		bytes = write(STDOUT_FILENO, buf, bytes);
-+	close(statusfd);
-+	ret = EXIT_SUCCESS;
-+
-+out:
-+	(void)wait(NULL);
-+
-+	exit(ret);
-+}
+diff --git a/arch/arm/kvm/Kconfig b/arch/arm/kvm/Kconfig
+index 3f5320f46de2..f591026347a5 100644
+--- a/arch/arm/kvm/Kconfig
++++ b/arch/arm/kvm/Kconfig
+@@ -22,7 +22,6 @@ config KVM
+ 	bool "Kernel-based Virtual Machine (KVM) support"
+ 	depends on MMU && OF
+ 	select PREEMPT_NOTIFIERS
+-	select ANON_INODES
+ 	select ARM_GIC
+ 	select ARM_GIC_V3
+ 	select ARM_GIC_V3_ITS
+diff --git a/arch/arm64/kvm/Kconfig b/arch/arm64/kvm/Kconfig
+index a3f85624313e..a67121d419a2 100644
+--- a/arch/arm64/kvm/Kconfig
++++ b/arch/arm64/kvm/Kconfig
+@@ -23,7 +23,6 @@ config KVM
+ 	depends on OF
+ 	select MMU_NOTIFIER
+ 	select PREEMPT_NOTIFIERS
+-	select ANON_INODES
+ 	select HAVE_KVM_CPU_RELAX_INTERCEPT
+ 	select HAVE_KVM_ARCH_TLB_FLUSH_ALL
+ 	select KVM_MMIO
+diff --git a/arch/mips/kvm/Kconfig b/arch/mips/kvm/Kconfig
+index 4528bc9c3cb1..eac25aef21e0 100644
+--- a/arch/mips/kvm/Kconfig
++++ b/arch/mips/kvm/Kconfig
+@@ -21,7 +21,6 @@ config KVM
+ 	depends on MIPS_FP_SUPPORT
+ 	select EXPORT_UASM
+ 	select PREEMPT_NOTIFIERS
+-	select ANON_INODES
+ 	select KVM_GENERIC_DIRTYLOG_READ_PROTECT
+ 	select HAVE_KVM_VCPU_ASYNC_IOCTL
+ 	select KVM_MMIO
+diff --git a/arch/powerpc/kvm/Kconfig b/arch/powerpc/kvm/Kconfig
+index bfdde04e4905..f53997a8ca62 100644
+--- a/arch/powerpc/kvm/Kconfig
++++ b/arch/powerpc/kvm/Kconfig
+@@ -20,7 +20,6 @@ if VIRTUALIZATION
+ config KVM
+ 	bool
+ 	select PREEMPT_NOTIFIERS
+-	select ANON_INODES
+ 	select HAVE_KVM_EVENTFD
+ 	select HAVE_KVM_VCPU_ASYNC_IOCTL
+ 	select SRCU
+diff --git a/arch/s390/kvm/Kconfig b/arch/s390/kvm/Kconfig
+index 767453faacfc..1816ee48eadd 100644
+--- a/arch/s390/kvm/Kconfig
++++ b/arch/s390/kvm/Kconfig
+@@ -21,7 +21,6 @@ config KVM
+ 	prompt "Kernel-based Virtual Machine (KVM) support"
+ 	depends on HAVE_KVM
+ 	select PREEMPT_NOTIFIERS
+-	select ANON_INODES
+ 	select HAVE_KVM_CPU_RELAX_INTERCEPT
+ 	select HAVE_KVM_VCPU_ASYNC_IOCTL
+ 	select HAVE_KVM_EVENTFD
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 5ad92419be19..7a70fb58b2d0 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -44,7 +44,6 @@ config X86
+ 	#
+ 	select ACPI_LEGACY_TABLES_LOOKUP	if ACPI
+ 	select ACPI_SYSTEM_POWER_STATES_SUPPORT	if ACPI
+-	select ANON_INODES
+ 	select ARCH_32BIT_OFF_T			if X86_32
+ 	select ARCH_CLOCKSOURCE_DATA
+ 	select ARCH_CLOCKSOURCE_INIT
+diff --git a/arch/x86/kvm/Kconfig b/arch/x86/kvm/Kconfig
+index 72fa955f4a15..fc042419e670 100644
+--- a/arch/x86/kvm/Kconfig
++++ b/arch/x86/kvm/Kconfig
+@@ -27,7 +27,6 @@ config KVM
+ 	depends on X86_LOCAL_APIC
+ 	select PREEMPT_NOTIFIERS
+ 	select MMU_NOTIFIER
+-	select ANON_INODES
+ 	select HAVE_KVM_IRQCHIP
+ 	select HAVE_KVM_IRQFD
+ 	select IRQ_BYPASS_MANAGER
+diff --git a/drivers/base/Kconfig b/drivers/base/Kconfig
+index 059700ea3521..03f067da12ee 100644
+--- a/drivers/base/Kconfig
++++ b/drivers/base/Kconfig
+@@ -174,7 +174,6 @@ source "drivers/base/regmap/Kconfig"
+ config DMA_SHARED_BUFFER
+ 	bool
+ 	default n
+-	select ANON_INODES
+ 	select IRQ_WORK
+ 	help
+ 	  This option enables the framework for buffer-sharing between
+diff --git a/drivers/char/tpm/Kconfig b/drivers/char/tpm/Kconfig
+index 536e55d3919f..f3e4bc490cf0 100644
+--- a/drivers/char/tpm/Kconfig
++++ b/drivers/char/tpm/Kconfig
+@@ -157,7 +157,6 @@ config TCG_CRB
+ config TCG_VTPM_PROXY
+ 	tristate "VTPM Proxy Interface"
+ 	depends on TCG_TPM
+-	select ANON_INODES
+ 	---help---
+ 	  This driver proxies for an emulated TPM (vTPM) running in userspace.
+ 	  A device /dev/vtpmx is provided that creates a device pair
+diff --git a/drivers/dma-buf/Kconfig b/drivers/dma-buf/Kconfig
+index 2e5a0faa2cb1..3fc9c2efc583 100644
+--- a/drivers/dma-buf/Kconfig
++++ b/drivers/dma-buf/Kconfig
+@@ -3,7 +3,6 @@ menu "DMABUF options"
+ config SYNC_FILE
+ 	bool "Explicit Synchronization Framework"
+ 	default n
+-	select ANON_INODES
+ 	select DMA_SHARED_BUFFER
+ 	---help---
+ 	  The Sync File Framework adds explicit syncronization via
+diff --git a/drivers/gpio/Kconfig b/drivers/gpio/Kconfig
+index 3f50526a771f..0f91600c27ae 100644
+--- a/drivers/gpio/Kconfig
++++ b/drivers/gpio/Kconfig
+@@ -12,7 +12,6 @@ config ARCH_HAVE_CUSTOM_GPIO_H
+ 
+ menuconfig GPIOLIB
+ 	bool "GPIO Support"
+-	select ANON_INODES
+ 	help
+ 	  This enables GPIO support through the generic GPIO library.
+ 	  You only need to enable this, if you also want to enable
+diff --git a/drivers/iio/Kconfig b/drivers/iio/Kconfig
+index d08aeb41cd07..1dec0fecb6ef 100644
+--- a/drivers/iio/Kconfig
++++ b/drivers/iio/Kconfig
+@@ -4,7 +4,6 @@
+ 
+ menuconfig IIO
+ 	tristate "Industrial I/O support"
+-	select ANON_INODES
+ 	help
+ 	  The industrial I/O subsystem provides a unified framework for
+ 	  drivers for many different types of embedded sensors using a
+diff --git a/drivers/infiniband/Kconfig b/drivers/infiniband/Kconfig
+index a1fb840de45d..d318bab25860 100644
+--- a/drivers/infiniband/Kconfig
++++ b/drivers/infiniband/Kconfig
+@@ -25,7 +25,6 @@ config INFINIBAND_USER_MAD
+ 
+ config INFINIBAND_USER_ACCESS
+ 	tristate "InfiniBand userspace access (verbs and CM)"
+-	select ANON_INODES
+ 	depends on MMU
+ 	---help---
+ 	  Userspace InfiniBand access support.  This enables the
+diff --git a/drivers/vfio/Kconfig b/drivers/vfio/Kconfig
+index 9de5ed38da83..3798d77d131c 100644
+--- a/drivers/vfio/Kconfig
++++ b/drivers/vfio/Kconfig
+@@ -22,7 +22,6 @@ menuconfig VFIO
+ 	tristate "VFIO Non-Privileged userspace driver framework"
+ 	depends on IOMMU_API
+ 	select VFIO_IOMMU_TYPE1 if (X86 || S390 || ARM || ARM64)
+-	select ANON_INODES
+ 	help
+ 	  VFIO provides a framework for secure userspace device drivers.
+ 	  See Documentation/vfio.txt for more details.
+diff --git a/fs/Makefile b/fs/Makefile
+index 427fec226fae..35945f8139e6 100644
+--- a/fs/Makefile
++++ b/fs/Makefile
+@@ -25,7 +25,7 @@ obj-$(CONFIG_PROC_FS) += proc_namespace.o
+ 
+ obj-y				+= notify/
+ obj-$(CONFIG_EPOLL)		+= eventpoll.o
+-obj-$(CONFIG_ANON_INODES)	+= anon_inodes.o
++obj-y				+= anon_inodes.o
+ obj-$(CONFIG_SIGNALFD)		+= signalfd.o
+ obj-$(CONFIG_TIMERFD)		+= timerfd.o
+ obj-$(CONFIG_EVENTFD)		+= eventfd.o
+diff --git a/fs/notify/fanotify/Kconfig b/fs/notify/fanotify/Kconfig
+index 735bfb2e9190..521dc91d2cb5 100644
+--- a/fs/notify/fanotify/Kconfig
++++ b/fs/notify/fanotify/Kconfig
+@@ -1,7 +1,6 @@
+ config FANOTIFY
+ 	bool "Filesystem wide access notification"
+ 	select FSNOTIFY
+-	select ANON_INODES
+ 	select EXPORTFS
+ 	default n
+ 	---help---
+diff --git a/fs/notify/inotify/Kconfig b/fs/notify/inotify/Kconfig
+index b981fc0c8379..0161c74e76e2 100644
+--- a/fs/notify/inotify/Kconfig
++++ b/fs/notify/inotify/Kconfig
+@@ -1,6 +1,5 @@
+ config INOTIFY_USER
+ 	bool "Inotify support for userspace"
+-	select ANON_INODES
+ 	select FSNOTIFY
+ 	default y
+ 	---help---
+diff --git a/init/Kconfig b/init/Kconfig
+index 4592bf7997c0..be8f97e37a76 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1171,9 +1171,6 @@ config LD_DEAD_CODE_DATA_ELIMINATION
+ config SYSCTL
+ 	bool
+ 
+-config ANON_INODES
+-	bool
+-
+ config HAVE_UID16
+ 	bool
+ 
+@@ -1378,14 +1375,12 @@ config HAVE_FUTEX_CMPXCHG
+ config EPOLL
+ 	bool "Enable eventpoll support" if EXPERT
+ 	default y
+-	select ANON_INODES
+ 	help
+ 	  Disabling this option will cause the kernel to be built without
+ 	  support for epoll family of system calls.
+ 
+ config SIGNALFD
+ 	bool "Enable signalfd() system call" if EXPERT
+-	select ANON_INODES
+ 	default y
+ 	help
+ 	  Enable the signalfd() system call that allows to receive signals
+@@ -1395,7 +1390,6 @@ config SIGNALFD
+ 
+ config TIMERFD
+ 	bool "Enable timerfd() system call" if EXPERT
+-	select ANON_INODES
+ 	default y
+ 	help
+ 	  Enable the timerfd() system call that allows to receive timer
+@@ -1405,7 +1399,6 @@ config TIMERFD
+ 
+ config EVENTFD
+ 	bool "Enable eventfd() system call" if EXPERT
+-	select ANON_INODES
+ 	default y
+ 	help
+ 	  Enable the eventfd() system call that allows to receive both
+@@ -1516,7 +1509,6 @@ config KALLSYMS_BASE_RELATIVE
+ # syscall, maps, verifier
+ config BPF_SYSCALL
+ 	bool "Enable bpf() system call"
+-	select ANON_INODES
+ 	select BPF
+ 	select IRQ_WORK
+ 	default n
+@@ -1533,7 +1525,6 @@ config BPF_JIT_ALWAYS_ON
+ 
+ config USERFAULTFD
+ 	bool "Enable userfaultfd() system call"
+-	select ANON_INODES
+ 	depends on MMU
+ 	help
+ 	  Enable the userfaultfd() system call that allows to intercept and
+@@ -1600,7 +1591,6 @@ config PERF_EVENTS
+ 	bool "Kernel performance events and counters"
+ 	default y if PROFILING
+ 	depends on HAVE_PERF_EVENTS
+-	select ANON_INODES
+ 	select IRQ_WORK
+ 	select SRCU
+ 	help
 -- 
 2.21.0
