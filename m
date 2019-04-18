@@ -1,75 +1,37 @@
 From: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
-Subject: Re: [PATCH 1/5] glibc: Perform rseq(2) registration at C startup and
- thread creation (v8)
-Date: Thu, 18 Apr 2019 15:33:13 +0000
-Message-ID: <6cbfea7b-9d83-74a5-9cd2-af56a5d68818@arm.com>
+Subject: Re: [PATCH 2/5] glibc: sched_getcpu(): use rseq cpu_id TLS on Linux
+ (v2)
+Date: Thu, 18 Apr 2019 15:33:33 +0000
+Message-ID: <c9c53d4b-ed9b-f2d9-60b0-e5e805de0324@arm.com>
 References: <20190416173216.9028-1-mathieu.desnoyers@efficios.com>
- <20190416173216.9028-2-mathieu.desnoyers@efficios.com>
- <364803063.586.1555516769056.JavaMail.zimbra@efficios.com>
- <alpine.DEB.2.21.1904171601540.32123@digraph.polyomino.org.uk>
- <1770787324.668.1555530989646.JavaMail.zimbra@efficios.com>
- <1066731871.915.1555593471194.JavaMail.zimbra@efficios.com>
+ <20190416173216.9028-3-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
-Return-path: <libc-alpha-return-101521-glibc-alpha=m.gmane.org@sourceware.org>
+Return-path: <libc-alpha-return-101522-glibc-alpha=m.gmane.org@sourceware.org>
 List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
 List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
 List-Archive: <http://sourceware.org/ml/libc-alpha/>
 List-Post: <mailto:libc-alpha@sourceware.org>
 List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
 Sender: libc-alpha-owner@sourceware.org
-In-Reply-To: <1066731871.915.1555593471194.JavaMail.zimbra@efficios.com>
-Content-ID: <61F9D6381DCE1B42B91EE635199CCA43@eurprd08.prod.outlook.com>
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Joseph Myers <joseph@codesourcery.com>, Will Deacon <Will.Deacon@arm.com>
-Cc: nd <nd@arm.com>, carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
+In-Reply-To: <20190416173216.9028-3-mathieu.desnoyers@efficios.com>
+Content-ID: <8E32C93A8CB8DF46A798F4AD2DCCAD17@eurprd08.prod.outlook.com>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Carlos O'Donell <carlos@redhat.com>
+Cc: nd <nd@arm.com>, Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <Will.Deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-T24gMTgvMDQvMjAxOSAxNDoxNywgTWF0aGlldSBEZXNub3llcnMgd3JvdGU6DQo+IC0tLS0tIE9u
-IEFwciAxNywgMjAxOSwgYXQgMzo1NiBQTSwgTWF0aGlldSBEZXNub3llcnMgbWF0aGlldS5kZXNu
-b3llcnNAZWZmaWNpb3MuY29tIHdyb3RlOg0KPj4gLS0tLS0gT24gQXByIDE3LCAyMDE5LCBhdCAx
-MjoxNyBQTSwgSm9zZXBoIE15ZXJzIGpvc2VwaEBjb2Rlc291cmNlcnkuY29tIHdyb3RlOg0KPj4+
-IE9uIFdlZCwgMTcgQXByIDIwMTksIE1hdGhpZXUgRGVzbm95ZXJzIHdyb3RlOg0KPj4+DQo+Pj4+
-PiArLyogUlNFUV9TSUcgaXMgYSBzaWduYXR1cmUgcmVxdWlyZWQgYmVmb3JlIGVhY2ggYWJvcnQg
-aGFuZGxlciBjb2RlLg0KPj4+Pj4gKw0KPj4+Pj4gKyAgIEl0IGlzIGEgMzItYml0IHZhbHVlIHRo
-YXQgbWFwcyB0byBhY3R1YWwgYXJjaGl0ZWN0dXJlIGNvZGUgY29tcGlsZWQNCj4+Pj4+ICsgICBp
-bnRvIGFwcGxpY2F0aW9ucyBhbmQgbGlicmFyaWVzLiBJdCBuZWVkcyB0byBiZSBkZWZpbmVkIGZv
-ciBlYWNoDQo+Pj4+PiArICAgYXJjaGl0ZWN0dXJlLiBXaGVuIGNob29zaW5nIHRoaXMgdmFsdWUs
-IGl0IG5lZWRzIHRvIGJlIHRha2VuIGludG8NCj4+Pj4+ICsgICBhY2NvdW50IHRoYXQgZ2VuZXJh
-dGluZyBpbnZhbGlkIGluc3RydWN0aW9ucyBtYXkgaGF2ZSBpbGwgZWZmZWN0cyBvbg0KPj4+Pj4g
-KyAgIHRvb2xzIGxpa2Ugb2JqZHVtcCwgYW5kIG1heSBhbHNvIGhhdmUgaW1wYWN0IG9uIHRoZSBD
-UFUgc3BlY3VsYXRpdmUNCj4+Pj4+ICsgICBleGVjdXRpb24gZWZmaWNpZW5jeSBpbiBzb21lIGNh
-c2VzLiAgKi8NCj4+Pj4+ICsNCj4+Pj4+ICsjZGVmaW5lIFJTRVFfU0lHIDB4ZDQyOGJjMDAJLyog
-QlJLICMweDQ1RTAuICAqLw0KPj4+Pg0KPj4+PiBBZnRlciBmdXJ0aGVyIGludmVzdGlnYXRpb24s
-IHdlIHNob3VsZCBwcm9iYWJseSBkbyB0aGUgZm9sbG93aW5nDQo+Pj4+IHRvIGhhbmRsZSBjb21w
-aWxpbmcgd2l0aCAtbWJpZy1lbmRpYW4gb24gYWFyY2g2NCwgd2hpY2ggZ2VuZXJhdGVzDQo+Pj4+
-IGJpbmFyaWVzIHdpdGggbWl4ZWQgY29kZSB2cyBkYXRhIGVuZGlhbm5lc3MgKGxpdHRsZSBlbmRp
-YW4gY29kZSwNCj4+Pj4gYmlnIGVuZGlhbiBkYXRhKToNCj4+Pg0KPj4+IEZpcnN0LCB0aGUgY29t
-bWVudCBvbiBSU0VRX1NJRyBzaG91bGQgc3BlY2lmeSB3aGV0aGVyIGl0IGlzIHRvIGJlDQo+Pj4g
-aW50ZXJwcmV0ZWQgaW4gdGhlIGNvZGUgb3IgdGhlIGRhdGEgZW5kaWFubmVzcy4NCj4+DQo+PiBS
-aWdodC4gVGhlIHNpZ25hdHVyZSBwYXNzZWQgYXMgYXJndW1lbnQgdG8gdGhlIHJzZXEgcmVnaXN0
-cmF0aW9uDQo+PiBzeXN0ZW0gY2FsbCBuZWVkcyB0byBiZSBpbiBkYXRhIGVuZGlhbm5lc3MgKGN1
-cnJlbnRseSBleHBvc2VkIGtlcm5lbA0KPj4gQUJJKS4NCj4+DQo+PiBJZGVhbGx5IGZvciB1c2Vy
-c3BhY2UsIHdlIHdhbnQgdG8gZGVmaW5lIGEgc2lnbmF0dXJlIGluIGNvZGUgZW5kaWFubmVzcw0K
-Pj4gdGhhdCBoYXBwZW5zIHRvIG5pY2VseSBtYXRjaCBzcGVjaWZpYyBjb2RlIHBhdHRlcm5zLg0K
-Li4uDQo+IEZvciBhYXJjaDY0LCBJIHRoaW5rIHdlIGNhbiBzaW1wbHkgZG86DQo+IA0KPiAvKg0K
-PiAgKiBhYXJjaDY0IC1tYmlnLWVuZGlhbiBnZW5lcmF0ZXMgbWl4ZWQgZW5kaWFubmVzcyBjb2Rl
-IHZzIGRhdGE6DQo+ICAqIGxpdHRsZS1lbmRpYW4gY29kZSBhbmQgYmlnLWVuZGlhbiBkYXRhLiBF
-bnN1cmUgdGhlIFJTRVFfU0lHIHNpZ25hdHVyZQ0KPiAgKiBtYXRjaGVzIGNvZGUgZW5kaWFubmVz
-cy4NCj4gICovDQo+ICNkZWZpbmUgUlNFUV9TSUdfQ09ERSAgIDB4ZDQyOGJjMDAgICAgICAvKiBC
-UksgIzB4NDVFMC4gICovDQo+IA0KPiAjaWZkZWYgX19BUk1fQklHX0VORElBTg0KPiAjZGVmaW5l
-IFJTRVFfU0lHX0RBVEEgICAweDAwYmMyOGQ0ICAgICAgLyogQlJLICMweDQ1RTAuICAqLw0KPiAj
-ZWxzZQ0KPiAjZGVmaW5lIFJTRVFfU0lHX0RBVEEgICBSU0VRX1NJR19DT0RFDQo+ICNlbmRpZg0K
-PiANCj4gI2RlZmluZSBSU0VRX1NJRyAgICAgICAgUlNFUV9TSUdfREFUQQ0KPiANCj4gRmVlZGJh
-Y2sgaXMgbW9zdCB3ZWxjb21lLA0KDQpzbyB0aGUgUlNFUV9TSUcgdmFsdWUgaXMgc3VwcG9zZWQg
-dG8gYmUgdXNlZCB3aXRoIC53b3JkDQppbiBhc20gaW5zdGVhZCBvZiAuaW5zdD8NCg0KaSBkb24n
-dCB0aGluayB3ZSB1c2UgX19BUk1fKiBpbiBwdWJsaWMgaGVhZGVycyBjdXJyZW50bHksDQpidXQg
-aG9wZWZ1bGx5IGFhcmNoNjRfYmUgY29tcGlsZXJzIGltcGxlbWVudCBpdC4NCg0Kb3RoZXJ3aXNl
-IHRoaXMgbG9va3Mgb2sgdG8gbWUuDQoNCihpIHRoaW5rIGEgcmFyZSBwYWxpbmRyb21lIGluc3Ry
-dWN0aW9uIHdvdWxkIHdvcmsgdG9vLCBlLmcuDQowYTVmNWYwYSAJYW5kCXcxMCwgdzI0LCB3enIs
-IGxzciAjMjMgLy8gc2hpZnRlZCAwDQoyYTVmNWYyYSAJb3JyCXcxMCwgdzI1LCB3enIsIGxzciAj
-MjMNCmViOWY5ZmViIAluZWdzCXgxMSwgeHpyLCBhc3IgIzM5DQpjODNmM2ZjOCAJc3R4cAl3enIs
-IHg4LCB4MTUsIFt4MzBdICAvLyBzdG9yZSB0byBMUiBpZ25vcmluZyBzdWNjZXNzDQpkOWZmZmZk
-OSAJc3R6MmcJeDI1LCBbeDMwLCAjLTE2XSEgICAgLy8gdjguNSB0YWcremVybyAyIGdyYW51bGVz
-IGFyb3VuZCBMUg0KZXRjLiBpdCBkb2VzIG5vdCBuZWVkIHRvIGJlIGEgZ3VhcmFudGVlZCB0cmFw
-KQ0K
+T24gMTYvMDQvMjAxOSAxODozMiwgTWF0aGlldSBEZXNub3llcnMgd3JvdGU6DQo+IC0tLSBhL3N5
+c2RlcHMvdW5peC9zeXN2L2xpbnV4L3NjaGVkX2dldGNwdS5jDQo+ICsrKyBiL3N5c2RlcHMvdW5p
+eC9zeXN2L2xpbnV4L3NjaGVkX2dldGNwdS5jDQo+IEBAIC0zNywzICszNywyNiBAQCBzY2hlZF9n
+ZXRjcHUgKHZvaWQpDQo+ICAgIHJldHVybiAtMTsNCj4gICNlbmRpZg0KPiAgfQ0KPiArDQo+ICsj
+aWZkZWYgX19OUl9yc2VxDQo+ICsjaW5jbHVkZSA8c3lzL3JzZXEuaD4NCj4gKyNlbmRpZg0KPiAr
+DQo+ICsjaWYgZGVmaW5lZCBfX05SX3JzZXEgJiYgZGVmaW5lZCBSU0VRX1NJRw0KPiArZXh0ZXJu
+IF9fYXR0cmlidXRlX18gKCh0bHNfbW9kZWwgKCJpbml0aWFsLWV4ZWMiKSkpDQo+ICtfX3RocmVh
+ZCB2b2xhdGlsZSBzdHJ1Y3QgcnNlcSBfX3JzZXFfYWJpOw0KDQppJ2QgZXhwZWN0IHN5cy9yc2Vx
+LmggdG8gcHJvdmlkZSB0aGlzIGRlY2xhcmF0aW9uLg0KDQo+ICsNCj4gK2ludA0KPiArc2NoZWRf
+Z2V0Y3B1ICh2b2lkKQ0KPiArew0KPiArICBpbnQgY3B1X2lkID0gX19yc2VxX2FiaS5jcHVfaWQ7
+DQo+ICsNCj4gKyAgcmV0dXJuIGNwdV9pZCA+PSAwID8gY3B1X2lkIDogdnN5c2NhbGxfc2NoZWRf
+Z2V0Y3B1ICgpOw0KPiArfQ0KPiArI2Vsc2UNCj4gK2ludA0KPiArc2NoZWRfZ2V0Y3B1ICh2b2lk
+KQ0KPiArew0KPiArICByZXR1cm4gdnN5c2NhbGxfc2NoZWRfZ2V0Y3B1ICgpOw0KPiArfQ0KPiAr
+I2VuZGlmDQo+IC0tIDIuMTcuMQ0KPiANCg0K
