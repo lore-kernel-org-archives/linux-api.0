@@ -1,106 +1,175 @@
-From: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
-Subject: Re: [PATCH 1/5] glibc: Perform rseq(2) registration at C startup and
- thread creation (v8)
-Date: Thu, 18 Apr 2019 17:37:23 +0000
-Message-ID: <846db7ef-f75e-53b8-3c4c-461ec730a17e@arm.com>
-References: <20190416173216.9028-1-mathieu.desnoyers@efficios.com>
- <364803063.586.1555516769056.JavaMail.zimbra@efficios.com>
- <alpine.DEB.2.21.1904171601540.32123@digraph.polyomino.org.uk>
- <1770787324.668.1555530989646.JavaMail.zimbra@efficios.com>
- <1066731871.915.1555593471194.JavaMail.zimbra@efficios.com>
- <6cbfea7b-9d83-74a5-9cd2-af56a5d68818@arm.com>
- <1055153722.1072.1555602067220.JavaMail.zimbra@efficios.com>
- <79996d13-2ba2-ed7d-b202-e7d38f1fd870@arm.com>
- <604915684.1299.1555607449814.JavaMail.zimbra@efficios.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH 1/5] glibc: Perform rseq(2) registration at C startup
+ and thread creation (v8)
+Date: Thu, 18 Apr 2019 14:17:02 -0400 (EDT)
+Message-ID: <1531569198.1389.1555611422188.JavaMail.zimbra@efficios.com>
+References: <20190416173216.9028-1-mathieu.desnoyers@efficios.com> <1770787324.668.1555530989646.JavaMail.zimbra@efficios.com> <1066731871.915.1555593471194.JavaMail.zimbra@efficios.com> <6cbfea7b-9d83-74a5-9cd2-af56a5d68818@arm.com> <1055153722.1072.1555602067220.JavaMail.zimbra@efficios.com> <79996d13-2ba2-ed7d-b202-e7d38f1fd870@arm.com> <604915684.1299.1555607449814.JavaMail.zimbra@efficios.com> <846db7ef-f75e-53b8-3c4c-461ec730a17e@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <604915684.1299.1555607449814.JavaMail.zimbra@efficios.com>
-Content-Language: en-US
-Content-ID: <A1534BFA2B210749AC977DE102C7AA9B@eurprd08.prod.outlook.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <libc-alpha-return-101537-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+In-Reply-To: <846db7ef-f75e-53b8-3c4c-461ec730a17e@arm.com>
+To: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
 Cc: nd <nd@arm.com>, Joseph Myers <joseph@codesourcery.com>, Will Deacon <Will.Deacon@arm.com>, carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-T24gMTgvMDQvMjAxOSAxODoxMCwgTWF0aGlldSBEZXNub3llcnMgd3JvdGU6DQo+IA0KPiAtLS0t
-LSBPbiBBcHIgMTgsIDIwMTksIGF0IDEyOjA3IFBNLCBTemFib2xjcyBOYWd5IFN6YWJvbGNzLk5h
-Z3lAYXJtLmNvbSB3cm90ZToNCj4gDQo+PiBPbiAxOC8wNC8yMDE5IDE2OjQxLCBNYXRoaWV1IERl
-c25veWVycyB3cm90ZToNCj4+PiAtLS0tLSBPbiBBcHIgMTgsIDIwMTksIGF0IDExOjMzIEFNLCBT
-emFib2xjcyBOYWd5IFN6YWJvbGNzLk5hZ3lAYXJtLmNvbSB3cm90ZToNCj4+Pg0KPj4+PiBPbiAx
-OC8wNC8yMDE5IDE0OjE3LCBNYXRoaWV1IERlc25veWVycyB3cm90ZToNCj4+Pj4+IC0tLS0tIE9u
-IEFwciAxNywgMjAxOSwgYXQgMzo1NiBQTSwgTWF0aGlldSBEZXNub3llcnMNCj4+Pj4+IG1hdGhp
-ZXUuZGVzbm95ZXJzQGVmZmljaW9zLmNvbSB3cm90ZToNCj4+Pj4+PiAtLS0tLSBPbiBBcHIgMTcs
-IDIwMTksIGF0IDEyOjE3IFBNLCBKb3NlcGggTXllcnMgam9zZXBoQGNvZGVzb3VyY2VyeS5jb20g
-d3JvdGU6DQo+Pj4+Pj4+IE9uIFdlZCwgMTcgQXByIDIwMTksIE1hdGhpZXUgRGVzbm95ZXJzIHdy
-b3RlOg0KPj4+Pj4+Pg0KPj4+Pj4+Pj4+ICsvKiBSU0VRX1NJRyBpcyBhIHNpZ25hdHVyZSByZXF1
-aXJlZCBiZWZvcmUgZWFjaCBhYm9ydCBoYW5kbGVyIGNvZGUuDQo+Pj4+Pj4+Pj4gKw0KPj4+Pj4+
-Pj4+ICsgICBJdCBpcyBhIDMyLWJpdCB2YWx1ZSB0aGF0IG1hcHMgdG8gYWN0dWFsIGFyY2hpdGVj
-dHVyZSBjb2RlIGNvbXBpbGVkDQo+Pj4+Pj4+Pj4gKyAgIGludG8gYXBwbGljYXRpb25zIGFuZCBs
-aWJyYXJpZXMuIEl0IG5lZWRzIHRvIGJlIGRlZmluZWQgZm9yIGVhY2gNCj4+Pj4+Pj4+PiArICAg
-YXJjaGl0ZWN0dXJlLiBXaGVuIGNob29zaW5nIHRoaXMgdmFsdWUsIGl0IG5lZWRzIHRvIGJlIHRh
-a2VuIGludG8NCj4+Pj4+Pj4+PiArICAgYWNjb3VudCB0aGF0IGdlbmVyYXRpbmcgaW52YWxpZCBp
-bnN0cnVjdGlvbnMgbWF5IGhhdmUgaWxsIGVmZmVjdHMgb24NCj4+Pj4+Pj4+PiArICAgdG9vbHMg
-bGlrZSBvYmpkdW1wLCBhbmQgbWF5IGFsc28gaGF2ZSBpbXBhY3Qgb24gdGhlIENQVSBzcGVjdWxh
-dGl2ZQ0KPj4+Pj4+Pj4+ICsgICBleGVjdXRpb24gZWZmaWNpZW5jeSBpbiBzb21lIGNhc2VzLiAg
-Ki8NCj4+Pj4+Pj4+PiArDQo+Pj4+Pj4+Pj4gKyNkZWZpbmUgUlNFUV9TSUcgMHhkNDI4YmMwMAkv
-KiBCUksgIzB4NDVFMC4gICovDQo+Pj4+Pj4+Pg0KPj4+Pj4+Pj4gQWZ0ZXIgZnVydGhlciBpbnZl
-c3RpZ2F0aW9uLCB3ZSBzaG91bGQgcHJvYmFibHkgZG8gdGhlIGZvbGxvd2luZw0KPj4+Pj4+Pj4g
-dG8gaGFuZGxlIGNvbXBpbGluZyB3aXRoIC1tYmlnLWVuZGlhbiBvbiBhYXJjaDY0LCB3aGljaCBn
-ZW5lcmF0ZXMNCj4+Pj4+Pj4+IGJpbmFyaWVzIHdpdGggbWl4ZWQgY29kZSB2cyBkYXRhIGVuZGlh
-bm5lc3MgKGxpdHRsZSBlbmRpYW4gY29kZSwNCj4+Pj4+Pj4+IGJpZyBlbmRpYW4gZGF0YSk6DQo+
-Pj4+Pj4+DQo+Pj4+Pj4+IEZpcnN0LCB0aGUgY29tbWVudCBvbiBSU0VRX1NJRyBzaG91bGQgc3Bl
-Y2lmeSB3aGV0aGVyIGl0IGlzIHRvIGJlDQo+Pj4+Pj4+IGludGVycHJldGVkIGluIHRoZSBjb2Rl
-IG9yIHRoZSBkYXRhIGVuZGlhbm5lc3MuDQo+Pj4+Pj4NCj4+Pj4+PiBSaWdodC4gVGhlIHNpZ25h
-dHVyZSBwYXNzZWQgYXMgYXJndW1lbnQgdG8gdGhlIHJzZXEgcmVnaXN0cmF0aW9uDQo+Pj4+Pj4g
-c3lzdGVtIGNhbGwgbmVlZHMgdG8gYmUgaW4gZGF0YSBlbmRpYW5uZXNzIChjdXJyZW50bHkgZXhw
-b3NlZCBrZXJuZWwNCj4+Pj4+PiBBQkkpLg0KPj4+Pj4+DQo+Pj4+Pj4gSWRlYWxseSBmb3IgdXNl
-cnNwYWNlLCB3ZSB3YW50IHRvIGRlZmluZSBhIHNpZ25hdHVyZSBpbiBjb2RlIGVuZGlhbm5lc3MN
-Cj4+Pj4+PiB0aGF0IGhhcHBlbnMgdG8gbmljZWx5IG1hdGNoIHNwZWNpZmljIGNvZGUgcGF0dGVy
-bnMuDQo+Pj4+IC4uLg0KPj4+Pj4gRm9yIGFhcmNoNjQsIEkgdGhpbmsgd2UgY2FuIHNpbXBseSBk
-bzoNCj4+Pj4+DQo+Pj4+PiAvKg0KPj4+Pj4gICogYWFyY2g2NCAtbWJpZy1lbmRpYW4gZ2VuZXJh
-dGVzIG1peGVkIGVuZGlhbm5lc3MgY29kZSB2cyBkYXRhOg0KPj4+Pj4gICogbGl0dGxlLWVuZGlh
-biBjb2RlIGFuZCBiaWctZW5kaWFuIGRhdGEuIEVuc3VyZSB0aGUgUlNFUV9TSUcgc2lnbmF0dXJl
-DQo+Pj4+PiAgKiBtYXRjaGVzIGNvZGUgZW5kaWFubmVzcy4NCj4+Pj4+ICAqLw0KPj4+Pj4gI2Rl
-ZmluZSBSU0VRX1NJR19DT0RFICAgMHhkNDI4YmMwMCAgICAgIC8qIEJSSyAjMHg0NUUwLiAgKi8N
-Cj4+Pj4+DQo+Pj4+PiAjaWZkZWYgX19BUk1fQklHX0VORElBTg0KPj4+Pj4gI2RlZmluZSBSU0VR
-X1NJR19EQVRBICAgMHgwMGJjMjhkNCAgICAgIC8qIEJSSyAjMHg0NUUwLiAgKi8NCj4+Pj4+ICNl
-bHNlDQo+Pj4+PiAjZGVmaW5lIFJTRVFfU0lHX0RBVEEgICBSU0VRX1NJR19DT0RFDQo+Pj4+PiAj
-ZW5kaWYNCj4+Pj4+DQo+Pj4+PiAjZGVmaW5lIFJTRVFfU0lHICAgICAgICBSU0VRX1NJR19EQVRB
-DQo+Pj4+Pg0KPj4+Pj4gRmVlZGJhY2sgaXMgbW9zdCB3ZWxjb21lLA0KPj4+Pg0KPj4+PiBzbyB0
-aGUgUlNFUV9TSUcgdmFsdWUgaXMgc3VwcG9zZWQgdG8gYmUgdXNlZCB3aXRoIC53b3JkDQo+Pj4+
-IGluIGFzbSBpbnN0ZWFkIG9mIC5pbnN0Pw0KPj4+DQo+Pj4gV2Ugd2FudCBhIC5pbnN0IHNvIGl0
-IHRyYW5zbGF0ZXMgaW50byBhIHZhbGlkIHRyYXAgaW5zdHJ1Y3Rpb24uDQo+Pj4gSXQncyBiZXR0
-ZXIgdG8gdHJhcCBpbiBjYXNlIHByb2dyYW0gZXhlY3V0aW9uIHJlYWNoZXMgdGhpcw0KPj4+IGJ5
-IG1pc3Rha2UgKG1ha2VzIGRlYnVnZ2luZyBlYXNpZXIpLg0KPj4NCj4+IHRoYXQgZG9lcyBub3Qg
-bWFrZSBzZW5zZSB0byBtZS4NCj4+DQo+PiAiLmluc3QiIGlzIGFuIGFzbSBkaXJlY3RpdmUgdGhh
-dCByZXF1aXJlcyBhIHRoZSB2YWx1ZSB0bw0KPj4gYmUgdGhlIHNhbWUgb24gQkUgYW5kIExFIChu
-b3JtYWwgaW5zbiBlbmNvZGluZykuDQo+Pg0KPj4gIi53b3JkIiBpcyBhbiBhc20gZGlyZWN0aXZl
-IHRoYXQgcmVxdWlyZXMgdGhlIHZhbHVlIHRvDQo+PiB1c2Ugc3dhcHBlZCBlbmNvZGluZyBvbiBC
-RSAoaWYgaXQncyB1c2VkIGluIHRoZSBpbnN0cnVjdGlvbg0KPj4gc3RyZWFtIGl0IHdpbGwgY3Jl
-YXRlIGEgZGF0YSBtYXBwaW5nIHN5bWJvbCBhbmQgZGlzYXNtIHRvDQo+PiAud29yZCB2YWx1ZSBp
-bnN0ZWFkIG9mIHRoZSBpbnN0cnVjdGlvbiBtbmVtb25pY3MpLg0KPj4NCj4+IHNvIHdoaWNoIG9u
-ZSBpcyBpdD8NCj4gDQo+IFdlIGRlY2xhcmUgdGhlIHNpZ25hdHVyZSB3aXRoICIuaW5zdCIgaW4g
-YXNzZW1ibGVyLg0KPiANCj4gSG93ZXZlciwgd2UgYWxzbyBuZWVkIHRvIHBhc3MgdGhhdCAzMi1i
-aXQgc2lnbmF0dXJlIHZhbHVlIGFzDQo+IGFyZ3VtZW50IHRvIHRoZSByc2VxIHN5c3RlbSBjYWxs
-IHdoZW4gcmVnaXN0ZXJpbmcgcnNlcS4NCj4gDQo+IFRoZSBzaWduYXR1cmUgY29tcGFyaXNvbiBp
-cyBwZXJmb3JtZWQgYnkgdGhlIGtlcm5lbCBiZWZvcmUNCj4gbW92aW5nIHRoZSBpbnN0cnVjdGlv
-biBwb2ludGVyIHRvIHRoZSBhYm9ydCBoYW5kbGVyLiBJdCBjb21wYXJlcw0KPiB0aGUgc2lnbmF0
-dXJlIHJlY2VpdmVkIGFzIHBhcmFtZXRlciBieSBzeXNfcnNlcSAoZGF0YSkgdG8gdGhlDQo+IDQt
-Ynl0ZSBzaWduYXR1cmUgcHJlY2VkaW5nIHRoZSBhYm9ydCBJUC4NCj4gDQo+IE9uIGFhcmNoNjQg
-YmlnIGVuZGlhbiwgQUZBSVUgdGhlIHNpZ25hdHVyZSBpbiB0aGUgY29kZSBpcyBpbg0KPiBsaXR0
-bGUgZW5kaWFuLCBhbmQgdGhlIHNpZ25hdHVyZSB2YWx1ZSBwYXNzZWQgYXMgYXJndW1lbnQgdG8N
-Cj4gdGhlIHJzZXEgc3lzdGVtIGNhbGwgaXMgaW4gYmlnIGVuZGlhbi4gT25lIHdheSB0byBoYW5k
-bGUgdGhpcw0KPiBpcyB0byBzd2FwIHRoZSBieXRlIG9yZGVyIG9mIHRoZSBzaWduYXR1cmUgImRh
-dGEiIHJlcHJlc2VudGF0aW9uDQo+IHBhc3NlZCBhcyBhcmd1bWVudCB0byBzeXNfcnNlcS4NCg0K
-eW91IGhhdmUgdG8gYWRkIGEgZG9jdW1lbnRhdGlvbiBjb21tZW50IHNvbWV3aGVyZQ0KZXhwbGFp
-bmluZyBpZiBSU0VRX1NJRyBpcyB0aGUgdmFsdWUgdGhhdCdzIHBhc3NlZCB0bw0KdGhlIGtlcm5l
-bCBhbmQgdGhlbiBhYXJjaDY0IGFzbSBjb2RlIGhhcyB0byB1c2UNCg0KIC5pbnN0IGVuZGlhbmZp
-eHVwKFJTRVFfU0lHKSAvLyBvcg0KIC53b3JkIFJTRVFfU0lHDQoNCm9yIGlmIFJTRVFfU0lHIGlz
-IHVzZWQgYXMNCg0KIC5pbnN0IFJTRVFfU0lHDQoNCmluIGFhcmNoNjQgYXNtIGFuZCB0aGVuIGVu
-ZGlhbmZpeHVwKFJTRVFfU0lHKSBzaG91bGQNCmJlIHBhc3NlZCB0byB0aGUgc3lzY2FsbC4NCg0K
-ZWl0aGVyIHdheSBpdCBjYW4gYmUgYSBicmsgMHg0NWUwIG9uIGJvdGggTEUgYW5kIEJFLA0KYnV0
-IGluIHRoZSBsYXR0ZXIgY2FzZSB5b3UgaGF2ZSB0byBkb2N1bWVudCB0aGlzIGluDQphcmNoIGlu
-ZGVwZW5kZW50IHdheSwgc2luY2UgdGhlIHN5c2NhbGwgYXBpIG11c3QgYmUNCnBvcnRhYmxlIChp
-IGFzc3VtZSAiUlNFUV9TSUciIGlzIHBhcnQgb2YgdGhlIGFwaSkuDQo=
+----- On Apr 18, 2019, at 1:37 PM, Szabolcs Nagy Szabolcs.Nagy@arm.com wrote:
+
+> On 18/04/2019 18:10, Mathieu Desnoyers wrote:
+>> 
+>> ----- On Apr 18, 2019, at 12:07 PM, Szabolcs Nagy Szabolcs.Nagy@arm.com wrote:
+>> 
+>>> On 18/04/2019 16:41, Mathieu Desnoyers wrote:
+>>>> ----- On Apr 18, 2019, at 11:33 AM, Szabolcs Nagy Szabolcs.Nagy@arm.com wrote:
+>>>>
+>>>>> On 18/04/2019 14:17, Mathieu Desnoyers wrote:
+>>>>>> ----- On Apr 17, 2019, at 3:56 PM, Mathieu Desnoyers
+>>>>>> mathieu.desnoyers@efficios.com wrote:
+>>>>>>> ----- On Apr 17, 2019, at 12:17 PM, Joseph Myers joseph@codesourcery.com wrote:
+>>>>>>>> On Wed, 17 Apr 2019, Mathieu Desnoyers wrote:
+>>>>>>>>
+>>>>>>>>>> +/* RSEQ_SIG is a signature required before each abort handler code.
+>>>>>>>>>> +
+>>>>>>>>>> +   It is a 32-bit value that maps to actual architecture code compiled
+>>>>>>>>>> +   into applications and libraries. It needs to be defined for each
+>>>>>>>>>> +   architecture. When choosing this value, it needs to be taken into
+>>>>>>>>>> +   account that generating invalid instructions may have ill effects on
+>>>>>>>>>> +   tools like objdump, and may also have impact on the CPU speculative
+>>>>>>>>>> +   execution efficiency in some cases.  */
+>>>>>>>>>> +
+>>>>>>>>>> +#define RSEQ_SIG 0xd428bc00	/* BRK #0x45E0.  */
+>>>>>>>>>
+>>>>>>>>> After further investigation, we should probably do the following
+>>>>>>>>> to handle compiling with -mbig-endian on aarch64, which generates
+>>>>>>>>> binaries with mixed code vs data endianness (little endian code,
+>>>>>>>>> big endian data):
+>>>>>>>>
+>>>>>>>> First, the comment on RSEQ_SIG should specify whether it is to be
+>>>>>>>> interpreted in the code or the data endianness.
+>>>>>>>
+>>>>>>> Right. The signature passed as argument to the rseq registration
+>>>>>>> system call needs to be in data endianness (currently exposed kernel
+>>>>>>> ABI).
+>>>>>>>
+>>>>>>> Ideally for userspace, we want to define a signature in code endianness
+>>>>>>> that happens to nicely match specific code patterns.
+>>>>> ...
+>>>>>> For aarch64, I think we can simply do:
+>>>>>>
+>>>>>> /*
+>>>>>>  * aarch64 -mbig-endian generates mixed endianness code vs data:
+>>>>>>  * little-endian code and big-endian data. Ensure the RSEQ_SIG signature
+>>>>>>  * matches code endianness.
+>>>>>>  */
+>>>>>> #define RSEQ_SIG_CODE   0xd428bc00      /* BRK #0x45E0.  */
+>>>>>>
+>>>>>> #ifdef __ARM_BIG_ENDIAN
+>>>>>> #define RSEQ_SIG_DATA   0x00bc28d4      /* BRK #0x45E0.  */
+>>>>>> #else
+>>>>>> #define RSEQ_SIG_DATA   RSEQ_SIG_CODE
+>>>>>> #endif
+>>>>>>
+>>>>>> #define RSEQ_SIG        RSEQ_SIG_DATA
+>>>>>>
+>>>>>> Feedback is most welcome,
+>>>>>
+>>>>> so the RSEQ_SIG value is supposed to be used with .word
+>>>>> in asm instead of .inst?
+>>>>
+>>>> We want a .inst so it translates into a valid trap instruction.
+>>>> It's better to trap in case program execution reaches this
+>>>> by mistake (makes debugging easier).
+>>>
+>>> that does not make sense to me.
+>>>
+>>> ".inst" is an asm directive that requires a the value to
+>>> be the same on BE and LE (normal insn encoding).
+>>>
+>>> ".word" is an asm directive that requires the value to
+>>> use swapped encoding on BE (if it's used in the instruction
+>>> stream it will create a data mapping symbol and disasm to
+>>> .word value instead of the instruction mnemonics).
+>>>
+>>> so which one is it?
+>> 
+>> We declare the signature with ".inst" in assembler.
+>> 
+>> However, we also need to pass that 32-bit signature value as
+>> argument to the rseq system call when registering rseq.
+>> 
+>> The signature comparison is performed by the kernel before
+>> moving the instruction pointer to the abort handler. It compares
+>> the signature received as parameter by sys_rseq (data) to the
+>> 4-byte signature preceding the abort IP.
+>> 
+>> On aarch64 big endian, AFAIU the signature in the code is in
+>> little endian, and the signature value passed as argument to
+>> the rseq system call is in big endian. One way to handle this
+>> is to swap the byte order of the signature "data" representation
+>> passed as argument to sys_rseq.
+> 
+> you have to add a documentation comment somewhere
+> explaining if RSEQ_SIG is the value that's passed to
+> the kernel and then aarch64 asm code has to use
+> 
+> .inst endianfixup(RSEQ_SIG) // or
+> .word RSEQ_SIG
+
+Using ".word" won't allow objdump to show the instruction it
+maps to. It will consider it as data. So .inst is preferred here.
+
+> 
+> or if RSEQ_SIG is used as
+> 
+> .inst RSEQ_SIG
+> 
+> in aarch64 asm and then endianfixup(RSEQ_SIG) should
+> be passed to the syscall.
+
+At this stage, we control the meaning of the definitions we
+publicly expose. They are part of glibc headers, not part of the
+kernel uapi.
+
+On architectures where data and code endianness match, RSEQ_SIG
+can be used both as argument to sys_rseq and as value for
+.inst in assembler.
+
+On architectures where data and code endianness differ, I am
+tempted to declare them separately:
+
+* RSEQ_SIG_CODE: for use with .inst in assembly,
+* RSEQ_SIG_DATA (mapping to RSEQ_SIG): to pass as parameter to sys_rseq.
+
+So those specific architectures would use "RSEQ_SIG_CODE" with
+.inst in assembly, and we can still pass the RSEQ_SIG as parameter
+to sys_rseq in generic rseq registration code.
+
+> either way it can be a brk 0x45e0 on both LE and BE,
+> but in the latter case you have to document this in
+> arch independent way, since the syscall api must be
+> portable (i assume "RSEQ_SIG" is part of the api).
+
+The RSEQ_SIG is defined by glibc bits/rseq.h which is included from
+sys/rseq.h. It's therefore not part of the Linux kernel uapi. So
+we can define whatever we need to at this point, but we won't be
+able to change it after it has been exposed for a given
+architecture.
+
+All the kernel ABI expects is a data-endian value of the signature
+it needs to compare to when it loads the 4 bytes prior to the abort
+ip.
+
+Thanks,
+
+Mathieu
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
