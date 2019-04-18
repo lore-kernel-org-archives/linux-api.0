@@ -1,35 +1,132 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH v2 4/5] signal: support CLONE_PIDFD with pidfd_send_signal
-Date: Thu, 18 Apr 2019 17:01:00 +0200
-Message-ID: <EF6F0B39-1F4A-4A8F-9C64-FB3B1E804C83@brauner.io>
-References: <20190418101841.4476-1-christian@brauner.io> <20190418101841.4476-5-christian@brauner.io> <20190418142559.GA30069@redhat.com>
+From: Masahiro Yamada <yamada.masahiro@socionext.com>
+Subject: Re: [PATCH v2] moduleparam: Save information about built-in modules
+ in separate file
+Date: Fri, 19 Apr 2019 00:26:33 +0900
+Message-ID: <CAK7LNARKHXLgniczKXY01JhxhBpL2p-X_hWg70AcsrXRaLyDSg@mail.gmail.com>
+References: <20190406121447.GB4047@localhost.localdomain> <CAK7LNATfo0K6kzwobkAZ_u2KnWL3XycJzbr3KPtPF=ePziCuDg@mail.gmail.com>
+ <20190418135238.GA5626@linux-8ccs>
 Mime-Version: 1.0
-Content-Type: text/plain;
- charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190418142559.GA30069@redhat.com>
+In-Reply-To: <20190418135238.GA5626@linux-8ccs>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>
-Cc: torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, jannh@google.com, dhowells@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, serge@hallyn.com, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, tglx@linutronix.de, mtk.manpages@gmail.com, akpm@linux-foundation.org, cyphar@cyphar.com, joel@joelfernandes.org, dancol@google.com
+To: Jessica Yu <jeyu@kernel.org>
+Cc: Alexey Gladkov <gladkov.alexey@gmail.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux Kbuild mailing list <linux-kbuild@vger.kernel.org>, linux-api@vger.kernel.org, linux-modules@vger.kernel.org, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>, "Dmitry V. Levin" <ldv@altlinux.org>, Michal Marek <michal.lkml@markovi.net>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Rusty Russell <rusty@rustcorp.com.au>, Lucas De Marchi <lucas.de.marchi@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On April 18, 2019 4:26:00 PM GMT+02:00, Oleg Nesterov <oleg@redhat=2Ecom> w=
-rote:
->On 04/18, Christian Brauner wrote:
->>
->> +static struct pid *pidfd_to_pid(const struct file *file)
->> +{
->> +	if (file->f_op =3D=3D &pidfd_fops)
->> +		return file->private_data;
->> +
->> +	return tgid_pidfd_to_pid(file);
->> +}
+On Thu, Apr 18, 2019 at 10:52 PM Jessica Yu <jeyu@kernel.org> wrote:
 >
->the patch looks obviously fine to me, but I have an absolutely
->off-topic
->question=2E=2E=2E why tgid_pidfd_to_pid() has to check d_is_dir() ?
+> +++ Masahiro Yamada [18/04/19 20:10 +0900]:
+> >On Sat, Apr 6, 2019 at 9:15 PM Alexey Gladkov <gladkov.alexey@gmail.com> wrote:
+> >>
+> >> Problem:
+> >>
+> >> When a kernel module is compiled as a separate module, some important
+> >> information about the kernel module is available via .modinfo section of
+> >> the module.  In contrast, when the kernel module is compiled into the
+> >> kernel, that information is not available.
+> >>
+> >> Information about built-in modules is necessary in the following cases:
+> >>
+> >> 1. When it is necessary to find out what additional parameters can be
+> >> passed to the kernel at boot time.
+> >>
+> >> 2. When you need to know which module names and their aliases are in
+> >> the kernel. This is very useful for creating an initrd image.
+> >>
+> >> Proposal:
+> >>
+> >> The proposed patch does not remove .modinfo section with module
+> >> information from the vmlinux at the build time and saves it into a
+> >> separate file after kernel linking. So, the kernel does not increase in
+> >> size and no additional information remains in it. Information is stored
+> >> in the same format as in the separate modules (null-terminated string
+> >> array). Because the .modinfo section is already exported with a separate
+> >> modules, we are not creating a new API.
+> >>
+> >> It can be easily read in the userspace:
+> >>
+> >> $ tr '\0' '\n' < kernel.builtin
+> >> ext4.softdep=pre: crc32c
+> >> ext4.license=GPL
+> >> ext4.description=Fourth Extended Filesystem
+> >> ext4.author=Remy Card, Stephen Tweedie, Andrew Morton, Andreas Dilger, Theodore Ts'o and others
+> >> ext4.alias=fs-ext4
+> >> ext4.alias=ext3
+> >> ext4.alias=fs-ext3
+> >> ext4.alias=ext2
+> >> ext4.alias=fs-ext2
+> >> md_mod.alias=block-major-9-*
+> >> md_mod.alias=md
+> >> md_mod.description=MD RAID framework
+> >> md_mod.license=GPL
+> >> md_mod.parmtype=create_on_open:bool
+> >> md_mod.parmtype=start_dirty_degraded:int
+> >> ...
+> >>
+> >> v2:
+> >>  * Extract modinfo from vmlinux.o as suggested by Masahiro Yamada;
+> >>  * Rename output file to kernel.builtin;
+> >
+> >Sorry, I do not get why you renamed
+> >"kernel.builtin.modinfo" to "kernel.builtin".
+> >
+> >If you drop "modinfo", we do not understand
+> >what kind information is contained in it.
+> >
+> >I think "kernel" and "builtin" have
+> >a quite similar meaning here.
+> >
+> >How about "builtin.modinfo" for example?
+> >
+> >
+> >It is shorter, and it is clear enough
+> >that it contains module_info.
+>
+> I agree that the name kernel.builtin is unclear in what kind of
+> information it contains. Apologies for not having clarified this in
+> the previous review.
+>
+> Since kbuild already produces "modules.order" and "modules.builtin"
+> files, why not just name it "modules.builtin.modinfo" to keep the
+> names consistent with what is already there?
 
-It doesn't have too; pure paranoia=2E
 
-Christian
+Is it consistent?
+
+If we had "modules.order" and "modules.builtin.order" there,
+I would agree with "modules.builtin.modinfo",
+and also "modules.alias" vs "modules.builtin.alias".
+
+
+We already have "modules.builtin", and probably impossible
+to rename it, so we cannot keep consistency in any way.
+
+
+"modules.builtin" is a weird name since
+it actually contains "order", but its extension
+does not express what kind of information is in it.
+Hence, I doubt "modules.builtin" is a good precedent.
+
+IMHO, "modules" and "builtin" are opposite
+to each other. "modules.builtin" sounds iffy to me.
+
+
+
+
+
+> It clearly conveys that
+> this file contains modinfo for builtin modules.
+>
+> I'll leave it up to Lucas to decide if the file format is OK for kmod.
+> With the modinfo dump, kmod could then decide what to do with the
+> information, append to modules.alias{,.bin}, etc.
+>
+> Also, I think this file needs to be documented in Documentation/kbuild/kbuild.txt.
+>
+> Thanks,
+>
+> Jessica
+--
+Best Regards
+Masahiro Yamada
