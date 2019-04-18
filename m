@@ -1,7 +1,8 @@
 From: Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH v5 13/16] ext4: wire up new fscrypt ioctls
-Date: Thu, 18 Apr 2019 16:29:20 -0700
-Message-ID: <20190418232923.250800-14-ebiggers@kernel.org>
+Subject: [PATCH v5 12/16] fscrypt: require that key be added when
+ setting a v2 encryption policy
+Date: Thu, 18 Apr 2019 16:29:19 -0700
+Message-ID: <20190418232923.250800-13-ebiggers@kernel.org>
 References: <20190418232923.250800-1-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,76 +23,119 @@ List-Id: linux-api@vger.kernel.org
 
 From: Eric Biggers <ebiggers@google.com>
 
-Wire up the new ioctls for adding and removing fscrypt keys to/from the
-filesystem, and the new ioctl for retrieving v2 encryption policies.
+By looking up the master keys in a filesystem-level keyring rather than
+in the calling processes' key hierarchy, it becomes possible for a user
+to set an encryption policy which refers to some key they don't actually
+know, then encrypt their files using that key.  Cryptographically this
+isn't much of a problem, but the semantics of this would be a bit weird.
+Thus, enforce that a v2 encryption policy can only be set if the user
+has previously added the key, or has capable(CAP_FOWNER).
 
-FS_IOC_REMOVE_ENCRYPTION_KEY also required making ext4_drop_inode() call
-fscrypt_drop_inode().
-
-For more details see Documentation/filesystems/fscrypt.rst and the
-fscrypt patches that added the implementation of these ioctls.
+We tolerate that this problem will continue to exist for v1 encryption
+policies, however; there is no way around that.
 
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
- fs/ext4/ioctl.c | 24 ++++++++++++++++++++++++
- fs/ext4/super.c |  3 +++
- 2 files changed, 27 insertions(+)
+ fs/crypto/fscrypt_private.h |  3 +++
+ fs/crypto/keyring.c         | 47 +++++++++++++++++++++++++++++++++++++
+ fs/crypto/policy.c          |  6 +++++
+ 3 files changed, 56 insertions(+)
 
-diff --git a/fs/ext4/ioctl.c b/fs/ext4/ioctl.c
-index bab3da4f1e0d3..3ed66628e9301 100644
---- a/fs/ext4/ioctl.c
-+++ b/fs/ext4/ioctl.c
-@@ -1074,6 +1074,26 @@ long ext4_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 	case EXT4_IOC_GET_ENCRYPTION_POLICY:
- 		return fscrypt_ioctl_get_policy(filp, (void __user *)arg);
+diff --git a/fs/crypto/fscrypt_private.h b/fs/crypto/fscrypt_private.h
+index 5f679ba32cece..a398383ae9e34 100644
+--- a/fs/crypto/fscrypt_private.h
++++ b/fs/crypto/fscrypt_private.h
+@@ -411,6 +411,9 @@ extern struct key *
+ fscrypt_find_master_key(struct super_block *sb,
+ 			const struct fscrypt_key_specifier *mk_spec);
  
-+	case FS_IOC_GET_ENCRYPTION_POLICY_EX:
-+		if (!ext4_has_feature_encrypt(sb))
-+			return -EOPNOTSUPP;
-+		return fscrypt_ioctl_get_policy_ex(filp, (void __user *)arg);
++extern int fscrypt_verify_key_added(struct super_block *sb,
++				    const u8 identifier[FSCRYPT_KEY_IDENTIFIER_SIZE]);
 +
-+	case FS_IOC_ADD_ENCRYPTION_KEY:
-+		if (!ext4_has_feature_encrypt(sb))
-+			return -EOPNOTSUPP;
-+		return fscrypt_ioctl_add_key(filp, (void __user *)arg);
-+
-+	case FS_IOC_REMOVE_ENCRYPTION_KEY:
-+		if (!ext4_has_feature_encrypt(sb))
-+			return -EOPNOTSUPP;
-+		return fscrypt_ioctl_remove_key(filp, (const void __user *)arg);
-+
-+	case FS_IOC_GET_ENCRYPTION_KEY_STATUS:
-+		if (!ext4_has_feature_encrypt(sb))
-+			return -EOPNOTSUPP;
-+		return fscrypt_ioctl_get_key_status(filp, (void __user *)arg);
-+
- 	case EXT4_IOC_FSGETXATTR:
- 	{
- 		struct fsxattr fa;
-@@ -1192,6 +1212,10 @@ long ext4_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
- 	case EXT4_IOC_SET_ENCRYPTION_POLICY:
- 	case EXT4_IOC_GET_ENCRYPTION_PWSALT:
- 	case EXT4_IOC_GET_ENCRYPTION_POLICY:
-+	case FS_IOC_GET_ENCRYPTION_POLICY_EX:
-+	case FS_IOC_ADD_ENCRYPTION_KEY:
-+	case FS_IOC_REMOVE_ENCRYPTION_KEY:
-+	case FS_IOC_GET_ENCRYPTION_KEY_STATUS:
- 	case EXT4_IOC_SHUTDOWN:
- 	case FS_IOC_GETFSMAP:
- 		break;
-diff --git a/fs/ext4/super.c b/fs/ext4/super.c
-index 5b92054bf8ea0..6640831f77735 100644
---- a/fs/ext4/super.c
-+++ b/fs/ext4/super.c
-@@ -1103,6 +1103,9 @@ static int ext4_drop_inode(struct inode *inode)
- {
- 	int drop = generic_drop_inode(inode);
+ extern int __init fscrypt_init_keyring(void);
+ extern void fscrypt_exit_keyring(void);
  
-+	if (!drop)
-+		drop = fscrypt_drop_inode(inode);
-+
- 	trace_ext4_drop_inode(inode, drop);
- 	return drop;
+diff --git a/fs/crypto/keyring.c b/fs/crypto/keyring.c
+index 4809ed061b332..73758c649f620 100644
+--- a/fs/crypto/keyring.c
++++ b/fs/crypto/keyring.c
+@@ -562,6 +562,53 @@ int fscrypt_ioctl_add_key(struct file *filp, void __user *_uarg)
  }
+ EXPORT_SYMBOL_GPL(fscrypt_ioctl_add_key);
+ 
++/*
++ * Verify that the current user has added a master key with the given identifier
++ * (returns -ENOKEY if not).  This is needed to prevent a user from encrypting
++ * their files using some other user's key which they don't actually know.
++ * Cryptographically this isn't much of a problem, but the semantics of this
++ * would be a bit weird, so it's best to just forbid it.
++ *
++ * The system administrator (CAP_FOWNER) can override this, which should be
++ * enough for any use cases where encryption policies are being set using keys
++ * that were chosen ahead of time but aren't available at the moment.
++ *
++ * Note that the key may have already removed by the time this returns, but
++ * that's okay; we just care whether the key was there at some point.
++ *
++ * Return: 0 if the key is added, -ENOKEY if it isn't, or another -errno code
++ */
++int fscrypt_verify_key_added(struct super_block *sb,
++			     const u8 identifier[FSCRYPT_KEY_IDENTIFIER_SIZE])
++{
++	struct fscrypt_key_specifier mk_spec;
++	struct key *key, *mk_user;
++	struct fscrypt_master_key *mk;
++	int err;
++
++	mk_spec.type = FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER;
++	memcpy(mk_spec.u.identifier, identifier, FSCRYPT_KEY_IDENTIFIER_SIZE);
++
++	key = fscrypt_find_master_key(sb, &mk_spec);
++	if (IS_ERR(key)) {
++		err = PTR_ERR(key);
++		goto out;
++	}
++	mk = key->payload.data[0];
++	mk_user = find_master_key_user(mk);
++	if (IS_ERR(mk_user)) {
++		err = PTR_ERR(mk_user);
++	} else {
++		key_put(mk_user);
++		err = 0;
++	}
++	key_put(key);
++out:
++	if (err == -ENOKEY && capable(CAP_FOWNER))
++		err = 0;
++	return err;
++}
++
+ static void shrink_dcache_inode(struct inode *inode)
+ {
+ 	struct dentry *dentry;
+diff --git a/fs/crypto/policy.c b/fs/crypto/policy.c
+index b42e9e3ce8d0f..839ce67581812 100644
+--- a/fs/crypto/policy.c
++++ b/fs/crypto/policy.c
+@@ -211,6 +211,7 @@ static int set_encryption_policy(struct inode *inode,
+ {
+ 	union fscrypt_context ctx;
+ 	int ctxsize;
++	int err;
+ 
+ 	if (!fscrypt_supported_policy(policy))
+ 		return -EINVAL;
+@@ -229,6 +230,11 @@ static int set_encryption_policy(struct inode *inode,
+ 		 */
+ 		pr_warn_once("%s (pid %d) is setting deprecated v1 encryption policy; recommend upgrading to v2.\n",
+ 			     current->comm, current->pid);
++	} else {
++		err = fscrypt_verify_key_added(inode->i_sb,
++					       policy->v2.master_key_identifier);
++		if (err)
++			return err;
+ 	}
+ 
+ 	ctxsize = fscrypt_new_context_from_policy(&ctx, policy);
 -- 
 2.21.0.392.gf8f6787159e-goog
