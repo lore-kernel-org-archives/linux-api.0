@@ -1,70 +1,55 @@
-From: Daniel Axtens <dja@axtens.net>
-Subject: Re: [PATCH V32 01/27] Add the ability to lock down access to the running kernel image
-Date: Thu, 18 Apr 2019 16:38:54 +1000
-Message-ID: <87zhonyg01.fsf@dja-thinkpad.axtens.net>
-References: <20190404003249.14356-1-matthewgarrett@google.com> <20190404003249.14356-2-matthewgarrett@google.com> <059c523e-926c-24ee-0935-198031712145@au1.ibm.com>
+From: Christian Brauner <christian@brauner.io>
+Subject: Re: [PATCH v1 2/4] clone: add CLONE_PIDFD
+Date: Thu, 18 Apr 2019 11:36:30 +0200
+Message-ID: <20190418093629.6fshxhambc2zzjdk@brauner.io>
+References: <20190416170233.10208-1-christian@brauner.io>
+ <20190416170233.10208-3-christian@brauner.io>
+ <20190417142253.GH32622@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <059c523e-926c-24ee-0935-198031712145@au1.ibm.com>
+Content-Disposition: inline
+In-Reply-To: <20190417142253.GH32622@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Donnellan <andrew.donnellan@au1.ibm.com>, Matthew Garrett <matthewgarrett@google.com>, jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-api@vger.kernel.org, luto@kernel.org, linuxppc-dev <linuxppc-dev@lists.ozlabs.org>, Michael Ellerman <mpe@ellerman.id.au>, cmr <cmr@informatik.wtf>
+To: Oleg Nesterov <oleg@redhat.com>
+Cc: torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, jannh@google.com, dhowells@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, serge@hallyn.com, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, tglx@linutronix.de, mtk.manpages@gmail.com, akpm@linux-foundation.org, cyphar@cyphar.com, joel@joelfernandes.org, dancol@google.com
 List-Id: linux-api@vger.kernel.org
 
-Hi Andrew,
+On Wed, Apr 17, 2019 at 04:22:54PM +0200, Oleg Nesterov wrote:
+> On 04/16, Christian Brauner wrote:
+> >
+> > +	if (clone_flags & CLONE_PIDFD) {
+> > +		retval = pidfd_create(pid, &pidfdf);
+> > +		if (retval < 0)
+> > +			goto bad_fork_free_pid;
+> > +		pidfd = retval;
+> > +	}
+> 
+> ...
+> 
+> > +	if (clone_flags & CLONE_PIDFD) {
+> > +		fd_install(pidfd, pidfdf);
+> > +		put_user(pidfd, parent_tidptr);
+> 
+> put_user() can fail, I don't think this error should be silently ignored,
+> this can lead to the hard-to-trigger/debug problems.
+> 
+> Why can't we do put_user-with-check along with pidfd_create() above?
 
->> +		If CONFIG_LOCK_DOWN_KERNEL is enabled, the kernel can be
->> +		moved to a more locked down state at runtime by writing to
->> +		this attribute. Valid values are:
->> +
->> +		integrity:
->> +			The kernel will disable functionality that allows
->> +			userland to modify the running kernel image, other
->> +			than through the loading or execution of appropriately
->> +			signed objects.
->> +
->> +		confidentiality:
->> +			The kernel will disable all functionality disabled by
->> +			the integrity mode, but additionally will disable
->> +			features that potentially permit userland to obtain
->> +			confidential information stored within the kernel.
->
-> [+ linuxppc, mpe, dja, cmr]
->
-> I'm thinking about whether we should lock down the powerpc xmon debug 
-> monitor - intuitively, I think the answer is yes if for no other reason 
-> than Least Astonishment, when lockdown is enabled you probably don't 
-> expect xmon to keep letting you access kernel memory.
->
-> Semantically though, xmon is not a userspace process - it's in kernel 
-> and reads debug commands/outputs debug data directly from/to the 
-> console. Is that a threat vector that this series cares about?
+I've moved put_user() right were pidfd_create() is called but I think
+then it makes sense to change pidfd_create() to also do the fd_install()
+such that the following sequence creates the pidfd, installs it, and
+calls put_user() and calls ksys_close() on error. Any objections Oleg?
 
-I guess there are 2 ways you could think about lockdown:
++       if (clone_flags & CLONE_PIDFD) {
++               retval = pidfd_create(pid);
++               if (retval < 0)
++                       goto bad_fork_free_pid;
++
++               pidfd = retval;
++               retval = put_user(pidfd, parent_tidptr);
++               if (retval)
++                       goto bad_fork_put_pidfd;
++       }
 
- - It adds a security boundary between the kernel and UID 0, so that
-   userland cannot compromise the integrity/confidentiality of the
-   locked down kernel.
-
- - It is a bundle of related security boundaries so that the
-   integrity/confidentiality of a running, locked down kernel cannot be
-   compromised, even by a privileged, physically present user.
-
-You're right that techincally xmon is in the kernel and on the console
-rather than in userland, so it doesn't fall within the first concept of
-lockdown. But I think usecases for lockdown tend to expect something
-more like the second concept.
-
-IOW, lockdown is a trapdoor - once you've locked down a kernel, you
-can't get out of lockdown (except by rebooting). xmon would allow you to
-get out of the trapdoor, so I think it should be restricted by lockdown.
-
-Regards,
-Daniel
-
->
->
-> -- 
-> Andrew Donnellan              OzLabs, ADL Canberra
-> andrew.donnellan@au1.ibm.com  IBM Australia Limited
+Christian
