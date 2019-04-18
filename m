@@ -1,102 +1,50 @@
-From: Jessica Yu <jeyu@kernel.org>
-Subject: Re: [PATCH v2] moduleparam: Save information about built-in modules
- in separate file
-Date: Thu, 18 Apr 2019 15:52:38 +0200
-Message-ID: <20190418135238.GA5626@linux-8ccs>
-References: <20190406121447.GB4047@localhost.localdomain>
- <CAK7LNATfo0K6kzwobkAZ_u2KnWL3XycJzbr3KPtPF=ePziCuDg@mail.gmail.com>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH v2 2/5] clone: add CLONE_PIDFD
+Date: Thu, 18 Apr 2019 16:10:20 +0200
+Message-ID: <20190418141019.GD13701@redhat.com>
+References: <20190418101841.4476-1-christian@brauner.io>
+ <20190418101841.4476-3-christian@brauner.io>
+ <20190418131206.GB13701@redhat.com>
+ <20190418132822.untjt7erfvbbiz7a@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAK7LNATfo0K6kzwobkAZ_u2KnWL3XycJzbr3KPtPF=ePziCuDg@mail.gmail.com>
+In-Reply-To: <20190418132822.untjt7erfvbbiz7a@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Masahiro Yamada <yamada.masahiro@socionext.com>
-Cc: Alexey Gladkov <gladkov.alexey@gmail.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux Kbuild mailing list <linux-kbuild@vger.kernel.org>, linux-api@vger.kernel.org, linux-modules@vger.kernel.org, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>, "Dmitry V. Levin" <ldv@altlinux.org>, Michal Marek <michal.lkml@markovi.net>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Rusty Russell <rusty@rustcorp.com.au>, Lucas De Marchi <lucas.de.marchi@gmail.com>
+To: Christian Brauner <christian@brauner.io>
+Cc: torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, jannh@google.com, dhowells@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, serge@hallyn.com, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, tglx@linutronix.de, mtk.manpages@gmail.com, akpm@linux-foundation.org, cyphar@cyphar.com, joel@joelfernandes.org, dancol@google.com
 List-Id: linux-api@vger.kernel.org
 
-+++ Masahiro Yamada [18/04/19 20:10 +0900]:
->On Sat, Apr 6, 2019 at 9:15 PM Alexey Gladkov <gladkov.alexey@gmail.com> wrote:
->>
->> Problem:
->>
->> When a kernel module is compiled as a separate module, some important
->> information about the kernel module is available via .modinfo section of
->> the module.  In contrast, when the kernel module is compiled into the
->> kernel, that information is not available.
->>
->> Information about built-in modules is necessary in the following cases:
->>
->> 1. When it is necessary to find out what additional parameters can be
->> passed to the kernel at boot time.
->>
->> 2. When you need to know which module names and their aliases are in
->> the kernel. This is very useful for creating an initrd image.
->>
->> Proposal:
->>
->> The proposed patch does not remove .modinfo section with module
->> information from the vmlinux at the build time and saves it into a
->> separate file after kernel linking. So, the kernel does not increase in
->> size and no additional information remains in it. Information is stored
->> in the same format as in the separate modules (null-terminated string
->> array). Because the .modinfo section is already exported with a separate
->> modules, we are not creating a new API.
->>
->> It can be easily read in the userspace:
->>
->> $ tr '\0' '\n' < kernel.builtin
->> ext4.softdep=pre: crc32c
->> ext4.license=GPL
->> ext4.description=Fourth Extended Filesystem
->> ext4.author=Remy Card, Stephen Tweedie, Andrew Morton, Andreas Dilger, Theodore Ts'o and others
->> ext4.alias=fs-ext4
->> ext4.alias=ext3
->> ext4.alias=fs-ext3
->> ext4.alias=ext2
->> ext4.alias=fs-ext2
->> md_mod.alias=block-major-9-*
->> md_mod.alias=md
->> md_mod.description=MD RAID framework
->> md_mod.license=GPL
->> md_mod.parmtype=create_on_open:bool
->> md_mod.parmtype=start_dirty_degraded:int
->> ...
->>
->> v2:
->>  * Extract modinfo from vmlinux.o as suggested by Masahiro Yamada;
->>  * Rename output file to kernel.builtin;
+On 04/18, Christian Brauner wrote:
 >
->Sorry, I do not get why you renamed
->"kernel.builtin.modinfo" to "kernel.builtin".
+> On Thu, Apr 18, 2019 at 03:12:07PM +0200, Oleg Nesterov wrote:
+> > Should we allow CLONE_THREAD | CLONE_PIDFD ?
 >
->If you drop "modinfo", we do not understand
->what kind information is contained in it.
->
->I think "kernel" and "builtin" have
->a quite similar meaning here.
->
->How about "builtin.modinfo" for example?
->
->
->It is shorter, and it is clear enough
->that it contains module_info.
+> I think so, yes. I have thought about this.
 
-I agree that the name kernel.builtin is unclear in what kind of
-information it contains. Apologies for not having clarified this in
-the previous review.
+OK, I won't insist. But let me explain why did I ask.
 
-Since kbuild already produces "modules.order" and "modules.builtin"
-files, why not just name it "modules.builtin.modinfo" to keep the
-names consistent with what is already there? It clearly conveys that
-this file contains modinfo for builtin modules.
+> Yes, due to CLONE_FILES |
+> CLONE_VM you'd necessarily hand the pidfd to the child but threads are
+> no security boundary in the first place.
 
-I'll leave it up to Lucas to decide if the file format is OK for kmod.
-With the modinfo dump, kmod could then decide what to do with the
-information, append to modules.alias{,.bin}, etc.
+No, no, I am not not worried about security. CLONE_PARENT | CLONE_PIDFD
+looks more problematic to me, but I see nothing dangerous security-wise..
 
-Also, I think this file needs to be documented in Documentation/kbuild/kbuild.txt.
+I agree that CLONE_THREAD | CLONE_PIDFD may be usefule, but I am not sure
+we should allow this from the very begining, until we have a "real" use-case.
 
-Thanks,
+IIUC, we are going to make it pollable soon. OK, but proc_tgid_base_poll()
+(which should be turned into pidfd_poll) simply can't work if pid_task() is
+not a group leader. poll(pidfd) will hang forever if pidfd was created by
+CLONE_THREAD | CLONE_PIDFD.
 
-Jessica
+Sure, we can (should?) improve pidfd_poll() but this will need more nasty
+changes in the core kernel code. Do we really need/want this? Right now it
+is not clear to me. Instead, we can simply disallow CLONE_THREAD|CLONE_PIDFD
+until we decide that yes, we want to poll sub-threads.
+
+But again, I am fine with CLONE_THREAD | CLONE_PIDFD.
+
+Oleg.
