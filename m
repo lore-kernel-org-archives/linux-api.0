@@ -1,107 +1,102 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH v2 2/5] clone: add CLONE_PIDFD
-Date: Thu, 18 Apr 2019 15:28:23 +0200
-Message-ID: <20190418132822.untjt7erfvbbiz7a@brauner.io>
-References: <20190418101841.4476-1-christian@brauner.io>
- <20190418101841.4476-3-christian@brauner.io>
- <20190418131206.GB13701@redhat.com>
+From: Jessica Yu <jeyu@kernel.org>
+Subject: Re: [PATCH v2] moduleparam: Save information about built-in modules
+ in separate file
+Date: Thu, 18 Apr 2019 15:52:38 +0200
+Message-ID: <20190418135238.GA5626@linux-8ccs>
+References: <20190406121447.GB4047@localhost.localdomain>
+ <CAK7LNATfo0K6kzwobkAZ_u2KnWL3XycJzbr3KPtPF=ePziCuDg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190418131206.GB13701@redhat.com>
+In-Reply-To: <CAK7LNATfo0K6kzwobkAZ_u2KnWL3XycJzbr3KPtPF=ePziCuDg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>
-Cc: torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, jannh@google.com, dhowells@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, serge@hallyn.com, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, tglx@linutronix.de, mtk.manpages@gmail.com, akpm@linux-foundation.org, cyphar@cyphar.com, joel@joelfernandes.org, dancol@google.com
+To: Masahiro Yamada <yamada.masahiro@socionext.com>
+Cc: Alexey Gladkov <gladkov.alexey@gmail.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux Kbuild mailing list <linux-kbuild@vger.kernel.org>, linux-api@vger.kernel.org, linux-modules@vger.kernel.org, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>, "Dmitry V. Levin" <ldv@altlinux.org>, Michal Marek <michal.lkml@markovi.net>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Rusty Russell <rusty@rustcorp.com.au>, Lucas De Marchi <lucas.de.marchi@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 18, 2019 at 03:12:07PM +0200, Oleg Nesterov wrote:
-> On 04/18, Christian Brauner wrote:
-> >
-> > @@ -1674,13 +1729,14 @@ static __latent_entropy struct task_struct *copy_process(
-> >  					unsigned long clone_flags,
-> >  					unsigned long stack_start,
-> >  					unsigned long stack_size,
-> > +					int __user *parent_tidptr,
-> >  					int __user *child_tidptr,
-> >  					struct pid *pid,
-> >  					int trace,
-> >  					unsigned long tls,
-> >  					int node)
-> >  {
-> > -	int retval;
-> > +	int pidfd = -1, retval;
-> 
-> it seems that initialization is unneeded, but this is cosmetic.
-> 
-> I see no technical problems, feel free to add my reviewed-by.
++++ Masahiro Yamada [18/04/19 20:10 +0900]:
+>On Sat, Apr 6, 2019 at 9:15 PM Alexey Gladkov <gladkov.alexey@gmail.com> wrote:
+>>
+>> Problem:
+>>
+>> When a kernel module is compiled as a separate module, some important
+>> information about the kernel module is available via .modinfo section of
+>> the module.  In contrast, when the kernel module is compiled into the
+>> kernel, that information is not available.
+>>
+>> Information about built-in modules is necessary in the following cases:
+>>
+>> 1. When it is necessary to find out what additional parameters can be
+>> passed to the kernel at boot time.
+>>
+>> 2. When you need to know which module names and their aliases are in
+>> the kernel. This is very useful for creating an initrd image.
+>>
+>> Proposal:
+>>
+>> The proposed patch does not remove .modinfo section with module
+>> information from the vmlinux at the build time and saves it into a
+>> separate file after kernel linking. So, the kernel does not increase in
+>> size and no additional information remains in it. Information is stored
+>> in the same format as in the separate modules (null-terminated string
+>> array). Because the .modinfo section is already exported with a separate
+>> modules, we are not creating a new API.
+>>
+>> It can be easily read in the userspace:
+>>
+>> $ tr '\0' '\n' < kernel.builtin
+>> ext4.softdep=pre: crc32c
+>> ext4.license=GPL
+>> ext4.description=Fourth Extended Filesystem
+>> ext4.author=Remy Card, Stephen Tweedie, Andrew Morton, Andreas Dilger, Theodore Ts'o and others
+>> ext4.alias=fs-ext4
+>> ext4.alias=ext3
+>> ext4.alias=fs-ext3
+>> ext4.alias=ext2
+>> ext4.alias=fs-ext2
+>> md_mod.alias=block-major-9-*
+>> md_mod.alias=md
+>> md_mod.description=MD RAID framework
+>> md_mod.license=GPL
+>> md_mod.parmtype=create_on_open:bool
+>> md_mod.parmtype=start_dirty_degraded:int
+>> ...
+>>
+>> v2:
+>>  * Extract modinfo from vmlinux.o as suggested by Masahiro Yamada;
+>>  * Rename output file to kernel.builtin;
+>
+>Sorry, I do not get why you renamed
+>"kernel.builtin.modinfo" to "kernel.builtin".
+>
+>If you drop "modinfo", we do not understand
+>what kind information is contained in it.
+>
+>I think "kernel" and "builtin" have
+>a quite similar meaning here.
+>
+>How about "builtin.modinfo" for example?
+>
+>
+>It is shorter, and it is clear enough
+>that it contains module_info.
 
-Thank you!
+I agree that the name kernel.builtin is unclear in what kind of
+information it contains. Apologies for not having clarified this in
+the previous review.
 
-> 
-> 
-> But let me ask a couple of questions...
+Since kbuild already produces "modules.order" and "modules.builtin"
+files, why not just name it "modules.builtin.modinfo" to keep the
+names consistent with what is already there? It clearly conveys that
+this file contains modinfo for builtin modules.
 
-Sure!
+I'll leave it up to Lucas to decide if the file format is OK for kmod.
+With the modinfo dump, kmod could then decide what to do with the
+information, append to modules.alias{,.bin}, etc.
 
-> 
-> 
-> Why O_CLOEXEC? I am just curious, I do not really care.
+Also, I think this file needs to be documented in Documentation/kbuild/kbuild.txt.
 
-I think that having the file descriptor O_CLOEXEC by default is a good
-security measure in general. Most of the time you do not want to pass a
-file descriptor through exec() (apart from 0,1,2) and it is usually more
-of an issue when you accidently do it then when you accidently don't. So
-if users really care about passing a pidfd they should do so by removing
-the O_CLOEXEC flag explicitly.
-(New file descriptors should probably all default to that but that's just
-my opinion.)
-Another thing is that for a pidfds it makes even more sense to have them
-cloexec by default. You don't want to *unintentionally* leak an fd that
-can be used to operate on a process.
+Thanks,
 
-> 
-> 
-> Should we allow CLONE_THREAD | CLONE_PIDFD ?
-
-I think so, yes. I have thought about this. Yes, due to CLONE_FILES |
-CLONE_VM you'd necessarily hand the pidfd to the child but threads are
-no security boundary in the first place. So if you have a
-non-cooperating thread you very much already have a problem. The
-situation is not very much different from passing the tid.
-Plus, CLONE_PIDFD can make use of the CLONE_UNDETACHED flag in the
-future in contrast to all the other flags. So one could potentially (not
-saying we have this planned!) add a flag CLONE_PIDFD_KILL_ON_CLOSE (This
-is just an improvised bad name rn.) which would cause the child to kill
-itself if it does close(pidfd) on its own pidfd and noone else is
-holding a reference at which point you'd hand a suicide switch to a new
-thread but nothing else.
-
-> 
-> 
-> Are you sure we will never need to extend this interface? If not, then perhaps it
-
-Well, we can already make use of CLONE_UNDETACHED with CLONE_PIDFD since
-we don't just ignore it. :)
-
-> make sense to add something like
-> 
-> 	if (CLONE_PIDFD) {
-> 		unsigned long not_used_yet;
-> 		if (get_user(not_used_yet, parent_tidptr) ||
-> 		    not_used_yet != 0)
-> 			return -EINVAL;
-
-Oh, very interesting point. Yes, I think this is worth it.
-
-> 	}
-> 
-> this way we can easily add more arguments in future or even turn CLONE_PIDFD into
-> CLONE_MORE_ARGS_IN_PARENT_TIDPTR.
-> 
-> Not that I think this is really good idea, sys_clone2() makes more sense, but still.
-
-No, you're right about leaving this option open. Even if we don't extend
-not allowing garbage to be passed is always a good idea.
-
-Christian
+Jessica
