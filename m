@@ -1,87 +1,128 @@
-From: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
-Subject: Re: [PATCH 1/5] glibc: Perform rseq(2) registration at C startup and
- thread creation (v8)
-Date: Thu, 18 Apr 2019 16:07:39 +0000
-Message-ID: <79996d13-2ba2-ed7d-b202-e7d38f1fd870@arm.com>
-References: <20190416173216.9028-1-mathieu.desnoyers@efficios.com>
- <20190416173216.9028-2-mathieu.desnoyers@efficios.com>
- <364803063.586.1555516769056.JavaMail.zimbra@efficios.com>
- <alpine.DEB.2.21.1904171601540.32123@digraph.polyomino.org.uk>
- <1770787324.668.1555530989646.JavaMail.zimbra@efficios.com>
- <1066731871.915.1555593471194.JavaMail.zimbra@efficios.com>
- <6cbfea7b-9d83-74a5-9cd2-af56a5d68818@arm.com>
- <1055153722.1072.1555602067220.JavaMail.zimbra@efficios.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH 1/5] glibc: Perform rseq(2) registration at C startup
+ and thread creation (v8)
+Date: Thu, 18 Apr 2019 13:10:49 -0400 (EDT)
+Message-ID: <604915684.1299.1555607449814.JavaMail.zimbra@efficios.com>
+References: <20190416173216.9028-1-mathieu.desnoyers@efficios.com> <364803063.586.1555516769056.JavaMail.zimbra@efficios.com> <alpine.DEB.2.21.1904171601540.32123@digraph.polyomino.org.uk> <1770787324.668.1555530989646.JavaMail.zimbra@efficios.com> <1066731871.915.1555593471194.JavaMail.zimbra@efficios.com> <6cbfea7b-9d83-74a5-9cd2-af56a5d68818@arm.com> <1055153722.1072.1555602067220.JavaMail.zimbra@efficios.com> <79996d13-2ba2-ed7d-b202-e7d38f1fd870@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <libc-alpha-return-101528-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-In-Reply-To: <1055153722.1072.1555602067220.JavaMail.zimbra@efficios.com>
-Content-ID: <8265BF5BDF73294FB3CC91041CC751B2@eurprd08.prod.outlook.com>
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <79996d13-2ba2-ed7d-b202-e7d38f1fd870@arm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
 Cc: nd <nd@arm.com>, Joseph Myers <joseph@codesourcery.com>, Will Deacon <Will.Deacon@arm.com>, carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-T24gMTgvMDQvMjAxOSAxNjo0MSwgTWF0aGlldSBEZXNub3llcnMgd3JvdGU6DQo+IC0tLS0tIE9u
-IEFwciAxOCwgMjAxOSwgYXQgMTE6MzMgQU0sIFN6YWJvbGNzIE5hZ3kgU3phYm9sY3MuTmFneUBh
-cm0uY29tIHdyb3RlOg0KPiANCj4+IE9uIDE4LzA0LzIwMTkgMTQ6MTcsIE1hdGhpZXUgRGVzbm95
-ZXJzIHdyb3RlOg0KPj4+IC0tLS0tIE9uIEFwciAxNywgMjAxOSwgYXQgMzo1NiBQTSwgTWF0aGll
-dSBEZXNub3llcnMNCj4+PiBtYXRoaWV1LmRlc25veWVyc0BlZmZpY2lvcy5jb20gd3JvdGU6DQo+
-Pj4+IC0tLS0tIE9uIEFwciAxNywgMjAxOSwgYXQgMTI6MTcgUE0sIEpvc2VwaCBNeWVycyBqb3Nl
-cGhAY29kZXNvdXJjZXJ5LmNvbSB3cm90ZToNCj4+Pj4+IE9uIFdlZCwgMTcgQXByIDIwMTksIE1h
-dGhpZXUgRGVzbm95ZXJzIHdyb3RlOg0KPj4+Pj4NCj4+Pj4+Pj4gKy8qIFJTRVFfU0lHIGlzIGEg
-c2lnbmF0dXJlIHJlcXVpcmVkIGJlZm9yZSBlYWNoIGFib3J0IGhhbmRsZXIgY29kZS4NCj4+Pj4+
-Pj4gKw0KPj4+Pj4+PiArICAgSXQgaXMgYSAzMi1iaXQgdmFsdWUgdGhhdCBtYXBzIHRvIGFjdHVh
-bCBhcmNoaXRlY3R1cmUgY29kZSBjb21waWxlZA0KPj4+Pj4+PiArICAgaW50byBhcHBsaWNhdGlv
-bnMgYW5kIGxpYnJhcmllcy4gSXQgbmVlZHMgdG8gYmUgZGVmaW5lZCBmb3IgZWFjaA0KPj4+Pj4+
-PiArICAgYXJjaGl0ZWN0dXJlLiBXaGVuIGNob29zaW5nIHRoaXMgdmFsdWUsIGl0IG5lZWRzIHRv
-IGJlIHRha2VuIGludG8NCj4+Pj4+Pj4gKyAgIGFjY291bnQgdGhhdCBnZW5lcmF0aW5nIGludmFs
-aWQgaW5zdHJ1Y3Rpb25zIG1heSBoYXZlIGlsbCBlZmZlY3RzIG9uDQo+Pj4+Pj4+ICsgICB0b29s
-cyBsaWtlIG9iamR1bXAsIGFuZCBtYXkgYWxzbyBoYXZlIGltcGFjdCBvbiB0aGUgQ1BVIHNwZWN1
-bGF0aXZlDQo+Pj4+Pj4+ICsgICBleGVjdXRpb24gZWZmaWNpZW5jeSBpbiBzb21lIGNhc2VzLiAg
-Ki8NCj4+Pj4+Pj4gKw0KPj4+Pj4+PiArI2RlZmluZSBSU0VRX1NJRyAweGQ0MjhiYzAwCS8qIEJS
-SyAjMHg0NUUwLiAgKi8NCj4+Pj4+Pg0KPj4+Pj4+IEFmdGVyIGZ1cnRoZXIgaW52ZXN0aWdhdGlv
-biwgd2Ugc2hvdWxkIHByb2JhYmx5IGRvIHRoZSBmb2xsb3dpbmcNCj4+Pj4+PiB0byBoYW5kbGUg
-Y29tcGlsaW5nIHdpdGggLW1iaWctZW5kaWFuIG9uIGFhcmNoNjQsIHdoaWNoIGdlbmVyYXRlcw0K
-Pj4+Pj4+IGJpbmFyaWVzIHdpdGggbWl4ZWQgY29kZSB2cyBkYXRhIGVuZGlhbm5lc3MgKGxpdHRs
-ZSBlbmRpYW4gY29kZSwNCj4+Pj4+PiBiaWcgZW5kaWFuIGRhdGEpOg0KPj4+Pj4NCj4+Pj4+IEZp
-cnN0LCB0aGUgY29tbWVudCBvbiBSU0VRX1NJRyBzaG91bGQgc3BlY2lmeSB3aGV0aGVyIGl0IGlz
-IHRvIGJlDQo+Pj4+PiBpbnRlcnByZXRlZCBpbiB0aGUgY29kZSBvciB0aGUgZGF0YSBlbmRpYW5u
-ZXNzLg0KPj4+Pg0KPj4+PiBSaWdodC4gVGhlIHNpZ25hdHVyZSBwYXNzZWQgYXMgYXJndW1lbnQg
-dG8gdGhlIHJzZXEgcmVnaXN0cmF0aW9uDQo+Pj4+IHN5c3RlbSBjYWxsIG5lZWRzIHRvIGJlIGlu
-IGRhdGEgZW5kaWFubmVzcyAoY3VycmVudGx5IGV4cG9zZWQga2VybmVsDQo+Pj4+IEFCSSkuDQo+
-Pj4+DQo+Pj4+IElkZWFsbHkgZm9yIHVzZXJzcGFjZSwgd2Ugd2FudCB0byBkZWZpbmUgYSBzaWdu
-YXR1cmUgaW4gY29kZSBlbmRpYW5uZXNzDQo+Pj4+IHRoYXQgaGFwcGVucyB0byBuaWNlbHkgbWF0
-Y2ggc3BlY2lmaWMgY29kZSBwYXR0ZXJucy4NCj4+IC4uLg0KPj4+IEZvciBhYXJjaDY0LCBJIHRo
-aW5rIHdlIGNhbiBzaW1wbHkgZG86DQo+Pj4NCj4+PiAvKg0KPj4+ICAqIGFhcmNoNjQgLW1iaWct
-ZW5kaWFuIGdlbmVyYXRlcyBtaXhlZCBlbmRpYW5uZXNzIGNvZGUgdnMgZGF0YToNCj4+PiAgKiBs
-aXR0bGUtZW5kaWFuIGNvZGUgYW5kIGJpZy1lbmRpYW4gZGF0YS4gRW5zdXJlIHRoZSBSU0VRX1NJ
-RyBzaWduYXR1cmUNCj4+PiAgKiBtYXRjaGVzIGNvZGUgZW5kaWFubmVzcy4NCj4+PiAgKi8NCj4+
-PiAjZGVmaW5lIFJTRVFfU0lHX0NPREUgICAweGQ0MjhiYzAwICAgICAgLyogQlJLICMweDQ1RTAu
-ICAqLw0KPj4+DQo+Pj4gI2lmZGVmIF9fQVJNX0JJR19FTkRJQU4NCj4+PiAjZGVmaW5lIFJTRVFf
-U0lHX0RBVEEgICAweDAwYmMyOGQ0ICAgICAgLyogQlJLICMweDQ1RTAuICAqLw0KPj4+ICNlbHNl
-DQo+Pj4gI2RlZmluZSBSU0VRX1NJR19EQVRBICAgUlNFUV9TSUdfQ09ERQ0KPj4+ICNlbmRpZg0K
-Pj4+DQo+Pj4gI2RlZmluZSBSU0VRX1NJRyAgICAgICAgUlNFUV9TSUdfREFUQQ0KPj4+DQo+Pj4g
-RmVlZGJhY2sgaXMgbW9zdCB3ZWxjb21lLA0KPj4NCj4+IHNvIHRoZSBSU0VRX1NJRyB2YWx1ZSBp
-cyBzdXBwb3NlZCB0byBiZSB1c2VkIHdpdGggLndvcmQNCj4+IGluIGFzbSBpbnN0ZWFkIG9mIC5p
-bnN0Pw0KPiANCj4gV2Ugd2FudCBhIC5pbnN0IHNvIGl0IHRyYW5zbGF0ZXMgaW50byBhIHZhbGlk
-IHRyYXAgaW5zdHJ1Y3Rpb24uDQo+IEl0J3MgYmV0dGVyIHRvIHRyYXAgaW4gY2FzZSBwcm9ncmFt
-IGV4ZWN1dGlvbiByZWFjaGVzIHRoaXMNCj4gYnkgbWlzdGFrZSAobWFrZXMgZGVidWdnaW5nIGVh
-c2llcikuDQoNCnRoYXQgZG9lcyBub3QgbWFrZSBzZW5zZSB0byBtZS4NCg0KIi5pbnN0IiBpcyBh
-biBhc20gZGlyZWN0aXZlIHRoYXQgcmVxdWlyZXMgYSB0aGUgdmFsdWUgdG8NCmJlIHRoZSBzYW1l
-IG9uIEJFIGFuZCBMRSAobm9ybWFsIGluc24gZW5jb2RpbmcpLg0KDQoiLndvcmQiIGlzIGFuIGFz
-bSBkaXJlY3RpdmUgdGhhdCByZXF1aXJlcyB0aGUgdmFsdWUgdG8NCnVzZSBzd2FwcGVkIGVuY29k
-aW5nIG9uIEJFIChpZiBpdCdzIHVzZWQgaW4gdGhlIGluc3RydWN0aW9uDQpzdHJlYW0gaXQgd2ls
-bCBjcmVhdGUgYSBkYXRhIG1hcHBpbmcgc3ltYm9sIGFuZCBkaXNhc20gdG8NCi53b3JkIHZhbHVl
-IGluc3RlYWQgb2YgdGhlIGluc3RydWN0aW9uIG1uZW1vbmljcykuDQoNCnNvIHdoaWNoIG9uZSBp
-cyBpdD8NCg0KPj4gaSBkb24ndCB0aGluayB3ZSB1c2UgX19BUk1fKiBpbiBwdWJsaWMgaGVhZGVy
-cyBjdXJyZW50bHksDQo+PiBidXQgaG9wZWZ1bGx5IGFhcmNoNjRfYmUgY29tcGlsZXJzIGltcGxl
-bWVudCBpdC4NCj4gDQo+IENhbiBJIHVzZSAjaWYgX19CWVRFX09SREVSX18gPT0gX19PUkRFUl9C
-SUdfRU5ESUFOX18gIHRoZW4gPw0KDQpobSwgaSdkIGVpdGhlciB1c2UgI2lmZGVmIF9fQUFSQ0g2
-NEVCX18gKHNpbmNlIHdlIGFscmVhZHkgdXNlIGl0KQ0Kb3IgdGhlIHBvcnRhYmxlICNpbmNsdWRl
-IGVuZGlhbi5oIGFuZCBfX0JZVEVfT1JERVIgPT0gX19CSUdfRU5ESUFODQo=
+
+----- On Apr 18, 2019, at 12:07 PM, Szabolcs Nagy Szabolcs.Nagy@arm.com wrote:
+
+> On 18/04/2019 16:41, Mathieu Desnoyers wrote:
+>> ----- On Apr 18, 2019, at 11:33 AM, Szabolcs Nagy Szabolcs.Nagy@arm.com wrote:
+>> 
+>>> On 18/04/2019 14:17, Mathieu Desnoyers wrote:
+>>>> ----- On Apr 17, 2019, at 3:56 PM, Mathieu Desnoyers
+>>>> mathieu.desnoyers@efficios.com wrote:
+>>>>> ----- On Apr 17, 2019, at 12:17 PM, Joseph Myers joseph@codesourcery.com wrote:
+>>>>>> On Wed, 17 Apr 2019, Mathieu Desnoyers wrote:
+>>>>>>
+>>>>>>>> +/* RSEQ_SIG is a signature required before each abort handler code.
+>>>>>>>> +
+>>>>>>>> +   It is a 32-bit value that maps to actual architecture code compiled
+>>>>>>>> +   into applications and libraries. It needs to be defined for each
+>>>>>>>> +   architecture. When choosing this value, it needs to be taken into
+>>>>>>>> +   account that generating invalid instructions may have ill effects on
+>>>>>>>> +   tools like objdump, and may also have impact on the CPU speculative
+>>>>>>>> +   execution efficiency in some cases.  */
+>>>>>>>> +
+>>>>>>>> +#define RSEQ_SIG 0xd428bc00	/* BRK #0x45E0.  */
+>>>>>>>
+>>>>>>> After further investigation, we should probably do the following
+>>>>>>> to handle compiling with -mbig-endian on aarch64, which generates
+>>>>>>> binaries with mixed code vs data endianness (little endian code,
+>>>>>>> big endian data):
+>>>>>>
+>>>>>> First, the comment on RSEQ_SIG should specify whether it is to be
+>>>>>> interpreted in the code or the data endianness.
+>>>>>
+>>>>> Right. The signature passed as argument to the rseq registration
+>>>>> system call needs to be in data endianness (currently exposed kernel
+>>>>> ABI).
+>>>>>
+>>>>> Ideally for userspace, we want to define a signature in code endianness
+>>>>> that happens to nicely match specific code patterns.
+>>> ...
+>>>> For aarch64, I think we can simply do:
+>>>>
+>>>> /*
+>>>>  * aarch64 -mbig-endian generates mixed endianness code vs data:
+>>>>  * little-endian code and big-endian data. Ensure the RSEQ_SIG signature
+>>>>  * matches code endianness.
+>>>>  */
+>>>> #define RSEQ_SIG_CODE   0xd428bc00      /* BRK #0x45E0.  */
+>>>>
+>>>> #ifdef __ARM_BIG_ENDIAN
+>>>> #define RSEQ_SIG_DATA   0x00bc28d4      /* BRK #0x45E0.  */
+>>>> #else
+>>>> #define RSEQ_SIG_DATA   RSEQ_SIG_CODE
+>>>> #endif
+>>>>
+>>>> #define RSEQ_SIG        RSEQ_SIG_DATA
+>>>>
+>>>> Feedback is most welcome,
+>>>
+>>> so the RSEQ_SIG value is supposed to be used with .word
+>>> in asm instead of .inst?
+>> 
+>> We want a .inst so it translates into a valid trap instruction.
+>> It's better to trap in case program execution reaches this
+>> by mistake (makes debugging easier).
+> 
+> that does not make sense to me.
+> 
+> ".inst" is an asm directive that requires a the value to
+> be the same on BE and LE (normal insn encoding).
+> 
+> ".word" is an asm directive that requires the value to
+> use swapped encoding on BE (if it's used in the instruction
+> stream it will create a data mapping symbol and disasm to
+> .word value instead of the instruction mnemonics).
+> 
+> so which one is it?
+
+We declare the signature with ".inst" in assembler.
+
+However, we also need to pass that 32-bit signature value as
+argument to the rseq system call when registering rseq.
+
+The signature comparison is performed by the kernel before
+moving the instruction pointer to the abort handler. It compares
+the signature received as parameter by sys_rseq (data) to the
+4-byte signature preceding the abort IP.
+
+On aarch64 big endian, AFAIU the signature in the code is in
+little endian, and the signature value passed as argument to
+the rseq system call is in big endian. One way to handle this
+is to swap the byte order of the signature "data" representation
+passed as argument to sys_rseq.
+
+> 
+>>> i don't think we use __ARM_* in public headers currently,
+>>> but hopefully aarch64_be compilers implement it.
+>> 
+>> Can I use #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__  then ?
+> 
+> hm, i'd either use #ifdef __AARCH64EB__ (since we already use it)
+> or the portable #include endian.h and __BYTE_ORDER == __BIG_ENDIAN
+
+I'll use #ifdef __AARCH64EB__ given this header is specific to aarch64.
+
+Thanks,
+
+Mathieu
+
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
