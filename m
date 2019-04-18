@@ -1,64 +1,56 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [PATCH 2/5] glibc: sched_getcpu(): use rseq cpu_id TLS on Linux
- (v2)
-Date: Thu, 18 Apr 2019 11:45:25 -0400 (EDT)
-Message-ID: <1072203859.1074.1555602325772.JavaMail.zimbra@efficios.com>
-References: <20190416173216.9028-1-mathieu.desnoyers@efficios.com> <20190416173216.9028-3-mathieu.desnoyers@efficios.com> <c9c53d4b-ed9b-f2d9-60b0-e5e805de0324@arm.com>
+From: "Enrico Weigelt, metux IT consult" <lkml@metux.net>
+Subject: Re: RFC: on adding new CLONE_* flags [WAS Re: [PATCH 0/4] clone: add
+ CLONE_PIDFD]
+Date: Thu, 18 Apr 2019 17:46:47 +0200
+Message-ID: <ac16b51d-3bcf-45ff-aa57-85d5da7224c2@metux.net>
+References: <20190414201436.19502-1-christian@brauner.io>
+ <dc05ffe3-c2ff-8b3e-d181-e0cc620bf91d@metux.net>
+ <20190415195911.z7b7miwsj67ha54y@yavin>
+ <CALCETrWxMnaPvwicqkMLswMynWvJVteazD-bFv3ZnBKWp-1joQ@mail.gmail.com>
+ <c783a83a-01a1-9813-e2f7-0516cf7a1c16@metux.net>
+ <CALCETrWWoEvnzx6oLTEajBmiArScX5sSt74o2VO+aTiwEi_9mQ@mail.gmail.com>
+ <e58d1694-c143-3465-512d-43301422bd8b@metux.net>
+ <20190417125422.bhyrmzom4kwuenwm@brauner.io>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <c9c53d4b-ed9b-f2d9-60b0-e5e805de0324@arm.com>
+In-Reply-To: <20190417125422.bhyrmzom4kwuenwm@brauner.io>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
-Cc: carlos <carlos@redhat.com>, nd <nd@arm.com>, Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <Will.Deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
+To: Christian Brauner <christian@brauner.io>
+Cc: Andy Lutomirski <luto@kernel.org>, Aleksa Sarai <cyphar@cyphar.com>, Linus Torvalds <torvalds@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Jann Horn <jannh@google.com>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Joel Fernandes <joel@joelfernandes.org>, Daniel Colascione <dancol@google.com>
 List-Id: linux-api@vger.kernel.org
 
------ On Apr 18, 2019, at 11:33 AM, Szabolcs Nagy Szabolcs.Nagy@arm.com wrote:
+On 17.04.19 14:54, Christian Brauner wrote:
 
-> On 16/04/2019 18:32, Mathieu Desnoyers wrote:
->> --- a/sysdeps/unix/sysv/linux/sched_getcpu.c
->> +++ b/sysdeps/unix/sysv/linux/sched_getcpu.c
->> @@ -37,3 +37,26 @@ sched_getcpu (void)
->>    return -1;
->>  #endif
->>  }
->> +
->> +#ifdef __NR_rseq
->> +#include <sys/rseq.h>
->> +#endif
->> +
->> +#if defined __NR_rseq && defined RSEQ_SIG
->> +extern __attribute__ ((tls_model ("initial-exec")))
->> +__thread volatile struct rseq __rseq_abi;
+>> Ah, that is a cool thing !>> I suppose that also works across namespaces ?> > Yes, it should. If
+you hand off the pidfd to another pidns (e.g. via SCM> credentials) for
+example.
+I thought about things like sending the pidfd via unix socket.
+It would be really cool if the receiving process could then control
+the referred process (eg. send signals), even if it's in a different
+pidns.
+
+>> What other things can be done via pidfd ?
 > 
-> i'd expect sys/rseq.h to provide this declaration.
+> Very basic things right now and until CLONE_PIDFD is accepted (possibly
+> for 5.2) we won't enable any more features.
+> I'm not a fan of wild speculations and grand schemes that then don't
+> come to fruition. :) Right now it's about focussing on somewhat cleanly
+> covering the basics. Coming to a consensus there was hard enough. We
+> have no intention in making this more complex right now as it needs to
+> be.
 
-And it actually does! Will remove this duplicate.
+IMHO, it would be good if it would support all operations that now can
+be done via numerical PID, and w/ the permissions of the process who
+created that pidfd. Certainly, that would also need some lockdown
+mechanism, so the creating process can define what the holder of the
+fd can actually do.
 
-Thanks,
-
-Mathieu
-
-> 
->> +
->> +int
->> +sched_getcpu (void)
->> +{
->> +  int cpu_id = __rseq_abi.cpu_id;
->> +
->> +  return cpu_id >= 0 ? cpu_id : vsyscall_sched_getcpu ();
->> +}
->> +#else
->> +int
->> +sched_getcpu (void)
->> +{
->> +  return vsyscall_sched_getcpu ();
->> +}
->> +#endif
->> -- 2.17.1
+--mtx
 
 -- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Enrico Weigelt, metux IT consult
+Free software and Linux embedded engineering
+info@metux.net -- +49-151-27565287
