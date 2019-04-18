@@ -1,73 +1,75 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [PATCH 1/4] glibc: Perform rseq(2) registration at C startup
- and thread creation (v7)
-Date: Thu, 18 Apr 2019 11:31:56 -0400 (EDT)
-Message-ID: <836018684.1056.1555601516134.JavaMail.zimbra@efficios.com>
-References: <5166fbe9-cfe0-8554-abc7-4fc844cf2765@redhat.com> <ce6f9db3-bf85-7aec-4bae-998e6fd629e1@redhat.com> <87y34o4xt3.fsf@oldenburg2.str.redhat.com> <43f97ddb-c8df-27ea-9517-63252ebd3183@redhat.com> <877ec4pam2.fsf@linux.ibm.com> <ce9fbc66-5eb9-0fa9-99fa-5abfe00ddfc2@redhat.com> <877ec3yffq.fsf@concordia.ellerman.id.au> <20190409092948.GA14424@bubble.grove.modra.org>
+From: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
+Subject: Re: [PATCH 1/5] glibc: Perform rseq(2) registration at C startup and
+ thread creation (v8)
+Date: Thu, 18 Apr 2019 15:33:13 +0000
+Message-ID: <6cbfea7b-9d83-74a5-9cd2-af56a5d68818@arm.com>
+References: <20190416173216.9028-1-mathieu.desnoyers@efficios.com>
+ <20190416173216.9028-2-mathieu.desnoyers@efficios.com>
+ <364803063.586.1555516769056.JavaMail.zimbra@efficios.com>
+ <alpine.DEB.2.21.1904171601540.32123@digraph.polyomino.org.uk>
+ <1770787324.668.1555530989646.JavaMail.zimbra@efficios.com>
+ <1066731871.915.1555593471194.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190409092948.GA14424@bubble.grove.modra.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alan Modra <amodra@gmail.com>
-Cc: Michael Ellerman <mpe@ellerman.id.au>, Carlos O'Donell <codonell@redhat.com>, Tulio Magno Quites Machado Filho <tuliom@ascii.art.br>, Florian Weimer <fweimer@redhat.com>, Michael Meissner <meissner@linux.ibm.com>, Peter Bergner <bergner@vnet.ibm.com>, Paul Burton <paul.burton@mips.com>, Will Deacon <will.deacon@arm.com>, Boqun Feng <boqun.feng@gmail.com>, heiko carstens <heiko.carstens@de.ibm.com>, gor <gor@linux.ibm.com>, schwidefsky <schwidefsky@de.ibm.com>, "Russell King, ARM Linux" <linux@armlinux.org.uk>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <libc-alpha-return-101521-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+In-Reply-To: <1066731871.915.1555593471194.JavaMail.zimbra@efficios.com>
+Content-ID: <61F9D6381DCE1B42B91EE635199CCA43@eurprd08.prod.outlook.com>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Joseph Myers <joseph@codesourcery.com>, Will Deacon <Will.Deacon@arm.com>
+Cc: nd <nd@arm.com>, carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
------ On Apr 9, 2019, at 5:29 AM, Alan Modra amodra@gmail.com wrote:
-
-> On Tue, Apr 09, 2019 at 02:23:53PM +1000, Michael Ellerman wrote:
->> I'd much rather we use a trap with a specific immediate value. Otherwise
->> someone's going to waste time one day puzzling over why userspace is
->> doing mtmsr.
-> 
-> It's data.  We have other data in executable sections.  Anyone who
-> wonders about odd disassembly just hasn't realized they are
-> disassembling data.
-> 
->> It would also complicate things if we ever wanted to emulate mtmsr.
-> 
-> No, because it won't be executed.  If I understand correctly, the only
-> reason to choose an illegal, trap or privileged insn is to halt
-> execution earlier rather than later when a program goes off in the
-> weeds.
-> 
->> If we want something that is a trap rather than a nop then use 0x0fe50553.
->> 
->> That's "compare the value in r5 with 0x553 and then trap unconditionally".
->> 
->> It shows up in objdump as:
->> 
->>     10000000:	53 05 e5 0f 	twui    r5,1363
->> 
->> 
->> The immediate can be anything, I chose that value to mimic the x86 value
->> Mathieu mentioned.
->> 
->> There's no reason that instruction would ever be generated because the
->> immediate value serves no purpose. So it satisfies the "very unlikely
->> to appear" criteria AFAICS.
-> 
-> Yes, looks fine to me, except that in VLE mode (do we care?)
-> ".long 0x0fe50553" disassembles as
->   0:	0f e5       	se_cmphl r5,r30
->   2:	05 53       	se_mullw r3,r5
-> No illegal/trap/privileged insn there.
-> 
-> ".long 0x0fe5000b" might be better to cover VLE.
-
-Can you share with us the objdump output of ".long 0x0fe5000b" in
-VLE mode ? VLE mode support does not appear to be available in typical
-toolchains. Also, is VLE mode only for powerpc 32 be, or also for
-powerpc 64 be/le ?
-
-Thanks,
-
-Mathieu
-
-
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+T24gMTgvMDQvMjAxOSAxNDoxNywgTWF0aGlldSBEZXNub3llcnMgd3JvdGU6DQo+IC0tLS0tIE9u
+IEFwciAxNywgMjAxOSwgYXQgMzo1NiBQTSwgTWF0aGlldSBEZXNub3llcnMgbWF0aGlldS5kZXNu
+b3llcnNAZWZmaWNpb3MuY29tIHdyb3RlOg0KPj4gLS0tLS0gT24gQXByIDE3LCAyMDE5LCBhdCAx
+MjoxNyBQTSwgSm9zZXBoIE15ZXJzIGpvc2VwaEBjb2Rlc291cmNlcnkuY29tIHdyb3RlOg0KPj4+
+IE9uIFdlZCwgMTcgQXByIDIwMTksIE1hdGhpZXUgRGVzbm95ZXJzIHdyb3RlOg0KPj4+DQo+Pj4+
+PiArLyogUlNFUV9TSUcgaXMgYSBzaWduYXR1cmUgcmVxdWlyZWQgYmVmb3JlIGVhY2ggYWJvcnQg
+aGFuZGxlciBjb2RlLg0KPj4+Pj4gKw0KPj4+Pj4gKyAgIEl0IGlzIGEgMzItYml0IHZhbHVlIHRo
+YXQgbWFwcyB0byBhY3R1YWwgYXJjaGl0ZWN0dXJlIGNvZGUgY29tcGlsZWQNCj4+Pj4+ICsgICBp
+bnRvIGFwcGxpY2F0aW9ucyBhbmQgbGlicmFyaWVzLiBJdCBuZWVkcyB0byBiZSBkZWZpbmVkIGZv
+ciBlYWNoDQo+Pj4+PiArICAgYXJjaGl0ZWN0dXJlLiBXaGVuIGNob29zaW5nIHRoaXMgdmFsdWUs
+IGl0IG5lZWRzIHRvIGJlIHRha2VuIGludG8NCj4+Pj4+ICsgICBhY2NvdW50IHRoYXQgZ2VuZXJh
+dGluZyBpbnZhbGlkIGluc3RydWN0aW9ucyBtYXkgaGF2ZSBpbGwgZWZmZWN0cyBvbg0KPj4+Pj4g
+KyAgIHRvb2xzIGxpa2Ugb2JqZHVtcCwgYW5kIG1heSBhbHNvIGhhdmUgaW1wYWN0IG9uIHRoZSBD
+UFUgc3BlY3VsYXRpdmUNCj4+Pj4+ICsgICBleGVjdXRpb24gZWZmaWNpZW5jeSBpbiBzb21lIGNh
+c2VzLiAgKi8NCj4+Pj4+ICsNCj4+Pj4+ICsjZGVmaW5lIFJTRVFfU0lHIDB4ZDQyOGJjMDAJLyog
+QlJLICMweDQ1RTAuICAqLw0KPj4+Pg0KPj4+PiBBZnRlciBmdXJ0aGVyIGludmVzdGlnYXRpb24s
+IHdlIHNob3VsZCBwcm9iYWJseSBkbyB0aGUgZm9sbG93aW5nDQo+Pj4+IHRvIGhhbmRsZSBjb21w
+aWxpbmcgd2l0aCAtbWJpZy1lbmRpYW4gb24gYWFyY2g2NCwgd2hpY2ggZ2VuZXJhdGVzDQo+Pj4+
+IGJpbmFyaWVzIHdpdGggbWl4ZWQgY29kZSB2cyBkYXRhIGVuZGlhbm5lc3MgKGxpdHRsZSBlbmRp
+YW4gY29kZSwNCj4+Pj4gYmlnIGVuZGlhbiBkYXRhKToNCj4+Pg0KPj4+IEZpcnN0LCB0aGUgY29t
+bWVudCBvbiBSU0VRX1NJRyBzaG91bGQgc3BlY2lmeSB3aGV0aGVyIGl0IGlzIHRvIGJlDQo+Pj4g
+aW50ZXJwcmV0ZWQgaW4gdGhlIGNvZGUgb3IgdGhlIGRhdGEgZW5kaWFubmVzcy4NCj4+DQo+PiBS
+aWdodC4gVGhlIHNpZ25hdHVyZSBwYXNzZWQgYXMgYXJndW1lbnQgdG8gdGhlIHJzZXEgcmVnaXN0
+cmF0aW9uDQo+PiBzeXN0ZW0gY2FsbCBuZWVkcyB0byBiZSBpbiBkYXRhIGVuZGlhbm5lc3MgKGN1
+cnJlbnRseSBleHBvc2VkIGtlcm5lbA0KPj4gQUJJKS4NCj4+DQo+PiBJZGVhbGx5IGZvciB1c2Vy
+c3BhY2UsIHdlIHdhbnQgdG8gZGVmaW5lIGEgc2lnbmF0dXJlIGluIGNvZGUgZW5kaWFubmVzcw0K
+Pj4gdGhhdCBoYXBwZW5zIHRvIG5pY2VseSBtYXRjaCBzcGVjaWZpYyBjb2RlIHBhdHRlcm5zLg0K
+Li4uDQo+IEZvciBhYXJjaDY0LCBJIHRoaW5rIHdlIGNhbiBzaW1wbHkgZG86DQo+IA0KPiAvKg0K
+PiAgKiBhYXJjaDY0IC1tYmlnLWVuZGlhbiBnZW5lcmF0ZXMgbWl4ZWQgZW5kaWFubmVzcyBjb2Rl
+IHZzIGRhdGE6DQo+ICAqIGxpdHRsZS1lbmRpYW4gY29kZSBhbmQgYmlnLWVuZGlhbiBkYXRhLiBF
+bnN1cmUgdGhlIFJTRVFfU0lHIHNpZ25hdHVyZQ0KPiAgKiBtYXRjaGVzIGNvZGUgZW5kaWFubmVz
+cy4NCj4gICovDQo+ICNkZWZpbmUgUlNFUV9TSUdfQ09ERSAgIDB4ZDQyOGJjMDAgICAgICAvKiBC
+UksgIzB4NDVFMC4gICovDQo+IA0KPiAjaWZkZWYgX19BUk1fQklHX0VORElBTg0KPiAjZGVmaW5l
+IFJTRVFfU0lHX0RBVEEgICAweDAwYmMyOGQ0ICAgICAgLyogQlJLICMweDQ1RTAuICAqLw0KPiAj
+ZWxzZQ0KPiAjZGVmaW5lIFJTRVFfU0lHX0RBVEEgICBSU0VRX1NJR19DT0RFDQo+ICNlbmRpZg0K
+PiANCj4gI2RlZmluZSBSU0VRX1NJRyAgICAgICAgUlNFUV9TSUdfREFUQQ0KPiANCj4gRmVlZGJh
+Y2sgaXMgbW9zdCB3ZWxjb21lLA0KDQpzbyB0aGUgUlNFUV9TSUcgdmFsdWUgaXMgc3VwcG9zZWQg
+dG8gYmUgdXNlZCB3aXRoIC53b3JkDQppbiBhc20gaW5zdGVhZCBvZiAuaW5zdD8NCg0KaSBkb24n
+dCB0aGluayB3ZSB1c2UgX19BUk1fKiBpbiBwdWJsaWMgaGVhZGVycyBjdXJyZW50bHksDQpidXQg
+aG9wZWZ1bGx5IGFhcmNoNjRfYmUgY29tcGlsZXJzIGltcGxlbWVudCBpdC4NCg0Kb3RoZXJ3aXNl
+IHRoaXMgbG9va3Mgb2sgdG8gbWUuDQoNCihpIHRoaW5rIGEgcmFyZSBwYWxpbmRyb21lIGluc3Ry
+dWN0aW9uIHdvdWxkIHdvcmsgdG9vLCBlLmcuDQowYTVmNWYwYSAJYW5kCXcxMCwgdzI0LCB3enIs
+IGxzciAjMjMgLy8gc2hpZnRlZCAwDQoyYTVmNWYyYSAJb3JyCXcxMCwgdzI1LCB3enIsIGxzciAj
+MjMNCmViOWY5ZmViIAluZWdzCXgxMSwgeHpyLCBhc3IgIzM5DQpjODNmM2ZjOCAJc3R4cAl3enIs
+IHg4LCB4MTUsIFt4MzBdICAvLyBzdG9yZSB0byBMUiBpZ25vcmluZyBzdWNjZXNzDQpkOWZmZmZk
+OSAJc3R6MmcJeDI1LCBbeDMwLCAjLTE2XSEgICAgLy8gdjguNSB0YWcremVybyAyIGdyYW51bGVz
+IGFyb3VuZCBMUg0KZXRjLiBpdCBkb2VzIG5vdCBuZWVkIHRvIGJlIGEgZ3VhcmFudGVlZCB0cmFw
+KQ0K
