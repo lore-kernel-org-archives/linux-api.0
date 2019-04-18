@@ -1,132 +1,73 @@
-From: Masahiro Yamada <yamada.masahiro@socionext.com>
-Subject: Re: [PATCH v2] moduleparam: Save information about built-in modules
- in separate file
-Date: Fri, 19 Apr 2019 00:26:33 +0900
-Message-ID: <CAK7LNARKHXLgniczKXY01JhxhBpL2p-X_hWg70AcsrXRaLyDSg@mail.gmail.com>
-References: <20190406121447.GB4047@localhost.localdomain> <CAK7LNATfo0K6kzwobkAZ_u2KnWL3XycJzbr3KPtPF=ePziCuDg@mail.gmail.com>
- <20190418135238.GA5626@linux-8ccs>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH 1/4] glibc: Perform rseq(2) registration at C startup
+ and thread creation (v7)
+Date: Thu, 18 Apr 2019 11:31:56 -0400 (EDT)
+Message-ID: <836018684.1056.1555601516134.JavaMail.zimbra@efficios.com>
+References: <5166fbe9-cfe0-8554-abc7-4fc844cf2765@redhat.com> <ce6f9db3-bf85-7aec-4bae-998e6fd629e1@redhat.com> <87y34o4xt3.fsf@oldenburg2.str.redhat.com> <43f97ddb-c8df-27ea-9517-63252ebd3183@redhat.com> <877ec4pam2.fsf@linux.ibm.com> <ce9fbc66-5eb9-0fa9-99fa-5abfe00ddfc2@redhat.com> <877ec3yffq.fsf@concordia.ellerman.id.au> <20190409092948.GA14424@bubble.grove.modra.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190418135238.GA5626@linux-8ccs>
+In-Reply-To: <20190409092948.GA14424@bubble.grove.modra.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jessica Yu <jeyu@kernel.org>
-Cc: Alexey Gladkov <gladkov.alexey@gmail.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux Kbuild mailing list <linux-kbuild@vger.kernel.org>, linux-api@vger.kernel.org, linux-modules@vger.kernel.org, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>, "Dmitry V. Levin" <ldv@altlinux.org>, Michal Marek <michal.lkml@markovi.net>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Rusty Russell <rusty@rustcorp.com.au>, Lucas De Marchi <lucas.de.marchi@gmail.com>
+To: Alan Modra <amodra@gmail.com>
+Cc: Michael Ellerman <mpe@ellerman.id.au>, Carlos O'Donell <codonell@redhat.com>, Tulio Magno Quites Machado Filho <tuliom@ascii.art.br>, Florian Weimer <fweimer@redhat.com>, Michael Meissner <meissner@linux.ibm.com>, Peter Bergner <bergner@vnet.ibm.com>, Paul Burton <paul.burton@mips.com>, Will Deacon <will.deacon@arm.com>, Boqun Feng <boqun.feng@gmail.com>, heiko carstens <heiko.carstens@de.ibm.com>, gor <gor@linux.ibm.com>, schwidefsky <schwidefsky@de.ibm.com>, "Russell King, ARM Linux" <linux@armlinux.org.uk>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 18, 2019 at 10:52 PM Jessica Yu <jeyu@kernel.org> wrote:
->
-> +++ Masahiro Yamada [18/04/19 20:10 +0900]:
-> >On Sat, Apr 6, 2019 at 9:15 PM Alexey Gladkov <gladkov.alexey@gmail.com> wrote:
-> >>
-> >> Problem:
-> >>
-> >> When a kernel module is compiled as a separate module, some important
-> >> information about the kernel module is available via .modinfo section of
-> >> the module.  In contrast, when the kernel module is compiled into the
-> >> kernel, that information is not available.
-> >>
-> >> Information about built-in modules is necessary in the following cases:
-> >>
-> >> 1. When it is necessary to find out what additional parameters can be
-> >> passed to the kernel at boot time.
-> >>
-> >> 2. When you need to know which module names and their aliases are in
-> >> the kernel. This is very useful for creating an initrd image.
-> >>
-> >> Proposal:
-> >>
-> >> The proposed patch does not remove .modinfo section with module
-> >> information from the vmlinux at the build time and saves it into a
-> >> separate file after kernel linking. So, the kernel does not increase in
-> >> size and no additional information remains in it. Information is stored
-> >> in the same format as in the separate modules (null-terminated string
-> >> array). Because the .modinfo section is already exported with a separate
-> >> modules, we are not creating a new API.
-> >>
-> >> It can be easily read in the userspace:
-> >>
-> >> $ tr '\0' '\n' < kernel.builtin
-> >> ext4.softdep=pre: crc32c
-> >> ext4.license=GPL
-> >> ext4.description=Fourth Extended Filesystem
-> >> ext4.author=Remy Card, Stephen Tweedie, Andrew Morton, Andreas Dilger, Theodore Ts'o and others
-> >> ext4.alias=fs-ext4
-> >> ext4.alias=ext3
-> >> ext4.alias=fs-ext3
-> >> ext4.alias=ext2
-> >> ext4.alias=fs-ext2
-> >> md_mod.alias=block-major-9-*
-> >> md_mod.alias=md
-> >> md_mod.description=MD RAID framework
-> >> md_mod.license=GPL
-> >> md_mod.parmtype=create_on_open:bool
-> >> md_mod.parmtype=start_dirty_degraded:int
-> >> ...
-> >>
-> >> v2:
-> >>  * Extract modinfo from vmlinux.o as suggested by Masahiro Yamada;
-> >>  * Rename output file to kernel.builtin;
-> >
-> >Sorry, I do not get why you renamed
-> >"kernel.builtin.modinfo" to "kernel.builtin".
-> >
-> >If you drop "modinfo", we do not understand
-> >what kind information is contained in it.
-> >
-> >I think "kernel" and "builtin" have
-> >a quite similar meaning here.
-> >
-> >How about "builtin.modinfo" for example?
-> >
-> >
-> >It is shorter, and it is clear enough
-> >that it contains module_info.
->
-> I agree that the name kernel.builtin is unclear in what kind of
-> information it contains. Apologies for not having clarified this in
-> the previous review.
->
-> Since kbuild already produces "modules.order" and "modules.builtin"
-> files, why not just name it "modules.builtin.modinfo" to keep the
-> names consistent with what is already there?
+----- On Apr 9, 2019, at 5:29 AM, Alan Modra amodra@gmail.com wrote:
 
+> On Tue, Apr 09, 2019 at 02:23:53PM +1000, Michael Ellerman wrote:
+>> I'd much rather we use a trap with a specific immediate value. Otherwise
+>> someone's going to waste time one day puzzling over why userspace is
+>> doing mtmsr.
+> 
+> It's data.  We have other data in executable sections.  Anyone who
+> wonders about odd disassembly just hasn't realized they are
+> disassembling data.
+> 
+>> It would also complicate things if we ever wanted to emulate mtmsr.
+> 
+> No, because it won't be executed.  If I understand correctly, the only
+> reason to choose an illegal, trap or privileged insn is to halt
+> execution earlier rather than later when a program goes off in the
+> weeds.
+> 
+>> If we want something that is a trap rather than a nop then use 0x0fe50553.
+>> 
+>> That's "compare the value in r5 with 0x553 and then trap unconditionally".
+>> 
+>> It shows up in objdump as:
+>> 
+>>     10000000:	53 05 e5 0f 	twui    r5,1363
+>> 
+>> 
+>> The immediate can be anything, I chose that value to mimic the x86 value
+>> Mathieu mentioned.
+>> 
+>> There's no reason that instruction would ever be generated because the
+>> immediate value serves no purpose. So it satisfies the "very unlikely
+>> to appear" criteria AFAICS.
+> 
+> Yes, looks fine to me, except that in VLE mode (do we care?)
+> ".long 0x0fe50553" disassembles as
+>   0:	0f e5       	se_cmphl r5,r30
+>   2:	05 53       	se_mullw r3,r5
+> No illegal/trap/privileged insn there.
+> 
+> ".long 0x0fe5000b" might be better to cover VLE.
 
-Is it consistent?
+Can you share with us the objdump output of ".long 0x0fe5000b" in
+VLE mode ? VLE mode support does not appear to be available in typical
+toolchains. Also, is VLE mode only for powerpc 32 be, or also for
+powerpc 64 be/le ?
 
-If we had "modules.order" and "modules.builtin.order" there,
-I would agree with "modules.builtin.modinfo",
-and also "modules.alias" vs "modules.builtin.alias".
+Thanks,
 
-
-We already have "modules.builtin", and probably impossible
-to rename it, so we cannot keep consistency in any way.
-
-
-"modules.builtin" is a weird name since
-it actually contains "order", but its extension
-does not express what kind of information is in it.
-Hence, I doubt "modules.builtin" is a good precedent.
-
-IMHO, "modules" and "builtin" are opposite
-to each other. "modules.builtin" sounds iffy to me.
+Mathieu
 
 
 
-
-
-> It clearly conveys that
-> this file contains modinfo for builtin modules.
->
-> I'll leave it up to Lucas to decide if the file format is OK for kmod.
-> With the modinfo dump, kmod could then decide what to do with the
-> information, append to modules.alias{,.bin}, etc.
->
-> Also, I think this file needs to be documented in Documentation/kbuild/kbuild.txt.
->
-> Thanks,
->
-> Jessica
---
-Best Regards
-Masahiro Yamada
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
