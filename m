@@ -1,36 +1,87 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH v2 3/5] signal: use fdget() since we don't allow O_PATH
-Date: Thu, 18 Apr 2019 17:53:27 +0200
-Message-ID: <20190418155326.nvjzvrhshi4gbib6@brauner.io>
-References: <20190418101841.4476-1-christian@brauner.io>
- <20190418101841.4476-4-christian@brauner.io>
- <CAHk-=whB0A_WsBpr3MFujWKi7WW9XLxUpq=z_uYTv+J7uE0wRw@mail.gmail.com>
+From: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
+Subject: Re: [PATCH 1/5] glibc: Perform rseq(2) registration at C startup and
+ thread creation (v8)
+Date: Thu, 18 Apr 2019 16:07:39 +0000
+Message-ID: <79996d13-2ba2-ed7d-b202-e7d38f1fd870@arm.com>
+References: <20190416173216.9028-1-mathieu.desnoyers@efficios.com>
+ <20190416173216.9028-2-mathieu.desnoyers@efficios.com>
+ <364803063.586.1555516769056.JavaMail.zimbra@efficios.com>
+ <alpine.DEB.2.21.1904171601540.32123@digraph.polyomino.org.uk>
+ <1770787324.668.1555530989646.JavaMail.zimbra@efficios.com>
+ <1066731871.915.1555593471194.JavaMail.zimbra@efficios.com>
+ <6cbfea7b-9d83-74a5-9cd2-af56a5d68818@arm.com>
+ <1055153722.1072.1555602067220.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHk-=whB0A_WsBpr3MFujWKi7WW9XLxUpq=z_uYTv+J7uE0wRw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Jann Horn <jannh@google.com>, David Howells <dhowells@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Andrew Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk-manpages <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Aleksa Sarai <cyphar@cyphar.com>, Joel Fernandes <joel@joelfernandes.org>, Daniel Colascione <dancol@google.com>, Jann Horn <jann@thejh.net>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <libc-alpha-return-101528-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+In-Reply-To: <1055153722.1072.1555602067220.JavaMail.zimbra@efficios.com>
+Content-ID: <8265BF5BDF73294FB3CC91041CC751B2@eurprd08.prod.outlook.com>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: nd <nd@arm.com>, Joseph Myers <joseph@codesourcery.com>, Will Deacon <Will.Deacon@arm.com>, carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 18, 2019 at 08:37:28AM -0700, Linus Torvalds wrote:
-> On Thu, Apr 18, 2019 at 3:19 AM Christian Brauner <christian@brauner.io> wrote:
-> >
-> >     It's just semantically correct to use fdget()
-> > and return an error right from there instead of taking a reference and
-> > returning an error later.
-> 
-> I've applied this one directly, because it ends up affecting the
-> existing code, and I'd rather just have the initial release of
-> pidfd_send_signal() right.
-
-Perfect! Thank you!
-
-> 
-> The other patches I consider to be "future release" material.
-
-Yes, indeed. Jann and I are targeting the 5.2 merge window if that's ok.
-
-Christian
+T24gMTgvMDQvMjAxOSAxNjo0MSwgTWF0aGlldSBEZXNub3llcnMgd3JvdGU6DQo+IC0tLS0tIE9u
+IEFwciAxOCwgMjAxOSwgYXQgMTE6MzMgQU0sIFN6YWJvbGNzIE5hZ3kgU3phYm9sY3MuTmFneUBh
+cm0uY29tIHdyb3RlOg0KPiANCj4+IE9uIDE4LzA0LzIwMTkgMTQ6MTcsIE1hdGhpZXUgRGVzbm95
+ZXJzIHdyb3RlOg0KPj4+IC0tLS0tIE9uIEFwciAxNywgMjAxOSwgYXQgMzo1NiBQTSwgTWF0aGll
+dSBEZXNub3llcnMNCj4+PiBtYXRoaWV1LmRlc25veWVyc0BlZmZpY2lvcy5jb20gd3JvdGU6DQo+
+Pj4+IC0tLS0tIE9uIEFwciAxNywgMjAxOSwgYXQgMTI6MTcgUE0sIEpvc2VwaCBNeWVycyBqb3Nl
+cGhAY29kZXNvdXJjZXJ5LmNvbSB3cm90ZToNCj4+Pj4+IE9uIFdlZCwgMTcgQXByIDIwMTksIE1h
+dGhpZXUgRGVzbm95ZXJzIHdyb3RlOg0KPj4+Pj4NCj4+Pj4+Pj4gKy8qIFJTRVFfU0lHIGlzIGEg
+c2lnbmF0dXJlIHJlcXVpcmVkIGJlZm9yZSBlYWNoIGFib3J0IGhhbmRsZXIgY29kZS4NCj4+Pj4+
+Pj4gKw0KPj4+Pj4+PiArICAgSXQgaXMgYSAzMi1iaXQgdmFsdWUgdGhhdCBtYXBzIHRvIGFjdHVh
+bCBhcmNoaXRlY3R1cmUgY29kZSBjb21waWxlZA0KPj4+Pj4+PiArICAgaW50byBhcHBsaWNhdGlv
+bnMgYW5kIGxpYnJhcmllcy4gSXQgbmVlZHMgdG8gYmUgZGVmaW5lZCBmb3IgZWFjaA0KPj4+Pj4+
+PiArICAgYXJjaGl0ZWN0dXJlLiBXaGVuIGNob29zaW5nIHRoaXMgdmFsdWUsIGl0IG5lZWRzIHRv
+IGJlIHRha2VuIGludG8NCj4+Pj4+Pj4gKyAgIGFjY291bnQgdGhhdCBnZW5lcmF0aW5nIGludmFs
+aWQgaW5zdHJ1Y3Rpb25zIG1heSBoYXZlIGlsbCBlZmZlY3RzIG9uDQo+Pj4+Pj4+ICsgICB0b29s
+cyBsaWtlIG9iamR1bXAsIGFuZCBtYXkgYWxzbyBoYXZlIGltcGFjdCBvbiB0aGUgQ1BVIHNwZWN1
+bGF0aXZlDQo+Pj4+Pj4+ICsgICBleGVjdXRpb24gZWZmaWNpZW5jeSBpbiBzb21lIGNhc2VzLiAg
+Ki8NCj4+Pj4+Pj4gKw0KPj4+Pj4+PiArI2RlZmluZSBSU0VRX1NJRyAweGQ0MjhiYzAwCS8qIEJS
+SyAjMHg0NUUwLiAgKi8NCj4+Pj4+Pg0KPj4+Pj4+IEFmdGVyIGZ1cnRoZXIgaW52ZXN0aWdhdGlv
+biwgd2Ugc2hvdWxkIHByb2JhYmx5IGRvIHRoZSBmb2xsb3dpbmcNCj4+Pj4+PiB0byBoYW5kbGUg
+Y29tcGlsaW5nIHdpdGggLW1iaWctZW5kaWFuIG9uIGFhcmNoNjQsIHdoaWNoIGdlbmVyYXRlcw0K
+Pj4+Pj4+IGJpbmFyaWVzIHdpdGggbWl4ZWQgY29kZSB2cyBkYXRhIGVuZGlhbm5lc3MgKGxpdHRs
+ZSBlbmRpYW4gY29kZSwNCj4+Pj4+PiBiaWcgZW5kaWFuIGRhdGEpOg0KPj4+Pj4NCj4+Pj4+IEZp
+cnN0LCB0aGUgY29tbWVudCBvbiBSU0VRX1NJRyBzaG91bGQgc3BlY2lmeSB3aGV0aGVyIGl0IGlz
+IHRvIGJlDQo+Pj4+PiBpbnRlcnByZXRlZCBpbiB0aGUgY29kZSBvciB0aGUgZGF0YSBlbmRpYW5u
+ZXNzLg0KPj4+Pg0KPj4+PiBSaWdodC4gVGhlIHNpZ25hdHVyZSBwYXNzZWQgYXMgYXJndW1lbnQg
+dG8gdGhlIHJzZXEgcmVnaXN0cmF0aW9uDQo+Pj4+IHN5c3RlbSBjYWxsIG5lZWRzIHRvIGJlIGlu
+IGRhdGEgZW5kaWFubmVzcyAoY3VycmVudGx5IGV4cG9zZWQga2VybmVsDQo+Pj4+IEFCSSkuDQo+
+Pj4+DQo+Pj4+IElkZWFsbHkgZm9yIHVzZXJzcGFjZSwgd2Ugd2FudCB0byBkZWZpbmUgYSBzaWdu
+YXR1cmUgaW4gY29kZSBlbmRpYW5uZXNzDQo+Pj4+IHRoYXQgaGFwcGVucyB0byBuaWNlbHkgbWF0
+Y2ggc3BlY2lmaWMgY29kZSBwYXR0ZXJucy4NCj4+IC4uLg0KPj4+IEZvciBhYXJjaDY0LCBJIHRo
+aW5rIHdlIGNhbiBzaW1wbHkgZG86DQo+Pj4NCj4+PiAvKg0KPj4+ICAqIGFhcmNoNjQgLW1iaWct
+ZW5kaWFuIGdlbmVyYXRlcyBtaXhlZCBlbmRpYW5uZXNzIGNvZGUgdnMgZGF0YToNCj4+PiAgKiBs
+aXR0bGUtZW5kaWFuIGNvZGUgYW5kIGJpZy1lbmRpYW4gZGF0YS4gRW5zdXJlIHRoZSBSU0VRX1NJ
+RyBzaWduYXR1cmUNCj4+PiAgKiBtYXRjaGVzIGNvZGUgZW5kaWFubmVzcy4NCj4+PiAgKi8NCj4+
+PiAjZGVmaW5lIFJTRVFfU0lHX0NPREUgICAweGQ0MjhiYzAwICAgICAgLyogQlJLICMweDQ1RTAu
+ICAqLw0KPj4+DQo+Pj4gI2lmZGVmIF9fQVJNX0JJR19FTkRJQU4NCj4+PiAjZGVmaW5lIFJTRVFf
+U0lHX0RBVEEgICAweDAwYmMyOGQ0ICAgICAgLyogQlJLICMweDQ1RTAuICAqLw0KPj4+ICNlbHNl
+DQo+Pj4gI2RlZmluZSBSU0VRX1NJR19EQVRBICAgUlNFUV9TSUdfQ09ERQ0KPj4+ICNlbmRpZg0K
+Pj4+DQo+Pj4gI2RlZmluZSBSU0VRX1NJRyAgICAgICAgUlNFUV9TSUdfREFUQQ0KPj4+DQo+Pj4g
+RmVlZGJhY2sgaXMgbW9zdCB3ZWxjb21lLA0KPj4NCj4+IHNvIHRoZSBSU0VRX1NJRyB2YWx1ZSBp
+cyBzdXBwb3NlZCB0byBiZSB1c2VkIHdpdGggLndvcmQNCj4+IGluIGFzbSBpbnN0ZWFkIG9mIC5p
+bnN0Pw0KPiANCj4gV2Ugd2FudCBhIC5pbnN0IHNvIGl0IHRyYW5zbGF0ZXMgaW50byBhIHZhbGlk
+IHRyYXAgaW5zdHJ1Y3Rpb24uDQo+IEl0J3MgYmV0dGVyIHRvIHRyYXAgaW4gY2FzZSBwcm9ncmFt
+IGV4ZWN1dGlvbiByZWFjaGVzIHRoaXMNCj4gYnkgbWlzdGFrZSAobWFrZXMgZGVidWdnaW5nIGVh
+c2llcikuDQoNCnRoYXQgZG9lcyBub3QgbWFrZSBzZW5zZSB0byBtZS4NCg0KIi5pbnN0IiBpcyBh
+biBhc20gZGlyZWN0aXZlIHRoYXQgcmVxdWlyZXMgYSB0aGUgdmFsdWUgdG8NCmJlIHRoZSBzYW1l
+IG9uIEJFIGFuZCBMRSAobm9ybWFsIGluc24gZW5jb2RpbmcpLg0KDQoiLndvcmQiIGlzIGFuIGFz
+bSBkaXJlY3RpdmUgdGhhdCByZXF1aXJlcyB0aGUgdmFsdWUgdG8NCnVzZSBzd2FwcGVkIGVuY29k
+aW5nIG9uIEJFIChpZiBpdCdzIHVzZWQgaW4gdGhlIGluc3RydWN0aW9uDQpzdHJlYW0gaXQgd2ls
+bCBjcmVhdGUgYSBkYXRhIG1hcHBpbmcgc3ltYm9sIGFuZCBkaXNhc20gdG8NCi53b3JkIHZhbHVl
+IGluc3RlYWQgb2YgdGhlIGluc3RydWN0aW9uIG1uZW1vbmljcykuDQoNCnNvIHdoaWNoIG9uZSBp
+cyBpdD8NCg0KPj4gaSBkb24ndCB0aGluayB3ZSB1c2UgX19BUk1fKiBpbiBwdWJsaWMgaGVhZGVy
+cyBjdXJyZW50bHksDQo+PiBidXQgaG9wZWZ1bGx5IGFhcmNoNjRfYmUgY29tcGlsZXJzIGltcGxl
+bWVudCBpdC4NCj4gDQo+IENhbiBJIHVzZSAjaWYgX19CWVRFX09SREVSX18gPT0gX19PUkRFUl9C
+SUdfRU5ESUFOX18gIHRoZW4gPw0KDQpobSwgaSdkIGVpdGhlciB1c2UgI2lmZGVmIF9fQUFSQ0g2
+NEVCX18gKHNpbmNlIHdlIGFscmVhZHkgdXNlIGl0KQ0Kb3IgdGhlIHBvcnRhYmxlICNpbmNsdWRl
+IGVuZGlhbi5oIGFuZCBfX0JZVEVfT1JERVIgPT0gX19CSUdfRU5ESUFODQo=
