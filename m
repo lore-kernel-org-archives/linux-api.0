@@ -1,39 +1,62 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH v15 1/3] /proc/pid/status: Add support for architecture
- specific output
-Date: Thu, 18 Apr 2019 15:00:40 +0200 (CEST)
-Message-ID: <alpine.DEB.2.21.1904181500100.3174@nanos.tec.linutronix.de>
-References: <20190416063250.7514-1-aubrey.li@linux.intel.com> <20190416160143.8292ced993dc803aae7fa0da@linux-foundation.org> <CALCETrUjF9PBmkzH1J86vw4ZW785DP7FtcT+gcSrx29=BUnjoQ@mail.gmail.com>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH v2 2/5] clone: add CLONE_PIDFD
+Date: Thu, 18 Apr 2019 15:12:07 +0200
+Message-ID: <20190418131206.GB13701@redhat.com>
+References: <20190418101841.4476-1-christian@brauner.io>
+ <20190418101841.4476-3-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrUjF9PBmkzH1J86vw4ZW785DP7FtcT+gcSrx29=BUnjoQ@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <20190418101841.4476-3-christian@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Aubrey Li <aubrey.li@linux.intel.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, Tim Chen <tim.c.chen@linux.intel.com>, Dave Hansen <dave.hansen@intel.com>, Arjan van de Ven <arjan@linux.intel.com>, Alexey Dobriyan <adobriyan@gmail.com>, aubrey.li@intel.com, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+To: Christian Brauner <christian@brauner.io>
+Cc: torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, jannh@google.com, dhowells@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, serge@hallyn.com, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, tglx@linutronix.de, mtk.manpages@gmail.com, akpm@linux-foundation.org, cyphar@cyphar.com, joel@joelfernandes.org, dancol@google.com
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 17 Apr 2019, Andy Lutomirski wrote:
+On 04/18, Christian Brauner wrote:
+>
+> @@ -1674,13 +1729,14 @@ static __latent_entropy struct task_struct *copy_process(
+>  					unsigned long clone_flags,
+>  					unsigned long stack_start,
+>  					unsigned long stack_size,
+> +					int __user *parent_tidptr,
+>  					int __user *child_tidptr,
+>  					struct pid *pid,
+>  					int trace,
+>  					unsigned long tls,
+>  					int node)
+>  {
+> -	int retval;
+> +	int pidfd = -1, retval;
 
-> On Tue, Apr 16, 2019 at 4:01 PM Andrew Morton <akpm@linux-foundation.org> wrote:
-> >
-> > On Tue, 16 Apr 2019 14:32:48 +0800 Aubrey Li <aubrey.li@linux.intel.com> wrote:
-> >
-> > > The architecture specific information of the running processes could
-> > > be useful to the userland. Add support to examine process architecture
-> > > specific information externally.
-> >
-> > The implementation looks just fine to me.  Have you had any feedback on
-> > the overall desirability of adding this feature?
-> 
-> I think I've been the most outspoken, and my not-all-that-strong
-> opinion is that I don't really like it.  /proc/PID/status is already a
-> bit of a mess, and I don't think we really want it to be a mess that
-> is different on different architectures.  Hence my suggestion of
-> /proc/PID/x86_status instead.  Or we could do /proc/PID/arch_status, I
+it seems that initialization is unneeded, but this is cosmetic.
 
-arch_status looks like the right thing to do.
+I see no technical problems, feel free to add my reviewed-by.
 
-Thanks,
 
-	tglx
+But let me ask a couple of questions...
+
+
+Why O_CLOEXEC? I am just curious, I do not really care.
+
+
+Should we allow CLONE_THREAD | CLONE_PIDFD ?
+
+
+Are you sure we will never need to extend this interface? If not, then perhaps it
+make sense to add something like
+
+	if (CLONE_PIDFD) {
+		unsigned long not_used_yet;
+		if (get_user(not_used_yet, parent_tidptr) ||
+		    not_used_yet != 0)
+			return -EINVAL;
+	}
+
+this way we can easily add more arguments in future or even turn CLONE_PIDFD into
+CLONE_MORE_ARGS_IN_PARENT_TIDPTR.
+
+Not that I think this is really good idea, sys_clone2() makes more sense, but still.
+
+Oleg.
