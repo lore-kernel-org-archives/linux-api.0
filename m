@@ -1,121 +1,110 @@
-From: Lucas De Marchi <lucas.de.marchi@gmail.com>
-Subject: Re: [PATCH v2] moduleparam: Save information about built-in modules
- in separate file
-Date: Thu, 18 Apr 2019 07:36:25 -0700
-Message-ID: <CAKi4VALprR0+p-pk9h4Jt1+v2nxGqs_aO7p6bM_2oVsutsTsyQ@mail.gmail.com>
-References: <20190406121447.GB4047@localhost.localdomain> <CAK7LNATfo0K6kzwobkAZ_u2KnWL3XycJzbr3KPtPF=ePziCuDg@mail.gmail.com>
- <20190418135238.GA5626@linux-8ccs>
+From: hpa@zytor.com
+Subject: Re: [PATCH] Linux: Define struct termios2 in <termios.h> under _GNU_SOURCE [BZ #10339]
+Date: Thu, 18 Apr 2019 07:46:39 -0700
+Message-ID: <50A91072-AEEB-4A05-BF7C-41086B17A4F9@zytor.com>
+References: <875zrnlakd.fsf@oldenburg2.str.redhat.com> <284e9c76-2411-b8f4-c4bc-c25c60c04cf7@linaro.org> <87imvker6t.fsf@oldenburg2.str.redhat.com> <db468a0f-4a7b-d251-601f-428885275d08@linaro.org> <87lg0fbr1q.fsf@oldenburg2.str.redhat.com> <A278227C-039B-49F4-B80D-650B785AE225@zytor.com> <bfe6744f-7326-0a06-e43c-9f88abce7032@linaro.org> <8f05dc10-02ea-327f-f984-98b91a0b195d@zytor.com> <4ae23f8e-c5e5-2d11-8508-82e5dd4c1e2b@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190418135238.GA5626@linux-8ccs>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jessica Yu <jeyu@kernel.org>
-Cc: Masahiro Yamada <yamada.masahiro@socionext.com>, Alexey Gladkov <gladkov.alexey@gmail.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux Kbuild mailing list <linux-kbuild@vger.kernel.org>, linux-api@vger.kernel.org, linux-modules <linux-modules@vger.kernel.org>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>, "Dmitry V. Levin" <ldv@altlinux.org>, Michal Marek <michal.lkml@markovi.net>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Rusty Russell <rusty@rustcorp.com.au>
+Content-Type: text/plain;
+ charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <libc-alpha-return-101514-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+In-Reply-To: <4ae23f8e-c5e5-2d11-8508-82e5dd4c1e2b@linaro.org>
+To: Adhemerval Zanella <adhemerval.zanella@linaro.org>, Florian Weimer <fweimer@redhat.com>
+Cc: libc-alpha@sourceware.org, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 18, 2019 at 6:52 AM Jessica Yu <jeyu@kernel.org> wrote:
+On April 18, 2019 4:09:07 AM PDT, Adhemerval Zanella <adhemerval=2Ezanella@=
+linaro=2Eorg> wrote:
 >
-> +++ Masahiro Yamada [18/04/19 20:10 +0900]:
-> >On Sat, Apr 6, 2019 at 9:15 PM Alexey Gladkov <gladkov.alexey@gmail.com> wrote:
-> >>
-> >> Problem:
-> >>
-> >> When a kernel module is compiled as a separate module, some important
-> >> information about the kernel module is available via .modinfo section of
-> >> the module.  In contrast, when the kernel module is compiled into the
-> >> kernel, that information is not available.
-> >>
-> >> Information about built-in modules is necessary in the following cases:
-> >>
-> >> 1. When it is necessary to find out what additional parameters can be
-> >> passed to the kernel at boot time.
-> >>
-> >> 2. When you need to know which module names and their aliases are in
-> >> the kernel. This is very useful for creating an initrd image.
-> >>
-> >> Proposal:
-> >>
-> >> The proposed patch does not remove .modinfo section with module
-> >> information from the vmlinux at the build time and saves it into a
-> >> separate file after kernel linking. So, the kernel does not increase in
-> >> size and no additional information remains in it. Information is stored
-> >> in the same format as in the separate modules (null-terminated string
-> >> array). Because the .modinfo section is already exported with a separate
-> >> modules, we are not creating a new API.
-> >>
-> >> It can be easily read in the userspace:
-> >>
-> >> $ tr '\0' '\n' < kernel.builtin
-> >> ext4.softdep=pre: crc32c
-> >> ext4.license=GPL
-> >> ext4.description=Fourth Extended Filesystem
-> >> ext4.author=Remy Card, Stephen Tweedie, Andrew Morton, Andreas Dilger, Theodore Ts'o and others
-> >> ext4.alias=fs-ext4
-> >> ext4.alias=ext3
-> >> ext4.alias=fs-ext3
-> >> ext4.alias=ext2
-> >> ext4.alias=fs-ext2
-> >> md_mod.alias=block-major-9-*
-> >> md_mod.alias=md
-> >> md_mod.description=MD RAID framework
-> >> md_mod.license=GPL
-> >> md_mod.parmtype=create_on_open:bool
-> >> md_mod.parmtype=start_dirty_degraded:int
-> >> ...
-> >>
-> >> v2:
-> >>  * Extract modinfo from vmlinux.o as suggested by Masahiro Yamada;
-> >>  * Rename output file to kernel.builtin;
-> >
-> >Sorry, I do not get why you renamed
-> >"kernel.builtin.modinfo" to "kernel.builtin".
-> >
-> >If you drop "modinfo", we do not understand
-> >what kind information is contained in it.
-> >
-> >I think "kernel" and "builtin" have
-> >a quite similar meaning here.
-> >
-> >How about "builtin.modinfo" for example?
-> >
-> >
-> >It is shorter, and it is clear enough
-> >that it contains module_info.
 >
-> I agree that the name kernel.builtin is unclear in what kind of
-> information it contains. Apologies for not having clarified this in
-> the previous review.
+>On 17/04/2019 19:04, H=2E Peter Anvin wrote:
+>> On 4/15/19 10:22 AM, Adhemerval Zanella wrote:
+>>>>
+>>>> New interfaces are only necessary for the handful of architectures
+>that don't have the speed fields *and* to space to put them in=2E=20
+>>>
+>>> Based on your WIP, it seems that both sparc and mips could be
+>adapted=2E
+>>> Do we still have glibc supported architecture that would require
+>compat
+>>> symbols?
+>>>
+>>>>
+>>>> Using symbol versioning doesn't really help much since the real
+>problem is that struct termios can be passed around in userspace, and
+>the interfaces between user space libraries don't have any versioning=2E
+>However, my POC code deals with that too by only seeing BOTHER when
+>necessary, so if the structure is extended garbage in the extra fields
+>will be ignored unless new baud rates are in use=2E
+>>>
+>>> Yeah, we discussed this earlier and if recall correctly it was not
+>settled
+>>> that all architectures would allow the use to extra space for the
+>new
+>>> fields=2E It seems the case, which makes the adaptation for termios2
+>even easier=2E
+>>>
+>>> The question I have for kernel side is whether termios2 is fully
+>compatible
+>>> with termios, meaning that if there is conner cases we need to
+>handle in
+>>> userland=2E
+>>>
+>>=20
+>> It depends on what you mean with "fully compatible=2E"
+>>=20
+>> Functionality-wise, the termios2 interfaces are a strict superset=2E
+>There
+>> is not, however, any guarantee that struct kernel_termios2 *contains*
+>a
+>> contiguous binary equivalent to struct kernel_termios (in fact, on
+>most
+>> architectures, it doesn't=2E)
 >
-> Since kbuild already produces "modules.order" and "modules.builtin"
-> files, why not just name it "modules.builtin.modinfo" to keep the
-
-I agree with modules.builtin.modinfo
-
-> names consistent with what is already there? It clearly conveys that
-> this file contains modinfo for builtin modules.
+>I mean that we can fully implement termios1 using termios2 by adjusting
+>the termios struct in syscall wrappers=2E  If it is a superset I think it
+>is fine=2E
 >
-> I'll leave it up to Lucas to decide if the file format is OK for kmod.
-> With the modinfo dump, kmod could then decide what to do with the
-> information, append to modules.alias{,.bin}, etc.
-
-I think it's ok with the current format. It's simple enough. I would
-delay merging it until
-the userspace counterpart is implemented though. So to make sure we
-have everything we need.
-I can work on that in ~1 or 2 weeks.
-
-thanks
-Lucas De Marchi
-
+>>=20
+>>>>
+>>>> My POC code deals with Alpha as well by falling back to the old
+>interfaces if necessary and possible, otherwise return error=2E
+>>>>
+>>>> Exporting termios2 to user space feels a bit odd at this stage as
+>it would only be usable as a fallback on old glibc=2E Call it
+>kernel_termios2 at least=2E ioctls using struct termios *must* be changed
+>to kernel_termios anyway!
+>>>>
+>>>
+>>> I still prefer to avoid export it to userland and make it usable
+>through
+>>> default termios, as your wip does=2E  My understanding is new
+>interfaces=20
+>>> should be semantic equal to current one with the only deviation that
+>>> non-standard baudrates will handled as its values=2E  The only issue I
 >
-> Also, I think this file needs to be documented in Documentation/kbuild/kbuild.txt.
+>>> can foresee is if POSIX starts to export new bauds value=2E
+>>>
+>>=20
+>> =2E=2E=2E which will be easy to handle: just define a Bxxxx constant wi=
+th
+>the
+>> value equal to the baud rate=2E
+>>=20
+>> 	-hhpa
 >
-> Thanks,
->
-> Jessica
+>Right=2E
 
+termio, termios1 and termios2 are kernel ioctl interfaces =2E=2E=2E there =
+are no wrappers; it is an ioctl=2E
 
-
--- 
-Lucas De Marchi
+The glibc termios is different from all of these, and already is a wrapper=
+ around the kernel-provided ioctls=2E
+--=20
+Sent from my Android device with K-9 Mail=2E Please excuse my brevity=2E
