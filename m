@@ -1,47 +1,35 @@
-From: Joseph Myers <joseph@codesourcery.com>
-Subject: Re: [PATCH 1/5] glibc: Perform rseq(2) registration at C startup
- and thread creation (v8)
-Date: Thu, 18 Apr 2019 14:48:34 +0000
-Message-ID: <alpine.DEB.2.21.1904181445550.5356@digraph.polyomino.org.uk>
-References: <20190416173216.9028-1-mathieu.desnoyers@efficios.com> <20190416173216.9028-2-mathieu.desnoyers@efficios.com> <364803063.586.1555516769056.JavaMail.zimbra@efficios.com> <alpine.DEB.2.21.1904171601540.32123@digraph.polyomino.org.uk>
- <1770787324.668.1555530989646.JavaMail.zimbra@efficios.com> <1066731871.915.1555593471194.JavaMail.zimbra@efficios.com>
+From: Christian Brauner <christian@brauner.io>
+Subject: Re: [PATCH v2 4/5] signal: support CLONE_PIDFD with pidfd_send_signal
+Date: Thu, 18 Apr 2019 17:01:00 +0200
+Message-ID: <EF6F0B39-1F4A-4A8F-9C64-FB3B1E804C83@brauner.io>
+References: <20190418101841.4476-1-christian@brauner.io> <20190418101841.4476-5-christian@brauner.io> <20190418142559.GA30069@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
+Content-Type: text/plain;
+ charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1066731871.915.1555593471194.JavaMail.zimbra@efficios.com>
+In-Reply-To: <20190418142559.GA30069@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Will Deacon <will.deacon@arm.com>, carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
+To: Oleg Nesterov <oleg@redhat.com>
+Cc: torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, jannh@google.com, dhowells@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, serge@hallyn.com, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, tglx@linutronix.de, mtk.manpages@gmail.com, akpm@linux-foundation.org, cyphar@cyphar.com, joel@joelfernandes.org, dancol@google.com
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 18 Apr 2019, Mathieu Desnoyers wrote:
+On April 18, 2019 4:26:00 PM GMT+02:00, Oleg Nesterov <oleg@redhat=2Ecom> w=
+rote:
+>On 04/18, Christian Brauner wrote:
+>>
+>> +static struct pid *pidfd_to_pid(const struct file *file)
+>> +{
+>> +	if (file->f_op =3D=3D &pidfd_fops)
+>> +		return file->private_data;
+>> +
+>> +	return tgid_pidfd_to_pid(file);
+>> +}
+>
+>the patch looks obviously fine to me, but I have an absolutely
+>off-topic
+>question=2E=2E=2E why tgid_pidfd_to_pid() has to check d_is_dir() ?
 
-> The approach above should work for arm32 be8 vs be32 linker weirdness.
-> 
-> For aarch64, I think we can simply do:
-> 
-> /*
->  * aarch64 -mbig-endian generates mixed endianness code vs data:
->  * little-endian code and big-endian data. Ensure the RSEQ_SIG signature
->  * matches code endianness.
->  */
-> #define RSEQ_SIG_CODE   0xd428bc00      /* BRK #0x45E0.  */
-> 
-> #ifdef __ARM_BIG_ENDIAN
-> #define RSEQ_SIG_DATA   0x00bc28d4      /* BRK #0x45E0.  */
-> #else
-> #define RSEQ_SIG_DATA   RSEQ_SIG_CODE
-> #endif
-> 
-> #define RSEQ_SIG        RSEQ_SIG_DATA
-> 
-> Feedback is most welcome,
+It doesn't have too; pure paranoia=2E
 
-You'll also need __ASSEMBLER__ conditionals in the installed sys/rseq.h 
-header so that it only defines constants and doesn't include any C 
-declarations in that case, if RSEQ_SIG_CODE is meant to be usable in .S 
-files rather than just inline asm in C files.
-
--- 
-Joseph S. Myers
-joseph@codesourcery.com
+Christian
