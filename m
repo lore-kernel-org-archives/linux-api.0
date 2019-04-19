@@ -1,303 +1,314 @@
-From: Yurii Pavlovskyi <yurii.pavlovskyi@gmail.com>
-Subject: [PATCH v3 10/11] platform/x86: asus-wmi: Switch fan boost mode
-Date: Fri, 19 Apr 2019 12:15:45 +0200
-Message-ID: <bc454e6f-58f5-f326-3037-56e843e96800@gmail.com>
-References: <7acd57fe-604a-a96a-4ca2-a25bc88d6405@gmail.com>
+From: Christian Brauner <christian@brauner.io>
+Subject: [PATCH v3 2/4] clone: add CLONE_PIDFD
+Date: Fri, 19 Apr 2019 14:09:02 +0200
+Message-ID: <20190419120904.27502-3-christian@brauner.io>
+References: <20190419120904.27502-1-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <7acd57fe-604a-a96a-4ca2-a25bc88d6405@gmail.com>
-Content-Language: en-US
+In-Reply-To: <20190419120904.27502-1-christian@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-Cc: Corentin Chary <corentin.chary@gmail.com>, Darren Hart <dvhart@infradead.org>, Andy Shevchenko <andy@infradead.org>, Daniel Drake <drake@endlessm.com>, acpi4asus-user@lists.sourceforge.net, platform-driver-x86@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+To: torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, jannh@google.com, dhowells@redhat.com, oleg@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: serge@hallyn.com, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, tglx@linutronix.de, mtk.manpages@gmail.com, akpm@linux-foundation.org, cyphar@cyphar.com, joel@joelfernandes.org, dancol@google.com, Christian Brauner <christian@brauner.io>, Jann Horn <jann@thejh.net>
 List-Id: linux-api@vger.kernel.org
 
-The WMI exposes a write-only device ID where up to three fan modes modes
-can be switched on some laptops (TUF Gaming FX505GM). There is a hotkey
-combination Fn-F5 that does have a fan icon which is designed to toggle
-between fan modes. The DSTS of the device ID returns information about the
-presence of the device and the presence of each of the two additional fan
-modes as a bitmask (0x01 - overboost present, 0x02 - silent present) [1].
+This patchset makes it possible to retrieve pid file descriptors at
+process creation time by introducing the new flag CLONE_PIDFD to the
+clone() system call.  Linus originally suggested to implement this as a
+new flag to clone() instead of making it a separate system call.  As
+spotted by Linus, there is exactly one bit for clone() left.
 
-Add a SysFS entry that reads the last written value and updates value in
-WMI on write and a hotkey handler that toggles the modes taking into
-account their availability according to DSTS.
+CLONE_PIDFD creates file descriptors based on the anonymous inode
+implementation in the kernel that will also be used to implement the new
+mount api.  They serve as a simple opaque handle on pids.  Logically,
+this makes it possible to interpret a pidfd differently, narrowing or
+widening the scope of various operations (e.g. signal sending).  Thus, a
+pidfd cannot just refer to a tgid, but also a tid, or in theory - given
+appropriate flag arguments in relevant syscalls - a process group or
+session. A pidfd does not represent a privilege.  This does not imply it
+cannot ever be that way but for now this is not the case.
 
-Modes:
-* 0x00 - normal or balanced,
-* 0x01 - overboost, increased fan RPM,
-* 0x02 - silent, decreased fan RPM
+A pidfd comes with additional information in fdinfo if the kernel supports
+procfs.  The fdinfo file contains the pid of the process in the callers
+pid namespace in the same format as the procfs status file, i.e. "Pid:\t%d".
 
-[1] https://lkml.org/lkml/2019/4/12/110
+As suggested by Oleg, with CLONE_PIDFD the pidfd is returned in the
+parent_tidptr argument of clone.  This has the advantage that we can
+give back the associated pid and the pidfd at the same time.
 
-Signed-off-by: Yurii Pavlovskyi <yurii.pavlovskyi@gmail.com>
-Suggested-by: Daniel Drake <drake@endlessm.com>
+To remove worries about missing metadata access this patchset comes with
+a sample program that illustrates how a combination of CLONE_PIDFD, and
+pidfd_send_signal() can be used to gain race-free access to process
+metadata through /proc/<pid>.  The sample program can easily be
+translated into a helper that would be suitable for inclusion in libc so
+that users don't have to worry about writing it themselves.
+
+Suggested-by: Linus Torvalds <torvalds@linux-foundation.org>
+Signed-off-by: Christian Brauner <christian@brauner.io>
+Co-developed-by: Jann Horn <jann@thejh.net>
+Signed-off-by: Jann Horn <jann@thejh.net>
+Reviewed-by: Oleg Nesterov <oleg@redhat.com>
+Cc: Arnd Bergmann <arnd@arndb.de>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: David Howells <dhowells@redhat.com>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: Andy Lutomirsky <luto@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Aleksa Sarai <cyphar@cyphar.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Al Viro <viro@zeniv.linux.org.uk>
 ---
- .../ABI/testing/sysfs-platform-asus-wmi       |  10 ++
- drivers/platform/x86/asus-wmi.c               | 149 +++++++++++++++++-
- include/linux/platform_data/x86/asus-wmi.h    |   1 +
- 3 files changed, 152 insertions(+), 8 deletions(-)
+/* changelog */
+v1:
+- Oleg Nesterov <oleg@redhat.com>:
+  - return pidfd in parent_tidptr argument of clone
+    This way we can return the pid and the pidfd at the same time to the
+    caller and can also start pid file descriptor numbering at 0 as is
+    customary for file descriptors.
+- Christian Brauner <christian@brauner.io>:
+  - update comments to reflect changes based on Oleg's idea
+v2:
+- Oleg Nesterov <oleg@redhat.com>:
+  - move put_user() before clone()'s point of no return so we can handle
+    put_user() errors
+- Christian Brauner <christian@brauner.io>:
+  - change pidfd_create() to also fd_install()
+    With Oleg's change it makes sense to do the fd_install() right before
+    the moved put_user().
+v3:
+- Oleg Nesterov <oleg@redhat.com>:
+  - block CLONE_PIDFD with CLONE_THREAD until someone really needs this
+    feature
+  - ensure that parent_tidptr is pristine so we can use with CLONE_PIDFD
+    for additional features
+- Christian Brauner <christian@brauner.io>:
+  - return EFAULT on get_user() error, EINVAL on non-zero value
+    Oleg had originally sketched a piece of code that returned EINVAL when
+    get_user() fails. However, it is clearer for userspace if EFAULT is
+    returned when get_user() fails and EINVAL when the retrieved value is
+    not 0.
+---
+ include/linux/pid.h        |   2 +
+ include/uapi/linux/sched.h |   1 +
+ kernel/fork.c              | 108 +++++++++++++++++++++++++++++++++++--
+ 3 files changed, 107 insertions(+), 4 deletions(-)
 
-diff --git a/Documentation/ABI/testing/sysfs-platform-asus-wmi b/Documentation/ABI/testing/sysfs-platform-asus-wmi
-index 1cc54d5e3e10..6f396c4eabdc 100644
---- a/Documentation/ABI/testing/sysfs-platform-asus-wmi
-+++ b/Documentation/ABI/testing/sysfs-platform-asus-wmi
-@@ -97,3 +97,13 @@ Description:
- 		Write changed RGB keyboard backlight parameters:
- 			* 1 - permanently,
- 			* 2 - temporarily.
+diff --git a/include/linux/pid.h b/include/linux/pid.h
+index b6f4ba16065a..3c8ef5a199ca 100644
+--- a/include/linux/pid.h
++++ b/include/linux/pid.h
+@@ -66,6 +66,8 @@ struct pid
+ 
+ extern struct pid init_struct_pid;
+ 
++extern const struct file_operations pidfd_fops;
 +
-+What:		/sys/devices/platform/<platform>/fan_mode
-+Date:		Apr 2019
-+KernelVersion:	5.1
-+Contact:	"Yurii Pavlovskyi" <yurii.pavlovskyi@gmail.com>
-+Description:
-+		Fan boost mode:
-+			* 0 - normal,
-+			* 1 - overboost,
-+			* 2 - silent
-diff --git a/drivers/platform/x86/asus-wmi.c b/drivers/platform/x86/asus-wmi.c
-index 0a32079336d8..7974283b7b12 100644
---- a/drivers/platform/x86/asus-wmi.c
-+++ b/drivers/platform/x86/asus-wmi.c
-@@ -69,6 +69,7 @@ MODULE_LICENSE("GPL");
- #define NOTIFY_KBD_BRTUP		0xc4
- #define NOTIFY_KBD_BRTDWN		0xc5
- #define NOTIFY_KBD_BRTTOGGLE		0xc7
-+#define NOTIFY_KBD_FBM			0x99
+ static inline struct pid *get_pid(struct pid *pid)
+ {
+ 	if (pid)
+diff --git a/include/uapi/linux/sched.h b/include/uapi/linux/sched.h
+index 22627f80063e..ed4ee170bee2 100644
+--- a/include/uapi/linux/sched.h
++++ b/include/uapi/linux/sched.h
+@@ -10,6 +10,7 @@
+ #define CLONE_FS	0x00000200	/* set if fs info shared between processes */
+ #define CLONE_FILES	0x00000400	/* set if open files shared between processes */
+ #define CLONE_SIGHAND	0x00000800	/* set if signal handlers and blocked signals shared */
++#define CLONE_PIDFD	0x00001000	/* set if a pidfd should be placed in parent */
+ #define CLONE_PTRACE	0x00002000	/* set if we want to let tracing continue on the child too */
+ #define CLONE_VFORK	0x00004000	/* set if the parent wants the child to wake it up on mm_release */
+ #define CLONE_PARENT	0x00008000	/* set if we want to have the same parent as the cloner */
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 9dcd18aa210b..5525837ed80e 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -11,6 +11,7 @@
+  * management can be a bitch. See 'mm/memory.c': 'copy_page_range()'
+  */
  
- #define ASUS_FAN_DESC			"cpu_fan"
- #define ASUS_FAN_MFUN			0x13
-@@ -77,6 +78,13 @@ MODULE_LICENSE("GPL");
- #define ASUS_FAN_CTRL_MANUAL		1
- #define ASUS_FAN_CTRL_AUTO		2
- 
-+#define ASUS_FAN_MODE_NORMAL		0
-+#define ASUS_FAN_MODE_OVERBOOST		1
-+#define ASUS_FAN_MODE_OVERBOOST_MASK	0x01
-+#define ASUS_FAN_MODE_SILENT		2
-+#define ASUS_FAN_MODE_SILENT_MASK	0x02
-+#define ASUS_FAN_MODES_MASK		0x03
-+
- #define USB_INTEL_XUSB2PR		0xD0
- #define PCI_DEVICE_ID_INTEL_LYNXPOINT_LP_XHCI	0x9c31
- 
-@@ -198,6 +206,10 @@ struct asus_wmi {
- 	int asus_hwmon_num_fans;
- 	int asus_hwmon_pwm;
- 
-+	bool fan_mode_available;
-+	u8 fan_mode_mask;
-+	u8 fan_mode;
-+
- 	bool kbbl_rgb_available;
- 	struct asus_kbbl_rgb kbbl_rgb;
- 
-@@ -1827,6 +1839,114 @@ static int asus_wmi_fan_init(struct asus_wmi *asus)
- 	return 0;
++#include <linux/anon_inodes.h>
+ #include <linux/slab.h>
+ #include <linux/sched/autogroup.h>
+ #include <linux/sched/mm.h>
+@@ -21,8 +22,10 @@
+ #include <linux/sched/task.h>
+ #include <linux/sched/task_stack.h>
+ #include <linux/sched/cputime.h>
++#include <linux/seq_file.h>
+ #include <linux/rtmutex.h>
+ #include <linux/init.h>
++#include <linux/fsnotify.h>
+ #include <linux/unistd.h>
+ #include <linux/module.h>
+ #include <linux/vmalloc.h>
+@@ -1662,6 +1665,58 @@ static inline void rcu_copy_process(struct task_struct *p)
+ #endif /* #ifdef CONFIG_TASKS_RCU */
  }
  
-+/* Fan mode *******************************************************************/
-+
-+static int fan_mode_check_present(struct asus_wmi *asus)
++static int pidfd_release(struct inode *inode, struct file *file)
 +{
-+	u32 result;
-+	int err;
++	struct pid *pid = file->private_data;
 +
-+	asus->fan_mode_available = false;
-+
-+	err = asus_wmi_get_devstate(asus, ASUS_WMI_DEVID_FAN_MODE, &result);
-+	if (err) {
-+		if (err == -ENODEV)
-+			return 0;
-+		else
-+			return err;
-+	}
-+
-+	if ((result & ASUS_WMI_DSTS_PRESENCE_BIT) &&
-+			(result & ASUS_FAN_MODES_MASK)) {
-+		asus->fan_mode_available = true;
-+		asus->fan_mode_mask = result & ASUS_FAN_MODES_MASK;
-+	}
-+
++	file->private_data = NULL;
++	put_pid(pid);
 +	return 0;
 +}
 +
-+static int fan_mode_write(struct asus_wmi *asus)
++#ifdef CONFIG_PROC_FS
++static void pidfd_show_fdinfo(struct seq_file *m, struct file *f)
 +{
-+	int err;
-+	u8 value;
-+	u32 retval;
++	struct pid_namespace *ns = proc_pid_ns(file_inode(m->file));
++	struct pid *pid = f->private_data;
 +
-+	value = asus->fan_mode;
++	seq_put_decimal_ull(m, "Pid:\t", pid_nr_ns(pid, ns));
++	seq_putc(m, '\n');
++}
++#endif
 +
-+	pr_info("Set fan mode: %u\n", value);
-+	err = asus_wmi_set_devstate(ASUS_WMI_DEVID_FAN_MODE, value, &retval);
++const struct file_operations pidfd_fops = {
++	.release = pidfd_release,
++#ifdef CONFIG_PROC_FS
++	.show_fdinfo = pidfd_show_fdinfo,
++#endif
++};
 +
-+	if (err) {
-+		pr_warn("Failed to set fan mode: %d\n", err);
-+		return err;
-+	}
++/**
++ * pidfd_create() - Create a new pid file descriptor.
++ *
++ * @pid:  struct pid that the pidfd will reference
++ *
++ * This creates a new pid file descriptor with the O_CLOEXEC flag set.
++ *
++ * Note, that this function can only be called after the fd table has
++ * been unshared to avoid leaking the pidfd to the new process.
++ *
++ * Return: On success, a cloexec pidfd is returned.
++ *         On error, a negative errno number will be returned.
++ */
++static int pidfd_create(struct pid *pid)
++{
++	int fd;
 +
-+	if (retval != 1) {
-+		pr_warn("Failed to set fan mode (retval): 0x%x\n", retval);
-+		return -EIO;
-+	}
++	fd = anon_inode_getfd("pidfd", &pidfd_fops, get_pid(pid),
++			      O_RDWR | O_CLOEXEC);
++	if (fd < 0)
++		put_pid(pid);
 +
-+	return 0;
++	return fd;
 +}
 +
-+static int fan_mode_switch_next(struct asus_wmi *asus)
-+{
-+	if (asus->fan_mode == ASUS_FAN_MODE_NORMAL) {
-+		if (asus->fan_mode_mask & ASUS_FAN_MODE_OVERBOOST_MASK)
-+			asus->fan_mode = ASUS_FAN_MODE_OVERBOOST;
-+		else if (asus->fan_mode_mask & ASUS_FAN_MODE_SILENT_MASK)
-+			asus->fan_mode = ASUS_FAN_MODE_SILENT;
-+	} else if (asus->fan_mode == ASUS_FAN_MODE_OVERBOOST) {
-+		if (asus->fan_mode_mask & ASUS_FAN_MODE_SILENT_MASK)
-+			asus->fan_mode = ASUS_FAN_MODE_SILENT;
-+		else
-+			asus->fan_mode = ASUS_FAN_MODE_NORMAL;
-+	} else {
-+		asus->fan_mode = ASUS_FAN_MODE_NORMAL;
-+	}
-+
-+	return fan_mode_write(asus);
-+}
-+
-+static ssize_t fan_mode_show(struct device *dev,
-+		struct device_attribute *attr, char *buf)
-+{
-+	struct asus_wmi *asus = dev_get_drvdata(dev);
-+
-+	return show_u8(asus->fan_mode, buf);
-+}
-+
-+static ssize_t fan_mode_store(struct device *dev,
-+		struct device_attribute *attr, const char *buf, size_t count)
-+{
-+	int result;
-+	u8 new_mode;
-+
-+	struct asus_wmi *asus = dev_get_drvdata(dev);
-+
-+	result = store_u8(&new_mode, buf, count);
-+	if (result < 0)
-+		return result;
-+
-+	if (new_mode == ASUS_FAN_MODE_OVERBOOST) {
-+		if (!(asus->fan_mode_mask & ASUS_FAN_MODE_OVERBOOST_MASK))
-+			return -EINVAL;
-+	} else if (new_mode == ASUS_FAN_MODE_SILENT) {
-+		if (!(asus->fan_mode_mask & ASUS_FAN_MODE_SILENT_MASK))
-+			return -EINVAL;
-+	} else if (new_mode != ASUS_FAN_MODE_NORMAL) {
-+		return -EINVAL;
-+	}
-+
-+	asus->fan_mode = new_mode;
-+	fan_mode_write(asus);
-+
-+	return result;
-+}
-+
-+// Fan mode: 0 - normal, 1 - overboost, 2 - silent
-+static DEVICE_ATTR_RW(fan_mode);
-+
- /* Backlight ******************************************************************/
+ /*
+  * This creates a new process as a copy of the old one,
+  * but does not actually start it yet.
+@@ -1674,13 +1729,14 @@ static __latent_entropy struct task_struct *copy_process(
+ 					unsigned long clone_flags,
+ 					unsigned long stack_start,
+ 					unsigned long stack_size,
++					int __user *parent_tidptr,
+ 					int __user *child_tidptr,
+ 					struct pid *pid,
+ 					int trace,
+ 					unsigned long tls,
+ 					int node)
+ {
+-	int retval;
++	int pidfd = -1, retval;
+ 	struct task_struct *p;
+ 	struct multiprocess_signals delayed;
  
- static int read_backlight_power(struct asus_wmi *asus)
-@@ -2078,6 +2198,11 @@ static void asus_wmi_handle_notify_code(int code, struct asus_wmi *asus)
- 		return;
+@@ -1730,6 +1786,31 @@ static __latent_entropy struct task_struct *copy_process(
+ 			return ERR_PTR(-EINVAL);
  	}
  
-+	if (asus->fan_mode_available && code == NOTIFY_KBD_FBM) {
-+		fan_mode_switch_next(asus);
-+		return;
++	if (clone_flags & CLONE_PIDFD) {
++		int reserved;
++
++		/*
++		 * - CLONE_PARENT_SETTID is useless for pidfds and also
++		 *   parent_tidptr is used to return pidfds.
++		 * - CLONE_DETACHED is blocked so that we can potentially
++		 *   reuse it later for CLONE_PIDFD.
++		 * - CLONE_THREAD is blocked until someone really needs it.
++		 */
++		if (clone_flags &
++		    (CLONE_DETACHED | CLONE_PARENT_SETTID | CLONE_THREAD))
++			return ERR_PTR(-EINVAL);
++
++		/*
++		 * Verify that parent_tidptr is sane so we can potentially
++		 * reuse it later.
++		 */
++		if (get_user(reserved, parent_tidptr))
++			return ERR_PTR(-EFAULT);
++
++		if (reserved != 0)
++			return ERR_PTR(-EINVAL);
 +	}
 +
- 	if (is_display_toggle(code) && asus->driver->quirks->no_display_toggle)
- 		return;
+ 	/*
+ 	 * Force any signals received before this point to be delivered
+ 	 * before the fork happens.  Collect up signals sent to multiple
+@@ -1936,6 +2017,22 @@ static __latent_entropy struct task_struct *copy_process(
+ 		}
+ 	}
  
-@@ -2234,6 +2359,7 @@ static struct attribute *platform_attributes[] = {
- 	&dev_attr_touchpad.attr,
- 	&dev_attr_lid_resume.attr,
- 	&dev_attr_als_enable.attr,
-+	&dev_attr_fan_mode.attr,
- 	NULL
- };
- 
-@@ -2255,6 +2381,8 @@ static umode_t asus_sysfs_is_visible(struct kobject *kobj,
- 		devid = ASUS_WMI_DEVID_LID_RESUME;
- 	else if (attr == &dev_attr_als_enable.attr)
- 		devid = ASUS_WMI_DEVID_ALS_ENABLE;
-+	else if (attr == &dev_attr_fan_mode.attr)
-+		ok = asus->fan_mode_available;
- 
- 	if (devid != -1)
- 		ok = !(asus_wmi_get_devstate_simple(asus, devid) < 0);
-@@ -2355,12 +2483,7 @@ static int asus_wmi_platform_init(struct asus_wmi *asus)
- 		asus_wmi_set_devstate(ASUS_WMI_DEVID_CWAP,
- 				      asus->driver->quirks->wapf, NULL);
- 
--	return asus_wmi_sysfs_init(asus->platform_device);
--}
--
--static void asus_wmi_platform_exit(struct asus_wmi *asus)
--{
--	asus_wmi_sysfs_exit(asus->platform_device);
-+	return 0;
- }
- 
- /* debugfs ********************************************************************/
-@@ -2539,6 +2662,14 @@ static int asus_wmi_add(struct platform_device *pdev)
- 	if (err)
- 		goto fail_platform;
- 
-+	err = fan_mode_check_present(asus);
-+	if (err)
-+		goto fail_fan_mode;
++	/*
++	 * This has to happen after we've potentially unshared the file
++	 * descriptor table (so that the pidfd doesn't leak into the child
++	 * if the fd table isn't shared).
++	 */
++	if (clone_flags & CLONE_PIDFD) {
++		retval = pidfd_create(pid);
++		if (retval < 0)
++			goto bad_fork_free_pid;
 +
-+	err = asus_wmi_sysfs_init(asus->platform_device);
-+	if (err)
-+		goto fail_sysfs;
++		pidfd = retval;
++		retval = put_user(pidfd, parent_tidptr);
++		if (retval)
++			goto bad_fork_put_pidfd;
++	}
 +
- 	err = asus_wmi_input_init(asus);
- 	if (err)
- 		goto fail_input;
-@@ -2622,7 +2753,9 @@ static int asus_wmi_add(struct platform_device *pdev)
- fail_hwmon:
- 	asus_wmi_input_exit(asus);
- fail_input:
--	asus_wmi_platform_exit(asus);
-+	asus_wmi_sysfs_exit(asus->platform_device);
-+fail_sysfs:
-+fail_fan_mode:
- fail_platform:
- 	kfree(asus);
- 	return err;
-@@ -2640,7 +2773,7 @@ static int asus_wmi_remove(struct platform_device *device)
- 	kbbl_rgb_exit(asus);
- 	asus_wmi_rfkill_exit(asus);
- 	asus_wmi_debugfs_exit(asus);
--	asus_wmi_platform_exit(asus);
-+	asus_wmi_sysfs_exit(asus->platform_device);
- 	asus_hwmon_fan_set_auto(asus);
+ #ifdef CONFIG_BLOCK
+ 	p->plug = NULL;
+ #endif
+@@ -1996,7 +2093,7 @@ static __latent_entropy struct task_struct *copy_process(
+ 	 */
+ 	retval = cgroup_can_fork(p);
+ 	if (retval)
+-		goto bad_fork_free_pid;
++		goto bad_fork_put_pidfd;
  
- 	kfree(asus);
-diff --git a/include/linux/platform_data/x86/asus-wmi.h b/include/linux/platform_data/x86/asus-wmi.h
-index c8c6e939e196..fdf5839f64ad 100644
---- a/include/linux/platform_data/x86/asus-wmi.h
-+++ b/include/linux/platform_data/x86/asus-wmi.h
-@@ -59,6 +59,7 @@
- #define ASUS_WMI_DEVID_LIGHTBAR		0x00050025
- #define ASUS_WMI_DEVID_KBD_RGB		0x00100056
- #define ASUS_WMI_DEVID_KBD_RGB2		0x00100057
-+#define ASUS_WMI_DEVID_FAN_MODE		0x00110018
+ 	/*
+ 	 * From this point on we must avoid any synchronous user-space
+@@ -2111,6 +2208,9 @@ static __latent_entropy struct task_struct *copy_process(
+ 	spin_unlock(&current->sighand->siglock);
+ 	write_unlock_irq(&tasklist_lock);
+ 	cgroup_cancel_fork(p);
++bad_fork_put_pidfd:
++	if (clone_flags & CLONE_PIDFD)
++		ksys_close(pidfd);
+ bad_fork_free_pid:
+ 	cgroup_threadgroup_change_end(current);
+ 	if (pid != &init_struct_pid)
+@@ -2176,7 +2276,7 @@ static inline void init_idle_pids(struct task_struct *idle)
+ struct task_struct *fork_idle(int cpu)
+ {
+ 	struct task_struct *task;
+-	task = copy_process(CLONE_VM, 0, 0, NULL, &init_struct_pid, 0, 0,
++	task = copy_process(CLONE_VM, 0, 0, NULL, NULL, &init_struct_pid, 0, 0,
+ 			    cpu_to_node(cpu));
+ 	if (!IS_ERR(task)) {
+ 		init_idle_pids(task);
+@@ -2223,7 +2323,7 @@ long _do_fork(unsigned long clone_flags,
+ 			trace = 0;
+ 	}
  
- /* Misc */
- #define ASUS_WMI_DEVID_CAMERA		0x00060013
+-	p = copy_process(clone_flags, stack_start, stack_size,
++	p = copy_process(clone_flags, stack_start, stack_size, parent_tidptr,
+ 			 child_tidptr, NULL, trace, tls, NUMA_NO_NODE);
+ 	add_latent_entropy();
+ 
 -- 
-2.17.1
+2.21.0
