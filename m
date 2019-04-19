@@ -1,31 +1,48 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH v3 0/4] clone: add CLONE_PIDFD
-Date: Fri, 19 Apr 2019 22:05:22 +0200
-Message-ID: <20190419200521.5pr66nsdj3i7liip@brauner.io>
-References: <20190419120904.27502-1-christian@brauner.io>
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: [PATCH for 5.1 0/3] Restartable Sequences updates for 5.1
+Date: Fri, 19 Apr 2019 12:41:23 +0200
+Message-ID: <20190419104123.GB111210@gmail.com>
+References: <20190305194755.2602-1-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190419120904.27502-1-christian@brauner.io>
+In-Reply-To: <20190305194755.2602-1-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, jannh@google.com, dhowells@redhat.com, oleg@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: serge@hallyn.com, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, tglx@linutronix.de, mtk.manpages@gmail.com, akpm@linux-foundation.org, cyphar@cyphar.com, joel@joelfernandes.org, dancol@google.com, Jann Horn <jann@thejh.net>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Apr 19, 2019 at 02:09:00PM +0200, Christian Brauner wrote:
-> Hey,
+
+* Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
+
+> Those changes aiming at 5.1 include one comment cleanup, the removal of
+> the rseq_len field from the task struct which serves no purpose
+> considering that the struct size is fixed by the ABI, and a selftest
+> improvement adapting the number of threads to the number of detected
+> CPUs, which is nicer for smaller systems.
 > 
-> /* v3 summary */
-> After a brief discussion we decided to block CLONE_PIDFD with
-> CLONE_THREAD for now.  Not because it is not possible but because we
-> don't have a use-case yet and blocking it makes the initial work for
-> pidfd polling easier.  However, it is possible to simply flick the
-> switch later.
+> Thanks,
+> 
+> Mathieu
+> 
+> Mathieu Desnoyers (3):
+>   rseq: cleanup: Reflect removal of event counter in comments
+>   rseq: cleanup: remove rseq_len from task_struct
+>   rseq/selftests: Adapt number of threads to the number of detected cpus
+> 
+>  arch/arm/kernel/signal.c                       | 3 +--
+>  arch/x86/kernel/signal.c                       | 5 +----
+>  include/linux/sched.h                          | 4 ----
+>  kernel/rseq.c                                  | 9 +++------
+>  tools/testing/selftests/rseq/run_param_test.sh | 7 +++++--
+>  5 files changed, 10 insertions(+), 18 deletions(-)
 
-I have moved v3 into my for-next branch which means it should show up in
-linux-next for some testing soon. All versions of the CLONE_PIDFD
-patches are on top of v5.1-rc4.
+Looks good, I've applied these to tip:core/rseq to make sure they don't 
+miss the v5.2 merge window.
 
-Thanks!
-Christian
+(Let me know if you wanted to handle this differently.)
+
+Thanks,
+
+	Ingo
