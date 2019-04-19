@@ -1,152 +1,216 @@
-From: Masahiro Yamada <yamada.masahiro@socionext.com>
-Subject: Re: [PATCH v2] moduleparam: Save information about built-in modules
- in separate file
-Date: Fri, 19 Apr 2019 12:03:50 +0900
-Message-ID: <CAK7LNARxT7a5-C4-ZuKYWOWyuDdMVzkd-n8C8vdO1MEw10TsJA@mail.gmail.com>
-References: <20190406121447.GB4047@localhost.localdomain> <CAK7LNATfo0K6kzwobkAZ_u2KnWL3XycJzbr3KPtPF=ePziCuDg@mail.gmail.com>
- <20190418135238.GA5626@linux-8ccs> <CAK7LNARKHXLgniczKXY01JhxhBpL2p-X_hWg70AcsrXRaLyDSg@mail.gmail.com>
- <20190418153611.GB5626@linux-8ccs>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH for 5.1 3/3] rseq/selftests: Adapt number of threads to
+ the number of detected cpus
+Date: Fri, 19 Apr 2019 10:40:24 -0400 (EDT)
+Message-ID: <580328197.148.1555684824260.JavaMail.zimbra@efficios.com>
+References: <20190305194755.2602-1-mathieu.desnoyers@efficios.com> <20190305194755.2602-4-mathieu.desnoyers@efficios.com> <20190419103847.GA111210@gmail.com> <1444419838.71.1555677682502.JavaMail.zimbra@efficios.com> <1266612341.87.1555678507226.JavaMail.zimbra@efficios.com> <614774674.134.1555681346941.JavaMail.zimbra@efficios.com> <1863599735.141.1555681723685.JavaMail.zimbra@efficios.com> <6ba0796c-8a96-f797-265c-37bfb9b4bb71@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190418153611.GB5626@linux-8ccs>
+In-Reply-To: <6ba0796c-8a96-f797-265c-37bfb9b4bb71@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jessica Yu <jeyu@kernel.org>
-Cc: Alexey Gladkov <gladkov.alexey@gmail.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux Kbuild mailing list <linux-kbuild@vger.kernel.org>, linux-api@vger.kernel.org, linux-modules@vger.kernel.org, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>, "Dmitry V. Levin" <ldv@altlinux.org>, Michal Marek <michal.lkml@markovi.net>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Rusty Russell <rusty@rustcorp.com.au>, Lucas De Marchi <lucas.de.marchi@gmail.com>
+To: shuah <shuah@kernel.org>, Ingo Molnar <mingo@kernel.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Apr 19, 2019 at 12:36 AM Jessica Yu <jeyu@kernel.org> wrote:
->
-> +++ Masahiro Yamada [19/04/19 00:26 +0900]:
-> >On Thu, Apr 18, 2019 at 10:52 PM Jessica Yu <jeyu@kernel.org> wrote:
-> >>
-> >> +++ Masahiro Yamada [18/04/19 20:10 +0900]:
-> >> >On Sat, Apr 6, 2019 at 9:15 PM Alexey Gladkov <gladkov.alexey@gmail.com> wrote:
-> >> >>
-> >> >> Problem:
-> >> >>
-> >> >> When a kernel module is compiled as a separate module, some important
-> >> >> information about the kernel module is available via .modinfo section of
-> >> >> the module.  In contrast, when the kernel module is compiled into the
-> >> >> kernel, that information is not available.
-> >> >>
-> >> >> Information about built-in modules is necessary in the following cases:
-> >> >>
-> >> >> 1. When it is necessary to find out what additional parameters can be
-> >> >> passed to the kernel at boot time.
-> >> >>
-> >> >> 2. When you need to know which module names and their aliases are in
-> >> >> the kernel. This is very useful for creating an initrd image.
-> >> >>
-> >> >> Proposal:
-> >> >>
-> >> >> The proposed patch does not remove .modinfo section with module
-> >> >> information from the vmlinux at the build time and saves it into a
-> >> >> separate file after kernel linking. So, the kernel does not increase in
-> >> >> size and no additional information remains in it. Information is stored
-> >> >> in the same format as in the separate modules (null-terminated string
-> >> >> array). Because the .modinfo section is already exported with a separate
-> >> >> modules, we are not creating a new API.
-> >> >>
-> >> >> It can be easily read in the userspace:
-> >> >>
-> >> >> $ tr '\0' '\n' < kernel.builtin
-> >> >> ext4.softdep=pre: crc32c
-> >> >> ext4.license=GPL
-> >> >> ext4.description=Fourth Extended Filesystem
-> >> >> ext4.author=Remy Card, Stephen Tweedie, Andrew Morton, Andreas Dilger, Theodore Ts'o and others
-> >> >> ext4.alias=fs-ext4
-> >> >> ext4.alias=ext3
-> >> >> ext4.alias=fs-ext3
-> >> >> ext4.alias=ext2
-> >> >> ext4.alias=fs-ext2
-> >> >> md_mod.alias=block-major-9-*
-> >> >> md_mod.alias=md
-> >> >> md_mod.description=MD RAID framework
-> >> >> md_mod.license=GPL
-> >> >> md_mod.parmtype=create_on_open:bool
-> >> >> md_mod.parmtype=start_dirty_degraded:int
-> >> >> ...
-> >> >>
-> >> >> v2:
-> >> >>  * Extract modinfo from vmlinux.o as suggested by Masahiro Yamada;
-> >> >>  * Rename output file to kernel.builtin;
-> >> >
-> >> >Sorry, I do not get why you renamed
-> >> >"kernel.builtin.modinfo" to "kernel.builtin".
-> >> >
-> >> >If you drop "modinfo", we do not understand
-> >> >what kind information is contained in it.
-> >> >
-> >> >I think "kernel" and "builtin" have
-> >> >a quite similar meaning here.
-> >> >
-> >> >How about "builtin.modinfo" for example?
-> >> >
-> >> >
-> >> >It is shorter, and it is clear enough
-> >> >that it contains module_info.
-> >>
-> >> I agree that the name kernel.builtin is unclear in what kind of
-> >> information it contains. Apologies for not having clarified this in
-> >> the previous review.
-> >>
-> >> Since kbuild already produces "modules.order" and "modules.builtin"
-> >> files, why not just name it "modules.builtin.modinfo" to keep the
-> >> names consistent with what is already there?
-> >
-> >
-> >Is it consistent?
-> >
-> >If we had "modules.order" and "modules.builtin.order" there,
-> >I would agree with "modules.builtin.modinfo",
-> >and also "modules.alias" vs "modules.builtin.alias".
-> >
-> >
-> >We already have "modules.builtin", and probably impossible
-> >to rename it, so we cannot keep consistency in any way.
-> >
-> >
-> >"modules.builtin" is a weird name since
-> >it actually contains "order", but its extension
-> >does not express what kind of information is in it.
-> >Hence, I doubt "modules.builtin" is a good precedent.
-> >
-> >IMHO, "modules" and "builtin" are opposite
-> >to each other. "modules.builtin" sounds iffy to me.
->
-> I've always interpreted "modules.builtin" to mean "this is a list of
-> modules that have been built-in into the kernel", no? So I thought the
-> name made sense.
+----- On Apr 19, 2019, at 10:17 AM, shuah shuah@kernel.org wrote:
 
-OK, I see.
+> On 4/19/19 7:48 AM, Mathieu Desnoyers wrote:
+>> ----- On Apr 19, 2019, at 9:42 AM, Mathieu Desnoyers
+>> mathieu.desnoyers@efficios.com wrote:
+>> 
+>>> ----- On Apr 19, 2019, at 8:55 AM, Mathieu Desnoyers
+>>> mathieu.desnoyers@efficios.com wrote:
+>>>
+>>>> ----- On Apr 19, 2019, at 8:41 AM, Mathieu Desnoyers
+>>>> mathieu.desnoyers@efficios.com wrote:
+>>>>
+>>>>> ----- On Apr 19, 2019, at 6:38 AM, Ingo Molnar mingo@kernel.org wrote:
+>>>>>
+>>>>>> * Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
+>>>>>>
+>>>>>>> On smaller systems, running a test with 200 threads can take a long
+>>>>>>> time on machines with smaller number of CPUs.
+>>>>>>>
+>>>>>>> Detect the number of online cpus at test runtime, and multiply that
+>>>>>>> by 6 to have 6 rseq threads per cpu preempting each other.
+>>>>>>>
+>>>>>>> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+>>>>>>> Cc: Shuah Khan <shuah@kernel.org>
+>>>>>>> Cc: Thomas Gleixner <tglx@linutronix.de>
+>>>>>>> Cc: Joel Fernandes <joelaf@google.com>
+>>>>>>> Cc: Peter Zijlstra <peterz@infradead.org>
+>>>>>>> Cc: Catalin Marinas <catalin.marinas@arm.com>
+>>>>>>> Cc: Dave Watson <davejwatson@fb.com>
+>>>>>>> Cc: Will Deacon <will.deacon@arm.com>
+>>>>>>> Cc: Andi Kleen <andi@firstfloor.org>
+>>>>>>> Cc: linux-kselftest@vger.kernel.org
+>>>>>>> Cc: "H . Peter Anvin" <hpa@zytor.com>
+>>>>>>> Cc: Chris Lameter <cl@linux.com>
+>>>>>>> Cc: Russell King <linux@arm.linux.org.uk>
+>>>>>>> Cc: Michael Kerrisk <mtk.manpages@gmail.com>
+>>>>>>> Cc: "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>
+>>>>>>> Cc: Paul Turner <pjt@google.com>
+>>>>>>> Cc: Boqun Feng <boqun.feng@gmail.com>
+>>>>>>> Cc: Josh Triplett <josh@joshtriplett.org>
+>>>>>>> Cc: Steven Rostedt <rostedt@goodmis.org>
+>>>>>>> Cc: Ben Maurer <bmaurer@fb.com>
+>>>>>>> Cc: Andy Lutomirski <luto@amacapital.net>
+>>>>>>> Cc: Andrew Morton <akpm@linux-foundation.org>
+>>>>>>> Cc: Linus Torvalds <torvalds@linux-foundation.org>
+>>>>>>> ---
+>>>>>>>   tools/testing/selftests/rseq/run_param_test.sh | 7 +++++--
+>>>>>>>   1 file changed, 5 insertions(+), 2 deletions(-)
+>>>>>>>
+>>>>>>> diff --git a/tools/testing/selftests/rseq/run_param_test.sh
+>>>>>>> b/tools/testing/selftests/rseq/run_param_test.sh
+>>>>>>> index 3acd6d75ff9f..e426304fd4a0 100755
+>>>>>>> --- a/tools/testing/selftests/rseq/run_param_test.sh
+>>>>>>> +++ b/tools/testing/selftests/rseq/run_param_test.sh
+>>>>>>> @@ -1,6 +1,8 @@
+>>>>>>>   #!/bin/bash
+>>>>>>>   # SPDX-License-Identifier: GPL-2.0+ or MIT
+>>>>>>>   
+>>>>>>> +NR_CPUS=`grep '^processor' /proc/cpuinfo | wc -l`
+>>>>>>> +
+>>>>>>>   EXTRA_ARGS=${@}
+>>>>>>>   
+>>>>>>>   OLDIFS="$IFS"
+>>>>>>> @@ -28,15 +30,16 @@ IFS="$OLDIFS"
+>>>>>>>   
+>>>>>>>   REPS=1000
+>>>>>>>   SLOW_REPS=100
+>>>>>>> +NR_THREADS=$((6*${NR_CPUS}))
+>>>>>>>   
+>>>>>>>   function do_tests()
+>>>>>>>   {
+>>>>>>>   	local i=0
+>>>>>>>   	while [ "$i" -lt "${#TEST_LIST[@]}" ]; do
+>>>>>>>   		echo "Running test ${TEST_NAME[$i]}"
+>>>>>>> -		./param_test ${TEST_LIST[$i]} -r ${REPS} ${@} ${EXTRA_ARGS} || exit 1
+>>>>>>> +		./param_test ${TEST_LIST[$i]} -r ${REPS} -t ${NR_THREADS} ${@} ${EXTRA_ARGS}
+>>>>>>> || exit 1
+>>>>>>>   		echo "Running compare-twice test ${TEST_NAME[$i]}"
+>>>>>>> -		./param_test_compare_twice ${TEST_LIST[$i]} -r ${REPS} ${@} ${EXTRA_ARGS} ||
+>>>>>>> exit 1
+>>>>>>> +		./param_test_compare_twice ${TEST_LIST[$i]} -r ${REPS} -t ${NR_THREADS} ${@}
+>>>>>>> ${EXTRA_ARGS} || exit 1
+>>>>>>>   		let "i++"
+>>>>>>>   	done
+>>>>>>>   }
+>>>>>>
+>>>>>> BTW., when trying to build the rseq self-tests I get this build failure:
+>>>>>>
+>>>>>>   dagon:~/tip/tools/testing/selftests/rseq> make
+>>>>>>   gcc -O2 -Wall -g -I./ -I../../../../usr/include/ -L./ -Wl,-rpath=./ -shared
+>>>>>>   -fPIC rseq.c -lpthread -o
+>>>>>>   /home/mingo/tip/tools/testing/selftests/rseq/librseq.so
+>>>>>>   gcc -O2 -Wall -g -I./ -I../../../../usr/include/ -L./ -Wl,-rpath=./ basic_test.c
+>>>>>>   -lpthread -lrseq -o /home/mingo/tip/tools/testing/selftests/rseq/basic_test
+>>>>>>   gcc -O2 -Wall -g -I./ -I../../../../usr/include/ -L./ -Wl,-rpath=./
+>>>>>>   basic_percpu_ops_test.c -lpthread -lrseq -o
+>>>>>>   /home/mingo/tip/tools/testing/selftests/rseq/basic_percpu_ops_test
+>>>>>>   /usr/bin/ld: /tmp/ccuHTWnZ.o: in function `rseq_cmpeqv_storev':
+>>>>>>   /home/mingo/tip/tools/testing/selftests/rseq/./rseq-x86.h:84: undefined
+>>>>>>   reference to `.L8'
+>>>>>>   /usr/bin/ld: /home/mingo/tip/tools/testing/selftests/rseq/./rseq-x86.h:84:
+>>>>>>   undefined reference to `.L49'
+>>>>>>   /usr/bin/ld: /tmp/ccuHTWnZ.o: in function `rseq_cmpnev_storeoffp_load':
+>>>>>>   /home/mingo/tip/tools/testing/selftests/rseq/./rseq-x86.h:141: undefined
+>>>>>>   reference to `.L57'
+>>>>>>   /usr/bin/ld: /tmp/ccuHTWnZ.o:(__rseq_failure+0x8): undefined reference to `.L8'
+>>>>>>   /usr/bin/ld: /tmp/ccuHTWnZ.o:(__rseq_failure+0x14): undefined reference to
+>>>>>>   `.L49'
+>>>>>>   /usr/bin/ld: /tmp/ccuHTWnZ.o:(__rseq_failure+0x20): undefined reference to
+>>>>>>   `.L55'
+>>>>>>   collect2: error: ld returned 1 exit status
+>>>>>>   make: *** [Makefile:22:
+>>>>>>   /home/mingo/tip/tools/testing/selftests/rseq/basic_percpu_ops_test] Error 1
+>>>>>>
+>>>>>> Is this a known problem, or do I miss something from my build environment
+>>>>>> perhaps? Vanilla 64-bit Ubuntu 18.10 (Cosmic).
+>>>>>
+>>>>> It works fine with gcc-7 (gcc version 7.3.0 (Ubuntu 7.3.0-16ubuntu3))
+>>>>> but indeed I get the same failure with gcc-8 (gcc version 8.0.1 20180414
+>>>>> (experimental) [trunk revision 259383] (Ubuntu 8-20180414-1ubuntu2)).
+>>>>>
+>>>>> Thanks for reporting! I will investigate.
+>>>>
+>>>> It looks like gcc-8 optimize away the target of asm goto labels when
+>>>> there are more than one of them on x86-64. I'll try to come up with
+>>>> a simpler reproducer.
+>>>
+>>> It appears to be related to gcc-8 mishandling combination of
+>>> asm goto and thread-local storage input operands on x86-64.
+>>> Here is a simple reproducer:
+>>>
+>>> __thread int var;
+>>>   
+>>> static int fct(void)
+>>> {
+>>>         asm goto (      "jmp %l[testlabel]\n\t"
+>>>                         : : [var] "m" (var) : : testlabel);
+>>>         return 0;
+>>> testlabel:
+>> 
+>> FWIW, if I add an empty
+>> 
+>>     asm volatile ("");
+>> 
+>> here after the label, gcc-8 -O2 builds "something" which is
+>> a bogus assembler (an endless loop) :
+>> 
+>> main:
+>> .LFB24:
+>>          .cfi_startproc
+>> .L2:
+>>          subq    $8, %rsp
+>>          .cfi_def_cfa_offset 16
+>> #APP
+>> # 6 "test-asm-goto.c" 1
+>>          jmp .L2
+>> 
+>> # 0 "" 2
+>> #NO_APP
+>>          movl    %fs:var@tpoff, %edx
+>>          leaq    .LC0(%rip), %rsi
+>>          movl    $1, %edi
+>>          xorl    %eax, %eax
+>>          call    __printf_chk@PLT
+>>          xorl    %eax, %eax
+>>          addq    $8, %rsp
+>>          .cfi_def_cfa_offset 8
+>>          ret
+>>          .cfi_endproc
+>> 
+>> Thoughts ?
+>> 
+> 
+> Didn't see problems when I tested it before applying it to
+> linux-kselftest next.
+> 
+> I have gcc version 7.3.0 (Ubuntu 7.3.0-27ubuntu1~18.04)
 
-> But you are the maintainer, so I do not have a strong
-> opinion on this either way :-)
+It really appears to be an optimization bug in gcc-8. Considering that
+bogus compilers are released in the wild, we can hardly justify using
+the compiler feature that triggers the bogus behavior, even if it gets
+fixed in the future.
 
-My idea was to use
-'modules.<file-type>'  vs  'builtin.<file-type>'
-instead of
-'modules.<file-type>'  vs  'modules.builtin.<file-type>'
+I've prepared a patch that changes the way the __rseq_abi fields are
+passed to the inline asm. I pass the address of the __rseq_abi TLS
+as a register input operand rather than each individual field as "m"
+operand.
 
-I am slightly in favor of the former
-since it is shorter and
-(I hope) still clear enough.
+I will submit it in a separate thread.
 
-If this naming is not nice for external projects such as kmod,
-please speak up.
+By the way, it affects both x86-32 (building with gcc-8 -m32) and x86-64.
 
+Thanks,
 
-(BTW, I am thinking of renaming 'modules.builtin' into 'builtin.order'
-for kbuild internal. We cannot change that for the installation area, though.)
-
->
-> Thanks,
->
-> Jessica
-
-
+Mathieu
 
 -- 
-Best Regards
-Masahiro Yamada
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
