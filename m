@@ -1,314 +1,109 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: [PATCH v3 2/4] clone: add CLONE_PIDFD
-Date: Fri, 19 Apr 2019 14:09:02 +0200
-Message-ID: <20190419120904.27502-3-christian@brauner.io>
-References: <20190419120904.27502-1-christian@brauner.io>
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: [PATCH for 5.1 3/3] rseq/selftests: Adapt number of threads to
+ the number of detected cpus
+Date: Fri, 19 Apr 2019 12:38:47 +0200
+Message-ID: <20190419103847.GA111210@gmail.com>
+References: <20190305194755.2602-1-mathieu.desnoyers@efficios.com>
+ <20190305194755.2602-4-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190419120904.27502-1-christian@brauner.io>
+Content-Disposition: inline
+In-Reply-To: <20190305194755.2602-4-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, jannh@google.com, dhowells@redhat.com, oleg@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: serge@hallyn.com, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, tglx@linutronix.de, mtk.manpages@gmail.com, akpm@linux-foundation.org, cyphar@cyphar.com, joel@joelfernandes.org, dancol@google.com, Christian Brauner <christian@brauner.io>, Jann Horn <jann@thejh.net>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm.com>
 List-Id: linux-api@vger.kernel.org
 
-This patchset makes it possible to retrieve pid file descriptors at
-process creation time by introducing the new flag CLONE_PIDFD to the
-clone() system call.  Linus originally suggested to implement this as a
-new flag to clone() instead of making it a separate system call.  As
-spotted by Linus, there is exactly one bit for clone() left.
 
-CLONE_PIDFD creates file descriptors based on the anonymous inode
-implementation in the kernel that will also be used to implement the new
-mount api.  They serve as a simple opaque handle on pids.  Logically,
-this makes it possible to interpret a pidfd differently, narrowing or
-widening the scope of various operations (e.g. signal sending).  Thus, a
-pidfd cannot just refer to a tgid, but also a tid, or in theory - given
-appropriate flag arguments in relevant syscalls - a process group or
-session. A pidfd does not represent a privilege.  This does not imply it
-cannot ever be that way but for now this is not the case.
+* Mathieu Desnoyers <mathieu.desnoyers@efficios.com> wrote:
 
-A pidfd comes with additional information in fdinfo if the kernel supports
-procfs.  The fdinfo file contains the pid of the process in the callers
-pid namespace in the same format as the procfs status file, i.e. "Pid:\t%d".
+> On smaller systems, running a test with 200 threads can take a long
+> time on machines with smaller number of CPUs.
+> 
+> Detect the number of online cpus at test runtime, and multiply that
+> by 6 to have 6 rseq threads per cpu preempting each other.
+> 
+> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+> Cc: Shuah Khan <shuah@kernel.org>
+> Cc: Thomas Gleixner <tglx@linutronix.de>
+> Cc: Joel Fernandes <joelaf@google.com>
+> Cc: Peter Zijlstra <peterz@infradead.org>
+> Cc: Catalin Marinas <catalin.marinas@arm.com>
+> Cc: Dave Watson <davejwatson@fb.com>
+> Cc: Will Deacon <will.deacon@arm.com>
+> Cc: Andi Kleen <andi@firstfloor.org>
+> Cc: linux-kselftest@vger.kernel.org
+> Cc: "H . Peter Anvin" <hpa@zytor.com>
+> Cc: Chris Lameter <cl@linux.com>
+> Cc: Russell King <linux@arm.linux.org.uk>
+> Cc: Michael Kerrisk <mtk.manpages@gmail.com>
+> Cc: "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>
+> Cc: Paul Turner <pjt@google.com>
+> Cc: Boqun Feng <boqun.feng@gmail.com>
+> Cc: Josh Triplett <josh@joshtriplett.org>
+> Cc: Steven Rostedt <rostedt@goodmis.org>
+> Cc: Ben Maurer <bmaurer@fb.com>
+> Cc: Andy Lutomirski <luto@amacapital.net>
+> Cc: Andrew Morton <akpm@linux-foundation.org>
+> Cc: Linus Torvalds <torvalds@linux-foundation.org>
+> ---
+>  tools/testing/selftests/rseq/run_param_test.sh | 7 +++++--
+>  1 file changed, 5 insertions(+), 2 deletions(-)
+> 
+> diff --git a/tools/testing/selftests/rseq/run_param_test.sh b/tools/testing/selftests/rseq/run_param_test.sh
+> index 3acd6d75ff9f..e426304fd4a0 100755
+> --- a/tools/testing/selftests/rseq/run_param_test.sh
+> +++ b/tools/testing/selftests/rseq/run_param_test.sh
+> @@ -1,6 +1,8 @@
+>  #!/bin/bash
+>  # SPDX-License-Identifier: GPL-2.0+ or MIT
+>  
+> +NR_CPUS=`grep '^processor' /proc/cpuinfo | wc -l`
+> +
+>  EXTRA_ARGS=${@}
+>  
+>  OLDIFS="$IFS"
+> @@ -28,15 +30,16 @@ IFS="$OLDIFS"
+>  
+>  REPS=1000
+>  SLOW_REPS=100
+> +NR_THREADS=$((6*${NR_CPUS}))
+>  
+>  function do_tests()
+>  {
+>  	local i=0
+>  	while [ "$i" -lt "${#TEST_LIST[@]}" ]; do
+>  		echo "Running test ${TEST_NAME[$i]}"
+> -		./param_test ${TEST_LIST[$i]} -r ${REPS} ${@} ${EXTRA_ARGS} || exit 1
+> +		./param_test ${TEST_LIST[$i]} -r ${REPS} -t ${NR_THREADS} ${@} ${EXTRA_ARGS} || exit 1
+>  		echo "Running compare-twice test ${TEST_NAME[$i]}"
+> -		./param_test_compare_twice ${TEST_LIST[$i]} -r ${REPS} ${@} ${EXTRA_ARGS} || exit 1
+> +		./param_test_compare_twice ${TEST_LIST[$i]} -r ${REPS} -t ${NR_THREADS} ${@} ${EXTRA_ARGS} || exit 1
+>  		let "i++"
+>  	done
+>  }
 
-As suggested by Oleg, with CLONE_PIDFD the pidfd is returned in the
-parent_tidptr argument of clone.  This has the advantage that we can
-give back the associated pid and the pidfd at the same time.
+BTW., when trying to build the rseq self-tests I get this build failure:
 
-To remove worries about missing metadata access this patchset comes with
-a sample program that illustrates how a combination of CLONE_PIDFD, and
-pidfd_send_signal() can be used to gain race-free access to process
-metadata through /proc/<pid>.  The sample program can easily be
-translated into a helper that would be suitable for inclusion in libc so
-that users don't have to worry about writing it themselves.
+  dagon:~/tip/tools/testing/selftests/rseq> make
+  gcc -O2 -Wall -g -I./ -I../../../../usr/include/ -L./ -Wl,-rpath=./ -shared -fPIC rseq.c -lpthread -o /home/mingo/tip/tools/testing/selftests/rseq/librseq.so
+  gcc -O2 -Wall -g -I./ -I../../../../usr/include/ -L./ -Wl,-rpath=./ basic_test.c -lpthread -lrseq -o /home/mingo/tip/tools/testing/selftests/rseq/basic_test
+  gcc -O2 -Wall -g -I./ -I../../../../usr/include/ -L./ -Wl,-rpath=./ basic_percpu_ops_test.c -lpthread -lrseq -o /home/mingo/tip/tools/testing/selftests/rseq/basic_percpu_ops_test
+  /usr/bin/ld: /tmp/ccuHTWnZ.o: in function `rseq_cmpeqv_storev':
+  /home/mingo/tip/tools/testing/selftests/rseq/./rseq-x86.h:84: undefined reference to `.L8'
+  /usr/bin/ld: /home/mingo/tip/tools/testing/selftests/rseq/./rseq-x86.h:84: undefined reference to `.L49'
+  /usr/bin/ld: /tmp/ccuHTWnZ.o: in function `rseq_cmpnev_storeoffp_load':
+  /home/mingo/tip/tools/testing/selftests/rseq/./rseq-x86.h:141: undefined reference to `.L57'
+  /usr/bin/ld: /tmp/ccuHTWnZ.o:(__rseq_failure+0x8): undefined reference to `.L8'
+  /usr/bin/ld: /tmp/ccuHTWnZ.o:(__rseq_failure+0x14): undefined reference to `.L49'
+  /usr/bin/ld: /tmp/ccuHTWnZ.o:(__rseq_failure+0x20): undefined reference to `.L55'
+  collect2: error: ld returned 1 exit status
+  make: *** [Makefile:22: /home/mingo/tip/tools/testing/selftests/rseq/basic_percpu_ops_test] Error 1
 
-Suggested-by: Linus Torvalds <torvalds@linux-foundation.org>
-Signed-off-by: Christian Brauner <christian@brauner.io>
-Co-developed-by: Jann Horn <jann@thejh.net>
-Signed-off-by: Jann Horn <jann@thejh.net>
-Reviewed-by: Oleg Nesterov <oleg@redhat.com>
-Cc: Arnd Bergmann <arnd@arndb.de>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: David Howells <dhowells@redhat.com>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Cc: Andy Lutomirsky <luto@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Al Viro <viro@zeniv.linux.org.uk>
----
-/* changelog */
-v1:
-- Oleg Nesterov <oleg@redhat.com>:
-  - return pidfd in parent_tidptr argument of clone
-    This way we can return the pid and the pidfd at the same time to the
-    caller and can also start pid file descriptor numbering at 0 as is
-    customary for file descriptors.
-- Christian Brauner <christian@brauner.io>:
-  - update comments to reflect changes based on Oleg's idea
-v2:
-- Oleg Nesterov <oleg@redhat.com>:
-  - move put_user() before clone()'s point of no return so we can handle
-    put_user() errors
-- Christian Brauner <christian@brauner.io>:
-  - change pidfd_create() to also fd_install()
-    With Oleg's change it makes sense to do the fd_install() right before
-    the moved put_user().
-v3:
-- Oleg Nesterov <oleg@redhat.com>:
-  - block CLONE_PIDFD with CLONE_THREAD until someone really needs this
-    feature
-  - ensure that parent_tidptr is pristine so we can use with CLONE_PIDFD
-    for additional features
-- Christian Brauner <christian@brauner.io>:
-  - return EFAULT on get_user() error, EINVAL on non-zero value
-    Oleg had originally sketched a piece of code that returned EINVAL when
-    get_user() fails. However, it is clearer for userspace if EFAULT is
-    returned when get_user() fails and EINVAL when the retrieved value is
-    not 0.
----
- include/linux/pid.h        |   2 +
- include/uapi/linux/sched.h |   1 +
- kernel/fork.c              | 108 +++++++++++++++++++++++++++++++++++--
- 3 files changed, 107 insertions(+), 4 deletions(-)
+Is this a known problem, or do I miss something from my build environment 
+perhaps? Vanilla 64-bit Ubuntu 18.10 (Cosmic).
 
-diff --git a/include/linux/pid.h b/include/linux/pid.h
-index b6f4ba16065a..3c8ef5a199ca 100644
---- a/include/linux/pid.h
-+++ b/include/linux/pid.h
-@@ -66,6 +66,8 @@ struct pid
- 
- extern struct pid init_struct_pid;
- 
-+extern const struct file_operations pidfd_fops;
-+
- static inline struct pid *get_pid(struct pid *pid)
- {
- 	if (pid)
-diff --git a/include/uapi/linux/sched.h b/include/uapi/linux/sched.h
-index 22627f80063e..ed4ee170bee2 100644
---- a/include/uapi/linux/sched.h
-+++ b/include/uapi/linux/sched.h
-@@ -10,6 +10,7 @@
- #define CLONE_FS	0x00000200	/* set if fs info shared between processes */
- #define CLONE_FILES	0x00000400	/* set if open files shared between processes */
- #define CLONE_SIGHAND	0x00000800	/* set if signal handlers and blocked signals shared */
-+#define CLONE_PIDFD	0x00001000	/* set if a pidfd should be placed in parent */
- #define CLONE_PTRACE	0x00002000	/* set if we want to let tracing continue on the child too */
- #define CLONE_VFORK	0x00004000	/* set if the parent wants the child to wake it up on mm_release */
- #define CLONE_PARENT	0x00008000	/* set if we want to have the same parent as the cloner */
-diff --git a/kernel/fork.c b/kernel/fork.c
-index 9dcd18aa210b..5525837ed80e 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -11,6 +11,7 @@
-  * management can be a bitch. See 'mm/memory.c': 'copy_page_range()'
-  */
- 
-+#include <linux/anon_inodes.h>
- #include <linux/slab.h>
- #include <linux/sched/autogroup.h>
- #include <linux/sched/mm.h>
-@@ -21,8 +22,10 @@
- #include <linux/sched/task.h>
- #include <linux/sched/task_stack.h>
- #include <linux/sched/cputime.h>
-+#include <linux/seq_file.h>
- #include <linux/rtmutex.h>
- #include <linux/init.h>
-+#include <linux/fsnotify.h>
- #include <linux/unistd.h>
- #include <linux/module.h>
- #include <linux/vmalloc.h>
-@@ -1662,6 +1665,58 @@ static inline void rcu_copy_process(struct task_struct *p)
- #endif /* #ifdef CONFIG_TASKS_RCU */
- }
- 
-+static int pidfd_release(struct inode *inode, struct file *file)
-+{
-+	struct pid *pid = file->private_data;
-+
-+	file->private_data = NULL;
-+	put_pid(pid);
-+	return 0;
-+}
-+
-+#ifdef CONFIG_PROC_FS
-+static void pidfd_show_fdinfo(struct seq_file *m, struct file *f)
-+{
-+	struct pid_namespace *ns = proc_pid_ns(file_inode(m->file));
-+	struct pid *pid = f->private_data;
-+
-+	seq_put_decimal_ull(m, "Pid:\t", pid_nr_ns(pid, ns));
-+	seq_putc(m, '\n');
-+}
-+#endif
-+
-+const struct file_operations pidfd_fops = {
-+	.release = pidfd_release,
-+#ifdef CONFIG_PROC_FS
-+	.show_fdinfo = pidfd_show_fdinfo,
-+#endif
-+};
-+
-+/**
-+ * pidfd_create() - Create a new pid file descriptor.
-+ *
-+ * @pid:  struct pid that the pidfd will reference
-+ *
-+ * This creates a new pid file descriptor with the O_CLOEXEC flag set.
-+ *
-+ * Note, that this function can only be called after the fd table has
-+ * been unshared to avoid leaking the pidfd to the new process.
-+ *
-+ * Return: On success, a cloexec pidfd is returned.
-+ *         On error, a negative errno number will be returned.
-+ */
-+static int pidfd_create(struct pid *pid)
-+{
-+	int fd;
-+
-+	fd = anon_inode_getfd("pidfd", &pidfd_fops, get_pid(pid),
-+			      O_RDWR | O_CLOEXEC);
-+	if (fd < 0)
-+		put_pid(pid);
-+
-+	return fd;
-+}
-+
- /*
-  * This creates a new process as a copy of the old one,
-  * but does not actually start it yet.
-@@ -1674,13 +1729,14 @@ static __latent_entropy struct task_struct *copy_process(
- 					unsigned long clone_flags,
- 					unsigned long stack_start,
- 					unsigned long stack_size,
-+					int __user *parent_tidptr,
- 					int __user *child_tidptr,
- 					struct pid *pid,
- 					int trace,
- 					unsigned long tls,
- 					int node)
- {
--	int retval;
-+	int pidfd = -1, retval;
- 	struct task_struct *p;
- 	struct multiprocess_signals delayed;
- 
-@@ -1730,6 +1786,31 @@ static __latent_entropy struct task_struct *copy_process(
- 			return ERR_PTR(-EINVAL);
- 	}
- 
-+	if (clone_flags & CLONE_PIDFD) {
-+		int reserved;
-+
-+		/*
-+		 * - CLONE_PARENT_SETTID is useless for pidfds and also
-+		 *   parent_tidptr is used to return pidfds.
-+		 * - CLONE_DETACHED is blocked so that we can potentially
-+		 *   reuse it later for CLONE_PIDFD.
-+		 * - CLONE_THREAD is blocked until someone really needs it.
-+		 */
-+		if (clone_flags &
-+		    (CLONE_DETACHED | CLONE_PARENT_SETTID | CLONE_THREAD))
-+			return ERR_PTR(-EINVAL);
-+
-+		/*
-+		 * Verify that parent_tidptr is sane so we can potentially
-+		 * reuse it later.
-+		 */
-+		if (get_user(reserved, parent_tidptr))
-+			return ERR_PTR(-EFAULT);
-+
-+		if (reserved != 0)
-+			return ERR_PTR(-EINVAL);
-+	}
-+
- 	/*
- 	 * Force any signals received before this point to be delivered
- 	 * before the fork happens.  Collect up signals sent to multiple
-@@ -1936,6 +2017,22 @@ static __latent_entropy struct task_struct *copy_process(
- 		}
- 	}
- 
-+	/*
-+	 * This has to happen after we've potentially unshared the file
-+	 * descriptor table (so that the pidfd doesn't leak into the child
-+	 * if the fd table isn't shared).
-+	 */
-+	if (clone_flags & CLONE_PIDFD) {
-+		retval = pidfd_create(pid);
-+		if (retval < 0)
-+			goto bad_fork_free_pid;
-+
-+		pidfd = retval;
-+		retval = put_user(pidfd, parent_tidptr);
-+		if (retval)
-+			goto bad_fork_put_pidfd;
-+	}
-+
- #ifdef CONFIG_BLOCK
- 	p->plug = NULL;
- #endif
-@@ -1996,7 +2093,7 @@ static __latent_entropy struct task_struct *copy_process(
- 	 */
- 	retval = cgroup_can_fork(p);
- 	if (retval)
--		goto bad_fork_free_pid;
-+		goto bad_fork_put_pidfd;
- 
- 	/*
- 	 * From this point on we must avoid any synchronous user-space
-@@ -2111,6 +2208,9 @@ static __latent_entropy struct task_struct *copy_process(
- 	spin_unlock(&current->sighand->siglock);
- 	write_unlock_irq(&tasklist_lock);
- 	cgroup_cancel_fork(p);
-+bad_fork_put_pidfd:
-+	if (clone_flags & CLONE_PIDFD)
-+		ksys_close(pidfd);
- bad_fork_free_pid:
- 	cgroup_threadgroup_change_end(current);
- 	if (pid != &init_struct_pid)
-@@ -2176,7 +2276,7 @@ static inline void init_idle_pids(struct task_struct *idle)
- struct task_struct *fork_idle(int cpu)
- {
- 	struct task_struct *task;
--	task = copy_process(CLONE_VM, 0, 0, NULL, &init_struct_pid, 0, 0,
-+	task = copy_process(CLONE_VM, 0, 0, NULL, NULL, &init_struct_pid, 0, 0,
- 			    cpu_to_node(cpu));
- 	if (!IS_ERR(task)) {
- 		init_idle_pids(task);
-@@ -2223,7 +2323,7 @@ long _do_fork(unsigned long clone_flags,
- 			trace = 0;
- 	}
- 
--	p = copy_process(clone_flags, stack_start, stack_size,
-+	p = copy_process(clone_flags, stack_start, stack_size, parent_tidptr,
- 			 child_tidptr, NULL, trace, tls, NUMA_NO_NODE);
- 	add_latent_entropy();
- 
--- 
-2.21.0
+Thanks,
+
+	Ingo
