@@ -1,217 +1,79 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: [PATCH v3 4/4] samples: show race-free pidfd metadata access
-Date: Fri, 19 Apr 2019 14:09:04 +0200
-Message-ID: <20190419120904.27502-5-christian@brauner.io>
-References: <20190419120904.27502-1-christian@brauner.io>
+From: Aleksa Sarai <cyphar@cyphar.com>
+Subject: Re: [PATCH v2 2/5] clone: add CLONE_PIDFD
+Date: Fri, 19 Apr 2019 23:39:18 +1000
+Message-ID: <20190419133918.7uedlqgc6cvt7fjt@yavin>
+References: <20190418101841.4476-1-christian@brauner.io>
+ <20190418101841.4476-3-christian@brauner.io>
+ <20190418131206.GB13701@redhat.com>
+ <20190418132822.untjt7erfvbbiz7a@brauner.io>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="vpeoutzg3boqufdk"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190419120904.27502-1-christian@brauner.io>
+Content-Disposition: inline
+In-Reply-To: <20190418132822.untjt7erfvbbiz7a@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, jannh@google.com, dhowells@redhat.com, oleg@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: serge@hallyn.com, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, tglx@linutronix.de, mtk.manpages@gmail.com, akpm@linux-foundation.org, cyphar@cyphar.com, joel@joelfernandes.org, dancol@google.com, Christian Brauner <christian@brauner.io>, Jann Horn <jann@thejh.net>
+To: Christian Brauner <christian@brauner.io>
+Cc: Oleg Nesterov <oleg@redhat.com>, torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, jannh@google.com, dhowells@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, serge@hallyn.com, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, tglx@linutronix.de, mtk.manpages@gmail.com, akpm@linux-foundation.org, joel@joelfernandes.org, dancol@google.com
 List-Id: linux-api@vger.kernel.org
 
-This is a sample program showing userspace how to get race-free access
-to process metadata from a pidfd.  It is rather easy to do and userspace
-can actually simply reuse code that currently parses a process's status
-file in procfs.
-The program can easily be extended into a generic helper suitable for
-inclusion in a libc to make it even easier for userspace to gain metadata
-access.
 
-Since this came up in a discussion because this API is going to be used
-in various service managers: A lot of programs will have a whitelist
-seccomp filter that returns <some-errno> for all new syscalls.  This
-means that programs might get confused if CLONE_PIDFD works but the
-later pidfd_send_signal() syscall doesn't.  Hence, here's a ahead of
-time check that pidfd_send_signal() is supported:
+--vpeoutzg3boqufdk
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-bool pidfd_send_signal_supported()
-{
-        int procfd = open("/proc/self", O_DIRECTORY | O_RDONLY | O_CLOEXEC);
-        if (procfd < 0)
-                return false;
+On 2019-04-18, Christian Brauner <christian@brauner.io> wrote:
+> > Why O_CLOEXEC? I am just curious, I do not really care.
+>=20
+> I think that having the file descriptor O_CLOEXEC by default is a good
+> security measure in general. Most of the time you do not want to pass a
+> file descriptor through exec() (apart from 0,1,2) and it is usually more
+> of an issue when you accidently do it then when you accidently don't. So
+> if users really care about passing a pidfd they should do so by removing
+> the O_CLOEXEC flag explicitly.
+> (New file descriptors should probably all default to that but that's just
+> my opinion.)
+> Another thing is that for a pidfds it makes even more sense to have them
+> cloexec by default. You don't want to *unintentionally* leak an fd that
+> can be used to operate on a process.
 
-        /*
-         * A process is always allowed to signal itself so
-         * pidfd_send_signal() should never fail this test. If it does
-         * it must mean it is not available, blocked by an LSM, seccomp,
-         * or other.
-         */
-        return pidfd_send_signal(procfd, 0, NULL, 0) == 0;
-}
+There is another factor as well -- if you want to set O_CLOEXEC in a
+multi-threaded process you can't be sure that another thread didn't fork
+in between you getting the fd_install'd and the userspace process
+setting O_CLOEXEC (leading to the fd leaking outside the current
+process). This is why a lot of syscalls have a way to get an O_CLOEXEC
+fd from the outset.
 
-Signed-off-by: Christian Brauner <christian@brauner.io>
-Co-developed-by: Jann Horn <jann@thejh.net>
-Signed-off-by: Jann Horn <jann@thejh.net>
-Cc: Arnd Bergmann <arnd@arndb.de>
-Cc: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: David Howells <dhowells@redhat.com>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Cc: Andy Lutomirsky <luto@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Oleg Nesterov <oleg@redhat.com>
-Cc: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Al Viro <viro@zeniv.linux.org.uk>
----
-/* changelog */
-v1:
-- Christian Brauner <christian@brauner.io>:
-  - adapt sample program to changes in how CLONE_PIDFD returns the pidfd
-    With Oleg's suggestion we can simplify the program even more.
-v2: patch unchanged
-v3: patch unchanged
----
- samples/Makefile               |   2 +-
- samples/pidfd/Makefile         |   6 ++
- samples/pidfd/pidfd-metadata.c | 112 +++++++++++++++++++++++++++++++++
- 3 files changed, 119 insertions(+), 1 deletion(-)
- create mode 100644 samples/pidfd/Makefile
- create mode 100644 samples/pidfd/pidfd-metadata.c
+So I'm +1 on doing O_CLOEXEC by default -- you can always disable it
+safely but enabling it safely isn't so simple (and I don't think it
+makes much sense to add the mechanism to pass PIDFD_CLOEXEC as well,
+given how tight the flags are getting).
 
-diff --git a/samples/Makefile b/samples/Makefile
-index b1142a958811..fadadb1c3b05 100644
---- a/samples/Makefile
-+++ b/samples/Makefile
-@@ -3,4 +3,4 @@
- obj-$(CONFIG_SAMPLES)	+= kobject/ kprobes/ trace_events/ livepatch/ \
- 			   hw_breakpoint/ kfifo/ kdb/ hidraw/ rpmsg/ seccomp/ \
- 			   configfs/ connector/ v4l/ trace_printk/ \
--			   vfio-mdev/ statx/ qmi/ binderfs/
-+			   vfio-mdev/ statx/ qmi/ binderfs/ pidfd/
-diff --git a/samples/pidfd/Makefile b/samples/pidfd/Makefile
-new file mode 100644
-index 000000000000..0ff97784177a
---- /dev/null
-+++ b/samples/pidfd/Makefile
-@@ -0,0 +1,6 @@
-+# SPDX-License-Identifier: GPL-2.0
-+
-+hostprogs-y := pidfd-metadata
-+always := $(hostprogs-y)
-+HOSTCFLAGS_pidfd-metadata.o += -I$(objtree)/usr/include
-+all: pidfd-metadata
-diff --git a/samples/pidfd/pidfd-metadata.c b/samples/pidfd/pidfd-metadata.c
-new file mode 100644
-index 000000000000..bd8456fc4c0e
---- /dev/null
-+++ b/samples/pidfd/pidfd-metadata.c
-@@ -0,0 +1,112 @@
-+// SPDX-License-Identifier: GPL-2.0
-+
-+#define _GNU_SOURCE
-+#include <err.h>
-+#include <errno.h>
-+#include <fcntl.h>
-+#include <inttypes.h>
-+#include <limits.h>
-+#include <sched.h>
-+#include <signal.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <sys/stat.h>
-+#include <sys/syscall.h>
-+#include <sys/types.h>
-+#include <sys/wait.h>
-+#include <unistd.h>
-+
-+#ifndef CLONE_PIDFD
-+#define CLONE_PIDFD 0x00001000
-+#endif
-+
-+static int do_child(void *args)
-+{
-+	printf("%d\n", getpid());
-+	_exit(EXIT_SUCCESS);
-+}
-+
-+static pid_t pidfd_clone(int flags, int *pidfd)
-+{
-+	size_t stack_size = 1024;
-+	char *stack[1024] = { 0 };
-+
-+#ifdef __ia64__
-+	return __clone2(do_child, stack, stack_size, flags | SIGCHLD, NULL, pidfd);
-+#else
-+	return clone(do_child, stack + stack_size, flags | SIGCHLD, NULL, pidfd);
-+#endif
-+}
-+
-+static inline int sys_pidfd_send_signal(int pidfd, int sig, siginfo_t *info,
-+					unsigned int flags)
-+{
-+	return syscall(__NR_pidfd_send_signal, pidfd, sig, info, flags);
-+}
-+
-+static int pidfd_metadata_fd(pid_t pid, int pidfd)
-+{
-+	int procfd, ret;
-+	char path[100];
-+
-+	snprintf(path, sizeof(path), "/proc/%d", pid);
-+	procfd = open(path, O_DIRECTORY | O_RDONLY | O_CLOEXEC);
-+	if (procfd < 0) {
-+		warn("Failed to open %s\n", path);
-+		return -1;
-+	}
-+
-+	/*
-+	 * Verify that the pid has not been recycled and our /proc/<pid> handle
-+	 * is still valid.
-+	 */
-+	ret = sys_pidfd_send_signal(pidfd, 0, NULL, 0);
-+	if (ret < 0) {
-+		switch (errno) {
-+		case EPERM:
-+			/* Process exists, just not allowed to signal it. */
-+			break;
-+		default:
-+			warn("Failed to signal process\n");
-+			close(procfd);
-+			procfd = -1;
-+		}
-+	}
-+
-+	return procfd;
-+}
-+
-+int main(int argc, char *argv[])
-+{
-+	int ret = EXIT_FAILURE;
-+	char buf[4096] = { 0 };
-+	pid_t pid;
-+	int pidfd, procfd, statusfd;
-+	ssize_t bytes;
-+
-+	pid = pidfd_clone(CLONE_PIDFD, &pidfd);
-+	if (pid < 0)
-+		exit(ret);
-+
-+	procfd = pidfd_metadata_fd(pid, pidfd);
-+	close(pidfd);
-+	if (procfd < 0)
-+		goto out;
-+
-+	statusfd = openat(procfd, "status", O_RDONLY | O_CLOEXEC);
-+	close(procfd);
-+	if (statusfd < 0)
-+		goto out;
-+
-+	bytes = read(statusfd, buf, sizeof(buf));
-+	if (bytes > 0)
-+		bytes = write(STDOUT_FILENO, buf, bytes);
-+	close(statusfd);
-+	ret = EXIT_SUCCESS;
-+
-+out:
-+	(void)wait(NULL);
-+
-+	exit(ret);
-+}
--- 
-2.21.0
+--=20
+Aleksa Sarai
+Senior Software Engineer (Containers)
+SUSE Linux GmbH
+<https://www.cyphar.com/>
+
+--vpeoutzg3boqufdk
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAABCAAdFiEEb6Gz4/mhjNy+aiz1Snvnv3Dem58FAly5z4YACgkQSnvnv3De
+m58UxRAAgcnnb4NwtWMB9j9vrcjC5M89nkbun9n1RzZA2iKOiguktbzuFqgI3A7F
++M1vvVsOGP5oNDGDXiSX9klXhY+nMQazNBJx0vB0CEQAVY2nL3l+qy0XEEjlgyZ4
+/VbXsEI6/SaYKUmDIHmQPKq0QCjC69s5L0O7R1bsnoH5YUVk6m7RNBAMxQ+EZ/Fn
+BhV0WAiBsjOk6fM12RpbWFeEV5cg9UB4OI+75S1zpirhVsMo1d0xtDwD/2dEfrAl
+undKn+rDuhh5/ULP76drQ9XWnB24F9qiqvx2/H8vrCLYY8vOmhanC1Xii2HaXKPQ
+8ggaFeDY3/rO6h2TIXNzW6d5bj8ezveiOtMngVaIeAXCi0se13iCYcRzVjPHGwBw
+/V+NaHktML75wazFadXkMp0rlyWr6ua6lClnCz8TN2cEonHHRJQKIz4rr+JedqQh
+rl9svBSn7kP+6A0H6ch1s2Lx+dcSMIBA05HFM9S8RoKUn3i0OM8DZzkikcctGwid
+Dc2HASNmm3lCWg030Fdym+p4Ndzl1Dr9IFCLV/Zwso8rsbaFGoY4nMa1TLUmbS+w
+7cmgFd+imZrlcbrTTUvVsYBGPZ5G9EYbIefO/PqVlARxK7aa3urQFj4pjyKTodUI
+1Ou6fi1anhOAp1JOkxlXIdrLfB5RvoxcH3sUKizN33QjBT/zIzU=
+=enJD
+-----END PGP SIGNATURE-----
+
+--vpeoutzg3boqufdk--
