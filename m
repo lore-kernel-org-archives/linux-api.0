@@ -1,43 +1,217 @@
-From: "Li, Aubrey" <aubrey.li@linux.intel.com>
-Subject: Re: [PATCH v15 1/3] /proc/pid/status: Add support for architecture
- specific output
-Date: Fri, 19 Apr 2019 19:42:01 +0800
-Message-ID: <547c8966-8252-01b9-a807-5e28f91acf6b@linux.intel.com>
-References: <20190416063250.7514-1-aubrey.li@linux.intel.com>
- <20190416160143.8292ced993dc803aae7fa0da@linux-foundation.org>
- <CALCETrUjF9PBmkzH1J86vw4ZW785DP7FtcT+gcSrx29=BUnjoQ@mail.gmail.com>
- <alpine.DEB.2.21.1904181500100.3174@nanos.tec.linutronix.de>
+From: Christian Brauner <christian@brauner.io>
+Subject: [PATCH v3 4/4] samples: show race-free pidfd metadata access
+Date: Fri, 19 Apr 2019 14:09:04 +0200
+Message-ID: <20190419120904.27502-5-christian@brauner.io>
+References: <20190419120904.27502-1-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.21.1904181500100.3174@nanos.tec.linutronix.de>
-Content-Language: en-US
+In-Reply-To: <20190419120904.27502-1-christian@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <ak@linux.intel.com>, Tim Chen <tim.c.chen@linux.intel.com>, Dave Hansen <dave.hansen@intel.com>, Arjan van de Ven <arjan@linux.intel.com>, Alexey Dobriyan <adobriyan@gmail.com>, aubrey.li@intel.com, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+To: torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, jannh@google.com, dhowells@redhat.com, oleg@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: serge@hallyn.com, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, tglx@linutronix.de, mtk.manpages@gmail.com, akpm@linux-foundation.org, cyphar@cyphar.com, joel@joelfernandes.org, dancol@google.com, Christian Brauner <christian@brauner.io>, Jann Horn <jann@thejh.net>
 List-Id: linux-api@vger.kernel.org
 
-On 2019/4/18 21:00, Thomas Gleixner wrote:
-> On Wed, 17 Apr 2019, Andy Lutomirski wrote:
-> 
->> On Tue, Apr 16, 2019 at 4:01 PM Andrew Morton <akpm@linux-foundation.org> wrote:
->>>
->>> On Tue, 16 Apr 2019 14:32:48 +0800 Aubrey Li <aubrey.li@linux.intel.com> wrote:
->>>
->>>> The architecture specific information of the running processes could
->>>> be useful to the userland. Add support to examine process architecture
->>>> specific information externally.
->>>
->>> The implementation looks just fine to me.  Have you had any feedback on
->>> the overall desirability of adding this feature?
->>
->> I think I've been the most outspoken, and my not-all-that-strong
->> opinion is that I don't really like it.  /proc/PID/status is already a
->> bit of a mess, and I don't think we really want it to be a mess that
->> is different on different architectures.  Hence my suggestion of
->> /proc/PID/x86_status instead.  Or we could do /proc/PID/arch_status, I
-> 
-> arch_status looks like the right thing to do.
+This is a sample program showing userspace how to get race-free access
+to process metadata from a pidfd.  It is rather easy to do and userspace
+can actually simply reuse code that currently parses a process's status
+file in procfs.
+The program can easily be extended into a generic helper suitable for
+inclusion in a libc to make it even easier for userspace to gain metadata
+access.
 
-Thanks Andy and Thomas, let me change the patch to use arch_status instead.
+Since this came up in a discussion because this API is going to be used
+in various service managers: A lot of programs will have a whitelist
+seccomp filter that returns <some-errno> for all new syscalls.  This
+means that programs might get confused if CLONE_PIDFD works but the
+later pidfd_send_signal() syscall doesn't.  Hence, here's a ahead of
+time check that pidfd_send_signal() is supported:
+
+bool pidfd_send_signal_supported()
+{
+        int procfd = open("/proc/self", O_DIRECTORY | O_RDONLY | O_CLOEXEC);
+        if (procfd < 0)
+                return false;
+
+        /*
+         * A process is always allowed to signal itself so
+         * pidfd_send_signal() should never fail this test. If it does
+         * it must mean it is not available, blocked by an LSM, seccomp,
+         * or other.
+         */
+        return pidfd_send_signal(procfd, 0, NULL, 0) == 0;
+}
+
+Signed-off-by: Christian Brauner <christian@brauner.io>
+Co-developed-by: Jann Horn <jann@thejh.net>
+Signed-off-by: Jann Horn <jann@thejh.net>
+Cc: Arnd Bergmann <arnd@arndb.de>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: David Howells <dhowells@redhat.com>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: Andy Lutomirsky <luto@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Oleg Nesterov <oleg@redhat.com>
+Cc: Aleksa Sarai <cyphar@cyphar.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+---
+/* changelog */
+v1:
+- Christian Brauner <christian@brauner.io>:
+  - adapt sample program to changes in how CLONE_PIDFD returns the pidfd
+    With Oleg's suggestion we can simplify the program even more.
+v2: patch unchanged
+v3: patch unchanged
+---
+ samples/Makefile               |   2 +-
+ samples/pidfd/Makefile         |   6 ++
+ samples/pidfd/pidfd-metadata.c | 112 +++++++++++++++++++++++++++++++++
+ 3 files changed, 119 insertions(+), 1 deletion(-)
+ create mode 100644 samples/pidfd/Makefile
+ create mode 100644 samples/pidfd/pidfd-metadata.c
+
+diff --git a/samples/Makefile b/samples/Makefile
+index b1142a958811..fadadb1c3b05 100644
+--- a/samples/Makefile
++++ b/samples/Makefile
+@@ -3,4 +3,4 @@
+ obj-$(CONFIG_SAMPLES)	+= kobject/ kprobes/ trace_events/ livepatch/ \
+ 			   hw_breakpoint/ kfifo/ kdb/ hidraw/ rpmsg/ seccomp/ \
+ 			   configfs/ connector/ v4l/ trace_printk/ \
+-			   vfio-mdev/ statx/ qmi/ binderfs/
++			   vfio-mdev/ statx/ qmi/ binderfs/ pidfd/
+diff --git a/samples/pidfd/Makefile b/samples/pidfd/Makefile
+new file mode 100644
+index 000000000000..0ff97784177a
+--- /dev/null
++++ b/samples/pidfd/Makefile
+@@ -0,0 +1,6 @@
++# SPDX-License-Identifier: GPL-2.0
++
++hostprogs-y := pidfd-metadata
++always := $(hostprogs-y)
++HOSTCFLAGS_pidfd-metadata.o += -I$(objtree)/usr/include
++all: pidfd-metadata
+diff --git a/samples/pidfd/pidfd-metadata.c b/samples/pidfd/pidfd-metadata.c
+new file mode 100644
+index 000000000000..bd8456fc4c0e
+--- /dev/null
++++ b/samples/pidfd/pidfd-metadata.c
+@@ -0,0 +1,112 @@
++// SPDX-License-Identifier: GPL-2.0
++
++#define _GNU_SOURCE
++#include <err.h>
++#include <errno.h>
++#include <fcntl.h>
++#include <inttypes.h>
++#include <limits.h>
++#include <sched.h>
++#include <signal.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/stat.h>
++#include <sys/syscall.h>
++#include <sys/types.h>
++#include <sys/wait.h>
++#include <unistd.h>
++
++#ifndef CLONE_PIDFD
++#define CLONE_PIDFD 0x00001000
++#endif
++
++static int do_child(void *args)
++{
++	printf("%d\n", getpid());
++	_exit(EXIT_SUCCESS);
++}
++
++static pid_t pidfd_clone(int flags, int *pidfd)
++{
++	size_t stack_size = 1024;
++	char *stack[1024] = { 0 };
++
++#ifdef __ia64__
++	return __clone2(do_child, stack, stack_size, flags | SIGCHLD, NULL, pidfd);
++#else
++	return clone(do_child, stack + stack_size, flags | SIGCHLD, NULL, pidfd);
++#endif
++}
++
++static inline int sys_pidfd_send_signal(int pidfd, int sig, siginfo_t *info,
++					unsigned int flags)
++{
++	return syscall(__NR_pidfd_send_signal, pidfd, sig, info, flags);
++}
++
++static int pidfd_metadata_fd(pid_t pid, int pidfd)
++{
++	int procfd, ret;
++	char path[100];
++
++	snprintf(path, sizeof(path), "/proc/%d", pid);
++	procfd = open(path, O_DIRECTORY | O_RDONLY | O_CLOEXEC);
++	if (procfd < 0) {
++		warn("Failed to open %s\n", path);
++		return -1;
++	}
++
++	/*
++	 * Verify that the pid has not been recycled and our /proc/<pid> handle
++	 * is still valid.
++	 */
++	ret = sys_pidfd_send_signal(pidfd, 0, NULL, 0);
++	if (ret < 0) {
++		switch (errno) {
++		case EPERM:
++			/* Process exists, just not allowed to signal it. */
++			break;
++		default:
++			warn("Failed to signal process\n");
++			close(procfd);
++			procfd = -1;
++		}
++	}
++
++	return procfd;
++}
++
++int main(int argc, char *argv[])
++{
++	int ret = EXIT_FAILURE;
++	char buf[4096] = { 0 };
++	pid_t pid;
++	int pidfd, procfd, statusfd;
++	ssize_t bytes;
++
++	pid = pidfd_clone(CLONE_PIDFD, &pidfd);
++	if (pid < 0)
++		exit(ret);
++
++	procfd = pidfd_metadata_fd(pid, pidfd);
++	close(pidfd);
++	if (procfd < 0)
++		goto out;
++
++	statusfd = openat(procfd, "status", O_RDONLY | O_CLOEXEC);
++	close(procfd);
++	if (statusfd < 0)
++		goto out;
++
++	bytes = read(statusfd, buf, sizeof(buf));
++	if (bytes > 0)
++		bytes = write(STDOUT_FILENO, buf, bytes);
++	close(statusfd);
++	ret = EXIT_SUCCESS;
++
++out:
++	(void)wait(NULL);
++
++	exit(ret);
++}
+-- 
+2.21.0
