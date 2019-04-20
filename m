@@ -1,39 +1,88 @@
-From: shuah <shuah@kernel.org>
-Subject: Re: [PATCH for 5.1 3/3] rseq/selftests: Adapt number of threads to
- the number of detected cpus
-Date: Fri, 19 Apr 2019 15:03:06 -0600
-Message-ID: <45ecf26a-a2f4-fa86-a252-e1d9b3bc4224@kernel.org>
-References: <20190305194755.2602-1-mathieu.desnoyers@efficios.com>
- <1444419838.71.1555677682502.JavaMail.zimbra@efficios.com>
- <1266612341.87.1555678507226.JavaMail.zimbra@efficios.com>
- <614774674.134.1555681346941.JavaMail.zimbra@efficios.com>
- <1863599735.141.1555681723685.JavaMail.zimbra@efficios.com>
- <6ba0796c-8a96-f797-265c-37bfb9b4bb71@kernel.org>
- <580328197.148.1555684824260.JavaMail.zimbra@efficios.com>
- <cfcbace7-363d-e45e-11da-8efb200783b7@kernel.org>
- <1136505826.203.1555707541777.JavaMail.zimbra@efficios.com>
+From: Kevin Easton <kevin@guarana.org>
+Subject: Re: RFC: on adding new CLONE_* flags [WAS Re: [PATCH 0/4] clone: add
+ CLONE_PIDFD]
+Date: Sat, 20 Apr 2019 07:14:06 +0000
+Message-ID: <20190420071406.GA22257@ip-172-31-15-78>
+References: <20190414201436.19502-1-christian@brauner.io>
+ <dc05ffe3-c2ff-8b3e-d181-e0cc620bf91d@metux.net>
+ <20190415195911.z7b7miwsj67ha54y@yavin>
+ <CALCETrWxMnaPvwicqkMLswMynWvJVteazD-bFv3ZnBKWp-1joQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1136505826.203.1555707541777.JavaMail.zimbra@efficios.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <CALCETrWxMnaPvwicqkMLswMynWvJVteazD-bFv3ZnBKWp-1joQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Ingo Molnar <mingo@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <cat>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Aleksa Sarai <cyphar@cyphar.com>, "Enrico Weigelt, metux IT consult" <lkml@metux.net>, Christian Brauner <christian@brauner.io>, Linus Torvalds <torvalds@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Jann Horn <jannh@google.com>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Joel Fernandes <joel@joelfernandes.org>, Daniel Colascione <dancol@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On 4/19/19 2:59 PM, Mathieu Desnoyers wrote:
-> ----- On Apr 19, 2019, at 2:57 PM, shuah shuah@kernel.org wrote:
-> [...]
->> Should I drop this patch that is currently in linux-kseltest next? Just
->> confirming if your new patch is supposed to be applied on top of this
->> one or not?
+On Mon, Apr 15, 2019 at 01:29:23PM -0700, Andy Lutomirski wrote:
+> On Mon, Apr 15, 2019 at 12:59 PM Aleksa Sarai <cyphar@cyphar.com> wrote:
+> >
+> > On 2019-04-15, Enrico Weigelt, metux IT consult <lkml@metux.net> wrote:
+> > > > This patchset makes it possible to retrieve pid file descriptors at
+> > > > process creation time by introducing the new flag CLONE_PIDFD to the
+> > > > clone() system call as previously discussed.
+> > >
+> > > Sorry, for highjacking this thread, but I'm curious on what things to
+> > > consider when introducing new CLONE_* flags.
+> > >
+> > > The reason I'm asking is:
+> > >
+> > > I'm working on implementing plan9-like fs namespaces, where unprivileged
+> > > processes can change their own namespace at will. For that, certain
+> > > traditional unix'ish things have to be disabled, most notably suid.
+> > > As forbidding suid can be helpful in other scenarios, too, I thought
+> > > about making this its own feature. Doing that switch on clone() seems
+> > > a nice place for that, IMHO.
+> >
+> > Just spit-balling -- is no_new_privs not sufficient for this usecase?
+> > Not granting privileges such as setuid during execve(2) is the main
+> > point of that flag.
+> >
 > 
-> We should keep this patch in linux-kselftest next. The fix applies on top
-> of it.
+> I would personally *love* it if distros started setting no_new_privs
+> for basically all processes.  And pidfd actually gets us part of the
+> way toward a straightforward way to make sudo and su still work in a
+> no_new_privs world: su could call into a daemon that would spawn the
+> privileged task, and su would get a (read-only!) pidfd back and then
+> wait for the fd and exit.  I suppose that, done naively, this might
+> cause some odd effects with respect to tty handling, but I bet it's
+> solveable.  I suppose it would be nifty if there were a way for a
+> process, by mutual agreement, to reparent itself to an unrelated
+> process.
 > 
+> Anyway, clone(2) is an enormous mess.  Surely the right solution here
+> is to have a whole new process creation API that takes a big,
+> extensible struct as an argument, and supports *at least* the full
+> abilities of posix_spawn() and ideally covers all the use cases for
+> fork() + do stuff + exec().  It would be nifty if this API also had a
+> way to say "add no_new_privs and therefore enable extra functionality
+> that doesn't work without no_new_privs".  This functionality would
+> include things like returning a future extra-privileged pidfd that
+> gives ptrace-like access.
+> 
+> As basic examples, the improved process creation API should take a
+> list of dup2() operations to perform, fds to remove the O_CLOEXEC flag
+> from, fds to close (or, maybe even better, a list of fds to *not*
+> close), a list of rlimit changes to make, a list of signal changes to
+> make, the ability to set sid, pgrp, uid, gid (as in
+> setresuid/setresgid), the ability to do capset() operations, etc.  The
+> posix_spawn() API, for all that it's rather complicated, covers a
+> bunch of the basics pretty well.
 
-Will do. Thanks for a quick response.
+The idea of a system call that takes an infinitely-extendable laundry
+list of operations to perform in kernel space seems quite inelegant, if
+only for the error-reporting reason.
 
--- Shuah
+Instead, I suggest that what you'd want is a way to create a new
+embryonic process that has no address space and isn't yet schedulable.
+You then just need other-process-directed variants of all the normal
+setup functions - so pr_openat(pidfd, dirfd, pathname, flags, mode),
+pr_sigaction(pidfd, signum, act, oldact), pr_dup2(pidfd, oldfd, newfd)
+etc.
+
+Then when it's all set up you pr_execve() to kick it off.
+
+    - Kevin
