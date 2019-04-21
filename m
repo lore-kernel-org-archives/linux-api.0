@@ -1,7 +1,7 @@
 From: Aubrey Li <aubrey.li@linux.intel.com>
-Subject: [PATCH v17 2/3] /proc/pid/arch_status: Add AVX-512 usage elapsed time
-Date: Mon, 22 Apr 2019 02:35:28 +0800
-Message-ID: <20190421183529.9141-2-aubrey.li@linux.intel.com>
+Subject: [PATCH v17 3/3] Documentation/filesystems/proc.txt: add arch_status file
+Date: Mon, 22 Apr 2019 02:35:29 +0800
+Message-ID: <20190421183529.9141-3-aubrey.li@linux.intel.com>
 References: <20190421183529.9141-1-aubrey.li@linux.intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190421183529.9141-1-aubrey.li@linux.intel.com>
@@ -10,38 +10,8 @@ To: tglx@linutronix.de, mingo@redhat.com, peterz@infradead.org, hpa@zytor.com
 Cc: ak@linux.intel.com, tim.c.chen@linux.intel.com, dave.hansen@intel.com, arjan@linux.intel.com, adobriyan@gmail.com, akpm@linux-foundation.org, aubrey.li@intel.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Aubrey Li <aubrey.li@linux.intel.com>, Andy Lutomirski <luto@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-AVX-512 components use could cause core turbo frequency drop. So
-it's useful to expose AVX-512 usage elapsed time as a heuristic hint
-for the user space job scheduler to cluster the AVX-512 using tasks
-together.
-
-Tensorflow example:
-$ while [ 1 ]; do cat /proc/tid/arch_status | grep AVX512; sleep 1; done
-AVX512_elapsed_ms:      4
-AVX512_elapsed_ms:      8
-AVX512_elapsed_ms:      4
-
-This means that 4 milliseconds have elapsed since the AVX512 usage
-of tensorflow task was detected when the task was scheduled out.
-
-Or:
-$ cat /proc/tid/arch_status | grep AVX512
-AVX512_elapsed_ms:      -1
-
-The number '-1' indicates that no AVX512 usage recorded before
-thus the task unlikely has frequency drop issue.
-
-User space tools may want to further check by:
-
-$ perf stat --pid <pid> -e core_power.lvl2_turbo_license -- sleep 1
-
- Performance counter stats for process id '3558':
-
-     3,251,565,961      core_power.lvl2_turbo_license
-
-       1.004031387 seconds time elapsed
-
-Non-zero counter value confirms that the task causes frequency drop.
+Added /proc/<pid>/arch_status file, and added AVX512_elapsed_ms in
+/proc/<pid>/arch_status. Report it in Documentation/filesystems/proc.txt
 
 Signed-off-by: Aubrey Li <aubrey.li@linux.intel.com>
 Cc: Thomas Gleixner <tglx@linutronix.de>
@@ -55,82 +25,63 @@ Cc: Andrew Morton <akpm@linux-foundation.org>
 Cc: Andy Lutomirski <luto@kernel.org>
 Cc: Linux API <linux-api@vger.kernel.org>
 ---
- arch/x86/include/asm/processor.h |  6 +++++
- arch/x86/kernel/fpu/xstate.c     | 43 ++++++++++++++++++++++++++++++++
- 2 files changed, 49 insertions(+)
+ Documentation/filesystems/proc.txt | 37 ++++++++++++++++++++++++++++++
+ 1 file changed, 37 insertions(+)
 
-diff --git a/arch/x86/include/asm/processor.h b/arch/x86/include/asm/processor.h
-index 2bb3a648fc12..0728848473a2 100644
---- a/arch/x86/include/asm/processor.h
-+++ b/arch/x86/include/asm/processor.h
-@@ -991,4 +991,10 @@ enum l1tf_mitigations {
+diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
+index 66cad5c86171..cf5114a8fb13 100644
+--- a/Documentation/filesystems/proc.txt
++++ b/Documentation/filesystems/proc.txt
+@@ -45,6 +45,7 @@ Table of Contents
+   3.9   /proc/<pid>/map_files - Information about memory mapped files
+   3.10  /proc/<pid>/timerslack_ns - Task timerslack value
+   3.11	/proc/<pid>/patch_state - Livepatch patch operation state
++  3.12	/proc/<pid>/arch_status - Task architecture specific information
  
- extern enum l1tf_mitigations l1tf_mitigation;
+   4	Configuring procfs
+   4.1	Mount options
+@@ -1948,6 +1949,42 @@ patched.  If the patch is being enabled, then the task has already been
+ patched.  If the patch is being disabled, then the task hasn't been
+ unpatched yet.
  
-+#ifdef CONFIG_PROC_PID_ARCH_STATUS
-+/* Add support for task architecture specific output in /proc/pid/arch_status */
-+void task_arch_status(struct seq_file *m, struct task_struct *task);
-+#define task_arch_status task_arch_status
-+#endif /* CONFIG_PROC_PID_ARCH_STATUS */
++3.12 /proc/<pid>/arch_status - task architecture specific status
++-------------------------------------------------------------------
++When CONFIG_PROC_PID_ARCH_STATUS is enabled, this file displays the
++architecture specific status of the task.
 +
- #endif /* _ASM_X86_PROCESSOR_H */
-diff --git a/arch/x86/kernel/fpu/xstate.c b/arch/x86/kernel/fpu/xstate.c
-index d7432c2b1051..a0dda11ab72e 100644
---- a/arch/x86/kernel/fpu/xstate.c
-+++ b/arch/x86/kernel/fpu/xstate.c
-@@ -7,6 +7,7 @@
- #include <linux/cpu.h>
- #include <linux/mman.h>
- #include <linux/pkeys.h>
-+#include <linux/seq_file.h>
++Example
++-------
++ $ cat /proc/6753/arch_status
++ AVX512_elapsed_ms:      8
++
++Description
++-----------
++
++ AVX512_elapsed_ms:
++ ------------------
++  If AVX512 is supported on the machine, this entry shows the milliseconds
++  elapsed since the last time AVX512 usage was recorded. The recording
++  happens on a best effort basis when a task is scheduled out. This means
++  that the value depends on two factors:
++
++    1) The time which the task spent on the CPU without being scheduled
++       out. With CPU isolation and a single runnable task this can take
++       several seconds.
++
++    2) The time since the task was scheduled out last. Depending on the
++       reason for being scheduled out (time slice exhausted, syscall ...)
++       this can be arbitrary long time.
++
++  As a consequence the value cannot be considered precise and authoritative
++  information. The application which uses this information has to be aware
++  of the overall scenario on the system in order to determine whether a
++  task is a real AVX512 user or not.
++
++  A special value of '-1' indicates that no AVX512 usage was recorded, thus
++  the task is unlikely an AVX512 user, but depends on the workload and the
++  scheduling scenario, it also could be a false negative mentioned above.
  
- #include <asm/fpu/api.h>
- #include <asm/fpu/internal.h>
-@@ -1243,3 +1244,45 @@ int copy_user_to_xstate(struct xregs_state *xsave, const void __user *ubuf)
- 
- 	return 0;
- }
-+
-+#ifdef CONFIG_PROC_PID_ARCH_STATUS
-+/*
-+ * Report the amount of time elapsed in millisecond since last AVX512
-+ * use in the task.
-+ */
-+static void avx512_status(struct seq_file *m, struct task_struct *task)
-+{
-+	unsigned long timestamp = READ_ONCE(task->thread.fpu.avx512_timestamp);
-+	long delta;
-+
-+	if (!timestamp) {
-+		/*
-+		 * Report -1 if no AVX512 usage
-+		 */
-+		delta = -1;
-+	} else {
-+		delta = (long)(jiffies - timestamp);
-+		/*
-+		 * Cap to LONG_MAX if time difference > LONG_MAX
-+		 */
-+		if (delta < 0)
-+			delta = LONG_MAX;
-+		delta = jiffies_to_msecs(delta);
-+	}
-+
-+	seq_put_decimal_ll(m, "AVX512_elapsed_ms:\t", delta);
-+	seq_putc(m, '\n');
-+}
-+
-+/*
-+ * Report architecture specific information
-+ */
-+void task_arch_status(struct seq_file *m, struct task_struct *task)
-+{
-+	/*
-+	 * Report AVX512 state if the processor and build option supported.
-+	 */
-+	if (cpu_feature_enabled(X86_FEATURE_AVX512F))
-+		avx512_status(m, task);
-+}
-+#endif /* CONFIG_PROC_PID_ARCH_STATUS */
+ ------------------------------------------------------------------------------
+ Configuring procfs
 -- 
 2.17.1
