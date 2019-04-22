@@ -1,49 +1,103 @@
-From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [PATCH ghak90 V6 00/10] audit: implement container identifier
-Date: Mon, 22 Apr 2019 09:49:05 -0400
-Message-ID: <CAHC9VhQYPF2ma_W+hySbQtfTztf=K1LTFnxnyVK0y9VYxj-K=w@mail.gmail.com>
-References: <cover.1554732921.git.rgb@redhat.com> <20190422113810.GA27747@hmswarspite.think-freely.org>
+From: syzbot <syzbot+10d25e23199614b7721f@syzkaller.appspotmail.com>
+Subject: WARNING in percpu_ref_kill_and_confirm
+Date: Mon, 22 Apr 2019 09:06:04 -0700
+Message-ID: <00000000000043fe9c058720a5d3@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="UTF-8"; format=flowed; delsp=yes
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190422113810.GA27747@hmswarspite.think-freely.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Neil Horman <nhorman@tuxdriver.com>
-Cc: Richard Guy Briggs <rgb@redhat.com>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com
+To: arnd@arndb.de, axboe@kernel.dk, bp@alien8.de, darrick.wong@oracle.com, gregkh@linuxfoundation.org, hpa@zytor.com, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, luto@kernel.org, mathieu.desnoyers@efficios.com, mingo@redhat.com, mpe@ellerman.id.au, syzkaller-bugs@googlegroups.com, tglx@linutronix.de, torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 22, 2019 at 7:38 AM Neil Horman <nhorman@tuxdriver.com> wrote:
-> On Mon, Apr 08, 2019 at 11:39:07PM -0400, Richard Guy Briggs wrote:
-> > Implement kernel audit container identifier.
->
-> I'm sorry, I've lost track of this, where have we landed on it? Are we good for
-> inclusion?
+Hello,
 
-I haven't finished going through this latest revision, but unless
-Richard made any significant changes outside of the feedback from the
-v5 patchset I'm guessing we are "close".
+syzbot found the following crash on:
 
-Based on discussions Richard and I had some time ago, I have always
-envisioned the plan as being get the kernel patchset, tests, docs
-ready (which Richard has been doing) and then run the actual
-implemented API by the userland container folks, e.g. cri-o/lxc/etc.,
-to make sure the actual implementation is sane from their perspective.
-They've already seen the design, so I'm not expecting any real
-surprises here, but sometimes opinions change when they have actual
-code in front of them to play with and review.
+HEAD commit:    9e5de623 Merge tag 'nfs-for-5.1-5' of git://git.linux-nfs...
+git tree:       upstream
+console output: https://syzkaller.appspot.com/x/log.txt?x=15624257200000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=856fc6d0fbbeede9
+dashboard link: https://syzkaller.appspot.com/bug?extid=10d25e23199614b7721f
+compiler:       gcc (GCC) 9.0.0 20181231 (experimental)
+userspace arch: i386
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=17ff39f3200000
+C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=15758647200000
 
-Beyond that, while the cri-o/lxc/etc. folks are looking it over,
-whatever additional testing we can do would be a big win.  I'm
-thinking I'll pull it into a separate branch in the audit tree
-(audit/working-container ?) and include that in my secnext kernels
-that I build/test on a regular basis; this is also a handy way to keep
-it based against the current audit/next branch.  If any changes are
-needed Richard can either chose to base those changes on audit/next or
-the separate audit container ID branch; that's up to him.  I've done
-this with other big changes in other trees, e.g. SELinux, and it has
-worked well to get some extra testing in and keep the patchset "merge
-ready" while others outside the subsystem look things over.
+The bug was bisected to:
 
--- 
-paul moore
-www.paul-moore.com
+commit 38e7571c07be01f9f19b355a9306a4e3d5cb0f5b
+Author: Linus Torvalds <torvalds@linux-foundation.org>
+Date:   Fri Mar 8 22:48:40 2019 +0000
+
+     Merge tag 'io_uring-2019-03-06' of git://git.kernel.dk/linux-block
+
+bisection log:  https://syzkaller.appspot.com/x/bisect.txt?x=1736bc57200000
+final crash:    https://syzkaller.appspot.com/x/report.txt?x=14b6bc57200000
+console output: https://syzkaller.appspot.com/x/log.txt?x=10b6bc57200000
+
+IMPORTANT: if you fix the bug, please add the following tag to the commit:
+Reported-by: syzbot+10d25e23199614b7721f@syzkaller.appspotmail.com
+Fixes: 38e7571c07be ("Merge tag 'io_uring-2019-03-06' of  
+git://git.kernel.dk/linux-block")
+
+------------[ cut here ]------------
+percpu_ref_kill_and_confirm called more than once on io_ring_ctx_ref_free!
+WARNING: CPU: 1 PID: 7815 at lib/percpu-refcount.c:335  
+percpu_ref_kill_and_confirm+0x341/0x3b0 lib/percpu-refcount.c:335
+Kernel panic - not syncing: panic_on_warn set ...
+CPU: 1 PID: 7815 Comm: syz-executor269 Not tainted 5.1.0-rc5+ #77
+Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS  
+Google 01/01/2011
+Call Trace:
+  __dump_stack lib/dump_stack.c:77 [inline]
+  dump_stack+0x172/0x1f0 lib/dump_stack.c:113
+  panic+0x2cb/0x65c kernel/panic.c:214
+  __warn.cold+0x20/0x45 kernel/panic.c:571
+  report_bug+0x263/0x2b0 lib/bug.c:186
+  fixup_bug arch/x86/kernel/traps.c:179 [inline]
+  fixup_bug arch/x86/kernel/traps.c:174 [inline]
+  do_error_trap+0x11b/0x200 arch/x86/kernel/traps.c:272
+  do_invalid_op+0x37/0x50 arch/x86/kernel/traps.c:291
+  invalid_op+0x14/0x20 arch/x86/entry/entry_64.S:973
+RIP: 0010:percpu_ref_kill_and_confirm+0x341/0x3b0 lib/percpu-refcount.c:335
+Code: 42 e0 2a 06 01 48 89 fa 48 c1 ea 03 80 3c 02 00 75 76 49 8b 54 24 10  
+48 c7 c6 a0 71 a1 87 48 c7 c7 40 71 a1 87 e8 ad 92 13 fe <0f> 0b 48 b8 00  
+00 00 00 00 fc ff df 4c 89 ea 48 c1 ea 03 80 3c 02
+RSP: 0018:ffff8880a96cfce0 EFLAGS: 00010086
+RAX: 0000000000000000 RBX: 0000607f5142e35b RCX: 0000000000000000
+RDX: 0000000000000000 RSI: ffffffff815afcf6 RDI: ffffed10152d9f8e
+RBP: ffff8880a96cfd10 R08: ffff8880a85c40c0 R09: fffffbfff1133639
+R10: fffffbfff1133638 R11: ffffffff8899b1c3 R12: ffff88809ee571c0
+R13: ffff88809ee571c8 R14: 0000000000000286 R15: 0000000000000000
+  percpu_ref_kill include/linux/percpu-refcount.h:128 [inline]
+  __io_uring_register+0xa7/0x1fe0 fs/io_uring.c:2937
+  __do_sys_io_uring_register fs/io_uring.c:2998 [inline]
+  __se_sys_io_uring_register fs/io_uring.c:2980 [inline]
+  __ia32_sys_io_uring_register+0x193/0x1f0 fs/io_uring.c:2980
+  do_syscall_32_irqs_on arch/x86/entry/common.c:326 [inline]
+  do_fast_syscall_32+0x281/0xc98 arch/x86/entry/common.c:397
+  entry_SYSENTER_compat+0x70/0x7f arch/x86/entry/entry_64_compat.S:139
+RIP: 0023:0xf7f16869
+Code: 85 d2 74 02 89 0a 5b 5d c3 8b 04 24 c3 8b 14 24 c3 8b 3c 24 c3 90 90  
+90 90 90 90 90 90 90 90 90 90 51 52 55 89 e5 0f 34 cd 80 <5d> 5a 59 c3 90  
+90 90 90 eb 0d 90 90 90 90 90 90 90 90 90 90 90 90
+RSP: 002b:00000000f7ef11ec EFLAGS: 00000296 ORIG_RAX: 00000000000001ab
+RAX: ffffffffffffffda RBX: 0000000000000003 RCX: 0000000000000000
+RDX: 0000000000000000 RSI: 0000000000000000 RDI: 0000000000000000
+RBP: 0000000000000000 R08: 0000000000000000 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000000 R12: 0000000000000000
+R13: 0000000000000000 R14: 0000000000000000 R15: 0000000000000000
+Kernel Offset: disabled
+Rebooting in 86400 seconds..
+
+
+---
+This bug is generated by a bot. It may contain errors.
+See https://goo.gl/tpsmEJ for more information about syzbot.
+syzbot engineers can be reached at syzkaller@googlegroups.com.
+
+syzbot will keep track of this bug report. See:
+https://goo.gl/tpsmEJ#status for how to communicate with syzbot.
+For information about bisection process see: https://goo.gl/tpsmEJ#bisection
+syzbot can test patches for this bug, for details see:
+https://goo.gl/tpsmEJ#testing-patches
