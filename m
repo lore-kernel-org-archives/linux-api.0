@@ -1,62 +1,47 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
+From: Jens Axboe <axboe@kernel.dk>
 Subject: Re: WARNING in percpu_ref_kill_and_confirm
-Date: Mon, 22 Apr 2019 09:23:53 -0700
-Message-ID: <CAHk-=wgC5mNgPN5excXyTNtFpOyF4+9jk3tLiC+s-VezgGbVTA@mail.gmail.com>
+Date: Mon, 22 Apr 2019 10:32:31 -0600
+Message-ID: <53a17444-9539-5810-82a0-ceeefa742508@kernel.dk>
 References: <00000000000043fe9c058720a5d3@google.com>
+ <ad884b18-0e03-d6be-02b0-4e5273f068ce@kernel.dk>
+ <CAHk-=wgG=RqK8T5kWiZfH7da6rBuqp3kAesP=ETgceb6RzvZng@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <00000000000043fe9c058720a5d3@google.com>
+In-Reply-To: <CAHk-=wgG=RqK8T5kWiZfH7da6rBuqp3kAesP=ETgceb6RzvZng@mail.gmail.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: syzbot <syzbot+10d25e23199614b7721f@syzkaller.appspotmail.com>
-Cc: Arnd Bergmann <arnd@arndb.de>, Jens Axboe <axboe@kernel.dk>, Borislav Petkov <bp@alien8.de>, "Darrick J. Wong" <darrick.wong@oracle.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Anvin <hpa@zytor.com>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, linux-block <linux-block@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Andrew Lutomirski <luto@kernel.org>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Ingo Molnar <mingo@redhat.com>, Michael Ellerman <mpe@ellerman.id.au>, syzkaller-bugs <syzkaller-bugs@googlegroups.com>, Thomas Gleixner <tglx@linutronix.de>, Al Viro <viro@zeniv.linux.org.uk>, the arch/x86 maintainers <x86@k>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: syzbot <syzbot+10d25e23199614b7721f@syzkaller.appspotmail.com>, Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>, "Darrick J. Wong" <darrick.wong@oracle.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Anvin <hpa@zytor.com>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, linux-block <linux-block@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Andrew Lutomirski <luto@kernel.org>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Ingo Molnar <mingo@redhat.com>, Michael Ellerman <mpe@ellerman.id.au>, syzkaller-bugs <syzkaller-bugs@googlegroups.com>, Thomas Gleixner <tglx@linutronix.de>, Al Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 22, 2019 at 9:06 AM syzbot
-<syzbot+10d25e23199614b7721f@syzkaller.appspotmail.com> wrote:
->
->
-> The bug was bisected to:
->
-> commit 38e7571c07be01f9f19b355a9306a4e3d5cb0f5b
-> Author: Linus Torvalds <torvalds@linux-foundation.org>
-> Date:   Fri Mar 8 22:48:40 2019 +0000
->
->      Merge tag 'io_uring-2019-03-06' of git://git.kernel.dk/linux-block
->
-> percpu_ref_kill_and_confirm called more than once on io_ring_ctx_ref_free!
+On 4/22/19 10:27 AM, Linus Torvalds wrote:
+> [ Crossed emails ]
+> 
+> On Mon, Apr 22, 2019 at 9:23 AM Jens Axboe <axboe@kernel.dk> wrote:
+>>
+>> I think the below should fix this. Very early versions of io_uring didn't
+>> have this issue, since we did the percpu ref tryget for io_uring_register().
+> 
+> Ok, so I like your patch better than mine, but note how syzbot
+> bisected this to the initial merge of the io_uring code.
 
-So I don't see how that happens in the original code (because
-__io_uring_register() is called with the uring_lock held), but let's
-see.
+Yes, I did think about that too...
 
-HOWEVER.
+> I agree that code shouldn't have had this particular issue, but it
+> looks like it does.
+> 
+> Is there some way to race with io_ring_ctx_wait_and_kill(), which
+> _also_ does that ref_kill() thing? I'm not seeing how that could
+> happen, but maybe if the file ref counts get screwed up you have
+> ->release() called early..
 
-I do see how it happens now as of the latest kernel as of commit
-b19062a56726 ("io_uring: fix possible deadlock between
-io_uring_{enter,register}") where the code explicitly drops the mutex
-in order to wait for other uring users to finish.
+I just tried on the current code and it triggers easily, but that's
+with that mutex patch in there. I agree it should not trigger before
+that, unless something is wonky. I'll try and play around with it a bit
+and see what is going on (or if I can trigger it at all with the mutex
+change reverted).
 
-So Jens, I think that commit was buggy. I suspect that
-io_uring_register() should perhaps do something like
-
---- a/fs/io_uring.c
-+++ b/fs/io_uring.c
-@@ -2934,7 +2934,10 @@ static int __io_uring_register(struct
-io_ring_ctx *ctx, unsigned opcode,
- {
-        int ret;
-
-+       if (!percpu_ref_tryget(&ctx->refs))
-+               return -EBUSY;
-        percpu_ref_kill(&ctx->refs);
-+       percpu_ref_put(&ctx->refs);
-
-        /*
-         * Drop uring mutex before waiting for references to exit. If another
-
-to guarantee that it's the *only* case of io_uring_register() doing that kill.
-
-Hmm?
-
-                Linus
+-- 
+Jens Axboe
