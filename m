@@ -1,61 +1,64 @@
-From: Dmitry Vyukov <dvyukov@google.com>
-Subject: Re: WARNING in percpu_ref_kill_and_confirm
-Date: Tue, 23 Apr 2019 17:41:40 +0300
-Message-ID: <CACT4Y+b8dkFzQoJgaNLMiDjF4bM1AeSZaH5EWTvF_o5MQhu4Pg@mail.gmail.com>
-References: <00000000000043fe9c058720a5d3@google.com> <ad884b18-0e03-d6be-02b0-4e5273f068ce@kernel.dk>
- <CAHk-=wgG=RqK8T5kWiZfH7da6rBuqp3kAesP=ETgceb6RzvZng@mail.gmail.com>
- <53a17444-9539-5810-82a0-ceeefa742508@kernel.dk> <cfa6be6d-4125-6d1e-8993-e9ec9dbaa7bb@kernel.dk>
- <CAHk-=wh=kKEb6qbuhnSWh5S55SbQBOE33991ULSFUgVrEnzivA@mail.gmail.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH] binfmt_elf: Update READ_IMPLIES_EXEC logic for modern CPUs
+Date: Tue, 23 Apr 2019 21:02:03 +0200
+Message-ID: <CAG48ez0CeTEGDuwr+qAGBwsqm+Drj0dkFfr6_UDc+g-xM4BpiA@mail.gmail.com>
+References: <20190423181210.GA2443@beast>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=wh=kKEb6qbuhnSWh5S55SbQBOE33991ULSFUgVrEnzivA@mail.gmail.com>
+In-Reply-To: <20190423181210.GA2443@beast>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Jens Axboe <axboe@kernel.dk>, syzbot <syzbot+10d25e23199614b7721f@syzkaller.appspotmail.com>, Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>, "Darrick J. Wong" <darrick.wong@oracle.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Anvin <hpa@zytor.com>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, linux-block <linux-block@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Andrew Lutomirski <luto@kernel.org>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Ingo Molnar <mingo@redhat.com>, Michael Ellerman <mpe@ellerman.id.au>, syzkaller-bugs <syzkaller-bugs@googlegroups.com>, Thomas Gleixner <tglx@linutronix.de>, Al
+To: Kees Cook <keescook@chromium.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Hector Marco-Gisbert <hecmargi@upv.es>, Jason Gunthorpe <jgg@mellanox.com>, kernel list <linux-kernel@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Mark Rutland <mark.rutland@arm.com>, linux-arm-kernel@lists.infradead.org, musl@lists.openwall.com, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 22, 2019 at 7:48 PM Linus Torvalds
-<torvalds@linux-foundation.org> wrote:
->
-> On Mon, Apr 22, 2019 at 9:38 AM Jens Axboe <axboe@kernel.dk> wrote:
-> >
-> > With the mutex change in, I can trigger it in a second or so. Just ran
-> > the reproducer with that change reverted, and I'm not seeing any badness.
-> > So I do wonder if the bisect results are accurate?
->
-> Looking at the syzbot report, it's syzbot being confused.
->
-> The actual WARNING in percpu_ref_kill_and_confirm() only happens with
-> recent kernels.
->
-> But then syzbot mixes it up with a completely different bug:
->
->    crash: BUG: MAX_STACK_TRACE_ENTRIES too low!
->    BUG: MAX_STACK_TRACE_ENTRIES too low!
->
-> and for some reason decides that *that* bug is the same thing entirely.
->
-> So yeah, I think the simple percpu_ref_is_dying() check is sufficient,
-> and that the syzbot bisection is completely bogus.
++linux-api, +musl
 
-Using crashed/not-crashed predicate gives better results overall. More
-than half kernel bugs have different manifestations due to different
-reasons. And even if we can say for sure that we see a different bug,
-we still don't know if the original bug is also there or not. See the
-following threads for details:
-https://groups.google.com/d/msg/syzkaller-bugs/nFeC8-UG1gg/y6gUEsvAAgAJ
-https://groups.google.com/d/msg/syzkaller/sR8aAXaWEF4/tTWYRgvmAwAJ
+On Tue, Apr 23, 2019 at 8:12 PM Kees Cook <keescook@chromium.org> wrote:
+> The READ_IMPLIES_EXEC work-around was designed for old CPUs lacking NX
+> (to have the visible permission flags on memory regions reflect reality:
+> they are all executable), and for old toolchains that lacked the ELF
+> PT_GNU_STACK marking (under the assumption than toolchains that couldn't
+> even specify memory protection flags may have it wrong for all memory
+> regions).
+>
+> This logic is sensible, but was implemented in a way that equated having
+> a PT_GNU_STACK marked executable as being as "broken" as lacking the
+> PT_GNU_STACK marking entirely. This is not a reasonable assumption
+> for CPUs that have had NX support from the start (or very close to
+> the start). This confusion has led to situations where modern 64-bit
+> programs with explicitly marked executable stack are forced into the
+> READ_IMPLIES_EXEC state when no such thing is needed. (And leads to
+> unexpected failures when mmap()ing regions of device driver memory that
+> wish to disallow VM_EXEC[1].)
+>
+> To fix this, elf_read_implies_exec() is adjusted on arm64 (where NX has
+> always existed and all toolchains include PT_GNU_STACK), and x86 is
+> adjusted to handle this combination of possible outcomes:
+>
+>               CPU: | lacks NX  | has NX, ia32     | has NX, x86_64   |
+>  ELF:              |           |                  |                  |
+>  ------------------------------|------------------|------------------|
+>  missing GNU_STACK | needs RIE | needs RIE        | no RIE           |
+>  GNU_STACK == RWX  | needs RIE | no RIE: stack X  | no RIE: stack X  |
+>  GNU_STACK == RW   | needs RIE | no RIE: stack NX | no RIE: stack NX |
+>
+> This has the effect of making binfmt_elf's EXSTACK_DEFAULT actually take
+> on the correct architecture default of being non-executable on arm64 and
+> x86_64, and being executable on ia32.
 
-Unrelated crashes is the most common cause of incorrect bisection
-results (66%). To enable better bisection we would need to integrate
-some meaningful precommit testing into kernel development process
-(would be tremendously useful for other reasons too). E.g. this "BUG:
-MAX_STACK_TRACE_ENTRIES too low!" is this:
-https://syzkaller.appspot.com/bug?id=dbd70f0407487a061d2d46fdc6bccc94b95ce3c0
-and the reproducer is simply opening /dev/infiniband/rdma_cm or
-/dev/vhci or something equally simple with LOCKDEP enabled. None of
-this was done in a testing environment for several weeks. And then it
-took another month to propagate the fix through all distributed kernel
-trees. For all that time simple programs crash and bisection can't be
-done and we are spending time here...
+It's probably worth going a bit more into detail in this description
+on how libraries typically allocate thread stacks.
+
+It looks like glibc will be fine; before commit 54ee14b3882
+(https://sourceware.org/git/?p=glibc.git;a=blobdiff;f=nptl/allocatestack.c;h=dc501650b8629eda4502f2016016f09106cfb526;hp=6ada1fe1381de104153c0627e27f09fe5ad02caa;hb=54ee14b3882;hpb=16a76cd23ce9d3924fa192395e730423e3dc8b36),
+thread stacks were always RWX, and since then, from what I can tell,
+thread stacks were executable depending on the executable's ELF
+headers (as parsed by glibc).
+
+But e.g. musl's __pthread_create() seems to hardcode
+PROT_READ|PROT_WRITE, which I think would mean that if someone built a
+multithreaded program with nested functions and linked with musl, that
+program would stop working? Or maybe I'm just reading the code wrong.
+
+Then again, I'm not sure whether anyone actually uses nested functions...
