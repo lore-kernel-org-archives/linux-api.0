@@ -1,78 +1,61 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [PATCH 1/5] glibc: Perform rseq(2) registration at C startup
- and thread creation (v8)
-Date: Tue, 23 Apr 2019 08:36:04 -0400 (EDT)
-Message-ID: <515545056.862.1556022964232.JavaMail.zimbra@efficios.com>
-References: <20190416173216.9028-1-mathieu.desnoyers@efficios.com> <1055153722.1072.1555602067220.JavaMail.zimbra@efficios.com> <79996d13-2ba2-ed7d-b202-e7d38f1fd870@arm.com> <604915684.1299.1555607449814.JavaMail.zimbra@efficios.com> <846db7ef-f75e-53b8-3c4c-461ec730a17e@arm.com> <1531569198.1389.1555611422188.JavaMail.zimbra@efficios.com> <a1bd2595-b7ae-b06b-9c71-802901ed8587@arm.com> <CAJA7tRZDKHxLDzuggSmNngfxSTD31EX3mv6YQpcnNXrOtF=9qQ@mail.gmail.com>
+From: Dmitry Vyukov <dvyukov@google.com>
+Subject: Re: WARNING in percpu_ref_kill_and_confirm
+Date: Tue, 23 Apr 2019 17:41:40 +0300
+Message-ID: <CACT4Y+b8dkFzQoJgaNLMiDjF4bM1AeSZaH5EWTvF_o5MQhu4Pg@mail.gmail.com>
+References: <00000000000043fe9c058720a5d3@google.com> <ad884b18-0e03-d6be-02b0-4e5273f068ce@kernel.dk>
+ <CAHk-=wgG=RqK8T5kWiZfH7da6rBuqp3kAesP=ETgceb6RzvZng@mail.gmail.com>
+ <53a17444-9539-5810-82a0-ceeefa742508@kernel.dk> <cfa6be6d-4125-6d1e-8993-e9ec9dbaa7bb@kernel.dk>
+ <CAHk-=wh=kKEb6qbuhnSWh5S55SbQBOE33991ULSFUgVrEnzivA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAJA7tRZDKHxLDzuggSmNngfxSTD31EX3mv6YQpcnNXrOtF=9qQ@mail.gmail.com>
+In-Reply-To: <CAHk-=wh=kKEb6qbuhnSWh5S55SbQBOE33991ULSFUgVrEnzivA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Ramana Radhakrishnan <ramana.gcc@googlemail.com>
-Cc: Szabolcs Nagy <Szabolcs.Nagy@arm.com>, nd <nd@arm.com>, Joseph Myers <joseph@codesourcery.com>, Will Deacon <Will.Deacon@arm.com>, carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Jens Axboe <axboe@kernel.dk>, syzbot <syzbot+10d25e23199614b7721f@syzkaller.appspotmail.com>, Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>, "Darrick J. Wong" <darrick.wong@oracle.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Anvin <hpa@zytor.com>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, linux-block <linux-block@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Andrew Lutomirski <luto@kernel.org>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Ingo Molnar <mingo@redhat.com>, Michael Ellerman <mpe@ellerman.id.au>, syzkaller-bugs <syzkaller-bugs@googlegroups.com>, Thomas Gleixner <tglx@linutronix.de>, Al
 List-Id: linux-api@vger.kernel.org
 
------ On Apr 23, 2019, at 7:59 AM, Ramana Radhakrishnan ramana.gcc@googlemail.com wrote:
+On Mon, Apr 22, 2019 at 7:48 PM Linus Torvalds
+<torvalds@linux-foundation.org> wrote:
+>
+> On Mon, Apr 22, 2019 at 9:38 AM Jens Axboe <axboe@kernel.dk> wrote:
+> >
+> > With the mutex change in, I can trigger it in a second or so. Just ran
+> > the reproducer with that change reverted, and I'm not seeing any badness.
+> > So I do wonder if the bisect results are accurate?
+>
+> Looking at the syzbot report, it's syzbot being confused.
+>
+> The actual WARNING in percpu_ref_kill_and_confirm() only happens with
+> recent kernels.
+>
+> But then syzbot mixes it up with a completely different bug:
+>
+>    crash: BUG: MAX_STACK_TRACE_ENTRIES too low!
+>    BUG: MAX_STACK_TRACE_ENTRIES too low!
+>
+> and for some reason decides that *that* bug is the same thing entirely.
+>
+> So yeah, I think the simple percpu_ref_is_dying() check is sufficient,
+> and that the syzbot bisection is completely bogus.
 
-> On Tue, Apr 23, 2019 at 12:16 PM Szabolcs Nagy <Szabolcs.Nagy@arm.com> wrote:
->>
->> On 18/04/2019 19:17, Mathieu Desnoyers wrote:
->> > ----- On Apr 18, 2019, at 1:37 PM, Szabolcs Nagy Szabolcs.Nagy@arm.com wrote:
->> >> you have to add a documentation comment somewhere
->> >> explaining if RSEQ_SIG is the value that's passed to
->> >> the kernel and then aarch64 asm code has to use
->> >>
->> >> .inst endianfixup(RSEQ_SIG) // or
->> >> .word RSEQ_SIG
->> >
->> > Using ".word" won't allow objdump to show the instruction it
->> > maps to. It will consider it as data. So .inst is preferred here.
->>
->> is there some specific reason you prefer .inst?
-> 
-> I believe the reasoning here is that in the disassembly you want to
-> see an instruction pattern for an architecture rather than a magic bit
-> pattern that appears to be an "inline" literal pool entry.  I would
-> support the .inst variant so that the disassembler shows the
-> instruction for what it is when debugging. If control reaches the
-> marker instruction, something's gone wrong and thus from a user
-> friendliness perspective I would prefer to see an instruction that
-> clearly indicates that it's undefined .inst directive so that someone
-> disassembling this in an assembly view in GDB sees the right thing
-> (TM) instead of having to reach for the manual and disassembling this
-> by hand.
+Using crashed/not-crashed predicate gives better results overall. More
+than half kernel bugs have different manifestations due to different
+reasons. And even if we can say for sure that we see a different bug,
+we still don't know if the original bug is also there or not. See the
+following threads for details:
+https://groups.google.com/d/msg/syzkaller-bugs/nFeC8-UG1gg/y6gUEsvAAgAJ
+https://groups.google.com/d/msg/syzkaller/sR8aAXaWEF4/tTWYRgvmAwAJ
 
-That's my line of thinking exactly. I might add that having data in a
-literal pool within the instruction stream might be unexpected in some
-compilation environments, e.g. when compiling with -mno-text-section-literals .
-
-So even though the signature may likely end up being placed in a literal
-pool, it's preferable to ensure it is a valid uncommon trap instruction.
-
-Thanks,
-
-Mathieu
-
-> 
->>
->> disassembling a canary value as data (that is
->> never executed, but loaded and compared by the
->> kernel as data) sounds more semantically correct
->> to me than showing it as an instruction.
->>
-> 
-> 
-> 
-> Ramana
-> 
-> 
->> i guess having it as an instruction can avoid
->> issues if some tools dislike .word in .text,
-> > but otherwise .word seems better.
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+Unrelated crashes is the most common cause of incorrect bisection
+results (66%). To enable better bisection we would need to integrate
+some meaningful precommit testing into kernel development process
+(would be tremendously useful for other reasons too). E.g. this "BUG:
+MAX_STACK_TRACE_ENTRIES too low!" is this:
+https://syzkaller.appspot.com/bug?id=dbd70f0407487a061d2d46fdc6bccc94b95ce3c0
+and the reproducer is simply opening /dev/infiniband/rdma_cm or
+/dev/vhci or something equally simple with LOCKDEP enabled. None of
+this was done in a testing environment for several weeks. And then it
+took another month to propagate the fix through all distributed kernel
+trees. For all that time simple programs crash and bisection can't be
+done and we are spending time here...
