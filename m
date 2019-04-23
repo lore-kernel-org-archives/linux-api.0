@@ -1,77 +1,300 @@
-From: Rich Felker <dalias@libc.org>
-Subject: Re: [musl] Re: [PATCH] binfmt_elf: Update READ_IMPLIES_EXEC logic
- for modern CPUs
-Date: Tue, 23 Apr 2019 15:25:34 -0400
-Message-ID: <20190423192534.GN23599@brightrain.aerifal.cx>
-References: <20190423181210.GA2443@beast>
- <CAG48ez0CeTEGDuwr+qAGBwsqm+Drj0dkFfr6_UDc+g-xM4BpiA@mail.gmail.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: [GIT PULL] arch: add pidfd and io_uring syscalls everywhere
+Date: Tue, 23 Apr 2019 21:28:48 +0200
+Message-ID: <CAK8P3a3bT=HO=YQ7PY7wOEsJTzf0jS4PkqNHSqYX4JjwmbhY+g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <kernel-hardening-return-15743-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-Content-Disposition: inline
-In-Reply-To: <CAG48ez0CeTEGDuwr+qAGBwsqm+Drj0dkFfr6_UDc+g-xM4BpiA@mail.gmail.com>
-Sender: Rich Felker <dalias@aerifal.cx>
-To: Jann Horn <jannh@google.com>
-Cc: Kees Cook <keescook@chromium.org>, Andrew Morton <akpm@linux-foundation.org>, Hector Marco-Gisbert <hecmargi@upv.es>, Jason Gunthorpe <jgg@mellanox.com>, kernel list <linux-kernel@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Mark Rutland <mark.rutland@arm.com>, linux-arm-kernel@lists.infradead.org, musl@lists.openwall.com, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>, linux-arch <linux-arch@vger.kernel.org>
+Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 23, 2019 at 09:02:03PM +0200, Jann Horn wrote:
-> +linux-api, +musl
-> 
-> On Tue, Apr 23, 2019 at 8:12 PM Kees Cook <keescook@chromium.org> wrote:
-> > The READ_IMPLIES_EXEC work-around was designed for old CPUs lacking NX
-> > (to have the visible permission flags on memory regions reflect reality:
-> > they are all executable), and for old toolchains that lacked the ELF
-> > PT_GNU_STACK marking (under the assumption than toolchains that couldn't
-> > even specify memory protection flags may have it wrong for all memory
-> > regions).
-> >
-> > This logic is sensible, but was implemented in a way that equated having
-> > a PT_GNU_STACK marked executable as being as "broken" as lacking the
-> > PT_GNU_STACK marking entirely. This is not a reasonable assumption
-> > for CPUs that have had NX support from the start (or very close to
-> > the start). This confusion has led to situations where modern 64-bit
-> > programs with explicitly marked executable stack are forced into the
-> > READ_IMPLIES_EXEC state when no such thing is needed. (And leads to
-> > unexpected failures when mmap()ing regions of device driver memory that
-> > wish to disallow VM_EXEC[1].)
-> >
-> > To fix this, elf_read_implies_exec() is adjusted on arm64 (where NX has
-> > always existed and all toolchains include PT_GNU_STACK), and x86 is
-> > adjusted to handle this combination of possible outcomes:
-> >
-> >               CPU: | lacks NX  | has NX, ia32     | has NX, x86_64   |
-> >  ELF:              |           |                  |                  |
-> >  ------------------------------|------------------|------------------|
-> >  missing GNU_STACK | needs RIE | needs RIE        | no RIE           |
-> >  GNU_STACK == RWX  | needs RIE | no RIE: stack X  | no RIE: stack X  |
-> >  GNU_STACK == RW   | needs RIE | no RIE: stack NX | no RIE: stack NX |
-> >
-> > This has the effect of making binfmt_elf's EXSTACK_DEFAULT actually take
-> > on the correct architecture default of being non-executable on arm64 and
-> > x86_64, and being executable on ia32.
-> 
-> It's probably worth going a bit more into detail in this description
-> on how libraries typically allocate thread stacks.
-> 
-> It looks like glibc will be fine; before commit 54ee14b3882
-> (https://sourceware.org/git/?p=glibc.git;a=blobdiff;f=nptl/allocatestack.c;h=dc501650b8629eda4502f2016016f09106cfb526;hp=6ada1fe1381de104153c0627e27f09fe5ad02caa;hb=54ee14b3882;hpb=16a76cd23ce9d3924fa192395e730423e3dc8b36),
-> thread stacks were always RWX, and since then, from what I can tell,
-> thread stacks were executable depending on the executable's ELF
-> headers (as parsed by glibc).
-> 
-> But e.g. musl's __pthread_create() seems to hardcode
-> PROT_READ|PROT_WRITE, which I think would mean that if someone built a
-> multithreaded program with nested functions and linked with musl, that
-> program would stop working? Or maybe I'm just reading the code wrong.
+The following changes since commit 9e98c678c2d6ae3a17cb2de55d17f69dddaa231b:
 
-musl intentionally/explicitly does not support executable stacks. If
-you happen to get one from the kernel for the main thread, things
-might happen to work, but it's unintended and unsupported
-functionality.
+  Linux 5.1-rc1 (2019-03-17 14:22:26 -0700)
 
-Rich
+are available in the Git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/arnd/asm-generic.git
+syscalls-5.1
+
+for you to fetch changes up to 39036cd2727395c3369b1051005da74059a85317:
+
+  arch: add pidfd and io_uring syscalls everywhere (2019-04-15 16:31:17 +0200)
+
+----------------------------------------------------------------
+arch: add pidfd and io_uring syscalls everywhere
+
+This comes a bit late, but should be in 5.1 anyway: we want the newly
+added system calls to be synchronized across all architectures in
+the release.
+
+I hope that in the future, any newly added system calls can be added
+to all architectures at the same time, and tested there while they
+are in linux-next, avoiding dependencies between the architecture
+maintainer trees and the tree that contains the new system call.
+
+----------------------------------------------------------------
+Arnd Bergmann (1):
+      arch: add pidfd and io_uring syscalls everywhere
+
+ arch/alpha/kernel/syscalls/syscall.tbl      | 4 ++++
+ arch/arm/tools/syscall.tbl                  | 4 ++++
+ arch/arm64/include/asm/unistd.h             | 2 +-
+ arch/arm64/include/asm/unistd32.h           | 8 ++++++++
+ arch/ia64/kernel/syscalls/syscall.tbl       | 4 ++++
+ arch/m68k/kernel/syscalls/syscall.tbl       | 4 ++++
+ arch/microblaze/kernel/syscalls/syscall.tbl | 4 ++++
+ arch/mips/kernel/syscalls/syscall_n32.tbl   | 4 ++++
+ arch/mips/kernel/syscalls/syscall_n64.tbl   | 4 ++++
+ arch/mips/kernel/syscalls/syscall_o32.tbl   | 4 ++++
+ arch/parisc/kernel/syscalls/syscall.tbl     | 4 ++++
+ arch/powerpc/kernel/syscalls/syscall.tbl    | 4 ++++
+ arch/s390/kernel/syscalls/syscall.tbl       | 4 ++++
+ arch/sh/kernel/syscalls/syscall.tbl         | 4 ++++
+ arch/sparc/kernel/syscalls/syscall.tbl      | 4 ++++
+ arch/xtensa/kernel/syscalls/syscall.tbl     | 4 ++++
+ 16 files changed, 65 insertions(+), 1 deletion(-)
+
+commit 39036cd2727395c3369b1051005da74059a85317
+Author: Arnd Bergmann <arnd@arndb.de>
+Date:   Thu Feb 28 13:59:19 2019 +0100
+
+    arch: add pidfd and io_uring syscalls everywhere
+
+    Add the io_uring and pidfd_send_signal system calls to all architectures.
+
+    These system calls are designed to handle both native and compat tasks,
+    so all entries are the same across architectures, only arm-compat and
+    the generic tale still use an old format.
+
+    Acked-by: Michael Ellerman <mpe@ellerman.id.au> (powerpc)
+    Acked-by: Heiko Carstens <heiko.carstens@de.ibm.com> (s390)
+    Acked-by: Geert Uytterhoeven <geert@linux-m68k.org>
+    Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+
+diff --git a/arch/alpha/kernel/syscalls/syscall.tbl
+b/arch/alpha/kernel/syscalls/syscall.tbl
+index 63ed39cbd3bd..165f268beafc 100644
+--- a/arch/alpha/kernel/syscalls/syscall.tbl
++++ b/arch/alpha/kernel/syscalls/syscall.tbl
+@@ -463,3 +463,7 @@
+ 532 common getppid sys_getppid
+ # all other architectures have common numbers for new syscall, alpha
+ # is the exception.
++534 common pidfd_send_signal sys_pidfd_send_signal
++535 common io_uring_setup sys_io_uring_setup
++536 common io_uring_enter sys_io_uring_enter
++537 common io_uring_register sys_io_uring_register
+diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
+index 9016f4081bb9..0393917eaa57 100644
+--- a/arch/arm/tools/syscall.tbl
++++ b/arch/arm/tools/syscall.tbl
+@@ -437,3 +437,7 @@
+ 421 common rt_sigtimedwait_time64 sys_rt_sigtimedwait
+ 422 common futex_time64 sys_futex
+ 423 common sched_rr_get_interval_time64 sys_sched_rr_get_interval
++424 common pidfd_send_signal sys_pidfd_send_signal
++425 common io_uring_setup sys_io_uring_setup
++426 common io_uring_enter sys_io_uring_enter
++427 common io_uring_register sys_io_uring_register
+diff --git a/arch/arm64/include/asm/unistd.h b/arch/arm64/include/asm/unistd.h
+index d1dd93436e1e..f2a83ff6b73c 100644
+--- a/arch/arm64/include/asm/unistd.h
++++ b/arch/arm64/include/asm/unistd.h
+@@ -44,7 +44,7 @@
+ #define __ARM_NR_compat_set_tls (__ARM_NR_COMPAT_BASE + 5)
+ #define __ARM_NR_COMPAT_END (__ARM_NR_COMPAT_BASE + 0x800)
+
+-#define __NR_compat_syscalls 424
++#define __NR_compat_syscalls 428
+ #endif
+
+ #define __ARCH_WANT_SYS_CLONE
+diff --git a/arch/arm64/include/asm/unistd32.h
+b/arch/arm64/include/asm/unistd32.h
+index 5590f2623690..23f1a44acada 100644
+--- a/arch/arm64/include/asm/unistd32.h
++++ b/arch/arm64/include/asm/unistd32.h
+@@ -866,6 +866,14 @@ __SYSCALL(__NR_rt_sigtimedwait_time64,
+compat_sys_rt_sigtimedwait_time64)
+ __SYSCALL(__NR_futex_time64, sys_futex)
+ #define __NR_sched_rr_get_interval_time64 423
+ __SYSCALL(__NR_sched_rr_get_interval_time64, sys_sched_rr_get_interval)
++#define __NR_pidfd_send_signal 424
++__SYSCALL(__NR_pidfd_send_signal, sys_pidfd_send_signal)
++#define __NR_io_uring_setup 425
++__SYSCALL(__NR_io_uring_setup, sys_io_uring_setup)
++#define __NR_io_uring_enter 426
++__SYSCALL(__NR_io_uring_enter, sys_io_uring_enter)
++#define __NR_io_uring_register 427
++__SYSCALL(__NR_io_uring_register, sys_io_uring_register)
+
+ /*
+  * Please add new compat syscalls above this comment and update
+diff --git a/arch/ia64/kernel/syscalls/syscall.tbl
+b/arch/ia64/kernel/syscalls/syscall.tbl
+index ab9cda5f6136..56e3d0b685e1 100644
+--- a/arch/ia64/kernel/syscalls/syscall.tbl
++++ b/arch/ia64/kernel/syscalls/syscall.tbl
+@@ -344,3 +344,7 @@
+ 332 common pkey_free sys_pkey_free
+ 333 common rseq sys_rseq
+ # 334 through 423 are reserved to sync up with other architectures
++424 common pidfd_send_signal sys_pidfd_send_signal
++425 common io_uring_setup sys_io_uring_setup
++426 common io_uring_enter sys_io_uring_enter
++427 common io_uring_register sys_io_uring_register
+diff --git a/arch/m68k/kernel/syscalls/syscall.tbl
+b/arch/m68k/kernel/syscalls/syscall.tbl
+index 125c14178979..df4ec3ec71d1 100644
+--- a/arch/m68k/kernel/syscalls/syscall.tbl
++++ b/arch/m68k/kernel/syscalls/syscall.tbl
+@@ -423,3 +423,7 @@
+ 421 common rt_sigtimedwait_time64 sys_rt_sigtimedwait
+ 422 common futex_time64 sys_futex
+ 423 common sched_rr_get_interval_time64 sys_sched_rr_get_interval
++424 common pidfd_send_signal sys_pidfd_send_signal
++425 common io_uring_setup sys_io_uring_setup
++426 common io_uring_enter sys_io_uring_enter
++427 common io_uring_register sys_io_uring_register
+diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl
+b/arch/microblaze/kernel/syscalls/syscall.tbl
+index 8ee3a8c18498..4964947732af 100644
+--- a/arch/microblaze/kernel/syscalls/syscall.tbl
++++ b/arch/microblaze/kernel/syscalls/syscall.tbl
+@@ -429,3 +429,7 @@
+ 421 common rt_sigtimedwait_time64 sys_rt_sigtimedwait
+ 422 common futex_time64 sys_futex
+ 423 common sched_rr_get_interval_time64 sys_sched_rr_get_interval
++424 common pidfd_send_signal sys_pidfd_send_signal
++425 common io_uring_setup sys_io_uring_setup
++426 common io_uring_enter sys_io_uring_enter
++427 common io_uring_register sys_io_uring_register
+diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl
+b/arch/mips/kernel/syscalls/syscall_n32.tbl
+index 15f4117900ee..9392dfe33f97 100644
+--- a/arch/mips/kernel/syscalls/syscall_n32.tbl
++++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
+@@ -362,3 +362,7 @@
+ 421 n32 rt_sigtimedwait_time64 compat_sys_rt_sigtimedwait_time64
+ 422 n32 futex_time64 sys_futex
+ 423 n32 sched_rr_get_interval_time64 sys_sched_rr_get_interval
++424 n32 pidfd_send_signal sys_pidfd_send_signal
++425 n32 io_uring_setup sys_io_uring_setup
++426 n32 io_uring_enter sys_io_uring_enter
++427 n32 io_uring_register sys_io_uring_register
+diff --git a/arch/mips/kernel/syscalls/syscall_n64.tbl
+b/arch/mips/kernel/syscalls/syscall_n64.tbl
+index c85502e67b44..cd0c8aa21fba 100644
+--- a/arch/mips/kernel/syscalls/syscall_n64.tbl
++++ b/arch/mips/kernel/syscalls/syscall_n64.tbl
+@@ -338,3 +338,7 @@
+ 327 n64 rseq sys_rseq
+ 328 n64 io_pgetevents sys_io_pgetevents
+ # 329 through 423 are reserved to sync up with other architectures
++424 n64 pidfd_send_signal sys_pidfd_send_signal
++425 n64 io_uring_setup sys_io_uring_setup
++426 n64 io_uring_enter sys_io_uring_enter
++427 n64 io_uring_register sys_io_uring_register
+diff --git a/arch/mips/kernel/syscalls/syscall_o32.tbl
+b/arch/mips/kernel/syscalls/syscall_o32.tbl
+index 2e063d0f837e..e849e8ffe4a2 100644
+--- a/arch/mips/kernel/syscalls/syscall_o32.tbl
++++ b/arch/mips/kernel/syscalls/syscall_o32.tbl
+@@ -411,3 +411,7 @@
+ 421 o32 rt_sigtimedwait_time64 sys_rt_sigtimedwait
+compat_sys_rt_sigtimedwait_time64
+ 422 o32 futex_time64 sys_futex sys_futex
+ 423 o32 sched_rr_get_interval_time64 sys_sched_rr_get_interval
+sys_sched_rr_get_interval
++424 o32 pidfd_send_signal sys_pidfd_send_signal
++425 o32 io_uring_setup sys_io_uring_setup
++426 o32 io_uring_enter sys_io_uring_enter
++427 o32 io_uring_register sys_io_uring_register
+diff --git a/arch/parisc/kernel/syscalls/syscall.tbl
+b/arch/parisc/kernel/syscalls/syscall.tbl
+index b26766c6647d..fe8ca623add8 100644
+--- a/arch/parisc/kernel/syscalls/syscall.tbl
++++ b/arch/parisc/kernel/syscalls/syscall.tbl
+@@ -420,3 +420,7 @@
+ 421 32 rt_sigtimedwait_time64 sys_rt_sigtimedwait
+compat_sys_rt_sigtimedwait_time64
+ 422 32 futex_time64 sys_futex sys_futex
+ 423 32 sched_rr_get_interval_time64 sys_sched_rr_get_interval
+sys_sched_rr_get_interval
++424 common pidfd_send_signal sys_pidfd_send_signal
++425 common io_uring_setup sys_io_uring_setup
++426 common io_uring_enter sys_io_uring_enter
++427 common io_uring_register sys_io_uring_register
+diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl
+b/arch/powerpc/kernel/syscalls/syscall.tbl
+index b18abb0c3dae..00f5a63c8d9a 100644
+--- a/arch/powerpc/kernel/syscalls/syscall.tbl
++++ b/arch/powerpc/kernel/syscalls/syscall.tbl
+@@ -505,3 +505,7 @@
+ 421 32 rt_sigtimedwait_time64 sys_rt_sigtimedwait
+compat_sys_rt_sigtimedwait_time64
+ 422 32 futex_time64 sys_futex sys_futex
+ 423 32 sched_rr_get_interval_time64 sys_sched_rr_get_interval
+sys_sched_rr_get_interval
++424 common pidfd_send_signal sys_pidfd_send_signal
++425 common io_uring_setup sys_io_uring_setup
++426 common io_uring_enter sys_io_uring_enter
++427 common io_uring_register sys_io_uring_register
+diff --git a/arch/s390/kernel/syscalls/syscall.tbl
+b/arch/s390/kernel/syscalls/syscall.tbl
+index 02579f95f391..061418f787c3 100644
+--- a/arch/s390/kernel/syscalls/syscall.tbl
++++ b/arch/s390/kernel/syscalls/syscall.tbl
+@@ -426,3 +426,7 @@
+ 421 32 rt_sigtimedwait_time64 - compat_sys_rt_sigtimedwait_time64
+ 422 32 futex_time64 - sys_futex
+ 423 32 sched_rr_get_interval_time64 - sys_sched_rr_get_interval
++424  common pidfd_send_signal sys_pidfd_send_signal sys_pidfd_send_signal
++425  common io_uring_setup sys_io_uring_setup              sys_io_uring_setup
++426  common io_uring_enter sys_io_uring_enter              sys_io_uring_enter
++427  common io_uring_register sys_io_uring_register
+sys_io_uring_register
+diff --git a/arch/sh/kernel/syscalls/syscall.tbl
+b/arch/sh/kernel/syscalls/syscall.tbl
+index bfda678576e4..480b057556ee 100644
+--- a/arch/sh/kernel/syscalls/syscall.tbl
++++ b/arch/sh/kernel/syscalls/syscall.tbl
+@@ -426,3 +426,7 @@
+ 421 common rt_sigtimedwait_time64 sys_rt_sigtimedwait
+ 422 common futex_time64 sys_futex
+ 423 common sched_rr_get_interval_time64 sys_sched_rr_get_interval
++424 common pidfd_send_signal sys_pidfd_send_signal
++425 common io_uring_setup sys_io_uring_setup
++426 common io_uring_enter sys_io_uring_enter
++427 common io_uring_register sys_io_uring_register
+diff --git a/arch/sparc/kernel/syscalls/syscall.tbl
+b/arch/sparc/kernel/syscalls/syscall.tbl
+index b9a5a04b2d2c..a1dd24307b00 100644
+--- a/arch/sparc/kernel/syscalls/syscall.tbl
++++ b/arch/sparc/kernel/syscalls/syscall.tbl
+@@ -469,3 +469,7 @@
+ 421 32 rt_sigtimedwait_time64 sys_rt_sigtimedwait
+compat_sys_rt_sigtimedwait_time64
+ 422 32 futex_time64 sys_futex sys_futex
+ 423 32 sched_rr_get_interval_time64 sys_sched_rr_get_interval
+sys_sched_rr_get_interval
++424 common pidfd_send_signal sys_pidfd_send_signal
++425 common io_uring_setup sys_io_uring_setup
++426 common io_uring_enter sys_io_uring_enter
++427 common io_uring_register sys_io_uring_register
+diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl
+b/arch/xtensa/kernel/syscalls/syscall.tbl
+index 6af49929de85..30084eaf8422 100644
+--- a/arch/xtensa/kernel/syscalls/syscall.tbl
++++ b/arch/xtensa/kernel/syscalls/syscall.tbl
+@@ -394,3 +394,7 @@
+ 421 common rt_sigtimedwait_time64 sys_rt_sigtimedwait
+ 422 common futex_time64 sys_futex
+ 423 common sched_rr_get_interval_time64 sys_sched_rr_get_interval
++424 common pidfd_send_signal sys_pidfd_send_signal
++425 common io_uring_setup sys_io_uring_setup
++426 common io_uring_enter sys_io_uring_enter
++427 common io_uring_register sys_io_uring_register
