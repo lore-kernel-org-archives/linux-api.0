@@ -1,72 +1,64 @@
-From: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
+From: Ramana Radhakrishnan <ramana.gcc@googlemail.com>
 Subject: Re: [PATCH 1/5] glibc: Perform rseq(2) registration at C startup and
- thread creation (v9)
-Date: Tue, 23 Apr 2019 11:23:34 +0000
-Message-ID: <532096e3-9943-fa20-daff-92bad34a11fc@arm.com>
-References: <20190422175623.6134-1-mathieu.desnoyers@efficios.com>
- <20190422175623.6134-2-mathieu.desnoyers@efficios.com>
+ thread creation (v8)
+Date: Tue, 23 Apr 2019 12:59:38 +0100
+Message-ID: <CAJA7tRZDKHxLDzuggSmNngfxSTD31EX3mv6YQpcnNXrOtF=9qQ@mail.gmail.com>
+References: <20190416173216.9028-1-mathieu.desnoyers@efficios.com>
+ <1770787324.668.1555530989646.JavaMail.zimbra@efficios.com>
+ <1066731871.915.1555593471194.JavaMail.zimbra@efficios.com>
+ <6cbfea7b-9d83-74a5-9cd2-af56a5d68818@arm.com> <1055153722.1072.1555602067220.JavaMail.zimbra@efficios.com>
+ <79996d13-2ba2-ed7d-b202-e7d38f1fd870@arm.com> <604915684.1299.1555607449814.JavaMail.zimbra@efficios.com>
+ <846db7ef-f75e-53b8-3c4c-461ec730a17e@arm.com> <1531569198.1389.1555611422188.JavaMail.zimbra@efficios.com>
+ <a1bd2595-b7ae-b06b-9c71-802901ed8587@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <libc-alpha-return-101558-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-In-Reply-To: <20190422175623.6134-2-mathieu.desnoyers@efficios.com>
-Content-ID: <47FA7D70368628449F248B19713611EB@eurprd08.prod.outlook.com>
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Carlos O'Donell <carlos@redhat.com>
-Cc: nd <nd@arm.com>, Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <Will.Deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <a1bd2595-b7ae-b06b-9c71-802901ed8587@arm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
+Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, nd <nd@arm.com>, Joseph Myers <joseph@codesourcery.com>, Will Deacon <Will.Deacon@arm.com>, carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-T24gMjIvMDQvMjAxOSAxODo1NiwgTWF0aGlldSBEZXNub3llcnMgd3JvdGU6DQo+IGRpZmYgLS1n
-aXQgYS9zeXNkZXBzL3VuaXgvc3lzdi9saW51eC9hYXJjaDY0L2JpdHMvcnNlcS5oIGIvc3lzZGVw
-cy91bml4L3N5c3YvbGludXgvYWFyY2g2NC9iaXRzL3JzZXEuaA0KPiBuZXcgZmlsZSBtb2RlIDEw
-MDY0NA0KPiBpbmRleCAwMDAwMDAwMDAwLi5lNTM4NjY4NjEyDQo+IC0tLSAvZGV2L251bGwNCj4g
-KysrIGIvc3lzZGVwcy91bml4L3N5c3YvbGludXgvYWFyY2g2NC9iaXRzL3JzZXEuaA0KPiBAQCAt
-MCwwICsxLDQ0IEBADQo+ICsvKiBSZXN0YXJ0YWJsZSBTZXF1ZW5jZXMgTGludXggYWFyY2g2NCBh
-cmNoaXRlY3R1cmUgaGVhZGVyLg0KPiArDQo+ICsgICBDb3B5cmlnaHQgKEMpIDIwMTkgRnJlZSBT
-b2Z0d2FyZSBGb3VuZGF0aW9uLCBJbmMuDQo+ICsNCj4gKyAgIFRoZSBHTlUgQyBMaWJyYXJ5IGlz
-IGZyZWUgc29mdHdhcmU7IHlvdSBjYW4gcmVkaXN0cmlidXRlIGl0IGFuZC9vcg0KPiArICAgbW9k
-aWZ5IGl0IHVuZGVyIHRoZSB0ZXJtcyBvZiB0aGUgR05VIExlc3NlciBHZW5lcmFsIFB1YmxpYw0K
-PiArICAgTGljZW5zZSBhcyBwdWJsaXNoZWQgYnkgdGhlIEZyZWUgU29mdHdhcmUgRm91bmRhdGlv
-bjsgZWl0aGVyDQo+ICsgICB2ZXJzaW9uIDIuMSBvZiB0aGUgTGljZW5zZSwgb3IgKGF0IHlvdXIg
-b3B0aW9uKSBhbnkgbGF0ZXIgdmVyc2lvbi4NCj4gKw0KPiArICAgVGhlIEdOVSBDIExpYnJhcnkg
-aXMgZGlzdHJpYnV0ZWQgaW4gdGhlIGhvcGUgdGhhdCBpdCB3aWxsIGJlIHVzZWZ1bCwNCj4gKyAg
-IGJ1dCBXSVRIT1VUIEFOWSBXQVJSQU5UWTsgd2l0aG91dCBldmVuIHRoZSBpbXBsaWVkIHdhcnJh
-bnR5IG9mDQo+ICsgICBNRVJDSEFOVEFCSUxJVFkgb3IgRklUTkVTUyBGT1IgQSBQQVJUSUNVTEFS
-IFBVUlBPU0UuICBTZWUgdGhlIEdOVQ0KPiArICAgTGVzc2VyIEdlbmVyYWwgUHVibGljIExpY2Vu
-c2UgZm9yIG1vcmUgZGV0YWlscy4NCj4gKw0KPiArICAgWW91IHNob3VsZCBoYXZlIHJlY2VpdmVk
-IGEgY29weSBvZiB0aGUgR05VIExlc3NlciBHZW5lcmFsIFB1YmxpYw0KPiArICAgTGljZW5zZSBh
-bG9uZyB3aXRoIHRoZSBHTlUgQyBMaWJyYXJ5OyBpZiBub3QsIHNlZQ0KPiArICAgPGh0dHA6Ly93
-d3cuZ251Lm9yZy9saWNlbnNlcy8+LiAgKi8NCj4gKw0KPiArI2lmbmRlZiBfU1lTX1JTRVFfSA0K
-PiArIyBlcnJvciAiTmV2ZXIgdXNlIDxiaXRzL3JzZXEuaD4gZGlyZWN0bHk7IGluY2x1ZGUgPHN5
-cy9yc2VxLmg+IGluc3RlYWQuIg0KPiArI2VuZGlmDQo+ICsNCj4gKy8qIFJTRVFfU0lHIGlzIGEg
-c2lnbmF0dXJlIHJlcXVpcmVkIGJlZm9yZSBlYWNoIGFib3J0IGhhbmRsZXIgY29kZS4NCj4gKw0K
-PiArICAgSXQgaXMgYSAzMi1iaXQgdmFsdWUgdGhhdCBtYXBzIHRvIGFjdHVhbCBhcmNoaXRlY3R1
-cmUgY29kZSBjb21waWxlZA0KPiArICAgaW50byBhcHBsaWNhdGlvbnMgYW5kIGxpYnJhcmllcy4g
-SXQgbmVlZHMgdG8gYmUgZGVmaW5lZCBmb3IgZWFjaA0KPiArICAgYXJjaGl0ZWN0dXJlLiBXaGVu
-IGNob29zaW5nIHRoaXMgdmFsdWUsIGl0IG5lZWRzIHRvIGJlIHRha2VuIGludG8NCj4gKyAgIGFj
-Y291bnQgdGhhdCBnZW5lcmF0aW5nIGludmFsaWQgaW5zdHJ1Y3Rpb25zIG1heSBoYXZlIGlsbCBl
-ZmZlY3RzIG9uDQo+ICsgICB0b29scyBsaWtlIG9iamR1bXAsIGFuZCBtYXkgYWxzbyBoYXZlIGlt
-cGFjdCBvbiB0aGUgQ1BVIHNwZWN1bGF0aXZlDQo+ICsgICBleGVjdXRpb24gZWZmaWNpZW5jeSBp
-biBzb21lIGNhc2VzLg0KPiArDQo+ICsgICBhYXJjaDY0IC1tYmlnLWVuZGlhbiBnZW5lcmF0ZXMg
-bWl4ZWQgZW5kaWFubmVzcyBjb2RlIHZzIGRhdGE6DQo+ICsgICBsaXR0bGUtZW5kaWFuIGNvZGUg
-YW5kIGJpZy1lbmRpYW4gZGF0YS4gRW5zdXJlIHRoZSBSU0VRX1NJRyBzaWduYXR1cmUNCj4gKyAg
-IG1hdGNoZXMgY29kZSBlbmRpYW5uZXNzLiAgKi8NCj4gKw0KPiArI2RlZmluZSBSU0VRX1NJR19D
-T0RFCTB4ZDQyOGJjMDAJLyogQlJLICMweDQ1RTAuICAqLw0KPiArDQo+ICsjaWZkZWYgX19BQVJD
-SDY0RUJfXw0KPiArI2RlZmluZSBSU0VRX1NJR19EQVRBCTB4MDBiYzI4ZDQJLyogQlJLICMweDQ1
-RTAuICAqLw0KPiArI2Vsc2UNCj4gKyNkZWZpbmUgUlNFUV9TSUdfREFUQQlSU0VRX1NJR19DT0RF
-DQo+ICsjZW5kaWYNCj4gKw0KPiArI2RlZmluZSBSU0VRX1NJRwlSU0VRX1NJR19EQVRBDQo+IGRp
-ZmYgLS1naXQgYS9zeXNkZXBzL3VuaXgvc3lzdi9saW51eC9hYXJjaDY0L2xpYmMuYWJpbGlzdCBi
-L3N5c2RlcHMvdW5peC9zeXN2L2xpbnV4L2FhcmNoNjQvbGliYy5hYmlsaXN0DQo+IGluZGV4IDlj
-MzMwZjMyNWUuLjMzMWYzOWU0MWEgMTAwNjQ0DQo+IC0tLSBhL3N5c2RlcHMvdW5peC9zeXN2L2xp
-bnV4L2FhcmNoNjQvbGliYy5hYmlsaXN0DQo+ICsrKyBiL3N5c2RlcHMvdW5peC9zeXN2L2xpbnV4
-L2FhcmNoNjQvbGliYy5hYmlsaXN0DQo+IEBAIC0yMTQxLDMgKzIxNDEsNSBAQCBHTElCQ18yLjI4
-IHRocmRfeWllbGQgRg0KPiAgR0xJQkNfMi4yOSBnZXRjcHUgRg0KPiAgR0xJQkNfMi4yOSBwb3Np
-eF9zcGF3bl9maWxlX2FjdGlvbnNfYWRkY2hkaXJfbnAgRg0KPiAgR0xJQkNfMi4yOSBwb3NpeF9z
-cGF3bl9maWxlX2FjdGlvbnNfYWRkZmNoZGlyX25wIEYNCj4gK0dMSUJDXzIuMzAgX19yc2VxX2Fi
-aSBUIDB4MjANCj4gK0dMSUJDXzIuMzAgX19yc2VxX2hhbmRsZWQgRCAweDQNCg0KdGhlIGFhcmNo
-NjQgY2hhbmdlcyBhcmUgb2suDQo=
+On Tue, Apr 23, 2019 at 12:16 PM Szabolcs Nagy <Szabolcs.Nagy@arm.com> wrote:
+>
+> On 18/04/2019 19:17, Mathieu Desnoyers wrote:
+> > ----- On Apr 18, 2019, at 1:37 PM, Szabolcs Nagy Szabolcs.Nagy@arm.com wrote:
+> >> you have to add a documentation comment somewhere
+> >> explaining if RSEQ_SIG is the value that's passed to
+> >> the kernel and then aarch64 asm code has to use
+> >>
+> >> .inst endianfixup(RSEQ_SIG) // or
+> >> .word RSEQ_SIG
+> >
+> > Using ".word" won't allow objdump to show the instruction it
+> > maps to. It will consider it as data. So .inst is preferred here.
+>
+> is there some specific reason you prefer .inst?
+
+I believe the reasoning here is that in the disassembly you want to
+see an instruction pattern for an architecture rather than a magic bit
+pattern that appears to be an "inline" literal pool entry.  I would
+support the .inst variant so that the disassembler shows the
+instruction for what it is when debugging. If control reaches the
+marker instruction, something's gone wrong and thus from a user
+friendliness perspective I would prefer to see an instruction that
+clearly indicates that it's undefined .inst directive so that someone
+disassembling this in an assembly view in GDB sees the right thing
+(TM) instead of having to reach for the manual and disassembling this
+by hand.
+
+>
+> disassembling a canary value as data (that is
+> never executed, but loaded and compared by the
+> kernel as data) sounds more semantically correct
+> to me than showing it as an instruction.
+>
+
+
+
+Ramana
+
+
+> i guess having it as an instruction can avoid
+> issues if some tools dislike .word in .text,
+> but otherwise .word seems better.
