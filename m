@@ -1,61 +1,42 @@
-From: Neil Horman <nhorman@tuxdriver.com>
-Subject: Re: [PATCH ghak90 V6 00/10] audit: implement container identifier
-Date: Tue, 23 Apr 2019 06:28:21 -0400
-Message-ID: <20190423102821.GA30923@hmswarspite.think-freely.org>
-References: <cover.1554732921.git.rgb@redhat.com>
- <20190422113810.GA27747@hmswarspite.think-freely.org>
- <CAHC9VhQYPF2ma_W+hySbQtfTztf=K1LTFnxnyVK0y9VYxj-K=w@mail.gmail.com>
+From: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
+Subject: Re: [PATCH 1/5] glibc: Perform rseq(2) registration at C startup and
+ thread creation (v8)
+Date: Tue, 23 Apr 2019 11:16:03 +0000
+Message-ID: <a1bd2595-b7ae-b06b-9c71-802901ed8587@arm.com>
+References: <20190416173216.9028-1-mathieu.desnoyers@efficios.com>
+ <1770787324.668.1555530989646.JavaMail.zimbra@efficios.com>
+ <1066731871.915.1555593471194.JavaMail.zimbra@efficios.com>
+ <6cbfea7b-9d83-74a5-9cd2-af56a5d68818@arm.com>
+ <1055153722.1072.1555602067220.JavaMail.zimbra@efficios.com>
+ <79996d13-2ba2-ed7d-b202-e7d38f1fd870@arm.com>
+ <604915684.1299.1555607449814.JavaMail.zimbra@efficios.com>
+ <846db7ef-f75e-53b8-3c4c-461ec730a17e@arm.com>
+ <1531569198.1389.1555611422188.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHC9VhQYPF2ma_W+hySbQtfTztf=K1LTFnxnyVK0y9VYxj-K=w@mail.gmail.com>
+In-Reply-To: <1531569198.1389.1555611422188.JavaMail.zimbra@efficios.com>
+Content-Language: en-US
+Content-ID: <683B99399D7B2B4FAF62C9C4A80FA203@eurprd08.prod.outlook.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Moore <paul@paul-moore.com>
-Cc: Richard Guy Briggs <rgb@redhat.com>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: nd <nd@arm.com>, Joseph Myers <joseph@codesourcery.com>, Will Deacon <Will.Deacon@arm.com>, carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 22, 2019 at 09:49:05AM -0400, Paul Moore wrote:
-> On Mon, Apr 22, 2019 at 7:38 AM Neil Horman <nhorman@tuxdriver.com> wrote:
-> > On Mon, Apr 08, 2019 at 11:39:07PM -0400, Richard Guy Briggs wrote:
-> > > Implement kernel audit container identifier.
-> >
-> > I'm sorry, I've lost track of this, where have we landed on it? Are we good for
-> > inclusion?
-> 
-> I haven't finished going through this latest revision, but unless
-> Richard made any significant changes outside of the feedback from the
-> v5 patchset I'm guessing we are "close".
-> 
-> Based on discussions Richard and I had some time ago, I have always
-> envisioned the plan as being get the kernel patchset, tests, docs
-> ready (which Richard has been doing) and then run the actual
-> implemented API by the userland container folks, e.g. cri-o/lxc/etc.,
-> to make sure the actual implementation is sane from their perspective.
-> They've already seen the design, so I'm not expecting any real
-> surprises here, but sometimes opinions change when they have actual
-> code in front of them to play with and review.
-> 
-> Beyond that, while the cri-o/lxc/etc. folks are looking it over,
-> whatever additional testing we can do would be a big win.  I'm
-> thinking I'll pull it into a separate branch in the audit tree
-> (audit/working-container ?) and include that in my secnext kernels
-> that I build/test on a regular basis; this is also a handy way to keep
-> it based against the current audit/next branch.  If any changes are
-> needed Richard can either chose to base those changes on audit/next or
-> the separate audit container ID branch; that's up to him.  I've done
-> this with other big changes in other trees, e.g. SELinux, and it has
-> worked well to get some extra testing in and keep the patchset "merge
-> ready" while others outside the subsystem look things over.
-> 
-
-That all sounds good, thank you Paul.  I knew you and Richard were working on
-it, but I somehow managed to loose track of exactly where we left this.  
-
-Much Appreciated
-Neil
-
-> -- 
-> paul moore
-> www.paul-moore.com
-> 
+T24gMTgvMDQvMjAxOSAxOToxNywgTWF0aGlldSBEZXNub3llcnMgd3JvdGU6DQo+IC0tLS0tIE9u
+IEFwciAxOCwgMjAxOSwgYXQgMTozNyBQTSwgU3phYm9sY3MgTmFneSBTemFib2xjcy5OYWd5QGFy
+bS5jb20gd3JvdGU6DQo+PiB5b3UgaGF2ZSB0byBhZGQgYSBkb2N1bWVudGF0aW9uIGNvbW1lbnQg
+c29tZXdoZXJlDQo+PiBleHBsYWluaW5nIGlmIFJTRVFfU0lHIGlzIHRoZSB2YWx1ZSB0aGF0J3Mg
+cGFzc2VkIHRvDQo+PiB0aGUga2VybmVsIGFuZCB0aGVuIGFhcmNoNjQgYXNtIGNvZGUgaGFzIHRv
+IHVzZQ0KPj4NCj4+IC5pbnN0IGVuZGlhbmZpeHVwKFJTRVFfU0lHKSAvLyBvcg0KPj4gLndvcmQg
+UlNFUV9TSUcNCj4gDQo+IFVzaW5nICIud29yZCIgd29uJ3QgYWxsb3cgb2JqZHVtcCB0byBzaG93
+IHRoZSBpbnN0cnVjdGlvbiBpdA0KPiBtYXBzIHRvLiBJdCB3aWxsIGNvbnNpZGVyIGl0IGFzIGRh
+dGEuIFNvIC5pbnN0IGlzIHByZWZlcnJlZCBoZXJlLg0KDQppcyB0aGVyZSBzb21lIHNwZWNpZmlj
+IHJlYXNvbiB5b3UgcHJlZmVyIC5pbnN0Pw0KDQpkaXNhc3NlbWJsaW5nIGEgY2FuYXJ5IHZhbHVl
+IGFzIGRhdGEgKHRoYXQgaXMNCm5ldmVyIGV4ZWN1dGVkLCBidXQgbG9hZGVkIGFuZCBjb21wYXJl
+ZCBieSB0aGUNCmtlcm5lbCBhcyBkYXRhKSBzb3VuZHMgbW9yZSBzZW1hbnRpY2FsbHkgY29ycmVj
+dA0KdG8gbWUgdGhhbiBzaG93aW5nIGl0IGFzIGFuIGluc3RydWN0aW9uLg0KDQppIGd1ZXNzIGhh
+dmluZyBpdCBhcyBhbiBpbnN0cnVjdGlvbiBjYW4gYXZvaWQNCmlzc3VlcyBpZiBzb21lIHRvb2xz
+IGRpc2xpa2UgLndvcmQgaW4gLnRleHQsDQpidXQgb3RoZXJ3aXNlIC53b3JkIHNlZW1zIGJldHRl
+ci4NCg==
