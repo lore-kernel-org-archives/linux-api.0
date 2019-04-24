@@ -1,92 +1,136 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH for 5.2 10/10] rseq/selftests: mips: use break
- instruction for RSEQ_SIG
-Date: Wed, 24 Apr 2019 19:12:03 -0400 (EDT)
-Message-ID: <2114325810.1301.1556147523476.JavaMail.zimbra@efficios.com>
-References: <20190424152502.14246-1-mathieu.desnoyers@efficios.com> <20190424152502.14246-11-mathieu.desnoyers@efficios.com> <20190424220609.4kryfcgsv46iu3ds@pburton-laptop>
+From: Paul Burton <paul.burton@mips.com>
+Subject: Re: [PATCH 1/4] glibc: Perform rseq(2) registration at C startup and
+ thread creation (v7)
+Date: Wed, 24 Apr 2019 23:13:08 +0000
+Message-ID: <20190424231303.zu2irxd5g3v7yqey@pburton-laptop>
+References: <20190212194253.1951-1-mathieu.desnoyers@efficios.com>
+ <20190212194253.1951-2-mathieu.desnoyers@efficios.com>
+ <5166fbe9-cfe0-8554-abc7-4fc844cf2765@redhat.com>
+ <1965431879.7576.1553529272844.JavaMail.zimbra@efficios.com>
+ <602718e0-7375-deb7-b6e6-2d17022173c5@redhat.com>
+ <20190404214151.6ogrm34dok52az4h@pburton-laptop>
+ <1031613720.1496.1555613900993.JavaMail.zimbra@efficios.com>
+ <1103046939.521.1556118342613.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190424220609.4kryfcgsv46iu3ds@pburton-laptop>
+In-Reply-To: <1103046939.521.1556118342613.JavaMail.zimbra@efficios.com>
+Content-Language: en-US
+Content-ID: <0C44D8EEC9D969418C9B37E280694560@namprd22.prod.outlook.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Burton <paul.burton@mips.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Carlos O'Donell <codonell@redhat.com>, Will Deacon <will.deacon@arm.com>, Boqun Feng <boqun.feng@gmail.com>, heiko carstens <heiko.carstens@de.ibm.com>, gor <gor@linux.ibm.com>, schwidefsky <schwidefsky@de.ibm.com>, "Russell King, ARM Linux" <linux@armlinux.org.uk>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Dave Watson <davejwatson@fb.c>
 List-Id: linux-api@vger.kernel.org
 
------ On Apr 24, 2019, at 6:06 PM, Paul Burton paul.burton@mips.com wrote:
+Hi Mathieu,
 
-> Hi Mathieu,
-> 
-> On Wed, Apr 24, 2019 at 11:25:02AM -0400, Mathieu Desnoyers wrote:
->> diff --git a/tools/testing/selftests/rseq/rseq-mips.h
->> b/tools/testing/selftests/rseq/rseq-mips.h
->> index fe3eabcdcbe5..eb53a6adfbbb 100644
->> --- a/tools/testing/selftests/rseq/rseq-mips.h
->> +++ b/tools/testing/selftests/rseq/rseq-mips.h
->> @@ -7,7 +7,11 @@
->>   * (C) Copyright 2016-2018 - Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
->>   */
->>  
->> -#define RSEQ_SIG	0x53053053
->> +/*
->> + * RSEQ_SIG uses the break instruction. The instruction pattern is
->> + *	0350000d        break    0x350
->> + */
->> +#define RSEQ_SIG	0x0350000d
-> 
-> My apologies for taking a while to get back to you on the various ISAs &
-> endian issues here, but I think we'll want this to be something like:
-> 
-> #if defined(__nanomips__)
-> # ifdef __MIPSEL__
-> #  define RSEQ_SIG	0x03500010
-> # else
-> #  define RSEQ_SIG	0x00100350
-> # endif
-> #elif defined(__mips_micromips)
-> # ifdef __MIPSEL__
-> #  define RSEQ_SIG	0xd4070000
-> # else
-> #  define RSEQ_SIG	0x0000d407
-> # endif
-> #else
-> # define RSEQ_SIG	0x0350000d
-> #endif
-> 
-> For plain old MIPS the .word directive will be fine endian-wise, but for
-> microMIPS & nanoMIPS we need to take into account that the instruction
-> stream is encoded as 16b halfwords & swap those accordingly for little
-> endian.
+Just following up on a couple of things here.
 
-Hi Paul,
+On Wed, Apr 24, 2019 at 11:05:42AM -0400, Mathieu Desnoyers wrote:
+> >>> 2a. A uncommon TRAP hopefully with some immediate data encoded (maybe=
+ uncommon)
+> >>=20
+> >> Our break instruction has a 19b immediate in nanoMIPS (20b for microMI=
+PS
+> >> & classic MIPS) so that could be something like:
+> >>=20
+> >>  break 0x7273       # ASCII 'rs'
+> >>=20
+> >=20
+> > I like this uncommon break instruction as signature choice.
+> >=20
+> > However, if I try to compile assembler with a break 0x7273 instruction
+> > with mips64 and mips32 toolchains (gcc version 8.2.0 (Ubuntu
+> > 8.2.0-1ubuntu2~18.04))
+> > I get:
+> >=20
+> > /tmp/ccVh9F7T.s: Assembler messages:
+> > /tmp/ccVh9F7T.s:24: Error: operand 1 out of range `break 0x7273'
+> >=20
+> > It works up to the value 0x3FF, which seems to use the top 10
+> > code bits:
+> >=20
+> >   a:	03ff 0007 	break	0x3ff
+> >=20
+> > Would a "break 0x350" be a good choice as well ?
 
-Thanks for looking into it!
+The "break 0x350" instruction seems good to me - it's still going to be
+rare.
 
-Does the following comment above the forest of #ifdef work for you ?
+> > Any idea why 0x7273 is not accepted by my assembler ?
 
-/*
- * RSEQ_SIG uses the break instruction. The instruction pattern is:
- *
- * On MIPS:
- *      0350000d        break     0x350
- *
- * On nanoMIPS32:
- *      00100350        break     0x350
- *
- * On microMIPS:
- *      0000d407        break     0x350
- *
- * For nanoMIPS32 and microMIPS, the instruction stream is encoded as 16-bit
- * halfwords, so the signature halfwords need to be swapped accordingly for
- * little-endian.
- */
+I don't know why the assembler wants a smaller immediate than the
+instruction encoding allows... There's a comment in the binutils file
+include/opcode/mips.h that reads:
+
+> A breakpoint instruction uses OP, CODE and SPEC (10 bits of the
+> breakpoint instruction are not defined; Kane says the breakpoint code
+> field in BREAK is 20 bits; yet MIPS assemblers and debuggers only use
+> ten bits).  An optional two-operand form of break/sdbbp allows the
+> lower ten bits to be set too, and MIPS32 and later architectures allow
+> 20 bits to be set with a signal operand (using CODE20).
+
+I suspect there's some history here that predates my involvement (or
+possibly just predates me).
+
+> > I also tried crafting the assembler with values between 0x3FF and 0x727=
+3
+> > in the 20 code bits. It seems fine from an objdump perspective:
+> >=20
+> > ".long 0x03FFFC7\n\t"
+> >=20
+> > generates:
+> >=20
+> >  10:	003f ffc7 	break	0x3f,0x3ff
+> >=20
+> > What I don't understand is why the instruction generated by my
+> > toolchain ends with the last 6 bits "000111", whereas the mips32
+> > instruction set specifies break as ending with "001101" [1].
+> > What am I missing ?
+
+Were you targeting microMIPS by any chance? There the break32
+instructions ends with 000111.
+
+> > Also, the nanomips break code [2] has a completely different
+> > instruction layout. Should we use a different signature when
+> > compiling for nanomips ? What #ifdef should we use ?
+
+Yes, and __nanomips__. I included the encoding in my reply to your RFC
+patch.
+
+> > Do I need a special toolchain to generate nanomips binaries ?
+
+Yes, you can find it here:
+
+  https://codescape.mips.com/components/toolchain/nanomips/latest/index.htm=
+l
+
+We don't have the nanoMIPS kernel support in mainline yet, I've gotten
+various things applied in preparation but also been swamped with other
+things so it's taking a while. If you want to see a working downstream
+kernel though you can find it here:
+
+  git://git.linux-mips.org/pub/scm/linux-mti.git nanomips-v4.15
+
+> Hi Paul, I'm still waiting for feedback on the MIPS front.
+>=20
+> Meanwhile, I plan to use #define RSEQ_SIG 0x0350000d which maps to:
+>=20
+>    0350000d 	break	0x350
+>=20
+> and use RSEQ_SIG in assembly with:
+>=20
+>    ".word " __rseq_str(RSEQ_SIG) "\n\t"
+>=20
+> on big and little endian MIPS, for MIPS32 and MIPS64, based on
+> code generated with gcc version 8.2.0 (Ubuntu 8.2.0-1ubuntu2~18.04).
+>=20
+> Let me know if it needs to be tweaked.
+
+That's fine for the classic MIPS ISA, but won't decode as a break for
+microMIPS or nanoMIPS. See my reply to your RFC for valid encodings for
+both of those.
 
 Thanks,
-
-Mathieu
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+    Paul
