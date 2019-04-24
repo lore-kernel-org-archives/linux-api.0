@@ -1,124 +1,131 @@
-From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: Re: [PATCH RESEND v5 0/5] namei: vfs flags to restrict path
- resolution
-Date: Thu, 25 Apr 2019 01:38:06 +1000
-Message-ID: <20190424153806.64qkkmkudzodxnz2@yavin>
-References: <20190320143717.2523-1-cyphar@cyphar.com>
- <CALCETrV-Q4qZXGeavBPQbF6-VVz7hqvjRkbhFeYmbGiQgu5Omg@mail.gmail.com>
- <20190325130429.dbrgjxnvq3w5cpb3@yavin>
- <CAGXu5jKPrarixQkWWXOBCu6kRRpQd0aaJsPJbvsAyh0Wvc620A@mail.gmail.com>
+From: Mark Rutland <mark.rutland@arm.com>
+Subject: Re: [RFC PATCH for 5.2 08/10] rseq/selftests: aarch64 code
+ signature: handle big-endian environment
+Date: Wed, 24 Apr 2019 17:40:33 +0100
+Message-ID: <20190424164032.GD21101@lakrids.cambridge.arm.com>
+References: <20190424152502.14246-1-mathieu.desnoyers@efficios.com>
+ <20190424152502.14246-9-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="gwuxm2y5lqyvv4zh"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAGXu5jKPrarixQkWWXOBCu6kRRpQd0aaJsPJbvsAyh0Wvc620A@mail.gmail.com>
+In-Reply-To: <20190424152502.14246-9-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Andy Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Eric Biederman <ebiederm@xmission.com>, Jann Horn <jannh@google.com>, Christian Brauner <christian@brauner.io>, David Drysdale <drysdale@google.com>, Tycho Andersen <tycho@tycho.ws>, Linux Containers <containers@lists.linux-foundation.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, Linus Torvalds <torvalds@linux-fo>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm>
 List-Id: linux-api@vger.kernel.org
 
+On Wed, Apr 24, 2019 at 11:25:00AM -0400, Mathieu Desnoyers wrote:
+> Handle compiling with -mbig-endian on aarch64, which generates binaries
+> with mixed code vs data endianness (little endian code, big endian
+> data).
+> 
+> Else mismatch between code endianness for the generated signatures and
+> data endianness for the RSEQ_SIG parameter passed to the rseq
+> registration will trigger application segmentation faults when the
+> kernel try to abort rseq critical sections.
+> 
+> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+> CC: Peter Zijlstra <peterz@infradead.org>
+> CC: Thomas Gleixner <tglx@linutronix.de>
+> CC: Joel Fernandes <joelaf@google.com>
+> CC: Catalin Marinas <catalin.marinas@arm.com>
+> CC: Dave Watson <davejwatson@fb.com>
+> CC: Will Deacon <will.deacon@arm.com>
+> CC: Shuah Khan <shuah@kernel.org>
+> CC: Andi Kleen <andi@firstfloor.org>
+> CC: linux-kselftest@vger.kernel.org
+> CC: "H . Peter Anvin" <hpa@zytor.com>
+> CC: Chris Lameter <cl@linux.com>
+> CC: Russell King <linux@arm.linux.org.uk>
+> CC: Michael Kerrisk <mtk.manpages@gmail.com>
+> CC: "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>
+> CC: Paul Turner <pjt@google.com>
+> CC: Boqun Feng <boqun.feng@gmail.com>
+> CC: Josh Triplett <josh@joshtriplett.org>
+> CC: Steven Rostedt <rostedt@goodmis.org>
+> CC: Ben Maurer <bmaurer@fb.com>
+> CC: linux-api@vger.kernel.org
+> CC: Andy Lutomirski <luto@amacapital.net>
+> CC: Andrew Morton <akpm@linux-foundation.org>
+> CC: Linus Torvalds <torvalds@linux-foundation.org>
+> ---
+>  tools/testing/selftests/rseq/rseq-arm64.h | 17 +++++++++++++++--
+>  1 file changed, 15 insertions(+), 2 deletions(-)
+> 
+> diff --git a/tools/testing/selftests/rseq/rseq-arm64.h b/tools/testing/selftests/rseq/rseq-arm64.h
+> index b41a2a48e965..200dae9e4208 100644
+> --- a/tools/testing/selftests/rseq/rseq-arm64.h
+> +++ b/tools/testing/selftests/rseq/rseq-arm64.h
+> @@ -6,7 +6,20 @@
+>   * (C) Copyright 2018 - Will Deacon <will.deacon@arm.com>
+>   */
+>  
+> -#define RSEQ_SIG	0xd428bc00	/* BRK #0x45E0 */
+> +/*
+> + * aarch64 -mbig-endian generates mixed endianness code vs data:
+> + * little-endian code and big-endian data. Ensure the RSEQ_SIG signature
+> + * matches code endianness.
+> + */
+> +#define RSEQ_SIG_CODE	0xd428bc00	/* BRK #0x45E0.  */
+> +
+> +#ifdef __AARCH64EB__
+> +#define RSEQ_SIG_DATA	0x00bc28d4	/* BRK #0x45E0.  */
+> +#else
+> +#define RSEQ_SIG_DATA	RSEQ_SIG_CODE
+> +#endif
+> +
+> +#define RSEQ_SIG	RSEQ_SIG_DATA
+>  
+>  #define rseq_smp_mb()	__asm__ __volatile__ ("dmb ish" ::: "memory")
+>  #define rseq_smp_rmb()	__asm__ __volatile__ ("dmb ishld" ::: "memory")
+> @@ -121,7 +134,7 @@ do {										\
+>  
+>  #define RSEQ_ASM_DEFINE_ABORT(label, abort_label)				\
+>  	"	b	222f\n"							\
+> -	"	.inst 	"	__rseq_str(RSEQ_SIG) "\n"			\
+> +	"	.inst 	"	__rseq_str(RSEQ_SIG_CODE) "\n"			\
 
---gwuxm2y5lqyvv4zh
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+I don't think this is right; the .inst directive _should_ emit the value
+in the instruction stream endianness (i.e. LE, regardless of the data
+endianness).
 
-On 2019-04-23, Kees Cook <keescook@chromium.org> wrote:
-> On Mon, Mar 25, 2019 at 6:05 AM Aleksa Sarai <cyphar@cyphar.com> wrote:
-> > On 2019-03-21, Andy Lutomirski <luto@kernel.org> wrote:
-> > > On Wed, Mar 20, 2019 at 7:38 AM Aleksa Sarai <cyphar@cyphar.com> wrot=
-e:
-> > > > Now that the holiday break is over, it's time to re-send this patch
-> > > > series (with a few additions, due to new information we got from
-> > > > CVE-2019-5736 -- which this patchset mostly protected against but h=
-ad
-> > > > some holes with regards to #!-style scripts).
-> > >
-> > > I generally like this, but, as Linus pointed out, it will be
-> > > unfortunate if application authors see this as just another
-> > > non-portable weird Linux API and don't use it.  Would it be worthwhile
-> > > to put some thought into making it an API that other OSes might be
-> > > willing to implement?  As it stands, the openat(2) flags are getting
-> > > rather crazy in this patch set.
->=20
-> I think many of the issues are specific to Linux (and Linux containers
-> especially), so I'm not sure this should get blocked because we want
-> something more portable.
+That's certainly the case with the kernel.org crosstool GCC:
 
-I agree these issues are quite Linux-specific (*especially* the ability
-to re-open fds through /proc and the existence of "magic links").
+[mark@lakrids:/mnt/data/tests/inst-test]% cat test.c                               
+void func(void)
+{
+        asm volatile(".inst 0xd4000001");
+}
+[mark@lakrids:/mnt/data/tests/inst-test]% usekorg 8.1.0 aarch64-linux-gcc -c test.c
+[mark@lakrids:/mnt/data/tests/inst-test]% usekorg 8.1.0 aarch64-linux-objdump -d test.o
 
-However, I feel there are a few more good reasons for resolveat(2):
+test.o:     file format elf64-littleaarch64
 
- * openat(2) ignores unknown flags, meaning that old kernels will ignore
-   new programs trying to use O_THISROOT and might end up causing
-   security issues. Yes, it'd be trivial to check whether the new O_*
-   flags are supported at start-up, but I think a security feature
-   shouldn't have a foot-gun associated with it. In fact, I didn't know
-   openat(2) ignored unknown flags until I wrote this patchset -- I
-   doubt many other userspace developers do either.
 
- * resolveat(2) allows for improvement to the O_PATH interface, which I
-   think might be necessary (completely separately to this patchset).
-   I've been working on a patchset which would make nd_jump_link()
-   transitions in trailing_symlink() depend on the mode of the magic
-   link being traversed through (this would allow us to block a
-   read-only fd being re-opened as a read-write fd or similar such
-   nonsense). One aspect of this could be to allow userspace to enable
-   certain re-opening operations by passing a "link mode" to
-   resolveat(2).
+Disassembly of section .text:
 
- * I would argue that O_PATH should've been a separate syscall from the
-   beginning, given how different its semantics are to other openat(2)
-   flags (not to mention how O_PATH is incompatible with and thus
-   ignores so many other openat(2) flags).
+0000000000000000 <func>:
+   0:   d4000001        svc     #0x0
+   4:   d503201f        nop
+   8:   d65f03c0        ret
+[mark@lakrids:/mnt/data/tests/inst-test]% usekorg 8.1.0 aarch64-linux-gcc -mbig-endian -c test.c
+[mark@lakrids:/mnt/data/tests/inst-test]% usekorg 8.1.0 aarch64-linux-objdump -d test.o         
 
- * If we end up needing a resolveat(2) for any of the above reasons,
-   then we will have wasted quite a few openat(2) flag slots for naught.
-   (Then again, there are plenty of flag slots still left.)
+test.o:     file format elf64-bigaarch64
 
-All of that aside, what I'd really like to know is what I should do to
-get this patchset reviewed and merged. It's been largely radio-silence
-for the last few revisions.
 
-A simple resolveat(2) is fairly trivial (I have a version of it lying
-around somewhere), but it doesn't make sense to polish it if there's no
-chance Al is interested in it.
+Disassembly of section .text:
 
-> This series provides solutions to so many different race and confusion
-> issues, I'd really like to see it land. What's the next step here? Is
-> this planned to go directly to Linus for v5.2, or is it going to live
-> in -mm for a while? I'd really like to see this moving forward.
+0000000000000000 <func>:
+   0:   d4000001        svc     #0x0
+   4:   d503201f        nop
+   8:   d65f03c0        ret
 
-Given some of the security requirements of this interface, I think
-getting it to live in -mm wouldn't be a bad idea so folks can shake the
-bugs out before it's depended on by container runtimes.
 
---=20
-Aleksa Sarai
-Senior Software Engineer (Containers)
-SUSE Linux GmbH
-<https://www.cyphar.com/>
 
---gwuxm2y5lqyvv4zh
-Content-Type: application/pgp-signature; name="signature.asc"
+Have you tested this? Is there some toolchain that doesn't get this
+right?
 
------BEGIN PGP SIGNATURE-----
-
-iQIzBAABCAAdFiEEb6Gz4/mhjNy+aiz1Snvnv3Dem58FAlzAgtoACgkQSnvnv3De
-m5+Qng//UgytI5RxPSbDQDbFvQ7hXxQeK7Hj2F//aO1N7wMcdXddaLGl4k2psrcy
-8XV3uLPZGMGIk5O73Ll1vlvikJo6epmauB2Uft0ZmlsseL8lz3cOxnUmrr2DBlAZ
-2amB5VzXSLHjwrr351CKUXnOisEIy9aWlhWqb+hjS5MObaVb2GLqrv1sf8pIcd9k
-fmUwbDYEAhjLLan+WZnaI1OzE5xf/kvCvb2J4XL0nXK5jbcCravxrvTdt/jGh+Bk
-erdQ8n5XdhpQ8bGFKaxQavKkIqmwWf70d7HV4K/pTyWqmE4zdc+F29ZvM4a2XAHa
-cRovUeJY26ZD9yuhWLqaswBCM+AkAYQ4E5k6CbRMpYQyJM9i4B5j/s8ZMeyqHknJ
-IvFN2hWLesU96bQYM8aUxdx8yM5v71fAKwk1O5pAc1QIiDOja3ua8wfSOiyBvKP1
-QXm6wfyqbzj7qBpQ11Gh2cvFKrbq2OLGN59sbM/DHAs8PfhaDvtJstzL7xJ8zaWE
-B+GJorQxpHXP8HIKu+XbE5yezapmBKhcRTJcjaQDBjuzMxk7hUS+4J0+mOBL9cAz
-b885AoiI2QkdaO2bNEmRHj/jHj9Tdbmin91UPFXOMCUqcbDegpYYKb0to9hRX+g3
-IFC9pwuXt7hxEqNbVr8XT73fzA+/eJx7ngaoZU107fUNR0sr8xU=
-=23Y4
------END PGP SIGNATURE-----
-
---gwuxm2y5lqyvv4zh--
+Thanks,
+Mark.
