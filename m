@@ -1,55 +1,108 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [GIT PULL] arch: add pidfd and io_uring syscalls everywhere
-Date: Wed, 24 Apr 2019 09:16:26 +0200
-Message-ID: <CAK8P3a2vmEkqN2FLu6C5TPGyDZ4F=tUENJXz_E_oeqdN1RDqQA@mail.gmail.com>
-References: <CAK8P3a3bT=HO=YQ7PY7wOEsJTzf0jS4PkqNHSqYX4JjwmbhY+g@mail.gmail.com>
- <20190424004131.GA19764@altlinux.org>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH 1/4] glibc: Perform rseq(2) registration at C startup
+ and thread creation (v7)
+Date: Wed, 24 Apr 2019 11:05:42 -0400 (EDT)
+Message-ID: <1103046939.521.1556118342613.JavaMail.zimbra@efficios.com>
+References: <20190212194253.1951-1-mathieu.desnoyers@efficios.com> <20190212194253.1951-2-mathieu.desnoyers@efficios.com> <5166fbe9-cfe0-8554-abc7-4fc844cf2765@redhat.com> <1965431879.7576.1553529272844.JavaMail.zimbra@efficios.com> <602718e0-7375-deb7-b6e6-2d17022173c5@redhat.com> <20190404214151.6ogrm34dok52az4h@pburton-laptop> <1031613720.1496.1555613900993.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190424004131.GA19764@altlinux.org>
+In-Reply-To: <1031613720.1496.1555613900993.JavaMail.zimbra@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Dmitry V. Levin" <ldv@altlinux.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, linux-arch <linux-arch@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Paul Burton <paul.burton@mips.com>
+Cc: Carlos O'Donell <codonell@redhat.com>, Will Deacon <will.deacon@arm.com>, Boqun Feng <boqun.feng@gmail.com>, heiko carstens <heiko.carstens@de.ibm.com>, gor <gor@linux.ibm.com>, schwidefsky <schwidefsky@de.ibm.com>, "Russell King, ARM Linux" <linux@armlinux.org.uk>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Paul Mackerras <paulus@samba.org>, Michael Ellerman <mpe@ellerman.id.au>, carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Dave Watson <davejwatson@fb.c>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Apr 24, 2019 at 2:41 AM Dmitry V. Levin <ldv@altlinux.org> wrote:
-> On Tue, Apr 23, 2019 at 09:28:48PM +0200, Arnd Bergmann wrote:
-> > The following changes since commit 9e98c678c2d6ae3a17cb2de55d17f69dddaa231b:
-> >
-> >   Linux 5.1-rc1 (2019-03-17 14:22:26 -0700)
-> >
-> > are available in the Git repository at:
-> >
-> >   git://git.kernel.org/pub/scm/linux/kernel/git/arnd/asm-generic.git
-> > syscalls-5.1
-> >
-> > for you to fetch changes up to 39036cd2727395c3369b1051005da74059a85317:
-> >
-> >   arch: add pidfd and io_uring syscalls everywhere (2019-04-15 16:31:17 +0200)
-> >
-> > ----------------------------------------------------------------
-> > arch: add pidfd and io_uring syscalls everywhere
-> >
-> > This comes a bit late, but should be in 5.1 anyway: we want the newly
-> > added system calls to be synchronized across all architectures in
-> > the release.
-> >
-> > I hope that in the future, any newly added system calls can be added
-> > to all architectures at the same time, and tested there while they
-> > are in linux-next, avoiding dependencies between the architecture
-> > maintainer trees and the tree that contains the new system call.
->
-> Is "everywhere" really means everywhere?
-> The reason I'm asking this question is that sh64 seems to be excluded:
-> arch/sh/kernel/syscalls_64.S hasn't got any syscall entries since commit
-> v4.8-rc1~15^2~3.  Is sh64 supported in any way at all?
+----- On Apr 18, 2019, at 2:58 PM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
 
-sh64 is dead, the only reason those files are still there is because nobody
-has bothered to create the patch to remove them.
+> ----- On Apr 4, 2019, at 5:41 PM, Paul Burton paul.burton@mips.com wrote:
+> [...]
+> 
+>>> 2a. A uncommon TRAP hopefully with some immediate data encoded (maybe uncommon)
+>> 
+>> Our break instruction has a 19b immediate in nanoMIPS (20b for microMIPS
+>> & classic MIPS) so that could be something like:
+>> 
+>>  break 0x7273       # ASCII 'rs'
+>> 
+> 
+> Hi Paul,
+> 
+> I like this uncommon break instruction as signature choice.
+> 
+> However, if I try to compile assembler with a break 0x7273 instruction
+> with mips64 and mips32 toolchains (gcc version 8.2.0 (Ubuntu
+> 8.2.0-1ubuntu2~18.04))
+> I get:
+> 
+> /tmp/ccVh9F7T.s: Assembler messages:
+> /tmp/ccVh9F7T.s:24: Error: operand 1 out of range `break 0x7273'
+> 
+> It works up to the value 0x3FF, which seems to use the top 10
+> code bits:
+> 
+>   a:	03ff 0007 	break	0x3ff
+> 
+> Would a "break 0x350" be a good choice as well ?
+> 
+> Any idea why 0x7273 is not accepted by my assembler ?
+> 
+> I also tried crafting the assembler with values between 0x3FF and 0x7273
+> in the 20 code bits. It seems fine from an objdump perspective:
+> 
+> ".long 0x03FFFC7\n\t"
+> 
+> generates:
+> 
+>  10:	003f ffc7 	break	0x3f,0x3ff
+> 
+> What I don't understand is why the instruction generated by my
+> toolchain ends with the last 6 bits "000111", whereas the mips32
+> instruction set specifies break as ending with "001101" [1].
+> What am I missing ?
+> 
+> Also, the nanomips break code [2] has a completely different
+> instruction layout. Should we use a different signature when
+> compiling for nanomips ? What #ifdef should we use ? Do I
+> need a special toolchain to generate nanomips binaries ?
 
-It has not been possible to even build an sh64 kernel for many years,
-and I'm sure none of the prototypes have been turned on for even longer
-if they are still in someone's board pile.
+Hi Paul, I'm still waiting for feedback on the MIPS front.
 
-     Arnd
+Meanwhile, I plan to use #define RSEQ_SIG 0x0350000d which maps to:
+
+   0350000d 	break	0x350
+
+and use RSEQ_SIG in assembly with:
+
+   ".word " __rseq_str(RSEQ_SIG) "\n\t"
+
+on big and little endian MIPS, for MIPS32 and MIPS64, based on
+code generated with gcc version 8.2.0 (Ubuntu 8.2.0-1ubuntu2~18.04).
+
+Let me know if it needs to be tweaked.
+
+Thanks,
+
+Mathieu
+
+
+> 
+> Thanks,
+> 
+> Mathieu
+> 
+> [1]
+> http://hades.mech.northwestern.edu/images/1/16/MIPS32_Architecture_Volume_II-A_Instruction_Set.pdf
+> [2]
+> https://s3-eu-west-1.amazonaws.com/downloads-mips/I7200/I7200+product+launch/MIPS_nanomips32_ISA_TRM_01_01_MD01247.pdf
+> 
+> --
+> Mathieu Desnoyers
+> EfficiOS Inc.
+> http://www.efficios.com
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
