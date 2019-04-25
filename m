@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv3 13/27] x86/vdso: Rename vdso_image {.data=>.text}
-Date: Thu, 25 Apr 2019 17:14:02 +0100
-Message-ID: <20190425161416.26600-14-dima@arista.com>
+Subject: [PATCHv3 12/27] x86/vdso: Restrict splitting VVAR VMA
+Date: Thu, 25 Apr 2019 17:14:01 +0100
+Message-ID: <20190425161416.26600-13-dima@arista.com>
 References: <20190425161416.26600-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,64 +12,48 @@ To: linux-kernel@vger.kernel.org
 Cc: Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-To avoid any confusion with VVAR.
+Although, time namespace can work with VVAR VMA split, it seems worth
+to forbid splitting VVAR resulting in stricter ABI and reducing amount
+of corner-cases to consider while working further on VDSO.
+
+I don't think there is any use-case for partial mremap() of vvar,
+but if there is any - this patch can be easily reverted.
 
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- arch/x86/entry/vdso/vdso2c.h | 2 +-
- arch/x86/entry/vdso/vma.c    | 6 +++---
- arch/x86/include/asm/vdso.h  | 2 +-
- 3 files changed, 5 insertions(+), 5 deletions(-)
+ arch/x86/entry/vdso/vma.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
 
-diff --git a/arch/x86/entry/vdso/vdso2c.h b/arch/x86/entry/vdso/vdso2c.h
-index 61c8bb2e5af8..086a11aee0e8 100644
---- a/arch/x86/entry/vdso/vdso2c.h
-+++ b/arch/x86/entry/vdso/vdso2c.h
-@@ -157,7 +157,7 @@ static void BITSFUNC(go)(void *raw_addr, size_t raw_len,
- 	fprintf(outfile, "\n};\n\n");
- 
- 	fprintf(outfile, "const struct vdso_image %s = {\n", name);
--	fprintf(outfile, "\t.data = raw_data,\n");
-+	fprintf(outfile, "\t.text = raw_data,\n");
- 	fprintf(outfile, "\t.size = %lu,\n", mapping_size);
- 	if (alt_sec) {
- 		fprintf(outfile, "\t.alt = %lu,\n",
 diff --git a/arch/x86/entry/vdso/vma.c b/arch/x86/entry/vdso/vma.c
-index ff9875a4d53b..35f7a1c1f4bc 100644
+index babc4e7a519c..ff9875a4d53b 100644
 --- a/arch/x86/entry/vdso/vma.c
 +++ b/arch/x86/entry/vdso/vma.c
-@@ -32,8 +32,8 @@ void __init init_vdso_image(const struct vdso_image *image)
- {
- 	BUG_ON(image->size % PAGE_SIZE != 0);
- 
--	apply_alternatives((struct alt_instr *)(image->data + image->alt),
--			   (struct alt_instr *)(image->data + image->alt +
-+	apply_alternatives((struct alt_instr *)(image->text + image->alt),
-+			   (struct alt_instr *)(image->text + image->alt +
- 						image->alt_len));
- }
- 
-@@ -47,7 +47,7 @@ static vm_fault_t vdso_fault(const struct vm_special_mapping *sm,
- 	if (!image || (vmf->pgoff << PAGE_SHIFT) >= image->size)
- 		return VM_FAULT_SIGBUS;
- 
--	vmf->page = virt_to_page(image->data + (vmf->pgoff << PAGE_SHIFT));
-+	vmf->page = virt_to_page(image->text + (vmf->pgoff << PAGE_SHIFT));
- 	get_page(vmf->page);
+@@ -84,6 +84,18 @@ static int vdso_mremap(const struct vm_special_mapping *sm,
  	return 0;
  }
-diff --git a/arch/x86/include/asm/vdso.h b/arch/x86/include/asm/vdso.h
-index 27566e57e87d..02cb843b4c0b 100644
---- a/arch/x86/include/asm/vdso.h
-+++ b/arch/x86/include/asm/vdso.h
-@@ -11,7 +11,7 @@
- #include <linux/mm_types.h>
  
- struct vdso_image {
--	void *data;
-+	void *text;
- 	unsigned long size;   /* Always a multiple of PAGE_SIZE */
++static int vvar_mremap(const struct vm_special_mapping *sm,
++		struct vm_area_struct *new_vma)
++{
++	unsigned long new_size = new_vma->vm_end - new_vma->vm_start;
++	const struct vdso_image *image = current->mm->context.vdso_image;
++
++	if (new_size != -image->sym_vvar_start)
++		return -EINVAL;
++
++	return 0;
++}
++
+ static vm_fault_t vvar_fault(const struct vm_special_mapping *sm,
+ 		      struct vm_area_struct *vma, struct vm_fault *vmf)
+ {
+@@ -136,6 +148,7 @@ static const struct vm_special_mapping vdso_mapping = {
+ static const struct vm_special_mapping vvar_mapping = {
+ 	.name = "[vvar]",
+ 	.fault = vvar_fault,
++	.mremap = vvar_mremap,
+ };
  
- 	unsigned long alt, alt_len;
+ /*
 -- 
 2.21.0
