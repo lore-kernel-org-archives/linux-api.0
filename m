@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv3 27/27] selftest/timens: Check that a right vdso is mapped after fork and exec
-Date: Thu, 25 Apr 2019 17:14:16 +0100
-Message-ID: <20190425161416.26600-28-dima@arista.com>
+Subject: [PATCHv3 25/27] x86/vdso: Align VDSO functions by CPU L1 cache line
+Date: Thu, 25 Apr 2019 17:14:14 +0100
+Message-ID: <20190425161416.26600-26-dima@arista.com>
 References: <20190425161416.26600-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,131 +14,49 @@ List-Id: linux-api@vger.kernel.org
 
 From: Andrei Vagin <avagin@gmail.com>
 
+After performance testing VDSO patches a noticeable 20% regression was
+found on gettime_perf selftest with a cold cache.
+As it turns to be, before time namespaces introduction, VDSO functions
+were quite aligned to cache lines, but adding a new code to adjust
+timens offset inside namespace created a small shift and vdso functions
+become unaligned on cache lines.
+
+Add align to vdso functions with gcc option to fix performance drop.
+
+Coping the resulting numbers from cover letter:
+
+Hot CPU cache (more gettime_perf.c cycles - the better):
+        | before     | CONFIG_TIME_NS=n | host        | inside timens
+--------|------------|------------------|-------------|-------------
+cycles  | 139887013  | 139453003        | 139899785   | 128792458
+diff (%)| 100        | 99.7             | 100         | 92
+
+Cold cache (lesser tsc per gettime_perf_cold.c cycle - the better):
+        | before     | CONFIG_TIME_NS=n | host        | inside timens
+--------|------------|------------------|-------------|-------------
+tsc     | 6748       | 6718             | 6862        | 12682
+diff (%)| 100        | 99.6             | 101.7       | 188
+
+Measured on Intel(R) Core(TM) i5-6300U CPU @ 2.40GHz
+
+Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Andrei Vagin <avagin@gmail.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- tools/testing/selftests/timens/.gitignore |  1 +
- tools/testing/selftests/timens/Makefile   |  2 +-
- tools/testing/selftests/timens/exec.c     | 91 +++++++++++++++++++++++
- 3 files changed, 93 insertions(+), 1 deletion(-)
- create mode 100644 tools/testing/selftests/timens/exec.c
+ arch/x86/entry/vdso/Makefile | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/tools/testing/selftests/timens/.gitignore b/tools/testing/selftests/timens/.gitignore
-index 16292e4d08a5..789f21e81028 100644
---- a/tools/testing/selftests/timens/.gitignore
-+++ b/tools/testing/selftests/timens/.gitignore
-@@ -1,4 +1,5 @@
- clock_nanosleep
-+exec
- gettime_perf
- gettime_perf_cold
- procfs
-diff --git a/tools/testing/selftests/timens/Makefile b/tools/testing/selftests/timens/Makefile
-index ef65bf96b55c..9e0edf354906 100644
---- a/tools/testing/selftests/timens/Makefile
-+++ b/tools/testing/selftests/timens/Makefile
-@@ -1,4 +1,4 @@
--TEST_GEN_PROGS := timens timerfd timer clock_nanosleep procfs gettime_perf
-+TEST_GEN_PROGS := timens timerfd timer clock_nanosleep procfs gettime_perf exec
+diff --git a/arch/x86/entry/vdso/Makefile b/arch/x86/entry/vdso/Makefile
+index bc0bdbf49397..9b45aafdfcfe 100644
+--- a/arch/x86/entry/vdso/Makefile
++++ b/arch/x86/entry/vdso/Makefile
+@@ -4,6 +4,7 @@
+ #
  
- uname_M := $(shell uname -m 2>/dev/null || echo not)
- ARCH ?= $(shell echo $(uname_M) | sed -e s/i.86/i386/)
-diff --git a/tools/testing/selftests/timens/exec.c b/tools/testing/selftests/timens/exec.c
-new file mode 100644
-index 000000000000..b3a05c41e202
---- /dev/null
-+++ b/tools/testing/selftests/timens/exec.c
-@@ -0,0 +1,91 @@
-+// SPDX-License-Identifier: GPL-2.0
-+#define _GNU_SOURCE
-+#include <errno.h>
-+#include <fcntl.h>
-+#include <sched.h>
-+#include <stdio.h>
-+#include <stdbool.h>
-+#include <sys/stat.h>
-+#include <sys/syscall.h>
-+#include <sys/types.h>
-+#include <sys/wait.h>
-+#include <time.h>
-+#include <unistd.h>
-+#include <time.h>
-+#include <string.h>
-+
-+#include "log.h"
-+#include "timens.h"
-+
-+#define OFFSET (36000)
-+
-+int main(int argc, char *argv[])
-+{
-+	struct timespec now, tst;
-+	int status, i;
-+	pid_t pid;
-+
-+	if (argc > 1) {
-+		if (sscanf(argv[1], "%ld", &now.tv_sec) != 1)
-+			return pr_perror("sscanf");
-+
-+		for (i = 0; i < 2; i++) {
-+			_gettime(CLOCK_MONOTONIC, &tst, i);
-+			if (abs(tst.tv_sec - now.tv_sec) > 5)
-+				return pr_fail("%ld %ld\n", now.tv_sec, tst.tv_sec);
-+		}
-+	}
-+
-+	nscheck();
-+
-+	clock_gettime(CLOCK_MONOTONIC, &now);
-+
-+	if (unshare(CLONE_NEWTIME))
-+		return pr_perror("Can't unshare() timens");
-+
-+	if (_settime(CLOCK_MONOTONIC, OFFSET))
-+		return 1;
-+
-+	for (i = 0; i < 2; i++) {
-+		_gettime(CLOCK_MONOTONIC, &tst, i);
-+		if (abs(tst.tv_sec - now.tv_sec) > 5)
-+			return pr_fail("%ld %ld\n",
-+					now.tv_sec, tst.tv_sec);
-+	}
-+
-+	if (argc > 1)
-+		return 0;
-+
-+	pid = fork();
-+	if (pid < 0)
-+		return pr_perror("fork");
-+
-+	if (pid == 0) {
-+		char now_str[64];
-+		char *cargv[] = {"exec", now_str, NULL};
-+		char *cenv[] = {NULL};
-+
-+		/* Check that a child process is in the new timens. */
-+		for (i = 0; i < 2; i++) {
-+			_gettime(CLOCK_MONOTONIC, &tst, i);
-+			if (abs(tst.tv_sec - now.tv_sec - OFFSET) > 5)
-+				return pr_fail("%ld %ld\n",
-+						now.tv_sec + OFFSET, tst.tv_sec);
-+		}
-+
-+		/* Check that a proper vdso will be mapped after execve. */
-+		snprintf(now_str, sizeof(now_str), "%ld", now.tv_sec + OFFSET);
-+		execve("/proc/self/exe", cargv, cenv);
-+		return pr_perror("execve");
-+	}
-+
-+	if (waitpid(pid, &status, 0) != pid)
-+		return pr_perror("waitpid");
-+
-+	if (status)
-+		ksft_exit_fail();
-+
-+	ksft_test_result_pass("exec\n");
-+	ksft_exit_pass();
-+	return 0;
-+}
+ KBUILD_CFLAGS += $(DISABLE_LTO)
++KBUILD_CFLAGS += -falign-functions=$(CONFIG_X86_L1_CACHE_SHIFT)
+ KASAN_SANITIZE			:= n
+ UBSAN_SANITIZE			:= n
+ OBJECT_FILES_NON_STANDARD	:= y
 -- 
 2.21.0
