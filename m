@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv3 19/27] timens/fs/proc: Introduce /proc/pid/timens_offsets
-Date: Thu, 25 Apr 2019 17:14:08 +0100
-Message-ID: <20190425161416.26600-20-dima@arista.com>
+Subject: [PATCHv3 16/27] x86/vdso: Switch image on setns()/unshare()/clone()
+Date: Thu, 25 Apr 2019 17:14:05 +0100
+Message-ID: <20190425161416.26600-17-dima@arista.com>
 References: <20190425161416.26600-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -9,268 +9,138 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190425161416.26600-1-dima@arista.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Andrei Vagin <avagin@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
+Cc: Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org, Andrei Vagin <avagin@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-From: Andrei Vagin <avagin@gmail.com>
+As it has been discussed on timens RFC, adding a new conditional branch
+`if (inside_time_ns)` on VDSO for all processes is undesirable.
+It will add a penalty for everybody as branch predictor may mispredict
+the jump. Also there are instruction cache lines wasted on cmp/jmp.
 
-API to set time namespace offsets for children processes, i.e.:
-echo "clockid off_ses off_nsec" > /proc/self/timens_offsets
+Those effects of introducing time namespace are very much unwanted
+having in mind how much work have been spent on micro-optimisation
+vdso code.
 
+Addressing those problems, there are two versions of VDSO's .so:
+for host tasks (without any penalty) and for processes inside of time
+namespace with clk_to_ns() that subtracts offsets from host's time.
+
+Whenever a user does setns()/unshare() or clone() with CLONE_TIMENS,
+change VDSO image in mm and zap existing VVAR/VDSO page tables.
+They will be re-faulted with corresponding image and VVAR offsets.
+
+Co-developed-by: Andrei Vagin <avagin@gmail.com>
 Signed-off-by: Andrei Vagin <avagin@gmail.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- fs/proc/base.c                 | 101 +++++++++++++++++++++++++++++++++
- include/linux/time_namespace.h |  10 ++++
- kernel/time_namespace.c        |  82 ++++++++++++++++++++++++++
- 3 files changed, 193 insertions(+)
+ arch/x86/entry/vdso/vma.c   | 29 +++++++++++++++++++++++++++++
+ arch/x86/include/asm/vdso.h |  1 +
+ kernel/time_namespace.c     | 11 +++++++++++
+ 3 files changed, 41 insertions(+)
 
-diff --git a/fs/proc/base.c b/fs/proc/base.c
-index 6a803a0b75df..76d58e9b5178 100644
---- a/fs/proc/base.c
-+++ b/fs/proc/base.c
-@@ -94,6 +94,7 @@
- #include <linux/sched/debug.h>
- #include <linux/sched/stat.h>
- #include <linux/posix-timers.h>
-+#include <linux/time_namespace.h>
- #include <trace/events/oom.h>
- #include "internal.h"
- #include "fd.h"
-@@ -1521,6 +1522,103 @@ static const struct file_operations proc_pid_sched_autogroup_operations = {
+diff --git a/arch/x86/entry/vdso/vma.c b/arch/x86/entry/vdso/vma.c
+index 6aae9c0d400d..28628950214d 100644
+--- a/arch/x86/entry/vdso/vma.c
++++ b/arch/x86/entry/vdso/vma.c
+@@ -25,6 +25,7 @@
+ #include <asm/cpufeature.h>
+ #include <asm/mshyperv.h>
+ #include <asm/page.h>
++#include <asm/tlb.h>
  
- #endif /* CONFIG_SCHED_AUTOGROUP */
+ #if defined(CONFIG_X86_64)
+ unsigned int __read_mostly vdso64_enabled = 1;
+@@ -189,6 +190,34 @@ static const struct vm_special_mapping vvar_mapping = {
+ 	.mremap = vvar_mremap,
+ };
  
 +#ifdef CONFIG_TIME_NS
-+static int timens_offsets_show(struct seq_file *m, void *v)
++int vdso_join_timens(struct task_struct *task, bool inside_ns)
 +{
-+	struct inode *inode = m->private;
-+	struct task_struct *p;
++	struct mm_struct *mm = task->mm;
++	struct vm_area_struct *vma;
 +
-+	p = get_proc_task(inode);
-+	if (!p)
-+		return -ESRCH;
-+	proc_timens_show_offsets(p, m);
++	if (down_write_killable(&mm->mmap_sem))
++		return -EINTR;
 +
-+	put_task_struct(p);
++	for (vma = mm->mmap; vma; vma = vma->vm_next) {
++		unsigned long size = vma->vm_end - vma->vm_start;
 +
++		if (vma_is_special_mapping(vma, &vvar_mapping))
++			zap_page_range(vma, vma->vm_start, size);
++		if (vma_is_special_mapping(vma, &vdso_mapping))
++			zap_page_range(vma, vma->vm_start, size);
++	}
++
++	up_write(&mm->mmap_sem);
 +	return 0;
 +}
-+
-+static ssize_t
-+timens_offsets_write(struct file *file, const char __user *buf,
-+	    size_t count, loff_t *ppos)
++#else /* CONFIG_TIME_NS */
++int vdso_join_timens(struct task_struct *task, bool inside_ns)
 +{
-+	struct inode *inode = file_inode(file);
-+	struct proc_timens_offset offsets[2];
-+	char *kbuf = NULL, *pos, *next_line;
-+	struct task_struct *p;
-+	int ret, noffsets;
-+
-+	/* Only allow < page size writes at the beginning of the file */
-+	if ((*ppos != 0) || (count >= PAGE_SIZE))
-+		return -EINVAL;
-+
-+	/* Slurp in the user data */
-+	kbuf = memdup_user_nul(buf, count);
-+	if (IS_ERR(kbuf))
-+		return PTR_ERR(kbuf);
-+
-+	/* Parse the user data */
-+	ret = -EINVAL;
-+	noffsets = 0;
-+	pos = kbuf;
-+	for (; pos; pos = next_line) {
-+		struct proc_timens_offset *off = &offsets[noffsets];
-+		int err;
-+
-+		/* Find the end of line and ensure I don't look past it */
-+		next_line = strchr(pos, '\n');
-+		if (next_line) {
-+			*next_line = '\0';
-+			next_line++;
-+			if (*next_line == '\0')
-+				next_line = NULL;
-+		}
-+
-+		err = sscanf(pos, "%u %lld %lu", &off->clockid,
-+				&off->val.tv_sec, &off->val.tv_nsec);
-+		if (err != 3 || off->val.tv_nsec >= NSEC_PER_SEC)
-+			goto out;
-+		if (noffsets++ == ARRAY_SIZE(offsets))
-+			break;
-+	}
-+
-+	ret = -ESRCH;
-+	p = get_proc_task(inode);
-+	if (!p)
-+		goto out;
-+	ret = proc_timens_set_offset(p, offsets, noffsets);
-+	put_task_struct(p);
-+	if (ret)
-+		goto out;
-+
-+	ret = count;
-+out:
-+	kfree(kbuf);
-+	return ret;
++	return -ENXIO;
 +}
-+
-+static int timens_offsets_open(struct inode *inode, struct file *filp)
-+{
-+	int ret;
-+
-+	ret = single_open(filp, timens_offsets_show, NULL);
-+	if (!ret) {
-+		struct seq_file *m = filp->private_data;
-+
-+		m->private = inode;
-+	}
-+	return ret;
-+}
-+
-+static const struct file_operations proc_timens_offsets_operations = {
-+	.open		= timens_offsets_open,
-+	.read		= seq_read,
-+	.write		= timens_offsets_write,
-+	.llseek		= seq_lseek,
-+	.release	= single_release,
-+};
-+#endif /* CONFIG_TIME_NS */
-+
- static ssize_t comm_write(struct file *file, const char __user *buf,
- 				size_t count, loff_t *offset)
- {
-@@ -2982,6 +3080,9 @@ static const struct pid_entry tgid_base_stuff[] = {
- #endif
- #ifdef CONFIG_SCHED_AUTOGROUP
- 	REG("autogroup",  S_IRUGO|S_IWUSR, proc_pid_sched_autogroup_operations),
 +#endif
-+#ifdef CONFIG_TIME_NS
-+	REG("timens_offsets",  S_IRUGO|S_IWUSR, proc_timens_offsets_operations),
- #endif
- 	REG("comm",      S_IRUGO|S_IWUSR, proc_pid_set_comm_operations),
- #ifdef CONFIG_HAVE_ARCH_TRACEHOOK
-diff --git a/include/linux/time_namespace.h b/include/linux/time_namespace.h
-index 988414f7f791..1434b5664673 100644
---- a/include/linux/time_namespace.h
-+++ b/include/linux/time_namespace.h
-@@ -40,6 +40,16 @@ static inline void put_time_ns(struct time_namespace *ns)
- 	kref_put(&ns->kref, free_time_ns);
- }
++
+ /*
+  * Add vdso and vvar mappings to current process.
+  * @image          - blob to map
+diff --git a/arch/x86/include/asm/vdso.h b/arch/x86/include/asm/vdso.h
+index a620c7f23425..583133446874 100644
+--- a/arch/x86/include/asm/vdso.h
++++ b/arch/x86/include/asm/vdso.h
+@@ -46,6 +46,7 @@ extern struct vdso_image vdso_image_32;
+ extern void __init init_vdso_image(struct vdso_image *image);
  
-+extern void proc_timens_show_offsets(struct task_struct *p, struct seq_file *m);
-+
-+struct proc_timens_offset {
-+	int clockid;
-+	struct timespec64 val;
-+};
-+
-+extern int proc_timens_set_offset(struct task_struct *p,
-+				struct proc_timens_offset *offsets, int n);
-+
- static inline void timens_add_monotonic(struct timespec64 *ts)
- {
-         struct timens_offsets *ns_offsets = current->nsproxy->time_ns->offsets;
+ extern int map_vdso_once(const struct vdso_image *image, unsigned long addr);
++extern int vdso_join_timens(struct task_struct *task, bool inside_ns);
+ 
+ #endif /* __ASSEMBLER__ */
+ 
 diff --git a/kernel/time_namespace.c b/kernel/time_namespace.c
-index e806accc4eaf..9ad4b63c4ed2 100644
+index 4828447721ec..e806accc4eaf 100644
 --- a/kernel/time_namespace.c
 +++ b/kernel/time_namespace.c
-@@ -13,6 +13,7 @@
- #include <linux/user_namespace.h>
+@@ -14,6 +14,7 @@
  #include <linux/proc_ns.h>
  #include <linux/sched/task.h>
-+#include <linux/seq_file.h>
  #include <linux/mm.h>
- #include <asm/vdso.h>
++#include <asm/vdso.h>
  
-@@ -202,6 +203,87 @@ static struct user_namespace *timens_owner(struct ns_common *ns)
- 	return to_time_ns(ns)->user_ns;
- }
+ static struct ucounts *inc_time_namespaces(struct user_namespace *ns)
+ {
+@@ -155,11 +156,16 @@ static void timens_put(struct ns_common *ns)
+ static int timens_install(struct nsproxy *nsproxy, struct ns_common *new)
+ {
+ 	struct time_namespace *ns = to_time_ns(new);
++	int ret;
  
-+static void show_offset(struct seq_file *m, int clockid, struct timespec64 *ts)
-+{
-+	seq_printf(m, "%d %lld %ld\n", clockid, ts->tv_sec, ts->tv_nsec);
-+}
+ 	if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN) ||
+ 	    !ns_capable(current_user_ns(), CAP_SYS_ADMIN))
+ 		return -EPERM;
+ 
++	ret = vdso_join_timens(current, ns != &init_time_ns);
++	if (ret)
++		return ret;
 +
-+void proc_timens_show_offsets(struct task_struct *p, struct seq_file *m)
-+{
-+	struct ns_common *ns;
-+	struct time_namespace *time_ns;
-+	struct timens_offsets *ns_offsets;
+ 	get_time_ns(ns);
+ 	get_time_ns(ns);
+ 	put_time_ns(nsproxy->time_ns);
+@@ -174,10 +180,15 @@ int timens_on_fork(struct nsproxy *nsproxy, struct task_struct *tsk)
+ {
+ 	struct ns_common *nsc = &nsproxy->time_ns_for_children->ns;
+ 	struct time_namespace *ns = to_time_ns(nsc);
++	int ret;
+ 
+ 	if (nsproxy->time_ns == nsproxy->time_ns_for_children)
+ 		return 0;
+ 
++	ret = vdso_join_timens(tsk, ns != &init_time_ns);
++	if (ret)
++		return ret;
 +
-+	ns = timens_for_children_get(p);
-+	if (!ns)
-+		return;
-+	time_ns = to_time_ns(ns);
-+
-+	if (!time_ns->offsets) {
-+		put_time_ns(time_ns);
-+		return;
-+	}
-+	ns_offsets = time_ns->offsets;
-+
-+	show_offset(m, CLOCK_MONOTONIC, &ns_offsets->monotonic_time_offset);
-+	show_offset(m, CLOCK_BOOTTIME, &ns_offsets->monotonic_boottime_offset);
-+	put_time_ns(time_ns);
-+}
-+
-+int proc_timens_set_offset(struct task_struct *p,
-+			   struct proc_timens_offset *offsets, int noffsets)
-+{
-+	struct ns_common *ns;
-+	struct time_namespace *time_ns;
-+	struct timens_offsets *ns_offsets;
-+	struct timespec64 *offset;
-+	struct timespec64 tp;
-+	int i, err;
-+
-+	ns = timens_for_children_get(p);
-+	if (!ns)
-+		return -ESRCH;
-+	time_ns = to_time_ns(ns);
-+
-+	if (!time_ns->offsets || time_ns->initialized ||
-+	    !ns_capable(time_ns->user_ns, CAP_SYS_TIME)) {
-+		put_time_ns(time_ns);
-+		return -EPERM;
-+	}
-+	ns_offsets = time_ns->offsets;
-+
-+	err = -EINVAL;
-+	for (i = 0; i < noffsets; i++) {
-+		struct proc_timens_offset *off = &offsets[i];
-+
-+		switch (off->clockid) {
-+		case CLOCK_MONOTONIC:
-+			ktime_get_ts64(&tp);
-+			offset = &ns_offsets->monotonic_time_offset;
-+			break;
-+		case CLOCK_BOOTTIME:
-+			ktime_get_boottime_ts64(&tp);
-+			offset = &ns_offsets->monotonic_boottime_offset;
-+			break;
-+		default:
-+			goto out;
-+		}
-+
-+		err = -ERANGE;
-+		tp = timespec64_add(tp, off->val);
-+		if (tp.tv_sec < 0 || tp.tv_sec > KTIME_SEC_MAX / 2)
-+			goto out;
-+		*offset = off->val;
-+
-+	}
-+
-+	err = 0;
-+out:
-+	put_time_ns(time_ns);
-+
-+	return err;
-+}
-+
- const struct proc_ns_operations timens_operations = {
- 	.name		= "time",
- 	.type		= CLONE_NEWTIME,
+ 	get_time_ns(ns);
+ 	put_time_ns(nsproxy->time_ns);
+ 	nsproxy->time_ns = ns;
 -- 
 2.21.0
