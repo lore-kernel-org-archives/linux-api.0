@@ -1,142 +1,157 @@
-From: Dave Martin <Dave.Martin@arm.com>
-Subject: Re: [RFC PATCH v6 22/26] x86/cet/shstk: ELF header parsing of Shadow
- Stack
-Date: Thu, 25 Apr 2019 12:02:11 +0100
-Message-ID: <20190425110211.GZ3567@e103592.cambridge.arm.com>
-References: <20181119214809.6086-1-yu-cheng.yu@intel.com>
- <20181119214809.6086-23-yu-cheng.yu@intel.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH V2] mm: Allow userland to request that the kernel clear
+ memory on release
+Date: Thu, 25 Apr 2019 14:14:10 +0200
+Message-ID: <20190425121410.GC1144@dhcp22.suse.cz>
+References: <CACdnJuup-y1xAO93wr+nr6ARacxJ9YXgaceQK9TLktE7shab1w@mail.gmail.com>
+ <20190424211038.204001-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20181119214809.6086-23-yu-cheng.yu@intel.com>
+In-Reply-To: <20190424211038.204001-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pa
+To: Matthew Garrett <matthewgarrett@google.com>
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, Matthew Garrett <mjg59@google.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 19, 2018 at 01:48:05PM -0800, Yu-cheng Yu wrote:
-> Look in .note.gnu.property of an ELF file and check if Shadow Stack needs
-> to be enabled for the task.
+Please cc linux-api for user visible API proposals (now done). Keep the
+rest of the email intact for reference.
 
-What's the status of this series?  I don't see anything in linux-next
-yet.
-
-For describing ELF features, Arm has recently adopted
-NT_GNU_PROPERTY_TYPE_0, with properties closely modelled on
-GNU_PROPERTY_X86_FEATURE_1_AND etc. [1]
-
-So, arm64 will be need something like this patch for supporting new
-features (such as the Branch Target Identification feature of ARMv8.5-A
-[2]).
-
-If this series isn't likely to merge soon, can we split this patch into
-generic and x86-specific parts and handle them separately?
-
-It would be good to see the generic ELF note parsing move to common
-code -- I'll take a look and comment in more detail.
-
-[...]
-
-> diff --git a/arch/x86/include/asm/elf.h b/arch/x86/include/asm/elf.h
-> index 69c0f892e310..557ed0ba71c7 100644
-> --- a/arch/x86/include/asm/elf.h
-> +++ b/arch/x86/include/asm/elf.h
-> @@ -381,4 +381,9 @@ struct va_alignment {
+On Wed 24-04-19 14:10:39, Matthew Garrett wrote:
+> From: Matthew Garrett <mjg59@google.com>
+> 
+> Applications that hold secrets and wish to avoid them leaking can use
+> mlock() to prevent the page from being pushed out to swap and
+> MADV_DONTDUMP to prevent it from being included in core dumps. Applications
+> can also use atexit() handlers to overwrite secrets on application exit.
+> However, if an attacker can reboot the system into another OS, they can
+> dump the contents of RAM and extract secrets. We can avoid this by setting
+> CONFIG_RESET_ATTACK_MITIGATION on UEFI systems in order to request that the
+> firmware wipe the contents of RAM before booting another OS, but this means
+> rebooting takes a *long* time - the expected behaviour is for a clean
+> shutdown to remove the request after scrubbing secrets from RAM in order to
+> avoid this.
+> 
+> Unfortunately, if an application exits uncleanly, its secrets may still be
+> present in RAM. This can't be easily fixed in userland (eg, if the OOM
+> killer decides to kill a process holding secrets, we're not going to be able
+> to avoid that), so this patch adds a new flag to madvise() to allow userland
+> to request that the kernel clear the covered pages whenever the page
+> reference count hits zero. Since vm_flags is already full on 32-bit, it
+> will only work on 64-bit systems.
+> 
+> Signed-off-by: Matthew Garrett <mjg59@google.com>
+> ---
+> 
+> Modified to wipe when the VMA is released rather than on page freeing
+> 
+>  include/linux/mm.h                     |  6 ++++++
+>  include/uapi/asm-generic/mman-common.h |  2 ++
+>  mm/madvise.c                           | 21 +++++++++++++++++++++
+>  mm/memory.c                            |  3 +++
+>  4 files changed, 32 insertions(+)
+> 
+> diff --git a/include/linux/mm.h b/include/linux/mm.h
+> index 6b10c21630f5..64bdab679275 100644
+> --- a/include/linux/mm.h
+> +++ b/include/linux/mm.h
+> @@ -257,6 +257,8 @@ extern unsigned int kobjsize(const void *objp);
+>  #define VM_HIGH_ARCH_2	BIT(VM_HIGH_ARCH_BIT_2)
+>  #define VM_HIGH_ARCH_3	BIT(VM_HIGH_ARCH_BIT_3)
+>  #define VM_HIGH_ARCH_4	BIT(VM_HIGH_ARCH_BIT_4)
+> +
+> +#define VM_WIPEONRELEASE BIT(37)       /* Clear pages when releasing them */
+>  #endif /* CONFIG_ARCH_USES_HIGH_VMA_FLAGS */
 >  
->  extern struct va_alignment va_align;
->  extern unsigned long align_vdso_addr(unsigned long);
-> +
-> +#ifdef CONFIG_ARCH_HAS_PROGRAM_PROPERTIES
-> +extern int arch_setup_features(void *ehdr, void *phdr, struct file *file,
-> +			       bool interp);
-> +#endif
->  #endif /* _ASM_X86_ELF_H */
-> diff --git a/arch/x86/include/uapi/asm/elf_property.h b/arch/x86/include/uapi/asm/elf_property.h
-> new file mode 100644
-> index 000000000000..af361207718c
-> --- /dev/null
-> +++ b/arch/x86/include/uapi/asm/elf_property.h
-> @@ -0,0 +1,15 @@
-> +/* SPDX-License-Identifier: GPL-2.0 */
-> +#ifndef _UAPI_ASM_X86_ELF_PROPERTY_H
-> +#define _UAPI_ASM_X86_ELF_PROPERTY_H
-> +
-> +/*
-> + * pr_type
-> + */
-> +#define GNU_PROPERTY_X86_FEATURE_1_AND (0xc0000002)
-> +
-> +/*
-> + * Bits for GNU_PROPERTY_X86_FEATURE_1_AND
-> + */
-> +#define GNU_PROPERTY_X86_FEATURE_1_SHSTK	(0x00000002)
-> +
-
-Generally we seem to collect all ELF definitions in <linux/uapi/elf.h>,
-including arch-specific ones.
-
-Is a new header really needed here?
-
-[...]
-
-> diff --git a/fs/binfmt_elf.c b/fs/binfmt_elf.c
-> index 54207327f98f..007ff0fbae84 100644
-> --- a/fs/binfmt_elf.c
-> +++ b/fs/binfmt_elf.c
-> @@ -1081,6 +1081,21 @@ static int load_elf_binary(struct linux_binprm *bprm)
->  		goto out_free_dentry;
->  	}
+>  #ifdef CONFIG_ARCH_HAS_PKEYS
+> @@ -298,6 +300,10 @@ extern unsigned int kobjsize(const void *objp);
+>  # define VM_GROWSUP	VM_NONE
+>  #endif
 >  
-> +#ifdef CONFIG_ARCH_HAS_PROGRAM_PROPERTIES
-> +	if (interpreter) {
-> +		retval = arch_setup_features(&loc->interp_elf_ex,
-> +					     interp_elf_phdata,
-> +					     interpreter, true);
-
-Can we dummy no-op functions in the common headers to avoid this
-ifdeffery?  Logically all arches will always do this step, even if it's
-a no-op today.
-
-> +	} else {
-> +		retval = arch_setup_features(&loc->elf_ex,
-> +					     elf_phdata,
-> +					     bprm->file, false);
-> +	}
-> +
-> +	if (retval < 0)
-> +		goto out_free_dentry;
+> +#ifndef VM_WIPEONRELEASE
+> +# define VM_WIPEONRELEASE VM_NONE
 > +#endif
 > +
->  	if (elf_interpreter) {
->  		unsigned long interp_map_addr = 0;
+>  /* Bits set in the VMA until the stack is in its final location */
+>  #define VM_STACK_INCOMPLETE_SETUP	(VM_RAND_READ | VM_SEQ_READ)
 >  
-> diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
-> index c5358e0ae7c5..5ef25a565e88 100644
-> --- a/include/uapi/linux/elf.h
-> +++ b/include/uapi/linux/elf.h
-> @@ -372,6 +372,7 @@ typedef struct elf64_shdr {
->  #define NT_PRFPREG	2
->  #define NT_PRPSINFO	3
->  #define NT_TASKSTRUCT	4
-> +#define NT_GNU_PROPERTY_TYPE_0 5
+> diff --git a/include/uapi/asm-generic/mman-common.h b/include/uapi/asm-generic/mman-common.h
+> index abd238d0f7a4..82dfff4a8e3d 100644
+> --- a/include/uapi/asm-generic/mman-common.h
+> +++ b/include/uapi/asm-generic/mman-common.h
+> @@ -64,6 +64,8 @@
+>  #define MADV_WIPEONFORK 18		/* Zero memory on fork, child only */
+>  #define MADV_KEEPONFORK 19		/* Undo MADV_WIPEONFORK */
+>  
+> +#define MADV_WIPEONRELEASE 20
+> +#define MADV_DONTWIPEONRELEASE 21
+>  /* compatibility flags */
+>  #define MAP_FILE	0
+>  
+> diff --git a/mm/madvise.c b/mm/madvise.c
+> index 21a7881a2db4..989c2fde15cf 100644
+> --- a/mm/madvise.c
+> +++ b/mm/madvise.c
+> @@ -92,6 +92,22 @@ static long madvise_behavior(struct vm_area_struct *vma,
+>  	case MADV_KEEPONFORK:
+>  		new_flags &= ~VM_WIPEONFORK;
+>  		break;
+> +	case MADV_WIPEONRELEASE:
+> +		/* MADV_WIPEONRELEASE is only supported on anonymous memory. */
+> +		if (VM_WIPEONRELEASE == 0 || vma->vm_file ||
+> +		    vma->vm_flags & VM_SHARED) {
+> +			error = -EINVAL;
+> +			goto out;
+> +		}
+> +		new_flags |= VM_WIPEONRELEASE;
+> +		break;
+> +	case MADV_DONTWIPEONRELEASE:
+> +		if (VM_WIPEONRELEASE == 0) {
+> +			error = -EINVAL;
+> +			goto out;
+> +		}
+> +		new_flags &= ~VM_WIPEONRELEASE;
+> +		break;
+>  	case MADV_DONTDUMP:
+>  		new_flags |= VM_DONTDUMP;
+>  		break;
+> @@ -727,6 +743,8 @@ madvise_behavior_valid(int behavior)
+>  	case MADV_DODUMP:
+>  	case MADV_WIPEONFORK:
+>  	case MADV_KEEPONFORK:
+> +	case MADV_WIPEONRELEASE:
+> +	case MADV_DONTWIPEONRELEASE:
+>  #ifdef CONFIG_MEMORY_FAILURE
+>  	case MADV_SOFT_OFFLINE:
+>  	case MADV_HWPOISON:
+> @@ -785,6 +803,9 @@ madvise_behavior_valid(int behavior)
+>   *  MADV_DONTDUMP - the application wants to prevent pages in the given range
+>   *		from being included in its core dump.
+>   *  MADV_DODUMP - cancel MADV_DONTDUMP: no longer exclude from core dump.
+> + *  MADV_WIPEONRELEASE - clear the contents of the memory after the last
+> + *		reference to it has been released
+> + *  MADV_DONTWIPEONRELEASE - cancel MADV_WIPEONRELEASE
+>   *
+>   * return values:
+>   *  zero    - success
+> diff --git a/mm/memory.c b/mm/memory.c
+> index ab650c21bccd..ff78b527660e 100644
+> --- a/mm/memory.c
+> +++ b/mm/memory.c
+> @@ -1091,6 +1091,9 @@ static unsigned long zap_pte_range(struct mmu_gather *tlb,
+>  			page_remove_rmap(page, false);
+>  			if (unlikely(page_mapcount(page) < 0))
+>  				print_bad_pte(vma, addr, ptent, page);
+> +			if (unlikely(vma->vm_flags & VM_WIPEONRELEASE) &&
+> +			    page_mapcount(page) == 0)
+> +				clear_highpage(page);
+>  			if (unlikely(__tlb_remove_page(tlb, page))) {
+>  				force_flush = 1;
+>  				addr += PAGE_SIZE;
+> -- 
+> 2.21.0.593.g511ec345e18-goog
 
-IIUC, note type codes are namespaced by the note name.  This section
-currently only seems to have codes for name == "LINUX".
-
-There are conflicts: for example NT_GNU_ABI_TAG == NT_PRSTATUS.
-
-We should probably split out the codes for name == "GNU" into a separate
-list, otherwise people are likely to get confused.
-
-As noted above, can the GNU_PRPOERTY_<arch>_* definitions just go in
-here instead of a separate header?
-
-[...]
-
-Cheers
----Dave
-
-[1] https://developer.arm.com/docs/ihi0056/latest/elf-for-the-arm-64-bit-architecture-aarch64-abi-2019q1-documentation
-
-[2] https://community.arm.com/developer/ip-products/processors/b/processors-ip-blog/posts/arm-a-profile-architecture-2018-developments-armv85a
+-- 
+Michal Hocko
+SUSE Labs
