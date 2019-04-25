@@ -1,89 +1,114 @@
-From: Aubrey Li <aubrey.li@linux.intel.com>
-Subject: [PATCH v18 3/3] Documentation/filesystems/proc.txt: add arch_status file
-Date: Thu, 25 Apr 2019 22:32:19 +0800
-Message-ID: <20190425143219.102258-3-aubrey.li@linux.intel.com>
-References: <20190425143219.102258-1-aubrey.li@linux.intel.com>
+From: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: Re: [RFC PATCH v6 22/26] x86/cet/shstk: ELF header parsing of
+ Shadow Stack
+Date: Thu, 25 Apr 2019 08:14:52 -0700
+Message-ID: <e7bbb51291434a9c8526d7b617929465d5784121.camel@intel.com>
+References: <20181119214809.6086-1-yu-cheng.yu@intel.com>
+         <20181119214809.6086-23-yu-cheng.yu@intel.com>
+         <20190425110211.GZ3567@e103592.cambridge.arm.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190425143219.102258-1-aubrey.li@linux.intel.com>
+In-Reply-To: <20190425110211.GZ3567@e103592.cambridge.arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: tglx@linutronix.de, mingo@redhat.com, peterz@infradead.org, hpa@zytor.com
-Cc: ak@linux.intel.com, tim.c.chen@linux.intel.com, dave.hansen@intel.com, arjan@linux.intel.com, adobriyan@gmail.com, akpm@linux-foundation.org, aubrey.li@intel.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Aubrey Li <aubrey.li@linux.intel.com>, Andy Lutomirski <luto@kernel.org>
+To: Dave Martin <Dave.Martin@arm.com>
+Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pa
 List-Id: linux-api@vger.kernel.org
 
-Added /proc/<pid>/arch_status file, and added AVX512_elapsed_ms in
-/proc/<pid>/arch_status. Report it in Documentation/filesystems/proc.txt
+On Thu, 2019-04-25 at 12:02 +0100, Dave Martin wrote:
+> On Mon, Nov 19, 2018 at 01:48:05PM -0800, Yu-cheng Yu wrote:
+> > Look in .note.gnu.property of an ELF file and check if Shadow Stack needs
+> > to be enabled for the task.
+> 
+> What's the status of this series?  I don't see anything in linux-next
+> yet.
+> 
+> For describing ELF features, Arm has recently adopted
+> NT_GNU_PROPERTY_TYPE_0, with properties closely modelled on
+> GNU_PROPERTY_X86_FEATURE_1_AND etc. [1]
+> 
+> So, arm64 will be need something like this patch for supporting new
+> features (such as the Branch Target Identification feature of ARMv8.5-A
+> [2]).
+> 
+> If this series isn't likely to merge soon, can we split this patch into
+> generic and x86-specific parts and handle them separately?
+> 
+> It would be good to see the generic ELF note parsing move to common
+> code -- I'll take a look and comment in more detail.
 
-Signed-off-by: Aubrey Li <aubrey.li@linux.intel.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Andi Kleen <ak@linux.intel.com>
-Cc: Tim Chen <tim.c.chen@linux.intel.com>
-Cc: Dave Hansen <dave.hansen@intel.com>
-Cc: Arjan van de Ven <arjan@linux.intel.com>
-Cc: Alexey Dobriyan <adobriyan@gmail.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Andy Lutomirski <luto@kernel.org>
-Cc: Linux API <linux-api@vger.kernel.org>
----
- Documentation/filesystems/proc.txt | 39 ++++++++++++++++++++++++++++++
- 1 file changed, 39 insertions(+)
+Yes, I will work on that.
 
-diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
-index 66cad5c86171..e8bc403d15df 100644
---- a/Documentation/filesystems/proc.txt
-+++ b/Documentation/filesystems/proc.txt
-@@ -45,6 +45,7 @@ Table of Contents
-   3.9   /proc/<pid>/map_files - Information about memory mapped files
-   3.10  /proc/<pid>/timerslack_ns - Task timerslack value
-   3.11	/proc/<pid>/patch_state - Livepatch patch operation state
-+  3.12	/proc/<pid>/arch_status - Task architecture specific information
- 
-   4	Configuring procfs
-   4.1	Mount options
-@@ -1948,6 +1949,44 @@ patched.  If the patch is being enabled, then the task has already been
- patched.  If the patch is being disabled, then the task hasn't been
- unpatched yet.
- 
-+3.12 /proc/<pid>/arch_status - task architecture specific status
-+-------------------------------------------------------------------
-+When CONFIG_PROC_PID_ARCH_STATUS is enabled, this file displays the
-+architecture specific status of the task.
-+
-+Example
-+-------
-+ $ cat /proc/6753/arch_status
-+ AVX512_elapsed_ms:      8
-+
-+Description
-+-----------
-+
-+x86 specific entries:
-+---------------------
-+ AVX512_elapsed_ms:
-+ ------------------
-+  If AVX512 is supported on the machine, this entry shows the milliseconds
-+  elapsed since the last time AVX512 usage was recorded. The recording
-+  happens on a best effort basis when a task is scheduled out. This means
-+  that the value depends on two factors:
-+
-+    1) The time which the task spent on the CPU without being scheduled
-+       out. With CPU isolation and a single runnable task this can take
-+       several seconds.
-+
-+    2) The time since the task was scheduled out last. Depending on the
-+       reason for being scheduled out (time slice exhausted, syscall ...)
-+       this can be arbitrary long time.
-+
-+  As a consequence the value cannot be considered precise and authoritative
-+  information. The application which uses this information has to be aware
-+  of the overall scenario on the system in order to determine whether a
-+  task is a real AVX512 user or not.
-+
-+  A special value of '-1' indicates that no AVX512 usage was recorded, thus
-+  the task is unlikely an AVX512 user, but depends on the workload and the
-+  scheduling scenario, it also could be a false negative mentioned above.
- 
- ------------------------------------------------------------------------------
- Configuring procfs
--- 
-2.17.1
+> 
+> [...]
+> 
+> > diff --git a/arch/x86/include/asm/elf.h b/arch/x86/include/asm/elf.h
+> > index 69c0f892e310..557ed0ba71c7 100644
+> > --- a/arch/x86/include/asm/elf.h
+> > +++ b/arch/x86/include/asm/elf.h
+> > @@ -381,4 +381,9 @@ struct va_alignment {
+> >  
+> >  extern struct va_alignment va_align;
+> >  extern unsigned long align_vdso_addr(unsigned long);
+> > +
+> > +#ifdef CONFIG_ARCH_HAS_PROGRAM_PROPERTIES
+> > +extern int arch_setup_features(void *ehdr, void *phdr, struct file *file,
+> > +			       bool interp);
+> > +#endif
+> >  #endif /* _ASM_X86_ELF_H */
+> > diff --git a/arch/x86/include/uapi/asm/elf_property.h
+> > b/arch/x86/include/uapi/asm/elf_property.h
+> > new file mode 100644
+> > index 000000000000..af361207718c
+> > --- /dev/null
+> > +++ b/arch/x86/include/uapi/asm/elf_property.h
+> > @@ -0,0 +1,15 @@
+> > +/* SPDX-License-Identifier: GPL-2.0 */
+> > +#ifndef _UAPI_ASM_X86_ELF_PROPERTY_H
+> > +#define _UAPI_ASM_X86_ELF_PROPERTY_H
+> > +
+> > +/*
+> > + * pr_type
+> > + */
+> > +#define GNU_PROPERTY_X86_FEATURE_1_AND (0xc0000002)
+> > +
+> > +/*
+> > + * Bits for GNU_PROPERTY_X86_FEATURE_1_AND
+> > + */
+> > +#define GNU_PROPERTY_X86_FEATURE_1_SHSTK	(0x00000002)
+> > +
+> 
+> Generally we seem to collect all ELF definitions in <linux/uapi/elf.h>,
+> including arch-specific ones.
+
+Agree.
+
+> 
+> Is a new header really needed here?
+> 
+> [...]
+> 
+> > diff --git a/fs/binfmt_elf.c b/fs/binfmt_elf.c
+> > index 54207327f98f..007ff0fbae84 100644
+> > --- a/fs/binfmt_elf.c
+> > +++ b/fs/binfmt_elf.c
+> > @@ -1081,6 +1081,21 @@ static int load_elf_binary(struct linux_binprm *bprm)
+> >  		goto out_free_dentry;
+> >  	}
+> >  
+> > +#ifdef CONFIG_ARCH_HAS_PROGRAM_PROPERTIES
+> > +	if (interpreter) {
+> > +		retval = arch_setup_features(&loc->interp_elf_ex,
+> > +					     interp_elf_phdata,
+> > +					     interpreter, true);
+> 
+> Can we dummy no-op functions in the common headers to avoid this
+> ifdeffery?  Logically all arches will always do this step, even if it's
+> a no-op today.
+
+Sure.
+
+Thanks,
+
+Yu-cheng
