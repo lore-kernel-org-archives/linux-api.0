@@ -1,274 +1,375 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH v1 1/2] Add polling support to pidfd
-Date: Fri, 26 Apr 2019 00:24:04 +0200
-Message-ID: <20190425222359.sqhboc4x4daznr6r@brauner.io>
-References: <20190425190010.46489-1-joel@joelfernandes.org>
+From: Matthew Garrett <matthewgarrett@google.com>
+Subject: [PATCH V3] mm: Allow userland to request that the kernel clear memory
+ on release
+Date: Thu, 25 Apr 2019 15:58:28 -0700
+Message-ID: <20190425225828.212472-1-matthewgarrett@google.com>
+References: <CACdnJuup-y1xAO93wr+nr6ARacxJ9YXgaceQK9TLktE7shab1w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190425190010.46489-1-joel@joelfernandes.org>
+In-Reply-To: <CACdnJuup-y1xAO93wr+nr6ARacxJ9YXgaceQK9TLktE7shab1w@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Joel Fernandes (Google)" <joel@joelfernandes.org>
-Cc: linux-kernel@vger.kernel.org, luto@amacapital.net, rostedt@goodmis.org, dancol@google.com, sspatil@google.com, jannh@google.com, surenb@google.com, timmurray@google.com, Jonathan Kowalski <bl0pbl33p@gmail.com>, torvalds@linux-foundation.org, kernel-team@android.com, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Ingo Molnar <mingo@kernel.org>, Jann Horn <jann@thejh.net>, linux-kselftest@vger.kernel.org, Michal Hocko <mhocko@suse.com>, "Peter Zijlstra (Intel)" <peterz@infradead.org>, Serge Hallyn <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Stephen Rothwell <sfr@canb.auug.org.au>, Thomas Gleixner <tglx@linutronix.de>, Tycho Andersen <tycho@ty>
+To: linux-mm@kvack.org
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Matthew Garrett <mjg59@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 25, 2019 at 03:00:09PM -0400, Joel Fernandes (Google) wrote:
-> pidfd are file descriptors referring to a process created with the
-> CLONE_PIDFD clone(2) flag. Android low memory killer (LMK) needs pidfd
-> polling support to replace code that currently checks for existence of
-> /proc/pid for knowing that a process that is signalled to be killed has
-> died, which is both racy and slow. The pidfd poll approach is race-free,
-> and also allows the LMK to do other things (such as by polling on other
-> fds) while awaiting the process being killed to die.
+From: Matthew Garrett <mjg59@google.com>
 
-Thanks for the patch!
+Applications that hold secrets and wish to avoid them leaking can use
+mlock() to prevent the page from being pushed out to swap and
+MADV_DONTDUMP to prevent it from being included in core dumps. Applications
+can also use atexit() handlers to overwrite secrets on application exit.
+However, if an attacker can reboot the system into another OS, they can
+dump the contents of RAM and extract secrets. We can avoid this by setting
+CONFIG_RESET_ATTACK_MITIGATION on UEFI systems in order to request that the
+firmware wipe the contents of RAM before booting another OS, but this means
+rebooting takes a *long* time - the expected behaviour is for a clean
+shutdown to remove the request after scrubbing secrets from RAM in order to
+avoid this.
 
-Ok, let me be a little bit anal.
-Please start the commit message with what this patch does and then add
-the justification why. You just say the "pidfd-poll" approach. You can
-probably assume that CLONE_PIDFD is available for this patch. So
-something like:
+Unfortunately, if an application exits uncleanly, its secrets may still be
+present in RAM. This can't be easily fixed in userland (eg, if the OOM
+killer decides to kill a process holding secrets, we're not going to be able
+to avoid that), so this patch adds a new flag to madvise() to allow userland
+to request that the kernel clear the covered pages whenever the page
+map count hits zero. Since vm_flags is already full on 32-bit, it
+will only work on 64-bit systems. This is currently only permitted on
+private mappings that have not yet been populated in order to simplify
+implementation, which should suffice for the envisaged use cases. We can
+extend the behaviour later if we come up with a robust set of semantics.
 
-"This patch makes pidfds pollable. Specifically, it allows listeners to
-be informed when the process the pidfd referes to exits. This patch only
-introduces the ability to poll thread-group leaders since pidfds
-currently can only reference those..."
+Signed-off-by: Matthew Garrett <mjg59@google.com>
+---
 
-Then justify the use-case and then go into implementation details.
-That's usually how I would think about this:
-- Change the codebase to do X
-- Why do we need X
-- Are there any technical details worth mentioning in the commit message
-(- Are there any controversial points that people stumbled upon but that
-  have been settled sufficiently.)
+Updated based on feedback from Jann - for now let's just prevent setting
+the flag on anything that has already mapped some pages, which avoids
+child processes being able to interfere with the parent. In addition,
+move the page clearing logic into page_remove_rmap() to ensure that we
+cover the full set of cases (eg, handling page migration properly).
 
-> pidfd are file descriptors referring to a process created with the
-> CLONE_PIDFD clone(2) flag. Android low memory killer (LMK) needs pidfd
-> polling support to replace code that currently checks for existence of
-> /proc/pid for knowing that a process that is signalled to be killed has
-> died, which is both racy and slow. The pidfd poll approach is race-free,
-> and also allows the LMK to do other things (such as by polling on other
-> fds) while awaiting the process being killed to die.
+ include/linux/mm.h                     |  6 ++++++
+ include/linux/rmap.h                   |  2 +-
+ include/uapi/asm-generic/mman-common.h |  2 ++
+ kernel/events/uprobes.c                |  2 +-
+ mm/huge_memory.c                       | 12 ++++++------
+ mm/hugetlb.c                           |  4 ++--
+ mm/khugepaged.c                        |  2 +-
+ mm/ksm.c                               |  2 +-
+ mm/madvise.c                           | 25 +++++++++++++++++++++++++
+ mm/memory.c                            |  6 +++---
+ mm/migrate.c                           |  4 ++--
+ mm/rmap.c                              |  9 +++++++--
+ 12 files changed, 57 insertions(+), 19 deletions(-)
 
-> 
-> It prevents a situation where a PID is reused between when LMK sends a
-> kill signal and checks for existence of the PID, since the wrong PID is
-> now possibly checked for existence.
-> 
-> In this patch, we follow the same existing mechanism in the kernel used
-> when the parent of the task group is to be notified (do_notify_parent).
-> This is when the tasks waiting on a poll of pidfd are also awakened.
-> 
-> We have decided to include the waitqueue in struct pid for the following
-> reasons:
-> 1. The wait queue has to survive for the lifetime of the poll. Including
-> it in task_struct would not be option in this case because the task can
-> be reaped and destroyed before the poll returns.
-> 
-> 2. By including the struct pid for the waitqueue means that during
-> de_thread(), the new thread group leader automatically gets the new
-> waitqueue/pid even though its task_struct is different.
-> 
-> Appropriate test cases are added in the second patch to provide coverage
-> of all the cases the patch is handling.
-> 
-> Andy had a similar patch [1] in the past which was a good reference
-> however this patch tries to handle different situations properly related
-> to thread group existence, and how/where it notifies. And also solves
-> other bugs (waitqueue lifetime).  Daniel had a similar patch [2]
-> recently which this patch supercedes.
-> 
-> [1] https://lore.kernel.org/patchwork/patch/345098/
-> [2] https://lore.kernel.org/lkml/20181029175322.189042-1-dancol@google.com/
-> 
-> Cc: luto@amacapital.net
-> Cc: rostedt@goodmis.org
-> Cc: dancol@google.com
-> Cc: sspatil@google.com
-> Cc: christian@brauner.io
-> Cc: jannh@google.com
-> Cc: surenb@google.com
-> Cc: timmurray@google.com
-> Cc: Jonathan Kowalski <bl0pbl33p@gmail.com>
-> Cc: torvalds@linux-foundation.org
-> Cc: kernel-team@android.com
-
-These should all be in the form:
-
-Cc: Firstname Lastname <email@address.com>
-
-There are people missing from the Cc that really should be there...
-
-Even though he usually doesn't respond that often, please Cc Al on this.
-If he responds it's usually rather important.
-
-Oleg has reviewed your RFC patch quite substantially and given valuable
-feedback and has an opinion on this thing and is best acquainted with
-the exit code. So please add him to the Cc of the commit message in the
-appropriate form and also add him to the Cc of the thread.
-
-Probably also want linux-api for good measure since a lot of people are
-subscribed that would care about pollable pidfds. I'd also add Kees
-since he had some interest in this work and David (Howells).
-
-> Co-developed-by: Daniel Colascione <dancol@google.com>
-
-Every CDB needs to give a SOB as well.
-
-> Signed-off-by: Joel Fernandes (Google) <joel@joelfernandes.org>
-> 
-> ---
-> 
-> RFC -> v1:
-> * Based on CLONE_PIDFD patches: https://lwn.net/Articles/786244/
-> * Updated selftests.
-> * Renamed poll wake function to do_notify_pidfd.
-> * Removed depending on EXIT flags
-> * Removed POLLERR flag since semantics are controversial and
->   we don't have usecases for it right now (later we can add if there's
->   a need for it).
-> 
->  include/linux/pid.h |  3 +++
->  kernel/fork.c       | 33 +++++++++++++++++++++++++++++++++
->  kernel/pid.c        |  2 ++
->  kernel/signal.c     | 14 ++++++++++++++
->  4 files changed, 52 insertions(+)
-> 
-> diff --git a/include/linux/pid.h b/include/linux/pid.h
-> index 3c8ef5a199ca..1484db6ca8d1 100644
-> --- a/include/linux/pid.h
-> +++ b/include/linux/pid.h
-> @@ -3,6 +3,7 @@
->  #define _LINUX_PID_H
->  
->  #include <linux/rculist.h>
-> +#include <linux/wait.h>
->  
->  enum pid_type
->  {
-> @@ -60,6 +61,8 @@ struct pid
->  	unsigned int level;
->  	/* lists of tasks that use this pid */
->  	struct hlist_head tasks[PIDTYPE_MAX];
-> +	/* wait queue for pidfd notifications */
-> +	wait_queue_head_t wait_pidfd;
->  	struct rcu_head rcu;
->  	struct upid numbers[1];
->  };
-> diff --git a/kernel/fork.c b/kernel/fork.c
-> index 5525837ed80e..fb3b614f6456 100644
-> --- a/kernel/fork.c
-> +++ b/kernel/fork.c
-> @@ -1685,8 +1685,41 @@ static void pidfd_show_fdinfo(struct seq_file *m, struct file *f)
->  }
->  #endif
->  
-> +static unsigned int pidfd_poll(struct file *file, struct poll_table_struct *pts)
-> +{
-> +	struct task_struct *task;
-> +	struct pid *pid;
-> +	int poll_flags = 0;
-> +
-> +	/*
-> +	 * tasklist_lock must be held because to avoid racing with
-> +	 * changes in exit_state and wake up. Basically to avoid:
-> +	 *
-> +	 * P0: read exit_state = 0
-> +	 * P1: write exit_state = EXIT_DEAD
-> +	 * P1: Do a wake up - wq is empty, so do nothing
-> +	 * P0: Queue for polling - wait forever.
-> +	 */
-> +	read_lock(&tasklist_lock);
-> +	pid = file->private_data;
-> +	task = pid_task(pid, PIDTYPE_PID);
-> +	WARN_ON_ONCE(task && !thread_group_leader(task));
-> +
-> +	if (!task || (task->exit_state && thread_group_empty(task)))
-> +		poll_flags = POLLIN | POLLRDNORM;
-
-So we block until the thread-group is empty? Hm, the thread-group leader
-remains in zombie state until all threads are gone. Should probably just
-be a short comment somewhere that callers are only informed about a
-whole thread-group exit and not about when the thread-group leader has
-actually exited.
-
-I would like the ability to extend this interface in the future to allow
-for actually reading data from the pidfd on EPOLLIN.
-POSIX specifies that POLLIN and POLLRDNORM are set even if the
-message to be read is zero. So one cheap way of doing this would
-probably be to do a 0 read/ioctl. That wouldn't hurt your very limited
-usecase and people could test whether the read returned non-0 data and
-if so they know this interface got extended. If we never extend it here
-it won't matter.
-
-> +
-> +	if (!poll_flags)
-> +		poll_wait(file, &pid->wait_pidfd, pts);
-> +
-> +	read_unlock(&tasklist_lock);
-> +
-> +	return poll_flags;
-> +}
-
-
-> +
-> +
->  const struct file_operations pidfd_fops = {
->  	.release = pidfd_release,
-> +	.poll = pidfd_poll,
->  #ifdef CONFIG_PROC_FS
->  	.show_fdinfo = pidfd_show_fdinfo,
->  #endif
-> diff --git a/kernel/pid.c b/kernel/pid.c
-> index 20881598bdfa..5c90c239242f 100644
-> --- a/kernel/pid.c
-> +++ b/kernel/pid.c
-> @@ -214,6 +214,8 @@ struct pid *alloc_pid(struct pid_namespace *ns)
->  	for (type = 0; type < PIDTYPE_MAX; ++type)
->  		INIT_HLIST_HEAD(&pid->tasks[type]);
->  
-> +	init_waitqueue_head(&pid->wait_pidfd);
-> +
->  	upid = pid->numbers + ns->level;
->  	spin_lock_irq(&pidmap_lock);
->  	if (!(ns->pid_allocated & PIDNS_ADDING))
-> diff --git a/kernel/signal.c b/kernel/signal.c
-> index 1581140f2d99..16e7718316e5 100644
-> --- a/kernel/signal.c
-> +++ b/kernel/signal.c
-> @@ -1800,6 +1800,17 @@ int send_sigqueue(struct sigqueue *q, struct pid *pid, enum pid_type type)
->  	return ret;
->  }
->  
-> +static void do_notify_pidfd(struct task_struct *task)
-
-Maybe a short command that this helper can only be called when we know
-that task is a thread-group leader wouldn't hurt so there's no confusion
-later.
-
-> +{
-> +	struct pid *pid;
-> +
-> +	lockdep_assert_held(&tasklist_lock);
-> +
-> +	pid = get_task_pid(task, PIDTYPE_PID);
-> +	wake_up_all(&pid->wait_pidfd);
-> +	put_pid(pid);
-> +}
-> +
->  /*
->   * Let a parent know about the death of a child.
->   * For a stopped/continued status change, use do_notify_parent_cldstop instead.
-> @@ -1823,6 +1834,9 @@ bool do_notify_parent(struct task_struct *tsk, int sig)
->  	BUG_ON(!tsk->ptrace &&
->  	       (tsk->group_leader != tsk || !thread_group_empty(tsk)));
->  
-> +	/* Wake up all pidfd waiters */
-> +	do_notify_pidfd(tsk);
-> +
->  	if (sig != SIGCHLD) {
->  		/*
->  		 * This is only possible if parent == real_parent.
-> -- 
-> 2.21.0.593.g511ec345e18-goog
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 6b10c21630f5..64bdab679275 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -257,6 +257,8 @@ extern unsigned int kobjsize(const void *objp);
+ #define VM_HIGH_ARCH_2	BIT(VM_HIGH_ARCH_BIT_2)
+ #define VM_HIGH_ARCH_3	BIT(VM_HIGH_ARCH_BIT_3)
+ #define VM_HIGH_ARCH_4	BIT(VM_HIGH_ARCH_BIT_4)
++
++#define VM_WIPEONRELEASE BIT(37)       /* Clear pages when releasing them */
+ #endif /* CONFIG_ARCH_USES_HIGH_VMA_FLAGS */
+ 
+ #ifdef CONFIG_ARCH_HAS_PKEYS
+@@ -298,6 +300,10 @@ extern unsigned int kobjsize(const void *objp);
+ # define VM_GROWSUP	VM_NONE
+ #endif
+ 
++#ifndef VM_WIPEONRELEASE
++# define VM_WIPEONRELEASE VM_NONE
++#endif
++
+ /* Bits set in the VMA until the stack is in its final location */
+ #define VM_STACK_INCOMPLETE_SETUP	(VM_RAND_READ | VM_SEQ_READ)
+ 
+diff --git a/include/linux/rmap.h b/include/linux/rmap.h
+index 988d176472df..abb47d623edd 100644
+--- a/include/linux/rmap.h
++++ b/include/linux/rmap.h
+@@ -177,7 +177,7 @@ void do_page_add_anon_rmap(struct page *, struct vm_area_struct *,
+ void page_add_new_anon_rmap(struct page *, struct vm_area_struct *,
+ 		unsigned long, bool);
+ void page_add_file_rmap(struct page *, bool);
+-void page_remove_rmap(struct page *, bool);
++void page_remove_rmap(struct page *, struct vm_area_struct *, bool);
+ 
+ void hugepage_add_anon_rmap(struct page *, struct vm_area_struct *,
+ 			    unsigned long);
+diff --git a/include/uapi/asm-generic/mman-common.h b/include/uapi/asm-generic/mman-common.h
+index abd238d0f7a4..82dfff4a8e3d 100644
+--- a/include/uapi/asm-generic/mman-common.h
++++ b/include/uapi/asm-generic/mman-common.h
+@@ -64,6 +64,8 @@
+ #define MADV_WIPEONFORK 18		/* Zero memory on fork, child only */
+ #define MADV_KEEPONFORK 19		/* Undo MADV_WIPEONFORK */
+ 
++#define MADV_WIPEONRELEASE 20
++#define MADV_DONTWIPEONRELEASE 21
+ /* compatibility flags */
+ #define MAP_FILE	0
+ 
+diff --git a/kernel/events/uprobes.c b/kernel/events/uprobes.c
+index c5cde87329c7..2230a1717fe3 100644
+--- a/kernel/events/uprobes.c
++++ b/kernel/events/uprobes.c
+@@ -196,7 +196,7 @@ static int __replace_page(struct vm_area_struct *vma, unsigned long addr,
+ 	set_pte_at_notify(mm, addr, pvmw.pte,
+ 			mk_pte(new_page, vma->vm_page_prot));
+ 
+-	page_remove_rmap(old_page, false);
++	page_remove_rmap(old_page, vma, false);
+ 	if (!page_mapped(old_page))
+ 		try_to_free_swap(old_page);
+ 	page_vma_mapped_walk_done(&pvmw);
+diff --git a/mm/huge_memory.c b/mm/huge_memory.c
+index 165ea46bf149..1ad6ee5857b7 100644
+--- a/mm/huge_memory.c
++++ b/mm/huge_memory.c
+@@ -1260,7 +1260,7 @@ static vm_fault_t do_huge_pmd_wp_page_fallback(struct vm_fault *vmf,
+ 
+ 	smp_wmb(); /* make pte visible before pmd */
+ 	pmd_populate(vma->vm_mm, vmf->pmd, pgtable);
+-	page_remove_rmap(page, true);
++	page_remove_rmap(page, vma, true);
+ 	spin_unlock(vmf->ptl);
+ 
+ 	/*
+@@ -1410,7 +1410,7 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
+ 			add_mm_counter(vma->vm_mm, MM_ANONPAGES, HPAGE_PMD_NR);
+ 		} else {
+ 			VM_BUG_ON_PAGE(!PageHead(page), page);
+-			page_remove_rmap(page, true);
++			page_remove_rmap(page, vma, true);
+ 			put_page(page);
+ 		}
+ 		ret |= VM_FAULT_WRITE;
+@@ -1783,7 +1783,7 @@ int zap_huge_pmd(struct mmu_gather *tlb, struct vm_area_struct *vma,
+ 
+ 		if (pmd_present(orig_pmd)) {
+ 			page = pmd_page(orig_pmd);
+-			page_remove_rmap(page, true);
++			page_remove_rmap(page, vma, true);
+ 			VM_BUG_ON_PAGE(page_mapcount(page) < 0, page);
+ 			VM_BUG_ON_PAGE(!PageHead(page), page);
+ 		} else if (thp_migration_supported()) {
+@@ -2146,7 +2146,7 @@ static void __split_huge_pmd_locked(struct vm_area_struct *vma, pmd_t *pmd,
+ 			set_page_dirty(page);
+ 		if (!PageReferenced(page) && pmd_young(_pmd))
+ 			SetPageReferenced(page);
+-		page_remove_rmap(page, true);
++		page_remove_rmap(page, vma, true);
+ 		put_page(page);
+ 		add_mm_counter(mm, mm_counter_file(page), -HPAGE_PMD_NR);
+ 		return;
+@@ -2266,7 +2266,7 @@ static void __split_huge_pmd_locked(struct vm_area_struct *vma, pmd_t *pmd,
+ 
+ 	if (freeze) {
+ 		for (i = 0; i < HPAGE_PMD_NR; i++) {
+-			page_remove_rmap(page + i, false);
++			page_remove_rmap(page + i, vma, false);
+ 			put_page(page + i);
+ 		}
+ 	}
+@@ -2954,7 +2954,7 @@ void set_pmd_migration_entry(struct page_vma_mapped_walk *pvmw,
+ 	if (pmd_soft_dirty(pmdval))
+ 		pmdswp = pmd_swp_mksoft_dirty(pmdswp);
+ 	set_pmd_at(mm, address, pvmw->pmd, pmdswp);
+-	page_remove_rmap(page, true);
++	page_remove_rmap(page, vma, true);
+ 	put_page(page);
+ }
+ 
+diff --git a/mm/hugetlb.c b/mm/hugetlb.c
+index 6cdc7b2d9100..1df046525861 100644
+--- a/mm/hugetlb.c
++++ b/mm/hugetlb.c
+@@ -3419,7 +3419,7 @@ void __unmap_hugepage_range(struct mmu_gather *tlb, struct vm_area_struct *vma,
+ 			set_page_dirty(page);
+ 
+ 		hugetlb_count_sub(pages_per_huge_page(h), mm);
+-		page_remove_rmap(page, true);
++		page_remove_rmap(page, vma, true);
+ 
+ 		spin_unlock(ptl);
+ 		tlb_remove_page_size(tlb, page, huge_page_size(h));
+@@ -3643,7 +3643,7 @@ static vm_fault_t hugetlb_cow(struct mm_struct *mm, struct vm_area_struct *vma,
+ 		mmu_notifier_invalidate_range(mm, range.start, range.end);
+ 		set_huge_pte_at(mm, haddr, ptep,
+ 				make_huge_pte(vma, new_page, 1));
+-		page_remove_rmap(old_page, true);
++		page_remove_rmap(old_page, vma, true);
+ 		hugepage_add_new_anon_rmap(new_page, vma, haddr);
+ 		set_page_huge_active(new_page);
+ 		/* Make the old page be freed below */
+diff --git a/mm/khugepaged.c b/mm/khugepaged.c
+index 449044378782..20df74dfd954 100644
+--- a/mm/khugepaged.c
++++ b/mm/khugepaged.c
+@@ -673,7 +673,7 @@ static void __collapse_huge_page_copy(pte_t *pte, struct page *page,
+ 			 * superfluous.
+ 			 */
+ 			pte_clear(vma->vm_mm, address, _pte);
+-			page_remove_rmap(src_page, false);
++			page_remove_rmap(src_page, vma, false);
+ 			spin_unlock(ptl);
+ 			free_page_and_swap_cache(src_page);
+ 		}
+diff --git a/mm/ksm.c b/mm/ksm.c
+index fc64874dc6f4..280705f65af7 100644
+--- a/mm/ksm.c
++++ b/mm/ksm.c
+@@ -1193,7 +1193,7 @@ static int replace_page(struct vm_area_struct *vma, struct page *page,
+ 	ptep_clear_flush(vma, addr, ptep);
+ 	set_pte_at_notify(mm, addr, ptep, newpte);
+ 
+-	page_remove_rmap(page, false);
++	page_remove_rmap(page, vma, false);
+ 	if (!page_mapped(page))
+ 		try_to_free_swap(page);
+ 	put_page(page);
+diff --git a/mm/madvise.c b/mm/madvise.c
+index 21a7881a2db4..2a6e616e5c0d 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -92,6 +92,26 @@ static long madvise_behavior(struct vm_area_struct *vma,
+ 	case MADV_KEEPONFORK:
+ 		new_flags &= ~VM_WIPEONFORK;
+ 		break;
++	case MADV_WIPEONRELEASE:
++		/*
++		 * MADV_WIPEONRELEASE is only supported on as-yet unallocated
++		 * anonymous memory.
++		 */
++		if (VM_WIPEONRELEASE == 0 || vma->vm_file || vma->anon_vma ||
++		    vma->vm_flags & VM_SHARED) {
++			error = -EINVAL;
++			goto out;
++		}
++
++		new_flags |= VM_WIPEONRELEASE;
++		break;
++	case MADV_DONTWIPEONRELEASE:
++		if (VM_WIPEONRELEASE == 0) {
++			error = -EINVAL;
++			goto out;
++		}
++		new_flags &= ~VM_WIPEONRELEASE;
++		break;
+ 	case MADV_DONTDUMP:
+ 		new_flags |= VM_DONTDUMP;
+ 		break;
+@@ -727,6 +747,8 @@ madvise_behavior_valid(int behavior)
+ 	case MADV_DODUMP:
+ 	case MADV_WIPEONFORK:
+ 	case MADV_KEEPONFORK:
++	case MADV_WIPEONRELEASE:
++	case MADV_DONTWIPEONRELEASE:
+ #ifdef CONFIG_MEMORY_FAILURE
+ 	case MADV_SOFT_OFFLINE:
+ 	case MADV_HWPOISON:
+@@ -785,6 +807,9 @@ madvise_behavior_valid(int behavior)
+  *  MADV_DONTDUMP - the application wants to prevent pages in the given range
+  *		from being included in its core dump.
+  *  MADV_DODUMP - cancel MADV_DONTDUMP: no longer exclude from core dump.
++ *  MADV_WIPEONRELEASE - clear the contents of the memory after the last
++ *		reference to it has been released
++ *  MADV_DONTWIPEONRELEASE - cancel MADV_WIPEONRELEASE
+  *
+  * return values:
+  *  zero    - success
+diff --git a/mm/memory.c b/mm/memory.c
+index ab650c21bccd..dd9555bb9aec 100644
+--- a/mm/memory.c
++++ b/mm/memory.c
+@@ -1088,7 +1088,7 @@ static unsigned long zap_pte_range(struct mmu_gather *tlb,
+ 					mark_page_accessed(page);
+ 			}
+ 			rss[mm_counter(page)]--;
+-			page_remove_rmap(page, false);
++			page_remove_rmap(page, vma, false);
+ 			if (unlikely(page_mapcount(page) < 0))
+ 				print_bad_pte(vma, addr, ptent, page);
+ 			if (unlikely(__tlb_remove_page(tlb, page))) {
+@@ -1116,7 +1116,7 @@ static unsigned long zap_pte_range(struct mmu_gather *tlb,
+ 
+ 			pte_clear_not_present_full(mm, addr, pte, tlb->fullmm);
+ 			rss[mm_counter(page)]--;
+-			page_remove_rmap(page, false);
++			page_remove_rmap(page, vma, false);
+ 			put_page(page);
+ 			continue;
+ 		}
+@@ -2340,7 +2340,7 @@ static vm_fault_t wp_page_copy(struct vm_fault *vmf)
+ 			 * mapcount is visible. So transitively, TLBs to
+ 			 * old page will be flushed before it can be reused.
+ 			 */
+-			page_remove_rmap(old_page, false);
++			page_remove_rmap(old_page, vma, false);
+ 		}
+ 
+ 		/* Free the old page.. */
+diff --git a/mm/migrate.c b/mm/migrate.c
+index 663a5449367a..5d3437a6541d 100644
+--- a/mm/migrate.c
++++ b/mm/migrate.c
+@@ -2083,7 +2083,7 @@ int migrate_misplaced_transhuge_page(struct mm_struct *mm,
+ 
+ 	page_ref_unfreeze(page, 2);
+ 	mlock_migrate_page(new_page, page);
+-	page_remove_rmap(page, true);
++	page_remove_rmap(page, vma, true);
+ 	set_page_owner_migrate_reason(new_page, MR_NUMA_MISPLACED);
+ 
+ 	spin_unlock(ptl);
+@@ -2313,7 +2313,7 @@ static int migrate_vma_collect_pmd(pmd_t *pmdp,
+ 			 * drop page refcount. Page won't be freed, as we took
+ 			 * a reference just above.
+ 			 */
+-			page_remove_rmap(page, false);
++			page_remove_rmap(page, vma, false);
+ 			put_page(page);
+ 
+ 			if (pte_present(pte))
+diff --git a/mm/rmap.c b/mm/rmap.c
+index b30c7c71d1d9..46dc9946a516 100644
+--- a/mm/rmap.c
++++ b/mm/rmap.c
+@@ -1292,11 +1292,13 @@ static void page_remove_anon_compound_rmap(struct page *page)
+ /**
+  * page_remove_rmap - take down pte mapping from a page
+  * @page:	page to remove mapping from
++ * @vma:	VMA the page belongs to
+  * @compound:	uncharge the page as compound or small page
+  *
+  * The caller needs to hold the pte lock.
+  */
+-void page_remove_rmap(struct page *page, bool compound)
++void page_remove_rmap(struct page *page, struct vm_area_struct *vma,
++		      bool compound)
+ {
+ 	if (!PageAnon(page))
+ 		return page_remove_file_rmap(page, compound);
+@@ -1321,6 +1323,9 @@ void page_remove_rmap(struct page *page, bool compound)
+ 	if (PageTransCompound(page))
+ 		deferred_split_huge_page(compound_head(page));
+ 
++	if (unlikely(vma->vm_flags & VM_WIPEONRELEASE))
++		clear_highpage(page);
++
+ 	/*
+ 	 * It would be tidy to reset the PageAnon mapping here,
+ 	 * but that might overwrite a racing page_add_anon_rmap
+@@ -1652,7 +1657,7 @@ static bool try_to_unmap_one(struct page *page, struct vm_area_struct *vma,
+ 		 *
+ 		 * See Documentation/vm/mmu_notifier.rst
+ 		 */
+-		page_remove_rmap(subpage, PageHuge(page));
++		page_remove_rmap(subpage, vma, PageHuge(page));
+ 		put_page(page);
+ 	}
+ 
+-- 
+2.21.0.593.g511ec345e18-goog
