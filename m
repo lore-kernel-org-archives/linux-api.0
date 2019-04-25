@@ -1,66 +1,54 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCHv3 01/27] ns: Introduce Time Namespace
-Date: Thu, 25 Apr 2019 21:10:28 +0200
-Message-ID: <CAG48ez2h5Khw1tcizUKywtqEuUWpHsrGcWF+KN+X119B4MvmoA@mail.gmail.com>
-References: <20190425161416.26600-1-dima@arista.com> <20190425161416.26600-2-dima@arista.com>
+From: Greg KH <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH v10 00/18] Introduce the Counter subsystem
+Date: Thu, 25 Apr 2019 21:36:24 +0200
+Message-ID: <20190425193624.GA11240@kroah.com>
+References: <cover.1554184734.git.vilhelm.gray@gmail.com>
+ <20190407152550.451a7f63@archlinux>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190425161416.26600-2-dima@arista.com>
+Content-Disposition: inline
+In-Reply-To: <20190407152550.451a7f63@archlinux>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dmitry Safonov <dima@arista.com>
-Cc: kernel list <linux-kernel@vger.kernel.org>, Andrei Vagin <avagin@openvz.org>, Adrian Reber <adrian@lisas.de>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, Linux API <linux-api@vger.kernel.org>, the arch/x86 maintainers <x86>
+To: Jonathan Cameron <jic23@kernel.org>
+Cc: William Breathitt Gray <vilhelm.gray@gmail.com>, linux-arm-kernel@lists.infradead.org, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org, linux-iio@vger.kernel.org, fabrice.gasnier@st.com, benjamin.gaignard@st.com, knaack.h@gmx.de, lars@metafoo.de, pmeerw@pmeerw.net, akpm@linux-foundation.org, david@lechnology.com, robh+dt@kernel.org, mark.rutland@arm.com, shawnguo@kernel.org, leoyang.li@nxp.com, daniel.lezcano@linaro.org, tglx@linutronix.de, thierry.reding@gmail.com, esben@haabendal.dk, linux-pwm@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, patrick.havelange@essensium.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 25, 2019 at 6:14 PM Dmitry Safonov <dima@arista.com> wrote:
-> Time Namespace isolates clock values.
->
-> The kernel provides access to several clocks CLOCK_REALTIME,
-> CLOCK_MONOTONIC, CLOCK_BOOTTIME, etc.
->
-> CLOCK_REALTIME
->       System-wide clock that measures real (i.e., wall-clock) time.
->
-> CLOCK_MONOTONIC
->       Clock that cannot be set and represents monotonic time since
->       some unspecified starting point.
->
-> CLOCK_BOOTTIME
->       Identical to CLOCK_MONOTONIC, except it also includes any time
->       that the system is suspended.
->
-> For many users, the time namespace means the ability to changes date and
-> time in a container (CLOCK_REALTIME).
->
-> But in a context of the checkpoint/restore functionality, monotonic and
-> bootime clocks become interesting. Both clocks are monotonic with
-> unspecified staring points. These clocks are widely used to measure time
-> slices and set timers. After restoring or migrating processes, we have to
-> guarantee that they never go backward. In an ideal case, the behavior of
-> these clocks should be the same as for a case when a whole system is
-> suspended. All this means that we need to be able to set CLOCK_MONOTONIC
-> and CLOCK_BOOTTIME clocks, what can be done by adding per-namespace
-> offsets for clocks.
->
-> A time namespace is similar to a pid namespace in a way how it is
-> created: unshare(CLONE_NEWTIME) system call creates a new time namespace,
-> but doesn't set it to the current process. Then all children of
-> the process will be born in the new time namespace, or a process can
-> use the setns() system call to join a namespace.
->
-> This scheme allows setting clock offsets for a namespace, before any
-> processes appear in it.
+On Sun, Apr 07, 2019 at 03:25:50PM +0100, Jonathan Cameron wrote:
+> On Tue,  2 Apr 2019 15:30:35 +0900
+> William Breathitt Gray <vilhelm.gray@gmail.com> wrote:
+> 
+> > Changes in v10:
+> >   - Fix minor typographical errors in documentation
+> >   - Merge the FlexTimer Module Quadrature decoder counter driver patches
+> > 
+> > This revision is functionally identical to the last; changes in this
+> > version were made to fix minor typos in the documentation files and also
+> > to pull in the new FTM quadrature decoder counter driver.
+> > 
+> > The Generic Counter API has been and is still in a feature freeze until
+> > it is merged into the mainline. The following features will be
+> > investigated after the merge: interrupt support for counter devices, and
+> > a character device interface for low-latency applications.
+> 
+> Hi William / al,
+> 
+> So the question is how to move this forwards?  I'm happy with how it turned
+> out and the existing drivers we had in IIO are a lot cleaner under
+> the counter subsystem (other than the backwards compatibility for those that
+> ever existed in IIO).  For those  not following closely the situation is:
 
-Is there a check anywhere to make sure that you can't use
-clone(CLONE_VM) after calling unshare(CLONE_NEWTIME), and that you
-can't use clone(CLONE_VM|CLONE_NEWTIME)? Those things probably
-shouldn't be allowed, right?
+I've now sucked this into my staging-testing branch and if 0-day is fine
+with it, I'll merge it to staging-next in a day or so.  This way you can
+build on it for any iio drivers that might be coming.
 
-CLONE_NEWPID has similar rules; from the clone.2 manpage:
+I do have reservations about that one sysfs file that is multi-line, and
+I think it will come to bite you in the end over time, so I reserve the
+right to say "I told you so" when that happens...
 
-       EINVAL CLONE_THREAD was specified, but the current process previously
-              called unshare(2) with the CLONE_NEWPID flag or used setns(2)
-              to reassociate itself with a PID namespace.
-[...]
-       EINVAL One (or both) of CLONE_NEWPID or CLONE_NEWUSER and one (or
-              both) of CLONE_THREAD or CLONE_PARENT were specified in flags.
+But, I don't have a better answer for it now, so don't really worry
+about it :)
+
+thanks,
+
+greg k-h
