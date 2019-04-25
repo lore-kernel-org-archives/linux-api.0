@@ -1,59 +1,35 @@
-From: Cyrill Gorcunov <gorcunov@gmail.com>
-Subject: Re: [PATCHv3 04/27] timens: Introduce CLOCK_BOOTTIME offset
-Date: Thu, 25 Apr 2019 23:08:06 +0300
-Message-ID: <20190425200806.GQ6662@uranus.lan>
-References: <20190425161416.26600-1-dima@arista.com>
- <20190425161416.26600-5-dima@arista.com>
+From: Matthew Garrett <mjg59@google.com>
+Subject: Re: [PATCH V2] mm: Allow userland to request that the kernel clear
+ memory on release
+Date: Thu, 25 Apr 2019 13:39:01 -0700
+Message-ID: <CACdnJuutwmBn_ASY1N1+ZK8g4MbpjTnUYbarR+CPhC5BAy0oZA@mail.gmail.com>
+References: <CACdnJuup-y1xAO93wr+nr6ARacxJ9YXgaceQK9TLktE7shab1w@mail.gmail.com>
+ <20190424211038.204001-1-matthewgarrett@google.com> <20190425121410.GC1144@dhcp22.suse.cz>
+ <20190425123755.GX12751@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190425161416.26600-5-dima@arista.com>
+In-Reply-To: <20190425123755.GX12751@dhcp22.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dmitry Safonov <dima@arista.com>
-Cc: linux-kernel@vger.kernel.org, Andrei Vagin <avagin@openvz.org>, Adrian Reber <adrian@lisas.de>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org, Andrei Vagin <avagin@gmail.com>
+To: Michal Hocko <mhocko@kernel.org>
+Cc: linux-mm@kvack.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 25, 2019 at 05:13:53PM +0100, Dmitry Safonov wrote:
-> 
-> diff --git a/include/linux/time_namespace.h b/include/linux/time_namespace.h
-> index 8f75d34cf34a..5f0da6858b10 100644
-> --- a/include/linux/time_namespace.h
-> +++ b/include/linux/time_namespace.h
-> @@ -48,6 +48,14 @@ static inline void timens_add_monotonic(struct timespec64 *ts)
->                  *ts = timespec64_add(*ts, ns_offsets->monotonic_time_offset);
->  }
->  
-> +static inline void timens_add_boottime(struct timespec64 *ts)
-> +{
-> +        struct timens_offsets *ns_offsets = current->nsproxy->time_ns->offsets;
-> +
-> +        if (ns_offsets)
-> +                *ts = timespec64_add(*ts, ns_offsets->monotonic_boottime_offset);
-> +}
->
-...
+On Thu, Apr 25, 2019 at 5:37 AM Michal Hocko <mhocko@kernel.org> wrote:
+> Besides that you inherently assume that the user would do mlock because
+> you do not try to wipe the swap content. Is this intentional?
 
->  struct timens_offsets {
->  	struct timespec64  monotonic_time_offset;
-> +	struct timespec64  monotonic_boottime_offset;
->  };
+Yes, given MADV_DONTDUMP doesn't imply mlock I thought it'd be more
+consistent to keep those independent.
 
-Guys, is not the _offset postfix here redundant? timens_offsets
-already has it and ns_offsets->monotonic_boottime_offset looks
-too much.
+> Another question would be regarding the targeted user API. There are
+> some attempts to make all the freed memory to be zeroed/poisoned. Are
+> users who would like to use this feature also be interested in using
+> system wide setting as well?
 
-static always_inline current_time_ns_offsets(void)
-{
-	return current->nsproxy->time_ns->offsets;
-}
-
-static inline void timens_add_boottime(struct timespec64 *ts)
-{
-	struct timens_offsets *tns_off = current_time_ns_offsets();
-
-	if (tns_off)
-		*ts = timespec64_add(*ts, tns_off->monotonic_boottime);
-}
-
-Hmm? Up to you though.
+I think that depends on the performance overhead of a global setting,
+but it's also influenced by the semantics around when the freeing
+occurs, which is something I haven't nailed down yet. If the
+expectation is that the page is freed whenever the process exits, even
+if the page is in use somewhere else, then we'd still want this to be
+separate to poisoning on final page free.
