@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv3 07/27] timens/kernel: Take into account timens clock offsets in clock_nanosleep
-Date: Thu, 25 Apr 2019 17:13:56 +0100
-Message-ID: <20190425161416.26600-8-dima@arista.com>
+Subject: [PATCHv3 06/27] posix-timers/timens: Take into account clock offsets
+Date: Thu, 25 Apr 2019 17:13:55 +0100
+Message-ID: <20190425161416.26600-7-dima@arista.com>
 References: <20190425161416.26600-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,91 +14,48 @@ List-Id: linux-api@vger.kernel.org
 
 From: Andrei Vagin <avagin@gmail.com>
 
-Wire up clock_nanosleep() to timens offsets.
+Wire timer_settime() syscall into time namespace virtualization.
 
 Signed-off-by: Andrei Vagin <avagin@openvz.org>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- kernel/time/alarmtimer.c   |  2 ++
- kernel/time/posix-stubs.c  |  8 ++++----
- kernel/time/posix-timers.c | 12 ++++++++++--
- 3 files changed, 16 insertions(+), 6 deletions(-)
+ kernel/time/alarmtimer.c   | 3 +++
+ kernel/time/posix-timers.c | 2 ++
+ 2 files changed, 5 insertions(+)
 
 diff --git a/kernel/time/alarmtimer.c b/kernel/time/alarmtimer.c
-index 23f5c39c8d23..409d518acbb3 100644
+index 31f99361342e..23f5c39c8d23 100644
 --- a/kernel/time/alarmtimer.c
 +++ b/kernel/time/alarmtimer.c
-@@ -816,6 +816,8 @@ static int alarm_timer_nsleep(const clockid_t which_clock, int flags,
- 		ktime_t now = alarm_bases[type].gettime();
+@@ -26,6 +26,7 @@
+ #include <linux/freezer.h>
+ #include <linux/compat.h>
+ #include <linux/module.h>
++#include <linux/time_namespace.h>
  
- 		exp = ktime_add_safe(now, exp);
-+	} else {
-+		exp = timens_ktime_to_host(alarm_bases[type].base_clockid, exp);
- 	}
+ #include "posix-timers.h"
  
- 	ret = alarmtimer_do_nsleep(&alarm, exp, type);
-diff --git a/kernel/time/posix-stubs.c b/kernel/time/posix-stubs.c
-index edaf075d1ee4..f319d51e2e01 100644
---- a/kernel/time/posix-stubs.c
-+++ b/kernel/time/posix-stubs.c
-@@ -147,8 +147,8 @@ SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
- 		rmtp = NULL;
- 	current->restart_block.nanosleep.type = rmtp ? TT_NATIVE : TT_NONE;
- 	current->restart_block.nanosleep.rmtp = rmtp;
--	return hrtimer_nanosleep(&t, flags & TIMER_ABSTIME ?
--				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL,
-+	return hrtimer_nanosleep(&t, HRTIMER_MODE_NS | (flags & TIMER_ABSTIME ?
-+				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL),
- 				 which_clock);
- }
+@@ -621,6 +622,8 @@ static void alarm_timer_arm(struct k_itimer *timr, ktime_t expires,
  
-@@ -233,8 +233,8 @@ SYSCALL_DEFINE4(clock_nanosleep_time32, clockid_t, which_clock, int, flags,
- 		rmtp = NULL;
- 	current->restart_block.nanosleep.type = rmtp ? TT_COMPAT : TT_NONE;
- 	current->restart_block.nanosleep.compat_rmtp = rmtp;
--	return hrtimer_nanosleep(&t, flags & TIMER_ABSTIME ?
--				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL,
-+	return hrtimer_nanosleep(&t, HRTIMER_MODE_NS | (flags & TIMER_ABSTIME ?
-+				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL),
- 				 which_clock);
- }
- #endif
+ 	if (!absolute)
+ 		expires = ktime_add_safe(expires, base->gettime());
++	else
++		expires = timens_ktime_to_host(base->base_clockid, expires);
+ 	if (sigev_none)
+ 		alarm->node.expires = expires;
+ 	else
 diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
-index 7922731f98cd..39c0330464a3 100644
+index a723e63d55fd..7922731f98cd 100644
 --- a/kernel/time/posix-timers.c
 +++ b/kernel/time/posix-timers.c
-@@ -1188,6 +1188,14 @@ static int common_nsleep(const clockid_t which_clock, int flags,
- 				 which_clock);
- }
+@@ -803,6 +803,8 @@ static void common_hrtimer_arm(struct k_itimer *timr, ktime_t expires,
  
-+static int common_nsleep_timens(const clockid_t which_clock, int flags,
-+			 const struct timespec64 *rqtp)
-+{
-+	return hrtimer_nanosleep(rqtp, HRTIMER_MODE_NS | (flags & TIMER_ABSTIME ?
-+				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL),
-+				 which_clock);
-+}
-+
- SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
- 		const struct __kernel_timespec __user *, rqtp,
- 		struct __kernel_timespec __user *, rmtp)
-@@ -1262,7 +1270,7 @@ static const struct k_clock clock_realtime = {
- static const struct k_clock clock_monotonic = {
- 	.clock_getres		= posix_get_hrtimer_res,
- 	.clock_get		= posix_ktime_get_ts,
--	.nsleep			= common_nsleep,
-+	.nsleep			= common_nsleep_timens,
- 	.timer_create		= common_timer_create,
- 	.timer_set		= common_timer_set,
- 	.timer_get		= common_timer_get,
-@@ -1307,7 +1315,7 @@ static const struct k_clock clock_tai = {
- static const struct k_clock clock_boottime = {
- 	.clock_getres		= posix_get_hrtimer_res,
- 	.clock_get		= posix_get_boottime,
--	.nsleep			= common_nsleep,
-+	.nsleep			= common_nsleep_timens,
- 	.timer_create		= common_timer_create,
- 	.timer_set		= common_timer_set,
- 	.timer_get		= common_timer_get,
+ 	if (!absolute)
+ 		expires = ktime_add_safe(expires, timer->base->get_time());
++	else
++		expires = timens_ktime_to_host(timer->base->clockid, expires);
+ 	hrtimer_set_expires(timer, expires);
+ 
+ 	if (!sigev_none)
 -- 
 2.21.0
