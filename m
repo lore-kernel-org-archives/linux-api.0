@@ -1,54 +1,72 @@
-From: Greg KH <gregkh@linuxfoundation.org>
-Subject: Re: [PATCH v10 00/18] Introduce the Counter subsystem
-Date: Thu, 25 Apr 2019 21:36:24 +0200
-Message-ID: <20190425193624.GA11240@kroah.com>
-References: <cover.1554184734.git.vilhelm.gray@gmail.com>
- <20190407152550.451a7f63@archlinux>
+From: Aleksa Sarai <cyphar@cyphar.com>
+Subject: Re: [PATCH RESEND v5 0/5] namei: vfs flags to restrict path
+ resolution
+Date: Fri, 26 Apr 2019 05:45:25 +1000
+Message-ID: <20190425194525.5d66uzfqfxmorx2n@yavin>
+References: <20190320143717.2523-1-cyphar@cyphar.com>
+ <CALCETrV-Q4qZXGeavBPQbF6-VVz7hqvjRkbhFeYmbGiQgu5Omg@mail.gmail.com>
+ <20190325130429.dbrgjxnvq3w5cpb3@yavin>
+ <CAGXu5jKPrarixQkWWXOBCu6kRRpQd0aaJsPJbvsAyh0Wvc620A@mail.gmail.com>
+ <20190424153806.64qkkmkudzodxnz2@yavin>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="mgp24gaplbeperzh"
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190407152550.451a7f63@archlinux>
+In-Reply-To: <20190424153806.64qkkmkudzodxnz2@yavin>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jonathan Cameron <jic23@kernel.org>
-Cc: William Breathitt Gray <vilhelm.gray@gmail.com>, linux-arm-kernel@lists.infradead.org, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org, linux-iio@vger.kernel.org, fabrice.gasnier@st.com, benjamin.gaignard@st.com, knaack.h@gmx.de, lars@metafoo.de, pmeerw@pmeerw.net, akpm@linux-foundation.org, david@lechnology.com, robh+dt@kernel.org, mark.rutland@arm.com, shawnguo@kernel.org, leoyang.li@nxp.com, daniel.lezcano@linaro.org, tglx@linutronix.de, thierry.reding@gmail.com, esben@haabendal.dk, linux-pwm@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, patrick.havelange@essensium.com, linux-api@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>
+Cc: Andy Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Eric Biederman <ebiederm@xmission.com>, Jann Horn <jannh@google.com>, Christian Brauner <christian@brauner.io>, David Drysdale <drysdale@google.com>, Tycho Andersen <tycho@tycho.ws>, Linux Containers <containers@lists.linux-foundation.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, Linus Torvalds <torvalds@linux-fo>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Apr 07, 2019 at 03:25:50PM +0100, Jonathan Cameron wrote:
-> On Tue,  2 Apr 2019 15:30:35 +0900
-> William Breathitt Gray <vilhelm.gray@gmail.com> wrote:
-> 
-> > Changes in v10:
-> >   - Fix minor typographical errors in documentation
-> >   - Merge the FlexTimer Module Quadrature decoder counter driver patches
-> > 
-> > This revision is functionally identical to the last; changes in this
-> > version were made to fix minor typos in the documentation files and also
-> > to pull in the new FTM quadrature decoder counter driver.
-> > 
-> > The Generic Counter API has been and is still in a feature freeze until
-> > it is merged into the mainline. The following features will be
-> > investigated after the merge: interrupt support for counter devices, and
-> > a character device interface for low-latency applications.
-> 
-> Hi William / al,
-> 
-> So the question is how to move this forwards?  I'm happy with how it turned
-> out and the existing drivers we had in IIO are a lot cleaner under
-> the counter subsystem (other than the backwards compatibility for those that
-> ever existed in IIO).  For those  not following closely the situation is:
 
-I've now sucked this into my staging-testing branch and if 0-day is fine
-with it, I'll merge it to staging-next in a day or so.  This way you can
-build on it for any iio drivers that might be coming.
+--mgp24gaplbeperzh
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-I do have reservations about that one sysfs file that is multi-line, and
-I think it will come to bite you in the end over time, so I reserve the
-right to say "I told you so" when that happens...
+On 2019-04-25, Aleksa Sarai <cyphar@cyphar.com> wrote:
+> On 2019-04-23, Kees Cook <keescook@chromium.org> wrote:
+> > This series provides solutions to so many different race and confusion
+> > issues, I'd really like to see it land. What's the next step here? Is
+> > this planned to go directly to Linus for v5.2, or is it going to live
+> > in -mm for a while? I'd really like to see this moving forward.
+>=20
+> Given some of the security requirements of this interface, I think
+> getting it to live in -mm wouldn't be a bad idea so folks can shake the
+> bugs out before it's depended on by container runtimes.
 
-But, I don't have a better answer for it now, so don't really worry
-about it :)
+Scratch my mention of -mm, it should be in Al's tree since it touches
+quite a few of the namei seqlocks. My point was that it should live in
+someone's tree for a little bit before it goes into a release.
 
-thanks,
+I will put together a PoC of a resolveat(2) variation of this series and
+re-send it out with both versions.
 
-greg k-h
+--=20
+Aleksa Sarai
+Senior Software Engineer (Containers)
+SUSE Linux GmbH
+<https://www.cyphar.com/>
+
+--mgp24gaplbeperzh
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAABCAAdFiEEb6Gz4/mhjNy+aiz1Snvnv3Dem58FAlzCDlUACgkQSnvnv3De
+m5+dTBAAkJaalB1ZAlNLaIBqNJeW7q7mu/h9lSLPEiXvdvYaaX7vsxdRP+qw733+
+70e5zLtSp63rWZ+C1qC+X29jPP6sqxoYIbSrufbpBGXFl0DqWh2bdibbyJ0OfMgl
+uWQRnlzgKF9OsdXWHUOe6vyaL5OrBYM27mgCZ0DRzOrULUbTcYn2C3iYFI6sIwwq
+9i58pEVwTosNB48fvvmP97ANjZrdpIfovNCELQJL//uQTGTRIYc31lRn5bxJw31R
+kZAO9hv2khQZnBQmiB/AntAnYzAjOeaT1I2EgbO4eDXmb1VOzBlO7VzlkPDy34Wj
+EiyVktScI1Fr/ckbyQ2f0HJVXwYIE6Qh7kodot8ZY3BcYQUpptW6BTffvU7qqra8
+LUScCOdgyOf4A3iTJM3/HdnWkTCOnbbwMHQf97sQlJN3+SnBelrz++bQ8d4Pnlci
+IXDQkTvaJPzmehd8iBEfqdoSb5H0ipxmIr1OZgdvBskQ1X3zRMhemSKfGU2umC7p
+Dt5qTpiuwmMdqN/mzb6rd/OQCiww3vHaPWn0cY9ppPQyaqn5M7vVd38B0sJ2RfRm
+n7ojrJ6Hrl3Tl30N0LXlS8EXTEF2gOFznn/beWig+SIoF1WRBX+YdD+N03h940C2
+/D7ioE/0fOukT/9ZM4Aco28Y4b2GLI36jlmEFGSDRzzwuEtb4UU=
+=niPy
+-----END PGP SIGNATURE-----
+
+--mgp24gaplbeperzh--
