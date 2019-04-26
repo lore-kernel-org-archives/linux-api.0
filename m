@@ -1,32 +1,33 @@
 From: Matthew Garrett <mjg59@google.com>
-Subject: Re: [PATCH V2] mm: Allow userland to request that the kernel clear
+Subject: Re: [PATCH V3] mm: Allow userland to request that the kernel clear
  memory on release
-Date: Fri, 26 Apr 2019 11:08:44 -0700
-Message-ID: <CACdnJutweLKsir_r9EgP9g=Eih-hbhq20N8zHzKawR8=awnENw@mail.gmail.com>
+Date: Fri, 26 Apr 2019 11:10:22 -0700
+Message-ID: <CACdnJuuVBb8bOUGGq0H+Ask_ufT3X9YH42o5nAGQK0TCf+aKWg@mail.gmail.com>
 References: <CACdnJuup-y1xAO93wr+nr6ARacxJ9YXgaceQK9TLktE7shab1w@mail.gmail.com>
- <20190424211038.204001-1-matthewgarrett@google.com> <20190425121410.GC1144@dhcp22.suse.cz>
- <20190425123755.GX12751@dhcp22.suse.cz> <CACdnJuutwmBn_ASY1N1+ZK8g4MbpjTnUYbarR+CPhC5BAy0oZA@mail.gmail.com>
- <20190426052520.GB12337@dhcp22.suse.cz>
+ <20190425225828.212472-1-matthewgarrett@google.com> <d058d1ef-994f-ea6b-b6b4-bcd838a9fe2f@suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190426052520.GB12337@dhcp22.suse.cz>
+In-Reply-To: <d058d1ef-994f-ea6b-b6b4-bcd838a9fe2f@suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
+To: Vlastimil Babka <vbabka@suse.cz>
 Cc: linux-mm@kvack.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Apr 25, 2019 at 10:25 PM Michal Hocko <mhocko@kernel.org> wrote:
+On Fri, Apr 26, 2019 at 12:45 AM Vlastimil Babka <vbabka@suse.cz> wrote:
 >
-> On Thu 25-04-19 13:39:01, Matthew Garrett wrote:
-> > Yes, given MADV_DONTDUMP doesn't imply mlock I thought it'd be more
-> > consistent to keep those independent.
+> On 4/26/19 12:58 AM, Matthew Garrett wrote:
+> > Updated based on feedback from Jann - for now let's just prevent setting
+> > the flag on anything that has already mapped some pages, which avoids
+> > child processes being able to interfere with the parent. In addition,
 >
-> Do we want to fail madvise call on VMAs that are not mlocked then? What
-> if the munlock happens later after the madvise is called?
+> That makes the API quite tricky and different from existing madvise()
+> modes that don't care. One would for example have to call
+> madvise(MADV_WIPEONRELEASE) before mlock(), otherwise mlock() would
+> fault the pages in (unless MLOCK_ONFAULT). As such it really looks like
+> a mmap() flag, but that's less flexible.
+>
+> How bout just doing the CoW on any such pre-existing pages as part of
+> the madvise(MADV_WIPEONRELEASE) call?
 
-I'm not sure if it's strictly necessary. We already have various
-combinations of features that only make sense when used together and
-which can be undermined by later actions. I can see the appeal of
-designing this in a way that makes it harder to misuse, but is that
-worth additional implementation complexity?
+I'll look into the easiest way to do that.
