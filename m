@@ -1,109 +1,59 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH V2] mm: Allow userland to request that the kernel clear
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH V3] mm: Allow userland to request that the kernel clear
  memory on release
-Date: Fri, 26 Apr 2019 07:31:35 +0200
-Message-ID: <20190426053135.GC12337@dhcp22.suse.cz>
+Date: Fri, 26 Apr 2019 09:45:11 +0200
+Message-ID: <d058d1ef-994f-ea6b-b6b4-bcd838a9fe2f@suse.cz>
 References: <CACdnJuup-y1xAO93wr+nr6ARacxJ9YXgaceQK9TLktE7shab1w@mail.gmail.com>
- <20190424211038.204001-1-matthewgarrett@google.com>
- <20190425121410.GC1144@dhcp22.suse.cz>
- <CAG48ez0x6QiFpqXbimB9ZV-jS5UJJWhzg9XiAWncQL+phfKkPA@mail.gmail.com>
+ <20190425225828.212472-1-matthewgarrett@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAG48ez0x6QiFpqXbimB9ZV-jS5UJJWhzg9XiAWncQL+phfKkPA@mail.gmail.com>
+In-Reply-To: <20190425225828.212472-1-matthewgarrett@google.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: Matthew Garrett <matthewgarrett@google.com>, Linux-MM <linux-mm@kvack.org>, kernel list <linux-kernel@vger.kernel.org>, Matthew Garrett <mjg59@google.com>, Linux API <linux-api@vger.kernel.org>
+To: Matthew Garrett <matthewgarrett@google.com>, linux-mm@kvack.org
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Matthew Garrett <mjg59@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu 25-04-19 14:42:52, Jann Horn wrote:
-> On Thu, Apr 25, 2019 at 2:14 PM Michal Hocko <mhocko@kernel.org> wrote:
-> [...]
-> > On Wed 24-04-19 14:10:39, Matthew Garrett wrote:
-> > > From: Matthew Garrett <mjg59@google.com>
-> > >
-> > > Applications that hold secrets and wish to avoid them leaking can use
-> > > mlock() to prevent the page from being pushed out to swap and
-> > > MADV_DONTDUMP to prevent it from being included in core dumps. Applications
-> > > can also use atexit() handlers to overwrite secrets on application exit.
-> > > However, if an attacker can reboot the system into another OS, they can
-> > > dump the contents of RAM and extract secrets. We can avoid this by setting
-> > > CONFIG_RESET_ATTACK_MITIGATION on UEFI systems in order to request that the
-> > > firmware wipe the contents of RAM before booting another OS, but this means
-> > > rebooting takes a *long* time - the expected behaviour is for a clean
-> > > shutdown to remove the request after scrubbing secrets from RAM in order to
-> > > avoid this.
-> > >
-> > > Unfortunately, if an application exits uncleanly, its secrets may still be
-> > > present in RAM. This can't be easily fixed in userland (eg, if the OOM
-> > > killer decides to kill a process holding secrets, we're not going to be able
-> > > to avoid that), so this patch adds a new flag to madvise() to allow userland
-> > > to request that the kernel clear the covered pages whenever the page
-> > > reference count hits zero. Since vm_flags is already full on 32-bit, it
-> > > will only work on 64-bit systems.
-> [...]
-> > > diff --git a/mm/madvise.c b/mm/madvise.c
-> > > index 21a7881a2db4..989c2fde15cf 100644
-> > > --- a/mm/madvise.c
-> > > +++ b/mm/madvise.c
-> > > @@ -92,6 +92,22 @@ static long madvise_behavior(struct vm_area_struct *vma,
-> > >       case MADV_KEEPONFORK:
-> > >               new_flags &= ~VM_WIPEONFORK;
-> > >               break;
-> > > +     case MADV_WIPEONRELEASE:
-> > > +             /* MADV_WIPEONRELEASE is only supported on anonymous memory. */
-> > > +             if (VM_WIPEONRELEASE == 0 || vma->vm_file ||
-> > > +                 vma->vm_flags & VM_SHARED) {
-> > > +                     error = -EINVAL;
-> > > +                     goto out;
-> > > +             }
-> > > +             new_flags |= VM_WIPEONRELEASE;
-> > > +             break;
+On 4/26/19 12:58 AM, Matthew Garrett wrote:
+> From: Matthew Garrett <mjg59@google.com>
 > 
-> An interesting effect of this is that it will be possible to set this
-> on a CoW anon VMA in a fork() child, and then the semantics in the
-> parent will be subtly different - e.g. if the parent vmsplice()d a
-> CoWed page into a pipe, then forked an unprivileged child, the child
-
-Maybe a stupid question. How do you fork an unprivileged child (without
-exec)? Child would have to drop priviledges on its own, no?
-
-> set MADV_WIPEONRELEASE on its VMA, the parent died somehow, and then
-> the child died, the page in the pipe would be zeroed out. A child
-> should not be able to affect its parent like this, I think. If this
-> was an mmap() flag instead of a madvise() command, that issue could be
-> avoided.
-
-With a VMA flag underneath, I think you can do an early CoW during fork
-to prevent from that.
-
-> Alternatively, if adding more mmap() flags doesn't work,
-> perhaps you could scan the VMA and ensure that it contains no pages
-> yet, or something like that?
+> Applications that hold secrets and wish to avoid them leaking can use
+> mlock() to prevent the page from being pushed out to swap and
+> MADV_DONTDUMP to prevent it from being included in core dumps. Applications
+> can also use atexit() handlers to overwrite secrets on application exit.
+> However, if an attacker can reboot the system into another OS, they can
+> dump the contents of RAM and extract secrets. We can avoid this by setting
+> CONFIG_RESET_ATTACK_MITIGATION on UEFI systems in order to request that the
+> firmware wipe the contents of RAM before booting another OS, but this means
+> rebooting takes a *long* time - the expected behaviour is for a clean
+> shutdown to remove the request after scrubbing secrets from RAM in order to
+> avoid this.
 > 
-> > > diff --git a/mm/memory.c b/mm/memory.c
-> > > index ab650c21bccd..ff78b527660e 100644
-> > > --- a/mm/memory.c
-> > > +++ b/mm/memory.c
-> > > @@ -1091,6 +1091,9 @@ static unsigned long zap_pte_range(struct mmu_gather *tlb,
-> > >                       page_remove_rmap(page, false);
-> > >                       if (unlikely(page_mapcount(page) < 0))
-> > >                               print_bad_pte(vma, addr, ptent, page);
-> > > +                     if (unlikely(vma->vm_flags & VM_WIPEONRELEASE) &&
-> > > +                         page_mapcount(page) == 0)
-> > > +                             clear_highpage(page);
-> > >                       if (unlikely(__tlb_remove_page(tlb, page))) {
-> > >                               force_flush = 1;
-> > >                               addr += PAGE_SIZE;
+> Unfortunately, if an application exits uncleanly, its secrets may still be
+> present in RAM. This can't be easily fixed in userland (eg, if the OOM
+> killer decides to kill a process holding secrets, we're not going to be able
+> to avoid that), so this patch adds a new flag to madvise() to allow userland
+> to request that the kernel clear the covered pages whenever the page
+> map count hits zero. Since vm_flags is already full on 32-bit, it
+> will only work on 64-bit systems. This is currently only permitted on
+> private mappings that have not yet been populated in order to simplify
+> implementation, which should suffice for the envisaged use cases. We can
+> extend the behaviour later if we come up with a robust set of semantics.
 > 
-> Should something like this perhaps be added in page_remove_rmap()
-> instead? That's where the mapcount is decremented; and looking at
-> other callers of page_remove_rmap(), in particular the following ones
-> look interesting:
+> Signed-off-by: Matthew Garrett <mjg59@google.com>
+> ---
+> 
+> Updated based on feedback from Jann - for now let's just prevent setting
+> the flag on anything that has already mapped some pages, which avoids
+> child processes being able to interfere with the parent. In addition,
 
-Well spotted!
+That makes the API quite tricky and different from existing madvise()
+modes that don't care. One would for example have to call
+madvise(MADV_WIPEONRELEASE) before mlock(), otherwise mlock() would
+fault the pages in (unless MLOCK_ONFAULT). As such it really looks like
+a mmap() flag, but that's less flexible.
 
--- 
-Michal Hocko
-SUSE Labs
+How bout just doing the CoW on any such pre-existing pages as part of
+the madvise(MADV_WIPEONRELEASE) call?
