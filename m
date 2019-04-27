@@ -1,68 +1,126 @@
-From: Jonathan Cameron <jic23@kernel.org>
-Subject: Re: [PATCH v10 00/18] Introduce the Counter subsystem
-Date: Sat, 27 Apr 2019 12:49:36 +0100
-Message-ID: <20190427124937.1a9920ea@archlinux>
-References: <cover.1554184734.git.vilhelm.gray@gmail.com>
-        <20190407152550.451a7f63@archlinux>
-        <20190425193624.GA11240@kroah.com>
+From: Lukasz Majewski <lukma@denx.de>
+Subject: Re: [PATCH 1/2] y2038: make CONFIG_64BIT_TIME unconditional
+Date: Sat, 27 Apr 2019 17:06:13 +0200
+Message-ID: <20190427170613.38bdfbbd@jawa>
+References: <20190426142531.1378357-1-arnd@arndb.de>
+        <20190427004653.3cecd1cb@jawa>
+        <20190427095418.344yoomf5nwznatd@sghpc.golosunov.pp.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/signed; micalg=pgp-sha256;
+ boundary="Sig_/NtOXQs_YE8e+5oiZUS+hS8k"; protocol="application/pgp-signature"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190425193624.GA11240@kroah.com>
+In-Reply-To: <20190427095418.344yoomf5nwznatd@sghpc.golosunov.pp.ru>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Greg KH <gregkh@linuxfoundation.org>
-Cc: William Breathitt Gray <vilhelm.gray@gmail.com>, linux-arm-kernel@lists.infradead.org, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org, linux-iio@vger.kernel.org, fabrice.gasnier@st.com, benjamin.gaignard@st.com, knaack.h@gmx.de, lars@metafoo.de, pmeerw@pmeerw.net, akpm@linux-foundation.org, david@lechnology.com, robh+dt@kernel.org, mark.rutland@arm.com, shawnguo@kernel.org, leoyang.li@nxp.com, daniel.lezcano@linaro.org, tglx@linutronix.de, thierry.reding@gmail.com, esben@haabendal.dk, linux-pwm@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, patrick.havelange@essensium.com, linux-api@vger.kernel.org
+To: Stepan Golosunov <stepan@golosunov.pp.ru>
+Cc: Arnd Bergmann <arnd@arndb.de>, Thomas Gleixner <tglx@linutronix.de>, Joseph Myers <joseph@codesourcery.com>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Deepa Dinamani <deepa.kernel@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 25 Apr 2019 21:36:24 +0200
-Greg KH <gregkh@linuxfoundation.org> wrote:
+--Sig_/NtOXQs_YE8e+5oiZUS+hS8k
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-> On Sun, Apr 07, 2019 at 03:25:50PM +0100, Jonathan Cameron wrote:
-> > On Tue,  2 Apr 2019 15:30:35 +0900
-> > William Breathitt Gray <vilhelm.gray@gmail.com> wrote:
-> >   
-> > > Changes in v10:
-> > >   - Fix minor typographical errors in documentation
-> > >   - Merge the FlexTimer Module Quadrature decoder counter driver patches
-> > > 
-> > > This revision is functionally identical to the last; changes in this
-> > > version were made to fix minor typos in the documentation files and also
-> > > to pull in the new FTM quadrature decoder counter driver.
-> > > 
-> > > The Generic Counter API has been and is still in a feature freeze until
-> > > it is merged into the mainline. The following features will be
-> > > investigated after the merge: interrupt support for counter devices, and
-> > > a character device interface for low-latency applications.  
-> > 
-> > Hi William / al,
-> > 
-> > So the question is how to move this forwards?  I'm happy with how it turned
-> > out and the existing drivers we had in IIO are a lot cleaner under
-> > the counter subsystem (other than the backwards compatibility for those that
-> > ever existed in IIO).  For those  not following closely the situation is:  
-> 
-> I've now sucked this into my staging-testing branch and if 0-day is fine
-> with it, I'll merge it to staging-next in a day or so.  This way you can
-> build on it for any iio drivers that might be coming.
+Hi Stepan,
 
-Great thanks. 
+> 27.04.2019 =D0=B2 00:46:53 +0200 Lukasz Majewski =D0=BD=D0=B0=D0=BF=D0=B8=
+=D1=81=D0=B0=D0=BB:
+> > Hi Arnd,
+> >  =20
+> > > As Stepan Golosunov points out, we made a small mistake in the
+> > > get_timespec64() function in the kernel. It was originally added
+> > > under the assumption that CONFIG_64BIT_TIME would get enabled on
+> > > all 32-bit and 64-bit architectures, but when I did the
+> > > conversion, I only turned it on for 32-bit ones.
+> > >=20
+> > > The effect is that the get_timespec64() function never clears the
+> > > upper half of the tv_nsec field for 32-bit tasks in compat mode.
+> > > Clearing this is required for POSIX compliant behavior of
+> > > functions that pass a 'timespec' structure with a 64-bit tv_sec
+> > > and a 32-bit tv_nsec, plus uninitialized padding. =20
+>=20
+> > At least for my setup (32bit ARM with 64 bit time support) this
+> > patch is not fixing anything. =20
+>=20
+> The patch is not supposed to fix anything on 32-bit architectures as
+> in-kernel struct timespec64 has 32-bit tv_nsec there.  Thus truncation
+> should happen automatically.  I also missed that fact when I was
+> reading get_timespec64 code.
 
-> 
-> I do have reservations about that one sysfs file that is multi-line, and
-> I think it will come to bite you in the end over time, so I reserve the
-> right to say "I told you so" when that happens...
-> 
-> But, I don't have a better answer for it now, so don't really worry
-> about it :)
-> 
-> thanks,
-> 
-> greg k-h
+Yes. You are right. The tv_nsec is 32 bit.
 
-Looks like a few late breaking comments came in, but nothing that can't
-be fixed up before this reaches a release.
+>=20
+> (I am wondering whether such trucation is undefined behaviour in C
 
-Thanks,
+According to [1] - Chapter 6.3.1.3 - Point 3 it is
+implementation-defined.
 
-Jonathan
+> and
+> whether there should be sign-extension instead of zeroing-out for the
+> in_compat_syscall() case though.)
+
+What I've found is that "typically" the high order bits are discarded.
+
+However, it is still "implementation dependent".
+
+>=20
+> > > The easiest fix for linux-5.1 is to just make the Kconfig symbol
+> > > unconditional, as it was originally intended. As a follow-up,
+> > > we should remove any #ifdef CONFIG_64BIT_TIME completely.
+> > >=20
+> > > Link:
+> > > https://lore.kernel.org/lkml/20190422090710.bmxdhhankurhafxq@sghpc.go=
+losunov.pp.ru/
+> > > Cc: Lukasz Majewski <lukma@denx.de> Cc: Stepan Golosunov
+> > > <stepan@golosunov.pp.ru> Signed-off-by: Arnd Bergmann
+> > > <arnd@arndb.de> ---
+> > > Please apply this one as a bugfix for 5.1
+> > > ---
+> > >  arch/Kconfig | 2 +-
+> > >  1 file changed, 1 insertion(+), 1 deletion(-)
+> > >=20
+> > > diff --git a/arch/Kconfig b/arch/Kconfig
+> > > index 33687dddd86a..9092e0ffe4d3 100644
+> > > --- a/arch/Kconfig
+> > > +++ b/arch/Kconfig
+> > > @@ -764,7 +764,7 @@ config COMPAT_OLD_SIGACTION
+> > >  	bool
+> > > =20
+> > >  config 64BIT_TIME
+> > > -	def_bool ARCH_HAS_64BIT_TIME
+> > > +	def_bool y
+> > >  	help
+> > >  	  This should be selected by all architectures that need
+> > > to support new system calls with a 64-bit time_t. This is
+> > > relevant on all 32-bit =20
+
+Note:
+
+[1] - http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf
+
+
+Best regards,
+
+Lukasz Majewski
+
+--
+
+DENX Software Engineering GmbH,      Managing Director: Wolfgang Denk
+HRB 165235 Munich, Office: Kirchenstr.5, D-82194 Groebenzell, Germany
+Phone: (+49)-8142-66989-59 Fax: (+49)-8142-66989-80 Email: lukma@denx.de
+
+--Sig_/NtOXQs_YE8e+5oiZUS+hS8k
+Content-Type: application/pgp-signature
+Content-Description: OpenPGP digital signature
+
+-----BEGIN PGP SIGNATURE-----
+
+iQEzBAEBCAAdFiEEgAyFJ+N6uu6+XupJAR8vZIA0zr0FAlzEb+UACgkQAR8vZIA0
+zr2z8gf/Q3cd7NEt3lba9R3Jd4WtSGipupTihng+hzrCulnMN0bI9yi5uaIeHdUM
+XU07EttxLTCyC1lI+AUCZq2pfds70EcWk4iLDlc8AYFoP7ANhidEIz6IMoDi2kRi
+UoiCm9PR1HNZyhOgoeJ2CHKhCfcnNii7q9HLdmQss7hwNVPWlrPl62iTDztliy5m
+CqVNYJT8ATPUxOPveaIZ8STf+bToip/xN6AwrHZLgXYZBeoDHRaJkOC4eI6tgrei
+n8AWhiFFcTmGHkDQXPpcPVYHOthdQeIupW0afQAArtUDjr/vMINbRakLhkqFcFH6
+eZ5TxS6lj+RT/ZkqtY08HY7GyjWhgg==
+=XsUp
+-----END PGP SIGNATURE-----
+
+--Sig_/NtOXQs_YE8e+5oiZUS+hS8k--
