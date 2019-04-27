@@ -1,77 +1,68 @@
-From: Stepan Golosunov <stepan@golosunov.pp.ru>
-Subject: Re: [PATCH 1/2] y2038: make CONFIG_64BIT_TIME unconditional
-Date: Sat, 27 Apr 2019 13:54:18 +0400
-Message-ID: <20190427095418.344yoomf5nwznatd@sghpc.golosunov.pp.ru>
-References: <20190426142531.1378357-1-arnd@arndb.de>
- <20190427004653.3cecd1cb@jawa>
+From: Jonathan Cameron <jic23@kernel.org>
+Subject: Re: [PATCH v10 00/18] Introduce the Counter subsystem
+Date: Sat, 27 Apr 2019 12:49:36 +0100
+Message-ID: <20190427124937.1a9920ea@archlinux>
+References: <cover.1554184734.git.vilhelm.gray@gmail.com>
+        <20190407152550.451a7f63@archlinux>
+        <20190425193624.GA11240@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=koi8-r
-Content-Transfer-Encoding: 8bit
-Return-path: <libc-alpha-return-101632-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-Content-Disposition: inline
-In-Reply-To: <20190427004653.3cecd1cb@jawa>
-To: Lukasz Majewski <lukma@denx.de>
-Cc: Arnd Bergmann <arnd@arndb.de>, Thomas Gleixner <tglx@linutronix.de>, Joseph Myers <joseph@codesourcery.com>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Deepa Dinamani <deepa.kernel@gmail.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190425193624.GA11240@kroah.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Greg KH <gregkh@linuxfoundation.org>
+Cc: William Breathitt Gray <vilhelm.gray@gmail.com>, linux-arm-kernel@lists.infradead.org, devicetree@vger.kernel.org, linux-kernel@vger.kernel.org, linux-iio@vger.kernel.org, fabrice.gasnier@st.com, benjamin.gaignard@st.com, knaack.h@gmx.de, lars@metafoo.de, pmeerw@pmeerw.net, akpm@linux-foundation.org, david@lechnology.com, robh+dt@kernel.org, mark.rutland@arm.com, shawnguo@kernel.org, leoyang.li@nxp.com, daniel.lezcano@linaro.org, tglx@linutronix.de, thierry.reding@gmail.com, esben@haabendal.dk, linux-pwm@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, patrick.havelange@essensium.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-27.04.2019 в 00:46:53 +0200 Lukasz Majewski написал:
-> Hi Arnd,
+On Thu, 25 Apr 2019 21:36:24 +0200
+Greg KH <gregkh@linuxfoundation.org> wrote:
+
+> On Sun, Apr 07, 2019 at 03:25:50PM +0100, Jonathan Cameron wrote:
+> > On Tue,  2 Apr 2019 15:30:35 +0900
+> > William Breathitt Gray <vilhelm.gray@gmail.com> wrote:
+> >   
+> > > Changes in v10:
+> > >   - Fix minor typographical errors in documentation
+> > >   - Merge the FlexTimer Module Quadrature decoder counter driver patches
+> > > 
+> > > This revision is functionally identical to the last; changes in this
+> > > version were made to fix minor typos in the documentation files and also
+> > > to pull in the new FTM quadrature decoder counter driver.
+> > > 
+> > > The Generic Counter API has been and is still in a feature freeze until
+> > > it is merged into the mainline. The following features will be
+> > > investigated after the merge: interrupt support for counter devices, and
+> > > a character device interface for low-latency applications.  
+> > 
+> > Hi William / al,
+> > 
+> > So the question is how to move this forwards?  I'm happy with how it turned
+> > out and the existing drivers we had in IIO are a lot cleaner under
+> > the counter subsystem (other than the backwards compatibility for those that
+> > ever existed in IIO).  For those  not following closely the situation is:  
 > 
-> > As Stepan Golosunov points out, we made a small mistake in the
-> > get_timespec64() function in the kernel. It was originally added under
-> > the assumption that CONFIG_64BIT_TIME would get enabled on all 32-bit
-> > and 64-bit architectures, but when I did the conversion, I only turned
-> > it on for 32-bit ones.
-> > 
-> > The effect is that the get_timespec64() function never clears the
-> > upper half of the tv_nsec field for 32-bit tasks in compat mode.
-> > Clearing this is required for POSIX compliant behavior of functions
-> > that pass a 'timespec' structure with a 64-bit tv_sec and a 32-bit
-> > tv_nsec, plus uninitialized padding.
+> I've now sucked this into my staging-testing branch and if 0-day is fine
+> with it, I'll merge it to staging-next in a day or so.  This way you can
+> build on it for any iio drivers that might be coming.
 
-> At least for my setup (32bit ARM with 64 bit time support) this patch is
-> not fixing anything.
+Great thanks. 
 
-The patch is not supposed to fix anything on 32-bit architectures as
-in-kernel struct timespec64 has 32-bit tv_nsec there.  Thus truncation
-should happen automatically.  I also missed that fact when I was
-reading get_timespec64 code.
+> 
+> I do have reservations about that one sysfs file that is multi-line, and
+> I think it will come to bite you in the end over time, so I reserve the
+> right to say "I told you so" when that happens...
+> 
+> But, I don't have a better answer for it now, so don't really worry
+> about it :)
+> 
+> thanks,
+> 
+> greg k-h
 
-(I am wondering whether such trucation is undefined behaviour in C and
-whether there should be sign-extension instead of zeroing-out for the
-in_compat_syscall() case though.)
+Looks like a few late breaking comments came in, but nothing that can't
+be fixed up before this reaches a release.
 
-> > The easiest fix for linux-5.1 is to just make the Kconfig symbol
-> > unconditional, as it was originally intended. As a follow-up,
-> > we should remove any #ifdef CONFIG_64BIT_TIME completely.
-> > 
-> > Link:
-> > https://lore.kernel.org/lkml/20190422090710.bmxdhhankurhafxq@sghpc.golosunov.pp.ru/
-> > Cc: Lukasz Majewski <lukma@denx.de> Cc: Stepan Golosunov
-> > <stepan@golosunov.pp.ru> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
-> > ---
-> > Please apply this one as a bugfix for 5.1
-> > ---
-> >  arch/Kconfig | 2 +-
-> >  1 file changed, 1 insertion(+), 1 deletion(-)
-> > 
-> > diff --git a/arch/Kconfig b/arch/Kconfig
-> > index 33687dddd86a..9092e0ffe4d3 100644
-> > --- a/arch/Kconfig
-> > +++ b/arch/Kconfig
-> > @@ -764,7 +764,7 @@ config COMPAT_OLD_SIGACTION
-> >  	bool
-> >  
-> >  config 64BIT_TIME
-> > -	def_bool ARCH_HAS_64BIT_TIME
-> > +	def_bool y
-> >  	help
-> >  	  This should be selected by all architectures that need to
-> > support new system calls with a 64-bit time_t. This is relevant on
-> > all 32-bit
+Thanks,
+
+Jonathan
