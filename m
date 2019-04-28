@@ -1,53 +1,84 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH 1/2] y2038: make CONFIG_64BIT_TIME unconditional
-Date: Sat, 27 Apr 2019 22:47:17 +0200
-Message-ID: <CAK8P3a0rdByED8ZsCSm4biuvOhkKs3o9_wFnGnSHk0hOhu-vsA@mail.gmail.com>
-References: <20190426142531.1378357-1-arnd@arndb.de> <20190427004653.3cecd1cb@jawa>
- <20190427095418.344yoomf5nwznatd@sghpc.golosunov.pp.ru> <20190427170613.38bdfbbd@jawa>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH v1 1/2] Add polling support to pidfd
+Date: Sun, 28 Apr 2019 18:24:06 +0200
+Message-ID: <20190428162405.GA6757@redhat.com>
+References: <20190425190010.46489-1-joel@joelfernandes.org>
+ <20190425222359.sqhboc4x4daznr6r@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190427170613.38bdfbbd@jawa>
+Content-Disposition: inline
+In-Reply-To: <20190425222359.sqhboc4x4daznr6r@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Lukasz Majewski <lukma@denx.de>
-Cc: Stepan Golosunov <stepan@golosunov.pp.ru>, Thomas Gleixner <tglx@linutronix.de>, Joseph Myers <joseph@codesourcery.com>, GNU C Library <libc-alpha@sourceware.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Deepa Dinamani <deepa.kernel@gmail.com>
+To: Christian Brauner <christian@brauner.io>
+Cc: "Joel Fernandes (Google)" <joel@joelfernandes.org>, linux-kernel@vger.kernel.org, luto@amacapital.net, rostedt@goodmis.org, dancol@google.com, sspatil@google.com, jannh@google.com, surenb@google.com, timmurray@google.com, Jonathan Kowalski <bl0pbl33p@gmail.com>, torvalds@linux-foundation.org, kernel-team@android.com, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Ingo Molnar <mingo@kernel.org>, Jann Horn <jann@thejh.net>, linux-kselftest@vger.kernel.org, Michal Hocko <mhocko@suse.com>, "Peter Zijlstra (Intel)" <peterz@infradead.org>, Serge Hallyn <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Stephen Rothwell <sfr@canb.auug.org.au>, Thomas
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Apr 27, 2019 at 5:06 PM Lukasz Majewski <lukma@denx.de> wrote:
-> > 27.04.2019 в 00:46:53 +0200 Lukasz Majewski написал:
-> > (I am wondering whether such trucation is undefined behaviour in C
+Thanks for cc'ing me...
+
+On 04/26, Christian Brauner wrote:
 >
-> According to [1] - Chapter 6.3.1.3 - Point 3 it is
-> implementation-defined.
+> On Thu, Apr 25, 2019 at 03:00:09PM -0400, Joel Fernandes (Google) wrote:
+> > +static unsigned int pidfd_poll(struct file *file, struct poll_table_struct *pts)
+> > +{
+> > +	struct task_struct *task;
+> > +	struct pid *pid;
+> > +	int poll_flags = 0;
+> > +
+> > +	/*
+> > +	 * tasklist_lock must be held because to avoid racing with
+> > +	 * changes in exit_state and wake up. Basically to avoid:
+> > +	 *
+> > +	 * P0: read exit_state = 0
+> > +	 * P1: write exit_state = EXIT_DEAD
+> > +	 * P1: Do a wake up - wq is empty, so do nothing
+> > +	 * P0: Queue for polling - wait forever.
+> > +	 */
+> > +	read_lock(&tasklist_lock);
+> > +	pid = file->private_data;
+> > +	task = pid_task(pid, PIDTYPE_PID);
+> > +	WARN_ON_ONCE(task && !thread_group_leader(task));
+> > +
+> > +	if (!task || (task->exit_state && thread_group_empty(task)))
+> > +		poll_flags = POLLIN | POLLRDNORM;
 
-The kernel relies on the sane behavior for integer overflow in many
-places already, and it is built with -fno-strict-overflow to also make
-sure gcc doesn't optimize cases that would be undefined otherwise.
+Joel, I still can't understand why do we need tasklist... and I don't really
+understand the comment. The code looks as if you are trying to avoid poll_wait(),
+but this would be strange.
 
-> > and
-> > whether there should be sign-extension instead of zeroing-out for the
-> > in_compat_syscall() case though.)
+OK, why can't pidfd_poll() do
+
+	poll_wait(file, &pid->wait_pidfd, pts);
+
+	rcu_read_lock();
+	task = pid_task(pid, PIDTYPE_PID);
+	if (!task || task->exit_state && thread_group_empty(task))
+		poll_flags = POLLIN | ...;
+	rcu_read_unlock();
+
+	return poll_flags;
+
+?
+
+> > +static void do_notify_pidfd(struct task_struct *task)
 >
-> What I've found is that "typically" the high order bits are discarded.
->
-> However, it is still "implementation dependent".
+> Maybe a short command that this helper can only be called when we know
+> that task is a thread-group leader wouldn't hurt so there's no confusion
+> later.
 
-I think the question was whether we should use
+Not really. If the task is traced, do_notify_parent() (and thus do_notify_pidfd())
+can be called to notify the debugger even if the task is not a leader and/or if
+it is not the last thread. The latter means a spurious wakeup for pidfd_poll().
 
-          kts.tv_nsec = (int)kts.tv_nsec;
+> > +{
+> > +	struct pid *pid;
+> > +
+> > +	lockdep_assert_held(&tasklist_lock);
+> > +
+> > +	pid = get_task_pid(task, PIDTYPE_PID);
+> > +	wake_up_all(&pid->wait_pidfd);
+> > +	put_pid(pid);
 
-instead of
+Why get/put?
 
-          kts.tv_nsec &= 0xfffffffful;
-
-Both have a clearly defined meaning in the C dialect we use in the
-kernel, but differ in the upper 32 bits for negative input values.
-
-I would say that using sign-extension indeed makes more sense
-here, but we don't need to change it for linux-5.1, since none of the
-callers of get_timespec64() care -- any negative 32-bit tv_nsec
-value results in -EINVAL, including the utimensat() syscall that
-has two special cases outside of the 0...999999999 range.
-
-      Arnd
+Oleg.
