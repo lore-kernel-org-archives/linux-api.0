@@ -1,106 +1,217 @@
-From: "Serge E. Hallyn" <serge@hallyn.com>
-Subject: Re: RFC: on adding new CLONE_* flags [WAS Re: [PATCH 0/4] clone: add
- CLONE_PIDFD]
-Date: Mon, 29 Apr 2019 10:49:49 -0500
-Message-ID: <20190429154949.GA23456@mail.hallyn.com>
-References: <20190414201436.19502-1-christian@brauner.io>
- <dc05ffe3-c2ff-8b3e-d181-e0cc620bf91d@metux.net>
- <20190415155034.GA25351@mail.hallyn.com>
- <000a64d6-1e22-21bf-f232-15f141092e44@metux.net>
+From: Alexey Gladkov <gladkov.alexey@gmail.com>
+Subject: [PATCH v4] moduleparam: Save information about built-in modules in
+ separate file
+Date: Mon, 29 Apr 2019 18:11:14 +0200
+Message-ID: <20190429161114.GY9023@dhcp129-178.brq.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <000a64d6-1e22-21bf-f232-15f141092e44@metux.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Enrico Weigelt, metux IT consult" <lkml@metux.net>
-Cc: "Serge E. Hallyn" <serge@hallyn.com>, Christian Brauner <christian@brauner.io>, torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, jannh@google.com, dhowells@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, tglx@linutronix.de, mtk.manpages@gmail.com, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, joel@joelfernandes.org, dancol@google.com
+To: Masahiro Yamada <yamada.masahiro@socionext.com>
+Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux Kbuild mailing list <linux-kbuild@vger.kernel.org>, linux-api@vger.kernel.org, linux-modules@vger.kernel.org, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>, "Dmitry V. Levin" <ldv@altlinux.org>, Michal Marek <michal.lkml@markovi.net>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Rusty Russell <rusty@rustcorp.com.au>, Jessica Yu <jeyu@kernel.org>, Lucas De Marchi <lucas.de.marchi@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 16, 2019 at 08:32:50PM +0200, Enrico Weigelt, metux IT consult wrote:
+Problem:
 
-(Sorry for the late reply, I had missed this one)
+When a kernel module is compiled as a separate module, some important
+information about the kernel module is available via .modinfo section of
+the module.  In contrast, when the kernel module is compiled into the
+kernel, that information is not available.
 
-> On 15.04.19 17:50, Serge E. Hallyn wrote:
-> 
-> Hi,
-> 
-> >> I'm working on implementing plan9-like fs namespaces, where unprivileged>> processes can change their own namespace at will. For that, certain>
-> > Is there any place where we can see previous discussion about this?
-> Yes, lkml and constainers list.
-> It's stalled since few month, as I'm too busy w/ other things.
-> 
-> > If you have to disable suid anyway, then is there any reason why the> existing ability to do this in a private user namespace, with only>
-> your own uid mapped (which you can do without any privilege) does> not
-> suffice?  That was actually one of the main design goals of user>
-> namespaces, to be able to clone(CLONE_NEWUSER), map your current uid,>
-> then clone(CLONE_NEWNS) and bind mount at will.
-> Well, it's not that easy ... maybe I should explain a bit more about how
-> Plan9 works, and how I intent to map it into Linux:
-> 
-> * on plan9, anybody can alter his own fs namespace (bind and mount), as
->   well as spawning new ones
-> * basically anything is coming from some fileserver - even devices
->   (eg. there is no such thing like device nodes)
-> * access control is done by the individual fileservers, based on the
->   initial authentication (on connecting to the server, before mounting)
+Information about built-in modules is necessary in the following cases:
 
-yes, so far I'm aware of this,
+1. When it is necessary to find out what additional parameters can be
+passed to the kernel at boot time.
 
-> * all users are equal - no root at all. the only exception is the
->   initial process, which gets the kernel devices mounted into his
->   namespace.
+2. When you need to know which module names and their aliases are in
+the kernel. This is very useful for creating an initrd image.
 
-This does not match my understanding, but I'm most likely wrong.  (I thought
-there was an actual 'host owner' uid, which mostly is only used for initial
-process, but is basically root with a different name, and used far less.  No
-uid transitions without factotem so that it *looked* like no root user).
+Proposal:
 
-> What I'd like to achieve on Linux:
-> 
-> * unprivileged users can have their own mount namespace, where they
->   can mount at will (maybe just 9P).
+The proposed patch does not remove .modinfo section with module
+information from the vmlinux at the build time and saves it into a
+separate file after kernel linking. So, the kernel does not increase in
+size and no additional information remains in it. Information is stored
+in the same format as in the separate modules (null-terminated string
+array). Because the .modinfo section is already exported with a separate
+modules, we are not creating a new API.
 
-No problem, you can do that now.
+It can be easily read in the userspace:
 
-> * but they still appear as the same normal users to the rest of the
->   system
+$ tr '\0' '\n' < modules.builtin.modinfo
+ext4.softdep=pre: crc32c
+ext4.license=GPL
+ext4.description=Fourth Extended Filesystem
+ext4.author=Remy Card, Stephen Tweedie, Andrew Morton, Andreas Dilger, Theodore Ts'o and others
+ext4.alias=fs-ext4
+ext4.alias=ext3
+ext4.alias=fs-ext3
+ext4.alias=ext2
+ext4.alias=fs-ext2
+md_mod.alias=block-major-9-*
+md_mod.alias=md
+md_mod.description=MD RAID framework
+md_mod.license=GPL
+md_mod.parmtype=create_on_open:bool
+md_mod.parmtype=start_dirty_degraded:int
+...
 
-No problem, you can do that now.
+v2:
+ * Extract modinfo from vmlinux.o as suggested by Masahiro Yamada;
+ * Rename output file to kernel.builtin;
+ * Add MODULE_VERSION to modinfo that is saved to the kernel.builtin;
+ * Fix build warnings on powerpc.
 
-> * 9p programs (compiled for Linux ABI) can run parallel to traditional
->   linux programs within the same user and sessions (eg. from a terminal,
->   i can call both the same way)
-> * namespace modifications affect both equally (eg. I could run ff in
->   an own ns)
+v3:
+ * Rename output file to modules.builtin.modinfo as suggested by Masahiro Yamada;
+ * Update Documentation/dontdiff, Documentation/kbuild/kbuild.txt.
 
-affect both of what equally?
+Co-Developed-by: Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>
+Signed-off-by: Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>
+Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
+Acked-by: Jessica Yu <jeyu@kernel.org>
+---
+ .gitignore                        |  1 +
+ Documentation/dontdiff            |  1 +
+ Documentation/kbuild/kbuild.txt   |  5 +++++
+ Makefile                          |  2 ++
+ include/asm-generic/vmlinux.lds.h |  1 +
+ include/linux/module.h            |  1 +
+ include/linux/moduleparam.h       | 12 +++++-------
+ scripts/link-vmlinux.sh           |  3 +++
+ 8 files changed, 19 insertions(+), 7 deletions(-)
 
-> * these namespaces exist as long as there's one process alive in here
-
-That's sort of how it is now, except you can also pin the namespaces
-with their fds.
-
-> * creating a new ns can be done by unprivileged user
-
-That's true now.
-
->  One of the things to make this work (w/o introducing a massive security
-> hole) is disable suid for those processes (actually, one day i'd like to
-> get rid of it completely, but that's another story).
-
-That's exactly what user namespaces are for.  You can create a new
-user namespace, using no privilege at all, with your current uid (i.e.
-1000) mapped to whatever uid you like; if you pick 0, then you can unshare all
-the namespaces you like.  Once you unshare mnt_ns, you can mount to your
-heart's content.  To other processes on the host, your process is
-uid 1000.  Host uid 0 is not mapped into your ns, so you cannot exploit
-suid to host root.
-
-Regarding factotem, I agree that with the pidfd work going on etc, it's getting
-more and more tempting to attempt a switch to that.  Looking back at my folder,
-I see you posted a kernel patch for it.  I had done the same long ago.  Happy to
-work with you again on that, and put a simple daemon into shadow package, if
-util-linux isn't deemed the far better place.
-
--serge
+diff --git a/.gitignore b/.gitignore
+index a20ac26aa2f5..91711164cd0a 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -58,6 +58,7 @@ modules.builtin
+ /vmlinuz
+ /System.map
+ /Module.markers
++/modules.builtin.modinfo
+ 
+ #
+ # RPM spec file (make rpm-pkg)
+diff --git a/Documentation/dontdiff b/Documentation/dontdiff
+index 2228fcc8e29f..3d4d5a402b8b 100644
+--- a/Documentation/dontdiff
++++ b/Documentation/dontdiff
+@@ -179,6 +179,7 @@ mktables
+ mktree
+ modpost
+ modules.builtin
++modules.builtin.modinfo
+ modules.order
+ modversions.h*
+ nconf
+diff --git a/Documentation/kbuild/kbuild.txt b/Documentation/kbuild/kbuild.txt
+index c9e3d93e7a89..63e118c8c837 100644
+--- a/Documentation/kbuild/kbuild.txt
++++ b/Documentation/kbuild/kbuild.txt
+@@ -11,6 +11,11 @@ modules.builtin
+ This file lists all modules that are built into the kernel. This is used
+ by modprobe to not fail when trying to load something builtin.
+ 
++modules.builtin.modinfo
++--------------------------------------------------
++This file contains modinfo from all modules that are built into the kernel.
++Unlike modinfo of a separate module, all fields are prefixed with module name.
++
+ 
+ Environment variables
+ 
+diff --git a/Makefile b/Makefile
+index d5713e7b1e50..5e6657fcf08c 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1288,6 +1288,7 @@ _modinst_:
+ 	fi
+ 	@cp -f $(objtree)/modules.order $(MODLIB)/
+ 	@cp -f $(objtree)/modules.builtin $(MODLIB)/
++	@cp -f $(objtree)/modules.builtin.modinfo $(MODLIB)/
+ 	$(Q)$(MAKE) -f $(srctree)/scripts/Makefile.modinst
+ 
+ # This depmod is only for convenience to give the initial
+@@ -1328,6 +1329,7 @@ endif # CONFIG_MODULES
+ 
+ # Directories & files removed with 'make clean'
+ CLEAN_DIRS  += $(MODVERDIR) include/ksym
++CLEAN_FILES += modules.builtin.modinfo
+ 
+ # Directories & files removed with 'make mrproper'
+ MRPROPER_DIRS  += include/config usr/include include/generated          \
+diff --git a/include/asm-generic/vmlinux.lds.h b/include/asm-generic/vmlinux.lds.h
+index 3d7a6a9c2370..44c724bf7d3a 100644
+--- a/include/asm-generic/vmlinux.lds.h
++++ b/include/asm-generic/vmlinux.lds.h
+@@ -844,6 +844,7 @@
+ 	EXIT_CALL							\
+ 	*(.discard)							\
+ 	*(.discard.*)							\
++	*(.modinfo)							\
+ 	}
+ 
+ /**
+diff --git a/include/linux/module.h b/include/linux/module.h
+index f5bc4c046461..1cae28b1172a 100644
+--- a/include/linux/module.h
++++ b/include/linux/module.h
+@@ -237,6 +237,7 @@ extern typeof(name) __mod_##type##__##name##_device_table		\
+ #define MODULE_VERSION(_version) MODULE_INFO(version, _version)
+ #else
+ #define MODULE_VERSION(_version)					\
++	MODULE_INFO(version, _version);					\
+ 	static struct module_version_attribute ___modver_attr = {	\
+ 		.mattr	= {						\
+ 			.attr	= {					\
+diff --git a/include/linux/moduleparam.h b/include/linux/moduleparam.h
+index ba36506db4fb..5ba250d9172a 100644
+--- a/include/linux/moduleparam.h
++++ b/include/linux/moduleparam.h
+@@ -10,23 +10,21 @@
+    module name. */
+ #ifdef MODULE
+ #define MODULE_PARAM_PREFIX /* empty */
++#define __MODULE_INFO_PREFIX /* empty */
+ #else
+ #define MODULE_PARAM_PREFIX KBUILD_MODNAME "."
++/* We cannot use MODULE_PARAM_PREFIX because some modules override it. */
++#define __MODULE_INFO_PREFIX KBUILD_MODNAME "."
+ #endif
+ 
+ /* Chosen so that structs with an unsigned long line up. */
+ #define MAX_PARAM_PREFIX_LEN (64 - sizeof(unsigned long))
+ 
+-#ifdef MODULE
+ #define __MODULE_INFO(tag, name, info)					  \
+ static const char __UNIQUE_ID(name)[]					  \
+   __used __attribute__((section(".modinfo"), unused, aligned(1)))	  \
+-  = __stringify(tag) "=" info
+-#else  /* !MODULE */
+-/* This struct is here for syntactic coherency, it is not used */
+-#define __MODULE_INFO(tag, name, info)					  \
+-  struct __UNIQUE_ID(name) {}
+-#endif
++  = __MODULE_INFO_PREFIX __stringify(tag) "=" info
++
+ #define __MODULE_PARM_TYPE(name, _type)					  \
+   __MODULE_INFO(parmtype, name##type, #name ":" _type)
+ 
+diff --git a/scripts/link-vmlinux.sh b/scripts/link-vmlinux.sh
+index c8cf45362bd6..43abf917f1ec 100755
+--- a/scripts/link-vmlinux.sh
++++ b/scripts/link-vmlinux.sh
+@@ -226,6 +226,9 @@ modpost_link vmlinux.o
+ # modpost vmlinux.o to check for section mismatches
+ ${MAKE} -f "${srctree}/scripts/Makefile.modpost" vmlinux.o
+ 
++info MODINFO modules.builtin.modinfo
++"${OBJCOPY}" -j .modinfo -O binary vmlinux.o modules.builtin.modinfo
++
+ kallsymso=""
+ kallsyms_vmlinux=""
+ if [ -n "${CONFIG_KALLSYMS}" ]; then
+-- 
+2.21.0
