@@ -1,40 +1,48 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: RFC: on adding new CLONE_* flags [WAS Re: [PATCH 0/4] clone: add CLONE_PIDFD]
-Date: Mon, 29 Apr 2019 14:31:30 -0700
-Message-ID: <CAHk-=wiPv4QJBC0qX8xxnT5P2C7S5uDG0HKdvdSpcoXaHG91tQ@mail.gmail.com>
-References: <20190414201436.19502-1-christian@brauner.io> <dc05ffe3-c2ff-8b3e-d181-e0cc620bf91d@metux.net>
- <20190415195911.z7b7miwsj67ha54y@yavin> <CALCETrWxMnaPvwicqkMLswMynWvJVteazD-bFv3ZnBKWp-1joQ@mail.gmail.com>
- <20190420071406.GA22257@ip-172-31-15-78> <CAG48ez0gG4bd-t1wdR2p6-N2FjWbCqm_+ZThKfF7yKnD=KLqAQ@mail.gmail.com>
- <CAG48ez15bf1EJB0XTJsGFpvf8r5pj9+rv1axKVr13H1NW7ARZw@mail.gmail.com>
- <CAHk-=wi_N81mKYFz33ycoWiL7_tGbZBMJOsAs16inYzSza+OEw@mail.gmail.com> <87zho8bl8x.fsf@oldenburg2.str.redhat.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH V2] mm: Allow userland to request that the kernel clear
+ memory on release
+Date: Mon, 29 Apr 2019 17:44:58 -0400
+Message-ID: <20190429214458.GB3715@dhcp22.suse.cz>
+References: <CACdnJuup-y1xAO93wr+nr6ARacxJ9YXgaceQK9TLktE7shab1w@mail.gmail.com>
+ <20190424211038.204001-1-matthewgarrett@google.com>
+ <20190425121410.GC1144@dhcp22.suse.cz>
+ <20190425123755.GX12751@dhcp22.suse.cz>
+ <CACdnJuutwmBn_ASY1N1+ZK8g4MbpjTnUYbarR+CPhC5BAy0oZA@mail.gmail.com>
+ <20190426052520.GB12337@dhcp22.suse.cz>
+ <CACdnJutweLKsir_r9EgP9g=Eih-hbhq20N8zHzKawR8=awnENw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87zho8bl8x.fsf@oldenburg2.str.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <CACdnJutweLKsir_r9EgP9g=Eih-hbhq20N8zHzKawR8=awnENw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>
-Cc: Jann Horn <jannh@google.com>, Kevin Easton <kevin@guarana.org>, Andy Lutomirski <luto@kernel.org>, Christian Brauner <christian@brauner.io>, Aleksa Sarai <cyphar@cyphar.com>, "Enrico Weigelt, metux IT consult" <lkml@metux.net>, Al Viro <viro@zeniv.linux.org.uk>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Joel Fernandes <joel@joelfernandes.org>, Daniel Colascione <dancol@goog>
+To: Matthew Garrett <mjg59@google.com>
+Cc: linux-mm@kvack.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 29, 2019 at 1:38 PM Florian Weimer <fweimer@redhat.com> wrote:
->
-> In Linux-as-the-ABI (as opposed to Linux-as-the-implementation), vfork
-> is sometimes implemented as fork, so applications cannot rely on the
-> vfork behavior regarding the stopped parent and the shared address
-> space.
+On Fri 26-04-19 11:08:44, Matthew Garrett wrote:
+> On Thu, Apr 25, 2019 at 10:25 PM Michal Hocko <mhocko@kernel.org> wrote:
+> >
+> > On Thu 25-04-19 13:39:01, Matthew Garrett wrote:
+> > > Yes, given MADV_DONTDUMP doesn't imply mlock I thought it'd be more
+> > > consistent to keep those independent.
+> >
+> > Do we want to fail madvise call on VMAs that are not mlocked then? What
+> > if the munlock happens later after the madvise is called?
+> 
+> I'm not sure if it's strictly necessary. We already have various
+> combinations of features that only make sense when used together and
+> which can be undermined by later actions. I can see the appeal of
+> designing this in a way that makes it harder to misuse, but is that
+> worth additional implementation complexity?
 
-What broken library does that?
+If the complexity is not worth the usual usecases then this should be
+really documented and noted that without an mlock you are not getting
+the full semantic and you can leave memory behind on the swap partition.
 
-Sure, we didn't have a proper vfork() long long long ago. But that
-predates both git and BK, so it's some time in the 90's. We've had a
-proper vfork() *forever*.
-
-> In fact, it would be nice to have a flag we can check in the posix_spawn
-> implementation, so that we can support vfork-as-fork without any run
-> time cost to native Linux.
-
-No. Just make a bug-report to whatever broken library you use. What's
-the point of having a library that can't even get vfork() right? Why
-would you want to have a flag to say "vfork is broken"?
-
-                 Linus
+I cannot judge how much that matter but it certainly looks half feature
+to me but if nobody is going to use the madvise without mlock then it
+looks certainly much easier to implement.
+-- 
+Michal Hocko
+SUSE Labs
