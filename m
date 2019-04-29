@@ -1,47 +1,120 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH 1/2] y2038: make CONFIG_64BIT_TIME unconditional
-Date: Mon, 29 Apr 2019 15:22:02 +0200
-Message-ID: <CAK8P3a2UVqg--Xs29o55QbsRKu-ynN8ZXR96Phiq2cuCoABvGw@mail.gmail.com>
-References: <20190426142531.1378357-1-arnd@arndb.de> <alpine.DEB.2.21.1904290933130.1626@nanos.tec.linutronix.de>
+From: Joel Fernandes <joel@joelfernandes.org>
+Subject: Re: [PATCH v1 1/2] Add polling support to pidfd
+Date: Mon, 29 Apr 2019 10:02:45 -0400
+Message-ID: <20190429140245.GB233442@google.com>
+References: <20190425190010.46489-1-joel@joelfernandes.org>
+ <20190425222359.sqhboc4x4daznr6r@brauner.io>
+ <20190428162405.GA6757@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.21.1904290933130.1626@nanos.tec.linutronix.de>
+Content-Disposition: inline
+In-Reply-To: <20190428162405.GA6757@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: Joseph Myers <joseph@codesourcery.com>, GNU C Library <libc-alpha@sourceware.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Deepa Dinamani <deepa.kernel@gmail.com>, Lukasz Majewski <lukma@denx.de>, Stepan Golosunov <stepan@golosunov.pp.ru>
+To: Oleg Nesterov <oleg@redhat.com>
+Cc: Christian Brauner <christian@brauner.io>, linux-kernel@vger.kernel.org, luto@amacapital.net, rostedt@goodmis.org, dancol@google.com, sspatil@google.com, jannh@google.com, surenb@google.com, timmurray@google.com, Jonathan Kowalski <bl0pbl33p@gmail.com>, torvalds@linux-foundation.org, kernel-team@android.com, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Ingo Molnar <mingo@kernel.org>, Jann Horn <jann@thejh.net>, linux-kselftest@vger.kernel.org, Michal Hocko <mhocko@suse.com>, "Peter Zijlstra (Intel)" <peterz@infradead.org>, Serge Hallyn <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Stephen Rothwell <sfr@canb.auug.org.au>, Thomas Gleixner <tgl>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 29, 2019 at 9:34 AM Thomas Gleixner <tglx@linutronix.de> wrote:
->
-> On Fri, 26 Apr 2019, Arnd Bergmann wrote:
->
-> > As Stepan Golosunov points out, we made a small mistake in the
-> > get_timespec64() function in the kernel. It was originally added under
-> > the assumption that CONFIG_64BIT_TIME would get enabled on all 32-bit
-> > and 64-bit architectures, but when I did the conversion, I only turned
-> > it on for 32-bit ones.
+On Sun, Apr 28, 2019 at 06:24:06PM +0200, Oleg Nesterov wrote:
+> Thanks for cc'ing me...
+> 
+> On 04/26, Christian Brauner wrote:
 > >
-> > The effect is that the get_timespec64() function never clears the upper
-> > half of the tv_nsec field for 32-bit tasks in compat mode. Clearing this
-> > is required for POSIX compliant behavior of functions that pass a
-> > 'timespec' structure with a 64-bit tv_sec and a 32-bit tv_nsec, plus
-> > uninitialized padding.
-> >
-> > The easiest fix for linux-5.1 is to just make the Kconfig symbol
-> > unconditional, as it was originally intended. As a follow-up,
-> > we should remove any #ifdef CONFIG_64BIT_TIME completely.
-> >
-> > Link: https://lore.kernel.org/lkml/20190422090710.bmxdhhankurhafxq@sghpc.golosunov.pp.ru/
-> > Cc: Lukasz Majewski <lukma@denx.de>
-> > Cc: Stepan Golosunov <stepan@golosunov.pp.ru>
-> > Signed-off-by: Arnd Bergmann <arnd@arndb.de>
-> > ---
-> > Please apply this one as a bugfix for 5.1
->
-> Can you provide a 'Fixes: ....' tag please?
+> > On Thu, Apr 25, 2019 at 03:00:09PM -0400, Joel Fernandes (Google) wrote:
+> > > +static unsigned int pidfd_poll(struct file *file, struct poll_table_struct *pts)
+> > > +{
+> > > +	struct task_struct *task;
+> > > +	struct pid *pid;
+> > > +	int poll_flags = 0;
+> > > +
+> > > +	/*
+> > > +	 * tasklist_lock must be held because to avoid racing with
+> > > +	 * changes in exit_state and wake up. Basically to avoid:
+> > > +	 *
+> > > +	 * P0: read exit_state = 0
+> > > +	 * P1: write exit_state = EXIT_DEAD
+> > > +	 * P1: Do a wake up - wq is empty, so do nothing
+> > > +	 * P0: Queue for polling - wait forever.
+> > > +	 */
+> > > +	read_lock(&tasklist_lock);
+> > > +	pid = file->private_data;
+> > > +	task = pid_task(pid, PIDTYPE_PID);
+> > > +	WARN_ON_ONCE(task && !thread_group_leader(task));
+> > > +
+> > > +	if (!task || (task->exit_state && thread_group_empty(task)))
+> > > +		poll_flags = POLLIN | POLLRDNORM;
+> 
+> Joel, I still can't understand why do we need tasklist... and I don't really
+> understand the comment. The code looks as if you are trying to avoid poll_wait(),
+> but this would be strange.
+> 
+> OK, why can't pidfd_poll() do
+> 
+> 	poll_wait(file, &pid->wait_pidfd, pts);
+> 
+> 	rcu_read_lock();
+> 	task = pid_task(pid, PIDTYPE_PID);
+> 	if (!task || task->exit_state && thread_group_empty(task))
+> 		poll_flags = POLLIN | ...;
+> 	rcu_read_unlock();
+> 
+> 	return poll_flags;
+> 
+> ?
 
-Ok, resent both patches now. I also took the chance to add a clarification
-for the point that Lukasz missed on the first submission.
+Oh that's much better Oleg, and would avoid the race I had in mind: Basically
+I was acquiring the tasklist_lock to avoid a case where a polling task is not
+woken up because it was added to the waitqueue too late. The reading of the
+exit_state and the conditional adding to the wait queue, needed to be atomic.
+Otherwise something like the following may be possible:
 
-       Arnd
+Task A (poller)		Task B (exiting task being polled)
+------------            ----------------
+poll() called
+			exit_state is set to non-zero
+read exit_state
+			wake_up_all()
+
+add_wait_queue()
+----------------------------------------------
+
+However, in your code above, it is avoided because we get:
+
+Task A (poller)		Task B (exiting task being polled)
+------------            ----------------
+poll() called
+add_wait_queue()
+			exit_state is set to non-zero
+read exit_state
+remove_wait_queue()
+			wake_up_all()
+
+I don't see any other issues with your code above so I can try it out and
+update the patches. Thanks.
+
+> > > +static void do_notify_pidfd(struct task_struct *task)
+> >
+> > Maybe a short command that this helper can only be called when we know
+> > that task is a thread-group leader wouldn't hurt so there's no confusion
+> > later.
+> 
+> Not really. If the task is traced, do_notify_parent() (and thus do_notify_pidfd())
+> can be called to notify the debugger even if the task is not a leader and/or if
+> it is not the last thread. The latter means a spurious wakeup for pidfd_poll().
+
+Seems like you are replying to Christian's point. I agree with you.
+
+> > > +{
+> > > +	struct pid *pid;
+> > > +
+> > > +	lockdep_assert_held(&tasklist_lock);
+> > > +
+> > > +	pid = get_task_pid(task, PIDTYPE_PID);
+> > > +	wake_up_all(&pid->wait_pidfd);
+> > > +	put_pid(pid);
+> 
+> Why get/put?
+
+Yes, pid_task() should do it. Will update it. Thanks!
+
+ - Joel
