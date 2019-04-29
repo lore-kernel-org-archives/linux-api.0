@@ -1,91 +1,135 @@
-From: "Enrico Weigelt, metux IT consult" <lkml@metux.net>
-Subject: Re: RFC: on adding new CLONE_* flags [WAS Re: [PATCH 0/4] clone: add
- CLONE_PIDFD]
-Date: Mon, 29 Apr 2019 19:31:43 +0200
-Message-ID: <c95fbdbb-a62b-4ad1-f4be-7d1a8f96f508@metux.net>
-References: <20190414201436.19502-1-christian@brauner.io>
- <dc05ffe3-c2ff-8b3e-d181-e0cc620bf91d@metux.net>
- <20190415155034.GA25351@mail.hallyn.com>
- <000a64d6-1e22-21bf-f232-15f141092e44@metux.net>
- <20190429154949.GA23456@mail.hallyn.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: RFC: on adding new CLONE_* flags [WAS Re: [PATCH 0/4] clone: add CLONE_PIDFD]
+Date: Mon, 29 Apr 2019 15:30:04 -0400
+Message-ID: <CAG48ez0gG4bd-t1wdR2p6-N2FjWbCqm_+ZThKfF7yKnD=KLqAQ@mail.gmail.com>
+References: <20190414201436.19502-1-christian@brauner.io> <dc05ffe3-c2ff-8b3e-d181-e0cc620bf91d@metux.net>
+ <20190415195911.z7b7miwsj67ha54y@yavin> <CALCETrWxMnaPvwicqkMLswMynWvJVteazD-bFv3ZnBKWp-1joQ@mail.gmail.com>
+ <20190420071406.GA22257@ip-172-31-15-78>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190429154949.GA23456@mail.hallyn.com>
-Content-Language: en-US
+In-Reply-To: <20190420071406.GA22257@ip-172-31-15-78>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Serge E. Hallyn" <serge@hallyn.com>
-Cc: Christian Brauner <christian@brauner.io>, torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, jannh@google.com, dhowells@redhat.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, luto@kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, tglx@linutronix.de, mtk.manpages@gmail.com, akpm@linux-foundation.org, oleg@redhat.com, cyphar@cyphar.com, joel@joelfernandes.org, dancol@google.com
+To: Kevin Easton <kevin@guarana.org>, Andy Lutomirski <luto@kernel.org>, Christian Brauner <christian@brauner.io>
+Cc: Aleksa Sarai <cyphar@cyphar.com>, "Enrico Weigelt, metux IT consult" <lkml@metux.net>, Linus Torvalds <torvalds@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Joel Fernandes <joel@joelfernandes.org>, Daniel Colascione <dancol@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On 29.04.19 17:49, Serge E. Hallyn wrote:
+On Sat, Apr 20, 2019 at 3:14 AM Kevin Easton <kevin@guarana.org> wrote:
+> On Mon, Apr 15, 2019 at 01:29:23PM -0700, Andy Lutomirski wrote:
+> > On Mon, Apr 15, 2019 at 12:59 PM Aleksa Sarai <cyphar@cyphar.com> wrote:
+> > >
+> > > On 2019-04-15, Enrico Weigelt, metux IT consult <lkml@metux.net> wrote:
+> > > > > This patchset makes it possible to retrieve pid file descriptors at
+> > > > > process creation time by introducing the new flag CLONE_PIDFD to the
+> > > > > clone() system call as previously discussed.
+> > > >
+> > > > Sorry, for highjacking this thread, but I'm curious on what things to
+> > > > consider when introducing new CLONE_* flags.
+> > > >
+> > > > The reason I'm asking is:
+> > > >
+> > > > I'm working on implementing plan9-like fs namespaces, where unprivileged
+> > > > processes can change their own namespace at will. For that, certain
+> > > > traditional unix'ish things have to be disabled, most notably suid.
+> > > > As forbidding suid can be helpful in other scenarios, too, I thought
+> > > > about making this its own feature. Doing that switch on clone() seems
+> > > > a nice place for that, IMHO.
+> > >
+> > > Just spit-balling -- is no_new_privs not sufficient for this usecase?
+> > > Not granting privileges such as setuid during execve(2) is the main
+> > > point of that flag.
+> > >
+> >
+> > I would personally *love* it if distros started setting no_new_privs
+> > for basically all processes.  And pidfd actually gets us part of the
+> > way toward a straightforward way to make sudo and su still work in a
+> > no_new_privs world: su could call into a daemon that would spawn the
+> > privileged task, and su would get a (read-only!) pidfd back and then
+> > wait for the fd and exit.  I suppose that, done naively, this might
+> > cause some odd effects with respect to tty handling, but I bet it's
+> > solveable.  I suppose it would be nifty if there were a way for a
+> > process, by mutual agreement, to reparent itself to an unrelated
+> > process.
+> >
+> > Anyway, clone(2) is an enormous mess.  Surely the right solution here
+> > is to have a whole new process creation API that takes a big,
+> > extensible struct as an argument, and supports *at least* the full
+> > abilities of posix_spawn() and ideally covers all the use cases for
+> > fork() + do stuff + exec().  It would be nifty if this API also had a
+> > way to say "add no_new_privs and therefore enable extra functionality
+> > that doesn't work without no_new_privs".  This functionality would
+> > include things like returning a future extra-privileged pidfd that
+> > gives ptrace-like access.
+> >
+> > As basic examples, the improved process creation API should take a
+> > list of dup2() operations to perform, fds to remove the O_CLOEXEC flag
+> > from, fds to close (or, maybe even better, a list of fds to *not*
+> > close), a list of rlimit changes to make, a list of signal changes to
+> > make, the ability to set sid, pgrp, uid, gid (as in
+> > setresuid/setresgid), the ability to do capset() operations, etc.  The
+> > posix_spawn() API, for all that it's rather complicated, covers a
+> > bunch of the basics pretty well.
+>
+> The idea of a system call that takes an infinitely-extendable laundry
+> list of operations to perform in kernel space seems quite inelegant, if
+> only for the error-reporting reason.
+>
+> Instead, I suggest that what you'd want is a way to create a new
+> embryonic process that has no address space and isn't yet schedulable.
+> You then just need other-process-directed variants of all the normal
+> setup functions - so pr_openat(pidfd, dirfd, pathname, flags, mode),
+> pr_sigaction(pidfd, signum, act, oldact), pr_dup2(pidfd, oldfd, newfd)
+> etc.
+>
+> Then when it's all set up you pr_execve() to kick it off.
 
->> * all users are equal - no root at all. the only exception is the>>   initial process, which gets the kernel devices mounted into his>>
- namespace.> > This does not match my understanding, but I'm most likely
-wrong.  (I thought> there was an actual 'host owner' uid, which mostly
-is only used for initial> process, but is basically root with a
-different name, and used far less.  No> uid transitions without factotem
-so that it *looked* like no root user).
-Not quite (IIRC). The hostowner is just the user who booted the machine,
-the initial process runs under this uname and gets the kernel devices
-bound into his namespace, so he can start fileservers on them.
+Is this really necessary? I agree that fork()+exec() is suboptimal,
+but if you just want to avoid the cost of duplicating the address
+space, you can AFAICS already do that in userspace with
+clone(CLONE_VM|CLONE_CHILD_SETTID|CLONE_CHILD_CLEARTID|SIGCHLD). Then
+the parent can block on a futex until the child leaves the mm_struct
+through execve() (or by exiting, in the case of an error), and the
+child can temporarily have its stack at the bottom of the caller's
+stack. You could build an API like this around it in userspace:
 
-Also the caphash device (the one you can create capabilities, eg. for
-user change, which then can be used via capuse device) can only be
-opened once - usually by the host factotum.
+int clone_temporary(int (*fn)(void *arg), void *arg, pid_t *child_pid,
+<clone flags and arguments, maybe in a struct>)
 
-There really is no such thing like root user.
+and then you'd use it like this to fork off a child process:
 
->> What I'd like to achieve on Linux:>>>> * unprivileged users can have their own mount namespace, where
-they>>   can mount at will (maybe just 9P).> > No problem, you can do
-that now.
-But only within separate userns, IMHO. (and, when I last tried, plain
-users couldn't directly create their userns).
+int spawn_shell_subprocess_(void *arg) {
+  char *cmdline = arg;
+  execl("/bin/sh", "sh", "-c", cmdline);
+  return -1;
+}
+pid_t spawn_shell_subprocess(char *cmdline) {
+  pid_t child_pid;
+  int res = clone_temporary(spawn_shell_subprocess_, cmdline,
+&child_pid, [...]);
+  if (res == 0) return child_pid;
+  return res;
+}
 
->> * but they still appear as the same normal users to the rest of the
->>   system
-> 
-> No problem, you can do that now.
+clone_temporary() could be implemented roughly as follows by the libc
+(or other userspace code):
 
-How exactly ? Did I miss something vital ?
-
->> * 9p programs (compiled for Linux ABI) can run parallel to traditional
->>   linux programs within the same user and sessions (eg. from a terminal,
->>   i can call both the same way)
->> * namespace modifications affect both equally (eg. I could run ff in
->>   an own ns)
-> 
-> affect both of what equally?
-
-mount / bind.
-
-> That's exactly what user namespaces are for.  You can create a new
-> user namespace, using no privilege at all, with your current uid (i.e.
-> 1000) mapped to whatever uid you like; if you pick 0, then you can unshare all
-> the namespaces you like.  
-
-But I don't like to appear as 'root' in here. I just wanna have my own
-filesystem namespace, nothing more.
-
-> Once you unshare mnt_ns, you can mount to your
-> heart's content.  To other processes on the host, your process is
-> uid 1000.
-
-Is that the uid, I'm appearing to filesystems ?
-
-> Regarding factotem, I agree that with the pidfd work going on etc, it's getting
-> more and more tempting to attempt a switch to that.  Looking back at my folder,
-> I see you posted a kernel patch for it.  I had done the same long ago.  Happy to
-> work with you again on that, and put a simple daemon into shadow package, if
-> util-linux isn't deemed the far better place.
-
-Yeah :)
-
-
---mtx
-
--- 
-Enrico Weigelt, metux IT consult
-Free software and Linux embedded engineering
-info@metux.net -- +49-151-27565287
+sigset_t sigset, sigset_old;
+sigfillset(&sigset);
+sigprocmask(SIG_SETMASK, &sigset, &sigset_old);
+int child_pid;
+int result = 0;
+/* starting here, use inline assembly to ensure that no stack
+allocations occur */
+long child = syscall(__NR_clone,
+CLONE_VM|CLONE_CHILD_SETTID|CLONE_CHILD_CLEARTID|SIGCHLD, $RSP -
+ABI_STACK_REDZONE_SIZE, NULL, &child_pid, 0);
+if (child == -1) { result = -1; goto reset_sigmask; }
+if (child == 0) {
+  result = fn(arg);
+  syscall(__NR_exit, 0);
+}
+futex(&child_pid, FUTEX_WAIT, child, NULL);
+/* end of no-stack-allocations zone */
+reset_sigmask:
+sigprocmask(SIG_SETMASK, &sigset_old, NULL);
+return result;
