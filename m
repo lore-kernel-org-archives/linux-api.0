@@ -1,7 +1,7 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH for 5.2 09/12] rseq/selftests: aarch64 code signature: handle big-endian environment
-Date: Mon, 29 Apr 2019 11:28:00 -0400
-Message-ID: <20190429152803.7719-10-mathieu.desnoyers@efficios.com>
+Subject: [PATCH for 5.2 08/12] rseq/selftests: arm: use udf instruction for RSEQ_SIG
+Date: Mon, 29 Apr 2019 11:27:59 -0400
+Message-ID: <20190429152803.7719-9-mathieu.desnoyers@efficios.com>
 References: <20190429152803.7719-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190429152803.7719-1-mathieu.desnoyers@efficios.com>
@@ -10,7 +10,16 @@ To: Shuah Khan <shuah@kernel.org>
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H . Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, Steven Rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will Deacon <will.deacon@arm>
 List-Id: linux-api@vger.kernel.org
 
-Handle compiling with -mbig-endian on aarch64, which generates binaries
+Use udf as the guard instruction for the restartable sequence abort
+handler.
+
+Previously, the chosen signature was not a valid instruction, based
+on the assumption that it could always sit in a literal pool. However,
+there are compilation environments in which literal pools are not
+availble, for instance execute-only code. Therefore, we need to
+choose a signature value that is also a valid instruction.
+
+Handle compiling with -mbig-endian on ARMv6+, which generates binaries
 with mixed code vs data endianness (little endian code, big endian
 data).
 
@@ -19,8 +28,10 @@ data endianness for the RSEQ_SIG parameter passed to the rseq
 registration will trigger application segmentation faults when the
 kernel try to abort rseq critical sections.
 
+Prior to ARMv6, -mbig-endian generates big-endian code and data, so
+endianness should not be reversed in that case.
+
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Acked-by: Will Deacon <will.deacon@arm.com>
 CC: Peter Zijlstra <peterz@infradead.org>
 CC: Thomas Gleixner <tglx@linutronix.de>
 CC: Joel Fernandes <joelaf@google.com>
@@ -45,43 +56,78 @@ CC: Andy Lutomirski <luto@amacapital.net>
 CC: Andrew Morton <akpm@linux-foundation.org>
 CC: Linus Torvalds <torvalds@linux-foundation.org>
 ---
- tools/testing/selftests/rseq/rseq-arm64.h | 17 +++++++++++++++--
- 1 file changed, 15 insertions(+), 2 deletions(-)
+ tools/testing/selftests/rseq/rseq-arm.h | 52 +++++++++++++++++++++++++++++++--
+ 1 file changed, 50 insertions(+), 2 deletions(-)
 
-diff --git a/tools/testing/selftests/rseq/rseq-arm64.h b/tools/testing/selftests/rseq/rseq-arm64.h
-index b41a2a48e965..200dae9e4208 100644
---- a/tools/testing/selftests/rseq/rseq-arm64.h
-+++ b/tools/testing/selftests/rseq/rseq-arm64.h
-@@ -6,7 +6,20 @@
-  * (C) Copyright 2018 - Will Deacon <will.deacon@arm.com>
+diff --git a/tools/testing/selftests/rseq/rseq-arm.h b/tools/testing/selftests/rseq/rseq-arm.h
+index 5f262c54364f..e8ccfc37d685 100644
+--- a/tools/testing/selftests/rseq/rseq-arm.h
++++ b/tools/testing/selftests/rseq/rseq-arm.h
+@@ -5,7 +5,54 @@
+  * (C) Copyright 2016-2018 - Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
   */
  
--#define RSEQ_SIG	0xd428bc00	/* BRK #0x45E0 */
+-#define RSEQ_SIG	0x53053053
 +/*
-+ * aarch64 -mbig-endian generates mixed endianness code vs data:
-+ * little-endian code and big-endian data. Ensure the RSEQ_SIG signature
-+ * matches code endianness.
++ * RSEQ_SIG uses the udf A32 instruction with an uncommon immediate operand
++ * value 0x5de3. This traps if user-space reaches this instruction by mistake,
++ * and the uncommon operand ensures the kernel does not move the instruction
++ * pointer to attacker-controlled code on rseq abort.
++ *
++ * The instruction pattern in the A32 instruction set is:
++ *
++ * e7f5def3    udf    #24035    ; 0x5de3
++ *
++ * This translates to the following instruction pattern in the T16 instruction
++ * set:
++ *
++ * little endian:
++ * def3        udf    #243      ; 0xf3
++ * e7f5        b.n    <7f5>
++ *
++ * pre-ARMv6 big endian code:
++ * e7f5        b.n    <7f5>
++ * def3        udf    #243      ; 0xf3
++ *
++ * ARMv6+ -mbig-endian generates mixed endianness code vs data: little-endian
++ * code and big-endian data. Ensure the RSEQ_SIG data signature matches code
++ * endianness. Prior to ARMv6, -mbig-endian generates big-endian code and data
++ * (which match), so there is no need to reverse the endianness of the data
++ * representation of the signature. However, the choice between BE32 and BE8
++ * is done by the linker, so we cannot know whether code and data endianness
++ * will be mixed before the linker is invoked.
 + */
-+#define RSEQ_SIG_CODE	0xd428bc00	/* BRK #0x45E0.  */
 +
-+#ifdef __AARCH64EB__
-+#define RSEQ_SIG_DATA	0x00bc28d4	/* BRK #0x45E0.  */
-+#else
-+#define RSEQ_SIG_DATA	RSEQ_SIG_CODE
-+#endif
++#define RSEQ_SIG_CODE	0xe7f5def3
++
++#ifndef __ASSEMBLER__
++
++#define RSEQ_SIG_DATA							\
++	({								\
++		int sig;						\
++		asm volatile (  "b 2f\n\t"				\
++				"1: .inst " __rseq_str(RSEQ_SIG_CODE) "\n\t" \
++				"2:\n\t"				\
++				"ldr %[sig], 1b\n\t"			\
++				: [sig] "=r" (sig));			\
++		sig;							\
++	})
 +
 +#define RSEQ_SIG	RSEQ_SIG_DATA
++
++#endif
  
- #define rseq_smp_mb()	__asm__ __volatile__ ("dmb ish" ::: "memory")
- #define rseq_smp_rmb()	__asm__ __volatile__ ("dmb ishld" ::: "memory")
-@@ -121,7 +134,7 @@ do {										\
- 
- #define RSEQ_ASM_DEFINE_ABORT(label, abort_label)				\
- 	"	b	222f\n"							\
--	"	.inst 	"	__rseq_str(RSEQ_SIG) "\n"			\
-+	"	.inst 	"	__rseq_str(RSEQ_SIG_CODE) "\n"			\
- 	__rseq_str(label) ":\n"							\
- 	"	b	%l[" __rseq_str(abort_label) "]\n"			\
- 	"222:\n"
+ #define rseq_smp_mb()	__asm__ __volatile__ ("dmb" ::: "memory", "cc")
+ #define rseq_smp_rmb()	__asm__ __volatile__ ("dmb" ::: "memory", "cc")
+@@ -78,7 +125,8 @@ do {									\
+ 		__rseq_str(table_label) ":\n\t"				\
+ 		".word " __rseq_str(version) ", " __rseq_str(flags) "\n\t" \
+ 		".word " __rseq_str(start_ip) ", 0x0, " __rseq_str(post_commit_offset) ", 0x0, " __rseq_str(abort_ip) ", 0x0\n\t" \
+-		".word " __rseq_str(RSEQ_SIG) "\n\t"			\
++		".arm\n\t"						\
++		".inst " __rseq_str(RSEQ_SIG_CODE) "\n\t"		\
+ 		__rseq_str(label) ":\n\t"				\
+ 		teardown						\
+ 		"b %l[" __rseq_str(abort_label) "]\n\t"
 -- 
 2.11.0
