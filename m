@@ -1,40 +1,58 @@
-From: Oleg Nesterov <oleg@redhat.com>
-Subject: Re: [PATCH v1 1/2] Add polling support to pidfd
-Date: Mon, 29 Apr 2019 16:20:30 +0200
-Message-ID: <20190429142030.GA17715@redhat.com>
-References: <20190425190010.46489-1-joel@joelfernandes.org>
- <20190425222359.sqhboc4x4daznr6r@brauner.io>
- <20190428162405.GA6757@redhat.com>
- <20190429140245.GB233442@google.com>
+From: Jessica Yu <jeyu@kernel.org>
+Subject: Re: [PATCH v3] moduleparam: Save information about built-in modules
+ in separate file
+Date: Mon, 29 Apr 2019 16:21:56 +0200
+Message-ID: <20190429142156.GA31567@linux-8ccs>
+References: <20190429090854.GU9023@dhcp129-178.brq.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190429140245.GB233442@google.com>
+In-Reply-To: <20190429090854.GU9023@dhcp129-178.brq.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Joel Fernandes <joel@joelfernandes.org>
-Cc: Christian Brauner <christian@brauner.io>, linux-kernel@vger.kernel.org, luto@amacapital.net, rostedt@goodmis.org, dancol@google.com, sspatil@google.com, jannh@google.com, surenb@google.com, timmurray@google.com, Jonathan Kowalski <bl0pbl33p@gmail.com>, torvalds@linux-foundation.org, kernel-team@android.com, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Ingo Molnar <mingo@kernel.org>, Jann Horn <jann@thejh.net>, linux-kselftest@vger.kernel.org, Michal Hocko <mhocko@suse.com>, "Peter Zijlstra (Intel)" <peterz@infradead.org>, Serge Hallyn <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Stephen Rothwell <sfr@canb.auug.org.au>, Thomas Gleixner <tgl>
+To: Alexey Gladkov <gladkov.alexey@gmail.com>
+Cc: Masahiro Yamada <yamada.masahiro@socionext.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux Kbuild mailing list <linux-kbuild@vger.kernel.org>, linux-api@vger.kernel.org, linux-modules@vger.kernel.org, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Gleb Fotengauer-Malinovskiy <glebfm@altlinux.org>, "Dmitry V. Levin" <ldv@altlinux.org>, Michal Marek <michal.lkml@markovi.net>, Dmitry Torokhov <dmitry.torokhov@gmail.com>, Rusty Russell <rusty@rustcorp.com.au>, Lucas De Marchi <lucas.de.marchi@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On 04/29, Joel Fernandes wrote:
++++ Alexey Gladkov [29/04/19 11:08 +0200]:
+>Problem:
 >
-> However, in your code above, it is avoided because we get:
+>When a kernel module is compiled as a separate module, some important
+>information about the kernel module is available via .modinfo section of
+>the module.  In contrast, when the kernel module is compiled into the
+>kernel, that information is not available.
 >
-> Task A (poller)		Task B (exiting task being polled)
-> ------------            ----------------
-> poll() called
-> add_wait_queue()
-> 			exit_state is set to non-zero
-> read exit_state
-> remove_wait_queue()
-> 			wake_up_all()
+>Information about built-in modules is necessary in the following cases:
+>
+>1. When it is necessary to find out what additional parameters can be
+>passed to the kernel at boot time.
+>
+>2. When you need to know which module names and their aliases are in
+>the kernel. This is very useful for creating an initrd image.
+>
+>Proposal:
+>
+>The proposed patch does not remove .modinfo section with module
+>information from the vmlinux at the build time and saves it into a
+>separate file after kernel linking. So, the kernel does not increase in
+>size and no additional information remains in it. Information is stored
+>in the same format as in the separate modules (null-terminated string
+>array). Because the .modinfo section is already exported with a separate
+>modules, we are not creating a new API.
+>
+>It can be easily read in the userspace:
+>
+>$ tr '\0' '\n' < kernel.builtin
 
-just to clarify... No, sys_poll() path doesn't do remove_wait_queue() until
-it returns to user mode, and that is why we can't race with set-exit_code +
-wake_up().
+s/kernel.builtin/modules.builtin.modinfo/
 
-pidfd_poll() can race with the exiting task, miss exit_code != 0, and return
-zero. However, do_poll() won't block after that and pidfd_poll() will be called
-again.
+Otherwise, for module.h and moduleparam.h:
 
-Oleg.
+Acked-by: Jessica Yu <jeyu@kernel.org>
+
+And it would be great if Lucas can confirm if the file format and name
+would be OK for kmod.
+
+Thanks!
+
+Jessica
