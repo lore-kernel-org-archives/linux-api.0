@@ -1,61 +1,53 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: RFC: on adding new CLONE_* flags [WAS Re: [PATCH 0/4] clone: add CLONE_PIDFD]
-Date: Mon, 29 Apr 2019 19:16:11 -0700
-Message-ID: <CAHk-=wg73au-kvOwWpPDY+rXrz8O5gwrcPiw1FZx-Qr2PqpRFg@mail.gmail.com>
-References: <20190414201436.19502-1-christian@brauner.io> <dc05ffe3-c2ff-8b3e-d181-e0cc620bf91d@metux.net>
- <20190415195911.z7b7miwsj67ha54y@yavin> <CALCETrWxMnaPvwicqkMLswMynWvJVteazD-bFv3ZnBKWp-1joQ@mail.gmail.com>
- <20190420071406.GA22257@ip-172-31-15-78> <CAG48ez0gG4bd-t1wdR2p6-N2FjWbCqm_+ZThKfF7yKnD=KLqAQ@mail.gmail.com>
- <CAG48ez15bf1EJB0XTJsGFpvf8r5pj9+rv1axKVr13H1NW7ARZw@mail.gmail.com>
- <CAHk-=wi_N81mKYFz33ycoWiL7_tGbZBMJOsAs16inYzSza+OEw@mail.gmail.com> <CAG48ez1CV54c1xZ9s26ym=9avkihiNi=ppW-CWA1-qrCpYdc1A@mail.gmail.com>
+From: Andrew Donnellan <andrew.donnellan@au1.ibm.com>
+Subject: Re: [PATCH V32 01/27] Add the ability to lock down access to the
+ running kernel image
+Date: Tue, 30 Apr 2019 15:15:17 +1000
+Message-ID: <b56f7fbe-f87a-0af7-f447-4bfee712ce16@au1.ibm.com>
+References: <20190404003249.14356-1-matthewgarrett@google.com>
+ <20190404003249.14356-2-matthewgarrett@google.com>
+ <059c523e-926c-24ee-0935-198031712145@au1.ibm.com>
+ <CACdnJus9AhAAYs-R94BH7HDuuQfXjgdhdqUR6Pvk9mxbuPx1=Q@mail.gmail.com>
+ <87wojdy8ro.fsf@dja-thinkpad.axtens.net>
+ <87tvehxvh0.fsf@dja-thinkpad.axtens.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAG48ez1CV54c1xZ9s26ym=9avkihiNi=ppW-CWA1-qrCpYdc1A@mail.gmail.com>
+In-Reply-To: <87tvehxvh0.fsf@dja-thinkpad.axtens.net>
+Content-Language: en-AU
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: Kevin Easton <kevin@guarana.org>, Andy Lutomirski <luto@kernel.org>, Christian Brauner <christian@brauner.io>, Aleksa Sarai <cyphar@cyphar.com>, "Enrico Weigelt, metux IT consult" <lkml@metux.net>, Al Viro <viro@zeniv.linux.org.uk>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, "Serge E. Hallyn" <serge@hallyn.com>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, Thomas Gleixner <tglx@linutronix.de>, Michael Kerrisk <mtk.manpages@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Joel Fernandes <joel@joelfernandes.org>, Daniel Colascione <dancol@google.com>
+To: Daniel Axtens <dja@axtens.net>, Matthew Garrett <mjg59@google.com>
+Cc: James Morris <jmorris@namei.org>, LSM List <linux-security-module@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Linux API <linux-api@vger.kernel.org>, Andy Lutomirski <luto@kernel.org>, linuxppc-dev <linuxppc-dev@lists.ozlabs.org>, Michael Ellerman <mpe@ellerman.id.au>, cmr <cmr@informatik.wtf>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 29, 2019 at 5:39 PM Jann Horn <jannh@google.com> wrote:
->
-> ... uuuh, whoops. Turns out I don't know what I'm talking about.
+On 29/4/19 2:54 pm, Daniel Axtens wrote:
+> Hi,
+> 
+>>>> I'm thinking about whether we should lock down the powerpc xmon debug
+>>>> monitor - intuitively, I think the answer is yes if for no other reason
+>>>> than Least Astonishment, when lockdown is enabled you probably don't
+>>>> expect xmon to keep letting you access kernel memory.
+>>>
+>>> The original patchset contained a sysrq hotkey to allow physically
+>>> present users to disable lockdown, so I'm not super concerned about
+>>> this case - I could definitely be convinced otherwise, though.
+> 
+> So Mimi contacted me offlist and very helpfully provided me with a much
+> better and less confused justification for disabling xmon in lockdown:
+> 
+> On x86, physical presence (== console access) is a trigger to
+> disable/enable lockdown mode.
+> 
+> In lockdown mode, you're not supposed to be able to modify memory. xmon
+> allows you to modify memory, and therefore shouldn't be allowed in
+> lockdown.
+> 
+> So, if you can disable lockdown on the console that's probably OK, but
+> it should be specifically disabling lockdown, not randomly editing
+> memory with xmon.
 
-Well, apparently there's some odd libc issue accoprding to Florian, so
-there *might* be something to it.
+That makes sense.
 
-> Nevermind. For some reason I thought vfork() was just
-> CLONE_VFORK|SIGCHLD, but now I see I got that completely wrong.
-
-Well, inside the kernel, that's actually *very* close to what vfork() is:
-
-  SYSCALL_DEFINE0(vfork)
-  {
-        return _do_fork(CLONE_VFORK | CLONE_VM | SIGCHLD, 0,
-                        0, NULL, NULL, 0);
-  }
-
-but that's just an internal implementation detail. It's a real vfork()
-and should act as the traditional BSD "share everything" without any
-address space copying. The CLONE_VFORK flag is what does the "wait for
-child to exit or execve" magic.
-
-Note that vfork() is "exciting" for the compiler in much the same way
-"setjmp/longjmp()" is, because of the shared stack use in the child
-and the parent. It is *very* easy to get this wrong and cause massive
-and subtle memory corruption issues because the parent returns to
-something that has been messed up by the child.
-
-That may be why some libc might end up just using "fork()", because it
-ends up avoiding bugs in user space.
-(In fact, if I recall correctly, the _reason_ we have an explicit
-'vfork()' entry point rather than using clone() with magic parameters
-was that the lack of arguments meant that you didn't have to
-save/restore any registers in user space, which made the whole stack
-issue simpler. But it's been two decades, so my memory is bitrotting).
-
-Also, particularly if you have a big address space, vfork()+execve()
-can be quite a bit faster than fork()+execve(). Linux fork() is pretty
-efficient, but if you have gigabytes of VM space to copy, it's going
-to take time even if you do it fairly well.
-
-               Linus
+-- 
+Andrew Donnellan              OzLabs, ADL Canberra
+andrew.donnellan@au1.ibm.com  IBM Australia Limited
