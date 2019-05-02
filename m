@@ -1,104 +1,96 @@
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
+From: Dave Martin <Dave.Martin@arm.com>
 Subject: Re: [PATCH] binfmt_elf: Extract .note.gnu.property from an ELF file
-Date: Thu, 02 May 2019 08:48:42 -0700
-Message-ID: <ed56d7930e630213d74a7df8b9144d01415dac7c.camel@intel.com>
+Date: Thu, 2 May 2019 17:14:24 +0100
+Message-ID: <20190502161424.GQ3567@e103592.cambridge.arm.com>
 References: <20190501211217.5039-1-yu-cheng.yu@intel.com>
-         <20190502111003.GO3567@e103592.cambridge.arm.com>
-         <20190502142951.GP3567@e103592.cambridge.arm.com>
+ <20190502111003.GO3567@e103592.cambridge.arm.com>
+ <5b2c6cee345e00182e97842ae90c02cdcd830135.camel@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190502142951.GP3567@e103592.cambridge.arm.com>
+Content-Disposition: inline
+In-Reply-To: <5b2c6cee345e00182e97842ae90c02cdcd830135.camel@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Martin <Dave.Martin@arm.com>
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>
 Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pa
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2019-05-02 at 15:29 +0100, Dave Martin wrote:
-> On Thu, May 02, 2019 at 12:10:04PM +0100, Dave Martin wrote:
+On Thu, May 02, 2019 at 08:47:06AM -0700, Yu-cheng Yu wrote:
+> On Thu, 2019-05-02 at 12:10 +0100, Dave Martin wrote:
 > > On Wed, May 01, 2019 at 02:12:17PM -0700, Yu-cheng Yu wrote:
+> > > An ELF file's .note.gnu.property indicates features the executable file
+> > > can support.  For example, the property GNU_PROPERTY_X86_FEATURE_1_AND
+> > > indicates the file supports GNU_PROPERTY_X86_FEATURE_1_IBT and/or
+> > > GNU_PROPERTY_X86_FEATURE_1_SHSTK.
 > 
 > [...]
+> > A couple of questions before I look in more detail:
+> > 
+> > 1) Can we rely on PT_GNU_PROPERTY being present in the phdrs to describe
+> > the NT_GNU_PROPERTY_TYPE_0 note?  If so, we can avoid trying to parse
+> > irrelevant PT_NOTE segments.
 > 
-> > > diff --git a/fs/binfmt_elf.c b/fs/binfmt_elf.c > > index
-> > > 7d09d125f148..40aa4a4fd64d 100644
-> > > --- a/fs/binfmt_elf.c
-> > > +++ b/fs/binfmt_elf.c
-> > > @@ -1076,6 +1076,19 @@ static int load_elf_binary(struct linux_binprm
-> > > *bprm)
-> > >  		goto out_free_dentry;
-> > >  	}
-> > >  
-> > > +	if (interpreter) {
-> > > +		retval = arch_setup_property(&loc->interp_elf_ex,
-> > > +					     interp_elf_phdata,
-> > > +					     interpreter, true);
-> > > +	} else {
-> > > +		retval = arch_setup_property(&loc->elf_ex,
-> > > +					     elf_phdata,
-> > > +					     bprm->file, false);
-> > > +	}
-> 
-> This will be too late for arm64, since we need to twiddle the mmap prot
-> flags for the executable's pages based on the detected properties.
-> 
-> Can we instead move this much earlier, letting the arch code stash
-> something in arch_state that can be consumed later on?
-> 
-> This also has the advantage that we can report errors to the execve()
-> caller before passing the point of no return (i.e., flush_old_exec()).
+> Some older linkers can create multiples of NT_GNU_PROPERTY_TYPE_0.  The code
+> scans all PT_NOTE segments to ensure there is only one NT_GNU_PROPERTY_TYPE_0. 
+> If there are multiples, then all are considered invalid.
 
-I will look into that.
+I'm concerned that in the arm64 case we would waste some effort by
+scanning multiple notes.
 
+Could we do something like iterating over the phdrs, and if we find
+exactly one PT_GNU_PROPERTY then use that, else fall back to scanning
+all PT_NOTEs?
+
+> > 2) Are there standard types for things like the program property header?
+> > If not, can we add something in elf.h?  We should try to coordinate with
+> > libc on that.  Something like
+> > 
+> > typedef __u32 Elf_Word;
+> > 
+> > typedef struct {
+> > 	Elf_Word pr_type;
+> > 	Elf_Word pr_datasz;
+> > } Elf_Gnu_Prophdr;
+> > 
+> > (i.e., just the header part from [1], with a more specific name -- which
+> > I just made up).
+> 
+> Yes, I will fix that.
 > 
 > [...]
+> > 3) It looks like we have to go and re-parse all the notes for every
+> > property requested by the arch code.
 > 
-> > > diff --git a/fs/gnu_property.c b/fs/gnu_property.c
-> 
-> [...]
-> 
-> > > +int get_gnu_property(void *ehdr_p, void *phdr_p, struct file *f,
-> > > +		     u32 pr_type, u32 *property)
-> > > +{
-> > > +	struct elf64_hdr *ehdr64 = ehdr_p;
-> > > +	int err = 0;
-> > > +
-> > > +	*property = 0;
-> > > +
-> > > +	if (ehdr64->e_ident[EI_CLASS] == ELFCLASS64) {
-> > > +		struct elf64_phdr *phdr64 = phdr_p;
-> > > +
-> > > +		err = scan_segments_64(f, phdr64, ehdr64->e_phnum,
-> > > +				       pr_type, property);
-> > > +		if (err < 0)
-> > > +			goto out;
-> > > +	} else {
-> > > +#ifdef CONFIG_COMPAT
-> > > +		struct elf32_hdr *ehdr32 = ehdr_p;
-> > > +
-> > > +		if (ehdr32->e_ident[EI_CLASS] == ELFCLASS32) {
-> > > +			struct elf32_phdr *phdr32 = phdr_p;
-> > > +
-> > > +			err = scan_segments_32(f, phdr32, ehdr32-
-> > > >e_phnum,
-> > > +					       pr_type, property);
-> > > +			if (err < 0)
-> > > +				goto out;
-> > > +		}
-> > > +#else
-> > > +	WARN_ONCE(1, "Exec of 32-bit app, but CONFIG_COMPAT is not
-> > > enabled.\n");
-> > > +	return -ENOTSUPP;
-> > > +#endif
-> > > +	}
-> 
-> We have already made a ton of assumptions about the ELF class by this
-> point, and we don't seem to check it explicitly elsewhere, so it is a
-> bit weird to police it specifically here.
-> 
-> Can we simply pass the assumed ELF class as a parameter instead?
+> As explained above, it is necessary to scan all PT_NOTE segments.  But there
+> should be only one NT_GNU_PROPERTY_TYPE_0 in an ELF file.  Once that is found,
+> perhaps we can store it somewhere, or call into the arch code as you mentioned
+> below.  I will look into that.
 
-Yes.
+Just to get something working on arm64, I'm working on some hacks that
+move things around a bit -- I'll post when I have something.
 
-Yu-cheng
+Did you have any view on my other point, below?
+
+Cheers
+---Dave
+
+> > For now there is only one property requested anyway, so this is probably
+> > not too bad.  But could we flip things around so that we have some
+> > CONFIG_ARCH_WANTS_ELF_GNU_PROPERTY (say), and have the ELF core code
+> > call into the arch backend for each property found?
+> > 
+> > The arch could provide some hook
+> > 
+> > 	int arch_elf_has_gnu_property(const Elf_Gnu_Prophdr *prop,
+> > 					const void *data);
+> > 
+> > to consume the properties as they are found.
+> > 
+> > This would effectively replace the arch_setup_property() hook you
+> > currently have.
+> > 
+> > Cheers
+> > ---Dave
+> > 
+> > [1] https://github.com/hjl-tools/linux-abi/wiki/Linux-Extensions-to-gABI
+> 
