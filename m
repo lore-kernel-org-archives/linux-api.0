@@ -1,60 +1,83 @@
-From: shuah <shuah@kernel.org>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 Subject: Re: [PATCH for 5.2 00/12] Restartable Sequences selftests updates
-Date: Fri, 3 May 2019 12:53:23 -0600
-Message-ID: <68a135d7-7b30-71c7-c570-c7608d6f75d5@kernel.org>
+Date: Fri, 3 May 2019 14:36:02 -0400 (EDT)
+Message-ID: <678952111.699.1556908562445.JavaMail.zimbra@efficios.com>
 References: <20190429152803.7719-1-mathieu.desnoyers@efficios.com>
- <678952111.699.1556908562445.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <678952111.699.1556908562445.JavaMail.zimbra@efficios.com>
-Content-Language: en-US
+In-Reply-To: <20190429152803.7719-1-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+To: shuah <shuah@kernel.org>
 Cc: linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will
 List-Id: linux-api@vger.kernel.org
 
-On 5/3/19 12:36 PM, Mathieu Desnoyers wrote:
-> ----- On Apr 29, 2019, at 11:27 AM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
+----- On Apr 29, 2019, at 11:27 AM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
+
+> Those rseq selftests updates are hereby submitted to Shuah Khan,
+> maintainer of kernel selftests, for the next merge window (5.2).
 > 
->> Those rseq selftests updates are hereby submitted to Shuah Khan,
->> maintainer of kernel selftests, for the next merge window (5.2).
->>
->> They change the per-architecture pre-abort signatures to ensure those
->> are valid trap instructions.
->>
->> The way exit points are presented to debuggers is enhanced, ensuring
->> all exit points are present, so debuggers don't have to disassemble
->> rseq critical section to properly skip over them.
->>
->> Discussions with the glibc community is reaching a concensus of exposing
->> a __rseq_handled symbol from glibc to coexist with rseq early adopters.
->> Update the rseq selftest code to expose and use this symbol.
->>
->> Support for compiling asm goto with clang is added with the
->> "-no-integrated-as" compiler switch, similarly to the toplevel kernel
->> Makefile.
+> They change the per-architecture pre-abort signatures to ensure those
+> are valid trap instructions.
 > 
-> Hi Shuah,
+> The way exit points are presented to debuggers is enhanced, ensuring
+> all exit points are present, so debuggers don't have to disassemble
+> rseq critical section to properly skip over them.
 > 
-> Is there anything else you need before you can pick up those patches ?
+> Discussions with the glibc community is reaching a concensus of exposing
+> a __rseq_handled symbol from glibc to coexist with rseq early adopters.
+> Update the rseq selftest code to expose and use this symbol.
 > 
+> Support for compiling asm goto with clang is added with the
+> "-no-integrated-as" compiler switch, similarly to the toplevel kernel
+> Makefile.
 
-I was going to say "no more work needed" and noticed that the series has
-checkpatch errors and warns as I was running the series through
-pre-commit tests.
+Hi Shuah,
 
-Patches 1,2,3,8 have errors/warns based
-on quick look at the log.
+Is there anything else you need before you can pick up those patches ?
 
+Thanks,
 
-ERROR: need consistent spacing around '%' (ctx:WxV)
-#227: FILE: tools/testing/selftests/rseq/rseq-x86.h:104:
-+		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), %l[error1])
+Mathieu
 
+> 
+> Thanks,
+> 
+> Mathieu
+> 
+> Martin Schwidefsky (1):
+>  rseq/selftests: s390: use trap4 for RSEQ_SIG
+> 
+> Mathieu Desnoyers (11):
+>  rseq/selftests: x86: Work-around bogus gcc-8 optimisation
+>  rseq/selftests: Add __rseq_exit_point_array section for debuggers
+>  rseq/selftests: Introduce __rseq_cs_ptr_array, rename __rseq_table to
+>    __rseq_cs
+>  rseq/selftests: Use __rseq_handled symbol to coexist with glibc
+>  rseq/selftests: s390: use jg instruction for jumps outside of the asm
+>  rseq/selftests: x86: use ud1 instruction as RSEQ_SIG opcode
+>  rseq/selftests: arm: use udf instruction for RSEQ_SIG
+>  rseq/selftests: aarch64 code signature: handle big-endian environment
+>  rseq/selftests: powerpc code signature: generate valid instructions
+>  rseq/selftests: mips: use break instruction for RSEQ_SIG
+>  rseq/selftests: add -no-integrated-as for clang
+> 
+> tools/testing/selftests/rseq/Makefile     |   8 +-
+> tools/testing/selftests/rseq/rseq-arm.h   | 132 +++++++++++++--
+> tools/testing/selftests/rseq/rseq-arm64.h |  74 ++++++++-
+> tools/testing/selftests/rseq/rseq-mips.h  | 115 +++++++++++--
+> tools/testing/selftests/rseq/rseq-ppc.h   |  90 +++++++++-
+> tools/testing/selftests/rseq/rseq-s390.h  |  78 ++++++++-
+> tools/testing/selftests/rseq/rseq-x86.h   | 264 +++++++++++++++++++++---------
+> tools/testing/selftests/rseq/rseq.c       |  55 ++++++-
+> tools/testing/selftests/rseq/rseq.h       |   1 +
+> 9 files changed, 688 insertions(+), 129 deletions(-)
+> 
+> --
+> 2.11.0
 
-Will you be able to fix them and resend?
-
-thanks,
--- Shuah
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
