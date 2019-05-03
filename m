@@ -1,34 +1,84 @@
-From: Joe Perches <joe@perches.com>
+From: shuah <shuah@kernel.org>
 Subject: Re: [PATCH for 5.2 00/12] Restartable Sequences selftests updates
-Date: Fri, 03 May 2019 14:46:17 -0700
-Message-ID: <5a671727418034dd1de54ad67f3f028f3cde9516.camel@perches.com>
+Date: Fri, 3 May 2019 16:59:12 -0600
+Message-ID: <9aa2d6ca-5b42-5c4d-788d-d82dc0389eff@kernel.org>
 References: <20190429152803.7719-1-mathieu.desnoyers@efficios.com>
-         <678952111.699.1556908562445.JavaMail.zimbra@efficios.com>
-         <68a135d7-7b30-71c7-c570-c7608d6f75d5@kernel.org>
-         <1137649333.995.1556911352713.JavaMail.zimbra@efficios.com>
+ <678952111.699.1556908562445.JavaMail.zimbra@efficios.com>
+ <68a135d7-7b30-71c7-c570-c7608d6f75d5@kernel.org>
+ <1137649333.995.1556911352713.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1137649333.995.1556911352713.JavaMail.zimbra@efficios.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, shuah <shuah@kernel.org>, Andy Whitcroft <apw@canonical.com>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Andy Whitcroft <apw@canonical.com>, Joe Perches <joe@perches.com>
 Cc: linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Russell King <linux@arm.linux.org.uk>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Will
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 2019-05-03 at 15:22 -0400, Mathieu Desnoyers wrote:
+On 5/3/19 1:22 PM, Mathieu Desnoyers wrote:
 > ----- On May 3, 2019, at 2:53 PM, shuah shuah@kernel.org wrote:
-> > ERROR: need consistent spacing around '%' (ctx:WxV)
-> > #227: FILE: tools/testing/selftests/rseq/rseq-x86.h:104:
-> > +		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), %l[error1])
-> > 
-> > Will you be able to fix them and resend?
-[]
+> 
+>> On 5/3/19 12:36 PM, Mathieu Desnoyers wrote:
+>>> ----- On Apr 29, 2019, at 11:27 AM, Mathieu Desnoyers
+>>> mathieu.desnoyers@efficios.com wrote:
+>>>
+>>>> Those rseq selftests updates are hereby submitted to Shuah Khan,
+>>>> maintainer of kernel selftests, for the next merge window (5.2).
+>>>>
+>>>> They change the per-architecture pre-abort signatures to ensure those
+>>>> are valid trap instructions.
+>>>>
+>>>> The way exit points are presented to debuggers is enhanced, ensuring
+>>>> all exit points are present, so debuggers don't have to disassemble
+>>>> rseq critical section to properly skip over them.
+>>>>
+>>>> Discussions with the glibc community is reaching a concensus of exposing
+>>>> a __rseq_handled symbol from glibc to coexist with rseq early adopters.
+>>>> Update the rseq selftest code to expose and use this symbol.
+>>>>
+>>>> Support for compiling asm goto with clang is added with the
+>>>> "-no-integrated-as" compiler switch, similarly to the toplevel kernel
+>>>> Makefile.
+>>>
+>>> Hi Shuah,
+>>>
+>>> Is there anything else you need before you can pick up those patches ?
+>>>
+>>
+>> I was going to say "no more work needed" and noticed that the series has
+>> checkpatch errors and warns as I was running the series through
+>> pre-commit tests.
+>>
+>> Patches 1,2,3,8 have errors/warns based
+>> on quick look at the log.
+>>
+>>
+>> ERROR: need consistent spacing around '%' (ctx:WxV)
+>> #227: FILE: tools/testing/selftests/rseq/rseq-x86.h:104:
+>> +		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), %l[error1])
+>>
+>>
+>> Will you be able to fix them and resend?
+> 
 > (CCing the che checkpatch maintainers)
 > 
 > checkpatch appears to be wrong for these errors. I suspect it thinks those are
 > '%' modulo operators (for which the style requires space before/after),
 > but those are actually part of the asm input and goto target operands.
+> 
+> Most warnings are about some lines over 80 cols. However, the areas where
+> this happens is due to following the style of already upstream code which
+> has the final "\" at the end of line sometimes beyond 80 col to accommodate
+> macros that take a bit of horizontal real estate.
+> 
+> For patch 8, the warning about "availble" being a typo is right. The
+> style error about space after "asm (" is right as well. Should I send only
+> this updated patch to you or should I send the whole patchset again ?
+> 
 
-checkpatch doesn't really understand asm.
-Ignore checkpatch when it's silly.
+No need to send all patches. This is good.
+
+thanks,
+-- Shuah
