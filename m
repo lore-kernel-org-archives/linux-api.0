@@ -1,7 +1,7 @@
 From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: [PATCH v7 2/5] namei: O_BENEATH-style path resolution flags
-Date: Wed,  8 May 2019 02:43:14 +1000
-Message-ID: <20190507164317.13562-3-cyphar@cyphar.com>
+Subject: [PATCH v7 4/5] namei: aggressively check for nd->root escape on ".." resolution
+Date: Wed,  8 May 2019 02:43:16 +1000
+Message-ID: <20190507164317.13562-5-cyphar@cyphar.com>
 References: <20190507164317.13562-1-cyphar@cyphar.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -9,292 +9,159 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190507164317.13562-1-cyphar@cyphar.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>
-Cc: Aleksa Sarai <cyphar@cyphar.com>, Eric Biederman <ebiederm@xmission.com>, Christian Brauner <christian@brauner.io>, Kees Cook <keescook@chromium.org>, David Drysdale <drysdale@google.com>, Andy Lutomirski <luto@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, containers@lists.linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org
+Cc: Aleksa Sarai <cyphar@cyphar.com>, Jann Horn <jannh@google.com>, Kees Cook <keescook@chromium.org>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Christian Brauner <christian@brauner.io>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, Linus Torvalds <torvalds@linux-foundation.org>, containers@lists.linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Add the following flags to allow various restrictions on path
-resolution (these affect the *entire* resolution, rather than just the
-final path component -- as is the case with most other AT_* flags).
+This patch allows for LOOKUP_BENEATH and LOOKUP_IN_ROOT to safely permit
+".." resolution (in the case of LOOKUP_BENEATH the resolution will still
+fail if ".." resolution would resolve a path outside of the root --
+while LOOKUP_IN_ROOT will chroot(2)-style scope it). "magic link" jumps
+are still disallowed entirely because now they could result in
+inconsistent behaviour if resolution encounters a subsequent "..".
 
-The primary justification for these flags is to allow for programs to be
-far more strict about how they want path resolution to handle symlinks,
-mountpoint crossings, and paths that escape the dirfd (through an
-absolute path or ".." shenanigans).
+The need for this patch is explained by observing there is a fairly
+easy-to-exploit race condition with chroot(2) (and thus by extension
+LOOKUP_IN_ROOT and LOOKUP_BENEATH) where a rename(2) of a path can be
+used to "skip over" nd->root and thus escape to the filesystem above
+nd->root.
 
-This is of particular concern to container runtimes that want to be very
-careful about malicious root filesystems that a container's init might
-have screwed around with (and there is no real way to protect against
-this in userspace if you consider potential races against a malicious
-container's init). More classical applications (which have their own
-potentially buggy userspace path sanitisation code) include web
-servers, archive extraction tools, network file servers, and so on.
+  thread1 [attacker]:
+    for (;;)
+      renameat2(AT_FDCWD, "/a/b/c", AT_FDCWD, "/a/d", RENAME_EXCHANGE);
+  thread2 [victim]:
+    for (;;)
+      resolveat(dirb, "b/c/../../etc/shadow", RESOLVE_IN_ROOT);
 
-These flags are exposed to userspace in a later patchset.
+With fairly significant regularity, thread2 will resolve to
+"/etc/shadow" rather than "/a/b/etc/shadow". There is also a similar
+(though somewhat more privileged) attack using MS_MOVE.
 
-* LOOKUP_XDEV: Disallow mount-point crossing (both *down* into one, or
-  *up* from one). The primary "scoping" use is to blocking resolution
-  that crosses a bind-mount, which has a similar property to a symlink
-  (in the way that it allows for escape from the starting-point). Since
-  it is not possible to differentiate bind-mounts However since
-  bind-mounting requires privileges (in ways symlinks don't) this has
-  been split from LOOKUP_BENEATH. The naming is based on "find -xdev" as
-  well as -EXDEV (though find(1) doesn't walk upwards, the semantics
-  seem obvious).
+With this patch, such cases will be detected *during* ".." resolution
+(which is the weak point of chroot(2) -- since walking *into* a
+subdirectory tautologically cannot result in you walking *outside*
+nd->root -- except through a bind-mount or "magic link"). By detecting
+this at ".." resolution (rather than checking only at the end of the
+entire resolution) we can both correct escapes by jumping back to the
+root (in the case of LOOKUP_IN_ROOT), as well as avoid revealing to
+attackers the structure of the filesystem outside of the root (through
+timing attacks for instance).
 
-* LOOKUP_NO_MAGICLINKS: Disallows ->get_link "symlink" jumping. This is
-  a very specific restriction, and it exists because /proc/$pid/fd/...
-  "symlinks" allow for access outside nd->root and pose risk to
-  container runtimes that don't want to be tricked into accessing a host
-  path (but do want to allow no-funny-business symlink resolution).
+In order to avoid a quadratic lookup with each ".." entry, we only
+activate the slow path if a write through &rename_lock or &mount_lock
+have occurred during path resolution (&rename_lock and &mount_lock are
+re-taken to further optimise the lookup). Since the primary attack being
+protected against is MS_MOVE or rename(2), not doing additional checks
+unless a mount or rename have occurred avoids making the common case
+slow.
 
-* LOOKUP_NO_SYMLINKS: Disallows symlink jumping *of any kind*. Implies
-  LOOKUP_NO_MAGICLINKS (obviously).
+The use of path_is_under() here might seem suspect, but on further
+inspection of the most important race (a path was *inside* the root but
+is now *outside*), there appears to be no attack potential. If
+path_is_under() occurs before the rename, then the path will be resolved
+but since the path was originally inside the root there is no escape.
+Subsequent ".." jumps are guaranteed to check path_is_under() (by
+construction, &rename_lock or &mount_lock must have been taken by the
+attacker after path_is_under() returned in the victim), and thus will
+not be able to escape from the previously-inside-root path. Walking down
+is still safe since the entire subtree was moved (either by rename(2) or
+MS_MOVE) and because (as discussed above) walking down is safe.
 
-* LOOKUP_BENEATH: Disallow "escapes" from the starting point of the
-  filesystem tree during resolution (you must stay "beneath" the
-  starting point at all times). Currently this is done by disallowing
-  ".." and absolute paths (either in the given path or found during
-  symlink resolution) entirely, as well as all "magic link" jumping.
-
-  The wholesale banning of ".." is because it is currently not safe to
-  allow ".." resolution (races can cause the path to be moved outside of
-  the root -- this is conceptually similar to historical chroot(2)
-  escape attacks). Future patches in this series will address this, and
-  will re-enable ".." resolution once it is safe. With those patches,
-  ".." resolution will only be allowed if it remains in the root
-  throughout resolution (such as "a/../b" not "a/../../outside/b").
-
-  The banning of "magic link" jumping is done because it is not clear
-  whether semantically they should be allowed -- while some "magic
-  links" are safe there are many that can cause escapes (and once a
-  resolution is outside of the root, O_BENEATH will no longer detect
-  it). Future patches may re-enable "magic link" jumping when such jumps
-  would remain inside the root.
-
-The LOOKUP_NO_*LINK flags return -ELOOP if path resolution would
-violates their requirement, while the others all return -EXDEV.
-
-This is a refresh of Al's AT_NO_JUMPS patchset[1] (which was a variation
-on David Drysdale's O_BENEATH patchset[2], which in turn was based on
-the Capsicum project[3]). Input from Linus and Andy in the AT_NO_JUMPS
-thread[4] determined most of the API changes made in this refresh.
-
-[1]: https://lwn.net/Articles/721443/
-[2]: https://lwn.net/Articles/619151/
-[3]: https://lwn.net/Articles/603929/
-[4]: https://lwn.net/Articles/723057/
-
-Cc: Eric Biederman <ebiederm@xmission.com>
-Cc: Christian Brauner <christian@brauner.io>
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Jann Horn <jannh@google.com>
 Cc: Kees Cook <keescook@chromium.org>
-Suggested-by: David Drysdale <drysdale@google.com>
-Suggested-by: Al Viro <viro@zeniv.linux.org.uk>
-Suggested-by: Andy Lutomirski <luto@kernel.org>
-Suggested-by: Linus Torvalds <torvalds@linux-foundation.org>
 Signed-off-by: Aleksa Sarai <cyphar@cyphar.com>
 ---
- fs/namei.c            | 76 ++++++++++++++++++++++++++++++++++++-------
- include/linux/namei.h |  7 ++++
- 2 files changed, 72 insertions(+), 11 deletions(-)
+ fs/namei.c | 48 +++++++++++++++++++++++++++++++++---------------
+ 1 file changed, 33 insertions(+), 15 deletions(-)
 
 diff --git a/fs/namei.c b/fs/namei.c
-index 2a91b72aa5e9..e13a02720a9d 100644
+index 3a3cba593b85..2b6a1bf4e745 100644
 --- a/fs/namei.c
 +++ b/fs/namei.c
-@@ -843,6 +843,12 @@ static inline void path_to_nameidata(const struct path *path,
- 
- static int nd_jump_root(struct nameidata *nd)
- {
-+	if (unlikely(nd->flags & LOOKUP_BENEATH))
-+		return -EXDEV;
-+	if (unlikely(nd->flags & LOOKUP_XDEV)) {
-+		if (nd->path.mnt != nd->root.mnt)
-+			return -EXDEV;
-+	}
- 	if (nd->flags & LOOKUP_RCU) {
- 		struct dentry *d;
- 		nd->path = nd->root;
-@@ -1051,6 +1057,9 @@ const char *get_link(struct nameidata *nd)
- 	int error;
- 	const char *res;
- 
-+	if (unlikely(nd->flags & LOOKUP_NO_SYMLINKS))
-+		return ERR_PTR(-ELOOP);
-+
- 	if (!(nd->flags & LOOKUP_RCU)) {
- 		touch_atime(&last->link);
- 		cond_resched();
-@@ -1081,14 +1090,23 @@ const char *get_link(struct nameidata *nd)
- 		} else {
- 			res = get(dentry, inode, &last->done);
- 		}
-+		/* If we just jumped it was because of a procfs-style link. */
-+		if (unlikely(nd->flags & LOOKUP_JUMPED)) {
-+			if (unlikely(nd->flags & LOOKUP_NO_MAGICLINKS))
-+				return ERR_PTR(-ELOOP);
-+			/* Not currently safe. */
-+			if (unlikely(nd->flags & LOOKUP_BENEATH))
-+				return ERR_PTR(-EXDEV);
-+		}
- 		if (IS_ERR_OR_NULL(res))
- 			return res;
- 	}
- 	if (*res == '/') {
- 		if (!nd->root.mnt)
- 			set_root(nd);
--		if (unlikely(nd_jump_root(nd)))
--			return ERR_PTR(-ECHILD);
-+		error = nd_jump_root(nd);
-+		if (unlikely(error))
-+			return ERR_PTR(error);
- 		while (unlikely(*++res == '/'))
- 			;
- 	}
-@@ -1269,12 +1287,16 @@ static int follow_managed(struct path *path, struct nameidata *nd)
- 		break;
- 	}
- 
--	if (need_mntput && path->mnt == mnt)
--		mntput(path->mnt);
-+	if (need_mntput) {
-+		if (path->mnt == mnt)
-+			mntput(path->mnt);
-+		if (unlikely(nd->flags & LOOKUP_XDEV))
-+			ret = -EXDEV;
-+		else
-+			nd->flags |= LOOKUP_JUMPED;
-+	}
- 	if (ret == -EISDIR || !ret)
- 		ret = 1;
--	if (need_mntput)
--		nd->flags |= LOOKUP_JUMPED;
- 	if (unlikely(ret < 0))
- 		path_put_conditional(path, nd);
- 	return ret;
-@@ -1331,6 +1353,8 @@ static bool __follow_mount_rcu(struct nameidata *nd, struct path *path,
- 		mounted = __lookup_mnt(path->mnt, path->dentry);
- 		if (!mounted)
- 			break;
-+		if (unlikely(nd->flags & LOOKUP_XDEV))
-+			return false;
- 		path->mnt = &mounted->mnt;
- 		path->dentry = mounted->mnt.mnt_root;
- 		nd->flags |= LOOKUP_JUMPED;
-@@ -1351,8 +1375,11 @@ static int follow_dotdot_rcu(struct nameidata *nd)
- 	struct inode *inode = nd->inode;
- 
- 	while (1) {
--		if (path_equal(&nd->path, &nd->root))
-+		if (path_equal(&nd->path, &nd->root)) {
-+			if (unlikely(nd->flags & LOOKUP_BENEATH))
-+				return -EXDEV;
- 			break;
-+		}
- 		if (nd->path.dentry != nd->path.mnt->mnt_root) {
- 			struct dentry *old = nd->path.dentry;
- 			struct dentry *parent = old->d_parent;
-@@ -1377,6 +1404,8 @@ static int follow_dotdot_rcu(struct nameidata *nd)
- 				return -ECHILD;
- 			if (&mparent->mnt == nd->path.mnt)
- 				break;
-+			if (unlikely(nd->flags & LOOKUP_XDEV))
-+				return -EXDEV;
- 			/* we know that mountpoint was pinned */
- 			nd->path.dentry = mountpoint;
- 			nd->path.mnt = &mparent->mnt;
-@@ -1391,6 +1420,8 @@ static int follow_dotdot_rcu(struct nameidata *nd)
- 			return -ECHILD;
- 		if (!mounted)
- 			break;
-+		if (unlikely(nd->flags & LOOKUP_XDEV))
-+			return -EXDEV;
- 		nd->path.mnt = &mounted->mnt;
- 		nd->path.dentry = mounted->mnt.mnt_root;
- 		inode = nd->path.dentry->d_inode;
-@@ -1479,8 +1510,11 @@ static int path_parent_directory(struct path *path)
- static int follow_dotdot(struct nameidata *nd)
- {
- 	while(1) {
--		if (path_equal(&nd->path, &nd->root))
-+		if (path_equal(&nd->path, &nd->root)) {
-+			if (unlikely(nd->flags & LOOKUP_BENEATH))
-+				return -EXDEV;
- 			break;
-+		}
- 		if (nd->path.dentry != nd->path.mnt->mnt_root) {
- 			int ret = path_parent_directory(&nd->path);
- 			if (ret)
-@@ -1489,6 +1523,8 @@ static int follow_dotdot(struct nameidata *nd)
- 		}
- 		if (!follow_up(&nd->path))
- 			break;
-+		if (unlikely(nd->flags & LOOKUP_XDEV))
-+			return -EXDEV;
- 	}
- 	follow_mount(&nd->path);
- 	nd->inode = nd->path.dentry->d_inode;
-@@ -1703,6 +1739,13 @@ static inline int may_lookup(struct nameidata *nd)
+@@ -491,7 +491,7 @@ struct nameidata {
+ 	struct path	root;
+ 	struct inode	*inode; /* path.dentry.d_inode */
+ 	unsigned int	flags;
+-	unsigned	seq, m_seq;
++	unsigned	seq, m_seq, r_seq;
+ 	int		last_type;
+ 	unsigned	depth;
+ 	int		total_link_count;
+@@ -1739,19 +1739,35 @@ static inline int may_lookup(struct nameidata *nd)
  static inline int handle_dots(struct nameidata *nd, int type)
  {
  	if (type == LAST_DOTDOT) {
-+		/*
-+		 * LOOKUP_BENEATH resolving ".." is not currently safe -- races can
-+		 * cause our parent to have moved outside of the root and us to skip
-+		 * over it.
-+		 */
-+		if (unlikely(nd->flags & LOOKUP_BENEATH))
-+			return -EXDEV;
+-		/*
+-		 * LOOKUP_BENEATH resolving ".." is not currently safe -- races can
+-		 * cause our parent to have moved outside of the root and us to skip
+-		 * over it.
+-		 */
+-		if (unlikely(nd->flags & (LOOKUP_BENEATH | LOOKUP_IN_ROOT)))
+-			return -EXDEV;
++		int error = 0;
++
  		if (!nd->root.mnt)
  			set_root(nd);
- 		if (nd->flags & LOOKUP_RCU) {
-@@ -2251,6 +2294,15 @@ static const char *path_init(struct nameidata *nd, unsigned flags)
+-		if (nd->flags & LOOKUP_RCU) {
+-			return follow_dotdot_rcu(nd);
+-		} else
+-			return follow_dotdot(nd);
++		if (nd->flags & LOOKUP_RCU)
++			error = follow_dotdot_rcu(nd);
++		else
++			error = follow_dotdot(nd);
++		if (error)
++			return error;
++
++		if (unlikely(nd->flags & (LOOKUP_BENEATH | LOOKUP_IN_ROOT))) {
++			bool m_retry = read_seqretry(&mount_lock, nd->m_seq);
++			bool r_retry = read_seqretry(&rename_lock, nd->r_seq);
++
++			/*
++			 * Don't bother checking unless there's a racing
++			 * rename(2) or MS_MOVE.
++			 */
++			if (likely(!m_retry && !r_retry))
++				return 0;
++
++			if (m_retry && !(nd->flags & LOOKUP_RCU))
++				nd->m_seq = read_seqbegin(&mount_lock);
++			if (r_retry)
++				nd->r_seq = read_seqbegin(&rename_lock);
++			if (!path_is_under(&nd->path, &nd->root))
++				return -EXDEV;
++		}
+ 	}
+ 	return 0;
+ }
+@@ -2272,6 +2288,11 @@ static const char *path_init(struct nameidata *nd, unsigned flags)
+ 	nd->last_type = LAST_ROOT; /* if there are only slashes... */
+ 	nd->flags = flags | LOOKUP_JUMPED | LOOKUP_PARENT;
+ 	nd->depth = 0;
++
++	nd->m_seq = read_seqbegin(&mount_lock);
++	if (unlikely(flags & (LOOKUP_BENEATH | LOOKUP_IN_ROOT)))
++		nd->r_seq = read_seqbegin(&rename_lock);
++
+ 	if (flags & LOOKUP_ROOT) {
+ 		struct dentry *root = nd->root.dentry;
+ 		struct inode *inode = root->d_inode;
+@@ -2282,7 +2303,6 @@ static const char *path_init(struct nameidata *nd, unsigned flags)
+ 		if (flags & LOOKUP_RCU) {
+ 			nd->seq = __read_seqcount_begin(&nd->path.dentry->d_seq);
+ 			nd->root_seq = nd->seq;
+-			nd->m_seq = read_seqbegin(&mount_lock);
+ 		} else {
+ 			path_get(&nd->path);
+ 		}
+@@ -2293,8 +2313,6 @@ static const char *path_init(struct nameidata *nd, unsigned flags)
+ 	nd->path.mnt = NULL;
  	nd->path.dentry = NULL;
  
- 	nd->m_seq = read_seqbegin(&mount_lock);
-+
-+	if (unlikely(nd->flags & LOOKUP_BENEATH)) {
-+		error = dirfd_path_init(nd);
-+		if (unlikely(error))
-+			return ERR_PTR(error);
-+		nd->root = nd->path;
-+		if (!(nd->flags & LOOKUP_RCU))
-+			path_get(&nd->root);
-+	}
- 	if (*s == '/') {
- 		if (likely(!nd->root.mnt))
- 			set_root(nd);
-@@ -2259,9 +2311,11 @@ static const char *path_init(struct nameidata *nd, unsigned flags)
- 			s = ERR_PTR(error);
- 		return s;
- 	}
--	error = dirfd_path_init(nd);
--	if (unlikely(error))
--		return ERR_PTR(error);
-+	if (likely(!nd->path.mnt)) {
-+		error = dirfd_path_init(nd);
-+		if (unlikely(error))
-+			return ERR_PTR(error);
-+	}
- 	return s;
- }
- 
-diff --git a/include/linux/namei.h b/include/linux/namei.h
-index 9138b4471dbf..7bc819ad0cd3 100644
---- a/include/linux/namei.h
-+++ b/include/linux/namei.h
-@@ -50,6 +50,13 @@ enum {LAST_NORM, LAST_ROOT, LAST_DOT, LAST_DOTDOT, LAST_BIND};
- #define LOOKUP_EMPTY		0x4000
- #define LOOKUP_DOWN		0x8000
- 
-+/* Scoping flags for lookup. */
-+#define LOOKUP_BENEATH		0x010000 /* No escaping from starting point. */
-+#define LOOKUP_XDEV		0x020000 /* No mountpoint crossing. */
-+#define LOOKUP_NO_MAGICLINKS	0x040000 /* No /proc/$pid/fd/ "symlink" crossing. */
-+#define LOOKUP_NO_SYMLINKS	0x080000 /* No symlink crossing *at all*.
-+					    Implies LOOKUP_NO_MAGICLINKS. */
-+
- extern int path_pts(struct path *path);
- 
- extern int user_path_at_empty(int, const char __user *, unsigned, struct path *, int *empty);
+-	nd->m_seq = read_seqbegin(&mount_lock);
+-
+ 	if (unlikely(nd->flags & (LOOKUP_BENEATH | LOOKUP_IN_ROOT))) {
+ 		error = dirfd_path_init(nd);
+ 		if (unlikely(error))
 -- 
 2.21.0
