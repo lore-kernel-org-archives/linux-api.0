@@ -1,116 +1,143 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v6 5/6] binfmt_*: scope path resolution of interpreters
-Date: Mon, 6 May 2019 16:41:00 -0700
-Message-ID: <A982EE7E-7E92-460A-A458-2F9C3586E9DA@amacapital.net>
-References: <20190506165439.9155-1-cyphar@cyphar.com> <20190506165439.9155-6-cyphar@cyphar.com> <CAG48ez0-CiODf6UBHWTaog97prx=VAd3HgHvEjdGNz344m1xKw@mail.gmail.com> <20190506191735.nmzf7kwfh7b6e2tf@yavin>
-Mime-Version: 1.0 (1.0)
-Content-Type: text/plain;
-        charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+From: Patrick Bellasi <patrick.bellasi@arm.com>
+Subject: Re: [PATCH v8 03/16] sched/core: uclamp: Enforce last task's
+ UCLAMP_MAX
+Date: Tue, 7 May 2019 11:10:37 +0100
+Message-ID: <20190507101037.zmkp4trqr4de5yws@e110439-lin>
+References: <20190402104153.25404-1-patrick.bellasi@arm.com>
+ <20190402104153.25404-4-patrick.bellasi@arm.com>
+ <CAJuCfpHN4kMBScdEdJodtmbHQ2qhVDnXrJKFDdaSYyjWH0JH5Q@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190506191735.nmzf7kwfh7b6e2tf@yavin>
+Content-Disposition: inline
+In-Reply-To: <CAJuCfpHN4kMBScdEdJodtmbHQ2qhVDnXrJKFDdaSYyjWH0JH5Q@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Jann Horn <jannh@google.com>, Andy Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Eric Biederman <ebiederm@xmission.com>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Christian Brauner <christian@brauner.io>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, Linus Torvalds <torvalds@linux-foundation.org>, containers@lists.linux-foundation.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux
+To: Suren Baghdasaryan <surenb@google.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>
 List-Id: linux-api@vger.kernel.org
 
+On 17-Apr 13:36, Suren Baghdasaryan wrote:
+>  Hi Patrick,
+> 
+> On Tue, Apr 2, 2019 at 3:42 AM Patrick Bellasi <patrick.bellasi@arm.com> wrote:
+> >
+> > When a task sleeps it removes its max utilization clamp from its CPU.
+> > However, the blocked utilization on that CPU can be higher than the max
+> > clamp value enforced while the task was running. This allows undesired
+> > CPU frequency increases while a CPU is idle, for example, when another
+> > CPU on the same frequency domain triggers a frequency update, since
+> > schedutil can now see the full not clamped blocked utilization of the
+> > idle CPU.
+> >
+> > Fix this by using
+> >   uclamp_rq_dec_id(p, rq, UCLAMP_MAX)
+> >     uclamp_rq_max_value(rq, UCLAMP_MAX, clamp_value)
+> > to detect when a CPU has no more RUNNABLE clamped tasks and to flag this
+> > condition.
+> >
+> 
+> If I understand the intent correctly, you are trying to exclude idle
+> CPUs from affecting calculations of rq UCLAMP_MAX value. If that is
+> true I think description can be simplified a bit :)
 
+That's not entirely correct. What I want to avoid is an OPP increase
+because of an idle CPU. Maybe an example can explain it better,
+consider this sequence:
 
-> On May 6, 2019, at 12:17 PM, Aleksa Sarai <cyphar@cyphar.com> wrote:
->=20
->> On 2019-05-06, Jann Horn <jannh@google.com> wrote:
->>> On Mon, May 6, 2019 at 6:56 PM Aleksa Sarai <cyphar@cyphar.com> wrote:
->>> The need to be able to scope path resolution of interpreters became
->>> clear with one of the possible vectors used in CVE-2019-5736 (which
->>> most major container runtimes were vulnerable to).
->>>=20
->>> Naively, it might seem that openat(2) -- which supports path scoping --
->>> can be combined with execveat(AT_EMPTY_PATH) to trivially scope the
->>> binary being executed. Unfortunately, a "bad binary" (usually a symlink)=
+ 1. A task is running unconstrained on a CPUx and it generates a 100%
+    utilization
+ 2. The task is now constrained by setting util_max=20
+ 3. We now select an OPP which provides 20% capacity on CPUx
 
->>> could be written as a #!-style script with the symlink target as the
->>> interpreter -- which would be completely missed by just scoping the
->>> openat(2). An example of this being exploitable is CVE-2019-5736.
->>>=20
->>> In order to get around this, we need to pass down to each binfmt_*
->>> implementation the scoping flags requested in execveat(2). In order to
->>> maintain backwards-compatibility we only pass the scoping AT_* flags.
->>>=20
->>> To avoid breaking userspace (in the exceptionally rare cases where you
->>> have #!-scripts with a relative path being execveat(2)-ed with dfd !=3D
->>> AT_FDCWD), we only pass dfd down to binfmt_* if any of our new flags are=
+In this scenario the task is still running flat out on that CPUx which
+will keep it's util_avg to 1024. Note that after Vincet's PELT rewrite
+we don't converge down to the current capacity.
 
->>> set in execveat(2).
->>=20
->> This seems extremely dangerous. I like the overall series, but not this p=
-atch.
->>=20
->>> @@ -1762,6 +1774,12 @@ static int __do_execve_file(int fd, struct filena=
-me *filename,
->>>=20
->>>        sched_exec();
->>>=20
->>> +       bprm->flags =3D flags & (AT_XDEV | AT_NO_MAGICLINKS | AT_NO_SYML=
-INKS |
->>> +                              AT_THIS_ROOT);
->> [...]
->>> +#define AT_THIS_ROOT           0x100000 /* - Scope ".." resolution to d=
-irfd (like chroot(2)). */
->>=20
->> So now what happens if there is a setuid root ELF binary with program
->> interpreter "/lib64/ld-linux-x86-64.so.2" (like /bin/su), and an
->> unprivileged user runs it with execveat(..., AT_THIS_ROOT)? Is that
->> going to let the unprivileged user decide which interpreter the
->> setuid-root process should use? =46rom a high-level perspective, opening
->> the interpreter should be controlled by the program that is being
->> loaded, not by the program that invoked it.
->=20
-> I went a bit nuts with openat_exec(), and I did end up adding it to the
-> ELF interpreter lookup (and you're completely right that this is a bad
-> idea -- I will drop it from this patch if it's included in the next
-> series).
->=20
-> The proposed solutions you give below are much nicer than this patch so
-> I can drop it and work on fixing those issues separately.
->=20
->> In my opinion, CVE-2019-5736 points out two different problems:
->>=20
->> The big problem: The __ptrace_may_access() logic has a special-case
->> short-circuit for "introspection" that you can't opt out of; this
->> makes it possible to open things in procfs that are related to the
->> current process even if the credentials of the process wouldn't permit
->> accessing another process like it. I think the proper fix to deal with
->> this would be to add a prctl() flag for "set whether introspection is
->> allowed for this process", and if userspace has manually un-set that
->> flag, any introspection special-case logic would be skipped.
->=20
-> We could do PR_SET_DUMPABLE=3D3 for this, I guess?
->=20
->> An additional problem: /proc/*/exe can be used to open a file for
->> writing; I think it may have been Andy Lutomirski who pointed out some
->> time ago that it would be nice if you couldn't use /proc/*/fd/* to
->> re-open files with more privileges, which is sort of the same thing.
->=20
-> This is something I'm currently working on a series for, which would
-> boil down to some restrictions on how re-opening of file descriptors
-> works through procfs.
->=20
-> However, execveat() of a procfs magiclink is a bit hard to block --
-> there is no way for userspace to to represent a file being "open for
-> execute" so they are all "open for execute" by default and blocking it
-> outright seems a bit extreme (though I actually hope to eventually add
-> the ability to mark an O_PATH as "open for X" to resolveat(2) -- hence
-> why I've reserved some bits).
+ 4. The task sleep, it's removed from CPUx but the "blocked
+    utilization" is still 1024
 
-There=E2=80=99s an O_MAYEXEC series floating around.
+After this point: the CPU is idle, its "blocked utilization" starts
+to "slowly" decay but we _already_ removed the 20% util_max constraint
+on that CPU since there are no RUNNABLE tasks (i.e no active buckets).
 
->=20
-> (Thinking more about it, there is an argument that I should include the
-> above patch into this series so that we can block re-opening of fds
-> opened through resolveat(2) without explicit flags from the outset.)
->=20
-> --=20
-> Aleksa Sarai
-> Senior Software Engineer (Containers)
-> SUSE Linux GmbH
-> <https://www.cyphar.com/>
+At this point in time, if there is a schedutil update requested from
+another CPU of the same frequency domain, by looking at CPUx we will
+see its full "blocked utilization" signal, which can be above 20%.
+
+> In particular it took me some time to understand what "blocked
+> utilization" means, however if it's a widely accepted term then feel
+> free to ignore my input.
+
+Yes, "blocked utilization" is a commonly used term to refer to the
+utilization generated by tasks executed on a CPU.
+
+[...]
+
+> > +static inline unsigned int
+> > +uclamp_idle_value(struct rq *rq, unsigned int clamp_id, unsigned int clamp_value)
+> > +{
+> > +       /*
+> > +        * Avoid blocked utilization pushing up the frequency when we go
+> > +        * idle (which drops the max-clamp) by retaining the last known
+> > +        * max-clamp.
+> > +        */
+> > +       if (clamp_id == UCLAMP_MAX) {
+> > +               rq->uclamp_flags |= UCLAMP_FLAG_IDLE;
+> > +               return clamp_value;
+> > +       }
+> > +
+> > +       return uclamp_none(UCLAMP_MIN);
+> > +}
+> > +
+> > +static inline void uclamp_idle_reset(struct rq *rq, unsigned int clamp_id,
+> > +                                    unsigned int clamp_value)
+> > +{
+> > +       /* Reset max-clamp retention only on idle exit */
+> > +       if (!(rq->uclamp_flags & UCLAMP_FLAG_IDLE))
+> > +               return;
+> > +
+> > +       WRITE_ONCE(rq->uclamp[clamp_id].value, clamp_value);
+> > +}
+> > +
+> >  static inline
+> > -unsigned int uclamp_rq_max_value(struct rq *rq, unsigned int clamp_id)
+> > +unsigned int uclamp_rq_max_value(struct rq *rq, unsigned int clamp_id,
+> > +                                unsigned int clamp_value)
+> 
+> IMHO the name of uclamp_rq_max_value() is a bit misleading because:
+
+That's very similar to what you proposed in:
+
+   https://lore.kernel.org/lkml/20190314122256.7wb3ydswpkfmntvf@e110439-lin/
+
+> 1. It does not imply that it has to be called only when there are no
+> more runnable tasks on a CPU. This is currently the case because it's
+> called only from uclamp_rq_dec_id() and only when bucket->tasks==0 but
+> nothing in the name of this function indicates that it can't be called
+> from other places.
+> 2. It does not imply that it marks rq UCLAMP_FLAG_IDLE.
+
+Even if you call it from other places, which is not required, it does
+not arm. That function still return the current max clamp for a CPU
+given its current state. If the CPU is idle we set the flag one more
+time but that's not a problem too.
+
+However, do you have any other proposal for a better name ?
+
+> >  {
+> >         struct uclamp_bucket *bucket = rq->uclamp[clamp_id].bucket;
+> >         int bucket_id = UCLAMP_BUCKETS - 1;
+> > @@ -771,7 +798,7 @@ unsigned int uclamp_rq_max_value(struct rq *rq, unsigned int clamp_id)
+> >         }
+> >
+> >         /* No tasks -- default clamp values */
+> > -       return uclamp_none(clamp_id);
+> > +       return uclamp_idle_value(rq, clamp_id, clamp_value);
+> >  }
+
+[...]
+
+-- 
+#include <best/regards.h>
+
+Patrick Bellasi
