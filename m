@@ -1,85 +1,116 @@
 From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: Re: [PATCH v8 04/16] sched/core: uclamp: Add system default clamps
-Date: Tue, 7 May 2019 11:38:45 +0100
-Message-ID: <20190507103845.tejg55wfsu3l3jwh@e110439-lin>
+Subject: Re: [PATCH v8 06/16] sched/core: uclamp: Extend sched_setattr() to
+ support utilization clamping
+Date: Tue, 7 May 2019 12:13:47 +0100
+Message-ID: <20190507111347.4ivnjwbymsf7i3e6@e110439-lin>
 References: <20190402104153.25404-1-patrick.bellasi@arm.com>
- <20190402104153.25404-5-patrick.bellasi@arm.com>
- <CAJuCfpGcN-CWCoo16_xKzohUbBTCY3W5D1E8izhA8wtEjCtF+Q@mail.gmail.com>
+ <20190402104153.25404-7-patrick.bellasi@arm.com>
+ <CAJuCfpH3htcr3xB_Y4nr7HXCdQd1hOdOAXbtZJB1SOt7Of_qbw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAJuCfpGcN-CWCoo16_xKzohUbBTCY3W5D1E8izhA8wtEjCtF+Q@mail.gmail.com>
+In-Reply-To: <CAJuCfpH3htcr3xB_Y4nr7HXCdQd1hOdOAXbtZJB1SOt7Of_qbw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Suren Baghdasaryan <surenb@google.com>
 Cc: LKML <linux-kernel@vger.kernel.org>, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On 17-Apr 17:51, Suren Baghdasaryan wrote:
+On 17-Apr 15:26, Suren Baghdasaryan wrote:
 > On Tue, Apr 2, 2019 at 3:42 AM Patrick Bellasi <patrick.bellasi@arm.com> wrote:
 
 [...]
 
-> > +/*
-> > + * The effective clamp bucket index of a task depends on, by increasing
-> > + * priority:
-> > + * - the task specific clamp value, when explicitly requested from userspace
-> > + * - the system default clamp value, defined by the sysadmin
-> > + */
-> > +static inline struct uclamp_se
-> > +uclamp_eff_get(struct task_struct *p, unsigned int clamp_id)
-> > +{
-> > +       struct uclamp_se uc_req = p->uclamp_req[clamp_id];
-> > +       struct uclamp_se uc_max = uclamp_default[clamp_id];
-> > +
-> > +       /* System default restrictions always apply */
-> > +       if (unlikely(uc_req.value > uc_max.value))
-> > +               return uc_max;
-> > +
-> > +       return uc_req;
-> > +}
-> > +
-> > +static inline unsigned int
-> > +uclamp_eff_bucket_id(struct task_struct *p, unsigned int clamp_id)
+> > Do not allow to change sched class specific params and non class
+> > specific params (i.e. clamp values) at the same time.  This keeps things
+> > simple and still works for the most common cases since we are usually
+> > interested in just one of the two actions.
 > 
-> This function is not used anywhere AFAIKT.
+> Sorry, I can't find where you are checking to eliminate the
+> possibility of simultaneous changes to both sched class specific
+> params and non class specific params... Am I too tired or they are
+> indeed missing?
 
-Right, this is the dual of uclamp_eff_value() but, since we don't
-actually use it in the corrent code, let's remove it and keep only the
-latter.
+No, you right... that limitation has been removed in v8 :)
 
-> uclamp_eff_bucket_id() and
-> uclamp_eff_value() look very similar, maybe they can be combined into
-> one function returning struct uclamp_se?
+I'll remove the above paragraph in v9, thanks for spotting it.
 
-I would prefer not since at the callsites of uclamp_eff_value() we
-actually need just the value.
+[...]
 
+> > +static int uclamp_validate(struct task_struct *p,
+> > +                          const struct sched_attr *attr)
 > > +{
-> > +       struct uclamp_se uc_eff;
+> > +       unsigned int lower_bound = p->uclamp_req[UCLAMP_MIN].value;
+> > +       unsigned int upper_bound = p->uclamp_req[UCLAMP_MAX].value;
 > > +
-> > +       /* Task currently refcounted: use back-annotated (effective) bucket */
-> > +       if (p->uclamp[clamp_id].active)
-> > +               return p->uclamp[clamp_id].bucket_id;
+> > +       if (attr->sched_flags & SCHED_FLAG_UTIL_CLAMP_MIN)
+> > +               lower_bound = attr->sched_util_min;
+> > +       if (attr->sched_flags & SCHED_FLAG_UTIL_CLAMP_MAX)
+> > +               upper_bound = attr->sched_util_max;
 > > +
-> > +       uc_eff = uclamp_eff_get(p, clamp_id);
+> > +       if (lower_bound > upper_bound)
+> > +               return -EINVAL;
+> > +       if (upper_bound > SCHED_CAPACITY_SCALE)
+> > +               return -EINVAL;
 > > +
-> > +       return uc_eff.bucket_id;
+> > +       return 0;
 > > +}
-> > +
-> > +unsigned int uclamp_eff_value(struct task_struct *p, unsigned int clamp_id)
+
+[...]
+
+> >  static void uclamp_fork(struct task_struct *p)
+> >  {
+> >         unsigned int clamp_id;
+> > @@ -1056,6 +1100,13 @@ static void __init init_uclamp(void)
+> >  #else /* CONFIG_UCLAMP_TASK */
+> >  static inline void uclamp_rq_inc(struct rq *rq, struct task_struct *p) { }
+> >  static inline void uclamp_rq_dec(struct rq *rq, struct task_struct *p) { }
+> > +static inline int uclamp_validate(struct task_struct *p,
+> > +                                 const struct sched_attr *attr)
 > > +{
-> > +       struct uclamp_se uc_eff;
-> > +
-> > +       /* Task currently refcounted: use back-annotated (effective) value */
-> > +       if (p->uclamp[clamp_id].active)
-> > +               return p->uclamp[clamp_id].value;
-> > +
-> > +       uc_eff = uclamp_eff_get(p, clamp_id);
-> > +
-> > +       return uc_eff.value;
+> > +       return -ENODEV;
+> 
+> ENOSYS might be more appropriate?
+
+Yep, agree, thanks!
+
+> 
 > > +}
+> > +static void __setscheduler_uclamp(struct task_struct *p,
+> > +                                 const struct sched_attr *attr) { }
+> >  static inline void uclamp_fork(struct task_struct *p) { }
+> >  static inline void init_uclamp(void) { }
+> >  #endif /* CONFIG_UCLAMP_TASK */
+> > @@ -4424,6 +4475,13 @@ static void __setscheduler_params(struct task_struct *p,
+> >  static void __setscheduler(struct rq *rq, struct task_struct *p,
+> >                            const struct sched_attr *attr, bool keep_boost)
+> >  {
+> > +       /*
+> > +        * If params can't change scheduling class changes aren't allowed
+> > +        * either.
+> > +        */
+> > +       if (attr->sched_flags & SCHED_FLAG_KEEP_PARAMS)
+> > +               return;
 > > +
+> >         __setscheduler_params(p, attr);
+> >
+> >         /*
+> > @@ -4561,6 +4619,13 @@ static int __sched_setscheduler(struct task_struct *p,
+> >                         return retval;
+> >         }
+> >
+> > +       /* Update task specific "requested" clamps */
+> > +       if (attr->sched_flags & SCHED_FLAG_UTIL_CLAMP) {
+> > +               retval = uclamp_validate(p, attr);
+> > +               if (retval)
+> > +                       return retval;
+> > +       }
+> > +
+> >         /*
+> >          * Make sure no PI-waiters arrive (or leave) while we are
+> >          * changing the priority of the task:
+
+[...]
 
 -- 
 #include <best/regards.h>
