@@ -1,242 +1,156 @@
-From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: Re: [PATCH v8 12/16] sched/core: uclamp: Extend CPU's cgroup
- controller
-Date: Tue, 7 May 2019 12:42:32 +0100
-Message-ID: <20190507114232.npsvba4itex5qpvl@e110439-lin>
-References: <20190402104153.25404-1-patrick.bellasi@arm.com>
- <20190402104153.25404-13-patrick.bellasi@arm.com>
- <CAJuCfpFFSgRUFb9pyckpXWxr-z+mrrhcsLjZiVN5fZMvYC5XxQ@mail.gmail.com>
+From: Aleksa Sarai <cyphar@cyphar.com>
+Subject: [PATCH v7 0/5] namei: resolveat(2) path resolution restriction API
+Date: Wed,  8 May 2019 02:43:12 +1000
+Message-ID: <20190507164317.13562-1-cyphar@cyphar.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAJuCfpFFSgRUFb9pyckpXWxr-z+mrrhcsLjZiVN5fZMvYC5XxQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Suren Baghdasaryan <surenb@google.com>
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>
+To: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>
+Cc: Aleksa Sarai <cyphar@cyphar.com>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Christian Brauner <christian@brauner.io>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, Linus Torvalds <torvalds@linux-foundation.org>, containers@lists.linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 17-Apr 17:12, Suren Baghdasaryan wrote:
-> On Tue, Apr 2, 2019 at 3:43 AM Patrick Bellasi <patrick.bellasi@arm.com> wrote:
-> >
-> > The cgroup CPU bandwidth controller allows to assign a specified
-> > (maximum) bandwidth to the tasks of a group. However this bandwidth is
-> > defined and enforced only on a temporal base, without considering the
-> > actual frequency a CPU is running on. Thus, the amount of computation
-> > completed by a task within an allocated bandwidth can be very different
-> > depending on the actual frequency the CPU is running that task.
-> > The amount of computation can be affected also by the specific CPU a
-> > task is running on, especially when running on asymmetric capacity
-> > systems like Arm's big.LITTLE.
-> >
-> > With the availability of schedutil, the scheduler is now able
-> > to drive frequency selections based on actual task utilization.
-> > Moreover, the utilization clamping support provides a mechanism to
-> > bias the frequency selection operated by schedutil depending on
-> > constraints assigned to the tasks currently RUNNABLE on a CPU.
-> >
-> > Giving the mechanisms described above, it is now possible to extend the
-> > cpu controller to specify the minimum (or maximum) utilization which
-> > should be considered for tasks RUNNABLE on a cpu.
-> > This makes it possible to better defined the actual computational
-> > power assigned to task groups, thus improving the cgroup CPU bandwidth
-> > controller which is currently based just on time constraints.
-> >
-> > Extend the CPU controller with a couple of new attributes util.{min,max}
-> > which allows to enforce utilization boosting and capping for all the
-> > tasks in a group. Specifically:
-> >
-> > - util.min: defines the minimum utilization which should be considered
-> >             i.e. the RUNNABLE tasks of this group will run at least at a
-> >                  minimum frequency which corresponds to the util.min
-> >                  utilization
-> >
-> > - util.max: defines the maximum utilization which should be considered
-> >             i.e. the RUNNABLE tasks of this group will run up to a
-> >                  maximum frequency which corresponds to the util.max
-> >                  utilization
-> >
-> > These attributes:
-> >
-> > a) are available only for non-root nodes, both on default and legacy
-> >    hierarchies, while system wide clamps are defined by a generic
-> >    interface which does not depends on cgroups. This system wide
-> >    interface enforces constraints on tasks in the root node.
-> >
-> > b) enforce effective constraints at each level of the hierarchy which
-> >    are a restriction of the group requests considering its parent's
-> >    effective constraints. Root group effective constraints are defined
-> >    by the system wide interface.
-> >    This mechanism allows each (non-root) level of the hierarchy to:
-> >    - request whatever clamp values it would like to get
-> >    - effectively get only up to the maximum amount allowed by its parent
-> >
-> > c) have higher priority than task-specific clamps, defined via
-> >    sched_setattr(), thus allowing to control and restrict task requests
-> >
-> > Add two new attributes to the cpu controller to collect "requested"
-> > clamp values. Allow that at each non-root level of the hierarchy.
-> > Validate local consistency by enforcing util.min < util.max.
-> > Keep it simple by do not caring now about "effective" values computation
-> > and propagation along the hierarchy.
-> >
-> > Signed-off-by: Patrick Bellasi <patrick.bellasi@arm.com>
-> > Cc: Ingo Molnar <mingo@redhat.com>
-> > Cc: Peter Zijlstra <peterz@infradead.org>
-> > Cc: Tejun Heo <tj@kernel.org>
-> >
-> > --
-> > Changes in v8:
-> >  Message-ID: <20190214154817.GN50184@devbig004.ftw2.facebook.com>
-> >  - update changelog description for points b), c) and following paragraph
-> > ---
-> >  Documentation/admin-guide/cgroup-v2.rst |  27 +++++
-> >  init/Kconfig                            |  22 ++++
-> >  kernel/sched/core.c                     | 142 +++++++++++++++++++++++-
-> >  kernel/sched/sched.h                    |   6 +
-> >  4 files changed, 196 insertions(+), 1 deletion(-)
-> >
-> > diff --git a/Documentation/admin-guide/cgroup-v2.rst b/Documentation/admin-guide/cgroup-v2.rst
-> > index 7bf3f129c68b..47710a77f4fa 100644
-> > --- a/Documentation/admin-guide/cgroup-v2.rst
-> > +++ b/Documentation/admin-guide/cgroup-v2.rst
-> > @@ -909,6 +909,12 @@ controller implements weight and absolute bandwidth limit models for
-> >  normal scheduling policy and absolute bandwidth allocation model for
-> >  realtime scheduling policy.
-> >
-> > +Cycles distribution is based, by default, on a temporal base and it
-> > +does not account for the frequency at which tasks are executed.
-> > +The (optional) utilization clamping support allows to enforce a minimum
-> > +bandwidth, which should always be provided by a CPU, and a maximum bandwidth,
-> > +which should never be exceeded by a CPU.
-> > +
-> >  WARNING: cgroup2 doesn't yet support control of realtime processes and
-> >  the cpu controller can only be enabled when all RT processes are in
-> >  the root cgroup.  Be aware that system management software may already
-> > @@ -974,6 +980,27 @@ All time durations are in microseconds.
-> >         Shows pressure stall information for CPU. See
-> >         Documentation/accounting/psi.txt for details.
-> >
-> > +  cpu.util.min
-> > +        A read-write single value file which exists on non-root cgroups.
-> > +        The default is "0", i.e. no utilization boosting.
-> > +
-> > +        The requested minimum utilization in the range [0, 1024].
-> > +
-> > +        This interface allows reading and setting minimum utilization clamp
-> > +        values similar to the sched_setattr(2). This minimum utilization
-> > +        value is used to clamp the task specific minimum utilization clamp.
-> > +
-> > +  cpu.util.max
-> > +        A read-write single value file which exists on non-root cgroups.
-> > +        The default is "1024". i.e. no utilization capping
-> > +
-> > +        The requested maximum utilization in the range [0, 1024].
-> > +
-> > +        This interface allows reading and setting maximum utilization clamp
-> > +        values similar to the sched_setattr(2). This maximum utilization
-> > +        value is used to clamp the task specific maximum utilization clamp.
-> > +
-> > +
-> >
-> >  Memory
-> >  ------
-> > diff --git a/init/Kconfig b/init/Kconfig
-> > index 7439cbf4d02e..33006e8de996 100644
-> > --- a/init/Kconfig
-> > +++ b/init/Kconfig
-> > @@ -877,6 +877,28 @@ config RT_GROUP_SCHED
-> >
-> >  endif #CGROUP_SCHED
-> >
-> > +config UCLAMP_TASK_GROUP
-> > +       bool "Utilization clamping per group of tasks"
-> > +       depends on CGROUP_SCHED
-> > +       depends on UCLAMP_TASK
-> > +       default n
-> > +       help
-> > +         This feature enables the scheduler to track the clamped utilization
-> > +         of each CPU based on RUNNABLE tasks currently scheduled on that CPU.
-> > +
-> > +         When this option is enabled, the user can specify a min and max
-> > +         CPU bandwidth which is allowed for each single task in a group.
-> > +         The max bandwidth allows to clamp the maximum frequency a task
-> > +         can use, while the min bandwidth allows to define a minimum
-> > +         frequency a task will always use.
-> > +
-> > +         When task group based utilization clamping is enabled, an eventually
-> > +         specified task-specific clamp value is constrained by the cgroup
-> > +         specified clamp value. Both minimum and maximum task clamping cannot
-> > +         be bigger than the corresponding clamping defined at task group level.
-> > +
-> > +         If in doubt, say N.
-> > +
-> >  config CGROUP_PIDS
-> >         bool "PIDs controller"
-> >         help
-> > diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-> > index 71c9dd6487b1..aeed2dd315cc 100644
-> > --- a/kernel/sched/core.c
-> > +++ b/kernel/sched/core.c
-> > @@ -1130,8 +1130,12 @@ static void __init init_uclamp(void)
-> >         /* System defaults allow max clamp values for both indexes */
-> >         uc_max.value = uclamp_none(UCLAMP_MAX);
-> >         uc_max.bucket_id = uclamp_bucket_id(uc_max.value);
-> > -       for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id)
-> > +       for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id) {
-> >                 uclamp_default[clamp_id] = uc_max;
-> > +#ifdef CONFIG_UCLAMP_TASK_GROUP
-> > +               root_task_group.uclamp_req[clamp_id] = uc_max;
-> > +#endif
-> > +       }
-> >  }
-> >
-> >  #else /* CONFIG_UCLAMP_TASK */
-> > @@ -6720,6 +6724,19 @@ void ia64_set_curr_task(int cpu, struct task_struct *p)
-> >  /* task_group_lock serializes the addition/removal of task groups */
-> >  static DEFINE_SPINLOCK(task_group_lock);
-> >
-> > +static inline int alloc_uclamp_sched_group(struct task_group *tg,
-> > +                                          struct task_group *parent)
-> > +{
-> > +#ifdef CONFIG_UCLAMP_TASK_GROUP
-> > +       int clamp_id;
-> > +
-> > +       for (clamp_id = 0; clamp_id < UCLAMP_CNT; ++clamp_id)
-> > +               tg->uclamp_req[clamp_id] = parent->uclamp_req[clamp_id];
-> > +#endif
-> > +
-> > +       return 1;
-> 
-> Looks like you never return anything else neither here nor in the
-> following patches I think...
+Patch changelog:
+  v7:
+    * Remove execveat(2) support for these flags since it might
+      result in some pretty hairy security issues with setuid binaries.
+      There are other avenues we can go down to solve the issues with
+      CVE-2019-5736. [Jann]
+    * Reserve an additional bit in resolveat(2) for the eXecute access
+      mode if we end up implementing it.
+  v6:
+    * Drop O_* flags API to the new LOOKUP_ path scoping bits and
+      instead introduce resolveat(2) as an alternative method of
+      obtaining an O_PATH. The justification for this is included in
+      patch 6 (though switching back to O_* flags is trivial).
+  v5:
+    * In response to CVE-2019-5736 (one of the vectors showed that
+      open(2)+fexec(3) cannot be used to scope binfmt_script's implicit
+      open_exec()), AT_* flags have been re-added and are now piped
+      through to binfmt_script (and other binfmt_* that use open_exec)
+      but are only supported for execveat(2) for now.
+  v4:
+    * Remove AT_* flag reservations, as they require more discussion.
+    * Switch to path_is_under() over __d_path() for breakout checking.
+    * Make O_XDEV no longer block openat("/tmp", "/", O_XDEV) -- dirfd
+      is now ignored for absolute paths to match other flags.
+    * Improve the dirfd_path_init() refactor and move it to a separate
+      commit.
+    * Remove reference to Linux-capsicum.
+    * Switch "proclink" name to "magic link".
+  v3: [resend]
+  v2:
+    * Made ".." resolution with AT_THIS_ROOT and AT_BENEATH safe(r) with
+      some semi-aggressive __d_path checking (see patch 3).
+    * Disallowed "proclinks" with AT_THIS_ROOT and AT_BENEATH, in the
+      hopes they can be re-enabled once safe.
+    * Removed the selftests as they will be reimplemented as xfstests.
+    * Removed stat(2) support, since you can already get it through
+      O_PATH and fstatat(2).
 
-That's right, I just preferred to keep the same structure in the
-callsite below...
+The need for some sort of control over VFS's path resolution (to avoid
+malicious paths resulting in inadvertent breakouts) has been a very
+long-standing desire of many userspace applications. This patchset is a
+revival of Al Viro's old AT_NO_JUMPS[1,2] patchset (which was a variant
+of David Drysdale's O_BENEATH patchset[3] which was a spin-off of the
+Capsicum project[4]) with a few additions and changes made based on the
+previous discussion within [5] as well as others I felt were useful.
 
-> > +}
-> > +
-> >  static void sched_free_group(struct task_group *tg)
-> >  {
-> >         free_fair_sched_group(tg);
-> > @@ -6743,6 +6760,9 @@ struct task_group *sched_create_group(struct task_group *parent)
-> >         if (!alloc_rt_sched_group(tg, parent))
-> >                 goto err;
-> >
-> > +       if (!alloc_uclamp_sched_group(tg, parent))
-> > +               goto err;
-> > +
+In line with the conclusions of the original discussion of AT_NO_JUMPS,
+the flag has been split up into separate flags. However, instead of
+being an openat(2) flag it is provided through a new syscall
+resolveat(2) which provides an alternative way to get an O_PATH file
+descriptor (the reasoning for doing this is included in patch 6). The
+following new LOOKUP_ (and corresponding uapi) flags are added:
 
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  * LOOKUP_XDEV blocks all mountpoint crossings (upwards, downwards, or
+    through absolute links). Absolute pathnames alone in openat(2) do
+    not trigger this.
 
-... under the assumption the compiler is smart enough to optimized that.
+  * LOOKUP_NO_MAGICLINKS blocks resolution through /proc/$pid/fd-style
+    links. This is done by blocking the usage of nd_jump_link() during
+    resolution in a filesystem. The term "magic links" is used to match
+    with the only reference to these links in Documentation/, but I'm
+    happy to change the name.
 
-But perhaps  it's less confusing to just use void, will update in v9.
+    It should be noted that this is different to the scope of
+    ~LOOKUP_FOLLOW in that it applies to all path components. However,
+    you can do resolveat(NOFOLLOW|NO_MAGICLINKS) on a "magic link" and
+    it will *not* fail (assuming that no parent component was a "magic
+    link"), and you will have an fd for the "magic link".
 
-> >         return tg;
-> >
-> >  err:
+  * LOOKUP_BENEATH disallows escapes to outside the starting dirfd's
+    tree, using techniques such as ".." or absolute links. Absolute
+    paths in openat(2) are also disallowed. Conceptually this flag is to
+    ensure you "stay below" a certain point in the filesystem tree --
+    but this requires some additional to protect against various races
+    that would allow escape using ".." (see patch 4 for more detail).
+
+    Currently LOOKUP_BENEATH implies LOOKUP_NO_MAGICLINKS, because it
+    can trivially beam you around the filesystem (breaking the
+    protection). In future, there might be similar safety checks as in
+    patch 4, but that requires more discussion.
+
+In addition, two new flags were added that expand on the above ideas:
+
+  * LOOKUP_NO_SYMLINKS does what it says on the tin. No symlink
+    resolution is allowed at all, including "magic links". Just as with
+    LOOKUP_NO_MAGICLINKS this can still be used with NOFOLLOW to open an
+    fd for the symlink as long as no parent path had a symlink
+    component.
+
+  * LOOKUP_IN_ROOT is an extension of LOOKUP_BENEATH that, rather than
+    blocking attempts to move past the root, forces all such movements
+    to be scoped to the starting point. This provides chroot(2)-like
+    protection but without the cost of a chroot(2) for each filesystem
+    operation, as well as being safe against race attacks that chroot(2)
+    is not.
+
+    If a race is detected (as with LOOKUP_BENEATH) then an error is
+    generated, and similar to LOOKUP_BENEATH it is not permitted to cross
+    "magic links" with LOOKUP_IN_ROOT.
+
+    The primary need for this is from container runtimes, which
+    currently need to do symlink scoping in userspace[6] when opening
+    paths in a potentially malicious container. There is a long list of
+    CVEs that could have bene mitigated by having O_THISROOT (such as
+    CVE-2017-1002101, CVE-2017-1002102, CVE-2018-15664, and
+    CVE-2019-5736, just to name a few).
+
+[1]: https://lwn.net/Articles/721443/
+[2]: https://lore.kernel.org/patchwork/patch/784221/
+[3]: https://lwn.net/Articles/619151/
+[4]: https://lwn.net/Articles/603929/
+[5]: https://lwn.net/Articles/723057/
+[6]: https://github.com/cyphar/filepath-securejoin
+
+Aleksa Sarai (5):
+  namei: split out nd->dfd handling to dirfd_path_init
+  namei: O_BENEATH-style path resolution flags
+  namei: LOOKUP_IN_ROOT: chroot-like path resolution
+  namei: aggressively check for nd->root escape on ".." resolution
+  namei: resolveat(2) syscall
+
+ arch/alpha/kernel/syscalls/syscall.tbl      |   1 +
+ arch/arm/tools/syscall.tbl                  |   1 +
+ arch/ia64/kernel/syscalls/syscall.tbl       |   1 +
+ arch/m68k/kernel/syscalls/syscall.tbl       |   1 +
+ arch/microblaze/kernel/syscalls/syscall.tbl |   1 +
+ arch/mips/kernel/syscalls/syscall_n32.tbl   |   1 +
+ arch/mips/kernel/syscalls/syscall_n64.tbl   |   1 +
+ arch/mips/kernel/syscalls/syscall_o32.tbl   |   1 +
+ arch/parisc/kernel/syscalls/syscall.tbl     |   1 +
+ arch/powerpc/kernel/syscalls/syscall.tbl    |   1 +
+ arch/s390/kernel/syscalls/syscall.tbl       |   1 +
+ arch/sh/kernel/syscalls/syscall.tbl         |   1 +
+ arch/sparc/kernel/syscalls/syscall.tbl      |   1 +
+ arch/x86/entry/syscalls/syscall_32.tbl      |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl      |   1 +
+ arch/xtensa/kernel/syscalls/syscall.tbl     |   1 +
+ fs/namei.c                                  | 251 +++++++++++++++-----
+ include/linux/namei.h                       |   8 +
+ include/uapi/linux/fcntl.h                  |  13 +
+ 19 files changed, 229 insertions(+), 59 deletions(-)
+
 -- 
-#include <best/regards.h>
-
-Patrick Bellasi
+2.21.0
