@@ -1,54 +1,22 @@
-From: Alan Tull <atull@kernel.org>
-Subject: Re: [PATCH v2 02/18] fpga: dfl: fme: remove copy_to_user() in ioctl
- for PR
-Date: Wed, 8 May 2019 12:58:59 -0500
-Message-ID: <CANk1AXQW-BhHgaYkvYKU3tHRiFvj9_O3xteTh9cmfna2JKYauQ@mail.gmail.com>
-References: <1556528151-17221-1-git-send-email-hao.wu@intel.com>
- <1556528151-17221-3-git-send-email-hao.wu@intel.com> <20190507172545.GA26690@archbox>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH v8 04/16] sched/core: uclamp: Add system default clamps
+Date: Wed, 8 May 2019 20:42:02 +0200
+Message-ID: <20190508184202.GA32547@worktop.programming.kicks-ass.net>
+References: <20190402104153.25404-1-patrick.bellasi@arm.com>
+ <20190402104153.25404-5-patrick.bellasi@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190507172545.GA26690@archbox>
+Content-Disposition: inline
+In-Reply-To: <20190402104153.25404-5-patrick.bellasi@arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Moritz Fischer <mdf@kernel.org>
-Cc: Wu Hao <hao.wu@intel.com>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Xu Yilun <yilun.xu@intel.com>
+To: Patrick Bellasi <patrick.bellasi@arm.com>
+Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 7, 2019 at 12:26 PM Moritz Fischer <mdf@kernel.org> wrote:
->
-> On Mon, Apr 29, 2019 at 04:55:35PM +0800, Wu Hao wrote:
-> > This patch removes copy_to_user() code in partial reconfiguration
-> > ioctl, as it's useless as user never needs to read the data
-> > structure after ioctl.
-> >
-> > Signed-off-by: Xu Yilun <yilun.xu@intel.com>
-> > Signed-off-by: Wu Hao <hao.wu@intel.com>
-> Acked-by: Moritz Fischer <mdf@kernel.org>
+On Tue, Apr 02, 2019 at 11:41:40AM +0100, Patrick Bellasi wrote:
+> Add a privileged interface to define a system default configuration via:
+> 
+>   /proc/sys/kernel/sched_uclamp_util_{min,max}
 
-Acked-by: Alan Tull <atull@kernel.org>
-
-Alan
-
-> > ---
-> > v2: clean up code split from patch 2 in v1 patchset.
-> > ---
-> >  drivers/fpga/dfl-fme-pr.c | 3 ---
-> >  1 file changed, 3 deletions(-)
-> >
-> > diff --git a/drivers/fpga/dfl-fme-pr.c b/drivers/fpga/dfl-fme-pr.c
-> > index d9ca955..6ec0f09 100644
-> > --- a/drivers/fpga/dfl-fme-pr.c
-> > +++ b/drivers/fpga/dfl-fme-pr.c
-> > @@ -159,9 +159,6 @@ static int fme_pr(struct platform_device *pdev, unsigned long arg)
-> >       mutex_unlock(&pdata->lock);
-> >  free_exit:
-> >       vfree(buf);
-> > -     if (copy_to_user((void __user *)arg, &port_pr, minsz))
-> > -             return -EFAULT;
-> > -
-> >       return ret;
-> >  }
-> >
-> > --
-> > 1.8.3.1
-> >
+Isn't the 'u' in "uclamp" already for util?
