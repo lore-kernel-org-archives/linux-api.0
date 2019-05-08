@@ -1,98 +1,54 @@
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [PATCH v3 09/11] platform/x86: asus-wmi: Control RGB keyboard
- backlight
-Date: Wed, 8 May 2019 19:12:29 +0200
-Message-ID: <20190508171229.GA22024@amd>
-References: <7acd57fe-604a-a96a-4ca2-a25bc88d6405@gmail.com>
- <c953b43b-6186-77e9-54b1-b1cd1d7d1eb6@gmail.com>
- <CAHp75Vf9uPG7_K0P26nHYCH0WB6LFX3wk8aJBpLWQ-r46kDw9w@mail.gmail.com>
+From: Alan Tull <atull@kernel.org>
+Subject: Re: [PATCH v2 02/18] fpga: dfl: fme: remove copy_to_user() in ioctl
+ for PR
+Date: Wed, 8 May 2019 12:58:59 -0500
+Message-ID: <CANk1AXQW-BhHgaYkvYKU3tHRiFvj9_O3xteTh9cmfna2JKYauQ@mail.gmail.com>
+References: <1556528151-17221-1-git-send-email-hao.wu@intel.com>
+ <1556528151-17221-3-git-send-email-hao.wu@intel.com> <20190507172545.GA26690@archbox>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-        protocol="application/pgp-signature"; boundary="45Z9DzgjV8m4Oswq"
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHp75Vf9uPG7_K0P26nHYCH0WB6LFX3wk8aJBpLWQ-r46kDw9w@mail.gmail.com>
+In-Reply-To: <20190507172545.GA26690@archbox>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Shevchenko <andy.shevchenko@gmail.com>
-Cc: Yurii Pavlovskyi <yurii.pavlovskyi@gmail.com>, Jacek Anaszewski <jacek.anaszewski@gmail.com>, Linux LED Subsystem <linux-leds@vger.kernel.org>, Corentin Chary <corentin.chary@gmail.com>, Darren Hart <dvhart@infradead.org>, Andy Shevchenko <andy@infradead.org>, Daniel Drake <drake@endlessm.com>, acpi4asus-user <acpi4asus-user@lists.sourceforge.net>, Platform Driver <platform-driver-x86@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org
+To: Moritz Fischer <mdf@kernel.org>
+Cc: Wu Hao <hao.wu@intel.com>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Xu Yilun <yilun.xu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-
---45Z9DzgjV8m4Oswq
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-Hi!
-
-> > The WMI exposes two methods for controlling RGB keyboard backlight, whi=
-ch
-> > allows controlling:
-> > * RGB components in range 00 - ff,
-> > * Switch between 4 effects,
-> > * Switch between 3 effect speed modes,
-> > * Separately enable the backlight on boot, in the awake state (after dr=
-iver
-> >   load), in sleep mode, and probably in something called shutdown mode =
-(no
-> >   observable effects of enabling it are known so far).
+On Tue, May 7, 2019 at 12:26 PM Moritz Fischer <mdf@kernel.org> wrote:
+>
+> On Mon, Apr 29, 2019 at 04:55:35PM +0800, Wu Hao wrote:
+> > This patch removes copy_to_user() code in partial reconfiguration
+> > ioctl, as it's useless as user never needs to read the data
+> > structure after ioctl.
 > >
-> > The configuration should be written to several sysfs parameter buffers
-> > which are then written via WMI by writing either 1 or 2 to the "kbbl_se=
-t"
-> > parameter. When reading the buffers the last written value is returned.
-> >
-> > If the 2 is written to "kbbl_set", the parameters will be reset on rebo=
-ot
-> > (temporary mode), 1 is permanent mode, parameters are retained.
-> >
-> > The calls use new 3-dword input buffer method call.
-> >
-> > The functionality is only enabled if corresponding DSTS methods return
-> > exact valid values.
-> >
-> > The following script demonstrates usage:
-> >
-> > echo Red [00 - ff]
-> > echo 33 > /sys/devices/platform/asus-nb-wmi/kbbl/kbbl_red
-> > echo Green [00 - ff]
-> > echo ff > /sys/devices/platform/asus-nb-wmi/kbbl/kbbl_green
-> > echo Blue [00 - ff]
-> > echo 0 > /sys/devices/platform/asus-nb-wmi/kbbl/kbbl_blue
-> > echo Mode: 0 - static color, 1 - breathing, 2 - color cycle, 3 - strobi=
-ng
-> > echo 0 > /sys/devices/platform/asus-nb-wmi/kbbl/kbbl_mode
-> > echo Speed for modes 1 and 2: 0 - slow, 1 - medium, 2 - fast
-> > echo 0 > /sys/devices/platform/asus-nb-wmi/kbbl/kbbl_speed
-> > echo Enable: 02 - on boot, before module load, 08 - awake, 20 - sleep,
-> > echo 2a or ff to set all
-> > echo 2a > /sys/devices/platform/asus-nb-wmi/kbbl/kbbl_flags
-> > echo Save: 1 - permanently, 2 - temporarily, reset after reboot
-> > echo 1 > /sys/devices/platform/asus-nb-wmi/kbbl/kbbl_set
-> >
->=20
-> Shouldn't be the LED subsystem driver for this?
+> > Signed-off-by: Xu Yilun <yilun.xu@intel.com>
+> > Signed-off-by: Wu Hao <hao.wu@intel.com>
+> Acked-by: Moritz Fischer <mdf@kernel.org>
 
-Yes, please. We have common interface for LED drivers; this needs to
-use it.
+Acked-by: Alan Tull <atull@kernel.org>
 
-Thanks,
-									Pavel
---=20
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
-g.html
+Alan
 
---45Z9DzgjV8m4Oswq
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iEYEARECAAYFAlzTDf0ACgkQMOfwapXb+vJFGACfSBV9DLzKArrDcy1WFTMiUIRD
-adwAoKGN8uwzERJIj5yAWDJcBhtOauT3
-=Pemh
------END PGP SIGNATURE-----
-
---45Z9DzgjV8m4Oswq--
+> > ---
+> > v2: clean up code split from patch 2 in v1 patchset.
+> > ---
+> >  drivers/fpga/dfl-fme-pr.c | 3 ---
+> >  1 file changed, 3 deletions(-)
+> >
+> > diff --git a/drivers/fpga/dfl-fme-pr.c b/drivers/fpga/dfl-fme-pr.c
+> > index d9ca955..6ec0f09 100644
+> > --- a/drivers/fpga/dfl-fme-pr.c
+> > +++ b/drivers/fpga/dfl-fme-pr.c
+> > @@ -159,9 +159,6 @@ static int fme_pr(struct platform_device *pdev, unsigned long arg)
+> >       mutex_unlock(&pdata->lock);
+> >  free_exit:
+> >       vfree(buf);
+> > -     if (copy_to_user((void __user *)arg, &port_pr, minsz))
+> > -             return -EFAULT;
+> > -
+> >       return ret;
+> >  }
+> >
+> > --
+> > 1.8.3.1
+> >
