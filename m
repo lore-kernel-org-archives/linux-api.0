@@ -1,38 +1,51 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH v8 06/16] sched/core: uclamp: Extend sched_setattr() to
- support utilization clamping
-Date: Wed, 8 May 2019 21:44:39 +0200
-Message-ID: <20190508194439.GF32547@worktop.programming.kicks-ass.net>
-References: <20190402104153.25404-1-patrick.bellasi@arm.com>
- <20190402104153.25404-7-patrick.bellasi@arm.com>
- <CAJuCfpH3htcr3xB_Y4nr7HXCdQd1hOdOAXbtZJB1SOt7Of_qbw@mail.gmail.com>
- <20190507111347.4ivnjwbymsf7i3e6@e110439-lin>
+From: Yury Norov <yury.norov@gmail.com>
+Subject: Re: [PATCH v9 00/24] ILP32 for ARM64
+Date: Wed, 8 May 2019 15:59:00 -0700
+Message-ID: <20190508225900.GA14091@yury-thinkpad>
+References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190507111347.4ivnjwbymsf7i3e6@e110439-lin>
+In-Reply-To: <20180516081910.10067-1-ynorov@caviumnetworks.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Patrick Bellasi <patrick.bellasi@arm.com>
-Cc: Suren Baghdasaryan <surenb@google.com>, LKML <linux-kernel@vger.kernel.org>, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>
+To: Yury Norov <ynorov@caviumnetworks.com>
+Cc: Catalin Marinas <catalin.marinas@arm.com>, Arnd Bergmann <arnd@arndb.de>, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Adam Borowski <kilobyte@angband.pl>, Alexander Graf <agraf@suse.de>, Alexey Klimov <klimov.linux@gmail.com>, Andreas Schwab <schwab@suse.de>, Andrew Pinski <pinskia@gmail.com>, Bamvor Zhangjian <bamv2005@gmail.com>, Chris Metcalf <cmetcalf@mellanox.com>, Christoph Muellner <christoph.muellner@theobroma-systems.com>, Dave Martin <Dave.Martin@arm.com>, "David S . Miller" <davem@davemloft.net>, Florian Weimer <fweimer@redhat.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, James Hogan <jame>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 07, 2019 at 12:13:47PM +0100, Patrick Bellasi wrote:
-> On 17-Apr 15:26, Suren Baghdasaryan wrote:
-> > On Tue, Apr 2, 2019 at 3:42 AM Patrick Bellasi <patrick.bellasi@arm.com> wrote:
+Hi all,
 
-> > > @@ -1056,6 +1100,13 @@ static void __init init_uclamp(void)
-> > >  #else /* CONFIG_UCLAMP_TASK */
-> > >  static inline void uclamp_rq_inc(struct rq *rq, struct task_struct *p) { }
-> > >  static inline void uclamp_rq_dec(struct rq *rq, struct task_struct *p) { }
-> > > +static inline int uclamp_validate(struct task_struct *p,
-> > > +                                 const struct sched_attr *attr)
-> > > +{
-> > > +       return -ENODEV;
-> > 
-> > ENOSYS might be more appropriate?
+On Wed, May 16, 2018 at 11:18:45AM +0300, Yury Norov wrote:
+> This series enables AARCH64 with ILP32 mode.
 > 
-> Yep, agree, thanks!
+> As supporting work, it introduces ARCH_32BIT_OFF_T configuration
+> option that is enabled for existing 32-bit architectures but disabled
+> for new arches (so 64-bit off_t userspace type is used by new userspace).
+> Also it deprecates getrlimit and setrlimit syscalls prior to prlimit64.
+> 
+> Based on kernel v4.16. Tested with LTP, glibc testsuite, trinity, lmbench,
+> CPUSpec.
+> 
+> This series on github: 
+> https://github.com/norov/linux/tree/ilp32-4.16
+> Linaro toolchain:
+> http://snapshots.linaro.org/components/toolchain/binaries/7.3-2018.04-rc1/aarch64-linux-gnu_ilp32/
+> Debian repo:
+> http://people.linaro.org/~wookey/ilp32/
+> OpenSUSE repo:
+> https://build.opensuse.org/project/show/devel:ARM:Factory:Contrib:ILP32
 
-No, -ENOSYS (see the comment) is special in that it indicates the whole
-system call is unavailable; that is most certainly not the case!
+This is the 5.1-based version.
+Changes comparing to 5.0:
+ - drop arch patches that has been taken upstream:
+   80d7da1cac62 asm-generic: Drop getrlimit and setrlimit syscalls from default list
+   942fa985e9f1 32-bit userspace ABI: introduce ARCH_32BIT_OFF_T config option
+   0d0216c03a7a compat ABI: use non-compat openat and open_by_handle_at variants
+ - in include/linux/thread_bits.h define current_thread_info() prior to
+   inclusion of asm/thread_info.h, to avoid circullar dependencies (thread: move
+   thread bits accessors to separated file);
+ - enable old IPC interfaces for ilp32, according to mainline changes
+   (arm64: ilp32: introduce syscall table for ILP32).
+
+Thanks,
+Yury
