@@ -1,62 +1,39 @@
-From: Alan Tull <atull@kernel.org>
-Subject: Re: [PATCH v2 17/18] fpga: dfl: fme: add global error reporting support
-Date: Thu, 9 May 2019 11:27:36 -0500
-Message-ID: <CANk1AXRpBe=8Jh+_ZMfARSdXZmrQaN3jc0AfxoX2nP5sLESv2A@mail.gmail.com>
-References: <1556528151-17221-1-git-send-email-hao.wu@intel.com> <1556528151-17221-18-git-send-email-hao.wu@intel.com>
+From: Rob Landley <rob@landley.net>
+Subject: Re: [PATCH v2 0/3] initramfs: add support for xattrs in the initial
+ ram disk
+Date: Thu, 9 May 2019 13:34:13 -0500
+Message-ID: <fca8e601-1144-1bb8-c007-518651f624a5@landley.net>
+References: <20190509112420.15671-1-roberto.sassu@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1556528151-17221-18-git-send-email-hao.wu@intel.com>
+In-Reply-To: <20190509112420.15671-1-roberto.sassu@huawei.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Wu Hao <hao.wu@intel.com>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Luwei Kang <luwei.kang@intel.com>, Ananda Ravuri <ananda.ravuri@intel.com>, Xu Yilun <yilun.xu@intel.com>
+To: Roberto Sassu <roberto.sassu@huawei.com>, viro@zeniv.linux.org.uk
+Cc: linux-security-module@vger.kernel.org, linux-integrity@vger.kernel.org, initramfs@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, zohar@linux.vnet.ibm.com, silviu.vlasceanu@huawei.com, dmitry.kasatkin@huawei.com, takondra@cisco.com, kamensky@cisco.com, hpa@zytor.com, arnd@arndb.de, james.w.mcmechan@gmail.com
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 29, 2019 at 4:13 AM Wu Hao <hao.wu@intel.com> wrote:
+On 5/9/19 6:24 AM, Roberto Sassu wrote:
+> This patch set aims at solving the following use case: appraise files from
+> the initial ram disk. To do that, IMA checks the signature/hash from the
+> security.ima xattr. Unfortunately, this use case cannot be implemented
+> currently, as the CPIO format does not support xattrs.
+> 
+> This proposal consists in marshaling pathnames and xattrs in a file called
+> .xattr-list. They are unmarshaled by the CPIO parser after all files have
+> been extracted.
 
-Hi Hao,
+So it's in-band signalling that has a higher peak memory requirement.
 
-The changes look good.  There's one easy to fix thing that Greg has
-pointed out recently on another patch (below).
+> The difference with another proposal
+> (https://lore.kernel.org/patchwork/cover/888071/) is that xattrs can be
+> included in an image without changing the image format, as opposed to
+> defining a new one. As seen from the discussion, if a new format has to be
+> defined, it should fix the issues of the existing format, which requires
+> more time.
 
->
-> This patch adds support for global error reporting for FPGA
-> Management Engine (FME), it introduces sysfs interfaces to
-> report different error detected by the hardware, and allow
-> user to clear errors or inject error for testing purpose.
->
-> Signed-off-by: Luwei Kang <luwei.kang@intel.com>
-> Signed-off-by: Ananda Ravuri <ananda.ravuri@intel.com>
-> Signed-off-by: Xu Yilun <yilun.xu@intel.com>
-> Signed-off-by: Wu Hao <hao.wu@intel.com>
+So you've explicitly chosen _not_ to address Y2038 while you're there.
 
-Acked-by: Alan Tull <atull@kernel.org>
-
-> ---
-> v2: fix issues found in sysfs doc.
->     fix returned error code issues for writable sysfs interfaces.
->     (use -EINVAL if input doesn't match error code)
->     reorder the sysfs groups in code.
-
-> +static ssize_t revision_show(struct device *dev, struct device_attribute *attr,
-> +                            char *buf)
-> +{
-> +       struct device *err_dev = dev->parent;
-> +       void __iomem *base;
-> +
-> +       base = dfl_get_feature_ioaddr_by_id(err_dev, FME_FEATURE_ID_GLOBAL_ERR);
-> +
-> +       return scnprintf(buf, PAGE_SIZE, "%u\n", dfl_feature_revision(base));
-
-Greg is discouraging use of scnprintf for sysfs attributes where it's
-not needed [1].
-
-Please fix this up the attributes added in this patchset.  Besides
-that, looks good, I added my Ack.
-
-Alan
-
-> +}
-> +static DEVICE_ATTR_RO(revision);
-
-[1] https://lkml.org/lkml/2019/4/25/1050
+Rob
