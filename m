@@ -1,28 +1,62 @@
-From: Oleg Nesterov <oleg@redhat.com>
-Subject: Re: [PATCH linux-next v10 0/7] ptrace: add PTRACE_GET_SYSCALL_INFO
- request
-Date: Thu, 9 May 2019 18:14:20 +0200
-Message-ID: <20190509161420.GD24526@redhat.com>
-References: <20190415234307.GA9364@altlinux.org>
+From: Alan Tull <atull@kernel.org>
+Subject: Re: [PATCH v2 17/18] fpga: dfl: fme: add global error reporting support
+Date: Thu, 9 May 2019 11:27:36 -0500
+Message-ID: <CANk1AXRpBe=8Jh+_ZMfARSdXZmrQaN3jc0AfxoX2nP5sLESv2A@mail.gmail.com>
+References: <1556528151-17221-1-git-send-email-hao.wu@intel.com> <1556528151-17221-18-git-send-email-hao.wu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190415234307.GA9364@altlinux.org>
+In-Reply-To: <1556528151-17221-18-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Dmitry V. Levin" <ldv@altlinux.org>, Andrew Morton <akpm@linux-foundation.org>
-Cc: Elvira Khabirova <lineprinter@altlinux.org>, Eugene Syromyatnikov <esyr@redhat.com>, Andy Lutomirski <luto@kernel.org>, Benjamin Herrenschmidt <benh@kernel.crashing.org>, Greentime Hu <greentime@andestech.com>, Helge Deller <deller@gmx.de>, "James E.J. Bottomley" <jejb@parisc-linux.org>, James Hogan <jhogan@kernel.org>, Kees Cook <keescook@chromium.org>, Michael Ellerman <mpe@ellerman.id.au>, Paul Burton <paul.burton@mips.com>, Paul Mackerras <paulus@samba.org>, Ralf Baechle <ralf@linux-mips.org>, Richard Kuo <rkuo@codeaurora.org>, Shuah Khan <shuah@kernel.org>, Vincent Chen <deanbo422@gmail.com>, linux-api@vger.kernel.org, linux-hexagon@vger.kernel.org, linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org, linux-mips@vger.kernel.org
+To: Wu Hao <hao.wu@intel.com>
+Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Luwei Kang <luwei.kang@intel.com>, Ananda Ravuri <ananda.ravuri@intel.com>, Xu Yilun <yilun.xu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On 04/16, Dmitry V. Levin wrote:
+On Mon, Apr 29, 2019 at 4:13 AM Wu Hao <hao.wu@intel.com> wrote:
+
+Hi Hao,
+
+The changes look good.  There's one easy to fix thing that Greg has
+pointed out recently on another patch (below).
+
 >
-> [Andrew, could you take this patchset into your tree, please?]
+> This patch adds support for global error reporting for FPGA
+> Management Engine (FME), it introduces sysfs interfaces to
+> report different error detected by the hardware, and allow
+> user to clear errors or inject error for testing purpose.
+>
+> Signed-off-by: Luwei Kang <luwei.kang@intel.com>
+> Signed-off-by: Ananda Ravuri <ananda.ravuri@intel.com>
+> Signed-off-by: Xu Yilun <yilun.xu@intel.com>
+> Signed-off-by: Wu Hao <hao.wu@intel.com>
 
-Just in case...
+Acked-by: Alan Tull <atull@kernel.org>
 
-I have already acked 6/7.
+> ---
+> v2: fix issues found in sysfs doc.
+>     fix returned error code issues for writable sysfs interfaces.
+>     (use -EINVAL if input doesn't match error code)
+>     reorder the sysfs groups in code.
 
-Other patches look good to me too, just I don't think I can actually review
-these non-x86 changes.
+> +static ssize_t revision_show(struct device *dev, struct device_attribute *attr,
+> +                            char *buf)
+> +{
+> +       struct device *err_dev = dev->parent;
+> +       void __iomem *base;
+> +
+> +       base = dfl_get_feature_ioaddr_by_id(err_dev, FME_FEATURE_ID_GLOBAL_ERR);
+> +
+> +       return scnprintf(buf, PAGE_SIZE, "%u\n", dfl_feature_revision(base));
 
-Oleg.
+Greg is discouraging use of scnprintf for sysfs attributes where it's
+not needed [1].
+
+Please fix this up the attributes added in this patchset.  Besides
+that, looks good, I added my Ack.
+
+Alan
+
+> +}
+> +static DEVICE_ATTR_RO(revision);
+
+[1] https://lkml.org/lkml/2019/4/25/1050
