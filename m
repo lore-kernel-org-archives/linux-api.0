@@ -1,123 +1,56 @@
 From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH v8 04/16] sched/core: uclamp: Add system default clamps
-Date: Thu, 9 May 2019 13:53:07 +0200
-Message-ID: <20190509115307.GS2623@hirez.programming.kicks-ass.net>
+Subject: Re: [PATCH v8 05/16] sched/core: Allow sched_setattr() to use the
+ current policy
+Date: Thu, 9 May 2019 13:55:17 +0200
+Message-ID: <20190509115517.GT2623@hirez.programming.kicks-ass.net>
 References: <20190402104153.25404-1-patrick.bellasi@arm.com>
- <20190402104153.25404-5-patrick.bellasi@arm.com>
- <20190508190733.GC32547@worktop.programming.kicks-ass.net>
- <20190508191529.GA26813@worktop.programming.kicks-ass.net>
- <20190509091057.ckef2ley4eswyzds@e110439-lin>
+ <20190402104153.25404-6-patrick.bellasi@arm.com>
+ <20190508192131.GD32547@worktop.programming.kicks-ass.net>
+ <20190509091807.7d3iykkn3oj4b737@e110439-lin>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190509091057.ckef2ley4eswyzds@e110439-lin>
+In-Reply-To: <20190509091807.7d3iykkn3oj4b737@e110439-lin>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Patrick Bellasi <patrick.bellasi@arm.com>
 Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 09, 2019 at 10:10:57AM +0100, Patrick Bellasi wrote:
-> On 08-May 21:15, Peter Zijlstra wrote:
-> > On Wed, May 08, 2019 at 09:07:33PM +0200, Peter Zijlstra wrote:
-> > > On Tue, Apr 02, 2019 at 11:41:40AM +0100, Patrick Bellasi wrote:
-> > > > +static inline struct uclamp_se
-> > > > +uclamp_eff_get(struct task_struct *p, unsigned int clamp_id)
-> > > > +{
-> > > > +	struct uclamp_se uc_req = p->uclamp_req[clamp_id];
-> > > > +	struct uclamp_se uc_max = uclamp_default[clamp_id];
-> > > > +
-> > > > +	/* System default restrictions always apply */
-> > > > +	if (unlikely(uc_req.value > uc_max.value))
-> > > > +		return uc_max;
-> > > > +
-> > > > +	return uc_req;
-> > > > +}
-> > > > +
-> > > > +static inline unsigned int
-> > > > +uclamp_eff_bucket_id(struct task_struct *p, unsigned int clamp_id)
-> > > > +{
-> > > > +	struct uclamp_se uc_eff;
-> > > > +
-> > > > +	/* Task currently refcounted: use back-annotated (effective) bucket */
-> > > > +	if (p->uclamp[clamp_id].active)
-> > > > +		return p->uclamp[clamp_id].bucket_id;
-> > > > +
-> > > > +	uc_eff = uclamp_eff_get(p, clamp_id);
-> > > > +
-> > > > +	return uc_eff.bucket_id;
-> > > > +}
-> > > > +
-> > > > +unsigned int uclamp_eff_value(struct task_struct *p, unsigned int clamp_id)
-> > > > +{
-> > > > +	struct uclamp_se uc_eff;
-> > > > +
-> > > > +	/* Task currently refcounted: use back-annotated (effective) value */
-> > > > +	if (p->uclamp[clamp_id].active)
-> > > > +		return p->uclamp[clamp_id].value;
-> > > > +
-> > > > +	uc_eff = uclamp_eff_get(p, clamp_id);
-> > > > +
-> > > > +	return uc_eff.value;
-> > > > +}
-> > > 
-> > > This is 'wrong' because:
-> > > 
-> > >   uclamp_eff_value(p,id) := uclamp_eff(p,id).value
+On Thu, May 09, 2019 at 10:18:07AM +0100, Patrick Bellasi wrote:
+> On 08-May 21:21, Peter Zijlstra wrote:
+> > On Tue, Apr 02, 2019 at 11:41:41AM +0100, Patrick Bellasi wrote:
+> > > diff --git a/include/uapi/linux/sched.h b/include/uapi/linux/sched.h
+> > > index 22627f80063e..075c610adf45 100644
+> > > --- a/include/uapi/linux/sched.h
+> > > +++ b/include/uapi/linux/sched.h
+> > > @@ -40,6 +40,8 @@
+> > >  /* SCHED_ISO: reserved but not implemented yet */
+> > >  #define SCHED_IDLE		5
+> > >  #define SCHED_DEADLINE		6
+> > > +/* Must be the last entry: used to sanity check attr.policy values */
+> > > +#define SCHED_POLICY_MAX	SCHED_DEADLINE
 > > 
-> > Clearly I means to say the above does not hold with the given
-> > implementation, while the naming would suggest it does.
+> > This is a wee bit sad to put in a uapi header; but yeah, where else :/
+> > 
+> > Another option would be something like:
+> > 
+> > enum {
+> > 	SCHED_NORMAL = 0,
+> > 	SCHED_FIFO = 1,
+> > 	SCHED_RR = 2,
+> > 	SCHED_BATCH = 3,
+> > 	/* SCHED_ISO = 4, reserved */
+> > 	SCHED_IDLE = 5,
+> > 	SCHED_DEADLINE = 6,
+> > 	SCHED_POLICY_NR
+> > };
 > 
-> Not sure to completely get your point...
+> I just wanted to minimize the changes by keeping the same structure...
+> If you prefer the above I can add a refactoring patch just to update
+> existing definitions before adding this patch...
 
-the point is that uclamp_eff_get() doesn't do the back annotate thing
-and therefore returns something entirely different from
-uclamp_eff_{bucket_id,value}(), where the naming would suggest it in
-fact returns the same thing.
-
-> > > Which seems to suggest the uclamp_eff_*() functions want another name.
-> 
-> That function returns the effective value of a task, which is either:
->  1. the back annotated value for a RUNNABLE task
-> or
->  2. the aggregation of task-specific, system-default and cgroup values
->     for a non RUNNABLE task.
-
-Right, but uclamp_eff_get() doesn't do 1, while the other two do do it.
-And that is confusing.
-
-> > > Also, suppose the above would be true; does GCC really generate better
-> > > code for the LHS compared to the RHS?
-> 
-> It generate "sane" code which implements the above logic and allows
-> to know that whenever we call uclamp_eff_value(p,id) we get the most
-> updated effective value for a task, independently from its {!}RUNNABLE
-> state.
-> 
-> I would keep the function but, since Suren also complained also about
-> the name... perhaps I should come up with a better name? Proposals?
-
-Right, so they should move to the patch where they're needed, but I was
-wondering why you'd not written something like:
-
-static inline
-struct uclamp_se uclamp_active(struct task_struct *p, unsigned int clamp_id)
-{
-	if (p->uclamp[clamp_id].active)
-		return p->uclamp[clamp_id];
-
-	return uclamp_eff(p, clamp_id);
-}
-
-And then used:
-
-	uclamp_active(p, id).{value,bucket_id}
-
-- OR -
-
-have uclamp_eff() include the active thing, afaict the callsite in
-uclamp_rq_inc_id() guarantees !active.
-
-In any case, I'm thinking the foo().member notation saves us from having
-to have two almost identical functions and the 'inline' part should get
-GCC to generate sane code.
+Right; I've no idea really. The thing that started all this was adding
+that define to UAPI. Maybe we can do without it and instead put in a
+comment to check sched_setattr() any time we add a new policy and just
+hard code the thing.
