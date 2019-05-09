@@ -1,33 +1,143 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH v8 00/16] Add utilization clamping support
-Date: Thu, 9 May 2019 15:02:15 +0200
-Message-ID: <20190509130215.GV2623@hirez.programming.kicks-ass.net>
+From: Patrick Bellasi <patrick.bellasi@arm.com>
+Subject: Re: [PATCH v8 04/16] sched/core: uclamp: Add system default clamps
+Date: Thu, 9 May 2019 14:04:44 +0100
+Message-ID: <20190509130444.4yawtbpjx2y7pp7g@e110439-lin>
 References: <20190402104153.25404-1-patrick.bellasi@arm.com>
+ <20190402104153.25404-5-patrick.bellasi@arm.com>
+ <20190508190733.GC32547@worktop.programming.kicks-ass.net>
+ <20190508191529.GA26813@worktop.programming.kicks-ass.net>
+ <20190509091057.ckef2ley4eswyzds@e110439-lin>
+ <20190509115307.GS2623@hirez.programming.kicks-ass.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190402104153.25404-1-patrick.bellasi@arm.com>
+In-Reply-To: <20190509115307.GS2623@hirez.programming.kicks-ass.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Patrick Bellasi <patrick.bellasi@arm.com>
+To: Peter Zijlstra <peterz@infradead.org>
 Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Apr 02, 2019 at 11:41:36AM +0100, Patrick Bellasi wrote:
-> Series Organization
-> ===================
+On 09-May 13:53, Peter Zijlstra wrote:
+> On Thu, May 09, 2019 at 10:10:57AM +0100, Patrick Bellasi wrote:
+> > On 08-May 21:15, Peter Zijlstra wrote:
+> > > On Wed, May 08, 2019 at 09:07:33PM +0200, Peter Zijlstra wrote:
+> > > > On Tue, Apr 02, 2019 at 11:41:40AM +0100, Patrick Bellasi wrote:
+> > > > > +static inline struct uclamp_se
+> > > > > +uclamp_eff_get(struct task_struct *p, unsigned int clamp_id)
+> > > > > +{
+> > > > > +	struct uclamp_se uc_req = p->uclamp_req[clamp_id];
+> > > > > +	struct uclamp_se uc_max = uclamp_default[clamp_id];
+> > > > > +
+> > > > > +	/* System default restrictions always apply */
+> > > > > +	if (unlikely(uc_req.value > uc_max.value))
+> > > > > +		return uc_max;
+> > > > > +
+> > > > > +	return uc_req;
+> > > > > +}
+> > > > > +
+> > > > > +static inline unsigned int
+> > > > > +uclamp_eff_bucket_id(struct task_struct *p, unsigned int clamp_id)
+> > > > > +{
+> > > > > +	struct uclamp_se uc_eff;
+> > > > > +
+> > > > > +	/* Task currently refcounted: use back-annotated (effective) bucket */
+> > > > > +	if (p->uclamp[clamp_id].active)
+> > > > > +		return p->uclamp[clamp_id].bucket_id;
+> > > > > +
+> > > > > +	uc_eff = uclamp_eff_get(p, clamp_id);
+> > > > > +
+> > > > > +	return uc_eff.bucket_id;
+> > > > > +}
+> > > > > +
+> > > > > +unsigned int uclamp_eff_value(struct task_struct *p, unsigned int clamp_id)
+> > > > > +{
+> > > > > +	struct uclamp_se uc_eff;
+> > > > > +
+> > > > > +	/* Task currently refcounted: use back-annotated (effective) value */
+> > > > > +	if (p->uclamp[clamp_id].active)
+> > > > > +		return p->uclamp[clamp_id].value;
+> > > > > +
+> > > > > +	uc_eff = uclamp_eff_get(p, clamp_id);
+> > > > > +
+> > > > > +	return uc_eff.value;
+> > > > > +}
+> > > > 
+> > > > This is 'wrong' because:
+> > > > 
+> > > >   uclamp_eff_value(p,id) := uclamp_eff(p,id).value
+> > > 
+> > > Clearly I means to say the above does not hold with the given
+> > > implementation, while the naming would suggest it does.
+> > 
+> > Not sure to completely get your point...
 > 
-> The series is organized into these main sections:
+> the point is that uclamp_eff_get() doesn't do the back annotate thing
+> and therefore returns something entirely different from
+> uclamp_eff_{bucket_id,value}(), where the naming would suggest it in
+> fact returns the same thing.
 > 
->  - Patches [01-07]: Per task (primary) API
->  - Patches [08-09]: Schedutil integration for FAIR and RT tasks
->  - Patches [10-11]: Integration with EAS's energy_compute()
+> > > > Which seems to suggest the uclamp_eff_*() functions want another name.
+> > 
+> > That function returns the effective value of a task, which is either:
+> >  1. the back annotated value for a RUNNABLE task
+> > or
+> >  2. the aggregation of task-specific, system-default and cgroup values
+> >     for a non RUNNABLE task.
+> 
+> Right, but uclamp_eff_get() doesn't do 1, while the other two do do it.
+> And that is confusing.
 
-Aside from the comments already provided, I think this is starting to
-look really good.
+I see, right.
 
-Thanks!
+> > > > Also, suppose the above would be true; does GCC really generate better
+> > > > code for the LHS compared to the RHS?
+> > 
+> > It generate "sane" code which implements the above logic and allows
+> > to know that whenever we call uclamp_eff_value(p,id) we get the most
+> > updated effective value for a task, independently from its {!}RUNNABLE
+> > state.
+> > 
+> > I would keep the function but, since Suren also complained also about
+> > the name... perhaps I should come up with a better name? Proposals?
+> 
+> Right, so they should move to the patch where they're needed, but I was
 
->  - Patches [12-16]: Per task group (secondary) API
+Yes, I'll move _value() to 10/16:
 
-I still have to stare at these, but maybe a little later...
+   sched/core: uclamp: Add uclamp_util_with()
+
+where we actually need to access the clamp value and...
+
+> wondering why you'd not written something like:
+> 
+> static inline
+> struct uclamp_se uclamp_active(struct task_struct *p, unsigned int clamp_id)
+> {
+> 	if (p->uclamp[clamp_id].active)
+> 		return p->uclamp[clamp_id];
+> 
+> 	return uclamp_eff(p, clamp_id);
+> }
+> 
+> And then used:
+> 
+> 	uclamp_active(p, id).{value,bucket_id}
+> 
+> - OR -
+> 
+> have uclamp_eff() include the active thing, afaict the callsite in
+> uclamp_rq_inc_id() guarantees !active.
+> 
+> In any case, I'm thinking the foo().member notation saves us from having
+> to have two almost identical functions and the 'inline' part should get
+> GCC to generate sane code.
+
+... look into this approach, seems reasonable and actually better to read.
+
+Thanks
+
+-- 
+#include <best/regards.h>
+
+Patrick Bellasi
