@@ -1,56 +1,54 @@
 From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH v8 05/16] sched/core: Allow sched_setattr() to use the
- current policy
-Date: Thu, 9 May 2019 13:55:17 +0200
-Message-ID: <20190509115517.GT2623@hirez.programming.kicks-ass.net>
+Subject: Re: [PATCH v8 11/16] sched/fair: uclamp: Add uclamp support to
+ energy_compute()
+Date: Thu, 9 May 2019 14:51:05 +0200
+Message-ID: <20190509125105.GU2623@hirez.programming.kicks-ass.net>
 References: <20190402104153.25404-1-patrick.bellasi@arm.com>
- <20190402104153.25404-6-patrick.bellasi@arm.com>
- <20190508192131.GD32547@worktop.programming.kicks-ass.net>
- <20190509091807.7d3iykkn3oj4b737@e110439-lin>
+ <20190402104153.25404-12-patrick.bellasi@arm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190509091807.7d3iykkn3oj4b737@e110439-lin>
+In-Reply-To: <20190402104153.25404-12-patrick.bellasi@arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Patrick Bellasi <patrick.bellasi@arm.com>
 Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 09, 2019 at 10:18:07AM +0100, Patrick Bellasi wrote:
-> On 08-May 21:21, Peter Zijlstra wrote:
-> > On Tue, Apr 02, 2019 at 11:41:41AM +0100, Patrick Bellasi wrote:
-> > > diff --git a/include/uapi/linux/sched.h b/include/uapi/linux/sched.h
-> > > index 22627f80063e..075c610adf45 100644
-> > > --- a/include/uapi/linux/sched.h
-> > > +++ b/include/uapi/linux/sched.h
-> > > @@ -40,6 +40,8 @@
-> > >  /* SCHED_ISO: reserved but not implemented yet */
-> > >  #define SCHED_IDLE		5
-> > >  #define SCHED_DEADLINE		6
-> > > +/* Must be the last entry: used to sanity check attr.policy values */
-> > > +#define SCHED_POLICY_MAX	SCHED_DEADLINE
-> > 
-> > This is a wee bit sad to put in a uapi header; but yeah, where else :/
-> > 
-> > Another option would be something like:
-> > 
-> > enum {
-> > 	SCHED_NORMAL = 0,
-> > 	SCHED_FIFO = 1,
-> > 	SCHED_RR = 2,
-> > 	SCHED_BATCH = 3,
-> > 	/* SCHED_ISO = 4, reserved */
-> > 	SCHED_IDLE = 5,
-> > 	SCHED_DEADLINE = 6,
-> > 	SCHED_POLICY_NR
-> > };
-> 
-> I just wanted to minimize the changes by keeping the same structure...
-> If you prefer the above I can add a refactoring patch just to update
-> existing definitions before adding this patch...
+On Tue, Apr 02, 2019 at 11:41:47AM +0100, Patrick Bellasi wrote:
+> @@ -6484,11 +6494,29 @@ compute_energy(struct task_struct *p, int dst_cpu, struct perf_domain *pd)
+>  		 * it will not appear in its pd list and will not be accounted
+>  		 * by compute_energy().
+>  		 */
+> -		for_each_cpu_and(cpu, perf_domain_span(pd), cpu_online_mask) {
+> -			util = cpu_util_next(cpu, p, dst_cpu);
+> -			util = schedutil_energy_util(cpu, util);
+> -			max_util = max(util, max_util);
+> -			sum_util += util;
+> +		for_each_cpu_and(cpu, pd_mask, cpu_online_mask) {
+> +			util_cfs = cpu_util_next(cpu, p, dst_cpu);
+> +
+> +			/*
+> +			 * Busy time computation: utilization clamping is not
+> +			 * required since the ratio (sum_util / cpu_capacity)
+> +			 * is already enough to scale the EM reported power
+> +			 * consumption at the (eventually clamped) cpu_capacity.
+> +			 */
+> +			sum_util += schedutil_cpu_util(cpu, util_cfs, cpu_cap,
+> +						       ENERGY_UTIL, NULL);
+> +
+> +			/*
+> +			 * Performance domain frequency: utilization clamping
+> +			 * must be considered since it affects the selection
+> +			 * of the performance domain frequency.
+> +			 * NOTE: in case RT tasks are running, by default the
+> +			 * FREQUENCY_UTIL's utilization can be max OPP.
+> +			 */
+> +			tsk = cpu == dst_cpu ? p : NULL;
+> +			cpu_util = schedutil_cpu_util(cpu, util_cfs, cpu_cap,
+> +						      FREQUENCY_UTIL, tsk);
+> +			max_util = max(max_util, cpu_util);
+>  		}
 
-Right; I've no idea really. The thing that started all this was adding
-that define to UAPI. Maybe we can do without it and instead put in a
-comment to check sched_setattr() any time we add a new policy and just
-hard code the thing.
+That's a bit unfortunate; having to do both variants here, but I see
+why. Nothing to be done about it I suppose.
