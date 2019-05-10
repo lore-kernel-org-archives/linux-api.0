@@ -1,52 +1,41 @@
-From: Rob Landley <rob@landley.net>
-Subject: Re: [PATCH v2 0/3] initramfs: add support for xattrs in the initial
- ram disk
-Date: Fri, 10 May 2019 15:46:30 -0500
-Message-ID: <3a9d717e-0e12-9d62-a3cf-afb7a5dbf166@landley.net>
-References: <20190509112420.15671-1-roberto.sassu@huawei.com>
- <fca8e601-1144-1bb8-c007-518651f624a5@landley.net>
- <bf0d02fc-d6ce-ef1d-bb7d-7ca14432c6fd@huawei.com>
- <1557488971.10635.102.camel@linux.ibm.com>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH v6 5/6] binfmt_*: scope path resolution of interpreters
+Date: Fri, 10 May 2019 14:20:23 -0700
+Message-ID: <CALCETrW2nn=omqJb4p+m-BDsCOhg+YZQ3ELd4BdhODV3G44gfA@mail.gmail.com>
+References: <20190506165439.9155-1-cyphar@cyphar.com> <20190506165439.9155-6-cyphar@cyphar.com>
+ <CAG48ez0-CiODf6UBHWTaog97prx=VAd3HgHvEjdGNz344m1xKw@mail.gmail.com>
+ <20190506191735.nmzf7kwfh7b6e2tf@yavin> <20190510204141.GB253532@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1557488971.10635.102.camel@linux.ibm.com>
-Content-Language: en-US
+In-Reply-To: <20190510204141.GB253532@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mimi Zohar <zohar@linux.ibm.com>, Roberto Sassu <roberto.sassu@huawei.com>, viro@zeniv.linux.org.uk
-Cc: linux-security-module@vger.kernel.org, linux-integrity@vger.kernel.org, initramfs@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, zohar@linux.vnet.ibm.com, silviu.vlasceanu@huawei.com, dmitry.kasatkin@huawei.com, takondra@cisco.com, kamensky@cisco.com, hpa@zytor.com, arnd@arndb.de, james.w.mcmechan@gmail.com
+To: Jann Horn <jannh@google.com>
+Cc: Aleksa Sarai <cyphar@cyphar.com>, Andy Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Eric Biederman <ebiederm@xmission.com>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Christian Brauner <christian@brauner.io>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, Linus Torvalds <torvalds@linux-foundation.org>, Linux Containers <containers@lists.linux-foundation.org>, linux-fsdevel <linux-fsdevel@vger>
 List-Id: linux-api@vger.kernel.org
 
-On 5/10/19 6:49 AM, Mimi Zohar wrote:
-> On Fri, 2019-05-10 at 08:56 +0200, Roberto Sassu wrote:
->> On 5/9/2019 8:34 PM, Rob Landley wrote:
->>> On 5/9/19 6:24 AM, Roberto Sassu wrote:
-> 
->>>> The difference with another proposal
->>>> (https://lore.kernel.org/patchwork/cover/888071/) is that xattrs can be
->>>> included in an image without changing the image format, as opposed to
->>>> defining a new one. As seen from the discussion, if a new format has to be
->>>> defined, it should fix the issues of the existing format, which requires
->>>> more time.
->>>
->>> So you've explicitly chosen _not_ to address Y2038 while you're there.
->>
->> Can you be more specific?
-> 
-> Right, this patch set avoids incrementing the CPIO magic number and
-> the resulting changes required (eg. increasing the timestamp field
-> size), by including a file with the security xattrs in the CPIO.  In
-> either case, including the security xattrs in the initramfs header or
-> as a separate file, the initramfs, itself, needs to be signed.
+On Fri, May 10, 2019 at 1:41 PM Jann Horn <jannh@google.com> wrote:
+>
+> On Tue, May 07, 2019 at 05:17:35AM +1000, Aleksa Sarai wrote:
+> > On 2019-05-06, Jann Horn <jannh@google.com> wrote:
+> > > In my opinion, CVE-2019-5736 points out two different problems:
+> > >
+> > > The big problem: The __ptrace_may_access() logic has a special-case
+> > > short-circuit for "introspection" that you can't opt out of; this
+> > > makes it possible to open things in procfs that are related to the
+> > > current process even if the credentials of the process wouldn't permit
+> > > accessing another process like it. I think the proper fix to deal with
+> > > this would be to add a prctl() flag for "set whether introspection is
+> > > allowed for this process", and if userspace has manually un-set that
+> > > flag, any introspection special-case logic would be skipped.
+> >
+> > We could do PR_SET_DUMPABLE=3 for this, I guess?
+>
+> Hmm... I'd make it a new prctl() command, since introspection is
+> somewhat orthogonal to dumpability. Also, dumpability is per-mm, and I
+> think the introspection flag should be per-thread.
 
-The /init binary in the initramfs runs as root and launches all other processes
-on the system. Presumably it can write any xattrs it wants to, and doesn't need
-any extra permissions granted to it to do so. But as soon as you start putting
-xattrs on _other_ files within the initramfs that are _not_ necessarily running
-as PID 1, _that's_ when the need to sign the initramfs comes in?
-
-Presumably the signing occurs on the gzipped file. How does that affect the cpio
-parsing _after_ it's decompressed? Why would that be part of _this_ patch?
-
-Rob
+I've lost track of the context here, but it seems to me that
+mitigating attacks involving accidental following of /proc links
+shouldn't depend on dumpability.  What's the actual problem this is
+trying to solve again?
