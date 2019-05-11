@@ -1,118 +1,72 @@
-From: Aleksa Sarai <cyphar@cyphar.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
 Subject: Re: [PATCH v6 5/6] binfmt_*: scope path resolution of interpreters
-Date: Sun, 12 May 2019 03:26:04 +1000
-Message-ID: <20190511172604.znr7wa3iarlgzor4@yavin>
-References: <20190506165439.9155-1-cyphar@cyphar.com>
- <20190506165439.9155-6-cyphar@cyphar.com>
+Date: Sat, 11 May 2019 13:21:11 -0400
+Message-ID: <CAHk-=wh1JJD_RabMaFfinsAQp1vHGJOQ1rKqihafY=r7yHc8sQ@mail.gmail.com>
+References: <20190506165439.9155-1-cyphar@cyphar.com> <20190506165439.9155-6-cyphar@cyphar.com>
  <CAG48ez0-CiODf6UBHWTaog97prx=VAd3HgHvEjdGNz344m1xKw@mail.gmail.com>
- <20190506191735.nmzf7kwfh7b6e2tf@yavin>
- <20190510204141.GB253532@google.com>
+ <20190506191735.nmzf7kwfh7b6e2tf@yavin> <20190510204141.GB253532@google.com>
  <CALCETrW2nn=omqJb4p+m-BDsCOhg+YZQ3ELd4BdhODV3G44gfA@mail.gmail.com>
- <20190510225527.GA59914@google.com>
- <C60DC580-854D-478D-AF23-5F29FB7C3E50@amacapital.net>
+ <20190510225527.GA59914@google.com> <C60DC580-854D-478D-AF23-5F29FB7C3E50@amacapital.net>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="n7szhd3upx5nplbw"
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
 In-Reply-To: <C60DC580-854D-478D-AF23-5F29FB7C3E50@amacapital.net>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Andy Lutomirski <luto@amacapital.net>
-Cc: Jann Horn <jannh@google.com>, Andy Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Eric Biederman <ebiederm@xmission.com>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Christian Brauner <christian@brauner.io>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, Linus Torvalds <torvalds@linux-foundation.org>, Linux Containers <containers@lists.linux-foundation.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>
+Cc: Jann Horn <jannh@google.com>, Andy Lutomirski <luto@kernel.org>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Eric Biederman <ebiederm@xmission.com>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Christian Brauner <christian@brauner.io>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, Linux Containers <containers@lists.linux-foundation.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>Linu
 List-Id: linux-api@vger.kernel.org
 
+On Sat, May 11, 2019 at 1:00 PM Andy Lutomirski <luto@amacapital.net> wrote=
+:
+>
+> A better =E2=80=9Cspawn=E2=80=9D API should fix this.
 
---n7szhd3upx5nplbw
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Andy, stop with the "spawn would be better".
 
-On 2019-05-11, Andy Lutomirski <luto@amacapital.net> wrote:
-> >> I've lost track of the context here, but it seems to me that
-> >> mitigating attacks involving accidental following of /proc links
-> >> shouldn't depend on dumpability.  What's the actual problem this is
-> >> trying to solve again?
-> >=20
-> > The one actual security problem that I've seen related to this is
-> > CVE-2019-5736. There is a write-up of it at
-> > <https://blog.dragonsector.pl/2019/02/cve-2019-5736-escape-from-docker-=
-and.html>
-> > under "Successful approach", but it goes more or less as follows:
-> >=20
-> > A container is running that doesn't use user namespaces (because for
-> > some reason I don't understand, apparently some people still do that).
-> > An evil process is running inside the container with UID 0 (as in,
-> > GLOBAL_ROOT_UID); so if the evil process inside the container was able
-> > to reach root-owned files on the host filesystem, it could write into
-> > them.
-> >=20
-> > The container engine wants to spawn a new process inside the container.
-> > It forks off a child that joins the container's namespaces (including
-> > PID and mount namespaces), and then the child calls execve() on some
-> > path in the container.
->=20
-> I think that, at this point, the task should be considered owned by
-> the container.  Maybe we should have a better API than execve() to
-> execute a program in a safer way, but fiddling with dumpability seems
-> like a band-aid.  In fact, the process is arguably pwned even *before*
-> execve.
+Spawn is garbage. It's garbage because it's fundamentally too
+inflexible, and it's garbage because it is quite complex to try to
+work around the inflexibility by having those complex "action pointer
+arrays" to make up for its failings.
 
-Yeah, execve is just the vector (though in this case it's done in order
-to clear mm->dumpable). An earlier CVE (CVE-2016-9962) was very similar
-but was attacking a dirfd that runc had open into the container (LXC had
-a very similar bug too) -- setting !mm->dumpable was one of the
-workarounds we had for this.
+And spawn() would fundamentally have all the same permission issues
+that you now point to execve() as having, so it doesn't even *solve*
+anything.
 
-> A better =E2=80=9Cspawn=E2=80=9D API should fix this.  In the mean time, =
-I think it
-> should be assumed that, if you join a container=E2=80=99s namespaces, you=
- are
-> at its mercy.
+You've said this whole "spawn would fix things" thing before, and it's
+wrong. Spawn isn't better. Really. If fixes absolutely zero things,
+and the only reason for spawn existing is because VMS and NT had that
+broken and inflexible model.
 
-This is generally how we treat containers as runtime authors, but it's
-not a trivial thing to get right. In many cases the kernel APIs are
-working against you -- Christian and myself have written a fair few
-patches to fix holes in the kernel APIs so we can avoid these kinds of
-assumptions.
+There's at least one paper from some MS people about how "spawn()" is
+wonderful, and maybe you bought into the garbage from that. But that
+paper is about how they hate fork(), not because of execve(). And if
+you hate fork, use "vfork()" instead (preferably with an immediate
+call to a non-returning function in the child to avoid the stack
+re-use issue that makes it so simple to screw up vfork() in hard to
+debug ways).
 
-But yes, one of the most risky parts of a container runtime is when
-you're attaching to a running container because all of the helpful
-introspection APIs in /proc/ suddenly become a security nightmare. A
-better "spawn a process in these namespaces" API might help improve the
-situation (or at least, I hope it would).
+execve() is a _fine_ model. That's not the problem in this whole issue
+at all - never was, and never will be.
 
-> > - You can use /proc/*/exe to get a writable fd.
->=20
-> This is IMO the real bug.
+The problem in this discussion is (a) having privileges you shouldn't
+have and (b) having other interfaces that make it easyish to change
+the filesystem layout to confuse those entities with privileges.
 
-I will try to send an RFC of the patchset I have for this next week or
-so. Funnily enough, currently /proc/*/exe has the write bit set in its
-"mode" (my series fixes this).
+So the reason the open flags can be problematic is exactly because
+they effectively change filesystem layout. And no, it's not just
+AT_THIS_ROOT, although that's the obvious one. Things like "you can't
+follow symlinks" can also effectively change the layout: imagine if
+you have a PATH-like lookup model, and you end up having symlinks as
+part of the standard filesystem layout.. Now a "don't follow symlinks"
+can turn the *standard* executable into something that isn't found,
+and then you might end up executing something else instead (think root
+having '.' as the last entry in path, which some people used to
+suggest as the fix for the completely bad "first entry" case)..
 
---=20
-Aleksa Sarai
-Senior Software Engineer (Containers)
-SUSE Linux GmbH
-<https://www.cyphar.com/>
+Notice? None of the real problems are about execve or would be solved
+by any spawn API. You just think that because you've apparently been
+talking to too many MS people that think fork (and thus indirectly
+execve()) is bad process management.
 
---n7szhd3upx5nplbw
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAABCAAdFiEEb6Gz4/mhjNy+aiz1Snvnv3Dem58FAlzXBawACgkQSnvnv3De
-m5+9uhAAxlNj8wFvyGxd9lOFHlJk3BsEWF8O35j0dfu/SXGgCNJZ97fZ8lUWTVG+
-Znkw+uL8P+d3IItZeF5IlpWaeE+rISaTqwF6Q55riVaKXY+oarEuDdvWSgPkO9S8
-QHlnu5MyIQcccSI9Mxk+BZCXrlKbqZJJnFeHP/zI95hnsbOanK2dO6rYfEaAMYIZ
-XwkL4HvI0mqdFUcrmO4hpkQEJjj/b6xSpo6oJBsm/PvOaUeChJROam4lgES3oAV8
-ngomtPJWzbTz4ZYzYBXUiNwWvNCCl2E9XfnH9jVgD9z1NFQ0V1LLu3SXxdSqcdpW
-OOzGdmdRNuRvFeRKGISZYs3kr/vVgD8hm0g79KVsbCl24FU9eHSK7EQLUZ+/fc7K
-GGIok1MHPjDfVRJ6ZoFil47MWrLdvqJlgovEdYmjZC5Tt7NOfP+JkXkvh+jZ49pi
-7YTk6h/2ZAW+l5Hq0UxPv9bKUSLtErZmsueCT/U0AAqhQaBAU3HWQVyhGoLNNMfu
-cJXnRHZcw4QaAZEzSb6FENQq4Qv+Or+Fv+cOis759T1Cgx02jybyo0ZIKHzfelxP
-Mgqd0qkTv9+mG3w1p6ox9gDQvGoZJRZT+d6E7VSVqZRc4DAFCcTAF/EzJArg0OhU
-DA0oCKIiZwgpEHyyzIcaD/6fSSFnz2hQJ3EXIp46nX2IZjldnjo=
-=Ut88
------END PGP SIGNATURE-----
-
---n7szhd3upx5nplbw--
+                Linus
