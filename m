@@ -1,45 +1,36 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v6 5/6] binfmt_*: scope path resolution of interpreters
-Date: Sun, 12 May 2019 07:34:26 -0700
-Message-ID: <0ED963D0-4C31-45B1-B361-E4A75DFBF7C1@amacapital.net>
-References: <20190506191735.nmzf7kwfh7b6e2tf@yavin> <20190510204141.GB253532@google.com> <CALCETrW2nn=omqJb4p+m-BDsCOhg+YZQ3ELd4BdhODV3G44gfA@mail.gmail.com> <20190510225527.GA59914@google.com> <C60DC580-854D-478D-AF23-5F29FB7C3E50@amacapital.net> <CAHk-=wh1JJD_RabMaFfinsAQp1vHGJOQ1rKqihafY=r7yHc8sQ@mail.gmail.com> <CALCETrUOj=4VWp=B=QT0BQ8X_Ds_b+pt68oDwfjGb+K0StXmWA@mail.gmail.com> <CAHk-=wg3+3GfHsHdB4o78jNiPh_5ShrzxBuTN-Y8EZfiFMhCvw@mail.gmail.com> <9CD2B97D-A6BD-43BE-9040-B410D996A195@amacapital.net> <CAHk-=wh3dT7=SMjvSZreXSu36Cg7gsfSipLhfTz5ioDKXV5uHg@mail.gmail.com> <20190512133549.ymx5yg5rdqvavzyq@yavin>
-Mime-Version: 1.0 (1.0)
-Content-Type: text/plain;
-        charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+From: Dominik Brodowski <linux@dominikbrodowski.net>
+Subject: Re: [PATCH v2 0/3] initramfs: add support for xattrs in the initial
+ ram disk
+Date: Sun, 12 May 2019 17:31:05 +0200
+Message-ID: <20190512153105.GA25254@light.dominikbrodowski.net>
+References: <1557665567.10635.222.camel@linux.ibm.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190512133549.ymx5yg5rdqvavzyq@yavin>
+Content-Disposition: inline
+In-Reply-To: <1557665567.10635.222.camel@linux.ibm.com>
+ <4E92753A-04BD-4018-A3A4-5E3E4242D8B9@zytor.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Andrew Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>, Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Eric Biederman <ebiederm@xmission.com>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Christian Brauner <christian@brauner.io>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, Linux Containers <containers@lists.linux-foundation.org>, linux-fsdevel <linux-fsdevel@vger.k>
+To: hpa@zytor.com, Mimi Zohar <zohar@linux.ibm.com>
+Cc: Roberto Sassu <roberto.sassu@huawei.com>, viro@zeniv.linux.org.uk, linux-security-module@vger.kernel.org, linux-integrity@vger.kernel.org, initramfs@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, zohar@linux.vnet.ibm.com, silviu.vlasceanu@huawei.com, dmitry.kasatkin@huawei.com, takondra@cisco.com, kamensky@cisco.com, arnd@arndb.de, rob@landley.net, james.w.mcmechan@gmail.com
 List-Id: linux-api@vger.kernel.org
 
+On Sun, May 12, 2019 at 03:18:16AM -0700, hpa@zytor.com wrote:
+> > Couldn't this parsing of the .xattr-list file and the setting of the xattrs
+> > be done equivalently by the initramfs' /init? Why is kernel involvement
+> > actually required here?
+> 
+> There are a lot of things that could/should be done that way...
 
-> On May 12, 2019, at 6:35 AM, Aleksa Sarai <cyphar@cyphar.com> wrote:
->=20
->> On 2019-05-12, Linus Torvalds <torvalds@linux-foundation.org> wrote:
->>> On Sat, May 11, 2019 at 7:37 PM Andy Lutomirski <luto@amacapital.net> wr=
-ote:
->>> I bet this will break something that already exists. An execveat()
->>> flag to turn off /proc/self/exe would do the trick, though.
->>=20
->> Thinking more about it, I suspect it is (once again) wrong to let the
->> thing that does the execve() control that bit.
->>=20
->> Generally, the less we allow people to affect the lifetime and
->> environment of a suid executable, the better off we are.
->>=20
->> But maybe we could limit /proc/*/exe to at least not honor suid'ness
->> of the target? Or does chrome/runc depend on that too?
->=20
-> Speaking on the runc side, we don't depend on this. It's possible
-> someone depends on this for fexecve(3) -- but as mentioned before in
-> newer kernels glibc uses execve(AT_EMPTY_PATH).
+Indeed... so why not try to avoid adding more such "things", and keeping
+them in userspace (or in a fork_usermode_blob)?
 
-Why are we concerned about suid?  Don=E2=80=99t we already block suid if the=
- path being execed doesn=E2=80=99t come from the current mountns?  That shou=
-ld mostly cover the things we care about, no?
 
-I suppose we could also block suid for deleted files, so that deleting a kno=
-wn-buggy suid binary becomes more reliable. But every sensible package tool s=
-hould already be chmoding the suid away before unlinking.=
+On Sun, May 12, 2019 at 08:52:47AM -0400, Mimi Zohar wrote:
+> It's too late.  The /init itself should be signed and verified.
+
+Could you elaborate a bit more about the threat model, and why deferring
+this to the initramfs is too late?
+
+Thanks,
+	Dominik
