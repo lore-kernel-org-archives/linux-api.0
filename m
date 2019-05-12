@@ -1,36 +1,36 @@
-From: Dominik Brodowski <linux@dominikbrodowski.net>
+From: Rob Landley <rob@landley.net>
 Subject: Re: [PATCH v2 0/3] initramfs: add support for xattrs in the initial
  ram disk
-Date: Sun, 12 May 2019 17:31:05 +0200
-Message-ID: <20190512153105.GA25254@light.dominikbrodowski.net>
-References: <1557665567.10635.222.camel@linux.ibm.com>
+Date: Sun, 12 May 2019 12:05:48 -0500
+Message-ID: <dca50ee1-62d8-2256-6fdb-9a786e6cea5a@landley.net>
+References: <20190509112420.15671-1-roberto.sassu@huawei.com>
+ <20190512091748.s6fvy2f5p2a2o6ja@isilmar-4.linta.de>
+ <1557665567.10635.222.camel@linux.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
 In-Reply-To: <1557665567.10635.222.camel@linux.ibm.com>
- <4E92753A-04BD-4018-A3A4-5E3E4242D8B9@zytor.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: hpa@zytor.com, Mimi Zohar <zohar@linux.ibm.com>
-Cc: Roberto Sassu <roberto.sassu@huawei.com>, viro@zeniv.linux.org.uk, linux-security-module@vger.kernel.org, linux-integrity@vger.kernel.org, initramfs@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, zohar@linux.vnet.ibm.com, silviu.vlasceanu@huawei.com, dmitry.kasatkin@huawei.com, takondra@cisco.com, kamensky@cisco.com, arnd@arndb.de, rob@landley.net, james.w.mcmechan@gmail.com
+To: Mimi Zohar <zohar@linux.ibm.com>, Dominik Brodowski <linux@dominikbrodowski.net>, Roberto Sassu <roberto.sassu@huawei.com>
+Cc: viro@zeniv.linux.org.uk, linux-security-module@vger.kernel.org, linux-integrity@vger.kernel.org, initramfs@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, zohar@linux.vnet.ibm.com, silviu.vlasceanu@huawei.com, dmitry.kasatkin@huawei.com, takondra@cisco.com, kamensky@cisco.com, hpa@zytor.com, arnd@arndb.de, james.w.mcmechan@gmail.com
 List-Id: linux-api@vger.kernel.org
 
-On Sun, May 12, 2019 at 03:18:16AM -0700, hpa@zytor.com wrote:
-> > Couldn't this parsing of the .xattr-list file and the setting of the xattrs
-> > be done equivalently by the initramfs' /init? Why is kernel involvement
-> > actually required here?
+On 5/12/19 7:52 AM, Mimi Zohar wrote:
+> On Sun, 2019-05-12 at 11:17 +0200, Dominik Brodowski wrote:
+>> On Thu, May 09, 2019 at 01:24:17PM +0200, Roberto Sassu wrote:
+>>> This proposal consists in marshaling pathnames and xattrs in a file called
+>>> .xattr-list. They are unmarshaled by the CPIO parser after all files have
+>>> been extracted.
+>>
+>> Couldn't this parsing of the .xattr-list file and the setting of the xattrs
+>> be done equivalently by the initramfs' /init? Why is kernel involvement
+>> actually required here?
 > 
-> There are a lot of things that could/should be done that way...
-
-Indeed... so why not try to avoid adding more such "things", and keeping
-them in userspace (or in a fork_usermode_blob)?
-
-
-On Sun, May 12, 2019 at 08:52:47AM -0400, Mimi Zohar wrote:
 > It's too late.  The /init itself should be signed and verified.
 
-Could you elaborate a bit more about the threat model, and why deferring
-this to the initramfs is too late?
+If the initramfs cpio.gz image was signed and verified by the extractor, how is
+the init in it _not_ verified?
 
-Thanks,
-	Dominik
+Rob
