@@ -1,49 +1,70 @@
-From: hpa@zytor.com
-Subject: Re: [PATCH v2 0/3] initramfs: add support for xattrs in the initial ram disk
-Date: Sun, 12 May 2019 17:23:16 -0700
-Message-ID: <0D08BE40-475A-47AB-A3CE-B8EC4C4357D9@zytor.com>
-References: <20190512153105.GA25254@light.dominikbrodowski.net>
+From: Roberto Sassu <roberto.sassu@huawei.com>
+Subject: Re: [PATCH v2 0/3] initramfs: add support for xattrs in the initial
+ ram disk
+Date: Mon, 13 May 2019 09:49:03 +0200
+Message-ID: <3fe0e74b-19ca-6081-3afe-e05921b1bfe6@huawei.com>
+References: <dca50ee1-62d8-2256-6fdb-9a786e6cea5a@landley.net>
+ <20190512194322.GA71658@rani.riverdale.lan>
 Mime-Version: 1.0
-Content-Type: text/plain;
- charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190512153105.GA25254@light.dominikbrodowski.net>
+In-Reply-To: <20190512194322.GA71658@rani.riverdale.lan>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dominik Brodowski <linux@dominikbrodowski.net>, Mimi Zohar <zohar@linux.ibm.com>
-Cc: Roberto Sassu <roberto.sassu@huawei.com>, viro@zeniv.linux.org.uk, linux-security-module@vger.kernel.org, linux-integrity@vger.kernel.org, initramfs@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, zohar@linux.vnet.ibm.com, silviu.vlasceanu@huawei.com, dmitry.kasatkin@huawei.com, takondra@cisco.com, kamensky@cisco.com, arnd@arndb.de, rob@landley.net, james.w.mcmechan@gmail.com
+To: Arvind Sankar <niveditas98@gmail.com>, Rob Landley <rob@landley.net>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-integrity@vger.kernel.org, initramfs@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On May 12, 2019 8:31:05 AM PDT, Dominik Brodowski <linux@dominikbrodowski=
-=2Enet> wrote:
->On Sun, May 12, 2019 at 03:18:16AM -0700, hpa@zytor=2Ecom wrote:
->> > Couldn't this parsing of the =2Exattr-list file and the setting of
->the xattrs
->> > be done equivalently by the initramfs' /init? Why is kernel
->involvement
->> > actually required here?
->>=20
->> There are a lot of things that could/should be done that way=2E=2E=2E
->
->Indeed=2E=2E=2E so why not try to avoid adding more such "things", and
->keeping
->them in userspace (or in a fork_usermode_blob)?
->
->
->On Sun, May 12, 2019 at 08:52:47AM -0400, Mimi Zohar wrote:
->> It's too late=2E  The /init itself should be signed and verified=2E
->
->Could you elaborate a bit more about the threat model, and why
->deferring
->this to the initramfs is too late?
->
->Thanks,
->	Dominik
+On 5/12/2019 9:43 PM, Arvind Sankar wrote:
+> On Sun, May 12, 2019 at 05:05:48PM +0000, Rob Landley wrote:
+>> On 5/12/19 7:52 AM, Mimi Zohar wrote:
+>>> On Sun, 2019-05-12 at 11:17 +0200, Dominik Brodowski wrote:
+>>>> On Thu, May 09, 2019 at 01:24:17PM +0200, Roberto Sassu wrote:
+>>>>> This proposal consists in marshaling pathnames and xattrs in a file called
+>>>>> .xattr-list. They are unmarshaled by the CPIO parser after all files have
+>>>>> been extracted.
+>>>>
+>>>> Couldn't this parsing of the .xattr-list file and the setting of the xattrs
+>>>> be done equivalently by the initramfs' /init? Why is kernel involvement
+>>>> actually required here?
+>>>
+>>> It's too late.  The /init itself should be signed and verified.
+>>
+>> If the initramfs cpio.gz image was signed and verified by the extractor, how is
+>> the init in it _not_ verified?
+>>
+>> Ro
+> 
+> Wouldn't the below work even before enforcing signatures on external
+> initramfs:
+> 1. Create an embedded initramfs with an /init that does the xattr
+> parsing/setting. This will be verified as part of the kernel image
+> signature, so no new code required.
+> 2. Add a config option/boot parameter to panic the kernel if an external
+> initramfs attempts to overwrite anything in the embedded initramfs. This
+> prevents overwriting the embedded /init even if the external initramfs
+> is unverified.
 
-I tried over 10 years ago to make exactly that happen=2E=2E=2E it was call=
-ed the klibc project=2E Linus turned it down because he felt that it didn't=
- provide enough immediate benefit to justify the complexity, which of cours=
-e creates the thousand-cuts problem: there will never be *one single* event=
- that *by itself* justifies the transition=2E
---=20
-Sent from my Android device with K-9 Mail=2E Please excuse my brevity=2E
+Unfortunately, it wouldn't work. IMA is already initialized and it would
+verify /init in the embedded initial ram disk. The only reason why
+opening .xattr-list works is that IMA is not yet initialized
+(late_initcall vs rootfs_initcall).
+
+Allowing a kernel with integrity enforcement to parse the CPIO image
+without verifying it first is the weak point. However, extracted files
+are not used, and before they are used they are verified. At the time
+they are verified, they (included /init) must already have a signature
+or otherwise access would be denied.
+
+This scheme relies on the ability of the kernel to not be corrupted in
+the event it parses a malformed CPIO image. Mimi suggested to use
+digital signatures to prevent this issue, but it cannot be used in all
+scenarios, since conventional systems generate the initial ram disk
+locally.
+
+Roberto
+
+-- 
+HUAWEI TECHNOLOGIES Duesseldorf GmbH, HRB 56063
+Managing Director: Bo PENG, Jian LI, Yanli SHI
