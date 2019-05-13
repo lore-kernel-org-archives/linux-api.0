@@ -1,37 +1,106 @@
-From: Andreas Schwab <schwab@suse.de>
-Subject: Re: [PATCH v9 00/24] ILP32 for ARM64
-Date: Mon, 13 May 2019 10:48:48 +0200
-Message-ID: <mvmtvdyoi33.fsf@suse.de>
-References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
-        <20190508225900.GA14091@yury-thinkpad>
+From: Rob Landley <rob@landley.net>
+Subject: Re: [PATCH v2 0/3] initramfs: add support for xattrs in the initial
+ ram disk
+Date: Mon, 13 May 2019 04:07:08 -0500
+Message-ID: <4f522e28-29c8-5930-5d90-e0086b503613@landley.net>
+References: <dca50ee1-62d8-2256-6fdb-9a786e6cea5a@landley.net>
+ <20190512194322.GA71658@rani.riverdale.lan>
+ <3fe0e74b-19ca-6081-3afe-e05921b1bfe6@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190508225900.GA14091@yury-thinkpad> (Yury Norov's message of
-        "Wed, 8 May 2019 15:59:00 -0700")
+In-Reply-To: <3fe0e74b-19ca-6081-3afe-e05921b1bfe6@huawei.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yury Norov <yury.norov@gmail.com>
-Cc: Yury Norov <ynorov@caviumnetworks.com>, Catalin Marinas <catalin.marinas@arm.com>, Arnd Bergmann <arnd@arndb.de>, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Adam Borowski <kilobyte@angband.pl>, Alexander Graf <agraf@suse.de>, Alexey Klimov <klimov.linux@gmail.com>, Andrew Pinski <pinskia@gmail.com>, Bamvor Zhangjian <bamv2005@gmail.com>, Chris Metcalf <cmetcalf@mellanox.com>, Christoph Muellner <christoph.muellner@theobroma-systems.com>, Dave Martin <Dave.Martin@arm.com>, "David S . Miller" <davem@davemloft.net>, Florian Weimer <fweimer@redhat.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, James
+To: Roberto Sassu <roberto.sassu@huawei.com>, Arvind Sankar <niveditas98@gmail.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-integrity@vger.kernel.org, initramfs@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-There is a problem with the stack size accounting during execve when
-there is no stack limit:
 
-$ ulimit -s
-8192
-$ ./hello.ilp32 
-Hello World!
-$ ulimit -s unlimited
-$ ./hello.ilp32 
-Segmentation fault
-$ strace ./hello.ilp32 
-execve("./hello.ilp32", ["./hello.ilp32"], 0xfffff10548f0 /* 77 vars */) = -1 ENOMEM (Cannot allocate memory)
-+++ killed by SIGSEGV +++
-Segmentation fault (core dumped)
 
-Andreas.
+On 5/13/19 2:49 AM, Roberto Sassu wrote:
+> On 5/12/2019 9:43 PM, Arvind Sankar wrote:
+>> On Sun, May 12, 2019 at 05:05:48PM +0000, Rob Landley wrote:
+>>> On 5/12/19 7:52 AM, Mimi Zohar wrote:
+>>>> On Sun, 2019-05-12 at 11:17 +0200, Dominik Brodowski wrote:
+>>>>> On Thu, May 09, 2019 at 01:24:17PM +0200, Roberto Sassu wrote:
+>>>>>> This proposal consists in marshaling pathnames and xattrs in a file called
+>>>>>> .xattr-list. They are unmarshaled by the CPIO parser after all files have
+>>>>>> been extracted.
+>>>>>
+>>>>> Couldn't this parsing of the .xattr-list file and the setting of the xattrs
+>>>>> be done equivalently by the initramfs' /init? Why is kernel involvement
+>>>>> actually required here?
+>>>>
+>>>> It's too late.  The /init itself should be signed and verified.
+>>>
+>>> If the initramfs cpio.gz image was signed and verified by the extractor, how is
+>>> the init in it _not_ verified?
+>>>
+>>> Ro
+>>
+>> Wouldn't the below work even before enforcing signatures on external
+>> initramfs:
+>> 1. Create an embedded initramfs with an /init that does the xattr
+>> parsing/setting. This will be verified as part of the kernel image
+>> signature, so no new code required.
+>> 2. Add a config option/boot parameter to panic the kernel if an external
+>> initramfs attempts to overwrite anything in the embedded initramfs. This
+>> prevents overwriting the embedded /init even if the external initramfs
+>> is unverified.
+> 
+> Unfortunately, it wouldn't work. IMA is already initialized and it would
+> verify /init in the embedded initial ram disk.
 
--- 
-Andreas Schwab, SUSE Labs, schwab@suse.de
-GPG Key fingerprint = 0196 BAD8 1CE9 1970 F4BE  1748 E4D4 88E3 0EEA B9D7
-"And now for something completely different."
+So you made broken infrastructure that's causing you problems. Sounds unfortunate.
+
+> The only reason why
+> opening .xattr-list works is that IMA is not yet initialized
+> (late_initcall vs rootfs_initcall).
+
+Launching init before enabling ima is bad because... you didn't think of it?
+
+> Allowing a kernel with integrity enforcement to parse the CPIO image
+> without verifying it first is the weak point.
+
+If you don't verify the CPIO image then in theory it could have anything in it,
+yes. You seem to believe that signing individual files is more secure than
+signing the archive. This is certainly a point of view.
+
+> However, extracted files
+> are not used, and before they are used they are verified. At the time
+> they are verified, they (included /init) must already have a signature
+> or otherwise access would be denied.
+
+You build infrastructure that works a certain way, the rest of the system
+doesn't fit your assumptions, so you need to change the rest of the system to
+fit your assumptions.
+
+> This scheme relies on the ability of the kernel to not be corrupted in
+> the event it parses a malformed CPIO image.
+
+I'm unaware of any buffer overruns or wild pointer traversals in the cpio
+extraction code. You can fill up all physical memory with initramfs and lock the
+system hard, though.
+
+It still only parses them at boot time before launching PID 1, right? So you
+have a local physical exploit and you're trying to prevent people from working
+around your Xbox copy protection without a mod chip?
+
+> Mimi suggested to use
+> digital signatures to prevent this issue, but it cannot be used in all
+> scenarios, since conventional systems generate the initial ram disk
+> locally.
+
+So you use a proprietary init binary you can't rebuild from source, and put it
+in a cpio where /dev/urandom is a file with known contents? Clearly, not
+exploitable at all. (And we update the initramfs.cpio but not the kernel because
+clearly keeping the kernel up to date is less important to security...)
+
+Whatever happened to https://lwn.net/Articles/532778/ ? Modules are signed
+in-band in the file, but you need xattrs for some reason?
+
+> Roberto
+
+Rob
