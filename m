@@ -1,47 +1,61 @@
-From: Yuri Norov <ynorov@marvell.com>
-Subject: Re: [EXT] Re: [PATCH v9 00/24] ILP32 for ARM64
-Date: Mon, 13 May 2019 20:16:17 +0000
-Message-ID: <MN2PR18MB30865B950D85C6463EB0E1D4CB0F0@MN2PR18MB3086.namprd18.prod.outlook.com>
-References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
- <20190508225900.GA14091@yury-thinkpad>,<mvmtvdyoi33.fsf@suse.de>
+From: Mimi Zohar <zohar@linux.ibm.com>
+Subject: Re: [PATCH v2 0/3] initramfs: add support for xattrs in the initial
+ ram disk
+Date: Mon, 13 May 2019 18:09:11 -0400
+Message-ID: <1557785351.4969.94.camel@linux.ibm.com>
+References: <dca50ee1-62d8-2256-6fdb-9a786e6cea5a@landley.net>
+         <20190512194322.GA71658@rani.riverdale.lan>
+         <3fe0e74b-19ca-6081-3afe-e05921b1bfe6@huawei.com>
+         <4f522e28-29c8-5930-5d90-e0086b503613@landley.net>
+         <f7bc547c-61f4-1a17-735c-7e8df97d7965@huawei.com>
+         <20190513172007.GA69717@rani.riverdale.lan>
+         <20190513175250.GC69717@rani.riverdale.lan>
+         <1557772584.4969.62.camel@linux.ibm.com>
+         <20190513184744.GA12386@rani.riverdale.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <mvmtvdyoi33.fsf@suse.de>
-Content-Language: en-US
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Andreas Schwab <schwab@suse.de>, Yury Norov <yury.norov@gmail.com>, "ltp@lists.linux.it" <ltp@lists.linux.it>
-Cc: "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Szabolcs Nagy <szabolcs.nagy@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Yury Norov <ynorov@caviumnetworks.com>, Philipp Tomsich <philipp.tomsich@theobroma-systems.com>, Joseph Myers <joseph@codesourcery.com>, "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>, Steve Ellcey <sellcey@caviumnetworks.com>, Prasun Kapoor <Prasun.Kapoor@caviumnetworks.com>, Alexander Graf <agraf@suse.de>, Bamvor Zhangjian <bamv2005@gmail.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Dave Martin <Dave.Martin@arm.com>, Adam Borowski <kilobyte@angband.pl>, Manuel Montezelo <manuel.montezelo@gmail.com>, James Hogan <james.hogan@imgtec.com>, Chris Metcalf <cmetcalf@mellanox.com>, Arnd Bergmann <arnd@arndb.de>, Andrew Pinski <pinskia@gmail.com>, Lin Yongting <linyongting@huawei.>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190513184744.GA12386@rani.riverdale.lan>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Arvind Sankar <nivedita@alum.mit.edu>
+Cc: Arvind Sankar <niveditas98@gmail.com>, Roberto Sassu <roberto.sassu@huawei.com>, Rob Landley <rob@landley.net>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-integrity@vger.kernel.org, initramfs@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-+ ltp@lists.linux.it
+On Mon, 2019-05-13 at 14:47 -0400, Arvind Sankar wrote:
+> On Mon, May 13, 2019 at 02:36:24PM -0400, Mimi Zohar wrote:
+> > 
+> > > > How does this work today then? Is it actually the case that initramfs
+> > > > just cannot be used on an IMA-enabled system, or it can but it leaves
+> > > > the initramfs unverified and we're trying to fix that? I had assumed the
+> > > > latter.
+> > > Oooh, it's done not by starting IMA appraisal later, but by loading a
+> > > default policy to ignore initramfs?
+> > 
+> > Right, when rootfs is a tmpfs filesystem, it supports xattrs, allowing
+> > for finer grained policies to be defined.  This patch set would allow
+> > a builtin IMA appraise policy to be defined which includes tmpfs.
 
-> There is a problem with the stack size accounting during execve when
-> there is no stack limit:
->
-> $ ulimit -s
-> 8192
-> $ ./hello.ilp32 
-> Hello World!
-> $ ulimit -s unlimited
-> $ ./hello.ilp32 
-> Segmentation fault
-> $ strace ./hello.ilp32 
-> execve("./hello.ilp32", ["./hello.ilp32"], 0xfffff10548f0 /* 77 vars */) = -1 ENOMEM (Cannot allocate memory)
-> +++ killed by SIGSEGV +++
-> Segmentation fault (core dumped)
->
-> Andreas.
+Clarification: finer grain IMA policy rules are normally defined in
+terms of LSM labels.  The LSMs need to enabled, before writing IMA
+policy rules in terms of the LSM labels.
 
-Thanks Andreas, I will take a look. Do we have such test in LTP?
-    
-Yury
+> > 
+> Ok, but wouldn't my idea still work? Leave the default compiled-in
+> policy set to not appraise initramfs. The embedded /init sets all the
+> xattrs, changes the policy to appraise tmpfs, and then exec's the real
+> init? Then everything except the embedded /init and the file with the
+> xattrs will be appraised, and the embedded /init was verified as part of
+> the kernel image signature. The only additional kernel change needed
+> then is to add a config option to the kernel to disallow overwriting the
+> embedded initramfs (or at least the embedded /init).
+
+Yes and no.  The current IMA design allows a builtin policy to be
+specified on the boot command line ("ima_policy="), so that it exists
+from boot, and allows it to be replaced once with a custom policy.
+ After that, assuming that CONFIG_IMA_WRITE_POLICY is configured,
+additional rules may be appended.  As your embedded /init solution
+already replaces the builtin policy, the IMA policy couldn't currently
+be replaced a second time with a custom policy based on LSM labels.
+
+Mimi
