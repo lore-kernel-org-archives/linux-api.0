@@ -1,8 +1,8 @@
-From: Arvind Sankar <nivedita@alum.mit.edu>
+From: Arvind Sankar <niveditas98@gmail.com>
 Subject: Re: [PATCH v2 0/3] initramfs: add support for xattrs in the initial
  ram disk
-Date: Mon, 13 May 2019 13:51:12 -0400
-Message-ID: <20190513175111.GB69717@rani.riverdale.lan>
+Date: Mon, 13 May 2019 13:52:50 -0400
+Message-ID: <20190513175250.GC69717@rani.riverdale.lan>
 References: <dca50ee1-62d8-2256-6fdb-9a786e6cea5a@landley.net>
  <20190512194322.GA71658@rani.riverdale.lan>
  <3fe0e74b-19ca-6081-3afe-e05921b1bfe6@huawei.com>
@@ -62,8 +62,8 @@ On Mon, May 13, 2019 at 01:20:08PM -0400, Arvind Sankar wrote:
 > just cannot be used on an IMA-enabled system, or it can but it leaves
 > the initramfs unverified and we're trying to fix that? I had assumed the
 > latter.
-Oooh, it's done not by starting IMA later, but by loading a default
-policy that ignores the initramfs?
+Oooh, it's done not by starting IMA appraisal later, but by loading a
+default policy to ignore initramfs?
 > > > 
 > > > So you made broken infrastructure that's causing you problems. Sounds unfortunate.
 > > 
