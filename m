@@ -1,49 +1,52 @@
-From: Rob Landley <rob@landley.net>
-Subject: Re: [PATCH v2 0/3] initramfs: add support for xattrs in the initial
- ram disk
-Date: Tue, 14 May 2019 01:06:45 -0500
-Message-ID: <66b57ae5-bb5a-c008-8490-2c90e050fc65@landley.net>
-References: <dca50ee1-62d8-2256-6fdb-9a786e6cea5a@landley.net>
- <20190512194322.GA71658@rani.riverdale.lan>
- <3fe0e74b-19ca-6081-3afe-e05921b1bfe6@huawei.com>
- <4f522e28-29c8-5930-5d90-e0086b503613@landley.net>
- <f7bc547c-61f4-1a17-735c-7e8df97d7965@huawei.com>
- <20190513172007.GA69717@rani.riverdale.lan>
- <20190513175250.GC69717@rani.riverdale.lan>
- <1557772584.4969.62.camel@linux.ibm.com>
- <20190513184744.GA12386@rani.riverdale.lan>
- <1557785351.4969.94.camel@linux.ibm.com>
+From: Cyril Hrubis <chrubis@suse.cz>
+Subject: Re: [LTP] [EXT] Re: [PATCH v9 00/24] ILP32 for ARM64
+Date: Tue, 14 May 2019 12:43:11 +0200
+Message-ID: <20190514104311.GA24708@rei>
+References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
+ <20190508225900.GA14091@yury-thinkpad>
+ <mvmtvdyoi33.fsf@suse.de>
+ <MN2PR18MB30865B950D85C6463EB0E1D4CB0F0@MN2PR18MB3086.namprd18.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1557785351.4969.94.camel@linux.ibm.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <MN2PR18MB30865B950D85C6463EB0E1D4CB0F0@MN2PR18MB3086.namprd18.prod.outlook.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mimi Zohar <zohar@linux.ibm.com>, Arvind Sankar <nivedita@alum.mit.edu>
-Cc: Arvind Sankar <niveditas98@gmail.com>, Roberto Sassu <roberto.sassu@huawei.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-integrity@vger.kernel.org, initramfs@vger.kernel.org
+To: Yuri Norov <ynorov@marvell.com>
+Cc: Andreas Schwab <schwab@suse.de>, Yury Norov <yury.norov@gmail.com>, "ltp@lists.linux.it" <ltp@lists.linux.it>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Szabolcs Nagy <szabolcs.nagy@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Philipp Tomsich <philipp.tomsich@theobroma-systems.com>, Joseph Myers <joseph@codesourcery.com>, "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>, Steve Ellcey <sellcey@caviumnetworks.com>, Prasun Kapoor <Prasun.Kapoor@caviumnetworks.com>, Alexander Graf <agraf@suse.de>, Bamvor Zhangjian <bamv2005@gmail.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Dave Martin <Dave.Martin@arm.com>, Adam Borowski <kilobyte@angband.pl>, Manuel Montezelo <manuel.montezelo@gmai>
 List-Id: linux-api@vger.kernel.org
 
-On 5/13/19 5:09 PM, Mimi Zohar wrote:
->> Ok, but wouldn't my idea still work? Leave the default compiled-in
->> policy set to not appraise initramfs. The embedded /init sets all the
->> xattrs, changes the policy to appraise tmpfs, and then exec's the real
->> init? Then everything except the embedded /init and the file with the
->> xattrs will be appraised, and the embedded /init was verified as part of
->> the kernel image signature. The only additional kernel change needed
->> then is to add a config option to the kernel to disallow overwriting the
->> embedded initramfs (or at least the embedded /init).
+Hi!
+> > There is a problem with the stack size accounting during execve when
+> > there is no stack limit:
+> >
+> > $ ulimit -s
+> > 8192
+> > $ ./hello.ilp32 
+> > Hello World!
+> > $ ulimit -s unlimited
+> > $ ./hello.ilp32 
+> > Segmentation fault
+> > $ strace ./hello.ilp32 
+> > execve("./hello.ilp32", ["./hello.ilp32"], 0xfffff10548f0 /* 77 vars */) = -1 ENOMEM (Cannot allocate memory)
+> > +++ killed by SIGSEGV +++
+> > Segmentation fault (core dumped)
+> >
+> > Andreas.
 > 
-> Yes and no.  The current IMA design allows a builtin policy to be
-> specified on the boot command line ("ima_policy="), so that it exists
-> from boot, and allows it to be replaced once with a custom policy.
->  After that, assuming that CONFIG_IMA_WRITE_POLICY is configured,
-> additional rules may be appended.  As your embedded /init solution
-> already replaces the builtin policy, the IMA policy couldn't currently
-> be replaced a second time with a custom policy based on LSM labels.
+> Thanks Andreas, I will take a look. Do we have such test in LTP?
 
-So your design assumption you're changing other code to work around in that
-instance is the policy can only be replaced once rather than having a "finalize"
-option when it's set, making it immutable from then on.
+We do have a test that we can run a binary with very small stack size
+i.e. 512kB but there does not seem to be anything that would catch this
+specific problem.
 
-Rob
+Can you please open an issue and describe how to reproduce the problem
+at our github tracker:
+
+https://github.com/linux-test-project/ltp/issues
+
+Then we can create testcase based on that reproducer later on.
+
+-- 
+Cyril Hrubis
+chrubis@suse.cz
