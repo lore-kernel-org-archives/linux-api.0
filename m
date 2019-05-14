@@ -1,55 +1,62 @@
-From: Yury Norov <yury.norov@gmail.com>
-Subject: Re: [LTP] [EXT] Re: [PATCH v9 00/24] ILP32 for ARM64
-Date: Tue, 14 May 2019 16:41:49 -0700
-Message-ID: <20190514234149.GA12077@yury-thinkpad>
-References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
- <20190508225900.GA14091@yury-thinkpad>
- <mvmtvdyoi33.fsf@suse.de>
- <MN2PR18MB30865B950D85C6463EB0E1D4CB0F0@MN2PR18MB3086.namprd18.prod.outlook.com>
- <20190514104311.GA24708@rei>
+From: James Bottomley <James.Bottomley@HansenPartnership.com>
+Subject: Re: [PATCH v2 0/3] initramfs: add support for xattrs in the initial
+ ram disk
+Date: Tue, 14 May 2019 16:54:12 -0700
+Message-ID: <1557878052.2873.6.camel@HansenPartnership.com>
+References: <dca50ee1-62d8-2256-6fdb-9a786e6cea5a@landley.net>
+         <20190512194322.GA71658@rani.riverdale.lan>
+         <3fe0e74b-19ca-6081-3afe-e05921b1bfe6@huawei.com>
+         <4f522e28-29c8-5930-5d90-e0086b503613@landley.net>
+         <f7bc547c-61f4-1a17-735c-7e8df97d7965@huawei.com>
+         <CALCETrV3b205L38xqPr6QqwGn6-vxQdPoJGUygJJpgM-JqqXfQ@mail.gmail.com>
+         <1557861511.3378.19.camel@HansenPartnership.com>
+         <4da3dbda-bb76-5d71-d5c5-c03d98350ab0@landley.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190514104311.GA24708@rei>
+In-Reply-To: <4da3dbda-bb76-5d71-d5c5-c03d98350ab0@landley.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Cyril Hrubis <chrubis@suse.cz>
-Cc: Yuri Norov <ynorov@marvell.com>, Andreas Schwab <schwab@suse.de>, "ltp@lists.linux.it" <ltp@lists.linux.it>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Szabolcs Nagy <szabolcs.nagy@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Philipp Tomsich <philipp.tomsich@theobroma-systems.com>, Joseph Myers <joseph@codesourcery.com>, "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>, Steve Ellcey <sellcey@caviumnetworks.com>, Prasun Kapoor <Prasun.Kapoor@caviumnetworks.com>, Alexander Graf <agraf@suse.de>, Bamvor Zhangjian <bamv2005@gmail.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Dave Martin <Dave.Martin@arm.com>, Adam Borowski <kilobyte@angband.pl>, Manuel Montezelo <manuel.montezelo@gmail.>
+To: Rob Landley <rob@landley.net>, Andy Lutomirski <luto@kernel.org>
+Cc: Arvind Sankar <niveditas98@gmail.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, linux-integrity <linux-integrity@vger.kernel.org>, initramfs@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 14, 2019 at 12:43:11PM +0200, Cyril Hrubis wrote:
-> Hi!
-> > > There is a problem with the stack size accounting during execve when
-> > > there is no stack limit:
-> > >
-> > > $ ulimit -s
-> > > 8192
-> > > $ ./hello.ilp32 
-> > > Hello World!
-> > > $ ulimit -s unlimited
-> > > $ ./hello.ilp32 
-> > > Segmentation fault
-> > > $ strace ./hello.ilp32 
-> > > execve("./hello.ilp32", ["./hello.ilp32"], 0xfffff10548f0 /* 77 vars */) = -1 ENOMEM (Cannot allocate memory)
-> > > +++ killed by SIGSEGV +++
-> > > Segmentation fault (core dumped)
-> > >
-> > > Andreas.
+On Tue, 2019-05-14 at 18:39 -0500, Rob Landley wrote:
+> On 5/14/19 2:18 PM, James Bottomley wrote:
+> > > I think Rob is right here.  If /init was statically built into
+> > > the kernel image, it has no more ability to compromise the kernel
+> > > than anything else in the kernel.  What's the problem here?
 > > 
-> > Thanks Andreas, I will take a look. Do we have such test in LTP?
+> > The specific problem is that unless you own the kernel signing key,
+> > which is really untrue for most distribution consumers because the
+> > distro owns the key, you cannot build the initrd statically into
+> > the kernel.  You can take the distro signed kernel, link it with
+> > the initrd then resign the combination with your key, provided you
+> > insert your key into the MoK variables as a trusted secure boot
+> > key, but the distros have been unhappy recommending this as
+> > standard practice.
+> > 
+> > If our model for security is going to be to link the kernel and the
+> > initrd statically to give signature protection over the aggregate
+> > then we need to figure out how to execute this via the distros.  If
+> > we accept that the split model, where the distro owns and signs the
+> > kernel but the machine owner builds and is responsible for the
+> > initrd, then we need to explore split security models like this
+> > proposal.
 > 
-> We do have a test that we can run a binary with very small stack size
-> i.e. 512kB but there does not seem to be anything that would catch this
-> specific problem.
-> 
-> Can you please open an issue and describe how to reproduce the problem
-> at our github tracker:
-> 
-> https://github.com/linux-test-project/ltp/issues
-> 
-> Then we can create testcase based on that reproducer later on.
+> You can have a built-in and an external initrd? The second extracts
+> over the first? (I know because once upon a time conflicting files
+> would append. It sounds like the desired behavior here is O_EXCL fail
+> and move on.)
 
-This is it:
-https://github.com/linux-test-project/ltp/issues/530
+Technically yes, because the first initrd could find the second by some
+predefined means, extract it to a temporary directory and do a
+pivot_root() and then the second would do some stuff, find the real
+root and do a pivot_root() again.  However, while possible, wouldn't it
+just add to the rendezvous complexity without adding any benefits? even
+if the first initrd is built and signed by the distro and the second is
+built by you, the first has to verify the second somehow.  I suppose
+the second could be tar extracted, which would add xattrs, if that's
+the goal?
 
-Yury
+James
