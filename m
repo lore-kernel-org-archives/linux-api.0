@@ -1,77 +1,58 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH RFC v2 0/4] mm/ksm: add option to automerge VMAs
-Date: Tue, 14 May 2019 16:41:05 +0200
-Message-ID: <20190514144105.GF4683@dhcp22.suse.cz>
-References: <20190514131654.25463-1-oleksandr@redhat.com>
+From: Arvind Sankar <nivedita@alum.mit.edu>
+Subject: Re: [PATCH v2 0/3] initramfs: add support for xattrs in the initial
+ ram disk
+Date: Tue, 14 May 2019 10:44:07 -0400
+Message-ID: <20190514144406.GA37109@rani.riverdale.lan>
+References: <20190512194322.GA71658@rani.riverdale.lan>
+ <3fe0e74b-19ca-6081-3afe-e05921b1bfe6@huawei.com>
+ <4f522e28-29c8-5930-5d90-e0086b503613@landley.net>
+ <f7bc547c-61f4-1a17-735c-7e8df97d7965@huawei.com>
+ <20190513172007.GA69717@rani.riverdale.lan>
+ <20190513175250.GC69717@rani.riverdale.lan>
+ <1557772584.4969.62.camel@linux.ibm.com>
+ <20190513184744.GA12386@rani.riverdale.lan>
+ <1557785351.4969.94.camel@linux.ibm.com>
+ <66b57ae5-bb5a-c008-8490-2c90e050fc65@landley.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190514131654.25463-1-oleksandr@redhat.com>
+In-Reply-To: <66b57ae5-bb5a-c008-8490-2c90e050fc65@landley.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Oleksandr Natalenko <oleksandr@redhat.com>
-Cc: linux-kernel@vger.kernel.org, Kirill Tkhai <ktkhai@virtuozzo.com>, Vlastimil Babka <vbabka@suse.cz>, Matthew Wilcox <willy@infradead.org>, Pavel Tatashin <pasha.tatashin@soleen.com>, Timofey Titovets <nefelim4ag@gmail.com>, Aaron Tomlin <atomlin@redhat.com>, Grzegorz Halat <ghalat@redhat.com>, linux-mm@kvack.org, linux-api@vger.kernel.org
+To: Rob Landley <rob@landley.net>
+Cc: Mimi Zohar <zohar@linux.ibm.com>, Arvind Sankar <nivedita@alum.mit.edu>, Arvind Sankar <niveditas98@gmail.com>, Roberto Sassu <roberto.sassu@huawei.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-integrity@vger.kernel.org, initramfs@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-[This is adding a new user visible interface so you should be CCing
-linux-api mailing list. Also CC Hugh for KSM in general. Done now]
+On Tue, May 14, 2019 at 01:06:45AM -0500, Rob Landley wrote:
+> On 5/13/19 5:09 PM, Mimi Zohar wrote:
+> >> Ok, but wouldn't my idea still work? Leave the default compiled-in
+> >> policy set to not appraise initramfs. The embedded /init sets all the
+> >> xattrs, changes the policy to appraise tmpfs, and then exec's the real
+> >> init? Then everything except the embedded /init and the file with the
+> >> xattrs will be appraised, and the embedded /init was verified as part of
+> >> the kernel image signature. The only additional kernel change needed
+> >> then is to add a config option to the kernel to disallow overwriting the
+> >> embedded initramfs (or at least the embedded /init).
+> > 
+> > Yes and no.  The current IMA design allows a builtin policy to be
+> > specified on the boot command line ("ima_policy="), so that it exists
+> > from boot, and allows it to be replaced once with a custom policy.
+> >  After that, assuming that CONFIG_IMA_WRITE_POLICY is configured,
+> > additional rules may be appended.  As your embedded /init solution
+> > already replaces the builtin policy, the IMA policy couldn't currently
+> > be replaced a second time with a custom policy based on LSM labels.
+> 
+> So your design assumption you're changing other code to work around in that
+> instance is the policy can only be replaced once rather than having a "finalize"
+> option when it's set, making it immutable from then on.
+> 
+> Rob
+I agree it would be better to have a finalize option. Outside of my
+idea, it seems the current setup would make it so while developing an
+IMA policy you need to keep rebooting to test your changes?
 
-On Tue 14-05-19 15:16:50, Oleksandr Natalenko wrote:
-> By default, KSM works only on memory that is marked by madvise(). And the
-> only way to get around that is to either:
-> 
->   * use LD_PRELOAD; or
->   * patch the kernel with something like UKSM or PKSM.
-> 
-> Instead, lets implement a sysfs knob, which allows marking VMAs as
-> mergeable. This can be used manually on some task in question or by some
-> small userspace helper daemon.
-> 
-> The knob is named "force_madvise", and it is write-only. It accepts a PID
-> to act on. To mark the VMAs as mergeable, use:
-> 
->    # echo PID > /sys/kernel/mm/ksm/force_madvise
-> 
-> To unmerge all the VMAs, use the same approach, prepending the PID with
-> the "minus" sign:
-> 
->    # echo -PID > /sys/kernel/mm/ksm/force_madvise
-> 
-> This patchset is based on earlier Timofey's submission [1], but it doesn't
-> use dedicated kthread to walk through the list of tasks/VMAs. Instead,
-> it is up to userspace to traverse all the tasks in /proc if needed.
-> 
-> The previous suggestion [2] was based on amending do_anonymous_page()
-> handler to implement fully automatic mode, but this approach was
-> incorrect due to improper locking and not desired due to excessive
-> complexity.
-> 
-> The current approach just implements minimal interface and leaves the
-> decision on how and when to act to userspace.
-
-Please make sure to describe a usecase that warrants adding a new
-interface we have to maintain for ever.
-
-> 
-> Thanks.
-> 
-> [1] https://lore.kernel.org/patchwork/patch/1012142/
-> [2] http://lkml.iu.edu/hypermail/linux/kernel/1905.1/02417.html
-> 
-> Oleksandr Natalenko (4):
->   mm/ksm: introduce ksm_enter() helper
->   mm/ksm: introduce ksm_leave() helper
->   mm/ksm: introduce force_madvise knob
->   mm/ksm: add force merging/unmerging documentation
-> 
->  Documentation/admin-guide/mm/ksm.rst |  11 ++
->  mm/ksm.c                             | 160 +++++++++++++++++++++------
->  2 files changed, 137 insertions(+), 34 deletions(-)
-> 
-> -- 
-> 2.21.0
-> 
-
--- 
-Michal Hocko
-SUSE Labs
+I'd suggest having a knob that starts out unrestricted, and can be
+one-way changed to append-only or immutable. This seems like a good idea
+even if you decide the embedded image is too much trouble or unworkable
+for other reasons.
