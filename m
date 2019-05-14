@@ -1,77 +1,48 @@
-From: Yury Norov <yury.norov@gmail.com>
-Subject: Re: [LTP] [EXT] Re: [PATCH v9 00/24] ILP32 for ARM64
-Date: Tue, 14 May 2019 16:01:58 -0700
-Message-ID: <20190514230158.GA6780@yury-thinkpad>
-References: <20180516081910.10067-1-ynorov@caviumnetworks.com>
- <20190508225900.GA14091@yury-thinkpad>
- <mvmtvdyoi33.fsf@suse.de>
- <MN2PR18MB30865B950D85C6463EB0E1D4CB0F0@MN2PR18MB3086.namprd18.prod.outlook.com>
- <20190514104311.GA24708@rei>
+From: Rob Landley <rob@landley.net>
+Subject: Re: [PATCH v2 0/3] initramfs: add support for xattrs in the initial
+ ram disk
+Date: Tue, 14 May 2019 18:39:16 -0500
+Message-ID: <4da3dbda-bb76-5d71-d5c5-c03d98350ab0@landley.net>
+References: <dca50ee1-62d8-2256-6fdb-9a786e6cea5a@landley.net>
+ <20190512194322.GA71658@rani.riverdale.lan>
+ <3fe0e74b-19ca-6081-3afe-e05921b1bfe6@huawei.com>
+ <4f522e28-29c8-5930-5d90-e0086b503613@landley.net>
+ <f7bc547c-61f4-1a17-735c-7e8df97d7965@huawei.com>
+ <CALCETrV3b205L38xqPr6QqwGn6-vxQdPoJGUygJJpgM-JqqXfQ@mail.gmail.com>
+ <1557861511.3378.19.camel@HansenPartnership.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190514104311.GA24708@rei>
+In-Reply-To: <1557861511.3378.19.camel@HansenPartnership.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Cyril Hrubis <chrubis@suse.cz>
-Cc: Yuri Norov <ynorov@marvell.com>, Andreas Schwab <schwab@suse.de>, "ltp@lists.linux.it" <ltp@lists.linux.it>, "linux-doc@vger.kernel.org" <linux-doc@vger.kernel.org>, Szabolcs Nagy <szabolcs.nagy@arm.com>, Catalin Marinas <catalin.marinas@arm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, Philipp Tomsich <philipp.tomsich@theobroma-systems.com>, Joseph Myers <joseph@codesourcery.com>, "linux-arch@vger.kernel.org" <linux-arch@vger.kernel.org>, Steve Ellcey <sellcey@caviumnetworks.com>, Prasun Kapoor <Prasun.Kapoor@caviumnetworks.com>, Alexander Graf <agraf@suse.de>, Bamvor Zhangjian <bamv2005@gmail.com>, Geert Uytterhoeven <geert@linux-m68k.org>, Dave Martin <Dave.Martin@arm.com>, Adam Borowski <kilobyte@angband.pl>, Manuel Montezelo <manuel.montezelo@gmail.>
+To: James Bottomley <James.Bottomley@HansenPartnership.com>, Andy Lutomirski <luto@kernel.org>
+Cc: Arvind Sankar <niveditas98@gmail.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, linux-integrity <linux-integrity@vger.kernel.org>, initramfs@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 14, 2019 at 12:43:11PM +0200, Cyril Hrubis wrote:
-> Hi!
-> > > There is a problem with the stack size accounting during execve when
-> > > there is no stack limit:
-> > >
-> > > $ ulimit -s
-> > > 8192
-> > > $ ./hello.ilp32 
-> > > Hello World!
-> > > $ ulimit -s unlimited
-> > > $ ./hello.ilp32 
-> > > Segmentation fault
-> > > $ strace ./hello.ilp32 
-> > > execve("./hello.ilp32", ["./hello.ilp32"], 0xfffff10548f0 /* 77 vars */) = -1 ENOMEM (Cannot allocate memory)
-> > > +++ killed by SIGSEGV +++
-> > > Segmentation fault (core dumped)
-> > >
-> > > Andreas.
-> > 
-> > Thanks Andreas, I will take a look. Do we have such test in LTP?
-
-So the problem was in not converting new compat-sensitive code:
-
-diff --git a/arch/arm64/include/asm/processor.h b/arch/arm64/include/asm/processor.h
-index 5bdf357169d8..c509f83fa506 100644
---- a/arch/arm64/include/asm/processor.h
-+++ b/arch/arm64/include/asm/processor.h
-@@ -63,7 +63,7 @@
- 				TASK_SIZE_32 : TASK_SIZE_64)
- #define TASK_SIZE_OF(tsk)	(is_compat_thread(tsk) ? \
- 				TASK_SIZE_32 : TASK_SIZE_64)
--#define DEFAULT_MAP_WINDOW	(test_thread_flag(TIF_32BIT) ? \
-+#define DEFAULT_MAP_WINDOW	(is_compat_task() ? \
- 				TASK_SIZE_32 : DEFAULT_MAP_WINDOW_64)
- #else
- #define TASK_SIZE		TASK_SIZE_64
-
-The fix is incorporated in ilp32-5.1.1:
-https://github.com/norov/linux/tree/ilp32-5.1.1
-
-> We do have a test that we can run a binary with very small stack size
-> i.e. 512kB but there does not seem to be anything that would catch this
-> specific problem.
+On 5/14/19 2:18 PM, James Bottomley wrote:
+>> I think Rob is right here.  If /init was statically built into the
+>> kernel image, it has no more ability to compromise the kernel than
+>> anything else in the kernel.  What's the problem here?
 > 
-> Can you please open an issue and describe how to reproduce the problem
-> at our github tracker:
+> The specific problem is that unless you own the kernel signing key,
+> which is really untrue for most distribution consumers because the
+> distro owns the key, you cannot build the initrd statically into the
+> kernel.  You can take the distro signed kernel, link it with the initrd
+> then resign the combination with your key, provided you insert your key
+> into the MoK variables as a trusted secure boot key, but the distros
+> have been unhappy recommending this as standard practice.
 > 
-> https://github.com/linux-test-project/ltp/issues
-> 
-> Then we can create testcase based on that reproducer later on.
-> 
-> -- 
-> Cyril Hrubis
-> chrubis@suse.cz
+> If our model for security is going to be to link the kernel and the
+> initrd statically to give signature protection over the aggregate then
+> we need to figure out how to execute this via the distros.  If we
+> accept that the split model, where the distro owns and signs the kernel
+> but the machine owner builds and is responsible for the initrd, then we
+> need to explore split security models like this proposal.
 
-OK, I'll do.
+You can have a built-in and an external initrd? The second extracts over the
+first? (I know because once upon a time conflicting files would append. It
+sounds like the desired behavior here is O_EXCL fail and move on.)
 
-Yury
+Rob
