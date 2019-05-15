@@ -1,57 +1,67 @@
-From: Geert Uytterhoeven <geert@linux-m68k.org>
+From: Yann Droneaud <ydroneaud@opteya.com>
 Subject: Re: [PATCH 1/2] pid: add pidfd_open()
-Date: Wed, 15 May 2019 14:29:14 +0200
-Message-ID: <CAMuHMdUKJOP2H4cVy0Na5hjn2-HUbfvE_zbctS4L9d-h9Oru4Q@mail.gmail.com>
+Date: Wed, 15 May 2019 16:00:20 +0200
+Message-ID: <4c5ae46657e1931a832def5645db61eb0bf1accd.camel@opteya.com>
 References: <20190515100400.3450-1-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
 In-Reply-To: <20190515100400.3450-1-christian@brauner.io>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian@brauner.io>
-Cc: Jann Horn <jannh@google.com>, Oleg Nesterov <oleg@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, "torvalds@linux-foundation.org" <torvalds@linux-foundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, "linux-ia64@vger.kernel.org" <linux-ia64@vger.kernel.org>, Linux-sh list <linux-sh@vger.kernel.org>, linux-mips@vger.kernel.org, "open list:KERNEL SELFTEST FRAMEWORK" <linux-kselftest@vger.kernel.org>, sparclinux <sparclinux@vger.kernel.org>, elena.reshetova@intel.com, Linux-Arch <linux-arch@vger.kernel.org>, linux-s390 <linux-s390@vger.kernel.org>, linux-xtensa@linux-xtensa.org, Kees Cook <keescook@chromium.org>, linux-m68k <linux-m68k@lists.linux-m68k.org>, Andy
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+To: Christian Brauner <christian@brauner.io>, jannh@google.com, oleg@redhat.com, viro@zeniv.linux.org.uk, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, arnd@arndb.de, dhowells@redhat.com
+Cc: linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, linux-mips@vger.kernel.org, linux-kselftest@vger.kernel.org, sparclinux@vger.kernel.org, elena.reshetova@intel.com, linux-arch@vger.kernel.org, linux-s390@vger.kernel.org, linux-xtensa@linux-xtensa.org, keescook@chromium.org, linux-m68k@lists.linux-m68k.org, luto@kernel.org, tglx@linutronix.de, linux-arm-kernel@lists.infradead.org, linux-parisc@vger.kernel.org, linux-api@vger.kernel.org, cyphar@cyphar.com, luto@amacapital.net, ebiederm@xmission.com, linux-alpha@vger.kernel.org, akpm@linux-foundation.org, linuxppc-dev@lists.ozlabs.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 15, 2019 at 12:04 PM Christian Brauner <christian@brauner.io> wrote:
-> This adds the pidfd_open() syscall. It allows a caller to retrieve pollable
-> pidfds for a process which did not get created via CLONE_PIDFD, i.e. for a
-> process that is created via traditional fork()/clone() calls that is only
-> referenced by a PID:
->
-> int pidfd = pidfd_open(1234, 0);
-> ret = pidfd_send_signal(pidfd, SIGSTOP, NULL, 0);
->
-> With the introduction of pidfds through CLONE_PIDFD it is possible to
-> created pidfds at process creation time.
-> However, a lot of processes get created with traditional PID-based calls
-> such as fork() or clone() (without CLONE_PIDFD). For these processes a
-> caller can currently not create a pollable pidfd. This is a huge problem
-> for Android's low memory killer (LMK) and service managers such as systemd.
-> Both are examples of tools that want to make use of pidfds to get reliable
-> notification of process exit for non-parents (pidfd polling) and race-free
-> signal sending (pidfd_send_signal()). They intend to switch to this API for
-> process supervision/management as soon as possible. Having no way to get
-> pollable pidfds from PID-only processes is one of the biggest blockers for
-> them in adopting this api. With pidfd_open() making it possible to retrieve
-> pidfd for PID-based processes we enable them to adopt this api.
->
-> In line with Arnd's recent changes to consolidate syscall numbers across
-> architectures, I have added the pidfd_open() syscall to all architectures
-> at the same time.
->
-> Signed-off-by: Christian Brauner <christian@brauner.io>
-
->  arch/m68k/kernel/syscalls/syscall.tbl       |  1 +
-
-Acked-by: Geert Uytterhoeven <geert@linux-m68k.org>
-
-Gr{oetje,eeting}s,
-
-                        Geert
-
--- 
-Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k.org
-
-In personal conversations with technical people, I call myself a hacker. But
-when I'm talking to journalists I just say "programmer" or something like that.
-                                -- Linus Torvalds
+SGksCgpMZSBtZXJjcmVkaSAxNSBtYWkgMjAxOSDDoCAxMjowMyArMDIwMCwgQ2hyaXN0aWFuIEJy
+YXVuZXIgYSDDqWNyaXQgOgo+IAo+IGRpZmYgLS1naXQgYS9rZXJuZWwvcGlkLmMgYi9rZXJuZWwv
+cGlkLmMKPiBpbmRleCAyMDg4MTU5OGJkZmEuLjIzN2QxOGQ2ZWNiOCAxMDA2NDQKPiAtLS0gYS9r
+ZXJuZWwvcGlkLmMKPiArKysgYi9rZXJuZWwvcGlkLmMKPiBAQCAtNDUxLDYgKzQ1Miw1MyBAQCBz
+dHJ1Y3QgcGlkICpmaW5kX2dlX3BpZChpbnQgbnIsIHN0cnVjdAo+IHBpZF9uYW1lc3BhY2UgKm5z
+KQo+ICAJcmV0dXJuIGlkcl9nZXRfbmV4dCgmbnMtPmlkciwgJm5yKTsKPiAgfQo+ICAKPiArLyoq
+Cj4gKyAqIHBpZGZkX29wZW4oKSAtIE9wZW4gbmV3IHBpZCBmaWxlIGRlc2NyaXB0b3IuCj4gKyAq
+Cj4gKyAqIEBwaWQ6ICAgcGlkIGZvciB3aGljaCB0byByZXRyaWV2ZSBhIHBpZGZkCj4gKyAqIEBm
+bGFnczogZmxhZ3MgdG8gcGFzcwo+ICsgKgo+ICsgKiBUaGlzIGNyZWF0ZXMgYSBuZXcgcGlkIGZp
+bGUgZGVzY3JpcHRvciB3aXRoIHRoZSBPX0NMT0VYRUMgZmxhZyBzZXQgZm9yCj4gKyAqIHRoZSBw
+cm9jZXNzIGlkZW50aWZpZWQgYnkgQHBpZC4gQ3VycmVudGx5LCB0aGUgcHJvY2VzcyBpZGVudGlm
+aWVkIGJ5Cj4gKyAqIEBwaWQgbXVzdCBiZSBhIHRocmVhZC1ncm91cCBsZWFkZXIuIFRoaXMgcmVz
+dHJpY3Rpb24gY3VycmVudGx5IGV4aXN0cwo+ICsgKiBmb3IgYWxsIGFzcGVjdHMgb2YgcGlkZmRz
+IGluY2x1ZGluZyBwaWRmZCBjcmVhdGlvbiAoQ0xPTkVfUElERkQgY2Fubm90Cj4gKyAqIGJlIHVz
+ZWQgd2l0aCBDTE9ORV9USFJFQUQpIGFuZCBwaWRmZCBwb2xsaW5nIChvbmx5IHN1cHBvcnRzIHRo
+cmVhZCBncm91cAo+ICsgKiBsZWFkZXJzKS4KPiArICoKCldvdWxkIGl0IGJlIHBvc3NpYmxlIHRv
+IGNyZWF0ZSBmaWxlIGRlc2NyaXB0b3Igd2l0aCAicmVzdHJpY3RlZCIKb3BlcmF0aW9uID8KCi0g
+T19SRE9OTFk6IHdhaXRpbmcgZm9yIHByb2Nlc3MgY29tcGxldGlvbiBhbGxvd2VkIChmb3IgZXhh
+bXBsZSkKLSBPX1dST05MWTogc2VuZGluZyBwcm9jZXNzIHNpZ25hbCBhbGxvd2VkCgpGb3IgZXhh
+bXBsZSwgYSBwcm9jZXNzIGNvdWxkIHNlbmQgb3ZlciBhIFVuaXggc29ja2V0IGEgcHJvY2VzcyBh
+IHBpZGZkLAphbGxvd2luZyB0aGlzIHRvIG9ubHkgd2FpdCBmb3IgY29tcGxldGlvbiwgYnV0IG5v
+dCBzZW5kaW5nIHNpZ25hbCA/CgpJIHNlZSB0aGUgcGVybWlzc2lvbiBjaGVjayBpcyBub3QgZG9u
+ZSBpbiBwaWRmZF9vcGVuKCksIHNvIHdoYXQgcHJldmVudAphIHVzZXIgZnJvbSBzZW5kaW5nIGEg
+c2lnbmFsIHRvIGFub3RoZXIgdXNlciBvd25lZCBwcm9jZXNzID8KCklmIGl0J3MgaW4gcGlkZmRf
+c2VuZF9zaWduYWwoKSwgdGhlbiwgcGFzc2luZyB0aGUgc29ja2V0IHRocm91Z2gKU0NNX1JJR0hU
+IHdvbid0IGJlIHVzZWZ1bCBpZiB0aGUgdGFyZ2V0IHByb2Nlc3MgaXMgbm90IG93bmVkIGJ5IHRo
+ZQpzYW1lIHVzZXIsIG9yIHJvb3QuCgo+ICsgKiBSZXR1cm46IE9uIHN1Y2Nlc3MsIGEgY2xvZXhl
+YyBwaWRmZCBpcyByZXR1cm5lZC4KPiArICogICAgICAgICBPbiBlcnJvciwgYSBuZWdhdGl2ZSBl
+cnJubyBudW1iZXIgd2lsbCBiZSByZXR1cm5lZC4KPiArICovCj4gK1NZU0NBTExfREVGSU5FMihw
+aWRmZF9vcGVuLCBwaWRfdCwgcGlkLCB1bnNpZ25lZCBpbnQsIGZsYWdzKQo+ICt7Cj4gKwlpbnQg
+ZmQsIHJldDsKPiArCXN0cnVjdCBwaWQgKnA7Cj4gKwlzdHJ1Y3QgdGFza19zdHJ1Y3QgKnRzazsK
+PiArCj4gKwlpZiAoZmxhZ3MpCj4gKwkJcmV0dXJuIC1FSU5WQUw7Cj4gKwo+ICsJaWYgKHBpZCA8
+PSAwKQo+ICsJCXJldHVybiAtRUlOVkFMOwo+ICsKPiArCXAgPSBmaW5kX2dldF9waWQocGlkKTsK
+PiArCWlmICghcCkKPiArCQlyZXR1cm4gLUVTUkNIOwo+ICsKPiArCXJjdV9yZWFkX2xvY2soKTsK
+PiArCXRzayA9IHBpZF90YXNrKHAsIFBJRFRZUEVfUElEKTsKPiArCWlmICghdHNrKQo+ICsJCXJl
+dCA9IC1FU1JDSDsKPiArCWVsc2UgaWYgKHVubGlrZWx5KCF0aHJlYWRfZ3JvdXBfbGVhZGVyKHRz
+aykpKQo+ICsJCXJldCA9IC1FSU5WQUw7Cj4gKwllbHNlCj4gKwkJcmV0ID0gMDsKPiArCXJjdV9y
+ZWFkX3VubG9jaygpOwo+ICsKPiArCWZkID0gcmV0ID86IHBpZGZkX2NyZWF0ZShwKTsKPiArCXB1
+dF9waWQocCk7Cj4gKwlyZXR1cm4gZmQ7Cj4gK30KPiArCj4gIHZvaWQgX19pbml0IHBpZF9pZHJf
+aW5pdCh2b2lkKQo+ICB7Cj4gIAkvKiBWZXJpZnkgbm8gb25lIGhhcyBkb25lIGFueXRoaW5nIHNp
+bGx5OiAqLwoKUmVnYXJkcy4KCi0tIApZYW5uIERyb25lYXVkCk9QVEVZQQoKCgpfX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpsaW51eC1hcm0ta2VybmVsIG1h
+aWxpbmcgbGlzdApsaW51eC1hcm0ta2VybmVsQGxpc3RzLmluZnJhZGVhZC5vcmcKaHR0cDovL2xp
+c3RzLmluZnJhZGVhZC5vcmcvbWFpbG1hbi9saXN0aW5mby9saW51eC1hcm0ta2VybmVsCg==
