@@ -1,55 +1,53 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH RFC v2 0/4] mm/ksm: add option to automerge VMAs
-Date: Wed, 15 May 2019 16:24:19 +0200
-Message-ID: <20190515142419.GD16651@dhcp22.suse.cz>
-References: <20190514131654.25463-1-oleksandr@redhat.com>
- <20190514144105.GF4683@dhcp22.suse.cz>
- <20190514145122.GG4683@dhcp22.suse.cz>
- <20190515062523.5ndf7obzfgugilfs@butterfly.localdomain>
- <20190515065311.GB16651@dhcp22.suse.cz>
- <20190515073723.wbr522cpyjfelfav@butterfly.localdomain>
- <20190515083321.GC16651@dhcp22.suse.cz>
- <20190515085158.hyuamrxkxhjhx6go@butterfly.localdomain>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH 1/2] pid: add pidfd_open()
+Date: Wed, 15 May 2019 16:38:58 +0200
+Message-ID: <20190515143857.GB18892@redhat.com>
+References: <20190515100400.3450-1-christian@brauner.io>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190515085158.hyuamrxkxhjhx6go@butterfly.localdomain>
+In-Reply-To: <20190515100400.3450-1-christian@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Oleksandr Natalenko <oleksandr@redhat.com>
-Cc: linux-kernel@vger.kernel.org, Kirill Tkhai <ktkhai@virtuozzo.com>, Vlastimil Babka <vbabka@suse.cz>, Matthew Wilcox <willy@infradead.org>, Pavel Tatashin <pasha.tatashin@soleen.com>, Timofey Titovets <nefelim4ag@gmail.com>, Aaron Tomlin <atomlin@redhat.com>, Grzegorz Halat <ghalat@redhat.com>, linux-mm@kvack.org, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>
+To: Christian Brauner <christian@brauner.io>
+Cc: jannh@google.com, viro@zeniv.linux.org.uk, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, arnd@arndb.de, dhowells@redhat.com, akpm@linux-foundation.org, cyphar@cyphar.com, ebiederm@xmission.com, elena.reshetova@intel.com, keescook@chromium.org, luto@amacapital.net, luto@kernel.org, tglx@linutronix.de, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, linux-sh@vger.kernel.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-kselftest@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed 15-05-19 10:51:58, Oleksandr Natalenko wrote:
-> On Wed, May 15, 2019 at 10:33:21AM +0200, Michal Hocko wrote:
-> > > For my current setup with 2 Firefox instances I get 100 to 200 MiB saved
-> > > for the second instance depending on the amount of tabs.
-> > 
-> > What does prevent Firefox (an opensource project) to be updated to use
-> > the explicit merging?
-> 
-> This was rather an example of a big project. Other big projects may be
-> closed source, of course.
+On 05/15, Christian Brauner wrote:
+>
+> +SYSCALL_DEFINE2(pidfd_open, pid_t, pid, unsigned int, flags)
+> +{
+> +	int fd, ret;
+> +	struct pid *p;
+> +	struct task_struct *tsk;
+> +
+> +	if (flags)
+> +		return -EINVAL;
+> +
+> +	if (pid <= 0)
+> +		return -EINVAL;
+> +
+> +	p = find_get_pid(pid);
+> +	if (!p)
+> +		return -ESRCH;
+> +
+> +	rcu_read_lock();
+> +	tsk = pid_task(p, PIDTYPE_PID);
 
-Again, specific examples are usually considered a much better
-justification than "something might use the feature".
+You do not need find_get_pid() before rcu_lock and put_pid() at the end.
+You can just do find_vpid() under rcu_read_lock().
 
-[...]
+> +	if (!tsk)
+> +		ret = -ESRCH;
+> +	else if (unlikely(!thread_group_leader(tsk)))
+> +		ret = -EINVAL;
 
-> > OK, this makes more sense. Please note that there are other people who
-> > would like to see certain madvise operations to be done on a remote
-> > process - e.g. to allow external memory management (Android would like
-> > to control memory aging so something like MADV_DONTNEED without loosing
-> > content and more probably) and potentially other madvise operations.
-> > Or maybe we need a completely new interface other than madvise.
-> 
-> I didn't know about those intentions. Could you please point me to a
-> relevant discussion so that I can check the details?
+it seems that you can do a single check
 
-I am sorry I do not have any specific links to patches under discussion.
-We have discussed that topic at LSFMM this year
-(https://lwn.net/Articles/787217/) and Google guys should be sending
-something soon.
--- 
-Michal Hocko
-SUSE Labs
+	tsk = pid_task(p, PIDTYPE_TGID);
+	if (!tsk)
+		ret = -ESRCH;
+
+this even looks more correct if we race with exec changing the leader.
+
+Oleg.
