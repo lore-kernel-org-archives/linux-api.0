@@ -1,322 +1,329 @@
-From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: [PATCH v9 13/16] sched/core: uclamp: Propagate parent clamps
-Date: Wed, 15 May 2019 10:44:56 +0100
-Message-ID: <20190515094459.10317-14-patrick.bellasi@arm.com>
-References: <20190515094459.10317-1-patrick.bellasi@arm.com>
+From: Christian Brauner <christian@brauner.io>
+Subject: [PATCH 1/2] pid: add pidfd_open()
+Date: Wed, 15 May 2019 12:03:59 +0200
+Message-ID: <20190515100400.3450-1-christian@brauner.io>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190515094459.10317-1-patrick.bellasi@arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
+To: jannh@google.com, oleg@redhat.com, viro@zeniv.linux.org.uk, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, arnd@arndb.de, dhowells@redhat.com
+Cc: akpm@linux-foundation.org, cyphar@cyphar.com, ebiederm@xmission.com, elena.reshetova@intel.com, keescook@chromium.org, luto@amacapital.net, luto@kernel.org, tglx@linutronix.de, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, linux-sh@vger.kernel.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-kselftest@vger.kernel.org, Christian Brauner <christian@brauner.io>
 List-Id: linux-api@vger.kernel.org
 
-In order to properly support hierarchical resources control, the cgroup
-delegation model requires that attribute writes from a child group never
-fail but still are (potentially) constrained based on parent's assigned
-resources. This requires to properly propagate and aggregate parent
-attributes down to its descendants.
+This adds the pidfd_open() syscall. It allows a caller to retrieve pollable
+pidfds for a process which did not get created via CLONE_PIDFD, i.e. for a
+process that is created via traditional fork()/clone() calls that is only
+referenced by a PID:
 
-Let's implement this mechanism by adding a new "effective" clamp value
-for each task group. The effective clamp value is defined as the smaller
-value between the clamp value of a group and the effective clamp value
-of its parent. This is the actual clamp value enforced on tasks in a
-task group.
+int pidfd = pidfd_open(1234, 0);
+ret = pidfd_send_signal(pidfd, SIGSTOP, NULL, 0);
 
-Since it can be interesting for userspace, e.g. system management
-software, to know exactly what the currently propagated/enforced
-configuration is, the effective clamp values are exposed to user-space
-by means of a new pair of read-only attributes
-cpu.util.{min,max}.effective.
+With the introduction of pidfds through CLONE_PIDFD it is possible to
+created pidfds at process creation time.
+However, a lot of processes get created with traditional PID-based calls
+such as fork() or clone() (without CLONE_PIDFD). For these processes a
+caller can currently not create a pollable pidfd. This is a huge problem
+for Android's low memory killer (LMK) and service managers such as systemd.
+Both are examples of tools that want to make use of pidfds to get reliable
+notification of process exit for non-parents (pidfd polling) and race-free
+signal sending (pidfd_send_signal()). They intend to switch to this API for
+process supervision/management as soon as possible. Having no way to get
+pollable pidfds from PID-only processes is one of the biggest blockers for
+them in adopting this api. With pidfd_open() making it possible to retrieve
+pidfd for PID-based processes we enable them to adopt this api.
 
-Signed-off-by: Patrick Bellasi <patrick.bellasi@arm.com>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Tejun Heo <tj@kernel.org>
+In line with Arnd's recent changes to consolidate syscall numbers across
+architectures, I have added the pidfd_open() syscall to all architectures
+at the same time.
+
+Signed-off-by: Christian Brauner <christian@brauner.io>
+Cc: Arnd Bergmann <arnd@arndb.de>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Jann Horn <jannh@google.com>
+Cc: David Howells <dhowells@redhat.com>
+Cc: Andy Lutomirsky <luto@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Oleg Nesterov <oleg@redhat.com>
+Cc: Aleksa Sarai <cyphar@cyphar.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Cc: linux-api@vger.kernel.org
 ---
- Documentation/admin-guide/cgroup-v2.rst |  19 +++++
- kernel/sched/core.c                     | 108 ++++++++++++++++++++++--
- kernel/sched/sched.h                    |   2 +
- 3 files changed, 124 insertions(+), 5 deletions(-)
+ arch/alpha/kernel/syscalls/syscall.tbl      |  1 +
+ arch/arm64/include/asm/unistd32.h           |  2 +
+ arch/ia64/kernel/syscalls/syscall.tbl       |  1 +
+ arch/m68k/kernel/syscalls/syscall.tbl       |  1 +
+ arch/microblaze/kernel/syscalls/syscall.tbl |  1 +
+ arch/mips/kernel/syscalls/syscall_n32.tbl   |  1 +
+ arch/parisc/kernel/syscalls/syscall.tbl     |  1 +
+ arch/powerpc/kernel/syscalls/syscall.tbl    |  1 +
+ arch/s390/kernel/syscalls/syscall.tbl       |  1 +
+ arch/sh/kernel/syscalls/syscall.tbl         |  1 +
+ arch/sparc/kernel/syscalls/syscall.tbl      |  1 +
+ arch/x86/entry/syscalls/syscall_32.tbl      |  1 +
+ arch/x86/entry/syscalls/syscall_64.tbl      |  1 +
+ arch/xtensa/kernel/syscalls/syscall.tbl     |  1 +
+ include/linux/pid.h                         |  1 +
+ include/linux/syscalls.h                    |  1 +
+ include/uapi/asm-generic/unistd.h           |  4 +-
+ kernel/fork.c                               |  2 +-
+ kernel/pid.c                                | 48 +++++++++++++++++++++
+ 19 files changed, 69 insertions(+), 2 deletions(-)
 
-diff --git a/Documentation/admin-guide/cgroup-v2.rst b/Documentation/admin-guide/cgroup-v2.rst
-index 3a940bfe4e8c..4d13f88bfe25 100644
---- a/Documentation/admin-guide/cgroup-v2.rst
-+++ b/Documentation/admin-guide/cgroup-v2.rst
-@@ -990,6 +990,16 @@ All time durations are in microseconds.
-         values similar to the sched_setattr(2). This minimum utilization
-         value is used to clamp the task specific minimum utilization clamp.
+diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
+index 165f268beafc..ddc3c93ad7a7 100644
+--- a/arch/alpha/kernel/syscalls/syscall.tbl
++++ b/arch/alpha/kernel/syscalls/syscall.tbl
+@@ -467,3 +467,4 @@
+ 535	common	io_uring_setup			sys_io_uring_setup
+ 536	common	io_uring_enter			sys_io_uring_enter
+ 537	common	io_uring_register		sys_io_uring_register
++538	common	pidfd_open			sys_pidfd_open
+diff --git a/arch/arm64/include/asm/unistd32.h b/arch/arm64/include/asm/unistd32.h
+index 23f1a44acada..350e2049b4a9 100644
+--- a/arch/arm64/include/asm/unistd32.h
++++ b/arch/arm64/include/asm/unistd32.h
+@@ -874,6 +874,8 @@ __SYSCALL(__NR_io_uring_setup, sys_io_uring_setup)
+ __SYSCALL(__NR_io_uring_enter, sys_io_uring_enter)
+ #define __NR_io_uring_register 427
+ __SYSCALL(__NR_io_uring_register, sys_io_uring_register)
++#define __NR_pidfd_open 428
++__SYSCALL(__NR_pidfd_open, sys_pidfd_open)
  
-+  cpu.util.min.effective
-+        A read-only single value file which exists on non-root cgroups and
-+        reports minimum utilization clamp value currently enforced on a task
-+        group.
-+
-+        The actual minimum utilization in the range [0, 1024].
-+
-+        This value can be lower then cpu.util.min in case a parent cgroup
-+        allows only smaller minimum utilization values.
-+
-   cpu.util.max
-         A read-write single value file which exists on non-root cgroups.
-         The default is "1024". i.e. no utilization capping
-@@ -1000,6 +1010,15 @@ All time durations are in microseconds.
-         values similar to the sched_setattr(2). This maximum utilization
-         value is used to clamp the task specific maximum utilization clamp.
+ /*
+  * Please add new compat syscalls above this comment and update
+diff --git a/arch/ia64/kernel/syscalls/syscall.tbl b/arch/ia64/kernel/syscalls/syscall.tbl
+index 56e3d0b685e1..7115f6dd347a 100644
+--- a/arch/ia64/kernel/syscalls/syscall.tbl
++++ b/arch/ia64/kernel/syscalls/syscall.tbl
+@@ -348,3 +348,4 @@
+ 425	common	io_uring_setup			sys_io_uring_setup
+ 426	common	io_uring_enter			sys_io_uring_enter
+ 427	common	io_uring_register		sys_io_uring_register
++428	common	pidfd_open			sys_pidfd_open
+diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
+index df4ec3ec71d1..44bf12b16ffe 100644
+--- a/arch/m68k/kernel/syscalls/syscall.tbl
++++ b/arch/m68k/kernel/syscalls/syscall.tbl
+@@ -427,3 +427,4 @@
+ 425	common	io_uring_setup			sys_io_uring_setup
+ 426	common	io_uring_enter			sys_io_uring_enter
+ 427	common	io_uring_register		sys_io_uring_register
++428	common	pidfd_open			sys_pidfd_open
+diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl b/arch/microblaze/kernel/syscalls/syscall.tbl
+index 4964947732af..0d32e5152dc0 100644
+--- a/arch/microblaze/kernel/syscalls/syscall.tbl
++++ b/arch/microblaze/kernel/syscalls/syscall.tbl
+@@ -433,3 +433,4 @@
+ 425	common	io_uring_setup			sys_io_uring_setup
+ 426	common	io_uring_enter			sys_io_uring_enter
+ 427	common	io_uring_register		sys_io_uring_register
++428	common	pidfd_open			sys_pidfd_open
+diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl b/arch/mips/kernel/syscalls/syscall_n32.tbl
+index 9392dfe33f97..726e107b3c9f 100644
+--- a/arch/mips/kernel/syscalls/syscall_n32.tbl
++++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
+@@ -366,3 +366,4 @@
+ 425	n32	io_uring_setup			sys_io_uring_setup
+ 426	n32	io_uring_enter			sys_io_uring_enter
+ 427	n32	io_uring_register		sys_io_uring_register
++428	n32	pidfd_open			sys_pidfd_open
+diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
+index fe8ca623add8..83b46b568d51 100644
+--- a/arch/parisc/kernel/syscalls/syscall.tbl
++++ b/arch/parisc/kernel/syscalls/syscall.tbl
+@@ -424,3 +424,4 @@
+ 425	common	io_uring_setup			sys_io_uring_setup
+ 426	common	io_uring_enter			sys_io_uring_enter
+ 427	common	io_uring_register		sys_io_uring_register
++428	common	pidfd_open			sys_pidfd_open
+diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
+index 00f5a63c8d9a..5294d04d7fa5 100644
+--- a/arch/powerpc/kernel/syscalls/syscall.tbl
++++ b/arch/powerpc/kernel/syscalls/syscall.tbl
+@@ -509,3 +509,4 @@
+ 425	common	io_uring_setup			sys_io_uring_setup
+ 426	common	io_uring_enter			sys_io_uring_enter
+ 427	common	io_uring_register		sys_io_uring_register
++428	common	pidfd_open			sys_pidfd_open
+diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
+index 061418f787c3..dcdb838adf49 100644
+--- a/arch/s390/kernel/syscalls/syscall.tbl
++++ b/arch/s390/kernel/syscalls/syscall.tbl
+@@ -430,3 +430,4 @@
+ 425  common	io_uring_setup		sys_io_uring_setup              sys_io_uring_setup
+ 426  common	io_uring_enter		sys_io_uring_enter              sys_io_uring_enter
+ 427  common	io_uring_register	sys_io_uring_register           sys_io_uring_register
++428  common	pidfd_open		sys_pidfd_open			sys_pidfd_open
+diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
+index 480b057556ee..8e66edfbc521 100644
+--- a/arch/sh/kernel/syscalls/syscall.tbl
++++ b/arch/sh/kernel/syscalls/syscall.tbl
+@@ -430,3 +430,4 @@
+ 425	common	io_uring_setup			sys_io_uring_setup
+ 426	common	io_uring_enter			sys_io_uring_enter
+ 427	common	io_uring_register		sys_io_uring_register
++428	common	pidfd_open			sys_pidfd_open
+diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
+index a1dd24307b00..d6f3bc686939 100644
+--- a/arch/sparc/kernel/syscalls/syscall.tbl
++++ b/arch/sparc/kernel/syscalls/syscall.tbl
+@@ -473,3 +473,4 @@
+ 425	common	io_uring_setup			sys_io_uring_setup
+ 426	common	io_uring_enter			sys_io_uring_enter
+ 427	common	io_uring_register		sys_io_uring_register
++428	common	pidfd_open			sys_pidfd_open
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index 4cd5f982b1e5..1af6b469160a 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -438,3 +438,4 @@
+ 425	i386	io_uring_setup		sys_io_uring_setup		__ia32_sys_io_uring_setup
+ 426	i386	io_uring_enter		sys_io_uring_enter		__ia32_sys_io_uring_enter
+ 427	i386	io_uring_register	sys_io_uring_register		__ia32_sys_io_uring_register
++428	i386	pidfd_open		sys_pidfd_open			__ia32_sys_pidfd_open
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index 64ca0d06259a..c18e6ebe3387 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -355,6 +355,7 @@
+ 425	common	io_uring_setup		__x64_sys_io_uring_setup
+ 426	common	io_uring_enter		__x64_sys_io_uring_enter
+ 427	common	io_uring_register	__x64_sys_io_uring_register
++428	common	pidfd_open		__x64_sys_pidfd_open
  
-+  cpu.util.max.effective
-+        A read-only single value file which exists on non-root cgroups and
-+        reports maximum utilization clamp value currently enforced on a task
-+        group.
-+
-+        The actual maximum utilization in the range [0, 1024].
-+
-+        This value can be lower then cpu.util.max in case a parent cgroup
-+        is enforcing a more restrictive clamping on max utilization.
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
+diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl b/arch/xtensa/kernel/syscalls/syscall.tbl
+index 30084eaf8422..21ee795f3003 100644
+--- a/arch/xtensa/kernel/syscalls/syscall.tbl
++++ b/arch/xtensa/kernel/syscalls/syscall.tbl
+@@ -398,3 +398,4 @@
+ 425	common	io_uring_setup			sys_io_uring_setup
+ 426	common	io_uring_enter			sys_io_uring_enter
+ 427	common	io_uring_register		sys_io_uring_register
++428	common	pidfd_open			sys_pidfd_open
+diff --git a/include/linux/pid.h b/include/linux/pid.h
+index 3c8ef5a199ca..c938a92eab99 100644
+--- a/include/linux/pid.h
++++ b/include/linux/pid.h
+@@ -67,6 +67,7 @@ struct pid
+ extern struct pid init_struct_pid;
  
+ extern const struct file_operations pidfd_fops;
++extern int pidfd_create(struct pid *pid);
  
- Memory
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 19437257a08d..efedbd3a0ce6 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -761,6 +761,18 @@ static void set_load_weight(struct task_struct *p, bool update_load)
+ static inline struct pid *get_pid(struct pid *pid)
+ {
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index e2870fe1be5b..989055e0b501 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -929,6 +929,7 @@ asmlinkage long sys_clock_adjtime32(clockid_t which_clock,
+ 				struct old_timex32 __user *tx);
+ asmlinkage long sys_syncfs(int fd);
+ asmlinkage long sys_setns(int fd, int nstype);
++asmlinkage long sys_pidfd_open(pid_t pid, unsigned int flags);
+ asmlinkage long sys_sendmmsg(int fd, struct mmsghdr __user *msg,
+ 			     unsigned int vlen, unsigned flags);
+ asmlinkage long sys_process_vm_readv(pid_t pid,
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index dee7292e1df6..94a257a93d20 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -832,9 +832,11 @@ __SYSCALL(__NR_io_uring_setup, sys_io_uring_setup)
+ __SYSCALL(__NR_io_uring_enter, sys_io_uring_enter)
+ #define __NR_io_uring_register 427
+ __SYSCALL(__NR_io_uring_register, sys_io_uring_register)
++#define __NR_pidfd_open 428
++__SYSCALL(__NR_pidfd_open, sys_pidfd_open)
+ 
+ #undef __NR_syscalls
+-#define __NR_syscalls 428
++#define __NR_syscalls 429
+ 
+ /*
+  * 32 bit systems traditionally used different
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 737db1828437..980cc1d2b8d4 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -1714,7 +1714,7 @@ const struct file_operations pidfd_fops = {
+  * Return: On success, a cloexec pidfd is returned.
+  *         On error, a negative errno number will be returned.
+  */
+-static int pidfd_create(struct pid *pid)
++int pidfd_create(struct pid *pid)
+ {
+ 	int fd;
+ 
+diff --git a/kernel/pid.c b/kernel/pid.c
+index 20881598bdfa..237d18d6ecb8 100644
+--- a/kernel/pid.c
++++ b/kernel/pid.c
+@@ -38,6 +38,7 @@
+ #include <linux/syscalls.h>
+ #include <linux/proc_ns.h>
+ #include <linux/proc_fs.h>
++#include <linux/sched/signal.h>
+ #include <linux/sched/task.h>
+ #include <linux/idr.h>
+ 
+@@ -451,6 +452,53 @@ struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
+ 	return idr_get_next(&ns->idr, &nr);
  }
  
- #ifdef CONFIG_UCLAMP_TASK
-+/*
-+ * Serializes updates of utilization clamp values
++/**
++ * pidfd_open() - Open new pid file descriptor.
 + *
-+ * The (slow-path) user-space triggers utilization clamp value updates which
-+ * can require updates on (fast-path) scheduler's data structures used to
-+ * support enqueue/dequeue operations.
-+ * While the per-CPU rq lock protects fast-path update operations, user-space
-+ * requests are serialized using a mutex to reduce the risk of conflicting
-+ * updates or API abuses.
++ * @pid:   pid for which to retrieve a pidfd
++ * @flags: flags to pass
++ *
++ * This creates a new pid file descriptor with the O_CLOEXEC flag set for
++ * the process identified by @pid. Currently, the process identified by
++ * @pid must be a thread-group leader. This restriction currently exists
++ * for all aspects of pidfds including pidfd creation (CLONE_PIDFD cannot
++ * be used with CLONE_THREAD) and pidfd polling (only supports thread group
++ * leaders).
++ *
++ * Return: On success, a cloexec pidfd is returned.
++ *         On error, a negative errno number will be returned.
 + */
-+static DEFINE_MUTEX(uclamp_mutex);
-+
- /* Max allowed minimum utilization */
- unsigned int sysctl_sched_uclamp_util_min = SCHED_CAPACITY_SCALE;
- 
-@@ -1125,6 +1137,8 @@ static void __init init_uclamp(void)
- 	unsigned int clamp_id;
- 	int cpu;
- 
-+	mutex_init(&uclamp_mutex);
-+
- 	for_each_possible_cpu(cpu) {
- 		memset(&cpu_rq(cpu)->uclamp, 0, sizeof(struct uclamp_rq));
- 		cpu_rq(cpu)->uclamp_flags = 0;
-@@ -1141,6 +1155,7 @@ static void __init init_uclamp(void)
- 		uclamp_default[clamp_id] = uc_max;
- #ifdef CONFIG_UCLAMP_TASK_GROUP
- 		root_task_group.uclamp_req[clamp_id] = uc_max;
-+		root_task_group.uclamp[clamp_id] = uc_max;
- #endif
- 	}
- }
-@@ -6705,8 +6720,10 @@ static inline void alloc_uclamp_sched_group(struct task_group *tg,
- #ifdef CONFIG_UCLAMP_TASK_GROUP
- 	int clamp_id;
- 
--	for_each_clamp_id(clamp_id)
-+	for_each_clamp_id(clamp_id) {
- 		tg->uclamp_req[clamp_id] = parent->uclamp_req[clamp_id];
-+		tg->uclamp[clamp_id] = parent->uclamp[clamp_id];
-+	}
- #endif
- }
- 
-@@ -6956,6 +6973,44 @@ static void cpu_cgroup_attach(struct cgroup_taskset *tset)
- }
- 
- #ifdef CONFIG_UCLAMP_TASK_GROUP
-+static void cpu_util_update_eff(struct cgroup_subsys_state *css,
-+				unsigned int clamp_id)
++SYSCALL_DEFINE2(pidfd_open, pid_t, pid, unsigned int, flags)
 +{
-+	struct cgroup_subsys_state *top_css = css;
-+	struct uclamp_se *uc_se, *uc_parent;
-+	unsigned int value;
++	int fd, ret;
++	struct pid *p;
++	struct task_struct *tsk;
 +
-+	css_for_each_descendant_pre(css, top_css) {
-+		value = css_tg(css)->uclamp_req[clamp_id].value;
++	if (flags)
++		return -EINVAL;
 +
-+		uc_parent = NULL;
-+		if (css_tg(css)->parent)
-+			uc_parent = &css_tg(css)->parent->uclamp[clamp_id];
++	if (pid <= 0)
++		return -EINVAL;
 +
-+		/*
-+		 * Skip the whole subtrees if the current effective clamp is
-+		 * already matching the TG's clamp value.
-+		 * In this case, all the subtrees already have top_value, or a
-+		 * more restrictive value, as effective clamp.
-+		 */
-+		uc_se = &css_tg(css)->uclamp[clamp_id];
-+		if (uc_se->value == value &&
-+		    uc_parent && uc_parent->value >= value) {
-+			css = css_rightmost_descendant(css);
-+			continue;
-+		}
++	p = find_get_pid(pid);
++	if (!p)
++		return -ESRCH;
 +
-+		/* Propagate the most restrictive effective value */
-+		if (uc_parent && uc_parent->value < value)
-+			value = uc_parent->value;
-+		if (uc_se->value == value)
-+			continue;
++	rcu_read_lock();
++	tsk = pid_task(p, PIDTYPE_PID);
++	if (!tsk)
++		ret = -ESRCH;
++	else if (unlikely(!thread_group_leader(tsk)))
++		ret = -EINVAL;
++	else
++		ret = 0;
++	rcu_read_unlock();
 +
-+		uc_se->value = value;
-+		uc_se->bucket_id = uclamp_bucket_id(value);
-+	}
++	fd = ret ?: pidfd_create(p);
++	put_pid(p);
++	return fd;
 +}
 +
- static int cpu_util_min_write_u64(struct cgroup_subsys_state *css,
- 				  struct cftype *cftype, u64 min_value)
+ void __init pid_idr_init(void)
  {
-@@ -6965,6 +7020,7 @@ static int cpu_util_min_write_u64(struct cgroup_subsys_state *css,
- 	if (min_value > SCHED_CAPACITY_SCALE)
- 		return -ERANGE;
- 
-+	mutex_lock(&uclamp_mutex);
- 	rcu_read_lock();
- 
- 	tg = css_tg(css);
-@@ -6981,8 +7037,12 @@ static int cpu_util_min_write_u64(struct cgroup_subsys_state *css,
- 
- 	uclamp_se_set(&tg->uclamp_req[UCLAMP_MIN], min_value, false);
- 
-+	/* Update effective clamps to track the most restrictive value */
-+	cpu_util_update_eff(css, UCLAMP_MIN);
-+
- out:
- 	rcu_read_unlock();
-+	mutex_unlock(&uclamp_mutex);
- 
- 	return ret;
- }
-@@ -6996,6 +7056,7 @@ static int cpu_util_max_write_u64(struct cgroup_subsys_state *css,
- 	if (max_value > SCHED_CAPACITY_SCALE)
- 		return -ERANGE;
- 
-+	mutex_lock(&uclamp_mutex);
- 	rcu_read_lock();
- 
- 	tg = css_tg(css);
-@@ -7012,21 +7073,28 @@ static int cpu_util_max_write_u64(struct cgroup_subsys_state *css,
- 
- 	uclamp_se_set(&tg->uclamp_req[UCLAMP_MAX], max_value, false);
- 
-+	/* Update effective clamps to track the most restrictive value */
-+	cpu_util_update_eff(css, UCLAMP_MAX);
-+
- out:
- 	rcu_read_unlock();
-+	mutex_unlock(&uclamp_mutex);
- 
- 	return ret;
- }
- 
- static inline u64 cpu_uclamp_read(struct cgroup_subsys_state *css,
--				  enum uclamp_id clamp_id)
-+				  enum uclamp_id clamp_id,
-+				  bool effective)
- {
- 	struct task_group *tg;
- 	u64 util_clamp;
- 
- 	rcu_read_lock();
- 	tg = css_tg(css);
--	util_clamp = tg->uclamp_req[clamp_id].value;
-+	util_clamp = effective
-+		? tg->uclamp[clamp_id].value
-+		: tg->uclamp_req[clamp_id].value;
- 	rcu_read_unlock();
- 
- 	return util_clamp;
-@@ -7035,13 +7103,25 @@ static inline u64 cpu_uclamp_read(struct cgroup_subsys_state *css,
- static u64 cpu_util_min_read_u64(struct cgroup_subsys_state *css,
- 				 struct cftype *cft)
- {
--	return cpu_uclamp_read(css, UCLAMP_MIN);
-+	return cpu_uclamp_read(css, UCLAMP_MIN, false);
- }
- 
- static u64 cpu_util_max_read_u64(struct cgroup_subsys_state *css,
- 				 struct cftype *cft)
- {
--	return cpu_uclamp_read(css, UCLAMP_MAX);
-+	return cpu_uclamp_read(css, UCLAMP_MAX, false);
-+}
-+
-+static u64 cpu_util_min_effective_read_u64(struct cgroup_subsys_state *css,
-+					   struct cftype *cft)
-+{
-+	return cpu_uclamp_read(css, UCLAMP_MIN, true);
-+}
-+
-+static u64 cpu_util_max_effective_read_u64(struct cgroup_subsys_state *css,
-+					   struct cftype *cft)
-+{
-+	return cpu_uclamp_read(css, UCLAMP_MAX, true);
- }
- #endif /* CONFIG_UCLAMP_TASK_GROUP */
- 
-@@ -7396,11 +7476,19 @@ static struct cftype cpu_legacy_files[] = {
- 		.read_u64 = cpu_util_min_read_u64,
- 		.write_u64 = cpu_util_min_write_u64,
- 	},
-+	{
-+		.name = "util.min.effective",
-+		.read_u64 = cpu_util_min_effective_read_u64,
-+	},
- 	{
- 		.name = "util.max",
- 		.read_u64 = cpu_util_max_read_u64,
- 		.write_u64 = cpu_util_max_write_u64,
- 	},
-+	{
-+		.name = "util.max.effective",
-+		.read_u64 = cpu_util_max_effective_read_u64,
-+	},
- #endif
- 	{ }	/* Terminate */
- };
-@@ -7576,12 +7664,22 @@ static struct cftype cpu_files[] = {
- 		.read_u64 = cpu_util_min_read_u64,
- 		.write_u64 = cpu_util_min_write_u64,
- 	},
-+	{
-+		.name = "util.min.effective",
-+		.flags = CFTYPE_NOT_ON_ROOT,
-+		.read_u64 = cpu_util_min_effective_read_u64,
-+	},
- 	{
- 		.name = "util.max",
- 		.flags = CFTYPE_NOT_ON_ROOT,
- 		.read_u64 = cpu_util_max_read_u64,
- 		.write_u64 = cpu_util_max_write_u64,
- 	},
-+	{
-+		.name = "util.max.effective",
-+		.flags = CFTYPE_NOT_ON_ROOT,
-+		.read_u64 = cpu_util_max_effective_read_u64,
-+	},
- #endif
- 	{ }	/* terminate */
- };
-diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index fd31527fdcc8..f3c65af96756 100644
---- a/kernel/sched/sched.h
-+++ b/kernel/sched/sched.h
-@@ -403,6 +403,8 @@ struct task_group {
- #ifdef CONFIG_UCLAMP_TASK_GROUP
- 	/* Clamp values requested for a task group */
- 	struct uclamp_se	uclamp_req[UCLAMP_CNT];
-+	/* Effective clamp values used for a task group */
-+	struct uclamp_se	uclamp[UCLAMP_CNT];
- #endif
- 
- };
+ 	/* Verify no one has done anything silly: */
 -- 
 2.21.0
