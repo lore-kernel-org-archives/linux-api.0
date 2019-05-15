@@ -1,62 +1,68 @@
-From: James Bottomley <James.Bottomley@HansenPartnership.com>
+From: Arvind Sankar <nivedita@alum.mit.edu>
 Subject: Re: [PATCH v2 0/3] initramfs: add support for xattrs in the initial
  ram disk
-Date: Tue, 14 May 2019 16:54:12 -0700
-Message-ID: <1557878052.2873.6.camel@HansenPartnership.com>
+Date: Tue, 14 May 2019 20:25:57 -0400
+Message-ID: <20190515002556.GA88615@rani.riverdale.lan>
 References: <dca50ee1-62d8-2256-6fdb-9a786e6cea5a@landley.net>
-         <20190512194322.GA71658@rani.riverdale.lan>
-         <3fe0e74b-19ca-6081-3afe-e05921b1bfe6@huawei.com>
-         <4f522e28-29c8-5930-5d90-e0086b503613@landley.net>
-         <f7bc547c-61f4-1a17-735c-7e8df97d7965@huawei.com>
-         <CALCETrV3b205L38xqPr6QqwGn6-vxQdPoJGUygJJpgM-JqqXfQ@mail.gmail.com>
-         <1557861511.3378.19.camel@HansenPartnership.com>
-         <4da3dbda-bb76-5d71-d5c5-c03d98350ab0@landley.net>
+ <20190512194322.GA71658@rani.riverdale.lan>
+ <3fe0e74b-19ca-6081-3afe-e05921b1bfe6@huawei.com>
+ <4f522e28-29c8-5930-5d90-e0086b503613@landley.net>
+ <f7bc547c-61f4-1a17-735c-7e8df97d7965@huawei.com>
+ <CALCETrV3b205L38xqPr6QqwGn6-vxQdPoJGUygJJpgM-JqqXfQ@mail.gmail.com>
+ <9357cb32-3803-2a7e-4949-f9e4554c1ee9@huawei.com>
+ <20190514165842.GC28266@kroah.com>
+ <f01ad775-54de-033f-d8cb-f27f36e92f0c@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <4da3dbda-bb76-5d71-d5c5-c03d98350ab0@landley.net>
+Content-Disposition: inline
+In-Reply-To: <f01ad775-54de-033f-d8cb-f27f36e92f0c@huawei.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Rob Landley <rob@landley.net>, Andy Lutomirski <luto@kernel.org>
-Cc: Arvind Sankar <niveditas98@gmail.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, linux-integrity <linux-integrity@vger.kernel.org>, initramfs@vger.kernel.org
+To: Roberto Sassu <roberto.sassu@huawei.com>
+Cc: Greg KH <gregkh@linuxfoundation.org>, Andy Lutomirski <luto@kernel.org>, Rob Landley <rob@landley.net>, Arvind Sankar <niveditas98@gmail.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, linux-integrity <linux-integrity@vger.kernel.org>, initramfs@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2019-05-14 at 18:39 -0500, Rob Landley wrote:
-> On 5/14/19 2:18 PM, James Bottomley wrote:
-> > > I think Rob is right here.  If /init was statically built into
-> > > the kernel image, it has no more ability to compromise the kernel
-> > > than anything else in the kernel.  What's the problem here?
+On Tue, May 14, 2019 at 07:20:15PM +0200, Roberto Sassu wrote:
+> On 5/14/2019 6:58 PM, Greg KH wrote:
+> > On Tue, May 14, 2019 at 06:33:29PM +0200, Roberto Sassu wrote:
+> >> Right, the measurement/signature verification of the kernel image is
+> >> sufficient.
+> >>
+> >> Now, assuming that we defer the IMA initialization until /init in the
+> >> embedded initramfs has been executed, the problem is how to handle
+> >> processes launched with the user mode helper or files directly read by
+> >> the kernel (if it can happen before /init is executed). If IMA is not
+> >> yet enabled, these operations will be performed without measurement and
+> >> signature verification.
 > > 
-> > The specific problem is that unless you own the kernel signing key,
-> > which is really untrue for most distribution consumers because the
-> > distro owns the key, you cannot build the initrd statically into
-> > the kernel.  You can take the distro signed kernel, link it with
-> > the initrd then resign the combination with your key, provided you
-> > insert your key into the MoK variables as a trusted secure boot
-> > key, but the distros have been unhappy recommending this as
-> > standard practice.
+> > If you really care about this, don't launch any user mode helper
+> > programs (hint, you have the kernel option to control this and funnel
+> > everything into one, or no, binaries).  And don't allow the kernel to
+> > read any files either, again, you have control over this.
 > > 
-> > If our model for security is going to be to link the kernel and the
-> > initrd statically to give signature protection over the aggregate
-> > then we need to figure out how to execute this via the distros.  If
-> > we accept that the split model, where the distro owns and signs the
-> > kernel but the machine owner builds and is responsible for the
-> > initrd, then we need to explore split security models like this
-> > proposal.
+> > Or start IMA earlier if you need/want/care about this.
 > 
-> You can have a built-in and an external initrd? The second extracts
-> over the first? (I know because once upon a time conflicting files
-> would append. It sounds like the desired behavior here is O_EXCL fail
-> and move on.)
+> Yes, this is how it works now. It couldn't start earlier than
+> late_initcall, as it has to wait until the TPM driver is initialized.
+> 
+> Anyway, it is enabled at the time /init is executed. And this would be
+> an issue because launching /init and reading xattrs from /.xattr-list
+> would be denied (the signature is missing).
+> 
+> And /.xattr-list won't have a signature, if initramfs is generated
+> locally.
+> 
+> Roberto
+> 
+> -- 
+> HUAWEI TECHNOLOGIES Duesseldorf GmbH, HRB 56063
+> Managing Director: Bo PENG, Jian LI, Yanli SHI
 
-Technically yes, because the first initrd could find the second by some
-predefined means, extract it to a temporary directory and do a
-pivot_root() and then the second would do some stuff, find the real
-root and do a pivot_root() again.  However, while possible, wouldn't it
-just add to the rendezvous complexity without adding any benefits? even
-if the first initrd is built and signed by the distro and the second is
-built by you, the first has to verify the second somehow.  I suppose
-the second could be tar extracted, which would add xattrs, if that's
-the goal?
+The uevent and firmware loader user mode helpers are both obsolete I
+believe, so those shouldn't be an issue.
 
-James
+There is still the internal firmware loader (CONFIG_FW_LOADER). If this
+is built-in, there's probably no way to 100% stop it racing with /init if we
+depend on an embedded /init and a malicious external initramfs image
+contains /lib/firmware, but it can be built as an external module, in
+which case there should be no danger until the boot process actually loads it.
