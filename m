@@ -1,83 +1,55 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH 1/2] pid: add pidfd_open()
-Date: Wed, 15 May 2019 16:16:35 +0200
-Message-ID: <20190515141634.lrc5ynllcmjr64mn@brauner.io>
-References: <20190515100400.3450-1-christian@brauner.io>
- <4c5ae46657e1931a832def5645db61eb0bf1accd.camel@opteya.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH RFC v2 0/4] mm/ksm: add option to automerge VMAs
+Date: Wed, 15 May 2019 16:24:19 +0200
+Message-ID: <20190515142419.GD16651@dhcp22.suse.cz>
+References: <20190514131654.25463-1-oleksandr@redhat.com>
+ <20190514144105.GF4683@dhcp22.suse.cz>
+ <20190514145122.GG4683@dhcp22.suse.cz>
+ <20190515062523.5ndf7obzfgugilfs@butterfly.localdomain>
+ <20190515065311.GB16651@dhcp22.suse.cz>
+ <20190515073723.wbr522cpyjfelfav@butterfly.localdomain>
+ <20190515083321.GC16651@dhcp22.suse.cz>
+ <20190515085158.hyuamrxkxhjhx6go@butterfly.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <4c5ae46657e1931a832def5645db61eb0bf1accd.camel@opteya.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Yann Droneaud <ydroneaud@opteya.com>
-Cc: linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, linux-kernel@vger.kernel.org, dhowells@redhat.com, linux-kselftest@vger.kernel.org, sparclinux@vger.kernel.org, linux-api@vger.kernel.org, elena.reshetova@intel.com, linux-arch@vger.kernel.org, linux-s390@vger.kernel.org, linux-xtensa@linux-xtensa.org, keescook@chromium.org, arnd@arndb.de, jannh@google.com, linux-m68k@lists.linux-m68k.org, viro@zeniv.linux.org.uk, luto@kernel.org, oleg@redhat.com, tglx@linutronix.de, linux-arm-kernel@lists.infradead.org, linux-parisc@vger.kernel.org, cyphar@cyphar.com, torvalds@linux-foundation.org, linux-mips@vger.kernel.org, luto@amacapital.net, ebiederm@xmission.com, linux-alpha@vger.kernel.org, akpm@linux-foundation.org, linuxppc-dev@lists.ozlabs.org
+In-Reply-To: <20190515085158.hyuamrxkxhjhx6go@butterfly.localdomain>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Oleksandr Natalenko <oleksandr@redhat.com>
+Cc: linux-kernel@vger.kernel.org, Kirill Tkhai <ktkhai@virtuozzo.com>, Vlastimil Babka <vbabka@suse.cz>, Matthew Wilcox <willy@infradead.org>, Pavel Tatashin <pasha.tatashin@soleen.com>, Timofey Titovets <nefelim4ag@gmail.com>, Aaron Tomlin <atomlin@redhat.com>, Grzegorz Halat <ghalat@redhat.com>, linux-mm@kvack.org, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>
 List-Id: linux-api@vger.kernel.org
 
-T24gV2VkLCBNYXkgMTUsIDIwMTkgYXQgMDQ6MDA6MjBQTSArMDIwMCwgWWFubiBEcm9uZWF1ZCB3
-cm90ZToKPiBIaSwKPiAKPiBMZSBtZXJjcmVkaSAxNSBtYWkgMjAxOSDDoCAxMjowMyArMDIwMCwg
-Q2hyaXN0aWFuIEJyYXVuZXIgYSDDqWNyaXQgOgo+ID4gCj4gPiBkaWZmIC0tZ2l0IGEva2VybmVs
-L3BpZC5jIGIva2VybmVsL3BpZC5jCj4gPiBpbmRleCAyMDg4MTU5OGJkZmEuLjIzN2QxOGQ2ZWNi
-OCAxMDA2NDQKPiA+IC0tLSBhL2tlcm5lbC9waWQuYwo+ID4gKysrIGIva2VybmVsL3BpZC5jCj4g
-PiBAQCAtNDUxLDYgKzQ1Miw1MyBAQCBzdHJ1Y3QgcGlkICpmaW5kX2dlX3BpZChpbnQgbnIsIHN0
-cnVjdAo+ID4gcGlkX25hbWVzcGFjZSAqbnMpCj4gPiAgCXJldHVybiBpZHJfZ2V0X25leHQoJm5z
-LT5pZHIsICZucik7Cj4gPiAgfQo+ID4gIAo+ID4gKy8qKgo+ID4gKyAqIHBpZGZkX29wZW4oKSAt
-IE9wZW4gbmV3IHBpZCBmaWxlIGRlc2NyaXB0b3IuCj4gPiArICoKPiA+ICsgKiBAcGlkOiAgIHBp
-ZCBmb3Igd2hpY2ggdG8gcmV0cmlldmUgYSBwaWRmZAo+ID4gKyAqIEBmbGFnczogZmxhZ3MgdG8g
-cGFzcwo+ID4gKyAqCj4gPiArICogVGhpcyBjcmVhdGVzIGEgbmV3IHBpZCBmaWxlIGRlc2NyaXB0
-b3Igd2l0aCB0aGUgT19DTE9FWEVDIGZsYWcgc2V0IGZvcgo+ID4gKyAqIHRoZSBwcm9jZXNzIGlk
-ZW50aWZpZWQgYnkgQHBpZC4gQ3VycmVudGx5LCB0aGUgcHJvY2VzcyBpZGVudGlmaWVkIGJ5Cj4g
-PiArICogQHBpZCBtdXN0IGJlIGEgdGhyZWFkLWdyb3VwIGxlYWRlci4gVGhpcyByZXN0cmljdGlv
-biBjdXJyZW50bHkgZXhpc3RzCj4gPiArICogZm9yIGFsbCBhc3BlY3RzIG9mIHBpZGZkcyBpbmNs
-dWRpbmcgcGlkZmQgY3JlYXRpb24gKENMT05FX1BJREZEIGNhbm5vdAo+ID4gKyAqIGJlIHVzZWQg
-d2l0aCBDTE9ORV9USFJFQUQpIGFuZCBwaWRmZCBwb2xsaW5nIChvbmx5IHN1cHBvcnRzIHRocmVh
-ZCBncm91cAo+ID4gKyAqIGxlYWRlcnMpLgo+ID4gKyAqCj4gCj4gV291bGQgaXQgYmUgcG9zc2li
-bGUgdG8gY3JlYXRlIGZpbGUgZGVzY3JpcHRvciB3aXRoICJyZXN0cmljdGVkIgo+IG9wZXJhdGlv
-biA/Cj4gCj4gLSBPX1JET05MWTogd2FpdGluZyBmb3IgcHJvY2VzcyBjb21wbGV0aW9uIGFsbG93
-ZWQgKGZvciBleGFtcGxlKQo+IC0gT19XUk9OTFk6IHNlbmRpbmcgcHJvY2VzcyBzaWduYWwgYWxs
-b3dlZAoKWWVzLCBzb21ldGhpbmcgbGlrZSB0aGlzIGlzIGxpa2VseSBnb2luZyB0byBiZSBwb3Nz
-aWJsZSBpbiB0aGUgZnV0dXJlLgpXZSBoYWQgZGlzY3Vzc2lvbiBhcm91bmQgdGhpcy4gQnV0IG1h
-cHBpbmcgdGhpcyB0byBPX1JET05MWSBhbmQgT19XUk9OTFkKaXMgbm90IHRoZSByaWdodCBtb2Rl
-bC4gSXQgbWFrZXMgbW9yZSBzZW5zZSB0byBoYXZlIHNwZWNpYWxpemVkIGZsYWdzCnRoYXQgcmVz
-dHJpY3QgYWN0aW9ucy4KCj4gCj4gRm9yIGV4YW1wbGUsIGEgcHJvY2VzcyBjb3VsZCBzZW5kIG92
-ZXIgYSBVbml4IHNvY2tldCBhIHByb2Nlc3MgYSBwaWRmZCwKPiBhbGxvd2luZyB0aGlzIHRvIG9u
-bHkgd2FpdCBmb3IgY29tcGxldGlvbiwgYnV0IG5vdCBzZW5kaW5nIHNpZ25hbCA/Cj4gCj4gSSBz
-ZWUgdGhlIHBlcm1pc3Npb24gY2hlY2sgaXMgbm90IGRvbmUgaW4gcGlkZmRfb3BlbigpLCBzbyB3
-aGF0IHByZXZlbnQKPiBhIHVzZXIgZnJvbSBzZW5kaW5nIGEgc2lnbmFsIHRvIGFub3RoZXIgdXNl
-ciBvd25lZCBwcm9jZXNzID8KClRoYXQncyBzdXBwb3NlZCB0byBiZSBwb3NzaWJsZS4gWW91IGNh
-biBkbyB0aGUgc2FtZSByaWdodCBub3cgYWxyZWFkeQp3aXRoIHBpZHMuIFRvb2xzIGxpa2UgTE1L
-IG5lZWQgdGhpcyBwcm9iYWJseSB2ZXJ5IG11Y2guClBlcm1pc3Npb24gY2hlY2tpbmcgZm9yIHNp
-Z25hbHMgaXMgZG9uZSBhdCBzZW5kIHRpbWUgcmlnaHQgbm93LgpBbmQgaWYgeW91IGNhbid0IHNp
-Z25hbCB2aWEgYSBwaWQgeW91IGNhbid0IHNpZ25hbCB2aWEgYSBwaWRmZCBhcwp0aGV5J3JlIGJv
-dGggc3ViamVjdCB0byB0aGUgc2FtZSBwZXJtaXNzaW9ucyBjaGVja3MuCgo+IAo+IElmIGl0J3Mg
-aW4gcGlkZmRfc2VuZF9zaWduYWwoKSwgdGhlbiwgcGFzc2luZyB0aGUgc29ja2V0IHRocm91Z2gK
-PiBTQ01fUklHSFQgd29uJ3QgYmUgdXNlZnVsIGlmIHRoZSB0YXJnZXQgcHJvY2VzcyBpcyBub3Qg
-b3duZWQgYnkgdGhlCj4gc2FtZSB1c2VyLCBvciByb290Lgo+IAo+ID4gKyAqIFJldHVybjogT24g
-c3VjY2VzcywgYSBjbG9leGVjIHBpZGZkIGlzIHJldHVybmVkLgo+ID4gKyAqICAgICAgICAgT24g
-ZXJyb3IsIGEgbmVnYXRpdmUgZXJybm8gbnVtYmVyIHdpbGwgYmUgcmV0dXJuZWQuCj4gPiArICov
-Cj4gPiArU1lTQ0FMTF9ERUZJTkUyKHBpZGZkX29wZW4sIHBpZF90LCBwaWQsIHVuc2lnbmVkIGlu
-dCwgZmxhZ3MpCj4gPiArewo+ID4gKwlpbnQgZmQsIHJldDsKPiA+ICsJc3RydWN0IHBpZCAqcDsK
-PiA+ICsJc3RydWN0IHRhc2tfc3RydWN0ICp0c2s7Cj4gPiArCj4gPiArCWlmIChmbGFncykKPiA+
-ICsJCXJldHVybiAtRUlOVkFMOwo+ID4gKwo+ID4gKwlpZiAocGlkIDw9IDApCj4gPiArCQlyZXR1
-cm4gLUVJTlZBTDsKPiA+ICsKPiA+ICsJcCA9IGZpbmRfZ2V0X3BpZChwaWQpOwo+ID4gKwlpZiAo
-IXApCj4gPiArCQlyZXR1cm4gLUVTUkNIOwo+ID4gKwo+ID4gKwlyY3VfcmVhZF9sb2NrKCk7Cj4g
-PiArCXRzayA9IHBpZF90YXNrKHAsIFBJRFRZUEVfUElEKTsKPiA+ICsJaWYgKCF0c2spCj4gPiAr
-CQlyZXQgPSAtRVNSQ0g7Cj4gPiArCWVsc2UgaWYgKHVubGlrZWx5KCF0aHJlYWRfZ3JvdXBfbGVh
-ZGVyKHRzaykpKQo+ID4gKwkJcmV0ID0gLUVJTlZBTDsKPiA+ICsJZWxzZQo+ID4gKwkJcmV0ID0g
-MDsKPiA+ICsJcmN1X3JlYWRfdW5sb2NrKCk7Cj4gPiArCj4gPiArCWZkID0gcmV0ID86IHBpZGZk
-X2NyZWF0ZShwKTsKPiA+ICsJcHV0X3BpZChwKTsKPiA+ICsJcmV0dXJuIGZkOwo+ID4gK30KPiA+
-ICsKPiA+ICB2b2lkIF9faW5pdCBwaWRfaWRyX2luaXQodm9pZCkKPiA+ICB7Cj4gPiAgCS8qIFZl
-cmlmeSBubyBvbmUgaGFzIGRvbmUgYW55dGhpbmcgc2lsbHk6ICovCj4gCj4gUmVnYXJkcy4KPiAK
-PiAtLSAKPiBZYW5uIERyb25lYXVkCj4gT1BURVlBCj4gCj4gCgpfX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fXwpsaW51eC1hcm0ta2VybmVsIG1haWxpbmcgbGlz
-dApsaW51eC1hcm0ta2VybmVsQGxpc3RzLmluZnJhZGVhZC5vcmcKaHR0cDovL2xpc3RzLmluZnJh
-ZGVhZC5vcmcvbWFpbG1hbi9saXN0aW5mby9saW51eC1hcm0ta2VybmVsCg==
+On Wed 15-05-19 10:51:58, Oleksandr Natalenko wrote:
+> On Wed, May 15, 2019 at 10:33:21AM +0200, Michal Hocko wrote:
+> > > For my current setup with 2 Firefox instances I get 100 to 200 MiB saved
+> > > for the second instance depending on the amount of tabs.
+> > 
+> > What does prevent Firefox (an opensource project) to be updated to use
+> > the explicit merging?
+> 
+> This was rather an example of a big project. Other big projects may be
+> closed source, of course.
+
+Again, specific examples are usually considered a much better
+justification than "something might use the feature".
+
+[...]
+
+> > OK, this makes more sense. Please note that there are other people who
+> > would like to see certain madvise operations to be done on a remote
+> > process - e.g. to allow external memory management (Android would like
+> > to control memory aging so something like MADV_DONTNEED without loosing
+> > content and more probably) and potentially other madvise operations.
+> > Or maybe we need a completely new interface other than madvise.
+> 
+> I didn't know about those intentions. Could you please point me to a
+> relevant discussion so that I can check the details?
+
+I am sorry I do not have any specific links to patches under discussion.
+We have discussed that topic at LSFMM this year
+(https://lwn.net/Articles/787217/) and Google guys should be sending
+something soon.
+-- 
+Michal Hocko
+SUSE Labs
