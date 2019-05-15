@@ -1,41 +1,54 @@
-From: Greg KH <greg@kroah.com>
-Subject: Re: [PATCH RFC v2 0/4] mm/ksm: add option to automerge VMAs
-Date: Wed, 15 May 2019 17:15:57 +0200
-Message-ID: <20190515151557.GA23969@kroah.com>
-References: <20190514131654.25463-1-oleksandr@redhat.com>
- <20190514144105.GF4683@dhcp22.suse.cz>
- <20190514145122.GG4683@dhcp22.suse.cz>
- <20190515062523.5ndf7obzfgugilfs@butterfly.localdomain>
- <20190515065311.GB16651@dhcp22.suse.cz>
- <20190515145151.GG16651@dhcp22.suse.cz>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH 1/2] pid: add pidfd_open()
+Date: Wed, 15 May 2019 17:19:13 +0200
+Message-ID: <20190515151912.GE18892@redhat.com>
+References: <20190515100400.3450-1-christian@brauner.io>
+ <20190515143857.GB18892@redhat.com>
+ <20190515144927.f2yxyi6w6lhn3xx7@brauner.io>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190515145151.GG16651@dhcp22.suse.cz>
+In-Reply-To: <20190515144927.f2yxyi6w6lhn3xx7@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Oleksandr Natalenko <oleksandr@redhat.com>, linux-kernel@vger.kernel.org, Kirill Tkhai <ktkhai@virtuozzo.com>, Vlastimil Babka <vbabka@suse.cz>, Matthew Wilcox <willy@infradead.org>, Pavel Tatashin <pasha.tatashin@soleen.com>, Timofey Titovets <nefelim4ag@gmail.com>, Aaron Tomlin <atomlin@redhat.com>, Grzegorz Halat <ghalat@redhat.com>, linux-mm@kvack.org, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Suren Baghdasaryan <surenb@google.com>, Minchan Kim <minchan@kernel.org>
+To: Christian Brauner <christian@brauner.io>
+Cc: jannh@google.com, viro@zeniv.linux.org.uk, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, arnd@arndb.de, dhowells@redhat.com, akpm@linux-foundation.org, cyphar@cyphar.com, ebiederm@xmission.com, elena.reshetova@intel.com, keescook@chromium.org, luto@amacapital.net, luto@kernel.org, tglx@linutronix.de, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, linux-sh@vger.kernel.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-kselftest@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 15, 2019 at 04:51:51PM +0200, Michal Hocko wrote:
-> [Cc Suren and Minchan - the email thread starts here 20190514131654.25463-1-oleksandr@redhat.com]
-> 
-> On Wed 15-05-19 08:53:11, Michal Hocko wrote:
-> [...]
-> > I will try to comment on the interface itself later. But I have to say
-> > that I am not impressed. Abusing sysfs for per process features is quite
-> > gross to be honest.
-> 
-> I have already commented on this in other email. I consider sysfs an
-> unsuitable interface for per-process API.
+On 05/15, Christian Brauner wrote:
+>
+> On Wed, May 15, 2019 at 04:38:58PM +0200, Oleg Nesterov wrote:
+> >
+> > it seems that you can do a single check
+> >
+> > 	tsk = pid_task(p, PIDTYPE_TGID);
+> > 	if (!tsk)
+> > 		ret = -ESRCH;
+> >
+> > this even looks more correct if we race with exec changing the leader.
+>
+> The logic here being that you can only reach the thread_group leader
+> from struct pid if PIDTYPE_PID == PIDTYPE_TGID for this struct pid?
 
-Wait, what?  A new sysfs file/directory per process?  That's crazy, no
-one must have benchmarked it :)
+Not exactly... it is not that PIDTYPE_PID == PIDTYPE_TGID for this pid,
+struct pid has no "type" or something like this.
 
-And I agree, sysfs is not for that, please don't abuse it.  Proc is for
-process apis.
+The logic is that pid->tasks[PIDTYPE_XXX] is the list of task which use
+this pid as "XXX" type.
 
-thanks,
+For example, clone(CLONE_THREAD) creates a pid which has a single non-
+empty list, pid->tasks[PIDTYPE_PID]. This pid can't be used as TGID or
+SID.
 
-greg k-h
+So if pid_task(PIDTYPE_TGID) returns non-NULL we know that this pid was
+used for a group-leader, see copy_process() which does
+
+	if (thread_group_leader(p))
+		attach_pid(p, PIDTYPE_TGID);
+
+
+If we race with exec which changes the leader pid_task(TGID) can return
+the old leader. We do not care, but this means that we should not check
+thread_group_leader().
+
+Oleg.
