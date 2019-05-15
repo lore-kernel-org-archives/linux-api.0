@@ -1,62 +1,49 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH 1/2] pid: add pidfd_open()
-Date: Wed, 15 May 2019 16:49:28 +0200
-Message-ID: <20190515144927.f2yxyi6w6lhn3xx7@brauner.io>
-References: <20190515100400.3450-1-christian@brauner.io>
- <20190515143857.GB18892@redhat.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH RFC v2 0/4] mm/ksm: add option to automerge VMAs
+Date: Wed, 15 May 2019 16:51:51 +0200
+Message-ID: <20190515145151.GG16651@dhcp22.suse.cz>
+References: <20190514131654.25463-1-oleksandr@redhat.com>
+ <20190514144105.GF4683@dhcp22.suse.cz>
+ <20190514145122.GG4683@dhcp22.suse.cz>
+ <20190515062523.5ndf7obzfgugilfs@butterfly.localdomain>
+ <20190515065311.GB16651@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190515143857.GB18892@redhat.com>
+In-Reply-To: <20190515065311.GB16651@dhcp22.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>
-Cc: jannh@google.com, viro@zeniv.linux.org.uk, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, arnd@arndb.de, dhowells@redhat.com, akpm@linux-foundation.org, cyphar@cyphar.com, ebiederm@xmission.com, elena.reshetova@intel.com, keescook@chromium.org, luto@amacapital.net, luto@kernel.org, tglx@linutronix.de, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, linux-sh@vger.kernel.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-kselftest@vger.kernel.org
+To: Oleksandr Natalenko <oleksandr@redhat.com>
+Cc: linux-kernel@vger.kernel.org, Kirill Tkhai <ktkhai@virtuozzo.com>, Vlastimil Babka <vbabka@suse.cz>, Matthew Wilcox <willy@infradead.org>, Pavel Tatashin <pasha.tatashin@soleen.com>, Timofey Titovets <nefelim4ag@gmail.com>, Aaron Tomlin <atomlin@redhat.com>, Grzegorz Halat <ghalat@redhat.com>, linux-mm@kvack.org, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Suren Baghdasaryan <surenb@google.com>, Minchan Kim <minchan@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 15, 2019 at 04:38:58PM +0200, Oleg Nesterov wrote:
-> On 05/15, Christian Brauner wrote:
-> >
-> > +SYSCALL_DEFINE2(pidfd_open, pid_t, pid, unsigned int, flags)
-> > +{
-> > +	int fd, ret;
-> > +	struct pid *p;
-> > +	struct task_struct *tsk;
-> > +
-> > +	if (flags)
-> > +		return -EINVAL;
-> > +
-> > +	if (pid <= 0)
-> > +		return -EINVAL;
-> > +
-> > +	p = find_get_pid(pid);
-> > +	if (!p)
-> > +		return -ESRCH;
-> > +
-> > +	rcu_read_lock();
-> > +	tsk = pid_task(p, PIDTYPE_PID);
-> 
-> You do not need find_get_pid() before rcu_lock and put_pid() at the end.
-> You can just do find_vpid() under rcu_read_lock().
+[Cc Suren and Minchan - the email thread starts here 20190514131654.25463-1-oleksandr@redhat.com]
 
-Will do.
+On Wed 15-05-19 08:53:11, Michal Hocko wrote:
+[...]
+> I will try to comment on the interface itself later. But I have to say
+> that I am not impressed. Abusing sysfs for per process features is quite
+> gross to be honest.
 
-> 
-> > +	if (!tsk)
-> > +		ret = -ESRCH;
-> > +	else if (unlikely(!thread_group_leader(tsk)))
-> > +		ret = -EINVAL;
-> 
-> it seems that you can do a single check
-> 
-> 	tsk = pid_task(p, PIDTYPE_TGID);
-> 	if (!tsk)
-> 		ret = -ESRCH;
-> 
-> this even looks more correct if we race with exec changing the leader.
+I have already commented on this in other email. I consider sysfs an
+unsuitable interface for per-process API. Not to mention this particular
+one is very KSM specific while the question about setting different
+hints on memory of a remote process is a more generic question. As
+already mentioned there are usecases where people would like to say
+that a certain memory is cold from outside of the process context (e.g.
+monitor application). So essentially a form of a user space memory
+management. And this usecase sounds a bit similar to me and having a
+common api sounds more sensible to me.
 
-The logic here being that you can only reach the thread_group leader
-from struct pid if PIDTYPE_PID == PIDTYPE_TGID for this struct pid?
+One thing we were discussing at LSFMM this year was a way to either
+provide madvise_remote(pid, addr, length, advice) or a fadvise
+alternative over /proc/<pid>/map_vmas/<range> file descriptors
+(essentially resembling the existing map_files api) to achieve such a
+functionality. This is still a very rough idea but the api would sound
+much more generic to me and it would allow much wider range of usecases.
 
-Thanks, Oleg.
-Christian
+But maybe I am completely wrong and this is just opens a can of worms
+that we do not want.
+-- 
+Michal Hocko
+SUSE Labs
