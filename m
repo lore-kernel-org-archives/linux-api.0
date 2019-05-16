@@ -1,67 +1,85 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH v1 1/2] pid: add pidfd_open()
-Date: Thu, 16 May 2019 17:29:16 +0200
-Message-ID: <20190516152915.3t2wofeu3xsyhfbd@brauner.io>
-References: <20190516135944.7205-1-christian@brauner.io>
- <20190516142659.GB22564@redhat.com>
- <20190516145607.j43xyj26k6l5vmbd@yavin>
- <20190516150611.GC22564@redhat.com>
- <20190516151202.hrawrx7hxllmz2di@yavin>
- <20190516152252.GD22564@redhat.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH RFC 4/5] mm/ksm, proc: introduce remote merge
+Date: Thu, 16 May 2019 18:06:24 +0200
+Message-ID: <CAG48ez0teQk+rVnRmr=xcM8PJ_8UZC3hSi7PABx-qunz+5=DGg@mail.gmail.com>
+References: <20190516094234.9116-1-oleksandr@redhat.com> <20190516094234.9116-5-oleksandr@redhat.com>
+ <CAG48ez2yXw_PJXO-mS=Qw5rkLpG6zDPd0saMhhGk09-du2bpaA@mail.gmail.com> <20190516142013.sf2vitmksvbkb33f@butterfly.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190516152252.GD22564@redhat.com>
+In-Reply-To: <20190516142013.sf2vitmksvbkb33f@butterfly.localdomain>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>
-Cc: Aleksa Sarai <cyphar@cyphar.com>, jannh@google.com, viro@zeniv.linux.org.uk, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, arnd@arndb.de, akpm@linux-foundation.org, dhowells@redhat.com, ebiederm@xmission.com, elena.reshetova@intel.com, keescook@chromium.org, luto@amacapital.net, luto@kernel.org, tglx@linutronix.de, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, linux-sh@vger.kernel.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-kselftest@vger.kernel.org, joel@joelfernandes.org, dancol@goo
+To: Oleksandr Natalenko <oleksandr@redhat.com>
+Cc: kernel list <linux-kernel@vger.kernel.org>, Kirill Tkhai <ktkhai@virtuozzo.com>, Hugh Dickins <hughd@google.com>, Alexey Dobriyan <adobriyan@gmail.com>, Vlastimil Babka <vbabka@suse.cz>, Michal Hocko <mhocko@suse.com>, Matthew Wilcox <willy@infradead.org>, Pavel Tatashin <pasha.tatashin@soleen.com>, Greg KH <greg@kroah.com>, Suren Baghdasaryan <surenb@google.com>, Minchan Kim <minchan@kernel.org>, Timofey Titovets <nefelim4ag@gmail.com>, Aaron Tomlin <atomlin@redhat.com>, Grzegorz Halat <ghalat@redhat.com>, Linux-MM <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 16, 2019 at 05:22:53PM +0200, Oleg Nesterov wrote:
-> On 05/17, Aleksa Sarai wrote:
+On Thu, May 16, 2019 at 4:20 PM Oleksandr Natalenko
+<oleksandr@redhat.com> wrote:
+> On Thu, May 16, 2019 at 12:00:24PM +0200, Jann Horn wrote:
+> > On Thu, May 16, 2019 at 11:43 AM Oleksandr Natalenko
+> > <oleksandr@redhat.com> wrote:
+> > > Use previously introduced remote madvise knob to mark task's
+> > > anonymous memory as mergeable.
+> > >
+> > > To force merging task's VMAs, "merge" hint is used:
+> > >
+> > >    # echo merge > /proc/<pid>/madvise
+> > >
+> > > Force unmerging is done similarly:
+> > >
+> > >    # echo unmerge > /proc/<pid>/madvise
+> > >
+> > > To achieve this, previously introduced ksm_madvise_*() helpers
+> > > are used.
 > >
-> > On 2019-05-16, Oleg Nesterov <oleg@redhat.com> wrote:
-> > > On 05/17, Aleksa Sarai wrote:
-> > > > On 2019-05-16, Oleg Nesterov <oleg@redhat.com> wrote:
-> > > > > On 05/16, Christian Brauner wrote:
-> > > > > > With the introduction of pidfds through CLONE_PIDFD it is possible to
-> > > > > > created pidfds at process creation time.
-> > > > >
-> > > > > Now I am wondering why do we need CLONE_PIDFD, you can just do
-> > > > >
-> > > > > 	pid = fork();
-> > > > > 	pidfd_open(pid);
-> > > >
-> > > > While the race window would be exceptionally short, there is the
-> > > > possibility that the child will die
-> > >
-> > > Yes,
-> > >
-> > > > and their pid will be recycled
-> > > > before you do pidfd_open().
-> > >
-> > > No.
-> > >
-> > > Unless the caller's sub-thread does wait() before pidfd_open(), of course.
-> > > Or unless you do signal(SIGCHILD, SIG_IGN).
+> > Why does this not require PTRACE_MODE_ATTACH_FSCREDS to the target
+> > process? Enabling KSM on another process is hazardous because it
+> > significantly increases the attack surface for side channels.
 > >
-> > What about CLONE_PARENT?
-> 
-> I should have mentioned CLONE_PARENT ;)
-> 
-> Of course in this case the child can be reaped before pidfd_open(). But how often
-> do you or other people use clone(CLONE_PARENT) ? not to mention you can trivially
-> eliminate/detect this race if you really need this.
-> 
-> Don't get me wrong, I am not trying to say that CLONE_PIDFD is a bad idea.
-> 
-> But to me pidfd_open() is much more useful. Say, as a perl programmer I can easily
-> use pidfd_open(), but not CLONE_PIDFD.
+> > (Note that if you change this to require PTRACE_MODE_ATTACH_FSCREDS,
+> > you'll want to use mm_access() in the ->open handler and drop the mm
+> > in ->release. mm_access() from a ->write handler is not permitted.)
+>
+> Sounds reasonable. So, something similar to what mem_open() & friends do
+> now:
+>
+> static int madvise_open(...)
+> ...
+>         struct task_struct *task = get_proc_task(inode);
+> ...
+>         if (task) {
+>                 mm = mm_access(task, PTRACE_MODE_ATTACH_FSCREDS);
+>                 put_task_struct(task);
+>                 if (!IS_ERR_OR_NULL(mm)) {
+>                         mmgrab(mm);
+>                         mmput(mm);
+> ...
+>
+> Then:
+>
+> static ssize_t madvise_write(...)
+> ...
+>         if (!mmget_not_zero(mm))
+>                 goto out;
+>
+>         down_write(&mm->mmap_sem);
+>         if (!mmget_still_valid(mm))
+>                 goto skip_mm;
+> ...
+> skip_mm:
+>         up_write(&mm->mmap_sem);
+>
+>         mmput(mm);
+> out:
+>         return ...;
+>
+> And, finally:
+>
+> static int madvise_release(...)
+> ...
+>                 mmdrop(mm);
+> ...
+>
+> Right?
 
-Right, but for a libc, service- or container manager CLONE_PIDFD is much
-nicer when spawning processes quickly. :) I think both are very good to
-have.
-
-Thanks, Oleg. As always super helpful reviews. :)
-Christian
+Yeah, that looks reasonable.
