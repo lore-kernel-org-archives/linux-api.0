@@ -1,7 +1,7 @@
 From: Oleksandr Natalenko <oleksandr@redhat.com>
-Subject: [PATCH RFC 2/5] mm/ksm: introduce ksm_madvise_merge() helper
-Date: Thu, 16 May 2019 11:42:31 +0200
-Message-ID: <20190516094234.9116-3-oleksandr@redhat.com>
+Subject: [PATCH RFC 4/5] mm/ksm, proc: introduce remote merge
+Date: Thu, 16 May 2019 11:42:33 +0200
+Message-ID: <20190516094234.9116-5-oleksandr@redhat.com>
 References: <20190516094234.9116-1-oleksandr@redhat.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,111 +12,102 @@ To: linux-kernel@vger.kernel.org
 Cc: Kirill Tkhai <ktkhai@virtuozzo.com>, Hugh Dickins <hughd@google.com>, Alexey Dobriyan <adobriyan@gmail.com>, Vlastimil Babka <vbabka@suse.cz>, Michal Hocko <mhocko@suse.com>, Matthew Wilcox <willy@infradead.org>, Pavel Tatashin <pasha.tatashin@soleen.com>, Greg KH <greg@kroah.com>, Suren Baghdasaryan <surenb@google.com>, Minchan Kim <minchan@kernel.org>, Timofey Titovets <nefelim4ag@gmail.com>, Aaron Tomlin <atomlin@redhat.com>, Grzegorz Halat <ghalat@redhat.com>, linux-mm@kvack.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Move MADV_MERGEABLE part of ksm_madvise() into a dedicated helper since
-it will be further used for marking VMAs to be merged forcibly.
+Use previously introduced remote madvise knob to mark task's
+anonymous memory as mergeable.
 
-This does not bring any functional changes.
+To force merging task's VMAs, "merge" hint is used:
+
+   # echo merge > /proc/<pid>/madvise
+
+Force unmerging is done similarly:
+
+   # echo unmerge > /proc/<pid>/madvise
+
+To achieve this, previously introduced ksm_madvise_*() helpers
+are used.
 
 Signed-off-by: Oleksandr Natalenko <oleksandr@redhat.com>
 ---
- include/linux/ksm.h |  2 ++
- mm/ksm.c            | 60 +++++++++++++++++++++++++++------------------
- 2 files changed, 38 insertions(+), 24 deletions(-)
+ fs/proc/base.c | 52 +++++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 51 insertions(+), 1 deletion(-)
 
-diff --git a/include/linux/ksm.h b/include/linux/ksm.h
-index e48b1e453ff5..e824b3141677 100644
---- a/include/linux/ksm.h
-+++ b/include/linux/ksm.h
-@@ -19,6 +19,8 @@ struct stable_node;
- struct mem_cgroup;
- 
- #ifdef CONFIG_KSM
-+int ksm_madvise_merge(struct mm_struct *mm, struct vm_area_struct *vma,
-+		unsigned long *vm_flags);
- int ksm_madvise(struct vm_area_struct *vma, unsigned long start,
- 		unsigned long end, int advice, unsigned long *vm_flags);
- int __ksm_enter(struct mm_struct *mm);
-diff --git a/mm/ksm.c b/mm/ksm.c
-index fc64874dc6f4..1fdcf2fbd58d 100644
---- a/mm/ksm.c
-+++ b/mm/ksm.c
-@@ -2442,41 +2442,53 @@ static int ksm_scan_thread(void *nothing)
- 	return 0;
- }
- 
--int ksm_madvise(struct vm_area_struct *vma, unsigned long start,
--		unsigned long end, int advice, unsigned long *vm_flags)
-+int ksm_madvise_merge(struct mm_struct *mm, struct vm_area_struct *vma,
-+		unsigned long *vm_flags)
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+index f69532d6b74f..6677580080ed 100644
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -94,6 +94,8 @@
+ #include <linux/sched/debug.h>
+ #include <linux/sched/stat.h>
+ #include <linux/posix-timers.h>
++#include <linux/mman.h>
++#include <linux/ksm.h>
+ #include <trace/events/oom.h>
+ #include "internal.h"
+ #include "fd.h"
+@@ -2960,15 +2962,63 @@ static int proc_stack_depth(struct seq_file *m, struct pid_namespace *ns,
+ static ssize_t madvise_write(struct file *file, const char __user *buf,
+ 		size_t count, loff_t *ppos)
  {
--	struct mm_struct *mm = vma->vm_mm;
- 	int err;
++	/* For now, only KSM hints are implemented */
++#ifdef CONFIG_KSM
++	char buffer[PROC_NUMBUF];
++	int behaviour;
+ 	struct task_struct *task;
++	struct mm_struct *mm;
++	int err = 0;
++	struct vm_area_struct *vma;
++
++	memset(buffer, 0, sizeof(buffer));
++	if (count > sizeof(buffer) - 1)
++		count = sizeof(buffer) - 1;
++	if (copy_from_user(buffer, buf, count))
++		return -EFAULT;
++
++	if (!memcmp("merge", buffer, min(sizeof("merge")-1, count)))
++		behaviour = MADV_MERGEABLE;
++	else if (!memcmp("unmerge", buffer, min(sizeof("unmerge")-1, count)))
++		behaviour = MADV_UNMERGEABLE;
++	else
++		return -EINVAL;
  
--	switch (advice) {
--	case MADV_MERGEABLE:
--		/*
--		 * Be somewhat over-protective for now!
--		 */
--		if (*vm_flags & (VM_MERGEABLE | VM_SHARED  | VM_MAYSHARE   |
--				 VM_PFNMAP    | VM_IO      | VM_DONTEXPAND |
--				 VM_HUGETLB | VM_MIXEDMAP))
--			return 0;		/* just ignore the advice */
-+	/*
-+	 * Be somewhat over-protective for now!
-+	 */
-+	if (*vm_flags & (VM_MERGEABLE | VM_SHARED  | VM_MAYSHARE   |
-+			 VM_PFNMAP    | VM_IO      | VM_DONTEXPAND |
-+			 VM_HUGETLB | VM_MIXEDMAP))
-+		return 0;		/* just ignore the advice */
+ 	task = get_proc_task(file_inode(file));
+ 	if (!task)
+ 		return -ESRCH;
  
--		if (vma_is_dax(vma))
--			return 0;
-+	if (vma_is_dax(vma))
-+		return 0;
- 
- #ifdef VM_SAO
--		if (*vm_flags & VM_SAO)
--			return 0;
-+	if (*vm_flags & VM_SAO)
-+		return 0;
- #endif
- #ifdef VM_SPARC_ADI
--		if (*vm_flags & VM_SPARC_ADI)
--			return 0;
-+	if (*vm_flags & VM_SPARC_ADI)
-+		return 0;
- #endif
- 
--		if (!test_bit(MMF_VM_MERGEABLE, &mm->flags)) {
--			err = __ksm_enter(mm);
--			if (err)
--				return err;
--		}
-+	if (!test_bit(MMF_VM_MERGEABLE, &mm->flags)) {
-+		err = __ksm_enter(mm);
-+		if (err)
-+			return err;
++	mm = get_task_mm(task);
++	if (!mm) {
++		err = -EINVAL;
++		goto out_put_task_struct;
 +	}
 +
-+	*vm_flags |= VM_MERGEABLE;
-+
-+	return 0;
-+}
- 
--		*vm_flags |= VM_MERGEABLE;
-+int ksm_madvise(struct vm_area_struct *vma, unsigned long start,
-+		unsigned long end, int advice, unsigned long *vm_flags)
-+{
-+	struct mm_struct *mm = vma->vm_mm;
-+	int err;
-+
-+	switch (advice) {
++	down_write(&mm->mmap_sem);
++	switch (behaviour) {
 +	case MADV_MERGEABLE:
-+		err = ksm_madvise_merge(mm, vma, vm_flags);
-+		if (err)
-+			return err;
- 		break;
++	case MADV_UNMERGEABLE:
++		vma = mm->mmap;
++		while (vma) {
++			if (behaviour == MADV_MERGEABLE)
++				ksm_madvise_merge(vma->vm_mm, vma, &vma->vm_flags);
++			else
++				ksm_madvise_unmerge(vma, vma->vm_start, vma->vm_end, &vma->vm_flags);
++			vma = vma->vm_next;
++		}
++		break;
++	}
++	up_write(&mm->mmap_sem);
++
++	mmput(mm);
++
++out_put_task_struct:
+ 	put_task_struct(task);
  
- 	case MADV_UNMERGEABLE:
+-	return count;
++	return err ? err : count;
++#else
++	return -EINVAL;
++#endif /* CONFIG_KSM */
+ }
+ 
+ static const struct file_operations proc_madvise_operations = {
 -- 
 2.21.0
