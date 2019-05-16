@@ -1,7 +1,7 @@
 From: Oleksandr Natalenko <oleksandr@redhat.com>
-Subject: [PATCH RFC 1/5] proc: introduce madvise placeholder
-Date: Thu, 16 May 2019 11:42:30 +0200
-Message-ID: <20190516094234.9116-2-oleksandr@redhat.com>
+Subject: [PATCH RFC 3/5] mm/ksm: introduce ksm_madvise_unmerge() helper
+Date: Thu, 16 May 2019 11:42:32 +0200
+Message-ID: <20190516094234.9116-4-oleksandr@redhat.com>
 References: <20190516094234.9116-1-oleksandr@redhat.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,53 +12,79 @@ To: linux-kernel@vger.kernel.org
 Cc: Kirill Tkhai <ktkhai@virtuozzo.com>, Hugh Dickins <hughd@google.com>, Alexey Dobriyan <adobriyan@gmail.com>, Vlastimil Babka <vbabka@suse.cz>, Michal Hocko <mhocko@suse.com>, Matthew Wilcox <willy@infradead.org>, Pavel Tatashin <pasha.tatashin@soleen.com>, Greg KH <greg@kroah.com>, Suren Baghdasaryan <surenb@google.com>, Minchan Kim <minchan@kernel.org>, Timofey Titovets <nefelim4ag@gmail.com>, Aaron Tomlin <atomlin@redhat.com>, Grzegorz Halat <ghalat@redhat.com>, linux-mm@kvack.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Add a write-only /proc/<pid>/madvise file to handle remote madvise
-operations.
+Move MADV_UNMERGEABLE part of ksm_madvise() into a dedicated helper
+since it will be further used for unmerging VMAs forcibly.
 
-For now, this is just a soother that does nothing.
+This does not bring any functional changes.
 
 Signed-off-by: Oleksandr Natalenko <oleksandr@redhat.com>
 ---
- fs/proc/base.c | 20 ++++++++++++++++++++
- 1 file changed, 20 insertions(+)
+ include/linux/ksm.h |  2 ++
+ mm/ksm.c            | 32 ++++++++++++++++++++++----------
+ 2 files changed, 24 insertions(+), 10 deletions(-)
 
-diff --git a/fs/proc/base.c b/fs/proc/base.c
-index 6a803a0b75df..f69532d6b74f 100644
---- a/fs/proc/base.c
-+++ b/fs/proc/base.c
-@@ -2957,6 +2957,25 @@ static int proc_stack_depth(struct seq_file *m, struct pid_namespace *ns,
+diff --git a/include/linux/ksm.h b/include/linux/ksm.h
+index e824b3141677..a91a7cfc87a1 100644
+--- a/include/linux/ksm.h
++++ b/include/linux/ksm.h
+@@ -21,6 +21,8 @@ struct mem_cgroup;
+ #ifdef CONFIG_KSM
+ int ksm_madvise_merge(struct mm_struct *mm, struct vm_area_struct *vma,
+ 		unsigned long *vm_flags);
++int ksm_madvise_unmerge(struct vm_area_struct *vma, unsigned long start,
++		unsigned long end, unsigned long *vm_flags);
+ int ksm_madvise(struct vm_area_struct *vma, unsigned long start,
+ 		unsigned long end, int advice, unsigned long *vm_flags);
+ int __ksm_enter(struct mm_struct *mm);
+diff --git a/mm/ksm.c b/mm/ksm.c
+index 1fdcf2fbd58d..e0357e25e09f 100644
+--- a/mm/ksm.c
++++ b/mm/ksm.c
+@@ -2478,6 +2478,25 @@ int ksm_madvise_merge(struct mm_struct *mm, struct vm_area_struct *vma,
+ 	return 0;
  }
- #endif /* CONFIG_STACKLEAK_METRICS */
  
-+static ssize_t madvise_write(struct file *file, const char __user *buf,
-+		size_t count, loff_t *ppos)
++int ksm_madvise_unmerge(struct vm_area_struct *vma, unsigned long start,
++		unsigned long end, unsigned long *vm_flags)
 +{
-+	struct task_struct *task;
++	int err;
 +
-+	task = get_proc_task(file_inode(file));
-+	if (!task)
-+		return -ESRCH;
++	if (!(*vm_flags & VM_MERGEABLE))
++		return 0;		/* just ignore the advice */
 +
-+	put_task_struct(task);
++	if (vma->anon_vma) {
++		err = unmerge_ksm_pages(vma, start, end);
++		if (err)
++			return err;
++	}
 +
-+	return count;
++	*vm_flags &= ~VM_MERGEABLE;
++
++	return 0;
 +}
 +
-+static const struct file_operations proc_madvise_operations = {
-+	.write		= madvise_write,
-+	.llseek		= noop_llseek,
-+};
-+
- /*
-  * Thread groups
-  */
-@@ -3061,6 +3080,7 @@ static const struct pid_entry tgid_base_stuff[] = {
- #ifdef CONFIG_STACKLEAK_METRICS
- 	ONE("stack_depth", S_IRUGO, proc_stack_depth),
- #endif
-+	REG("madvise", S_IRUGO|S_IWUSR, proc_madvise_operations),
- };
+ int ksm_madvise(struct vm_area_struct *vma, unsigned long start,
+ 		unsigned long end, int advice, unsigned long *vm_flags)
+ {
+@@ -2492,16 +2511,9 @@ int ksm_madvise(struct vm_area_struct *vma, unsigned long start,
+ 		break;
  
- static int proc_tgid_base_readdir(struct file *file, struct dir_context *ctx)
+ 	case MADV_UNMERGEABLE:
+-		if (!(*vm_flags & VM_MERGEABLE))
+-			return 0;		/* just ignore the advice */
+-
+-		if (vma->anon_vma) {
+-			err = unmerge_ksm_pages(vma, start, end);
+-			if (err)
+-				return err;
+-		}
+-
+-		*vm_flags &= ~VM_MERGEABLE;
++		err = ksm_madvise_unmerge(vma, start, end, vm_flags);
++		if (err)
++			return err;
+ 		break;
+ 	}
+ 
 -- 
 2.21.0
