@@ -1,70 +1,182 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH 1/2] pid: add pidfd_open()
-Date: Thu, 16 May 2019 16:05:08 +0200
-Message-ID: <20190516140507.75crjbaulasw6mj6@brauner.io>
-References: <20190515100400.3450-1-christian@brauner.io>
- <CAKOZuesPF+ftwqsNDMBy1LpwJgWTNuQm9-E=C90sSTBYEEsDww@mail.gmail.com>
- <20190516130813.i66ujfzftbgpqhnh@brauner.io>
- <CAG48ez05OtBi_yX+071TrrfK3zKOn9h1kFyPr5rttiqQAZ0sEA@mail.gmail.com>
+From: Oleksandr Natalenko <oleksandr@redhat.com>
+Subject: Re: [PATCH RFC 4/5] mm/ksm, proc: introduce remote merge
+Date: Thu, 16 May 2019 16:20:13 +0200
+Message-ID: <20190516142013.sf2vitmksvbkb33f@butterfly.localdomain>
+References: <20190516094234.9116-1-oleksandr@redhat.com>
+ <20190516094234.9116-5-oleksandr@redhat.com>
+ <CAG48ez2yXw_PJXO-mS=Qw5rkLpG6zDPd0saMhhGk09-du2bpaA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAG48ez05OtBi_yX+071TrrfK3zKOn9h1kFyPr5rttiqQAZ0sEA@mail.gmail.com>
+In-Reply-To: <CAG48ez2yXw_PJXO-mS=Qw5rkLpG6zDPd0saMhhGk09-du2bpaA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Jann Horn <jannh@google.com>
-Cc: Daniel Colascione <dancol@google.com>, Oleg Nesterov <oleg@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Linus Torvalds <torvalds@linux-foundation.org>, linux-kernel <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Aleksa Sarai <cyphar@cyphar.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Elena Reshetova <elena.reshetova@intel.com>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Andy Lutomirski <luto@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kern
+Cc: kernel list <linux-kernel@vger.kernel.org>, Kirill Tkhai <ktkhai@virtuozzo.com>, Hugh Dickins <hughd@google.com>, Alexey Dobriyan <adobriyan@gmail.com>, Vlastimil Babka <vbabka@suse.cz>, Michal Hocko <mhocko@suse.com>, Matthew Wilcox <willy@infradead.org>, Pavel Tatashin <pasha.tatashin@soleen.com>, Greg KH <greg@kroah.com>, Suren Baghdasaryan <surenb@google.com>, Minchan Kim <minchan@kernel.org>, Timofey Titovets <nefelim4ag@gmail.com>, Aaron Tomlin <atomlin@redhat.com>, Grzegorz Halat <ghalat@redhat.com>, Linux-MM <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 16, 2019 at 04:03:27PM +0200, Jann Horn wrote:
-> On Thu, May 16, 2019 at 3:08 PM Christian Brauner <christian@brauner.io> wrote:
-> > On Wed, May 15, 2019 at 10:45:06AM -0700, Daniel Colascione wrote:
-> > > On Wed, May 15, 2019 at 3:04 AM Christian Brauner <christian@brauner.io> wrote:
-> > > >
-> > > > This adds the pidfd_open() syscall. It allows a caller to retrieve pollable
-> > > > pidfds for a process which did not get created via CLONE_PIDFD, i.e. for a
-> > > > process that is created via traditional fork()/clone() calls that is only
-> > > > referenced by a PID:
-> [...]
-> > > > +/**
-> > > > + * pidfd_open() - Open new pid file descriptor.
-> > > > + *
-> > > > + * @pid:   pid for which to retrieve a pidfd
-> > > > + * @flags: flags to pass
-> > > > + *
-> > > > + * This creates a new pid file descriptor with the O_CLOEXEC flag set for
-> > > > + * the process identified by @pid. Currently, the process identified by
-> > > > + * @pid must be a thread-group leader. This restriction currently exists
-> > > > + * for all aspects of pidfds including pidfd creation (CLONE_PIDFD cannot
-> > > > + * be used with CLONE_THREAD) and pidfd polling (only supports thread group
-> > > > + * leaders).
-> > > > + *
-> > > > + * Return: On success, a cloexec pidfd is returned.
-> > > > + *         On error, a negative errno number will be returned.
-> > > > + */
-> > > > +SYSCALL_DEFINE2(pidfd_open, pid_t, pid, unsigned int, flags)
-> > > > +{
-> [...]
-> > > > +       if (pid <= 0)
-> > > > +               return -EINVAL;
-> > >
-> > > WDYT of defining pid == 0 to mean "open myself"?
+Hi.
+
+On Thu, May 16, 2019 at 12:00:24PM +0200, Jann Horn wrote:
+> On Thu, May 16, 2019 at 11:43 AM Oleksandr Natalenko
+> <oleksandr@redhat.com> wrote:
+> > Use previously introduced remote madvise knob to mark task's
+> > anonymous memory as mergeable.
 > >
-> > I'm torn. It be a nice shortcut of course but pid being 0 is usually an
-> > indicator for child processes. So unless the getpid() before
-> > pidfd_open() is an issue I'd say let's leave it as is. If you really
-> > want the shortcut might -1 be better?
+> > To force merging task's VMAs, "merge" hint is used:
+> >
+> >    # echo merge > /proc/<pid>/madvise
+> >
+> > Force unmerging is done similarly:
+> >
+> >    # echo unmerge > /proc/<pid>/madvise
+> >
+> > To achieve this, previously introduced ksm_madvise_*() helpers
+> > are used.
 > 
-> Joining the bikeshed painting club: Please don't allow either 0 or -1
-> as shortcut for "self". James Forshaw found an Android security bug a
-> while back (https://bugs.chromium.org/p/project-zero/issues/detail?id=727)
-> that passed a PID to getpidcon(), except that the PID was 0
-> (placeholder for oneway binder transactions), and then the service
-> thought it was talking to itself. You could pick some other number and
-> provide a #define for that, but I think pidfd_open(getpid(), ...)
-> makes more sense.
+> Why does this not require PTRACE_MODE_ATTACH_FSCREDS to the target
+> process? Enabling KSM on another process is hazardous because it
+> significantly increases the attack surface for side channels.
+> 
+> (Note that if you change this to require PTRACE_MODE_ATTACH_FSCREDS,
+> you'll want to use mm_access() in the ->open handler and drop the mm
+> in ->release. mm_access() from a ->write handler is not permitted.)
 
-Yes, I agree. I left it as is for v1, i.e. no shortcut; getpid() should
-do.
+Sounds reasonable. So, something similar to what mem_open() & friends do
+now:
 
-Christian
+static int madvise_open(...)
+...
+	struct task_struct *task = get_proc_task(inode);
+...
+	if (task) {
+		mm = mm_access(task, PTRACE_MODE_ATTACH_FSCREDS);
+		put_task_struct(task);
+		if (!IS_ERR_OR_NULL(mm)) {
+			mmgrab(mm);
+			mmput(mm);
+...
+
+Then:
+
+static ssize_t madvise_write(...)
+...
+	if (!mmget_not_zero(mm))
+		goto out;
+
+	down_write(&mm->mmap_sem);
+	if (!mmget_still_valid(mm))
+		goto skip_mm;
+...
+skip_mm:
+	up_write(&mm->mmap_sem);
+
+	mmput(mm);
+out:
+	return ...;
+
+And, finally:
+
+static int madvise_release(...)
+...
+		mmdrop(mm);
+...
+
+Right?
+
+> [...]
+> > @@ -2960,15 +2962,63 @@ static int proc_stack_depth(struct seq_file *m, struct pid_namespace *ns,
+> >  static ssize_t madvise_write(struct file *file, const char __user *buf,
+> >                 size_t count, loff_t *ppos)
+> >  {
+> > +       /* For now, only KSM hints are implemented */
+> > +#ifdef CONFIG_KSM
+> > +       char buffer[PROC_NUMBUF];
+> > +       int behaviour;
+> >         struct task_struct *task;
+> > +       struct mm_struct *mm;
+> > +       int err = 0;
+> > +       struct vm_area_struct *vma;
+> > +
+> > +       memset(buffer, 0, sizeof(buffer));
+> > +       if (count > sizeof(buffer) - 1)
+> > +               count = sizeof(buffer) - 1;
+> > +       if (copy_from_user(buffer, buf, count))
+> > +               return -EFAULT;
+> > +
+> > +       if (!memcmp("merge", buffer, min(sizeof("merge")-1, count)))
+> 
+> This means that you also match on something like "mergeblah". Just use strcmp().
+
+I agree. Just to make it more interesting I must say that
+
+   /sys/kernel/mm/transparent_hugepage/enabled
+
+uses memcmp in the very same way, and thus echoing "alwaysssss" or
+"madviseeee" works perfectly there, and it was like that from the very
+beginning, it seems. Should we fix it, or it became (zomg) a public API?
+
+> > +               behaviour = MADV_MERGEABLE;
+> > +       else if (!memcmp("unmerge", buffer, min(sizeof("unmerge")-1, count)))
+> > +               behaviour = MADV_UNMERGEABLE;
+> > +       else
+> > +               return -EINVAL;
+> >
+> >         task = get_proc_task(file_inode(file));
+> >         if (!task)
+> >                 return -ESRCH;
+> >
+> > +       mm = get_task_mm(task);
+> > +       if (!mm) {
+> > +               err = -EINVAL;
+> > +               goto out_put_task_struct;
+> > +       }
+> > +
+> > +       down_write(&mm->mmap_sem);
+> 
+> Should a check for mmget_still_valid(mm) be inserted here? See commit
+> 04f5866e41fb70690e28397487d8bd8eea7d712a.
+
+Yeah, it seems so :/. Thanks for the pointer. I've put it into the
+madvise_write snippet above.
+
+> > +       switch (behaviour) {
+> > +       case MADV_MERGEABLE:
+> > +       case MADV_UNMERGEABLE:
+> 
+> This switch isn't actually necessary at this point, right?
+
+Yup, but it is there to highlight a possibility of adding other, non-KSM
+options. So, let it be, and I'll just re-arrange CONFIG_KSM ifdef
+instead.
+
+Thank you.
+
+> > +               vma = mm->mmap;
+> > +               while (vma) {
+> > +                       if (behaviour == MADV_MERGEABLE)
+> > +                               ksm_madvise_merge(vma->vm_mm, vma, &vma->vm_flags);
+> > +                       else
+> > +                               ksm_madvise_unmerge(vma, vma->vm_start, vma->vm_end, &vma->vm_flags);
+> > +                       vma = vma->vm_next;
+> > +               }
+> > +               break;
+> > +       }
+> > +       up_write(&mm->mmap_sem);
+> > +
+> > +       mmput(mm);
+> > +
+> > +out_put_task_struct:
+> >         put_task_struct(task);
+> >
+> > -       return count;
+> > +       return err ? err : count;
+> > +#else
+> > +       return -EINVAL;
+> > +#endif /* CONFIG_KSM */
+> >  }
+
+-- 
+  Best regards,
+    Oleksandr Natalenko (post-factum)
+    Senior Software Maintenance Engineer
