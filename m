@@ -1,49 +1,46 @@
-From: Mimi Zohar <zohar@linux.ibm.com>
-Subject: Re: [PATCH v2 0/3] initramfs: add support for xattrs in the initial
- ram disk
-Date: Thu, 16 May 2019 09:31:32 -0400
-Message-ID: <1558013492.4581.97.camel@linux.ibm.com>
-References: <4f522e28-29c8-5930-5d90-e0086b503613@landley.net>
-         <f7bc547c-61f4-1a17-735c-7e8df97d7965@huawei.com>
-         <CALCETrV3b205L38xqPr6QqwGn6-vxQdPoJGUygJJpgM-JqqXfQ@mail.gmail.com>
-         <1557861511.3378.19.camel@HansenPartnership.com>
-         <4da3dbda-bb76-5d71-d5c5-c03d98350ab0@landley.net>
-         <1557878052.2873.6.camel@HansenPartnership.com>
-         <20190515005221.GB88615@rani.riverdale.lan>
-         <a138af12-d983-453e-f0b2-661a80b7e837@huawei.com>
-         <20190515160834.GA81614@rani.riverdale.lan>
-         <ce65240a-4df6-8ebc-8360-c01451e724f0@huawei.com>
-         <20190516052934.GA68777@rani.riverdale.lan>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH RFC 0/5] mm: process_vm_mmap() -- syscall for duplication
+ a process mapping
+Date: Thu, 16 May 2019 15:32:06 +0200
+Message-ID: <CAG48ez3EOwLd8A6Ku53vKLdofmZAh1ZYfkK4rVgSgM8ZfcR4zg@mail.gmail.com>
+References: <155793276388.13922.18064660723547377633.stgit@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190516052934.GA68777@rani.riverdale.lan>
+In-Reply-To: <155793276388.13922.18064660723547377633.stgit@localhost.localdomain>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Arvind Sankar <nivedita@alum.mit.edu>, Roberto Sassu <roberto.sassu@huawei.com>, Mehmet Kayaalp <mkayaalp@linux.ibm.com>
-Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, Rob Landley <rob@landley.net>, Andy Lutomirski <luto@kernel.org>, Arvind Sankar <niveditas98@gmail.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, linux-integrity <linux-integrity@vger.kernel.org>, initramfs@vger.kernel.org, Silviu Vlasceanu <Silviu.Vlasceanu@huawei.com>
+To: Kirill Tkhai <ktkhai@virtuozzo.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Dan Williams <dan.j.williams@intel.com>, Michal Hocko <mhocko@suse.com>, keith.busch@intel.com, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, pasha.tatashin@oracle.com, Alexander Duyck <alexander.h.duyck@linux.intel.com>, ira.weiny@intel.com, Andrey Konovalov <andreyknvl@google.com>, arunks@codeaurora.org, Vlastimil Babka <vbabka@suse.cz>, Christoph Lameter <cl@linux.com>, Rik van Riel <riel@surriel.com>, Kees Cook <keescook@chromium.org>, hannes@cmpxchg.org, npiggin@gmail.com, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Shakeel Butt <shakeelb@google.com>, Roman Gushchin <guro@fb.com>, Andrea Arcangeli <aarcange@redhat.com>, Hugh Dickins <hughd@google.com>, Jerome Glisse <jglisse@redhat.co>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2019-05-16 at 01:29 -0400, Arvind Sankar wrote:
+On Wed, May 15, 2019 at 5:11 PM Kirill Tkhai <ktkhai@virtuozzo.com> wrote:
+> This patchset adds a new syscall, which makes possible
+> to clone a mapping from a process to another process.
+> The syscall supplements the functionality provided
+> by process_vm_writev() and process_vm_readv() syscalls,
+> and it may be useful in many situation.
+[...]
+> The proposed syscall aims to introduce an interface, which
+> supplements currently existing process_vm_writev() and
+> process_vm_readv(), and allows to solve the problem with
+> anonymous memory transfer. The above example may be rewritten as:
+>
+>         void *buf;
+>
+>         buf = mmap(NULL, n * PAGE_SIZE, PROT_READ|PROT_WRITE,
+>                    MAP_PRIVATE|MAP_ANONYMOUS, ...);
+>         recv(sock, buf, n * PAGE_SIZE, 0);
+>
+>         /* Sign of @pid is direction: "from @pid task to current" or vice versa. */
+>         process_vm_mmap(-pid, buf, n * PAGE_SIZE, remote_addr, PVMMAP_FIXED);
+>         munmap(buf, n * PAGE_SIZE);
 
-> I think that's a separate issue. If you want to allow people to be able
-> to put files onto the system that will be IMA verified, they need to
-> have some way to locally sign them whether it's inside an initramfs or
-> on a real root filesystem.
+In this specific example, an alternative would be to splice() from the
+socket into /proc/$pid/mem, or something like that, right?
+proc_mem_operations has no ->splice_read() at the moment, and it'd
+need that to be more efficient, but that could be built without
+creating new UAPI, right?
 
-Anyone building their own kernel can build their own key into the
-kernel image.  Another option is to build the kernel with  
-CONFIG_SYSTEM_EXTRA_CERTIFICATE enabled, allowing an additional
-certificate to be inserted into the kernel image post build.  The
-additional certificate will be loaded onto the builtin kernel keyring.
- Certificates signed with the private key can then be added to the IMA
-keyring.  By modifying the kernel image, the kernel image obviously
-needs to be resigned.  Additional patches "Certificate insertion
-support for x86 bzImages" were posted, but have not been upstreamed.
-
-This patch set adds the security xattrs needed by IMA.
-
-Mimi
-
-
- 
+But I guess maybe your workload is not that simple? What do you
+actually do with the received data between receiving it and shoving it
+over into the other process?
