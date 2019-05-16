@@ -1,48 +1,119 @@
-From: Greg KH <greg@kroah.com>
-Subject: Re: [PATCH RFC v2 0/4] mm/ksm: add option to automerge VMAs
-Date: Thu, 16 May 2019 09:53:11 +0200
-Message-ID: <20190516075311.GA10467@kroah.com>
-References: <20190514131654.25463-1-oleksandr@redhat.com>
- <20190514144105.GF4683@dhcp22.suse.cz>
- <20190514145122.GG4683@dhcp22.suse.cz>
- <20190515062523.5ndf7obzfgugilfs@butterfly.localdomain>
- <20190515065311.GB16651@dhcp22.suse.cz>
- <20190515145151.GG16651@dhcp22.suse.cz>
- <20190515151557.GA23969@kroah.com>
- <20190516074713.GK16651@dhcp22.suse.cz>
+From: Oleksandr Natalenko <oleksandr@redhat.com>
+Subject: [PATCH RFC 0/5] mm/ksm, proc: introduce remote madvise
+Date: Thu, 16 May 2019 11:42:29 +0200
+Message-ID: <20190516094234.9116-1-oleksandr@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190516074713.GK16651@dhcp22.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Oleksandr Natalenko <oleksandr@redhat.com>, linux-kernel@vger.kernel.org, Kirill Tkhai <ktkhai@virtuozzo.com>, Vlastimil Babka <vbabka@suse.cz>, Matthew Wilcox <willy@infradead.org>, Pavel Tatashin <pasha.tatashin@soleen.com>, Timofey Titovets <nefelim4ag@gmail.com>, Aaron Tomlin <atomlin@redhat.com>, Grzegorz Halat <ghalat@redhat.com>, linux-mm@kvack.org, linux-api@vger.kernel.org, Hugh Dickins <hughd@google.com>, Suren Baghdasaryan <surenb@google.com>, Minchan Kim <minchan@kernel.org>
+To: linux-kernel@vger.kernel.org
+Cc: Kirill Tkhai <ktkhai@virtuozzo.com>, Hugh Dickins <hughd@google.com>, Alexey Dobriyan <adobriyan@gmail.com>, Vlastimil Babka <vbabka@suse.cz>, Michal Hocko <mhocko@suse.com>, Matthew Wilcox <willy@infradead.org>, Pavel Tatashin <pasha.tatashin@soleen.com>, Greg KH <greg@kroah.com>, Suren Baghdasaryan <surenb@google.com>, Minchan Kim <minchan@kernel.org>, Timofey Titovets <nefelim4ag@gmail.com>, Aaron Tomlin <atomlin@redhat.com>, Grzegorz Halat <ghalat@redhat.com>, linux-mm@kvack.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 16, 2019 at 09:47:13AM +0200, Michal Hocko wrote:
-> On Wed 15-05-19 17:15:57, Greg KH wrote:
-> > On Wed, May 15, 2019 at 04:51:51PM +0200, Michal Hocko wrote:
-> > > [Cc Suren and Minchan - the email thread starts here 20190514131654.25463-1-oleksandr@redhat.com]
-> > > 
-> > > On Wed 15-05-19 08:53:11, Michal Hocko wrote:
-> > > [...]
-> > > > I will try to comment on the interface itself later. But I have to say
-> > > > that I am not impressed. Abusing sysfs for per process features is quite
-> > > > gross to be honest.
-> > > 
-> > > I have already commented on this in other email. I consider sysfs an
-> > > unsuitable interface for per-process API.
-> > 
-> > Wait, what?  A new sysfs file/directory per process?  That's crazy, no
-> > one must have benchmarked it :)
-> 
-> Just to clarify, that was not a per process file but rather per process API.
-> Essentially echo $PID > $SYSFS_SPECIAL_FILE
+It all began with the fact that KSM works only on memory that is marked
+by madvise(). And the only way to get around that is to either:
 
-Ick, no, that's not ok either.  sysfs files are not a replacement for
-syscalls :)
+  * use LD_PRELOAD; or
+  * patch the kernel with something like UKSM or PKSM.
 
-thanks,
+(i skip ptrace can of worms here intentionally)
 
-greg k-h
+To overcome this restriction, lets implement a per-process /proc knob,
+which allows calling madvise remotely. This can be used manually on a
+task in question or by some small userspace helper daemon that will do
+auto-KSM job for us.
+
+Also, following the discussions from the previous submissions [2] and
+[3], make the interface more generic, so that it can be used for other
+madvise hints in the future. At this point, I'd like Android people to
+speak up, for instance, and clarify in which form they need page
+granularity or other things I've missed or have never heard about.
+
+So, I think of three major consumers of this interface:
+
+  * hosts, that run containers, especially similar ones and especially in
+    a trusted environment, sharing the same runtime like Node.js;
+
+  * heavy applications, that can be run in multiple instances, not
+    limited to opensource ones like Firefox, but also those that cannot be
+	modified since they are binary-only and, maybe, statically linked;
+
+  * Android environment that wants to do tricks with
+    MADV_WILLNEED/DONTNEED or something similar.
+
+On to the actual implementation. The per-process knob is named "madvise",
+and it is write-only. It accepts a madvise hint name to be executed.
+Currently, only KSM hints are implemented:
+
+* to mark all the eligible VMAs as mergeable, use:
+
+   # echo merge > /proc/<pid>/madvise
+
+* to unmerge all the VMAs, use:
+
+   # echo unmerge > /proc/<pid>/madvise
+
+I've implemented address space level granularity instead of VMA/page
+granularity intentionally for simplicity. If the discussion goes in
+other directions, this can be re-implemented to act on a specific VMA
+(via map_files?) or page-wise.
+
+Speaking of statistics, more numbers can be found in the very first
+submission, that is related to this one [1]. For my current setup with
+two Firefox instances I get 100 to 200 MiB saved for the second instance
+depending on the amount of tabs.
+
+1 FF instance with 15 tabs:
+
+   $ echo "$(cat /sys/kernel/mm/ksm/pages_sharing) * 4 / 1024" | bc
+   410
+
+2 FF instances, second one has 12 tabs (all the tabs are different):
+
+   $ echo "$(cat /sys/kernel/mm/ksm/pages_sharing) * 4 / 1024" | bc
+   592
+
+At the very moment I do not have specific numbers for containerised
+workload, but those should be comparable in case the containers share
+similar/same runtime.
+
+The history of this patchset:
+
+  * [2] was based on Timofey's submission [1], but it didn't use a
+    dedicated kthread to walk through the list of tasks/VMAs. Instead,
+	do_anonymous_page() was amended to implement fully automatic mode,
+	but this approach was incorrect due to improper locking and not
+	desired due to excessive complexity and being KSM-specific;
+  * [3] implemented KSM-specific madvise hints via sysfs, leaving
+    traversing /proc to userspace if needed. The approach was not
+	desired due to the fact that sysfs shouldn't implement any
+	per-process API. Also, the interface was not generic enough to
+	extend it for other users.
+
+I drop all the "Reviewed-by" tags from previous submissions because of
+code changes and because the objective of this series is now somewhat
+different.
+
+Please comment!
+
+Thanks.
+
+[1] https://lore.kernel.org/patchwork/patch/1012142/
+[2] http://lkml.iu.edu/hypermail/linux/kernel/1905.1/02417.html
+[3] http://lkml.iu.edu/hypermail/linux/kernel/1905.1/05076.html
+
+Oleksandr Natalenko (5):
+  proc: introduce madvise placeholder
+  mm/ksm: introduce ksm_madvise_merge() helper
+  mm/ksm: introduce ksm_madvise_unmerge() helper
+  mm/ksm, proc: introduce remote merge
+  mm/ksm, proc: add remote madvise documentation
+
+ Documentation/filesystems/proc.txt | 13 +++++
+ fs/proc/base.c                     | 70 +++++++++++++++++++++++
+ include/linux/ksm.h                |  4 ++
+ mm/ksm.c                           | 92 +++++++++++++++++++-----------
+ 4 files changed, 145 insertions(+), 34 deletions(-)
+
+-- 
+2.21.0
