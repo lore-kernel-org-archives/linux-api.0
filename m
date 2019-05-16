@@ -1,75 +1,80 @@
-From: Kirill Tkhai <ktkhai@virtuozzo.com>
-Subject: Re: [PATCH RFC 0/5] mm: process_vm_mmap() -- syscall for duplication
- a process mapping
-Date: Thu, 16 May 2019 17:22:23 +0300
-Message-ID: <85562807-2a13-9aa2-e67d-15513c766eae@virtuozzo.com>
-References: <155793276388.13922.18064660723547377633.stgit@localhost.localdomain>
- <20190516133034.GT16651@dhcp22.suse.cz>
- <20190516135259.GU16651@dhcp22.suse.cz>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH v1 1/2] pid: add pidfd_open()
+Date: Thu, 16 May 2019 16:27:00 +0200
+Message-ID: <20190516142659.GB22564@redhat.com>
+References: <20190516135944.7205-1-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190516135259.GU16651@dhcp22.suse.cz>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20190516135944.7205-1-christian@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: akpm@linux-foundation.org, dan.j.williams@intel.com, keith.busch@intel.com, kirill.shutemov@linux.intel.com, pasha.tatashin@oracle.com, alexander.h.duyck@linux.intel.com, ira.weiny@intel.com, andreyknvl@google.com, arunks@codeaurora.org, vbabka@suse.cz, cl@linux.com, riel@surriel.com, keescook@chromium.org, hannes@cmpxchg.org, npiggin@gmail.com, mathieu.desnoyers@efficios.com, shakeelb@google.com, guro@fb.com, aarcange@redhat.com, hughd@google.com, jglisse@redhat.com, mgorman@techsingularity.net, daniel.m.jordan@oracle.com, linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+To: Christian Brauner <christian@brauner.io>
+Cc: jannh@google.com, viro@zeniv.linux.org.uk, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, arnd@arndb.de, akpm@linux-foundation.org, cyphar@cyphar.com, dhowells@redhat.com, ebiederm@xmission.com, elena.reshetova@intel.com, keescook@chromium.org, luto@amacapital.net, luto@kernel.org, tglx@linutronix.de, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, linux-sh@vger.kernel.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-kselftest@vger.kernel.org, joel@joelfernandes.org, dancol@google.com, serge@hallyn.c
 List-Id: linux-api@vger.kernel.org
 
-On 16.05.2019 16:52, Michal Hocko wrote:
-> On Thu 16-05-19 15:30:34, Michal Hocko wrote:
->> [You are defining a new user visible API, please always add linux-api
->>  mailing list - now done]
->>
->> On Wed 15-05-19 18:11:15, Kirill Tkhai wrote:
-> [...]
->>> The proposed syscall aims to introduce an interface, which
->>> supplements currently existing process_vm_writev() and
->>> process_vm_readv(), and allows to solve the problem with
->>> anonymous memory transfer. The above example may be rewritten as:
->>>
->>> 	void *buf;
->>>
->>> 	buf = mmap(NULL, n * PAGE_SIZE, PROT_READ|PROT_WRITE,
->>> 		   MAP_PRIVATE|MAP_ANONYMOUS, ...);
->>> 	recv(sock, buf, n * PAGE_SIZE, 0);
->>>
->>> 	/* Sign of @pid is direction: "from @pid task to current" or vice versa. */
->>> 	process_vm_mmap(-pid, buf, n * PAGE_SIZE, remote_addr, PVMMAP_FIXED);
->>> 	munmap(buf, n * PAGE_SIZE);
-> 
-> AFAIU this means that you actually want to do an mmap of an anonymous
-> memory with a COW semantic to the remote process right?
+On 05/16, Christian Brauner wrote:
+>
+> With the introduction of pidfds through CLONE_PIDFD it is possible to
+> created pidfds at process creation time.
 
-Yes.
+Now I am wondering why do we need CLONE_PIDFD, you can just do
 
-> How does the remote process find out where and what has been mmaped?
+	pid = fork();
+	pidfd_open(pid);
 
-Any way. Isn't this a trivial task? :) You may use socket or any
-of appropriate linux features to communicate between them.
+> +SYSCALL_DEFINE2(pidfd_open, pid_t, pid, unsigned int, flags)
+> +{
+> +	int fd, ret;
+> +	struct pid *p;
+> +	struct task_struct *tsk;
+> +
+> +	if (flags)
+> +		return -EINVAL;
+> +
+> +	if (pid <= 0)
+> +		return -EINVAL;
+> +
+> +	p = find_get_pid(pid);
+> +	if (!p)
+> +		return -ESRCH;
+> +
+> +	ret = 0;
+> +	rcu_read_lock();
+> +	/*
+> +	 * If this returns non-NULL the pid was used as a thread-group
+> +	 * leader. Note, we race with exec here: If it changes the
+> +	 * thread-group leader we might return the old leader.
+> +	 */
+> +	tsk = pid_task(p, PIDTYPE_TGID);
+> +	if (!tsk)
+> +		ret = -ESRCH;
+> +	rcu_read_unlock();
+> +
+> +	fd = ret ?: pidfd_create(p);
+> +	put_pid(p);
+> +	return fd;
+> +}
 
->What if the range collides? This sounds quite scary to me TBH.
+Looks correct, feel free to add Reviewed-by: Oleg Nesterov <oleg@redhat.com>
 
-In case of range collides, the part of old VMA becomes unmapped.
-The same way we behave on ordinary mmap. You may intersect a range,
-which another thread mapped, so you need a synchronization between
-them. There is no a principle difference.
+But why do we need task_struct *tsk?
 
-Also I'm going to add a flag to prevent unmapping like Kees suggested.
-Please, see his message.
+	rcu_read_lock();
+	if (!pid_task(PIDTYPE_TGID))
+		ret = -ESRCH;
+	rcu_read_unlock();
 
-> Why cannot you simply use shared memory for that?
+and in fact we do not even need rcu_read_lock(), we could do
 
-Because of remote task may want specific type of VMA. It may want not to
-share a VMA with its children.
+	// shut up rcu_dereference_check()
+	rcu_lock_acquire(&rcu_lock_map);
+	if (!pid_task(PIDTYPE_TGID))
+		ret = -ESRCH;
+	rcu_lock_release(&rcu_lock_map);
 
-Speaking about online migration, a task wants its anonymous private VMAs
-remain the same after the migration. Otherwise, imagine the situation,
-when task's stack becomes a shared VMA after the migration.
-Also, task wants anonymous mapping remains anonymous.
+Well... I won't insist, but the comment about the race with exec looks a bit
+confusing to me. It is true, but we do not care at all, we are not going to
+use the task_struct returned by pid_task().
 
-In general, in case of shared memory is enough for everything, we would
-have never had process_vm_writev() and process_vm_readv() syscalls.
-
-Kirill
+Oleg.
