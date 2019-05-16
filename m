@@ -1,98 +1,71 @@
 From: Christian Brauner <christian@brauner.io>
 Subject: Re: [PATCH v1 1/2] pid: add pidfd_open()
-Date: Thu, 16 May 2019 16:57:17 +0200
-Message-ID: <20190516145716.ool2pzdqbfclnnqi@brauner.io>
+Date: Thu, 16 May 2019 16:58:19 +0200
+Message-ID: <20190516145819.ofqkv6ozfpumhhuk@brauner.io>
 References: <20190516135944.7205-1-christian@brauner.io>
- <20190516142659.GB22564@redhat.com>
+ <CAMuHMdVbUJ0+28Lc2wHPah8UUk8Ou9m81KzLvhrcMsJzz2bX2A@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190516142659.GB22564@redhat.com>
+In-Reply-To: <CAMuHMdVbUJ0+28Lc2wHPah8UUk8Ou9m81KzLvhrcMsJzz2bX2A@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>
-Cc: jannh@google.com, viro@zeniv.linux.org.uk, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, arnd@arndb.de, akpm@linux-foundation.org, cyphar@cyphar.com, dhowells@redhat.com, ebiederm@xmission.com, elena.reshetova@intel.com, keescook@chromium.org, luto@amacapital.net, luto@kernel.org, tglx@linutronix.de, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, linux-sh@vger.kernel.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-kselftest@vger.kernel.org, joel@joelfernandes.org, dancol@google.com, serge@hallyn.c
+To: Geert Uytterhoeven <geert@linux-m68k.org>
+Cc: David Howells <dhowells@redhat.com>, Jann Horn <jannh@google.com>, Oleg Nesterov <oleg@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, "torvalds@linux-foundation.org" <torvalds@linux-foundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, "linux-ia64@vger.kernel.org" <linux-ia64@vger.kernel.org>, Linux-sh list <linux-sh@vger.kernel.org>, linux-mips@vger.kernel.org, Joel Fernandes <joel@joelfernandes.org>, "open list:KERNEL SELFTEST FRAMEWORK" <linux-kselftest@vger.kernel.org>, sparclinux <sparclinux@vger.kernel.org>, elena.reshetova@intel.com, Linux-Arch <linux-arch@vger.kernel.org>, linux-s390 <linux-s390@vger.kernel.org>, Daniel Colascione <dancol@google.com>, "Serge E. Hallyn" <serge@hallyn.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 16, 2019 at 04:27:00PM +0200, Oleg Nesterov wrote:
-> On 05/16, Christian Brauner wrote:
+On Thu, May 16, 2019 at 04:56:08PM +0200, Geert Uytterhoeven wrote:
+> Hi Christian, David,
+> 
+> On Thu, May 16, 2019 at 4:00 PM Christian Brauner <christian@brauner.io> wrote:
+> > This adds the pidfd_open() syscall. It allows a caller to retrieve pollable
+> > pidfds for a process which did not get created via CLONE_PIDFD, i.e. for a
+> > process that is created via traditional fork()/clone() calls that is only
+> > referenced by a PID:
+> >
+> > int pidfd = pidfd_open(1234, 0);
+> > ret = pidfd_send_signal(pidfd, SIGSTOP, NULL, 0);
 > >
 > > With the introduction of pidfds through CLONE_PIDFD it is possible to
 > > created pidfds at process creation time.
+> > However, a lot of processes get created with traditional PID-based calls
+> > such as fork() or clone() (without CLONE_PIDFD). For these processes a
+> > caller can currently not create a pollable pidfd. This is a huge problem
+> > for Android's low memory killer (LMK) and service managers such as systemd.
+> > Both are examples of tools that want to make use of pidfds to get reliable
+> > notification of process exit for non-parents (pidfd polling) and race-free
+> > signal sending (pidfd_send_signal()). They intend to switch to this API for
+> > process supervision/management as soon as possible. Having no way to get
+> > pollable pidfds from PID-only processes is one of the biggest blockers for
+> > them in adopting this api. With pidfd_open() making it possible to retrieve
+> > pidfd for PID-based processes we enable them to adopt this api.
+> >
+> > In line with Arnd's recent changes to consolidate syscall numbers across
+> > architectures, I have added the pidfd_open() syscall to all architectures
+> > at the same time.
 > 
-> Now I am wondering why do we need CLONE_PIDFD, you can just do
+> > +428    common  pidfd_open                      sys_pidfd_open
 > 
-> 	pid = fork();
-> 	pidfd_open(pid);
+> This number conflicts with "[PATCH 4/4] uapi: Wire up the mount API
+> syscalls on non-x86 arches", which is requested to be included before
+> rc1.
 
-CLONE_PIDFD eliminates the race at the source and let's us avoid two
-syscalls for the sake of one. That'll obviously matter even more when we
-enable CLONE_THREAD | CLONE_PIDFD.
-pidfd_open() is really just a necessity for anyone who does non-parent
-process management aka LMK or service managers.
-I also would like to reserve the ability at some point (e.g. with cloneX
-or sm) to be able to specify specific additional flags at process
-creation time that modify pidfd behavior.
-
-> 
-> > +SYSCALL_DEFINE2(pidfd_open, pid_t, pid, unsigned int, flags)
-> > +{
-> > +	int fd, ret;
-> > +	struct pid *p;
-> > +	struct task_struct *tsk;
-> > +
-> > +	if (flags)
-> > +		return -EINVAL;
-> > +
-> > +	if (pid <= 0)
-> > +		return -EINVAL;
-> > +
-> > +	p = find_get_pid(pid);
-> > +	if (!p)
-> > +		return -ESRCH;
-> > +
-> > +	ret = 0;
-> > +	rcu_read_lock();
-> > +	/*
-> > +	 * If this returns non-NULL the pid was used as a thread-group
-> > +	 * leader. Note, we race with exec here: If it changes the
-> > +	 * thread-group leader we might return the old leader.
-> > +	 */
-> > +	tsk = pid_task(p, PIDTYPE_TGID);
-> > +	if (!tsk)
-> > +		ret = -ESRCH;
-> > +	rcu_read_unlock();
-> > +
-> > +	fd = ret ?: pidfd_create(p);
-> > +	put_pid(p);
-> > +	return fd;
-> > +}
-> 
-> Looks correct, feel free to add Reviewed-by: Oleg Nesterov <oleg@redhat.com>
-> 
-> But why do we need task_struct *tsk?
-> 
-> 	rcu_read_lock();
-> 	if (!pid_task(PIDTYPE_TGID))
-> 		ret = -ESRCH;
-> 	rcu_read_unlock();
-
-Sure, that's simpler. I'll rework and add your Reviewed-by.
-
-> 
-> and in fact we do not even need rcu_read_lock(), we could do
-> 
-> 	// shut up rcu_dereference_check()
-> 	rcu_lock_acquire(&rcu_lock_map);
-> 	if (!pid_task(PIDTYPE_TGID))
-> 		ret = -ESRCH;
-> 	rcu_lock_release(&rcu_lock_map);
-> 
-> Well... I won't insist, but the comment about the race with exec looks a bit
-> confusing to me. It is true, but we do not care at all, we are not going to
-> use the task_struct returned by pid_task().
-
-Yeah, I can remove it.
+Yep, already spotted this thanks to Arnd! Will change the syscall
+numbers.
 
 Thanks!
 Christian
+
+> 
+> Note that none of this is part of linux-next.
+> 
+> Gr{oetje,eeting}s,
+> 
+>                         Geert
+> 
+> -- 
+> Geert Uytterhoeven -- There's lots of Linux beyond ia32 -- geert@linux-m68k.org
+> 
+> In personal conversations with technical people, I call myself a hacker. But
+> when I'm talking to journalists I just say "programmer" or something like that.
+>                                 -- Linus Torvalds
