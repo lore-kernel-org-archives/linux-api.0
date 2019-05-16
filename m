@@ -1,80 +1,60 @@
-From: Aleksa Sarai <cyphar@cyphar.com>
+From: Oleg Nesterov <oleg@redhat.com>
 Subject: Re: [PATCH v1 1/2] pid: add pidfd_open()
-Date: Fri, 17 May 2019 01:12:02 +1000
-Message-ID: <20190516151202.hrawrx7hxllmz2di@yavin>
+Date: Thu, 16 May 2019 17:22:53 +0200
+Message-ID: <20190516152252.GD22564@redhat.com>
 References: <20190516135944.7205-1-christian@brauner.io>
  <20190516142659.GB22564@redhat.com>
  <20190516145607.j43xyj26k6l5vmbd@yavin>
  <20190516150611.GC22564@redhat.com>
+ <20190516151202.hrawrx7hxllmz2di@yavin>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="ndso2fpbrge26y3v"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190516150611.GC22564@redhat.com>
+In-Reply-To: <20190516151202.hrawrx7hxllmz2di@yavin>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>
+To: Aleksa Sarai <cyphar@cyphar.com>
 Cc: Christian Brauner <christian@brauner.io>, jannh@google.com, viro@zeniv.linux.org.uk, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, arnd@arndb.de, akpm@linux-foundation.org, dhowells@redhat.com, ebiederm@xmission.com, elena.reshetova@intel.com, keescook@chromium.org, luto@amacapital.net, luto@kernel.org, tglx@linutronix.de, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, linux-sh@vger.kernel.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-kselftest@vger.kernel.org, joel@joelfernandes.orgda
 List-Id: linux-api@vger.kernel.org
 
-
---ndso2fpbrge26y3v
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-On 2019-05-16, Oleg Nesterov <oleg@redhat.com> wrote:
-> On 05/17, Aleksa Sarai wrote:
-> > On 2019-05-16, Oleg Nesterov <oleg@redhat.com> wrote:
-> > > On 05/16, Christian Brauner wrote:
-> > > > With the introduction of pidfds through CLONE_PIDFD it is possible =
-to
-> > > > created pidfds at process creation time.
+On 05/17, Aleksa Sarai wrote:
+>
+> On 2019-05-16, Oleg Nesterov <oleg@redhat.com> wrote:
+> > On 05/17, Aleksa Sarai wrote:
+> > > On 2019-05-16, Oleg Nesterov <oleg@redhat.com> wrote:
+> > > > On 05/16, Christian Brauner wrote:
+> > > > > With the introduction of pidfds through CLONE_PIDFD it is possible to
+> > > > > created pidfds at process creation time.
+> > > >
+> > > > Now I am wondering why do we need CLONE_PIDFD, you can just do
+> > > >
+> > > > 	pid = fork();
+> > > > 	pidfd_open(pid);
 > > >
-> > > Now I am wondering why do we need CLONE_PIDFD, you can just do
-> > >
-> > > 	pid =3D fork();
-> > > 	pidfd_open(pid);
+> > > While the race window would be exceptionally short, there is the
+> > > possibility that the child will die
 > >
-> > While the race window would be exceptionally short, there is the
-> > possibility that the child will die
->=20
-> Yes,
->=20
-> > and their pid will be recycled
-> > before you do pidfd_open().
->=20
-> No.
->=20
-> Unless the caller's sub-thread does wait() before pidfd_open(), of course.
-> Or unless you do signal(SIGCHILD, SIG_IGN).
+> > Yes,
+> >
+> > > and their pid will be recycled
+> > > before you do pidfd_open().
+> >
+> > No.
+> >
+> > Unless the caller's sub-thread does wait() before pidfd_open(), of course.
+> > Or unless you do signal(SIGCHILD, SIG_IGN).
+>
+> What about CLONE_PARENT?
 
-What about CLONE_PARENT?
+I should have mentioned CLONE_PARENT ;)
 
---=20
-Aleksa Sarai
-Senior Software Engineer (Containers)
-SUSE Linux GmbH
-<https://www.cyphar.com/>
+Of course in this case the child can be reaped before pidfd_open(). But how often
+do you or other people use clone(CLONE_PARENT) ? not to mention you can trivially
+eliminate/detect this race if you really need this.
 
---ndso2fpbrge26y3v
-Content-Type: application/pgp-signature; name="signature.asc"
+Don't get me wrong, I am not trying to say that CLONE_PIDFD is a bad idea.
 
------BEGIN PGP SIGNATURE-----
+But to me pidfd_open() is much more useful. Say, as a perl programmer I can easily
+use pidfd_open(), but not CLONE_PIDFD.
 
-iQIzBAABCAAdFiEEb6Gz4/mhjNy+aiz1Snvnv3Dem58FAlzdfcIACgkQSnvnv3De
-m5+LBg//TwYfNfdVTd12qfs8hOPFa2sx2DG90Wu3gEQ0F/cxogi+efP+RY/o+vPT
-i0FYUiX+aGQ5bpWOfMVytL5PElsRY03f8GZSbweGW0m2y7Kb2cH+wx6qxe2s4RKI
-JiNQ6UEIZcAHybLLKlbSaiIYMO1xmZxALchF/Nopq4lVDxpEKhOd8tJaZ5MWTQpi
-WCGuVct2Mq+z2FVkdRZl0CXoSf4usXm/bGe/3P1Z/6ZllIwheasZP5whVSybpQa/
-oDYZPJOHaPtKJ1DrXO3Qx5j17hltS97pT4DPWi/ad3AqMgHTdFoeuJOSLJzYZ3/d
-XFiu4svN/b+dzLj75k+ki4HwbUln+Zz0mnHkgLRYUWC9a7j3bOf2qBxx3eWCIhbz
-rRnc+kSy0Qu44pli5inNmPJF66MxVgMkvJtq1fmderaaywkBDjcgrsc7M9ScxUbW
-CfPKBIhSZgmfUYqG+NCGXcgJEv4iI3xkFwWfOXGnCjYSoQkgIcJvszd3cVwacLX9
-KImzTDjcb50CuNFbYtL5nOHjXl5cHDtsvASzSFZ1FIBZAwiXXnqQE2/byust72VY
-WpysP1WuZmkwYLs13DebotUCbSQsvFvyZO6DXuY7JgYXz+rSCdTF4+vG7mjqg3Uo
-UZk1XcunD1in53UE3nG2qfE9ayfhvwq6wQ+iSDdyfhDa9ocBjg8=
-=utbj
------END PGP SIGNATURE-----
-
---ndso2fpbrge26y3v--
+Oleg.
