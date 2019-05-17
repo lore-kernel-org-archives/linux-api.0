@@ -1,47 +1,90 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH 0/4] uapi, vfs: Change the mount API UAPI [ver #2]
-Date: Fri, 17 May 2019 09:27:14 +0200
-Message-ID: <16C5B24F-2D1B-4AD3-BFEC-38BE8FE6AE1A@brauner.io>
-References: <F67AF221-C576-4424-88D7-7C6074D0A6C6@brauner.io> <155800752418.4037.9567789434648701032.stgit@warthog.procyon.org.uk> <20190516162259.GB17978@ZenIV.linux.org.uk> <20190516163151.urrmrueugockxtdy@brauner.io> <20190516165021.GD17978@ZenIV.linux.org.uk> <11455.1558077206@warthog.procyon.org.uk>
-Mime-Version: 1.0
+From: Felipe Gasper <felipe@felipegasper.com>
+Subject: Re: [PATCH] Add UNIX_DIAG_UID to Netlink UNIX socket diagnostics.
+Date: Fri, 17 May 2019 10:11:38 -0400
+Message-ID: <AF68C2F5-1E59-44D4-BC63-9C988C278174@felipegasper.com>
+References: <20190517032505.19921-1-felipe@felipegasper.com>
+ <CALCETrUaTamZ1ZGbWpu+4kDAEFRqyESoa_4tgwpAmMh3NVQ4pQ@mail.gmail.com>
+Mime-Version: 1.0 (Mac OS X Mail 12.4 \(3445.104.11\))
 Content-Type: text/plain;
- charset=utf-8
+        charset=utf-8
 Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <11455.1558077206@warthog.procyon.org.uk>
+In-Reply-To: <CALCETrUaTamZ1ZGbWpu+4kDAEFRqyESoa_4tgwpAmMh3NVQ4pQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-Cc: dhowells@redhat.com, Al Viro <viro@zeniv.linux.org.uk>, torvalds@linux-foundation.org, Arnd Bergmann <arnd@arndb.de>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api <linux-api@vger.kernel.org>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: "David S. Miller" <davem@davemloft.net>, Al Viro <viro@zeniv.linux.org.uk>, LKML <linux-kernel@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On May 17, 2019 9:13:26 AM GMT+02:00, David Howells <dhowells@redhat=2Ecom>=
- wrote:
->Christian Brauner <christian@brauner=2Eio> wrote:
->
->> If you still prefer to have cloexec flags
->> for the 4 new syscalls then yes,
->> if they could at least all have the same name
->> (FSMOUNT_CLOEXEC?) that would be good=2E
->
->They don't all have the same value (see OPEN_TREE_CLOEXEC)=2E
->
->Note that I also don't want to blindly #define them to O_CLOEXEC
->because it's
->not necessarily the same value on all arches=2E  Currently it can be
->02000000,
->010000000 or 0x400000 for instance, which means that if it's sharing a
->mask
->with other flags, at least three bits have to be reserved for it or we
->have to
->have arch-dependent bit juggling=2E
 
+> On May 17, 2019, at 12:59 AM, Andy Lutomirski <luto@kernel.org> wrote:
+>=20
+>> On May 16, 2019, at 8:25 PM, Felipe <felipe@felipegasper.com> wrote:
+>>=20
+>> Author: Felipe Gasper <felipe@felipegasper.com>
+>> Date:   Thu May 16 12:16:53 2019 -0500
+>>=20
+>>   Add UNIX_DIAG_UID to Netlink UNIX socket diagnostics.
+>>=20
+>>   This adds the ability for Netlink to report a socket=E2=80=99s UID =
+along with the
+>>   other UNIX socket diagnostic information that is already available. =
+This will
+>>   allow diagnostic tools greater insight into which users control =
+which socket.
+>>=20
+>>   Signed-off-by: Felipe Gasper <felipe@felipegasper.com>
+>>=20
+>> diff --git a/include/uapi/linux/unix_diag.h =
+b/include/uapi/linux/unix_diag.h
+>> index 5c502fd..a198857 100644
+>> --- a/include/uapi/linux/unix_diag.h
+>> +++ b/include/uapi/linux/unix_diag.h
+>> @@ -20,6 +20,7 @@ struct unix_diag_req {
+>> #define UDIAG_SHOW_ICONS    0x00000008    /* show pending connections =
+*/
+>> #define UDIAG_SHOW_RQLEN    0x00000010    /* show skb receive queue =
+len */
+>> #define UDIAG_SHOW_MEMINFO    0x00000020    /* show memory info of a =
+socket */
+>> +#define UDIAG_SHOW_UID        0x00000040    /* show socket's UID */
+>>=20
+>> struct unix_diag_msg {
+>>   __u8    udiag_family;
+>> @@ -40,6 +41,7 @@ enum {
+>>   UNIX_DIAG_RQLEN,
+>>   UNIX_DIAG_MEMINFO,
+>>   UNIX_DIAG_SHUTDOWN,
+>> +    UNIX_DIAG_UID,
+>>=20
+>>   __UNIX_DIAG_MAX,
+>> };
+>> diff --git a/net/unix/diag.c b/net/unix/diag.c
+>> index 3183d9b..011f56c 100644
+>> --- a/net/unix/diag.c
+>> +++ b/net/unix/diag.c
+>> @@ -110,6 +110,11 @@ static int sk_diag_show_rqlen(struct sock *sk, =
+struct sk_buff *nlskb)
+>>   return nla_put(nlskb, UNIX_DIAG_RQLEN, sizeof(rql), &rql);
+>> }
+>>=20
+>> +static int sk_diag_dump_uid(struct sock *sk, struct sk_buff *nlskb)
+>> +{
+>> +    return nla_put(nlskb, UNIX_DIAG_UID, sizeof(kuid_t), =
+&(sk->sk_uid));
+>=20
+> That type is called *k* uid_t because it=E2=80=99s internal to the =
+kernel. You
+> probably want from_kuid_munged(), which will fix it up for an
+> appropriate userns.  Presumably you want sk=E2=80=99s netns=E2=80=99s =
+userns.
 
-Ugh=2E Right, I forgot about that entirely=2E
+Thank you for pointing this out.
 
-Christian
+Would it suffice to get the userns as: =E2=80=9Csk_user_ns(sk)=E2=80=9D?
 
->
->One thing I like about your approach of just making them O_CLOEXEC by
->default
->and removing the constants is that it avoids this mess entirely=2E
->
->David
+Or would it be better to pass struct netlink_callback *cb from =
+unix_diag_dump() to sk_diag_dump() to sk_diag_fill(), then to the new =
+function to add the UID?
+
+cheers,
+-Felipe Gasper=
