@@ -1,61 +1,72 @@
-From: Wu Hao <hao.wu@intel.com>
-Subject: Re: [PATCH v2 05/18] Documentation: fpga: dfl: add descriptions for
- virtualization and new interfaces.
-Date: Fri, 17 May 2019 12:11:16 +0800
-Message-ID: <20190517041116.GC20569@hao-dev>
-References: <1556528151-17221-1-git-send-email-hao.wu@intel.com>
- <1556528151-17221-6-git-send-email-hao.wu@intel.com>
- <CANk1AXQSL8k=FOLv4_rLfRHBqOi=CW=yP3O8ch4VEa25cj9+Cw@mail.gmail.com>
- <CANk1AXQCp2ozUQDWz__MuiUeDLvGvrfqj3KUYmBa5Z34oxG8NQ@mail.gmail.com>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH] Add UNIX_DIAG_UID to Netlink UNIX socket diagnostics.
+Date: Thu, 16 May 2019 21:59:03 -0700
+Message-ID: <CALCETrUaTamZ1ZGbWpu+4kDAEFRqyESoa_4tgwpAmMh3NVQ4pQ@mail.gmail.com>
+References: <20190517032505.19921-1-felipe@felipegasper.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CANk1AXQCp2ozUQDWz__MuiUeDLvGvrfqj3KUYmBa5Z34oxG8NQ@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alan Tull <atull@kernel.org>
-Cc: Moritz Fischer <mdf@kernel.org>, linux-fpga@vger.kernel.org, linux-kernel <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Xu Yilun <yilun.xu@intel.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20190517032505.19921-1-felipe@felipegasper.com>
+Sender: netdev-owner@vger.kernel.org
+To: Felipe <felipe@felipegasper.com>
+Cc: "David S. Miller" <davem@davemloft.net>, Al Viro <viro@zeniv.linux.org.uk>, LKML <linux-kernel@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 16, 2019 at 12:53:00PM -0500, Alan Tull wrote:
-> On Thu, May 16, 2019 at 12:36 PM Alan Tull <atull@kernel.org> wrote:
-> >
-> > On Mon, Apr 29, 2019 at 4:12 AM Wu Hao <hao.wu@intel.com> wrote:
-> 
-> Hi Hao,
-> 
-> Most of this patchset looks ready to go upstream or nearly so with
-> pretty straightforward changes .  Patches 17 and 18 need minor changes
-> and please change the scnprintf in the other patches.  The patches
-> that had nontrivial changes are the power and thermal ones involving
-> hwmon.  I'm hoping to send up the patchset minus the hwmon patches in
-> the next version if there's no unforseen issues.  If the hwmon patches
-> are ready then also, that's great, but otherwise those patches don't
-> need to hold up all the rest of the patchset.  How's that sound?
+> On May 16, 2019, at 8:25 PM, Felipe <felipe@felipegasper.com> wrote:
+>
+> Author: Felipe Gasper <felipe@felipegasper.com>
+> Date:   Thu May 16 12:16:53 2019 -0500
+>
+>    Add UNIX_DIAG_UID to Netlink UNIX socket diagnostics.
+>
+>    This adds the ability for Netlink to report a socket=E2=80=99s UID alo=
+ng with the
+>    other UNIX socket diagnostic information that is already available. Th=
+is will
+>    allow diagnostic tools greater insight into which users control which =
+socket.
+>
+>    Signed-off-by: Felipe Gasper <felipe@felipegasper.com>
+>
+> diff --git a/include/uapi/linux/unix_diag.h b/include/uapi/linux/unix_dia=
+g.h
+> index 5c502fd..a198857 100644
+> --- a/include/uapi/linux/unix_diag.h
+> +++ b/include/uapi/linux/unix_diag.h
+> @@ -20,6 +20,7 @@ struct unix_diag_req {
+> #define UDIAG_SHOW_ICONS    0x00000008    /* show pending connections */
+> #define UDIAG_SHOW_RQLEN    0x00000010    /* show skb receive queue len *=
+/
+> #define UDIAG_SHOW_MEMINFO    0x00000020    /* show memory info of a sock=
+et */
+> +#define UDIAG_SHOW_UID        0x00000040    /* show socket's UID */
+>
+> struct unix_diag_msg {
+>    __u8    udiag_family;
+> @@ -40,6 +41,7 @@ enum {
+>    UNIX_DIAG_RQLEN,
+>    UNIX_DIAG_MEMINFO,
+>    UNIX_DIAG_SHUTDOWN,
+> +    UNIX_DIAG_UID,
+>
+>    __UNIX_DIAG_MAX,
+> };
+> diff --git a/net/unix/diag.c b/net/unix/diag.c
+> index 3183d9b..011f56c 100644
+> --- a/net/unix/diag.c
+> +++ b/net/unix/diag.c
+> @@ -110,6 +110,11 @@ static int sk_diag_show_rqlen(struct sock *sk, struc=
+t sk_buff *nlskb)
+>    return nla_put(nlskb, UNIX_DIAG_RQLEN, sizeof(rql), &rql);
+> }
+>
+> +static int sk_diag_dump_uid(struct sock *sk, struct sk_buff *nlskb)
+> +{
+> +    return nla_put(nlskb, UNIX_DIAG_UID, sizeof(kuid_t), &(sk->sk_uid));
 
-Hi Alan
-
-Thanks for your time for reviewing this patchset.
-
-This sounds good to me. Only thing here is, I need to split the patch which
-updates documentation into 2 patches (to remove hwmon description in doc),
-but for sure, it should be very easy. :)
-
-Thanks
-Hao
-
-> 
-> Alan
-> 
-> > >
-> > > This patch adds virtualization support description for DFL based
-> > > FPGA devices (based on PCIe SRIOV), and introductions to new
-> > > interfaces added by new dfl private feature drivers.
-> > >
-> > > Signed-off-by: Xu Yilun <yilun.xu@intel.com>
-> > > Signed-off-by: Wu Hao <hao.wu@intel.com>
-> >
-> > Acked-by: Alan Tull <atull@kernel.org>
-> >
-> > Thanks,
-> > Alan
+That type is called *k* uid_t because it=E2=80=99s internal to the kernel. =
+You
+probably want from_kuid_munged(), which will fix it up for an
+appropriate userns.  Presumably you want sk=E2=80=99s netns=E2=80=99s usern=
+s.
