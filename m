@@ -1,99 +1,34 @@
-From: Christian Brauner <christian@brauner.io>
+From: David Howells <dhowells@redhat.com>
 Subject: Re: [PATCH 0/4] uapi, vfs: Change the mount API UAPI [ver #2]
-Date: Fri, 17 May 2019 09:01:42 +0200
-Message-ID: <F67AF221-C576-4424-88D7-7C6074D0A6C6@brauner.io>
-References: <155800752418.4037.9567789434648701032.stgit@warthog.procyon.org.uk> <20190516162259.GB17978@ZenIV.linux.org.uk> <20190516163151.urrmrueugockxtdy@brauner.io> <20190516165021.GD17978@ZenIV.linux.org.uk>
+Date: Fri, 17 May 2019 08:13:26 +0100
+Message-ID: <11455.1558077206@warthog.procyon.org.uk>
+References: <F67AF221-C576-4424-88D7-7C6074D0A6C6@brauner.io> <155800752418.4037.9567789434648701032.stgit@warthog.procyon.org.uk> <20190516162259.GB17978@ZenIV.linux.org.uk> <20190516163151.urrmrueugockxtdy@brauner.io> <20190516165021.GD17978@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain;
- charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190516165021.GD17978@ZenIV.linux.org.uk>
+In-Reply-To: <F67AF221-C576-4424-88D7-7C6074D0A6C6@brauner.io>
+Content-ID: <11454.1558077206.1@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Al Viro <viro@zeniv.linux.org.uk>
-Cc: David Howells <dhowells@redhat.com>, torvalds@linux-foundation.org, Arnd Bergmann <arnd@arndb.de>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api <linux-api@vger.kernel.org>
+To: Christian Brauner <christian@brauner.io>
+Cc: dhowells@redhat.com, Al Viro <viro@zeniv.linux.org.uk>, torvalds@linux-foundation.org, Arnd Bergmann <arnd@arndb.de>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On May 16, 2019 6:50:22 PM GMT+02:00, Al Viro <viro@zeniv=2Elinux=2Eorg=2Eu=
-k> wrote:
->[linux-abi cc'd]
->
->On Thu, May 16, 2019 at 06:31:52PM +0200, Christian Brauner wrote:
->> On Thu, May 16, 2019 at 05:22:59PM +0100, Al Viro wrote:
->> > On Thu, May 16, 2019 at 12:52:04PM +0100, David Howells wrote:
->> > >=20
->> > > Hi Linus, Al,
->> > >=20
->> > > Here are some patches that make changes to the mount API UAPI and
->two of
->> > > them really need applying, before -rc1 - if they're going to be
->applied at
->> > > all=2E
->> >=20
->> > I'm fine with 2--4, but I'm not convinced that cloexec-by-default
->crusade
->> > makes any sense=2E  Could somebody give coherent arguments in favour
->of
->> > abandoning the existing conventions?
->>=20
->> So as I said in the commit message=2E From a userspace perspective it's
->> more of an issue if one accidently leaks an fd to a task during exec=2E
->>=20
->> Also, most of the time one does not want to inherit an fd during an
->> exec=2E It is a hazzle to always have to specify an extra flag=2E
->>=20
->> As Al pointed out to me open() semantics are not going anywhere=2E
->Sure,
->> no argument there at all=2E
->> But the idea of making fds cloexec by default is only targeted at fds
->> that come from separate syscalls=2E fsopen(), open_tree_clone(), etc=2E
->they
->> all return fds independent of open() so it's really easy to have them
->> cloexec by default without regressing anyone and we also remove the
->need
->> for a bunch of separate flags for each syscall to turn them into
->> cloexec-fds=2E I mean, those for syscalls came with 4 separate flags to
->be
->> able to specify that the returned fd should be made cloexec=2E The
->other
->> way around, cloexec by default, fcntl() to remove the cloexec bit is
->way
->> saner imho=2E
->
->Re separate flags - it is, in principle, a valid argument=2E  OTOH, I'm
->not
->sure if they need to be separate - they all have the same value and
->I don't see any reason for that to change=2E=2E=2E
+Christian Brauner <christian@brauner.io> wrote:
 
-One last thing I'd like to point out is that
-we already have syscalls and ioctls that
-return cloexec fds=2E So the consistency
-argument is kinda dead=2E
+> If you still prefer to have cloexec flags
+> for the 4 new syscalls then yes,
+> if they could at least all have the same name
+> (FSMOUNT_CLOEXEC?) that would be good.
 
-If you still prefer to have cloexec flags
-for the 4 new syscalls then yes,
-if they could at least all have the same name
-(FSMOUNT_CLOEXEC?) that would be good=2E
+They don't all have the same value (see OPEN_TREE_CLOEXEC).
 
->
->Only tangentially related, but I wonder if something like
->close_range(from, to)
->would be a more useful approach=2E=2E=2E  That kind of open-coded loops i=
-s
->not
->rare in userland and kernel-side code can do them much cheaper=2E=20
->Something
->like
->	/* that exec is sensitive */
->	unshare(CLONE_FILES);
->	/* we don't want anything past stderr here */
->	close_range(3, ~0U);
->	execve(=2E=2E=2E=2E);
->on the userland side of thing=2E  Comments?
+Note that I also don't want to blindly #define them to O_CLOEXEC because it's
+not necessarily the same value on all arches.  Currently it can be 02000000,
+010000000 or 0x400000 for instance, which means that if it's sharing a mask
+with other flags, at least three bits have to be reserved for it or we have to
+have arch-dependent bit juggling.
 
-Said it before but, the list was mistyped so again:
-I think that's a great idea=2E
-I have a prototype for close_range(start, end, flags)=2E
-I'll wait after rc1 and then send it out=2E
+One thing I like about your approach of just making them O_CLOEXEC by default
+and removing the constants is that it avoids this mess entirely.
 
-Christian
+David
