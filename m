@@ -1,90 +1,83 @@
-From: Felipe Gasper <felipe@felipegasper.com>
-Subject: Re: [PATCH] Add UNIX_DIAG_UID to Netlink UNIX socket diagnostics.
-Date: Fri, 17 May 2019 10:11:38 -0400
-Message-ID: <AF68C2F5-1E59-44D4-BC63-9C988C278174@felipegasper.com>
-References: <20190517032505.19921-1-felipe@felipegasper.com>
- <CALCETrUaTamZ1ZGbWpu+4kDAEFRqyESoa_4tgwpAmMh3NVQ4pQ@mail.gmail.com>
-Mime-Version: 1.0 (Mac OS X Mail 12.4 \(3445.104.11\))
-Content-Type: text/plain;
-        charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+From: Roberto Sassu <roberto.sassu@huawei.com>
+Subject: [PATCH v3 0/2] initramfs: add support for xattrs in the initial ram disk
+Date: Fri, 17 May 2019 18:55:17 +0200
+Message-ID: <20190517165519.11507-1-roberto.sassu@huawei.com>
+Mime-Version: 1.0
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrUaTamZ1ZGbWpu+4kDAEFRqyESoa_4tgwpAmMh3NVQ4pQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: "David S. Miller" <davem@davemloft.net>, Al Viro <viro@zeniv.linux.org.uk>, LKML <linux-kernel@vger.kernel.org>, Network Development <netdev@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: viro@zeniv.linux.org.uk
+Cc: linux-security-module@vger.kernel.org, linux-integrity@vger.kernel.org, initramfs@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, zohar@linux.vnet.ibm.com, silviu.vlasceanu@huawei.com, dmitry.kasatkin@huawei.com, takondra@cisco.com, kamensky@cisco.com, hpa@zytor.com, arnd@arndb.de, rob@landley.net, james.w.mcmechan@gmail.com, niveditas98@gmail.com, Roberto Sassu <roberto.sassu@huawei.com>
 List-Id: linux-api@vger.kernel.org
 
+This patch set aims at solving the following use case: appraise files from
+the initial ram disk. To do that, IMA checks the signature/hash from the
+security.ima xattr. Unfortunately, this use case cannot be implemented
+currently, as the CPIO format does not support xattrs.
 
-> On May 17, 2019, at 12:59 AM, Andy Lutomirski <luto@kernel.org> wrote:
->=20
->> On May 16, 2019, at 8:25 PM, Felipe <felipe@felipegasper.com> wrote:
->>=20
->> Author: Felipe Gasper <felipe@felipegasper.com>
->> Date:   Thu May 16 12:16:53 2019 -0500
->>=20
->>   Add UNIX_DIAG_UID to Netlink UNIX socket diagnostics.
->>=20
->>   This adds the ability for Netlink to report a socket=E2=80=99s UID =
-along with the
->>   other UNIX socket diagnostic information that is already available. =
-This will
->>   allow diagnostic tools greater insight into which users control =
-which socket.
->>=20
->>   Signed-off-by: Felipe Gasper <felipe@felipegasper.com>
->>=20
->> diff --git a/include/uapi/linux/unix_diag.h =
-b/include/uapi/linux/unix_diag.h
->> index 5c502fd..a198857 100644
->> --- a/include/uapi/linux/unix_diag.h
->> +++ b/include/uapi/linux/unix_diag.h
->> @@ -20,6 +20,7 @@ struct unix_diag_req {
->> #define UDIAG_SHOW_ICONS    0x00000008    /* show pending connections =
-*/
->> #define UDIAG_SHOW_RQLEN    0x00000010    /* show skb receive queue =
-len */
->> #define UDIAG_SHOW_MEMINFO    0x00000020    /* show memory info of a =
-socket */
->> +#define UDIAG_SHOW_UID        0x00000040    /* show socket's UID */
->>=20
->> struct unix_diag_msg {
->>   __u8    udiag_family;
->> @@ -40,6 +41,7 @@ enum {
->>   UNIX_DIAG_RQLEN,
->>   UNIX_DIAG_MEMINFO,
->>   UNIX_DIAG_SHUTDOWN,
->> +    UNIX_DIAG_UID,
->>=20
->>   __UNIX_DIAG_MAX,
->> };
->> diff --git a/net/unix/diag.c b/net/unix/diag.c
->> index 3183d9b..011f56c 100644
->> --- a/net/unix/diag.c
->> +++ b/net/unix/diag.c
->> @@ -110,6 +110,11 @@ static int sk_diag_show_rqlen(struct sock *sk, =
-struct sk_buff *nlskb)
->>   return nla_put(nlskb, UNIX_DIAG_RQLEN, sizeof(rql), &rql);
->> }
->>=20
->> +static int sk_diag_dump_uid(struct sock *sk, struct sk_buff *nlskb)
->> +{
->> +    return nla_put(nlskb, UNIX_DIAG_UID, sizeof(kuid_t), =
-&(sk->sk_uid));
->=20
-> That type is called *k* uid_t because it=E2=80=99s internal to the =
-kernel. You
-> probably want from_kuid_munged(), which will fix it up for an
-> appropriate userns.  Presumably you want sk=E2=80=99s netns=E2=80=99s =
-userns.
+This proposal consists in marshaling pathnames and xattrs in a file called
+.xattr-list. They are unmarshaled by the CPIO parser after all files have
+been extracted, or before the next ram disk is processed.
 
-Thank you for pointing this out.
+The difference from v1 (https://lkml.org/lkml/2018/11/22/1182) is that all
+xattrs are stored in a single file and not per file (solves the file name
+limitation issue, as it is not necessary to add a suffix to files
+containing xattrs).
 
-Would it suffice to get the userns as: =E2=80=9Csk_user_ns(sk)=E2=80=9D?
+The difference with another proposal
+(https://lore.kernel.org/patchwork/cover/888071/) is that xattrs can be
+included in an image without changing the image format, as opposed to
+defining a new one. As seen from the discussion, if a new format has to be
+defined, it should fix the issues of the existing format, which requires
+more time.
 
-Or would it be better to pass struct netlink_callback *cb from =
-unix_diag_dump() to sk_diag_dump() to sk_diag_fill(), then to the new =
-function to add the UID?
+To fulfill both requirements, adding support for xattrs in a short time and
+defining a new image format properly, this patch set takes an incremental
+approach: it introduces a parser of xattrs that can be used either if
+xattrs are in a regular file or directly added to the image (this patch set
+reuses patch 9/15 of the existing proposal); in addition, it introduces a
+wrapper of the xattr parser, to read xattrs from a file.
 
-cheers,
--Felipe Gasper=
+The changes introduced by this patch set don't cause any compatibility
+issue: kernels without the xattr parser simply extracts .xattr-list and
+don't unmarshal xattrs; kernels with the xattr parser don't unmarshal
+xattrs if .xattr-list is not found in the image.
+
+>From the kernel space perspective, backporting this functionality to older
+kernels should be very easy. It is sufficient to add two calls to the new
+function do_readxattrs(). From the user space perspective, no change is
+required for the use case. A new dracut module (module-setup.sh) will
+execute:
+
+getfattr --absolute-names -d -h -R -e hex -m security.ima \
+    <file list> | xattr.awk -b > ${initdir}/.xattr-list
+
+where xattr.awk is the script that marshals xattrs (see patch 3/3). The
+same can be done with the initramfs-tools ram disk generator.
+
+Changelog
+
+v2:
+- replace ksys_lsetxattr() with kern_path() and vfs_setxattr()
+  (suggested by Jann Horn)
+- replace ksys_open()/ksys_read()/ksys_close() with
+  filp_open()/kernel_read()/fput()
+  (suggested by Jann Horn)
+- use path variable instead of name_buf in do_readxattrs()
+- set last byte of str to 0 in do_readxattrs()
+- call do_readxattrs() in do_name() before replacing an existing
+  .xattr-list
+- pass pathname to do_setxattrs()
+
+
+Mimi Zohar (1):
+  initramfs: set extended attributes
+
+Roberto Sassu (1):
+  initramfs: introduce do_readxattrs()
+
+ init/initramfs.c | 170 ++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 168 insertions(+), 2 deletions(-)
+
+-- 
+2.17.1
