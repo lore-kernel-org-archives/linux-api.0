@@ -1,112 +1,113 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH v1 1/2] pid: add pidfd_open()
-Date: Sat, 18 May 2019 12:04:46 +0200
-Message-ID: <20190518100435.c5bqpcnra53dsr6p@brauner.io>
-References: <20190516135944.7205-1-christian@brauner.io>
- <20190516224949.GA15401@localhost>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH v2] net: Add UNIX_DIAG_UID to Netlink UNIX socket diagnostics.
+Date: Sat, 18 May 2019 10:18:54 -0700
+Message-ID: <6CDA54A5-56FF-4B42-B6F5-762E72C3FC3B@amacapital.net>
+References: <20190518034820.16500-1-felipe@felipegasper.com>
+Mime-Version: 1.0 (1.0)
+Content-Type: text/plain;
+        charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190516224949.GA15401@localhost>
+In-Reply-To: <20190518034820.16500-1-felipe@felipegasper.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Joel Fernandes <joel@joelfernandes.org>
-Cc: jannh@google.com, oleg@redhat.com, viro@zeniv.linux.org.uk, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, arnd@arndb.de, akpm@linux-foundation.org, cyphar@cyphar.com, dhowells@redhat.com, ebiederm@xmission.com, elena.reshetova@intel.com, keescook@chromium.org, luto@amacapital.net, luto@kernel.org, tglx@linutronix.de, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.orgg, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, linux-sh@vger.kernel.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-kselftest@vger.kernel.org, dancol@google.com, serge@hallyn.com, su
+To: Felipe Gasper <felipe@felipegasper.com>
+Cc: davem@davemloft.net, viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, May 18, 2019 at 05:48:03AM -0400, Joel Fernandes wrote:
-> Hi Christian,
-> 
-> For next revision, could you also CC surenb@google.com as well? He is also
-> working on the low memory killer. And also suggest CC to
-> kernel-team@android.com. And mentioned some comments below, thanks.
 
-Yip, totally. Just added them both to my Cc list. :)
-(I saw you added Suren manually. I added the Android kernel team now too.)
 
-> 
-> On Thu, May 16, 2019 at 03:59:42PM +0200, Christian Brauner wrote:
-> [snip]  
-> > diff --git a/kernel/pid.c b/kernel/pid.c
-> > index 20881598bdfa..4afca3d6dcb8 100644
-> > --- a/kernel/pid.c
-> > +++ b/kernel/pid.c
-> > @@ -38,6 +38,7 @@
-> >  #include <linux/syscalls.h>
-> >  #include <linux/proc_ns.h>
-> >  #include <linux/proc_fs.h>
-> > +#include <linux/sched/signal.h>
-> >  #include <linux/sched/task.h>
-> >  #include <linux/idr.h>
-> >  
-> > @@ -451,6 +452,55 @@ struct pid *find_ge_pid(int nr, struct pid_namespace *ns)
-> >  	return idr_get_next(&ns->idr, &nr);
-> >  }
-> >  
-> > +/**
-> > + * pidfd_open() - Open new pid file descriptor.
-> > + *
-> > + * @pid:   pid for which to retrieve a pidfd
-> > + * @flags: flags to pass
-> > + *
-> > + * This creates a new pid file descriptor with the O_CLOEXEC flag set for
-> > + * the process identified by @pid. Currently, the process identified by
-> > + * @pid must be a thread-group leader. This restriction currently exists
-> > + * for all aspects of pidfds including pidfd creation (CLONE_PIDFD cannot
-> > + * be used with CLONE_THREAD) and pidfd polling (only supports thread group
-> > + * leaders).
-> > + *
-> > + * Return: On success, a cloexec pidfd is returned.
-> > + *         On error, a negative errno number will be returned.
-> > + */
-> > +SYSCALL_DEFINE2(pidfd_open, pid_t, pid, unsigned int, flags)
-> > +{
-> > +	int fd, ret;
-> > +	struct pid *p;
-> > +	struct task_struct *tsk;
-> > +
-> > +	if (flags)
-> > +		return -EINVAL;
-> > +
-> > +	if (pid <= 0)
-> > +		return -EINVAL;
-> > +
-> > +	p = find_get_pid(pid);
-> > +	if (!p)
-> > +		return -ESRCH;
-> > +
-> > +	ret = 0;
-> > +	rcu_read_lock();
-> > +	/*
-> > +	 * If this returns non-NULL the pid was used as a thread-group
-> > +	 * leader. Note, we race with exec here: If it changes the
-> > +	 * thread-group leader we might return the old leader.
-> > +	 */
-> > +	tsk = pid_task(p, PIDTYPE_TGID);
-> 
-> Just trying to understand the comment here. The issue is that we might either
-> return the new leader, or the old leader depending on the overlap with
-> concurrent de_thread right? In either case, we don't care though.
-> 
-> I suggest to remove the "Note..." part of the comment since it doesn't seem the
-> race is relevant here unless we are doing something else with tsk in the
-> function, but if you want to keep it that's also fine. Comment text should
-> probably should be 'return the new leader' though.
+> On May 17, 2019, at 8:48 PM, Felipe Gasper <felipe@felipegasper.com> wrote=
+:
+>=20
+> Author: Felipe Gasper <felipe@felipegasper.com>
+> Date:   Fri May 17 16:54:40 2019 -0500
+>=20
+>   net: Add UNIX_DIAG_UID to Netlink UNIX socket diagnostics.
+>=20
+>   This adds the ability for Netlink to report a socket=E2=80=99s UID along=
+ with the
+>   other UNIX diagnostic information that is already available. This will
+>   allow diagnostic tools greater insight into which users control which so=
+cket.
+>=20
+>   Signed-off-by: Felipe Gasper <felipe@felipegasper.com>
+>=20
+> diff --git a/include/uapi/linux/unix_diag.h b/include/uapi/linux/unix_diag=
+.h
+> index 5c502fd..a198857 100644
+> --- a/include/uapi/linux/unix_diag.h
+> +++ b/include/uapi/linux/unix_diag.h
+> @@ -20,6 +20,7 @@ struct unix_diag_req {
+> #define UDIAG_SHOW_ICONS    0x00000008    /* show pending connections */
+> #define UDIAG_SHOW_RQLEN    0x00000010    /* show skb receive queue len */=
 
-Nah, I actually removed the comment already independently (cf. see [1]).
+> #define UDIAG_SHOW_MEMINFO    0x00000020    /* show memory info of a socke=
+t */
+> +#define UDIAG_SHOW_UID        0x00000040    /* show socket's UID */
+>=20
+> struct unix_diag_msg {
+>    __u8    udiag_family;
+> @@ -40,6 +41,7 @@ enum {
+>    UNIX_DIAG_RQLEN,
+>    UNIX_DIAG_MEMINFO,
+>    UNIX_DIAG_SHUTDOWN,
+> +    UNIX_DIAG_UID,
+>=20
+>    __UNIX_DIAG_MAX,
+> };
+> diff --git a/net/unix/diag.c b/net/unix/diag.c
+> index 3183d9b..e40f348 100644
+> --- a/net/unix/diag.c
+> +++ b/net/unix/diag.c
+> @@ -4,9 +4,11 @@
+> #include <linux/unix_diag.h>
+> #include <linux/skbuff.h>
+> #include <linux/module.h>
+> +#include <linux/uidgid.h>
+> #include <net/netlink.h>
+> #include <net/af_unix.h>
+> #include <net/tcp_states.h>
+> +#include <net/sock.h>
+>=20
+> static int sk_diag_dump_name(struct sock *sk, struct sk_buff *nlskb)
+> {
+> @@ -110,6 +112,12 @@ static int sk_diag_show_rqlen(struct sock *sk, struct=
+ sk_buff *nlskb)
+>    return nla_put(nlskb, UNIX_DIAG_RQLEN, sizeof(rql), &rql);
+> }
+>=20
+> +static int sk_diag_dump_uid(struct sock *sk, struct sk_buff *nlskb)
+> +{
+> +    uid_t uid =3D from_kuid_munged(sk_user_ns(sk), sock_i_uid(sk));
+> +    return nla_put(nlskb, UNIX_DIAG_UID, sizeof(uid_t), &uid);
 
-[1]: https://git.kernel.org/pub/scm/linux/kernel/git/brauner/linux.git/commit/?h=pidfd_open&id=dcfc98c2d957bf3ac14b06414cb2cf4c673fc297
-> 
-> > +	if (!tsk)
-> > +		ret = -ESRCH;
-> 
-> Perhaps -EINVAL?  AFAICS, this can only happen if a CLONE_THREAD pid was
-> passed as argument to pidfd_open which is invalid. But let me know what you
-> had in mind..
+This still looks wrong. You=E2=80=99re reporting the uid of the socket as se=
+en by that socket.  Presumably you actually want the uid of the socket as se=
+en by the *diagnostic* socket. This might be sk_user_ns(nlskb->sk).
 
-Hm, from the kernel's perspective ESRCH is correct but I guess EINVAL is
-nicer for userspace. So I don't have objections to using EINVAL. My
-first version did too I think.
+You can test this with a command like unshare -U -r nc -l 12345 run as no -r=
+oot. Then run you user diagnostic tool to find the uid of the socket. It sho=
+uld not be zero. Similarly, if you run unshare -U -r bash and then open a so=
+cket and run your diagnostic tool, both from that same session, you should s=
+ee 0 as the uid since bash and all its children think they=E2=80=99re uid 0.=
 
-Thanks!
-Christian
+
+> +}
+
+> +
+> static int sk_diag_fill(struct sock *sk, struct sk_buff *skb, struct unix_=
+diag_req *req,
+>        u32 portid, u32 seq, u32 flags, int sk_ino)
+> {
+> @@ -156,6 +164,10 @@ static int sk_diag_fill(struct sock *sk, struct sk_bu=
+ff *skb, struct unix_diag_r
+>    if (nla_put_u8(skb, UNIX_DIAG_SHUTDOWN, sk->sk_shutdown))
+>        goto out_nlmsg_trim;
+>=20
+> +    if ((req->udiag_show & UDIAG_SHOW_UID) &&
+> +        sk_diag_dump_uid(sk, skb))
+> +        goto out_nlmsg_trim;
+> +
+>    nlmsg_end(skb, nlh);
+>    return 0;
+>=20
