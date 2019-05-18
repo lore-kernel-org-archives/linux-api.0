@@ -1,43 +1,83 @@
-From: Rob Landley <rob@landley.net>
-Subject: Re: [PATCH v3 2/2] initramfs: introduce do_readxattrs()
-Date: Fri, 17 May 2019 21:16:04 -0500
-Message-ID: <a0afd58f-c682-66b5-7478-c405a179d72a@landley.net>
-References: <20190517165519.11507-1-roberto.sassu@huawei.com>
- <20190517165519.11507-3-roberto.sassu@huawei.com>
- <CD9A4F89-7CA5-4329-A06A-F8DEB87905A5@zytor.com>
- <69ef1f55-9fc1-7ee0-371f-3dbc77551dc0@zytor.com>
+From: Felipe Gasper <felipe@felipegasper.com>
+Subject: [PATCH v2] net: Add UNIX_DIAG_UID to Netlink UNIX socket diagnostics.
+Date: Fri, 17 May 2019 22:48:20 -0500
+Message-ID: <20190518034820.16500-1-felipe@felipegasper.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <69ef1f55-9fc1-7ee0-371f-3dbc77551dc0@zytor.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: "H. Peter Anvin" <hpa@zytor.com>, Roberto Sassu <roberto.sassu@huawei.com>, viro@zeniv.linux.org.uk
-Cc: linux-security-module@vger.kernel.org, linux-integrity@vger.kernel.org, initramfs@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, zohar@linux.vnet.ibm.com, silviu.vlasceanu@huawei.com, dmitry.kasatkin@huawei.com, takondra@cisco.com, kamensky@cisco.com, arnd@arndb.de, james.w.mcmechan@gmail.com, niveditas98@gmail.com
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Return-path: <netdev-owner@vger.kernel.org>
+Sender: netdev-owner@vger.kernel.org
+To: davem@davemloft.net, viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 5/17/19 4:41 PM, H. Peter Anvin wrote:
-> On 5/17/19 1:18 PM, hpa@zytor.com wrote:
->>
->> Ok... I just realized this does not work for a modular initramfs, composed at load time from multiple files, which is a very real problem. Should be easy enough to deal with: instead of one large file, use one companion file per source file, perhaps something like filename..xattrs (suggesting double dots to make it less likely to conflict with a "real" file.) No leading dot, as it makes it more likely that archivers will sort them before the file proper.
->>
->> A side benefit is that the format can be simpler as there is no need to encode the filename.
->>
->> A technically cleaner solution still, but which would need archiver modifications, would be to encode the xattrs as an optionally nameless file (just an empty string) with a new file mode value, immediately following the original file. The advantage there is that the archiver itself could support xattrs and other extended metadata (which has been requested elsewhere); the disadvantage obviously is that that it requires new support in the archiver. However, at least it ought to be simpler since it is still a higher protocol level than the cpio archive itself.
->>
->> There's already one special case in cpio, which is the "!!!TRAILER!!!" filename; although I don't think it is part of the formal spec, to the extent there is one, I would expect that in practice it is always encoded with a mode of 0, which incidentally could be used to unbreak the case where such a filename actually exists. So one way to support such extended metadata would be to set mode to 0 and use the filename to encode the type of metadata. I wonder how existing GNU or BSD cpio (the BSD one is better maintained these days) would deal with reading such a file; it would at least not be a regression if it just read it still, possibly with warnings. It could also be possible to use bits 17:16 in the mode, which are traditionally always zero (mode_t being 16 bits), but I believe are pre
- sent in most or all of the cpio formats for historical reasons. It might be accepted better by existing implementations to use one of these high bits combined with S_IFREG, I dont know.
->
-> 
-> Correction: it's just !!!TRAILER!!!.
+Author: Felipe Gasper <felipe@felipegasper.com>
+Date:   Fri May 17 16:54:40 2019 -0500
 
-We documented it as "TRAILER!!!" without leading !!!, and that its purpose is to
-flush hardlinks:
+   net: Add UNIX_DIAG_UID to Netlink UNIX socket diagnostics.
 
-  https://www.kernel.org/doc/Documentation/early-userspace/buffer-format.txt
+   This adds the ability for Netlink to report a socket’s UID along with the
+   other UNIX diagnostic information that is already available. This will
+   allow diagnostic tools greater insight into which users control which socket.
 
-That's what toybox cpio has been producing. Kernel consumes it just fine. Just
-checked busybox cpio and that's what they're producing as well...
+   Signed-off-by: Felipe Gasper <felipe@felipegasper.com>
 
-Rob
+diff --git a/include/uapi/linux/unix_diag.h b/include/uapi/linux/unix_diag.h
+index 5c502fd..a198857 100644
+--- a/include/uapi/linux/unix_diag.h
++++ b/include/uapi/linux/unix_diag.h
+@@ -20,6 +20,7 @@ struct unix_diag_req {
+ #define UDIAG_SHOW_ICONS	0x00000008	/* show pending connections */
+ #define UDIAG_SHOW_RQLEN	0x00000010	/* show skb receive queue len */
+ #define UDIAG_SHOW_MEMINFO	0x00000020	/* show memory info of a socket */
++#define UDIAG_SHOW_UID		0x00000040	/* show socket's UID */
+ 
+ struct unix_diag_msg {
+ 	__u8	udiag_family;
+@@ -40,6 +41,7 @@ enum {
+ 	UNIX_DIAG_RQLEN,
+ 	UNIX_DIAG_MEMINFO,
+ 	UNIX_DIAG_SHUTDOWN,
++	UNIX_DIAG_UID,
+ 
+ 	__UNIX_DIAG_MAX,
+ };
+diff --git a/net/unix/diag.c b/net/unix/diag.c
+index 3183d9b..e40f348 100644
+--- a/net/unix/diag.c
++++ b/net/unix/diag.c
+@@ -4,9 +4,11 @@
+ #include <linux/unix_diag.h>
+ #include <linux/skbuff.h>
+ #include <linux/module.h>
++#include <linux/uidgid.h>
+ #include <net/netlink.h>
+ #include <net/af_unix.h>
+ #include <net/tcp_states.h>
++#include <net/sock.h>
+ 
+ static int sk_diag_dump_name(struct sock *sk, struct sk_buff *nlskb)
+ {
+@@ -110,6 +112,12 @@ static int sk_diag_show_rqlen(struct sock *sk, struct sk_buff *nlskb)
+ 	return nla_put(nlskb, UNIX_DIAG_RQLEN, sizeof(rql), &rql);
+ }
+ 
++static int sk_diag_dump_uid(struct sock *sk, struct sk_buff *nlskb)
++{
++	uid_t uid = from_kuid_munged(sk_user_ns(sk), sock_i_uid(sk));
++	return nla_put(nlskb, UNIX_DIAG_UID, sizeof(uid_t), &uid);
++}
++
+ static int sk_diag_fill(struct sock *sk, struct sk_buff *skb, struct unix_diag_req *req,
+ 		u32 portid, u32 seq, u32 flags, int sk_ino)
+ {
+@@ -156,6 +164,10 @@ static int sk_diag_fill(struct sock *sk, struct sk_buff *skb, struct unix_diag_r
+ 	if (nla_put_u8(skb, UNIX_DIAG_SHUTDOWN, sk->sk_shutdown))
+ 		goto out_nlmsg_trim;
+ 
++	if ((req->udiag_show & UDIAG_SHOW_UID) &&
++	    sk_diag_dump_uid(sk, skb))
++		goto out_nlmsg_trim;
++
+ 	nlmsg_end(skb, nlh);
+ 	return 0;
+ 
