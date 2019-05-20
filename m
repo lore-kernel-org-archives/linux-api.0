@@ -1,91 +1,224 @@
-From: Roberto Sassu <roberto.sassu@huawei.com>
-Subject: Re: [PATCH v3 2/2] initramfs: introduce do_readxattrs()
-Date: Mon, 20 May 2019 11:39:46 +0200
-Message-ID: <7bdca169-7a01-8c55-40e4-a832e876a0e5@huawei.com>
-References: <20190517165519.11507-1-roberto.sassu@huawei.com>
- <20190517165519.11507-3-roberto.sassu@huawei.com>
- <CD9A4F89-7CA5-4329-A06A-F8DEB87905A5@zytor.com>
- <20190517210219.GA5998@rani.riverdale.lan>
- <d48f35a1-aab1-2f20-2e91-5e81a84b107f@zytor.com>
- <20190517221731.GA11358@rani.riverdale.lan>
+From: Aleksa Sarai <cyphar@cyphar.com>
+Subject: [PATCH RFC v8 00/10] namei: resolveat(2) path resolution restrictions
+Date: Mon, 20 May 2019 23:32:55 +1000
+Message-ID: <20190520133305.11925-1-cyphar@cyphar.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190517221731.GA11358@rani.riverdale.lan>
-Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Arvind Sankar <nivedita@alum.mit.edu>, "H. Peter Anvin" <hpa@zytor.com>
-Cc: viro@zeniv.linux.org.uk, linux-security-module@vger.kernel.org, linux-integrity@vger.kernel.org, initramfs@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, zohar@linux.vnet.ibm.com, silviu.vlasceanu@huawei.com, dmitry.kasatkin@huawei.com, takondra@cisco.com, kamensky@cisco.com, arnd@arndb.de, rob@landley.net, james.w.mcmechan@gmail.com, niveditas98@gmail.com
+To: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>
+Cc: Aleksa Sarai <cyphar@cyphar.com>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>, Christian Brauner <christian@brauner.io>, David Drysdale <drysdale@google.com>, Tycho Andersen <tycho@tycho.ws>, Kees Cook <keescook@chromium.org>, Linus Torvalds <torvalds@linux-foundation.org>, containers@lists.linux-foundation.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, linux-kselftest@vger.kernel.org, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 5/18/2019 12:17 AM, Arvind Sankar wrote:
-> On Fri, May 17, 2019 at 02:47:31PM -0700, H. Peter Anvin wrote:
->> On 5/17/19 2:02 PM, Arvind Sankar wrote:
->>> On Fri, May 17, 2019 at 01:18:11PM -0700, hpa@zytor.com wrote:
->>>>
->>>> Ok... I just realized this does not work for a modular initramfs, composed at load time from multiple files, which is a very real problem. Should be easy enough to deal with: instead of one large file, use one companion file per source file, perhaps something like filename..xattrs (suggesting double dots to make it less likely to conflict with a "real" file.) No leading dot, as it makes it more likely that archivers will sort them before the file proper.
->>> This version of the patch was changed from the previous one exactly to deal with this case --
->>> it allows for the bootloader to load multiple initramfs archives, each
->>> with its own .xattr-list file, and to have that work properly.
->>> Could you elaborate on the issue that you see?
->>>
->>
->> Well, for one thing, how do you define "cpio archive", each with its own
->> .xattr-list file? Second, that would seem to depend on the ordering, no,
->> in which case you depend critically on .xattr-list file following the
->> files, which most archivers won't do.
->>
->> Either way it seems cleaner to have this per file; especially if/as it
->> can be done without actually mucking up the format.
->>
->> I need to run, but I'll post a more detailed explanation of what I did
->> in a little bit.
->>
->> 	-hpa
->>
-> Not sure what you mean by how do I define it? Each cpio archive will
-> contain its own .xattr-list file with signatures for the files within
-> it, that was the idea.
-> 
-> You need to review the code more closely I think -- it does not depend
-> on the .xattr-list file following the files to which it applies.
-> 
-> The code first extracts .xattr-list as though it was a regular file. If
-> a later dupe shows up (presumably from a second archive, although the
-> patch will actually allow a second one in the same archive), it will
-> then process the existing .xattr-list file and apply the attributes
-> listed within it. It then will proceed to read the second one and
-> overwrite the first one with it (this is the normal behaviour in the
-> kernel cpio parser). At the end once all the archives have been
-> extracted, if there is an .xattr-list file in the rootfs it will be
-> parsed (it would've been the last one encountered, which hasn't been
-> parsed yet, just extracted).
-> 
-> Regarding the idea to use the high 16 bits of the mode field in
-> the header that's another possibility. It would just require additional
-> support in the program that actually creates the archive though, which
-> the current patch doesn't.
+Patch changelog:
+  v8:
+    * Default to O_CLOEXEC to match other new fd-creation syscalls
+      (users can always disable O_CLOEXEC afterwards). [Christian]
+    * Implement magic-link restrictions based on their mode. This is
+      done through a series of masks and is designed to avoid breaking
+      users -- most users don't have chained O_PATH fd re-opens.
+    * Add O_EMPTYPATH which allows for fd re-opening without needing
+      procfs. This would help some users of fd re-opening, and with the
+      changes to magic-link permissions we now have the right semantics
+      for such a flag.
+    * Add selftests for resolveat(2), O_EMPTYPATH, and the magic-link
+	  mode semantics.
+  v7:
+    * Remove execveat(2) support for these flags since it might
+      result in some pretty hairy security issues with setuid binaries.
+      There are other avenues we can go down to solve the issues with
+      CVE-2019-5736. [Jann]
+    * Reserve an additional bit in resolveat(2) for the eXecute access
+      mode if we end up implementing it.
+  v6:
+    * Drop O_* flags API to the new LOOKUP_ path scoping bits and
+      instead introduce resolveat(2) as an alternative method of
+      obtaining an O_PATH. The justification for this is included in
+      patch 6 (though switching back to O_* flags is trivial).
+  v5:
+    * In response to CVE-2019-5736 (one of the vectors showed that
+      open(2)+fexec(3) cannot be used to scope binfmt_script's implicit
+      open_exec()), AT_* flags have been re-added and are now piped
+      through to binfmt_script (and other binfmt_* that use open_exec)
+      but are only supported for execveat(2) for now.
+  v4:
+    * Remove AT_* flag reservations, as they require more discussion.
+    * Switch to path_is_under() over __d_path() for breakout checking.
+    * Make O_XDEV no longer block openat("/tmp", "/", O_XDEV) -- dirfd
+      is now ignored for absolute paths to match other flags.
+    * Improve the dirfd_path_init() refactor and move it to a separate
+      commit.
+    * Remove reference to Linux-capsicum.
+    * Switch "proclink" name to magic-link.
+  v3: [resend]
+  v2:
+    * Made ".." resolution with AT_THIS_ROOT and AT_BENEATH safe(r) with
+      some semi-aggressive __d_path checking (see patch 3).
+    * Disallowed "proclinks" with AT_THIS_ROOT and AT_BENEATH, in the
+      hopes they can be re-enabled once safe.
+    * Removed the selftests as they will be reimplemented as xfstests.
+    * Removed stat(2) support, since you can already get it through
+      O_PATH and fstatat(2).
 
-Yes, for adding signatures for a subset of files, no changes to the ram
-disk generator are necessary. Everything is done by a custom module. To
-support a generic use case, it would be necessary to modify the
-generator to execute getfattr and the awk script after files have been
-placed in the temporary directory.
+The need for some sort of control over VFS's path resolution (to avoid
+malicious paths resulting in inadvertent breakouts) has been a very
+long-standing desire of many userspace applications. This patchset is a
+revival of Al Viro's old AT_NO_JUMPS[1,2] patchset (which was a variant
+of David Drysdale's O_BENEATH patchset[3] which was a spin-off of the
+Capsicum project[4]) with a few additions and changes made based on the
+previous discussion within [5] as well as others I felt were useful.
 
-If I understood the new proposal correctly, it would be task for cpio to
-read file metadata after the content and create a new record for each
-file with mode 0x18000, type of metadata encoded in the file name and
-metadata as file content. I don't know how easy it would be to modify
-cpio. Probably the amount of changes would be reasonable.
+In line with the conclusions of the original discussion of AT_NO_JUMPS,
+the flag has been split up into separate flags. However, instead of
+being an openat(2) flag it is provided through a new syscall
+resolveat(2) which provides an alternative way to get an O_PATH file
+descriptor (the reasoning for doing this is included in patch 6). The
+following new LOOKUP_ flags are added:
 
-The kernel will behave in a similar way. It will call do_readxattrs() in
-do_copy() for each file. Since the only difference between the current
-and the new proposal would be two additional calls to do_readxattrs() in
-do_name() and unpack_to_rootfs(), maybe we could support both.
+  * LOOKUP_XDEV blocks all mountpoint crossings (upwards, downwards, or
+    through absolute links). Absolute pathnames alone in openat(2) do
+    not trigger this.
 
-Roberto
+  * LOOKUP_NO_MAGICLINKS blocks resolution through /proc/$pid/fd-style
+    links. This is done by blocking the usage of nd_jump_link() during
+	resolution in a filesystem. The term "magic-links" is used to match
+	with the only reference to these links in Documentation/, but I'm
+	happy to change the name.
+
+	It should be noted that this is different to the scope of
+	~LOOKUP_FOLLOW in that it applies to all path components. However,
+	you can do resolveat(NO_FOLLOW|NO_MAGICLINKS) on a magic-link and it
+	will *not* fail (assuming that no parent component was a
+	magic-link), and you will have an fd for the magic-link.
+
+  * LOOKUP_BENEATH disallows escapes to outside the starting dirfd's
+    tree, using techniques such as ".." or absolute links. Absolute
+    paths in openat(2) are also disallowed. Conceptually this flag is to
+    ensure you "stay below" a certain point in the filesystem tree --
+    but this requires some additional to protect against various races
+    that would allow escape using ".." (see patch 4 for more detail).
+
+    Currently LOOKUP_BENEATH implies LOOKUP_NO_MAGICLINKS, because it
+    can trivially beam you around the filesystem (breaking the
+    protection). In future, there might be similar safety checks as in
+    patch 4, but that requires more discussion.
+
+In addition, two new flags are added that expand on the above ideas:
+
+  * LOOKUP_NO_SYMLINKS does what it says on the tin. No symlink
+	resolution is allowed at all, including magic-links. Just as with
+	LOOKUP_NO_MAGICLINKS this can still be used with NOFOLLOW to open an
+	fd for the symlink as long as no parent path had a symlink
+	component.
+
+  * LOOKUP_IN_ROOT is an extension of LOOKUP_BENEATH that, rather than
+    blocking attempts to move past the root, forces all such movements
+    to be scoped to the starting point. This provides chroot(2)-like
+    protection but without the cost of a chroot(2) for each filesystem
+    operation, as well as being safe against race attacks that chroot(2)
+    is not.
+
+    If a race is detected (as with LOOKUP_BENEATH) then an error is
+    generated, and similar to LOOKUP_BENEATH it is not permitted to cross
+    magic-links with LOOKUP_IN_ROOT.
+
+    The primary need for this is from container runtimes, which
+    currently need to do symlink scoping in userspace[6] when opening
+    paths in a potentially malicious container. There is a long list of
+    CVEs that could have bene mitigated by having O_THISROOT (such as
+    CVE-2017-1002101, CVE-2017-1002102, CVE-2018-15664, and
+    CVE-2019-5736, just to name a few).
+
+And further, several semantics of file descriptor "re-opening" are now
+changed to prevent attacks like CVE-2019-5736 by restricting how
+magic-links can be resolved (based on their mode). This required some
+other changes to the semantics of the modes of O_PATH file descriptor's
+associated /proc/self/fd magic-links. resolveat(2) has the ability to
+further restrict re-opening of its own O_PATH fds, so that users can
+make even better use of this feature.
+
+Finally, O_EMPTYPATH was added so that users can do /proc/self/fd-style
+re-opening without depending on procfs. The new restricted semantics for
+magic-links are applied here too.
+
+Cc: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Eric Biederman <ebiederm@xmission.com>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: David Howells <dhowells@redhat.com>
+Cc: Jann Horn <jannh@google.com>
+Cc: Christian Brauner <christian@brauner.io>
+Cc: David Drysdale <drysdale@google.com>
+Cc: Tycho Andersen <tycho@tycho.ws>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: <containers@lists.linux-foundation.org>
+Cc: <linux-fsdevel@vger.kernel.org>
+Cc: <linux-api@vger.kernel.org>
+
+[1]: https://lwn.net/Articles/721443/
+[2]: https://lore.kernel.org/patchwork/patch/784221/
+[3]: https://lwn.net/Articles/619151/
+[4]: https://lwn.net/Articles/603929/
+[5]: https://lwn.net/Articles/723057/
+[6]: https://github.com/cyphar/filepath-securejoin
+
+Aleksa Sarai (10):
+  namei: obey trailing magic-link DAC permissions
+  procfs: switch magic-link modes to be more sane
+  open: O_EMPTYPATH: procfs-less file descriptor re-opening
+  namei: split out nd->dfd handling to dirfd_path_init
+  namei: O_BENEATH-style path resolution flags
+  namei: LOOKUP_IN_ROOT: chroot-like path resolution
+  namei: aggressively check for nd->root escape on ".." resolution
+  namei: resolveat(2) syscall
+  kselftest: save-and-restore errno to allow for %m formatting
+  selftests: add resolveat(2) selftests
+
+ arch/alpha/kernel/syscalls/syscall.tbl        |   1 +
+ arch/arm/tools/syscall.tbl                    |   1 +
+ arch/arm64/include/asm/unistd.h               |   2 +-
+ arch/arm64/include/asm/unistd32.h             |   3 +
+ arch/ia64/kernel/syscalls/syscall.tbl         |   1 +
+ arch/m68k/kernel/syscalls/syscall.tbl         |   1 +
+ arch/microblaze/kernel/syscalls/syscall.tbl   |   1 +
+ arch/mips/kernel/syscalls/syscall_n32.tbl     |   1 +
+ arch/mips/kernel/syscalls/syscall_n64.tbl     |   1 +
+ arch/mips/kernel/syscalls/syscall_o32.tbl     |   1 +
+ arch/parisc/kernel/syscalls/syscall.tbl       |   1 +
+ arch/powerpc/kernel/syscalls/syscall.tbl      |   1 +
+ arch/s390/kernel/syscalls/syscall.tbl         |   1 +
+ arch/sh/kernel/syscalls/syscall.tbl           |   1 +
+ arch/sparc/kernel/syscalls/syscall.tbl        |   1 +
+ arch/x86/entry/syscalls/syscall_32.tbl        |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl        |   1 +
+ arch/xtensa/kernel/syscalls/syscall.tbl       |   1 +
+ fs/fcntl.c                                    |   2 +-
+ fs/internal.h                                 |   1 +
+ fs/namei.c                                    | 397 ++++++++++++++---
+ fs/open.c                                     |  10 +-
+ fs/proc/base.c                                |  20 +-
+ fs/proc/fd.c                                  |  16 +-
+ fs/proc/namespaces.c                          |   2 +-
+ include/linux/fcntl.h                         |  10 +-
+ include/linux/fs.h                            |   4 +
+ include/linux/namei.h                         |   8 +
+ include/linux/types.h                         |   2 +-
+ include/uapi/asm-generic/fcntl.h              |   5 +
+ include/uapi/asm-generic/unistd.h             |   5 +-
+ include/uapi/linux/fcntl.h                    |  10 +
+ tools/testing/selftests/Makefile              |   1 +
+ tools/testing/selftests/kselftest.h           |  15 +
+ tools/testing/selftests/resolveat/.gitignore  |   1 +
+ tools/testing/selftests/resolveat/Makefile    |   6 +
+ tools/testing/selftests/resolveat/helpers.h   | 195 +++++++++
+ .../selftests/resolveat/linkmode_test.c       | 306 ++++++++++++++
+ .../selftests/resolveat/resolveat_test.c      | 400 ++++++++++++++++++
+ 39 files changed, 1350 insertions(+), 87 deletions(-)
+ create mode 100644 tools/testing/selftests/resolveat/.gitignore
+ create mode 100644 tools/testing/selftests/resolveat/Makefile
+ create mode 100644 tools/testing/selftests/resolveat/helpers.h
+ create mode 100644 tools/testing/selftests/resolveat/linkmode_test.c
+ create mode 100644 tools/testing/selftests/resolveat/resolveat_test.c
 
 -- 
-HUAWEI TECHNOLOGIES Duesseldorf GmbH, HRB 56063
-Managing Director: Bo PENG, Jian LI, Yanli SHI
+2.21.0
