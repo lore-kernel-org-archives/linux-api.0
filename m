@@ -1,52 +1,40 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [RFC 1/7] mm: introduce MADV_COOL
-Date: Mon, 20 May 2019 10:16:21 +0200
-Message-ID: <20190520081621.GV6836@dhcp22.suse.cz>
-References: <20190520035254.57579-1-minchan@kernel.org>
- <20190520035254.57579-2-minchan@kernel.org>
+From: Roberto Sassu <roberto.sassu@huawei.com>
+Subject: Re: [PATCH v3 2/2] initramfs: introduce do_readxattrs()
+Date: Mon, 20 May 2019 10:16:58 +0200
+Message-ID: <cee53f00-a216-0666-0774-0f3ebf1b1292@huawei.com>
+References: <20190517165519.11507-1-roberto.sassu@huawei.com>
+ <20190517165519.11507-3-roberto.sassu@huawei.com>
+ <CD9A4F89-7CA5-4329-A06A-F8DEB87905A5@zytor.com>
+ <20190517210219.GA5998@rani.riverdale.lan>
+ <20190517211014.GA9198@rani.riverdale.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190520035254.57579-2-minchan@kernel.org>
+In-Reply-To: <20190517211014.GA9198@rani.riverdale.lan>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Minchan Kim <minchan@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, linux-api@vger.kernel.org
+To: Arvind Sankar <nivedita@alum.mit.edu>
+Cc: hpa@zytor.com, viro@zeniv.linux.org.uk, linux-security-module@vger.kernel.org, linux-integrity@vger.kernel.org, initramfs@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, zohar@linux.vnet.ibm.com, silviu.vlasceanu@huawei.com, dmitry.kasatkin@huawei.com, takondra@cisco.com, kamensky@cisco.com, arnd@arndb.de, rob@landley.net, james.w.mcmechan@gmail.com, niveditas98@gmail.com
 List-Id: linux-api@vger.kernel.org
 
-[CC linux-api]
+On 5/17/2019 11:10 PM, Arvind Sankar wrote:
+> On Fri, May 17, 2019 at 05:02:20PM -0400, Arvind Sankar wrote:
+>> On Fri, May 17, 2019 at 01:18:11PM -0700, hpa@zytor.com wrote:
+>>>
+>>> Ok... I just realized this does not work for a modular initramfs, composed at load time from multiple files, which is a very real problem. Should be easy enough to deal with: instead of one large file, use one companion file per source file, perhaps something like filename..xattrs (suggesting double dots to make it less likely to conflict with a "real" file.) No leading dot, as it makes it more likely that archivers will sort them before the file proper.
+>> This version of the patch was changed from the previous one exactly to deal with this case --
+>> it allows for the bootloader to load multiple initramfs archives, each
+>> with its own .xattr-list file, and to have that work properly.
+>> Could you elaborate on the issue that you see?
+> Roberto, are you missing a changelog entry for v2->v3 change?
 
-On Mon 20-05-19 12:52:48, Minchan Kim wrote:
-> When a process expects no accesses to a certain memory range
-> it could hint kernel that the pages can be reclaimed
-> when memory pressure happens but data should be preserved
-> for future use.  This could reduce workingset eviction so it
-> ends up increasing performance.
-> 
-> This patch introduces the new MADV_COOL hint to madvise(2)
-> syscall. MADV_COOL can be used by a process to mark a memory range
-> as not expected to be used in the near future. The hint can help
-> kernel in deciding which pages to evict early during memory
-> pressure.
+The changelog for v1->v2 is missing.
 
-I do not want to start naming fight but MADV_COOL sounds a bit
-misleading. Everybody thinks his pages are cool ;). Probably MADV_COLD
-or MADV_DONTNEED_PRESERVE.
+Thanks
 
-> Internally, it works via deactivating memory from active list to
-> inactive's head so when the memory pressure happens, they will be
-> reclaimed earlier than other active pages unless there is no
-> access until the time.
+Roberto
 
-Could you elaborate about the decision to move to the head rather than
-tail? What should happen to inactive pages? Should we move them to the
-tail? Your implementation seems to ignore those completely. Why?
-
-What should happen for shared pages? In other words do we want to allow
-less privileged process to control evicting of shared pages with a more
-privileged one? E.g. think of all sorts of side channel attacks. Maybe
-we want to do the same thing as for mincore where write access is
-required.
 -- 
-Michal Hocko
-SUSE Labs
+HUAWEI TECHNOLOGIES Duesseldorf GmbH, HRB 56063
+Managing Director: Bo PENG, Jian LI, Yanli SHI
