@@ -1,49 +1,51 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH v2 1/2] pid: add pidfd_open()
-Date: Mon, 20 May 2019 16:59:16 +0200
-Message-ID: <CAK8P3a2u2gftAuzTfspAUCvWPPE0YVNOATFPN__tEQoO4GXg-g@mail.gmail.com>
-References: <20190520134605.29116-1-christian@brauner.io> <CAK8P3a1cZZ6SQe5mGjhga=MgTvCGF6OKyjvosR8J6z6EpH+rVA@mail.gmail.com>
- <20190520144822.xfaifawi65jus6ng@brauner.io>
+From: Suren Baghdasaryan <surenb@google.com>
+Subject: Re: [RFC 1/7] mm: introduce MADV_COOL
+Date: Mon, 20 May 2019 08:08:45 -0700
+Message-ID: <CAJuCfpE60ZOcpFfE6MpF0PBujK9sfeRjbkhUa243Bo9QmOoARg@mail.gmail.com>
+References: <20190520035254.57579-1-minchan@kernel.org> <20190520035254.57579-2-minchan@kernel.org>
+ <20190520081621.GV6836@dhcp22.suse.cz> <20190520081943.GW6836@dhcp22.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190520144822.xfaifawi65jus6ng@brauner.io>
+In-Reply-To: <20190520081943.GW6836@dhcp22.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian@brauner.io>
-Cc: Jann Horn <jannh@google.com>, Oleg Nesterov <oleg@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Linus Torvalds <torvalds@linux-foundation.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, cyphar@cyphar.com, David Howells <dhowells@redhat.com>, "Eric W . Biederman" <ebiederm@xmission.com>, "Reshetova, Elena" <elena.reshetova@intel.com>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Andy Lutomirski <luto@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, alpha <linux-alpha@vger.kernel.org>, Linux ARM <linux-arm-kernel@lists.infradead.org>, linux-ia64@vger.kernel.org, linux-m68k <linux-m68k@lists.linux-m68k.org>, linux-mips@vger.kernel.org, Parisc List <linux-parisc@v>
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Minchan Kim <minchan@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, May 20, 2019 at 4:48 PM Christian Brauner <christian@brauner.io> wrote:
+On Mon, May 20, 2019 at 1:19 AM Michal Hocko <mhocko@kernel.org> wrote:
 >
-> On Mon, May 20, 2019 at 04:37:03PM +0200, Arnd Bergmann wrote:
-> > On Mon, May 20, 2019 at 3:46 PM Christian Brauner <christian@brauner.io> wrote:
+> On Mon 20-05-19 10:16:21, Michal Hocko wrote:
+> > [CC linux-api]
+> >
+> > On Mon 20-05-19 12:52:48, Minchan Kim wrote:
+> > > When a process expects no accesses to a certain memory range
+> > > it could hint kernel that the pages can be reclaimed
+> > > when memory pressure happens but data should be preserved
+> > > for future use.  This could reduce workingset eviction so it
+> > > ends up increasing performance.
 > > >
-> > > In line with Arnd's recent changes to consolidate syscall numbers across
-> > > architectures, I have added the pidfd_open() syscall to all architectures
-> > > at the same time.
+> > > This patch introduces the new MADV_COOL hint to madvise(2)
+> > > syscall. MADV_COOL can be used by a process to mark a memory range
+> > > as not expected to be used in the near future. The hint can help
+> > > kernel in deciding which pages to evict early during memory
+> > > pressure.
 > >
-> > Thanks! I've checked that the ones you have added are all
-> > done correctly. However, double-checking that you got all of them,
-> > I noticed that you missed mips-o32 and mips-n64. With those added:
-> >
-> > Acked-by: Arnd Bergmann <arnd@arndb.de>
+> > I do not want to start naming fight but MADV_COOL sounds a bit
+> > misleading. Everybody thinks his pages are cool ;). Probably MADV_COLD
+> > or MADV_DONTNEED_PRESERVE.
 >
-> Perfect, will plumb mips-o32 and mips-n64 and resend once more with your
-> ack added.
-> Sidenote: You plan on merging the common syscall tables or will there be
-> a script to do this work per-arch in the future?
+> OK, I can see that you have used MADV_COLD for a different mode.
+> So this one is effectively a non destructive MADV_FREE alternative
+> so MADV_FREE_PRESERVE would sound like a good fit. Your MADV_COLD
+> in other patch would then be MADV_DONTNEED_PRESERVE. Right?
+>
 
-David Howells also asked about this. I think having a common table will
-be best in the long run, patches welcome.
+I agree that naming them this way would be more in-line with the
+existing API. Another good option IMO could be MADV_RECLAIM_NOW /
+MADV_RECLAIM_LAZY which might explain a bit better what they do but
+Michal's proposal is more consistent with the current API.
 
-As you noticed, there are still a few minor differences between the files
-on mips, arm, x86, alpha and s390, and we are missing the .tbl files
-for arm-compat and asm-generic, as well as an architecture independent
-script.
-
-Once that is all taken care of, we can move the entries for syscall
-403 and higher into a common file, and change the script to pick
-up the contents from there in addition to the architecture specific
-file.
-
-      Arnd
+> --
+> Michal Hocko
+> SUSE Labs
