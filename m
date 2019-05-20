@@ -1,8 +1,7 @@
 From: Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH v6 12/16] fscrypt: require that key be added when
- setting a v2 encryption policy
-Date: Mon, 20 May 2019 10:25:48 -0700
-Message-ID: <20190520172552.217253-13-ebiggers@kernel.org>
+Subject: [PATCH v6 15/16] ubifs: wire up new fscrypt ioctls
+Date: Mon, 20 May 2019 10:25:51 -0700
+Message-ID: <20190520172552.217253-16-ebiggers@kernel.org>
 References: <20190520172552.217253-1-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,119 +22,83 @@ List-Id: linux-api@vger.kernel.org
 
 From: Eric Biggers <ebiggers@google.com>
 
-By looking up the master keys in a filesystem-level keyring rather than
-in the calling processes' key hierarchy, it becomes possible for a user
-to set an encryption policy which refers to some key they don't actually
-know, then encrypt their files using that key.  Cryptographically this
-isn't much of a problem, but the semantics of this would be a bit weird.
-Thus, enforce that a v2 encryption policy can only be set if the user
-has previously added the key, or has capable(CAP_FOWNER).
+Wire up the new ioctls for adding and removing fscrypt keys to/from the
+filesystem, and the new ioctl for retrieving v2 encryption policies.
 
-We tolerate that this problem will continue to exist for v1 encryption
-policies, however; there is no way around that.
+FS_IOC_REMOVE_ENCRYPTION_KEY also required making UBIFS use
+fscrypt_drop_inode().
+
+For more details see Documentation/filesystems/fscrypt.rst and the
+fscrypt patches that added the implementation of these ioctls.
 
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
- fs/crypto/fscrypt_private.h |  3 +++
- fs/crypto/keyring.c         | 47 +++++++++++++++++++++++++++++++++++++
- fs/crypto/policy.c          |  6 +++++
- 3 files changed, 56 insertions(+)
+ fs/ubifs/ioctl.c | 16 ++++++++++++++++
+ fs/ubifs/super.c | 11 +++++++++++
+ 2 files changed, 27 insertions(+)
 
-diff --git a/fs/crypto/fscrypt_private.h b/fs/crypto/fscrypt_private.h
-index 5f679ba32cece..a398383ae9e34 100644
---- a/fs/crypto/fscrypt_private.h
-+++ b/fs/crypto/fscrypt_private.h
-@@ -411,6 +411,9 @@ extern struct key *
- fscrypt_find_master_key(struct super_block *sb,
- 			const struct fscrypt_key_specifier *mk_spec);
+diff --git a/fs/ubifs/ioctl.c b/fs/ubifs/ioctl.c
+index 6b05b3ec500e1..b2a67618bef91 100644
+--- a/fs/ubifs/ioctl.c
++++ b/fs/ubifs/ioctl.c
+@@ -204,6 +204,18 @@ long ubifs_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 	case FS_IOC_GET_ENCRYPTION_POLICY:
+ 		return fscrypt_ioctl_get_policy(file, (void __user *)arg);
  
-+extern int fscrypt_verify_key_added(struct super_block *sb,
-+				    const u8 identifier[FSCRYPT_KEY_IDENTIFIER_SIZE]);
++	case FS_IOC_GET_ENCRYPTION_POLICY_EX:
++		return fscrypt_ioctl_get_policy_ex(file, (void __user *)arg);
 +
- extern int __init fscrypt_init_keyring(void);
- extern void fscrypt_exit_keyring(void);
- 
-diff --git a/fs/crypto/keyring.c b/fs/crypto/keyring.c
-index 0a92f2998b437..92eadda419278 100644
---- a/fs/crypto/keyring.c
-+++ b/fs/crypto/keyring.c
-@@ -562,6 +562,53 @@ int fscrypt_ioctl_add_key(struct file *filp, void __user *_uarg)
++	case FS_IOC_ADD_ENCRYPTION_KEY:
++		return fscrypt_ioctl_add_key(file, (void __user *)arg);
++
++	case FS_IOC_REMOVE_ENCRYPTION_KEY:
++		return fscrypt_ioctl_remove_key(file, (const void __user *)arg);
++
++	case FS_IOC_GET_ENCRYPTION_KEY_STATUS:
++		return fscrypt_ioctl_get_key_status(file, (void __user *)arg);
++
+ 	default:
+ 		return -ENOTTY;
+ 	}
+@@ -221,6 +233,10 @@ long ubifs_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ 		break;
+ 	case FS_IOC_SET_ENCRYPTION_POLICY:
+ 	case FS_IOC_GET_ENCRYPTION_POLICY:
++	case FS_IOC_GET_ENCRYPTION_POLICY_EX:
++	case FS_IOC_ADD_ENCRYPTION_KEY:
++	case FS_IOC_REMOVE_ENCRYPTION_KEY:
++	case FS_IOC_GET_ENCRYPTION_KEY_STATUS:
+ 		break;
+ 	default:
+ 		return -ENOIOCTLCMD;
+diff --git a/fs/ubifs/super.c b/fs/ubifs/super.c
+index 04b8ecfd34701..ae026a7bb1a62 100644
+--- a/fs/ubifs/super.c
++++ b/fs/ubifs/super.c
+@@ -330,6 +330,16 @@ static int ubifs_write_inode(struct inode *inode, struct writeback_control *wbc)
+ 	return err;
  }
- EXPORT_SYMBOL_GPL(fscrypt_ioctl_add_key);
  
-+/*
-+ * Verify that the current user has added a master key with the given identifier
-+ * (returns -ENOKEY if not).  This is needed to prevent a user from encrypting
-+ * their files using some other user's key which they don't actually know.
-+ * Cryptographically this isn't much of a problem, but the semantics of this
-+ * would be a bit weird, so it's best to just forbid it.
-+ *
-+ * The system administrator (CAP_FOWNER) can override this, which should be
-+ * enough for any use cases where encryption policies are being set using keys
-+ * that were chosen ahead of time but aren't available at the moment.
-+ *
-+ * Note that the key may have already removed by the time this returns, but
-+ * that's okay; we just care whether the key was there at some point.
-+ *
-+ * Return: 0 if the key is added, -ENOKEY if it isn't, or another -errno code
-+ */
-+int fscrypt_verify_key_added(struct super_block *sb,
-+			     const u8 identifier[FSCRYPT_KEY_IDENTIFIER_SIZE])
++static int ubifs_drop_inode(struct inode *inode)
 +{
-+	struct fscrypt_key_specifier mk_spec;
-+	struct key *key, *mk_user;
-+	struct fscrypt_master_key *mk;
-+	int err;
++	int drop = generic_drop_inode(inode);
 +
-+	mk_spec.type = FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER;
-+	memcpy(mk_spec.u.identifier, identifier, FSCRYPT_KEY_IDENTIFIER_SIZE);
++	if (!drop)
++		drop = fscrypt_drop_inode(inode);
 +
-+	key = fscrypt_find_master_key(sb, &mk_spec);
-+	if (IS_ERR(key)) {
-+		err = PTR_ERR(key);
-+		goto out;
-+	}
-+	mk = key->payload.data[0];
-+	mk_user = find_master_key_user(mk);
-+	if (IS_ERR(mk_user)) {
-+		err = PTR_ERR(mk_user);
-+	} else {
-+		key_put(mk_user);
-+		err = 0;
-+	}
-+	key_put(key);
-+out:
-+	if (err == -ENOKEY && capable(CAP_FOWNER))
-+		err = 0;
-+	return err;
++	return drop;
 +}
 +
- static void shrink_dcache_inode(struct inode *inode)
+ static void ubifs_evict_inode(struct inode *inode)
  {
- 	struct dentry *dentry;
-diff --git a/fs/crypto/policy.c b/fs/crypto/policy.c
-index 3643156a511a7..8fb9f5ac5f8c0 100644
---- a/fs/crypto/policy.c
-+++ b/fs/crypto/policy.c
-@@ -211,6 +211,7 @@ static int set_encryption_policy(struct inode *inode,
- {
- 	union fscrypt_context ctx;
- 	int ctxsize;
-+	int err;
- 
- 	if (!fscrypt_supported_policy(policy))
- 		return -EINVAL;
-@@ -229,6 +230,11 @@ static int set_encryption_policy(struct inode *inode,
- 		 */
- 		pr_warn_once("%s (pid %d) is setting deprecated v1 encryption policy; recommend upgrading to v2.\n",
- 			     current->comm, current->pid);
-+	} else {
-+		err = fscrypt_verify_key_added(inode->i_sb,
-+					       policy->v2.master_key_identifier);
-+		if (err)
-+			return err;
- 	}
- 
- 	ctxsize = fscrypt_new_context_from_policy(&ctx, policy);
+ 	int err;
+@@ -1980,6 +1990,7 @@ const struct super_operations ubifs_super_operations = {
+ 	.free_inode    = ubifs_free_inode,
+ 	.put_super     = ubifs_put_super,
+ 	.write_inode   = ubifs_write_inode,
++	.drop_inode    = ubifs_drop_inode,
+ 	.evict_inode   = ubifs_evict_inode,
+ 	.statfs        = ubifs_statfs,
+ 	.dirty_inode   = ubifs_dirty_inode,
 -- 
 2.21.0.1020.gf2820cf01a-goog
