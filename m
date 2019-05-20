@@ -1,7 +1,7 @@
 From: Kirill Tkhai <ktkhai@virtuozzo.com>
-Subject: [PATCH v2 2/7] mm: Extend copy_vma()
-Date: Mon, 20 May 2019 17:00:12 +0300
-Message-ID: <155836081252.2441.9024100415314519956.stgit@localhost.localdomain>
+Subject: [PATCH v2 7/7] mm: Add process_vm_mmap()
+Date: Mon, 20 May 2019 17:00:39 +0300
+Message-ID: <155836083941.2441.1939229815005692644.stgit@localhost.localdomain>
 References: <155836064844.2441.10911127801797083064.stgit@localhost.localdomain>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -12,114 +12,300 @@ Sender: linux-kernel-owner@vger.kernel.org
 To: akpm@linux-foundation.org, dan.j.williams@intel.com, ktkhai@virtuozzo.com, mhocko@suse.com, keith.busch@intel.com, kirill.shutemov@linux.intel.com, alexander.h.duyck@linux.intel.com, ira.weiny@intel.com, andreyknvl@google.com, arunks@codeaurora.org, vbabka@suse.cz, cl@linux.com, riel@surriel.com, keescook@chromium.org, hannes@cmpxchg.org, npiggin@gmail.com, mathieu.desnoyers@efficios.com, shakeelb@google.com, guro@fb.com, aarcange@redhat.com, hughd@google.com, jglisse@redhat.com, mgorman@techsingularity.net, daniel.m.jordan@oracle.com, jannh@google.com, kilobyte@angband.pl, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org
 List-Id: linux-api@vger.kernel.org
 
-This prepares the function to copy a vma between
-two processes. Two new arguments are introduced.
+This adds a new syscall to duplicate a VMA of other
+process to current. Flag PVMMAP_FIXED may be specified,
+its meaning is similar to mmap()'s MAP_FIXED.
+
+VMA are merged on destination, i.e. if source task
+has VMA with address [start; end], and we map it sequentially
+twice:
+
+process_vm_mmap(@pid, start, start + (end - start)/2, ...);
+process_vm_mmap(@pid, start + (end - start)/2, end,   ...);
+
+the destination task will have single vma [start, end].
+
+v2:
+    Add PVMMAP_FIXED_NOREPLACE flag.
+    Use find_vma_without_flags() and may_mmap_overlapped_region() helpers.
+    Fix whitespaces.
+
+    Previous version has a possibility to duplicate VMA from
+    current to remote process, but there was a error, so I
+    removed that. It's needed to advance get_unmapped_area
+    to make it working with remote VMA (which I missed
+    initially). This requires a lot of refactoring, which
+    may hide the main logic away from a reader, so let's
+    I do that later in a separate series.
 
 Signed-off-by: Kirill Tkhai <ktkhai@virtuozzo.com>
 ---
- include/linux/mm.h |    4 ++--
- mm/mmap.c          |   33 ++++++++++++++++++++++++---------
- mm/mremap.c        |    4 ++--
- 3 files changed, 28 insertions(+), 13 deletions(-)
+ include/linux/mm.h                     |    4 +
+ include/linux/mm_types.h               |    2 +
+ include/uapi/asm-generic/mman-common.h |    6 ++
+ mm/mmap.c                              |  107 ++++++++++++++++++++++++++++++++
+ mm/process_vm_access.c                 |   69 +++++++++++++++++++++
+ 5 files changed, 188 insertions(+)
 
 diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 0e8834ac32b7..afe07e4a76f8 100644
+index 65ceb56acd44..9d1c79a44128 100644
 --- a/include/linux/mm.h
 +++ b/include/linux/mm.h
-@@ -2329,8 +2329,8 @@ extern void __vma_link_rb(struct mm_struct *, struct vm_area_struct *,
- 	struct rb_node **, struct rb_node *);
- extern void unlink_file_vma(struct vm_area_struct *);
- extern struct vm_area_struct *copy_vma(struct vm_area_struct **,
--	unsigned long addr, unsigned long len, pgoff_t pgoff,
--	bool *need_rmap_locks);
-+	struct mm_struct *, unsigned long addr, unsigned long len,
-+	pgoff_t pgoff, bool *need_rmap_locks, bool clear_flags_ctx);
- extern void exit_mmap(struct mm_struct *);
+@@ -2385,6 +2385,10 @@ extern int __do_munmap(struct mm_struct *, unsigned long, size_t,
+ 		       struct list_head *uf, bool downgrade);
+ extern int do_munmap(struct mm_struct *, unsigned long, size_t,
+ 		     struct list_head *uf);
++extern unsigned long mmap_process_vm(struct mm_struct *, unsigned long,
++				     struct mm_struct *, unsigned long,
++				     unsigned long, unsigned long,
++				     struct list_head *);
  
- static inline int check_data_rlimit(unsigned long rlim,
+ static inline unsigned long
+ do_mmap_pgoff(struct file *file, unsigned long addr,
+diff --git a/include/linux/mm_types.h b/include/linux/mm_types.h
+index 1815fbc40926..885f256f2fb7 100644
+--- a/include/linux/mm_types.h
++++ b/include/linux/mm_types.h
+@@ -261,11 +261,13 @@ struct vm_region {
+ 
+ #ifdef CONFIG_USERFAULTFD
+ #define NULL_VM_UFFD_CTX ((struct vm_userfaultfd_ctx) { NULL, })
++#define IS_NULL_VM_UFFD_CTX(uctx) ((uctx)->ctx == NULL)
+ struct vm_userfaultfd_ctx {
+ 	struct userfaultfd_ctx *ctx;
+ };
+ #else /* CONFIG_USERFAULTFD */
+ #define NULL_VM_UFFD_CTX ((struct vm_userfaultfd_ctx) {})
++#define IS_NULL_VM_UFFD_CTX(uctx) (true)
+ struct vm_userfaultfd_ctx {};
+ #endif /* CONFIG_USERFAULTFD */
+ 
+diff --git a/include/uapi/asm-generic/mman-common.h b/include/uapi/asm-generic/mman-common.h
+index abd238d0f7a4..91803e6ada7c 100644
+--- a/include/uapi/asm-generic/mman-common.h
++++ b/include/uapi/asm-generic/mman-common.h
+@@ -28,6 +28,12 @@
+ /* 0x0100 - 0x80000 flags are defined in asm-generic/mman.h */
+ #define MAP_FIXED_NOREPLACE	0x100000	/* MAP_FIXED which doesn't unmap underlying mapping */
+ 
++/*
++ * Flags for process_vm_mmap
++ */
++#define PVMMAP_FIXED		0x01
++#define PVMMAP_FIXED_NOREPLACE	0x02		/* PVMAP_FIXED which doesn't unmap underlying mapping */
++
+ /*
+  * Flags for mlock
+  */
 diff --git a/mm/mmap.c b/mm/mmap.c
-index 57803a0a3a5c..99778e724ad1 100644
+index 260e47e917e6..3123ecee5fb8 100644
 --- a/mm/mmap.c
 +++ b/mm/mmap.c
-@@ -3195,19 +3195,21 @@ int insert_vm_struct(struct mm_struct *mm, struct vm_area_struct *vma)
+@@ -3282,6 +3282,113 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
+ 	return NULL;
  }
  
- /*
-- * Copy the vma structure to a new location in the same mm,
-- * prior to moving page table entries, to effect an mremap move.
-+ * Copy the vma structure to new location in the same vma
-+ * prior to moving page table entries, to effect an mremap move;
-  */
- struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
--	unsigned long addr, unsigned long len, pgoff_t pgoff,
--	bool *need_rmap_locks)
-+				struct mm_struct *mm, unsigned long addr,
-+				unsigned long len, pgoff_t pgoff,
-+				bool *need_rmap_locks, bool clear_flags_ctx)
- {
- 	struct vm_area_struct *vma = *vmap;
- 	unsigned long vma_start = vma->vm_start;
--	struct mm_struct *mm = vma->vm_mm;
-+	struct vm_userfaultfd_ctx uctx;
- 	struct vm_area_struct *new_vma, *prev;
- 	struct rb_node **rb_link, *rb_parent;
- 	bool faulted_in_anon_vma = true;
-+	unsigned long flags;
- 
- 	/*
- 	 * If anonymous vma has not yet been faulted, update new pgoff
-@@ -3220,15 +3222,25 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
- 
- 	if (find_vma_links(mm, addr, addr + len, &prev, &rb_link, &rb_parent))
- 		return NULL;	/* should never get here */
--	new_vma = vma_merge(mm, prev, addr, addr + len, vma->vm_flags,
--			    vma->anon_vma, vma->vm_file, pgoff, vma_policy(vma),
--			    vma->vm_userfaultfd_ctx);
++static int do_mmap_process_vm(struct vm_area_struct *src_vma,
++			      unsigned long src_addr,
++			      struct mm_struct *dst_mm,
++			      unsigned long dst_addr,
++			      unsigned long len,
++			      struct list_head *uf)
++{
++	struct vm_area_struct *dst_vma;
++	unsigned long pgoff, ret;
++	bool unused;
 +
-+	uctx = vma->vm_userfaultfd_ctx;
-+	flags = vma->vm_flags;
-+	if (clear_flags_ctx) {
-+		uctx = NULL_VM_UFFD_CTX;
-+		flags &= ~(VM_UFFD_MISSING | VM_UFFD_WP | VM_MERGEABLE |
-+			   VM_LOCKED | VM_LOCKONFAULT | VM_WIPEONFORK |
-+			   VM_DONTCOPY);
++	if (do_munmap(dst_mm, dst_addr, len, uf))
++		return -ENOMEM;
++
++	if (src_vma->vm_flags & VM_ACCOUNT) {
++		if (security_vm_enough_memory_mm(dst_mm, len >> PAGE_SHIFT))
++			return -ENOMEM;
 +	}
 +
-+	new_vma = vma_merge(mm, prev, addr, addr + len, flags, vma->anon_vma,
-+			    vma->vm_file, pgoff, vma_policy(vma), uctx);
- 	if (new_vma) {
- 		/*
- 		 * Source vma may have been merged into new_vma
- 		 */
- 		if (unlikely(vma_start >= new_vma->vm_start &&
--			     vma_start < new_vma->vm_end)) {
-+			     vma_start < new_vma->vm_end) &&
-+			     vma->vm_mm == mm) {
- 			/*
- 			 * The only way we can get a vma_merge with
- 			 * self during an mremap is if the vma hasn't
-@@ -3249,6 +3261,9 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
- 		new_vma = vm_area_dup(vma);
- 		if (!new_vma)
- 			goto out;
-+		new_vma->vm_mm = mm;
-+		new_vma->vm_flags = flags;
-+		new_vma->vm_userfaultfd_ctx = uctx;
- 		new_vma->vm_start = addr;
- 		new_vma->vm_end = addr + len;
- 		new_vma->vm_pgoff = pgoff;
-diff --git a/mm/mremap.c b/mm/mremap.c
-index 37b5b2ad91be..9a96cfc28675 100644
---- a/mm/mremap.c
-+++ b/mm/mremap.c
-@@ -352,8 +352,8 @@ static unsigned long move_vma(struct vm_area_struct *vma,
- 		return err;
++	pgoff = src_vma->vm_pgoff +
++			((src_addr - src_vma->vm_start) >> PAGE_SHIFT);
++	dst_vma = copy_vma(&src_vma, dst_mm, dst_addr,
++			   len, pgoff, &unused, false);
++	if (!dst_vma) {
++		ret = -ENOMEM;
++		goto unacct;
++	}
++
++	ret = copy_page_range(dst_mm, src_vma->vm_mm, src_vma,
++			      dst_addr, src_addr, src_addr + len);
++	if (ret) {
++		do_munmap(dst_mm, dst_addr, len, uf);
++		return -ENOMEM;
++	}
++
++	if (dst_vma->vm_file)
++		uprobe_mmap(dst_vma);
++	perf_event_mmap(dst_vma);
++
++	dst_vma->vm_flags |= VM_SOFTDIRTY;
++	vma_set_page_prot(dst_vma);
++
++	vm_stat_account(dst_mm, dst_vma->vm_flags, len >> PAGE_SHIFT);
++	return 0;
++
++unacct:
++	vm_unacct_memory(len >> PAGE_SHIFT);
++	return ret;
++}
++
++unsigned long mmap_process_vm(struct mm_struct *src_mm,
++			      unsigned long src_addr,
++			      struct mm_struct *dst_mm,
++			      unsigned long dst_addr,
++			      unsigned long len,
++			      unsigned long flags,
++			      struct list_head *uf)
++{
++	struct vm_area_struct *src_vma, *dst_vma;
++	unsigned long gua_flags = 0;
++	unsigned long ret;
++
++	src_vma = find_vma_without_flags(src_mm, src_addr, len,
++				VM_HUGETLB|VM_DONTEXPAND|VM_PFNMAP|VM_IO);
++	if (IS_ERR(src_vma))
++		return -EFAULT;
++	if (dst_mm->map_count > sysctl_max_map_count - 2)
++		return -ENOMEM;
++	if (!IS_NULL_VM_UFFD_CTX(&src_vma->vm_userfaultfd_ctx))
++		return -ENOTSUPP;
++
++	if (src_vma->vm_flags & VM_SHARED)
++		gua_flags |= MAP_SHARED;
++	else
++		gua_flags |= MAP_PRIVATE;
++	if (vma_is_anonymous(src_vma) || vma_is_shmem(src_vma))
++		gua_flags |= MAP_ANONYMOUS;
++	if (flags & PVMMAP_FIXED)
++		gua_flags |= MAP_FIXED;
++	if (flags & PVMMAP_FIXED_NOREPLACE)
++		gua_flags |= MAP_FIXED | MAP_FIXED_NOREPLACE;
++
++	ret = get_unmapped_area(src_vma->vm_file, dst_addr, len,
++				src_vma->vm_pgoff +
++				((src_addr - src_vma->vm_start) >> PAGE_SHIFT),
++				gua_flags);
++	if (offset_in_page(ret))
++                return ret;
++	if (flags & PVMMAP_FIXED_NOREPLACE) {
++		dst_vma = find_vma(dst_mm, dst_addr);
++		if (dst_vma && dst_vma->vm_start < dst_addr + len)
++			return -EEXIST;
++	}
++
++	dst_addr = ret;
++
++	/* Check against address space limit. */
++	if (!may_mmap_overlapped_region(dst_mm, src_vma->vm_flags, dst_addr, len))
++		return -ENOMEM;
++
++	ret = do_mmap_process_vm(src_vma, src_addr, dst_mm, dst_addr, len, uf);
++	if (ret)
++                return ret;
++
++	return dst_addr;
++}
++
+ /*
+  * Return true if the calling process may expand its vm space by the passed
+  * number of pages
+diff --git a/mm/process_vm_access.c b/mm/process_vm_access.c
+index a447092d4635..e2073f52415b 100644
+--- a/mm/process_vm_access.c
++++ b/mm/process_vm_access.c
+@@ -17,6 +17,8 @@
+ #include <linux/ptrace.h>
+ #include <linux/slab.h>
+ #include <linux/syscalls.h>
++#include <linux/mman.h>
++#include <linux/userfaultfd_k.h>
  
- 	new_pgoff = vma->vm_pgoff + ((old_addr - vma->vm_start) >> PAGE_SHIFT);
--	new_vma = copy_vma(&vma, new_addr, new_len, new_pgoff,
--			   &need_rmap_locks);
-+	new_vma = copy_vma(&vma, mm, new_addr, new_len, new_pgoff,
-+			   &need_rmap_locks, false);
- 	if (!new_vma)
- 		return -ENOMEM;
+ #ifdef CONFIG_COMPAT
+ #include <linux/compat.h>
+@@ -295,6 +297,66 @@ static ssize_t process_vm_rw(pid_t pid,
+ 	return rc;
+ }
  
++static unsigned long process_vm_mmap(pid_t pid, unsigned long src_addr,
++				     unsigned long len, unsigned long dst_addr,
++				     unsigned long flags)
++{
++	struct mm_struct *src_mm, *dst_mm;
++	struct task_struct *task;
++	unsigned long ret;
++	int depth = 0;
++	LIST_HEAD(uf);
++
++	len = PAGE_ALIGN(len);
++	src_addr = round_down(src_addr, PAGE_SIZE);
++	if (flags & PVMMAP_FIXED)
++		dst_addr = round_down(dst_addr, PAGE_SIZE);
++	else
++		dst_addr = round_hint_to_min(dst_addr);
++
++	if ((flags & ~(PVMMAP_FIXED|PVMMAP_FIXED_NOREPLACE)) ||
++	    len == 0 || len > TASK_SIZE || src_addr == 0 ||
++	    dst_addr > TASK_SIZE - len || pid <= 0)
++		return -EINVAL;
++	task = find_get_task_by_vpid(pid);
++	if (!task)
++		return -ESRCH;
++	if (unlikely(task->flags & PF_KTHREAD)) {
++		ret = -EINVAL;
++		goto out_put_task;
++	}
++
++	src_mm = mm_access(task, PTRACE_MODE_ATTACH_REALCREDS);
++	if (!src_mm || IS_ERR(src_mm)) {
++		ret = IS_ERR(src_mm) ? PTR_ERR(src_mm) : -ESRCH;
++		goto out_put_task;
++	}
++	dst_mm = current->mm;
++	mmget(dst_mm);
++
++	/* Double lock mm in address order: smallest is the first */
++	if (src_mm < dst_mm) {
++		down_write(&src_mm->mmap_sem);
++		depth = SINGLE_DEPTH_NESTING;
++	}
++	down_write_nested(&dst_mm->mmap_sem, depth);
++	if (src_mm > dst_mm)
++		down_write_nested(&src_mm->mmap_sem, SINGLE_DEPTH_NESTING);
++
++	ret = mmap_process_vm(src_mm, src_addr, dst_mm, dst_addr, len, flags, &uf);
++
++	up_write(&dst_mm->mmap_sem);
++	if (dst_mm != src_mm)
++		up_write(&src_mm->mmap_sem);
++
++	userfaultfd_unmap_complete(dst_mm, &uf);
++	mmput(src_mm);
++	mmput(dst_mm);
++out_put_task:
++	put_task_struct(task);
++	return ret;
++}
++
+ SYSCALL_DEFINE6(process_vm_readv, pid_t, pid, const struct iovec __user *, lvec,
+ 		unsigned long, liovcnt, const struct iovec __user *, rvec,
+ 		unsigned long, riovcnt,	unsigned long, flags)
+@@ -310,6 +372,13 @@ SYSCALL_DEFINE6(process_vm_writev, pid_t, pid,
+ 	return process_vm_rw(pid, lvec, liovcnt, rvec, riovcnt, flags, 1);
+ }
+ 
++SYSCALL_DEFINE5(process_vm_mmap, pid_t, pid,
++		unsigned long, src_addr, unsigned long, len,
++		unsigned long, dst_addr, unsigned long, flags)
++{
++	return process_vm_mmap(pid, src_addr, len, dst_addr, flags);
++}
++
+ #ifdef CONFIG_COMPAT
+ 
+ static ssize_t
