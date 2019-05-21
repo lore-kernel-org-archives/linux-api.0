@@ -1,104 +1,38 @@
 From: Michal Hocko <mhocko@kernel.org>
 Subject: Re: [RFC 0/7] introduce memory hinting API for external process
-Date: Tue, 21 May 2019 08:32:21 +0200
-Message-ID: <20190521063221.GF32329@dhcp22.suse.cz>
+Date: Tue, 21 May 2019 08:34:21 +0200
+Message-ID: <20190521063421.GG32329@dhcp22.suse.cz>
 References: <20190520035254.57579-1-minchan@kernel.org>
- <20190520164605.GA11665@cmpxchg.org>
- <20190521043950.GJ10039@google.com>
+ <20190521014452.GA6738@bombadil.infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190521043950.GJ10039@google.com>
+In-Reply-To: <20190521014452.GA6738@bombadil.infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Minchan Kim <minchan@kernel.org>
-Cc: Johannes Weiner <hannes@cmpxchg.org>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, linux-api@vger.kernel.org
+To: Matthew Wilcox <willy@infradead.org>
+Cc: Minchan Kim <minchan@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-[Cc linux-api]
+[linux-api]
 
-On Tue 21-05-19 13:39:50, Minchan Kim wrote:
-> On Mon, May 20, 2019 at 12:46:05PM -0400, Johannes Weiner wrote:
-> > On Mon, May 20, 2019 at 12:52:47PM +0900, Minchan Kim wrote:
-> > > - Approach
-> > > 
-> > > The approach we chose was to use a new interface to allow userspace to
-> > > proactively reclaim entire processes by leveraging platform information.
-> > > This allowed us to bypass the inaccuracy of the kernel’s LRUs for pages
-> > > that are known to be cold from userspace and to avoid races with lmkd
-> > > by reclaiming apps as soon as they entered the cached state. Additionally,
-> > > it could provide many chances for platform to use much information to
-> > > optimize memory efficiency.
-> > > 
-> > > IMHO we should spell it out that this patchset complements MADV_WONTNEED
-> > > and MADV_FREE by adding non-destructive ways to gain some free memory
-> > > space. MADV_COLD is similar to MADV_WONTNEED in a way that it hints the
-> > > kernel that memory region is not currently needed and should be reclaimed
-> > > immediately; MADV_COOL is similar to MADV_FREE in a way that it hints the
-> > > kernel that memory region is not currently needed and should be reclaimed
-> > > when memory pressure rises.
-> > 
-> > I agree with this approach and the semantics. But these names are very
-> > vague and extremely easy to confuse since they're so similar.
-> > 
-> > MADV_COLD could be a good name, but for deactivating pages, not
-> > reclaiming them - marking memory "cold" on the LRU for later reclaim.
-> > 
-> > For the immediate reclaim one, I think there is a better option too:
-> > In virtual memory speak, putting a page into secondary storage (or
-> > ensuring it's already there), and then freeing its in-memory copy, is
-> > called "paging out". And that's what this flag is supposed to do. So
-> > how about MADV_PAGEOUT?
-> > 
-> > With that, we'd have:
-> > 
-> > MADV_FREE: Mark data invalid, free memory when needed
-> > MADV_DONTNEED: Mark data invalid, free memory immediately
-> > 
-> > MADV_COLD: Data is not used for a while, free memory when needed
-> > MADV_PAGEOUT: Data is not used for a while, free memory immediately
-> > 
-> > What do you think?
+On Mon 20-05-19 18:44:52, Matthew Wilcox wrote:
+> On Mon, May 20, 2019 at 12:52:47PM +0900, Minchan Kim wrote:
+> > IMHO we should spell it out that this patchset complements MADV_WONTNEED
+> > and MADV_FREE by adding non-destructive ways to gain some free memory
+> > space. MADV_COLD is similar to MADV_WONTNEED in a way that it hints the
+> > kernel that memory region is not currently needed and should be reclaimed
+> > immediately; MADV_COOL is similar to MADV_FREE in a way that it hints the
+> > kernel that memory region is not currently needed and should be reclaimed
+> > when memory pressure rises.
 > 
-> There are several suggestions until now. Thanks, Folks!
-> 
-> For deactivating:
-> 
-> - MADV_COOL
-> - MADV_RECLAIM_LAZY
-> - MADV_DEACTIVATE
-> - MADV_COLD
-> - MADV_FREE_PRESERVE
-> 
-> 
-> For reclaiming:
-> 
-> - MADV_COLD
-> - MADV_RECLAIM_NOW
-> - MADV_RECLAIMING
-> - MADV_PAGEOUT
-> - MADV_DONTNEED_PRESERVE
-> 
-> It seems everybody doesn't like MADV_COLD so want to go with other.
-> For consisteny of view with other existing hints of madvise, -preserve
-> postfix suits well. However, originally, I don't like the naming FREE
-> vs DONTNEED from the beginning. They were easily confused.
-> I prefer PAGEOUT to RECLAIM since it's more likely to be nuance to
-> represent reclaim with memory pressure and is supposed to paged-in
-> if someone need it later. So, it imply PRESERVE.
-> If there is not strong against it, I want to go with MADV_COLD and
-> MADV_PAGEOUT.
-> 
-> Other opinion?
+> Do we tear down page tables for these ranges?  That seems like a good
+> way of reclaiming potentially a substantial amount of memory.
 
-I do not really care strongly. I am pretty sure we will have a lot of
-suggestions because people tend to be good at arguing about that...
-Anyway, unlike DONTNEED/FREE we do not have any other OS to implement
-these features, right? So we shouldn't be tight to existing names.
-On the other hand I kinda like the reference to the existing names but
-DEACTIVATE/PAGEOUT seem a good fit to me as well. Unless there is way
-much better name suggested I would go with one of those. Up to you.
+I do not think we can in general because this is a non-destructive
+operation. So at least we cannot tear down anonymous ptes (they will
+turn into swap entries).
+
 -- 
 Michal Hocko
 SUSE Labs
