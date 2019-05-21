@@ -1,79 +1,90 @@
-From: Eric Biggers <ebiggers@kernel.org>
-Subject: Re: [PATCH v6 00/16] fscrypt: key management improvements
-Date: Mon, 20 May 2019 17:41:20 -0700
-Message-ID: <20190521004119.GA647@sol.localdomain>
-References: <20190520172552.217253-1-ebiggers@kernel.org>
- <20190521001636.GA2369@mit.edu>
+From: Felipe Gasper <felipe@felipegasper.com>
+Subject: [PATCH v4] net: Add UNIX_DIAG_UID to Netlink UNIX socket diagnostics.
+Date: Mon, 20 May 2019 19:43:51 -0500
+Message-ID: <20190521004351.23706-1-felipe@felipegasper.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org>
-Content-Disposition: inline
-In-Reply-To: <20190521001636.GA2369@mit.edu>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
- <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
-List-Post: <mailto:linux-mtd@lists.infradead.org>
-List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
- <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-mtd" <linux-mtd-bounces@lists.infradead.org>
-Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org
-To: Theodore Ts'o <tytso@mit.edu>
-Cc: linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-fscrypt@vger.kernel.org, keyrings@vger.kernel.org, linux-mtd@lists.infradead.org, linux-crypto@vger.kernel.org, linux-fsdevel@vger.kernel.org, Satya Tangirala <satyat@google.com>, Paul Crowley <paulcrowley@google.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: davem@davemloft.net, viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org
+Cc: Felipe Gasper <felipe@felipegasper.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, May 20, 2019 at 08:16:36PM -0400, Theodore Ts'o wrote:
-> On Mon, May 20, 2019 at 10:25:36AM -0700, Eric Biggers wrote:
-> > 
-> > This patchset makes major improvements to how keys are added, removed,
-> > and derived in fscrypt, aka ext4/f2fs/ubifs encryption.  It does this by
-> > adding new ioctls that add and remove encryption keys directly to/from
-> > the filesystem, and by adding a new encryption policy version ("v2")
-> > where the user-provided keys are only used as input to HKDF-SHA512 and
-> > are identified by their cryptographic hash.
-> 
-> Do you have userspace programs which use these new ioctl's?  What's
-> are testing strategy for these new ioctls?
-> 
-> Thanks,
-> 
-> 						- Ted
+This adds the ability for Netlink to report a socket's UID along with the
+other UNIX diagnostic information that is already available. This will
+allow diagnostic tools greater insight into which users control which
+socket.
 
-This was answered in the cover letter, quoted below:
+To test this, do the following as a non-root user:
 
-I've written xfstests for the new APIs.  They test the APIs themselves
-as well as verify the correctness of the ciphertext stored on-disk for
-v2 encryption policies.  The tests can be found at:
+    unshare -U -r bash
+    nc -l -U user.socket.$$ &
 
-	Repository:   https://git.kernel.org/pub/scm/linux/kernel/git/ebiggers/xfstests-dev.git
-	Branch:       fscrypt-key-mgmt-improvements
+.. and verify from within that same session that Netlink UNIX socket
+diagnostics report the socket's UID as 0. Also verify that Netlink UNIX
+socket diagnostics report the socket's UID as the user's UID from an
+unprivileged process in a different session. Verify the same from
+a root process.
 
-The xfstests depend on new xfs_io commands which can be found at:
+Signed-off-by: Felipe Gasper <felipe@felipegasper.com>
 
-	Repository:   https://git.kernel.org/pub/scm/linux/kernel/git/ebiggers/xfsprogs-dev.git
-	Branch:       fscrypt-key-mgmt-improvements
-
-I've also made proof-of-concept changes to the 'fscrypt' userspace
-program (https://github.com/google/fscrypt) to make it support v2
-encryption policies.  You can find these changes in git at:
-
-	Repository:   https://github.com/ebiggers/fscrypt.git
-	Branch:       fscrypt-key-mgmt-improvements
-
-To make the 'fscrypt' userspace program experimentally use v2 encryption
-policies on new encrypted directories, add the following to
-/etc/fscrypt.conf within the "options" section:
-
-	"policy_version": "2"
-
-Finally, it's also planned for Android and Chromium OS to switch to the
-new ioctls and eventually to v2 encryption policies.  Work-in-progress,
-proof-of-concept changes by Satya Tangirala for AOSP can be found at
-https://android-review.googlesource.com/q/topic:fscrypt-key-mgmt-improvements
-
-- Eric
-
-______________________________________________________
-Linux MTD discussion mailing list
-http://lists.infradead.org/mailman/listinfo/linux-mtd/
+diff --git a/include/uapi/linux/unix_diag.h b/include/uapi/linux/unix_diag.h
+index 5c502fd..a198857 100644
+--- a/include/uapi/linux/unix_diag.h
++++ b/include/uapi/linux/unix_diag.h
+@@ -20,6 +20,7 @@ struct unix_diag_req {
+ #define UDIAG_SHOW_ICONS	0x00000008	/* show pending connections */
+ #define UDIAG_SHOW_RQLEN	0x00000010	/* show skb receive queue len */
+ #define UDIAG_SHOW_MEMINFO	0x00000020	/* show memory info of a socket */
++#define UDIAG_SHOW_UID		0x00000040	/* show socket's UID */
+ 
+ struct unix_diag_msg {
+ 	__u8	udiag_family;
+@@ -40,6 +41,7 @@ enum {
+ 	UNIX_DIAG_RQLEN,
+ 	UNIX_DIAG_MEMINFO,
+ 	UNIX_DIAG_SHUTDOWN,
++	UNIX_DIAG_UID,
+ 
+ 	__UNIX_DIAG_MAX,
+ };
+diff --git a/net/unix/diag.c b/net/unix/diag.c
+index 3183d9b..e40f348 100644
+--- a/net/unix/diag.c
++++ b/net/unix/diag.c
+@@ -4,9 +4,11 @@
+ #include <linux/unix_diag.h>
+ #include <linux/skbuff.h>
+ #include <linux/module.h>
++#include <linux/uidgid.h>
+ #include <net/netlink.h>
+ #include <net/af_unix.h>
+ #include <net/tcp_states.h>
++#include <net/sock.h>
+ 
+ static int sk_diag_dump_name(struct sock *sk, struct sk_buff *nlskb)
+ {
+@@ -110,6 +112,12 @@ static int sk_diag_show_rqlen(struct sock *sk, struct sk_buff *nlskb)
+ 	return nla_put(nlskb, UNIX_DIAG_RQLEN, sizeof(rql), &rql);
+ }
+ 
++static int sk_diag_dump_uid(struct sock *sk, struct sk_buff *nlskb)
++{
++	uid_t uid = from_kuid_munged(sk_user_ns(nlskb->sk), sock_i_uid(sk));
++	return nla_put(nlskb, UNIX_DIAG_UID, sizeof(uid_t), &uid);
++}
++
+ static int sk_diag_fill(struct sock *sk, struct sk_buff *skb, struct unix_diag_req *req,
+ 		u32 portid, u32 seq, u32 flags, int sk_ino)
+ {
+@@ -156,6 +164,10 @@ static int sk_diag_fill(struct sock *sk, struct sk_buff *skb, struct unix_diag_r
+ 	if (nla_put_u8(skb, UNIX_DIAG_SHUTDOWN, sk->sk_shutdown))
+ 		goto out_nlmsg_trim;
+ 
++	if ((req->udiag_show & UDIAG_SHOW_UID) &&
++	    sk_diag_dump_uid(sk, skb))
++		goto out_nlmsg_trim;
++
+ 	nlmsg_end(skb, nlh);
+ 	return 0;
+ 
