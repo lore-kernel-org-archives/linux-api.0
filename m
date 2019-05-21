@@ -1,134 +1,79 @@
-From: Ira Weiny <ira.weiny@intel.com>
-Subject: Re: [PATCH v2 1/7] mm: Add process_vm_mmap() syscall declaration
-Date: Mon, 20 May 2019 17:28:27 -0700
-Message-ID: <20190521002827.GA30518@iweiny-DESK2.sc.intel.com>
-References: <155836064844.2441.10911127801797083064.stgit@localhost.localdomain>
- <155836080726.2441.11153759042802992469.stgit@localhost.localdomain>
+From: Eric Biggers <ebiggers@kernel.org>
+Subject: Re: [PATCH v6 00/16] fscrypt: key management improvements
+Date: Mon, 20 May 2019 17:41:20 -0700
+Message-ID: <20190521004119.GA647@sol.localdomain>
+References: <20190520172552.217253-1-ebiggers@kernel.org>
+ <20190521001636.GA2369@mit.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org>
 Content-Disposition: inline
-In-Reply-To: <155836080726.2441.11153759042802992469.stgit@localhost.localdomain>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kirill Tkhai <ktkhai@virtuozzo.com>
-Cc: akpm@linux-foundation.org, dan.j.williams@intel.com, mhocko@suse.com, keith.busch@intel.com, kirill.shutemov@linux.intel.com, alexander.h.duyck@linux.intel.com, andreyknvl@google.com, arunks@codeaurora.org, vbabka@suse.cz, cl@linux.com, riel@surriel.com, keescook@chromium.org, hannes@cmpxchg.org, npiggin@gmail.com, mathieu.desnoyers@efficios.com, shakeelb@google.com, guro@fb.com, aarcange@redhat.com, hughd@google.com, jglisse@redhat.com, mgorman@techsingularity.net, daniel.m.jordan@oracle.com, jannh@google.com, kilobyte@angband.pl, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org
+In-Reply-To: <20190521001636.GA2369@mit.edu>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
+List-Post: <mailto:linux-mtd@lists.infradead.org>
+List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-mtd" <linux-mtd-bounces@lists.infradead.org>
+Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org
+To: Theodore Ts'o <tytso@mit.edu>
+Cc: linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-fscrypt@vger.kernel.org, keyrings@vger.kernel.org, linux-mtd@lists.infradead.org, linux-crypto@vger.kernel.org, linux-fsdevel@vger.kernel.org, Satya Tangirala <satyat@google.com>, Paul Crowley <paulcrowley@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, May 20, 2019 at 05:00:07PM +0300, Kirill Tkhai wrote:
-> Similar to process_vm_readv() and process_vm_writev(),
-> add declarations of a new syscall, which will allow
-> to map memory from or to another process.
-
-Shouldn't this be the last patch in the series so that the syscall is actually
-implemented first?
-
-Ira
-
+On Mon, May 20, 2019 at 08:16:36PM -0400, Theodore Ts'o wrote:
+> On Mon, May 20, 2019 at 10:25:36AM -0700, Eric Biggers wrote:
+> > 
+> > This patchset makes major improvements to how keys are added, removed,
+> > and derived in fscrypt, aka ext4/f2fs/ubifs encryption.  It does this by
+> > adding new ioctls that add and remove encryption keys directly to/from
+> > the filesystem, and by adding a new encryption policy version ("v2")
+> > where the user-provided keys are only used as input to HKDF-SHA512 and
+> > are identified by their cryptographic hash.
 > 
-> Signed-off-by: Kirill Tkhai <ktkhai@virtuozzo.com>
-> ---
->  arch/x86/entry/syscalls/syscall_32.tbl |    1 +
->  arch/x86/entry/syscalls/syscall_64.tbl |    2 ++
->  include/linux/syscalls.h               |    5 +++++
->  include/uapi/asm-generic/unistd.h      |    5 ++++-
->  init/Kconfig                           |    9 +++++----
->  kernel/sys_ni.c                        |    2 ++
->  6 files changed, 19 insertions(+), 5 deletions(-)
+> Do you have userspace programs which use these new ioctl's?  What's
+> are testing strategy for these new ioctls?
 > 
-> diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-> index ad968b7bac72..99d6e0085576 100644
-> --- a/arch/x86/entry/syscalls/syscall_32.tbl
-> +++ b/arch/x86/entry/syscalls/syscall_32.tbl
-> @@ -438,3 +438,4 @@
->  431	i386	fsconfig		sys_fsconfig			__ia32_sys_fsconfig
->  432	i386	fsmount			sys_fsmount			__ia32_sys_fsmount
->  433	i386	fspick			sys_fspick			__ia32_sys_fspick
-> +434	i386	process_vm_mmap		sys_process_vm_mmap		__ia32_compat_sys_process_vm_mmap
-> diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-> index b4e6f9e6204a..46d7d2898f7a 100644
-> --- a/arch/x86/entry/syscalls/syscall_64.tbl
-> +++ b/arch/x86/entry/syscalls/syscall_64.tbl
-> @@ -355,6 +355,7 @@
->  431	common	fsconfig		__x64_sys_fsconfig
->  432	common	fsmount			__x64_sys_fsmount
->  433	common	fspick			__x64_sys_fspick
-> +434	common	process_vm_mmap		__x64_sys_process_vm_mmap
->  
->  #
->  # x32-specific system call numbers start at 512 to avoid cache impact
-> @@ -398,3 +399,4 @@
->  545	x32	execveat		__x32_compat_sys_execveat/ptregs
->  546	x32	preadv2			__x32_compat_sys_preadv64v2
->  547	x32	pwritev2		__x32_compat_sys_pwritev64v2
-> +548	x32	process_vm_mmap		__x32_compat_sys_process_vm_mmap
-> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-> index e2870fe1be5b..7d8ae36589cf 100644
-> --- a/include/linux/syscalls.h
-> +++ b/include/linux/syscalls.h
-> @@ -997,6 +997,11 @@ asmlinkage long sys_fspick(int dfd, const char __user *path, unsigned int flags)
->  asmlinkage long sys_pidfd_send_signal(int pidfd, int sig,
->  				       siginfo_t __user *info,
->  				       unsigned int flags);
-> +asmlinkage long sys_process_vm_mmap(pid_t pid,
-> +				    unsigned long src_addr,
-> +				    unsigned long len,
-> +				    unsigned long dst_addr,
-> +				    unsigned long flags);
->  
->  /*
->   * Architecture-specific system calls
-> diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-> index a87904daf103..b7aaa5ae02da 100644
-> --- a/include/uapi/asm-generic/unistd.h
-> +++ b/include/uapi/asm-generic/unistd.h
-> @@ -844,9 +844,12 @@ __SYSCALL(__NR_fsconfig, sys_fsconfig)
->  __SYSCALL(__NR_fsmount, sys_fsmount)
->  #define __NR_fspick 433
->  __SYSCALL(__NR_fspick, sys_fspick)
-> +#define __NR_process_vm_mmap 424
-> +__SC_COMP(__NR_process_vm_mmap, sys_process_vm_mmap, \
-> +          compat_sys_process_vm_mmap)
->  
->  #undef __NR_syscalls
-> -#define __NR_syscalls 434
-> +#define __NR_syscalls 435
->  
->  /*
->   * 32 bit systems traditionally used different
-> diff --git a/init/Kconfig b/init/Kconfig
-> index 8b9ffe236e4f..604db5f14718 100644
-> --- a/init/Kconfig
-> +++ b/init/Kconfig
-> @@ -320,13 +320,14 @@ config POSIX_MQUEUE_SYSCTL
->  	default y
->  
->  config CROSS_MEMORY_ATTACH
-> -	bool "Enable process_vm_readv/writev syscalls"
-> +	bool "Enable process_vm_readv/writev/mmap syscalls"
->  	depends on MMU
->  	default y
->  	help
-> -	  Enabling this option adds the system calls process_vm_readv and
-> -	  process_vm_writev which allow a process with the correct privileges
-> -	  to directly read from or write to another process' address space.
-> +	  Enabling this option adds the system calls process_vm_readv,
-> +	  process_vm_writev and process_vm_mmap, which allow a process
-> +	  with the correct privileges to directly read from or write to
-> +	  or mmap another process' address space.
->  	  See the man page for more details.
->  
->  config USELIB
-> diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
-> index 4d9ae5ea6caf..6f51634f4f7e 100644
-> --- a/kernel/sys_ni.c
-> +++ b/kernel/sys_ni.c
-> @@ -316,6 +316,8 @@ COND_SYSCALL(process_vm_readv);
->  COND_SYSCALL_COMPAT(process_vm_readv);
->  COND_SYSCALL(process_vm_writev);
->  COND_SYSCALL_COMPAT(process_vm_writev);
-> +COND_SYSCALL(process_vm_mmap);
-> +COND_SYSCALL_COMPAT(process_vm_mmap);
->  
->  /* compare kernel pointers */
->  COND_SYSCALL(kcmp);
+> Thanks,
 > 
+> 						- Ted
+
+This was answered in the cover letter, quoted below:
+
+I've written xfstests for the new APIs.  They test the APIs themselves
+as well as verify the correctness of the ciphertext stored on-disk for
+v2 encryption policies.  The tests can be found at:
+
+	Repository:   https://git.kernel.org/pub/scm/linux/kernel/git/ebiggers/xfstests-dev.git
+	Branch:       fscrypt-key-mgmt-improvements
+
+The xfstests depend on new xfs_io commands which can be found at:
+
+	Repository:   https://git.kernel.org/pub/scm/linux/kernel/git/ebiggers/xfsprogs-dev.git
+	Branch:       fscrypt-key-mgmt-improvements
+
+I've also made proof-of-concept changes to the 'fscrypt' userspace
+program (https://github.com/google/fscrypt) to make it support v2
+encryption policies.  You can find these changes in git at:
+
+	Repository:   https://github.com/ebiggers/fscrypt.git
+	Branch:       fscrypt-key-mgmt-improvements
+
+To make the 'fscrypt' userspace program experimentally use v2 encryption
+policies on new encrypted directories, add the following to
+/etc/fscrypt.conf within the "options" section:
+
+	"policy_version": "2"
+
+Finally, it's also planned for Android and Chromium OS to switch to the
+new ioctls and eventually to v2 encryption policies.  Work-in-progress,
+proof-of-concept changes by Satya Tangirala for AOSP can be found at
+https://android-review.googlesource.com/q/topic:fscrypt-key-mgmt-improvements
+
+- Eric
+
+______________________________________________________
+Linux MTD discussion mailing list
+http://lists.infradead.org/mailman/listinfo/linux-mtd/
