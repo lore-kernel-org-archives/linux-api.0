@@ -1,62 +1,61 @@
 From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [RFC 1/7] mm: introduce MADV_COOL
-Date: Tue, 21 May 2019 08:04:43 +0200
-Message-ID: <20190521060443.GA32329@dhcp22.suse.cz>
+Subject: Re: [RFC 3/7] mm: introduce MADV_COLD
+Date: Tue, 21 May 2019 08:08:20 +0200
+Message-ID: <20190521060820.GB32329@dhcp22.suse.cz>
 References: <20190520035254.57579-1-minchan@kernel.org>
- <20190520035254.57579-2-minchan@kernel.org>
- <20190520081621.GV6836@dhcp22.suse.cz>
- <20190520225419.GA10039@google.com>
+ <20190520035254.57579-4-minchan@kernel.org>
+ <20190520082703.GX6836@dhcp22.suse.cz>
+ <20190520230038.GD10039@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190520225419.GA10039@google.com>
+In-Reply-To: <20190520230038.GD10039@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Minchan Kim <minchan@kernel.org>
 Cc: Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue 21-05-19 07:54:19, Minchan Kim wrote:
-> On Mon, May 20, 2019 at 10:16:21AM +0200, Michal Hocko wrote:
-[...]
-> > > Internally, it works via deactivating memory from active list to
-> > > inactive's head so when the memory pressure happens, they will be
-> > > reclaimed earlier than other active pages unless there is no
-> > > access until the time.
+On Tue 21-05-19 08:00:38, Minchan Kim wrote:
+> On Mon, May 20, 2019 at 10:27:03AM +0200, Michal Hocko wrote:
+> > [Cc linux-api]
 > > 
-> > Could you elaborate about the decision to move to the head rather than
-> > tail? What should happen to inactive pages? Should we move them to the
-> > tail? Your implementation seems to ignore those completely. Why?
+> > On Mon 20-05-19 12:52:50, Minchan Kim wrote:
+> > > When a process expects no accesses to a certain memory range
+> > > for a long time, it could hint kernel that the pages can be
+> > > reclaimed instantly but data should be preserved for future use.
+> > > This could reduce workingset eviction so it ends up increasing
+> > > performance.
+> > > 
+> > > This patch introduces the new MADV_COLD hint to madvise(2)
+> > > syscall. MADV_COLD can be used by a process to mark a memory range
+> > > as not expected to be used for a long time. The hint can help
+> > > kernel in deciding which pages to evict proactively.
+> > 
+> > As mentioned in other email this looks like a non-destructive
+> > MADV_DONTNEED alternative.
+> > 
+> > > Internally, it works via reclaiming memory in process context
+> > > the syscall is called. If the page is dirty but backing storage
+> > > is not synchronous device, the written page will be rotate back
+> > > into LRU's tail once the write is done so they will reclaim easily
+> > > when memory pressure happens. If backing storage is
+> > > synchrnous device(e.g., zram), hte page will be reclaimed instantly.
+> > 
+> > Why do we special case async backing storage? Please always try to
+> > explain _why_ the decision is made.
 > 
-> Normally, inactive LRU could have used-once pages without any mapping
-> to user's address space. Such pages would be better candicate to
-> reclaim when the memory pressure happens. With deactivating only
-> active LRU pages of the process to the head of inactive LRU, we will
-> keep them in RAM longer than used-once pages and could have more chance
-> to be activated once the process is resumed.
+> I didn't make any decesion. ;-) That's how current reclaim works to
+> avoid latency of freeing page in interrupt context. I had a patchset
+> to resolve the concern a few years ago but got distracted.
 
-You are making some assumptions here. You have an explicit call what is
-cold now you are assuming something is even colder. Is this assumption a
-general enough to make people depend on it? Not that we wouldn't be able
-to change to logic later but that will always be risky - especially in
-the area when somebody want to make a user space driven memory
-management.
- 
-> > What should happen for shared pages? In other words do we want to allow
-> > less privileged process to control evicting of shared pages with a more
-> > privileged one? E.g. think of all sorts of side channel attacks. Maybe
-> > we want to do the same thing as for mincore where write access is
-> > required.
-> 
-> It doesn't work with shared pages(ie, page_mapcount > 1). I will add it
-> in the description.
-
-OK, this is good for the starter. It makes the implementation simpler
-and we can add shared mappings coverage later.
-
-Although I would argue that touching only writeable mappings should be
-reasonably safe.
-
+Please articulate that in the changelog then. Or even do not go into
+implementation details and stick with - reuse the current reclaim
+implementation. If you call out some of the specific details you are
+risking people will start depending on them. The fact that this reuses
+the currect reclaim logic is enough from the review point of view
+because we know that there is no additional special casing to worry
+about.
 -- 
 Michal Hocko
 SUSE Labs
