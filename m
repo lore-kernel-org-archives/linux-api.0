@@ -1,90 +1,259 @@
-From: Felipe Gasper <felipe@felipegasper.com>
-Subject: [PATCH v4] net: Add UNIX_DIAG_UID to Netlink UNIX socket diagnostics.
-Date: Mon, 20 May 2019 19:43:51 -0500
-Message-ID: <20190521004351.23706-1-felipe@felipegasper.com>
+From: Minchan Kim <minchan@kernel.org>
+Subject: Re: [RFC 5/7] mm: introduce external memory hinting API
+Date: Tue, 21 May 2019 11:41:07 +0900
+Message-ID: <20190521024107.GF10039@google.com>
+References: <20190520035254.57579-1-minchan@kernel.org>
+ <20190520035254.57579-6-minchan@kernel.org>
+ <20190520091829.GY6836@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190520091829.GY6836@dhcp22.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: davem@davemloft.net, viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org
-Cc: Felipe Gasper <felipe@felipegasper.com>
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This adds the ability for Netlink to report a socket's UID along with the
-other UNIX diagnostic information that is already available. This will
-allow diagnostic tools greater insight into which users control which
-socket.
+On Mon, May 20, 2019 at 11:18:29AM +0200, Michal Hocko wrote:
+> [Cc linux-api]
+> 
+> On Mon 20-05-19 12:52:52, Minchan Kim wrote:
+> > There is some usecase that centralized userspace daemon want to give
+> > a memory hint like MADV_[COOL|COLD] to other process. Android's
+> > ActivityManagerService is one of them.
+> > 
+> > It's similar in spirit to madvise(MADV_WONTNEED), but the information
+> > required to make the reclaim decision is not known to the app. Instead,
+> > it is known to the centralized userspace daemon(ActivityManagerService),
+> > and that daemon must be able to initiate reclaim on its own without
+> > any app involvement.
+> 
+> Could you expand some more about how this all works? How does the
+> centralized daemon track respective ranges? How does it synchronize
+> against parallel modification of the address space etc.
 
-To test this, do the following as a non-root user:
+Currently, we don't track each address ranges because we have two
+policies at this moment:
 
-    unshare -U -r bash
-    nc -l -U user.socket.$$ &
+	deactive file pages and reclaim anonymous pages of the app.
 
-.. and verify from within that same session that Netlink UNIX socket
-diagnostics report the socket's UID as 0. Also verify that Netlink UNIX
-socket diagnostics report the socket's UID as the user's UID from an
-unprivileged process in a different session. Verify the same from
-a root process.
+Since the daemon has a ability to let background apps resume(IOW, process
+will be run by the daemon) and both hints are non-disruptive stabilty point
+of view, we are okay for the race.
 
-Signed-off-by: Felipe Gasper <felipe@felipegasper.com>
+> 
+> > To solve the issue, this patch introduces new syscall process_madvise(2)
+> > which works based on pidfd so it could give a hint to the exeternal
+> > process.
+> > 
+> > int process_madvise(int pidfd, void *addr, size_t length, int advise);
+> 
+> OK, this makes some sense from the API point of view. When we have
+> discussed that at LSFMM I was contemplating about something like that
+> except the fd would be a VMA fd rather than the process. We could extend
+> and reuse /proc/<pid>/map_files interface which doesn't support the
+> anonymous memory right now. 
+> 
+> I am not saying this would be a better interface but I wanted to mention
+> it here for a further discussion. One slight advantage would be that
+> you know the exact object that you are operating on because you have a
+> fd for the VMA and we would have a more straightforward way to reject
+> operation if the underlying object has changed (e.g. unmapped and reused
+> for a different mapping).
 
-diff --git a/include/uapi/linux/unix_diag.h b/include/uapi/linux/unix_diag.h
-index 5c502fd..a198857 100644
---- a/include/uapi/linux/unix_diag.h
-+++ b/include/uapi/linux/unix_diag.h
-@@ -20,6 +20,7 @@ struct unix_diag_req {
- #define UDIAG_SHOW_ICONS	0x00000008	/* show pending connections */
- #define UDIAG_SHOW_RQLEN	0x00000010	/* show skb receive queue len */
- #define UDIAG_SHOW_MEMINFO	0x00000020	/* show memory info of a socket */
-+#define UDIAG_SHOW_UID		0x00000040	/* show socket's UID */
- 
- struct unix_diag_msg {
- 	__u8	udiag_family;
-@@ -40,6 +41,7 @@ enum {
- 	UNIX_DIAG_RQLEN,
- 	UNIX_DIAG_MEMINFO,
- 	UNIX_DIAG_SHUTDOWN,
-+	UNIX_DIAG_UID,
- 
- 	__UNIX_DIAG_MAX,
- };
-diff --git a/net/unix/diag.c b/net/unix/diag.c
-index 3183d9b..e40f348 100644
---- a/net/unix/diag.c
-+++ b/net/unix/diag.c
-@@ -4,9 +4,11 @@
- #include <linux/unix_diag.h>
- #include <linux/skbuff.h>
- #include <linux/module.h>
-+#include <linux/uidgid.h>
- #include <net/netlink.h>
- #include <net/af_unix.h>
- #include <net/tcp_states.h>
-+#include <net/sock.h>
- 
- static int sk_diag_dump_name(struct sock *sk, struct sk_buff *nlskb)
- {
-@@ -110,6 +112,12 @@ static int sk_diag_show_rqlen(struct sock *sk, struct sk_buff *nlskb)
- 	return nla_put(nlskb, UNIX_DIAG_RQLEN, sizeof(rql), &rql);
- }
- 
-+static int sk_diag_dump_uid(struct sock *sk, struct sk_buff *nlskb)
-+{
-+	uid_t uid = from_kuid_munged(sk_user_ns(nlskb->sk), sock_i_uid(sk));
-+	return nla_put(nlskb, UNIX_DIAG_UID, sizeof(uid_t), &uid);
-+}
-+
- static int sk_diag_fill(struct sock *sk, struct sk_buff *skb, struct unix_diag_req *req,
- 		u32 portid, u32 seq, u32 flags, int sk_ino)
- {
-@@ -156,6 +164,10 @@ static int sk_diag_fill(struct sock *sk, struct sk_buff *skb, struct unix_diag_r
- 	if (nla_put_u8(skb, UNIX_DIAG_SHUTDOWN, sk->sk_shutdown))
- 		goto out_nlmsg_trim;
- 
-+	if ((req->udiag_show & UDIAG_SHOW_UID) &&
-+	    sk_diag_dump_uid(sk, skb))
-+		goto out_nlmsg_trim;
-+
- 	nlmsg_end(skb, nlh);
- 	return 0;
- 
+I agree your point. If I didn't miss something, such kinds of vma level
+modify notification doesn't work even file mapped vma at this moment.
+For anonymous vma, I think we could use userfaultfd, pontentially.
+It would be great if someone want to do with disruptive hints like
+MADV_DONTNEED.
+
+I'd like to see it further enhancement after landing address range based
+operation via limiting hints process_madvise supports to non-disruptive
+only(e.g., MADV_[COOL|COLD]) so that we could catch up the usercase/workload
+when someone want to extend the API.
+
+> 
+> > All advises madvise provides can be supported in process_madvise, too.
+> > Since it could affect other process's address range, only privileged
+> > process(CAP_SYS_PTRACE) or something else(e.g., being the same UID)
+> > gives it the right to ptrrace the process could use it successfully.
+> 
+> proc_mem_open model we use for accessing address space via proc sounds
+> like a good mode. You are doing something similar.
+> 
+> > Please suggest better idea if you have other idea about the permission.
+> > 
+> > * from v1r1
+> >   * use ptrace capability - surenb, dancol
+> > 
+> > Signed-off-by: Minchan Kim <minchan@kernel.org>
+> > ---
+> >  arch/x86/entry/syscalls/syscall_32.tbl |  1 +
+> >  arch/x86/entry/syscalls/syscall_64.tbl |  1 +
+> >  include/linux/proc_fs.h                |  1 +
+> >  include/linux/syscalls.h               |  2 ++
+> >  include/uapi/asm-generic/unistd.h      |  2 ++
+> >  kernel/signal.c                        |  2 +-
+> >  kernel/sys_ni.c                        |  1 +
+> >  mm/madvise.c                           | 45 ++++++++++++++++++++++++++
+> >  8 files changed, 54 insertions(+), 1 deletion(-)
+> > 
+> > diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+> > index 4cd5f982b1e5..5b9dd55d6b57 100644
+> > --- a/arch/x86/entry/syscalls/syscall_32.tbl
+> > +++ b/arch/x86/entry/syscalls/syscall_32.tbl
+> > @@ -438,3 +438,4 @@
+> >  425	i386	io_uring_setup		sys_io_uring_setup		__ia32_sys_io_uring_setup
+> >  426	i386	io_uring_enter		sys_io_uring_enter		__ia32_sys_io_uring_enter
+> >  427	i386	io_uring_register	sys_io_uring_register		__ia32_sys_io_uring_register
+> > +428	i386	process_madvise		sys_process_madvise		__ia32_sys_process_madvise
+> > diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+> > index 64ca0d06259a..0e5ee78161c9 100644
+> > --- a/arch/x86/entry/syscalls/syscall_64.tbl
+> > +++ b/arch/x86/entry/syscalls/syscall_64.tbl
+> > @@ -355,6 +355,7 @@
+> >  425	common	io_uring_setup		__x64_sys_io_uring_setup
+> >  426	common	io_uring_enter		__x64_sys_io_uring_enter
+> >  427	common	io_uring_register	__x64_sys_io_uring_register
+> > +428	common	process_madvise		__x64_sys_process_madvise
+> >  
+> >  #
+> >  # x32-specific system call numbers start at 512 to avoid cache impact
+> > diff --git a/include/linux/proc_fs.h b/include/linux/proc_fs.h
+> > index 52a283ba0465..f8545d7c5218 100644
+> > --- a/include/linux/proc_fs.h
+> > +++ b/include/linux/proc_fs.h
+> > @@ -122,6 +122,7 @@ static inline struct pid *tgid_pidfd_to_pid(const struct file *file)
+> >  
+> >  #endif /* CONFIG_PROC_FS */
+> >  
+> > +extern struct pid *pidfd_to_pid(const struct file *file);
+> >  struct net;
+> >  
+> >  static inline struct proc_dir_entry *proc_net_mkdir(
+> > diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+> > index e2870fe1be5b..21c6c9a62006 100644
+> > --- a/include/linux/syscalls.h
+> > +++ b/include/linux/syscalls.h
+> > @@ -872,6 +872,8 @@ asmlinkage long sys_munlockall(void);
+> >  asmlinkage long sys_mincore(unsigned long start, size_t len,
+> >  				unsigned char __user * vec);
+> >  asmlinkage long sys_madvise(unsigned long start, size_t len, int behavior);
+> > +asmlinkage long sys_process_madvise(int pid_fd, unsigned long start,
+> > +				size_t len, int behavior);
+> >  asmlinkage long sys_remap_file_pages(unsigned long start, unsigned long size,
+> >  			unsigned long prot, unsigned long pgoff,
+> >  			unsigned long flags);
+> > diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+> > index dee7292e1df6..7ee82ce04620 100644
+> > --- a/include/uapi/asm-generic/unistd.h
+> > +++ b/include/uapi/asm-generic/unistd.h
+> > @@ -832,6 +832,8 @@ __SYSCALL(__NR_io_uring_setup, sys_io_uring_setup)
+> >  __SYSCALL(__NR_io_uring_enter, sys_io_uring_enter)
+> >  #define __NR_io_uring_register 427
+> >  __SYSCALL(__NR_io_uring_register, sys_io_uring_register)
+> > +#define __NR_process_madvise 428
+> > +__SYSCALL(__NR_process_madvise, sys_process_madvise)
+> >  
+> >  #undef __NR_syscalls
+> >  #define __NR_syscalls 428
+> > diff --git a/kernel/signal.c b/kernel/signal.c
+> > index 1c86b78a7597..04e75daab1f8 100644
+> > --- a/kernel/signal.c
+> > +++ b/kernel/signal.c
+> > @@ -3620,7 +3620,7 @@ static int copy_siginfo_from_user_any(kernel_siginfo_t *kinfo, siginfo_t *info)
+> >  	return copy_siginfo_from_user(kinfo, info);
+> >  }
+> >  
+> > -static struct pid *pidfd_to_pid(const struct file *file)
+> > +struct pid *pidfd_to_pid(const struct file *file)
+> >  {
+> >  	if (file->f_op == &pidfd_fops)
+> >  		return file->private_data;
+> > diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+> > index 4d9ae5ea6caf..5277421795ab 100644
+> > --- a/kernel/sys_ni.c
+> > +++ b/kernel/sys_ni.c
+> > @@ -278,6 +278,7 @@ COND_SYSCALL(mlockall);
+> >  COND_SYSCALL(munlockall);
+> >  COND_SYSCALL(mincore);
+> >  COND_SYSCALL(madvise);
+> > +COND_SYSCALL(process_madvise);
+> >  COND_SYSCALL(remap_file_pages);
+> >  COND_SYSCALL(mbind);
+> >  COND_SYSCALL_COMPAT(mbind);
+> > diff --git a/mm/madvise.c b/mm/madvise.c
+> > index 119e82e1f065..af02aa17e5c1 100644
+> > --- a/mm/madvise.c
+> > +++ b/mm/madvise.c
+> > @@ -9,6 +9,7 @@
+> >  #include <linux/mman.h>
+> >  #include <linux/pagemap.h>
+> >  #include <linux/page_idle.h>
+> > +#include <linux/proc_fs.h>
+> >  #include <linux/syscalls.h>
+> >  #include <linux/mempolicy.h>
+> >  #include <linux/page-isolation.h>
+> > @@ -16,6 +17,7 @@
+> >  #include <linux/hugetlb.h>
+> >  #include <linux/falloc.h>
+> >  #include <linux/sched.h>
+> > +#include <linux/sched/mm.h>
+> >  #include <linux/ksm.h>
+> >  #include <linux/fs.h>
+> >  #include <linux/file.h>
+> > @@ -1140,3 +1142,46 @@ SYSCALL_DEFINE3(madvise, unsigned long, start, size_t, len_in, int, behavior)
+> >  {
+> >  	return madvise_core(current, start, len_in, behavior);
+> >  }
+> > +
+> > +SYSCALL_DEFINE4(process_madvise, int, pidfd, unsigned long, start,
+> > +		size_t, len_in, int, behavior)
+> > +{
+> > +	int ret;
+> > +	struct fd f;
+> > +	struct pid *pid;
+> > +	struct task_struct *tsk;
+> > +	struct mm_struct *mm;
+> > +
+> > +	f = fdget(pidfd);
+> > +	if (!f.file)
+> > +		return -EBADF;
+> > +
+> > +	pid = pidfd_to_pid(f.file);
+> > +	if (IS_ERR(pid)) {
+> > +		ret = PTR_ERR(pid);
+> > +		goto err;
+> > +	}
+> > +
+> > +	ret = -EINVAL;
+> > +	rcu_read_lock();
+> > +	tsk = pid_task(pid, PIDTYPE_PID);
+> > +	if (!tsk) {
+> > +		rcu_read_unlock();
+> > +		goto err;
+> > +	}
+> > +	get_task_struct(tsk);
+> > +	rcu_read_unlock();
+> > +	mm = mm_access(tsk, PTRACE_MODE_ATTACH_REALCREDS);
+> > +	if (!mm || IS_ERR(mm)) {
+> > +		ret = IS_ERR(mm) ? PTR_ERR(mm) : -ESRCH;
+> > +		if (ret == -EACCES)
+> > +			ret = -EPERM;
+> > +		goto err;
+> > +	}
+> > +	ret = madvise_core(tsk, start, len_in, behavior);
+> > +	mmput(mm);
+> > +	put_task_struct(tsk);
+> > +err:
+> > +	fdput(f);
+> > +	return ret;
+> > +}
+> > -- 
+> > 2.21.0.1020.gf2820cf01a-goog
+> > 
+> 
+> -- 
+> Michal Hocko
+> SUSE Labs
