@@ -1,206 +1,201 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH v2 0/7] mm: process_vm_mmap() -- syscall for duplication a
- process mapping
-Date: Tue, 21 May 2019 09:43:56 -0700
-Message-ID: <CALCETrUMDTGRtLFocw6vnN___7rkb6r82ULehs0=yQO5PZL8MA@mail.gmail.com>
-References: <155836064844.2441.10911127801797083064.stgit@localhost.localdomain>
- <CALCETrU221N6uPmdaj4bRDDsf+Oc5tEfPERuyV24wsYKHn+spA@mail.gmail.com> <9638a51c-4295-924f-1852-1783c7f3e82d@virtuozzo.com>
+From: Christian Brauner <christian@brauner.io>
+Subject: Re: [PATCH 1/2] open: add close_range()
+Date: Tue, 21 May 2019 18:53:50 +0200
+Message-ID: <20190521165349.lduphxylwnfgael4@brauner.io>
+References: <20190521113448.20654-1-christian@brauner.io>
+ <20190521150006.GJ17978@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <9638a51c-4295-924f-1852-1783c7f3e82d@virtuozzo.com>
+Content-Disposition: inline
+In-Reply-To: <20190521150006.GJ17978@ZenIV.linux.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Kirill Tkhai <ktkhai@virtuozzo.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Dan Williams <dan.j.williams@intel.com>, Michal Hocko <mhocko@suse.com>, Keith Busch <keith.busch@intel.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, alexander.h.duyck@linux.intel.com, Weiny Ira <ira.weiny@intel.com>, Andrey Konovalov <andreyknvl@google.com>, arunks@codeaurora.org, Vlastimil Babka <vbabka@suse.cz>, Christoph Lameter <cl@linux.com>, Rik van Riel <riel@surriel.com>, Kees Cook <keescook@chromium.org>, Johannes Weiner <hannes@cmpxchg.org>, Nicholas Piggin <npiggin@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Shakeel Butt <shakeelb@google.com>, Roman Gushchin <guro@fb.com>, Andrea Arcangeli <aarcange@redhat.com>, Hugh
+To: Al Viro <viro@zeniv.linux.org.uk>
+Cc: linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, jannh@google.com, fweimer@redhat.com, oleg@redhat.com, tglx@linutronix.de, torvalds@linux-foundation.org, arnd@arndb.de, shuah@kernel.org, dhowells@redhat.com, tkjos@android.com, ldv@altlinux.org, miklos@szeredi.hu, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, linux-sh@vger.kernel.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-arch@vger.kernel.org, linux-kselftest@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 21, 2019 at 8:52 AM Kirill Tkhai <ktkhai@virtuozzo.com> wrote:
->
-> On 21.05.2019 17:43, Andy Lutomirski wrote:
-> > On Mon, May 20, 2019 at 7:01 AM Kirill Tkhai <ktkhai@virtuozzo.com> wrote:
-> >>
-> >
-> >> [Summary]
-> >>
-> >> New syscall, which allows to clone a remote process VMA
-> >> into local process VM. The remote process's page table
-> >> entries related to the VMA are cloned into local process's
-> >> page table (in any desired address, which makes this different
-> >> from that happens during fork()). Huge pages are handled
-> >> appropriately.
-> >>
-> >> This allows to improve performance in significant way like
-> >> it's shows in the example below.
-> >>
-> >> [Description]
-> >>
-> >> This patchset adds a new syscall, which makes possible
-> >> to clone a VMA from a process to current process.
-> >> The syscall supplements the functionality provided
-> >> by process_vm_writev() and process_vm_readv() syscalls,
-> >> and it may be useful in many situation.
-> >>
-> >> For example, it allows to make a zero copy of data,
-> >> when process_vm_writev() was previously used:
-> >>
-> >>         struct iovec local_iov, remote_iov;
-> >>         void *buf;
-> >>
-> >>         buf = mmap(NULL, n * PAGE_SIZE, PROT_READ|PROT_WRITE,
-> >>                    MAP_PRIVATE|MAP_ANONYMOUS, ...);
-> >>         recv(sock, buf, n * PAGE_SIZE, 0);
-> >>
-> >>         local_iov->iov_base = buf;
-> >>         local_iov->iov_len = n * PAGE_SIZE;
-> >>         remove_iov = ...;
-> >>
-> >>         process_vm_writev(pid, &local_iov, 1, &remote_iov, 1 0);
-> >>         munmap(buf, n * PAGE_SIZE);
-> >>
-> >>         (Note, that above completely ignores error handling)
-> >>
-> >> There are several problems with process_vm_writev() in this example:
-> >>
-> >> 1)it causes pagefault on remote process memory, and it forces
-> >>   allocation of a new page (if was not preallocated);
-> >
-> > I don't see how your new syscall helps.  You're writing to remote
-> > memory.  If that memory wasn't allocated, it's going to get allocated
-> > regardless of whether you use a write-like interface or an mmap-like
-> > interface.
->
-> No, the talk is not about just another interface for copying memory.
-> The talk is about borrowing of remote task's VMA and corresponding
-> page table's content. Syscall allows to copy part of page table
-> with preallocated pages from remote to local process. See here:
->
-> [task1]                                                        [task2]
->
-> buf = mmap(NULL, n * PAGE_SIZE, PROT_READ|PROT_WRITE,
->            MAP_PRIVATE|MAP_ANONYMOUS, ...);
->
-> <task1 populates buf>
->
->                                                                buf = process_vm_mmap(pid_of_task1, addr, n * PAGE_SIZE, ...);
-> munmap(buf);
->
->
-> process_vm_mmap() copies PTEs related to memory of buf in task1 to task2
-> just like in the way we do during fork syscall.
+On Tue, May 21, 2019 at 04:00:06PM +0100, Al Viro wrote:
+> On Tue, May 21, 2019 at 01:34:47PM +0200, Christian Brauner wrote:
+> 
+> > This adds the close_range() syscall. It allows to efficiently close a range
+> > of file descriptors up to all file descriptors of a calling task.
+> > 
+> > The syscall came up in a recent discussion around the new mount API and
+> > making new file descriptor types cloexec by default. During this
+> > discussion, Al suggested the close_range() syscall (cf. [1]). Note, a
+> > syscall in this manner has been requested by various people over time.
+> > 
+> > First, it helps to close all file descriptors of an exec()ing task. This
+> > can be done safely via (quoting Al's example from [1] verbatim):
+> > 
+> >         /* that exec is sensitive */
+> >         unshare(CLONE_FILES);
+> >         /* we don't want anything past stderr here */
+> >         close_range(3, ~0U);
+> >         execve(....);
+> > 
+> > The code snippet above is one way of working around the problem that file
+> > descriptors are not cloexec by default. This is aggravated by the fact that
+> > we can't just switch them over without massively regressing userspace. For
+> > a whole class of programs having an in-kernel method of closing all file
+> > descriptors is very helpful (e.g. demons, service managers, programming
+> > language standard libraries, container managers etc.).
+> > (Please note, unshare(CLONE_FILES) should only be needed if the calling
+> >  task is multi-threaded and shares the file descriptor table with another
+> >  thread in which case two threads could race with one thread allocating
+> >  file descriptors and the other one closing them via close_range(). For the
+> >  general case close_range() before the execve() is sufficient.)
+> > 
+> > Second, it allows userspace to avoid implementing closing all file
+> > descriptors by parsing through /proc/<pid>/fd/* and calling close() on each
+> > file descriptor. From looking at various large(ish) userspace code bases
+> > this or similar patterns are very common in:
+> > - service managers (cf. [4])
+> > - libcs (cf. [6])
+> > - container runtimes (cf. [5])
+> > - programming language runtimes/standard libraries
+> >   - Python (cf. [2])
+> >   - Rust (cf. [7], [8])
+> > As Dmitry pointed out there's even a long-standing glibc bug about missing
+> > kernel support for this task (cf. [3]).
+> > In addition, the syscall will also work for tasks that do not have procfs
+> > mounted and on kernels that do not have procfs support compiled in. In such
+> > situations the only way to make sure that all file descriptors are closed
+> > is to call close() on each file descriptor up to UINT_MAX or RLIMIT_NOFILE,
+> > OPEN_MAX trickery (cf. comment [8] on Rust).
+> > 
+> > The performance is striking. For good measure, comparing the following
+> > simple close_all_fds() userspace implementation that is essentially just
+> > glibc's version in [6]:
+> > 
+> > static int close_all_fds(void)
+> > {
+> >         DIR *dir;
+> >         struct dirent *direntp;
+> > 
+> >         dir = opendir("/proc/self/fd");
+> >         if (!dir)
+> >                 return -1;
+> > 
+> >         while ((direntp = readdir(dir))) {
+> >                 int fd;
+> >                 if (strcmp(direntp->d_name, ".") == 0)
+> >                         continue;
+> >                 if (strcmp(direntp->d_name, "..") == 0)
+> >                         continue;
+> >                 fd = atoi(direntp->d_name);
+> >                 if (fd == 0 || fd == 1 || fd == 2)
+> >                         continue;
+> >                 close(fd);
+> >         }
+> > 
+> >         closedir(dir); /* cannot fail */
+> >         return 0;
+> > }
+> > 
+> > to close_range() yields:
+> > 1. closing 4 open files:
+> >    - close_all_fds(): ~280 us
+> >    - close_range():    ~24 us
+> > 
+> > 2. closing 1000 open files:
+> >    - close_all_fds(): ~5000 us
+> >    - close_range():   ~800 us
+> > 
+> > close_range() is designed to allow for some flexibility. Specifically, it
+> > does not simply always close all open file descriptors of a task. Instead,
+> > callers can specify an upper bound.
+> > This is e.g. useful for scenarios where specific file descriptors are
+> > created with well-known numbers that are supposed to be excluded from
+> > getting closed.
+> > For extra paranoia close_range() comes with a flags argument. This can e.g.
+> > be used to implement extension. Once can imagine userspace wanting to stop
+> > at the first error instead of ignoring errors under certain circumstances.
+> > There might be other valid ideas in the future. In any case, a flag
+> > argument doesn't hurt and keeps us on the safe side.
+> > 
+> > >From an implementation side this is kept rather dumb. It saw some input
+> > from David and Jann but all nonsense is obviously my own!
+> > - Errors to close file descriptors are currently ignored. (Could be changed
+> >   by setting a flag in the future if needed.)
+> > - __close_range() is a rather simplistic wrapper around __close_fd().
+> >   My reasoning behind this is based on the nature of how __close_fd() needs
+> >   to release an fd. But maybe I misunderstood specifics:
+> >   We take the files_lock and rcu-dereference the fdtable of the calling
+> >   task, we find the entry in the fdtable, get the file and need to release
+> >   files_lock before calling filp_close().
+> >   In the meantime the fdtable might have been altered so we can't just
+> >   retake the spinlock and keep the old rcu-reference of the fdtable
+> >   around. Instead we need to grab a fresh reference to the fdtable.
+> >   If my reasoning is correct then there's really no point in fancyfying
+> >   __close_range(): We just need to rcu-dereference the fdtable of the
+> >   calling task once to cap the max_fd value correctly and then go on
+> >   calling __close_fd() in a loop.
+> 
+> > +/**
+> > + * __close_range() - Close all file descriptors in a given range.
+> > + *
+> > + * @fd:     starting file descriptor to close
+> > + * @max_fd: last file descriptor to close
+> > + *
+> > + * This closes a range of file descriptors. All file descriptors
+> > + * from @fd up to and including @max_fd are closed.
+> > + */
+> > +int __close_range(struct files_struct *files, unsigned fd, unsigned max_fd)
+> > +{
+> > +	unsigned int cur_max;
+> > +
+> > +	if (fd > max_fd)
+> > +		return -EINVAL;
+> > +
+> > +	rcu_read_lock();
+> > +	cur_max = files_fdtable(files)->max_fds;
+> > +	rcu_read_unlock();
+> > +
+> > +	/* cap to last valid index into fdtable */
+> > +	if (max_fd >= cur_max)
+> > +		max_fd = cur_max - 1;
+> > +
+> > +	while (fd <= max_fd)
+> > +		__close_fd(files, fd++);
+> > +
+> > +	return 0;
+> > +}
+> 
+> Umm...  That's going to be very painful if you dup2() something to MAX_INT and
+> then run that; roughly 2G iterations of bouncing ->file_lock up and down,
+> without anything that would yield CPU in process.
+> 
+> If anything, I would suggest something like
+> 
+> 	fd = *start_fd;
+> 	grab the lock
+>         fdt = files_fdtable(files);
+> more:
+> 	look for the next eviction candidate in ->open_fds, starting at fd
+> 	if there's none up to max_fd
+> 		drop the lock
+> 		return NULL
+> 	*start_fd = fd + 1;
+> 	if the fscker is really opened and not just reserved
+> 		rcu_assign_pointer(fdt->fd[fd], NULL);
+> 		__put_unused_fd(files, fd);
+> 		drop the lock
+> 		return the file we'd got
+> 	if (unlikely(need_resched()))
+> 		drop lock
+> 		cond_resched();
+> 		grab lock
+> 		fdt = files_fdtable(files);
+> 	goto more;
+> 
+> with the main loop being basically
+> 	while ((file = pick_next(files, &start_fd, max_fd)) != NULL)
+> 		filp_close(file, files);
 
-If I understand this correctly, your intended use is to have one task
-allocate memory and fill it, have the other task clone the VMA, and
-have the first task free the VMA?  If so, that wasn't at all obvious
-from your original email.
+That's obviously much more clever than what I had.
+I honestly have never thought about using open_fds before this. Seemed
+extremely localized to file.c
+Thanks for the pointers!
 
-Why don't you use splice() instead?  splice() the data to the remote
-task and have the remove task read() it?  All these VMA games will
-result in a lot of flushes, which is bad for performance.  Or,
-depending on your exact constraints, you could map a memfd in both
-tasks instead, which has the same flushing issues but at least has a
-sensible API.
-
->
-> There is no copying of buf memory content, unless COW happens. This is
-> the principal difference to process_vm_writev(), which just allocates
-> pages in remote VM.
->
-> > Keep in mind that, on x86, just the hardware part of a
-> > page fault is very slow -- populating the memory with a syscall
-> > instead of a fault may well be faster.
->
-> It is not as slow, as disk IO has. Just compare, what happens in case of anonymous
-> pages related to buf of task1 are swapped:
->
-> 1)process_vm_writev() reads them back into memory;
->
-> 2)process_vm_mmap() just copies swap PTEs from task1 page table
->   to task2 page table.
->
-> Also, for faster page faults one may use huge pages for the mappings.
-> But really, it's funny to think about page faults, when there are
-> disk IO problems I shown.
-
-What are you doing that is causing *disk* IO in any of this?  I
-suspect your real problem is that you are using far too large of a
-buffer. See below.
-
->
-> >>
-> >> 2)amount of memory for this example is doubled in a moment --
-> >>   n pages in current and n pages in remote tasks are occupied
-> >>   at the same time;
-> >
-> > This seems disingenuous.  If you're writing p pages total in chunks of
-> > n pages, you will use a total of p pages if you use mmap and p+n if
-> > you use write.
->
-> I didn't understand this sentence because of many ifs, sorry. Could you
-> please explain your thought once again?
-
-You seem to have a function that tries to populate p pages of memory
-with data received from a socket.  It looks like you're doing
-something like this:
-
-void copy_p_pages(size_t p)
-{
-  size_t n = some_value(p);
-  char *buf = malloc(n * PAGE_SIZE);
-  for (int i = 0; i < p; i += n*PAGE_SIZE) {
-    read(fd, buf, n*PAGE_SIZE);  /* check return value, etc */
-    process_vm_writev(write n*PAGE_SIZE bytes to remote process);
-  }
-  free(buf);
-}
-
-If you have a *constant* n (i.e. some_value(p) is just a number like
-16)), then you aren't doubling memory usage.  If you have
-some_value(p) return p, then you are indeed doubling memory usage.  So
-don't do that!
-If buf is getting swapped out, you are very likely doing something
-wrong.  If you're using a 100MB buffer or a 10GB, then I'm not
-surprised you have problems.  Try something reasonable like 128kB. For
-extra fun, you could mlock() that buf, but if you're thrashing on
-access to a 128kB working set, you will probably also get your *code*
-swapped out, in which case you pretty much lose.
-
-
-> > For example, if the remote VMA is MAP_ANONYMOUS, do you get
-> > a CoW copy of it? I assume you don't since the whole point is to
-> > write to remote memory
->
-> But, no, there *is* COW semantic. We do not copy memory. We copy
-> page table content. This is just the same we have on fork(), when
-> children duplicates parent's VMA and related page table subset,
-> and parent's PTEs lose _PAGE_RW flag.
-
-Then you need to document this very carefully, because other people
-will use your syscall in different ways than you use it.
-
-And, if you are doing CoW like this, then your syscall is basically
-only useful for your really weird use case in which you're using it to
-import an already-populated VMA.  Maybe this is a reasonable feature
-to add to the kernel, but it needs a benchmark against a reasonable
-alternative.
-
->
-> There is all copy_page_range() code reused for that. Please, see [3/7]
-> for the details.
-
-You can't as users of a syscall to read the nitty gritty mm code to
-figure out what the syscall does from a user's perspective.
-
-> > But there are plenty of other questions.
-> > What happens if the remote VMA is a gate area or other special mapping
-> > (vDSO, vvar area, etc)?  What if the remote memory comes from a driver
-> > that wasn't expecting the mapping to get magically copied to a
-> > different process?
->
-> In case of someone wants to duplicate such the mappings, we may consider
-> that, and extend the interface in the future for VMA types, which are
-> safe for that.
-
-Do you mean that the code you sent rejects this case?  If so, please
-document it.  In any case, I looked at the code, and it seems to be
-trying to handle MAP_SHARED and MAP_ANONYMOUS.  I don't see where it
-would reject copying a vDSO.
+Christian
