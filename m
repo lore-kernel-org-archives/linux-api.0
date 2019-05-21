@@ -1,87 +1,63 @@
 From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [RFC 5/7] mm: introduce external memory hinting API
-Date: Tue, 21 May 2019 08:17:43 +0200
-Message-ID: <20190521061743.GC32329@dhcp22.suse.cz>
+Subject: Re: [RFC 7/7] mm: madvise support MADV_ANONYMOUS_FILTER and
+ MADV_FILE_FILTER
+Date: Tue, 21 May 2019 08:26:28 +0200
+Message-ID: <20190521062628.GE32329@dhcp22.suse.cz>
 References: <20190520035254.57579-1-minchan@kernel.org>
- <20190520035254.57579-6-minchan@kernel.org>
- <20190520091829.GY6836@dhcp22.suse.cz>
- <20190521024107.GF10039@google.com>
+ <20190520035254.57579-8-minchan@kernel.org>
+ <20190520092801.GA6836@dhcp22.suse.cz>
+ <20190521025533.GH10039@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190521024107.GF10039@google.com>
+In-Reply-To: <20190521025533.GH10039@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Minchan Kim <minchan@kernel.org>
 Cc: Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue 21-05-19 11:41:07, Minchan Kim wrote:
-> On Mon, May 20, 2019 at 11:18:29AM +0200, Michal Hocko wrote:
-> > [Cc linux-api]
+On Tue 21-05-19 11:55:33, Minchan Kim wrote:
+> On Mon, May 20, 2019 at 11:28:01AM +0200, Michal Hocko wrote:
+> > [cc linux-api]
 > > 
-> > On Mon 20-05-19 12:52:52, Minchan Kim wrote:
-> > > There is some usecase that centralized userspace daemon want to give
-> > > a memory hint like MADV_[COOL|COLD] to other process. Android's
-> > > ActivityManagerService is one of them.
+> > On Mon 20-05-19 12:52:54, Minchan Kim wrote:
+> > > System could have much faster swap device like zRAM. In that case, swapping
+> > > is extremely cheaper than file-IO on the low-end storage.
+> > > In this configuration, userspace could handle different strategy for each
+> > > kinds of vma. IOW, they want to reclaim anonymous pages by MADV_COLD
+> > > while it keeps file-backed pages in inactive LRU by MADV_COOL because
+> > > file IO is more expensive in this case so want to keep them in memory
+> > > until memory pressure happens.
 > > > 
-> > > It's similar in spirit to madvise(MADV_WONTNEED), but the information
-> > > required to make the reclaim decision is not known to the app. Instead,
-> > > it is known to the centralized userspace daemon(ActivityManagerService),
-> > > and that daemon must be able to initiate reclaim on its own without
-> > > any app involvement.
+> > > To support such strategy easier, this patch introduces
+> > > MADV_ANONYMOUS_FILTER and MADV_FILE_FILTER options in madvise(2) like
+> > > that /proc/<pid>/clear_refs already has supported same filters.
+> > > They are filters could be Ored with other existing hints using top two bits
+> > > of (int behavior).
 > > 
-> > Could you expand some more about how this all works? How does the
-> > centralized daemon track respective ranges? How does it synchronize
-> > against parallel modification of the address space etc.
-> 
-> Currently, we don't track each address ranges because we have two
-> policies at this moment:
-> 
-> 	deactive file pages and reclaim anonymous pages of the app.
-> 
-> Since the daemon has a ability to let background apps resume(IOW, process
-> will be run by the daemon) and both hints are non-disruptive stabilty point
-> of view, we are okay for the race.
-
-Fair enough but the API should consider future usecases where this might
-be a problem. So we should really think about those potential scenarios
-now. If we are ok with that, fine, but then we should be explicit and
-document it that way. Essentially say that any sort of synchronization
-is supposed to be done by monitor. This will make the API less usable
-but maybe that is enough.
- 
-> > > To solve the issue, this patch introduces new syscall process_madvise(2)
-> > > which works based on pidfd so it could give a hint to the exeternal
-> > > process.
+> > madvise operates on top of ranges and it is quite trivial to do the
+> > filtering from the userspace so why do we need any additional filtering?
+> > 
+> > > Once either of them is set, the hint could affect only the interested vma
+> > > either anonymous or file-backed.
 > > > 
-> > > int process_madvise(int pidfd, void *addr, size_t length, int advise);
+> > > With that, user could call a process_madvise syscall simply with a entire
+> > > range(0x0 - 0xFFFFFFFFFFFFFFFF) but either of MADV_ANONYMOUS_FILTER and
+> > > MADV_FILE_FILTER so there is no need to call the syscall range by range.
 > > 
-> > OK, this makes some sense from the API point of view. When we have
-> > discussed that at LSFMM I was contemplating about something like that
-> > except the fd would be a VMA fd rather than the process. We could extend
-> > and reuse /proc/<pid>/map_files interface which doesn't support the
-> > anonymous memory right now. 
-> > 
-> > I am not saying this would be a better interface but I wanted to mention
-> > it here for a further discussion. One slight advantage would be that
-> > you know the exact object that you are operating on because you have a
-> > fd for the VMA and we would have a more straightforward way to reject
-> > operation if the underlying object has changed (e.g. unmapped and reused
-> > for a different mapping).
+> > OK, so here is the reason you want that. The immediate question is why
+> > cannot the monitor do the filtering from the userspace. Slightly more
+> > work, all right, but less of an API to expose and that itself is a
+> > strong argument against.
 > 
-> I agree your point. If I didn't miss something, such kinds of vma level
-> modify notification doesn't work even file mapped vma at this moment.
-> For anonymous vma, I think we could use userfaultfd, pontentially.
-> It would be great if someone want to do with disruptive hints like
-> MADV_DONTNEED.
-> 
-> I'd like to see it further enhancement after landing address range based
-> operation via limiting hints process_madvise supports to non-disruptive
-> only(e.g., MADV_[COOL|COLD]) so that we could catch up the usercase/workload
-> when someone want to extend the API.
+> What I should do if we don't have such filter option is to enumerate all of
+> vma via /proc/<pid>/maps and then parse every ranges and inode from string,
+> which would be painful for 2000+ vmas.
 
-So do you think we want both interfaces (process_madvise and madvisefd)?
+Painful is not an argument to add a new user API. If the existing API
+suits the purpose then it should be used. If it is not usable, we can
+think of a different way.
 -- 
 Michal Hocko
 SUSE Labs
