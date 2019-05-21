@@ -1,63 +1,206 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH 1/2] open: add close_range()
-Date: Tue, 21 May 2019 18:41:42 +0200
-Message-ID: <20190521164141.rbehqnghiej3gfua@brauner.io>
-References: <20190521150006.GJ17978@ZenIV.linux.org.uk>
- <20190521113448.20654-1-christian@brauner.io>
- <28114.1558456227@warthog.procyon.org.uk>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH v2 0/7] mm: process_vm_mmap() -- syscall for duplication a
+ process mapping
+Date: Tue, 21 May 2019 09:43:56 -0700
+Message-ID: <CALCETrUMDTGRtLFocw6vnN___7rkb6r82ULehs0=yQO5PZL8MA@mail.gmail.com>
+References: <155836064844.2441.10911127801797083064.stgit@localhost.localdomain>
+ <CALCETrU221N6uPmdaj4bRDDsf+Oc5tEfPERuyV24wsYKHn+spA@mail.gmail.com> <9638a51c-4295-924f-1852-1783c7f3e82d@virtuozzo.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <28114.1558456227@warthog.procyon.org.uk>
+In-Reply-To: <9638a51c-4295-924f-1852-1783c7f3e82d@virtuozzo.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, jannh@google.com, fweimer@redhat.com, oleg@redhat.com, tglx@linutronix.de, torvalds@linux-foundation.org, arnd@arndb.de, shuah@kernel.org, tkjos@android.com, ldv@altlinux.org, miklos@szeredi.hu, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, linux-sh@vger.kernel.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-arch@vger.kernel.org, linux-kselftest@vger.kernel.org, x86@kernel.org
+To: Kirill Tkhai <ktkhai@virtuozzo.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Dan Williams <dan.j.williams@intel.com>, Michal Hocko <mhocko@suse.com>, Keith Busch <keith.busch@intel.com>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, alexander.h.duyck@linux.intel.com, Weiny Ira <ira.weiny@intel.com>, Andrey Konovalov <andreyknvl@google.com>, arunks@codeaurora.org, Vlastimil Babka <vbabka@suse.cz>, Christoph Lameter <cl@linux.com>, Rik van Riel <riel@surriel.com>, Kees Cook <keescook@chromium.org>, Johannes Weiner <hannes@cmpxchg.org>, Nicholas Piggin <npiggin@gmail.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Shakeel Butt <shakeelb@google.com>, Roman Gushchin <guro@fb.com>, Andrea Arcangeli <aarcange@redhat.com>, Hugh
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 21, 2019 at 05:30:27PM +0100, David Howells wrote:
-> Al Viro <viro@zeniv.linux.org.uk> wrote:
-> 
-> > Umm...  That's going to be very painful if you dup2() something to MAX_INT and
-> > then run that; roughly 2G iterations of bouncing ->file_lock up and down,
-> > without anything that would yield CPU in process.
-> > 
-> > If anything, I would suggest something like
-> > 
-> > 	fd = *start_fd;
-> > 	grab the lock
-> >         fdt = files_fdtable(files);
-> > more:
-> > 	look for the next eviction candidate in ->open_fds, starting at fd
-> > 	if there's none up to max_fd
-> > 		drop the lock
-> > 		return NULL
-> > 	*start_fd = fd + 1;
-> > 	if the fscker is really opened and not just reserved
-> > 		rcu_assign_pointer(fdt->fd[fd], NULL);
-> > 		__put_unused_fd(files, fd);
-> > 		drop the lock
-> > 		return the file we'd got
-> > 	if (unlikely(need_resched()))
-> > 		drop lock
-> > 		cond_resched();
-> > 		grab lock
-> > 		fdt = files_fdtable(files);
-> > 	goto more;
-> > 
-> > with the main loop being basically
-> > 	while ((file = pick_next(files, &start_fd, max_fd)) != NULL)
-> > 		filp_close(file, files);
-> 
-> If we can live with close_from(int first) rather than close_range(), then this
-> can perhaps be done a lot more efficiently by:
+On Tue, May 21, 2019 at 8:52 AM Kirill Tkhai <ktkhai@virtuozzo.com> wrote:
+>
+> On 21.05.2019 17:43, Andy Lutomirski wrote:
+> > On Mon, May 20, 2019 at 7:01 AM Kirill Tkhai <ktkhai@virtuozzo.com> wrote:
+> >>
+> >
+> >> [Summary]
+> >>
+> >> New syscall, which allows to clone a remote process VMA
+> >> into local process VM. The remote process's page table
+> >> entries related to the VMA are cloned into local process's
+> >> page table (in any desired address, which makes this different
+> >> from that happens during fork()). Huge pages are handled
+> >> appropriately.
+> >>
+> >> This allows to improve performance in significant way like
+> >> it's shows in the example below.
+> >>
+> >> [Description]
+> >>
+> >> This patchset adds a new syscall, which makes possible
+> >> to clone a VMA from a process to current process.
+> >> The syscall supplements the functionality provided
+> >> by process_vm_writev() and process_vm_readv() syscalls,
+> >> and it may be useful in many situation.
+> >>
+> >> For example, it allows to make a zero copy of data,
+> >> when process_vm_writev() was previously used:
+> >>
+> >>         struct iovec local_iov, remote_iov;
+> >>         void *buf;
+> >>
+> >>         buf = mmap(NULL, n * PAGE_SIZE, PROT_READ|PROT_WRITE,
+> >>                    MAP_PRIVATE|MAP_ANONYMOUS, ...);
+> >>         recv(sock, buf, n * PAGE_SIZE, 0);
+> >>
+> >>         local_iov->iov_base = buf;
+> >>         local_iov->iov_len = n * PAGE_SIZE;
+> >>         remove_iov = ...;
+> >>
+> >>         process_vm_writev(pid, &local_iov, 1, &remote_iov, 1 0);
+> >>         munmap(buf, n * PAGE_SIZE);
+> >>
+> >>         (Note, that above completely ignores error handling)
+> >>
+> >> There are several problems with process_vm_writev() in this example:
+> >>
+> >> 1)it causes pagefault on remote process memory, and it forces
+> >>   allocation of a new page (if was not preallocated);
+> >
+> > I don't see how your new syscall helps.  You're writing to remote
+> > memory.  If that memory wasn't allocated, it's going to get allocated
+> > regardless of whether you use a write-like interface or an mmap-like
+> > interface.
+>
+> No, the talk is not about just another interface for copying memory.
+> The talk is about borrowing of remote task's VMA and corresponding
+> page table's content. Syscall allows to copy part of page table
+> with preallocated pages from remote to local process. See here:
+>
+> [task1]                                                        [task2]
+>
+> buf = mmap(NULL, n * PAGE_SIZE, PROT_READ|PROT_WRITE,
+>            MAP_PRIVATE|MAP_ANONYMOUS, ...);
+>
+> <task1 populates buf>
+>
+>                                                                buf = process_vm_mmap(pid_of_task1, addr, n * PAGE_SIZE, ...);
+> munmap(buf);
+>
+>
+> process_vm_mmap() copies PTEs related to memory of buf in task1 to task2
+> just like in the way we do during fork syscall.
 
-Yeah, you mentioned this before. I do like being able to specify an
-upper bound to have the ability to place fds strategically after said
-upper bound.
-I have used this quite a few times where I know that given task may have
-inherited up to m fds and I want to inherit a specific pipe who's fd I
-know. Then I'd dup2(pipe_fd, <upper_bound + 1>) and then close all
-other fds. Is that too much of a corner case?
+If I understand this correctly, your intended use is to have one task
+allocate memory and fill it, have the other task clone the VMA, and
+have the first task free the VMA?  If so, that wasn't at all obvious
+from your original email.
 
-Christian
+Why don't you use splice() instead?  splice() the data to the remote
+task and have the remove task read() it?  All these VMA games will
+result in a lot of flushes, which is bad for performance.  Or,
+depending on your exact constraints, you could map a memfd in both
+tasks instead, which has the same flushing issues but at least has a
+sensible API.
+
+>
+> There is no copying of buf memory content, unless COW happens. This is
+> the principal difference to process_vm_writev(), which just allocates
+> pages in remote VM.
+>
+> > Keep in mind that, on x86, just the hardware part of a
+> > page fault is very slow -- populating the memory with a syscall
+> > instead of a fault may well be faster.
+>
+> It is not as slow, as disk IO has. Just compare, what happens in case of anonymous
+> pages related to buf of task1 are swapped:
+>
+> 1)process_vm_writev() reads them back into memory;
+>
+> 2)process_vm_mmap() just copies swap PTEs from task1 page table
+>   to task2 page table.
+>
+> Also, for faster page faults one may use huge pages for the mappings.
+> But really, it's funny to think about page faults, when there are
+> disk IO problems I shown.
+
+What are you doing that is causing *disk* IO in any of this?  I
+suspect your real problem is that you are using far too large of a
+buffer. See below.
+
+>
+> >>
+> >> 2)amount of memory for this example is doubled in a moment --
+> >>   n pages in current and n pages in remote tasks are occupied
+> >>   at the same time;
+> >
+> > This seems disingenuous.  If you're writing p pages total in chunks of
+> > n pages, you will use a total of p pages if you use mmap and p+n if
+> > you use write.
+>
+> I didn't understand this sentence because of many ifs, sorry. Could you
+> please explain your thought once again?
+
+You seem to have a function that tries to populate p pages of memory
+with data received from a socket.  It looks like you're doing
+something like this:
+
+void copy_p_pages(size_t p)
+{
+  size_t n = some_value(p);
+  char *buf = malloc(n * PAGE_SIZE);
+  for (int i = 0; i < p; i += n*PAGE_SIZE) {
+    read(fd, buf, n*PAGE_SIZE);  /* check return value, etc */
+    process_vm_writev(write n*PAGE_SIZE bytes to remote process);
+  }
+  free(buf);
+}
+
+If you have a *constant* n (i.e. some_value(p) is just a number like
+16)), then you aren't doubling memory usage.  If you have
+some_value(p) return p, then you are indeed doubling memory usage.  So
+don't do that!
+If buf is getting swapped out, you are very likely doing something
+wrong.  If you're using a 100MB buffer or a 10GB, then I'm not
+surprised you have problems.  Try something reasonable like 128kB. For
+extra fun, you could mlock() that buf, but if you're thrashing on
+access to a 128kB working set, you will probably also get your *code*
+swapped out, in which case you pretty much lose.
+
+
+> > For example, if the remote VMA is MAP_ANONYMOUS, do you get
+> > a CoW copy of it? I assume you don't since the whole point is to
+> > write to remote memory
+>
+> But, no, there *is* COW semantic. We do not copy memory. We copy
+> page table content. This is just the same we have on fork(), when
+> children duplicates parent's VMA and related page table subset,
+> and parent's PTEs lose _PAGE_RW flag.
+
+Then you need to document this very carefully, because other people
+will use your syscall in different ways than you use it.
+
+And, if you are doing CoW like this, then your syscall is basically
+only useful for your really weird use case in which you're using it to
+import an already-populated VMA.  Maybe this is a reasonable feature
+to add to the kernel, but it needs a benchmark against a reasonable
+alternative.
+
+>
+> There is all copy_page_range() code reused for that. Please, see [3/7]
+> for the details.
+
+You can't as users of a syscall to read the nitty gritty mm code to
+figure out what the syscall does from a user's perspective.
+
+> > But there are plenty of other questions.
+> > What happens if the remote VMA is a gate area or other special mapping
+> > (vDSO, vvar area, etc)?  What if the remote memory comes from a driver
+> > that wasn't expecting the mapping to get magically copied to a
+> > different process?
+>
+> In case of someone wants to duplicate such the mappings, we may consider
+> that, and extend the interface in the future for VMA types, which are
+> safe for that.
+
+Do you mean that the code you sent rejects this case?  If so, please
+document it.  In any case, I looked at the code, and it seems to be
+trying to handle MAP_SHARED and MAP_ANONYMOUS.  I don't see where it
+would reject copying a vDSO.
