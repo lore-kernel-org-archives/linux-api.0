@@ -1,59 +1,38 @@
-From: David Miller <davem@davemloft.net>
-Subject: Re: [PATCH v3] net: Add UNIX_DIAG_UID to Netlink UNIX socket
- diagnostics.
-Date: Mon, 20 May 2019 20:12:02 -0400 (EDT)
-Message-ID: <20190520.201202.368431080157706787.davem@davemloft.net>
-References: <20190519013839.20355-1-felipe@felipegasper.com>
+From: "Theodore Ts'o" <tytso@mit.edu>
+Subject: Re: [PATCH v6 00/16] fscrypt: key management improvements
+Date: Mon, 20 May 2019 20:16:36 -0400
+Message-ID: <20190521001636.GA2369@mit.edu>
+References: <20190520172552.217253-1-ebiggers@kernel.org>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190519013839.20355-1-felipe@felipegasper.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: felipe@felipegasper.com
-Cc: viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, netdev@vger.kernel.org, linux-api@vger.kernel.org
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+Content-Disposition: inline
+In-Reply-To: <20190520172552.217253-1-ebiggers@kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-fscrypt@vger.kernel.org, keyrings@vger.kernel.org, linux-mtd@lists.infradead.org, linux-crypto@vger.kernel.org, linux-fsdevel@vger.kernel.org, Satya Tangirala <satyat@google.com>, Paul Crowley <paulcrowley@google.com>
 List-Id: linux-api@vger.kernel.org
 
-From: Felipe Gasper <felipe@felipegasper.com>
-Date: Sat, 18 May 2019 20:38:39 -0500
-
-> Author: Felipe Gasper <felipe@felipegasper.com>
-> Date:   Sat May 18 20:04:40 2019 -0500
+On Mon, May 20, 2019 at 10:25:36AM -0700, Eric Biggers wrote:
 > 
->    net: Add UNIX_DIAG_UID to Netlink UNIX socket diagnostics.
+> This patchset makes major improvements to how keys are added, removed,
+> and derived in fscrypt, aka ext4/f2fs/ubifs encryption.  It does this by
+> adding new ioctls that add and remove encryption keys directly to/from
+> the filesystem, and by adding a new encryption policy version ("v2")
+> where the user-provided keys are only used as input to HKDF-SHA512 and
+> are identified by their cryptographic hash.
 
-Please format your patch submission properly.
+Do you have userspace programs which use these new ioctl's?  What's
+are testing strategy for these new ioctls?
 
-This Author: and Date: should not be here in the commit message.
+Thanks,
 
-The "net: Add UNIX_DIAG_UID to Netlink UNIX socket diagnostics." should
-be exclusively in your Subject line.
-
-And:
-
->    This adds the ability for Netlink to report a socket's UID along with the
->    other UNIX diagnostic information that is already available. This will
->    allow diagnostic tools greater insight into which users control which
->    socket.
-> 
->    To test this, do the following as a non-root user:
-> 
->         unshare -U -r bash
->         nc -l -U user.socket.$$ &
-> 
->    .. and verify from within that same session that Netlink UNIX socket
->    diagnostics report the socket's UID as 0. Also verify that Netlink UNIX
->    socket diagnostics report the socket's UID as the user's UID from an
->    unprivileged process in a different session. Verify the same from
->    a root process.
-> 
->    Signed-off-by: Felipe Gasper <felipe@felipegasper.com>
-
-This is all unnecessarily indented.
-
-I know what you did, you took something like "git show" output and
-just posted it to the list here.
-
-But that's not what you're supposed to do.
-
-Thanks.
+						- Ted
