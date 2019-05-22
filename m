@@ -1,136 +1,77 @@
 From: hpa@zytor.com
 Subject: Re: [PATCH v3 2/2] initramfs: introduce do_readxattrs()
-Date: Wed, 22 May 2019 09:17:24 -0700
-Message-ID: <9C5B9F98-2067-43D3-B149-57613F38DCD4@zytor.com>
-References: <20190517165519.11507-1-roberto.sassu@huawei.com> <20190517165519.11507-3-roberto.sassu@huawei.com> <CD9A4F89-7CA5-4329-A06A-F8DEB87905A5@zytor.com> <20190517210219.GA5998@rani.riverdale.lan> <d48f35a1-aab1-2f20-2e91-5e81a84b107f@zytor.com> <20190517221731.GA11358@rani.riverdale.lan> <7bdca169-7a01-8c55-40e4-a832e876a0e5@huawei.com>
+Date: Wed, 22 May 2019 09:18:36 -0700
+Message-ID: <FAF78781-2684-4482-9D4D-445B91C15E97@zytor.com>
+References: <20190517165519.11507-1-roberto.sassu@huawei.com> <20190517165519.11507-3-roberto.sassu@huawei.com> <CD9A4F89-7CA5-4329-A06A-F8DEB87905A5@zytor.com> <69ef1f55-9fc1-7ee0-371f-3dbc77551dc0@zytor.com> <a0afd58f-c682-66b5-7478-c405a179d72a@landley.net>
 Mime-Version: 1.0
 Content-Type: text/plain;
  charset=utf-8
 Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <7bdca169-7a01-8c55-40e4-a832e876a0e5@huawei.com>
+In-Reply-To: <a0afd58f-c682-66b5-7478-c405a179d72a@landley.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Roberto Sassu <roberto.sassu@huawei.com>, Arvind Sankar <nivedita@alum.mit.edu>
-Cc: viro@zeniv.linux.org.uk, linux-security-module@vger.kernel.org, linux-integrity@vger.kernel.org, initramfs@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, zohar@linux.vnet.ibm.com, silviu.vlasceanu@huawei.com, dmitry.kasatkin@huawei.com, takondra@cisco.com, kamensky@cisco.com, arnd@arndb.de, rob@landley.net, james.w.mcmechan@gmail.com, niveditas98@gmail.com
+To: Rob Landley <rob@landley.net>, Roberto Sassu <roberto.sassu@huawei.com>, viro@zeniv.linux.org.uk
+Cc: linux-security-module@vger.kernel.org, linux-integrity@vger.kernel.org, initramfs@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, zohar@linux.vnet.ibm.com, silviu.vlasceanu@huawei.com, dmitry.kasatkin@huawei.com, takondra@cisco.com, kamensky@cisco.com, arnd@arndb.de, james.w.mcmechan@gmail.com, niveditas98@gmail.com
 List-Id: linux-api@vger.kernel.org
 
-On May 20, 2019 2:39:46 AM PDT, Roberto Sassu <roberto=2Esassu@huawei=2Ecom=
-> wrote:
->On 5/18/2019 12:17 AM, Arvind Sankar wrote:
->> On Fri, May 17, 2019 at 02:47:31PM -0700, H=2E Peter Anvin wrote:
->>> On 5/17/19 2:02 PM, Arvind Sankar wrote:
->>>> On Fri, May 17, 2019 at 01:18:11PM -0700, hpa@zytor=2Ecom wrote:
->>>>>
->>>>> Ok=2E=2E=2E I just realized this does not work for a modular initram=
-fs,
+On May 17, 2019 7:16:04 PM PDT, Rob Landley <rob@landley=2Enet> wrote:
+>On 5/17/19 4:41 PM, H=2E Peter Anvin wrote:
+>> On 5/17/19 1:18 PM, hpa@zytor=2Ecom wrote:
+>>>
+>>> Ok=2E=2E=2E I just realized this does not work for a modular initramfs=
+,
 >composed at load time from multiple files, which is a very real
 >problem=2E Should be easy enough to deal with: instead of one large file,
 >use one companion file per source file, perhaps something like
 >filename=2E=2Exattrs (suggesting double dots to make it less likely to
 >conflict with a "real" file=2E) No leading dot, as it makes it more
 >likely that archivers will sort them before the file proper=2E
->>>> This version of the patch was changed from the previous one exactly
->to deal with this case --
->>>> it allows for the bootloader to load multiple initramfs archives,
->each
->>>> with its own =2Exattr-list file, and to have that work properly=2E
->>>> Could you elaborate on the issue that you see?
->>>>
 >>>
->>> Well, for one thing, how do you define "cpio archive", each with its
->own
->>> =2Exattr-list file? Second, that would seem to depend on the ordering,
->no,
->>> in which case you depend critically on =2Exattr-list file following
->the
->>> files, which most archivers won't do=2E
+>>> A side benefit is that the format can be simpler as there is no need
+>to encode the filename=2E
 >>>
->>> Either way it seems cleaner to have this per file; especially if/as
->it
->>> can be done without actually mucking up the format=2E
+>>> A technically cleaner solution still, but which would need archiver
+>modifications, would be to encode the xattrs as an optionally nameless
+>file (just an empty string) with a new file mode value, immediately
+>following the original file=2E The advantage there is that the archiver
+>itself could support xattrs and other extended metadata (which has been
+>requested elsewhere); the disadvantage obviously is that that it
+>requires new support in the archiver=2E However, at least it ought to be
+>simpler since it is still a higher protocol level than the cpio archive
+>itself=2E
 >>>
->>> I need to run, but I'll post a more detailed explanation of what I
->did
->>> in a little bit=2E
->>>
->>> 	-hpa
->>>
->> Not sure what you mean by how do I define it? Each cpio archive will
->> contain its own =2Exattr-list file with signatures for the files within
->> it, that was the idea=2E
+>>> There's already one special case in cpio, which is the
+>"!!!TRAILER!!!" filename; although I don't think it is part of the
+>formal spec, to the extent there is one, I would expect that in
+>practice it is always encoded with a mode of 0, which incidentally
+>could be used to unbreak the case where such a filename actually
+>exists=2E So one way to support such extended metadata would be to set
+>mode to 0 and use the filename to encode the type of metadata=2E I wonder
+>how existing GNU or BSD cpio (the BSD one is better maintained these
+>days) would deal with reading such a file; it would at least not be a
+>regression if it just read it still, possibly with warnings=2E It could
+>also be possible to use bits 17:16 in the mode, which are traditionally
+>always zero (mode_t being 16 bits), but I believe are present in most
+>or all of the cpio formats for historical reasons=2E It might be accepted
+>better by existing implementations to use one of these high bits
+>combined with S_IFREG, I dont know=2E
+>>
 >>=20
->> You need to review the code more closely I think -- it does not
->depend
->> on the =2Exattr-list file following the files to which it applies=2E
->>=20
->> The code first extracts =2Exattr-list as though it was a regular file=
-=2E
->If
->> a later dupe shows up (presumably from a second archive, although the
->> patch will actually allow a second one in the same archive), it will
->> then process the existing =2Exattr-list file and apply the attributes
->> listed within it=2E It then will proceed to read the second one and
->> overwrite the first one with it (this is the normal behaviour in the
->> kernel cpio parser)=2E At the end once all the archives have been
->> extracted, if there is an =2Exattr-list file in the rootfs it will be
->> parsed (it would've been the last one encountered, which hasn't been
->> parsed yet, just extracted)=2E
->>=20
->> Regarding the idea to use the high 16 bits of the mode field in
->> the header that's another possibility=2E It would just require
->additional
->> support in the program that actually creates the archive though,
->which
->> the current patch doesn't=2E
+>> Correction: it's just !!!TRAILER!!!=2E
 >
->Yes, for adding signatures for a subset of files, no changes to the ram
->disk generator are necessary=2E Everything is done by a custom module=2E =
-To
->support a generic use case, it would be necessary to modify the
->generator to execute getfattr and the awk script after files have been
->placed in the temporary directory=2E
+>We documented it as "TRAILER!!!" without leading !!!, and that its
+>purpose is to
+>flush hardlinks:
 >
->If I understood the new proposal correctly, it would be task for cpio
->to
->read file metadata after the content and create a new record for each
->file with mode 0x18000, type of metadata encoded in the file name and
->metadata as file content=2E I don't know how easy it would be to modify
->cpio=2E Probably the amount of changes would be reasonable=2E
+>https://www=2Ekernel=2Eorg/doc/Documentation/early-userspace/buffer-forma=
+t=2Etxt
 >
->The kernel will behave in a similar way=2E It will call do_readxattrs()
->in
->do_copy() for each file=2E Since the only difference between the current
->and the new proposal would be two additional calls to do_readxattrs()
->in
->do_name() and unpack_to_rootfs(), maybe we could support both=2E
+>That's what toybox cpio has been producing=2E Kernel consumes it just
+>fine=2E Just
+>checked busybox cpio and that's what they're producing as well=2E=2E=2E
 >
->Roberto
+>Rob
 
-The nice thing with explicit metadata is that it doesn't have to contain t=
-he filename per se, and each file is self-contained=2E There is a reason wh=
-y each cpio header starts with the magic number: each cpio record is formal=
-ly independent and can be processed in isolation=2E  The TRAILER!!! thing i=
-s a huge wart in the format, although in practice TRAILER!!! always has a m=
-ode of 0 and so can be distinguished from an actual file=2E
-
-The use of mode 0x18000 for metadata allows for optional backwards compati=
-bility for extraction; for encoding this can be handled with very simple po=
-stprocessing=2E
-
-So my suggestion would be to have mode 0x18000 indicate extended file meta=
-data, with the filename of the form:
-
-optional_filename!XXXXX!
-
-=2E=2E=2E where XXXXX indicates the type of metadata (e=2Eg=2E !XATTR!)=2E=
- The optional_filename prefix allows an unaware decoder to extract to a wel=
-l-defined name; simple postprocessing would be able to either remove (for s=
-ize) or add (for compatibility) this prefix=2E It would be an error for thi=
-s prefix, if present, to not match the name of the previous file=2E
-
-I do agree that the delayed processing of an =2Exattr-list as you describe=
- ought to work even with a modular initramfs=2E
-
-
+Yes, TRAILER!!! is correct=2E Somehow I managed to get it wrong twice=2E
 --=20
 Sent from my Android device with K-9 Mail=2E Please excuse my brevity=2E
