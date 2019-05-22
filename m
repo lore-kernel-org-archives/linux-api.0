@@ -1,66 +1,111 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: Re: [RFC 7/7] mm: madvise support MADV_ANONYMOUS_FILTER and
- MADV_FILE_FILTER
-Date: Wed, 22 May 2019 10:50:25 +0900
-Message-ID: <20190522015025.GA29449@google.com>
-References: <20190520035254.57579-1-minchan@kernel.org>
- <20190520035254.57579-8-minchan@kernel.org>
- <20190520092801.GA6836@dhcp22.suse.cz>
- <20190521025533.GH10039@google.com>
- <20190521153310.GA3218@cmpxchg.org>
+From: Brian Geffon <bgeffon@google.com>
+Subject: Re: [RFC 0/7] introduce memory hinting API for external process
+Date: Tue, 21 May 2019 21:23:35 -0700
+Message-ID: <CADyq12xG5AO-bAniiMwrW+7W4jBdJVsacVC_gbOq_g4zQ=X12g@mail.gmail.com>
+References: <20190520035254.57579-1-minchan@kernel.org> <dbe801f0-4bbe-5f6e-9053-4b7deb38e235@arm.com>
+ <CAEe=Sxka3Q3vX+7aWUJGKicM+a9Px0rrusyL+5bB1w4ywF6N4Q@mail.gmail.com>
+ <1754d0ef-6756-d88b-f728-17b1fe5d5b07@arm.com> <CALvZod6ioRxSi7tHB-uSTxN1-hsxD+8O3mfFAjaqdsimjUVmcw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190521153310.GA3218@cmpxchg.org>
+In-Reply-To: <CALvZod6ioRxSi7tHB-uSTxN1-hsxD+8O3mfFAjaqdsimjUVmcw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Johannes Weiner <hannes@cmpxchg.org>
-Cc: Michal Hocko <mhocko@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, linux-api@vger.kernel.org
+To: Shakeel Butt <shakeelb@google.com>
+Cc: Anshuman Khandual <anshuman.khandual@arm.com>, Tim Murray <timmurray@google.com>, Minchan Kim <minchan@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Sonny Rao <sonnyrao@google.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 21, 2019 at 11:33:10AM -0400, Johannes Weiner wrote:
-> On Tue, May 21, 2019 at 11:55:33AM +0900, Minchan Kim wrote:
-> > On Mon, May 20, 2019 at 11:28:01AM +0200, Michal Hocko wrote:
-> > > [cc linux-api]
-> > > 
-> > > On Mon 20-05-19 12:52:54, Minchan Kim wrote:
-> > > > System could have much faster swap device like zRAM. In that case, swapping
-> > > > is extremely cheaper than file-IO on the low-end storage.
-> > > > In this configuration, userspace could handle different strategy for each
-> > > > kinds of vma. IOW, they want to reclaim anonymous pages by MADV_COLD
-> > > > while it keeps file-backed pages in inactive LRU by MADV_COOL because
-> > > > file IO is more expensive in this case so want to keep them in memory
-> > > > until memory pressure happens.
-> > > > 
-> > > > To support such strategy easier, this patch introduces
-> > > > MADV_ANONYMOUS_FILTER and MADV_FILE_FILTER options in madvise(2) like
-> > > > that /proc/<pid>/clear_refs already has supported same filters.
-> > > > They are filters could be Ored with other existing hints using top two bits
-> > > > of (int behavior).
-> > > 
-> > > madvise operates on top of ranges and it is quite trivial to do the
-> > > filtering from the userspace so why do we need any additional filtering?
-> > > 
-> > > > Once either of them is set, the hint could affect only the interested vma
-> > > > either anonymous or file-backed.
-> > > > 
-> > > > With that, user could call a process_madvise syscall simply with a entire
-> > > > range(0x0 - 0xFFFFFFFFFFFFFFFF) but either of MADV_ANONYMOUS_FILTER and
-> > > > MADV_FILE_FILTER so there is no need to call the syscall range by range.
-> > > 
-> > > OK, so here is the reason you want that. The immediate question is why
-> > > cannot the monitor do the filtering from the userspace. Slightly more
-> > > work, all right, but less of an API to expose and that itself is a
-> > > strong argument against.
-> > 
-> > What I should do if we don't have such filter option is to enumerate all of
-> > vma via /proc/<pid>/maps and then parse every ranges and inode from string,
-> > which would be painful for 2000+ vmas.
-> 
-> Just out of curiosity, how do you get to 2000+ distinct memory regions
-> in the address space of a mobile app? I'm assuming these aren't files,
-> but rather anon objects with poor grouping. Is that from guard pages
-> between individual heap allocations or something?
+To expand on the ChromeOS use case we're in a very similar situation
+to Android. For example, the Chrome browser uses a separate process
+for each individual tab (with some exceptions) and over time many tabs
+remain open in a back-grounded or idle state. Given that we have a lot
+of information about the weight of a tab, when it was last active,
+etc, we can benefit tremendously from per-process reclaim. We're
+working on getting real world numbers but all of our initial testing
+shows very promising results.
 
-Android uses preload library model to speed up app launch so it loads
-all of library in advance on zygote and forks new app based on it.
+
+On Tue, May 21, 2019 at 5:57 AM Shakeel Butt <shakeelb@google.com> wrote:
+>
+> On Mon, May 20, 2019 at 7:55 PM Anshuman Khandual
+> <anshuman.khandual@arm.com> wrote:
+> >
+> >
+> >
+> > On 05/20/2019 10:29 PM, Tim Murray wrote:
+> > > On Sun, May 19, 2019 at 11:37 PM Anshuman Khandual
+> > > <anshuman.khandual@arm.com> wrote:
+> > >>
+> > >> Or Is the objective here is reduce the number of processes which get killed by
+> > >> lmkd by triggering swapping for the unused memory (user hinted) sooner so that
+> > >> they dont get picked by lmkd. Under utilization for zram hardware is a concern
+> > >> here as well ?
+> > >
+> > > The objective is to avoid some instances of memory pressure by
+> > > proactively swapping pages that userspace knows to be cold before
+> > > those pages reach the end of the LRUs, which in turn can prevent some
+> > > apps from being killed by lmk/lmkd. As soon as Android userspace knows
+> > > that an application is not being used and is only resident to improve
+> > > performance if the user returns to that app, we can kick off
+> > > process_madvise on that process's pages (or some portion of those
+> > > pages) in a power-efficient way to reduce memory pressure long before
+> > > the system hits the free page watermark. This allows the system more
+> > > time to put pages into zram versus waiting for the watermark to
+> > > trigger kswapd, which decreases the likelihood that later memory
+> > > allocations will cause enough pressure to trigger a kill of one of
+> > > these apps.
+> >
+> > So this opens up bit of LRU management to user space hints. Also because the app
+> > in itself wont know about the memory situation of the entire system, new system
+> > call needs to be called from an external process.
+> >
+> > >
+> > >> Swapping out memory into zram wont increase the latency for a hot start ? Or
+> > >> is it because as it will prevent a fresh cold start which anyway will be slower
+> > >> than a slow hot start. Just being curious.
+> > >
+> > > First, not all swapped pages will be reloaded immediately once an app
+> > > is resumed. We've found that an app's working set post-process_madvise
+> > > is significantly smaller than what an app allocates when it first
+> > > launches (see the delta between pswpin and pswpout in Minchan's
+> > > results). Presumably because of this, faulting to fetch from zram does
+> >
+> > pswpin      417613    1392647     975034     233.00
+> > pswpout    1274224    2661731    1387507     108.00
+> >
+> > IIUC the swap-in ratio is way higher in comparison to that of swap out. Is that
+> > always the case ? Or it tend to swap out from an active area of the working set
+> > which faulted back again.
+> >
+> > > not seem to introduce a noticeable hot start penalty, not does it
+> > > cause an increase in performance problems later in the app's
+> > > lifecycle. I've measured with and without process_madvise, and the
+> > > differences are within our noise bounds. Second, because we're not
+> >
+> > That is assuming that post process_madvise() working set for the application is
+> > always smaller. There is another challenge. The external process should ideally
+> > have the knowledge of active areas of the working set for an application in
+> > question for it to invoke process_madvise() correctly to prevent such scenarios.
+> >
+> > > preemptively evicting file pages and only making them more likely to
+> > > be evicted when there's already memory pressure, we avoid the case
+> > > where we process_madvise an app then immediately return to the app and
+> > > reload all file pages in the working set even though there was no
+> > > intervening memory pressure. Our initial version of this work evicted
+> >
+> > That would be the worst case scenario which should be avoided. Memory pressure
+> > must be a parameter before actually doing the swap out. But pages if know to be
+> > inactive/cold can be marked high priority to be swapped out.
+> >
+> > > file pages preemptively and did cause a noticeable slowdown (~15%) for
+> > > that case; this patch set avoids that slowdown. Finally, the benefit
+> > > from avoiding cold starts is huge. The performance improvement from
+> > > having a hot start instead of a cold start ranges from 3x for very
+> > > small apps to 50x+ for larger apps like high-fidelity games.
+> >
+> > Is there any other real world scenario apart from this app based ecosystem where
+> > user hinted LRU management might be helpful ? Just being curious. Thanks for the
+> > detailed explanation. I will continue looking into this series.
+>
+> Chrome OS is another real world use-case for this user hinted LRU
+> management approach by proactively reclaiming reclaim from tabs not
+> accessed by the user for some time.
