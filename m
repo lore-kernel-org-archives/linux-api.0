@@ -1,109 +1,33 @@
-From: Oleg Nesterov <oleg@redhat.com>
-Subject: Re: [PATCH v1 1/2] open: add close_range()
-Date: Wed, 22 May 2019 18:57:37 +0200
-Message-ID: <20190522165737.GC4915@redhat.com>
-References: <20190522155259.11174-1-christian@brauner.io>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH RFC v8 01/10] namei: obey trailing magic-link DAC permissions
+Date: Wed, 22 May 2019 10:01:17 -0700
+Message-ID: <CALCETrVCwe49q5mu=f6jTYNSgosQSjjY5chukMPo6eZtQGqo5g@mail.gmail.com>
+References: <20190520133305.11925-1-cyphar@cyphar.com> <20190520133305.11925-2-cyphar@cyphar.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190522155259.11174-1-christian@brauner.io>
+In-Reply-To: <20190520133305.11925-2-cyphar@cyphar.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian@brauner.io>
-Cc: viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, torvalds@linux-foundation.org, fweimer@redhat.com, jannh@google.com, tglx@linutronix.de, arnd@arndb.de, shuah@kernel.org, dhowells@redhat.com, tkjos@android.com, ldv@altlinux.org, miklos@szeredi.hu, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, linux-sh@vger.kernel.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-arch@vger.kernel.org, linux-kselftest@vger.kernel.org, x86@kernel.org
+To: Aleksa Sarai <cyphar@cyphar.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Andy Lutomirski <luto@kernel.org>, Christian Brauner <christian@brauner.io>, Eric Biederman <ebiederm@xmission.com>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, Linus Torvalds <torvalds@linux-foundation.org>, Linux Containers <contai>
 List-Id: linux-api@vger.kernel.org
 
-On 05/22, Christian Brauner wrote:
->
-> +static struct file *pick_file(struct files_struct *files, unsigned fd)
->  {
-> -	struct file *file;
-> +	struct file *file = NULL;
->  	struct fdtable *fdt;
->  
->  	spin_lock(&files->file_lock);
-> @@ -632,15 +629,65 @@ int __close_fd(struct files_struct *files, unsigned fd)
->  		goto out_unlock;
->  	rcu_assign_pointer(fdt->fd[fd], NULL);
->  	__put_unused_fd(files, fd);
-> -	spin_unlock(&files->file_lock);
-> -	return filp_close(file, files);
->  
->  out_unlock:
->  	spin_unlock(&files->file_lock);
-> -	return -EBADF;
-> +	return file;
+On Mon, May 20, 2019 at 6:34 AM Aleksa Sarai <cyphar@cyphar.com> wrote:
+> One final exception is given, which is that non-O_PATH file descriptors
+> are given re-open rights equivalent to the permissions available at
+> open-time. This allows for O_RDONLY file descriptors to be re-opened
+> O_RDWR as long as the user had MAY_WRITE access at the time of opening
+> the O_RDONLY descriptor. This is necessary to avoid breaking userspace
+> (some of the kernel's own selftests depended on this "feature").
 
-...
+Can you clarify this exception a bit?  I'd like to make sure it's not
+such a huge exception that it invalidates the whole point of the
+patch.  If you open a file for execute, by actually exec()ing it or by
+using something like the proposed O_MAYEXEC, and you have
+inode_permission to write, do you still end up with FMODE_PATH_WRITE?
+The code looks like it does, and this seems like it might be a
+mistake.  Is there any way for user code to read out these new file
+mode bits?
 
-> +int __close_range(struct files_struct *files, unsigned fd, unsigned max_fd)
-> +{
-> +	unsigned int cur_max;
-> +
-> +	if (fd > max_fd)
-> +		return -EINVAL;
-> +
-> +	rcu_read_lock();
-> +	cur_max = files_fdtable(files)->max_fds;
-> +	rcu_read_unlock();
-> +
-> +	/* cap to last valid index into fdtable */
-> +	if (max_fd >= cur_max)
-> +		max_fd = cur_max - 1;
-> +
-> +	while (fd <= max_fd) {
-> +		struct file *file;
-> +
-> +		file = pick_file(files, fd++);
-
-Well, how about something like
-
-	static unsigned int find_next_opened_fd(struct fdtable *fdt, unsigned start)
-	{
-		unsigned int maxfd = fdt->max_fds;
-		unsigned int maxbit = maxfd / BITS_PER_LONG;
-		unsigned int bitbit = start / BITS_PER_LONG;
-
-		bitbit = find_next_bit(fdt->full_fds_bits, maxbit, bitbit) * BITS_PER_LONG;
-		if (bitbit > maxfd)
-			return maxfd;
-		if (bitbit > start)
-			start = bitbit;
-		return find_next_bit(fdt->open_fds, maxfd, start);
-	}
-
-	unsigned close_next_fd(struct files_struct *files, unsigned start, unsigned maxfd)
-	{
-		unsigned fd;
-		struct file *file;
-		struct fdtable *fdt;
-	
-		spin_lock(&files->file_lock);
-		fdt = files_fdtable(files);
-		fd = find_next_opened_fd(fdt, start);
-		if (fd >= fdt->max_fds || fd > maxfd) {
-			fd = -1;
-			goto out;
-		}
-
-		file = fdt->fd[fd];
-		rcu_assign_pointer(fdt->fd[fd], NULL);
-		__put_unused_fd(files, fd);
-	out:
-		spin_unlock(&files->file_lock);
-
-		if (fd == -1u)
-			return fd;
-
-		filp_close(file, files);
-		return fd + 1;
-	}
-
-?
-
-Then close_range() can do
-
-	while (fd < max_fd)
-		fd = close_next_fd(fd, maxfd);
-
-Oleg.
+What are actual examples of uses for this exception?  Breaking
+selftests is not, in and of itself, a huge problem.
