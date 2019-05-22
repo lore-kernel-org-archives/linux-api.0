@@ -1,77 +1,109 @@
-From: hpa@zytor.com
-Subject: Re: [PATCH v3 2/2] initramfs: introduce do_readxattrs()
-Date: Wed, 22 May 2019 09:18:36 -0700
-Message-ID: <FAF78781-2684-4482-9D4D-445B91C15E97@zytor.com>
-References: <20190517165519.11507-1-roberto.sassu@huawei.com> <20190517165519.11507-3-roberto.sassu@huawei.com> <CD9A4F89-7CA5-4329-A06A-F8DEB87905A5@zytor.com> <69ef1f55-9fc1-7ee0-371f-3dbc77551dc0@zytor.com> <a0afd58f-c682-66b5-7478-c405a179d72a@landley.net>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH v1 1/2] open: add close_range()
+Date: Wed, 22 May 2019 18:57:37 +0200
+Message-ID: <20190522165737.GC4915@redhat.com>
+References: <20190522155259.11174-1-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain;
- charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <a0afd58f-c682-66b5-7478-c405a179d72a@landley.net>
+Content-Disposition: inline
+In-Reply-To: <20190522155259.11174-1-christian@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Rob Landley <rob@landley.net>, Roberto Sassu <roberto.sassu@huawei.com>, viro@zeniv.linux.org.uk
-Cc: linux-security-module@vger.kernel.org, linux-integrity@vger.kernel.org, initramfs@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, zohar@linux.vnet.ibm.com, silviu.vlasceanu@huawei.com, dmitry.kasatkin@huawei.com, takondra@cisco.com, kamensky@cisco.com, arnd@arndb.de, james.w.mcmechan@gmail.com, niveditas98@gmail.com
+To: Christian Brauner <christian@brauner.io>
+Cc: viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, torvalds@linux-foundation.org, fweimer@redhat.com, jannh@google.com, tglx@linutronix.de, arnd@arndb.de, shuah@kernel.org, dhowells@redhat.com, tkjos@android.com, ldv@altlinux.org, miklos@szeredi.hu, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, linux-sh@vger.kernel.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-arch@vger.kernel.org, linux-kselftest@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On May 17, 2019 7:16:04 PM PDT, Rob Landley <rob@landley=2Enet> wrote:
->On 5/17/19 4:41 PM, H=2E Peter Anvin wrote:
->> On 5/17/19 1:18 PM, hpa@zytor=2Ecom wrote:
->>>
->>> Ok=2E=2E=2E I just realized this does not work for a modular initramfs=
-,
->composed at load time from multiple files, which is a very real
->problem=2E Should be easy enough to deal with: instead of one large file,
->use one companion file per source file, perhaps something like
->filename=2E=2Exattrs (suggesting double dots to make it less likely to
->conflict with a "real" file=2E) No leading dot, as it makes it more
->likely that archivers will sort them before the file proper=2E
->>>
->>> A side benefit is that the format can be simpler as there is no need
->to encode the filename=2E
->>>
->>> A technically cleaner solution still, but which would need archiver
->modifications, would be to encode the xattrs as an optionally nameless
->file (just an empty string) with a new file mode value, immediately
->following the original file=2E The advantage there is that the archiver
->itself could support xattrs and other extended metadata (which has been
->requested elsewhere); the disadvantage obviously is that that it
->requires new support in the archiver=2E However, at least it ought to be
->simpler since it is still a higher protocol level than the cpio archive
->itself=2E
->>>
->>> There's already one special case in cpio, which is the
->"!!!TRAILER!!!" filename; although I don't think it is part of the
->formal spec, to the extent there is one, I would expect that in
->practice it is always encoded with a mode of 0, which incidentally
->could be used to unbreak the case where such a filename actually
->exists=2E So one way to support such extended metadata would be to set
->mode to 0 and use the filename to encode the type of metadata=2E I wonder
->how existing GNU or BSD cpio (the BSD one is better maintained these
->days) would deal with reading such a file; it would at least not be a
->regression if it just read it still, possibly with warnings=2E It could
->also be possible to use bits 17:16 in the mode, which are traditionally
->always zero (mode_t being 16 bits), but I believe are present in most
->or all of the cpio formats for historical reasons=2E It might be accepted
->better by existing implementations to use one of these high bits
->combined with S_IFREG, I dont know=2E
->>
->>=20
->> Correction: it's just !!!TRAILER!!!=2E
+On 05/22, Christian Brauner wrote:
 >
->We documented it as "TRAILER!!!" without leading !!!, and that its
->purpose is to
->flush hardlinks:
->
->https://www=2Ekernel=2Eorg/doc/Documentation/early-userspace/buffer-forma=
-t=2Etxt
->
->That's what toybox cpio has been producing=2E Kernel consumes it just
->fine=2E Just
->checked busybox cpio and that's what they're producing as well=2E=2E=2E
->
->Rob
+> +static struct file *pick_file(struct files_struct *files, unsigned fd)
+>  {
+> -	struct file *file;
+> +	struct file *file = NULL;
+>  	struct fdtable *fdt;
+>  
+>  	spin_lock(&files->file_lock);
+> @@ -632,15 +629,65 @@ int __close_fd(struct files_struct *files, unsigned fd)
+>  		goto out_unlock;
+>  	rcu_assign_pointer(fdt->fd[fd], NULL);
+>  	__put_unused_fd(files, fd);
+> -	spin_unlock(&files->file_lock);
+> -	return filp_close(file, files);
+>  
+>  out_unlock:
+>  	spin_unlock(&files->file_lock);
+> -	return -EBADF;
+> +	return file;
 
-Yes, TRAILER!!! is correct=2E Somehow I managed to get it wrong twice=2E
---=20
-Sent from my Android device with K-9 Mail=2E Please excuse my brevity=2E
+...
+
+> +int __close_range(struct files_struct *files, unsigned fd, unsigned max_fd)
+> +{
+> +	unsigned int cur_max;
+> +
+> +	if (fd > max_fd)
+> +		return -EINVAL;
+> +
+> +	rcu_read_lock();
+> +	cur_max = files_fdtable(files)->max_fds;
+> +	rcu_read_unlock();
+> +
+> +	/* cap to last valid index into fdtable */
+> +	if (max_fd >= cur_max)
+> +		max_fd = cur_max - 1;
+> +
+> +	while (fd <= max_fd) {
+> +		struct file *file;
+> +
+> +		file = pick_file(files, fd++);
+
+Well, how about something like
+
+	static unsigned int find_next_opened_fd(struct fdtable *fdt, unsigned start)
+	{
+		unsigned int maxfd = fdt->max_fds;
+		unsigned int maxbit = maxfd / BITS_PER_LONG;
+		unsigned int bitbit = start / BITS_PER_LONG;
+
+		bitbit = find_next_bit(fdt->full_fds_bits, maxbit, bitbit) * BITS_PER_LONG;
+		if (bitbit > maxfd)
+			return maxfd;
+		if (bitbit > start)
+			start = bitbit;
+		return find_next_bit(fdt->open_fds, maxfd, start);
+	}
+
+	unsigned close_next_fd(struct files_struct *files, unsigned start, unsigned maxfd)
+	{
+		unsigned fd;
+		struct file *file;
+		struct fdtable *fdt;
+	
+		spin_lock(&files->file_lock);
+		fdt = files_fdtable(files);
+		fd = find_next_opened_fd(fdt, start);
+		if (fd >= fdt->max_fds || fd > maxfd) {
+			fd = -1;
+			goto out;
+		}
+
+		file = fdt->fd[fd];
+		rcu_assign_pointer(fdt->fd[fd], NULL);
+		__put_unused_fd(files, fd);
+	out:
+		spin_unlock(&files->file_lock);
+
+		if (fd == -1u)
+			return fd;
+
+		filp_close(file, files);
+		return fd + 1;
+	}
+
+?
+
+Then close_range() can do
+
+	while (fd < max_fd)
+		fd = close_next_fd(fd, maxfd);
+
+Oleg.
