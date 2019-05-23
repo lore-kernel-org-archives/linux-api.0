@@ -1,178 +1,98 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH v1 1/2] open: add close_range()
-Date: Thu, 23 May 2019 13:51:20 +0200
-Message-ID: <20190523115118.pmscbd6kaqy37dym@brauner.io>
-References: <20190522155259.11174-1-christian@brauner.io>
- <20190522165737.GC4915@redhat.com>
+From: Roberto Sassu <roberto.sassu@huawei.com>
+Subject: [PATCH v4 0/3] initramfs: add support for xattrs in the initial ram disk
+Date: Thu, 23 May 2019 14:18:00 +0200
+Message-ID: <20190523121803.21638-1-roberto.sassu@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190522165737.GC4915@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>
-Cc: viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, torvalds@linux-foundation.org, fweimer@redhat.com, jannh@google.com, tglx@linutronix.de, arnd@arndb.de, shuah@kernel.org, dhowells@redhat.com, tkjos@android.com, ldv@altlinux.org, miklos@szeredi.hu, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, linux-sh@vger.kernel.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-arch@vger.kernel.org, linux-kselftest@vger.kernel.org, x86@kernel.org
+To: viro@zeniv.linux.org.uk
+Cc: linux-security-module@vger.kernel.org, linux-integrity@vger.kernel.org, initramfs@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, bug-cpio@gnu.org, zohar@linux.vnet.ibm.com, silviu.vlasceanu@huawei.com, dmitry.kasatkin@huawei.com, takondra@cisco.com, kamensky@cisco.com, hpa@zytor.com, arnd@arndb.de, rob@landley.net, james.w.mcmechan@gmail.com, niveditas98@gmail.com, Roberto Sassu <roberto.sassu@huawei.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 22, 2019 at 06:57:37PM +0200, Oleg Nesterov wrote:
-> On 05/22, Christian Brauner wrote:
-> >
-> > +static struct file *pick_file(struct files_struct *files, unsigned fd)
-> >  {
-> > -	struct file *file;
-> > +	struct file *file = NULL;
-> >  	struct fdtable *fdt;
-> >  
-> >  	spin_lock(&files->file_lock);
-> > @@ -632,15 +629,65 @@ int __close_fd(struct files_struct *files, unsigned fd)
-> >  		goto out_unlock;
-> >  	rcu_assign_pointer(fdt->fd[fd], NULL);
-> >  	__put_unused_fd(files, fd);
-> > -	spin_unlock(&files->file_lock);
-> > -	return filp_close(file, files);
-> >  
-> >  out_unlock:
-> >  	spin_unlock(&files->file_lock);
-> > -	return -EBADF;
-> > +	return file;
-> 
-> ...
-> 
-> > +int __close_range(struct files_struct *files, unsigned fd, unsigned max_fd)
-> > +{
-> > +	unsigned int cur_max;
-> > +
-> > +	if (fd > max_fd)
-> > +		return -EINVAL;
-> > +
-> > +	rcu_read_lock();
-> > +	cur_max = files_fdtable(files)->max_fds;
-> > +	rcu_read_unlock();
-> > +
-> > +	/* cap to last valid index into fdtable */
-> > +	if (max_fd >= cur_max)
-> > +		max_fd = cur_max - 1;
-> > +
-> > +	while (fd <= max_fd) {
-> > +		struct file *file;
-> > +
-> > +		file = pick_file(files, fd++);
-> 
-> Well, how about something like
-> 
-> 	static unsigned int find_next_opened_fd(struct fdtable *fdt, unsigned start)
-> 	{
-> 		unsigned int maxfd = fdt->max_fds;
-> 		unsigned int maxbit = maxfd / BITS_PER_LONG;
-> 		unsigned int bitbit = start / BITS_PER_LONG;
-> 
-> 		bitbit = find_next_bit(fdt->full_fds_bits, maxbit, bitbit) * BITS_PER_LONG;
-> 		if (bitbit > maxfd)
-> 			return maxfd;
-> 		if (bitbit > start)
-> 			start = bitbit;
-> 		return find_next_bit(fdt->open_fds, maxfd, start);
-> 	}
+This patch set aims at solving the following use case: appraise files from
+the initial ram disk. To do that, IMA checks the signature/hash from the
+security.ima xattr. Unfortunately, this use case cannot be implemented
+currently, as the CPIO format does not support xattrs.
 
-> 
-> 	unsigned close_next_fd(struct files_struct *files, unsigned start, unsigned maxfd)
-> 	{
-> 		unsigned fd;
-> 		struct file *file;
-> 		struct fdtable *fdt;
-> 	
-> 		spin_lock(&files->file_lock);
-> 		fdt = files_fdtable(files);
-> 		fd = find_next_opened_fd(fdt, start);
-> 		if (fd >= fdt->max_fds || fd > maxfd) {
-> 			fd = -1;
-> 			goto out;
-> 		}
-> 
-> 		file = fdt->fd[fd];
-> 		rcu_assign_pointer(fdt->fd[fd], NULL);
-> 		__put_unused_fd(files, fd);
-> 	out:
-> 		spin_unlock(&files->file_lock);
-> 
-> 		if (fd == -1u)
-> 			return fd;
-> 
-> 		filp_close(file, files);
-> 		return fd + 1;
-> 	}
+This proposal consists in including file metadata as additional files named
+METADATA!!!, for each file added to the ram disk. The CPIO parser in the
+kernel recognizes these special files from the file name, and calls the
+appropriate parser to add metadata to the previously extracted file. It has
+been proposed to use bit 17:16 of the file mode as a way to recognize files
+with metadata, but both the kernel and the cpio tool declare the file mode
+as unsigned short.
 
-Thanks, Oleg!
+The difference from v2, v3 (https://lkml.org/lkml/2019/5/9/230,
+https://lkml.org/lkml/2019/5/17/466) is that file metadata are stored in
+separate files instead of a single file. Given that files with metadata
+must immediately follow the files metadata will be added to, image
+generators have to be modified in this version.
 
-I kept it dumb and was about to reply that your solution introduces more
-code when it seemed we wanted to keep this very simple for now.
-But then I saw that find_next_opened_fd() already exists as
-find_next_fd(). So it's actually not bad compared to what I sent in v1.
-So - with some small tweaks (need to test it and all now) - how do we
-feel about?:
+The difference from v1 (https://lkml.org/lkml/2018/11/22/1182) is that
+all files have the same name. The file metadata are added to is always the
+previous one, and the image generator in user space will make sure that
+files are in the correct sequence.
 
-/**
- * __close_next_open_fd() - Close the nearest open fd.
- *
- * @curfd: lowest file descriptor to consider
- * @maxfd: highest file descriptor to consider
- *
- * This function will close the nearest open fd, i.e. it will either
- * close @curfd if it is open or the closest open file descriptor
- * c greater than @curfd that
- * is smaller or equal to maxfd.
- * If the function found a file descriptor to close it will return 0 and
- * place the file descriptor it closed in @curfd. If it did not find a
- * file descriptor to close it will return -EBADF.
- */
-static int __close_next_open_fd(struct files_struct *files, unsigned *curfd, unsigned maxfd)
-{
-        struct file *file = NULL;
-	unsigned fd;
-	struct fdtable *fdt;
+The difference with another proposal
+(https://lore.kernel.org/patchwork/cover/888071/) is that xattrs can be
+included in an image without changing the image format. Files with metadata
+will appear as regular files. It will be task of the parser in the kernel
+to process them.
 
-	spin_lock(&files->file_lock);
-	fdt = files_fdtable(files);
-	fd = find_next_fd(fdt, *curfd);
-	if (fd >= fdt->max_fds || fd > maxfd)
-		goto out_unlock;
+This patch set extends the format of data defined in patch 9/15 of the last
+proposal. It adds header version and type, so that new formats can be
+defined and arbitrary metadata types can be processed.
 
-	file = fdt->fd[fd];
-	rcu_assign_pointer(fdt->fd[fd], NULL);
-	__put_unused_fd(files, fd);
+The changes introduced by this patch set don't cause any compatibility
+issue: kernels without the metadata parser simply extract the special files
+and don't process metadata; kernels with the metadata parser don't process
+metadata if the special files are not included in the image.
 
-out_unlock:
-	spin_unlock(&files->file_lock);
+>From the kernel space perspective, backporting this functionality to older
+kernels should be very easy. It is sufficient to add two calls to the new
+function do_process_metadata() in do_copy(), and to check the file name in
+do_name(). From the user space perspective, unlike the previous version of
+the patch set, it is required to modify the image generators in order to
+include metadata as separate files.
 
-	if (!file)
-		return -EBADF;
+Changelog
 
-	*curfd = fd;
-	filp_close(file, files);
-	return 0;
-}
+v3:
+- include file metadata as separate files named METADATA!!!
+- add the possibility to include in the ram disk arbitrary metadata types
 
-int __close_range(struct files_struct *files, unsigned fd, unsigned max_fd)
-{
-	if (fd > max_fd)
-		return -EINVAL;
+v2:
+- replace ksys_lsetxattr() with kern_path() and vfs_setxattr()
+  (suggested by Jann Horn)
+- replace ksys_open()/ksys_read()/ksys_close() with
+  filp_open()/kernel_read()/fput()
+  (suggested by Jann Horn)
+- use path variable instead of name_buf in do_readxattrs()
+- set last byte of str to 0 in do_readxattrs()
+- call do_readxattrs() in do_name() before replacing an existing
+  .xattr-list
+- pass pathname to do_setxattrs()
 
-	while (fd <= max_fd) {
-		if (__close_next_fd(files, &fd, maxfd))
-			break;
+v1:
+- move xattr unmarshaling to CPIO parser
 
-		cond_resched();
-		fd++;
-	}
 
-	return 0;
-}
+Mimi Zohar (1):
+  initramfs: add file metadata
 
-SYSCALL_DEFINE3(close_range, unsigned int, fd, unsigned int, max_fd,
-		unsigned int, flags)
-{
-	if (flags)
-		return -EINVAL;
+Roberto Sassu (2):
+  initramfs: read metadata from special file METADATA!!!
+  gen_init_cpio: add support for file metadata
 
-	return __close_range(current->files, fd, max_fd);
-}
+ include/linux/initramfs.h |  21 ++++++
+ init/initramfs.c          | 137 +++++++++++++++++++++++++++++++++++++-
+ usr/Kconfig               |   8 +++
+ usr/Makefile              |   4 +-
+ usr/gen_init_cpio.c       | 137 ++++++++++++++++++++++++++++++++++++--
+ usr/gen_initramfs_list.sh |  10 ++-
+ 6 files changed, 305 insertions(+), 12 deletions(-)
+ create mode 100644 include/linux/initramfs.h
+
+-- 
+2.17.1
