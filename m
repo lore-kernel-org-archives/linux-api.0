@@ -1,79 +1,46 @@
-From: Kirill Tkhai <ktkhai@virtuozzo.com>
-Subject: Re: [PATCH v2 0/7] mm: process_vm_mmap() -- syscall for duplication a
- process mapping
-Date: Fri, 24 May 2019 17:00:32 +0300
-Message-ID: <c3cd3719-0a5e-befe-89f2-328526bb714d@virtuozzo.com>
-References: <155836064844.2441.10911127801797083064.stgit@localhost.localdomain>
- <20190522152254.5cyxhjizuwuojlix@box>
- <358bb95e-0dca-6a82-db39-83c0cf09a06c@virtuozzo.com>
- <20190524115239.ugxv766doolc6nsc@box>
+From: Daniel Jordan <daniel.m.jordan@oracle.com>
+Subject: Re: [PATCH] mm: mlockall error for flag MCL_ONFAULT
+Date: Fri, 24 May 2019 17:43:04 -0400
+Message-ID: <20190524214304.enntpu4tvzpyxzfe@ca-dmjordan1.us.oracle.com>
+References: <20190522112329.GA25483@er01809n.ebgroup.elektrobit.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190524115239.ugxv766doolc6nsc@box>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20190522112329.GA25483@er01809n.ebgroup.elektrobit.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Kirill A. Shutemov" <kirill@shutemov.name>
-Cc: akpm@linux-foundation.org, dan.j.williams@intel.com, mhocko@suse.com, keith.busch@intel.com, kirill.shutemov@linux.intel.com, alexander.h.duyck@linux.intel.com, ira.weiny@intel.com, andreyknvl@google.com, arunks@codeaurora.org, vbabka@suse.cz, cl@linux.com, riel@surriel.com, keescook@chromium.org, hannes@cmpxchg.org, npiggin@gmail.com, mathieu.desnoyers@efficios.com, shakeelb@google.com, guro@fb.com, aarcange@redhat.com, hughd@google.com, jglisse@redhat.com, mgorman@techsingularity.net, daniel.m.jordan@oracle.com, jannh@google.com, kilobyte@angband.pl, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org
+To: "Potyra, Stefan" <Stefan.Potyra@elektrobit.com>
+Cc: "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "Jordan, Tobias" <Tobias.Jordan@elektrobit.com>, akpm@linux-foundation.org, vbabka@suse.cz, mhocko@suse.com, kirill.shutemov@linux.intel.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 24.05.2019 14:52, Kirill A. Shutemov wrote:
-> On Fri, May 24, 2019 at 01:45:50PM +0300, Kirill Tkhai wrote:
->> On 22.05.2019 18:22, Kirill A. Shutemov wrote:
->>> On Mon, May 20, 2019 at 05:00:01PM +0300, Kirill Tkhai wrote:
->>>> This patchset adds a new syscall, which makes possible
->>>> to clone a VMA from a process to current process.
->>>> The syscall supplements the functionality provided
->>>> by process_vm_writev() and process_vm_readv() syscalls,
->>>> and it may be useful in many situation.
->>>
->>> Kirill, could you explain how the change affects rmap and how it is safe.
->>>
->>> My concern is that the patchset allows to map the same page multiple times
->>> within one process or even map page allocated by child to the parrent.
->>>
->>> It was not allowed before.
->>>
->>> In the best case it makes reasoning about rmap substantially more difficult.
->>>
->>> But I'm worry it will introduce hard-to-debug bugs, like described in
->>> https://lwn.net/Articles/383162/.
->>
->> Andy suggested to unmap PTEs from source page table, and this make the single
->> page never be mapped in the same process twice. This is OK for my use case,
->> and here we will just do a small step "allow to inherit VMA by a child process",
->> which we didn't have before this. If someone still needs to continue the work
->> to allow the same page be mapped twice in a single process in the future, this
->> person will have a supported basis we do in this small step. I believe, someone
->> like debugger may want to have this to make a fast snapshot of a process private
->> memory (when the task is stopped for a small time to get its memory). But for
->> me remapping is enough at the moment.
->>
->> What do you think about this?
-> 
-> I don't think that unmapping alone will do. Consider the following
-> scenario:
-> 
-> 1. Task A creates and populates the mapping.
-> 2. Task A forks. We have now Task B mapping the same pages, but
-> write-protected.
-> 3. Task B calls process_vm_mmap() and passes the mapping to the parent.
-> 
-> After this Task A will have the same anon pages mapped twice.
+[ Adding linux-api and some of the people who were involved in the
+MCL_ONFAULT/mlock2/etc discussions.  Author of the Fixes patch appears to
+have moved on. ]
 
-Ah, sure.
+On Wed, May 22, 2019 at 11:23:37AM +0000, Potyra, Stefan wrote:
+> If mlockall() is called with only MCL_ONFAULT as flag,
+> it removes any previously applied lockings and does
+> nothing else.
 
-> One possible way out would be to force CoW on all pages in the mapping,
-> before passing the mapping to the new process.
+The change looks reasonable.  Hard to imagine any application relies on it, and
+they really shouldn't be if they are.  Debian codesearch turned up only a few
+cases where stress-ng was doing this for unknown reasons[1] and this change
+isn't gonna break those.  In this case I think changing the syscall's behavior
+is justified.  
 
-This will pop all swapped pages up, which is the thing the patchset aims
-to prevent.
+> This behavior is counter-intuitive and doesn't match the
+> Linux man page.
 
-Hm, what about allow remapping only VMA, which anon_vma::rb_root contain
-only chain and which vma->anon_vma_chain contains single entry? This is
-a vma, which were faulted, but its mm never were duplicated (or which
-forks already died).
+I'd quote it for the changelog:
 
-Thanks,
-Kirill
+  For mlockall():
+
+  EINVAL Unknown  flags were specified or MCL_ONFAULT was specified with‐
+         out either MCL_FUTURE or MCL_CURRENT.
+
+With that you can add
+
+Reviewed-by: Daniel Jordan <daniel.m.jordan@oracle.com>
+
+[1] https://sources.debian.org/src/stress-ng/0.09.50-1/stress-mlock.c/?hl=203#L203
