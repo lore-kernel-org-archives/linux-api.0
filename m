@@ -1,66 +1,40 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: Re: [RFC 7/7] mm: madvise support MADV_ANONYMOUS_FILTER and
- MADV_FILE_FILTER
-Date: Mon, 27 May 2019 16:58:11 +0900
-Message-ID: <20190527075811.GC6879@google.com>
-References: <20190520035254.57579-1-minchan@kernel.org>
- <20190520035254.57579-8-minchan@kernel.org>
- <20190520092801.GA6836@dhcp22.suse.cz>
- <20190521025533.GH10039@google.com>
- <20190521062628.GE32329@dhcp22.suse.cz>
+From: "Potyra, Stefan" <Stefan.Potyra@elektrobit.com>
+Subject: [PATCH v2] mm: mlockall error for flag MCL_ONFAULT
+Date: Mon, 27 May 2019 07:53:42 +0000
+Message-ID: <20190527075333.GA6339@er01809n.ebgroup.elektrobit.com>
+References: <20190527070415.GA1658@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190521062628.GE32329@dhcp22.suse.cz>
+In-Reply-To: <20190527070415.GA1658@dhcp22.suse.cz>
+Content-Language: en-US
+Content-ID: <45C0C401F4D9434B806A15C5EEE14E5F@namprd08.prod.outlook.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, linux-api@vger.kernel.org
+To: Michal Hocko <mhocko@kernel.org>, Daniel Jordan <daniel.m.jordan@oracle.com>
+Cc: "Potyra, Stefan" <Stefan.Potyra@elektrobit.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "Jordan, Tobias" <Tobias.Jordan@elektrobit.com>, "akpm@linux-foundation.org" <akpm@linux-foundation.org>, "vbabka@suse.cz" <vbabka@suse.cz>, "kirill.shutemov@linux.intel.com" <kirill.shutemov@linux.intel.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 21, 2019 at 08:26:28AM +0200, Michal Hocko wrote:
-> On Tue 21-05-19 11:55:33, Minchan Kim wrote:
-> > On Mon, May 20, 2019 at 11:28:01AM +0200, Michal Hocko wrote:
-> > > [cc linux-api]
-> > > 
-> > > On Mon 20-05-19 12:52:54, Minchan Kim wrote:
-> > > > System could have much faster swap device like zRAM. In that case, swapping
-> > > > is extremely cheaper than file-IO on the low-end storage.
-> > > > In this configuration, userspace could handle different strategy for each
-> > > > kinds of vma. IOW, they want to reclaim anonymous pages by MADV_COLD
-> > > > while it keeps file-backed pages in inactive LRU by MADV_COOL because
-> > > > file IO is more expensive in this case so want to keep them in memory
-> > > > until memory pressure happens.
-> > > > 
-> > > > To support such strategy easier, this patch introduces
-> > > > MADV_ANONYMOUS_FILTER and MADV_FILE_FILTER options in madvise(2) like
-> > > > that /proc/<pid>/clear_refs already has supported same filters.
-> > > > They are filters could be Ored with other existing hints using top two bits
-> > > > of (int behavior).
-> > > 
-> > > madvise operates on top of ranges and it is quite trivial to do the
-> > > filtering from the userspace so why do we need any additional filtering?
-> > > 
-> > > > Once either of them is set, the hint could affect only the interested vma
-> > > > either anonymous or file-backed.
-> > > > 
-> > > > With that, user could call a process_madvise syscall simply with a entire
-> > > > range(0x0 - 0xFFFFFFFFFFFFFFFF) but either of MADV_ANONYMOUS_FILTER and
-> > > > MADV_FILE_FILTER so there is no need to call the syscall range by range.
-> > > 
-> > > OK, so here is the reason you want that. The immediate question is why
-> > > cannot the monitor do the filtering from the userspace. Slightly more
-> > > work, all right, but less of an API to expose and that itself is a
-> > > strong argument against.
-> > 
-> > What I should do if we don't have such filter option is to enumerate all of
-> > vma via /proc/<pid>/maps and then parse every ranges and inode from string,
-> > which would be painful for 2000+ vmas.
-> 
-> Painful is not an argument to add a new user API. If the existing API
-> suits the purpose then it should be used. If it is not usable, we can
-> think of a different way.
-
-I measured 1568 vma parsing overhead of /proc/<pid>/maps in ARM64 modern
-mobile CPU. It takes 60ms and 185ms on big cores depending on cpu governor.
-It's never trivial.
+SWYgbWxvY2thbGwoKSBpcyBjYWxsZWQgd2l0aCBvbmx5IE1DTF9PTkZBVUxUIGFzIGZsYWcsDQpp
+dCByZW1vdmVzIGFueSBwcmV2aW91c2x5IGFwcGxpZWQgbG9ja2luZ3MgYW5kIGRvZXMNCm5vdGhp
+bmcgZWxzZS4NCg0KVGhpcyBiZWhhdmlvciBpcyBjb3VudGVyLWludHVpdGl2ZSBhbmQgZG9lc24n
+dCBtYXRjaCB0aGUNCkxpbnV4IG1hbiBwYWdlLg0KDQogIEZvciBtbG9ja2FsbCgpOg0KDQogIEVJ
+TlZBTCBVbmtub3duICBmbGFncyB3ZXJlIHNwZWNpZmllZCBvciBNQ0xfT05GQVVMVCB3YXMgc3Bl
+Y2lmaWVkIHdpdGjigJANCiAgICAgICAgIG91dCBlaXRoZXIgTUNMX0ZVVFVSRSBvciBNQ0xfQ1VS
+UkVOVC4NCg0KQ29uc2VxdWVudGx5LCByZXR1cm4gdGhlIGVycm9yIEVJTlZBTCwgaWYgb25seSBN
+Q0xfT05GQVVMVA0KaXMgcGFzc2VkLiBUaGF0IHdheSwgYXBwbGljYXRpb25zIHdpbGwgYXQgbGVh
+c3QgZGV0ZWN0IHRoYXQNCnRoZXkgYXJlIGNhbGxpbmcgbWxvY2thbGwoKSBpbmNvcnJlY3RseS4N
+Cg0KRml4ZXM6IGIwZjIwNWMyYTMwOCAoIm1tOiBtbG9jazogYWRkIG1sb2NrIGZsYWdzIHRvIGVu
+YWJsZSBWTV9MT0NLT05GQVVMVCB1c2FnZSIpDQpTaWduZWQtb2ZmLWJ5OiBTdGVmYW4gUG90eXJh
+IDxTdGVmYW4uUG90eXJhQGVsZWt0cm9iaXQuY29tPg0KUmV2aWV3ZWQtYnk6IERhbmllbCBKb3Jk
+YW4gPGRhbmllbC5tLmpvcmRhbkBvcmFjbGUuY29tPg0KQWNrZWQtYnk6IE1pY2hhbCBIb2NrbyA8
+bWhvY2tvQHN1c2UuY29tPg0KLS0tDQogbW0vbWxvY2suYyB8IDMgKystDQogMSBmaWxlIGNoYW5n
+ZWQsIDIgaW5zZXJ0aW9ucygrKSwgMSBkZWxldGlvbigtKQ0KDQpkaWZmIC0tZ2l0IGEvbW0vbWxv
+Y2suYyBiL21tL21sb2NrLmMNCmluZGV4IGU0OTJhMTU1YzUxYS4uMDNmMzljYmRkNGM0IDEwMDY0
+NA0KLS0tIGEvbW0vbWxvY2suYw0KKysrIGIvbW0vbWxvY2suYw0KQEAgLTc5Nyw3ICs3OTcsOCBA
+QCBTWVNDQUxMX0RFRklORTEobWxvY2thbGwsIGludCwgZmxhZ3MpDQogCXVuc2lnbmVkIGxvbmcg
+bG9ja19saW1pdDsNCiAJaW50IHJldDsNCiANCi0JaWYgKCFmbGFncyB8fCAoZmxhZ3MgJiB+KE1D
+TF9DVVJSRU5UIHwgTUNMX0ZVVFVSRSB8IE1DTF9PTkZBVUxUKSkpDQorCWlmICghZmxhZ3MgfHwg
+KGZsYWdzICYgfihNQ0xfQ1VSUkVOVCB8IE1DTF9GVVRVUkUgfCBNQ0xfT05GQVVMVCkpIHx8DQor
+CSAgICBmbGFncyA9PSBNQ0xfT05GQVVMVCkNCiAJCXJldHVybiAtRUlOVkFMOw0KIA0KIAlpZiAo
+IWNhbl9kb19tbG9jaygpKQ0KLS0gDQoyLjIwLjENCg0K
