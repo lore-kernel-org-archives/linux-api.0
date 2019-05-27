@@ -1,58 +1,50 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH] mm: mlockall error for flag MCL_ONFAULT
-Date: Mon, 27 May 2019 09:04:15 +0200
-Message-ID: <20190527070415.GA1658@dhcp22.suse.cz>
-References: <20190522112329.GA25483@er01809n.ebgroup.elektrobit.com>
- <20190524214304.enntpu4tvzpyxzfe@ca-dmjordan1.us.oracle.com>
+From: "Li, Aubrey" <aubrey.li@linux.intel.com>
+Subject: Re: [PATCH v18 1/3] proc: add /proc/<pid>/arch_status
+Date: Mon, 27 May 2019 15:16:11 +0800
+Message-ID: <d9c9e104-8062-961a-ede7-60d0590f942a@linux.intel.com>
+References: <20190425143219.102258-1-aubrey.li@linux.intel.com>
+ <20190523201822.cc554d68ec567164bec781e1@linux-foundation.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190524214304.enntpu4tvzpyxzfe@ca-dmjordan1.us.oracle.com>
+In-Reply-To: <20190523201822.cc554d68ec567164bec781e1@linux-foundation.org>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Jordan <daniel.m.jordan@oracle.com>
-Cc: "Potyra, Stefan" <Stefan.Potyra@elektrobit.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "Jordan, Tobias" <Tobias.Jordan@elektrobit.com>, akpm@linux-foundation.org, vbabka@suse.cz, kirill.shutemov@linux.intel.com, linux-api@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: tglx@linutronix.de, mingo@redhat.com, peterz@infradead.org, hpa@zytor.com, ak@linux.intel.com, tim.c.chen@linux.intel.com, dave.hansen@intel.com, arjan@linux.intel.com, adobriyan@gmail.com, aubrey.li@intel.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Andy Lutomirski <luto@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri 24-05-19 17:43:04, Daniel Jordan wrote:
-> [ Adding linux-api and some of the people who were involved in the
-> MCL_ONFAULT/mlock2/etc discussions.  Author of the Fixes patch appears to
-> have moved on. ]
+On 2019/5/24 11:18, Andrew Morton wrote:
+> On Thu, 25 Apr 2019 22:32:17 +0800 Aubrey Li <aubrey.li@linux.intel.com> wrote:
 > 
-> On Wed, May 22, 2019 at 11:23:37AM +0000, Potyra, Stefan wrote:
-> > If mlockall() is called with only MCL_ONFAULT as flag,
-> > it removes any previously applied lockings and does
-> > nothing else.
+>> The architecture specific information of the running processes
+>> could be useful to the userland. Add /proc/<pid>/arch_status
+>> interface support to examine process architecture specific
+>> information externally.
 > 
-> The change looks reasonable.  Hard to imagine any application relies on it, and
-> they really shouldn't be if they are.  Debian codesearch turned up only a few
-> cases where stress-ng was doing this for unknown reasons[1] and this change
-> isn't gonna break those.  In this case I think changing the syscall's behavior
-> is justified.  
+> I'll give this an
 > 
-> > This behavior is counter-intuitive and doesn't match the
-> > Linux man page.
-> 
-> I'd quote it for the changelog:
-> 
->   For mlockall():
-> 
->   EINVAL Unknown  flags were specified or MCL_ONFAULT was specified with‐
->          out either MCL_FUTURE or MCL_CURRENT.
-> 
-> With that you can add
-> 
-> Reviewed-by: Daniel Jordan <daniel.m.jordan@oracle.com>
-> 
-> [1] https://sources.debian.org/src/stress-ng/0.09.50-1/stress-mlock.c/?hl=203#L203
-
-Well spotted and the fix looks reasonable as well. Quoting the man page
-seems useful as well.
-
-Acked-by: Michal Hocko <mhocko@suse.com>
+> Acked-by: Andrew Morton <akpm@linux-foundation.org>
 
 Thanks!
--- 
-Michal Hocko
-SUSE Labs
+
+> 
+> from a procfs POV and shall let the x86 maintainers worry about it.
+> 
+> I must say I'm a bit surprised that we don't already provide some form
+> of per-process CPU-specific info anywhere in procfs.  Something to
+> piggy-back this onto.  But I can't find such a thing.
+> 
+> I assume we've already discussed why this is a new procfs file rather
+> than merely a new line in /proc/<pid>/status.  If so, please add the
+> reasoning to the changelog.  If not, please discuss now ;)
+>
+
+Andy and Thomas may want to give more comments. The discussion was that
+we don't want /proc/PID/status to be different on different architectures.
+It would be better to separate the arch staff into its own file /proc/PID/
+arch_status and make sure that everything in it is namespaced.
+
+Thanks,
+-Aubrey
