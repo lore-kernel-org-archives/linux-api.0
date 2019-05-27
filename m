@@ -1,40 +1,34 @@
-From: "Potyra, Stefan" <Stefan.Potyra@elektrobit.com>
-Subject: [PATCH v2] mm: mlockall error for flag MCL_ONFAULT
-Date: Mon, 27 May 2019 07:53:42 +0000
-Message-ID: <20190527075333.GA6339@er01809n.ebgroup.elektrobit.com>
-References: <20190527070415.GA1658@dhcp22.suse.cz>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH 2/2] arch: wire-up clone6() syscall on x86
+Date: Mon, 27 May 2019 12:02:37 +0200
+Message-ID: <CAK8P3a1Ltsna_rtKxhMU7X0t=UOXDA75tKpph6s=OZ4itJe7VQ@mail.gmail.com>
+References: <20190526102612.6970-1-christian@brauner.io> <20190526102612.6970-2-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190527070415.GA1658@dhcp22.suse.cz>
-Content-Language: en-US
-Content-ID: <45C0C401F4D9434B806A15C5EEE14E5F@namprd08.prod.outlook.com>
+In-Reply-To: <20190526102612.6970-2-christian@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>, Daniel Jordan <daniel.m.jordan@oracle.com>
-Cc: "Potyra, Stefan" <Stefan.Potyra@elektrobit.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "Jordan, Tobias" <Tobias.Jordan@elektrobit.com>, "akpm@linux-foundation.org" <akpm@linux-foundation.org>, "vbabka@suse.cz" <vbabka@suse.cz>, "kirill.shutemov@linux.intel.com" <kirill.shutemov@linux.intel.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+To: Christian Brauner <christian@brauner.io>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Jann Horn <jannh@google.com>, Florian Weimer <fweimer@redhat.com>, Oleg Nesterov <oleg@redhat.com>, David Howells <dhowells@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-SWYgbWxvY2thbGwoKSBpcyBjYWxsZWQgd2l0aCBvbmx5IE1DTF9PTkZBVUxUIGFzIGZsYWcsDQpp
-dCByZW1vdmVzIGFueSBwcmV2aW91c2x5IGFwcGxpZWQgbG9ja2luZ3MgYW5kIGRvZXMNCm5vdGhp
-bmcgZWxzZS4NCg0KVGhpcyBiZWhhdmlvciBpcyBjb3VudGVyLWludHVpdGl2ZSBhbmQgZG9lc24n
-dCBtYXRjaCB0aGUNCkxpbnV4IG1hbiBwYWdlLg0KDQogIEZvciBtbG9ja2FsbCgpOg0KDQogIEVJ
-TlZBTCBVbmtub3duICBmbGFncyB3ZXJlIHNwZWNpZmllZCBvciBNQ0xfT05GQVVMVCB3YXMgc3Bl
-Y2lmaWVkIHdpdGjigJANCiAgICAgICAgIG91dCBlaXRoZXIgTUNMX0ZVVFVSRSBvciBNQ0xfQ1VS
-UkVOVC4NCg0KQ29uc2VxdWVudGx5LCByZXR1cm4gdGhlIGVycm9yIEVJTlZBTCwgaWYgb25seSBN
-Q0xfT05GQVVMVA0KaXMgcGFzc2VkLiBUaGF0IHdheSwgYXBwbGljYXRpb25zIHdpbGwgYXQgbGVh
-c3QgZGV0ZWN0IHRoYXQNCnRoZXkgYXJlIGNhbGxpbmcgbWxvY2thbGwoKSBpbmNvcnJlY3RseS4N
-Cg0KRml4ZXM6IGIwZjIwNWMyYTMwOCAoIm1tOiBtbG9jazogYWRkIG1sb2NrIGZsYWdzIHRvIGVu
-YWJsZSBWTV9MT0NLT05GQVVMVCB1c2FnZSIpDQpTaWduZWQtb2ZmLWJ5OiBTdGVmYW4gUG90eXJh
-IDxTdGVmYW4uUG90eXJhQGVsZWt0cm9iaXQuY29tPg0KUmV2aWV3ZWQtYnk6IERhbmllbCBKb3Jk
-YW4gPGRhbmllbC5tLmpvcmRhbkBvcmFjbGUuY29tPg0KQWNrZWQtYnk6IE1pY2hhbCBIb2NrbyA8
-bWhvY2tvQHN1c2UuY29tPg0KLS0tDQogbW0vbWxvY2suYyB8IDMgKystDQogMSBmaWxlIGNoYW5n
-ZWQsIDIgaW5zZXJ0aW9ucygrKSwgMSBkZWxldGlvbigtKQ0KDQpkaWZmIC0tZ2l0IGEvbW0vbWxv
-Y2suYyBiL21tL21sb2NrLmMNCmluZGV4IGU0OTJhMTU1YzUxYS4uMDNmMzljYmRkNGM0IDEwMDY0
-NA0KLS0tIGEvbW0vbWxvY2suYw0KKysrIGIvbW0vbWxvY2suYw0KQEAgLTc5Nyw3ICs3OTcsOCBA
-QCBTWVNDQUxMX0RFRklORTEobWxvY2thbGwsIGludCwgZmxhZ3MpDQogCXVuc2lnbmVkIGxvbmcg
-bG9ja19saW1pdDsNCiAJaW50IHJldDsNCiANCi0JaWYgKCFmbGFncyB8fCAoZmxhZ3MgJiB+KE1D
-TF9DVVJSRU5UIHwgTUNMX0ZVVFVSRSB8IE1DTF9PTkZBVUxUKSkpDQorCWlmICghZmxhZ3MgfHwg
-KGZsYWdzICYgfihNQ0xfQ1VSUkVOVCB8IE1DTF9GVVRVUkUgfCBNQ0xfT05GQVVMVCkpIHx8DQor
-CSAgICBmbGFncyA9PSBNQ0xfT05GQVVMVCkNCiAJCXJldHVybiAtRUlOVkFMOw0KIA0KIAlpZiAo
-IWNhbl9kb19tbG9jaygpKQ0KLS0gDQoyLjIwLjENCg0K
+On Sun, May 26, 2019 at 12:27 PM Christian Brauner <christian@brauner.io> wrote:
+>
+> Wire up the clone6() call on x86.
+>
+> This patch only wires up clone6() on x86. Some of the arches look like they
+> need special assembly massaging and it is probably smarter if the
+> appropriate arch maintainers would do the actual wiring.
+
+Why do some architectures need special cases here? I'd prefer to have
+new system calls always get defined in a way that avoids this, and
+have a common entry point for everyone.
+
+Looking at the m68k sys_clone comment in
+arch/m68k/kernel/process.c, it seems that this was done as an
+optimization to deal with an inferior ABI. Similar code is present
+in h8300, ia64, nios2, and sparc. If all of them just do this to
+shave off a few cycles from the system call entry, I really
+couldn't care less.
+
+       Arnd
