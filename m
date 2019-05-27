@@ -1,43 +1,90 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH 1/2] fork: add clone6
-Date: Mon, 27 May 2019 21:36:18 +0200
-Message-ID: <CAG48ez2wyDhM-V1hs5ya1R4x7wHT=T8XLOYCPUyw97kzzLhbhg@mail.gmail.com>
-References: <20190526102612.6970-1-christian@brauner.io> <CAHk-=wieuV4hGwznPsX-8E0G2FKhx3NjZ9X3dTKh5zKd+iqOBw@mail.gmail.com>
- <20190527104239.fbnjzfyxa4y4acpf@brauner.io> <CAHk-=wjnbK5ob9JE0H1Ge_R4BL6D0ztsAvrM6DN+S+zyDWE=7A@mail.gmail.com>
+From: "Kirill A. Shutemov" <kirill@shutemov.name>
+Subject: Re: [PATCH v2 0/7] mm: process_vm_mmap() -- syscall for duplication
+ a process mapping
+Date: Tue, 28 May 2019 02:30:30 +0300
+Message-ID: <20190527233030.hpnnbi4aqnu34ova@box>
+References: <155836064844.2441.10911127801797083064.stgit@localhost.localdomain>
+ <20190522152254.5cyxhjizuwuojlix@box>
+ <358bb95e-0dca-6a82-db39-83c0cf09a06c@virtuozzo.com>
+ <20190524115239.ugxv766doolc6nsc@box>
+ <c3cd3719-0a5e-befe-89f2-328526bb714d@virtuozzo.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=wjnbK5ob9JE0H1Ge_R4BL6D0ztsAvrM6DN+S+zyDWE=7A@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <c3cd3719-0a5e-befe-89f2-328526bb714d@virtuozzo.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Christian Brauner <christian@brauner.io>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Florian Weimer <fweimer@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@gmail.com>, Linux API <linux-api@vger.kernel.org>
+To: Kirill Tkhai <ktkhai@virtuozzo.com>
+Cc: akpm@linux-foundation.org, dan.j.williams@intel.com, mhocko@suse.com, keith.busch@intel.com, kirill.shutemov@linux.intel.com, alexander.h.duyck@linux.intel.com, ira.weiny@intel.com, andreyknvl@google.com, arunks@codeaurora.org, vbabka@suse.cz, cl@linux.com, riel@surriel.com, keescook@chromium.org, hannes@cmpxchg.org, npiggin@gmail.com, mathieu.desnoyers@efficios.com, shakeelb@google.com, guro@fb.com, aarcange@redhat.com, hughd@google.com, jglisse@redhat.com, mgorman@techsingularity.net, daniel.m.jordan@oracle.com, jannh@google.com, kilobyte@angband.pl, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org
 List-Id: linux-api@vger.kernel.org
 
-+Kees
+On Fri, May 24, 2019 at 05:00:32PM +0300, Kirill Tkhai wrote:
+> On 24.05.2019 14:52, Kirill A. Shutemov wrote:
+> > On Fri, May 24, 2019 at 01:45:50PM +0300, Kirill Tkhai wrote:
+> >> On 22.05.2019 18:22, Kirill A. Shutemov wrote:
+> >>> On Mon, May 20, 2019 at 05:00:01PM +0300, Kirill Tkhai wrote:
+> >>>> This patchset adds a new syscall, which makes possible
+> >>>> to clone a VMA from a process to current process.
+> >>>> The syscall supplements the functionality provided
+> >>>> by process_vm_writev() and process_vm_readv() syscalls,
+> >>>> and it may be useful in many situation.
+> >>>
+> >>> Kirill, could you explain how the change affects rmap and how it is safe.
+> >>>
+> >>> My concern is that the patchset allows to map the same page multiple times
+> >>> within one process or even map page allocated by child to the parrent.
+> >>>
+> >>> It was not allowed before.
+> >>>
+> >>> In the best case it makes reasoning about rmap substantially more difficult.
+> >>>
+> >>> But I'm worry it will introduce hard-to-debug bugs, like described in
+> >>> https://lwn.net/Articles/383162/.
+> >>
+> >> Andy suggested to unmap PTEs from source page table, and this make the single
+> >> page never be mapped in the same process twice. This is OK for my use case,
+> >> and here we will just do a small step "allow to inherit VMA by a child process",
+> >> which we didn't have before this. If someone still needs to continue the work
+> >> to allow the same page be mapped twice in a single process in the future, this
+> >> person will have a supported basis we do in this small step. I believe, someone
+> >> like debugger may want to have this to make a fast snapshot of a process private
+> >> memory (when the task is stopped for a small time to get its memory). But for
+> >> me remapping is enough at the moment.
+> >>
+> >> What do you think about this?
+> > 
+> > I don't think that unmapping alone will do. Consider the following
+> > scenario:
+> > 
+> > 1. Task A creates and populates the mapping.
+> > 2. Task A forks. We have now Task B mapping the same pages, but
+> > write-protected.
+> > 3. Task B calls process_vm_mmap() and passes the mapping to the parent.
+> > 
+> > After this Task A will have the same anon pages mapped twice.
+> 
+> Ah, sure.
+> 
+> > One possible way out would be to force CoW on all pages in the mapping,
+> > before passing the mapping to the new process.
+> 
+> This will pop all swapped pages up, which is the thing the patchset aims
+> to prevent.
+> 
+> Hm, what about allow remapping only VMA, which anon_vma::rb_root contain
+> only chain and which vma->anon_vma_chain contains single entry? This is
+> a vma, which were faulted, but its mm never were duplicated (or which
+> forks already died).
 
-On Mon, May 27, 2019 at 9:27 PM Linus Torvalds
-<torvalds@linux-foundation.org> wrote:
-> On Mon, May 27, 2019 at 3:42 AM Christian Brauner <christian@brauner.io> wrote:
-> > Hm, still pondering whether having one unsigned int argument passed
-> > through registers that captures all the flags from the old clone() would
-> > be a good idea.
->
-> That sounds like a reasonable thing to do.
->
-> Maybe we could continue to call the old flags CLONE_XYZ and continue
-> to pass them in as "flags" argument, and then we have CLONE_EXT_XYZ
-> flags for a new 64-bit flag field that comes in through memory in the
-> new clone_args thing?
+The requirement for the VMA to be faulted (have any pages mapped) looks
+excessive to me, but the general idea may work.
 
-With the current seccomp model, that would have the unfortunate effect
-of making it impossible to filter out new clone flags - which would
-likely mean that people who want to sandbox their code would not use
-the new clone() because they don't want their sandboxed code to be
-able to create time namespaces and whatever other new fancy things
-clone() might support in the future. This is why I convinced Christian
-to pass flags in registers for the first patch version.
+One issue I see is that userspace may not have full control to create such
+VMA. vma_merge() can merge the VMA to the next one without any consent
+from userspace and you'll get anon_vma inherited from the VMA you've
+justed merged with.
 
-The alternative I see would be to somehow extend seccomp to support
-argument structures that are passed in memory - that would probably
-require quite a bit of new plumbing though, both in the kernel and in
-userspace code that configures seccomp filters.
+I don't have any valid idea on how to get around this.
+
+-- 
+ Kirill A. Shutemov
