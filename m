@@ -1,31 +1,158 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH 3/7] vfs: Add a mount-notification facility
-Date: Wed, 29 May 2019 00:08:37 +0100
-Message-ID: <30028.1559084917@warthog.procyon.org.uk>
-References: <10418.1559084686@warthog.procyon.org.uk> <CAG48ez2rRh2_Kq_EGJs5k-ZBNffGs_Q=vkQdinorBgo58tbGpg@mail.gmail.com> <155905930702.7587.7100265859075976147.stgit@warthog.procyon.org.uk> <155905933492.7587.6968545866041839538.stgit@warthog.procyon.org.uk>
+From: Greg KH <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH 1/7] General notification queue with user mmap()'able
+ ring buffer
+Date: Tue, 28 May 2019 16:12:18 -0700
+Message-ID: <20190528231218.GA28384@kroah.com>
+References: <20190528162603.GA24097@kroah.com>
+ <155905930702.7587.7100265859075976147.stgit@warthog.procyon.org.uk>
+ <155905931502.7587.11705449537368497489.stgit@warthog.procyon.org.uk>
+ <4031.1559064620@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <10418.1559084686@warthog.procyon.org.uk>
-Content-ID: <30027.1559084917.1@warthog.procyon.org.uk>
+Content-Disposition: inline
+In-Reply-To: <4031.1559064620@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: dhowells@redhat.com, Al Viro <viro@zeniv.linux.org.uk>, raven@themaw.net, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module <linux-security-module@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>
+To: David Howells <dhowells@redhat.com>
+Cc: viro@zeniv.linux.org.uk, raven@themaw.net, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-David Howells <dhowells@redhat.com> wrote:
-
-> > It might make sense to redesign this stuff so that watches don't hold
-> > references on the object being watched.
->
-> I explicitly made it hold a reference so that if you place a watch on an
-> automounted mount it stops it from expiring.
+On Tue, May 28, 2019 at 06:30:20PM +0100, David Howells wrote:
+> Greg KH <gregkh@linuxfoundation.org> wrote:
 > 
-> Further, if I create a watch on something, *should* it be unmountable, just as
-> if I had a file open there or had chdir'd into there?
+> > > Implement a misc device that implements a general notification queue as a
+> > > ring buffer that can be mmap()'d from userspace.
+> > 
+> > "general" but just for filesystems, right?  :(
+> 
+> Whatever gave you that idea?  You can watch keyrings events, for example -
+> they're not exactly filesystems.  I've added the ability to watch for mount
+> topology changes and superblock events because those are something I've been
+> asked to do.  I've added something for block events because I've recently had
+> a problem with trying to recover data from a dodgy disk in that every time the
+> disk goes offline, the ddrecover goes "wheeeee!" as it just sees a lot of
+> EIO/ENODATA at a great rate of knots because it doesn't know the driver is now
+> ignoring the disk.
+> 
+> I don't know what else people might want to watch, but I've tried to make it
+> as generic as possible so as not to exclude it if possible.
 
-It gets trickier than that as I need a ref on the dentry on which the watch is
-rooted to prevent it from getting culled.
+Ok, let me try to dig up some older proposals to see if this fits into
+the same model to work with them as well.
 
-David
+> > > +	refcount_t		usage;
+> > 
+> > Usage of what, this structure?  Or something else?
+> 
+> This is the number of usages of this struct (references to if you prefer).  I
+> can add a comment to this effect.
+
+I think you answer this later on with the kref comment :)
+
+> > > +		return -EOPNOTSUPP;
+> > 
+> > -ENOTTY is the correct "not a valid ioctl" error value, right?
+> 
+> fs/ioctl.c does both, but I can switch it if it makes you happier.
+
+It does.
+
+> > > +void put_watch_queue(struct watch_queue *wqueue)
+> > > +{
+> > > +	if (refcount_dec_and_test(&wqueue->usage))
+> > > +		kfree_rcu(wqueue, rcu);
+> > 
+> > Why not just use a kref?
+> 
+> Why use a kref?  It seems like an effort to be a C++ base class, but without
+> the C++ inheritance bit.  Using kref doesn't seem to gain anything.  It's just
+> a wrapper around refcount_t - so why not just use a refcount_t?
+> 
+> kref_put() could potentially add an unnecessary extra stack frame and would
+> seem to be best avoided, though an optimising compiler ought to be able to
+> inline if it can.
+
+If kref_put() is on your fast path, you have worse problems (kfree isn't
+fast, right?)
+
+Anyway, it's an inline function, how can it add an extra stack frame?
+Don't try to optimize something that isn't needed yet.
+
+> Are you now on the convert all refcounts to krefs path?
+
+"now"?  Remember, I wrote kref all those years ago, everyone should use
+it.  It saves us having to audit the same pattern over and over again.
+And, even nicer, it uses a refcount now, and as you are trying to
+reference count an object, it is exactly what this was written for.
+
+So yes, I do think it should be used here, unless it is deemed to not
+fit the pattern/usage model.
+
+> > > +EXPORT_SYMBOL(add_watch_to_object);
+> > 
+> > Naming nit, shouldn't the "prefix" all be the same for these new
+> > functions?
+> > 
+> > watch_queue_add_object()?  watch_queue_put()?  And so on?
+> 
+> Naming is fun.  watch_queue_add_object - that suggests something different to
+> what the function actually does.  I'll think about adjusting the names.
+
+Ok, just had to say something.  It's your call, and yes, naming is hard.
+
+> > > +module_exit(watch_queue_exit);
+> > 
+> > module_misc_device()?
+> 
+> 	warthog>git grep module_misc_device -- Documentation/
+> 	warthog1>
+
+Do I have to document all helper macros?  Anyway, it saves you
+boilerplate code, but if built in, it's at the module init level, not
+the fs init level, like you are asking for here.  So that might not
+work, it's your call.
+
+> > > +		struct {
+> > > +			struct watch_notification watch; /* WATCH_TYPE_SKIP */
+> > > +			volatile __u32	head;		/* Ring head index */
+> > > +			volatile __u32	tail;		/* Ring tail index */
+> > 
+> > A uapi structure that has volatile in it?  Are you _SURE_ this is
+> > correct?
+> > 
+> > That feels wrong to me...  This is not a backing-hardware register, it's
+> > "just memory" and slapping volatile on it shouldn't be the correct
+> > solution for telling the compiler to not to optimize away reads/flushes,
+> > right?  You need a proper memory access type primitive for that to work
+> > correctly everywhere I thought.
+> > 
+> > We only have 2 users of volatile in include/uapi, one for WMI structures
+> > that are backed by firmware (seems correct), and one for DRM which I
+> > have no idea how it works as it claims to be a lock.  Why is this new
+> > addition the correct way to do this that no other ring-buffer that was
+> > mmapped has needed to?
+> 
+> Yeah, I understand your concern with this.
+> 
+> The reason I put the volatiles in is that the kernel may be modifying the head
+> pointer on one CPU simultaneously with userspace modifying the tail pointer on
+> another CPU.
+> 
+> Note that userspace does not need to enter the kernel to find out if there's
+> anything in the buffer or to read stuff out of the buffer.  Userspace only
+> needs to enter the kernel, using poll() or similar, to wait for something to
+> appear in the buffer.
+
+And how does the tracing and perf ring buffers do this without needing
+volatile?  Why not use the same type of interface they provide, as it's
+always good to share code that has already had all of the nasty corner
+cases worked out.
+
+Anyway, I don't want you to think I don't like this code/idea overall, I
+do.  I just want to see it be something that everyone can use, and use
+easily, as it has been something lots of people have been asking for for
+a long time.
+
+thanks,
+
+greg k-h
