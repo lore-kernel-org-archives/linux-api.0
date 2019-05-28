@@ -1,104 +1,67 @@
-From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 11/25] hugetlbfs: Add support for fsinfo() [ver #13]
-Date: Tue, 28 May 2019 16:12:33 +0100
-Message-ID: <155905635365.1662.16642890243994690650.stgit@warthog.procyon.org.uk>
-References: <155905626142.1662.18430571708534506785.stgit@warthog.procyon.org.uk>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [PATCH 1/2] fork: add clone6
+Date: Tue, 28 May 2019 10:23:21 -0500
+Message-ID: <87ef4i7gd2.fsf@xmission.com>
+References: <20190526102612.6970-1-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <155905626142.1662.18430571708534506785.stgit@warthog.procyon.org.uk>
+In-Reply-To: <20190526102612.6970-1-christian@brauner.io> (Christian Brauner's
+        message of "Sun, 26 May 2019 12:26:11 +0200")
 Sender: linux-kernel-owner@vger.kernel.org
-To: viro@zeniv.linux.org.uk
-Cc: dhowells@redhat.com, raven@themaw.net, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, mszeredi@redhat.com
+To: Christian Brauner <christian@brauner.io>
+Cc: viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, torvalds@linux-foundation.org, jannh@google.com, fweimer@redhat.com, oleg@redhat.com, arnd@arndb.de, dhowells@redhat.com, Pavel Emelyanov <xemul@virtuozzo.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@gmail.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Add support for fsinfo().
+Christian Brauner <christian@brauner.io> writes:
 
-Signed-off-by: David Howells <dhowells@redhat.com>
----
+> This adds the clone6 system call.
+>
+> As mentioned several times already (cf. [7], [8]) here's the promised
+> patchset for clone6().
+>
+> We recently merged the CLONE_PIDFD patchset (cf. [1]). It took the last
+> free flag from clone().
+>
+> Independent of the CLONE_PIDFD patchset a time namespace has been discussed
+> at Linux Plumber Conference last year and has been sent out and reviewed
+> (cf. [5]). It is expected that it will go upstream in the not too distant
+> future. However, it relies on the addition of the CLONE_NEWTIME flag to
+> clone(). The only other good candidate - CLONE_DETACHED - is currently not
+> recycable as we have identified at least two large or widely used codebases
+> that currently pass this flag (cf. [2], [3], and [4]). Given that we
+> grabbed the last clone() flag we effectively blocked the time namespace
+> patchset. It just seems right that we unblock it again.
 
- fs/hugetlbfs/inode.c |   56 ++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 56 insertions(+)
+I am not certain just extending clone is the right way to go.
 
-diff --git a/fs/hugetlbfs/inode.c b/fs/hugetlbfs/inode.c
-index 1dcc57189382..e6ecebd9ebc2 100644
---- a/fs/hugetlbfs/inode.c
-+++ b/fs/hugetlbfs/inode.c
-@@ -28,6 +28,7 @@
- #include <linux/hugetlb.h>
- #include <linux/pagevec.h>
- #include <linux/fs_parser.h>
-+#include <linux/fsinfo.h>
- #include <linux/mman.h>
- #include <linux/slab.h>
- #include <linux/dnotify.h>
-@@ -958,6 +959,58 @@ static int hugetlbfs_show_options(struct seq_file *m, struct dentry *root)
- 	return 0;
- }
- 
-+#ifdef CONFIG_FSINFO
-+static int hugetlbfs_fsinfo(struct path *path, struct fsinfo_kparams *params)
-+{
-+	struct dentry *dentry = path->dentry;
-+	struct hugetlbfs_sb_info *sbinfo = HUGETLBFS_SB(dentry->d_sb);
-+	struct hugepage_subpool *spool = sbinfo->spool;
-+	unsigned long hpage_size = huge_page_size(sbinfo->hstate);
-+	unsigned hpage_shift = huge_page_shift(sbinfo->hstate);
-+	char mod;
-+
-+	switch (params->request) {
-+	case FSINFO_ATTR_PARAMETERS:
-+		if (!uid_eq(sbinfo->uid, GLOBAL_ROOT_UID))
-+			fsinfo_note_paramf(params, "uid", "%u",
-+					   from_kuid_munged(&init_user_ns,
-+							    sbinfo->uid));
-+
-+		if (!gid_eq(sbinfo->gid, GLOBAL_ROOT_GID))
-+			fsinfo_note_paramf(params, "gid", "%u",
-+					   from_kgid_munged(&init_user_ns,
-+							    sbinfo->gid));
-+
-+		if (spool && spool->max_hpages != -1)
-+			fsinfo_note_paramf(params, "size", "%llu",
-+					   (unsigned long long)spool->max_hpages << hpage_shift);
-+
-+		if (spool && spool->min_hpages != -1)
-+			fsinfo_note_paramf(params, "min_size", "%llu",
-+					   (unsigned long long)spool->min_hpages << hpage_shift);
-+
-+		hpage_size /= 1024;
-+		mod = 'K';
-+		if (hpage_size >= 1024) {
-+			hpage_size /= 1024;
-+			mod = 'M';
-+		}
-+		fsinfo_note_paramf(params, "pagesize", "%lu%c", hpage_size, mod);
-+
-+		if (sbinfo->mode != 0755)
-+			fsinfo_note_paramf(params, "mode", "%o", sbinfo->mode);
-+
-+		if (sbinfo->max_inodes != -1)
-+			fsinfo_note_paramf(params, "nr_inodes", "%lu",
-+					   sbinfo->max_inodes);
-+		return params->usage;
-+
-+	default:
-+		return generic_fsinfo(path, params);
-+	}
-+}
-+#endif /* CONFIG_FSINFO */
-+
- static int hugetlbfs_statfs(struct dentry *dentry, struct kstatfs *buf)
- {
- 	struct hugetlbfs_sb_info *sbinfo = HUGETLBFS_SB(dentry->d_sb);
-@@ -1116,6 +1169,9 @@ static const struct super_operations hugetlbfs_ops = {
- 	.statfs		= hugetlbfs_statfs,
- 	.put_super	= hugetlbfs_put_super,
- 	.show_options	= hugetlbfs_show_options,
-+#ifdef CONFIG_FSINFO
-+	.fsinfo		= hugetlbfs_fsinfo,
-+#endif
- };
- 
- /*
+- Last I looked glibc does not support calling clone without creating
+  a stack first.  Which makes it unpleasant to support clone as a fork
+  with extra flags as container runtimes would appreciate.
+
+- Tying namespace creation to process creation is unnecessary.
+  I admit both the time and the pid namespace actually need a new
+  process before you can use them, but the trick of having a namespace
+  for children and a namespace the current process uses seems to handle
+  that case nicely.
+
+- There is cruft in clone current runtimes do not use.
+  The entire CSIGNAL mask. Also: CLONE_PARENT, CLONE_DETACHED.  And
+  probably one or two other bits that I am not remembering right now.
+
+  It would probably make sense to make all of the old linux-thread
+  support optional so we can compile it out, and in a decade or two
+  get rid of it as unused code.
+
+Maybe some of this is time critical and doing everything in a single
+system call makes sense.  But I don't a few extra microseconds matters
+in container creation.  It feels to me like the road to better
+maintenance of the kernel would just be to move work out of clone.
+
+It certainly feels like we could implement all of the current
+clone functionality on top of a simpler clone that I have described.
+
+Perhaps we want sys_createns that like setns works on a single
+namespace at a time.
+
+Eric
