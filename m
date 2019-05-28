@@ -1,7 +1,7 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 22/25] fsinfo: debugfs - add sb operation fsinfo() [ver #13]
-Date: Tue, 28 May 2019 16:14:11 +0100
-Message-ID: <155905645172.1662.12893154635552209881.stgit@warthog.procyon.org.uk>
+Subject: [PATCH 23/25] fsinfo: bpf - add sb operation fsinfo() [ver #13]
+Date: Tue, 28 May 2019 16:14:19 +0100
+Message-ID: <155905645905.1662.13856174905974520945.stgit@warthog.procyon.org.uk>
 References: <155905626142.1662.18430571708534506785.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -24,28 +24,26 @@ function as sb operation ->show_options() so it needs to be
 implemented by any file system that provides ->show_options()
 as a minimum.
 
-Also add a simple FSINFO_ATTR_CAPABILITIES implementation.
-
 Signed-off-by: Ian Kent <raven@themaw.net>
 Signed-off-by: David Howells <dhowells@redhat.com>
 ---
 
- fs/debugfs/inode.c |   37 +++++++++++++++++++++++++++++++++++++
- 1 file changed, 37 insertions(+)
+ kernel/bpf/inode.c |   24 ++++++++++++++++++++++++
+ 1 file changed, 24 insertions(+)
 
-diff --git a/fs/debugfs/inode.c b/fs/debugfs/inode.c
-index 24354ccdc968..74b499c964f3 100644
---- a/fs/debugfs/inode.c
-+++ b/fs/debugfs/inode.c
-@@ -24,6 +24,7 @@
- #include <linux/seq_file.h>
- #include <linux/magic.h>
- #include <linux/slab.h>
+diff --git a/kernel/bpf/inode.c b/kernel/bpf/inode.c
+index 6e22363054b1..49ac30424dd1 100644
+--- a/kernel/bpf/inode.c
++++ b/kernel/bpf/inode.c
+@@ -23,6 +23,7 @@
+ #include <linux/filter.h>
+ #include <linux/bpf.h>
+ #include <linux/bpf_trace.h>
 +#include <linux/fsinfo.h>
  
- #include "internal.h"
- 
-@@ -143,6 +144,39 @@ static int debugfs_show_options(struct seq_file *m, struct dentry *root)
+ enum bpf_type {
+ 	BPF_TYPE_UNSPEC	= 0,
+@@ -567,6 +568,26 @@ static int bpf_show_options(struct seq_file *m, struct dentry *root)
  	return 0;
  }
  
@@ -53,27 +51,14 @@ index 24354ccdc968..74b499c964f3 100644
 +/*
 + * Get filesystem information.
 + */
-+static int debugfs_fsinfo(struct path *path, struct fsinfo_kparams *params)
++static int bpf_fsinfo(struct path *path, struct fsinfo_kparams *params)
 +{
-+	struct debugfs_fs_info *fsi = path->dentry->d_sb->s_fs_info;
-+	struct fsinfo_capabilities *caps;
++	umode_t mode = d_inode(path->dentry)->i_mode & S_IALLUGO & ~S_ISVTX;
 +
 +	switch (params->request) {
-+	case FSINFO_ATTR_CAPABILITIES:
-+		caps = params->buffer;
-+		fsinfo_set_cap(caps, FSINFO_CAP_IS_KERNEL_FS);
-+		fsinfo_set_cap(caps, FSINFO_CAP_NOT_PERSISTENT);
-+		return sizeof(*caps);
-+
 +	case FSINFO_ATTR_PARAMETERS:
-+		if (!uid_eq(fsi->uid, GLOBAL_ROOT_UID))
-+			fsinfo_note_paramf(params, "uid", "%u",
-+				   from_kuid_munged(&init_user_ns, fsi->uid));
-+		if (!gid_eq(fsi->gid, GLOBAL_ROOT_GID))
-+			fsinfo_note_paramf(params, "gid", "%u",
-+				   from_kgid_munged(&init_user_ns, fsi->gid));
-+		if (fsi->mode != DEBUGFS_DEFAULT_MODE)
-+			fsinfo_note_paramf(params, "mode", "%o", fsi->mode);
++		if (mode != S_IRWXUGO)
++			fsinfo_note_paramf(params, "mode", "%o", mode);
 +		return params->usage;
 +
 +	default:
@@ -82,16 +67,16 @@ index 24354ccdc968..74b499c964f3 100644
 +}
 +#endif /* CONFIG_FSINFO */
 +
- static void debugfs_free_inode(struct inode *inode)
+ static void bpf_free_inode(struct inode *inode)
  {
- 	if (S_ISLNK(inode->i_mode))
-@@ -154,6 +188,9 @@ static const struct super_operations debugfs_super_operations = {
- 	.statfs		= simple_statfs,
- 	.show_options	= debugfs_show_options,
- 	.free_inode	= debugfs_free_inode,
+ 	enum bpf_type type;
+@@ -583,6 +604,9 @@ static const struct super_operations bpf_super_ops = {
+ 	.drop_inode	= generic_delete_inode,
+ 	.show_options	= bpf_show_options,
+ 	.free_inode	= bpf_free_inode,
 +#ifdef CONFIG_FSINFO
-+	.fsinfo		= debugfs_fsinfo,
++	.fsinfo		= bpf_fsinfo,
 +#endif
  };
  
- static void debugfs_release_dentry(struct dentry *dentry)
+ enum {
