@@ -1,67 +1,194 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH 1/2] fork: add clone6
-Date: Tue, 28 May 2019 10:23:21 -0500
-Message-ID: <87ef4i7gd2.fsf@xmission.com>
-References: <20190526102612.6970-1-christian@brauner.io>
+From: David Howells <dhowells@redhat.com>
+Subject: [RFC][PATCH 0/7] Mount, FS, Block and Keyrings notifications
+Date: Tue, 28 May 2019 17:01:47 +0100
+Message-ID: <155905930702.7587.7100265859075976147.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190526102612.6970-1-christian@brauner.io> (Christian Brauner's
-        message of "Sun, 26 May 2019 12:26:11 +0200")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian@brauner.io>
-Cc: viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, torvalds@linux-foundation.org, jannh@google.com, fweimer@redhat.com, oleg@redhat.com, arnd@arndb.de, dhowells@redhat.com, Pavel Emelyanov <xemul@virtuozzo.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@gmail.com>, linux-api@vger.kernel.org
+To: viro@zeniv.linux.org.uk
+Cc: dhowells@redhat.com, raven@themaw.net, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Christian Brauner <christian@brauner.io> writes:
 
-> This adds the clone6 system call.
->
-> As mentioned several times already (cf. [7], [8]) here's the promised
-> patchset for clone6().
->
-> We recently merged the CLONE_PIDFD patchset (cf. [1]). It took the last
-> free flag from clone().
->
-> Independent of the CLONE_PIDFD patchset a time namespace has been discussed
-> at Linux Plumber Conference last year and has been sent out and reviewed
-> (cf. [5]). It is expected that it will go upstream in the not too distant
-> future. However, it relies on the addition of the CLONE_NEWTIME flag to
-> clone(). The only other good candidate - CLONE_DETACHED - is currently not
-> recycable as we have identified at least two large or widely used codebases
-> that currently pass this flag (cf. [2], [3], and [4]). Given that we
-> grabbed the last clone() flag we effectively blocked the time namespace
-> patchset. It just seems right that we unblock it again.
+Hi Al,
 
-I am not certain just extending clone is the right way to go.
+Here's a set of patches to add a general variable-length notification queue
+concept and to add sources of events for:
 
-- Last I looked glibc does not support calling clone without creating
-  a stack first.  Which makes it unpleasant to support clone as a fork
-  with extra flags as container runtimes would appreciate.
+ (1) Mount topology events, such as mounting, unmounting, mount expiry,
+     mount reconfiguration.
 
-- Tying namespace creation to process creation is unnecessary.
-  I admit both the time and the pid namespace actually need a new
-  process before you can use them, but the trick of having a namespace
-  for children and a namespace the current process uses seems to handle
-  that case nicely.
+ (2) Superblock events, such as R/W<->R/O changes, quota overrun and I/O
+     errors (not complete yet).
 
-- There is cruft in clone current runtimes do not use.
-  The entire CSIGNAL mask. Also: CLONE_PARENT, CLONE_DETACHED.  And
-  probably one or two other bits that I am not remembering right now.
+ (3) Block layer events, such as I/O errors.
 
-  It would probably make sense to make all of the old linux-thread
-  support optional so we can compile it out, and in a decade or two
-  get rid of it as unused code.
+ (4) Key/keyring events, such as creating, linking and removal of keys.
 
-Maybe some of this is time critical and doing everything in a single
-system call makes sense.  But I don't a few extra microseconds matters
-in container creation.  It feels to me like the road to better
-maintenance of the kernel would just be to move work out of clone.
+One of the reasons for this is so that we can remove the issue of processes
+having to repeatedly and regularly scan /proc/mounts, which has proven to
+be a system performance problem.  To further aid this, the fsinfo() syscall
+on which this patch series depends, provides a way to access superblock and
+mount information in binary form without the need to parse /proc/mounts.
 
-It certainly feels like we could implement all of the current
-clone functionality on top of a simpler clone that I have described.
 
-Perhaps we want sys_createns that like setns works on a single
-namespace at a time.
+Design decisions:
 
-Eric
+ (1) A misc chardev is used to create and open a ring buffer:
+
+	fd = open("/dev/watch_queue", O_RDWR);
+
+     which is then configured and mmap'd into userspace:
+
+	ioctl(fd, IOC_WATCH_QUEUE_SET_SIZE, BUF_SIZE);
+	ioctl(fd, IOC_WATCH_QUEUE_SET_FILTER, &filter);
+	buf = mmap(NULL, BUF_SIZE * page_size, PROT_READ | PROT_WRITE,
+		   MAP_SHARED, fd, 0);
+
+     The fd cannot be read or written (though there is a facility to use
+     write to inject records for debugging) and userspace just pulls data
+     directly out of the buffer.
+
+ (2) The ring index pointers are stored inside the ring and are thus
+     accessible to userspace.  Userspace should only update the tail
+     pointer and never the head pointer or risk breaking the buffer.  The
+     kernel checks that the pointers appear valid before trying to use
+     them.  A 'skip' record is maintained around the pointers.
+
+ (3) poll() can be used to wait for data to appear in the buffer.
+
+ (4) Records in the buffer are binary, typed and have a length so that they
+     can be of varying size.
+
+     This means that multiple heterogeneous sources can share a common
+     buffer.  Tags may be specified when a watchpoint is created to help
+     distinguish the sources.
+
+ (5) The queue is reusable as there are 16 million types available, of
+     which I've used 4, so there is scope for others to be used.
+
+ (6) Records are filterable as types have up to 256 subtypes that can be
+     individually filtered.  Other filtration is also available.
+
+ (7) Each time the buffer is opened, a new buffer is created - this means
+     that there's no interference between watchers.
+
+ (8) When recording a notification, the kernel will not sleep, but will
+     rather mark a queue as overrun if there's insufficient space, thereby
+     avoiding userspace causing the kernel to hang.
+
+ (9) The 'watchpoint' should be specific where possible, meaning that you
+     specify the object that you want to watch.
+
+(10) The buffer is created and then watchpoints are attached to it, using
+     one of:
+
+	keyctl_watch_key(KEY_SPEC_SESSION_KEYRING, fd, 0x01);
+	mount_notify(AT_FDCWD, "/", 0, fd, 0x02);
+	sb_notify(AT_FDCWD, "/mnt", 0, fd, 0x03);
+
+     where in all three cases, fd indicates the queue and the number after
+     is a tag between 0 and 255.
+
+(11) The watch must be removed if either the watch buffer is destroyed or
+     the watched object is destroyed.
+
+
+Things I want to avoid:
+
+ (1) Introducing features that make the core VFS dependent on the network
+     stack or networking namespaces (ie. usage of netlink).
+
+ (2) Dumping all this stuff into dmesg and having a daemon that sits there
+     parsing the output and distributing it as this then puts the
+     responsibility for security into userspace and makes handling
+     namespaces tricky.  Further, dmesg might not exist or might be
+     inaccessible inside a container.
+
+ (3) Letting users see events they shouldn't be able to see.
+
+
+Further things that could be considered:
+
+ (1) Adding a keyctl call to allow a watch on a keyring to be extended to
+     "children" of that keyring, such that the watch is removed from the
+     child if it is unlinked from the keyring.
+
+ (2) Adding global superblock event queue.
+
+ (3) Propagating watches to child superblock over automounts.
+
+
+The patches can be found here also:
+
+	http://git.kernel.org/cgit/linux/kernel/git/dhowells/linux-fs.git/log/?h=notifications
+
+David
+---
+David Howells (7):
+      General notification queue with user mmap()'able ring buffer
+      keys: Add a notification facility
+      vfs: Add a mount-notification facility
+      vfs: Add superblock notifications
+      fsinfo: Export superblock notification counter
+      block: Add block layer notifications
+      Add sample notification program
+
+
+ Documentation/security/keys/core.rst   |   58 ++
+ Documentation/watch_queue.rst          |  311 +++++++++++
+ arch/x86/entry/syscalls/syscall_32.tbl |    3 
+ arch/x86/entry/syscalls/syscall_64.tbl |    3 
+ block/Kconfig                          |    9 
+ block/Makefile                         |    1 
+ block/blk-core.c                       |   28 +
+ block/blk-notify.c                     |   83 +++
+ drivers/misc/Kconfig                   |   13 
+ drivers/misc/Makefile                  |    1 
+ drivers/misc/watch_queue.c             |  877 ++++++++++++++++++++++++++++++++
+ fs/Kconfig                             |   21 +
+ fs/Makefile                            |    1 
+ fs/fsinfo.c                            |   12 
+ fs/mount.h                             |   33 +
+ fs/mount_notify.c                      |  178 ++++++
+ fs/namespace.c                         |    9 
+ fs/super.c                             |  116 ++++
+ include/linux/blkdev.h                 |   10 
+ include/linux/dcache.h                 |    1 
+ include/linux/fs.h                     |   78 +++
+ include/linux/key.h                    |    4 
+ include/linux/lsm_hooks.h              |   15 +
+ include/linux/security.h               |   14 +
+ include/linux/syscalls.h               |    5 
+ include/linux/watch_queue.h            |   86 +++
+ include/uapi/linux/fsinfo.h            |   10 
+ include/uapi/linux/keyctl.h            |    1 
+ include/uapi/linux/watch_queue.h       |  185 +++++++
+ kernel/sys_ni.c                        |    6 
+ mm/interval_tree.c                     |    2 
+ mm/memory.c                            |    1 
+ samples/Kconfig                        |    6 
+ samples/Makefile                       |    1 
+ samples/vfs/test-fsinfo.c              |   13 
+ samples/watch_queue/Makefile           |    9 
+ samples/watch_queue/watch_test.c       |  284 ++++++++++
+ security/keys/Kconfig                  |   10 
+ security/keys/compat.c                 |    2 
+ security/keys/gc.c                     |    5 
+ security/keys/internal.h               |   30 +
+ security/keys/key.c                    |   37 +
+ security/keys/keyctl.c                 |   88 +++
+ security/keys/keyring.c                |   17 -
+ security/keys/request_key.c            |    4 
+ security/security.c                    |    9 
+ 46 files changed, 2652 insertions(+), 38 deletions(-)
+ create mode 100644 Documentation/watch_queue.rst
+ create mode 100644 block/blk-notify.c
+ create mode 100644 drivers/misc/watch_queue.c
+ create mode 100644 fs/mount_notify.c
+ create mode 100644 include/linux/watch_queue.h
+ create mode 100644 include/uapi/linux/watch_queue.h
+ create mode 100644 samples/watch_queue/Makefile
+ create mode 100644 samples/watch_queue/watch_test.c
