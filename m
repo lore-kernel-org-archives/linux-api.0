@@ -1,39 +1,43 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [RFC 7/7] mm: madvise support MADV_ANONYMOUS_FILTER and
- MADV_FILE_FILTER
-Date: Tue, 28 May 2019 14:38:32 +0200
-Message-ID: <20190528123832.GD1658@dhcp22.suse.cz>
-References: <CAKOZuesnS6kBFX-PKJ3gvpkv8i-ysDOT2HE2Z12=vnnHQv0FDA@mail.gmail.com>
- <20190528084927.GB159710@google.com>
- <20190528090821.GU1658@dhcp22.suse.cz>
- <20190528103256.GA9199@google.com>
- <20190528104117.GW1658@dhcp22.suse.cz>
- <20190528111208.GA30365@google.com>
- <20190528112840.GY1658@dhcp22.suse.cz>
- <CAKOZuesCSrE0esqDDbo8x5u5rM-Uv_81jjBt1QRXFKNOUJu0aw@mail.gmail.com>
- <20190528115609.GA1658@dhcp22.suse.cz>
- <CAKOZuesnXGAsQgkB45n=jqwDRQ4_aoPiydmZxfxPmzO2p=cTow@mail.gmail.com>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH 1/2] fork: add clone6
+Date: Tue, 28 May 2019 07:15:37 -0700
+Message-ID: <CALCETrU0wXuefHFzRNrQjQ+xgTz6tbPa-sLcBV=dV58QEcA6HQ@mail.gmail.com>
+References: <20190526102612.6970-1-christian@brauner.io> <CAHk-=wieuV4hGwznPsX-8E0G2FKhx3NjZ9X3dTKh5zKd+iqOBw@mail.gmail.com>
+ <20190527104239.fbnjzfyxa4y4acpf@brauner.io> <CAHk-=wjnbK5ob9JE0H1Ge_R4BL6D0ztsAvrM6DN+S+zyDWE=7A@mail.gmail.com>
+ <20190528100802.sdfqtwrowrmulpml@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAKOZuesnXGAsQgkB45n=jqwDRQ4_aoPiydmZxfxPmzO2p=cTow@mail.gmail.com>
+In-Reply-To: <20190528100802.sdfqtwrowrmulpml@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Colascione <dancol@google.com>
-Cc: Minchan Kim <minchan@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, Linux API <linux-api@vger.kernel.org>
+To: Christian Brauner <christian@brauner.io>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Jann Horn <jannh@google.com>, Florian Weimer <fweimer@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@gmail.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue 28-05-19 05:18:48, Daniel Colascione wrote:
-[...]
-> The important requirement, I think, is that we need to support
-> managing "memory-naive" uncooperative tasks (perhaps legacy ones
-> written before cross-process memory management even became possible),
-> and I think that the cooperative-vs-uncooperative distinction matters
-> a lot more than the tgid of the thread doing the memory manipulation.
-> (Although in our case, we really do need a separate tgid. :-))
+On Tue, May 28, 2019 at 3:08 AM Christian Brauner <christian@brauner.io> wrote:
+>
+> On Mon, May 27, 2019 at 12:27:08PM -0700, Linus Torvalds wrote:
+> > On Mon, May 27, 2019 at 3:42 AM Christian Brauner <christian@brauner.io> wrote:
+> > >
+> > > Hm, still pondering whether having one unsigned int argument passed
+> > > through registers that captures all the flags from the old clone() would
+> > > be a good idea.
+> >
+> > That sounds like a reasonable thing to do.
+> >
+> > Maybe we could continue to call the old flags CLONE_XYZ and continue
+> > to pass them in as "flags" argument, and then we have CLONE_EXT_XYZ
+> > flags for a new 64-bit flag field that comes in through memory in the
+> > new clone_args thing?
+>
+> Hm. I think I'll try a first version without an additional register
+> flags argument. And here's why: I'm not sure it buys us a lot especially
+> if we're giving up on making this convenient for seccomp anyway.
+> And with that out of the way (at least for the moment) I would really
+> like to make this interface consistent. But we can revisit this when I
+> have the code.
+>
 
-Agreed here and that requires some sort of revalidation and failure on
-"object has changed" in one form or another IMHO.
--- 
-Michal Hocko
-SUSE Labs
+Seems reasonable.  Once the interface is nailed down, we can see if it
+makes sense to break out some flags into a register.  I would guess
+that all the unsharing flags are a good candidate.
