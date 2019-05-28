@@ -1,65 +1,53 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH 6/7] block: Add block layer notifications
-Date: Tue, 28 May 2019 22:37:36 +0200
-Message-ID: <CAG48ez0iRCyRdMBRPPkFJP-wuiLN=VcpfHLM9cV_Cvc3z2d=+Q@mail.gmail.com>
-References: <155905930702.7587.7100265859075976147.stgit@warthog.procyon.org.uk>
- <155905935953.7587.11815678364029606128.stgit@warthog.procyon.org.uk>
+From: Daniel Walsh <dwalsh@redhat.com>
+Subject: Re: [PATCH ghak90 V6 00/10] audit: implement container identifier
+Date: Tue, 28 May 2019 17:53:55 -0400
+Message-ID: <509ea6b0-1ac8-b809-98c2-37c34dd98ca3@redhat.com>
+References: <cover.1554732921.git.rgb@redhat.com>
+ <20190422113810.GA27747@hmswarspite.think-freely.org>
+ <CAHC9VhQYPF2ma_W+hySbQtfTztf=K1LTFnxnyVK0y9VYxj-K=w@mail.gmail.com>
+Reply-To: dwalsh@redhat.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <155905935953.7587.11815678364029606128.stgit@warthog.procyon.org.uk>
+In-Reply-To: <CAHC9VhQYPF2ma_W+hySbQtfTztf=K1LTFnxnyVK0y9VYxj-K=w@mail.gmail.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, raven@themaw.net, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module <linux-security-module@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>
+To: Paul Moore <paul@paul-moore.com>, Neil Horman <nhorman@tuxdriver.com>
+Cc: Richard Guy Briggs <rgb@redhat.com>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, Mrunal Patel <mpatel@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 28, 2019 at 6:05 PM David Howells <dhowells@redhat.com> wrote:
-> Add a block layer notification mechanism whereby notifications about
-> block-layer events such as I/O errors, can be reported to a monitoring
-> process asynchronously.
-[...]
-> +#ifdef CONFIG_BLK_NOTIFICATIONS
-> +static const enum block_notification_type blk_notifications[] = {
-> +       [BLK_STS_TIMEOUT]       = NOTIFY_BLOCK_ERROR_TIMEOUT,
-> +       [BLK_STS_NOSPC]         = NOTIFY_BLOCK_ERROR_NO_SPACE,
-> +       [BLK_STS_TRANSPORT]     = NOTIFY_BLOCK_ERROR_RECOVERABLE_TRANSPORT,
-> +       [BLK_STS_TARGET]        = NOTIFY_BLOCK_ERROR_CRITICAL_TARGET,
-> +       [BLK_STS_NEXUS]         = NOTIFY_BLOCK_ERROR_CRITICAL_NEXUS,
-> +       [BLK_STS_MEDIUM]        = NOTIFY_BLOCK_ERROR_CRITICAL_MEDIUM,
-> +       [BLK_STS_PROTECTION]    = NOTIFY_BLOCK_ERROR_PROTECTION,
-> +       [BLK_STS_RESOURCE]      = NOTIFY_BLOCK_ERROR_KERNEL_RESOURCE,
-> +       [BLK_STS_DEV_RESOURCE]  = NOTIFY_BLOCK_ERROR_DEVICE_RESOURCE,
-> +       [BLK_STS_IOERR]         = NOTIFY_BLOCK_ERROR_IO,
-> +};
-> +#endif
-> +
->  blk_status_t errno_to_blk_status(int errno)
->  {
->         int i;
-> @@ -179,6 +194,19 @@ static void print_req_error(struct request *req, blk_status_t status)
->                                 req->rq_disk ?  req->rq_disk->disk_name : "?",
->                                 (unsigned long long)blk_rq_pos(req),
->                                 req->cmd_flags);
-> +
-> +#ifdef CONFIG_BLK_NOTIFICATIONS
-> +       if (blk_notifications[idx]) {
-
-If you have this branch here, that indicates that blk_notifications
-might be sparse - but at the same time, blk_notifications is not
-defined in a way that explicitly ensures that it has as many elements
-as blk_errors. It might make sense to add an explicit length to the
-definition of blk_notifications - something like "static const enum
-block_notification_type blk_notifications[ARRAY_SIZE(blk_errors)]"
-maybe?
-
-> +               struct block_notification n = {
-> +                       .watch.type     = WATCH_TYPE_BLOCK_NOTIFY,
-> +                       .watch.subtype  = blk_notifications[idx],
-> +                       .watch.info     = sizeof(n),
-> +                       .dev            = req->rq_disk ? disk_devt(req->rq_disk) : 0,
-> +                       .sector         = blk_rq_pos(req),
-> +               };
-> +               post_block_notification(&n);
-> +       }
-> +#endif
->  }
+On 4/22/19 9:49 AM, Paul Moore wrote:
+> On Mon, Apr 22, 2019 at 7:38 AM Neil Horman <nhorman@tuxdriver.com> wrote:
+>> On Mon, Apr 08, 2019 at 11:39:07PM -0400, Richard Guy Briggs wrote:
+>>> Implement kernel audit container identifier.
+>> I'm sorry, I've lost track of this, where have we landed on it? Are we good for
+>> inclusion?
+> I haven't finished going through this latest revision, but unless
+> Richard made any significant changes outside of the feedback from the
+> v5 patchset I'm guessing we are "close".
+>
+> Based on discussions Richard and I had some time ago, I have always
+> envisioned the plan as being get the kernel patchset, tests, docs
+> ready (which Richard has been doing) and then run the actual
+> implemented API by the userland container folks, e.g. cri-o/lxc/etc.,
+> to make sure the actual implementation is sane from their perspective.
+> They've already seen the design, so I'm not expecting any real
+> surprises here, but sometimes opinions change when they have actual
+> code in front of them to play with and review.
+>
+> Beyond that, while the cri-o/lxc/etc. folks are looking it over,
+> whatever additional testing we can do would be a big win.  I'm
+> thinking I'll pull it into a separate branch in the audit tree
+> (audit/working-container ?) and include that in my secnext kernels
+> that I build/test on a regular basis; this is also a handy way to keep
+> it based against the current audit/next branch.  If any changes are
+> needed Richard can either chose to base those changes on audit/next or
+> the separate audit container ID branch; that's up to him.  I've done
+> this with other big changes in other trees, e.g. SELinux, and it has
+> worked well to get some extra testing in and keep the patchset "merge
+> ready" while others outside the subsystem look things over.
+>
+Mrunal Patel (maintainer of CRI-O) and I have reviewed the API, and
+believe this is something we can work on in the container runtimes team
+to implement the container auditing code in CRI-O and Podman.
