@@ -1,7 +1,7 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 19/25] fsinfo: proc - add sb operation fsinfo() [ver #13]
-Date: Tue, 28 May 2019 16:13:49 +0100
-Message-ID: <155905642971.1662.2801058772112807295.stgit@warthog.procyon.org.uk>
+Subject: [PATCH 20/25] fsinfo: devpts - add sb operation fsinfo() [ver #13]
+Date: Tue, 28 May 2019 16:13:57 +0100
+Message-ID: <155905643707.1662.9338994077777129914.stgit@warthog.procyon.org.uk>
 References: <155905626142.1662.18430571708534506785.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -30,22 +30,22 @@ Signed-off-by: Ian Kent <raven@themaw.net>
 Signed-off-by: David Howells <dhowells@redhat.com>
 ---
 
- fs/proc/inode.c |   36 ++++++++++++++++++++++++++++++++++++
- 1 file changed, 36 insertions(+)
+ fs/devpts/inode.c |   42 ++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 42 insertions(+)
 
-diff --git a/fs/proc/inode.c b/fs/proc/inode.c
-index 5f8d215b3fd0..0f6c122d22f0 100644
---- a/fs/proc/inode.c
-+++ b/fs/proc/inode.c
-@@ -24,6 +24,7 @@
+diff --git a/fs/devpts/inode.c b/fs/devpts/inode.c
+index 3aa73a2ec2f1..12fece8913d2 100644
+--- a/fs/devpts/inode.c
++++ b/fs/devpts/inode.c
+@@ -28,6 +28,7 @@
+ #include <linux/devpts_fs.h>
+ #include <linux/fsnotify.h>
  #include <linux/seq_file.h>
- #include <linux/slab.h>
- #include <linux/mount.h>
 +#include <linux/fsinfo.h>
  
- #include <linux/uaccess.h>
- 
-@@ -115,6 +116,38 @@ static int proc_show_options(struct seq_file *seq, struct dentry *root)
+ #define DEVPTS_DEFAULT_MODE 0600
+ /*
+@@ -401,9 +402,50 @@ static int devpts_show_options(struct seq_file *seq, struct dentry *root)
  	return 0;
  }
  
@@ -53,10 +53,10 @@ index 5f8d215b3fd0..0f6c122d22f0 100644
 +/*
 + * Get filesystem information.
 + */
-+static int proc_fsinfo(struct path *path, struct fsinfo_kparams *params)
++static int devpts_fsinfo(struct path *path, struct fsinfo_kparams *params)
 +{
-+	struct super_block *sb = path->dentry->d_sb;
-+	struct pid_namespace *pid = sb->s_fs_info;
++	struct pts_fs_info *fsi = DEVPTS_SB(path->dentry->d_sb);
++	struct pts_mount_opts *opts = &fsi->mount_opts;
 +	struct fsinfo_capabilities *caps;
 +
 +	switch (params->request) {
@@ -64,15 +64,21 @@ index 5f8d215b3fd0..0f6c122d22f0 100644
 +		caps = params->buffer;
 +		fsinfo_set_cap(caps, FSINFO_CAP_IS_KERNEL_FS);
 +		fsinfo_set_cap(caps, FSINFO_CAP_NOT_PERSISTENT);
++		fsinfo_set_cap(caps, FSINFO_CAP_UIDS);
++		fsinfo_set_cap(caps, FSINFO_CAP_GIDS);
 +		return sizeof(*caps);
 +
 +	case FSINFO_ATTR_PARAMETERS:
-+		if (!gid_eq(pid->pid_gid, GLOBAL_ROOT_GID))
++		if (opts->setuid)
++			fsinfo_note_paramf(params, "uid", "%u",
++				from_kuid_munged(&init_user_ns, opts->uid));
++		if (opts->setgid)
 +			fsinfo_note_paramf(params, "gid", "%u",
-+				from_kgid_munged(&init_user_ns, pid->pid_gid));
-+		if (pid->hide_pid != HIDEPID_OFF)
-+			fsinfo_note_paramf(params, "hidepid",
-+					  "%u", pid->hide_pid);
++				from_kgid_munged(&init_user_ns, opts->gid));
++		fsinfo_note_paramf(params, "mode", "%03o", opts->mode);
++		fsinfo_note_paramf(params, "ptmxmode", "%03o", opts->ptmxmode);
++		if (opts->max < NR_UNIX98_PTY_MAX)
++			fsinfo_note_paramf(params, "max", "%d", opts->max);
 +		return params->usage;
 +
 +	default:
@@ -81,16 +87,12 @@ index 5f8d215b3fd0..0f6c122d22f0 100644
 +}
 +#endif /* CONFIG_FSINFO */
 +
- const struct super_operations proc_sops = {
- 	.alloc_inode	= proc_alloc_inode,
- 	.free_inode	= proc_free_inode,
-@@ -122,6 +155,9 @@ const struct super_operations proc_sops = {
- 	.evict_inode	= proc_evict_inode,
+ static const struct super_operations devpts_sops = {
  	.statfs		= simple_statfs,
- 	.show_options	= proc_show_options,
+ 	.show_options	= devpts_show_options,
 +#ifdef CONFIG_FSINFO
-+	.fsinfo		= proc_fsinfo,
++	.fsinfo		= devpts_fsinfo,
 +#endif
  };
  
- enum {BIAS = -1U<<31};
+ static int devpts_fill_super(struct super_block *s, struct fs_context *fc)
