@@ -1,24 +1,31 @@
-From: Daniel Colascione <dancol@google.com>
-Subject: Re: [RFC 7/7] mm: madvise support MADV_ANONYMOUS_FILTER and MADV_FILE_FILTER
-Date: Tue, 28 May 2019 04:51:54 -0700
-Message-ID: <CAKOZueu7ayjDoV904gFPRQu84_toxWAN5hBBe17x=g-MOBJ7uQ@mail.gmail.com>
-References: <20190528032632.GF6879@google.com> <20190528062947.GL1658@dhcp22.suse.cz>
- <20190528081351.GA159710@google.com> <CAKOZuesnS6kBFX-PKJ3gvpkv8i-ysDOT2HE2Z12=vnnHQv0FDA@mail.gmail.com>
- <20190528084927.GB159710@google.com> <20190528090821.GU1658@dhcp22.suse.cz>
- <20190528103256.GA9199@google.com> <20190528104117.GW1658@dhcp22.suse.cz>
- <20190528111208.GA30365@google.com> <20190528112840.GY1658@dhcp22.suse.cz> <20190528114436.GB30365@google.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [RFC 7/7] mm: madvise support MADV_ANONYMOUS_FILTER and
+ MADV_FILE_FILTER
+Date: Tue, 28 May 2019 13:56:09 +0200
+Message-ID: <20190528115609.GA1658@dhcp22.suse.cz>
+References: <20190528062947.GL1658@dhcp22.suse.cz>
+ <20190528081351.GA159710@google.com>
+ <CAKOZuesnS6kBFX-PKJ3gvpkv8i-ysDOT2HE2Z12=vnnHQv0FDA@mail.gmail.com>
+ <20190528084927.GB159710@google.com>
+ <20190528090821.GU1658@dhcp22.suse.cz>
+ <20190528103256.GA9199@google.com>
+ <20190528104117.GW1658@dhcp22.suse.cz>
+ <20190528111208.GA30365@google.com>
+ <20190528112840.GY1658@dhcp22.suse.cz>
+ <CAKOZuesCSrE0esqDDbo8x5u5rM-Uv_81jjBt1QRXFKNOUJu0aw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190528114436.GB30365@google.com>
+Content-Disposition: inline
+In-Reply-To: <CAKOZuesCSrE0esqDDbo8x5u5rM-Uv_81jjBt1QRXFKNOUJu0aw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Minchan Kim <minchan@kernel.org>
-Cc: Michal Hocko <mhocko@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, Linux API <linux-api@vger.kernel.org>
+To: Daniel Colascione <dancol@google.com>
+Cc: Minchan Kim <minchan@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 28, 2019 at 4:44 AM Minchan Kim <minchan@kernel.org> wrote:
->
-> On Tue, May 28, 2019 at 01:28:40PM +0200, Michal Hocko wrote:
+On Tue 28-05-19 04:42:47, Daniel Colascione wrote:
+> On Tue, May 28, 2019 at 4:28 AM Michal Hocko <mhocko@kernel.org> wrote:
+> >
 > > On Tue 28-05-19 20:12:08, Minchan Kim wrote:
 > > > On Tue, May 28, 2019 at 12:41:17PM +0200, Michal Hocko wrote:
 > > > > On Tue 28-05-19 19:32:56, Minchan Kim wrote:
@@ -69,26 +76,55 @@ On Tue, May 28, 2019 at 4:44 AM Minchan Kim <minchan@kernel.org> wrote:
 > > How come they are racy wrt address ranges? You would have to be in
 > > multithreaded environment and then the onus of synchronization is on
 > > threads. That model is quite clear. But we are talking about separate
->
-> Think about MADV_FREE. Allocator would think the chunk is worth to mark
-> "freeable" but soon, user of the allocator asked the chunk - ie, it's not
-> freeable any longer once user start to use it.
->
-> My point is that kinds of *hints* are always racy so any synchronization
-> couldn't help a lot. That's why I want to restrict hints process_madvise
-> supports as such kinds of non-destruptive one at next respin.
+> > processes and some of them might be even not aware of an external entity
+> > tweaking their address space.
+> 
+> I don't think the difference between a thread and a process matters in
+> this context. Threads race on address space operations all the time
+> --- in the sense that multiple threads modify a process's address
+> space without synchronization.
 
-I think it's more natural for process_madvise to be a superset of
-regular madvise. What's the harm? There are no security implications,
-since anyone who could process_madvise could just ptrace anyway. I
-also don't think limiting the hinting to non-destructive operations
-guarantees safety (in a broad sense) either, since operating on the
-wrong memory range can still cause unexpected system performance
-issues even if there's no data loss.
+I would disagree. They do have in-kernel synchronization as long as they
+do not use MAP_FIXED. If they do want to use MAP_FIXED then they better
+synchronize or the result is undefined.
 
-More broadly, what I want to see is a family of process_* APIs that
-provide a superset of the functionality that the existing intraprocess
-APIs provide. I think this approach is elegant and generalizes easily.
-I'm worried about prematurely limiting the interprocess memory APIs
-and creating limitations that will last a long time in order to avoid
-having to consider issues like VMA synchronization.
+> The main reasons that these races
+> hasn't been a problem are: 1) threads mostly "mind their own business"
+> and modify different parts of the address space or use locks to ensure
+> that they don't stop on each other (e.g., the malloc heap lock), and
+> 2) POSIX mmap atomic-replacement semantics make certain classes of
+> operation (like "magic ring buffer" setup) safe even in the presence
+> of other threads stomping over an address space.
+
+Agreed here.
+
+[...]
+
+> From a synchronization point
+> of view, it doesn't really matter whether it's a thread within the
+> target process or a thread outside the target process that does the
+> address space manipulation. What's new is the inspection of the
+> address space before performing an operation.
+
+The fundamental difference is that if you want to achieve the same
+inside the process then your application is inherenly aware of the
+operation and use whatever synchronization is needed to achieve a
+consistency. As soon as you allow the same from outside you either
+have to have an aware target application as well or you need a mechanism
+to find out that your decision has been invalidated by a later
+unsynchronized action.
+
+> Minchan started this thread by proposing some flags that would
+> implement a few of the filtering policies I used as examples above.
+> Personally, instead of providing a few pre-built policies as flags,
+> I'd rather push the page manipulation policy to userspace as much as
+> possible and just have the kernel provide a mechanism that *in
+> general* makes these read-decide-modify operations efficient and
+> robust. I still think there's way to achieve this goal very
+> inexpensively without compromising on flexibility.
+
+Agreed here.
+
+-- 
+Michal Hocko
+SUSE Labs
