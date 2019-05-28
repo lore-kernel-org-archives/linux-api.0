@@ -1,48 +1,96 @@
-From: Michael Ellerman <mpe@ellerman.id.au>
-Subject: Re: [PATCH v3 3/3] tests: add close_range() tests
-Date: Tue, 28 May 2019 13:22:10 +1000
-Message-ID: <87zhn7p8kd.fsf@concordia.ellerman.id.au>
-References: <20190524111047.6892-1-christian@brauner.io> <20190524111047.6892-4-christian@brauner.io>
+From: Minchan Kim <minchan@kernel.org>
+Subject: Re: [RFC 7/7] mm: madvise support MADV_ANONYMOUS_FILTER and
+ MADV_FILE_FILTER
+Date: Tue, 28 May 2019 12:26:32 +0900
+Message-ID: <20190528032632.GF6879@google.com>
+References: <20190520035254.57579-1-minchan@kernel.org>
+ <20190520035254.57579-8-minchan@kernel.org>
+ <20190520092801.GA6836@dhcp22.suse.cz>
+ <20190521025533.GH10039@google.com>
+ <20190521062628.GE32329@dhcp22.suse.cz>
+ <20190527075811.GC6879@google.com>
+ <20190527124411.GC1658@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190524111047.6892-4-christian@brauner.io>
+Content-Disposition: inline
+In-Reply-To: <20190527124411.GC1658@dhcp22.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, torvalds@linux-foundation.org, fweimer@redhat.com
-Cc: jannh@google.com, oleg@redhat.com, tglx@linutronix.de, arnd@arndb.de, shuah@kernel.org, dhowells@redhat.com, tkjos@android.com, ldv@altlinux.org, miklos@szeredi.hu, Christian Brauner <christian@brauner.io>, linux-api@vger.kernel.org, linux-kselftest@vger.kernel.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Christian Brauner <christian@brauner.io> writes:
-> This adds basic tests for the new close_range() syscall.
-> - test that no invalid flags can be passed
-> - test that a range of file descriptors is correctly closed
-> - test that a range of file descriptors is correctly closed if there there
->   are already closed file descriptors in the range
-> - test that max_fd is correctly capped to the current fdtable maximum
->
-> Signed-off-by: Christian Brauner <christian@brauner.io>
-> Cc: Arnd Bergmann <arnd@arndb.de>
-> Cc: Jann Horn <jannh@google.com>
-> Cc: David Howells <dhowells@redhat.com>
-> Cc: Dmitry V. Levin <ldv@altlinux.org>
-> Cc: Oleg Nesterov <oleg@redhat.com>
-> Cc: Linus Torvalds <torvalds@linux-foundation.org>
-> Cc: Florian Weimer <fweimer@redhat.com>
-> Cc: Shuah Khan <shuah@kernel.org>
-> Cc: linux-api@vger.kernel.org
-> Cc: linux-kselftest@vger.kernel.org
-> ---
-> v1: unchanged
-> v2:
-> - Christian Brauner <christian@brauner.io>:
->   - verify that close_range() correctly closes a single file descriptor
-> v3:
-> - Christian Brauner <christian@brauner.io>:
->   - add missing Cc for Shuah
->   - add missing Cc for linux-kselftest
+On Mon, May 27, 2019 at 02:44:11PM +0200, Michal Hocko wrote:
+> On Mon 27-05-19 16:58:11, Minchan Kim wrote:
+> > On Tue, May 21, 2019 at 08:26:28AM +0200, Michal Hocko wrote:
+> > > On Tue 21-05-19 11:55:33, Minchan Kim wrote:
+> > > > On Mon, May 20, 2019 at 11:28:01AM +0200, Michal Hocko wrote:
+> > > > > [cc linux-api]
+> > > > > 
+> > > > > On Mon 20-05-19 12:52:54, Minchan Kim wrote:
+> > > > > > System could have much faster swap device like zRAM. In that case, swapping
+> > > > > > is extremely cheaper than file-IO on the low-end storage.
+> > > > > > In this configuration, userspace could handle different strategy for each
+> > > > > > kinds of vma. IOW, they want to reclaim anonymous pages by MADV_COLD
+> > > > > > while it keeps file-backed pages in inactive LRU by MADV_COOL because
+> > > > > > file IO is more expensive in this case so want to keep them in memory
+> > > > > > until memory pressure happens.
+> > > > > > 
+> > > > > > To support such strategy easier, this patch introduces
+> > > > > > MADV_ANONYMOUS_FILTER and MADV_FILE_FILTER options in madvise(2) like
+> > > > > > that /proc/<pid>/clear_refs already has supported same filters.
+> > > > > > They are filters could be Ored with other existing hints using top two bits
+> > > > > > of (int behavior).
+> > > > > 
+> > > > > madvise operates on top of ranges and it is quite trivial to do the
+> > > > > filtering from the userspace so why do we need any additional filtering?
+> > > > > 
+> > > > > > Once either of them is set, the hint could affect only the interested vma
+> > > > > > either anonymous or file-backed.
+> > > > > > 
+> > > > > > With that, user could call a process_madvise syscall simply with a entire
+> > > > > > range(0x0 - 0xFFFFFFFFFFFFFFFF) but either of MADV_ANONYMOUS_FILTER and
+> > > > > > MADV_FILE_FILTER so there is no need to call the syscall range by range.
+> > > > > 
+> > > > > OK, so here is the reason you want that. The immediate question is why
+> > > > > cannot the monitor do the filtering from the userspace. Slightly more
+> > > > > work, all right, but less of an API to expose and that itself is a
+> > > > > strong argument against.
+> > > > 
+> > > > What I should do if we don't have such filter option is to enumerate all of
+> > > > vma via /proc/<pid>/maps and then parse every ranges and inode from string,
+> > > > which would be painful for 2000+ vmas.
+> > > 
+> > > Painful is not an argument to add a new user API. If the existing API
+> > > suits the purpose then it should be used. If it is not usable, we can
+> > > think of a different way.
+> > 
+> > I measured 1568 vma parsing overhead of /proc/<pid>/maps in ARM64 modern
+> > mobile CPU. It takes 60ms and 185ms on big cores depending on cpu governor.
+> > It's never trivial.
+> 
+> This is not the only option. Have you tried to simply use
+> /proc/<pid>/map_files interface? This will provide you with all the file
+> backed mappings.
 
-Sorry I replied to v2, but I think my comments still apply:
+I compared maps vs. map_files with 3036 file-backed vma.
+Test scenario is to dump all of vmas of the process and parse address
+ranges.
+For map_files, it's easy to parse each address range because directory name
+itself is range. However, in case of maps, I need to parse each range
+line by line so need to scan all of lines.
 
-https://lore.kernel.org/lkml/8736kzqpdm.fsf@concordia.ellerman.id.au/
+(maps cover additional non-file-backed vmas so nr_vma is a little bigger)
 
-cheers
+performance mode:
+map_files: nr_vma 3036 usec 13387
+maps     : nr_vma 3078 usec 12923
+
+powersave mode:
+
+map_files: nr_vma 3036 usec 52614
+maps     : nr_vma 3078 usec 41089
+
+map_files is slower than maps if we dump all of vmas. I guess directory
+operation needs much more jobs(e.g., dentry lookup, instantiation)
+compared to maps.
