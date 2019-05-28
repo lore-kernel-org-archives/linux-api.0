@@ -1,208 +1,146 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH 3/7] vfs: Add a mount-notification facility
-Date: Tue, 28 May 2019 22:06:23 +0200
-Message-ID: <CAG48ez2rRh2_Kq_EGJs5k-ZBNffGs_Q=vkQdinorBgo58tbGpg@mail.gmail.com>
-References: <155905930702.7587.7100265859075976147.stgit@warthog.procyon.org.uk>
- <155905933492.7587.6968545866041839538.stgit@warthog.procyon.org.uk>
+From: "Darrick J. Wong" <darrick.wong@oracle.com>
+Subject: Re: [RFC][PATCH] link.2: AT_ATOMIC_DATA and AT_ATOMIC_METADATA
+Date: Tue, 28 May 2019 13:06:59 -0700
+Message-ID: <20190528200659.GK5221@magnolia>
+References: <20190527172655.9287-1-amir73il@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <155905933492.7587.6968545866041839538.stgit@warthog.procyon.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, raven@themaw.net, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module <linux-security-module@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190527172655.9287-1-amir73il@gmail.com>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Amir Goldstein <amir73il@gmail.com>
+Cc: Theodore Tso <tytso@mit.edu>, Jan Kara <jack@suse.cz>, Dave Chinner <david@fromorbit.com>, Chris Mason <clm@fb.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, linux-xfs@vger.kernel.org, linux-ext4@vger.kernel.org, linux-btrfs@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 28, 2019 at 6:05 PM David Howells <dhowells@redhat.com> wrote:
-> Add a mount notification facility whereby notifications about changes in
-> mount topology and configuration can be received.  Note that this only
-> covers vfsmount topology changes and not superblock events.  A separate
-> facility will be added for that.
-[...]
-> @@ -172,4 +167,18 @@ static inline void notify_mount(struct mount *changed,
->                                 u32 info_flags)
->  {
->         atomic_inc(&changed->mnt_notify_counter);
+On Mon, May 27, 2019 at 08:26:55PM +0300, Amir Goldstein wrote:
+> New link flags to request "atomic" link.
+> 
+> Signed-off-by: Amir Goldstein <amir73il@gmail.com>
+> ---
+> 
+> Hi Guys,
+> 
+> Following our discussions on LSF/MM and beyond [1][2], here is
+> an RFC documentation patch.
+> 
+> Ted, I know we discussed limiting the API for linking an O_TMPFILE
+> to avert the hardlinks issue, but I decided it would be better to
+> document the hardlinks non-guaranty instead. This will allow me to
+> replicate the same semantics and documentation to renameat(2).
+> Let me know how that works out for you.
+> 
+> I also decided to try out two separate flags for data and metadata.
+> I do not find any of those flags very useful without the other, but
+> documenting them seprately was easier, because of the fsync/fdatasync
+> reference.  In the end, we are trying to solve a social engineering
+> problem, so this is the least confusing way I could think of to describe
+> the new API.
+> 
+> First implementation of AT_ATOMIC_METADATA is expected to be
+> noop for xfs/ext4 and probably fsync for btrfs.
+> 
+> First implementation of AT_ATOMIC_DATA is expected to be
+> filemap_write_and_wait() for xfs/ext4 and probably fdatasync for btrfs.
+> 
+> Thoughts?
+> 
+> Amir.
+> 
+> [1] https://lwn.net/Articles/789038/
+> [2] https://lore.kernel.org/linux-fsdevel/CAOQ4uxjZm6E2TmCv8JOyQr7f-2VB0uFRy7XEp8HBHQmMdQg+6w@mail.gmail.com/
+> 
+>  man2/link.2 | 51 +++++++++++++++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 51 insertions(+)
+> 
+> diff --git a/man2/link.2 b/man2/link.2
+> index 649ba00c7..15c24703e 100644
+> --- a/man2/link.2
+> +++ b/man2/link.2
+> @@ -184,6 +184,57 @@ See
+>  .BR openat (2)
+>  for an explanation of the need for
+>  .BR linkat ().
+> +.TP
+> +.BR AT_ATOMIC_METADATA " (since Linux 5.x)"
+> +By default, a link operation followed by a system crash, may result in the
+> +new file name being linked with old inode metadata, such as out dated time
+> +stamps or missing extended attributes.
+> +.BR fsync (2)
+> +before linking the inode, but that involves flushing of volatile disk caches.
 > +
-> +#ifdef CONFIG_MOUNT_NOTIFICATIONS
-> +       {
-> +               struct mount_notification n = {
-> +                       .watch.type     = WATCH_TYPE_MOUNT_NOTIFY,
-> +                       .watch.subtype  = subtype,
-> +                       .watch.info     = info_flags | sizeof(n),
-> +                       .triggered_on   = changed->mnt_id,
-> +                       .changed_mount  = aux ? aux->mnt_id : 0,
-> +               };
+> +A filesystem that accepts this flag will guaranty, that old inode metadata
+> +will not be exposed in the new linked name.
+> +Some filesystems may internally perform
+> +.BR fsync (2)
+> +before linking the inode to provide this guaranty,
+> +but often, filesystems will have a more efficient method to provide this
+> +guaranty without flushing volatile disk caches.
 > +
-> +               post_mount_notification(changed, &n);
-> +       }
-> +#endif
->  }
-[...]
-> +void post_mount_notification(struct mount *changed,
-> +                            struct mount_notification *notify)
-> +{
-> +       const struct cred *cred = current_cred();
+> +A filesystem that accepts this flag does
+> +.BR NOT
+> +guaranty that the new file name will exist after a system crash, nor that the
+> +current inode metadata is persisted to disk.
 
-This current_cred() looks bogus to me. Can't mount topology changes
-come from all sorts of places? For example, umount_mnt() from
-umount_tree() from dissolve_on_fput() from __fput(), which could
-happen pretty much anywhere depending on where the last reference gets
-dropped?
+Hmmm.  I think it would be much clearer to state the two expectations in
+the same place, e.g.:
 
-> +       struct path cursor;
-> +       struct mount *mnt;
-> +       unsigned seq;
-> +
-> +       seq = 0;
-> +       rcu_read_lock();
-> +restart:
-> +       cursor.mnt = &changed->mnt;
-> +       cursor.dentry = changed->mnt.mnt_root;
-> +       mnt = real_mount(cursor.mnt);
-> +       notify->watch.info &= ~WATCH_INFO_IN_SUBTREE;
-> +
-> +       read_seqbegin_or_lock(&rename_lock, &seq);
-> +       for (;;) {
-> +               if (mnt->mnt_watchers &&
-> +                   !hlist_empty(&mnt->mnt_watchers->watchers)) {
-> +                       if (cursor.dentry->d_flags & DCACHE_MOUNT_WATCH)
-> +                               post_watch_notification(mnt->mnt_watchers,
-> +                                                       &notify->watch, cred,
-> +                                                       (unsigned long)cursor.dentry);
-> +               } else {
-> +                       cursor.dentry = mnt->mnt.mnt_root;
-> +               }
-> +               notify->watch.info |= WATCH_INFO_IN_SUBTREE;
-> +
-> +               if (cursor.dentry == cursor.mnt->mnt_root ||
-> +                   IS_ROOT(cursor.dentry)) {
-> +                       struct mount *parent = READ_ONCE(mnt->mnt_parent);
-> +
-> +                       /* Escaped? */
-> +                       if (cursor.dentry != cursor.mnt->mnt_root)
-> +                               break;
-> +
-> +                       /* Global root? */
-> +                       if (mnt != parent) {
-> +                               cursor.dentry = READ_ONCE(mnt->mnt_mountpoint);
-> +                               mnt = parent;
-> +                               cursor.mnt = &mnt->mnt;
-> +                               continue;
-> +                       }
-> +                       break;
+"A filesystem that accepts this flag guarantees that after a successful
+call completion, the filesystem will return either (a) the version of
+the metadata that was on disk at the time the call completed; (b) a
+newer version of that metadata; or (c) -ENOENT.  In other words, a
+subsequent access of the file path will never return metadata that was
+obsolete at the time that the call completed, even if the system crashes
+immediately afterwards."
 
-(nit: this would look clearer if you inverted the condition and wrote
-it as "if (mnt == parent) break;", then you also wouldn't need that
-"continue" or the braces)
+Did I get that right?  I /think/ this means that one could implement Ye
+Olde Write And Rename as:
 
-> +               }
-> +
-> +               cursor.dentry = cursor.dentry->d_parent;
-> +       }
-> +
-> +       if (need_seqretry(&rename_lock, seq)) {
-> +               seq = 1;
-> +               goto restart;
-> +       }
-> +
-> +       done_seqretry(&rename_lock, seq);
-> +       rcu_read_unlock();
-> +}
-[...]
-> +SYSCALL_DEFINE5(mount_notify,
-> +               int, dfd,
-> +               const char __user *, filename,
-> +               unsigned int, at_flags,
-> +               int, watch_fd,
-> +               int, watch_id)
-> +{
-> +       struct watch_queue *wqueue;
-> +       struct watch_list *wlist = NULL;
-> +       struct watch *watch;
-> +       struct mount *m;
-> +       struct path path;
-> +       int ret;
-> +
-> +       if (watch_id < -1 || watch_id > 0xff)
-> +               return -EINVAL;
-> +
-> +       ret = user_path_at(dfd, filename, at_flags, &path);
+fd = open(".", O_TMPFILE...);
+write(fd);
+fsync(fd);
+snprintf(path, PATH_MAX, "/proc/self/fd/%d", fd);
+linkat(AT_FDCWD, path, AT_FDCWD, "file.txt",
+	AT_EMPTY_PATH | AT_ATOMIC_DATA | AT_ATOMIC_METADATA);
 
-The third argument of user_path_at() contains kernel-private lookup
-flags, I'm pretty sure userspace isn't supposed to be able to control
-these directly.
+(Still struggling to figure out what userspace programs would use this
+for...)
 
-> +       if (ret)
-> +               return ret;
-> +
-> +       wqueue = get_watch_queue(watch_fd);
-> +       if (IS_ERR(wqueue))
-> +               goto err_path;
-> +
-> +       m = real_mount(path.mnt);
-> +
-> +       if (watch_id >= 0) {
-> +               if (!m->mnt_watchers) {
-> +                       wlist = kzalloc(sizeof(*wlist), GFP_KERNEL);
-> +                       if (!wlist)
-> +                               goto err_wqueue;
-> +                       INIT_HLIST_HEAD(&wlist->watchers);
-> +                       spin_lock_init(&wlist->lock);
-> +                       wlist->release_watch = release_mount_watch;
-> +               }
-> +
-> +               watch = kzalloc(sizeof(*watch), GFP_KERNEL);
-> +               if (!watch)
-> +                       goto err_wlist;
-> +
-> +               init_watch(watch, wqueue);
-> +               watch->id               = (unsigned long)path.dentry;
-> +               watch->private          = path.mnt;
-> +               watch->info_id          = (u32)watch_id << 24;
-> +
-> +               down_write(&m->mnt.mnt_sb->s_umount);
-> +               if (!m->mnt_watchers) {
-> +                       m->mnt_watchers = wlist;
-> +                       wlist = NULL;
-> +               }
-> +
-> +               ret = add_watch_to_object(watch, m->mnt_watchers);
-> +               if (ret == 0) {
-> +                       spin_lock(&path.dentry->d_lock);
-> +                       path.dentry->d_flags |= DCACHE_MOUNT_WATCH;
-> +                       spin_unlock(&path.dentry->d_lock);
-> +                       path_get(&path);
+--D
 
-So... the watches on a mountpoint create references back to the
-mountpoint? Is your plan that umount_tree() breaks the loop by getting
-rid of the watches?
-
-If so: Is there anything that prevents installing new watches after
-umount_tree()? Because I don't see anything.
-
-It might make sense to redesign this stuff so that watches don't hold
-references on the object being watched.
-
-> +               }
-> +               up_write(&m->mnt.mnt_sb->s_umount);
-> +               if (ret < 0)
-> +                       kfree(watch);
-> +       } else if (m->mnt_watchers) {
-> +               down_write(&m->mnt.mnt_sb->s_umount);
-> +               ret = remove_watch_from_object(m->mnt_watchers, wqueue,
-> +                                              (unsigned long)path.dentry,
-> +                                              false);
-> +               up_write(&m->mnt.mnt_sb->s_umount);
-> +       } else {
-> +               ret = -EBADSLT;
-> +       }
+> +Specifically, if a file has hardlinks, the existance of the linked name after
+> +a system crash does
+> +.BR NOT
+> +guaranty that any of the other file names exist, nor that the last observed
+> +value of
+> +.I st_nlink
+> +(see
+> +.BR stat (2))
+> +has persisted.
+> +.TP
+> +.BR AT_ATOMIC_DATA " (since Linux 5.x)"
+> +By default, a link operation followed by a system crash, may result in the
+> +new file name being linked with old data or missing data.
+> +One way to prevent this is to call
+> +.BR fdatasync (2)
+> +before linking the inode, but that involves flushing of volatile disk caches.
 > +
-> +err_wlist:
-> +       kfree(wlist);
-> +err_wqueue:
-> +       put_watch_queue(wqueue);
-> +err_path:
-> +       path_put(&path);
-> +       return ret;
-> +}
+> +A filesystem that accepts this flag will guaranty, that old data
+> +will not be exposed in the new linked name.
+> +Some filesystems may internally perform
+> +.BR fsync (2)
+> +before linking the inode to provide this guaranty,
+> +but often, filesystems will have a more efficient method to provide this
+> +guaranty without flushing volatile disk caches.
+> +
+> +A filesystem that accepts this flag does
+> +.BR NOT
+> +guaranty that the new file name will exist after a system crash, nor that the
+> +current inode data is persisted to disk.
+> +.TP
+>  .SH RETURN VALUE
+>  On success, zero is returned.
+>  On error, \-1 is returned, and
+> -- 
+> 2.17.1
+> 
