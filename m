@@ -1,7 +1,7 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 23/25] fsinfo: bpf - add sb operation fsinfo() [ver #13]
-Date: Tue, 28 May 2019 16:14:19 +0100
-Message-ID: <155905645905.1662.13856174905974520945.stgit@warthog.procyon.org.uk>
+Subject: [PATCH 24/25] fsinfo: ufs - add sb operation fsinfo() [ver #13]
+Date: Tue, 28 May 2019 16:14:26 +0100
+Message-ID: <155905646637.1662.2508556539065009207.stgit@warthog.procyon.org.uk>
 References: <155905626142.1662.18430571708534506785.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -28,37 +28,70 @@ Signed-off-by: Ian Kent <raven@themaw.net>
 Signed-off-by: David Howells <dhowells@redhat.com>
 ---
 
- kernel/bpf/inode.c |   24 ++++++++++++++++++++++++
- 1 file changed, 24 insertions(+)
+ fs/ufs/super.c |   57 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 57 insertions(+)
 
-diff --git a/kernel/bpf/inode.c b/kernel/bpf/inode.c
-index 6e22363054b1..49ac30424dd1 100644
---- a/kernel/bpf/inode.c
-+++ b/kernel/bpf/inode.c
-@@ -23,6 +23,7 @@
- #include <linux/filter.h>
- #include <linux/bpf.h>
- #include <linux/bpf_trace.h>
+diff --git a/fs/ufs/super.c b/fs/ufs/super.c
+index 84c0c5178cd2..6395ce4da5e6 100644
+--- a/fs/ufs/super.c
++++ b/fs/ufs/super.c
+@@ -89,6 +89,7 @@
+ #include <linux/mount.h>
+ #include <linux/seq_file.h>
+ #include <linux/iversion.h>
 +#include <linux/fsinfo.h>
  
- enum bpf_type {
- 	BPF_TYPE_UNSPEC	= 0,
-@@ -567,6 +568,26 @@ static int bpf_show_options(struct seq_file *m, struct dentry *root)
+ #include "ufs_fs.h"
+ #include "ufs.h"
+@@ -1401,6 +1402,59 @@ static int ufs_show_options(struct seq_file *seq, struct dentry *root)
  	return 0;
  }
  
 +#ifdef CONFIG_FSINFO
++static int ufs_fsinfo_print_token(struct fsinfo_kparams *params, const char *token)
++{
++	char *new, *key, *value;
++
++	new = kstrdup(token, GFP_KERNEL);
++	if (!new)
++		return -ENOMEM;
++
++	key = new;
++	value = strchr(new, '=');
++	if (value)
++		*value++ = '\0';
++
++	fsinfo_note_param(params, key, value);
++
++	kfree(new);
++	return 0;
++}
++
 +/*
 + * Get filesystem information.
 + */
-+static int bpf_fsinfo(struct path *path, struct fsinfo_kparams *params)
++static int ufs_fsinfo(struct path *path, struct fsinfo_kparams *params)
 +{
-+	umode_t mode = d_inode(path->dentry)->i_mode & S_IALLUGO & ~S_ISVTX;
++	struct ufs_sb_info *sbi = UFS_SB(path->dentry->d_sb);
++	unsigned mval = sbi->s_mount_opt & UFS_MOUNT_UFSTYPE;
++	const struct match_token *tp = tokens;
++	int ret;
 +
 +	switch (params->request) {
 +	case FSINFO_ATTR_PARAMETERS:
-+		if (mode != S_IRWXUGO)
-+			fsinfo_note_paramf(params, "mode", "%o", mode);
++		while (tp->token != Opt_onerror_panic && tp->token != mval)
++			++tp;
++		BUG_ON(tp->token == Opt_onerror_panic);
++		ret = ufs_fsinfo_print_token(params, tp->pattern);
++		if (ret)
++			return ret;
++		mval = sbi->s_mount_opt & UFS_MOUNT_ONERROR;
++		while (tp->token != Opt_err && tp->token != mval)
++			++tp;
++		BUG_ON(tp->token == Opt_err);
++		ret = ufs_fsinfo_print_token(params, tp->pattern);
++		if (ret)
++			return ret;
 +		return params->usage;
 +
 +	default:
@@ -67,16 +100,16 @@ index 6e22363054b1..49ac30424dd1 100644
 +}
 +#endif /* CONFIG_FSINFO */
 +
- static void bpf_free_inode(struct inode *inode)
+ static int ufs_statfs(struct dentry *dentry, struct kstatfs *buf)
  {
- 	enum bpf_type type;
-@@ -583,6 +604,9 @@ static const struct super_operations bpf_super_ops = {
- 	.drop_inode	= generic_delete_inode,
- 	.show_options	= bpf_show_options,
- 	.free_inode	= bpf_free_inode,
+ 	struct super_block *sb = dentry->d_sb;
+@@ -1496,6 +1550,9 @@ static const struct super_operations ufs_super_ops = {
+ 	.statfs		= ufs_statfs,
+ 	.remount_fs	= ufs_remount,
+ 	.show_options   = ufs_show_options,
 +#ifdef CONFIG_FSINFO
-+	.fsinfo		= bpf_fsinfo,
++	.fsinfo		= ufs_fsinfo,
 +#endif
  };
  
- enum {
+ static struct dentry *ufs_mount(struct file_system_type *fs_type,
