@@ -1,88 +1,40 @@
 From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH v2 2/2] tests: add close_range() tests
-Date: Tue, 28 May 2019 11:57:56 +0200
-Message-ID: <20190528095754.peumcgjysw2nq24y@brauner.io>
-References: <20190523154747.15162-1-christian@brauner.io>
- <20190523154747.15162-3-christian@brauner.io>
- <8736kzqpdm.fsf@concordia.ellerman.id.au>
+Subject: Re: [PATCH 1/2] fork: add clone6
+Date: Tue, 28 May 2019 12:08:04 +0200
+Message-ID: <20190528100802.sdfqtwrowrmulpml@brauner.io>
+References: <20190526102612.6970-1-christian@brauner.io>
+ <CAHk-=wieuV4hGwznPsX-8E0G2FKhx3NjZ9X3dTKh5zKd+iqOBw@mail.gmail.com>
+ <20190527104239.fbnjzfyxa4y4acpf@brauner.io>
+ <CAHk-=wjnbK5ob9JE0H1Ge_R4BL6D0ztsAvrM6DN+S+zyDWE=7A@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <8736kzqpdm.fsf@concordia.ellerman.id.au>
+In-Reply-To: <CAHk-=wjnbK5ob9JE0H1Ge_R4BL6D0ztsAvrM6DN+S+zyDWE=7A@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michael Ellerman <mpe@ellerman.id.au>
-Cc: viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, torvalds@linux-foundation.org, fweimer@redhat.com, jannh@google.com, oleg@redhat.com, tglx@linutronix.de, arnd@arndb.de, shuah@kernel.org, dhowells@redhat.com, tkjos@android.com, ldv@altlinux.org, miklos@szeredi.hu, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, linux-sh@vger.kernel.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-arch@vger.kernel.org, linux-kselftest@vger.kernel.org, x86@kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Jann Horn <jannh@google.com>, Florian Weimer <fweimer@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@gmail.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 28, 2019 at 12:33:41PM +1000, Michael Ellerman wrote:
-> Christian Brauner <christian@brauner.io> writes:
-> > This adds basic tests for the new close_range() syscall.
-> > - test that no invalid flags can be passed
-> > - test that a range of file descriptors is correctly closed
-> > - test that a range of file descriptors is correctly closed if there there
-> >   are already closed file descriptors in the range
-> > - test that max_fd is correctly capped to the current fdtable maximum
+On Mon, May 27, 2019 at 12:27:08PM -0700, Linus Torvalds wrote:
+> On Mon, May 27, 2019 at 3:42 AM Christian Brauner <christian@brauner.io> wrote:
 > >
-> > Signed-off-by: Christian Brauner <christian@brauner.io>
-> > Cc: Arnd Bergmann <arnd@arndb.de>
-> > Cc: Jann Horn <jannh@google.com>
-> > Cc: David Howells <dhowells@redhat.com>
-> > Cc: Dmitry V. Levin <ldv@altlinux.org>
-> > Cc: Oleg Nesterov <oleg@redhat.com>
-> > Cc: Linus Torvalds <torvalds@linux-foundation.org>
-> > Cc: Florian Weimer <fweimer@redhat.com>
-> > Cc: linux-api@vger.kernel.org
-> > ---
-> > v1: unchanged
-> > v2:
-> > - Christian Brauner <christian@brauner.io>:
-> >   - verify that close_range() correctly closes a single file descriptor
-> > ---
-> >  tools/testing/selftests/Makefile              |   1 +
-> >  tools/testing/selftests/core/.gitignore       |   1 +
-> >  tools/testing/selftests/core/Makefile         |   6 +
-> >  .../testing/selftests/core/close_range_test.c | 142 ++++++++++++++++++
-> >  4 files changed, 150 insertions(+)
-> >  create mode 100644 tools/testing/selftests/core/.gitignore
-> >  create mode 100644 tools/testing/selftests/core/Makefile
-> >  create mode 100644 tools/testing/selftests/core/close_range_test.c
-> >
-> > diff --git a/tools/testing/selftests/core/.gitignore b/tools/testing/selftests/core/.gitignore
-> > new file mode 100644
-> > index 000000000000..6e6712ce5817
-> > --- /dev/null
-> > +++ b/tools/testing/selftests/core/.gitignore
-> > @@ -0,0 +1 @@
-> > +close_range_test
-> > diff --git a/tools/testing/selftests/core/Makefile b/tools/testing/selftests/core/Makefile
-> > new file mode 100644
-> > index 000000000000..de3ae68aa345
-> > --- /dev/null
-> > +++ b/tools/testing/selftests/core/Makefile
-> > @@ -0,0 +1,6 @@
-> > +CFLAGS += -g -I../../../../usr/include/ -I../../../../include
+> > Hm, still pondering whether having one unsigned int argument passed
+> > through registers that captures all the flags from the old clone() would
+> > be a good idea.
 > 
-> Your second -I pulls the unexported kernel headers in, userspace
-> programs shouldn't include unexported kernel headers.
+> That sounds like a reasonable thing to do.
 > 
-> It breaks the build on powerpc with eg:
-> 
->   powerpc64le-linux-gnu-gcc -g -I../../../../usr/include/ -I../../../../include    close_range_test.c  -o /output/kselftest/core/close_range_test
->   In file included from /usr/powerpc64le-linux-gnu/include/bits/fcntl-linux.h:346,
->                    from /usr/powerpc64le-linux-gnu/include/bits/fcntl.h:62,
->                    from /usr/powerpc64le-linux-gnu/include/fcntl.h:35,
->                    from close_range_test.c:5:
->   ../../../../include/linux/falloc.h:13:2: error: unknown type name '__s16'
->     __s16  l_type;
->     ^~~~~
-> 
-> 
-> Did you do that on purpose or just copy it from one of the other
-> Makefiles? :)
+> Maybe we could continue to call the old flags CLONE_XYZ and continue
+> to pass them in as "flags" argument, and then we have CLONE_EXT_XYZ
+> flags for a new 64-bit flag field that comes in through memory in the
+> new clone_args thing?
 
-I originally did that on purpose because checkpatch was yammering on
-about me not having used ARRAY_SIZE(). But that include can go, you are
-right.
+Hm. I think I'll try a first version without an additional register
+flags argument. And here's why: I'm not sure it buys us a lot especially
+if we're giving up on making this convenient for seccomp anyway.
+And with that out of the way (at least for the moment) I would really
+like to make this interface consistent. But we can revisit this when I
+have the code.
 
 Christian
