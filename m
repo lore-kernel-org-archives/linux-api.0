@@ -1,43 +1,60 @@
 From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH 1/7] General notification queue with user mmap()'able ring buffer
-Date: Wed, 29 May 2019 19:46:54 +0200
-Message-ID: <CAG48ez0R-R3Xs+3Xg9T9qcV3Xv6r4pnx1Z2y=Ltx7RGOayte_w@mail.gmail.com>
-References: <20190528162603.GA24097@kroah.com> <155905930702.7587.7100265859075976147.stgit@warthog.procyon.org.uk>
- <155905931502.7587.11705449537368497489.stgit@warthog.procyon.org.uk>
- <4031.1559064620@warthog.procyon.org.uk> <20190528231218.GA28384@kroah.com> <31936.1559146000@warthog.procyon.org.uk>
+Subject: Re: [PATCH 3/7] vfs: Add a mount-notification facility
+Date: Wed, 29 May 2019 20:11:40 +0200
+Message-ID: <CAG48ez2S+i2wxpWXVGpEAprgY9gtjxyejLfbZtrqu5YOkQ81Nw@mail.gmail.com>
+References: <CAG48ez2rRh2_Kq_EGJs5k-ZBNffGs_Q=vkQdinorBgo58tbGpg@mail.gmail.com>
+ <155905930702.7587.7100265859075976147.stgit@warthog.procyon.org.uk>
+ <155905933492.7587.6968545866041839538.stgit@warthog.procyon.org.uk>
+ <14347.1559127657@warthog.procyon.org.uk> <312a138c-e5b2-4bfb-b50b-40c82c55773f@schaufler-ca.com>
+ <4552118F-BE9B-4905-BF0F-A53DC13D5A82@amacapital.net> <058f227c-71ab-a6f4-00bf-b8782b3b2956@schaufler-ca.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <31936.1559146000@warthog.procyon.org.uk>
+In-Reply-To: <058f227c-71ab-a6f4-00bf-b8782b3b2956@schaufler-ca.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Greg KH <gregkh@linuxfoundation.org>, Al Viro <viro@zeniv.linux.org.uk>, raven@themaw.net, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module <linux-security-module@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>
+To: Casey Schaufler <casey@schaufler-ca.com>
+Cc: Andy Lutomirski <luto@amacapital.net>, David Howells <dhowells@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, raven@themaw.net, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module <linux-security-module@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 29, 2019 at 6:07 PM David Howells <dhowells@redhat.com> wrote:
-> Greg KH <gregkh@linuxfoundation.org> wrote:
-> > everyone should use
-> > it.  It saves us having to audit the same pattern over and over again.
-> > And, even nicer, it uses a refcount now, and as you are trying to
-> > reference count an object, it is exactly what this was written for.
-> >
-> > So yes, I do think it should be used here, unless it is deemed to not
-> > fit the pattern/usage model.
+On Wed, May 29, 2019 at 7:46 PM Casey Schaufler <casey@schaufler-ca.com> wrote:
+> On 5/29/2019 10:13 AM, Andy Lutomirski wrote:
+> >> On May 29, 2019, at 8:53 AM, Casey Schaufler <casey@schaufler-ca.com> wrote:
+> >>> On 5/29/2019 4:00 AM, David Howells wrote:
+> >>> Jann Horn <jannh@google.com> wrote:
+> >>>
+> >>>>> +void post_mount_notification(struct mount *changed,
+> >>>>> +                            struct mount_notification *notify)
+> >>>>> +{
+> >>>>> +       const struct cred *cred = current_cred();
+> >>>> This current_cred() looks bogus to me. Can't mount topology changes
+> >>>> come from all sorts of places? For example, umount_mnt() from
+> >>>> umount_tree() from dissolve_on_fput() from __fput(), which could
+> >>>> happen pretty much anywhere depending on where the last reference gets
+> >>>> dropped?
+> >>> IIRC, that's what Casey argued is the right thing to do from a security PoV.
+> >>> Casey?
+> >> You need to identify the credential of the subject that triggered
+> >> the event. If it isn't current_cred(), the cred needs to be passed
+> >> in to post_mount_notification(), or derived by some other means.
+> > Taking a step back, why do we care who triggered the event?  It seems to me that we should care whether the event happened and whether the *receiver* is permitted to know that.
 >
-> kref_put() enforces a very specific destructor signature.  I know of places
-> where that doesn't work because the destructor takes more than one argument
-> (granted that this is not the case here).  So why does kref_put() exist at
-> all?  Why not kref_dec_and_test()?
->
-> Why doesn't refcount_t get merged into kref, or vice versa?  Having both would
-> seem redundant.
->
-> Mind you, I've been gradually reverting atomic_t-to-refcount_t conversions
-> because it seems I'm not allowed refcount_inc/dec_return() and I want to get
-> at the point refcount for tracing purposes.
+> There are two filesystems, "dot" and "dash". I am not allowed
+> to communicate with Fred on the system, and all precautions have
+> been taken to ensure I cannot. Fred asks for notifications on
+> all mount activity. I perform actions that result in notifications
+> on "dot" and "dash". Fred receives notifications and interprets
+> them using Morse code. This is not OK. If Wilma, who *is* allowed
+> to communicate with Fred, does the same actions, he should be
+> allowed to get the messages via Morse.
 
-Yeeech, that's horrible, please don't do that.
-
-Does this mean that refcount_read() isn't sufficient for what you want
-to do with tracing (because for some reason you actually need to know
-the values atomically at the time of increment/decrement)?
+In other words, a classic covert channel. You can't really prevent two
+cooperating processes from communicating through a covert channel on a
+modern computer. You can transmit information through the scheduler,
+through hyperthread resource sharing, through CPU data caches, through
+disk contention, through page cache state, through RAM contention, and
+probably dozens of other ways that I can't think of right now. There
+have been plenty of papers that demonstrated things like an SSH
+connection between two virtual machines without network access running
+on the same physical host (<https://gruss.cc/files/hello.pdf>),
+communication between a VM and a browser running on the host system,
+and so on.
