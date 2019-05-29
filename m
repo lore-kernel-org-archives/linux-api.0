@@ -1,45 +1,77 @@
 From: Miklos Szeredi <miklos@szeredi.hu>
-Subject: Re: [PATCH 1/7] General notification queue with user mmap()'able ring
- buffer [ver #13]
-Date: Wed, 29 May 2019 09:55:38 +0200
-Message-ID: <CAJfpeguPTQ00zVjpwVQ4R8mEqE3aijCzNMAz6Wvr56xE-jfJag@mail.gmail.com>
-References: <155905621951.1304.5956310120238620025.stgit@warthog.procyon.org.uk>
- <155905622921.1304.8775688192987027250.stgit@warthog.procyon.org.uk>
+Subject: Re: [PATCH 04/25] vfs: Implement parameter value retrieval with
+ fsinfo() [ver #13]
+Date: Wed, 29 May 2019 10:08:58 +0200
+Message-ID: <CAJfpegutheVtnmN6BFSjzrmz8p9+DpZxFoKa4CoShoh4MW+5gQ@mail.gmail.com>
+References: <155905626142.1662.18430571708534506785.stgit@warthog.procyon.org.uk>
+ <155905629702.1662.7233272785972036117.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <155905622921.1304.8775688192987027250.stgit@warthog.procyon.org.uk>
+In-Reply-To: <155905629702.1662.7233272785972036117.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
 To: David Howells <dhowells@redhat.com>
 Cc: Al Viro <viro@zeniv.linux.org.uk>, Ian Kent <raven@themaw.net>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, Miklos Szeredi <mszeredi@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 28, 2019 at 5:10 PM David Howells <dhowells@redhat.com> wrote:
+On Tue, May 28, 2019 at 5:11 PM David Howells <dhowells@redhat.com> wrote:
 >
-> Implement a misc device that implements a general notification queue as a
-> ring buffer that can be mmap()'d from userspace.
+> Implement parameter value retrieval with fsinfo() - akin to parsing
+> /proc/mounts.
 >
-> The way this is done is:
+> This allows all the parameters to be retrieved in one go with:
 >
->  (1) An application opens the device and indicates the size of the ring
->      buffer that it wants to reserve in pages (this can only be set once):
->
->         fd = open("/dev/watch_queue", O_RDWR);
->         ioctl(fd, IOC_WATCH_QUEUE_NR_PAGES, nr_of_pages);
->
->  (2) The application should then map the pages that the device has
->      reserved.  Each instance of the device created by open() allocates
->      separate pages so that maps of different fds don't interfere with one
->      another.  Multiple mmap() calls on the same fd, however, will all work
->      together.
->
->         page_size = sysconf(_SC_PAGESIZE);
->         mapping_size = nr_of_pages * page_size;
->         char *buf = mmap(NULL, mapping_size, PROT_READ|PROT_WRITE,
->                          MAP_SHARED, fd, 0);
+>         struct fsinfo_params params = {
+>                 .request        = FSINFO_ATTR_PARAMETER,
+>         };
 
-Would it make sense to use relayfs for the implementation of the
-mapped ring buffer?
+Ah, here it is.
+
+>
+> Each parameter comes as a pair of blobs with a length tacked on the front
+> rather than using separators, since any printable character that could be
+> used as a separator can be found in some value somewhere (including comma).
+> In fact, cifs allows the separator to be set using the "sep=" option in
+> parameter parsing.
+>
+> The length on the front of each blob is 1-3 bytes long.  Each byte has a
+> flag in bit 7 that's set if there are more bytes and clear on the last
+> byte; bits 0-6 should be shifted and OR'd into the length count.  The bytes
+> are most-significant first.
+>
+> For example, 0x83 0xf5 0x06 is the length (0x03<<14 | 0x75<<7 | 0x06).
+
+Sounds way too complicated.  What about fixed 4byte sizes?  Or using
+the nul charater as separator (and binary blobs be damned)?
+
+[...]
+
+> +static void fsinfo_insert_sb_flag_parameters(struct path *path,
+> +                                            struct fsinfo_kparams *params)
+> +{
+> +       int s_flags = READ_ONCE(path->dentry->d_sb->s_flags);
+> +
+> +       if (s_flags & SB_DIRSYNC)
+> +               fsinfo_note_param(params, "dirsync", NULL);
+> +       if (s_flags & SB_LAZYTIME)
+> +               fsinfo_note_param(params, "lazytime", NULL);
+> +       if (s_flags & SB_MANDLOCK)
+> +               fsinfo_note_param(params, "mand", NULL);
+> +       if (s_flags & SB_POSIXACL)
+> +               fsinfo_note_param(params, "posixacl", NULL);
+> +       if (s_flags & SB_RDONLY)
+> +               fsinfo_note_param(params, "ro", NULL);
+> +       if (s_flags & SB_SYNCHRONOUS)
+> +               fsinfo_note_param(params, "sync", NULL);
+
+Again, don't blindly transform s_flags into options, because some of
+them may have been internally manipulated by the filesystem.
+
+You could do a helper for filesystems that does the the common ones
+(ro/sync/dirsync) but all of that *should* go through the filesystem.
+
+Same goes for vfs_parse_sb_flag() btw.   It should be moved into each
+filesystem's ->parse_param() and not be a mandatory thing.
 
 Thanks,
 Miklos
