@@ -1,20 +1,27 @@
 From: Amir Goldstein <amir73il@gmail.com>
 Subject: Re: [RFC][PATCH] link.2: AT_ATOMIC_DATA and AT_ATOMIC_METADATA
-Date: Wed, 29 May 2019 08:38:49 +0300
-Message-ID: <CAOQ4uxgo5jmwQbLAKQre9=7pLQw=CwMgDaWPaJxi-5NGnPEVPQ@mail.gmail.com>
-References: <20190527172655.9287-1-amir73il@gmail.com> <20190528202659.GA12412@mit.edu>
+Date: Wed, 29 May 2019 08:58:09 +0300
+Message-ID: <CAOQ4uxgq-A7qpi8Mj-N2f2TC1fCHZ45yBc0_KfA9CygwqLMNHw@mail.gmail.com>
+References: <20190527172655.9287-1-amir73il@gmail.com> <20190528200659.GK5221@magnolia>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <20190528202659.GA12412@mit.edu>
+In-Reply-To: <20190528200659.GK5221@magnolia>
 Sender: linux-btrfs-owner@vger.kernel.org
-To: Theodore Ts'o <tytso@mit.edu>
-Cc: Jan Kara <jack@suse.cz>, "Darrick J . Wong" <darrick.wong@oracle.com>, Dave Chinner <david@fromorbit.com>, Chris Mason <clm@fb.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-xfs <linux-xfs@vger.kernel.org>, Ext4 <linux-ext4@vger.kernel.org>, Linux Btrfs <linux-btrfs@vger.kernel.org>, linux-api@vger.kernel.org
+To: "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: Theodore Tso <tytso@mit.edu>, Jan Kara <jack@suse.cz>, Dave Chinner <david@fromorbit.com>, Chris Mason <clm@fb.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-xfs <linux-xfs@vger.kernel.org>, Ext4 <linux-ext4@vger.kernel.org>, Linux Btrfs <linux-btrfs@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 28, 2019 at 11:27 PM Theodore Ts'o <tytso@mit.edu> wrote:
+On Tue, May 28, 2019 at 11:07 PM Darrick J. Wong
+<darrick.wong@oracle.com> wrote:
 >
 > On Mon, May 27, 2019 at 08:26:55PM +0300, Amir Goldstein wrote:
+> > New link flags to request "atomic" link.
+> >
+> > Signed-off-by: Amir Goldstein <amir73il@gmail.com>
+> > ---
+> >
+> > Hi Guys,
 > >
 > > Following our discussions on LSF/MM and beyond [1][2], here is
 > > an RFC documentation patch.
@@ -31,46 +38,100 @@ On Tue, May 28, 2019 at 11:27 PM Theodore Ts'o <tytso@mit.edu> wrote:
 > > reference.  In the end, we are trying to solve a social engineering
 > > problem, so this is the least confusing way I could think of to describe
 > > the new API.
+> >
+> > First implementation of AT_ATOMIC_METADATA is expected to be
+> > noop for xfs/ext4 and probably fsync for btrfs.
+> >
+> > First implementation of AT_ATOMIC_DATA is expected to be
+> > filemap_write_and_wait() for xfs/ext4 and probably fdatasync for btrfs.
+> >
+> > Thoughts?
+> >
+> > Amir.
+> >
+> > [1] https://lwn.net/Articles/789038/
+> > [2] https://lore.kernel.org/linux-fsdevel/CAOQ4uxjZm6E2TmCv8JOyQr7f-2VB0uFRy7XEp8HBHQmMdQg+6w@mail.gmail.com/
+> >
+> >  man2/link.2 | 51 +++++++++++++++++++++++++++++++++++++++++++++++++++
+> >  1 file changed, 51 insertions(+)
+> >
+> > diff --git a/man2/link.2 b/man2/link.2
+> > index 649ba00c7..15c24703e 100644
+> > --- a/man2/link.2
+> > +++ b/man2/link.2
+> > @@ -184,6 +184,57 @@ See
+> >  .BR openat (2)
+> >  for an explanation of the need for
+> >  .BR linkat ().
+> > +.TP
+> > +.BR AT_ATOMIC_METADATA " (since Linux 5.x)"
+> > +By default, a link operation followed by a system crash, may result in the
+> > +new file name being linked with old inode metadata, such as out dated time
+> > +stamps or missing extended attributes.
+> > +.BR fsync (2)
+> > +before linking the inode, but that involves flushing of volatile disk caches.
+> > +
+> > +A filesystem that accepts this flag will guaranty, that old inode metadata
+> > +will not be exposed in the new linked name.
+> > +Some filesystems may internally perform
+> > +.BR fsync (2)
+> > +before linking the inode to provide this guaranty,
+> > +but often, filesystems will have a more efficient method to provide this
+> > +guaranty without flushing volatile disk caches.
+> > +
+> > +A filesystem that accepts this flag does
+> > +.BR NOT
+> > +guaranty that the new file name will exist after a system crash, nor that the
+> > +current inode metadata is persisted to disk.
 >
-> The way you have stated thigs is very confusing, and prone to be
-> misunderstood.  I think it would be helpful to state things in the
-> positive, instead of the negative.
+> Hmmm.  I think it would be much clearer to state the two expectations in
+> the same place, e.g.:
 >
-> Let's review what you had wanted:
->
->         *If* the filename is visible in the directory after the crash,
->         *then* all of the metadata/data that had been written to the file
->         before the linkat(2) would be visible.
->
->         HOWEVER, you did not want to necessarily force an fsync(2) in
->         order to provide that guarantee.  That is, the filename would
->         not necessarily be guaranteed to be visible after a crash when
->         linkat(2) returns, but if the existence of the filename is
->         persisted, then the data would be too.
->
->         Also, at least initially we talked about this only making
->         sense for O_TMPFILE file desacriptors.  I believe you were
->         trying to generalize things so it wouldn't necessarily have to
->         be a file created using O_TMPFILE.  Is that correct?
+> "A filesystem that accepts this flag guarantees that after a successful
+> call completion, the filesystem will return either (a) the version of
+> the metadata that was on disk at the time the call completed; (b) a
+> newer version of that metadata; or (c) -ENOENT.  In other words, a
+> subsequent access of the file path will never return metadata that was
+> obsolete at the time that the call completed, even if the system crashes
+> immediately afterwards."
 
-That is correct. I felt we were limiting ourselves only to avert the
-hardlinks issue, so decided its better to explain that "nlink is not
-part of the inode metadata" that this guarantee refers to.
-I would be happy to get your feedback about the hardlink disclaimer
-since you brought up the concern. It the disclaimer enough?
-Not needed at all?
+Your feedback is along the same line as Ted's feedback.
+I will try out the phrasing that Ted proposed, will see how that goes...
 
 >
-> So instead of saying "A filesystem that accepts this flag will
-> guaranty, that old inode data will not be exposed in the new linked
-> name."  It's much clearer to state this in the affirmative:
+> Did I get that right?  I /think/ this means that one could implement Ye
+> Olde Write And Rename as:
 >
->         A filesystem which accepts this flag will guarantee that if
->         the new pathname exists after a crash, all of the data written
->         to the file at the time of the linkat(2) call will be visible.
+> fd = open(".", O_TMPFILE...);
+> write(fd);
+> fsync(fd);
+
+Certainly not fsync(), that what my "counter-fsync()" phrasing was trying to
+convey. The flags are meant as a "cheaper" replacement for that fsync().
+
+> snprintf(path, PATH_MAX, "/proc/self/fd/%d", fd);
+> linkat(AT_FDCWD, path, AT_FDCWD, "file.txt",
+>         AT_EMPTY_PATH | AT_ATOMIC_DATA | AT_ATOMIC_METADATA);
+>
+> (Still struggling to figure out what userspace programs would use this
+> for...)
 >
 
-Sounds good to me. I will take a swing at another patch.
+There are generally two use cases:
 
-Thanks for the review!
+1. Flushing volatile disk caches is very expensive.
+In this case sync_file_range(SYNC_FILE_RANGE_WRITE_AND_WAIT)
+is cheaper than fdatasync() for a preallocated file and obviously a noop
+for AT_ATOMIC_METADATA in "S.O.M.C" filesystem is cheaper than
+a journal commit.
+
+2. Highly concurrent metadata workloads
+Many users running  AT_ATOMIC_METADATA concurrently are much
+less likely to interfere each other than many users running fsync concurrently.
+
+IWO, when I'm using fsync() to provide the AT_ATOMIC_METADATA guarantee
+on a single journal fs, other users pay the penalty for a guaranty that I didn't
+ask for (i.e. persistency).
+
+Thanks,
 Amir.
