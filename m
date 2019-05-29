@@ -1,26 +1,51 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH 1/7] General notification queue with user mmap()'able ring buffer [ver #13]
-Date: Wed, 29 May 2019 14:12:05 +0100
-Message-ID: <29055.1559135525@warthog.procyon.org.uk>
-References: <CAJfpeguPTQ00zVjpwVQ4R8mEqE3aijCzNMAz6Wvr56xE-jfJag@mail.gmail.com> <155905621951.1304.5956310120238620025.stgit@warthog.procyon.org.uk> <155905622921.1304.8775688192987027250.stgit@warthog.procyon.org.uk>
+From: Paul Moore <paul@paul-moore.com>
+Subject: Re: [PATCH ghak90 V6 00/10] audit: implement container identifier
+Date: Wed, 29 May 2019 09:14:44 -0400
+Message-ID: <CAHC9VhScO5yfnM2tn=_6OKtuU5P_LukPfmnE06E0hVE-2e++uw@mail.gmail.com>
+References: <cover.1554732921.git.rgb@redhat.com> <509ea6b0-1ac8-b809-98c2-37c34dd98ca3@redhat.com>
+ <CAHC9VhRW9f6GbhvvfifbOzd9p=PgdB2gq1E7tACcaqvfb85Y8A@mail.gmail.com>
+ <3299293.RYyUlNkVNy@x2> <20190529004352.vvicec7nnk6pvkwt@madcap2.tricolour.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAJfpeguPTQ00zVjpwVQ4R8mEqE3aijCzNMAz6Wvr56xE-jfJag@mail.gmail.com>
-Content-ID: <29054.1559135525.1@warthog.procyon.org.uk>
+In-Reply-To: <20190529004352.vvicec7nnk6pvkwt@madcap2.tricolour.ca>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Miklos Szeredi <miklos@szeredi.hu>
-Cc: dhowells@redhat.com, Al Viro <viro@zeniv.linux.org.uk>, Ian Kent <raven@themaw.net>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, Miklos Szeredi <mszeredi@redhat.com>
+To: Richard Guy Briggs <rgb@redhat.com>, Steve Grubb <sgrubb@redhat.com>
+Cc: Dan Walsh <dwalsh@redhat.com>, Neil Horman <nhorman@tuxdriver.com>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, Mrunal Patel <mpatel@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Miklos Szeredi <miklos@szeredi.hu> wrote:
+On Tue, May 28, 2019 at 8:44 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> On 2019-05-28 19:00, Steve Grubb wrote:
+> > On Tuesday, May 28, 2019 6:26:47 PM EDT Paul Moore wrote:
+> > > On Tue, May 28, 2019 at 5:54 PM Daniel Walsh <dwalsh@redhat.com> wrote:
 
-> Would it make sense to use relayfs for the implementation of the
-> mapped ring buffer?
+...
 
-Note that I reposted the notification patches under the correct cover note
-later.  Could you repost your response there.
+> > > > Mrunal Patel (maintainer of CRI-O) and I have reviewed the API, and
+> > > > believe this is something we can work on in the container runtimes team
+> > > > to implement the container auditing code in CRI-O and Podman.
+> > >
+> > > Thanks Dan.  If I pulled this into a branch and built you some test
+> > > kernels to play with, any idea how long it might take to get a proof
+> > > of concept working on the cri-o side?
+> >
+> > We'd need to merge user space patches and let them use that instead of the
+> > raw interface. I'm not going to merge user space until we are pretty sure the
+> > patch is going into the kernel.
+>
+> I have an f29 test rpm of the userspace bits if that helps for testing:
+>         http://people.redhat.com/~rbriggs/ghak90/git-1db7e21/
+>
+> Here's what it contains (minus the last patch):
+>         https://github.com/linux-audit/audit-userspace/compare/master...rgbriggs:ghau40-containerid-filter.v7.0
 
-Subject: [RFC][PATCH 0/7] Mount, FS, Block and Keyrings notifications
+Yes, exactly.  Just as I plan to start making some test kernels for
+people to play with (assuming v6 looks okay), I think it would be good
+if Steve could make a test build of the latest audit userspace with
+the audit container ID patches.  It really shouldn't be that hard, and
+the benefits should far outweigh any time spent generating the
+tree/builds.
 
-David
+-- 
+paul moore
+www.paul-moore.com
