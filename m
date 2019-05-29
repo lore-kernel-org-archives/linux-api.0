@@ -1,68 +1,117 @@
-From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [PATCH ghak90 V6 00/10] audit: implement container identifier
-Date: Wed, 29 May 2019 18:26:12 -0400
-Message-ID: <CAHC9VhTQ0gDZoWUh1QB4b7h3AgbpkhS40jrPVpCfJb11GT_FzQ@mail.gmail.com>
-References: <cover.1554732921.git.rgb@redhat.com> <20190422113810.GA27747@hmswarspite.think-freely.org>
- <CAHC9VhQYPF2ma_W+hySbQtfTztf=K1LTFnxnyVK0y9VYxj-K=w@mail.gmail.com>
+From: Tycho Andersen <tycho@tycho.ws>
+Subject: Re: [PATCH ghak90 V6 02/10] audit: add container id
+Date: Wed, 29 May 2019 16:28:35 -0600
+Message-ID: <20190529222835.GD8959@cisco>
+References: <cover.1554732921.git.rgb@redhat.com>
+ <9edad39c40671fb53f28d76862304cc2647029c6.1554732921.git.rgb@redhat.com>
+ <20190529145742.GA8959@cisco>
+ <CAHC9VhR4fudQanvZGYWMvCf7k2CU3q7e7n1Pi7hzC3v_zpVEdw@mail.gmail.com>
+ <20190529153427.GB8959@cisco>
+ <CAHC9VhSF3AjErX37+eeusJ7+XRw8yuPsmqBTRwc9EVoRBh_3Tw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHC9VhQYPF2ma_W+hySbQtfTztf=K1LTFnxnyVK0y9VYxj-K=w@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <CAHC9VhSF3AjErX37+eeusJ7+XRw8yuPsmqBTRwc9EVoRBh_3Tw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Guy Briggs <rgb@redhat.com>
-Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, Neil Horman <nhorman@tuxdriver.com>
+To: Paul Moore <paul@paul-moore.com>
+Cc: Richard Guy Briggs <rgb@redhat.com>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Apr 22, 2019 at 9:49 AM Paul Moore <paul@paul-moore.com> wrote:
-> On Mon, Apr 22, 2019 at 7:38 AM Neil Horman <nhorman@tuxdriver.com> wrote:
-> > On Mon, Apr 08, 2019 at 11:39:07PM -0400, Richard Guy Briggs wrote:
-> > > Implement kernel audit container identifier.
+On Wed, May 29, 2019 at 12:03:58PM -0400, Paul Moore wrote:
+> On Wed, May 29, 2019 at 11:34 AM Tycho Andersen <tycho@tycho.ws> wrote:
 > >
-> > I'm sorry, I've lost track of this, where have we landed on it? Are we good for
-> > inclusion?
->
-> I haven't finished going through this latest revision, but unless
-> Richard made any significant changes outside of the feedback from the
-> v5 patchset I'm guessing we are "close".
->
-> Based on discussions Richard and I had some time ago, I have always
-> envisioned the plan as being get the kernel patchset, tests, docs
-> ready (which Richard has been doing) and then run the actual
-> implemented API by the userland container folks, e.g. cri-o/lxc/etc.,
-> to make sure the actual implementation is sane from their perspective.
-> They've already seen the design, so I'm not expecting any real
-> surprises here, but sometimes opinions change when they have actual
-> code in front of them to play with and review.
->
-> Beyond that, while the cri-o/lxc/etc. folks are looking it over,
-> whatever additional testing we can do would be a big win.  I'm
-> thinking I'll pull it into a separate branch in the audit tree
-> (audit/working-container ?) and include that in my secnext kernels
-> that I build/test on a regular basis; this is also a handy way to keep
-> it based against the current audit/next branch.  If any changes are
-> needed Richard can either chose to base those changes on audit/next or
-> the separate audit container ID branch; that's up to him.  I've done
-> this with other big changes in other trees, e.g. SELinux, and it has
-> worked well to get some extra testing in and keep the patchset "merge
-> ready" while others outside the subsystem look things over.
+> > On Wed, May 29, 2019 at 11:29:05AM -0400, Paul Moore wrote:
+> > > On Wed, May 29, 2019 at 10:57 AM Tycho Andersen <tycho@tycho.ws> wrote:
+> > > >
+> > > > On Mon, Apr 08, 2019 at 11:39:09PM -0400, Richard Guy Briggs wrote:
+> > > > > It is not permitted to unset the audit container identifier.
+> > > > > A child inherits its parent's audit container identifier.
+> > > >
+> > > > ...
+> > > >
+> > > > >  /**
+> > > > > + * audit_set_contid - set current task's audit contid
+> > > > > + * @contid: contid value
+> > > > > + *
+> > > > > + * Returns 0 on success, -EPERM on permission failure.
+> > > > > + *
+> > > > > + * Called (set) from fs/proc/base.c::proc_contid_write().
+> > > > > + */
+> > > > > +int audit_set_contid(struct task_struct *task, u64 contid)
+> > > > > +{
+> > > > > +     u64 oldcontid;
+> > > > > +     int rc = 0;
+> > > > > +     struct audit_buffer *ab;
+> > > > > +     uid_t uid;
+> > > > > +     struct tty_struct *tty;
+> > > > > +     char comm[sizeof(current->comm)];
+> > > > > +
+> > > > > +     task_lock(task);
+> > > > > +     /* Can't set if audit disabled */
+> > > > > +     if (!task->audit) {
+> > > > > +             task_unlock(task);
+> > > > > +             return -ENOPROTOOPT;
+> > > > > +     }
+> > > > > +     oldcontid = audit_get_contid(task);
+> > > > > +     read_lock(&tasklist_lock);
+> > > > > +     /* Don't allow the audit containerid to be unset */
+> > > > > +     if (!audit_contid_valid(contid))
+> > > > > +             rc = -EINVAL;
+> > > > > +     /* if we don't have caps, reject */
+> > > > > +     else if (!capable(CAP_AUDIT_CONTROL))
+> > > > > +             rc = -EPERM;
+> > > > > +     /* if task has children or is not single-threaded, deny */
+> > > > > +     else if (!list_empty(&task->children))
+> > > > > +             rc = -EBUSY;
+> > > > > +     else if (!(thread_group_leader(task) && thread_group_empty(task)))
+> > > > > +             rc = -EALREADY;
+> > > > > +     read_unlock(&tasklist_lock);
+> > > > > +     if (!rc)
+> > > > > +             task->audit->contid = contid;
+> > > > > +     task_unlock(task);
+> > > > > +
+> > > > > +     if (!audit_enabled)
+> > > > > +             return rc;
+> > > >
+> > > > ...but it is allowed to change it (assuming
+> > > > capable(CAP_AUDIT_CONTROL), of course)? Seems like this might be more
+> > > > immediately useful since we still live in the world of majority
+> > > > privileged containers if we didn't allow changing it, in addition to
+> > > > un-setting it.
+> > >
+> > > The idea is that only container orchestrators should be able to
+> > > set/modify the audit container ID, and since setting the audit
+> > > container ID can have a significant effect on the records captured
+> > > (and their routing to multiple daemons when we get there) modifying
+> > > the audit container ID is akin to modifying the audit configuration
+> > > which is why it is gated by CAP_AUDIT_CONTROL.  The current thinking
+> > > is that you would only change the audit container ID from one
+> > > set/inherited value to another if you were nesting containers, in
+> > > which case the nested container orchestrator would need to be granted
+> > > CAP_AUDIT_CONTROL (which everyone to date seems to agree is a workable
+> > > compromise).
+> >
+> > But then don't you want some kind of ns_capable() instead (probably
+> > not the obvious one, though...)? With capable(), you can't really nest
+> > using the audit-id and user namespaces together.
+> 
+> You want capable() and not ns_capable() because you want to ensure
+> that the orchestrator has the rights in the init_ns as changes to the
+> audit container ID could have an auditing impact that spans the entire
+> system.
 
-I just sent my feedback on the v6 patchset, and it's small: basically
-three patches with "one-liner" changes needed.
+Ok but,
 
-Richard, it's your call on how you want to proceed from here.  You can
-post a v7 incorporating the feedback, or since the tweaks are so
-minor, you can post fixup patches; the former being more
-comprehensive, the later being quicker to review and digest.
-Regardless of that, while we are waiting on a prototype from the
-container folks, I think it would be good to pull this into a working
-branch in the audit repo (as mentioned above), unless you would prefer
-to keep it as a patchset on the mailing list?  If you want to go with
-the working branch approach, I'll keep the branch fresh and (re)based
-against audit/next and if we notice any problems you can just submit
-fixes against that branch (depending on the issue they can be fixup
-patches, or proper patches).  My hope is that this will enable the
-process to move quicker as we get near the finish line.
+> > > The current thinking
+> > > is that you would only change the audit container ID from one
+> > > set/inherited value to another if you were nesting containers, in
+> > > which case the nested container orchestrator would need to be granted
+> > > CAP_AUDIT_CONTROL (which everyone to date seems to agree is a workable
+> > > compromise).
 
--- 
-paul moore
-www.paul-moore.com
+won't work in user namespaced containers, because they will never be
+capable(CAP_AUDIT_CONTROL); so I don't think this will work for
+nesting as is. But maybe nobody cares :)
+
+Tycho
