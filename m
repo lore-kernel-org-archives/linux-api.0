@@ -1,34 +1,49 @@
-From: Amir Goldstein <amir73il@gmail.com>
-Subject: Re: [RFC][PATCH 0/7] Mount, FS, Block and Keyrings notifications
-Date: Wed, 29 May 2019 10:40:11 +0300
-Message-ID: <CAOQ4uxiBMmDg2Rn2+jsexTdK7g25J7WD79chDdRvofrvC_PLXQ@mail.gmail.com>
-References: <155905930702.7587.7100265859075976147.stgit@warthog.procyon.org.uk>
- <CAOQ4uxjC1M7jwjd9zSaSa6UW2dbEjc+ZbFSo7j9F1YHAQxQ8LQ@mail.gmail.com> <22971.1559112346@warthog.procyon.org.uk>
+From: Miklos Szeredi <miklos@szeredi.hu>
+Subject: Re: [PATCH 01/25] vfs: syscall: Add fsinfo() to query filesystem
+ information [ver #13]
+Date: Wed, 29 May 2019 09:42:49 +0200
+Message-ID: <CAJfpegtkpNNOOWQ3TnLPGSm=bwL2otQp1--GjNNFiXO7imMxEQ@mail.gmail.com>
+References: <155905626142.1662.18430571708534506785.stgit@warthog.procyon.org.uk>
+ <155905627049.1662.17033721577309385838.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <22971.1559112346@warthog.procyon.org.uk>
+In-Reply-To: <155905627049.1662.17033721577309385838.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
 To: David Howells <dhowells@redhat.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Ian Kent <raven@themaw.net>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-api@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, keyrings@vger.kernel.org, LSM List <linux-security-module@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Jan Kara <jack@suse.cz>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Ian Kent <raven@themaw.net>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, Miklos Szeredi <mszeredi@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 29, 2019 at 9:45 AM David Howells <dhowells@redhat.com> wrote:
+On Tue, May 28, 2019 at 5:11 PM David Howells <dhowells@redhat.com> wrote:
 >
-> Amir Goldstein <amir73il@gmail.com> wrote:
+> Add a system call to allow filesystem information to be queried.  A request
+> value can be given to indicate the desired attribute.  Support is provided
+> for enumerating multi-value attributes.
 >
-> > I am interested to know how you envision filesystem notifications would
-> > look with this interface.
->
-> What sort of events are you thinking of by "filesystem notifications"?  You
-> mean things like file changes?
 
-I mean all the events provided by
-http://man7.org/linux/man-pages/man7/fanotify.7.html
+[...]
 
-Which was recently (v4.20) extended to support watching a super block
-and more recently (v5.1) extended to support watching directory entry
-modifications.
+> +static u32 calc_sb_flags(u32 s_flags)
+> +{
+> +       u32 flags = 0;
+> +
+> +       if (s_flags & SB_RDONLY)        flags |= MS_RDONLY;
+> +       if (s_flags & SB_SYNCHRONOUS)   flags |= MS_SYNCHRONOUS;
+> +       if (s_flags & SB_MANDLOCK)      flags |= MS_MANDLOCK;
+> +       if (s_flags & SB_DIRSYNC)       flags |= MS_DIRSYNC;
+> +       if (s_flags & SB_SILENT)        flags |= MS_SILENT;
+> +       if (s_flags & SB_POSIXACL)      flags |= MS_POSIXACL;
+> +       if (s_flags & SB_LAZYTIME)      flags |= MS_LAZYTIME;
+> +       if (s_flags & SB_I_VERSION)     flags |= MS_I_VERSION;
+
+Please don't resurrect MS_ flags.  They are from the old API and
+shouldn't be used in the new one.  Some of them (e.g. MS_POSIXACL,
+MS_I_VERSION) are actually internal flags despite being exported on
+the old API.  And there's SB_SILENT which is simply not a superblock
+flag and we might be better getting rid of it entirely.
+
+The proper way to query mount options should be analogous to the way
+they are set on the new API: list of {key, type, value, aux} tuples.
 
 Thanks,
-Amir.
+Miklos
