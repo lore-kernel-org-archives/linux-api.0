@@ -1,137 +1,152 @@
 From: Amir Goldstein <amir73il@gmail.com>
-Subject: Re: [RFC][PATCH] link.2: AT_ATOMIC_DATA and AT_ATOMIC_METADATA
-Date: Wed, 29 May 2019 08:58:09 +0300
-Message-ID: <CAOQ4uxgq-A7qpi8Mj-N2f2TC1fCHZ45yBc0_KfA9CygwqLMNHw@mail.gmail.com>
-References: <20190527172655.9287-1-amir73il@gmail.com> <20190528200659.GK5221@magnolia>
+Subject: Re: [RFC][PATCH 0/7] Mount, FS, Block and Keyrings notifications
+Date: Wed, 29 May 2019 09:33:35 +0300
+Message-ID: <CAOQ4uxjC1M7jwjd9zSaSa6UW2dbEjc+ZbFSo7j9F1YHAQxQ8LQ@mail.gmail.com>
+References: <155905930702.7587.7100265859075976147.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <20190528200659.GK5221@magnolia>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: Theodore Tso <tytso@mit.edu>, Jan Kara <jack@suse.cz>, Dave Chinner <david@fromorbit.com>, Chris Mason <clm@fb.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-xfs <linux-xfs@vger.kernel.org>, Ext4 <linux-ext4@vger.kernel.org>, Linux Btrfs <linux-btrfs@vger.kernel.org>, linux-api@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <155905930702.7587.7100265859075976147.stgit@warthog.procyon.org.uk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: David Howells <dhowells@redhat.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Ian Kent <raven@themaw.net>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-api@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, keyrings@vger.kernel.org, LSM List <linux-security-module@vger.kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Jan Kara <jack@suse.cz>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, May 28, 2019 at 11:07 PM Darrick J. Wong
-<darrick.wong@oracle.com> wrote:
+On Tue, May 28, 2019 at 7:03 PM David Howells <dhowells@redhat.com> wrote:
 >
-> On Mon, May 27, 2019 at 08:26:55PM +0300, Amir Goldstein wrote:
-> > New link flags to request "atomic" link.
-> >
-> > Signed-off-by: Amir Goldstein <amir73il@gmail.com>
-> > ---
-> >
-> > Hi Guys,
-> >
-> > Following our discussions on LSF/MM and beyond [1][2], here is
-> > an RFC documentation patch.
-> >
-> > Ted, I know we discussed limiting the API for linking an O_TMPFILE
-> > to avert the hardlinks issue, but I decided it would be better to
-> > document the hardlinks non-guaranty instead. This will allow me to
-> > replicate the same semantics and documentation to renameat(2).
-> > Let me know how that works out for you.
-> >
-> > I also decided to try out two separate flags for data and metadata.
-> > I do not find any of those flags very useful without the other, but
-> > documenting them seprately was easier, because of the fsync/fdatasync
-> > reference.  In the end, we are trying to solve a social engineering
-> > problem, so this is the least confusing way I could think of to describe
-> > the new API.
-> >
-> > First implementation of AT_ATOMIC_METADATA is expected to be
-> > noop for xfs/ext4 and probably fsync for btrfs.
-> >
-> > First implementation of AT_ATOMIC_DATA is expected to be
-> > filemap_write_and_wait() for xfs/ext4 and probably fdatasync for btrfs.
-> >
-> > Thoughts?
-> >
-> > Amir.
-> >
-> > [1] https://lwn.net/Articles/789038/
-> > [2] https://lore.kernel.org/linux-fsdevel/CAOQ4uxjZm6E2TmCv8JOyQr7f-2VB0uFRy7XEp8HBHQmMdQg+6w@mail.gmail.com/
-> >
-> >  man2/link.2 | 51 +++++++++++++++++++++++++++++++++++++++++++++++++++
-> >  1 file changed, 51 insertions(+)
-> >
-> > diff --git a/man2/link.2 b/man2/link.2
-> > index 649ba00c7..15c24703e 100644
-> > --- a/man2/link.2
-> > +++ b/man2/link.2
-> > @@ -184,6 +184,57 @@ See
-> >  .BR openat (2)
-> >  for an explanation of the need for
-> >  .BR linkat ().
-> > +.TP
-> > +.BR AT_ATOMIC_METADATA " (since Linux 5.x)"
-> > +By default, a link operation followed by a system crash, may result in the
-> > +new file name being linked with old inode metadata, such as out dated time
-> > +stamps or missing extended attributes.
-> > +.BR fsync (2)
-> > +before linking the inode, but that involves flushing of volatile disk caches.
-> > +
-> > +A filesystem that accepts this flag will guaranty, that old inode metadata
-> > +will not be exposed in the new linked name.
-> > +Some filesystems may internally perform
-> > +.BR fsync (2)
-> > +before linking the inode to provide this guaranty,
-> > +but often, filesystems will have a more efficient method to provide this
-> > +guaranty without flushing volatile disk caches.
-> > +
-> > +A filesystem that accepts this flag does
-> > +.BR NOT
-> > +guaranty that the new file name will exist after a system crash, nor that the
-> > +current inode metadata is persisted to disk.
 >
-> Hmmm.  I think it would be much clearer to state the two expectations in
-> the same place, e.g.:
+> Hi Al,
 >
-> "A filesystem that accepts this flag guarantees that after a successful
-> call completion, the filesystem will return either (a) the version of
-> the metadata that was on disk at the time the call completed; (b) a
-> newer version of that metadata; or (c) -ENOENT.  In other words, a
-> subsequent access of the file path will never return metadata that was
-> obsolete at the time that the call completed, even if the system crashes
-> immediately afterwards."
-
-Your feedback is along the same line as Ted's feedback.
-I will try out the phrasing that Ted proposed, will see how that goes...
-
+> Here's a set of patches to add a general variable-length notification queue
+> concept and to add sources of events for:
 >
-> Did I get that right?  I /think/ this means that one could implement Ye
-> Olde Write And Rename as:
+>  (1) Mount topology events, such as mounting, unmounting, mount expiry,
+>      mount reconfiguration.
 >
-> fd = open(".", O_TMPFILE...);
-> write(fd);
-> fsync(fd);
-
-Certainly not fsync(), that what my "counter-fsync()" phrasing was trying to
-convey. The flags are meant as a "cheaper" replacement for that fsync().
-
-> snprintf(path, PATH_MAX, "/proc/self/fd/%d", fd);
-> linkat(AT_FDCWD, path, AT_FDCWD, "file.txt",
->         AT_EMPTY_PATH | AT_ATOMIC_DATA | AT_ATOMIC_METADATA);
+>  (2) Superblock events, such as R/W<->R/O changes, quota overrun and I/O
+>      errors (not complete yet).
 >
-> (Still struggling to figure out what userspace programs would use this
-> for...)
+>  (3) Block layer events, such as I/O errors.
+>
+>  (4) Key/keyring events, such as creating, linking and removal of keys.
+>
+> One of the reasons for this is so that we can remove the issue of processes
+> having to repeatedly and regularly scan /proc/mounts, which has proven to
+> be a system performance problem.  To further aid this, the fsinfo() syscall
+> on which this patch series depends, provides a way to access superblock and
+> mount information in binary form without the need to parse /proc/mounts.
+>
+>
+> Design decisions:
+>
+>  (1) A misc chardev is used to create and open a ring buffer:
+>
+>         fd = open("/dev/watch_queue", O_RDWR);
+>
+>      which is then configured and mmap'd into userspace:
+>
+>         ioctl(fd, IOC_WATCH_QUEUE_SET_SIZE, BUF_SIZE);
+>         ioctl(fd, IOC_WATCH_QUEUE_SET_FILTER, &filter);
+>         buf = mmap(NULL, BUF_SIZE * page_size, PROT_READ | PROT_WRITE,
+>                    MAP_SHARED, fd, 0);
+>
+>      The fd cannot be read or written (though there is a facility to use
+>      write to inject records for debugging) and userspace just pulls data
+>      directly out of the buffer.
+>
+>  (2) The ring index pointers are stored inside the ring and are thus
+>      accessible to userspace.  Userspace should only update the tail
+>      pointer and never the head pointer or risk breaking the buffer.  The
+>      kernel checks that the pointers appear valid before trying to use
+>      them.  A 'skip' record is maintained around the pointers.
+>
+>  (3) poll() can be used to wait for data to appear in the buffer.
+>
+>  (4) Records in the buffer are binary, typed and have a length so that they
+>      can be of varying size.
+>
+>      This means that multiple heterogeneous sources can share a common
+>      buffer.  Tags may be specified when a watchpoint is created to help
+>      distinguish the sources.
+>
+>  (5) The queue is reusable as there are 16 million types available, of
+>      which I've used 4, so there is scope for others to be used.
+>
+>  (6) Records are filterable as types have up to 256 subtypes that can be
+>      individually filtered.  Other filtration is also available.
+>
+>  (7) Each time the buffer is opened, a new buffer is created - this means
+>      that there's no interference between watchers.
+>
+>  (8) When recording a notification, the kernel will not sleep, but will
+>      rather mark a queue as overrun if there's insufficient space, thereby
+>      avoiding userspace causing the kernel to hang.
+>
+>  (9) The 'watchpoint' should be specific where possible, meaning that you
+>      specify the object that you want to watch.
+>
+> (10) The buffer is created and then watchpoints are attached to it, using
+>      one of:
+>
+>         keyctl_watch_key(KEY_SPEC_SESSION_KEYRING, fd, 0x01);
+>         mount_notify(AT_FDCWD, "/", 0, fd, 0x02);
+>         sb_notify(AT_FDCWD, "/mnt", 0, fd, 0x03);
+>
+>      where in all three cases, fd indicates the queue and the number after
+>      is a tag between 0 and 255.
+>
+> (11) The watch must be removed if either the watch buffer is destroyed or
+>      the watched object is destroyed.
+>
+>
+> Things I want to avoid:
+>
+>  (1) Introducing features that make the core VFS dependent on the network
+>      stack or networking namespaces (ie. usage of netlink).
+>
+>  (2) Dumping all this stuff into dmesg and having a daemon that sits there
+>      parsing the output and distributing it as this then puts the
+>      responsibility for security into userspace and makes handling
+>      namespaces tricky.  Further, dmesg might not exist or might be
+>      inaccessible inside a container.
+>
+>  (3) Letting users see events they shouldn't be able to see.
+>
+>
+> Further things that could be considered:
+>
+>  (1) Adding a keyctl call to allow a watch on a keyring to be extended to
+>      "children" of that keyring, such that the watch is removed from the
+>      child if it is unlinked from the keyring.
+>
+>  (2) Adding global superblock event queue.
+>
+>  (3) Propagating watches to child superblock over automounts.
 >
 
-There are generally two use cases:
+David,
 
-1. Flushing volatile disk caches is very expensive.
-In this case sync_file_range(SYNC_FILE_RANGE_WRITE_AND_WAIT)
-is cheaper than fdatasync() for a preallocated file and obviously a noop
-for AT_ATOMIC_METADATA in "S.O.M.C" filesystem is cheaper than
-a journal commit.
+I am interested to know how you envision filesystem notifications would
+look with this interface.
 
-2. Highly concurrent metadata workloads
-Many users running  AT_ATOMIC_METADATA concurrently are much
-less likely to interfere each other than many users running fsync concurrently.
+fanotify can certainly benefit from providing a ring buffer interface to read
+events.
 
-IWO, when I'm using fsync() to provide the AT_ATOMIC_METADATA guarantee
-on a single journal fs, other users pay the penalty for a guaranty that I didn't
-ask for (i.e. persistency).
+>From what I have seen, a common practice of users is to monitor mounts
+(somehow) and place FAN_MARK_MOUNT fanotify watches dynamically.
+It'd be good if those users can use a single watch mechanism/API for
+watching the mount namespace and filesystem events within mounts.
+
+A similar usability concern is with sb_notify and FAN_MARK_FILESYSTEM.
+It provides users with two complete different mechanisms to watch error
+and filesystem events. That is generally not a good thing to have.
+
+I am not asking that you implement fs_notify() before merging sb_notify()
+and I understand that you have a use case for sb_notify().
+I am asking that you show me the path towards a unified API (how a
+typical program would look like), so that we know before merging your
+new API that it could be extended to accommodate fsnotify events
+where the final result will look wholesome to users.
 
 Thanks,
 Amir.
