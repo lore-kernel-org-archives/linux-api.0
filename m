@@ -1,106 +1,113 @@
-From: Casey Schaufler <casey@schaufler-ca.com>
-Subject: Re: [PATCH 3/7] vfs: Add a mount-notification facility
-Date: Wed, 29 May 2019 08:53:34 -0700
-Message-ID: <312a138c-e5b2-4bfb-b50b-40c82c55773f@schaufler-ca.com>
-References: <CAG48ez2rRh2_Kq_EGJs5k-ZBNffGs_Q=vkQdinorBgo58tbGpg@mail.gmail.com>
- <155905930702.7587.7100265859075976147.stgit@warthog.procyon.org.uk>
- <155905933492.7587.6968545866041839538.stgit@warthog.procyon.org.uk>
- <14347.1559127657@warthog.procyon.org.uk>
+From: Paul Moore <paul@paul-moore.com>
+Subject: Re: [PATCH ghak90 V6 02/10] audit: add container id
+Date: Wed, 29 May 2019 12:03:58 -0400
+Message-ID: <CAHC9VhSF3AjErX37+eeusJ7+XRw8yuPsmqBTRwc9EVoRBh_3Tw@mail.gmail.com>
+References: <cover.1554732921.git.rgb@redhat.com> <9edad39c40671fb53f28d76862304cc2647029c6.1554732921.git.rgb@redhat.com>
+ <20190529145742.GA8959@cisco> <CAHC9VhR4fudQanvZGYWMvCf7k2CU3q7e7n1Pi7hzC3v_zpVEdw@mail.gmail.com>
+ <20190529153427.GB8959@cisco>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
- protocol="application/pgp-signature";
- boundary="cNkJJFaLGPzGj0MrH4stT0km9ovmzGP9Z"
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <14347.1559127657@warthog.procyon.org.uk>
+In-Reply-To: <20190529153427.GB8959@cisco>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>, Jann Horn <jannh@google.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, raven@themaw.net, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module <linux-security-module@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>
+To: Tycho Andersen <tycho@tycho.ws>
+Cc: Richard Guy Briggs <rgb@redhat.com>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com
 List-Id: linux-api@vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---cNkJJFaLGPzGj0MrH4stT0km9ovmzGP9Z
-Content-Type: multipart/mixed; boundary="CGJ0IeN7E9pxspTs8jkc4kNwow51RM68Y";
- protected-headers="v1"
-From: Casey Schaufler <casey@schaufler-ca.com>
-To: David Howells <dhowells@redhat.com>, Jann Horn <jannh@google.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, raven@themaw.net,
- linux-fsdevel <linux-fsdevel@vger.kernel.org>,
- Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org,
- keyrings@vger.kernel.org,
- linux-security-module <linux-security-module@vger.kernel.org>,
- kernel list <linux-kernel@vger.kernel.org>
-Message-ID: <312a138c-e5b2-4bfb-b50b-40c82c55773f@schaufler-ca.com>
-Subject: Re: [PATCH 3/7] vfs: Add a mount-notification facility
-References: <CAG48ez2rRh2_Kq_EGJs5k-ZBNffGs_Q=vkQdinorBgo58tbGpg@mail.gmail.com>
- <155905930702.7587.7100265859075976147.stgit@warthog.procyon.org.uk>
- <155905933492.7587.6968545866041839538.stgit@warthog.procyon.org.uk>
- <14347.1559127657@warthog.procyon.org.uk>
-In-Reply-To: <14347.1559127657@warthog.procyon.org.uk>
-
---CGJ0IeN7E9pxspTs8jkc4kNwow51RM68Y
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Content-Language: en-US
-
-On 5/29/2019 4:00 AM, David Howells wrote:
-> Jann Horn <jannh@google.com> wrote:
+On Wed, May 29, 2019 at 11:34 AM Tycho Andersen <tycho@tycho.ws> wrote:
 >
->>> +void post_mount_notification(struct mount *changed,
->>> +                            struct mount_notification *notify)
->>> +{
->>> +       const struct cred *cred =3D current_cred();
->> This current_cred() looks bogus to me. Can't mount topology changes
->> come from all sorts of places? For example, umount_mnt() from
->> umount_tree() from dissolve_on_fput() from __fput(), which could
->> happen pretty much anywhere depending on where the last reference gets=
-
->> dropped?
-> IIRC, that's what Casey argued is the right thing to do from a security=
- PoV.
-> Casey?
-
-You need to identify the credential of the subject that triggered
-the event. If it isn't current_cred(), the cred needs to be passed
-in to post_mount_notification(), or derived by some other means.
-
-> Maybe I should pass in NULL creds in the case that an event is being ge=
-nerated
-> because an object is being destroyed due to the last usage[*] being rem=
-oved.
-
-You should pass the cred of the process that removed the
-last usage. If the last usage was removed by something like
-the power being turned off on a disk drive a system cred
-should be used. Someone or something caused the event. It can
-be important who it was.
-
->  [*] Usage, not ref - Superblocks are a bit weird in their accounting.
+> On Wed, May 29, 2019 at 11:29:05AM -0400, Paul Moore wrote:
+> > On Wed, May 29, 2019 at 10:57 AM Tycho Andersen <tycho@tycho.ws> wrote:
+> > >
+> > > On Mon, Apr 08, 2019 at 11:39:09PM -0400, Richard Guy Briggs wrote:
+> > > > It is not permitted to unset the audit container identifier.
+> > > > A child inherits its parent's audit container identifier.
+> > >
+> > > ...
+> > >
+> > > >  /**
+> > > > + * audit_set_contid - set current task's audit contid
+> > > > + * @contid: contid value
+> > > > + *
+> > > > + * Returns 0 on success, -EPERM on permission failure.
+> > > > + *
+> > > > + * Called (set) from fs/proc/base.c::proc_contid_write().
+> > > > + */
+> > > > +int audit_set_contid(struct task_struct *task, u64 contid)
+> > > > +{
+> > > > +     u64 oldcontid;
+> > > > +     int rc = 0;
+> > > > +     struct audit_buffer *ab;
+> > > > +     uid_t uid;
+> > > > +     struct tty_struct *tty;
+> > > > +     char comm[sizeof(current->comm)];
+> > > > +
+> > > > +     task_lock(task);
+> > > > +     /* Can't set if audit disabled */
+> > > > +     if (!task->audit) {
+> > > > +             task_unlock(task);
+> > > > +             return -ENOPROTOOPT;
+> > > > +     }
+> > > > +     oldcontid = audit_get_contid(task);
+> > > > +     read_lock(&tasklist_lock);
+> > > > +     /* Don't allow the audit containerid to be unset */
+> > > > +     if (!audit_contid_valid(contid))
+> > > > +             rc = -EINVAL;
+> > > > +     /* if we don't have caps, reject */
+> > > > +     else if (!capable(CAP_AUDIT_CONTROL))
+> > > > +             rc = -EPERM;
+> > > > +     /* if task has children or is not single-threaded, deny */
+> > > > +     else if (!list_empty(&task->children))
+> > > > +             rc = -EBUSY;
+> > > > +     else if (!(thread_group_leader(task) && thread_group_empty(task)))
+> > > > +             rc = -EALREADY;
+> > > > +     read_unlock(&tasklist_lock);
+> > > > +     if (!rc)
+> > > > +             task->audit->contid = contid;
+> > > > +     task_unlock(task);
+> > > > +
+> > > > +     if (!audit_enabled)
+> > > > +             return rc;
+> > >
+> > > ...but it is allowed to change it (assuming
+> > > capable(CAP_AUDIT_CONTROL), of course)? Seems like this might be more
+> > > immediately useful since we still live in the world of majority
+> > > privileged containers if we didn't allow changing it, in addition to
+> > > un-setting it.
+> >
+> > The idea is that only container orchestrators should be able to
+> > set/modify the audit container ID, and since setting the audit
+> > container ID can have a significant effect on the records captured
+> > (and their routing to multiple daemons when we get there) modifying
+> > the audit container ID is akin to modifying the audit configuration
+> > which is why it is gated by CAP_AUDIT_CONTROL.  The current thinking
+> > is that you would only change the audit container ID from one
+> > set/inherited value to another if you were nesting containers, in
+> > which case the nested container orchestrator would need to be granted
+> > CAP_AUDIT_CONTROL (which everyone to date seems to agree is a workable
+> > compromise).
 >
-> David
+> But then don't you want some kind of ns_capable() instead (probably
+> not the obvious one, though...)? With capable(), you can't really nest
+> using the audit-id and user namespaces together.
 
+You want capable() and not ns_capable() because you want to ensure
+that the orchestrator has the rights in the init_ns as changes to the
+audit container ID could have an auditing impact that spans the entire
+system.  Setting the audit container ID is equivalent to munging the
+kernel's audit configuration, and the audit configuration is not
+"namespaced" in any way.  The audit container ID work is about
+providing the right "container context" (as defined by userspace) with
+the audit records so that admins have a better understanding about
+what is going on in the system; it is very explicitly not creating an
+audit namespace.
 
---CGJ0IeN7E9pxspTs8jkc4kNwow51RM68Y--
+At some point in the future we will want to support running multiple
+audit daemons, and have a configurable way of routing audit records
+based on the audit container ID, which will blur the line regarding
+audit namespaces, but even then I would argue we are not creating an
+audit namespace.
 
---cNkJJFaLGPzGj0MrH4stT0km9ovmzGP9Z
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iQIzBAEBCAAdFiEEC+9tH1YyUwIQzUIeOKUVfIxDyBEFAlzuqwkACgkQOKUVfIxD
-yBEWag//SJA6JpQHXqyOeXOtCod82vVguKxz7q2fheSMMS+T8bB0rX2XTO4rho9D
-t5wUt9c1+HtGk8HBvbS7vOnjhXso6RshvI2uUEfE0MOQ/Y1FBIqXwrTzpSs8/FVE
-tv3YFqCWlcaLOfnh/Gl0GvK+o5DGMVFDVsv0j3ke5VihJ4enHnn18AncowE5nVu3
-n9GahTQcWaRIgYIHJ9Wr0olwAQsa2TQpj/0wJR3I5ni1hY10wknm9jCIw2L612xU
-l5rZ73EqvgIjqsq9m1rgZqjH3QypYvTgdDCd9I/AdZmAI8QJ3JISRzZlKGw2o6GL
-ZIExEzQCVMzGyqEDkTxQQlXjczfF7jHCWQ9+iyyz747JMRrx1Kr6LqZlTJsfQCc0
-F+Ytx0D8RVkwkpkrzIQz5eS/R2ib2lYH7Jtk9RhreDagrzkieeyZ3A3Y0feYqIb3
-O7tGYBfQVWx5dVjB5nZ7v/aUw7Wc929yiONfiHLxSg8U4xlj0mFSa0HFOYC4DzaG
-C0NSVb7xvoDfpyt6m9Wv1mF7cJKkLFffeMfqUREZAcNEdiYrg90Ho6cJ5tZVreSu
-rVgR81R7SSVANygbfauj9X3N3D4fsWxu+D81zz0B9CBgy8GP+p/kWrL45hRC4CLN
-hG3yC60hUm54xq2H3YT775eyGBcDixyPsh5qmTXQ21MtLLm3W1c=
-=qEff
------END PGP SIGNATURE-----
-
---cNkJJFaLGPzGj0MrH4stT0km9ovmzGP9Z--
+-- 
+paul moore
+www.paul-moore.com
