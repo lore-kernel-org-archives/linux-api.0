@@ -1,106 +1,111 @@
-From: Casey Schaufler <casey@schaufler-ca.com>
-Subject: Re: [PATCH 3/7] vfs: Add a mount-notification facility
-Date: Wed, 29 May 2019 16:56:47 -0700
-Message-ID: <35a3b0f9-f227-2cd7-eb87-9b3d5816c67d@schaufler-ca.com>
-References: <CAG48ez2rRh2_Kq_EGJs5k-ZBNffGs_Q=vkQdinorBgo58tbGpg@mail.gmail.com>
- <155905930702.7587.7100265859075976147.stgit@warthog.procyon.org.uk>
- <155905933492.7587.6968545866041839538.stgit@warthog.procyon.org.uk>
- <14347.1559127657@warthog.procyon.org.uk>
- <312a138c-e5b2-4bfb-b50b-40c82c55773f@schaufler-ca.com>
- <4552118F-BE9B-4905-BF0F-A53DC13D5A82@amacapital.net>
- <058f227c-71ab-a6f4-00bf-b8782b3b2956@schaufler-ca.com>
- <2FF92095-E5B1-4811-A7F8-B7D4C32F86DD@amacapital.net>
+From: Minchan Kim <minchan@kernel.org>
+Subject: Re: [RFC 6/7] mm: extend process_madvise syscall to support vector
+ arrary
+Date: Thu, 30 May 2019 11:17:48 +0900
+Message-ID: <20190530021748.GE229459@google.com>
+References: <20190520035254.57579-1-minchan@kernel.org>
+ <20190520035254.57579-7-minchan@kernel.org>
+ <20190520092258.GZ6836@dhcp22.suse.cz>
+ <20190521024820.GG10039@google.com>
+ <20190521062421.GD32329@dhcp22.suse.cz>
+ <20190521102613.GC219653@google.com>
+ <20190521103726.GM32329@dhcp22.suse.cz>
+ <20190527074940.GB6879@google.com>
+ <CAKOZuesK-8zrm1zua4dzqh4TEMivsZKiccySMvfBjOyDkg-MEw@mail.gmail.com>
+ <20190529103352.GD18589@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <2FF92095-E5B1-4811-A7F8-B7D4C32F86DD@amacapital.net>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20190529103352.GD18589@dhcp22.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: David Howells <dhowells@redhat.com>, Jann Horn <jannh@google.com>, Al Viro <viro@zeniv.linux.org.uk>, raven@themaw.net, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module <linux-security-module@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, casey@schaufler-ca.com
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Daniel Colascione <dancol@google.com>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 5/29/2019 4:12 PM, Andy Lutomirski wrote:
->
->> On May 29, 2019, at 10:46 AM, Casey Schaufler <casey@schaufler-ca.com>=
- wrote:
->>
->>> On 5/29/2019 10:13 AM, Andy Lutomirski wrote:
->>>
->>>>> On May 29, 2019, at 8:53 AM, Casey Schaufler <casey@schaufler-ca.co=
-m> wrote:
->>>>>
->>>>> On 5/29/2019 4:00 AM, David Howells wrote:
->>>>> Jann Horn <jannh@google.com> wrote:
->>>>>
->>>>>>> +void post_mount_notification(struct mount *changed,
->>>>>>> +                            struct mount_notification *notify)
->>>>>>> +{
->>>>>>> +       const struct cred *cred =3D current_cred();
->>>>>> This current_cred() looks bogus to me. Can't mount topology change=
-s
->>>>>> come from all sorts of places? For example, umount_mnt() from
->>>>>> umount_tree() from dissolve_on_fput() from __fput(), which could
->>>>>> happen pretty much anywhere depending on where the last reference =
-gets
->>>>>> dropped?
->>>>> IIRC, that's what Casey argued is the right thing to do from a secu=
-rity PoV.
->>>>> Casey?
->>>> You need to identify the credential of the subject that triggered
->>>> the event. If it isn't current_cred(), the cred needs to be passed
->>>> in to post_mount_notification(), or derived by some other means.
->>> Taking a step back, why do we care who triggered the event?  It seems=
- to me that we should care whether the event happened and whether the *re=
-ceiver* is permitted to know that.
->> There are two filesystems, "dot" and "dash". I am not allowed
->> to communicate with Fred on the system, and all precautions have
->> been taken to ensure I cannot. Fred asks for notifications on
->> all mount activity. I perform actions that result in notifications
->> on "dot" and "dash". Fred receives notifications and interprets
->> them using Morse code. This is not OK. If Wilma, who *is* allowed
->> to communicate with Fred, does the same actions, he should be
->> allowed to get the messages via Morse.
-> Under this scenario, Fred should not be allowed to enable these watches=
-=2E If you give yourself and Fred unconstrained access to the same FS, th=
-en can communicate.
+On Wed, May 29, 2019 at 12:33:52PM +0200, Michal Hocko wrote:
+> On Wed 29-05-19 03:08:32, Daniel Colascione wrote:
+> > On Mon, May 27, 2019 at 12:49 AM Minchan Kim <minchan@kernel.org> wrote:
+> > >
+> > > On Tue, May 21, 2019 at 12:37:26PM +0200, Michal Hocko wrote:
+> > > > On Tue 21-05-19 19:26:13, Minchan Kim wrote:
+> > > > > On Tue, May 21, 2019 at 08:24:21AM +0200, Michal Hocko wrote:
+> > > > > > On Tue 21-05-19 11:48:20, Minchan Kim wrote:
+> > > > > > > On Mon, May 20, 2019 at 11:22:58AM +0200, Michal Hocko wrote:
+> > > > > > > > [Cc linux-api]
+> > > > > > > >
+> > > > > > > > On Mon 20-05-19 12:52:53, Minchan Kim wrote:
+> > > > > > > > > Currently, process_madvise syscall works for only one address range
+> > > > > > > > > so user should call the syscall several times to give hints to
+> > > > > > > > > multiple address range.
+> > > > > > > >
+> > > > > > > > Is that a problem? How big of a problem? Any numbers?
+> > > > > > >
+> > > > > > > We easily have 2000+ vma so it's not trivial overhead. I will come up
+> > > > > > > with number in the description at respin.
+> > > > > >
+> > > > > > Does this really have to be a fast operation? I would expect the monitor
+> > > > > > is by no means a fast path. The system call overhead is not what it used
+> > > > > > to be, sigh, but still for something that is not a hot path it should be
+> > > > > > tolerable, especially when the whole operation is quite expensive on its
+> > > > > > own (wrt. the syscall entry/exit).
+> > > > >
+> > > > > What's different with process_vm_[readv|writev] and vmsplice?
+> > > > > If the range needed to be covered is a lot, vector operation makes senese
+> > > > > to me.
+> > > >
+> > > > I am not saying that the vector API is wrong. All I am trying to say is
+> > > > that the benefit is not really clear so far. If you want to push it
+> > > > through then you should better get some supporting data.
+> > >
+> > > I measured 1000 madvise syscall vs. a vector range syscall with 1000
+> > > ranges on ARM64 mordern device. Even though I saw 15% improvement but
+> > > absoluate gain is just 1ms so I don't think it's worth to support.
+> > > I will drop vector support at next revision.
+> > 
+> > Please do keep the vector support. Absolute timing is misleading,
+> > since in a tight loop, you're not going to contend on mmap_sem. We've
+> > seen tons of improvements in things like camera start come from
+> > coalescing mprotect calls, with the gains coming from taking and
+> > releasing various locks a lot less often and bouncing around less on
+> > the contended lock paths. Raw throughput doesn't tell the whole story,
+> > especially on mobile.
+> 
+> This will always be a double edge sword. Taking a lock for longer can
+> improve a throughput of a single call but it would make a latency for
+> anybody contending on the lock much worse.
+> 
+> Besides that, please do not overcomplicate the thing from the early
+> beginning please. Let's start with a simple and well defined remote
+> madvise alternative first and build a vector API on top with some
+> numbers based on _real_ workloads.
 
-How are you going to determine at the time Fred tries to enable the watch=
-es
-that I am going to do something that will trigger them? I'm not saying it=
- isn't
-possible, I'm curious how you would propose doing it. If you deny Fred th=
-e ability
-to set watches because it is possible for me to trigger them, he can't us=
-e them
-to get information from Wilma, either.
+First time, I didn't think about atomicity about address range race
+because MADV_COLD/PAGEOUT is not critical for the race.
+However you raised the atomicity issue because people would extend
+hints to destructive ones easily. I agree with that and that's why
+we discussed how to guarantee the race and Daniel comes up with good idea.
 
->
->> Other security modelers may disagree. The models they produce
->> are going to be *very* complicated and will introduce agents and
->> intermediate objects to justify Fred's reception of an event as
->> a read operation.
-> I disagree. They=E2=80=99ll model the watch as something to prevent if =
-they want to restrict communication.
+  - vma configuration seq number via process_getinfo(2).
 
-Sorry, but that isn't sufficiently detailed to be meaningful.
+We discussed the race issue without _read_ workloads/requests because
+it's common sense that people might extend the syscall later.
 
->>> (And receiver means whoever subscribed, presumably, not whoever calle=
-d read() or mmap().)
->> The receiver is the process that gets the event. There may
->> be more than one receiver, and the receivers may have different
->> credentials. Each needs to be checked separately.
-> I think it=E2=80=99s a bit crazy to have the same event queue with two =
-readers who read different things.
+Here is same. For current workload, we don't need to support vector
+for perfomance point of view based on my experiment. However, it's
+rather limited experiment. Some configuration might have 10000+ vmas
+or really slow CPU. 
 
-Look at killpg(3).
+Furthermore, I want to have vector support due to atomicity issue
+if it's really the one we should consider.
+With vector support of the API and vma configuration sequence number
+from Daniel, we could support address ranges operations's atomicity.
+However, since we don't introduce vector at this moment, we need to
+introduce *another syscall* later to be able to handle multile ranges
+all at once atomically if it's okay.
 
-The process that creates the event has to be involved in the
-access decision. Otherwise you have an uncontrolled data channel.
-When the receiver reads the event queue it knows nothing about the
-sender, and hence cannot make the decision unless the credential of
-the sender is kept with the event message, and used when the
-receiver tries to access it. I don't think that wold work well with
-the mechanism as designed.
-=C2=A0
+Other thought:
+Maybe we could extend address range batch syscall covers other MM
+syscall like mmap/munmap/madvise/mprotect and so on because there
+are multiple users that would benefit from this general batching
+mechanism.
