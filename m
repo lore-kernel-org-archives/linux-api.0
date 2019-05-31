@@ -1,40 +1,101 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
+From: Christian Brauner <christian@brauner.io>
 Subject: Re: [PATCH v1 1/2] fork: add clone3
-Date: Fri, 31 May 2019 13:38:29 -0700
-Message-ID: <CAHk-=whQP-Ykxi=zSYaV9iXsHsENa+2fdj-zYKwyeyed63Lsfw@mail.gmail.com>
-References: <20190529152237.10719-1-christian@brauner.io> <20190529222414.GA6492@gmail.com>
+Date: Sat, 1 Jun 2019 00:08:16 +0200
+Message-ID: <20190531220815.owrc5kbbdemmwdhs@brauner.io>
+References: <20190529152237.10719-1-christian@brauner.io>
+ <1058006e0df4b52b3e53c7b3202c04140899aeb5.camel@opteya.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190529222414.GA6492@gmail.com>
+Content-Disposition: inline
+In-Reply-To: <1058006e0df4b52b3e53c7b3202c04140899aeb5.camel@opteya.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andrei Vagin <avagin@gmail.com>
-Cc: Christian Brauner <christian@brauner.io>, Al Viro <viro@zeniv.linux.org.uk>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Jann Horn <jannh@google.com>, Florian Weimer <fweimer@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Linux API <linux-api@vger.kernel.org>
+To: Yann Droneaud <ydroneaud@opteya.com>
+Cc: viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, torvalds@linux-foundation.org, jannh@google.com, fweimer@redhat.com, oleg@redhat.com, arnd@arndb.de, dhowells@redhat.com, Pavel Emelyanov <xemul@virtuozzo.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@gmail.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 29, 2019 at 3:24 PM Andrei Vagin <avagin@gmail.com> wrote:
->
-> Thank you for thinking about time namespaces. I looked at this patch
-> quickly and I would suggest to move a termination signal out of flags. I
-> think we can add a separate field (exit_signal) into clone_args. Does it
-> make sense? For me, exit_signal in flags always looked weird...
+On Wed, May 29, 2019 at 05:42:14PM +0200, Yann Droneaud wrote:
+> Le mercredi 29 mai 2019 à 17:22 +0200, Christian Brauner a écrit :
+> > This adds the clone3 system call.
+> > 
+> > 
+> > diff --git a/kernel/fork.c b/kernel/fork.c
+> > index b4cba953040a..6bc3e3d17150 100644
+> > --- a/kernel/fork.c
+> > +++ b/kernel/fork.c
+> > @@ -2472,7 +2475,96 @@ SYSCALL_DEFINE5(clone, unsigned long, clone_flags, unsigned long, newsp,
+> >  		 unsigned long, tls)
+> >  #endif
+> >  {
+> > -	return _do_fork(clone_flags, newsp, 0, parent_tidptr, child_tidptr, tls);
+> > +	struct kernel_clone_args args = {
+> > +		.flags = clone_flags,
+> > +		.stack = newsp,
+> > +		.pidfd = parent_tidptr,
+> > +		.parent_tidptr = parent_tidptr,
+> > +		.tls = tls,
+> > +		.child_tidptr = child_tidptr,
+> > +	};
+> > +
+> > +	/* clone(CLONE_PIDFD) uses parent_tidptr to return a pidfd */
+> > +	if ((clone_flags & CLONE_PIDFD) && (clone_flags & CLONE_PARENT_SETTID))
+> > +		return -EINVAL;
+> > +
+> > +	return _do_fork(&args);
+> > +}
+> > +
+> > +static bool clone3_flags_valid(u64 flags)
+> > +{
+> > +	if (flags & CLONE_DETACHED)
+> > +		return false;
+> > +
+> > +	if (flags & ~CLONE_MAX)
+> > +		return false;
+> > +
+> > +	return true;
+> > +}
+> > +
+> > +static int copy_clone_args_from_user(struct kernel_clone_args *kargs,
+> > +				     struct clone_args __user *uargs,
+> > +				     size_t size)
+> > +{
+> > +	struct clone_args args;
+> > +
+> > +	if (unlikely(size > PAGE_SIZE))
+> > +		return -E2BIG;
+> > +
+> > +	if (unlikely(size < sizeof(struct clone_args)))
+> > +		return -EINVAL;
+> > +
+> > +	if (unlikely(!access_ok(uargs, size)))
+> > +		return -EFAULT;
+> > +
+> > +	if (size > sizeof(struct clone_args)) {
+> > +		unsigned char __user *addr;
+> > +		unsigned char __user *end;
+> > +		unsigned char val;
+> > +
+> > +		addr = (void __user *)uargs + sizeof(struct clone_args);
+> > +		end = (void __user *)uargs + size;
+> > +
+> > +		for (; addr < end; addr++) {
+> > +			if (get_user(val, addr))
+> > +				return -EFAULT;
+> > +			if (val)
+> > +				return -E2BIG;
+> 
+> Should be -EINVAL: having something after the structure should be
+> handled just like an invalid flags, while still allowing future
+> userspace program to probe for support for newer feature.
 
-I agree - the child signal in flags was always just a "it fits" kind
-of thing, and that was obviously true back then, but is not true now.
+(Traveling until Monday, so sorry for delayed responses.)
 
-In fact, if we move it out of flags, we'd open up new flag values for
-the new interface, in that now the low 8 bits are freed up for more
-useful things.
+This copies what:
 
-In fact, even for the old ones, we might just say that instead of the
-full 8-bit CSIGNAL field, nobody ever *used* more than 6 bits, because
-_NSIG is 64, and we've never actually had named signals > 31.
+kernel/sched/core.c:sched_copy_attr()
+kernel/event/core.c:perf_copy_attr()
 
-(Yeah, yeah, somebody could use signal 64, and yes, mips has _NSIG
-128, but realistically we could get two new clone signals in the old
-interface and I think nobody would even notice).
+are already doing. Consistency might be good here but, I think.
 
-In fact, all of the CSIGNAL bits are ignored if CLONE_THREAD or
-CLONE_PARENT is set.
-
-                   Linus
+Christian
