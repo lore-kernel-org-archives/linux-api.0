@@ -1,54 +1,61 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH 1/7] General notification queue with user mmap()'able ring buffer
-Date: Fri, 31 May 2019 18:12:42 +0100
-Message-ID: <15401.1559322762@warthog.procyon.org.uk>
-References: <20190531164444.GD2606@hirez.programming.kicks-ass.net> <CAG48ez0R-R3Xs+3Xg9T9qcV3Xv6r4pnx1Z2y=Ltx7RGOayte_w@mail.gmail.com> <20190528162603.GA24097@kroah.com> <155905930702.7587.7100265859075976147.stgit@warthog.procyon.org.uk> <155905931502.7587.11705449537368497489.stgit@warthog.procyon.org.uk> <4031.1559064620@warthog.procyon.org.uk> <20190528231218.GA28384@kroah.com> <31936.1559146000@warthog.procyon.org.uk> <16193.1559163763@warthog.procyon.org.uk> <21942.1559304135@warthog.procyon.org.uk> <606.1559312412@warthog.procyon.org.uk>
+From: Amir Goldstein <amir73il@gmail.com>
+Subject: Re: [RFC][PATCH] link.2: AT_ATOMIC_DATA and AT_ATOMIC_METADATA
+Date: Fri, 31 May 2019 20:22:06 +0300
+Message-ID: <CAOQ4uxjp5psDBLXBu+26xRLpV50txqksVFe6ZhUo0io8kgoH4A@mail.gmail.com>
+References: <20190527172655.9287-1-amir73il@gmail.com> <20190528202659.GA12412@mit.edu>
+ <CAOQ4uxgo5jmwQbLAKQre9=7pLQw=CwMgDaWPaJxi-5NGnPEVPQ@mail.gmail.com>
+ <CAOQ4uxgj94WR82iHE4PDGSD0UDxG5sCtr+Sv+t1sOHHmnXFYzQ@mail.gmail.com> <20190531164136.GA3066@mit.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190531164444.GD2606@hirez.programming.kicks-ass.net>
-Content-ID: <15400.1559322762.1@warthog.procyon.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: dhowells@redhat.com, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Al Viro <viro@zeniv.linux.org.uk>, raven@themaw.net, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module <linux-security-module@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+In-Reply-To: <20190531164136.GA3066@mit.edu>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Theodore Ts'o <tytso@mit.edu>
+Cc: Jan Kara <jack@suse.cz>, "Darrick J . Wong" <darrick.wong@oracle.com>, Dave Chinner <david@fromorbit.com>, Chris Mason <clm@fb.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-xfs <linux-xfs@vger.kernel.org>, Ext4 <linux-ext4@vger.kernel.org>, Linux Btrfs <linux-btrfs@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Peter Zijlstra <peterz@infradead.org> wrote:
+On Fri, May 31, 2019 at 7:41 PM Theodore Ts'o <tytso@mit.edu> wrote:
+>
+> On Fri, May 31, 2019 at 06:21:45PM +0300, Amir Goldstein wrote:
+> > What do you think of:
+> >
+> > "AT_ATOMIC_DATA (since Linux 5.x)
+> > A filesystem which accepts this flag will guarantee that if the linked file
+> > name exists after a system crash, then all of the data written to the file
+> > and all of the file's metadata at the time of the linkat(2) call will be
+> > visible.
+>
+> ".... will be visible after the the file system is remounted".  (Never
+> hurts to be explicit.)
+>
+> > The way to achieve this guarantee on old kernels is to call fsync (2)
+> > before linking the file, but doing so will also results in flushing of
+> > volatile disk caches.
+> >
+> > A filesystem which accepts this flag does NOT
+> > guarantee that any of the file hardlinks will exist after a system crash,
+> > nor that the last observed value of st_nlink (see stat (2)) will persist."
+> >
+>
+> This is I think more precise:
+>
+>     This guarantee can be achieved by calling fsync(2) before linking
+>     the file, but there may be more performant ways to provide these
+>     semantics.  In particular, note that the use of the AT_ATOMIC_DATA
+>     flag does *not* guarantee that the new link created by linkat(2)
+>     will be persisted after a crash.
 
-> > > (and it has already been established that refcount_t doesn't work for
-> > > usage count scenarios)
-> > 
-> > ?
-> > 
-> > Does that mean struct kref doesn't either?
-> 
-> Indeed, since kref is just a pointless wrapper around refcount_t it does
-> not either.
-> 
-> The main distinction between a reference count and a usage count is that
-> 0 means different things. For a refcount 0 means dead. For a usage count
-> 0 is merely unused but valid.
+OK. Just to be clear, mentioning hardlinks and st_link is not needed
+in your opinion?
 
-Ah - I consider the terms interchangeable.
+>
+> We should also document that a file system which does not implement
+> this flag MUST return EINVAL if it is passed this flag to linkat(2).
+>
 
-Take Documentation/filesystems/vfs.txt for instance:
+OK. I think this part can be documented as possible reason for EINVAL
+As in renameat(2) man page:
+       EINVAL The filesystem does not support one of the flags in flags.
 
-  dget: open a new handle for an existing dentry (this just increments
-	the usage count)
-
-  dput: close a handle for a dentry (decrements the usage count). ...
-
-  ...
-
-  d_lookup: look up a dentry given its parent and path name component
-	It looks up the child of that given name from the dcache
-	hash table. If it is found, the reference count is incremented
-	and the dentry is returned. The caller must use dput()
-	to free the dentry when it finishes using it.
-
-Here we interchange the terms.
-
-Or https://www.kernel.org/doc/gorman/html/understand/understand013.html
-which seems to interchange the terms in reference to struct page.
-
-David
+Thanks,
+Amir.
