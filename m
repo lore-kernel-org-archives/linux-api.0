@@ -1,317 +1,113 @@
-From: Oleksandr Natalenko <oleksandr@redhat.com>
-Subject: Re: [RFCv2 4/6] mm: factor out madvise's core functionality
-Date: Fri, 31 May 2019 16:35:45 +0200
-Message-ID: <20190531143545.jwmgzaigd4rbw2wy@butterfly.localdomain>
-References: <20190531064313.193437-1-minchan@kernel.org>
- <20190531064313.193437-5-minchan@kernel.org>
- <20190531070420.m7sxybbzzayig44o@butterfly.localdomain>
- <20190531131226.GA195463@google.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH 1/5] glibc: Perform rseq(2) registration at C startup
+ and thread creation (v10)
+Date: Fri, 31 May 2019 10:48:29 -0400 (EDT)
+Message-ID: <732661684.21584.1559314109886.JavaMail.zimbra@efficios.com>
+References: <20190503184219.19266-1-mathieu.desnoyers@efficios.com> <20190503184219.19266-2-mathieu.desnoyers@efficios.com> <87h89gjgaf.fsf@oldenburg2.str.redhat.com> <1239705947.14878.1558985272873.JavaMail.zimbra@efficios.com> <140718133.18261.1559144710554.JavaMail.zimbra@efficios.com> <2022553041.20966.1559249801435.JavaMail.zimbra@efficios.com> <875zprm4jo.fsf@oldenburg2.str.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190531131226.GA195463@google.com>
+In-Reply-To: <875zprm4jo.fsf@oldenburg2.str.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Minchan Kim <minchan@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, jannh@google.com, oleg@redhat.com, christian@brauner.io, hdanton@sina.com
+To: Florian Weimer <fweimer@redhat.com>
+Cc: carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 31, 2019 at 10:12:26PM +0900, Minchan Kim wrote:
-> On Fri, May 31, 2019 at 09:04:20AM +0200, Oleksandr Natalenko wrote:
-> > On Fri, May 31, 2019 at 03:43:11PM +0900, Minchan Kim wrote:
-> > > This patch factor out madvise's core functionality so that upcoming
-> > > patch can reuse it without duplication. It shouldn't change any behavior.
-> > > 
-> > > Signed-off-by: Minchan Kim <minchan@kernel.org>
-> > > ---
-> > >  mm/madvise.c | 188 +++++++++++++++++++++++++++------------------------
-> > >  1 file changed, 101 insertions(+), 87 deletions(-)
-> > > 
-> > > diff --git a/mm/madvise.c b/mm/madvise.c
-> > > index 9d749a1420b4..466623ea8c36 100644
-> > > --- a/mm/madvise.c
-> > > +++ b/mm/madvise.c
-> > > @@ -425,9 +425,10 @@ static int madvise_pageout_pte_range(pmd_t *pmd, unsigned long addr,
-> > >  	struct page *page;
-> > >  	int isolated = 0;
-> > >  	struct vm_area_struct *vma = walk->vma;
-> > > +	struct task_struct *task = walk->private;
-> > >  	unsigned long next;
-> > >  
-> > > -	if (fatal_signal_pending(current))
-> > > +	if (fatal_signal_pending(task))
-> > >  		return -EINTR;
-> > >  
-> > >  	next = pmd_addr_end(addr, end);
-> > > @@ -505,12 +506,14 @@ static int madvise_pageout_pte_range(pmd_t *pmd, unsigned long addr,
-> > >  }
-> > >  
-> > >  static void madvise_pageout_page_range(struct mmu_gather *tlb,
-> > > -			     struct vm_area_struct *vma,
-> > > -			     unsigned long addr, unsigned long end)
-> > > +				struct task_struct *task,
-> > > +				struct vm_area_struct *vma,
-> > > +				unsigned long addr, unsigned long end)
-> > >  {
-> > >  	struct mm_walk warm_walk = {
-> > >  		.pmd_entry = madvise_pageout_pte_range,
-> > >  		.mm = vma->vm_mm,
-> > > +		.private = task,
-> > >  	};
-> > >  
-> > >  	tlb_start_vma(tlb, vma);
-> > > @@ -519,9 +522,9 @@ static void madvise_pageout_page_range(struct mmu_gather *tlb,
-> > >  }
-> > >  
-> > >  
-> > > -static long madvise_pageout(struct vm_area_struct *vma,
-> > > -			struct vm_area_struct **prev,
-> > > -			unsigned long start_addr, unsigned long end_addr)
-> > > +static long madvise_pageout(struct task_struct *task,
-> > > +		struct vm_area_struct *vma, struct vm_area_struct **prev,
-> > > +		unsigned long start_addr, unsigned long end_addr)
-> > >  {
-> > >  	struct mm_struct *mm = vma->vm_mm;
-> > >  	struct mmu_gather tlb;
-> > > @@ -532,7 +535,7 @@ static long madvise_pageout(struct vm_area_struct *vma,
-> > >  
-> > >  	lru_add_drain();
-> > >  	tlb_gather_mmu(&tlb, mm, start_addr, end_addr);
-> > > -	madvise_pageout_page_range(&tlb, vma, start_addr, end_addr);
-> > > +	madvise_pageout_page_range(&tlb, task, vma, start_addr, end_addr);
-> > >  	tlb_finish_mmu(&tlb, start_addr, end_addr);
-> > >  
-> > >  	return 0;
-> > > @@ -744,7 +747,8 @@ static long madvise_dontneed_single_vma(struct vm_area_struct *vma,
-> > >  	return 0;
-> > >  }
-> > >  
-> > > -static long madvise_dontneed_free(struct vm_area_struct *vma,
-> > > +static long madvise_dontneed_free(struct mm_struct *mm,
-> > > +				  struct vm_area_struct *vma,
-> > >  				  struct vm_area_struct **prev,
-> > >  				  unsigned long start, unsigned long end,
-> > >  				  int behavior)
-> > > @@ -756,8 +760,8 @@ static long madvise_dontneed_free(struct vm_area_struct *vma,
-> > >  	if (!userfaultfd_remove(vma, start, end)) {
-> > >  		*prev = NULL; /* mmap_sem has been dropped, prev is stale */
-> > >  
-> > > -		down_read(&current->mm->mmap_sem);
-> > > -		vma = find_vma(current->mm, start);
-> > > +		down_read(&mm->mmap_sem);
-> > > +		vma = find_vma(mm, start);
-> > >  		if (!vma)
-> > >  			return -ENOMEM;
-> > >  		if (start < vma->vm_start) {
-> > > @@ -804,7 +808,8 @@ static long madvise_dontneed_free(struct vm_area_struct *vma,
-> > >   * Application wants to free up the pages and associated backing store.
-> > >   * This is effectively punching a hole into the middle of a file.
-> > >   */
-> > > -static long madvise_remove(struct vm_area_struct *vma,
-> > > +static long madvise_remove(struct mm_struct *mm,
-> > > +				struct vm_area_struct *vma,
-> > >  				struct vm_area_struct **prev,
-> > >  				unsigned long start, unsigned long end)
-> > >  {
-> > > @@ -838,13 +843,13 @@ static long madvise_remove(struct vm_area_struct *vma,
-> > >  	get_file(f);
-> > >  	if (userfaultfd_remove(vma, start, end)) {
-> > >  		/* mmap_sem was not released by userfaultfd_remove() */
-> > > -		up_read(&current->mm->mmap_sem);
-> > > +		up_read(&mm->mmap_sem);
-> > >  	}
-> > >  	error = vfs_fallocate(f,
-> > >  				FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE,
-> > >  				offset, end - start);
-> > >  	fput(f);
-> > > -	down_read(&current->mm->mmap_sem);
-> > > +	down_read(&mm->mmap_sem);
-> > >  	return error;
-> > >  }
-> > >  
-> > > @@ -918,21 +923,23 @@ static int madvise_inject_error(int behavior,
-> > >  #endif
-> > >  
-> > >  static long
-> > > -madvise_vma(struct vm_area_struct *vma, struct vm_area_struct **prev,
-> > > +madvise_vma(struct task_struct *task, struct mm_struct *mm,
-> > > +		struct vm_area_struct *vma, struct vm_area_struct **prev,
-> > >  		unsigned long start, unsigned long end, int behavior)
-> > >  {
-> > >  	switch (behavior) {
-> > >  	case MADV_REMOVE:
-> > > -		return madvise_remove(vma, prev, start, end);
-> > > +		return madvise_remove(mm, vma, prev, start, end);
-> > >  	case MADV_WILLNEED:
-> > >  		return madvise_willneed(vma, prev, start, end);
-> > >  	case MADV_COLD:
-> > >  		return madvise_cold(vma, prev, start, end);
-> > >  	case MADV_PAGEOUT:
-> > > -		return madvise_pageout(vma, prev, start, end);
-> > > +		return madvise_pageout(task, vma, prev, start, end);
-> > >  	case MADV_FREE:
-> > >  	case MADV_DONTNEED:
-> > > -		return madvise_dontneed_free(vma, prev, start, end, behavior);
-> > > +		return madvise_dontneed_free(mm, vma, prev, start,
-> > > +						end, behavior);
-> > >  	default:
-> > >  		return madvise_behavior(vma, prev, start, end, behavior);
-> > >  	}
-> > > @@ -976,68 +983,8 @@ madvise_behavior_valid(int behavior)
-> > >  	}
-> > >  }
-> > >  
-> > > -/*
-> > > - * The madvise(2) system call.
-> > > - *
-> > > - * Applications can use madvise() to advise the kernel how it should
-> > > - * handle paging I/O in this VM area.  The idea is to help the kernel
-> > > - * use appropriate read-ahead and caching techniques.  The information
-> > > - * provided is advisory only, and can be safely disregarded by the
-> > > - * kernel without affecting the correct operation of the application.
-> > > - *
-> > > - * behavior values:
-> > > - *  MADV_NORMAL - the default behavior is to read clusters.  This
-> > > - *		results in some read-ahead and read-behind.
-> > > - *  MADV_RANDOM - the system should read the minimum amount of data
-> > > - *		on any access, since it is unlikely that the appli-
-> > > - *		cation will need more than what it asks for.
-> > > - *  MADV_SEQUENTIAL - pages in the given range will probably be accessed
-> > > - *		once, so they can be aggressively read ahead, and
-> > > - *		can be freed soon after they are accessed.
-> > > - *  MADV_WILLNEED - the application is notifying the system to read
-> > > - *		some pages ahead.
-> > > - *  MADV_DONTNEED - the application is finished with the given range,
-> > > - *		so the kernel can free resources associated with it.
-> > > - *  MADV_FREE - the application marks pages in the given range as lazy free,
-> > > - *		where actual purges are postponed until memory pressure happens.
-> > > - *  MADV_REMOVE - the application wants to free up the given range of
-> > > - *		pages and associated backing store.
-> > > - *  MADV_DONTFORK - omit this area from child's address space when forking:
-> > > - *		typically, to avoid COWing pages pinned by get_user_pages().
-> > > - *  MADV_DOFORK - cancel MADV_DONTFORK: no longer omit this area when forking.
-> > > - *  MADV_WIPEONFORK - present the child process with zero-filled memory in this
-> > > - *              range after a fork.
-> > > - *  MADV_KEEPONFORK - undo the effect of MADV_WIPEONFORK
-> > > - *  MADV_HWPOISON - trigger memory error handler as if the given memory range
-> > > - *		were corrupted by unrecoverable hardware memory failure.
-> > > - *  MADV_SOFT_OFFLINE - try to soft-offline the given range of memory.
-> > > - *  MADV_MERGEABLE - the application recommends that KSM try to merge pages in
-> > > - *		this area with pages of identical content from other such areas.
-> > > - *  MADV_UNMERGEABLE- cancel MADV_MERGEABLE: no longer merge pages with others.
-> > > - *  MADV_HUGEPAGE - the application wants to back the given range by transparent
-> > > - *		huge pages in the future. Existing pages might be coalesced and
-> > > - *		new pages might be allocated as THP.
-> > > - *  MADV_NOHUGEPAGE - mark the given range as not worth being backed by
-> > > - *		transparent huge pages so the existing pages will not be
-> > > - *		coalesced into THP and new pages will not be allocated as THP.
-> > > - *  MADV_DONTDUMP - the application wants to prevent pages in the given range
-> > > - *		from being included in its core dump.
-> > > - *  MADV_DODUMP - cancel MADV_DONTDUMP: no longer exclude from core dump.
-> > > - *
-> > > - * return values:
-> > > - *  zero    - success
-> > > - *  -EINVAL - start + len < 0, start is not page-aligned,
-> > > - *		"behavior" is not a valid value, or application
-> > > - *		is attempting to release locked or shared pages,
-> > > - *		or the specified address range includes file, Huge TLB,
-> > > - *		MAP_SHARED or VMPFNMAP range.
-> > > - *  -ENOMEM - addresses in the specified range are not currently
-> > > - *		mapped, or are outside the AS of the process.
-> > > - *  -EIO    - an I/O error occurred while paging in data.
-> > > - *  -EBADF  - map exists, but area maps something that isn't a file.
-> > > - *  -EAGAIN - a kernel resource was temporarily unavailable.
-> > > - */
-> > > -SYSCALL_DEFINE3(madvise, unsigned long, start, size_t, len_in, int, behavior)
-> > > +static int madvise_core(struct task_struct *task, struct mm_struct *mm,
-> > > +			unsigned long start, size_t len_in, int behavior)
-> > 
-> > Just a minor nitpick, but can we please have it named madvise_common,
-> > not madvise_core? This would follow a usual naming scheme, when some
-> > common functionality is factored out (like, for mutexes, semaphores
-> > etc), and within the kernel "core" usually means something completely
-> > different.
+
+
+----- On May 31, 2019, at 4:06 AM, Florian Weimer fweimer@redhat.com wrote:
+
+> * Mathieu Desnoyers:
 > 
-> Sure.
+>> I found that it's because touching a __thread variable from
+>> ld-linux-x86-64.so.2 ends up setting the DF_STATIC_TLS flag
+>> for that .so, which is really not expected.
+>>
+>> Even if I tweak the assert to make it more lenient there,
+>> touching the __thread variable ends up triggering a SIGFPE.
 > 
-> > 
-> > >  {
-> > >  	unsigned long end, tmp;
-> > >  	struct vm_area_struct *vma, *prev;
-> > > @@ -1068,15 +1015,16 @@ SYSCALL_DEFINE3(madvise, unsigned long, start, size_t, len_in, int, behavior)
-> > >  
-> > >  #ifdef CONFIG_MEMORY_FAILURE
-> > >  	if (behavior == MADV_HWPOISON || behavior == MADV_SOFT_OFFLINE)
-> > > -		return madvise_inject_error(behavior, start, start + len_in);
-> > > +		return madvise_inject_error(behavior,
-> > > +					start, start + len_in);
-> > 
-> > Not sure what this change is about except changing the line length.
-> > Note, madvise_inject_error() still operates on "current" through
-> > get_user_pages_fast() and gup_pgd_range(), but that was not changed
-> > here. I Know you've filtered out this hint later, so technically this
-> > is not an issue, but, maybe, this needs some attention too since we've
-> > already spotted it?
+> Sorry, I got distracted at this critical juncture.  Yes, I forgot that
+> there isn't TLS support in the dynamic loader today.
 > 
-> It is leftover I had done. I actually modified it to handle remote
-> task but changed my mind not to fix it because process_madvise
-> will not support it at this moment. I'm not sure it's a good idea
-> to change it for *might-be-done-in-future* at this moment even though
-> we have spotted.
-
-I'd expect to have at least some comments in code on why other hints
-are disabled, so if we already know some shortcomings, this information
-would not be lost.
-
-Of course, I don't care much about memory poisoning, but if it can be
-addressed now, let's address it now.
-
+>> So rather than touching the TLS from ld-linux-x86-64.so.2,
+>> I've rather experimented with moving the rseq initialization
+>> for both SHARED and !SHARED cases to a library constructor
+>> within libc.so.
+>>
+>> Are you aware of any downside to this approach ?
 > 
-> > 
-> > >  #endif
-> > >  
-> > >  	write = madvise_need_mmap_write(behavior);
-> > >  	if (write) {
-> > > -		if (down_write_killable(&current->mm->mmap_sem))
-> > > +		if (down_write_killable(&mm->mmap_sem))
-> > >  			return -EINTR;
-> > 
-> > Do you still need that trick with mmget_still_valid() here?
-> > Something like:
+> The information whether the kernel supports rseq would not be available
+> to IFUNC resolvers.  And in some cases, ELF constructors for application
+> libraries could run before the libc.so.6 constructor, so applications
+> would see a transition from lack of kernel support to kernel support.
 > 
-> Since MADV_COLD|PAGEOUT doesn't change address space layout or
-> vma->vm_flags, technically, we don't need it if I understand
-> correctly. Right?
-
-I'd expect so, yes. But.
-
-Since we want this interface to be universal and to be able to cover
-various needs, and since my initial intention with working in this
-direction involved KSM, I'd ask you to enable KSM hints too, and once
-(and if) that happens, the work there is done under write lock, and
-you'll need this trick to be applied.
-
-Of course, I can do that myself later in a subsequent patch series once
-(and, again, if) your series is merged, but, maybe, we can cover this
-already especially given the fact that KSM hinting is a relatively easy
-task in this pile. I did some preliminary tests with it, and so far no
-dragons have started to roar.
-
+>> +static
+>> +__attribute__ ((constructor))
+>> +void __rseq_libc_init (void)
+>> +{
+>> +  rseq_init ();
+>> +  /* Register rseq ABI to the kernel.   */
+>> +  (void) rseq_register_current_thread ();
+>> +}
 > 
-> > 
-> > if (current->mm != mm && !mmget_still_valid(mm))
-> >    goto skip_mm;
-> > 
-> > and that skip_mm label would be before
-> > 
-> > if (write)
-> >    up_write(&mm->mmap_sem);
-> > 
-> > below.
-> > 
-> > (see 04f5866e41fb70690e28397487d8bd8eea7d712a for details on this)
+> I think the call to rseq_init (and the __rseq_handled variable) should
+> still be part of the dynamic loader.  Otherwise there could be confusion
+> about whether glibc handles the registration (due the constructor
+> ordering issue).
+
+Let's break this down into the various sub-issues involved:
+
+1) How early do we need to setup rseq ? Should it be setup before:
+   - LD_PRELOAD .so constructors ?
+     - Without circular dependency,
+     - With circular dependency,
+   - audit libraries initialization ?
+   - IFUNC resolvers ?
+   - other callbacks ?
+   - memory allocator calls ?
+
+We may end up in a situation where we need memory allocation to be setup
+in order to initialize TLS before rseq can be registered for the main
+thread. I suspect we will end up needing a fallbacks which always work
+for the few cases that would try to use rseq too early in dl/libc startup.
+
+2) Do we need to setup __rseq_handled and __rseq_abi at the same stage of
+   startup, or is it OK to setup __rseq_handled before __rseq_abi ?
+
+3) Which shared object owns __rseq_handled and __rseq_abi ?
+   - libc.so ?
+   - ld-linux-*.so.2 ?
+   - Should both symbols be owned by the same .so ?
+   - What about the !SHARED case ? I think this would end up in libc.a in all cases.
+
+4) Inability to touch a TLS variable (__rseq_abi) from ld-linux-*.so.2
+   - Should we extend the dynamic linker to allow such TLS variable to be
+     accessed ? If so, how much effort is required ?
+   - Can we find an alternative way to initialize rseq early during
+     dl init stages while still performing the TLS access from a function
+     implemented within libc.so ?
+
+So far, I got rseq to be initialized before LD_PRELOADed library constructors
+by doing the initialization in a constructor within libc.so. I don't particularly
+like this approach, because the constructor order is not guaranteed.
+
+One possible solution would be to somehow expose a rseq initialization function
+symbol from libc.so, look it up from ld-linux-*.so.2, and invoke it after libc.so
+has been loaded. It would end up being similar to a constructor, but with a
+fixed invocation order.
+
+I'm just not sure we have everything we need to do this in ld-linux-*.so.2
+init stages.
+
+Thoughts ?
+
+Thanks,
+
+Mathieu
+
 
 -- 
-  Best regards,
-    Oleksandr Natalenko (post-factum)
-    Senior Software Maintenance Engineer
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
