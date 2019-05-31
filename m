@@ -1,62 +1,90 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: Re: [RFCv2 5/6] mm: introduce external memory hinting API
-Date: Fri, 31 May 2019 22:19:00 +0900
-Message-ID: <20190531131859.GB195463@google.com>
-References: <20190531064313.193437-1-minchan@kernel.org>
- <20190531064313.193437-6-minchan@kernel.org>
- <20190531083757.GH6896@dhcp22.suse.cz>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH 1/7] General notification queue with user mmap()'able
+ ring buffer
+Date: Fri, 31 May 2019 15:26:20 +0200
+Message-ID: <20190531132620.GC2606@hirez.programming.kicks-ass.net>
+References: <20190531111445.GO2677@hirez.programming.kicks-ass.net>
+ <CAG48ez0R-R3Xs+3Xg9T9qcV3Xv6r4pnx1Z2y=Ltx7RGOayte_w@mail.gmail.com>
+ <20190528162603.GA24097@kroah.com>
+ <155905930702.7587.7100265859075976147.stgit@warthog.procyon.org.uk>
+ <155905931502.7587.11705449537368497489.stgit@warthog.procyon.org.uk>
+ <4031.1559064620@warthog.procyon.org.uk>
+ <20190528231218.GA28384@kroah.com>
+ <31936.1559146000@warthog.procyon.org.uk>
+ <16193.1559163763@warthog.procyon.org.uk>
+ <21942.1559304135@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <kernel-hardening-return-16020-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
 Content-Disposition: inline
-In-Reply-To: <20190531083757.GH6896@dhcp22.suse.cz>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, jannh@google.com, oleg@redhat.com, christian@brauner.io, oleksandr@redhat.com, hdanton@sina.com
+In-Reply-To: <21942.1559304135@warthog.procyon.org.uk>
+To: David Howells <dhowells@redhat.com>
+Cc: Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Al Viro <viro@zeniv.linux.org.uk>, raven@themaw.net, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module <linux-security-module@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 31, 2019 at 10:37:57AM +0200, Michal Hocko wrote:
-> On Fri 31-05-19 15:43:12, Minchan Kim wrote:
-> > There is some usecase that centralized userspace daemon want to give
-> > a memory hint like MADV_[COLD|PAGEEOUT] to other process. Android's
-> > ActivityManagerService is one of them.
-> > 
-> > It's similar in spirit to madvise(MADV_WONTNEED), but the information
-> > required to make the reclaim decision is not known to the app. Instead,
-> > it is known to the centralized userspace daemon(ActivityManagerService),
-> > and that daemon must be able to initiate reclaim on its own without
-> > any app involvement.
-> > 
-> > To solve the issue, this patch introduces new syscall process_madvise(2).
-> > It could give a hint to the exeternal process of pidfd.
-> > 
-> >  int process_madvise(int pidfd, void *addr, size_t length, int advise,
-> > 			unsigned long cookie, unsigned long flag);
-> > 
-> > Since it could affect other process's address range, only privileged
-> > process(CAP_SYS_PTRACE) or something else(e.g., being the same UID)
-> > gives it the right to ptrace the process could use it successfully.
-> > 
-> > The syscall has a cookie argument to privode atomicity(i.e., detect
-> > target process's address space change since monitor process has parsed
-> > the address range of target process so the operaion could fail in case
-> > of happening race). Although there is no interface to get a cookie
-> > at this moment, it could be useful to consider it as argument to avoid
-> > introducing another new syscall in future. It could support *atomicity*
-> > for disruptive hint(e.g., MADV_DONTNEED|FREE).
-> > flag argument is reserved for future use if we need to extend the API.
+On Fri, May 31, 2019 at 01:02:15PM +0100, David Howells wrote:
+> Peter Zijlstra <peterz@infradead.org> wrote:
 > 
-> Providing an API that is incomplete will not fly. Really. As this really
-> begs for much more discussion and it would be good to move on with the
-> core idea of the pro active memory memory management from userspace
-> usecase. Could you split out the core change so that we can move on and
-> leave the external for a later discussion. I believe this would lead to
-> a smoother integration.
+> > Can you re-iterate the exact problem? I konw we talked about this in the
+> > past, but I seem to have misplaced those memories :/
+> 
+> Take this for example:
+> 
+> 	void afs_put_call(struct afs_call *call)
+> 	{
+> 		struct afs_net *net = call->net;
+> 		int n = atomic_dec_return(&call->usage);
+> 		int o = atomic_read(&net->nr_outstanding_calls);
+> 
+> 		trace_afs_call(call, afs_call_trace_put, n + 1, o,
+> 			       __builtin_return_address(0));
+> 
+> 		ASSERTCMP(n, >=, 0);
+> 		if (n == 0) {
+> 			...
+> 		}
+> 	}
+> 
+> I am printing the usage count in the afs_call tracepoint so that I can use it
+> to debug refcount bugs.  If I do it like this:
+> 
+> 	void afs_put_call(struct afs_call *call)
+> 	{
+> 		int n = refcount_read(&call->usage);
+> 		int o = atomic_read(&net->nr_outstanding_calls);
+> 
+> 		trace_afs_call(call, afs_call_trace_put, n, o,
+> 			       __builtin_return_address(0));
+> 
+> 		if (refcount_dec_and_test(&call->usage)) {
+> 			...
+> 		}
+> 	}
+> 
+> then there's a temporal gap between the usage count being read and the actual
+> atomic decrement in which another CPU can alter the count.  This can be
+> exacerbated by an interrupt occurring, a softirq occurring or someone enabling
+> the tracepoint.
+> 
+> I can't do the tracepoint after the decrement if refcount_dec_and_test()
+> returns false unless I save all the values from the object that I might need
+> as the object could be destroyed any time from that point on.
 
-No problem but I need to understand what you want a little bit more because
-I thought this patchset is already step by step so if we reach the agreement
-of part of them like [1-5/6], it could be merged first.
+Is it not the responsibility of the task that affects the 1->0
+transition to actually free the memory?
 
-Could you say how you want to split the patchset for forward progress?
+That is, I'm expecting the '...' in both cases above the include the
+actual freeing of the object. If this is not the case, then @usage is
+not a reference count.
 
-Thanks.
+(and it has already been established that refcount_t doesn't work for
+usage count scenarios)
+
+Aside from that, is the problem that refcount_dec_and_test() returns a
+boolean (true - last put, false - not last) instead of the refcount
+value? This does indeed make it hard to print the exact count value for
+the event.
