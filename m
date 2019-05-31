@@ -1,7 +1,7 @@
 From: Palmer Dabbelt <palmer@sifive.com>
-Subject: [PATCH 4/5] x86: Add fchmodat4 to syscall_64.tbl
-Date: Fri, 31 May 2019 12:12:03 -0700
-Message-ID: <20190531191204.4044-5-palmer@sifive.com>
+Subject: [PATCH 5/5] x86: Add fchmod4 to syscall_32.tbl
+Date: Fri, 31 May 2019 12:12:04 -0700
+Message-ID: <20190531191204.4044-6-palmer@sifive.com>
 References: <20190531191204.4044-1-palmer@sifive.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,20 +14,17 @@ List-Id: linux-api@vger.kernel.org
 
 Signed-off-by: Palmer Dabbelt <palmer@sifive.com>
 ---
- arch/x86/entry/syscalls/syscall_64.tbl | 1 +
+ arch/x86/entry/syscalls/syscall_32.tbl | 1 +
  1 file changed, 1 insertion(+)
 
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index 92ee0b4378d4..998aa3eb09e2 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -349,6 +349,7 @@
- 425	common	io_uring_setup		__x64_sys_io_uring_setup
- 426	common	io_uring_enter		__x64_sys_io_uring_enter
- 427	common	io_uring_register	__x64_sys_io_uring_register
-+428	common	fchmodat4		__x64_sys_fchmodat4
- 
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index 1f9607ed087c..319c7a6d3f02 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -433,3 +433,4 @@
+ 425	i386	io_uring_setup		sys_io_uring_setup		__ia32_sys_io_uring_setup
+ 426	i386	io_uring_enter		sys_io_uring_enter		__ia32_sys_io_uring_enter
+ 427	i386	io_uring_register	sys_io_uring_register		__ia32_sys_io_uring_register
++428	i386	fchmodat4		sys_fchmodat4			__ia32_sys_fchmodat4
 -- 
 2.21.0
