@@ -1,51 +1,33 @@
-From: Daniel Colascione <dancol@google.com>
-Subject: Re: [RFCv2 5/6] mm: introduce external memory hinting API
-Date: Fri, 31 May 2019 10:35:20 -0700
-Message-ID: <CAKOZuevswVxZjffQcwjqJFa5V4Vv2jxq=mq6hWhd1SpNrGAGkg@mail.gmail.com>
-References: <20190531064313.193437-1-minchan@kernel.org> <20190531064313.193437-6-minchan@kernel.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+From: Richard Guy Briggs <rgb@redhat.com>
+Subject: [PATCH ghak90 V6] fixup! audit: add containerid filtering
+Date: Fri, 31 May 2019 13:53:36 -0400
+Message-ID: <fadb320e38a899441fcc693bbbc822a3b57f1a46.1559239558.git.rgb@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190531064313.193437-6-minchan@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Minchan Kim <minchan@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, Jann Horn <jannh@google.com>, Oleg Nesterov <oleg@redhat.com>, Christian Brauner <christian@brauner.io>, oleksandr@redhat.com, hdanton@sina.com
+To: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org
+Cc: Paul Moore <paul@paul-moore.com>, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, eparis@parisplace.org, serge@hallyn.com, ebiederm@xmission.com, nhorman@tuxdriver.com, Richard Guy Briggs <rgb@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, May 30, 2019 at 11:43 PM Minchan Kim <minchan@kernel.org> wrote:
->
-> There is some usecase that centralized userspace daemon want to give
-> a memory hint like MADV_[COLD|PAGEEOUT] to other process. Android's
-> ActivityManagerService is one of them.
->
-> It's similar in spirit to madvise(MADV_WONTNEED), but the information
-> required to make the reclaim decision is not known to the app. Instead,
-> it is known to the centralized userspace daemon(ActivityManagerService),
-> and that daemon must be able to initiate reclaim on its own without
-> any app involvement.
->
-> To solve the issue, this patch introduces new syscall process_madvise(2).
-> It could give a hint to the exeternal process of pidfd.
->
->  int process_madvise(int pidfd, void *addr, size_t length, int advise,
->                         unsigned long cookie, unsigned long flag);
->
-> Since it could affect other process's address range, only privileged
-> process(CAP_SYS_PTRACE) or something else(e.g., being the same UID)
-> gives it the right to ptrace the process could use it successfully.
->
-> The syscall has a cookie argument to privode atomicity(i.e., detect
-> target process's address space change since monitor process has parsed
-> the address range of target process so the operaion could fail in case
-> of happening race). Although there is no interface to get a cookie
-> at this moment, it could be useful to consider it as argument to avoid
-> introducing another new syscall in future. It could support *atomicity*
-> for disruptive hint(e.g., MADV_DONTNEED|FREE).
-> flag argument is reserved for future use if we need to extend the API.
+Remove the BUG() call since we will never have an invalid op value as
+audit_data_to_entry()/audit_to_op() ensure that the op value is a a
+known good value.
 
-How about a compromise? Let's allow all madvise hints if the process
-is calling process_madvise *on itself* (which will be useful once we
-wire up the atomicity cookie) and restrict the cross-process case to
-the hints you've mentioned. This way, the restriction on madvise hints
-isn't tied to the specific API, but to the relationship between hinter
-and hintee.
+Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+---
+ kernel/auditfilter.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/kernel/auditfilter.c b/kernel/auditfilter.c
+index 407b5bb3b4c6..385a114a1254 100644
+--- a/kernel/auditfilter.c
++++ b/kernel/auditfilter.c
+@@ -1244,7 +1244,6 @@ int audit_comparator64(u64 left, u32 op, u64 right)
+ 	case Audit_bittest:
+ 		return ((left & right) == right);
+ 	default:
+-		BUG();
+ 		return 0;
+ 	}
+ }
+-- 
+1.8.3.1
