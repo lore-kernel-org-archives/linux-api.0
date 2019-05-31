@@ -1,57 +1,62 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: Re: [RFCv2 6/6] mm: extend process_madvise syscall to support vector
- arrary
-Date: Sat, 1 Jun 2019 08:18:59 +0900
-Message-ID: <20190531231859.GB248371@google.com>
-References: <20190531064313.193437-1-minchan@kernel.org>
- <20190531064313.193437-7-minchan@kernel.org>
- <2fd5d462449f24b04adad2bbdf0e272647e62247.camel@opteya.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [RFC][PATCH] link.2: AT_ATOMIC_DATA and AT_ATOMIC_METADATA
+Date: Sat, 1 Jun 2019 09:28:52 +1000
+Message-ID: <20190531232852.GG29573@dread.disaster.area>
+References: <20190527172655.9287-1-amir73il@gmail.com>
+ <20190528202659.GA12412@mit.edu>
+ <CAOQ4uxgo5jmwQbLAKQre9=7pLQw=CwMgDaWPaJxi-5NGnPEVPQ@mail.gmail.com>
+ <CAOQ4uxgj94WR82iHE4PDGSD0UDxG5sCtr+Sv+t1sOHHmnXFYzQ@mail.gmail.com>
+ <20190531164136.GA3066@mit.edu>
+ <20190531224549.GF29573@dread.disaster.area>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-btrfs-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <2fd5d462449f24b04adad2bbdf0e272647e62247.camel@opteya.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Yann Droneaud <ydroneaud@opteya.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, jannh@google.com, oleg@redhat.com, christian@brauner.io, oleksandr@redhat.com, hdanton@sina.com
+In-Reply-To: <20190531224549.GF29573@dread.disaster.area>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Theodore Ts'o <tytso@mit.edu>
+Cc: Amir Goldstein <amir73il@gmail.com>, Jan Kara <jack@suse.cz>, "Darrick J . Wong" <darrick.wong@oracle.com>, Chris Mason <clm@fb.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-xfs <linux-xfs@vger.kernel.org>, Ext4 <linux-ext4@vger.kernel.org>, Linux Btrfs <linux-btrfs@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Yann,
+On Sat, Jun 01, 2019 at 08:45:49AM +1000, Dave Chinner wrote:
+> Given that we can already use AIO to provide this sort of ordering,
+> and AIO is vastly faster than synchronous IO, I don't see any point
+> in adding complex barrier interfaces that can be /easily implemented
+> in userspace/ using existing AIO primitives. You should start
+> thinking about expanding libaio with stuff like
+> "link_after_fdatasync()" and suddenly the whole problem of
+> filesystem data vs metadata ordering goes away because the
+> application directly controls all ordering without blocking and
+> doesn't need to care what the filesystem under it does....
 
-On Fri, May 31, 2019 at 12:06:52PM +0200, Yann Droneaud wrote:
-> Hi,
-> 
-> Le vendredi 31 mai 2019 à 15:43 +0900, Minchan Kim a écrit :
-> > 
-> > diff --git a/include/uapi/asm-generic/mman-common.h
-> > b/include/uapi/asm-generic/mman-common.h
-> > index 92e347a89ddc..220c2b5eb961 100644
-> > --- a/include/uapi/asm-generic/mman-common.h
-> > +++ b/include/uapi/asm-generic/mman-common.h
-> > @@ -75,4 +75,15 @@
-> >  #define PKEY_ACCESS_MASK	(PKEY_DISABLE_ACCESS |\
-> >  				 PKEY_DISABLE_WRITE)
-> >  
-> > +struct pr_madvise_param {
-> > +	int size;		/* the size of this structure */
-> > +	int cookie;		/* reserved to support atomicity */
-> > +	int nr_elem;		/* count of below arrary fields */
-> 
-> Those should be unsigned.
-> 
-> There's an implicit hole here on ABI with 64bits aligned pointers
-> 
-> > +	int __user *hints;	/* hints for each range */
-> > +	/* to store result of each operation */
-> > +	const struct iovec __user *results;
-> > +	/* input address ranges */
-> > +	const struct iovec __user *ranges;
-> 
-> Using pointer type in uAPI structure require a 'compat' version of the
-> syscall need to be provided.
-> 
-> If using iovec too.
+And let me point out that this is also how userspace can do an
+efficient atomic rename - rename_after_fdatasync(). i.e. on
+completion of the AIO_FSYNC, run the rename. This guarantees that
+the application will see either the old file of the complete new
+file, and it *doesn't have to wait for the operation to complete*.
+Once it is in flight, the file will contain the old data until some
+point in the near future when will it contain the new data....
 
-I will fix them when I submit next revision.
-Thanks for the review.
+Seriously, sit down and work out all the "atomic" data vs metadata
+behaviours you want, and then tell me how many of them cannot be
+implemented as "AIO_FSYNC w/ completion callback function" in
+userspace. This mechanism /guarantees ordering/ at the application
+level, the application does not block waiting for these data
+integrity operations to complete, and you don't need any new kernel
+side functionality to implement this.
+
+Fundamentally, the assertion that disk cache flushes are not what
+causes fsync "to be slow" is incorrect. It's the synchronous
+"waiting for IO completion" that makes fsync "slow". AIO_FSYNC
+avoids needing to wait for IO completion, allowing the application
+to do useful work (like issue more DI ops) while data integrity
+operations are in flight. At this point, fsync is no longer a "slow"
+operation - it's just another background async data flush operation
+like the BDI flusher thread...
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
