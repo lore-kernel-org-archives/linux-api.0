@@ -1,108 +1,128 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [RFC][PATCH] link.2: AT_ATOMIC_DATA and AT_ATOMIC_METADATA
-Date: Sat, 1 Jun 2019 08:45:49 +1000
-Message-ID: <20190531224549.GF29573@dread.disaster.area>
-References: <20190527172655.9287-1-amir73il@gmail.com>
- <20190528202659.GA12412@mit.edu>
- <CAOQ4uxgo5jmwQbLAKQre9=7pLQw=CwMgDaWPaJxi-5NGnPEVPQ@mail.gmail.com>
- <CAOQ4uxgj94WR82iHE4PDGSD0UDxG5sCtr+Sv+t1sOHHmnXFYzQ@mail.gmail.com>
- <20190531164136.GA3066@mit.edu>
+From: Minchan Kim <minchan@kernel.org>
+Subject: Re: [RFCv2 3/6] mm: introduce MADV_PAGEOUT
+Date: Sat, 1 Jun 2019 08:14:38 +0900
+Message-ID: <20190531231438.GA248371@google.com>
+References: <20190531064313.193437-1-minchan@kernel.org>
+ <20190531064313.193437-4-minchan@kernel.org>
+ <20190531165927.GA20067@cmpxchg.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-btrfs-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190531164136.GA3066@mit.edu>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Theodore Ts'o <tytso@mit.edu>
-Cc: Amir Goldstein <amir73il@gmail.com>, Jan Kara <jack@suse.cz>, "Darrick J . Wong" <darrick.wong@oracle.com>, Chris Mason <clm@fb.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-xfs <linux-xfs@vger.kernel.org>, Ext4 <linux-ext4@vger.kernel.org>, Linux Btrfs <linux-btrfs@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+In-Reply-To: <20190531165927.GA20067@cmpxchg.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Johannes Weiner <hannes@cmpxchg.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Michal Hocko <mhocko@suse.com>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, jannh@google.com, oleg@redhat.com, christian@brauner.io, oleksandr@redhat.com, hdanton@sina.com
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 31, 2019 at 12:41:36PM -0400, Theodore Ts'o wrote:
-> On Fri, May 31, 2019 at 06:21:45PM +0300, Amir Goldstein wrote:
-> > What do you think of:
-> > 
-> > "AT_ATOMIC_DATA (since Linux 5.x)
-> > A filesystem which accepts this flag will guarantee that if the linked file
-> > name exists after a system crash, then all of the data written to the file
-> > and all of the file's metadata at the time of the linkat(2) call will be
-> > visible.
+Hey Johannes,
+
+On Fri, May 31, 2019 at 12:59:27PM -0400, Johannes Weiner wrote:
+> Hi Michan,
 > 
-> ".... will be visible after the the file system is remounted".  (Never
-> hurts to be explicit.)
+> this looks pretty straight-forward to me, only one kink:
 > 
-> > The way to achieve this guarantee on old kernels is to call fsync (2)
-> > before linking the file, but doing so will also results in flushing of
-> > volatile disk caches.
-> >
-> > A filesystem which accepts this flag does NOT
-> > guarantee that any of the file hardlinks will exist after a system crash,
-> > nor that the last observed value of st_nlink (see stat (2)) will persist."
-> > 
+> On Fri, May 31, 2019 at 03:43:10PM +0900, Minchan Kim wrote:
+> > --- a/mm/vmscan.c
+> > +++ b/mm/vmscan.c
+> > @@ -2126,6 +2126,83 @@ static void shrink_active_list(unsigned long nr_to_scan,
+> >  			nr_deactivate, nr_rotated, sc->priority, file);
+> >  }
+> >  
+> > +unsigned long reclaim_pages(struct list_head *page_list)
+> > +{
+> > +	int nid = -1;
+> > +	unsigned long nr_isolated[2] = {0, };
+> > +	unsigned long nr_reclaimed = 0;
+> > +	LIST_HEAD(node_page_list);
+> > +	struct reclaim_stat dummy_stat;
+> > +	struct scan_control sc = {
+> > +		.gfp_mask = GFP_KERNEL,
+> > +		.priority = DEF_PRIORITY,
+> > +		.may_writepage = 1,
+> > +		.may_unmap = 1,
+> > +		.may_swap = 1,
+> > +	};
+> > +
+> > +	while (!list_empty(page_list)) {
+> > +		struct page *page;
+> > +
+> > +		page = lru_to_page(page_list);
+> > +		if (nid == -1) {
+> > +			nid = page_to_nid(page);
+> > +			INIT_LIST_HEAD(&node_page_list);
+> > +			nr_isolated[0] = nr_isolated[1] = 0;
+> > +		}
+> > +
+> > +		if (nid == page_to_nid(page)) {
+> > +			list_move(&page->lru, &node_page_list);
+> > +			nr_isolated[!!page_is_file_cache(page)] +=
+> > +						hpage_nr_pages(page);
+> > +			continue;
+> > +		}
+> > +
+> > +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_ANON,
+> > +					nr_isolated[0]);
+> > +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_FILE,
+> > +					nr_isolated[1]);
+> > +		nr_reclaimed += shrink_page_list(&node_page_list,
+> > +				NODE_DATA(nid), &sc, TTU_IGNORE_ACCESS,
+> > +				&dummy_stat, true);
+> > +		while (!list_empty(&node_page_list)) {
+> > +			struct page *page = lru_to_page(&node_page_list);
+> > +
+> > +			list_del(&page->lru);
+> > +			putback_lru_page(page);
+> > +		}
+> > +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_ANON,
+> > +					-nr_isolated[0]);
+> > +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_FILE,
+> > +					-nr_isolated[1]);
+> > +		nid = -1;
+> > +	}
+> > +
+> > +	if (!list_empty(&node_page_list)) {
+> > +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_ANON,
+> > +					nr_isolated[0]);
+> > +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_FILE,
+> > +					nr_isolated[1]);
+> > +		nr_reclaimed += shrink_page_list(&node_page_list,
+> > +				NODE_DATA(nid), &sc, TTU_IGNORE_ACCESS,
+> > +				&dummy_stat, true);
+> > +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_ANON,
+> > +					-nr_isolated[0]);
+> > +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_FILE,
+> > +					-nr_isolated[1]);
+> > +
+> > +		while (!list_empty(&node_page_list)) {
+> > +			struct page *page = lru_to_page(&node_page_list);
+> > +
+> > +			list_del(&page->lru);
+> > +			putback_lru_page(page);
+> > +		}
+> > +
+> > +	}
 > 
-> This is I think more precise:
+> The NR_ISOLATED accounting, nid parsing etc. is really awkward and
+> makes it hard to see what the function actually does.
 > 
->     This guarantee can be achieved by calling fsync(2) before linking
->     the file, but there may be more performant ways to provide these
->     semantics.  In particular, note that the use of the AT_ATOMIC_DATA
->     flag does *not* guarantee that the new link created by linkat(2)
->     will be persisted after a crash.
+> Can you please make those ISOLATED counters part of the isolation API?
+> Your patch really shows this is an overdue cleanup.
 
-So here's the *implementation* problem I see with this definition of
-AT_ATOMIC_DATA. After linkat(dirfd, name, AT_ATOMIC_DATA), there is
-no guarantee that the data is on disk or that the link is present.
+Yeah, that was very painful.
 
-However:
+> 
+> These are fast local percpu counters, we don't need the sprawling
+> batching we do all over vmscan.c, migrate.c, khugepaged.c,
+> compaction.c etc. Isolation can increase the counter page by page, and
+> reclaim or putback can likewise decrease them one by one.
+> 
+> It looks like mlock is the only user of the isolation api that does
+> not participate in the NR_ISOLATED_* counters protocol, but I don't
+> see why it wouldn't, or why doing so would hurt.
+> 
+> There are also seem to be quite a few callsites that use the atomic
+> versions of the counter API when they're clearly under the irqsafe
+> lru_lock. That would be fixed automatically by this work as well.
 
-	linkat(dirfd, name, AT_ATOMIC_DATA);
-	fsync(dirfd);
-
-Suddenly changes all that.
-
-i.e. when we fsync(dirfd) we guarantee that "name" is present in the
-directory and because we used AT_ATOMIC_DATA it implies that the
-data pointed to by "name" must be present on disk. IOWs, what was
-once a pure directory sync operation now *must* fsync all the child
-inodes that have been linkat(AT_ATOMIC_DATA) since the last time the
-direct has been made stable. 
-
-IOWs, the described AT_ATOMIC_DATA "we don't have to write the data
-during linkat() go-fast-get-out-of-gaol-free" behaviour isn't worth
-the pixels it is written on - it just moves all the complexity to
-directory fsync, and that's /already/ a behavioural minefield.
-
-IMO, the "work-around" of forcing filesystems to write back
-destination inodes during a link() operation is just nasty and will
-just end up with really weird performance anomalies occurring in
-production systems. That's not really a solution, either, especially
-as it is far, far faster for applications to use AIO_FSYNC and then
-on the completion callback run a normal linkat() operation...
-
-Hence, if I've understood these correctly, then I'll be recommending
-that XFS follows this:
-
-> We should also document that a file system which does not implement
-> this flag MUST return EINVAL if it is passed this flag to linkat(2).
-
-and returns -EINVAL to these flags because we do not have the change
-tracking infrastructure to handle these directory fsync semantics.
-I also suspect that, even if we could track this efficiently, we
-can't do the flushing atomically because of locking order
-constraints between directories, regular files, pages in the page
-cache, etc.
-
-Given that we can already use AIO to provide this sort of ordering,
-and AIO is vastly faster than synchronous IO, I don't see any point
-in adding complex barrier interfaces that can be /easily implemented
-in userspace/ using existing AIO primitives. You should start
-thinking about expanding libaio with stuff like
-"link_after_fdatasync()" and suddenly the whole problem of
-filesystem data vs metadata ordering goes away because the
-application directly controls all ordering without blocking and
-doesn't need to care what the filesystem under it does....
-
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
+I agree all points so will prepare clean up patch.
