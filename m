@@ -1,7 +1,7 @@
 From: Palmer Dabbelt <palmer@sifive.com>
-Subject: [PATCH 3/5] asm-generic: Register fchmodat4 as syscall 428
-Date: Fri, 31 May 2019 12:12:02 -0700
-Message-ID: <20190531191204.4044-4-palmer@sifive.com>
+Subject: [PATCH 1/5] Non-functional cleanup of a "__user * filename"
+Date: Fri, 31 May 2019 12:12:00 -0700
+Message-ID: <20190531191204.4044-2-palmer@sifive.com>
 References: <20190531191204.4044-1-palmer@sifive.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,27 +12,27 @@ To: viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, linux-fsdevel@vger.ke
 Cc: linux-arch@vger.kernel.org, x86@kernel.org, luto@kernel.org, tglx@linutronix.de, mingo@redhat.com, bp@alien8.de, hpa@zytor.com, Arnd Bergmann <arnd@arndb.de>, Palmer Dabbelt <palmer@sifive.com>
 List-Id: linux-api@vger.kernel.org
 
+The next patch defines a very similar interface, which I copied from
+this definition.  Since I'm touching it anyway I don't see any reason
+not to just go fix this one up.
+
 Signed-off-by: Palmer Dabbelt <palmer@sifive.com>
 ---
- include/uapi/asm-generic/unistd.h | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ include/linux/syscalls.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index dee7292e1df6..f0f4cad4c416 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -833,8 +833,11 @@ __SYSCALL(__NR_io_uring_enter, sys_io_uring_enter)
- #define __NR_io_uring_register 427
- __SYSCALL(__NR_io_uring_register, sys_io_uring_register)
- 
-+#define __NR_fchmodat4 428
-+__SYSCALL(__NR_fchmodat4, sys_fchmodat4)
-+
- #undef __NR_syscalls
--#define __NR_syscalls 428
-+#define __NR_syscalls 429
- 
- /*
-  * 32 bit systems traditionally used different
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index e446806a561f..396871b218f4 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -433,7 +433,7 @@ asmlinkage long sys_chdir(const char __user *filename);
+ asmlinkage long sys_fchdir(unsigned int fd);
+ asmlinkage long sys_chroot(const char __user *filename);
+ asmlinkage long sys_fchmod(unsigned int fd, umode_t mode);
+-asmlinkage long sys_fchmodat(int dfd, const char __user * filename,
++asmlinkage long sys_fchmodat(int dfd, const char __user *filename,
+ 			     umode_t mode);
+ asmlinkage long sys_fchownat(int dfd, const char __user *filename, uid_t user,
+ 			     gid_t group, int flag);
 -- 
 2.21.0
