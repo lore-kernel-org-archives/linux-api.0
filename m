@@ -1,61 +1,51 @@
-From: Amir Goldstein <amir73il@gmail.com>
-Subject: Re: [RFC][PATCH] link.2: AT_ATOMIC_DATA and AT_ATOMIC_METADATA
-Date: Fri, 31 May 2019 20:22:06 +0300
-Message-ID: <CAOQ4uxjp5psDBLXBu+26xRLpV50txqksVFe6ZhUo0io8kgoH4A@mail.gmail.com>
-References: <20190527172655.9287-1-amir73il@gmail.com> <20190528202659.GA12412@mit.edu>
- <CAOQ4uxgo5jmwQbLAKQre9=7pLQw=CwMgDaWPaJxi-5NGnPEVPQ@mail.gmail.com>
- <CAOQ4uxgj94WR82iHE4PDGSD0UDxG5sCtr+Sv+t1sOHHmnXFYzQ@mail.gmail.com> <20190531164136.GA3066@mit.edu>
+From: Daniel Colascione <dancol@google.com>
+Subject: Re: [RFCv2 5/6] mm: introduce external memory hinting API
+Date: Fri, 31 May 2019 10:35:20 -0700
+Message-ID: <CAKOZuevswVxZjffQcwjqJFa5V4Vv2jxq=mq6hWhd1SpNrGAGkg@mail.gmail.com>
+References: <20190531064313.193437-1-minchan@kernel.org> <20190531064313.193437-6-minchan@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <20190531164136.GA3066@mit.edu>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Theodore Ts'o <tytso@mit.edu>
-Cc: Jan Kara <jack@suse.cz>, "Darrick J . Wong" <darrick.wong@oracle.com>, Dave Chinner <david@fromorbit.com>, Chris Mason <clm@fb.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-xfs <linux-xfs@vger.kernel.org>, Ext4 <linux-ext4@vger.kernel.org>, Linux Btrfs <linux-btrfs@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190531064313.193437-6-minchan@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Minchan Kim <minchan@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, Jann Horn <jannh@google.com>, Oleg Nesterov <oleg@redhat.com>, Christian Brauner <christian@brauner.io>, oleksandr@redhat.com, hdanton@sina.com
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 31, 2019 at 7:41 PM Theodore Ts'o <tytso@mit.edu> wrote:
+On Thu, May 30, 2019 at 11:43 PM Minchan Kim <minchan@kernel.org> wrote:
 >
-> On Fri, May 31, 2019 at 06:21:45PM +0300, Amir Goldstein wrote:
-> > What do you think of:
-> >
-> > "AT_ATOMIC_DATA (since Linux 5.x)
-> > A filesystem which accepts this flag will guarantee that if the linked file
-> > name exists after a system crash, then all of the data written to the file
-> > and all of the file's metadata at the time of the linkat(2) call will be
-> > visible.
+> There is some usecase that centralized userspace daemon want to give
+> a memory hint like MADV_[COLD|PAGEEOUT] to other process. Android's
+> ActivityManagerService is one of them.
 >
-> ".... will be visible after the the file system is remounted".  (Never
-> hurts to be explicit.)
+> It's similar in spirit to madvise(MADV_WONTNEED), but the information
+> required to make the reclaim decision is not known to the app. Instead,
+> it is known to the centralized userspace daemon(ActivityManagerService),
+> and that daemon must be able to initiate reclaim on its own without
+> any app involvement.
 >
-> > The way to achieve this guarantee on old kernels is to call fsync (2)
-> > before linking the file, but doing so will also results in flushing of
-> > volatile disk caches.
-> >
-> > A filesystem which accepts this flag does NOT
-> > guarantee that any of the file hardlinks will exist after a system crash,
-> > nor that the last observed value of st_nlink (see stat (2)) will persist."
-> >
+> To solve the issue, this patch introduces new syscall process_madvise(2).
+> It could give a hint to the exeternal process of pidfd.
 >
-> This is I think more precise:
+>  int process_madvise(int pidfd, void *addr, size_t length, int advise,
+>                         unsigned long cookie, unsigned long flag);
 >
->     This guarantee can be achieved by calling fsync(2) before linking
->     the file, but there may be more performant ways to provide these
->     semantics.  In particular, note that the use of the AT_ATOMIC_DATA
->     flag does *not* guarantee that the new link created by linkat(2)
->     will be persisted after a crash.
+> Since it could affect other process's address range, only privileged
+> process(CAP_SYS_PTRACE) or something else(e.g., being the same UID)
+> gives it the right to ptrace the process could use it successfully.
+>
+> The syscall has a cookie argument to privode atomicity(i.e., detect
+> target process's address space change since monitor process has parsed
+> the address range of target process so the operaion could fail in case
+> of happening race). Although there is no interface to get a cookie
+> at this moment, it could be useful to consider it as argument to avoid
+> introducing another new syscall in future. It could support *atomicity*
+> for disruptive hint(e.g., MADV_DONTNEED|FREE).
+> flag argument is reserved for future use if we need to extend the API.
 
-OK. Just to be clear, mentioning hardlinks and st_link is not needed
-in your opinion?
-
->
-> We should also document that a file system which does not implement
-> this flag MUST return EINVAL if it is passed this flag to linkat(2).
->
-
-OK. I think this part can be documented as possible reason for EINVAL
-As in renameat(2) man page:
-       EINVAL The filesystem does not support one of the flags in flags.
-
-Thanks,
-Amir.
+How about a compromise? Let's allow all madvise hints if the process
+is calling process_madvise *on itself* (which will be useful once we
+wire up the atomicity cookie) and restrict the cross-process case to
+the hints you've mentioned. This way, the restriction on madvise hints
+isn't tied to the specific API, but to the relationship between hinter
+and hintee.
