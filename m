@@ -1,128 +1,57 @@
 From: Minchan Kim <minchan@kernel.org>
-Subject: Re: [RFCv2 3/6] mm: introduce MADV_PAGEOUT
-Date: Sat, 1 Jun 2019 08:14:38 +0900
-Message-ID: <20190531231438.GA248371@google.com>
+Subject: Re: [RFCv2 6/6] mm: extend process_madvise syscall to support vector
+ arrary
+Date: Sat, 1 Jun 2019 08:18:59 +0900
+Message-ID: <20190531231859.GB248371@google.com>
 References: <20190531064313.193437-1-minchan@kernel.org>
- <20190531064313.193437-4-minchan@kernel.org>
- <20190531165927.GA20067@cmpxchg.org>
+ <20190531064313.193437-7-minchan@kernel.org>
+ <2fd5d462449f24b04adad2bbdf0e272647e62247.camel@opteya.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190531165927.GA20067@cmpxchg.org>
+In-Reply-To: <2fd5d462449f24b04adad2bbdf0e272647e62247.camel@opteya.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Johannes Weiner <hannes@cmpxchg.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Michal Hocko <mhocko@suse.com>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, jannh@google.com, oleg@redhat.com, christian@brauner.io, oleksandr@redhat.com, hdanton@sina.com
+To: Yann Droneaud <ydroneaud@opteya.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, jannh@google.com, oleg@redhat.com, christian@brauner.io, oleksandr@redhat.com, hdanton@sina.com
 List-Id: linux-api@vger.kernel.org
 
-Hey Johannes,
+Hi Yann,
 
-On Fri, May 31, 2019 at 12:59:27PM -0400, Johannes Weiner wrote:
-> Hi Michan,
+On Fri, May 31, 2019 at 12:06:52PM +0200, Yann Droneaud wrote:
+> Hi,
 > 
-> this looks pretty straight-forward to me, only one kink:
-> 
-> On Fri, May 31, 2019 at 03:43:10PM +0900, Minchan Kim wrote:
-> > --- a/mm/vmscan.c
-> > +++ b/mm/vmscan.c
-> > @@ -2126,6 +2126,83 @@ static void shrink_active_list(unsigned long nr_to_scan,
-> >  			nr_deactivate, nr_rotated, sc->priority, file);
-> >  }
+> Le vendredi 31 mai 2019 à 15:43 +0900, Minchan Kim a écrit :
+> > 
+> > diff --git a/include/uapi/asm-generic/mman-common.h
+> > b/include/uapi/asm-generic/mman-common.h
+> > index 92e347a89ddc..220c2b5eb961 100644
+> > --- a/include/uapi/asm-generic/mman-common.h
+> > +++ b/include/uapi/asm-generic/mman-common.h
+> > @@ -75,4 +75,15 @@
+> >  #define PKEY_ACCESS_MASK	(PKEY_DISABLE_ACCESS |\
+> >  				 PKEY_DISABLE_WRITE)
 > >  
-> > +unsigned long reclaim_pages(struct list_head *page_list)
-> > +{
-> > +	int nid = -1;
-> > +	unsigned long nr_isolated[2] = {0, };
-> > +	unsigned long nr_reclaimed = 0;
-> > +	LIST_HEAD(node_page_list);
-> > +	struct reclaim_stat dummy_stat;
-> > +	struct scan_control sc = {
-> > +		.gfp_mask = GFP_KERNEL,
-> > +		.priority = DEF_PRIORITY,
-> > +		.may_writepage = 1,
-> > +		.may_unmap = 1,
-> > +		.may_swap = 1,
-> > +	};
-> > +
-> > +	while (!list_empty(page_list)) {
-> > +		struct page *page;
-> > +
-> > +		page = lru_to_page(page_list);
-> > +		if (nid == -1) {
-> > +			nid = page_to_nid(page);
-> > +			INIT_LIST_HEAD(&node_page_list);
-> > +			nr_isolated[0] = nr_isolated[1] = 0;
-> > +		}
-> > +
-> > +		if (nid == page_to_nid(page)) {
-> > +			list_move(&page->lru, &node_page_list);
-> > +			nr_isolated[!!page_is_file_cache(page)] +=
-> > +						hpage_nr_pages(page);
-> > +			continue;
-> > +		}
-> > +
-> > +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_ANON,
-> > +					nr_isolated[0]);
-> > +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_FILE,
-> > +					nr_isolated[1]);
-> > +		nr_reclaimed += shrink_page_list(&node_page_list,
-> > +				NODE_DATA(nid), &sc, TTU_IGNORE_ACCESS,
-> > +				&dummy_stat, true);
-> > +		while (!list_empty(&node_page_list)) {
-> > +			struct page *page = lru_to_page(&node_page_list);
-> > +
-> > +			list_del(&page->lru);
-> > +			putback_lru_page(page);
-> > +		}
-> > +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_ANON,
-> > +					-nr_isolated[0]);
-> > +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_FILE,
-> > +					-nr_isolated[1]);
-> > +		nid = -1;
-> > +	}
-> > +
-> > +	if (!list_empty(&node_page_list)) {
-> > +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_ANON,
-> > +					nr_isolated[0]);
-> > +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_FILE,
-> > +					nr_isolated[1]);
-> > +		nr_reclaimed += shrink_page_list(&node_page_list,
-> > +				NODE_DATA(nid), &sc, TTU_IGNORE_ACCESS,
-> > +				&dummy_stat, true);
-> > +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_ANON,
-> > +					-nr_isolated[0]);
-> > +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_FILE,
-> > +					-nr_isolated[1]);
-> > +
-> > +		while (!list_empty(&node_page_list)) {
-> > +			struct page *page = lru_to_page(&node_page_list);
-> > +
-> > +			list_del(&page->lru);
-> > +			putback_lru_page(page);
-> > +		}
-> > +
-> > +	}
+> > +struct pr_madvise_param {
+> > +	int size;		/* the size of this structure */
+> > +	int cookie;		/* reserved to support atomicity */
+> > +	int nr_elem;		/* count of below arrary fields */
 > 
-> The NR_ISOLATED accounting, nid parsing etc. is really awkward and
-> makes it hard to see what the function actually does.
+> Those should be unsigned.
 > 
-> Can you please make those ISOLATED counters part of the isolation API?
-> Your patch really shows this is an overdue cleanup.
+> There's an implicit hole here on ABI with 64bits aligned pointers
+> 
+> > +	int __user *hints;	/* hints for each range */
+> > +	/* to store result of each operation */
+> > +	const struct iovec __user *results;
+> > +	/* input address ranges */
+> > +	const struct iovec __user *ranges;
+> 
+> Using pointer type in uAPI structure require a 'compat' version of the
+> syscall need to be provided.
+> 
+> If using iovec too.
 
-Yeah, that was very painful.
-
-> 
-> These are fast local percpu counters, we don't need the sprawling
-> batching we do all over vmscan.c, migrate.c, khugepaged.c,
-> compaction.c etc. Isolation can increase the counter page by page, and
-> reclaim or putback can likewise decrease them one by one.
-> 
-> It looks like mlock is the only user of the isolation api that does
-> not participate in the NR_ISOLATED_* counters protocol, but I don't
-> see why it wouldn't, or why doing so would hurt.
-> 
-> There are also seem to be quite a few callsites that use the atomic
-> versions of the counter API when they're clearly under the irqsafe
-> lru_lock. That would be fixed automatically by this work as well.
-
-I agree all points so will prepare clean up patch.
+I will fix them when I submit next revision.
+Thanks for the review.
