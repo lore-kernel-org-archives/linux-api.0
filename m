@@ -1,101 +1,57 @@
 From: Christian Brauner <christian@brauner.io>
 Subject: Re: [PATCH v1 1/2] fork: add clone3
-Date: Sat, 1 Jun 2019 00:08:16 +0200
-Message-ID: <20190531220815.owrc5kbbdemmwdhs@brauner.io>
+Date: Sat, 1 Jun 2019 00:08:59 +0200
+Message-ID: <20190531220858.nyr7kdduk4auu67m@brauner.io>
 References: <20190529152237.10719-1-christian@brauner.io>
- <1058006e0df4b52b3e53c7b3202c04140899aeb5.camel@opteya.com>
+ <20190529222414.GA6492@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1058006e0df4b52b3e53c7b3202c04140899aeb5.camel@opteya.com>
+In-Reply-To: <20190529222414.GA6492@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yann Droneaud <ydroneaud@opteya.com>
-Cc: viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, torvalds@linux-foundation.org, jannh@google.com, fweimer@redhat.com, oleg@redhat.com, arnd@arndb.de, dhowells@redhat.com, Pavel Emelyanov <xemul@virtuozzo.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@gmail.com>, linux-api@vger.kernel.org
+To: Andrei Vagin <avagin@gmail.com>
+Cc: viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, torvalds@linux-foundation.org, jannh@google.com, fweimer@redhat.com, oleg@redhat.com, arnd@arndb.de, dhowells@redhat.com, Pavel Emelyanov <xemul@virtuozzo.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, May 29, 2019 at 05:42:14PM +0200, Yann Droneaud wrote:
-> Le mercredi 29 mai 2019 à 17:22 +0200, Christian Brauner a écrit :
+On Wed, May 29, 2019 at 03:24:15PM -0700, Andrei Vagin wrote:
+> On Wed, May 29, 2019 at 05:22:36PM +0200, Christian Brauner wrote:
 > > This adds the clone3 system call.
 > > 
+> > As mentioned several times already (cf. [7], [8]) here's the promised
+> > patchset for clone3().
 > > 
-> > diff --git a/kernel/fork.c b/kernel/fork.c
-> > index b4cba953040a..6bc3e3d17150 100644
-> > --- a/kernel/fork.c
-> > +++ b/kernel/fork.c
-> > @@ -2472,7 +2475,96 @@ SYSCALL_DEFINE5(clone, unsigned long, clone_flags, unsigned long, newsp,
-> >  		 unsigned long, tls)
-> >  #endif
-> >  {
-> > -	return _do_fork(clone_flags, newsp, 0, parent_tidptr, child_tidptr, tls);
-> > +	struct kernel_clone_args args = {
-> > +		.flags = clone_flags,
-> > +		.stack = newsp,
-> > +		.pidfd = parent_tidptr,
-> > +		.parent_tidptr = parent_tidptr,
-> > +		.tls = tls,
-> > +		.child_tidptr = child_tidptr,
-> > +	};
-> > +
-> > +	/* clone(CLONE_PIDFD) uses parent_tidptr to return a pidfd */
-> > +	if ((clone_flags & CLONE_PIDFD) && (clone_flags & CLONE_PARENT_SETTID))
-> > +		return -EINVAL;
-> > +
-> > +	return _do_fork(&args);
-> > +}
-> > +
-> > +static bool clone3_flags_valid(u64 flags)
-> > +{
-> > +	if (flags & CLONE_DETACHED)
-> > +		return false;
-> > +
-> > +	if (flags & ~CLONE_MAX)
-> > +		return false;
-> > +
-> > +	return true;
-> > +}
-> > +
-> > +static int copy_clone_args_from_user(struct kernel_clone_args *kargs,
-> > +				     struct clone_args __user *uargs,
-> > +				     size_t size)
-> > +{
-> > +	struct clone_args args;
-> > +
-> > +	if (unlikely(size > PAGE_SIZE))
-> > +		return -E2BIG;
-> > +
-> > +	if (unlikely(size < sizeof(struct clone_args)))
-> > +		return -EINVAL;
-> > +
-> > +	if (unlikely(!access_ok(uargs, size)))
-> > +		return -EFAULT;
-> > +
-> > +	if (size > sizeof(struct clone_args)) {
-> > +		unsigned char __user *addr;
-> > +		unsigned char __user *end;
-> > +		unsigned char val;
-> > +
-> > +		addr = (void __user *)uargs + sizeof(struct clone_args);
-> > +		end = (void __user *)uargs + size;
-> > +
-> > +		for (; addr < end; addr++) {
-> > +			if (get_user(val, addr))
-> > +				return -EFAULT;
-> > +			if (val)
-> > +				return -E2BIG;
+> > We recently merged the CLONE_PIDFD patchset (cf. [1]). It took the last
+> > free flag from clone().
+> > 
+> > Independent of the CLONE_PIDFD patchset a time namespace has been discussed
+> > at Linux Plumber Conference last year and has been sent out and reviewed
+> > (cf. [5]). It is expected that it will go upstream in the not too distant
+> > future. However, it relies on the addition of the CLONE_NEWTIME flag to
+> > clone(). The only other good candidate - CLONE_DETACHED - is currently not
+> > recyclable as we have identified at least two large or widely used
+> > codebases that currently pass this flag (cf. [2], [3], and [4]). Given that
+> > CLONE_PIDFD grabbed the last clone() flag the time namespace is effectively
+> > blocked. clone3() has the advantage that it will unblock this patchset
+> > again.
 > 
-> Should be -EINVAL: having something after the structure should be
-> handled just like an invalid flags, while still allowing future
-> userspace program to probe for support for newer feature.
+> Hi Christian,
+
+Hi Andrei,
 
 (Traveling until Monday, so sorry for delayed responses.)
 
-This copies what:
+> 
+> Thank you for thinking about time namespaces. I looked at this patch
+> quickly and I would suggest to move a termination signal out of flags. I
+> think we can add a separate field (exit_signal) into clone_args. Does it
+> make sense? For me, exit_signal in flags always looked weird...
 
-kernel/sched/core.c:sched_copy_attr()
-kernel/event/core.c:perf_copy_attr()
+Yup, that does sound good to me.
 
-are already doing. Consistency might be good here but, I think.
+> 
+> I will look at this patch more detailed later this week. Thanks.
+
+Excellent!
 
 Christian
