@@ -1,59 +1,77 @@
-From: Yann Droneaud <ydroneaud@opteya.com>
-Subject: Re: [RFCv2 6/6] mm: extend process_madvise syscall to support
- vector arrary
-Date: Fri, 31 May 2019 12:06:52 +0200
-Message-ID: <2fd5d462449f24b04adad2bbdf0e272647e62247.camel@opteya.com>
-References: <20190531064313.193437-1-minchan@kernel.org>
-         <20190531064313.193437-7-minchan@kernel.org>
+From: Renzo Davoli <renzo@cs.unibo.it>
+Subject: Re: [PATCH 1/1] eventfd new tag EFD_VPOLL: generate epoll events
+Date: Fri, 31 May 2019 12:45:02 +0200
+Message-ID: <20190531104502.GE3661@cs.unibo.it>
+References: <20190526142521.GA21842@cs.unibo.it>
+ <20190527073332.GA13782@kroah.com>
+ <20190527133621.GC26073@cs.unibo.it>
+ <480f1bda66b67f740f5da89189bbfca3@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190531064313.193437-7-minchan@kernel.org>
+Content-Disposition: inline
+In-Reply-To: <480f1bda66b67f740f5da89189bbfca3@suse.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Minchan Kim <minchan@kernel.org>, Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, jannh@google.com, oleg@redhat.com, christian@brauner.io, oleksandr@redhat.com, hdanton@sina.com
+To: Roman Penyaev <rpenyaev@suse.de>
+Cc: Greg KH <gregkh@linuxfoundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Davide Libenzi <davidel@xmailserver.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel-owner@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+HI Roman,
 
-Le vendredi 31 mai 2019 à 15:43 +0900, Minchan Kim a écrit :
+On Fri, May 31, 2019 at 11:34:08AM +0200, Roman Penyaev wrote:
+> On 2019-05-27 15:36, Renzo Davoli wrote:
+> > Unfortunately this approach cannot be applied to
+> > poll/select/ppoll/pselect/epoll.
 > 
-> diff --git a/include/uapi/asm-generic/mman-common.h
-> b/include/uapi/asm-generic/mman-common.h
-> index 92e347a89ddc..220c2b5eb961 100644
-> --- a/include/uapi/asm-generic/mman-common.h
-> +++ b/include/uapi/asm-generic/mman-common.h
-> @@ -75,4 +75,15 @@
->  #define PKEY_ACCESS_MASK	(PKEY_DISABLE_ACCESS |\
->  				 PKEY_DISABLE_WRITE)
->  
-> +struct pr_madvise_param {
-> +	int size;		/* the size of this structure */
-> +	int cookie;		/* reserved to support atomicity */
-> +	int nr_elem;		/* count of below arrary fields */
+> If you have to override other systemcalls, what is the problem to override
+> poll family?  It will add, let's say, 50 extra code lines complexity to your
+> userspace code.  All you need is to be woken up by *any* event and check
+> one mask variable, in order to understand what you need to do: read or
+> write,
+> basically exactly what you do in your eventfd modification, but only in
+> userspace.
 
-Those should be unsigned.
+This approach would not scale. If I want to use both a (user-space) network stack
+and a (emulated) device (or more stacks and devices) which (overridden) poll would I use?
 
-There's an implicit hole here on ABI with 64bits aligned pointers
+The poll of the first stack is not able to to deal with the third device.
 
-> +	int __user *hints;	/* hints for each range */
-> +	/* to store result of each operation */
-> +	const struct iovec __user *results;
-> +	/* input address ranges */
-> +	const struct iovec __user *ranges;
+> 
+> 
+> > > Why can it not be less than 64?
+> > This is the imeplementation of 'write'. The 64 bits include the
+> > 'command'
+> > EFD_VPOLL_ADDEVENTS, EFD_VPOLL_DELEVENTS or EFD_VPOLL_MODEVENTS (in the
+> > most
+> > significant 32 bits) and the set of events (in the lowest 32 bits).
+> 
+> Do you really need add/del/mod semantics?  Userspace still has to keep mask
+> somewhere, so you can have one simple command, which does:
+>    ctx->count = events;
+> in kernel, so no masks and this games with bits are needed.  That will
+> simplify API.
 
-Using pointer type in uAPI structure require a 'compat' version of the
-syscall need to be provided.
+It is true, at the price to have more complex code in user space.
+Other system calls could have beeen implemented as "set the value", instead there are
+ADD/DEL modification flags.
+I mean for example sigprocmask (SIG_BLOCK, SIG_UNBLOCK, SIG_SETMASK), or even epoll_ctl.
+While poll requires the program to keep the struct pollfd array stored somewhere,
+epoll is more powerful and flexible as different file descriptors can be added
+and deleted by different modules/components.
 
-If using iovec too.
+If I have two threads implementing the send and receive path of a socket in a user-space
+network stack implementation the epoll pending bitmap is shared so I have to create
+critical sections like the following one any time I need to set or reset a bit.
+	pthread_mutex_lock(mylock)
+	events |= EPOLLIN
+	write(efd, &events, sizeof(events));
+	pthread_mutex_unlock(mylock)
+Using add/del semantics locking is not required as the send path thread deals with EPOLLOUT while
+its siblings receive thread uses EPOLLIN or EPOLLPRI
 
-> +};
-> +
->  #endif /* __ASM_GENERIC_MMAN_COMMON_H */
+I would prefer the add/del/mod semantics, but if this is generally perceived as a unnecessary 
+complexity in the kernel code I can update my patch.  
 
-Regards.
-
--- 
-Yann Droneaud
-OPTEYA
+Thank you Roman,
+			
+			renzo
