@@ -1,119 +1,54 @@
-From: Johannes Weiner <hannes@cmpxchg.org>
-Subject: Re: [RFCv2 3/6] mm: introduce MADV_PAGEOUT
-Date: Fri, 31 May 2019 12:59:27 -0400
-Message-ID: <20190531165927.GA20067@cmpxchg.org>
-References: <20190531064313.193437-1-minchan@kernel.org>
- <20190531064313.193437-4-minchan@kernel.org>
+From: David Howells <dhowells@redhat.com>
+Subject: Re: [PATCH 1/7] General notification queue with user mmap()'able ring buffer
+Date: Fri, 31 May 2019 18:12:42 +0100
+Message-ID: <15401.1559322762@warthog.procyon.org.uk>
+References: <20190531164444.GD2606@hirez.programming.kicks-ass.net> <CAG48ez0R-R3Xs+3Xg9T9qcV3Xv6r4pnx1Z2y=Ltx7RGOayte_w@mail.gmail.com> <20190528162603.GA24097@kroah.com> <155905930702.7587.7100265859075976147.stgit@warthog.procyon.org.uk> <155905931502.7587.11705449537368497489.stgit@warthog.procyon.org.uk> <4031.1559064620@warthog.procyon.org.uk> <20190528231218.GA28384@kroah.com> <31936.1559146000@warthog.procyon.org.uk> <16193.1559163763@warthog.procyon.org.uk> <21942.1559304135@warthog.procyon.org.uk> <606.1559312412@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190531064313.193437-4-minchan@kernel.org>
+In-Reply-To: <20190531164444.GD2606@hirez.programming.kicks-ass.net>
+Content-ID: <15400.1559322762.1@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Minchan Kim <minchan@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Michal Hocko <mhocko@suse.com>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, jannh@google.com, oleg@redhat.com, christian@brauner.io, oleksandr@redhat.com, hdanton@sina.com
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: dhowells@redhat.com, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Al Viro <viro@zeniv.linux.org.uk>, raven@themaw.net, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module <linux-security-module@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Michan,
+Peter Zijlstra <peterz@infradead.org> wrote:
 
-this looks pretty straight-forward to me, only one kink:
+> > > (and it has already been established that refcount_t doesn't work for
+> > > usage count scenarios)
+> > 
+> > ?
+> > 
+> > Does that mean struct kref doesn't either?
+> 
+> Indeed, since kref is just a pointless wrapper around refcount_t it does
+> not either.
+> 
+> The main distinction between a reference count and a usage count is that
+> 0 means different things. For a refcount 0 means dead. For a usage count
+> 0 is merely unused but valid.
 
-On Fri, May 31, 2019 at 03:43:10PM +0900, Minchan Kim wrote:
-> --- a/mm/vmscan.c
-> +++ b/mm/vmscan.c
-> @@ -2126,6 +2126,83 @@ static void shrink_active_list(unsigned long nr_to_scan,
->  			nr_deactivate, nr_rotated, sc->priority, file);
->  }
->  
-> +unsigned long reclaim_pages(struct list_head *page_list)
-> +{
-> +	int nid = -1;
-> +	unsigned long nr_isolated[2] = {0, };
-> +	unsigned long nr_reclaimed = 0;
-> +	LIST_HEAD(node_page_list);
-> +	struct reclaim_stat dummy_stat;
-> +	struct scan_control sc = {
-> +		.gfp_mask = GFP_KERNEL,
-> +		.priority = DEF_PRIORITY,
-> +		.may_writepage = 1,
-> +		.may_unmap = 1,
-> +		.may_swap = 1,
-> +	};
-> +
-> +	while (!list_empty(page_list)) {
-> +		struct page *page;
-> +
-> +		page = lru_to_page(page_list);
-> +		if (nid == -1) {
-> +			nid = page_to_nid(page);
-> +			INIT_LIST_HEAD(&node_page_list);
-> +			nr_isolated[0] = nr_isolated[1] = 0;
-> +		}
-> +
-> +		if (nid == page_to_nid(page)) {
-> +			list_move(&page->lru, &node_page_list);
-> +			nr_isolated[!!page_is_file_cache(page)] +=
-> +						hpage_nr_pages(page);
-> +			continue;
-> +		}
-> +
-> +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_ANON,
-> +					nr_isolated[0]);
-> +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_FILE,
-> +					nr_isolated[1]);
-> +		nr_reclaimed += shrink_page_list(&node_page_list,
-> +				NODE_DATA(nid), &sc, TTU_IGNORE_ACCESS,
-> +				&dummy_stat, true);
-> +		while (!list_empty(&node_page_list)) {
-> +			struct page *page = lru_to_page(&node_page_list);
-> +
-> +			list_del(&page->lru);
-> +			putback_lru_page(page);
-> +		}
-> +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_ANON,
-> +					-nr_isolated[0]);
-> +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_FILE,
-> +					-nr_isolated[1]);
-> +		nid = -1;
-> +	}
-> +
-> +	if (!list_empty(&node_page_list)) {
-> +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_ANON,
-> +					nr_isolated[0]);
-> +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_FILE,
-> +					nr_isolated[1]);
-> +		nr_reclaimed += shrink_page_list(&node_page_list,
-> +				NODE_DATA(nid), &sc, TTU_IGNORE_ACCESS,
-> +				&dummy_stat, true);
-> +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_ANON,
-> +					-nr_isolated[0]);
-> +		mod_node_page_state(NODE_DATA(nid), NR_ISOLATED_FILE,
-> +					-nr_isolated[1]);
-> +
-> +		while (!list_empty(&node_page_list)) {
-> +			struct page *page = lru_to_page(&node_page_list);
-> +
-> +			list_del(&page->lru);
-> +			putback_lru_page(page);
-> +		}
-> +
-> +	}
+Ah - I consider the terms interchangeable.
 
-The NR_ISOLATED accounting, nid parsing etc. is really awkward and
-makes it hard to see what the function actually does.
+Take Documentation/filesystems/vfs.txt for instance:
 
-Can you please make those ISOLATED counters part of the isolation API?
-Your patch really shows this is an overdue cleanup.
+  dget: open a new handle for an existing dentry (this just increments
+	the usage count)
 
-These are fast local percpu counters, we don't need the sprawling
-batching we do all over vmscan.c, migrate.c, khugepaged.c,
-compaction.c etc. Isolation can increase the counter page by page, and
-reclaim or putback can likewise decrease them one by one.
+  dput: close a handle for a dentry (decrements the usage count). ...
 
-It looks like mlock is the only user of the isolation api that does
-not participate in the NR_ISOLATED_* counters protocol, but I don't
-see why it wouldn't, or why doing so would hurt.
+  ...
 
-There are also seem to be quite a few callsites that use the atomic
-versions of the counter API when they're clearly under the irqsafe
-lru_lock. That would be fixed automatically by this work as well.
+  d_lookup: look up a dentry given its parent and path name component
+	It looks up the child of that given name from the dcache
+	hash table. If it is found, the reference count is incremented
+	and the dentry is returned. The caller must use dput()
+	to free the dentry when it finishes using it.
+
+Here we interchange the terms.
+
+Or https://www.kernel.org/doc/gorman/html/understand/understand013.html
+which seems to interchange the terms in reference to struct page.
+
+David
