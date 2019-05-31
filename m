@@ -1,82 +1,106 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH 1/7] General notification queue with user mmap()'able ring buffer
-Date: Fri, 31 May 2019 15:20:12 +0100
-Message-ID: <606.1559312412@warthog.procyon.org.uk>
-References: <20190531132620.GC2606@hirez.programming.kicks-ass.net> <20190531111445.GO2677@hirez.programming.kicks-ass.net> <CAG48ez0R-R3Xs+3Xg9T9qcV3Xv6r4pnx1Z2y=Ltx7RGOayte_w@mail.gmail.com> <20190528162603.GA24097@kroah.com> <155905930702.7587.7100265859075976147.stgit@warthog.procyon.org.uk> <155905931502.7587.11705449537368497489.stgit@warthog.procyon.org.uk> <4031.1559064620@warthog.procyon.org.uk> <20190528231218.GA28384@kroah.com> <31936.1559146000@warthog.procyon.org.uk> <16193.1559163763@warthog.procyon.org.uk> <21942.1559304135@warthog.procyon.org.uk>
+From: Minchan Kim <minchan@kernel.org>
+Subject: Re: [RFCv2 1/6] mm: introduce MADV_COLD
+Date: Fri, 31 May 2019 23:34:07 +0900
+Message-ID: <20190531143407.GB216592@google.com>
+References: <20190531064313.193437-1-minchan@kernel.org>
+ <20190531064313.193437-2-minchan@kernel.org>
+ <20190531084752.GI6896@dhcp22.suse.cz>
+ <20190531133904.GC195463@google.com>
+ <20190531140332.GT6896@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190531132620.GC2606@hirez.programming.kicks-ass.net>
-Content-ID: <605.1559312411.1@warthog.procyon.org.uk>
+Content-Disposition: inline
+In-Reply-To: <20190531140332.GT6896@dhcp22.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: dhowells@redhat.com, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Al Viro <viro@zeniv.linux.org.uk>, raven@themaw.net, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module <linux-security-module@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, jannh@google.com, oleg@redhat.com, christian@brauner.io, oleksandr@redhat.com, hdanton@sina.com
 List-Id: linux-api@vger.kernel.org
 
-Peter Zijlstra <peterz@infradead.org> wrote:
-
-> Is it not the responsibility of the task that affects the 1->0
-> transition to actually free the memory?
+On Fri, May 31, 2019 at 04:03:32PM +0200, Michal Hocko wrote:
+> On Fri 31-05-19 22:39:04, Minchan Kim wrote:
+> > On Fri, May 31, 2019 at 10:47:52AM +0200, Michal Hocko wrote:
+> > > On Fri 31-05-19 15:43:08, Minchan Kim wrote:
+> > > > When a process expects no accesses to a certain memory range, it could
+> > > > give a hint to kernel that the pages can be reclaimed when memory pressure
+> > > > happens but data should be preserved for future use.  This could reduce
+> > > > workingset eviction so it ends up increasing performance.
+> > > > 
+> > > > This patch introduces the new MADV_COLD hint to madvise(2) syscall.
+> > > > MADV_COLD can be used by a process to mark a memory range as not expected
+> > > > to be used in the near future. The hint can help kernel in deciding which
+> > > > pages to evict early during memory pressure.
+> > > > 
+> > > > Internally, it works via deactivating pages from active list to inactive's
+> > > > head if the page is private because inactive list could be full of
+> > > > used-once pages which are first candidate for the reclaiming and that's a
+> > > > reason why MADV_FREE move pages to head of inactive LRU list. Therefore,
+> > > > if the memory pressure happens, they will be reclaimed earlier than other
+> > > > active pages unless there is no access until the time.
+> > > 
+> > > [I am intentionally not looking at the implementation because below
+> > > points should be clear from the changelog - sorry about nagging ;)]
+> > > 
+> > > What kind of pages can be deactivated? Anonymous/File backed.
+> > > Private/shared? If shared, are there any restrictions?
+> > 
+> > Both file and private pages could be deactived from each active LRU
+> > to each inactive LRU if the page has one map_count. In other words,
+> > 
+> >     if (page_mapcount(page) <= 1)
+> >         deactivate_page(page);
 > 
-> That is, I'm expecting the '...' in both cases above the include the
-> actual freeing of the object. If this is not the case, then @usage is
-> not a reference count.
+> Why do we restrict to pages that are single mapped?
 
-Yes.  The '...' does the freeing.  It seemed unnecessary to include the code
-ellipsised there since it's not the point of the discussion, but if you want
-the full function:
+Because page table in one of process shared the page would have access bit
+so finally we couldn't reclaim the page. The more process it is shared,
+the more fail to reclaim.
 
-	void afs_put_call(struct afs_call *call)
-	{
-		struct afs_net *net = call->net;
-		int n = atomic_dec_return(&call->usage);
-		int o = atomic_read(&net->nr_outstanding_calls);
+> 
+> > > Are there any restrictions on mappings? E.g. what would be an effect of
+> > > this operation on hugetlbfs mapping?
+> > 
+> > VM_LOCKED|VM_HUGETLB|VM_PFNMAP vma will be skipped like MADV_FREE|DONTNEED
+> 
+> OK documenting that this is restricted to the same vmas as MADV_FREE|DONTNEED
+> is really useful to mention.
 
-		trace_afs_call(call, afs_call_trace_put, n + 1, o,
-			       __builtin_return_address(0));
+Sure.
 
-		ASSERTCMP(n, >=, 0);
-		if (n == 0) {
-			ASSERT(!work_pending(&call->async_work));
-			ASSERT(call->type->name != NULL);
+> 
+> > 
+> > > 
+> > > Also you are talking about inactive LRU but what kind of LRU is that? Is
+> > > it the anonymous LRU? If yes, don't we have the same problem as with the
+> > 
+> > active file page -> inactive file LRU
+> > active anon page -> inacdtive anon LRU
+> > 
+> > > early MADV_FREE implementation when enough page cache causes that
+> > > deactivated anonymous memory doesn't get reclaimed anytime soon. Or
+> > > worse never when there is no swap available?
+> > 
+> > I think MADV_COLD is a little bit different symantic with MAVD_FREE.
+> > MADV_FREE means it's okay to discard when the memory pressure because
+> > the content of the page is *garbage*. Furthemore, freeing such pages is
+> > almost zero overhead since we don't need to swap out and access
+> > afterward causes minor fault. Thus, it would make sense to put those
+> > freeable pages in inactive file LRU to compete other used-once pages.
+> > 
+> > However, MADV_COLD doesn't means it's a garbage and freeing requires
+> > swap out/swap in afterward. So, it would be better to move inactive
+> > anon's LRU list, not file LRU. Furthermore, it would avoid unnecessary
+> > scanning of those cold anonymous if system doesn't have a swap device.
+> 
+> Please document this, if this is really a desirable semantic because
+> then you have the same set of problems as we've had with the early
+> MADV_FREE implementation mentioned above.
 
-			if (call->rxcall) {
-				rxrpc_kernel_end_call(net->socket, call->rxcall);
-				call->rxcall = NULL;
-			}
-			if (call->type->destructor)
-				call->type->destructor(call);
+IIRC, the problem of MADV_FREE was that we couldn't discard freeable
+pages because VM never scan anonymous LRU with swapless system.
+However, it's not the our case because we should reclaim them, not
+discarding.
 
-			afs_put_server(call->net, call->server);
-			afs_put_cb_interest(call->net, call->cbi);
-			afs_put_addrlist(call->alist);
-			kfree(call->request);
+I will include it in the description.
 
-			trace_afs_call(call, afs_call_trace_free, 0, o,
-				       __builtin_return_address(0));
-			kfree(call);
-
-			o = atomic_dec_return(&net->nr_outstanding_calls);
-			if (o == 0)
-				wake_up_var(&net->nr_outstanding_calls);
-		}
-	}
-
-You can see the kfree(call) in there.
-Peter Zijlstra <peterz@infradead.org> wrote:
-
-> (and it has already been established that refcount_t doesn't work for
-> usage count scenarios)
-
-?
-
-Does that mean struct kref doesn't either?
-
-> Aside from that, is the problem that refcount_dec_and_test() returns a
-> boolean (true - last put, false - not last) instead of the refcount
-> value? This does indeed make it hard to print the exact count value for
-> the event.
-
-That is the problem, yes - well, one of them: refcount_inc() doesn't either.
-
-David
+Thanks.
