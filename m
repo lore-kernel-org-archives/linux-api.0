@@ -1,70 +1,200 @@
-From: "Theodore Ts'o" <tytso@mit.edu>
-Subject: Re: [RFC][PATCH] link.2: AT_ATOMIC_DATA and AT_ATOMIC_METADATA
-Date: Fri, 31 May 2019 15:21:19 -0400
-Message-ID: <20190531192119.GB3066@mit.edu>
-References: <20190527172655.9287-1-amir73il@gmail.com>
- <20190528202659.GA12412@mit.edu>
- <CAOQ4uxgo5jmwQbLAKQre9=7pLQw=CwMgDaWPaJxi-5NGnPEVPQ@mail.gmail.com>
- <CAOQ4uxgj94WR82iHE4PDGSD0UDxG5sCtr+Sv+t1sOHHmnXFYzQ@mail.gmail.com>
- <20190531164136.GA3066@mit.edu>
- <CAOQ4uxjp5psDBLXBu+26xRLpV50txqksVFe6ZhUo0io8kgoH4A@mail.gmail.com>
+From: Palmer Dabbelt <palmer@sifive.com>
+Subject: Add a new fchmodat4() syscall
+Date: Fri, 31 May 2019 12:11:59 -0700
+Message-ID: <20190531191204.4044-1-palmer@sifive.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAOQ4uxjp5psDBLXBu+26xRLpV50txqksVFe6ZhUo0io8kgoH4A@mail.gmail.com>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Amir Goldstein <amir73il@gmail.com>
-Cc: Jan Kara <jack@suse.cz>, "Darrick J . Wong" <darrick.wong@oracle.com>, Dave Chinner <david@fromorbit.com>, Chris Mason <clm@fb.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-xfs <linux-xfs@vger.kernel.org>, Ext4 <linux-ext4@vger.kernel.org>, Linux Btrfs <linux-btrfs@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: linux-arch@vger.kernel.org, x86@kernel.org, luto@kernel.org, tglx@linutronix.de, mingo@redhat.com, bp@alien8.de, hpa@zytor.com, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 31, 2019 at 08:22:06PM +0300, Amir Goldstein wrote:
-> >
-> > This is I think more precise:
-> >
-> >     This guarantee can be achieved by calling fsync(2) before linking
-> >     the file, but there may be more performant ways to provide these
-> >     semantics.  In particular, note that the use of the AT_ATOMIC_DATA
-> >     flag does *not* guarantee that the new link created by linkat(2)
-> >     will be persisted after a crash.
-> 
-> OK. Just to be clear, mentioning hardlinks and st_link is not needed
-> in your opinion?
+I spent half of dinner last night being complained to by one of our
+hardware engineers about Linux's lack of support for the flags argument
+to fchmodat().  This all came about because of a FUSE filesystem
+implementation, and while there are some application-specific
+workarounds for the issue it seemed to me like the cleanest bet was to
+just go add another fchmodat() that supports flags to the kernel.
 
-Your previous text stated that it was undefined what would happen to
-all hardlinks belonging to the file, and that would imply that if a
-file had N hard links, some in the directory which we are modifying,
-and some in other directories, that somehow any of them might not be
-present after the crash.  And that's not the case.  Suppose the file
-currently has hardlinks test1/foo, test1/quux, and test2/baz --- and
-we've called syncfs(2) on the file system so everything is persisted,
-and then linkat(2) is used to create a new hardlink, test1/bar.
+The actual implementation is super simple: essentially it's just
+the same as fchmodat(), but LOOKUP_FOLLOW is conditionally set based on
+the flags.  I've attempted to make this match "man 2 fchmodat" as
+closely as possible, which says EINVAL is returned for invalid flags (as
+opposed to ENOTSUPP, which is currently returned by glibc for
+AT_SYMLINK_NOFOLLOW).  I have a sketch of a glibc patch that I haven't
+even compiled yet, but seems fairly straight-forward:
 
-After a crash, the existence of test1/foo, test1/quux, and test2/baz
-are not in question.  It's only unclear whether or not test1/bar
-exists after the crash.
+    diff --git a/sysdeps/unix/sysv/linux/fchmodat.c b/sysdeps/unix/sysv/linux/fchmodat.c
+    index 6d9cbc1ce9e0..b1beab76d56c 100644
+    --- a/sysdeps/unix/sysv/linux/fchmodat.c
+    +++ b/sysdeps/unix/sysv/linux/fchmodat.c
+    @@ -29,12 +29,36 @@
+     int
+     fchmodat (int fd, const char *file, mode_t mode, int flag)
+     {
+    -  if (flag & ~AT_SYMLINK_NOFOLLOW)
+    -    return INLINE_SYSCALL_ERROR_RETURN_VALUE (EINVAL);
+    -#ifndef __NR_lchmod		/* Linux so far has no lchmod syscall.  */
+    +  /* There are four paths through this code:
+    +      - The flags are zero.  In this case it's fine to call fchmodat.
+    +      - The flags are non-zero and glibc doesn't have access to
+    +	__NR_fchmodat4.  In this case all we can do is emulate the error codes
+    +	defined by the glibc interface from userspace.
+    +      - The flags are non-zero, glibc has __NR_fchmodat4, and the kernel has
+    +	fchmodat4.  This is the simplest case, as the fchmodat4 syscall exactly
+    +	matches glibc's library interface so it can be called directly.
+    +      - The flags are non-zero, glibc has __NR_fchmodat4, but the kernel does
+    +	not.  In this case we must respect the error codes defined by the glibc
+    +	interface instead of returning ENOSYS.
+    +    The intent here is to ensure that the kernel is called at most once per
+    +    library call, and that the error types defined by glibc are always
+    +    respected.  */
+    +
+    +#ifdef __NR_fchmodat4
+    +  long result;
+    +#endif
+    +
+    +  if (flag == 0)
+    +    return INLINE_SYSCALL (fchmodat, 3, fd, file, mode);
+    +
+    +#ifdef __NR_fchmodat4
+    +  result = INLINE_SYSCALL (fchmodat4, 4, fd, file, mode, flag);
+    +  if (result == 0 || errno != ENOSYS)
+    +    return result;
+    +#endif
+    +
+       if (flag & AT_SYMLINK_NOFOLLOW)
+         return INLINE_SYSCALL_ERROR_RETURN_VALUE (ENOTSUP);
+    -#endif
+     
+    -  return INLINE_SYSCALL (fchmodat, 3, fd, file, mode);
+    +  return INLINE_SYSCALL_ERROR_RETURN_VALUE (EINVAL);
+     }
 
-As far as st_nlink is concerned, the presumption is that the file
-system itself will be consistent after the crash.  So if the hard link
-has been persisted, then st_nlink will be incremented, if it has not,
-it won't be.
+I've never added a new syscall before so I'm not really sure what the
+proper procedure to follow is.  I'm assuming any new syscall will
+involve fairly significant discussion, so I've just done the minimum of
+an implementation for this patch set.  Specifically, I've:
 
-Finally, one thing which gets hard about trying to state these sorts
-of things as guarantees.  Sometimes, the file system won't *know*
-whether or not it can make these guarantees.  For example what should
-we do if the file system is mounted with nobarrier?  If the overall
-hardware design includes UPS's or some other kind of battery backup,
-the guarantee may very well exist.  But the file system code can't
-know whether or not that is the case.  So my inclination is to allow
-the file system to accept the flag even if the mount option nobarrier
-is in play --- but in that case, the guarantee is only if the rest of
-the system is designed appropriately.
+* Defined a new syscall that looks like fchmodat but includes a flag
+  argument, which I'm calling fchmodat4 because it has 4 arguments.  I
+  don't know if that's the correct naming convention, and don't really
+  have any skin in that game.
+* Implemented that syscall by extending the fchmod code to handle flags,
+  which is pretty straight-forward.  I think it's sane, but given that
+  it's so simple I'm not sure if I'm missing something -- specifically,
+  I didn't go check to make sure the semantics of AT_SYMLINK_NOFOLLOW
+  match !LOOKUP_FOLLOW.  I'm assuming the do, but sometimes when I look
+  at something and say "that's so simple, how is it broken" I'm actually
+  just missing something entirely.
+* Added an asm-generic syscall number for this, which I assume I'm
+  supposed to do this first as it looks like we're trying to keep the
+  numbers in sync everywhere.
+* Added x86 syscalls for this so I could test it.
 
-(For that matter, it used to be that there existed hard drives that
-lied about whether they had a writeback cache, and/or made the CACHE
-FLUSH a no-op so they could win the Winbench benchmarketing wars,
-which was worth millions and millions of dollars in sales.  So we can
-only assume that the hardware isn't lying to us when we use words like
-"guarantee".)
+I also cleaned up a checkpatch issue in fchmodat().  I only found this
+because I copied the fchmodat() interface for fchmodat4() and it threw
+the warning, I don't personally care either way as to whether or not the
+space is in there.
 
-						- Ted
+I've given this fairly minimal testing.  Essentially all I've done is
+booted up 5.1.6 with this patch set on my local development box and run
+
+    $ touch test-file
+    $ ln -s test-file test-link
+    $ cat > test.c
+    #include <fcntl.h>
+    #include <stdio.h>
+    #include <unistd.h>
+    
+    int main(int argc, char **argv)
+    {
+            long out;
+    
+            out = syscall(428, AT_FDCWD, "test-file", 0x888, AT_SYMLINK_NOFOLLOW);
+            printf("fchmodat4(AT_FDCWD, \"test-file\", 0x888, AT_SYMLINK_NOFOLLOW): %ld\n", out);
+    
+            out = syscall(428, AT_FDCWD, "test-file", 0x888, 0);
+            printf("fchmodat4(AT_FDCWD, \"test-file\", 0x888, 0): %ld\n", out);
+    
+            out = syscall(268, AT_FDCWD, "test-file", 0x888);
+            printf("fchmodat(AT_FDCWD, \"test-file\", 0x888): %ld\n", out);
+    
+            out = syscall(428, AT_FDCWD, "test-link", 0x888, AT_SYMLINK_NOFOLLOW);
+            printf("fchmodat4(AT_FDCWD, \"test-link\", 0x888, AT_SYMLINK_NOFOLLOW): %ld\n", out);
+    
+            out = syscall(428, AT_FDCWD, "test-link", 0x888, 0);
+            printf("fchmodat4(AT_FDCWD, \"test-link\", 0x888, 0): %ld\n", out);
+    
+            out = syscall(268, AT_FDCWD, "test-link", 0x888);
+            printf("fchmodat(AT_FDCWD, \"test-link\", 0x888): %ld\n", out);
+    
+            return 0;
+    }
+    $ gcc test.c -o test
+    $ ./test
+    fchmodat4(AT_FDCWD, "test-file", 0x888, AT_SYMLINK_NOFOLLOW): 0
+    fchmodat4(AT_FDCWD, "test-file", 0x888, 0): 0
+    fchmodat(AT_FDCWD, "test-file", 0x888): 0
+    fchmodat4(AT_FDCWD, "test-link", 0x888, AT_SYMLINK_NOFOLLOW): -1
+    fchmodat4(AT_FDCWD, "test-link", 0x888, 0): 0
+    fchmodat(AT_FDCWD, "test-link", 0x888): 0
+
+While I don't think there's any reason what's there is unacceptable, I
+don't really consider this finished.  I couldn't find a cookbook for
+"here's how you add a system call", but all I really did was "git grep
+add | grep syscall" so if there's something out there then please let me
+know and I'll follow it.  Specifically, I haven't:
+
+* Added any sort of documentation.  I don't find anything with a "git
+  grep fchmodat", so I'm assuming it's just the man pages that are
+  relevant here.
+* Fixed any of the other architectures.  I'm assuming this is just the
+  mechanical process of fixing all these in the same way I did for x86.
+
+      arch/alpha/kernel/syscalls/syscall.tbl:461      common  fchmodat                        sys_fchmodat
+      arch/arm/tools/syscall.tbl:333  common  fchmodat                sys_fchmodat
+      arch/arm64/include/asm/unistd32.h:#define __NR_fchmodat 333
+      arch/arm64/include/asm/unistd32.h:__SYSCALL(__NR_fchmodat, sys_fchmodat)
+      arch/ia64/kernel/fsys.S:        data8 0                         // fchmodat
+      arch/ia64/kernel/syscalls/syscall.tbl:268       common  fchmodat                        sys_fchmodat
+      arch/m68k/kernel/syscalls/syscall.tbl:299       common  fchmodat                        sys_fchmodat
+      arch/microblaze/kernel/syscalls/syscall.tbl:306 common  fchmodat                        sys_fchmodat
+      arch/mips/kernel/syscalls/syscall_n32.tbl:262   n32     fchmodat                        sys_fchmodat
+      arch/mips/kernel/syscalls/syscall_n64.tbl:258   n64     fchmodat                        sys_fchmodat
+      arch/mips/kernel/syscalls/syscall_o32.tbl:299   o32     fchmodat                        sys_fchmodat
+      arch/parisc/kernel/syscalls/syscall.tbl:286     common  fchmodat                sys_fchmodat
+      arch/powerpc/kernel/syscalls/syscall.tbl:297    common  fchmodat                        sys_fchmodat
+      arch/s390/kernel/syscalls/syscall.tbl:299  common       fchmodat                sys_fchmodat                    sys_fchmodat
+      arch/sh/include/uapi/asm/unistd_64.h:#define __NR_fchmodat              334
+      arch/sh/kernel/syscalls/syscall.tbl:306 common  fchmodat                        sys_fchmodat
+      arch/sh/kernel/syscalls_64.S:   .long sys_fchmodat
+      arch/sparc/kernel/syscalls/syscall.tbl:295      common  fchmodat                sys_fchmodat
+      arch/xtensa/kernel/syscalls/syscall.tbl:300     common  fchmodat                        sys_fchmodat
+* Looked at anything in tools.  Again, I'm assuming it's just a
+  mechanical process of looking at all of these and adding fchmodat4.
+
+      tools/include/nolibc/nolibc.h:#ifdef __NR_fchmodat
+      tools/include/nolibc/nolibc.h:  return my_syscall4(__NR_fchmodat, AT_FDCWD, path, mode, 0);
+      tools/include/uapi/asm-generic/unistd.h:#define __NR_fchmodat 53
+      tools/include/uapi/asm-generic/unistd.h:__SYSCALL(__NR_fchmodat, sys_fchmodat)
+      tools/perf/arch/powerpc/entry/syscalls/syscall.tbl:297  common  fchmodat                        sys_fchmodat
+      tools/perf/arch/s390/entry/syscalls/syscall.tbl:299  common     fchmodat                sys_fchmodat                    compat_sys_fchmodat
+      tools/perf/arch/x86/entry/syscalls/syscall_64.tbl:268   common  fchmodat                __x64_sys_fchmodat
+      tools/perf/builtin-trace.c:     { .name     = "fchmodat",
+
+* Done anything with userspace, aside from thinking about the glibc code
+  above.  I'd assume that I'm meant to bring in libc-alpha to the
+  discussion, but I didn't want to do so this early in case this was
+  just a non-starter.
+
+I'm happy dealing with all of that, but given that I'm assuming there's
+going to be some discussion I wanted to send out the proof-of-concept
+first to see if this has any legs.  Aside from the glibc side the
+remaining work smells pretty mechanical, so I figured I'd wait on that
+until I knew it wasn't going to be a waste of time -- partially because
+I'm lazy, but mostly because I just realized I blew my whole morning
+working on this when all I really wanted to do was avoid discussing
+fchmodat in the first place :)
+    
