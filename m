@@ -1,55 +1,42 @@
 From: Palmer Dabbelt <palmer@sifive.com>
-Subject: Re: [PATCH 2/5] Add fchmodat4(), a new syscall
-Date: Fri, 31 May 2019 16:36:41 -0700 (PDT)
-Message-ID: <mhng-234d2802-9483-43be-af69-5bd04721b932@palmer-si-x1e>
-References: <CAK8P3a3HPeVq29k3Zk5rSk4bddiUQFrdEgDZUgdNnYZK+8QpGw@mail.gmail.com>
+Subject: Re: [PATCH 3/5] asm-generic: Register fchmodat4 as syscall 428
+Date: Fri, 31 May 2019 16:57:53 -0700 (PDT)
+Message-ID: <mhng-d362e451-72d2-4893-a749-8469359b65ea@palmer-si-x1e>
+References: <CAK8P3a2=xko56LbwV4tyhyyyX+tw+EV-NGavYEYj0q61t=mnwg@mail.gmail.com>
 Mime-Version: 1.0 (MHng)
 Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAK8P3a3HPeVq29k3Zk5rSk4bddiUQFrdEgDZUgdNnYZK+8QpGw@mail.gmail.com>
+In-Reply-To: <CAK8P3a2=xko56LbwV4tyhyyyX+tw+EV-NGavYEYj0q61t=mnwg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Arnd Bergmann <arnd@arndb.de>
 Cc: viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, x86@kernel.org, luto@kernel.org, tglx@linutronix.de, mingo@redhat.com, bp@alien8.de, hpa@zytor.com
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 31 May 2019 12:51:00 PDT (-0700), Arnd Bergmann wrote:
+On Fri, 31 May 2019 12:56:39 PDT (-0700), Arnd Bergmann wrote:
 > On Fri, May 31, 2019 at 9:23 PM Palmer Dabbelt <palmer@sifive.com> wrote:
 >>
->> man 3p says that fchmodat() takes a flags argument, but the Linux
->> syscall does not.  There doesn't appear to be a good userspace
->> workaround for this issue but the implementation in the kernel is pretty
->> straight-forward.  The specific use case where the missing flags came up
->> was WRT a fuse filesystem implemenation, but the functionality is pretty
->> generic so I'm assuming there would be other use cases.
->>
 >> Signed-off-by: Palmer Dabbelt <palmer@sifive.com>
->> ---
->>  fs/open.c                | 21 +++++++++++++++++++--
->>  include/linux/syscalls.h |  5 +++++
->>  2 files changed, 24 insertions(+), 2 deletions(-)
->>
->> diff --git a/fs/open.c b/fs/open.c
->> index a00350018a47..cfad7684e8d3 100644
->> --- a/fs/open.c
->> +++ b/fs/open.c
->> @@ -568,11 +568,17 @@ SYSCALL_DEFINE2(fchmod, unsigned int, fd, umode_t, mode)
->>         return ksys_fchmod(fd, mode);
->>  }
->>
->> -int do_fchmodat(int dfd, const char __user *filename, umode_t mode)
->> +int do_fchmodat4(int dfd, const char __user *filename, umode_t mode, int flags)
-> ...
->> +
->> +int do_fchmodat(int dfd, const char __user *filename, umode_t mode)
->> +{
->> +       return do_fchmodat4(dfd, filename, mode, 0);
->> +}
->> +
 >
-> There is only one external caller of do_fchmodat(), so just change that
-> to pass the extra argument here, and keep a single do_fchmodat()
-> function used by the sys_fchmod(), sys_fchmod4(), sys_chmod()
-> and ksys_chmod().
+> As usual, each patch needs a changelog text. I would prefer having a single
+> patch here that changes /all/ system call tables at once, rather than doing one
+> at a time like we used to.
 
-OK, I'll roll that up into a v2.
+Works for me.  That also gives me something to write about it the text :)
+
+> In linux-next, we are at number 434 now, and there are a couple of other
+> new system calls being proposed right now (more than usual), so you may
+> have to change the number a few times.
+
+OK, no problem.  It'll be a bit easier to handle the number that way.
+
+> Note: most architectures use .tbl files now, the exceptions are
+> include/uapi/asm-generic/unistd.h and arch/arm64/include/asm/unistd32.h,
+> and the latter also requires changing __NR_compat_syscalls in asm/unistd.h.
+>
+> Numbers should now be the same across architectures, except for alpha,
+> which has a +110 offset. We have discussed ways to have a single
+> file to modify for a new call on all architectures, but no patches yet.
+
+OK, thanks.  I'll wait a bit for feedback, but unless there's anything else
+I'll go ahead and finish this.
