@@ -1,122 +1,89 @@
 From: Amir Goldstein <amir73il@gmail.com>
 Subject: Re: [RFC][PATCH] link.2: AT_ATOMIC_DATA and AT_ATOMIC_METADATA
-Date: Sat, 1 Jun 2019 10:21:49 +0300
-Message-ID: <CAOQ4uxjeGxNsjT9N_X6W+mVbvn2kTaoeLE-tXVYq0-3MwC_+Xg@mail.gmail.com>
+Date: Sat, 1 Jun 2019 11:01:42 +0300
+Message-ID: <CAOQ4uxi99NDYMrz-Q7xKta4beQiYFX3-MipZ_RxFNktFTA=vMA@mail.gmail.com>
 References: <20190527172655.9287-1-amir73il@gmail.com> <20190528202659.GA12412@mit.edu>
  <CAOQ4uxgo5jmwQbLAKQre9=7pLQw=CwMgDaWPaJxi-5NGnPEVPQ@mail.gmail.com>
  <CAOQ4uxgj94WR82iHE4PDGSD0UDxG5sCtr+Sv+t1sOHHmnXFYzQ@mail.gmail.com>
- <20190531164136.GA3066@mit.edu> <20190531224549.GF29573@dread.disaster.area>
+ <20190531164136.GA3066@mit.edu> <20190531224549.GF29573@dread.disaster.area> <20190531232852.GG29573@dread.disaster.area>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <20190531224549.GF29573@dread.disaster.area>
+In-Reply-To: <20190531232852.GG29573@dread.disaster.area>
 Sender: linux-btrfs-owner@vger.kernel.org
 To: Dave Chinner <david@fromorbit.com>
-Cc: Theodore Ts'o <tytso@mit.edu>, Jan Kara <jack@suse.cz>, "Darrick J . Wong" <darrick.wong@oracle.com>, Chris Mason <clm@fb.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-xfs <linux-xfs@vger.kernel.org>, Ext4 <linux-ext4@vger.kernel.org>, Linux Btrfs <linux-btrfs@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Ric Wheeler <rwheeler@redhat.com>
+Cc: Theodore Ts'o <tytso@mit.edu>, Jan Kara <jack@suse.cz>, "Darrick J . Wong" <darrick.wong@oracle.com>, Chris Mason <clm@fb.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-xfs <linux-xfs@vger.kernel.org>, Ext4 <linux-ext4@vger.kernel.org>, Linux Btrfs <linux-btrfs@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Jun 1, 2019 at 1:46 AM Dave Chinner <david@fromorbit.com> wrote:
+On Sat, Jun 1, 2019 at 2:28 AM Dave Chinner <david@fromorbit.com> wrote:
 >
-> On Fri, May 31, 2019 at 12:41:36PM -0400, Theodore Ts'o wrote:
-> > On Fri, May 31, 2019 at 06:21:45PM +0300, Amir Goldstein wrote:
-> > > What do you think of:
-> > >
-> > > "AT_ATOMIC_DATA (since Linux 5.x)
-> > > A filesystem which accepts this flag will guarantee that if the linked file
-> > > name exists after a system crash, then all of the data written to the file
-> > > and all of the file's metadata at the time of the linkat(2) call will be
-> > > visible.
-> >
-> > ".... will be visible after the the file system is remounted".  (Never
-> > hurts to be explicit.)
-> >
-> > > The way to achieve this guarantee on old kernels is to call fsync (2)
-> > > before linking the file, but doing so will also results in flushing of
-> > > volatile disk caches.
-> > >
-> > > A filesystem which accepts this flag does NOT
-> > > guarantee that any of the file hardlinks will exist after a system crash,
-> > > nor that the last observed value of st_nlink (see stat (2)) will persist."
-> > >
-> >
-> > This is I think more precise:
-> >
-> >     This guarantee can be achieved by calling fsync(2) before linking
-> >     the file, but there may be more performant ways to provide these
-> >     semantics.  In particular, note that the use of the AT_ATOMIC_DATA
-> >     flag does *not* guarantee that the new link created by linkat(2)
-> >     will be persisted after a crash.
+> On Sat, Jun 01, 2019 at 08:45:49AM +1000, Dave Chinner wrote:
+> > Given that we can already use AIO to provide this sort of ordering,
+> > and AIO is vastly faster than synchronous IO, I don't see any point
+> > in adding complex barrier interfaces that can be /easily implemented
+> > in userspace/ using existing AIO primitives. You should start
+> > thinking about expanding libaio with stuff like
+> > "link_after_fdatasync()" and suddenly the whole problem of
+> > filesystem data vs metadata ordering goes away because the
+> > application directly controls all ordering without blocking and
+> > doesn't need to care what the filesystem under it does....
 >
-> So here's the *implementation* problem I see with this definition of
-> AT_ATOMIC_DATA. After linkat(dirfd, name, AT_ATOMIC_DATA), there is
-> no guarantee that the data is on disk or that the link is present.
->
-> However:
->
->         linkat(dirfd, name, AT_ATOMIC_DATA);
->         fsync(dirfd);
->
-> Suddenly changes all that.
->
-> i.e. when we fsync(dirfd) we guarantee that "name" is present in the
-> directory and because we used AT_ATOMIC_DATA it implies that the
-> data pointed to by "name" must be present on disk. IOWs, what was
-> once a pure directory sync operation now *must* fsync all the child
-> inodes that have been linkat(AT_ATOMIC_DATA) since the last time the
-> direct has been made stable.
->
-> IOWs, the described AT_ATOMIC_DATA "we don't have to write the data
-> during linkat() go-fast-get-out-of-gaol-free" behaviour isn't worth
-> the pixels it is written on - it just moves all the complexity to
-> directory fsync, and that's /already/ a behavioural minefield.
+> And let me point out that this is also how userspace can do an
+> efficient atomic rename - rename_after_fdatasync(). i.e. on
+> completion of the AIO_FSYNC, run the rename. This guarantees that
+> the application will see either the old file of the complete new
+> file, and it *doesn't have to wait for the operation to complete*.
+> Once it is in flight, the file will contain the old data until some
+> point in the near future when will it contain the new data....
 
-Where does it say we don't have to write the data during linkat()?
-I was only talking about avoid FLUSH/FUA caused by fsync().
-I wrote in commit message:
-"First implementation of AT_ATOMIC_DATA is expected to be
-filemap_write_and_wait() for xfs/ext4 and probably fdatasync for btrfs."
-
-I failed to convey the reasoning for this flag to you.
-It is *not* about the latency of the "atomic link" for the calling thread
-It is about not interfering with other workloads running at the same time.
+What I am looking for is a way to isolate the effects of "atomic rename/link"
+from the rest of the users. Sure there is I/O bandwidth and queued
+bios, but at least isolate other threads working on other files or metadata
+from contending with the "atomic rename" thread of journal flushes and
+the like. Actually, one of my use cases is "atomic rename" of files with
+no data (looking for atomicity w.r.t xattr and mtime), so this "atomic rename"
+thread should not be interfering with other workloads at all.
 
 >
-> IMO, the "work-around" of forcing filesystems to write back
-> destination inodes during a link() operation is just nasty and will
-> just end up with really weird performance anomalies occurring in
-> production systems. That's not really a solution, either, especially
-> as it is far, far faster for applications to use AIO_FSYNC and then
-> on the completion callback run a normal linkat() operation...
->
-> Hence, if I've understood these correctly, then I'll be recommending
-> that XFS follows this:
->
-> > We should also document that a file system which does not implement
-> > this flag MUST return EINVAL if it is passed this flag to linkat(2).
->
-> and returns -EINVAL to these flags because we do not have the change
-> tracking infrastructure to handle these directory fsync semantics.
-> I also suspect that, even if we could track this efficiently, we
-> can't do the flushing atomically because of locking order
-> constraints between directories, regular files, pages in the page
-> cache, etc.
+> Seriously, sit down and work out all the "atomic" data vs metadata
+> behaviours you want, and then tell me how many of them cannot be
+> implemented as "AIO_FSYNC w/ completion callback function" in
+> userspace. This mechanism /guarantees ordering/ at the application
+> level, the application does not block waiting for these data
+> integrity operations to complete, and you don't need any new kernel
+> side functionality to implement this.
 
-That is not at all what I had in mind for XFS with the flag.
+So I think what I could have used is AIO_BATCH_FSYNC, an interface
+that was proposed by Ric Wheeler and discussed on LSF:
+https://lwn.net/Articles/789024/
+Ric was looking for a way to efficiently fsync a "bunch of files".
+Submitting several AIO_FSYNC calls is not the efficient way of doing that.
+So it is either a new AIO_BATCH_FSYNC and a kernel implementation
+that flushes the inodes and then calls ->sync_fs(), or a new AIO operation
+that just does the ->sync_fs() bit and using sync_file_range() for the inodes.
+
+To be more accurate, the AIO operation that would emulate my
+proposed API more closely is AIO_WAIT_FOR_SYNCFS, as I do not wish
+to impose excessive journal flushes, I just need a completion callback
+when they happened to perform the rename/link.
 
 >
-> Given that we can already use AIO to provide this sort of ordering,
-> and AIO is vastly faster than synchronous IO, I don't see any point
-> in adding complex barrier interfaces that can be /easily implemented
-> in userspace/ using existing AIO primitives. You should start
-> thinking about expanding libaio with stuff like
-> "link_after_fdatasync()" and suddenly the whole problem of
-> filesystem data vs metadata ordering goes away because the
-> application directly controls all ordering without blocking and
-> doesn't need to care what the filesystem under it does....
->
+> Fundamentally, the assertion that disk cache flushes are not what
+> causes fsync "to be slow" is incorrect. It's the synchronous
 
-OK. I can work with that. It's not that simple, but I will reply on
-your next email, where you wrote more about this alternative.
+Too many double negatives. I am not sure I parsed this correctly.
+But I think by now you understand that I don't care that fsync is "slow".
+I care about frequent fsyncs making the entire system slow down.
+
+Heck, xfs even has a mitigation in place to improve performance
+of too frequent fsyncs, but that mitigation is partly gone since
+47c7d0b19502 xfs: fix incorrect log_flushed on fsync
+
+The situation with frequent fsync on ext4 at the moment is probably
+worse.
+
+I am trying to reduce the number of fsyncs from applications
+and converting fsync to AIO_FSYNC is not going to help with that.
 
 Thanks,
 Amir.
