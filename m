@@ -1,42 +1,122 @@
-From: Palmer Dabbelt <palmer@sifive.com>
-Subject: Re: [PATCH 3/5] asm-generic: Register fchmodat4 as syscall 428
-Date: Fri, 31 May 2019 16:57:53 -0700 (PDT)
-Message-ID: <mhng-d362e451-72d2-4893-a749-8469359b65ea@palmer-si-x1e>
-References: <CAK8P3a2=xko56LbwV4tyhyyyX+tw+EV-NGavYEYj0q61t=mnwg@mail.gmail.com>
-Mime-Version: 1.0 (MHng)
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAK8P3a2=xko56LbwV4tyhyyyX+tw+EV-NGavYEYj0q61t=mnwg@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, x86@kernel.org, luto@kernel.org, tglx@linutronix.de, mingo@redhat.com, bp@alien8.de, hpa@zytor.com
+From: Amir Goldstein <amir73il@gmail.com>
+Subject: Re: [RFC][PATCH] link.2: AT_ATOMIC_DATA and AT_ATOMIC_METADATA
+Date: Sat, 1 Jun 2019 10:21:49 +0300
+Message-ID: <CAOQ4uxjeGxNsjT9N_X6W+mVbvn2kTaoeLE-tXVYq0-3MwC_+Xg@mail.gmail.com>
+References: <20190527172655.9287-1-amir73il@gmail.com> <20190528202659.GA12412@mit.edu>
+ <CAOQ4uxgo5jmwQbLAKQre9=7pLQw=CwMgDaWPaJxi-5NGnPEVPQ@mail.gmail.com>
+ <CAOQ4uxgj94WR82iHE4PDGSD0UDxG5sCtr+Sv+t1sOHHmnXFYzQ@mail.gmail.com>
+ <20190531164136.GA3066@mit.edu> <20190531224549.GF29573@dread.disaster.area>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+In-Reply-To: <20190531224549.GF29573@dread.disaster.area>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Dave Chinner <david@fromorbit.com>
+Cc: Theodore Ts'o <tytso@mit.edu>, Jan Kara <jack@suse.cz>, "Darrick J . Wong" <darrick.wong@oracle.com>, Chris Mason <clm@fb.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-xfs <linux-xfs@vger.kernel.org>, Ext4 <linux-ext4@vger.kernel.org>, Linux Btrfs <linux-btrfs@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Ric Wheeler <rwheeler@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 31 May 2019 12:56:39 PDT (-0700), Arnd Bergmann wrote:
-> On Fri, May 31, 2019 at 9:23 PM Palmer Dabbelt <palmer@sifive.com> wrote:
->>
->> Signed-off-by: Palmer Dabbelt <palmer@sifive.com>
+On Sat, Jun 1, 2019 at 1:46 AM Dave Chinner <david@fromorbit.com> wrote:
 >
-> As usual, each patch needs a changelog text. I would prefer having a single
-> patch here that changes /all/ system call tables at once, rather than doing one
-> at a time like we used to.
-
-Works for me.  That also gives me something to write about it the text :)
-
-> In linux-next, we are at number 434 now, and there are a couple of other
-> new system calls being proposed right now (more than usual), so you may
-> have to change the number a few times.
-
-OK, no problem.  It'll be a bit easier to handle the number that way.
-
-> Note: most architectures use .tbl files now, the exceptions are
-> include/uapi/asm-generic/unistd.h and arch/arm64/include/asm/unistd32.h,
-> and the latter also requires changing __NR_compat_syscalls in asm/unistd.h.
+> On Fri, May 31, 2019 at 12:41:36PM -0400, Theodore Ts'o wrote:
+> > On Fri, May 31, 2019 at 06:21:45PM +0300, Amir Goldstein wrote:
+> > > What do you think of:
+> > >
+> > > "AT_ATOMIC_DATA (since Linux 5.x)
+> > > A filesystem which accepts this flag will guarantee that if the linked file
+> > > name exists after a system crash, then all of the data written to the file
+> > > and all of the file's metadata at the time of the linkat(2) call will be
+> > > visible.
+> >
+> > ".... will be visible after the the file system is remounted".  (Never
+> > hurts to be explicit.)
+> >
+> > > The way to achieve this guarantee on old kernels is to call fsync (2)
+> > > before linking the file, but doing so will also results in flushing of
+> > > volatile disk caches.
+> > >
+> > > A filesystem which accepts this flag does NOT
+> > > guarantee that any of the file hardlinks will exist after a system crash,
+> > > nor that the last observed value of st_nlink (see stat (2)) will persist."
+> > >
+> >
+> > This is I think more precise:
+> >
+> >     This guarantee can be achieved by calling fsync(2) before linking
+> >     the file, but there may be more performant ways to provide these
+> >     semantics.  In particular, note that the use of the AT_ATOMIC_DATA
+> >     flag does *not* guarantee that the new link created by linkat(2)
+> >     will be persisted after a crash.
 >
-> Numbers should now be the same across architectures, except for alpha,
-> which has a +110 offset. We have discussed ways to have a single
-> file to modify for a new call on all architectures, but no patches yet.
+> So here's the *implementation* problem I see with this definition of
+> AT_ATOMIC_DATA. After linkat(dirfd, name, AT_ATOMIC_DATA), there is
+> no guarantee that the data is on disk or that the link is present.
+>
+> However:
+>
+>         linkat(dirfd, name, AT_ATOMIC_DATA);
+>         fsync(dirfd);
+>
+> Suddenly changes all that.
+>
+> i.e. when we fsync(dirfd) we guarantee that "name" is present in the
+> directory and because we used AT_ATOMIC_DATA it implies that the
+> data pointed to by "name" must be present on disk. IOWs, what was
+> once a pure directory sync operation now *must* fsync all the child
+> inodes that have been linkat(AT_ATOMIC_DATA) since the last time the
+> direct has been made stable.
+>
+> IOWs, the described AT_ATOMIC_DATA "we don't have to write the data
+> during linkat() go-fast-get-out-of-gaol-free" behaviour isn't worth
+> the pixels it is written on - it just moves all the complexity to
+> directory fsync, and that's /already/ a behavioural minefield.
 
-OK, thanks.  I'll wait a bit for feedback, but unless there's anything else
-I'll go ahead and finish this.
+Where does it say we don't have to write the data during linkat()?
+I was only talking about avoid FLUSH/FUA caused by fsync().
+I wrote in commit message:
+"First implementation of AT_ATOMIC_DATA is expected to be
+filemap_write_and_wait() for xfs/ext4 and probably fdatasync for btrfs."
+
+I failed to convey the reasoning for this flag to you.
+It is *not* about the latency of the "atomic link" for the calling thread
+It is about not interfering with other workloads running at the same time.
+
+>
+> IMO, the "work-around" of forcing filesystems to write back
+> destination inodes during a link() operation is just nasty and will
+> just end up with really weird performance anomalies occurring in
+> production systems. That's not really a solution, either, especially
+> as it is far, far faster for applications to use AIO_FSYNC and then
+> on the completion callback run a normal linkat() operation...
+>
+> Hence, if I've understood these correctly, then I'll be recommending
+> that XFS follows this:
+>
+> > We should also document that a file system which does not implement
+> > this flag MUST return EINVAL if it is passed this flag to linkat(2).
+>
+> and returns -EINVAL to these flags because we do not have the change
+> tracking infrastructure to handle these directory fsync semantics.
+> I also suspect that, even if we could track this efficiently, we
+> can't do the flushing atomically because of locking order
+> constraints between directories, regular files, pages in the page
+> cache, etc.
+
+That is not at all what I had in mind for XFS with the flag.
+
+>
+> Given that we can already use AIO to provide this sort of ordering,
+> and AIO is vastly faster than synchronous IO, I don't see any point
+> in adding complex barrier interfaces that can be /easily implemented
+> in userspace/ using existing AIO primitives. You should start
+> thinking about expanding libaio with stuff like
+> "link_after_fdatasync()" and suddenly the whole problem of
+> filesystem data vs metadata ordering goes away because the
+> application directly controls all ordering without blocking and
+> doesn't need to care what the filesystem under it does....
+>
+
+OK. I can work with that. It's not that simple, but I will reply on
+your next email, where you wrote more about this alternative.
+
+Thanks,
+Amir.
