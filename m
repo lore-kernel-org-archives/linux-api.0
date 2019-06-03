@@ -1,82 +1,59 @@
-From: Johannes Weiner <hannes@cmpxchg.org>
-Subject: Re: [RFCv2 1/6] mm: introduce MADV_COLD
-Date: Mon, 3 Jun 2019 13:27:17 -0400
-Message-ID: <20190603172717.GA30363@cmpxchg.org>
-References: <20190531064313.193437-1-minchan@kernel.org>
- <20190531064313.193437-2-minchan@kernel.org>
- <20190531084752.GI6896@dhcp22.suse.cz>
- <20190531133904.GC195463@google.com>
- <20190531140332.GT6896@dhcp22.suse.cz>
- <20190531143407.GB216592@google.com>
- <20190603071607.GB4531@dhcp22.suse.cz>
+From: "Kirill A. Shutemov" <kirill@shutemov.name>
+Subject: Re: [PATCH v2 0/7] mm: process_vm_mmap() -- syscall for duplication
+ a process mapping
+Date: Mon, 3 Jun 2019 20:47:06 +0300
+Message-ID: <20190603174706.t4cby7f5ni4gvvom@box>
+References: <155836064844.2441.10911127801797083064.stgit@localhost.localdomain>
+ <20190522152254.5cyxhjizuwuojlix@box>
+ <4228b541-d31c-b76a-2570-1924df0d4724@virtuozzo.com>
+ <5ae7e3c1-3875-ea1e-54b3-ac3c493a11f0@virtuozzo.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190603071607.GB4531@dhcp22.suse.cz>
+In-Reply-To: <5ae7e3c1-3875-ea1e-54b3-ac3c493a11f0@virtuozzo.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Minchan Kim <minchan@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, jannh@google.com, oleg@redhat.com, christian@brauner.io, oleksandr@redhat.com, hdanton@sina.com
+To: Kirill Tkhai <ktkhai@virtuozzo.com>
+Cc: akpm@linux-foundation.org, dan.j.williams@intel.com, mhocko@suse.com, keith.busch@intel.com, kirill.shutemov@linux.intel.com, alexander.h.duyck@linux.intel.com, ira.weiny@intel.com, andreyknvl@google.com, arunks@codeaurora.org, vbabka@suse.cz, cl@linux.com, riel@surriel.com, keescook@chromium.org, hannes@cmpxchg.org, npiggin@gmail.com, mathieu.desnoyers@efficios.com, shakeelb@google.com, guro@fb.com, aarcange@redhat.com, hughd@google.com, jglisse@redhat.com, mgorman@techsingularity.net, daniel.m.jordan@oracle.com, jannh@google.com, kilobyte@angband.pl, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jun 03, 2019 at 09:16:07AM +0200, Michal Hocko wrote:
-> On Fri 31-05-19 23:34:07, Minchan Kim wrote:
-> > On Fri, May 31, 2019 at 04:03:32PM +0200, Michal Hocko wrote:
-> > > On Fri 31-05-19 22:39:04, Minchan Kim wrote:
-> > > > On Fri, May 31, 2019 at 10:47:52AM +0200, Michal Hocko wrote:
-> > > > > On Fri 31-05-19 15:43:08, Minchan Kim wrote:
-> > > > > > When a process expects no accesses to a certain memory range, it could
-> > > > > > give a hint to kernel that the pages can be reclaimed when memory pressure
-> > > > > > happens but data should be preserved for future use.  This could reduce
-> > > > > > workingset eviction so it ends up increasing performance.
-> > > > > > 
-> > > > > > This patch introduces the new MADV_COLD hint to madvise(2) syscall.
-> > > > > > MADV_COLD can be used by a process to mark a memory range as not expected
-> > > > > > to be used in the near future. The hint can help kernel in deciding which
-> > > > > > pages to evict early during memory pressure.
-> > > > > > 
-> > > > > > Internally, it works via deactivating pages from active list to inactive's
-> > > > > > head if the page is private because inactive list could be full of
-> > > > > > used-once pages which are first candidate for the reclaiming and that's a
-> > > > > > reason why MADV_FREE move pages to head of inactive LRU list. Therefore,
-> > > > > > if the memory pressure happens, they will be reclaimed earlier than other
-> > > > > > active pages unless there is no access until the time.
-> > > > > 
-> > > > > [I am intentionally not looking at the implementation because below
-> > > > > points should be clear from the changelog - sorry about nagging ;)]
-> > > > > 
-> > > > > What kind of pages can be deactivated? Anonymous/File backed.
-> > > > > Private/shared? If shared, are there any restrictions?
-> > > > 
-> > > > Both file and private pages could be deactived from each active LRU
-> > > > to each inactive LRU if the page has one map_count. In other words,
-> > > > 
-> > > >     if (page_mapcount(page) <= 1)
-> > > >         deactivate_page(page);
-> > > 
-> > > Why do we restrict to pages that are single mapped?
+On Mon, Jun 03, 2019 at 05:56:32PM +0300, Kirill Tkhai wrote:
+> On 03.06.2019 17:38, Kirill Tkhai wrote:
+> > On 22.05.2019 18:22, Kirill A. Shutemov wrote:
+> >> On Mon, May 20, 2019 at 05:00:01PM +0300, Kirill Tkhai wrote:
+> >>> This patchset adds a new syscall, which makes possible
+> >>> to clone a VMA from a process to current process.
+> >>> The syscall supplements the functionality provided
+> >>> by process_vm_writev() and process_vm_readv() syscalls,
+> >>> and it may be useful in many situation.
+> >>
+> >> Kirill, could you explain how the change affects rmap and how it is safe.
+> >>
+> >> My concern is that the patchset allows to map the same page multiple times
+> >> within one process or even map page allocated by child to the parrent.
 > > 
-> > Because page table in one of process shared the page would have access bit
-> > so finally we couldn't reclaim the page. The more process it is shared,
-> > the more fail to reclaim.
+> > Speaking honestly, we already support this model, since ZERO_PAGE() may
+> > be mapped multiply times in any number of mappings.
 > 
-> So what? In other words why should it be restricted solely based on the
-> map count. I can see a reason to restrict based on the access
-> permissions because we do not want to simplify all sorts of side channel
-> attacks but memory reclaim is capable of reclaiming shared pages and so
-> far I haven't heard any sound argument why madvise should skip those.
-> Again if there are any reasons, then document them in the changelog.
+> Picking of huge_zero_page and mremapping its VMA to unaligned address also gives
+> the case, when the same huge page is mapped as huge page and as set of ordinary
+> pages in the same process.
+> 
+> Summing up two above cases, is there really a fundamental problem with
+> the functionality the patch set introduces? It looks like we already have
+> these cases in stable kernel supported.
 
-I think it makes sense. It could be explained, but it also follows
-established madvise semantics, and I'm not sure it's necessarily
-Minchan's job to re-iterate those.
+It *might* work. But it requires a lot of audit to prove that it actually
+*does* work.
 
-Sharing isn't exactly transparent to userspace. The kernel does COW,
-ksm etc. When you madvise, you can really only speak for your own
-reference to that memory - "*I* am not using this."
+For instance, are you sure it will not break KSM? What does it mean for
+memory accounting? memcg?
 
-This is in line with other madvise calls: MADV_DONTNEED clears the
-local page table entries and drops the corresponding references, so
-shared pages won't get freed. MADV_FREE clears the pte dirty bit and
-also has explicit mapcount checks before clearing PG_dirty, so again
-shared pages don't get freed.
+My point is that you breaking long standing invariant in Linux MM and it
+has to be properly justified.
+
+I would expect to see some strange deadlocks or permanent trylock failure
+as result of such change.
+
+-- 
+ Kirill A. Shutemov
