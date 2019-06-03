@@ -1,47 +1,82 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH 3/7] vfs: Add a mount-notification facility
-Date: Mon, 03 Jun 2019 17:30:26 +0100
-Message-ID: <19414.1559579426@warthog.procyon.org.uk>
-References: <c95dd6cd-5530-6b70-68f6-4038edd72352@schaufler-ca.com> <CAG48ez2rRh2_Kq_EGJs5k-ZBNffGs_Q=vkQdinorBgo58tbGpg@mail.gmail.com> <155905930702.7587.7100265859075976147.stgit@warthog.procyon.org.uk> <155905933492.7587.6968545866041839538.stgit@warthog.procyon.org.uk> <14347.1559127657@warthog.procyon.org.uk> <312a138c-e5b2-4bfb-b50b-40c82c55773f@schaufler-ca.com> <CAG48ez2KMrTBFzO9p8GvduXruz+FNLPyhc2YivHePsgViEoT1g@mail.gmail.com>
+From: Johannes Weiner <hannes@cmpxchg.org>
+Subject: Re: [RFCv2 1/6] mm: introduce MADV_COLD
+Date: Mon, 3 Jun 2019 13:27:17 -0400
+Message-ID: <20190603172717.GA30363@cmpxchg.org>
+References: <20190531064313.193437-1-minchan@kernel.org>
+ <20190531064313.193437-2-minchan@kernel.org>
+ <20190531084752.GI6896@dhcp22.suse.cz>
+ <20190531133904.GC195463@google.com>
+ <20190531140332.GT6896@dhcp22.suse.cz>
+ <20190531143407.GB216592@google.com>
+ <20190603071607.GB4531@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <c95dd6cd-5530-6b70-68f6-4038edd72352@schaufler-ca.com>
-Content-ID: <19413.1559579426.1@warthog.procyon.org.uk>
+Content-Disposition: inline
+In-Reply-To: <20190603071607.GB4531@dhcp22.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Casey Schaufler <casey@schaufler-ca.com>
-Cc: dhowells@redhat.com, Jann Horn <jannh@google.com>, Al Viro <viro@zeniv.linux.org.uk>, raven@themaw.net, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module <linux-security-module@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@kernel.org>
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Minchan Kim <minchan@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, jannh@google.com, oleg@redhat.com, christian@brauner.io, oleksandr@redhat.com, hdanton@sina.com
 List-Id: linux-api@vger.kernel.org
 
-Casey Schaufler <casey@schaufler-ca.com> wrote:
-
-> >> should be used. Someone or something caused the event. It can
-> >> be important who it was.
-> > The kernel's normal security model means that you should be able to
-> > e.g. accept FDs that random processes send you and perform
-> > read()/write() calls on them without acting as a subject in any
-> > security checks; let alone close().
+On Mon, Jun 03, 2019 at 09:16:07AM +0200, Michal Hocko wrote:
+> On Fri 31-05-19 23:34:07, Minchan Kim wrote:
+> > On Fri, May 31, 2019 at 04:03:32PM +0200, Michal Hocko wrote:
+> > > On Fri 31-05-19 22:39:04, Minchan Kim wrote:
+> > > > On Fri, May 31, 2019 at 10:47:52AM +0200, Michal Hocko wrote:
+> > > > > On Fri 31-05-19 15:43:08, Minchan Kim wrote:
+> > > > > > When a process expects no accesses to a certain memory range, it could
+> > > > > > give a hint to kernel that the pages can be reclaimed when memory pressure
+> > > > > > happens but data should be preserved for future use.  This could reduce
+> > > > > > workingset eviction so it ends up increasing performance.
+> > > > > > 
+> > > > > > This patch introduces the new MADV_COLD hint to madvise(2) syscall.
+> > > > > > MADV_COLD can be used by a process to mark a memory range as not expected
+> > > > > > to be used in the near future. The hint can help kernel in deciding which
+> > > > > > pages to evict early during memory pressure.
+> > > > > > 
+> > > > > > Internally, it works via deactivating pages from active list to inactive's
+> > > > > > head if the page is private because inactive list could be full of
+> > > > > > used-once pages which are first candidate for the reclaiming and that's a
+> > > > > > reason why MADV_FREE move pages to head of inactive LRU list. Therefore,
+> > > > > > if the memory pressure happens, they will be reclaimed earlier than other
+> > > > > > active pages unless there is no access until the time.
+> > > > > 
+> > > > > [I am intentionally not looking at the implementation because below
+> > > > > points should be clear from the changelog - sorry about nagging ;)]
+> > > > > 
+> > > > > What kind of pages can be deactivated? Anonymous/File backed.
+> > > > > Private/shared? If shared, are there any restrictions?
+> > > > 
+> > > > Both file and private pages could be deactived from each active LRU
+> > > > to each inactive LRU if the page has one map_count. In other words,
+> > > > 
+> > > >     if (page_mapcount(page) <= 1)
+> > > >         deactivate_page(page);
+> > > 
+> > > Why do we restrict to pages that are single mapped?
+> > 
+> > Because page table in one of process shared the page would have access bit
+> > so finally we couldn't reclaim the page. The more process it is shared,
+> > the more fail to reclaim.
 > 
-> Passed file descriptors are an anomaly in the security model
-> that (in this developer's opinion) should have never been
-> included. More than one of the "B" level UNIX systems disabled
-> them outright. 
+> So what? In other words why should it be restricted solely based on the
+> map count. I can see a reason to restrict based on the access
+> permissions because we do not want to simplify all sorts of side channel
+> attacks but memory reclaim is capable of reclaiming shared pages and so
+> far I haven't heard any sound argument why madvise should skip those.
+> Again if there are any reasons, then document them in the changelog.
 
-Considering further on this, I think the only way to implement what you're
-suggesting is to add a field to struct file to record the last fputter's creds
-as the procedure of fputting is offloaded to a workqueue.
+I think it makes sense. It could be explained, but it also follows
+established madvise semantics, and I'm not sure it's necessarily
+Minchan's job to re-iterate those.
 
-Note that's last fputter, not the last closer, as we don't track the number of
-open fds linked to a file struct.
+Sharing isn't exactly transparent to userspace. The kernel does COW,
+ksm etc. When you madvise, you can really only speak for your own
+reference to that memory - "*I* am not using this."
 
-In the case of AF_UNIX sockets that contain in-the-process-of-being-passed fds
-at the time of closure, this is further complicated by the socket fput being
-achieved in the work item - thereby adding layers of indirection.
-
-It might be possible to replace f_cred rather than adding a new field, but
-that might get used somewhere after that point.
-
-Note also that fsnotify_close() doesn't appear to use the last fputter's path
-since it's not available if called from deferred fput.
-
-David
+This is in line with other madvise calls: MADV_DONTNEED clears the
+local page table entries and drops the corresponding references, so
+shared pages won't get freed. MADV_FREE clears the pte dirty bit and
+also has explicit mapcount checks before clearing PG_dirty, so again
+shared pages don't get freed.
