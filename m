@@ -1,93 +1,86 @@
-From: Amir Goldstein <amir73il@gmail.com>
-Subject: Re: [RFC][PATCH] link.2: AT_ATOMIC_DATA and AT_ATOMIC_METADATA
-Date: Mon, 3 Jun 2019 09:17:19 +0300
-Message-ID: <CAOQ4uxhqJJvr=uHmn_vPPPwZDCQoL2GFug30quFScNORT5Fw=w@mail.gmail.com>
-References: <20190527172655.9287-1-amir73il@gmail.com> <20190528202659.GA12412@mit.edu>
- <CAOQ4uxgo5jmwQbLAKQre9=7pLQw=CwMgDaWPaJxi-5NGnPEVPQ@mail.gmail.com>
- <CAOQ4uxgj94WR82iHE4PDGSD0UDxG5sCtr+Sv+t1sOHHmnXFYzQ@mail.gmail.com>
- <20190531164136.GA3066@mit.edu> <20190531224549.GF29573@dread.disaster.area>
- <20190531232852.GG29573@dread.disaster.area> <CAOQ4uxi99NDYMrz-Q7xKta4beQiYFX3-MipZ_RxFNktFTA=vMA@mail.gmail.com>
- <20190603042540.GH29573@dread.disaster.area>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [RFCv2 1/6] mm: introduce MADV_COLD
+Date: Mon, 3 Jun 2019 09:16:07 +0200
+Message-ID: <20190603071607.GB4531@dhcp22.suse.cz>
+References: <20190531064313.193437-1-minchan@kernel.org>
+ <20190531064313.193437-2-minchan@kernel.org>
+ <20190531084752.GI6896@dhcp22.suse.cz>
+ <20190531133904.GC195463@google.com>
+ <20190531140332.GT6896@dhcp22.suse.cz>
+ <20190531143407.GB216592@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <20190603042540.GH29573@dread.disaster.area>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Dave Chinner <david@fromorbit.com>
-Cc: Theodore Ts'o <tytso@mit.edu>, Jan Kara <jack@suse.cz>, "Darrick J . Wong" <darrick.wong@oracle.com>, Chris Mason <clm@fb.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-xfs <linux-xfs@vger.kernel.org>, Ext4 <linux-ext4@vger.kernel.org>, Linux Btrfs <linux-btrfs@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190531143407.GB216592@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Minchan Kim <minchan@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, jannh@google.com, oleg@redhat.com, christian@brauner.io, oleksandr@redhat.com, hdanton@sina.com
 List-Id: linux-api@vger.kernel.org
 
-> > Actually, one of my use cases is "atomic rename" of files with
-> > no data (looking for atomicity w.r.t xattr and mtime), so this "atomic rename"
-> > thread should not be interfering with other workloads at all.
->
-> Which should already guaranteed because a) rename is supposed to be
-> atomic, and b) metadata ordering requirements in journalled
-> filesystems. If they lose xattrs across rename, there's something
-> seriously wrong with the filesystem implementation.  I'm really not
-> sure what you think filesystems are actually doing with metadata
-> across rename operations....
->
+On Fri 31-05-19 23:34:07, Minchan Kim wrote:
+> On Fri, May 31, 2019 at 04:03:32PM +0200, Michal Hocko wrote:
+> > On Fri 31-05-19 22:39:04, Minchan Kim wrote:
+> > > On Fri, May 31, 2019 at 10:47:52AM +0200, Michal Hocko wrote:
+> > > > On Fri 31-05-19 15:43:08, Minchan Kim wrote:
+> > > > > When a process expects no accesses to a certain memory range, it could
+> > > > > give a hint to kernel that the pages can be reclaimed when memory pressure
+> > > > > happens but data should be preserved for future use.  This could reduce
+> > > > > workingset eviction so it ends up increasing performance.
+> > > > > 
+> > > > > This patch introduces the new MADV_COLD hint to madvise(2) syscall.
+> > > > > MADV_COLD can be used by a process to mark a memory range as not expected
+> > > > > to be used in the near future. The hint can help kernel in deciding which
+> > > > > pages to evict early during memory pressure.
+> > > > > 
+> > > > > Internally, it works via deactivating pages from active list to inactive's
+> > > > > head if the page is private because inactive list could be full of
+> > > > > used-once pages which are first candidate for the reclaiming and that's a
+> > > > > reason why MADV_FREE move pages to head of inactive LRU list. Therefore,
+> > > > > if the memory pressure happens, they will be reclaimed earlier than other
+> > > > > active pages unless there is no access until the time.
+> > > > 
+> > > > [I am intentionally not looking at the implementation because below
+> > > > points should be clear from the changelog - sorry about nagging ;)]
+> > > > 
+> > > > What kind of pages can be deactivated? Anonymous/File backed.
+> > > > Private/shared? If shared, are there any restrictions?
+> > > 
+> > > Both file and private pages could be deactived from each active LRU
+> > > to each inactive LRU if the page has one map_count. In other words,
+> > > 
+> > >     if (page_mapcount(page) <= 1)
+> > >         deactivate_page(page);
+> > 
+> > Why do we restrict to pages that are single mapped?
+> 
+> Because page table in one of process shared the page would have access bit
+> so finally we couldn't reclaim the page. The more process it is shared,
+> the more fail to reclaim.
 
-Dave,
-
-We are going in circles so much that my head is spinning.
-I don't blame anyone for having a hard time to keep up with the plot, because
-it spans many threads and subjects, so let me re-iterate:
-
-- I *do* know that rename provides me the needed "metadata barrier"
-  w.r.t. xattr on xfs/ext4 today.
-- I *do* know the sync_file_range()+rename() callback provides the
-"data barrier"
-  I need on xfs/ext4 today.
-- I *do* use this internal fs knowledge in my applications
-- I even fixed up sync_file_range() per your suggestion, so I won't need to use
-  the FIEMAP_FLAG_SYNC hack
-- At attempt from CrashMonkey developers to document this behavior was
-  "shot down" for many justified reasons
-- Without any documentation nor explicit API with a clean guarantee, users
-  cannot write efficient applications without being aware of the filesystem
-  underneath and follow that filesystem development to make sure behavior
-  has not changed
-- The most recent proposal I have made in LSF, based on Jan's suggestion is
-  to change nothing in filesystem implementation, but use a new *explicit* verb
-  to communicate the expectation of the application, so that
-filesystems are free
-  the change behavior in the future in the absence of the new verb
-
-Once again, ATOMIC_METADATA is a noop in preset xfs/ext4.
-ATOMIC_DATA is sync_file_range() in present xfs/ext4.
-The APIs I *need* from the kernel *do* exist, but the filesystem developers
-(except xfs) are not willing to document the guarantee that the existing
-interfaces provide in the present.
-
+So what? In other words why should it be restricted solely based on the
+map count. I can see a reason to restrict based on the access
+permissions because we do not want to simplify all sorts of side channel
+attacks but memory reclaim is capable of reclaiming shared pages and so
+far I haven't heard any sound argument why madvise should skip those.
+Again if there are any reasons, then document them in the changelog.
+ 
 [...]
-> So, in the interests of /informed debate/, please implement what you
-> want using batched AIO_FSYNC + rename/linkat completion callback and
-> measure what it acheives. Then implement a sync_file_range/linkat
-> thread pool that provides the same functionality to the application
-> (i.e. writeback concurrency in userspace) and measure it. Then we
-> can discuss what the relative overhead is with numbers and can
-> perform analysis to determine what the cause of the performance
-> differential actually is.
->
 
-Fare enough.
+> > Please document this, if this is really a desirable semantic because
+> > then you have the same set of problems as we've had with the early
+> > MADV_FREE implementation mentioned above.
+> 
+> IIRC, the problem of MADV_FREE was that we couldn't discard freeable
+> pages because VM never scan anonymous LRU with swapless system.
+> However, it's not the our case because we should reclaim them, not
+> discarding.
 
-> Neither of these things require kernel modifications, but you need
-> to provide the evidence that existing APIs are insufficient.
+Right. But there is still the page cache reclaim. Is it expected that
+an explicitly cold memory doesn't get reclaimed because we have a
+sufficient amount of page cache (a very common case) and we never age
+anonymous memory because of that?
 
-APIs are sufficient if I know which filesystem I am running on.
-btrfs needs a different set of syscalls to get the same thing done.
-
-> Indeed, we now have the new async ioring stuff that can run async
-> sync_file_range calls, so you probably need to benchmark replacing
-> AIO_FSYNC with that interface as well. This new API likely does
-> exactly what you want without the journal/device cache flush
-> overhead of AIO_FSYNC....
->
-
-Indeed, I am keeping a close watch on io_uring.
-
-Thanks,
-Amir.
+-- 
+Michal Hocko
+SUSE Labs
