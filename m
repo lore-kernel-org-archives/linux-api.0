@@ -1,59 +1,46 @@
-From: "Kirill A. Shutemov" <kirill@shutemov.name>
-Subject: Re: [PATCH v2 0/7] mm: process_vm_mmap() -- syscall for duplication
- a process mapping
-Date: Mon, 3 Jun 2019 20:47:06 +0300
-Message-ID: <20190603174706.t4cby7f5ni4gvvom@box>
-References: <155836064844.2441.10911127801797083064.stgit@localhost.localdomain>
- <20190522152254.5cyxhjizuwuojlix@box>
- <4228b541-d31c-b76a-2570-1924df0d4724@virtuozzo.com>
- <5ae7e3c1-3875-ea1e-54b3-ac3c493a11f0@virtuozzo.com>
+From: Rob Landley <rob@landley.net>
+Subject: Re: [PATCH v4 0/3] initramfs: add support for xattrs in the initial
+ ram disk
+Date: Mon, 3 Jun 2019 13:32:53 -0500
+Message-ID: <541e9ea1-024f-5c22-0b58-f8692e6c1eb1@landley.net>
+References: <20190523121803.21638-1-roberto.sassu@huawei.com>
+ <cf9d08ca-74c7-c945-5bf9-7c3495907d1e@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <5ae7e3c1-3875-ea1e-54b3-ac3c493a11f0@virtuozzo.com>
+In-Reply-To: <cf9d08ca-74c7-c945-5bf9-7c3495907d1e@huawei.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Kirill Tkhai <ktkhai@virtuozzo.com>
-Cc: akpm@linux-foundation.org, dan.j.williams@intel.com, mhocko@suse.com, keith.busch@intel.com, kirill.shutemov@linux.intel.com, alexander.h.duyck@linux.intel.com, ira.weiny@intel.com, andreyknvl@google.com, arunks@codeaurora.org, vbabka@suse.cz, cl@linux.com, riel@surriel.com, keescook@chromium.org, hannes@cmpxchg.org, npiggin@gmail.com, mathieu.desnoyers@efficios.com, shakeelb@google.com, guro@fb.com, aarcange@redhat.com, hughd@google.com, jglisse@redhat.com, mgorman@techsingularity.net, daniel.m.jordan@oracle.com, jannh@google.com, kilobyte@angband.pl, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mm@kvack.org
+To: Roberto Sassu <roberto.sassu@huawei.com>, viro@zeniv.linux.org.uk
+Cc: linux-security-module@vger.kernel.org, linux-integrity@vger.kernel.org, initramfs@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, bug-cpio@gnu.org, zohar@linux.vnet.ibm.com, silviu.vlasceanu@huawei.com, dmitry.kasatkin@huawei.com, takondra@cisco.com, kamensky@cisco.com, hpa@zytor.com, arnd@arndb.de, james.w.mcmechan@gmail.com, niveditas98@gmail.com
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jun 03, 2019 at 05:56:32PM +0300, Kirill Tkhai wrote:
-> On 03.06.2019 17:38, Kirill Tkhai wrote:
-> > On 22.05.2019 18:22, Kirill A. Shutemov wrote:
-> >> On Mon, May 20, 2019 at 05:00:01PM +0300, Kirill Tkhai wrote:
-> >>> This patchset adds a new syscall, which makes possible
-> >>> to clone a VMA from a process to current process.
-> >>> The syscall supplements the functionality provided
-> >>> by process_vm_writev() and process_vm_readv() syscalls,
-> >>> and it may be useful in many situation.
-> >>
-> >> Kirill, could you explain how the change affects rmap and how it is safe.
-> >>
-> >> My concern is that the patchset allows to map the same page multiple times
-> >> within one process or even map page allocated by child to the parrent.
-> > 
-> > Speaking honestly, we already support this model, since ZERO_PAGE() may
-> > be mapped multiply times in any number of mappings.
+On 6/3/19 4:31 AM, Roberto Sassu wrote:
+>> This patch set aims at solving the following use case: appraise files from
+>> the initial ram disk. To do that, IMA checks the signature/hash from the
+>> security.ima xattr. Unfortunately, this use case cannot be implemented
+>> currently, as the CPIO format does not support xattrs.
+>>
+>> This proposal consists in including file metadata as additional files named
+>> METADATA!!!, for each file added to the ram disk. The CPIO parser in the
+>> kernel recognizes these special files from the file name, and calls the
+>> appropriate parser to add metadata to the previously extracted file. It has
+>> been proposed to use bit 17:16 of the file mode as a way to recognize files
+>> with metadata, but both the kernel and the cpio tool declare the file mode
+>> as unsigned short.
+>
+> Any opinion on this patch set?
 > 
-> Picking of huge_zero_page and mremapping its VMA to unaligned address also gives
-> the case, when the same huge page is mapped as huge page and as set of ordinary
-> pages in the same process.
+> Thanks
 > 
-> Summing up two above cases, is there really a fundamental problem with
-> the functionality the patch set introduces? It looks like we already have
-> these cases in stable kernel supported.
+> Roberto
 
-It *might* work. But it requires a lot of audit to prove that it actually
-*does* work.
+Sorry, I've had the window open since you posted it but haven't gotten around to
+it. I'll try to build it later today.
 
-For instance, are you sure it will not break KSM? What does it mean for
-memory accounting? memcg?
+It does look interesting, and I have no objections to the basic approach. I
+should be able to add support to toybox cpio over a weekend once I've got the
+kernel doing it to test against.
 
-My point is that you breaking long standing invariant in Linux MM and it
-has to be properly justified.
-
-I would expect to see some strange deadlocks or permanent trylock failure
-as result of such change.
-
--- 
- Kirill A. Shutemov
+Rob
