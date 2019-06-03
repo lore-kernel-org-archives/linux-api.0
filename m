@@ -1,234 +1,143 @@
-From: Greg KH <gregkh@linuxfoundation.org>
-Subject: Re: [PATCH v3 16/16] fpga: dfl: fme: add performance reporting
- support
-Date: Sat, 1 Jun 2019 02:42:19 -0700
-Message-ID: <20190601094219.GA1998@kroah.com>
-References: <1558934546-12171-1-git-send-email-hao.wu@intel.com>
- <1558934546-12171-17-git-send-email-hao.wu@intel.com>
- <20190530190305.GA2909@kroah.com>
- <20190601091147.GB3743@hao-dev>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [RFC][PATCH] link.2: AT_ATOMIC_DATA and AT_ATOMIC_METADATA
+Date: Mon, 3 Jun 2019 14:25:40 +1000
+Message-ID: <20190603042540.GH29573@dread.disaster.area>
+References: <20190527172655.9287-1-amir73il@gmail.com>
+ <20190528202659.GA12412@mit.edu>
+ <CAOQ4uxgo5jmwQbLAKQre9=7pLQw=CwMgDaWPaJxi-5NGnPEVPQ@mail.gmail.com>
+ <CAOQ4uxgj94WR82iHE4PDGSD0UDxG5sCtr+Sv+t1sOHHmnXFYzQ@mail.gmail.com>
+ <20190531164136.GA3066@mit.edu>
+ <20190531224549.GF29573@dread.disaster.area>
+ <20190531232852.GG29573@dread.disaster.area>
+ <CAOQ4uxi99NDYMrz-Q7xKta4beQiYFX3-MipZ_RxFNktFTA=vMA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-btrfs-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190601091147.GB3743@hao-dev>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Wu Hao <hao.wu@intel.com>
-Cc: atull@kernel.org, mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Luwei Kang <luwei.kang@intel.com>, Xu Yilun <yilun.xu@intel.com>
+In-Reply-To: <CAOQ4uxi99NDYMrz-Q7xKta4beQiYFX3-MipZ_RxFNktFTA=vMA@mail.gmail.com>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Amir Goldstein <amir73il@gmail.com>
+Cc: Theodore Ts'o <tytso@mit.edu>, Jan Kara <jack@suse.cz>, "Darrick J . Wong" <darrick.wong@oracle.com>, Chris Mason <clm@fb.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-xfs <linux-xfs@vger.kernel.org>, Ext4 <linux-ext4@vger.kernel.org>, Linux Btrfs <linux-btrfs@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Jun 01, 2019 at 05:11:47PM +0800, Wu Hao wrote:
-> On Thu, May 30, 2019 at 12:03:05PM -0700, Greg KH wrote:
-> > On Mon, May 27, 2019 at 01:22:26PM +0800, Wu Hao wrote:
-> > > --- /dev/null
-> > > +++ b/drivers/fpga/dfl-fme-perf.c
-> > > @@ -0,0 +1,962 @@
-> > > +// SPDX-License-Identifier: GPL-2.0
-> > > +/*
-> > > + * Driver for FPGA Management Engine (FME) Global Performance Reporting
-> > > + *
-> > > + * Copyright 2019 Intel Corporation, Inc.
-> > > + *
-> > > + * Authors:
-> > > + *   Kang Luwei <luwei.kang@intel.com>
-> > > + *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
-> > > + *   Wu Hao <hao.wu@intel.com>
-> > > + *   Joseph Grecco <joe.grecco@intel.com>
-> > > + *   Enno Luebbers <enno.luebbers@intel.com>
-> > > + *   Tim Whisonant <tim.whisonant@intel.com>
-> > > + *   Ananda Ravuri <ananda.ravuri@intel.com>
-> > > + *   Mitchel, Henry <henry.mitchel@intel.com>
-> > > + */
-> > > +
-> > > +#include "dfl.h"
-> > > +#include "dfl-fme.h"
-> > > +
-> > > +/*
-> > > + * Performance Counter Registers for Cache.
-> > > + *
-> > > + * Cache Events are listed below as CACHE_EVNT_*.
-> > > + */
-> > > +#define CACHE_CTRL			0x8
-> > > +#define CACHE_RESET_CNTR		BIT_ULL(0)
-> > > +#define CACHE_FREEZE_CNTR		BIT_ULL(8)
-> > > +#define CACHE_CTRL_EVNT			GENMASK_ULL(19, 16)
-> > > +#define CACHE_EVNT_RD_HIT		0x0
-> > > +#define CACHE_EVNT_WR_HIT		0x1
-> > > +#define CACHE_EVNT_RD_MISS		0x2
-> > > +#define CACHE_EVNT_WR_MISS		0x3
-> > > +#define CACHE_EVNT_RSVD			0x4
-> > > +#define CACHE_EVNT_HOLD_REQ		0x5
-> > > +#define CACHE_EVNT_DATA_WR_PORT_CONTEN	0x6
-> > > +#define CACHE_EVNT_TAG_WR_PORT_CONTEN	0x7
-> > > +#define CACHE_EVNT_TX_REQ_STALL		0x8
-> > > +#define CACHE_EVNT_RX_REQ_STALL		0x9
-> > > +#define CACHE_EVNT_EVICTIONS		0xa
-> > > +#define CACHE_EVNT_MAX			CACHE_EVNT_EVICTIONS
-> > > +#define CACHE_CHANNEL_SEL		BIT_ULL(20)
-> > > +#define CACHE_CHANNEL_RD		0
-> > > +#define CACHE_CHANNEL_WR		1
-> > > +#define CACHE_CHANNEL_MAX		2
-> > > +#define CACHE_CNTR0			0x10
-> > > +#define CACHE_CNTR1			0x18
-> > > +#define CACHE_CNTR_EVNT_CNTR		GENMASK_ULL(47, 0)
-> > > +#define CACHE_CNTR_EVNT			GENMASK_ULL(63, 60)
-> > > +
-> > > +/*
-> > > + * Performance Counter Registers for Fabric.
-> > > + *
-> > > + * Fabric Events are listed below as FAB_EVNT_*
-> > > + */
-> > > +#define FAB_CTRL			0x20
-> > > +#define FAB_RESET_CNTR			BIT_ULL(0)
-> > > +#define FAB_FREEZE_CNTR			BIT_ULL(8)
-> > > +#define FAB_CTRL_EVNT			GENMASK_ULL(19, 16)
-> > > +#define FAB_EVNT_PCIE0_RD		0x0
-> > > +#define FAB_EVNT_PCIE0_WR		0x1
-> > > +#define FAB_EVNT_PCIE1_RD		0x2
-> > > +#define FAB_EVNT_PCIE1_WR		0x3
-> > > +#define FAB_EVNT_UPI_RD			0x4
-> > > +#define FAB_EVNT_UPI_WR			0x5
-> > > +#define FAB_EVNT_MMIO_RD		0x6
-> > > +#define FAB_EVNT_MMIO_WR		0x7
-> > > +#define FAB_EVNT_MAX			FAB_EVNT_MMIO_WR
-> > > +#define FAB_PORT_ID			GENMASK_ULL(21, 20)
-> > > +#define FAB_PORT_FILTER			BIT_ULL(23)
-> > > +#define FAB_PORT_FILTER_DISABLE		0
-> > > +#define FAB_PORT_FILTER_ENABLE		1
-> > > +#define FAB_CNTR			0x28
-> > > +#define FAB_CNTR_EVNT_CNTR		GENMASK_ULL(59, 0)
-> > > +#define FAB_CNTR_EVNT			GENMASK_ULL(63, 60)
-> > > +
-> > > +/*
-> > > + * Performance Counter Registers for Clock.
-> > > + *
-> > > + * Clock Counter can't be reset or frozen by SW.
-> > > + */
-> > > +#define CLK_CNTR			0x30
-> > > +
-> > > +/*
-> > > + * Performance Counter Registers for IOMMU / VT-D.
-> > > + *
-> > > + * VT-D Events are listed below as VTD_EVNT_* and VTD_SIP_EVNT_*
-> > > + */
-> > > +#define VTD_CTRL			0x38
-> > > +#define VTD_RESET_CNTR			BIT_ULL(0)
-> > > +#define VTD_FREEZE_CNTR			BIT_ULL(8)
-> > > +#define VTD_CTRL_EVNT			GENMASK_ULL(19, 16)
-> > > +#define VTD_EVNT_AFU_MEM_RD_TRANS	0x0
-> > > +#define VTD_EVNT_AFU_MEM_WR_TRANS	0x1
-> > > +#define VTD_EVNT_AFU_DEVTLB_RD_HIT	0x2
-> > > +#define VTD_EVNT_AFU_DEVTLB_WR_HIT	0x3
-> > > +#define VTD_EVNT_DEVTLB_4K_FILL		0x4
-> > > +#define VTD_EVNT_DEVTLB_2M_FILL		0x5
-> > > +#define VTD_EVNT_DEVTLB_1G_FILL		0x6
-> > > +#define VTD_EVNT_MAX			VTD_EVNT_DEVTLB_1G_FILL
-> > > +#define VTD_CNTR			0x40
-> > > +#define VTD_CNTR_EVNT			GENMASK_ULL(63, 60)
-> > > +#define VTD_CNTR_EVNT_CNTR		GENMASK_ULL(47, 0)
-> > > +#define VTD_SIP_CTRL			0x48
-> > > +#define VTD_SIP_RESET_CNTR		BIT_ULL(0)
-> > > +#define VTD_SIP_FREEZE_CNTR		BIT_ULL(8)
-> > > +#define VTD_SIP_CTRL_EVNT		GENMASK_ULL(19, 16)
-> > > +#define VTD_SIP_EVNT_IOTLB_4K_HIT	0x0
-> > > +#define VTD_SIP_EVNT_IOTLB_2M_HIT	0x1
-> > > +#define VTD_SIP_EVNT_IOTLB_1G_HIT	0x2
-> > > +#define VTD_SIP_EVNT_SLPWC_L3_HIT	0x3
-> > > +#define VTD_SIP_EVNT_SLPWC_L4_HIT	0x4
-> > > +#define VTD_SIP_EVNT_RCC_HIT		0x5
-> > > +#define VTD_SIP_EVNT_IOTLB_4K_MISS	0x6
-> > > +#define VTD_SIP_EVNT_IOTLB_2M_MISS	0x7
-> > > +#define VTD_SIP_EVNT_IOTLB_1G_MISS	0x8
-> > > +#define VTD_SIP_EVNT_SLPWC_L3_MISS	0x9
-> > > +#define VTD_SIP_EVNT_SLPWC_L4_MISS	0xa
-> > > +#define VTD_SIP_EVNT_RCC_MISS		0xb
-> > > +#define VTD_SIP_EVNT_MAX		VTD_SIP_EVNT_RCC_MISS
-> > > +#define VTD_SIP_CNTR			0X50
-> > > +#define VTD_SIP_CNTR_EVNT		GENMASK_ULL(63, 60)
-> > > +#define VTD_SIP_CNTR_EVNT_CNTR		GENMASK_ULL(47, 0)
-> > > +
-> > > +#define PERF_OBJ_ROOT_ID		(~0)
-> > > +
-> > > +#define PERF_TIMEOUT			30
-> > > +
-> > > +/**
-> > > + * struct perf_object - object of performance counter
-> > > + *
-> > > + * @id: instance id. PERF_OBJ_ROOT_ID indicates it is a parent object which
-> > > + *      counts performance counters for all instances.
-> > > + * @attr_groups: the sysfs files are associated with this object.
-> > > + * @feature: pointer to related private feature.
-> > > + * @node: used to link itself to parent's children list.
-> > > + * @children: used to link its children objects together.
-> > > + * @kobj: generic kobject interface.
-> > > + *
-> > > + * 'node' and 'children' are used to construct parent-children hierarchy.
-> > > + */
-> > > +struct perf_object {
-> > > +	int id;
-> > > +	const struct attribute_group **attr_groups;
-> > > +	struct dfl_feature *feature;
-> > > +
-> > > +	struct list_head node;
-> > > +	struct list_head children;
-> > > +	struct kobject kobj;
-> > 
-> > Woah, why are you using a "raw" kobject and not a 'struct device' here?
-> > You just broke userspace and no libraries will see your kobject's
-> > properties as the "chain" of struct devices is not happening anymore.
-> > 
-> > Why can this not just be a 'struct device'?
+On Sat, Jun 01, 2019 at 11:01:42AM +0300, Amir Goldstein wrote:
+> On Sat, Jun 1, 2019 at 2:28 AM Dave Chinner <david@fromorbit.com> wrote:
+> >
+> > On Sat, Jun 01, 2019 at 08:45:49AM +1000, Dave Chinner wrote:
+> > > Given that we can already use AIO to provide this sort of ordering,
+> > > and AIO is vastly faster than synchronous IO, I don't see any point
+> > > in adding complex barrier interfaces that can be /easily implemented
+> > > in userspace/ using existing AIO primitives. You should start
+> > > thinking about expanding libaio with stuff like
+> > > "link_after_fdatasync()" and suddenly the whole problem of
+> > > filesystem data vs metadata ordering goes away because the
+> > > application directly controls all ordering without blocking and
+> > > doesn't need to care what the filesystem under it does....
+> >
+> > And let me point out that this is also how userspace can do an
+> > efficient atomic rename - rename_after_fdatasync(). i.e. on
+> > completion of the AIO_FSYNC, run the rename. This guarantees that
+> > the application will see either the old file of the complete new
+> > file, and it *doesn't have to wait for the operation to complete*.
+> > Once it is in flight, the file will contain the old data until some
+> > point in the near future when will it contain the new data....
 > 
-> Hi Greg,
+> What I am looking for is a way to isolate the effects of "atomic rename/link"
+> from the rest of the users.  Sure there is I/O bandwidth and queued
+> bios, but at least isolate other threads working on other files or metadata
+> from contending with the "atomic rename" thread of journal flushes and
+> the like.
+
+That's not a function of the kernel API. That's a function of the
+implementation behind the kernel API. i.e. The API requires data to
+be written before the rename/link is committed, how that is achieved
+is up to the filesystem. And some filesystems will not be able to
+isolate the API behavioural requirement from other users....
+
+> Actually, one of my use cases is "atomic rename" of files with
+> no data (looking for atomicity w.r.t xattr and mtime), so this "atomic rename"
+> thread should not be interfering with other workloads at all.
+
+Which should already guaranteed because a) rename is supposed to be
+atomic, and b) metadata ordering requirements in journalled
+filesystems. If they lose xattrs across rename, there's something
+seriously wrong with the filesystem implementation.  I'm really not
+sure what you think filesystems are actually doing with metadata
+across rename operations....
+
+> > Seriously, sit down and work out all the "atomic" data vs metadata
+> > behaviours you want, and then tell me how many of them cannot be
+> > implemented as "AIO_FSYNC w/ completion callback function" in
+> > userspace. This mechanism /guarantees ordering/ at the application
+> > level, the application does not block waiting for these data
+> > integrity operations to complete, and you don't need any new kernel
+> > side functionality to implement this.
 > 
-> Many thanks for the review and comments.
-> 
-> Actually we are just trying to create sysfs hierarchy for performance
-> counters using these data structures.
-> 
-> If we use 'struct device' instead of kobject, then we have to let userspace
-> code to deal with device's sysfs (e.g. ignore 'uevent' below). This is the
-> only concern from my side now, as I know that using 'struct device'
-> saves code as we don't need to introduce a new perf_obj_attribute then.
-> 
-> dfl-fme.0/perf/
->  ├── iommu
->  │   ├── afu0
->  │   │   ├── devtlb_1g_fill
->  │   │   ├── devtlb_2m_fill
->  │   │   ├── devtlb_4k_fill
->  │   │   ├── devtlb_read_hit
->  │   │   ├── devtlb_write_hit
->  │   │   ├── read_transaction
->  │   │   ├── uevent
->  │   │   └── write_transaction
->  │   ├── freeze
->  │   ├── iotlb_1g_hit
->  │   ├── iotlb_1g_miss
-> 	 ...
->      └── uevent
->  ...
-> 
-> Do you think if we could keep it or it's better to use 'struct device'?
+> So I think what I could have used is AIO_BATCH_FSYNC, an interface
+> that was proposed by Ric Wheeler and discussed on LSF:
+> https://lwn.net/Articles/789024/
+> Ric was looking for a way to efficiently fsync a "bunch of files".
+> Submitting several AIO_FSYNC calls is not the efficient way of doing that.
 
-What about using the attribute group name?  That gives you a subdir for
-free.  Doing anything "deeper" than one level means that you really have
-a child device, and yes, you need to use a 'struct device'.  Make it
-part of your bus and just have it be a different "type" and all should
-be good.
+/me sighs.
 
-Again, NEVER use a raw kobject as a child of a 'struct device', that
-will break things.
+That's not what I just suggested, and I've already addressed this
+"AIO_FSYNC sucks" FUD in multiple separate threads.  You do realise
+you can submit multiple AIO operations with a single io_submit()
+call, right?
 
-And please cc: me on this series from now on, as you are obviously
-trying to do complex things with the driver model and sysfs and it is
-easy to get very wrong.
+	struct iocb	ioc[10];
+	struct io_event ev[10];
 
-But wait, step back, why does this one driver have such a "special"
-user/kernel api that unique to it and nothing else?  That's also a big
-red flag, why not just use the normal perf api that everyone else uses?
+	for (i = 0; i < 10; i++) {
+		io_prep_fsync(&ioc[i], fd[i]);
+		ioc[i]->data = callback_arg[i];
+	}
 
-thanks,
+	io_submit(aio_ctx, 10, &ioc);
+	io_getevents(aio_ctx, 10, 10, ev, NULL);
 
-greg k-h
+	for (i = 0; i < 10; i++)
+		post_fsync_callback(&ev[i]);
+
+
+There's your single syscall AIO_BATCH_FSYNC functionality, and it
+implements a per-fd post-fsync callback function. This isn't rocket
+science....
+
+[snip]
+
+> I am trying to reduce the number of fsyncs from applications
+> and converting fsync to AIO_FSYNC is not going to help with that.
+
+Your whole argument is "fsync is inefficient because cache flushes,
+therefore AIO_FSYNC must be inefficient." IOWs, you've already
+decided what is wrong, how it can and can't be fixed and the
+solution you want regardless of whether your assertions are correct
+or not. You haven't provided any evidence that a new kernel API is
+the only viable solution, nor that the existing ones cannot provide
+the functionality you require.
+
+So, in the interests of /informed debate/, please implement what you
+want using batched AIO_FSYNC + rename/linkat completion callback and
+measure what it acheives. Then implement a sync_file_range/linkat
+thread pool that provides the same functionality to the application
+(i.e. writeback concurrency in userspace) and measure it. Then we
+can discuss what the relative overhead is with numbers and can
+perform analysis to determine what the cause of the performance
+differential actually is.
+
+Neither of these things require kernel modifications, but you need
+to provide the evidence that existing APIs are insufficient.
+Indeed, we now have the new async ioring stuff that can run async
+sync_file_range calls, so you probably need to benchmark replacing
+AIO_FSYNC with that interface as well. This new API likely does
+exactly what you want without the journal/device cache flush
+overhead of AIO_FSYNC....
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
