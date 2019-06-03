@@ -1,352 +1,93 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v1 3/4] mm: account nr_isolated_xxx in [isolate|putback]_lru_page
-Date: Mon,  3 Jun 2019 14:36:54 +0900
-Message-ID: <20190603053655.127730-4-minchan@kernel.org>
-References: <20190603053655.127730-1-minchan@kernel.org>
+From: Amir Goldstein <amir73il@gmail.com>
+Subject: Re: [RFC][PATCH] link.2: AT_ATOMIC_DATA and AT_ATOMIC_METADATA
+Date: Mon, 3 Jun 2019 09:17:19 +0300
+Message-ID: <CAOQ4uxhqJJvr=uHmn_vPPPwZDCQoL2GFug30quFScNORT5Fw=w@mail.gmail.com>
+References: <20190527172655.9287-1-amir73il@gmail.com> <20190528202659.GA12412@mit.edu>
+ <CAOQ4uxgo5jmwQbLAKQre9=7pLQw=CwMgDaWPaJxi-5NGnPEVPQ@mail.gmail.com>
+ <CAOQ4uxgj94WR82iHE4PDGSD0UDxG5sCtr+Sv+t1sOHHmnXFYzQ@mail.gmail.com>
+ <20190531164136.GA3066@mit.edu> <20190531224549.GF29573@dread.disaster.area>
+ <20190531232852.GG29573@dread.disaster.area> <CAOQ4uxi99NDYMrz-Q7xKta4beQiYFX3-MipZ_RxFNktFTA=vMA@mail.gmail.com>
+ <20190603042540.GH29573@dread.disaster.area>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190603053655.127730-1-minchan@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, jannh@google.com, oleg@redhat.com, christian@brauner.io, oleksandr@redhat.com, hdanton@sina.com, Minchan Kim <minchan@kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+In-Reply-To: <20190603042540.GH29573@dread.disaster.area>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Dave Chinner <david@fromorbit.com>
+Cc: Theodore Ts'o <tytso@mit.edu>, Jan Kara <jack@suse.cz>, "Darrick J . Wong" <darrick.wong@oracle.com>, Chris Mason <clm@fb.com>, Al Viro <viro@zeniv.linux.org.uk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-xfs <linux-xfs@vger.kernel.org>, Ext4 <linux-ext4@vger.kernel.org>, Linux Btrfs <linux-btrfs@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-The isolate counting is pecpu counter so it would be not huge gain
-to work them by batch. Rather than complicating to make them batch,
-let's make it more stright-foward via adding the counting logic
-into [isolate|putback]_lru_page API.
+> > Actually, one of my use cases is "atomic rename" of files with
+> > no data (looking for atomicity w.r.t xattr and mtime), so this "atomic rename"
+> > thread should not be interfering with other workloads at all.
+>
+> Which should already guaranteed because a) rename is supposed to be
+> atomic, and b) metadata ordering requirements in journalled
+> filesystems. If they lose xattrs across rename, there's something
+> seriously wrong with the filesystem implementation.  I'm really not
+> sure what you think filesystems are actually doing with metadata
+> across rename operations....
+>
 
-Link: http://lkml.kernel.org/r/20190531165927.GA20067@cmpxchg.org
-Suggested-by: Johannes Weiner <hannes@cmpxchg.org>
-Signed-off-by: Minchan Kim <minchan@kernel.org>
----
- mm/compaction.c     |  2 --
- mm/gup.c            |  7 +------
- mm/khugepaged.c     |  3 ---
- mm/memory-failure.c |  3 ---
- mm/memory_hotplug.c |  4 ----
- mm/mempolicy.c      |  6 +-----
- mm/migrate.c        | 37 ++++++++-----------------------------
- mm/vmscan.c         | 22 ++++++++++++++++------
- 8 files changed, 26 insertions(+), 58 deletions(-)
+Dave,
 
-diff --git a/mm/compaction.c b/mm/compaction.c
-index 9e1b9acb116b..c6591682deda 100644
---- a/mm/compaction.c
-+++ b/mm/compaction.c
-@@ -982,8 +982,6 @@ isolate_migratepages_block(struct compact_control *cc, unsigned long low_pfn,
- 
- 		/* Successfully isolated */
- 		del_page_from_lru_list(page, lruvec, page_lru(page));
--		inc_node_page_state(page,
--				NR_ISOLATED_ANON + page_is_file_cache(page));
- 
- isolate_success:
- 		list_add(&page->lru, &cc->migratepages);
-diff --git a/mm/gup.c b/mm/gup.c
-index 63ac50e48072..2d9a9bc358c7 100644
---- a/mm/gup.c
-+++ b/mm/gup.c
-@@ -1360,13 +1360,8 @@ static long check_and_migrate_cma_pages(struct task_struct *tsk,
- 					drain_allow = false;
- 				}
- 
--				if (!isolate_lru_page(head)) {
-+				if (!isolate_lru_page(head))
- 					list_add_tail(&head->lru, &cma_page_list);
--					mod_node_page_state(page_pgdat(head),
--							    NR_ISOLATED_ANON +
--							    page_is_file_cache(head),
--							    hpage_nr_pages(head));
--				}
- 			}
- 		}
- 	}
-diff --git a/mm/khugepaged.c b/mm/khugepaged.c
-index a335f7c1fac4..3359df994fb4 100644
---- a/mm/khugepaged.c
-+++ b/mm/khugepaged.c
-@@ -503,7 +503,6 @@ void __khugepaged_exit(struct mm_struct *mm)
- 
- static void release_pte_page(struct page *page)
- {
--	dec_node_page_state(page, NR_ISOLATED_ANON + page_is_file_cache(page));
- 	unlock_page(page);
- 	putback_lru_page(page);
- }
-@@ -602,8 +601,6 @@ static int __collapse_huge_page_isolate(struct vm_area_struct *vma,
- 			result = SCAN_DEL_PAGE_LRU;
- 			goto out;
- 		}
--		inc_node_page_state(page,
--				NR_ISOLATED_ANON + page_is_file_cache(page));
- 		VM_BUG_ON_PAGE(!PageLocked(page), page);
- 		VM_BUG_ON_PAGE(PageLRU(page), page);
- 
-diff --git a/mm/memory-failure.c b/mm/memory-failure.c
-index bc749265a8f3..2187bad7ceff 100644
---- a/mm/memory-failure.c
-+++ b/mm/memory-failure.c
-@@ -1796,9 +1796,6 @@ static int __soft_offline_page(struct page *page, int flags)
- 		 * so use !__PageMovable instead for LRU page's mapping
- 		 * cannot have PAGE_MAPPING_MOVABLE.
- 		 */
--		if (!__PageMovable(page))
--			inc_node_page_state(page, NR_ISOLATED_ANON +
--						page_is_file_cache(page));
- 		list_add(&page->lru, &pagelist);
- 		ret = migrate_pages(&pagelist, new_page, NULL, MPOL_MF_MOVE_ALL,
- 					MIGRATE_SYNC, MR_MEMORY_FAILURE);
-diff --git a/mm/memory_hotplug.c b/mm/memory_hotplug.c
-index a88c5f334e5a..a41bea24d0c9 100644
---- a/mm/memory_hotplug.c
-+++ b/mm/memory_hotplug.c
-@@ -1390,10 +1390,6 @@ do_migrate_range(unsigned long start_pfn, unsigned long end_pfn)
- 			ret = isolate_movable_page(page, ISOLATE_UNEVICTABLE);
- 		if (!ret) { /* Success */
- 			list_add_tail(&page->lru, &source);
--			if (!__PageMovable(page))
--				inc_node_page_state(page, NR_ISOLATED_ANON +
--						    page_is_file_cache(page));
--
- 		} else {
- 			pr_warn("failed to isolate pfn %lx\n", pfn);
- 			dump_page(page, "isolation failed");
-diff --git a/mm/mempolicy.c b/mm/mempolicy.c
-index 5b3bf1747c19..cfb0590f69bb 100644
---- a/mm/mempolicy.c
-+++ b/mm/mempolicy.c
-@@ -948,12 +948,8 @@ static void migrate_page_add(struct page *page, struct list_head *pagelist,
- 	 * Avoid migrating a page that is shared with others.
- 	 */
- 	if ((flags & MPOL_MF_MOVE_ALL) || page_mapcount(head) == 1) {
--		if (!isolate_lru_page(head)) {
-+		if (!isolate_lru_page(head))
- 			list_add_tail(&head->lru, pagelist);
--			mod_node_page_state(page_pgdat(head),
--				NR_ISOLATED_ANON + page_is_file_cache(head),
--				hpage_nr_pages(head));
--		}
- 	}
- }
- 
-diff --git a/mm/migrate.c b/mm/migrate.c
-index 572b4bc85d76..39b95ba04d3e 100644
---- a/mm/migrate.c
-+++ b/mm/migrate.c
-@@ -190,8 +190,6 @@ void putback_movable_pages(struct list_head *l)
- 			unlock_page(page);
- 			put_page(page);
- 		} else {
--			mod_node_page_state(page_pgdat(page), NR_ISOLATED_ANON +
--					page_is_file_cache(page), -hpage_nr_pages(page));
- 			putback_lru_page(page);
- 		}
- 	}
-@@ -1181,10 +1179,17 @@ static ICE_noinline int unmap_and_move(new_page_t get_new_page,
- 		return -ENOMEM;
- 
- 	if (page_count(page) == 1) {
-+		bool is_lru = !__PageMovable(page);
-+
- 		/* page was freed from under us. So we are done. */
- 		ClearPageActive(page);
- 		ClearPageUnevictable(page);
--		if (unlikely(__PageMovable(page))) {
-+		if (likely(is_lru))
-+			mod_node_page_state(page_pgdat(page),
-+						NR_ISOLATED_ANON +
-+						page_is_file_cache(page),
-+						hpage_nr_pages(page));
-+		else {
- 			lock_page(page);
- 			if (!PageMovable(page))
- 				__ClearPageIsolated(page);
-@@ -1210,15 +1215,6 @@ static ICE_noinline int unmap_and_move(new_page_t get_new_page,
- 		 * restored.
- 		 */
- 		list_del(&page->lru);
--
--		/*
--		 * Compaction can migrate also non-LRU pages which are
--		 * not accounted to NR_ISOLATED_*. They can be recognized
--		 * as __PageMovable
--		 */
--		if (likely(!__PageMovable(page)))
--			mod_node_page_state(page_pgdat(page), NR_ISOLATED_ANON +
--					page_is_file_cache(page), -hpage_nr_pages(page));
- 	}
- 
- 	/*
-@@ -1572,9 +1568,6 @@ static int add_page_for_migration(struct mm_struct *mm, unsigned long addr,
- 
- 		err = 0;
- 		list_add_tail(&head->lru, pagelist);
--		mod_node_page_state(page_pgdat(head),
--			NR_ISOLATED_ANON + page_is_file_cache(head),
--			hpage_nr_pages(head));
- 	}
- out_putpage:
- 	/*
-@@ -1890,8 +1883,6 @@ static struct page *alloc_misplaced_dst_page(struct page *page,
- 
- static int numamigrate_isolate_page(pg_data_t *pgdat, struct page *page)
- {
--	int page_lru;
--
- 	VM_BUG_ON_PAGE(compound_order(page) && !PageTransHuge(page), page);
- 
- 	/* Avoid migrating to a node that is nearly full */
-@@ -1913,10 +1904,6 @@ static int numamigrate_isolate_page(pg_data_t *pgdat, struct page *page)
- 		return 0;
- 	}
- 
--	page_lru = page_is_file_cache(page);
--	mod_node_page_state(page_pgdat(page), NR_ISOLATED_ANON + page_lru,
--				hpage_nr_pages(page));
--
- 	/*
- 	 * Isolating the page has taken another reference, so the
- 	 * caller's reference can be safely dropped without the page
-@@ -1971,8 +1958,6 @@ int migrate_misplaced_page(struct page *page, struct vm_area_struct *vma,
- 	if (nr_remaining) {
- 		if (!list_empty(&migratepages)) {
- 			list_del(&page->lru);
--			dec_node_page_state(page, NR_ISOLATED_ANON +
--					page_is_file_cache(page));
- 			putback_lru_page(page);
- 		}
- 		isolated = 0;
-@@ -2002,7 +1987,6 @@ int migrate_misplaced_transhuge_page(struct mm_struct *mm,
- 	pg_data_t *pgdat = NODE_DATA(node);
- 	int isolated = 0;
- 	struct page *new_page = NULL;
--	int page_lru = page_is_file_cache(page);
- 	unsigned long start = address & HPAGE_PMD_MASK;
- 
- 	new_page = alloc_pages_node(node,
-@@ -2048,8 +2032,6 @@ int migrate_misplaced_transhuge_page(struct mm_struct *mm,
- 		/* Retake the callers reference and putback on LRU */
- 		get_page(page);
- 		putback_lru_page(page);
--		mod_node_page_state(page_pgdat(page),
--			 NR_ISOLATED_ANON + page_lru, -HPAGE_PMD_NR);
- 
- 		goto out_unlock;
- 	}
-@@ -2099,9 +2081,6 @@ int migrate_misplaced_transhuge_page(struct mm_struct *mm,
- 	count_vm_events(PGMIGRATE_SUCCESS, HPAGE_PMD_NR);
- 	count_vm_numa_events(NUMA_PAGE_MIGRATE, HPAGE_PMD_NR);
- 
--	mod_node_page_state(page_pgdat(page),
--			NR_ISOLATED_ANON + page_lru,
--			-HPAGE_PMD_NR);
- 	return isolated;
- 
- out_fail:
-diff --git a/mm/vmscan.c b/mm/vmscan.c
-index 0973a46a0472..56df55e8afcd 100644
---- a/mm/vmscan.c
-+++ b/mm/vmscan.c
-@@ -999,6 +999,9 @@ int remove_mapping(struct address_space *mapping, struct page *page)
- void putback_lru_page(struct page *page)
- {
- 	lru_cache_add(page);
-+	mod_node_page_state(page_pgdat(page),
-+				NR_ISOLATED_ANON + page_is_file_cache(page),
-+				-hpage_nr_pages(page));
- 	put_page(page);		/* drop ref from isolate */
- }
- 
-@@ -1464,6 +1467,9 @@ static unsigned long shrink_page_list(struct list_head *page_list,
- 		 */
- 		nr_reclaimed += nr_pages;
- 
-+		mod_node_page_state(pgdat, NR_ISOLATED_ANON +
-+						page_is_file_cache(page),
-+						-nr_pages);
- 		/*
- 		 * Is there need to periodically free_page_list? It would
- 		 * appear not as the counts should be low
-@@ -1539,7 +1545,6 @@ unsigned long reclaim_clean_pages_from_list(struct zone *zone,
- 	ret = shrink_page_list(&clean_pages, zone->zone_pgdat, &sc,
- 			TTU_IGNORE_ACCESS, &dummy_stat, true);
- 	list_splice(&clean_pages, page_list);
--	mod_node_page_state(zone->zone_pgdat, NR_ISOLATED_FILE, -ret);
- 	return ret;
- }
- 
-@@ -1615,6 +1620,9 @@ int __isolate_lru_page(struct page *page, isolate_mode_t mode)
- 		 */
- 		ClearPageLRU(page);
- 		ret = 0;
-+		__mod_node_page_state(page_pgdat(page), NR_ISOLATED_ANON +
-+						page_is_file_cache(page),
-+						hpage_nr_pages(page));
- 	}
- 
- 	return ret;
-@@ -1746,6 +1754,7 @@ static unsigned long isolate_lru_pages(unsigned long nr_to_scan,
- 	trace_mm_vmscan_lru_isolate(sc->reclaim_idx, sc->order, nr_to_scan,
- 				    total_scan, skipped, nr_taken, mode, lru);
- 	update_lru_sizes(lruvec, lru, nr_zone_taken);
-+
- 	return nr_taken;
- }
- 
-@@ -1794,6 +1803,9 @@ int isolate_lru_page(struct page *page)
- 			ClearPageLRU(page);
- 			del_page_from_lru_list(page, lruvec, lru);
- 			ret = 0;
-+			mod_node_page_state(pgdat, NR_ISOLATED_ANON +
-+						page_is_file_cache(page),
-+						hpage_nr_pages(page));
- 		}
- 		spin_unlock_irq(&pgdat->lru_lock);
- 	}
-@@ -1885,6 +1897,9 @@ static unsigned noinline_for_stack move_pages_to_lru(struct lruvec *lruvec,
- 		update_lru_size(lruvec, lru, page_zonenum(page), nr_pages);
- 		list_move(&page->lru, &lruvec->lists[lru]);
- 
-+		__mod_node_page_state(pgdat, NR_ISOLATED_ANON +
-+						page_is_file_cache(page),
-+						-hpage_nr_pages(page));
- 		if (put_page_testzero(page)) {
- 			__ClearPageLRU(page);
- 			__ClearPageActive(page);
-@@ -1962,7 +1977,6 @@ shrink_inactive_list(unsigned long nr_to_scan, struct lruvec *lruvec,
- 	nr_taken = isolate_lru_pages(nr_to_scan, lruvec, &page_list,
- 				     &nr_scanned, sc, lru);
- 
--	__mod_node_page_state(pgdat, NR_ISOLATED_ANON + file, nr_taken);
- 	reclaim_stat->recent_scanned[file] += nr_taken;
- 
- 	item = current_is_kswapd() ? PGSCAN_KSWAPD : PGSCAN_DIRECT;
-@@ -1988,8 +2002,6 @@ shrink_inactive_list(unsigned long nr_to_scan, struct lruvec *lruvec,
- 
- 	move_pages_to_lru(lruvec, &page_list);
- 
--	__mod_node_page_state(pgdat, NR_ISOLATED_ANON + file, -nr_taken);
--
- 	spin_unlock_irq(&pgdat->lru_lock);
- 
- 	mem_cgroup_uncharge_list(&page_list);
-@@ -2048,7 +2060,6 @@ static void shrink_active_list(unsigned long nr_to_scan,
- 	nr_taken = isolate_lru_pages(nr_to_scan, lruvec, &l_hold,
- 				     &nr_scanned, sc, lru);
- 
--	__mod_node_page_state(pgdat, NR_ISOLATED_ANON + file, nr_taken);
- 	reclaim_stat->recent_scanned[file] += nr_taken;
- 
- 	__count_vm_events(PGREFILL, nr_scanned);
-@@ -2117,7 +2128,6 @@ static void shrink_active_list(unsigned long nr_to_scan,
- 	__count_vm_events(PGDEACTIVATE, nr_deactivate);
- 	__count_memcg_events(lruvec_memcg(lruvec), PGDEACTIVATE, nr_deactivate);
- 
--	__mod_node_page_state(pgdat, NR_ISOLATED_ANON + file, -nr_taken);
- 	spin_unlock_irq(&pgdat->lru_lock);
- 
- 	mem_cgroup_uncharge_list(&l_active);
--- 
-2.22.0.rc1.311.g5d7573a151-goog
+We are going in circles so much that my head is spinning.
+I don't blame anyone for having a hard time to keep up with the plot, because
+it spans many threads and subjects, so let me re-iterate:
+
+- I *do* know that rename provides me the needed "metadata barrier"
+  w.r.t. xattr on xfs/ext4 today.
+- I *do* know the sync_file_range()+rename() callback provides the
+"data barrier"
+  I need on xfs/ext4 today.
+- I *do* use this internal fs knowledge in my applications
+- I even fixed up sync_file_range() per your suggestion, so I won't need to use
+  the FIEMAP_FLAG_SYNC hack
+- At attempt from CrashMonkey developers to document this behavior was
+  "shot down" for many justified reasons
+- Without any documentation nor explicit API with a clean guarantee, users
+  cannot write efficient applications without being aware of the filesystem
+  underneath and follow that filesystem development to make sure behavior
+  has not changed
+- The most recent proposal I have made in LSF, based on Jan's suggestion is
+  to change nothing in filesystem implementation, but use a new *explicit* verb
+  to communicate the expectation of the application, so that
+filesystems are free
+  the change behavior in the future in the absence of the new verb
+
+Once again, ATOMIC_METADATA is a noop in preset xfs/ext4.
+ATOMIC_DATA is sync_file_range() in present xfs/ext4.
+The APIs I *need* from the kernel *do* exist, but the filesystem developers
+(except xfs) are not willing to document the guarantee that the existing
+interfaces provide in the present.
+
+[...]
+> So, in the interests of /informed debate/, please implement what you
+> want using batched AIO_FSYNC + rename/linkat completion callback and
+> measure what it acheives. Then implement a sync_file_range/linkat
+> thread pool that provides the same functionality to the application
+> (i.e. writeback concurrency in userspace) and measure it. Then we
+> can discuss what the relative overhead is with numbers and can
+> perform analysis to determine what the cause of the performance
+> differential actually is.
+>
+
+Fare enough.
+
+> Neither of these things require kernel modifications, but you need
+> to provide the evidence that existing APIs are insufficient.
+
+APIs are sufficient if I know which filesystem I am running on.
+btrfs needs a different set of syscalls to get the same thing done.
+
+> Indeed, we now have the new async ioring stuff that can run async
+> sync_file_range calls, so you probably need to benchmark replacing
+> AIO_FSYNC with that interface as well. This new API likely does
+> exactly what you want without the journal/device cache flush
+> overhead of AIO_FSYNC....
+>
+
+Indeed, I am keeping a close watch on io_uring.
+
+Thanks,
+Amir.
