@@ -1,123 +1,66 @@
-From: Renzo Davoli <renzo@cs.unibo.it>
-Subject: Re: [PATCH 1/1] eventfd new tag EFD_VPOLL: generate epoll events
-Date: Mon, 3 Jun 2019 17:00:10 +0200
-Message-ID: <20190603150010.GE4312@cs.unibo.it>
-References: <20190526142521.GA21842@cs.unibo.it>
- <20190527073332.GA13782@kroah.com>
- <20190527133621.GC26073@cs.unibo.it>
- <480f1bda66b67f740f5da89189bbfca3@suse.de>
- <20190531104502.GE3661@cs.unibo.it>
- <cd20672aaf13f939b4f798d0839d2438@suse.de>
+From: Daniel Colascione <dancol@google.com>
+Subject: Re: [RFCv2 1/6] mm: introduce MADV_COLD
+Date: Mon, 3 Jun 2019 08:43:59 -0700
+Message-ID: <CAKOZuetW1UsPP3fDm-zTBOiO_oWkkDwADu+Apy53abWNs-UcUA@mail.gmail.com>
+References: <20190531064313.193437-1-minchan@kernel.org> <20190531064313.193437-2-minchan@kernel.org>
+ <20190531084752.GI6896@dhcp22.suse.cz> <20190531133904.GC195463@google.com>
+ <20190531140332.GT6896@dhcp22.suse.cz> <20190531143407.GB216592@google.com> <20190603071607.GB4531@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <cd20672aaf13f939b4f798d0839d2438@suse.de>
+In-Reply-To: <20190603071607.GB4531@dhcp22.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Roman Penyaev <rpenyaev@suse.de>
-Cc: Greg KH <gregkh@linuxfoundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Davide Libenzi <davidel@xmailserver.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel-owner@vger.kernel.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Minchan Kim <minchan@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, Jann Horn <jannh@google.com>, Oleg Nesterov <oleg@redhat.com>, Christian Brauner <christian@brauner.io>, oleksandr@redhat.com, hdanton@sina.com
 List-Id: linux-api@vger.kernel.org
 
-Hi Roman,
+On Mon, Jun 3, 2019 at 12:16 AM Michal Hocko <mhocko@kernel.org> wrote:
+> On Fri 31-05-19 23:34:07, Minchan Kim wrote:
+> > On Fri, May 31, 2019 at 04:03:32PM +0200, Michal Hocko wrote:
+> > > On Fri 31-05-19 22:39:04, Minchan Kim wrote:
+> > > > On Fri, May 31, 2019 at 10:47:52AM +0200, Michal Hocko wrote:
+> > > > > On Fri 31-05-19 15:43:08, Minchan Kim wrote:
+> > > > > > When a process expects no accesses to a certain memory range, it could
+> > > > > > give a hint to kernel that the pages can be reclaimed when memory pressure
+> > > > > > happens but data should be preserved for future use.  This could reduce
+> > > > > > workingset eviction so it ends up increasing performance.
+> > > > > >
+> > > > > > This patch introduces the new MADV_COLD hint to madvise(2) syscall.
+> > > > > > MADV_COLD can be used by a process to mark a memory range as not expected
+> > > > > > to be used in the near future. The hint can help kernel in deciding which
+> > > > > > pages to evict early during memory pressure.
+> > > > > >
+> > > > > > Internally, it works via deactivating pages from active list to inactive's
+> > > > > > head if the page is private because inactive list could be full of
+> > > > > > used-once pages which are first candidate for the reclaiming and that's a
+> > > > > > reason why MADV_FREE move pages to head of inactive LRU list. Therefore,
+> > > > > > if the memory pressure happens, they will be reclaimed earlier than other
+> > > > > > active pages unless there is no access until the time.
+> > > > >
+> > > > > [I am intentionally not looking at the implementation because below
+> > > > > points should be clear from the changelog - sorry about nagging ;)]
+> > > > >
+> > > > > What kind of pages can be deactivated? Anonymous/File backed.
+> > > > > Private/shared? If shared, are there any restrictions?
+> > > >
+> > > > Both file and private pages could be deactived from each active LRU
+> > > > to each inactive LRU if the page has one map_count. In other words,
+> > > >
+> > > >     if (page_mapcount(page) <= 1)
+> > > >         deactivate_page(page);
+> > >
+> > > Why do we restrict to pages that are single mapped?
+> >
+> > Because page table in one of process shared the page would have access bit
+> > so finally we couldn't reclaim the page. The more process it is shared,
+> > the more fail to reclaim.
+>
+> So what? In other words why should it be restricted solely based on the
+> map count. I can see a reason to restrict based on the access
+> permissions because we do not want to simplify all sorts of side channel
+> attacks but memory reclaim is capable of reclaiming shared pages and so
+> far I haven't heard any sound argument why madvise should skip those.
+> Again if there are any reasons, then document them in the changelog.
 
-	 I sorry for the delay in my answer, but I needed to set up a minimal
-tutorial to show what I am working on and why I need a feature like the
-one I am proposing.
-
-Please, have a look of the README.md page here:
-https://github.com/virtualsquare/vuos
-(everything can be downloaded and tested)
-
-On Fri, May 31, 2019 at 01:48:39PM +0200, Roman Penyaev wrote:
-> Since each such a stack has a set of read/write/etc functions you always
-> can extend you stack with another call which returns you event mask,
-> specifying what exactly you have to do, e.g.:
-> 
->     nfds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
->     for (n = 0; n < nfds; ++n) {
->          struct sock *sock;
-> 
->          sock = events[n].data.ptr;
->          events = sock->get_events(sock, &events[n]);
-> 
->          if (events & EPOLLIN)
->              sock->read(sock);
->          if (events & EPOLLOUT)
->              sock->write(sock);
->     }
-> 
-> 
-> With such a virtual table you can mix all userspace stacks and even
-> with normal sockets, for which 'get_events' function can be declared as
-> 
-> static poll_t kernel_sock_get_events(struct sock *sock, struct epoll_event
-> *ev)
-> {
->     return ev->events;
-> }
-> 
-> Do I miss something?
-
-I am not trying to port some tools to use user-space implemented stacks or device
-drivers/emulators, I am seeking to a general purpose approach.
-
-I think that the example in the section of the README "mount a user-level 
-networking stack" explains the situation.
-
-The submodule vunetvdestack uses a namespace to define a networking stack connected
-to a VDE network (see https://github.com/rd235/vdeplug4).
-
-The API is clean (as it can be seen at the end of the file vunet_modules/vunetvdestack.c).
-All the methods but "socket" are directly mapped to their system call counterparts:
-
-struct vunet_operations vunet_ops = {
-  .socket = vdestack_socket,
-  .bind = bind,
-  .connect = connect,
-  .listen = listen,
-  .accept4 = accept4,
-....
-	.epoll_ctl = epoll_ctl,
-...
-}
-
-(the elegance of the API can be seen also in vunet_modules/vunetreal.c: a 38 lines module
- implementing a gateway to the real networking of the hosting machine)
-
-Unfortunately I cannot use the same clean interface to support user-library implemented
-stacks like lwip/lwipv6/picotcp because I cannot generate EPOLL events...
-
-Bizantine workarounds based on data structures exchanged in the data.ptr field of epoll_event
-that must be decoded by the hypervisor to retrieve the missing information about the event
-can be implemented... but it would be a pity ;-)
-
-The same problem arises in umdev modules: virtual devices should generate the same
-EPOLL events of their real couterparts.
-
-I feel that the ability to generate/synthesize EPOLL events could be useful for many projects.
-(In my first message I included some URLs of people seeking for this feature, retrieved by
- some queries on a web search engine)
-
-Implementations may vary as well as the kernel API to support such a feature.
-As I told, my proposal has a minimal impact on the code, it does not require the definition
-of new syscalls, it simply enhances the features of eventfd.
-
-> 
-> Eventually you come up with such a lock to protect your tcp or whatever
-> state machine.  Or you have a real example where read and write paths
-> can work completely independently?
-
-Actually umvu hypervisor uses concurrent tracing of concurrent processes.
-We have named this technique "guardian angels": each process/thread running in the
-partial virtual machine has a correspondent thread in the hypervisor.
-So if a process uses two threads to manage a network connection (say a TCP stream),
-the two guardian angels replicate their requests towards the networking module.
-
-So I am looking for a general solution, not to a pattern to port some projects.
-(and I cannot use two different approaches for event driven and multi-threaded
- implementations as I have to support both).
-
-If you reached this point...  Thank you for your patience.
-I am more than pleased to receive further comments or proposals.
-
-	renzo
+Whether to reclaim shared pages is a policy decision best left to
+userland, IMHO.
