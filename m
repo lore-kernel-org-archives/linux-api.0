@@ -1,54 +1,47 @@
-From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [PATCH ghak90 V6] fixup! audit: add containerid filtering
-Date: Mon, 3 Jun 2019 12:01:24 -0400
-Message-ID: <CAHC9VhQZuOXiK4yj4xeRwGF_qepeg7qDL02GDdYhwTNRLRdmPA@mail.gmail.com>
-References: <fadb320e38a899441fcc693bbbc822a3b57f1a46.1559239558.git.rgb@redhat.com>
+From: David Howells <dhowells@redhat.com>
+Subject: Re: [PATCH 3/7] vfs: Add a mount-notification facility
+Date: Mon, 03 Jun 2019 17:30:26 +0100
+Message-ID: <19414.1559579426@warthog.procyon.org.uk>
+References: <c95dd6cd-5530-6b70-68f6-4038edd72352@schaufler-ca.com> <CAG48ez2rRh2_Kq_EGJs5k-ZBNffGs_Q=vkQdinorBgo58tbGpg@mail.gmail.com> <155905930702.7587.7100265859075976147.stgit@warthog.procyon.org.uk> <155905933492.7587.6968545866041839538.stgit@warthog.procyon.org.uk> <14347.1559127657@warthog.procyon.org.uk> <312a138c-e5b2-4bfb-b50b-40c82c55773f@schaufler-ca.com> <CAG48ez2KMrTBFzO9p8GvduXruz+FNLPyhc2YivHePsgViEoT1g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <fadb320e38a899441fcc693bbbc822a3b57f1a46.1559239558.git.rgb@redhat.com>
+In-Reply-To: <c95dd6cd-5530-6b70-68f6-4038edd72352@schaufler-ca.com>
+Content-ID: <19413.1559579426.1@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Guy Briggs <rgb@redhat.com>
-Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com
+To: Casey Schaufler <casey@schaufler-ca.com>
+Cc: dhowells@redhat.com, Jann Horn <jannh@google.com>, Al Viro <viro@zeniv.linux.org.uk>, raven@themaw.net, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module <linux-security-module@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, Andy Lutomirski <luto@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 31, 2019 at 1:54 PM Richard Guy Briggs <rgb@redhat.com> wrote:
->
-> Remove the BUG() call since we will never have an invalid op value as
-> audit_data_to_entry()/audit_to_op() ensure that the op value is a a
-> known good value.
->
-> Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> ---
->  kernel/auditfilter.c | 1 -
->  1 file changed, 1 deletion(-)
+Casey Schaufler <casey@schaufler-ca.com> wrote:
 
-Thanks for sending this out.  However, in light of the discussion in
-the patchset's cover letter it looks like we need to better support
-nested container orchestrators which is likely going to require some
-non-trivial changes to the kernel/userspace API.  Because of this I'm
-going to hold off pulling these patches into a "working" branch,
-hopefully the next revision of these patches will solve the nested
-orchestrator issue enough that we can continue to move forward with
-testing.
+> >> should be used. Someone or something caused the event. It can
+> >> be important who it was.
+> > The kernel's normal security model means that you should be able to
+> > e.g. accept FDs that random processes send you and perform
+> > read()/write() calls on them without acting as a subject in any
+> > security checks; let alone close().
+> 
+> Passed file descriptors are an anomaly in the security model
+> that (in this developer's opinion) should have never been
+> included. More than one of the "B" level UNIX systems disabled
+> them outright. 
 
-> diff --git a/kernel/auditfilter.c b/kernel/auditfilter.c
-> index 407b5bb3b4c6..385a114a1254 100644
-> --- a/kernel/auditfilter.c
-> +++ b/kernel/auditfilter.c
-> @@ -1244,7 +1244,6 @@ int audit_comparator64(u64 left, u32 op, u64 right)
->         case Audit_bittest:
->                 return ((left & right) == right);
->         default:
-> -               BUG();
->                 return 0;
->         }
->  }
-> --
-> 1.8.3.1
->
+Considering further on this, I think the only way to implement what you're
+suggesting is to add a field to struct file to record the last fputter's creds
+as the procedure of fputting is offloaded to a workqueue.
 
+Note that's last fputter, not the last closer, as we don't track the number of
+open fds linked to a file struct.
 
--- 
-paul moore
-www.paul-moore.com
+In the case of AF_UNIX sockets that contain in-the-process-of-being-passed fds
+at the time of closure, this is further complicated by the socket fput being
+achieved in the work item - thereby adding layers of indirection.
+
+It might be possible to replace f_cred rather than adding a new field, but
+that might get used somewhere after that point.
+
+Note also that fsnotify_close() doesn't appear to use the last fputter's path
+since it's not available if called from deferred fput.
+
+David
