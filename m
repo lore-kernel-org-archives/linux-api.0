@@ -1,70 +1,169 @@
-From: Casey Schaufler <casey@schaufler-ca.com>
-Subject: Re: [RFC][PATCH 0/8] Mount, FS, Block and Keyrings notifications [ver
- #2]
-Date: Tue, 4 Jun 2019 14:11:45 -0700
-Message-ID: <3ca991d1-4056-c45b-dbae-9976fb5d81e0@schaufler-ca.com>
-References: <CALCETrWzDR=Ap8NQ5-YrVhXCEBgr+hwpjw9fBn0m2NkZzZ7XLQ@mail.gmail.com>
- <155966609977.17449.5624614375035334363.stgit@warthog.procyon.org.uk>
- <1207.1559680778@warthog.procyon.org.uk>
+From: Christian Brauner <christian@brauner.io>
+Subject: Re: [PATCH v3 2/2] arch: wire-up clone3() syscall
+Date: Tue, 4 Jun 2019 23:29:31 +0200
+Message-ID: <20190604212930.jaaztvkent32b7d3@brauner.io>
+References: <20190604160944.4058-1-christian@brauner.io>
+ <20190604160944.4058-2-christian@brauner.io>
+ <CAK8P3a0OfBpx6y4m5uWX-DUg16NoFby5ik-3xCcD+yMrw0tbEw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1207.1559680778@warthog.procyon.org.uk>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <CAK8P3a0OfBpx6y4m5uWX-DUg16NoFby5ik-3xCcD+yMrw0tbEw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>, Andy Lutomirski <luto@kernel.org>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, raven@themaw.net, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, LSM List <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, casey@schaufler-ca.com
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Jann Horn <jannh@google.com>, Kees Cook <keescook@chromium.org>, Florian Weimer <fweimer@redhat.com>, Oleg Nesterov <oleg@redhat.com>, David Howells <dhowells@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 6/4/2019 1:39 PM, David Howells wrote:
-> Andy Lutomirski <luto@kernel.org> wrote:
->
->>> Here's a set of patches to add a general variable-length notification=
- queue
->>> concept and to add sources of events for:
->> I asked before and didn't see a response, so I'll ask again.  Why are =
-you
->> paying any attention at all to the creds that generate an event?
-> Casey responded to you.  It's one of his requirements.
+On Tue, Jun 04, 2019 at 08:40:01PM +0200, Arnd Bergmann wrote:
+> On Tue, Jun 4, 2019 at 6:09 PM Christian Brauner <christian@brauner.io> wrote:
+> >
+> > Wire up the clone3() call on all arches that don't require hand-rolled
+> > assembly.
+> >
+> > Some of the arches look like they need special assembly massaging and it is
+> > probably smarter if the appropriate arch maintainers would do the actual
+> > wiring. Arches that are wired-up are:
+> > - x86{_32,64}
+> > - arm{64}
+> > - xtensa
+> 
+> The ones you did look good to me. I would hope that we can do all other
+> architectures the same way, even if they have special assembly wrappers
+> for the old clone(). The most interesting cases appear to be ia64, alpha,
+> m68k and sparc, so it would be good if their maintainers could take a
+> look.
 
-Process A takes an action. As a result of that action,
-an event is written to Process B's event buffer. This isn't
-a covert channel, it's a direct access, just like sending
-a signal. Process A is the subject and the event buffer,
-which is part of Process B, is the object.
+Yes, agreed. They can sort this out even after this lands.
 
+> 
+> What do you use for testing? Would it be possible to override the
+> internal clone() function in glibc with an LD_PRELOAD library
+> to quickly test one of the other architectures for regressions?
 
-> I'm not sure of the need, and I particularly don't like trying to make
-> indirect destruction events (mount destruction keyed on fput, for insta=
-nce)
-> carry the creds of the triggerer.  Indeed, the trigger can come from al=
-l sorts
-> of places - including af_unix queue destruction, someone poking around =
-in
-> procfs, a variety of processes fputting simultaneously.  Only one of th=
-em can
-> win, and the LSM needs to handle *all* the possibilities.
+I have a test program that is rather horrendously ugly and I compiled
+kernels for x86 and the arms and tested in qemu. The program basically
+looks like [1].
 
-Yes, it's a hairy problem. It was a significant factor in the
-demise of kdbus.
+Christian
 
-> However, the LSMs (or at least SELinux) ignore f_cred and use current_c=
-red()
-> when checking permissions.  See selinux_revalidate_file_permission() fo=
-r
-> example - it uses current_cred() not file->f_cred to re-evaluate the pe=
-rms,
-> and the fd might be shared between a number of processes with different=
- creds.
->
->> This seems like the wrong approach.  If an LSM wants to prevent covert=
+[1]:
+#define _GNU_SOURCE
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <linux/sched.h>
+#include <linux/types.h>
+#include <sched.h>
+#include <signal.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/mount.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/syscall.h>
+#include <sys/sysmacros.h>
+#include <sys/types.h>
+#include <sys/un.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
->> communication from, say, mount actions, then it shouldn't allow the
->> watch to be set up in the first place.
-> Yeah, I can agree to that.  Casey?
+static pid_t raw_clone(struct clone_args *args)
+{
+	return syscall(__NR_clone3, args, sizeof(struct clone_args));
+}
 
-Back to your earlier point, you don't know where the
-event is coming from when you create the event watch.
-If you enforce a watch time, what are you going to check?
-Isn't this going to be considered too restrictive?
+static pid_t raw_clone_legacy(int *pidfd, unsigned int flags)
+{
+	return syscall(__NR_clone, flags, 0, pidfd, 0, 0);
+}
+
+static int wait_for_pid(pid_t pid)
+{
+	int status, ret;
+
+again:
+	ret = waitpid(pid, &status, 0);
+	if (ret == -1) {
+		if (errno == EINTR)
+			goto again;
+
+		return -1;
+	}
+
+	if (ret != pid)
+		goto again;
+
+	if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+		return -1;
+
+	return 0;
+}
+
+#define ptr_to_u64(ptr) ((__u64)((uintptr_t)(ptr)))
+#define u64_to_ptr(n) ((uintptr_t)((__u64)(n)))
+
+int main(int argc, char *argv[])
+{
+	int pidfd = -1;
+	pid_t parent_tid = -1, pid = -1;
+	struct clone_args args = {0};
+	args.parent_tid = ptr_to_u64(&parent_tid);
+	args.pidfd = ptr_to_u64(&pidfd);
+	args.flags = CLONE_PIDFD | CLONE_PARENT_SETTID;
+	args.exit_signal = SIGCHLD;
+
+	pid = raw_clone(&args);
+	if (pid < 0) {
+		fprintf(stderr, "%s - Failed to create new process\n",
+			strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+
+	if (pid == 0) {
+		printf("I am the child with pid %d\n", getpid());
+		exit(EXIT_SUCCESS);
+	}
+
+	printf("raw_clone: I am the parent. My child's pid is   %d\n", pid);
+	printf("raw_clone: I am the parent. My child's pidfd is %d\n",
+	       *(int *)args.pidfd);
+	printf("raw_clone: I am the parent. My child's paren_tid value is %d\n",
+	       *(pid_t *)args.parent_tid);
+
+	if (wait_for_pid(pid))
+		exit(EXIT_FAILURE);
+
+	if (pid != *(pid_t *)args.parent_tid)
+		exit(EXIT_FAILURE);
+
+	close(pidfd);
+
+	printf("\n\n");
+	pidfd = -1;
+	pid = raw_clone_legacy(&pidfd, CLONE_PIDFD | SIGCHLD);
+	if (pid < 0) {
+		fprintf(stderr, "%s - Failed to create new process\n",
+			strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+
+	if (pid == 0) {
+		printf("I am the child with pid %d\n", getpid());
+		exit(EXIT_SUCCESS);
+	}
+
+	printf("raw_clone_legacy: I am the parent. My child's pid is   %d\n",
+	       pid);
+	printf("raw_clone_legacy: I am the parent. My child's pidfd is %d\n",
+	       pidfd);
+
+	if (wait_for_pid(pid))
+		exit(EXIT_FAILURE);
+
+	if (pid != *(pid_t *)args.parent_tid)
+		exit(EXIT_FAILURE);
+
+	return 0;
+}
