@@ -1,34 +1,37 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH 1/8] security: Override creds in __fput() with last
- fputter's creds [ver #2]
-Date: Tue, 4 Jun 2019 11:15:14 -0700
-Message-ID: <CALCETrXLoowmrHHWWr3OqsOGBkyGsV_x0nADaEyv+_ysGQdM3g@mail.gmail.com>
-References: <155966609977.17449.5624614375035334363.stgit@warthog.procyon.org.uk>
- <155966611030.17449.1411028213562548153.stgit@warthog.procyon.org.uk>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH v3 2/2] arch: wire-up clone3() syscall
+Date: Tue, 4 Jun 2019 20:40:01 +0200
+Message-ID: <CAK8P3a0OfBpx6y4m5uWX-DUg16NoFby5ik-3xCcD+yMrw0tbEw@mail.gmail.com>
+References: <20190604160944.4058-1-christian@brauner.io> <20190604160944.4058-2-christian@brauner.io>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <155966611030.17449.1411028213562548153.stgit@warthog.procyon.org.uk>
+In-Reply-To: <20190604160944.4058-2-christian@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>, Jann Horn <jannh@google.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Casey Schaufler <casey@schaufler-ca.com>, raven@themaw.net, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, LSM List <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+To: Christian Brauner <christian@brauner.io>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Jann Horn <jannh@google.com>, Kees Cook <keescook@chromium.org>, Florian Weimer <fweimer@redhat.com>, Oleg Nesterov <oleg@redhat.com>, David Howells <dhowells@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jun 4, 2019 at 9:35 AM David Howells <dhowells@redhat.com> wrote:
+On Tue, Jun 4, 2019 at 6:09 PM Christian Brauner <christian@brauner.io> wrote:
 >
-> So that the LSM can see the credentials of the last process to do an fput()
-> on a file object when the file object is being dismantled, do the following
-> steps:
+> Wire up the clone3() call on all arches that don't require hand-rolled
+> assembly.
 >
->  (1) Cache the current credentials in file->f_fput_cred at the point the
->      file object's reference count reaches zero.
+> Some of the arches look like they need special assembly massaging and it is
+> probably smarter if the appropriate arch maintainers would do the actual
+> wiring. Arches that are wired-up are:
+> - x86{_32,64}
+> - arm{64}
+> - xtensa
 
-I don't think it's valid to capture credentials in close().  This
-sounds very easy to spoof, especially when you consider that you can
-stick an fd in unix socket and aim it at a service that's just going
-to ignore it and close it.
+The ones you did look good to me. I would hope that we can do all other
+architectures the same way, even if they have special assembly wrappers
+for the old clone(). The most interesting cases appear to be ia64, alpha,
+m68k and sparc, so it would be good if their maintainers could take a
+look.
 
-IOW I think this is at least as invalid as looking at current_cred()
-in write(), which is a classic bug that gets repeated regularly.
+What do you use for testing? Would it be possible to override the
+internal clone() function in glibc with an LD_PRELOAD library
+to quickly test one of the other architectures for regressions?
 
---Andy
+      Arnd
