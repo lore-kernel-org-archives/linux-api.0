@@ -1,63 +1,52 @@
-From: Christopher Lameter <cl@linux.com>
-Subject: Re: [PATCH v1 4/4] mm: introduce MADV_PAGEOUT
-Date: Tue, 4 Jun 2019 15:38:20 +0000
-Message-ID: <0100016b232425c9-64a09298-59ba-48b8-9aa3-e7e1ad2d316c-000000@email.amazonses.com>
-References: <20190603053655.127730-1-minchan@kernel.org> <20190603053655.127730-5-minchan@kernel.org>
+From: David Laight <David.Laight@ACULAB.COM>
+Subject: RE: [PATCH] signal: remove the wrong signal_pending() check in
+ restore_user_sigmask()
+Date: Tue, 4 Jun 2019 15:57:41 +0000
+Message-ID: <3b68788ea9114d08bdfdab575c8c29bb@AcuMS.aculab.com>
+References: <20190522032144.10995-1-deepa.kernel@gmail.com>
+	<20190529161157.GA27659@redhat.com>	<20190604134117.GA29963@redhat.com>
+ <87tvd5nz8i.fsf@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190603053655.127730-5-minchan@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Minchan Kim <minchan@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, jannh@google.com, oleg@redhat.com, christian@brauner.io, oleksandr@redhat.com, hdanton@sina.com
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <owner-linux-aio@kvack.org>
+In-Reply-To: <87tvd5nz8i.fsf@xmission.com>
+Content-Language: en-US
+Sender: owner-linux-aio@kvack.org
+To: "'Eric W. Biederman'" <ebiederm@xmission.com>, Oleg Nesterov <oleg@redhat.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Deepa Dinamani <deepa.kernel@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "arnd@arndb.de" <arnd@arndb.de>, "dbueso@suse.de" <dbueso@suse.de>, "axboe@kernel.dk" <axboe@kernel.dk>, "dave@stgolabs.net" <dave@stgolabs.net>, "e@80x24.org" <e@80x24.org>, "jbaron@akamai.com" <jbaron@akamai.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-aio@kvack.org" <linux-aio@kvack.org>, "omar.kilani@gmail.com" <omar.kilani@gmail.com>, "tglx@linutronix.de" <tglx@linutronix.de>, "stable@vger.kernel.org" <stable@vger.kernel.org>, Al
+ Viro <viro@ZenIV.linux.org.uk>, Linus Torvalds <torvalds@linux-foundation.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Michael Kerrisk <mtk.manpages@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 3 Jun 2019, Minchan Kim wrote:
+From: Eric W. Biederman
+> Sent: 04 June 2019 16:32
+...
+> Michael is there any chance we can get this guarantee of the linux
+> implementation of pselect and friends clearly documented.  The guarantee
+> that if the system call completes successfully we are guaranteed that
+> no signal that is unblocked by using sigmask will be delivered?
 
-> @@ -415,6 +416,128 @@ static long madvise_cold(struct vm_area_struct *vma,
->  	return 0;
->  }
->
-> +static int madvise_pageout_pte_range(pmd_t *pmd, unsigned long addr,
-> +				unsigned long end, struct mm_walk *walk)
-> +{
-> +	pte_t *orig_pte, *pte, ptent;
-> +	spinlock_t *ptl;
-> +	LIST_HEAD(page_list);
-> +	struct page *page;
-> +	int isolated = 0;
-> +	struct vm_area_struct *vma = walk->vma;
-> +	unsigned long next;
-> +
-> +	if (fatal_signal_pending(current))
-> +		return -EINTR;
-> +
-> +	next = pmd_addr_end(addr, end);
-> +	if (pmd_trans_huge(*pmd)) {
-> +		ptl = pmd_trans_huge_lock(pmd, vma);
-> +		if (!ptl)
-> +			return 0;
-> +
-> +		if (is_huge_zero_pmd(*pmd))
-> +			goto huge_unlock;
-> +
-> +		page = pmd_page(*pmd);
-> +		if (page_mapcount(page) > 1)
-> +			goto huge_unlock;
-> +
-> +		if (next - addr != HPAGE_PMD_SIZE) {
-> +			int err;
-> +
-> +			get_page(page);
-> +			spin_unlock(ptl);
-> +			lock_page(page);
-> +			err = split_huge_page(page);
-> +			unlock_page(page);
-> +			put_page(page);
-> +			if (!err)
-> +				goto regular_page;
-> +			return 0;
-> +		}
+The behaviour certainly needs documenting - the ToG docs are unclear.
+I think you need stronger statement that the one above.
 
-I have seen this before multiple times. Is there a way to avoid
-replicating the whole shebang?
+Maybe "signals will only be delivered (ie the handler called) if
+the system call has to wait and the wait is interrupted by a signal.
+(Even then pselect might find ready fd and return success.)
+
+There is also the 'issue' of ERESTARTNOHAND.
+Some of the system calls will return EINTR if the wait is interrupted
+by a signal that doesn't have a handler, others get restarted.
+I'm not at all sure about why there is a difference.
+
+=09David
+
+-
+Registered Address Lakeside, Bramley Road, Mount Farm, Milton Keynes, MK1 1=
+PT, UK
+Registration No: 1397386 (Wales)
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
