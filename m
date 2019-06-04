@@ -1,100 +1,73 @@
 From: Minchan Kim <minchan@kernel.org>
-Subject: Re: [RFCv2 1/6] mm: introduce MADV_COLD
-Date: Tue, 4 Jun 2019 13:26:51 +0900
-Message-ID: <20190604042651.GC43390@google.com>
-References: <20190531064313.193437-1-minchan@kernel.org>
- <20190531064313.193437-2-minchan@kernel.org>
- <20190531084752.GI6896@dhcp22.suse.cz>
- <20190531133904.GC195463@google.com>
- <20190531140332.GT6896@dhcp22.suse.cz>
- <20190531143407.GB216592@google.com>
- <20190603071607.GB4531@dhcp22.suse.cz>
+Subject: Re: [PATCH v1 3/4] mm: account nr_isolated_xxx in
+ [isolate|putback]_lru_page
+Date: Tue, 4 Jun 2019 13:51:46 +0900
+Message-ID: <20190604045146.GD43390@google.com>
+References: <20190604042047.13492-1-hdanton@sina.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190603071607.GB4531@dhcp22.suse.cz>
+In-Reply-To: <20190604042047.13492-1-hdanton@sina.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, jannh@google.com, oleg@redhat.com, christian@brauner.io, oleksandr@redhat.com, hdanton@sina.com
+To: Hillf Danton <hdanton@sina.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, "jannh@google.com" <jannh@google.com>, "oleg@redhat.com" <oleg@redhat.com>, "christian@brauner.io" <christian@brauner.io>, "oleksandr@redhat.com" <oleksandr@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jun 03, 2019 at 09:16:07AM +0200, Michal Hocko wrote:
-> On Fri 31-05-19 23:34:07, Minchan Kim wrote:
-> > On Fri, May 31, 2019 at 04:03:32PM +0200, Michal Hocko wrote:
-> > > On Fri 31-05-19 22:39:04, Minchan Kim wrote:
-> > > > On Fri, May 31, 2019 at 10:47:52AM +0200, Michal Hocko wrote:
-> > > > > On Fri 31-05-19 15:43:08, Minchan Kim wrote:
-> > > > > > When a process expects no accesses to a certain memory range, it could
-> > > > > > give a hint to kernel that the pages can be reclaimed when memory pressure
-> > > > > > happens but data should be preserved for future use.  This could reduce
-> > > > > > workingset eviction so it ends up increasing performance.
-> > > > > > 
-> > > > > > This patch introduces the new MADV_COLD hint to madvise(2) syscall.
-> > > > > > MADV_COLD can be used by a process to mark a memory range as not expected
-> > > > > > to be used in the near future. The hint can help kernel in deciding which
-> > > > > > pages to evict early during memory pressure.
-> > > > > > 
-> > > > > > Internally, it works via deactivating pages from active list to inactive's
-> > > > > > head if the page is private because inactive list could be full of
-> > > > > > used-once pages which are first candidate for the reclaiming and that's a
-> > > > > > reason why MADV_FREE move pages to head of inactive LRU list. Therefore,
-> > > > > > if the memory pressure happens, they will be reclaimed earlier than other
-> > > > > > active pages unless there is no access until the time.
-> > > > > 
-> > > > > [I am intentionally not looking at the implementation because below
-> > > > > points should be clear from the changelog - sorry about nagging ;)]
-> > > > > 
-> > > > > What kind of pages can be deactivated? Anonymous/File backed.
-> > > > > Private/shared? If shared, are there any restrictions?
-> > > > 
-> > > > Both file and private pages could be deactived from each active LRU
-> > > > to each inactive LRU if the page has one map_count. In other words,
-> > > > 
-> > > >     if (page_mapcount(page) <= 1)
-> > > >         deactivate_page(page);
-> > > 
-> > > Why do we restrict to pages that are single mapped?
+Hi Hillf,
+
+On Tue, Jun 04, 2019 at 12:20:47PM +0800, Hillf Danton wrote:
+> 
+> Hi Minchan
+> 
+> On Mon, 3 Jun 2019 13:37:27 +0800 Minchan Kim wrote:
+> > @@ -1181,10 +1179,17 @@ static ICE_noinline int unmap_and_move(new_page_t get_new_page,
+> >  		return -ENOMEM;
 > > 
-> > Because page table in one of process shared the page would have access bit
-> > so finally we couldn't reclaim the page. The more process it is shared,
-> > the more fail to reclaim.
-> 
-> So what? In other words why should it be restricted solely based on the
-> map count. I can see a reason to restrict based on the access
-> permissions because we do not want to simplify all sorts of side channel
-> attacks but memory reclaim is capable of reclaiming shared pages and so
-> far I haven't heard any sound argument why madvise should skip those.
-> Again if there are any reasons, then document them in the changelog.
+> >  	if (page_count(page) == 1) {
+> > +		bool is_lru = !__PageMovable(page);
+> > +
+> >  		/* page was freed from under us. So we are done. */
+> >  		ClearPageActive(page);
+> >  		ClearPageUnevictable(page);
+> > -		if (unlikely(__PageMovable(page))) {
+> > +		if (likely(is_lru))
+> > +			mod_node_page_state(page_pgdat(page),
+> > +						NR_ISOLATED_ANON +
+> > +						page_is_file_cache(page),
+> > +						hpage_nr_pages(page));
 
-I will go with removing the part so that defer to decision to the VM reclaim
-based on the review.
+That should be -hpage_nr_pages(page). It's a bug.
 
->  
-> [...]
+> > +		else {
+> >  			lock_page(page);
+> >  			if (!PageMovable(page))
+> >  				__ClearPageIsolated(page);
 > 
-> > > Please document this, if this is really a desirable semantic because
-> > > then you have the same set of problems as we've had with the early
-> > > MADV_FREE implementation mentioned above.
+> As this page will go down the path only through the MIGRATEPAGE_SUCCESS branches,
+> with no putback ahead, the current code is, I think, doing right things for this
+> work to keep isolated stat balanced.
+
+I guess that's the one you pointed out. Right?
+Thanks for the review!
+
+> 
+> > @@ -1210,15 +1215,6 @@ static ICE_noinline int unmap_and_move(new_page_t get_new_page,
+> >  		 * restored.
+> >  		 */
+> >  		list_del(&page->lru);
+> > -
+> > -		/*
+> > -		 * Compaction can migrate also non-LRU pages which are
+> > -		 * not accounted to NR_ISOLATED_*. They can be recognized
+> > -		 * as __PageMovable
+> > -		 */
+> > -		if (likely(!__PageMovable(page)))
+> > -			mod_node_page_state(page_pgdat(page), NR_ISOLATED_ANON +
+> > -					page_is_file_cache(page), -hpage_nr_pages(page));
+> >  	}
 > > 
-> > IIRC, the problem of MADV_FREE was that we couldn't discard freeable
-> > pages because VM never scan anonymous LRU with swapless system.
-> > However, it's not the our case because we should reclaim them, not
-> > discarding.
 > 
-> Right. But there is still the page cache reclaim. Is it expected that
-> an explicitly cold memory doesn't get reclaimed because we have a
-> sufficient amount of page cache (a very common case) and we never age
-> anonymous memory because of that?
-
-If there are lots of used-once pages in file-LRU, I think there is no
-need to reclaim anonymous pages because it needs bigger overhead due to
-IO. It has been true for a long time in current VM policy.
-
-Reclaim preference model based on hints is as following based on cost:
-
-MADV_DONTNEED >> MADV_PAGEOUT > used-once pages > MADV_FREE >= MADV_COLD
-
-It is desirable for the new hints to be placed in the reclaiming preference
-order such that a) they don't overlap functionally with existing hints and
-b) we have a balanced ordering of disruptive and non-disruptive hints.
+> BR
+> Hillf
+> 
