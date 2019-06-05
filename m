@@ -1,45 +1,194 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH v9 12/16] sched/core: uclamp: Extend CPU's cgroup
- controller
-Date: Wed, 5 Jun 2019 07:44:50 -0700
-Message-ID: <20190605144450.GN374014@devbig004.ftw2.facebook.com>
-References: <20190515094459.10317-1-patrick.bellasi@arm.com>
- <20190515094459.10317-13-patrick.bellasi@arm.com>
- <20190531153545.GE374014@devbig004.ftw2.facebook.com>
- <20190603122725.GB19426@darkstar>
- <20190605140324.GL374014@devbig004.ftw2.facebook.com>
- <20190605143805.olk2ta5p2jnd4mjt@e110439-lin>
+From: Casey Schaufler <casey@schaufler-ca.com>
+Subject: Re: [RFC][PATCH 0/8] Mount, FS, Block and Keyrings notifications [ver
+ #2]
+Date: Wed, 5 Jun 2019 07:50:57 -0700
+Message-ID: <e4c19d1b-9827-5949-ecb8-6c3cb4648f58@schaufler-ca.com>
+References: <50c2ea19-6ae8-1f42-97ef-ba5c95e40475@schaufler-ca.com>
+ <155966609977.17449.5624614375035334363.stgit@warthog.procyon.org.uk>
+ <CALCETrWzDR=Ap8NQ5-YrVhXCEBgr+hwpjw9fBn0m2NkZzZ7XLQ@mail.gmail.com>
+ <20192.1559724094@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/signed; micalg=pgp-sha256;
+ protocol="application/pgp-signature";
+ boundary="nAYbsaLPWvSYgBq1ZgUViHpZIInmpNbp5"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190605143805.olk2ta5p2jnd4mjt@e110439-lin>
+In-Reply-To: <20192.1559724094@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Patrick Bellasi <patrick.bellasi@arm.com>
-Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
+To: David Howells <dhowells@redhat.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, raven@themaw.net, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, LSM List <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, casey@schaufler-ca.com
 List-Id: linux-api@vger.kernel.org
 
-Hello,
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--nAYbsaLPWvSYgBq1ZgUViHpZIInmpNbp5
+Content-Type: multipart/mixed; boundary="txkkq0wOFA671eV9SlTrRrBSRAcaZSaKJ";
+ protected-headers="v1"
+From: Casey Schaufler <casey@schaufler-ca.com>
+To: David Howells <dhowells@redhat.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>,
+ raven@themaw.net, Linux FS Devel <linux-fsdevel@vger.kernel.org>,
+ Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org,
+ keyrings@vger.kernel.org, LSM List <linux-security-module@vger.kernel.org>,
+ LKML <linux-kernel@vger.kernel.org>, casey@schaufler-ca.com
+Message-ID: <e4c19d1b-9827-5949-ecb8-6c3cb4648f58@schaufler-ca.com>
+Subject: Re: [RFC][PATCH 0/8] Mount, FS, Block and Keyrings notifications [ver
+ #2]
+References: <50c2ea19-6ae8-1f42-97ef-ba5c95e40475@schaufler-ca.com>
+ <155966609977.17449.5624614375035334363.stgit@warthog.procyon.org.uk>
+ <CALCETrWzDR=Ap8NQ5-YrVhXCEBgr+hwpjw9fBn0m2NkZzZ7XLQ@mail.gmail.com>
+ <20192.1559724094@warthog.procyon.org.uk>
+In-Reply-To: <20192.1559724094@warthog.procyon.org.uk>
 
-On Wed, Jun 05, 2019 at 03:39:50PM +0100, Patrick Bellasi wrote:
-> Which means we will enforce the effective values as:
-> 
->    /tg1/tg11:
-> 
->          util_min.effective=0
->             i.e. keep the child protection since smaller than parent
-> 
->          util_max.effective=800
->             i.e. keep parent limit since stricter than child
+--txkkq0wOFA671eV9SlTrRrBSRAcaZSaKJ
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Content-Language: en-US
+
+On 6/5/2019 1:41 AM, David Howells wrote:
+> Casey Schaufler <casey@schaufler-ca.com> wrote:
 >
-> Please shout if I got it wrong, otherwise I'll update v10 to
-> implement the above logic.
+>> I will try to explain the problem once again. If process A
+>> sends a signal (writes information) to process B the kernel
+>> checks that either process A has the same UID as process B
+>> or that process A has privilege to override that policy.
+>> Process B is passive in this access control decision, while
+>> process A is active. In the event delivery case, process A
+>> does something (e.g. modifies a keyring) that generates an
+>> event, which is then sent to process B's event buffer.
+> I think this might be the core sticking point here.  It looks like two
+> different situations:
+>
+>  (1) A explicitly sends event to B (eg. signalling, sendmsg, etc.)
+>
+>  (2) A implicitly and unknowingly sends event to B as a side effect of =
+some
+>      other action (eg. B has a watch for the event A did).
+>
+> The LSM treats them as the same: that is B must have MAC authorisation =
+to send
+> a message to A.
 
-Everything sounds good to me.  Please note that cgroup interface files
-actually use literal "max" for limit/protection max settings so that 0
-and "max" mean the same things for all limit/protection knobs.
+YES!
 
-Thanks.
+Threat is about what you can do, not what you intend to do.
 
--- 
-tejun
+And it would be really great if you put some thought into what
+a rational model would be for UID based controls, too.
+
+> But there are problems with not sending the event:
+>
+>  (1) B's internal state is then corrupt (or, at least, unknowingly inva=
+lid).
+
+Then B is a badly written program.
+
+>  (2) B can potentially figure out that the event happened by other mean=
+s.
+
+Then why does it need the event mechanism in the first place?
+
+> I've implemented four event sources so far:
+>
+>  (1) Keys/keyrings.  You can only get events on a key you have View per=
+mission
+>      on and the other process has to have write access to it, so I thin=
+k this
+>      is good enough.
+
+Sounds fine.
+
+>  (2) Block layer.  Currently this will only get you hardware error even=
+ts,
+>      which is probably safe.  I'm not sure you can manipulate those wit=
+hout
+>      permission to directly access the device files.
+
+There's an argument to be made that this should require CAP_SYS_ADMIN,
+or that an LSM like SELinux might include hardware error events in
+policy, but generally I agree that system generated events like this
+are both harmless and pointless for the general public to watch.
+
+>  (3) Superblock.  This is trickier since it can see events that can be
+>      manufactured (R/W <-> R/O remounting, EDQUOT) as well as events th=
+at
+>      can't without hardware control (EIO, network link loss, RF kill).
+
+The events generated by processes (the 1st set) need controls
+like keys. The events generated by the system (the 2nd set) may
+need controls like the block layer.
+
+
+>  (4) Mount topology.  This is the trickiest since it allows you to see =
+events
+>      beyond the point at which you placed your watch (in essence, you p=
+lace a
+>      subtree watch).
+
+Like keys.
+
+>      The question is what permission checking should I do?  Ideally, I'=
+d
+>      emulate a pathwalk between the watchpoint and the eventing object =
+to see
+>      if the owner of the watchpoint could reach it.
+
+That will depend, as I've been saying, on what causes
+the event to be generated. If it's from a process, the
+question is "can the active process, the one that generated
+the event, write to the passive, watching process?"
+If it's the system on a hardware event, you may want the watcher
+to have CAP_SYS_ADMIN.
+
+>      I'd need to do a reverse walk, calling inode_permission(MAY_NOT_BL=
+OCK)
+>      for each directory between the eventing object and the watchpoint =
+to see
+>      if one rejects it - but some filesystems have a permission check t=
+hat
+>      can't be called in this state.
+
+This is for setting the watch, right?
+
+>      It would also be necessary to do this separately for each watchpoi=
+nt in
+>      the parental chain.
+>
+>      Further, each permissions check would generate an audit event and =
+could
+>      generate FAN_ACCESS and/or FAN_ACCESS_PERM fanotify events - which=
+ could
+>      be a problem if fanotify is also trying to post those events to th=
+e same
+>      watch queue.
+
+If you required that the watching process open(dir) what
+you want to watch you'd get this for free. Or did I miss
+something obvious?
+
+> David
+
+
+--txkkq0wOFA671eV9SlTrRrBSRAcaZSaKJ--
+
+--nAYbsaLPWvSYgBq1ZgUViHpZIInmpNbp5
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEC+9tH1YyUwIQzUIeOKUVfIxDyBEFAlz31tgACgkQOKUVfIxD
+yBEU8hAAj4xd0kV0Ucnk5ru/+nPSqV1JaihLZ77GVirKuvVGICRr78mNeNmZk6n2
+u9YVwbFCdB/O/cLE9RtjQzB3PGbGuCNn9JOvKFPfSIARHmBpg93wj8KPamYmMzdJ
+xltRCnoLwHwHJdZEKgAEIUEQajqIj36opyx7bshsYP8j36Pzn48F1f3Fg8Kg2X2d
+MeDbje3oXdqf9tVQ8lVLv2EOfF4ZVBH8IqHfO1a7o8UpfZ2ZKilDF5ari5i0+L20
+vvom1Xasat1j9BxFsNwwtDXU94LHK0XP5nMAHgHBjNlRQGpZ5Y7ET7RqbRxcuRNA
+JznODlWUqba6wsY7tnQD1cV6WLRoVzzKi66qhRONJoM8l38916mqzwoneK141fv6
+JNdlwq/xkniImrKIVKBszu3LmZsorLWRdlsnxy0XLBZvbbxegLRukiUnSu62m1DV
+hrfGbTDKh6U1UPwaBrteSn0RNNdvl2cF5+GAc/BOMYTae4zSMJacpfX+R4GcPfpj
+cTpLYExK2bfYvkIcmrrbt7H38Zhdk4cxEz1Z4UykohjkLdNmuv3kwAUih78JcUbh
+bZe4OAGR9VYDyBqPxWlDHjrTlTZ3bIcjNAuArVZ4woBTtRaBdsAOhgomRR5S9fYF
+HTbMjASC6nhlc+Rthv1pXPk4nr/PrAXiRvrqLQyNYOjXxWV8ix8=
+=G8mX
+-----END PGP SIGNATURE-----
+
+--nAYbsaLPWvSYgBq1ZgUViHpZIInmpNbp5--
