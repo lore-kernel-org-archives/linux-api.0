@@ -1,52 +1,65 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH v9 12/16] sched/core: uclamp: Extend CPU's cgroup
- controller
-Date: Wed, 5 Jun 2019 08:39:55 -0700
-Message-ID: <20190605153955.GP374014@devbig004.ftw2.facebook.com>
-References: <20190515094459.10317-1-patrick.bellasi@arm.com>
- <20190515094459.10317-13-patrick.bellasi@arm.com>
- <20190531153545.GE374014@devbig004.ftw2.facebook.com>
- <20190603122725.GB19426@darkstar>
- <20190605140324.GL374014@devbig004.ftw2.facebook.com>
- <20190605143805.olk2ta5p2jnd4mjt@e110439-lin>
- <20190605144450.GN374014@devbig004.ftw2.facebook.com>
- <20190605153742.lusoiodrzxmpsrvd@e110439-lin>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [RFC][PATCH 0/8] Mount, FS, Block and Keyrings notifications [ver #2]
+Date: Wed, 5 Jun 2019 09:04:09 -0700
+Message-ID: <CALCETrVSBwHEm-1pgBXxth07PZ0XF6FD+7E25=WbiS7jxUe83A@mail.gmail.com>
+References: <50c2ea19-6ae8-1f42-97ef-ba5c95e40475@schaufler-ca.com>
+ <155966609977.17449.5624614375035334363.stgit@warthog.procyon.org.uk>
+ <CALCETrWzDR=Ap8NQ5-YrVhXCEBgr+hwpjw9fBn0m2NkZzZ7XLQ@mail.gmail.com>
+ <20192.1559724094@warthog.procyon.org.uk> <e4c19d1b-9827-5949-ecb8-6c3cb4648f58@schaufler-ca.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190605153742.lusoiodrzxmpsrvd@e110439-lin>
+In-Reply-To: <e4c19d1b-9827-5949-ecb8-6c3cb4648f58@schaufler-ca.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Patrick Bellasi <patrick.bellasi@arm.com>
-Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
+To: Casey Schaufler <casey@schaufler-ca.com>
+Cc: David Howells <dhowells@redhat.com>, Andy Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, raven@themaw.net, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, LSM List <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello, Patrick.
-
-On Wed, Jun 05, 2019 at 04:37:43PM +0100, Patrick Bellasi wrote:
-> > Everything sounds good to me.  Please note that cgroup interface files
-> > actually use literal "max" for limit/protection max settings so that 0
-> > and "max" mean the same things for all limit/protection knobs.
-> 
-> Lemme see if I've got it right, do you mean that we can:
-> 
->  1) write the _string_ "max" into a cgroup attribute to:
-> 
->     - set    0 for util_max, since it's a protection
->     - set 1024 for util_min, since it's a limit
+On Wed, Jun 5, 2019 at 7:51 AM Casey Schaufler <casey@schaufler-ca.com> wrote:
 >
->  2) write the _string_ "0" into a cgroup attribute to:
-> 
->     - set 1024 for util_max, since it's a protection
->     - set    0 for util_min, since it's a limit
-> 
-> Is that correct or it's just me totally confused?
+> On 6/5/2019 1:41 AM, David Howells wrote:
+> > Casey Schaufler <casey@schaufler-ca.com> wrote:
+> >
+> >> I will try to explain the problem once again. If process A
+> >> sends a signal (writes information) to process B the kernel
+> >> checks that either process A has the same UID as process B
+> >> or that process A has privilege to override that policy.
+> >> Process B is passive in this access control decision, while
+> >> process A is active. In the event delivery case, process A
+> >> does something (e.g. modifies a keyring) that generates an
+> >> event, which is then sent to process B's event buffer.
+> > I think this might be the core sticking point here.  It looks like two
+> > different situations:
+> >
+> >  (1) A explicitly sends event to B (eg. signalling, sendmsg, etc.)
+> >
+> >  (2) A implicitly and unknowingly sends event to B as a side effect of some
+> >      other action (eg. B has a watch for the event A did).
+> >
+> > The LSM treats them as the same: that is B must have MAC authorisation to send
+> > a message to A.
+>
+> YES!
+>
+> Threat is about what you can do, not what you intend to do.
+>
+> And it would be really great if you put some thought into what
+> a rational model would be for UID based controls, too.
+>
+> > But there are problems with not sending the event:
+> >
+> >  (1) B's internal state is then corrupt (or, at least, unknowingly invalid).
+>
+> Then B is a badly written program.
 
-Heh, sorry about not being clearer.  "max" just means numerically
-highest possible config for the config knob, so in your case, "max"
-would always map to 1024.
+Either I'm misunderstanding you or I strongly disagree.  If B has
+authority to detect a certain action, and A has authority to perform
+that action, then refusing to notify B because B is somehow missing
+some special authorization to be notified by A is nuts.  This is just
+introducing incorrectness into the design in support of a
+not-actually-helpful security idea.
 
-Thanks.
-
--- 
-tejun
+If I can read /proc/self/mounts, I can detect changes to my mount
+namespace.  Giving me a faster and nicer way to do this is fine, AS
+LONG AS IT ACTUALLY WORKS.  "Works" means it needs to detect all
+changes.
