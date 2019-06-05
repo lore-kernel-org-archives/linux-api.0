@@ -1,8 +1,8 @@
-From: Stephen Smalley <sds@tycho.nsa.gov>
-Subject: Re: [RFC][PATCH 0/8] Mount, FS, Block and Keyrings notifications [ver
- #2]
-Date: Wed, 5 Jun 2019 14:25:33 -0400
-Message-ID: <5dae2a59-1b91-7b35-7578-481d03c677bc@tycho.nsa.gov>
+From: Greg KH <gregkh@linuxfoundation.org>
+Subject: Re: [RFC][PATCH 0/8] Mount, FS, Block and Keyrings notifications
+ [ver #2]
+Date: Wed, 5 Jun 2019 21:28:42 +0200
+Message-ID: <20190605192842.GA9590@kroah.com>
 References: <50c2ea19-6ae8-1f42-97ef-ba5c95e40475@schaufler-ca.com>
  <155966609977.17449.5624614375035334363.stgit@warthog.procyon.org.uk>
  <CALCETrWzDR=Ap8NQ5-YrVhXCEBgr+hwpjw9fBn0m2NkZzZ7XLQ@mail.gmail.com>
@@ -11,86 +11,88 @@ References: <50c2ea19-6ae8-1f42-97ef-ba5c95e40475@schaufler-ca.com>
  <CALCETrVSBwHEm-1pgBXxth07PZ0XF6FD+7E25=WbiS7jxUe83A@mail.gmail.com>
  <9a9406ba-eda4-e3ec-2100-9f7cf1d5c130@schaufler-ca.com>
  <15CBE0B8-2797-433B-B9D7-B059FD1B9266@amacapital.net>
+ <5dae2a59-1b91-7b35-7578-481d03c677bc@tycho.nsa.gov>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <15CBE0B8-2797-433B-B9D7-B059FD1B9266@amacapital.net>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <5dae2a59-1b91-7b35-7578-481d03c677bc@tycho.nsa.gov>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>, Casey Schaufler <casey@schaufler-ca.com>
-Cc: Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, raven@themaw.net, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, LSM List <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+To: Stephen Smalley <sds@tycho.nsa.gov>
+Cc: Andy Lutomirski <luto@amacapital.net>, Casey Schaufler <casey@schaufler-ca.com>, Andy Lutomirski <luto@kernel.org>, David Howells <dhowells@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, raven@themaw.net, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, LSM List <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 6/5/19 1:47 PM, Andy Lutomirski wrote:
+On Wed, Jun 05, 2019 at 02:25:33PM -0400, Stephen Smalley wrote:
+> On 6/5/19 1:47 PM, Andy Lutomirski wrote:
+> > 
+> > > On Jun 5, 2019, at 10:01 AM, Casey Schaufler <casey@schaufler-ca.com> wrote:
+> > > 
+> > > > On 6/5/2019 9:04 AM, Andy Lutomirski wrote:
+> > > > > On Wed, Jun 5, 2019 at 7:51 AM Casey Schaufler <casey@schaufler-ca.com> wrote:
+> > > > > > On 6/5/2019 1:41 AM, David Howells wrote:
+> > > > > > Casey Schaufler <casey@schaufler-ca.com> wrote:
+> > > > > > 
+> > > > > > > I will try to explain the problem once again. If process A
+> > > > > > > sends a signal (writes information) to process B the kernel
+> > > > > > > checks that either process A has the same UID as process B
+> > > > > > > or that process A has privilege to override that policy.
+> > > > > > > Process B is passive in this access control decision, while
+> > > > > > > process A is active. In the event delivery case, process A
+> > > > > > > does something (e.g. modifies a keyring) that generates an
+> > > > > > > event, which is then sent to process B's event buffer.
+> > > > > > I think this might be the core sticking point here.  It looks like two
+> > > > > > different situations:
+> > > > > > 
+> > > > > > (1) A explicitly sends event to B (eg. signalling, sendmsg, etc.)
+> > > > > > 
+> > > > > > (2) A implicitly and unknowingly sends event to B as a side effect of some
+> > > > > >      other action (eg. B has a watch for the event A did).
+> > > > > > 
+> > > > > > The LSM treats them as the same: that is B must have MAC authorisation to send
+> > > > > > a message to A.
+> > > > > YES!
+> > > > > 
+> > > > > Threat is about what you can do, not what you intend to do.
+> > > > > 
+> > > > > And it would be really great if you put some thought into what
+> > > > > a rational model would be for UID based controls, too.
+> > > > > 
+> > > > > > But there are problems with not sending the event:
+> > > > > > 
+> > > > > > (1) B's internal state is then corrupt (or, at least, unknowingly invalid).
+> > > > > Then B is a badly written program.
+> > > > Either I'm misunderstanding you or I strongly disagree.
+> > > 
+> > > A program needs to be aware of the conditions under
+> > > which it gets event, *including the possibility that
+> > > it may not get an event that it's not allowed*. Do you
+> > > regularly write programs that go into corrupt states
+> > > if an open() fails? Or where read() returns less than
+> > > the amount of data you ask for?
+> > 
+> > I do not regularly write programs that handle read() omitting data in the middle of a TCP stream.  I also don’t write programs that wait for processes to die and need to handle the case where a child is dead, waitid() can see it, but SIGCHLD wasn’t sent because “security”.
+> > 
+> > > 
+> > > >   If B has
+> > > > authority to detect a certain action, and A has authority to perform
+> > > > that action, then refusing to notify B because B is somehow missing
+> > > > some special authorization to be notified by A is nuts.
+> > > 
+> > > You are hand-waving the notion of authority. You are assuming
+> > > that if A can read X and B can read X that A can write B.
+> > 
+> > No, read it again please. I’m assuming that if A can *write* X and B can read X then A can send information to B.
 > 
->> On Jun 5, 2019, at 10:01 AM, Casey Schaufler <casey@schaufler-ca.com> wrote:
->>
->>> On 6/5/2019 9:04 AM, Andy Lutomirski wrote:
->>>> On Wed, Jun 5, 2019 at 7:51 AM Casey Schaufler <casey@schaufler-ca.com> wrote:
->>>>> On 6/5/2019 1:41 AM, David Howells wrote:
->>>>> Casey Schaufler <casey@schaufler-ca.com> wrote:
->>>>>
->>>>>> I will try to explain the problem once again. If process A
->>>>>> sends a signal (writes information) to process B the kernel
->>>>>> checks that either process A has the same UID as process B
->>>>>> or that process A has privilege to override that policy.
->>>>>> Process B is passive in this access control decision, while
->>>>>> process A is active. In the event delivery case, process A
->>>>>> does something (e.g. modifies a keyring) that generates an
->>>>>> event, which is then sent to process B's event buffer.
->>>>> I think this might be the core sticking point here.  It looks like two
->>>>> different situations:
->>>>>
->>>>> (1) A explicitly sends event to B (eg. signalling, sendmsg, etc.)
->>>>>
->>>>> (2) A implicitly and unknowingly sends event to B as a side effect of some
->>>>>      other action (eg. B has a watch for the event A did).
->>>>>
->>>>> The LSM treats them as the same: that is B must have MAC authorisation to send
->>>>> a message to A.
->>>> YES!
->>>>
->>>> Threat is about what you can do, not what you intend to do.
->>>>
->>>> And it would be really great if you put some thought into what
->>>> a rational model would be for UID based controls, too.
->>>>
->>>>> But there are problems with not sending the event:
->>>>>
->>>>> (1) B's internal state is then corrupt (or, at least, unknowingly invalid).
->>>> Then B is a badly written program.
->>> Either I'm misunderstanding you or I strongly disagree.
->>
->> A program needs to be aware of the conditions under
->> which it gets event, *including the possibility that
->> it may not get an event that it's not allowed*. Do you
->> regularly write programs that go into corrupt states
->> if an open() fails? Or where read() returns less than
->> the amount of data you ask for?
+> I guess the questions here are:
 > 
-> I do not regularly write programs that handle read() omitting data in the middle of a TCP stream.  I also don’t write programs that wait for processes to die and need to handle the case where a child is dead, waitid() can see it, but SIGCHLD wasn’t sent because “security”.
-> 
->>
->>>   If B has
->>> authority to detect a certain action, and A has authority to perform
->>> that action, then refusing to notify B because B is somehow missing
->>> some special authorization to be notified by A is nuts.
->>
->> You are hand-waving the notion of authority. You are assuming
->> that if A can read X and B can read X that A can write B.
-> 
-> No, read it again please. I’m assuming that if A can *write* X and B can read X then A can send information to B.
+> 1) How do we handle recursive notification support, since we can't check
+> that B can read everything below a given directory easily?  Perhaps we can
+> argue that if I have watch permission to / then that implies visibility to
+> everything below it but that is rather broad.
 
-I guess the questions here are:
+How do you handle fanotify today which I think can do this?
 
-1) How do we handle recursive notification support, since we can't check 
-that B can read everything below a given directory easily?  Perhaps we 
-can argue that if I have watch permission to / then that implies 
-visibility to everything below it but that is rather broad.
+thanks,
 
-2) Is there always a corresponding labeled object in view for each of 
-these notifications to which we can check access when the watch is set?
-
-3) Are notifications only generated for write events or can they be 
-generated by processes that only have read access to the object?
+greg k-h
