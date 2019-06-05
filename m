@@ -1,97 +1,90 @@
-From: Stephen Smalley <sds@tycho.nsa.gov>
-Subject: Re: [RFC][PATCH 0/8] Mount, FS, Block and Keyrings notifications [ver
- #2]
-Date: Wed, 5 Jun 2019 09:47:56 -0400
-Message-ID: <5a3353d3-3b88-6c0f-147b-6b9e2ac17773@tycho.nsa.gov>
-References: <155966609977.17449.5624614375035334363.stgit@warthog.procyon.org.uk>
- <CALCETrWzDR=Ap8NQ5-YrVhXCEBgr+hwpjw9fBn0m2NkZzZ7XLQ@mail.gmail.com>
- <1207.1559680778@warthog.procyon.org.uk>
- <CALCETrXmjpSvVj_GROhgouNtbzLm5U9B4b364wycMaqApqDVNA@mail.gmail.com>
- <CAB9W1A0AgMYOwGx9c-TmAt=1O6Bjsr2P3Nhd=2+QV39dgw0CrA@mail.gmail.com>
- <CALCETrU_5djawkwW-GRyHZXHwOUjaei1Cp7NEJaVFDm_bK6G3w@mail.gmail.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH v9 12/16] sched/core: uclamp: Extend CPU's cgroup
+ controller
+Date: Wed, 5 Jun 2019 07:03:24 -0700
+Message-ID: <20190605140324.GL374014@devbig004.ftw2.facebook.com>
+References: <20190515094459.10317-1-patrick.bellasi@arm.com>
+ <20190515094459.10317-13-patrick.bellasi@arm.com>
+ <20190531153545.GE374014@devbig004.ftw2.facebook.com>
+ <20190603122725.GB19426@darkstar>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrU_5djawkwW-GRyHZXHwOUjaei1Cp7NEJaVFDm_bK6G3w@mail.gmail.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20190603122725.GB19426@darkstar>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>, Stephen Smalley <stephen.smalley@gmail.com>
-Cc: David Howells <dhowells@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Casey Schaufler <casey@schaufler-ca.com>, raven@themaw.net, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, LSM List <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Paul Moore <paul@paul-moore.com>
+To: Patrick Bellasi <patrick.bellasi@arm.com>
+Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On 6/5/19 12:19 AM, Andy Lutomirski wrote:
-> On Tue, Jun 4, 2019 at 6:18 PM Stephen Smalley
-> <stephen.smalley@gmail.com> wrote:
->>
->> On Tue, Jun 4, 2019 at 4:58 PM Andy Lutomirski <luto@kernel.org> wrote:
->>>
->>> On Tue, Jun 4, 2019 at 1:39 PM David Howells <dhowells@redhat.com> wrote:
->>>>
->>>> Andy Lutomirski <luto@kernel.org> wrote:
->>>>
->>>>>> Here's a set of patches to add a general variable-length notification queue
->>>>>> concept and to add sources of events for:
->>>>>
->>>>> I asked before and didn't see a response, so I'll ask again.  Why are you
->>>>> paying any attention at all to the creds that generate an event?
->>>>
->>>> Casey responded to you.  It's one of his requirements.
->>>>
->>>
->>> It being a "requirement" doesn't make it okay.
->>>
->>>> However, the LSMs (or at least SELinux) ignore f_cred and use current_cred()
->>>> when checking permissions.  See selinux_revalidate_file_permission() for
->>>> example - it uses current_cred() not file->f_cred to re-evaluate the perms,
->>>> and the fd might be shared between a number of processes with different creds.
->>>
->>> That's a bug.  It's arguably a rather severe bug.  If I ever get
->>> around to writing the patch I keep thinking of that will warn if we
->>> use creds from invalid contexts, it will warn.
->>
->>
->> No, not a bug.  Working as designed. Initial validation on open, but revalidation upon read/write if something has changed since open (process SID differs from opener, inode SID has changed, policy has changed). Current subject SID should be used for the revalidation. It's a MAC vs DAC difference.
->>
+Hello,
+
+On Mon, Jun 03, 2019 at 01:27:25PM +0100, Patrick Bellasi wrote:
+> All the above, to me it means that:
+>  - cgroups are always capped by system clamps
+>  - cgroups can further restrict system clamps
 > 
-> Can you explain how the design is valid, then?  Consider nasty cases like this:
+> Does that match with your view?
+
+Yeah, as long as what's defined at system level clamps everything in
+the system whether they're in cgroups or not, it's all good.
+
+> > * Limits (high / max) default to max.  Protections (low / min) 0.  A
+> >   new cgroup by default doesn't constrain itself further and doesn't
+> >   have any protection.
 > 
-> $ sudo -u lotsofgarbage 2>/dev/whatever
+> Example 2
+> ---------
+> 
+> Let say we have:
+> 
+>   /tg1:
+>         util_min=200 (as a protection)
+>         util_max=800 (as a limit)
+> 
+> the moment we create a subgroup /tg1/tg11, in v9 it is initialized
+> with the same limits _and protections_ of its father:
+> 
+>   /tg1/tg11:
+>         util_min=200 (protection inherited from /tg1)
+>         util_max=800 (limit inherited from /tg1)
+> 
+> Do you mean that we should have instead:
+> 
+>   /tg1/tg11:
+>         util_min=0   (no protection by default at creation time)
+>         util_max=800 (limit inherited from /tg1)
+> 
+> 
+> i.e. we need to reset the protection of a newly created subgroup?
 
-(sorry for the previous html email; gmail or my inability to properly 
-use it strikes again!)
+The default value for limits should be max, protections 0.  Don't
+inherit config values from the parent.  That gets confusing super fast
+because when the parent config is set and each child is created plays
+into the overall configuration.  Hierarchical confinements should
+always be enforced and a new cgroup should always start afresh in
+terms of its own configuration.
 
-Here we have four (or more) opportunities to say no:
-1) Upon selinux_inode_permission(), when checking write access to 
-/dev/whatever in the context of the shell process,
-2) Upon selinux_file_open(), when checking and caching the open and 
-write access for shell to /dev/whatever in the file security struct,
-3) Upon selinux_bprm_committing_creds() -> flush_unauthorized_files(), 
-when revalidating write access to /dev/whatever in the context of sudo,
-4) Upon selinux_file_permission() -> 
-selinux_revalidate_file_permission(), when revalidating write access to 
-/dev/whatever in the context of sudo.
+> > * A limit defines the upper ceiling for the subtree.  If an ancestor
+> >   has a limit of X, none of its descendants can have more than X.
+> 
+> That's correct, however we distinguish between "requested" and
+> "effective" values.
 
-If any of those fail, then access is denied, so unless both the shell 
-and sudo are authorized to write to /dev/whatever, it is a no-go.  NB 
-Only the shell context requires open permission here; the sudo context 
-only needs write.
+Sure, all property propagating controllers should.
 
-> It is certainly the case that drivers, fs code, and other core code
-> MUST NOT look at current_cred() in the context of syscalls like
-> open().  Jann, I, and others have found quite a few rootable bugs of
-> this sort.  What makes MAC special here?
+> > Note that there's no way for an ancestor to enforce protection its
+> > descendants.  It can only allow them to claim some.  This is
+> > intentional as the other end of the spectrum is either descendants
+> > losing the ability to further distribute protections as they see fit.
+> 
+> Ok, that means I need to update in v10 the initialization of subgroups
+> min clamps to be none by default as discussed in the above Example 2,
+> right?
 
-Do you mean syscalls like write(), not open()?  I think your concern is 
-that they apply some check only during write() and not open() and 
-therefore are susceptible to confused deputy scenario above.  In 
-contrast we are validating access at open, transfer/inherit, and use. If 
-we use file->f_cred instead of current_cred() in 
-selinux_revalidate_file_permission() and the current process SID differs 
-from that of the opener, we'll never apply a check for the actual 
-security context performing the write(), so information can flow in 
-violation of the MAC policy.
+Yeah and max to max.
 
-> I would believe there are cases where auditing write() callers makes
-> some sense, but anyone reading those logs needs to understand that the
-> creds are dubious at best.
+Thanks.
+
+-- 
+tejun
