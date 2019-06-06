@@ -1,264 +1,133 @@
-From: Wu Hao <hao.wu@intel.com>
-Subject: Re: [PATCH v3 2/3] fpga: dfl: fme: add thermal management support
-Date: Thu, 6 Jun 2019 14:11:31 +0800
-Message-ID: <20190606061130.GA13333@hao-dev>
-References: <1558937216-12742-1-git-send-email-hao.wu@intel.com>
- <1558937216-12742-3-git-send-email-hao.wu@intel.com>
- <20190605211031.GA2730@roeck-us.net>
+From: David Howells <dhowells@redhat.com>
+Subject: [PATCH 01/10] security: Override creds in __fput() with last
+ fputter's creds [ver #3]
+Date: Thu, 06 Jun 2019 10:42:10 +0100
+Message-ID: <155981413016.17513.10540579988392555403.stgit@warthog.procyon.org.uk>
+References: <155981411940.17513.7137844619951358374.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190605211031.GA2730@roeck-us.net>
+In-Reply-To: <155981411940.17513.7137844619951358374.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Guenter Roeck <linux@roeck-us.net>
-Cc: atull@kernel.org, mdf@kernel.org, jdelvare@suse.com, linux-fpga@vger.kernel.org, linux-hwmon@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Luwei Kang <luwei.kang@intel.com>, Russ Weight <russell.h.weight@intel.com>, Xu Yilun <yilun.xu@intel.com>
+To: viro@zeniv.linux.org.uk
+Cc: Casey Schaufler <casey@schaufler-ca.com>Casey Schaufler <casey@schaufler-ca.com>, dhowells@redhat.com, raven@themaw.net, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jun 05, 2019 at 02:10:31PM -0700, Guenter Roeck wrote:
-> On Mon, May 27, 2019 at 02:06:55PM +0800, Wu Hao wrote:
-> > This patch adds support to thermal management private feature for DFL
-> > FPGA Management Engine (FME). This private feature driver registers
-> > a hwmon for thermal/temperature monitoring (hwmon temp1_input).
-> > If hardware automatic throttling is supported by this hardware, then
-> > driver also exposes sysfs interfaces under hwmon for thresholds
-> > (temp1_max/ crit/ emergency), threshold alarms (temp1_max_alarm/
-> > temp1_crit_alarm) and throttling policy (temp1_max_policy).
-> > 
-> > Signed-off-by: Luwei Kang <luwei.kang@intel.com>
-> > Signed-off-by: Russ Weight <russell.h.weight@intel.com>
-> > Signed-off-by: Xu Yilun <yilun.xu@intel.com>
-> > Signed-off-by: Wu Hao <hao.wu@intel.com>
-> > ----
-> > v2: create a dfl_fme_thermal hwmon to expose thermal information.
-> >     move all sysfs interfaces under hwmon
-> > 	tempareture       --> hwmon temp1_input
-> > 	threshold1        --> hwmon temp1_alarm
-> > 	threshold2        --> hwmon temp1_crit
-> > 	trip_threshold    --> hwmon temp1_emergency
-> > 	threshold1_status --> hwmon temp1_alarm_status
-> > 	threshold2_status --> hwmon temp1_crit_status
-> > 	threshold1_policy --> hwmon temp1_alarm_policy
-> > v3: rename some hwmon sysfs interfaces to follow hwmon ABI.
-> > 	temp1_alarm        --> temp1_max
-> > 	temp1_alarm_status --> temp1_max_alarm
-> > 	temp1_crit_status  --> temp1_crit_alarm
-> > 	temp1_alarm_policy --> temp1_max_policy
-> >     update sysfs doc for above sysfs interface changes.
-> >     replace scnprintf with sprintf in sysfs interface.
-> > ---
-> >  Documentation/ABI/testing/sysfs-platform-dfl-fme |  64 ++++++++
-> >  drivers/fpga/Kconfig                             |   2 +-
-> >  drivers/fpga/dfl-fme-main.c                      | 196 +++++++++++++++++++++++
-> >  3 files changed, 261 insertions(+), 1 deletion(-)
-> > 
-> > diff --git a/Documentation/ABI/testing/sysfs-platform-dfl-fme b/Documentation/ABI/testing/sysfs-platform-dfl-fme
-> > index 63a02cb..0a0b7b9 100644
-> > --- a/Documentation/ABI/testing/sysfs-platform-dfl-fme
-> > +++ b/Documentation/ABI/testing/sysfs-platform-dfl-fme
-> > @@ -212,3 +212,67 @@ Description:	Read-Write. Read this file for current status of port level
-> >  		fabric counters. Write "1" to enable port level fabric counters.
-> >  		Once port level fabric counters are enabled, device level fabric
-> >  		counters will be disabled automatically.
-> > +
-> > +What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/name
-> > +Date:		May 2019
-> > +KernelVersion:	5.3
-> > +Contact:	Wu Hao <hao.wu@intel.com>
-> > +Description:	Read-Only. Read this file to get the name of hwmon device, it
-> > +		supports values:
-> > +		    'dfl_fme_thermal' - thermal hwmon device name
-> > +
-> > +What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/temp1_input
-> > +Date:		May 2019
-> > +KernelVersion:	5.3
-> > +Contact:	Wu Hao <hao.wu@intel.com>
-> > +Description:	Read-Only. It returns FPGA device temperature in millidegrees
-> > +		Celsius.
-> > +
-> > +What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/temp1_max
-> > +Date:		May 2019
-> > +KernelVersion:	5.3
-> > +Contact:	Wu Hao <hao.wu@intel.com>
-> > +Description:	Read-Only. It returns hardware threshold1 temperature in
-> > +		millidegrees Celsius. If temperature rises at or above this
-> > +		threshold, hardware starts 50% or 90% throttling (see
-> > +		'temp1_max_policy').
-> > +
-> > +What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/temp1_crit
-> > +Date:		May 2019
-> > +KernelVersion:	5.3
-> > +Contact:	Wu Hao <hao.wu@intel.com>
-> > +Description:	Read-Only. It returns hardware threshold2 temperature in
-> > +		millidegrees Celsius. If temperature rises at or above this
-> > +		threshold, hardware starts 100% throttling.
-> > +
-> > +What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/temp1_emergency
-> > +Date:		May 2019
-> > +KernelVersion:	5.3
-> > +Contact:	Wu Hao <hao.wu@intel.com>
-> > +Description:	Read-Only. It returns hardware trip threshold temperature in
-> > +		millidegrees Celsius. If temperature rises at or above this
-> > +		threshold, a fatal event will be triggered to board management
-> > +		controller (BMC) to shutdown FPGA.
-> > +
-> > +What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/temp1_max_alarm
-> > +Date:		May 2019
-> > +KernelVersion:	5.3
-> > +Contact:	Wu Hao <hao.wu@intel.com>
-> > +Description:	Read-only. It returns 1 if temperature is currently at or above
-> > +		hardware threshold1 (see 'temp1_max'), otherwise 0.
-> > +
-> > +What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/temp1_crit_alarm
-> > +Date:		May 2019
-> > +KernelVersion:	5.3
-> > +Contact:	Wu Hao <hao.wu@intel.com>
-> > +Description:	Read-only. It returns 1 if temperature is currently at or above
-> > +		hardware threshold2 (see 'temp1_crit'), otherwise 0.
-> > +
-> > +What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/temp1_max_policy
-> > +Date:		May 2019
-> > +KernelVersion:	5.3
-> > +Contact:	Wu Hao <hao.wu@intel.com>
-> > +Description:	Read-Only. Read this file to get the policy of hardware threshold1
-> > +		(see 'temp1_max'). It only supports two values (policies):
-> > +		    0 - AP2 state (90% throttling)
-> > +		    1 - AP1 state (50% throttling)
-> > diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
-> > index d892f3e..36551d6 100644
-> > --- a/drivers/fpga/Kconfig
-> > +++ b/drivers/fpga/Kconfig
-> > @@ -154,7 +154,7 @@ config FPGA_DFL
-> >  
-> >  config FPGA_DFL_FME
-> >  	tristate "FPGA DFL FME Driver"
-> > -	depends on FPGA_DFL
-> > +	depends on FPGA_DFL && HWMON
-> >  	help
-> >  	  The FPGA Management Engine (FME) is a feature device implemented
-> >  	  under Device Feature List (DFL) framework. Select this option to
-> > diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-main.c
-> > index 4a5b25d..91152d5 100644
-> > --- a/drivers/fpga/dfl-fme-main.c
-> > +++ b/drivers/fpga/dfl-fme-main.c
-> > @@ -14,6 +14,8 @@
-> >   *   Henry Mitchel <henry.mitchel@intel.com>
-> >   */
-> >  
-> > +#include <linux/hwmon.h>
-> > +#include <linux/hwmon-sysfs.h>
-> >  #include <linux/kernel.h>
-> >  #include <linux/module.h>
-> >  #include <linux/uaccess.h>
-> > @@ -217,6 +219,196 @@ static long fme_hdr_ioctl(struct platform_device *pdev,
-> >  	.ioctl = fme_hdr_ioctl,
-> >  };
-> >  
-> > +#define FME_THERM_THRESHOLD	0x8
-> > +#define TEMP_THRESHOLD1		GENMASK_ULL(6, 0)
-> > +#define TEMP_THRESHOLD1_EN	BIT_ULL(7)
-> > +#define TEMP_THRESHOLD2		GENMASK_ULL(14, 8)
-> > +#define TEMP_THRESHOLD2_EN	BIT_ULL(15)
-> > +#define TRIP_THRESHOLD		GENMASK_ULL(30, 24)
-> > +#define TEMP_THRESHOLD1_STATUS	BIT_ULL(32)		/* threshold1 reached */
-> > +#define TEMP_THRESHOLD2_STATUS	BIT_ULL(33)		/* threshold2 reached */
-> > +/* threshold1 policy: 0 - AP2 (90% throttle) / 1 - AP1 (50% throttle) */
-> > +#define TEMP_THRESHOLD1_POLICY	BIT_ULL(44)
-> > +
-> > +#define FME_THERM_RDSENSOR_FMT1	0x10
-> > +#define FPGA_TEMPERATURE	GENMASK_ULL(6, 0)
-> > +
-> > +#define FME_THERM_CAP		0x20
-> > +#define THERM_NO_THROTTLE	BIT_ULL(0)
-> > +
-> > +#define MD_PRE_DEG
-> > +
-> > +static bool fme_thermal_throttle_support(void __iomem *base)
-> > +{
-> > +	u64 v = readq(base + FME_THERM_CAP);
-> > +
-> > +	return FIELD_GET(THERM_NO_THROTTLE, v) ? false : true;
-> > +}
-> > +
-> > +static umode_t thermal_hwmon_attrs_visible(const void *drvdata,
-> > +					   enum hwmon_sensor_types type,
-> > +					   u32 attr, int channel)
-> > +{
-> > +	const struct dfl_feature *feature = drvdata;
-> > +
-> > +	/* temperature is always supported, and check hardware cap for others */
-> > +	if (attr == hwmon_temp_input)
-> > +		return 0444;
-> > +
-> > +	return fme_thermal_throttle_support(feature->ioaddr) ? 0444 : 0;
-> > +}
-> > +
-> > +static int thermal_hwmon_read(struct device *dev, enum hwmon_sensor_types type,
-> > +			      u32 attr, int channel, long *val)
-> > +{
-> > +	struct dfl_feature *feature = dev_get_drvdata(dev);
-> > +	u64 v;
-> > +
-> > +	switch (attr) {
-> > +	case hwmon_temp_input:
-> > +		v = readq(feature->ioaddr + FME_THERM_RDSENSOR_FMT1);
-> > +		*val = (long)(FIELD_GET(FPGA_TEMPERATURE, v) * 1000);
-> > +		break;
-> > +	case hwmon_temp_max:
-> > +		v = readq(feature->ioaddr + FME_THERM_THRESHOLD);
-> > +		*val = (long)(FIELD_GET(TEMP_THRESHOLD1, v) * 1000);
-> > +		break;
-> > +	case hwmon_temp_crit:
-> > +		v = readq(feature->ioaddr + FME_THERM_THRESHOLD);
-> > +		*val = (long)(FIELD_GET(TEMP_THRESHOLD2, v) * 1000);
-> > +		break;
-> > +	case hwmon_temp_emergency:
-> > +		v = readq(feature->ioaddr + FME_THERM_THRESHOLD);
-> > +		*val = (long)(FIELD_GET(TRIP_THRESHOLD, v) * 1000);
-> > +		break;
-> > +	case hwmon_temp_max_alarm:
-> > +		v = readq(feature->ioaddr + FME_THERM_THRESHOLD);
-> > +		*val = (long)FIELD_GET(TEMP_THRESHOLD1_STATUS, v);
-> > +		break;
-> > +	case hwmon_temp_crit_alarm:
-> > +		v = readq(feature->ioaddr + FME_THERM_THRESHOLD);
-> > +		*val = (long)FIELD_GET(TEMP_THRESHOLD2_STATUS, v);
-> > +		break;
-> > +	default:
-> > +		return -EOPNOTSUPP;
-> > +	}
-> > +
-> > +	return 0;
-> > +}
-> > +
-> > +static const struct hwmon_ops thermal_hwmon_ops = {
-> > +	.is_visible = thermal_hwmon_attrs_visible,
-> > +	.read = thermal_hwmon_read,
-> > +};
-> > +
-> > +static const u32 thermal_hwmon_temp_config[] = {
-> > +	HWMON_T_INPUT | HWMON_T_MAX | HWMON_T_CRIT | HWMON_T_EMERGENCY |
-> > +	HWMON_T_MAX_ALARM | HWMON_T_CRIT_ALARM,
-> > +	0
-> > +};
-> > +
-> > +static const struct hwmon_channel_info hwmon_temp_info = {
-> > +	.type = hwmon_temp,
-> > +	.config = thermal_hwmon_temp_config,
-> > +};
-> > +
-> > +static const struct hwmon_channel_info *thermal_hwmon_info[] = {
-> > +	&hwmon_temp_info,
-> > +	NULL
-> > +};
-> 
-> Please use the HWMON_CHANNEL_INFO() macro to reduce boilerplate code.
+So that the LSM can see the credentials of the last process to do an fput()
+on a file object when the file object is being dismantled, do the following
+steps:
 
-Sure, will fix this in the next version. Thanks a lot!
+ (1) Cache the current credentials in file->f_fput_cred at the point the
+     file object's reference count reaches zero.
 
-Hao
+ (2) In __fput(), use override_creds() to apply those credentials to the
+     dismantling process.  This is necessary so that if we're dismantling a
+     unix socket that has semi-passed fds still in it, their fputs will
+     pick up the same credentials if they're reduced to zero at that point.
 
-> 
-> Thanks,
-> Guenter
-> 
+     Note that it's probably not strictly necessary to take an extra ref on
+     the creds here (which override_creds() does).
+
+ (3) Destroy the fput creds in file_free_rcu().
+
+This additionally makes the creds available to:
+
+	fsnotify
+	eventpoll
+	file locking
+	->fasync, ->release file ops
+	superblock destruction
+	mountpoint destruction
+
+This allows various notifications about object cleanups/destructions to
+carry appropriate credentials for the LSM to approve/disapprove them based
+on the process that caused them, even if indirectly.
+
+Note that this means that someone looking at /proc/<pid>/fd/<n> may end up
+being inadvertently noted as the subject of a cleanup message if the
+process they're looking at croaks whilst they're looking at it.
+
+Further, kernel services like nfsd and cachefiles may be seen as the
+fputter and may not have a system credential.  In cachefiles's case, it may
+appear that cachefilesd caused the notification.
+
+Suggested-by: Casey Schaufler <casey@schaufler-ca.com>
+Signed-off-by: David Howells <dhowells@redhat.com>
+cc: Casey Schaufler <casey@schaufler-ca.com>
+---
+
+ fs/file_table.c    |   12 ++++++++++++
+ include/linux/fs.h |    1 +
+ 2 files changed, 13 insertions(+)
+
+diff --git a/fs/file_table.c b/fs/file_table.c
+index 3f9c1b452c1d..9bf2be45b7f9 100644
+--- a/fs/file_table.c
++++ b/fs/file_table.c
+@@ -46,6 +46,7 @@ static void file_free_rcu(struct rcu_head *head)
+ 	struct file *f = container_of(head, struct file, f_u.fu_rcuhead);
+ 
+ 	put_cred(f->f_cred);
++	put_cred(f->f_fput_cred);
+ 	kmem_cache_free(filp_cachep, f);
+ }
+ 
+@@ -252,6 +253,7 @@ struct file *alloc_file_clone(struct file *base, int flags,
+  */
+ static void __fput(struct file *file)
+ {
++	const struct cred *saved_cred;
+ 	struct dentry *dentry = file->f_path.dentry;
+ 	struct vfsmount *mnt = file->f_path.mnt;
+ 	struct inode *inode = file->f_inode;
+@@ -262,6 +264,12 @@ static void __fput(struct file *file)
+ 
+ 	might_sleep();
+ 
++	/* Set the creds of whoever triggered the last fput for the LSM.  Note
++	 * that this has to be made available to further fputs, say on fds
++	 * trapped in a unix socket.
++	 */
++	saved_cred = override_creds(file->f_fput_cred);
++
+ 	fsnotify_close(file);
+ 	/*
+ 	 * The function eventpoll_release() should be the first called
+@@ -293,6 +301,8 @@ static void __fput(struct file *file)
+ 	if (unlikely(mode & FMODE_NEED_UNMOUNT))
+ 		dissolve_on_fput(mnt);
+ 	mntput(mnt);
++
++	revert_creds(saved_cred);
+ out:
+ 	file_free(file);
+ }
+@@ -334,6 +344,7 @@ void fput_many(struct file *file, unsigned int refs)
+ 	if (atomic_long_sub_and_test(refs, &file->f_count)) {
+ 		struct task_struct *task = current;
+ 
++		file->f_fput_cred = get_current_cred();
+ 		if (likely(!in_interrupt() && !(task->flags & PF_KTHREAD))) {
+ 			init_task_work(&file->f_u.fu_rcuhead, ____fput);
+ 			if (!task_work_add(task, &file->f_u.fu_rcuhead, true))
+@@ -368,6 +379,7 @@ void __fput_sync(struct file *file)
+ 	if (atomic_long_dec_and_test(&file->f_count)) {
+ 		struct task_struct *task = current;
+ 		BUG_ON(!(task->flags & PF_KTHREAD));
++		file->f_fput_cred = get_current_cred();
+ 		__fput(file);
+ 	}
+ }
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index f1c74596cd77..db05738b1951 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -943,6 +943,7 @@ struct file {
+ 	loff_t			f_pos;
+ 	struct fown_struct	f_owner;
+ 	const struct cred	*f_cred;
++	const struct cred	*f_fput_cred;	/* Who did the last fput() (for LSM) */
+ 	struct file_ra_state	f_ra;
+ 
+ 	u64			f_version;
