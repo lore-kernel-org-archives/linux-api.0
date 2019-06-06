@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v7 17/27] mm: Update can_follow_write_pte/pmd for shadow stack
-Date: Thu,  6 Jun 2019 13:06:36 -0700
-Message-ID: <20190606200646.3951-18-yu-cheng.yu@intel.com>
+Subject: [PATCH v7 14/27] x86/mm: Shadow stack page fault error checking
+Date: Thu,  6 Jun 2019 13:06:33 -0700
+Message-ID: <20190606200646.3951-15-yu-cheng.yu@intel.com>
 References: <20190606200646.3951-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190606200646.3951-1-yu-cheng.yu@intel.com>
@@ -10,128 +10,76 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-can_follow_write_pte/pmd look for the (RO & DIRTY) PTE/PMD to
-verify an exclusive RO page still exists after a broken COW.
+If a page fault is triggered by a shadow stack access (e.g. call/ret)
+or shadow stack management instructions (e.g. wrussq), then bit[6] of
+the page fault error code is set.
 
-A shadow stack PTE is RO & PAGE_DIRTY_SW when it is shared,
-otherwise RO & PAGE_DIRTY_HW.
+In access_error(), verify a shadow stack page fault is within a
+shadow stack memory area.  It is always an error otherwise.
 
-Introduce pte_exclusive() and pmd_exclusive() to also verify a
-shadow stack PTE is exclusive.
-
-Also rename can_follow_write_pte/pmd() to can_follow_write() to
-make their meaning clear; i.e. "Can we write to the page?", not
-"Is the PTE writable?"
+For a valid shadow stack access, set FAULT_FLAG_WRITE to effect
+copy-on-write.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/mm/pgtable.c         | 18 ++++++++++++++++++
- include/asm-generic/pgtable.h |  4 ++++
- mm/gup.c                      |  8 +++++---
- mm/huge_memory.c              |  8 +++++---
- 4 files changed, 32 insertions(+), 6 deletions(-)
+ arch/x86/include/asm/traps.h |  2 ++
+ arch/x86/mm/fault.c          | 18 ++++++++++++++++++
+ 2 files changed, 20 insertions(+)
 
-diff --git a/arch/x86/mm/pgtable.c b/arch/x86/mm/pgtable.c
-index 8ff54bd978f3..2a89c168df7b 100644
---- a/arch/x86/mm/pgtable.c
-+++ b/arch/x86/mm/pgtable.c
-@@ -913,4 +913,22 @@ inline bool arch_copy_pte_mapping(vm_flags_t vm_flags)
- {
- 	return (vm_flags & VM_SHSTK);
- }
-+
-+inline bool pte_exclusive(pte_t pte, struct vm_area_struct *vma)
-+{
-+	if (vma->vm_flags & VM_SHSTK)
-+		return pte_dirty_hw(pte);
-+	else
-+		return pte_dirty(pte);
-+}
-+
-+#ifdef CONFIG_TRANSPARENT_HUGEPAGE
-+inline bool pmd_exclusive(pmd_t pmd, struct vm_area_struct *vma)
-+{
-+	if (vma->vm_flags & VM_SHSTK)
-+		return pmd_dirty_hw(pmd);
-+	else
-+		return pmd_dirty(pmd);
-+}
-+#endif /* CONFIG_TRANSPARENT_HUGEPAGE */
- #endif /* CONFIG_X86_INTEL_SHADOW_STACK_USER */
-diff --git a/include/asm-generic/pgtable.h b/include/asm-generic/pgtable.h
-index 4940411b8e1c..3324e30bb07f 100644
---- a/include/asm-generic/pgtable.h
-+++ b/include/asm-generic/pgtable.h
-@@ -1192,10 +1192,14 @@ static inline bool arch_has_pfn_modify_check(void)
- #define pte_set_vma_features(pte, vma) pte
- #define pmd_set_vma_features(pmd, vma) pmd
- #define arch_copy_pte_mapping(vma_flags) false
-+#define pte_exclusive(pte, vma) pte_dirty(pte)
-+#define pmd_exclusive(pmd, vma) pmd_dirty(pmd)
- #else
- pte_t pte_set_vma_features(pte_t pte, struct vm_area_struct *vma);
- pmd_t pmd_set_vma_features(pmd_t pmd, struct vm_area_struct *vma);
- bool arch_copy_pte_mapping(vm_flags_t vm_flags);
-+bool pte_exclusive(pte_t pte, struct vm_area_struct *vma);
-+bool pmd_exclusive(pmd_t pmd, struct vm_area_struct *vma);
- #endif
- 
- #endif /* _ASM_GENERIC_PGTABLE_H */
-diff --git a/mm/gup.c b/mm/gup.c
-index ddde097cf9e4..7d11fff1e8c3 100644
---- a/mm/gup.c
-+++ b/mm/gup.c
-@@ -178,10 +178,12 @@ static int follow_pfn_pte(struct vm_area_struct *vma, unsigned long address,
-  * FOLL_FORCE can write to even unwritable pte's, but only
-  * after we've gone through a COW cycle and they are dirty.
+diff --git a/arch/x86/include/asm/traps.h b/arch/x86/include/asm/traps.h
+index 5906a22796b6..292fb3a1b340 100644
+--- a/arch/x86/include/asm/traps.h
++++ b/arch/x86/include/asm/traps.h
+@@ -166,6 +166,7 @@ enum {
+  *   bit 3 ==				1: use of reserved bit detected
+  *   bit 4 ==				1: fault was an instruction fetch
+  *   bit 5 ==				1: protection keys block access
++ *   bit 6 ==				1: shadow stack access fault
   */
--static inline bool can_follow_write_pte(pte_t pte, unsigned int flags)
-+static inline bool can_follow_write(pte_t pte, unsigned int flags,
-+				    struct vm_area_struct *vma)
- {
- 	return pte_write(pte) ||
--		((flags & FOLL_FORCE) && (flags & FOLL_COW) && pte_dirty(pte));
-+		((flags & FOLL_FORCE) && (flags & FOLL_COW) &&
-+		 pte_exclusive(pte, vma));
- }
+ enum x86_pf_error_code {
+ 	X86_PF_PROT	=		1 << 0,
+@@ -174,5 +175,6 @@ enum x86_pf_error_code {
+ 	X86_PF_RSVD	=		1 << 3,
+ 	X86_PF_INSTR	=		1 << 4,
+ 	X86_PF_PK	=		1 << 5,
++	X86_PF_SHSTK	=		1 << 6,
+ };
+ #endif /* _ASM_X86_TRAPS_H */
+diff --git a/arch/x86/mm/fault.c b/arch/x86/mm/fault.c
+index 46df4c6aae46..59f4f66e4f2e 100644
+--- a/arch/x86/mm/fault.c
++++ b/arch/x86/mm/fault.c
+@@ -1205,6 +1205,17 @@ access_error(unsigned long error_code, struct vm_area_struct *vma)
+ 				       (error_code & X86_PF_INSTR), foreign))
+ 		return 1;
  
- static struct page *follow_page_pte(struct vm_area_struct *vma,
-@@ -219,7 +221,7 @@ static struct page *follow_page_pte(struct vm_area_struct *vma,
- 	}
- 	if ((flags & FOLL_NUMA) && pte_protnone(pte))
- 		goto no_page;
--	if ((flags & FOLL_WRITE) && !can_follow_write_pte(pte, flags)) {
-+	if ((flags & FOLL_WRITE) && !can_follow_write(pte, flags, vma)) {
- 		pte_unmap_unlock(ptep, ptl);
- 		return NULL;
- 	}
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index eac1ee2f8985..d65970b9ece6 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -1441,10 +1441,12 @@ vm_fault_t do_huge_pmd_wp_page(struct vm_fault *vmf, pmd_t orig_pmd)
-  * FOLL_FORCE can write to even unwritable pmd's, but only
-  * after we've gone through a COW cycle and they are dirty.
-  */
--static inline bool can_follow_write_pmd(pmd_t pmd, unsigned int flags)
-+static inline bool can_follow_write(pmd_t pmd, unsigned int flags,
-+				    struct vm_area_struct *vma)
- {
- 	return pmd_write(pmd) ||
--	       ((flags & FOLL_FORCE) && (flags & FOLL_COW) && pmd_dirty(pmd));
-+	       ((flags & FOLL_FORCE) && (flags & FOLL_COW) &&
-+		pmd_exclusive(pmd, vma));
- }
++	/*
++	 * Verify X86_PF_SHSTK is within a shadow stack VMA.
++	 * It is always an error if there is a shadow stack
++	 * fault outside a shadow stack VMA.
++	 */
++	if (error_code & X86_PF_SHSTK) {
++		if (!(vma->vm_flags & VM_SHSTK))
++			return 1;
++		return 0;
++	}
++
+ 	if (error_code & X86_PF_WRITE) {
+ 		/* write, present and write, not present: */
+ 		if (unlikely(!(vma->vm_flags & VM_WRITE)))
+@@ -1362,6 +1373,13 @@ void do_user_addr_fault(struct pt_regs *regs,
  
- struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
-@@ -1457,7 +1459,7 @@ struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
+ 	perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS, 1, regs, address);
  
- 	assert_spin_locked(pmd_lockptr(mm, pmd));
- 
--	if (flags & FOLL_WRITE && !can_follow_write_pmd(*pmd, flags))
-+	if (flags & FOLL_WRITE && !can_follow_write(*pmd, flags, vma))
- 		goto out;
- 
- 	/* Avoid dumping huge zero page */
++	/*
++	 * If the fault is caused by a shadow stack access,
++	 * i.e. CALL/RET/SAVEPREVSSP/RSTORSSP, then set
++	 * FAULT_FLAG_WRITE to effect copy-on-write.
++	 */
++	if (hw_error_code & X86_PF_SHSTK)
++		flags |= FAULT_FLAG_WRITE;
+ 	if (hw_error_code & X86_PF_WRITE)
+ 		flags |= FAULT_FLAG_WRITE;
+ 	if (hw_error_code & X86_PF_INSTR)
 -- 
 2.17.1
