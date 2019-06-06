@@ -1,89 +1,264 @@
-From: Aubrey Li <aubrey.li@linux.intel.com>
-Subject: [PATCH v19 3/3] Documentation/filesystems/proc.txt: add arch_status file
-Date: Thu,  6 Jun 2019 09:22:36 +0800
-Message-ID: <20190606012236.9391-3-aubrey.li@linux.intel.com>
-References: <20190606012236.9391-1-aubrey.li@linux.intel.com>
+From: Wu Hao <hao.wu@intel.com>
+Subject: Re: [PATCH v3 2/3] fpga: dfl: fme: add thermal management support
+Date: Thu, 6 Jun 2019 14:11:31 +0800
+Message-ID: <20190606061130.GA13333@hao-dev>
+References: <1558937216-12742-1-git-send-email-hao.wu@intel.com>
+ <1558937216-12742-3-git-send-email-hao.wu@intel.com>
+ <20190605211031.GA2730@roeck-us.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190606012236.9391-1-aubrey.li@linux.intel.com>
+Content-Disposition: inline
+In-Reply-To: <20190605211031.GA2730@roeck-us.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: akpm@linux-foundation.org, tglx@linutronix.de, mingo@redhat.com, peterz@infradead.org, hpa@zytor.com
-Cc: ak@linux.intel.com, tim.c.chen@linux.intel.com, dave.hansen@intel.com, arjan@linux.intel.com, adobriyan@gmail.com, aubrey.li@intel.com, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Aubrey Li <aubrey.li@linux.intel.com>, Andy Lutomirski <luto@kernel.org>
+To: Guenter Roeck <linux@roeck-us.net>
+Cc: atull@kernel.org, mdf@kernel.org, jdelvare@suse.com, linux-fpga@vger.kernel.org, linux-hwmon@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Luwei Kang <luwei.kang@intel.com>, Russ Weight <russell.h.weight@intel.com>, Xu Yilun <yilun.xu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Added /proc/<pid>/arch_status file, and added AVX512_elapsed_ms in
-/proc/<pid>/arch_status. Report it in Documentation/filesystems/proc.txt
+On Wed, Jun 05, 2019 at 02:10:31PM -0700, Guenter Roeck wrote:
+> On Mon, May 27, 2019 at 02:06:55PM +0800, Wu Hao wrote:
+> > This patch adds support to thermal management private feature for DFL
+> > FPGA Management Engine (FME). This private feature driver registers
+> > a hwmon for thermal/temperature monitoring (hwmon temp1_input).
+> > If hardware automatic throttling is supported by this hardware, then
+> > driver also exposes sysfs interfaces under hwmon for thresholds
+> > (temp1_max/ crit/ emergency), threshold alarms (temp1_max_alarm/
+> > temp1_crit_alarm) and throttling policy (temp1_max_policy).
+> > 
+> > Signed-off-by: Luwei Kang <luwei.kang@intel.com>
+> > Signed-off-by: Russ Weight <russell.h.weight@intel.com>
+> > Signed-off-by: Xu Yilun <yilun.xu@intel.com>
+> > Signed-off-by: Wu Hao <hao.wu@intel.com>
+> > ----
+> > v2: create a dfl_fme_thermal hwmon to expose thermal information.
+> >     move all sysfs interfaces under hwmon
+> > 	tempareture       --> hwmon temp1_input
+> > 	threshold1        --> hwmon temp1_alarm
+> > 	threshold2        --> hwmon temp1_crit
+> > 	trip_threshold    --> hwmon temp1_emergency
+> > 	threshold1_status --> hwmon temp1_alarm_status
+> > 	threshold2_status --> hwmon temp1_crit_status
+> > 	threshold1_policy --> hwmon temp1_alarm_policy
+> > v3: rename some hwmon sysfs interfaces to follow hwmon ABI.
+> > 	temp1_alarm        --> temp1_max
+> > 	temp1_alarm_status --> temp1_max_alarm
+> > 	temp1_crit_status  --> temp1_crit_alarm
+> > 	temp1_alarm_policy --> temp1_max_policy
+> >     update sysfs doc for above sysfs interface changes.
+> >     replace scnprintf with sprintf in sysfs interface.
+> > ---
+> >  Documentation/ABI/testing/sysfs-platform-dfl-fme |  64 ++++++++
+> >  drivers/fpga/Kconfig                             |   2 +-
+> >  drivers/fpga/dfl-fme-main.c                      | 196 +++++++++++++++++++++++
+> >  3 files changed, 261 insertions(+), 1 deletion(-)
+> > 
+> > diff --git a/Documentation/ABI/testing/sysfs-platform-dfl-fme b/Documentation/ABI/testing/sysfs-platform-dfl-fme
+> > index 63a02cb..0a0b7b9 100644
+> > --- a/Documentation/ABI/testing/sysfs-platform-dfl-fme
+> > +++ b/Documentation/ABI/testing/sysfs-platform-dfl-fme
+> > @@ -212,3 +212,67 @@ Description:	Read-Write. Read this file for current status of port level
+> >  		fabric counters. Write "1" to enable port level fabric counters.
+> >  		Once port level fabric counters are enabled, device level fabric
+> >  		counters will be disabled automatically.
+> > +
+> > +What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/name
+> > +Date:		May 2019
+> > +KernelVersion:	5.3
+> > +Contact:	Wu Hao <hao.wu@intel.com>
+> > +Description:	Read-Only. Read this file to get the name of hwmon device, it
+> > +		supports values:
+> > +		    'dfl_fme_thermal' - thermal hwmon device name
+> > +
+> > +What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/temp1_input
+> > +Date:		May 2019
+> > +KernelVersion:	5.3
+> > +Contact:	Wu Hao <hao.wu@intel.com>
+> > +Description:	Read-Only. It returns FPGA device temperature in millidegrees
+> > +		Celsius.
+> > +
+> > +What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/temp1_max
+> > +Date:		May 2019
+> > +KernelVersion:	5.3
+> > +Contact:	Wu Hao <hao.wu@intel.com>
+> > +Description:	Read-Only. It returns hardware threshold1 temperature in
+> > +		millidegrees Celsius. If temperature rises at or above this
+> > +		threshold, hardware starts 50% or 90% throttling (see
+> > +		'temp1_max_policy').
+> > +
+> > +What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/temp1_crit
+> > +Date:		May 2019
+> > +KernelVersion:	5.3
+> > +Contact:	Wu Hao <hao.wu@intel.com>
+> > +Description:	Read-Only. It returns hardware threshold2 temperature in
+> > +		millidegrees Celsius. If temperature rises at or above this
+> > +		threshold, hardware starts 100% throttling.
+> > +
+> > +What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/temp1_emergency
+> > +Date:		May 2019
+> > +KernelVersion:	5.3
+> > +Contact:	Wu Hao <hao.wu@intel.com>
+> > +Description:	Read-Only. It returns hardware trip threshold temperature in
+> > +		millidegrees Celsius. If temperature rises at or above this
+> > +		threshold, a fatal event will be triggered to board management
+> > +		controller (BMC) to shutdown FPGA.
+> > +
+> > +What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/temp1_max_alarm
+> > +Date:		May 2019
+> > +KernelVersion:	5.3
+> > +Contact:	Wu Hao <hao.wu@intel.com>
+> > +Description:	Read-only. It returns 1 if temperature is currently at or above
+> > +		hardware threshold1 (see 'temp1_max'), otherwise 0.
+> > +
+> > +What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/temp1_crit_alarm
+> > +Date:		May 2019
+> > +KernelVersion:	5.3
+> > +Contact:	Wu Hao <hao.wu@intel.com>
+> > +Description:	Read-only. It returns 1 if temperature is currently at or above
+> > +		hardware threshold2 (see 'temp1_crit'), otherwise 0.
+> > +
+> > +What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/temp1_max_policy
+> > +Date:		May 2019
+> > +KernelVersion:	5.3
+> > +Contact:	Wu Hao <hao.wu@intel.com>
+> > +Description:	Read-Only. Read this file to get the policy of hardware threshold1
+> > +		(see 'temp1_max'). It only supports two values (policies):
+> > +		    0 - AP2 state (90% throttling)
+> > +		    1 - AP1 state (50% throttling)
+> > diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
+> > index d892f3e..36551d6 100644
+> > --- a/drivers/fpga/Kconfig
+> > +++ b/drivers/fpga/Kconfig
+> > @@ -154,7 +154,7 @@ config FPGA_DFL
+> >  
+> >  config FPGA_DFL_FME
+> >  	tristate "FPGA DFL FME Driver"
+> > -	depends on FPGA_DFL
+> > +	depends on FPGA_DFL && HWMON
+> >  	help
+> >  	  The FPGA Management Engine (FME) is a feature device implemented
+> >  	  under Device Feature List (DFL) framework. Select this option to
+> > diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-main.c
+> > index 4a5b25d..91152d5 100644
+> > --- a/drivers/fpga/dfl-fme-main.c
+> > +++ b/drivers/fpga/dfl-fme-main.c
+> > @@ -14,6 +14,8 @@
+> >   *   Henry Mitchel <henry.mitchel@intel.com>
+> >   */
+> >  
+> > +#include <linux/hwmon.h>
+> > +#include <linux/hwmon-sysfs.h>
+> >  #include <linux/kernel.h>
+> >  #include <linux/module.h>
+> >  #include <linux/uaccess.h>
+> > @@ -217,6 +219,196 @@ static long fme_hdr_ioctl(struct platform_device *pdev,
+> >  	.ioctl = fme_hdr_ioctl,
+> >  };
+> >  
+> > +#define FME_THERM_THRESHOLD	0x8
+> > +#define TEMP_THRESHOLD1		GENMASK_ULL(6, 0)
+> > +#define TEMP_THRESHOLD1_EN	BIT_ULL(7)
+> > +#define TEMP_THRESHOLD2		GENMASK_ULL(14, 8)
+> > +#define TEMP_THRESHOLD2_EN	BIT_ULL(15)
+> > +#define TRIP_THRESHOLD		GENMASK_ULL(30, 24)
+> > +#define TEMP_THRESHOLD1_STATUS	BIT_ULL(32)		/* threshold1 reached */
+> > +#define TEMP_THRESHOLD2_STATUS	BIT_ULL(33)		/* threshold2 reached */
+> > +/* threshold1 policy: 0 - AP2 (90% throttle) / 1 - AP1 (50% throttle) */
+> > +#define TEMP_THRESHOLD1_POLICY	BIT_ULL(44)
+> > +
+> > +#define FME_THERM_RDSENSOR_FMT1	0x10
+> > +#define FPGA_TEMPERATURE	GENMASK_ULL(6, 0)
+> > +
+> > +#define FME_THERM_CAP		0x20
+> > +#define THERM_NO_THROTTLE	BIT_ULL(0)
+> > +
+> > +#define MD_PRE_DEG
+> > +
+> > +static bool fme_thermal_throttle_support(void __iomem *base)
+> > +{
+> > +	u64 v = readq(base + FME_THERM_CAP);
+> > +
+> > +	return FIELD_GET(THERM_NO_THROTTLE, v) ? false : true;
+> > +}
+> > +
+> > +static umode_t thermal_hwmon_attrs_visible(const void *drvdata,
+> > +					   enum hwmon_sensor_types type,
+> > +					   u32 attr, int channel)
+> > +{
+> > +	const struct dfl_feature *feature = drvdata;
+> > +
+> > +	/* temperature is always supported, and check hardware cap for others */
+> > +	if (attr == hwmon_temp_input)
+> > +		return 0444;
+> > +
+> > +	return fme_thermal_throttle_support(feature->ioaddr) ? 0444 : 0;
+> > +}
+> > +
+> > +static int thermal_hwmon_read(struct device *dev, enum hwmon_sensor_types type,
+> > +			      u32 attr, int channel, long *val)
+> > +{
+> > +	struct dfl_feature *feature = dev_get_drvdata(dev);
+> > +	u64 v;
+> > +
+> > +	switch (attr) {
+> > +	case hwmon_temp_input:
+> > +		v = readq(feature->ioaddr + FME_THERM_RDSENSOR_FMT1);
+> > +		*val = (long)(FIELD_GET(FPGA_TEMPERATURE, v) * 1000);
+> > +		break;
+> > +	case hwmon_temp_max:
+> > +		v = readq(feature->ioaddr + FME_THERM_THRESHOLD);
+> > +		*val = (long)(FIELD_GET(TEMP_THRESHOLD1, v) * 1000);
+> > +		break;
+> > +	case hwmon_temp_crit:
+> > +		v = readq(feature->ioaddr + FME_THERM_THRESHOLD);
+> > +		*val = (long)(FIELD_GET(TEMP_THRESHOLD2, v) * 1000);
+> > +		break;
+> > +	case hwmon_temp_emergency:
+> > +		v = readq(feature->ioaddr + FME_THERM_THRESHOLD);
+> > +		*val = (long)(FIELD_GET(TRIP_THRESHOLD, v) * 1000);
+> > +		break;
+> > +	case hwmon_temp_max_alarm:
+> > +		v = readq(feature->ioaddr + FME_THERM_THRESHOLD);
+> > +		*val = (long)FIELD_GET(TEMP_THRESHOLD1_STATUS, v);
+> > +		break;
+> > +	case hwmon_temp_crit_alarm:
+> > +		v = readq(feature->ioaddr + FME_THERM_THRESHOLD);
+> > +		*val = (long)FIELD_GET(TEMP_THRESHOLD2_STATUS, v);
+> > +		break;
+> > +	default:
+> > +		return -EOPNOTSUPP;
+> > +	}
+> > +
+> > +	return 0;
+> > +}
+> > +
+> > +static const struct hwmon_ops thermal_hwmon_ops = {
+> > +	.is_visible = thermal_hwmon_attrs_visible,
+> > +	.read = thermal_hwmon_read,
+> > +};
+> > +
+> > +static const u32 thermal_hwmon_temp_config[] = {
+> > +	HWMON_T_INPUT | HWMON_T_MAX | HWMON_T_CRIT | HWMON_T_EMERGENCY |
+> > +	HWMON_T_MAX_ALARM | HWMON_T_CRIT_ALARM,
+> > +	0
+> > +};
+> > +
+> > +static const struct hwmon_channel_info hwmon_temp_info = {
+> > +	.type = hwmon_temp,
+> > +	.config = thermal_hwmon_temp_config,
+> > +};
+> > +
+> > +static const struct hwmon_channel_info *thermal_hwmon_info[] = {
+> > +	&hwmon_temp_info,
+> > +	NULL
+> > +};
+> 
+> Please use the HWMON_CHANNEL_INFO() macro to reduce boilerplate code.
 
-Signed-off-by: Aubrey Li <aubrey.li@linux.intel.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Andi Kleen <ak@linux.intel.com>
-Cc: Tim Chen <tim.c.chen@linux.intel.com>
-Cc: Dave Hansen <dave.hansen@intel.com>
-Cc: Arjan van de Ven <arjan@linux.intel.com>
-Cc: Alexey Dobriyan <adobriyan@gmail.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Andy Lutomirski <luto@kernel.org>
-Cc: Linux API <linux-api@vger.kernel.org>
----
- Documentation/filesystems/proc.txt | 39 ++++++++++++++++++++++++++++++
- 1 file changed, 39 insertions(+)
+Sure, will fix this in the next version. Thanks a lot!
 
-diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
-index 66cad5c86171..e8bc403d15df 100644
---- a/Documentation/filesystems/proc.txt
-+++ b/Documentation/filesystems/proc.txt
-@@ -45,6 +45,7 @@ Table of Contents
-   3.9   /proc/<pid>/map_files - Information about memory mapped files
-   3.10  /proc/<pid>/timerslack_ns - Task timerslack value
-   3.11	/proc/<pid>/patch_state - Livepatch patch operation state
-+  3.12	/proc/<pid>/arch_status - Task architecture specific information
- 
-   4	Configuring procfs
-   4.1	Mount options
-@@ -1948,6 +1949,44 @@ patched.  If the patch is being enabled, then the task has already been
- patched.  If the patch is being disabled, then the task hasn't been
- unpatched yet.
- 
-+3.12 /proc/<pid>/arch_status - task architecture specific status
-+-------------------------------------------------------------------
-+When CONFIG_PROC_PID_ARCH_STATUS is enabled, this file displays the
-+architecture specific status of the task.
-+
-+Example
-+-------
-+ $ cat /proc/6753/arch_status
-+ AVX512_elapsed_ms:      8
-+
-+Description
-+-----------
-+
-+x86 specific entries:
-+---------------------
-+ AVX512_elapsed_ms:
-+ ------------------
-+  If AVX512 is supported on the machine, this entry shows the milliseconds
-+  elapsed since the last time AVX512 usage was recorded. The recording
-+  happens on a best effort basis when a task is scheduled out. This means
-+  that the value depends on two factors:
-+
-+    1) The time which the task spent on the CPU without being scheduled
-+       out. With CPU isolation and a single runnable task this can take
-+       several seconds.
-+
-+    2) The time since the task was scheduled out last. Depending on the
-+       reason for being scheduled out (time slice exhausted, syscall ...)
-+       this can be arbitrary long time.
-+
-+  As a consequence the value cannot be considered precise and authoritative
-+  information. The application which uses this information has to be aware
-+  of the overall scenario on the system in order to determine whether a
-+  task is a real AVX512 user or not.
-+
-+  A special value of '-1' indicates that no AVX512 usage was recorded, thus
-+  the task is unlikely an AVX512 user, but depends on the workload and the
-+  scheduling scenario, it also could be a false negative mentioned above.
- 
- ------------------------------------------------------------------------------
- Configuring procfs
--- 
-2.17.1
+Hao
+
+> 
+> Thanks,
+> Guenter
+> 
