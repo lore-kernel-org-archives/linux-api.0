@@ -1,63 +1,51 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH 01/10] security: Override creds in __fput() with last
- fputter's creds [ver #3]
-Date: Thu, 6 Jun 2019 10:18:16 -0700
-Message-ID: <CALCETrUukxNNhbBAifxz1EADzLOvYKoh9oqqZFJteU+MMhh1ig@mail.gmail.com>
-References: <155981411940.17513.7137844619951358374.stgit@warthog.procyon.org.uk>
- <155981413016.17513.10540579988392555403.stgit@warthog.procyon.org.uk>
- <176F8189-3BE9-4B8C-A4D5-8915436338FB@amacapital.net> <11031.1559833574@warthog.procyon.org.uk>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH v4 00/16] fs-verity: read-only file-based
+ authenticity protection
+Date: Thu, 6 Jun 2019 10:21:12 -0700
+Message-ID: <CAHk-=wgSzRzoro8ATO5xb6OFxN1A0fjUCQSAHfGuEPbEu+zWvA@mail.gmail.com>
+References: <20190606155205.2872-1-ebiggers@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <11031.1559833574@warthog.procyon.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Casey Schaufler <casey@schaufler-ca.com>, raven@themaw.net, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, LSM List <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Jann Horn <jannh@google.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+In-Reply-To: <20190606155205.2872-1-ebiggers@kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: "Theodore Y . Ts'o" <tytso@mit.edu>, "Darrick J . Wong" <darrick.wong@oracle.com>, Linux API <linux-api@vger.kernel.org>, Dave Chinner <david@fromorbit.com>, linux-f2fs-devel@lists.sourceforge.net, linux-fscrypt@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jaegeuk Kim <jaegeuk@kernel.org>, linux-integrity@vger.kernel.org, linux-ext4@vger.kernel.org, Christoph Hellwig <hch@lst.de>, Victor Hsieh <victorhsieh@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jun 6, 2019 at 8:06 AM David Howells <dhowells@redhat.com> wrote:
+On Thu, Jun 6, 2019 at 8:54 AM Eric Biggers <ebiggers@kernel.org> wrote:
 >
-> Andy Lutomirski <luto@amacapital.net> wrote:
->
-> > > So that the LSM can see the credentials of the last process to do an fput()
-> > > on a file object when the file object is being dismantled, do the following
-> > > steps:
-> > >
-> >
-> > I still maintain that this is a giant design error.
->
-> Yes, I know.  This was primarily a post so that Greg could play with the USB
-> notifications stuff I added.  The LSM support isn't resolved and is unchanged.
->
-> > Can someone at least come up with a single valid use case that isn't
-> > entirely full of bugs?
->
-> "Entirely full of bugs"?
+> This is a redesigned version of the fs-verity patchset, implementing
+> Ted's suggestion to build the Merkle tree in the kernel
+> (https://lore.kernel.org/linux-fsdevel/20190207031101.GA7387@mit.edu/).
+> This greatly simplifies the UAPI, since the verity metadata no longer
+> needs to be transferred to the kernel.
 
-I can say "hey, I have this policy that the person who triggered an
-event needs such-and-such permission, otherwise the event gets
-suppressed".  But this isn't a full use case, and it's buggy.  It's
-not a full use case because I haven't specified what my actual goal is
-and why this particular policy achieves my goals.  And it's entirely
-full of bugs because, as this patch so nicely illustrates, it's not
-well defined who triggered the event.  For example, if I exec a setuid
-process, who triggers the close?  What if I send the fd to systemd
-over a socket and immediately close my copy before systemd gets (and
-ignores) the message?  Or if I send it to Wayland, or to any other
-process?
+Interfaces look sane to me. My only real concern is whether it would
+make sense to make the FS_IOC_ENABLE_VERITY ioctl be something that
+could be done incrementally, since the way it is done now it looks
+like any random user could create a big file and then do the
+FS_IOC_ENABLE_VERITY to make the kernel do a _very_ expensive
+operation.
 
-A file is closed when everyone is done with it.  Trying to figure out
-who the last intentional user of the file was seems little better than
-random guessing.  Defining a security policy based on it seems like a
-poor idea.
+Yes, I see the
 
->
-> How would you propose I deal with Casey's requirement?  I'm getting the
-> feeling you're going to nak it if I try to fulfil that and he's going to nak
-> it if I don't.
->
++               if (fatal_signal_pending(current))
++                       return -EINTR;
++               cond_resched();
 
-Casey, I think you need to state your requirement in a way that's well
-defined, and I think you need to make a compelling case that your
-requirement is indeed worth dictating the design of parts of the
-kernel outside LSM.
+in there, so it's not like it's some entirely unkillable thing, and
+maybe we don't care as a result. But maybe the ioctl interface could
+be fundamentally restartable?
+
+If that was already considered and people just went "too complex", never mind.
+
+               Linus
