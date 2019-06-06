@@ -1,77 +1,87 @@
-From: Eric Biggers <ebiggers@kernel.org>
-Subject: Re: [PATCH v4 00/16] fs-verity: read-only file-based
- authenticity protection
-Date: Thu, 6 Jun 2019 12:43:44 -0700
-Message-ID: <20190606194343.GA84833@gmail.com>
-References: <20190606155205.2872-1-ebiggers@kernel.org>
- <CAHk-=wgSzRzoro8ATO5xb6OFxN1A0fjUCQSAHfGuEPbEu+zWvA@mail.gmail.com>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [RFC][PATCH 00/10] Mount, FS, Block and Keyrings notifications
+ [ver #3]
+Date: Thu, 6 Jun 2019 12:54:38 -0700
+Message-ID: <CALCETrVuNRPgEzv-XY4M9m6sEsCiRHxPenN_MpcMYc1h26vVwQ@mail.gmail.com>
+References: <b91710d8-cd2d-6b93-8619-130b9d15983d@tycho.nsa.gov>
+ <155981411940.17513.7137844619951358374.stgit@warthog.procyon.org.uk>
+ <3813.1559827003@warthog.procyon.org.uk> <8382af23-548c-f162-0e82-11e308049735@tycho.nsa.gov>
+ <0eb007c5-b4a0-9384-d915-37b0e5a158bf@schaufler-ca.com> <c82052e5-ca11-67b5-965e-8f828081f31c@tycho.nsa.gov>
+ <07e92045-2d80-8573-4d36-643deeaff9ec@schaufler-ca.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-Content-Disposition: inline
-In-Reply-To: <CAHk-=wgSzRzoro8ATO5xb6OFxN1A0fjUCQSAHfGuEPbEu+zWvA@mail.gmail.com>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: "Theodore Y . Ts'o" <tytso@mit.edu>, "Darrick J . Wong" <darrick.wong@oracle.com>, Linux API <linux-api@vger.kernel.org>, Dave Chinner <david@fromorbit.com>, linux-f2fs-devel@lists.sourceforge.net, linux-fscrypt@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Jaegeuk Kim <jaegeuk@kernel.org>, linux-integrity@vger.kernel.org, linux-ext4@vger.kernel.org, Christoph Hellwig <hch@lst.de>, Victor Hsieh <victorhsieh@google.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <07e92045-2d80-8573-4d36-643deeaff9ec@schaufler-ca.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Casey Schaufler <casey@schaufler-ca.com>
+Cc: Stephen Smalley <sds@tycho.nsa.gov>, David Howells <dhowells@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, USB list <linux-usb@vger.kernel.org>, raven@themaw.net, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, LSM List <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Paul Moore <paul@paul-moore.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jun 06, 2019 at 10:21:12AM -0700, Linus Torvalds wrote:
-> On Thu, Jun 6, 2019 at 8:54 AM Eric Biggers <ebiggers@kernel.org> wrote:
+On Thu, Jun 6, 2019 at 11:56 AM Casey Schaufler <casey@schaufler-ca.com> wrote:
+>
+> On 6/6/2019 10:16 AM, Stephen Smalley wrote:
+> > On 6/6/19 12:43 PM, Casey Schaufler wrote:
+> >> ...
+> >> I don't agree. That is, I don't believe it is sufficient.
+> >> There is no guarantee that being able to set a watch on an
+> >> object implies that every process that can trigger the event
+> >> can send it to you.
+> >>
+> >>     Watcher has Smack label W
+> >>     Triggerer has Smack label T
+> >>     Watched object has Smack label O
+> >>
+> >>     Relevant Smack rules are
+> >>
+> >>     W O rw
+> >>     T O rw
+> >>
+> >> The watcher will be able to set the watch,
+> >> the triggerer will be able to trigger the event,
+> >> but there is nothing that would allow the watcher
+> >> to receive the event. This is not a case of watcher
+> >> reading the watched object, as the event is delivered
+> >> without any action by watcher.
 > >
-> > This is a redesigned version of the fs-verity patchset, implementing
-> > Ted's suggestion to build the Merkle tree in the kernel
-> > (https://lore.kernel.org/linux-fsdevel/20190207031101.GA7387@mit.edu/).
-> > This greatly simplifies the UAPI, since the verity metadata no longer
-> > needs to be transferred to the kernel.
-> 
-> Interfaces look sane to me. My only real concern is whether it would
-> make sense to make the FS_IOC_ENABLE_VERITY ioctl be something that
-> could be done incrementally, since the way it is done now it looks
-> like any random user could create a big file and then do the
-> FS_IOC_ENABLE_VERITY to make the kernel do a _very_ expensive
-> operation.
-> 
-> Yes, I see the
-> 
-> +               if (fatal_signal_pending(current))
-> +                       return -EINTR;
-> +               cond_resched();
-> 
-> in there, so it's not like it's some entirely unkillable thing, and
-> maybe we don't care as a result. But maybe the ioctl interface could
-> be fundamentally restartable?
-> 
-> If that was already considered and people just went "too complex", never mind.
-> 
->                Linus
+> > You are allowing arbitrary information flow between T and W above.  Who cares about notifications?
+>
+> I do. If Watched object is /dev/null no data flow is possible.
+> There are many objects on a modern Linux system for which this
+> is true. Even if it's "just a file" the existence of one path
+> for data to flow does not justify ignoring the rules for other
+> data paths.
 
-Making it incremental would be complex.  We could make FS_IOC_ENABLE_VERITY
-write checkpoints periodically, and make it resume from the checkpoint if
-present.  But then we'd have to worry about sync'ing the Merkle tree before
-writing each checkpoint, and storing the Merkle tree parameters in each
-checkpoint so that if the second call to FS_IOC_ENABLE_VERITY is made with
-different parameters it knows to delete everything and restart from scratch.
+Aha!
 
-Or we could make it explicit in the UAPI, where userspace calls ioctls to build
-blocks 0 through 9999, then 10000 through 19999, etc.  But that would make the
-UAPI much more complex, and the kernel would need to do lots of extra validation
-of the parameters passed in.  This approach would also not be crash-safe unless
-userspace did its own checkpointing, whereas the all-or-nothing API naturally
-avoids inconsistent states.
+Even ignoring security, writes to things like /dev/null should
+probably not trigger notifications to people who are watching
+/dev/null.  (There are probably lots of things like this: /dev/zero,
+/dev/urandom, etc.)  David, are there any notification types that have
+this issue in your patchset?  If so, is there a straightforward way to
+fix it?  Generically, it seems like maybe writes to device nodes
+shouldn't trigger notifications since, despite the fact that different
+openers of a device node share an inode, there isn't necessarily any
+connection between them.
 
-And either way of making it incremental, the "partial Merkle tree" would also
-become a valid on-disk state.  Conceptually that adds a lot of complexity, and
-probably people would want fsck to support removing all the partial trees,
-similar to how e2fsck supports optimizing directories and extent trees.
+Casey, if this is fixed in general, do you have another case where the
+right to write and the right to read do not imply the right to
+communicate?
 
-So in the end, it's not something I decided to add.
+> An analogy is that two processes with different UIDs can open a file,
+> but still can't signal each other.
 
-- Eric
+What do you mean "signal"?  If two processes with different UIDs can
+open the same file for read and write, then they can communicate with
+each other in many ways.  For example, one can write to the file and
+the other can read it.  One can take locks and the other can read the
+lock state.  They can both map it and use any number of memory access
+side channels to communicate.  But, of course, they can't send each
+other signals with kill().
+
+If, however, one of these processes is using some fancy mechanism
+(inotify, dnotify, kqueue, fanotify, whatever) to watch the file, and
+the other one writes it, then it seems inconsistent to lie to the
+watching process and say that the file wasn't written because some
+security policy has decided to allow the write, allow the read, but
+suppress this particular notification.  Hence my request for a real
+example: when would it make sense to do this?
