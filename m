@@ -1,424 +1,54 @@
-From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 10/10] Add sample notification program [ver #3]
-Date: Thu, 06 Jun 2019 10:43:33 +0100
-Message-ID: <155981421379.17513.13158528501056454772.stgit@warthog.procyon.org.uk>
-References: <155981411940.17513.7137844619951358374.stgit@warthog.procyon.org.uk>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: [PATCH 1/5] glibc: Perform rseq(2) registration at C startup and thread creation (v10)
+Date: Thu, 06 Jun 2019 13:57:23 +0200
+Message-ID: <87wohzorj0.fsf@oldenburg2.str.redhat.com>
+References: <20190503184219.19266-1-mathieu.desnoyers@efficios.com>
+        <140718133.18261.1559144710554.JavaMail.zimbra@efficios.com>
+        <2022553041.20966.1559249801435.JavaMail.zimbra@efficios.com>
+        <875zprm4jo.fsf@oldenburg2.str.redhat.com>
+        <732661684.21584.1559314109886.JavaMail.zimbra@efficios.com>
+        <87muj2k4ov.fsf@oldenburg2.str.redhat.com>
+        <1528929896.22217.1559326257155.JavaMail.zimbra@efficios.com>
+        <87o93d4lqb.fsf@oldenburg2.str.redhat.com>
+        <117220011.27079.1559663870037.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <155981411940.17513.7137844619951358374.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: viro@zeniv.linux.org.uk
-Cc: dhowells@redhat.com, raven@themaw.net, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-This needs to be linked with -lkeyutils.
+* Mathieu Desnoyers:
 
-It is run like:
+> Should we plan ahead for such scheme to override which library "owns" rseq
+> registration from a LD_PRELOAD library ? If so, then we would want glibc to
+> set __rseq_handled _after_ LD_PRELOAD ctors are executed.
 
-	./watch_test
+I don't think so.  The LD_PRELOAD phase is not clearly delineated from
+the non-preload phase.  So it's not clear to me what this would even
+mean in practice.
 
-and watches "/" for mount changes and the current session keyring for key
-changes:
+Let me ask the key question again: Does it matter if code observes the
+rseq area first without kernel support, and then with kernel support?
+If we don't expect any problems immediately, we do not need to worry
+much about the constructor ordering right now.  I expect that over time,
+fixing this properly will become easier.
 
-	# keyctl add user a a @s
-	1035096409
-	# keyctl unlink 1035096409 @s
-	# mount -t tmpfs none /mnt/nfsv3tcp/
-	# umount /mnt/nfsv3tcp
+>> The final remaining case is static dlopen.  There is a copy of ld.so on
+>> the dynamic side, but it is completely inactive and has never run.  I do
+>> not think we need to support that because multi-threading does not work
+>> reliably in this scenario, either.  However, we should skip rseq
+>> registration in a nested libc (see the rtld_active function).
+>
+> So for SHARED, if (!rtld_active ()), we should indeed leave the state of
+> __rseq_handled as it is, because we are within a nested inactive ld.so.
 
-producing:
+I think we should add __rseq_handled initialization to ld.so, so it will
+only run once, ever.
 
-	# ./watch_test
-	ptrs h=4 t=2 m=20003
-	NOTIFY[00000004-00000002] ty=0003 sy=0002 i=01000010
-	KEY 2ffc2e5d change=2[linked] aux=1035096409
-	ptrs h=6 t=4 m=20003
-	NOTIFY[00000006-00000004] ty=0003 sy=0003 i=01000010
-	KEY 2ffc2e5d change=3[unlinked] aux=1035096409
-	ptrs h=8 t=6 m=20003
-	NOTIFY[00000008-00000006] ty=0001 sy=0000 i=02000010
-	MOUNT 00000013 change=0[new_mount] aux=168
-	ptrs h=a t=8 m=20003
-	NOTIFY[0000000a-00000008] ty=0001 sy=0001 i=02000010
-	MOUNT 00000013 change=1[unmount] aux=168
+It's the registration from libc.so which needs some care.  In
+particular, we must not override an existing registration.
 
-Other events may be produced, such as with a failing disk:
-
-	ptrs h=5 t=2 m=6000004
-	NOTIFY[00000005-00000002] ty=0004 sy=0006 i=04000018
-	BLOCK 00800050 e=6[critical medium] s=5be8
-
-This corresponds to:
-
-	print_req_error: critical medium error, dev sdf, sector 23528 flags 0
-
-in dmesg.
-
-Signed-off-by: David Howells <dhowells@redhat.com>
----
-
- samples/Kconfig                  |    6 +
- samples/Makefile                 |    1 
- samples/watch_queue/Makefile     |    9 +
- samples/watch_queue/watch_test.c |  310 ++++++++++++++++++++++++++++++++++++++
- 4 files changed, 326 insertions(+)
- create mode 100644 samples/watch_queue/Makefile
- create mode 100644 samples/watch_queue/watch_test.c
-
-diff --git a/samples/Kconfig b/samples/Kconfig
-index 0561a94f6fdb..a2b7a7babee5 100644
---- a/samples/Kconfig
-+++ b/samples/Kconfig
-@@ -160,4 +160,10 @@ config SAMPLE_VFS
- 	  as mount API and statx().  Note that this is restricted to the x86
- 	  arch whilst it accesses system calls that aren't yet in all arches.
- 
-+config SAMPLE_WATCH_QUEUE
-+	bool "Build example /dev/watch_queue notification consumer"
-+	help
-+	  Build example userspace program to use the new mount_notify(),
-+	  sb_notify() syscalls and the KEYCTL_WATCH_KEY keyctl() function.
-+
- endif # SAMPLES
-diff --git a/samples/Makefile b/samples/Makefile
-index debf8925f06f..ed3b8bab6e9b 100644
---- a/samples/Makefile
-+++ b/samples/Makefile
-@@ -20,3 +20,4 @@ obj-$(CONFIG_SAMPLE_TRACE_PRINTK)	+= trace_printk/
- obj-$(CONFIG_VIDEO_PCI_SKELETON)	+= v4l/
- obj-y					+= vfio-mdev/
- subdir-$(CONFIG_SAMPLE_VFS)		+= vfs
-+subdir-$(CONFIG_SAMPLE_WATCH_QUEUE)	+= watch_queue
-diff --git a/samples/watch_queue/Makefile b/samples/watch_queue/Makefile
-new file mode 100644
-index 000000000000..42b694430d0f
---- /dev/null
-+++ b/samples/watch_queue/Makefile
-@@ -0,0 +1,9 @@
-+# List of programs to build
-+hostprogs-y := watch_test
-+
-+# Tell kbuild to always build the programs
-+always := $(hostprogs-y)
-+
-+HOSTCFLAGS_watch_test.o += -I$(objtree)/usr/include
-+
-+HOSTLOADLIBES_watch_test += -lkeyutils
-diff --git a/samples/watch_queue/watch_test.c b/samples/watch_queue/watch_test.c
-new file mode 100644
-index 000000000000..893a5380f792
---- /dev/null
-+++ b/samples/watch_queue/watch_test.c
-@@ -0,0 +1,310 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/* Use /dev/watch_queue to watch for notifications.
-+ *
-+ * Copyright (C) 2019 Red Hat, Inc. All Rights Reserved.
-+ * Written by David Howells (dhowells@redhat.com)
-+ */
-+
-+#include <stdbool.h>
-+#include <stdarg.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <signal.h>
-+#include <unistd.h>
-+#include <fcntl.h>
-+#include <dirent.h>
-+#include <errno.h>
-+#include <sys/wait.h>
-+#include <sys/ioctl.h>
-+#include <sys/mman.h>
-+#include <poll.h>
-+#include <limits.h>
-+#include <linux/watch_queue.h>
-+#include <linux/unistd.h>
-+#include <linux/keyctl.h>
-+
-+#ifndef __NR_mount_notify
-+#define __NR_mount_notify -1
-+#endif
-+#ifndef __NR_sb_notify
-+#define __NR_sb_notify -1
-+#endif
-+#ifndef __NR_device_notify
-+#define __NR_device_notify -1
-+#endif
-+#ifndef KEYCTL_WATCH_KEY
-+#define KEYCTL_WATCH_KEY -1
-+#endif
-+
-+#define BUF_SIZE 4
-+
-+static const char *key_subtypes[256] = {
-+	[NOTIFY_KEY_INSTANTIATED]	= "instantiated",
-+	[NOTIFY_KEY_UPDATED]		= "updated",
-+	[NOTIFY_KEY_LINKED]		= "linked",
-+	[NOTIFY_KEY_UNLINKED]		= "unlinked",
-+	[NOTIFY_KEY_CLEARED]		= "cleared",
-+	[NOTIFY_KEY_REVOKED]		= "revoked",
-+	[NOTIFY_KEY_INVALIDATED]	= "invalidated",
-+	[NOTIFY_KEY_SETATTR]		= "setattr",
-+};
-+
-+static void saw_key_change(struct watch_notification *n)
-+{
-+	struct key_notification *k = (struct key_notification *)n;
-+	unsigned int len = n->info & WATCH_INFO_LENGTH;
-+
-+	if (len != sizeof(struct key_notification))
-+		return;
-+
-+	printf("KEY %08x change=%u[%s] aux=%u\n",
-+	       k->key_id, n->subtype, key_subtypes[n->subtype], k->aux);
-+}
-+
-+static const char *mount_subtypes[256] = {
-+	[NOTIFY_MOUNT_NEW_MOUNT]	= "new_mount",
-+	[NOTIFY_MOUNT_UNMOUNT]		= "unmount",
-+	[NOTIFY_MOUNT_EXPIRY]		= "expiry",
-+	[NOTIFY_MOUNT_READONLY]		= "readonly",
-+	[NOTIFY_MOUNT_SETATTR]		= "setattr",
-+	[NOTIFY_MOUNT_MOVE_FROM]	= "move_from",
-+	[NOTIFY_MOUNT_MOVE_TO]		= "move_to",
-+};
-+
-+static long keyctl_watch_key(int key, int watch_fd, int watch_id)
-+{
-+	return syscall(__NR_keyctl, KEYCTL_WATCH_KEY, key, watch_fd, watch_id);
-+}
-+
-+static void saw_mount_change(struct watch_notification *n)
-+{
-+	struct mount_notification *m = (struct mount_notification *)n;
-+	unsigned int len = n->info & WATCH_INFO_LENGTH;
-+
-+	if (len != sizeof(struct mount_notification))
-+		return;
-+
-+	printf("MOUNT %08x change=%u[%s] aux=%u\n",
-+	       m->triggered_on, n->subtype, mount_subtypes[n->subtype], m->changed_mount);
-+}
-+
-+static const char *super_subtypes[256] = {
-+	[NOTIFY_SUPERBLOCK_READONLY]	= "readonly",
-+	[NOTIFY_SUPERBLOCK_ERROR]	= "error",
-+	[NOTIFY_SUPERBLOCK_EDQUOT]	= "edquot",
-+	[NOTIFY_SUPERBLOCK_NETWORK]	= "network",
-+};
-+
-+static void saw_super_change(struct watch_notification *n)
-+{
-+	struct superblock_notification *s = (struct superblock_notification *)n;
-+	unsigned int len = n->info & WATCH_INFO_LENGTH;
-+
-+	if (len < sizeof(struct superblock_notification))
-+		return;
-+
-+	printf("SUPER %08llx change=%u[%s]\n",
-+	       s->sb_id, n->subtype, super_subtypes[n->subtype]);
-+}
-+
-+static const char *block_subtypes[256] = {
-+	[NOTIFY_BLOCK_ERROR_TIMEOUT]			= "timeout",
-+	[NOTIFY_BLOCK_ERROR_NO_SPACE]			= "critical space allocation",
-+	[NOTIFY_BLOCK_ERROR_RECOVERABLE_TRANSPORT]	= "recoverable transport",
-+	[NOTIFY_BLOCK_ERROR_CRITICAL_TARGET]		= "critical target",
-+	[NOTIFY_BLOCK_ERROR_CRITICAL_NEXUS]		= "critical nexus",
-+	[NOTIFY_BLOCK_ERROR_CRITICAL_MEDIUM]		= "critical medium",
-+	[NOTIFY_BLOCK_ERROR_PROTECTION]			= "protection",
-+	[NOTIFY_BLOCK_ERROR_KERNEL_RESOURCE]		= "kernel resource",
-+	[NOTIFY_BLOCK_ERROR_DEVICE_RESOURCE]		= "device resource",
-+	[NOTIFY_BLOCK_ERROR_IO]				= "I/O",
-+};
-+
-+static void saw_block_change(struct watch_notification *n)
-+{
-+	struct block_notification *b = (struct block_notification *)n;
-+	unsigned int len = n->info & WATCH_INFO_LENGTH;
-+
-+	if (len < sizeof(struct block_notification))
-+		return;
-+
-+	printf("BLOCK %08llx e=%u[%s] s=%llx\n",
-+	       (unsigned long long)b->dev,
-+	       n->subtype, block_subtypes[n->subtype],
-+	       (unsigned long long)b->sector);
-+}
-+
-+static const char *usb_subtypes[256] = {
-+	[NOTIFY_USB_DEVICE_ADD]		= "dev-add",
-+	[NOTIFY_USB_DEVICE_REMOVE]	= "dev-remove",
-+	[NOTIFY_USB_BUS_ADD]		= "bus-add",
-+	[NOTIFY_USB_BUS_REMOVE]		= "bus-remove",
-+	[NOTIFY_USB_DEVICE_RESET]	= "dev-reset",
-+	[NOTIFY_USB_DEVICE_ERROR]	= "dev-error",
-+};
-+
-+static void saw_usb_event(struct watch_notification *n)
-+{
-+	struct usb_notification *u = (struct usb_notification *)n;
-+	unsigned int len = n->info & WATCH_INFO_LENGTH;
-+
-+	if (len < sizeof(struct usb_notification))
-+		return;
-+
-+	printf("USB %*.*s %s e=%x r=%x\n",
-+	       u->name_len, u->name_len, u->name,
-+	       usb_subtypes[n->subtype],
-+	       u->error, u->reserved);
-+}
-+
-+/*
-+ * Consume and display events.
-+ */
-+static int consumer(int fd, struct watch_queue_buffer *buf)
-+{
-+	struct watch_notification *n;
-+	struct pollfd p[1];
-+	unsigned int head, tail, mask = buf->meta.mask;
-+
-+	for (;;) {
-+		p[0].fd = fd;
-+		p[0].events = POLLIN | POLLERR;
-+		p[0].revents = 0;
-+
-+		if (poll(p, 1, -1) == -1) {
-+			perror("poll");
-+			break;
-+		}
-+
-+		printf("ptrs h=%x t=%x m=%x\n",
-+		       buf->meta.head, buf->meta.tail, buf->meta.mask);
-+
-+		while (head = buf->meta.head,
-+		       tail = buf->meta.tail,
-+		       tail != head
-+		       ) {
-+			asm ("lfence" : : : "memory" );
-+			n = &buf->slots[tail & mask];
-+			printf("NOTIFY[%08x-%08x] ty=%04x sy=%04x i=%08x\n",
-+			       head, tail, n->type, n->subtype, n->info);
-+			if ((n->info & WATCH_INFO_LENGTH) == 0)
-+				goto out;
-+
-+			switch (n->type) {
-+			case WATCH_TYPE_META:
-+				if (n->subtype == WATCH_META_REMOVAL_NOTIFICATION)
-+					printf("REMOVAL of watchpoint %08x\n",
-+					       n->info & WATCH_INFO_ID);
-+				break;
-+			case WATCH_TYPE_MOUNT_NOTIFY:
-+				saw_mount_change(n);
-+				break;
-+			case WATCH_TYPE_SB_NOTIFY:
-+				saw_super_change(n);
-+				break;
-+			case WATCH_TYPE_KEY_NOTIFY:
-+				saw_key_change(n);
-+				break;
-+			case WATCH_TYPE_BLOCK_NOTIFY:
-+				saw_block_change(n);
-+				break;
-+			case WATCH_TYPE_USB_NOTIFY:
-+				saw_usb_event(n);
-+				break;
-+			}
-+
-+			tail += (n->info & WATCH_INFO_LENGTH) >> WATCH_LENGTH_SHIFT;
-+			asm("mfence" ::: "memory");
-+			buf->meta.tail = tail;
-+		}
-+	}
-+
-+out:
-+	return 0;
-+}
-+
-+static struct watch_notification_filter filter = {
-+	.nr_filters	= 5,
-+	.__reserved	= 0,
-+	.filters = {
-+		[0] = {
-+			.type			= WATCH_TYPE_MOUNT_NOTIFY,
-+			// Reject move-from notifications
-+			.subtype_filter[0]	= UINT_MAX & ~(1 << NOTIFY_MOUNT_MOVE_FROM),
-+		},
-+		[1]	= {
-+			.type			= WATCH_TYPE_SB_NOTIFY,
-+			// Only accept notification of changes to R/O state
-+			.subtype_filter[0]	= (1 << NOTIFY_SUPERBLOCK_READONLY),
-+			// Only accept notifications of change-to-R/O
-+			.info_mask		= WATCH_INFO_FLAG_0,
-+			.info_filter		= WATCH_INFO_FLAG_0,
-+		},
-+		[2]	= {
-+			.type			= WATCH_TYPE_KEY_NOTIFY,
-+			.subtype_filter[0]	= UINT_MAX,
-+		},
-+		[3]	= {
-+			.type			= WATCH_TYPE_BLOCK_NOTIFY,
-+			.subtype_filter[0]	= UINT_MAX,
-+		},
-+		[4]	= {
-+			.type			= WATCH_TYPE_USB_NOTIFY,
-+			.subtype_filter[0]	= UINT_MAX,
-+		},
-+	},
-+};
-+
-+int main(int argc, char **argv)
-+{
-+	struct watch_queue_buffer *buf;
-+	size_t page_size;
-+	int fd;
-+
-+	fd = open("/dev/watch_queue", O_RDWR);
-+	if (fd == -1) {
-+		perror("/dev/watch_queue");
-+		exit(1);
-+	}
-+
-+	if (ioctl(fd, IOC_WATCH_QUEUE_SET_SIZE, BUF_SIZE) == -1) {
-+		perror("/dev/watch_queue(size)");
-+		exit(1);
-+	}
-+
-+	if (ioctl(fd, IOC_WATCH_QUEUE_SET_FILTER, &filter) == -1) {
-+		perror("/dev/watch_queue(filter)");
-+		exit(1);
-+	}
-+
-+	page_size = sysconf(_SC_PAGESIZE);
-+	buf = mmap(NULL, BUF_SIZE * page_size, PROT_READ | PROT_WRITE,
-+		   MAP_SHARED, fd, 0);
-+	if (buf == MAP_FAILED) {
-+		perror("mmap");
-+		exit(1);
-+	}
-+
-+	if (keyctl_watch_key(KEY_SPEC_SESSION_KEYRING, fd, 0x01) == -1) {
-+		perror("keyctl");
-+		exit(1);
-+	}
-+
-+	if (syscall(__NR_mount_notify, AT_FDCWD, "/", 0, fd, 0x02) == -1) {
-+		perror("mount_notify");
-+		exit(1);
-+	}
-+
-+	if (syscall(__NR_sb_notify, AT_FDCWD, "/mnt", 0, fd, 0x03) == -1) {
-+		perror("sb_notify");
-+		exit(1);
-+	}
-+
-+	if (syscall(__NR_device_notify, fd, 0x04) == -1) {
-+		perror("device_notify");
-+		exit(1);
-+	}
-+
-+	return consumer(fd, buf);
-+}
+Thanks,
+Florian
