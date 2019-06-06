@@ -1,37 +1,45 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH 10/10] Add sample notification program [ver #3]
-Date: Thu, 06 Jun 2019 23:52:50 +0100
-Message-ID: <31575.1559861570@warthog.procyon.org.uk>
-References: <20190606212140.GA25664@vmlxhi-102.adit-jv.com> <155981411940.17513.7137844619951358374.stgit@warthog.procyon.org.uk> <155981421379.17513.13158528501056454772.stgit@warthog.procyon.org.uk>
+From: "Theodore Ts'o" <tytso@mit.edu>
+Subject: Re: [RFC]: Convention for naming syscall revisions
+Date: Thu, 6 Jun 2019 19:54:35 -0400
+Message-ID: <20190606235435.GD23169@mit.edu>
+References: <20190606154224.7lln4zp6v3ey4icq@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190606212140.GA25664@vmlxhi-102.adit-jv.com>
-Content-ID: <31574.1559861570.1@warthog.procyon.org.uk>
+Content-Disposition: inline
+In-Reply-To: <20190606154224.7lln4zp6v3ey4icq@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Eugeniu Rosca <erosca@de.adit-jv.com>
-Cc: dhowells@redhat.com, viro@zeniv.linux.org.uk, raven@themaw.net, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, Eugeniu Rosca <roscaeugeniu@gmail.com>
+To: Christian Brauner <christian@brauner.io>
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Eugeniu Rosca <erosca@de.adit-jv.com> wrote:
-
-> How about arm64? Do you intend to enable cross-compilation?
-
-There's no guarantee that a cross-compiler can actually build userspace apps,
-though I haven't intended to encode anything against that in the Makefile.
-
-> > +			asm ("lfence" : : : "memory" );
-> [..]
-> > +			asm("mfence" ::: "memory");
+On Thu, Jun 06, 2019 at 05:42:25PM +0200, Christian Brauner wrote:
+> Hey everyone,
 > 
-> FWIW, trying to cross-compile it returned:
+> I hope this is not going to start a trash fire.
 > 
-> aarch64-linux-gnu-gcc -I../../usr/include -I../../include  watch_test.c   -o watch_test
-> /tmp/ccDXYynm.s: Assembler messages:
-> /tmp/ccDXYynm.s:471: Error: unknown mnemonic `lfence' -- `lfence'
-> /tmp/ccDXYynm.s:568: Error: unknown mnemonic `mfence' -- `mfence'
+> While working on a new clone version I tried to find out what the
+> current naming conventions for syscall revisions is. I was told and
+> seemed to be able to confirm through the syscall list that revisions of
+> syscalls are for the most part (for examples see [1]) named after the
+> number of arguments and not for the number of revisions. But some also
+> seem to escape that logic (e.g. clone2).
 
-Yeah.  I need to use C-standard __atomic_* stuff.
+There are also examples which show that it's a revision number:
 
-David
+      preadv2, pwritev2, mlock2, sync_file_range2
+
+immediately come to mind.  It's also important to note that in some
+cases, we do something very different (look aht the stat and fstat
+variants), and that in some cases the number of parameters for a
+system call vary between architectures (because of system call
+argument passing limitations), and this gets papered over by glibc.
+
+So we can define what the historical pattern, but there might be a big
+difference between what might make sense as an internal naming
+convention, and the names that we want to expose to userspace
+application programmers --- especially if the number of arguments at
+the syscall level might be different (on some architectures) than at
+the C library level.
+
+					- Ted
