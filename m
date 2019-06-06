@@ -1,87 +1,59 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v7 08/14] x86/cet/ibt: Add ENDBR to op-code-map
-Date: Thu,  6 Jun 2019 13:09:20 -0700
-Message-ID: <20190606200926.4029-9-yu-cheng.yu@intel.com>
-References: <20190606200926.4029-1-yu-cheng.yu@intel.com>
+Subject: [PATCH v7 02/27] x86/cpufeatures: Add CET CPU feature flags for Control-flow Enforcement Technology (CET)
+Date: Thu,  6 Jun 2019 13:06:21 -0700
+Message-ID: <20190606200646.3951-3-yu-cheng.yu@intel.com>
+References: <20190606200646.3951-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190606200926.4029-1-yu-cheng.yu@intel.com>
+In-Reply-To: <20190606200646.3951-1-yu-cheng.yu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Add control transfer terminating instructions:
+Add CPU feature flags for Control-flow Enforcement Technology (CET).
 
-ENDBR64/ENDBR32:
-    Mark a valid 64/32-bit control transfer endpoint.
+CPUID.(EAX=7,ECX=0):ECX[bit 7] Shadow stack
+CPUID.(EAX=7,ECX=0):EDX[bit 20] Indirect branch tracking
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Reviewed-by: Borislav Petkov <bp@suse.de>
 ---
- arch/x86/lib/x86-opcode-map.txt               | 13 +++++++++++--
- tools/objtool/arch/x86/lib/x86-opcode-map.txt | 13 +++++++++++--
- 2 files changed, 22 insertions(+), 4 deletions(-)
+ arch/x86/include/asm/cpufeatures.h | 2 ++
+ arch/x86/kernel/cpu/cpuid-deps.c   | 2 ++
+ 2 files changed, 4 insertions(+)
 
-diff --git a/arch/x86/lib/x86-opcode-map.txt b/arch/x86/lib/x86-opcode-map.txt
-index c5e825d44766..fbc53481bc59 100644
---- a/arch/x86/lib/x86-opcode-map.txt
-+++ b/arch/x86/lib/x86-opcode-map.txt
-@@ -620,7 +620,16 @@ ea: SAVEPREVSSP (f3)
- # Skip 0xeb-0xff
- EndTable
+diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
+index 75f27ee2c263..21b2d9497c0f 100644
+--- a/arch/x86/include/asm/cpufeatures.h
++++ b/arch/x86/include/asm/cpufeatures.h
+@@ -323,6 +323,7 @@
+ #define X86_FEATURE_PKU			(16*32+ 3) /* Protection Keys for Userspace */
+ #define X86_FEATURE_OSPKE		(16*32+ 4) /* OS Protection Keys Enable */
+ #define X86_FEATURE_AVX512_VBMI2	(16*32+ 6) /* Additional AVX512 Vector Bit Manipulation Instructions */
++#define X86_FEATURE_SHSTK		(16*32+ 7) /* Shadow Stack */
+ #define X86_FEATURE_GFNI		(16*32+ 8) /* Galois Field New Instructions */
+ #define X86_FEATURE_VAES		(16*32+ 9) /* Vector AES */
+ #define X86_FEATURE_VPCLMULQDQ		(16*32+10) /* Carry-Less Multiplication Double Quadword */
+@@ -347,6 +348,7 @@
+ #define X86_FEATURE_MD_CLEAR		(18*32+10) /* VERW clears CPU buffers */
+ #define X86_FEATURE_TSX_FORCE_ABORT	(18*32+13) /* "" TSX_FORCE_ABORT */
+ #define X86_FEATURE_PCONFIG		(18*32+18) /* Intel PCONFIG */
++#define X86_FEATURE_IBT			(18*32+20) /* Indirect Branch Tracking */
+ #define X86_FEATURE_SPEC_CTRL		(18*32+26) /* "" Speculation Control (IBRS + IBPB) */
+ #define X86_FEATURE_INTEL_STIBP		(18*32+27) /* "" Single Thread Indirect Branch Predictors */
+ #define X86_FEATURE_FLUSH_L1D		(18*32+28) /* Flush L1D cache */
+diff --git a/arch/x86/kernel/cpu/cpuid-deps.c b/arch/x86/kernel/cpu/cpuid-deps.c
+index 2c0bd38a44ab..68ef07175062 100644
+--- a/arch/x86/kernel/cpu/cpuid-deps.c
++++ b/arch/x86/kernel/cpu/cpuid-deps.c
+@@ -59,6 +59,8 @@ static const struct cpuid_dep cpuid_deps[] = {
+ 	{ X86_FEATURE_AVX512_4VNNIW,	X86_FEATURE_AVX512F   },
+ 	{ X86_FEATURE_AVX512_4FMAPS,	X86_FEATURE_AVX512F   },
+ 	{ X86_FEATURE_AVX512_VPOPCNTDQ, X86_FEATURE_AVX512F   },
++	{ X86_FEATURE_SHSTK,		X86_FEATURE_XSAVES    },
++	{ X86_FEATURE_IBT,		X86_FEATURE_XSAVES    },
+ 	{}
+ };
  
--Table: 3-byte opcode 2 (0x0f 0x38)
-+Table: 3-byte opcode 2 (0x0f 0x1e)
-+Referrer:
-+AVXcode:
-+# Skip 0x00-0xf9
-+fa: ENDBR64 (f3)
-+fb: ENDBR32 (f3)
-+#skip 0xfc-0xff
-+EndTable
-+
-+Table: 3-byte opcode 3 (0x0f 0x38)
- Referrer: 3-byte escape 1
- AVXcode: 2
- # 0x0f 0x38 0x00-0x0f
-@@ -804,7 +813,7 @@ f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v) | WRSS Pq,Qq
- f7: BEXTR Gy,Ey,By (v) | SHLX Gy,Ey,By (66),(v) | SARX Gy,Ey,By (F3),(v) | SHRX Gy,Ey,By (F2),(v)
- EndTable
- 
--Table: 3-byte opcode 3 (0x0f 0x3a)
-+Table: 3-byte opcode 4 (0x0f 0x3a)
- Referrer: 3-byte escape 2
- AVXcode: 3
- # 0x0f 0x3a 0x00-0xff
-diff --git a/tools/objtool/arch/x86/lib/x86-opcode-map.txt b/tools/objtool/arch/x86/lib/x86-opcode-map.txt
-index c5e825d44766..fbc53481bc59 100644
---- a/tools/objtool/arch/x86/lib/x86-opcode-map.txt
-+++ b/tools/objtool/arch/x86/lib/x86-opcode-map.txt
-@@ -620,7 +620,16 @@ ea: SAVEPREVSSP (f3)
- # Skip 0xeb-0xff
- EndTable
- 
--Table: 3-byte opcode 2 (0x0f 0x38)
-+Table: 3-byte opcode 2 (0x0f 0x1e)
-+Referrer:
-+AVXcode:
-+# Skip 0x00-0xf9
-+fa: ENDBR64 (f3)
-+fb: ENDBR32 (f3)
-+#skip 0xfc-0xff
-+EndTable
-+
-+Table: 3-byte opcode 3 (0x0f 0x38)
- Referrer: 3-byte escape 1
- AVXcode: 2
- # 0x0f 0x38 0x00-0x0f
-@@ -804,7 +813,7 @@ f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v) | WRSS Pq,Qq
- f7: BEXTR Gy,Ey,By (v) | SHLX Gy,Ey,By (66),(v) | SARX Gy,Ey,By (F3),(v) | SHRX Gy,Ey,By (F2),(v)
- EndTable
- 
--Table: 3-byte opcode 3 (0x0f 0x3a)
-+Table: 3-byte opcode 4 (0x0f 0x3a)
- Referrer: 3-byte escape 2
- AVXcode: 3
- # 0x0f 0x3a 0x00-0xff
 -- 
 2.17.1
