@@ -1,72 +1,28 @@
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: Re: [PATCH v7 04/27] x86/fpu/xstate: Introduce XSAVES system states
-Date: Thu, 06 Jun 2019 15:10:55 -0700
-Message-ID: <93ee5b103b8261d2b50de89f8658d133639a9af5.camel@intel.com>
-References: <20190606200646.3951-1-yu-cheng.yu@intel.com>
-         <20190606200646.3951-5-yu-cheng.yu@intel.com>
-         <0a2f8b9b-b96b-06c8-bae0-b78b2ca3b727@intel.com>
-         <5EE146A8-6C8C-4C5D-B7C0-AB8AD1012F1E@amacapital.net>
-         <4effb749-0cdc-6a49-6352-7b2d4aa7d866@intel.com>
+From: David Howells <dhowells@redhat.com>
+Subject: Re: [RFC][PATCH 00/10] Mount, FS, Block and Keyrings notifications [ver #3]
+Date: Thu, 06 Jun 2019 23:38:01 +0100
+Message-ID: <30567.1559860681@warthog.procyon.org.uk>
+References: <AD7898AE-B92C-4DE6-B895-7116FEDB3091@amacapital.net> <CALCETrVuNRPgEzv-XY4M9m6sEsCiRHxPenN_MpcMYc1h26vVwQ@mail.gmail.com> <b91710d8-cd2d-6b93-8619-130b9d15983d@tycho.nsa.gov> <155981411940.17513.7137844619951358374.stgit@warthog.procyon.org.uk> <3813.1559827003@warthog.procyon.org.uk> <8382af23-548c-f162-0e82-11e308049735@tycho.nsa.gov> <0eb007c5-b4a0-9384-d915-37b0e5a158bf@schaufler-ca.com> <c82052e5-ca11-67b5-965e-8f828081f31c@tycho.nsa.gov> <07e92045-2d80-8573-4d36-643deeaff9ec@schaufler-ca.com> <23611.1559855827@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <4effb749-0cdc-6a49-6352-7b2d4aa7d866@intel.com>
+In-Reply-To: <AD7898AE-B92C-4DE6-B895-7116FEDB3091@amacapital.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Hansen <dave.hansen@intel.com>, Andy Lutomirski <luto@amacapital.net>
-Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: dhowells@redhat.com, Andy Lutomirski <luto@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, Al Viro <viro@zeniv.linux.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, USB list <linux-usb@vger.kernel.org>, raven@themaw.net, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, LSM List <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Paul Moore <paul@paul-moore.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2019-06-06 at 15:08 -0700, Dave Hansen wrote:
-> 
-> On 6/6/19 3:04 PM, Andy Lutomirski wrote:
-> > > But, that seems broken.  If we have supervisor state, we can't 
-> > > always defer the load until return to userspace, so we'll never?? 
-> > > have TIF_NEED_FPU_LOAD.  That would certainly be true for 
-> > > cet_kernel_state.
-> > 
-> > Ugh. I was sort of imagining that we would treat supervisor state
-> 
->  completely separately from user state.  But can you maybe give
-> examples of exactly what you mean?
-> > 
-> > > It seems like we actually need three classes of XSAVE states: 1. 
-> > > User state
-> > 
-> > This is FPU, XMM, etc, right?
-> 
-> Yep.
-> 
-> > > 2. Supervisor state that affects user mode
-> > 
-> > User CET?
-> 
-> Yep.
-> 
-> > > 3. Supervisor state that affects kernel mode
-> > 
-> > Like supervisor CET?  If we start doing supervisor shadow stack, the 
-> > context switches will be real fun.  We may need to handle this in 
-> > asm.
-> 
-> Yeah, that's what I was thinking.
-> 
-> I have the feeling Yu-cheng's patches don't comprehend this since
-> Sebastian's patches went in after he started working on shadow stacks.
-> 
-> > Where does PKRU fit in?  Maybe we can treat it as #3?
-> 
-> I thought Sebastian added specific PKRU handling to make it always
-> eager.  It's actually user state that affect kernel mode. :)
+Andy Lutomirski <luto@amacapital.net> wrote:
 
-For CET user states, we need to restore before making changes.  If they are not
-being changed (i.e. signal handling and syscalls), then they are restored only
-before going back to user-mode.
+> I mean: are there cases where some action generates a notification but does
+> not otherwise have an effect visible to the users who can receive the
+> notification. It looks like the answer is probably “no”, which is good.
 
-For CET kernel states, we only need to make small changes in the way similar to
-the PKRU handling, right?  We'll address it when sending CET kernel-mode
-patches.
+mount_notify().  You can get a notification that someone altered the mount
+topology (eg. by mounting something).  A process receiving a notification
+could then use fsinfo(), say, to reread the mount topology tree, find out
+where the new mount is and wander over there to have a look - assuming they
+have the permissions for pathwalk to succeed.
 
-I will put in more comments as suggested by Dave in earlier emails.
-
-Yu-cheng
+David
