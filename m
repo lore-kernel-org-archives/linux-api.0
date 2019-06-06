@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v7 14/14] x86: Discard .note.gnu.property sections
-Date: Thu,  6 Jun 2019 13:09:26 -0700
-Message-ID: <20190606200926.4029-15-yu-cheng.yu@intel.com>
+Subject: [PATCH v7 11/14] x86/vsyscall/64: Add ENDBR64 to vsyscall entry points
+Date: Thu,  6 Jun 2019 13:09:23 -0700
+Message-ID: <20190606200926.4029-12-yu-cheng.yu@intel.com>
 References: <20190606200926.4029-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190606200926.4029-1-yu-cheng.yu@intel.com>
@@ -11,71 +11,43 @@ List-Id: linux-api@vger.kernel.org
 
 From: "H.J. Lu" <hjl.tools@gmail.com>
 
-With the command-line option, -mx86-used-note=yes, the x86 assembler
-in binutils 2.32 and above generates a program property note in a note
-section, .note.gnu.property, to encode used x86 ISAs and features.
-To exclude .note.gnu.property sections from NOTE segment in x86 kernel
-linker script:
-
-PHDRS {
- text PT_LOAD FLAGS(5);
- data PT_LOAD FLAGS(6);
- percpu PT_LOAD FLAGS(6);
- init PT_LOAD FLAGS(7);
- note PT_NOTE FLAGS(0);
-}
-SECTIONS
-{
-...
- .notes : AT(ADDR(.notes) - 0xffffffff80000000) { __start_notes = .; KEEP(*(.not
-e.*)) __stop_notes = .; } :text :note
-...
-}
-
-this patch discards .note.gnu.property sections in kernel linker script
-by adding
-
- /DISCARD/ : {
-  *(.note.gnu.property)
- }
-
-before .notes sections.  Since .exit.text and .exit.data sections are
-discarded at runtime, it undefines EXIT_TEXT and EXIT_DATA to exclude
-.exit.text and .exit.data sections from default discarded sections.
+Add ENDBR64 to vsyscall entry points.
 
 Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
+Acked-by: Andy Lutomirski <luto@kernel.org>
 ---
- arch/x86/kernel/vmlinux.lds.S | 11 ++++++++++-
- 1 file changed, 10 insertions(+), 1 deletion(-)
+ arch/x86/entry/vsyscall/vsyscall_emu_64.S | 9 +++++++++
+ 1 file changed, 9 insertions(+)
 
-diff --git a/arch/x86/kernel/vmlinux.lds.S b/arch/x86/kernel/vmlinux.lds.S
-index 0850b5149345..d2594b482c09 100644
---- a/arch/x86/kernel/vmlinux.lds.S
-+++ b/arch/x86/kernel/vmlinux.lds.S
-@@ -146,6 +146,10 @@ SECTIONS
- 	/* End of text section */
- 	_etext = .;
+diff --git a/arch/x86/entry/vsyscall/vsyscall_emu_64.S b/arch/x86/entry/vsyscall/vsyscall_emu_64.S
+index 2e203f3a25a7..040696333457 100644
+--- a/arch/x86/entry/vsyscall/vsyscall_emu_64.S
++++ b/arch/x86/entry/vsyscall/vsyscall_emu_64.S
+@@ -17,16 +17,25 @@ __PAGE_ALIGNED_DATA
+ 	.type __vsyscall_page, @object
+ __vsyscall_page:
  
-+	/* .note.gnu.property sections should be discarded */
-+	/DISCARD/ : {
-+		*(.note.gnu.property)
-+	}
- 	NOTES :text :note
++#ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
++	endbr64
++#endif
+ 	mov $__NR_gettimeofday, %rax
+ 	syscall
+ 	ret
  
- 	EXCEPTION_TABLE(16) :text = 0x9090
-@@ -382,7 +386,12 @@ SECTIONS
- 	STABS_DEBUG
- 	DWARF_DEBUG
+ 	.balign 1024, 0xcc
++#ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
++	endbr64
++#endif
+ 	mov $__NR_time, %rax
+ 	syscall
+ 	ret
  
--	/* Sections to be discarded */
-+	/* Sections to be discarded.  EXIT_TEXT and EXIT_DATA discard at runtime.
-+	 * not link time.  */
-+#undef EXIT_TEXT
-+#define EXIT_TEXT
-+#undef EXIT_DATA
-+#define EXIT_DATA
- 	DISCARDS
- 	/DISCARD/ : {
- 		*(.eh_frame)
+ 	.balign 1024, 0xcc
++#ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
++	endbr64
++#endif
+ 	mov $__NR_getcpu, %rax
+ 	syscall
+ 	ret
 -- 
 2.17.1
