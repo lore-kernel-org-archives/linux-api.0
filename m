@@ -1,8 +1,8 @@
 From: Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH v4 10/16] fs-verity: implement
- FS_IOC_ENABLE_VERITY ioctl
-Date: Thu,  6 Jun 2019 08:51:59 -0700
-Message-ID: <20190606155205.2872-11-ebiggers@kernel.org>
+Subject: [PATCH v4 05/16] fs-verity: add Kconfig and the helper
+ functions for hashing
+Date: Thu,  6 Jun 2019 08:51:54 -0700
+Message-ID: <20190606155205.2872-6-ebiggers@kernel.org>
 References: <20190606155205.2872-1-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,42 +23,211 @@ List-Id: linux-api@vger.kernel.org
 
 From: Eric Biggers <ebiggers@google.com>
 
-Add a function for filesystems to call to implement the
-FS_IOC_ENABLE_VERITY ioctl.  This ioctl enables fs-verity on a file.
-
-See the "FS_IOC_ENABLE_VERITY" section of
-Documentation/filesystems/fsverity.rst for the documentation.
+Add the beginnings of the fs/verity/ support layer, including the
+Kconfig option and various helper functions for hashing.  To start, only
+SHA-256 is supported, but other hash algorithms can easily be added.
 
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
- fs/verity/Makefile       |   3 +-
- fs/verity/enable.c       | 339 +++++++++++++++++++++++++++++++++++++++
- include/linux/fsverity.h |  64 ++++++++
- 3 files changed, 405 insertions(+), 1 deletion(-)
- create mode 100644 fs/verity/enable.c
+ fs/Kconfig                   |   2 +
+ fs/Makefile                  |   1 +
+ fs/verity/Kconfig            |  38 +++++
+ fs/verity/Makefile           |   4 +
+ fs/verity/fsverity_private.h |  91 ++++++++++++
+ fs/verity/hash_algs.c        | 274 +++++++++++++++++++++++++++++++++++
+ fs/verity/init.c             |  41 ++++++
+ 7 files changed, 451 insertions(+)
+ create mode 100644 fs/verity/Kconfig
+ create mode 100644 fs/verity/Makefile
+ create mode 100644 fs/verity/fsverity_private.h
+ create mode 100644 fs/verity/hash_algs.c
+ create mode 100644 fs/verity/init.c
 
-diff --git a/fs/verity/Makefile b/fs/verity/Makefile
-index 7fa628cd5eba..04b37475fd28 100644
---- a/fs/verity/Makefile
-+++ b/fs/verity/Makefile
-@@ -1,6 +1,7 @@
- # SPDX-License-Identifier: GPL-2.0
+diff --git a/fs/Kconfig b/fs/Kconfig
+index f1046cf6ad85..4b66dafbdc7b 100644
+--- a/fs/Kconfig
++++ b/fs/Kconfig
+@@ -113,6 +113,8 @@ config MANDATORY_FILE_LOCKING
  
--obj-$(CONFIG_FS_VERITY) += hash_algs.o \
-+obj-$(CONFIG_FS_VERITY) += enable.o \
-+			   hash_algs.o \
- 			   init.o \
- 			   open.o \
- 			   verify.o
-diff --git a/fs/verity/enable.c b/fs/verity/enable.c
+ source "fs/crypto/Kconfig"
+ 
++source "fs/verity/Kconfig"
++
+ source "fs/notify/Kconfig"
+ 
+ source "fs/quota/Kconfig"
+diff --git a/fs/Makefile b/fs/Makefile
+index c9aea23aba56..fe7f2c07f482 100644
+--- a/fs/Makefile
++++ b/fs/Makefile
+@@ -34,6 +34,7 @@ obj-$(CONFIG_AIO)               += aio.o
+ obj-$(CONFIG_IO_URING)		+= io_uring.o
+ obj-$(CONFIG_FS_DAX)		+= dax.o
+ obj-$(CONFIG_FS_ENCRYPTION)	+= crypto/
++obj-$(CONFIG_FS_VERITY)		+= verity/
+ obj-$(CONFIG_FILE_LOCKING)      += locks.o
+ obj-$(CONFIG_COMPAT)		+= compat.o compat_ioctl.o
+ obj-$(CONFIG_BINFMT_AOUT)	+= binfmt_aout.o
+diff --git a/fs/verity/Kconfig b/fs/verity/Kconfig
 new file mode 100644
-index 000000000000..7e7ef9d3c376
+index 000000000000..c2bca0b01ecf
 --- /dev/null
-+++ b/fs/verity/enable.c
-@@ -0,0 +1,339 @@
++++ b/fs/verity/Kconfig
+@@ -0,0 +1,38 @@
++# SPDX-License-Identifier: GPL-2.0
++
++config FS_VERITY
++	bool "FS Verity (read-only file-based authenticity protection)"
++	select CRYPTO
++	# SHA-256 is selected as it's intended to be the default hash algorithm.
++	# To avoid bloat, other wanted algorithms must be selected explicitly.
++	select CRYPTO_SHA256
++	help
++	  This option enables fs-verity.  fs-verity is the dm-verity
++	  mechanism implemented at the file level.  On supported
++	  filesystems (currently EXT4 and F2FS), userspace can use an
++	  ioctl to enable verity for a file, which causes the filesystem
++	  to build a Merkle tree for the file.  The filesystem will then
++	  transparently verify any data read from the file against the
++	  Merkle tree.  The file is also made read-only.
++
++	  This serves as an integrity check, but the availability of the
++	  Merkle tree root hash also allows efficiently supporting
++	  various use cases where normally the whole file would need to
++	  be hashed at once, such as: (a) auditing (logging the file's
++	  hash), or (b) authenticity verification (comparing the hash
++	  against a known good value, e.g. from a digital signature).
++
++	  fs-verity is especially useful on large files where not all
++	  the contents may actually be needed.  Also, fs-verity verifies
++	  data each time it is paged back in, which provides better
++	  protection against malicious disks vs. an ahead-of-time hash.
++
++	  If unsure, say N.
++
++config FS_VERITY_DEBUG
++	bool "FS Verity debugging"
++	depends on FS_VERITY
++	help
++	  Enable debugging messages related to fs-verity by default.
++
++	  Say N unless you are an fs-verity developer.
+diff --git a/fs/verity/Makefile b/fs/verity/Makefile
+new file mode 100644
+index 000000000000..398f3f85fa18
+--- /dev/null
++++ b/fs/verity/Makefile
+@@ -0,0 +1,4 @@
++# SPDX-License-Identifier: GPL-2.0
++
++obj-$(CONFIG_FS_VERITY) += hash_algs.o \
++			   init.o
+diff --git a/fs/verity/fsverity_private.h b/fs/verity/fsverity_private.h
+new file mode 100644
+index 000000000000..c879189bfd61
+--- /dev/null
++++ b/fs/verity/fsverity_private.h
+@@ -0,0 +1,91 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++/*
++ * fs-verity: read-only file-based authenticity protection
++ *
++ * Copyright 2019 Google LLC
++ */
++
++#ifndef _FSVERITY_PRIVATE_H
++#define _FSVERITY_PRIVATE_H
++
++#ifdef CONFIG_FS_VERITY_DEBUG
++#define DEBUG
++#endif
++
++#define pr_fmt(fmt) "fs-verity: " fmt
++
++#include <crypto/sha.h>
++#include <linux/fs.h>
++#include <uapi/linux/fsverity.h>
++
++struct ahash_request;
++
++/*
++ * Maximum depth of the Merkle tree.  Up to 64 levels are theoretically possible
++ * with a very small block size, but we'd like to limit stack usage during
++ * verification, and in practice this is plenty.  E.g., with SHA-256 and 4K
++ * blocks, a file with size UINT64_MAX bytes needs just 8 levels.
++ */
++#define FS_VERITY_MAX_LEVELS		16
++
++/*
++ * Largest digest size among all hash algorithms supported by fs-verity.
++ * Currently assumed to be <= size of fsverity_descriptor::root_hash.
++ */
++#define FS_VERITY_MAX_DIGEST_SIZE	SHA256_DIGEST_SIZE
++
++/* A hash algorithm supported by fs-verity */
++struct fsverity_hash_alg {
++	struct crypto_ahash *tfm; /* hash tfm, allocated on demand */
++	const char *name;	  /* crypto API name, e.g. sha256 */
++	unsigned int digest_size; /* digest size in bytes, e.g. 32 for SHA-256 */
++	unsigned int block_size;  /* block size in bytes, e.g. 64 for SHA-256 */
++};
++
++/* Merkle tree parameters: hash algorithm, initial hash state, and topology */
++struct merkle_tree_params {
++	const struct fsverity_hash_alg *hash_alg; /* the hash algorithm */
++	const u8 *hashstate;		/* initial hash state or NULL */
++	unsigned int digest_size;	/* same as hash_alg->digest_size */
++	unsigned int block_size;	/* size of data and tree blocks */
++	unsigned int hashes_per_block;	/* number of hashes per tree block */
++	unsigned int log_blocksize;	/* log2(block_size) */
++	unsigned int log_arity;		/* log2(hashes_per_block) */
++	unsigned int num_levels;	/* number of levels in Merkle tree */
++	u64 data_size;			/* data size in bytes */
++	u64 tree_size;			/* Merkle tree size in bytes */
++
++	/*
++	 * Starting block index for each tree level, ordered from leaf level (0)
++	 * to root level ('num_levels - 1')
++	 */
++	u64 level_start[FS_VERITY_MAX_LEVELS];
++};
++
++/* hash_algs.c */
++
++extern struct fsverity_hash_alg fsverity_hash_algs[];
++
++const struct fsverity_hash_alg *fsverity_get_hash_alg(const struct inode *inode,
++						      unsigned int num);
++const u8 *fsverity_prepare_hash_state(const struct fsverity_hash_alg *alg,
++				      const u8 *salt, size_t salt_size);
++int fsverity_hash_page(const struct merkle_tree_params *params,
++		       const struct inode *inode,
++		       struct ahash_request *req, struct page *page, u8 *out);
++int fsverity_hash_buffer(const struct fsverity_hash_alg *alg,
++			 const void *data, size_t size, u8 *out);
++void __init fsverity_check_hash_algs(void);
++
++/* init.c */
++
++extern void __printf(3, 4) __cold
++fsverity_msg(const struct inode *inode, const char *level,
++	     const char *fmt, ...);
++
++#define fsverity_warn(inode, fmt, ...)		\
++	fsverity_msg((inode), KERN_WARNING, fmt, ##__VA_ARGS__)
++#define fsverity_err(inode, fmt, ...)		\
++	fsverity_msg((inode), KERN_ERR, fmt, ##__VA_ARGS__)
++
++#endif /* _FSVERITY_PRIVATE_H */
+diff --git a/fs/verity/hash_algs.c b/fs/verity/hash_algs.c
+new file mode 100644
+index 000000000000..46df17094fc2
+--- /dev/null
++++ b/fs/verity/hash_algs.c
+@@ -0,0 +1,274 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * fs/verity/enable.c: ioctl to enable verity on a file
++ * fs/verity/hash_algs.c: fs-verity hash algorithms
 + *
 + * Copyright 2019 Google LLC
 + */
@@ -66,430 +235,316 @@ index 000000000000..7e7ef9d3c376
 +#include "fsverity_private.h"
 +
 +#include <crypto/hash.h>
-+#include <linux/mount.h>
-+#include <linux/pagemap.h>
-+#include <linux/sched/signal.h>
-+#include <linux/uaccess.h>
++#include <linux/scatterlist.h>
 +
-+static int build_merkle_tree_level(struct inode *inode, unsigned int level,
-+				   u64 num_blocks_to_hash,
-+				   const struct merkle_tree_params *params,
-+				   u8 *pending_hashes,
-+				   struct ahash_request *req)
-+{
-+	const struct fsverity_operations *vops = inode->i_sb->s_vop;
-+	unsigned int pending_size = 0;
-+	u64 dst_block_num;
-+	u64 i;
-+	int err;
++/* The hash algorithms supported by fs-verity */
++struct fsverity_hash_alg fsverity_hash_algs[] = {
++	[FS_VERITY_HASH_ALG_SHA256] = {
++		.name = "sha256",
++		.digest_size = SHA256_DIGEST_SIZE,
++		.block_size = SHA256_BLOCK_SIZE,
++	},
++};
 +
-+	if (WARN_ON(params->block_size != PAGE_SIZE)) /* checked earlier too */
-+		return -EINVAL;
-+
-+	if (level < params->num_levels) {
-+		dst_block_num = params->level_start[level];
-+	} else {
-+		if (WARN_ON(num_blocks_to_hash != 1))
-+			return -EINVAL;
-+		dst_block_num = 0; /* unused */
-+	}
-+
-+	for (i = 0; i < num_blocks_to_hash; i++) {
-+		struct page *src_page;
-+
-+		if ((pgoff_t)i % 10000 == 0 || i + 1 == num_blocks_to_hash)
-+			pr_debug("Hashing block %llu of %llu for level %u\n",
-+				 i + 1, num_blocks_to_hash, level);
-+
-+		if (level == 0)
-+			/* Leaf: hashing a data block */
-+			src_page = read_mapping_page(inode->i_mapping, i, NULL);
-+		else
-+			/* Non-leaf: hashing hash block from level below */
-+			src_page = vops->read_merkle_tree_page(inode,
-+					params->level_start[level - 1] + i);
-+		if (IS_ERR(src_page)) {
-+			err = PTR_ERR(src_page);
-+			fsverity_err(inode,
-+				     "Error %d reading Merkle tree page %llu",
-+				     err, params->level_start[level - 1] + i);
-+			return err;
-+		}
-+
-+		err = fsverity_hash_page(params, inode, req, src_page,
-+					 &pending_hashes[pending_size]);
-+		put_page(src_page);
-+		if (err)
-+			return err;
-+		pending_size += params->digest_size;
-+
-+		if (level == params->num_levels) /* Root hash? */
-+			return 0;
-+
-+		if (pending_size + params->digest_size > params->block_size ||
-+		    i + 1 == num_blocks_to_hash) {
-+			/* Flush the pending hash block */
-+			memset(&pending_hashes[pending_size], 0,
-+			       params->block_size - pending_size);
-+			err = vops->write_merkle_tree_block(inode,
-+					pending_hashes,
-+					dst_block_num,
-+					params->log_blocksize);
-+			if (err) {
-+				fsverity_err(inode,
-+					     "Error %d writing Merkle tree block %llu",
-+					     err, dst_block_num);
-+				return err;
-+			}
-+			dst_block_num++;
-+			pending_size = 0;
-+		}
-+
-+		if (fatal_signal_pending(current))
-+			return -EINTR;
-+		cond_resched();
-+	}
-+	return 0;
-+}
-+
-+/*
-+ * Build the Merkle tree for the given inode using the given parameters, and
-+ * return the root hash in @root_hash.
++/**
++ * fsverity_get_hash_alg() - validate and prepare a hash algorithm
++ * @inode: optional inode for logging purposes
++ * @num: the hash algorithm number
 + *
-+ * The tree is written to a filesystem-specific location as determined by the
-+ * ->write_merkle_tree_block() method.  However, the blocks that comprise the
-+ * tree are the same for all filesystems.
++ * Get the struct fsverity_hash_alg for the given hash algorithm number, and
++ * ensure it has a hash transform ready to go.  The hash transforms are
++ * allocated on-demand so that we don't waste resources unnecessarily, and
++ * because the crypto modules may be initialized later than fs/verity/.
++ *
++ * Return: pointer to the hash alg on success, else an ERR_PTR()
 + */
-+static int build_merkle_tree(struct inode *inode,
-+			     const struct merkle_tree_params *params,
-+			     u8 *root_hash)
++const struct fsverity_hash_alg *fsverity_get_hash_alg(const struct inode *inode,
++						      unsigned int num)
 +{
-+	u8 *pending_hashes;
-+	struct ahash_request *req;
-+	u64 blocks;
-+	unsigned int level;
-+	int err = -ENOMEM;
-+
-+	pending_hashes = kmalloc(params->block_size, GFP_KERNEL);
-+	req = ahash_request_alloc(params->hash_alg->tfm, GFP_KERNEL);
-+	if (!pending_hashes || !req)
-+		goto out;
-+
-+	/*
-+	 * Build each level of the Merkle tree, starting at the leaf level
-+	 * (level 0) and ascending to the root node (level 'num_levels - 1').
-+	 * Then at the end (level 'num_levels'), calculate the root hash.
-+	 */
-+	blocks = (params->data_size + params->block_size - 1) >>
-+		 params->log_blocksize;
-+	for (level = 0; level <= params->num_levels; level++) {
-+		err = build_merkle_tree_level(inode, level, blocks, params,
-+					      pending_hashes, req);
-+		if (err)
-+			goto out;
-+		blocks = (blocks + params->hashes_per_block - 1) >>
-+			 params->log_arity;
-+	}
-+	memcpy(root_hash, pending_hashes, params->digest_size);
-+	err = 0;
-+out:
-+	kfree(pending_hashes);
-+	ahash_request_free(req);
-+	return err;
-+}
-+
-+static int enable_verity(struct file *filp,
-+			 const struct fsverity_enable_arg *arg)
-+{
-+	struct inode *inode = file_inode(filp);
-+	const struct fsverity_operations *vops = inode->i_sb->s_vop;
-+	struct merkle_tree_params params = { };
-+	struct fsverity_descriptor *desc;
-+	size_t desc_size = sizeof(*desc);
-+	struct fsverity_info *vi;
++	struct fsverity_hash_alg *alg;
++	struct crypto_ahash *tfm;
 +	int err;
 +
-+	/* Start initializing the fsverity_descriptor */
-+	desc = kzalloc(desc_size, GFP_KERNEL);
-+	if (!desc)
-+		return -ENOMEM;
-+	desc->version = 1;
-+	desc->hash_algorithm = arg->hash_algorithm;
-+	desc->log_blocksize = ilog2(arg->block_size);
-+
-+	/* Get the salt if the user provided one */
-+	if (arg->salt_size &&
-+	    copy_from_user(desc->salt,
-+			   (const u8 __user *)(uintptr_t)arg->salt_ptr,
-+			   arg->salt_size)) {
-+		err = -EFAULT;
-+		goto out;
++	if (num >= ARRAY_SIZE(fsverity_hash_algs) ||
++	    !fsverity_hash_algs[num].name) {
++		fsverity_warn(inode, "Unknown hash algorithm number: %u", num);
++		return ERR_PTR(-EINVAL);
 +	}
-+	desc->salt_size = arg->salt_size;
++	alg = &fsverity_hash_algs[num];
 +
-+	desc->data_size = cpu_to_le64(inode->i_size);
-+
-+	pr_debug("Building Merkle tree...\n");
-+
-+	/* Prepare the Merkle tree parameters */
-+	err = fsverity_init_merkle_tree_params(&params, inode,
-+					       arg->hash_algorithm,
-+					       desc->log_blocksize,
-+					       desc->salt, desc->salt_size);
-+	if (err)
-+		goto out;
-+
-+	/* Tell the filesystem that verity is being enabled on the file */
-+	err = vops->begin_enable_verity(filp);
-+	if (err)
-+		goto out;
-+
-+	/* Build the Merkle tree */
-+	BUILD_BUG_ON(sizeof(desc->root_hash) < FS_VERITY_MAX_DIGEST_SIZE);
-+	err = build_merkle_tree(inode, &params, desc->root_hash);
-+	if (err) {
-+		fsverity_err(inode, "Error %d building Merkle tree", err);
-+		goto rollback;
++	/* pairs with cmpxchg() below */
++	tfm = READ_ONCE(alg->tfm);
++	if (likely(tfm != NULL))
++		return alg;
++	/*
++	 * Using the shash API would make things a bit simpler, but the ahash
++	 * API is preferable as it allows the use of crypto accelerators.
++	 */
++	tfm = crypto_alloc_ahash(alg->name, 0, 0);
++	if (IS_ERR(tfm)) {
++		if (PTR_ERR(tfm) == -ENOENT)
++			fsverity_warn(inode,
++				      "Missing crypto API support for hash algorithm \"%s\"",
++				      alg->name);
++		else
++			fsverity_err(inode,
++				     "Error allocating hash algorithm \"%s\": %ld",
++				     alg->name, PTR_ERR(tfm));
++		return ERR_CAST(tfm);
 +	}
-+	pr_debug("Done building Merkle tree.  Root hash is %s:%*phN\n",
-+		 params.hash_alg->name, params.digest_size, desc->root_hash);
++
++	err = -EINVAL;
++	if (WARN_ON(alg->digest_size != crypto_ahash_digestsize(tfm)))
++		goto err_free_tfm;
++	if (WARN_ON(alg->block_size != crypto_ahash_blocksize(tfm)))
++		goto err_free_tfm;
++
++	pr_info("%s using implementation \"%s\"\n",
++		alg->name, crypto_ahash_driver_name(tfm));
++
++	/* pairs with READ_ONCE() above */
++	if (cmpxchg(&alg->tfm, NULL, tfm) != NULL)
++		crypto_free_ahash(tfm);
++
++	return alg;
++
++err_free_tfm:
++	crypto_free_ahash(tfm);
++	return ERR_PTR(err);
++}
++
++/**
++ * fsverity_prepare_hash_state() - precompute the initial hash state
++ * @alg: hash algorithm
++ * @salt: a salt which is to be prepended to all data to be hashed
++ * @salt_size: salt size in bytes, possibly 0
++ *
++ * Return: NULL if the salt is empty, otherwise the kmalloc()'ed precomputed
++ *	   initial hash state on success or an ERR_PTR() on failure.
++ */
++const u8 *fsverity_prepare_hash_state(const struct fsverity_hash_alg *alg,
++				      const u8 *salt, size_t salt_size)
++{
++	u8 *hashstate = NULL;
++	struct ahash_request *req = NULL;
++	u8 *padded_salt = NULL;
++	size_t padded_salt_size;
++	struct scatterlist sg;
++	DECLARE_CRYPTO_WAIT(wait);
++	int err;
++
++	if (salt_size == 0)
++		return NULL;
++
++	hashstate = kmalloc(crypto_ahash_statesize(alg->tfm), GFP_KERNEL);
++	if (!hashstate)
++		return ERR_PTR(-ENOMEM);
++
++	req = ahash_request_alloc(alg->tfm, GFP_KERNEL);
++	if (!req) {
++		err = -ENOMEM;
++		goto err_free;
++	}
 +
 +	/*
-+	 * Create the fsverity_info.  Don't bother trying to save work by
-+	 * reusing the merkle_tree_params from above.  Instead, just create the
-+	 * fsverity_info from the fsverity_descriptor as if it were just loaded
-+	 * from disk.  This is simpler, and it serves as an extra check that the
-+	 * metadata we're writing is valid before actually enabling verity.
++	 * Zero-pad the salt to the next multiple of the input size of the hash
++	 * algorithm's compression function, e.g. 64 bytes for SHA-256 or 128
++	 * bytes for SHA-512.  This ensures that the hash algorithm won't have
++	 * any bytes buffered internally after processing the salt, thus making
++	 * salted hashing just as fast as unsalted hashing.
 +	 */
-+	vi = fsverity_create_info(inode, desc, desc_size);
-+	if (IS_ERR(vi)) {
-+		err = PTR_ERR(vi);
-+		goto rollback;
++	padded_salt_size = round_up(salt_size, alg->block_size);
++	padded_salt = kzalloc(padded_salt_size, GFP_KERNEL);
++	if (!padded_salt) {
++		err = -ENOMEM;
++		goto err_free;
 +	}
++	memcpy(padded_salt, salt, salt_size);
 +
-+	/* Tell the filesystem to finish enabling verity on the file */
-+	err = vops->end_enable_verity(filp, desc, desc_size, params.tree_size);
-+	if (err) {
-+		fsverity_err(inode, "%ps() failed with err %d",
-+			     vops->end_enable_verity, err);
-+		fsverity_free_info(vi);
-+	} else {
-+		/* Successfully enabled verity */
++	sg_init_one(&sg, padded_salt, padded_salt_size);
++	ahash_request_set_callback(req, CRYPTO_TFM_REQ_MAY_SLEEP |
++					CRYPTO_TFM_REQ_MAY_BACKLOG,
++				   crypto_req_done, &wait);
++	ahash_request_set_crypt(req, &sg, NULL, padded_salt_size);
 +
-+		WARN_ON(!IS_VERITY(inode));
++	err = crypto_wait_req(crypto_ahash_init(req), &wait);
++	if (err)
++		goto err_free;
 +
-+		/*
-+		 * Readers can start using ->i_verity_info immediately, so it
-+		 * can't be rolled back once set.  So don't set it until just
-+		 * after the filesystem has successfully enabled verity.
-+		 */
-+		fsverity_set_info(inode, vi);
-+	}
++	err = crypto_wait_req(crypto_ahash_update(req), &wait);
++	if (err)
++		goto err_free;
++
++	err = crypto_ahash_export(req, hashstate);
++	if (err)
++		goto err_free;
 +out:
-+	kfree(params.hashstate);
-+	kfree(desc);
-+	return err;
++	kfree(padded_salt);
++	ahash_request_free(req);
++	return hashstate;
 +
-+rollback:
-+	(void)vops->end_enable_verity(filp, NULL, 0, params.tree_size);
++err_free:
++	kfree(hashstate);
++	hashstate = ERR_PTR(err);
 +	goto out;
 +}
 +
 +/**
-+ * fsverity_ioctl_enable() - enable verity on a file
++ * fsverity_hash_page() - hash a single data or hash page
++ * @params: the Merkle tree's parameters
++ * @inode: inode for which the hashing is being done
++ * @req: preallocated hash request
++ * @page: the page to hash
++ * @out: output digest, size 'params->digest_size' bytes
 + *
-+ * Enable fs-verity on a file.  See the "FS_IOC_ENABLE_VERITY" section of
-+ * Documentation/filesystems/fsverity.rst for the documentation.
++ * Hash a single data or hash block, assuming block_size == PAGE_SIZE.
++ * The hash is salted if a salt is specified in the Merkle tree parameters.
 + *
 + * Return: 0 on success, -errno on failure
 + */
-+int fsverity_ioctl_enable(struct file *filp, const void __user *uarg)
++int fsverity_hash_page(const struct merkle_tree_params *params,
++		       const struct inode *inode,
++		       struct ahash_request *req, struct page *page, u8 *out)
 +{
-+	struct inode *inode = file_inode(filp);
-+	struct fsverity_enable_arg arg;
++	struct scatterlist sg;
++	DECLARE_CRYPTO_WAIT(wait);
 +	int err;
 +
-+	if (copy_from_user(&arg, uarg, sizeof(arg)))
-+		return -EFAULT;
-+
-+	if (arg.version != 1)
++	if (WARN_ON(params->block_size != PAGE_SIZE))
 +		return -EINVAL;
 +
-+	if (arg.__reserved1 ||
-+	    memchr_inv(arg.__reserved2, 0, sizeof(arg.__reserved2)))
-+		return -EINVAL;
++	sg_init_table(&sg, 1);
++	sg_set_page(&sg, page, PAGE_SIZE, 0);
++	ahash_request_set_callback(req, CRYPTO_TFM_REQ_MAY_SLEEP |
++					CRYPTO_TFM_REQ_MAY_BACKLOG,
++				   crypto_req_done, &wait);
++	ahash_request_set_crypt(req, &sg, out, PAGE_SIZE);
 +
-+	if (arg.block_size != PAGE_SIZE)
-+		return -EINVAL;
-+
-+	if (arg.salt_size > FIELD_SIZEOF(struct fsverity_descriptor, salt))
-+		return -EMSGSIZE;
-+
-+	if (arg.sig_size)
-+		return -EINVAL;
-+
-+	/*
-+	 * Require a regular file with write access.  But the actual fd must
-+	 * still be readonly so that we can lock out all writers.  This is
-+	 * needed to guarantee that no writable fds exist to the file once it
-+	 * has verity enabled, and to stabilize the data being hashed.
-+	 */
-+
-+	err = inode_permission(inode, MAY_WRITE);
-+	if (err)
-+		return err;
-+
-+	if (IS_APPEND(inode))
-+		return -EPERM;
-+
-+	if (S_ISDIR(inode->i_mode))
-+		return -EISDIR;
-+
-+	if (!S_ISREG(inode->i_mode))
-+		return -EINVAL;
-+
-+	err = mnt_want_write_file(filp);
-+	if (err) /* -EROFS */
-+		return err;
-+
-+	err = deny_write_access(filp);
-+	if (err) /* -ETXTBSY */
-+		goto out_drop_write;
-+
-+	inode_lock(inode);
-+
-+	if (IS_VERITY(inode)) {
-+		err = -EEXIST;
-+		goto out_unlock;
++	if (params->hashstate) {
++		err = crypto_ahash_import(req, params->hashstate);
++		if (err) {
++			fsverity_err(inode,
++				     "Error %d importing hash state", err);
++			return err;
++		}
++		err = crypto_ahash_finup(req);
++	} else {
++		err = crypto_ahash_digest(req);
 +	}
 +
-+	if (inode->i_size <= 0) {
-+		err = -EINVAL;
-+		goto out_unlock;
-+	}
-+
-+	err = enable_verity(filp, &arg);
++	err = crypto_wait_req(err, &wait);
 +	if (err)
-+		goto out_unlock;
-+
-+	/*
-+	 * Some pages of the file may have been evicted from pagecache after
-+	 * being used in the Merkle tree construction, then read into pagecache
-+	 * again by another process reading from the file concurrently.  Since
-+	 * these pages didn't undergo verification against the file measurement
-+	 * which fs-verity now claims to be enforcing, we have to wipe the
-+	 * pagecache to ensure that all future reads are verified.
-+	 */
-+	filemap_write_and_wait(inode->i_mapping);
-+	truncate_inode_pages(inode->i_mapping, 0);
-+
-+	/*
-+	 * allow_write_access() is needed to pair with deny_write_access().
-+	 * Regardless, the filesystem won't allow writing to verity files.
-+	 */
-+out_unlock:
-+	inode_unlock(inode);
-+	allow_write_access(filp);
-+out_drop_write:
-+	mnt_drop_write_file(filp);
++		fsverity_err(inode, "Error %d computing page hash", err);
 +	return err;
 +}
-+EXPORT_SYMBOL_GPL(fsverity_ioctl_enable);
-diff --git a/include/linux/fsverity.h b/include/linux/fsverity.h
-index ecd47e748c7f..7ef2ef826534 100644
---- a/include/linux/fsverity.h
-+++ b/include/linux/fsverity.h
-@@ -17,6 +17,42 @@
- /* Verity operations for filesystems */
- struct fsverity_operations {
- 
-+	/**
-+	 * Begin enabling verity on the given file.
-+	 *
-+	 * @filp: a readonly file descriptor for the file
-+	 *
-+	 * The filesystem must do any needed filesystem-specific preparations
-+	 * for enabling verity, e.g. evicting inline data.
-+	 *
-+	 * i_rwsem is held for write.
-+	 *
-+	 * Return: 0 on success, -errno on failure
-+	 */
-+	int (*begin_enable_verity)(struct file *filp);
 +
-+	/**
-+	 * End enabling verity on the given file.
-+	 *
-+	 * @filp: a readonly file descriptor for the file
-+	 * @desc: the verity descriptor to write, or NULL on failure
-+	 * @desc_size: size of verity descriptor, or 0 on failure
-+	 * @merkle_tree_size: total bytes the Merkle tree took up
-+	 *
-+	 * If desc == NULL, then enabling verity failed and the filesystem only
-+	 * must do any necessary cleanups.  Else, it must also store the given
-+	 * verity descriptor to a fs-specific location associated with the inode
-+	 * and do any fs-specific actions needed to mark the inode as a verity
-+	 * inode, e.g. setting a bit in the on-disk inode.  The filesystem is
-+	 * also responsible for setting the S_VERITY flag in the VFS inode.
-+	 *
-+	 * i_rwsem is held for write.
-+	 *
-+	 * Return: 0 on success, -errno on failure
-+	 */
-+	int (*end_enable_verity)(struct file *filp, const void *desc,
-+				 size_t desc_size, u64 merkle_tree_size);
-+
- 	/**
- 	 * Get the verity descriptor of the given inode.
- 	 *
-@@ -50,6 +86,22 @@ struct fsverity_operations {
- 	 */
- 	struct page *(*read_merkle_tree_page)(struct inode *inode,
- 					      pgoff_t index);
-+
-+	/**
-+	 * Write a Merkle tree block to the given inode.
-+	 *
-+	 * @inode: the inode for which the Merkle tree is being built
-+	 * @buf: block to write
-+	 * @index: 0-based index of the block within the Merkle tree
-+	 * @log_blocksize: log base 2 of the Merkle tree block size
-+	 *
-+	 * This is only called between ->begin_enable_verity() and
-+	 * ->end_enable_verity().  i_rwsem is held for write.
-+	 *
-+	 * Return: 0 on success, -errno on failure
-+	 */
-+	int (*write_merkle_tree_block)(struct inode *inode, const void *buf,
-+				       u64 index, int log_blocksize);
- };
- 
- #ifdef CONFIG_FS_VERITY
-@@ -60,6 +112,10 @@ static inline struct fsverity_info *fsverity_get_info(const struct inode *inode)
- 	return READ_ONCE(inode->i_verity_info);
- }
- 
-+/* enable.c */
-+
-+extern int fsverity_ioctl_enable(struct file *filp, const void __user *arg);
-+
- /* open.c */
- 
- extern int fsverity_file_open(struct inode *inode, struct file *filp);
-@@ -79,6 +135,14 @@ static inline struct fsverity_info *fsverity_get_info(const struct inode *inode)
- 	return NULL;
- }
- 
-+/* enable.c */
-+
-+static inline int fsverity_ioctl_enable(struct file *filp,
-+					const void __user *arg)
++/**
++ * fsverity_hash_buffer() - hash some data
++ * @alg: the hash algorithm to use
++ * @data: the data to hash
++ * @size: size of data to hash
++ * @out: output digest, size 'alg->digest_size' bytes
++ *
++ * Hash some data which is located in physically contiguous memory (i.e. memory
++ * allocated by kmalloc(), not by vmalloc()).  No salt is used.
++ *
++ * Return: 0 on success, -errno on failure
++ */
++int fsverity_hash_buffer(const struct fsverity_hash_alg *alg,
++			 const void *data, size_t size, u8 *out)
 +{
-+	return -EOPNOTSUPP;
++	struct ahash_request *req;
++	struct scatterlist sg;
++	DECLARE_CRYPTO_WAIT(wait);
++	int err;
++
++	req = ahash_request_alloc(alg->tfm, GFP_KERNEL);
++	if (!req)
++		return -ENOMEM;
++
++	sg_init_one(&sg, data, size);
++	ahash_request_set_callback(req, CRYPTO_TFM_REQ_MAY_SLEEP |
++					CRYPTO_TFM_REQ_MAY_BACKLOG,
++				   crypto_req_done, &wait);
++	ahash_request_set_crypt(req, &sg, out, size);
++
++	err = crypto_wait_req(crypto_ahash_digest(req), &wait);
++
++	ahash_request_free(req);
++	return err;
 +}
 +
- /* open.c */
- 
- static inline int fsverity_file_open(struct inode *inode, struct file *filp)
++void __init fsverity_check_hash_algs(void)
++{
++	size_t i;
++
++	/*
++	 * Sanity check the hash algorithms (could be a build-time check, but
++	 * they're in an array)
++	 */
++	for (i = 0; i < ARRAY_SIZE(fsverity_hash_algs); i++) {
++		const struct fsverity_hash_alg *alg = &fsverity_hash_algs[i];
++
++		if (!alg->name)
++			continue;
++
++		BUG_ON(alg->digest_size > FS_VERITY_MAX_DIGEST_SIZE);
++
++		/*
++		 * For efficiency, the implementation currently assumes the
++		 * digest and block sizes are powers of 2.  This limitation can
++		 * be lifted if the code is updated to handle other values.
++		 */
++		BUG_ON(!is_power_of_2(alg->digest_size));
++		BUG_ON(!is_power_of_2(alg->block_size));
++	}
++}
+diff --git a/fs/verity/init.c b/fs/verity/init.c
+new file mode 100644
+index 000000000000..40076bbe452a
+--- /dev/null
++++ b/fs/verity/init.c
+@@ -0,0 +1,41 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * fs/verity/init.c: fs-verity module initialization and logging
++ *
++ * Copyright 2019 Google LLC
++ */
++
++#include "fsverity_private.h"
++
++#include <linux/ratelimit.h>
++
++void fsverity_msg(const struct inode *inode, const char *level,
++		  const char *fmt, ...)
++{
++	static DEFINE_RATELIMIT_STATE(rs, DEFAULT_RATELIMIT_INTERVAL,
++				      DEFAULT_RATELIMIT_BURST);
++	struct va_format vaf;
++	va_list args;
++
++	if (!__ratelimit(&rs))
++		return;
++
++	va_start(args, fmt);
++	vaf.fmt = fmt;
++	vaf.va = &args;
++	if (inode)
++		printk("%sfs-verity (%s, inode %lu): %pV\n",
++		       level, inode->i_sb->s_id, inode->i_ino, &vaf);
++	else
++		printk("%sfs-verity: %pV\n", level, &vaf);
++	va_end(args);
++}
++
++static int __init fsverity_init(void)
++{
++	fsverity_check_hash_algs();
++
++	pr_debug("Initialized fs-verity\n");
++	return 0;
++}
++late_initcall(fsverity_init)
 -- 
 2.21.0
