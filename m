@@ -1,47 +1,61 @@
-From: Dave Hansen <dave.hansen@intel.com>
-Subject: Re: [PATCH v7 04/27] x86/fpu/xstate: Introduce XSAVES system states
-Date: Thu, 6 Jun 2019 14:18:29 -0700
-Message-ID: <0a2f8b9b-b96b-06c8-bae0-b78b2ca3b727@intel.com>
-References: <20190606200646.3951-1-yu-cheng.yu@intel.com>
- <20190606200646.3951-5-yu-cheng.yu@intel.com>
+From: Eugeniu Rosca <erosca@de.adit-jv.com>
+Subject: Re: [PATCH 10/10] Add sample notification program [ver #3]
+Date: Thu, 6 Jun 2019 23:21:40 +0200
+Message-ID: <20190606212140.GA25664@vmlxhi-102.adit-jv.com>
+References: <155981411940.17513.7137844619951358374.stgit@warthog.procyon.org.uk>
+ <155981421379.17513.13158528501056454772.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190606200646.3951-5-yu-cheng.yu@intel.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <155981421379.17513.13158528501056454772.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>
+To: David Howells <dhowells@redhat.com>
+Cc: viro@zeniv.linux.org.uk, raven@themaw.net, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, Eugeniu Rosca <erosca@de.adit-jv.com>, Eugeniu Rosca <roscaeugeniu@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-> +/*
-> + * Helpers for changing XSAVES system states.
-> + */
-> +static inline void modify_fpu_regs_begin(void)
-> +{
-> +	fpregs_lock();
-> +	if (test_thread_flag(TIF_NEED_FPU_LOAD))
-> +		__fpregs_load_activate();
-> +}
+Hi David,
+
+On Thu, Jun 06, 2019 at 10:43:33AM +0100, David Howells wrote:
+[..]
+> diff --git a/samples/watch_queue/Makefile b/samples/watch_queue/Makefile
+> new file mode 100644
+> index 000000000000..42b694430d0f
+> --- /dev/null
+> +++ b/samples/watch_queue/Makefile
+> @@ -0,0 +1,9 @@
+> +# List of programs to build
+> +hostprogs-y := watch_test
 > +
-> +static inline void modify_fpu_regs_end(void)
-> +{
-> +	fpregs_unlock();
-> +}
+> +# Tell kbuild to always build the programs
+> +always := $(hostprogs-y)
+> +
+> +HOSTCFLAGS_watch_test.o += -I$(objtree)/usr/include
 
-These are massively under-commented and under-changelogged.  This looks
-like it's intended to ensure that we have supervisor FPU state for this
-task loaded before we go and run the MSRs that might be modifying it.
+How about arm64? Do you intend to enable cross-compilation?
 
-But, that seems broken.  If we have supervisor state, we can't always
-defer the load until return to userspace, so we'll never?? have
-TIF_NEED_FPU_LOAD.  That would certainly be true for cet_kernel_state.
+> +
+> +HOSTLOADLIBES_watch_test += -lkeyutils
+> diff --git a/samples/watch_queue/watch_test.c b/samples/watch_queue/watch_test.c
+> new file mode 100644
+> index 000000000000..893a5380f792
+> --- /dev/null
+> +++ b/samples/watch_queue/watch_test.c
+[..]
 
-It seems like we actually need three classes of XSAVE states:
-1. User state
-2. Supervisor state that affects user mode
-3. Supervisor state that affects kernel mode
+> +			asm ("lfence" : : : "memory" );
+[..]
+> +			asm("mfence" ::: "memory");
 
-We can delay the load of 1 and 2, but not 3.
+FWIW, trying to cross-compile it returned:
 
-But I don't see any infrastructure for this.
+aarch64-linux-gnu-gcc -I../../usr/include -I../../include  watch_test.c   -o watch_test
+/tmp/ccDXYynm.s: Assembler messages:
+/tmp/ccDXYynm.s:471: Error: unknown mnemonic `lfence' -- `lfence'
+/tmp/ccDXYynm.s:568: Error: unknown mnemonic `mfence' -- `mfence'
+<builtin>: recipe for target 'watch_test' failed
+make: *** [watch_test] Error 1
+
+-- 
+Best Regards,
+Eugeniu.
