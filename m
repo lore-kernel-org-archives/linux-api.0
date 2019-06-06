@@ -1,7 +1,8 @@
 From: Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH v4 16/16] f2fs: add fs-verity support
-Date: Thu,  6 Jun 2019 08:52:05 -0700
-Message-ID: <20190606155205.2872-17-ebiggers@kernel.org>
+Subject: [PATCH v4 09/16] fs-verity: add data verification hooks
+ for ->readpages()
+Date: Thu,  6 Jun 2019 08:51:58 -0700
+Message-ID: <20190606155205.2872-10-ebiggers@kernel.org>
 References: <20190606155205.2872-1-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,770 +23,448 @@ List-Id: linux-api@vger.kernel.org
 
 From: Eric Biggers <ebiggers@google.com>
 
-Add fs-verity support to f2fs.  fs-verity is a filesystem feature that
-enables transparent integrity protection and authentication of read-only
-files.  It uses a dm-verity like mechanism at the file level: a Merkle
-tree is used to verify any block in the file in log(filesize) time.  It
-is implemented mainly by helper functions in fs/verity/.  See
-Documentation/filesystems/fsverity.rst for the full documentation.
+Add functions that verify data pages that have been read from a
+fs-verity file, against that file's Merkle tree.  These will be called
+from filesystems' ->readpage() and ->readpages() methods.
 
-The f2fs support for fs-verity consists of:
+Since data verification can block, a workqueue is provided for these
+methods to enqueue verification work from their bio completion callback.
 
-- Adding a filesystem feature flag and an inode flag for fs-verity.
-
-- Implementing the fsverity_operations to support enabling verity on an
-  inode and reading/writing the verity metadata.
-
-- Updating ->readpages() to verify data as it's read from verity files
-  and to support reading verity metadata pages.
-
-- Updating ->write_begin(), ->write_end(), and ->writepages() to support
-  writing verity metadata pages.
-
-- Calling the fs-verity hooks for ->open(), ->setattr(), and ->ioctl().
-
-Like ext4, f2fs stores the verity metadata (Merkle tree and
-fsverity_descriptor) past the end of the file, starting at the first
-page fully beyond i_size.  This approach works because (a) verity files
-are readonly, and (b) pages fully beyond i_size aren't visible to
-userspace but can be read/written internally by f2fs with only some
-relatively small changes to f2fs.  Extended attributes cannot be used
-because (a) f2fs limits the total size of an inode's xattr entries to
-4096 bytes, which wouldn't be enough for even a single Merkle tree
-block, and (b) f2fs encryption doesn't encrypt xattrs, yet the verity
-metadata *must* be encrypted when the file is because it contains hashes
-of the plaintext data.
+See the "Verifying data" section of
+Documentation/filesystems/fsverity.rst for more information.
 
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
- fs/f2fs/Makefile |   1 +
- fs/f2fs/data.c   |  72 +++++++++++++--
- fs/f2fs/f2fs.h   |  23 ++++-
- fs/f2fs/file.c   |  40 +++++++++
- fs/f2fs/inode.c  |   5 +-
- fs/f2fs/super.c  |   3 +
- fs/f2fs/sysfs.c  |  11 +++
- fs/f2fs/verity.c | 224 +++++++++++++++++++++++++++++++++++++++++++++++
- fs/f2fs/xattr.h  |   2 +
- 9 files changed, 367 insertions(+), 14 deletions(-)
- create mode 100644 fs/f2fs/verity.c
+ fs/verity/Makefile           |   3 +-
+ fs/verity/fsverity_private.h |   5 +
+ fs/verity/init.c             |   8 +
+ fs/verity/open.c             |   6 +
+ fs/verity/verify.c           | 275 +++++++++++++++++++++++++++++++++++
+ include/linux/fsverity.h     |  56 +++++++
+ 6 files changed, 352 insertions(+), 1 deletion(-)
+ create mode 100644 fs/verity/verify.c
 
-diff --git a/fs/f2fs/Makefile b/fs/f2fs/Makefile
-index 776c4b936504..2aaecc63834f 100644
---- a/fs/f2fs/Makefile
-+++ b/fs/f2fs/Makefile
-@@ -8,3 +8,4 @@ f2fs-$(CONFIG_F2FS_STAT_FS) += debug.o
- f2fs-$(CONFIG_F2FS_FS_XATTR) += xattr.o
- f2fs-$(CONFIG_F2FS_FS_POSIX_ACL) += acl.o
- f2fs-$(CONFIG_F2FS_IO_TRACE) += trace.o
-+f2fs-$(CONFIG_FS_VERITY) += verity.o
-diff --git a/fs/f2fs/data.c b/fs/f2fs/data.c
-index eda4181d2092..8f175d47291d 100644
---- a/fs/f2fs/data.c
-+++ b/fs/f2fs/data.c
-@@ -73,6 +73,7 @@ static enum count_type __read_io_type(struct page *page)
- enum bio_post_read_step {
- 	STEP_INITIAL = 0,
- 	STEP_DECRYPT,
-+	STEP_VERITY,
- };
+diff --git a/fs/verity/Makefile b/fs/verity/Makefile
+index e6a8951c493a..7fa628cd5eba 100644
+--- a/fs/verity/Makefile
++++ b/fs/verity/Makefile
+@@ -2,4 +2,5 @@
  
- struct bio_post_read_ctx {
-@@ -119,8 +120,23 @@ static void decrypt_work(struct work_struct *work)
- 	bio_post_read_processing(ctx);
- }
+ obj-$(CONFIG_FS_VERITY) += hash_algs.o \
+ 			   init.o \
+-			   open.o
++			   open.o \
++			   verify.o
+diff --git a/fs/verity/fsverity_private.h b/fs/verity/fsverity_private.h
+index c7fc3c7fc714..d61ad740027d 100644
+--- a/fs/verity/fsverity_private.h
++++ b/fs/verity/fsverity_private.h
+@@ -137,5 +137,10 @@ void fsverity_set_info(struct inode *inode, struct fsverity_info *vi);
+ void fsverity_free_info(struct fsverity_info *vi);
  
-+static void verity_work(struct work_struct *work)
-+{
-+	struct bio_post_read_ctx *ctx =
-+		container_of(work, struct bio_post_read_ctx, work);
+ int __init fsverity_init_info_cache(void);
++void __init fsverity_exit_info_cache(void);
 +
-+	fsverity_verify_bio(ctx->bio);
++/* verify.c */
 +
-+	bio_post_read_processing(ctx);
-+}
-+
- static void bio_post_read_processing(struct bio_post_read_ctx *ctx)
- {
-+	/*
-+	 * We use different work queues for decryption and for verity because
-+	 * verity may require reading metadata pages that need decryption, and
-+	 * we shouldn't recurse to the same workqueue.
-+	 */
- 	switch (++ctx->cur_step) {
- 	case STEP_DECRYPT:
- 		if (ctx->enabled_steps & (1 << STEP_DECRYPT)) {
-@@ -130,6 +146,14 @@ static void bio_post_read_processing(struct bio_post_read_ctx *ctx)
- 		}
- 		ctx->cur_step++;
- 		/* fall-through */
-+	case STEP_VERITY:
-+		if (ctx->enabled_steps & (1 << STEP_VERITY)) {
-+			INIT_WORK(&ctx->work, verity_work);
-+			fsverity_enqueue_verify_work(&ctx->work);
-+			return;
-+		}
-+		ctx->cur_step++;
-+		/* fall-through */
- 	default:
- 		__read_end_io(ctx->bio);
- 	}
-@@ -553,8 +577,15 @@ void f2fs_submit_page_write(struct f2fs_io_info *fio)
- 	up_write(&io->io_rwsem);
- }
++int __init fsverity_init_workqueue(void);
  
-+static inline bool f2fs_need_verity(const struct inode *inode, pgoff_t idx)
-+{
-+	return fsverity_active(inode) &&
-+	       idx < DIV_ROUND_UP(inode->i_size, PAGE_SIZE);
-+}
-+
- static struct bio *f2fs_grab_read_bio(struct inode *inode, block_t blkaddr,
--					unsigned nr_pages, unsigned op_flag)
-+				      unsigned nr_pages, unsigned op_flag,
-+				      pgoff_t first_idx)
- {
- 	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
- 	struct bio *bio;
-@@ -570,6 +601,10 @@ static struct bio *f2fs_grab_read_bio(struct inode *inode, block_t blkaddr,
- 
- 	if (f2fs_encrypted_file(inode))
- 		post_read_steps |= 1 << STEP_DECRYPT;
-+
-+	if (f2fs_need_verity(inode, first_idx))
-+		post_read_steps |= 1 << STEP_VERITY;
-+
- 	if (post_read_steps) {
- 		ctx = mempool_alloc(bio_post_read_ctx_pool, GFP_NOFS);
- 		if (!ctx) {
-@@ -591,7 +626,7 @@ static int f2fs_submit_page_read(struct inode *inode, struct page *page,
- 	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
- 	struct bio *bio;
- 
--	bio = f2fs_grab_read_bio(inode, blkaddr, 1, 0);
-+	bio = f2fs_grab_read_bio(inode, blkaddr, 1, 0, page->index);
- 	if (IS_ERR(bio))
- 		return PTR_ERR(bio);
- 
-@@ -1514,6 +1549,15 @@ int f2fs_fiemap(struct inode *inode, struct fiemap_extent_info *fieinfo,
- 	return ret;
- }
- 
-+static inline loff_t f2fs_readpage_limit(struct inode *inode)
-+{
-+	if (IS_ENABLED(CONFIG_FS_VERITY) &&
-+	    (IS_VERITY(inode) || f2fs_verity_in_progress(inode)))
-+		return inode->i_sb->s_maxbytes;
-+
-+	return i_size_read(inode);
-+}
-+
- static int f2fs_read_single_page(struct inode *inode, struct page *page,
- 					unsigned nr_pages,
- 					struct f2fs_map_blocks *map,
-@@ -1532,7 +1576,7 @@ static int f2fs_read_single_page(struct inode *inode, struct page *page,
- 
- 	block_in_file = (sector_t)page->index;
- 	last_block = block_in_file + nr_pages;
--	last_block_in_file = (i_size_read(inode) + blocksize - 1) >>
-+	last_block_in_file = (f2fs_readpage_limit(inode) + blocksize - 1) >>
- 							blkbits;
- 	if (last_block > last_block_in_file)
- 		last_block = last_block_in_file;
-@@ -1576,6 +1620,11 @@ static int f2fs_read_single_page(struct inode *inode, struct page *page,
- 	} else {
- zero_out:
- 		zero_user_segment(page, 0, PAGE_SIZE);
-+		if (f2fs_need_verity(inode, page->index) &&
-+		    !fsverity_verify_page(page)) {
-+			ret = -EIO;
-+			goto out;
-+		}
- 		if (!PageUptodate(page))
- 			SetPageUptodate(page);
- 		unlock_page(page);
-@@ -1594,7 +1643,7 @@ static int f2fs_read_single_page(struct inode *inode, struct page *page,
- 	}
- 	if (bio == NULL) {
- 		bio = f2fs_grab_read_bio(inode, block_nr, nr_pages,
--				is_readahead ? REQ_RAHEAD : 0);
-+				is_readahead ? REQ_RAHEAD : 0, page->index);
- 		if (IS_ERR(bio)) {
- 			ret = PTR_ERR(bio);
- 			bio = NULL;
-@@ -1991,7 +2040,7 @@ static int __write_data_page(struct page *page, bool *submitted,
- 	if (unlikely(is_sbi_flag_set(sbi, SBI_POR_DOING)))
- 		goto redirty_out;
- 
--	if (page->index < end_index)
-+	if (page->index < end_index || f2fs_verity_in_progress(inode))
- 		goto write;
- 
- 	/*
-@@ -2383,7 +2432,8 @@ static int prepare_write_begin(struct f2fs_sb_info *sbi,
- 	 * the block addresses when there is no need to fill the page.
- 	 */
- 	if (!f2fs_has_inline_data(inode) && len == PAGE_SIZE &&
--			!is_inode_flag_set(inode, FI_NO_PREALLOC))
-+	    !is_inode_flag_set(inode, FI_NO_PREALLOC) &&
-+	    !f2fs_verity_in_progress(inode))
- 		return 0;
- 
- 	/* f2fs_lock_op avoids race between write CP and convert_inline_page */
-@@ -2522,7 +2572,8 @@ static int f2fs_write_begin(struct file *file, struct address_space *mapping,
- 	if (len == PAGE_SIZE || PageUptodate(page))
- 		return 0;
- 
--	if (!(pos & (PAGE_SIZE - 1)) && (pos + len) >= i_size_read(inode)) {
-+	if (!(pos & (PAGE_SIZE - 1)) && (pos + len) >= i_size_read(inode) &&
-+	    !f2fs_verity_in_progress(inode)) {
- 		zero_user_segment(page, len, PAGE_SIZE);
- 		return 0;
- 	}
-@@ -2585,7 +2636,8 @@ static int f2fs_write_end(struct file *file,
- 
- 	set_page_dirty(page);
- 
--	if (pos + copied > i_size_read(inode))
-+	if (pos + copied > i_size_read(inode) &&
-+	    !f2fs_verity_in_progress(inode))
- 		f2fs_i_size_write(inode, pos + copied);
- unlock_out:
- 	f2fs_put_page(page, 1);
-@@ -2906,7 +2958,9 @@ void f2fs_clear_page_cache_dirty_tag(struct page *page)
- 
- int __init f2fs_init_post_read_processing(void)
- {
--	bio_post_read_ctx_cache = KMEM_CACHE(bio_post_read_ctx, 0);
-+	bio_post_read_ctx_cache =
-+		kmem_cache_create("f2fs_bio_post_read_ctx",
-+				  sizeof(struct bio_post_read_ctx), 0, 0, NULL);
- 	if (!bio_post_read_ctx_cache)
- 		goto fail;
- 	bio_post_read_ctx_pool =
-diff --git a/fs/f2fs/f2fs.h b/fs/f2fs/f2fs.h
-index 06b89a9862ab..8477191ad1c9 100644
---- a/fs/f2fs/f2fs.h
-+++ b/fs/f2fs/f2fs.h
-@@ -25,6 +25,7 @@
- #include <crypto/hash.h>
- 
- #include <linux/fscrypt.h>
-+#include <linux/fsverity.h>
- 
- #ifdef CONFIG_F2FS_CHECK_FS
- #define f2fs_bug_on(sbi, condition)	BUG_ON(condition)
-@@ -148,7 +149,7 @@ struct f2fs_mount_info {
- #define F2FS_FEATURE_QUOTA_INO		0x0080
- #define F2FS_FEATURE_INODE_CRTIME	0x0100
- #define F2FS_FEATURE_LOST_FOUND		0x0200
--#define F2FS_FEATURE_VERITY		0x0400	/* reserved */
-+#define F2FS_FEATURE_VERITY		0x0400
- #define F2FS_FEATURE_SB_CHKSUM		0x0800
- 
- #define __F2FS_HAS_FEATURE(raw_super, mask)				\
-@@ -626,7 +627,7 @@ enum {
- #define FADVISE_ENC_NAME_BIT	0x08
- #define FADVISE_KEEP_SIZE_BIT	0x10
- #define FADVISE_HOT_BIT		0x20
--#define FADVISE_VERITY_BIT	0x40	/* reserved */
-+#define FADVISE_VERITY_BIT	0x40
- 
- #define FADVISE_MODIFIABLE_BITS	(FADVISE_COLD_BIT | FADVISE_HOT_BIT)
- 
-@@ -646,6 +647,8 @@ enum {
- #define file_is_hot(inode)	is_file(inode, FADVISE_HOT_BIT)
- #define file_set_hot(inode)	set_file(inode, FADVISE_HOT_BIT)
- #define file_clear_hot(inode)	clear_file(inode, FADVISE_HOT_BIT)
-+#define file_is_verity(inode)	is_file(inode, FADVISE_VERITY_BIT)
-+#define file_set_verity(inode)	set_file(inode, FADVISE_VERITY_BIT)
- 
- #define DEF_DIR_LEVEL		0
- 
-@@ -2344,6 +2347,7 @@ static inline void f2fs_change_bit(unsigned int nr, char *addr)
- #define F2FS_TOPDIR_FL			0x00020000 /* Top of directory hierarchies*/
- #define F2FS_HUGE_FILE_FL               0x00040000 /* Set to each huge file */
- #define F2FS_EXTENTS_FL			0x00080000 /* Inode uses extents */
-+#define F2FS_VERITY_FL			0x00100000 /* Verity protected inode */
- #define F2FS_EA_INODE_FL	        0x00200000 /* Inode used for large EA */
- #define F2FS_EOFBLOCKS_FL		0x00400000 /* Blocks allocated beyond EOF */
- #define F2FS_NOCOW_FL			0x00800000 /* Do not cow file */
-@@ -2351,7 +2355,7 @@ static inline void f2fs_change_bit(unsigned int nr, char *addr)
- #define F2FS_PROJINHERIT_FL		0x20000000 /* Create with parents projid */
- #define F2FS_RESERVED_FL		0x80000000 /* reserved for ext4 lib */
- 
--#define F2FS_FL_USER_VISIBLE		0x30CBDFFF /* User visible flags */
-+#define F2FS_FL_USER_VISIBLE		0x30DBDFFF /* User visible flags */
- #define F2FS_FL_USER_MODIFIABLE		0x204BC0FF /* User modifiable flags */
- 
- /* Flags we can manipulate with through F2FS_IOC_FSSETXATTR */
-@@ -2417,6 +2421,7 @@ enum {
- 	FI_PROJ_INHERIT,	/* indicate file inherits projectid */
- 	FI_PIN_FILE,		/* indicate file should not be gced */
- 	FI_ATOMIC_REVOKE_REQUEST, /* request to drop atomic data */
-+	FI_VERITY_IN_PROGRESS,	/* building fs-verity Merkle tree */
- };
- 
- static inline void __mark_inode_dirty_flag(struct inode *inode,
-@@ -2456,6 +2461,12 @@ static inline void clear_inode_flag(struct inode *inode, int flag)
- 	__mark_inode_dirty_flag(inode, flag, false);
- }
- 
-+static inline bool f2fs_verity_in_progress(struct inode *inode)
-+{
-+	return IS_ENABLED(CONFIG_FS_VERITY) &&
-+	       is_inode_flag_set(inode, FI_VERITY_IN_PROGRESS);
-+}
-+
- static inline void set_acl_inode(struct inode *inode, umode_t mode)
- {
- 	F2FS_I(inode)->i_acl_mode = mode;
-@@ -3524,6 +3535,9 @@ void f2fs_exit_sysfs(void);
- int f2fs_register_sysfs(struct f2fs_sb_info *sbi);
- void f2fs_unregister_sysfs(struct f2fs_sb_info *sbi);
- 
-+/* verity.c */
-+extern const struct fsverity_operations f2fs_verityops;
-+
- /*
-  * crypto support
-  */
-@@ -3546,7 +3560,7 @@ static inline void f2fs_set_encrypted_inode(struct inode *inode)
-  */
- static inline bool f2fs_post_read_required(struct inode *inode)
- {
--	return f2fs_encrypted_file(inode);
-+	return f2fs_encrypted_file(inode) || fsverity_active(inode);
- }
- 
- #define F2FS_FEATURE_FUNCS(name, flagname) \
-@@ -3564,6 +3578,7 @@ F2FS_FEATURE_FUNCS(flexible_inline_xattr, FLEXIBLE_INLINE_XATTR);
- F2FS_FEATURE_FUNCS(quota_ino, QUOTA_INO);
- F2FS_FEATURE_FUNCS(inode_crtime, INODE_CRTIME);
- F2FS_FEATURE_FUNCS(lost_found, LOST_FOUND);
-+F2FS_FEATURE_FUNCS(verity, VERITY);
- F2FS_FEATURE_FUNCS(sb_chksum, SB_CHKSUM);
- 
- #ifdef CONFIG_BLK_DEV_ZONED
-diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-index 45b45f37d347..6706c2081941 100644
---- a/fs/f2fs/file.c
-+++ b/fs/f2fs/file.c
-@@ -493,6 +493,10 @@ static int f2fs_file_open(struct inode *inode, struct file *filp)
- {
- 	int err = fscrypt_file_open(inode, filp);
- 
-+	if (err)
-+		return err;
-+
-+	err = fsverity_file_open(inode, filp);
+ #endif /* _FSVERITY_PRIVATE_H */
+diff --git a/fs/verity/init.c b/fs/verity/init.c
+index fff1fd634335..b593805aafcc 100644
+--- a/fs/verity/init.c
++++ b/fs/verity/init.c
+@@ -41,7 +41,15 @@ static int __init fsverity_init(void)
  	if (err)
  		return err;
  
-@@ -781,6 +785,10 @@ int f2fs_setattr(struct dentry *dentry, struct iattr *attr)
- 	if (err)
- 		return err;
- 
-+	err = fsverity_prepare_setattr(dentry, attr);
++	err = fsverity_init_workqueue();
 +	if (err)
-+		return err;
++		goto err_exit_info_cache;
 +
- 	if (is_quota_modification(inode, attr)) {
- 		err = dquot_initialize(inode);
- 		if (err)
-@@ -1656,6 +1664,8 @@ static int f2fs_ioc_getflags(struct file *filp, unsigned long arg)
- 
- 	if (IS_ENCRYPTED(inode))
- 		flags |= F2FS_ENCRYPT_FL;
-+	if (IS_VERITY(inode))
-+		flags |= F2FS_VERITY_FL;
- 	if (f2fs_has_inline_data(inode) || f2fs_has_inline_dentry(inode))
- 		flags |= F2FS_INLINE_DATA_FL;
- 	if (is_inode_flag_set(inode, FI_PIN_FILE))
-@@ -2980,6 +2990,30 @@ static int f2fs_ioc_precache_extents(struct file *filp, unsigned long arg)
- 	return f2fs_precache_extents(file_inode(filp));
+ 	pr_debug("Initialized fs-verity\n");
+ 	return 0;
++
++err_exit_info_cache:
++	fsverity_exit_info_cache();
++	return err;
  }
- 
-+static int f2fs_ioc_enable_verity(struct file *filp, unsigned long arg)
+ late_initcall(fsverity_init)
+diff --git a/fs/verity/open.c b/fs/verity/open.c
+index 91f7e2d05b54..731c7e810719 100644
+--- a/fs/verity/open.c
++++ b/fs/verity/open.c
+@@ -344,3 +344,9 @@ int __init fsverity_init_info_cache(void)
+ 		return -ENOMEM;
+ 	return 0;
+ }
++
++void __init fsverity_exit_info_cache(void)
 +{
-+	struct inode *inode = file_inode(filp);
-+
-+	f2fs_update_time(F2FS_I_SB(inode), REQ_TIME);
-+
-+	if (!f2fs_sb_has_verity(F2FS_I_SB(inode))) {
-+		f2fs_msg(inode->i_sb, KERN_WARNING,
-+			 "Can't enable fs-verity on inode %lu: the verity feature is not enabled on this filesystem.\n",
-+			 inode->i_ino);
-+		return -EOPNOTSUPP;
-+	}
-+
-+	return fsverity_ioctl_enable(filp, (const void __user *)arg);
++	kmem_cache_destroy(fsverity_info_cachep);
++	fsverity_info_cachep = NULL;
 +}
-+
-+static int f2fs_ioc_measure_verity(struct file *filp, unsigned long arg)
-+{
-+	if (!f2fs_sb_has_verity(F2FS_I_SB(file_inode(filp))))
-+		return -EOPNOTSUPP;
-+
-+	return fsverity_ioctl_measure(filp, (void __user *)arg);
-+}
-+
- long f2fs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- {
- 	if (unlikely(f2fs_cp_error(F2FS_I_SB(file_inode(filp)))))
-@@ -3036,6 +3070,10 @@ long f2fs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
- 		return f2fs_ioc_set_pin_file(filp, arg);
- 	case F2FS_IOC_PRECACHE_EXTENTS:
- 		return f2fs_ioc_precache_extents(filp, arg);
-+	case FS_IOC_ENABLE_VERITY:
-+		return f2fs_ioc_enable_verity(filp, arg);
-+	case FS_IOC_MEASURE_VERITY:
-+		return f2fs_ioc_measure_verity(filp, arg);
- 	default:
- 		return -ENOTTY;
- 	}
-@@ -3149,6 +3187,8 @@ long f2fs_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
- 	case F2FS_IOC_GET_PIN_FILE:
- 	case F2FS_IOC_SET_PIN_FILE:
- 	case F2FS_IOC_PRECACHE_EXTENTS:
-+	case FS_IOC_ENABLE_VERITY:
-+	case FS_IOC_MEASURE_VERITY:
- 		break;
- 	default:
- 		return -ENOIOCTLCMD;
-diff --git a/fs/f2fs/inode.c b/fs/f2fs/inode.c
-index ccb02226dd2c..b2f945b1afe5 100644
---- a/fs/f2fs/inode.c
-+++ b/fs/f2fs/inode.c
-@@ -46,9 +46,11 @@ void f2fs_set_inode_flags(struct inode *inode)
- 		new_fl |= S_DIRSYNC;
- 	if (file_is_encrypt(inode))
- 		new_fl |= S_ENCRYPTED;
-+	if (file_is_verity(inode))
-+		new_fl |= S_VERITY;
- 	inode_set_flags(inode, new_fl,
- 			S_SYNC|S_APPEND|S_IMMUTABLE|S_NOATIME|S_DIRSYNC|
--			S_ENCRYPTED);
-+			S_ENCRYPTED|S_VERITY);
- }
- 
- static void __get_inode_rdev(struct inode *inode, struct f2fs_inode *ri)
-@@ -749,6 +751,7 @@ void f2fs_evict_inode(struct inode *inode)
- 	}
- out_clear:
- 	fscrypt_put_encryption_info(inode);
-+	fsverity_cleanup_inode(inode);
- 	clear_inode(inode);
- }
- 
-diff --git a/fs/f2fs/super.c b/fs/f2fs/super.c
-index 6b959bbb336a..ea4a247d6ed6 100644
---- a/fs/f2fs/super.c
-+++ b/fs/f2fs/super.c
-@@ -3177,6 +3177,9 @@ static int f2fs_fill_super(struct super_block *sb, void *data, int silent)
- 	sb->s_op = &f2fs_sops;
- #ifdef CONFIG_FS_ENCRYPTION
- 	sb->s_cop = &f2fs_cryptops;
-+#endif
-+#ifdef CONFIG_FS_VERITY
-+	sb->s_vop = &f2fs_verityops;
- #endif
- 	sb->s_xattr = f2fs_xattr_handlers;
- 	sb->s_export_op = &f2fs_export_ops;
-diff --git a/fs/f2fs/sysfs.c b/fs/f2fs/sysfs.c
-index 729f46a3c9ee..b3e28467db72 100644
---- a/fs/f2fs/sysfs.c
-+++ b/fs/f2fs/sysfs.c
-@@ -117,6 +117,9 @@ static ssize_t features_show(struct f2fs_attr *a,
- 	if (f2fs_sb_has_lost_found(sbi))
- 		len += snprintf(buf + len, PAGE_SIZE - len, "%s%s",
- 				len ? ", " : "", "lost_found");
-+	if (f2fs_sb_has_verity(sbi))
-+		len += snprintf(buf + len, PAGE_SIZE - len, "%s%s",
-+				len ? ", " : "", "verity");
- 	if (f2fs_sb_has_sb_chksum(sbi))
- 		len += snprintf(buf + len, PAGE_SIZE - len, "%s%s",
- 				len ? ", " : "", "sb_checksum");
-@@ -350,6 +353,7 @@ enum feat_id {
- 	FEAT_QUOTA_INO,
- 	FEAT_INODE_CRTIME,
- 	FEAT_LOST_FOUND,
-+	FEAT_VERITY,
- 	FEAT_SB_CHECKSUM,
- };
- 
-@@ -367,6 +371,7 @@ static ssize_t f2fs_feature_show(struct f2fs_attr *a,
- 	case FEAT_QUOTA_INO:
- 	case FEAT_INODE_CRTIME:
- 	case FEAT_LOST_FOUND:
-+	case FEAT_VERITY:
- 	case FEAT_SB_CHECKSUM:
- 		return snprintf(buf, PAGE_SIZE, "supported\n");
- 	}
-@@ -455,6 +460,9 @@ F2FS_FEATURE_RO_ATTR(flexible_inline_xattr, FEAT_FLEXIBLE_INLINE_XATTR);
- F2FS_FEATURE_RO_ATTR(quota_ino, FEAT_QUOTA_INO);
- F2FS_FEATURE_RO_ATTR(inode_crtime, FEAT_INODE_CRTIME);
- F2FS_FEATURE_RO_ATTR(lost_found, FEAT_LOST_FOUND);
-+#ifdef CONFIG_FS_VERITY
-+F2FS_FEATURE_RO_ATTR(verity, FEAT_VERITY);
-+#endif
- F2FS_FEATURE_RO_ATTR(sb_checksum, FEAT_SB_CHECKSUM);
- 
- #define ATTR_LIST(name) (&f2fs_attr_##name.attr)
-@@ -517,6 +525,9 @@ static struct attribute *f2fs_feat_attrs[] = {
- 	ATTR_LIST(quota_ino),
- 	ATTR_LIST(inode_crtime),
- 	ATTR_LIST(lost_found),
-+#ifdef CONFIG_FS_VERITY
-+	ATTR_LIST(verity),
-+#endif
- 	ATTR_LIST(sb_checksum),
- 	NULL,
- };
-diff --git a/fs/f2fs/verity.c b/fs/f2fs/verity.c
+diff --git a/fs/verity/verify.c b/fs/verity/verify.c
 new file mode 100644
-index 000000000000..259f475de07a
+index 000000000000..2a0f9e2ebc9f
 --- /dev/null
-+++ b/fs/f2fs/verity.c
-@@ -0,0 +1,224 @@
++++ b/fs/verity/verify.c
+@@ -0,0 +1,275 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * fs/f2fs/verity.c: fs-verity support for f2fs
++ * fs/verity/verify.c: data verification functions, i.e. hooks for ->readpages()
 + *
 + * Copyright 2019 Google LLC
 + */
 +
-+/*
-+ * Implementation of fsverity_operations for f2fs.
++#include "fsverity_private.h"
++
++#include <crypto/hash.h>
++#include <linux/bio.h>
++#include <linux/ratelimit.h>
++
++static struct workqueue_struct *fsverity_read_workqueue;
++
++/**
++ * hash_at_level() - compute the location of the block's hash at the given level
 + *
-+ * Like ext4, f2fs stores the verity metadata (Merkle tree and
-+ * fsverity_descriptor) past the end of the file, starting at the first page
-+ * fully beyond i_size.  This approach works because (a) verity files are
-+ * readonly, and (b) pages fully beyond i_size aren't visible to userspace but
-+ * can be read/written internally by f2fs with only some relatively small
-+ * changes to f2fs.  Extended attributes cannot be used because (a) f2fs limits
-+ * the total size of an inode's xattr entries to 4096 bytes, which wouldn't be
-+ * enough for even a single Merkle tree block, and (b) f2fs encryption doesn't
-+ * encrypt xattrs, yet the verity metadata *must* be encrypted when the file is
-+ * because it contains hashes of the plaintext data.
++ * @params:	(in) the Merkle tree parameters
++ * @dindex:	(in) the index of the data block being verified
++ * @level:	(in) the level of hash we want (0 is leaf level)
++ * @hindex:	(out) the index of the hash block containing the wanted hash
++ * @hoffset:	(out) the byte offset to the wanted hash within the hash block
 + */
-+
-+#include <linux/f2fs_fs.h>
-+
-+#include "f2fs.h"
-+#include "xattr.h"
-+
-+/*
-+ * Read some verity metadata from the inode.  __vfs_read() can't be used because
-+ * we need to read beyond i_size.
-+ */
-+static int pagecache_read(struct inode *inode, void *buf, size_t count,
-+			  loff_t pos)
++static void hash_at_level(const struct merkle_tree_params *params,
++			  pgoff_t dindex, unsigned int level, pgoff_t *hindex,
++			  unsigned int *hoffset)
 +{
-+	const size_t orig_count = count;
++	pgoff_t position;
 +
-+	while (count) {
-+		size_t n = min_t(size_t, count,
-+				 PAGE_SIZE - offset_in_page(pos));
-+		struct page *page;
-+		void *addr;
++	/* Offset of the hash within the level's region, in hashes */
++	position = dindex >> (level * params->log_arity);
 +
-+		page = read_mapping_page(inode->i_mapping, pos >> PAGE_SHIFT,
-+					 NULL);
-+		if (IS_ERR(page))
-+			return PTR_ERR(page);
++	/* Index of the hash block in the tree overall */
++	*hindex = params->level_start[level] + (position >> params->log_arity);
 +
-+		addr = kmap_atomic(page);
-+		memcpy(buf, addr + offset_in_page(pos), n);
-+		kunmap_atomic(addr);
++	/* Offset of the wanted hash (in bytes) within the hash block */
++	*hoffset = (position & ((1 << params->log_arity) - 1)) <<
++		   (params->log_blocksize - params->log_arity);
++}
 +
-+		put_page(page);
++/* Extract a hash from a hash page */
++static void extract_hash(struct page *hpage, unsigned int hoffset,
++			 unsigned int hsize, u8 *out)
++{
++	void *virt = kmap_atomic(hpage);
 +
-+		buf += n;
-+		pos += n;
-+		count -= n;
-+	}
-+	return orig_count;
++	memcpy(out, virt + hoffset, hsize);
++	kunmap_atomic(virt);
++}
++
++static inline int cmp_hashes(const struct fsverity_info *vi,
++			     const u8 *want_hash, const u8 *real_hash,
++			     pgoff_t index, int level)
++{
++	const unsigned int hsize = vi->tree_params.digest_size;
++
++	if (memcmp(want_hash, real_hash, hsize) == 0)
++		return 0;
++
++	fsverity_err(vi->inode,
++		     "FILE CORRUPTED! index=%lu, level=%d, want_hash=%s:%*phN, real_hash=%s:%*phN",
++		     index, level,
++		     vi->tree_params.hash_alg->name, hsize, want_hash,
++		     vi->tree_params.hash_alg->name, hsize, real_hash);
++	return -EBADMSG;
 +}
 +
 +/*
-+ * Write some verity metadata to the inode for FS_IOC_ENABLE_VERITY.
-+ * kernel_write() can't be used because the file descriptor is readonly.
++ * Verify a single data page against the file's Merkle tree.
++ *
++ * In principle, we need to verify the entire path to the root node.  However,
++ * for efficiency the filesystem may cache the hash pages.  Therefore we need
++ * only ascend the tree until an already-verified page is seen, as indicated by
++ * the PageChecked bit being set; then verify the path to that page.
++ *
++ * This code currently only supports the case where the verity block size is
++ * equal to PAGE_SIZE.  Doing otherwise would be possible but tricky, since we
++ * wouldn't be able to use the PageChecked bit.
++ *
++ * Note that multiple processes may race to verify a hash page and mark it
++ * Checked, but it doesn't matter; the result will be the same either way.
++ *
++ * Return: true if the page is valid, else false.
 + */
-+static int pagecache_write(struct inode *inode, const void *buf, size_t count,
-+			   loff_t pos)
++static bool verify_page(struct inode *inode, const struct fsverity_info *vi,
++			struct ahash_request *req, struct page *data_page)
 +{
-+	while (count) {
-+		size_t n = min_t(size_t, count,
-+				 PAGE_SIZE - offset_in_page(pos));
-+		struct page *page;
-+		void *fsdata;
-+		void *addr;
-+		int res;
-+
-+		res = pagecache_write_begin(NULL, inode->i_mapping, pos, n, 0,
-+					    &page, &fsdata);
-+		if (res)
-+			return res;
-+
-+		addr = kmap_atomic(page);
-+		memcpy(addr + offset_in_page(pos), buf, n);
-+		kunmap_atomic(addr);
-+
-+		res = pagecache_write_end(NULL, inode->i_mapping, pos, n, n,
-+					  page, fsdata);
-+		if (res < 0)
-+			return res;
-+		if (res != n)
-+			return -EIO;
-+
-+		buf += n;
-+		pos += n;
-+		count -= n;
-+	}
-+	return 0;
-+}
-+
-+/*
-+ * Format of f2fs verity xattr.  This points to the location of the verity
-+ * descriptor within the file data rather than containing it directly because
-+ * the verity descriptor *must* be encrypted when f2fs encryption is used.  But,
-+ * f2fs encryption does not encrypt xattrs.
-+ */
-+struct fsverity_descriptor_location {
-+	__le32 version;
-+	__le32 size;
-+	__le64 pos;
-+};
-+
-+static int f2fs_begin_enable_verity(struct file *filp)
-+{
-+	struct inode *inode = file_inode(filp);
++	const struct merkle_tree_params *params = &vi->tree_params;
++	const unsigned int hsize = params->digest_size;
++	const pgoff_t index = data_page->index;
++	int level;
++	u8 _want_hash[FS_VERITY_MAX_DIGEST_SIZE];
++	const u8 *want_hash;
++	u8 real_hash[FS_VERITY_MAX_DIGEST_SIZE];
++	struct page *hpages[FS_VERITY_MAX_LEVELS];
++	unsigned int hoffsets[FS_VERITY_MAX_LEVELS];
 +	int err;
 +
-+	err = f2fs_convert_inline_inode(inode);
-+	if (err)
-+		return err;
++	if (WARN_ON_ONCE(!PageLocked(data_page) || PageUptodate(data_page)))
++		return false;
 +
-+	err = dquot_initialize(inode);
-+	if (err)
-+		return err;
++	pr_debug_ratelimited("Verifying data page %lu...\n", index);
 +
-+	set_inode_flag(inode, FI_VERITY_IN_PROGRESS);
++	/*
++	 * Starting at the leaf level, ascend the tree saving hash pages along
++	 * the way until we find a verified hash page, indicated by PageChecked;
++	 * or until we reach the root.
++	 */
++	for (level = 0; level < params->num_levels; level++) {
++		pgoff_t hindex;
++		unsigned int hoffset;
++		struct page *hpage;
++
++		hash_at_level(params, index, level, &hindex, &hoffset);
++
++		pr_debug_ratelimited("Level %d: hindex=%lu, hoffset=%u\n",
++				     level, hindex, hoffset);
++
++		hpage = inode->i_sb->s_vop->read_merkle_tree_page(inode,
++								  hindex);
++		if (IS_ERR(hpage)) {
++			err = PTR_ERR(hpage);
++			fsverity_err(inode,
++				     "Error %d reading Merkle tree page %lu",
++				     err, hindex);
++			goto out;
++		}
++
++		if (PageChecked(hpage)) {
++			extract_hash(hpage, hoffset, hsize, _want_hash);
++			want_hash = _want_hash;
++			put_page(hpage);
++			pr_debug_ratelimited("Hash page already checked, want %s:%*phN\n",
++					     params->hash_alg->name,
++					     hsize, want_hash);
++			goto descend;
++		}
++		pr_debug_ratelimited("Hash page not yet checked\n");
++		hpages[level] = hpage;
++		hoffsets[level] = hoffset;
++	}
++
++	want_hash = vi->root_hash;
++	pr_debug("Want root hash: %s:%*phN\n",
++		 params->hash_alg->name, hsize, want_hash);
++descend:
++	/* Descend the tree verifying hash pages */
++	for (; level > 0; level--) {
++		struct page *hpage = hpages[level - 1];
++		unsigned int hoffset = hoffsets[level - 1];
++
++		err = fsverity_hash_page(params, inode, req, hpage, real_hash);
++		if (err)
++			goto out;
++		err = cmp_hashes(vi, want_hash, real_hash, index, level - 1);
++		if (err)
++			goto out;
++		SetPageChecked(hpage);
++		extract_hash(hpage, hoffset, hsize, _want_hash);
++		want_hash = _want_hash;
++		put_page(hpage);
++		pr_debug("Verified hash page at level %d, now want %s:%*phN\n",
++			 level - 1, params->hash_alg->name, hsize, want_hash);
++	}
++
++	/* Finally, verify the data page */
++	err = fsverity_hash_page(params, inode, req, data_page, real_hash);
++	if (err)
++		goto out;
++	err = cmp_hashes(vi, want_hash, real_hash, index, -1);
++out:
++	for (; level > 0; level--)
++		put_page(hpages[level - 1]);
++
++	return err == 0;
++}
++
++/**
++ * fsverity_verify_page - verify a data page
++ *
++ * Verify a page that has just been read from a verity file.  The page must be a
++ * pagecache page that is still locked and not yet uptodate.
++ *
++ * Return: true if the page is valid, else false.
++ */
++bool fsverity_verify_page(struct page *page)
++{
++	struct inode *inode = page->mapping->host;
++	const struct fsverity_info *vi = inode->i_verity_info;
++	struct ahash_request *req;
++	bool valid;
++
++	req = ahash_request_alloc(vi->tree_params.hash_alg->tfm, GFP_NOFS);
++	if (unlikely(!req))
++		return false;
++
++	valid = verify_page(inode, vi, req, page);
++
++	ahash_request_free(req);
++
++	return valid;
++}
++EXPORT_SYMBOL_GPL(fsverity_verify_page);
++
++#ifdef CONFIG_BLOCK
++/**
++ * fsverity_verify_bio - verify a 'read' bio that has just completed
++ *
++ * Verify a set of pages that have just been read from a verity file.  The pages
++ * must be pagecache pages that are still locked and not yet uptodate.  Pages
++ * that fail verification are set to the Error state.  Verification is skipped
++ * for pages already in the Error state, e.g. due to fscrypt decryption failure.
++ *
++ * This is a helper function for use by the ->readpages() method of filesystems
++ * that issue bios to read data directly into the page cache.  Filesystems that
++ * populate the page cache without issuing bios (e.g. non block-based
++ * filesystems) must instead call fsverity_verify_page() directly on each page.
++ * All filesystems must also call fsverity_verify_page() on holes.
++ */
++void fsverity_verify_bio(struct bio *bio)
++{
++	struct inode *inode = bio_first_page_all(bio)->mapping->host;
++	const struct fsverity_info *vi = inode->i_verity_info;
++	struct ahash_request *req;
++	struct bio_vec *bv;
++	struct bvec_iter_all iter_all;
++
++	req = ahash_request_alloc(vi->tree_params.hash_alg->tfm, GFP_NOFS);
++	if (unlikely(!req)) {
++		bio_for_each_segment_all(bv, bio, iter_all)
++			SetPageError(bv->bv_page);
++		return;
++	}
++
++	bio_for_each_segment_all(bv, bio, iter_all) {
++		struct page *page = bv->bv_page;
++
++		if (!PageError(page) && !verify_page(inode, vi, req, page))
++			SetPageError(page);
++	}
++
++	ahash_request_free(req);
++}
++EXPORT_SYMBOL_GPL(fsverity_verify_bio);
++#endif /* CONFIG_BLOCK */
++
++/**
++ * fsverity_enqueue_verify_work - enqueue work on the fs-verity workqueue
++ *
++ * Enqueue verification work for asynchronous processing.
++ */
++void fsverity_enqueue_verify_work(struct work_struct *work)
++{
++	queue_work(fsverity_read_workqueue, work);
++}
++EXPORT_SYMBOL_GPL(fsverity_enqueue_verify_work);
++
++int __init fsverity_init_workqueue(void)
++{
++	/*
++	 * Use an unbound workqueue to allow bios to be verified in parallel
++	 * even when they happen to complete on the same CPU.  This sacrifices
++	 * locality, but it's worthwhile since hashing is CPU-intensive.
++	 *
++	 * Also use a high-priority workqueue to prioritize verification work,
++	 * which blocks reads from completing, over regular application tasks.
++	 */
++	fsverity_read_workqueue = alloc_workqueue("fsverity_read_queue",
++						  WQ_UNBOUND | WQ_HIGHPRI,
++						  num_online_cpus());
++	if (!fsverity_read_workqueue)
++		return -ENOMEM;
 +	return 0;
 +}
+diff --git a/include/linux/fsverity.h b/include/linux/fsverity.h
+index cbcc358d0736..ecd47e748c7f 100644
+--- a/include/linux/fsverity.h
++++ b/include/linux/fsverity.h
+@@ -33,6 +33,23 @@ struct fsverity_operations {
+ 	 */
+ 	int (*get_verity_descriptor)(struct inode *inode, void *buf,
+ 				     size_t bufsize);
 +
-+static int f2fs_end_enable_verity(struct file *filp, const void *desc,
-+				  size_t desc_size, u64 merkle_tree_size)
-+{
-+	struct inode *inode = file_inode(filp);
-+	u64 desc_pos = round_up(inode->i_size, PAGE_SIZE) + merkle_tree_size;
-+	struct fsverity_descriptor_location dloc = {
-+		.version = cpu_to_le32(1),
-+		.size = cpu_to_le32(desc_size),
-+		.pos = cpu_to_le64(desc_pos),
-+	};
-+	int err = 0;
-+
-+	if (desc != NULL) {
-+		/* Succeeded; write the verity descriptor. */
-+		err = pagecache_write(inode, desc, desc_size, desc_pos);
-+
-+		/* Write all pages before clearing FI_VERITY_IN_PROGRESS. */
-+		if (!err)
-+			err = filemap_write_and_wait(inode->i_mapping);
-+	} else {
-+		/* Failed; truncate anything we wrote past i_size. */
-+		f2fs_truncate(inode);
-+	}
-+
-+	clear_inode_flag(inode, FI_VERITY_IN_PROGRESS);
-+
-+	if (desc != NULL && !err) {
-+		err = f2fs_setxattr(inode, F2FS_XATTR_INDEX_VERITY,
-+				    F2FS_XATTR_NAME_VERITY, &dloc, sizeof(dloc),
-+				    NULL, XATTR_CREATE);
-+		if (!err) {
-+			file_set_verity(inode);
-+			f2fs_set_inode_flags(inode);
-+			f2fs_mark_inode_dirty_sync(inode, true);
-+		}
-+	}
-+	return err;
-+}
-+
-+static int f2fs_get_verity_descriptor(struct inode *inode, void *buf,
-+				      size_t buf_size)
-+{
-+	struct fsverity_descriptor_location dloc;
-+	int res;
-+	u32 size;
-+	u64 pos;
-+
-+	/* Get the descriptor location */
-+	res = f2fs_getxattr(inode, F2FS_XATTR_INDEX_VERITY,
-+			    F2FS_XATTR_NAME_VERITY, &dloc, sizeof(dloc), NULL);
-+	if (res < 0 && res != -ERANGE)
-+		return res;
-+	if (res != sizeof(dloc) || dloc.version != cpu_to_le32(1)) {
-+		f2fs_msg(inode->i_sb, KERN_WARNING,
-+			 "unknown verity xattr format");
-+		return -EINVAL;
-+	}
-+	size = le32_to_cpu(dloc.size);
-+	pos = le64_to_cpu(dloc.pos);
-+
-+	/* Get the descriptor */
-+	if (pos + size < pos || pos + size > inode->i_sb->s_maxbytes ||
-+	    pos < round_up(inode->i_size, PAGE_SIZE) || size > INT_MAX) {
-+		f2fs_msg(inode->i_sb, KERN_WARNING, "invalid verity xattr");
-+		return -EUCLEAN; /* EFSCORRUPTED */
-+	}
-+	if (buf_size == 0)
-+		return size;
-+	if (size > buf_size)
-+		return -ERANGE;
-+	return pagecache_read(inode, buf, size, pos);
-+}
-+
-+static struct page *f2fs_read_merkle_tree_page(struct inode *inode,
-+					       pgoff_t index)
-+{
-+	index += DIV_ROUND_UP(inode->i_size, PAGE_SIZE);
-+
-+	return read_mapping_page(inode->i_mapping, index, NULL);
-+}
-+
-+static int f2fs_write_merkle_tree_block(struct inode *inode, const void *buf,
-+					u64 index, int log_blocksize)
-+{
-+	loff_t pos = round_up(inode->i_size, PAGE_SIZE) +
-+		     (index << log_blocksize);
-+
-+	return pagecache_write(inode, buf, 1 << log_blocksize, pos);
-+}
-+
-+const struct fsverity_operations f2fs_verityops = {
-+	.begin_enable_verity	= f2fs_begin_enable_verity,
-+	.end_enable_verity	= f2fs_end_enable_verity,
-+	.get_verity_descriptor	= f2fs_get_verity_descriptor,
-+	.read_merkle_tree_page	= f2fs_read_merkle_tree_page,
-+	.write_merkle_tree_block = f2fs_write_merkle_tree_block,
-+};
-diff --git a/fs/f2fs/xattr.h b/fs/f2fs/xattr.h
-index a90920e2f949..de0c600b9cab 100644
---- a/fs/f2fs/xattr.h
-+++ b/fs/f2fs/xattr.h
-@@ -34,8 +34,10 @@
- #define F2FS_XATTR_INDEX_ADVISE			7
- /* Should be same as EXT4_XATTR_INDEX_ENCRYPTION */
- #define F2FS_XATTR_INDEX_ENCRYPTION		9
-+#define F2FS_XATTR_INDEX_VERITY			11
++	/**
++	 * Read a Merkle tree page of the given inode.
++	 *
++	 * @inode: the inode
++	 * @index: 0-based index of the page within the Merkle tree
++	 *
++	 * This can be called at any time on an open verity file, as well as
++	 * between ->begin_enable_verity() and ->end_enable_verity().  It may be
++	 * called by multiple processes concurrently, even with the same page.
++	 *
++	 * Note that this must retrieve a *page*, not necessarily a *block*.
++	 *
++	 * Return: the page on success, ERR_PTR() on failure
++	 */
++	struct page *(*read_merkle_tree_page)(struct inode *inode,
++					      pgoff_t index);
+ };
  
- #define F2FS_XATTR_NAME_ENCRYPTION_CONTEXT	"c"
-+#define F2FS_XATTR_NAME_VERITY			"v"
+ #ifdef CONFIG_FS_VERITY
+@@ -49,6 +66,12 @@ extern int fsverity_file_open(struct inode *inode, struct file *filp);
+ extern int fsverity_prepare_setattr(struct dentry *dentry, struct iattr *attr);
+ extern void fsverity_cleanup_inode(struct inode *inode);
  
- struct f2fs_xattr_header {
- 	__le32  h_magic;        /* magic number for identification */
++/* verify.c */
++
++extern bool fsverity_verify_page(struct page *page);
++extern void fsverity_verify_bio(struct bio *bio);
++extern void fsverity_enqueue_verify_work(struct work_struct *work);
++
+ #else /* !CONFIG_FS_VERITY */
+ 
+ static inline struct fsverity_info *fsverity_get_info(const struct inode *inode)
+@@ -73,6 +96,39 @@ static inline void fsverity_cleanup_inode(struct inode *inode)
+ {
+ }
+ 
++/* verify.c */
++
++static inline bool fsverity_verify_page(struct page *page)
++{
++	WARN_ON(1);
++	return false;
++}
++
++static inline void fsverity_verify_bio(struct bio *bio)
++{
++	WARN_ON(1);
++}
++
++static inline void fsverity_enqueue_verify_work(struct work_struct *work)
++{
++	WARN_ON(1);
++}
++
+ #endif	/* !CONFIG_FS_VERITY */
+ 
++/**
++ * fsverity_active() - do reads from the inode need to go through fs-verity?
++ *
++ * This checks whether ->i_verity_info has been set.
++ *
++ * Filesystems call this from ->readpages() to check whether the pages need to
++ * be verified or not.  Don't use IS_VERITY() for this purpose; it's subject to
++ * a race condition where the file is being read concurrently with
++ * FS_IOC_ENABLE_VERITY completing.  (S_VERITY is set before ->i_verity_info.)
++ */
++static inline bool fsverity_active(const struct inode *inode)
++{
++	return fsverity_get_info(inode) != NULL;
++}
++
+ #endif	/* _LINUX_FSVERITY_H */
 -- 
 2.21.0
