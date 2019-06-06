@@ -1,60 +1,66 @@
 From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [RFC][PATCH 00/10] Mount, FS, Block and Keyrings notifications [ver #3]
-Date: Thu, 6 Jun 2019 14:54:27 -0700
-Message-ID: <AD7898AE-B92C-4DE6-B895-7116FEDB3091@amacapital.net>
-References: <CALCETrVuNRPgEzv-XY4M9m6sEsCiRHxPenN_MpcMYc1h26vVwQ@mail.gmail.com> <b91710d8-cd2d-6b93-8619-130b9d15983d@tycho.nsa.gov> <155981411940.17513.7137844619951358374.stgit@warthog.procyon.org.uk> <3813.1559827003@warthog.procyon.org.uk> <8382af23-548c-f162-0e82-11e308049735@tycho.nsa.gov> <0eb007c5-b4a0-9384-d915-37b0e5a158bf@schaufler-ca.com> <c82052e5-ca11-67b5-965e-8f828081f31c@tycho.nsa.gov> <07e92045-2d80-8573-4d36-643deeaff9ec@schaufler-ca.com> <23611.1559855827@warthog.procyon.org.uk>
+Subject: Re: [PATCH v7 04/27] x86/fpu/xstate: Introduce XSAVES system states
+Date: Thu, 6 Jun 2019 15:04:41 -0700
+Message-ID: <5EE146A8-6C8C-4C5D-B7C0-AB8AD1012F1E@amacapital.net>
+References: <20190606200646.3951-1-yu-cheng.yu@intel.com> <20190606200646.3951-5-yu-cheng.yu@intel.com> <0a2f8b9b-b96b-06c8-bae0-b78b2ca3b727@intel.com>
 Mime-Version: 1.0 (1.0)
 Content-Type: text/plain;
         charset=utf-8
 Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <23611.1559855827@warthog.procyon.org.uk>
+In-Reply-To: <0a2f8b9b-b96b-06c8-bae0-b78b2ca3b727@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, Al Viro <viro@zeniv.linux.org.uk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, USB list <linux-usb@vger.kernel.org>, raven@themaw.net, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, LSM List <linux-security-module@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Paul Moore <paul@paul-moore.com>
+To: Dave Hansen <dave.hansen@intel.com>
+Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
 
 
-> On Jun 6, 2019, at 2:17 PM, David Howells <dhowells@redhat.com> wrote:
->=20
-> Andy Lutomirski <luto@kernel.org> wrote:
->=20
->>>> You are allowing arbitrary information flow between T and W above.  Who=
+On Jun 6, 2019, at 2:18 PM, Dave Hansen <dave.hansen@intel.com> wrote:
 
->>>> cares about notifications?
->>>=20
->>> I do. If Watched object is /dev/null no data flow is possible.
->>> There are many objects on a modern Linux system for which this
->>> is true. Even if it's "just a file" the existence of one path
->>> for data to flow does not justify ignoring the rules for other
->>> data paths.
->>=20
->> Aha!
->>=20
->> Even ignoring security, writes to things like /dev/null should
->> probably not trigger notifications to people who are watching
->> /dev/null.  (There are probably lots of things like this: /dev/zero,
->> /dev/urandom, etc.)
+>> +/*
+>> + * Helpers for changing XSAVES system states.
+>> + */
+>> +static inline void modify_fpu_regs_begin(void)
+>> +{
+>> +    fpregs_lock();
+>> +    if (test_thread_flag(TIF_NEED_FPU_LOAD))
+>> +        __fpregs_load_activate();
+>> +}
+>> +
+>> +static inline void modify_fpu_regs_end(void)
+>> +{
+>> +    fpregs_unlock();
+>> +}
 >=20
-> Even writes to /dev/null might generate access notifications; leastways,
-> vfs_read() will call fsnotify_access() afterwards on success.
+> These are massively under-commented and under-changelogged.  This looks
+> like it's intended to ensure that we have supervisor FPU state for this
+> task loaded before we go and run the MSRs that might be modifying it.
+>=20
+> But, that seems broken.  If we have supervisor state, we can't always
+> defer the load until return to userspace, so we'll never?? have
+> TIF_NEED_FPU_LOAD.  That would certainly be true for cet_kernel_state.
 
-Hmm. I can see this being an issue, but I guess not with your patch set.
+Ugh. I was sort of imagining that we would treat supervisor state completely=
+ separately from user state.  But can you maybe give examples of exactly wha=
+t you mean?
 
 >=20
-> Whether or not you can set marks on open device files is another matter.
->=20
->> David, are there any notification types that have this issue in your
->> patchset?  If so, is there a straightforward way to fix it?
->=20
-> I'm not sure what issue you're referring to specifically.  Do you mean whe=
-ther
-> writes to device files generate notifications?
+> It seems like we actually need three classes of XSAVE states:
+> 1. User state
 
-I mean: are there cases where some action generates a notification but does n=
-ot otherwise have an effect visible to the users who can receive the notific=
-ation. It looks like the answer is probably =E2=80=9Cno=E2=80=9D, which is g=
-ood.
+This is FPU, XMM, etc, right?
 
-Casey, is this good enough for you, or is there still an issue?=
+> 2. Supervisor state that affects user mode
+
+User CET?
+
+
+> 3. Supervisor state that affects kernel mode
+
+Like supervisor CET?  If we start doing supervisor shadow stack, the context=
+ switches will be real fun.  We may need to handle this in asm.
+
+Where does PKRU fit in?  Maybe we can treat it as #3?
+
+=E2=80=94Andy
