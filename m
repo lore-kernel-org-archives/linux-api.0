@@ -1,49 +1,94 @@
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: Re: [PATCH v7 03/14] x86/cet/ibt: Add IBT legacy code bitmap setup
- function
-Date: Fri, 07 Jun 2019 13:06:10 -0700
-Message-ID: <0e505563f7dae3849b57fb327f578f41b760b6f7.camel@intel.com>
-References: <20190606200926.4029-1-yu-cheng.yu@intel.com>
-         <20190606200926.4029-4-yu-cheng.yu@intel.com>
-         <20190607080832.GT3419@hirez.programming.kicks-ass.net>
-         <aa8a92ef231d512b5c9855ef416db050b5ab59a6.camel@intel.com>
-         <20190607174336.GM3436@hirez.programming.kicks-ass.net>
-         <b3de4110-5366-fdc7-a960-71dea543a42f@intel.com>
-         <34E0D316-552A-401C-ABAA-5584B5BC98C5@amacapital.net>
-         <7e0b97bf1fbe6ff20653a8e4e147c6285cc5552d.camel@intel.com>
-         <4b448cde-ee4e-1c95-0f7f-4fe694be7db6@intel.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH v7 03/14] x86/cet/ibt: Add IBT legacy code bitmap setup function
+Date: Fri, 7 Jun 2019 13:40:06 -0700
+Message-ID: <D10B5B59-1BE7-44DC-8E91-C8E4292DC6FB@amacapital.net>
+References: <20190606200926.4029-1-yu-cheng.yu@intel.com> <20190606200926.4029-4-yu-cheng.yu@intel.com> <20190607080832.GT3419@hirez.programming.kicks-ass.net> <aa8a92ef231d512b5c9855ef416db050b5ab59a6.camel@intel.com> <20190607174336.GM3436@hirez.programming.kicks-ass.net> <b3de4110-5366-fdc7-a960-71dea543a42f@intel.com> <34E0D316-552A-401C-ABAA-5584B5BC98C5@amacapital.net> <352e6172-938d-f8e4-c195-9fd1b881bdee@intel.com>
+Mime-Version: 1.0 (1.0)
+Content-Type: text/plain;
+        charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <4b448cde-ee4e-1c95-0f7f-4fe694be7db6@intel.com>
+In-Reply-To: <352e6172-938d-f8e4-c195-9fd1b881bdee@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Hansen <dave.hansen@intel.com>, Andy Lutomirski <luto@amacapital.net>
-Cc: Peter Zijlstra <peterz@infradead.org>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
+To: Dave Hansen <dave.hansen@intel.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 2019-06-07 at 13:00 -0700, Dave Hansen wrote:
-> On 6/7/19 12:49 PM, Yu-cheng Yu wrote:
-> > > 
-> > > This also gives us an excellent opportunity to make it read-only as seen
-> > > from
-> > > userspace to prevent exploits from just poking it full of ones before
-> > > redirecting execution.
-> > 
-> > GLIBC sets bits only for legacy code, and then makes the bitmap read-
-> > only.  That
-> > avoids most issues:
-> > 
-> >   To populate bitmap pages, mprotect() is required.
-> >   Reading zero bitmap pages would not waste more physical memory, right?
-> 
-> Huh, how does glibc know about all possible past and future legacy code
-> in the application?
 
-When dlopen() gets a legacy binary and the policy allows that, it will manage
-the bitmap:
 
-  If a bitmap has not been created, create one.
-  Set bits for the legacy code being loaded.
+> On Jun 7, 2019, at 11:58 AM, Dave Hansen <dave.hansen@intel.com> wrote:
+>=20
+> On 6/7/19 11:29 AM, Andy Lutomirski wrote:
+> ...
+>>> I think this new MSR probably needs to get included in oops output when
+>>> CET is enabled.
+>>=20
+>> This shouldn=E2=80=99t be able to OOPS because it only happens at CPL 3,
+>> right?  We should put it into core dumps, though.
+>=20
+> Good point.
+>=20
+> Yu-cheng, can you just confirm that the bitmap can't be referenced in
+> ring-0, no matter what?  We should also make sure that no funny business
+> happens if we put an address in the bitmap that faults, or is
+> non-canonical.  Do we have any self-tests for that?
+>=20
+> Let's say userspace gets a fault on this.  Do they have the
+> introspection capability to figure out why they faulted, say in their
+> signal handler?
 
-Yu-cheng
+We need to stick the tracker state in the sigcontext somewhere.
+
+Did we end up defining a signal frame shadow stack token?
+
+>=20
+>>> Why don't we require that a VMA be in place for the entire bitmap?
+>>> Don't we need a "get" prctl function too in case something like a JIT is=
+
+>>> running and needs to find the location of this bitmap to set bits itself=
+?
+>>>=20
+>>> Or, do we just go whole-hog and have the kernel manage the bitmap
+>>> itself. Our interface here could be:
+>>>=20
+>>>   prctl(PR_MARK_CODE_AS_LEGACY, start, size);
+>>>=20
+>>> and then have the kernel allocate and set the bitmap for those code
+>>> locations.
+>>=20
+>> Given that the format depends on the VA size, this might be a good
+>> idea.
+>=20
+> Yeah, making userspace know how large the address space is or could be
+> is rather nasty, especially if we ever get any fancy CPU features that
+> eat up address bits (a la ARM top-byte-ignore or SPARC ADI).
+
+That gets extra bad if we ever grow user code that uses it but is unaware. I=
+t could poke the wrong part of the bitmap.
+
+>=20
+>> Hmm.  Can we be creative and skip populating it with zeros?  The CPU
+> should only ever touch a page if we miss an ENDBR on it, so, in normal
+> operation, we don=E2=80=99t need anything to be there.  We could try to pr=
+event
+> anyone from *reading* it outside of ENDBR tracking if we want to avoid
+> people accidentally wasting lots of memory by forcing it to be fully
+> populated when the read it.
+>=20
+> Won't reads on a big, contiguous private mapping get the huge zero page
+> anyway?
+
+The zero pages may be free, but the page tables could be decently large.  Do=
+es the core mm code use huge, immense, etc huge zero pages?  Or can it synth=
+esize them by reusing page table pages that map zeros?
+
+>=20
+>> The one downside is this forces it to be per-mm, but that seems like
+>> a generally reasonable model anyway.
+>=20
+> Yeah, practically, you could only make it shared if you shared the
+> layout of all code in the address space.  I'm sure the big database(s)
+> do that cross-process, but I bet nobody else does.  User ASLR
+> practically guarantees that nobody can do this.
+
+I meant per-mm instead of per-task.
