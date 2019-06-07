@@ -1,69 +1,44 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v7 03/14] x86/cet/ibt: Add IBT legacy code bitmap setup function
-Date: Fri, 7 Jun 2019 11:29:50 -0700
-Message-ID: <34E0D316-552A-401C-ABAA-5584B5BC98C5@amacapital.net>
-References: <20190606200926.4029-1-yu-cheng.yu@intel.com> <20190606200926.4029-4-yu-cheng.yu@intel.com> <20190607080832.GT3419@hirez.programming.kicks-ass.net> <aa8a92ef231d512b5c9855ef416db050b5ab59a6.camel@intel.com> <20190607174336.GM3436@hirez.programming.kicks-ass.net> <b3de4110-5366-fdc7-a960-71dea543a42f@intel.com>
-Mime-Version: 1.0 (1.0)
-Content-Type: text/plain;
-        charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: [PATCH] uapi: avoid namespace conflict in linux/posix_types.h
+Date: Fri, 07 Jun 2019 20:43:03 +0200
+Message-ID: <871s05fd8o.fsf@oldenburg2.str.redhat.com>
+References: <20190319165123.3967889-1-arnd@arndb.de>
+        <alpine.DEB.2.21.1905072249570.19308@digraph.polyomino.org.uk>
+        <87tvd2j9ye.fsf@oldenburg2.str.redhat.com>
+        <CAHk-=wio1e4=WUUwmo-Ph55BEgH_X3oXzBpvPyLQg2TxzfGYuw@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <b3de4110-5366-fdc7-a960-71dea543a42f@intel.com>
+In-Reply-To: <CAHk-=wio1e4=WUUwmo-Ph55BEgH_X3oXzBpvPyLQg2TxzfGYuw@mail.gmail.com>
+        (Linus Torvalds's message of "Fri, 7 Jun 2019 11:27:57 -0700")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Hansen <dave.hansen@intel.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Joseph Myers <joseph@codesourcery.com>, Arnd Bergmann <arnd@arndb.de>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Netdev <netdev@vger.kernel.org>, Laura Abbott <labbott@redhat.com>, Paul Burton <pburton@wavecomp.com>, Deepa Dinamani <deepa.kernel@gmail.com>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+* Linus Torvalds:
 
+> If we're changing kernel header files, it's easy enough to change the
+> kernel users. I'd be more worried about user space that *uses* that
+> thing, and currently accesses 'val[]' by name.
+>
+> So the patch looks a bit odd to me. How are people supposed to use
+> fsid_t if they can't look at it?
 
-> On Jun 7, 2019, at 10:59 AM, Dave Hansen <dave.hansen@intel.com> wrote:
->=20
->> On 6/7/19 10:43 AM, Peter Zijlstra wrote:
->> I've no idea what the kernel should do; since you failed to answer the
->> question what happens when you point this to garbage.
->>=20
->> Does it then fault or what?
->=20
-> Yeah, I think you'll fault with a rather mysterious CR2 value since
-> you'll go look at the instruction that faulted and not see any
-> references to the CR2 value.
->=20
-> I think this new MSR probably needs to get included in oops output when
-> CET is enabled.
+The problem is that the header was previously not used pervasively in
+userspace headers.  See commit a623a7a1a5670c25a16881f5078072d272d96b71
+("y2038: fix socket.h header inclusion").  Very little code needed it
+before.
 
-This shouldn=E2=80=99t be able to OOPS because it only happens at CPL 3, rig=
-ht?  We should put it into core dumps, though.
+On the glibc side, we nowadays deal with this by splitting headers
+further.  (We used to suppress definitions with macros, but that tended
+to become convoluted.)  In this case, moving the definition of
+__kernel_long_t to its own header, so that
+include/uapi/asm-generic/socket.h can include that should fix it.
 
->=20
-> Why don't we require that a VMA be in place for the entire bitmap?
-> Don't we need a "get" prctl function too in case something like a JIT is
-> running and needs to find the location of this bitmap to set bits itself?
->=20
-> Or, do we just go whole-hog and have the kernel manage the bitmap
-> itself. Our interface here could be:
->=20
->    prctl(PR_MARK_CODE_AS_LEGACY, start, size);
->=20
-> and then have the kernel allocate and set the bitmap for those code
-> locations.
+> So now that I _do_ see the patch, there's no way I'll apply it.
 
-Given that the format depends on the VA size, this might be a good idea.  I b=
-et we can reuse the special mapping infrastructure for this =E2=80=94 the VM=
-A could
-be a MAP_PRIVATE special mapping named [cet_legacy_bitmap] or similar, and w=
-e can even make special rules to core dump it intelligently if needed.  And w=
-e can make mremap() on it work correctly if anyone (CRIU?) cares.
+Fair enough.
 
-Hmm.  Can we be creative and skip populating it with zeros?  The CPU should o=
-nly ever touch a page if we miss an ENDBR on it, so, in normal operation, we=
- don=E2=80=99t need anything to be there.  We could try to prevent anyone fr=
-om *reading* it outside of ENDBR tracking if we want to avoid people acciden=
-tally wasting lots of memory by forcing it to be fully populated when the re=
-ad it.
-
-The one downside is this forces it to be per-mm, but that seems like a gener=
-ally reasonable model anyway.
-
-This also gives us an excellent opportunity to make it read-only as seen fro=
-m userspace to prevent exploits from just poking it full of ones before redi=
-recting execution.=
+Thanks,
+Florian
