@@ -1,53 +1,176 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH v7 03/14] x86/cet/ibt: Add IBT legacy code bitmap setup
- function
-Date: Fri, 7 Jun 2019 10:08:32 +0200
-Message-ID: <20190607080832.GT3419@hirez.programming.kicks-ass.net>
-References: <20190606200926.4029-1-yu-cheng.yu@intel.com>
- <20190606200926.4029-4-yu-cheng.yu@intel.com>
+From: Renzo Davoli <renzo@cs.unibo.it>
+Subject: Re: [PATCH 1/1] eventfd new tag EFD_VPOLL: generate epoll events
+Date: Fri, 7 Jun 2019 11:40:51 +0200
+Message-ID: <20190607094051.GA8353@cs.unibo.it>
+References: <20190526142521.GA21842@cs.unibo.it>
+ <20190527073332.GA13782@kroah.com>
+ <20190527133621.GC26073@cs.unibo.it>
+ <480f1bda66b67f740f5da89189bbfca3@suse.de>
+ <20190531104502.GE3661@cs.unibo.it>
+ <cd20672aaf13f939b4f798d0839d2438@suse.de>
+ <20190603150010.GE4312@cs.unibo.it>
+ <5d44edf655e193789823094d1b4301fd@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190606200926.4029-4-yu-cheng.yu@intel.com>
+In-Reply-To: <5d44edf655e193789823094d1b4301fd@suse.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
+To: Roman Penyaev <rpenyaev@suse.de>
+Cc: Greg KH <gregkh@linuxfoundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Davide Libenzi <davidel@xmailserver.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel-owner@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jun 06, 2019 at 01:09:15PM -0700, Yu-cheng Yu wrote:
-> Indirect Branch Tracking (IBT) provides an optional legacy code bitmap
-> that allows execution of legacy, non-IBT compatible library by an
-> IBT-enabled application.  When set, each bit in the bitmap indicates
-> one page of legacy code.
+Hi Roman,
+
+On Thu, Jun 06, 2019 at 10:11:57PM +0200, Roman Penyaev wrote:
+> Hi Renzo,
+> On 2019-06-03 17:00, Renzo Davoli wrote:
+> > Please, have a look of the README.md page here:
+> > https://github.com/virtualsquare/vuos
+> Is that similar to what user-mode linux does?  I mean the principle.
+
+let us write this proportion:
+user-mode-linux / umvu = linux / namespace
+
+In a comparison between user-mode linux and umvu,
+while the way to get the system call requests is the same (ptrace)
+the goal is different.
+
+user-mode linux catches all the system calls, none of them is forwarded to
+the real kernel: it uses a linux kernel compiled as a process to give processes
+the illusion to live in another machine.
+
+umvu catches all the system calls and then it decides if the syscall must be forwarded
+to the kernel (maybe modified) or entirely processed at user-level by the hypervisor
+(by means of specific plug-in modules like vufuse for file systems, vudev for devices
+ and so on).
+While the "illusion" of user-mode linux is a global illusion, the "illusion" provided by
+umvu is limited and configurable. After a "mount" of a filesystem using vufuse,
+the file system tree is the same *but* the subtree of the mountpoint.
+The illusion is limited to the subtree as only the system call requests for paths inside
+the subtree are processed by umvu and its modules.
+
+It is similar to a namespace implemented at user level.
+w.r.t. namespaces:
+* umvu does not change the attack surface of the kernel (it is just a virtualization
+		-- a.k.a. illusion -- provided by a user process to other user processes)
+* umvu can provide features not currently supported by the kernel (e.g. a file system
+		organization unavailable as kernel code, networking stacks at user level etc.)
+* ...
+
+umvu is an implementation of vuos concepts using ptrace. In a future maybe it will be
+possibile to reimplement the same idea of partial virtual machines using other
+syscall tracing/filtering tools.
 > 
-> The bitmap is allocated and setup from the application.
+> > I am not trying to port some tools to use user-space implemented
+> > stacks or device
+> > drivers/emulators, I am seeking to a general purpose approach.
+> 
+> You still intersect *each* syscall, why not to do the same for epoll_wait()
+> and replace events with correct value?  Seems you do something similar
+> already
+> in a vu_wrap_poll.c: wo_epoll_wait(), right?
+> 
+> Don't get me wrong, I really want to understand whether everything really
+> looks so bad without proposed change. It seems not, because the whole
+> principle
+> is based on intersection of each syscall, thus one more one less - it does
+> not
+> become more clean and especially does not look like a generic purpose
+> solution,
+> which you seek.  I may be wrong.
+Your comments are precious. Thank you as I see that you have browsed into my code
+to have a better view of the problem.
 
-> +int cet_setup_ibt_bitmap(unsigned long bitmap, unsigned long size)
-> +{
-> +	u64 r;
-> +
-> +	if (!current->thread.cet.ibt_enabled)
-> +		return -EINVAL;
-> +
-> +	if (!PAGE_ALIGNED(bitmap) || (size > TASK_SIZE_MAX))
-> +		return -EINVAL;
-> +
-> +	current->thread.cet.ibt_bitmap_addr = bitmap;
-> +	current->thread.cet.ibt_bitmap_size = size;
-> +
-> +	/*
-> +	 * Turn on IBT legacy bitmap.
-> +	 */
-> +	modify_fpu_regs_begin();
-> +	rdmsrl(MSR_IA32_U_CET, r);
-> +	r |= (MSR_IA32_CET_LEG_IW_EN | bitmap);
-> +	wrmsrl(MSR_IA32_U_CET, r);
-> +	modify_fpu_regs_end();
-> +
-> +	return 0;
-> +}
+umvu is a modular tool. The executable of umvu is a dispatcher between the
+system call requests coming from the user processes and modules (loaded at
+run time as dynamic plug-in libraries)
 
-So you just program a random user supplied address into the hardware.
-What happens if there's not actually anything at that address or the
-user munmap()s the data after doing this?
++-----------------+         +------+      +---------------------------------+
++processes running|<------->| umvu |<---->| module (e.g. vufuse/vudev/vunet)|
++  "inside" umvu  |         +------+      +---------------------------------+
++-----------------+
+
+Each module "registers" to umvu its "responsabilities"
+It can register:
+* a pathname (it will receive the syscall requests for that subtree)
+* an address_family (all the syscall for sockets of that AF)
+* major/minor numbers of a char or block device
+* a systam call number
+* ....
+(each module can register more items)
+
+The problem is not in the dialogue between umvu and the user processes
+(<---> on the left in the diagram above) but between umvu and its modules
+(<---> on the right). 
+(wi_epoll_wait, wd_epoll_wait, wo_epoll_wait are the three wrappers used
+ respectively before, during and after epoll_wait in the dialogue on the left with the
+user processes).
+
+When a user process generates a "read" syscall request and umvu discovers that
+the fd is managed by vufuse, it forwards to vufuse a "read" request
+having the same signature of the "read" system call (plus a trailing fdprivate arg for
+syscalls using a fd. This arg can be used to speed up virtualization but can be safely
+ignored).
+
+If for the same "read" request the file descriptor is managed by vunet,
+it is forwarded to vunet (actually it is converted to "recvmsg": if fd is a socket
+recvmesg manages all read/recv/recvfrom/recvmsg, umvu tends to simplify the API 
+by unifying similar system calls).
+
+But what about poll/epoll/ppoll/select/pselect?
+umvu takes care of all the system call requests but it needs a clean way to ask
+modules some feedback when the expected events happen.
+
+I think the clean way to do it is illustrated in test_modules/unrealsock.c
+This is a test module: it registers the address families AF_INET, AF_INET6 and AF_NETLINK
+then it forwards all the requests to the system calls.
+In this way when this module is loaded all system calls requests 
+related to sockets of the mentioned families are sent to unrealsock 
+which uses the system call.
+
+When unrealsock is loaded
+   vu_insmod unrealsock
+nothing apparently happens.
+It is possible to run ssh, ask for ip addresses using "ip addr" etc.
+The difference is that all the system call requests "pass through" umvu
+and are sent to the real kernel by unrealsock.
+
+We use modules like unrealsock to test umvu features in an independent manner (without
+specific modules and submodules).
+
+All the stuff related the virtualization of poll/ppoll/select/pselect/epoll is managed at
+line 77:
+		vu_syscall_handler(s, epoll_ctl) = epoll_ctl;
+
+It says: "dear module if I need to get informed by you about an event on a file descriptor
+I'll call an epoll_ctl". That's all.
+
+Here it works as I am diverting the request to the system call which is able to generate
+EPOLL_PRI and all other flavours of EPOLL_*.
+When I want to write a module able to virtualize a network stack I need to write my epoll_ctl 
+so I need a way to generate EPOLL_PRI when I receive an OOB packet, EPOLL_IN must be set 
+when the stack receives a packet and reset when the buffer gets empty, etc.
+
+For sure I could teach people aiming to write a module for umvu that there is a variable in
+proxima centaury (I mean an helper function using data.ptr of struct epoll_event) and
+then if they generate an EPOLL_IN it will be processed as if it were an EPOLL_PRI.
+why?
+
+Let us reverse the question.
+Why not giving linux programmers the ability to have file descriptors on which arbitrary 
+EPOLL events can be generated as they need/please? eventfd/EFD_VPOLL is (in my opinion) 
+a simple way to implement this feature, we can converge on a different API.
+It is not a Copernican revolution of the code. It seems to me that it is not a dangerous
+feature (I could be wrong, please tell me!). It is possible to generate signals normally
+sent by the kernel (e.g. SEGV), why it is not possible to generate an EPOLL_PRI?
+There is at least one happy user of the new feature (me) and other may come.
+It is just one (tiny) more degree of freedom.
+
+Many kernel features were added for one usage (e.g. seccomp was created to lend/rent processing
+power in a safe way) and then it was discovered that they are useful in other cases (e.g.
+sandboxes for browsers).
+
+Again thanks to everybody who will have read this message up to this point ;-)
+
+	renzo
