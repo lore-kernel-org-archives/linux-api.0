@@ -1,34 +1,80 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
 Subject: Re: [PATCH v7 03/14] x86/cet/ibt: Add IBT legacy code bitmap setup
  function
-Date: Fri, 07 Jun 2019 12:23:46 -0700
-Message-ID: <997ef050c13e3654dee6a862d810cffcafce249b.camel@intel.com>
+Date: Fri, 07 Jun 2019 12:49:28 -0700
+Message-ID: <7e0b97bf1fbe6ff20653a8e4e147c6285cc5552d.camel@intel.com>
 References: <20190606200926.4029-1-yu-cheng.yu@intel.com>
          <20190606200926.4029-4-yu-cheng.yu@intel.com>
-         <c5c21778-f10f-cef8-c937-1e8ad1e2a7cf@intel.com>
+         <20190607080832.GT3419@hirez.programming.kicks-ass.net>
+         <aa8a92ef231d512b5c9855ef416db050b5ab59a6.camel@intel.com>
+         <20190607174336.GM3436@hirez.programming.kicks-ass.net>
+         <b3de4110-5366-fdc7-a960-71dea543a42f@intel.com>
+         <34E0D316-552A-401C-ABAA-5584B5BC98C5@amacapital.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <c5c21778-f10f-cef8-c937-1e8ad1e2a7cf@intel.com>
+In-Reply-To: <34E0D316-552A-401C-ABAA-5584B5BC98C5@amacapital.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Hansen <dave.hansen@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>
+To: Andy Lutomirski <luto@amacapital.net>, Dave Hansen <dave.hansen@intel.com>
+Cc: Peter Zijlstra <peterz@infradead.org>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 2019-06-07 at 12:03 -0700, Dave Hansen wrote:
-> On 6/6/19 1:09 PM, Yu-cheng Yu wrote:
-> > +	modify_fpu_regs_begin();
-> > +	rdmsrl(MSR_IA32_U_CET, r);
-> > +	r |= (MSR_IA32_CET_LEG_IW_EN | bitmap);
-> > +	wrmsrl(MSR_IA32_U_CET, r);
-> > +	modify_fpu_regs_end();
+On Fri, 2019-06-07 at 11:29 -0700, Andy Lutomirski wrote:
+> > On Jun 7, 2019, at 10:59 AM, Dave Hansen <dave.hansen@intel.com> wrote:
+> > 
+> > > On 6/7/19 10:43 AM, Peter Zijlstra wrote:
+> > > I've no idea what the kernel should do; since you failed to answer the
+> > > question what happens when you point this to garbage.
+> > > 
+> > > Does it then fault or what?
+> > 
+> > Yeah, I think you'll fault with a rather mysterious CR2 value since
+> > you'll go look at the instruction that faulted and not see any
+> > references to the CR2 value.
+> > 
+> > I think this new MSR probably needs to get included in oops output when
+> > CET is enabled.
 > 
-> Isn't there a bunch of other stuff in this MSR?  It seems like the
-> bitmap value would allow overwriting lots of bits in the MSR that have
-> nothing to do with the bitmap... in a prctl() that's supposed to only be
-> dealing with the bitmap.
+> This shouldn’t be able to OOPS because it only happens at CPL 3, right?  We
+> should put it into core dumps, though.
+> 
+> > 
+> > Why don't we require that a VMA be in place for the entire bitmap?
+> > Don't we need a "get" prctl function too in case something like a JIT is
+> > running and needs to find the location of this bitmap to set bits itself?
+> > 
+> > Or, do we just go whole-hog and have the kernel manage the bitmap
+> > itself. Our interface here could be:
+> > 
+> >    prctl(PR_MARK_CODE_AS_LEGACY, start, size);
+> > 
+> > and then have the kernel allocate and set the bitmap for those code
+> > locations.
+> 
+> Given that the format depends on the VA size, this might be a good idea.  I
+> bet we can reuse the special mapping infrastructure for this — the VMA could
+> be a MAP_PRIVATE special mapping named [cet_legacy_bitmap] or similar, and we
+> can even make special rules to core dump it intelligently if needed.  And we
+> can make mremap() on it work correctly if anyone (CRIU?) cares.
+> 
+> Hmm.  Can we be creative and skip populating it with zeros?  The CPU should
+> only ever touch a page if we miss an ENDBR on it, so, in normal operation, we
+> don’t need anything to be there.  We could try to prevent anyone from
+> *reading* it outside of ENDBR tracking if we want to avoid people accidentally
+> wasting lots of memory by forcing it to be fully populated when the read it.
+> 
+> The one downside is this forces it to be per-mm, but that seems like a
+> generally reasonable model anyway.
+> 
+> This also gives us an excellent opportunity to make it read-only as seen from
+> userspace to prevent exploits from just poking it full of ones before
+> redirecting execution.
 
-Yes, the bitmap address should have been masked, although it is checked for page
-alignment (which has the same effect).  I will fix it.
+GLIBC sets bits only for legacy code, and then makes the bitmap read-only.  That
+avoids most issues:
+
+  To populate bitmap pages, mprotect() is required.
+  Reading zero bitmap pages would not waste more physical memory, right?
 
 Yu-cheng
