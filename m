@@ -1,71 +1,61 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [RFC]: Convention for naming syscall revisions
-Date: Fri, 7 Jun 2019 15:42:53 +0200
-Message-ID: <20190607134252.kf3e6ifm7qpw2cas@brauner.io>
-References: <20190606154224.7lln4zp6v3ey4icq@brauner.io>
- <20190606235435.GD23169@mit.edu>
+From: Alan Stern <stern@rowland.harvard.edu>
+Subject: Re: [PATCH 09/10] usb: Add USB subsystem notifications [ver #3]
+Date: Fri, 7 Jun 2019 10:01:30 -0400 (EDT)
+Message-ID: <Pine.LNX.4.44L0.1906071000260.1612-100000@iolanthe.rowland.org>
+References: <87imthdhjb.fsf@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190606235435.GD23169@mit.edu>
+In-Reply-To: <87imthdhjb.fsf@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Theodore Ts'o <tytso@mit.edu>
-Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Felipe Balbi <felipe.balbi@linux.intel.com>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, David Howells <dhowells@redhat.com>, viro@zeniv.linux.org.uk, linux-usb@vger.kernel.org, raven@themaw.net, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jun 06, 2019 at 07:54:35PM -0400, Theodore Ts'o wrote:
-> On Thu, Jun 06, 2019 at 05:42:25PM +0200, Christian Brauner wrote:
-> > Hey everyone,
-> > 
-> > I hope this is not going to start a trash fire.
-> > 
-> > While working on a new clone version I tried to find out what the
-> > current naming conventions for syscall revisions is. I was told and
-> > seemed to be able to confirm through the syscall list that revisions of
-> > syscalls are for the most part (for examples see [1]) named after the
-> > number of arguments and not for the number of revisions. But some also
-> > seem to escape that logic (e.g. clone2).
+On Fri, 7 Jun 2019, Felipe Balbi wrote:
+
+> Hi,
 > 
-> There are also examples which show that it's a revision number:
+> Greg Kroah-Hartman <gregkh@linuxfoundation.org> writes:
+> > On Thu, Jun 06, 2019 at 10:55:24AM -0400, Alan Stern wrote:
+> >> On Thu, 6 Jun 2019, Greg Kroah-Hartman wrote:
+> >> 
+> >> > On Thu, Jun 06, 2019 at 10:24:18AM -0400, Alan Stern wrote:
+> >> > > On Thu, 6 Jun 2019, David Howells wrote:
+> >> > > 
+> >> > > > Add a USB subsystem notification mechanism whereby notifications about
+> >> > > > hardware events such as device connection, disconnection, reset and I/O
+> >> > > > errors, can be reported to a monitoring process asynchronously.
+> >> > > 
+> >> > > USB I/O errors covers an awfully large and vague field.  Do we really
+> >> > > want to include them?  I'm doubtful.
+> >> > 
+> >> > See the other patch on the linux-usb list that wanted to start adding
+> >> > KOBJ_CHANGE notifications about USB "i/o errors".
+> >> 
+> >> That patch wanted to add notifications only for enumeration failures
+> >> (assuming you're talking about the patch from Eugeniu Rosca), not I/O
+> >> errors in general.
+> >
+> > Yes, sorry, I was thinking that as a "I/O failed in enumeration" :)
+> >
+> >> > So for "severe" issues, yes, we should do this, but perhaps not for all
+> >> > of the "normal" things we see when a device is yanked out of the system
+> >> > and the like.
+> >> 
+> >> Then what counts as a "severe" issue?  Anything besides enumeration 
+> >> failure?
+> >
+> > Not that I can think of at the moment, other than the other recently
+> > added KOBJ_CHANGE issue.  I'm sure we have other "hard failure" issues
+> > in the USB stack that people will want exposed over time.
 > 
->       preadv2, pwritev2, mlock2, sync_file_range2
-> 
-> immediately come to mind.  It's also important to note that in some
+> From an XHCI standpoint, Transaction Errors might be one thing. They
+> happen rarely and are a strong indication that the bus itself is
+> bad. Either bad cable, misbehaving PHYs, improper power management, etc.
 
-Exactly, that's what made it confusing in the first place.
+Don't you also get transaction errors if the user unplugs a device in 
+the middle of a transfer?  That's not the sort of thing we want to sent 
+notifications about.
 
-> cases, we do something very different (look aht the stat and fstat
-> variants), and that in some cases the number of parameters for a
-
-Sure, there will always be cases where we will revise a syscall but it
-makes sense to name it completely different than its predecessor.
-(Very different behavior, bad original naming immediately come to mind
-as reasons.)
-
-But for the general case where we do stuff like:
-dup()
-dup2()
-dup3()
-
-we could probably just make a call and document something like:
-
-"If a syscall is revised and a completely new name is not warranted by
-its design the consensus is to append the revision number."
-
-and then maybe also add a brief section about what we historically did
-and maybe also briefly point out what some good indicators are that a
-completely new name could be used.
-
-> system call vary between architectures (because of system call
-> argument passing limitations), and this gets papered over by glibc.
-> 
-> So we can define what the historical pattern, but there might be a big
-> difference between what might make sense as an internal naming
-> convention, and the names that we want to expose to userspace
-> application programmers --- especially if the number of arguments at
-
-Right, but I am specifically interested in naming conventions for the
-kernel not for userspace. :)
-
-Christian
+Alan Stern
