@@ -1,44 +1,38 @@
 From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH v7 22/27] binfmt_elf: Extract .note.gnu.property from an
- ELF file
-Date: Fri, 7 Jun 2019 09:58:22 +0200
-Message-ID: <20190607075822.GR3419@hirez.programming.kicks-ass.net>
-References: <20190606200646.3951-1-yu-cheng.yu@intel.com>
- <20190606200646.3951-23-yu-cheng.yu@intel.com>
+Subject: Re: [PATCH v7 07/14] x86/cet/ibt: Add arch_prctl functions for IBT
+Date: Fri, 7 Jun 2019 10:07:06 +0200
+Message-ID: <20190607080706.GS3419@hirez.programming.kicks-ass.net>
+References: <20190606200926.4029-1-yu-cheng.yu@intel.com>
+ <20190606200926.4029-8-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190606200646.3951-23-yu-cheng.yu@intel.com>
+In-Reply-To: <20190606200926.4029-8-yu-cheng.yu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Yu-cheng Yu <yu-cheng.yu@intel.com>
 Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jun 06, 2019 at 01:06:41PM -0700, Yu-cheng Yu wrote:
-> An ELF file's .note.gnu.property indicates features the executable file
-> can support.  For example, the property GNU_PROPERTY_X86_FEATURE_1_AND
-> indicates the file supports GNU_PROPERTY_X86_FEATURE_1_IBT and/or
-> GNU_PROPERTY_X86_FEATURE_1_SHSTK.
-> 
-> With this patch, if an arch needs to setup features from ELF properties,
-> it needs CONFIG_ARCH_USE_GNU_PROPERTY to be set, and a specific
-> arch_setup_property().
-> 
-> For example, for X86_64:
-> 
-> int arch_setup_property(void *ehdr, void *phdr, struct file *f, bool inter)
-> {
-> 	int r;
-> 	uint32_t property;
-> 
-> 	r = get_gnu_property(ehdr, phdr, f, GNU_PROPERTY_X86_FEATURE_1_AND,
-> 			     &property);
-> 	...
-> }
-> 
-> Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
-> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+On Thu, Jun 06, 2019 at 01:09:19PM -0700, Yu-cheng Yu wrote:
 
-Did HJ write this patch as suggested by that SoB chain? If so, you lost
-a From: line on top, if not, the SoB thing is invalid.
+> +static int handle_bitmap(unsigned long arg2)
+> +{
+> +	unsigned long addr, size;
+> +
+> +	if (get_user(addr, (unsigned long __user *)arg2) ||
+> +	    get_user(size, (unsigned long __user *)arg2 + 1))
+> +		return -EFAULT;
+> +
+> +	return cet_setup_ibt_bitmap(addr, size);
+> +}
+
+
+> +	/*
+> +	 * Allocate legacy bitmap and return address & size to user.
+> +	 */
+> +	case ARCH_X86_CET_SET_LEGACY_BITMAP:
+> +		return handle_bitmap(arg2);
+
+AFAICT it does exactly the opposite of that comment; it gets the address
+and size from userspace and doesn't allocate anything at all.
