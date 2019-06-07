@@ -1,50 +1,59 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: Re: [PATCH v7 22/27] binfmt_elf: Extract .note.gnu.property from an
- ELF file
-Date: Fri, 07 Jun 2019 09:17:06 -0700
-Message-ID: <1b5778f8f1336ad7a63f4621f189b7f04a56a9ed.camel@intel.com>
-References: <20190606200646.3951-1-yu-cheng.yu@intel.com>
-         <20190606200646.3951-23-yu-cheng.yu@intel.com>
-         <20190607075822.GR3419@hirez.programming.kicks-ass.net>
+Subject: Re: [PATCH v7 03/14] x86/cet/ibt: Add IBT legacy code bitmap setup
+ function
+Date: Fri, 07 Jun 2019 09:23:43 -0700
+Message-ID: <aa8a92ef231d512b5c9855ef416db050b5ab59a6.camel@intel.com>
+References: <20190606200926.4029-1-yu-cheng.yu@intel.com>
+         <20190606200926.4029-4-yu-cheng.yu@intel.com>
+         <20190607080832.GT3419@hirez.programming.kicks-ass.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190607075822.GR3419@hirez.programming.kicks-ass.net>
+In-Reply-To: <20190607080832.GT3419@hirez.programming.kicks-ass.net>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Peter Zijlstra <peterz@infradead.org>
 Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 2019-06-07 at 09:58 +0200, Peter Zijlstra wrote:
-> On Thu, Jun 06, 2019 at 01:06:41PM -0700, Yu-cheng Yu wrote:
-> > An ELF file's .note.gnu.property indicates features the executable file
-> > can support.  For example, the property GNU_PROPERTY_X86_FEATURE_1_AND
-> > indicates the file supports GNU_PROPERTY_X86_FEATURE_1_IBT and/or
-> > GNU_PROPERTY_X86_FEATURE_1_SHSTK.
+On Fri, 2019-06-07 at 10:08 +0200, Peter Zijlstra wrote:
+> On Thu, Jun 06, 2019 at 01:09:15PM -0700, Yu-cheng Yu wrote:
+> > Indirect Branch Tracking (IBT) provides an optional legacy code bitmap
+> > that allows execution of legacy, non-IBT compatible library by an
+> > IBT-enabled application.  When set, each bit in the bitmap indicates
+> > one page of legacy code.
 > > 
-> > With this patch, if an arch needs to setup features from ELF properties,
-> > it needs CONFIG_ARCH_USE_GNU_PROPERTY to be set, and a specific
-> > arch_setup_property().
-> > 
-> > For example, for X86_64:
-> > 
-> > int arch_setup_property(void *ehdr, void *phdr, struct file *f, bool inter)
-> > {
-> > 	int r;
-> > 	uint32_t property;
-> > 
-> > 	r = get_gnu_property(ehdr, phdr, f, GNU_PROPERTY_X86_FEATURE_1_AND,
-> > 			     &property);
-> > 	...
-> > }
-> > 
-> > Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
-> > Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+> > The bitmap is allocated and setup from the application.
+> > +int cet_setup_ibt_bitmap(unsigned long bitmap, unsigned long size)
+> > +{
+> > +	u64 r;
+> > +
+> > +	if (!current->thread.cet.ibt_enabled)
+> > +		return -EINVAL;
+> > +
+> > +	if (!PAGE_ALIGNED(bitmap) || (size > TASK_SIZE_MAX))
+> > +		return -EINVAL;
+> > +
+> > +	current->thread.cet.ibt_bitmap_addr = bitmap;
+> > +	current->thread.cet.ibt_bitmap_size = size;
+> > +
+> > +	/*
+> > +	 * Turn on IBT legacy bitmap.
+> > +	 */
+> > +	modify_fpu_regs_begin();
+> > +	rdmsrl(MSR_IA32_U_CET, r);
+> > +	r |= (MSR_IA32_CET_LEG_IW_EN | bitmap);
+> > +	wrmsrl(MSR_IA32_U_CET, r);
+> > +	modify_fpu_regs_end();
+> > +
+> > +	return 0;
+> > +}
 > 
-> Did HJ write this patch as suggested by that SoB chain? If so, you lost
-> a From: line on top, if not, the SoB thing is invalid.
+> So you just program a random user supplied address into the hardware.
+> What happens if there's not actually anything at that address or the
+> user munmap()s the data after doing this?
 
-I will fix that.
+This function checks the bitmap's alignment and size, and anything else is the
+app's responsibility.  What else do you think the kernel should check?
 
 Yu-cheng
