@@ -1,202 +1,153 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH v3 1/2] fork: add clone3
-Date: Sat, 8 Jun 2019 10:15:28 +0200
-Message-ID: <20190608081527.nxeo3xk2xt5hhpyx@brauner.io>
-References: <20190604160944.4058-1-christian@brauner.io>
- <20190606214645.GA31599@mail.hallyn.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH v2 for 5.2 08/12] rseq/selftests: arm: use udf
+ instruction for RSEQ_SIG
+Date: Sat, 8 Jun 2019 11:52:45 -0400 (EDT)
+Message-ID: <716499178.40175.1560009165920.JavaMail.zimbra@efficios.com>
+References: <20190429152803.7719-9-mathieu.desnoyers@efficios.com> <20190503193858.9676-1-mathieu.desnoyers@efficios.com> <1975020343.35751.1559844149532.JavaMail.zimbra@efficios.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190606214645.GA31599@mail.hallyn.com>
+In-Reply-To: <1975020343.35751.1559844149532.JavaMail.zimbra@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, torvalds@linux-foundation.org
-Cc: jannh@google.com, "Serge E. Hallyn" <serge@hallyn.com>, keescook@chromium.org, fweimer@redhat.com, oleg@redhat.com, arnd@arndb.de, dhowells@redhat.com, Pavel Emelyanov <xemul@virtuozzo.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@gmail.com>, linux-api@vger.kernel.org
+To: Will Deacon <will.deacon@arm.com>, Russell King <linux@arm.linux.org.uk>
+Cc: linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, shuah <shuah@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Andrew Morton <akpm@linux-foundation.org>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Andi Kleen <andi@firstfloor.org>, Chris Lameter <cl@linux.com>, Ben Maurer <bmaurer@fb.com>, rostedt <rostedt@goodmis.org>, Josh Triplett <josh@joshtriplett.org>, Linus Torvalds <torvalds@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Michael Kerrisk <mtk.manpages@>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jun 06, 2019 at 04:46:45PM -0500, Serge Hallyn wrote:
-> On Tue, Jun 04, 2019 at 06:09:43PM +0200, Christian Brauner wrote:
-> > This adds the clone3 system call.
-> > 
-> > As mentioned several times already (cf. [7], [8]) here's the promised
-> > patchset for clone3().
-> > 
-> > We recently merged the CLONE_PIDFD patchset (cf. [1]). It took the last
-> > free flag from clone().
-> > 
-> > Independent of the CLONE_PIDFD patchset a time namespace has been discussed
-> > at Linux Plumber Conference last year and has been sent out and reviewed
-> > (cf. [5]). It is expected that it will go upstream in the not too distant
-> > future. However, it relies on the addition of the CLONE_NEWTIME flag to
-> > clone(). The only other good candidate - CLONE_DETACHED - is currently not
-> > recyclable as we have identified at least two large or widely used
-> > codebases that currently pass this flag (cf. [2], [3], and [4]). Given that
-> > CLONE_PIDFD grabbed the last clone() flag the time namespace is effectively
-> > blocked. clone3() has the advantage that it will unblock this patchset
-> > again. In general, clone3() is extensible and allows for the implementation
-> > of new features.
-> > 
-> > The idea is to keep clone3() very simple and close to the original clone(),
-> > specifically, to keep on supporting old clone()-based workloads.
-> > We know there have been various creative proposals how a new process
-> > creation syscall or even api is supposed to look like. Some people even
-> > going so far as to argue that the traditional fork()+exec() split should be
-> > abandoned in favor of an in-kernel version of spawn(). Independent of
-> > whether or not we personally think spawn() is a good idea this patchset has
-> > and does not want to have anything to do with this.
-> > One stance we take is that there's no real good alternative to
-> > clone()+exec() and we need and want to support this model going forward;
-> > independent of spawn().
-> > The following requirements guided clone3():
-> > - bump the number of available flags
-> > - move arguments that are currently passed as separate arguments
-> >   in clone() into a dedicated struct clone_args
-> >   - choose a struct layout that is easy to handle on 32 and on 64 bit
-> >   - choose a struct layout that is extensible
-> >   - give new flags that currently need to abuse another flag's dedicated
-> >     return argument in clone() their own dedicated return argument
-> >     (e.g. CLONE_PIDFD)
-> >   - use a separate kernel internal struct kernel_clone_args that is
-> >     properly typed according to current kernel conventions in fork.c and is
-> >     different from  the uapi struct clone_args
-> > - port _do_fork() to use kernel_clone_args so that all process creation
-> >   syscalls such as fork(), vfork(), clone(), and clone3() behave identical
-> >   (Arnd suggested, that we can probably also port do_fork() itself in a
-> >    separate patchset.)
-> > - ease of transition for userspace from clone() to clone3()
-> >   This very much means that we do *not* remove functionality that userspace
-> >   currently relies on as the latter is a good way of creating a syscall
-> >   that won't be adopted.
-> > - do not try to be clever or complex: keep clone3() as dumb as possible
-> > 
-> > In accordance with Linus suggestions (cf. [11]), clone3() has the following
-> > signature:
-> > 
-> > /* uapi */
-> > struct clone_args {
-> >         __aligned_u64 flags;
-> >         __aligned_u64 pidfd;
-> >         __aligned_u64 child_tid;
-> >         __aligned_u64 parent_tid;
-> >         __aligned_u64 exit_signal;
-> >         __aligned_u64 stack;
-> >         __aligned_u64 stack_size;
-> >         __aligned_u64 tls;
-> > };
-> > 
-> > /* kernel internal */
-> > struct kernel_clone_args {
-> >         u64 flags;
-> >         int __user *pidfd;
-> >         int __user *child_tid;
-> >         int __user *parent_tid;
-> >         int exit_signal;
-> >         unsigned long stack;
-> >         unsigned long stack_size;
-> >         unsigned long tls;
-> > };
-> > 
-> > long sys_clone3(struct clone_args __user *uargs, size_t size)
-> > 
-> > clone3() cleanly supports all of the supported flags from clone() and thus
-> > all legacy workloads.
-> > The advantage of sticking close to the old clone() is the low cost for
-> > userspace to switch to this new api. Quite a lot of userspace apis (e.g.
-> > pthreads) are based on the clone() syscall. With the new clone3() syscall
-> > supporting all of the old workloads and opening up the ability to add new
-> > features should make switching to it for userspace more appealing. In
-> > essence, glibc can just write a simple wrapper to switch from clone() to
-> > clone3().
-> > 
-> > There has been some interest in this patchset already. We have received a
-> > patch from the CRIU corner for clone3() that would set the PID/TID of a
-> > restored process without /proc/sys/kernel/ns_last_pid to eliminate a race.
-> > 
-> > /* User visible differences to legacy clone() */
-> > - CLONE_DETACHED will cause EINVAL with clone3()
-> > - CSIGNAL is deprecated
-> >   It is superseeded by a dedicated "exit_signal" argument in struct
-> >   clone_args freeing up space for additional flags.
-> >   This is based on a suggestion from Andrei and Linus (cf. [9] and [10])
-> > 
-> > /* References */
-> > [1]: b3e5838252665ee4cfa76b82bdf1198dca81e5be
-> > [2]: https://dxr.mozilla.org/mozilla-central/source/security/sandbox/linux/SandboxFilter.cpp#343
-> > [3]: https://git.musl-libc.org/cgit/musl/tree/src/thread/pthread_create.c#n233
-> > [4]: https://sources.debian.org/src/blcr/0.8.5-2.3/cr_module/cr_dump_self.c/?hl=740#L740
-> > [5]: https://lore.kernel.org/lkml/20190425161416.26600-1-dima@arista.com/
-> > [6]: https://lore.kernel.org/lkml/20190425161416.26600-2-dima@arista.com/
-> > [7]: https://lore.kernel.org/lkml/CAHrFyr5HxpGXA2YrKza-oB-GGwJCqwPfyhD-Y5wbktWZdt0sGQ@mail.gmail.com/
-> > [8]: https://lore.kernel.org/lkml/20190524102756.qjsjxukuq2f4t6bo@brauner.io/
-> > [9]: https://lore.kernel.org/lkml/20190529222414.GA6492@gmail.com/
-> > [10]: https://lore.kernel.org/lkml/CAHk-=whQP-Ykxi=zSYaV9iXsHsENa+2fdj-zYKwyeyed63Lsfw@mail.gmail.com/
-> > [11]: https://lore.kernel.org/lkml/CAHk-=wieuV4hGwznPsX-8E0G2FKhx3NjZ9X3dTKh5zKd+iqOBw@mail.gmail.com/
-> > 
-> > Suggested-by: Linus Torvalds <torvalds@linux-foundation.org>
-> > Signed-off-by: Christian Brauner <christian@brauner.io>
+----- On Jun 6, 2019, at 8:02 PM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
+
+> ----- On May 3, 2019, at 3:38 PM, Mathieu Desnoyers
+> mathieu.desnoyers@efficios.com wrote:
 > 
-> Acked-by: Serge Hallyn <serge@hallyn.com>
-
-This also carries an Ack by Arnd and there don't seem to be technical
-issues anymore.
-So I'm going to move this over into my for-next branch targeting 5.3 to
-see some testing.
-
-Thanks!
-Christian
-
+>> Use udf as the guard instruction for the restartable sequence abort
+>> handler.
+>> 
+>> Previously, the chosen signature was not a valid instruction, based
+>> on the assumption that it could always sit in a literal pool. However,
+>> there are compilation environments in which literal pools are not
+>> available, for instance execute-only code. Therefore, we need to
+>> choose a signature value that is also a valid instruction.
+>> 
+>> Handle compiling with -mbig-endian on ARMv6+, which generates binaries
+>> with mixed code vs data endianness (little endian code, big endian
+>> data).
+>> 
+>> Else mismatch between code endianness for the generated signatures and
+>> data endianness for the RSEQ_SIG parameter passed to the rseq
+>> registration will trigger application segmentation faults when the
+>> kernel try to abort rseq critical sections.
+>> 
+>> Prior to ARMv6, -mbig-endian generates big-endian code and data, so
+>> endianness should not be reversed in that case.
 > 
-> > Cc: Arnd Bergmann <arnd@arndb.de>
-> > Cc: Kees Cook <keescook@chromium.org>
-> > Cc: Pavel Emelyanov <xemul@virtuozzo.com>
-> > Cc: Jann Horn <jannh@google.com>
-> > Cc: David Howells <dhowells@redhat.com>
-> > Cc: Andrew Morton <akpm@linux-foundation.org>
-> > Cc: Oleg Nesterov <oleg@redhat.com>
-> > Cc: Adrian Reber <adrian@lisas.de>
-> > Cc: Linus Torvalds <torvalds@linux-foundation.org>
-> > Cc: Andrei Vagin <avagin@gmail.com>
-> > Cc: Al Viro <viro@zeniv.linux.org.uk>
-> > Cc: Florian Weimer <fweimer@redhat.com>
-> > Cc: linux-api@vger.kernel.org
-> > ---
-> > v1:
-> > - Linus Torvalds <torvalds@linux-foundation.org>:
-> >   - redesign based on Linus proposal
-> >   - switch from arg-based to revision-based naming scheme: s/clone6/clone3/
-> > - Arnd Bergmann <arnd@arndb.de>:
-> >   - use a single copy_from_user() instead of multiple get_user() calls
-> >     since the latter have a constant overhead on some architectures
-> >   - a range of other tweaks and suggestions
-> > v2:
-> > - Linus Torvalds <torvalds@linux-foundation.org>,
-> >   Andrei Vagin <avagin@gmail.com>:
-> >   - replace CSIGNAL flag with dedicated exit_signal argument in struct
-> >     clone_args
-> > - Christian Brauner <christian@brauner.io>:
-> >   - improve naming for some struct clone_args members
-> > v3:
-> > - Arnd Bergmann <arnd@arndb.de>:
-> >   - replace memset with constructor for clarity and better object code
-> >   - call flag verification function clone3_flags_valid() on
-> >     kernel_clone_args instead of clone_args
-> >   - remove __ARCH_WANT_SYS_CLONE ifdefine around sys_clone3()
-> > - Christian Brauner <christian@brauner.io>:
-> >   - replace clone3_flags_valid() with clone3_args_valid() and call in
-> >     clone3() directly rather than in copy_clone_args_from_user()
-> >     This cleanly separates copying the args from userspace from the
-> >     verification whether those args are sane.
-> > - David Howells <dhowells@redhat.com>:
-> >   - align new struct member assignments with tabs
-> >   - replace CLONE_MAX by with a non-uapi exported CLONE_LEGACY_FLAGS and
-> >     define it as  0xffffffffULL for clarity
-> >   - make copy_clone_args_from_user() noinline
-> >   - avoid assigning to local variables from struct kernel_clone_args
-> >     members in cases where it makes sense
-> > ---
-> >  arch/x86/ia32/sys_ia32.c   |  12 ++-
-> >  include/linux/sched/task.h |  17 +++-
-> >  include/linux/syscalls.h   |   4 +
-> >  include/uapi/linux/sched.h |  16 +++
-> >  kernel/fork.c              | 201 ++++++++++++++++++++++++++++---------
-> >  5 files changed, 199 insertions(+), 51 deletions(-)
+> And of course it cannot be that easy. This breaks when building in
+> thumb mode (-mthumb). Output from librseq arm32 build [1] (code similar
+> to what is found in the rseq selftests):
+> 
+>  CC       rseq.lo
+> /tmp/ccu6Jw1b.s: Assembler messages:
+> /tmp/ccu6Jw1b.s:297: Error: cannot determine Thumb instruction size. Use
+> .inst.n/.inst.w instead
+> /tmp/ccu6Jw1b.s:490: Error: cannot determine Thumb instruction size. Use
+> .inst.n/.inst.w instead
+> Makefile:460: recipe for target 'rseq.lo' failed
+> 
+> This appears to be caused by a missing .arm directive in RSEQ_SIG_DATA.
+> Fixing with:
+> 
+> -               asm volatile ("b 2f\n\t"                                \
+> +               asm volatile (".arm\n\t"                                \
+> +                             "b 2f\n\t"                                \
+> 
+> gets the build to go further, but breaks at:
+> 
+>  CC       basic_percpu_ops_test.o
+> /tmp/ccpHOMHZ.s: Assembler messages:
+> /tmp/ccpHOMHZ.s:148: Error: misaligned branch destination
+> /tmp/ccpHOMHZ.s:956: Error: misaligned branch destination
+> Makefile:378: recipe for target 'basic_percpu_ops_test.o' failed
+> 
+> I suspect it's caused by the change from:
+> 
+> -               ".word " __rseq_str(RSEQ_SIG) "\n\t"                    \
+> 
+> to
+> 
+> +               ".arm\n\t"                                              \
+> +               ".inst " __rseq_str(RSEQ_SIG_CODE) "\n\t"               \
+> 
+> which changes the mode from thumb to arm for the rest of the
+> inline asm within __RSEQ_ASM_DEFINE_ABORT. Better yet, there appears
+> to be no way to save the arm/thumb state and restore it afterwards.
+> 
+> I'm really starting to wonder if we should go our of our way to try
+> to get this signature to be a valid instruction on arm32. Perhaps
+> we should consider going back to use ".word" on arm32 so it ensures
+> it uses data endianness (which matches the parameter received by the
+> sys_rseq system call), let objdump and friends print it as a literal
+> pool (which it is), and just choose an instruction which has little
+> chances to appear for the cases we care about between ARM32 BE, LE
+> and THUMB. Perhaps a 32-bit palindrome ? Bonus points if this is a
+> trap instruction in common configurations for odd-cases-debugging
+> purposes.
+
+So I'm not particularly proud of the result, but I found a rather
+ugly way to figure out if we are currently in thumb mode within an
+inline asm, and restore that mode: test the length of a nop
+instruction with a ".if" asm statement.
+
+Do we want to go for this kind of approach, or should we revert
+back to a ".word" and accept that the rseq signature before the
+abort handler will be seen as data rather than an instruction
+on arm32 ?
+
+Is there a better way to do this ?
+
+Thanks,
+
+Mathieu
+
+diff --git a/include/rseq/rseq-arm.h b/include/rseq/rseq-arm.h
+index 1ce9231..b6c36dd 100644
+--- a/include/rseq/rseq-arm.h
++++ b/include/rseq/rseq-arm.h
+@@ -43,7 +43,14 @@
+        ({                                                              \
+                int sig;                                                \
+                asm volatile ("b 2f\n\t"                                \
++                             "3:\n\t"                                  \
++                             "nop\n\t"                                 \
++                             "4:\n\t"                                  \
++                             ".arm\n\t"                                \
+                              "1: .inst " __rseq_str(RSEQ_SIG_CODE) "\n\t" \
++                             ".if ((4b - 3b) == 2)\n\t"                \
++                             ".thumb\n\t"                              \
++                             ".endif\n\t"                              \
+                              "2:\n\t"                                  \
+                              "ldr %[sig], 1b\n\t"                      \
+                              : [sig] "=r" (sig));                      \
+@@ -125,8 +132,14 @@ do {                                                                       \
+                __rseq_str(table_label) ":\n\t"                         \
+                ".word " __rseq_str(version) ", " __rseq_str(flags) "\n\t" \
+                ".word " __rseq_str(start_ip) ", 0x0, " __rseq_str(post_commit_offset) ", 0x0, " __rseq_str(abort_ip) ", 0x0\n\t" \
++               "333:\n\t"                                              \
++               "nop\n\t"                                               \
++               "444:\n\t"                                              \
+                ".arm\n\t"                                              \
+                ".inst " __rseq_str(RSEQ_SIG_CODE) "\n\t"               \
++               ".if ((444b - 333b) == 2)\n\t"                          \
++               ".thumb\n\t"                                            \
++               ".endif\n\t"                                            \
+                __rseq_str(label) ":\n\t"                               \
+                teardown                                                \
+                "b %l[" __rseq_str(abort_label) "]\n\t"
+
+
+
+
+
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
