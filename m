@@ -1,53 +1,89 @@
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [PATCH v7 03/14] x86/cet/ibt: Add IBT legacy code bitmap setup
- function
-Date: Sat, 8 Jun 2019 22:52:18 +0200
-Message-ID: <20190608205218.GA2359@xo-6d-61-c0.localdomain>
-References: <20190606200926.4029-1-yu-cheng.yu@intel.com>
- <20190606200926.4029-4-yu-cheng.yu@intel.com>
- <20190607080832.GT3419@hirez.programming.kicks-ass.net>
- <aa8a92ef231d512b5c9855ef416db050b5ab59a6.camel@intel.com>
- <20190607174336.GM3436@hirez.programming.kicks-ass.net>
- <b3de4110-5366-fdc7-a960-71dea543a42f@intel.com>
+From: Randy Dunlap <rdunlap@infradead.org>
+Subject: Re: [PATCH 02/13] uapi: General notification ring definitions [ver
+ #4]
+Date: Sat, 8 Jun 2019 21:35:33 -0700
+Message-ID: <6b6f5bb0-1426-239b-ac9f-281e31ddcd04@infradead.org>
+References: <20190607151228.GA1872258@magnolia>
+ <155991702981.15579.6007568669839441045.stgit@warthog.procyon.org.uk>
+ <155991706083.15579.16359443779582362339.stgit@warthog.procyon.org.uk>
+ <29222.1559922719@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <b3de4110-5366-fdc7-a960-71dea543a42f@intel.com>
+In-Reply-To: <29222.1559922719@warthog.procyon.org.uk>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Hansen <dave.hansen@intel.com>
-Cc: Peter Zijlstra <peterz@infradead.org>, Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>
+To: David Howells <dhowells@redhat.com>, "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: viro@zeniv.linux.org.uk, raven@themaw.net, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi!
+On 6/7/19 8:51 AM, David Howells wrote:
+> Darrick J. Wong <darrick.wong@oracle.com> wrote:
+> 
 
-> > I've no idea what the kernel should do; since you failed to answer the
-> > question what happens when you point this to garbage.
-> > 
-> > Does it then fault or what?
+>>> +	__u32			info;
+>>> +#define WATCH_INFO_OVERRUN	0x00000001	/* Event(s) lost due to overrun */
+>>> +#define WATCH_INFO_ENOMEM	0x00000002	/* Event(s) lost due to ENOMEM */
+>>> +#define WATCH_INFO_RECURSIVE	0x00000004	/* Change was recursive */
+>>> +#define WATCH_INFO_LENGTH	0x000001f8	/* Length of record / sizeof(watch_notification) */
+>>
+>> This is a mask, isn't it?  Could we perhaps have some helpers here?
+>> Something along the lines of...
+>>
+>> #define WATCH_INFO_LENGTH_MASK	0x000001f8
+>> #define WATCH_INFO_LENGTH_SHIFT	3
+>>
+>> static inline size_t watch_notification_length(struct watch_notification *wn)
+>> {
+>> 	return (wn->info & WATCH_INFO_LENGTH_MASK) >> WATCH_INFO_LENGTH_SHIFT *
+>> 			sizeof(struct watch_notification);
+>> }
+>>
+>> static inline struct watch_notification *watch_notification_next(
+>> 		struct watch_notification *wn)
+>> {
+>> 	return wn + ((wn->info & WATCH_INFO_LENGTH_MASK) >>
+>> 			WATCH_INFO_LENGTH_SHIFT);
+>> }
 > 
-> Yeah, I think you'll fault with a rather mysterious CR2 value since
-> you'll go look at the instruction that faulted and not see any
-> references to the CR2 value.
-> 
-> I think this new MSR probably needs to get included in oops output when
-> CET is enabled.
-> 
-> Why don't we require that a VMA be in place for the entire bitmap?
-> Don't we need a "get" prctl function too in case something like a JIT is
-> running and needs to find the location of this bitmap to set bits itself?
-> 
-> Or, do we just go whole-hog and have the kernel manage the bitmap
-> itself. Our interface here could be:
-> 
-> 	prctl(PR_MARK_CODE_AS_LEGACY, start, size);
-> 
-> and then have the kernel allocate and set the bitmap for those code
-> locations.
+> No inline functions in UAPI headers, please.  I'd love to kill off the ones
+> that we have, but that would break things.
 
-For the record, that sounds like a better interface than userspace knowing
-about the bitmap formats...
-									Pavel
+Hi David,
+
+What is the problem with inline functions in UAPI headers?
+
+>> ...so that we don't have to opencode all of the ring buffer walking
+>> magic and stuff?
+> 
+> There'll end up being a small userspace library, I think.
+
+>>> +};
+>>> +
+>>> +#define WATCH_LENGTH_SHIFT	3
+>>> +
+>>> +struct watch_queue_buffer {
+>>> +	union {
+>>> +		/* The first few entries are special, containing the
+>>> +		 * ring management variables.
+>>
+>> The first /two/ entries, correct?
+> 
+> Currently two.
+> 
+>> Also, weird multiline comment style.
+> 
+> Not really.
+
+Yes really.
+
+>>> +		 */
+
+It does not match the preferred coding style for multi-line comments
+according to coding-style.rst.
+
+
+thanks.
 -- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+~Randy
