@@ -1,8 +1,8 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
 Subject: Re: [PATCH v7 03/14] x86/cet/ibt: Add IBT legacy code bitmap setup
  function
-Date: Mon, 10 Jun 2019 09:03:04 -0700
-Message-ID: <d699f179b7daefc6269174867a04868c9157ebe4.camel@intel.com>
+Date: Mon, 10 Jun 2019 09:05:13 -0700
+Message-ID: <5dc357f5858f8036cad5847cfe214401bb9138bf.camel@intel.com>
 References: <20190606200926.4029-1-yu-cheng.yu@intel.com>
          <20190606200926.4029-4-yu-cheng.yu@intel.com>
          <20190607080832.GT3419@hirez.programming.kicks-ass.net>
@@ -14,37 +14,31 @@ References: <20190606200926.4029-1-yu-cheng.yu@intel.com>
          <4b448cde-ee4e-1c95-0f7f-4fe694be7db6@intel.com>
          <0e505563f7dae3849b57fb327f578f41b760b6f7.camel@intel.com>
          <f6de9073-9939-a20d-2196-25fa223cf3fc@intel.com>
-         <4F7D0C3C-F239-4B67-BB05-31350F809293@amacapital.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <4F7D0C3C-F239-4B67-BB05-31350F809293@amacapital.net>
+In-Reply-To: <f6de9073-9939-a20d-2196-25fa223cf3fc@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>, Dave Hansen <dave.hansen@intel.com>
+To: Dave Hansen <dave.hansen@intel.com>, Andy Lutomirski <luto@amacapital.net>
 Cc: Peter Zijlstra <peterz@infradead.org>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 2019-06-07 at 15:27 -0700, Andy Lutomirski wrote:
-> > On Jun 7, 2019, at 2:09 PM, Dave Hansen <dave.hansen@intel.com> wrote:
+On Fri, 2019-06-07 at 14:09 -0700, Dave Hansen wrote:
+> On 6/7/19 1:06 PM, Yu-cheng Yu wrote:
+> > > Huh, how does glibc know about all possible past and future legacy code
+> > > in the application?
 > > 
-> > On 6/7/19 1:06 PM, Yu-cheng Yu wrote:
-> > > > Huh, how does glibc know about all possible past and future legacy code
-> > > > in the application?
-> > > 
-> > > When dlopen() gets a legacy binary and the policy allows that, it will
-> > > manage
-> > > the bitmap:
-> > > 
-> > >  If a bitmap has not been created, create one.
-> > >  Set bits for the legacy code being loaded.
+> > When dlopen() gets a legacy binary and the policy allows that, it will
+> > manage
+> > the bitmap:
 > > 
-> > I was thinking about code that doesn't go through GLIBC like JITs.
+> >   If a bitmap has not been created, create one.
+> >   Set bits for the legacy code being loaded.
 > 
-> CRIU is another consideration: it would be rather annoying if CET programs
-> can’t migrate between LA57 and normal machines.
+> I was thinking about code that doesn't go through GLIBC like JITs.
 
-When a machine migrates, does its applications' addresses change?
-If no, then the bitmap should still work, right?
+If JIT manages the bitmap, it knows where it is.
+It can always read the bitmap again, right?
 
 Yu-cheng
