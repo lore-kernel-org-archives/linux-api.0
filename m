@@ -1,281 +1,100 @@
-From: Stephen Smalley <sds@tycho.nsa.gov>
-Subject: Re: [RFC][PATCH 00/13] Mount, FS, Block and Keyrings notifications
- [ver #4]
-Date: Mon, 10 Jun 2019 11:21:01 -0400
-Message-ID: <be966d9c-e38d-7a30-8d80-fad5f25ab230@tycho.nsa.gov>
-References: <155991702981.15579.6007568669839441045.stgit@warthog.procyon.org.uk>
+From: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: Re: [PATCH v7 03/14] x86/cet/ibt: Add IBT legacy code bitmap setup
+ function
+Date: Mon, 10 Jun 2019 08:22:33 -0700
+Message-ID: <e26f7d09376740a5f7e8360fac4805488b2c0a4f.camel@intel.com>
+References: <20190606200926.4029-1-yu-cheng.yu@intel.com>
+         <20190606200926.4029-4-yu-cheng.yu@intel.com>
+         <20190607080832.GT3419@hirez.programming.kicks-ass.net>
+         <aa8a92ef231d512b5c9855ef416db050b5ab59a6.camel@intel.com>
+         <20190607174336.GM3436@hirez.programming.kicks-ass.net>
+         <b3de4110-5366-fdc7-a960-71dea543a42f@intel.com>
+         <34E0D316-552A-401C-ABAA-5584B5BC98C5@amacapital.net>
+         <7e0b97bf1fbe6ff20653a8e4e147c6285cc5552d.camel@intel.com>
+         <25281DB3-FCE4-40C2-BADB-B3B05C5F8DD3@amacapital.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <155991702981.15579.6007568669839441045.stgit@warthog.procyon.org.uk>
-Content-Language: en-US
+In-Reply-To: <25281DB3-FCE4-40C2-BADB-B3B05C5F8DD3@amacapital.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>, viro@zeniv.linux.org.uk
-Cc: linux-usb@vger.kernel.org, linux-security-module@vger.kernel.org, Casey Schaufler <casey@schaufler-ca.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, raven@themaw.net, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-kernel@vger.kernel.org, Paul Moore <paul@paul-moore.com>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Dave Hansen <dave.hansen@intel.com>, Peter Zijlstra <peterz@infradead.org>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>
 List-Id: linux-api@vger.kernel.org
 
-On 6/7/19 10:17 AM, David Howells wrote:
+On Fri, 2019-06-07 at 13:43 -0700, Andy Lutomirski wrote:
+> > On Jun 7, 2019, at 12:49 PM, Yu-cheng Yu <yu-cheng.yu@intel.com> wrote:
+> > 
+> > On Fri, 2019-06-07 at 11:29 -0700, Andy Lutomirski wrote:
+> > > > On Jun 7, 2019, at 10:59 AM, Dave Hansen <dave.hansen@intel.com> wrote:
+> > > > 
+> > > > > On 6/7/19 10:43 AM, Peter Zijlstra wrote:
+> > > > > I've no idea what the kernel should do; since you failed to answer the
+> > > > > question what happens when you point this to garbage.
+> > > > > 
+> > > > > Does it then fault or what?
+> > > > 
+> > > > Yeah, I think you'll fault with a rather mysterious CR2 value since
+> > > > you'll go look at the instruction that faulted and not see any
+> > > > references to the CR2 value.
+> > > > 
+> > > > I think this new MSR probably needs to get included in oops output when
+> > > > CET is enabled.
+> > > 
+> > > This shouldn’t be able to OOPS because it only happens at CPL 3,
+> > > right?  We
+> > > should put it into core dumps, though.
+> > > 
+> > > > 
+> > > > Why don't we require that a VMA be in place for the entire bitmap?
+> > > > Don't we need a "get" prctl function too in case something like a JIT is
+> > > > running and needs to find the location of this bitmap to set bits
+> > > > itself?
+> > > > 
+> > > > Or, do we just go whole-hog and have the kernel manage the bitmap
+> > > > itself. Our interface here could be:
+> > > > 
+> > > >   prctl(PR_MARK_CODE_AS_LEGACY, start, size);
+> > > > 
+> > > > and then have the kernel allocate and set the bitmap for those code
+> > > > locations.
+> > > 
+> > > Given that the format depends on the VA size, this might be a good
+> > > idea.  I
+> > > bet we can reuse the special mapping infrastructure for this — the VMA
+> > > could
+> > > be a MAP_PRIVATE special mapping named [cet_legacy_bitmap] or similar, and
+> > > we
+> > > can even make special rules to core dump it intelligently if needed.  And
+> > > we
+> > > can make mremap() on it work correctly if anyone (CRIU?) cares.
+> > > 
+> > > Hmm.  Can we be creative and skip populating it with zeros?  The CPU
+> > > should
+> > > only ever touch a page if we miss an ENDBR on it, so, in normal operation,
+> > > we
+> > > don’t need anything to be there.  We could try to prevent anyone from
+> > > *reading* it outside of ENDBR tracking if we want to avoid people
+> > > accidentally
+> > > wasting lots of memory by forcing it to be fully populated when the read
+> > > it.
+> > > 
+> > > The one downside is this forces it to be per-mm, but that seems like a
+> > > generally reasonable model anyway.
+> > > 
+> > > This also gives us an excellent opportunity to make it read-only as seen
+> > > from
+> > > userspace to prevent exploits from just poking it full of ones before
+> > > redirecting execution.
+> > 
+> > GLIBC sets bits only for legacy code, and then makes the bitmap read-
+> > only.  That
+> > avoids most issues:
 > 
-> Hi Al,
-> 
-> Here's a set of patches to add a general variable-length notification queue
-> concept and to add sources of events for:
-> 
->   (1) Mount topology events, such as mounting, unmounting, mount expiry,
->       mount reconfiguration.
-> 
->   (2) Superblock events, such as R/W<->R/O changes, quota overrun and I/O
->       errors (not complete yet).
-> 
->   (3) Key/keyring events, such as creating, linking and removal of keys.
-> 
->   (4) General device events (single common queue) including:
-> 
->       - Block layer events, such as device errors
-> 
->       - USB subsystem events, such as device/bus attach/remove, device
->         reset, device errors.
-> 
-> One of the reasons for this is so that we can remove the issue of processes
-> having to repeatedly and regularly scan /proc/mounts, which has proven to
-> be a system performance problem.  To further aid this, the fsinfo() syscall
-> on which this patch series depends, provides a way to access superblock and
-> mount information in binary form without the need to parse /proc/mounts.
-> 
-> 
-> LSM support is included, but controversial:
-> 
->   (1) The creds of the process that did the fput() that reduced the refcount
->       to zero are cached in the file struct.
-> 
->   (2) __fput() overrides the current creds with the creds from (1) whilst
->       doing the cleanup, thereby making sure that the creds seen by the
->       destruction notification generated by mntput() appears to come from
->       the last fputter.
-> 
->   (3) security_post_notification() is called for each queue that we might
->       want to post a notification into, thereby allowing the LSM to prevent
->       covert communications.
-> 
->   (?) Do I need to add security_set_watch(), say, to rule on whether a watch
->       may be set in the first place?  I might need to add a variant per
->       watch-type.
-> 
->   (?) Do I really need to keep track of the process creds in which an
->       implicit object destruction happened?  For example, imagine you create
->       an fd with fsopen()/fsmount().  It is marked to dissolve the mount it
->       refers to on close unless move_mount() clears that flag.  Now, imagine
->       someone looking at that fd through procfs at the same time as you exit
->       due to an error.  The LSM sees the destruction notification come from
->       the looker if they happen to do their fput() after yours.
+> How does glibc know the linear address space size?  We don’t want LA64 to
+> break old binaries because the address calculation changed.
 
-I remain unconvinced that (1), (2), (3), and the final (?) above are a 
-good idea.
+When an application starts, its highest stack address is determined.
+It uses that as the maximum the bitmap needs to cover.
 
-For SELinux, I would expect that one would implement a collection of per 
-watch-type WATCH permission checks on the target object (or to some 
-well-defined object label like the kernel SID if there is no object) 
-that allow receipt of all notifications of that watch-type for objects 
-related to the target object, where "related to" is defined per watch-type.
-
-I wouldn't expect SELinux to implement security_post_notification() at 
-all.  I can't see how one can construct a meaningful, stable policy for 
-it.  I'd argue that the triggering process is not posting the 
-notification; the kernel is posting the notification and the watcher has 
-been authorized to receive it.
-
-> 
-> 
-> Design decisions:
-> 
->   (1) A misc chardev is used to create and open a ring buffer:
-> 
-> 	fd = open("/dev/watch_queue", O_RDWR);
-> 
->       which is then configured and mmap'd into userspace:
-> 
-> 	ioctl(fd, IOC_WATCH_QUEUE_SET_SIZE, BUF_SIZE);
-> 	ioctl(fd, IOC_WATCH_QUEUE_SET_FILTER, &filter);
-> 	buf = mmap(NULL, BUF_SIZE * page_size, PROT_READ | PROT_WRITE,
-> 		   MAP_SHARED, fd, 0);
-> 
->       The fd cannot be read or written (though there is a facility to use
->       write to inject records for debugging) and userspace just pulls data
->       directly out of the buffer.
-> 
->   (2) The ring index pointers are stored inside the ring and are thus
->       accessible to userspace.  Userspace should only update the tail
->       pointer and never the head pointer or risk breaking the buffer.  The
->       kernel checks that the pointers appear valid before trying to use
->       them.  A 'skip' record is maintained around the pointers.
-> 
->   (3) poll() can be used to wait for data to appear in the buffer.
-> 
->   (4) Records in the buffer are binary, typed and have a length so that they
->       can be of varying size.
-> 
->       This means that multiple heterogeneous sources can share a common
->       buffer.  Tags may be specified when a watchpoint is created to help
->       distinguish the sources.
-> 
->   (5) The queue is reusable as there are 16 million types available, of
->       which I've used 4, so there is scope for others to be used.
-> 
->   (6) Records are filterable as types have up to 256 subtypes that can be
->       individually filtered.  Other filtration is also available.
-> 
->   (7) Each time the buffer is opened, a new buffer is created - this means
->       that there's no interference between watchers.
-> 
->   (8) When recording a notification, the kernel will not sleep, but will
->       rather mark a queue as overrun if there's insufficient space, thereby
->       avoiding userspace causing the kernel to hang.
-> 
->   (9) The 'watchpoint' should be specific where possible, meaning that you
->       specify the object that you want to watch.
-> 
-> (10) The buffer is created and then watchpoints are attached to it, using
->       one of:
-> 
-> 	keyctl_watch_key(KEY_SPEC_SESSION_KEYRING, fd, 0x01);
-> 	mount_notify(AT_FDCWD, "/", 0, fd, 0x02);
-> 	sb_notify(AT_FDCWD, "/mnt", 0, fd, 0x03);
-> 
->       where in all three cases, fd indicates the queue and the number after
->       is a tag between 0 and 255.
-> 
-> (11) The watch must be removed if either the watch buffer is destroyed or
->       the watched object is destroyed.
-> 
-> 
-> Things I want to avoid:
-> 
->   (1) Introducing features that make the core VFS dependent on the network
->       stack or networking namespaces (ie. usage of netlink).
-> 
->   (2) Dumping all this stuff into dmesg and having a daemon that sits there
->       parsing the output and distributing it as this then puts the
->       responsibility for security into userspace and makes handling
->       namespaces tricky.  Further, dmesg might not exist or might be
->       inaccessible inside a container.
-> 
->   (3) Letting users see events they shouldn't be able to see.
-> 
-> 
-> Further things that could be considered:
-> 
->   (1) Adding a keyctl call to allow a watch on a keyring to be extended to
->       "children" of that keyring, such that the watch is removed from the
->       child if it is unlinked from the keyring.
-> 
->   (2) Adding global superblock event queue.
-> 
->   (3) Propagating watches to child superblock over automounts.
-> 
-> 
-> The patches can be found here also:
-> 
-> 	http://git.kernel.org/cgit/linux/kernel/git/dhowells/linux-fs.git/log/?h=notifications
-> 
-> Changes:
-> 
->   v4: Split the basic UAPI bits out into their own patch and then split the
->       LSM hooks out into an intermediate patch.  Add LSM hooks for setting
->       watches.
-> 
->       Rename the *_notify() system calls to watch_*() for consistency.
-> 
->   v3: I've added a USB notification source and reformulated the block
->       notification source so that there's now a common watch list, for which
->       the system call is now device_notify().
-> 
->       I've assigned a pair of unused ioctl numbers in the 'W' series to the
->       ioctls added by this series.
-> 
->       I've also added a description of the kernel API to the documentation.
-> 
->   v2: I've fixed various issues raised by Jann Horn and GregKH and moved to
->       krefs for refcounting.  I've added some security features to try and
->       give Casey Schaufler the LSM control he wants.
-> 
-> David
-> ---
-> David Howells (13):
->        security: Override creds in __fput() with last fputter's creds
->        uapi: General notification ring definitions
->        security: Add hooks to rule on setting a watch
->        security: Add a hook for the point of notification insertion
->        General notification queue with user mmap()'able ring buffer
->        keys: Add a notification facility
->        vfs: Add a mount-notification facility
->        vfs: Add superblock notifications
->        fsinfo: Export superblock notification counter
->        Add a general, global device notification watch list
->        block: Add block layer notifications
->        usb: Add USB subsystem notifications
->        Add sample notification program
-> 
-> 
->   Documentation/ioctl/ioctl-number.txt   |    1
->   Documentation/security/keys/core.rst   |   58 ++
->   Documentation/watch_queue.rst          |  492 ++++++++++++++++++
->   arch/x86/entry/syscalls/syscall_32.tbl |    3
->   arch/x86/entry/syscalls/syscall_64.tbl |    3
->   block/Kconfig                          |    9
->   block/blk-core.c                       |   29 +
->   drivers/base/Kconfig                   |    9
->   drivers/base/Makefile                  |    1
->   drivers/base/watch.c                   |   89 +++
->   drivers/misc/Kconfig                   |   13
->   drivers/misc/Makefile                  |    1
->   drivers/misc/watch_queue.c             |  889 ++++++++++++++++++++++++++++++++
->   drivers/usb/core/Kconfig               |   10
->   drivers/usb/core/devio.c               |   55 ++
->   drivers/usb/core/hub.c                 |    3
->   fs/Kconfig                             |   21 +
->   fs/Makefile                            |    1
->   fs/file_table.c                        |   12
->   fs/fsinfo.c                            |   12
->   fs/mount.h                             |   33 +
->   fs/mount_notify.c                      |  187 +++++++
->   fs/namespace.c                         |    9
->   fs/super.c                             |  122 ++++
->   include/linux/blkdev.h                 |   15 +
->   include/linux/dcache.h                 |    1
->   include/linux/device.h                 |    7
->   include/linux/fs.h                     |   79 +++
->   include/linux/key.h                    |    4
->   include/linux/lsm_hooks.h              |   48 ++
->   include/linux/security.h               |   35 +
->   include/linux/syscalls.h               |    5
->   include/linux/usb.h                    |   19 +
->   include/linux/watch_queue.h            |   87 +++
->   include/uapi/linux/fsinfo.h            |   10
->   include/uapi/linux/keyctl.h            |    1
->   include/uapi/linux/watch_queue.h       |  213 ++++++++
->   kernel/sys_ni.c                        |    7
->   samples/Kconfig                        |    6
->   samples/Makefile                       |    1
->   samples/vfs/test-fsinfo.c              |   13
->   samples/watch_queue/Makefile           |    9
->   samples/watch_queue/watch_test.c       |  308 +++++++++++
->   security/keys/Kconfig                  |   10
->   security/keys/compat.c                 |    2
->   security/keys/gc.c                     |    5
->   security/keys/internal.h               |   30 +
->   security/keys/key.c                    |   37 +
->   security/keys/keyctl.c                 |   95 +++
->   security/keys/keyring.c                |   17 -
->   security/keys/request_key.c            |    4
->   security/security.c                    |   29 +
->   52 files changed, 3121 insertions(+), 38 deletions(-)
->   create mode 100644 Documentation/watch_queue.rst
->   create mode 100644 drivers/base/watch.c
->   create mode 100644 drivers/misc/watch_queue.c
->   create mode 100644 fs/mount_notify.c
->   create mode 100644 include/linux/watch_queue.h
->   create mode 100644 include/uapi/linux/watch_queue.h
->   create mode 100644 samples/watch_queue/Makefile
->   create mode 100644 samples/watch_queue/watch_test.c
-> 
+Yu-cheng
