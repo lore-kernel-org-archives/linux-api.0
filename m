@@ -1,53 +1,149 @@
-From: Dave Hansen <dave.hansen@intel.com>
-Subject: Re: [PATCH v7 03/14] x86/cet/ibt: Add IBT legacy code bitmap setup
- function
-Date: Mon, 10 Jun 2019 12:52:34 -0700
-Message-ID: <0665416d-9999-b394-df17-f2a5e1408130@intel.com>
-References: <20190606200926.4029-1-yu-cheng.yu@intel.com>
- <20190606200926.4029-4-yu-cheng.yu@intel.com>
- <20190607080832.GT3419@hirez.programming.kicks-ass.net>
- <aa8a92ef231d512b5c9855ef416db050b5ab59a6.camel@intel.com>
- <20190607174336.GM3436@hirez.programming.kicks-ass.net>
- <b3de4110-5366-fdc7-a960-71dea543a42f@intel.com>
- <34E0D316-552A-401C-ABAA-5584B5BC98C5@amacapital.net>
- <7e0b97bf1fbe6ff20653a8e4e147c6285cc5552d.camel@intel.com>
- <25281DB3-FCE4-40C2-BADB-B3B05C5F8DD3@amacapital.net>
- <e26f7d09376740a5f7e8360fac4805488b2c0a4f.camel@intel.com>
- <3f19582d-78b1-5849-ffd0-53e8ca747c0d@intel.com>
- <5aa98999b1343f34828414b74261201886ec4591.camel@intel.com>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [RFC][PATCH 00/13] Mount, FS, Block and Keyrings notifications
+ [ver #4]
+Date: Mon, 10 Jun 2019 12:53:14 -0700
+Message-ID: <CALCETrU+PKVbrKQJoXj9x_5y+vTZENMczHqyM_Xb85ca5YDZuA@mail.gmail.com>
+References: <155991702981.15579.6007568669839441045.stgit@warthog.procyon.org.uk>
+ <be966d9c-e38d-7a30-8d80-fad5f25ab230@tycho.nsa.gov> <0cf7a49d-85f6-fba9-62ec-a378e0b76adf@schaufler-ca.com>
+ <CALCETrX5O18q2=dUeC=hEtK2=t5KQpGBy9XveHxFw36OqkbNOg@mail.gmail.com>
+ <dac74580-5b48-86e4-8222-cac29a9f541d@schaufler-ca.com> <E0925E1F-E5F2-4457-8704-47B6E64FE3F3@amacapital.net>
+ <4b7d02b2-2434-8a7c-66cc-7dbebc37efbc@schaufler-ca.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5aa98999b1343f34828414b74261201886ec4591.camel@intel.com>
-Content-Language: en-US
+In-Reply-To: <4b7d02b2-2434-8a7c-66cc-7dbebc37efbc@schaufler-ca.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yu-cheng Yu <yu-cheng.yu@intel.com>, Andy Lutomirski <luto@amacapital.net>
-Cc: Peter Zijlstra <peterz@infradead.org>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
+To: Casey Schaufler <casey@schaufler-ca.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Stephen Smalley <sds@tycho.nsa.gov>, David Howells <dhowells@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, USB list <linux-usb@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, raven@themaw.net, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Paul Moore <paul@paul-moore.com>
 List-Id: linux-api@vger.kernel.org
 
-On 6/10/19 12:38 PM, Yu-cheng Yu wrote:
->>> When an application starts, its highest stack address is determined.
->>> It uses that as the maximum the bitmap needs to cover.
->> Huh, I didn't think we ran code from the stack. ;)
->>
->> Especially given the way that we implemented the new 5-level-paging
->> address space, I don't think that expecting code to be below the stack
->> is a good universal expectation.
-> Yes, you make a good point.  However, allowing the application manage the bitmap
-> is the most efficient and flexible.  If the loader finds a legacy lib is beyond
-> the bitmap can cover, it can deal with the problem by moving the lib to a lower
-> address; or re-allocate the bitmap.
+On Mon, Jun 10, 2019 at 12:34 PM Casey Schaufler <casey@schaufler-ca.com> w=
+rote:
+> >>> I think you really need to give an example of a coherent policy that
+> >>> needs this.
+> >> I keep telling you, and you keep ignoring what I say.
+> >>
+> >>>  As it stands, your analogy seems confusing.
+> >> It's pretty simple. I have given both the abstract
+> >> and examples.
+> > You gave the /dev/null example, which is inapplicable to this patchset.
+>
+> That addressed an explicit objection, and pointed out
+> an exception to a generality you had asserted, which was
+> not true. It's also a red herring regarding the current
+> discussion.
 
-How could the loader reallocate the bitmap and coordinate with other
-users of the bitmap?
+This argument is pointless.
 
-> If the loader cannot allocate a big bitmap to cover all 5-level
-> address space (the bitmap will be large), it can put all legacy lib's
-> at lower address.  We cannot do these easily in the kernel.
+Please humor me and just give me an example.  If you think you have
+already done so, feel free to repeat yourself.  If you have no
+example, then please just say so.
 
-This is actually an argument to do it in the kernel.  The kernel can
-always allocate the virtual space however it wants, no matter how large.
- If we hide the bitmap behind a kernel API then we can put it at high
-5-level user addresses because we also don't have to worry about the
-high bits confusing userspace.
+>
+> >>>  If someone
+> >>> changes the system clock, we don't restrict who is allowed to be
+> >>> notified (via, for example, TFD_TIMER_CANCEL_ON_SET) that the clock
+> >>> was changed based on who changed the clock.
+> >> That's right. The system clock is not an object that
+> >> unprivileged processes can modify. In fact, it is not
+> >> an object at all. If you care to look, you will see that
+> >> Smack does nothing with the clock.
+> > And this is different from the mount tree how?
+>
+> The mount tree can be modified by unprivileged users.
+> If nothing that unprivileged users can do to the mount
+> tree can trigger a notification you are correct, the
+> mount tree is very like the system clock. Is that the
+> case?
+
+The mount tree can't be modified by unprivileged users, unless a
+privileged user very carefully configured it as such.  An unprivileged
+user can create a new userns and a new mount ns, but then they're
+modifying a whole different mount tree.
+
+>
+> >>>  Similarly, if someone
+> >>> tries to receive a packet on a socket, we check whether they have the
+> >>> right to receive on that socket (from the endpoint in question) and,
+> >>> if the sender is local, whether the sender can send to that socket.
+> >>> We do not check whether the sender can send to the receiver.
+> >> Bzzzt! Smack sure does.
+> > This seems dubious. I=E2=80=99m still trying to get you to explain to a=
+ non-Smack person why this makes sense.
+>
+> Process A sends a packet to process B.
+> If A has access to TopSecret data and B is not
+> allowed to see TopSecret data, the delivery should
+> be prevented. Is that nonsensical?
+
+It makes sense.  As I see it, the way that a sensible policy should do
+this is by making sure that there are no sockets, pipes, etc that
+Process A can write and that Process B can read.
+
+If you really want to prevent a malicious process with TopSecret data
+from sending it to a different process, then you can't use Linux on
+x86 or ARM.  Maybe that will be fixed some day, but you're going to
+need to use an extremely tight sandbox to make this work.
+
+>
+> >>> The signal example is inapplicable.
+> >> From a modeling viewpoint the actions are identical.
+> > This seems incorrect to me
+>
+> What would be correct then? Some convoluted combination
+> of system entities that aren't owned or controlled by
+> any mechanism?
+>
+
+POSIX signal restrictions aren't there to prevent two processes from
+communicating.  They're there to prevent the sender from manipulating
+or crashing the receiver without appropriate privilege.
+
+
+> >  and, I think, to most everyone else reading this.
+>
+> That's quite the assertion. You may even be correct.
+>
+> >  Can you explain?
+> >
+> > In SELinux-ese, when you write to a file, the subject is the writer and=
+ the object is the file.  When you send a signal to a process, the object i=
+s the target process.
+>
+> YES!!!!!!!!!!!!
+>
+> And when a process triggers a notification it is the subject
+> and the watching process is the object!
+>
+> Subject =3D=3D active entity
+> Object  =3D=3D passive entity
+>
+> Triggering an event is, like calling kill(), an action!
+>
+
+And here is where I disagree with your interpretation.  Triggering an
+event is a side effect of writing to the file.  There are *two*
+security relevant actions, not one, and they are:
+
+First, the write:
+
+Subject =3D=3D the writer
+Action =3D=3D write
+Object =3D=3D the file
+
+Then the event, which could be modeled in a couple of ways:
+
+Subject =3D=3D the file
+Action =3D=3D notify
+Object =3D=3D the recipient
+
+or
+
+Subject =3D=3D the recipient
+Action =3D=3D watch
+Object =3D=3D the file
+
+By conflating these two actions into one, you've made the modeling
+very hard, and you start running into all these nasty questions like
+"who actually closed this open file"
