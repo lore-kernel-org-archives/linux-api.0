@@ -1,42 +1,53 @@
 From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [PATCH v7 22/27] binfmt_elf: Extract .note.gnu.property from an ELF file
-Date: Mon, 10 Jun 2019 19:24:43 +0200
-Message-ID: <87lfy9cq04.fsf@oldenburg2.str.redhat.com>
-References: <20190606200646.3951-1-yu-cheng.yu@intel.com>
-        <20190606200646.3951-23-yu-cheng.yu@intel.com>
-        <20190607180115.GJ28398@e103592.cambridge.arm.com>
-        <94b9c55b3b874825fda485af40ab2a6bc3dad171.camel@intel.com>
+Subject: Re: [PATCH v7 03/14] x86/cet/ibt: Add IBT legacy code bitmap setup function
+Date: Mon, 10 Jun 2019 19:28:36 +0200
+Message-ID: <87h88xcptn.fsf@oldenburg2.str.redhat.com>
+References: <20190606200926.4029-1-yu-cheng.yu@intel.com>
+        <20190606200926.4029-4-yu-cheng.yu@intel.com>
+        <20190607080832.GT3419@hirez.programming.kicks-ass.net>
+        <aa8a92ef231d512b5c9855ef416db050b5ab59a6.camel@intel.com>
+        <20190607174336.GM3436@hirez.programming.kicks-ass.net>
+        <b3de4110-5366-fdc7-a960-71dea543a42f@intel.com>
+        <34E0D316-552A-401C-ABAA-5584B5BC98C5@amacapital.net>
+        <7e0b97bf1fbe6ff20653a8e4e147c6285cc5552d.camel@intel.com>
+        <4b448cde-ee4e-1c95-0f7f-4fe694be7db6@intel.com>
+        <0e505563f7dae3849b57fb327f578f41b760b6f7.camel@intel.com>
+        <f6de9073-9939-a20d-2196-25fa223cf3fc@intel.com>
+        <5dc357f5858f8036cad5847cfe214401bb9138bf.camel@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <94b9c55b3b874825fda485af40ab2a6bc3dad171.camel@intel.com>
-        (Yu-cheng Yu's message of "Mon, 10 Jun 2019 09:29:04 -0700")
+In-Reply-To: <5dc357f5858f8036cad5847cfe214401bb9138bf.camel@intel.com>
+        (Yu-cheng Yu's message of "Mon, 10 Jun 2019 09:05:13 -0700")
 Sender: linux-kernel-owner@vger.kernel.org
 To: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Cc: Dave Martin <Dave.Martin@arm.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
+Cc: Dave Hansen <dave.hansen@intel.com>, Andy Lutomirski <luto@amacapital.net>, Peter Zijlstra <peterz@infradead.org>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>
 List-Id: linux-api@vger.kernel.org
 
 * Yu-cheng Yu:
 
-> To me, looking at PT_GNU_PROPERTY and not trying to support anything is a
-> logical choice.  And it breaks only a limited set of toolchains.
+> On Fri, 2019-06-07 at 14:09 -0700, Dave Hansen wrote:
+>> On 6/7/19 1:06 PM, Yu-cheng Yu wrote:
+>> > > Huh, how does glibc know about all possible past and future legacy code
+>> > > in the application?
+>> > 
+>> > When dlopen() gets a legacy binary and the policy allows that, it will
+>> > manage
+>> > the bitmap:
+>> > 
+>> >   If a bitmap has not been created, create one.
+>> >   Set bits for the legacy code being loaded.
+>> 
+>> I was thinking about code that doesn't go through GLIBC like JITs.
 >
-> I will simplify the parser and leave this patch as-is for anyone who wants to
-> back-port.  Are there any objections or concerns?
+> If JIT manages the bitmap, it knows where it is.
+> It can always read the bitmap again, right?
 
-Red Hat Enterprise Linux 8 does not use PT_GNU_PROPERTY and is probably
-the largest collection of CET-enabled binaries that exists today.
-
-My hope was that we would backport the upstream kernel patches for CET,
-port the glibc dynamic loader to the new kernel interface, and be ready
-to run with CET enabled in principle (except that porting userspace
-libraries such as OpenSSL has not really started upstream, so many
-processes where CET is particularly desirable will still run without
-it).
-
-I'm not sure if it is a good idea to port the legacy support if it's not
-part of the mainline kernel because it comes awfully close to creating
-our own private ABI.
+The problem are JIT libraries without assembler code which can be marked
+non-CET, such as liborc.  Our builds (e.g., orc-0.4.29-2.fc30.x86_64)
+currently carries the IBT and SHSTK flag, although the entry points into
+the generated code do not start with ENDBR, so that a jump to them will
+fault with the CET enabled.
 
 Thanks,
 Florian
