@@ -1,45 +1,42 @@
-From: Jonathan Corbet <corbet@lwn.net>
-Subject: Re: [PATCH 06/13] keys: Add a notification facility [ver #4]
-Date: Mon, 10 Jun 2019 11:11:10 -0600
-Message-ID: <20190610111110.72468326@lwn.net>
-References: <155991702981.15579.6007568669839441045.stgit@warthog.procyon.org.uk>
-        <155991709983.15579.13232123365803197237.stgit@warthog.procyon.org.uk>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: [PATCH v7 22/27] binfmt_elf: Extract .note.gnu.property from an ELF file
+Date: Mon, 10 Jun 2019 19:24:43 +0200
+Message-ID: <87lfy9cq04.fsf@oldenburg2.str.redhat.com>
+References: <20190606200646.3951-1-yu-cheng.yu@intel.com>
+        <20190606200646.3951-23-yu-cheng.yu@intel.com>
+        <20190607180115.GJ28398@e103592.cambridge.arm.com>
+        <94b9c55b3b874825fda485af40ab2a6bc3dad171.camel@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <155991709983.15579.13232123365803197237.stgit@warthog.procyon.org.uk>
+In-Reply-To: <94b9c55b3b874825fda485af40ab2a6bc3dad171.camel@intel.com>
+        (Yu-cheng Yu's message of "Mon, 10 Jun 2019 09:29:04 -0700")
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: viro@zeniv.linux.org.uk, raven@themaw.net, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: Dave Martin <Dave.Martin@arm.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 07 Jun 2019 15:18:19 +0100
-David Howells <dhowells@redhat.com> wrote:
+* Yu-cheng Yu:
 
-> Add a key/keyring change notification facility whereby notifications about
-> changes in key and keyring content and attributes can be received.
-> 
-> Firstly, an event queue needs to be created:
-> 
-> 	fd = open("/dev/event_queue", O_RDWR);
-> 	ioctl(fd, IOC_WATCH_QUEUE_SET_SIZE, page_size << n);
-> 
-> then a notification can be set up to report notifications via that queue:
-> 
-> 	struct watch_notification_filter filter = {
-> 		.nr_filters = 1,
-> 		.filters = {
-> 			[0] = {
-> 				.type = WATCH_TYPE_KEY_NOTIFY,
-> 				.subtype_filter[0] = UINT_MAX,
-> 			},
-> 		},
-> 	};
-> 	ioctl(fd, IOC_WATCH_QUEUE_SET_FILTER, &filter);
-> 	keyctl_watch_key(KEY_SPEC_SESSION_KEYRING, fd, 0x01);
+> To me, looking at PT_GNU_PROPERTY and not trying to support anything is a
+> logical choice.  And it breaks only a limited set of toolchains.
+>
+> I will simplify the parser and leave this patch as-is for anyone who wants to
+> back-port.  Are there any objections or concerns?
 
-One little nit: it seems that keyctl_watch_key is actually spelled
-keyctl(KEYCTL_WATCH_KEY, ...).
+Red Hat Enterprise Linux 8 does not use PT_GNU_PROPERTY and is probably
+the largest collection of CET-enabled binaries that exists today.
 
-jon
+My hope was that we would backport the upstream kernel patches for CET,
+port the glibc dynamic loader to the new kernel interface, and be ready
+to run with CET enabled in principle (except that porting userspace
+libraries such as OpenSSL has not really started upstream, so many
+processes where CET is particularly desirable will still run without
+it).
+
+I'm not sure if it is a good idea to port the legacy support if it's not
+part of the mainline kernel because it comes awfully close to creating
+our own private ABI.
+
+Thanks,
+Florian
