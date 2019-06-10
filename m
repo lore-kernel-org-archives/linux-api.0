@@ -1,56 +1,55 @@
-From: Dave Hansen <dave.hansen@intel.com>
-Subject: Re: [PATCH v7 03/14] x86/cet/ibt: Add IBT legacy code bitmap setup
- function
-Date: Mon, 10 Jun 2019 15:59:29 -0700
-Message-ID: <ea5e333f-8cd6-8396-635f-a9dc580d5364@intel.com>
-References: <20190606200926.4029-1-yu-cheng.yu@intel.com>
- <20190606200926.4029-4-yu-cheng.yu@intel.com>
- <20190607080832.GT3419@hirez.programming.kicks-ass.net>
- <aa8a92ef231d512b5c9855ef416db050b5ab59a6.camel@intel.com>
- <20190607174336.GM3436@hirez.programming.kicks-ass.net>
- <b3de4110-5366-fdc7-a960-71dea543a42f@intel.com>
- <34E0D316-552A-401C-ABAA-5584B5BC98C5@amacapital.net>
- <7e0b97bf1fbe6ff20653a8e4e147c6285cc5552d.camel@intel.com>
- <25281DB3-FCE4-40C2-BADB-B3B05C5F8DD3@amacapital.net>
- <e26f7d09376740a5f7e8360fac4805488b2c0a4f.camel@intel.com>
- <3f19582d-78b1-5849-ffd0-53e8ca747c0d@intel.com>
- <5aa98999b1343f34828414b74261201886ec4591.camel@intel.com>
- <0665416d-9999-b394-df17-f2a5e1408130@intel.com>
- <5c8727dde9653402eea97bfdd030c479d1e8dd99.camel@intel.com>
- <ac9a20a6-170a-694e-beeb-605a17195034@intel.com>
- <328275c9b43c06809c9937c83d25126a6e3efcbd.camel@intel.com>
- <92e56b28-0cd4-e3f4-867b-639d9b98b86c@intel.com>
- <1b961c71d30e31ecb22da2c5401b1a81cb802d86.camel@intel.com>
+From: "H.J. Lu" <hjl.tools@gmail.com>
+Subject: Re: [PATCH v7 03/14] x86/cet/ibt: Add IBT legacy code bitmap setup function
+Date: Mon, 10 Jun 2019 16:20:52 -0700
+Message-ID: <CAMe9rOqLxNxE-gGX9ozX=emW9iQ+gOeUiS3ec5W4jmF6wk6cng@mail.gmail.com>
+References: <20190606200926.4029-1-yu-cheng.yu@intel.com> <20190606200926.4029-4-yu-cheng.yu@intel.com>
+ <20190607080832.GT3419@hirez.programming.kicks-ass.net> <aa8a92ef231d512b5c9855ef416db050b5ab59a6.camel@intel.com>
+ <20190607174336.GM3436@hirez.programming.kicks-ass.net> <b3de4110-5366-fdc7-a960-71dea543a42f@intel.com>
+ <34E0D316-552A-401C-ABAA-5584B5BC98C5@amacapital.net> <7e0b97bf1fbe6ff20653a8e4e147c6285cc5552d.camel@intel.com>
+ <25281DB3-FCE4-40C2-BADB-B3B05C5F8DD3@amacapital.net> <e26f7d09376740a5f7e8360fac4805488b2c0a4f.camel@intel.com>
+ <3f19582d-78b1-5849-ffd0-53e8ca747c0d@intel.com> <5aa98999b1343f34828414b74261201886ec4591.camel@intel.com>
+ <0665416d-9999-b394-df17-f2a5e1408130@intel.com> <5c8727dde9653402eea97bfdd030c479d1e8dd99.camel@intel.com>
+ <ac9a20a6-170a-694e-beeb-605a17195034@intel.com> <328275c9b43c06809c9937c83d25126a6e3efcbd.camel@intel.com>
+ <92e56b28-0cd4-e3f4-867b-639d9b98b86c@intel.com> <1b961c71d30e31ecb22da2c5401b1a81cb802d86.camel@intel.com>
+ <ea5e333f-8cd6-8396-635f-a9dc580d5364@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1b961c71d30e31ecb22da2c5401b1a81cb802d86.camel@intel.com>
-Content-Language: en-US
+In-Reply-To: <ea5e333f-8cd6-8396-635f-a9dc580d5364@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yu-cheng Yu <yu-cheng.yu@intel.com>, Andy Lutomirski <luto@amacapital.net>
-Cc: Peter Zijlstra <peterz@infradead.org>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
+To: Dave Hansen <dave.hansen@intel.com>
+Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>, Andy Lutomirski <luto@amacapital.net>, Peter Zijlstra <peterz@infradead.org>, the arch/x86 maintainers <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, LKML <linux-kernel@vger.kernel.org>, linux-doc@vger.kernel.org, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@>
 List-Id: linux-api@vger.kernel.org
 
-On 6/10/19 3:40 PM, Yu-cheng Yu wrote:
-> Ok, we will go back to do_mmap() with MAP_PRIVATE, MAP_NORESERVE and
-> VM_DONTDUMP.  The bitmap will cover only 48-bit address space.
+On Mon, Jun 10, 2019 at 3:59 PM Dave Hansen <dave.hansen@intel.com> wrote:
+>
+> > We then create PR_MARK_CODE_AS_LEGACY.  The kernel will set the bitmap, but it
+> > is going to be slow.
+>
+> Slow compared to what?  We're effectively adding one (quick) system call
+> to a path that, today, has at *least* half a dozen syscalls and probably
+> a bunch of page faults.  Heck, we can probably avoid the actual page
+> fault to populate the bitmap if we're careful.  That alone would put a
+> syscall on equal footing with any other approach.  If the bit setting
+> crossed a page boundary it would probably win.
+>
+> > Perhaps we still let the app fill the bitmap?
+>
+> I think I'd want to see some performance data on it first.
 
-Could you make sure to discuss the downsides of only doing a 48-bit
-address space?
+Updating legacy bitmap in user space from kernel requires
 
-What are the reasons behind and implications of VM_DONTDUMP?
+long q;
 
-> We then create PR_MARK_CODE_AS_LEGACY.  The kernel will set the bitmap, but it
-> is going to be slow.
+get_user(q, ...);
+q |= mask;
+put_user(q, ...);
 
-Slow compared to what?  We're effectively adding one (quick) system call
-to a path that, today, has at *least* half a dozen syscalls and probably
-a bunch of page faults.  Heck, we can probably avoid the actual page
-fault to populate the bitmap if we're careful.  That alone would put a
-syscall on equal footing with any other approach.  If the bit setting
-crossed a page boundary it would probably win.
+instead of
 
-> Perhaps we still let the app fill the bitmap?
+*p |= mask;
 
-I think I'd want to see some performance data on it first.
+get_user + put_user was quite slow when we tried before.
+
+-- 
+H.J.
