@@ -1,167 +1,203 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [RFC][PATCH 00/13] Mount, FS, Block and Keyrings notifications [ver #4]
-Date: Mon, 10 Jun 2019 11:22:13 -0700
-Message-ID: <E0925E1F-E5F2-4457-8704-47B6E64FE3F3@amacapital.net>
-References: <155991702981.15579.6007568669839441045.stgit@warthog.procyon.org.uk> <be966d9c-e38d-7a30-8d80-fad5f25ab230@tycho.nsa.gov> <0cf7a49d-85f6-fba9-62ec-a378e0b76adf@schaufler-ca.com> <CALCETrX5O18q2=dUeC=hEtK2=t5KQpGBy9XveHxFw36OqkbNOg@mail.gmail.com> <dac74580-5b48-86e4-8222-cac29a9f541d@schaufler-ca.com>
-Mime-Version: 1.0 (1.0)
-Content-Type: text/plain;
-        charset=utf-8
+From: Casey Schaufler <casey@schaufler-ca.com>
+Subject: Re: [RFC][PATCH 00/13] Mount, FS, Block and Keyrings notifications
+ [ver #4]
+Date: Mon, 10 Jun 2019 12:33:59 -0700
+Message-ID: <4b7d02b2-2434-8a7c-66cc-7dbebc37efbc@schaufler-ca.com>
+References: <155991702981.15579.6007568669839441045.stgit@warthog.procyon.org.uk>
+ <be966d9c-e38d-7a30-8d80-fad5f25ab230@tycho.nsa.gov>
+ <0cf7a49d-85f6-fba9-62ec-a378e0b76adf@schaufler-ca.com>
+ <CALCETrX5O18q2=dUeC=hEtK2=t5KQpGBy9XveHxFw36OqkbNOg@mail.gmail.com>
+ <dac74580-5b48-86e4-8222-cac29a9f541d@schaufler-ca.com>
+ <E0925E1F-E5F2-4457-8704-47B6E64FE3F3@amacapital.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <dac74580-5b48-86e4-8222-cac29a9f541d@schaufler-ca.com>
+In-Reply-To: <E0925E1F-E5F2-4457-8704-47B6E64FE3F3@amacapital.net>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Casey Schaufler <casey@schaufler-ca.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Stephen Smalley <sds@tycho.nsa.gov>, David Howells <dhowells@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, USB list <linux-usb@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, raven@themaw.net, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Paul Moore <paul@paul-moore.com>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Andy Lutomirski <luto@kernel.org>, Stephen Smalley <sds@tycho.nsa.gov>, David Howells <dhowells@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, USB list <linux-usb@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, raven@themaw.net, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Paul Moore <paul@paul-moore.com>, casey@schaufler-ca.com
 List-Id: linux-api@vger.kernel.org
 
-
-> On Jun 10, 2019, at 11:01 AM, Casey Schaufler <casey@schaufler-ca.com> wro=
-te:
->=20
->> On 6/10/2019 9:42 AM, Andy Lutomirski wrote:
->>> On Mon, Jun 10, 2019 at 9:34 AM Casey Schaufler <casey@schaufler-ca.com>=
+On 6/10/2019 11:22 AM, Andy Lutomirski wrote:
+>> On Jun 10, 2019, at 11:01 AM, Casey Schaufler <casey@schaufler-ca.com>=
  wrote:
->>>> On 6/10/2019 8:21 AM, Stephen Smalley wrote:
->>>>> On 6/7/19 10:17 AM, David Howells wrote:
->>>>> Hi Al,
->>>>>=20
->>>>> Here's a set of patches to add a general variable-length notification q=
-ueue
->>>>> concept and to add sources of events for:
->>>>>=20
->>>>>  (1) Mount topology events, such as mounting, unmounting, mount expiry=
-,
->>>>>      mount reconfiguration.
->>>>>=20
->>>>>  (2) Superblock events, such as R/W<->R/O changes, quota overrun and I=
-/O
->>>>>      errors (not complete yet).
->>>>>=20
->>>>>  (3) Key/keyring events, such as creating, linking and removal of keys=
-.
->>>>>=20
->>>>>  (4) General device events (single common queue) including:
->>>>>=20
->>>>>      - Block layer events, such as device errors
->>>>>=20
->>>>>      - USB subsystem events, such as device/bus attach/remove, device
->>>>>        reset, device errors.
->>>>>=20
->>>>> One of the reasons for this is so that we can remove the issue of proc=
-esses
->>>>> having to repeatedly and regularly scan /proc/mounts, which has proven=
- to
->>>>> be a system performance problem.  To further aid this, the fsinfo() sy=
-scall
->>>>> on which this patch series depends, provides a way to access superbloc=
-k and
->>>>> mount information in binary form without the need to parse /proc/mount=
-s.
->>>>>=20
->>>>>=20
->>>>> LSM support is included, but controversial:
->>>>>=20
->>>>>  (1) The creds of the process that did the fput() that reduced the ref=
-count
->>>>>      to zero are cached in the file struct.
->>>>>=20
->>>>>  (2) __fput() overrides the current creds with the creds from (1) whil=
-st
->>>>>      doing the cleanup, thereby making sure that the creds seen by the=
+>>
+>>> On 6/10/2019 9:42 AM, Andy Lutomirski wrote:
+>>>> On Mon, Jun 10, 2019 at 9:34 AM Casey Schaufler <casey@schaufler-ca.=
+com> wrote:
+>>>>> On 6/10/2019 8:21 AM, Stephen Smalley wrote:
+>>>>>> On 6/7/19 10:17 AM, David Howells wrote:
+>>>>>> Hi Al,
+>>>>>>
+>>>>>> Here's a set of patches to add a general variable-length notificat=
+ion queue
+>>>>>> concept and to add sources of events for:
+>>>>>>
+>>>>>>  (1) Mount topology events, such as mounting, unmounting, mount ex=
+piry,
+>>>>>>      mount reconfiguration.
+>>>>>>
+>>>>>>  (2) Superblock events, such as R/W<->R/O changes, quota overrun a=
+nd I/O
+>>>>>>      errors (not complete yet).
+>>>>>>
+>>>>>>  (3) Key/keyring events, such as creating, linking and removal of =
+keys.
+>>>>>>
+>>>>>>  (4) General device events (single common queue) including:
+>>>>>>
+>>>>>>      - Block layer events, such as device errors
+>>>>>>
+>>>>>>      - USB subsystem events, such as device/bus attach/remove, dev=
+ice
+>>>>>>        reset, device errors.
+>>>>>>
+>>>>>> One of the reasons for this is so that we can remove the issue of =
+processes
+>>>>>> having to repeatedly and regularly scan /proc/mounts, which has pr=
+oven to
+>>>>>> be a system performance problem.  To further aid this, the fsinfo(=
+) syscall
+>>>>>> on which this patch series depends, provides a way to access super=
+block and
+>>>>>> mount information in binary form without the need to parse /proc/m=
+ounts.
+>>>>>>
+>>>>>>
+>>>>>> LSM support is included, but controversial:
+>>>>>>
+>>>>>>  (1) The creds of the process that did the fput() that reduced the=
+ refcount
+>>>>>>      to zero are cached in the file struct.
+>>>>>>
+>>>>>>  (2) __fput() overrides the current creds with the creds from (1) =
+whilst
+>>>>>>      doing the cleanup, thereby making sure that the creds seen by=
+ the
+>>>>>>      destruction notification generated by mntput() appears to com=
+e from
+>>>>>>      the last fputter.
+>>>>>>
+>>>>>>  (3) security_post_notification() is called for each queue that we=
+ might
+>>>>>>      want to post a notification into, thereby allowing the LSM to=
+ prevent
+>>>>>>      covert communications.
+>>>>>>
+>>>>>>  (?) Do I need to add security_set_watch(), say, to rule on whethe=
+r a watch
+>>>>>>      may be set in the first place?  I might need to add a variant=
+ per
+>>>>>>      watch-type.
+>>>>>>
+>>>>>>  (?) Do I really need to keep track of the process creds in which =
+an
+>>>>>>      implicit object destruction happened?  For example, imagine y=
+ou create
+>>>>>>      an fd with fsopen()/fsmount().  It is marked to dissolve the =
+mount it
+>>>>>>      refers to on close unless move_mount() clears that flag.  Now=
+, imagine
+>>>>>>      someone looking at that fd through procfs at the same time as=
+ you exit
+>>>>>>      due to an error.  The LSM sees the destruction notification c=
+ome from
+>>>>>>      the looker if they happen to do their fput() after yours.
+>>>>> I remain unconvinced that (1), (2), (3), and the final (?) above ar=
+e a good idea.
+>>>>>
+>>>>> For SELinux, I would expect that one would implement a collection o=
+f per watch-type WATCH permission checks on the target object (or to some=
+ well-defined object label like the kernel SID if there is no object) tha=
+t allow receipt of all notifications of that watch-type for objects relat=
+ed to the target object, where "related to" is defined per watch-type.
+>>>>>
+>>>>> I wouldn't expect SELinux to implement security_post_notification()=
+ at all.  I can't see how one can construct a meaningful, stable policy f=
+or it.  I'd argue that the triggering process is not posting the notifica=
+tion; the kernel is posting the notification and the watcher has been aut=
+horized to receive it.
+>>>> I cannot agree. There is an explicit action by a subject that result=
+s
+>>>> in information being delivered to an object. Just like a signal or a=
 
->>>>>      destruction notification generated by mntput() appears to come fr=
-om
->>>>>      the last fputter.
->>>>>=20
->>>>>  (3) security_post_notification() is called for each queue that we mig=
-ht
->>>>>      want to post a notification into, thereby allowing the LSM to pre=
-vent
->>>>>      covert communications.
->>>>>=20
->>>>>  (?) Do I need to add security_set_watch(), say, to rule on whether a w=
-atch
->>>>>      may be set in the first place?  I might need to add a variant per=
+>>>> UDP packet delivery. Smack handles this kind of thing just fine. The=
 
->>>>>      watch-type.
->>>>>=20
->>>>>  (?) Do I really need to keep track of the process creds in which an
->>>>>      implicit object destruction happened?  For example, imagine you c=
-reate
->>>>>      an fd with fsopen()/fsmount().  It is marked to dissolve the moun=
-t it
->>>>>      refers to on close unless move_mount() clears that flag.  Now, im=
-agine
->>>>>      someone looking at that fd through procfs at the same time as you=
- exit
->>>>>      due to an error.  The LSM sees the destruction notification come f=
-rom
->>>>>      the looker if they happen to do their fput() after yours.
->>>> I remain unconvinced that (1), (2), (3), and the final (?) above are a g=
-ood idea.
->>>>=20
->>>> For SELinux, I would expect that one would implement a collection of pe=
-r watch-type WATCH permission checks on the target object (or to some well-d=
-efined object label like the kernel SID if there is no object) that allow re=
-ceipt of all notifications of that watch-type for objects related to the tar=
-get object, where "related to" is defined per watch-type.
->>>>=20
->>>> I wouldn't expect SELinux to implement security_post_notification() at a=
-ll.  I can't see how one can construct a meaningful, stable policy for it.  I=
-'d argue that the triggering process is not posting the notification; the ke=
-rnel is posting the notification and the watcher has been authorized to rece=
-ive it.
->>> I cannot agree. There is an explicit action by a subject that results
->>> in information being delivered to an object. Just like a signal or a
->>> UDP packet delivery. Smack handles this kind of thing just fine. The
->>> internal mechanism that results in the access is irrelevant from
->>> this viewpoint. I can understand how a mechanism like SELinux that
->>> works on finer granularity might view it differently.
->> I think you really need to give an example of a coherent policy that
->> needs this.
->=20
-> I keep telling you, and you keep ignoring what I say.
->=20
->>  As it stands, your analogy seems confusing.
->=20
-> It's pretty simple. I have given both the abstract
-> and examples.
+>>>> internal mechanism that results in the access is irrelevant from
+>>>> this viewpoint. I can understand how a mechanism like SELinux that
+>>>> works on finer granularity might view it differently.
+>>> I think you really need to give an example of a coherent policy that
+>>> needs this.
+>> I keep telling you, and you keep ignoring what I say.
+>>
+>>>  As it stands, your analogy seems confusing.
+>> It's pretty simple. I have given both the abstract
+>> and examples.
+> You gave the /dev/null example, which is inapplicable to this patchset.=
 
-You gave the /dev/null example, which is inapplicable to this patchset.
 
->=20
->>  If someone
->> changes the system clock, we don't restrict who is allowed to be
->> notified (via, for example, TFD_TIMER_CANCEL_ON_SET) that the clock
->> was changed based on who changed the clock.
->=20
-> That's right. The system clock is not an object that
-> unprivileged processes can modify. In fact, it is not
-> an object at all. If you care to look, you will see that
-> Smack does nothing with the clock.
+That addressed an explicit objection, and pointed out
+an exception to a generality you had asserted, which was
+not true. It's also a red herring regarding the current
+discussion.
 
-And this is different from the mount tree how?
+>>>  If someone
+>>> changes the system clock, we don't restrict who is allowed to be
+>>> notified (via, for example, TFD_TIMER_CANCEL_ON_SET) that the clock
+>>> was changed based on who changed the clock.
+>> That's right. The system clock is not an object that
+>> unprivileged processes can modify. In fact, it is not
+>> an object at all. If you care to look, you will see that
+>> Smack does nothing with the clock.
+> And this is different from the mount tree how?
 
->=20
->>  Similarly, if someone
->> tries to receive a packet on a socket, we check whether they have the
->> right to receive on that socket (from the endpoint in question) and,
->> if the sender is local, whether the sender can send to that socket.
->> We do not check whether the sender can send to the receiver.
->=20
-> Bzzzt! Smack sure does.
+The mount tree can be modified by unprivileged users.
+If nothing that unprivileged users can do to the mount
+tree can trigger a notification you are correct, the
+mount tree is very like the system clock. Is that the
+case?=20
 
-This seems dubious. I=E2=80=99m still trying to get you to explain to a non-=
-Smack person why this makes sense.
+>>>  Similarly, if someone
+>>> tries to receive a packet on a socket, we check whether they have the=
 
->=20
->> The signal example is inapplicable.
->=20
-> =46rom a modeling viewpoint the actions are identical.
+>>> right to receive on that socket (from the endpoint in question) and,
+>>> if the sender is local, whether the sender can send to that socket.
+>>> We do not check whether the sender can send to the receiver.
+>> Bzzzt! Smack sure does.
+> This seems dubious. I=E2=80=99m still trying to get you to explain to a=
+ non-Smack person why this makes sense.
 
-This seems incorrect to me and, I think, to most everyone else reading this.=
- Can you explain?
+Process A sends a packet to process B.
+If A has access to TopSecret data and B is not
+allowed to see TopSecret data, the delivery should
+be prevented. Is that nonsensical?
 
-In SELinux-ese, when you write to a file, the subject is the writer and the o=
-bject is the file.  When you send a signal to a process, the object is the t=
-arget process.=
+>>> The signal example is inapplicable.
+>> From a modeling viewpoint the actions are identical.
+> This seems incorrect to me
+
+What would be correct then? Some convoluted combination
+of system entities that aren't owned or controlled by
+any mechanism?=20
+
+>  and, I think, to most everyone else reading this.
+
+That's quite the assertion. You may even be correct.
+
+>  Can you explain?
+>
+> In SELinux-ese, when you write to a file, the subject is the writer and=
+ the object is the file.  When you send a signal to a process, the object=
+ is the target process.
+
+YES!!!!!!!!!!!!
+
+And when a process triggers a notification it is the subject
+and the watching process is the object!
+
+Subject =3D=3D active entity
+Object  =3D=3D passive entity
+
+Triggering an event is, like calling kill(), an action!
