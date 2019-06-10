@@ -1,60 +1,56 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [RFC][PATCH 00/13] Mount, FS, Block and Keyrings notifications [ver #4]
-Date: Mon, 10 Jun 2019 23:07:46 +0100
-Message-ID: <29010.1560204466@warthog.procyon.org.uk>
-References: <25d88489-9850-f092-205e-0a4fc292f41b@schaufler-ca.com> <155991702981.15579.6007568669839441045.stgit@warthog.procyon.org.uk> <be966d9c-e38d-7a30-8d80-fad5f25ab230@tycho.nsa.gov> <0cf7a49d-85f6-fba9-62ec-a378e0b76adf@schaufler-ca.com> <CALCETrX5O18q2=dUeC=hEtK2=t5KQpGBy9XveHxFw36OqkbNOg@mail.gmail.com> <dac74580-5b48-86e4-8222-cac29a9f541d@schaufler-ca.com> <E0925E1F-E5F2-4457-8704-47B6E64FE3F3@amacapital.net> <4b7d02b2-2434-8a7c-66cc-7dbebc37efbc@schaufler-ca.com> <CALCETrU+PKVbrKQJoXj9x_5y+vTZENMczHqyM_Xb85ca5YDZuA@mail.gmail.com>
+From: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: Re: [PATCH v7 03/14] x86/cet/ibt: Add IBT legacy code bitmap setup
+ function
+Date: Mon, 10 Jun 2019 15:40:49 -0700
+Message-ID: <1b961c71d30e31ecb22da2c5401b1a81cb802d86.camel@intel.com>
+References: <20190606200926.4029-1-yu-cheng.yu@intel.com>
+         <20190606200926.4029-4-yu-cheng.yu@intel.com>
+         <20190607080832.GT3419@hirez.programming.kicks-ass.net>
+         <aa8a92ef231d512b5c9855ef416db050b5ab59a6.camel@intel.com>
+         <20190607174336.GM3436@hirez.programming.kicks-ass.net>
+         <b3de4110-5366-fdc7-a960-71dea543a42f@intel.com>
+         <34E0D316-552A-401C-ABAA-5584B5BC98C5@amacapital.net>
+         <7e0b97bf1fbe6ff20653a8e4e147c6285cc5552d.camel@intel.com>
+         <25281DB3-FCE4-40C2-BADB-B3B05C5F8DD3@amacapital.net>
+         <e26f7d09376740a5f7e8360fac4805488b2c0a4f.camel@intel.com>
+         <3f19582d-78b1-5849-ffd0-53e8ca747c0d@intel.com>
+         <5aa98999b1343f34828414b74261201886ec4591.camel@intel.com>
+         <0665416d-9999-b394-df17-f2a5e1408130@intel.com>
+         <5c8727dde9653402eea97bfdd030c479d1e8dd99.camel@intel.com>
+         <ac9a20a6-170a-694e-beeb-605a17195034@intel.com>
+         <328275c9b43c06809c9937c83d25126a6e3efcbd.camel@intel.com>
+         <92e56b28-0cd4-e3f4-867b-639d9b98b86c@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <25d88489-9850-f092-205e-0a4fc292f41b@schaufler-ca.com>
-Content-ID: <29009.1560204466.1@warthog.procyon.org.uk>
+In-Reply-To: <92e56b28-0cd4-e3f4-867b-639d9b98b86c@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Casey Schaufler <casey@schaufler-ca.com>
-Cc: dhowells@redhat.com, Andy Lutomirski <luto@kernel.org>, Stephen Smalley <sds@tycho.nsa.gov>, Al Viro <viro@zeniv.linux.org.uk>, USB list <linux-usb@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, raven@themaw.net, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Paul Moore <paul@paul-moore.com>
+To: Dave Hansen <dave.hansen@intel.com>, Andy Lutomirski <luto@amacapital.net>
+Cc: Peter Zijlstra <peterz@infradead.org>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Casey Schaufler <casey@schaufler-ca.com> wrote:
-
-> Process A and process B both open /dev/null.
-> A and B can write and read to their hearts content
-> to/from /dev/null without ever once communicating.
-> The mutual accessibility of /dev/null in no way implies that
-> A and B can communicate. If A can set a watch on /dev/null,
-> and B triggers an event, there still has to be an access
-> check on the delivery of the event because delivering an event
-> to A is not an action on /dev/null, but on A.
-
-If a process has the privilege, it appears that fanotify() allows that process
-to see others accessing /dev/null (FAN_ACCESS, FAN_ACCESS_PERM).  There don't
-seem to be any LSM checks there either.
-
-On the other hand, the privilege required is CAP_SYS_ADMIN,
-
-> > The mount tree can't be modified by unprivileged users, unless a
-> > privileged user very carefully configured it as such.
+On Mon, 2019-06-10 at 15:02 -0700, Dave Hansen wrote:
+> On 6/10/19 1:58 PM, Yu-cheng Yu wrote:
+> > > > On each memory request, the kernel then must consider a percentage of
+> > > > allocated space in its calculation, and on systems with less memory
+> > > > this quickly becomes a problem.
+> > > 
+> > > I'm not sure what you're referring to here?  Are you referring to our
+> > > overcommit limits?
+> > 
+> > Yes.
 > 
-> "Unless" means *is* possible. In which case access control is
-> required. I will admit to being less then expert on the extent
-> to which mounts can be done without privilege.
+> My assumption has always been that these large, potentially sparse
+> hardware tables *must* be mmap()'d with MAP_NORESERVE specified.  That
+> should keep them from being problematic with respect to overcommit.
 
-Automounts in network filesystems, for example.
+Ok, we will go back to do_mmap() with MAP_PRIVATE, MAP_NORESERVE and
+VM_DONTDUMP.  The bitmap will cover only 48-bit address space.
 
-The initial mount of the network filesystem requires local privilege, but then
-mountpoints are managed with remote privilege as granted by things like
-kerberos tickets.  The local kernel has no control.
+We then create PR_MARK_CODE_AS_LEGACY.  The kernel will set the bitmap, but it
+is going to be slow.
 
-If you have CONFIG_AFS_FS enabled in your kernel, for example, and you install
-the keyutils package (dnf, rpm, apt, etc.), then you should be able to do:
+Perhaps we still let the app fill the bitmap?
 
-	mount -t afs none /mnt -o dyn
-	ls /afs/grand.central.org/software/
-
-for example.  That will go through a couple of automount points.  Assuming you
-don't have a kerberos login on those servers, however, you shouldn't be able
-to add new mountpoints.
-
-Someone watching the mount topology can see events when an automount is
-enacted and when it expires, the latter being an event with the system as the
-subject since the expiry is done on a timeout set by the kernel.
-
-David
+Yu-cheng
