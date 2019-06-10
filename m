@@ -1,203 +1,48 @@
-From: Casey Schaufler <casey@schaufler-ca.com>
-Subject: Re: [RFC][PATCH 00/13] Mount, FS, Block and Keyrings notifications
- [ver #4]
-Date: Mon, 10 Jun 2019 12:33:59 -0700
-Message-ID: <4b7d02b2-2434-8a7c-66cc-7dbebc37efbc@schaufler-ca.com>
-References: <155991702981.15579.6007568669839441045.stgit@warthog.procyon.org.uk>
- <be966d9c-e38d-7a30-8d80-fad5f25ab230@tycho.nsa.gov>
- <0cf7a49d-85f6-fba9-62ec-a378e0b76adf@schaufler-ca.com>
- <CALCETrX5O18q2=dUeC=hEtK2=t5KQpGBy9XveHxFw36OqkbNOg@mail.gmail.com>
- <dac74580-5b48-86e4-8222-cac29a9f541d@schaufler-ca.com>
- <E0925E1F-E5F2-4457-8704-47B6E64FE3F3@amacapital.net>
+From: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: Re: [PATCH v7 03/14] x86/cet/ibt: Add IBT legacy code bitmap setup
+ function
+Date: Mon, 10 Jun 2019 12:38:09 -0700
+Message-ID: <5aa98999b1343f34828414b74261201886ec4591.camel@intel.com>
+References: <20190606200926.4029-1-yu-cheng.yu@intel.com>
+         <20190606200926.4029-4-yu-cheng.yu@intel.com>
+         <20190607080832.GT3419@hirez.programming.kicks-ass.net>
+         <aa8a92ef231d512b5c9855ef416db050b5ab59a6.camel@intel.com>
+         <20190607174336.GM3436@hirez.programming.kicks-ass.net>
+         <b3de4110-5366-fdc7-a960-71dea543a42f@intel.com>
+         <34E0D316-552A-401C-ABAA-5584B5BC98C5@amacapital.net>
+         <7e0b97bf1fbe6ff20653a8e4e147c6285cc5552d.camel@intel.com>
+         <25281DB3-FCE4-40C2-BADB-B3B05C5F8DD3@amacapital.net>
+         <e26f7d09376740a5f7e8360fac4805488b2c0a4f.camel@intel.com>
+         <3f19582d-78b1-5849-ffd0-53e8ca747c0d@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <E0925E1F-E5F2-4457-8704-47B6E64FE3F3@amacapital.net>
-Content-Language: en-US
+In-Reply-To: <3f19582d-78b1-5849-ffd0-53e8ca747c0d@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Andy Lutomirski <luto@kernel.org>, Stephen Smalley <sds@tycho.nsa.gov>, David Howells <dhowells@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, USB list <linux-usb@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, raven@themaw.net, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Paul Moore <paul@paul-moore.com>, casey@schaufler-ca.com
+To: Dave Hansen <dave.hansen@intel.com>, Andy Lutomirski <luto@amacapital.net>
+Cc: Peter Zijlstra <peterz@infradead.org>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On 6/10/2019 11:22 AM, Andy Lutomirski wrote:
->> On Jun 10, 2019, at 11:01 AM, Casey Schaufler <casey@schaufler-ca.com>=
- wrote:
->>
->>> On 6/10/2019 9:42 AM, Andy Lutomirski wrote:
->>>> On Mon, Jun 10, 2019 at 9:34 AM Casey Schaufler <casey@schaufler-ca.=
-com> wrote:
->>>>> On 6/10/2019 8:21 AM, Stephen Smalley wrote:
->>>>>> On 6/7/19 10:17 AM, David Howells wrote:
->>>>>> Hi Al,
->>>>>>
->>>>>> Here's a set of patches to add a general variable-length notificat=
-ion queue
->>>>>> concept and to add sources of events for:
->>>>>>
->>>>>>  (1) Mount topology events, such as mounting, unmounting, mount ex=
-piry,
->>>>>>      mount reconfiguration.
->>>>>>
->>>>>>  (2) Superblock events, such as R/W<->R/O changes, quota overrun a=
-nd I/O
->>>>>>      errors (not complete yet).
->>>>>>
->>>>>>  (3) Key/keyring events, such as creating, linking and removal of =
-keys.
->>>>>>
->>>>>>  (4) General device events (single common queue) including:
->>>>>>
->>>>>>      - Block layer events, such as device errors
->>>>>>
->>>>>>      - USB subsystem events, such as device/bus attach/remove, dev=
-ice
->>>>>>        reset, device errors.
->>>>>>
->>>>>> One of the reasons for this is so that we can remove the issue of =
-processes
->>>>>> having to repeatedly and regularly scan /proc/mounts, which has pr=
-oven to
->>>>>> be a system performance problem.  To further aid this, the fsinfo(=
-) syscall
->>>>>> on which this patch series depends, provides a way to access super=
-block and
->>>>>> mount information in binary form without the need to parse /proc/m=
-ounts.
->>>>>>
->>>>>>
->>>>>> LSM support is included, but controversial:
->>>>>>
->>>>>>  (1) The creds of the process that did the fput() that reduced the=
- refcount
->>>>>>      to zero are cached in the file struct.
->>>>>>
->>>>>>  (2) __fput() overrides the current creds with the creds from (1) =
-whilst
->>>>>>      doing the cleanup, thereby making sure that the creds seen by=
- the
->>>>>>      destruction notification generated by mntput() appears to com=
-e from
->>>>>>      the last fputter.
->>>>>>
->>>>>>  (3) security_post_notification() is called for each queue that we=
- might
->>>>>>      want to post a notification into, thereby allowing the LSM to=
- prevent
->>>>>>      covert communications.
->>>>>>
->>>>>>  (?) Do I need to add security_set_watch(), say, to rule on whethe=
-r a watch
->>>>>>      may be set in the first place?  I might need to add a variant=
- per
->>>>>>      watch-type.
->>>>>>
->>>>>>  (?) Do I really need to keep track of the process creds in which =
-an
->>>>>>      implicit object destruction happened?  For example, imagine y=
-ou create
->>>>>>      an fd with fsopen()/fsmount().  It is marked to dissolve the =
-mount it
->>>>>>      refers to on close unless move_mount() clears that flag.  Now=
-, imagine
->>>>>>      someone looking at that fd through procfs at the same time as=
- you exit
->>>>>>      due to an error.  The LSM sees the destruction notification c=
-ome from
->>>>>>      the looker if they happen to do their fput() after yours.
->>>>> I remain unconvinced that (1), (2), (3), and the final (?) above ar=
-e a good idea.
->>>>>
->>>>> For SELinux, I would expect that one would implement a collection o=
-f per watch-type WATCH permission checks on the target object (or to some=
- well-defined object label like the kernel SID if there is no object) tha=
-t allow receipt of all notifications of that watch-type for objects relat=
-ed to the target object, where "related to" is defined per watch-type.
->>>>>
->>>>> I wouldn't expect SELinux to implement security_post_notification()=
- at all.  I can't see how one can construct a meaningful, stable policy f=
-or it.  I'd argue that the triggering process is not posting the notifica=
-tion; the kernel is posting the notification and the watcher has been aut=
-horized to receive it.
->>>> I cannot agree. There is an explicit action by a subject that result=
-s
->>>> in information being delivered to an object. Just like a signal or a=
+On Mon, 2019-06-10 at 11:02 -0700, Dave Hansen wrote:
+> On 6/10/19 8:22 AM, Yu-cheng Yu wrote:
+> > > How does glibc know the linear address space size?  We don’t want LA64 to
+> > > break old binaries because the address calculation changed.
+> > 
+> > When an application starts, its highest stack address is determined.
+> > It uses that as the maximum the bitmap needs to cover.
+> 
+> Huh, I didn't think we ran code from the stack. ;)
+> 
+> Especially given the way that we implemented the new 5-level-paging
+> address space, I don't think that expecting code to be below the stack
+> is a good universal expectation.
 
->>>> UDP packet delivery. Smack handles this kind of thing just fine. The=
+Yes, you make a good point.  However, allowing the application manage the bitmap
+is the most efficient and flexible.  If the loader finds a legacy lib is beyond
+the bitmap can cover, it can deal with the problem by moving the lib to a lower
+address; or re-allocate the bitmap.  If the loader cannot allocate a big bitmap
+to cover all 5-level address space (the bitmap will be large), it can put all
+legacy lib's at lower address.  We cannot do these easily in the kernel.
 
->>>> internal mechanism that results in the access is irrelevant from
->>>> this viewpoint. I can understand how a mechanism like SELinux that
->>>> works on finer granularity might view it differently.
->>> I think you really need to give an example of a coherent policy that
->>> needs this.
->> I keep telling you, and you keep ignoring what I say.
->>
->>>  As it stands, your analogy seems confusing.
->> It's pretty simple. I have given both the abstract
->> and examples.
-> You gave the /dev/null example, which is inapplicable to this patchset.=
-
-
-That addressed an explicit objection, and pointed out
-an exception to a generality you had asserted, which was
-not true. It's also a red herring regarding the current
-discussion.
-
->>>  If someone
->>> changes the system clock, we don't restrict who is allowed to be
->>> notified (via, for example, TFD_TIMER_CANCEL_ON_SET) that the clock
->>> was changed based on who changed the clock.
->> That's right. The system clock is not an object that
->> unprivileged processes can modify. In fact, it is not
->> an object at all. If you care to look, you will see that
->> Smack does nothing with the clock.
-> And this is different from the mount tree how?
-
-The mount tree can be modified by unprivileged users.
-If nothing that unprivileged users can do to the mount
-tree can trigger a notification you are correct, the
-mount tree is very like the system clock. Is that the
-case?=20
-
->>>  Similarly, if someone
->>> tries to receive a packet on a socket, we check whether they have the=
-
->>> right to receive on that socket (from the endpoint in question) and,
->>> if the sender is local, whether the sender can send to that socket.
->>> We do not check whether the sender can send to the receiver.
->> Bzzzt! Smack sure does.
-> This seems dubious. I=E2=80=99m still trying to get you to explain to a=
- non-Smack person why this makes sense.
-
-Process A sends a packet to process B.
-If A has access to TopSecret data and B is not
-allowed to see TopSecret data, the delivery should
-be prevented. Is that nonsensical?
-
->>> The signal example is inapplicable.
->> From a modeling viewpoint the actions are identical.
-> This seems incorrect to me
-
-What would be correct then? Some convoluted combination
-of system entities that aren't owned or controlled by
-any mechanism?=20
-
->  and, I think, to most everyone else reading this.
-
-That's quite the assertion. You may even be correct.
-
->  Can you explain?
->
-> In SELinux-ese, when you write to a file, the subject is the writer and=
- the object is the file.  When you send a signal to a process, the object=
- is the target process.
-
-YES!!!!!!!!!!!!
-
-And when a process triggers a notification it is the subject
-and the watching process is the object!
-
-Subject =3D=3D active entity
-Object  =3D=3D passive entity
-
-Triggering an event is, like calling kill(), an action!
+Yu-cheng
