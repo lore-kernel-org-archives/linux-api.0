@@ -1,59 +1,158 @@
-From: Dave Hansen <dave.hansen@intel.com>
-Subject: Re: [PATCH v7 03/14] x86/cet/ibt: Add IBT legacy code bitmap setup
- function
-Date: Mon, 10 Jun 2019 10:59:48 -0700
-Message-ID: <0e07f346-89c7-ccf1-9d38-854a8e7d25a1@intel.com>
-References: <20190606200926.4029-1-yu-cheng.yu@intel.com>
- <20190606200926.4029-4-yu-cheng.yu@intel.com>
- <20190607080832.GT3419@hirez.programming.kicks-ass.net>
- <aa8a92ef231d512b5c9855ef416db050b5ab59a6.camel@intel.com>
- <20190607174336.GM3436@hirez.programming.kicks-ass.net>
- <b3de4110-5366-fdc7-a960-71dea543a42f@intel.com>
- <34E0D316-552A-401C-ABAA-5584B5BC98C5@amacapital.net>
- <7e0b97bf1fbe6ff20653a8e4e147c6285cc5552d.camel@intel.com>
- <4b448cde-ee4e-1c95-0f7f-4fe694be7db6@intel.com>
- <0e505563f7dae3849b57fb327f578f41b760b6f7.camel@intel.com>
- <f6de9073-9939-a20d-2196-25fa223cf3fc@intel.com>
- <5dc357f5858f8036cad5847cfe214401bb9138bf.camel@intel.com>
+From: Casey Schaufler <casey@schaufler-ca.com>
+Subject: Re: [RFC][PATCH 00/13] Mount, FS, Block and Keyrings notifications
+ [ver #4]
+Date: Mon, 10 Jun 2019 11:01:58 -0700
+Message-ID: <dac74580-5b48-86e4-8222-cac29a9f541d@schaufler-ca.com>
+References: <155991702981.15579.6007568669839441045.stgit@warthog.procyon.org.uk>
+ <be966d9c-e38d-7a30-8d80-fad5f25ab230@tycho.nsa.gov>
+ <0cf7a49d-85f6-fba9-62ec-a378e0b76adf@schaufler-ca.com>
+ <CALCETrX5O18q2=dUeC=hEtK2=t5KQpGBy9XveHxFw36OqkbNOg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5dc357f5858f8036cad5847cfe214401bb9138bf.camel@intel.com>
+In-Reply-To: <CALCETrX5O18q2=dUeC=hEtK2=t5KQpGBy9XveHxFw36OqkbNOg@mail.gmail.com>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yu-cheng Yu <yu-cheng.yu@intel.com>, Andy Lutomirski <luto@amacapital.net>
-Cc: Peter Zijlstra <peterz@infradead.org>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Stephen Smalley <sds@tycho.nsa.gov>, David Howells <dhowells@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, USB list <linux-usb@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, raven@themaw.net, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Paul Moore <paul@paul-moore.com>, casey@schaufler-ca.com
 List-Id: linux-api@vger.kernel.org
 
-On 6/10/19 9:05 AM, Yu-cheng Yu wrote:
-> On Fri, 2019-06-07 at 14:09 -0700, Dave Hansen wrote:
->> On 6/7/19 1:06 PM, Yu-cheng Yu wrote:
->>>> Huh, how does glibc know about all possible past and future legacy code
->>>> in the application?
->>> When dlopen() gets a legacy binary and the policy allows that, it will
->>> manage
->>> the bitmap:
+On 6/10/2019 9:42 AM, Andy Lutomirski wrote:
+> On Mon, Jun 10, 2019 at 9:34 AM Casey Schaufler <casey@schaufler-ca.com=
+> wrote:
+>> On 6/10/2019 8:21 AM, Stephen Smalley wrote:
+>>> On 6/7/19 10:17 AM, David Howells wrote:
+>>>> Hi Al,
+>>>>
+>>>> Here's a set of patches to add a general variable-length notificatio=
+n queue
+>>>> concept and to add sources of events for:
+>>>>
+>>>>   (1) Mount topology events, such as mounting, unmounting, mount exp=
+iry,
+>>>>       mount reconfiguration.
+>>>>
+>>>>   (2) Superblock events, such as R/W<->R/O changes, quota overrun an=
+d I/O
+>>>>       errors (not complete yet).
+>>>>
+>>>>   (3) Key/keyring events, such as creating, linking and removal of k=
+eys.
+>>>>
+>>>>   (4) General device events (single common queue) including:
+>>>>
+>>>>       - Block layer events, such as device errors
+>>>>
+>>>>       - USB subsystem events, such as device/bus attach/remove, devi=
+ce
+>>>>         reset, device errors.
+>>>>
+>>>> One of the reasons for this is so that we can remove the issue of pr=
+ocesses
+>>>> having to repeatedly and regularly scan /proc/mounts, which has prov=
+en to
+>>>> be a system performance problem.  To further aid this, the fsinfo() =
+syscall
+>>>> on which this patch series depends, provides a way to access superbl=
+ock and
+>>>> mount information in binary form without the need to parse /proc/mou=
+nts.
+>>>>
+>>>>
+>>>> LSM support is included, but controversial:
+>>>>
+>>>>   (1) The creds of the process that did the fput() that reduced the =
+refcount
+>>>>       to zero are cached in the file struct.
+>>>>
+>>>>   (2) __fput() overrides the current creds with the creds from (1) w=
+hilst
+>>>>       doing the cleanup, thereby making sure that the creds seen by =
+the
+>>>>       destruction notification generated by mntput() appears to come=
+ from
+>>>>       the last fputter.
+>>>>
+>>>>   (3) security_post_notification() is called for each queue that we =
+might
+>>>>       want to post a notification into, thereby allowing the LSM to =
+prevent
+>>>>       covert communications.
+>>>>
+>>>>   (?) Do I need to add security_set_watch(), say, to rule on whether=
+ a watch
+>>>>       may be set in the first place?  I might need to add a variant =
+per
+>>>>       watch-type.
+>>>>
+>>>>   (?) Do I really need to keep track of the process creds in which a=
+n
+>>>>       implicit object destruction happened?  For example, imagine yo=
+u create
+>>>>       an fd with fsopen()/fsmount().  It is marked to dissolve the m=
+ount it
+>>>>       refers to on close unless move_mount() clears that flag.  Now,=
+ imagine
+>>>>       someone looking at that fd through procfs at the same time as =
+you exit
+>>>>       due to an error.  The LSM sees the destruction notification co=
+me from
+>>>>       the looker if they happen to do their fput() after yours.
+>>> I remain unconvinced that (1), (2), (3), and the final (?) above are =
+a good idea.
 >>>
->>>   If a bitmap has not been created, create one.
->>>   Set bits for the legacy code being loaded.
->> I was thinking about code that doesn't go through GLIBC like JITs.
-> If JIT manages the bitmap, it knows where it is.
-> It can always read the bitmap again, right?
+>>> For SELinux, I would expect that one would implement a collection of =
+per watch-type WATCH permission checks on the target object (or to some w=
+ell-defined object label like the kernel SID if there is no object) that =
+allow receipt of all notifications of that watch-type for objects related=
+ to the target object, where "related to" is defined per watch-type.
+>>>
+>>> I wouldn't expect SELinux to implement security_post_notification() a=
+t all.  I can't see how one can construct a meaningful, stable policy for=
+ it.  I'd argue that the triggering process is not posting the notificati=
+on; the kernel is posting the notification and the watcher has been autho=
+rized to receive it.
+>> I cannot agree. There is an explicit action by a subject that results
+>> in information being delivered to an object. Just like a signal or a
+>> UDP packet delivery. Smack handles this kind of thing just fine. The
+>> internal mechanism that results in the access is irrelevant from
+>> this viewpoint. I can understand how a mechanism like SELinux that
+>> works on finer granularity might view it differently.
+> I think you really need to give an example of a coherent policy that
+> needs this.
 
-Let's just be clear:
+I keep telling you, and you keep ignoring what I say.
 
-The design proposed here is that all code mappers (anybody wanting to
-get legacy non-CET code into the address space):
+>   As it stands, your analogy seems confusing.
 
-1. Know about CET
-2. Know where the bitmap is, and identify the part that needs to be
-   changed
-3. Be able to mprotect() the bitmap to be writable (undoing glibc's
-   PROT_READ)
-4. Set the bits in the bitmap for the legacy code
-5. mprotect() the bitmap back to PROT_READ
+It's pretty simple. I have given both the abstract
+and examples.
 
-Do the non-glibc code mappers have glibc interfaces for this?
-Otherwise, how could a bunch of JITs in a big multi-threaded application
-possibly coordinate the mprotect()s?  Won't they race with each other?
+>   If someone
+> changes the system clock, we don't restrict who is allowed to be
+> notified (via, for example, TFD_TIMER_CANCEL_ON_SET) that the clock
+> was changed based on who changed the clock.
+
+That's right. The system clock is not an object that
+unprivileged processes can modify. In fact, it is not
+an object at all. If you care to look, you will see that
+Smack does nothing with the clock.
+
+>   Similarly, if someone
+> tries to receive a packet on a socket, we check whether they have the
+> right to receive on that socket (from the endpoint in question) and,
+> if the sender is local, whether the sender can send to that socket.
+> We do not check whether the sender can send to the receiver.
+
+Bzzzt! Smack sure does.
+
+> The signal example is inapplicable.
+
+=46rom a modeling viewpoint the actions are identical.
+
+>   Sending a signal to a process is
+> an explicit action done to that process, and it can easily adversely
+> affect the target.  Of course it requires permission.
+>
+> --Andy
