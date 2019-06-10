@@ -1,446 +1,49 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v2 5/5] mm: factor out pmd young/dirty bit handling and THP split
-Date: Mon, 10 Jun 2019 20:12:52 +0900
-Message-ID: <20190610111252.239156-6-minchan@kernel.org>
-References: <20190610111252.239156-1-minchan@kernel.org>
+From: Carlos O'Donell <carlos@redhat.com>
+Subject: Re: [PATCH 1/5] glibc: Perform rseq(2) registration at C startup and
+ thread creation (v10)
+Date: Mon, 10 Jun 2019 10:43:50 -0400
+Message-ID: <c16c9785-7f8c-430b-a4df-a53e47bf1600@redhat.com>
+References: <20190503184219.19266-1-mathieu.desnoyers@efficios.com>
+ <140718133.18261.1559144710554.JavaMail.zimbra@efficios.com>
+ <2022553041.20966.1559249801435.JavaMail.zimbra@efficios.com>
+ <875zprm4jo.fsf@oldenburg2.str.redhat.com>
+ <732661684.21584.1559314109886.JavaMail.zimbra@efficios.com>
+ <87muj2k4ov.fsf@oldenburg2.str.redhat.com>
+ <1528929896.22217.1559326257155.JavaMail.zimbra@efficios.com>
+ <87o93d4lqb.fsf@oldenburg2.str.redhat.com>
+ <117220011.27079.1559663870037.JavaMail.zimbra@efficios.com>
+ <87wohzorj0.fsf@oldenburg2.str.redhat.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190610111252.239156-1-minchan@kernel.org>
+In-Reply-To: <87wohzorj0.fsf@oldenburg2.str.redhat.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, jannh@google.com, oleg@redhat.com, christian@brauner.io, oleksandr@redhat.com, hdanton@sina.com, lizeb@google.com, Minchan Kim <minchan@kernel.org>, "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>, Christopher Lameter <cl@linux.com>
+To: Florian Weimer <fweimer@redhat.com>, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Now, there are common part among MADV_COLD|PAGEOUT|FREE to reset
-access/dirty bit resetting or split the THP page to handle part
-of subpages in the THP page. This patch factor out the common part.
+On 6/6/19 7:57 AM, Florian Weimer wrote:
+> Let me ask the key question again: Does it matter if code observes the
+> rseq area first without kernel support, and then with kernel support?
+> If we don't expect any problems immediately, we do not need to worry
+> much about the constructor ordering right now.  I expect that over time,
+> fixing this properly will become easier.
 
-Cc: "Kirill A. Shutemov" <kirill.shutemov@linux.intel.com>
-Cc: Christopher Lameter <cl@linux.com>
-Signed-off-by: Minchan Kim <minchan@kernel.org>
----
- include/linux/huge_mm.h |   3 -
- mm/huge_memory.c        |  74 -------------
- mm/madvise.c            | 234 +++++++++++++++++++++++-----------------
- 3 files changed, 135 insertions(+), 176 deletions(-)
+I just wanted to chime in and say that splitting this into:
 
-diff --git a/include/linux/huge_mm.h b/include/linux/huge_mm.h
-index 7cd5c150c21d..2667e1aa3ce5 100644
---- a/include/linux/huge_mm.h
-+++ b/include/linux/huge_mm.h
-@@ -29,9 +29,6 @@ extern struct page *follow_trans_huge_pmd(struct vm_area_struct *vma,
- 					  unsigned long addr,
- 					  pmd_t *pmd,
- 					  unsigned int flags);
--extern bool madvise_free_huge_pmd(struct mmu_gather *tlb,
--			struct vm_area_struct *vma,
--			pmd_t *pmd, unsigned long addr, unsigned long next);
- extern int zap_huge_pmd(struct mmu_gather *tlb,
- 			struct vm_area_struct *vma,
- 			pmd_t *pmd, unsigned long addr);
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index 9f8bce9a6b32..22e20f929463 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -1668,80 +1668,6 @@ vm_fault_t do_huge_pmd_numa_page(struct vm_fault *vmf, pmd_t pmd)
- 	return 0;
- }
- 
--/*
-- * Return true if we do MADV_FREE successfully on entire pmd page.
-- * Otherwise, return false.
-- */
--bool madvise_free_huge_pmd(struct mmu_gather *tlb, struct vm_area_struct *vma,
--		pmd_t *pmd, unsigned long addr, unsigned long next)
--{
--	spinlock_t *ptl;
--	pmd_t orig_pmd;
--	struct page *page;
--	struct mm_struct *mm = tlb->mm;
--	bool ret = false;
--
--	tlb_change_page_size(tlb, HPAGE_PMD_SIZE);
--
--	ptl = pmd_trans_huge_lock(pmd, vma);
--	if (!ptl)
--		goto out_unlocked;
--
--	orig_pmd = *pmd;
--	if (is_huge_zero_pmd(orig_pmd))
--		goto out;
--
--	if (unlikely(!pmd_present(orig_pmd))) {
--		VM_BUG_ON(thp_migration_supported() &&
--				  !is_pmd_migration_entry(orig_pmd));
--		goto out;
--	}
--
--	page = pmd_page(orig_pmd);
--	/*
--	 * If other processes are mapping this page, we couldn't discard
--	 * the page unless they all do MADV_FREE so let's skip the page.
--	 */
--	if (page_mapcount(page) != 1)
--		goto out;
--
--	if (!trylock_page(page))
--		goto out;
--
--	/*
--	 * If user want to discard part-pages of THP, split it so MADV_FREE
--	 * will deactivate only them.
--	 */
--	if (next - addr != HPAGE_PMD_SIZE) {
--		get_page(page);
--		spin_unlock(ptl);
--		split_huge_page(page);
--		unlock_page(page);
--		put_page(page);
--		goto out_unlocked;
--	}
--
--	if (PageDirty(page))
--		ClearPageDirty(page);
--	unlock_page(page);
--
--	if (pmd_young(orig_pmd) || pmd_dirty(orig_pmd)) {
--		pmdp_invalidate(vma, addr, pmd);
--		orig_pmd = pmd_mkold(orig_pmd);
--		orig_pmd = pmd_mkclean(orig_pmd);
--
--		set_pmd_at(mm, addr, pmd, orig_pmd);
--		tlb_remove_pmd_tlb_entry(tlb, pmd, addr);
--	}
--
--	mark_page_lazyfree(page);
--	ret = true;
--out:
--	spin_unlock(ptl);
--out_unlocked:
--	return ret;
--}
--
- static inline void zap_deposited_table(struct mm_struct *mm, pmd_t *pmd)
- {
- 	pgtable_t pgtable;
-diff --git a/mm/madvise.c b/mm/madvise.c
-index 3b9d2ba421b1..bb1906bb75fd 100644
---- a/mm/madvise.c
-+++ b/mm/madvise.c
-@@ -310,6 +310,91 @@ static long madvise_willneed(struct vm_area_struct *vma,
- 	return 0;
- }
- 
-+enum madv_pmdp_reset_t {
-+	MADV_PMDP_RESET,	/* pmd was reset successfully */
-+	MADV_PMDP_SPLIT,	/* pmd was split */
-+	MADV_PMDP_ERROR,
-+};
-+
-+static enum madv_pmdp_reset_t madvise_pmdp_reset_or_split(struct mm_walk *walk,
-+				pmd_t *pmd, spinlock_t *ptl,
-+				unsigned long addr, unsigned long end,
-+				bool young, bool dirty)
-+{
-+	pmd_t orig_pmd;
-+	unsigned long next;
-+	struct page *page;
-+	struct mmu_gather *tlb = walk->private;
-+	struct mm_struct *mm = walk->mm;
-+	struct vm_area_struct *vma = walk->vma;
-+	bool reset_young = false;
-+	bool reset_dirty = false;
-+	enum madv_pmdp_reset_t ret = MADV_PMDP_ERROR;
-+
-+	orig_pmd = *pmd;
-+	if (is_huge_zero_pmd(orig_pmd))
-+		return ret;
-+
-+	if (unlikely(!pmd_present(orig_pmd))) {
-+		VM_BUG_ON(thp_migration_supported() &&
-+				!is_pmd_migration_entry(orig_pmd));
-+		return ret;
-+	}
-+
-+	next = pmd_addr_end(addr, end);
-+	page = pmd_page(orig_pmd);
-+	if (next - addr != HPAGE_PMD_SIZE) {
-+		/*
-+		 * THP collapsing is not cheap so only split the page is
-+		 * private to the this process.
-+		 */
-+		if (page_mapcount(page) != 1)
-+			return ret;
-+		get_page(page);
-+		spin_unlock(ptl);
-+		lock_page(page);
-+		if (!split_huge_page(page))
-+			ret = MADV_PMDP_SPLIT;
-+		unlock_page(page);
-+		put_page(page);
-+		return ret;
-+	}
-+
-+	if (young && pmd_young(orig_pmd))
-+		reset_young = true;
-+	if (dirty && pmd_dirty(orig_pmd))
-+		reset_dirty = true;
-+
-+	/*
-+	 * Other process could rely on the PG_dirty for data consistency,
-+	 * not pte_dirty so we could reset PG_dirty only when we are owner
-+	 * of the page.
-+	 */
-+	if (reset_dirty) {
-+		if (page_mapcount(page) != 1)
-+			goto out;
-+		if (!trylock_page(page))
-+			goto out;
-+		if (PageDirty(page))
-+			ClearPageDirty(page);
-+		unlock_page(page);
-+	}
-+
-+	ret = MADV_PMDP_RESET;
-+	if (reset_young || reset_dirty) {
-+		tlb_change_page_size(tlb, HPAGE_PMD_SIZE);
-+		pmdp_invalidate(vma, addr, pmd);
-+		if (reset_young)
-+			orig_pmd = pmd_mkold(orig_pmd);
-+		if (reset_dirty)
-+			orig_pmd = pmd_mkclean(orig_pmd);
-+		set_pmd_at(mm, addr, pmd, orig_pmd);
-+		tlb_remove_pmd_tlb_entry(tlb, pmd, addr);
-+	}
-+out:
-+	return ret;
-+}
-+
- static int madvise_cold_pte_range(pmd_t *pmd, unsigned long addr,
- 				unsigned long end, struct mm_walk *walk)
- {
-@@ -319,64 +404,31 @@ static int madvise_cold_pte_range(pmd_t *pmd, unsigned long addr,
- 	pte_t *orig_pte, *pte, ptent;
- 	spinlock_t *ptl;
- 	struct page *page;
--	unsigned long next;
- 
--	next = pmd_addr_end(addr, end);
- 	if (pmd_trans_huge(*pmd)) {
--		pmd_t orig_pmd;
--
--		tlb_change_page_size(tlb, HPAGE_PMD_SIZE);
- 		ptl = pmd_trans_huge_lock(pmd, vma);
- 		if (!ptl)
- 			return 0;
- 
--		orig_pmd = *pmd;
--		if (is_huge_zero_pmd(orig_pmd))
--			goto huge_unlock;
--
--		if (unlikely(!pmd_present(orig_pmd))) {
--			VM_BUG_ON(thp_migration_supported() &&
--					!is_pmd_migration_entry(orig_pmd));
--			goto huge_unlock;
--		}
--
--		page = pmd_page(orig_pmd);
--		if (next - addr != HPAGE_PMD_SIZE) {
--			int err;
--
--			if (page_mapcount(page) != 1)
--				goto huge_unlock;
--
--			get_page(page);
-+		switch (madvise_pmdp_reset_or_split(walk, pmd, ptl, addr, end,
-+							true, false)) {
-+		case MADV_PMDP_RESET:
- 			spin_unlock(ptl);
--			lock_page(page);
--			err = split_huge_page(page);
--			unlock_page(page);
--			put_page(page);
--			if (!err)
--				goto regular_page;
--			return 0;
--		}
--
--		if (pmd_young(orig_pmd)) {
--			pmdp_invalidate(vma, addr, pmd);
--			orig_pmd = pmd_mkold(orig_pmd);
--
--			set_pmd_at(mm, addr, pmd, orig_pmd);
--			tlb_remove_pmd_tlb_entry(tlb, pmd, addr);
-+			page = pmd_page(*pmd);
-+			test_and_clear_page_young(page);
-+			deactivate_page(page);
-+			goto next;
-+		case MADV_PMDP_ERROR:
-+			spin_unlock(ptl);
-+			goto next;
-+		case MADV_PMDP_SPLIT:
-+			; /* go through */
- 		}
--
--		test_and_clear_page_young(page);
--		deactivate_page(page);
--huge_unlock:
--		spin_unlock(ptl);
--		return 0;
- 	}
- 
- 	if (pmd_trans_unstable(pmd))
- 		return 0;
- 
--regular_page:
- 	tlb_change_page_size(tlb, PAGE_SIZE);
- 	orig_pte = pte = pte_offset_map_lock(vma->vm_mm, pmd, addr, &ptl);
- 	flush_tlb_batched_pending(mm);
-@@ -414,6 +466,7 @@ static int madvise_cold_pte_range(pmd_t *pmd, unsigned long addr,
- 
- 	arch_enter_lazy_mmu_mode();
- 	pte_unmap_unlock(orig_pte, ptl);
-+next:
- 	cond_resched();
- 
- 	return 0;
-@@ -464,70 +517,38 @@ static int madvise_pageout_pte_range(pmd_t *pmd, unsigned long addr,
- 	LIST_HEAD(page_list);
- 	struct page *page;
- 	int isolated = 0;
--	unsigned long next;
- 
- 	if (fatal_signal_pending(current))
- 		return -EINTR;
- 
--	next = pmd_addr_end(addr, end);
- 	if (pmd_trans_huge(*pmd)) {
--		pmd_t orig_pmd;
--
--		tlb_change_page_size(tlb, HPAGE_PMD_SIZE);
- 		ptl = pmd_trans_huge_lock(pmd, vma);
- 		if (!ptl)
- 			return 0;
- 
--		orig_pmd = *pmd;
--		if (is_huge_zero_pmd(orig_pmd))
--			goto huge_unlock;
--
--		if (unlikely(!pmd_present(orig_pmd))) {
--			VM_BUG_ON(thp_migration_supported() &&
--					!is_pmd_migration_entry(orig_pmd));
--			goto huge_unlock;
--		}
--
--		page = pmd_page(orig_pmd);
--		if (next - addr != HPAGE_PMD_SIZE) {
--			int err;
--
--			if (page_mapcount(page) != 1)
--				goto huge_unlock;
--			get_page(page);
-+		switch (madvise_pmdp_reset_or_split(walk, pmd, ptl, addr, end,
-+							true, false)) {
-+		case MADV_PMDP_RESET:
-+			page = pmd_page(*pmd);
- 			spin_unlock(ptl);
--			lock_page(page);
--			err = split_huge_page(page);
--			unlock_page(page);
--			put_page(page);
--			if (!err)
--				goto regular_page;
--			return 0;
--		}
--
--		if (isolate_lru_page(page))
--			goto huge_unlock;
--
--		if (pmd_young(orig_pmd)) {
--			pmdp_invalidate(vma, addr, pmd);
--			orig_pmd = pmd_mkold(orig_pmd);
--
--			set_pmd_at(mm, addr, pmd, orig_pmd);
--			tlb_remove_tlb_entry(tlb, pmd, addr);
-+			if (isolate_lru_page(page))
-+				return 0;
-+			ClearPageReferenced(page);
-+			test_and_clear_page_young(page);
-+			list_add(&page->lru, &page_list);
-+			reclaim_pages(&page_list);
-+			goto next;
-+		case MADV_PMDP_ERROR:
-+			spin_unlock(ptl);
-+			goto next;
-+		case MADV_PMDP_SPLIT:
-+			; /* go through */
- 		}
--
--		ClearPageReferenced(page);
--		test_and_clear_page_young(page);
--		list_add(&page->lru, &page_list);
--huge_unlock:
--		spin_unlock(ptl);
--		reclaim_pages(&page_list);
--		return 0;
- 	}
- 
- 	if (pmd_trans_unstable(pmd))
- 		return 0;
--regular_page:
-+
- 	tlb_change_page_size(tlb, PAGE_SIZE);
- 	orig_pte = pte = pte_offset_map_lock(vma->vm_mm, pmd, addr, &ptl);
- 	flush_tlb_batched_pending(mm);
-@@ -569,6 +590,7 @@ static int madvise_pageout_pte_range(pmd_t *pmd, unsigned long addr,
- 	arch_leave_lazy_mmu_mode();
- 	pte_unmap_unlock(orig_pte, ptl);
- 	reclaim_pages(&page_list);
-+next:
- 	cond_resched();
- 
- 	return 0;
-@@ -620,12 +642,26 @@ static int madvise_free_pte_range(pmd_t *pmd, unsigned long addr,
- 	pte_t *orig_pte, *pte, ptent;
- 	struct page *page;
- 	int nr_swap = 0;
--	unsigned long next;
- 
--	next = pmd_addr_end(addr, end);
--	if (pmd_trans_huge(*pmd))
--		if (madvise_free_huge_pmd(tlb, vma, pmd, addr, next))
-+	if (pmd_trans_huge(*pmd)) {
-+		ptl = pmd_trans_huge_lock(pmd, vma);
-+		if (!ptl)
-+			return 0;
-+
-+		switch (madvise_pmdp_reset_or_split(walk, pmd, ptl, addr, end,
-+							true, true)) {
-+		case MADV_PMDP_RESET:
-+			page = pmd_page(*pmd);
-+			spin_unlock(ptl);
-+			mark_page_lazyfree(page);
- 			goto next;
-+		case MADV_PMDP_ERROR:
-+			spin_unlock(ptl);
-+			goto next;
-+		case MADV_PMDP_SPLIT:
-+			; /* go through */
-+		}
-+	}
- 
- 	if (pmd_trans_unstable(pmd))
- 		return 0;
-@@ -737,8 +773,8 @@ static int madvise_free_pte_range(pmd_t *pmd, unsigned long addr,
- 	}
- 	arch_leave_lazy_mmu_mode();
- 	pte_unmap_unlock(orig_pte, ptl);
--	cond_resched();
- next:
-+	cond_resched();
- 	return 0;
- }
- 
+* Ownership (__rseq_handled)
+
+* Initialization (__rseq_abi)
+
+Makes sense to me.
+
+I agree we need an answer to this question of ownership but not yet
+initialized, to owned and initialized.
+
+I like the idea of having __rseq_handled in ld.so.
+
 -- 
-2.22.0.rc2.383.gf4fbbf30c2-goog
+Cheers,
+Carlos.
