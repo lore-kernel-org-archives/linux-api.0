@@ -1,64 +1,46 @@
-From: Dave Martin <Dave.Martin@arm.com>
-Subject: Re: [PATCH v7 22/27] binfmt_elf: Extract .note.gnu.property from an
- ELF file
-Date: Tue, 11 Jun 2019 12:41:09 +0100
-Message-ID: <20190611114109.GN28398@e103592.cambridge.arm.com>
-References: <20190606200646.3951-1-yu-cheng.yu@intel.com>
- <20190606200646.3951-23-yu-cheng.yu@intel.com>
- <20190607180115.GJ28398@e103592.cambridge.arm.com>
- <94b9c55b3b874825fda485af40ab2a6bc3dad171.camel@intel.com>
- <87lfy9cq04.fsf@oldenburg2.str.redhat.com>
+From: Alan Stern <stern@rowland.harvard.edu>
+Subject: Re: [PATCH 09/10] usb: Add USB subsystem notifications [ver #3]
+Date: Tue, 11 Jun 2019 09:53:03 -0400 (EDT)
+Message-ID: <Pine.LNX.4.44L0.1906110950440.1535-100000@iolanthe.rowland.org>
+References: <875zpcfxfk.fsf@linux.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <87lfy9cq04.fsf@oldenburg2.str.redhat.com>
+In-Reply-To: <875zpcfxfk.fsf@linux.intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>
-Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
+To: Felipe Balbi <felipe.balbi@linux.intel.com>
+Cc: Mathias Nyman <mathias.nyman@linux.intel.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, David Howells <dhowells@redhat.com>, viro@zeniv.linux.org.uk, linux-usb@vger.kernel.org, raven@themaw.net, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jun 10, 2019 at 07:24:43PM +0200, Florian Weimer wrote:
-> * Yu-cheng Yu:
-> 
-> > To me, looking at PT_GNU_PROPERTY and not trying to support anything is a
-> > logical choice.  And it breaks only a limited set of toolchains.
+On Tue, 11 Jun 2019, Felipe Balbi wrote:
+
+> >> >> > So for "severe" issues, yes, we should do this, but perhaps not for all
+> >> >> > of the "normal" things we see when a device is yanked out of the system
+> >> >> > and the like.
+> >> >> 
+> >> >> Then what counts as a "severe" issue?  Anything besides enumeration 
+> >> >> failure?
+> >> >
+> >> > Not that I can think of at the moment, other than the other recently
+> >> > added KOBJ_CHANGE issue.  I'm sure we have other "hard failure" issues
+> >> > in the USB stack that people will want exposed over time.
+> >> 
+> >> From an XHCI standpoint, Transaction Errors might be one thing. They
+> >> happen rarely and are a strong indication that the bus itself is
+> >> bad. Either bad cable, misbehaving PHYs, improper power management, etc.
 > >
-> > I will simplify the parser and leave this patch as-is for anyone who wants to
-> > back-port.  Are there any objections or concerns?
+> > Don't you also get transaction errors if the user unplugs a device in 
+> > the middle of a transfer?  That's not the sort of thing we want to sent 
+> > notifications about.
 > 
-> Red Hat Enterprise Linux 8 does not use PT_GNU_PROPERTY and is probably
-> the largest collection of CET-enabled binaries that exists today.
+> Mathias, do we get Transaction Error if user removes cable during a
+> transfer? I thought we would just get Port Status Change with CC bit
+> cleared, no?
 
-For clarity, RHEL is actively parsing these properties today?
+Even if xHCI doesn't give Transaction Errors when a cable is unplugged 
+during a transfer, other host controllers do.  Sometimes quite a lot -- 
+they continue to occur until the kernel polls the parent hub's 
+interrupt ep and learns that the port is disconnected, which can take 
+up to 250 ms.
 
-> My hope was that we would backport the upstream kernel patches for CET,
-> port the glibc dynamic loader to the new kernel interface, and be ready
-> to run with CET enabled in principle (except that porting userspace
-> libraries such as OpenSSL has not really started upstream, so many
-> processes where CET is particularly desirable will still run without
-> it).
-> 
-> I'm not sure if it is a good idea to port the legacy support if it's not
-> part of the mainline kernel because it comes awfully close to creating
-> our own private ABI.
-
-I guess we can aim to factor things so that PT_NOTE scanning is
-available as a fallback on arches for which the absence of
-PT_GNU_PROPERTY is not authoritative.
-
-Can we argue that the lack of PT_GNU_PROPERTY is an ABI bug, fix it
-for new binaries and hence limit the efforts we go to to support
-theoretical binaries that lack the phdrs entry?
-
-If we can make practical simplifications to the parsing, such as
-limiting the maximum PT_NOTE size that we will search for the program
-properties to 1K (say), or requiring NT_NOTE_GNU_PROPERTY_TYPE_0 to sit
-by itself in a single PT_NOTE then that could help minimse the exec
-overheads and the number of places for bugs to hide in the kernel.
-
-What we can do here depends on what the tools currently do and what
-binaries are out there.
-
-Cheers
----Dave
+Alan Stern
