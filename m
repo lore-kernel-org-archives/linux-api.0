@@ -1,184 +1,49 @@
 From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [RFC][PATCH 00/13] Mount, FS, Block and Keyrings notifications [ver #4]
-Date: Mon, 10 Jun 2019 17:13:51 -0700
-Message-ID: <97BA9EB5-4E62-4E3A-BD97-CEC34F16FCFF@amacapital.net>
-References: <155991702981.15579.6007568669839441045.stgit@warthog.procyon.org.uk> <be966d9c-e38d-7a30-8d80-fad5f25ab230@tycho.nsa.gov> <0cf7a49d-85f6-fba9-62ec-a378e0b76adf@schaufler-ca.com> <CALCETrX5O18q2=dUeC=hEtK2=t5KQpGBy9XveHxFw36OqkbNOg@mail.gmail.com> <dac74580-5b48-86e4-8222-cac29a9f541d@schaufler-ca.com> <E0925E1F-E5F2-4457-8704-47B6E64FE3F3@amacapital.net> <4b7d02b2-2434-8a7c-66cc-7dbebc37efbc@schaufler-ca.com> <CALCETrU+PKVbrKQJoXj9x_5y+vTZENMczHqyM_Xb85ca5YDZuA@mail.gmail.com> <25d88489-9850-f092-205e-0a4fc292f41b@schaufler-ca.com>
+Subject: Re: [PATCH v7 03/14] x86/cet/ibt: Add IBT legacy code bitmap setup function
+Date: Mon, 10 Jun 2019 17:36:03 -0700
+Message-ID: <7E931FED-B39D-4C05-8B78-D8CF2F0EF9FC@amacapital.net>
+References: <20190606200926.4029-1-yu-cheng.yu@intel.com> <aa8a92ef231d512b5c9855ef416db050b5ab59a6.camel@intel.com>
+ <20190607174336.GM3436@hirez.programming.kicks-ass.net> <b3de4110-5366-fdc7-a960-71dea543a42f@intel.com>
+ <34E0D316-552A-401C-ABAA-5584B5BC98C5@amacapital.net> <7e0b97bf1fbe6ff20653a8e4e147c6285cc5552d.camel@intel.com>
+ <25281DB3-FCE4-40C2-BADB-B3B05C5F8DD3@amacapital.net> <e26f7d09376740a5f7e8360fac4805488b2c0a4f.camel@intel.com>
+ <3f19582d-78b1-5849-ffd0-53e8ca747c0d@intel.com> <5aa98999b1343f34828414b74261201886ec4591.camel@intel.com>
+ <0665416d-9999-b394-df17-f2a5e1408130@intel.com> <5c8727dde9653402eea97bfdd030c479d1e8dd99.camel@intel.com>
+ <ac9a20a6-170a-694e-beeb-605a17195034@intel.com> <328275c9b43c06809c9937c83d25126a6e3efcbd.camel@intel.com>
+ <92e56b28-0cd4-e3f4-867b-639d9b98b86c@intel.com> <1b961c71d30e31ecb22da2c5401b1a81cb802d86.camel@intel.com>
+ <ea5e333f-8cd6-8396-635f-a9dc580d5364@intel.com> <BBBF82D3-EE21-49E1-92A4-713C7729E6AD@amacapital.net>
+ <a329c4fa-adb0-09a4-7a8c-465f82e0e6c7@intel.com>
 Mime-Version: 1.0 (1.0)
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <25d88489-9850-f092-205e-0a4fc292f41b@schaufler-ca.com>
+In-Reply-To: <a329c4fa-adb0-09a4-7a8c-465f82e0e6c7@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Casey Schaufler <casey@schaufler-ca.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Stephen Smalley <sds@tycho.nsa.gov>, David Howells <dhowells@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, USB list <linux-usb@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, raven@themaw.net, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Paul Moore <paul@paul-moore.com>
+To: Dave Hansen <dave.hansen@intel.com>
+Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>, Peter Zijlstra <peterz@infradead.org>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>
 List-Id: linux-api@vger.kernel.org
 
 
 
-> On Jun 10, 2019, at 2:25 PM, Casey Schaufler <casey@schaufler-ca.com> wrot=
-e:
+> On Jun 10, 2019, at 5:08 PM, Dave Hansen <dave.hansen@intel.com> wrote:
 >=20
->> On 6/10/2019 12:53 PM, Andy Lutomirski wrote:
->> On Mon, Jun 10, 2019 at 12:34 PM Casey Schaufler <casey@schaufler-ca.com>=
- wrote:
->>>>>> I think you really need to give an example of a coherent policy that
->>>>>> needs this.
->>>>> I keep telling you, and you keep ignoring what I say.
->>>>>=20
->>>>>> As it stands, your analogy seems confusing.
->>>>> It's pretty simple. I have given both the abstract
->>>>> and examples.
->>>> You gave the /dev/null example, which is inapplicable to this patchset.=
+>> On 6/10/19 4:54 PM, Andy Lutomirski wrote:
+>> Another benefit of kernel management: we could plausibly auto-clear
+>> the bits corresponding to munmapped regions. Is this worth it?
+>=20
+> I did it for MPX.  I think I even went to the trouble of zapping the
+> whole pages that got unused.
+>=20
+> But, MPX tables took 80% of the address space, worst-case.  This takes
+> 0.003% :)  The only case it would really matter would be a task was
+> long-running, used legacy executables/JITs, and was mapping/unmapping
+> text all over the address space.  That seems rather unlikely.
 
->>> That addressed an explicit objection, and pointed out
->>> an exception to a generality you had asserted, which was
->>> not true. It's also a red herring regarding the current
->>> discussion.
->> This argument is pointless.
->>=20
->> Please humor me and just give me an example.  If you think you have
->> already done so, feel free to repeat yourself.  If you have no
->> example, then please just say so.
->=20
-> To repeat the /dev/null example:
->=20
-> Process A and process B both open /dev/null.
-> A and B can write and read to their hearts content
-> to/from /dev/null without ever once communicating.
-> The mutual accessibility of /dev/null in no way implies that
-> A and B can communicate. If A can set a watch on /dev/null,
-> and B triggers an event, there still has to be an access
-> check on the delivery of the event because delivering an event
-> to A is not an action on /dev/null, but on A.
->=20
+Every wasted page still costs 4K plus page table overhead.  The worst case i=
+s a JIT that doesn=E2=80=99t clean up and leaks legacy bitmap memory all ove=
+r. We can blame the JIT, but the actual attribution could be complicated.
 
-At discussed, this is an irrelevant straw man. This patch series does not pr=
-oduce events when this happens. I=E2=80=99m looking for a relevant example, p=
-lease.
->=20
->=20
->>  An unprivileged
->> user can create a new userns and a new mount ns, but then they're
->> modifying a whole different mount tree.
->=20
-> Within those namespaces you can still have multiple users,
-> constrained be system access control policy.
+It also matters when you unmap one thing, map something else, and are sad wh=
+en the legacy bits are still set.
 
-And the one doing the mounting will be constrained by MAC and DAC policy, as=
- always.  The namespace creator is, from the perspective of those processes,=
- admin.
-
->=20
->>=20
->>>>>> Similarly, if someone
->>>>>> tries to receive a packet on a socket, we check whether they have the=
-
->>>>>> right to receive on that socket (from the endpoint in question) and,
->>>>>> if the sender is local, whether the sender can send to that socket.
->>>>>> We do not check whether the sender can send to the receiver.
->>>>> Bzzzt! Smack sure does.
->>>> This seems dubious. I=E2=80=99m still trying to get you to explain to a=
- non-Smack person why this makes sense.
->>> Process A sends a packet to process B.
->>> If A has access to TopSecret data and B is not
->>> allowed to see TopSecret data, the delivery should
->>> be prevented. Is that nonsensical?
->> It makes sense.  As I see it, the way that a sensible policy should do
->> this is by making sure that there are no sockets, pipes, etc that
->> Process A can write and that Process B can read.
->=20
-> You can't explain UDP controls without doing the access check
-> on packet delivery. The sendmsg() succeeds when the packet leaves
-> the sender. There doesn't even have to be a socket bound to the
-> port. The only opportunity you have for control is on packet
-> delivery, which is the only point at which you can have the
-> information required.
-
-Huh?  You sendmsg() from an address to an address.  My point is that, for mo=
-st purposes, that=E2=80=99s all the information that=E2=80=99s needed.
-
->=20
->> If you really want to prevent a malicious process with TopSecret data
->> from sending it to a different process, then you can't use Linux on
->> x86 or ARM.  Maybe that will be fixed some day, but you're going to
->> need to use an extremely tight sandbox to make this work.
->=20
-> I won't be commenting on that.
-
-Then why is preventing this is an absolute requirement? It=E2=80=99s unattai=
-nable.
-
->=20
->>=20
->>>>>> The signal example is inapplicable.
->>>>> =46rom a modeling viewpoint the actions are identical.
->>>> This seems incorrect to me
->>> What would be correct then? Some convoluted combination
->>> of system entities that aren't owned or controlled by
->>> any mechanism?
->>>=20
->> POSIX signal restrictions aren't there to prevent two processes from
->> communicating.  They're there to prevent the sender from manipulating
->> or crashing the receiver without appropriate privilege.
->=20
-> POSIX signal restrictions have a long history. In the P10031e/2c
-> debates both communication and manipulation where seriously
-> considered. I would say both are true.
->=20
->>>> and, I think, to most everyone else reading this.
->>> That's quite the assertion. You may even be correct.
->>>=20
->>>> Can you explain?
->>>>=20
->>>> In SELinux-ese, when you write to a file, the subject is the writer and=
- the object is the file.  When you send a signal to a process, the object is=
- the target process.
->>> YES!!!!!!!!!!!!
->>>=20
->>> And when a process triggers a notification it is the subject
->>> and the watching process is the object!
->>>=20
->>> Subject =3D=3D active entity
->>> Object  =3D=3D passive entity
->>>=20
->>> Triggering an event is, like calling kill(), an action!
->>>=20
->> And here is where I disagree with your interpretation.  Triggering an
->> event is a side effect of writing to the file.  There are *two*
->> security relevant actions, not one, and they are:
->>=20
->> First, the write:
->>=20
->> Subject =3D=3D the writer
->> Action =3D=3D write
->> Object =3D=3D the file
->>=20
->> Then the event, which could be modeled in a couple of ways:
->>=20
->> Subject =3D=3D the file
->=20
-> Files   are   not   subjects. They are passive entities.
->=20
->> Action =3D=3D notify
->> Object =3D=3D the recipient
-
-Great. Then use the variant below.
-
->>=20
->> or
->>=20
->> Subject =3D=3D the recipient
->> Action =3D=3D watch
->> Object =3D=3D the file
->>=20
->> By conflating these two actions into one, you've made the modeling
->> very hard, and you start running into all these nasty questions like
->> "who actually closed this open file"
->=20
-> No, I've made the code more difficult.
-> You can not call
-> the file a subject. That is just wrong. It's not a valid
-> model.
-
-You=E2=80=99ve ignored the =E2=80=9CAction =3D=3D watch=E2=80=9D variant. Do=
- you care to comment?
+Admittedly, it=E2=80=99s a bit hard to imagine the exploit that takes advant=
+age of this.=
