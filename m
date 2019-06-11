@@ -1,56 +1,221 @@
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: Re: [PATCH v7 22/27] binfmt_elf: Extract .note.gnu.property from an
- ELF file
-Date: Tue, 11 Jun 2019 12:31:34 -0700
-Message-ID: <031bc55d8dcdcf4f031e6ff27c33fd52c61d33a5.camel@intel.com>
-References: <20190606200646.3951-1-yu-cheng.yu@intel.com>
-         <20190606200646.3951-23-yu-cheng.yu@intel.com>
-         <20190607180115.GJ28398@e103592.cambridge.arm.com>
-         <94b9c55b3b874825fda485af40ab2a6bc3dad171.camel@intel.com>
-         <87lfy9cq04.fsf@oldenburg2.str.redhat.com>
-         <20190611114109.GN28398@e103592.cambridge.arm.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [PATCH 1/7] signal.h: Define SIGINFO on all architectures
+Date: Tue, 11 Jun 2019 15:36:00 -0500
+Message-ID: <87o933507j.fsf@xmission.com>
+References: <20190605081906.28938-1-ar@cs.msu.ru>
+        <20190605081906.28938-2-ar@cs.msu.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190611114109.GN28398@e103592.cambridge.arm.com>
+In-Reply-To: <20190605081906.28938-2-ar@cs.msu.ru> (Arseny Maslennikov's
+        message of "Wed, 5 Jun 2019 11:19:00 +0300")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Martin <Dave.Martin@arm.com>, Florian Weimer <fweimer@redhat.com>
-Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel
+To: Arseny Maslennikov <ar@cs.msu.ru>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Jiri Slaby <jslaby@suse.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, linux-kernel@vger.kernel.org, "Vladimir D . Seleznev" <vseleznv@altlinux.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2019-06-11 at 12:41 +0100, Dave Martin wrote:
-> On Mon, Jun 10, 2019 at 07:24:43PM +0200, Florian Weimer wrote:
-> > * Yu-cheng Yu:
-> > 
-> > > To me, looking at PT_GNU_PROPERTY and not trying to support anything is a
-> > > logical choice.  And it breaks only a limited set of toolchains.
-> > > 
-> > > I will simplify the parser and leave this patch as-is for anyone who wants
-> > > to
-> > > back-port.  Are there any objections or concerns?
-> > 
-> > Red Hat Enterprise Linux 8 does not use PT_GNU_PROPERTY and is probably
-> > the largest collection of CET-enabled binaries that exists today.
-> 
-> For clarity, RHEL is actively parsing these properties today?
-> 
-> > My hope was that we would backport the upstream kernel patches for CET,
-> > port the glibc dynamic loader to the new kernel interface, and be ready
-> > to run with CET enabled in principle (except that porting userspace
-> > libraries such as OpenSSL has not really started upstream, so many
-> > processes where CET is particularly desirable will still run without
-> > it).
-> > 
-> > I'm not sure if it is a good idea to port the legacy support if it's not
-> > part of the mainline kernel because it comes awfully close to creating
-> > our own private ABI.
-> 
-> I guess we can aim to factor things so that PT_NOTE scanning is
-> available as a fallback on arches for which the absence of
-> PT_GNU_PROPERTY is not authoritative.
+Arseny Maslennikov <ar@cs.msu.ru> writes:
 
-We can probably check PT_GNU_PROPERTY first, and fallback (based on ld-linux
-version?) to PT_NOTE scanning?
+> This complementary patch defines SIGINFO as a synonym for SIGPWR
+> on every architecture supported by the kernel.
+> The particular signal number chosen does not really matter and is only
+> required for the related tty functionality to work properly,
+> so if it does not suite expectations, any suggestions are warmly
+> welcome.
+>
+> SIGPWR looks like a nice candidate for this role, because it is
+> defined on every supported arch; it is currently only used to inform
+> PID 1 of power failures, and daemons that care about low-level
+> events do not tend to have a controlling terminal.
+>
+> However, on sparcs SIGPWR is a synonym for SIGLOST, a signal unique
+> to that architecture, with a narrow set of intended uses that do not
+> combine well with interactively requesting status.
+> SIGLOST is not used by any kernel code at the moment.
+> I'm not sure there is a more reasonable alternative right now.
 
-Yu-cheng
+Is the name SIGINFO already well established.
+
+It just is a little bit confusing with struct siginfo.
+
+At least on x86 it looks like we have signals 32 and 33 that are
+reserved and not used for anything.  Is there a reason you have
+not picked one of those?
+
+Also should this be a realtime signal with signal information
+or a non-realtime signal?
+
+I don't expect there is much to encode except that the user is asking
+for information.  I half wonder if it could be done as a different
+si_code to SIGWINCH.  But of course that doesn't work because it is
+not a real time signal so does not queue more than one siginfo. (Sigh).
+
+I just would like to see that we have a clear concept of how this new
+signal plays into all of the signal handling bits.
+
+Added linux-api because this is fundamentally extending the linux-api,
+and we probably want man-page updates etc.
+
+Eric
+
+>
+> Signed-off-by: Arseny Maslennikov <ar@cs.msu.ru>
+> ---
+>  arch/arm/include/uapi/asm/signal.h     | 1 +
+>  arch/h8300/include/uapi/asm/signal.h   | 1 +
+>  arch/ia64/include/uapi/asm/signal.h    | 1 +
+>  arch/m68k/include/uapi/asm/signal.h    | 1 +
+>  arch/mips/include/uapi/asm/signal.h    | 1 +
+>  arch/parisc/include/uapi/asm/signal.h  | 1 +
+>  arch/powerpc/include/uapi/asm/signal.h | 1 +
+>  arch/s390/include/uapi/asm/signal.h    | 1 +
+>  arch/sparc/include/uapi/asm/signal.h   | 2 ++
+>  arch/x86/include/uapi/asm/signal.h     | 1 +
+>  arch/xtensa/include/uapi/asm/signal.h  | 1 +
+>  include/uapi/asm-generic/signal.h      | 1 +
+>  12 files changed, 13 insertions(+)
+>
+> diff --git a/arch/arm/include/uapi/asm/signal.h b/arch/arm/include/uapi/asm/signal.h
+> index 9b4185ba4f8a..b80b53a17267 100644
+> --- a/arch/arm/include/uapi/asm/signal.h
+> +++ b/arch/arm/include/uapi/asm/signal.h
+> @@ -50,6 +50,7 @@ typedef unsigned long sigset_t;
+>  #define SIGLOST		29
+>  */
+>  #define SIGPWR		30
+> +#define SIGINFO		SIGPWR
+>  #define SIGSYS		31
+>  #define	SIGUNUSED	31
+>  
+> diff --git a/arch/h8300/include/uapi/asm/signal.h b/arch/h8300/include/uapi/asm/signal.h
+> index e15521037348..7a2b783af22b 100644
+> --- a/arch/h8300/include/uapi/asm/signal.h
+> +++ b/arch/h8300/include/uapi/asm/signal.h
+> @@ -50,6 +50,7 @@ typedef unsigned long sigset_t;
+>  #define SIGLOST		29
+>  */
+>  #define SIGPWR		30
+> +#define SIGINFO		SIGPWR
+>  #define SIGSYS		31
+>  #define	SIGUNUSED	31
+>  
+> diff --git a/arch/ia64/include/uapi/asm/signal.h b/arch/ia64/include/uapi/asm/signal.h
+> index aa98ff1b9e22..b4c98cb17165 100644
+> --- a/arch/ia64/include/uapi/asm/signal.h
+> +++ b/arch/ia64/include/uapi/asm/signal.h
+> @@ -45,6 +45,7 @@
+>  #define SIGLOST		29
+>  */
+>  #define SIGPWR		30
+> +#define SIGINFO		SIGPWR
+>  #define SIGSYS		31
+>  /* signal 31 is no longer "unused", but the SIGUNUSED macro remains for backwards compatibility */
+>  #define	SIGUNUSED	31
+> diff --git a/arch/m68k/include/uapi/asm/signal.h b/arch/m68k/include/uapi/asm/signal.h
+> index 915cc755a184..a0b4e4108cb8 100644
+> --- a/arch/m68k/include/uapi/asm/signal.h
+> +++ b/arch/m68k/include/uapi/asm/signal.h
+> @@ -50,6 +50,7 @@ typedef unsigned long sigset_t;
+>  #define SIGLOST		29
+>  */
+>  #define SIGPWR		30
+> +#define SIGINFO		SIGPWR
+>  #define SIGSYS		31
+>  #define	SIGUNUSED	31
+>  
+> diff --git a/arch/mips/include/uapi/asm/signal.h b/arch/mips/include/uapi/asm/signal.h
+> index 53104b10aae2..975a6f0d3b0b 100644
+> --- a/arch/mips/include/uapi/asm/signal.h
+> +++ b/arch/mips/include/uapi/asm/signal.h
+> @@ -43,6 +43,7 @@ typedef unsigned long old_sigset_t;		/* at least 32 bits */
+>  #define SIGCHLD		18	/* Child status has changed (POSIX).  */
+>  #define SIGCLD		SIGCHLD /* Same as SIGCHLD (System V).	*/
+>  #define SIGPWR		19	/* Power failure restart (System V).  */
+> +#define SIGINFO		SIGPWR	/* Keyboard status request (4.2 BSD). */
+>  #define SIGWINCH	20	/* Window size change (4.3 BSD, Sun).  */
+>  #define SIGURG		21	/* Urgent condition on socket (4.2 BSD).  */
+>  #define SIGIO		22	/* I/O now possible (4.2 BSD).	*/
+> diff --git a/arch/parisc/include/uapi/asm/signal.h b/arch/parisc/include/uapi/asm/signal.h
+> index d38563a394f2..fe2e00d590ac 100644
+> --- a/arch/parisc/include/uapi/asm/signal.h
+> +++ b/arch/parisc/include/uapi/asm/signal.h
+> @@ -22,6 +22,7 @@
+>  #define SIGUSR2		17
+>  #define SIGCHLD		18
+>  #define SIGPWR		19
+> +#define SIGINFO		SIGPWR
+>  #define SIGVTALRM	20
+>  #define SIGPROF		21
+>  #define SIGIO		22
+> diff --git a/arch/powerpc/include/uapi/asm/signal.h b/arch/powerpc/include/uapi/asm/signal.h
+> index 85b0a7aa43e7..e7f3885905b4 100644
+> --- a/arch/powerpc/include/uapi/asm/signal.h
+> +++ b/arch/powerpc/include/uapi/asm/signal.h
+> @@ -53,6 +53,7 @@ typedef struct {
+>  #define SIGLOST		29
+>  */
+>  #define SIGPWR		30
+> +#define SIGINFO		SIGPWR
+>  #define SIGSYS		31
+>  #define	SIGUNUSED	31
+>  
+> diff --git a/arch/s390/include/uapi/asm/signal.h b/arch/s390/include/uapi/asm/signal.h
+> index 9a14a611ed82..12ee62987971 100644
+> --- a/arch/s390/include/uapi/asm/signal.h
+> +++ b/arch/s390/include/uapi/asm/signal.h
+> @@ -58,6 +58,7 @@ typedef unsigned long sigset_t;
+>  #define SIGLOST         29
+>  */
+>  #define SIGPWR          30
+> +#define SIGINFO         SIGPWR
+>  #define SIGSYS		31
+>  #define SIGUNUSED       31
+>  
+> diff --git a/arch/sparc/include/uapi/asm/signal.h b/arch/sparc/include/uapi/asm/signal.h
+> index ff9505923b9a..b655163198bb 100644
+> --- a/arch/sparc/include/uapi/asm/signal.h
+> +++ b/arch/sparc/include/uapi/asm/signal.h
+> @@ -71,6 +71,8 @@
+>  #define SIGWINCH	28
+>  #define SIGLOST		29
+>  #define SIGPWR		SIGLOST
+> +/* XXX: is it OK for SIGINFO to collide with LOST? */
+> +#define SIGINFO		SIGPWR
+>  #define SIGUSR1		30
+>  #define SIGUSR2		31
+>  
+> diff --git a/arch/x86/include/uapi/asm/signal.h b/arch/x86/include/uapi/asm/signal.h
+> index e5745d593dc7..1539bb28826c 100644
+> --- a/arch/x86/include/uapi/asm/signal.h
+> +++ b/arch/x86/include/uapi/asm/signal.h
+> @@ -55,6 +55,7 @@ typedef unsigned long sigset_t;
+>  #define SIGLOST		29
+>  */
+>  #define SIGPWR		30
+> +#define SIGINFO		SIGPWR
+>  #define SIGSYS		31
+>  #define	SIGUNUSED	31
+>  
+> diff --git a/arch/xtensa/include/uapi/asm/signal.h b/arch/xtensa/include/uapi/asm/signal.h
+> index 005dec5bfde4..d644234305de 100644
+> --- a/arch/xtensa/include/uapi/asm/signal.h
+> +++ b/arch/xtensa/include/uapi/asm/signal.h
+> @@ -65,6 +65,7 @@ typedef struct {
+>  #define SIGPOLL		SIGIO
+>  /* #define SIGLOST		29 */
+>  #define SIGPWR		30
+> +#define SIGINFO		SIGPWR
+>  #define SIGSYS		31
+>  #define	SIGUNUSED	31
+>  
+> diff --git a/include/uapi/asm-generic/signal.h b/include/uapi/asm-generic/signal.h
+> index 5c716a952cbe..9f9a1db0d43c 100644
+> --- a/include/uapi/asm-generic/signal.h
+> +++ b/include/uapi/asm-generic/signal.h
+> @@ -43,6 +43,7 @@
+>  #define SIGLOST		29
+>  */
+>  #define SIGPWR		30
+> +#define SIGINFO		SIGPWR
+>  #define SIGSYS		31
+>  #define	SIGUNUSED	31
