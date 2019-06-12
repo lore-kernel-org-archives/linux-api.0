@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv4 13/28] x86/vdso: Restrict splitting VVAR VMA
-Date: Wed, 12 Jun 2019 20:26:12 +0100
-Message-ID: <20190612192628.23797-14-dima@arista.com>
+Subject: [PATCHv4 19/28] timens: Add align for timens_offsets
+Date: Wed, 12 Jun 2019 20:26:18 +0100
+Message-ID: <20190612192628.23797-20-dima@arista.com>
 References: <20190612192628.23797-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,50 +12,39 @@ To: linux-kernel@vger.kernel.org
 Cc: Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Although, time namespace can work with VVAR VMA split, it seems worth
-to forbid splitting VVAR resulting in stricter ABI and reducing amount
-of corner-cases to consider while working further on VDSO.
-
-I don't think there is any use-case for partial mremap() of vvar,
-but if there is any - this patch can be easily reverted.
+Align offsets so that time namespace will work for ia32 applications on
+x86_64 host.
 
 Co-developed-by: Andrei Vagin <avagin@openvz.org>
 Signed-off-by: Andrei Vagin <avagin@openvz.org>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- arch/x86/entry/vdso/vma.c | 13 +++++++++++++
- 1 file changed, 13 insertions(+)
+ include/linux/timens_offsets.h | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
 
-diff --git a/arch/x86/entry/vdso/vma.c b/arch/x86/entry/vdso/vma.c
-index 8db1f594e8b1..d2b421233ba5 100644
---- a/arch/x86/entry/vdso/vma.c
-+++ b/arch/x86/entry/vdso/vma.c
-@@ -84,6 +84,18 @@ static int vdso_mremap(const struct vm_special_mapping *sm,
- 	return 0;
- }
+diff --git a/include/linux/timens_offsets.h b/include/linux/timens_offsets.h
+index e93aabaa5e45..05da1b0563ce 100644
+--- a/include/linux/timens_offsets.h
++++ b/include/linux/timens_offsets.h
+@@ -2,9 +2,17 @@
+ #ifndef _LINUX_TIME_OFFSETS_H
+ #define _LINUX_TIME_OFFSETS_H
  
-+static int vvar_mremap(const struct vm_special_mapping *sm,
-+		struct vm_area_struct *new_vma)
-+{
-+	unsigned long new_size = new_vma->vm_end - new_vma->vm_start;
-+	const struct vdso_image *image = new_vma->vm_mm->context.vdso_image;
-+
-+	if (new_size != -image->sym_vvar_start)
-+		return -EINVAL;
-+
-+	return 0;
-+}
-+
- static vm_fault_t vvar_fault(const struct vm_special_mapping *sm,
- 		      struct vm_area_struct *vma, struct vm_fault *vmf)
- {
-@@ -136,6 +148,7 @@ static const struct vm_special_mapping vdso_mapping = {
- static const struct vm_special_mapping vvar_mapping = {
- 	.name = "[vvar]",
- 	.fault = vvar_fault,
-+	.mremap = vvar_mremap,
++/*
++ * Time offsets need align as they're placed on VVAR page,
++ * which is used by x86_64 and ia32 VDSO code.
++ * On ia32 offset::tv_sec (u64) has align(4), so re-align offsets
++ * to the same positions as 64-bit offsets.
++ * On 64-bit big-endian systems VDSO should convert to timespec64
++ * to timespec because of a padding occurring between the fields.
++ */
+ struct timens_offsets {
+-	struct timespec64 monotonic;
+-	struct timespec64 boottime;
++	struct timespec64 monotonic __aligned(8);
++	struct timespec64 boottime __aligned(8);
  };
  
- /*
+ #endif
 -- 
 2.22.0
