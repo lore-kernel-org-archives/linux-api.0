@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv4 16/28] x86/vdso: Allocate timens vdso
-Date: Wed, 12 Jun 2019 20:26:15 +0100
-Message-ID: <20190612192628.23797-17-dima@arista.com>
+Subject: [PATCHv4 15/28] x86/vdso: Add offsets page in vvar
+Date: Wed, 12 Jun 2019 20:26:14 +0100
+Message-ID: <20190612192628.23797-16-dima@arista.com>
 References: <20190612192628.23797-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -9,232 +9,276 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190612192628.23797-1-dima@arista.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
+Cc: Andrei Vagin <avagin@openvz.org>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.orgAndrei
 List-Id: linux-api@vger.kernel.org
 
-As it has been discussed on timens RFC, adding a new conditional branch
-`if (inside_time_ns)` on VDSO for all processes is undesirable.
-It will add a penalty for everybody as branch predictor may mispredict
-the jump. Also there are instruction cache lines wasted on cmp/jmp.
+From: Andrei Vagin <avagin@openvz.org>
 
-Those effects of introducing time namespace are very much unwanted
-having in mind how much work have been spent on micro-optimisation
-vdso code.
+As modern applications fetch time from VDSO without entering the kernel,
+it's needed to provide offsets for userspace code inside time namespace.
 
-The propose is to allocate a second vdso code with dynamically
-patched out (disabled by static_branch) timens code on boot time.
+A page for timens offsets is allocated on time namespace construction.
+Put that page into VVAR for tasks inside timens and zero page for
+host processes.
 
-Allocate another vdso and copy original code.
+As VDSO code is already optimized as much as possible in terms of speed,
+any new if-condition in VDSO code is undesirable; the goal is to provide
+two .so(s), as was originally suggested by Andy and Thomas:
+- for host tasks with optimized-out clk_to_ns() without any penalty
+- for processes inside timens with clk_to_ns()
+For this purpose, define clk_to_ns() under CONFIG_TIME_NS.
 
-Co-developed-by: Andrei Vagin <avagin@openvz.org>
-Signed-off-by: Andrei Vagin <avagin@openvz.org>
+To eliminate any performance regression, clk_to_ns() will be called
+under static_branch with follow-up patches, that adds support for
+patching vdso.
+
+VDSO mappings are platform-specific, add Kconfig dependency for arch.
+
+Signed-off-by: Andrei Vagin <avagin@gmail.com>
+Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- arch/x86/entry/vdso/vdso2c.h |   2 +-
- arch/x86/entry/vdso/vma.c    | 113 +++++++++++++++++++++++++++++++++--
- arch/x86/include/asm/vdso.h  |   9 +--
- 3 files changed, 114 insertions(+), 10 deletions(-)
+ arch/Kconfig                          |  5 ++++
+ arch/x86/Kconfig                      |  1 +
+ arch/x86/entry/vdso/vclock_gettime.c  | 43 +++++++++++++++++++++++++++
+ arch/x86/entry/vdso/vdso-layout.lds.S |  9 +++++-
+ arch/x86/entry/vdso/vdso2c.c          |  3 ++
+ arch/x86/entry/vdso/vma.c             | 12 ++++++++
+ arch/x86/include/asm/vdso.h           |  1 +
+ init/Kconfig                          |  1 +
+ 8 files changed, 74 insertions(+), 1 deletion(-)
 
-diff --git a/arch/x86/entry/vdso/vdso2c.h b/arch/x86/entry/vdso/vdso2c.h
-index 7556bb70ed8b..885b988aea19 100644
---- a/arch/x86/entry/vdso/vdso2c.h
-+++ b/arch/x86/entry/vdso/vdso2c.h
-@@ -157,7 +157,7 @@ static void BITSFUNC(go)(void *raw_addr, size_t raw_len,
- 	}
- 	fprintf(outfile, "\n};\n\n");
+diff --git a/arch/Kconfig b/arch/Kconfig
+index c47b328eada0..503a4113dc6c 100644
+--- a/arch/Kconfig
++++ b/arch/Kconfig
+@@ -734,6 +734,11 @@ config HAVE_ARCH_NVRAM_OPS
+ config ISA_BUS_API
+ 	def_bool ISA
  
--	fprintf(outfile, "const struct vdso_image %s = {\n", image_name);
-+	fprintf(outfile, "struct vdso_image %s __ro_after_init = {\n", image_name);
- 	fprintf(outfile, "\t.text = raw_data,\n");
- 	fprintf(outfile, "\t.size = %lu,\n", mapping_size);
- 	if (alt_sec) {
-diff --git a/arch/x86/entry/vdso/vma.c b/arch/x86/entry/vdso/vma.c
-index 8a7f4cfe1fad..cc06c6b70167 100644
---- a/arch/x86/entry/vdso/vma.c
-+++ b/arch/x86/entry/vdso/vma.c
-@@ -30,26 +30,128 @@
- unsigned int __read_mostly vdso64_enabled = 1;
++config ARCH_HAS_VDSO_TIME_NS
++	bool
++	help
++	 VDSO can add time-ns offsets without entering kernel.
++
+ #
+ # ABI hall of shame
+ #
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 2bbbd4d1ba31..da70b320eb09 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -79,6 +79,7 @@ config X86
+ 	select ARCH_HAS_STRICT_MODULE_RWX
+ 	select ARCH_HAS_SYNC_CORE_BEFORE_USERMODE
+ 	select ARCH_HAS_UBSAN_SANITIZE_ALL
++	select ARCH_HAS_VDSO_TIME_NS
+ 	select ARCH_HAS_ZONE_DEVICE		if X86_64
+ 	select ARCH_HAVE_NMI_SAFE_CMPXCHG
+ 	select ARCH_MIGHT_HAVE_ACPI_PDC		if ACPI
+diff --git a/arch/x86/entry/vdso/vclock_gettime.c b/arch/x86/entry/vdso/vclock_gettime.c
+index 0f82a70c7682..e2d93628c0dd 100644
+--- a/arch/x86/entry/vdso/vclock_gettime.c
++++ b/arch/x86/entry/vdso/vclock_gettime.c
+@@ -21,6 +21,7 @@
+ #include <linux/math64.h>
+ #include <linux/time.h>
+ #include <linux/kernel.h>
++#include <linux/timens_offsets.h>
+ 
+ #define gtod (&VVAR(vsyscall_gtod_data))
+ 
+@@ -38,6 +39,11 @@ extern u8 hvclock_page[PAGE_SIZE]
+ 	__attribute__((visibility("hidden")));
  #endif
  
--void __init init_vdso_image(const struct vdso_image *image)
-+void __init init_vdso_image(struct vdso_image *image)
- {
- 	BUG_ON(image->size % PAGE_SIZE != 0);
- 
- 	apply_alternatives((struct alt_instr *)(image->text + image->alt),
- 			   (struct alt_instr *)(image->text + image->alt +
- 						image->alt_len));
 +#ifdef CONFIG_TIME_NS
-+	image->text_timens = vmalloc_32(image->size);
-+	if (WARN_ON(image->text_timens == NULL))
-+		return;
-+
-+	memcpy(image->text_timens, image->text, image->size);
++extern u8 timens_page
++	__attribute__((visibility("hidden")));
 +#endif
++
+ #ifndef BUILD_VDSO32
+ 
+ notrace static long vdso_fallback_gettime(long clock, struct timespec *ts)
+@@ -139,6 +145,39 @@ notrace static inline u64 vgetcyc(int mode)
+ 	return U64_MAX;
  }
  
- struct linux_binprm;
- 
 +#ifdef CONFIG_TIME_NS
-+static inline struct timens_offsets *current_timens_offsets(void)
++notrace static __always_inline void clk_to_ns(clockid_t clk, struct timespec *ts)
 +{
-+	return current->nsproxy->time_ns->offsets;
++	struct timens_offsets *timens = (struct timens_offsets *) &timens_page;
++	struct timespec64 *offset64;
++
++	switch (clk) {
++	case CLOCK_MONOTONIC:
++	case CLOCK_MONOTONIC_COARSE:
++	case CLOCK_MONOTONIC_RAW:
++		offset64 = &timens->monotonic;
++		break;
++	case CLOCK_BOOTTIME:
++		offset64 = &timens->boottime;
++	default:
++		return;
++	}
++
++	ts->tv_nsec += offset64->tv_nsec;
++	ts->tv_sec += offset64->tv_sec;
++	if (ts->tv_nsec >= NSEC_PER_SEC) {
++		ts->tv_nsec -= NSEC_PER_SEC;
++		ts->tv_sec++;
++	}
++	if (ts->tv_nsec < 0) {
++		ts->tv_nsec += NSEC_PER_SEC;
++		ts->tv_sec--;
++	}
 +}
-+
-+static int vdso_check_timens(struct vm_area_struct *vma, bool *in_timens)
-+{
-+	struct task_struct *tsk;
-+
-+	if (likely(vma->vm_mm == current->mm)) {
-+		*in_timens = !!current_timens_offsets();
-+		return 0;
-+	}
-+
-+	/*
-+	 * .fault() handler can be called over remote process through
-+	 * interfaces like /proc/$pid/mem or process_vm_{readv,writev}()
-+	 * Considering such access to vdso as a slow-path.
-+	 */
-+
-+#ifdef CONFIG_MEMCG
-+	rcu_read_lock();
-+
-+	tsk = rcu_dereference(vma->vm_mm->owner);
-+	if (tsk) {
-+		task_lock(tsk);
-+		/*
-+		 * Shouldn't happen: nsproxy is unset in exit_mm().
-+		 * Before that exit_mm() holds mmap_sem to set (mm = NULL).
-+		 * It's impossible to have a fault in task without mm
-+		 * and mmap_sem is taken during the fault.
-+		 */
-+		if (WARN_ON_ONCE(tsk->nsproxy == NULL)) {
-+			task_unlock(tsk);
-+			rcu_read_unlock();
-+			return -EIO;
-+		}
-+		*in_timens = !!tsk->nsproxy->time_ns->offsets;
-+		task_unlock(tsk);
-+		rcu_read_unlock();
-+		return 0;
-+	}
-+	rcu_read_unlock();
++#else
++notrace static __always_inline void clk_to_ns(clockid_t clk, struct timespec *ts) {}
 +#endif
 +
-+	read_lock(&tasklist_lock);
-+	for_each_process(tsk) {
-+		struct task_struct *c;
-+
-+		if (tsk->flags & PF_KTHREAD)
-+			continue;
-+		for_each_thread(tsk, c) {
-+			if (c->mm == vma->vm_mm)
-+				goto found;
-+			if (c->mm)
-+				break;
-+		}
-+	}
-+	read_unlock(&tasklist_lock);
-+	return -ESRCH;
-+
-+found:
-+	task_lock(tsk);
-+	read_unlock(&tasklist_lock);
-+	*in_timens = !!tsk->nsproxy->time_ns->offsets;
-+	task_unlock(tsk);
-+
-+	return 0;
-+}
-+#else /* CONFIG_TIME_NS */
-+static inline int vdso_check_timens(struct vm_area_struct *vma, bool *in_timens)
-+{
-+	*in_timens = false;
-+	return 0;
-+}
-+static inline struct timens_offsets *current_timens_offsets(void)
-+{
-+	return NULL;
-+}
-+#endif /* CONFIG_TIME_NS */
-+
- static vm_fault_t vdso_fault(const struct vm_special_mapping *sm,
- 		      struct vm_area_struct *vma, struct vm_fault *vmf)
+ notrace static int do_hres(clockid_t clk, struct timespec *ts)
  {
- 	const struct vdso_image *image = vma->vm_mm->context.vdso_image;
-+	unsigned long offset = vmf->pgoff << PAGE_SHIFT;
-+	bool in_timens;
-+	int err;
+ 	struct vgtod_ts *base = &gtod->basetime[clk];
+@@ -165,6 +204,8 @@ notrace static int do_hres(clockid_t clk, struct timespec *ts)
+ 	ts->tv_sec = sec + __iter_div_u64_rem(ns, NSEC_PER_SEC, &ns);
+ 	ts->tv_nsec = ns;
  
- 	if (!image || (vmf->pgoff << PAGE_SHIFT) >= image->size)
- 		return VM_FAULT_SIGBUS;
- 
--	vmf->page = virt_to_page(image->text + (vmf->pgoff << PAGE_SHIFT));
-+	err = vdso_check_timens(vma, &in_timens);
-+	if (err)
-+		return VM_FAULT_SIGBUS;
++	clk_to_ns(clk, ts);
 +
-+	WARN_ON_ONCE(in_timens && !image->text_timens);
-+
-+	if (in_timens && image->text_timens)
-+		vmf->page = vmalloc_to_page(image->text_timens + offset);
-+	else
-+		vmf->page = virt_to_page(image->text + offset);
-+
- 	get_page(vmf->page);
  	return 0;
  }
-@@ -138,13 +240,14 @@ static vm_fault_t vvar_fault(const struct vm_special_mapping *sm,
- 			return vmf_insert_pfn(vma, vmf->address,
- 					vmalloc_to_pfn(tsc_pg));
- 	} else if (sym_offset == image->sym_timens_page) {
--		struct time_namespace *ns = current->nsproxy->time_ns;
-+		/* We can fault only in current context for VM_PFNMAP mapping */
-+		struct timens_offsets *offsets = current_timens_offsets();
- 		unsigned long pfn;
  
--		if (!ns->offsets)
-+		if (!offsets)
- 			pfn = page_to_pfn(ZERO_PAGE(0));
- 		else
--			pfn = page_to_pfn(virt_to_page(ns->offsets));
-+			pfn = page_to_pfn(virt_to_page(offsets));
+@@ -178,6 +219,8 @@ notrace static void do_coarse(clockid_t clk, struct timespec *ts)
+ 		ts->tv_sec = base->sec;
+ 		ts->tv_nsec = base->nsec;
+ 	} while (unlikely(gtod_read_retry(gtod, seq)));
++
++	clk_to_ns(clk, ts);
+ }
  
- 		return vmf_insert_pfn(vma, vmf->address, pfn);
- 	}
-diff --git a/arch/x86/include/asm/vdso.h b/arch/x86/include/asm/vdso.h
-index 9d420c545607..03f468c63a24 100644
---- a/arch/x86/include/asm/vdso.h
-+++ b/arch/x86/include/asm/vdso.h
-@@ -12,6 +12,7 @@
+ notrace int __vdso_clock_gettime(clockid_t clock, struct timespec *ts)
+diff --git a/arch/x86/entry/vdso/vdso-layout.lds.S b/arch/x86/entry/vdso/vdso-layout.lds.S
+index 93c6dc7812d0..ba216527e59f 100644
+--- a/arch/x86/entry/vdso/vdso-layout.lds.S
++++ b/arch/x86/entry/vdso/vdso-layout.lds.S
+@@ -7,6 +7,12 @@
+  * This script controls its layout.
+  */
  
- struct vdso_image {
- 	void *text;
-+	void *text_timens;
- 	unsigned long size;   /* Always a multiple of PAGE_SIZE */
++#ifdef CONFIG_TIME_NS
++# define TIMENS_SZ	PAGE_SIZE
++#else
++# define TIMENS_SZ	0
++#endif
++
+ SECTIONS
+ {
+ 	/*
+@@ -16,7 +22,7 @@ SECTIONS
+ 	 * segment.
+ 	 */
  
- 	unsigned long alt, alt_len;
-@@ -30,18 +31,18 @@ struct vdso_image {
+-	vvar_start = . - 3 * PAGE_SIZE;
++	vvar_start = . - (3 * PAGE_SIZE + TIMENS_SZ);
+ 	vvar_page = vvar_start;
+ 
+ 	/* Place all vvars at the offsets in asm/vvar.h. */
+@@ -28,6 +34,7 @@ SECTIONS
+ 
+ 	pvclock_page = vvar_start + PAGE_SIZE;
+ 	hvclock_page = vvar_start + 2 * PAGE_SIZE;
++	timens_page = vvar_start + 3 * PAGE_SIZE;
+ 
+ 	. = SIZEOF_HEADERS;
+ 
+diff --git a/arch/x86/entry/vdso/vdso2c.c b/arch/x86/entry/vdso/vdso2c.c
+index ce67370d14e5..7380908045c7 100644
+--- a/arch/x86/entry/vdso/vdso2c.c
++++ b/arch/x86/entry/vdso/vdso2c.c
+@@ -75,12 +75,14 @@ enum {
+ 	sym_vvar_page,
+ 	sym_pvclock_page,
+ 	sym_hvclock_page,
++	sym_timens_page,
  };
  
- #ifdef CONFIG_X86_64
--extern const struct vdso_image vdso_image_64;
-+extern struct vdso_image vdso_image_64;
- #endif
+ const int special_pages[] = {
+ 	sym_vvar_page,
+ 	sym_pvclock_page,
+ 	sym_hvclock_page,
++	sym_timens_page,
+ };
  
- #ifdef CONFIG_X86_X32
--extern const struct vdso_image vdso_image_x32;
-+extern struct vdso_image vdso_image_x32;
- #endif
+ struct vdso_sym {
+@@ -93,6 +95,7 @@ struct vdso_sym required_syms[] = {
+ 	[sym_vvar_page] = {"vvar_page", true},
+ 	[sym_pvclock_page] = {"pvclock_page", true},
+ 	[sym_hvclock_page] = {"hvclock_page", true},
++	[sym_timens_page] = {"timens_page", true},
+ 	{"VDSO32_NOTE_MASK", true},
+ 	{"__kernel_vsyscall", true},
+ 	{"__kernel_sigreturn", true},
+diff --git a/arch/x86/entry/vdso/vma.c b/arch/x86/entry/vdso/vma.c
+index c30a33b2963b..8a7f4cfe1fad 100644
+--- a/arch/x86/entry/vdso/vma.c
++++ b/arch/x86/entry/vdso/vma.c
+@@ -14,6 +14,7 @@
+ #include <linux/elf.h>
+ #include <linux/cpu.h>
+ #include <linux/ptrace.h>
++#include <linux/time_namespace.h>
+ #include <asm/pvclock.h>
+ #include <asm/vgtod.h>
+ #include <asm/proto.h>
+@@ -23,6 +24,7 @@
+ #include <asm/desc.h>
+ #include <asm/cpufeature.h>
+ #include <asm/mshyperv.h>
++#include <asm/page.h>
  
- #if defined CONFIG_X86_32 || defined CONFIG_COMPAT
--extern const struct vdso_image vdso_image_32;
-+extern struct vdso_image vdso_image_32;
- #endif
+ #if defined(CONFIG_X86_64)
+ unsigned int __read_mostly vdso64_enabled = 1;
+@@ -135,6 +137,16 @@ static vm_fault_t vvar_fault(const struct vm_special_mapping *sm,
+ 		if (tsc_pg && vclock_was_used(VCLOCK_HVCLOCK))
+ 			return vmf_insert_pfn(vma, vmf->address,
+ 					vmalloc_to_pfn(tsc_pg));
++	} else if (sym_offset == image->sym_timens_page) {
++		struct time_namespace *ns = current->nsproxy->time_ns;
++		unsigned long pfn;
++
++		if (!ns->offsets)
++			pfn = page_to_pfn(ZERO_PAGE(0));
++		else
++			pfn = page_to_pfn(virt_to_page(ns->offsets));
++
++		return vmf_insert_pfn(vma, vmf->address, pfn);
+ 	}
  
--extern void __init init_vdso_image(const struct vdso_image *image);
-+extern void __init init_vdso_image(struct vdso_image *image);
+ 	return VM_FAULT_SIGBUS;
+diff --git a/arch/x86/include/asm/vdso.h b/arch/x86/include/asm/vdso.h
+index dffdc12cc7d6..9d420c545607 100644
+--- a/arch/x86/include/asm/vdso.h
++++ b/arch/x86/include/asm/vdso.h
+@@ -21,6 +21,7 @@ struct vdso_image {
+ 	long sym_vvar_page;
+ 	long sym_pvclock_page;
+ 	long sym_hvclock_page;
++	long sym_timens_page;
+ 	long sym_VDSO32_NOTE_MASK;
+ 	long sym___kernel_sigreturn;
+ 	long sym___kernel_rt_sigreturn;
+diff --git a/init/Kconfig b/init/Kconfig
+index 098fe185360c..3d9497241394 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -993,6 +993,7 @@ config UTS_NS
  
- extern int map_vdso_once(const struct vdso_image *image, unsigned long addr);
- 
+ config TIME_NS
+ 	bool "TIME namespace"
++	depends on ARCH_HAS_VDSO_TIME_NS
+ 	default y
+ 	help
+ 	  In this namespace boottime and monotonic clocks can be set.
 -- 
 2.22.0
