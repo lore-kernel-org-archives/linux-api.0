@@ -1,86 +1,125 @@
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [PATCH v2 0/5] Introduce MADV_COLD and MADV_PAGEOUT
-Date: Wed, 12 Jun 2019 13:37:15 +0200
-Message-ID: <20190612113715.GA21366@amd>
-References: <20190610111252.239156-1-minchan@kernel.org>
- <20190612105945.GA16442@amd>
- <20190612111920.evedpmre63ivnxkz@butterfly.localdomain>
+From: tip-bot for Aubrey Li <tipbot@zytor.com>
+Subject: [tip:x86/core] proc: Add /proc/<pid>/arch_status
+Date: Wed, 12 Jun 2019 05:34:51 -0700
+Message-ID: <tip-68bc30bb9f33fc8d11e3d110d29e06490896a999@git.kernel.org>
+References: <20190606012236.9391-1-aubrey.li@linux.intel.com>
+Reply-To: ak@linux.intel.com, tglx@linutronix.de,
+          linux-kernel@vger.kernel.org, arjan@linux.intel.com,
+          hpa@zytor.com, aubrey.li@linux.intel.com, luto@kernel.org,
+          linux-api@vger.kernel.org, peterz@infradead.org,
+          akpm@linux-foundation.org, tim.c.chen@linux.intel.com,
+          mingo@kernel.org, dave.hansen@intel.com, adobriyan@gmail.com
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-        protocol="application/pgp-signature"; boundary="NzB8fVQJ5HfG6fxh"
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190606012236.9391-1-aubrey.li@linux.intel.com>
 Content-Disposition: inline
-In-Reply-To: <20190612111920.evedpmre63ivnxkz@butterfly.localdomain>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Oleksandr Natalenko <oleksandr@redhat.com>
-Cc: Minchan Kim <minchan@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, jannh@google.com, oleg@redhat.com, christian@brauner.io, hdanton@sina.com, lizeb@google.com
+To: linux-tip-commits@vger.kernel.org
+Cc: akpm@linux-foundation.org, adobriyan@gmail.com, mingo@kernel.org, dave.hansen@intel.com, tim.c.chen@linux.intel.com, arjan@linux.intel.com, linux-kernel@vger.kernel.org, tglx@linutronix.de, ak@linux.intel.com, peterz@infradead.org, linux-api@vger.kernel.org, luto@kernel.org, aubrey.li@linux.intel.com, hpa@zytor.com
 List-Id: linux-api@vger.kernel.org
 
+Commit-ID:  68bc30bb9f33fc8d11e3d110d29e06490896a999
+Gitweb:     https://git.kernel.org/tip/68bc30bb9f33fc8d11e3d110d29e06490896a999
+Author:     Aubrey Li <aubrey.li@linux.intel.com>
+AuthorDate: Thu, 6 Jun 2019 09:22:34 +0800
+Committer:  Thomas Gleixner <tglx@linutronix.de>
+CommitDate: Wed, 12 Jun 2019 11:42:13 +0200
 
---NzB8fVQJ5HfG6fxh
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+proc: Add /proc/<pid>/arch_status
 
-Hi!
+Exposing architecture specific per process information is useful for
+various reasons. An example is the AVX512 usage on x86 which is important
+for task placement for power/performance optimizations.
 
-> > > This approach is similar in spirit to madvise(MADV_WONTNEED), but the
-> > > information required to make the reclaim decision is not known to the=
- app.
-> > > Instead, it is known to a centralized userspace daemon, and that daem=
-on
-> > > must be able to initiate reclaim on its own without any app involveme=
-nt.
-> > > To solve the concern, this patch introduces new syscall -
-> > >=20
-> > >     struct pr_madvise_param {
-> > >             int size;               /* the size of this structure */
-> > >             int cookie;             /* reserved to support atomicity =
-*/
-> > >             int nr_elem;            /* count of below arrary fields */
-> > >             int __user *hints;      /* hints for each range */
-> > >             /* to store result of each operation */
-> > >             const struct iovec __user *results;
-> > >             /* input address ranges */
-> > >             const struct iovec __user *ranges;
-> > >     };
-> > >    =20
-> > >     int process_madvise(int pidfd, struct pr_madvise_param *u_param,
-> > >                             unsigned long flags);
-> >=20
-> > That's quite a complex interface.
-> >=20
-> > Could we simply have feel_free_to_swap_out(int pid) syscall? :-).
->=20
-> I wonder for how long we'll go on with adding new syscalls each time we n=
-eed
-> some amendment to existing interfaces. Yes, clone6(), I'm looking at
-> you :(.
->=20
-> In case of process_madvise() keep in mind it will be focused not only on
-> MADV_COLD, but also, potentially, on other MADV_ flags as well. I can
-> hardly imagine we'll add one syscall per each flag.
+Adding this information to the existing /prcc/pid/status file would be the
+obvious choise, but it has been agreed on that a explicit arch_status file
+is better in separating the generic and architecture specific information.
 
-Use case described above talked about whole-process-at-a-time usage,
-so I'm asking if simpler interface/code is enough. If there's
-motivation for more complex version, it should be described here...
+[ tglx: Massage changelog ]
 
-									Pavel
---=20
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
-g.html
+Signed-off-by: Aubrey Li <aubrey.li@linux.intel.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Acked-by: Andrew Morton <akpm@linux-foundation.org>
+Cc: peterz@infradead.org
+Cc: hpa@zytor.com
+Cc: ak@linux.intel.com
+Cc: tim.c.chen@linux.intel.com
+Cc: dave.hansen@intel.com
+Cc: arjan@linux.intel.com
+Cc: adobriyan@gmail.com
+Cc: aubrey.li@intel.com
+Cc: linux-api@vger.kernel.org
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Andi Kleen <ak@linux.intel.com>
+Cc: Tim Chen <tim.c.chen@linux.intel.com>
+Cc: Dave Hansen <dave.hansen@intel.com>
+Cc: Arjan van de Ven <arjan@linux.intel.com>
+Cc: Alexey Dobriyan <adobriyan@gmail.com>
+Cc: Linux API <linux-api@vger.kernel.org>
+Link: https://lkml.kernel.org/r/20190606012236.9391-1-aubrey.li@linux.intel.com
 
---NzB8fVQJ5HfG6fxh
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
+---
+ fs/proc/Kconfig         | 4 ++++
+ fs/proc/base.c          | 6 ++++++
+ include/linux/proc_fs.h | 9 +++++++++
+ 3 files changed, 19 insertions(+)
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iEYEARECAAYFAl0A4+sACgkQMOfwapXb+vL5YQCghuEijV5YAvkI5fTH2VOxFvri
-GLwAoJHEuclcX7PmhKr8Ht0OQ4+EHl8w
-=CpBo
------END PGP SIGNATURE-----
-
---NzB8fVQJ5HfG6fxh--
+diff --git a/fs/proc/Kconfig b/fs/proc/Kconfig
+index 62ee41b4bbd0..4c3dcb718961 100644
+--- a/fs/proc/Kconfig
++++ b/fs/proc/Kconfig
+@@ -98,3 +98,7 @@ config PROC_CHILDREN
+ 
+ 	  Say Y if you are running any user-space software which takes benefit from
+ 	  this interface. For example, rkt is such a piece of software.
++
++config PROC_PID_ARCH_STATUS
++	def_bool n
++	depends on PROC_FS
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+index 9c8ca6cd3ce4..ec436c61eece 100644
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -3061,6 +3061,9 @@ static const struct pid_entry tgid_base_stuff[] = {
+ #ifdef CONFIG_STACKLEAK_METRICS
+ 	ONE("stack_depth", S_IRUGO, proc_stack_depth),
+ #endif
++#ifdef CONFIG_PROC_PID_ARCH_STATUS
++	ONE("arch_status", S_IRUGO, proc_pid_arch_status),
++#endif
+ };
+ 
+ static int proc_tgid_base_readdir(struct file *file, struct dir_context *ctx)
+@@ -3449,6 +3452,9 @@ static const struct pid_entry tid_base_stuff[] = {
+ #ifdef CONFIG_LIVEPATCH
+ 	ONE("patch_state",  S_IRUSR, proc_pid_patch_state),
+ #endif
++#ifdef CONFIG_PROC_PID_ARCH_STATUS
++	ONE("arch_status", S_IRUGO, proc_pid_arch_status),
++#endif
+ };
+ 
+ static int proc_tid_base_readdir(struct file *file, struct dir_context *ctx)
+diff --git a/include/linux/proc_fs.h b/include/linux/proc_fs.h
+index 52a283ba0465..a705aa2d03f9 100644
+--- a/include/linux/proc_fs.h
++++ b/include/linux/proc_fs.h
+@@ -75,6 +75,15 @@ struct proc_dir_entry *proc_create_net_single_write(const char *name, umode_t mo
+ 						    void *data);
+ extern struct pid *tgid_pidfd_to_pid(const struct file *file);
+ 
++#ifdef CONFIG_PROC_PID_ARCH_STATUS
++/*
++ * The architecture which selects CONFIG_PROC_PID_ARCH_STATUS must
++ * provide proc_pid_arch_status() definition.
++ */
++int proc_pid_arch_status(struct seq_file *m, struct pid_namespace *ns,
++			struct pid *pid, struct task_struct *task);
++#endif /* CONFIG_PROC_PID_ARCH_STATUS */
++
+ #else /* CONFIG_PROC_FS */
+ 
+ static inline void proc_root_init(void)
