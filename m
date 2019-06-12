@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv4 20/28] timens/fs/proc: Introduce /proc/pid/timens_offsets
-Date: Wed, 12 Jun 2019 20:26:19 +0100
-Message-ID: <20190612192628.23797-21-dima@arista.com>
+Subject: [PATCHv4 14/28] x86/vdso: Rename vdso_image {.data=>.text}
+Date: Wed, 12 Jun 2019 20:26:13 +0100
+Message-ID: <20190612192628.23797-15-dima@arista.com>
 References: <20190612192628.23797-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -9,285 +9,69 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190612192628.23797-1-dima@arista.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Andrei Vagin <avagin@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.ke
+Cc: Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Andrei Vagin <avagin@gmail.com>
+To avoid any confusion with VVAR.
 
-API to set time namespace offsets for children processes, i.e.:
-echo "clockid off_ses off_nsec" > /proc/self/timens_offsets
-
-Signed-off-by: Andrei Vagin <avagin@gmail.com>
-Co-developed-by: Dmitry Safonov <dima@arista.com>
+Co-developed-by: Andrei Vagin <avagin@openvz.org>
+Signed-off-by: Andrei Vagin <avagin@openvz.org>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- fs/proc/base.c                 |  95 ++++++++++++++++++++++++++++++
- include/linux/time_namespace.h |  10 ++++
- kernel/time_namespace.c        | 104 +++++++++++++++++++++++++++++++++
- 3 files changed, 209 insertions(+)
+ arch/x86/entry/vdso/vdso2c.h | 2 +-
+ arch/x86/entry/vdso/vma.c    | 6 +++---
+ arch/x86/include/asm/vdso.h  | 2 +-
+ 3 files changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/fs/proc/base.c b/fs/proc/base.c
-index 9c8ca6cd3ce4..6a96b0543f69 100644
---- a/fs/proc/base.c
-+++ b/fs/proc/base.c
-@@ -94,6 +94,7 @@
- #include <linux/sched/debug.h>
- #include <linux/sched/stat.h>
- #include <linux/posix-timers.h>
-+#include <linux/time_namespace.h>
- #include <trace/events/oom.h>
- #include "internal.h"
- #include "fd.h"
-@@ -1516,6 +1517,97 @@ static const struct file_operations proc_pid_sched_autogroup_operations = {
+diff --git a/arch/x86/entry/vdso/vdso2c.h b/arch/x86/entry/vdso/vdso2c.h
+index 80be339ee93e..7556bb70ed8b 100644
+--- a/arch/x86/entry/vdso/vdso2c.h
++++ b/arch/x86/entry/vdso/vdso2c.h
+@@ -158,7 +158,7 @@ static void BITSFUNC(go)(void *raw_addr, size_t raw_len,
+ 	fprintf(outfile, "\n};\n\n");
  
- #endif /* CONFIG_SCHED_AUTOGROUP */
- 
-+#ifdef CONFIG_TIME_NS
-+static int timens_offsets_show(struct seq_file *m, void *v)
-+{
-+	struct task_struct *p;
-+
-+	p = get_proc_task(file_inode(m->file));
-+	if (!p)
-+		return -ESRCH;
-+	proc_timens_show_offsets(p, m);
-+
-+	put_task_struct(p);
-+
-+	return 0;
-+}
-+
-+static ssize_t
-+timens_offsets_write(struct file *file, const char __user *buf,
-+	    size_t count, loff_t *ppos)
-+{
-+	struct inode *inode = file_inode(file);
-+	struct proc_timens_offset offsets[2];
-+	char *kbuf = NULL, *pos, *next_line;
-+	struct task_struct *p;
-+	int ret, noffsets;
-+
-+	/* Only allow < page size writes at the beginning of the file */
-+	if ((*ppos != 0) || (count >= PAGE_SIZE))
-+		return -EINVAL;
-+
-+	/* Slurp in the user data */
-+	kbuf = memdup_user_nul(buf, count);
-+	if (IS_ERR(kbuf))
-+		return PTR_ERR(kbuf);
-+
-+	/* Parse the user data */
-+	ret = -EINVAL;
-+	noffsets = 0;
-+	for (pos = kbuf; pos; pos = next_line) {
-+		struct proc_timens_offset *off = &offsets[noffsets];
-+		int err;
-+
-+		/* Find the end of line and ensure we don't look past it */
-+		next_line = strchr(pos, '\n');
-+		if (next_line) {
-+			*next_line = '\0';
-+			next_line++;
-+			if (*next_line == '\0')
-+				next_line = NULL;
-+		}
-+
-+		err = sscanf(pos, "%u %lld %lu", &off->clockid,
-+				&off->val.tv_sec, &off->val.tv_nsec);
-+		if (err != 3 || off->val.tv_nsec >= NSEC_PER_SEC)
-+			goto out;
-+		noffsets++;
-+		if (noffsets == ARRAY_SIZE(offsets)) {
-+			if (next_line)
-+				count = next_line - kbuf;
-+			break;
-+		}
-+	}
-+
-+	ret = -ESRCH;
-+	p = get_proc_task(inode);
-+	if (!p)
-+		goto out;
-+	ret = proc_timens_set_offset(file, p, offsets, noffsets);
-+	put_task_struct(p);
-+	if (ret)
-+		goto out;
-+
-+	ret = count;
-+out:
-+	kfree(kbuf);
-+	return ret;
-+}
-+
-+static int timens_offsets_open(struct inode *inode, struct file *filp)
-+{
-+	return single_open(filp, timens_offsets_show, inode);
-+}
-+
-+static const struct file_operations proc_timens_offsets_operations = {
-+	.open		= timens_offsets_open,
-+	.read		= seq_read,
-+	.write		= timens_offsets_write,
-+	.llseek		= seq_lseek,
-+	.release	= single_release,
-+};
-+#endif /* CONFIG_TIME_NS */
-+
- static ssize_t comm_write(struct file *file, const char __user *buf,
- 				size_t count, loff_t *offset)
+ 	fprintf(outfile, "const struct vdso_image %s = {\n", image_name);
+-	fprintf(outfile, "\t.data = raw_data,\n");
++	fprintf(outfile, "\t.text = raw_data,\n");
+ 	fprintf(outfile, "\t.size = %lu,\n", mapping_size);
+ 	if (alt_sec) {
+ 		fprintf(outfile, "\t.alt = %lu,\n",
+diff --git a/arch/x86/entry/vdso/vma.c b/arch/x86/entry/vdso/vma.c
+index d2b421233ba5..c30a33b2963b 100644
+--- a/arch/x86/entry/vdso/vma.c
++++ b/arch/x86/entry/vdso/vma.c
+@@ -32,8 +32,8 @@ void __init init_vdso_image(const struct vdso_image *image)
  {
-@@ -2982,6 +3074,9 @@ static const struct pid_entry tgid_base_stuff[] = {
- #endif
- #ifdef CONFIG_SCHED_AUTOGROUP
- 	REG("autogroup",  S_IRUGO|S_IWUSR, proc_pid_sched_autogroup_operations),
-+#endif
-+#ifdef CONFIG_TIME_NS
-+	REG("timens_offsets",  S_IRUGO|S_IWUSR, proc_timens_offsets_operations),
- #endif
- 	REG("comm",      S_IRUGO|S_IWUSR, proc_pid_set_comm_operations),
- #ifdef CONFIG_HAVE_ARCH_TRACEHOOK
-diff --git a/include/linux/time_namespace.h b/include/linux/time_namespace.h
-index d32b55fad953..8cd16dfea42d 100644
---- a/include/linux/time_namespace.h
-+++ b/include/linux/time_namespace.h
-@@ -40,6 +40,16 @@ static inline void put_time_ns(struct time_namespace *ns)
- 	kref_put(&ns->kref, free_time_ns);
+ 	BUG_ON(image->size % PAGE_SIZE != 0);
+ 
+-	apply_alternatives((struct alt_instr *)(image->data + image->alt),
+-			   (struct alt_instr *)(image->data + image->alt +
++	apply_alternatives((struct alt_instr *)(image->text + image->alt),
++			   (struct alt_instr *)(image->text + image->alt +
+ 						image->alt_len));
  }
  
-+extern void proc_timens_show_offsets(struct task_struct *p, struct seq_file *m);
-+
-+struct proc_timens_offset {
-+	int clockid;
-+	struct timespec64 val;
-+};
-+
-+extern int proc_timens_set_offset(struct file *file, struct task_struct *p,
-+				struct proc_timens_offset *offsets, int n);
-+
- static inline void timens_add_monotonic(struct timespec64 *ts)
- {
-         struct timens_offsets *ns_offsets = current->nsproxy->time_ns->offsets;
-diff --git a/kernel/time_namespace.c b/kernel/time_namespace.c
-index 2a2cab14ac29..a32adeabf9f0 100644
---- a/kernel/time_namespace.c
-+++ b/kernel/time_namespace.c
-@@ -13,6 +13,7 @@
- #include <linux/user_namespace.h>
- #include <linux/proc_ns.h>
- #include <linux/sched/task.h>
-+#include <linux/seq_file.h>
- #include <linux/mm.h>
- #include <asm/vdso.h>
+@@ -47,7 +47,7 @@ static vm_fault_t vdso_fault(const struct vm_special_mapping *sm,
+ 	if (!image || (vmf->pgoff << PAGE_SHIFT) >= image->size)
+ 		return VM_FAULT_SIGBUS;
  
-@@ -229,6 +230,109 @@ static struct user_namespace *timens_owner(struct ns_common *ns)
- 	return to_time_ns(ns)->user_ns;
+-	vmf->page = virt_to_page(image->data + (vmf->pgoff << PAGE_SHIFT));
++	vmf->page = virt_to_page(image->text + (vmf->pgoff << PAGE_SHIFT));
+ 	get_page(vmf->page);
+ 	return 0;
  }
+diff --git a/arch/x86/include/asm/vdso.h b/arch/x86/include/asm/vdso.h
+index 230474e2ddb5..dffdc12cc7d6 100644
+--- a/arch/x86/include/asm/vdso.h
++++ b/arch/x86/include/asm/vdso.h
+@@ -11,7 +11,7 @@
+ #include <linux/mm_types.h>
  
-+static void show_offset(struct seq_file *m, int clockid, struct timespec64 *ts)
-+{
-+	seq_printf(m, "%d %lld %ld\n", clockid, ts->tv_sec, ts->tv_nsec);
-+}
-+
-+void proc_timens_show_offsets(struct task_struct *p, struct seq_file *m)
-+{
-+	struct ns_common *ns;
-+	struct time_namespace *time_ns;
-+	struct timens_offsets *ns_offsets;
-+
-+	ns = timens_for_children_get(p);
-+	if (!ns)
-+		return;
-+	time_ns = to_time_ns(ns);
-+
-+	if (!time_ns->offsets) {
-+		put_time_ns(time_ns);
-+		return;
-+	}
-+	ns_offsets = time_ns->offsets;
-+
-+	show_offset(m, CLOCK_MONOTONIC, &ns_offsets->monotonic);
-+	show_offset(m, CLOCK_BOOTTIME, &ns_offsets->boottime);
-+	put_time_ns(time_ns);
-+}
-+
-+int proc_timens_set_offset(struct file *file, struct task_struct *p,
-+			   struct proc_timens_offset *offsets, int noffsets)
-+{
-+	struct ns_common *ns;
-+	struct time_namespace *time_ns;
-+	struct timens_offsets *ns_offsets;
-+	struct timespec64 *offset;
-+	struct timespec64 tp;
-+	int i, err;
-+
-+	ns = timens_for_children_get(p);
-+	if (!ns)
-+		return -ESRCH;
-+	time_ns = to_time_ns(ns);
-+
-+	if (!time_ns->offsets || time_ns->initialized ||
-+	    !file_ns_capable(file, time_ns->user_ns, CAP_SYS_TIME)) {
-+		put_time_ns(time_ns);
-+		return -EPERM;
-+	}
-+	ns_offsets = time_ns->offsets;
-+
-+	for (i = 0; i < noffsets; i++) {
-+		struct proc_timens_offset *off = &offsets[i];
-+
-+		switch (off->clockid) {
-+		case CLOCK_MONOTONIC:
-+			ktime_get_ts64(&tp);
-+			break;
-+		case CLOCK_BOOTTIME:
-+			ktime_get_boottime_ts64(&tp);
-+			break;
-+		default:
-+			err = -EINVAL;
-+			goto out;
-+		}
-+
-+		err = -ERANGE;
-+
-+		if (off->val.tv_sec > KTIME_SEC_MAX || off->val.tv_sec < -KTIME_SEC_MAX)
-+			goto out;
-+
-+		tp = timespec64_add(tp, off->val);
-+		/*
-+		 * KTIME_SEC_MAX is divided by 2 to be sure that KTIME_MAX is
-+		 * still unreachable.
-+		 */
-+		if (tp.tv_sec < 0 || tp.tv_sec > KTIME_SEC_MAX / 2)
-+			goto out;
-+	}
-+
-+	err = 0;
-+	/* don't report errors after this line */
-+	for (i = 0; i < noffsets; i++) {
-+		struct proc_timens_offset *off = &offsets[i];
-+
-+		switch (off->clockid) {
-+		case CLOCK_MONOTONIC:
-+			offset = &ns_offsets->monotonic;
-+			break;
-+		case CLOCK_BOOTTIME:
-+			offset = &ns_offsets->boottime;
-+			break;
-+		default:
-+			goto out;
-+		}
-+
-+		*offset = off->val;
-+	}
-+
-+out:
-+	put_time_ns(time_ns);
-+
-+	return err;
-+}
-+
- const struct proc_ns_operations timens_operations = {
- 	.name		= "time",
- 	.type		= CLONE_NEWTIME,
+ struct vdso_image {
+-	void *data;
++	void *text;
+ 	unsigned long size;   /* Always a multiple of PAGE_SIZE */
+ 
+ 	unsigned long alt, alt_len;
 -- 
 2.22.0
