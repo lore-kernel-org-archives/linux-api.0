@@ -1,122 +1,50 @@
-From: tip-bot for Aubrey Li <tipbot@zytor.com>
-Subject: [tip:x86/core] Documentation/filesystems/proc.txt: Add arch_status
- file
-Date: Wed, 12 Jun 2019 05:36:19 -0700
-Message-ID: <tip-711486fd18596315d42cebaac3dba8c408f60a3d@git.kernel.org>
-References: <20190606012236.9391-3-aubrey.li@linux.intel.com>
-Reply-To: linux-api@vger.kernel.org, ak@linux.intel.com, hpa@zytor.com,
-          dave.hansen@intel.com, luto@kernel.org,
-          linux-kernel@vger.kernel.org, akpm@linux-foundation.org,
-          adobriyan@gmail.com, arjan@linux.intel.com, tglx@linutronix.de,
-          aubrey.li@linux.intel.com, mingo@kernel.org,
-          peterz@infradead.org, tim.c.chen@linux.intel.com
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH 1/5] glibc: Perform rseq(2) registration at C startup
+ and thread creation (v10)
+Date: Wed, 12 Jun 2019 10:00:11 -0400 (EDT)
+Message-ID: <914051741.43025.1560348011775.JavaMail.zimbra@efficios.com>
+References: <20190503184219.19266-1-mathieu.desnoyers@efficios.com> <732661684.21584.1559314109886.JavaMail.zimbra@efficios.com> <87muj2k4ov.fsf@oldenburg2.str.redhat.com> <1528929896.22217.1559326257155.JavaMail.zimbra@efficios.com> <87o93d4lqb.fsf@oldenburg2.str.redhat.com> <117220011.27079.1559663870037.JavaMail.zimbra@efficios.com> <87wohzorj0.fsf@oldenburg2.str.redhat.com> <c16c9785-7f8c-430b-a4df-a53e47bf1600@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190606012236.9391-3-aubrey.li@linux.intel.com>
-Content-Disposition: inline
+In-Reply-To: <c16c9785-7f8c-430b-a4df-a53e47bf1600@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-tip-commits@vger.kernel.org
-Cc: adobriyan@gmail.com, arjan@linux.intel.com, tglx@linutronix.de, aubrey.li@linux.intel.com, peterz@infradead.org, mingo@kernel.org, tim.c.chen@linux.intel.com, linux-api@vger.kernel.org, dave.hansen@intel.com, hpa@zytor.com, ak@linux.intel.com, luto@kernel.org, linux-kernel@vger.kernel.org, akpm@linux-foundation.org
+To: carlos <carlos@redhat.com>, Florian Weimer <fweimer@redhat.com>
+Cc: Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Commit-ID:  711486fd18596315d42cebaac3dba8c408f60a3d
-Gitweb:     https://git.kernel.org/tip/711486fd18596315d42cebaac3dba8c408f60a3d
-Author:     Aubrey Li <aubrey.li@linux.intel.com>
-AuthorDate: Thu, 6 Jun 2019 09:22:36 +0800
-Committer:  Thomas Gleixner <tglx@linutronix.de>
-CommitDate: Wed, 12 Jun 2019 11:42:13 +0200
+----- On Jun 10, 2019, at 4:43 PM, carlos carlos@redhat.com wrote:
 
-Documentation/filesystems/proc.txt: Add arch_status file
+> On 6/6/19 7:57 AM, Florian Weimer wrote:
+>> Let me ask the key question again: Does it matter if code observes the
+>> rseq area first without kernel support, and then with kernel support?
+>> If we don't expect any problems immediately, we do not need to worry
+>> much about the constructor ordering right now.  I expect that over time,
+>> fixing this properly will become easier.
+> 
+> I just wanted to chime in and say that splitting this into:
+> 
+> * Ownership (__rseq_handled)
+> 
+> * Initialization (__rseq_abi)
+> 
+> Makes sense to me.
+> 
+> I agree we need an answer to this question of ownership but not yet
+> initialized, to owned and initialized.
+> 
+> I like the idea of having __rseq_handled in ld.so.
 
-Add documentation for /proc/<pid>/arch_status file and the x86 specific
-AVX512_elapsed_ms entry in it.
+Very good, so I'll implement this approach. Sorry for the delayed
+feedback, I am traveling this week.
 
-[ tglx: Massage changelog ]
+Thanks,
 
-Signed-off-by: Aubrey Li <aubrey.li@linux.intel.com>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: akpm@linux-foundation.org
-Cc: peterz@infradead.org
-Cc: hpa@zytor.com
-Cc: ak@linux.intel.com
-Cc: tim.c.chen@linux.intel.com
-Cc: dave.hansen@intel.com
-Cc: arjan@linux.intel.com
-Cc: adobriyan@gmail.com
-Cc: aubrey.li@intel.com
-Cc: linux-api@vger.kernel.org
-Cc: Andy Lutomirski <luto@kernel.org>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Andi Kleen <ak@linux.intel.com>
-Cc: Tim Chen <tim.c.chen@linux.intel.com>
-Cc: Dave Hansen <dave.hansen@intel.com>
-Cc: Arjan van de Ven <arjan@linux.intel.com>
-Cc: Alexey Dobriyan <adobriyan@gmail.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Linux API <linux-api@vger.kernel.org>
-Link: https://lkml.kernel.org/r/20190606012236.9391-3-aubrey.li@linux.intel.com
+Mathieu
 
----
- Documentation/filesystems/proc.txt | 40 ++++++++++++++++++++++++++++++++++++++
- 1 file changed, 40 insertions(+)
 
-diff --git a/Documentation/filesystems/proc.txt b/Documentation/filesystems/proc.txt
-index 66cad5c86171..a226061fa109 100644
---- a/Documentation/filesystems/proc.txt
-+++ b/Documentation/filesystems/proc.txt
-@@ -45,6 +45,7 @@ Table of Contents
-   3.9   /proc/<pid>/map_files - Information about memory mapped files
-   3.10  /proc/<pid>/timerslack_ns - Task timerslack value
-   3.11	/proc/<pid>/patch_state - Livepatch patch operation state
-+  3.12	/proc/<pid>/arch_status - Task architecture specific information
- 
-   4	Configuring procfs
-   4.1	Mount options
-@@ -1948,6 +1949,45 @@ patched.  If the patch is being enabled, then the task has already been
- patched.  If the patch is being disabled, then the task hasn't been
- unpatched yet.
- 
-+3.12 /proc/<pid>/arch_status - task architecture specific status
-+-------------------------------------------------------------------
-+When CONFIG_PROC_PID_ARCH_STATUS is enabled, this file displays the
-+architecture specific status of the task.
-+
-+Example
-+-------
-+ $ cat /proc/6753/arch_status
-+ AVX512_elapsed_ms:      8
-+
-+Description
-+-----------
-+
-+x86 specific entries:
-+---------------------
-+ AVX512_elapsed_ms:
-+ ------------------
-+  If AVX512 is supported on the machine, this entry shows the milliseconds
-+  elapsed since the last time AVX512 usage was recorded. The recording
-+  happens on a best effort basis when a task is scheduled out. This means
-+  that the value depends on two factors:
-+
-+    1) The time which the task spent on the CPU without being scheduled
-+       out. With CPU isolation and a single runnable task this can take
-+       several seconds.
-+
-+    2) The time since the task was scheduled out last. Depending on the
-+       reason for being scheduled out (time slice exhausted, syscall ...)
-+       this can be arbitrary long time.
-+
-+  As a consequence the value cannot be considered precise and authoritative
-+  information. The application which uses this information has to be aware
-+  of the overall scenario on the system in order to determine whether a
-+  task is a real AVX512 user or not. Precise information can be obtained
-+  with performance counters.
-+
-+  A special value of '-1' indicates that no AVX512 usage was recorded, thus
-+  the task is unlikely an AVX512 user, but depends on the workload and the
-+  scheduling scenario, it also could be a false negative mentioned above.
- 
- ------------------------------------------------------------------------------
- Configuring procfs
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
