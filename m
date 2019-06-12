@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv4 27/28] selftests: Add a simple perf test for clock_gettime()
-Date: Wed, 12 Jun 2019 20:26:26 +0100
-Message-ID: <20190612192628.23797-28-dima@arista.com>
+Subject: [PATCHv4 28/28] selftest/timens: Check that a right vdso is mapped after fork and exec
+Date: Wed, 12 Jun 2019 20:26:27 +0100
+Message-ID: <20190612192628.23797-29-dima@arista.com>
 References: <20190612192628.23797-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -18,188 +18,127 @@ Signed-off-by: Andrei Vagin <avagin@gmail.com>
 Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- tools/testing/selftests/timens/.gitignore     |  2 +
- tools/testing/selftests/timens/Makefile       |  8 +-
- tools/testing/selftests/timens/gettime_perf.c | 74 +++++++++++++++++++
- .../selftests/timens/gettime_perf_cold.c      | 63 ++++++++++++++++
- 4 files changed, 146 insertions(+), 1 deletion(-)
- create mode 100644 tools/testing/selftests/timens/gettime_perf.c
- create mode 100644 tools/testing/selftests/timens/gettime_perf_cold.c
+ tools/testing/selftests/timens/.gitignore |  1 +
+ tools/testing/selftests/timens/Makefile   |  2 +-
+ tools/testing/selftests/timens/exec.c     | 91 +++++++++++++++++++++++
+ 3 files changed, 93 insertions(+), 1 deletion(-)
+ create mode 100644 tools/testing/selftests/timens/exec.c
 
 diff --git a/tools/testing/selftests/timens/.gitignore b/tools/testing/selftests/timens/.gitignore
-index 3b7eda8f35ce..16292e4d08a5 100644
+index 16292e4d08a5..789f21e81028 100644
 --- a/tools/testing/selftests/timens/.gitignore
 +++ b/tools/testing/selftests/timens/.gitignore
-@@ -1,4 +1,6 @@
+@@ -1,4 +1,5 @@
  clock_nanosleep
-+gettime_perf
-+gettime_perf_cold
++exec
+ gettime_perf
+ gettime_perf_cold
  procfs
- timens
- timer
 diff --git a/tools/testing/selftests/timens/Makefile b/tools/testing/selftests/timens/Makefile
-index ae1ffd24cc43..ef65bf96b55c 100644
+index ef65bf96b55c..9e0edf354906 100644
 --- a/tools/testing/selftests/timens/Makefile
 +++ b/tools/testing/selftests/timens/Makefile
-@@ -1,4 +1,10 @@
--TEST_GEN_PROGS := timens timerfd timer clock_nanosleep procfs
-+TEST_GEN_PROGS := timens timerfd timer clock_nanosleep procfs gettime_perf
-+
-+uname_M := $(shell uname -m 2>/dev/null || echo not)
-+ARCH ?= $(shell echo $(uname_M) | sed -e s/i.86/i386/)
-+ifeq ($(ARCH),x86_64)
-+TEST_GEN_PROGS += gettime_perf_cold
-+endif
+@@ -1,4 +1,4 @@
+-TEST_GEN_PROGS := timens timerfd timer clock_nanosleep procfs gettime_perf
++TEST_GEN_PROGS := timens timerfd timer clock_nanosleep procfs gettime_perf exec
  
- CFLAGS := -Wall -Werror
- LDFLAGS := -lrt
-diff --git a/tools/testing/selftests/timens/gettime_perf.c b/tools/testing/selftests/timens/gettime_perf.c
+ uname_M := $(shell uname -m 2>/dev/null || echo not)
+ ARCH ?= $(shell echo $(uname_M) | sed -e s/i.86/i386/)
+diff --git a/tools/testing/selftests/timens/exec.c b/tools/testing/selftests/timens/exec.c
 new file mode 100644
-index 000000000000..510d77a941d9
+index 000000000000..b3a05c41e202
 --- /dev/null
-+++ b/tools/testing/selftests/timens/gettime_perf.c
-@@ -0,0 +1,74 @@
++++ b/tools/testing/selftests/timens/exec.c
+@@ -0,0 +1,91 @@
 +// SPDX-License-Identifier: GPL-2.0
 +#define _GNU_SOURCE
-+#include <sys/types.h>
-+#include <sys/stat.h>
 +#include <errno.h>
 +#include <fcntl.h>
 +#include <sched.h>
-+#include <time.h>
 +#include <stdio.h>
-+#include <unistd.h>
-+#include <sys/syscall.h>
-+
-+#include "log.h"
-+#include "timens.h"
-+
-+//#define TEST_SYSCALL
-+
-+static void test(clock_t clockid, char *clockstr, bool in_ns)
-+{
-+	struct timespec tp, start;
-+	long i = 0;
-+	const int timeout = 3;
-+
-+#ifndef TEST_SYSCALL
-+	clock_gettime(clockid, &start);
-+#else
-+	syscall(__NR_clock_gettime, clockid, &start);
-+#endif
-+	tp = start;
-+	for (tp = start; start.tv_sec + timeout > tp.tv_sec ||
-+			 (start.tv_sec + timeout == tp.tv_sec &&
-+			  start.tv_nsec > tp.tv_nsec); i++) {
-+#ifndef TEST_SYSCALL
-+		clock_gettime(clockid, &tp);
-+#else
-+		syscall(__NR_clock_gettime, clockid, &tp);
-+#endif
-+	}
-+
-+	ksft_test_result_pass("%s:\tclock: %10s\tcycles:\t%10ld\n",
-+			      in_ns ? "ns" : "host", clockstr, i);
-+}
-+
-+int main(int argc, char *argv[])
-+{
-+	time_t offset = 10;
-+	int nsfd;
-+
-+	test(CLOCK_MONOTONIC, "monotonic", false);
-+	test(CLOCK_BOOTTIME, "boottime", false);
-+
-+	nscheck();
-+
-+	if (unshare(CLONE_NEWTIME))
-+		return pr_perror("Can't unshare() timens");
-+
-+	nsfd = open("/proc/self/ns/time_for_children", O_RDONLY);
-+	if (nsfd < 0)
-+		return pr_perror("Can't open a time namespace");
-+
-+	if (_settime(CLOCK_MONOTONIC, offset))
-+		return 1;
-+	if (_settime(CLOCK_BOOTTIME, offset))
-+		return 1;
-+
-+	if (setns(nsfd, CLONE_NEWTIME))
-+		return pr_perror("setns");
-+
-+	test(CLOCK_MONOTONIC, "monotonic", true);
-+	test(CLOCK_BOOTTIME, "boottime", true);
-+
-+	ksft_exit_pass();
-+	return 0;
-+}
-diff --git a/tools/testing/selftests/timens/gettime_perf_cold.c b/tools/testing/selftests/timens/gettime_perf_cold.c
-new file mode 100644
-index 000000000000..f72db8a4c903
---- /dev/null
-+++ b/tools/testing/selftests/timens/gettime_perf_cold.c
-@@ -0,0 +1,63 @@
-+// SPDX-License-Identifier: GPL-2.0
-+#define _GNU_SOURCE
-+#include <sys/types.h>
++#include <stdbool.h>
 +#include <sys/stat.h>
-+#include <errno.h>
-+#include <fcntl.h>
-+#include <sched.h>
-+#include <time.h>
-+#include <stdio.h>
-+#include <unistd.h>
 +#include <sys/syscall.h>
++#include <sys/types.h>
++#include <sys/wait.h>
++#include <time.h>
++#include <unistd.h>
++#include <time.h>
 +#include <string.h>
 +
 +#include "log.h"
 +#include "timens.h"
 +
-+static __inline__ unsigned long long rdtsc(void)
++#define OFFSET (36000)
++
++int main(int argc, char *argv[])
 +{
-+	unsigned hi, lo;
++	struct timespec now, tst;
++	int status, i;
++	pid_t pid;
 +
-+	__asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
-+	return ((unsigned long long) lo) | (((unsigned long long)hi) << 32);
-+}
++	if (argc > 1) {
++		if (sscanf(argv[1], "%ld", &now.tv_sec) != 1)
++			return pr_perror("sscanf");
 +
-+static void test(clock_t clockid, char *clockstr)
-+{
-+	struct timespec tp;
-+	long long s, e;
-+
-+	s = rdtsc();
-+	clock_gettime(clockid, &tp);
-+	e = rdtsc();
-+	printf("%lld\n", e - s);
-+	return;
-+}
-+
-+int main(int argc, char **argv)
-+{
-+	time_t offset = 10;
-+	int nsfd;
-+
-+	if (argc == 1) {
-+		test(CLOCK_MONOTONIC, "monotonic");
-+		return 0;
++		for (i = 0; i < 2; i++) {
++			_gettime(CLOCK_MONOTONIC, &tst, i);
++			if (abs(tst.tv_sec - now.tv_sec) > 5)
++				return pr_fail("%ld %ld\n", now.tv_sec, tst.tv_sec);
++		}
 +	}
++
 +	nscheck();
++
++	clock_gettime(CLOCK_MONOTONIC, &now);
 +
 +	if (unshare(CLONE_NEWTIME))
 +		return pr_perror("Can't unshare() timens");
 +
-+	nsfd = open("/proc/self/ns/time_for_children", O_RDONLY);
-+	if (nsfd < 0)
-+		return pr_perror("Can't open a time namespace");
-+
-+	if (_settime(CLOCK_MONOTONIC, offset))
++	if (_settime(CLOCK_MONOTONIC, OFFSET))
 +		return 1;
 +
-+	if (setns(nsfd, CLONE_NEWTIME))
-+		return pr_perror("setns");
++	for (i = 0; i < 2; i++) {
++		_gettime(CLOCK_MONOTONIC, &tst, i);
++		if (abs(tst.tv_sec - now.tv_sec) > 5)
++			return pr_fail("%ld %ld\n",
++					now.tv_sec, tst.tv_sec);
++	}
 +
-+	test(CLOCK_MONOTONIC, "monotonic");
++	if (argc > 1)
++		return 0;
++
++	pid = fork();
++	if (pid < 0)
++		return pr_perror("fork");
++
++	if (pid == 0) {
++		char now_str[64];
++		char *cargv[] = {"exec", now_str, NULL};
++		char *cenv[] = {NULL};
++
++		/* Check that a child process is in the new timens. */
++		for (i = 0; i < 2; i++) {
++			_gettime(CLOCK_MONOTONIC, &tst, i);
++			if (abs(tst.tv_sec - now.tv_sec - OFFSET) > 5)
++				return pr_fail("%ld %ld\n",
++						now.tv_sec + OFFSET, tst.tv_sec);
++		}
++
++		/* Check that a proper vdso will be mapped after execve. */
++		snprintf(now_str, sizeof(now_str), "%ld", now.tv_sec + OFFSET);
++		execve("/proc/self/exe", cargv, cenv);
++		return pr_perror("execve");
++	}
++
++	if (waitpid(pid, &status, 0) != pid)
++		return pr_perror("waitpid");
++
++	if (status)
++		ksft_exit_fail();
++
++	ksft_test_result_pass("exec\n");
++	ksft_exit_pass();
 +	return 0;
 +}
 -- 
