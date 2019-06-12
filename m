@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv4 10/28] x86/vdso2c: Correct err messages on file opening
-Date: Wed, 12 Jun 2019 20:26:09 +0100
-Message-ID: <20190612192628.23797-11-dima@arista.com>
+Subject: [PATCHv4 11/28] x86/vdso2c: Convert iterator to unsigned
+Date: Wed, 12 Jun 2019 20:26:10 +0100
+Message-ID: <20190612192628.23797-12-dima@arista.com>
 References: <20190612192628.23797-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,40 +12,47 @@ To: linux-kernel@vger.kernel.org
 Cc: Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-err() message in main() is misleading: it should print `outfilename`,
-which is argv[3], not argv[2].
+i and j are used everywhere with unsigned types.
+Cleanup and prettify the code a bit.
 
-Correct error messages to be more precise about what failed and for
-which file.
+Introduce syms_nr for readability and as a preparation for allocating an
+array of vDSO entries that will be needed for creating two vdso .so's:
+one for host tasks and another for processes inside time namespace.
 
 Co-developed-by: Andrei Vagin <avagin@openvz.org>
 Signed-off-by: Andrei Vagin <avagin@openvz.org>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- arch/x86/entry/vdso/vdso2c.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ arch/x86/entry/vdso/vdso2c.h | 9 ++++-----
+ 1 file changed, 4 insertions(+), 5 deletions(-)
 
-diff --git a/arch/x86/entry/vdso/vdso2c.c b/arch/x86/entry/vdso/vdso2c.c
-index 3a4d8d4d39f8..ce67370d14e5 100644
---- a/arch/x86/entry/vdso/vdso2c.c
-+++ b/arch/x86/entry/vdso/vdso2c.c
-@@ -184,7 +184,7 @@ static void map_input(const char *name, void **addr, size_t *len, int prot)
+diff --git a/arch/x86/entry/vdso/vdso2c.h b/arch/x86/entry/vdso/vdso2c.h
+index a20b134de2a8..80be339ee93e 100644
+--- a/arch/x86/entry/vdso/vdso2c.h
++++ b/arch/x86/entry/vdso/vdso2c.h
+@@ -13,7 +13,7 @@ static void BITSFUNC(go)(void *raw_addr, size_t raw_len,
+ 	unsigned long load_size = -1;  /* Work around bogus warning */
+ 	unsigned long mapping_size;
+ 	ELF(Ehdr) *hdr = (ELF(Ehdr) *)raw_addr;
+-	int i;
++	unsigned int i, syms_nr;
+ 	unsigned long j;
+ 	ELF(Shdr) *symtab_hdr = NULL, *strtab_hdr, *secstrings_hdr,
+ 		*alt_sec = NULL;
+@@ -86,11 +86,10 @@ static void BITSFUNC(go)(void *raw_addr, size_t raw_len,
+ 	strtab_hdr = raw_addr + GET_LE(&hdr->e_shoff) +
+ 		GET_LE(&hdr->e_shentsize) * GET_LE(&symtab_hdr->sh_link);
  
- 	int fd = open(name, O_RDONLY);
- 	if (fd == -1)
--		err(1, "%s", name);
-+		err(1, "open(%s)", name);
- 
- 	tmp_len = lseek(fd, 0, SEEK_END);
- 	if (tmp_len == (off_t)-1)
-@@ -237,7 +237,7 @@ int main(int argc, char **argv)
- 	outfilename = argv[3];
- 	outfile = fopen(outfilename, "w");
- 	if (!outfile)
--		err(1, "%s", argv[2]);
-+		err(1, "fopen(%s)", outfilename);
- 
- 	go(raw_addr, raw_len, stripped_addr, stripped_len, outfile, name);
- 
++	syms_nr = GET_LE(&symtab_hdr->sh_size) / GET_LE(&symtab_hdr->sh_entsize);
+ 	/* Walk the symbol table */
+-	for (i = 0;
+-	     i < GET_LE(&symtab_hdr->sh_size) / GET_LE(&symtab_hdr->sh_entsize);
+-	     i++) {
+-		int k;
++	for (i = 0; i < syms_nr; i++) {
++		unsigned int k;
+ 		ELF(Sym) *sym = raw_addr + GET_LE(&symtab_hdr->sh_offset) +
+ 			GET_LE(&symtab_hdr->sh_entsize) * i;
+ 		const char *sym_name = raw_addr +
 -- 
 2.22.0
