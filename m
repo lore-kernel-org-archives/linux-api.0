@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv4 22/28] selftest/timens: Add a test for timerfd
-Date: Wed, 12 Jun 2019 20:26:21 +0100
-Message-ID: <20190612192628.23797-23-dima@arista.com>
+Subject: [PATCHv4 18/28] vdso: introduce timens_static_branch
+Date: Wed, 12 Jun 2019 20:26:17 +0100
+Message-ID: <20190612192628.23797-19-dima@arista.com>
 References: <20190612192628.23797-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,167 +14,252 @@ List-Id: linux-api@vger.kernel.org
 
 From: Andrei Vagin <avagin@gmail.com>
 
-Check that timerfd_create() takes into account clock offsets.
+As it has been discussed on timens RFC, adding a new conditional branch
+`if (inside_time_ns)` on VDSO for all processes is undesirable.
+
+Addressing those problems, there are two versions of VDSO's .so:
+for host tasks (without any penalty) and for processes inside of time
+namespace with clk_to_ns() that subtracts offsets from host's time.
+
+This patch introduces timens_static_branch(), which is similar with
+static_branch_unlikely.
+
+The timens code in vdso looks like this:
+
+       if (timens_static_branch()) {
+               clk_to_ns(clk, ts);
+       }
+
+The version of vdso which is compiled from sources will never execute
+clk_to_ns(). And then we can patch the 'no-op' in the straight-line
+codepath with a 'jump' instruction to the out-of-line true branch and
+get the timens version of the vdso library.
+
+While cooking the patch, an alternative approach has being considered:
+to omit no-ops - memcpy() the following asm ret sequience on the place of
+a function call: https://github.com/0x7f454c46/linux/commit/4cc0180f6d65
+Having in mind possible issues with different toolchains, the usual
+static_branch() approach was choosen.
 
 Signed-off-by: Andrei Vagin <avagin@gmail.com>
 Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- tools/testing/selftests/timens/.gitignore |   1 +
- tools/testing/selftests/timens/Makefile   |   2 +-
- tools/testing/selftests/timens/timerfd.c  | 127 ++++++++++++++++++++++
- 3 files changed, 129 insertions(+), 1 deletion(-)
- create mode 100644 tools/testing/selftests/timens/timerfd.c
+ arch/x86/entry/vdso/vclock_gettime.c  |  9 +++++--
+ arch/x86/entry/vdso/vdso-layout.lds.S |  1 +
+ arch/x86/entry/vdso/vdso2c.h          | 11 +++++++-
+ arch/x86/entry/vdso/vma.c             | 37 ++++++++++++++++++++++-----
+ arch/x86/include/asm/jump_label.h     | 14 ++++++++++
+ arch/x86/include/asm/vdso.h           |  1 +
+ include/linux/jump_label.h            |  5 ++++
+ 7 files changed, 69 insertions(+), 9 deletions(-)
 
-diff --git a/tools/testing/selftests/timens/.gitignore b/tools/testing/selftests/timens/.gitignore
-index 27a693229ce1..b609f6ee9fb9 100644
---- a/tools/testing/selftests/timens/.gitignore
-+++ b/tools/testing/selftests/timens/.gitignore
-@@ -1 +1,2 @@
- timens
-+timerfd
-diff --git a/tools/testing/selftests/timens/Makefile b/tools/testing/selftests/timens/Makefile
-index b877efb78974..66b90cd28e5c 100644
---- a/tools/testing/selftests/timens/Makefile
-+++ b/tools/testing/selftests/timens/Makefile
-@@ -1,4 +1,4 @@
--TEST_GEN_PROGS := timens
-+TEST_GEN_PROGS := timens timerfd
+diff --git a/arch/x86/entry/vdso/vclock_gettime.c b/arch/x86/entry/vdso/vclock_gettime.c
+index e2d93628c0dd..21b7153cf2b0 100644
+--- a/arch/x86/entry/vdso/vclock_gettime.c
++++ b/arch/x86/entry/vdso/vclock_gettime.c
+@@ -18,6 +18,7 @@
+ #include <asm/msr.h>
+ #include <asm/pvclock.h>
+ #include <asm/mshyperv.h>
++#include <asm/jump_label.h>
+ #include <linux/math64.h>
+ #include <linux/time.h>
+ #include <linux/kernel.h>
+@@ -174,8 +175,10 @@ notrace static __always_inline void clk_to_ns(clockid_t clk, struct timespec *ts
+ 		ts->tv_sec--;
+ 	}
+ }
++#define _timens_static_branch_unlikely timens_static_branch_unlikely
+ #else
+ notrace static __always_inline void clk_to_ns(clockid_t clk, struct timespec *ts) {}
++notrace static __always_inline bool _timens_static_branch_unlikely(void) { return false; }
+ #endif
  
- CFLAGS := -Wall -Werror
+ notrace static int do_hres(clockid_t clk, struct timespec *ts)
+@@ -204,7 +207,8 @@ notrace static int do_hres(clockid_t clk, struct timespec *ts)
+ 	ts->tv_sec = sec + __iter_div_u64_rem(ns, NSEC_PER_SEC, &ns);
+ 	ts->tv_nsec = ns;
  
-diff --git a/tools/testing/selftests/timens/timerfd.c b/tools/testing/selftests/timens/timerfd.c
-new file mode 100644
-index 000000000000..c9816db4fe79
---- /dev/null
-+++ b/tools/testing/selftests/timens/timerfd.c
-@@ -0,0 +1,127 @@
-+// SPDX-License-Identifier: GPL-2.0
-+#define _GNU_SOURCE
-+#include <sched.h>
-+
-+#include <sys/timerfd.h>
-+#include <sys/syscall.h>
-+#include <sys/types.h>
-+#include <sys/wait.h>
-+#include <time.h>
-+#include <unistd.h>
-+#include <stdlib.h>
-+#include <stdio.h>
-+#include <stdint.h>
-+
-+#include "log.h"
-+#include "timens.h"
-+
-+static int tclock_gettime(clock_t clockid, struct timespec *now)
-+{
-+	if (clockid == CLOCK_BOOTTIME_ALARM)
-+		clockid = CLOCK_BOOTTIME;
-+	return clock_gettime(clockid, now);
-+}
-+
-+int run_test(int clockid, struct timespec now)
-+{
-+	struct itimerspec new_value;
-+	long long elapsed;
-+	int fd, i;
-+
-+	if (tclock_gettime(clockid, &now))
-+		return pr_perror("clock_gettime");
-+
-+	for (i = 0; i < 2; i++) {
-+		int flags = 0;
-+
-+		new_value.it_value.tv_sec = 3600;
-+		new_value.it_value.tv_nsec = 0;
-+		new_value.it_interval.tv_sec = 1;
-+		new_value.it_interval.tv_nsec = 0;
-+
-+		if (i == 1) {
-+			new_value.it_value.tv_sec += now.tv_sec;
-+			new_value.it_value.tv_nsec += now.tv_nsec;
-+		}
-+
-+		fd = timerfd_create(clockid, 0);
-+		if (fd == -1)
-+			return pr_perror("timerfd_create");
-+
-+		if (i == 1)
-+			flags |= TFD_TIMER_ABSTIME;
-+
-+		if (timerfd_settime(fd, flags, &new_value, NULL))
-+			return pr_perror("timerfd_settime");
-+
-+		if (timerfd_gettime(fd, &new_value))
-+			return pr_perror("timerfd_gettime");
-+
-+		elapsed = new_value.it_value.tv_sec;
-+		if (abs(elapsed - 3600) > 60) {
-+			ksft_test_result_fail("clockid: %d elapsed: %lld\n",
-+					      clockid, elapsed);
-+			return 1;
-+		}
-+
-+		close(fd);
+-	clk_to_ns(clk, ts);
++	if (_timens_static_branch_unlikely())
++		clk_to_ns(clk, ts);
+ 
+ 	return 0;
+ }
+@@ -220,7 +224,8 @@ notrace static void do_coarse(clockid_t clk, struct timespec *ts)
+ 		ts->tv_nsec = base->nsec;
+ 	} while (unlikely(gtod_read_retry(gtod, seq)));
+ 
+-	clk_to_ns(clk, ts);
++	if (_timens_static_branch_unlikely())
++		clk_to_ns(clk, ts);
+ }
+ 
+ notrace int __vdso_clock_gettime(clockid_t clock, struct timespec *ts)
+diff --git a/arch/x86/entry/vdso/vdso-layout.lds.S b/arch/x86/entry/vdso/vdso-layout.lds.S
+index ba216527e59f..69dbe4821aa5 100644
+--- a/arch/x86/entry/vdso/vdso-layout.lds.S
++++ b/arch/x86/entry/vdso/vdso-layout.lds.S
+@@ -45,6 +45,7 @@ SECTIONS
+ 	.gnu.version	: { *(.gnu.version) }
+ 	.gnu.version_d	: { *(.gnu.version_d) }
+ 	.gnu.version_r	: { *(.gnu.version_r) }
++	__jump_table	: { *(__jump_table) }	:text
+ 
+ 	.dynamic	: { *(.dynamic) }		:text	:dynamic
+ 
+diff --git a/arch/x86/entry/vdso/vdso2c.h b/arch/x86/entry/vdso/vdso2c.h
+index 885b988aea19..392031258315 100644
+--- a/arch/x86/entry/vdso/vdso2c.h
++++ b/arch/x86/entry/vdso/vdso2c.h
+@@ -16,7 +16,7 @@ static void BITSFUNC(go)(void *raw_addr, size_t raw_len,
+ 	unsigned int i, syms_nr;
+ 	unsigned long j;
+ 	ELF(Shdr) *symtab_hdr = NULL, *strtab_hdr, *secstrings_hdr,
+-		*alt_sec = NULL;
++		*alt_sec = NULL, *jump_table_sec = NULL;
+ 	ELF(Dyn) *dyn = 0, *dyn_end = 0;
+ 	const char *secstrings;
+ 	INT_BITS syms[NSYMS] = {};
+@@ -78,6 +78,9 @@ static void BITSFUNC(go)(void *raw_addr, size_t raw_len,
+ 		if (!strcmp(secstrings + GET_LE(&sh->sh_name),
+ 			    ".altinstructions"))
+ 			alt_sec = sh;
++		if (!strcmp(secstrings + GET_LE(&sh->sh_name),
++			    "__jump_table"))
++			jump_table_sec  = sh;
+ 	}
+ 
+ 	if (!symtab_hdr)
+@@ -166,6 +169,12 @@ static void BITSFUNC(go)(void *raw_addr, size_t raw_len,
+ 		fprintf(outfile, "\t.alt_len = %lu,\n",
+ 			(unsigned long)GET_LE(&alt_sec->sh_size));
+ 	}
++	if (jump_table_sec) {
++		fprintf(outfile, "\t.jump_table = %lu,\n",
++			(unsigned long)GET_LE(&jump_table_sec->sh_offset));
++		fprintf(outfile, "\t.jump_table_len = %lu,\n",
++			(unsigned long)GET_LE(&jump_table_sec->sh_size));
 +	}
+ 	for (i = 0; i < NSYMS; i++) {
+ 		if (required_syms[i].export && syms[i])
+ 			fprintf(outfile, "\t.sym_%s = %" PRIi64 ",\n",
+diff --git a/arch/x86/entry/vdso/vma.c b/arch/x86/entry/vdso/vma.c
+index 3ed5bf4932af..12cf73aa0aec 100644
+--- a/arch/x86/entry/vdso/vma.c
++++ b/arch/x86/entry/vdso/vma.c
+@@ -15,6 +15,7 @@
+ #include <linux/cpu.h>
+ #include <linux/ptrace.h>
+ #include <linux/time_namespace.h>
++#include <linux/jump_label.h>
+ #include <asm/pvclock.h>
+ #include <asm/vgtod.h>
+ #include <asm/proto.h>
+@@ -31,20 +32,44 @@
+ unsigned int __read_mostly vdso64_enabled = 1;
+ #endif
+ 
+-void __init init_vdso_image(struct vdso_image *image)
++#ifdef CONFIG_TIME_NS
++static __init void apply_jump_tables(struct vdso_jump_entry *ent, unsigned long nr)
+ {
+-	BUG_ON(image->size % PAGE_SIZE != 0);
++	while (nr--) {
++		void *code_addr	= (void *)ent + ent->code;
++		long target_addr = (long) ent->target - (ent->code + JUMP_LABEL_NOP_SIZE);
++		((char *)code_addr)[0] = 0xe9; /* JMP rel32 */
++		*((long *)(code_addr + 1)) = (long)target_addr;
 +
-+	ksft_test_result_pass("clockid=%d\n", clockid);
-+
-+	return 0;
-+}
-+
-+int main(int argc, char *argv[])
-+{
-+	int ret, status, len, fd;
-+	char buf[4096];
-+	pid_t pid;
-+	struct timespec btime_now, mtime_now;
-+
-+	nscheck();
-+
-+	clock_gettime(CLOCK_MONOTONIC, &mtime_now);
-+	clock_gettime(CLOCK_BOOTTIME, &btime_now);
-+
-+	if (unshare(CLONE_NEWTIME))
-+		return pr_perror("unshare");
-+
-+	len = snprintf(buf, sizeof(buf), "%d %d 0\n%d %d 0",
-+			CLOCK_MONOTONIC, 70 * 24 * 3600,
-+			CLOCK_BOOTTIME, 9 * 24 * 3600);
-+	fd = open("/proc/self/timens_offsets", O_WRONLY);
-+	if (fd < 0)
-+		return pr_perror("/proc/self/timens_offsets");
-+
-+	if (write(fd, buf, len) != len)
-+		return pr_perror("/proc/self/timens_offsets");
-+
-+	close(fd);
-+	mtime_now.tv_sec += 70 * 24 * 3600;
-+	btime_now.tv_sec += 9 * 24 * 3600;
-+
-+	pid = fork();
-+	if (pid < 0)
-+		return pr_perror("Unable to fork");
-+	if (pid == 0) {
-+		ret = 0;
-+		ret |= run_test(CLOCK_BOOTTIME, btime_now);
-+		ret |= run_test(CLOCK_MONOTONIC, mtime_now);
-+		ret |= run_test(CLOCK_BOOTTIME_ALARM, btime_now);
-+
-+		if (ret)
-+			ksft_exit_fail();
-+		ksft_exit_pass();
-+		return ret;
++		ent++;
 +	}
-+
-+	if (waitpid(pid, &status, 0) != pid)
-+		return pr_perror("Unable to wait the child process");
-+
-+	if (WIFEXITED(status))
-+		return WEXITSTATUS(status);
-+
-+	return 1;
 +}
 +
++static __init void init_timens(struct vdso_image *image)
++{
++	struct vdso_jump_entry *entries;
+ 
+-	apply_alternatives((struct alt_instr *)(image->text + image->alt),
+-			   (struct alt_instr *)(image->text + image->alt +
+-						image->alt_len));
+-#ifdef CONFIG_TIME_NS
+ 	image->text_timens = vmalloc_32(image->size);
+ 	if (WARN_ON(image->text_timens == NULL))
+ 		return;
+ 
+ 	memcpy(image->text_timens, image->text, image->size);
++
++	entries = image->text_timens + image->jump_table;
++	apply_jump_tables(entries, image->jump_table_len / sizeof(struct vdso_jump_entry));
++}
++#else
++static inline void init_timens(struct vdso_image *image) {}
+ #endif
++
++void __init init_vdso_image(struct vdso_image *image)
++{
++	BUG_ON(image->size % PAGE_SIZE != 0);
++
++	apply_alternatives((struct alt_instr *)(image->text + image->alt),
++			   (struct alt_instr *)(image->text + image->alt +
++						image->alt_len));
++	init_timens(image);
+ }
+ 
+ struct linux_binprm;
+diff --git a/arch/x86/include/asm/jump_label.h b/arch/x86/include/asm/jump_label.h
+index 65191ce8e1cf..1784aa49cc82 100644
+--- a/arch/x86/include/asm/jump_label.h
++++ b/arch/x86/include/asm/jump_label.h
+@@ -51,6 +51,20 @@ static __always_inline bool arch_static_branch_jump(struct static_key *key, bool
+ 	return true;
+ }
+ 
++static __always_inline bool timens_static_branch_unlikely(void)
++{
++	asm_volatile_goto("1:\n\t"
++		".byte " __stringify(STATIC_KEY_INIT_NOP) "\n\t"
++		 ".pushsection __jump_table,  \"aw\"\n\t"
++		 "2: .word 1b - 2b, %l[l_yes] - 2b\n\t"
++		 ".popsection\n\t"
++		 : :  :  : l_yes);
++
++	return false;
++l_yes:
++	return true;
++}
++
+ #else	/* __ASSEMBLY__ */
+ 
+ .macro STATIC_JUMP_IF_TRUE target, key, def
+diff --git a/arch/x86/include/asm/vdso.h b/arch/x86/include/asm/vdso.h
+index ccf89dedd04f..5e83bd3cda22 100644
+--- a/arch/x86/include/asm/vdso.h
++++ b/arch/x86/include/asm/vdso.h
+@@ -16,6 +16,7 @@ struct vdso_image {
+ 	unsigned long size;   /* Always a multiple of PAGE_SIZE */
+ 
+ 	unsigned long alt, alt_len;
++	unsigned long jump_table, jump_table_len;
+ 
+ 	long sym_vvar_start;  /* Negative offset to the vvar area */
+ 
+diff --git a/include/linux/jump_label.h b/include/linux/jump_label.h
+index 3e113a1fa0f1..69854a05d2f2 100644
+--- a/include/linux/jump_label.h
++++ b/include/linux/jump_label.h
+@@ -125,6 +125,11 @@ struct jump_entry {
+ 	long key;	// key may be far away from the core kernel under KASLR
+ };
+ 
++struct vdso_jump_entry {
++	u16 code;
++	u16 target;
++};
++
+ static inline unsigned long jump_entry_code(const struct jump_entry *entry)
+ {
+ 	return (unsigned long)&entry->code + entry->code;
 -- 
 2.22.0
