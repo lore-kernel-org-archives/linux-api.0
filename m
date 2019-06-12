@@ -1,42 +1,69 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [RFC][PATCH 00/13] Mount, FS, Block and Keyrings notifications [ver #4]
-Date: Wed, 12 Jun 2019 09:55:02 +0100
-Message-ID: <12980.1560329702@warthog.procyon.org.uk>
-References: <cf3f4865-b6d7-7303-0212-960439e0c119@tycho.nsa.gov> <155991702981.15579.6007568669839441045.stgit@warthog.procyon.org.uk> <be966d9c-e38d-7a30-8d80-fad5f25ab230@tycho.nsa.gov> <0cf7a49d-85f6-fba9-62ec-a378e0b76adf@schaufler-ca.com> <CALCETrX5O18q2=dUeC=hEtK2=t5KQpGBy9XveHxFw36OqkbNOg@mail.gmail.com> <dac74580-5b48-86e4-8222-cac29a9f541d@schaufler-ca.com> <E0925E1F-E5F2-4457-8704-47B6E64FE3F3@amacapital.net> <4b7d02b2-2434-8a7c-66cc-7dbebc37efbc@schaufler-ca.com> <CALCETrU+PKVbrKQJoXj9x_5y+vTZENMczHqyM_Xb85ca5YDZuA@mail.gmail.com> <25d88489-9850-f092-205e-0a4fc292f41b@schaufler-ca.com> <97BA9EB5-4E62-4E3A-BD97-CEC34F16FCFF@amacapital.net>
+From: Dave Martin <Dave.Martin@arm.com>
+Subject: Re: [PATCH v7 22/27] binfmt_elf: Extract .note.gnu.property from an
+ ELF file
+Date: Wed, 12 Jun 2019 10:32:38 +0100
+Message-ID: <20190612093238.GQ28398@e103592.cambridge.arm.com>
+References: <20190606200646.3951-1-yu-cheng.yu@intel.com>
+ <20190606200646.3951-23-yu-cheng.yu@intel.com>
+ <20190607180115.GJ28398@e103592.cambridge.arm.com>
+ <94b9c55b3b874825fda485af40ab2a6bc3dad171.camel@intel.com>
+ <87lfy9cq04.fsf@oldenburg2.str.redhat.com>
+ <20190611114109.GN28398@e103592.cambridge.arm.com>
+ <031bc55d8dcdcf4f031e6ff27c33fd52c61d33a5.camel@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cf3f4865-b6d7-7303-0212-960439e0c119@tycho.nsa.gov>
-Content-ID: <12979.1560329702.1@warthog.procyon.org.uk>
+Content-Disposition: inline
+In-Reply-To: <031bc55d8dcdcf4f031e6ff27c33fd52c61d33a5.camel@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Stephen Smalley <sds@tycho.nsa.gov>
-Cc: dhowells@redhat.com, Andy Lutomirski <luto@amacapital.net>, Casey Schaufler <casey@schaufler-ca.com>, Andy Lutomirski <luto@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, USB list <linux-usb@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, raven@themaw.net, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Paul Moore <paul@paul-moore.com>
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: Florian Weimer <fweimer@redhat.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Stephen Smalley <sds@tycho.nsa.gov> wrote:
+On Tue, Jun 11, 2019 at 12:31:34PM -0700, Yu-cheng Yu wrote:
+> On Tue, 2019-06-11 at 12:41 +0100, Dave Martin wrote:
+> > On Mon, Jun 10, 2019 at 07:24:43PM +0200, Florian Weimer wrote:
+> > > * Yu-cheng Yu:
+> > > 
+> > > > To me, looking at PT_GNU_PROPERTY and not trying to support anything is a
+> > > > logical choice.  And it breaks only a limited set of toolchains.
+> > > > 
+> > > > I will simplify the parser and leave this patch as-is for anyone who wants
+> > > > to
+> > > > back-port.  Are there any objections or concerns?
+> > > 
+> > > Red Hat Enterprise Linux 8 does not use PT_GNU_PROPERTY and is probably
+> > > the largest collection of CET-enabled binaries that exists today.
+> > 
+> > For clarity, RHEL is actively parsing these properties today?
+> > 
+> > > My hope was that we would backport the upstream kernel patches for CET,
+> > > port the glibc dynamic loader to the new kernel interface, and be ready
+> > > to run with CET enabled in principle (except that porting userspace
+> > > libraries such as OpenSSL has not really started upstream, so many
+> > > processes where CET is particularly desirable will still run without
+> > > it).
+> > > 
+> > > I'm not sure if it is a good idea to port the legacy support if it's not
+> > > part of the mainline kernel because it comes awfully close to creating
+> > > our own private ABI.
+> > 
+> > I guess we can aim to factor things so that PT_NOTE scanning is
+> > available as a fallback on arches for which the absence of
+> > PT_GNU_PROPERTY is not authoritative.
+> 
+> We can probably check PT_GNU_PROPERTY first, and fallback (based on ld-linux
+> version?) to PT_NOTE scanning?
 
-> 2) If notifications can be triggered by read-like operations (as in fanotify,
-> for example), then a "read" can be turned into a "write" flow through a
-> notification.
+For arm64, we can check for PT_GNU_PROPERTY and then give up
+unconditionally.
 
-I don't think any of the things can be classed as "read-like" operations.  At
-the moment, there are the following groups:
+For x86, we would fall back to PT_NOTE scanning, but this will add a bit
+of cost to binaries that don't have NT_GNU_PROPERTY_TYPE_0.  The ld.so
+version doesn't tell you what ELF ABI a given executable conforms to.
 
- (1) Addition of objects (eg. key_link, mount).
+Since this sounds like it's largely a distro-specific issue, maybe there
+could be a Kconfig option to turn the fallback PT_NOTE scanning on?
 
- (2) Modifications to things (eg. keyctl_write, remount).
-
- (3) Removal of objects (eg. key_unlink, unmount, fput+FMODE_NEED_UNMOUNT).
-
- (4) I/O or hardware errors (eg. USB device add/remove, EDQUOT, ENOSPC).
-
-I have not currently defined any access events.
-
-I've been looking at the possibility of having epoll generate events this way,
-but that's not as straightforward as I'd hoped and fanotify could potentially
-use it also, but in both those cases, the process is already getting the
-events currently by watching for them using synchronous waiting syscalls.
-Instead this would generate an event to say it had happened.
-
-David
+Cheers
+---Dave
