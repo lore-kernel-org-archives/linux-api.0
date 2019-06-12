@@ -1,74 +1,270 @@
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: Re: [PATCH v7 22/27] binfmt_elf: Extract .note.gnu.property from an
- ELF file
-Date: Wed, 12 Jun 2019 12:04:01 -0700
-Message-ID: <b8fb6626a6ae415fac4d5daa86225e4c68d56673.camel@intel.com>
-References: <20190606200646.3951-1-yu-cheng.yu@intel.com>
-         <20190606200646.3951-23-yu-cheng.yu@intel.com>
-         <20190607180115.GJ28398@e103592.cambridge.arm.com>
-         <94b9c55b3b874825fda485af40ab2a6bc3dad171.camel@intel.com>
-         <87lfy9cq04.fsf@oldenburg2.str.redhat.com>
-         <20190611114109.GN28398@e103592.cambridge.arm.com>
-         <031bc55d8dcdcf4f031e6ff27c33fd52c61d33a5.camel@intel.com>
-         <20190612093238.GQ28398@e103592.cambridge.arm.com>
+From: Dmitry Safonov <dima@arista.com>
+Subject: [PATCHv4 00/28] kernel: Introduce Time Namespace
+Date: Wed, 12 Jun 2019 20:25:59 +0100
+Message-ID: <20190612192628.23797-1-dima@arista.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190612093238.GQ28398@e103592.cambridge.arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Martin <Dave.Martin@arm.com>
-Cc: Florian Weimer <fweimer@redhat.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
+To: linux-kernel@vger.kernel.org
+Cc: Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.orgAndrei
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2019-06-12 at 10:32 +0100, Dave Martin wrote:
-> On Tue, Jun 11, 2019 at 12:31:34PM -0700, Yu-cheng Yu wrote:
-> > On Tue, 2019-06-11 at 12:41 +0100, Dave Martin wrote:
-> > > On Mon, Jun 10, 2019 at 07:24:43PM +0200, Florian Weimer wrote:
-> > > > * Yu-cheng Yu:
-> > > > 
-> > > > > To me, looking at PT_GNU_PROPERTY and not trying to support anything
-> > > > > is a
-> > > > > logical choice.  And it breaks only a limited set of toolchains.
-> > > > > 
-> > > > > I will simplify the parser and leave this patch as-is for anyone who
-> > > > > wants
-> > > > > to
-> > > > > back-port.  Are there any objections or concerns?
-> > > > 
-> > > > Red Hat Enterprise Linux 8 does not use PT_GNU_PROPERTY and is probably
-> > > > the largest collection of CET-enabled binaries that exists today.
-> > > 
-> > > For clarity, RHEL is actively parsing these properties today?
-> > > 
-> > > > My hope was that we would backport the upstream kernel patches for CET,
-> > > > port the glibc dynamic loader to the new kernel interface, and be ready
-> > > > to run with CET enabled in principle (except that porting userspace
-> > > > libraries such as OpenSSL has not really started upstream, so many
-> > > > processes where CET is particularly desirable will still run without
-> > > > it).
-> > > > 
-> > > > I'm not sure if it is a good idea to port the legacy support if it's not
-> > > > part of the mainline kernel because it comes awfully close to creating
-> > > > our own private ABI.
-> > > 
-> > > I guess we can aim to factor things so that PT_NOTE scanning is
-> > > available as a fallback on arches for which the absence of
-> > > PT_GNU_PROPERTY is not authoritative.
-> > 
-> > We can probably check PT_GNU_PROPERTY first, and fallback (based on ld-linux
-> > version?) to PT_NOTE scanning?
-> 
-> For arm64, we can check for PT_GNU_PROPERTY and then give up
-> unconditionally.
-> 
-> For x86, we would fall back to PT_NOTE scanning, but this will add a bit
-> of cost to binaries that don't have NT_GNU_PROPERTY_TYPE_0.  The ld.so
-> version doesn't tell you what ELF ABI a given executable conforms to.
-> 
-> Since this sounds like it's largely a distro-specific issue, maybe there
-> could be a Kconfig option to turn the fallback PT_NOTE scanning on?
+Discussions around time namespace are there for a long time. The first
+attempt to implement it was in 2006 by Jeff Dike. From that time, the
+topic appears on and off in various discussions.
 
-Yes, I will make it a Kconfig option.
+There are two main use cases for time namespaces:
+1. change date and time inside a container;
+2. adjust clocks for a container restored from a checkpoint.
 
-Yu-cheng
+“It seems like this might be one of the last major obstacles keeping
+migration from being used in production systems, given that not all
+containers and connections can be migrated as long as a time dependency
+is capable of messing it up.” (by github.com/dav-ell)
+
+The kernel provides access to several clocks: CLOCK_REALTIME,
+CLOCK_MONOTONIC, CLOCK_BOOTTIME. Last two clocks are monotonous, but the
+start points for them are not defined and are different for each
+system. When a container is migrated from one node to another, all
+clocks have to be restored into consistent states; in other words, they
+have to continue running from the same points where they have been
+dumped.
+
+The main idea of this patch set is adding per-namespace offsets for
+system clocks. When a process in a non-root time namespace requests
+time of a clock, a namespace offset is added to the current value of
+this clock and the sum is returned.
+
+All offsets are placed on a separate page, this allows us to map it as
+part of VVAR into user processes and use offsets from VDSO calls.
+
+Now offsets are implemented for CLOCK_MONOTONIC and CLOCK_BOOTTIME
+clocks.
+
+v4 Changes:
+
+* CLOCKE_NEWTIME is unshare()-only flag now (CLON_PIDFD took previous value)
+* Addressing Jann Horn's feedback - we don't allow CLONE_THREAD or
+  CLONE_VM together with CLONE_NEWTIME (thanks for spotting!)
+* Addressing issues found by Thomas - removed unmaintainable CLOCK_TIMENS
+  and introduced another call back into k_clock to get ktime instead
+  of getting timespec and converting it (Patch 03)
+* Renaming timens_offsets members to omit _offset postfix
+  (thanks Cyrill for the suggestion)
+* Suggestions, renaming and making code more maintainable from Thomas's
+  feedback (thanks much!)
+* Fixing out-of-bounds and other issues in procfs file (kudos Jann Horn)
+* vdso_fault() can be called on a remote task by /proc/$pid/mem or
+  process_vm_readv() - addressed by adding a slow-path with searching
+  for owner's namespace (thanks for spotting this unobvious issue, Jann)
+* Other nits by Jann Horn
+
+v3: Major changes:
+
+* Simplify two VDSO images by using static_branch() in vclock_gettime()
+  Removes unwanted conflicts with generic VDSO movement patches and
+  simplifies things by dropping too invasive linker magic.
+  As an alternative to static_branch() we tested an attempt to introduce
+  home-made dynamic patching called retcalls:
+  https://github.com/0x7f454c46/linux/commit/4cc0180f6d65
+  Considering some theoretical problems with toolchains, we decided to go
+  with long well-tested nop-patching in static_branch(). Though, it was
+  needed to provide backend for relative code.
+
+* address Thomas' comments.
+* add sanity checks for offsets:
+  - the current clock time in a namespace has to be in [0, KTIME_MAX / 2).
+    KTIME_MAX is divided by two here to be sure that the KTIME_MAX limit
+    is still unreachable.
+Link: https://lkml.org/lkml/2018/9/19/950
+Link: https://lkml.org/lkml/2019/2/5/867
+
+v2: There are two major changes:
+
+* Two versions of the VDSO library to avoid a performance penalty for
+  host tasks outside time namespace (as suggested by Andy and Thomas).
+
+  As it has been discussed on timens RFC, adding a new conditional branch
+  `if (inside_time_ns)` on VDSO for all processes is undesirable.
+  It will add a penalty for everybody as branch predictor may mispredict
+  the jump. Also there are instruction cache lines wasted on cmp/jmp.
+
+  Those effects of introducing time namespace are very much unwanted
+  having in mind how much work have been spent on micro-optimisation
+  VDSO code.
+
+  Addressing those problems, there are two versions of VDSO's .so:
+  for host tasks (without any penalty) and for processes inside of time
+  namespace with clk_to_ns() that subtracts offsets from host's time.
+
+
+* Allow to set clock offsets for a namespace only before any processes
+  appear in it.
+
+  Now a time namespace looks similar to a pid namespace in a way how it is
+  created: unshare(CLONE_NEWTIME) system call creates a new time namespace,
+  but doesn't set it to the current process. Then all children of
+  the process will be born in the new time namespace, or a process can
+  use the setns() system call to join a namespace.
+
+  This scheme allows to create a new time namespaces, set clock offsets
+  and then populate the namespace with processes.
+
+Our performance measurements show that the price of VDSO's clock_gettime()
+in a child time namespace is about 8% with a hot CPU cache and about 90%
+with a cold CPU cache. There is no performance regression for host
+processes outside time namespace on those tests.
+
+We wrote two small benchmarks. The first one gettime_perf.c calls
+clock_gettime() in a loop for 3 seconds. It shows us performance with
+a hot CPU cache (more clock_gettime() cycles - the better):
+
+        | before     | CONFIG_TIME_NS=n | host        | inside timens
+--------|------------|------------------|-------------|-------------
+cycles  | 139887013  | 139453003        | 139899785   | 128792458
+diff (%)| 100        | 99.7             | 100         | 92
+
+The second one gettime_perf_cold.c calls rdtsc, clock_gettime(), rdtsc
+and shows a difference of second and first rdtsc. We call this binary in
+a loop 1000 times, get 1000 values and calculate MODE for them.
+It should show us performance with a cold CPU cache
+(lesser tsc per cycle - the better):
+
+        | before     | CONFIG_TIME_NS=n | host        | inside timens
+--------|------------|------------------|-------------|-------------
+tsc     | 6748       | 6718             | 6862        | 12682
+diff (%)| 100        | 99.6             | 101.7       | 188
+
+The numbers gathered on Intel(R) Core(TM) i5-6300U CPU @ 2.40GHz.
+
+Cc: Adrian Reber <adrian@lisas.de>
+Cc: Andrei Vagin <avagin@openvz.org>
+Cc: Andy Lutomirski <luto@kernel.org>
+Cc: Arnd Bergmann <arnd@arndb.de>
+Cc: Christian Brauner <christian.brauner@ubuntu.com>
+Cc: Cyrill Gorcunov <gorcunov@openvz.org>
+Cc: Dmitry Safonov <0x7f454c46@gmail.com>
+Cc: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: "H. Peter Anvin" <hpa@zytor.com>
+Cc: Ingo Molnar <mingo@redhat.com>
+Cc: Jann Horn <jannh@google.com>
+Cc: Jeff Dike <jdike@addtoit.com>
+Cc: Oleg Nesterov <oleg@redhat.com>
+Cc: Pavel Emelyanov <xemul@virtuozzo.com>
+Cc: Shuah Khan <shuah@kernel.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Vincenzo Frascino <vincenzo.frascino@arm.com>
+Cc: containers@lists.linux-foundation.org
+Cc: criu@openvz.org
+Cc: linux-api@vger.kernel.org
+Cc: x86@kernel.org
+
+v3: https://lkml.kernel.org/r/20190425161416.26600-1-dima@arista.com
+v2: https://lore.kernel.org/lkml/20190206001107.16488-1-dima@arista.com/
+RFC: https://lkml.kernel.org/r/20180919205037.9574-1-dima@arista.com/
+
+Andrei Vagin (17):
+  ns: Introduce Time Namespace
+  timens: Add timens_offsets
+  posix-clocks: add another call back to return clock time in ktime_t
+  timens: Introduce CLOCK_MONOTONIC offsets
+  timens: Introduce CLOCK_BOOTTIME offset
+  timerfd/timens: Take into account ns clock offsets
+  posix-timers/timens: Take into account clock offsets
+  timens/kernel: Take into account timens clock offsets in
+    clock_nanosleep
+  x86/vdso: Add offsets page in vvar
+  vdso: introduce timens_static_branch
+  timens/fs/proc: Introduce /proc/pid/timens_offsets
+  selftest/timens: Add a test for timerfd
+  selftest/timens: Add a test for clock_nanosleep()
+  selftest/timens: Add timer offsets test
+  x86/vdso: Align VDSO functions by CPU L1 cache line
+  selftests: Add a simple perf test for clock_gettime()
+  selftest/timens: Check that a right vdso is mapped after fork and exec
+
+Dmitry Safonov (11):
+  timens: Shift /proc/uptime
+  x86/vdso2c: Correct err messages on file opening
+  x86/vdso2c: Convert iterator to unsigned
+  x86/vdso/Makefile: Add vobjs32
+  x86/vdso: Restrict splitting VVAR VMA
+  x86/vdso: Rename vdso_image {.data=>.text}
+  x86/vdso: Allocate timens vdso
+  x86/vdso: Switch image on setns()/unshare()/clone()
+  timens: Add align for timens_offsets
+  selftest/timens: Add Time Namespace test for supported clocks
+  selftest/timens: Add procfs selftest
+
+ MAINTAINERS                                   |   3 +
+ arch/Kconfig                                  |   5 +
+ arch/x86/Kconfig                              |   1 +
+ arch/x86/entry/vdso/Makefile                  |  16 +-
+ arch/x86/entry/vdso/vclock_gettime.c          |  48 +++
+ arch/x86/entry/vdso/vdso-layout.lds.S         |  10 +-
+ arch/x86/entry/vdso/vdso2c.c                  |   7 +-
+ arch/x86/entry/vdso/vdso2c.h                  |  24 +-
+ arch/x86/entry/vdso/vma.c                     | 189 ++++++++-
+ arch/x86/include/asm/jump_label.h             |  14 +
+ arch/x86/include/asm/vdso.h                   |  14 +-
+ fs/proc/base.c                                |  95 +++++
+ fs/proc/namespaces.c                          |   4 +
+ fs/proc/uptime.c                              |   3 +
+ fs/timerfd.c                                  |   3 +
+ include/linux/hrtimer.h                       |   2 +-
+ include/linux/jump_label.h                    |   5 +
+ include/linux/nsproxy.h                       |   2 +
+ include/linux/posix-timers.h                  |   3 +
+ include/linux/proc_ns.h                       |   2 +
+ include/linux/time_namespace.h                | 115 ++++++
+ include/linux/timens_offsets.h                |  18 +
+ include/linux/user_namespace.h                |   1 +
+ include/uapi/linux/sched.h                    |   5 +
+ init/Kconfig                                  |   8 +
+ kernel/Makefile                               |   1 +
+ kernel/fork.c                                 |  29 +-
+ kernel/nsproxy.c                              |  41 +-
+ kernel/time/alarmtimer.c                      |  27 +-
+ kernel/time/hrtimer.c                         |   8 +-
+ kernel/time/posix-clock.c                     |   8 +-
+ kernel/time/posix-cpu-timers.c                |  32 +-
+ kernel/time/posix-stubs.c                     |  15 +-
+ kernel/time/posix-timers.c                    |  87 +++--
+ kernel/time/posix-timers.h                    |   7 +-
+ kernel/time_namespace.c                       | 367 ++++++++++++++++++
+ tools/testing/selftests/Makefile              |   1 +
+ tools/testing/selftests/timens/.gitignore     |   8 +
+ tools/testing/selftests/timens/Makefile       |  12 +
+ .../selftests/timens/clock_nanosleep.c        | 100 +++++
+ tools/testing/selftests/timens/config         |   1 +
+ tools/testing/selftests/timens/exec.c         |  91 +++++
+ tools/testing/selftests/timens/gettime_perf.c |  74 ++++
+ .../selftests/timens/gettime_perf_cold.c      |  63 +++
+ tools/testing/selftests/timens/log.h          |  26 ++
+ tools/testing/selftests/timens/procfs.c       | 142 +++++++
+ tools/testing/selftests/timens/timens.c       | 188 +++++++++
+ tools/testing/selftests/timens/timens.h       |  63 +++
+ tools/testing/selftests/timens/timer.c        | 116 ++++++
+ tools/testing/selftests/timens/timerfd.c      | 127 ++++++
+ 50 files changed, 2132 insertions(+), 99 deletions(-)
+ create mode 100644 include/linux/time_namespace.h
+ create mode 100644 include/linux/timens_offsets.h
+ create mode 100644 kernel/time_namespace.c
+ create mode 100644 tools/testing/selftests/timens/.gitignore
+ create mode 100644 tools/testing/selftests/timens/Makefile
+ create mode 100644 tools/testing/selftests/timens/clock_nanosleep.c
+ create mode 100644 tools/testing/selftests/timens/config
+ create mode 100644 tools/testing/selftests/timens/exec.c
+ create mode 100644 tools/testing/selftests/timens/gettime_perf.c
+ create mode 100644 tools/testing/selftests/timens/gettime_perf_cold.c
+ create mode 100644 tools/testing/selftests/timens/log.h
+ create mode 100644 tools/testing/selftests/timens/procfs.c
+ create mode 100644 tools/testing/selftests/timens/timens.c
+ create mode 100644 tools/testing/selftests/timens/timens.h
+ create mode 100644 tools/testing/selftests/timens/timer.c
+ create mode 100644 tools/testing/selftests/timens/timerfd.c
+
+-- 
+2.22.0
