@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv4 17/28] x86/vdso: Switch image on setns()/unshare()/clone()
-Date: Wed, 12 Jun 2019 20:26:16 +0100
-Message-ID: <20190612192628.23797-18-dima@arista.com>
+Subject: [PATCHv4 12/28] x86/vdso/Makefile: Add vobjs32
+Date: Wed, 12 Jun 2019 20:26:11 +0100
+Message-ID: <20190612192628.23797-13-dima@arista.com>
 References: <20190612192628.23797-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -9,137 +9,70 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190612192628.23797-1-dima@arista.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.orgAndrei
+Cc: Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-As it has been discussed on timens RFC, adding a new conditional branch
-`if (inside_time_ns)` on VDSO for all processes is undesirable.
-It will add a penalty for everybody as branch predictor may mispredict
-the jump. Also there are instruction cache lines wasted on cmp/jmp.
+Treat ia32/i386 objects in array the same As for 64-bit vdso objects.
+This is a preparation ground to avoid code duplication on introduction
+timens vdso.
 
-Those effects of introducing time namespace are very much unwanted
-having in mind how much work have been spent on micro-optimisation
-vdso code.
-
-Addressing those problems, there are two versions of VDSO's .so:
-for host tasks (without any penalty) and for processes inside of time
-namespace with clk_to_ns() that subtracts offsets from host's time.
-
-Whenever a user does setns()/unshare() or clone() with CLONE_TIMENS,
-change VDSO image in mm and zap existing VVAR/VDSO page tables.
-They will be re-faulted with corresponding image and VVAR offsets.
-
-Co-developed-by: Andrei Vagin <avagin@gmail.com>
-Signed-off-by: Andrei Vagin <avagin@gmail.com>
+Co-developed-by: Andrei Vagin <avagin@openvz.org>
+Signed-off-by: Andrei Vagin <avagin@openvz.org>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- arch/x86/entry/vdso/vma.c   | 28 ++++++++++++++++++++++++++++
- arch/x86/include/asm/vdso.h |  1 +
- kernel/time_namespace.c     | 11 +++++++++++
- 3 files changed, 40 insertions(+)
+ arch/x86/entry/vdso/Makefile | 15 +++++----------
+ 1 file changed, 5 insertions(+), 10 deletions(-)
 
-diff --git a/arch/x86/entry/vdso/vma.c b/arch/x86/entry/vdso/vma.c
-index cc06c6b70167..3ed5bf4932af 100644
---- a/arch/x86/entry/vdso/vma.c
-+++ b/arch/x86/entry/vdso/vma.c
-@@ -25,6 +25,7 @@
- #include <asm/cpufeature.h>
- #include <asm/mshyperv.h>
- #include <asm/page.h>
-+#include <asm/tlb.h>
+diff --git a/arch/x86/entry/vdso/Makefile b/arch/x86/entry/vdso/Makefile
+index 42fe42e82baf..b58d34120fd8 100644
+--- a/arch/x86/entry/vdso/Makefile
++++ b/arch/x86/entry/vdso/Makefile
+@@ -18,6 +18,8 @@ VDSO32-$(CONFIG_IA32_EMULATION)	:= y
  
- #if defined(CONFIG_X86_64)
- unsigned int __read_mostly vdso64_enabled = 1;
-@@ -266,6 +267,33 @@ static const struct vm_special_mapping vvar_mapping = {
- 	.mremap = vvar_mremap,
- };
+ # files to link into the vdso
+ vobjs-y := vdso-note.o vclock_gettime.o vgetcpu.o
++vobjs32-y := vdso32/note.o vdso32/system_call.o vdso32/sigreturn.o
++vobjs32-y += vdso32/vclock_gettime.o
  
-+#ifdef CONFIG_TIME_NS
-+int vdso_join_timens(struct task_struct *task)
-+{
-+	struct mm_struct *mm = task->mm;
-+	struct vm_area_struct *vma;
-+
-+	if (down_write_killable(&mm->mmap_sem))
-+		return -EINTR;
-+
-+	for (vma = mm->mmap; vma; vma = vma->vm_next) {
-+		unsigned long size = vma->vm_end - vma->vm_start;
-+
-+		if (vma_is_special_mapping(vma, &vvar_mapping) ||
-+		    vma_is_special_mapping(vma, &vdso_mapping))
-+			zap_page_range(vma, vma->vm_start, size);
-+	}
-+
-+	up_write(&mm->mmap_sem);
-+	return 0;
-+}
-+#else /* CONFIG_TIME_NS */
-+int vdso_join_timens(struct task_struct *task)
-+{
-+	return -ENXIO;
-+}
-+#endif
-+
- /*
-  * Add vdso and vvar mappings to current process.
-  * @image          - blob to map
-diff --git a/arch/x86/include/asm/vdso.h b/arch/x86/include/asm/vdso.h
-index 03f468c63a24..ccf89dedd04f 100644
---- a/arch/x86/include/asm/vdso.h
-+++ b/arch/x86/include/asm/vdso.h
-@@ -45,6 +45,7 @@ extern struct vdso_image vdso_image_32;
- extern void __init init_vdso_image(struct vdso_image *image);
+ # files to link into kernel
+ obj-y				+= vma.o
+@@ -31,10 +33,12 @@ vdso_img-$(VDSO32-y)		+= 32
+ obj-$(VDSO32-y)			+= vdso32-setup.o
  
- extern int map_vdso_once(const struct vdso_image *image, unsigned long addr);
-+extern int vdso_join_timens(struct task_struct *task);
+ vobjs := $(foreach F,$(vobjs-y),$(obj)/$F)
++vobjs32 := $(foreach F,$(vobjs32-y),$(obj)/$F)
  
- #endif /* __ASSEMBLER__ */
+ $(obj)/vdso.o: $(obj)/vdso.so
  
-diff --git a/kernel/time_namespace.c b/kernel/time_namespace.c
-index b3cffdf2635c..2a2cab14ac29 100644
---- a/kernel/time_namespace.c
-+++ b/kernel/time_namespace.c
-@@ -14,6 +14,7 @@
- #include <linux/proc_ns.h>
- #include <linux/sched/task.h>
- #include <linux/mm.h>
-+#include <asm/vdso.h>
+ targets += vdso.lds $(vobjs-y)
++targets += vdso32/vdso32.lds $(vobjs32-y)
  
- ktime_t do_timens_ktime_to_host(clockid_t clockid, ktime_t tim, struct timens_offsets *ns_offsets)
- {
-@@ -182,11 +183,16 @@ static void timens_put(struct ns_common *ns)
- static int timens_install(struct nsproxy *nsproxy, struct ns_common *new)
- {
- 	struct time_namespace *ns = to_time_ns(new);
-+	int ret;
+ # Build the vDSO image C files and link them in.
+ vdso_img_objs := $(vdso_img-y:%=vdso-image-%.o)
+@@ -125,10 +129,6 @@ $(obj)/vdsox32.so.dbg: $(obj)/vdsox32.lds $(vobjx32s) FORCE
+ CPPFLAGS_vdso32.lds = $(CPPFLAGS_vdso.lds)
+ VDSO_LDFLAGS_vdso32.lds = -m elf_i386 -soname linux-gate.so.1
  
- 	if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN) ||
- 	    !ns_capable(current_user_ns(), CAP_SYS_ADMIN))
- 		return -EPERM;
+-targets += vdso32/vdso32.lds
+-targets += vdso32/note.o vdso32/system_call.o vdso32/sigreturn.o
+-targets += vdso32/vclock_gettime.o
+-
+ KBUILD_AFLAGS_32 := $(filter-out -m64,$(KBUILD_AFLAGS)) -DBUILD_VDSO
+ $(obj)/vdso32.so.dbg: KBUILD_AFLAGS = $(KBUILD_AFLAGS_32)
+ $(obj)/vdso32.so.dbg: asflags-$(CONFIG_X86_64) += -m32
+@@ -153,12 +153,7 @@ endif
  
-+	ret = vdso_join_timens(current);
-+	if (ret)
-+		return ret;
-+
- 	get_time_ns(ns);
- 	get_time_ns(ns);
- 	put_time_ns(nsproxy->time_ns);
-@@ -201,10 +207,15 @@ int timens_on_fork(struct nsproxy *nsproxy, struct task_struct *tsk)
- {
- 	struct ns_common *nsc = &nsproxy->time_ns_for_children->ns;
- 	struct time_namespace *ns = to_time_ns(nsc);
-+	int ret;
+ $(obj)/vdso32.so.dbg: KBUILD_CFLAGS = $(KBUILD_CFLAGS_32)
  
- 	if (nsproxy->time_ns == nsproxy->time_ns_for_children)
- 		return 0;
+-$(obj)/vdso32.so.dbg: FORCE \
+-		      $(obj)/vdso32/vdso32.lds \
+-		      $(obj)/vdso32/vclock_gettime.o \
+-		      $(obj)/vdso32/note.o \
+-		      $(obj)/vdso32/system_call.o \
+-		      $(obj)/vdso32/sigreturn.o
++$(obj)/vdso32.so.dbg: $(obj)/vdso32/vdso32.lds $(vobjs32) FORCE
+ 	$(call if_changed,vdso)
  
-+	ret = vdso_join_timens(tsk);
-+	if (ret)
-+		return ret;
-+
- 	get_time_ns(ns);
- 	put_time_ns(nsproxy->time_ns);
- 	nsproxy->time_ns = ns;
+ #
 -- 
 2.22.0
