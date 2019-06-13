@@ -1,108 +1,57 @@
-From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv4 05/28] timens: Introduce CLOCK_BOOTTIME offset
-Date: Wed, 12 Jun 2019 20:26:04 +0100
-Message-ID: <20190612192628.23797-6-dima@arista.com>
-References: <20190612192628.23797-1-dima@arista.com>
+From: Randy Dunlap <rdunlap@infradead.org>
+Subject: Re: [PATCH 02/13] uapi: General notification ring definitions [ver
+ #4]
+Date: Thu, 13 Jun 2019 07:49:49 -0700
+Message-ID: <575fa290-961f-8dcd-3b76-4608daa5ee0e@infradead.org>
+References: <6b6f5bb0-1426-239b-ac9f-281e31ddcd04@infradead.org>
+ <20190607151228.GA1872258@magnolia>
+ <155991702981.15579.6007568669839441045.stgit@warthog.procyon.org.uk>
+ <155991706083.15579.16359443779582362339.stgit@warthog.procyon.org.uk>
+ <29222.1559922719@warthog.procyon.org.uk>
+ <30226.1560432885@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190612192628.23797-1-dima@arista.com>
+In-Reply-To: <30226.1560432885@warthog.procyon.org.uk>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Andrei Vagin <avagin@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.ke
+To: David Howells <dhowells@redhat.com>
+Cc: "Darrick J. Wong" <darrick.wong@oracle.com>, viro@zeniv.linux.org.uk, raven@themaw.net, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Andrei Vagin <avagin@gmail.com>
+On 6/13/19 6:34 AM, David Howells wrote:
+> Randy Dunlap <rdunlap@infradead.org> wrote:
+> 
+>> What is the problem with inline functions in UAPI headers?
+> 
+> It makes compiler problems more likely; it increases the potential for name
+> collisions with userspace; it makes for more potential problems if the headers
+> are imported into some other language; and it's not easy to fix a bug in one
+> if userspace uses it, just in case fixing the bug breaks userspace.
+> 
+> Further, in this case, the first of Darrick's functions (calculating the
+> length) is probably reasonable, but the second is not.  It should crank the
+> tail pointer and then use that, but that requires 
+> 
+>>>> Also, weird multiline comment style.
+>>>
+>>> Not really.
+>>
+>> Yes really.
+> 
+> No.  It's not weird.  If anything, the default style is less good for several
+> reasons.  I'm going to deal with this separately as I need to generate some
+> stats first.
+> 
+> David
+> 
 
-Adds boottime virtualisation for time namespace.
-Introduce timespec for boottime clock into timens offsets and wire
-clock_gettime() syscall.
+OK, maybe you are objecting to the word "weird."  So the multi-line comment style
+that you used is not the preferred Linux kernel multi-line comment style
+(except in networking code) [Documentation/process/coding-style.rst] that has been
+in effect for 20+ years AFAIK.
 
-Signed-off-by: Andrei Vagin <avagin@gmail.com>
-Co-developed-by: Dmitry Safonov <dima@arista.com>
-Signed-off-by: Dmitry Safonov <dima@arista.com>
----
- include/linux/time_namespace.h | 9 +++++++++
- include/linux/timens_offsets.h | 1 +
- kernel/time/alarmtimer.c       | 1 +
- kernel/time/posix-stubs.c      | 1 +
- kernel/time/posix-timers.c     | 1 +
- 5 files changed, 13 insertions(+)
 
-diff --git a/include/linux/time_namespace.h b/include/linux/time_namespace.h
-index 81d0c989df3c..1dda8af6b9fe 100644
---- a/include/linux/time_namespace.h
-+++ b/include/linux/time_namespace.h
-@@ -48,6 +48,14 @@ static inline void timens_add_monotonic(struct timespec64 *ts)
-                 *ts = timespec64_add(*ts, ns_offsets->monotonic);
- }
- 
-+static inline void timens_add_boottime(struct timespec64 *ts)
-+{
-+        struct timens_offsets *ns_offsets = current->nsproxy->time_ns->offsets;
-+
-+        if (ns_offsets)
-+                *ts = timespec64_add(*ts, ns_offsets->boottime);
-+}
-+
- #else
- static inline struct time_namespace *get_time_ns(struct time_namespace *ns)
- {
-@@ -73,6 +81,7 @@ static inline int timens_on_fork(struct nsproxy *nsproxy, struct task_struct *ts
- }
- 
- static inline void timens_add_monotonic(struct timespec64 *ts) {}
-+static inline void timens_add_boottime(struct timespec64 *ts) {}
- #endif
- 
- #endif /* _LINUX_TIMENS_H */
-diff --git a/include/linux/timens_offsets.h b/include/linux/timens_offsets.h
-index eaac2c82be5c..e93aabaa5e45 100644
---- a/include/linux/timens_offsets.h
-+++ b/include/linux/timens_offsets.h
-@@ -4,6 +4,7 @@
- 
- struct timens_offsets {
- 	struct timespec64 monotonic;
-+	struct timespec64 boottime;
- };
- 
- #endif
-diff --git a/kernel/time/alarmtimer.c b/kernel/time/alarmtimer.c
-index 68a163c8b4f2..6346e6ee0d32 100644
---- a/kernel/time/alarmtimer.c
-+++ b/kernel/time/alarmtimer.c
-@@ -26,6 +26,7 @@
- #include <linux/freezer.h>
- #include <linux/compat.h>
- #include <linux/module.h>
-+#include <linux/time_namespace.h>
- 
- #include "posix-timers.h"
- 
-diff --git a/kernel/time/posix-stubs.c b/kernel/time/posix-stubs.c
-index 17c67e0aecd8..edaf075d1ee4 100644
---- a/kernel/time/posix-stubs.c
-+++ b/kernel/time/posix-stubs.c
-@@ -82,6 +82,7 @@ int do_clock_gettime(clockid_t which_clock, struct timespec64 *tp)
- 		break;
- 	case CLOCK_BOOTTIME:
- 		ktime_get_boottime_ts64(tp);
-+		timens_add_boottime(tp);
- 		break;
- 	default:
- 		return -EINVAL;
-diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
-index 52098f6ad596..573942ae2629 100644
---- a/kernel/time/posix-timers.c
-+++ b/kernel/time/posix-timers.c
-@@ -240,6 +240,7 @@ static int posix_get_coarse_res(const clockid_t which_clock, struct timespec64 *
- int posix_get_boottime_timespec(const clockid_t which_clock, struct timespec64 *tp)
- {
- 	ktime_get_boottime_ts64(tp);
-+	timens_add_boottime(tp);
- 	return 0;
- }
- 
 -- 
-2.22.0
+~Randy
