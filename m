@@ -1,83 +1,90 @@
-From: Dave Martin <Dave.Martin@arm.com>
-Subject: Re: [PATCH v7 22/27] binfmt_elf: Extract .note.gnu.property from an
- ELF file
-Date: Thu, 13 Jun 2019 14:26:23 +0100
-Message-ID: <20190613132623.GA28398@e103592.cambridge.arm.com>
-References: <20190606200646.3951-1-yu-cheng.yu@intel.com>
- <20190606200646.3951-23-yu-cheng.yu@intel.com>
- <20190607180115.GJ28398@e103592.cambridge.arm.com>
- <94b9c55b3b874825fda485af40ab2a6bc3dad171.camel@intel.com>
- <87lfy9cq04.fsf@oldenburg2.str.redhat.com>
- <20190611114109.GN28398@e103592.cambridge.arm.com>
- <031bc55d8dcdcf4f031e6ff27c33fd52c61d33a5.camel@intel.com>
- <20190612093238.GQ28398@e103592.cambridge.arm.com>
- <b8fb6626a6ae415fac4d5daa86225e4c68d56673.camel@intel.com>
+From: Christian Brauner <christian@brauner.io>
+Subject: Re: Regression for MS_MOVE on kernel v5.1
+Date: Thu, 13 Jun 2019 15:22:51 +0200
+Message-ID: <20190613132250.u65yawzvf4voifea@brauner.io>
+References: <20190612225431.p753mzqynxpsazb7@brauner.io>
+ <CAHk-=wh2Khe1Lj-Pdu3o2cXxumL1hegg_1JZGJXki6cchg_Q2Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <b8fb6626a6ae415fac4d5daa86225e4c68d56673.camel@intel.com>
+In-Reply-To: <CAHk-=wh2Khe1Lj-Pdu3o2cXxumL1hegg_1JZGJXki6cchg_Q2Q@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Cc: Florian Weimer <fweimer@redhat.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, David Howells <dhowells@redhat.com>, "Eric W. Biederman" <ebiederm@xmission.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jun 12, 2019 at 12:04:01PM -0700, Yu-cheng Yu wrote:
-> On Wed, 2019-06-12 at 10:32 +0100, Dave Martin wrote:
-> > On Tue, Jun 11, 2019 at 12:31:34PM -0700, Yu-cheng Yu wrote:
-> > > On Tue, 2019-06-11 at 12:41 +0100, Dave Martin wrote:
-> > > > On Mon, Jun 10, 2019 at 07:24:43PM +0200, Florian Weimer wrote:
-> > > > > * Yu-cheng Yu:
-> > > > > 
-> > > > > > To me, looking at PT_GNU_PROPERTY and not trying to support anything
-> > > > > > is a
-> > > > > > logical choice.  And it breaks only a limited set of toolchains.
-> > > > > > 
-> > > > > > I will simplify the parser and leave this patch as-is for anyone who
-> > > > > > wants
-> > > > > > to
-> > > > > > back-port.  Are there any objections or concerns?
-> > > > > 
-> > > > > Red Hat Enterprise Linux 8 does not use PT_GNU_PROPERTY and is probably
-> > > > > the largest collection of CET-enabled binaries that exists today.
-> > > > 
-> > > > For clarity, RHEL is actively parsing these properties today?
-> > > > 
-> > > > > My hope was that we would backport the upstream kernel patches for CET,
-> > > > > port the glibc dynamic loader to the new kernel interface, and be ready
-> > > > > to run with CET enabled in principle (except that porting userspace
-> > > > > libraries such as OpenSSL has not really started upstream, so many
-> > > > > processes where CET is particularly desirable will still run without
-> > > > > it).
-> > > > > 
-> > > > > I'm not sure if it is a good idea to port the legacy support if it's not
-> > > > > part of the mainline kernel because it comes awfully close to creating
-> > > > > our own private ABI.
-> > > > 
-> > > > I guess we can aim to factor things so that PT_NOTE scanning is
-> > > > available as a fallback on arches for which the absence of
-> > > > PT_GNU_PROPERTY is not authoritative.
-> > > 
-> > > We can probably check PT_GNU_PROPERTY first, and fallback (based on ld-linux
-> > > version?) to PT_NOTE scanning?
-> > 
-> > For arm64, we can check for PT_GNU_PROPERTY and then give up
-> > unconditionally.
-> > 
-> > For x86, we would fall back to PT_NOTE scanning, but this will add a bit
-> > of cost to binaries that don't have NT_GNU_PROPERTY_TYPE_0.  The ld.so
-> > version doesn't tell you what ELF ABI a given executable conforms to.
-> > 
-> > Since this sounds like it's largely a distro-specific issue, maybe there
-> > could be a Kconfig option to turn the fallback PT_NOTE scanning on?
+On Wed, Jun 12, 2019 at 06:00:39PM -1000, Linus Torvalds wrote:
+> On Wed, Jun 12, 2019 at 12:54 PM Christian Brauner <christian@brauner.io> wrote:
+> >
+> > The commit changes the internal logic to lock mounts when propagating
+> > mounts (user+)mount namespaces and - I believe - causes do_mount_move()
+> > to fail at:
 > 
-> Yes, I will make it a Kconfig option.
+> You mean 'do_move_mount()'.
+> 
+> > if (old->mnt.mnt_flags & MNT_LOCKED)
+> >         goto out;
+> >
+> > If that's indeed the case we should either revert this commit (reverts
+> > cleanly, just tested it) or find a fix.
+> 
+> Hmm.. I'm not entirely sure of the logic here, and just looking at
+> that commit 3bd045cc9c4b ("separate copying and locking mount tree on
+> cross-userns copies") doesn't make me go "Ahh" either.
+> 
+> Al? My gut feel is that we need to just revert, since this was in 5.1
+> and it's getting reasonably late in 5.2 too. But maybe you go "guys,
+> don't be silly, this is easily fixed with this one-liner".
 
-OK, that works for me.  This would also help keep the PT_NOTE scanning
-separate from the rest of the code.
+David and I have been staring at that code today for a while together.
+I think I made some sense of it.
+One thing we weren't absolutely sure is if the old MS_MOVE behavior was
+intentional or a bug. If it is a bug we have a problem since we quite
+heavily rely on this...
 
-For arm64 we could then unconditionally select/deselect that option,
-where x86 could leave it configurable either way.
+So this whole cross-user+mnt namespace propagation mechanism comes with
+a big hammer that Eric indeed did introduce a while back which is
+MNT_LOCKED (cf. [1] for the relevant commit).
 
-Cheers
----Dave
+Afaict, MNT_LOCKED is (among other cases) supposed to prevent a user+mnt
+namespace pair to get access to a mount that is hidden underneath an
+additional mount. Consider the following scenario:
+
+sudo mount -t tmpfs tmpfs /mnt
+sudo mount --make-rshared /mnt
+sudo mount -t tmpfs tmpfs /mnt
+sudo mount --make-rshared /mnt
+unshare -U -m --map-root --propagation=unchanged
+
+umount /mnt
+# or
+mount --move -mnt /opt
+
+The last umount/MS_MOVE is supposed to fail since the mount is locked
+with MNT_LOCKED since umounting or MS_MOVing the mount would reveal the
+underlying mount which I didn't have access to prior to the creation of
+my user+mnt namespace pair.
+(Whether or not this is a reasonable security mechanism is a separate
+discussion.)
+
+But now consider the case where from the ancestor user+mnt namespace
+pair I do:
+
+# propagate the mount to the user+mount namespace pair                 
+sudo mount -t tmpfs tmpfs /mnt
+# switch to the child user+mnt namespace pair
+umount /mnt
+# or
+mount --move /mnt /opt
+
+That umount/MS_MOVE should work since that mount was propagated to the
+unprivileged task after the user+mnt namespace pair was created.
+Also, because I already had access to the underlying mount in the first
+place and second because this is literally the only way - we know of -
+to inject a mount cross mount namespaces and this is a must have feature
+that quite a lot of users rely on.
+
+Christian
+
+[1]: git show 5ff9d8a65ce80efb509ce4e8051394e9ed2cd942
