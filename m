@@ -1,38 +1,25 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: Regression for MS_MOVE on kernel v5.1
-Date: Thu, 13 Jun 2019 10:27:30 +0100
-Message-ID: <9383.1560418050@warthog.procyon.org.uk>
-References: <CAHk-=wh2Khe1Lj-Pdu3o2cXxumL1hegg_1JZGJXki6cchg_Q2Q@mail.gmail.com> <20190612225431.p753mzqynxpsazb7@brauner.io>
+From: Minchan Kim <minchan@kernel.org>
+Subject: Re: [PATCH v2 0/5] Introduce MADV_COLD and MADV_PAGEOUT
+Date: Thu, 13 Jun 2019 13:51:42 +0900
+Message-ID: <20190613045142.GG55602@google.com>
+References: <20190610111252.239156-1-minchan@kernel.org>
+ <21cf2918-ba0e-aae1-a20e-36ee1ad4f704@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=wh2Khe1Lj-Pdu3o2cXxumL1hegg_1JZGJXki6cchg_Q2Q@mail.gmail.com>
-Content-ID: <9382.1560418050.1@warthog.procyon.org.uk>
+Content-Disposition: inline
+In-Reply-To: <21cf2918-ba0e-aae1-a20e-36ee1ad4f704@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dhowells@redhat.com, "Eric W. Biederman" <ebiederm@xmission.com>, Christian Brauner <christian@brauner.io>, Al Viro <viro@zeniv.linux.org.uk>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+To: Dave Hansen <dave.hansen@intel.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, jannh@google.com, oleg@redhat.com, christian@brauner.io, oleksandr@redhat.com, hdanton@sina.com, lizeb@google.com
 List-Id: linux-api@vger.kernel.org
 
-[Adding Eric to the cc list since he implemented MNT_LOCKED]
+On Mon, Jun 10, 2019 at 11:03:00AM -0700, Dave Hansen wrote:
+> I'd really love to see the manpages for these new flags.  The devil is
+> in the details of our promises to userspace.
 
-Linus Torvalds <torvalds@linux-foundation.org> wrote:
+I'm waiting comments from reviewers since I have fixed what they point
+out from the previous version.
 
-> > The commit changes the internal logic to lock mounts when propagating
-> > mounts (user+)mount namespaces and - I believe - causes do_mount_move()
-> > to fail at:
-> 
-> You mean 'do_move_mount()'.
-> 
-> > if (old->mnt.mnt_flags & MNT_LOCKED)
-> >         goto out;
-> >
-> > If that's indeed the case we should either revert this commit (reverts
-> > cleanly, just tested it) or find a fix.
-> 
-> Hmm.. I'm not entirely sure of the logic here, and just looking at
-> that commit 3bd045cc9c4b ("separate copying and locking mount tree on
-> cross-userns copies") doesn't make me go "Ahh" either.
-> 
-> Al? My gut feel is that we need to just revert, since this was in 5.1
-> and it's getting reasonably late in 5.2 too. But maybe you go "guys,
-> don't be silly, this is easily fixed with this one-liner".
+I will add manpage material in respin after the getting more feedback.
+Thanks.
