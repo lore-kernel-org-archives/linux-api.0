@@ -1,45 +1,35 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [PATCH 1/5] glibc: Perform rseq(2) registration at C startup and thread creation (v10)
-Date: Fri, 14 Jun 2019 15:42:26 +0200
-Message-ID: <87imt8tha5.fsf@oldenburg2.str.redhat.com>
-References: <20190503184219.19266-1-mathieu.desnoyers@efficios.com>
-        <1635690189.3049.1560507249693.JavaMail.zimbra@efficios.com>
-        <87tvcsv1pk.fsf@oldenburg2.str.redhat.com>
-        <1190407525.3131.1560516910936.JavaMail.zimbra@efficios.com>
-        <1085273942.3137.1560517301721.JavaMail.zimbra@efficios.com>
-        <87d0jguxdk.fsf@oldenburg2.str.redhat.com>
-        <1779359826.3226.1560518318701.JavaMail.zimbra@efficios.com>
-        <87wohoti47.fsf@oldenburg2.str.redhat.com>
-        <189377747.3315.1560519247118.JavaMail.zimbra@efficios.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCHv4 07/28] posix-timers/timens: Take into account clock
+ offsets
+Date: Fri, 14 Jun 2019 15:42:33 +0200 (CEST)
+Message-ID: <alpine.DEB.2.21.1906141538240.1722@nanos.tec.linutronix.de>
+References: <20190612192628.23797-1-dima@arista.com> <20190612192628.23797-8-dima@arista.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <189377747.3315.1560519247118.JavaMail.zimbra@efficios.com>
-        (Mathieu Desnoyers's message of "Fri, 14 Jun 2019 09:34:07 -0400
-        (EDT)")
+In-Reply-To: <20190612192628.23797-8-dima@arista.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
+To: Dmitry Safonov <dima@arista.com>
+Cc: linux-kernel@vger.kernel.org, Andrei Vagin <avagin@gmail.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, Dmitry Safonov <0x7f454c46@gmail.com>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-* Mathieu Desnoyers:
+On Wed, 12 Jun 2019, Dmitry Safonov wrote:
 
-> +  /* Publicize rseq registration ownership.  This must be performed
-> +     after rtld re-relocation, before invoking constructors of
-> +     preloaded libraries.  */
-> +  rseq_init ();
+> Subject: posix-timers/timens: Take into account clock offsets
 
-Please add a comment that IFUNC resolvers do not see the initialized
-value.  I think this is okay because we currently do not support access
-to extern variables in IFUNC resolvers.
+Please avoid that '/timens' appendix. It's not really a new subsystem or
+subfunction of posix-timers.
 
->    /* Do any necessary cleanups for the startup OS interface code.
->       We do these now so that no calls are made after rtld re-relocation
->       which might be resolved to different functions than we expect.
->
-> It works fine now!
+posix-timers: Add time namespace support to common_timer_set()
 
-Great.
+> From: Andrei Vagin <avagin@gmail.com>
+> 
+> Wire timer_settime() syscall into time namespace virtualization.
+
+Please explain why this only affects common_timer_set() and not any other
+incarnation along with an explanation why only ABSTIME timers need to be
+converted.
 
 Thanks,
-Florian
+
+	tglx
