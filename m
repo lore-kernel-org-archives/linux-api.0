@@ -1,85 +1,119 @@
-From: Dmitry Safonov <0x7f454c46@gmail.com>
-Subject: Re: [PATCHv4 03/28] posix-clocks: add another call back to return
- clock time in ktime_t
-Date: Fri, 14 Jun 2019 15:39:13 +0100
-Message-ID: <af700944-694c-822b-4633-7de945f9d228@gmail.com>
-References: <20190612192628.23797-1-dima@arista.com>
- <20190612192628.23797-4-dima@arista.com>
- <alpine.DEB.2.21.1906141511440.1722@nanos.tec.linutronix.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [PATCH glibc 2/5] glibc: sched_getcpu(): use rseq cpu_id TLS on Linux (v5)
+Date: Fri, 14 Jun 2019 11:23:01 -0400
+Message-ID: <20190614152304.12321-3-mathieu.desnoyers@efficios.com>
+References: <20190614152304.12321-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.21.1906141511440.1722@nanos.tec.linutronix.de>
-Content-Language: en-US
+In-Reply-To: <20190614152304.12321-1-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>, Dmitry Safonov <dima@arista.com>
-Cc: linux-kernel@vger.kernel.org, Andrei Vagin <avagin@gmail.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
+To: Carlos O'Donell <carlos@redhat.com>
+Cc: Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha@sourceware.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Thomas,
+When available, use the cpu_id field from __rseq_abi on Linux to
+implement sched_getcpu(). Fall-back on the vgetcpu vDSO if unavailable.
 
-Thanks much for the review,
+Benchmarks:
 
-On 6/14/19 2:32 PM, Thomas Gleixner wrote:
-> Dmitry,
-> 
-> On Wed, 12 Jun 2019, Dmitry Safonov wrote:
-> 
->> From: Andrei Vagin <avagin@gmail.com>
->>
->> The callsite in common_timer_get() has already a comment:
->>         /*
->>          * The timespec64 based conversion is suboptimal, but it's not
->>          * worth to implement yet another callback.
->>          */
->>         kc->clock_get(timr->it_clock, &ts64);
->>         now = timespec64_to_ktime(ts64);
->>
->> Now we are going to add time namespaces and we need to be able to get:
-> 
-> Please avoid 'we' and try to describe the changes in a neutral technical
-> form, e.g.:
-> 
->  The upcoming support for time namespaces requires to have access to:
-> 
->> * clock value in a task time namespace to return it from the clock_gettime
->>   syscall.
-> 
->   - The time in a tasks time namespace for sys_clock_gettime()
-> 
->> * clock valuse in the root time namespace to use it in
->>   common_timer_get().
-> 
->   - The time in the root name space for common_timer_get()
-> 
->> It looks like another reason why we need a separate callback to return
->> clock value in ktime_t.
-> 
->  That adds a valid reason to finally implement a separate callback which
->  returns the time in ktime_t format.
-> 
-> Hmm?
+x86-64: Intel E5-2630 v3@2.40GHz, 16-core, hyperthreading
 
-Agree, the patch has become bigger than wanted and the message could
-have been better in technical sense. Will split, add kernel doc and fix
-the commit message(s).
+glibc sched_getcpu():                     13.7 ns (baseline)
+glibc sched_getcpu() using rseq:           2.5 ns (speedup:  5.5x)
+inline load cpuid from __rseq_abi TLS:     0.8 ns (speedup: 17.1x)
 
-[..]
-> TBH, this patch is way to big. It changes too many things at once. Can you
-> please structure it this way:
-> 
->  1) Rename k_clock::clock_get to k_clock::clock_get_timespec and fix up all
->     struct initializers
-> 
->  2) Rename the clock_get_timespec functions per instance
-> 
->  3) Add the new callback
-> 
->  4) Add the new functions per instance and add them to the corresponding
->     struct initializers
-> 
->  5) Use the new callback
-> 
-Thanks,
-          Dima
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: Carlos O'Donell <carlos@redhat.com>
+CC: Florian Weimer <fweimer@redhat.com>
+CC: Joseph Myers <joseph@codesourcery.com>
+CC: Szabolcs Nagy <szabolcs.nagy@arm.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Paul Turner <pjt@google.com>
+CC: libc-alpha@sourceware.org
+CC: linux-kernel@vger.kernel.org
+CC: linux-api@vger.kernel.org
+---
+Changes since v1:
+- rseq is only used if both __NR_rseq and RSEQ_SIG are defined.
+
+Changes since v2:
+- remove duplicated __rseq_abi extern declaration.
+
+Changes since v3:
+- update ChangeLog.
+
+Changes since v4:
+- Use atomic_load_relaxed to load the __rseq_abi.cpu_id field, a
+  consequence of the fact that __rseq_abi is not volatile anymore.
+- Include atomic.h which provides atomic_load_relaxed.
+---
+ ChangeLog                              |  5 +++++
+ sysdeps/unix/sysv/linux/sched_getcpu.c | 25 +++++++++++++++++++++++--
+ 2 files changed, 28 insertions(+), 2 deletions(-)
+
+diff --git a/ChangeLog b/ChangeLog
+index 01a411acbf..58830cafc2 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -1,3 +1,8 @@
++2019-04-23  Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
++
++	* sysdeps/unix/sysv/linux/sched_getcpu.c: use rseq cpu_id TLS on
++	Linux.
++
+ 2019-04-23  Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+ 
+ 	* NEWS: Add Restartable Sequences feature description.
+diff --git a/sysdeps/unix/sysv/linux/sched_getcpu.c b/sysdeps/unix/sysv/linux/sched_getcpu.c
+index fb0d317f83..01a818f5b0 100644
+--- a/sysdeps/unix/sysv/linux/sched_getcpu.c
++++ b/sysdeps/unix/sysv/linux/sched_getcpu.c
+@@ -18,14 +18,15 @@
+ #include <errno.h>
+ #include <sched.h>
+ #include <sysdep.h>
++#include <atomic.h>
+ 
+ #ifdef HAVE_GETCPU_VSYSCALL
+ # define HAVE_VSYSCALL
+ #endif
+ #include <sysdep-vdso.h>
+ 
+-int
+-sched_getcpu (void)
++static int
++vsyscall_sched_getcpu (void)
+ {
+ #ifdef __NR_getcpu
+   unsigned int cpu;
+@@ -37,3 +38,23 @@ sched_getcpu (void)
+   return -1;
+ #endif
+ }
++
++#ifdef __NR_rseq
++#include <sys/rseq.h>
++#endif
++
++#if defined __NR_rseq && defined RSEQ_SIG
++int
++sched_getcpu (void)
++{
++  int cpu_id = atomic_load_relaxed (&__rseq_abi.cpu_id);
++
++  return cpu_id >= 0 ? cpu_id : vsyscall_sched_getcpu ();
++}
++#else
++int
++sched_getcpu (void)
++{
++  return vsyscall_sched_getcpu ();
++}
++#endif
+-- 
+2.17.1
