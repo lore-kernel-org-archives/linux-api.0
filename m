@@ -1,76 +1,114 @@
-From: Oleksandr Natalenko <oleksandr@redhat.com>
-Subject: [PATCH NOTFORMERGE 5/5] mm/madvise: allow KSM hints for remote API
-Date: Sun, 16 Jun 2019 10:58:35 +0200
-Message-ID: <20190616085835.953-6-oleksandr@redhat.com>
-References: <20190616085835.953-1-oleksandr@redhat.com>
+From: Dmitry Safonov <0x7f454c46@gmail.com>
+Subject: Re: [PATCHv4 06/28] timerfd/timens: Take into account ns clock
+ offsets
+Date: Sun, 16 Jun 2019 18:43:49 +0100
+Message-ID: <bf28eefd-390b-5209-09c1-db9874030369@gmail.com>
+References: <20190612192628.23797-1-dima@arista.com>
+ <20190612192628.23797-7-dima@arista.com>
+ <alpine.DEB.2.21.1906141534090.1722@nanos.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190616085835.953-1-oleksandr@redhat.com>
+In-Reply-To: <alpine.DEB.2.21.1906141534090.1722@nanos.tec.linutronix.de>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Minchan Kim <minchan@kernel.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>, Dmitry Safonov <dima@arista.com>
+Cc: linux-kernel@vger.kernel.org, Andrei Vagin <avagin@gmail.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-It all began with the fact that KSM works only on memory that is marked
-by madvise(). And the only way to get around that is to either:
+On 6/14/19 2:37 PM, Thomas Gleixner wrote:
+> On Wed, 12 Jun 2019, Dmitry Safonov wrote:
+>> ---
+>>  fs/timerfd.c                   |  3 +++
+>>  include/linux/time_namespace.h | 18 ++++++++++++++++++
+>>  kernel/time_namespace.c        | 27 +++++++++++++++++++++++++++
+>>  3 files changed, 48 insertions(+)
+> 
+> Again, please split that into:
+> 
+>    1) Introduce the new function
+> 
+>    2) Make use of it
 
-  * use LD_PRELOAD; or
-  * patch the kernel with something like UKSM or PKSM.
+Will do
 
-(i skip ptrace can of worms here intentionally)
+> 
+>> diff --git a/fs/timerfd.c b/fs/timerfd.c
+>> index 6a6fc8aa1de7..9b0c2f65e7e8 100644
+>> --- a/fs/timerfd.c
+>> +++ b/fs/timerfd.c
+>> @@ -26,6 +26,7 @@
+>>  #include <linux/syscalls.h>
+>>  #include <linux/compat.h>
+>>  #include <linux/rcupdate.h>
+>> +#include <linux/time_namespace.h>
+>>  
+>>  struct timerfd_ctx {
+>>  	union {
+>> @@ -196,6 +197,8 @@ static int timerfd_setup(struct timerfd_ctx *ctx, int flags,
+>>  	}
+>>  
+>>  	if (texp != 0) {
+>> +		if (flags & TFD_TIMER_ABSTIME)
+>> +			texp = timens_ktime_to_host(clockid, texp);
+>>  		if (isalarm(ctx)) {
+>>  			if (flags & TFD_TIMER_ABSTIME)
+>>  				alarm_start(&ctx->t.alarm, texp);
+>> diff --git a/include/linux/time_namespace.h b/include/linux/time_namespace.h
+>> index 1dda8af6b9fe..d32b55fad953 100644
+>> --- a/include/linux/time_namespace.h
+>> +++ b/include/linux/time_namespace.h
+>> @@ -56,6 +56,19 @@ static inline void timens_add_boottime(struct timespec64 *ts)
+>>                  *ts = timespec64_add(*ts, ns_offsets->boottime);
+>>  }
+>>  
+>> +ktime_t do_timens_ktime_to_host(clockid_t clockid, ktime_t tim,
+>> +				struct timens_offsets *offsets);
+>> +static inline ktime_t timens_ktime_to_host(clockid_t clockid, ktime_t tim)
+>> +{
+>> +	struct timens_offsets *offsets = current->nsproxy->time_ns->offsets;
+>> +
+>> +	if (!offsets) /* fast-path for the root time namespace */
+> 
+> Can you please avoid tail comments. They break the reading flow. Aside of
+> that I don't see the value of documenting the obvious.
+> 
+>> +ktime_t do_timens_ktime_to_host(clockid_t clockid, ktime_t tim, struct timens_offsets *ns_offsets)
+> 
+> Please line break the arguments
+> 
+> ktime_t do_timens_ktime_to_host(clockid_t clockid, ktime_t tim,
+> 				struct timens_offsets *ns_offsets)
 
-To overcome this restriction, lets employ a new remote madvise API. This
-can be used by some small userspace helper daemon that will do auto-KSM
-job for us.
+Sure
 
-I think of two major consumers of remote KSM hints:
+> 
+>> +{
+>> +	ktime_t koff;
+>> +
+>> +	switch (clockid) {
+>> +	case CLOCK_MONOTONIC:
+>> +		koff = timespec64_to_ktime(ns_offsets->monotonic);
+>> +		break;
+>> +	case CLOCK_BOOTTIME:
+>> +	case CLOCK_BOOTTIME_ALARM:
+>> +		koff = timespec64_to_ktime(ns_offsets->boottime);
+>> +		break;
+>> +	default:
+>> +		return tim;
+>> +	}
+>> +
+>> +	/* tim - off has to be in [0, KTIME_MAX) */
+> 
+> Please be more elaborate why the below conditions can happen at all.
+> 
+>> +	if (tim < koff)
+>> +		tim = 0;
+>> +	else if (KTIME_MAX - tim < -koff)
+>> +		tim = KTIME_MAX;
+>> +	else
+>> +		tim = ktime_sub(tim, koff);
 
-  * hosts, that run containers, especially similar ones and especially in
-    a trusted environment, sharing the same runtime like Node.js;
-
-  * heavy applications, that can be run in multiple instances, not
-    limited to opensource ones like Firefox, but also those that cannot be
-    modified since they are binary-only and, maybe, statically linked.
-
-Speaking of statistics, more numbers can be found in the very first
-submission, that is related to this one [1]. For my current setup with
-two Firefox instances I get 100 to 200 MiB saved for the second instance
-depending on the amount of tabs.
-
-1 FF instance with 15 tabs:
-
-   $ echo "$(cat /sys/kernel/mm/ksm/pages_sharing) * 4 / 1024" | bc
-   410
-
-2 FF instances, second one has 12 tabs (all the tabs are different):
-
-   $ echo "$(cat /sys/kernel/mm/ksm/pages_sharing) * 4 / 1024" | bc
-   592
-
-At the very moment I do not have specific numbers for containerised
-workload, but those should be comparable in case the containers share
-similar/same runtime.
-
-[1] https://lore.kernel.org/patchwork/patch/1012142/
-
-Signed-off-by: Oleksandr Natalenko <oleksandr@redhat.com>
----
- mm/madvise.c | 2 ++
- 1 file changed, 2 insertions(+)
-
-diff --git a/mm/madvise.c b/mm/madvise.c
-index 84f899b1b6da..e8f9c49794a3 100644
---- a/mm/madvise.c
-+++ b/mm/madvise.c
-@@ -991,6 +991,8 @@ process_madvise_behavior_valid(int behavior)
- 	switch (behavior) {
- 	case MADV_COLD:
- 	case MADV_PAGEOUT:
-+	case MADV_MERGEABLE:
-+	case MADV_UNMERGEABLE:
- 		return true;
- 
- 	default:
--- 
-2.22.0
+Thanks,
+          Dmitry
