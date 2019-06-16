@@ -1,46 +1,92 @@
-From: "Theodore Ts'o" <tytso@mit.edu>
-Subject: Re: [PATCH v4 14/16] ext4: add basic fs-verity support
-Date: Sat, 15 Jun 2019 11:31:12 -0400
-Message-ID: <20190615153112.GO6142@mit.edu>
-References: <20190606155205.2872-1-ebiggers@kernel.org>
- <20190606155205.2872-15-ebiggers@kernel.org>
+From: Oleksandr Natalenko <oleksandr@redhat.com>
+Subject: [PATCH NOTFORMERGE 1/5] mm: rename madvise_core to madvise_common
+Date: Sun, 16 Jun 2019 10:58:31 +0200
+Message-ID: <20190616085835.953-2-oleksandr@redhat.com>
+References: <20190616085835.953-1-oleksandr@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-Content-Disposition: inline
-In-Reply-To: <20190606155205.2872-15-ebiggers@kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: "Darrick J . Wong" <darrick.wong@oracle.com>, linux-api@vger.kernel.org, Dave Chinner <david@fromorbit.com>, linux-f2fs-devel@lists.sourceforge.net, linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, linux-integrity@vger.kernel.org, linux-ext4@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Christoph Hellwig <hch@lst.de>, Victor Hsieh <victorhsieh@google.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190616085835.953-1-oleksandr@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Minchan Kim <minchan@kernel.org>
+Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jun 06, 2019 at 08:52:03AM -0700, Eric Biggers wrote:
-> +/*
-> + * Format of ext4 verity xattr.  This points to the location of the verity
-> + * descriptor within the file data rather than containing it directly because
-> + * the verity descriptor *must* be encrypted when ext4 encryption is used.  But,
-> + * ext4 encryption does not encrypt xattrs.
-> + */
-> +struct fsverity_descriptor_location {
-> +	__le32 version;
-> +	__le32 size;
-> +	__le64 pos;
-> +};
+"core" usually means something very different within the kernel land,
+thus lets just follow the way it is handled in mutexes, rw_semaphores
+etc and name common things as "_common".
 
-What's the benefit of storing the location in an xattr as opposed to
-just keying it off the end of i_size, rounded up to next page size (or
-64k) as I had suggested earlier?
+Signed-off-by: Oleksandr Natalenko <oleksandr@redhat.com>
+---
+ mm/madvise.c | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
 
-Using an xattr burns xattr space, which is a limited resource, and it
-adds some additional code complexity.  Does the benefits outweigh the
-added complexity?
-
-						- Ted
+diff --git a/mm/madvise.c b/mm/madvise.c
+index 94d782097afd..edb7184f665c 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -998,7 +998,7 @@ process_madvise_behavior_valid(int behavior)
+ }
+ 
+ /*
+- * madvise_core - request behavior hint to address range of the target process
++ * madvise_common - request behavior hint to address range of the target process
+  *
+  * @task: task_struct got behavior hint, not giving the hint
+  * @mm: mm_struct got behavior hint, not giving the hint
+@@ -1009,7 +1009,7 @@ process_madvise_behavior_valid(int behavior)
+  * @task could be a zombie leader if it calls sys_exit so accessing mm_struct
+  * via task->mm is prohibited. Please use @mm insetad of task->mm.
+  */
+-static int madvise_core(struct task_struct *task, struct mm_struct *mm,
++static int madvise_common(struct task_struct *task, struct mm_struct *mm,
+ 			unsigned long start, size_t len_in, int behavior)
+ {
+ 	unsigned long end, tmp;
+@@ -1132,7 +1132,7 @@ static int pr_madvise_copy_param(struct pr_madvise_param __user *u_param,
+ 	return ret;
+ }
+ 
+-static int process_madvise_core(struct task_struct *tsk, struct mm_struct *mm,
++static int process_madvise_common(struct task_struct *tsk, struct mm_struct *mm,
+ 				int *behaviors,
+ 				struct iov_iter *iter,
+ 				const struct iovec *range_vec,
+@@ -1144,7 +1144,7 @@ static int process_madvise_core(struct task_struct *tsk, struct mm_struct *mm,
+ 	for (i = 0; i < riovcnt && iov_iter_count(iter); i++) {
+ 		err = -EINVAL;
+ 		if (process_madvise_behavior_valid(behaviors[i]))
+-			err = madvise_core(tsk, mm,
++			err = madvise_common(tsk, mm,
+ 				(unsigned long)range_vec[i].iov_base,
+ 				range_vec[i].iov_len, behaviors[i]);
+ 
+@@ -1220,7 +1220,7 @@ static int process_madvise_core(struct task_struct *tsk, struct mm_struct *mm,
+  */
+ SYSCALL_DEFINE3(madvise, unsigned long, start, size_t, len_in, int, behavior)
+ {
+-	return madvise_core(current, current->mm, start, len_in, behavior);
++	return madvise_common(current, current->mm, start, len_in, behavior);
+ }
+ 
+ 
+@@ -1252,7 +1252,7 @@ SYSCALL_DEFINE3(process_madvise, int, pidfd,
+ 
+ 	/*
+ 	 * We don't support cookie to gaurantee address space atomicity yet.
+-	 * Once we implment cookie, process_madvise_core need to hold mmap_sme
++	 * Once we implment cookie, process_madvise_common need to hold mmap_sme
+ 	 * during entire operation to guarantee atomicity.
+ 	 */
+ 	if (params.cookie != 0)
+@@ -1316,7 +1316,7 @@ SYSCALL_DEFINE3(process_madvise, int, pidfd,
+ 		goto release_task;
+ 	}
+ 
+-	ret = process_madvise_core(task, mm, behaviors, &iter, iov_r, nr_elem);
++	ret = process_madvise_common(task, mm, behaviors, &iter, iov_r, nr_elem);
+ 	mmput(mm);
+ release_task:
+ 	put_task_struct(task);
+-- 
+2.22.0
