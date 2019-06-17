@@ -1,42 +1,121 @@
-From: Waiman Long <longman@redhat.com>
-Subject: Re: [PATCH] mm, memcg: Report number of memcg caches in slabinfo
-Date: Mon, 17 Jun 2019 10:50:23 -0400
-Message-ID: <9e165eae-e354-04c4-6362-0f80fe819469@redhat.com>
-References: <20190617142149.5245-1-longman@redhat.com>
- <20190617143842.GC1492@dhcp22.suse.cz>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH 1/1] Revert "rseq/selftests: arm: use udf instruction for RSEQ_SIG"
+Date: Mon, 17 Jun 2019 17:23:04 +0200
+Message-ID: <20190617152304.23371-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190617143842.GC1492@dhcp22.suse.cz>
-Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Christoph Lameter <cl@linux.com>, Pekka Enberg <penberg@kernel.org>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Roman Gushchin <guro@fb.com>, Johannes Weiner <hannes@cmpxchg.org>, Shakeel Butt <shakeelb@google.com>, Vladimir Davydov <vdavydov.dev@gmail.com>, linux-api@vger.kernel.org
+To: Shuah Khan <shuah@kernel.org>, Will Deacon <will.deacon@arm.com>
+Cc: linux-kernel@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Joel Fernandes <joelaf@google.com>, Catalin Marinas <catalin.marinas@arm.com>, Dave Watson <davejwatson@fb.com>, Andi Kleen <andi@firstfloor.org>, linux-kselftest@vger.kernel.org, "H . Peter Anvin" <hpa@zytor.com>, Chris Lameter <cl@linux.com>, Russell King <linux@arm.linux.org.uk>, Michael Kerrisk <mtk.manpages@gmail.com>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Paul Turner <pjt@google.com>, Boqun Feng <boqun.feng@gmail.com>, Josh Triplett <josh@joshtriplett.org>, Steven Rostedt <rostedt@goodmis.org>, Ben Maurer <bmaurer@fb.com>, linux-api@vger.kernel.org, Andy Lutomirski <lu>
 List-Id: linux-api@vger.kernel.org
 
-On 6/17/19 10:38 AM, Michal Hocko wrote:
-> [Cc linux-api]
->
-> On Mon 17-06-19 10:21:49, Waiman Long wrote:
->> There are concerns about memory leaks from extensive use of memory
->> cgroups as each memory cgroup creates its own set of kmem caches. There
->> is a possiblity that the memcg kmem caches may remain even after the
->> memory cgroup removal.
->>
->> Therefore, it will be useful to show how many memcg caches are present
->> for each of the kmem caches.
-> How is a user going to use that information?  Btw. Don't we have an
-> interface to display the number of (dead) cgroups?
+This reverts commit 2b845d4b4acd9422bbb668989db8dc36dfc8f438.
 
-The interface to report dead cgroups is for cgroup v2 (cgroup.stat)
-only. I don't think there is a way to find that for cgroup v1. Also the
-number of memcg kmem caches may not be the same as the number of
-memcg's. It can range from 0 to above the number of memcg's.  So it is
-an interesting number by itself.
+That commit introduces build issues for programs compiled in Thumb mode.
+Rather than try to be clever and emit a valid trap instruction on arm32,
+which requires special care about big/little endian handling on that
+architecture, just emit plain data. Data in the instruction stream is
+technically expected on arm32: this is how literal pools are
+implemented. Reverting to the prior behavior does exactly that.
 
->From the user perspective, if the numbers is way above the number of
-memcg's, there is probably something wrong there.
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Joel Fernandes <joelaf@google.com>
+CC: Catalin Marinas <catalin.marinas@arm.com>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Shuah Khan <shuah@kernel.org>
+CC: Andi Kleen <andi@firstfloor.org>
+CC: linux-kselftest@vger.kernel.org
+CC: "H . Peter Anvin" <hpa@zytor.com>
+CC: Chris Lameter <cl@linux.com>
+CC: Russell King <linux@arm.linux.org.uk>
+CC: Michael Kerrisk <mtk.manpages@gmail.com>
+CC: "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Paul Turner <pjt@google.com>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: Josh Triplett <josh@joshtriplett.org>
+CC: Steven Rostedt <rostedt@goodmis.org>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: linux-api@vger.kernel.org
+CC: Andy Lutomirski <luto@amacapital.net>
+CC: Andrew Morton <akpm@linux-foundation.org>
+CC: Linus Torvalds <torvalds@linux-foundation.org>
+CC: Carlos O'Donell <carlos@redhat.com>
+CC: Florian Weimer <fweimer@redhat.com>
+---
+ tools/testing/selftests/rseq/rseq-arm.h | 52 ++-------------------------------
+ 1 file changed, 2 insertions(+), 50 deletions(-)
 
-Cheers,
-Longman
+diff --git a/tools/testing/selftests/rseq/rseq-arm.h b/tools/testing/selftests/rseq/rseq-arm.h
+index 84f28f147fb6..5f262c54364f 100644
+--- a/tools/testing/selftests/rseq/rseq-arm.h
++++ b/tools/testing/selftests/rseq/rseq-arm.h
+@@ -5,54 +5,7 @@
+  * (C) Copyright 2016-2018 - Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+  */
+ 
+-/*
+- * RSEQ_SIG uses the udf A32 instruction with an uncommon immediate operand
+- * value 0x5de3. This traps if user-space reaches this instruction by mistake,
+- * and the uncommon operand ensures the kernel does not move the instruction
+- * pointer to attacker-controlled code on rseq abort.
+- *
+- * The instruction pattern in the A32 instruction set is:
+- *
+- * e7f5def3    udf    #24035    ; 0x5de3
+- *
+- * This translates to the following instruction pattern in the T16 instruction
+- * set:
+- *
+- * little endian:
+- * def3        udf    #243      ; 0xf3
+- * e7f5        b.n    <7f5>
+- *
+- * pre-ARMv6 big endian code:
+- * e7f5        b.n    <7f5>
+- * def3        udf    #243      ; 0xf3
+- *
+- * ARMv6+ -mbig-endian generates mixed endianness code vs data: little-endian
+- * code and big-endian data. Ensure the RSEQ_SIG data signature matches code
+- * endianness. Prior to ARMv6, -mbig-endian generates big-endian code and data
+- * (which match), so there is no need to reverse the endianness of the data
+- * representation of the signature. However, the choice between BE32 and BE8
+- * is done by the linker, so we cannot know whether code and data endianness
+- * will be mixed before the linker is invoked.
+- */
+-
+-#define RSEQ_SIG_CODE	0xe7f5def3
+-
+-#ifndef __ASSEMBLER__
+-
+-#define RSEQ_SIG_DATA							\
+-	({								\
+-		int sig;						\
+-		asm volatile ("b 2f\n\t"				\
+-			      "1: .inst " __rseq_str(RSEQ_SIG_CODE) "\n\t" \
+-			      "2:\n\t"					\
+-			      "ldr %[sig], 1b\n\t"			\
+-			      : [sig] "=r" (sig));			\
+-		sig;							\
+-	})
+-
+-#define RSEQ_SIG	RSEQ_SIG_DATA
+-
+-#endif
++#define RSEQ_SIG	0x53053053
+ 
+ #define rseq_smp_mb()	__asm__ __volatile__ ("dmb" ::: "memory", "cc")
+ #define rseq_smp_rmb()	__asm__ __volatile__ ("dmb" ::: "memory", "cc")
+@@ -125,8 +78,7 @@ do {									\
+ 		__rseq_str(table_label) ":\n\t"				\
+ 		".word " __rseq_str(version) ", " __rseq_str(flags) "\n\t" \
+ 		".word " __rseq_str(start_ip) ", 0x0, " __rseq_str(post_commit_offset) ", 0x0, " __rseq_str(abort_ip) ", 0x0\n\t" \
+-		".arm\n\t"						\
+-		".inst " __rseq_str(RSEQ_SIG_CODE) "\n\t"		\
++		".word " __rseq_str(RSEQ_SIG) "\n\t"			\
+ 		__rseq_str(label) ":\n\t"				\
+ 		teardown						\
+ 		"b %l[" __rseq_str(abort_label) "]\n\t"
+-- 
+2.11.0
