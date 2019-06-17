@@ -1,49 +1,125 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH v7 22/27] binfmt_elf: Extract .note.gnu.property from an
- ELF file
-Date: Mon, 17 Jun 2019 14:20:40 +0200 (CEST)
-Message-ID: <alpine.DEB.2.21.1906171418220.1854@nanos.tec.linutronix.de>
-References: <20190606200646.3951-1-yu-cheng.yu@intel.com>        <20190606200646.3951-23-yu-cheng.yu@intel.com>        <20190607180115.GJ28398@e103592.cambridge.arm.com>        <94b9c55b3b874825fda485af40ab2a6bc3dad171.camel@intel.com>       
- <87lfy9cq04.fsf@oldenburg2.str.redhat.com>        <20190611114109.GN28398@e103592.cambridge.arm.com>        <031bc55d8dcdcf4f031e6ff27c33fd52c61d33a5.camel@intel.com>        <20190612093238.GQ28398@e103592.cambridge.arm.com>
- <87imt4jwpt.fsf@oldenburg2.str.redhat.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH] mm, memcg: Report number of memcg caches in slabinfo
+Date: Mon, 17 Jun 2019 16:38:42 +0200
+Message-ID: <20190617143842.GC1492@dhcp22.suse.cz>
+References: <20190617142149.5245-1-longman@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87imt4jwpt.fsf@oldenburg2.str.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20190617142149.5245-1-longman@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>
-Cc: Dave Martin <Dave.Martin@arm.com>, Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg
+To: Waiman Long <longman@redhat.com>
+Cc: Christoph Lameter <cl@linux.com>, Pekka Enberg <penberg@kernel.org>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Roman Gushchin <guro@fb.com>, Johannes Weiner <hannes@cmpxchg.org>, Shakeel Butt <shakeelb@google.com>, Vladimir Davydov <vdavydov.dev@gmail.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 17 Jun 2019, Florian Weimer wrote:
-> * Dave Martin:
-> > On Tue, Jun 11, 2019 at 12:31:34PM -0700, Yu-cheng Yu wrote:
-> >> We can probably check PT_GNU_PROPERTY first, and fallback (based on ld-linux
-> >> version?) to PT_NOTE scanning?
-> >
-> > For arm64, we can check for PT_GNU_PROPERTY and then give up
-> > unconditionally.
-> >
-> > For x86, we would fall back to PT_NOTE scanning, but this will add a bit
-> > of cost to binaries that don't have NT_GNU_PROPERTY_TYPE_0.  The ld.so
-> > version doesn't tell you what ELF ABI a given executable conforms to.
-> >
-> > Since this sounds like it's largely a distro-specific issue, maybe there
-> > could be a Kconfig option to turn the fallback PT_NOTE scanning on?
+[Cc linux-api]
+
+On Mon 17-06-19 10:21:49, Waiman Long wrote:
+> There are concerns about memory leaks from extensive use of memory
+> cgroups as each memory cgroup creates its own set of kmem caches. There
+> is a possiblity that the memcg kmem caches may remain even after the
+> memory cgroup removal.
 > 
-> I'm worried that this causes interop issues similarly to what we see
-> with VSYSCALL today.  If we need both and a way to disable it, it should
-> be something like a personality flag which can be configured for each
-> process tree separately.  Ideally, we'd settle on one correct approach
-> (i.e., either always process both, or only process PT_GNU_PROPERTY) and
-> enforce that.
+> Therefore, it will be useful to show how many memcg caches are present
+> for each of the kmem caches.
 
-Chose one and only the one which makes technically sense and is not some
-horrible vehicle.
+How is a user going to use that information?  Btw. Don't we have an
+interface to display the number of (dead) cgroups?
 
-Everytime we did those 'oh we need to make x fly workarounds' we regretted
-it sooner than later.
+Keeping the rest of the email for the reference.
 
-Thanks,
+> As slabinfo reporting code has to iterate
+> through all the memcg caches to get the final numbers anyway, there is
+> no additional cost in reporting the number of memcg caches available.
+> 
+> The slabinfo version is bumped up to 2.2 as a new "<num_caches>" column
+> is added at the end.
+> 
+> Signed-off-by: Waiman Long <longman@redhat.com>
+> ---
+>  mm/slab_common.c | 24 ++++++++++++++++--------
+>  1 file changed, 16 insertions(+), 8 deletions(-)
+> 
+> diff --git a/mm/slab_common.c b/mm/slab_common.c
+> index 58251ba63e4a..c7aa47a99b2b 100644
+> --- a/mm/slab_common.c
+> +++ b/mm/slab_common.c
+> @@ -1308,13 +1308,13 @@ static void print_slabinfo_header(struct seq_file *m)
+>  	 * without _too_ many complaints.
+>  	 */
+>  #ifdef CONFIG_DEBUG_SLAB
+> -	seq_puts(m, "slabinfo - version: 2.1 (statistics)\n");
+> +	seq_puts(m, "slabinfo - version: 2.2 (statistics)\n");
+>  #else
+> -	seq_puts(m, "slabinfo - version: 2.1\n");
+> +	seq_puts(m, "slabinfo - version: 2.2\n");
+>  #endif
+>  	seq_puts(m, "# name            <active_objs> <num_objs> <objsize> <objperslab> <pagesperslab>");
+>  	seq_puts(m, " : tunables <limit> <batchcount> <sharedfactor>");
+> -	seq_puts(m, " : slabdata <active_slabs> <num_slabs> <sharedavail>");
+> +	seq_puts(m, " : slabdata <active_slabs> <num_slabs> <sharedavail> <num_caches>");
+>  #ifdef CONFIG_DEBUG_SLAB
+>  	seq_puts(m, " : globalstat <listallocs> <maxobjs> <grown> <reaped> <error> <maxfreeable> <nodeallocs> <remotefrees> <alienoverflow>");
+>  	seq_puts(m, " : cpustat <allochit> <allocmiss> <freehit> <freemiss>");
+> @@ -1338,14 +1338,18 @@ void slab_stop(struct seq_file *m, void *p)
+>  	mutex_unlock(&slab_mutex);
+>  }
+>  
+> -static void
+> +/*
+> + * Return number of memcg caches.
+> + */
+> +static unsigned int
+>  memcg_accumulate_slabinfo(struct kmem_cache *s, struct slabinfo *info)
+>  {
+>  	struct kmem_cache *c;
+>  	struct slabinfo sinfo;
+> +	unsigned int cnt = 0;
+>  
+>  	if (!is_root_cache(s))
+> -		return;
+> +		return 0;
+>  
+>  	for_each_memcg_cache(c, s) {
+>  		memset(&sinfo, 0, sizeof(sinfo));
+> @@ -1356,17 +1360,20 @@ memcg_accumulate_slabinfo(struct kmem_cache *s, struct slabinfo *info)
+>  		info->shared_avail += sinfo.shared_avail;
+>  		info->active_objs += sinfo.active_objs;
+>  		info->num_objs += sinfo.num_objs;
+> +		cnt++;
+>  	}
+> +	return cnt;
+>  }
+>  
+>  static void cache_show(struct kmem_cache *s, struct seq_file *m)
+>  {
+>  	struct slabinfo sinfo;
+> +	unsigned int nr_memcg_caches;
+>  
+>  	memset(&sinfo, 0, sizeof(sinfo));
+>  	get_slabinfo(s, &sinfo);
+>  
+> -	memcg_accumulate_slabinfo(s, &sinfo);
+> +	nr_memcg_caches = memcg_accumulate_slabinfo(s, &sinfo);
+>  
+>  	seq_printf(m, "%-17s %6lu %6lu %6u %4u %4d",
+>  		   cache_name(s), sinfo.active_objs, sinfo.num_objs, s->size,
+> @@ -1374,8 +1381,9 @@ static void cache_show(struct kmem_cache *s, struct seq_file *m)
+>  
+>  	seq_printf(m, " : tunables %4u %4u %4u",
+>  		   sinfo.limit, sinfo.batchcount, sinfo.shared);
+> -	seq_printf(m, " : slabdata %6lu %6lu %6lu",
+> -		   sinfo.active_slabs, sinfo.num_slabs, sinfo.shared_avail);
+> +	seq_printf(m, " : slabdata %6lu %6lu %6lu %3u",
+> +		   sinfo.active_slabs, sinfo.num_slabs, sinfo.shared_avail,
+> +		   nr_memcg_caches);
+>  	slabinfo_show_stats(m, s);
+>  	seq_putc(m, '\n');
+>  }
+> -- 
+> 2.18.1
 
-	tglx
+-- 
+Michal Hocko
+SUSE Labs
