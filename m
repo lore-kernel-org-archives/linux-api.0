@@ -1,55 +1,78 @@
-From: Dmitry Safonov <0x7f454c46@gmail.com>
-Subject: Re: [PATCHv4 17/28] x86/vdso: Switch image on
- setns()/unshare()/clone()
-Date: Sun, 16 Jun 2019 18:51:12 +0100
-Message-ID: <efe0d911-e70d-c044-80fc-da7bab8e546d@gmail.com>
-References: <20190612192628.23797-1-dima@arista.com>
- <20190612192628.23797-18-dima@arista.com>
- <alpine.DEB.2.21.1906141603500.1722@nanos.tec.linutronix.de>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: [PATCH v7 22/27] binfmt_elf: Extract .note.gnu.property from an ELF file
+Date: Mon, 17 Jun 2019 13:08:14 +0200
+Message-ID: <87imt4jwpt.fsf@oldenburg2.str.redhat.com>
+References: <20190606200646.3951-1-yu-cheng.yu@intel.com>
+        <20190606200646.3951-23-yu-cheng.yu@intel.com>
+        <20190607180115.GJ28398@e103592.cambridge.arm.com>
+        <94b9c55b3b874825fda485af40ab2a6bc3dad171.camel@intel.com>
+        <87lfy9cq04.fsf@oldenburg2.str.redhat.com>
+        <20190611114109.GN28398@e103592.cambridge.arm.com>
+        <031bc55d8dcdcf4f031e6ff27c33fd52c61d33a5.camel@intel.com>
+        <20190612093238.GQ28398@e103592.cambridge.arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.21.1906141603500.1722@nanos.tec.linutronix.de>
-Content-Language: en-US
+In-Reply-To: <20190612093238.GQ28398@e103592.cambridge.arm.com> (Dave Martin's
+        message of "Wed, 12 Jun 2019 10:32:38 +0100")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>, Dmitry Safonov <dima@arista.com>
-Cc: linux-kernel@vger.kernel.org, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org, Andrei Vagin <avagin@gmail.com>
+To: Dave Martin <Dave.Martin@arm.com>
+Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On 6/14/19 3:05 PM, Thomas Gleixner wrote:
-> On Wed, 12 Jun 2019, Dmitry Safonov wrote:
->>  
->> +#ifdef CONFIG_TIME_NS
->> +int vdso_join_timens(struct task_struct *task)
->> +{
->> +	struct mm_struct *mm = task->mm;
->> +	struct vm_area_struct *vma;
->> +
->> +	if (down_write_killable(&mm->mmap_sem))
->> +		return -EINTR;
->> +
->> +	for (vma = mm->mmap; vma; vma = vma->vm_next) {
->> +		unsigned long size = vma->vm_end - vma->vm_start;
->> +
->> +		if (vma_is_special_mapping(vma, &vvar_mapping) ||
->> +		    vma_is_special_mapping(vma, &vdso_mapping))
->> +			zap_page_range(vma, vma->vm_start, size);
->> +	}
->> +
->> +	up_write(&mm->mmap_sem);
->> +	return 0;
->> +}
->> +#else /* CONFIG_TIME_NS */
->> +int vdso_join_timens(struct task_struct *task)
->> +{
->> +	return -ENXIO;
->> +}
-> 
-> Is that else path really required? The callsite is only compiled when
-> CONFIG_TIME_NS is enabled, right?
+* Dave Martin:
 
-Oh, yes - will drop this.
+> On Tue, Jun 11, 2019 at 12:31:34PM -0700, Yu-cheng Yu wrote:
+>> On Tue, 2019-06-11 at 12:41 +0100, Dave Martin wrote:
+>> > On Mon, Jun 10, 2019 at 07:24:43PM +0200, Florian Weimer wrote:
+>> > > * Yu-cheng Yu:
+>> > > 
+>> > > > To me, looking at PT_GNU_PROPERTY and not trying to support anything is a
+>> > > > logical choice.  And it breaks only a limited set of toolchains.
+>> > > > 
+>> > > > I will simplify the parser and leave this patch as-is for anyone who wants
+>> > > > to
+>> > > > back-port.  Are there any objections or concerns?
+>> > > 
+>> > > Red Hat Enterprise Linux 8 does not use PT_GNU_PROPERTY and is probably
+>> > > the largest collection of CET-enabled binaries that exists today.
+>> > 
+>> > For clarity, RHEL is actively parsing these properties today?
+>> > 
+>> > > My hope was that we would backport the upstream kernel patches for CET,
+>> > > port the glibc dynamic loader to the new kernel interface, and be ready
+>> > > to run with CET enabled in principle (except that porting userspace
+>> > > libraries such as OpenSSL has not really started upstream, so many
+>> > > processes where CET is particularly desirable will still run without
+>> > > it).
+>> > > 
+>> > > I'm not sure if it is a good idea to port the legacy support if it's not
+>> > > part of the mainline kernel because it comes awfully close to creating
+>> > > our own private ABI.
+>> > 
+>> > I guess we can aim to factor things so that PT_NOTE scanning is
+>> > available as a fallback on arches for which the absence of
+>> > PT_GNU_PROPERTY is not authoritative.
+>> 
+>> We can probably check PT_GNU_PROPERTY first, and fallback (based on ld-linux
+>> version?) to PT_NOTE scanning?
+>
+> For arm64, we can check for PT_GNU_PROPERTY and then give up
+> unconditionally.
+>
+> For x86, we would fall back to PT_NOTE scanning, but this will add a bit
+> of cost to binaries that don't have NT_GNU_PROPERTY_TYPE_0.  The ld.so
+> version doesn't tell you what ELF ABI a given executable conforms to.
+>
+> Since this sounds like it's largely a distro-specific issue, maybe there
+> could be a Kconfig option to turn the fallback PT_NOTE scanning on?
+
+I'm worried that this causes interop issues similarly to what we see
+with VSYSCALL today.  If we need both and a way to disable it, it should
+be something like a personality flag which can be configured for each
+process tree separately.  Ideally, we'd settle on one correct approach
+(i.e., either always process both, or only process PT_GNU_PROPERTY) and
+enforce that.
 
 Thanks,
-          Dmitry
+Florian
