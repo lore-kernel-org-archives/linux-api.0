@@ -1,70 +1,48 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH 1/7] General notification queue with user mmap()'able
- ring buffer
-Date: Mon, 17 Jun 2019 18:24:55 +0200
-Message-ID: <20190617162455.GL3436@hirez.programming.kicks-ass.net>
-References: <20190528162603.GA24097@kroah.com>
- <155905930702.7587.7100265859075976147.stgit@warthog.procyon.org.uk>
- <155905931502.7587.11705449537368497489.stgit@warthog.procyon.org.uk>
- <4031.1559064620@warthog.procyon.org.uk>
- <20190528231218.GA28384@kroah.com>
- <31936.1559146000@warthog.procyon.org.uk>
- <16193.1559163763@warthog.procyon.org.uk>
- <21942.1559304135@warthog.procyon.org.uk>
- <606.1559312412@warthog.procyon.org.uk>
- <15401.1559322762@warthog.procyon.org.uk>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH] uapi: avoid namespace conflict in linux/posix_types.h
+Date: Mon, 17 Jun 2019 10:49:44 -0700
+Message-ID: <CAHk-=wjCwnk0nfgCcMYqqX6o9bBrutDtut_fzZ-2VwiZR1y4kw@mail.gmail.com>
+References: <20190319165123.3967889-1-arnd@arndb.de> <alpine.DEB.2.21.1905072249570.19308@digraph.polyomino.org.uk>
+ <87tvd2j9ye.fsf@oldenburg2.str.redhat.com> <CAHk-=wio1e4=WUUwmo-Ph55BEgH_X3oXzBpvPyLQg2TxzfGYuw@mail.gmail.com>
+ <871s05fd8o.fsf@oldenburg2.str.redhat.com> <CAHk-=wg4ijSoPq-w7ct_VuZvgHx+tUv_QX-We-62dEwK+AOf2w@mail.gmail.com>
+ <87sgs8igfj.fsf@oldenburg2.str.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <15401.1559322762@warthog.procyon.org.uk>
+In-Reply-To: <87sgs8igfj.fsf@oldenburg2.str.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Al Viro <viro@zeniv.linux.org.uk>, raven@themaw.net, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-block@vger.kernel.org, keyrings@vger.kernel.org, linux-security-module <linux-security-module@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>
+To: Florian Weimer <fweimer@redhat.com>
+Cc: Joseph Myers <joseph@codesourcery.com>, Arnd Bergmann <arnd@arndb.de>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Netdev <netdev@vger.kernel.org>, Laura Abbott <labbott@redhat.com>, Paul Burton <pburton@wavecomp.com>, Deepa Dinamani <deepa.kernel@gmail.com>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, May 31, 2019 at 06:12:42PM +0100, David Howells wrote:
-> Peter Zijlstra <peterz@infradead.org> wrote:
-> 
-> > > > (and it has already been established that refcount_t doesn't work for
-> > > > usage count scenarios)
-> > > 
-> > > ?
-> > > 
-> > > Does that mean struct kref doesn't either?
-> > 
-> > Indeed, since kref is just a pointless wrapper around refcount_t it does
-> > not either.
-> > 
-> > The main distinction between a reference count and a usage count is that
-> > 0 means different things. For a refcount 0 means dead. For a usage count
-> > 0 is merely unused but valid.
-> 
-> Ah - I consider the terms interchangeable.
-> 
-> Take Documentation/filesystems/vfs.txt for instance:
-> 
->   dget: open a new handle for an existing dentry (this just increments
-> 	the usage count)
-> 
->   dput: close a handle for a dentry (decrements the usage count). ...
-> 
->   ...
-> 
->   d_lookup: look up a dentry given its parent and path name component
-> 	It looks up the child of that given name from the dcache
-> 	hash table. If it is found, the reference count is incremented
-> 	and the dentry is returned. The caller must use dput()
-> 	to free the dentry when it finishes using it.
-> 
-> Here we interchange the terms.
-> 
-> Or https://www.kernel.org/doc/gorman/html/understand/understand013.html
-> which seems to interchange the terms in reference to struct page.
+On Mon, Jun 17, 2019 at 4:45 AM Florian Weimer <fweimer@redhat.com> wrote:
+>
+> I wanted to introduce a new header, <asm/kernel_long_t.h>, and include
+> it where the definition of __kernel_long_t is needed, something like
+> this (incomplete, untested):
 
-Right, but we have two distinct set of semantics, I figured it makes
-sense to have two different names for them. Do you have an alternative
-naming scheme we could use?
+So this doesn't look interesting to me: __kernel_long_t is neither
+interesting as a type anyway (it's just a way for user space to
+override "long"), nor is it a namespace violation.
 
-Or should we better document our distinction between reference and usage
-count?
+So honestly, user space could do whatever it wants for __kernel_long_t anyway.
+
+The thing that I think we should try to fix is just the "val[]" thing, ie
+
+> A different approach would rename <asm/posix_types.h> to something more
+> basic, exclude the two structs, and move all internal #includes which do
+> need the structs to the new header.
+
+In fact, I wouldn't even rename <posix_types.h> at all, I'd just make
+sure it's namespace-clean.
+
+I _think_ the only thing causing problems is  '__kernel_fsid_t' due to
+that "val[]" thing, so just remove ity entirely, and add it to
+<statfs.h> instead.
+
+And yeah, then we'd need to maybe make sure that the (couple) of
+__kernel_fsid_t users properly include that statfs.h file.
+
+Hmm?
+
+               Linus
