@@ -1,60 +1,64 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [PATCH] uapi: avoid namespace conflict in linux/posix_types.h
-Date: Tue, 18 Jun 2019 09:44:38 +0200
-Message-ID: <87lfxzbamx.fsf@oldenburg2.str.redhat.com>
-References: <20190319165123.3967889-1-arnd@arndb.de>
-        <alpine.DEB.2.21.1905072249570.19308@digraph.polyomino.org.uk>
-        <87tvd2j9ye.fsf@oldenburg2.str.redhat.com>
-        <CAHk-=wio1e4=WUUwmo-Ph55BEgH_X3oXzBpvPyLQg2TxzfGYuw@mail.gmail.com>
-        <871s05fd8o.fsf@oldenburg2.str.redhat.com>
-        <CAHk-=wg4ijSoPq-w7ct_VuZvgHx+tUv_QX-We-62dEwK+AOf2w@mail.gmail.com>
-        <87sgs8igfj.fsf@oldenburg2.str.redhat.com>
-        <CAHk-=wjCwnk0nfgCcMYqqX6o9bBrutDtut_fzZ-2VwiZR1y4kw@mail.gmail.com>
-        <87k1dkdr9c.fsf@oldenburg2.str.redhat.com>
-        <CAHk-=wgiZNERDN7p-bsCzzYGRjeqTQw7kJxJnXAHVjqqO8PGrg@mail.gmail.com>
-        <87a7egdqgr.fsf@oldenburg2.str.redhat.com>
-        <CAHk-=wjF6ek4v04w2O3CuOaauDERfdyduW+h=u9uN5ja1ObLzQ@mail.gmail.com>
+From: Dave Martin <Dave.Martin@arm.com>
+Subject: Re: [PATCH v7 22/27] binfmt_elf: Extract .note.gnu.property from an
+ ELF file
+Date: Tue, 18 Jun 2019 10:12:50 +0100
+Message-ID: <20190618091248.GB2790@e103592.cambridge.arm.com>
+References: <20190606200646.3951-1-yu-cheng.yu@intel.com>
+ <20190606200646.3951-23-yu-cheng.yu@intel.com>
+ <20190607180115.GJ28398@e103592.cambridge.arm.com>
+ <94b9c55b3b874825fda485af40ab2a6bc3dad171.camel@intel.com>
+ <87lfy9cq04.fsf@oldenburg2.str.redhat.com>
+ <20190611114109.GN28398@e103592.cambridge.arm.com>
+ <031bc55d8dcdcf4f031e6ff27c33fd52c61d33a5.camel@intel.com>
+ <20190612093238.GQ28398@e103592.cambridge.arm.com>
+ <87imt4jwpt.fsf@oldenburg2.str.redhat.com>
+ <alpine.DEB.2.21.1906171418220.1854@nanos.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=wjF6ek4v04w2O3CuOaauDERfdyduW+h=u9uN5ja1ObLzQ@mail.gmail.com>
-        (Linus Torvalds's message of "Mon, 17 Jun 2019 11:48:47 -0700")
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.21.1906171418220.1854@nanos.tec.linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Joseph Myers <joseph@codesourcery.com>, Arnd Bergmann <arnd@arndb.de>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Netdev <netdev@vger.kernel.org>, Laura Abbott <labbott@redhat.com>, Paul Burton <pburton@wavecomp.com>, Deepa Dinamani <deepa.kernel@gmail.com>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: Florian Weimer <fweimer@redhat.com>, Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg
 List-Id: linux-api@vger.kernel.org
 
-* Linus Torvalds:
+On Mon, Jun 17, 2019 at 02:20:40PM +0200, Thomas Gleixner wrote:
+> On Mon, 17 Jun 2019, Florian Weimer wrote:
+> > * Dave Martin:
+> > > On Tue, Jun 11, 2019 at 12:31:34PM -0700, Yu-cheng Yu wrote:
+> > >> We can probably check PT_GNU_PROPERTY first, and fallback (based on ld-linux
+> > >> version?) to PT_NOTE scanning?
+> > >
+> > > For arm64, we can check for PT_GNU_PROPERTY and then give up
+> > > unconditionally.
+> > >
+> > > For x86, we would fall back to PT_NOTE scanning, but this will add a bit
+> > > of cost to binaries that don't have NT_GNU_PROPERTY_TYPE_0.  The ld.so
+> > > version doesn't tell you what ELF ABI a given executable conforms to.
+> > >
+> > > Since this sounds like it's largely a distro-specific issue, maybe there
+> > > could be a Kconfig option to turn the fallback PT_NOTE scanning on?
+> > 
+> > I'm worried that this causes interop issues similarly to what we see
+> > with VSYSCALL today.  If we need both and a way to disable it, it should
+> > be something like a personality flag which can be configured for each
+> > process tree separately.  Ideally, we'd settle on one correct approach
+> > (i.e., either always process both, or only process PT_GNU_PROPERTY) and
+> > enforce that.
+> 
+> Chose one and only the one which makes technically sense and is not some
+> horrible vehicle.
+> 
+> Everytime we did those 'oh we need to make x fly workarounds' we regretted
+> it sooner than later.
 
-> On Mon, Jun 17, 2019 at 11:19 AM Florian Weimer <fweimer@redhat.com> wrote:
->> >
->> > Unlike the "val[]" thing, I don't think anybody is supposed to access
->> > those fields directly.
->>
->> Well, glibc already calls it __val …
->
-> Hmm. If user space already doesn't see the "val[]" array anyway, I
-> guess we could just do that in the kernel too.
->
-> Looking at the glibc headers I have for fds_bits, glibc seems to do
-> *both* fds_bits[] and __fds_bits[] depending on __USE_XOPEN or not.
->
-> Anyway, that all implies to me that we might as well just go the truly
-> mindless way, and just do the double underscores and not bother with
-> renaming any files.
->
-> I thought people actually might care about the "val[]" name because I
-> find that in documentation, but since apparently it's already not
-> visible to user space anyway, that can't be true.
->
-> I guess that makes the original patch acceptable, and we should just
-> do the same thing to fds_bits..
+So I guess that points to keeping PT_NOTE scanning always available as a
+fallback on x86.  This sucks a bit, but if there are binaries already in
+the wild that rely on this, I don't think we have much choice...
 
-Hah.
+I'd still favour a Kconfig option to allow this support to be suppressed
+by arches that don't have a similar legacy to be compatible with.
 
-I think Arnd's original patch already had both.  So it's ready to go in
-after all?
-
-Thanks,
-Florian
+Cheers
+---Dave
