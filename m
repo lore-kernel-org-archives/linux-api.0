@@ -1,53 +1,64 @@
-From: Eric Biggers <ebiggers@kernel.org>
-Subject: Re: [PATCH v4 13/16] fs-verity: support builtin file
- signatures
-Date: Tue, 18 Jun 2019 09:58:49 -0700
-Message-ID: <20190618165849.GE184520@gmail.com>
-References: <20190606155205.2872-1-ebiggers@kernel.org>
- <20190606155205.2872-14-ebiggers@kernel.org>
- <20190615152143.GN6142@mit.edu>
+From: Waiman Long <longman@redhat.com>
+Subject: Re: [PATCH] mm, memcg: Report number of memcg caches in slabinfo
+Date: Tue, 18 Jun 2019 12:59:24 -0400
+Message-ID: <dee4dee2-1f4f-a7c9-0014-dca54b991377@redhat.com>
+References: <20190617142149.5245-1-longman@redhat.com>
+ <20190617143842.GC1492@dhcp22.suse.cz>
+ <9e165eae-e354-04c4-6362-0f80fe819469@redhat.com>
+ <20190618123750.GG3318@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-Content-Disposition: inline
-In-Reply-To: <20190615152143.GN6142@mit.edu>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Theodore Ts'o <tytso@mit.edu>
-Cc: "Darrick J . Wong" <darrick.wong@oracle.com>, linux-api@vger.kernel.org, Dave Chinner <david@fromorbit.com>, linux-f2fs-devel@lists.sourceforge.net, linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, linux-integrity@vger.kernel.org, linux-ext4@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Christoph Hellwig <hch@lst.de>, Victor Hsieh <victorhsieh@google.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190618123750.GG3318@dhcp22.suse.cz>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Christoph Lameter <cl@linux.com>, Pekka Enberg <penberg@kernel.org>, David Rientjes <rientjes@google.com>, Joonsoo Kim <iamjoonsoo.kim@lge.com>, Andrew Morton <akpm@linux-foundation.org>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Roman Gushchin <guro@fb.com>, Johannes Weiner <hannes@cmpxchg.org>, Shakeel Butt <shakeelb@google.com>, Vladimir Davydov <vdavydov.dev@gmail.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Jun 15, 2019 at 11:21:43AM -0400, Theodore Ts'o wrote:
-> On Thu, Jun 06, 2019 at 08:52:02AM -0700, Eric Biggers wrote:
-> > From: Eric Biggers <ebiggers@google.com>
-> > 
-> > To meet some users' needs, add optional support for having fs-verity
-> > handle a portion of the authentication policy in the kernel.  An
-> > ".fs-verity" keyring is created to which X.509 certificates can be
-> > added; then a sysctl 'fs.verity.require_signatures' can be set to cause
-> > the kernel to enforce that all fs-verity files contain a signature of
-> > their file measurement by a key in this keyring.
-> 
-> I think it might be a good idea to allow the require_signatures
-> setting to be set on a per-file system basis, via a mount option?  We
-> could plumb it in via a flag in fsverity_info, set by the file system.
+On 6/18/19 8:37 AM, Michal Hocko wrote:
+> On Mon 17-06-19 10:50:23, Waiman Long wrote:
+>> On 6/17/19 10:38 AM, Michal Hocko wrote:
+>>> [Cc linux-api]
+>>>
+>>> On Mon 17-06-19 10:21:49, Waiman Long wrote:
+>>>> There are concerns about memory leaks from extensive use of memory
+>>>> cgroups as each memory cgroup creates its own set of kmem caches. There
+>>>> is a possiblity that the memcg kmem caches may remain even after the
+>>>> memory cgroup removal.
+>>>>
+>>>> Therefore, it will be useful to show how many memcg caches are present
+>>>> for each of the kmem caches.
+>>> How is a user going to use that information?  Btw. Don't we have an
+>>> interface to display the number of (dead) cgroups?
+>> The interface to report dead cgroups is for cgroup v2 (cgroup.stat)
+>> only. I don't think there is a way to find that for cgroup v1.
+> Doesn't debug_legacy_files provide the information for both cgroups
+> APIs?
 
-Perhaps, but this is something that can be added later, so I think we should
-hold off on it until someone needs it.
+Not really. The debug controller doesn't provide information about the
+number of dead cgroups, for instance. Of course, we can always add those
+information there. Also the debug controller is not typically configured
+into a production kernel.
 
-> 
-> Other than this feature request, looks good; you can add:
-> 
-> Reviewed-off-by: Theodore Ts'o <tytso@mit.edu>
-> 
 
-I assume you mean "Reviewed-by" :-)
+>> Also the
+>> number of memcg kmem caches may not be the same as the number of
+>> memcg's. It can range from 0 to above the number of memcg's.  So it is
+>> an interesting number by itself.
+> Is this useful enough to put into slabinfo? Doesn't this sound more like
+> a debugfs kinda a thing?
 
-- Eric
+I guess it is probably more on the debug side of things. I add it to
+slabinfo as the data is readily available. It will be much more work if
+we need to export the data via debugfs.
+
+We are seeing the kmem_cache slab growing continuously overtime when
+running a container-based workloads. Roman's kmem_cache reparenting
+patch will hopefully solve a major part of the problem, but we still
+need a way to confirm that by looking at how many memcg kmem_caches are
+associated with each root kmem_cache.
+
+Cheers,
+Longman
