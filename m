@@ -1,7 +1,7 @@
 From: Miklos Szeredi <mszeredi@redhat.com>
-Subject: [PATCH 11/13] cgroup: don't ignore options
-Date: Wed, 19 Jun 2019 14:30:17 +0200
-Message-ID: <20190619123019.30032-11-mszeredi@redhat.com>
+Subject: [PATCH 09/13] mqueue: don't ignore options
+Date: Wed, 19 Jun 2019 14:30:15 +0200
+Message-ID: <20190619123019.30032-9-mszeredi@redhat.com>
 References: <20190619123019.30032-1-mszeredi@redhat.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -13,7 +13,7 @@ Cc: Al Viro <viro@zeniv.linux.org.uk>, Ian Kent <raven@themaw.net>, linux-api@vg
 List-Id: linux-api@vger.kernel.org
 
 The options "sync", "async", "dirsync", "lazytime", "nolazytime", "mand"
-and "nomand" make no sense for the cgroup filesystem.  If these options are
+and "nomand" make no sense for the mqueue filesystem.  If these options are
 supplied to fsconfig(FSCONFIG_SET_FLAG), then return -EINVAL instead of
 silently ignoring the option.
 
@@ -22,35 +22,21 @@ without failing should simply ignore the return value from fsconfig().
 
 Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
 ---
- kernel/cgroup/cgroup-v1.c | 2 +-
- kernel/cgroup/cgroup.c    | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ ipc/mqueue.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kernel/cgroup/cgroup-v1.c b/kernel/cgroup/cgroup-v1.c
-index f960e6149311..1f50d59f7f4e 100644
---- a/kernel/cgroup/cgroup-v1.c
-+++ b/kernel/cgroup/cgroup-v1.c
-@@ -929,7 +929,7 @@ int cgroup1_parse_param(struct fs_context *fc, struct fs_parameter *param)
- 	struct fs_parse_result result;
- 	int ret, opt, i;
+diff --git a/ipc/mqueue.c b/ipc/mqueue.c
+index 557aa887996a..1e8567c20d6a 100644
+--- a/ipc/mqueue.c
++++ b/ipc/mqueue.c
+@@ -1577,7 +1577,7 @@ static const struct super_operations mqueue_super_ops = {
  
--	ret = vfs_parse_sb_flag(fc, param);
-+	ret = vfs_parse_ro_rw(fc, param);
- 	if (ret != -ENOPARAM)
- 		return ret;
- 
-diff --git a/kernel/cgroup/cgroup.c b/kernel/cgroup/cgroup.c
-index 93890285b510..f2e86b3942b3 100644
---- a/kernel/cgroup/cgroup.c
-+++ b/kernel/cgroup/cgroup.c
-@@ -1836,7 +1836,7 @@ static int cgroup2_parse_param(struct fs_context *fc, struct fs_parameter *param
- 	struct fs_parse_result result;
- 	int ret, opt;
- 
--	ret = vfs_parse_sb_flag(fc, param);
-+	ret = vfs_parse_ro_rw(fc, param);
- 	if (ret != -ENOPARAM)
- 		return ret;
+ static const struct fs_context_operations mqueue_fs_context_ops = {
+ 	.free		= mqueue_fs_context_free,
+-	.parse_param	= vfs_parse_sb_flag,
++	.parse_param	= vfs_parse_ro_rw,
+ 	.get_tree	= mqueue_get_tree,
+ };
  
 -- 
 2.21.0
