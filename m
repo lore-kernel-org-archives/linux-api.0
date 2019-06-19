@@ -1,7 +1,7 @@
 From: Miklos Szeredi <mszeredi@redhat.com>
-Subject: [PATCH 07/13] proc: don't ignore options
-Date: Wed, 19 Jun 2019 14:30:13 +0200
-Message-ID: <20190619123019.30032-7-mszeredi@redhat.com>
+Subject: [PATCH 03/13] vfs: don't parse forbidden flags
+Date: Wed, 19 Jun 2019 14:30:09 +0200
+Message-ID: <20190619123019.30032-3-mszeredi@redhat.com>
 References: <20190619123019.30032-1-mszeredi@redhat.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,31 +12,63 @@ To: David Howells <dhowells@redhat.com>
 Cc: Al Viro <viro@zeniv.linux.org.uk>, Ian Kent <raven@themaw.net>, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The options "sync", "async", "dirsync", "lazytime", "nolazytime", "mand"
-and "nomand" make no sense for the proc filesystem.  If these options are
-supplied to fsconfig(FSCONFIG_SET_FLAG), then return -EINVAL instead of
-silently ignoring the option.
+Impossible to keep this blacklist properly synced with what mount(8) parses
+and what it doesn't.  E.g. it has various forms of "*atime" options, but
+not "atime"...
 
-Any implementation, such as mount(8) that needs to parse this option
-without failing should simply ignore the return value from fsconfig().
+Other than being impossible to maintain, it also makes little sense.  So
+just get rid of it.
 
 Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
 ---
- fs/proc/root.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ fs/fs_context.c | 28 ----------------------------
+ 1 file changed, 28 deletions(-)
 
-diff --git a/fs/proc/root.c b/fs/proc/root.c
-index 6ef1527ad975..70127eaba04d 100644
---- a/fs/proc/root.c
-+++ b/fs/proc/root.c
-@@ -58,7 +58,7 @@ static int proc_parse_param(struct fs_context *fc, struct fs_parameter *param)
- 	struct fs_parse_result result;
- 	int ret, opt;
+diff --git a/fs/fs_context.c b/fs/fs_context.c
+index a9f314390b99..cbf89117a507 100644
+--- a/fs/fs_context.c
++++ b/fs/fs_context.c
+@@ -55,29 +55,6 @@ static const struct constant_table common_clear_sb_flag[] = {
+ 	{ "silent",	SB_SILENT },
+ };
  
--	ret = vfs_parse_sb_flag(fc, param);
-+	ret = vfs_parse_ro_rw(fc, param);
- 	if (ret != -ENOPARAM)
- 		return ret;
+-static const char *const forbidden_sb_flag[] = {
+-	"bind",
+-	"dev",
+-	"exec",
+-	"move",
+-	"noatime",
+-	"nodev",
+-	"nodiratime",
+-	"noexec",
+-	"norelatime",
+-	"nostrictatime",
+-	"nosuid",
+-	"private",
+-	"rec",
+-	"relatime",
+-	"remount",
+-	"shared",
+-	"slave",
+-	"strictatime",
+-	"suid",
+-	"unbindable",
+-};
+-
+ /*
+  * Check for a common mount option that manipulates s_flags.
+  */
+@@ -85,11 +62,6 @@ int vfs_parse_sb_flag(struct fs_context *fc, struct fs_parameter *param)
+ {
+ 	const char *key = param->key;
+ 	unsigned int set, clear;
+-	unsigned int i;
+-
+-	for (i = 0; i < ARRAY_SIZE(forbidden_sb_flag); i++)
+-		if (strcmp(key, forbidden_sb_flag[i]) == 0)
+-			return -EINVAL;
  
+ 	set = lookup_constant(common_set_sb_flag, key, 0);
+ 	clear = lookup_constant(common_clear_sb_flag, key, 0);
 -- 
 2.21.0
