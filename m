@@ -1,7 +1,8 @@
 From: Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH v5 15/16] ext4: add fs-verity read support
-Date: Thu, 20 Jun 2019 13:50:42 -0700
-Message-ID: <20190620205043.64350-16-ebiggers@kernel.org>
+Subject: [PATCH v5 10/16] fs-verity: implement
+ FS_IOC_ENABLE_VERITY ioctl
+Date: Thu, 20 Jun 2019 13:50:37 -0700
+Message-ID: <20190620205043.64350-11-ebiggers@kernel.org>
 References: <20190620205043.64350-1-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,352 +23,475 @@ List-Id: linux-api@vger.kernel.org
 
 From: Eric Biggers <ebiggers@google.com>
 
-Make ext4_mpage_readpages() verify data as it is read from fs-verity
-files, using the helper functions from fs/verity/.
+Add a function for filesystems to call to implement the
+FS_IOC_ENABLE_VERITY ioctl.  This ioctl enables fs-verity on a file.
 
-To support both encryption and verity simultaneously, this required
-refactoring the decryption workflow into a generic "post-read
-processing" workflow which can do decryption, verification, or both.
+See the "FS_IOC_ENABLE_VERITY" section of
+Documentation/filesystems/fsverity.rst for the documentation.
 
-The case where the ext4 block size is not equal to the PAGE_SIZE is not
-supported yet, since in that case ext4_mpage_readpages() sometimes falls
-back to block_read_full_page(), which does not support fs-verity yet.
-
-Co-developed-by: Theodore Ts'o <tytso@mit.edu>
-Signed-off-by: Theodore Ts'o <tytso@mit.edu>
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
- fs/ext4/ext4.h     |   2 +
- fs/ext4/inode.c    |   2 +
- fs/ext4/readpage.c | 207 ++++++++++++++++++++++++++++++++++++++-------
- fs/ext4/super.c    |   9 +-
- 4 files changed, 190 insertions(+), 30 deletions(-)
+ fs/verity/Makefile       |   3 +-
+ fs/verity/enable.c       | 341 +++++++++++++++++++++++++++++++++++++++
+ include/linux/fsverity.h |  64 ++++++++
+ 3 files changed, 407 insertions(+), 1 deletion(-)
+ create mode 100644 fs/verity/enable.c
 
-diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
-index 5a1deea3fb3e37..3c0d491c497025 100644
---- a/fs/ext4/ext4.h
-+++ b/fs/ext4/ext4.h
-@@ -3158,6 +3158,8 @@ static inline void ext4_set_de_type(struct super_block *sb,
- extern int ext4_mpage_readpages(struct address_space *mapping,
- 				struct list_head *pages, struct page *page,
- 				unsigned nr_pages, bool is_readahead);
-+extern int __init ext4_init_post_read_processing(void);
-+extern void ext4_exit_post_read_processing(void);
+diff --git a/fs/verity/Makefile b/fs/verity/Makefile
+index 7fa628cd5eba24..04b37475fd280a 100644
+--- a/fs/verity/Makefile
++++ b/fs/verity/Makefile
+@@ -1,6 +1,7 @@
+ # SPDX-License-Identifier: GPL-2.0
  
- /* symlink.c */
- extern const struct inode_operations ext4_encrypted_symlink_inode_operations;
-diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
-index 514e24f88f90f4..37571d080b3c64 100644
---- a/fs/ext4/inode.c
-+++ b/fs/ext4/inode.c
-@@ -3893,6 +3893,8 @@ static ssize_t ext4_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
- 	if (IS_ENCRYPTED(inode) && S_ISREG(inode->i_mode))
- 		return 0;
- #endif
-+	if (fsverity_active(inode))
-+		return 0;
- 
- 	/*
- 	 * If we are doing data journalling we don't support O_DIRECT
-diff --git a/fs/ext4/readpage.c b/fs/ext4/readpage.c
-index c916017db3344e..84152b686e498e 100644
---- a/fs/ext4/readpage.c
-+++ b/fs/ext4/readpage.c
-@@ -47,6 +47,11 @@
- 
- #include "ext4.h"
- 
-+#define NUM_PREALLOC_POST_READ_CTXS	128
+-obj-$(CONFIG_FS_VERITY) += hash_algs.o \
++obj-$(CONFIG_FS_VERITY) += enable.o \
++			   hash_algs.o \
+ 			   init.o \
+ 			   open.o \
+ 			   verify.o
+diff --git a/fs/verity/enable.c b/fs/verity/enable.c
+new file mode 100644
+index 00000000000000..144721bbe4aab9
+--- /dev/null
++++ b/fs/verity/enable.c
+@@ -0,0 +1,341 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * fs/verity/enable.c: ioctl to enable verity on a file
++ *
++ * Copyright 2019 Google LLC
++ */
 +
-+static struct kmem_cache *bio_post_read_ctx_cache;
-+static mempool_t *bio_post_read_ctx_pool;
++#include "fsverity_private.h"
 +
- static inline bool ext4_bio_encrypted(struct bio *bio)
- {
- #ifdef CONFIG_FS_ENCRYPTION
-@@ -56,6 +61,100 @@ static inline bool ext4_bio_encrypted(struct bio *bio)
- #endif
- }
- 
-+/* postprocessing steps for read bios */
-+enum bio_post_read_step {
-+	STEP_INITIAL = 0,
-+	STEP_DECRYPT,
-+	STEP_VERITY,
-+};
++#include <crypto/hash.h>
++#include <linux/mount.h>
++#include <linux/pagemap.h>
++#include <linux/sched/signal.h>
++#include <linux/uaccess.h>
 +
-+struct bio_post_read_ctx {
-+	struct bio *bio;
-+	struct work_struct work;
-+	unsigned int cur_step;
-+	unsigned int enabled_steps;
-+};
-+
-+static void __read_end_io(struct bio *bio)
++static int build_merkle_tree_level(struct inode *inode, unsigned int level,
++				   u64 num_blocks_to_hash,
++				   const struct merkle_tree_params *params,
++				   u8 *pending_hashes,
++				   struct ahash_request *req)
 +{
-+	struct page *page;
-+	struct bio_vec *bv;
-+	struct bvec_iter_all iter_all;
++	const struct fsverity_operations *vops = inode->i_sb->s_vop;
++	unsigned int pending_size = 0;
++	u64 dst_block_num;
++	u64 i;
++	int err;
 +
-+	bio_for_each_segment_all(bv, bio, iter_all) {
-+		page = bv->bv_page;
++	if (WARN_ON(params->block_size != PAGE_SIZE)) /* checked earlier too */
++		return -EINVAL;
 +
-+		/* PG_error was set if any post_read step failed */
-+		if (bio->bi_status || PageError(page)) {
-+			ClearPageUptodate(page);
-+			/* will re-read again later */
-+			ClearPageError(page);
-+		} else {
-+			SetPageUptodate(page);
-+		}
-+		unlock_page(page);
++	if (level < params->num_levels) {
++		dst_block_num = params->level_start[level];
++	} else {
++		if (WARN_ON(num_blocks_to_hash != 1))
++			return -EINVAL;
++		dst_block_num = 0; /* unused */
 +	}
-+	if (bio->bi_private)
-+		mempool_free(bio->bi_private, bio_post_read_ctx_pool);
-+	bio_put(bio);
-+}
 +
-+static void bio_post_read_processing(struct bio_post_read_ctx *ctx);
++	for (i = 0; i < num_blocks_to_hash; i++) {
++		struct page *src_page;
 +
-+static void decrypt_work(struct work_struct *work)
-+{
-+	struct bio_post_read_ctx *ctx =
-+		container_of(work, struct bio_post_read_ctx, work);
++		if ((pgoff_t)i % 10000 == 0 || i + 1 == num_blocks_to_hash)
++			pr_debug("Hashing block %llu of %llu for level %u\n",
++				 i + 1, num_blocks_to_hash, level);
 +
-+	fscrypt_decrypt_bio(ctx->bio);
-+
-+	bio_post_read_processing(ctx);
-+}
-+
-+static void verity_work(struct work_struct *work)
-+{
-+	struct bio_post_read_ctx *ctx =
-+		container_of(work, struct bio_post_read_ctx, work);
-+
-+	fsverity_verify_bio(ctx->bio);
-+
-+	bio_post_read_processing(ctx);
-+}
-+
-+static void bio_post_read_processing(struct bio_post_read_ctx *ctx)
-+{
-+	/*
-+	 * We use different work queues for decryption and for verity because
-+	 * verity may require reading metadata pages that need decryption, and
-+	 * we shouldn't recurse to the same workqueue.
-+	 */
-+	switch (++ctx->cur_step) {
-+	case STEP_DECRYPT:
-+		if (ctx->enabled_steps & (1 << STEP_DECRYPT)) {
-+			INIT_WORK(&ctx->work, decrypt_work);
-+			fscrypt_enqueue_decrypt_work(&ctx->work);
-+			return;
++		if (level == 0)
++			/* Leaf: hashing a data block */
++			src_page = read_mapping_page(inode->i_mapping, i, NULL);
++		else
++			/* Non-leaf: hashing hash block from level below */
++			src_page = vops->read_merkle_tree_page(inode,
++					params->level_start[level - 1] + i);
++		if (IS_ERR(src_page)) {
++			err = PTR_ERR(src_page);
++			fsverity_err(inode,
++				     "Error %d reading Merkle tree page %llu",
++				     err, params->level_start[level - 1] + i);
++			return err;
 +		}
-+		ctx->cur_step++;
-+		/* fall-through */
-+	case STEP_VERITY:
-+		if (ctx->enabled_steps & (1 << STEP_VERITY)) {
-+			INIT_WORK(&ctx->work, verity_work);
-+			fsverity_enqueue_verify_work(&ctx->work);
-+			return;
++
++		err = fsverity_hash_page(params, inode, req, src_page,
++					 &pending_hashes[pending_size]);
++		put_page(src_page);
++		if (err)
++			return err;
++		pending_size += params->digest_size;
++
++		if (level == params->num_levels) /* Root hash? */
++			return 0;
++
++		if (pending_size + params->digest_size > params->block_size ||
++		    i + 1 == num_blocks_to_hash) {
++			/* Flush the pending hash block */
++			memset(&pending_hashes[pending_size], 0,
++			       params->block_size - pending_size);
++			err = vops->write_merkle_tree_block(inode,
++					pending_hashes,
++					dst_block_num,
++					params->log_blocksize);
++			if (err) {
++				fsverity_err(inode,
++					     "Error %d writing Merkle tree block %llu",
++					     err, dst_block_num);
++				return err;
++			}
++			dst_block_num++;
++			pending_size = 0;
 +		}
-+		ctx->cur_step++;
-+		/* fall-through */
-+	default:
-+		__read_end_io(ctx->bio);
++
++		if (fatal_signal_pending(current))
++			return -EINTR;
++		cond_resched();
 +	}
-+}
-+
-+static bool bio_post_read_required(struct bio *bio)
-+{
-+	return bio->bi_private && !bio->bi_status;
-+}
-+
- /*
-  * I/O completion handler for multipage BIOs.
-  *
-@@ -70,30 +169,53 @@ static inline bool ext4_bio_encrypted(struct bio *bio)
-  */
- static void mpage_end_io(struct bio *bio)
- {
--	struct bio_vec *bv;
--	struct bvec_iter_all iter_all;
-+	if (bio_post_read_required(bio)) {
-+		struct bio_post_read_ctx *ctx = bio->bi_private;
- 
--	if (ext4_bio_encrypted(bio)) {
--		if (bio->bi_status) {
--			fscrypt_release_ctx(bio->bi_private);
--		} else {
--			fscrypt_enqueue_decrypt_bio(bio->bi_private, bio);
--			return;
--		}
-+		ctx->cur_step = STEP_INITIAL;
-+		bio_post_read_processing(ctx);
-+		return;
- 	}
--	bio_for_each_segment_all(bv, bio, iter_all) {
--		struct page *page = bv->bv_page;
-+	__read_end_io(bio);
-+}
- 
--		if (!bio->bi_status) {
--			SetPageUptodate(page);
--		} else {
--			ClearPageUptodate(page);
--			SetPageError(page);
--		}
--		unlock_page(page);
-+static inline bool ext4_need_verity(const struct inode *inode, pgoff_t idx)
-+{
-+	return fsverity_active(inode) &&
-+	       idx < DIV_ROUND_UP(inode->i_size, PAGE_SIZE);
-+}
-+
-+static struct bio_post_read_ctx *get_bio_post_read_ctx(struct inode *inode,
-+						       struct bio *bio,
-+						       pgoff_t first_idx)
-+{
-+	unsigned int post_read_steps = 0;
-+	struct bio_post_read_ctx *ctx = NULL;
-+
-+	if (IS_ENCRYPTED(inode) && S_ISREG(inode->i_mode))
-+		post_read_steps |= 1 << STEP_DECRYPT;
-+
-+	if (ext4_need_verity(inode, first_idx))
-+		post_read_steps |= 1 << STEP_VERITY;
-+
-+	if (post_read_steps) {
-+		ctx = mempool_alloc(bio_post_read_ctx_pool, GFP_NOFS);
-+		if (!ctx)
-+			return ERR_PTR(-ENOMEM);
-+		ctx->bio = bio;
-+		ctx->enabled_steps = post_read_steps;
-+		bio->bi_private = ctx;
- 	}
-+	return ctx;
-+}
- 
--	bio_put(bio);
-+static inline loff_t ext4_readpage_limit(struct inode *inode)
-+{
-+	if (IS_ENABLED(CONFIG_FS_VERITY) &&
-+	    (IS_VERITY(inode) || ext4_verity_in_progress(inode)))
-+		return inode->i_sb->s_maxbytes;
-+
-+	return i_size_read(inode);
- }
- 
- int ext4_mpage_readpages(struct address_space *mapping,
-@@ -141,7 +263,8 @@ int ext4_mpage_readpages(struct address_space *mapping,
- 
- 		block_in_file = (sector_t)page->index << (PAGE_SHIFT - blkbits);
- 		last_block = block_in_file + nr_pages * blocks_per_page;
--		last_block_in_file = (i_size_read(inode) + blocksize - 1) >> blkbits;
-+		last_block_in_file = (ext4_readpage_limit(inode) +
-+				      blocksize - 1) >> blkbits;
- 		if (last_block > last_block_in_file)
- 			last_block = last_block_in_file;
- 		page_block = 0;
-@@ -218,6 +341,9 @@ int ext4_mpage_readpages(struct address_space *mapping,
- 			zero_user_segment(page, first_hole << blkbits,
- 					  PAGE_SIZE);
- 			if (first_hole == 0) {
-+				if (ext4_need_verity(inode, page->index) &&
-+				    !fsverity_verify_page(page))
-+					goto set_error_page;
- 				SetPageUptodate(page);
- 				unlock_page(page);
- 				goto next_page;
-@@ -241,18 +367,15 @@ int ext4_mpage_readpages(struct address_space *mapping,
- 			bio = NULL;
- 		}
- 		if (bio == NULL) {
--			struct fscrypt_ctx *ctx = NULL;
-+			struct bio_post_read_ctx *ctx;
- 
--			if (IS_ENCRYPTED(inode) && S_ISREG(inode->i_mode)) {
--				ctx = fscrypt_get_ctx(GFP_NOFS);
--				if (IS_ERR(ctx))
--					goto set_error_page;
--			}
- 			bio = bio_alloc(GFP_KERNEL,
- 				min_t(int, nr_pages, BIO_MAX_PAGES));
--			if (!bio) {
--				if (ctx)
--					fscrypt_release_ctx(ctx);
-+			if (!bio)
-+				goto set_error_page;
-+			ctx = get_bio_post_read_ctx(inode, bio, page->index);
-+			if (IS_ERR(ctx)) {
-+				bio_put(bio);
- 				goto set_error_page;
- 			}
- 			bio_set_dev(bio, bdev);
-@@ -293,3 +416,29 @@ int ext4_mpage_readpages(struct address_space *mapping,
- 		submit_bio(bio);
- 	return 0;
- }
-+
-+int __init ext4_init_post_read_processing(void)
-+{
-+	bio_post_read_ctx_cache =
-+		kmem_cache_create("ext4_bio_post_read_ctx",
-+				  sizeof(struct bio_post_read_ctx), 0, 0, NULL);
-+	if (!bio_post_read_ctx_cache)
-+		goto fail;
-+	bio_post_read_ctx_pool =
-+		mempool_create_slab_pool(NUM_PREALLOC_POST_READ_CTXS,
-+					 bio_post_read_ctx_cache);
-+	if (!bio_post_read_ctx_pool)
-+		goto fail_free_cache;
 +	return 0;
-+
-+fail_free_cache:
-+	kmem_cache_destroy(bio_post_read_ctx_cache);
-+fail:
-+	return -ENOMEM;
 +}
 +
-+void ext4_exit_post_read_processing(void)
++/*
++ * Build the Merkle tree for the given inode using the given parameters, and
++ * return the root hash in @root_hash.
++ *
++ * The tree is written to a filesystem-specific location as determined by the
++ * ->write_merkle_tree_block() method.  However, the blocks that comprise the
++ * tree are the same for all filesystems.
++ */
++static int build_merkle_tree(struct inode *inode,
++			     const struct merkle_tree_params *params,
++			     u8 *root_hash)
 +{
-+	mempool_destroy(bio_post_read_ctx_pool);
-+	kmem_cache_destroy(bio_post_read_ctx_cache);
-+}
-diff --git a/fs/ext4/super.c b/fs/ext4/super.c
-index 05a9874687c365..23e7acd43e4ee7 100644
---- a/fs/ext4/super.c
-+++ b/fs/ext4/super.c
-@@ -6103,6 +6103,10 @@ static int __init ext4_init_fs(void)
- 		return err;
- 
- 	err = ext4_init_pending();
-+	if (err)
-+		goto out7;
++	u8 *pending_hashes;
++	struct ahash_request *req;
++	u64 blocks;
++	unsigned int level;
++	int err = -ENOMEM;
 +
-+	err = ext4_init_post_read_processing();
- 	if (err)
- 		goto out6;
++	if (inode->i_size == 0) {
++		/* Empty file is a special case; root hash is all 0's */
++		memset(root_hash, 0, params->digest_size);
++		return 0;
++	}
++
++	pending_hashes = kmalloc(params->block_size, GFP_KERNEL);
++	req = ahash_request_alloc(params->hash_alg->tfm, GFP_KERNEL);
++	if (!pending_hashes || !req)
++		goto out;
++
++	/*
++	 * Build each level of the Merkle tree, starting at the leaf level
++	 * (level 0) and ascending to the root node (level 'num_levels - 1').
++	 * Then at the end (level 'num_levels'), calculate the root hash.
++	 */
++	blocks = (inode->i_size + params->block_size - 1) >>
++		 params->log_blocksize;
++	for (level = 0; level <= params->num_levels; level++) {
++		err = build_merkle_tree_level(inode, level, blocks, params,
++					      pending_hashes, req);
++		if (err)
++			goto out;
++		blocks = (blocks + params->hashes_per_block - 1) >>
++			 params->log_arity;
++	}
++	memcpy(root_hash, pending_hashes, params->digest_size);
++	err = 0;
++out:
++	kfree(pending_hashes);
++	ahash_request_free(req);
++	return err;
++}
++
++static int enable_verity(struct file *filp,
++			 const struct fsverity_enable_arg *arg)
++{
++	struct inode *inode = file_inode(filp);
++	const struct fsverity_operations *vops = inode->i_sb->s_vop;
++	struct merkle_tree_params params = { };
++	struct fsverity_descriptor *desc;
++	size_t desc_size = sizeof(*desc);
++	struct fsverity_info *vi;
++	int err;
++
++	/* Start initializing the fsverity_descriptor */
++	desc = kzalloc(desc_size, GFP_KERNEL);
++	if (!desc)
++		return -ENOMEM;
++	desc->version = 1;
++	desc->hash_algorithm = arg->hash_algorithm;
++	desc->log_blocksize = ilog2(arg->block_size);
++
++	/* Get the salt if the user provided one */
++	if (arg->salt_size &&
++	    copy_from_user(desc->salt,
++			   (const u8 __user *)(uintptr_t)arg->salt_ptr,
++			   arg->salt_size)) {
++		err = -EFAULT;
++		goto out;
++	}
++	desc->salt_size = arg->salt_size;
++
++	desc->data_size = cpu_to_le64(inode->i_size);
++
++	pr_debug("Building Merkle tree...\n");
++
++	/* Prepare the Merkle tree parameters */
++	err = fsverity_init_merkle_tree_params(&params, inode,
++					       arg->hash_algorithm,
++					       desc->log_blocksize,
++					       desc->salt, desc->salt_size);
++	if (err)
++		goto out;
++
++	/* Tell the filesystem that verity is being enabled on the file */
++	err = vops->begin_enable_verity(filp);
++	if (err)
++		goto out;
++
++	/* Build the Merkle tree */
++	BUILD_BUG_ON(sizeof(desc->root_hash) < FS_VERITY_MAX_DIGEST_SIZE);
++	err = build_merkle_tree(inode, &params, desc->root_hash);
++	if (err) {
++		fsverity_err(inode, "Error %d building Merkle tree", err);
++		goto rollback;
++	}
++	pr_debug("Done building Merkle tree.  Root hash is %s:%*phN\n",
++		 params.hash_alg->name, params.digest_size, desc->root_hash);
++
++	/*
++	 * Create the fsverity_info.  Don't bother trying to save work by
++	 * reusing the merkle_tree_params from above.  Instead, just create the
++	 * fsverity_info from the fsverity_descriptor as if it were just loaded
++	 * from disk.  This is simpler, and it serves as an extra check that the
++	 * metadata we're writing is valid before actually enabling verity.
++	 */
++	vi = fsverity_create_info(inode, desc, desc_size);
++	if (IS_ERR(vi)) {
++		err = PTR_ERR(vi);
++		goto rollback;
++	}
++
++	/* Tell the filesystem to finish enabling verity on the file */
++	err = vops->end_enable_verity(filp, desc, desc_size, params.tree_size);
++	if (err) {
++		fsverity_err(inode, "%ps() failed with err %d",
++			     vops->end_enable_verity, err);
++		fsverity_free_info(vi);
++	} else if (WARN_ON(!IS_VERITY(inode))) {
++		err = -EINVAL;
++		fsverity_free_info(vi);
++	} else {
++		/* Successfully enabled verity */
++
++		/*
++		 * Readers can start using ->i_verity_info immediately, so it
++		 * can't be rolled back once set.  So don't set it until just
++		 * after the filesystem has successfully enabled verity.
++		 */
++		fsverity_set_info(inode, vi);
++	}
++out:
++	kfree(params.hashstate);
++	kfree(desc);
++	return err;
++
++rollback:
++	(void)vops->end_enable_verity(filp, NULL, 0, params.tree_size);
++	goto out;
++}
++
++/**
++ * fsverity_ioctl_enable() - enable verity on a file
++ *
++ * Enable fs-verity on a file.  See the "FS_IOC_ENABLE_VERITY" section of
++ * Documentation/filesystems/fsverity.rst for the documentation.
++ *
++ * Return: 0 on success, -errno on failure
++ */
++int fsverity_ioctl_enable(struct file *filp, const void __user *uarg)
++{
++	struct inode *inode = file_inode(filp);
++	struct fsverity_enable_arg arg;
++	int err;
++
++	if (copy_from_user(&arg, uarg, sizeof(arg)))
++		return -EFAULT;
++
++	if (arg.version != 1)
++		return -EINVAL;
++
++	if (arg.__reserved1 ||
++	    memchr_inv(arg.__reserved2, 0, sizeof(arg.__reserved2)))
++		return -EINVAL;
++
++	if (arg.block_size != PAGE_SIZE)
++		return -EINVAL;
++
++	if (arg.salt_size > FIELD_SIZEOF(struct fsverity_descriptor, salt))
++		return -EMSGSIZE;
++
++	if (arg.sig_size)
++		return -EINVAL;
++
++	/*
++	 * Require a regular file with write access.  But the actual fd must
++	 * still be readonly so that we can lock out all writers.  This is
++	 * needed to guarantee that no writable fds exist to the file once it
++	 * has verity enabled, and to stabilize the data being hashed.
++	 */
++
++	err = inode_permission(inode, MAY_WRITE);
++	if (err)
++		return err;
++
++	if (IS_APPEND(inode))
++		return -EPERM;
++
++	if (S_ISDIR(inode->i_mode))
++		return -EISDIR;
++
++	if (!S_ISREG(inode->i_mode))
++		return -EINVAL;
++
++	err = mnt_want_write_file(filp);
++	if (err) /* -EROFS */
++		return err;
++
++	err = deny_write_access(filp);
++	if (err) /* -ETXTBSY */
++		goto out_drop_write;
++
++	inode_lock(inode);
++
++	if (IS_VERITY(inode)) {
++		err = -EEXIST;
++		goto out_unlock;
++	}
++
++	err = enable_verity(filp, &arg);
++	if (err)
++		goto out_unlock;
++
++	/*
++	 * Some pages of the file may have been evicted from pagecache after
++	 * being used in the Merkle tree construction, then read into pagecache
++	 * again by another process reading from the file concurrently.  Since
++	 * these pages didn't undergo verification against the file measurement
++	 * which fs-verity now claims to be enforcing, we have to wipe the
++	 * pagecache to ensure that all future reads are verified.
++	 */
++	filemap_write_and_wait(inode->i_mapping);
++	truncate_inode_pages(inode->i_mapping, 0);
++
++	/*
++	 * allow_write_access() is needed to pair with deny_write_access().
++	 * Regardless, the filesystem won't allow writing to verity files.
++	 */
++out_unlock:
++	inode_unlock(inode);
++	allow_write_access(filp);
++out_drop_write:
++	mnt_drop_write_file(filp);
++	return err;
++}
++EXPORT_SYMBOL_GPL(fsverity_ioctl_enable);
+diff --git a/include/linux/fsverity.h b/include/linux/fsverity.h
+index ecd47e748c7f64..7ef2ef82653409 100644
+--- a/include/linux/fsverity.h
++++ b/include/linux/fsverity.h
+@@ -17,6 +17,42 @@
+ /* Verity operations for filesystems */
+ struct fsverity_operations {
  
-@@ -6144,8 +6148,10 @@ static int __init ext4_init_fs(void)
- out4:
- 	ext4_exit_pageio();
- out5:
--	ext4_exit_pending();
-+	ext4_exit_post_read_processing();
- out6:
-+	ext4_exit_pending();
-+out7:
- 	ext4_exit_es();
++	/**
++	 * Begin enabling verity on the given file.
++	 *
++	 * @filp: a readonly file descriptor for the file
++	 *
++	 * The filesystem must do any needed filesystem-specific preparations
++	 * for enabling verity, e.g. evicting inline data.
++	 *
++	 * i_rwsem is held for write.
++	 *
++	 * Return: 0 on success, -errno on failure
++	 */
++	int (*begin_enable_verity)(struct file *filp);
++
++	/**
++	 * End enabling verity on the given file.
++	 *
++	 * @filp: a readonly file descriptor for the file
++	 * @desc: the verity descriptor to write, or NULL on failure
++	 * @desc_size: size of verity descriptor, or 0 on failure
++	 * @merkle_tree_size: total bytes the Merkle tree took up
++	 *
++	 * If desc == NULL, then enabling verity failed and the filesystem only
++	 * must do any necessary cleanups.  Else, it must also store the given
++	 * verity descriptor to a fs-specific location associated with the inode
++	 * and do any fs-specific actions needed to mark the inode as a verity
++	 * inode, e.g. setting a bit in the on-disk inode.  The filesystem is
++	 * also responsible for setting the S_VERITY flag in the VFS inode.
++	 *
++	 * i_rwsem is held for write.
++	 *
++	 * Return: 0 on success, -errno on failure
++	 */
++	int (*end_enable_verity)(struct file *filp, const void *desc,
++				 size_t desc_size, u64 merkle_tree_size);
++
+ 	/**
+ 	 * Get the verity descriptor of the given inode.
+ 	 *
+@@ -50,6 +86,22 @@ struct fsverity_operations {
+ 	 */
+ 	struct page *(*read_merkle_tree_page)(struct inode *inode,
+ 					      pgoff_t index);
++
++	/**
++	 * Write a Merkle tree block to the given inode.
++	 *
++	 * @inode: the inode for which the Merkle tree is being built
++	 * @buf: block to write
++	 * @index: 0-based index of the block within the Merkle tree
++	 * @log_blocksize: log base 2 of the Merkle tree block size
++	 *
++	 * This is only called between ->begin_enable_verity() and
++	 * ->end_enable_verity().  i_rwsem is held for write.
++	 *
++	 * Return: 0 on success, -errno on failure
++	 */
++	int (*write_merkle_tree_block)(struct inode *inode, const void *buf,
++				       u64 index, int log_blocksize);
+ };
  
- 	return err;
-@@ -6162,6 +6168,7 @@ static void __exit ext4_exit_fs(void)
- 	ext4_exit_sysfs();
- 	ext4_exit_system_zone();
- 	ext4_exit_pageio();
-+	ext4_exit_post_read_processing();
- 	ext4_exit_es();
- 	ext4_exit_pending();
+ #ifdef CONFIG_FS_VERITY
+@@ -60,6 +112,10 @@ static inline struct fsverity_info *fsverity_get_info(const struct inode *inode)
+ 	return READ_ONCE(inode->i_verity_info);
  }
+ 
++/* enable.c */
++
++extern int fsverity_ioctl_enable(struct file *filp, const void __user *arg);
++
+ /* open.c */
+ 
+ extern int fsverity_file_open(struct inode *inode, struct file *filp);
+@@ -79,6 +135,14 @@ static inline struct fsverity_info *fsverity_get_info(const struct inode *inode)
+ 	return NULL;
+ }
+ 
++/* enable.c */
++
++static inline int fsverity_ioctl_enable(struct file *filp,
++					const void __user *arg)
++{
++	return -EOPNOTSUPP;
++}
++
+ /* open.c */
+ 
+ static inline int fsverity_file_open(struct inode *inode, struct file *filp)
 -- 
 2.22.0.410.gd8fdbe21b5-goog
