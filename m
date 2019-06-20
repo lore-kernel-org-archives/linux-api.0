@@ -1,7 +1,7 @@
 From: Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH v5 03/16] fs-verity: add UAPI header
-Date: Thu, 20 Jun 2019 13:50:30 -0700
-Message-ID: <20190620205043.64350-4-ebiggers@kernel.org>
+Subject: [PATCH v5 12/16] fs-verity: add SHA-512 support
+Date: Thu, 20 Jun 2019 13:50:39 -0700
+Message-ID: <20190620205043.64350-13-ebiggers@kernel.org>
 References: <20190620205043.64350-1-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,84 +22,59 @@ List-Id: linux-api@vger.kernel.org
 
 From: Eric Biggers <ebiggers@google.com>
 
-Add the UAPI header for fs-verity, including two ioctls:
-
-- FS_IOC_ENABLE_VERITY
-- FS_IOC_MEASURE_VERITY
-
-These ioctls are documented in the "User API" section of
-Documentation/filesystems/fsverity.rst.
-
-Examples of using these ioctls can be found in fsverity-utils
-(https://git.kernel.org/pub/scm/linux/kernel/git/ebiggers/fsverity-utils.git).
-
-I've also written xfstests that test these ioctls
-(https://git.kernel.org/pub/scm/linux/kernel/git/ebiggers/xfstests-dev.git/log/?h=fsverity).
+Add SHA-512 support to fs-verity.  This is primarily a demonstration of
+the trivial changes needed to support a new hash algorithm in fs-verity;
+most users will still use SHA-256, due to the smaller space required to
+store the hashes.  But some users may prefer SHA-512.
 
 Reviewed-by: Theodore Ts'o <tytso@mit.edu>
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
- Documentation/ioctl/ioctl-number.txt |  1 +
- include/uapi/linux/fsverity.h        | 39 ++++++++++++++++++++++++++++
- 2 files changed, 40 insertions(+)
- create mode 100644 include/uapi/linux/fsverity.h
+ fs/verity/fsverity_private.h  | 2 +-
+ fs/verity/hash_algs.c         | 5 +++++
+ include/uapi/linux/fsverity.h | 1 +
+ 3 files changed, 7 insertions(+), 1 deletion(-)
 
-diff --git a/Documentation/ioctl/ioctl-number.txt b/Documentation/ioctl/ioctl-number.txt
-index c9558146ac5896..21767c81e86d58 100644
---- a/Documentation/ioctl/ioctl-number.txt
-+++ b/Documentation/ioctl/ioctl-number.txt
-@@ -225,6 +225,7 @@ Code  Seq#(hex)	Include File		Comments
- 'f'	00-0F	fs/ext4/ext4.h		conflict!
- 'f'	00-0F	linux/fs.h		conflict!
- 'f'	00-0F	fs/ocfs2/ocfs2_fs.h	conflict!
-+'f'	81-8F	linux/fsverity.h
- 'g'	00-0F	linux/usb/gadgetfs.h
- 'g'	20-2F	linux/usb/g_printer.h
- 'h'	00-7F				conflict! Charon filesystem
+diff --git a/fs/verity/fsverity_private.h b/fs/verity/fsverity_private.h
+index eaa2b3b93bbf6b..02a547f0667c13 100644
+--- a/fs/verity/fsverity_private.h
++++ b/fs/verity/fsverity_private.h
+@@ -29,7 +29,7 @@ struct ahash_request;
+  * Largest digest size among all hash algorithms supported by fs-verity.
+  * Currently assumed to be <= size of fsverity_descriptor::root_hash.
+  */
+-#define FS_VERITY_MAX_DIGEST_SIZE	SHA256_DIGEST_SIZE
++#define FS_VERITY_MAX_DIGEST_SIZE	SHA512_DIGEST_SIZE
+ 
+ /* A hash algorithm supported by fs-verity */
+ struct fsverity_hash_alg {
+diff --git a/fs/verity/hash_algs.c b/fs/verity/hash_algs.c
+index 46df17094fc252..e0462a010cabfb 100644
+--- a/fs/verity/hash_algs.c
++++ b/fs/verity/hash_algs.c
+@@ -17,6 +17,11 @@ struct fsverity_hash_alg fsverity_hash_algs[] = {
+ 		.digest_size = SHA256_DIGEST_SIZE,
+ 		.block_size = SHA256_BLOCK_SIZE,
+ 	},
++	[FS_VERITY_HASH_ALG_SHA512] = {
++		.name = "sha512",
++		.digest_size = SHA512_DIGEST_SIZE,
++		.block_size = SHA512_BLOCK_SIZE,
++	},
+ };
+ 
+ /**
 diff --git a/include/uapi/linux/fsverity.h b/include/uapi/linux/fsverity.h
-new file mode 100644
-index 00000000000000..57d1d7fc0c345a
---- /dev/null
+index 57d1d7fc0c345a..da0daf6c193b4b 100644
+--- a/include/uapi/linux/fsverity.h
 +++ b/include/uapi/linux/fsverity.h
-@@ -0,0 +1,39 @@
-+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-+/*
-+ * fs-verity user API
-+ *
-+ * These ioctls can be used on filesystems that support fs-verity.  See the
-+ * "User API" section of Documentation/filesystems/fsverity.rst.
-+ *
-+ * Copyright 2019 Google LLC
-+ */
-+#ifndef _UAPI_LINUX_FSVERITY_H
-+#define _UAPI_LINUX_FSVERITY_H
-+
-+#include <linux/ioctl.h>
-+#include <linux/types.h>
-+
-+#define FS_VERITY_HASH_ALG_SHA256	1
-+
-+struct fsverity_enable_arg {
-+	__u32 version;
-+	__u32 hash_algorithm;
-+	__u32 block_size;
-+	__u32 salt_size;
-+	__u64 salt_ptr;
-+	__u32 sig_size;
-+	__u32 __reserved1;
-+	__u64 sig_ptr;
-+	__u64 __reserved2[11];
-+};
-+
-+struct fsverity_digest {
-+	__u16 digest_algorithm;
-+	__u16 digest_size; /* input/output */
-+	__u8 digest[];
-+};
-+
-+#define FS_IOC_ENABLE_VERITY	_IOW('f', 133, struct fsverity_enable_arg)
-+#define FS_IOC_MEASURE_VERITY	_IOWR('f', 134, struct fsverity_digest)
-+
-+#endif /* _UAPI_LINUX_FSVERITY_H */
+@@ -14,6 +14,7 @@
+ #include <linux/types.h>
+ 
+ #define FS_VERITY_HASH_ALG_SHA256	1
++#define FS_VERITY_HASH_ALG_SHA512	2
+ 
+ struct fsverity_enable_arg {
+ 	__u32 version;
 -- 
 2.22.0.410.gd8fdbe21b5-goog
