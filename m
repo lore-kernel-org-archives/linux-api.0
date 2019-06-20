@@ -1,92 +1,38 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH] samples: make pidfd-metadata fail gracefully on older
- kernels
-Date: Thu, 20 Jun 2019 13:10:37 +0200
-Message-ID: <20190620111036.asi3mbcv4ax5ekrw@brauner.io>
-References: <20190620103105.cdxgqfelzlnkmblv@brauner.io>
- <20190620110037.GA4998@altlinux.org>
+From: Joel Fernandes <joel@joelfernandes.org>
+Subject: Re: [PATCH v1 1/4] mm: introduce MADV_COLD
+Date: Thu, 20 Jun 2019 11:57:09 -0400
+Message-ID: <CAEXW_YSY2GgW_Fp6VN2Qrf0Gr8c71DUgoTzZoq-V2=jFgDEDvQ@mail.gmail.com>
+References: <20190603053655.127730-1-minchan@kernel.org> <20190603053655.127730-2-minchan@kernel.org>
+ <20190604203841.GC228607@google.com> <20190610100904.GC55602@google.com>
+ <20190612172104.GA125771@google.com> <20190613044824.GF55602@google.com>
+ <20190619171340.GA83620@google.com> <20190620050132.GC105727@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190620110037.GA4998@altlinux.org>
+In-Reply-To: <20190620050132.GC105727@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Dmitry V. Levin" <ldv@altlinux.org>
-Cc: Jann Horn <jannh@google.com>, Oleg Nesterov <oleg@redhat.com>, Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Minchan Kim <minchan@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, Jann Horn <jannh@google.com>, Oleg Nesterov <oleg@redhat.com>, Christian Brauner <christian@brauner.io>, oleksandr@redhat.com, hdanton@sina.com, Vladimir Davydov <vdavydov.dev@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jun 20, 2019 at 02:00:37PM +0300, Dmitry V. Levin wrote:
-> Cc'ed more people as the issue is not just with the example but
-> with the interface itself.
-> 
-> On Thu, Jun 20, 2019 at 12:31:06PM +0200, Christian Brauner wrote:
-> > On Thu, Jun 20, 2019 at 06:11:44AM +0300, Dmitry V. Levin wrote:
-> > > Initialize pidfd to an invalid descriptor, to fail gracefully on
-> > > those kernels that do not implement CLONE_PIDFD and leave pidfd
-> > > unchanged.
-> > > 
-> > > Signed-off-by: Dmitry V. Levin <ldv@altlinux.org>
-> > > ---
-> > >  samples/pidfd/pidfd-metadata.c | 8 ++++++--
-> > >  1 file changed, 6 insertions(+), 2 deletions(-)
-> > > 
-> > > diff --git a/samples/pidfd/pidfd-metadata.c b/samples/pidfd/pidfd-metadata.c
-> > > index 14b454448429..ff109fdac3a5 100644
-> > > --- a/samples/pidfd/pidfd-metadata.c
-> > > +++ b/samples/pidfd/pidfd-metadata.c
-> > > @@ -83,7 +83,7 @@ static int pidfd_metadata_fd(pid_t pid, int pidfd)
-> > >  
-> > >  int main(int argc, char *argv[])
-> > >  {
-> > > -	int pidfd = 0, ret = EXIT_FAILURE;
-> > > +	int pidfd = -1, ret = EXIT_FAILURE;
-> > 
-> > Hm, that currently won't work since we added a check in fork.c for
-> > pidfd == 0. If it isn't you'll get EINVAL.
-> 
-> Sorry, I must've missed that check.  But this makes things even worse.
-> 
-> > This was done to ensure that
-> > we can potentially extend CLONE_PIDFD by passing in flags through the
-> > return argument.
-> > However, I find this increasingly unlikely. Especially since the
-> > interface would be horrendous and an absolute last resort.
-> > If clone3() gets merged for 5.3 (currently in linux-next) we also have
-> > no real need anymore to extend legacy clone() this way. So either wait
-> > until (if) we merge clone3() where the check I mentioned is gone anyway,
-> > or remove the pidfd == 0 check from fork.c in a preliminary patch.
-> > Thoughts?
-> 
-> Userspace needs a reliable way to tell whether CLONE_PIDFD is supported
-> by the kernel or not.
+On Thu, Jun 20, 2019 at 1:01 AM Minchan Kim <minchan@kernel.org> wrote:
+[snip]
+> > > >
+> > > > I think to fix this, what you should do is clear the PG_Idle flag if the
+> > > > young/accessed PTE bits are set. If PG_Idle is already cleared, then you
+> > > > don't need to do anything.
+> > >
+> > > I'm not sure. What does it make MADV_COLD special?
+> > > How about MADV_FREE|MADV_DONTNEED?
+> > > Why don't they clear PG_Idle if pte was young at tearing down pte?
+> >
+> > Good point, so it sounds like those (MADV_FREE|MADV_DONTNEED) also need to be fixed then?
+>
+> Not sure. If you want it, maybe you need to fix every pte clearing and pte_mkold
+> part, which is more general to cover every sites like munmap, get_user_pages and
+> so on. Anyway, I don't think it's related to this patchset.
 
-Right, that's the general problem with legacy clone(): it ignores
-unknown flags... clone3() will EINVAL you if you pass any flag it
-doesn't know about.
+Ok, I can look into this issue on my own when I get time. I'll add it
+to my list. No problems with your patch otherwise from my side.
 
-For legacy clone you can pass
-
-(CLONE_PIDFD | CLONE_DETACHED)
-
-on all relevant kernels >= 2.6.2. CLONE_DETACHED will be silently
-ignored by the kernel if specified in flags. But if you specify both
-CLONE_PIDFD and CLONE_DETACHED on a kernel that does support CLONE_PIDFD
-you'll get EINVALed. (We did this because we wanted to have the ability
-to make CLONE_DETACHED reuseable with CLONE_PIDFD.)
-Does that help?
-
-> 
-> If CLONE_PIDFD is not supported, then pidfd remains unchanged.
-> 
-> If CLONE_PIDFD is supported and fd 0 is closed, then mandatory pidfd == 0
-> also remains unchanged, which effectively means that userspace must ensure
-> that fd 0 is not closed when invoking CLONE_PIDFD.  This is ugly.
-> 
-> If we can assume that clone(CLONE_PIDFD) is not going to be extended,
-> then I'm for removing the pidfd == 0 check along with recommending
-> userspace to initialize pidfd with -1.
-
-Right, I'm ok with that too.
-
-Thanks!
-Christian
+ -Joel
