@@ -1,107 +1,71 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: Re: [PATCH v2 4/5] mm: introduce MADV_PAGEOUT
-Date: Thu, 20 Jun 2019 13:16:20 +0900
-Message-ID: <20190620041620.GB105727@google.com>
-References: <20190610111252.239156-1-minchan@kernel.org>
- <20190610111252.239156-5-minchan@kernel.org>
- <20190619132450.GQ2968@dhcp22.suse.cz>
+From: Ian Kent <raven@themaw.net>
+Subject: Re: [PATCH 05/13] vfs: don't parse "silent" option
+Date: Thu, 20 Jun 2019 12:40:26 +0800
+Message-ID: <1ea8ec52ce19499f021510b5c9e38be8d8ebe38f.camel@themaw.net>
+References: <20190619123019.30032-1-mszeredi@redhat.com>
+         <20190619123019.30032-5-mszeredi@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190619132450.GQ2968@dhcp22.suse.cz>
+In-Reply-To: <20190619123019.30032-5-mszeredi@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, jannh@google.com, oleg@redhat.com, christian@brauner.io, oleksandr@redhat.com, hdanton@sina.com, lizeb@google.com
+To: Miklos Szeredi <mszeredi@redhat.com>, David Howells <dhowells@redhat.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jun 19, 2019 at 03:24:50PM +0200, Michal Hocko wrote:
-> On Mon 10-06-19 20:12:51, Minchan Kim wrote:
-> [...]
-> > +static int madvise_pageout_pte_range(pmd_t *pmd, unsigned long addr,
-> > +				unsigned long end, struct mm_walk *walk)
+On Wed, 2019-06-19 at 14:30 +0200, Miklos Szeredi wrote:
+> While this is a standard option as documented in mount(8), it is ignored by
+> most filesystems.  So reject, unless filesystem explicitly wants to handle
+> it.
 > 
-> Again the same question about a potential code reuse...
-> [...]
-> > +regular_page:
-> > +	tlb_change_page_size(tlb, PAGE_SIZE);
-> > +	orig_pte = pte = pte_offset_map_lock(vma->vm_mm, pmd, addr, &ptl);
-> > +	flush_tlb_batched_pending(mm);
-> > +	arch_enter_lazy_mmu_mode();
-> > +	for (; addr < end; pte++, addr += PAGE_SIZE) {
-> > +		ptent = *pte;
-> > +		if (!pte_present(ptent))
-> > +			continue;
-> > +
-> > +		page = vm_normal_page(vma, addr, ptent);
-> > +		if (!page)
-> > +			continue;
-> > +
-> > +		if (isolate_lru_page(page))
-> > +			continue;
-> > +
-> > +		isolated++;
-> > +		if (pte_young(ptent)) {
-> > +			ptent = ptep_get_and_clear_full(mm, addr, pte,
-> > +							tlb->fullmm);
-> > +			ptent = pte_mkold(ptent);
-> > +			set_pte_at(mm, addr, pte, ptent);
-> > +			tlb_remove_tlb_entry(tlb, pte, addr);
-> > +		}
-> > +		ClearPageReferenced(page);
-> > +		test_and_clear_page_young(page);
-> > +		list_add(&page->lru, &page_list);
-> > +		if (isolated >= SWAP_CLUSTER_MAX) {
+> The exception is unconverted filesystems, where it is unknown if the
+> filesystem handles this or not.
 > 
-> Why do we need SWAP_CLUSTER_MAX batching? Especially when we need ...
-> [...]
+> Any implementation, such as mount(8) that needs to parse this option
+> without failing should simply ignore the return value from fsconfig().
 
-It aims for preventing early OOM kill since we isolate too many LRU
-pages concurrently.
+In theory this is fine but every time someone has attempted
+to change the handling of this in the past autofs has had
+problems so I'm a bit wary of the change.
+
+It was originally meant to tell the file system to ignore
+invalid options such as could be found in automount maps that
+are used with multiple OS implementations that have differences
+in their options.
+
+That was, IIRC, primarily NFS although NFS should handle most
+(if not all of those) cases these days.
+
+Nevertheless I'm a bit nervous about it, ;)
 
 > 
-> > +unsigned long reclaim_pages(struct list_head *page_list)
-> > +{
-> > +	int nid = -1;
-> > +	unsigned long nr_reclaimed = 0;
-> > +	LIST_HEAD(node_page_list);
-> > +	struct reclaim_stat dummy_stat;
-> > +	struct scan_control sc = {
-> > +		.gfp_mask = GFP_KERNEL,
-> > +		.priority = DEF_PRIORITY,
-> > +		.may_writepage = 1,
-> > +		.may_unmap = 1,
-> > +		.may_swap = 1,
-> > +	};
-> > +
-> > +	while (!list_empty(page_list)) {
-> > +		struct page *page;
-> > +
-> > +		page = lru_to_page(page_list);
-> > +		if (nid == -1) {
-> > +			nid = page_to_nid(page);
-> > +			INIT_LIST_HEAD(&node_page_list);
-> > +		}
-> > +
-> > +		if (nid == page_to_nid(page)) {
-> > +			list_move(&page->lru, &node_page_list);
-> > +			continue;
-> > +		}
-> > +
-> > +		nr_reclaimed += shrink_page_list(&node_page_list,
-> > +						NODE_DATA(nid),
-> > +						&sc, 0,
-> > +						&dummy_stat, false);
+> Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
+> ---
+>  fs/fs_context.c | 4 +++-
+>  1 file changed, 3 insertions(+), 1 deletion(-)
 > 
-> per-node batching in fact. Other than that nothing really jumped at me.
-> Except for the shared page cache side channel timing aspect not being
-> considered AFAICS. To be more specific. Pushing out a shared page cache
-> is possible even now but this interface gives a much easier tool to
-> evict shared state and perform all sorts of timing attacks. Unless I am
-> missing something we should be doing something similar to mincore and
-> ignore shared pages without a writeable access or at least document why
-> we do not care.
-
-I'm not sure IIUC side channel attach. As you mentioned, without this syscall,
-1. they already can do that simply by memory hogging
-2. If we need fix MADV_PAGEOUT, that means we need to fix MADV_DONTNEED, too?
+> diff --git a/fs/fs_context.c b/fs/fs_context.c
+> index 49636e541293..c26b353aa858 100644
+> --- a/fs/fs_context.c
+> +++ b/fs/fs_context.c
+> @@ -51,7 +51,6 @@ static const struct constant_table common_clear_sb_flag[] =
+> {
+>  	{ "nolazytime",	SB_LAZYTIME },
+>  	{ "nomand",	SB_MANDLOCK },
+>  	{ "rw",		SB_RDONLY },
+> -	{ "silent",	SB_SILENT },
+>  };
+>  
+>  /*
+> @@ -535,6 +534,9 @@ static int legacy_parse_param(struct fs_context *fc,
+> struct fs_parameter *param)
+>  	if (ret != -ENOPARAM)
+>  		return ret;
+>  
+> +	if (strcmp(param->key, "silent") == 0)
+> +		fc->sb_flags |= SB_SILENT;
+> +
+>  	if (strcmp(param->key, "source") == 0) {
+>  		if (param->type != fs_value_is_string)
+>  			return invalf(fc, "VFS: Legacy: Non-string source");
