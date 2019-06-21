@@ -1,76 +1,106 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V33 21/30] x86/mmiotrace: Lock down the testmmiotrace module
-Date: Thu, 20 Jun 2019 18:19:32 -0700
-Message-ID: <20190621011941.186255-22-matthewgarrett@google.com>
+Subject: [PATCH V33 24/30] bpf: Restrict bpf when kernel lockdown is in
+ confidentiality mode
+Date: Thu, 20 Jun 2019 18:19:35 -0700
+Message-ID: <20190621011941.186255-25-matthewgarrett@google.com>
 References: <20190621011941.186255-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <netdev-owner@vger.kernel.org>
 In-Reply-To: <20190621011941.186255-1-matthewgarrett@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: netdev-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Matthew Garrett <mjg59@google.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org
+Cc: linux-security@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Alexei Starovoitov <alexei.starovoitov@gmail.com>, Matthew Garrett <mjg59@google.com>, netdev@vger.kernel.org, Chun-Yi Lee <jlee@suse.com>, Daniel Borkmann <daniel@iogearbox.net>
 List-Id: linux-api@vger.kernel.org
 
 From: David Howells <dhowells@redhat.com>
 
-The testmmiotrace module shouldn't be permitted when the kernel is locked
-down as it can be used to arbitrarily read and write MMIO space. This is
-a runtime check rather than buildtime in order to allow configurations
-where the same kernel may be run in both locked down or permissive modes
-depending on local policy.
+There are some bpf functions can be used to read kernel memory:
+bpf_probe_read, bpf_probe_write_user and bpf_trace_printk.  These allow
+private keys in kernel memory (e.g. the hibernation image signing key) to
+be read by an eBPF program and kernel memory to be altered without
+restriction. Disable them if the kernel has been locked down in
+confidentiality mode.
 
-Suggested-by: Thomas Gleixner <tglx@linutronix.de>
-Signed-off-by: David Howells <dhowells@redhat.com
+Suggested-by: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Matthew Garrett <mjg59@google.com>
-cc: Thomas Gleixner <tglx@linutronix.de>
-cc: Steven Rostedt <rostedt@goodmis.org>
-cc: Ingo Molnar <mingo@kernel.org>
-cc: "H. Peter Anvin" <hpa@zytor.com>
-cc: x86@kernel.org
+cc: netdev@vger.kernel.org
+cc: Chun-Yi Lee <jlee@suse.com>
+cc: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Cc: Daniel Borkmann <daniel@iogearbox.net>
 ---
- arch/x86/mm/testmmiotrace.c  | 3 +++
- include/linux/security.h     | 1 +
- security/lockdown/lockdown.c | 1 +
- 3 files changed, 5 insertions(+)
+ include/linux/security.h     |  1 +
+ kernel/trace/bpf_trace.c     | 11 +++++++++++
+ security/lockdown/lockdown.c |  1 +
+ 3 files changed, 13 insertions(+)
 
-diff --git a/arch/x86/mm/testmmiotrace.c b/arch/x86/mm/testmmiotrace.c
-index f6ae6830b341..a6b204f9f505 100644
---- a/arch/x86/mm/testmmiotrace.c
-+++ b/arch/x86/mm/testmmiotrace.c
-@@ -115,6 +115,9 @@ static int __init init(void)
- {
- 	unsigned long size = (read_far) ? (8 << 20) : (16 << 10);
- 
-+	if (security_is_locked_down(LOCKDOWN_MMIOTRACE))
-+		return -EPERM;
-+
- 	if (mmio_address == 0) {
- 		pr_err("you have to use the module argument mmio_address.\n");
- 		pr_err("DO NOT LOAD THIS MODULE UNLESS YOU REALLY KNOW WHAT YOU ARE DOING!\n");
 diff --git a/include/linux/security.h b/include/linux/security.h
-index 47ca04ac00f6..89b7adfae525 100644
+index dae4aa83352c..8bf426cdd151 100644
 --- a/include/linux/security.h
 +++ b/include/linux/security.h
-@@ -93,6 +93,7 @@ enum lockdown_reason {
- 	LOCKDOWN_PCMCIA_CIS,
- 	LOCKDOWN_TIOCSSERIAL,
- 	LOCKDOWN_MODULE_PARAMETERS,
-+	LOCKDOWN_MMIOTRACE,
+@@ -97,6 +97,7 @@ enum lockdown_reason {
  	LOCKDOWN_INTEGRITY_MAX,
+ 	LOCKDOWN_KCORE,
+ 	LOCKDOWN_KPROBES,
++	LOCKDOWN_BPF,
  	LOCKDOWN_CONFIDENTIALITY_MAX,
  };
+ 
+diff --git a/kernel/trace/bpf_trace.c b/kernel/trace/bpf_trace.c
+index d64c00afceb5..6f57485df840 100644
+--- a/kernel/trace/bpf_trace.c
++++ b/kernel/trace/bpf_trace.c
+@@ -137,6 +137,9 @@ BPF_CALL_3(bpf_probe_read, void *, dst, u32, size, const void *, unsafe_ptr)
+ {
+ 	int ret;
+ 
++	if (security_is_locked_down(LOCKDOWN_BPF))
++		return -EINVAL;
++
+ 	ret = probe_kernel_read(dst, unsafe_ptr, size);
+ 	if (unlikely(ret < 0))
+ 		memset(dst, 0, size);
+@@ -156,6 +159,8 @@ static const struct bpf_func_proto bpf_probe_read_proto = {
+ BPF_CALL_3(bpf_probe_write_user, void *, unsafe_ptr, const void *, src,
+ 	   u32, size)
+ {
++	if (security_is_locked_down(LOCKDOWN_BPF))
++		return -EINVAL;
+ 	/*
+ 	 * Ensure we're in user context which is safe for the helper to
+ 	 * run. This helper has no business in a kthread.
+@@ -207,6 +212,9 @@ BPF_CALL_5(bpf_trace_printk, char *, fmt, u32, fmt_size, u64, arg1,
+ 	char buf[64];
+ 	int i;
+ 
++	if (security_is_locked_down(LOCKDOWN_BPF))
++		return -EINVAL;
++
+ 	/*
+ 	 * bpf_check()->check_func_arg()->check_stack_boundary()
+ 	 * guarantees that fmt points to bpf program stack,
+@@ -534,6 +542,9 @@ BPF_CALL_3(bpf_probe_read_str, void *, dst, u32, size,
+ {
+ 	int ret;
+ 
++	if (security_is_locked_down(LOCKDOWN_BPF))
++		return -EINVAL;
++
+ 	/*
+ 	 * The strncpy_from_unsafe() call will likely not fill the entire
+ 	 * buffer, but that's okay in this circumstance as we're probing
 diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
-index 0788d4805449..215615e67237 100644
+index 89ad853daec2..0a3bbf1ba01d 100644
 --- a/security/lockdown/lockdown.c
 +++ b/security/lockdown/lockdown.c
-@@ -29,6 +29,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
- 	[LOCKDOWN_PCMCIA_CIS] = "direct PCMCIA CIS storage",
- 	[LOCKDOWN_TIOCSSERIAL] = "reconfiguration of serial port IO",
- 	[LOCKDOWN_MODULE_PARAMETERS] = "unsafe module parameters",
-+	[LOCKDOWN_MMIOTRACE] = "unsafe mmio",
+@@ -33,6 +33,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
  	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
+ 	[LOCKDOWN_KCORE] = "/proc/kcore access",
+ 	[LOCKDOWN_KPROBES] = "use of kprobes",
++	[LOCKDOWN_BPF] = "use of bpf",
  	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
  };
+ 
 -- 
 2.22.0.410.gd8fdbe21b5-goog
