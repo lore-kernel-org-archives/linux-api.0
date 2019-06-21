@@ -1,7 +1,7 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V33 25/30] Lock down perf when in confidentiality mode
-Date: Thu, 20 Jun 2019 18:19:36 -0700
-Message-ID: <20190621011941.186255-26-matthewgarrett@google.com>
+Subject: [PATCH V33 22/30] Lock down /proc/kcore
+Date: Thu, 20 Jun 2019 18:19:33 -0700
+Message-ID: <20190621011941.186255-23-matthewgarrett@google.com>
 References: <20190621011941.186255-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -9,62 +9,65 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190621011941.186255-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@redhat.com>, Arnaldo Carvalho de Melo <acme@kernel.org>
+Cc: linux-security@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>
 List-Id: linux-api@vger.kernel.org
 
 From: David Howells <dhowells@redhat.com>
 
-Disallow the use of certain perf facilities that might allow userspace to
-access kernel data.
+Disallow access to /proc/kcore when the kernel is locked down to prevent
+access to cryptographic data. This is limited to lockdown
+confidentiality mode and is still permitted in integrity mode.
 
 Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Matthew Garrett <mjg59@google.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Arnaldo Carvalho de Melo <acme@kernel.org>
 ---
+ fs/proc/kcore.c              | 3 +++
  include/linux/security.h     | 1 +
- kernel/events/core.c         | 5 +++++
  security/lockdown/lockdown.c | 1 +
- 3 files changed, 7 insertions(+)
+ 3 files changed, 5 insertions(+)
 
+diff --git a/fs/proc/kcore.c b/fs/proc/kcore.c
+index d29d869abec1..b410a16b1960 100644
+--- a/fs/proc/kcore.c
++++ b/fs/proc/kcore.c
+@@ -31,6 +31,7 @@
+ #include <linux/ioport.h>
+ #include <linux/memory.h>
+ #include <linux/sched/task.h>
++#include <linux/security.h>
+ #include <asm/sections.h>
+ #include "internal.h"
+ 
+@@ -545,6 +546,8 @@ read_kcore(struct file *file, char __user *buffer, size_t buflen, loff_t *fpos)
+ 
+ static int open_kcore(struct inode *inode, struct file *filp)
+ {
++	if (security_is_locked_down(LOCKDOWN_KCORE))
++		return -EPERM;
+ 	if (!capable(CAP_SYS_RAWIO))
+ 		return -EPERM;
+ 
 diff --git a/include/linux/security.h b/include/linux/security.h
-index 8bf426cdd151..36a9daa13bb0 100644
+index 89b7adfae525..6752584729e2 100644
 --- a/include/linux/security.h
 +++ b/include/linux/security.h
-@@ -98,6 +98,7 @@ enum lockdown_reason {
- 	LOCKDOWN_KCORE,
- 	LOCKDOWN_KPROBES,
- 	LOCKDOWN_BPF,
-+	LOCKDOWN_PERF,
+@@ -95,6 +95,7 @@ enum lockdown_reason {
+ 	LOCKDOWN_MODULE_PARAMETERS,
+ 	LOCKDOWN_MMIOTRACE,
+ 	LOCKDOWN_INTEGRITY_MAX,
++	LOCKDOWN_KCORE,
  	LOCKDOWN_CONFIDENTIALITY_MAX,
  };
  
-diff --git a/kernel/events/core.c b/kernel/events/core.c
-index 72d06e302e99..ac1045caa44d 100644
---- a/kernel/events/core.c
-+++ b/kernel/events/core.c
-@@ -10731,6 +10731,11 @@ SYSCALL_DEFINE5(perf_event_open,
- 			return -EINVAL;
- 	}
- 
-+	if ((attr.sample_type & PERF_SAMPLE_REGS_INTR) &&
-+	    security_is_locked_down(LOCKDOWN_PERF))
-+		/* REGS_INTR can leak data, lockdown must prevent this */
-+		return -EPERM;
-+
- 	/* Only privileged users can get physical addresses */
- 	if ((attr.sample_type & PERF_SAMPLE_PHYS_ADDR) &&
- 	    perf_paranoid_kernel() && !capable(CAP_SYS_ADMIN))
 diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
-index 0a3bbf1ba01d..14edc475d75c 100644
+index 215615e67237..80ff4a31d8aa 100644
 --- a/security/lockdown/lockdown.c
 +++ b/security/lockdown/lockdown.c
-@@ -34,6 +34,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
- 	[LOCKDOWN_KCORE] = "/proc/kcore access",
- 	[LOCKDOWN_KPROBES] = "use of kprobes",
- 	[LOCKDOWN_BPF] = "use of bpf",
-+	[LOCKDOWN_PERF] = "unsafe use of perf",
+@@ -31,6 +31,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
+ 	[LOCKDOWN_MODULE_PARAMETERS] = "unsafe module parameters",
+ 	[LOCKDOWN_MMIOTRACE] = "unsafe mmio",
+ 	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
++	[LOCKDOWN_KCORE] = "/proc/kcore access",
  	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
  };
  
