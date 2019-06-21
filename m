@@ -1,97 +1,149 @@
-From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V33 02/30] security: Add a "locked down" LSM hook
-Date: Thu, 20 Jun 2019 18:19:13 -0700
-Message-ID: <20190621011941.186255-3-matthewgarrett@google.com>
-References: <20190621011941.186255-1-matthewgarrett@google.com>
+From: Eric Biggers <ebiggers@kernel.org>
+Subject: Re: [PATCH v5 14/16] ext4: add basic fs-verity support
+Date: Thu, 20 Jun 2019 20:17:36 -0700
+Message-ID: <20190621031736.GA742@sol.localdomain>
+References: <20190620205043.64350-1-ebiggers@kernel.org>
+ <20190620205043.64350-15-ebiggers@kernel.org>
+ <20190620235938.GE5375@magnolia>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190621011941.186255-1-matthewgarrett@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: jmorris@namei.org
-Cc: linux-security@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Matthew Garrett <matthewgarrett@google.com>, Matthew Garrett <mjg59@google.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+Content-Disposition: inline
+In-Reply-To: <20190620235938.GE5375@magnolia>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+To: "Darrick J. Wong" <darrick.wong@oracle.com>
+Cc: "Theodore Y . Ts'o" <tytso@mit.edu>, linux-api@vger.kernel.org, Dave Chinner <david@fromorbit.com>, linux-f2fs-devel@lists.sourceforge.net, linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, linux-integrity@vger.kernel.org, linux-ext4@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Christoph Hellwig <hch@lst.de>, Victor Hsieh <victorhsieh@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Add a mechanism to allow LSMs to make a policy decision around whether
-kernel functionality that would allow tampering with or examining the
-runtime state of the kernel should be permitted.
+Hi Darrick,
 
-Signed-off-by: Matthew Garrett <mjg59@google.com>
----
- include/linux/lsm_hooks.h |  2 ++
- include/linux/security.h  | 11 +++++++++++
- security/security.c       |  6 ++++++
- 3 files changed, 19 insertions(+)
+On Thu, Jun 20, 2019 at 04:59:38PM -0700, Darrick J. Wong wrote:
+> > diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+> > index 1cb67859e0518b..5a1deea3fb3e37 100644
+> > --- a/fs/ext4/ext4.h
+> > +++ b/fs/ext4/ext4.h
+> > @@ -41,6 +41,7 @@
+> >  #endif
+> >  
+> >  #include <linux/fscrypt.h>
+> > +#include <linux/fsverity.h>
+> >  
+> >  #include <linux/compiler.h>
+> >  
+> > @@ -395,6 +396,7 @@ struct flex_groups {
+> >  #define EXT4_TOPDIR_FL			0x00020000 /* Top of directory hierarchies*/
+> >  #define EXT4_HUGE_FILE_FL               0x00040000 /* Set to each huge file */
+> >  #define EXT4_EXTENTS_FL			0x00080000 /* Inode uses extents */
+> > +#define EXT4_VERITY_FL			0x00100000 /* Verity protected inode */
+> 
+> Hmm, a new inode flag, superblock rocompat feature flag, and
+> (presumably) the Merkle tree has some sort of well defined format which
+> starts at the next 64k boundary past EOF.
+> 
+> Would you mind updating the relevant parts of the ondisk format
+> documentation in Documentation/filesystems/ext4/, please?
+> 
+> I saw that the Merkle tree and verity descriptor formats themselves are
+> documented in the first patch, so you could simply link the ext4
+> documentation to it.
+> 
 
-diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
-index 66fd1eac7a32..df2aebc99838 100644
---- a/include/linux/lsm_hooks.h
-+++ b/include/linux/lsm_hooks.h
-@@ -1790,6 +1790,7 @@ union security_list_options {
- 	int (*bpf_prog_alloc_security)(struct bpf_prog_aux *aux);
- 	void (*bpf_prog_free_security)(struct bpf_prog_aux *aux);
- #endif /* CONFIG_BPF_SYSCALL */
-+	int (*locked_down)(enum lockdown_reason what);
- };
- 
- struct security_hook_heads {
-@@ -2027,6 +2028,7 @@ struct security_hook_heads {
- 	struct hlist_head bpf_prog_alloc_security;
- 	struct hlist_head bpf_prog_free_security;
- #endif /* CONFIG_BPF_SYSCALL */
-+	struct hlist_head locked_down;
- } __randomize_layout;
- 
- /*
-diff --git a/include/linux/security.h b/include/linux/security.h
-index 1bb6fb2f1523..b75941c811e6 100644
---- a/include/linux/security.h
-+++ b/include/linux/security.h
-@@ -76,6 +76,12 @@ enum lsm_event {
- 	LSM_POLICY_CHANGE,
- };
- 
-+enum lockdown_reason {
-+	LOCKDOWN_NONE,
-+	LOCKDOWN_INTEGRITY_MAX,
-+	LOCKDOWN_CONFIDENTIALITY_MAX,
-+};
-+
- /* These functions are in security/commoncap.c */
- extern int cap_capable(const struct cred *cred, struct user_namespace *ns,
- 		       int cap, unsigned int opts);
-@@ -389,6 +395,7 @@ void security_inode_invalidate_secctx(struct inode *inode);
- int security_inode_notifysecctx(struct inode *inode, void *ctx, u32 ctxlen);
- int security_inode_setsecctx(struct dentry *dentry, void *ctx, u32 ctxlen);
- int security_inode_getsecctx(struct inode *inode, void **ctx, u32 *ctxlen);
-+int security_is_locked_down(enum lockdown_reason what);
- #else /* CONFIG_SECURITY */
- 
- static inline int call_lsm_notifier(enum lsm_event event, void *data)
-@@ -1189,6 +1196,10 @@ static inline int security_inode_getsecctx(struct inode *inode, void **ctx, u32
- {
- 	return -EOPNOTSUPP;
- }
-+static inline int security_is_locked_down(enum lockdown_reason what)
-+{
-+	return 0;
-+}
- #endif	/* CONFIG_SECURITY */
- 
- #ifdef CONFIG_SECURITY_NETWORK
-diff --git a/security/security.c b/security/security.c
-index 2a6672c9e72f..17c17d4d8552 100644
---- a/security/security.c
-+++ b/security/security.c
-@@ -2378,3 +2378,9 @@ void security_bpf_prog_free(struct bpf_prog_aux *aux)
- 	call_void_hook(bpf_prog_free_security, aux);
- }
- #endif /* CONFIG_BPF_SYSCALL */
-+
-+int security_is_locked_down(enum lockdown_reason what)
-+{
-+	return call_int_hook(locked_down, 0, what);
-+}
-+EXPORT_SYMBOL(security_is_locked_down);
--- 
-2.22.0.410.gd8fdbe21b5-goog
+Sure, I'll update the ext4 documentation.
+
+> > +/*
+> > + * Read some verity metadata from the inode.  __vfs_read() can't be used because
+> > + * we need to read beyond i_size.
+> > + */
+> > +static int pagecache_read(struct inode *inode, void *buf, size_t count,
+> > +			  loff_t pos)
+> > +{
+> > +	while (count) {
+> > +		size_t n = min_t(size_t, count,
+> > +				 PAGE_SIZE - offset_in_page(pos));
+> > +		struct page *page;
+> > +		void *addr;
+> > +
+> > +		page = read_mapping_page(inode->i_mapping, pos >> PAGE_SHIFT,
+> > +					 NULL);
+> > +		if (IS_ERR(page))
+> > +			return PTR_ERR(page);
+> > +
+> > +		addr = kmap_atomic(page);
+> > +		memcpy(buf, addr + offset_in_page(pos), n);
+> > +		kunmap_atomic(addr);
+> > +
+> > +		put_page(page);
+> > +
+> > +		buf += n;
+> > +		pos += n;
+> > +		count -= n;
+> > +	}
+> > +	return 0;
+> > +}
+> > +
+> > +/*
+> > + * Write some verity metadata to the inode for FS_IOC_ENABLE_VERITY.
+> > + * kernel_write() can't be used because the file descriptor is readonly.
+> > + */
+> > +static int pagecache_write(struct inode *inode, const void *buf, size_t count,
+> > +			   loff_t pos)
+> > +{
+> > +	while (count) {
+> > +		size_t n = min_t(size_t, count,
+> > +				 PAGE_SIZE - offset_in_page(pos));
+> > +		struct page *page;
+> > +		void *fsdata;
+> > +		void *addr;
+> > +		int res;
+> > +
+> > +		res = pagecache_write_begin(NULL, inode->i_mapping, pos, n, 0,
+> > +					    &page, &fsdata);
+> > +		if (res)
+> > +			return res;
+> > +
+> > +		addr = kmap_atomic(page);
+> > +		memcpy(addr + offset_in_page(pos), buf, n);
+> > +		kunmap_atomic(addr);
+> > +
+> > +		res = pagecache_write_end(NULL, inode->i_mapping, pos, n, n,
+> > +					  page, fsdata);
+> > +		if (res < 0)
+> > +			return res;
+> > +		if (res != n)
+> > +			return -EIO;
+> > +
+> > +		buf += n;
+> > +		pos += n;
+> > +		count -= n;
+> > +	}
+> > +	return 0;
+> > +}
+> 
+> This same code is duplicated in the f2fs patch.  Is there a reason why
+> they don't share this common code?  Even if you have to hide it under
+> fs/verity/ ?
+> 
+
+Yes, pagecache_read() and pagecache_write() are identical between ext4 and f2fs.
+I didn't put them in fs/verity/ because the "metadata past EOF" approach is a
+choice of ext4 and f2fs and not intrinsic to the fs-verity feature itself, so to
+avoid confusion I made the fs/verity/ support layer be completely clean of any
+assumption that that's the way filesystems implement fs-verity.
+
+Also, making the fsverity_operations call back into fs/verity/ adds a little
+extra conceptual complexity about what belongs where, since then we'd have a
+call stack of filesystem => fs/verity/ => filesystem => fs/verity/.
+
+But if people would rather that ext4 and f2fs share these two functions anyway,
+then sure, we could move them into fs/verity/, and other filesystems (if they
+take a different approach to fs-verity) simply won't use them.
+
+- Eric
