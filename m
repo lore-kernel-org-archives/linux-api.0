@@ -1,8 +1,8 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V33 14/30] x86/msr: Restrict MSR access when the kernel is
- locked down
-Date: Thu, 20 Jun 2019 18:19:25 -0700
-Message-ID: <20190621011941.186255-15-matthewgarrett@google.com>
+Subject: [PATCH V33 15/30] ACPI: Limit access to custom_method when the kernel
+ is locked down
+Date: Thu, 20 Jun 2019 18:19:26 -0700
+Message-ID: <20190621011941.186255-16-matthewgarrett@google.com>
 References: <20190621011941.186255-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -10,80 +10,67 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190621011941.186255-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Matthew Garrett <mjg59@srcf.ucam.org>, Matthew Garrett <mjg59@google.com>, David Howells <dhowells@redhat.com>, Kees Cook <keescook@chromium.org>, Thomas Gleixner <tglx@linutronix.de>, x86@kernel.org
+Cc: linux-security@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Matthew Garrett <mjg59@srcf.ucam.org>, Matthew Garrett <mjg59@google.com>, David Howells <dhowells@redhat.com>, linux-acpi@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 From: Matthew Garrett <mjg59@srcf.ucam.org>
 
-Writing to MSRs should not be allowed if the kernel is locked down, since
-it could lead to execution of arbitrary code in kernel mode.  Based on a
-patch by Kees Cook.
+custom_method effectively allows arbitrary access to system memory, making
+it possible for an attacker to circumvent restrictions on module loading.
+Disable it if the kernel is locked down.
 
 Signed-off-by: Matthew Garrett <mjg59@google.com>
 Signed-off-by: David Howells <dhowells@redhat.com>
-Acked-by: Kees Cook <keescook@chromium.org>
-Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
-cc: x86@kernel.org
+cc: linux-acpi@vger.kernel.org
 ---
- arch/x86/kernel/msr.c        | 8 ++++++++
+ drivers/acpi/custom_method.c | 4 ++++
  include/linux/security.h     | 1 +
  security/lockdown/lockdown.c | 1 +
- 3 files changed, 10 insertions(+)
+ 3 files changed, 6 insertions(+)
 
-diff --git a/arch/x86/kernel/msr.c b/arch/x86/kernel/msr.c
-index 4588414e2561..72f0ed5a93c3 100644
---- a/arch/x86/kernel/msr.c
-+++ b/arch/x86/kernel/msr.c
-@@ -39,6 +39,7 @@
- #include <linux/notifier.h>
+diff --git a/drivers/acpi/custom_method.c b/drivers/acpi/custom_method.c
+index aa972dc5cb7e..5c684b09a2d1 100644
+--- a/drivers/acpi/custom_method.c
++++ b/drivers/acpi/custom_method.c
+@@ -8,6 +8,7 @@
  #include <linux/uaccess.h>
- #include <linux/gfp.h>
+ #include <linux/debugfs.h>
+ #include <linux/acpi.h>
 +#include <linux/security.h>
  
- #include <asm/cpufeature.h>
- #include <asm/msr.h>
-@@ -84,6 +85,9 @@ static ssize_t msr_write(struct file *file, const char __user *buf,
- 	int err = 0;
- 	ssize_t bytes = 0;
+ #include "internal.h"
  
-+	if (security_is_locked_down(LOCKDOWN_MSR))
+@@ -29,6 +30,9 @@ static ssize_t cm_write(struct file *file, const char __user * user_buf,
+ 	struct acpi_table_header table;
+ 	acpi_status status;
+ 
++	if (security_is_locked_down(LOCKDOWN_ACPI_TABLES))
 +		return -EPERM;
 +
- 	if (count % 8)
- 		return -EINVAL;	/* Invalid chunk size */
- 
-@@ -135,6 +139,10 @@ static long msr_ioctl(struct file *file, unsigned int ioc, unsigned long arg)
- 			err = -EFAULT;
- 			break;
- 		}
-+		if (security_is_locked_down(LOCKDOWN_MSR)) {
-+			err = -EPERM;
-+			break;
-+		}
- 		err = wrmsr_safe_regs_on_cpu(cpu, regs);
- 		if (err)
- 			break;
+ 	if (!(*ppos)) {
+ 		/* parse the table header to get the table length */
+ 		if (count <= sizeof(struct acpi_table_header))
 diff --git a/include/linux/security.h b/include/linux/security.h
-index 59f0ac7adfa6..81c0968e485f 100644
+index 81c0968e485f..88d0f5d0cd87 100644
 --- a/include/linux/security.h
 +++ b/include/linux/security.h
-@@ -88,6 +88,7 @@ enum lockdown_reason {
- 	LOCKDOWN_HIBERNATION,
+@@ -89,6 +89,7 @@ enum lockdown_reason {
  	LOCKDOWN_PCI_ACCESS,
  	LOCKDOWN_IOPORT,
-+	LOCKDOWN_MSR,
+ 	LOCKDOWN_MSR,
++	LOCKDOWN_ACPI_TABLES,
  	LOCKDOWN_INTEGRITY_MAX,
  	LOCKDOWN_CONFIDENTIALITY_MAX,
  };
 diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
-index 6e426887bb23..a01301972290 100644
+index a01301972290..bfc0e088aa85 100644
 --- a/security/lockdown/lockdown.c
 +++ b/security/lockdown/lockdown.c
-@@ -24,6 +24,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
- 	[LOCKDOWN_HIBERNATION] = "hibernation",
+@@ -25,6 +25,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
  	[LOCKDOWN_PCI_ACCESS] = "direct PCI access",
  	[LOCKDOWN_IOPORT] = "raw io port access",
-+	[LOCKDOWN_MSR] = "raw MSR access",
+ 	[LOCKDOWN_MSR] = "raw MSR access",
++	[LOCKDOWN_ACPI_TABLES] = "modified ACPI tables",
  	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
  	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
  };
