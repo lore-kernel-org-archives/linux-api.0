@@ -1,80 +1,57 @@
-From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V34 14/29] ACPI: Limit access to custom_method when the kernel
- is locked down
-Date: Fri, 21 Jun 2019 17:03:43 -0700
-Message-ID: <20190622000358.19895-15-matthewgarrett@google.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH V34 10/29] hibernate: Disable when the kernel is locked
+ down
+Date: Sat, 22 Jun 2019 19:52:08 +0200
+Message-ID: <20190622175208.GB30317@amd>
 References: <20190622000358.19895-1-matthewgarrett@google.com>
+ <20190622000358.19895-11-matthewgarrett@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: multipart/signed; micalg=pgp-sha1;
+        protocol="application/pgp-signature"; boundary="qlTNgmc+xy1dBmNv"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190622000358.19895-1-matthewgarrett@google.com>
+Content-Disposition: inline
+In-Reply-To: <20190622000358.19895-11-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Matthew Garrett <mjg59@srcf.ucam.org>, Matthew Garrett <mjg59@google.com>, David Howells <dhowells@redhat.com>, linux-acpi@vger.kernel.org
+To: Matthew Garrett <matthewgarrett@google.com>
+Cc: jmorris@namei.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Josh Boyer <jwboyer@fedoraproject.org>, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, rjw@rjwysocki.net, linux-pm@vger.kernel.org, jikos@suse.cz
 List-Id: linux-api@vger.kernel.org
 
-From: Matthew Garrett <mjg59@srcf.ucam.org>
 
-custom_method effectively allows arbitrary access to system memory, making
-it possible for an attacker to circumvent restrictions on module loading.
-Disable it if the kernel is locked down.
+--qlTNgmc+xy1dBmNv
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Signed-off-by: Matthew Garrett <mjg59@google.com>
-Signed-off-by: David Howells <dhowells@redhat.com>
-cc: linux-acpi@vger.kernel.org
----
- drivers/acpi/custom_method.c | 6 ++++++
- include/linux/security.h     | 1 +
- security/lockdown/lockdown.c | 1 +
- 3 files changed, 8 insertions(+)
+On Fri 2019-06-21 17:03:39, Matthew Garrett wrote:
+> From: Josh Boyer <jwboyer@fedoraproject.org>
+>=20
+> There is currently no way to verify the resume image when returning
+> from hibernate.  This might compromise the signed modules trust model,
+> so until we can work with signed hibernate images we disable it when the
+> kernel is locked down.
 
-diff --git a/drivers/acpi/custom_method.c b/drivers/acpi/custom_method.c
-index aa972dc5cb7e..6e56f9f43492 100644
---- a/drivers/acpi/custom_method.c
-+++ b/drivers/acpi/custom_method.c
-@@ -8,6 +8,7 @@
- #include <linux/uaccess.h>
- #include <linux/debugfs.h>
- #include <linux/acpi.h>
-+#include <linux/security.h>
- 
- #include "internal.h"
- 
-@@ -28,6 +29,11 @@ static ssize_t cm_write(struct file *file, const char __user * user_buf,
- 
- 	struct acpi_table_header table;
- 	acpi_status status;
-+	int ret;
-+
-+	ret = security_locked_down(LOCKDOWN_ACPI_TABLES);
-+	if (ret)
-+		return ret;
- 
- 	if (!(*ppos)) {
- 		/* parse the table header to get the table length */
-diff --git a/include/linux/security.h b/include/linux/security.h
-index 30bc6f058926..cc2b5ee4cadd 100644
---- a/include/linux/security.h
-+++ b/include/linux/security.h
-@@ -89,6 +89,7 @@ enum lockdown_reason {
- 	LOCKDOWN_PCI_ACCESS,
- 	LOCKDOWN_IOPORT,
- 	LOCKDOWN_MSR,
-+	LOCKDOWN_ACPI_TABLES,
- 	LOCKDOWN_INTEGRITY_MAX,
- 	LOCKDOWN_CONFIDENTIALITY_MAX,
- };
-diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
-index 297a065e6261..1725224f0024 100644
---- a/security/lockdown/lockdown.c
-+++ b/security/lockdown/lockdown.c
-@@ -25,6 +25,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
- 	[LOCKDOWN_PCI_ACCESS] = "direct PCI access",
- 	[LOCKDOWN_IOPORT] = "raw io port access",
- 	[LOCKDOWN_MSR] = "raw MSR access",
-+	[LOCKDOWN_ACPI_TABLES] = "modified ACPI tables",
- 	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
- 	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
- };
--- 
-2.22.0.410.gd8fdbe21b5-goog
+I keep getting these...
+
+IIRC suse has patches to verify the images.
+								Pavel=20
+
+
+
+--=20
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
+g.html
+
+--qlTNgmc+xy1dBmNv
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iEYEARECAAYFAl0OasgACgkQMOfwapXb+vK4ZwCgroXTYUFxTOMmRgUE1WUOZBSW
+BP8Ani8DLJP1nVX8/NMG2MEgT7nBMDtv
+=9tFP
+-----END PGP SIGNATURE-----
+
+--qlTNgmc+xy1dBmNv--
