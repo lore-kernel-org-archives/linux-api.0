@@ -1,35 +1,33 @@
 From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH V34 07/29] Copy secure_boot flag in boot params across
- kexec reboot
-Date: Sat, 22 Jun 2019 16:53:19 -0700
-Message-ID: <201906221653.DDCB3C898@keescook>
+Subject: Re: [PATCH V34 09/29] kexec_file: Restrict at runtime if the kernel
+ is locked down
+Date: Sat, 22 Jun 2019 16:54:04 -0700
+Message-ID: <201906221654.3E113D1@keescook>
 References: <20190622000358.19895-1-matthewgarrett@google.com>
- <20190622000358.19895-8-matthewgarrett@google.com>
+ <20190622000358.19895-10-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190622000358.19895-8-matthewgarrett@google.com>
+In-Reply-To: <20190622000358.19895-10-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Matthew Garrett <matthewgarrett@google.com>
-Cc: jmorris@namei.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Dave Young <dyoung@redhat.com>, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, kexec@lists.infradead.org
+Cc: jmorris@namei.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Jiri Bohac <jbohac@suse.cz>, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, kexec@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jun 21, 2019 at 05:03:36PM -0700, Matthew Garrett wrote:
-> From: Dave Young <dyoung@redhat.com>
+On Fri, Jun 21, 2019 at 05:03:38PM -0700, Matthew Garrett wrote:
+> From: Jiri Bohac <jbohac@suse.cz>
 > 
-> Kexec reboot in case secure boot being enabled does not keep the secure
-> boot mode in new kernel, so later one can load unsigned kernel via legacy
-> kexec_load.  In this state, the system is missing the protections provided
-> by secure boot.
+> When KEXEC_SIG is not enabled, kernel should not load images through
+> kexec_file systemcall if the kernel is locked down.
 > 
-> Adding a patch to fix this by retain the secure_boot flag in original
-> kernel.
+> [Modified by David Howells to fit with modifications to the previous patch
+>  and to return -EPERM if the kernel is locked down for consistency with
+>  other lockdowns. Modified by Matthew Garrett to remove the IMA
+>  integration, which will be replaced by integrating with the IMA
+>  architecture policy patches.]
 > 
-> secure_boot flag in boot_params is set in EFI stub, but kexec bypasses the
-> stub.  Fixing this issue by copying secure_boot flag across kexec reboot.
-> 
-> Signed-off-by: Dave Young <dyoung@redhat.com>
+> Signed-off-by: Jiri Bohac <jbohac@suse.cz>
 
 Reviewed-by: Kees Cook <keescook@chromium.org>
 
@@ -37,23 +35,28 @@ Reviewed-by: Kees Cook <keescook@chromium.org>
 
 > Signed-off-by: David Howells <dhowells@redhat.com>
 > Signed-off-by: Matthew Garrett <mjg59@google.com>
+> Reviewed-by: Jiri Bohac <jbohac@suse.cz>
 > cc: kexec@lists.infradead.org
 > ---
->  arch/x86/kernel/kexec-bzimage64.c | 1 +
->  1 file changed, 1 insertion(+)
+>  kernel/kexec_file.c | 5 ++++-
+>  1 file changed, 4 insertions(+), 1 deletion(-)
 > 
-> diff --git a/arch/x86/kernel/kexec-bzimage64.c b/arch/x86/kernel/kexec-bzimage64.c
-> index 22f60dd26460..4243359ac509 100644
-> --- a/arch/x86/kernel/kexec-bzimage64.c
-> +++ b/arch/x86/kernel/kexec-bzimage64.c
-> @@ -182,6 +182,7 @@ setup_efi_state(struct boot_params *params, unsigned long params_load_addr,
->  	if (efi_enabled(EFI_OLD_MEMMAP))
->  		return 0;
+> diff --git a/kernel/kexec_file.c b/kernel/kexec_file.c
+> index eec7e5bb2a08..27adb4312b03 100644
+> --- a/kernel/kexec_file.c
+> +++ b/kernel/kexec_file.c
+> @@ -237,7 +237,10 @@ kimage_file_prepare_segments(struct kimage *image, int kernel_fd, int initrd_fd,
+>  			goto out;
+>  		}
 >  
-> +	params->secure_boot = boot_params.secure_boot;
->  	ei->efi_loader_signature = current_ei->efi_loader_signature;
->  	ei->efi_systab = current_ei->efi_systab;
->  	ei->efi_systab_hi = current_ei->efi_systab_hi;
+> -		ret = 0;
+> +		ret = security_locked_down(LOCKDOWN_KEXEC);
+> +		if (ret)
+> +			goto out;
+> +
+>  		break;
+>  
+>  		/* All other errors are fatal, including nomem, unparseable
 > -- 
 > 2.22.0.410.gd8fdbe21b5-goog
 > 
