@@ -1,70 +1,87 @@
 From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH V34 16/29] acpi: Disable ACPI table override if the
- kernel is locked down
-Date: Sat, 22 Jun 2019 17:00:12 -0700
-Message-ID: <201906221700.B1CA4EF77E@keescook>
+Subject: Re: [PATCH V34 17/29] Prohibit PCMCIA CIS storage when the kernel is
+ locked down
+Date: Sat, 22 Jun 2019 17:00:28 -0700
+Message-ID: <201906221700.51ABA736@keescook>
 References: <20190622000358.19895-1-matthewgarrett@google.com>
- <20190622000358.19895-17-matthewgarrett@google.com>
+ <20190622000358.19895-18-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190622000358.19895-17-matthewgarrett@google.com>
+In-Reply-To: <20190622000358.19895-18-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Matthew Garrett <matthewgarrett@google.com>
-Cc: jmorris@namei.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Linn Crosetto <linn@hpe.com>, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, linux-acpi@vger.kernel.org
+Cc: jmorris@namei.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Dominik Brodowski <linux@dominikbrodowski.net>, Matthew Garrett <mjg59@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jun 21, 2019 at 05:03:45PM -0700, Matthew Garrett wrote:
-> From: Linn Crosetto <linn@hpe.com>
+On Fri, Jun 21, 2019 at 05:03:46PM -0700, Matthew Garrett wrote:
+> From: David Howells <dhowells@redhat.com>
 > 
-> From the kernel documentation (initrd_table_override.txt):
+> Prohibit replacement of the PCMCIA Card Information Structure when the
+> kernel is locked down.
 > 
->   If the ACPI_INITRD_TABLE_OVERRIDE compile option is true, it is possible
->   to override nearly any ACPI table provided by the BIOS with an
->   instrumented, modified one.
-> 
-> When lockdown is enabled, the kernel should disallow any unauthenticated
-> changes to kernel space.  ACPI tables contain code invoked by the kernel,
-> so do not allow ACPI tables to be overridden if the kernel is locked down.
-> 
-> Signed-off-by: Linn Crosetto <linn@hpe.com>
+> Suggested-by: Dominik Brodowski <linux@dominikbrodowski.net>
+> Signed-off-by: David Howells <dhowells@redhat.com>
 
 Reviewed-by: Kees Cook <keescook@chromium.org>
 
 -Kees
 
-> Signed-off-by: David Howells <dhowells@redhat.com>
 > Signed-off-by: Matthew Garrett <mjg59@google.com>
-> cc: linux-acpi@vger.kernel.org
 > ---
->  drivers/acpi/tables.c | 6 ++++++
->  1 file changed, 6 insertions(+)
+>  drivers/pcmcia/cistpl.c      | 5 +++++
+>  include/linux/security.h     | 1 +
+>  security/lockdown/lockdown.c | 1 +
+>  3 files changed, 7 insertions(+)
 > 
-> diff --git a/drivers/acpi/tables.c b/drivers/acpi/tables.c
-> index 8fccbe49612a..41d9ccd0e075 100644
-> --- a/drivers/acpi/tables.c
-> +++ b/drivers/acpi/tables.c
-> @@ -34,6 +34,7 @@
->  #include <linux/memblock.h>
->  #include <linux/earlycpio.h>
->  #include <linux/initrd.h>
+> diff --git a/drivers/pcmcia/cistpl.c b/drivers/pcmcia/cistpl.c
+> index ac0672b8dfca..379c53610102 100644
+> --- a/drivers/pcmcia/cistpl.c
+> +++ b/drivers/pcmcia/cistpl.c
+> @@ -24,6 +24,7 @@
+>  #include <linux/pci.h>
+>  #include <linux/ioport.h>
+>  #include <linux/io.h>
 > +#include <linux/security.h>
->  #include "internal.h"
+>  #include <asm/byteorder.h>
+>  #include <asm/unaligned.h>
 >  
->  #ifdef CONFIG_ACPI_CUSTOM_DSDT
-> @@ -539,6 +540,11 @@ void __init acpi_table_upgrade(void)
->  	if (table_nr == 0)
->  		return;
+> @@ -1578,6 +1579,10 @@ static ssize_t pccard_store_cis(struct file *filp, struct kobject *kobj,
+>  	struct pcmcia_socket *s;
+>  	int error;
 >  
-> +	if (security_locked_down(LOCKDOWN_ACPI_TABLES)) {
-> +		pr_notice("kernel is locked down, ignoring table override\n");
-> +		return;
-> +	}
+> +	error = security_locked_down(LOCKDOWN_PCMCIA_CIS);
+> +	if (error)
+> +		return error;
 > +
->  	acpi_tables_addr =
->  		memblock_find_in_range(0, ACPI_TABLE_UPGRADE_MAX_PHYS,
->  				       all_tables_size, PAGE_SIZE);
+>  	s = to_socket(container_of(kobj, struct device, kobj));
+>  
+>  	if (off)
+> diff --git a/include/linux/security.h b/include/linux/security.h
+> index cc2b5ee4cadd..03c125b277ca 100644
+> --- a/include/linux/security.h
+> +++ b/include/linux/security.h
+> @@ -90,6 +90,7 @@ enum lockdown_reason {
+>  	LOCKDOWN_IOPORT,
+>  	LOCKDOWN_MSR,
+>  	LOCKDOWN_ACPI_TABLES,
+> +	LOCKDOWN_PCMCIA_CIS,
+>  	LOCKDOWN_INTEGRITY_MAX,
+>  	LOCKDOWN_CONFIDENTIALITY_MAX,
+>  };
+> diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
+> index 1725224f0024..7be3e8fb5847 100644
+> --- a/security/lockdown/lockdown.c
+> +++ b/security/lockdown/lockdown.c
+> @@ -26,6 +26,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
+>  	[LOCKDOWN_IOPORT] = "raw io port access",
+>  	[LOCKDOWN_MSR] = "raw MSR access",
+>  	[LOCKDOWN_ACPI_TABLES] = "modified ACPI tables",
+> +	[LOCKDOWN_PCMCIA_CIS] = "direct PCMCIA CIS storage",
+>  	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
+>  	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
+>  };
 > -- 
 > 2.22.0.410.gd8fdbe21b5-goog
 > 
