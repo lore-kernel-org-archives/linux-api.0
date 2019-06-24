@@ -1,39 +1,24 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH] samples: make pidfd-metadata fail gracefully on older
- kernels
-Date: Mon, 24 Jun 2019 11:52:50 +0200
-Message-ID: <20190624095250.wtl5t5cewo7scyby@brauner.io>
-References: <20190620103105.cdxgqfelzlnkmblv@brauner.io>
- <20190620110037.GA4998@altlinux.org>
- <20190620111036.asi3mbcv4ax5ekrw@brauner.io>
- <20190621170613.GA26182@altlinux.org>
- <20190621221339.6yj4vg4zexv4y2j7@brauner.io>
- <20190623113230.GC20697@altlinux.org>
+From: David Howells <dhowells@redhat.com>
+Subject: Re: [PATCH 05/13] vfs: don't parse "silent" option
+Date: Mon, 24 Jun 2019 11:36:29 +0100
+Message-ID: <30205.1561372589@warthog.procyon.org.uk>
+References: <CAOssrKcU2JKDYMDbW7V6jpM7_4WFSMA91h9AjpjoYmX=H4ybeg@mail.gmail.com> <20190619123019.30032-1-mszeredi@redhat.com> <20190619123019.30032-5-mszeredi@redhat.com> <1ea8ec52ce19499f021510b5c9e38be8d8ebe38f.camel@themaw.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190623113230.GC20697@altlinux.org>
+In-Reply-To: <CAOssrKcU2JKDYMDbW7V6jpM7_4WFSMA91h9AjpjoYmX=H4ybeg@mail.gmail.com>
+Content-ID: <30204.1561372589.1@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Dmitry V. Levin" <ldv@altlinux.org>
-Cc: Jann Horn <jannh@google.com>, Oleg Nesterov <oleg@redhat.com>, Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Miklos Szeredi <mszeredi@redhat.com>
+Cc: dhowells@redhat.com, Ian Kent <raven@themaw.net>, Al Viro <viro@zeniv.linux.org.uk>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Jun 23, 2019 at 02:32:30PM +0300, Dmitry V. Levin wrote:
-> On Sat, Jun 22, 2019 at 12:13:39AM +0200, Christian Brauner wrote:
-> [...]
-> > Out of curiosity: what makes the new flag different than say
-> > CLONE_NEWCGROUP or any new clone flag that got introduced?
-> > CLONE_NEWCGROUP too would not be detectable apart from the method I gave
-> > you above; same for other clone flags. Why are you so keen on being able
-> > to detect this flag when other flags didn't seem to matter that much.
-> 
-> I wasn't following uapi changes closely enough those days. ;)
+Miklos Szeredi <mszeredi@redhat.com> wrote:
 
-(Seriously, you had one job. :) I'm joking of course.)
+> What I'm saying is that with a new interface the rules need not follow
+> the rules of the old interface, because at the start no one is using
+> the new interface, so no chance of breaking anything.
 
-What you want makes sense to me overall. This way userspace can decide
-easier whether to manage a process through a pidfd or needs to fallback
-to a pid.
+Er. No.  That's not true, since the old interface comes through the new one.
 
-Christian
+David
