@@ -1,7 +1,7 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 18/25] fsinfo: proc - add sb operation fsinfo() [ver #14]
-Date: Mon, 24 Jun 2019 15:11:32 +0100
-Message-ID: <156138549291.25627.9442017015199997555.stgit@warthog.procyon.org.uk>
+Subject: [PATCH 19/25] fsinfo: autofs - add sb operation fsinfo() [ver #14]
+Date: Mon, 24 Jun 2019 15:11:40 +0100
+Message-ID: <156138550021.25627.6768424880434079121.stgit@warthog.procyon.org.uk>
 References: <156138532485.25627.7459410522109581052.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -30,22 +30,22 @@ Signed-off-by: Ian Kent <raven@themaw.net>
 Signed-off-by: David Howells <dhowells@redhat.com>
 ---
 
- fs/proc/inode.c |   37 +++++++++++++++++++++++++++++++++++++
- 1 file changed, 37 insertions(+)
+ fs/autofs/inode.c |   64 +++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 64 insertions(+)
 
-diff --git a/fs/proc/inode.c b/fs/proc/inode.c
-index 5f8d215b3fd0..28c287aff6aa 100644
---- a/fs/proc/inode.c
-+++ b/fs/proc/inode.c
-@@ -24,6 +24,7 @@
- #include <linux/seq_file.h>
- #include <linux/slab.h>
- #include <linux/mount.h>
+diff --git a/fs/autofs/inode.c b/fs/autofs/inode.c
+index 58457ec0ab27..53e794ee2aec 100644
+--- a/fs/autofs/inode.c
++++ b/fs/autofs/inode.c
+@@ -11,6 +11,7 @@
+ #include <linux/pagemap.h>
+ #include <linux/fs_context.h>
+ #include <linux/fs_parser.h>
 +#include <linux/fsinfo.h>
  
- #include <linux/uaccess.h>
+ #include "autofs_i.h"
  
-@@ -115,6 +116,39 @@ static int proc_show_options(struct seq_file *seq, struct dentry *root)
+@@ -101,6 +102,66 @@ static int autofs_show_options(struct seq_file *m, struct dentry *root)
  	return 0;
  }
  
@@ -53,27 +53,54 @@ index 5f8d215b3fd0..28c287aff6aa 100644
 +/*
 + * Get filesystem information.
 + */
-+static int proc_fsinfo(struct path *path, struct fsinfo_kparams *params)
++static int autofs_fsinfo(struct path *path, struct fsinfo_kparams *params)
 +{
-+	struct super_block *sb = path->dentry->d_sb;
-+	struct pid_namespace *pid = sb->s_fs_info;
++	struct autofs_sb_info *sbi = autofs_sbi(path->dentry->d_sb);
++	struct inode *inode = d_inode(path->dentry->d_sb->s_root);
 +	struct fsinfo_capabilities *caps;
 +
 +	switch (params->request) {
 +	case FSINFO_ATTR_CAPABILITIES:
 +		caps = params->buffer;
-+		fsinfo_set_cap(caps, FSINFO_CAP_IS_KERNEL_FS);
++		fsinfo_set_cap(caps, FSINFO_CAP_IS_AUTOMOUNTER_FS);
++		fsinfo_set_cap(caps, FSINFO_CAP_AUTOMOUNTS);
 +		fsinfo_set_cap(caps, FSINFO_CAP_NOT_PERSISTENT);
 +		return sizeof(*caps);
 +
 +	case FSINFO_ATTR_PARAMETERS:
-+		fsinfo_note_sb_params(params, sb->s_flags);
-+		if (!gid_eq(pid->pid_gid, GLOBAL_ROOT_GID))
++		fsinfo_note_sb_params(params, inode->i_sb->s_flags);
++		fsinfo_note_paramf(params, "fd", "%d", sbi->pipefd);
++		if (!uid_eq(inode->i_uid, GLOBAL_ROOT_UID))
++			fsinfo_note_paramf(params, "uid", "%u",
++				from_kuid_munged(&init_user_ns, inode->i_uid));
++		if (!gid_eq(inode->i_gid, GLOBAL_ROOT_GID))
 +			fsinfo_note_paramf(params, "gid", "%u",
-+				from_kgid_munged(&init_user_ns, pid->pid_gid));
-+		if (pid->hide_pid != HIDEPID_OFF)
-+			fsinfo_note_paramf(params, "hidepid",
-+					  "%u", pid->hide_pid);
++				from_kgid_munged(&init_user_ns, inode->i_gid));
++		fsinfo_note_paramf(params, "pgrp", "%d",
++				   pid_vnr(sbi->oz_pgrp));
++		fsinfo_note_paramf(params, "timeout", "%lu",
++				   sbi->exp_timeout/HZ);
++		fsinfo_note_paramf(params, "minproto", "%d",
++				   sbi->min_proto);
++		fsinfo_note_paramf(params, "maxproto", "%d",
++				   sbi->max_proto);
++		if (autofs_type_offset(sbi->type))
++			fsinfo_note_param(params, "offset", NULL);
++		else if (autofs_type_direct(sbi->type))
++			fsinfo_note_param(params, "direct", NULL);
++		else
++			fsinfo_note_param(params, "indirect", NULL);
++		if (sbi->flags & AUTOFS_SBI_STRICTEXPIRE)
++			fsinfo_note_param(params, "strictexpire", NULL);
++		if (sbi->flags & AUTOFS_SBI_IGNORE)
++			fsinfo_note_param(params, "ignore", NULL);
++#ifdef CONFIG_CHECKPOINT_RESTORE
++		if (sbi->pipe)
++			fsinfo_note_paramf(params, "pipe_ino",
++					  "%ld", file_inode(sbi->pipe)->i_ino);
++		else
++			fsinfo_note_param(params, "pipe_ino", "-1");
++#endif
 +		return params->usage;
 +
 +	default:
@@ -82,16 +109,16 @@ index 5f8d215b3fd0..28c287aff6aa 100644
 +}
 +#endif /* CONFIG_FSINFO */
 +
- const struct super_operations proc_sops = {
- 	.alloc_inode	= proc_alloc_inode,
- 	.free_inode	= proc_free_inode,
-@@ -122,6 +156,9 @@ const struct super_operations proc_sops = {
- 	.evict_inode	= proc_evict_inode,
+ static void autofs_evict_inode(struct inode *inode)
+ {
+ 	clear_inode(inode);
+@@ -111,6 +172,9 @@ static const struct super_operations autofs_sops = {
  	.statfs		= simple_statfs,
- 	.show_options	= proc_show_options,
+ 	.show_options	= autofs_show_options,
+ 	.evict_inode	= autofs_evict_inode,
 +#ifdef CONFIG_FSINFO
-+	.fsinfo		= proc_fsinfo,
++	.fsinfo		= autofs_fsinfo,
 +#endif
  };
  
- enum {BIAS = -1U<<31};
+ struct autofs_fs_context {
