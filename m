@@ -1,65 +1,39 @@
 From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH 2/2] samples: make pidfd-metadata fail gracefully on
- older kernels
-Date: Mon, 24 Jun 2019 11:50:48 +0200
-Message-ID: <20190624095047.2ixebkmurvv4qjrk@brauner.io>
+Subject: Re: [PATCH] samples: make pidfd-metadata fail gracefully on older
+ kernels
+Date: Mon, 24 Jun 2019 11:52:50 +0200
+Message-ID: <20190624095250.wtl5t5cewo7scyby@brauner.io>
 References: <20190620103105.cdxgqfelzlnkmblv@brauner.io>
  <20190620110037.GA4998@altlinux.org>
  <20190620111036.asi3mbcv4ax5ekrw@brauner.io>
  <20190621170613.GA26182@altlinux.org>
  <20190621221339.6yj4vg4zexv4y2j7@brauner.io>
- <20190623112717.GA20697@altlinux.org>
- <20190623112800.GB20697@altlinux.org>
+ <20190623113230.GC20697@altlinux.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190623112800.GB20697@altlinux.org>
+In-Reply-To: <20190623113230.GC20697@altlinux.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: "Dmitry V. Levin" <ldv@altlinux.org>
 Cc: Jann Horn <jannh@google.com>, Oleg Nesterov <oleg@redhat.com>, Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Jun 23, 2019 at 02:28:00PM +0300, Dmitry V. Levin wrote:
-> Initialize pidfd to an invalid descriptor, to fail gracefully on
-> those kernels that do not implement CLONE_PIDFD and leave pidfd
-> unchanged.
+On Sun, Jun 23, 2019 at 02:32:30PM +0300, Dmitry V. Levin wrote:
+> On Sat, Jun 22, 2019 at 12:13:39AM +0200, Christian Brauner wrote:
+> [...]
+> > Out of curiosity: what makes the new flag different than say
+> > CLONE_NEWCGROUP or any new clone flag that got introduced?
+> > CLONE_NEWCGROUP too would not be detectable apart from the method I gave
+> > you above; same for other clone flags. Why are you so keen on being able
+> > to detect this flag when other flags didn't seem to matter that much.
 > 
-> Signed-off-by: Dmitry V. Levin <ldv@altlinux.org>
+> I wasn't following uapi changes closely enough those days. ;)
 
-Reviewed-by: Christian Brauner <christian@brauner.io>
+(Seriously, you had one job. :) I'm joking of course.)
 
-Thank you Dmitry, queueing this up for rc7.
+What you want makes sense to me overall. This way userspace can decide
+easier whether to manage a process through a pidfd or needs to fallback
+to a pid.
 
-> ---
->  samples/pidfd/pidfd-metadata.c | 8 ++++++--
->  1 file changed, 6 insertions(+), 2 deletions(-)
-> 
-> diff --git a/samples/pidfd/pidfd-metadata.c b/samples/pidfd/pidfd-metadata.c
-> index 14b454448429..c459155daf9a 100644
-> --- a/samples/pidfd/pidfd-metadata.c
-> +++ b/samples/pidfd/pidfd-metadata.c
-> @@ -83,7 +83,7 @@ static int pidfd_metadata_fd(pid_t pid, int pidfd)
->  
->  int main(int argc, char *argv[])
->  {
-> -	int pidfd = 0, ret = EXIT_FAILURE;
-> +	int pidfd = -1, ret = EXIT_FAILURE;
->  	char buf[4096] = { 0 };
->  	pid_t pid;
->  	int procfd, statusfd;
-> @@ -91,7 +91,11 @@ int main(int argc, char *argv[])
->  
->  	pid = pidfd_clone(CLONE_PIDFD, &pidfd);
->  	if (pid < 0)
-> -		exit(ret);
-> +		err(ret, "CLONE_PIDFD");
-> +	if (pidfd == -1) {
-> +		warnx("CLONE_PIDFD is not supported by the kernel");
-> +		goto out;
-> +	}
->  
->  	procfd = pidfd_metadata_fd(pid, pidfd);
->  	close(pidfd);
-> -- 
-> ldv
+Christian
