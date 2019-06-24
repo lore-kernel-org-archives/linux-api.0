@@ -1,8 +1,7 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 20/25] fsinfo: shmem - add tmpfs sb operation fsinfo() [ver
- #14]
-Date: Mon, 24 Jun 2019 15:11:47 +0100
-Message-ID: <156138550754.25627.3434495073988452560.stgit@warthog.procyon.org.uk>
+Subject: [PATCH 21/25] fsinfo: devpts - add sb operation fsinfo() [ver #14]
+Date: Mon, 24 Jun 2019 15:11:54 +0100
+Message-ID: <156138551486.25627.9996141646216300722.stgit@warthog.procyon.org.uk>
 References: <156138532485.25627.7459410522109581052.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -31,125 +30,70 @@ Signed-off-by: Ian Kent <raven@themaw.net>
 Signed-off-by: David Howells <dhowells@redhat.com>
 ---
 
- mm/shmem.c |   72 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 72 insertions(+)
+ fs/devpts/inode.c |   43 +++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 43 insertions(+)
 
-diff --git a/mm/shmem.c b/mm/shmem.c
-index 38a77ee13db1..1a660ca7042f 100644
---- a/mm/shmem.c
-+++ b/mm/shmem.c
-@@ -39,6 +39,7 @@
- #include <linux/frontswap.h>
- #include <linux/fs_context.h>
- #include <linux/fs_parser.h>
+diff --git a/fs/devpts/inode.c b/fs/devpts/inode.c
+index 3aa73a2ec2f1..6f0eb69f7cbb 100644
+--- a/fs/devpts/inode.c
++++ b/fs/devpts/inode.c
+@@ -28,6 +28,7 @@
+ #include <linux/devpts_fs.h>
+ #include <linux/fsnotify.h>
+ #include <linux/seq_file.h>
 +#include <linux/fsinfo.h>
  
- #include <asm/tlbflush.h> /* for arch/microblaze update_mmu_cache() */
- 
-@@ -1403,6 +1404,20 @@ static void shmem_show_mpol(struct seq_file *seq, struct mempolicy *mpol)
- 	seq_printf(seq, ",mpol=%s", buffer);
- }
- 
-+#ifdef CONFIG_FSINFO
-+static void shmem_fsinfo_mpol(struct fsinfo_kparams *params, struct mempolicy *mpol)
-+{
-+	char buffer[64];
-+
-+	if (!mpol || mpol->mode == MPOL_DEFAULT)
-+		return;		/* show nothing */
-+
-+	mpol_to_str(buffer, sizeof(buffer), mpol);
-+
-+	fsinfo_note_paramf(params, "mpol", "%s", buffer);
-+}
-+#endif
-+
- static struct mempolicy *shmem_get_sbmpol(struct shmem_sb_info *sbinfo)
- {
- 	struct mempolicy *mpol = NULL;
-@@ -1418,6 +1433,11 @@ static struct mempolicy *shmem_get_sbmpol(struct shmem_sb_info *sbinfo)
- static inline void shmem_show_mpol(struct seq_file *seq, struct mempolicy *mpol)
- {
- }
-+#ifdef CONFIG_FSINFO
-+static void shmem_fsinfo_mpol(struct fsinfo_kparams *params, struct mempolicy *mpol)
-+{
-+}
-+#endif
- static inline struct mempolicy *shmem_get_sbmpol(struct shmem_sb_info *sbinfo)
- {
- 	return NULL;
-@@ -3478,7 +3498,9 @@ static int shmem_parse_param(struct fs_context *fc, struct fs_parameter *param)
- 	struct shmem_fs_context *ctx = fc->fs_private;
- 	struct fs_parse_result result;
- 	unsigned long long size;
-+#ifdef CONFIG_NUMA
- 	struct mempolicy *mpol;
-+#endif
- 	char *rest;
- 	int opt;
- 
-@@ -3623,6 +3645,53 @@ static int shmem_show_options(struct seq_file *seq, struct dentry *root)
+ #define DEVPTS_DEFAULT_MODE 0600
+ /*
+@@ -401,9 +402,51 @@ static int devpts_show_options(struct seq_file *seq, struct dentry *root)
  	return 0;
  }
  
 +#ifdef CONFIG_FSINFO
-+static int shmem_fsinfo(struct path *path, struct fsinfo_kparams *params)
++/*
++ * Get filesystem information.
++ */
++static int devpts_fsinfo(struct path *path, struct fsinfo_kparams *params)
 +{
-+	struct shmem_sb_info *sbinfo = SHMEM_SB(path->dentry->d_sb);
++	struct pts_fs_info *fsi = DEVPTS_SB(path->dentry->d_sb);
++	struct pts_mount_opts *opts = &fsi->mount_opts;
 +	struct fsinfo_capabilities *caps;
 +
 +	switch (params->request) {
 +	case FSINFO_ATTR_CAPABILITIES:
 +		caps = params->buffer;
-+		fsinfo_set_unix_caps(caps);
-+		fsinfo_set_cap(caps, FSINFO_CAP_IS_MEMORY_FS);
++		fsinfo_set_cap(caps, FSINFO_CAP_IS_KERNEL_FS);
 +		fsinfo_set_cap(caps, FSINFO_CAP_NOT_PERSISTENT);
-+#ifdef CONFIG_TMPFS_XATTR
-+		fsinfo_set_cap(caps, FSINFO_CAP_XATTRS);
-+#endif
++		fsinfo_set_cap(caps, FSINFO_CAP_UIDS);
++		fsinfo_set_cap(caps, FSINFO_CAP_GIDS);
 +		return sizeof(*caps);
 +
 +	case FSINFO_ATTR_PARAMETERS:
 +		fsinfo_note_sb_params(params, path->dentry->d_sb->s_flags);
-+		if (sbinfo->max_blocks != shmem_default_max_blocks())
-+			fsinfo_note_paramf(params, "size", "%luk",
-+				sbinfo->max_blocks << (PAGE_SHIFT - 10));
-+		if (sbinfo->max_inodes != shmem_default_max_inodes())
-+			fsinfo_note_paramf(params, "nr_inodes",
-+					  "%lu", sbinfo->max_inodes);
-+		if (sbinfo->mode != (0777 | S_ISVTX))
-+			fsinfo_note_paramf(params, "mode",
-+					  "%03ho", sbinfo->mode);
-+		if (!uid_eq(sbinfo->uid, GLOBAL_ROOT_UID))
++		if (opts->setuid)
 +			fsinfo_note_paramf(params, "uid", "%u",
-+				from_kuid_munged(&init_user_ns, sbinfo->uid));
-+		if (!gid_eq(sbinfo->gid, GLOBAL_ROOT_GID))
++				from_kuid_munged(&init_user_ns, opts->uid));
++		if (opts->setgid)
 +			fsinfo_note_paramf(params, "gid", "%u",
-+				from_kgid_munged(&init_user_ns, sbinfo->gid));
-+#ifdef CONFIG_TRANSPARENT_HUGE_PAGECACHE
-+		/* Rightly or wrongly, show huge mount option unmasked by shmem_huge */
-+		if (sbinfo->huge)
-+			fsinfo_note_paramf(params, "huge", "%s",
-+					shmem_format_huge(sbinfo->huge));
-+#endif
-+		shmem_fsinfo_mpol(params, sbinfo->mpol);
++				from_kgid_munged(&init_user_ns, opts->gid));
++		fsinfo_note_paramf(params, "mode", "%03o", opts->mode);
++		fsinfo_note_paramf(params, "ptmxmode", "%03o", opts->ptmxmode);
++		if (opts->max < NR_UNIX98_PTY_MAX)
++			fsinfo_note_paramf(params, "max", "%d", opts->max);
 +		return params->usage;
++
 +	default:
 +		return generic_fsinfo(path, params);
 +	}
 +}
 +#endif /* CONFIG_FSINFO */
- #endif /* CONFIG_TMPFS */
- 
- static void shmem_put_super(struct super_block *sb)
-@@ -3854,6 +3923,9 @@ static const struct super_operations shmem_ops = {
- #ifdef CONFIG_TMPFS
- 	.statfs		= shmem_statfs,
- 	.show_options	= shmem_show_options,
++
+ static const struct super_operations devpts_sops = {
+ 	.statfs		= simple_statfs,
+ 	.show_options	= devpts_show_options,
 +#ifdef CONFIG_FSINFO
-+	.fsinfo		= shmem_fsinfo,
++	.fsinfo		= devpts_fsinfo,
 +#endif
- #endif
- 	.evict_inode	= shmem_evict_inode,
- 	.drop_inode	= generic_delete_inode,
+ };
+ 
+ static int devpts_fill_super(struct super_block *s, struct fs_context *fc)
