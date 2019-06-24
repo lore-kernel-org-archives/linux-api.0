@@ -1,64 +1,31 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH 1/2] CLONE_PIDFD: do not use the value pointed by
- parent_tidptr
-Date: Mon, 24 Jun 2019 13:59:43 +0200
-Message-ID: <20190624115942.g6vyis3zy4ptt3fc@brauner.io>
-References: <20190620103105.cdxgqfelzlnkmblv@brauner.io>
- <20190620110037.GA4998@altlinux.org>
- <20190620111036.asi3mbcv4ax5ekrw@brauner.io>
- <20190621170613.GA26182@altlinux.org>
- <20190621221339.6yj4vg4zexv4y2j7@brauner.io>
- <20190623112717.GA20697@altlinux.org>
- <20190624094940.24qrteybbcp25wq7@brauner.io>
+From: Jiri Kosina <jikos@kernel.org>
+Subject: Re: [PATCH V34 10/29] hibernate: Disable when the kernel is locked
+ down
+Date: Mon, 24 Jun 2019 15:21:23 +0200 (CEST)
+Message-ID: <nycvar.YFH.7.76.1906241520500.27227@cbobk.fhfr.pm>
+References: <20190622000358.19895-1-matthewgarrett@google.com> <20190622000358.19895-11-matthewgarrett@google.com> <20190622175208.GB30317@amd>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190624094940.24qrteybbcp25wq7@brauner.io>
+In-Reply-To: <20190622175208.GB30317@amd>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Dmitry V. Levin" <ldv@altlinux.org>
-Cc: Jann Horn <jannh@google.com>, Oleg Nesterov <oleg@redhat.com>, Arnd Bergmann <arnd@arndb.de>, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Pavel Machek <pavel@ucw.cz>
+Cc: Matthew Garrett <matthewgarrett@google.com>, jmorris@namei.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Josh Boyer <jwboyer@fedoraproject.org>, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, rjw@rjwysocki.net, Joey Lee <JLee@suse.com>, linux-pm@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jun 24, 2019 at 11:49:40AM +0200, Christian Brauner wrote:
-> On Sun, Jun 23, 2019 at 02:27:17PM +0300, Dmitry V. Levin wrote:
-> > Userspace needs a cheap and reliable way to tell whether CLONE_PIDFD
-> > is supported by the kernel or not.
-> > 
-> > While older kernels without CLONE_PIDFD support just leave unchanged
-> > the value pointed by parent_tidptr, current implementation fails with
-> > EINVAL if that value is non-zero.
-> > 
-> > If CLONE_PIDFD is supported and fd 0 is closed, then mandatory pidfd == 0
-> > pointed by parent_tidptr also remains unchanged, which effectively
-> > means that userspace must either check CLONE_PIDFD support beforehand
-> > or ensure that fd 0 is not closed when invoking CLONE_PIDFD.
-> > 
-> > The check for pidfd == 0 was introduced during v5.2 release cycle
-> > by commit b3e583825266 ("clone: add CLONE_PIDFD") to ensure that
-> > CLONE_PIDFD could be potentially extended by passing in flags through
-> > the return argument.
-> > 
-> > However, that extension would look horrendous, and with introduction of
-> > clone3 syscall in v5.3 there is no need to extend legacy clone syscall
-> > this way.
-> > 
-> > So remove the pidfd == 0 check.  Userspace that needs to be portable
-> > to kernels without CLONE_PIDFD support is advised to initialize pidfd
-> > with -1 and check the pidfd value returned by CLONE_PIDFD.
-> > 
-> > Signed-off-by: Dmitry V. Levin <ldv@altlinux.org>
+On Sat, 22 Jun 2019, Pavel Machek wrote:
+
+> > There is currently no way to verify the resume image when returning
+> > from hibernate.  This might compromise the signed modules trust model,
+> > so until we can work with signed hibernate images we disable it when the
+> > kernel is locked down.
 > 
-> Reviewed-by: Christian Brauner <christian@brauner.io>
+> I keep getting these...
 > 
-> Thank you Dmitry, queueing this up for rc7.
+> IIRC suse has patches to verify the images.
 
-This is now sitting in
+Yeah, Joey Lee is taking care of those. CCing.
 
-https://git.kernel.org/pub/scm/linux/kernel/git/brauner/linux.git/commit/?h=fixes&id=43754d05f235dd1b6c7f8ab9f42007770d721f10
-
-I reformulated the commit message a bit and gave it a Fixes tag. Dmitry,
-if you want you can take a look and tell me if that's acceptable to you.
-
-Thanks!
-Christian
+-- 
+Jiri Kosina
+SUSE Labs
