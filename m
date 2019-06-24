@@ -1,7 +1,7 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 21/25] fsinfo: devpts - add sb operation fsinfo() [ver #14]
-Date: Mon, 24 Jun 2019 15:11:54 +0100
-Message-ID: <156138551486.25627.9996141646216300722.stgit@warthog.procyon.org.uk>
+Subject: [PATCH 22/25] fsinfo: pstore - add sb operation fsinfo() [ver #14]
+Date: Mon, 24 Jun 2019 15:12:02 +0100
+Message-ID: <156138552215.25627.11849234966327633715.stgit@warthog.procyon.org.uk>
 References: <156138532485.25627.7459410522109581052.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -24,28 +24,26 @@ function as sb operation ->show_options() so it needs to be
 implemented by any file system that provides ->show_options()
 as a minimum.
 
-Also add a simple FSINFO_ATTR_CAPABILITIES implementation.
-
 Signed-off-by: Ian Kent <raven@themaw.net>
 Signed-off-by: David Howells <dhowells@redhat.com>
 ---
 
- fs/devpts/inode.c |   43 +++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 43 insertions(+)
+ fs/pstore/inode.c |   32 ++++++++++++++++++++++++++++++++
+ 1 file changed, 32 insertions(+)
 
-diff --git a/fs/devpts/inode.c b/fs/devpts/inode.c
-index 3aa73a2ec2f1..6f0eb69f7cbb 100644
---- a/fs/devpts/inode.c
-+++ b/fs/devpts/inode.c
-@@ -28,6 +28,7 @@
- #include <linux/devpts_fs.h>
- #include <linux/fsnotify.h>
- #include <linux/seq_file.h>
+diff --git a/fs/pstore/inode.c b/fs/pstore/inode.c
+index 4640debf8755..b2c1751a1c48 100644
+--- a/fs/pstore/inode.c
++++ b/fs/pstore/inode.c
+@@ -36,6 +36,7 @@
+ #include <linux/slab.h>
+ #include <linux/spinlock.h>
+ #include <linux/uaccess.h>
 +#include <linux/fsinfo.h>
  
- #define DEVPTS_DEFAULT_MODE 0600
- /*
-@@ -401,9 +402,51 @@ static int devpts_show_options(struct seq_file *seq, struct dentry *root)
+ #include "internal.h"
+ 
+@@ -281,6 +282,34 @@ static int pstore_show_options(struct seq_file *m, struct dentry *root)
  	return 0;
  }
  
@@ -53,33 +51,22 @@ index 3aa73a2ec2f1..6f0eb69f7cbb 100644
 +/*
 + * Get filesystem information.
 + */
-+static int devpts_fsinfo(struct path *path, struct fsinfo_kparams *params)
++static int pstore_fsinfo(struct path *path, struct fsinfo_kparams *params)
 +{
-+	struct pts_fs_info *fsi = DEVPTS_SB(path->dentry->d_sb);
-+	struct pts_mount_opts *opts = &fsi->mount_opts;
 +	struct fsinfo_capabilities *caps;
 +
 +	switch (params->request) {
 +	case FSINFO_ATTR_CAPABILITIES:
 +		caps = params->buffer;
-+		fsinfo_set_cap(caps, FSINFO_CAP_IS_KERNEL_FS);
-+		fsinfo_set_cap(caps, FSINFO_CAP_NOT_PERSISTENT);
-+		fsinfo_set_cap(caps, FSINFO_CAP_UIDS);
-+		fsinfo_set_cap(caps, FSINFO_CAP_GIDS);
++		fsinfo_set_cap(caps, FSINFO_CAP_IS_FLASH_FS);
++		fsinfo_set_cap(caps, FSINFO_CAP_HAS_CTIME);
++		fsinfo_set_cap(caps, FSINFO_CAP_HAS_MTIME);
 +		return sizeof(*caps);
 +
 +	case FSINFO_ATTR_PARAMETERS:
 +		fsinfo_note_sb_params(params, path->dentry->d_sb->s_flags);
-+		if (opts->setuid)
-+			fsinfo_note_paramf(params, "uid", "%u",
-+				from_kuid_munged(&init_user_ns, opts->uid));
-+		if (opts->setgid)
-+			fsinfo_note_paramf(params, "gid", "%u",
-+				from_kgid_munged(&init_user_ns, opts->gid));
-+		fsinfo_note_paramf(params, "mode", "%03o", opts->mode);
-+		fsinfo_note_paramf(params, "ptmxmode", "%03o", opts->ptmxmode);
-+		if (opts->max < NR_UNIX98_PTY_MAX)
-+			fsinfo_note_paramf(params, "max", "%d", opts->max);
++		if (kmsg_bytes != PSTORE_DEFAULT_KMSG_BYTES)
++			fsinfo_note_paramf(params, "kmsg_bytes", "%lu", kmsg_bytes);
 +		return params->usage;
 +
 +	default:
@@ -88,12 +75,16 @@ index 3aa73a2ec2f1..6f0eb69f7cbb 100644
 +}
 +#endif /* CONFIG_FSINFO */
 +
- static const struct super_operations devpts_sops = {
- 	.statfs		= simple_statfs,
- 	.show_options	= devpts_show_options,
+ static int pstore_reconfigure(struct fs_context *fc)
+ {
+ 	sync_filesystem(fc->root->d_sb);
+@@ -293,6 +322,9 @@ static const struct super_operations pstore_ops = {
+ 	.drop_inode	= generic_delete_inode,
+ 	.evict_inode	= pstore_evict_inode,
+ 	.show_options	= pstore_show_options,
 +#ifdef CONFIG_FSINFO
-+	.fsinfo		= devpts_fsinfo,
++	.fsinfo		= pstore_fsinfo,
 +#endif
  };
  
- static int devpts_fill_super(struct super_block *s, struct fs_context *fc)
+ static struct super_block *pstore_sb;
