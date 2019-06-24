@@ -1,33 +1,37 @@
-From: Matthew Garrett <mjg59@google.com>
-Subject: Re: [PATCH V34 23/29] bpf: Restrict bpf when kernel lockdown is in
- confidentiality mode
-Date: Mon, 24 Jun 2019 14:30:46 -0700
-Message-ID: <CACdnJuuHdX-y5VpqVFVDM3ORUXLNh+-XKxykxypvYKotHuk1mA@mail.gmail.com>
+From: James Morris <jmorris@namei.org>
+Subject: Re: [PATCH V34 00/29] Lockdown as an LSM
+Date: Tue, 25 Jun 2019 09:01:44 +1000 (AEST)
+Message-ID: <alpine.LRH.2.21.1906250853290.7826@namei.org>
 References: <20190622000358.19895-1-matthewgarrett@google.com>
- <20190622000358.19895-24-matthewgarrett@google.com> <739e21b5-9559-d588-3542-bf0bc81de1b2@iogearbox.net>
- <CACdnJuvR2bn3y3fYzg06GWXXgAGjgED2Dfa5g0oAwJ28qCCqBg@mail.gmail.com>
- <CALCETrWmZX3R1L88Gz9vLY68gcK8zSXL4cA4GqAzQoyqSR7rRQ@mail.gmail.com> <7f36edf7-3120-975e-b643-3c0fa470bafd@iogearbox.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <7f36edf7-3120-975e-b643-3c0fa470bafd@iogearbox.net>
-Sender: netdev-owner@vger.kernel.org
-To: Daniel Borkmann <daniel@iogearbox.net>
-Cc: Andy Lutomirski <luto@kernel.org>, James Morris <jmorris@namei.org>, LSM List <linux-security-module@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, David Howells <dhowells@redhat.com>, Alexei Starovoitov <alexei.starovoitov@gmail.com>, Network Development <netdev@vger.kernel.org>, Chun-Yi Lee <jlee@suse.com>, Jann Horn <jannh@google.com>, bpf@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190622000358.19895-1-matthewgarrett@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Matthew Garrett <matthewgarrett@google.com>
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Stephen Smalley <sds@tycho.nsa.gov>, Andy Lutomirski <luto@amacapital.net>, John Johansen <john.johansen@canonical.com>, Casey Schaufler <casey@schaufler-ca.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jun 24, 2019 at 2:22 PM Daniel Borkmann <daniel@iogearbox.net> wrote:
-> Agree, for example, bpf_probe_write_user() can never write into
-> kernel memory (only user one). Just thinking out loud, wouldn't it
-> be cleaner and more generic to perform this check at the actual function
-> which performs the kernel memory without faulting? All three of these
-> are in mm/maccess.c, and the very few occasions that override the
-> probe_kernel_read symbol are calling eventually into __probe_kernel_read(),
-> so this would catch all of them wrt lockdown restrictions. Otherwise
-> you'd need to keep tracking every bit of new code being merged that
-> calls into one of these, no? That way you only need to do it once like
-> below and are guaranteed that the check catches these in future as well.
+On Fri, 21 Jun 2019, Matthew Garrett wrote:
 
-Not all paths into probe_kernel_read/write are from entry points that
-need to be locked down (eg, as far as I can tell ftrace can't leak
-anything interesting here).
+> Minor updates over V33 - security_is_locked_down renamed to
+> security_locked_down, return value of security_locked_down is returned
+> in most cases, one unnecessary patch was dropped, couple of minor nits
+> fixed.
+
+Thanks for the respin.
+
+We are still not resolved on granularity. Stephen has said he's not sure 
+if a useful policy can be constructed with just confidentiality and 
+integrity settings. I'd be interested to know JJ and Casey's thoughts on 
+lockdown policy flexibility wrt their respective LSMs.
+
+These are also "all or nothing" choices which may prevent deployment due 
+to a user needing to allow (presumably controlled or mitigated) exceptions 
+to the policy.
+
+
+
+-- 
+James Morris
+<jmorris@namei.org>
