@@ -1,55 +1,49 @@
-From: Chao Yu <yuchao0@huawei.com>
-Subject: Re: [PATCH v5 16/16] f2fs: add fs-verity support
-Date: Tue, 25 Jun 2019 15:55:57 +0800
-Message-ID: <90495fb1-72eb-ca42-8457-ef8e969eda51@huawei.com>
-References: <20190620205043.64350-1-ebiggers@kernel.org>
- <20190620205043.64350-17-ebiggers@kernel.org>
+From: John Johansen <john.johansen@canonical.com>
+Subject: Re: [PATCH V34 00/29] Lockdown as an LSM
+Date: Tue, 25 Jun 2019 01:16:49 -0700
+Message-ID: <642487e9-f70c-c11b-bc61-ad366096e267@canonical.com>
+References: <20190622000358.19895-1-matthewgarrett@google.com>
+ <alpine.LRH.2.21.1906250853290.7826@namei.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-In-Reply-To: <20190620205043.64350-17-ebiggers@kernel.org>
-Content-Language: en-US
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Eric Biggers <ebiggers@kernel.org>, linux-fscrypt@vger.kernel.org
-Cc: "Theodore Y . Ts'o" <tytso@mit.edu>, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-api@vger.kernel.org, Dave Chinner <david@fromorbit.com>, linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, linux-integrity@vger.kernel.org, linux-ext4@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Christoph Hellwig <hch@lst.de>, Victor Hsieh <victorhsieh@google.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.LRH.2.21.1906250853290.7826@namei.org>
+Content-Language: en-GB
+Sender: linux-kernel-owner@vger.kernel.org
+To: James Morris <jmorris@namei.org>, Matthew Garrett <matthewgarrett@google.com>
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Stephen Smalley <sds@tycho.nsa.gov>, Andy Lutomirski <luto@amacapital.net>, Casey Schaufler <casey@schaufler-ca.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Eric,
+On 6/24/19 4:01 PM, James Morris wrote:
+> On Fri, 21 Jun 2019, Matthew Garrett wrote:
+> 
+>> Minor updates over V33 - security_is_locked_down renamed to
+>> security_locked_down, return value of security_locked_down is returned
+>> in most cases, one unnecessary patch was dropped, couple of minor nits
+>> fixed.
+> 
+> Thanks for the respin.
+> 
+> We are still not resolved on granularity. Stephen has said he's not sure 
+> if a useful policy can be constructed with just confidentiality and 
+> integrity settings. I'd be interested to know JJ and Casey's thoughts on 
+> lockdown policy flexibility wrt their respective LSMs.
+> 
+> These are also "all or nothing" choices which may prevent deployment due 
+> to a user needing to allow (presumably controlled or mitigated) exceptions 
+> to the policy.
+> 
+> 
 
-On 2019/6/21 4:50, Eric Biggers wrote:
-> +static int f2fs_begin_enable_verity(struct file *filp)
-> +{
-> +	struct inode *inode = file_inode(filp);
-> +	int err;
-> +
+I haven't gotten a chance to play with this the way I want to so there is
+still a lot of questions regarding its interaction with apparmor and its
+policy, but from what I have seen so far it is looking good.
 
-I think we'd better add condition here (under inode lock) to disallow enabling
-verity on atomic/volatile inode, as we may fail to write merkle tree data due to
-atomic/volatile inode's special writeback method.
+I expect the all or nothing choices may limit its deployments (we really
+need to play with this more to say) but we already face similar issues.
+There are options we provide at a distro level that we can't turn on by
+default, but we do recommend to more security conscious users.
 
-> +	err = f2fs_convert_inline_inode(inode);
-> +	if (err)
-> +		return err;
-> +
-> +	err = dquot_initialize(inode);
-> +	if (err)
-> +		return err;
-
-We can get rid of dquot_initialize() here, since f2fs_file_open() ->
-dquot_file_open() should has initialized quota entry previously, right?
-
-Thanks,
-
-> +
-> +	set_inode_flag(inode, FI_VERITY_IN_PROGRESS);
-> +	return 0;
-> +}
-> +
+If lockdown was in kernel we would certainly make it available for our
+users, we have even had a few people ask about it.
