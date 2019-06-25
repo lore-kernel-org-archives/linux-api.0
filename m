@@ -1,12 +1,12 @@
 From: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
-Subject: [PATCH bpf-next v9 09/10] bpf,landlock: Add tests for Landlock
-Date: Tue, 25 Jun 2019 23:52:38 +0200
-Message-ID: <20190625215239.11136-10-mic@digikod.net>
+Subject: [PATCH bpf-next v9 02/10] bpf: Add eBPF program subtype and is_valid_subtype() verifier
+Date: Tue, 25 Jun 2019 23:52:31 +0200
+Message-ID: <20190625215239.11136-3-mic@digikod.net>
 References: <20190625215239.11136-1-mic@digikod.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
-Return-path: <kernel-hardening-return-16241-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+Return-path: <kernel-hardening-return-16242-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
 List-Post: <mailto:kernel-hardening@lists.openwall.com>
 List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
 List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
@@ -16,726 +16,508 @@ To: linux-kernel@vger.kernel.org
 Cc: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>, Aleksa Sarai <cyphar@cyphar.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Alexei Starovoitov <ast@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <jmorris@namei.org>, Jann Horn <jann@thejh.net>, John Johansen <john.johansen@canonical.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Michael Kerrisk <mtk.manpages@gmail.com>, =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <micka>
 List-Id: linux-api@vger.kernel.org
 
-Test basic context access, ptrace protection and filesystem hooks.
+The goal of the program subtype is to be able to have different static
+fine-grained verifications for a unique program type.
+
+The struct bpf_verifier_ops gets a new optional function:
+is_valid_subtype(). This new verifier is called at the beginning of the
+eBPF program verification to check if the (optional) program subtype is
+valid.
+
+The new helper bpf_load_program_xattr() enables to verify a program with
+subtypes.
+
+For now, only Landlock eBPF programs are using a program subtype (see
+next commits) but this could be used by other program types in the
+future.
 
 Signed-off-by: Mickaël Salaün <mic@digikod.net>
 Cc: Alexei Starovoitov <ast@kernel.org>
-Cc: Andy Lutomirski <luto@amacapital.net>
 Cc: Daniel Borkmann <daniel@iogearbox.net>
 Cc: David S. Miller <davem@davemloft.net>
-Cc: James Morris <jmorris@namei.org>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Serge E. Hallyn <serge@hallyn.com>
-Cc: Shuah Khan <shuah@kernel.org>
-Cc: Will Drewry <wad@chromium.org>
+Link: https://lkml.kernel.org/r/20160827205559.GA43880@ast-mbp.thefacebook.com
 ---
 
 Changes since v8:
-* update eBPF include path for macros
-* use TEST_GEN_PROGS and use the generic "clean" target
-* add more verbose errors
-* update the bpf/verifier files
-* remove chain tests (from landlock and bpf/verifier)
-* replace the whitelist tests with blacklist tests (because of stateless
-  Landlock programs): remove "dotdot" tests and other depth tests
-* sync the landlock Makefile with its bpf sibling directory and use
-  bpf_load_program_xattr()
+* use bpf_load_program_xattr() instead of bpf_load_program() and add
+  bpf_verify_program_xattr() to deal with subtypes
+* remove put_extra() since there is no more "previous" field (for now)
 
 Changes since v7:
-* update tests and add new ones for filesystem hierarchy and Landlock
-  chains.
+* rename LANDLOCK_SUBTYPE_* to LANDLOCK_*
+* move subtype in bpf_prog_aux and use only one bit for has_subtype
+  (suggested by Alexei Starovoitov)
+* wrap the prog_subtype with a prog_extra to be able to reference kernel
+  pointers:
+  * add an optional put_extra() function to struct bpf_prog_ops to be
+    able to free the pointed data
+  * replace all the prog_subtype with prog_extra in the struct
+    bpf_verifier_ops functions
+* remove the ABI field (requested by Alexei Starovoitov)
+* rename subtype fields
 
 Changes since v6:
-* use the new kselftest_harness.h
-* use const variables
-* replace ASSERT_STEP with ASSERT_*
-* rename BPF_PROG_TYPE_LANDLOCK to BPF_PROG_TYPE_LANDLOCK_RULE
-* force sample library rebuild
-* fix install target
+* rename Landlock version to ABI to better reflect its purpose
+* fix unsigned integer checks
+* fix pointer cast
+* constify pointers
+* rebase
 
 Changes since v5:
+* use a prog_subtype pointer and make it future-proof
 * add subtype test
-* add ptrace tests
-* split and rename files
-* cleanup and rebase
----
- tools/testing/selftests/Makefile              |   1 +
- tools/testing/selftests/bpf/bpf_helpers.h     |   2 +
- tools/testing/selftests/bpf/test_verifier.c   |   1 +
- .../testing/selftests/bpf/verifier/landlock.c |  35 +++
- .../testing/selftests/bpf/verifier/subtype.c  |  10 +
- tools/testing/selftests/landlock/.gitignore   |   4 +
- tools/testing/selftests/landlock/Makefile     |  39 +++
- tools/testing/selftests/landlock/test.h       |  48 ++++
- tools/testing/selftests/landlock/test_base.c  |  24 ++
- tools/testing/selftests/landlock/test_fs.c    | 257 ++++++++++++++++++
- .../testing/selftests/landlock/test_ptrace.c  | 154 +++++++++++
- 11 files changed, 575 insertions(+)
- create mode 100644 tools/testing/selftests/bpf/verifier/landlock.c
- create mode 100644 tools/testing/selftests/landlock/.gitignore
- create mode 100644 tools/testing/selftests/landlock/Makefile
- create mode 100644 tools/testing/selftests/landlock/test.h
- create mode 100644 tools/testing/selftests/landlock/test_base.c
- create mode 100644 tools/testing/selftests/landlock/test_fs.c
- create mode 100644 tools/testing/selftests/landlock/test_ptrace.c
+* constify bpf_load_program()'s subtype argument
+* cleanup subtype initialization
+* rebase
 
-diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-index 9781ca79794a..342a7d714fb9 100644
---- a/tools/testing/selftests/Makefile
-+++ b/tools/testing/selftests/Makefile
-@@ -21,6 +21,7 @@ TARGETS += ir
- TARGETS += kcmp
- TARGETS += kexec
- TARGETS += kvm
-+TARGETS += landlock
- TARGETS += lib
- TARGETS += livepatch
- TARGETS += membarrier
-diff --git a/tools/testing/selftests/bpf/bpf_helpers.h b/tools/testing/selftests/bpf/bpf_helpers.h
-index 1a5b1accf091..0b15c49fac3f 100644
---- a/tools/testing/selftests/bpf/bpf_helpers.h
-+++ b/tools/testing/selftests/bpf/bpf_helpers.h
-@@ -225,6 +225,8 @@ static void *(*bpf_sk_storage_get)(void *map, struct bpf_sock *sk,
- static int (*bpf_sk_storage_delete)(void *map, struct bpf_sock *sk) =
- 	(void *)BPF_FUNC_sk_storage_delete;
- static int (*bpf_send_signal)(unsigned sig) = (void *)BPF_FUNC_send_signal;
-+static unsigned long long (*bpf_inode_map_lookup)(void *map, void *key) =
-+	(void *) BPF_FUNC_inode_map_lookup;
+Changes since v4:
+* replace the "status" field with "version" (more generic)
+* replace the "access" field with "ability" (less confusing)
+
+Changes since v3:
+* remove the "origin" field
+* add an "option" field
+* cleanup comments
+---
+ include/linux/bpf.h                           |  8 +++++
+ include/uapi/linux/bpf.h                      |  9 ++++++
+ kernel/bpf/core.c                             |  1 +
+ kernel/bpf/syscall.c                          | 32 ++++++++++++++++++-
+ kernel/bpf/verifier.c                         | 11 +++++++
+ net/core/filter.c                             | 25 ++++++++-------
+ tools/include/uapi/linux/bpf.h                |  9 ++++++
+ tools/lib/bpf/bpf.c                           | 10 +++++-
+ tools/lib/bpf/bpf.h                           |  2 ++
+ tools/lib/bpf/libbpf.map                      |  1 +
+ tools/testing/selftests/bpf/test_verifier.c   | 26 +++++++++++++--
+ .../testing/selftests/bpf/verifier/subtype.c  | 10 ++++++
+ 12 files changed, 128 insertions(+), 16 deletions(-)
+ create mode 100644 tools/testing/selftests/bpf/verifier/subtype.c
+
+diff --git a/include/linux/bpf.h b/include/linux/bpf.h
+index a62e7889b0b6..da167d3afecc 100644
+--- a/include/linux/bpf.h
++++ b/include/linux/bpf.h
+@@ -294,6 +294,11 @@ bpf_ctx_record_field_size(struct bpf_insn_access_aux *aux, u32 size)
+ 	aux->ctx_field_size = size;
+ }
  
- /* llvm builtin functions that eBPF C program may use to
-  * emit BPF_LD_ABS and BPF_LD_IND instructions
++/* specific data per program type */
++struct bpf_prog_extra {
++	union bpf_prog_subtype subtype;
++};
++
+ struct bpf_prog_ops {
+ 	int (*test_run)(struct bpf_prog *prog, const union bpf_attr *kattr,
+ 			union bpf_attr __user *uattr);
+@@ -319,6 +324,8 @@ struct bpf_verifier_ops {
+ 				  const struct bpf_insn *src,
+ 				  struct bpf_insn *dst,
+ 				  struct bpf_prog *prog, u32 *target_size);
++	// TODO?: convert to bool (*is_valid_subtype)(struct bpf_prog *prog);
++	bool (*is_valid_subtype)(struct bpf_prog_extra *prog_extra);
+ };
+ 
+ struct bpf_prog_offload_ops {
+@@ -418,6 +425,7 @@ struct bpf_prog_aux {
+ 		struct work_struct work;
+ 		struct rcu_head	rcu;
+ 	};
++	struct bpf_prog_extra *extra;
+ };
+ 
+ struct bpf_array {
+diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
+index b077507efa3f..ddae50373d58 100644
+--- a/include/uapi/linux/bpf.h
++++ b/include/uapi/linux/bpf.h
+@@ -355,6 +355,13 @@ struct bpf_stack_build_id {
+ 	};
+ };
+ 
++union bpf_prog_subtype {
++	struct {
++		__u32		type; /* enum landlock_hook_type */
++		__aligned_u64	triggers; /* LANDLOCK_TRIGGER_* */
++	} landlock_hook;
++} __attribute__((aligned(8)));
++
+ union bpf_attr {
+ 	struct { /* anonymous struct used by BPF_MAP_CREATE command */
+ 		__u32	map_type;	/* one of enum bpf_map_type */
+@@ -409,6 +416,8 @@ union bpf_attr {
+ 		__u32		line_info_rec_size;	/* userspace bpf_line_info size */
+ 		__aligned_u64	line_info;	/* line info */
+ 		__u32		line_info_cnt;	/* number of bpf_line_info records */
++		__aligned_u64	prog_subtype;	/* bpf_prog_subtype address */
++		__u32		prog_subtype_size;
+ 	};
+ 
+ 	struct { /* anonymous struct used by BPF_OBJ_* commands */
+diff --git a/kernel/bpf/core.c b/kernel/bpf/core.c
+index ad3be85f1411..8ad392e52328 100644
+--- a/kernel/bpf/core.c
++++ b/kernel/bpf/core.c
+@@ -255,6 +255,7 @@ void __bpf_prog_free(struct bpf_prog *fp)
+ {
+ 	if (fp->aux) {
+ 		free_percpu(fp->aux->stats);
++		kfree(fp->aux->extra);
+ 		kfree(fp->aux);
+ 	}
+ 	vfree(fp);
+diff --git a/kernel/bpf/syscall.c b/kernel/bpf/syscall.c
+index 7713cf39795a..7dd3376904d4 100644
+--- a/kernel/bpf/syscall.c
++++ b/kernel/bpf/syscall.c
+@@ -1596,7 +1596,7 @@ bpf_prog_load_check_attach_type(enum bpf_prog_type prog_type,
+ }
+ 
+ /* last field in 'union bpf_attr' used by this command */
+-#define	BPF_PROG_LOAD_LAST_FIELD line_info_cnt
++#define	BPF_PROG_LOAD_LAST_FIELD prog_subtype_size
+ 
+ static int bpf_prog_load(union bpf_attr *attr, union bpf_attr __user *uattr)
+ {
+@@ -1686,6 +1686,36 @@ static int bpf_prog_load(union bpf_attr *attr, union bpf_attr __user *uattr)
+ 	if (err)
+ 		goto free_prog;
+ 
++	/* copy eBPF program subtype from user space */
++	if (attr->prog_subtype) {
++		u32 size;
++
++		err = bpf_check_uarg_tail_zero(
++				u64_to_user_ptr(attr->prog_subtype),
++				sizeof(prog->aux->extra->subtype),
++				attr->prog_subtype_size);
++		if (err)
++			goto free_prog;
++		size = min_t(u32, attr->prog_subtype_size,
++			     sizeof(prog->aux->extra->subtype));
++
++		prog->aux->extra = kzalloc(sizeof(*prog->aux->extra),
++					   GFP_KERNEL | GFP_USER);
++		if (!prog->aux->extra) {
++			err = -ENOMEM;
++			goto free_prog;
++		}
++		if (copy_from_user(&prog->aux->extra->subtype,
++				   u64_to_user_ptr(attr->prog_subtype), size)
++				   != 0) {
++			err = -EFAULT;
++			goto free_prog;
++		}
++	} else if (attr->prog_subtype_size != 0) {
++		err = -EINVAL;
++		goto free_prog;
++	}
++
+ 	/* run eBPF verifier */
+ 	err = bpf_check(&prog, attr, uattr);
+ 	if (err < 0)
+diff --git a/kernel/bpf/verifier.c b/kernel/bpf/verifier.c
+index 0e079b2298f8..930260683d0a 100644
+--- a/kernel/bpf/verifier.c
++++ b/kernel/bpf/verifier.c
+@@ -9167,6 +9167,17 @@ int bpf_check(struct bpf_prog **prog, union bpf_attr *attr,
+ 	if (ret < 0)
+ 		goto skip_full_check;
+ 
++	if (env->ops->is_valid_subtype) {
++		if (!env->ops->is_valid_subtype(env->prog->aux->extra)) {
++			ret = -EINVAL;
++			goto err_unlock;
++		}
++	} else if (env->prog->aux->extra) {
++		/* do not accept a subtype if the program does not handle it */
++		ret = -EINVAL;
++		goto err_unlock;
++	}
++
+ 	if (bpf_prog_is_dev_bound(env->prog->aux)) {
+ 		ret = bpf_prog_offload_verifier_prep(env->prog);
+ 		if (ret)
+diff --git a/net/core/filter.c b/net/core/filter.c
+index 2014d76e0d2a..0160237e5cd8 100644
+--- a/net/core/filter.c
++++ b/net/core/filter.c
+@@ -5846,7 +5846,8 @@ bool bpf_helper_changes_pkt_data(void *func)
+ }
+ 
+ static const struct bpf_func_proto *
+-bpf_base_func_proto(enum bpf_func_id func_id)
++bpf_base_func_proto(enum bpf_func_id func_id,
++		    const struct bpf_prog_extra *prog_extra)
+ {
+ 	switch (func_id) {
+ 	case BPF_FUNC_map_lookup_elem:
+@@ -5902,7 +5903,7 @@ sock_filter_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
+ 	case BPF_FUNC_get_local_storage:
+ 		return &bpf_get_local_storage_proto;
+ 	default:
+-		return bpf_base_func_proto(func_id);
++		return bpf_base_func_proto(func_id, prog->aux->extra);
+ 	}
+ }
+ 
+@@ -5942,7 +5943,7 @@ sock_addr_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
+ 	case BPF_FUNC_sk_storage_delete:
+ 		return &bpf_sk_storage_delete_proto;
+ 	default:
+-		return bpf_base_func_proto(func_id);
++		return bpf_base_func_proto(func_id, prog->aux->extra);
+ 	}
+ }
+ 
+@@ -5959,7 +5960,7 @@ sk_filter_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
+ 	case BPF_FUNC_get_socket_uid:
+ 		return &bpf_get_socket_uid_proto;
+ 	default:
+-		return bpf_base_func_proto(func_id);
++		return bpf_base_func_proto(func_id, prog->aux->extra);
+ 	}
+ }
+ 
+@@ -6096,7 +6097,7 @@ tc_cls_act_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
+ 		return &bpf_skb_ecn_set_ce_proto;
+ #endif
+ 	default:
+-		return bpf_base_func_proto(func_id);
++		return bpf_base_func_proto(func_id, prog->aux->extra);
+ 	}
+ }
+ 
+@@ -6135,7 +6136,7 @@ xdp_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
+ 		return &bpf_tcp_check_syncookie_proto;
+ #endif
+ 	default:
+-		return bpf_base_func_proto(func_id);
++		return bpf_base_func_proto(func_id, prog->aux->extra);
+ 	}
+ }
+ 
+@@ -6171,7 +6172,7 @@ sock_ops_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
+ 		return &bpf_tcp_sock_proto;
+ #endif /* CONFIG_INET */
+ 	default:
+-		return bpf_base_func_proto(func_id);
++		return bpf_base_func_proto(func_id, prog->aux->extra);
+ 	}
+ }
+ 
+@@ -6197,7 +6198,7 @@ sk_msg_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
+ 	case BPF_FUNC_msg_pop_data:
+ 		return &bpf_msg_pop_data_proto;
+ 	default:
+-		return bpf_base_func_proto(func_id);
++		return bpf_base_func_proto(func_id, prog->aux->extra);
+ 	}
+ }
+ 
+@@ -6237,7 +6238,7 @@ sk_skb_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
+ 		return &bpf_skc_lookup_tcp_proto;
+ #endif
+ 	default:
+-		return bpf_base_func_proto(func_id);
++		return bpf_base_func_proto(func_id, prog->aux->extra);
+ 	}
+ }
+ 
+@@ -6248,7 +6249,7 @@ flow_dissector_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
+ 	case BPF_FUNC_skb_load_bytes:
+ 		return &bpf_flow_dissector_load_bytes_proto;
+ 	default:
+-		return bpf_base_func_proto(func_id);
++		return bpf_base_func_proto(func_id, prog->aux->extra);
+ 	}
+ }
+ 
+@@ -6275,7 +6276,7 @@ lwt_out_func_proto(enum bpf_func_id func_id, const struct bpf_prog *prog)
+ 	case BPF_FUNC_skb_under_cgroup:
+ 		return &bpf_skb_under_cgroup_proto;
+ 	default:
+-		return bpf_base_func_proto(func_id);
++		return bpf_base_func_proto(func_id, prog->aux->extra);
+ 	}
+ }
+ 
+@@ -8611,7 +8612,7 @@ sk_reuseport_func_proto(enum bpf_func_id func_id,
+ 	case BPF_FUNC_skb_load_bytes_relative:
+ 		return &sk_reuseport_load_bytes_relative_proto;
+ 	default:
+-		return bpf_base_func_proto(func_id);
++		return bpf_base_func_proto(func_id, prog->aux->extra);
+ 	}
+ }
+ 
+diff --git a/tools/include/uapi/linux/bpf.h b/tools/include/uapi/linux/bpf.h
+index b077507efa3f..ddae50373d58 100644
+--- a/tools/include/uapi/linux/bpf.h
++++ b/tools/include/uapi/linux/bpf.h
+@@ -355,6 +355,13 @@ struct bpf_stack_build_id {
+ 	};
+ };
+ 
++union bpf_prog_subtype {
++	struct {
++		__u32		type; /* enum landlock_hook_type */
++		__aligned_u64	triggers; /* LANDLOCK_TRIGGER_* */
++	} landlock_hook;
++} __attribute__((aligned(8)));
++
+ union bpf_attr {
+ 	struct { /* anonymous struct used by BPF_MAP_CREATE command */
+ 		__u32	map_type;	/* one of enum bpf_map_type */
+@@ -409,6 +416,8 @@ union bpf_attr {
+ 		__u32		line_info_rec_size;	/* userspace bpf_line_info size */
+ 		__aligned_u64	line_info;	/* line info */
+ 		__u32		line_info_cnt;	/* number of bpf_line_info records */
++		__aligned_u64	prog_subtype;	/* bpf_prog_subtype address */
++		__u32		prog_subtype_size;
+ 	};
+ 
+ 	struct { /* anonymous struct used by BPF_OBJ_* commands */
+diff --git a/tools/lib/bpf/bpf.c b/tools/lib/bpf/bpf.c
+index c7d7993c44bb..ecd894344bbd 100644
+--- a/tools/lib/bpf/bpf.c
++++ b/tools/lib/bpf/bpf.c
+@@ -227,6 +227,9 @@ int bpf_load_program_xattr(const struct bpf_load_program_attr *load_attr,
+ 
+ 	memset(&attr, 0, sizeof(attr));
+ 	attr.prog_type = load_attr->prog_type;
++	attr.prog_subtype = ptr_to_u64(load_attr->prog_subtype);
++	attr.prog_subtype_size = load_attr->prog_subtype ?
++		sizeof(*load_attr->prog_subtype) : 0;
+ 	attr.expected_attach_type = load_attr->expected_attach_type;
+ 	attr.insn_cnt = (__u32)load_attr->insns_cnt;
+ 	attr.insns = ptr_to_u64(load_attr->insns);
+@@ -332,6 +335,11 @@ int bpf_load_program(enum bpf_prog_type type, const struct bpf_insn *insns,
+ 	return bpf_load_program_xattr(&load_attr, log_buf, log_buf_sz);
+ }
+ 
++int bpf_verify_program_xattr(union bpf_attr *attr, size_t attr_sz)
++{
++	return sys_bpf_prog_load(attr, attr_sz);
++}
++
+ int bpf_verify_program(enum bpf_prog_type type, const struct bpf_insn *insns,
+ 		       size_t insns_cnt, __u32 prog_flags, const char *license,
+ 		       __u32 kern_version, char *log_buf, size_t log_buf_sz,
+@@ -351,7 +359,7 @@ int bpf_verify_program(enum bpf_prog_type type, const struct bpf_insn *insns,
+ 	attr.kern_version = kern_version;
+ 	attr.prog_flags = prog_flags;
+ 
+-	return sys_bpf_prog_load(&attr, sizeof(attr));
++	return bpf_verify_program_xattr(&attr, sizeof(attr));
+ }
+ 
+ int bpf_map_update_elem(int fd, const void *key, const void *value,
+diff --git a/tools/lib/bpf/bpf.h b/tools/lib/bpf/bpf.h
+index ff42ca043dc8..7cd600d49f9e 100644
+--- a/tools/lib/bpf/bpf.h
++++ b/tools/lib/bpf/bpf.h
+@@ -88,6 +88,7 @@ struct bpf_load_program_attr {
+ 	__u32 line_info_cnt;
+ 	__u32 log_level;
+ 	__u32 prog_flags;
++	const union bpf_prog_subtype *prog_subtype;
+ };
+ 
+ /* Flags to direct loading requirements */
+@@ -102,6 +103,7 @@ LIBBPF_API int bpf_load_program(enum bpf_prog_type type,
+ 				const struct bpf_insn *insns, size_t insns_cnt,
+ 				const char *license, __u32 kern_version,
+ 				char *log_buf, size_t log_buf_sz);
++LIBBPF_API int bpf_verify_program_xattr(union bpf_attr *attr, size_t attr_sz);
+ LIBBPF_API int bpf_verify_program(enum bpf_prog_type type,
+ 				  const struct bpf_insn *insns,
+ 				  size_t insns_cnt, __u32 prog_flags,
+diff --git a/tools/lib/bpf/libbpf.map b/tools/lib/bpf/libbpf.map
+index 2c6d835620d2..48c9269a0496 100644
+--- a/tools/lib/bpf/libbpf.map
++++ b/tools/lib/bpf/libbpf.map
+@@ -107,6 +107,7 @@ LIBBPF_0.0.1 {
+ 		bpf_set_link_xdp_fd;
+ 		bpf_task_fd_query;
+ 		bpf_verify_program;
++		bpf_verify_program_xattr;
+ 		btf__fd;
+ 		btf__find_by_name;
+ 		btf__free;
 diff --git a/tools/testing/selftests/bpf/test_verifier.c b/tools/testing/selftests/bpf/test_verifier.c
-index 93faffd31fc3..c67218ffebf9 100644
+index c5514daf8865..93faffd31fc3 100644
 --- a/tools/testing/selftests/bpf/test_verifier.c
 +++ b/tools/testing/selftests/bpf/test_verifier.c
-@@ -30,6 +30,7 @@
- #include <linux/bpf.h>
- #include <linux/if_ether.h>
- #include <linux/btf.h>
-+#include <linux/landlock.h>
+@@ -105,6 +105,8 @@ struct bpf_test {
+ 			__u64 data64[TEST_DATA_LEN / 8];
+ 		};
+ 	} retvals[MAX_TEST_RUNS];
++	bool has_prog_subtype;
++	union bpf_prog_subtype prog_subtype;
+ };
  
- #include <bpf/bpf.h>
- #include <bpf/libbpf.h>
-diff --git a/tools/testing/selftests/bpf/verifier/landlock.c b/tools/testing/selftests/bpf/verifier/landlock.c
-new file mode 100644
-index 000000000000..7ed4e24c0a88
---- /dev/null
-+++ b/tools/testing/selftests/bpf/verifier/landlock.c
-@@ -0,0 +1,35 @@
+ /* Note we want this to be 64 bit aligned so that the end of our array is
+@@ -122,6 +124,11 @@ struct other_val {
+ 	long long bar;
+ };
+ 
++static inline __u64 ptr_to_u64(const void *ptr)
 +{
-+	"landlock/fs_pick: always accept",
-+	.insns = {
-+		BPF_MOV32_IMM(BPF_REG_0, 0),
-+		BPF_EXIT_INSN(),
-+	},
-+	.result = ACCEPT,
-+	.prog_type = BPF_PROG_TYPE_LANDLOCK_HOOK,
-+	.has_prog_subtype = true,
-+	.prog_subtype = {
-+		.landlock_hook = {
-+			.type = LANDLOCK_HOOK_FS_PICK,
-+			.triggers = LANDLOCK_TRIGGER_FS_PICK_READ,
-+		}
-+	},
-+},
-+{
-+	"landlock/fs_pick: read context",
-+	.insns = {
-+		BPF_MOV64_REG(BPF_REG_6, BPF_REG_1),
-+		BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_6,
-+			offsetof(struct landlock_ctx_fs_pick, inode)),
-+		BPF_MOV32_IMM(BPF_REG_0, 0),
-+		BPF_EXIT_INSN(),
-+	},
-+	.result = ACCEPT,
-+	.prog_type = BPF_PROG_TYPE_LANDLOCK_HOOK,
-+	.has_prog_subtype = true,
-+	.prog_subtype = {
-+		.landlock_hook = {
-+			.type = LANDLOCK_HOOK_FS_PICK,
-+			.triggers = LANDLOCK_TRIGGER_FS_PICK_READ,
-+		}
-+	},
-+},
++	return (__u64) (unsigned long) ptr;
++}
++
+ static void bpf_fill_ld_abs_vlan_push_pop(struct bpf_test *self)
+ {
+ 	/* test: {skb->data[0], vlan_push} x 51 + {skb->data[0], vlan_pop} x 51 */
+@@ -856,6 +863,9 @@ static void do_test_single(struct bpf_test *test, bool unpriv,
+ 	int fixup_skips;
+ 	__u32 pflags;
+ 	int i, err;
++	union bpf_attr attr;
++	union bpf_prog_subtype *prog_subtype =
++		test->has_prog_subtype ? &test->prog_subtype : NULL;
+ 
+ 	for (i = 0; i < MAX_NR_MAPS; i++)
+ 		map_fds[i] = -1;
+@@ -881,8 +891,20 @@ static void do_test_single(struct bpf_test *test, bool unpriv,
+ 		pflags |= BPF_F_STRICT_ALIGNMENT;
+ 	if (test->flags & F_NEEDS_EFFICIENT_UNALIGNED_ACCESS)
+ 		pflags |= BPF_F_ANY_ALIGNMENT;
+-	fd_prog = bpf_verify_program(prog_type, prog, prog_len, pflags,
+-				     "GPL", 0, bpf_vlog, sizeof(bpf_vlog), 4);
++
++	memset(&attr, 0, sizeof(attr));
++	attr.prog_type = prog_type;
++	attr.prog_subtype = ptr_to_u64(prog_subtype);
++	attr.prog_subtype_size = prog_subtype ? sizeof(*prog_subtype) : 0;
++	attr.insn_cnt = (__u32)prog_len;
++	attr.insns = ptr_to_u64(prog);
++	attr.license = ptr_to_u64("GPL");
++	bpf_vlog[0] = 0;
++	attr.log_buf = ptr_to_u64(bpf_vlog);
++	attr.log_size = sizeof(bpf_vlog);
++	attr.log_level = 4;
++	attr.prog_flags = pflags;
++	fd_prog = bpf_verify_program_xattr(&attr, sizeof(attr));
+ 	if (fd_prog < 0 && !bpf_probe_prog_type(prog_type, 0)) {
+ 		printf("SKIP (unsupported program type %d)\n", prog_type);
+ 		skips++;
 diff --git a/tools/testing/selftests/bpf/verifier/subtype.c b/tools/testing/selftests/bpf/verifier/subtype.c
-index cf614223d53f..6bb7ef4b39b5 100644
---- a/tools/testing/selftests/bpf/verifier/subtype.c
+new file mode 100644
+index 000000000000..cf614223d53f
+--- /dev/null
 +++ b/tools/testing/selftests/bpf/verifier/subtype.c
-@@ -8,3 +8,13 @@
- 	.result = REJECT,
- 	.has_prog_subtype = true,
- },
+@@ -0,0 +1,10 @@
 +{
-+	"missing subtype",
++	"superfluous subtype",
 +	.insns = {
 +		BPF_MOV32_IMM(BPF_REG_0, 0),
 +		BPF_EXIT_INSN(),
 +	},
 +	.errstr = "",
 +	.result = REJECT,
-+	.prog_type = BPF_PROG_TYPE_LANDLOCK_HOOK,
++	.has_prog_subtype = true,
 +},
-diff --git a/tools/testing/selftests/landlock/.gitignore b/tools/testing/selftests/landlock/.gitignore
-new file mode 100644
-index 000000000000..25b9cd834c3c
---- /dev/null
-+++ b/tools/testing/selftests/landlock/.gitignore
-@@ -0,0 +1,4 @@
-+/test_base
-+/test_fs
-+/test_ptrace
-+/tmp_*
-diff --git a/tools/testing/selftests/landlock/Makefile b/tools/testing/selftests/landlock/Makefile
-new file mode 100644
-index 000000000000..7a253bf6d580
---- /dev/null
-+++ b/tools/testing/selftests/landlock/Makefile
-@@ -0,0 +1,39 @@
-+LIBDIR := ../../../lib
-+BPFDIR := $(LIBDIR)/bpf
-+APIDIR := ../../../include/uapi
-+GENDIR := ../../../../include/generated
-+GENHDR := $(GENDIR)/autoconf.h
-+
-+ifneq ($(wildcard $(GENHDR)),)
-+  GENFLAGS := -DHAVE_GENHDR
-+endif
-+
-+BPFOBJS := $(BPFDIR)/bpf.o $(BPFDIR)/nlattr.o
-+LOADOBJ := ../../../../samples/bpf/bpf_load.o
-+
-+CFLAGS += -Wl,-no-as-needed -Wall -O2 -I$(APIDIR) -I$(LIBDIR) -I$(BPFDIR) -I$(GENDIR) $(GENFLAGS) -I../../../include
-+LDFLAGS += -lelf
-+
-+test_src = $(wildcard test_*.c)
-+
-+test_objs := $(test_src:.c=)
-+
-+TEST_GEN_PROGS := $(test_objs)
-+
-+.PHONY: all clean force
-+
-+all: $(test_objs)
-+
-+# force a rebuild of BPFOBJS when its dependencies are updated
-+force:
-+
-+# rebuild bpf.o as a workaround for the samples/bpf bug
-+$(BPFOBJS): $(LOADOBJ) force
-+	$(MAKE) -C $(BPFDIR)
-+
-+$(LOADOBJ): force
-+	$(MAKE) -C $(dir $(LOADOBJ))
-+
-+$(test_objs): $(BPFOBJS) $(LOADOBJ) ../kselftest_harness.h
-+
-+include ../lib.mk
-diff --git a/tools/testing/selftests/landlock/test.h b/tools/testing/selftests/landlock/test.h
-new file mode 100644
-index 000000000000..7d412d94148c
---- /dev/null
-+++ b/tools/testing/selftests/landlock/test.h
-@@ -0,0 +1,48 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ * Landlock helpers
-+ *
-+ * Copyright © 2017-2019 Mickaël Salaün <mic@digikod.net>
-+ * Copyright © 2019 ANSSI
-+ */
-+
-+#include <bpf/bpf.h>
-+#include <errno.h>
-+#include <linux/filter.h>
-+#include <linux/landlock.h>
-+#include <linux/seccomp.h>
-+#include <sys/prctl.h>
-+#include <sys/syscall.h>
-+
-+#include "../kselftest_harness.h"
-+#include "../../../../samples/bpf/bpf_load.h"
-+
-+#ifndef SECCOMP_PREPEND_LANDLOCK_PROG
-+#define SECCOMP_PREPEND_LANDLOCK_PROG	4
-+#endif
-+
-+#ifndef seccomp
-+static int __attribute__((unused)) seccomp(unsigned int op, unsigned int flags,
-+		void *args)
-+{
-+	errno = 0;
-+	return syscall(__NR_seccomp, op, flags, args);
-+}
-+#endif
-+
-+/* bpf_load_program() with subtype */
-+static int __attribute__((unused)) ll_bpf_load_program(
-+		const struct bpf_insn *insns, size_t insns_cnt, char *log_buf,
-+		size_t log_buf_sz, const union bpf_prog_subtype *subtype)
-+{
-+	struct bpf_load_program_attr load_attr;
-+
-+	memset(&load_attr, 0, sizeof(struct bpf_load_program_attr));
-+	load_attr.prog_type = BPF_PROG_TYPE_LANDLOCK_HOOK;
-+	load_attr.prog_subtype = subtype;
-+	load_attr.insns = insns;
-+	load_attr.insns_cnt = insns_cnt;
-+	load_attr.license = "GPL";
-+
-+	return bpf_load_program_xattr(&load_attr, log_buf, log_buf_sz);
-+}
-diff --git a/tools/testing/selftests/landlock/test_base.c b/tools/testing/selftests/landlock/test_base.c
-new file mode 100644
-index 000000000000..db46f39048cb
---- /dev/null
-+++ b/tools/testing/selftests/landlock/test_base.c
-@@ -0,0 +1,24 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Landlock tests - base
-+ *
-+ * Copyright © 2017-2019 Mickaël Salaün <mic@digikod.net>
-+ */
-+
-+#define _GNU_SOURCE
-+#include <errno.h>
-+
-+#include "test.h"
-+
-+TEST(seccomp_landlock)
-+{
-+	int ret;
-+
-+	ret = seccomp(SECCOMP_PREPEND_LANDLOCK_PROG, 0, NULL);
-+	EXPECT_EQ(-1, ret);
-+	EXPECT_EQ(EFAULT, errno) {
-+		TH_LOG("Kernel does not support CONFIG_SECURITY_LANDLOCK");
-+	}
-+}
-+
-+TEST_HARNESS_MAIN
-diff --git a/tools/testing/selftests/landlock/test_fs.c b/tools/testing/selftests/landlock/test_fs.c
-new file mode 100644
-index 000000000000..dba726ea4994
---- /dev/null
-+++ b/tools/testing/selftests/landlock/test_fs.c
-@@ -0,0 +1,257 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Landlock tests - file system
-+ *
-+ * Copyright © 2018-2019 Mickaël Salaün <mic@digikod.net>
-+ */
-+
-+#include <fcntl.h> /* O_DIRECTORY */
-+#include <sys/stat.h> /* statbuf */
-+#include <unistd.h> /* faccessat() */
-+
-+#include "test.h"
-+
-+#define TEST_PATH_TRIGGERS ( \
-+		LANDLOCK_TRIGGER_FS_PICK_OPEN | \
-+		LANDLOCK_TRIGGER_FS_PICK_READDIR | \
-+		LANDLOCK_TRIGGER_FS_PICK_EXECUTE | \
-+		LANDLOCK_TRIGGER_FS_PICK_GETATTR)
-+
-+static void test_path_rel(struct __test_metadata *_metadata, int dirfd,
-+		const char *path, int ret)
-+{
-+	int fd;
-+	struct stat statbuf;
-+
-+	ASSERT_EQ(ret, faccessat(dirfd, path, R_OK | X_OK, 0));
-+	ASSERT_EQ(ret, fstatat(dirfd, path, &statbuf, 0));
-+	fd = openat(dirfd, path, O_DIRECTORY);
-+	if (ret) {
-+		ASSERT_EQ(-1, fd);
-+	} else {
-+		ASSERT_NE(-1, fd);
-+		EXPECT_EQ(0, close(fd));
-+	}
-+}
-+
-+static void test_path(struct __test_metadata *_metadata, const char *path,
-+		int ret)
-+{
-+	return test_path_rel(_metadata, AT_FDCWD, path, ret);
-+}
-+
-+static const char d1[] = "/usr";
-+static const char d2[] = "/usr/share";
-+static const char d3[] = "/usr/share/doc";
-+
-+TEST(fs_base)
-+{
-+	test_path(_metadata, d1, 0);
-+	test_path(_metadata, d2, 0);
-+	test_path(_metadata, d3, 0);
-+}
-+
-+#define MAP_VALUE_DENY 1
-+
-+static int create_denied_inode_map(struct __test_metadata *_metadata,
-+		const char *const dirs[])
-+{
-+	int map, key, dirs_len, i;
-+	__u64 value = MAP_VALUE_DENY;
-+
-+	ASSERT_NE(NULL, dirs) {
-+		TH_LOG("No directory list\n");
-+	}
-+	ASSERT_NE(NULL, dirs[0]) {
-+		TH_LOG("Empty directory list\n");
-+	}
-+
-+	/* get the number of dir entries */
-+	for (dirs_len = 0; dirs[dirs_len]; dirs_len++);
-+	map = bpf_create_map(BPF_MAP_TYPE_INODE, sizeof(key), sizeof(value),
-+			dirs_len, 0);
-+	ASSERT_NE(-1, map) {
-+		TH_LOG("Failed to create a map of %d elements: %s\n", dirs_len,
-+				strerror(errno));
-+	}
-+
-+	for (i = 0; dirs[i]; i++) {
-+		key = open(dirs[i], O_RDONLY | O_CLOEXEC | O_DIRECTORY);
-+		ASSERT_NE(-1, key) {
-+			TH_LOG("Failed to open directory \"%s\": %s\n", dirs[i],
-+					strerror(errno));
-+		}
-+		ASSERT_EQ(0, bpf_map_update_elem(map, &key, &value, BPF_ANY)) {
-+			TH_LOG("Failed to update the map with \"%s\": %s\n",
-+					dirs[i], strerror(errno));
-+		}
-+		close(key);
-+	}
-+	return map;
-+}
-+
-+static void enforce_map(struct __test_metadata *_metadata, int map,
-+		bool subpath)
-+{
-+	const struct bpf_insn prog_deny[] = {
-+		BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_1),
-+		/* look for the requested inode in the map */
-+		BPF_LDX_MEM(BPF_DW, BPF_REG_2, BPF_REG_6,
-+			offsetof(struct landlock_ctx_fs_walk, inode)),
-+		BPF_LD_MAP_FD(BPF_REG_1, map), /* 2 instructions */
-+		BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,
-+				BPF_FUNC_inode_map_lookup),
-+		/* if it is there, then deny access to the inode, otherwise
-+		 * allow it */
-+		BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, MAP_VALUE_DENY, 2),
-+		BPF_MOV32_IMM(BPF_REG_0, LANDLOCK_RET_ALLOW),
-+		BPF_EXIT_INSN(),
-+		BPF_MOV32_IMM(BPF_REG_0, LANDLOCK_RET_DENY),
-+		BPF_EXIT_INSN(),
-+	};
-+	union bpf_prog_subtype subtype = {};
-+	int fd_walk = -1, fd_pick;
-+	char log[1024] = "";
-+
-+	if (subpath) {
-+		subtype.landlock_hook.type = LANDLOCK_HOOK_FS_WALK;
-+		fd_walk = ll_bpf_load_program((const struct bpf_insn *)&prog_deny,
-+				sizeof(prog_deny) / sizeof(struct bpf_insn),
-+				log, sizeof(log), &subtype);
-+		ASSERT_NE(-1, fd_walk) {
-+			TH_LOG("Failed to load fs_walk program: %s\n%s",
-+					strerror(errno), log);
-+		}
-+		ASSERT_EQ(0, seccomp(SECCOMP_PREPEND_LANDLOCK_PROG, 0, &fd_walk)) {
-+			TH_LOG("Failed to apply Landlock program: %s", strerror(errno));
-+		}
-+		EXPECT_EQ(0, close(fd_walk));
-+	}
-+
-+	subtype.landlock_hook.type = LANDLOCK_HOOK_FS_PICK;
-+	subtype.landlock_hook.triggers = TEST_PATH_TRIGGERS;
-+	fd_pick = ll_bpf_load_program((const struct bpf_insn *)&prog_deny,
-+			sizeof(prog_deny) / sizeof(struct bpf_insn), log,
-+			sizeof(log), &subtype);
-+	ASSERT_NE(-1, fd_pick) {
-+		TH_LOG("Failed to load fs_pick program: %s\n%s",
-+				strerror(errno), log);
-+	}
-+	ASSERT_EQ(0, seccomp(SECCOMP_PREPEND_LANDLOCK_PROG, 0, &fd_pick)) {
-+		TH_LOG("Failed to apply Landlock program: %s", strerror(errno));
-+	}
-+	EXPECT_EQ(0, close(fd_pick));
-+}
-+
-+static void check_map_blacklist(struct __test_metadata *_metadata,
-+		bool subpath)
-+{
-+	int map = create_denied_inode_map(_metadata, (const char *const [])
-+			{ d2, NULL });
-+	ASSERT_NE(-1, map);
-+	enforce_map(_metadata, map, subpath);
-+	test_path(_metadata, d1, 0);
-+	test_path(_metadata, d2, -1);
-+	test_path(_metadata, d3, subpath ? -1 : 0);
-+	EXPECT_EQ(0, close(map));
-+}
-+
-+TEST(fs_map_blacklist_literal)
-+{
-+	check_map_blacklist(_metadata, false);
-+}
-+
-+TEST(fs_map_blacklist_subpath)
-+{
-+	check_map_blacklist(_metadata, true);
-+}
-+
-+static const char r2[] = ".";
-+static const char r3[] = "./doc";
-+
-+enum relative_access {
-+	REL_OPEN,
-+	REL_CHDIR,
-+	REL_CHROOT,
-+};
-+
-+static void check_access(struct __test_metadata *_metadata,
-+		bool enforce, enum relative_access rel)
-+{
-+	int dirfd;
-+	int map = -1;
-+
-+	if (rel == REL_CHROOT)
-+		ASSERT_NE(-1, chdir(d2));
-+	if (enforce) {
-+		map = create_denied_inode_map(_metadata, (const char *const [])
-+				{ d3, NULL });
-+		ASSERT_NE(-1, map);
-+		enforce_map(_metadata, map, true);
-+	}
-+	switch (rel) {
-+	case REL_OPEN:
-+		dirfd = open(d2, O_DIRECTORY);
-+		ASSERT_NE(-1, dirfd);
-+		break;
-+	case REL_CHDIR:
-+		ASSERT_NE(-1, chdir(d2));
-+		dirfd = AT_FDCWD;
-+		break;
-+	case REL_CHROOT:
-+		ASSERT_NE(-1, chroot(d2)) {
-+			TH_LOG("Failed to chroot: %s\n", strerror(errno));
-+		}
-+		dirfd = AT_FDCWD;
-+		break;
-+	default:
-+		ASSERT_TRUE(false);
-+		return;
-+	}
-+
-+	test_path_rel(_metadata, dirfd, r2, 0);
-+	test_path_rel(_metadata, dirfd, r3, enforce ? -1 : 0);
-+
-+	if (rel == REL_OPEN)
-+		EXPECT_EQ(0, close(dirfd));
-+	if (enforce)
-+		EXPECT_EQ(0, close(map));
-+}
-+
-+TEST(fs_allow_open)
-+{
-+	/* no enforcement, via open */
-+	check_access(_metadata, false, REL_OPEN);
-+}
-+
-+TEST(fs_allow_chdir)
-+{
-+	/* no enforcement, via chdir */
-+	check_access(_metadata, false, REL_CHDIR);
-+}
-+
-+TEST(fs_allow_chroot)
-+{
-+	/* no enforcement, via chroot */
-+	check_access(_metadata, false, REL_CHROOT);
-+}
-+
-+TEST(fs_deny_open)
-+{
-+	/* enforcement without tag, via open */
-+	check_access(_metadata, true, REL_OPEN);
-+}
-+
-+TEST(fs_deny_chdir)
-+{
-+	/* enforcement without tag, via chdir */
-+	check_access(_metadata, true, REL_CHDIR);
-+}
-+
-+TEST(fs_deny_chroot)
-+{
-+	/* enforcement without tag, via chroot */
-+	check_access(_metadata, true, REL_CHROOT);
-+}
-+
-+TEST_HARNESS_MAIN
-diff --git a/tools/testing/selftests/landlock/test_ptrace.c b/tools/testing/selftests/landlock/test_ptrace.c
-new file mode 100644
-index 000000000000..2f3e346288bc
---- /dev/null
-+++ b/tools/testing/selftests/landlock/test_ptrace.c
-@@ -0,0 +1,154 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Landlock tests - ptrace
-+ *
-+ * Copyright © 2017-2019 Mickaël Salaün <mic@digikod.net>
-+ */
-+
-+#define _GNU_SOURCE
-+#include <signal.h> /* raise */
-+#include <sys/ptrace.h>
-+#include <sys/types.h> /* waitpid */
-+#include <sys/wait.h> /* waitpid */
-+#include <unistd.h> /* fork, pipe */
-+
-+#include "test.h"
-+
-+static void apply_null_sandbox(struct __test_metadata *_metadata)
-+{
-+	const struct bpf_insn prog_accept[] = {
-+		BPF_MOV32_IMM(BPF_REG_0, 0),
-+		BPF_EXIT_INSN(),
-+	};
-+	const union bpf_prog_subtype subtype = {
-+		.landlock_hook = {
-+			.type = LANDLOCK_HOOK_FS_PICK,
-+			.triggers = LANDLOCK_TRIGGER_FS_PICK_OPEN,
-+		}
-+	};
-+	int prog;
-+	char log[256] = "";
-+
-+	prog = ll_bpf_load_program((const struct bpf_insn *)&prog_accept,
-+			sizeof(prog_accept) / sizeof(struct bpf_insn), log,
-+			sizeof(log), &subtype);
-+	ASSERT_NE(-1, prog) {
-+		TH_LOG("Failed to load minimal rule: %s\n%s",
-+				strerror(errno), log);
-+	}
-+	ASSERT_EQ(0, seccomp(SECCOMP_PREPEND_LANDLOCK_PROG, 0, &prog)) {
-+		TH_LOG("Failed to apply minimal rule: %s", strerror(errno));
-+	}
-+	EXPECT_EQ(0, close(prog));
-+}
-+
-+/* PTRACE_TRACEME and PTRACE_ATTACH without Landlock rules effect */
-+static void check_ptrace(struct __test_metadata *_metadata,
-+		int sandbox_both, int sandbox_parent, int sandbox_child,
-+		int expect_ptrace)
-+{
-+	pid_t child;
-+	int status;
-+	int pipefd[2];
-+
-+	ASSERT_EQ(0, pipe(pipefd));
-+	if (sandbox_both)
-+		apply_null_sandbox(_metadata);
-+
-+	child = fork();
-+	ASSERT_LE(0, child);
-+	if (child == 0) {
-+		char buf;
-+
-+		EXPECT_EQ(0, close(pipefd[1]));
-+		if (sandbox_child)
-+			apply_null_sandbox(_metadata);
-+
-+		/* test traceme */
-+		ASSERT_EQ(expect_ptrace, ptrace(PTRACE_TRACEME));
-+		if (expect_ptrace) {
-+			ASSERT_EQ(EPERM, errno);
-+		} else {
-+			ASSERT_EQ(0, raise(SIGSTOP));
-+		}
-+
-+		/* sync */
-+		ASSERT_EQ(1, read(pipefd[0], &buf, 1)) {
-+			TH_LOG("Failed to read() sync from parent");
-+		}
-+		ASSERT_EQ('.', buf);
-+		_exit(_metadata->passed ? EXIT_SUCCESS : EXIT_FAILURE);
-+	}
-+
-+	EXPECT_EQ(0, close(pipefd[0]));
-+	if (sandbox_parent)
-+		apply_null_sandbox(_metadata);
-+
-+	/* test traceme */
-+	if (!expect_ptrace) {
-+		ASSERT_EQ(child, waitpid(child, &status, 0));
-+		ASSERT_EQ(1, WIFSTOPPED(status));
-+		ASSERT_EQ(0, ptrace(PTRACE_DETACH, child, NULL, 0));
-+	}
-+	/* test attach */
-+	ASSERT_EQ(expect_ptrace, ptrace(PTRACE_ATTACH, child, NULL, 0));
-+	if (expect_ptrace) {
-+		ASSERT_EQ(EPERM, errno);
-+	} else {
-+		ASSERT_EQ(child, waitpid(child, &status, 0));
-+		ASSERT_EQ(1, WIFSTOPPED(status));
-+		ASSERT_EQ(0, ptrace(PTRACE_CONT, child, NULL, 0));
-+	}
-+
-+	/* sync */
-+	ASSERT_EQ(1, write(pipefd[1], ".", 1)) {
-+		TH_LOG("Failed to write() sync to child");
-+	}
-+	ASSERT_EQ(child, waitpid(child, &status, 0));
-+	if (WIFSIGNALED(status) || WEXITSTATUS(status))
-+		_metadata->passed = 0;
-+}
-+
-+TEST(ptrace_allow_without_sandbox)
-+{
-+	/* no sandbox */
-+	check_ptrace(_metadata, 0, 0, 0, 0);
-+}
-+
-+TEST(ptrace_allow_with_one_sandbox)
-+{
-+	/* child sandbox */
-+	check_ptrace(_metadata, 0, 0, 1, 0);
-+}
-+
-+TEST(ptrace_allow_with_nested_sandbox)
-+{
-+	/* inherited and child sandbox */
-+	check_ptrace(_metadata, 1, 0, 1, 0);
-+}
-+
-+TEST(ptrace_deny_with_parent_sandbox)
-+{
-+	/* parent sandbox */
-+	check_ptrace(_metadata, 0, 1, 0, -1);
-+}
-+
-+TEST(ptrace_deny_with_nested_and_parent_sandbox)
-+{
-+	/* inherited and parent sandbox */
-+	check_ptrace(_metadata, 1, 1, 0, -1);
-+}
-+
-+TEST(ptrace_deny_with_forked_sandbox)
-+{
-+	/* inherited, parent and child sandbox */
-+	check_ptrace(_metadata, 1, 1, 1, -1);
-+}
-+
-+TEST(ptrace_deny_with_sibling_sandbox)
-+{
-+	/* parent and child sandbox */
-+	check_ptrace(_metadata, 0, 1, 1, -1);
-+}
-+
-+TEST_HARNESS_MAIN
 -- 
 2.20.1
