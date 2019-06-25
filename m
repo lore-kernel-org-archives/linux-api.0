@@ -1,152 +1,172 @@
-From: Will Deacon <will.deacon@arm.com>
-Subject: Re: [RFC PATCH 1/1] Revert "rseq/selftests: arm: use udf instruction
- for RSEQ_SIG"
-Date: Tue, 25 Jun 2019 10:15:07 +0100
-Message-ID: <20190625091507.GA13263@fuggles.cambridge.arm.com>
-References: <20190617152304.23371-1-mathieu.desnoyers@efficios.com>
- <20190624172429.GA11133@fuggles.cambridge.arm.com>
- <1620037196.377.1561400426591.JavaMail.zimbra@efficios.com>
+From: Christian Brauner <christian@brauner.io>
+Subject: Re: [PATCH 03/25] vfs: Allow fsinfo() to query what's in an
+ fs_context [ver #14]
+Date: Tue, 25 Jun 2019 11:27:28 +0200
+Message-ID: <20190625092728.z3jn3gbyopzcg2it@brauner.io>
+References: <156138532485.25627.7459410522109581052.stgit@warthog.procyon.org.uk>
+ <156138535407.25627.15015993364565647650.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1620037196.377.1561400426591.JavaMail.zimbra@efficios.com>
+In-Reply-To: <156138535407.25627.15015993364565647650.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: shuah <shuah@kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Joel Fernandes <joelaf@google.com>, Catalin Marinas <catalin.marinas@arm.com>, Dave Watson <davejwatson@fb.com>, Andi Kleen <andi@firstfloor.org>, linux-kselftest <linux-kselftest@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Chris Lameter <cl@linux.com>, Russell King <linux@arm.linux.org.uk>, Michael Kerrisk <mtk.manpages@gmail.com>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Paul Turner <pjt@google.com>, Boqun Feng <boqun.feng@gmail.com>, Josh Triplett <josh@joshtriplett.org>, rostedt <rostedt@goodmis.org>, Ben Maurer <bmaurer@fb.com>, linux-api <linux-api@vger.kernel.org>, Andy
+To: David Howells <dhowells@redhat.com>
+Cc: viro@zeniv.linux.org.uk, raven@themaw.net, mszeredi@redhat.com, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jun 24, 2019 at 02:20:26PM -0400, Mathieu Desnoyers wrote:
-> ----- On Jun 24, 2019, at 1:24 PM, Will Deacon will.deacon@arm.com wrote:
+On Mon, Jun 24, 2019 at 03:09:14PM +0100, David Howells wrote:
+> Allow fsinfo() to be used to query the filesystem attached to an fs_context
+> once a superblock has been created or if it comes from fspick().
 > 
-> > On Mon, Jun 17, 2019 at 05:23:04PM +0200, Mathieu Desnoyers wrote:
-> >> This reverts commit 2b845d4b4acd9422bbb668989db8dc36dfc8f438.
-> >> 
-> >> That commit introduces build issues for programs compiled in Thumb mode.
-> >> Rather than try to be clever and emit a valid trap instruction on arm32,
-> >> which requires special care about big/little endian handling on that
-> >> architecture, just emit plain data. Data in the instruction stream is
-> >> technically expected on arm32: this is how literal pools are
-> >> implemented. Reverting to the prior behavior does exactly that.
-> >> 
-> >> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-> >> CC: Peter Zijlstra <peterz@infradead.org>
-> >> CC: Thomas Gleixner <tglx@linutronix.de>
-> >> CC: Joel Fernandes <joelaf@google.com>
-> >> CC: Catalin Marinas <catalin.marinas@arm.com>
-> >> CC: Dave Watson <davejwatson@fb.com>
-> >> CC: Will Deacon <will.deacon@arm.com>
-> >> CC: Shuah Khan <shuah@kernel.org>
-> >> CC: Andi Kleen <andi@firstfloor.org>
-> >> CC: linux-kselftest@vger.kernel.org
-> >> CC: "H . Peter Anvin" <hpa@zytor.com>
-> >> CC: Chris Lameter <cl@linux.com>
-> >> CC: Russell King <linux@arm.linux.org.uk>
-> >> CC: Michael Kerrisk <mtk.manpages@gmail.com>
-> >> CC: "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>
-> >> CC: Paul Turner <pjt@google.com>
-> >> CC: Boqun Feng <boqun.feng@gmail.com>
-> >> CC: Josh Triplett <josh@joshtriplett.org>
-> >> CC: Steven Rostedt <rostedt@goodmis.org>
-> >> CC: Ben Maurer <bmaurer@fb.com>
-> >> CC: linux-api@vger.kernel.org
-> >> CC: Andy Lutomirski <luto@amacapital.net>
-> >> CC: Andrew Morton <akpm@linux-foundation.org>
-> >> CC: Linus Torvalds <torvalds@linux-foundation.org>
-> >> CC: Carlos O'Donell <carlos@redhat.com>
-> >> CC: Florian Weimer <fweimer@redhat.com>
-> >> ---
-> >>  tools/testing/selftests/rseq/rseq-arm.h | 52 ++-------------------------------
-> >>  1 file changed, 2 insertions(+), 50 deletions(-)
-> >> 
-> >> diff --git a/tools/testing/selftests/rseq/rseq-arm.h
-> >> b/tools/testing/selftests/rseq/rseq-arm.h
-> >> index 84f28f147fb6..5f262c54364f 100644
-> >> --- a/tools/testing/selftests/rseq/rseq-arm.h
-> >> +++ b/tools/testing/selftests/rseq/rseq-arm.h
-> >> @@ -5,54 +5,7 @@
-> >>   * (C) Copyright 2016-2018 - Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-> >>   */
-> >>  
-> >> -/*
-> >> - * RSEQ_SIG uses the udf A32 instruction with an uncommon immediate operand
-> >> - * value 0x5de3. This traps if user-space reaches this instruction by mistake,
-> >> - * and the uncommon operand ensures the kernel does not move the instruction
-> >> - * pointer to attacker-controlled code on rseq abort.
-> >> - *
-> >> - * The instruction pattern in the A32 instruction set is:
-> >> - *
-> >> - * e7f5def3    udf    #24035    ; 0x5de3
-> >> - *
-> >> - * This translates to the following instruction pattern in the T16 instruction
-> >> - * set:
-> >> - *
-> >> - * little endian:
-> >> - * def3        udf    #243      ; 0xf3
-> >> - * e7f5        b.n    <7f5>
-> >> - *
-> >> - * pre-ARMv6 big endian code:
-> >> - * e7f5        b.n    <7f5>
-> >> - * def3        udf    #243      ; 0xf3
-> >> - *
-> >> - * ARMv6+ -mbig-endian generates mixed endianness code vs data: little-endian
-> >> - * code and big-endian data. Ensure the RSEQ_SIG data signature matches code
-> >> - * endianness. Prior to ARMv6, -mbig-endian generates big-endian code and data
-> >> - * (which match), so there is no need to reverse the endianness of the data
-> >> - * representation of the signature. However, the choice between BE32 and BE8
-> >> - * is done by the linker, so we cannot know whether code and data endianness
-> >> - * will be mixed before the linker is invoked.
-> >> - */
-> >> -
-> >> -#define RSEQ_SIG_CODE	0xe7f5def3
-> >> -
-> >> -#ifndef __ASSEMBLER__
-> >> -
-> >> -#define RSEQ_SIG_DATA							\
-> >> -	({								\
-> >> -		int sig;						\
-> >> -		asm volatile ("b 2f\n\t"				\
-> >> -			      "1: .inst " __rseq_str(RSEQ_SIG_CODE) "\n\t" \
-> >> -			      "2:\n\t"					\
-> >> -			      "ldr %[sig], 1b\n\t"			\
-> >> -			      : [sig] "=r" (sig));			\
-> >> -		sig;							\
-> >> -	})
-> >> -
-> >> -#define RSEQ_SIG	RSEQ_SIG_DATA
-> >> -
-> >> -#endif
-> >> +#define RSEQ_SIG	0x53053053
-> > 
-> > I don't get why you're reverting back to this old signature value, when the
-> > one we came up with will work well when interpreted as an instruction in the
-> > *vast* majority of scenarios that people care about (A32/T32 little-endian).
-> > I think you might be under-estimating just how dead things like BE32 really
-> > are.
+> The caller must specify AT_FSINFO_FROM_FSOPEN in the parameters and must
+
+Yeah, I like that better than how it was before.
+
+> supply the fd from fsopen() as dfd and must set filename to NULL.
 > 
-> My issue is that the current .instr approach is broken for programs or functions
-> built in Thumb mode, and I received no feedback on the solutions I proposed for
-> those issues, which led me to propose a patch reverting to a simple .word.
-
-I understand why you're moving from .inst to .word, but I don't understand
-why that necessitates a change in the value. Why not .word 0xe7f5def3 ? You
-could also flip the bytes around in case of big-endian, which would keep the
-instruction coding clean for BE8.
-
-> > That said, when you ran into .inst.n/.inst.w issues, did you try something
-> > along the lines of the WASM() macro we use in arch/arm/, which adds the ".w"
-> > suffix when targetting Thumb?
+> This is done with something like:
 > 
-> AFAIU, the WASM macros depend on CONFIG_THUMB2_KERNEL, which may be fine within
-> the kernel, but for user-space things are a bit more complex.
+> 	fd = fsopen("ext4", 0);
+> 	...
+> 	struct fsinfo_params params = {
+> 		.at_flags = AT_FSINFO_FROM_FSOPEN;
+> 		...
+> 	};
+> 	fsinfo(fd, NULL, &params, ...);
 > 
-> A compile-unit can be compiled as thumb, which will set a compiler define
-> which we could use to detect thumb mode. However, unfortunately, a single
-> function can also be compiled with an attribute selecting thumb mode, which
-> AFAIU does not influence the preprocessor defines.
+> Signed-off-by: David Howells <dhowells@redhat.com>
+> ---
+> 
+>  fs/fsinfo.c                |   46 +++++++++++++++++++++++++++++++++++++++++++-
+>  fs/statfs.c                |    2 +-
+>  include/uapi/linux/fcntl.h |    2 ++
+>  3 files changed, 48 insertions(+), 2 deletions(-)
+> 
+> diff --git a/fs/fsinfo.c b/fs/fsinfo.c
+> index 49b46f96dda3..c24701f994d1 100644
+> --- a/fs/fsinfo.c
+> +++ b/fs/fsinfo.c
+> @@ -8,6 +8,7 @@
+>  #include <linux/security.h>
+>  #include <linux/uaccess.h>
+>  #include <linux/fsinfo.h>
+> +#include <linux/fs_context.h>
+>  #include <uapi/linux/mount.h>
+>  #include "internal.h"
+>  
+> @@ -340,6 +341,42 @@ static int vfs_fsinfo_fd(unsigned int fd, struct fsinfo_kparams *params)
+>  	return ret;
+>  }
+>  
+> +/*
+> + * Allow access to an fs_context object as created by fsopen() or fspick().
+> + */
+> +static int vfs_fsinfo_fscontext(int fd, struct fsinfo_kparams *params)
+> +{
+> +	struct fs_context *fc;
+> +	struct fd f = fdget(fd);
+> +	int ret;
+> +
+> +	if (!f.file)
+> +		return -EBADF;
+> +
+> +	ret = -EINVAL;
+> +	if (f.file->f_op == &fscontext_fops)
 
-Thanks, I hadn't considered that case. I don't know the right way to handle
-that in the toolchain, so using .word is probably the best bet in the
-absence of any better suggestions from the tools folks.
+Don't you mean != ?
 
-Will
+if (f.file->f_op != &fscontext_fops)
+
+> +		goto out_f;
+> +	ret = -EOPNOTSUPP;
+> +	if (fc->ops == &legacy_fs_context_ops)
+> +		goto out_f;
+> +
+> +	ret = mutex_lock_interruptible(&fc->uapi_mutex);
+> +	if (ret == 0) {
+> +		ret = -EIO;
+
+Why EIO when there's no root dentry?
+
+> +		if (fc->root) {
+> +			struct path path = { .dentry = fc->root };
+> +
+> +			ret = vfs_fsinfo(&path, params);
+> +		}
+> +
+> +		mutex_unlock(&fc->uapi_mutex);
+> +	}
+> +
+> +out_f:
+> +	fdput(f);
+> +	return ret;
+> +}
+> +
+>  /*
+>   * Return buffer information by requestable attribute.
+>   *
+> @@ -445,6 +482,9 @@ SYSCALL_DEFINE5(fsinfo,
+>  		params.request = user_params.request;
+>  		params.Nth = user_params.Nth;
+>  		params.Mth = user_params.Mth;
+> +
+
+[1]:
+
+> +		if ((params.at_flags & AT_FSINFO_FROM_FSOPEN) && filename)
+> +			return -EINVAL;
+>  	} else {
+>  		params.request = FSINFO_ATTR_STATFS;
+>  	}
+> @@ -453,6 +493,8 @@ SYSCALL_DEFINE5(fsinfo,
+>  		user_buf_size = 0;
+>  		user_buffer = NULL;
+>  	}
+> +	if ((params.at_flags & AT_FSINFO_FROM_FSOPEN) && filename)
+> +		return -EINVAL;
+
+Sorry, why is this checked twice (see [1])? Or is the diff just
+misleading here?
+
+>  
+>  	/* Allocate an appropriately-sized buffer.  We will truncate the
+>  	 * contents when we write the contents back to userspace.
+> @@ -500,7 +542,9 @@ SYSCALL_DEFINE5(fsinfo,
+>  	if (!params.buffer)
+>  		goto error_scratch;
+>  
+> -	if (filename)
+> +	if (params.at_flags & AT_FSINFO_FROM_FSOPEN)
+> +		ret = vfs_fsinfo_fscontext(dfd, &params);
+> +	else if (filename)
+>  		ret = vfs_fsinfo_path(dfd, filename, &params);
+>  	else
+>  		ret = vfs_fsinfo_fd(dfd, &params);
+> diff --git a/fs/statfs.c b/fs/statfs.c
+> index eea7af6f2f22..b9b63d9f4f24 100644
+> --- a/fs/statfs.c
+> +++ b/fs/statfs.c
+> @@ -86,7 +86,7 @@ int vfs_statfs(const struct path *path, struct kstatfs *buf)
+>  	int error;
+>  
+>  	error = statfs_by_dentry(path->dentry, buf);
+> -	if (!error)
+> +	if (!error && path->mnt)
+>  		buf->f_flags = calculate_f_flags(path->mnt);
+>  	return error;
+>  }
+> diff --git a/include/uapi/linux/fcntl.h b/include/uapi/linux/fcntl.h
+> index 1d338357df8a..6a2402a8fa30 100644
+> --- a/include/uapi/linux/fcntl.h
+> +++ b/include/uapi/linux/fcntl.h
+> @@ -91,6 +91,8 @@
+>  #define AT_STATX_FORCE_SYNC	0x2000	/* - Force the attributes to be sync'd with the server */
+>  #define AT_STATX_DONT_SYNC	0x4000	/* - Don't sync attributes with the server */
+>  
+> +#define AT_FSINFO_FROM_FSOPEN	0x2000	/* Examine the fs_context attached to dfd by fsopen() */
+> +
+>  #define AT_RECURSIVE		0x8000	/* Apply to the entire subtree */
+>  
+>  
+> 
