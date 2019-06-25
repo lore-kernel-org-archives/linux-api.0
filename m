@@ -1,68 +1,91 @@
-From: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
-Subject: [PATCH bpf-next v9 01/10] fs,security: Add a new file access type: MAY_CHROOT
-Date: Tue, 25 Jun 2019 23:52:30 +0200
-Message-ID: <20190625215239.11136-2-mic@digikod.net>
+From: Al Viro <viro@zeniv.linux.org.uk>
+Subject: Re: [PATCH bpf-next v9 05/10] bpf,landlock: Add a new map type: inode
+Date: Tue, 25 Jun 2019 23:52:01 +0100
+Message-ID: <20190625225201.GJ17978@ZenIV.linux.org.uk>
 References: <20190625215239.11136-1-mic@digikod.net>
+ <20190625215239.11136-6-mic@digikod.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: 8bit
-Return-path: <kernel-hardening-return-16247-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <20190625215239.11136-1-mic@digikod.net>
-To: linux-kernel@vger.kernel.org
-Cc: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>, Aleksa Sarai <cyphar@cyphar.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Alexei Starovoitov <ast@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <jmorris@namei.org>, Jann Horn <jann@thejh.net>, John Johansen <john.johansen@canonical.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Michael Kerrisk <mtk.manpages@gmail.com>, =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <micka>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190625215239.11136-6-mic@digikod.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
+Cc: linux-kernel@vger.kernel.org, Aleksa Sarai <cyphar@cyphar.com>, Alexei Starovoitov <ast@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <jmorris@namei.org>, Jann Horn <jann@thejh.net>, John Johansen <john.johansen@canonical.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Michael Kerrisk <mtk.manpages@gmail.com>, =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mickael.salaun@ssi.gouv.fr>, Paul Moore <paul@paul-moore.com>, Sargun
 List-Id: linux-api@vger.kernel.org
 
-For compatibility reason, MAY_CHROOT is always set with MAY_CHDIR.
-However, this new flag enable to differentiate a chdir form a chroot.
+On Tue, Jun 25, 2019 at 11:52:34PM +0200, Mickaël Salaün wrote:
+> +/* must call iput(inode) after this call */
+> +static struct inode *inode_from_fd(int ufd, bool check_access)
+> +{
+> +	struct inode *ret;
+> +	struct fd f;
+> +	int deny;
+> +
+> +	f = fdget(ufd);
+> +	if (unlikely(!f.file || !file_inode(f.file))) {
+> +		ret = ERR_PTR(-EBADF);
+> +		goto put_fd;
+> +	}
 
-This is needed for the Landlock LSM to be able to evaluate a new root
-directory.
+Just when does one get a NULL file_inode()?  The reason I'm asking is
+that arseloads of code would break if one managed to create such
+a beast...
 
-Signed-off-by: MickaÃ«l SalaÃ¼n <mic@digikod.net>
-Cc: Alexander Viro <viro@zeniv.linux.org.uk>
-Cc: Casey Schaufler <casey@schaufler-ca.com>
-Cc: James Morris <jmorris@namei.org>
-Cc: John Johansen <john.johansen@canonical.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Paul Moore <paul@paul-moore.com>
-Cc: "Serge E. Hallyn" <serge@hallyn.com>
-Cc: Stephen Smalley <sds@tycho.nsa.gov>
-Cc: Tetsuo Handa <penguin-kernel@I-love.SAKURA.ne.jp>
-Cc: linux-fsdevel@vger.kernel.org
----
- fs/open.c          | 3 ++-
- include/linux/fs.h | 1 +
- 2 files changed, 3 insertions(+), 1 deletion(-)
+Incidentally, that should be return ERR_PTR(-EBADF); fdput() is wrong there.
 
-diff --git a/fs/open.c b/fs/open.c
-index b5b80469b93d..e8767318fd03 100644
---- a/fs/open.c
-+++ b/fs/open.c
-@@ -494,7 +494,8 @@ int ksys_chroot(const char __user *filename)
- 	if (error)
- 		goto out;
- 
--	error = inode_permission(path.dentry->d_inode, MAY_EXEC | MAY_CHDIR);
-+	error = inode_permission(path.dentry->d_inode, MAY_EXEC | MAY_CHDIR |
-+			MAY_CHROOT);
- 	if (error)
- 		goto dput_and_out;
- 
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index f7fdfe93e25d..fa6c9d0c152b 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -99,6 +99,7 @@ typedef int (dio_iodone_t)(struct kiocb *iocb, loff_t offset,
- #define MAY_CHDIR		0x00000040
- /* called from RCU mode, don't block */
- #define MAY_NOT_BLOCK		0x00000080
-+#define MAY_CHROOT		0x00000100
- 
- /*
-  * flags in file.f_mode.  Note that FMODE_READ and FMODE_WRITE must correspond
--- 
-2.20.1
+> +	}
+> +	/* check if the FD is tied to a mount point */
+> +	/* TODO: add this check when called from an eBPF program too */
+> +	if (unlikely(!f.file->f_path.mnt
+
+Again, the same question - when the hell can that happen?  If you are
+sitting on an exploitable roothole, do share it...
+
+ || f.file->f_path.mnt->mnt_flags &
+> +				MNT_INTERNAL)) {
+> +		ret = ERR_PTR(-EINVAL);
+> +		goto put_fd;
+
+What does it have to do with mountpoints, anyway?
+
+> +/* called from syscall */
+> +static int sys_inode_map_delete_elem(struct bpf_map *map, struct inode *key)
+> +{
+> +	struct inode_array *array = container_of(map, struct inode_array, map);
+> +	struct inode *inode;
+> +	int i;
+> +
+> +	WARN_ON_ONCE(!rcu_read_lock_held());
+> +	for (i = 0; i < array->map.max_entries; i++) {
+> +		if (array->elems[i].inode == key) {
+> +			inode = xchg(&array->elems[i].inode, NULL);
+> +			array->nb_entries--;
+
+Umm...  Is that intended to be atomic in any sense?
+
+> +			iput(inode);
+> +			return 0;
+> +		}
+> +	}
+> +	return -ENOENT;
+> +}
+> +
+> +/* called from syscall */
+> +int bpf_inode_map_delete_elem(struct bpf_map *map, int *key)
+> +{
+> +	struct inode *inode;
+> +	int err;
+> +
+> +	inode = inode_from_fd(*key, false);
+> +	if (IS_ERR(inode))
+> +		return PTR_ERR(inode);
+> +	err = sys_inode_map_delete_elem(map, inode);
+> +	iput(inode);
+> +	return err;
+> +}
+
+Wait a sec...  So we have those beasties that can have long-term
+references to arbitrary inodes stuck in them?  What will happen
+if you get umount(2) called while such a thing exists?
