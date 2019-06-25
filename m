@@ -1,34 +1,55 @@
-From: James Morris <jmorris@namei.org>
-Subject: Re: [PATCH V34 00/29] Lockdown as an LSM
-Date: Tue, 25 Jun 2019 16:04:15 +1000 (AEST)
-Message-ID: <alpine.LRH.2.21.1906251601430.26271@namei.org>
-References: <20190622000358.19895-1-matthewgarrett@google.com> <alpine.LRH.2.21.1906250853290.7826@namei.org> <CACdnJut2erF9ZKeJQ+uvWZeEnHh=stmEioi_P36DF9mN5i2RGQ@mail.gmail.com>
+From: Chao Yu <yuchao0@huawei.com>
+Subject: Re: [PATCH v5 16/16] f2fs: add fs-verity support
+Date: Tue, 25 Jun 2019 15:55:57 +0800
+Message-ID: <90495fb1-72eb-ca42-8457-ef8e969eda51@huawei.com>
+References: <20190620205043.64350-1-ebiggers@kernel.org>
+ <20190620205043.64350-17-ebiggers@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CACdnJut2erF9ZKeJQ+uvWZeEnHh=stmEioi_P36DF9mN5i2RGQ@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Matthew Garrett <mjg59@google.com>
-Cc: LSM List <linux-security-module@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Stephen Smalley <sds@tycho.nsa.gov>, Andy Lutomirski <luto@amacapital.net>, John Johansen <john.johansen@canonical.com>, Casey Schaufler <casey@schaufler-ca.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+In-Reply-To: <20190620205043.64350-17-ebiggers@kernel.org>
+Content-Language: en-US
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+To: Eric Biggers <ebiggers@kernel.org>, linux-fscrypt@vger.kernel.org
+Cc: "Theodore Y . Ts'o" <tytso@mit.edu>, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-api@vger.kernel.org, Dave Chinner <david@fromorbit.com>, linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, linux-integrity@vger.kernel.org, linux-ext4@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Christoph Hellwig <hch@lst.de>, Victor Hsieh <victorhsieh@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 24 Jun 2019, Matthew Garrett wrote:
+Hi Eric,
 
-> > We are still not resolved on granularity. Stephen has said he's not sure
-> > if a useful policy can be constructed with just confidentiality and
-> > integrity settings. I'd be interested to know JJ and Casey's thoughts on
-> > lockdown policy flexibility wrt their respective LSMs.
-> 
-> This implementation provides arbitrary granularity at the LSM level,
-> though the lockdown LSM itself only provides two levels. Other LSMs
-> can choose an appropriate level of exposure.
+On 2019/6/21 4:50, Eric Biggers wrote:
+> +static int f2fs_begin_enable_verity(struct file *filp)
+> +{
+> +	struct inode *inode = file_inode(filp);
+> +	int err;
+> +
 
-Ahh, OK, I only looked at the patchset description and had not looked at 
-V33 yet.
+I think we'd better add condition here (under inode lock) to disallow enabling
+verity on atomic/volatile inode, as we may fail to write merkle tree data due to
+atomic/volatile inode's special writeback method.
 
-This is looking good.
+> +	err = f2fs_convert_inline_inode(inode);
+> +	if (err)
+> +		return err;
+> +
+> +	err = dquot_initialize(inode);
+> +	if (err)
+> +		return err;
 
+We can get rid of dquot_initialize() here, since f2fs_file_open() ->
+dquot_file_open() should has initialized quota entry previously, right?
 
--- 
-James Morris
-<jmorris@namei.org>
+Thanks,
+
+> +
+> +	set_inode_flag(inode, FI_VERITY_IN_PROGRESS);
+> +	return 0;
+> +}
+> +
