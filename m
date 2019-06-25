@@ -1,51 +1,34 @@
-From: Dave Young <dyoung@redhat.com>
-Subject: Re: [PATCH V31 07/25] kexec_file: Restrict at runtime if the kernel
- is locked down
-Date: Tue, 25 Jun 2019 10:51:48 +0800
-Message-ID: <20190625025148.GA4024@dhcp-128-65.nay.redhat.com>
-References: <20190326182742.16950-1-matthewgarrett@google.com>
- <20190326182742.16950-8-matthewgarrett@google.com>
- <20190621064340.GB4528@localhost.localdomain>
- <CACdnJut=J1YTpM4s6g5XWCEs+=X0Jvf8otfMg+w=_oqSZmf01Q@mail.gmail.com>
- <20190624015206.GB2976@dhcp-128-65.nay.redhat.com>
- <CACdnJusPtYLdg7ZPhBo=Y5EsBz6B+5M2zYscBrLcc89oNnPkdQ@mail.gmail.com>
+From: James Morris <jmorris@namei.org>
+Subject: Re: [PATCH V34 00/29] Lockdown as an LSM
+Date: Tue, 25 Jun 2019 16:04:15 +1000 (AEST)
+Message-ID: <alpine.LRH.2.21.1906251601430.26271@namei.org>
+References: <20190622000358.19895-1-matthewgarrett@google.com> <alpine.LRH.2.21.1906250853290.7826@namei.org> <CACdnJut2erF9ZKeJQ+uvWZeEnHh=stmEioi_P36DF9mN5i2RGQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CACdnJusPtYLdg7ZPhBo=Y5EsBz6B+5M2zYscBrLcc89oNnPkdQ@mail.gmail.com>
+In-Reply-To: <CACdnJut2erF9ZKeJQ+uvWZeEnHh=stmEioi_P36DF9mN5i2RGQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Matthew Garrett <mjg59@google.com>
-Cc: James Morris <jmorris@namei.org>, Jiri Bohac <jbohac@suse.cz>, Linux API <linux-api@vger.kernel.org>, kexec@lists.infradead.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, LSM List <linux-security-module@vger.kernel.org>, Andy Lutomirski <luto@kernel.org>
+Cc: LSM List <linux-security-module@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Stephen Smalley <sds@tycho.nsa.gov>, Andy Lutomirski <luto@amacapital.net>, John Johansen <john.johansen@canonical.com>, Casey Schaufler <casey@schaufler-ca.com>
 List-Id: linux-api@vger.kernel.org
 
-On 06/24/19 at 02:06pm, Matthew Garrett wrote:
-> On Sun, Jun 23, 2019 at 6:52 PM Dave Young <dyoung@redhat.com> wrote:
-> >
-> > On 06/21/19 at 01:18pm, Matthew Garrett wrote:
-> > > I don't think so - we want it to be possible to load images if they
-> > > have a valid signature.
-> >
-> > I know it works like this way because of the previous patch.  But from
-> > the patch log "When KEXEC_SIG is not enabled, kernel should not load
-> > images", it is simple to check it early for !IS_ENABLED(CONFIG_KEXEC_SIG) &&
-> > kernel_is_locked_down(reason, LOCKDOWN_INTEGRITY)  instead of depending
-> > on the late code to verify signature.  In that way, easier to
-> > understand the logic, no?
+On Mon, 24 Jun 2019, Matthew Garrett wrote:
+
+> > We are still not resolved on granularity. Stephen has said he's not sure
+> > if a useful policy can be constructed with just confidentiality and
+> > integrity settings. I'd be interested to know JJ and Casey's thoughts on
+> > lockdown policy flexibility wrt their respective LSMs.
 > 
-> But that combination doesn't enforce signature validation? We can't
-> depend on !IS_ENABLED(CONFIG_KEXEC_SIG_FORCE) because then it'll
-> enforce signature validation even if lockdown is disabled.
+> This implementation provides arbitrary granularity at the LSM level,
+> though the lockdown LSM itself only provides two levels. Other LSMs
+> can choose an appropriate level of exposure.
 
-Ok, got your point. still something could be improved though, in the switch
-chunk, the errno, reason and IS_ENABLED(CONFIG_KEXEC_SIG_FORCE) etc is
-not necessary for this -EPERM case.
+Ahh, OK, I only looked at the patchset description and had not looked at 
+V33 yet.
 
-/* add some comment to describe the behavior */
-if (ret && security_is_locked_down(LOCKDOWN_KEXEC)) {
-	ret = -EPERM;
-	goto out;
-}
+This is looking good.
 
-Thanks
-Dave
+
+-- 
+James Morris
+<jmorris@namei.org>
