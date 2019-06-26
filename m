@@ -1,54 +1,51 @@
-From: Eric Biggers <ebiggers@kernel.org>
-Subject: Re: [PATCH v5 16/16] f2fs: add fs-verity support
-Date: Wed, 26 Jun 2019 11:21:39 -0700
-Message-ID: <20190626182138.GA30296@gmail.com>
-References: <20190620205043.64350-1-ebiggers@kernel.org>
- <20190620205043.64350-17-ebiggers@kernel.org>
- <90495fb1-72eb-ca42-8457-ef8e969eda51@huawei.com>
- <20190625175225.GC81914@gmail.com>
- <68c5a15f-f6a8-75e2-b485-0f1b51471995@huawei.com>
+From: Matthew Garrett <mjg59@google.com>
+Subject: Re: [PATCH V33 29/30] tracefs: Restrict tracefs when the kernel is
+ locked down
+Date: Wed, 26 Jun 2019 12:39:31 -0700
+Message-ID: <CACdnJuubBJxrybsV6+hyz9RyUR2AUyzy=4WJEeoYrNgbh_=FCQ@mail.gmail.com>
+References: <20190621011941.186255-1-matthewgarrett@google.com>
+ <20190621011941.186255-30-matthewgarrett@google.com> <20190626090748.23eba868@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-Content-Disposition: inline
-In-Reply-To: <68c5a15f-f6a8-75e2-b485-0f1b51471995@huawei.com>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Chao Yu <yuchao0@huawei.com>
-Cc: "Theodore Y . Ts'o" <tytso@mit.edu>, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-api@vger.kernel.org, Dave Chinner <david@fromorbit.com>, linux-f2fs-devel@lists.sourceforge.net, linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, linux-integrity@vger.kernel.org, linux-ext4@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Christoph Hellwig <hch@lst.de>, Victor Hsieh <victorhsieh@google.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190626090748.23eba868@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
+Cc: James Morris <jmorris@namei.org>, linux-security@vger.kernel.org, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jun 26, 2019 at 03:34:35PM +0800, Chao Yu wrote:
-> >>> +	err = f2fs_convert_inline_inode(inode);
-> >>> +	if (err)
-> >>> +		return err;
-> >>> +
-> >>> +	err = dquot_initialize(inode);
-> >>> +	if (err)
-> >>> +		return err;
-> >>
-> >> We can get rid of dquot_initialize() here, since f2fs_file_open() ->
-> >> dquot_file_open() should has initialized quota entry previously, right?
-> > 
-> > We still need it because dquot_file_open() only calls dquot_initialize() if the
-> > file is being opened for writing.  But here the file descriptor is readonly.
-> > I'll add a comment explaining this here and in the ext4 equivalent.
-> 
-> Ah, you're right.
-> 
-> f2fs_convert_inline_inode() may grab one more block during conversion, so we
-> need to call dquot_initialize() before inline conversion?
-> 
-> Thanks,
-> 
+On Wed, Jun 26, 2019 at 6:07 AM Steven Rostedt <rostedt@goodmis.org> wrote:
+>
+> On Thu, 20 Jun 2019 18:19:40 -0700
+> Matthew Garrett <matthewgarrett@google.com> wrote:
+> > +static const struct file_operations tracefs_proxy_file_operations = {
+> > +     .read =         default_read_file,
+> > +     .write =        default_write_file,
+> > +     .open =         default_open_file,
+> > +     .llseek =       noop_llseek,
+> > +};
+>
+> This appears to be unused.
 
-Good point.  I'll fix that here and in ext4.
+Oops, yup - dropped.
 
-- Eric
+> > +     dentry->d_fsdata = fops ? (void *)fops :
+> > +             (void *)&tracefs_file_operations;
+> > +     memcpy(proxy_fops, dentry->d_fsdata, sizeof(struct file_operations));
+> > +     proxy_fops->open = default_open_file;
+> >       inode->i_mode = mode;
+> > -     inode->i_fop = fops ? fops : &tracefs_file_operations;
+> > +     inode->i_fop = proxy_fops;
+>
+>
+> I think the above would look cleaner as:
+>
+>
+>         if (!fops)
+>                 fops = &tracefs_file_operations;
+>
+>         dentry->d_fsdata = (void *)fops;
+>         memcpy(proxy_fops, fops, sizeof(*proxy_fops);
+>         proxy_fops->open = default_open_file;
+
+ACK.
