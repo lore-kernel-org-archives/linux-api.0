@@ -1,109 +1,97 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH 00/25] VFS: Introduce filesystem information query
- syscall [ver #14]
-Date: Wed, 26 Jun 2019 12:47:05 +0200
-Message-ID: <20190626104704.dwjd4urpsmuheirc@brauner.io>
-References: <156138532485.25627.7459410522109581052.stgit@warthog.procyon.org.uk>
- <20190626100525.irdehd24jowz5f75@brauner.io>
- <cf0361c2d1fc09ad0097f0da1e981b97ad39ab07.camel@themaw.net>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: Detecting the availability of VSYSCALL
+Date: Wed, 26 Jun 2019 14:12:22 +0200
+Message-ID: <87o92kmtp5.fsf@oldenburg2.str.redhat.com>
+References: <87v9wty9v4.fsf@oldenburg2.str.redhat.com>
+	<alpine.DEB.2.21.1906251824500.32342@nanos.tec.linutronix.de>
+	<87lfxpy614.fsf@oldenburg2.str.redhat.com>
+	<CALCETrVh1f5wJNMbMoVqY=bq-7G=uQ84BUkepf5RksA3vUopNQ@mail.gmail.com>
+	<87a7e5v1d9.fsf@oldenburg2.str.redhat.com>
+	<CALCETrUDt4v3=FqD+vseGTKTuG=qY+1LwRPrOrU8C7vCVbo=uA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <cf0361c2d1fc09ad0097f0da1e981b97ad39ab07.camel@themaw.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ian Kent <raven@themaw.net>
-Cc: David Howells <dhowells@redhat.com>, viro@zeniv.linux.org.uk, mszeredi@redhat.com, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Transfer-Encoding: quoted-printable
+Return-path: <kernel-hardening-return-16251-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <CALCETrUDt4v3=FqD+vseGTKTuG=qY+1LwRPrOrU8C7vCVbo=uA@mail.gmail.com>
+	(Andy Lutomirski's message of "Tue, 25 Jun 2019 14:49:27 -0700")
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>, Linux API <linux-api@vger.kernel.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, linux-x86_64@vger.kernel.org, linux-arch <linux-arch@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Carlos O'Donell <carlos@redhat.com>, X86 ML <x86@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jun 26, 2019 at 06:42:51PM +0800, Ian Kent wrote:
-> On Wed, 2019-06-26 at 12:05 +0200, Christian Brauner wrote:
-> > On Mon, Jun 24, 2019 at 03:08:45PM +0100, David Howells wrote:
-> > > Hi Al,
-> > > 
-> > > Here are a set of patches that adds a syscall, fsinfo(), that allows
-> > > attributes of a filesystem/superblock to be queried.  Attribute values are
-> > > of four basic types:
-> > > 
-> > >  (1) Version dependent-length structure (size defined by type).
-> > > 
-> > >  (2) Variable-length string (up to PAGE_SIZE).
-> > > 
-> > >  (3) Array of fixed-length structures (up to INT_MAX size).
-> > > 
-> > >  (4) Opaque blob (up to INT_MAX size).
-> > > 
-> > > Attributes can have multiple values in up to two dimensions and all the
-> > > values of a particular attribute must have the same type.
-> > > 
-> > > Note that the attribute values *are* allowed to vary between dentries
-> > > within a single superblock, depending on the specific dentry that you're
-> > > looking at.
-> > > 
-> > > I've tried to make the interface as light as possible, so integer/enum
-> > > attribute selector rather than string and the core does all the allocation
-> > > and extensibility support work rather than leaving that to the filesystems.
-> > > That means that for the first two attribute types, sb->s_op->fsinfo() may
-> > > assume that the provided buffer is always present and always big enough.
-> > > 
-> > > Further, this removes the possibility of the filesystem gaining access to
-> > > the
-> > > userspace buffer.
-> > > 
-> > > 
-> > > fsinfo() allows a variety of information to be retrieved about a filesystem
-> > > and the mount topology:
-> > > 
-> > >  (1) General superblock attributes:
-> > > 
-> > >       - The amount of space/free space in a filesystem (as statfs()).
-> > >       - Filesystem identifiers (UUID, volume label, device numbers, ...)
-> > >       - The limits on a filesystem's capabilities
-> > >       - Information on supported statx fields and attributes and IOC flags.
-> > >       - A variety single-bit flags indicating supported capabilities.
-> > >       - Timestamp resolution and range.
-> > >       - Sources (as per mount(2), but fsconfig() allows multiple sources).
-> > >       - In-filesystem filename format information.
-> > >       - Filesystem parameters ("mount -o xxx"-type things).
-> > >       - LSM parameters (again "mount -o xxx"-type things).
-> > > 
-> > >  (2) Filesystem-specific superblock attributes:
-> > > 
-> > >       - Server names and addresses.
-> > >       - Cell name.
-> > > 
-> > >  (3) Filesystem configuration metadata attributes:
-> > > 
-> > >       - Filesystem parameter type descriptions.
-> > >       - Name -> parameter mappings.
-> > >       - Simple enumeration name -> value mappings.
-> > > 
-> > >  (4) Mount topology:
-> > > 
-> > >       - General information about a mount object.
-> > >       - Mount device name(s).
-> > >       - Children of a mount object and their relative paths.
-> > > 
-> > >  (5) Information about what the fsinfo() syscall itself supports, including
-> > >      the number of attibutes supported and the number of capability bits
-> > >      supported.
-> > 
-> > Phew, this patchset is a lot. It's good of course but can we please cut
-> > some of the more advanced features such as querying by mount id,
-> > submounts etc. pp. for now?
-> 
-> Did you mean the "vfs: Allow fsinfo() to look up a mount object by ID"
-> patch?
-> 
-> We would need to be very careful what was dropped.
+* Andy Lutomirski:
 
-Not dropped as in never implement but rather defer it by one merge
-window to give us a) more time to review and settle the interface while
-b) not stalling the overall patch.
+> On Tue, Jun 25, 2019 at 1:47 PM Florian Weimer <fweimer@redhat.com> wrote:
+>>
+>> * Andy Lutomirski:
+>>
+>> >> We want binaries that run fast on VSYSCALL kernels, but can fall back=
+ to
+>> >> full system calls on kernels that do not have them (instead of
+>> >> crashing).
+>> >
+>> > Define "VSYSCALL kernels."  On any remotely recent kernel (*all* new
+>> > kernels and all kernels for the last several years that haven't
+>> > specifically requested vsyscall=3Dnative), using vsyscalls is much, mu=
+ch
+>> > slower than just doing syscalls.  I know a way you can tell whether
+>> > vsyscalls are fast, but it's unreliable, and I'm disinclined to
+>> > suggest it.  There are also at least two pending patch series that
+>> > will interfere.
+>>
+>> The fast path is for the benefit of the 2.6.32-based kernel in Red Hat
+>> Enterprise Linux 6.  It doesn't have the vsyscall emulation code yet, I
+>> think.
+>>
+>> My hope is to produce (statically linked) binaries that run as fast on
+>> that kernel as they run today, but can gracefully fall back to something
+>> else on kernels without vsyscall support.
+>>
+>> >> We could parse the vDSO and prefer the functions found there, but this
+>> >> is for the statically linked case.  We currently do not have a (minim=
+al)
+>> >> dynamic loader there in that version of the code base, so that doesn't
+>> >> really work for us.
+>> >
+>> > Is anything preventing you from adding a vDSO parser?  I wrote one
+>> > just for this type of use:
+>> >
+>> > $ wc -l tools/testing/selftests/vDSO/parse_vdso.c
+>> > 269 tools/testing/selftests/vDSO/parse_vdso.c
+>> >
+>> > (289 lines includes quite a bit of comment.)
+>>
+>> I'm worried that if I use a custom parser and the binaries start
+>> crashing again because something changed in the kernel (within the scope
+>> permitted by the ELF specification), the kernel won't be fixed.
+>>
+>> That is, we'd be in exactly the same situation as today.
+>
+> With my maintainer hat on, the kernel won't do that.  Obviously a
+> review of my parser would be appreciated, but I consider it to be
+> fully supported, just like glibc and musl's parsers are fully
+> supported.  Sadly, I *also* consider the version Go forked for a while
+> (now fixed) to be supported.  Sigh.
 
-> 
-> For example, I've found that the patch above is pretty much essential
-> for fsinfo() to be useful from user space.
+We've been burnt once, otherwise we wouldn't be having this
+conversation.  It's not just what the kernel does by default; if it's
+configurable, it will be disabled by some, and if it's label as
+=E2=80=9Csecurity hardening=E2=80=9D, the userspace ABI promise is suddenly=
+ forgotten
+and it's all userspace's fault for not supporting the new way.
 
-Yeah, but that interface is not clearly defined yet as can be seen from
-the commit message and that's what's bothering me most.
+It looks like parsing the vDSO is the only way forward, and we have to
+move in that direction if we move at all.
+
+It's tempting to read the machine code on the vsyscall page and analyze
+that, but vsyscall=3Dnone behavior changed at one point, and you no longer
+any mapping there at all.  So that doesn't work, either.
+
+I do hope the next userspace ABI break will have an option to undo it on
+a per-container basis.  Or at least a flag to detect it.
+
+Thanks,
+Florian
