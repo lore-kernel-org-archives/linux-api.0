@@ -1,168 +1,113 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH V33 29/30] tracefs: Restrict tracefs when the kernel is
- locked down
-Date: Wed, 26 Jun 2019 09:07:48 -0400
-Message-ID: <20190626090748.23eba868@gandalf.local.home>
-References: <20190621011941.186255-1-matthewgarrett@google.com>
-        <20190621011941.186255-30-matthewgarrett@google.com>
+From: Christian Brauner <christian@brauner.io>
+Subject: Re: [PATCH 00/25] VFS: Introduce filesystem information query
+ syscall [ver #14]
+Date: Wed, 26 Jun 2019 15:19:03 +0200
+Message-ID: <20190626131902.6xat2ab65arc62td@brauner.io>
+References: <156138532485.25627.7459410522109581052.stgit@warthog.procyon.org.uk>
+ <20190626100525.irdehd24jowz5f75@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190621011941.186255-30-matthewgarrett@google.com>
+Content-Disposition: inline
+In-Reply-To: <20190626100525.irdehd24jowz5f75@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Matthew Garrett <matthewgarrett@google.com>
-Cc: jmorris@namei.org, linux-security@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Matthew Garrett <mjg59@google.com>
+To: David Howells <dhowells@redhat.com>
+Cc: viro@zeniv.linux.org.uk, raven@themaw.net, mszeredi@redhat.com, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 20 Jun 2019 18:19:40 -0700
-Matthew Garrett <matthewgarrett@google.com> wrote:
-
-> Tracefs may release more information about the kernel than desirable, so
-> restrict it when the kernel is locked down in confidentiality mode by
-> preventing open().
+On Wed, Jun 26, 2019 at 12:05:25PM +0200, Christian Brauner wrote:
+> On Mon, Jun 24, 2019 at 03:08:45PM +0100, David Howells wrote:
+> > 
+> > Hi Al,
+> > 
+> > Here are a set of patches that adds a syscall, fsinfo(), that allows
+> > attributes of a filesystem/superblock to be queried.  Attribute values are
+> > of four basic types:
+> > 
+> >  (1) Version dependent-length structure (size defined by type).
+> > 
+> >  (2) Variable-length string (up to PAGE_SIZE).
+> > 
+> >  (3) Array of fixed-length structures (up to INT_MAX size).
+> > 
+> >  (4) Opaque blob (up to INT_MAX size).
+> > 
+> > Attributes can have multiple values in up to two dimensions and all the
+> > values of a particular attribute must have the same type.
+> > 
+> > Note that the attribute values *are* allowed to vary between dentries
+> > within a single superblock, depending on the specific dentry that you're
+> > looking at.
+> > 
+> > I've tried to make the interface as light as possible, so integer/enum
+> > attribute selector rather than string and the core does all the allocation
+> > and extensibility support work rather than leaving that to the filesystems.
+> > That means that for the first two attribute types, sb->s_op->fsinfo() may
+> > assume that the provided buffer is always present and always big enough.
+> > 
+> > Further, this removes the possibility of the filesystem gaining access to the
+> > userspace buffer.
+> > 
+> > 
+> > fsinfo() allows a variety of information to be retrieved about a filesystem
+> > and the mount topology:
+> > 
+> >  (1) General superblock attributes:
+> > 
+> >       - The amount of space/free space in a filesystem (as statfs()).
+> >       - Filesystem identifiers (UUID, volume label, device numbers, ...)
+> >       - The limits on a filesystem's capabilities
+> >       - Information on supported statx fields and attributes and IOC flags.
+> >       - A variety single-bit flags indicating supported capabilities.
+> >       - Timestamp resolution and range.
+> >       - Sources (as per mount(2), but fsconfig() allows multiple sources).
+> >       - In-filesystem filename format information.
+> >       - Filesystem parameters ("mount -o xxx"-type things).
+> >       - LSM parameters (again "mount -o xxx"-type things).
+> > 
+> >  (2) Filesystem-specific superblock attributes:
+> > 
+> >       - Server names and addresses.
+> >       - Cell name.
+> > 
+> >  (3) Filesystem configuration metadata attributes:
+> > 
+> >       - Filesystem parameter type descriptions.
+> >       - Name -> parameter mappings.
+> >       - Simple enumeration name -> value mappings.
+> > 
+> >  (4) Mount topology:
+> > 
+> >       - General information about a mount object.
+> >       - Mount device name(s).
+> >       - Children of a mount object and their relative paths.
+> > 
+> >  (5) Information about what the fsinfo() syscall itself supports, including
+> >      the number of attibutes supported and the number of capability bits
+> >      supported.
 > 
-> Signed-off-by: Matthew Garrett <mjg59@google.com>
-> Cc: Steven Rostedt <rostedt@goodmis.org>
-> ---
->  fs/tracefs/inode.c           | 41 +++++++++++++++++++++++++++++++++++-
->  include/linux/security.h     |  1 +
->  security/lockdown/lockdown.c |  1 +
->  3 files changed, 42 insertions(+), 1 deletion(-)
+> Phew, this patchset is a lot. It's good of course but can we please cut
+> some of the more advanced features such as querying by mount id,
+> submounts etc. pp. for now?
+> I feel this would help with review and since your interface is
+> extensible it's really not a big deal if we defer fancy features to
+> later cycles after people had more time to review and the interface has
+> seen some exposure.
 > 
-> diff --git a/fs/tracefs/inode.c b/fs/tracefs/inode.c
-> index 7098c49f3693..f6c04fa8e415 100644
-> --- a/fs/tracefs/inode.c
-> +++ b/fs/tracefs/inode.c
-> @@ -24,6 +24,7 @@
->  #include <linux/parser.h>
->  #include <linux/magic.h>
->  #include <linux/slab.h>
-> +#include <linux/security.h>
->  
->  #define TRACEFS_DEFAULT_MODE	0700
->  
-> @@ -31,6 +32,21 @@ static struct vfsmount *tracefs_mount;
->  static int tracefs_mount_count;
->  static bool tracefs_registered;
->  
-> +static int default_open_file(struct inode *inode, struct file *filp)
-> +{
-> +	struct dentry *dentry = filp->f_path.dentry;
-> +	struct file_operations *real_fops;
-> +
-> +	if (!dentry)
-> +		return -EINVAL;
-> +
-> +	if (security_is_locked_down(LOCKDOWN_TRACEFS))
-> +		return -EPERM;
-> +
-> +	real_fops = dentry->d_fsdata;
-> +	return real_fops->open(inode, filp);
-> +}
-> +
->  static ssize_t default_read_file(struct file *file, char __user *buf,
->  				 size_t count, loff_t *ppos)
->  {
-> @@ -50,6 +66,13 @@ static const struct file_operations tracefs_file_operations = {
->  	.llseek =	noop_llseek,
->  };
->  
-> +static const struct file_operations tracefs_proxy_file_operations = {
-> +	.read =		default_read_file,
-> +	.write =	default_write_file,
-> +	.open =		default_open_file,
-> +	.llseek =	noop_llseek,
-> +};
+> The mount api changes over the last months have honestly been so huge
+> that any chance to make the changes smaller and easier to digest we
+> should take. (I'm really not complaining. Good that the work is done and
+> it's entirely ok that it's a lot of code.)
+> 
+> It would also be great if after you have dropped some stuff from this
+> patchset and gotten an Ack we could stuff it into linux-next for some
+> time because it hasn't been so far...
 
-This appears to be unused.
+And I also very much recommend to remove any potential cross-dependency
+between the fsinfo() and the notification patchset.
+Ideally, I'd like to see fsinfo() to be completely independent to not
+block it on something way more controversial.
+Furthermore, I can't possibly keep the context of another huge patchset
+not yet merged in the back of my mind while reviewing this patchset. :)
 
-> +
->  static struct tracefs_dir_ops {
->  	int (*mkdir)(const char *name);
->  	int (*rmdir)(const char *name);
-> @@ -225,6 +248,12 @@ static int tracefs_apply_options(struct super_block *sb)
->  	return 0;
->  }
->  
-> +static void tracefs_destroy_inode(struct inode *inode)
-> +{
-> +	if (S_ISREG(inode->i_mode))
-> +		kfree(inode->i_fop);
-> +}
-> +
->  static int tracefs_remount(struct super_block *sb, int *flags, char *data)
->  {
->  	int err;
-> @@ -260,6 +289,7 @@ static int tracefs_show_options(struct seq_file *m, struct dentry *root)
->  
->  static const struct super_operations tracefs_super_operations = {
->  	.statfs		= simple_statfs,
-> +	.destroy_inode  = tracefs_destroy_inode,
->  	.remount_fs	= tracefs_remount,
->  	.show_options	= tracefs_show_options,
->  };
-> @@ -393,6 +423,7 @@ struct dentry *tracefs_create_file(const char *name, umode_t mode,
->  {
->  	struct dentry *dentry;
->  	struct inode *inode;
-> +	struct file_operations *proxy_fops;
->  
->  	if (!(mode & S_IFMT))
->  		mode |= S_IFREG;
-> @@ -406,8 +437,16 @@ struct dentry *tracefs_create_file(const char *name, umode_t mode,
->  	if (unlikely(!inode))
->  		return failed_creating(dentry);
->  
-> +	proxy_fops = kzalloc(sizeof(struct file_operations), GFP_KERNEL);
-> +	if (!proxy_fops)
-> +		return failed_creating(dentry);
-> +
-> +	dentry->d_fsdata = fops ? (void *)fops :
-> +		(void *)&tracefs_file_operations;
-> +	memcpy(proxy_fops, dentry->d_fsdata, sizeof(struct file_operations));
-> +	proxy_fops->open = default_open_file;
->  	inode->i_mode = mode;
-> -	inode->i_fop = fops ? fops : &tracefs_file_operations;
-> +	inode->i_fop = proxy_fops;
-
-
-I think the above would look cleaner as:
-
-
-	if (!fops)
-		fops = &tracefs_file_operations;
-
-	dentry->d_fsdata = (void *)fops;
-	memcpy(proxy_fops, fops, sizeof(*proxy_fops);
-	proxy_fops->open = default_open_file;
-
--- Steve
-
->  	inode->i_private = data;
->  	d_instantiate(dentry, inode);
->  	fsnotify_create(dentry->d_parent->d_inode, dentry);
-> diff --git a/include/linux/security.h b/include/linux/security.h
-> index 2563a9e3b415..040e7fc33397 100644
-> --- a/include/linux/security.h
-> +++ b/include/linux/security.h
-> @@ -100,6 +100,7 @@ enum lockdown_reason {
->  	LOCKDOWN_KPROBES,
->  	LOCKDOWN_BPF,
->  	LOCKDOWN_PERF,
-> +	LOCKDOWN_TRACEFS,
->  	LOCKDOWN_CONFIDENTIALITY_MAX,
->  };
->  
-> diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
-> index a6f7b0770e78..7dc601f06cd3 100644
-> --- a/security/lockdown/lockdown.c
-> +++ b/security/lockdown/lockdown.c
-> @@ -36,6 +36,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
->  	[LOCKDOWN_KPROBES] = "use of kprobes",
->  	[LOCKDOWN_BPF] = "use of bpf",
->  	[LOCKDOWN_PERF] = "unsafe use of perf",
-> +	[LOCKDOWN_TRACEFS] = "use of tracefs",
->  	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
->  };
->  
+Christian
