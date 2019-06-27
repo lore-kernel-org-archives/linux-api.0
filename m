@@ -1,41 +1,42 @@
-From: Minchan Kim <minchan@kernel.org>
-Subject: Re: [PATCH v3 0/5] Introduce MADV_COLD and MADV_PAGEOUT
-Date: Fri, 28 Jun 2019 08:12:11 +0900
-Message-ID: <20190627231211.GA33052@google.com>
-References: <20190627115405.255259-1-minchan@kernel.org>
- <20190627180601.xcppuzia3gk57lq2@box>
+From: Matthew Garrett <mjg59@google.com>
+Subject: Re: [PATCH V33 24/30] bpf: Restrict bpf when kernel lockdown is in
+ confidentiality mode
+Date: Thu, 27 Jun 2019 16:16:36 -0700
+Message-ID: <CACdnJuuG8cR7h9v3pNcBKsxyckAzpKuBJs1GQxsz77jk5DRoQA@mail.gmail.com>
+References: <20190621011941.186255-1-matthewgarrett@google.com>
+ <20190621011941.186255-25-matthewgarrett@google.com> <CALCETrVUwQP7roLnW6kFG80Cc5U6X_T6AW+BTAftLccYGp8+Ow@mail.gmail.com>
+ <alpine.LRH.2.21.1906270621080.28132@namei.org> <6E53376F-01BB-4795-BC02-24F9CAE00001@amacapital.net>
+ <bce70c8b-9efd-6362-d536-cfbbcf70b0b7@tycho.nsa.gov> <alpine.LRH.2.21.1906280332500.17363@namei.org>
+ <de8b15eb-ba6c-847a-7435-42742203d4a5@tycho.nsa.gov>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190627180601.xcppuzia3gk57lq2@box>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Kirill A. Shutemov" <kirill@shutemov.name>
-Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, oleksandr@redhat.com, hdanton@sina.com, lizeb@google.com, Dave Hansen <dave.hansen@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <de8b15eb-ba6c-847a-7435-42742203d4a5@tycho.nsa.gov>
+Sender: netdev-owner@vger.kernel.org
+To: Stephen Smalley <sds@tycho.nsa.gov>
+Cc: James Morris <jmorris@namei.org>, Andy Lutomirski <luto@amacapital.net>, Andy Lutomirski <luto@kernel.org>, linux-security@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, David Howells <dhowells@redhat.com>, Alexei Starovoitov <alexei.starovoitov@gmail.com>, Network Development <netdev@vger.kernel.org>, Chun-Yi Lee <jlee@suse.com>, Daniel Borkmann <daniel@iogearbox.net>, LSM List <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jun 27, 2019 at 09:06:01PM +0300, Kirill A. Shutemov wrote:
-> On Thu, Jun 27, 2019 at 08:54:00PM +0900, Minchan Kim wrote:
-> > - Problem
-> > 
-> > Naturally, cached apps were dominant consumers of memory on the system.
-> > However, they were not significant consumers of swap even though they are
-> > good candidate for swap. Under investigation, swapping out only begins
-> > once the low zone watermark is hit and kswapd wakes up, but the overall
-> > allocation rate in the system might trip lmkd thresholds and cause a cached
-> > process to be killed(we measured performance swapping out vs. zapping the
-> > memory by killing a process. Unsurprisingly, zapping is 10x times faster
-> > even though we use zram which is much faster than real storage) so kill
-> > from lmkd will often satisfy the high zone watermark, resulting in very
-> > few pages actually being moved to swap.
-> 
-> Maybe we should look if we do The Right Thing™ at system-wide level before
-> introducing new API? How changing swappiness affects your workloads? What
-> is swappiness value in your setup?
+On Thu, Jun 27, 2019 at 1:16 PM Stephen Smalley <sds@tycho.nsa.gov> wrote:
+> That would only allow the LSM to further lock down the system above the
+> lockdown level set at boot, not grant exemptions for specific
+> functionality/interfaces required by the user or by a specific
+> process/program. You'd have to boot with lockdown=none (or your
+> lockdown=custom suggestion) in order for the LSM to allow anything
+> covered by the integrity or confidentiality levels.  And then the kernel
+> would be unprotected prior to full initialization of the LSM, including
+> policy load.
+>
+> It seems like one would want to be able to boot with lockdown=integrity
+> to protect the kernel initially, then switch over to allowing the LSM to
+> selectively override it.
 
-It was 100. Even, I tried 150 and 200 with simple hack of swappiness.
-However, it caused too excessive swpout.
-
-Anyway, systen-level tune is generally good but if process has hint, that
-should work better and that's why advise API is.
+One option would be to allow modules to be "unstacked" at runtime, but
+there's still something of a problem here - how do you ensure that
+your userland can be trusted to load a new policy before it does so?
+If you're able to assert that your early userland is trustworthy
+(perhaps because it's in an initramfs that's part of your signed boot
+payload), there's maybe an argument that most of the lockdown
+integrity guarantees are unnecessary before handoff - just using the
+lockdown LSM to protect against attacks via kernel parameters would be
+sufficient.
