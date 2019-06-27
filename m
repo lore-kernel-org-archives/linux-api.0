@@ -1,44 +1,111 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [PATCH] binfmt_elf: Extract .note.gnu.property from an ELF file
-Date: Thu, 27 Jun 2019 11:38:45 +0200
-Message-ID: <87ef3fweoq.fsf@oldenburg2.str.redhat.com>
-References: <20190501211217.5039-1-yu-cheng.yu@intel.com>
-        <20190502111003.GO3567@e103592.cambridge.arm.com>
-        <CALCETrVZCzh+KFCF6ijuf4QEPn=R2gJ8FHLpyFd=n+pNOMMMjA@mail.gmail.com>
+From: Minchan Kim <minchan@kernel.org>
+Subject: [PATCH v3 0/5] Introduce MADV_COLD and MADV_PAGEOUT
+Date: Thu, 27 Jun 2019 20:54:00 +0900
+Message-ID: <20190627115405.255259-1-minchan@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrVZCzh+KFCF6ijuf4QEPn=R2gJ8FHLpyFd=n+pNOMMMjA@mail.gmail.com>
-        (Andy Lutomirski's message of "Wed, 26 Jun 2019 10:14:07 -0700")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Dave Martin <Dave.Martin@arm.com>, Yu-cheng Yu <yu-cheng.yu@intel.com>, X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, LKML <linux-kernel@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravet>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, oleksandr@redhat.com, hdanton@sina.com, lizeb@google.com, Dave Hansen <dave.hansen@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Minchan Kim <minchan@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-* Andy Lutomirski:
+This patch is part of previous series:
+https://lore.kernel.org/lkml/20190531064313.193437-1-minchan@kernel.org/T/#u
+Originally, it was created for external madvise hinting feature.
 
-> Also, I don't think there's any actual requirement that the upstream
-> kernel recognize existing CET-enabled RHEL 8 binaries as being
-> CET-enabled.  I tend to think that RHEL 8 jumped the gun here.
+https://lkml.org/lkml/2019/5/31/463
+Michal wanted to separte the discussion from external hinting interface
+so this patchset includes only first part of my entire patchset
 
-The ABI was supposed to be finalized and everyone involved thought it
-had been reviewed by the GNU gABI community and other interested
-parties.  It had been included in binutils for several releases.
+  - introduce MADV_COLD and MADV_PAGEOUT hint to madvise.
 
->From my point of view, the kernel is just a consumer of the ABI.  The
-kernel would not change an instruction encoding if it doesn't like it
-for some reason, either.
+However, I keep entire description for others for easier understanding
+why this kinds of hint was born.
 
-> While the upstream kernel should make some reasonble effort to make
-> sure that RHEL 8 binaries will continue to run, I don't see why we
-> need to go out of our way to keep the full set of mitigations
-> available for binaries that were developed against a non-upstream
-> kernel.
+Thanks.
 
-They were developed against the ABI specification.
+This patchset is against on next-20190530.
 
-I do not have a strong opinion what the kernel should do going forward.
-I just want to make clear what happened.
+Below is description of previous entire patchset.
+================= &< =====================
 
-Thanks,
-Florian
+- Background
+
+The Android terminology used for forking a new process and starting an app
+from scratch is a cold start, while resuming an existing app is a hot start.
+While we continually try to improve the performance of cold starts, hot
+starts will always be significantly less power hungry as well as faster so
+we are trying to make hot start more likely than cold start.
+
+To increase hot start, Android userspace manages the order that apps should
+be killed in a process called ActivityManagerService. ActivityManagerService
+tracks every Android app or service that the user could be interacting with
+at any time and translates that into a ranked list for lmkd(low memory
+killer daemon). They are likely to be killed by lmkd if the system has to
+reclaim memory. In that sense they are similar to entries in any other cache.
+Those apps are kept alive for opportunistic performance improvements but
+those performance improvements will vary based on the memory requirements of
+individual workloads.
+
+- Problem
+
+Naturally, cached apps were dominant consumers of memory on the system.
+However, they were not significant consumers of swap even though they are
+good candidate for swap. Under investigation, swapping out only begins
+once the low zone watermark is hit and kswapd wakes up, but the overall
+allocation rate in the system might trip lmkd thresholds and cause a cached
+process to be killed(we measured performance swapping out vs. zapping the
+memory by killing a process. Unsurprisingly, zapping is 10x times faster
+even though we use zram which is much faster than real storage) so kill
+from lmkd will often satisfy the high zone watermark, resulting in very
+few pages actually being moved to swap.
+
+- Approach
+
+The approach we chose was to use a new interface to allow userspace to
+proactively reclaim entire processes by leveraging platform information.
+This allowed us to bypass the inaccuracy of the kernel’s LRUs for pages
+that are known to be cold from userspace and to avoid races with lmkd
+by reclaiming apps as soon as they entered the cached state. Additionally,
+it could provide many chances for platform to use much information to
+optimize memory efficiency.
+
+To achieve the goal, the patchset introduce two new options for madvise.
+One is MADV_COLD which will deactivate activated pages and the other is
+MADV_PAGEOUT which will reclaim private pages instantly. These new options
+complement MADV_DONTNEED and MADV_FREE by adding non-destructive ways to
+gain some free memory space. MADV_PAGEOUT is similar to MADV_DONTNEED in a way
+that it hints the kernel that memory region is not currently needed and
+should be reclaimed immediately; MADV_COLD is similar to MADV_FREE in a way
+that it hints the kernel that memory region is not currently needed and
+should be reclaimed when memory pressure rises.
+
+Minchan Kim (5):
+  mm: introduce MADV_COLD
+  mm: change PAGEREF_RECLAIM_CLEAN with PAGE_REFRECLAIM
+  mm: account nr_isolated_xxx in [isolate|putback]_lru_page
+  mm: introduce MADV_PAGEOUT
+  mm: factor out pmd young/dirty bit handling and THP split
+
+ include/linux/huge_mm.h                |   3 -
+ include/linux/swap.h                   |   2 +
+ include/uapi/asm-generic/mman-common.h |   2 +
+ mm/compaction.c                        |   2 -
+ mm/gup.c                               |   7 +-
+ mm/huge_memory.c                       |  74 -----
+ mm/internal.h                          |   2 +-
+ mm/khugepaged.c                        |   3 -
+ mm/madvise.c                           | 438 ++++++++++++++++++++++++-
+ mm/memory-failure.c                    |   3 -
+ mm/memory_hotplug.c                    |   4 -
+ mm/mempolicy.c                         |   6 +-
+ mm/migrate.c                           |  37 +--
+ mm/oom_kill.c                          |   2 +-
+ mm/swap.c                              |  42 +++
+ mm/vmscan.c                            |  86 ++++-
+ 16 files changed, 566 insertions(+), 147 deletions(-)
+
+-- 
+2.22.0.410.gd8fdbe21b5-goog
