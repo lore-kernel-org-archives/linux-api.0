@@ -1,576 +1,356 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v4 15/15] fpga: dfl: fme: add global error reporting support
-Date: Thu, 27 Jun 2019 12:44:55 +0800
-Message-ID: <1561610695-5414-16-git-send-email-hao.wu@intel.com>
+Subject: [PATCH v4 12/15] fpga: dfl: afu: add error reporting support.
+Date: Thu, 27 Jun 2019 12:44:52 +0800
+Message-ID: <1561610695-5414-13-git-send-email-hao.wu@intel.com>
 References: <1561610695-5414-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1561610695-5414-1-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, yilun.xu@intel.com, hao.wu@intel.com, gregkh@linuxfoundation.org, atull@kernel.org, Luwei Kang <luwei.kang@intel.com>, Ananda Ravuri <ananda.ravuri@intel.com>
+Cc: linux-api@vger.kernel.org, yilun.xu@intel.com, hao.wu@intel.com, gregkh@linuxfoundation.org, atull@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This patch adds support for global error reporting for FPGA
-Management Engine (FME), it introduces sysfs interfaces to
-report different error detected by the hardware, and allow
-user to clear errors or inject error for testing purpose.
+Error reporting is one important private feature, it reports error
+detected on port and accelerated function unit (AFU). It introduces
+several sysfs interfaces to allow userspace to check and clear
+errors detected by hardware.
 
-Signed-off-by: Luwei Kang <luwei.kang@intel.com>
-Signed-off-by: Ananda Ravuri <ananda.ravuri@intel.com>
 Signed-off-by: Xu Yilun <yilun.xu@intel.com>
 Signed-off-by: Wu Hao <hao.wu@intel.com>
 Acked-by: Alan Tull <atull@kernel.org>
 ---
-v2: fix issues found in sysfs doc.
-    fix returned error code issues for writable sysfs interfaces.
-    (use -EINVAL if input doesn't match error code)
-    reorder the sysfs groups in code.
-v3: code rebase.
-    replace scnprintf with sprintf in sysfs interfaces.
+v2: add more error code description for error clear sysfs in doc.
+    return -EINVAL instead of -EBUSY when input error code doesn't
+    match in error clear sysfs.
+v3: replace scnprintf with sprintf in sysfs interfaces.
     update sysfs doc kernel version and date.
 v4: update sysfs doc date.
 ---
- Documentation/ABI/testing/sysfs-platform-dfl-fme |  75 +++++
- drivers/fpga/Makefile                            |   2 +-
- drivers/fpga/dfl-fme-error.c                     | 385 +++++++++++++++++++++++
- drivers/fpga/dfl-fme-main.c                      |   4 +
- drivers/fpga/dfl-fme.h                           |   2 +
- drivers/fpga/dfl.h                               |   2 +
- 6 files changed, 469 insertions(+), 1 deletion(-)
- create mode 100644 drivers/fpga/dfl-fme-error.c
+ Documentation/ABI/testing/sysfs-platform-dfl-port |  39 ++++
+ drivers/fpga/Makefile                             |   1 +
+ drivers/fpga/dfl-afu-error.c                      | 225 ++++++++++++++++++++++
+ drivers/fpga/dfl-afu-main.c                       |   4 +
+ drivers/fpga/dfl-afu.h                            |   4 +
+ 5 files changed, 273 insertions(+)
+ create mode 100644 drivers/fpga/dfl-afu-error.c
 
-diff --git a/Documentation/ABI/testing/sysfs-platform-dfl-fme b/Documentation/ABI/testing/sysfs-platform-dfl-fme
-index 99cd3b2..86eef83 100644
---- a/Documentation/ABI/testing/sysfs-platform-dfl-fme
-+++ b/Documentation/ABI/testing/sysfs-platform-dfl-fme
-@@ -44,3 +44,78 @@ Description:	Read-only. It returns socket_id to indicate which socket
- 		this FPGA belongs to, only valid for integrated solution.
- 		User only needs this information, in case standard numa node
- 		can't provide correct information.
+diff --git a/Documentation/ABI/testing/sysfs-platform-dfl-port b/Documentation/ABI/testing/sysfs-platform-dfl-port
+index 04ea7f2..4aeca94 100644
+--- a/Documentation/ABI/testing/sysfs-platform-dfl-port
++++ b/Documentation/ABI/testing/sysfs-platform-dfl-port
+@@ -79,3 +79,42 @@ KernelVersion:	5.3
+ Contact:	Wu Hao <hao.wu@intel.com>
+ Description:	Read-only. Read this file to get the status of issued command
+ 		to userclck_freqcntrcmd.
 +
-+What:		/sys/bus/platform/devices/dfl-fme.0/errors/revision
++What:		/sys/bus/platform/devices/dfl-port.0/errors/revision
 +Date:		June 2019
 +KernelVersion:	5.3
 +Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read-only. Read this file to get the revision of this global
-+		error reporting private feature.
++Description:	Read-only. Read this file to get the revision of this error
++		reporting private feature.
 +
-+What:		/sys/bus/platform/devices/dfl-fme.0/errors/pcie0_errors
++What:		/sys/bus/platform/devices/dfl-port.0/errors/errors
 +Date:		June 2019
-+KernelVersion:  5.3
++KernelVersion:	5.3
 +Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read-Write. Read this file for errors detected on pcie0 link.
-+		Write this file to clear errors logged in pcie0_errors. Write
-+		fails with -EINVAL if input parsing fails or input error code
-+		doesn't match.
++Description:	Read-only. Read this file to get errors detected on port and
++		Accelerated Function Unit (AFU).
 +
-+What:		/sys/bus/platform/devices/dfl-fme.0/errors/pcie1_errors
++What:		/sys/bus/platform/devices/dfl-port.0/errors/first_error
 +Date:		June 2019
-+KernelVersion:  5.3
-+Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read-Write. Read this file for errors detected on pcie1 link.
-+		Write this file to clear errors logged in pcie1_errors. Write
-+		fails with -EINVAL if input parsing fails or input error code
-+		doesn't match.
-+
-+What:		/sys/bus/platform/devices/dfl-fme.0/errors/nonfatal_errors
-+Date:		June 2019
-+KernelVersion:  5.3
-+Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read-only. It returns non-fatal errors detected.
-+
-+What:		/sys/bus/platform/devices/dfl-fme.0/errors/catfatal_errors
-+Date:		June 2019
-+KernelVersion:  5.3
-+Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read-only. It returns catastrophic and fatal errors detected.
-+
-+What:		/sys/bus/platform/devices/dfl-fme.0/errors/inject_error
-+Date:		June 2019
-+KernelVersion:  5.3
-+Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read-Write. Read this file to check errors injected. Write this
-+		file to inject errors for testing purpose. Write fails with
-+		-EINVAL if input parsing fails or input inject error code isn't
-+		supported.
-+
-+What:		/sys/bus/platform/devices/dfl-fme.0/errors/fme-errors/errors
-+Date:		June 2019
-+KernelVersion:  5.3
-+Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read-only. Read this file to get errors detected by hardware.
-+
-+What:		/sys/bus/platform/devices/dfl-fme.0/errors/fme-errors/first_error
-+Date:		June 2019
-+KernelVersion:  5.3
++KernelVersion:	5.3
 +Contact:	Wu Hao <hao.wu@intel.com>
 +Description:	Read-only. Read this file to get the first error detected by
 +		hardware.
 +
-+What:		/sys/bus/platform/devices/dfl-fme.0/errors/fme-errors/next_error
++What:		/sys/bus/platform/devices/dfl-port.0/errors/first_malformed_req
 +Date:		June 2019
-+KernelVersion:  5.3
++KernelVersion:	5.3
 +Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read-only. Read this file to get the second error detected by
-+		hardware.
++Description:	Read-only. Read this file to get the first malformed request
++		captured by hardware.
 +
-+What:		/sys/bus/platform/devices/dfl-fme.0/errors/fme-errors/clear
++What:		/sys/bus/platform/devices/dfl-port.0/errors/clear
 +Date:		June 2019
-+KernelVersion:  5.3
++KernelVersion:	5.3
 +Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Write-only. Write error code to this file to clear all errors
-+		logged in errors, first_error and next_error. Write fails with
-+		-EINVAL if input parsing fails or input error code doesn't
-+		match.
++Description:	Write-only. Write error code to this file to clear errors.
++		Write fails with -EINVAL if input parsing fails or input error
++		code doesn't match.
++		Write fails with -EBUSY or -ETIMEDOUT if error can't be cleared
++		as hardware is in low power state (-EBUSY) or not responding
++		(-ETIMEDOUT).
 diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
-index 7255891..4865b74 100644
+index 312b937..7255891 100644
 --- a/drivers/fpga/Makefile
 +++ b/drivers/fpga/Makefile
-@@ -39,7 +39,7 @@ obj-$(CONFIG_FPGA_DFL_FME_BRIDGE)	+= dfl-fme-br.o
- obj-$(CONFIG_FPGA_DFL_FME_REGION)	+= dfl-fme-region.o
- obj-$(CONFIG_FPGA_DFL_AFU)		+= dfl-afu.o
+@@ -41,6 +41,7 @@ obj-$(CONFIG_FPGA_DFL_AFU)		+= dfl-afu.o
  
--dfl-fme-objs := dfl-fme-main.o dfl-fme-pr.o
-+dfl-fme-objs := dfl-fme-main.o dfl-fme-pr.o dfl-fme-error.o
+ dfl-fme-objs := dfl-fme-main.o dfl-fme-pr.o
  dfl-afu-objs := dfl-afu-main.o dfl-afu-region.o dfl-afu-dma-region.o
- dfl-afu-objs += dfl-afu-error.o
++dfl-afu-objs += dfl-afu-error.o
  
-diff --git a/drivers/fpga/dfl-fme-error.c b/drivers/fpga/dfl-fme-error.c
+ # Drivers for FPGAs which implement DFL
+ obj-$(CONFIG_FPGA_DFL_PCI)		+= dfl-pci.o
+diff --git a/drivers/fpga/dfl-afu-error.c b/drivers/fpga/dfl-afu-error.c
 new file mode 100644
-index 0000000..cdea108
+index 0000000..f20dbdf
 --- /dev/null
-+++ b/drivers/fpga/dfl-fme-error.c
-@@ -0,0 +1,385 @@
++++ b/drivers/fpga/dfl-afu-error.c
+@@ -0,0 +1,225 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Driver for FPGA Management Engine Error Management
++ * Driver for FPGA Accelerated Function Unit (AFU) Error Reporting
 + *
 + * Copyright 2019 Intel Corporation, Inc.
 + *
 + * Authors:
-+ *   Kang Luwei <luwei.kang@intel.com>
++ *   Wu Hao <hao.wu@linux.intel.com>
 + *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
-+ *   Wu Hao <hao.wu@intel.com>
 + *   Joseph Grecco <joe.grecco@intel.com>
 + *   Enno Luebbers <enno.luebbers@intel.com>
 + *   Tim Whisonant <tim.whisonant@intel.com>
 + *   Ananda Ravuri <ananda.ravuri@intel.com>
-+ *   Mitchel, Henry <henry.mitchel@intel.com>
++ *   Mitchel Henry <henry.mitchel@intel.com>
 + */
 +
 +#include <linux/uaccess.h>
 +
-+#include "dfl.h"
-+#include "dfl-fme.h"
++#include "dfl-afu.h"
 +
-+#define FME_ERROR_MASK		0x8
-+#define FME_ERROR		0x10
-+#define MBP_ERROR		BIT_ULL(6)
-+#define PCIE0_ERROR_MASK	0x18
-+#define PCIE0_ERROR		0x20
-+#define PCIE1_ERROR_MASK	0x28
-+#define PCIE1_ERROR		0x30
-+#define FME_FIRST_ERROR		0x38
-+#define FME_NEXT_ERROR		0x40
-+#define RAS_NONFAT_ERROR_MASK	0x48
-+#define RAS_NONFAT_ERROR	0x50
-+#define RAS_CATFAT_ERROR_MASK	0x58
-+#define RAS_CATFAT_ERROR	0x60
-+#define RAS_ERROR_INJECT	0x68
-+#define INJECT_ERROR_MASK	GENMASK_ULL(2, 0)
++#define PORT_ERROR_MASK		0x8
++#define PORT_ERROR		0x10
++#define PORT_FIRST_ERROR	0x18
++#define PORT_MALFORMED_REQ0	0x20
++#define PORT_MALFORMED_REQ1	0x28
++
++#define ERROR_MASK		GENMASK_ULL(63, 0)
++
++/* mask or unmask port errors by the error mask register. */
++static void __port_err_mask(struct device *dev, bool mask)
++{
++	void __iomem *base;
++
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_ERROR);
++
++	writeq(mask ? ERROR_MASK : 0, base + PORT_ERROR_MASK);
++}
++
++/* clear port errors. */
++static int __port_err_clear(struct device *dev, u64 err)
++{
++	struct platform_device *pdev = to_platform_device(dev);
++	void __iomem *base_err, *base_hdr;
++	int ret;
++	u64 v;
++
++	base_err = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_ERROR);
++	base_hdr = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_HEADER);
++
++	/*
++	 * clear Port Errors
++	 *
++	 * - Check for AP6 State
++	 * - Halt Port by keeping Port in reset
++	 * - Set PORT Error mask to all 1 to mask errors
++	 * - Clear all errors
++	 * - Set Port mask to all 0 to enable errors
++	 * - All errors start capturing new errors
++	 * - Enable Port by pulling the port out of reset
++	 */
++
++	/* if device is still in AP6 power state, can not clear any error. */
++	v = readq(base_hdr + PORT_HDR_STS);
++	if (FIELD_GET(PORT_STS_PWR_STATE, v) == PORT_STS_PWR_STATE_AP6) {
++		dev_err(dev, "Could not clear errors, device in AP6 state.\n");
++		return -EBUSY;
++	}
++
++	/* Halt Port by keeping Port in reset */
++	ret = __port_disable(pdev);
++	if (ret)
++		return ret;
++
++	/* Mask all errors */
++	__port_err_mask(dev, true);
++
++	/* Clear errors if err input matches with current port errors.*/
++	v = readq(base_err + PORT_ERROR);
++
++	if (v == err) {
++		writeq(v, base_err + PORT_ERROR);
++
++		v = readq(base_err + PORT_FIRST_ERROR);
++		writeq(v, base_err + PORT_FIRST_ERROR);
++	} else {
++		ret = -EINVAL;
++	}
++
++	/* Clear mask */
++	__port_err_mask(dev, false);
++
++	/* Enable the Port by clear the reset */
++	__port_enable(pdev);
++
++	return ret;
++}
 +
 +static ssize_t revision_show(struct device *dev, struct device_attribute *attr,
 +			     char *buf)
 +{
-+	struct device *err_dev = dev->parent;
 +	void __iomem *base;
 +
-+	base = dfl_get_feature_ioaddr_by_id(err_dev, FME_FEATURE_ID_GLOBAL_ERR);
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_ERROR);
 +
 +	return sprintf(buf, "%u\n", dfl_feature_revision(base));
 +}
 +static DEVICE_ATTR_RO(revision);
 +
-+static ssize_t pcie0_errors_show(struct device *dev,
-+				 struct device_attribute *attr, char *buf)
++static ssize_t errors_show(struct device *dev, struct device_attribute *attr,
++			   char *buf)
 +{
-+	struct device *err_dev = dev->parent;
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
 +	void __iomem *base;
++	u64 error;
 +
-+	base = dfl_get_feature_ioaddr_by_id(err_dev, FME_FEATURE_ID_GLOBAL_ERR);
-+
-+	return sprintf(buf, "0x%llx\n",
-+		       (unsigned long long)readq(base + PCIE0_ERROR));
-+}
-+
-+static ssize_t pcie0_errors_store(struct device *dev,
-+				  struct device_attribute *attr,
-+				  const char *buf, size_t count)
-+{
-+	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev->parent);
-+	struct device *err_dev = dev->parent;
-+	void __iomem *base;
-+	int ret = 0;
-+	u64 v, val;
-+
-+	if (kstrtou64(buf, 0, &val))
-+		return -EINVAL;
-+
-+	base = dfl_get_feature_ioaddr_by_id(err_dev, FME_FEATURE_ID_GLOBAL_ERR);
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_ERROR);
 +
 +	mutex_lock(&pdata->lock);
-+	writeq(GENMASK_ULL(63, 0), base + PCIE0_ERROR_MASK);
-+
-+	v = readq(base + PCIE0_ERROR);
-+	if (val == v)
-+		writeq(v, base + PCIE0_ERROR);
-+	else
-+		ret = -EINVAL;
-+
-+	writeq(0ULL, base + PCIE0_ERROR_MASK);
-+	mutex_unlock(&pdata->lock);
-+	return ret ? ret : count;
-+}
-+static DEVICE_ATTR_RW(pcie0_errors);
-+
-+static ssize_t pcie1_errors_show(struct device *dev,
-+				 struct device_attribute *attr, char *buf)
-+{
-+	struct device *err_dev = dev->parent;
-+	void __iomem *base;
-+
-+	base = dfl_get_feature_ioaddr_by_id(err_dev, FME_FEATURE_ID_GLOBAL_ERR);
-+
-+	return sprintf(buf, "0x%llx\n",
-+		       (unsigned long long)readq(base + PCIE1_ERROR));
-+}
-+
-+static ssize_t pcie1_errors_store(struct device *dev,
-+				  struct device_attribute *attr,
-+				  const char *buf, size_t count)
-+{
-+	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev->parent);
-+	struct device *err_dev = dev->parent;
-+	void __iomem *base;
-+	int ret = 0;
-+	u64 v, val;
-+
-+	if (kstrtou64(buf, 0, &val))
-+		return -EINVAL;
-+
-+	base = dfl_get_feature_ioaddr_by_id(err_dev, FME_FEATURE_ID_GLOBAL_ERR);
-+
-+	mutex_lock(&pdata->lock);
-+	writeq(GENMASK_ULL(63, 0), base + PCIE1_ERROR_MASK);
-+
-+	v = readq(base + PCIE1_ERROR);
-+	if (val == v)
-+		writeq(v, base + PCIE1_ERROR);
-+	else
-+		ret = -EINVAL;
-+
-+	writeq(0ULL, base + PCIE1_ERROR_MASK);
-+	mutex_unlock(&pdata->lock);
-+	return ret ? ret : count;
-+}
-+static DEVICE_ATTR_RW(pcie1_errors);
-+
-+static ssize_t nonfatal_errors_show(struct device *dev,
-+				    struct device_attribute *attr, char *buf)
-+{
-+	struct device *err_dev = dev->parent;
-+	void __iomem *base;
-+
-+	base = dfl_get_feature_ioaddr_by_id(err_dev, FME_FEATURE_ID_GLOBAL_ERR);
-+
-+	return sprintf(buf, "0x%llx\n",
-+		       (unsigned long long)readq(base + RAS_NONFAT_ERROR));
-+}
-+static DEVICE_ATTR_RO(nonfatal_errors);
-+
-+static ssize_t catfatal_errors_show(struct device *dev,
-+				    struct device_attribute *attr, char *buf)
-+{
-+	struct device *err_dev = dev->parent;
-+	void __iomem *base;
-+
-+	base = dfl_get_feature_ioaddr_by_id(err_dev, FME_FEATURE_ID_GLOBAL_ERR);
-+
-+	return sprintf(buf, "0x%llx\n",
-+		       (unsigned long long)readq(base + RAS_CATFAT_ERROR));
-+}
-+static DEVICE_ATTR_RO(catfatal_errors);
-+
-+static ssize_t inject_error_show(struct device *dev,
-+				 struct device_attribute *attr, char *buf)
-+{
-+	struct device *err_dev = dev->parent;
-+	void __iomem *base;
-+	u64 v;
-+
-+	base = dfl_get_feature_ioaddr_by_id(err_dev, FME_FEATURE_ID_GLOBAL_ERR);
-+
-+	v = readq(base + RAS_ERROR_INJECT);
-+
-+	return sprintf(buf, "0x%llx\n",
-+		       (unsigned long long)FIELD_GET(INJECT_ERROR_MASK, v));
-+}
-+
-+static ssize_t inject_error_store(struct device *dev,
-+				  struct device_attribute *attr,
-+				  const char *buf, size_t count)
-+{
-+	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev->parent);
-+	struct device *err_dev = dev->parent;
-+	void __iomem *base;
-+	u8 inject_error;
-+	u64 v;
-+
-+	if (kstrtou8(buf, 0, &inject_error))
-+		return -EINVAL;
-+
-+	if (inject_error & ~INJECT_ERROR_MASK)
-+		return -EINVAL;
-+
-+	base = dfl_get_feature_ioaddr_by_id(err_dev, FME_FEATURE_ID_GLOBAL_ERR);
-+
-+	mutex_lock(&pdata->lock);
-+	v = readq(base + RAS_ERROR_INJECT);
-+	v &= ~INJECT_ERROR_MASK;
-+	v |= FIELD_PREP(INJECT_ERROR_MASK, inject_error);
-+	writeq(v, base + RAS_ERROR_INJECT);
++	error = readq(base + PORT_ERROR);
 +	mutex_unlock(&pdata->lock);
 +
-+	return count;
-+}
-+static DEVICE_ATTR_RW(inject_error);
-+
-+static struct attribute *errors_attrs[] = {
-+	&dev_attr_revision.attr,
-+	&dev_attr_pcie0_errors.attr,
-+	&dev_attr_pcie1_errors.attr,
-+	&dev_attr_nonfatal_errors.attr,
-+	&dev_attr_catfatal_errors.attr,
-+	&dev_attr_inject_error.attr,
-+	NULL,
-+};
-+
-+static struct attribute_group errors_attr_group = {
-+	.attrs	= errors_attrs,
-+};
-+
-+static ssize_t errors_show(struct device *dev,
-+			   struct device_attribute *attr, char *buf)
-+{
-+	struct device *err_dev = dev->parent;
-+	void __iomem *base;
-+
-+	base = dfl_get_feature_ioaddr_by_id(err_dev, FME_FEATURE_ID_GLOBAL_ERR);
-+
-+	return sprintf(buf, "0x%llx\n",
-+		       (unsigned long long)readq(base + FME_ERROR));
++	return sprintf(buf, "0x%llx\n", (unsigned long long)error);
 +}
 +static DEVICE_ATTR_RO(errors);
 +
 +static ssize_t first_error_show(struct device *dev,
 +				struct device_attribute *attr, char *buf)
 +{
-+	struct device *err_dev = dev->parent;
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
 +	void __iomem *base;
++	u64 error;
 +
-+	base = dfl_get_feature_ioaddr_by_id(err_dev, FME_FEATURE_ID_GLOBAL_ERR);
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_ERROR);
 +
-+	return sprintf(buf, "0x%llx\n",
-+		       (unsigned long long)readq(base + FME_FIRST_ERROR));
++	mutex_lock(&pdata->lock);
++	error = readq(base + PORT_FIRST_ERROR);
++	mutex_unlock(&pdata->lock);
++
++	return sprintf(buf, "0x%llx\n", (unsigned long long)error);
 +}
 +static DEVICE_ATTR_RO(first_error);
 +
-+static ssize_t next_error_show(struct device *dev,
-+			       struct device_attribute *attr, char *buf)
++static ssize_t first_malformed_req_show(struct device *dev,
++					struct device_attribute *attr,
++					char *buf)
 +{
-+	struct device *err_dev = dev->parent;
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
 +	void __iomem *base;
++	u64 req0, req1;
 +
-+	base = dfl_get_feature_ioaddr_by_id(err_dev, FME_FEATURE_ID_GLOBAL_ERR);
-+
-+	return sprintf(buf, "0x%llx\n",
-+		       (unsigned long long)readq(base + FME_NEXT_ERROR));
-+}
-+static DEVICE_ATTR_RO(next_error);
-+
-+static ssize_t clear_store(struct device *dev, struct device_attribute *attr,
-+			   const char *buf, size_t count)
-+{
-+	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev->parent);
-+	struct device *err_dev = dev->parent;
-+	void __iomem *base;
-+	u64 v, val;
-+	int ret = 0;
-+
-+	if (kstrtou64(buf, 0, &val))
-+		return -EINVAL;
-+
-+	base = dfl_get_feature_ioaddr_by_id(err_dev, FME_FEATURE_ID_GLOBAL_ERR);
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_ERROR);
 +
 +	mutex_lock(&pdata->lock);
-+	writeq(GENMASK_ULL(63, 0), base + FME_ERROR_MASK);
-+
-+	v = readq(base + FME_ERROR);
-+	if (val == v) {
-+		writeq(v, base + FME_ERROR);
-+		v = readq(base + FME_FIRST_ERROR);
-+		writeq(v, base + FME_FIRST_ERROR);
-+		v = readq(base + FME_NEXT_ERROR);
-+		writeq(v, base + FME_NEXT_ERROR);
-+	} else {
-+		ret = -EINVAL;
-+	}
-+
-+	/* Workaround: disable MBP_ERROR if feature revision is 0 */
-+	writeq(dfl_feature_revision(base) ? 0ULL : MBP_ERROR,
-+	       base + FME_ERROR_MASK);
++	req0 = readq(base + PORT_MALFORMED_REQ0);
++	req1 = readq(base + PORT_MALFORMED_REQ1);
 +	mutex_unlock(&pdata->lock);
++
++	return sprintf(buf, "0x%016llx%016llx\n",
++		       (unsigned long long)req1, (unsigned long long)req0);
++}
++static DEVICE_ATTR_RO(first_malformed_req);
++
++static ssize_t clear_store(struct device *dev, struct device_attribute *attr,
++			   const char *buff, size_t count)
++{
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
++	u64 value;
++	int ret;
++
++	if (kstrtou64(buff, 0, &value))
++		return -EINVAL;
++
++	mutex_lock(&pdata->lock);
++	ret = __port_err_clear(dev, value);
++	mutex_unlock(&pdata->lock);
++
 +	return ret ? ret : count;
 +}
 +static DEVICE_ATTR_WO(clear);
 +
-+static struct attribute *fme_errors_attrs[] = {
++static struct attribute *port_err_attrs[] = {
++	&dev_attr_revision.attr,
 +	&dev_attr_errors.attr,
 +	&dev_attr_first_error.attr,
-+	&dev_attr_next_error.attr,
++	&dev_attr_first_malformed_req.attr,
 +	&dev_attr_clear.attr,
 +	NULL,
 +};
 +
-+static struct attribute_group fme_errors_attr_group = {
-+	.attrs	= fme_errors_attrs,
-+	.name	= "fme-errors",
++static struct attribute_group port_err_attr_group = {
++	.attrs = port_err_attrs,
++	.name = "errors",
 +};
 +
-+static const struct attribute_group *error_groups[] = {
-+	&fme_errors_attr_group,
-+	&errors_attr_group,
-+	NULL
-+};
-+
-+static void fme_error_enable(struct dfl_feature *feature)
++static int port_err_init(struct platform_device *pdev,
++			 struct dfl_feature *feature)
 +{
-+	void __iomem *base = feature->ioaddr;
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
 +
-+	/* Workaround: disable MBP_ERROR if revision is 0 */
-+	writeq(dfl_feature_revision(feature->ioaddr) ? 0ULL : MBP_ERROR,
-+	       base + FME_ERROR_MASK);
-+	writeq(0ULL, base + PCIE0_ERROR_MASK);
-+	writeq(0ULL, base + PCIE1_ERROR_MASK);
-+	writeq(0ULL, base + RAS_NONFAT_ERROR_MASK);
-+	writeq(0ULL, base + RAS_CATFAT_ERROR_MASK);
++	dev_dbg(&pdev->dev, "PORT ERR Init.\n");
++
++	mutex_lock(&pdata->lock);
++	__port_err_mask(&pdev->dev, false);
++	mutex_unlock(&pdata->lock);
++
++	return sysfs_create_group(&pdev->dev.kobj, &port_err_attr_group);
 +}
 +
-+static void err_dev_release(struct device *dev)
++static void port_err_uinit(struct platform_device *pdev,
++			   struct dfl_feature *feature)
 +{
-+	kfree(dev);
++	dev_dbg(&pdev->dev, "PORT ERR UInit.\n");
++
++	sysfs_remove_group(&pdev->dev.kobj, &port_err_attr_group);
 +}
 +
-+static int fme_global_err_init(struct platform_device *pdev,
-+			       struct dfl_feature *feature)
-+{
-+	struct device *dev;
-+	int ret = 0;
-+
-+	dev_dbg(&pdev->dev, "FME Global Error Reporting Init.\n");
-+
-+	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
-+	if (!dev)
-+		return -ENOMEM;
-+
-+	dev->parent = &pdev->dev;
-+	dev->release = err_dev_release;
-+	dev_set_name(dev, "errors");
-+
-+	fme_error_enable(feature);
-+
-+	ret = device_register(dev);
-+	if (ret) {
-+		put_device(dev);
-+		return ret;
-+	}
-+
-+	ret = sysfs_create_groups(&dev->kobj, error_groups);
-+	if (ret) {
-+		device_unregister(dev);
-+		return ret;
-+	}
-+
-+	feature->priv = dev;
-+
-+	return ret;
-+}
-+
-+static void fme_global_err_uinit(struct platform_device *pdev,
-+				 struct dfl_feature *feature)
-+{
-+	struct device *dev = feature->priv;
-+
-+	dev_dbg(&pdev->dev, "FME Global Error Reporting UInit.\n");
-+
-+	sysfs_remove_groups(&dev->kobj, error_groups);
-+	device_unregister(dev);
-+}
-+
-+const struct dfl_feature_id fme_global_err_id_table[] = {
-+	{.id = FME_FEATURE_ID_GLOBAL_ERR,},
++const struct dfl_feature_id port_err_id_table[] = {
++	{.id = PORT_FEATURE_ID_ERROR,},
 +	{0,}
 +};
 +
-+const struct dfl_feature_ops fme_global_err_ops = {
-+	.init = fme_global_err_init,
-+	.uinit = fme_global_err_uinit,
++const struct dfl_feature_ops port_err_ops = {
++	.init = port_err_init,
++	.uinit = port_err_uinit,
 +};
-diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-main.c
-index 2d69b8f..4490cf4 100644
---- a/drivers/fpga/dfl-fme-main.c
-+++ b/drivers/fpga/dfl-fme-main.c
-@@ -227,6 +227,10 @@ static long fme_hdr_ioctl(struct platform_device *pdev,
- 		.ops = &fme_pr_mgmt_ops,
+diff --git a/drivers/fpga/dfl-afu-main.c b/drivers/fpga/dfl-afu-main.c
+index c8bc0b5..bcf6e28 100644
+--- a/drivers/fpga/dfl-afu-main.c
++++ b/drivers/fpga/dfl-afu-main.c
+@@ -523,6 +523,10 @@ static void port_afu_uinit(struct platform_device *pdev,
+ 		.ops = &port_afu_ops,
  	},
  	{
-+		.id_table = fme_global_err_id_table,
-+		.ops = &fme_global_err_ops,
++		.id_table = port_err_id_table,
++		.ops = &port_err_ops,
 +	},
 +	{
  		.ops = NULL,
- 	},
+ 	}
  };
-diff --git a/drivers/fpga/dfl-fme.h b/drivers/fpga/dfl-fme.h
-index 7a021c4..5fbe3f5 100644
---- a/drivers/fpga/dfl-fme.h
-+++ b/drivers/fpga/dfl-fme.h
-@@ -37,5 +37,7 @@ struct dfl_fme {
- 
- extern const struct dfl_feature_ops fme_pr_mgmt_ops;
- extern const struct dfl_feature_id fme_pr_mgmt_id_table[];
-+extern const struct dfl_feature_ops fme_global_err_ops;
-+extern const struct dfl_feature_id fme_global_err_id_table[];
- 
- #endif /* __DFL_FME_H */
-diff --git a/drivers/fpga/dfl.h b/drivers/fpga/dfl.h
-index fbc57f0..6c32080 100644
---- a/drivers/fpga/dfl.h
-+++ b/drivers/fpga/dfl.h
-@@ -197,12 +197,14 @@ struct dfl_feature_driver {
-  *		    feature dev (platform device)'s reources.
-  * @ioaddr: mapped mmio resource address.
-  * @ops: ops of this sub feature.
-+ * @priv: priv data of this feature.
-  */
- struct dfl_feature {
- 	u64 id;
- 	int resource_index;
- 	void __iomem *ioaddr;
- 	const struct dfl_feature_ops *ops;
-+	void *priv;
- };
- 
- #define DEV_STATUS_IN_USE	0
+diff --git a/drivers/fpga/dfl-afu.h b/drivers/fpga/dfl-afu.h
+index 35e60c5..c3182a2 100644
+--- a/drivers/fpga/dfl-afu.h
++++ b/drivers/fpga/dfl-afu.h
+@@ -100,4 +100,8 @@ int afu_dma_map_region(struct dfl_feature_platform_data *pdata,
+ struct dfl_afu_dma_region *
+ afu_dma_region_find(struct dfl_feature_platform_data *pdata,
+ 		    u64 iova, u64 size);
++
++extern const struct dfl_feature_ops port_err_ops;
++extern const struct dfl_feature_id port_err_id_table[];
++
+ #endif /* __DFL_AFU_H */
 -- 
 1.8.3.1
