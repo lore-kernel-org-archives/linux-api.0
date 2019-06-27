@@ -1,226 +1,75 @@
-From: Luis Chamberlain <mcgrof-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH v5 17/18] kernel/sysctl-test: Add null pointer test for
- sysctl.c:proc_dointvec()
-Date: Thu, 27 Jun 2019 06:10:21 +0000
-Message-ID: <20190627061021.GE19023@42.do-not-panic.com>
-References: <20190617082613.109131-1-brendanhiggins@google.com>
- <20190617082613.109131-18-brendanhiggins@google.com>
- <20190626021744.GU19023@42.do-not-panic.com>
- <CAAXuY3p+kVhjQ4LYtzormqVcH2vKu1abc_K9Z0XY=JX=bp8NcQ@mail.gmail.com>
+From: Dave Martin <Dave.Martin@arm.com>
+Subject: Re: [PATCH] binfmt_elf: Extract .note.gnu.property from an ELF file
+Date: Thu, 27 Jun 2019 10:27:17 +0100
+Message-ID: <20190627092715.GB2790@e103592.cambridge.arm.com>
+References: <20190501211217.5039-1-yu-cheng.yu@intel.com>
+ <20190502111003.GO3567@e103592.cambridge.arm.com>
+ <CALCETrVZCzh+KFCF6ijuf4QEPn=R2gJ8FHLpyFd=n+pNOMMMjA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <libc-alpha-return-103219-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
 Content-Disposition: inline
-In-Reply-To: <CAAXuY3p+kVhjQ4LYtzormqVcH2vKu1abc_K9Z0XY=JX=bp8NcQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-List-Unsubscribe: <https://lists.01.org/mailman/options/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.01.org/pipermail/linux-nvdimm/>
-List-Post: <mailto:linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-List-Help: <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.01.org/mailman/listinfo/linux-nvdimm>,
- <mailto:linux-nvdimm-request-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org?subject=subscribe>
-Errors-To: linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org
-Sender: "Linux-nvdimm" <linux-nvdimm-bounces-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org>
-To: Iurii Zaikin <yzaikin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Michael Kerrisk (man-pages)" <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Cc: pmladek-IBi9RG/b67k@public.gmane.org, linux-doc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, amir73il-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, Brendan Higgins <brendanhiggins-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, dri-devel-PD4FTy7X32lNgt0PjOBp9y5qC8QIuHrW@public.gmane.org, Alexander.Levin-0li6OtcxBFHby3iVrkZq2A@public.gmane.org, yamada.masahiro-uWyLwvC0a2jby3iVrkZq2A@public.gmane.org, mpe-Gsx/Oe8HsFggBc27wqDAHg@public.gmane.org, linux-kselftest-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, shuah-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, robh-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, linux-nvdimm-hn68Rpc1hR1g9hUCZPvPmw@public.gmane.org, frowand.list-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org, knut.omang-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, kieran.bingham-ryLnwIuWjnjg/C1BVhZhaw@public.gmane.org, wfg-VuQAYsv1563Yd54FQh9/CA@public.gmane.org, joel-U3u1mxZcP9KHXe+LvDLADg@public.gmane.org, David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, jdike-OPE4K8JWMJJBDgjK7y7TUQ@public.gmane.org, dan.carpenter-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, devicetree-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kbuild-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Tim.Bird-7U/KSKJipcs@public.gmane.org, linux-um-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org, julia.lawall-L2FTfq7BK8M@public.gmane.org, jpoimboe-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, kunit-dev-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org, tytso-3s7WtUTddSA@public.gmane.org, richard-/L3Ra7n9ekc@public.gmane.org, Stephen Boyd <sboyd-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, rdunlap-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org, linux-kernel-u79uwXL29TaqPxH82wqD4g@public.gmane.org
+In-Reply-To: <CALCETrVZCzh+KFCF6ijuf4QEPn=R2gJ8FHLpyFd=n+pNOMMMjA@mail.gmail.com>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>, X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, LKML <linux-kernel@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Machek <pavel@ucw.cz>Peter
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jun 26, 2019 at 09:07:43PM -0700, Iurii Zaikin wrote:
-> On Tue, Jun 25, 2019 at 7:17 PM Luis Chamberlain <mcgrof-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
-> > > +static void sysctl_test_dointvec_table_maxlen_unset(struct kunit *test)
-> > > +{
-> > > +     struct ctl_table table = {
-> > > +             .procname = "foo",
-> > > +             .data           = &test_data.int_0001,
-> > > +             .maxlen         = 0,
-> > > +             .mode           = 0644,
-> > > +             .proc_handler   = proc_dointvec,
-> > > +             .extra1         = &i_zero,
-> > > +             .extra2         = &i_one_hundred,
-> > > +     };
-> > > +     void  *buffer = kunit_kzalloc(test, sizeof(int), GFP_USER);
-> > > +     size_t len;
-> > > +     loff_t pos;
-> > > +
-> > > +     len = 1234;
-> > > +     KUNIT_EXPECT_EQ(test, 0, proc_dointvec(&table, 0, buffer, &len, &pos));
-> > > +     KUNIT_EXPECT_EQ(test, (size_t)0, len);
-> > > +     len = 1234;
-> > > +     KUNIT_EXPECT_EQ(test, 0, proc_dointvec(&table, 1, buffer, &len, &pos));
-> > > +     KUNIT_EXPECT_EQ(test, (size_t)0, len);
-> > > +}
+On Wed, Jun 26, 2019 at 10:14:07AM -0700, Andy Lutomirski wrote:
+> On Thu, May 2, 2019 at 4:10 AM Dave Martin <Dave.Martin@arm.com> wrote:
+
+[...]
+
+> > A couple of questions before I look in more detail:
 > >
-> > In a way this is also testing for general kernel API changes. This is and the
-> > last one were good examples. So this is not just testing functionality
-> > here. There is no wrong or write answer if 0 or -EINVAL was returned
-> > other than the fact that we have been doing this for years.
+> > 1) Can we rely on PT_GNU_PROPERTY being present in the phdrs to describe
+> > the NT_GNU_PROPERTY_TYPE_0 note?  If so, we can avoid trying to parse
+> > irrelevant PT_NOTE segments.
 > >
-> > Its a perhaps small but important difference for some of these tests.  I
-> > *do* think its worth clarifying through documentation which ones are
-> > testing for API consistency Vs proper correctness.
->
-> You make a good point that the test codifies the existing behavior of
-> the function in lieu of formal documentation.  However, the test cases
-> were derived from examining the source code of the function under test
-> and attempting to cover all branches. The assertions were added only
-> for the values that appeared to be set deliberately in the
-> implementation. And it makes sense to me to test that the code does
-> exactly what the implementation author intended.
-
-I'm not arguing against adding them. I'm suggesting that it is different
-to test for API than for correctness of intended functionality, and
-it would be wise to make it clear which test cases are for API and which
-for correctness.
-
-This will come up later for other kunit tests and it would be great
-to set precendent so that other kunit tests can follow similar
-practices to ensure its clear what is API realted Vs correctness of
-intended functionality.
-
-In fact, I'm not yet sure if its possible to test public kernel API to
-userspace with kunit, but if it is possible... well, that could make
-linux-api folks happy as they could enable us to codify interpreation of
-what is expected into kunit test cases, and we'd ensure that the
-codified interpretation is not only documented in man pages but also
-through formal kunit test cases.
-
-A regression in linux-api then could be formalized through a proper
-kunit tests case. And if an API evolves, it would force developers to
-update the respective kunit which codifies that contract.
-
-> > > +static void sysctl_test_dointvec_single_less_int_min(struct kunit *test)
-> > > +{
-> > > +     struct ctl_table table = {
-> > > +             .procname = "foo",
-> > > +             .data           = &test_data.int_0001,
-> > > +             .maxlen         = sizeof(int),
-> > > +             .mode           = 0644,
-> > > +             .proc_handler   = proc_dointvec,
-> > > +             .extra1         = &i_zero,
-> > > +             .extra2         = &i_one_hundred,
-> > > +     };
-> > > +     char input[32];
-> > > +     size_t len = sizeof(input) - 1;
-> > > +     loff_t pos = 0;
-> > > +     unsigned long abs_of_less_than_min = (unsigned long)INT_MAX
-> > > +                                          - (INT_MAX + INT_MIN) + 1;
-> > > +
-> > > +     KUNIT_EXPECT_LT(test,
-> > > +                     (size_t)snprintf(input, sizeof(input), "-%lu",
-> > > +                                      abs_of_less_than_min),
-> > > +                     sizeof(input));
-> > > +
-> > > +     table.data = kunit_kzalloc(test, sizeof(int), GFP_USER);
-> > > +     KUNIT_EXPECT_EQ(test, -EINVAL,
-> > > +                     proc_dointvec(&table, 1, input, &len, &pos));
-> > > +     KUNIT_EXPECT_EQ(test, sizeof(input) - 1, len);
-> > > +     KUNIT_EXPECT_EQ(test, 0, ((int *)table.data)[0]);
-> > > +}
 > >
-> > API test.
+> > 2) Are there standard types for things like the program property header?
+> > If not, can we add something in elf.h?  We should try to coordinate with
+> > libc on that.  Something like
 > >
-> Not sure why.
+> 
+> Where did PT_GNU_PROPERTY come from?  Are there actual docs for it?
+> Can someone here tell us what the actual semantics of this new ELF
+> thingy are?  From some searching, it seems like it's kind of an ELF
+> note but kind of not.  An actual description would be fantastic.
 
-Because you are codifying that we *definitely* return -EINVAL on
-overlow. Some parts of the kernel return -ERANGE for overflows for
-instance.
+https://github.com/hjl-tools/linux-abi/wiki/linux-abi-draft.pdf
 
-It would be a generic test for overflow if it would just test
-for any error.
+I don't know _when_ it was added, and the description is minimal, but
+it's there.
 
-It is a fine and good test to keep. All these tests are good to keep.
+(I'd say it's fairly obvious how it should be used, but it could do with
+some clarification...)
 
-> I believe there has been a real bug with int overflow in
-> proc_dointvec.
-> Covering it with test seems like a good idea.
+> Also, I don't think there's any actual requirement that the upstream
+> kernel recognize existing CET-enabled RHEL 8 binaries as being
+> CET-enabled.  I tend to think that RHEL 8 jumped the gun here.  While
+> the upstream kernel should make some reasonble effort to make sure
+> that RHEL 8 binaries will continue to run, I don't see why we need to
+> go out of our way to keep the full set of mitigations available for
+> binaries that were developed against a non-upstream kernel.
 
-Oh definitely.
+If that's an accpetable approach, it should certainly make our life
+easier.
 
-> > > +static void sysctl_test_dointvec_single_greater_int_max(struct kunit *test)
-> > > +{
-> > > +     struct ctl_table table = {
-> > > +             .procname = "foo",
-> > > +             .data           = &test_data.int_0001,
-> > > +             .maxlen         = sizeof(int),
-> > > +             .mode           = 0644,
-> > > +             .proc_handler   = proc_dointvec,
-> > > +             .extra1         = &i_zero,
-> > > +             .extra2         = &i_one_hundred,
-> > > +     };
-> > > +     char input[32];
-> > > +     size_t len = sizeof(input) - 1;
-> > > +     loff_t pos = 0;
-> > > +     unsigned long greater_than_max = (unsigned long)INT_MAX + 1;
-> > > +
-> > > +     KUNIT_EXPECT_GT(test, greater_than_max, (unsigned long)INT_MAX);
-> > > +     KUNIT_EXPECT_LT(test, (size_t)snprintf(input, sizeof(input), "%lu",
-> > > +                                            greater_than_max),
-> > > +                     sizeof(input));
-> > > +     table.data = kunit_kzalloc(test, sizeof(int), GFP_USER);
-> > > +     KUNIT_EXPECT_EQ(test, -EINVAL,
-> > > +                     proc_dointvec(&table, 1, input, &len, &pos));
-> > > +     KUNIT_EXPECT_EQ(test, sizeof(input) - 1, len);
-> > > +     KUNIT_EXPECT_EQ(test, 0, ((int *)table.data)[0]);
-> > > +}
-> > > +
-> >
-> > API test.
-> >
-> > > +static struct kunit_case sysctl_test_cases[] = {
-> > > +     KUNIT_CASE(sysctl_test_dointvec_null_tbl_data),
-> > > +     KUNIT_CASE(sysctl_test_dointvec_table_maxlen_unset),
-> > > +     KUNIT_CASE(sysctl_test_dointvec_table_len_is_zero),
-> > > +     KUNIT_CASE(sysctl_test_dointvec_table_read_but_position_set),
-> > > +     KUNIT_CASE(sysctl_test_dointvec_happy_single_positive),
-> > > +     KUNIT_CASE(sysctl_test_dointvec_happy_single_negative),
-> > > +     KUNIT_CASE(sysctl_test_dointvec_single_less_int_min),
-> > > +     KUNIT_CASE(sysctl_test_dointvec_single_greater_int_max),
-> > > +     {}
-> > > +};
-> >
-> > Oh all are API tests.. perhaps then just rename then
-> > sysctl_test_cases to sysctl_api_test_cases.
-> >
-> > Would be good to add at least *two* other tests cases for this
-> > example, one which does a valid read and one which does a valid write.
-> Added valid reads. There already are 2 valid writes.
+> In fact, if we handle the legacy bitmap differently from RHEL 8, we
+> may *have* to make sure that we don't recognize existing RHEL 8
+> binaries as CET-enabled.
 
-Thanks.
+Can't comment on that.  If the existing RHEL 8 binaries strictly don't
+have the PT_GNU_PROPERTY phdr, then this might serve a dual purpose ...
+otherwise, x86 might need some additional annotation for new binaries.
 
-> > If that is done either we add another kunit test module for correctness
-> > or just extend the above and use prefix / postfixes on the functions
-> > to distinguish between API / correctness somehow.
-> >
-> > > +
-> > > +static struct kunit_module sysctl_test_module = {
-> > > +     .name = "sysctl_test",
-> > > +     .test_cases = sysctl_test_cases,
-> > > +};
-> > > +
-> > > +module_test(sysctl_test_module);
-> > > diff --git a/lib/Kconfig.debug b/lib/Kconfig.debug
-> > > index cbdfae3798965..389b8986f5b77 100644
-> > > --- a/lib/Kconfig.debug
-> > > +++ b/lib/Kconfig.debug
-> > > @@ -1939,6 +1939,16 @@ config TEST_SYSCTL
-> > >
-> > >         If unsure, say N.
-> > >
-> > > +config SYSCTL_KUNIT_TEST
-> > > +     bool "KUnit test for sysctl"
-> > > +     depends on KUNIT
-> > > +     help
-> > > +       This builds the proc sysctl unit test, which runs on boot. For more
-> > > +       information on KUnit and unit tests in general please refer to the
-> > > +       KUnit documentation in Documentation/dev-tools/kunit/.
-> >
-> > A little more description here would help. It is testing for API and
-> > hopefully also correctness (if extended with those two examples I
-> > mentioned).
-> >
-> Added "Tests the API contract and implementation correctness of sysctl."
+I'll leave it for others to comment.
 
-Yes, much clearer, thanks!
-
-  Luis
+Cheers
+---Dave
