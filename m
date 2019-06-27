@@ -1,43 +1,75 @@
-From: James Morris <jmorris@namei.org>
-Subject: Re: [PATCH V34 09/29] kexec_file: Restrict at runtime if the kernel
- is locked down
-Date: Thu, 27 Jun 2019 14:59:09 +1000 (AEST)
-Message-ID: <alpine.LRH.2.21.1906271423070.16512@namei.org>
-References: <20190622000358.19895-1-matthewgarrett@google.com> <20190622000358.19895-10-matthewgarrett@google.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+From: Wu Hao <hao.wu@intel.com>
+Subject: [PATCH v4 00/15] add new features for FPGA DFL drivers
+Date: Thu, 27 Jun 2019 12:44:40 +0800
+Message-ID: <1561610695-5414-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190622000358.19895-10-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Matthew Garrett <matthewgarrett@google.com>
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Jiri Bohac <jbohac@suse.cz>, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, kexec@lists.infradead.org
+To: mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, yilun.xu@intel.com, hao.wu@intel.com, gregkh@linuxfoundation.org, atull@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 21 Jun 2019, Matthew Garrett wrote:
+This patchset adds more features support for FPGA Device Feature List
+(DFL) drivers, including PR enhancement, virtualization support based
+on PCIe SRIOV, private features of Port, private features of FME, and
+enhancement to DFL framework. Please refer to details in below list.
 
-> From: Jiri Bohac <jbohac@suse.cz>
-> 
-> When KEXEC_SIG is not enabled, kernel should not load images through
-> kexec_file systemcall if the kernel is locked down.
+Main changes from v3:
+ - split performance reporting support into another patchset for
+   better review.
 
-This is not a criticism of the patch but a related issue which I haven't 
-seen discussed (apologies if it has).
+Main changes from v2:
+ - move thermal/power management private feature support to another
+   patchset, including hwmon patches and related documentation update.
+ - update sysfs doc for kernel version and date.
+ - replace scnprintf to sprintf for sysfs interfaces.
+ - fix comments for performance reporting support. (patch #16)
 
-If signed code is loaded into ring 0, verified by the kernel, then 
-executed, you still lose your secure/trusted/verified boot state. If the 
-currently running kernel has been runtime-compromised, any signature 
-verification performed by the kernel cannot be trusted.
+Main changes from v1:
+ - split the clean up code in a separated patch (patch #2)
+ - add cpu_feature_enabled check for AVX512 code (patch #4)
+ - improve sysfs return values and also sysfs doc (patch #12 #17)
+ - create a hwmon for thermal management sysfs interfaces (patch #15)
+ - create a hwmon for power management sysfs interfaces (patch #16)
+ - update docmentation according to above changes (patch #5)
+ - improve sysfs doc for performance reporting support (patch #18)
 
-This problem is out of scope for the lockdown threat model (which 
-naturally cannot include a compromised kernel), but folk should be aware 
-that signature-verified kexec does not provide equivalent assurance to a 
-full reboot on a secure-boot system.
+Wu Hao (15):
+  fpga: dfl-fme-mgr: fix FME_PR_INTFC_ID register address.
+  fpga: dfl: fme: remove copy_to_user() in ioctl for PR
+  fpga: dfl: fme: align PR buffer size per PR datawidth
+  fpga: dfl: fme: support 512bit data width PR
+  Documentation: fpga: dfl: add descriptions for virtualization and new
+    interfaces.
+  fpga: dfl: fme: add DFL_FPGA_FME_PORT_RELEASE/ASSIGN ioctl support.
+  fpga: dfl: pci: enable SRIOV support.
+  fpga: dfl: afu: add AFU state related sysfs interfaces
+  fpga: dfl: afu: add userclock sysfs interfaces.
+  fpga: dfl: add id_table for dfl private feature driver
+  fpga: dfl: afu: export __port_enable/disable function.
+  fpga: dfl: afu: add error reporting support.
+  fpga: dfl: afu: add STP (SignalTap) support
+  fpga: dfl: fme: add capability sysfs interfaces
+  fpga: dfl: fme: add global error reporting support
 
-Potential mitigations here include runtime integrity verification of the
-kernel via a separate security monitor (hypervisor, SMM, TEE etc.) or some
-kind of platform support for kexec verification.
-
+ Documentation/ABI/testing/sysfs-platform-dfl-fme  |  98 ++++++
+ Documentation/ABI/testing/sysfs-platform-dfl-port | 104 ++++++
+ Documentation/fpga/dfl.txt                        | 101 ++++++
+ drivers/fpga/Makefile                             |   3 +-
+ drivers/fpga/dfl-afu-error.c                      | 225 +++++++++++++
+ drivers/fpga/dfl-afu-main.c                       | 330 ++++++++++++++++++-
+ drivers/fpga/dfl-afu.h                            |   7 +
+ drivers/fpga/dfl-fme-error.c                      | 385 ++++++++++++++++++++++
+ drivers/fpga/dfl-fme-main.c                       | 120 ++++++-
+ drivers/fpga/dfl-fme-mgr.c                        | 117 ++++++-
+ drivers/fpga/dfl-fme-pr.c                         |  65 ++--
+ drivers/fpga/dfl-fme.h                            |   7 +-
+ drivers/fpga/dfl-pci.c                            |  40 +++
+ drivers/fpga/dfl.c                                | 169 +++++++++-
+ drivers/fpga/dfl.h                                |  54 ++-
+ include/uapi/linux/fpga-dfl.h                     |  32 ++
+ 16 files changed, 1777 insertions(+), 80 deletions(-)
+ create mode 100644 drivers/fpga/dfl-afu-error.c
+ create mode 100644 drivers/fpga/dfl-fme-error.c
 
 -- 
-James Morris
-<jmorris@namei.org>
+1.8.3.1
