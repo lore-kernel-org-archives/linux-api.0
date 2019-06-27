@@ -1,356 +1,265 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v4 12/15] fpga: dfl: afu: add error reporting support.
-Date: Thu, 27 Jun 2019 12:44:52 +0800
-Message-ID: <1561610695-5414-13-git-send-email-hao.wu@intel.com>
+Subject: [PATCH v4 08/15] fpga: dfl: afu: add AFU state related sysfs interfaces
+Date: Thu, 27 Jun 2019 12:44:48 +0800
+Message-ID: <1561610695-5414-9-git-send-email-hao.wu@intel.com>
 References: <1561610695-5414-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1561610695-5414-1-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, yilun.xu@intel.com, hao.wu@intel.com, gregkh@linuxfoundation.org, atull@kernel.org
+Cc: linux-api@vger.kernel.org, yilun.xu@intel.com, hao.wu@intel.com, gregkh@linuxfoundation.org, atull@kernel.org, Ananda Ravuri <ananda.ravuri@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Error reporting is one important private feature, it reports error
-detected on port and accelerated function unit (AFU). It introduces
-several sysfs interfaces to allow userspace to check and clear
-errors detected by hardware.
+This patch introduces more sysfs interfaces for Accelerated
+Function Unit (AFU). These interfaces allow users to read
+current AFU Power State (APx), read / clear AFU Power (APx)
+events which are sticky to identify transient APx state,
+and manage AFU's LTR (latency tolerance reporting).
 
+Signed-off-by: Ananda Ravuri <ananda.ravuri@intel.com>
 Signed-off-by: Xu Yilun <yilun.xu@intel.com>
 Signed-off-by: Wu Hao <hao.wu@intel.com>
 Acked-by: Alan Tull <atull@kernel.org>
 ---
-v2: add more error code description for error clear sysfs in doc.
-    return -EINVAL instead of -EBUSY when input error code doesn't
-    match in error clear sysfs.
 v3: replace scnprintf with sprintf in sysfs interfaces.
     update sysfs doc kernel version and date.
 v4: update sysfs doc date.
 ---
- Documentation/ABI/testing/sysfs-platform-dfl-port |  39 ++++
- drivers/fpga/Makefile                             |   1 +
- drivers/fpga/dfl-afu-error.c                      | 225 ++++++++++++++++++++++
- drivers/fpga/dfl-afu-main.c                       |   4 +
- drivers/fpga/dfl-afu.h                            |   4 +
- 5 files changed, 273 insertions(+)
- create mode 100644 drivers/fpga/dfl-afu-error.c
+ Documentation/ABI/testing/sysfs-platform-dfl-port |  30 +++++
+ drivers/fpga/dfl-afu-main.c                       | 140 ++++++++++++++++++++++
+ drivers/fpga/dfl.h                                |  11 ++
+ 3 files changed, 181 insertions(+)
 
 diff --git a/Documentation/ABI/testing/sysfs-platform-dfl-port b/Documentation/ABI/testing/sysfs-platform-dfl-port
-index 04ea7f2..4aeca94 100644
+index 6a92dda..17b37d1 100644
 --- a/Documentation/ABI/testing/sysfs-platform-dfl-port
 +++ b/Documentation/ABI/testing/sysfs-platform-dfl-port
-@@ -79,3 +79,42 @@ KernelVersion:	5.3
- Contact:	Wu Hao <hao.wu@intel.com>
- Description:	Read-only. Read this file to get the status of issued command
- 		to userclck_freqcntrcmd.
+@@ -14,3 +14,33 @@ Description:	Read-only. User can program different PR bitstreams to FPGA
+ 		Accelerator Function Unit (AFU) for different functions. It
+ 		returns uuid which could be used to identify which PR bitstream
+ 		is programmed in this AFU.
 +
-+What:		/sys/bus/platform/devices/dfl-port.0/errors/revision
++What:		/sys/bus/platform/devices/dfl-port.0/power_state
 +Date:		June 2019
 +KernelVersion:	5.3
 +Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read-only. Read this file to get the revision of this error
-+		reporting private feature.
++Description:	Read-only. It reports the APx (AFU Power) state, different APx
++		means different throttling level. When reading this file, it
++		returns "0" - Normal / "1" - AP1 / "2" - AP2 / "6" - AP6.
 +
-+What:		/sys/bus/platform/devices/dfl-port.0/errors/errors
++What:		/sys/bus/platform/devices/dfl-port.0/ap1_event
 +Date:		June 2019
 +KernelVersion:	5.3
 +Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read-only. Read this file to get errors detected on port and
-+		Accelerated Function Unit (AFU).
++Description:	Read-write. Read or set 1 to clear AP1 (AFU Power State 1)
++		event. It's used to indicate transient AP1 state.
 +
-+What:		/sys/bus/platform/devices/dfl-port.0/errors/first_error
++What:		/sys/bus/platform/devices/dfl-port.0/ap2_event
 +Date:		June 2019
 +KernelVersion:	5.3
 +Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read-only. Read this file to get the first error detected by
-+		hardware.
++Description:	Read-write. Read or set 1 to clear AP2 (AFU Power State 2)
++		event. It's used to indicate transient AP2 state.
 +
-+What:		/sys/bus/platform/devices/dfl-port.0/errors/first_malformed_req
++What:		/sys/bus/platform/devices/dfl-port.0/ltr
 +Date:		June 2019
 +KernelVersion:	5.3
 +Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read-only. Read this file to get the first malformed request
-+		captured by hardware.
-+
-+What:		/sys/bus/platform/devices/dfl-port.0/errors/clear
-+Date:		June 2019
-+KernelVersion:	5.3
-+Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Write-only. Write error code to this file to clear errors.
-+		Write fails with -EINVAL if input parsing fails or input error
-+		code doesn't match.
-+		Write fails with -EBUSY or -ETIMEDOUT if error can't be cleared
-+		as hardware is in low power state (-EBUSY) or not responding
-+		(-ETIMEDOUT).
-diff --git a/drivers/fpga/Makefile b/drivers/fpga/Makefile
-index 312b937..7255891 100644
---- a/drivers/fpga/Makefile
-+++ b/drivers/fpga/Makefile
-@@ -41,6 +41,7 @@ obj-$(CONFIG_FPGA_DFL_AFU)		+= dfl-afu.o
- 
- dfl-fme-objs := dfl-fme-main.o dfl-fme-pr.o
- dfl-afu-objs := dfl-afu-main.o dfl-afu-region.o dfl-afu-dma-region.o
-+dfl-afu-objs += dfl-afu-error.o
- 
- # Drivers for FPGAs which implement DFL
- obj-$(CONFIG_FPGA_DFL_PCI)		+= dfl-pci.o
-diff --git a/drivers/fpga/dfl-afu-error.c b/drivers/fpga/dfl-afu-error.c
-new file mode 100644
-index 0000000..f20dbdf
---- /dev/null
-+++ b/drivers/fpga/dfl-afu-error.c
-@@ -0,0 +1,225 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Driver for FPGA Accelerated Function Unit (AFU) Error Reporting
-+ *
-+ * Copyright 2019 Intel Corporation, Inc.
-+ *
-+ * Authors:
-+ *   Wu Hao <hao.wu@linux.intel.com>
-+ *   Xiao Guangrong <guangrong.xiao@linux.intel.com>
-+ *   Joseph Grecco <joe.grecco@intel.com>
-+ *   Enno Luebbers <enno.luebbers@intel.com>
-+ *   Tim Whisonant <tim.whisonant@intel.com>
-+ *   Ananda Ravuri <ananda.ravuri@intel.com>
-+ *   Mitchel Henry <henry.mitchel@intel.com>
-+ */
-+
-+#include <linux/uaccess.h>
-+
-+#include "dfl-afu.h"
-+
-+#define PORT_ERROR_MASK		0x8
-+#define PORT_ERROR		0x10
-+#define PORT_FIRST_ERROR	0x18
-+#define PORT_MALFORMED_REQ0	0x20
-+#define PORT_MALFORMED_REQ1	0x28
-+
-+#define ERROR_MASK		GENMASK_ULL(63, 0)
-+
-+/* mask or unmask port errors by the error mask register. */
-+static void __port_err_mask(struct device *dev, bool mask)
-+{
-+	void __iomem *base;
-+
-+	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_ERROR);
-+
-+	writeq(mask ? ERROR_MASK : 0, base + PORT_ERROR_MASK);
-+}
-+
-+/* clear port errors. */
-+static int __port_err_clear(struct device *dev, u64 err)
-+{
-+	struct platform_device *pdev = to_platform_device(dev);
-+	void __iomem *base_err, *base_hdr;
-+	int ret;
-+	u64 v;
-+
-+	base_err = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_ERROR);
-+	base_hdr = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_HEADER);
-+
-+	/*
-+	 * clear Port Errors
-+	 *
-+	 * - Check for AP6 State
-+	 * - Halt Port by keeping Port in reset
-+	 * - Set PORT Error mask to all 1 to mask errors
-+	 * - Clear all errors
-+	 * - Set Port mask to all 0 to enable errors
-+	 * - All errors start capturing new errors
-+	 * - Enable Port by pulling the port out of reset
-+	 */
-+
-+	/* if device is still in AP6 power state, can not clear any error. */
-+	v = readq(base_hdr + PORT_HDR_STS);
-+	if (FIELD_GET(PORT_STS_PWR_STATE, v) == PORT_STS_PWR_STATE_AP6) {
-+		dev_err(dev, "Could not clear errors, device in AP6 state.\n");
-+		return -EBUSY;
-+	}
-+
-+	/* Halt Port by keeping Port in reset */
-+	ret = __port_disable(pdev);
-+	if (ret)
-+		return ret;
-+
-+	/* Mask all errors */
-+	__port_err_mask(dev, true);
-+
-+	/* Clear errors if err input matches with current port errors.*/
-+	v = readq(base_err + PORT_ERROR);
-+
-+	if (v == err) {
-+		writeq(v, base_err + PORT_ERROR);
-+
-+		v = readq(base_err + PORT_FIRST_ERROR);
-+		writeq(v, base_err + PORT_FIRST_ERROR);
-+	} else {
-+		ret = -EINVAL;
-+	}
-+
-+	/* Clear mask */
-+	__port_err_mask(dev, false);
-+
-+	/* Enable the Port by clear the reset */
-+	__port_enable(pdev);
-+
-+	return ret;
-+}
-+
-+static ssize_t revision_show(struct device *dev, struct device_attribute *attr,
-+			     char *buf)
-+{
-+	void __iomem *base;
-+
-+	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_ERROR);
-+
-+	return sprintf(buf, "%u\n", dfl_feature_revision(base));
-+}
-+static DEVICE_ATTR_RO(revision);
-+
-+static ssize_t errors_show(struct device *dev, struct device_attribute *attr,
-+			   char *buf)
-+{
-+	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
-+	void __iomem *base;
-+	u64 error;
-+
-+	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_ERROR);
-+
-+	mutex_lock(&pdata->lock);
-+	error = readq(base + PORT_ERROR);
-+	mutex_unlock(&pdata->lock);
-+
-+	return sprintf(buf, "0x%llx\n", (unsigned long long)error);
-+}
-+static DEVICE_ATTR_RO(errors);
-+
-+static ssize_t first_error_show(struct device *dev,
-+				struct device_attribute *attr, char *buf)
-+{
-+	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
-+	void __iomem *base;
-+	u64 error;
-+
-+	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_ERROR);
-+
-+	mutex_lock(&pdata->lock);
-+	error = readq(base + PORT_FIRST_ERROR);
-+	mutex_unlock(&pdata->lock);
-+
-+	return sprintf(buf, "0x%llx\n", (unsigned long long)error);
-+}
-+static DEVICE_ATTR_RO(first_error);
-+
-+static ssize_t first_malformed_req_show(struct device *dev,
-+					struct device_attribute *attr,
-+					char *buf)
-+{
-+	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
-+	void __iomem *base;
-+	u64 req0, req1;
-+
-+	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_ERROR);
-+
-+	mutex_lock(&pdata->lock);
-+	req0 = readq(base + PORT_MALFORMED_REQ0);
-+	req1 = readq(base + PORT_MALFORMED_REQ1);
-+	mutex_unlock(&pdata->lock);
-+
-+	return sprintf(buf, "0x%016llx%016llx\n",
-+		       (unsigned long long)req1, (unsigned long long)req0);
-+}
-+static DEVICE_ATTR_RO(first_malformed_req);
-+
-+static ssize_t clear_store(struct device *dev, struct device_attribute *attr,
-+			   const char *buff, size_t count)
-+{
-+	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
-+	u64 value;
-+	int ret;
-+
-+	if (kstrtou64(buff, 0, &value))
-+		return -EINVAL;
-+
-+	mutex_lock(&pdata->lock);
-+	ret = __port_err_clear(dev, value);
-+	mutex_unlock(&pdata->lock);
-+
-+	return ret ? ret : count;
-+}
-+static DEVICE_ATTR_WO(clear);
-+
-+static struct attribute *port_err_attrs[] = {
-+	&dev_attr_revision.attr,
-+	&dev_attr_errors.attr,
-+	&dev_attr_first_error.attr,
-+	&dev_attr_first_malformed_req.attr,
-+	&dev_attr_clear.attr,
-+	NULL,
-+};
-+
-+static struct attribute_group port_err_attr_group = {
-+	.attrs = port_err_attrs,
-+	.name = "errors",
-+};
-+
-+static int port_err_init(struct platform_device *pdev,
-+			 struct dfl_feature *feature)
-+{
-+	struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
-+
-+	dev_dbg(&pdev->dev, "PORT ERR Init.\n");
-+
-+	mutex_lock(&pdata->lock);
-+	__port_err_mask(&pdev->dev, false);
-+	mutex_unlock(&pdata->lock);
-+
-+	return sysfs_create_group(&pdev->dev.kobj, &port_err_attr_group);
-+}
-+
-+static void port_err_uinit(struct platform_device *pdev,
-+			   struct dfl_feature *feature)
-+{
-+	dev_dbg(&pdev->dev, "PORT ERR UInit.\n");
-+
-+	sysfs_remove_group(&pdev->dev.kobj, &port_err_attr_group);
-+}
-+
-+const struct dfl_feature_id port_err_id_table[] = {
-+	{.id = PORT_FEATURE_ID_ERROR,},
-+	{0,}
-+};
-+
-+const struct dfl_feature_ops port_err_ops = {
-+	.init = port_err_init,
-+	.uinit = port_err_uinit,
-+};
++Description:	Read-write. Read and set AFU latency tolerance reporting value.
++		Set ltr to 1 if the AFU can tolerate latency >= 40us or set it
++		to 0 if it is latency sensitive.
 diff --git a/drivers/fpga/dfl-afu-main.c b/drivers/fpga/dfl-afu-main.c
-index c8bc0b5..bcf6e28 100644
+index 02baa6a..040ed8a 100644
 --- a/drivers/fpga/dfl-afu-main.c
 +++ b/drivers/fpga/dfl-afu-main.c
-@@ -523,6 +523,10 @@ static void port_afu_uinit(struct platform_device *pdev,
- 		.ops = &port_afu_ops,
- 	},
- 	{
-+		.id_table = port_err_id_table,
-+		.ops = &port_err_ops,
-+	},
-+	{
- 		.ops = NULL,
- 	}
+@@ -21,6 +21,8 @@
+ 
+ #include "dfl-afu.h"
+ 
++#define DRV_VERSION	"0.8"
++
+ /**
+  * port_enable - enable a port
+  * @pdev: port platform device.
+@@ -141,8 +143,145 @@ static int port_get_id(struct platform_device *pdev)
+ }
+ static DEVICE_ATTR_RO(id);
+ 
++static ssize_t
++ltr_show(struct device *dev, struct device_attribute *attr, char *buf)
++{
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
++	void __iomem *base;
++	u64 v;
++
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_HEADER);
++
++	mutex_lock(&pdata->lock);
++	v = readq(base + PORT_HDR_CTRL);
++	mutex_unlock(&pdata->lock);
++
++	return sprintf(buf, "%x\n", (u8)FIELD_GET(PORT_CTRL_LATENCY, v));
++}
++
++static ssize_t
++ltr_store(struct device *dev, struct device_attribute *attr,
++	  const char *buf, size_t count)
++{
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
++	void __iomem *base;
++	u8 ltr;
++	u64 v;
++
++	if (kstrtou8(buf, 0, &ltr) || ltr > 1)
++		return -EINVAL;
++
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_HEADER);
++
++	mutex_lock(&pdata->lock);
++	v = readq(base + PORT_HDR_CTRL);
++	v &= ~PORT_CTRL_LATENCY;
++	v |= FIELD_PREP(PORT_CTRL_LATENCY, ltr);
++	writeq(v, base + PORT_HDR_CTRL);
++	mutex_unlock(&pdata->lock);
++
++	return count;
++}
++static DEVICE_ATTR_RW(ltr);
++
++static ssize_t
++ap1_event_show(struct device *dev, struct device_attribute *attr, char *buf)
++{
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
++	void __iomem *base;
++	u64 v;
++
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_HEADER);
++
++	mutex_lock(&pdata->lock);
++	v = readq(base + PORT_HDR_STS);
++	mutex_unlock(&pdata->lock);
++
++	return sprintf(buf, "%x\n", (u8)FIELD_GET(PORT_STS_AP1_EVT, v));
++}
++
++static ssize_t
++ap1_event_store(struct device *dev, struct device_attribute *attr,
++		const char *buf, size_t count)
++{
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
++	void __iomem *base;
++	u8 ap1_event;
++
++	if (kstrtou8(buf, 0, &ap1_event) || ap1_event != 1)
++		return -EINVAL;
++
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_HEADER);
++
++	mutex_lock(&pdata->lock);
++	writeq(PORT_STS_AP1_EVT, base + PORT_HDR_STS);
++	mutex_unlock(&pdata->lock);
++
++	return count;
++}
++static DEVICE_ATTR_RW(ap1_event);
++
++static ssize_t
++ap2_event_show(struct device *dev, struct device_attribute *attr,
++	       char *buf)
++{
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
++	void __iomem *base;
++	u64 v;
++
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_HEADER);
++
++	mutex_lock(&pdata->lock);
++	v = readq(base + PORT_HDR_STS);
++	mutex_unlock(&pdata->lock);
++
++	return sprintf(buf, "%x\n", (u8)FIELD_GET(PORT_STS_AP2_EVT, v));
++}
++
++static ssize_t
++ap2_event_store(struct device *dev, struct device_attribute *attr,
++		const char *buf, size_t count)
++{
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
++	void __iomem *base;
++	u8 ap2_event;
++
++	if (kstrtou8(buf, 0, &ap2_event) || ap2_event != 1)
++		return -EINVAL;
++
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_HEADER);
++
++	mutex_lock(&pdata->lock);
++	writeq(PORT_STS_AP2_EVT, base + PORT_HDR_STS);
++	mutex_unlock(&pdata->lock);
++
++	return count;
++}
++static DEVICE_ATTR_RW(ap2_event);
++
++static ssize_t
++power_state_show(struct device *dev, struct device_attribute *attr, char *buf)
++{
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
++	void __iomem *base;
++	u64 v;
++
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_HEADER);
++
++	mutex_lock(&pdata->lock);
++	v = readq(base + PORT_HDR_STS);
++	mutex_unlock(&pdata->lock);
++
++	return sprintf(buf, "0x%x\n", (u8)FIELD_GET(PORT_STS_PWR_STATE, v));
++}
++static DEVICE_ATTR_RO(power_state);
++
+ static const struct attribute *port_hdr_attrs[] = {
+ 	&dev_attr_id.attr,
++	&dev_attr_ltr.attr,
++	&dev_attr_ap1_event.attr,
++	&dev_attr_ap2_event.attr,
++	&dev_attr_power_state.attr,
+ 	NULL,
  };
-diff --git a/drivers/fpga/dfl-afu.h b/drivers/fpga/dfl-afu.h
-index 35e60c5..c3182a2 100644
---- a/drivers/fpga/dfl-afu.h
-+++ b/drivers/fpga/dfl-afu.h
-@@ -100,4 +100,8 @@ int afu_dma_map_region(struct dfl_feature_platform_data *pdata,
- struct dfl_afu_dma_region *
- afu_dma_region_find(struct dfl_feature_platform_data *pdata,
- 		    u64 iova, u64 size);
+ 
+@@ -634,3 +773,4 @@ static void __exit afu_exit(void)
+ MODULE_AUTHOR("Intel Corporation");
+ MODULE_LICENSE("GPL v2");
+ MODULE_ALIAS("platform:dfl-port");
++MODULE_VERSION(DRV_VERSION);
+diff --git a/drivers/fpga/dfl.h b/drivers/fpga/dfl.h
+index 1350e8e..1525098 100644
+--- a/drivers/fpga/dfl.h
++++ b/drivers/fpga/dfl.h
+@@ -119,6 +119,7 @@
+ #define PORT_HDR_NEXT_AFU	NEXT_AFU
+ #define PORT_HDR_CAP		0x30
+ #define PORT_HDR_CTRL		0x38
++#define PORT_HDR_STS		0x40
+ 
+ /* Port Capability Register Bitfield */
+ #define PORT_CAP_PORT_NUM	GENMASK_ULL(1, 0)	/* ID of this port */
+@@ -130,6 +131,16 @@
+ /* Latency tolerance reporting. '1' >= 40us, '0' < 40us.*/
+ #define PORT_CTRL_LATENCY	BIT_ULL(2)
+ #define PORT_CTRL_SFTRST_ACK	BIT_ULL(4)		/* HW ack for reset */
 +
-+extern const struct dfl_feature_ops port_err_ops;
-+extern const struct dfl_feature_id port_err_id_table[];
++/* Port Status Register Bitfield */
++#define PORT_STS_AP2_EVT	BIT_ULL(13)		/* AP2 event detected */
++#define PORT_STS_AP1_EVT	BIT_ULL(12)		/* AP1 event detected */
++#define PORT_STS_PWR_STATE	GENMASK_ULL(11, 8)	/* AFU power states */
++#define PORT_STS_PWR_STATE_NORM 0
++#define PORT_STS_PWR_STATE_AP1	1			/* 50% throttling */
++#define PORT_STS_PWR_STATE_AP2	2			/* 90% throttling */
++#define PORT_STS_PWR_STATE_AP6	6			/* 100% throttling */
 +
- #endif /* __DFL_AFU_H */
+ /**
+  * struct dfl_fpga_port_ops - port ops
+  *
 -- 
 1.8.3.1
