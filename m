@@ -1,7 +1,7 @@
 From: Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v3 1/5] mm: introduce MADV_COLD
-Date: Thu, 27 Jun 2019 20:54:01 +0900
-Message-ID: <20190627115405.255259-2-minchan@kernel.org>
+Subject: [PATCH v3 4/5] mm: introduce MADV_PAGEOUT
+Date: Thu, 27 Jun 2019 20:54:04 +0900
+Message-ID: <20190627115405.255259-5-minchan@kernel.org>
 References: <20190627115405.255259-1-minchan@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,136 +12,108 @@ To: Andrew Morton <akpm@linux-foundation.org>
 Cc: linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, oleksandr@redhat.com, hdanton@sina.com, lizeb@google.com, Dave Hansen <dave.hansen@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Minchan Kim <minchan@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-When a process expects no accesses to a certain memory range, it could
-give a hint to kernel that the pages can be reclaimed when memory pressure
-happens but data should be preserved for future use.  This could reduce
-workingset eviction so it ends up increasing performance.
+When a process expects no accesses to a certain memory range
+for a long time, it could hint kernel that the pages can be
+reclaimed instantly but data should be preserved for future use.
+This could reduce workingset eviction so it ends up increasing
+performance.
 
-This patch introduces the new MADV_COLD hint to madvise(2) syscall.
-MADV_COLD can be used by a process to mark a memory range as not expected
-to be used in the near future. The hint can help kernel in deciding which
-pages to evict early during memory pressure.
+This patch introduces the new MADV_PAGEOUT hint to madvise(2)
+syscall. MADV_PAGEOUT can be used by a process to mark a memory
+range as not expected to be used for a long time so that kernel
+reclaims *any LRU* pages instantly. The hint can help kernel in
+deciding which pages to evict proactively.
 
-It works for every LRU pages like MADV_[DONTNEED|FREE]. IOW, It moves
+- man-page material
 
-	active file page -> inactive file LRU
-	active anon page -> inacdtive anon LRU
+MADV_PAGEOUT (since Linux x.x)
 
-Unlike MADV_FREE, it doesn't move active anonymous pages to inactive
-file LRU's head because MADV_COLD is a little bit different symantic.
-MADV_FREE means it's okay to discard when the memory pressure because
-the content of the page is *garbage* so freeing such pages is almost zero
-overhead since we don't need to swap out and access afterward causes just
-minor fault. Thus, it would make sense to put those freeable pages in
-inactive file LRU to compete other used-once pages. It makes sense for
-implmentaion point of view, too because it's not swapbacked memory any
-longer until it would be re-dirtied. Even, it could give a bonus to make
-them be reclaimed on swapless system. However, MADV_COLD doesn't mean
-garbage so reclaiming them requires swap-out/in in the end so it's bigger
-cost. Since we have designed VM LRU aging based on cost-model, anonymous
-cold pages would be better to position inactive anon's LRU list, not file
-LRU. Furthermore, it would help to avoid unnecessary scanning if system
-doesn't have a swap device. Let's start simpler way without adding
-complexity at this moment. However, keep in mind, too that it's a caveat
-that workloads with a lot of pages cache are likely to ignore MADV_COLD
-on anonymous memory because we rarely age anonymous LRU lists.
+Do not expect access in the near future so pages in the specified
+regions could be reclaimed instantly regardless of memory pressure.
+Thus, access in the range after successful operation could cause
+major page fault but never lose the up-to-date contents unlike
+MADV_DONTNEED. It works for only private anonymous mappings and
+non-anonymous mappings that belong to files that the calling process
+could successfully open for writing; otherwise, it could be used for
+sidechannel attack.
 
-* man-page material
-
-MADV_COLD (since Linux x.x)
-
-Do not expect access in the near future so under memory pressure, pages
-in the specified regions could be reclaimed more aggressively compared
-to other pages in the system. The difference with MADV_DONTNEED is it
-doesn't change the semantics of memory access in the specified regions.
-Thus, it will keep the up-to-date contents of the region.
-
-MADV_COLD cannot be applied to locked pages, Huge TLB pages, or VM_PFNMAP
-pages.
+MADV_PAGEOUT cannot be applied to locked pages, Huge TLB pages, or
+VM_PFNMAP pages.
 
 * v2
- * add up the warn with lots of page cache workload - mhocko
+ * add comment about SWAP_CLUSTER_MAX - mhocko
+ * add permission check to prevent sidechannel attack - mhocko
  * add man page stuff - dave
 
 * v1
- * remove page_mapcount filter - hannes, mhocko
- * remove idle page handling - joelaf
+ * change pte to old and rely on the other's reference - hannes
+ * remove page_mapcount to check shared page - mhocko
 
-* RFCv2
- * add more description - mhocko
+* RFC v2
+ * make reclaim_pages simple via factoring out isolate logic - hannes
 
 * RFCv1
- * renaming from MADV_COOL to MADV_COLD - hannes
-
-* internal review
- * use clear_page_youn in deactivate_page - joelaf
- * Revise the description - surenb
- * Renaming from MADV_WARM to MADV_COOL - surenb
+ * rename from MADV_COLD to MADV_PAGEOUT - hannes
+ * bail out if process is being killed - Hillf
+ * fix reclaim_pages bugs - Hillf
 
 Signed-off-by: Minchan Kim <minchan@kernel.org>
 ---
  include/linux/swap.h                   |   1 +
  include/uapi/asm-generic/mman-common.h |   1 +
- mm/internal.h                          |   2 +-
- mm/madvise.c                           | 180 ++++++++++++++++++++++++-
- mm/oom_kill.c                          |   2 +-
- mm/swap.c                              |  42 ++++++
- 6 files changed, 224 insertions(+), 4 deletions(-)
+ mm/madvise.c                           | 212 +++++++++++++++++++++++++
+ mm/vmscan.c                            |  58 +++++++
+ 4 files changed, 272 insertions(+)
 
 diff --git a/include/linux/swap.h b/include/linux/swap.h
-index de2c67a33b7e..0ce997edb8bb 100644
+index 0ce997edb8bb..063c0c1e112b 100644
 --- a/include/linux/swap.h
 +++ b/include/linux/swap.h
-@@ -340,6 +340,7 @@ extern void lru_add_drain_cpu(int cpu);
- extern void lru_add_drain_all(void);
- extern void rotate_reclaimable_page(struct page *page);
- extern void deactivate_file_page(struct page *page);
-+extern void deactivate_page(struct page *page);
- extern void mark_page_lazyfree(struct page *page);
- extern void swap_setup(void);
+@@ -365,6 +365,7 @@ extern int vm_swappiness;
+ extern int remove_mapping(struct address_space *mapping, struct page *page);
+ extern unsigned long vm_total_pages;
  
++extern unsigned long reclaim_pages(struct list_head *page_list);
+ #ifdef CONFIG_NUMA
+ extern int node_reclaim_mode;
+ extern int sysctl_min_unmapped_ratio;
 diff --git a/include/uapi/asm-generic/mman-common.h b/include/uapi/asm-generic/mman-common.h
-index ef4623f03156..d7b4231eea63 100644
+index d7b4231eea63..f545e159b472 100644
 --- a/include/uapi/asm-generic/mman-common.h
 +++ b/include/uapi/asm-generic/mman-common.h
-@@ -47,6 +47,7 @@
- #define MADV_SEQUENTIAL	2		/* expect sequential page references */
+@@ -48,6 +48,7 @@
  #define MADV_WILLNEED	3		/* will need these pages */
  #define MADV_DONTNEED	4		/* don't need these pages */
-+#define MADV_COLD	5		/* deactivatie these pages */
+ #define MADV_COLD	5		/* deactivatie these pages */
++#define MADV_PAGEOUT	6		/* reclaim these pages */
  
  /* common parameters: try to keep these consistent across architectures */
  #define MADV_FREE	8		/* free pages only if memory pressure */
-diff --git a/mm/internal.h b/mm/internal.h
-index f53a14d67538..c61b215ff265 100644
---- a/mm/internal.h
-+++ b/mm/internal.h
-@@ -39,7 +39,7 @@ vm_fault_t do_swap_page(struct vm_fault *vmf);
- void free_pgtables(struct mmu_gather *tlb, struct vm_area_struct *start_vma,
- 		unsigned long floor, unsigned long ceiling);
- 
--static inline bool can_madv_dontneed_vma(struct vm_area_struct *vma)
-+static inline bool can_madv_lru_vma(struct vm_area_struct *vma)
- {
- 	return !(vma->vm_flags & (VM_LOCKED|VM_HUGETLB|VM_PFNMAP));
- }
 diff --git a/mm/madvise.c b/mm/madvise.c
-index 628022e674a7..7abb8e54bc7a 100644
+index 7abb8e54bc7a..ee210473f639 100644
 --- a/mm/madvise.c
 +++ b/mm/madvise.c
-@@ -40,6 +40,7 @@ static int madvise_need_mmap_write(int behavior)
- 	case MADV_REMOVE:
+@@ -11,6 +11,7 @@
+ #include <linux/syscalls.h>
+ #include <linux/mempolicy.h>
+ #include <linux/page-isolation.h>
++#include <linux/page_idle.h>
+ #include <linux/userfaultfd_k.h>
+ #include <linux/hugetlb.h>
+ #include <linux/falloc.h>
+@@ -41,6 +42,7 @@ static int madvise_need_mmap_write(int behavior)
  	case MADV_WILLNEED:
  	case MADV_DONTNEED:
-+	case MADV_COLD:
+ 	case MADV_COLD:
++	case MADV_PAGEOUT:
  	case MADV_FREE:
  		return 0;
  	default:
-@@ -307,6 +308,178 @@ static long madvise_willneed(struct vm_area_struct *vma,
+@@ -480,6 +482,213 @@ static long madvise_cold(struct vm_area_struct *vma,
  	return 0;
  }
  
-+static int madvise_cold_pte_range(pmd_t *pmd, unsigned long addr,
++static int madvise_pageout_pte_range(pmd_t *pmd, unsigned long addr,
 +				unsigned long end, struct mm_walk *walk)
 +{
 +	struct mmu_gather *tlb = walk->private;
@@ -149,8 +121,13 @@ index 628022e674a7..7abb8e54bc7a 100644
 +	struct vm_area_struct *vma = walk->vma;
 +	pte_t *orig_pte, *pte, ptent;
 +	spinlock_t *ptl;
++	LIST_HEAD(page_list);
 +	struct page *page;
++	int isolated = 0;
 +	unsigned long next;
++
++	if (fatal_signal_pending(current))
++		return -EINTR;
 +
 +	next = pmd_addr_end(addr, end);
 +	if (pmd_trans_huge(*pmd)) {
@@ -177,7 +154,6 @@ index 628022e674a7..7abb8e54bc7a 100644
 +
 +			if (page_mapcount(page) != 1)
 +				goto huge_unlock;
-+
 +			get_page(page);
 +			spin_unlock(ptl);
 +			lock_page(page);
@@ -189,24 +165,28 @@ index 628022e674a7..7abb8e54bc7a 100644
 +			return 0;
 +		}
 +
++		if (isolate_lru_page(page))
++			goto huge_unlock;
++
 +		if (pmd_young(orig_pmd)) {
 +			pmdp_invalidate(vma, addr, pmd);
 +			orig_pmd = pmd_mkold(orig_pmd);
 +
 +			set_pmd_at(mm, addr, pmd, orig_pmd);
-+			tlb_remove_pmd_tlb_entry(tlb, pmd, addr);
++			tlb_remove_tlb_entry(tlb, pmd, addr);
 +		}
 +
++		ClearPageReferenced(page);
 +		test_and_clear_page_young(page);
-+		deactivate_page(page);
++		list_add(&page->lru, &page_list);
 +huge_unlock:
 +		spin_unlock(ptl);
++		reclaim_pages(&page_list);
 +		return 0;
 +	}
 +
 +	if (pmd_trans_unstable(pmd))
 +		return 0;
-+
 +regular_page:
 +	tlb_change_page_size(tlb, PAGE_SIZE);
 +	orig_pte = pte = pte_offset_map_lock(vma->vm_mm, pmd, addr, &ptl);
@@ -214,10 +194,6 @@ index 628022e674a7..7abb8e54bc7a 100644
 +	arch_enter_lazy_mmu_mode();
 +	for (; addr < end; pte++, addr += PAGE_SIZE) {
 +		ptent = *pte;
-+
-+		if (pte_none(ptent))
-+			continue;
-+
 +		if (!pte_present(ptent))
 +			continue;
 +
@@ -226,7 +202,7 @@ index 628022e674a7..7abb8e54bc7a 100644
 +			continue;
 +
 +		/*
-+		 * Creating a THP page is expensive so split it only if we
++		 * creating a THP page is expensive so split it only if we
 +		 * are sure it's worth. Split it if we are only owner.
 +		 */
 +		if (PageTransCompound(page)) {
@@ -254,6 +230,10 @@ index 628022e674a7..7abb8e54bc7a 100644
 +
 +		VM_BUG_ON_PAGE(PageTransCompound(page), page);
 +
++		if (isolate_lru_page(page))
++			continue;
++
++		isolated++;
 +		if (pte_young(ptent)) {
 +			ptent = ptep_get_and_clear_full(mm, addr, pte,
 +							tlb->fullmm);
@@ -261,40 +241,64 @@ index 628022e674a7..7abb8e54bc7a 100644
 +			set_pte_at(mm, addr, pte, ptent);
 +			tlb_remove_tlb_entry(tlb, pte, addr);
 +		}
-+
-+		/*
-+		 * We are deactivating a page for accelerating reclaiming.
-+		 * VM couldn't reclaim the page unless we clear PG_young.
-+		 * As a side effect, it makes confuse idle-page tracking
-+		 * because they will miss recent referenced history.
-+		 */
++		ClearPageReferenced(page);
 +		test_and_clear_page_young(page);
-+		deactivate_page(page);
++		list_add(&page->lru, &page_list);
++		/*
++		 * Prevent early OOM kill since it could isolate too many LRU
++		 * pages concurrently.
++		 */
++		if (isolated >= SWAP_CLUSTER_MAX) {
++			arch_leave_lazy_mmu_mode();
++			pte_unmap_unlock(orig_pte, ptl);
++			reclaim_pages(&page_list);
++			isolated = 0;
++			pte = pte_offset_map_lock(vma->vm_mm, pmd, addr, &ptl);
++			arch_enter_lazy_mmu_mode();
++			orig_pte = pte;
++		}
 +	}
 +
-+	arch_enter_lazy_mmu_mode();
++	arch_leave_lazy_mmu_mode();
 +	pte_unmap_unlock(orig_pte, ptl);
++	reclaim_pages(&page_list);
 +	cond_resched();
 +
 +	return 0;
 +}
 +
-+static void madvise_cold_page_range(struct mmu_gather *tlb,
++static void madvise_pageout_page_range(struct mmu_gather *tlb,
 +			     struct vm_area_struct *vma,
 +			     unsigned long addr, unsigned long end)
 +{
-+	struct mm_walk cold_walk = {
-+		.pmd_entry = madvise_cold_pte_range,
++	struct mm_walk pageout_walk = {
++		.pmd_entry = madvise_pageout_pte_range,
 +		.mm = vma->vm_mm,
 +		.private = tlb,
 +	};
 +
 +	tlb_start_vma(tlb, vma);
-+	walk_page_range(addr, end, &cold_walk);
++	walk_page_range(addr, end, &pageout_walk);
 +	tlb_end_vma(tlb, vma);
 +}
 +
-+static long madvise_cold(struct vm_area_struct *vma,
++static inline bool can_do_pageout(struct vm_area_struct *vma)
++{
++	if (vma_is_anonymous(vma))
++		return true;
++	if (!vma->vm_file)
++		return false;
++	/*
++	 * paging out pagecache only for non-anonymous mappings that correspond
++	 * to the files the calling process could (if tried) open for writing;
++	 * otherwise we'd be including shared non-exclusive mappings, which
++	 * opens a side channel.
++	 */
++	return inode_owner_or_capable(file_inode(vma->vm_file)) ||
++		inode_permission(file_inode(vma->vm_file), MAY_WRITE) == 0;
++}
++
++static long madvise_pageout(struct vm_area_struct *vma,
 +			struct vm_area_struct **prev,
 +			unsigned long start_addr, unsigned long end_addr)
 +{
@@ -305,9 +309,12 @@ index 628022e674a7..7abb8e54bc7a 100644
 +	if (!can_madv_lru_vma(vma))
 +		return -EINVAL;
 +
++	if (!can_do_pageout(vma))
++		return 0;
++
 +	lru_add_drain();
 +	tlb_gather_mmu(&tlb, mm, start_addr, end_addr);
-+	madvise_cold_page_range(&tlb, vma, start_addr, end_addr);
++	madvise_pageout_page_range(&tlb, vma, start_addr, end_addr);
 +	tlb_finish_mmu(&tlb, start_addr, end_addr);
 +
 +	return 0;
@@ -316,134 +323,91 @@ index 628022e674a7..7abb8e54bc7a 100644
  static int madvise_free_pte_range(pmd_t *pmd, unsigned long addr,
  				unsigned long end, struct mm_walk *walk)
  
-@@ -519,7 +692,7 @@ static long madvise_dontneed_free(struct vm_area_struct *vma,
- 				  int behavior)
- {
- 	*prev = vma;
--	if (!can_madv_dontneed_vma(vma))
-+	if (!can_madv_lru_vma(vma))
- 		return -EINVAL;
- 
- 	if (!userfaultfd_remove(vma, start, end)) {
-@@ -541,7 +714,7 @@ static long madvise_dontneed_free(struct vm_area_struct *vma,
- 			 */
- 			return -ENOMEM;
- 		}
--		if (!can_madv_dontneed_vma(vma))
-+		if (!can_madv_lru_vma(vma))
- 			return -EINVAL;
- 		if (end > vma->vm_end) {
- 			/*
-@@ -695,6 +868,8 @@ madvise_vma(struct vm_area_struct *vma, struct vm_area_struct **prev,
- 		return madvise_remove(vma, prev, start, end);
- 	case MADV_WILLNEED:
+@@ -870,6 +1079,8 @@ madvise_vma(struct vm_area_struct *vma, struct vm_area_struct **prev,
  		return madvise_willneed(vma, prev, start, end);
-+	case MADV_COLD:
-+		return madvise_cold(vma, prev, start, end);
+ 	case MADV_COLD:
+ 		return madvise_cold(vma, prev, start, end);
++	case MADV_PAGEOUT:
++		return madvise_pageout(vma, prev, start, end);
  	case MADV_FREE:
  	case MADV_DONTNEED:
  		return madvise_dontneed_free(vma, prev, start, end, behavior);
-@@ -716,6 +891,7 @@ madvise_behavior_valid(int behavior)
- 	case MADV_WILLNEED:
+@@ -892,6 +1103,7 @@ madvise_behavior_valid(int behavior)
  	case MADV_DONTNEED:
  	case MADV_FREE:
-+	case MADV_COLD:
+ 	case MADV_COLD:
++	case MADV_PAGEOUT:
  #ifdef CONFIG_KSM
  	case MADV_MERGEABLE:
  	case MADV_UNMERGEABLE:
-diff --git a/mm/oom_kill.c b/mm/oom_kill.c
-index 6de5c354d6ca..2140a6f8db63 100644
---- a/mm/oom_kill.c
-+++ b/mm/oom_kill.c
-@@ -523,7 +523,7 @@ bool __oom_reap_task_mm(struct mm_struct *mm)
- 	set_bit(MMF_UNSTABLE, &mm->flags);
- 
- 	for (vma = mm->mmap ; vma; vma = vma->vm_next) {
--		if (!can_madv_dontneed_vma(vma))
-+		if (!can_madv_lru_vma(vma))
- 			continue;
- 
- 		/*
-diff --git a/mm/swap.c b/mm/swap.c
-index 607c48229a1d..a91859d061f3 100644
---- a/mm/swap.c
-+++ b/mm/swap.c
-@@ -47,6 +47,7 @@ int page_cluster;
- static DEFINE_PER_CPU(struct pagevec, lru_add_pvec);
- static DEFINE_PER_CPU(struct pagevec, lru_rotate_pvecs);
- static DEFINE_PER_CPU(struct pagevec, lru_deactivate_file_pvecs);
-+static DEFINE_PER_CPU(struct pagevec, lru_deactivate_pvecs);
- static DEFINE_PER_CPU(struct pagevec, lru_lazyfree_pvecs);
- #ifdef CONFIG_SMP
- static DEFINE_PER_CPU(struct pagevec, activate_page_pvecs);
-@@ -538,6 +539,22 @@ static void lru_deactivate_file_fn(struct page *page, struct lruvec *lruvec,
- 	update_page_reclaim_stat(lruvec, file, 0);
+diff --git a/mm/vmscan.c b/mm/vmscan.c
+index 223ce5da08f0..b521770c4314 100644
+--- a/mm/vmscan.c
++++ b/mm/vmscan.c
+@@ -2151,6 +2151,64 @@ static void shrink_active_list(unsigned long nr_to_scan,
+ 			nr_deactivate, nr_rotated, sc->priority, file);
  }
  
-+static void lru_deactivate_fn(struct page *page, struct lruvec *lruvec,
-+			    void *arg)
++unsigned long reclaim_pages(struct list_head *page_list)
 +{
-+	if (PageLRU(page) && PageActive(page) && !PageUnevictable(page)) {
-+		int file = page_is_file_cache(page);
-+		int lru = page_lru_base_type(page);
++	int nid = -1;
++	unsigned long nr_reclaimed = 0;
++	LIST_HEAD(node_page_list);
++	struct reclaim_stat dummy_stat;
++	struct scan_control sc = {
++		.gfp_mask = GFP_KERNEL,
++		.priority = DEF_PRIORITY,
++		.may_writepage = 1,
++		.may_unmap = 1,
++		.may_swap = 1,
++	};
 +
-+		del_page_from_lru_list(page, lruvec, lru + LRU_ACTIVE);
-+		ClearPageActive(page);
-+		ClearPageReferenced(page);
-+		add_page_to_lru_list(page, lruvec, lru);
++	while (!list_empty(page_list)) {
++		struct page *page;
 +
-+		__count_vm_events(PGDEACTIVATE, hpage_nr_pages(page));
-+		update_page_reclaim_stat(lruvec, file, 0);
++		page = lru_to_page(page_list);
++		if (nid == -1) {
++			nid = page_to_nid(page);
++			INIT_LIST_HEAD(&node_page_list);
++		}
++
++		if (nid == page_to_nid(page)) {
++			list_move(&page->lru, &node_page_list);
++			continue;
++		}
++
++		nr_reclaimed += shrink_page_list(&node_page_list,
++						NODE_DATA(nid),
++						&sc, 0,
++						&dummy_stat, false);
++		while (!list_empty(&node_page_list)) {
++			struct page *page = lru_to_page(&node_page_list);
++
++			list_del(&page->lru);
++			putback_lru_page(page);
++		}
++
++		nid = -1;
 +	}
-+}
- 
- static void lru_lazyfree_fn(struct page *page, struct lruvec *lruvec,
- 			    void *arg)
-@@ -590,6 +607,10 @@ void lru_add_drain_cpu(int cpu)
- 	if (pagevec_count(pvec))
- 		pagevec_lru_move_fn(pvec, lru_deactivate_file_fn, NULL);
- 
-+	pvec = &per_cpu(lru_deactivate_pvecs, cpu);
-+	if (pagevec_count(pvec))
-+		pagevec_lru_move_fn(pvec, lru_deactivate_fn, NULL);
 +
- 	pvec = &per_cpu(lru_lazyfree_pvecs, cpu);
- 	if (pagevec_count(pvec))
- 		pagevec_lru_move_fn(pvec, lru_lazyfree_fn, NULL);
-@@ -623,6 +644,26 @@ void deactivate_file_page(struct page *page)
- 	}
- }
- 
-+/*
-+ * deactivate_page - deactivate a page
-+ * @page: page to deactivate
-+ *
-+ * deactivate_page() moves @page to the inactive list if @page was on the active
-+ * list and was not an unevictable page.  This is done to accelerate the reclaim
-+ * of @page.
-+ */
-+void deactivate_page(struct page *page)
-+{
-+	if (PageLRU(page) && PageActive(page) && !PageUnevictable(page)) {
-+		struct pagevec *pvec = &get_cpu_var(lru_deactivate_pvecs);
++	if (!list_empty(&node_page_list)) {
++		nr_reclaimed += shrink_page_list(&node_page_list,
++						NODE_DATA(nid),
++						&sc, 0,
++						&dummy_stat, false);
++		while (!list_empty(&node_page_list)) {
++			struct page *page = lru_to_page(&node_page_list);
 +
-+		get_page(page);
-+		if (!pagevec_add(pvec, page) || PageCompound(page))
-+			pagevec_lru_move_fn(pvec, lru_deactivate_fn, NULL);
-+		put_cpu_var(lru_deactivate_pvecs);
++			list_del(&page->lru);
++			putback_lru_page(page);
++		}
 +	}
++
++	return nr_reclaimed;
 +}
 +
- /**
-  * mark_page_lazyfree - make an anon page lazyfree
-  * @page: page to deactivate
-@@ -687,6 +728,7 @@ void lru_add_drain_all(void)
- 		if (pagevec_count(&per_cpu(lru_add_pvec, cpu)) ||
- 		    pagevec_count(&per_cpu(lru_rotate_pvecs, cpu)) ||
- 		    pagevec_count(&per_cpu(lru_deactivate_file_pvecs, cpu)) ||
-+		    pagevec_count(&per_cpu(lru_deactivate_pvecs, cpu)) ||
- 		    pagevec_count(&per_cpu(lru_lazyfree_pvecs, cpu)) ||
- 		    need_activate_page_drain(cpu)) {
- 			INIT_WORK(work, lru_add_drain_per_cpu);
+ /*
+  * The inactive anon list should be small enough that the VM never has
+  * to do too much work.
 -- 
 2.22.0.410.gd8fdbe21b5-goog
