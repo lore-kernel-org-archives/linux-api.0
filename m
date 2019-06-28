@@ -1,8 +1,8 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 04/11] vfs: Allow fsinfo() to be used to query an fs
- parameter description [ver #15]
-Date: Fri, 28 Jun 2019 16:44:37 +0100
-Message-ID: <156173667706.14042.16039021239826870018.stgit@warthog.procyon.org.uk>
+Subject: [PATCH 06/11] fsinfo: Implement retrieval of LSM parameters with
+ fsinfo() [ver #15]
+Date: Fri, 28 Jun 2019 16:44:54 +0100
+Message-ID: <156173669444.14042.13687450924553725037.stgit@warthog.procyon.org.uk>
 References: <156173661696.14042.17822154531324224780.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -14,466 +14,226 @@ To: viro@zeniv.linux.org.uk
 Cc: dhowells@redhat.com, raven@themaw.net, mszeredi@redhat.com, christian@brauner.io, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Provide fsinfo() attributes that can be used to query a filesystem
-parameter description.  To do this, fsinfo() can be called on an
-fs_context that doesn't yet have a superblock created and attached.
+Implement LSM parameter value retrieval with fsinfo() - akin to parsing
+/proc/mounts. This allows all the LSM parameters to be retrieved in one go
+with:
 
-It can be obtained by doing, for example:
-
-	fd = fsopen("ext4", 0);
-
-	struct fsinfo_param_name name;
 	struct fsinfo_params params = {
-		.at_flags = AT_FSINFO_FROM_FSOPEN,
-		.request = fsinfo_attr_param_name,
-		.Nth	 = 3,
+		.request        = FSINFO_ATTR_LSM_PARAMETER,
 	};
-	fsinfo(fd, NULL, &params, &name, sizeof(name));
 
-to query the 4th parameter name in the name to parameter ID mapping table.
+The format is a blob containing pairs of length-prefixed strings to avoid
+the need to escape commas and suchlike in the values.  This is the same as
+for FSINFO_ATTR_PARAMETER.
 
 Signed-off-by: David Howells <dhowells@redhat.com>
 ---
 
- fs/fsinfo.c                 |   99 +++++++++++++++++++++++++++++++
- include/uapi/linux/fsinfo.h |   58 ++++++++++++++++++
- samples/vfs/Makefile        |    2 +
- samples/vfs/test-fs-query.c |  138 +++++++++++++++++++++++++++++++++++++++++++
- samples/vfs/test-fsinfo.c   |   14 ++++
- 5 files changed, 310 insertions(+), 1 deletion(-)
- create mode 100644 samples/vfs/test-fs-query.c
+ fs/fsinfo.c                 |   21 +++++++++++++++------
+ include/linux/lsm_hooks.h   |   13 +++++++++++++
+ include/linux/security.h    |   11 +++++++++++
+ include/uapi/linux/fsinfo.h |    1 +
+ samples/vfs/test-fsinfo.c   |    6 +++++-
+ security/security.c         |   12 ++++++++++++
+ 6 files changed, 57 insertions(+), 7 deletions(-)
 
 diff --git a/fs/fsinfo.c b/fs/fsinfo.c
-index d419cccbf3db..3218968c5fee 100644
+index 92906a3f4010..45bfb10eb8d9 100644
 --- a/fs/fsinfo.c
 +++ b/fs/fsinfo.c
-@@ -14,6 +14,7 @@
- #include <linux/uaccess.h>
- #include <linux/fsinfo.h>
- #include <linux/fs_context.h>
-+#include <linux/fs_parser.h>
- #include <uapi/linux/mount.h>
- #include "internal.h"
- 
-@@ -228,12 +229,87 @@ static int fsinfo_generic_name_encoding(struct path *path, char *buf)
- 	return sizeof(encoding) - 1;
- }
- 
-+static int fsinfo_generic_param_description(struct file_system_type *f,
-+					    struct fsinfo_kparams *params)
-+{
-+	const struct fs_parameter_description *desc = f->parameters;
-+	const struct fs_parameter_spec *s;
-+	const struct fs_parameter_enum *e;
-+	struct fsinfo_param_description *p = params->buffer;
-+
-+	if (desc && desc->specs) {
-+		for (s = desc->specs; s->name; s++) {}
-+		p->nr_params = s - desc->specs;
-+		if (desc->enums) {
-+			for (e = desc->enums; e->name[0]; e++) {}
-+			p->nr_enum_names = e - desc->enums;
-+		}
-+	}
-+
-+	return sizeof(*p);
-+}
-+
-+static int fsinfo_generic_param_specification(struct file_system_type *f,
-+					      struct fsinfo_kparams *params)
-+{
-+	const struct fs_parameter_description *desc = f->parameters;
-+	const struct fs_parameter_spec *s;
-+	struct fsinfo_param_specification *p = params->buffer;
-+	unsigned int nth = params->Nth;
-+
-+	if (!desc || !desc->specs)
-+		return -ENODATA;
-+
-+	for (s = desc->specs; s->name; s++) {
-+		if (nth == 0)
-+			goto found;
-+		nth--;
-+	}
-+
-+	return -ENODATA;
-+
-+found:
-+	p->type = s->type;
-+	p->flags = s->flags;
-+	p->opt = s->opt;
-+	strlcpy(p->name, s->name, sizeof(p->name));
-+	return sizeof(*p);
-+}
-+
-+static int fsinfo_generic_param_enum(struct file_system_type *f,
-+				     struct fsinfo_kparams *params)
-+{
-+	const struct fs_parameter_description *desc = f->parameters;
-+	const struct fs_parameter_enum *e;
-+	struct fsinfo_param_enum *p = params->buffer;
-+	unsigned int nth = params->Nth;
-+
-+	if (!desc || !desc->enums)
-+		return -ENODATA;
-+
-+	for (e = desc->enums; e->name; e++) {
-+		if (nth == 0)
-+			goto found;
-+		nth--;
-+	}
-+
-+	return -ENODATA;
-+
-+found:
-+	p->opt = e->opt;
-+	strlcpy(p->name, e->name, sizeof(p->name));
-+	return sizeof(*p);
-+}
-+
- /*
-  * Implement some queries generically from stuff in the superblock.
-  */
- int generic_fsinfo(struct path *path, struct fsinfo_kparams *params)
- {
-+	struct file_system_type *fs = path->dentry->d_sb->s_type;
-+
- #define _gen(X, Y) FSINFO_ATTR_##X: return fsinfo_generic_##Y(path, params->buffer)
-+#define _genf(X, Y) FSINFO_ATTR_##X: return fsinfo_generic_##Y(fs, params)
- 
- 	switch (params->request) {
- 	case _gen(STATFS,		statfs);
-@@ -245,6 +321,9 @@ int generic_fsinfo(struct path *path, struct fsinfo_kparams *params)
- 	case _gen(VOLUME_UUID,		volume_uuid);
- 	case _gen(VOLUME_ID,		volume_id);
- 	case _gen(NAME_ENCODING,	name_encoding);
-+	case _genf(PARAM_DESCRIPTION,	param_description);
-+	case _genf(PARAM_SPECIFICATION,	param_specification);
-+	case _genf(PARAM_ENUM,		param_enum);
- 	default:
- 		return -EOPNOTSUPP;
- 	}
-@@ -349,10 +428,11 @@ static int vfs_fsinfo_fd(unsigned int fd, struct fsinfo_kparams *params)
- }
- 
- /*
-- * Allow access to an fs_context object as created by fsopen() or fspick().
-+ * Allow an fs_context object as created by fsopen() or fspick() to be queried.
-  */
- static int vfs_fsinfo_fscontext(int fd, struct fsinfo_kparams *params)
- {
-+	struct file_system_type *fs;
- 	struct fs_context *fc;
- 	struct fd f = fdget(fd);
+@@ -368,7 +368,8 @@ static int vfs_fsinfo(struct path *path, struct fsinfo_kparams *params)
+ 	int (*fsinfo)(struct path *, struct fsinfo_kparams *);
  	int ret;
-@@ -363,10 +443,24 @@ static int vfs_fsinfo_fscontext(int fd, struct fsinfo_kparams *params)
- 	ret = -EINVAL;
- 	if (f.file->f_op != &fscontext_fops)
- 		goto out_f;
-+	fc = f.file->private_data;
-+	fs = fc->fs_type;
-+
- 	ret = -EOPNOTSUPP;
- 	if (fc->ops == &legacy_fs_context_ops)
- 		goto out_f;
  
-+	/* Filesystem parameter query is static information and doesn't need a
-+	 * lock to read it, nor even a dentry or superblock.
-+	 */
+-	if (params->request == FSINFO_ATTR_FSINFO) {
 +	switch (params->request) {
-+	case _genf(PARAM_DESCRIPTION,	param_description);
-+	case _genf(PARAM_SPECIFICATION,	param_specification);
-+	case _genf(PARAM_ENUM,		param_enum);
-+	default:
++	case FSINFO_ATTR_FSINFO: {
+ 		struct fsinfo_fsinfo *info = params->buffer;
+ 
+ 		info->max_attr	= FSINFO_ATTR__NR;
+@@ -376,11 +377,18 @@ static int vfs_fsinfo(struct path *path, struct fsinfo_kparams *params)
+ 		return sizeof(*info);
+ 	}
+ 
+-	fsinfo = dentry->d_sb->s_op->fsinfo;
+-	if (!fsinfo) {
+-		if (!dentry->d_sb->s_op->statfs)
+-			return -EOPNOTSUPP;
+-		fsinfo = generic_fsinfo;
++	case FSINFO_ATTR_LSM_PARAMETERS:
++		fsinfo = security_sb_fsinfo;
 +		break;
-+	}
 +
- 	ret = mutex_lock_interruptible(&fc->uapi_mutex);
- 	if (ret == 0) {
- 		ret = -EBADFD;
-@@ -439,6 +533,9 @@ static const struct fsinfo_attr_info fsinfo_buffer_info[FSINFO_ATTR__NR] = {
- 	FSINFO_STRING		(VOLUME_NAME),
- 	FSINFO_STRING		(NAME_ENCODING),
- 	FSINFO_STRING		(NAME_CODEPAGE),
-+	FSINFO_STRUCT		(PARAM_DESCRIPTION,	param_description),
-+	FSINFO_STRUCT_N		(PARAM_SPECIFICATION,	param_specification),
-+	FSINFO_STRUCT_N		(PARAM_ENUM,		param_enum),
++	default:
++		fsinfo = dentry->d_sb->s_op->fsinfo;
++		if (!fsinfo) {
++			if (!dentry->d_sb->s_op->statfs)
++				return -EOPNOTSUPP;
++			fsinfo = generic_fsinfo;
++		}
++		break;
+ 	}
+ 
+ 	ret = security_sb_statfs(dentry);
+@@ -573,6 +581,7 @@ static const struct fsinfo_attr_info fsinfo_buffer_info[FSINFO_ATTR__NR] = {
+ 	FSINFO_STRUCT_N		(PARAM_SPECIFICATION,	param_specification),
+ 	FSINFO_STRUCT_N		(PARAM_ENUM,		param_enum),
+ 	FSINFO_OPAQUE		(PARAMETERS),
++	FSINFO_OPAQUE		(LSM_PARAMETERS),
  };
  
  /**
+diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
+index 47f58cfb6a19..2474c3f785ca 100644
+--- a/include/linux/lsm_hooks.h
++++ b/include/linux/lsm_hooks.h
+@@ -108,6 +108,13 @@
+  *	mountpoint.
+  *	@dentry is a handle on the superblock for the filesystem.
+  *	Return 0 if permission is granted.
++ * @sb_fsinfo:
++ *	Query LSM information for a filesystem.
++ *	@path is a handle on the superblock for the filesystem.
++ *	@params is the fsinfo parameter and buffer block.
++ *	 - Currently, params->request can only be FSINFO_ATTR_LSM_PARAMETERS.
++ *	Return the length of the data in the buffer (and can return -ENODATA to
++ *      indicate no value under certain circumstances).
+  * @sb_mount:
+  *	Check permission before an object specified by @dev_name is mounted on
+  *	the mount point named by @nd.  For an ordinary mount, @dev_name
+@@ -1492,6 +1499,9 @@ union security_list_options {
+ 	int (*sb_kern_mount)(struct super_block *sb);
+ 	int (*sb_show_options)(struct seq_file *m, struct super_block *sb);
+ 	int (*sb_statfs)(struct dentry *dentry);
++#ifdef CONFIG_FSINFO
++	int (*sb_fsinfo)(struct path *path, struct fsinfo_kparams *params);
++#endif
+ 	int (*sb_mount)(const char *dev_name, const struct path *path,
+ 			const char *type, unsigned long flags, void *data);
+ 	int (*sb_umount)(struct vfsmount *mnt, int flags);
+@@ -1838,6 +1848,9 @@ struct security_hook_heads {
+ 	struct hlist_head sb_kern_mount;
+ 	struct hlist_head sb_show_options;
+ 	struct hlist_head sb_statfs;
++#ifdef CONFIG_FSINFO
++	struct hlist_head sb_fsinfo;
++#endif
+ 	struct hlist_head sb_mount;
+ 	struct hlist_head sb_umount;
+ 	struct hlist_head sb_pivotroot;
+diff --git a/include/linux/security.h b/include/linux/security.h
+index 659071c2e57c..23c8b602c0ab 100644
+--- a/include/linux/security.h
++++ b/include/linux/security.h
+@@ -57,6 +57,7 @@ struct mm_struct;
+ struct fs_context;
+ struct fs_parameter;
+ enum fs_value_type;
++struct fsinfo_kparams;
+ 
+ /* Default (no) options for the capable function */
+ #define CAP_OPT_NONE 0x0
+@@ -237,6 +238,9 @@ int security_sb_remount(struct super_block *sb, void *mnt_opts);
+ int security_sb_kern_mount(struct super_block *sb);
+ int security_sb_show_options(struct seq_file *m, struct super_block *sb);
+ int security_sb_statfs(struct dentry *dentry);
++#ifdef CONFIG_FSINFO
++int security_sb_fsinfo(struct path *path, struct fsinfo_kparams *params);
++#endif
+ int security_sb_mount(const char *dev_name, const struct path *path,
+ 		      const char *type, unsigned long flags, void *data);
+ int security_sb_umount(struct vfsmount *mnt, int flags);
+@@ -575,6 +579,13 @@ static inline int security_sb_statfs(struct dentry *dentry)
+ 	return 0;
+ }
+ 
++#ifdef CONFIG_FSINFO
++static inline int security_sb_fsinfo(struct path *path, struct fsinfo_kparams *params)
++{
++	return 0;
++}
++#endif
++
+ static inline int security_sb_mount(const char *dev_name, const struct path *path,
+ 				    const char *type, unsigned long flags,
+ 				    void *data)
 diff --git a/include/uapi/linux/fsinfo.h b/include/uapi/linux/fsinfo.h
-index cc7e13a9b95f..204ab25ec75d 100644
+index 11c4a74638b0..0d57d37311fc 100644
 --- a/include/uapi/linux/fsinfo.h
 +++ b/include/uapi/linux/fsinfo.h
-@@ -27,6 +27,9 @@ enum fsinfo_attribute {
- 	FSINFO_ATTR_VOLUME_NAME		= 9,	/* Volume name (string) */
- 	FSINFO_ATTR_NAME_ENCODING	= 10,	/* Filename encoding (string) */
- 	FSINFO_ATTR_NAME_CODEPAGE	= 11,	/* Filename codepage (string) */
-+	FSINFO_ATTR_PARAM_DESCRIPTION	= 12,	/* General fs parameter description */
-+	FSINFO_ATTR_PARAM_SPECIFICATION	= 13,	/* Nth parameter specification */
-+	FSINFO_ATTR_PARAM_ENUM		= 14,	/* Nth enum-to-val */
+@@ -31,6 +31,7 @@ enum fsinfo_attribute {
+ 	FSINFO_ATTR_PARAM_SPECIFICATION	= 13,	/* Nth parameter specification */
+ 	FSINFO_ATTR_PARAM_ENUM		= 14,	/* Nth enum-to-val */
+ 	FSINFO_ATTR_PARAMETERS		= 15,	/* Mount parameters (large string) */
++	FSINFO_ATTR_LSM_PARAMETERS	= 16,	/* LSM Mount parameters (large string) */
  	FSINFO_ATTR__NR
  };
  
-@@ -216,4 +219,59 @@ struct fsinfo_fsinfo {
- 	__u32	max_cap;	/* Number of supported capabilities (fsinfo_cap__nr) */
- };
- 
-+/*
-+ * Information struct for fsinfo(fsinfo_attr_param_description).
-+ *
-+ * Query the parameter set for a filesystem.
-+ */
-+struct fsinfo_param_description {
-+	__u32		nr_params;		/* Number of individual parameters */
-+	__u32		nr_enum_names;		/* Number of enum names  */
-+};
-+
-+/*
-+ * Information struct for fsinfo(fsinfo_attr_param_specification).
-+ *
-+ * Query the specification of the Nth filesystem parameter.
-+ */
-+struct fsinfo_param_specification {
-+	__u32		type;		/* enum fsinfo_param_specification_type */
-+	__u32		flags;		/* Qualifiers */
-+	__u32		opt;		/* Corresponding params have same ID here */
-+	char		name[240];
-+};
-+
-+enum fsinfo_param_specification_type {
-+	FSINFO_PARAM_SPEC_NOT_DEFINED		= 0,
-+	FSINFO_PARAM_SPEC_IS_FLAG		= 1,
-+	FSINFO_PARAM_SPEC_IS_BOOL		= 2,
-+	FSINFO_PARAM_SPEC_IS_U32		= 3,
-+	FSINFO_PARAM_SPEC_IS_U32_OCTAL		= 4,
-+	FSINFO_PARAM_SPEC_IS_U32_HEX		= 5,
-+	FSINFO_PARAM_SPEC_IS_S32		= 6,
-+	FSINFO_PARAM_SPEC_IS_U64		= 7,
-+	FSINFO_PARAM_SPEC_IS_ENUM		= 8,
-+	FSINFO_PARAM_SPEC_IS_STRING		= 9,
-+	FSINFO_PARAM_SPEC_IS_BLOB		= 10,
-+	FSINFO_PARAM_SPEC_IS_BLOCKDEV		= 11,
-+	FSINFO_PARAM_SPEC_IS_PATH		= 12,
-+	FSINFO_PARAM_SPEC_IS_FD			= 13,
-+	NR__FSINFO_PARAM_SPEC
-+};
-+
-+#define FSINFO_PARAM_SPEC_VALUE_IS_OPTIONAL	0X00000001
-+#define FSINFO_PARAM_SPEC_PREFIX_NO_IS_NEG	0X00000002
-+#define FSINFO_PARAM_SPEC_EMPTY_STRING_IS_NEG	0X00000004
-+#define FSINFO_PARAM_SPEC_DEPRECATED		0X00000008
-+
-+/*
-+ * Information struct for fsinfo(fsinfo_attr_param_enum).
-+ *
-+ * Query the Nth filesystem enum parameter value name.
-+ */
-+struct fsinfo_param_enum {
-+	__u32		opt;		/* ->opt of the relevant parameter specification */
-+	char		name[252];	/* Name of the enum value */
-+};
-+
- #endif /* _UAPI_LINUX_FSINFO_H */
-diff --git a/samples/vfs/Makefile b/samples/vfs/Makefile
-index d3cc8e9a4fd8..3c542d3b9479 100644
---- a/samples/vfs/Makefile
-+++ b/samples/vfs/Makefile
-@@ -1,6 +1,7 @@
- # List of programs to build
- hostprogs-y := \
- 	test-fsinfo \
-+	test-fs-query \
- 	test-fsmount \
- 	test-statx
- 
-@@ -10,5 +11,6 @@ always := $(hostprogs-y)
- HOSTCFLAGS_test-fsinfo.o += -I$(objtree)/usr/include
- HOSTLDLIBS_test-fsinfo += -lm
- 
-+HOSTCFLAGS_test-fs-query.o += -I$(objtree)/usr/include
- HOSTCFLAGS_test-fsmount.o += -I$(objtree)/usr/include
- HOSTCFLAGS_test-statx.o += -I$(objtree)/usr/include
-diff --git a/samples/vfs/test-fs-query.c b/samples/vfs/test-fs-query.c
-new file mode 100644
-index 000000000000..7572411ddb7e
---- /dev/null
-+++ b/samples/vfs/test-fs-query.c
-@@ -0,0 +1,138 @@
-+/* Test using the fsinfo() system call to query mount parameters.
-+ *
-+ * Copyright (C) 2018 Red Hat, Inc. All Rights Reserved.
-+ * Written by David Howells (dhowells@redhat.com)
-+ *
-+ * This program is free software; you can redistribute it and/or
-+ * modify it under the terms of the GNU General Public Licence
-+ * as published by the Free Software Foundation; either version
-+ * 2 of the Licence, or (at your option) any later version.
-+ */
-+
-+#define _GNU_SOURCE
-+#define _ATFILE_SOURCE
-+#include <stdbool.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <stdint.h>
-+#include <string.h>
-+#include <unistd.h>
-+#include <ctype.h>
-+#include <errno.h>
-+#include <time.h>
-+#include <math.h>
-+#include <sys/syscall.h>
-+#include <linux/fsinfo.h>
-+#include <linux/fcntl.h>
-+#include <sys/stat.h>
-+
-+#ifndef __NR_fsopen
-+#define __NR_fsopen -1
-+#endif
-+#ifndef __NR_fsinfo
-+#define __NR_fsinfo -1
-+#endif
-+
-+static int fsopen(const char *fs_name, unsigned int flags)
-+{
-+	return syscall(__NR_fsopen, fs_name, flags);
-+}
-+
-+static ssize_t fsinfo(int dfd, const char *filename, struct fsinfo_params *params,
-+		      void *buffer, size_t buf_size)
-+{
-+	return syscall(__NR_fsinfo, dfd, filename, params, buffer, buf_size);
-+}
-+
-+static const char *param_types[NR__FSINFO_PARAM_SPEC] = {
-+	[FSINFO_PARAM_SPEC_NOT_DEFINED]		= "?undef",
-+	[FSINFO_PARAM_SPEC_IS_FLAG]		= "flag",
-+	[FSINFO_PARAM_SPEC_IS_BOOL]		= "bool",
-+	[FSINFO_PARAM_SPEC_IS_U32]		= "u32",
-+	[FSINFO_PARAM_SPEC_IS_U32_OCTAL]	= "octal",
-+	[FSINFO_PARAM_SPEC_IS_U32_HEX]		= "hex",
-+	[FSINFO_PARAM_SPEC_IS_S32]		= "s32",
-+	[FSINFO_PARAM_SPEC_IS_U64]		= "u64",
-+	[FSINFO_PARAM_SPEC_IS_ENUM]		= "enum",
-+	[FSINFO_PARAM_SPEC_IS_STRING]		= "string",
-+	[FSINFO_PARAM_SPEC_IS_BLOB]		= "binary",
-+	[FSINFO_PARAM_SPEC_IS_BLOCKDEV]		= "blockdev",
-+	[FSINFO_PARAM_SPEC_IS_PATH]		= "path",
-+	[FSINFO_PARAM_SPEC_IS_FD]		= "fd",
-+};
-+
-+/*
-+ *
-+ */
-+int main(int argc, char **argv)
-+{
-+	struct fsinfo_param_description desc;
-+	struct fsinfo_param_specification spec;
-+	struct fsinfo_param_enum enum_name;
-+
-+	struct fsinfo_params params = {
-+		.at_flags = AT_FSINFO_FROM_FSOPEN,
-+	};
-+	int fd;
-+
-+	if (argc != 2) {
-+		printf("Format: test-fs-query <fs_name>\n");
-+		exit(2);
-+	}
-+
-+	fd = fsopen(argv[1], 0);
-+	if (fd == -1) {
-+		perror(argv[1]);
-+		exit(1);
-+	}
-+
-+	params.request = FSINFO_ATTR_PARAM_DESCRIPTION;
-+	if (fsinfo(fd, NULL, &params, &desc, sizeof(desc)) == -1) {
-+		perror("fsinfo/desc");
-+		exit(1);
-+	}
-+
-+	printf("Filesystem %s has %u parameters\n", argv[1], desc.nr_params);
-+
-+	params.request = FSINFO_ATTR_PARAM_SPECIFICATION;
-+	for (params.Nth = 0; params.Nth < desc.nr_params; params.Nth++) {
-+		char type[32];
-+
-+		if (fsinfo(fd, NULL, &params, &spec, sizeof(spec)) == -1) {
-+			if (errno == ENODATA)
-+				break;
-+			perror("fsinfo/spec");
-+			exit(1);
-+		}
-+
-+		if (spec.type < NR__FSINFO_PARAM_SPEC)
-+			strcpy(type, param_types[spec.type]);
-+		else
-+			sprintf(type, "?%u", spec.type);
-+
-+		printf("- PARAM[%3u] %-20s %3u %s%s%s%s%s\n",
-+		       params.Nth,
-+		       spec.name,
-+		       spec.opt,
-+		       type,
-+		       spec.flags & FSINFO_PARAM_SPEC_VALUE_IS_OPTIONAL ? ",opt" : "",
-+		       spec.flags & FSINFO_PARAM_SPEC_PREFIX_NO_IS_NEG ? ",neg-no" : "",
-+		       spec.flags & FSINFO_PARAM_SPEC_EMPTY_STRING_IS_NEG ? ",neg-empty" : "",
-+		       spec.flags & FSINFO_PARAM_SPEC_DEPRECATED ? ",dep" : "");
-+	}
-+
-+	printf("Filesystem has %u enumeration values\n", desc.nr_enum_names);
-+
-+	params.request = FSINFO_ATTR_PARAM_ENUM;
-+	for (params.Nth = 0; params.Nth < desc.nr_enum_names; params.Nth++) {
-+		if (fsinfo(fd, NULL, &params, &enum_name, sizeof(enum_name)) == -1) {
-+			if (errno == ENODATA)
-+				break;
-+			perror("fsinfo/enum");
-+			exit(1);
-+		}
-+		printf("- ENUM[%3u] %3u: %s\n",
-+		       params.Nth, enum_name.opt, enum_name.name);
-+	}
-+	return 0;
-+}
 diff --git a/samples/vfs/test-fsinfo.c b/samples/vfs/test-fsinfo.c
-index 8cce1986df7e..3c6ea3a5c157 100644
+index 8cf5b02e333a..f865bc1af16f 100644
 --- a/samples/vfs/test-fsinfo.c
 +++ b/samples/vfs/test-fsinfo.c
-@@ -78,6 +78,9 @@ static const struct fsinfo_attr_info fsinfo_buffer_info[FSINFO_ATTR__NR] = {
- 	FSINFO_STRING		(VOLUME_NAME,		volume_name),
- 	FSINFO_STRING		(NAME_ENCODING,		name_encoding),
- 	FSINFO_STRING		(NAME_CODEPAGE,		name_codepage),
-+	FSINFO_STRUCT		(PARAM_DESCRIPTION,	param_description),
-+	FSINFO_STRUCT_N		(PARAM_SPECIFICATION,	param_specification),
-+	FSINFO_STRUCT_N		(PARAM_ENUM,		param_enum),
+@@ -82,6 +82,7 @@ static const struct fsinfo_attr_info fsinfo_buffer_info[FSINFO_ATTR__NR] = {
+ 	FSINFO_STRUCT_N		(PARAM_SPECIFICATION,	param_specification),
+ 	FSINFO_STRUCT_N		(PARAM_ENUM,		param_enum),
+ 	FSINFO_OVERLARGE	(PARAMETERS,		-),
++	FSINFO_OVERLARGE	(LSM_PARAMETERS,	-),
  };
  
  #define FSINFO_NAME(X,Y) [FSINFO_ATTR_##X] = #Y
-@@ -94,6 +97,9 @@ static const char *fsinfo_attr_names[FSINFO_ATTR__NR] = {
- 	FSINFO_NAME		(VOLUME_NAME,		volume_name),
- 	FSINFO_NAME		(NAME_ENCODING,		name_encoding),
- 	FSINFO_NAME		(NAME_CODEPAGE,		name_codepage),
-+	FSINFO_NAME		(PARAM_DESCRIPTION,	param_description),
-+	FSINFO_NAME		(PARAM_SPECIFICATION,	param_specification),
-+	FSINFO_NAME		(PARAM_ENUM,		param_enum),
+@@ -102,6 +103,7 @@ static const char *fsinfo_attr_names[FSINFO_ATTR__NR] = {
+ 	FSINFO_NAME		(PARAM_SPECIFICATION,	param_specification),
+ 	FSINFO_NAME		(PARAM_ENUM,		param_enum),
+ 	FSINFO_NAME		(PARAMETERS,		parameters),
++	FSINFO_NAME		(LSM_PARAMETERS,	lsm_parameters),
  };
  
  union reply {
-@@ -514,6 +520,14 @@ int main(int argc, char **argv)
- 	}
+@@ -459,6 +461,7 @@ static int try_one(const char *file, struct fsinfo_params *params, bool raw)
  
- 	for (attr = 0; attr <= FSINFO_ATTR__NR; attr++) {
-+		switch (attr) {
-+		case FSINFO_ATTR_PARAM_DESCRIPTION:
-+		case FSINFO_ATTR_PARAM_SPECIFICATION:
-+		case FSINFO_ATTR_PARAM_ENUM:
-+			/* See test-fs-query.c instead */
-+			continue;
-+		}
+ 	switch (params->request) {
+ 	case FSINFO_ATTR_PARAMETERS:
++	case FSINFO_ATTR_LSM_PARAMETERS:
+ 		if (ret == 0)
+ 			return 0;
+ 	}
+@@ -505,7 +508,8 @@ static int try_one(const char *file, struct fsinfo_params *params, bool raw)
+ 		return 0;
+ 
+ 	case __FSINFO_OVER:
+-		if (params->request == FSINFO_ATTR_PARAMETERS)
++		if (params->request == FSINFO_ATTR_PARAMETERS ||
++		    params->request == FSINFO_ATTR_LSM_PARAMETERS)
+ 			dump_params(about, r, ret);
+ 		return 0;
+ 
+diff --git a/security/security.c b/security/security.c
+index 613a5c00e602..3af886e8fced 100644
+--- a/security/security.c
++++ b/security/security.c
+@@ -25,6 +25,7 @@
+ #include <linux/ima.h>
+ #include <linux/evm.h>
+ #include <linux/fsnotify.h>
++#include <linux/fsinfo.h>
+ #include <linux/mman.h>
+ #include <linux/mount.h>
+ #include <linux/personality.h>
+@@ -821,6 +822,17 @@ int security_sb_statfs(struct dentry *dentry)
+ 	return call_int_hook(sb_statfs, 0, dentry);
+ }
+ 
++#ifdef CONFIG_FSINFO
++int security_sb_fsinfo(struct path *path, struct fsinfo_kparams *params)
++{
++	int ret = -ENODATA;
 +
- 		Nth = 0;
- 		do {
- 			Mth = 0;
++	if (params->request == FSINFO_ATTR_LSM_PARAMETERS)
++		ret = 0; /* This is cumulative amongst all LSMs */
++	return call_int_hook(sb_fsinfo, ret, path, params);
++}
++#endif
++
+ int security_sb_mount(const char *dev_name, const struct path *path,
+                        const char *type, unsigned long flags, void *data)
+ {
