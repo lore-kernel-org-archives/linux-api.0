@@ -1,42 +1,76 @@
-From: Matthew Garrett <mjg59@google.com>
-Subject: Re: [PATCH V33 24/30] bpf: Restrict bpf when kernel lockdown is in
- confidentiality mode
-Date: Fri, 28 Jun 2019 11:47:12 -0700
-Message-ID: <CACdnJuuy7-tkj86njAqtdJ3dUMu-2T8a2y8DC3fMKBK0z9J6ag@mail.gmail.com>
-References: <20190621011941.186255-1-matthewgarrett@google.com>
- <20190621011941.186255-25-matthewgarrett@google.com> <CALCETrVUwQP7roLnW6kFG80Cc5U6X_T6AW+BTAftLccYGp8+Ow@mail.gmail.com>
- <alpine.LRH.2.21.1906270621080.28132@namei.org> <6E53376F-01BB-4795-BC02-24F9CAE00001@amacapital.net>
- <bce70c8b-9efd-6362-d536-cfbbcf70b0b7@tycho.nsa.gov> <CALCETrXwt43w6rQY6zt0J_3HOaad=+E5PushJNdSOZDBuaYV+Q@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+From: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: [RFC PATCH 1/3] mm: Introduce VM_IBT for CET legacy code bitmap
+Date: Fri, 28 Jun 2019 12:41:56 -0700
+Message-ID: <20190628194158.2431-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrXwt43w6rQY6zt0J_3HOaad=+E5PushJNdSOZDBuaYV+Q@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Stephen Smalley <sds@tycho.nsa.gov>, James Morris <jmorris@namei.org>, linux-security@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, David Howells <dhowells@redhat.com>, Alexei Starovoitov <alexei.starovoitov@gmail.com>, Network Development <netdev@vger.kernel.org>, Chun-Yi Lee <jlee@suse.com>, Daniel Borkmann <daniel@iogearbox.net>, LSM List <linux-security-module@vger.kernel.org>
+To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
+Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jun 27, 2019 at 4:27 PM Andy Lutomirski <luto@kernel.org> wrote:
-> They're really quite similar in my mind.  Certainly some things in the
-> "integrity" category give absolutely trivial control over the kernel
-> (e.g. modules) while others make it quite challenging (ioperm), but
-> the end result is very similar.  And quite a few "confidentiality"
-> things genuinely do allow all kernel memory to be read.
->
-> I agree that finer-grained distinctions could be useful. My concern is
-> that it's a tradeoff, and the other end of the tradeoff is an ABI
-> stability issue.  If someone decides down the road that some feature
-> that is currently "integrity" can be split into a narrow "integrity"
-> feature and a "confidentiality" feature then, if the user policy knows
-> about the individual features, there's a risk of breaking people's
-> systems.  If we keep the fine-grained control, do we have a clear
-> compatibility story?
+The previous discussion of the IBT legacy code bitmap is here:
 
-My preference right now is to retain the fine-grained aspect of things
-in the internal API, simply because it'll be more annoying to add it
-back later if we want to. I don't want to expose it via the Lockdown
-user facing API for the reasons you've described, but it's not
-impossible that another LSM would find a way to do this reasonably.
-Does it seem reasonable to punt this discussion out to the point where
-another LSM tries to do something with this information, based on the
-implementation they're attempting?
+    https://lkml.org/lkml/2019/6/6/1032
+
+When CET Indirect Branch Tracking (IBT) is enabled, the processor expects
+every branch target is an ENDBR instruction, or the target's address is
+marked as legacy in the legacy code bitmap.  The bitmap covers the whole
+user-mode address space (TASK_SIZE_MAX for 64-bit, TASK_SIZE for IA32),
+and each bit represents one page of linear address range.
+
+This patch introduces VM_IBT for the bitmap.
+
+Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+---
+ fs/proc/task_mmu.c | 3 +++
+ include/linux/mm.h | 8 ++++++++
+ 2 files changed, 11 insertions(+)
+
+diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
+index 66725e262a77..d707390285d3 100644
+--- a/fs/proc/task_mmu.c
++++ b/fs/proc/task_mmu.c
+@@ -663,6 +663,9 @@ static void show_smap_vma_flags(struct seq_file *m, struct vm_area_struct *vma)
+ #endif /* CONFIG_ARCH_HAS_PKEYS */
+ #ifdef CONFIG_X86_INTEL_SHADOW_STACK_USER
+ 		[ilog2(VM_SHSTK)]	= "ss",
++#endif
++#ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
++		[ilog2(VM_IBT)]		= "bt",
+ #endif
+ 	};
+ 	size_t i;
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index 921bae5fa7ab..a8da5bdfd7c9 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -299,12 +299,14 @@ extern unsigned int kobjsize(const void *objp);
+ #define VM_HIGH_ARCH_BIT_3	35	/* bit only usable on 64-bit architectures */
+ #define VM_HIGH_ARCH_BIT_4	36	/* bit only usable on 64-bit architectures */
+ #define VM_HIGH_ARCH_BIT_5	37	/* bit only usable on 64-bit architectures */
++#define VM_HIGH_ARCH_BIT_6	38	/* bit only usable on 64-bit architectures */
+ #define VM_HIGH_ARCH_0	BIT(VM_HIGH_ARCH_BIT_0)
+ #define VM_HIGH_ARCH_1	BIT(VM_HIGH_ARCH_BIT_1)
+ #define VM_HIGH_ARCH_2	BIT(VM_HIGH_ARCH_BIT_2)
+ #define VM_HIGH_ARCH_3	BIT(VM_HIGH_ARCH_BIT_3)
+ #define VM_HIGH_ARCH_4	BIT(VM_HIGH_ARCH_BIT_4)
+ #define VM_HIGH_ARCH_5	BIT(VM_HIGH_ARCH_BIT_5)
++#define VM_HIGH_ARCH_6	BIT(VM_HIGH_ARCH_BIT_6)
+ #endif /* CONFIG_ARCH_USES_HIGH_VMA_FLAGS */
+ 
+ #ifdef CONFIG_ARCH_HAS_PKEYS
+@@ -348,6 +350,12 @@ extern unsigned int kobjsize(const void *objp);
+ # define VM_SHSTK	VM_NONE
+ #endif
+ 
++#ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
++# define VM_IBT		VM_HIGH_ARCH_6
++#else
++# define VM_IBT		VM_NONE
++#endif
++
+ #ifndef VM_GROWSUP
+ # define VM_GROWSUP	VM_NONE
+ #endif
+-- 
+2.17.1
