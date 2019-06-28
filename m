@@ -1,97 +1,67 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 11/11] fsinfo: proc - add sb operation fsinfo() [ver #15]
-Date: Fri, 28 Jun 2019 16:45:35 +0100
-Message-ID: <156173673559.14042.17529988400865163194.stgit@warthog.procyon.org.uk>
-References: <156173661696.14042.17822154531324224780.stgit@warthog.procyon.org.uk>
+Subject: [PATCH 0/6] fsinfo: Add mount topology query [ver #15]
+Date: Fri, 28 Jun 2019 16:46:58 +0100
+Message-ID: <156173681842.14728.9331700785061885270.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <156173661696.14042.17822154531324224780.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
 To: viro@zeniv.linux.org.uk
 Cc: dhowells@redhat.com, raven@themaw.net, mszeredi@redhat.com, christian@brauner.io, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Ian Kent <raven@themaw.net>
 
-The new fsinfo() system call adds a new super block operation
-->fsinfo() which is used by file systems to provide file
-system specific information for fsinfo() requests.
+Here's a set of patches that builds upon the previously posted fsinfo()
+interface to:
 
-The fsinfo() request FSINFO_ATTR_PARAMETERS provides the same
-function as sb operation ->show_options() so it needs to be
-implemented by any file system that provides ->show_options()
-as a minimum.
+ (a) Make it possible to invoke a query based on a mount ID rather than a
+     path.  This is done by setting AT_FSINFO_MOUNTID_PATH and pointing the
+     pathname argument to the mount ID as a string.
 
-Also add a simple FSINFO_ATTR_CAPABILITIES implementation.
+     A pathname is not a unique handle into the mount topology tree.  It's
+     possible for there to be multiple overlying mounts at any particular
+     point in the tree, and only the topmost can be directly accessed (the
+     bottom might be inferrable from the parent).
 
-Signed-off-by: Ian Kent <raven@themaw.net>
-Signed-off-by: David Howells <dhowells@redhat.com>
----
+     Usage of the mount ID permits all mount objects to be queried.  It
+     would be possible to restrict the query based on the method used to
+     address the object, though I haven't done this for now.
 
- fs/proc/inode.c |   37 +++++++++++++++++++++++++++++++++++++
- 1 file changed, 37 insertions(+)
+ (b) Provide a change ID for each mount object that is incremented each
+     time a change is applied to that mount object.
 
-diff --git a/fs/proc/inode.c b/fs/proc/inode.c
-index 5f8d215b3fd0..28c287aff6aa 100644
---- a/fs/proc/inode.c
-+++ b/fs/proc/inode.c
-@@ -24,6 +24,7 @@
- #include <linux/seq_file.h>
- #include <linux/slab.h>
- #include <linux/mount.h>
-+#include <linux/fsinfo.h>
- 
- #include <linux/uaccess.h>
- 
-@@ -115,6 +116,39 @@ static int proc_show_options(struct seq_file *seq, struct dentry *root)
- 	return 0;
- }
- 
-+#ifdef CONFIG_FSINFO
-+/*
-+ * Get filesystem information.
-+ */
-+static int proc_fsinfo(struct path *path, struct fsinfo_kparams *params)
-+{
-+	struct super_block *sb = path->dentry->d_sb;
-+	struct pid_namespace *pid = sb->s_fs_info;
-+	struct fsinfo_capabilities *caps;
-+
-+	switch (params->request) {
-+	case FSINFO_ATTR_CAPABILITIES:
-+		caps = params->buffer;
-+		fsinfo_set_cap(caps, FSINFO_CAP_IS_KERNEL_FS);
-+		fsinfo_set_cap(caps, FSINFO_CAP_NOT_PERSISTENT);
-+		return sizeof(*caps);
-+
-+	case FSINFO_ATTR_PARAMETERS:
-+		fsinfo_note_sb_params(params, sb->s_flags);
-+		if (!gid_eq(pid->pid_gid, GLOBAL_ROOT_GID))
-+			fsinfo_note_paramf(params, "gid", "%u",
-+				from_kgid_munged(&init_user_ns, pid->pid_gid));
-+		if (pid->hide_pid != HIDEPID_OFF)
-+			fsinfo_note_paramf(params, "hidepid",
-+					  "%u", pid->hide_pid);
-+		return params->usage;
-+
-+	default:
-+		return generic_fsinfo(path, params);
-+	}
-+}
-+#endif /* CONFIG_FSINFO */
-+
- const struct super_operations proc_sops = {
- 	.alloc_inode	= proc_alloc_inode,
- 	.free_inode	= proc_free_inode,
-@@ -122,6 +156,9 @@ const struct super_operations proc_sops = {
- 	.evict_inode	= proc_evict_inode,
- 	.statfs		= simple_statfs,
- 	.show_options	= proc_show_options,
-+#ifdef CONFIG_FSINFO
-+	.fsinfo		= proc_fsinfo,
-+#endif
- };
- 
- enum {BIAS = -1U<<31};
+ (c) Allow the mount topology to be queried.  The mount topology
+     information returned is sprinkled with change IDs to make it easier to
+     check for changes during multiple queries.  A future notification
+     mechanism will also help with this.
+
+ (d) Provide a system-unique superblock identifier that can be used to
+     check to see if a mount object references the same superblock as it
+     used to or as another mount object without relying on device numbers -
+     which might not be seen to change over an unmount-mount combo.
+
+A sample is also provided that allows the mount topology tree at a point to
+be listed.
+
+The patches can be found here also:
+
+	https://git.kernel.org/pub/scm/linux/kernel/git/dhowells/linux-fs.git
+
+on branch:
+
+	fsinfo-mount
+
+[!] Note that this depends on the fsinfo branch.
+
+
+===================
+SIGNIFICANT CHANGES
+===================
+
+ ver #15:
+
+ (*) Split from the fsinfo-core branch.
+
+ (*) Rename notify_counter to change_counter as there's no notification
+     stuff here (that's in separate branches).
