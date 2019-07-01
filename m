@@ -1,56 +1,35 @@
-From: Randy Dunlap <rdunlap@infradead.org>
-Subject: Re: [PATCH 2/6] Adjust watch_queue documentation to mention mount and
- superblock watches. [ver #5]
-Date: Mon, 1 Jul 2019 07:52:02 -0700
-Message-ID: <90d07cf5-5ba4-1fb6-72b3-f120423a7726@infradead.org>
-References: <7a288c2c-11a1-87df-9550-b247d6ce3010@infradead.org>
- <156173701358.15650.8735203424342507015.stgit@warthog.procyon.org.uk>
- <156173703546.15650.14319137940607993268.stgit@warthog.procyon.org.uk>
- <8212.1561971170@warthog.procyon.org.uk>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH v3 2/2] arch: wire-up clone3() syscall
+Date: Mon, 1 Jul 2019 17:14:51 +0200
+Message-ID: <CAK8P3a0f_=q88JB=t7fbmweAbZ2E2_uCMt+2JoBYx3od_M6fHQ@mail.gmail.com>
+References: <20190604160944.4058-1-christian@brauner.io> <20190604160944.4058-2-christian@brauner.io>
+ <20190620184451.GA28543@roeck-us.net> <20190620221003.ciuov5fzqxrcaykp@brauner.io>
+ <CAK8P3a2iV7=HkHBVL_puvCQN0DmdKEnVs2aG9MQV_8Q58JSfTA@mail.gmail.com>
+ <20190621111839.v5yqlws6iw7mx4aa@brauner.io> <CAK8P3a0T1=eg5ONbMFhHi=vmk1K5uogZ+5=wpsXvjVDzn6vS=Q@mail.gmail.com>
+ <20190621153012.fxwhx25mzmzueqh7@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <8212.1561971170@warthog.procyon.org.uk>
-Content-Language: en-US
+In-Reply-To: <20190621153012.fxwhx25mzmzueqh7@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: viro@zeniv.linux.org.uk, Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Christian Brauner <christian@brauner.io>
+Cc: Guenter Roeck <linux@roeck-us.net>, Al Viro <viro@zeniv.linux.org.uk>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Jann Horn <jannh@google.com>, Kees Cook <keescook@chromium.org>, Florian Weimer <fweimer@redhat.com>, Oleg Nesterov <oleg@redhat.com>, David Howells <dhowells@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Ley Foon Tan <lftan@altera.com>, "moderated list:NIOS2 ARCHITECTURE" <nios2-dev@lists.rocketboards.org>
 List-Id: linux-api@vger.kernel.org
 
-On 7/1/19 1:52 AM, David Howells wrote:
-> Randy Dunlap <rdunlap@infradead.org> wrote:
-> 
->> I'm having a little trouble parsing that sentence.
->> Could you clarify it or maybe rewrite/modify it?
->> Thanks.
-> 
-> How about:
-> 
->   * ``info_filter`` and ``info_mask`` act as a filter on the info field of the
->     notification record.  The notification is only written into the buffer if::
-> 
-> 	(watch.info & info_mask) == info_filter
-> 
->     This could be used, for example, to ignore events that are not exactly on
->     the watched point in a mount tree by specifying NOTIFY_MOUNT_IN_SUBTREE
->     must not be set, e.g.::
-> 
-> 	{
-> 		.type = WATCH_TYPE_MOUNT_NOTIFY,
-> 		.info_filter = 0,
-> 		.info_mask = NOTIFY_MOUNT_IN_SUBTREE,
-> 		.subtype_filter = ...,
-> 	}
-> 
->     as an event would be only permissible with this filter if::
-> 
->     	(watch.info & NOTIFY_MOUNT_IN_SUBTREE) == 0
-> 
-> David
-> 
+On Fri, Jun 21, 2019 at 5:30 PM Christian Brauner <christian@brauner.io> wrote:
+> On Fri, Jun 21, 2019 at 04:20:15PM +0200, Arnd Bergmann wrote:
+> > On Fri, Jun 21, 2019 at 1:18 PM Christian Brauner <christian@brauner.io> wrote:
+> Hm, if you believe that this is fine and want to "vouch" for it by
+> whipping up a patch that replaces the wiring up done in [1] I'm happy to
+> take it. :) Otherwise I'd feel more comfortable not adding all arches at
+> once.
+>
+> [1]: https://git.kernel.org/pub/scm/linux/kernel/git/brauner/linux.git/log/?h=clone
 
-Yes, better.  Thanks.
+Sorry for my late reply. I had actually looked at the implementations
+in a little
+more detail and I think you are right that adding these are better
+left to the arch
+maintainers in case of clone3.
 
--- 
-~Randy
+      Arnd
