@@ -1,8 +1,8 @@
 From: Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH v6 04/17] fs: uapi: define verity bit for
- FS_IOC_GETFLAGS
-Date: Mon,  1 Jul 2019 08:32:24 -0700
-Message-ID: <20190701153237.1777-5-ebiggers@kernel.org>
+Subject: [PATCH v6 08/17] fs-verity: add the hook for file
+ ->setattr()
+Date: Mon,  1 Jul 2019 08:32:28 -0700
+Message-ID: <20190701153237.1777-9-ebiggers@kernel.org>
 References: <20190701153237.1777-1-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,32 +23,73 @@ List-Id: linux-api@vger.kernel.org
 
 From: Eric Biggers <ebiggers@google.com>
 
-Add FS_VERITY_FL to the flags for FS_IOC_GETFLAGS, so that applications
-can easily determine whether a file is a verity file at the same time as
-they're checking other file flags.  This flag will be gettable only;
-FS_IOC_SETFLAGS won't allow setting it, since an ioctl must be used
-instead to provide more parameters.
-
-This flag matches the on-disk bit that was already allocated for ext4.
+Add a function fsverity_prepare_setattr() which filesystems that support
+fs-verity must call to deny truncates of verity files.
 
 Reviewed-by: Theodore Ts'o <tytso@mit.edu>
 Reviewed-by: Jaegeuk Kim <jaegeuk@kernel.org>
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
- include/uapi/linux/fs.h | 1 +
- 1 file changed, 1 insertion(+)
+ fs/verity/open.c         | 21 +++++++++++++++++++++
+ include/linux/fsverity.h |  7 +++++++
+ 2 files changed, 28 insertions(+)
 
-diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-index 59c71fa8c553..df261b7e0587 100644
---- a/include/uapi/linux/fs.h
-+++ b/include/uapi/linux/fs.h
-@@ -306,6 +306,7 @@ struct fscrypt_key {
- #define FS_TOPDIR_FL			0x00020000 /* Top of directory hierarchies*/
- #define FS_HUGE_FILE_FL			0x00040000 /* Reserved for ext4 */
- #define FS_EXTENT_FL			0x00080000 /* Extents */
-+#define FS_VERITY_FL			0x00100000 /* Verity protected inode */
- #define FS_EA_INODE_FL			0x00200000 /* Inode used for large EA */
- #define FS_EOFBLOCKS_FL			0x00400000 /* Reserved for ext4 */
- #define FS_NOCOW_FL			0x00800000 /* Do not cow file */
+diff --git a/fs/verity/open.c b/fs/verity/open.c
+index 8013f77f907e..2cb2fe8082bf 100644
+--- a/fs/verity/open.c
++++ b/fs/verity/open.c
+@@ -295,6 +295,27 @@ int fsverity_file_open(struct inode *inode, struct file *filp)
+ }
+ EXPORT_SYMBOL_GPL(fsverity_file_open);
+ 
++/**
++ * fsverity_prepare_setattr() - prepare to change a verity inode's attributes
++ * @dentry: dentry through which the inode is being changed
++ * @attr: attributes to change
++ *
++ * Verity files are immutable, so deny truncates.  This isn't covered by the
++ * open-time check because sys_truncate() takes a path, not a file descriptor.
++ *
++ * Return: 0 on success, -errno on failure
++ */
++int fsverity_prepare_setattr(struct dentry *dentry, struct iattr *attr)
++{
++	if (IS_VERITY(d_inode(dentry)) && (attr->ia_valid & ATTR_SIZE)) {
++		pr_debug("Denying truncate of verity file (ino %lu)\n",
++			 d_inode(dentry)->i_ino);
++		return -EPERM;
++	}
++	return 0;
++}
++EXPORT_SYMBOL_GPL(fsverity_prepare_setattr);
++
+ /**
+  * fsverity_cleanup_inode() - free the inode's verity info, if present
+  *
+diff --git a/include/linux/fsverity.h b/include/linux/fsverity.h
+index 09b04dab6452..cbd0f84e1620 100644
+--- a/include/linux/fsverity.h
++++ b/include/linux/fsverity.h
+@@ -46,6 +46,7 @@ static inline struct fsverity_info *fsverity_get_info(const struct inode *inode)
+ /* open.c */
+ 
+ extern int fsverity_file_open(struct inode *inode, struct file *filp);
++extern int fsverity_prepare_setattr(struct dentry *dentry, struct iattr *attr);
+ extern void fsverity_cleanup_inode(struct inode *inode);
+ 
+ #else /* !CONFIG_FS_VERITY */
+@@ -62,6 +63,12 @@ static inline int fsverity_file_open(struct inode *inode, struct file *filp)
+ 	return IS_VERITY(inode) ? -EOPNOTSUPP : 0;
+ }
+ 
++static inline int fsverity_prepare_setattr(struct dentry *dentry,
++					   struct iattr *attr)
++{
++	return IS_VERITY(d_inode(dentry)) ? -EOPNOTSUPP : 0;
++}
++
+ static inline void fsverity_cleanup_inode(struct inode *inode)
+ {
+ }
 -- 
 2.22.0
