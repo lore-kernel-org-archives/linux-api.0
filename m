@@ -1,350 +1,486 @@
-From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v5 2/3] fpga: dfl: fme: add thermal management support
-Date: Mon,  1 Jul 2019 14:37:06 +0800
-Message-ID: <1561963027-4213-3-git-send-email-hao.wu@intel.com>
-References: <1561963027-4213-1-git-send-email-hao.wu@intel.com>
+From: Minchan Kim <minchan@kernel.org>
+Subject: Re: [PATCH v3 1/5] mm: introduce MADV_COLD
+Date: Mon, 1 Jul 2019 16:35:00 +0900
+Message-ID: <20190701073500.GA136163@google.com>
+References: <20190627115405.255259-1-minchan@kernel.org>
+ <20190627115405.255259-2-minchan@kernel.org>
+ <343599f9-3d99-b74f-1732-368e584fa5ef@intel.com>
+ <20190627140203.GB5303@dhcp22.suse.cz>
+ <d9341eb3-08eb-3c2b-9786-00b8a4f59953@intel.com>
+ <20190627145302.GC5303@dhcp22.suse.cz>
+ <20190627235618.GC33052@google.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1561963027-4213-1-git-send-email-hao.wu@intel.com>
+Content-Disposition: inline
+In-Reply-To: <20190627235618.GC33052@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, linux-hwmon@vger.kernel.org, jdelvare@suse.com, linux@roeck-us.net, atull@kernel.org, gregkh@linuxfoundation.org, Wu Hao <hao.wu@intel.com>, Luwei Kang <luwei.kang@intel.com>, Russ Weight <russell.h.weight@intel.com>, Xu Yilun <yilun.xu@intel.com>
+To: Michal Hocko <mhocko@kernel.org>
+Cc: Dave Hansen <dave.hansen@intel.com>, Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, oleksandr@redhat.com, hdanton@sina.com, lizeb@google.com, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds support to thermal management private feature for DFL
-FPGA Management Engine (FME). This private feature driver registers
-a hwmon for thermal/temperature monitoring (hwmon temp1_input).
-If hardware automatic throttling is supported by this hardware, then
-driver also exposes sysfs interfaces under hwmon for thresholds
-(temp1_max/ crit/ emergency), threshold alarms (temp1_max_alarm/
-temp1_crit_alarm) and throttling policy (temp1_max_policy).
+On Fri, Jun 28, 2019 at 08:56:18AM +0900, Minchan Kim wrote:
+> On Thu, Jun 27, 2019 at 04:53:02PM +0200, Michal Hocko wrote:
+> > On Thu 27-06-19 07:36:50, Dave Hansen wrote:
+> > [...]
+> > > For MADV_COLD, if we defined it like this, I think we could use it for
+> > > both purposes (demotion and LRU movement):
+> > > 
+> > > 	Pages in the specified regions will be treated as less-recently-
+> > > 	accessed compared to pages in the system with similar access
+> > > 	frequencies.  In contrast to MADV_DONTNEED, the contents of the
+> > 
+> > you meant s@MADV_DONTNEED@MADV_FREE@ I suppose
+> 
+> Right, MADV_FREE is more proper because it's aging related.
+> 
+> > 
+> > > 	region are preserved.
+> > > 
+> > > It would be nice not to talk about reclaim at all since we're not
+> > > promising reclaim per se.
+> 
+> Your suggestion doesn't expose any implementation detail and could meet your
+> needs later. I'm okay. I will change it if others are not against of it.
+> 
+> Thanks, Dave.
 
-Signed-off-by: Luwei Kang <luwei.kang@intel.com>
-Signed-off-by: Russ Weight <russell.h.weight@intel.com>
-Signed-off-by: Xu Yilun <yilun.xu@intel.com>
-Signed-off-by: Wu Hao <hao.wu@intel.com>
-Acked-by: Guenter Roeck <linux@roeck-us.net>
----
-v2: create a dfl_fme_thermal hwmon to expose thermal information.
-    move all sysfs interfaces under hwmon
-	tempareture       --> hwmon temp1_input
-	threshold1        --> hwmon temp1_alarm
-	threshold2        --> hwmon temp1_crit
-	trip_threshold    --> hwmon temp1_emergency
-	threshold1_status --> hwmon temp1_alarm_status
-	threshold2_status --> hwmon temp1_crit_status
-	threshold1_policy --> hwmon temp1_alarm_policy
-v3: rename some hwmon sysfs interfaces to follow hwmon ABI.
-	temp1_alarm        --> temp1_max
-	temp1_alarm_status --> temp1_max_alarm
-	temp1_crit_status  --> temp1_crit_alarm
-	temp1_alarm_policy --> temp1_max_policy
-    update sysfs doc for above sysfs interface changes.
-    replace scnprintf with sprintf in sysfs interface.
-v4: use HWMON_CHANNEL_INFO.
-    rebase, and update date in sysfs doc.
-v5: no change.
----
- Documentation/ABI/testing/sysfs-platform-dfl-fme |  64 ++++++++
- drivers/fpga/Kconfig                             |   2 +-
- drivers/fpga/dfl-fme-main.c                      | 187 +++++++++++++++++++++++
- 3 files changed, 252 insertions(+), 1 deletion(-)
+>From 39df9f94e6204b8893f3f3feb692745657392657 Mon Sep 17 00:00:00 2001
+From: Minchan Kim <minchan@kernel.org>
+Date: Fri, 24 May 2019 13:47:54 +0900
+Subject: [PATCH v3 1/5] mm: introduce MADV_COLD
 
-diff --git a/Documentation/ABI/testing/sysfs-platform-dfl-fme b/Documentation/ABI/testing/sysfs-platform-dfl-fme
-index 86eef83..2cd17dc 100644
---- a/Documentation/ABI/testing/sysfs-platform-dfl-fme
-+++ b/Documentation/ABI/testing/sysfs-platform-dfl-fme
-@@ -119,3 +119,67 @@ Description:	Write-only. Write error code to this file to clear all errors
- 		logged in errors, first_error and next_error. Write fails with
- 		-EINVAL if input parsing fails or input error code doesn't
- 		match.
-+
-+What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/name
-+Date:		June 2019
-+KernelVersion:	5.3
-+Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read-Only. Read this file to get the name of hwmon device, it
-+		supports values:
-+		    'dfl_fme_thermal' - thermal hwmon device name
-+
-+What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/temp1_input
-+Date:		June 2019
-+KernelVersion:	5.3
-+Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read-Only. It returns FPGA device temperature in millidegrees
-+		Celsius.
-+
-+What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/temp1_max
-+Date:		June 2019
-+KernelVersion:	5.3
-+Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read-Only. It returns hardware threshold1 temperature in
-+		millidegrees Celsius. If temperature rises at or above this
-+		threshold, hardware starts 50% or 90% throttling (see
-+		'temp1_max_policy').
-+
-+What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/temp1_crit
-+Date:		June 2019
-+KernelVersion:	5.3
-+Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read-Only. It returns hardware threshold2 temperature in
-+		millidegrees Celsius. If temperature rises at or above this
-+		threshold, hardware starts 100% throttling.
-+
-+What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/temp1_emergency
-+Date:		June 2019
-+KernelVersion:	5.3
-+Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read-Only. It returns hardware trip threshold temperature in
-+		millidegrees Celsius. If temperature rises at or above this
-+		threshold, a fatal event will be triggered to board management
-+		controller (BMC) to shutdown FPGA.
-+
-+What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/temp1_max_alarm
-+Date:		June 2019
-+KernelVersion:	5.3
-+Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read-only. It returns 1 if temperature is currently at or above
-+		hardware threshold1 (see 'temp1_max'), otherwise 0.
-+
-+What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/temp1_crit_alarm
-+Date:		June 2019
-+KernelVersion:	5.3
-+Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read-only. It returns 1 if temperature is currently at or above
-+		hardware threshold2 (see 'temp1_crit'), otherwise 0.
-+
-+What:		/sys/bus/platform/devices/dfl-fme.0/hwmon/hwmonX/temp1_max_policy
-+Date:		June 2019
-+KernelVersion:	5.3
-+Contact:	Wu Hao <hao.wu@intel.com>
-+Description:	Read-Only. Read this file to get the policy of hardware threshold1
-+		(see 'temp1_max'). It only supports two values (policies):
-+		    0 - AP2 state (90% throttling)
-+		    1 - AP1 state (50% throttling)
-diff --git a/drivers/fpga/Kconfig b/drivers/fpga/Kconfig
-index 8072c19..48f6224 100644
---- a/drivers/fpga/Kconfig
-+++ b/drivers/fpga/Kconfig
-@@ -155,7 +155,7 @@ config FPGA_DFL
+When a process expects no accesses to a certain memory range, it could
+give a hint to kernel that the pages can be reclaimed when memory pressure
+happens but data should be preserved for future use.  This could reduce
+workingset eviction so it ends up increasing performance.
+
+This patch introduces the new MADV_COLD hint to madvise(2) syscall.
+MADV_COLD can be used by a process to mark a memory range as not expected
+to be used in the near future. The hint can help kernel in deciding which
+pages to evict early during memory pressure.
+
+It works for every LRU pages like MADV_[DONTNEED|FREE]. IOW, It moves
+
+	active file page -> inactive file LRU
+	active anon page -> inacdtive anon LRU
+
+Unlike MADV_FREE, it doesn't move active anonymous pages to inactive
+file LRU's head because MADV_COLD is a little bit different symantic.
+MADV_FREE means it's okay to discard when the memory pressure because
+the content of the page is *garbage* so freeing such pages is almost zero
+overhead since we don't need to swap out and access afterward causes just
+minor fault. Thus, it would make sense to put those freeable pages in
+inactive file LRU to compete other used-once pages. It makes sense for
+implmentaion point of view, too because it's not swapbacked memory any
+longer until it would be re-dirtied. Even, it could give a bonus to make
+them be reclaimed on swapless system. However, MADV_COLD doesn't mean
+garbage so reclaiming them requires swap-out/in in the end so it's bigger
+cost. Since we have designed VM LRU aging based on cost-model, anonymous
+cold pages would be better to position inactive anon's LRU list, not file
+LRU. Furthermore, it would help to avoid unnecessary scanning if system
+doesn't have a swap device. Let's start simpler way without adding
+complexity at this moment. However, keep in mind, too that it's a caveat
+that workloads with a lot of pages cache are likely to ignore MADV_COLD
+on anonymous memory because we rarely age anonymous LRU lists.
+
+* man-page material
+
+MADV_COLD (since Linux x.x)
+
+Pages in the specified regions will be treated as less-recently-accessed
+compared to pages in the system with similar access frequencies.
+In contrast to MADV_FREE, the contents of the region are preserved
+regardless of subsequent writes to pages.
+
+MADV_COLD cannot be applied to locked pages, Huge TLB pages, or VM_PFNMAP
+pages.
+
+* v2
+ * add up the warn with lots of page cache workload - mhocko
+ * add man page stuff - dave
+
+* v1
+ * remove page_mapcount filter - hannes, mhocko
+ * remove idle page handling - joelaf
+
+* RFCv2
+ * add more description - mhocko
+
+* RFCv1
+ * renaming from MADV_COOL to MADV_COLD - hannes
+
+* internal review
+ * use clear_page_youn in deactivate_page - joelaf
+ * Revise the description - surenb
+ * Renaming from MADV_WARM to MADV_COOL - surenb
+
+Signed-off-by: Minchan Kim <minchan@kernel.org>
+---
+ include/linux/swap.h                   |   1 +
+ include/uapi/asm-generic/mman-common.h |   1 +
+ mm/internal.h                          |   2 +-
+ mm/madvise.c                           | 180 ++++++++++++++++++++++++-
+ mm/oom_kill.c                          |   2 +-
+ mm/swap.c                              |  42 ++++++
+ 6 files changed, 224 insertions(+), 4 deletions(-)
+
+diff --git a/include/linux/swap.h b/include/linux/swap.h
+index de2c67a33b7e..0ce997edb8bb 100644
+--- a/include/linux/swap.h
++++ b/include/linux/swap.h
+@@ -340,6 +340,7 @@ extern void lru_add_drain_cpu(int cpu);
+ extern void lru_add_drain_all(void);
+ extern void rotate_reclaimable_page(struct page *page);
+ extern void deactivate_file_page(struct page *page);
++extern void deactivate_page(struct page *page);
+ extern void mark_page_lazyfree(struct page *page);
+ extern void swap_setup(void);
  
- config FPGA_DFL_FME
- 	tristate "FPGA DFL FME Driver"
--	depends on FPGA_DFL
-+	depends on FPGA_DFL && HWMON
- 	help
- 	  The FPGA Management Engine (FME) is a feature device implemented
- 	  under Device Feature List (DFL) framework. Select this option to
-diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-main.c
-index 4490cf4..59ff9f1 100644
---- a/drivers/fpga/dfl-fme-main.c
-+++ b/drivers/fpga/dfl-fme-main.c
-@@ -14,6 +14,8 @@
-  *   Henry Mitchel <henry.mitchel@intel.com>
-  */
+diff --git a/include/uapi/asm-generic/mman-common.h b/include/uapi/asm-generic/mman-common.h
+index ef4623f03156..d7b4231eea63 100644
+--- a/include/uapi/asm-generic/mman-common.h
++++ b/include/uapi/asm-generic/mman-common.h
+@@ -47,6 +47,7 @@
+ #define MADV_SEQUENTIAL	2		/* expect sequential page references */
+ #define MADV_WILLNEED	3		/* will need these pages */
+ #define MADV_DONTNEED	4		/* don't need these pages */
++#define MADV_COLD	5		/* deactivatie these pages */
  
-+#include <linux/hwmon.h>
-+#include <linux/hwmon-sysfs.h>
- #include <linux/kernel.h>
- #include <linux/module.h>
- #include <linux/uaccess.h>
-@@ -217,6 +219,187 @@ static long fme_hdr_ioctl(struct platform_device *pdev,
- 	.ioctl = fme_hdr_ioctl,
- };
+ /* common parameters: try to keep these consistent across architectures */
+ #define MADV_FREE	8		/* free pages only if memory pressure */
+diff --git a/mm/internal.h b/mm/internal.h
+index f53a14d67538..c61b215ff265 100644
+--- a/mm/internal.h
++++ b/mm/internal.h
+@@ -39,7 +39,7 @@ vm_fault_t do_swap_page(struct vm_fault *vmf);
+ void free_pgtables(struct mmu_gather *tlb, struct vm_area_struct *start_vma,
+ 		unsigned long floor, unsigned long ceiling);
  
-+#define FME_THERM_THRESHOLD	0x8
-+#define TEMP_THRESHOLD1		GENMASK_ULL(6, 0)
-+#define TEMP_THRESHOLD1_EN	BIT_ULL(7)
-+#define TEMP_THRESHOLD2		GENMASK_ULL(14, 8)
-+#define TEMP_THRESHOLD2_EN	BIT_ULL(15)
-+#define TRIP_THRESHOLD		GENMASK_ULL(30, 24)
-+#define TEMP_THRESHOLD1_STATUS	BIT_ULL(32)		/* threshold1 reached */
-+#define TEMP_THRESHOLD2_STATUS	BIT_ULL(33)		/* threshold2 reached */
-+/* threshold1 policy: 0 - AP2 (90% throttle) / 1 - AP1 (50% throttle) */
-+#define TEMP_THRESHOLD1_POLICY	BIT_ULL(44)
-+
-+#define FME_THERM_RDSENSOR_FMT1	0x10
-+#define FPGA_TEMPERATURE	GENMASK_ULL(6, 0)
-+
-+#define FME_THERM_CAP		0x20
-+#define THERM_NO_THROTTLE	BIT_ULL(0)
-+
-+#define MD_PRE_DEG
-+
-+static bool fme_thermal_throttle_support(void __iomem *base)
+-static inline bool can_madv_dontneed_vma(struct vm_area_struct *vma)
++static inline bool can_madv_lru_vma(struct vm_area_struct *vma)
+ {
+ 	return !(vma->vm_flags & (VM_LOCKED|VM_HUGETLB|VM_PFNMAP));
+ }
+diff --git a/mm/madvise.c b/mm/madvise.c
+index 628022e674a7..7abb8e54bc7a 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -40,6 +40,7 @@ static int madvise_need_mmap_write(int behavior)
+ 	case MADV_REMOVE:
+ 	case MADV_WILLNEED:
+ 	case MADV_DONTNEED:
++	case MADV_COLD:
+ 	case MADV_FREE:
+ 		return 0;
+ 	default:
+@@ -307,6 +308,178 @@ static long madvise_willneed(struct vm_area_struct *vma,
+ 	return 0;
+ }
+ 
++static int madvise_cold_pte_range(pmd_t *pmd, unsigned long addr,
++				unsigned long end, struct mm_walk *walk)
 +{
-+	u64 v = readq(base + FME_THERM_CAP);
++	struct mmu_gather *tlb = walk->private;
++	struct mm_struct *mm = tlb->mm;
++	struct vm_area_struct *vma = walk->vma;
++	pte_t *orig_pte, *pte, ptent;
++	spinlock_t *ptl;
++	struct page *page;
++	unsigned long next;
 +
-+	return FIELD_GET(THERM_NO_THROTTLE, v) ? false : true;
-+}
++	next = pmd_addr_end(addr, end);
++	if (pmd_trans_huge(*pmd)) {
++		pmd_t orig_pmd;
 +
-+static umode_t thermal_hwmon_attrs_visible(const void *drvdata,
-+					   enum hwmon_sensor_types type,
-+					   u32 attr, int channel)
-+{
-+	const struct dfl_feature *feature = drvdata;
++		tlb_change_page_size(tlb, HPAGE_PMD_SIZE);
++		ptl = pmd_trans_huge_lock(pmd, vma);
++		if (!ptl)
++			return 0;
 +
-+	/* temperature is always supported, and check hardware cap for others */
-+	if (attr == hwmon_temp_input)
-+		return 0444;
++		orig_pmd = *pmd;
++		if (is_huge_zero_pmd(orig_pmd))
++			goto huge_unlock;
 +
-+	return fme_thermal_throttle_support(feature->ioaddr) ? 0444 : 0;
-+}
++		if (unlikely(!pmd_present(orig_pmd))) {
++			VM_BUG_ON(thp_migration_supported() &&
++					!is_pmd_migration_entry(orig_pmd));
++			goto huge_unlock;
++		}
 +
-+static int thermal_hwmon_read(struct device *dev, enum hwmon_sensor_types type,
-+			      u32 attr, int channel, long *val)
-+{
-+	struct dfl_feature *feature = dev_get_drvdata(dev);
-+	u64 v;
++		page = pmd_page(orig_pmd);
++		if (next - addr != HPAGE_PMD_SIZE) {
++			int err;
 +
-+	switch (attr) {
-+	case hwmon_temp_input:
-+		v = readq(feature->ioaddr + FME_THERM_RDSENSOR_FMT1);
-+		*val = (long)(FIELD_GET(FPGA_TEMPERATURE, v) * 1000);
-+		break;
-+	case hwmon_temp_max:
-+		v = readq(feature->ioaddr + FME_THERM_THRESHOLD);
-+		*val = (long)(FIELD_GET(TEMP_THRESHOLD1, v) * 1000);
-+		break;
-+	case hwmon_temp_crit:
-+		v = readq(feature->ioaddr + FME_THERM_THRESHOLD);
-+		*val = (long)(FIELD_GET(TEMP_THRESHOLD2, v) * 1000);
-+		break;
-+	case hwmon_temp_emergency:
-+		v = readq(feature->ioaddr + FME_THERM_THRESHOLD);
-+		*val = (long)(FIELD_GET(TRIP_THRESHOLD, v) * 1000);
-+		break;
-+	case hwmon_temp_max_alarm:
-+		v = readq(feature->ioaddr + FME_THERM_THRESHOLD);
-+		*val = (long)FIELD_GET(TEMP_THRESHOLD1_STATUS, v);
-+		break;
-+	case hwmon_temp_crit_alarm:
-+		v = readq(feature->ioaddr + FME_THERM_THRESHOLD);
-+		*val = (long)FIELD_GET(TEMP_THRESHOLD2_STATUS, v);
-+		break;
-+	default:
-+		return -EOPNOTSUPP;
++			if (page_mapcount(page) != 1)
++				goto huge_unlock;
++
++			get_page(page);
++			spin_unlock(ptl);
++			lock_page(page);
++			err = split_huge_page(page);
++			unlock_page(page);
++			put_page(page);
++			if (!err)
++				goto regular_page;
++			return 0;
++		}
++
++		if (pmd_young(orig_pmd)) {
++			pmdp_invalidate(vma, addr, pmd);
++			orig_pmd = pmd_mkold(orig_pmd);
++
++			set_pmd_at(mm, addr, pmd, orig_pmd);
++			tlb_remove_pmd_tlb_entry(tlb, pmd, addr);
++		}
++
++		test_and_clear_page_young(page);
++		deactivate_page(page);
++huge_unlock:
++		spin_unlock(ptl);
++		return 0;
 +	}
++
++	if (pmd_trans_unstable(pmd))
++		return 0;
++
++regular_page:
++	tlb_change_page_size(tlb, PAGE_SIZE);
++	orig_pte = pte = pte_offset_map_lock(vma->vm_mm, pmd, addr, &ptl);
++	flush_tlb_batched_pending(mm);
++	arch_enter_lazy_mmu_mode();
++	for (; addr < end; pte++, addr += PAGE_SIZE) {
++		ptent = *pte;
++
++		if (pte_none(ptent))
++			continue;
++
++		if (!pte_present(ptent))
++			continue;
++
++		page = vm_normal_page(vma, addr, ptent);
++		if (!page)
++			continue;
++
++		/*
++		 * Creating a THP page is expensive so split it only if we
++		 * are sure it's worth. Split it if we are only owner.
++		 */
++		if (PageTransCompound(page)) {
++			if (page_mapcount(page) != 1)
++				break;
++			get_page(page);
++			if (!trylock_page(page)) {
++				put_page(page);
++				break;
++			}
++			pte_unmap_unlock(orig_pte, ptl);
++			if (split_huge_page(page)) {
++				unlock_page(page);
++				put_page(page);
++				pte_offset_map_lock(mm, pmd, addr, &ptl);
++				break;
++			}
++			unlock_page(page);
++			put_page(page);
++			pte = pte_offset_map_lock(mm, pmd, addr, &ptl);
++			pte--;
++			addr -= PAGE_SIZE;
++			continue;
++		}
++
++		VM_BUG_ON_PAGE(PageTransCompound(page), page);
++
++		if (pte_young(ptent)) {
++			ptent = ptep_get_and_clear_full(mm, addr, pte,
++							tlb->fullmm);
++			ptent = pte_mkold(ptent);
++			set_pte_at(mm, addr, pte, ptent);
++			tlb_remove_tlb_entry(tlb, pte, addr);
++		}
++
++		/*
++		 * We are deactivating a page for accelerating reclaiming.
++		 * VM couldn't reclaim the page unless we clear PG_young.
++		 * As a side effect, it makes confuse idle-page tracking
++		 * because they will miss recent referenced history.
++		 */
++		test_and_clear_page_young(page);
++		deactivate_page(page);
++	}
++
++	arch_enter_lazy_mmu_mode();
++	pte_unmap_unlock(orig_pte, ptl);
++	cond_resched();
 +
 +	return 0;
 +}
 +
-+static const struct hwmon_ops thermal_hwmon_ops = {
-+	.is_visible = thermal_hwmon_attrs_visible,
-+	.read = thermal_hwmon_read,
-+};
-+
-+static const struct hwmon_channel_info *thermal_hwmon_info[] = {
-+	HWMON_CHANNEL_INFO(temp, HWMON_T_INPUT | HWMON_T_EMERGENCY |
-+				 HWMON_T_MAX   | HWMON_T_MAX_ALARM |
-+				 HWMON_T_CRIT  | HWMON_T_CRIT_ALARM),
-+	NULL
-+};
-+
-+static const struct hwmon_chip_info thermal_hwmon_chip_info = {
-+	.ops = &thermal_hwmon_ops,
-+	.info = thermal_hwmon_info,
-+};
-+
-+static ssize_t temp1_max_policy_show(struct device *dev,
-+				     struct device_attribute *attr, char *buf)
++static void madvise_cold_page_range(struct mmu_gather *tlb,
++			     struct vm_area_struct *vma,
++			     unsigned long addr, unsigned long end)
 +{
-+	struct dfl_feature *feature = dev_get_drvdata(dev);
-+	u64 v;
++	struct mm_walk cold_walk = {
++		.pmd_entry = madvise_cold_pte_range,
++		.mm = vma->vm_mm,
++		.private = tlb,
++	};
 +
-+	v = readq(feature->ioaddr + FME_THERM_THRESHOLD);
-+
-+	return sprintf(buf, "%u\n",
-+		       (unsigned int)FIELD_GET(TEMP_THRESHOLD1_POLICY, v));
++	tlb_start_vma(tlb, vma);
++	walk_page_range(addr, end, &cold_walk);
++	tlb_end_vma(tlb, vma);
 +}
 +
-+static DEVICE_ATTR_RO(temp1_max_policy);
-+
-+static struct attribute *thermal_extra_attrs[] = {
-+	&dev_attr_temp1_max_policy.attr,
-+	NULL,
-+};
-+
-+static umode_t thermal_extra_attrs_visible(struct kobject *kobj,
-+					   struct attribute *attr, int index)
++static long madvise_cold(struct vm_area_struct *vma,
++			struct vm_area_struct **prev,
++			unsigned long start_addr, unsigned long end_addr)
 +{
-+	struct device *dev = kobj_to_dev(kobj);
-+	struct dfl_feature *feature = dev_get_drvdata(dev);
++	struct mm_struct *mm = vma->vm_mm;
++	struct mmu_gather tlb;
 +
-+	return fme_thermal_throttle_support(feature->ioaddr) ? attr->mode : 0;
-+}
++	*prev = vma;
++	if (!can_madv_lru_vma(vma))
++		return -EINVAL;
 +
-+static const struct attribute_group thermal_extra_group = {
-+	.attrs		= thermal_extra_attrs,
-+	.is_visible	= thermal_extra_attrs_visible,
-+};
-+__ATTRIBUTE_GROUPS(thermal_extra);
-+
-+static int fme_thermal_mgmt_init(struct platform_device *pdev,
-+				 struct dfl_feature *feature)
-+{
-+	struct device *hwmon;
-+
-+	dev_dbg(&pdev->dev, "FME Thermal Management Init.\n");
-+
-+	/*
-+	 * create hwmon to allow userspace monitoring temperature and other
-+	 * threshold information.
-+	 *
-+	 * temp1_input      -> FPGA device temperature
-+	 * temp1_max        -> hardware threshold 1 -> 50% or 90% throttling
-+	 * temp1_crit       -> hardware threshold 2 -> 100% throttling
-+	 * temp1_emergency  -> hardware trip_threshold to shutdown FPGA
-+	 * temp1_max_alarm  -> hardware threshold 1 alarm
-+	 * temp1_crit_alarm -> hardware threshold 2 alarm
-+	 *
-+	 * create device specific sysfs interfaces, e.g. read temp1_max_policy
-+	 * to understand the actual hardware throttling action (50% vs 90%).
-+	 *
-+	 * If hardware doesn't support automatic throttling per thresholds,
-+	 * then all above sysfs interfaces are not visible except temp1_input
-+	 * for temperature.
-+	 */
-+	hwmon = devm_hwmon_device_register_with_info(&pdev->dev,
-+						     "dfl_fme_thermal", feature,
-+						     &thermal_hwmon_chip_info,
-+						     thermal_extra_groups);
-+	if (IS_ERR(hwmon)) {
-+		dev_err(&pdev->dev, "Fail to register thermal hwmon\n");
-+		return PTR_ERR(hwmon);
-+	}
++	lru_add_drain();
++	tlb_gather_mmu(&tlb, mm, start_addr, end_addr);
++	madvise_cold_page_range(&tlb, vma, start_addr, end_addr);
++	tlb_finish_mmu(&tlb, start_addr, end_addr);
 +
 +	return 0;
 +}
 +
-+static void fme_thermal_mgmt_uinit(struct platform_device *pdev,
-+				   struct dfl_feature *feature)
+ static int madvise_free_pte_range(pmd_t *pmd, unsigned long addr,
+ 				unsigned long end, struct mm_walk *walk)
+ 
+@@ -519,7 +692,7 @@ static long madvise_dontneed_free(struct vm_area_struct *vma,
+ 				  int behavior)
+ {
+ 	*prev = vma;
+-	if (!can_madv_dontneed_vma(vma))
++	if (!can_madv_lru_vma(vma))
+ 		return -EINVAL;
+ 
+ 	if (!userfaultfd_remove(vma, start, end)) {
+@@ -541,7 +714,7 @@ static long madvise_dontneed_free(struct vm_area_struct *vma,
+ 			 */
+ 			return -ENOMEM;
+ 		}
+-		if (!can_madv_dontneed_vma(vma))
++		if (!can_madv_lru_vma(vma))
+ 			return -EINVAL;
+ 		if (end > vma->vm_end) {
+ 			/*
+@@ -695,6 +868,8 @@ madvise_vma(struct vm_area_struct *vma, struct vm_area_struct **prev,
+ 		return madvise_remove(vma, prev, start, end);
+ 	case MADV_WILLNEED:
+ 		return madvise_willneed(vma, prev, start, end);
++	case MADV_COLD:
++		return madvise_cold(vma, prev, start, end);
+ 	case MADV_FREE:
+ 	case MADV_DONTNEED:
+ 		return madvise_dontneed_free(vma, prev, start, end, behavior);
+@@ -716,6 +891,7 @@ madvise_behavior_valid(int behavior)
+ 	case MADV_WILLNEED:
+ 	case MADV_DONTNEED:
+ 	case MADV_FREE:
++	case MADV_COLD:
+ #ifdef CONFIG_KSM
+ 	case MADV_MERGEABLE:
+ 	case MADV_UNMERGEABLE:
+diff --git a/mm/oom_kill.c b/mm/oom_kill.c
+index 6de5c354d6ca..2140a6f8db63 100644
+--- a/mm/oom_kill.c
++++ b/mm/oom_kill.c
+@@ -523,7 +523,7 @@ bool __oom_reap_task_mm(struct mm_struct *mm)
+ 	set_bit(MMF_UNSTABLE, &mm->flags);
+ 
+ 	for (vma = mm->mmap ; vma; vma = vma->vm_next) {
+-		if (!can_madv_dontneed_vma(vma))
++		if (!can_madv_lru_vma(vma))
+ 			continue;
+ 
+ 		/*
+diff --git a/mm/swap.c b/mm/swap.c
+index 607c48229a1d..a91859d061f3 100644
+--- a/mm/swap.c
++++ b/mm/swap.c
+@@ -47,6 +47,7 @@ int page_cluster;
+ static DEFINE_PER_CPU(struct pagevec, lru_add_pvec);
+ static DEFINE_PER_CPU(struct pagevec, lru_rotate_pvecs);
+ static DEFINE_PER_CPU(struct pagevec, lru_deactivate_file_pvecs);
++static DEFINE_PER_CPU(struct pagevec, lru_deactivate_pvecs);
+ static DEFINE_PER_CPU(struct pagevec, lru_lazyfree_pvecs);
+ #ifdef CONFIG_SMP
+ static DEFINE_PER_CPU(struct pagevec, activate_page_pvecs);
+@@ -538,6 +539,22 @@ static void lru_deactivate_file_fn(struct page *page, struct lruvec *lruvec,
+ 	update_page_reclaim_stat(lruvec, file, 0);
+ }
+ 
++static void lru_deactivate_fn(struct page *page, struct lruvec *lruvec,
++			    void *arg)
 +{
-+	dev_dbg(&pdev->dev, "FME Thermal Management UInit.\n");
++	if (PageLRU(page) && PageActive(page) && !PageUnevictable(page)) {
++		int file = page_is_file_cache(page);
++		int lru = page_lru_base_type(page);
++
++		del_page_from_lru_list(page, lruvec, lru + LRU_ACTIVE);
++		ClearPageActive(page);
++		ClearPageReferenced(page);
++		add_page_to_lru_list(page, lruvec, lru);
++
++		__count_vm_events(PGDEACTIVATE, hpage_nr_pages(page));
++		update_page_reclaim_stat(lruvec, file, 0);
++	}
++}
+ 
+ static void lru_lazyfree_fn(struct page *page, struct lruvec *lruvec,
+ 			    void *arg)
+@@ -590,6 +607,10 @@ void lru_add_drain_cpu(int cpu)
+ 	if (pagevec_count(pvec))
+ 		pagevec_lru_move_fn(pvec, lru_deactivate_file_fn, NULL);
+ 
++	pvec = &per_cpu(lru_deactivate_pvecs, cpu);
++	if (pagevec_count(pvec))
++		pagevec_lru_move_fn(pvec, lru_deactivate_fn, NULL);
++
+ 	pvec = &per_cpu(lru_lazyfree_pvecs, cpu);
+ 	if (pagevec_count(pvec))
+ 		pagevec_lru_move_fn(pvec, lru_lazyfree_fn, NULL);
+@@ -623,6 +644,26 @@ void deactivate_file_page(struct page *page)
+ 	}
+ }
+ 
++/*
++ * deactivate_page - deactivate a page
++ * @page: page to deactivate
++ *
++ * deactivate_page() moves @page to the inactive list if @page was on the active
++ * list and was not an unevictable page.  This is done to accelerate the reclaim
++ * of @page.
++ */
++void deactivate_page(struct page *page)
++{
++	if (PageLRU(page) && PageActive(page) && !PageUnevictable(page)) {
++		struct pagevec *pvec = &get_cpu_var(lru_deactivate_pvecs);
++
++		get_page(page);
++		if (!pagevec_add(pvec, page) || PageCompound(page))
++			pagevec_lru_move_fn(pvec, lru_deactivate_fn, NULL);
++		put_cpu_var(lru_deactivate_pvecs);
++	}
 +}
 +
-+static const struct dfl_feature_id fme_thermal_mgmt_id_table[] = {
-+	{.id = FME_FEATURE_ID_THERMAL_MGMT,},
-+	{0,}
-+};
-+
-+static const struct dfl_feature_ops fme_thermal_mgmt_ops = {
-+	.init = fme_thermal_mgmt_init,
-+	.uinit = fme_thermal_mgmt_uinit,
-+};
-+
- static struct dfl_feature_driver fme_feature_drvs[] = {
- 	{
- 		.id_table = fme_hdr_id_table,
-@@ -231,6 +414,10 @@ static long fme_hdr_ioctl(struct platform_device *pdev,
- 		.ops = &fme_global_err_ops,
- 	},
- 	{
-+		.id_table = fme_thermal_mgmt_id_table,
-+		.ops = &fme_thermal_mgmt_ops,
-+	},
-+	{
- 		.ops = NULL,
- 	},
- };
+ /**
+  * mark_page_lazyfree - make an anon page lazyfree
+  * @page: page to deactivate
+@@ -687,6 +728,7 @@ void lru_add_drain_all(void)
+ 		if (pagevec_count(&per_cpu(lru_add_pvec, cpu)) ||
+ 		    pagevec_count(&per_cpu(lru_rotate_pvecs, cpu)) ||
+ 		    pagevec_count(&per_cpu(lru_deactivate_file_pvecs, cpu)) ||
++		    pagevec_count(&per_cpu(lru_deactivate_pvecs, cpu)) ||
+ 		    pagevec_count(&per_cpu(lru_lazyfree_pvecs, cpu)) ||
+ 		    need_activate_page_drain(cpu)) {
+ 			INIT_WORK(work, lru_add_drain_per_cpu);
 -- 
-1.8.3.1
+2.22.0.410.gd8fdbe21b5-goog
