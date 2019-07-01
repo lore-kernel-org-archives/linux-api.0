@@ -1,132 +1,83 @@
-From: Mimi Zohar <zohar@linux.ibm.com>
-Subject: Re: [PATCH v4 0/3] initramfs: add support for xattrs in the initial
- ram disk
-Date: Sun, 30 Jun 2019 11:39:59 -0400
-Message-ID: <1561909199.3985.33.camel@linux.ibm.com>
-References: <20190523121803.21638-1-roberto.sassu@huawei.com>
-         <cf9d08ca-74c7-c945-5bf9-7c3495907d1e@huawei.com>
-         <541e9ea1-024f-5c22-0b58-f8692e6c1eb1@landley.net>
-         <33cfb804-6a17-39f0-92b7-01d54e9c452d@huawei.com>
+From: Randy Dunlap <rdunlap@infradead.org>
+Subject: Re: [PATCH 2/6] Adjust watch_queue documentation to mention mount and
+ superblock watches. [ver #5]
+Date: Sun, 30 Jun 2019 19:59:33 -0700
+Message-ID: <7a288c2c-11a1-87df-9550-b247d6ce3010@infradead.org>
+References: <156173701358.15650.8735203424342507015.stgit@warthog.procyon.org.uk>
+ <156173703546.15650.14319137940607993268.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <33cfb804-6a17-39f0-92b7-01d54e9c452d@huawei.com>
+In-Reply-To: <156173703546.15650.14319137940607993268.stgit@warthog.procyon.org.uk>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Roberto Sassu <roberto.sassu@huawei.com>, Rob Landley <rob@landley.net>, viro@zeniv.linux.org.uk
-Cc: linux-security-module@vger.kernel.org, linux-integrity@vger.kernel.org, initramfs@vger.kernel.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, bug-cpio@gnu.org, zohar@linux.vnet.ibm.com, silviu.vlasceanu@huawei.com, dmitry.kasatkin@huawei.com, takondra@cisco.com, kamensky@cisco.com, hpa@zytor.com, arnd@arndb.de, james.w.mcmechan@gmail.com, niveditas98@gmail.com
+To: David Howells <dhowells@redhat.com>, viro@zeniv.linux.org.uk
+Cc: Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2019-06-26 at 10:15 +0200, Roberto Sassu wrote:
-> On 6/3/2019 8:32 PM, Rob Landley wrote:
-> > On 6/3/19 4:31 AM, Roberto Sassu wrote:
-> >>> This patch set aims at solving the following use case: appraise files from
-> >>> the initial ram disk. To do that, IMA checks the signature/hash from the
-> >>> security.ima xattr. Unfortunately, this use case cannot be implemented
-> >>> currently, as the CPIO format does not support xattrs.
-> >>>
-> >>> This proposal consists in including file metadata as additional files named
-> >>> METADATA!!!, for each file added to the ram disk. The CPIO parser in the
-> >>> kernel recognizes these special files from the file name, and calls the
-> >>> appropriate parser to add metadata to the previously extracted file. It has
-> >>> been proposed to use bit 17:16 of the file mode as a way to recognize files
-> >>> with metadata, but both the kernel and the cpio tool declare the file mode
-> >>> as unsigned short.
-> >>
-> >> Any opinion on this patch set?
-> >>
-> >> Thanks
-> >>
-> >> Roberto
-> > 
-> > Sorry, I've had the window open since you posted it but haven't gotten around to
-> > it. I'll try to build it later today.
-> > 
-> > It does look interesting, and I have no objections to the basic approach. I
-> > should be able to add support to toybox cpio over a weekend once I've got the
-> > kernel doing it to test against.
+Hi David,
+
+On 6/28/19 8:50 AM, David Howells wrote:
+> Signed-off-by: David Howells <dhowells@redhat.com>
+> ---
 > 
-> Ok.
+>  Documentation/watch_queue.rst |   20 +++++++++++++++++++-
+>  drivers/misc/Kconfig          |    5 +++--
+>  2 files changed, 22 insertions(+), 3 deletions(-)
 > 
-> Let me give some instructions so that people can test this patch set.
-> 
-> To add xattrs to the ram disk embedded in the kernel it is sufficient
-> to set CONFIG_INITRAMFS_FILE_METADATA="xattr" and
-> CONFIG_INITRAMFS_SOURCE="<file with xattr>" in the kernel configuration.
-> 
-> To add xattrs to the external ram disk, it is necessary to patch cpio:
-> 
-> https://github.com/euleros/cpio/commit/531cabc88e9ecdc3231fad6e4856869baa9a91ef 
-> (xattr-v1 branch)
-> 
-> and dracut:
-> 
-> https://github.com/euleros/dracut/commit/a2dee56ea80495c2c1871bc73186f7b00dc8bf3b 
-> (digest-lists branch)
-> 
-> The same modification can be done for mkinitramfs (add '-e xattr' to the
-> cpio command line).
-> 
-> To simplify the test, it would be sufficient to replace only the cpio
-> binary and the dracut script with the modified versions. For dracut, the
-> patch should be applied to the local dracut (after it has been renamed
-> to dracut.sh).
-> 
-> Then, run:
-> 
-> dracut -e xattr -I <file with xattr> (add -f to overwrite the ram disk)
-> 
-> Xattrs can be seen by stopping the boot process for example by adding
-> rd.break to the kernel command line.
+> diff --git a/Documentation/watch_queue.rst b/Documentation/watch_queue.rst
+> index 4087a8e670a8..1bec2018d549 100644
+> --- a/Documentation/watch_queue.rst
+> +++ b/Documentation/watch_queue.rst
+> @@ -13,6 +13,10 @@ receive notifications from the kernel.  This can be used in conjunction with::
+>  
+>      * USB subsystem event notifications
+>  
+> +  * Mount topology change notifications
+> +
+> +  * Superblock event notifications
+> +
+>  
+>  The notifications buffers can be enabled by:
+>  
+> @@ -324,6 +328,19 @@ Any particular buffer can be fed from multiple sources.  Sources include:
+>      for buses and devices.  Watchpoints of this type are set on the global
+>      device watch list.
+>  
+> +  * WATCH_TYPE_MOUNT_NOTIFY
+> +
+> +    Notifications of this type indicate mount tree topology changes and mount
+> +    attribute changes.  A watch can be set on a particular file or directory
+> +    and notifications from the path subtree rooted at that point will be
+> +    intercepted.
+> +
+> +  * WATCH_TYPE_SB_NOTIFY
+> +
+> +    Notifications of this type indicate superblock events, such as quota limits
+> +    being hit, I/O errors being produced or network server loss/reconnection.
+> +    Watches of this type are set directly on superblocks.
+> +
+>  
+>  Event Filtering
+>  ===============
+> @@ -365,7 +382,8 @@ Where:
+>  	(watch.info & info_mask) == info_filter
+>  
+>      This could be used, for example, to ignore events that are not exactly on
+> -    the watched point in a mount tree.
+> +    the watched point in a mount tree by specifying NOTIFY_MOUNT_IN_SUBTREE
+> +    must be 0.
 
-A simple way of testing, without needing any changes other than the
-kernel patches, is to save the dracut temporary directory by supplying
-"--keep" on the dracut command line, calling
-usr/gen_initramfs_list.sh, followed by usr/gen_init_cpio with the "-e
-xattr" option.
+I'm having a little trouble parsing that sentence.
+Could you clarify it or maybe rewrite/modify it?
+Thanks.
 
-If your filesystem already has and copied the security xattrs to the
-dracut temporary directory, the script, below, will include them in
-the initramfs file.  Otherwise, you'll need to write the desired
-security xattrs on the files, using setfattr, in the temporary dracut
-directory, before creating the initramfs.
+>  
+>    * ``subtype_filter`` is a bitmask indicating the subtypes that are of
+>      interest.  Bit 0 of subtype_filter[0] corresponds to subtype 0, bit 1 to
 
-Remember to make sure that the initramfs_list includes "getfattr",
-otherwise you'll need to wait until real root is mounted as /sysroot
-to see the security xattrs for the rootfs files.
 
-The following script has not been tested on a recent version of
-dracut.  Some changes might be needed, as well as some code cleanup.
 
-#!/bin/bash
-
-initramfs_name=/boot/initramfs-`uname -r`.img
-initramfs_output_name=${initramfs_name/.img/.test.img}
-
-if [ $# -eq 1 ]; then
-        initramfs_name=$1
-fi
-
-if [ ! -f "$initramfs_name" ]; then
-        echo "Usage; $0 <initramfs pathanem>"
-        exit 1
-fi
-
-tmp=$(dracut -H -f "$initramfs_name" --keep --noprelink --nostrip 2>&1)
-suffix=$(echo $tmp | cut -d ' ' -f 3 | cut -d '.' -f 2)
-
-tmpdir="/var/tmp/dracut.$suffix/initramfs"
-
-if [ ! -d "$tmpdir" ]; then
-        echo "$tmpdir does not exist"
-        exit 1
-fi
-
-usr/gen_initramfs_list.sh ${tmpdir} > usr/initramfs_list
-usr/gen_init_cpio -e xattr usr/initramfs_list > usr/initramfs_data.cpio
-gzip usr/initramfs_data.cpio
-
-echo "Copying usr/initramfs_data.cpio to $initramfs_output_name"
-cp usr/initramfs_data.cpio.gz "$initramfs_output_name"
-
-Mimi
+-- 
+~Randy
