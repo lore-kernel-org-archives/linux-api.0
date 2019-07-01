@@ -1,45 +1,33 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH 2/6] Adjust watch_queue documentation to mention mount and superblock watches. [ver #5]
-Date: Mon, 01 Jul 2019 09:52:50 +0100
-Message-ID: <8212.1561971170@warthog.procyon.org.uk>
-References: <7a288c2c-11a1-87df-9550-b247d6ce3010@infradead.org> <156173701358.15650.8735203424342507015.stgit@warthog.procyon.org.uk> <156173703546.15650.14319137940607993268.stgit@warthog.procyon.org.uk>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH v3 0/5] Introduce MADV_COLD and MADV_PAGEOUT
+Date: Mon, 1 Jul 2019 12:22:56 +0200
+Message-ID: <20190701102256.GN6376@dhcp22.suse.cz>
+References: <20190627115405.255259-1-minchan@kernel.org>
+ <20190701073848.GB136163@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <7a288c2c-11a1-87df-9550-b247d6ce3010@infradead.org>
-Content-ID: <8211.1561971170.1@warthog.procyon.org.uk>
+Content-Disposition: inline
+In-Reply-To: <20190701073848.GB136163@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Randy Dunlap <rdunlap@infradead.org>
-Cc: dhowells@redhat.com, viro@zeniv.linux.org.uk, Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Minchan Kim <minchan@kernel.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, oleksandr@redhat.com, hdanton@sina.com, lizeb@google.com, Dave Hansen <dave.hansen@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Randy Dunlap <rdunlap@infradead.org> wrote:
+On Mon 01-07-19 16:38:48, Minchan Kim wrote:
+> 
+> Hi Folks,
+> 
+> Do you guys have comments? I think it would be long enough to be
+> pending. If there is no further comments, I want to ask to merge.
 
-> I'm having a little trouble parsing that sentence.
-> Could you clarify it or maybe rewrite/modify it?
-> Thanks.
-
-How about:
-
-  * ``info_filter`` and ``info_mask`` act as a filter on the info field of the
-    notification record.  The notification is only written into the buffer if::
-
-	(watch.info & info_mask) == info_filter
-
-    This could be used, for example, to ignore events that are not exactly on
-    the watched point in a mount tree by specifying NOTIFY_MOUNT_IN_SUBTREE
-    must not be set, e.g.::
-
-	{
-		.type = WATCH_TYPE_MOUNT_NOTIFY,
-		.info_filter = 0,
-		.info_mask = NOTIFY_MOUNT_IN_SUBTREE,
-		.subtype_filter = ...,
-	}
-
-    as an event would be only permissible with this filter if::
-
-    	(watch.info & NOTIFY_MOUNT_IN_SUBTREE) == 0
-
-David
+This is definitely on my todo list for this week. But please be patient.
+It's been _one_ work day since you posted this last version so I do not
+think this is stalling for too long. Sure the current version is
+probably not too much different from the previous but I didn't get to
+review it in the depth yet. All the code duplication doesn't make it
+much easier but I understand your reasoning that sharing more code is
+not really straightforward.
+-- 
+Michal Hocko
+SUSE Labs
