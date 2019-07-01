@@ -1,43 +1,58 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH v3 2/2] arch: wire-up clone3() syscall
-Date: Mon, 1 Jul 2019 17:24:14 +0200
-Message-ID: <20190701152413.zfwsxwtgeqtveie6@brauner.io>
-References: <20190604160944.4058-1-christian@brauner.io>
- <20190604160944.4058-2-christian@brauner.io>
- <20190620184451.GA28543@roeck-us.net>
- <20190620221003.ciuov5fzqxrcaykp@brauner.io>
- <CAK8P3a2iV7=HkHBVL_puvCQN0DmdKEnVs2aG9MQV_8Q58JSfTA@mail.gmail.com>
- <20190621111839.v5yqlws6iw7mx4aa@brauner.io>
- <CAK8P3a0T1=eg5ONbMFhHi=vmk1K5uogZ+5=wpsXvjVDzn6vS=Q@mail.gmail.com>
- <20190621153012.fxwhx25mzmzueqh7@brauner.io>
- <CAK8P3a0f_=q88JB=t7fbmweAbZ2E2_uCMt+2JoBYx3od_M6fHQ@mail.gmail.com>
+From: Eric Biggers <ebiggers@kernel.org>
+Subject: [PATCH v6 02/17] fs-verity: add MAINTAINERS file entry
+Date: Mon,  1 Jul 2019 08:32:22 -0700
+Message-ID: <20190701153237.1777-3-ebiggers@kernel.org>
+References: <20190701153237.1777-1-ebiggers@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAK8P3a0f_=q88JB=t7fbmweAbZ2E2_uCMt+2JoBYx3od_M6fHQ@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Guenter Roeck <linux@roeck-us.net>, Al Viro <viro@zeniv.linux.org.uk>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Jann Horn <jannh@google.com>, Kees Cook <keescook@chromium.org>, Florian Weimer <fweimer@redhat.com>, Oleg Nesterov <oleg@redhat.com>, David Howells <dhowells@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, Ley Foon Tan <lftan@altera.com>, "moderated list:NIOS2 ARCHITECTURE" <nios2-dev@lists.rocketboards.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+In-Reply-To: <20190701153237.1777-1-ebiggers@kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+To: linux-fscrypt@vger.kernel.org
+Cc: "Theodore Y . Ts'o" <tytso@mit.edu>, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-api@vger.kernel.org, Dave Chinner <david@fromorbit.com>, linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, linux-integrity@vger.kernel.org, linux-ext4@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Christoph Hellwig <hch@lst.de>, Victor Hsieh <victorhsieh@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 01, 2019 at 05:14:51PM +0200, Arnd Bergmann wrote:
-> On Fri, Jun 21, 2019 at 5:30 PM Christian Brauner <christian@brauner.io> wrote:
-> > On Fri, Jun 21, 2019 at 04:20:15PM +0200, Arnd Bergmann wrote:
-> > > On Fri, Jun 21, 2019 at 1:18 PM Christian Brauner <christian@brauner.io> wrote:
-> > Hm, if you believe that this is fine and want to "vouch" for it by
-> > whipping up a patch that replaces the wiring up done in [1] I'm happy to
-> > take it. :) Otherwise I'd feel more comfortable not adding all arches at
-> > once.
-> >
-> > [1]: https://git.kernel.org/pub/scm/linux/kernel/git/brauner/linux.git/log/?h=clone
-> 
-> Sorry for my late reply. I had actually looked at the implementations
-> in a little
-> more detail and I think you are right that adding these are better
-> left to the arch
-> maintainers in case of clone3.
+From: Eric Biggers <ebiggers@google.com>
 
-Perfect, thanks!
+fs-verity will be jointly maintained by Eric Biggers and Theodore Ts'o.
 
-Christian
+Reviewed-by: Theodore Ts'o <tytso@mit.edu>
+Reviewed-by: Jaegeuk Kim <jaegeuk@kernel.org>
+Signed-off-by: Eric Biggers <ebiggers@google.com>
+---
+ MAINTAINERS | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/MAINTAINERS b/MAINTAINERS
+index a6954776a37e..655065116f92 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -6505,6 +6505,18 @@ S:	Maintained
+ F:	fs/notify/
+ F:	include/linux/fsnotify*.h
+ 
++FSVERITY: READ-ONLY FILE-BASED AUTHENTICITY PROTECTION
++M:	Eric Biggers <ebiggers@kernel.org>
++M:	Theodore Y. Ts'o <tytso@mit.edu>
++L:	linux-fscrypt@vger.kernel.org
++Q:	https://patchwork.kernel.org/project/linux-fscrypt/list/
++T:	git git://git.kernel.org/pub/scm/fs/fscrypt/fscrypt.git fsverity
++S:	Supported
++F:	fs/verity/
++F:	include/linux/fsverity.h
++F:	include/uapi/linux/fsverity.h
++F:	Documentation/filesystems/fsverity.rst
++
+ FUJITSU LAPTOP EXTRAS
+ M:	Jonathan Woithe <jwoithe@just42.net>
+ L:	platform-driver-x86@vger.kernel.org
+-- 
+2.22.0
