@@ -1,67 +1,49 @@
-From: Chao Yu <yuchao0@huawei.com>
-Subject: Re: [PATCH v6 17/17] f2fs: add fs-verity support
-Date: Wed, 3 Jul 2019 09:25:44 +0800
-Message-ID: <b9b6d387-b893-18cc-b574-7775607ec5b3@huawei.com>
-References: <20190701153237.1777-1-ebiggers@kernel.org>
- <20190701153237.1777-18-ebiggers@kernel.org>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
+Date: Tue, 2 Jul 2019 11:24:35 -0700
+Message-ID: <201907021115.DCD56BBABB@keescook>
+References: <20190627201923.2589391-1-songliubraving@fb.com>
+ <20190627201923.2589391-2-songliubraving@fb.com>
+ <21894f45-70d8-dfca-8c02-044f776c5e05@kernel.org>
+ <3C595328-3ABE-4421-9772-8D41094A4F57@fb.com>
+ <CALCETrWBnH4Q43POU8cQ7YMjb9LioK28FDEQf7aHZbdf1eBZWg@mail.gmail.com>
+ <0DE7F23E-9CD2-4F03-82B5-835506B59056@fb.com>
+ <CALCETrWBWbNFJvsTCeUchu3BZJ3SH3dvtXLUB2EhnPrzFfsLNA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-In-Reply-To: <20190701153237.1777-18-ebiggers@kernel.org>
-Content-Language: en-US
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Eric Biggers <ebiggers@kernel.org>, linux-fscrypt@vger.kernel.org
-Cc: "Theodore Y . Ts'o" <tytso@mit.edu>, "Darrick J . Wong" <darrick.wong@oracle.com>, linux-api@vger.kernel.org, Dave Chinner <david@fromorbit.com>, linux-f2fs-devel@lists.sourceforge.net, linux-fsdevel@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, linux-integrity@vger.kernel.org, linux-ext4@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Christoph Hellwig <hch@lst.de>, Victor Hsieh <victorhsieh@google.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <netdev-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CALCETrWBWbNFJvsTCeUchu3BZJ3SH3dvtXLUB2EhnPrzFfsLNA@mail.gmail.com>
+Sender: netdev-owner@vger.kernel.org
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Song Liu <songliubraving@fb.com>, "linux-security@vger.kernel.org" <linux-security@vger.kernel.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 2019/7/1 23:32, Eric Biggers wrote:
-> From: Eric Biggers <ebiggers@google.com>
+On Mon, Jul 01, 2019 at 06:59:13PM -0700, Andy Lutomirski wrote:
+> I think I'm understanding your motivation.  You're not trying to make
+> bpf() generically usable without privilege -- you're trying to create
+> a way to allow certain users to access dangerous bpf functionality
+> within some limits.
 > 
-> Add fs-verity support to f2fs.  fs-verity is a filesystem feature that
-> enables transparent integrity protection and authentication of read-only
-> files.  It uses a dm-verity like mechanism at the file level: a Merkle
-> tree is used to verify any block in the file in log(filesize) time.  It
-> is implemented mainly by helper functions in fs/verity/.  See
-> Documentation/filesystems/fsverity.rst for the full documentation.
-> 
-> The f2fs support for fs-verity consists of:
-> 
-> - Adding a filesystem feature flag and an inode flag for fs-verity.
-> 
-> - Implementing the fsverity_operations to support enabling verity on an
->   inode and reading/writing the verity metadata.
-> 
-> - Updating ->readpages() to verify data as it's read from verity files
->   and to support reading verity metadata pages.
-> 
-> - Updating ->write_begin(), ->write_end(), and ->writepages() to support
->   writing verity metadata pages.
-> 
-> - Calling the fs-verity hooks for ->open(), ->setattr(), and ->ioctl().
-> 
-> Like ext4, f2fs stores the verity metadata (Merkle tree and
-> fsverity_descriptor) past the end of the file, starting at the first 64K
-> boundary beyond i_size.  This approach works because (a) verity files
-> are readonly, and (b) pages fully beyond i_size aren't visible to
-> userspace but can be read/written internally by f2fs with only some
-> relatively small changes to f2fs.  Extended attributes cannot be used
-> because (a) f2fs limits the total size of an inode's xattr entries to
-> 4096 bytes, which wouldn't be enough for even a single Merkle tree
-> block, and (b) f2fs encryption doesn't encrypt xattrs, yet the verity
-> metadata *must* be encrypted when the file is because it contains hashes
-> of the plaintext data.
-> 
-> Acked-by: Jaegeuk Kim <jaegeuk@kernel.org>
-> Signed-off-by: Eric Biggers <ebiggers@google.com>
+> That's a perfectly fine goal, but I think you're reinventing the
+> wheel, and the wheel you're reinventing is quite complicated and
+> already exists.  I think you should teach bpftool to be secure when
+> installed setuid root or with fscaps enabled and put your policy in
+> bpftool.  If you want to harden this a little bit, it would seem
+> entirely reasonable to add a new CAP_BPF_ADMIN and change some, but
+> not all, of the capable() checks to check CAP_BPF_ADMIN instead of the
+> capabilities that they currently check.
 
-Acked-by: Chao Yu <yuchao0@huawei.com>
+If finer grained controls are wanted, it does seem like the /dev/bpf
+path makes the most sense. open, request abilities, use fd. The open can
+be mediated by DAC and LSM. The request can be mediated by LSM. This
+provides a way to add policy at the LSM level and at the tool level.
+(i.e. For tool-level controls: leave LSM wide open, make /dev/bpf owned
+by "bpfadmin" and bpftool becomes setuid "bpfadmin". For fine-grained
+controls, leave /dev/bpf wide open and add policy to SELinux, etc.)
 
-Thanks,
+With only a new CAP, you don't get the fine-grained controls. (The
+"request abilities" part is the key there.)
+
+-- 
+Kees Cook
