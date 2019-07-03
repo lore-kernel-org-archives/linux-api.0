@@ -1,108 +1,80 @@
-From: Ian Kent <raven@themaw.net>
-Subject: Re: [PATCH 4/6] vfs: Allow mount information to be queried by
- fsinfo() [ver #15]
-Date: Wed, 03 Jul 2019 09:42:00 +0800
-Message-ID: <e9c60b25a1df6dfaec1f5613845695d6416bea0d.camel@themaw.net>
-References: <156173681842.14728.9331700785061885270.stgit@warthog.procyon.org.uk>
-         <156173685496.14728.9606180227161368035.stgit@warthog.procyon.org.uk>
-         <8c70abf248d5ac07f334730af70d64235185b109.camel@themaw.net>
-         <2daf229272884deaf139be510f5842f0689c18a6.camel@themaw.net>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH 8/9] usb: Add USB subsystem notifications [ver #5]
+Date: Wed, 3 Jul 2019 19:07:38 +0200
+Message-ID: <20190703170738.GA24672@kroah.com>
+References: <156173690158.15137.3985163001079120218.stgit@warthog.procyon.org.uk>
+ <156173698939.15137.11150923486478934112.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <2daf229272884deaf139be510f5842f0689c18a6.camel@themaw.net>
+Content-Disposition: inline
+In-Reply-To: <156173698939.15137.11150923486478934112.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: christian@brauner.io, David Howells <dhowells@redhat.com>, viro@zeniv.linux.org.uk
-Cc: mszeredi@redhat.com, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
+To: David Howells <dhowells@redhat.com>
+Cc: viro@zeniv.linux.org.uk, Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 2019-07-03 at 09:24 +0800, Ian Kent wrote:
-> On Wed, 2019-07-03 at 09:09 +0800, Ian Kent wrote:
-> > Hi Christian,
-> > 
-> > About the propagation attributes you mentioned ...
+On Fri, Jun 28, 2019 at 04:49:49PM +0100, David Howells wrote:
+> Add a USB subsystem notification mechanism whereby notifications about
+> hardware events such as device connection, disconnection, reset and I/O
+> errors, can be reported to a monitoring process asynchronously.
 > 
-> Umm ... how did you work out if a mount is unbindable from proc
-> mountinfo?
+> Firstly, an event queue needs to be created:
 > 
-> I didn't notice anything that could be used for that when I was
-> looking at this.
-
-Oh wait, fs/proc_namespace.c:show_mountinfo() has:
-        if (IS_MNT_UNBINDABLE(r))
-                seq_puts(m, " unbindable");
-
-I missed that, probably because I didn't have any unbindable mounts
-at the time I was looking at it, oops!
-
-That's missing and probably should be added too.
-
+> 	fd = open("/dev/event_queue", O_RDWR);
+> 	ioctl(fd, IOC_WATCH_QUEUE_SET_SIZE, page_size << n);
 > 
-> > On Fri, 2019-06-28 at 16:47 +0100, David Howells wrote:
-> > 
-> > snip ...
-> > 
-> > > +
-> > > +#ifdef CONFIG_FSINFO
-> > > +int fsinfo_generic_mount_info(struct path *path, struct fsinfo_kparams
-> > > *params)
-> > > +{
-> > > +	struct fsinfo_mount_info *p = params->buffer;
-> > > +	struct super_block *sb;
-> > > +	struct mount *m;
-> > > +	struct path root;
-> > > +	unsigned int flags;
-> > > +
-> > > +	if (!path->mnt)
-> > > +		return -ENODATA;
-> > > +
-> > > +	m = real_mount(path->mnt);
-> > > +	sb = m->mnt.mnt_sb;
-> > > +
-> > > +	p->f_sb_id		= sb->s_unique_id;
-> > > +	p->mnt_id		= m->mnt_id;
-> > > +	p->parent_id		= m->mnt_parent->mnt_id;
-> > > +	p->change_counter	= atomic_read(&m->mnt_change_counter);
-> > > +
-> > > +	get_fs_root(current->fs, &root);
-> > > +	if (path->mnt == root.mnt) {
-> > > +		p->parent_id = p->mnt_id;
-> > > +	} else {
-> > > +		rcu_read_lock();
-> > > +		if (!are_paths_connected(&root, path))
-> > > +			p->parent_id = p->mnt_id;
-> > > +		rcu_read_unlock();
-> > > +	}
-> > > +	if (IS_MNT_SHARED(m))
-> > > +		p->group_id = m->mnt_group_id;
-> > > +	if (IS_MNT_SLAVE(m)) {
-> > > +		int master = m->mnt_master->mnt_group_id;
-> > > +		int dom = get_dominating_id(m, &root);
-> > > +		p->master_id = master;
-> > > +		if (dom && dom != master)
-> > > +			p->from_id = dom;
-> > 
-> > This provides information about mount propagation (well mostly).
-> > 
-> > My understanding of this was that:
-> > "If a mount is propagation private (or slave) the group_id will
-> > be zero otherwise it's propagation shared and it's group id will
-> > be non-zero.
-> > 
-> > If a mount is propagation slave and propagation peers exist then
-> > the mount field mnt_master will be non-NULL. Then mnt_master
-> > (slave's master) can be used to set master_id. If the group id
-> > of the propagation source is not that of the master then set
-> > the from_id group as well."
-> > 
-> > This parallels the way in which these values are reported in
-> > the proc pseudo file system.
-> > 
-> > Perhaps adding flags as well as setting the fields would be
-> > useful too, since interpreting the meaning of the structure
-> > fields isn't obvious, ;)
-> > 
-> > David, Al, thoughts?
-> > 
-> > Ian
+> then a notification can be set up to report USB notifications via that
+> queue:
+> 
+> 	struct watch_notification_filter filter = {
+> 		.nr_filters = 1,
+> 		.filters = {
+> 			[0] = {
+> 				.type = WATCH_TYPE_USB_NOTIFY,
+> 				.subtype_filter[0] = UINT_MAX;
+> 			},
+> 		},
+> 	};
+> 	ioctl(fd, IOC_WATCH_QUEUE_SET_FILTER, &filter);
+> 	notify_devices(fd, 12);
+> 
+> After that, records will be placed into the queue when events occur on a
+> USB device or bus.  Records are of the following format:
+> 
+> 	struct usb_notification {
+> 		struct watch_notification watch;
+> 		__u32	error;
+> 		__u32	reserved;
+> 		__u8	name_len;
+> 		__u8	name[0];
+> 	} *n;
+> 
+> Where:
+> 
+> 	n->watch.type will be WATCH_TYPE_USB_NOTIFY
+> 
+> 	n->watch.subtype will be the type of notification, such as
+> 	NOTIFY_USB_DEVICE_ADD.
+> 
+> 	n->watch.info & WATCH_INFO_LENGTH will indicate the length of the
+> 	record.
+> 
+> 	n->watch.info & WATCH_INFO_ID will be the second argument to
+> 	device_notify(), shifted.
+> 
+> 	n->error and n->reserved are intended to convey information such as
+> 	error codes, but are currently not used
+> 
+> 	n->name_len and n->name convey the USB device name as an
+> 	unterminated string.  This may be truncated - it is currently
+> 	limited to a maximum 63 chars.
+> 
+> Note that it is permissible for event records to be of variable length -
+> or, at least, the length may be dependent on the subtype.
+> 
+> Signed-off-by: David Howells <dhowells@redhat.com>
+> cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+> cc: linux-usb@vger.kernel.org
+
+Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
