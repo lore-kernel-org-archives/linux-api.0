@@ -1,49 +1,108 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
-Date: Tue, 2 Jul 2019 11:24:35 -0700
-Message-ID: <201907021115.DCD56BBABB@keescook>
-References: <20190627201923.2589391-1-songliubraving@fb.com>
- <20190627201923.2589391-2-songliubraving@fb.com>
- <21894f45-70d8-dfca-8c02-044f776c5e05@kernel.org>
- <3C595328-3ABE-4421-9772-8D41094A4F57@fb.com>
- <CALCETrWBnH4Q43POU8cQ7YMjb9LioK28FDEQf7aHZbdf1eBZWg@mail.gmail.com>
- <0DE7F23E-9CD2-4F03-82B5-835506B59056@fb.com>
- <CALCETrWBWbNFJvsTCeUchu3BZJ3SH3dvtXLUB2EhnPrzFfsLNA@mail.gmail.com>
+From: Ian Kent <raven@themaw.net>
+Subject: Re: [PATCH 4/6] vfs: Allow mount information to be queried by
+ fsinfo() [ver #15]
+Date: Wed, 03 Jul 2019 09:42:00 +0800
+Message-ID: <e9c60b25a1df6dfaec1f5613845695d6416bea0d.camel@themaw.net>
+References: <156173681842.14728.9331700785061885270.stgit@warthog.procyon.org.uk>
+         <156173685496.14728.9606180227161368035.stgit@warthog.procyon.org.uk>
+         <8c70abf248d5ac07f334730af70d64235185b109.camel@themaw.net>
+         <2daf229272884deaf139be510f5842f0689c18a6.camel@themaw.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <netdev-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrWBWbNFJvsTCeUchu3BZJ3SH3dvtXLUB2EhnPrzFfsLNA@mail.gmail.com>
-Sender: netdev-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Song Liu <songliubraving@fb.com>, "linux-security@vger.kernel.org" <linux-security@vger.kernel.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <2daf229272884deaf139be510f5842f0689c18a6.camel@themaw.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: christian@brauner.io, David Howells <dhowells@redhat.com>, viro@zeniv.linux.org.uk
+Cc: mszeredi@redhat.com, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 01, 2019 at 06:59:13PM -0700, Andy Lutomirski wrote:
-> I think I'm understanding your motivation.  You're not trying to make
-> bpf() generically usable without privilege -- you're trying to create
-> a way to allow certain users to access dangerous bpf functionality
-> within some limits.
+On Wed, 2019-07-03 at 09:24 +0800, Ian Kent wrote:
+> On Wed, 2019-07-03 at 09:09 +0800, Ian Kent wrote:
+> > Hi Christian,
+> > 
+> > About the propagation attributes you mentioned ...
 > 
-> That's a perfectly fine goal, but I think you're reinventing the
-> wheel, and the wheel you're reinventing is quite complicated and
-> already exists.  I think you should teach bpftool to be secure when
-> installed setuid root or with fscaps enabled and put your policy in
-> bpftool.  If you want to harden this a little bit, it would seem
-> entirely reasonable to add a new CAP_BPF_ADMIN and change some, but
-> not all, of the capable() checks to check CAP_BPF_ADMIN instead of the
-> capabilities that they currently check.
+> Umm ... how did you work out if a mount is unbindable from proc
+> mountinfo?
+> 
+> I didn't notice anything that could be used for that when I was
+> looking at this.
 
-If finer grained controls are wanted, it does seem like the /dev/bpf
-path makes the most sense. open, request abilities, use fd. The open can
-be mediated by DAC and LSM. The request can be mediated by LSM. This
-provides a way to add policy at the LSM level and at the tool level.
-(i.e. For tool-level controls: leave LSM wide open, make /dev/bpf owned
-by "bpfadmin" and bpftool becomes setuid "bpfadmin". For fine-grained
-controls, leave /dev/bpf wide open and add policy to SELinux, etc.)
+Oh wait, fs/proc_namespace.c:show_mountinfo() has:
+        if (IS_MNT_UNBINDABLE(r))
+                seq_puts(m, " unbindable");
 
-With only a new CAP, you don't get the fine-grained controls. (The
-"request abilities" part is the key there.)
+I missed that, probably because I didn't have any unbindable mounts
+at the time I was looking at it, oops!
 
--- 
-Kees Cook
+That's missing and probably should be added too.
+
+> 
+> > On Fri, 2019-06-28 at 16:47 +0100, David Howells wrote:
+> > 
+> > snip ...
+> > 
+> > > +
+> > > +#ifdef CONFIG_FSINFO
+> > > +int fsinfo_generic_mount_info(struct path *path, struct fsinfo_kparams
+> > > *params)
+> > > +{
+> > > +	struct fsinfo_mount_info *p = params->buffer;
+> > > +	struct super_block *sb;
+> > > +	struct mount *m;
+> > > +	struct path root;
+> > > +	unsigned int flags;
+> > > +
+> > > +	if (!path->mnt)
+> > > +		return -ENODATA;
+> > > +
+> > > +	m = real_mount(path->mnt);
+> > > +	sb = m->mnt.mnt_sb;
+> > > +
+> > > +	p->f_sb_id		= sb->s_unique_id;
+> > > +	p->mnt_id		= m->mnt_id;
+> > > +	p->parent_id		= m->mnt_parent->mnt_id;
+> > > +	p->change_counter	= atomic_read(&m->mnt_change_counter);
+> > > +
+> > > +	get_fs_root(current->fs, &root);
+> > > +	if (path->mnt == root.mnt) {
+> > > +		p->parent_id = p->mnt_id;
+> > > +	} else {
+> > > +		rcu_read_lock();
+> > > +		if (!are_paths_connected(&root, path))
+> > > +			p->parent_id = p->mnt_id;
+> > > +		rcu_read_unlock();
+> > > +	}
+> > > +	if (IS_MNT_SHARED(m))
+> > > +		p->group_id = m->mnt_group_id;
+> > > +	if (IS_MNT_SLAVE(m)) {
+> > > +		int master = m->mnt_master->mnt_group_id;
+> > > +		int dom = get_dominating_id(m, &root);
+> > > +		p->master_id = master;
+> > > +		if (dom && dom != master)
+> > > +			p->from_id = dom;
+> > 
+> > This provides information about mount propagation (well mostly).
+> > 
+> > My understanding of this was that:
+> > "If a mount is propagation private (or slave) the group_id will
+> > be zero otherwise it's propagation shared and it's group id will
+> > be non-zero.
+> > 
+> > If a mount is propagation slave and propagation peers exist then
+> > the mount field mnt_master will be non-NULL. Then mnt_master
+> > (slave's master) can be used to set master_id. If the group id
+> > of the propagation source is not that of the master then set
+> > the from_id group as well."
+> > 
+> > This parallels the way in which these values are reported in
+> > the proc pseudo file system.
+> > 
+> > Perhaps adding flags as well as setting the fields would be
+> > useful too, since interpreting the meaning of the structure
+> > fields isn't obvious, ;)
+> > 
+> > David, Al, thoughts?
+> > 
+> > Ian
