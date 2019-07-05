@@ -1,154 +1,35 @@
-From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v2 03/11] fpga: dfl: pci: enable SRIOV support.
-Date: Fri,  5 Jul 2019 08:23:50 +0800
-Message-ID: <1562286238-11413-4-git-send-email-hao.wu@intel.com>
-References: <1562286238-11413-1-git-send-email-hao.wu@intel.com>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH 6/9] Add a general, global device notification watch list
+ [ver #5]
+Date: Fri, 5 Jul 2019 07:17:33 +0200
+Message-ID: <20190705051733.GA15821@kroah.com>
+References: <20190703190846.GA15663@kroah.com>
+ <156173690158.15137.3985163001079120218.stgit@warthog.procyon.org.uk>
+ <156173697086.15137.9549379251509621554.stgit@warthog.procyon.org.uk>
+ <10295.1562256260@warthog.procyon.org.uk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1562286238-11413-1-git-send-email-hao.wu@intel.com>
+Content-Disposition: inline
+In-Reply-To: <10295.1562256260@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: gregkh@linuxfoundation.org, mdf@kernel.org, linux-fpga@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, atull@kernel.org, Wu Hao <hao.wu@intel.com>, Zhang Yi Z <yi.z.zhang@intel.com>, Xu Yilun <yilun.xu@intel.com>
+To: David Howells <dhowells@redhat.com>
+Cc: viro@zeniv.linux.org.uk, Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This patch enables the standard sriov support. It allows user to
-enable SRIOV (and VFs), then user could pass through accelerators
-(VFs) into virtual machine or use VFs directly in host.
+On Thu, Jul 04, 2019 at 05:04:20PM +0100, David Howells wrote:
+> Greg Kroah-Hartman <gregkh@linuxfoundation.org> wrote:
+> 
+> > Don't we need a manpage and a kselftest for it?
+> 
+> I've got part of a manpage, but it needs more work.
+> 
+> How do you do a kselftest for this when it does nothing unless hardware events
+> happen?
 
-Signed-off-by: Zhang Yi Z <yi.z.zhang@intel.com>
-Signed-off-by: Xu Yilun <yilun.xu@intel.com>
-Signed-off-by: Wu Hao <hao.wu@intel.com>
-Acked-by: Alan Tull <atull@kernel.org>
-Acked-by: Moritz Fischer <mdf@kernel.org>
-Signed-off-by: Moritz Fischer <mdf@kernel.org>
----
-v2: remove DRV/MODULE_VERSION modifications.
----
- drivers/fpga/dfl-pci.c | 39 +++++++++++++++++++++++++++++++++++++++
- drivers/fpga/dfl.c     | 41 +++++++++++++++++++++++++++++++++++++++++
- drivers/fpga/dfl.h     |  1 +
- 3 files changed, 81 insertions(+)
+Hm, good point, but there should be some way to test this to verify it
+works.  Maybe for the other types of events?
 
-diff --git a/drivers/fpga/dfl-pci.c b/drivers/fpga/dfl-pci.c
-index 66b5720..0e65d81 100644
---- a/drivers/fpga/dfl-pci.c
-+++ b/drivers/fpga/dfl-pci.c
-@@ -223,8 +223,46 @@ int cci_pci_probe(struct pci_dev *pcidev, const struct pci_device_id *pcidevid)
- 	return ret;
- }
- 
-+static int cci_pci_sriov_configure(struct pci_dev *pcidev, int num_vfs)
-+{
-+	struct cci_drvdata *drvdata = pci_get_drvdata(pcidev);
-+	struct dfl_fpga_cdev *cdev = drvdata->cdev;
-+	int ret = 0;
-+
-+	mutex_lock(&cdev->lock);
-+
-+	if (!num_vfs) {
-+		/*
-+		 * disable SRIOV and then put released ports back to default
-+		 * PF access mode.
-+		 */
-+		pci_disable_sriov(pcidev);
-+
-+		__dfl_fpga_cdev_config_port_vf(cdev, false);
-+
-+	} else if (cdev->released_port_num == num_vfs) {
-+		/*
-+		 * only enable SRIOV if cdev has matched released ports, put
-+		 * released ports into VF access mode firstly.
-+		 */
-+		__dfl_fpga_cdev_config_port_vf(cdev, true);
-+
-+		ret = pci_enable_sriov(pcidev, num_vfs);
-+		if (ret)
-+			__dfl_fpga_cdev_config_port_vf(cdev, false);
-+	} else {
-+		ret = -EINVAL;
-+	}
-+
-+	mutex_unlock(&cdev->lock);
-+	return ret;
-+}
-+
- static void cci_pci_remove(struct pci_dev *pcidev)
- {
-+	if (dev_is_pf(&pcidev->dev))
-+		cci_pci_sriov_configure(pcidev, 0);
-+
- 	cci_remove_feature_devs(pcidev);
- 	pci_disable_pcie_error_reporting(pcidev);
- }
-@@ -234,6 +272,7 @@ static void cci_pci_remove(struct pci_dev *pcidev)
- 	.id_table = cci_pcie_id_tbl,
- 	.probe = cci_pci_probe,
- 	.remove = cci_pci_remove,
-+	.sriov_configure = cci_pci_sriov_configure,
- };
- 
- module_pci_driver(cci_pci_driver);
-diff --git a/drivers/fpga/dfl.c b/drivers/fpga/dfl.c
-index e04ed45..c3a8e1d 100644
---- a/drivers/fpga/dfl.c
-+++ b/drivers/fpga/dfl.c
-@@ -1112,6 +1112,47 @@ int dfl_fpga_cdev_config_port(struct dfl_fpga_cdev *cdev, int port_id,
- }
- EXPORT_SYMBOL_GPL(dfl_fpga_cdev_config_port);
- 
-+static void config_port_vf(struct device *fme_dev, int port_id, bool is_vf)
-+{
-+	void __iomem *base;
-+	u64 v;
-+
-+	base = dfl_get_feature_ioaddr_by_id(fme_dev, FME_FEATURE_ID_HEADER);
-+
-+	v = readq(base + FME_HDR_PORT_OFST(port_id));
-+
-+	v &= ~FME_PORT_OFST_ACC_CTRL;
-+	v |= FIELD_PREP(FME_PORT_OFST_ACC_CTRL,
-+			is_vf ? FME_PORT_OFST_ACC_VF : FME_PORT_OFST_ACC_PF);
-+
-+	writeq(v, base + FME_HDR_PORT_OFST(port_id));
-+}
-+
-+/**
-+ * __dfl_fpga_cdev_config_port_vf - configure port to VF access mode
-+ *
-+ * @cdev: parent container device.
-+ * @if_vf: true for VF access mode, and false for PF access mode
-+ *
-+ * Return: 0 on success, negative error code otherwise.
-+ *
-+ * This function is needed in sriov configuration routine. It could be used to
-+ * configures the released ports access mode to VF or PF.
-+ * The caller needs to hold lock for protection.
-+ */
-+void __dfl_fpga_cdev_config_port_vf(struct dfl_fpga_cdev *cdev, bool is_vf)
-+{
-+	struct dfl_feature_platform_data *pdata;
-+
-+	list_for_each_entry(pdata, &cdev->port_dev_list, node) {
-+		if (device_is_registered(&pdata->dev->dev))
-+			continue;
-+
-+		config_port_vf(cdev->fme_dev, pdata->id, is_vf);
-+	}
-+}
-+EXPORT_SYMBOL_GPL(__dfl_fpga_cdev_config_port_vf);
-+
- static int __init dfl_fpga_init(void)
- {
- 	int ret;
-diff --git a/drivers/fpga/dfl.h b/drivers/fpga/dfl.h
-index d700ee9..061ccd4 100644
---- a/drivers/fpga/dfl.h
-+++ b/drivers/fpga/dfl.h
-@@ -421,5 +421,6 @@ struct platform_device *
- 
- int dfl_fpga_cdev_config_port(struct dfl_fpga_cdev *cdev,
- 			      int port_id, bool release);
-+void __dfl_fpga_cdev_config_port_vf(struct dfl_fpga_cdev *cdev, bool is_vf);
- 
- #endif /* __FPGA_DFL_H */
--- 
-1.8.3.1
+thanks,
+
+greg k-h
