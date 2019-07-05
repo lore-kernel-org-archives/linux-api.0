@@ -1,70 +1,60 @@
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [RFC PATCH] binfmt_elf: Extract .note.gnu.property from an ELF
- file
-Date: Thu, 4 Jul 2019 21:50:25 +0200
-Message-ID: <20190704195024.GA4013@amd>
-References: <20190628172203.797-1-yu-cheng.yu@intel.com>
- <CAG48ez0rHHfcRgiVZf5FP0YOzxsXigvpg6ci790cmiN6PBwkhQ@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-        protocol="application/pgp-signature"; boundary="xHFwDpU9dbj6ez1V"
+From: Wu Hao <hao.wu@intel.com>
+Subject: [PATCH v2 00/11] FPGA DFL updates
+Date: Fri,  5 Jul 2019 08:23:47 +0800
+Message-ID: <1562286238-11413-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAG48ez0rHHfcRgiVZf5FP0YOzxsXigvpg6ci790cmiN6PBwkhQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>, the arch/x86 maintainers <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, kernel list <linux-kernel@vger.kernel.org>, linux-doc@vger.kernel.org, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@c>
+To: gregkh@linuxfoundation.org, mdf@kernel.org, linux-fpga@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, atull@kernel.org, Wu Hao <hao.wu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
+Hi Greg / Moritz
 
---xHFwDpU9dbj6ez1V
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+This is v2 patchset which adds more features to FPGA DFL. This patchset
+is made on top of patch[1] and char-misc-next tree. Documentation patch
+for DFL is dropped from this patchset, and will resubmit it later to
+avoid conflict.
 
-Hi!
+Main changes from v1:
+  - remove DRV/MODULE_VERSION modifications. (patch #1, #3, #4, #6)
+  - remove argsz from new ioctls. (patch #2)
+  - replace sysfs_create/remove_* with device_add/remove_* for sysfs entries.
+    (patch #5, #8, #11)
 
+[1] [PATCH] fpga: dfl: use driver core functions, not sysfs ones.
+    https://lkml.org/lkml/2019/7/4/36
 
-> > +static int scan(u8 *buf, u32 buf_size, int item_size, test_item_fn tes=
-t_item,
-> > +               next_item_fn next_item, u32 *arg, u32 type, u32 *pos)
-> > +{
-> > +       int found =3D 0;
-> > +       u8 *p, *max;
-> > +
-> > +       max =3D buf + buf_size;
-> > +       if (max < buf)
-> > +               return 0;
->=20
-> How can this ever legitimately happen? If it can't, perhaps you meant
-> to put a WARN_ON_ONCE() or something like that here?
-> Also, computing out-of-bounds pointers is UB (section 6.5.6 of C99:
-> "If both the pointer operand and the result point to elements of the
-> same array object, or one past the last element of the array object,
-> the evaluation shall not produce an overflow; otherwise, the behavior
-> is undefined."), and if the addition makes the pointer wrap, that's
-> certainly out of bounds; so I don't think this condition can trigger
-> without UB.
+Wu Hao (11):
+  fpga: dfl: fme: support 512bit data width PR
+  fpga: dfl: fme: add DFL_FPGA_FME_PORT_RELEASE/ASSIGN ioctl support.
+  fpga: dfl: pci: enable SRIOV support.
+  fpga: dfl: afu: add AFU state related sysfs interfaces
+  fpga: dfl: afu: add userclock sysfs interfaces.
+  fpga: dfl: add id_table for dfl private feature driver
+  fpga: dfl: afu: export __port_enable/disable function.
+  fpga: dfl: afu: add error reporting support.
+  fpga: dfl: afu: add STP (SignalTap) support
+  fpga: dfl: fme: add capability sysfs interfaces
+  fpga: dfl: fme: add global error reporting support
 
-Kernel assumes sane compiler. We pass flags to get it... C99 does not
-quite apply here.
-								Pavel
-							=09
---=20
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
-g.html
+ Documentation/ABI/testing/sysfs-platform-dfl-fme  |  98 ++++++
+ Documentation/ABI/testing/sysfs-platform-dfl-port | 104 ++++++
+ drivers/fpga/Makefile                             |   3 +-
+ drivers/fpga/dfl-afu-error.c                      | 225 +++++++++++++
+ drivers/fpga/dfl-afu-main.c                       | 328 +++++++++++++++++-
+ drivers/fpga/dfl-afu.h                            |   7 +
+ drivers/fpga/dfl-fme-error.c                      | 385 ++++++++++++++++++++++
+ drivers/fpga/dfl-fme-main.c                       |  93 +++++-
+ drivers/fpga/dfl-fme-mgr.c                        | 110 ++++++-
+ drivers/fpga/dfl-fme-pr.c                         |  50 ++-
+ drivers/fpga/dfl-fme.h                            |   7 +-
+ drivers/fpga/dfl-pci.c                            |  39 +++
+ drivers/fpga/dfl.c                                | 166 +++++++++-
+ drivers/fpga/dfl.h                                |  54 ++-
+ include/uapi/linux/fpga-dfl.h                     |  19 ++
+ 15 files changed, 1617 insertions(+), 71 deletions(-)
+ create mode 100644 drivers/fpga/dfl-afu-error.c
+ create mode 100644 drivers/fpga/dfl-fme-error.c
 
---xHFwDpU9dbj6ez1V
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iEYEARECAAYFAl0eWIAACgkQMOfwapXb+vLSMgCcC98TTx9pMIkokJGKGUu3i6ME
-o+AAn3TIA7Pjz5wBcK19BycwV2+shMN6
-=83sj
------END PGP SIGNATURE-----
-
---xHFwDpU9dbj6ez1V--
+-- 
+1.8.3.1
