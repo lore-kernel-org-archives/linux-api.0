@@ -1,186 +1,141 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [PATCH for 5.2] rseq/selftests: Fix Thumb mode build failure on
- arm32
-Date: Mon, 8 Jul 2019 13:58:39 -0400 (EDT)
-Message-ID: <1154710388.12906.1562608719838.JavaMail.zimbra@efficios.com>
-References: <20190630135613.19897-1-mathieu.desnoyers@efficios.com>
+From: Richard Guy Briggs <rgb@redhat.com>
+Subject: Re: [PATCH ghak90 V6 02/10] audit: add container id
+Date: Mon, 8 Jul 2019 14:05:58 -0400
+Message-ID: <20190708180558.5bar6ripag3sdadl@madcap2.tricolour.ca>
+References: <cover.1554732921.git.rgb@redhat.com>
+ <9edad39c40671fb53f28d76862304cc2647029c6.1554732921.git.rgb@redhat.com>
+ <20190529145742.GA8959@cisco>
+ <CAHC9VhR4fudQanvZGYWMvCf7k2CU3q7e7n1Pi7hzC3v_zpVEdw@mail.gmail.com>
+ <20190529153427.GB8959@cisco>
+ <CAHC9VhSF3AjErX37+eeusJ7+XRw8yuPsmqBTRwc9EVoRBh_3Tw@mail.gmail.com>
+ <20190529222835.GD8959@cisco>
+ <CAHC9VhRS66VGtug3fq3RTGHDvfGmBJG6yRJ+iMxm3cxnNF-zJw@mail.gmail.com>
+ <20190530170913.GA16722@mail.hallyn.com>
+ <CAHC9VhThLiQzGYRUWmSuVfOC6QCDmA75BDB7Eg7V8HX4x7ymQg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190630135613.19897-1-mathieu.desnoyers@efficios.com>
+Content-Disposition: inline
+In-Reply-To: <CAHC9VhThLiQzGYRUWmSuVfOC6QCDmA75BDB7Eg7V8HX4x7ymQg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: shuah <shuah@kernel.org>, Will Deacon <will.deacon@arm.com>, Linus Torvalds <torvalds@linux-foundation.org>, stable <stable@vger.kernel.org>
-Cc: linux-kernel <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Joel Fernandes <joelaf@google.com>, Catalin Marinas <catalin.marinas@arm.com>, Dave Watson <davejwatson@fb.com>, Andi Kleen <andi@firstfloor.org>, linux-kselftest <linux-kselftest@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Chris Lameter <cl@linux.com>, Russell King <linux@arm.linux.org.uk>, Michael Kerrisk <mtk.manpages@gmail.com>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Paul Turner <pjt@google.com>, Boqun Feng <boqun.feng@gmail.com>, Josh Triplett <josh@joshtriplett.org>, rostedt <rostedt@goodmis.org>, Ben Maurer <bmaurer@fb.com>, linux-api <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>
+To: Paul Moore <paul@paul-moore.com>
+Cc: "Serge E. Hallyn" <serge@hallyn.com>, Tycho Andersen <tycho@tycho.ws>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, ebiederm@xmission.com, nhorman@tuxdriver.com
 List-Id: linux-api@vger.kernel.org
 
------ On Jun 30, 2019, at 9:56 AM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
+On 2019-05-30 15:29, Paul Moore wrote:
+> On Thu, May 30, 2019 at 1:09 PM Serge E. Hallyn <serge@hallyn.com> wrote:
+> > On Wed, May 29, 2019 at 06:39:48PM -0400, Paul Moore wrote:
+> > > On Wed, May 29, 2019 at 6:28 PM Tycho Andersen <tycho@tycho.ws> wrote:
+> > > > On Wed, May 29, 2019 at 12:03:58PM -0400, Paul Moore wrote:
+> > > > > On Wed, May 29, 2019 at 11:34 AM Tycho Andersen <tycho@tycho.ws> wrote:
+> > > > > > On Wed, May 29, 2019 at 11:29:05AM -0400, Paul Moore wrote:
+> > > > > > > On Wed, May 29, 2019 at 10:57 AM Tycho Andersen <tycho@tycho.ws> wrote:
+> > > > > > > > On Mon, Apr 08, 2019 at 11:39:09PM -0400, Richard Guy Briggs wrote:
+> 
+> ...
+> 
+> > > > > > > The current thinking
+> > > > > > > is that you would only change the audit container ID from one
+> > > > > > > set/inherited value to another if you were nesting containers, in
+> > > > > > > which case the nested container orchestrator would need to be granted
+> > > > > > > CAP_AUDIT_CONTROL (which everyone to date seems to agree is a workable
+> > > > > > > compromise).
+> > > >
+> > > > won't work in user namespaced containers, because they will never be
+> > > > capable(CAP_AUDIT_CONTROL); so I don't think this will work for
+> > > > nesting as is. But maybe nobody cares :)
+> > >
+> > > That's fun :)
+> > >
+> > > To be honest, I've never been a big fan of supporting nested
+> > > containers from an audit perspective, so I'm not really too upset
+> > > about this.  The k8s/cri-o folks seem okay with this, or at least I
+> > > haven't heard any objections; lxc folks, what do you have to say?
+> >
+> > I actually thought the answer to this (when last I looked, "some time" ago)
+> > was that userspace should track an audit message saying "task X in
+> > container Y is changing its auditid to Z", and then decide to also track Z.
+> > This should be doable, but a lot of extra work in userspace.
+> >
+> > Per-userns containerids would also work.  So task X1 is in containerid
+> > 1 on the host and creates a new task Y in new userns;  it continues to
+> > be reported in init_user_ns as containerid 1 forever;  but in its own
+> > userns it can request to be known as some other containerid.  Audit
+> > socks would be per-userns, allowing root in a container to watch for
+> > audit events in its own (and descendent) namespaces.
+> >
+> > But again I'm sure we've gone over all this in the last few years.
+> >
+> > I suppose we can look at this as a "first step", and talk about
+> > making it user-ns-nestable later.  But agreed it's not useful in a
+> > lot of situations as is.
+> 
+> [REMINDER: It is an "*audit* container ID" and not a general
+> "container ID" ;)  Smiley aside, I'm not kidding about that part.]
+> 
+> I'm not interested in supporting/merging something that isn't useful;
+> if this doesn't work for your use case then we need to figure out what
+> would work.  It sounds like nested containers are much more common in
+> the lxc world, can you elaborate a bit more on this?
+> 
+> As far as the possible solutions you mention above, I'm not sure I
+> like the per-userns audit container IDs, I'd much rather just emit the
+> necessary tracking information via the audit record stream and let the
+> log analysis tools figure it out.  However, the bigger question is how
+> to limit (re)setting the audit container ID when you are in a non-init
+> userns.  For reasons already mentioned, using capable() is a non
+> starter for everything but the initial userns, and using ns_capable()
+> is equally poor as it essentially allows any userns the ability to
+> munge it's audit container ID (obviously not good).  It appears we
+> need a different method for controlling access to the audit container
+> ID.
 
-> Using ".arm .inst" for the arm signature introduces build issues for
-> programs compiled in Thumb mode because the assembler stays in the
-> arm mode for the rest of the inline assembly. Revert to using a ".word"
-> to express the signature as data instead.
-> 
-> The choice of signature is a valid trap instruction on arm32 little
-> endian, where both code and data are little endian.
-> 
-> ARMv6+ big endian (BE8) generates mixed endianness code vs data:
-> little-endian code and big-endian data. The data value of the signature
-> needs to have its byte order reversed to generate the trap instruction.
-> 
-> Prior to ARMv6, -mbig-endian generates big-endian code and data
-> (which match), so the endianness of the data representation of the
-> signature should not be reversed. However, the choice between BE32
-> and BE8 is done by the linker, so we cannot know whether code and
-> data endianness will be mixed before the linker is invoked. So rather
-> than try to play tricks with the linker, the rseq signature is simply
-> data (not a trap instruction) prior to ARMv6 on big endian. This is
-> why the signature is expressed as data (.word) rather than as
-> instruction (.inst) in assembler.
-> 
-> Because a ".word" is used to emit the signature, it will be interpreted
-> as a literal pool by a disassembler, not as an actual instruction.
-> Considering that the signature is not meant to be executed except in
-> scenarios where the program execution is completely bogus, this should
-> not be an issue.
+We're not quite ready yet for multiple audit daemons and possibly not
+yet for audit namespaces, but this is starting to look a lot like the
+latter.
 
-Now that 5.2 is out before this patch has been merged, can we please
-integrate this patch through the kernel selftests or ARM tree so it
-can be merged into the stable 5.2 branch ?
+If we can't trust ns_capable() then why are we passing on
+CAP_AUDIT_CONTROL?  It is being passed down and not stripped purposely
+by the orchestrator/engine.  If ns_capable() isn't inherited how is it
+gained otherwise?  Can it be inserted by cotainer image?  I think the
+answer is "no".  Either we trust ns_capable() or we have audit
+namespaces (recommend based on user namespace) (or both).
 
-Thanks
+At this point I would say we are at an impasse unless we trust
+ns_capable() or we implement audit namespaces.
 
-Mathieu
+I don't think another mechanism to trust nested orchestrators/engines
+will buy us anything.
 
+Am I missing something?
 
+> Punting this to a LSM hook is an obvious thing to do, and something we
+> might want to do anyway, but currently audit doesn't rely on the LSM
+> for proper/safe operation and I'm not sure I want to change that now.
 > 
-> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-> Acked-by: Will Deacon <will.deacon@arm.com>
-> CC: Peter Zijlstra <peterz@infradead.org>
-> CC: Thomas Gleixner <tglx@linutronix.de>
-> CC: Joel Fernandes <joelaf@google.com>
-> CC: Catalin Marinas <catalin.marinas@arm.com>
-> CC: Dave Watson <davejwatson@fb.com>
-> CC: Will Deacon <will.deacon@arm.com>
-> CC: Shuah Khan <shuah@kernel.org>
-> CC: Andi Kleen <andi@firstfloor.org>
-> CC: linux-kselftest@vger.kernel.org
-> CC: "H . Peter Anvin" <hpa@zytor.com>
-> CC: Chris Lameter <cl@linux.com>
-> CC: Russell King <linux@arm.linux.org.uk>
-> CC: Michael Kerrisk <mtk.manpages@gmail.com>
-> CC: "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>
-> CC: Paul Turner <pjt@google.com>
-> CC: Boqun Feng <boqun.feng@gmail.com>
-> CC: Josh Triplett <josh@joshtriplett.org>
-> CC: Steven Rostedt <rostedt@goodmis.org>
-> CC: Ben Maurer <bmaurer@fb.com>
-> CC: linux-api@vger.kernel.org
-> CC: Andy Lutomirski <luto@amacapital.net>
-> CC: Andrew Morton <akpm@linux-foundation.org>
-> CC: Linus Torvalds <torvalds@linux-foundation.org>
-> CC: Carlos O'Donell <carlos@redhat.com>
-> CC: Florian Weimer <fweimer@redhat.com>
-> ---
-> tools/testing/selftests/rseq/rseq-arm.h | 61 ++++++++++++++++++---------------
-> 1 file changed, 33 insertions(+), 28 deletions(-)
-> 
-> diff --git a/tools/testing/selftests/rseq/rseq-arm.h
-> b/tools/testing/selftests/rseq/rseq-arm.h
-> index 84f28f147fb6..5943c816c07c 100644
-> --- a/tools/testing/selftests/rseq/rseq-arm.h
-> +++ b/tools/testing/selftests/rseq/rseq-arm.h
-> @@ -6,6 +6,8 @@
->  */
-> 
-> /*
-> + * - ARM little endian
-> + *
->  * RSEQ_SIG uses the udf A32 instruction with an uncommon immediate operand
->  * value 0x5de3. This traps if user-space reaches this instruction by mistake,
->  * and the uncommon operand ensures the kernel does not move the instruction
-> @@ -22,36 +24,40 @@
->  * def3        udf    #243      ; 0xf3
->  * e7f5        b.n    <7f5>
->  *
-> - * pre-ARMv6 big endian code:
-> - * e7f5        b.n    <7f5>
-> - * def3        udf    #243      ; 0xf3
-> + * - ARMv6+ big endian (BE8):
->  *
->  * ARMv6+ -mbig-endian generates mixed endianness code vs data: little-endian
-> - * code and big-endian data. Ensure the RSEQ_SIG data signature matches code
-> - * endianness. Prior to ARMv6, -mbig-endian generates big-endian code and data
-> - * (which match), so there is no need to reverse the endianness of the data
-> - * representation of the signature. However, the choice between BE32 and BE8
-> - * is done by the linker, so we cannot know whether code and data endianness
-> - * will be mixed before the linker is invoked.
-> + * code and big-endian data. The data value of the signature needs to have its
-> + * byte order reversed to generate the trap instruction:
-> + *
-> + * Data: 0xf3def5e7
-> + *
-> + * Translates to this A32 instruction pattern:
-> + *
-> + * e7f5def3    udf    #24035    ; 0x5de3
-> + *
-> + * Translates to this T16 instruction pattern:
-> + *
-> + * def3        udf    #243      ; 0xf3
-> + * e7f5        b.n    <7f5>
-> + *
-> + * - Prior to ARMv6 big endian (BE32):
-> + *
-> + * Prior to ARMv6, -mbig-endian generates big-endian code and data
-> + * (which match), so the endianness of the data representation of the
-> + * signature should not be reversed. However, the choice between BE32
-> + * and BE8 is done by the linker, so we cannot know whether code and
-> + * data endianness will be mixed before the linker is invoked. So rather
-> + * than try to play tricks with the linker, the rseq signature is simply
-> + * data (not a trap instruction) prior to ARMv6 on big endian. This is
-> + * why the signature is expressed as data (.word) rather than as
-> + * instruction (.inst) in assembler.
->  */
-> 
-> -#define RSEQ_SIG_CODE	0xe7f5def3
-> -
-> -#ifndef __ASSEMBLER__
-> -
-> -#define RSEQ_SIG_DATA							\
-> -	({								\
-> -		int sig;						\
-> -		asm volatile ("b 2f\n\t"				\
-> -			      "1: .inst " __rseq_str(RSEQ_SIG_CODE) "\n\t" \
-> -			      "2:\n\t"					\
-> -			      "ldr %[sig], 1b\n\t"			\
-> -			      : [sig] "=r" (sig));			\
-> -		sig;							\
-> -	})
-> -
-> -#define RSEQ_SIG	RSEQ_SIG_DATA
-> -
-> +#ifdef __ARMEB__
-> +#define RSEQ_SIG    0xf3def5e7      /* udf    #24035    ; 0x5de3 (ARMv6+) */
-> +#else
-> +#define RSEQ_SIG    0xe7f5def3      /* udf    #24035    ; 0x5de3 */
-> #endif
-> 
-> #define rseq_smp_mb()	__asm__ __volatile__ ("dmb" ::: "memory", "cc")
-> @@ -125,8 +131,7 @@ do {									\
-> 		__rseq_str(table_label) ":\n\t"				\
-> 		".word " __rseq_str(version) ", " __rseq_str(flags) "\n\t" \
-> 		".word " __rseq_str(start_ip) ", 0x0, " __rseq_str(post_commit_offset) ", 0x0, "
-> 		__rseq_str(abort_ip) ", 0x0\n\t" \
-> -		".arm\n\t"						\
-> -		".inst " __rseq_str(RSEQ_SIG_CODE) "\n\t"		\
-> +		".word " __rseq_str(RSEQ_SIG) "\n\t"			\
-> 		__rseq_str(label) ":\n\t"				\
-> 		teardown						\
-> 		"b %l[" __rseq_str(abort_label) "]\n\t"
-> --
-> 2.11.0
+> The next obvious thing is to create some sort of access control knob
+> in audit itself.  Perhaps an auditctl operation that would allow the
+> administrator to specify which containers, via their corresponding
+> audit container IDs, are allowed to change their audit container ID?
+> The permission granting would need to be done in the init userns, but
+> it would allow containers with a non-init userns the ability to change
+> their audit container ID.  We would probably still want a
+> ns_capable(CAP_AUDIT_CONTROL) restriction in this case.
 
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+This auditctl knob of which you speak is an additional API, not changing
+the existing proposed one.
+
+> Does anyone else have any other ideas?
+> 
+> -- 
+> paul moore
+> www.paul-moore.com
+
+- RGB
+
+--
+Richard Guy Briggs <rgb@redhat.com>
+Sr. S/W Engineer, Kernel Security, Base Operating Systems
+Remote, Ottawa, Red Hat Canada
+IRC: rgb, SunRaycer
+Voice: +1.647.777.2635, Internal: (81) 32635
