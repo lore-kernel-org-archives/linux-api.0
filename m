@@ -1,119 +1,186 @@
-From: Richard Guy Briggs <rgb@redhat.com>
-Subject: Re: [PATCH ghak90 V6 02/10] audit: add container id
-Date: Mon, 8 Jul 2019 13:51:05 -0400
-Message-ID: <20190708175105.7zb6mikjw2wmnwln@madcap2.tricolour.ca>
-References: <cover.1554732921.git.rgb@redhat.com>
- <9edad39c40671fb53f28d76862304cc2647029c6.1554732921.git.rgb@redhat.com>
- <20190529145742.GA8959@cisco>
- <CAHC9VhR4fudQanvZGYWMvCf7k2CU3q7e7n1Pi7hzC3v_zpVEdw@mail.gmail.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH for 5.2] rseq/selftests: Fix Thumb mode build failure on
+ arm32
+Date: Mon, 8 Jul 2019 13:58:39 -0400 (EDT)
+Message-ID: <1154710388.12906.1562608719838.JavaMail.zimbra@efficios.com>
+References: <20190630135613.19897-1-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHC9VhR4fudQanvZGYWMvCf7k2CU3q7e7n1Pi7hzC3v_zpVEdw@mail.gmail.com>
+In-Reply-To: <20190630135613.19897-1-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Moore <paul@paul-moore.com>
-Cc: Tycho Andersen <tycho@tycho.ws>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com
+To: shuah <shuah@kernel.org>, Will Deacon <will.deacon@arm.com>, Linus Torvalds <torvalds@linux-foundation.org>, stable <stable@vger.kernel.org>
+Cc: linux-kernel <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Joel Fernandes <joelaf@google.com>, Catalin Marinas <catalin.marinas@arm.com>, Dave Watson <davejwatson@fb.com>, Andi Kleen <andi@firstfloor.org>, linux-kselftest <linux-kselftest@vger.kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Chris Lameter <cl@linux.com>, Russell King <linux@arm.linux.org.uk>, Michael Kerrisk <mtk.manpages@gmail.com>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Paul Turner <pjt@google.com>, Boqun Feng <boqun.feng@gmail.com>, Josh Triplett <josh@joshtriplett.org>, rostedt <rostedt@goodmis.org>, Ben Maurer <bmaurer@fb.com>, linux-api <linux-api@vger.kernel.org>, Andy Lutomirski <luto@amacapital.net>
 List-Id: linux-api@vger.kernel.org
 
-On 2019-05-29 11:29, Paul Moore wrote:
-> On Wed, May 29, 2019 at 10:57 AM Tycho Andersen <tycho@tycho.ws> wrote:
-> >
-> > On Mon, Apr 08, 2019 at 11:39:09PM -0400, Richard Guy Briggs wrote:
-> > > It is not permitted to unset the audit container identifier.
-> > > A child inherits its parent's audit container identifier.
-> >
-> > ...
-> >
-> > >  /**
-> > > + * audit_set_contid - set current task's audit contid
-> > > + * @contid: contid value
-> > > + *
-> > > + * Returns 0 on success, -EPERM on permission failure.
-> > > + *
-> > > + * Called (set) from fs/proc/base.c::proc_contid_write().
-> > > + */
-> > > +int audit_set_contid(struct task_struct *task, u64 contid)
-> > > +{
-> > > +     u64 oldcontid;
-> > > +     int rc = 0;
-> > > +     struct audit_buffer *ab;
-> > > +     uid_t uid;
-> > > +     struct tty_struct *tty;
-> > > +     char comm[sizeof(current->comm)];
-> > > +
-> > > +     task_lock(task);
-> > > +     /* Can't set if audit disabled */
-> > > +     if (!task->audit) {
-> > > +             task_unlock(task);
-> > > +             return -ENOPROTOOPT;
-> > > +     }
-> > > +     oldcontid = audit_get_contid(task);
-> > > +     read_lock(&tasklist_lock);
-> > > +     /* Don't allow the audit containerid to be unset */
-> > > +     if (!audit_contid_valid(contid))
-> > > +             rc = -EINVAL;
-> > > +     /* if we don't have caps, reject */
-> > > +     else if (!capable(CAP_AUDIT_CONTROL))
-> > > +             rc = -EPERM;
-> > > +     /* if task has children or is not single-threaded, deny */
-> > > +     else if (!list_empty(&task->children))
-> > > +             rc = -EBUSY;
-> > > +     else if (!(thread_group_leader(task) && thread_group_empty(task)))
-> > > +             rc = -EALREADY;
-> > > +     read_unlock(&tasklist_lock);
-> > > +     if (!rc)
-> > > +             task->audit->contid = contid;
-> > > +     task_unlock(task);
-> > > +
-> > > +     if (!audit_enabled)
-> > > +             return rc;
-> >
-> > ...but it is allowed to change it (assuming
-> > capable(CAP_AUDIT_CONTROL), of course)? Seems like this might be more
-> > immediately useful since we still live in the world of majority
-> > privileged containers if we didn't allow changing it, in addition to
-> > un-setting it.
+----- On Jun 30, 2019, at 9:56 AM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
+
+> Using ".arm .inst" for the arm signature introduces build issues for
+> programs compiled in Thumb mode because the assembler stays in the
+> arm mode for the rest of the inline assembly. Revert to using a ".word"
+> to express the signature as data instead.
 > 
-> The idea is that only container orchestrators should be able to
-> set/modify the audit container ID, and since setting the audit
-> container ID can have a significant effect on the records captured
-> (and their routing to multiple daemons when we get there) modifying
-> the audit container ID is akin to modifying the audit configuration
-> which is why it is gated by CAP_AUDIT_CONTROL.  The current thinking
-> is that you would only change the audit container ID from one
-> set/inherited value to another if you were nesting containers, in
-> which case the nested container orchestrator would need to be granted
-> CAP_AUDIT_CONTROL (which everyone to date seems to agree is a workable
-> compromise).  We did consider allowing for a chain of nested audit
-> container IDs, but the implications of doing so are significant
-> (implementation mess, runtime cost, etc.) so we are leaving that out
-> of this effort.
-
-We had previously discussed the idea of restricting
-orchestrators/engines from only being able to set the audit container
-identifier on their own descendants, but it was discarded.  I've added a
-check to ensure this is now enforced.
-
-I've also added a check to ensure that a process can't set its own audit
-container identifier and that if the identifier is already set, then the
-orchestrator/engine must be in a descendant user namespace from the
-orchestrator that set the previously inherited audit container
-identifier.
-
-> From a practical perspective, un-setting the audit container ID is
-> pretty much the same as changing it from one set value to another so
-> most of the above applies to that case as well.
+> The choice of signature is a valid trap instruction on arm32 little
+> endian, where both code and data are little endian.
 > 
-> -- 
-> paul moore
-> www.paul-moore.com
+> ARMv6+ big endian (BE8) generates mixed endianness code vs data:
+> little-endian code and big-endian data. The data value of the signature
+> needs to have its byte order reversed to generate the trap instruction.
+> 
+> Prior to ARMv6, -mbig-endian generates big-endian code and data
+> (which match), so the endianness of the data representation of the
+> signature should not be reversed. However, the choice between BE32
+> and BE8 is done by the linker, so we cannot know whether code and
+> data endianness will be mixed before the linker is invoked. So rather
+> than try to play tricks with the linker, the rseq signature is simply
+> data (not a trap instruction) prior to ARMv6 on big endian. This is
+> why the signature is expressed as data (.word) rather than as
+> instruction (.inst) in assembler.
+> 
+> Because a ".word" is used to emit the signature, it will be interpreted
+> as a literal pool by a disassembler, not as an actual instruction.
+> Considering that the signature is not meant to be executed except in
+> scenarios where the program execution is completely bogus, this should
+> not be an issue.
 
-- RGB
+Now that 5.2 is out before this patch has been merged, can we please
+integrate this patch through the kernel selftests or ARM tree so it
+can be merged into the stable 5.2 branch ?
 
---
-Richard Guy Briggs <rgb@redhat.com>
-Sr. S/W Engineer, Kernel Security, Base Operating Systems
-Remote, Ottawa, Red Hat Canada
-IRC: rgb, SunRaycer
-Voice: +1.647.777.2635, Internal: (81) 32635
+Thanks
+
+Mathieu
+
+
+> 
+> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+> Acked-by: Will Deacon <will.deacon@arm.com>
+> CC: Peter Zijlstra <peterz@infradead.org>
+> CC: Thomas Gleixner <tglx@linutronix.de>
+> CC: Joel Fernandes <joelaf@google.com>
+> CC: Catalin Marinas <catalin.marinas@arm.com>
+> CC: Dave Watson <davejwatson@fb.com>
+> CC: Will Deacon <will.deacon@arm.com>
+> CC: Shuah Khan <shuah@kernel.org>
+> CC: Andi Kleen <andi@firstfloor.org>
+> CC: linux-kselftest@vger.kernel.org
+> CC: "H . Peter Anvin" <hpa@zytor.com>
+> CC: Chris Lameter <cl@linux.com>
+> CC: Russell King <linux@arm.linux.org.uk>
+> CC: Michael Kerrisk <mtk.manpages@gmail.com>
+> CC: "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>
+> CC: Paul Turner <pjt@google.com>
+> CC: Boqun Feng <boqun.feng@gmail.com>
+> CC: Josh Triplett <josh@joshtriplett.org>
+> CC: Steven Rostedt <rostedt@goodmis.org>
+> CC: Ben Maurer <bmaurer@fb.com>
+> CC: linux-api@vger.kernel.org
+> CC: Andy Lutomirski <luto@amacapital.net>
+> CC: Andrew Morton <akpm@linux-foundation.org>
+> CC: Linus Torvalds <torvalds@linux-foundation.org>
+> CC: Carlos O'Donell <carlos@redhat.com>
+> CC: Florian Weimer <fweimer@redhat.com>
+> ---
+> tools/testing/selftests/rseq/rseq-arm.h | 61 ++++++++++++++++++---------------
+> 1 file changed, 33 insertions(+), 28 deletions(-)
+> 
+> diff --git a/tools/testing/selftests/rseq/rseq-arm.h
+> b/tools/testing/selftests/rseq/rseq-arm.h
+> index 84f28f147fb6..5943c816c07c 100644
+> --- a/tools/testing/selftests/rseq/rseq-arm.h
+> +++ b/tools/testing/selftests/rseq/rseq-arm.h
+> @@ -6,6 +6,8 @@
+>  */
+> 
+> /*
+> + * - ARM little endian
+> + *
+>  * RSEQ_SIG uses the udf A32 instruction with an uncommon immediate operand
+>  * value 0x5de3. This traps if user-space reaches this instruction by mistake,
+>  * and the uncommon operand ensures the kernel does not move the instruction
+> @@ -22,36 +24,40 @@
+>  * def3        udf    #243      ; 0xf3
+>  * e7f5        b.n    <7f5>
+>  *
+> - * pre-ARMv6 big endian code:
+> - * e7f5        b.n    <7f5>
+> - * def3        udf    #243      ; 0xf3
+> + * - ARMv6+ big endian (BE8):
+>  *
+>  * ARMv6+ -mbig-endian generates mixed endianness code vs data: little-endian
+> - * code and big-endian data. Ensure the RSEQ_SIG data signature matches code
+> - * endianness. Prior to ARMv6, -mbig-endian generates big-endian code and data
+> - * (which match), so there is no need to reverse the endianness of the data
+> - * representation of the signature. However, the choice between BE32 and BE8
+> - * is done by the linker, so we cannot know whether code and data endianness
+> - * will be mixed before the linker is invoked.
+> + * code and big-endian data. The data value of the signature needs to have its
+> + * byte order reversed to generate the trap instruction:
+> + *
+> + * Data: 0xf3def5e7
+> + *
+> + * Translates to this A32 instruction pattern:
+> + *
+> + * e7f5def3    udf    #24035    ; 0x5de3
+> + *
+> + * Translates to this T16 instruction pattern:
+> + *
+> + * def3        udf    #243      ; 0xf3
+> + * e7f5        b.n    <7f5>
+> + *
+> + * - Prior to ARMv6 big endian (BE32):
+> + *
+> + * Prior to ARMv6, -mbig-endian generates big-endian code and data
+> + * (which match), so the endianness of the data representation of the
+> + * signature should not be reversed. However, the choice between BE32
+> + * and BE8 is done by the linker, so we cannot know whether code and
+> + * data endianness will be mixed before the linker is invoked. So rather
+> + * than try to play tricks with the linker, the rseq signature is simply
+> + * data (not a trap instruction) prior to ARMv6 on big endian. This is
+> + * why the signature is expressed as data (.word) rather than as
+> + * instruction (.inst) in assembler.
+>  */
+> 
+> -#define RSEQ_SIG_CODE	0xe7f5def3
+> -
+> -#ifndef __ASSEMBLER__
+> -
+> -#define RSEQ_SIG_DATA							\
+> -	({								\
+> -		int sig;						\
+> -		asm volatile ("b 2f\n\t"				\
+> -			      "1: .inst " __rseq_str(RSEQ_SIG_CODE) "\n\t" \
+> -			      "2:\n\t"					\
+> -			      "ldr %[sig], 1b\n\t"			\
+> -			      : [sig] "=r" (sig));			\
+> -		sig;							\
+> -	})
+> -
+> -#define RSEQ_SIG	RSEQ_SIG_DATA
+> -
+> +#ifdef __ARMEB__
+> +#define RSEQ_SIG    0xf3def5e7      /* udf    #24035    ; 0x5de3 (ARMv6+) */
+> +#else
+> +#define RSEQ_SIG    0xe7f5def3      /* udf    #24035    ; 0x5de3 */
+> #endif
+> 
+> #define rseq_smp_mb()	__asm__ __volatile__ ("dmb" ::: "memory", "cc")
+> @@ -125,8 +131,7 @@ do {									\
+> 		__rseq_str(table_label) ":\n\t"				\
+> 		".word " __rseq_str(version) ", " __rseq_str(flags) "\n\t" \
+> 		".word " __rseq_str(start_ip) ", 0x0, " __rseq_str(post_commit_offset) ", 0x0, "
+> 		__rseq_str(abort_ip) ", 0x0\n\t" \
+> -		".arm\n\t"						\
+> -		".inst " __rseq_str(RSEQ_SIG_CODE) "\n\t"		\
+> +		".word " __rseq_str(RSEQ_SIG) "\n\t"			\
+> 		__rseq_str(label) ":\n\t"				\
+> 		teardown						\
+> 		"b %l[" __rseq_str(abort_label) "]\n\t"
+> --
+> 2.11.0
+
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
