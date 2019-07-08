@@ -1,146 +1,133 @@
-From: Stephen Smalley <sds@tycho.nsa.gov>
-Subject: Re: [PATCH 3/9] security: Add a hook for the point of notification
- insertion [ver #5]
-Date: Mon, 8 Jul 2019 15:13:09 -0400
-Message-ID: <541e5cb3-142b-fe87-dff6-260b46d34f2d@tycho.nsa.gov>
-References: <156173690158.15137.3985163001079120218.stgit@warthog.procyon.org.uk>
- <156173694190.15137.8939274212328721351.stgit@warthog.procyon.org.uk>
+From: Paul Moore <paul@paul-moore.com>
+Subject: Re: [PATCH ghak90 V6 02/10] audit: add container id
+Date: Mon, 08 Jul 2019 22:43:23 +0200
+Message-ID: <16bd353a5f8.280e.85c95baa4474aabc7814e68940a78392@paul-moore.com>
+References: <20190529145742.GA8959@cisco>
+ <CAHC9VhR4fudQanvZGYWMvCf7k2CU3q7e7n1Pi7hzC3v_zpVEdw@mail.gmail.com>
+ <20190529153427.GB8959@cisco>
+ <CAHC9VhSF3AjErX37+eeusJ7+XRw8yuPsmqBTRwc9EVoRBh_3Tw@mail.gmail.com>
+ <20190529222835.GD8959@cisco>
+ <CAHC9VhRS66VGtug3fq3RTGHDvfGmBJG6yRJ+iMxm3cxnNF-zJw@mail.gmail.com>
+ <20190530170913.GA16722@mail.hallyn.com>
+ <CAHC9VhThLiQzGYRUWmSuVfOC6QCDmA75BDB7Eg7V8HX4x7ymQg@mail.gmail.com>
+ <20190530212900.GC5739@cisco>
+ <CAHC9VhT5HPt9rCJoDutdvA3r1Y1GOHfpXe2eJ54atNC1=Vd8LA@mail.gmail.com>
+ <20190708181237.5poheliito7zpvmc@madcap2.tricolour.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <156173694190.15137.8939274212328721351.stgit@warthog.procyon.org.uk>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>, viro@zeniv.linux.org.uk
-Cc: Casey Schaufler <casey@schaufler-ca.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20190708181237.5poheliito7zpvmc@madcap2.tricolour.ca>
+Sender: netdev-owner@vger.kernel.org
+To: Richard Guy Briggs <rgb@redhat.com>
+Cc: Tycho Andersen <tycho@tycho.ws>, "Serge E. Hallyn" <serge@hallyn.com>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, ebiederm@xmission.com, nhorman@tuxdriver.com
 List-Id: linux-api@vger.kernel.org
 
-On 6/28/19 11:49 AM, David Howells wrote:
-> Add a security hook that allows an LSM to rule on whether a notification
-> message is allowed to be inserted into a particular watch queue.
-> 
-> The hook is given the following information:
-> 
->   (1) The credentials of the triggerer (which may be init_cred for a system
->       notification, eg. a hardware error).
-> 
->   (2) The credentials of the whoever set the watch.
-> 
->   (3) The notification message.
+On July 8, 2019 8:12:56 PM Richard Guy Briggs <rgb@redhat.com> wrote:
 
-As with the other proposed hooks, it is difficult to evaluate this hook 
-without at least one implementation of the hook.  Since Casey is the 
-only one requesting this hook, a Smack implementation would be the 
-natural choice; I do not intend to implement this hook for SELinux. 
-However, by providing this hook, you are in effect taking a position wrt 
-the earlier controversy over it, i.e. that application developers must 
-deal with the possibility that notifications can be dropped if a 
-security module does not permit the triggerer to post the notification 
-to the watcher, without any indication to either the triggerer or the 
-watcher.  This is a choice you are making by providing this hook.  The 
-alternative is to require that permission to set a watch imply the 
-ability to receive all notifications for the watched object.  Aside from 
-friendliness to application developers, the latter also yields stable, 
-sane policy and better performance.
+> On 2019-05-30 19:26, Paul Moore wrote:
+>> On Thu, May 30, 2019 at 5:29 PM Tycho Andersen <tycho@tycho.ws> wrote:
+>>> On Thu, May 30, 2019 at 03:29:32PM -0400, Paul Moore wrote:
+>>>>
+>>>>
+>>>> [REMINDER: It is an "*audit* container ID" and not a general
+>>>> "container ID" ;)  Smiley aside, I'm not kidding about that part.]
+>>>
+>>> This sort of seems like a distinction without a difference; presumably
+>>> audit is going to want to differentiate between everything that people
+>>> in userspace call a container. So you'll have to support all this
+>>> insanity anyway, even if it's "not a container ID".
+>>
+>> That's not quite right.  Audit doesn't care about what a container is,
+>> or is not, it also doesn't care if the "audit container ID" actually
+>> matches the ID used by the container engine in userspace and I think
+>> that is a very important line to draw.  Audit is simply given a value
+>> which it calls the "audit container ID", it ensures that the value is
+>> inherited appropriately (e.g. children inherit their parent's audit
+>> container ID), and it uses the value in audit records to provide some
+>> additional context for log analysis.  The distinction isn't limited to
+>> the value itself, but also to how it is used; it is an "audit
+>> container ID" and not a "container ID" because this value is
+>> exclusively for use by the audit subsystem.  We are very intentionally
+>> not adding a generic container ID to the kernel.  If the kernel does
+>> ever grow a general purpose container ID we will be one of the first
+>> ones in line to make use of it, but we are not going to be the ones to
+>> generically add containers to the kernel.  Enough people already hate
+>> audit ;)
+>>
+>>>> I'm not interested in supporting/merging something that isn't useful;
+>>>> if this doesn't work for your use case then we need to figure out what
+>>>> would work.  It sounds like nested containers are much more common in
+>>>> the lxc world, can you elaborate a bit more on this?
+>>>>
+>>>>
+>>>> As far as the possible solutions you mention above, I'm not sure I
+>>>> like the per-userns audit container IDs, I'd much rather just emit the
+>>>> necessary tracking information via the audit record stream and let the
+>>>> log analysis tools figure it out.  However, the bigger question is how
+>>>> to limit (re)setting the audit container ID when you are in a non-init
+>>>> userns.  For reasons already mentioned, using capable() is a non
+>>>> starter for everything but the initial userns, and using ns_capable()
+>>>> is equally poor as it essentially allows any userns the ability to
+>>>> munge it's audit container ID (obviously not good).  It appears we
+>>>> need a different method for controlling access to the audit container
+>>>> ID.
+>>>
+>>> One option would be to make it a string, and have it be append only.
+>>> That should be safe with no checks.
+>>>
+>>> I know there was a long thread about what type to make this thing. I
+>>> think you could accomplish the append-only-ness with a u64 if you had
+>>> some rule about only allowing setting lower order bits than those that
+>>> are already set. With 4 bits for simplicity:
+>>>
+>>> 1100         # initial container id
+>>> 1100 -> 1011 # not allowed
+>>> 1100 -> 1101 # allowed, but now 1101 is set in stone since there are
+>>>       # no lower order bits left
+>>>
+>>> There are probably fancier ways to do it if you actually understand
+>>> math :)
+>>
+>> ;)
+>>
+>>> Since userns nesting is limited to 32 levels (right now, IIRC), and
+>>> you have 64 bits, this might be reasonable. You could just teach
+>>> container engines to use the first say N bits for themselves, with a 1
+>>> bit for the barrier at the end.
+>>
+>> I like the creativity, but I worry that at some point these
+>> limitations are going to be raised (limits have a funny way of doing
+>> that over time) and we will be in trouble.  I say "trouble" because I
+>> want to be able to quickly do an audit container ID comparison and
+>> we're going to pay a penalty for these larger values (we'll need this
+>> when we add multiple auditd support and the requisite record routing).
+>>
+>> Thinking about this makes me also realize we probably need to think a
+>> bit longer about audit container ID conflicts between orchestrators.
+>> Right now we just take the value that is given to us by the
+>> orchestrator, but if we want to allow multiple container orchestrators
+>> to work without some form of cooperation in userspace (I think we have
+>> to assume the orchestrators will not talk to each other) we likely
+>> need to have some way to block reuse of an audit container ID.  We
+>> would either need to prevent the orchestrator from explicitly setting
+>> an audit container ID to a currently in use value, or instead generate
+>> the audit container ID in the kernel upon an event triggered by the
+>> orchestrator (e.g. a write to a /proc file).  I suspect we should
+>> start looking at the idr code, I think we will need to make use of it.
+>
+> To address this, I'd suggest that it is enforced to only allow the
+> setting of descendants and to maintain a master list of audit container
+> identifiers (with a hash table if necessary later) that includes the
+> container owner.
+>
+> This also allows the orchestrator/engine to inject processes into
+> existing containers by checking that the audit container identifier is
+> only used again by the same owner.
+>
+> I have working code for both.
 
-> 
-> Signed-off-by: David Howells <dhowells@redhat.com>
-> cc: Casey Schaufler <casey@schaufler-ca.com>
-> cc: Stephen Smalley <sds@tycho.nsa.gov>
-> cc: linux-security-module@vger.kernel.org
-> ---
-> 
->   include/linux/lsm_hooks.h |   10 ++++++++++
->   include/linux/security.h  |   10 ++++++++++
->   security/security.c       |    6 ++++++
->   3 files changed, 26 insertions(+)
-> 
-> diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
-> index f9d31f6445e4..fd4b2b14e7d0 100644
-> --- a/include/linux/lsm_hooks.h
-> +++ b/include/linux/lsm_hooks.h
-> @@ -1426,6 +1426,12 @@
->    *	from devices (as a global set).
->    *	@watch: The watch object
->    *
-> + * @post_notification:
-> + *	Check to see if a watch notification can be posted to a particular
-> + *	queue.
-> + *	@w_cred: The credentials of the whoever set the watch.
-> + *	@cred: The event-triggerer's credentials
-> + *	@n: The notification being posted
->    *
->    * Security hooks for using the eBPF maps and programs functionalities through
->    * eBPF syscalls.
-> @@ -1705,6 +1711,9 @@ union security_list_options {
->   #ifdef CONFIG_WATCH_QUEUE
->   	int (*watch_key)(struct watch *watch, struct key *key);
->   	int (*watch_devices)(struct watch *watch);
-> +	int (*post_notification)(const struct cred *w_cred,
-> +				 const struct cred *cred,
-> +				 struct watch_notification *n);
->   #endif /* CONFIG_WATCH_QUEUE */
->   
->   #ifdef CONFIG_SECURITY_NETWORK
-> @@ -1985,6 +1994,7 @@ struct security_hook_heads {
->   #ifdef CONFIG_WATCH_QUEUE
->   	struct hlist_head watch_key;
->   	struct hlist_head watch_devices;
-> +	struct hlist_head post_notification;
->   #endif /* CONFIG_WATCH_QUEUE */
->   #ifdef CONFIG_SECURITY_NETWORK
->   	struct hlist_head unix_stream_connect;
-> diff --git a/include/linux/security.h b/include/linux/security.h
-> index 540863678355..5c074bf18bea 100644
-> --- a/include/linux/security.h
-> +++ b/include/linux/security.h
-> @@ -58,6 +58,7 @@ struct fs_context;
->   struct fs_parameter;
->   enum fs_value_type;
->   struct watch;
-> +struct watch_notification;
->   
->   /* Default (no) options for the capable function */
->   #define CAP_OPT_NONE 0x0
-> @@ -396,6 +397,9 @@ int security_inode_getsecctx(struct inode *inode, void **ctx, u32 *ctxlen);
->   #ifdef CONFIG_WATCH_QUEUE
->   int security_watch_key(struct watch *watch, struct key *key);
->   int security_watch_devices(struct watch *watch);
-> +int security_post_notification(const struct cred *w_cred,
-> +			       const struct cred *cred,
-> +			       struct watch_notification *n);
->   #endif /* CONFIG_WATCH_QUEUE */
->   #else /* CONFIG_SECURITY */
->   
-> @@ -1218,6 +1222,12 @@ static inline int security_watch_devices(struct watch *watch)
->   {
->   	return 0;
->   }
-> +static inline int security_post_notification(const struct cred *w_cred,
-> +					     const struct cred *cred,
-> +					     struct watch_notification *n)
-> +{
-> +	return 0;
-> +}
->   #endif /* CONFIG_WATCH_QUEUE */
->   #endif	/* CONFIG_SECURITY */
->   
-> diff --git a/security/security.c b/security/security.c
-> index 2c9919226ad1..459e87d55ac9 100644
-> --- a/security/security.c
-> +++ b/security/security.c
-> @@ -1928,6 +1928,12 @@ int security_watch_devices(struct watch *watch)
->   	return call_int_hook(watch_devices, 0, watch);
->   }
->   
-> +int security_post_notification(const struct cred *w_cred,
-> +			       const struct cred *cred,
-> +			       struct watch_notification *n)
-> +{
-> +	return call_int_hook(post_notification, 0, w_cred, cred, n);
-> +}
->   #endif /* CONFIG_WATCH_QUEUE */
->   
->   #ifdef CONFIG_SECURITY_NETWORK
-> 
+Just a quick note that due to some holiday travel I'm not going to be able =
+to adequately respond to your latest messages on this thread for at least a=
+nother week, likely a bit more.  I'm only checking mail to put out fires, a=
+nd the audit container ID work tends to be something that starts them ;)
