@@ -1,135 +1,153 @@
-From: Richard Guy Briggs <rgb@redhat.com>
-Subject: Re: [PATCH ghak90 V6 02/10] audit: add container id
-Date: Mon, 8 Jul 2019 14:12:37 -0400
-Message-ID: <20190708181237.5poheliito7zpvmc@madcap2.tricolour.ca>
-References: <20190529145742.GA8959@cisco>
- <CAHC9VhR4fudQanvZGYWMvCf7k2CU3q7e7n1Pi7hzC3v_zpVEdw@mail.gmail.com>
- <20190529153427.GB8959@cisco>
- <CAHC9VhSF3AjErX37+eeusJ7+XRw8yuPsmqBTRwc9EVoRBh_3Tw@mail.gmail.com>
- <20190529222835.GD8959@cisco>
- <CAHC9VhRS66VGtug3fq3RTGHDvfGmBJG6yRJ+iMxm3cxnNF-zJw@mail.gmail.com>
- <20190530170913.GA16722@mail.hallyn.com>
- <CAHC9VhThLiQzGYRUWmSuVfOC6QCDmA75BDB7Eg7V8HX4x7ymQg@mail.gmail.com>
- <20190530212900.GC5739@cisco>
- <CAHC9VhT5HPt9rCJoDutdvA3r1Y1GOHfpXe2eJ54atNC1=Vd8LA@mail.gmail.com>
+From: Stephen Smalley <sds@tycho.nsa.gov>
+Subject: Re: [PATCH 2/9] security: Add hooks to rule on setting a watch [ver
+ #5]
+Date: Mon, 8 Jul 2019 14:46:11 -0400
+Message-ID: <cd657aab-e11c-c0b1-2e36-dd796ca75b75@tycho.nsa.gov>
+References: <156173690158.15137.3985163001079120218.stgit@warthog.procyon.org.uk>
+ <156173692760.15137.9636883182556029747.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHC9VhT5HPt9rCJoDutdvA3r1Y1GOHfpXe2eJ54atNC1=Vd8LA@mail.gmail.com>
+In-Reply-To: <156173692760.15137.9636883182556029747.stgit@warthog.procyon.org.uk>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Paul Moore <paul@paul-moore.com>
-Cc: Tycho Andersen <tycho@tycho.ws>, "Serge E. Hallyn" <serge@hallyn.com>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, ebiederm@xmission.com, nhorman@tuxdriver.com
+To: David Howells <dhowells@redhat.com>, viro@zeniv.linux.org.uk
+Cc: Casey Schaufler <casey@schaufler-ca.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 2019-05-30 19:26, Paul Moore wrote:
-> On Thu, May 30, 2019 at 5:29 PM Tycho Andersen <tycho@tycho.ws> wrote:
-> > On Thu, May 30, 2019 at 03:29:32PM -0400, Paul Moore wrote:
-> > >
-> > > [REMINDER: It is an "*audit* container ID" and not a general
-> > > "container ID" ;)  Smiley aside, I'm not kidding about that part.]
-> >
-> > This sort of seems like a distinction without a difference; presumably
-> > audit is going to want to differentiate between everything that people
-> > in userspace call a container. So you'll have to support all this
-> > insanity anyway, even if it's "not a container ID".
+On 6/28/19 11:48 AM, David Howells wrote:
+> Add security hooks that will allow an LSM to rule on whether or not a watch
+> may be set.  More than one hook is required as the watches watch different
+> types of object.
 > 
-> That's not quite right.  Audit doesn't care about what a container is,
-> or is not, it also doesn't care if the "audit container ID" actually
-> matches the ID used by the container engine in userspace and I think
-> that is a very important line to draw.  Audit is simply given a value
-> which it calls the "audit container ID", it ensures that the value is
-> inherited appropriately (e.g. children inherit their parent's audit
-> container ID), and it uses the value in audit records to provide some
-> additional context for log analysis.  The distinction isn't limited to
-> the value itself, but also to how it is used; it is an "audit
-> container ID" and not a "container ID" because this value is
-> exclusively for use by the audit subsystem.  We are very intentionally
-> not adding a generic container ID to the kernel.  If the kernel does
-> ever grow a general purpose container ID we will be one of the first
-> ones in line to make use of it, but we are not going to be the ones to
-> generically add containers to the kernel.  Enough people already hate
-> audit ;)
+> Signed-off-by: David Howells <dhowells@redhat.com>
+> cc: Casey Schaufler <casey@schaufler-ca.com>
+> cc: Stephen Smalley <sds@tycho.nsa.gov>
+> cc: linux-security-module@vger.kernel.org
+> ---
 > 
-> > > I'm not interested in supporting/merging something that isn't useful;
-> > > if this doesn't work for your use case then we need to figure out what
-> > > would work.  It sounds like nested containers are much more common in
-> > > the lxc world, can you elaborate a bit more on this?
-> > >
-> > > As far as the possible solutions you mention above, I'm not sure I
-> > > like the per-userns audit container IDs, I'd much rather just emit the
-> > > necessary tracking information via the audit record stream and let the
-> > > log analysis tools figure it out.  However, the bigger question is how
-> > > to limit (re)setting the audit container ID when you are in a non-init
-> > > userns.  For reasons already mentioned, using capable() is a non
-> > > starter for everything but the initial userns, and using ns_capable()
-> > > is equally poor as it essentially allows any userns the ability to
-> > > munge it's audit container ID (obviously not good).  It appears we
-> > > need a different method for controlling access to the audit container
-> > > ID.
-> >
-> > One option would be to make it a string, and have it be append only.
-> > That should be safe with no checks.
-> >
-> > I know there was a long thread about what type to make this thing. I
-> > think you could accomplish the append-only-ness with a u64 if you had
-> > some rule about only allowing setting lower order bits than those that
-> > are already set. With 4 bits for simplicity:
-> >
-> > 1100         # initial container id
-> > 1100 -> 1011 # not allowed
-> > 1100 -> 1101 # allowed, but now 1101 is set in stone since there are
-> >              # no lower order bits left
-> >
-> > There are probably fancier ways to do it if you actually understand
-> > math :)
+>   include/linux/lsm_hooks.h |   22 ++++++++++++++++++++++
+>   include/linux/security.h  |   15 +++++++++++++++
+>   security/security.c       |   13 +++++++++++++
+>   3 files changed, 50 insertions(+)
 > 
->  ;)
+> diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
+> index 47f58cfb6a19..f9d31f6445e4 100644
+> --- a/include/linux/lsm_hooks.h
+> +++ b/include/linux/lsm_hooks.h
+> @@ -1413,6 +1413,20 @@
+>    *	@ctx is a pointer in which to place the allocated security context.
+>    *	@ctxlen points to the place to put the length of @ctx.
+>    *
+> + * Security hooks for the general notification queue:
+> + *
+> + * @watch_key:
+> + *	Check to see if a process is allowed to watch for event notifications
+> + *	from a key or keyring.
+> + *	@watch: The watch object
+> + *	@key: The key to watch.
+> + *
+> + * @watch_devices:
+> + *	Check to see if a process is allowed to watch for event notifications
+> + *	from devices (as a global set).
+> + *	@watch: The watch object
+
+It is difficult to evaluate these without at least one implementation of 
+each hook.  I am unclear as to how any security module would use the 
+watch argument, since it has no security field/blob and does not appear 
+to contain any information that would be relevant to deciding whether or 
+not to permit the watch to be set.
+
+> + *
+> + *
+>    * Security hooks for using the eBPF maps and programs functionalities through
+>    * eBPF syscalls.
+>    *
+> @@ -1688,6 +1702,10 @@ union security_list_options {
+>   	int (*inode_notifysecctx)(struct inode *inode, void *ctx, u32 ctxlen);
+>   	int (*inode_setsecctx)(struct dentry *dentry, void *ctx, u32 ctxlen);
+>   	int (*inode_getsecctx)(struct inode *inode, void **ctx, u32 *ctxlen);
+> +#ifdef CONFIG_WATCH_QUEUE
+> +	int (*watch_key)(struct watch *watch, struct key *key);
+> +	int (*watch_devices)(struct watch *watch);
+> +#endif /* CONFIG_WATCH_QUEUE */
+>   
+>   #ifdef CONFIG_SECURITY_NETWORK
+>   	int (*unix_stream_connect)(struct sock *sock, struct sock *other,
+> @@ -1964,6 +1982,10 @@ struct security_hook_heads {
+>   	struct hlist_head inode_notifysecctx;
+>   	struct hlist_head inode_setsecctx;
+>   	struct hlist_head inode_getsecctx;
+> +#ifdef CONFIG_WATCH_QUEUE
+> +	struct hlist_head watch_key;
+> +	struct hlist_head watch_devices;
+> +#endif /* CONFIG_WATCH_QUEUE */
+>   #ifdef CONFIG_SECURITY_NETWORK
+>   	struct hlist_head unix_stream_connect;
+>   	struct hlist_head unix_may_send;
+> diff --git a/include/linux/security.h b/include/linux/security.h
+> index 659071c2e57c..540863678355 100644
+> --- a/include/linux/security.h
+> +++ b/include/linux/security.h
+> @@ -57,6 +57,7 @@ struct mm_struct;
+>   struct fs_context;
+>   struct fs_parameter;
+>   enum fs_value_type;
+> +struct watch;
+>   
+>   /* Default (no) options for the capable function */
+>   #define CAP_OPT_NONE 0x0
+> @@ -392,6 +393,10 @@ void security_inode_invalidate_secctx(struct inode *inode);
+>   int security_inode_notifysecctx(struct inode *inode, void *ctx, u32 ctxlen);
+>   int security_inode_setsecctx(struct dentry *dentry, void *ctx, u32 ctxlen);
+>   int security_inode_getsecctx(struct inode *inode, void **ctx, u32 *ctxlen);
+> +#ifdef CONFIG_WATCH_QUEUE
+> +int security_watch_key(struct watch *watch, struct key *key);
+> +int security_watch_devices(struct watch *watch);
+> +#endif /* CONFIG_WATCH_QUEUE */
+>   #else /* CONFIG_SECURITY */
+>   
+>   static inline int call_lsm_notifier(enum lsm_event event, void *data)
+> @@ -1204,6 +1209,16 @@ static inline int security_inode_getsecctx(struct inode *inode, void **ctx, u32
+>   {
+>   	return -EOPNOTSUPP;
+>   }
+> +#ifdef CONFIG_WATCH_QUEUE
+> +static inline int security_watch_key(struct watch *watch, struct key *key)
+> +{
+> +	return 0;
+> +}
+> +static inline int security_watch_devices(struct watch *watch)
+> +{
+> +	return 0;
+> +}
+> +#endif /* CONFIG_WATCH_QUEUE */
+>   #endif	/* CONFIG_SECURITY */
+>   
+>   #ifdef CONFIG_SECURITY_NETWORK
+> diff --git a/security/security.c b/security/security.c
+> index 613a5c00e602..2c9919226ad1 100644
+> --- a/security/security.c
+> +++ b/security/security.c
+> @@ -1917,6 +1917,19 @@ int security_inode_getsecctx(struct inode *inode, void **ctx, u32 *ctxlen)
+>   }
+>   EXPORT_SYMBOL(security_inode_getsecctx);
+>   
+> +#ifdef CONFIG_WATCH_QUEUE
+> +int security_watch_key(struct watch *watch, struct key *key)
+> +{
+> +	return call_int_hook(watch_key, 0, watch, key);
+> +}
+> +
+> +int security_watch_devices(struct watch *watch)
+> +{
+> +	return call_int_hook(watch_devices, 0, watch);
+> +}
+> +
+> +#endif /* CONFIG_WATCH_QUEUE */
+> +
+>   #ifdef CONFIG_SECURITY_NETWORK
+>   
+>   int security_unix_stream_connect(struct sock *sock, struct sock *other, struct sock *newsk)
 > 
-> > Since userns nesting is limited to 32 levels (right now, IIRC), and
-> > you have 64 bits, this might be reasonable. You could just teach
-> > container engines to use the first say N bits for themselves, with a 1
-> > bit for the barrier at the end.
-> 
-> I like the creativity, but I worry that at some point these
-> limitations are going to be raised (limits have a funny way of doing
-> that over time) and we will be in trouble.  I say "trouble" because I
-> want to be able to quickly do an audit container ID comparison and
-> we're going to pay a penalty for these larger values (we'll need this
-> when we add multiple auditd support and the requisite record routing).
-> 
-> Thinking about this makes me also realize we probably need to think a
-> bit longer about audit container ID conflicts between orchestrators.
-> Right now we just take the value that is given to us by the
-> orchestrator, but if we want to allow multiple container orchestrators
-> to work without some form of cooperation in userspace (I think we have
-> to assume the orchestrators will not talk to each other) we likely
-> need to have some way to block reuse of an audit container ID.  We
-> would either need to prevent the orchestrator from explicitly setting
-> an audit container ID to a currently in use value, or instead generate
-> the audit container ID in the kernel upon an event triggered by the
-> orchestrator (e.g. a write to a /proc file).  I suspect we should
-> start looking at the idr code, I think we will need to make use of it.
-
-To address this, I'd suggest that it is enforced to only allow the
-setting of descendants and to maintain a master list of audit container
-identifiers (with a hash table if necessary later) that includes the
-container owner.
-
-This also allows the orchestrator/engine to inject processes into
-existing containers by checking that the audit container identifier is
-only used again by the same owner.
-
-I have working code for both.
-
-> paul moore
-> www.paul-moore.com
-
-- RGB
-
---
-Richard Guy Briggs <rgb@redhat.com>
-Sr. S/W Engineer, Kernel Security, Base Operating Systems
-Remote, Ottawa, Red Hat Canada
-IRC: rgb, SunRaycer
-Voice: +1.647.777.2635, Internal: (81) 32635
