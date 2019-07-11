@@ -1,34 +1,169 @@
 From: Johannes Weiner <hannes@cmpxchg.org>
-Subject: Re: [PATCH v4 3/4] mm: account nr_isolated_xxx in
- [isolate|putback]_lru_page
-Date: Thu, 11 Jul 2019 14:07:27 -0400
-Message-ID: <20190711180727.GC20341@cmpxchg.org>
+Subject: Re: [PATCH v4 4/4] mm: introduce MADV_PAGEOUT
+Date: Thu, 11 Jul 2019 14:42:23 -0400
+Message-ID: <20190711184223.GD20341@cmpxchg.org>
 References: <20190711012528.176050-1-minchan@kernel.org>
- <20190711012528.176050-4-minchan@kernel.org>
+ <20190711012528.176050-5-minchan@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190711012528.176050-4-minchan@kernel.org>
+In-Reply-To: <20190711012528.176050-5-minchan@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Minchan Kim <minchan@kernel.org>
 Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Michal Hocko <mhocko@suse.com>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, oleksandr@redhat.com, hdanton@sina.com, lizeb@google.com, Dave Hansen <dave.hansen@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jul 11, 2019 at 10:25:27AM +0900, Minchan Kim wrote:
-> The isolate counting is pecpu counter so it would be not huge gain
-> to work them by batch. Rather than complicating to make them batch,
-> let's make it more stright-foward via adding the counting logic
-> into [isolate|putback]_lru_page API.
-> 
-> * v1
->  * fix accounting bug - Hillf
-> 
-> Link: http://lkml.kernel.org/r/20190531165927.GA20067@cmpxchg.org
-> Acked-by: Michal Hocko <mhocko@suse.com>
-> Suggested-by: Johannes Weiner <hannes@cmpxchg.org>
-> Signed-off-by: Minchan Kim <minchan@kernel.org>
+On Thu, Jul 11, 2019 at 10:25:28AM +0900, Minchan Kim wrote:
+> @@ -480,6 +482,198 @@ static long madvise_cold(struct vm_area_struct *vma,
+>  	return 0;
+>  }
+>  
+> +static int madvise_pageout_pte_range(pmd_t *pmd, unsigned long addr,
+> +				unsigned long end, struct mm_walk *walk)
+> +{
+> +	struct mmu_gather *tlb = walk->private;
+> +	struct mm_struct *mm = tlb->mm;
+> +	struct vm_area_struct *vma = walk->vma;
+> +	pte_t *orig_pte, *pte, ptent;
+> +	spinlock_t *ptl;
+> +	LIST_HEAD(page_list);
+> +	struct page *page;
+> +	unsigned long next;
+> +
+> +	if (fatal_signal_pending(current))
+> +		return -EINTR;
+> +
+> +	next = pmd_addr_end(addr, end);
+> +	if (pmd_trans_huge(*pmd)) {
+> +		pmd_t orig_pmd;
+> +
+> +		tlb_change_page_size(tlb, HPAGE_PMD_SIZE);
+> +		ptl = pmd_trans_huge_lock(pmd, vma);
+> +		if (!ptl)
+> +			return 0;
+> +
+> +		orig_pmd = *pmd;
+> +		if (is_huge_zero_pmd(orig_pmd))
+> +			goto huge_unlock;
+> +
+> +		if (unlikely(!pmd_present(orig_pmd))) {
+> +			VM_BUG_ON(thp_migration_supported() &&
+> +					!is_pmd_migration_entry(orig_pmd));
+> +			goto huge_unlock;
+> +		}
+> +
+> +		page = pmd_page(orig_pmd);
+> +		if (next - addr != HPAGE_PMD_SIZE) {
+> +			int err;
+> +
+> +			if (page_mapcount(page) != 1)
+> +				goto huge_unlock;
+> +			get_page(page);
+> +			spin_unlock(ptl);
+> +			lock_page(page);
+> +			err = split_huge_page(page);
+> +			unlock_page(page);
+> +			put_page(page);
+> +			if (!err)
+> +				goto regular_page;
+> +			return 0;
+> +		}
+> +
+> +		if (isolate_lru_page(page))
+> +			goto huge_unlock;
+> +
+> +		if (pmd_young(orig_pmd)) {
+> +			pmdp_invalidate(vma, addr, pmd);
+> +			orig_pmd = pmd_mkold(orig_pmd);
+> +
+> +			set_pmd_at(mm, addr, pmd, orig_pmd);
+> +			tlb_remove_tlb_entry(tlb, pmd, addr);
+> +		}
+> +
+> +		ClearPageReferenced(page);
+> +		test_and_clear_page_young(page);
+> +		list_add(&page->lru, &page_list);
+> +huge_unlock:
+> +		spin_unlock(ptl);
+> +		reclaim_pages(&page_list);
+> +		return 0;
+> +	}
+> +
+> +	if (pmd_trans_unstable(pmd))
+> +		return 0;
+> +regular_page:
+> +	tlb_change_page_size(tlb, PAGE_SIZE);
+> +	orig_pte = pte = pte_offset_map_lock(vma->vm_mm, pmd, addr, &ptl);
+> +	flush_tlb_batched_pending(mm);
+> +	arch_enter_lazy_mmu_mode();
+> +	for (; addr < end; pte++, addr += PAGE_SIZE) {
+> +		ptent = *pte;
+> +		if (!pte_present(ptent))
+> +			continue;
+> +
+> +		page = vm_normal_page(vma, addr, ptent);
+> +		if (!page)
+> +			continue;
+> +
+> +		/*
+> +		 * creating a THP page is expensive so split it only if we
+> +		 * are sure it's worth. Split it if we are only owner.
+> +		 */
+> +		if (PageTransCompound(page)) {
+> +			if (page_mapcount(page) != 1)
+> +				break;
+> +			get_page(page);
+> +			if (!trylock_page(page)) {
+> +				put_page(page);
+> +				break;
+> +			}
+> +			pte_unmap_unlock(orig_pte, ptl);
+> +			if (split_huge_page(page)) {
+> +				unlock_page(page);
+> +				put_page(page);
+> +				pte_offset_map_lock(mm, pmd, addr, &ptl);
+> +				break;
+> +			}
+> +			unlock_page(page);
+> +			put_page(page);
+> +			pte = pte_offset_map_lock(mm, pmd, addr, &ptl);
+> +			pte--;
+> +			addr -= PAGE_SIZE;
+> +			continue;
+> +		}
+> +
+> +		VM_BUG_ON_PAGE(PageTransCompound(page), page);
+> +
+> +		if (isolate_lru_page(page))
+> +			continue;
+> +
+> +		if (pte_young(ptent)) {
+> +			ptent = ptep_get_and_clear_full(mm, addr, pte,
+> +							tlb->fullmm);
+> +			ptent = pte_mkold(ptent);
+> +			set_pte_at(mm, addr, pte, ptent);
+> +			tlb_remove_tlb_entry(tlb, pte, addr);
+> +		}
+> +		ClearPageReferenced(page);
+> +		test_and_clear_page_young(page);
+> +		list_add(&page->lru, &page_list);
+> +	}
+> +
+> +	arch_leave_lazy_mmu_mode();
+> +	pte_unmap_unlock(orig_pte, ptl);
+> +	reclaim_pages(&page_list);
+> +	cond_resched();
+> +
+> +	return 0;
+> +}
 
-This is tricky to review, but fwiw it looks correct to me.
+I know you have briefly talked about code sharing already.
 
-Acked-by: Johannes Weiner <hannes@cmpxchg.org>
+While I agree that sharing with MADV_FREE is maybe a stretch, I
+applied these patches and compared the pageout and the cold page table
+functions, and they are line for line the same EXCEPT for 2-3 lines at
+the very end, where one reclaims and the other deactivates. It would
+be good to share here, it shouldn't be hard or result in fragile code.
+
+Something like int madvise_cold_or_pageout_range(..., bool pageout)?
