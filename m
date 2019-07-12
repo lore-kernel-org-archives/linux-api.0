@@ -1,76 +1,478 @@
-From: Al Viro <viro@zeniv.linux.org.uk>
-Subject: Re: [PATCH v9 05/10] namei: O_BENEATH-style path resolution flags
-Date: Fri, 12 Jul 2019 05:33:42 +0100
-Message-ID: <20190712043341.GI17978@ZenIV.linux.org.uk>
-References: <20190706145737.5299-1-cyphar@cyphar.com>
- <20190706145737.5299-6-cyphar@cyphar.com>
+From: Minchan Kim <minchan@kernel.org>
+Subject: Re: [PATCH v4 4/4] mm: introduce MADV_PAGEOUT
+Date: Fri, 12 Jul 2019 14:18:28 +0900
+Message-ID: <20190712051828.GA128252@google.com>
+References: <20190711012528.176050-1-minchan@kernel.org>
+ <20190711012528.176050-5-minchan@kernel.org>
+ <20190711184223.GD20341@cmpxchg.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190706145737.5299-6-cyphar@cyphar.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Aleksa Sarai <cyphar@cyphar.com>
-Cc: linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, linux-kernel@vger.kernel.org, David Howells <dhowells@redhat.com>, linux-kselftest@vger.kernel.org, sparclinux@vger.kernel.org, Shuah Khan <shuah@kernel.org>, linux-arch@vger.kernel.org, linux-s390@vger.kernel.org, Tycho Andersen <tycho@tycho.ws>, Aleksa Sarai <asarai@suse.de>, linux-arm-kernel@lists.infradead.org, linux-mips@vger.kernel.org, linux-xtensa@linux-xtensa.org, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Jann Horn <jannh@google.com>, linuxppc-dev@lists.ozlabs.org, linux-m68k@lists.linux-m68k.org, Andy Lutomirski <luto@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, David Drysdale <drysdale@google.com>, Christian Brauner <christian@brauner.io>, "J. Bruce Fields" <bfields@fieldses.org>, linux-parisc@vger.kernel.org, linux-api@vger.kernel.orgCh
+In-Reply-To: <20190711184223.GD20341@cmpxchg.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Johannes Weiner <hannes@cmpxchg.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Michal Hocko <mhocko@suse.com>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, oleksandr@redhat.com, hdanton@sina.com, lizeb@google.com, Dave Hansen <dave.hansen@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Jul 07, 2019 at 12:57:32AM +1000, Aleksa Sarai wrote:
+Hi Johannes,
 
-> @@ -1442,8 +1464,11 @@ static int follow_dotdot_rcu(struct nameidata *nd)
->  	struct inode *inode = nd->inode;
->  
->  	while (1) {
-> -		if (path_equal(&nd->path, &nd->root))
-> +		if (path_equal(&nd->path, &nd->root)) {
-> +			if (unlikely(nd->flags & LOOKUP_BENEATH))
-> +				return -EXDEV;
+On Thu, Jul 11, 2019 at 02:42:23PM -0400, Johannes Weiner wrote:
+> On Thu, Jul 11, 2019 at 10:25:28AM +0900, Minchan Kim wrote:
+> > @@ -480,6 +482,198 @@ static long madvise_cold(struct vm_area_struct *vma,
+> >  	return 0;
+> >  }
+> >  
+> > +static int madvise_pageout_pte_range(pmd_t *pmd, unsigned long addr,
+> > +				unsigned long end, struct mm_walk *walk)
+> > +{
+> > +	struct mmu_gather *tlb = walk->private;
+> > +	struct mm_struct *mm = tlb->mm;
+> > +	struct vm_area_struct *vma = walk->vma;
+> > +	pte_t *orig_pte, *pte, ptent;
+> > +	spinlock_t *ptl;
+> > +	LIST_HEAD(page_list);
+> > +	struct page *page;
+> > +	unsigned long next;
+> > +
+> > +	if (fatal_signal_pending(current))
+> > +		return -EINTR;
+> > +
+> > +	next = pmd_addr_end(addr, end);
+> > +	if (pmd_trans_huge(*pmd)) {
+> > +		pmd_t orig_pmd;
+> > +
+> > +		tlb_change_page_size(tlb, HPAGE_PMD_SIZE);
+> > +		ptl = pmd_trans_huge_lock(pmd, vma);
+> > +		if (!ptl)
+> > +			return 0;
+> > +
+> > +		orig_pmd = *pmd;
+> > +		if (is_huge_zero_pmd(orig_pmd))
+> > +			goto huge_unlock;
+> > +
+> > +		if (unlikely(!pmd_present(orig_pmd))) {
+> > +			VM_BUG_ON(thp_migration_supported() &&
+> > +					!is_pmd_migration_entry(orig_pmd));
+> > +			goto huge_unlock;
+> > +		}
+> > +
+> > +		page = pmd_page(orig_pmd);
+> > +		if (next - addr != HPAGE_PMD_SIZE) {
+> > +			int err;
+> > +
+> > +			if (page_mapcount(page) != 1)
+> > +				goto huge_unlock;
+> > +			get_page(page);
+> > +			spin_unlock(ptl);
+> > +			lock_page(page);
+> > +			err = split_huge_page(page);
+> > +			unlock_page(page);
+> > +			put_page(page);
+> > +			if (!err)
+> > +				goto regular_page;
+> > +			return 0;
+> > +		}
+> > +
+> > +		if (isolate_lru_page(page))
+> > +			goto huge_unlock;
+> > +
+> > +		if (pmd_young(orig_pmd)) {
+> > +			pmdp_invalidate(vma, addr, pmd);
+> > +			orig_pmd = pmd_mkold(orig_pmd);
+> > +
+> > +			set_pmd_at(mm, addr, pmd, orig_pmd);
+> > +			tlb_remove_tlb_entry(tlb, pmd, addr);
+> > +		}
+> > +
+> > +		ClearPageReferenced(page);
+> > +		test_and_clear_page_young(page);
+> > +		list_add(&page->lru, &page_list);
+> > +huge_unlock:
+> > +		spin_unlock(ptl);
+> > +		reclaim_pages(&page_list);
+> > +		return 0;
+> > +	}
+> > +
+> > +	if (pmd_trans_unstable(pmd))
+> > +		return 0;
+> > +regular_page:
+> > +	tlb_change_page_size(tlb, PAGE_SIZE);
+> > +	orig_pte = pte = pte_offset_map_lock(vma->vm_mm, pmd, addr, &ptl);
+> > +	flush_tlb_batched_pending(mm);
+> > +	arch_enter_lazy_mmu_mode();
+> > +	for (; addr < end; pte++, addr += PAGE_SIZE) {
+> > +		ptent = *pte;
+> > +		if (!pte_present(ptent))
+> > +			continue;
+> > +
+> > +		page = vm_normal_page(vma, addr, ptent);
+> > +		if (!page)
+> > +			continue;
+> > +
+> > +		/*
+> > +		 * creating a THP page is expensive so split it only if we
+> > +		 * are sure it's worth. Split it if we are only owner.
+> > +		 */
+> > +		if (PageTransCompound(page)) {
+> > +			if (page_mapcount(page) != 1)
+> > +				break;
+> > +			get_page(page);
+> > +			if (!trylock_page(page)) {
+> > +				put_page(page);
+> > +				break;
+> > +			}
+> > +			pte_unmap_unlock(orig_pte, ptl);
+> > +			if (split_huge_page(page)) {
+> > +				unlock_page(page);
+> > +				put_page(page);
+> > +				pte_offset_map_lock(mm, pmd, addr, &ptl);
+> > +				break;
+> > +			}
+> > +			unlock_page(page);
+> > +			put_page(page);
+> > +			pte = pte_offset_map_lock(mm, pmd, addr, &ptl);
+> > +			pte--;
+> > +			addr -= PAGE_SIZE;
+> > +			continue;
+> > +		}
+> > +
+> > +		VM_BUG_ON_PAGE(PageTransCompound(page), page);
+> > +
+> > +		if (isolate_lru_page(page))
+> > +			continue;
+> > +
+> > +		if (pte_young(ptent)) {
+> > +			ptent = ptep_get_and_clear_full(mm, addr, pte,
+> > +							tlb->fullmm);
+> > +			ptent = pte_mkold(ptent);
+> > +			set_pte_at(mm, addr, pte, ptent);
+> > +			tlb_remove_tlb_entry(tlb, pte, addr);
+> > +		}
+> > +		ClearPageReferenced(page);
+> > +		test_and_clear_page_young(page);
+> > +		list_add(&page->lru, &page_list);
+> > +	}
+> > +
+> > +	arch_leave_lazy_mmu_mode();
+> > +	pte_unmap_unlock(orig_pte, ptl);
+> > +	reclaim_pages(&page_list);
+> > +	cond_resched();
+> > +
+> > +	return 0;
+> > +}
+> 
+> I know you have briefly talked about code sharing already.
+> 
+> While I agree that sharing with MADV_FREE is maybe a stretch, I
+> applied these patches and compared the pageout and the cold page table
+> functions, and they are line for line the same EXCEPT for 2-3 lines at
+> the very end, where one reclaims and the other deactivates. It would
+> be good to share here, it shouldn't be hard or result in fragile code.
 
-> @@ -1468,6 +1493,8 @@ static int follow_dotdot_rcu(struct nameidata *nd)
->  				return -ECHILD;
->  			if (&mparent->mnt == nd->path.mnt)
->  				break;
-> +			if (unlikely(nd->flags & LOOKUP_XDEV))
-> +				return -EXDEV;
->  			/* we know that mountpoint was pinned */
->  			nd->path.dentry = mountpoint;
->  			nd->path.mnt = &mparent->mnt;
-> @@ -1482,6 +1509,8 @@ static int follow_dotdot_rcu(struct nameidata *nd)
->  			return -ECHILD;
->  		if (!mounted)
->  			break;
-> +		if (unlikely(nd->flags & LOOKUP_XDEV))
-> +			return -EXDEV;
+Fair enough if we leave MADV_FREE.
 
-Are you sure these failure exits in follow_dotdot_rcu() won't give
-suprious hard errors?
+> 
+> Something like int madvise_cold_or_pageout_range(..., bool pageout)?
 
-> +	if (unlikely(nd->flags & LOOKUP_BENEATH)) {
-> +		error = dirfd_path_init(nd);
-> +		if (unlikely(error))
-> +			return ERR_PTR(error);
-> +		nd->root = nd->path;
-> +		if (!(nd->flags & LOOKUP_RCU))
-> +			path_get(&nd->root);
-> +	}
->  	if (*s == '/') {
->  		if (likely(!nd->root.mnt))
->  			set_root(nd);
-> @@ -2350,9 +2400,11 @@ static const char *path_init(struct nameidata *nd, unsigned flags)
->  			s = ERR_PTR(error);
->  		return s;
->  	}
-> -	error = dirfd_path_init(nd);
-> -	if (unlikely(error))
-> -		return ERR_PTR(error);
-> +	if (likely(!nd->path.mnt)) {
+How about this?
 
-Is that a weird way of saying "if we hadn't already called dirfd_path_init()"?
+>From 41592f23e876ec21e49dc3c76dc89538e2bb16be Mon Sep 17 00:00:00 2001
+From: Minchan Kim <minchan@kernel.org>
+Date: Fri, 12 Jul 2019 14:05:36 +0900
+Subject: [PATCH] mm: factor out common parts between MADV_COLD and
+ MADV_PAGEOUT
+
+There are many common parts between MADV_COLD and MADV_PAGEOUT.
+This patch factor them out to save code duplication.
+
+Signed-off-by: Minchan Kim <minchan@kernel.org>
+---
+ mm/madvise.c | 201 +++++++++++++--------------------------------------
+ 1 file changed, 52 insertions(+), 149 deletions(-)
+
+diff --git a/mm/madvise.c b/mm/madvise.c
+index bc2f0138982e..3d3d14517cc8 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -30,6 +30,11 @@
+ 
+ #include "internal.h"
+ 
++struct madvise_walk_private {
++	struct mmu_gather *tlb;
++	bool pageout;
++};
++
+ /*
+  * Any behaviour which results in changes to the vma->vm_flags needs to
+  * take mmap_sem for writing. Others, which simply traverse vmas, need
+@@ -310,16 +315,23 @@ static long madvise_willneed(struct vm_area_struct *vma,
+ 	return 0;
+ }
+ 
+-static int madvise_cold_pte_range(pmd_t *pmd, unsigned long addr,
+-				unsigned long end, struct mm_walk *walk)
++static int madvise_cold_or_pageout_pte_range(pmd_t *pmd,
++				unsigned long addr, unsigned long end,
++				struct mm_walk *walk)
+ {
+-	struct mmu_gather *tlb = walk->private;
++	struct madvise_walk_private *private = walk->private;
++	struct mmu_gather *tlb = private->tlb;
++	bool pageout = private->pageout;
+ 	struct mm_struct *mm = tlb->mm;
+ 	struct vm_area_struct *vma = walk->vma;
+ 	pte_t *orig_pte, *pte, ptent;
+ 	spinlock_t *ptl;
+-	struct page *page;
+ 	unsigned long next;
++	struct page *page = NULL;
++	LIST_HEAD(page_list);
++
++	if (fatal_signal_pending(current))
++		return -EINTR;
+ 
+ 	next = pmd_addr_end(addr, end);
+ 	if (pmd_trans_huge(*pmd)) {
+@@ -358,6 +370,12 @@ static int madvise_cold_pte_range(pmd_t *pmd, unsigned long addr,
+ 			return 0;
+ 		}
+ 
++		if (pageout) {
++			if (isolate_lru_page(page))
++				goto huge_unlock;
++			list_add(&page->lru, &page_list);
++		}
++
+ 		if (pmd_young(orig_pmd)) {
+ 			pmdp_invalidate(vma, addr, pmd);
+ 			orig_pmd = pmd_mkold(orig_pmd);
+@@ -366,10 +384,14 @@ static int madvise_cold_pte_range(pmd_t *pmd, unsigned long addr,
+ 			tlb_remove_pmd_tlb_entry(tlb, pmd, addr);
+ 		}
+ 
++		ClearPageReferenced(page);
+ 		test_and_clear_page_young(page);
+-		deactivate_page(page);
+ huge_unlock:
+ 		spin_unlock(ptl);
++		if (pageout)
++			reclaim_pages(&page_list);
++		else
++			deactivate_page(page);
+ 		return 0;
+ 	}
+ 
+@@ -423,6 +445,12 @@ static int madvise_cold_pte_range(pmd_t *pmd, unsigned long addr,
+ 
+ 		VM_BUG_ON_PAGE(PageTransCompound(page), page);
+ 
++		if (pageout) {
++			if (isolate_lru_page(page))
++				continue;
++			list_add(&page->lru, &page_list);
++		}
++
+ 		if (pte_young(ptent)) {
+ 			ptent = ptep_get_and_clear_full(mm, addr, pte,
+ 							tlb->fullmm);
+@@ -437,12 +465,16 @@ static int madvise_cold_pte_range(pmd_t *pmd, unsigned long addr,
+ 		 * As a side effect, it makes confuse idle-page tracking
+ 		 * because they will miss recent referenced history.
+ 		 */
++		ClearPageReferenced(page);
+ 		test_and_clear_page_young(page);
+-		deactivate_page(page);
++		if (!pageout)
++			deactivate_page(page);
+ 	}
+ 
+ 	arch_enter_lazy_mmu_mode();
+ 	pte_unmap_unlock(orig_pte, ptl);
++	if (pageout)
++		reclaim_pages(&page_list);
+ 	cond_resched();
+ 
+ 	return 0;
+@@ -452,10 +484,15 @@ static void madvise_cold_page_range(struct mmu_gather *tlb,
+ 			     struct vm_area_struct *vma,
+ 			     unsigned long addr, unsigned long end)
+ {
++	struct madvise_walk_private walk_private = {
++		.tlb = tlb,
++		.pageout = false,
++	};
++
+ 	struct mm_walk cold_walk = {
+-		.pmd_entry = madvise_cold_pte_range,
++		.pmd_entry = madvise_cold_or_pageout_pte_range,
+ 		.mm = vma->vm_mm,
+-		.private = tlb,
++		.private = &walk_private,
+ 	};
+ 
+ 	tlb_start_vma(tlb, vma);
+@@ -482,153 +519,19 @@ static long madvise_cold(struct vm_area_struct *vma,
+ 	return 0;
+ }
+ 
+-static int madvise_pageout_pte_range(pmd_t *pmd, unsigned long addr,
+-				unsigned long end, struct mm_walk *walk)
+-{
+-	struct mmu_gather *tlb = walk->private;
+-	struct mm_struct *mm = tlb->mm;
+-	struct vm_area_struct *vma = walk->vma;
+-	pte_t *orig_pte, *pte, ptent;
+-	spinlock_t *ptl;
+-	LIST_HEAD(page_list);
+-	struct page *page;
+-	unsigned long next;
+-
+-	if (fatal_signal_pending(current))
+-		return -EINTR;
+-
+-	next = pmd_addr_end(addr, end);
+-	if (pmd_trans_huge(*pmd)) {
+-		pmd_t orig_pmd;
+-
+-		tlb_change_page_size(tlb, HPAGE_PMD_SIZE);
+-		ptl = pmd_trans_huge_lock(pmd, vma);
+-		if (!ptl)
+-			return 0;
+-
+-		orig_pmd = *pmd;
+-		if (is_huge_zero_pmd(orig_pmd))
+-			goto huge_unlock;
+-
+-		if (unlikely(!pmd_present(orig_pmd))) {
+-			VM_BUG_ON(thp_migration_supported() &&
+-					!is_pmd_migration_entry(orig_pmd));
+-			goto huge_unlock;
+-		}
+-
+-		page = pmd_page(orig_pmd);
+-		if (next - addr != HPAGE_PMD_SIZE) {
+-			int err;
+-
+-			if (page_mapcount(page) != 1)
+-				goto huge_unlock;
+-			get_page(page);
+-			spin_unlock(ptl);
+-			lock_page(page);
+-			err = split_huge_page(page);
+-			unlock_page(page);
+-			put_page(page);
+-			if (!err)
+-				goto regular_page;
+-			return 0;
+-		}
+-
+-		if (isolate_lru_page(page))
+-			goto huge_unlock;
+-
+-		if (pmd_young(orig_pmd)) {
+-			pmdp_invalidate(vma, addr, pmd);
+-			orig_pmd = pmd_mkold(orig_pmd);
+-
+-			set_pmd_at(mm, addr, pmd, orig_pmd);
+-			tlb_remove_tlb_entry(tlb, pmd, addr);
+-		}
+-
+-		ClearPageReferenced(page);
+-		test_and_clear_page_young(page);
+-		list_add(&page->lru, &page_list);
+-huge_unlock:
+-		spin_unlock(ptl);
+-		reclaim_pages(&page_list);
+-		return 0;
+-	}
+-
+-	if (pmd_trans_unstable(pmd))
+-		return 0;
+-regular_page:
+-	tlb_change_page_size(tlb, PAGE_SIZE);
+-	orig_pte = pte = pte_offset_map_lock(vma->vm_mm, pmd, addr, &ptl);
+-	flush_tlb_batched_pending(mm);
+-	arch_enter_lazy_mmu_mode();
+-	for (; addr < end; pte++, addr += PAGE_SIZE) {
+-		ptent = *pte;
+-		if (!pte_present(ptent))
+-			continue;
+-
+-		page = vm_normal_page(vma, addr, ptent);
+-		if (!page)
+-			continue;
+-
+-		/*
+-		 * creating a THP page is expensive so split it only if we
+-		 * are sure it's worth. Split it if we are only owner.
+-		 */
+-		if (PageTransCompound(page)) {
+-			if (page_mapcount(page) != 1)
+-				break;
+-			get_page(page);
+-			if (!trylock_page(page)) {
+-				put_page(page);
+-				break;
+-			}
+-			pte_unmap_unlock(orig_pte, ptl);
+-			if (split_huge_page(page)) {
+-				unlock_page(page);
+-				put_page(page);
+-				pte_offset_map_lock(mm, pmd, addr, &ptl);
+-				break;
+-			}
+-			unlock_page(page);
+-			put_page(page);
+-			pte = pte_offset_map_lock(mm, pmd, addr, &ptl);
+-			pte--;
+-			addr -= PAGE_SIZE;
+-			continue;
+-		}
+-
+-		VM_BUG_ON_PAGE(PageTransCompound(page), page);
+-
+-		if (isolate_lru_page(page))
+-			continue;
+-
+-		if (pte_young(ptent)) {
+-			ptent = ptep_get_and_clear_full(mm, addr, pte,
+-							tlb->fullmm);
+-			ptent = pte_mkold(ptent);
+-			set_pte_at(mm, addr, pte, ptent);
+-			tlb_remove_tlb_entry(tlb, pte, addr);
+-		}
+-		ClearPageReferenced(page);
+-		test_and_clear_page_young(page);
+-		list_add(&page->lru, &page_list);
+-	}
+-
+-	arch_leave_lazy_mmu_mode();
+-	pte_unmap_unlock(orig_pte, ptl);
+-	reclaim_pages(&page_list);
+-	cond_resched();
+-
+-	return 0;
+-}
+-
+ static void madvise_pageout_page_range(struct mmu_gather *tlb,
+ 			     struct vm_area_struct *vma,
+ 			     unsigned long addr, unsigned long end)
+ {
++	struct madvise_walk_private walk_private = {
++		.pageout = true,
++		.tlb = tlb,
++	};
++
+ 	struct mm_walk pageout_walk = {
+-		.pmd_entry = madvise_pageout_pte_range,
++		.pmd_entry = madvise_cold_or_pageout_pte_range,
+ 		.mm = vma->vm_mm,
+-		.private = tlb,
++		.private = &walk_private,
+ 	};
+ 
+ 	tlb_start_vma(tlb, vma);
+-- 
+2.22.0.410.gd8fdbe21b5-goog
