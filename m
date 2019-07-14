@@ -1,7 +1,7 @@
 From: Minchan Kim <minchan@kernel.org>
-Subject: [PATCH v5 3/5] mm: account nr_isolated_xxx in [isolate|putback]_lru_page
-Date: Mon, 15 Jul 2019 08:33:58 +0900
-Message-ID: <20190714233401.36909-4-minchan@kernel.org>
+Subject: [PATCH v5 5/5] mm: factor out common parts between MADV_COLD and MADV_PAGEOUT
+Date: Mon, 15 Jul 2019 08:34:00 +0900
+Message-ID: <20190714233401.36909-6-minchan@kernel.org>
 References: <20190714233401.36909-1-minchan@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,346 +12,275 @@ To: Andrew Morton <akpm@linux-foundation.org>
 Cc: linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, oleksandr@redhat.com, hdanton@sina.com, lizeb@google.com, Dave Hansen <dave.hansen@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Minchan Kim <minchan@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-The isolate counting is pecpu counter so it would be not huge gain
-to work them by batch. Rather than complicating to make them batch,
-let's make it more stright-foward via adding the counting logic
-into [isolate|putback]_lru_page API.
+There are many common parts between MADV_COLD and MADV_PAGEOUT.
+This patch factor them out to save code duplication.
 
-* v1
- * fix accounting bug - Hillf
-
-Link: http://lkml.kernel.org/r/20190531165927.GA20067@cmpxchg.org
-Suggested-by: Johannes Weiner <hannes@cmpxchg.org>
-Acked-by: Johannes Weiner <hannes@cmpxchg.org>
 Acked-by: Michal Hocko <mhocko@suse.com>
 Signed-off-by: Minchan Kim <minchan@kernel.org>
 ---
- mm/compaction.c     |  2 --
- mm/gup.c            |  7 +------
- mm/khugepaged.c     |  3 ---
- mm/memory-failure.c |  3 ---
- mm/memory_hotplug.c |  4 ----
- mm/mempolicy.c      |  6 +-----
- mm/migrate.c        | 37 ++++++++-----------------------------
- mm/vmscan.c         | 22 ++++++++++++++++------
- 8 files changed, 26 insertions(+), 58 deletions(-)
+ mm/madvise.c | 193 ++++++++++++---------------------------------------
+ 1 file changed, 46 insertions(+), 147 deletions(-)
 
-diff --git a/mm/compaction.c b/mm/compaction.c
-index 9e1b9acb116b..c6591682deda 100644
---- a/mm/compaction.c
-+++ b/mm/compaction.c
-@@ -982,8 +982,6 @@ isolate_migratepages_block(struct compact_control *cc, unsigned long low_pfn,
+diff --git a/mm/madvise.c b/mm/madvise.c
+index 8db102f170ef..693239a8f67b 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -30,6 +30,11 @@
  
- 		/* Successfully isolated */
- 		del_page_from_lru_list(page, lruvec, page_lru(page));
--		inc_node_page_state(page,
--				NR_ISOLATED_ANON + page_is_file_cache(page));
+ #include "internal.h"
  
- isolate_success:
- 		list_add(&page->lru, &cc->migratepages);
-diff --git a/mm/gup.c b/mm/gup.c
-index 98f13ab37bac..11d0634ce613 100644
---- a/mm/gup.c
-+++ b/mm/gup.c
-@@ -1475,13 +1475,8 @@ static long check_and_migrate_cma_pages(struct task_struct *tsk,
- 					drain_allow = false;
- 				}
- 
--				if (!isolate_lru_page(head)) {
-+				if (!isolate_lru_page(head))
- 					list_add_tail(&head->lru, &cma_page_list);
--					mod_node_page_state(page_pgdat(head),
--							    NR_ISOLATED_ANON +
--							    page_is_file_cache(head),
--							    hpage_nr_pages(head));
--				}
- 			}
- 		}
- 
-diff --git a/mm/khugepaged.c b/mm/khugepaged.c
-index eaaa21b23215..a8b517d6df4a 100644
---- a/mm/khugepaged.c
-+++ b/mm/khugepaged.c
-@@ -503,7 +503,6 @@ void __khugepaged_exit(struct mm_struct *mm)
- 
- static void release_pte_page(struct page *page)
- {
--	dec_node_page_state(page, NR_ISOLATED_ANON + page_is_file_cache(page));
- 	unlock_page(page);
- 	putback_lru_page(page);
- }
-@@ -602,8 +601,6 @@ static int __collapse_huge_page_isolate(struct vm_area_struct *vma,
- 			result = SCAN_DEL_PAGE_LRU;
- 			goto out;
- 		}
--		inc_node_page_state(page,
--				NR_ISOLATED_ANON + page_is_file_cache(page));
- 		VM_BUG_ON_PAGE(!PageLocked(page), page);
- 		VM_BUG_ON_PAGE(PageLRU(page), page);
- 
-diff --git a/mm/memory-failure.c b/mm/memory-failure.c
-index 7ef849da8278..9900bb95d774 100644
---- a/mm/memory-failure.c
-+++ b/mm/memory-failure.c
-@@ -1791,9 +1791,6 @@ static int __soft_offline_page(struct page *page, int flags)
- 		 * so use !__PageMovable instead for LRU page's mapping
- 		 * cannot have PAGE_MAPPING_MOVABLE.
- 		 */
--		if (!__PageMovable(page))
--			inc_node_page_state(page, NR_ISOLATED_ANON +
--						page_is_file_cache(page));
- 		list_add(&page->lru, &pagelist);
- 		ret = migrate_pages(&pagelist, new_page, NULL, MPOL_MF_MOVE_ALL,
- 					MIGRATE_SYNC, MR_MEMORY_FAILURE);
-diff --git a/mm/memory_hotplug.c b/mm/memory_hotplug.c
-index b9ba5b85f9f7..15bad2043b41 100644
---- a/mm/memory_hotplug.c
-+++ b/mm/memory_hotplug.c
-@@ -1383,10 +1383,6 @@ do_migrate_range(unsigned long start_pfn, unsigned long end_pfn)
- 			ret = isolate_movable_page(page, ISOLATE_UNEVICTABLE);
- 		if (!ret) { /* Success */
- 			list_add_tail(&page->lru, &source);
--			if (!__PageMovable(page))
--				inc_node_page_state(page, NR_ISOLATED_ANON +
--						    page_is_file_cache(page));
--
- 		} else {
- 			pr_warn("failed to isolate pfn %lx\n", pfn);
- 			dump_page(page, "isolation failed");
-diff --git a/mm/mempolicy.c b/mm/mempolicy.c
-index 4acc2d14bc77..a5685eee6d1d 100644
---- a/mm/mempolicy.c
-+++ b/mm/mempolicy.c
-@@ -994,12 +994,8 @@ static int migrate_page_add(struct page *page, struct list_head *pagelist,
- 	 * Avoid migrating a page that is shared with others.
- 	 */
- 	if ((flags & MPOL_MF_MOVE_ALL) || page_mapcount(head) == 1) {
--		if (!isolate_lru_page(head)) {
-+		if (!isolate_lru_page(head))
- 			list_add_tail(&head->lru, pagelist);
--			mod_node_page_state(page_pgdat(head),
--				NR_ISOLATED_ANON + page_is_file_cache(head),
--				hpage_nr_pages(head));
--		}
- 	}
- 
- 	return 0;
-diff --git a/mm/migrate.c b/mm/migrate.c
-index 8992741f10aa..f54f449a99f5 100644
---- a/mm/migrate.c
-+++ b/mm/migrate.c
-@@ -190,8 +190,6 @@ void putback_movable_pages(struct list_head *l)
- 			unlock_page(page);
- 			put_page(page);
- 		} else {
--			mod_node_page_state(page_pgdat(page), NR_ISOLATED_ANON +
--					page_is_file_cache(page), -hpage_nr_pages(page));
- 			putback_lru_page(page);
- 		}
- 	}
-@@ -1175,10 +1173,17 @@ static ICE_noinline int unmap_and_move(new_page_t get_new_page,
- 		return -ENOMEM;
- 
- 	if (page_count(page) == 1) {
-+		bool is_lru = !__PageMovable(page);
++struct madvise_walk_private {
++	struct mmu_gather *tlb;
++	bool pageout;
++};
 +
- 		/* page was freed from under us. So we are done. */
- 		ClearPageActive(page);
- 		ClearPageUnevictable(page);
--		if (unlikely(__PageMovable(page))) {
-+		if (likely(is_lru))
-+			mod_node_page_state(page_pgdat(page),
-+						NR_ISOLATED_ANON +
-+						page_is_file_cache(page),
-+						-hpage_nr_pages(page));
-+		else {
- 			lock_page(page);
- 			if (!PageMovable(page))
- 				__ClearPageIsolated(page);
-@@ -1204,15 +1209,6 @@ static ICE_noinline int unmap_and_move(new_page_t get_new_page,
- 		 * restored.
- 		 */
- 		list_del(&page->lru);
--
--		/*
--		 * Compaction can migrate also non-LRU pages which are
--		 * not accounted to NR_ISOLATED_*. They can be recognized
--		 * as __PageMovable
--		 */
--		if (likely(!__PageMovable(page)))
--			mod_node_page_state(page_pgdat(page), NR_ISOLATED_ANON +
--					page_is_file_cache(page), -hpage_nr_pages(page));
- 	}
+ /*
+  * Any behaviour which results in changes to the vma->vm_flags needs to
+  * take mmap_sem for writing. Others, which simply traverse vmas, need
+@@ -310,16 +315,23 @@ static long madvise_willneed(struct vm_area_struct *vma,
+ 	return 0;
+ }
  
- 	/*
-@@ -1566,9 +1562,6 @@ static int add_page_for_migration(struct mm_struct *mm, unsigned long addr,
- 
- 		err = 0;
- 		list_add_tail(&head->lru, pagelist);
--		mod_node_page_state(page_pgdat(head),
--			NR_ISOLATED_ANON + page_is_file_cache(head),
--			hpage_nr_pages(head));
- 	}
- out_putpage:
- 	/*
-@@ -1884,8 +1877,6 @@ static struct page *alloc_misplaced_dst_page(struct page *page,
- 
- static int numamigrate_isolate_page(pg_data_t *pgdat, struct page *page)
+-static int madvise_cold_pte_range(pmd_t *pmd, unsigned long addr,
+-				unsigned long end, struct mm_walk *walk)
++static int madvise_cold_or_pageout_pte_range(pmd_t *pmd,
++				unsigned long addr, unsigned long end,
++				struct mm_walk *walk)
  {
--	int page_lru;
--
- 	VM_BUG_ON_PAGE(compound_order(page) && !PageTransHuge(page), page);
+-	struct mmu_gather *tlb = walk->private;
++	struct madvise_walk_private *private = walk->private;
++	struct mmu_gather *tlb = private->tlb;
++	bool pageout = private->pageout;
+ 	struct mm_struct *mm = tlb->mm;
+ 	struct vm_area_struct *vma = walk->vma;
+ 	pte_t *orig_pte, *pte, ptent;
+ 	spinlock_t *ptl;
+-	struct page *page;
+ 	unsigned long next;
++	struct page *page = NULL;
++	LIST_HEAD(page_list);
++
++	if (fatal_signal_pending(current))
++		return -EINTR;
  
- 	/* Avoid migrating to a node that is nearly full */
-@@ -1907,10 +1898,6 @@ static int numamigrate_isolate_page(pg_data_t *pgdat, struct page *page)
+ 	next = pmd_addr_end(addr, end);
+ 	if (pmd_trans_huge(*pmd)) {
+@@ -366,10 +378,17 @@ static int madvise_cold_pte_range(pmd_t *pmd, unsigned long addr,
+ 			tlb_remove_pmd_tlb_entry(tlb, pmd, addr);
+ 		}
+ 
++		ClearPageReferenced(page);
+ 		test_and_clear_page_young(page);
+-		deactivate_page(page);
++		if (pageout) {
++			if (!isolate_lru_page(page))
++				list_add(&page->lru, &page_list);
++		} else
++			deactivate_page(page);
+ huge_unlock:
+ 		spin_unlock(ptl);
++		if (pageout)
++			reclaim_pages(&page_list);
  		return 0;
  	}
  
--	page_lru = page_is_file_cache(page);
--	mod_node_page_state(page_pgdat(page), NR_ISOLATED_ANON + page_lru,
--				hpage_nr_pages(page));
--
- 	/*
- 	 * Isolating the page has taken another reference, so the
- 	 * caller's reference can be safely dropped without the page
-@@ -1965,8 +1952,6 @@ int migrate_misplaced_page(struct page *page, struct vm_area_struct *vma,
- 	if (nr_remaining) {
- 		if (!list_empty(&migratepages)) {
- 			list_del(&page->lru);
--			dec_node_page_state(page, NR_ISOLATED_ANON +
--					page_is_file_cache(page));
- 			putback_lru_page(page);
- 		}
- 		isolated = 0;
-@@ -1996,7 +1981,6 @@ int migrate_misplaced_transhuge_page(struct mm_struct *mm,
- 	pg_data_t *pgdat = NODE_DATA(node);
- 	int isolated = 0;
- 	struct page *new_page = NULL;
--	int page_lru = page_is_file_cache(page);
- 	unsigned long start = address & HPAGE_PMD_MASK;
- 
- 	new_page = alloc_pages_node(node,
-@@ -2042,8 +2026,6 @@ int migrate_misplaced_transhuge_page(struct mm_struct *mm,
- 		/* Retake the callers reference and putback on LRU */
- 		get_page(page);
- 		putback_lru_page(page);
--		mod_node_page_state(page_pgdat(page),
--			 NR_ISOLATED_ANON + page_lru, -HPAGE_PMD_NR);
- 
- 		goto out_unlock;
+@@ -437,12 +456,19 @@ static int madvise_cold_pte_range(pmd_t *pmd, unsigned long addr,
+ 		 * As a side effect, it makes confuse idle-page tracking
+ 		 * because they will miss recent referenced history.
+ 		 */
++		ClearPageReferenced(page);
+ 		test_and_clear_page_young(page);
+-		deactivate_page(page);
++		if (pageout) {
++			if (!isolate_lru_page(page))
++				list_add(&page->lru, &page_list);
++		} else
++			deactivate_page(page);
  	}
-@@ -2093,9 +2075,6 @@ int migrate_misplaced_transhuge_page(struct mm_struct *mm,
- 	count_vm_events(PGMIGRATE_SUCCESS, HPAGE_PMD_NR);
- 	count_vm_numa_events(NUMA_PAGE_MIGRATE, HPAGE_PMD_NR);
  
--	mod_node_page_state(page_pgdat(page),
--			NR_ISOLATED_ANON + page_lru,
--			-HPAGE_PMD_NR);
- 	return isolated;
+ 	arch_enter_lazy_mmu_mode();
+ 	pte_unmap_unlock(orig_pte, ptl);
++	if (pageout)
++		reclaim_pages(&page_list);
+ 	cond_resched();
  
- out_fail:
-diff --git a/mm/vmscan.c b/mm/vmscan.c
-index b4fa04d10ba6..ca192b792d4f 100644
---- a/mm/vmscan.c
-+++ b/mm/vmscan.c
-@@ -1016,6 +1016,9 @@ int remove_mapping(struct address_space *mapping, struct page *page)
- void putback_lru_page(struct page *page)
+ 	return 0;
+@@ -452,10 +478,15 @@ static void madvise_cold_page_range(struct mmu_gather *tlb,
+ 			     struct vm_area_struct *vma,
+ 			     unsigned long addr, unsigned long end)
  {
- 	lru_cache_add(page);
-+	mod_node_page_state(page_pgdat(page),
-+				NR_ISOLATED_ANON + page_is_file_cache(page),
-+				-hpage_nr_pages(page));
- 	put_page(page);		/* drop ref from isolate */
- }
- 
-@@ -1481,6 +1484,9 @@ static unsigned long shrink_page_list(struct list_head *page_list,
- 		 */
- 		nr_reclaimed += nr_pages;
- 
-+		mod_node_page_state(pgdat, NR_ISOLATED_ANON +
-+						page_is_file_cache(page),
-+						-nr_pages);
- 		/*
- 		 * Is there need to periodically free_page_list? It would
- 		 * appear not as the counts should be low
-@@ -1556,7 +1562,6 @@ unsigned long reclaim_clean_pages_from_list(struct zone *zone,
- 	ret = shrink_page_list(&clean_pages, zone->zone_pgdat, &sc,
- 			TTU_IGNORE_ACCESS, &dummy_stat, true);
- 	list_splice(&clean_pages, page_list);
--	mod_node_page_state(zone->zone_pgdat, NR_ISOLATED_FILE, -ret);
- 	return ret;
- }
- 
-@@ -1632,6 +1637,9 @@ int __isolate_lru_page(struct page *page, isolate_mode_t mode)
- 		 */
- 		ClearPageLRU(page);
- 		ret = 0;
-+		__mod_node_page_state(page_pgdat(page), NR_ISOLATED_ANON +
-+						page_is_file_cache(page),
-+						hpage_nr_pages(page));
- 	}
- 
- 	return ret;
-@@ -1763,6 +1771,7 @@ static unsigned long isolate_lru_pages(unsigned long nr_to_scan,
- 	trace_mm_vmscan_lru_isolate(sc->reclaim_idx, sc->order, nr_to_scan,
- 				    total_scan, skipped, nr_taken, mode, lru);
- 	update_lru_sizes(lruvec, lru, nr_zone_taken);
++	struct madvise_walk_private walk_private = {
++		.tlb = tlb,
++		.pageout = false,
++	};
 +
- 	return nr_taken;
+ 	struct mm_walk cold_walk = {
+-		.pmd_entry = madvise_cold_pte_range,
++		.pmd_entry = madvise_cold_or_pageout_pte_range,
+ 		.mm = vma->vm_mm,
+-		.private = tlb,
++		.private = &walk_private,
+ 	};
+ 
+ 	tlb_start_vma(tlb, vma);
+@@ -482,151 +513,19 @@ static long madvise_cold(struct vm_area_struct *vma,
+ 	return 0;
  }
  
-@@ -1811,6 +1820,9 @@ int isolate_lru_page(struct page *page)
- 			ClearPageLRU(page);
- 			del_page_from_lru_list(page, lruvec, lru);
- 			ret = 0;
-+			mod_node_page_state(pgdat, NR_ISOLATED_ANON +
-+						page_is_file_cache(page),
-+						hpage_nr_pages(page));
- 		}
- 		spin_unlock_irq(&pgdat->lru_lock);
- 	}
-@@ -1902,6 +1914,9 @@ static unsigned noinline_for_stack move_pages_to_lru(struct lruvec *lruvec,
- 		update_lru_size(lruvec, lru, page_zonenum(page), nr_pages);
- 		list_move(&page->lru, &lruvec->lists[lru]);
- 
-+		__mod_node_page_state(pgdat, NR_ISOLATED_ANON +
-+						page_is_file_cache(page),
-+						-hpage_nr_pages(page));
- 		if (put_page_testzero(page)) {
- 			__ClearPageLRU(page);
- 			__ClearPageActive(page);
-@@ -1979,7 +1994,6 @@ shrink_inactive_list(unsigned long nr_to_scan, struct lruvec *lruvec,
- 	nr_taken = isolate_lru_pages(nr_to_scan, lruvec, &page_list,
- 				     &nr_scanned, sc, lru);
- 
--	__mod_node_page_state(pgdat, NR_ISOLATED_ANON + file, nr_taken);
- 	reclaim_stat->recent_scanned[file] += nr_taken;
- 
- 	item = current_is_kswapd() ? PGSCAN_KSWAPD : PGSCAN_DIRECT;
-@@ -2005,8 +2019,6 @@ shrink_inactive_list(unsigned long nr_to_scan, struct lruvec *lruvec,
- 
- 	move_pages_to_lru(lruvec, &page_list);
- 
--	__mod_node_page_state(pgdat, NR_ISOLATED_ANON + file, -nr_taken);
+-static int madvise_pageout_pte_range(pmd_t *pmd, unsigned long addr,
+-				unsigned long end, struct mm_walk *walk)
+-{
+-	struct mmu_gather *tlb = walk->private;
+-	struct mm_struct *mm = tlb->mm;
+-	struct vm_area_struct *vma = walk->vma;
+-	pte_t *orig_pte, *pte, ptent;
+-	spinlock_t *ptl;
+-	LIST_HEAD(page_list);
+-	struct page *page;
+-	unsigned long next;
 -
- 	spin_unlock_irq(&pgdat->lru_lock);
+-	if (fatal_signal_pending(current))
+-		return -EINTR;
+-
+-	next = pmd_addr_end(addr, end);
+-	if (pmd_trans_huge(*pmd)) {
+-		pmd_t orig_pmd;
+-
+-		tlb_change_page_size(tlb, HPAGE_PMD_SIZE);
+-		ptl = pmd_trans_huge_lock(pmd, vma);
+-		if (!ptl)
+-			return 0;
+-
+-		orig_pmd = *pmd;
+-		if (is_huge_zero_pmd(orig_pmd))
+-			goto huge_unlock;
+-
+-		if (unlikely(!pmd_present(orig_pmd))) {
+-			VM_BUG_ON(thp_migration_supported() &&
+-					!is_pmd_migration_entry(orig_pmd));
+-			goto huge_unlock;
+-		}
+-
+-		page = pmd_page(orig_pmd);
+-		if (next - addr != HPAGE_PMD_SIZE) {
+-			int err;
+-
+-			if (page_mapcount(page) != 1)
+-				goto huge_unlock;
+-			get_page(page);
+-			spin_unlock(ptl);
+-			lock_page(page);
+-			err = split_huge_page(page);
+-			unlock_page(page);
+-			put_page(page);
+-			if (!err)
+-				goto regular_page;
+-			return 0;
+-		}
+-
+-		if (pmd_young(orig_pmd)) {
+-			pmdp_invalidate(vma, addr, pmd);
+-			orig_pmd = pmd_mkold(orig_pmd);
+-
+-			set_pmd_at(mm, addr, pmd, orig_pmd);
+-			tlb_remove_tlb_entry(tlb, pmd, addr);
+-		}
+-
+-		ClearPageReferenced(page);
+-		test_and_clear_page_young(page);
+-
+-		if (!isolate_lru_page(page))
+-			list_add(&page->lru, &page_list);
+-huge_unlock:
+-		spin_unlock(ptl);
+-		reclaim_pages(&page_list);
+-		return 0;
+-	}
+-
+-	if (pmd_trans_unstable(pmd))
+-		return 0;
+-regular_page:
+-	tlb_change_page_size(tlb, PAGE_SIZE);
+-	orig_pte = pte = pte_offset_map_lock(vma->vm_mm, pmd, addr, &ptl);
+-	flush_tlb_batched_pending(mm);
+-	arch_enter_lazy_mmu_mode();
+-	for (; addr < end; pte++, addr += PAGE_SIZE) {
+-		ptent = *pte;
+-		if (!pte_present(ptent))
+-			continue;
+-
+-		page = vm_normal_page(vma, addr, ptent);
+-		if (!page)
+-			continue;
+-
+-		/*
+-		 * creating a THP page is expensive so split it only if we
+-		 * are sure it's worth. Split it if we are only owner.
+-		 */
+-		if (PageTransCompound(page)) {
+-			if (page_mapcount(page) != 1)
+-				break;
+-			get_page(page);
+-			if (!trylock_page(page)) {
+-				put_page(page);
+-				break;
+-			}
+-			pte_unmap_unlock(orig_pte, ptl);
+-			if (split_huge_page(page)) {
+-				unlock_page(page);
+-				put_page(page);
+-				pte_offset_map_lock(mm, pmd, addr, &ptl);
+-				break;
+-			}
+-			unlock_page(page);
+-			put_page(page);
+-			pte = pte_offset_map_lock(mm, pmd, addr, &ptl);
+-			pte--;
+-			addr -= PAGE_SIZE;
+-			continue;
+-		}
+-
+-		VM_BUG_ON_PAGE(PageTransCompound(page), page);
+-
+-		if (pte_young(ptent)) {
+-			ptent = ptep_get_and_clear_full(mm, addr, pte,
+-							tlb->fullmm);
+-			ptent = pte_mkold(ptent);
+-			set_pte_at(mm, addr, pte, ptent);
+-			tlb_remove_tlb_entry(tlb, pte, addr);
+-		}
+-		ClearPageReferenced(page);
+-		test_and_clear_page_young(page);
+-
+-		if (!isolate_lru_page(page))
+-			list_add(&page->lru, &page_list);
+-	}
+-
+-	arch_leave_lazy_mmu_mode();
+-	pte_unmap_unlock(orig_pte, ptl);
+-	reclaim_pages(&page_list);
+-	cond_resched();
+-
+-	return 0;
+-}
+-
+ static void madvise_pageout_page_range(struct mmu_gather *tlb,
+ 			     struct vm_area_struct *vma,
+ 			     unsigned long addr, unsigned long end)
+ {
++	struct madvise_walk_private walk_private = {
++		.pageout = true,
++		.tlb = tlb,
++	};
++
+ 	struct mm_walk pageout_walk = {
+-		.pmd_entry = madvise_pageout_pte_range,
++		.pmd_entry = madvise_cold_or_pageout_pte_range,
+ 		.mm = vma->vm_mm,
+-		.private = tlb,
++		.private = &walk_private,
+ 	};
  
- 	mem_cgroup_uncharge_list(&page_list);
-@@ -2065,7 +2077,6 @@ static void shrink_active_list(unsigned long nr_to_scan,
- 	nr_taken = isolate_lru_pages(nr_to_scan, lruvec, &l_hold,
- 				     &nr_scanned, sc, lru);
- 
--	__mod_node_page_state(pgdat, NR_ISOLATED_ANON + file, nr_taken);
- 	reclaim_stat->recent_scanned[file] += nr_taken;
- 
- 	__count_vm_events(PGREFILL, nr_scanned);
-@@ -2134,7 +2145,6 @@ static void shrink_active_list(unsigned long nr_to_scan,
- 	__count_vm_events(PGDEACTIVATE, nr_deactivate);
- 	__count_memcg_events(lruvec_memcg(lruvec), PGDEACTIVATE, nr_deactivate);
- 
--	__mod_node_page_state(pgdat, NR_ISOLATED_ANON + file, -nr_taken);
- 	spin_unlock_irq(&pgdat->lru_lock);
- 
- 	mem_cgroup_uncharge_list(&l_active);
+ 	tlb_start_vma(tlb, vma);
 -- 
 2.22.0.510.g264f2c817a-goog
