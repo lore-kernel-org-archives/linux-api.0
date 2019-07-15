@@ -1,81 +1,69 @@
-From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V35 10/29] hibernate: Disable when the kernel is locked down
-Date: Mon, 15 Jul 2019 12:59:27 -0700
-Message-ID: <20190715195946.223443-11-matthewgarrett@google.com>
-References: <20190715195946.223443-1-matthewgarrett@google.com>
+From: Paul Moore <paul@paul-moore.com>
+Subject: Re: [PATCH ghak90 V6 02/10] audit: add container id
+Date: Mon, 15 Jul 2019 16:38:25 -0400
+Message-ID: <CAHC9VhRFeCFSCn=m6wgDK2tXBN1euc2+bw8o=CfNwptk8t=j7A@mail.gmail.com>
+References: <cover.1554732921.git.rgb@redhat.com> <9edad39c40671fb53f28d76862304cc2647029c6.1554732921.git.rgb@redhat.com>
+ <20190529145742.GA8959@cisco> <CAHC9VhR4fudQanvZGYWMvCf7k2CU3q7e7n1Pi7hzC3v_zpVEdw@mail.gmail.com>
+ <20190708175105.7zb6mikjw2wmnwln@madcap2.tricolour.ca>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190715195946.223443-1-matthewgarrett@google.com>
+In-Reply-To: <20190708175105.7zb6mikjw2wmnwln@madcap2.tricolour.ca>
 Sender: linux-kernel-owner@vger.kernel.org
-To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Josh Boyer <jwboyer@fedoraproject.org>, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>, rjw@rjwysocki.net, pavel@ucw.cz, linux-pm@vger.kernel.org
+To: Richard Guy Briggs <rgb@redhat.com>
+Cc: Tycho Andersen <tycho@tycho.ws>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com
 List-Id: linux-api@vger.kernel.org
 
-From: Josh Boyer <jwboyer@fedoraproject.org>
+On Mon, Jul 8, 2019 at 1:51 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> On 2019-05-29 11:29, Paul Moore wrote:
 
-There is currently no way to verify the resume image when returning
-from hibernate.  This might compromise the signed modules trust model,
-so until we can work with signed hibernate images we disable it when the
-kernel is locked down.
+...
 
-Signed-off-by: Josh Boyer <jwboyer@fedoraproject.org>
-Signed-off-by: David Howells <dhowells@redhat.com>
-Signed-off-by: Matthew Garrett <mjg59@google.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
-Cc: rjw@rjwysocki.net
-Cc: pavel@ucw.cz
-cc: linux-pm@vger.kernel.org
----
- include/linux/security.h     | 1 +
- kernel/power/hibernate.c     | 3 ++-
- security/lockdown/lockdown.c | 1 +
- 3 files changed, 4 insertions(+), 1 deletion(-)
+> > The idea is that only container orchestrators should be able to
+> > set/modify the audit container ID, and since setting the audit
+> > container ID can have a significant effect on the records captured
+> > (and their routing to multiple daemons when we get there) modifying
+> > the audit container ID is akin to modifying the audit configuration
+> > which is why it is gated by CAP_AUDIT_CONTROL.  The current thinking
+> > is that you would only change the audit container ID from one
+> > set/inherited value to another if you were nesting containers, in
+> > which case the nested container orchestrator would need to be granted
+> > CAP_AUDIT_CONTROL (which everyone to date seems to agree is a workable
+> > compromise).  We did consider allowing for a chain of nested audit
+> > container IDs, but the implications of doing so are significant
+> > (implementation mess, runtime cost, etc.) so we are leaving that out
+> > of this effort.
+>
+> We had previously discussed the idea of restricting
+> orchestrators/engines from only being able to set the audit container
+> identifier on their own descendants, but it was discarded.  I've added a
+> check to ensure this is now enforced.
 
-diff --git a/include/linux/security.h b/include/linux/security.h
-index 69c5de539e9a..304a155a5628 100644
---- a/include/linux/security.h
-+++ b/include/linux/security.h
-@@ -106,6 +106,7 @@ enum lockdown_reason {
- 	LOCKDOWN_MODULE_SIGNATURE,
- 	LOCKDOWN_DEV_MEM,
- 	LOCKDOWN_KEXEC,
-+	LOCKDOWN_HIBERNATION,
- 	LOCKDOWN_INTEGRITY_MAX,
- 	LOCKDOWN_CONFIDENTIALITY_MAX,
- };
-diff --git a/kernel/power/hibernate.c b/kernel/power/hibernate.c
-index cd7434e6000d..3c0a5a8170b0 100644
---- a/kernel/power/hibernate.c
-+++ b/kernel/power/hibernate.c
-@@ -30,6 +30,7 @@
- #include <linux/ctype.h>
- #include <linux/genhd.h>
- #include <linux/ktime.h>
-+#include <linux/security.h>
- #include <trace/events/power.h>
- 
- #include "power.h"
-@@ -68,7 +69,7 @@ static const struct platform_hibernation_ops *hibernation_ops;
- 
- bool hibernation_available(void)
- {
--	return (nohibernate == 0);
-+	return nohibernate == 0 && !security_locked_down(LOCKDOWN_HIBERNATION);
- }
- 
- /**
-diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
-index 6f302c156bc8..a0996f75629f 100644
---- a/security/lockdown/lockdown.c
-+++ b/security/lockdown/lockdown.c
-@@ -21,6 +21,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
- 	[LOCKDOWN_MODULE_SIGNATURE] = "unsigned module loading",
- 	[LOCKDOWN_DEV_MEM] = "/dev/mem,kmem,port",
- 	[LOCKDOWN_KEXEC] = "kexec of unsigned images",
-+	[LOCKDOWN_HIBERNATION] = "hibernation",
- 	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
- 	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
- };
+When we weren't allowing nested orchestrators it wasn't necessary, but
+with the move to support nesting I believe this will be a requirement.
+We might also need/want to restrict audit container ID changes if a
+descendant is acting as a container orchestrator and managing one or
+more audit container IDs; although I'm less certain of the need for
+this.
+
+> I've also added a check to ensure that a process can't set its own audit
+> container identifier ...
+
+What does this protect against, or what problem does this solve?
+Considering how easy it is to fork/exec, it seems like this could be
+trivially bypassed.
+
+> ... and that if the identifier is already set, then the
+> orchestrator/engine must be in a descendant user namespace from the
+> orchestrator that set the previously inherited audit container
+> identifier.
+
+You lost me here ... although I don't like the idea of relying on X
+namespace inheritance for a hard coded policy on setting the audit
+container ID; we've worked hard to keep this independent of any
+definition of a "container" and it would sadden me greatly if we had
+to go back on that.
+
 -- 
-2.22.0.510.g264f2c817a-goog
+paul moore
+www.paul-moore.com
