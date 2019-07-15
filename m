@@ -1,8 +1,8 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V35 15/29] acpi: Ignore acpi_rsdp kernel param when the kernel
- has been locked down
-Date: Mon, 15 Jul 2019 12:59:32 -0700
-Message-ID: <20190715195946.223443-16-matthewgarrett@google.com>
+Subject: [PATCH V35 17/29] Prohibit PCMCIA CIS storage when the kernel is
+ locked down
+Date: Mon, 15 Jul 2019 12:59:34 -0700
+Message-ID: <20190715195946.223443-18-matthewgarrett@google.com>
 References: <20190715195946.223443-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -10,45 +10,70 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190715195946.223443-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Josh Boyer <jwboyer@redhat.com>, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>, Dave Young <dyoung@redhat.com>, linux-acpi@vger.kernel.org
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Dominik Brodowski <linux@dominikbrodowski.net>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Josh Boyer <jwboyer@redhat.com>
+From: David Howells <dhowells@redhat.com>
 
-This option allows userspace to pass the RSDP address to the kernel, which
-makes it possible for a user to modify the workings of hardware .  Reject
-the option when the kernel is locked down.
+Prohibit replacement of the PCMCIA Card Information Structure when the
+kernel is locked down.
 
-Signed-off-by: Josh Boyer <jwboyer@redhat.com>
+Suggested-by: Dominik Brodowski <linux@dominikbrodowski.net>
 Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Matthew Garrett <mjg59@google.com>
 Reviewed-by: Kees Cook <keescook@chromium.org>
-cc: Dave Young <dyoung@redhat.com>
-cc: linux-acpi@vger.kernel.org
 ---
- drivers/acpi/osl.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ drivers/pcmcia/cistpl.c      | 5 +++++
+ include/linux/security.h     | 1 +
+ security/lockdown/lockdown.c | 1 +
+ 3 files changed, 7 insertions(+)
 
-diff --git a/drivers/acpi/osl.c b/drivers/acpi/osl.c
-index 9c0edf2fc0dd..06e7cffc4386 100644
---- a/drivers/acpi/osl.c
-+++ b/drivers/acpi/osl.c
-@@ -26,6 +26,7 @@
- #include <linux/list.h>
- #include <linux/jiffies.h>
- #include <linux/semaphore.h>
+diff --git a/drivers/pcmcia/cistpl.c b/drivers/pcmcia/cistpl.c
+index abd029945cc8..629359fe3513 100644
+--- a/drivers/pcmcia/cistpl.c
++++ b/drivers/pcmcia/cistpl.c
+@@ -21,6 +21,7 @@
+ #include <linux/pci.h>
+ #include <linux/ioport.h>
+ #include <linux/io.h>
 +#include <linux/security.h>
+ #include <asm/byteorder.h>
+ #include <asm/unaligned.h>
  
- #include <asm/io.h>
- #include <linux/uaccess.h>
-@@ -180,7 +181,7 @@ acpi_physical_address __init acpi_os_get_root_pointer(void)
- 	acpi_physical_address pa;
+@@ -1575,6 +1576,10 @@ static ssize_t pccard_store_cis(struct file *filp, struct kobject *kobj,
+ 	struct pcmcia_socket *s;
+ 	int error;
  
- #ifdef CONFIG_KEXEC
--	if (acpi_rsdp)
-+	if (acpi_rsdp && !security_locked_down(LOCKDOWN_ACPI_TABLES))
- 		return acpi_rsdp;
- #endif
- 	pa = acpi_arch_get_root_pointer();
++	error = security_locked_down(LOCKDOWN_PCMCIA_CIS);
++	if (error)
++		return error;
++
+ 	s = to_socket(container_of(kobj, struct device, kobj));
+ 
+ 	if (off)
+diff --git a/include/linux/security.h b/include/linux/security.h
+index 1c32522b3c5a..3773ad09b831 100644
+--- a/include/linux/security.h
++++ b/include/linux/security.h
+@@ -111,6 +111,7 @@ enum lockdown_reason {
+ 	LOCKDOWN_IOPORT,
+ 	LOCKDOWN_MSR,
+ 	LOCKDOWN_ACPI_TABLES,
++	LOCKDOWN_PCMCIA_CIS,
+ 	LOCKDOWN_INTEGRITY_MAX,
+ 	LOCKDOWN_CONFIDENTIALITY_MAX,
+ };
+diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
+index 67dbc5c70ea0..96106c2870ef 100644
+--- a/security/lockdown/lockdown.c
++++ b/security/lockdown/lockdown.c
+@@ -26,6 +26,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
+ 	[LOCKDOWN_IOPORT] = "raw io port access",
+ 	[LOCKDOWN_MSR] = "raw MSR access",
+ 	[LOCKDOWN_ACPI_TABLES] = "modified ACPI tables",
++	[LOCKDOWN_PCMCIA_CIS] = "direct PCMCIA CIS storage",
+ 	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
+ 	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
+ };
 -- 
 2.22.0.510.g264f2c817a-goog
