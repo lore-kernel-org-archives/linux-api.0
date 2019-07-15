@@ -1,7 +1,7 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V35 21/29] Lock down /proc/kcore
-Date: Mon, 15 Jul 2019 12:59:38 -0700
-Message-ID: <20190715195946.223443-22-matthewgarrett@google.com>
+Subject: [PATCH V35 18/29] Lock down TIOCSSERIAL
+Date: Mon, 15 Jul 2019 12:59:35 -0700
+Message-ID: <20190715195946.223443-19-matthewgarrett@google.com>
 References: <20190715195946.223443-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -9,70 +9,74 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190715195946.223443-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>, Jiri Slaby <jslaby@suse.com>, linux-serial@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 From: David Howells <dhowells@redhat.com>
 
-Disallow access to /proc/kcore when the kernel is locked down to prevent
-access to cryptographic data. This is limited to lockdown
-confidentiality mode and is still permitted in integrity mode.
+Lock down TIOCSSERIAL as that can be used to change the ioport and irq
+settings on a serial port.  This only appears to be an issue for the serial
+drivers that use the core serial code.  All other drivers seem to either
+ignore attempts to change port/irq or give an error.
 
+Reported-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Matthew Garrett <mjg59@google.com>
 Reviewed-by: Kees Cook <keescook@chromium.org>
+cc: Jiri Slaby <jslaby@suse.com>
+Cc: linux-serial@vger.kernel.org
 ---
- fs/proc/kcore.c              | 5 +++++
- include/linux/security.h     | 1 +
- security/lockdown/lockdown.c | 1 +
+ drivers/tty/serial/serial_core.c | 5 +++++
+ include/linux/security.h         | 1 +
+ security/lockdown/lockdown.c     | 1 +
  3 files changed, 7 insertions(+)
 
-diff --git a/fs/proc/kcore.c b/fs/proc/kcore.c
-index f5834488b67d..ee2c576cc94e 100644
---- a/fs/proc/kcore.c
-+++ b/fs/proc/kcore.c
-@@ -31,6 +31,7 @@
- #include <linux/ioport.h>
- #include <linux/memory.h>
- #include <linux/sched/task.h>
+diff --git a/drivers/tty/serial/serial_core.c b/drivers/tty/serial/serial_core.c
+index 4223cb496764..6e713be1d4e9 100644
+--- a/drivers/tty/serial/serial_core.c
++++ b/drivers/tty/serial/serial_core.c
+@@ -22,6 +22,7 @@
+ #include <linux/serial_core.h>
+ #include <linux/delay.h>
+ #include <linux/mutex.h>
 +#include <linux/security.h>
- #include <asm/sections.h>
- #include "internal.h"
  
-@@ -545,6 +546,10 @@ read_kcore(struct file *file, char __user *buffer, size_t buflen, loff_t *fpos)
+ #include <linux/irq.h>
+ #include <linux/uaccess.h>
+@@ -862,6 +863,10 @@ static int uart_set_info(struct tty_struct *tty, struct tty_port *port,
+ 		goto check_and_exit;
+ 	}
  
- static int open_kcore(struct inode *inode, struct file *filp)
- {
-+	int ret = security_locked_down(LOCKDOWN_KCORE);
++	retval = security_locked_down(LOCKDOWN_TIOCSSERIAL);
++	if (retval && (change_irq || change_port))
++		goto exit;
 +
-+	if (ret)
-+		return ret;
- 	if (!capable(CAP_SYS_RAWIO))
- 		return -EPERM;
- 
+ 	/*
+ 	 * Ask the low level driver to verify the settings.
+ 	 */
 diff --git a/include/linux/security.h b/include/linux/security.h
-index 3f7b6a4cd65a..f0cffd0977d3 100644
+index 3773ad09b831..8f7048395114 100644
 --- a/include/linux/security.h
 +++ b/include/linux/security.h
-@@ -116,6 +116,7 @@ enum lockdown_reason {
- 	LOCKDOWN_MODULE_PARAMETERS,
- 	LOCKDOWN_MMIOTRACE,
+@@ -112,6 +112,7 @@ enum lockdown_reason {
+ 	LOCKDOWN_MSR,
+ 	LOCKDOWN_ACPI_TABLES,
+ 	LOCKDOWN_PCMCIA_CIS,
++	LOCKDOWN_TIOCSSERIAL,
  	LOCKDOWN_INTEGRITY_MAX,
-+	LOCKDOWN_KCORE,
  	LOCKDOWN_CONFIDENTIALITY_MAX,
  };
- 
 diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
-index e725f63c29d2..9c097240a3a6 100644
+index 96106c2870ef..07a49667f234 100644
 --- a/security/lockdown/lockdown.c
 +++ b/security/lockdown/lockdown.c
-@@ -31,6 +31,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
- 	[LOCKDOWN_MODULE_PARAMETERS] = "unsafe module parameters",
- 	[LOCKDOWN_MMIOTRACE] = "unsafe mmio",
+@@ -27,6 +27,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
+ 	[LOCKDOWN_MSR] = "raw MSR access",
+ 	[LOCKDOWN_ACPI_TABLES] = "modified ACPI tables",
+ 	[LOCKDOWN_PCMCIA_CIS] = "direct PCMCIA CIS storage",
++	[LOCKDOWN_TIOCSSERIAL] = "reconfiguration of serial port IO",
  	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
-+	[LOCKDOWN_KCORE] = "/proc/kcore access",
  	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
  };
- 
 -- 
 2.22.0.510.g264f2c817a-goog
