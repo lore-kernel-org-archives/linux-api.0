@@ -1,8 +1,7 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V35 19/29] Lock down module params that specify hardware
- parameters (eg. ioport)
-Date: Mon, 15 Jul 2019 12:59:36 -0700
-Message-ID: <20190715195946.223443-20-matthewgarrett@google.com>
+Subject: [PATCH V35 24/29] Lock down perf when in confidentiality mode
+Date: Mon, 15 Jul 2019 12:59:41 -0700
+Message-ID: <20190715195946.223443-25-matthewgarrett@google.com>
 References: <20190715195946.223443-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -10,121 +9,67 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190715195946.223443-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>, Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@redhat.com>, Arnaldo Carvalho de Melo <acme@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
 From: David Howells <dhowells@redhat.com>
 
-Provided an annotation for module parameters that specify hardware
-parameters (such as io ports, iomem addresses, irqs, dma channels, fixed
-dma buffers and other types).
+Disallow the use of certain perf facilities that might allow userspace to
+access kernel data.
 
-Suggested-by: Alan Cox <gnomes@lxorguk.ukuu.org.uk>
 Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Matthew Garrett <mjg59@google.com>
 Reviewed-by: Kees Cook <keescook@chromium.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Ingo Molnar <mingo@redhat.com>
+Cc: Arnaldo Carvalho de Melo <acme@kernel.org>
 ---
- include/linux/security.h     |  1 +
- kernel/params.c              | 28 +++++++++++++++++++++++-----
- security/lockdown/lockdown.c |  1 +
- 3 files changed, 25 insertions(+), 5 deletions(-)
+ include/linux/security.h     | 1 +
+ kernel/events/core.c         | 7 +++++++
+ security/lockdown/lockdown.c | 1 +
+ 3 files changed, 9 insertions(+)
 
 diff --git a/include/linux/security.h b/include/linux/security.h
-index 8f7048395114..43fa3486522b 100644
+index 8dd1741a52cd..8ef366de70b0 100644
 --- a/include/linux/security.h
 +++ b/include/linux/security.h
-@@ -113,6 +113,7 @@ enum lockdown_reason {
- 	LOCKDOWN_ACPI_TABLES,
- 	LOCKDOWN_PCMCIA_CIS,
- 	LOCKDOWN_TIOCSSERIAL,
-+	LOCKDOWN_MODULE_PARAMETERS,
- 	LOCKDOWN_INTEGRITY_MAX,
+@@ -119,6 +119,7 @@ enum lockdown_reason {
+ 	LOCKDOWN_KCORE,
+ 	LOCKDOWN_KPROBES,
+ 	LOCKDOWN_BPF_READ,
++	LOCKDOWN_PERF,
  	LOCKDOWN_CONFIDENTIALITY_MAX,
  };
-diff --git a/kernel/params.c b/kernel/params.c
-index cf448785d058..f2779a76d39a 100644
---- a/kernel/params.c
-+++ b/kernel/params.c
-@@ -12,6 +12,7 @@
- #include <linux/err.h>
- #include <linux/slab.h>
- #include <linux/ctype.h>
-+#include <linux/security.h>
  
- #ifdef CONFIG_SYSFS
- /* Protects all built-in parameters, modules use their own param_lock */
-@@ -96,13 +97,20 @@ bool parameq(const char *a, const char *b)
- 	return parameqn(a, b, strlen(a)+1);
- }
+diff --git a/kernel/events/core.c b/kernel/events/core.c
+index 785d708f8553..738d6f1cf5ec 100644
+--- a/kernel/events/core.c
++++ b/kernel/events/core.c
+@@ -10806,6 +10806,13 @@ SYSCALL_DEFINE5(perf_event_open,
+ 	    perf_paranoid_kernel() && !capable(CAP_SYS_ADMIN))
+ 		return -EACCES;
  
--static void param_check_unsafe(const struct kernel_param *kp)
-+static bool param_check_unsafe(const struct kernel_param *kp,
-+			       const char *doing)
- {
-+	if (kp->flags & KERNEL_PARAM_FL_HWPARAM &&
-+	    security_locked_down(LOCKDOWN_MODULE_PARAMETERS))
-+		return false;
++	err = security_locked_down(LOCKDOWN_PERF);
++	if (err && (attr.sample_type & PERF_SAMPLE_REGS_INTR))
++		/* REGS_INTR can leak data, lockdown must prevent this */
++		return err;
 +
- 	if (kp->flags & KERNEL_PARAM_FL_UNSAFE) {
- 		pr_notice("Setting dangerous option %s - tainting kernel\n",
- 			  kp->name);
- 		add_taint(TAINT_USER, LOCKDEP_STILL_OK);
- 	}
++	err = 0;
 +
-+	return true;
- }
- 
- static int parse_one(char *param,
-@@ -132,8 +140,10 @@ static int parse_one(char *param,
- 			pr_debug("handling %s with %p\n", param,
- 				params[i].ops->set);
- 			kernel_param_lock(params[i].mod);
--			param_check_unsafe(&params[i]);
--			err = params[i].ops->set(val, &params[i]);
-+			if (param_check_unsafe(&params[i], doing))
-+				err = params[i].ops->set(val, &params[i]);
-+			else
-+				err = -EPERM;
- 			kernel_param_unlock(params[i].mod);
- 			return err;
- 		}
-@@ -541,6 +551,12 @@ static ssize_t param_attr_show(struct module_attribute *mattr,
- 	return count;
- }
- 
-+#ifdef CONFIG_MODULES
-+#define mod_name(mod) ((mod)->name)
-+#else
-+#define mod_name(mod) "unknown"
-+#endif
-+
- /* sysfs always hands a nul-terminated string in buf.  We rely on that. */
- static ssize_t param_attr_store(struct module_attribute *mattr,
- 				struct module_kobject *mk,
-@@ -553,8 +569,10 @@ static ssize_t param_attr_store(struct module_attribute *mattr,
- 		return -EPERM;
- 
- 	kernel_param_lock(mk->mod);
--	param_check_unsafe(attribute->param);
--	err = attribute->param->ops->set(buf, attribute->param);
-+	if (param_check_unsafe(attribute->param, mod_name(mk->mod)))
-+		err = attribute->param->ops->set(buf, attribute->param);
-+	else
-+		err = -EPERM;
- 	kernel_param_unlock(mk->mod);
- 	if (!err)
- 		return len;
+ 	/*
+ 	 * In cgroup mode, the pid argument is used to pass the fd
+ 	 * opened to the cgroup directory in cgroupfs. The cpu argument
 diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
-index 07a49667f234..065432f9e218 100644
+index d14b89784412..e43c9d001e49 100644
 --- a/security/lockdown/lockdown.c
 +++ b/security/lockdown/lockdown.c
-@@ -28,6 +28,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
- 	[LOCKDOWN_ACPI_TABLES] = "modified ACPI tables",
- 	[LOCKDOWN_PCMCIA_CIS] = "direct PCMCIA CIS storage",
- 	[LOCKDOWN_TIOCSSERIAL] = "reconfiguration of serial port IO",
-+	[LOCKDOWN_MODULE_PARAMETERS] = "unsafe module parameters",
- 	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
+@@ -34,6 +34,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
+ 	[LOCKDOWN_KCORE] = "/proc/kcore access",
+ 	[LOCKDOWN_KPROBES] = "use of kprobes",
+ 	[LOCKDOWN_BPF_READ] = "use of bpf to read kernel RAM",
++	[LOCKDOWN_PERF] = "unsafe use of perf",
  	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
  };
+ 
 -- 
 2.22.0.510.g264f2c817a-goog
