@@ -1,68 +1,101 @@
 From: Paul Moore <paul@paul-moore.com>
 Subject: Re: [PATCH ghak90 V6 02/10] audit: add container id
-Date: Mon, 15 Jul 2019 16:38:25 -0400
-Message-ID: <CAHC9VhRFeCFSCn=m6wgDK2tXBN1euc2+bw8o=CfNwptk8t=j7A@mail.gmail.com>
+Date: Mon, 15 Jul 2019 17:04:29 -0400
+Message-ID: <CAHC9VhRTT7JWqNnynvK04wKerjc-3UJ6R1uPtjCAPVr_tW-7MA@mail.gmail.com>
 References: <cover.1554732921.git.rgb@redhat.com> <9edad39c40671fb53f28d76862304cc2647029c6.1554732921.git.rgb@redhat.com>
  <20190529145742.GA8959@cisco> <CAHC9VhR4fudQanvZGYWMvCf7k2CU3q7e7n1Pi7hzC3v_zpVEdw@mail.gmail.com>
- <20190708175105.7zb6mikjw2wmnwln@madcap2.tricolour.ca>
+ <20190529153427.GB8959@cisco> <CAHC9VhSF3AjErX37+eeusJ7+XRw8yuPsmqBTRwc9EVoRBh_3Tw@mail.gmail.com>
+ <20190529222835.GD8959@cisco> <CAHC9VhRS66VGtug3fq3RTGHDvfGmBJG6yRJ+iMxm3cxnNF-zJw@mail.gmail.com>
+ <20190530170913.GA16722@mail.hallyn.com> <CAHC9VhThLiQzGYRUWmSuVfOC6QCDmA75BDB7Eg7V8HX4x7ymQg@mail.gmail.com>
+ <20190708180558.5bar6ripag3sdadl@madcap2.tricolour.ca>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190708175105.7zb6mikjw2wmnwln@madcap2.tricolour.ca>
+In-Reply-To: <20190708180558.5bar6ripag3sdadl@madcap2.tricolour.ca>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Richard Guy Briggs <rgb@redhat.com>
-Cc: Tycho Andersen <tycho@tycho.ws>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com
+Cc: "Serge E. Hallyn" <serge@hallyn.com>, Tycho Andersen <tycho@tycho.ws>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, ebiederm@xmission.com, nhorman@tuxdriver.com
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jul 8, 2019 at 1:51 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> On 2019-05-29 11:29, Paul Moore wrote:
+On Mon, Jul 8, 2019 at 2:06 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> On 2019-05-30 15:29, Paul Moore wrote:
 
 ...
 
-> > The idea is that only container orchestrators should be able to
-> > set/modify the audit container ID, and since setting the audit
-> > container ID can have a significant effect on the records captured
-> > (and their routing to multiple daemons when we get there) modifying
-> > the audit container ID is akin to modifying the audit configuration
-> > which is why it is gated by CAP_AUDIT_CONTROL.  The current thinking
-> > is that you would only change the audit container ID from one
-> > set/inherited value to another if you were nesting containers, in
-> > which case the nested container orchestrator would need to be granted
-> > CAP_AUDIT_CONTROL (which everyone to date seems to agree is a workable
-> > compromise).  We did consider allowing for a chain of nested audit
-> > container IDs, but the implications of doing so are significant
-> > (implementation mess, runtime cost, etc.) so we are leaving that out
-> > of this effort.
+> > [REMINDER: It is an "*audit* container ID" and not a general
+> > "container ID" ;)  Smiley aside, I'm not kidding about that part.]
+> >
+> > I'm not interested in supporting/merging something that isn't useful;
+> > if this doesn't work for your use case then we need to figure out what
+> > would work.  It sounds like nested containers are much more common in
+> > the lxc world, can you elaborate a bit more on this?
+> >
+> > As far as the possible solutions you mention above, I'm not sure I
+> > like the per-userns audit container IDs, I'd much rather just emit the
+> > necessary tracking information via the audit record stream and let the
+> > log analysis tools figure it out.  However, the bigger question is how
+> > to limit (re)setting the audit container ID when you are in a non-init
+> > userns.  For reasons already mentioned, using capable() is a non
+> > starter for everything but the initial userns, and using ns_capable()
+> > is equally poor as it essentially allows any userns the ability to
+> > munge it's audit container ID (obviously not good).  It appears we
+> > need a different method for controlling access to the audit container
+> > ID.
 >
-> We had previously discussed the idea of restricting
-> orchestrators/engines from only being able to set the audit container
-> identifier on their own descendants, but it was discarded.  I've added a
-> check to ensure this is now enforced.
+> We're not quite ready yet for multiple audit daemons and possibly not
+> yet for audit namespaces, but this is starting to look a lot like the
+> latter.
 
-When we weren't allowing nested orchestrators it wasn't necessary, but
-with the move to support nesting I believe this will be a requirement.
-We might also need/want to restrict audit container ID changes if a
-descendant is acting as a container orchestrator and managing one or
-more audit container IDs; although I'm less certain of the need for
-this.
+A few quick comments on audit namespaces: the audit container ID is
+not envisioned as a new namespace (even in nested form) and neither do
+I consider running multiple audit daemons to be a new namespace.
 
-> I've also added a check to ensure that a process can't set its own audit
-> container identifier ...
+>From my perspective we create namespaces to allow us to redefine a
+global resource for some subset of the system, e.g. providing a unique
+/tmp for some number of processes on the system.  While it may be
+tempting to think of the audit container ID as something we could
+"namespace", especially when multiple audit daemons are concerned, in
+some ways this would be counter productive; the audit container ID is
+intended to be a global ID that can be used to associate audit event
+records with a "container" where the "container" is defined by an
+orchestrator outside the audit subsystem.  The global nature of the
+audit container ID allows us to maintain a sane(ish) view of the
+system in the audit log, if we were to "namespace" the audit container
+ID such that the value was no longer guaranteed to be unique
+throughout the system, we would need to additionally track the audit
+namespace along with the audit container ID which starts to border on
+insanity IMHO.
 
-What does this protect against, or what problem does this solve?
-Considering how easy it is to fork/exec, it seems like this could be
-trivially bypassed.
+> If we can't trust ns_capable() then why are we passing on
+> CAP_AUDIT_CONTROL?  It is being passed down and not stripped purposely
+> by the orchestrator/engine.  If ns_capable() isn't inherited how is it
+> gained otherwise?  Can it be inserted by cotainer image?  I think the
+> answer is "no".  Either we trust ns_capable() or we have audit
+> namespaces (recommend based on user namespace) (or both).
 
-> ... and that if the identifier is already set, then the
-> orchestrator/engine must be in a descendant user namespace from the
-> orchestrator that set the previously inherited audit container
-> identifier.
+My thinking is that since ns_capable() checks the credentials with
+respect to the current user namespace we can't rely on it to control
+access since it would be possible for a privileged process running
+inside an unprivileged container to manipulate the audit container ID
+(containerized process has CAP_AUDIT_CONTROL, e.g. running as root in
+the container, while the container itself does not).
 
-You lost me here ... although I don't like the idea of relying on X
-namespace inheritance for a hard coded policy on setting the audit
-container ID; we've worked hard to keep this independent of any
-definition of a "container" and it would sadden me greatly if we had
-to go back on that.
+> At this point I would say we are at an impasse unless we trust
+> ns_capable() or we implement audit namespaces.
+
+I'm not sure how we can trust ns_capable(), but if you can think of a
+way I would love to hear it.  I'm also not sure how namespacing audit
+is helpful (see my above comments), but if you think it is please
+explain.
+
+> I don't think another mechanism to trust nested orchestrators/engines
+> will buy us anything.
+>
+> Am I missing something?
+
+Based on your questions/comments above it looks like your
+understanding of ns_capable() does not match mine; if I'm thinking
+about ns_capable() incorrectly, please educate me.
 
 -- 
 paul moore
