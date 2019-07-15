@@ -1,8 +1,8 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V35 16/29] acpi: Disable ACPI table override if the kernel is
- locked down
-Date: Mon, 15 Jul 2019 12:59:33 -0700
-Message-ID: <20190715195946.223443-17-matthewgarrett@google.com>
+Subject: [PATCH V35 14/29] ACPI: Limit access to custom_method when the kernel
+ is locked down
+Date: Mon, 15 Jul 2019 12:59:31 -0700
+Message-ID: <20190715195946.223443-15-matthewgarrett@google.com>
 References: <20190715195946.223443-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -10,53 +10,72 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190715195946.223443-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Linn Crosetto <linn@hpe.com>, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>, linux-acpi@vger.kernel.org
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Matthew Garrett <mjg59@srcf.ucam.org>, Matthew Garrett <mjg59@google.com>, David Howells <dhowells@redhat.com>, Kees Cook <keescook@chromium.org>, linux-acpi@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Linn Crosetto <linn@hpe.com>
+From: Matthew Garrett <mjg59@srcf.ucam.org>
 
->From the kernel documentation (initrd_table_override.txt):
+custom_method effectively allows arbitrary access to system memory, making
+it possible for an attacker to circumvent restrictions on module loading.
+Disable it if the kernel is locked down.
 
-  If the ACPI_INITRD_TABLE_OVERRIDE compile option is true, it is possible
-  to override nearly any ACPI table provided by the BIOS with an
-  instrumented, modified one.
-
-When lockdown is enabled, the kernel should disallow any unauthenticated
-changes to kernel space.  ACPI tables contain code invoked by the kernel,
-so do not allow ACPI tables to be overridden if the kernel is locked down.
-
-Signed-off-by: Linn Crosetto <linn@hpe.com>
-Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Matthew Garrett <mjg59@google.com>
+Signed-off-by: David Howells <dhowells@redhat.com>
 Reviewed-by: Kees Cook <keescook@chromium.org>
 cc: linux-acpi@vger.kernel.org
 ---
- drivers/acpi/tables.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+ drivers/acpi/custom_method.c | 6 ++++++
+ include/linux/security.h     | 1 +
+ security/lockdown/lockdown.c | 1 +
+ 3 files changed, 8 insertions(+)
 
-diff --git a/drivers/acpi/tables.c b/drivers/acpi/tables.c
-index b32327759380..180ac4329763 100644
---- a/drivers/acpi/tables.c
-+++ b/drivers/acpi/tables.c
-@@ -20,6 +20,7 @@
- #include <linux/memblock.h>
- #include <linux/earlycpio.h>
- #include <linux/initrd.h>
+diff --git a/drivers/acpi/custom_method.c b/drivers/acpi/custom_method.c
+index b2ef4c2ec955..7031307becd7 100644
+--- a/drivers/acpi/custom_method.c
++++ b/drivers/acpi/custom_method.c
+@@ -9,6 +9,7 @@
+ #include <linux/uaccess.h>
+ #include <linux/debugfs.h>
+ #include <linux/acpi.h>
 +#include <linux/security.h>
+ 
  #include "internal.h"
  
- #ifdef CONFIG_ACPI_CUSTOM_DSDT
-@@ -578,6 +579,11 @@ void __init acpi_table_upgrade(void)
- 	if (table_nr == 0)
- 		return;
+@@ -29,6 +30,11 @@ static ssize_t cm_write(struct file *file, const char __user * user_buf,
  
-+	if (security_locked_down(LOCKDOWN_ACPI_TABLES)) {
-+		pr_notice("kernel is locked down, ignoring table override\n");
-+		return;
-+	}
+ 	struct acpi_table_header table;
+ 	acpi_status status;
++	int ret;
 +
- 	acpi_tables_addr =
- 		memblock_find_in_range(0, ACPI_TABLE_UPGRADE_MAX_PHYS,
- 				       all_tables_size, PAGE_SIZE);
++	ret = security_locked_down(LOCKDOWN_ACPI_TABLES);
++	if (ret)
++		return ret;
+ 
+ 	if (!(*ppos)) {
+ 		/* parse the table header to get the table length */
+diff --git a/include/linux/security.h b/include/linux/security.h
+index 155ff026eca4..1c32522b3c5a 100644
+--- a/include/linux/security.h
++++ b/include/linux/security.h
+@@ -110,6 +110,7 @@ enum lockdown_reason {
+ 	LOCKDOWN_PCI_ACCESS,
+ 	LOCKDOWN_IOPORT,
+ 	LOCKDOWN_MSR,
++	LOCKDOWN_ACPI_TABLES,
+ 	LOCKDOWN_INTEGRITY_MAX,
+ 	LOCKDOWN_CONFIDENTIALITY_MAX,
+ };
+diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
+index d99c0bee739d..67dbc5c70ea0 100644
+--- a/security/lockdown/lockdown.c
++++ b/security/lockdown/lockdown.c
+@@ -25,6 +25,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
+ 	[LOCKDOWN_PCI_ACCESS] = "direct PCI access",
+ 	[LOCKDOWN_IOPORT] = "raw io port access",
+ 	[LOCKDOWN_MSR] = "raw MSR access",
++	[LOCKDOWN_ACPI_TABLES] = "modified ACPI tables",
+ 	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
+ 	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
+ };
 -- 
 2.22.0.510.g264f2c817a-goog
