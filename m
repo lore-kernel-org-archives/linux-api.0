@@ -1,209 +1,126 @@
 From: Palmer Dabbelt <palmer@sifive.com>
-Subject: [PATCH v2 3/4] arch: Register fchmodat4, usually as syscall 434
-Date: Tue, 16 Jul 2019 18:27:18 -0700
-Message-ID: <20190717012719.5524-4-palmer@sifive.com>
-References: <20190717012719.5524-1-palmer@sifive.com>
+Subject: Add a new fchmodat4() syscall, v2
+Date: Tue, 16 Jul 2019 18:27:15 -0700
+Message-ID: <20190717012719.5524-1-palmer@sifive.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190717012719.5524-1-palmer@sifive.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org
 Cc: rth@twiddle.net, ink@jurassic.park.msu.ru, mattst88@gmail.com, linux@armlinux.org.uk, catalin.marinas@arm.com, will@kernel.org, tony.luck@intel.com, fenghua.yu@intel.com, geert@linux-m68k.org, monstr@monstr.eu, ralf@linux-mips.org, paul.burton@mips.com, jhogan@kernel.org, James.Bottomley@HansenPartnership.com, deller@gmx.de, benh@kernel.crashing.org, paulus@samba.org, mpe@ellerman.id.au, heiko.carstens@de.ibm.com, gor@linux.ibm.com, borntraeger@de.ibm.com, ysato@users.sourceforge.jp, dalias@libc.org, davem@davemloft.net, luto@kernel.org, tglx@linutronix.de, mingo@redhat.com, bp@alien8.de, hpa@zytor.com, x86@kernel.org, Arnd Bergmann <arnd@arndb.de>, peterz@infradead.org, acme@kernel.org, alexander.shishkin@linux.intel.com, jolsa@redhat.com, namhyung@kernel.org, Palmer Dabbelt <palm>
 List-Id: linux-api@vger.kernel.org
 
-This registers the new fchmodat4 syscall in most places as nuber 434,
-with alpha being the exception where it's 544.  I found all these sites
-by grepping for fspick, which I assume has found me everything.
+This patch set adds fchmodat4(), a new syscall. The actual
+implementation is super simple: essentially it's just the same as
+fchmodat(), but LOOKUP_FOLLOW is conditionally set based on the flags.
+I've attempted to make this match "man 2 fchmodat" as closely as
+possible, which says EINVAL is returned for invalid flags (as opposed to
+ENOTSUPP, which is currently returned by glibc for AT_SYMLINK_NOFOLLOW).
+I have a sketch of a glibc patch that I haven't even compiled yet, but
+seems fairly straight-forward:
 
-Signed-off-by: Palmer Dabbelt <palmer@sifive.com>
----
- arch/alpha/kernel/syscalls/syscall.tbl      | 1 +
- arch/arm/tools/syscall.tbl                  | 1 +
- arch/arm64/include/asm/unistd32.h           | 2 ++
- arch/ia64/kernel/syscalls/syscall.tbl       | 1 +
- arch/m68k/kernel/syscalls/syscall.tbl       | 1 +
- arch/microblaze/kernel/syscalls/syscall.tbl | 1 +
- arch/mips/kernel/syscalls/syscall_n32.tbl   | 1 +
- arch/mips/kernel/syscalls/syscall_n64.tbl   | 1 +
- arch/mips/kernel/syscalls/syscall_o32.tbl   | 1 +
- arch/parisc/kernel/syscalls/syscall.tbl     | 1 +
- arch/powerpc/kernel/syscalls/syscall.tbl    | 1 +
- arch/s390/kernel/syscalls/syscall.tbl       | 1 +
- arch/sh/kernel/syscalls/syscall.tbl         | 1 +
- arch/sparc/kernel/syscalls/syscall.tbl      | 1 +
- arch/x86/entry/syscalls/syscall_32.tbl      | 1 +
- arch/x86/entry/syscalls/syscall_64.tbl      | 1 +
- include/uapi/asm-generic/unistd.h           | 5 ++++-
- 17 files changed, 21 insertions(+), 1 deletion(-)
+    diff --git a/sysdeps/unix/sysv/linux/fchmodat.c b/sysdeps/unix/sysv/linux/fchmodat.c
+    index 6d9cbc1ce9e0..b1beab76d56c 100644
+    --- a/sysdeps/unix/sysv/linux/fchmodat.c
+    +++ b/sysdeps/unix/sysv/linux/fchmodat.c
+    @@ -29,12 +29,36 @@
+     int
+     fchmodat (int fd, const char *file, mode_t mode, int flag)
+     {
+    -  if (flag & ~AT_SYMLINK_NOFOLLOW)
+    -    return INLINE_SYSCALL_ERROR_RETURN_VALUE (EINVAL);
+    -#ifndef __NR_lchmod		/* Linux so far has no lchmod syscall.  */
+    +  /* There are four paths through this code:
+    +      - The flags are zero.  In this case it's fine to call fchmodat.
+    +      - The flags are non-zero and glibc doesn't have access to
+    +	__NR_fchmodat4.  In this case all we can do is emulate the error codes
+    +	defined by the glibc interface from userspace.
+    +      - The flags are non-zero, glibc has __NR_fchmodat4, and the kernel has
+    +	fchmodat4.  This is the simplest case, as the fchmodat4 syscall exactly
+    +	matches glibc's library interface so it can be called directly.
+    +      - The flags are non-zero, glibc has __NR_fchmodat4, but the kernel does
+    +	not.  In this case we must respect the error codes defined by the glibc
+    +	interface instead of returning ENOSYS.
+    +    The intent here is to ensure that the kernel is called at most once per
+    +    library call, and that the error types defined by glibc are always
+    +    respected.  */
+    +
+    +#ifdef __NR_fchmodat4
+    +  long result;
+    +#endif
+    +
+    +  if (flag == 0)
+    +    return INLINE_SYSCALL (fchmodat, 3, fd, file, mode);
+    +
+    +#ifdef __NR_fchmodat4
+    +  result = INLINE_SYSCALL (fchmodat4, 4, fd, file, mode, flag);
+    +  if (result == 0 || errno != ENOSYS)
+    +    return result;
+    +#endif
+    +
+       if (flag & AT_SYMLINK_NOFOLLOW)
+         return INLINE_SYSCALL_ERROR_RETURN_VALUE (ENOTSUP);
+    -#endif
 
-diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
-index 9e7704e44f6d..6c4ef43c8b52 100644
---- a/arch/alpha/kernel/syscalls/syscall.tbl
-+++ b/arch/alpha/kernel/syscalls/syscall.tbl
-@@ -473,3 +473,4 @@
- 541	common	fsconfig			sys_fsconfig
- 542	common	fsmount				sys_fsmount
- 543	common	fspick				sys_fspick
-+544	common	fcmodat4			sys_fchmodat4
-diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
-index aaf479a9e92d..c008b76fbf92 100644
---- a/arch/arm/tools/syscall.tbl
-+++ b/arch/arm/tools/syscall.tbl
-@@ -447,3 +447,4 @@
- 431	common	fsconfig			sys_fsconfig
- 432	common	fsmount				sys_fsmount
- 433	common	fspick				sys_fspick
-+434	common	fchmodat4			sys_fchmodat4
-diff --git a/arch/arm64/include/asm/unistd32.h b/arch/arm64/include/asm/unistd32.h
-index aa995920bd34..049471b468c1 100644
---- a/arch/arm64/include/asm/unistd32.h
-+++ b/arch/arm64/include/asm/unistd32.h
-@@ -875,6 +875,8 @@ __SYSCALL(__NR_fsconfig, sys_fsconfig)
- __SYSCALL(__NR_fsmount, sys_fsmount)
- #define __NR_fspick 433
- __SYSCALL(__NR_fspick, sys_fspick)
-+#define __NR_fchmodat4 434
-+__SYSCALL(__NR_fchmodat4, sys_fchmodat4)
- 
- /*
-  * Please add new compat syscalls above this comment and update
-diff --git a/arch/ia64/kernel/syscalls/syscall.tbl b/arch/ia64/kernel/syscalls/syscall.tbl
-index e01df3f2f80d..d16e9801fe82 100644
---- a/arch/ia64/kernel/syscalls/syscall.tbl
-+++ b/arch/ia64/kernel/syscalls/syscall.tbl
-@@ -354,3 +354,4 @@
- 431	common	fsconfig			sys_fsconfig
- 432	common	fsmount				sys_fsmount
- 433	common	fspick				sys_fspick
-+434	common	fchmodat4			sys_fchmodat4
-diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
-index 7e3d0734b2f3..1bbff1a9153c 100644
---- a/arch/m68k/kernel/syscalls/syscall.tbl
-+++ b/arch/m68k/kernel/syscalls/syscall.tbl
-@@ -433,3 +433,4 @@
- 431	common	fsconfig			sys_fsconfig
- 432	common	fsmount				sys_fsmount
- 433	common	fspick				sys_fspick
-+434	common	fchmodat4			sys_fchmodat4
-diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl b/arch/microblaze/kernel/syscalls/syscall.tbl
-index 26339e417695..3ed878cb10a3 100644
---- a/arch/microblaze/kernel/syscalls/syscall.tbl
-+++ b/arch/microblaze/kernel/syscalls/syscall.tbl
-@@ -439,3 +439,4 @@
- 431	common	fsconfig			sys_fsconfig
- 432	common	fsmount				sys_fsmount
- 433	common	fspick				sys_fspick
-+434	common	fchmodat4			sys_fchmodat4
-diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl b/arch/mips/kernel/syscalls/syscall_n32.tbl
-index 0e2dd68ade57..916cdb808e62 100644
---- a/arch/mips/kernel/syscalls/syscall_n32.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
-@@ -372,3 +372,4 @@
- 431	n32	fsconfig			sys_fsconfig
- 432	n32	fsmount				sys_fsmount
- 433	n32	fspick				sys_fspick
-+434	n32	fchmodat4			sys_fchmodat4
-diff --git a/arch/mips/kernel/syscalls/syscall_n64.tbl b/arch/mips/kernel/syscalls/syscall_n64.tbl
-index 5eebfa0d155c..48b4badb1914 100644
---- a/arch/mips/kernel/syscalls/syscall_n64.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_n64.tbl
-@@ -348,3 +348,4 @@
- 431	n64	fsconfig			sys_fsconfig
- 432	n64	fsmount				sys_fsmount
- 433	n64	fspick				sys_fspick
-+434	n64	fchmodat4			sys_fchmodat4
-diff --git a/arch/mips/kernel/syscalls/syscall_o32.tbl b/arch/mips/kernel/syscalls/syscall_o32.tbl
-index 3cc1374e02d0..0a2ec339882a 100644
---- a/arch/mips/kernel/syscalls/syscall_o32.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_o32.tbl
-@@ -421,3 +421,4 @@
- 431	o32	fsconfig			sys_fsconfig
- 432	o32	fsmount				sys_fsmount
- 433	o32	fspick				sys_fspick
-+434	o32	fchmodat4			sys_fchmodat4
-diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
-index c9e377d59232..07d38477f8f7 100644
---- a/arch/parisc/kernel/syscalls/syscall.tbl
-+++ b/arch/parisc/kernel/syscalls/syscall.tbl
-@@ -430,3 +430,4 @@
- 431	common	fsconfig			sys_fsconfig
- 432	common	fsmount				sys_fsmount
- 433	common	fspick				sys_fspick
-+434	common	fchmodat4			sys_fchmodat4
-diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
-index 103655d84b4b..3542b33d1bf3 100644
---- a/arch/powerpc/kernel/syscalls/syscall.tbl
-+++ b/arch/powerpc/kernel/syscalls/syscall.tbl
-@@ -515,3 +515,4 @@
- 431	common	fsconfig			sys_fsconfig
- 432	common	fsmount				sys_fsmount
- 433	common	fspick				sys_fspick
-+434	common	fchmodat4			sys_fchmodat4
-diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
-index e822b2964a83..cf7b3086ffaa 100644
---- a/arch/s390/kernel/syscalls/syscall.tbl
-+++ b/arch/s390/kernel/syscalls/syscall.tbl
-@@ -436,3 +436,4 @@
- 431  common	fsconfig		sys_fsconfig			sys_fsconfig
- 432  common	fsmount			sys_fsmount			sys_fsmount
- 433  common	fspick			sys_fspick			sys_fspick
-+434  common	fchmodat4		sys_fchmodat4			sys_fchmodat4
-diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
-index 016a727d4357..5afa9fb9b4d3 100644
---- a/arch/sh/kernel/syscalls/syscall.tbl
-+++ b/arch/sh/kernel/syscalls/syscall.tbl
-@@ -436,3 +436,4 @@
- 431	common	fsconfig			sys_fsconfig
- 432	common	fsmount				sys_fsmount
- 433	common	fspick				sys_fspick
-+434	common	fchmodat4			sys_fchmodat4
-diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
-index e047480b1605..ff19eb8185f3 100644
---- a/arch/sparc/kernel/syscalls/syscall.tbl
-+++ b/arch/sparc/kernel/syscalls/syscall.tbl
-@@ -479,3 +479,4 @@
- 431	common	fsconfig			sys_fsconfig
- 432	common	fsmount				sys_fsmount
- 433	common	fspick				sys_fspick
-+434	common	fchmodat4			sys_fchmodat4
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index ad968b7bac72..39609fa3536d 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -438,3 +438,4 @@
- 431	i386	fsconfig		sys_fsconfig			__ia32_sys_fsconfig
- 432	i386	fsmount			sys_fsmount			__ia32_sys_fsmount
- 433	i386	fspick			sys_fspick			__ia32_sys_fspick
-+434	i386	fchmodat4		sys_fchmodat4			__ia32_sys_fchmodat4
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index b4e6f9e6204a..b92d5b195e66 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -355,6 +355,7 @@
- 431	common	fsconfig		__x64_sys_fsconfig
- 432	common	fsmount			__x64_sys_fsmount
- 433	common	fspick			__x64_sys_fspick
-+434	common	fchmodat4		__x64_sys_fchmodat4
- 
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index a87904daf103..6a7ba1e69e42 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -845,8 +845,11 @@ __SYSCALL(__NR_fsmount, sys_fsmount)
- #define __NR_fspick 433
- __SYSCALL(__NR_fspick, sys_fspick)
- 
-+#define __NR_fchmodat4 434
-+__SYSCALL(__NR_fchmodat4, sys_fchmodat4)
-+
- #undef __NR_syscalls
--#define __NR_syscalls 434
-+#define __NR_syscalls 435
- 
- /*
-  * 32 bit systems traditionally used different
--- 
-2.21.0
+    -  return INLINE_SYSCALL (fchmodat, 3, fd, file, mode);
+    +  return INLINE_SYSCALL_ERROR_RETURN_VALUE (EINVAL);
+     }
+
+I've never added a new syscall before so I'm not really sure what the
+proper procedure to follow is.  Based on the feedback from my v1 patch
+set it seems this is somewhat uncontroversial.  At this point I don't
+think there's anything I'm missing, though note that I haven't gotten
+around to testing it this time because the diff from v1 is trivial for
+any platform I could reasonably test on.  The v1 patches suggest a
+simple test case, but I didn't re-run it because I don't want to reboot
+my laptop.
+
+    $ touch test-file
+    $ ln -s test-file test-link
+    $ cat > test.c
+    #include <fcntl.h>
+    #include <stdio.h>
+    #include <unistd.h>
+
+    int main(int argc, char **argv)
+    {
+            long out;
+
+            out = syscall(434, AT_FDCWD, "test-file", 0x888, AT_SYMLINK_NOFOLLOW);
+            printf("fchmodat4(AT_FDCWD, \"test-file\", 0x888, AT_SYMLINK_NOFOLLOW): %ld\n", out);
+
+            out = syscall(434, AT_FDCWD, "test-file", 0x888, 0);
+            printf("fchmodat4(AT_FDCWD, \"test-file\", 0x888, 0): %ld\n", out);
+
+            out = syscall(268, AT_FDCWD, "test-file", 0x888);
+            printf("fchmodat(AT_FDCWD, \"test-file\", 0x888): %ld\n", out);
+
+            out = syscall(434, AT_FDCWD, "test-link", 0x888, AT_SYMLINK_NOFOLLOW);
+            printf("fchmodat4(AT_FDCWD, \"test-link\", 0x888, AT_SYMLINK_NOFOLLOW): %ld\n", out);
+
+            out = syscall(434, AT_FDCWD, "test-link", 0x888, 0);
+            printf("fchmodat4(AT_FDCWD, \"test-link\", 0x888, 0): %ld\n", out);
+
+            out = syscall(268, AT_FDCWD, "test-link", 0x888);
+            printf("fchmodat(AT_FDCWD, \"test-link\", 0x888): %ld\n", out);
+
+            return 0;
+    }
+    $ gcc test.c -o test
+    $ ./test
+    fchmodat4(AT_FDCWD, "test-file", 0x888, AT_SYMLINK_NOFOLLOW): 0
+    fchmodat4(AT_FDCWD, "test-file", 0x888, 0): 0
+    fchmodat(AT_FDCWD, "test-file", 0x888): 0
+    fchmodat4(AT_FDCWD, "test-link", 0x888, AT_SYMLINK_NOFOLLOW): -1
+    fchmodat4(AT_FDCWD, "test-link", 0x888, 0): 0
+    fchmodat(AT_FDCWD, "test-link", 0x888): 0
+
+I've only built this on 64-bit x86.
+
+Changes since v1 [20190531191204.4044-1-palmer@sifive.com]:
+
+* All architectures are now supported, which support squashed into a
+  single patch.
+* The do_fchmodat() helper function has been removed, in favor of directly
+  calling do_fchmodat4().
+* The patches are based on 5.2 instead of 5.1.
