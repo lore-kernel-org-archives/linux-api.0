@@ -1,75 +1,112 @@
-From: Arnaldo Carvalho de Melo <arnaldo.melo@gmail.com>
-Subject: Re: [PATCH v2 4/4] tools: Add fchmodat4
-Date: Wed, 17 Jul 2019 09:39:59 -0300
-Message-ID: <20190717123959.GB24063@kernel.org>
-References: <20190717012719.5524-1-palmer@sifive.com>
- <20190717012719.5524-5-palmer@sifive.com>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [v2 PATCH 2/2] mm: mempolicy: handle vma with unmovable pages
+ mapped correctly in mbind
+Date: Wed, 17 Jul 2019 20:50:05 +0200
+Message-ID: <7be3d36a-19fe-2e3b-8840-27fb5fd60f15@suse.cz>
+References: <1561162809-59140-1-git-send-email-yang.shi@linux.alibaba.com>
+ <1561162809-59140-3-git-send-email-yang.shi@linux.alibaba.com>
+ <0cbc99f6-76a9-7357-efa7-a2d551b3cd12@suse.cz>
+ <9defdc16-c825-05b7-b394-abdf39000220@linux.alibaba.com>
+ <3197a7df-c7bc-2bac-3d40-dbfc97d4a909@linux.alibaba.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190717012719.5524-5-palmer@sifive.com>
+In-Reply-To: <3197a7df-c7bc-2bac-3d40-dbfc97d4a909@linux.alibaba.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Palmer Dabbelt <palmer@sifive.com>
-Cc: viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, rth@twiddle.net, ink@jurassic.park.msu.ru, mattst88@gmail.com, linux@armlinux.org.uk, catalin.marinas@arm.com, will@kernel.org, tony.luck@intel.com, fenghua.yu@intel.com, geert@linux-m68k.org, monstr@monstr.eu, ralf@linux-mips.org, paul.burton@mips.com, jhogan@kernel.org, James.Bottomley@hansenpartnership.com, deller@gmx.de, benh@kernel.crashing.org, paulus@samba.org, mpe@ellerman.id.au, heiko.carstens@de.ibm.com, gor@linux.ibm.com, borntraeger@de.ibm.com, ysato@users.sourceforge.jp, dalias@libc.org, davem@davemloft.net, luto@kernel.org, tglx@linutronix.de, mingo@redhat.com, bp@alien8.de, hpa@zytor.com, x86@kernel.org, peterz@infradead.org
+To: Yang Shi <yang.shi@linux.alibaba.com>, mhocko@kernel.org, mgorman@techsingularity.net, akpm@linux-foundation.org
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Em Tue, Jul 16, 2019 at 06:27:19PM -0700, Palmer Dabbelt escreveu:
-> I'm not sure why it's necessary to add this explicitly to tools/ as well
-> as arch/, but there were a few instances of fspick in here so I blindly
-> added fchmodat4 in the same fashion.
-
-The copies in tools/ for these specific files are used to generate a
-syscall table used by 'perf trace', and we don't/can't access files
-outside of tools/ to build tools/perf/, so we grab a copy and have
-checks in place to warn perf developers when those copies get out of
-sync.
-
-Its not required that kernel developers update anything in tools, you're
-welcomed to do so if you wish tho.
-
-Thanks,
-
-- Arnaldo
- 
-> Signed-off-by: Palmer Dabbelt <palmer@sifive.com>
-> ---
->  tools/include/uapi/asm-generic/unistd.h           | 4 +++-
->  tools/perf/arch/x86/entry/syscalls/syscall_64.tbl | 1 +
->  2 files changed, 4 insertions(+), 1 deletion(-)
+On 7/17/19 8:23 PM, Yang Shi wrote:
 > 
-> diff --git a/tools/include/uapi/asm-generic/unistd.h b/tools/include/uapi/asm-generic/unistd.h
-> index a87904daf103..36232ea94956 100644
-> --- a/tools/include/uapi/asm-generic/unistd.h
-> +++ b/tools/include/uapi/asm-generic/unistd.h
-> @@ -844,9 +844,11 @@ __SYSCALL(__NR_fsconfig, sys_fsconfig)
->  __SYSCALL(__NR_fsmount, sys_fsmount)
->  #define __NR_fspick 433
->  __SYSCALL(__NR_fspick, sys_fspick)
-> +#define __NR_fchmodat4 434
-> +__SYSCALL(__NR_fchmodat4, sys_fchmodat4)
->  
->  #undef __NR_syscalls
-> -#define __NR_syscalls 434
-> +#define __NR_syscalls 435
->  
->  /*
->   * 32 bit systems traditionally used different
-> diff --git a/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl b/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
-> index b4e6f9e6204a..b92d5b195e66 100644
-> --- a/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
-> +++ b/tools/perf/arch/x86/entry/syscalls/syscall_64.tbl
-> @@ -355,6 +355,7 @@
->  431	common	fsconfig		__x64_sys_fsconfig
->  432	common	fsmount			__x64_sys_fsmount
->  433	common	fspick			__x64_sys_fspick
-> +434	common	fchmodat4		__x64_sys_fchmodat4
->  
->  #
->  # x32-specific system call numbers start at 512 to avoid cache impact
-> -- 
-> 2.21.0
+> 
+> On 7/16/19 10:28 AM, Yang Shi wrote:
+>>
+>>
+>> On 7/16/19 5:07 AM, Vlastimil Babka wrote:
+>>> On 6/22/19 2:20 AM, Yang Shi wrote:
+>>>> @@ -969,10 +975,21 @@ static long do_get_mempolicy(int *policy, 
+>>>> nodemask_t *nmask,
+>>>>   /*
+>>>>    * page migration, thp tail pages can be passed.
+>>>>    */
+>>>> -static void migrate_page_add(struct page *page, struct list_head 
+>>>> *pagelist,
+>>>> +static int migrate_page_add(struct page *page, struct list_head 
+>>>> *pagelist,
+>>>>                   unsigned long flags)
+>>>>   {
+>>>>       struct page *head = compound_head(page);
+>>>> +
+>>>> +    /*
+>>>> +     * Non-movable page may reach here.  And, there may be
+>>>> +     * temporaty off LRU pages or non-LRU movable pages.
+>>>> +     * Treat them as unmovable pages since they can't be
+>>>> +     * isolated, so they can't be moved at the moment.  It
+>>>> +     * should return -EIO for this case too.
+>>>> +     */
+>>>> +    if (!PageLRU(head) && (flags & MPOL_MF_STRICT))
+>>>> +        return -EIO;
+>>>> +
+>>> Hm but !PageLRU() is not the only way why queueing for migration can
+>>> fail, as can be seen from the rest of the function. Shouldn't all cases
+>>> be reported?
+>>
+>> Do you mean the shared pages and isolation failed pages? I'm not sure 
+>> whether we should consider these cases break the semantics or not, so 
+>> I leave them as they are. But, strictly speaking they should be 
+>> reported too, at least for the isolation failed page.
 
--- 
+CC'd linux-api, should be done on v3 posting also.
 
-- Arnaldo
+> By reading mbind man page, it says:
+> 
+> If MPOL_MF_MOVE is specified in flags, then the kernel will attempt to 
+> move all the existing pages in the memory range so that they follow the 
+> policy.  Pages that are shared with other processes will not be moved.  
+> If MPOL_MF_STRICT is also specified, then the call fails with the error 
+> EIO if some pages could not be moved.
+
+I don't think this means that for shared pages, -EIO should not be
+reported. I can imagine both interpretations of the paragraph. I guess
+we can be conservative and keep not reporting them, if that was always
+the case - but then perhaps clarify the man page?
+
+> It looks the code already handles shared page correctly, we just need 
+> return -EIO for isolation failed page if MPOL_MF_STRICT is specified.
+> 
+>>
+>> Thanks,
+>> Yang
+>>
+>>>
+>>>>       /*
+>>>>        * Avoid migrating a page that is shared with others.
+>>>>        */
+>>>> @@ -984,6 +1001,8 @@ static void migrate_page_add(struct page *page, 
+>>>> struct list_head *pagelist,
+>>>>                   hpage_nr_pages(head));
+>>>>           }
+>>>>       }
+>>>> +
+>>>> +    return 0;
+>>>>   }
+>>>>     /* page allocation callback for NUMA node migration */
+>>>> @@ -1186,9 +1205,10 @@ static struct page *new_page(struct page 
+>>>> *page, unsigned long start)
+>>>>   }
+>>>>   #else
+>>>>   -static void migrate_page_add(struct page *page, struct list_head 
+>>>> *pagelist,
+>>>> +static int migrate_page_add(struct page *page, struct list_head 
+>>>> *pagelist,
+>>>>                   unsigned long flags)
+>>>>   {
+>>>> +    return -EIO;
+>>>>   }
+>>>>     int do_migrate_pages(struct mm_struct *mm, const nodemask_t *from,
+>>>>
+>>
+> 
