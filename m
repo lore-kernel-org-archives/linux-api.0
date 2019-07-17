@@ -1,48 +1,40 @@
-From: Al Viro <viro@zeniv.linux.org.uk>
-Subject: Re: [PATCH v2 2/4] Add fchmodat4(), a new syscall
-Date: Wed, 17 Jul 2019 04:02:58 +0100
-Message-ID: <20190717030258.GT17978@ZenIV.linux.org.uk>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH v2 3/4] arch: Register fchmodat4, usually as syscall 434
+Date: Wed, 17 Jul 2019 09:54:02 +0200
+Message-ID: <CAK8P3a2SGNJXqbHGFhVoPDZLpPYWGDVJ42D2476DLPU4nvf85g@mail.gmail.com>
 References: <20190717012719.5524-1-palmer@sifive.com>
- <20190717012719.5524-3-palmer@sifive.com>
- <20190717024046.GI1506@brightrain.aerifal.cx>
+ <20190717012719.5524-4-palmer@sifive.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190717024046.GI1506@brightrain.aerifal.cx>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Rich Felker <dalias@libc.org>
-Cc: Palmer Dabbelt <palmer@sifive.com>, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, rth@twiddle.net, ink@jurassic.park.msu.ru, mattst88@gmail.com, linux@armlinux.org.uk, catalin.marinas@arm.com, will@kernel.org, tony.luck@intel.com, fenghua.yu@intel.com, geert@linux-m68k.org, monstr@monstr.eu, ralf@linux-mips.org, paul.burton@mips.com, jhogan@kernel.org, James.Bottomley@hansenpartnership.com, deller@gmx.de, benh@kernel.crashing.org, paulus@samba.org, mpe@ellerman.id.au, heiko.carstens@de.ibm.com, gor@linux.ibm.com, borntraeger@de.ibm.com, ysato@users.sourceforge.jp, davem@davemloft.net, luto@kernel.org, tglx@linutronix.de, mingo@redhat.com, bp@alien8.de, hpa@zytor.com, x86@kernel.org, peterz@infradead.org, acme@
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+In-Reply-To: <20190717012719.5524-4-palmer@sifive.com>
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+To: Palmer Dabbelt <palmer@sifive.com>
+Cc: Rich Felker <dalias@libc.org>, Catalin Marinas <catalin.marinas@arm.com>, Linux-sh list <linux-sh@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Heiko Carstens <heiko.carstens@de.ibm.com>, Stefan Agner <stefan@agner.ch>, linux-mips@vger.kernel.org, James Bottomley <James.Bottomley@hansenpartnership.com>, Namhyung Kim <namhyung@kernel.org>, kim.phillips@arm.com, Paul Mackerras <paulus@samba.org>, Deepa Dinamani <deepa.kernel@gmail.com>, "H. Peter Anvin" <hpa@zytor.com>, sparclinux <sparclinux@vger.kernel.org>, linux-ia64@vger.kernel.org, Will Deacon <will@kernel.org>, linux-arch <linux-arch@vger.kernel.org>, linux-s390 <linux-s390@vger.kernel.org>, Hannes Reinecke <hare@suse.com>, Yoshinori Sato <ysato@users.sourceforge.jp>, Helge Deller <deller@gmx.de>, the arch/x86 maintainers <x86@kernel.org>, Russell King - ARM Linux <linux@armlinux.org.uk>, Christian
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jul 16, 2019 at 10:40:46PM -0400, Rich Felker wrote:
-> On Tue, Jul 16, 2019 at 06:27:17PM -0700, Palmer Dabbelt wrote:
-> > man 3p says that fchmodat() takes a flags argument, but the Linux
-> > syscall does not.  There doesn't appear to be a good userspace
-> > workaround for this issue but the implementation in the kernel is pretty
-> > straight-forward.  The specific use case where the missing flags came up
-> > was WRT a fuse filesystem implemenation, but the functionality is pretty
-> > generic so I'm assuming there would be other use cases.
-> 
-> Note that we do have a workaround in musl libc with O_PATH and
-> /proc/self/fd, but a syscall that allows a proper fix with the ugly
-> workaround only in the fallback path for old kernels will be much
-> appreciated!
-> 
-> What about also doing a new SYS_faccessat4 with working AT_EACCESS
-> flag? The workaround we have to do for it is far worse.
+On Wed, Jul 17, 2019 at 3:29 AM Palmer Dabbelt <palmer@sifive.com> wrote:
+>
+> This registers the new fchmodat4 syscall in most places as nuber 434,
+> with alpha being the exception where it's 544.  I found all these sites
+> by grepping for fspick, which I assume has found me everything.
 
-Umm...  That's doable, but getting into the "don't switch creds unless
-needed" territory.  I'll need to play with that a bit and see what
-gives a tolerable variant...
+434 is now pidfd_open, the next free one is 436.
 
-What of this part wrt AT_EACCESS?
-        if (!issecure(SECURE_NO_SETUID_FIXUP)) {
-                /* Clear the capabilities if we switch to a non-root user */
-                kuid_t root_uid = make_kuid(override_cred->user_ns, 0);
-                if (!uid_eq(override_cred->uid, root_uid))
-                        cap_clear(override_cred->cap_effective);
-                else
-                        override_cred->cap_effective =
-                                override_cred->cap_permitted;
-        }
+>  arch/alpha/kernel/syscalls/syscall.tbl      | 1 +
+>  arch/arm/tools/syscall.tbl                  | 1 +
+>  arch/arm64/include/asm/unistd32.h           | 2 ++
+
+You missed arch/arm64/include/asm/unistd.h, which
+contains __NR_compat_syscalls
+
+      Arnd
