@@ -1,8 +1,8 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V36 19/29] Lock down module params that specify hardware
- parameters (eg. ioport)
-Date: Thu, 18 Jul 2019 12:44:05 -0700
-Message-ID: <20190718194415.108476-20-matthewgarrett@google.com>
+Subject: [PATCH V36 15/29] acpi: Ignore acpi_rsdp kernel param when the kernel
+ has been locked down
+Date: Thu, 18 Jul 2019 12:44:01 -0700
+Message-ID: <20190718194415.108476-16-matthewgarrett@google.com>
 References: <20190718194415.108476-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -10,122 +10,215 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190718194415.108476-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>, Jessica Yu <jeyu@kernel.org>
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Josh Boyer <jwboyer@redhat.com>, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>, Dave Young <dyoung@redhat.com>, linux-acpi@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: David Howells <dhowells@redhat.com>
+From: Josh Boyer <jwboyer@redhat.com>
 
-Provided an annotation for module parameters that specify hardware
-parameters (such as io ports, iomem addresses, irqs, dma channels, fixed
-dma buffers and other types).
+This option allows userspace to pass the RSDP address to the kernel, which
+makes it possible for a user to modify the workings of hardware. Reject
+the option when the kernel is locked down. This requires some reworking
+of the existing RSDP command line logic, since the early boot code also
+makes use of a command-line passed RSDP when locating the SRAT table
+before the lockdown code has been initialised. This is achieved by
+separating the command line RSDP path in the early boot code from the
+generic RSDP path, and then copying the command line RSDP into boot
+params in the kernel proper if lockdown is not enabled. If lockdown is
+enabled and an RSDP is provided on the command line, this will only be
+used when parsing SRAT (which shouldn't permit kernel code execution)
+and will be ignored in the rest of the kernel.
 
-Suggested-by: Alan Cox <gnomes@lxorguk.ukuu.org.uk>
+(Modified by Matthew Garrett in order to handle the early boot RSDP
+environment)
+
+Signed-off-by: Josh Boyer <jwboyer@redhat.com>
 Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Matthew Garrett <mjg59@google.com>
 Reviewed-by: Kees Cook <keescook@chromium.org>
-Cc: Jessica Yu <jeyu@kernel.org>
+cc: Dave Young <dyoung@redhat.com>
+cc: linux-acpi@vger.kernel.org
 ---
- include/linux/security.h     |  1 +
- kernel/params.c              | 28 +++++++++++++++++++++++-----
- security/lockdown/lockdown.c |  1 +
- 3 files changed, 25 insertions(+), 5 deletions(-)
+ arch/x86/boot/compressed/acpi.c | 19 +++++++++++++------
+ arch/x86/include/asm/acpi.h     |  9 +++++++++
+ arch/x86/include/asm/x86_init.h |  2 ++
+ arch/x86/kernel/acpi/boot.c     |  5 +++++
+ arch/x86/kernel/x86_init.c      |  1 +
+ drivers/acpi/osl.c              | 14 +++++++++++++-
+ include/linux/acpi.h            |  6 ++++++
+ 7 files changed, 49 insertions(+), 7 deletions(-)
 
-diff --git a/include/linux/security.h b/include/linux/security.h
-index 8f7048395114..43fa3486522b 100644
---- a/include/linux/security.h
-+++ b/include/linux/security.h
-@@ -113,6 +113,7 @@ enum lockdown_reason {
- 	LOCKDOWN_ACPI_TABLES,
- 	LOCKDOWN_PCMCIA_CIS,
- 	LOCKDOWN_TIOCSSERIAL,
-+	LOCKDOWN_MODULE_PARAMETERS,
- 	LOCKDOWN_INTEGRITY_MAX,
- 	LOCKDOWN_CONFIDENTIALITY_MAX,
+diff --git a/arch/x86/boot/compressed/acpi.c b/arch/x86/boot/compressed/acpi.c
+index 15255f388a85..149795c369f2 100644
+--- a/arch/x86/boot/compressed/acpi.c
++++ b/arch/x86/boot/compressed/acpi.c
+@@ -26,7 +26,7 @@ struct mem_vector immovable_mem[MAX_NUMNODES*2];
+  */
+ #define MAX_ADDR_LEN 19
+ 
+-static acpi_physical_address get_acpi_rsdp(void)
++static acpi_physical_address get_cmdline_acpi_rsdp(void)
+ {
+ 	acpi_physical_address addr = 0;
+ 
+@@ -278,10 +278,7 @@ acpi_physical_address get_rsdp_addr(void)
+ {
+ 	acpi_physical_address pa;
+ 
+-	pa = get_acpi_rsdp();
+-
+-	if (!pa)
+-		pa = boot_params->acpi_rsdp_addr;
++	pa = boot_params->acpi_rsdp_addr;
+ 
+ 	/*
+ 	 * Try to get EFI data from setup_data. This can happen when we're a
+@@ -311,7 +308,17 @@ static unsigned long get_acpi_srat_table(void)
+ 	char arg[10];
+ 	u8 *entry;
+ 
+-	rsdp = (struct acpi_table_rsdp *)(long)boot_params->acpi_rsdp_addr;
++	/*
++	 * Check whether we were given an RSDP on the command line. We don't
++	 * stash this in boot params because the kernel itself may have
++	 * different ideas about whether to trust a command-line parameter.
++	 */
++	rsdp = (struct acpi_table_rsdp *)get_cmdline_acpi_rsdp();
++
++	if (!rsdp)
++		rsdp = (struct acpi_table_rsdp *)(long)
++			boot_params->acpi_rsdp_addr;
++
+ 	if (!rsdp)
+ 		return 0;
+ 
+diff --git a/arch/x86/include/asm/acpi.h b/arch/x86/include/asm/acpi.h
+index aac686e1e005..bc9693c9107e 100644
+--- a/arch/x86/include/asm/acpi.h
++++ b/arch/x86/include/asm/acpi.h
+@@ -117,6 +117,12 @@ static inline bool acpi_has_cpu_in_madt(void)
+ 	return !!acpi_lapic;
+ }
+ 
++#define ACPI_HAVE_ARCH_SET_ROOT_POINTER
++static inline void acpi_arch_set_root_pointer(u64 addr)
++{
++	x86_init.acpi.set_root_pointer(addr);
++}
++
+ #define ACPI_HAVE_ARCH_GET_ROOT_POINTER
+ static inline u64 acpi_arch_get_root_pointer(void)
+ {
+@@ -125,6 +131,7 @@ static inline u64 acpi_arch_get_root_pointer(void)
+ 
+ void acpi_generic_reduced_hw_init(void);
+ 
++void x86_default_set_root_pointer(u64 addr);
+ u64 x86_default_get_root_pointer(void);
+ 
+ #else /* !CONFIG_ACPI */
+@@ -138,6 +145,8 @@ static inline void disable_acpi(void) { }
+ 
+ static inline void acpi_generic_reduced_hw_init(void) { }
+ 
++static inline void x86_default_set_root_pointer(u64 addr) { }
++
+ static inline u64 x86_default_get_root_pointer(void)
+ {
+ 	return 0;
+diff --git a/arch/x86/include/asm/x86_init.h b/arch/x86/include/asm/x86_init.h
+index b85a7c54c6a1..d584128435cb 100644
+--- a/arch/x86/include/asm/x86_init.h
++++ b/arch/x86/include/asm/x86_init.h
+@@ -134,10 +134,12 @@ struct x86_hyper_init {
+ 
+ /**
+  * struct x86_init_acpi - x86 ACPI init functions
++ * @set_root_poitner:		set RSDP address
+  * @get_root_pointer:		get RSDP address
+  * @reduced_hw_early_init:	hardware reduced platform early init
+  */
+ struct x86_init_acpi {
++	void (*set_root_pointer)(u64 addr);
+ 	u64 (*get_root_pointer)(void);
+ 	void (*reduced_hw_early_init)(void);
  };
-diff --git a/kernel/params.c b/kernel/params.c
-index cf448785d058..f2779a76d39a 100644
---- a/kernel/params.c
-+++ b/kernel/params.c
-@@ -12,6 +12,7 @@
- #include <linux/err.h>
- #include <linux/slab.h>
- #include <linux/ctype.h>
+diff --git a/arch/x86/kernel/acpi/boot.c b/arch/x86/kernel/acpi/boot.c
+index 17b33ef604f3..04205ce127a1 100644
+--- a/arch/x86/kernel/acpi/boot.c
++++ b/arch/x86/kernel/acpi/boot.c
+@@ -1760,6 +1760,11 @@ void __init arch_reserve_mem_area(acpi_physical_address addr, size_t size)
+ 	e820__update_table_print();
+ }
+ 
++void x86_default_set_root_pointer(u64 addr)
++{
++	boot_params.acpi_rsdp_addr = addr;
++}
++
+ u64 x86_default_get_root_pointer(void)
+ {
+ 	return boot_params.acpi_rsdp_addr;
+diff --git a/arch/x86/kernel/x86_init.c b/arch/x86/kernel/x86_init.c
+index 50a2b492fdd6..d0b8f5585a73 100644
+--- a/arch/x86/kernel/x86_init.c
++++ b/arch/x86/kernel/x86_init.c
+@@ -95,6 +95,7 @@ struct x86_init_ops x86_init __initdata = {
+ 	},
+ 
+ 	.acpi = {
++		.set_root_pointer	= x86_default_set_root_pointer,
+ 		.get_root_pointer	= x86_default_get_root_pointer,
+ 		.reduced_hw_early_init	= acpi_generic_reduced_hw_init,
+ 	},
+diff --git a/drivers/acpi/osl.c b/drivers/acpi/osl.c
+index 9c0edf2fc0dd..d43df3a3fa8d 100644
+--- a/drivers/acpi/osl.c
++++ b/drivers/acpi/osl.c
+@@ -26,6 +26,7 @@
+ #include <linux/list.h>
+ #include <linux/jiffies.h>
+ #include <linux/semaphore.h>
 +#include <linux/security.h>
  
- #ifdef CONFIG_SYSFS
- /* Protects all built-in parameters, modules use their own param_lock */
-@@ -96,13 +97,20 @@ bool parameq(const char *a, const char *b)
- 	return parameqn(a, b, strlen(a)+1);
- }
+ #include <asm/io.h>
+ #include <linux/uaccess.h>
+@@ -180,8 +181,19 @@ acpi_physical_address __init acpi_os_get_root_pointer(void)
+ 	acpi_physical_address pa;
  
--static void param_check_unsafe(const struct kernel_param *kp)
-+static bool param_check_unsafe(const struct kernel_param *kp,
-+			       const char *doing)
- {
-+	if (kp->flags & KERNEL_PARAM_FL_HWPARAM &&
-+	    security_locked_down(LOCKDOWN_MODULE_PARAMETERS))
-+		return false;
-+
- 	if (kp->flags & KERNEL_PARAM_FL_UNSAFE) {
- 		pr_notice("Setting dangerous option %s - tainting kernel\n",
- 			  kp->name);
- 		add_taint(TAINT_USER, LOCKDEP_STILL_OK);
- 	}
-+
-+	return true;
- }
+ #ifdef CONFIG_KEXEC
+-	if (acpi_rsdp)
++	/*
++	 * We may have been provided with an RSDP on the command line,
++	 * but if a malicious user has done so they may be pointing us
++	 * at modified ACPI tables that could alter kernel behaviour -
++	 * so, we check the lockdown status before making use of
++	 * it. If we trust it then also stash it in an architecture
++	 * specific location (if appropriate) so it can be carried
++	 * over further kexec()s.
++	 */
++	if (acpi_rsdp && !security_locked_down(LOCKDOWN_ACPI_TABLES)) {
++		acpi_arch_set_root_pointer(acpi_rsdp);
+ 		return acpi_rsdp;
++	}
+ #endif
+ 	pa = acpi_arch_get_root_pointer();
+ 	if (pa)
+diff --git a/include/linux/acpi.h b/include/linux/acpi.h
+index 451e7b544342..e826f7311b2b 100644
+--- a/include/linux/acpi.h
++++ b/include/linux/acpi.h
+@@ -639,6 +639,12 @@ bool acpi_gtdt_c3stop(int type);
+ int acpi_arch_timer_mem_init(struct arch_timer_mem *timer_mem, int *timer_count);
+ #endif
  
- static int parse_one(char *param,
-@@ -132,8 +140,10 @@ static int parse_one(char *param,
- 			pr_debug("handling %s with %p\n", param,
- 				params[i].ops->set);
- 			kernel_param_lock(params[i].mod);
--			param_check_unsafe(&params[i]);
--			err = params[i].ops->set(val, &params[i]);
-+			if (param_check_unsafe(&params[i], doing))
-+				err = params[i].ops->set(val, &params[i]);
-+			else
-+				err = -EPERM;
- 			kernel_param_unlock(params[i].mod);
- 			return err;
- 		}
-@@ -541,6 +551,12 @@ static ssize_t param_attr_show(struct module_attribute *mattr,
- 	return count;
- }
- 
-+#ifdef CONFIG_MODULES
-+#define mod_name(mod) ((mod)->name)
-+#else
-+#define mod_name(mod) "unknown"
++#ifndef ACPI_HAVE_ARCH_SET_ROOT_POINTER
++static inline void acpi_arch_set_root_pointer(u64 addr)
++{
++}
 +#endif
 +
- /* sysfs always hands a nul-terminated string in buf.  We rely on that. */
- static ssize_t param_attr_store(struct module_attribute *mattr,
- 				struct module_kobject *mk,
-@@ -553,8 +569,10 @@ static ssize_t param_attr_store(struct module_attribute *mattr,
- 		return -EPERM;
- 
- 	kernel_param_lock(mk->mod);
--	param_check_unsafe(attribute->param);
--	err = attribute->param->ops->set(buf, attribute->param);
-+	if (param_check_unsafe(attribute->param, mod_name(mk->mod)))
-+		err = attribute->param->ops->set(buf, attribute->param);
-+	else
-+		err = -EPERM;
- 	kernel_param_unlock(mk->mod);
- 	if (!err)
- 		return len;
-diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
-index 00a3a6438dd2..5177938cfa0d 100644
---- a/security/lockdown/lockdown.c
-+++ b/security/lockdown/lockdown.c
-@@ -28,6 +28,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
- 	[LOCKDOWN_ACPI_TABLES] = "modifying ACPI tables",
- 	[LOCKDOWN_PCMCIA_CIS] = "direct PCMCIA CIS storage",
- 	[LOCKDOWN_TIOCSSERIAL] = "reconfiguration of serial port IO",
-+	[LOCKDOWN_MODULE_PARAMETERS] = "unsafe module parameters",
- 	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
- 	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
- };
+ #ifndef ACPI_HAVE_ARCH_GET_ROOT_POINTER
+ static inline u64 acpi_arch_get_root_pointer(void)
+ {
 -- 
 2.22.0.510.g264f2c817a-goog
