@@ -1,212 +1,171 @@
-From: Yang Shi <yang.shi@linux.alibaba.com>
-Subject: [v3 PATCH 1/2] mm: mempolicy: make the behavior consistent when MPOL_MF_MOVE* and MPOL_MF_STRICT were specified
-Date: Fri, 19 Jul 2019 01:17:53 +0800
-Message-ID: <1563470274-52126-2-git-send-email-yang.shi@linux.alibaba.com>
-References: <1563470274-52126-1-git-send-email-yang.shi@linux.alibaba.com>
+From: Patrick Bellasi <patrick.bellasi@arm.com>
+Subject: [PATCH v12 0/6] Add utilization clamping support (CGroups API)
+Date: Thu, 18 Jul 2019 19:17:42 +0100
+Message-ID: <20190718181748.28446-1-patrick.bellasi@arm.com>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1563470274-52126-1-git-send-email-yang.shi@linux.alibaba.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: vbabka@suse.cz, mhocko@kernel.org, mgorman@techsingularity.net, akpm@linux-foundation.org
-Cc: yang.shi@linux.alibaba.com, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+To: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, cgroups@vger.kernel.org
+Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Michal Koutny <mkoutny@suse.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>, Alessio Balsini <balsini@android.com>
 List-Id: linux-api@vger.kernel.org
 
-When both MPOL_MF_MOVE* and MPOL_MF_STRICT was specified, mbind() should
-try best to migrate misplaced pages, if some of the pages could not be
-migrated, then return -EIO.
+Hi all, this is a respin of:
 
-There are three different sub-cases:
-1. vma is not migratable
-2. vma is migratable, but there are unmovable pages
-3. vma is migratable, pages are movable, but migrate_pages() fails
+  https://lore.kernel.org/lkml/20190708084357.12944-1-patrick.bellasi@arm.com/
 
-If #1 happens, kernel would just abort immediately, then return -EIO,
-after the commit a7f40cfe3b7ada57af9b62fd28430eeb4a7cfcb7 ("mm:
-mempolicy: make mbind() return -EIO when MPOL_MF_STRICT is specified").
+which addresses all the comments collected so far:
 
-If #3 happens, kernel would set policy and migrate pages with best-effort,
-but won't rollback the migrated pages and reset the policy back.
+- track requested cgroup's percentage to mask conversion rounding to userspace
+- use a dedicated variable for parent restrictions
+- make more explicit in the documentation that the requested "protection" is
+  always capped by the requested "limit"
+- use the newly added uclamp_mutex to serialize the sysfs write callback
+- add missing RCU read locks across cpu_util_update_eff() call from
+  uclamp_update_root_tg()
+- remove not required and confusing sentence from the above changelog
+- add a new patch to always use enum uclamp_id for clamp_id values
+- fix percentage's decimals format string
 
-Before that commit, they behaves in the same way.  It'd better to keep
-their behavior consistent.  But, rolling back the migrated pages and
-resetting the policy back sounds not feasible, so just make #1 behave as
-same as #3.
+as well as adds some small modifications:
 
-Userspace will know that not everything was successfully migrated (via
--EIO), and can take whatever steps it deems necessary - attempt rollback,
-determine which exact page(s) are violating the policy, etc.
+- introduce UCLAMP_PERCENT_{SHIFT,SCALE} to avoid hardcoded constants
+- s/uclamp_scale_from_percent()/capacity_from_percent()/
+- move range check from cpu_uclamp_{min,max}_write() to capacity_from_percent()
 
-Make queue_pages_range() return 1 to indicate there are unmovable pages
-or vma is not migratable.
+The series is based on top of today's Linus master branch (wip for 5.3-rc1):
 
-The #2 is not handled correctly in the current kernel, the following
-patch will fix it.
+  commit 22051d9c4a57 ("Merge tag 'platform-drivers-x86-v5.3-2' of git://git.infradead.org/linux-platform-drivers-x86")
 
-Cc: Vlastimil Babka <vbabka@suse.cz>
-Cc: Michal Hocko <mhocko@suse.com>
-Cc: Mel Gorman <mgorman@techsingularity.net>
-Signed-off-by: Yang Shi <yang.shi@linux.alibaba.com>
----
- mm/mempolicy.c | 66 +++++++++++++++++++++++++++++++++++++++++-----------------
- 1 file changed, 47 insertions(+), 19 deletions(-)
+Thanks Quentin, Michal and Tejun for your review comments!
 
-diff --git a/mm/mempolicy.c b/mm/mempolicy.c
-index f48693f..0e73cc7 100644
---- a/mm/mempolicy.c
-+++ b/mm/mempolicy.c
-@@ -429,11 +429,14 @@ static inline bool queue_pages_required(struct page *page,
- }
- 
- /*
-- * queue_pages_pmd() has three possible return values:
-- * 1 - pages are placed on the right node or queued successfully.
-- * 0 - THP was split.
-- * -EIO - is migration entry or MPOL_MF_STRICT was specified and an existing
-- *        page was already on a node that does not follow the policy.
-+ * queue_pages_pmd() has four possible return values:
-+ * 0 - pages are placed on the right node or queued successfully.
-+ * 1 - there is unmovable page, and MPOL_MF_MOVE* & MPOL_MF_STRICT were
-+ *     specified.
-+ * 2 - THP was split.
-+ * -EIO - is migration entry or only MPOL_MF_STRICT was specified and an
-+ *        existing page was already on a node that does not follow the
-+ *        policy.
-  */
- static int queue_pages_pmd(pmd_t *pmd, spinlock_t *ptl, unsigned long addr,
- 				unsigned long end, struct mm_walk *walk)
-@@ -451,19 +454,17 @@ static int queue_pages_pmd(pmd_t *pmd, spinlock_t *ptl, unsigned long addr,
- 	if (is_huge_zero_page(page)) {
- 		spin_unlock(ptl);
- 		__split_huge_pmd(walk->vma, pmd, addr, false, NULL);
-+		ret = 2;
- 		goto out;
- 	}
--	if (!queue_pages_required(page, qp)) {
--		ret = 1;
-+	if (!queue_pages_required(page, qp))
- 		goto unlock;
--	}
- 
--	ret = 1;
- 	flags = qp->flags;
- 	/* go to thp migration */
- 	if (flags & (MPOL_MF_MOVE | MPOL_MF_MOVE_ALL)) {
- 		if (!vma_migratable(walk->vma)) {
--			ret = -EIO;
-+			ret = 1;
- 			goto unlock;
- 		}
- 
-@@ -479,6 +480,13 @@ static int queue_pages_pmd(pmd_t *pmd, spinlock_t *ptl, unsigned long addr,
- /*
-  * Scan through pages checking if pages follow certain conditions,
-  * and move them to the pagelist if they do.
-+ *
-+ * queue_pages_pte_range() has three possible return values:
-+ * 0 - pages are placed on the right node or queued successfully.
-+ * 1 - there is unmovable page, and MPOL_MF_MOVE* & MPOL_MF_STRICT were
-+ *     specified.
-+ * -EIO - only MPOL_MF_STRICT was specified and an existing page was already
-+ *        on a node that does not follow the policy.
-  */
- static int queue_pages_pte_range(pmd_t *pmd, unsigned long addr,
- 			unsigned long end, struct mm_walk *walk)
-@@ -488,15 +496,15 @@ static int queue_pages_pte_range(pmd_t *pmd, unsigned long addr,
- 	struct queue_pages *qp = walk->private;
- 	unsigned long flags = qp->flags;
- 	int ret;
-+	bool has_unmovable = false;
- 	pte_t *pte;
- 	spinlock_t *ptl;
- 
- 	ptl = pmd_trans_huge_lock(pmd, vma);
- 	if (ptl) {
- 		ret = queue_pages_pmd(pmd, ptl, addr, end, walk);
--		if (ret > 0)
--			return 0;
--		else if (ret < 0)
-+		/* THP was split, fall through to pte walk */
-+		if (ret != 2)
- 			return ret;
- 	}
- 
-@@ -519,14 +527,21 @@ static int queue_pages_pte_range(pmd_t *pmd, unsigned long addr,
- 		if (!queue_pages_required(page, qp))
- 			continue;
- 		if (flags & (MPOL_MF_MOVE | MPOL_MF_MOVE_ALL)) {
--			if (!vma_migratable(vma))
-+			/* MPOL_MF_STRICT must be specified if we get here */
-+			if (!vma_migratable(vma)) {
-+				has_unmovable |= true;
- 				break;
-+			}
- 			migrate_page_add(page, qp->pagelist, flags);
- 		} else
- 			break;
- 	}
- 	pte_unmap_unlock(pte - 1, ptl);
- 	cond_resched();
-+
-+	if (has_unmovable)
-+		return 1;
-+
- 	return addr != end ? -EIO : 0;
- }
- 
-@@ -639,7 +654,13 @@ static int queue_pages_test_walk(unsigned long start, unsigned long end,
-  *
-  * If pages found in a given range are on a set of nodes (determined by
-  * @nodes and @flags,) it's isolated and queued to the pagelist which is
-- * passed via @private.)
-+ * passed via @private.
-+ *
-+ * queue_pages_range() has three possible return values:
-+ * 1 - there is unmovable page, but MPOL_MF_MOVE* & MPOL_MF_STRICT were
-+ *     specified.
-+ * 0 - queue pages successfully or no misplaced page.
-+ * -EIO - there is misplaced page and only MPOL_MF_STRICT was specified.
-  */
- static int
- queue_pages_range(struct mm_struct *mm, unsigned long start, unsigned long end,
-@@ -1182,6 +1203,7 @@ static long do_mbind(unsigned long start, unsigned long len,
- 	struct mempolicy *new;
- 	unsigned long end;
- 	int err;
-+	int ret;
- 	LIST_HEAD(pagelist);
- 
- 	if (flags & ~(unsigned long)MPOL_MF_VALID)
-@@ -1243,10 +1265,15 @@ static long do_mbind(unsigned long start, unsigned long len,
- 	if (err)
- 		goto mpol_out;
- 
--	err = queue_pages_range(mm, start, end, nmask,
-+	ret = queue_pages_range(mm, start, end, nmask,
- 			  flags | MPOL_MF_INVERT, &pagelist);
--	if (!err)
--		err = mbind_range(mm, start, end, new);
-+
-+	if (ret < 0) {
-+		err = -EIO;
-+		goto up_out;
-+	}
-+
-+	err = mbind_range(mm, start, end, new);
- 
- 	if (!err) {
- 		int nr_failed = 0;
-@@ -1259,11 +1286,12 @@ static long do_mbind(unsigned long start, unsigned long len,
- 				putback_movable_pages(&pagelist);
- 		}
- 
--		if (nr_failed && (flags & MPOL_MF_STRICT))
-+		if ((ret > 0) || (nr_failed && (flags & MPOL_MF_STRICT)))
- 			err = -EIO;
- 	} else
- 		putback_movable_pages(&pagelist);
- 
-+up_out:
- 	up_write(&mm->mmap_sem);
-  mpol_out:
- 	mpol_put(new);
+This has been the first code review targeting specifically the cgroups bits and
+the series is now hopefully in a better shape.
+
+Looking forward for any additional comments! ;)
+
+Cheers,
+Patrick
+
+Series Organization
+===================
+
+The full tree is available here:
+
+   git://linux-arm.org/linux-pb.git   lkml/utilclamp_v12
+   http://www.linux-arm.org/git?p=linux-pb.git;a=shortlog;h=refs/heads/lkml/utilclamp_v12
+
+
+Newcomer's Short Abstract
+=========================
+
+The Linux scheduler tracks a "utilization" signal for each scheduling entity
+(SE), e.g. tasks, to know how much CPU time they use. This signal allows the
+scheduler to know how "big" a task is and, in principle, it can support
+advanced task placement strategies by selecting the best CPU to run a task.
+Some of these strategies are represented by the Energy Aware Scheduler [1].
+
+When the schedutil cpufreq governor is in use, the utilization signal allows
+the Linux scheduler to also drive frequency selection. The CPU utilization
+signal, which represents the aggregated utilization of tasks scheduled on that
+CPU, is used to select the frequency which best fits the workload generated by
+the tasks.
+
+The current translation of utilization values into a frequency selection is
+simple: we go to max for RT tasks or to the minimum frequency which can
+accommodate the utilization of DL+FAIR tasks.
+However, utilization values by themselves cannot convey the desired
+power/performance behaviors of each task as intended by user-space.
+As such they are not ideally suited for task placement decisions.
+
+Task placement and frequency selection policies in the kernel can be improved
+by taking into consideration hints coming from authorized user-space elements,
+like for example the Android middleware or more generally any "System
+Management Software" (SMS) framework.
+
+Utilization clamping is a mechanism which allows to "clamp" (i.e. filter) the
+utilization generated by RT and FAIR tasks within a range defined by user-space.
+The clamped utilization value can then be used, for example, to enforce a
+minimum and/or maximum frequency depending on which tasks are active on a CPU.
+
+The main use-cases for utilization clamping are:
+
+ - boosting: better interactive response for small tasks which
+   are affecting the user experience.
+
+   Consider for example the case of a small control thread for an external
+   accelerator (e.g. GPU, DSP, other devices). Here, from the task utilization
+   the scheduler does not have a complete view of what the task's requirements
+   are and, if it's a small utilization task, it keeps selecting a more energy
+   efficient CPU, with smaller capacity and lower frequency, thus negatively
+   impacting the overall time required to complete task activations.
+
+ - capping: increase energy efficiency for background tasks not affecting the
+   user experience.
+
+   Since running on a lower capacity CPU at a lower frequency is more energy
+   efficient, when the completion time is not a main goal, then capping the
+   utilization considered for certain (maybe big) tasks can have positive
+   effects, both on energy consumption and thermal headroom.
+   This feature allows also to make RT tasks more energy friendly on mobile
+   systems where running them on high capacity CPUs and at the maximum
+   frequency is not required.
+
+>From these two use-cases, it's worth noticing that frequency selection
+biasing, introduced by patches 9 and 10 of this series, is just one possible
+usage of utilization clamping. Another compelling extension of utilization
+clamping is in helping the scheduler in making tasks placement decisions.
+
+Utilization is (also) a task specific property the scheduler uses to know
+how much CPU bandwidth a task requires, at least as long as there is idle time.
+Thus, the utilization clamp values, defined either per-task or per-task_group,
+can represent tasks to the scheduler as being bigger (or smaller) than what
+they actually are.
+
+Utilization clamping thus enables interesting additional optimizations, for
+example on asymmetric capacity systems like Arm big.LITTLE and DynamIQ CPUs,
+where:
+
+ - boosting: try to run small/foreground tasks on higher-capacity CPUs to
+   complete them faster despite being less energy efficient.
+
+ - capping: try to run big/background tasks on low-capacity CPUs to save power
+   and thermal headroom for more important tasks
+
+This series does not present this additional usage of utilization clamping but
+it's an integral part of the EAS feature set, where [2] is one of its main
+components.
+
+Android kernels use SchedTune, a solution similar to utilization clamping, to
+bias both 'frequency selection' and 'task placement'. This series provides the
+foundation to add similar features to mainline while focusing, for the
+time being, just on schedutil integration.
+
+
+References
+==========
+
+[1] Energy Aware Scheduling
+    https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/Documentation/scheduler/sched-energy.txt?h=v5.1
+
+[2] Expressing per-task/per-cgroup performance hints
+    Linux Plumbers Conference 2018
+    https://linuxplumbersconf.org/event/2/contributions/128/
+
+
+Patrick Bellasi (6):
+  sched/core: uclamp: Extend CPU's cgroup controller
+  sched/core: uclamp: Propagate parent clamps
+  sched/core: uclamp: Propagate system defaults to root group
+  sched/core: uclamp: Use TG's clamps to restrict TASK's clamps
+  sched/core: uclamp: Update CPU's refcount on TG's clamp changes
+  sched/core: uclamp: always use enum uclamp_id for clamp_id values
+
+ Documentation/admin-guide/cgroup-v2.rst |  34 +++
+ init/Kconfig                            |  22 ++
+ kernel/sched/core.c                     | 382 ++++++++++++++++++++++--
+ kernel/sched/sched.h                    |  12 +-
+ 4 files changed, 430 insertions(+), 20 deletions(-)
+
 -- 
-1.8.3.1
+2.22.0
