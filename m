@@ -1,7 +1,7 @@
 From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: [PATCH v12 3/6] sched/core: uclamp: Propagate system defaults to root group
-Date: Thu, 18 Jul 2019 19:17:45 +0100
-Message-ID: <20190718181748.28446-4-patrick.bellasi@arm.com>
+Subject: [PATCH v12 5/6] sched/core: uclamp: Update CPU's refcount on TG's clamp changes
+Date: Thu, 18 Jul 2019 19:17:47 +0100
+Message-ID: <20190718181748.28446-6-patrick.bellasi@arm.com>
 References: <20190718181748.28446-1-patrick.bellasi@arm.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,99 +12,100 @@ To: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kerne
 Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Michal Koutny <mkoutny@suse.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>, Alessio Balsini <balsini@android.com>
 List-Id: linux-api@vger.kernel.org
 
-The clamp values are not tunable at the level of the root task group.
-That's for two main reasons:
+On updates of task group (TG) clamp values, ensure that these new values
+are enforced on all RUNNABLE tasks of the task group, i.e. all RUNNABLE
+tasks are immediately boosted and/or capped as requested.
 
- - the root group represents "system resources" which are always
-   entirely available from the cgroup standpoint.
-
- - when tuning/restricting "system resources" makes sense, tuning must
-   be done using a system wide API which should also be available when
-   control groups are not.
-
-When a system wide restriction is available, cgroups should be aware of
-its value in order to know exactly how much "system resources" are
-available for the subgroups.
-
-Utilization clamping supports already the concepts of:
-
- - system defaults: which define the maximum possible clamp values
-   usable by tasks.
-
- - effective clamps: which allows a parent cgroup to constraint (maybe
-   temporarily) its descendants without losing the information related
-   to the values "requested" from them.
-
-Exploit these two concepts and bind them together in such a way that,
-whenever system default are tuned, the new values are propagated to
-(possibly) restrict or relax the "effective" value of nested cgroups.
+Do that each time we update effective clamps from cpu_util_update_eff().
+Use the *cgroup_subsys_state (css) to walk the list of tasks in each
+affected TG and update their RUNNABLE tasks.
+Update each task by using the same mechanism used for cpu affinity masks
+updates, i.e. by taking the rq lock.
 
 Signed-off-by: Patrick Bellasi <patrick.bellasi@arm.com>
 Cc: Ingo Molnar <mingo@redhat.com>
 Cc: Peter Zijlstra <peterz@infradead.org>
 Cc: Tejun Heo <tj@kernel.org>
-
 ---
-Changes in v12:
- Message-ID: <20190716143417.us3xhksrsaxsl2ok@e110439-lin>
- - add missing RCU read locks across cpu_util_update_eff() call from
-   uclamp_update_root_tg()
----
- kernel/sched/core.c | 25 +++++++++++++++++++++++++
- 1 file changed, 25 insertions(+)
+ kernel/sched/core.c | 58 ++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 57 insertions(+), 1 deletion(-)
 
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 08f5a0c205c6..e9231b089d5c 100644
+index 426736b2c4d7..26ac1cbec0be 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -1017,10 +1017,30 @@ static inline void uclamp_rq_dec(struct rq *rq, struct task_struct *p)
+@@ -1043,6 +1043,57 @@ static inline void uclamp_rq_dec(struct rq *rq, struct task_struct *p)
  		uclamp_rq_dec_id(rq, p, clamp_id);
  }
  
-+#ifdef CONFIG_UCLAMP_TASK_GROUP
-+static void cpu_util_update_eff(struct cgroup_subsys_state *css);
-+static void uclamp_update_root_tg(void)
++static inline void
++uclamp_update_active(struct task_struct *p, unsigned int clamp_id)
 +{
-+	struct task_group *tg = &root_task_group;
++	struct rq_flags rf;
++	struct rq *rq;
 +
-+	uclamp_se_set(&tg->uclamp_req[UCLAMP_MIN],
-+		      sysctl_sched_uclamp_util_min, false);
-+	uclamp_se_set(&tg->uclamp_req[UCLAMP_MAX],
-+		      sysctl_sched_uclamp_util_max, false);
++	/*
++	 * Lock the task and the rq where the task is (or was) queued.
++	 *
++	 * We might lock the (previous) rq of a !RUNNABLE task, but that's the
++	 * price to pay to safely serialize util_{min,max} updates with
++	 * enqueues, dequeues and migration operations.
++	 * This is the same locking schema used by __set_cpus_allowed_ptr().
++	 */
++	rq = task_rq_lock(p, &rf);
 +
-+	rcu_read_lock();
-+	cpu_util_update_eff(&root_task_group.css);
-+	rcu_read_unlock();
++	/*
++	 * Setting the clamp bucket is serialized by task_rq_lock().
++	 * If the task is not yet RUNNABLE and its task_struct is not
++	 * affecting a valid clamp bucket, the next time it's enqueued,
++	 * it will already see the updated clamp bucket value.
++	 */
++	if (!p->uclamp[clamp_id].active)
++		goto done;
++
++	uclamp_rq_dec_id(rq, p, clamp_id);
++	uclamp_rq_inc_id(rq, p, clamp_id);
++
++done:
++
++	task_rq_unlock(rq, p, &rf);
 +}
-+#else
-+static void uclamp_update_root_tg(void) { }
-+#endif
 +
- int sysctl_sched_uclamp_handler(struct ctl_table *table, int write,
- 				void __user *buffer, size_t *lenp,
- 				loff_t *ppos)
- {
-+	bool update_root_tg = false;
- 	int old_min, old_max;
- 	int result;
- 
-@@ -1043,12 +1063,17 @@ int sysctl_sched_uclamp_handler(struct ctl_table *table, int write,
- 	if (old_min != sysctl_sched_uclamp_util_min) {
- 		uclamp_se_set(&uclamp_default[UCLAMP_MIN],
- 			      sysctl_sched_uclamp_util_min, false);
-+		update_root_tg = true;
- 	}
- 	if (old_max != sysctl_sched_uclamp_util_max) {
- 		uclamp_se_set(&uclamp_default[UCLAMP_MAX],
- 			      sysctl_sched_uclamp_util_max, false);
-+		update_root_tg = true;
- 	}
- 
-+	if (update_root_tg)
-+		uclamp_update_root_tg();
++static inline void
++uclamp_update_active_tasks(struct cgroup_subsys_state *css,
++			   unsigned int clamps)
++{
++	struct css_task_iter it;
++	struct task_struct *p;
++	unsigned int clamp_id;
 +
- 	/*
- 	 * Updating all the RUNNABLE task is expensive, keep it simple and do
- 	 * just a lazy update at each next enqueue time.
++	css_task_iter_start(css, 0, &it);
++	while ((p = css_task_iter_next(&it))) {
++		for_each_clamp_id(clamp_id) {
++			if ((0x1 << clamp_id) & clamps)
++				uclamp_update_active(p, clamp_id);
++		}
++	}
++	css_task_iter_end(&it);
++}
++
+ #ifdef CONFIG_UCLAMP_TASK_GROUP
+ static void cpu_util_update_eff(struct cgroup_subsys_state *css);
+ static void uclamp_update_root_tg(void)
+@@ -7091,8 +7142,13 @@ static void cpu_util_update_eff(struct cgroup_subsys_state *css)
+ 			uc_se[clamp_id].bucket_id = uclamp_bucket_id(eff[clamp_id]);
+ 			clamps |= (0x1 << clamp_id);
+ 		}
+-		if (!clamps)
++		if (!clamps) {
+ 			css = css_rightmost_descendant(css);
++			continue;
++		}
++
++		/* Immediately update descendants RUNNABLE tasks */
++		uclamp_update_active_tasks(css, clamps);
+ 	}
+ }
+ 
 -- 
 2.22.0
