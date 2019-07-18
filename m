@@ -1,87 +1,105 @@
-From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: Re: [PATCH v9 05/10] namei: O_BENEATH-style path resolution flags
-Date: Thu, 18 Jul 2019 13:17:29 +1000
-Message-ID: <20190718031729.scehpjydhuxgxqjy@yavin>
-References: <20190706145737.5299-6-cyphar@cyphar.com>
- <20190712043341.GI17978@ZenIV.linux.org.uk>
- <20190712105745.nruaftgeat6irhzr@yavin>
- <20190712123924.GK17978@ZenIV.linux.org.uk>
- <20190712125552.GL17978@ZenIV.linux.org.uk>
- <20190712132553.GN17978@ZenIV.linux.org.uk>
- <20190712150026.GO17978@ZenIV.linux.org.uk>
- <20190713024153.GA3817@ZenIV.linux.org.uk>
- <20190714070029.m53etvm3y4etidxt@yavin>
- <20190714143623.GR17978@ZenIV.linux.org.uk>
+From: Rasmus Villemoes <linux@rasmusvillemoes.dk>
+Subject: Re: [PATCH v9 08/10] open: openat2(2) syscall
+Date: Thu, 18 Jul 2019 16:48:12 +0200
+Message-ID: <845e4364-685f-343b-46fb-c418766dce3e@rasmusvillemoes.dk>
+References: <20190706145737.5299-1-cyphar@cyphar.com>
+ <20190706145737.5299-9-cyphar@cyphar.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="z4aw3kgjubxi6rqg"
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190714143623.GR17978@ZenIV.linux.org.uk>
+In-Reply-To: <20190706145737.5299-9-cyphar@cyphar.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Al Viro <viro@zeniv.linux.org.uk>
-Cc: Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Christian Brauner <christian@brauner.io>, David Drysdale <drysdale@google.com>, Andy Lutomirski <luto@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Eric Biederman <ebiederm@xmission.com>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, containers@lists.linux-foundation.org, linux-alpha@vger.kernel.org
+To: Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>
+Cc: Christian Brauner <christian@brauner.io>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, Linus Torvalds <torvalds@linux-foundation.org>, containers@lists.linux-foundation.org, linux-alpha@vger.kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-fsdevel@vger.kernel.org, linux-ia64@vger.kernel.org, linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org, linux-m
 List-Id: linux-api@vger.kernel.org
 
+On 06/07/2019 16.57, Aleksa Sarai wrote:
+> 
+> --- a/fs/open.c
+> +++ b/fs/open.c
+> @@ -928,24 +928,32 @@ struct file *open_with_fake_path(const struct path *path, int flags,
+>  }
+>  EXPORT_SYMBOL(open_with_fake_path);
+>  
+> -static inline int build_open_flags(int flags, umode_t mode, struct open_flags *op)
+> +static inline int build_open_flags(struct open_how how, struct open_flags *op)
+>  {
 
---z4aw3kgjubxi6rqg
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+How does passing such a huge struct by value affect code generation?
+Does gcc actually inline the function (and does it even inline the old
+one given that it's already non-trivial and has more than one caller).
 
-On 2019-07-14, Al Viro <viro@zeniv.linux.org.uk> wrote:
-> On Sun, Jul 14, 2019 at 05:00:29PM +1000, Aleksa Sarai wrote:
-> > The basic property being guaranteed by LOOKUP_IN_ROOT is that it will
-> > not result in resolution of a path component which was not inside the
-> > root of the dirfd tree at some point during resolution (and that all
-> > absolute symlink and ".." resolution will be done relative to the
-> > dirfd). This may smell slightly of chroot(2), because unfortunately it
-> > is a similar concept -- the reason for this is to allow for a more
-> > efficient way to safely resolve paths inside a rootfs than spawning a
-> > separate process to then pass back the fd to the caller.
->=20
-> IDGI...  If attacker can modify your subtree, you have already lost -
-> after all, they can make anything appear inside that tree just before
-> your syscall is made and bring it back out immediately afterwards.
-> And if they can't, what is the race you are trying to protect against?
-> Confused...
+>  	int lookup_flags = 0;
+> -	int acc_mode = ACC_MODE(flags);
+> +	int opath_mask = 0;
+> +	int acc_mode = ACC_MODE(how.flags);
+> +
+> +	if (how.resolve & ~VALID_RESOLVE_FLAGS)
+> +		return -EINVAL;
+> +	if (!(how.flags & (O_PATH | O_CREAT | __O_TMPFILE)) && how.mode != 0)
+> +		return -EINVAL;
+> +	if (memchr_inv(how.reserved, 0, sizeof(how.reserved)))
+> +		return -EINVAL;
 
-I'll be honest, this code mostly exists because Jann Horn said that it
-was necessary in order for this interface to be safe against those kinds
-of attacks. Though, it's also entirely possible I just am
-mis-remembering the attack scenario he described when I posted v1 of
-this series last year.
+How about passing how by const reference, and copy the few fields you
+need to local variables. That would at least simplify this patch by
+eliminating a lot of the
 
-The use-case I need this functionality for (as do other container
-runtimes) is one where you are trying to safely interact with a
-directory tree that is a (malicious) container's root filesystem -- so
-the container won't be able to move the directory tree root, nor can
-they move things outside the rootfs into it (or the reverse). Users
-dealing with FTP, web, or file servers probably have similar
-requirements.
+> -	flags &= VALID_OPEN_FLAGS;
+> +	how.flags &= VALID_OPEN_FLAGS;
+>  
+> -	if (flags & (O_CREAT | __O_TMPFILE))
+> -		op->mode = (mode & S_IALLUGO) | S_IFREG;
+> +	if (how.flags & (O_CREAT | __O_TMPFILE))
+> +		op->mode = (how.mode & S_IALLUGO) | S_IFREG;
 
-There is an obvious race condition if you allow the attacker to move the
-root (I give an example and test-case of it in the last patch in the
-series), and given that it is fairly trivial to defend against I don't
-see the downside in including it? But it's obviously your call -- and
-maybe Jann Horn can explain the reasoning behind this much better than I
-can.
+churn.
 
---=20
-Aleksa Sarai
-Senior Software Engineer (Containers)
-SUSE Linux GmbH
-<https://www.cyphar.com/>
+>  
+> diff --git a/include/linux/fcntl.h b/include/linux/fcntl.h
+> index 2868ae6c8fc1..e59917292213 100644
+> --- a/include/linux/fcntl.h
+> +++ b/include/linux/fcntl.h
+> @@ -4,13 +4,26 @@
+>  
+>  #include <uapi/linux/fcntl.h>
+>  
+> -/* list of all valid flags for the open/openat flags argument: */
+> +/* Should open_how.mode be set for older syscalls wrappers? */
+> +#define OPENHOW_MODE(flags, mode) \
+> +	(((flags) | (O_CREAT | __O_TMPFILE)) ? (mode) : 0)
+> +
 
---z4aw3kgjubxi6rqg
-Content-Type: application/pgp-signature; name="signature.asc"
+Typo: (((flags) & (O_CREAT | __O_TMPFILE)) ? (mode) : 0)
 
------BEGIN PGP SIGNATURE-----
+> +/**
+> + * Arguments for how openat2(2) should open the target path. If @extra is zero,
+> + * then openat2(2) is identical to openat(2).
+> + *
+> + * @flags: O_* flags (unknown flags ignored).
+> + * @mode: O_CREAT file mode (ignored otherwise).
 
-iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXS/kxgAKCRCdlLljIbnQ
-Eo0/AQD7a5jDbww9O+NZeirpVja2r3Y2CFcg1rTXSOeRjy321gEAoJhiO3HmSR50
-nG/Ogapy7jTKDSyCcC7BfUZDZSz67go=
-=wzlY
------END PGP SIGNATURE-----
+should probably say "O_CREAT/O_TMPFILE file mode".
 
---z4aw3kgjubxi6rqg--
+> + * @upgrade_mask: restrict how the O_PATH may be re-opened (ignored otherwise).
+> + * @resolve: RESOLVE_* flags (-EINVAL on unknown flags).
+> + * @reserved: reserved for future extensions, must be zeroed.
+> + */
+> +struct open_how {
+> +	__u32 flags;
+> +	union {
+> +		__u16 mode;
+> +		__u16 upgrade_mask;
+> +	};
+> +	__u16 resolve;
+
+So mode and upgrade_mask are naturally u16 aka mode_t. And yes, they
+probably never need to be used together, so the union works. That then
+makes the next member 2-byte aligned, so using a u16 for the resolve
+flags brings us to an 8-byte boundary, and 11 unused flag bits should be
+enough for a while. But it seems a bit artificial to cram all this
+together and then add 56 bytes of reserved space.
+
+Rasmus
