@@ -1,171 +1,225 @@
 From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: [PATCH v12 0/6] Add utilization clamping support (CGroups API)
-Date: Thu, 18 Jul 2019 19:17:42 +0100
-Message-ID: <20190718181748.28446-1-patrick.bellasi@arm.com>
+Subject: [PATCH v12 2/6] sched/core: uclamp: Propagate parent clamps
+Date: Thu, 18 Jul 2019 19:17:44 +0100
+Message-ID: <20190718181748.28446-3-patrick.bellasi@arm.com>
+References: <20190718181748.28446-1-patrick.bellasi@arm.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190718181748.28446-1-patrick.bellasi@arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, cgroups@vger.kernel.org
 Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Michal Koutny <mkoutny@suse.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>, Alessio Balsini <balsini@android.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi all, this is a respin of:
+In order to properly support hierarchical resources control, the cgroup
+delegation model requires that attribute writes from a child group never
+fail but still are locally consistent and constrained based on parent's
+assigned resources. This requires to properly propagate and aggregate
+parent attributes down to its descendants.
 
-  https://lore.kernel.org/lkml/20190708084357.12944-1-patrick.bellasi@arm.com/
+Implement this mechanism by adding a new "effective" clamp value for each
+task group. The effective clamp value is defined as the smaller value
+between the clamp value of a group and the effective clamp value of its
+parent. This is the actual clamp value enforced on tasks in a task group.
 
-which addresses all the comments collected so far:
+Since it's possible for a cpu.uclamp.min value to be bigger than the
+cpu.uclamp.max value, ensure local consistency by restricting each
+"protection" (i.e. min utilization) with the corresponding "limit"
+(i.e. max utilization).
 
-- track requested cgroup's percentage to mask conversion rounding to userspace
-- use a dedicated variable for parent restrictions
-- make more explicit in the documentation that the requested "protection" is
-  always capped by the requested "limit"
-- use the newly added uclamp_mutex to serialize the sysfs write callback
-- add missing RCU read locks across cpu_util_update_eff() call from
-  uclamp_update_root_tg()
-- remove not required and confusing sentence from the above changelog
-- add a new patch to always use enum uclamp_id for clamp_id values
-- fix percentage's decimals format string
+Do that at effective clamps propagation to ensure all user-space write
+never fails while still always tracking the most restrictive values.
 
-as well as adds some small modifications:
+Update sysctl_sched_uclamp_handler() to use the newly introduced
+uclamp_mutex so that we serialize system default updates with cgroup
+relate updates.
 
-- introduce UCLAMP_PERCENT_{SHIFT,SCALE} to avoid hardcoded constants
-- s/uclamp_scale_from_percent()/capacity_from_percent()/
-- move range check from cpu_uclamp_{min,max}_write() to capacity_from_percent()
+Signed-off-by: Patrick Bellasi <patrick.bellasi@arm.com>
+Cc: Ingo Molnar <mingo@redhat.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Tejun Heo <tj@kernel.org>
 
-The series is based on top of today's Linus master branch (wip for 5.3-rc1):
+---
+Changes in v12:
+ Message-ID: <20190716140706.vuggfigjlys44lkp@e110439-lin>
+ - use a dedicated variable for parent restrictions
+ - make more explicit in the documentation that the requested "protection" is
+   always capped by the requested "limit"
+ Message-ID: <20190716175542.p7vs2muslyuez6lq@e110439-lin>
+ - use the newly added uclamp_mutex to serialize the sysfs write callback
+---
+ kernel/sched/core.c  | 70 ++++++++++++++++++++++++++++++++++++++++++--
+ kernel/sched/sched.h |  2 ++
+ 2 files changed, 69 insertions(+), 3 deletions(-)
 
-  commit 22051d9c4a57 ("Merge tag 'platform-drivers-x86-v5.3-2' of git://git.infradead.org/linux-platform-drivers-x86")
-
-Thanks Quentin, Michal and Tejun for your review comments!
-
-This has been the first code review targeting specifically the cgroups bits and
-the series is now hopefully in a better shape.
-
-Looking forward for any additional comments! ;)
-
-Cheers,
-Patrick
-
-Series Organization
-===================
-
-The full tree is available here:
-
-   git://linux-arm.org/linux-pb.git   lkml/utilclamp_v12
-   http://www.linux-arm.org/git?p=linux-pb.git;a=shortlog;h=refs/heads/lkml/utilclamp_v12
-
-
-Newcomer's Short Abstract
-=========================
-
-The Linux scheduler tracks a "utilization" signal for each scheduling entity
-(SE), e.g. tasks, to know how much CPU time they use. This signal allows the
-scheduler to know how "big" a task is and, in principle, it can support
-advanced task placement strategies by selecting the best CPU to run a task.
-Some of these strategies are represented by the Energy Aware Scheduler [1].
-
-When the schedutil cpufreq governor is in use, the utilization signal allows
-the Linux scheduler to also drive frequency selection. The CPU utilization
-signal, which represents the aggregated utilization of tasks scheduled on that
-CPU, is used to select the frequency which best fits the workload generated by
-the tasks.
-
-The current translation of utilization values into a frequency selection is
-simple: we go to max for RT tasks or to the minimum frequency which can
-accommodate the utilization of DL+FAIR tasks.
-However, utilization values by themselves cannot convey the desired
-power/performance behaviors of each task as intended by user-space.
-As such they are not ideally suited for task placement decisions.
-
-Task placement and frequency selection policies in the kernel can be improved
-by taking into consideration hints coming from authorized user-space elements,
-like for example the Android middleware or more generally any "System
-Management Software" (SMS) framework.
-
-Utilization clamping is a mechanism which allows to "clamp" (i.e. filter) the
-utilization generated by RT and FAIR tasks within a range defined by user-space.
-The clamped utilization value can then be used, for example, to enforce a
-minimum and/or maximum frequency depending on which tasks are active on a CPU.
-
-The main use-cases for utilization clamping are:
-
- - boosting: better interactive response for small tasks which
-   are affecting the user experience.
-
-   Consider for example the case of a small control thread for an external
-   accelerator (e.g. GPU, DSP, other devices). Here, from the task utilization
-   the scheduler does not have a complete view of what the task's requirements
-   are and, if it's a small utilization task, it keeps selecting a more energy
-   efficient CPU, with smaller capacity and lower frequency, thus negatively
-   impacting the overall time required to complete task activations.
-
- - capping: increase energy efficiency for background tasks not affecting the
-   user experience.
-
-   Since running on a lower capacity CPU at a lower frequency is more energy
-   efficient, when the completion time is not a main goal, then capping the
-   utilization considered for certain (maybe big) tasks can have positive
-   effects, both on energy consumption and thermal headroom.
-   This feature allows also to make RT tasks more energy friendly on mobile
-   systems where running them on high capacity CPUs and at the maximum
-   frequency is not required.
-
->From these two use-cases, it's worth noticing that frequency selection
-biasing, introduced by patches 9 and 10 of this series, is just one possible
-usage of utilization clamping. Another compelling extension of utilization
-clamping is in helping the scheduler in making tasks placement decisions.
-
-Utilization is (also) a task specific property the scheduler uses to know
-how much CPU bandwidth a task requires, at least as long as there is idle time.
-Thus, the utilization clamp values, defined either per-task or per-task_group,
-can represent tasks to the scheduler as being bigger (or smaller) than what
-they actually are.
-
-Utilization clamping thus enables interesting additional optimizations, for
-example on asymmetric capacity systems like Arm big.LITTLE and DynamIQ CPUs,
-where:
-
- - boosting: try to run small/foreground tasks on higher-capacity CPUs to
-   complete them faster despite being less energy efficient.
-
- - capping: try to run big/background tasks on low-capacity CPUs to save power
-   and thermal headroom for more important tasks
-
-This series does not present this additional usage of utilization clamping but
-it's an integral part of the EAS feature set, where [2] is one of its main
-components.
-
-Android kernels use SchedTune, a solution similar to utilization clamping, to
-bias both 'frequency selection' and 'task placement'. This series provides the
-foundation to add similar features to mainline while focusing, for the
-time being, just on schedutil integration.
-
-
-References
-==========
-
-[1] Energy Aware Scheduling
-    https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/Documentation/scheduler/sched-energy.txt?h=v5.1
-
-[2] Expressing per-task/per-cgroup performance hints
-    Linux Plumbers Conference 2018
-    https://linuxplumbersconf.org/event/2/contributions/128/
-
-
-Patrick Bellasi (6):
-  sched/core: uclamp: Extend CPU's cgroup controller
-  sched/core: uclamp: Propagate parent clamps
-  sched/core: uclamp: Propagate system defaults to root group
-  sched/core: uclamp: Use TG's clamps to restrict TASK's clamps
-  sched/core: uclamp: Update CPU's refcount on TG's clamp changes
-  sched/core: uclamp: always use enum uclamp_id for clamp_id values
-
- Documentation/admin-guide/cgroup-v2.rst |  34 +++
- init/Kconfig                            |  22 ++
- kernel/sched/core.c                     | 382 ++++++++++++++++++++++--
- kernel/sched/sched.h                    |  12 +-
- 4 files changed, 430 insertions(+), 20 deletions(-)
-
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index fcc32afe53cb..08f5a0c205c6 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -773,6 +773,18 @@ static void set_load_weight(struct task_struct *p, bool update_load)
+ }
+ 
+ #ifdef CONFIG_UCLAMP_TASK
++/*
++ * Serializes updates of utilization clamp values
++ *
++ * The (slow-path) user-space triggers utilization clamp value updates which
++ * can require updates on (fast-path) scheduler's data structures used to
++ * support enqueue/dequeue operations.
++ * While the per-CPU rq lock protects fast-path update operations, user-space
++ * requests are serialized using a mutex to reduce the risk of conflicting
++ * updates or API abuses.
++ */
++static DEFINE_MUTEX(uclamp_mutex);
++
+ /* Max allowed minimum utilization */
+ unsigned int sysctl_sched_uclamp_util_min = SCHED_CAPACITY_SCALE;
+ 
+@@ -1010,10 +1022,9 @@ int sysctl_sched_uclamp_handler(struct ctl_table *table, int write,
+ 				loff_t *ppos)
+ {
+ 	int old_min, old_max;
+-	static DEFINE_MUTEX(mutex);
+ 	int result;
+ 
+-	mutex_lock(&mutex);
++	mutex_lock(&uclamp_mutex);
+ 	old_min = sysctl_sched_uclamp_util_min;
+ 	old_max = sysctl_sched_uclamp_util_max;
+ 
+@@ -1048,7 +1059,7 @@ int sysctl_sched_uclamp_handler(struct ctl_table *table, int write,
+ 	sysctl_sched_uclamp_util_min = old_min;
+ 	sysctl_sched_uclamp_util_max = old_max;
+ done:
+-	mutex_unlock(&mutex);
++	mutex_unlock(&uclamp_mutex);
+ 
+ 	return result;
+ }
+@@ -1137,6 +1148,8 @@ static void __init init_uclamp(void)
+ 	unsigned int clamp_id;
+ 	int cpu;
+ 
++	mutex_init(&uclamp_mutex);
++
+ 	for_each_possible_cpu(cpu) {
+ 		memset(&cpu_rq(cpu)->uclamp, 0, sizeof(struct uclamp_rq));
+ 		cpu_rq(cpu)->uclamp_flags = 0;
+@@ -1153,6 +1166,7 @@ static void __init init_uclamp(void)
+ 		uclamp_default[clamp_id] = uc_max;
+ #ifdef CONFIG_UCLAMP_TASK_GROUP
+ 		root_task_group.uclamp_req[clamp_id] = uc_max;
++		root_task_group.uclamp[clamp_id] = uc_max;
+ #endif
+ 	}
+ }
+@@ -6740,6 +6754,7 @@ static inline void alloc_uclamp_sched_group(struct task_group *tg,
+ 	for_each_clamp_id(clamp_id) {
+ 		uclamp_se_set(&tg->uclamp_req[clamp_id],
+ 			      uclamp_none(clamp_id), false);
++		tg->uclamp[clamp_id] = parent->uclamp[clamp_id];
+ 	}
+ #endif
+ }
+@@ -6990,6 +7005,45 @@ static void cpu_cgroup_attach(struct cgroup_taskset *tset)
+ }
+ 
+ #ifdef CONFIG_UCLAMP_TASK_GROUP
++static void cpu_util_update_eff(struct cgroup_subsys_state *css)
++{
++	struct cgroup_subsys_state *top_css = css;
++	struct uclamp_se *uc_parent = NULL;
++	struct uclamp_se *uc_se = NULL;
++	unsigned int eff[UCLAMP_CNT];
++	unsigned int clamp_id;
++	unsigned int clamps;
++
++	css_for_each_descendant_pre(css, top_css) {
++		uc_parent = css_tg(css)->parent
++			? css_tg(css)->parent->uclamp : NULL;
++
++		for_each_clamp_id(clamp_id) {
++			/* Assume effective clamps matches requested clamps */
++			eff[clamp_id] = css_tg(css)->uclamp_req[clamp_id].value;
++			/* Cap effective clamps with parent's effective clamps */
++			if (uc_parent &&
++			    eff[clamp_id] > uc_parent[clamp_id].value) {
++				eff[clamp_id] = uc_parent[clamp_id].value;
++			}
++		}
++		/* Ensure protection is always capped by limit */
++		eff[UCLAMP_MIN] = min(eff[UCLAMP_MIN], eff[UCLAMP_MAX]);
++
++		/* Propagate most restrictive effective clamps */
++		clamps = 0x0;
++		uc_se = css_tg(css)->uclamp;
++		for_each_clamp_id(clamp_id) {
++			if (eff[clamp_id] == uc_se[clamp_id].value)
++				continue;
++			uc_se[clamp_id].value = eff[clamp_id];
++			uc_se[clamp_id].bucket_id = uclamp_bucket_id(eff[clamp_id]);
++			clamps |= (0x1 << clamp_id);
++		}
++		if (!clamps)
++			css = css_rightmost_descendant(css);
++	}
++}
+ 
+ #define _POW10(exp) ((unsigned int)1e##exp)
+ #define POW10(exp) _POW10(exp)
+@@ -7040,6 +7094,7 @@ static ssize_t cpu_uclamp_min_write(struct kernfs_open_file *of,
+ 	if (req.ret)
+ 		return req.ret;
+ 
++	mutex_lock(&uclamp_mutex);
+ 	rcu_read_lock();
+ 
+ 	tg = css_tg(of_css(of));
+@@ -7049,7 +7104,11 @@ static ssize_t cpu_uclamp_min_write(struct kernfs_open_file *of,
+ 	/* Keep track of the actual requested value */
+ 	tg->uclamp_pct[UCLAMP_MIN] = req.percent;
+ 
++	/* Update effective clamps to track the most restrictive value */
++	cpu_util_update_eff(of_css(of));
++
+ 	rcu_read_unlock();
++	mutex_unlock(&uclamp_mutex);
+ 
+ 	return nbytes;
+ }
+@@ -7065,6 +7124,7 @@ static ssize_t cpu_uclamp_max_write(struct kernfs_open_file *of,
+ 	if (req.ret)
+ 		return req.ret;
+ 
++	mutex_lock(&uclamp_mutex);
+ 	rcu_read_lock();
+ 
+ 	tg = css_tg(of_css(of));
+@@ -7074,7 +7134,11 @@ static ssize_t cpu_uclamp_max_write(struct kernfs_open_file *of,
+ 	/* Keep track of the actual requested value */
+ 	tg->uclamp_pct[UCLAMP_MAX] = req.percent;
+ 
++	/* Update effective clamps to track the most restrictive value */
++	cpu_util_update_eff(of_css(of));
++
+ 	rcu_read_unlock();
++	mutex_unlock(&uclamp_mutex);
+ 
+ 	return nbytes;
+ }
+diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
+index f10557a2dea7..93a030321210 100644
+--- a/kernel/sched/sched.h
++++ b/kernel/sched/sched.h
+@@ -399,6 +399,8 @@ struct task_group {
+ 	unsigned int		uclamp_pct[UCLAMP_CNT];
+ 	/* Clamp values requested for a task group */
+ 	struct uclamp_se	uclamp_req[UCLAMP_CNT];
++	/* Effective clamp values used for a task group */
++	struct uclamp_se	uclamp[UCLAMP_CNT];
+ #endif
+ 
+ };
 -- 
 2.22.0
