@@ -1,8 +1,8 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V36 25/29] kexec: Allow kexec_file() with appropriate IMA
- policy when locked down
-Date: Thu, 18 Jul 2019 12:44:11 -0700
-Message-ID: <20190718194415.108476-26-matthewgarrett@google.com>
+Subject: [PATCH V36 19/29] Lock down module params that specify hardware
+ parameters (eg. ioport)
+Date: Thu, 18 Jul 2019 12:44:05 -0700
+Message-ID: <20190718194415.108476-20-matthewgarrett@google.com>
 References: <20190718194415.108476-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -10,155 +10,122 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190718194415.108476-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Matthew Garrett <matthewgarrett@google.com>, Matthew Garrett <mjg59@google.com>, Mimi Zohar <zohar@linux.ibm.com>, Dmitry Kasatkin <dmitry.kasatkin@gmail.com>, linux-integrity@vger.kernel.org
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>, Jessica Yu <jeyu@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Systems in lockdown mode should block the kexec of untrusted kernels.
-For x86 and ARM we can ensure that a kernel is trustworthy by validating
-a PE signature, but this isn't possible on other architectures. On those
-platforms we can use IMA digital signatures instead. Add a function to
-determine whether IMA has or will verify signatures for a given event type,
-and if so permit kexec_file() even if the kernel is otherwise locked down.
-This is restricted to cases where CONFIG_INTEGRITY_TRUSTED_KEYRING is set
-in order to prevent an attacker from loading additional keys at runtime.
+From: David Howells <dhowells@redhat.com>
 
+Provided an annotation for module parameters that specify hardware
+parameters (such as io ports, iomem addresses, irqs, dma channels, fixed
+dma buffers and other types).
+
+Suggested-by: Alan Cox <gnomes@lxorguk.ukuu.org.uk>
+Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Matthew Garrett <mjg59@google.com>
-Acked-by: Mimi Zohar <zohar@linux.ibm.com>
-Cc: Dmitry Kasatkin <dmitry.kasatkin@gmail.com>
-Cc: linux-integrity@vger.kernel.org
+Reviewed-by: Kees Cook <keescook@chromium.org>
+Cc: Jessica Yu <jeyu@kernel.org>
 ---
- include/linux/ima.h                 |  9 ++++++
- kernel/kexec_file.c                 | 12 +++++--
- security/integrity/ima/ima.h        |  2 ++
- security/integrity/ima/ima_main.c   |  2 +-
- security/integrity/ima/ima_policy.c | 50 +++++++++++++++++++++++++++++
- 5 files changed, 72 insertions(+), 3 deletions(-)
+ include/linux/security.h     |  1 +
+ kernel/params.c              | 28 +++++++++++++++++++++++-----
+ security/lockdown/lockdown.c |  1 +
+ 3 files changed, 25 insertions(+), 5 deletions(-)
 
-diff --git a/include/linux/ima.h b/include/linux/ima.h
-index a20ad398d260..1c37f17f7203 100644
---- a/include/linux/ima.h
-+++ b/include/linux/ima.h
-@@ -131,4 +131,13 @@ static inline int ima_inode_removexattr(struct dentry *dentry,
- 	return 0;
- }
- #endif /* CONFIG_IMA_APPRAISE */
-+
-+#if defined(CONFIG_IMA_APPRAISE) && defined(CONFIG_INTEGRITY_TRUSTED_KEYRING)
-+extern bool ima_appraise_signature(enum kernel_read_file_id func);
-+#else
-+static inline bool ima_appraise_signature(enum kernel_read_file_id func)
-+{
-+	return false;
-+}
-+#endif /* CONFIG_IMA_APPRAISE && CONFIG_INTEGRITY_TRUSTED_KEYRING */
- #endif /* _LINUX_IMA_H */
-diff --git a/kernel/kexec_file.c b/kernel/kexec_file.c
-index dd06f1070d66..13c9960a5860 100644
---- a/kernel/kexec_file.c
-+++ b/kernel/kexec_file.c
-@@ -228,9 +228,17 @@ kimage_file_prepare_segments(struct kimage *image, int kernel_fd, int initrd_fd,
- 			goto out;
- 		}
- 
--		ret = security_locked_down(LOCKDOWN_KEXEC);
--		if (ret)
-+		ret = 0;
-+
-+		/* If IMA is guaranteed to appraise a signature on the kexec
-+		 * image, permit it even if the kernel is otherwise locked
-+		 * down.
-+		 */
-+		if (!ima_appraise_signature(READING_KEXEC_IMAGE) &&
-+		    security_locked_down(LOCKDOWN_KEXEC)) {
-+			ret = -EPERM;
- 			goto out;
-+		}
- 
- 		break;
- 
-diff --git a/security/integrity/ima/ima.h b/security/integrity/ima/ima.h
-index 011b91c79351..64dcb11cf444 100644
---- a/security/integrity/ima/ima.h
-+++ b/security/integrity/ima/ima.h
-@@ -113,6 +113,8 @@ struct ima_kexec_hdr {
- 	u64 count;
+diff --git a/include/linux/security.h b/include/linux/security.h
+index 8f7048395114..43fa3486522b 100644
+--- a/include/linux/security.h
++++ b/include/linux/security.h
+@@ -113,6 +113,7 @@ enum lockdown_reason {
+ 	LOCKDOWN_ACPI_TABLES,
+ 	LOCKDOWN_PCMCIA_CIS,
+ 	LOCKDOWN_TIOCSSERIAL,
++	LOCKDOWN_MODULE_PARAMETERS,
+ 	LOCKDOWN_INTEGRITY_MAX,
+ 	LOCKDOWN_CONFIDENTIALITY_MAX,
  };
+diff --git a/kernel/params.c b/kernel/params.c
+index cf448785d058..f2779a76d39a 100644
+--- a/kernel/params.c
++++ b/kernel/params.c
+@@ -12,6 +12,7 @@
+ #include <linux/err.h>
+ #include <linux/slab.h>
+ #include <linux/ctype.h>
++#include <linux/security.h>
  
-+extern const int read_idmap[];
-+
- #ifdef CONFIG_HAVE_IMA_KEXEC
- void ima_load_kexec_buffer(void);
- #else
-diff --git a/security/integrity/ima/ima_main.c b/security/integrity/ima/ima_main.c
-index 584019728660..b9f57503af2c 100644
---- a/security/integrity/ima/ima_main.c
-+++ b/security/integrity/ima/ima_main.c
-@@ -502,7 +502,7 @@ int ima_read_file(struct file *file, enum kernel_read_file_id read_id)
- 	return 0;
+ #ifdef CONFIG_SYSFS
+ /* Protects all built-in parameters, modules use their own param_lock */
+@@ -96,13 +97,20 @@ bool parameq(const char *a, const char *b)
+ 	return parameqn(a, b, strlen(a)+1);
  }
  
--static const int read_idmap[READING_MAX_ID] = {
-+const int read_idmap[READING_MAX_ID] = {
- 	[READING_FIRMWARE] = FIRMWARE_CHECK,
- 	[READING_FIRMWARE_PREALLOC_BUFFER] = FIRMWARE_CHECK,
- 	[READING_MODULE] = MODULE_CHECK,
-diff --git a/security/integrity/ima/ima_policy.c b/security/integrity/ima/ima_policy.c
-index 6df7f641ff66..827f1e33fe86 100644
---- a/security/integrity/ima/ima_policy.c
-+++ b/security/integrity/ima/ima_policy.c
-@@ -1456,3 +1456,53 @@ int ima_policy_show(struct seq_file *m, void *v)
- 	return 0;
- }
- #endif	/* CONFIG_IMA_READ_POLICY */
-+
-+#if defined(CONFIG_IMA_APPRAISE) && defined(CONFIG_INTEGRITY_TRUSTED_KEYRING)
-+/*
-+ * ima_appraise_signature: whether IMA will appraise a given function using
-+ * an IMA digital signature. This is restricted to cases where the kernel
-+ * has a set of built-in trusted keys in order to avoid an attacker simply
-+ * loading additional keys.
-+ */
-+bool ima_appraise_signature(enum kernel_read_file_id id)
-+{
-+	struct ima_rule_entry *entry;
-+	bool found = false;
-+	enum ima_hooks func;
-+
-+	if (id >= READING_MAX_ID)
+-static void param_check_unsafe(const struct kernel_param *kp)
++static bool param_check_unsafe(const struct kernel_param *kp,
++			       const char *doing)
+ {
++	if (kp->flags & KERNEL_PARAM_FL_HWPARAM &&
++	    security_locked_down(LOCKDOWN_MODULE_PARAMETERS))
 +		return false;
 +
-+	func = read_idmap[id] ?: FILE_CHECK;
+ 	if (kp->flags & KERNEL_PARAM_FL_UNSAFE) {
+ 		pr_notice("Setting dangerous option %s - tainting kernel\n",
+ 			  kp->name);
+ 		add_taint(TAINT_USER, LOCKDEP_STILL_OK);
+ 	}
 +
-+	rcu_read_lock();
-+	list_for_each_entry_rcu(entry, ima_rules, list) {
-+		if (entry->action != APPRAISE)
-+			continue;
++	return true;
+ }
+ 
+ static int parse_one(char *param,
+@@ -132,8 +140,10 @@ static int parse_one(char *param,
+ 			pr_debug("handling %s with %p\n", param,
+ 				params[i].ops->set);
+ 			kernel_param_lock(params[i].mod);
+-			param_check_unsafe(&params[i]);
+-			err = params[i].ops->set(val, &params[i]);
++			if (param_check_unsafe(&params[i], doing))
++				err = params[i].ops->set(val, &params[i]);
++			else
++				err = -EPERM;
+ 			kernel_param_unlock(params[i].mod);
+ 			return err;
+ 		}
+@@ -541,6 +551,12 @@ static ssize_t param_attr_show(struct module_attribute *mattr,
+ 	return count;
+ }
+ 
++#ifdef CONFIG_MODULES
++#define mod_name(mod) ((mod)->name)
++#else
++#define mod_name(mod) "unknown"
++#endif
 +
-+		/*
-+		 * A generic entry will match, but otherwise require that it
-+		 * match the func we're looking for
-+		 */
-+		if (entry->func && entry->func != func)
-+			continue;
-+
-+		/*
-+		 * We require this to be a digital signature, not a raw IMA
-+		 * hash.
-+		 */
-+		if (entry->flags & IMA_DIGSIG_REQUIRED)
-+			found = true;
-+
-+		/*
-+		 * We've found a rule that matches, so break now even if it
-+		 * didn't require a digital signature - a later rule that does
-+		 * won't override it, so would be a false positive.
-+		 */
-+		break;
-+	}
-+
-+	rcu_read_unlock();
-+	return found;
-+}
-+#endif /* CONFIG_IMA_APPRAISE && CONFIG_INTEGRITY_TRUSTED_KEYRING */
+ /* sysfs always hands a nul-terminated string in buf.  We rely on that. */
+ static ssize_t param_attr_store(struct module_attribute *mattr,
+ 				struct module_kobject *mk,
+@@ -553,8 +569,10 @@ static ssize_t param_attr_store(struct module_attribute *mattr,
+ 		return -EPERM;
+ 
+ 	kernel_param_lock(mk->mod);
+-	param_check_unsafe(attribute->param);
+-	err = attribute->param->ops->set(buf, attribute->param);
++	if (param_check_unsafe(attribute->param, mod_name(mk->mod)))
++		err = attribute->param->ops->set(buf, attribute->param);
++	else
++		err = -EPERM;
+ 	kernel_param_unlock(mk->mod);
+ 	if (!err)
+ 		return len;
+diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
+index 00a3a6438dd2..5177938cfa0d 100644
+--- a/security/lockdown/lockdown.c
++++ b/security/lockdown/lockdown.c
+@@ -28,6 +28,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
+ 	[LOCKDOWN_ACPI_TABLES] = "modifying ACPI tables",
+ 	[LOCKDOWN_PCMCIA_CIS] = "direct PCMCIA CIS storage",
+ 	[LOCKDOWN_TIOCSSERIAL] = "reconfiguration of serial port IO",
++	[LOCKDOWN_MODULE_PARAMETERS] = "unsafe module parameters",
+ 	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
+ 	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
+ };
 -- 
 2.22.0.510.g264f2c817a-goog
