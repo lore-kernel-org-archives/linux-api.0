@@ -1,81 +1,57 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH v9 08/10] open: openat2(2) syscall
-Date: Thu, 18 Jul 2019 23:29:50 +0200
-Message-ID: <CAK8P3a3MiYK4bJiA3G_m5H-TpfN5__--b+=szsJBhG7_it+NQg@mail.gmail.com>
-References: <20190706145737.5299-1-cyphar@cyphar.com> <20190706145737.5299-9-cyphar@cyphar.com>
- <CAK8P3a33rGhPDFfRBAQyLTMG_WoEgX_toDgWR2O7rSwxKsZG+w@mail.gmail.com> <20190718161231.xcno272nvqpln3wj@yavin>
+From: Paul Moore <paul@paul-moore.com>
+Subject: Re: [PATCH ghak90 V6 02/10] audit: add container id
+Date: Thu, 18 Jul 2019 17:52:58 -0400
+Message-ID: <CAHC9VhTYV02ws3QcezER5cY+Xt+tExcJEO-dumTDx=FXGFh3nw@mail.gmail.com>
+References: <20190529153427.GB8959@cisco> <CAHC9VhSF3AjErX37+eeusJ7+XRw8yuPsmqBTRwc9EVoRBh_3Tw@mail.gmail.com>
+ <20190529222835.GD8959@cisco> <CAHC9VhRS66VGtug3fq3RTGHDvfGmBJG6yRJ+iMxm3cxnNF-zJw@mail.gmail.com>
+ <20190530170913.GA16722@mail.hallyn.com> <CAHC9VhThLiQzGYRUWmSuVfOC6QCDmA75BDB7Eg7V8HX4x7ymQg@mail.gmail.com>
+ <20190708180558.5bar6ripag3sdadl@madcap2.tricolour.ca> <CAHC9VhRTT7JWqNnynvK04wKerjc-3UJ6R1uPtjCAPVr_tW-7MA@mail.gmail.com>
+ <20190716220320.sotbfqplgdructg7@madcap2.tricolour.ca> <CAHC9VhScHizB2r5q3T5s0P3jkYdvzBPPudDksosYFp_TO7W9-Q@mail.gmail.com>
+ <20190718005145.eshekqfr3navqqiy@madcap2.tricolour.ca>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190718161231.xcno272nvqpln3wj@yavin>
+In-Reply-To: <20190718005145.eshekqfr3navqqiy@madcap2.tricolour.ca>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Christian Brauner <christian@brauner.io>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, Linus Torvalds <torvalds@linux-foundation.org>, containers@lists.linux-foundation.org, alpha <linux-alp>
+To: Richard Guy Briggs <rgb@redhat.com>
+Cc: "Serge E. Hallyn" <serge@hallyn.com>, Tycho Andersen <tycho@tycho.ws>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, ebiederm@xmission.com, nhorman@tuxdriver.com
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jul 18, 2019 at 6:12 PM Aleksa Sarai <cyphar@cyphar.com> wrote:
-> On 2019-07-18, Arnd Bergmann <arnd@arndb.de> wrote:
-> > On Sat, Jul 6, 2019 at 5:00 PM Aleksa Sarai <cyphar@cyphar.com> wrote:
-> >
-> > In fact, that seems similar enough to the existing openat() that I think
-> > you could also just add the fifth argument to the existing call when
-> > a newly defined flag is set, similarly to how we only use the 'mode'
-> > argument when O_CREAT or O_TMPFILE are set.
+On Wed, Jul 17, 2019 at 8:52 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> On 2019-07-16 19:30, Paul Moore wrote:
+
+...
+
+> > We can trust capable(CAP_AUDIT_CONTROL) for enforcing audit container
+> > ID policy, we can not trust ns_capable(CAP_AUDIT_CONTROL).
 >
-> I considered doing this (and even had a preliminary version of it), but
-> I discovered that I was not in favour of this idea -- once I started to
-> write tests using it -- for a few reasons:
->
->   1. It doesn't really allow for clean extension for a future 6th
->          argument (because you are using up O_* flags to signify "use the
->          next argument", and O_* flags don't give -EINVAL if they're
->          unknown). Now, yes you can do the on-start runtime check that
->          everyone does -- but I've never really liked having to do it.
->
->          Having reserved padding for later extensions (that is actually
->          checked and gives -EINVAL) matches more modern syscall designs.
->
->   2. I really was hoping that the variadic openat(2) could be done away
->      using this union setup (Linus said he didn't like it, and suggested
->          using something like 'struct stat' as an argument for openat(2) --
->          though personally I am not sure I would personally like to use an
->          interface like that).
->
->   3. In order to avoid wasting a syscall argument for mode/mask you need
->          to either have something like your suggested mode_mask (which makes
->          the syscall arguments less consistent) or have some sort of
->          mode-like argument that is treated specially (which is really awful
->          on multiple levels -- this one I also tried and even wrote my
->          original tests using). And in both cases, the shims for
->          open{,at}(2) are somewhat less clean.
+> Ok.  So does a process in a non-init user namespace have two (or more)
+> sets of capabilities stored in creds, one in the init_user_ns, and one
+> in current_user_ns?  Or does it get stripped of all its capabilities in
+> init_user_ns once it has its own set in current_user_ns?  If the former,
+> then we can use capable().  If the latter, we need another mechanism, as
+> you have suggested might be needed.
 
-These are all good reasons, thanks for providing the background.
+Unfortunately I think the problem is that ultimately we need to allow
+any container orchestrator that has been given privileges to manage
+the audit container ID to also grant that privilege to any of the
+child process/containers it manages.  I don't believe we can do that
+with capabilities based on the code I've looked at, and the
+discussions I've had, but if you find a way I would leave to hear it.
 
-> All of that being said, I'd be happy to switch to whatever you think
-> makes the most sense. As long as it's possible to get an O_PATH with
-> RESOLVE_IN_ROOT set, I'm happy.
+> If some random unprivileged user wants to fire up a container
+> orchestrator/engine in his own user namespace, then audit needs to be
+> namespaced.  Can we safely discard this scenario for now?
 
-I don't feel I should be in charge of making the decision. I'd still
-prefer avoiding the indirect argument structure because
+I think the only time we want to allow a container orchestrator to
+manage the audit container ID is if it has been granted that privilege
+by someone who has that privilege already.  In the zero-container, or
+single-level of containers, case this is relatively easy, and we can
+accomplish it using CAP_AUDIT_CONTROL as the privilege.  If we start
+nesting container orchestrators it becomes more complicated as we need
+to be able to support granting and inheriting this privilege in a
+manner; this is why I suggested a new mechanism *may* be necessary.
 
-4. it's inconsistent with most other syscalls
-
-5. you get the same problem with seccomp and strace that
-   clone3() has -- these and others only track the register
-   arguments by default.
-
-6. copying the structure adds a small overhead compared to
-   passing registers
-
-7. the calling conventions may be inconvenient for  a user space
-   library, so you end up with different prototypes for the low-level
-   syscall and the libc abstraction.
-
-I don't see any of the above seven points as a showstopper
-either way, so I hope someone else has a strong opinion
-and can make the decision easier for you.
-
-In the meantime just keep what you have, so you don't have
-to change it multiple times.
-
-       Arnd
+--
+paul moore
+www.paul-moore.com
