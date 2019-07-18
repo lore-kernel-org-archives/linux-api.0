@@ -1,137 +1,214 @@
-From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V36 04/29] Enforce module signatures if the kernel is locked down
-Date: Thu, 18 Jul 2019 12:43:50 -0700
-Message-ID: <20190718194415.108476-5-matthewgarrett@google.com>
+From: Casey Schaufler <casey@schaufler-ca.com>
+Subject: Re: [PATCH V36 01/29] security: Support early LSMs
+Date: Thu, 18 Jul 2019 13:02:25 -0700
+Message-ID: <9312127b-f98a-b10b-1059-8a1380cc0047@schaufler-ca.com>
 References: <20190718194415.108476-1-matthewgarrett@google.com>
+ <20190718194415.108476-2-matthewgarrett@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190718194415.108476-1-matthewgarrett@google.com>
+In-Reply-To: <20190718194415.108476-2-matthewgarrett@google.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Matthew Garrett <matthewgarrett@google.com>, Kees Cook <keescook@chromium.org>, Jessica Yu <jeyu@kernel.org>
+To: Matthew Garrett <matthewgarrett@google.com>, jmorris@namei.org
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-From: David Howells <dhowells@redhat.com>
+On 7/18/2019 12:43 PM, Matthew Garrett wrote:
+> The lockdown module is intended to allow for kernels to be locked down
+> early in boot - sufficiently early that we don't have the ability to
+> kmalloc() yet. Add support for early initialisation of some LSMs, and
+> then add them to the list of names when we do full initialisation later.
+> Early LSMs are initialised in link order and cannot be overridden via
+> boot parameters, and cannot make use of kmalloc() (since the allocator
+> isn't initialised yet).
+>
+> Signed-off-by: Matthew Garrett <mjg59@google.com>
+> Acked-by: Kees Cook <keescook@chromium.org>
 
-If the kernel is locked down, require that all modules have valid
-signatures that we can verify.
 
-I have adjusted the errors generated:
+Acked-by: Casey Schaufler <casey@schaufler-ca.com>
 
- (1) If there's no signature (ENODATA) or we can't check it (ENOPKG,
-     ENOKEY), then:
-
-     (a) If signatures are enforced then EKEYREJECTED is returned.
-
-     (b) If there's no signature or we can't check it, but the kernel is
-	 locked down then EPERM is returned (this is then consistent with
-	 other lockdown cases).
-
- (2) If the signature is unparseable (EBADMSG, EINVAL), the signature fails
-     the check (EKEYREJECTED) or a system error occurs (eg. ENOMEM), we
-     return the error we got.
-
-Note that the X.509 code doesn't check for key expiry as the RTC might not
-be valid or might not have been transferred to the kernel's clock yet.
-
- [Modified by Matthew Garrett to remove the IMA integration. This will
-  be replaced with integration with the IMA architecture policy
-  patchset.]
-
-Signed-off-by: David Howells <dhowells@redhat.com>
-Signed-off-by: Matthew Garrett <matthewgarrett@google.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
-Cc: Jessica Yu <jeyu@kernel.org>
----
- include/linux/security.h     |  1 +
- kernel/module.c              | 37 +++++++++++++++++++++++++++++-------
- security/lockdown/lockdown.c |  1 +
- 3 files changed, 32 insertions(+), 7 deletions(-)
-
-diff --git a/include/linux/security.h b/include/linux/security.h
-index 54a0532ec12f..8e70063074a1 100644
---- a/include/linux/security.h
-+++ b/include/linux/security.h
-@@ -103,6 +103,7 @@ enum lsm_event {
-  */
- enum lockdown_reason {
- 	LOCKDOWN_NONE,
-+	LOCKDOWN_MODULE_SIGNATURE,
- 	LOCKDOWN_INTEGRITY_MAX,
- 	LOCKDOWN_CONFIDENTIALITY_MAX,
- };
-diff --git a/kernel/module.c b/kernel/module.c
-index a2cee14a83f3..d8e1258e54af 100644
---- a/kernel/module.c
-+++ b/kernel/module.c
-@@ -2753,8 +2753,9 @@ static inline void kmemleak_load_module(const struct module *mod,
- #ifdef CONFIG_MODULE_SIG
- static int module_sig_check(struct load_info *info, int flags)
- {
--	int err = -ENOKEY;
-+	int err = -ENODATA;
- 	const unsigned long markerlen = sizeof(MODULE_SIG_STRING) - 1;
-+	const char *reason;
- 	const void *mod = info->hdr;
- 
- 	/*
-@@ -2769,16 +2770,38 @@ static int module_sig_check(struct load_info *info, int flags)
- 		err = mod_verify_sig(mod, info);
- 	}
- 
--	if (!err) {
-+	switch (err) {
-+	case 0:
- 		info->sig_ok = true;
- 		return 0;
--	}
- 
--	/* Not having a signature is only an error if we're strict. */
--	if (err == -ENOKEY && !is_module_sig_enforced())
--		err = 0;
-+		/* We don't permit modules to be loaded into trusted kernels
-+		 * without a valid signature on them, but if we're not
-+		 * enforcing, certain errors are non-fatal.
-+		 */
-+	case -ENODATA:
-+		reason = "Loading of unsigned module";
-+		goto decide;
-+	case -ENOPKG:
-+		reason = "Loading of module with unsupported crypto";
-+		goto decide;
-+	case -ENOKEY:
-+		reason = "Loading of module with unavailable key";
-+	decide:
-+		if (is_module_sig_enforced()) {
-+			pr_notice("%s is rejected\n", reason);
-+			return -EKEYREJECTED;
-+		}
- 
--	return err;
-+		return security_locked_down(LOCKDOWN_MODULE_SIGNATURE);
-+
-+		/* All other errors are fatal, including nomem, unparseable
-+		 * signatures and signature check failures - even if signatures
-+		 * aren't required.
-+		 */
-+	default:
-+		return err;
-+	}
- }
- #else /* !CONFIG_MODULE_SIG */
- static int module_sig_check(struct load_info *info, int flags)
-diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
-index d30c4d254b5f..2c53fd9f5c9b 100644
---- a/security/lockdown/lockdown.c
-+++ b/security/lockdown/lockdown.c
-@@ -18,6 +18,7 @@ static enum lockdown_reason kernel_locked_down;
- 
- static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
- 	[LOCKDOWN_NONE] = "none",
-+	[LOCKDOWN_MODULE_SIGNATURE] = "unsigned module loading",
- 	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
- 	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
- };
--- 
-2.22.0.510.g264f2c817a-goog
+> ---
+>  include/asm-generic/vmlinux.lds.h |  8 ++++-
+>  include/linux/lsm_hooks.h         |  6 ++++
+>  include/linux/security.h          |  1 +
+>  init/main.c                       |  1 +
+>  security/security.c               | 50 ++++++++++++++++++++++++++-----
+>  5 files changed, 57 insertions(+), 9 deletions(-)
+>
+> diff --git a/include/asm-generic/vmlinux.lds.h b/include/asm-generic/vmlinux.lds.h
+> index ca42182992a5..6cc6174a2a4c 100644
+> --- a/include/asm-generic/vmlinux.lds.h
+> +++ b/include/asm-generic/vmlinux.lds.h
+> @@ -215,8 +215,13 @@
+>  			__start_lsm_info = .;				\
+>  			KEEP(*(.lsm_info.init))				\
+>  			__end_lsm_info = .;
+> +#define EARLY_LSM_TABLE()	. = ALIGN(8);				\
+> +			__start_early_lsm_info = .;			\
+> +			KEEP(*(.early_lsm_info.init))			\
+> +			__end_early_lsm_info = .;
+>  #else
+>  #define LSM_TABLE()
+> +#define EARLY_LSM_TABLE()
+>  #endif
+>  
+>  #define ___OF_TABLE(cfg, name)	_OF_TABLE_##cfg(name)
+> @@ -616,7 +621,8 @@
+>  	ACPI_PROBE_TABLE(irqchip)					\
+>  	ACPI_PROBE_TABLE(timer)						\
+>  	EARLYCON_TABLE()						\
+> -	LSM_TABLE()
+> +	LSM_TABLE()							\
+> +	EARLY_LSM_TABLE()
+>  
+>  #define INIT_TEXT							\
+>  	*(.init.text .init.text.*)					\
+> diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
+> index df1318d85f7d..aebb0e032072 100644
+> --- a/include/linux/lsm_hooks.h
+> +++ b/include/linux/lsm_hooks.h
+> @@ -2104,12 +2104,18 @@ struct lsm_info {
+>  };
+>  
+>  extern struct lsm_info __start_lsm_info[], __end_lsm_info[];
+> +extern struct lsm_info __start_early_lsm_info[], __end_early_lsm_info[];
+>  
+>  #define DEFINE_LSM(lsm)							\
+>  	static struct lsm_info __lsm_##lsm				\
+>  		__used __section(.lsm_info.init)			\
+>  		__aligned(sizeof(unsigned long))
+>  
+> +#define DEFINE_EARLY_LSM(lsm)						\
+> +	static struct lsm_info __early_lsm_##lsm			\
+> +		__used __section(.early_lsm_info.init)			\
+> +		__aligned(sizeof(unsigned long))
+> +
+>  #ifdef CONFIG_SECURITY_SELINUX_DISABLE
+>  /*
+>   * Assuring the safety of deleting a security module is up to
+> diff --git a/include/linux/security.h b/include/linux/security.h
+> index 5f7441abbf42..66a2fcbe6ab0 100644
+> --- a/include/linux/security.h
+> +++ b/include/linux/security.h
+> @@ -195,6 +195,7 @@ int unregister_blocking_lsm_notifier(struct notifier_block *nb);
+>  
+>  /* prototypes */
+>  extern int security_init(void);
+> +extern int early_security_init(void);
+>  
+>  /* Security operations */
+>  int security_binder_set_context_mgr(struct task_struct *mgr);
+> diff --git a/init/main.c b/init/main.c
+> index ff5803b0841c..0fefca3fd43c 100644
+> --- a/init/main.c
+> +++ b/init/main.c
+> @@ -593,6 +593,7 @@ asmlinkage __visible void __init start_kernel(void)
+>  	boot_cpu_init();
+>  	page_address_init();
+>  	pr_notice("%s", linux_banner);
+> +	early_security_init();
+>  	setup_arch(&command_line);
+>  	mm_init_cpumask(&init_mm);
+>  	setup_command_line(command_line);
+> diff --git a/security/security.c b/security/security.c
+> index 250ee2d76406..90f1e291c800 100644
+> --- a/security/security.c
+> +++ b/security/security.c
+> @@ -33,6 +33,7 @@
+>  
+>  /* How many LSMs were built into the kernel? */
+>  #define LSM_COUNT (__end_lsm_info - __start_lsm_info)
+> +#define EARLY_LSM_COUNT (__end_early_lsm_info - __start_early_lsm_info)
+>  
+>  struct security_hook_heads security_hook_heads __lsm_ro_after_init;
+>  static BLOCKING_NOTIFIER_HEAD(blocking_lsm_notifier_chain);
+> @@ -277,6 +278,8 @@ static void __init ordered_lsm_parse(const char *order, const char *origin)
+>  static void __init lsm_early_cred(struct cred *cred);
+>  static void __init lsm_early_task(struct task_struct *task);
+>  
+> +static int lsm_append(const char *new, char **result);
+> +
+>  static void __init ordered_lsm_init(void)
+>  {
+>  	struct lsm_info **lsm;
+> @@ -323,6 +326,26 @@ static void __init ordered_lsm_init(void)
+>  	kfree(ordered_lsms);
+>  }
+>  
+> +int __init early_security_init(void)
+> +{
+> +	int i;
+> +	struct hlist_head *list = (struct hlist_head *) &security_hook_heads;
+> +	struct lsm_info *lsm;
+> +
+> +	for (i = 0; i < sizeof(security_hook_heads) / sizeof(struct hlist_head);
+> +	     i++)
+> +		INIT_HLIST_HEAD(&list[i]);
+> +
+> +	for (lsm = __start_early_lsm_info; lsm < __end_early_lsm_info; lsm++) {
+> +		if (!lsm->enabled)
+> +			lsm->enabled = &lsm_enabled_true;
+> +		prepare_lsm(lsm);
+> +		initialize_lsm(lsm);
+> +	}
+> +
+> +	return 0;
+> +}
+> +
+>  /**
+>   * security_init - initializes the security framework
+>   *
+> @@ -330,14 +353,18 @@ static void __init ordered_lsm_init(void)
+>   */
+>  int __init security_init(void)
+>  {
+> -	int i;
+> -	struct hlist_head *list = (struct hlist_head *) &security_hook_heads;
+> +	struct lsm_info *lsm;
+>  
+>  	pr_info("Security Framework initializing\n");
+>  
+> -	for (i = 0; i < sizeof(security_hook_heads) / sizeof(struct hlist_head);
+> -	     i++)
+> -		INIT_HLIST_HEAD(&list[i]);
+> +	/*
+> +	 * Append the names of the early LSM modules now that kmalloc() is
+> +	 * available
+> +	 */
+> +	for (lsm = __start_early_lsm_info; lsm < __end_early_lsm_info; lsm++) {
+> +		if (lsm->enabled)
+> +			lsm_append(lsm->name, &lsm_names);
+> +	}
+>  
+>  	/* Load LSMs in specified order. */
+>  	ordered_lsm_init();
+> @@ -384,7 +411,7 @@ static bool match_last_lsm(const char *list, const char *lsm)
+>  	return !strcmp(last, lsm);
+>  }
+>  
+> -static int lsm_append(char *new, char **result)
+> +static int lsm_append(const char *new, char **result)
+>  {
+>  	char *cp;
+>  
+> @@ -422,8 +449,15 @@ void __init security_add_hooks(struct security_hook_list *hooks, int count,
+>  		hooks[i].lsm = lsm;
+>  		hlist_add_tail_rcu(&hooks[i].list, hooks[i].head);
+>  	}
+> -	if (lsm_append(lsm, &lsm_names) < 0)
+> -		panic("%s - Cannot get early memory.\n", __func__);
+> +
+> +	/*
+> +	 * Don't try to append during early_security_init(), we'll come back
+> +	 * and fix this up afterwards.
+> +	 */
+> +	if (slab_is_available()) {
+> +		if (lsm_append(lsm, &lsm_names) < 0)
+> +			panic("%s - Cannot get early memory.\n", __func__);
+> +	}
+>  }
+>  
+>  int call_blocking_lsm_notifier(enum lsm_event event, void *data)
