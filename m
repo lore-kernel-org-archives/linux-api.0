@@ -1,124 +1,99 @@
-From: Casey Schaufler <casey@schaufler-ca.com>
-Subject: Re: [PATCH V36 02/29] security: Add a "locked down" LSM hook
-Date: Thu, 18 Jul 2019 13:03:41 -0700
-Message-ID: <b2d853d9-4968-d0ea-9d9b-cba2b9957394@schaufler-ca.com>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCH V36 20/29] x86/mmiotrace: Lock down the testmmiotrace
+ module
+Date: Thu, 18 Jul 2019 14:06:23 -0700
+Message-ID: <201907181406.0E364D490@keescook>
 References: <20190718194415.108476-1-matthewgarrett@google.com>
- <20190718194415.108476-3-matthewgarrett@google.com>
+ <20190718194415.108476-21-matthewgarrett@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190718194415.108476-3-matthewgarrett@google.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20190718194415.108476-21-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Matthew Garrett <matthewgarrett@google.com>, jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>
+To: Matthew Garrett <matthewgarrett@google.com>
+Cc: jmorris@namei.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Matthew Garrett <mjg59@google.com>, Steven Rostedt <rostedt@goodmis.org>, Ingo Molnar <mingo@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 7/18/2019 12:43 PM, Matthew Garrett wrote:
-> Add a mechanism to allow LSMs to make a policy decision around whether
-> kernel functionality that would allow tampering with or examining the
-> runtime state of the kernel should be permitted.
->
+On Thu, Jul 18, 2019 at 12:44:06PM -0700, Matthew Garrett wrote:
+> From: David Howells <dhowells@redhat.com>
+> 
+> The testmmiotrace module shouldn't be permitted when the kernel is locked
+> down as it can be used to arbitrarily read and write MMIO space. This is
+> a runtime check rather than buildtime in order to allow configurations
+> where the same kernel may be run in both locked down or permissive modes
+> depending on local policy.
+> 
+> Suggested-by: Thomas Gleixner <tglx@linutronix.de>
+> Signed-off-by: David Howells <dhowells@redhat.com
+
+Reviewed-by: Kees Cook <keescook@chromium.org>
+
+-Kees
+
 > Signed-off-by: Matthew Garrett <mjg59@google.com>
-> Acked-by: Kees Cook <keescook@chromium.org>
-
-Acked-by: Casey Schaufler <casey@schaufler-ca.com>
-
+> Acked-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+> cc: Thomas Gleixner <tglx@linutronix.de>
+> cc: Steven Rostedt <rostedt@goodmis.org>
+> cc: Ingo Molnar <mingo@kernel.org>
+> cc: "H. Peter Anvin" <hpa@zytor.com>
+> cc: x86@kernel.org
 > ---
->  include/linux/lsm_hooks.h |  2 ++
->  include/linux/security.h  | 32 ++++++++++++++++++++++++++++++++
->  security/security.c       |  6 ++++++
->  3 files changed, 40 insertions(+)
->
-> diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
-> index aebb0e032072..29c22cf40113 100644
-> --- a/include/linux/lsm_hooks.h
-> +++ b/include/linux/lsm_hooks.h
-> @@ -1807,6 +1807,7 @@ union security_list_options {
->  	int (*bpf_prog_alloc_security)(struct bpf_prog_aux *aux);
->  	void (*bpf_prog_free_security)(struct bpf_prog_aux *aux);
->  #endif /* CONFIG_BPF_SYSCALL */
-> +	int (*locked_down)(enum lockdown_reason what);
->  };
+>  arch/x86/mm/testmmiotrace.c  | 5 +++++
+>  include/linux/security.h     | 1 +
+>  security/lockdown/lockdown.c | 1 +
+>  3 files changed, 7 insertions(+)
+> 
+> diff --git a/arch/x86/mm/testmmiotrace.c b/arch/x86/mm/testmmiotrace.c
+> index 0881e1ff1e58..a8bd952e136d 100644
+> --- a/arch/x86/mm/testmmiotrace.c
+> +++ b/arch/x86/mm/testmmiotrace.c
+> @@ -8,6 +8,7 @@
+>  #include <linux/module.h>
+>  #include <linux/io.h>
+>  #include <linux/mmiotrace.h>
+> +#include <linux/security.h>
 >  
->  struct security_hook_heads {
-> @@ -2046,6 +2047,7 @@ struct security_hook_heads {
->  	struct hlist_head bpf_prog_alloc_security;
->  	struct hlist_head bpf_prog_free_security;
->  #endif /* CONFIG_BPF_SYSCALL */
-> +	struct hlist_head locked_down;
->  } __randomize_layout;
+>  static unsigned long mmio_address;
+>  module_param_hw(mmio_address, ulong, iomem, 0);
+> @@ -115,6 +116,10 @@ static void do_test_bulk_ioremapping(void)
+>  static int __init init(void)
+>  {
+>  	unsigned long size = (read_far) ? (8 << 20) : (16 << 10);
+> +	int ret = security_locked_down(LOCKDOWN_MMIOTRACE);
+> +
+> +	if (ret)
+> +		return ret;
 >  
->  /*
+>  	if (mmio_address == 0) {
+>  		pr_err("you have to use the module argument mmio_address.\n");
 > diff --git a/include/linux/security.h b/include/linux/security.h
-> index 66a2fcbe6ab0..c2b1204e8e26 100644
+> index 43fa3486522b..3f7b6a4cd65a 100644
 > --- a/include/linux/security.h
 > +++ b/include/linux/security.h
-> @@ -77,6 +77,33 @@ enum lsm_event {
->  	LSM_POLICY_CHANGE,
+> @@ -114,6 +114,7 @@ enum lockdown_reason {
+>  	LOCKDOWN_PCMCIA_CIS,
+>  	LOCKDOWN_TIOCSSERIAL,
+>  	LOCKDOWN_MODULE_PARAMETERS,
+> +	LOCKDOWN_MMIOTRACE,
+>  	LOCKDOWN_INTEGRITY_MAX,
+>  	LOCKDOWN_CONFIDENTIALITY_MAX,
 >  };
->  
-> +/*
-> + * These are reasons that can be passed to the security_locked_down()
-> + * LSM hook. Lockdown reasons that protect kernel integrity (ie, the
-> + * ability for userland to modify kernel code) are placed before
-> + * LOCKDOWN_INTEGRITY_MAX.  Lockdown reasons that protect kernel
-> + * confidentiality (ie, the ability for userland to extract
-> + * information from the running kernel that would otherwise be
-> + * restricted) are placed before LOCKDOWN_CONFIDENTIALITY_MAX.
-> + *
-> + * LSM authors should note that the semantics of any given lockdown
-> + * reason are not guaranteed to be stable - the same reason may block
-> + * one set of features in one kernel release, and a slightly different
-> + * set of features in a later kernel release. LSMs that seek to expose
-> + * lockdown policy at any level of granularity other than "none",
-> + * "integrity" or "confidentiality" are responsible for either
-> + * ensuring that they expose a consistent level of functionality to
-> + * userland, or ensuring that userland is aware that this is
-> + * potentially a moving target. It is easy to misuse this information
-> + * in a way that could break userspace. Please be careful not to do
-> + * so.
-> + */
-> +enum lockdown_reason {
-> +	LOCKDOWN_NONE,
-> +	LOCKDOWN_INTEGRITY_MAX,
-> +	LOCKDOWN_CONFIDENTIALITY_MAX,
-> +};
-> +
->  /* These functions are in security/commoncap.c */
->  extern int cap_capable(const struct cred *cred, struct user_namespace *ns,
->  		       int cap, unsigned int opts);
-> @@ -393,6 +420,7 @@ void security_inode_invalidate_secctx(struct inode *inode);
->  int security_inode_notifysecctx(struct inode *inode, void *ctx, u32 ctxlen);
->  int security_inode_setsecctx(struct dentry *dentry, void *ctx, u32 ctxlen);
->  int security_inode_getsecctx(struct inode *inode, void **ctx, u32 *ctxlen);
-> +int security_locked_down(enum lockdown_reason what);
->  #else /* CONFIG_SECURITY */
->  
->  static inline int call_blocking_lsm_notifier(enum lsm_event event, void *data)
-> @@ -1205,6 +1233,10 @@ static inline int security_inode_getsecctx(struct inode *inode, void **ctx, u32
->  {
->  	return -EOPNOTSUPP;
->  }
-> +static inline int security_locked_down(enum lockdown_reason what)
-> +{
-> +	return 0;
-> +}
->  #endif	/* CONFIG_SECURITY */
->  
->  #ifdef CONFIG_SECURITY_NETWORK
-> diff --git a/security/security.c b/security/security.c
-> index 90f1e291c800..ce6c945bf347 100644
-> --- a/security/security.c
-> +++ b/security/security.c
-> @@ -2392,3 +2392,9 @@ void security_bpf_prog_free(struct bpf_prog_aux *aux)
->  	call_void_hook(bpf_prog_free_security, aux);
->  }
->  #endif /* CONFIG_BPF_SYSCALL */
-> +
-> +int security_locked_down(enum lockdown_reason what)
-> +{
-> +	return call_int_hook(locked_down, 0, what);
-> +}
-> +EXPORT_SYMBOL(security_locked_down);
+> diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
+> index 5177938cfa0d..37b7d7e50474 100644
+> --- a/security/lockdown/lockdown.c
+> +++ b/security/lockdown/lockdown.c
+> @@ -29,6 +29,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
+>  	[LOCKDOWN_PCMCIA_CIS] = "direct PCMCIA CIS storage",
+>  	[LOCKDOWN_TIOCSSERIAL] = "reconfiguration of serial port IO",
+>  	[LOCKDOWN_MODULE_PARAMETERS] = "unsafe module parameters",
+> +	[LOCKDOWN_MMIOTRACE] = "unsafe mmio",
+>  	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
+>  	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
+>  };
+> -- 
+> 2.22.0.510.g264f2c817a-goog
+> 
+
+-- 
+Kees Cook
