@@ -1,37 +1,132 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH v9 08/10] open: openat2(2) syscall
-Date: Fri, 19 Jul 2019 12:29:41 +0200
-Message-ID: <20190719102932.274pvmxnrbjcc6gu@brauner.io>
-References: <20190706145737.5299-1-cyphar@cyphar.com>
- <20190706145737.5299-9-cyphar@cyphar.com>
- <CAK8P3a33rGhPDFfRBAQyLTMG_WoEgX_toDgWR2O7rSwxKsZG+w@mail.gmail.com>
- <20190718161231.xcno272nvqpln3wj@yavin>
- <CAK8P3a3MiYK4bJiA3G_m5H-TpfN5__--b+=szsJBhG7_it+NQg@mail.gmail.com>
- <20190719021218.GB18022@altlinux.org>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [v3 PATCH 1/2] mm: mempolicy: make the behavior consistent when
+ MPOL_MF_MOVE* and MPOL_MF_STRICT were specified
+Date: Fri, 19 Jul 2019 14:48:24 +0200
+Message-ID: <c1e2b48a-972f-3944-bc17-598cb81a6658@suse.cz>
+References: <1563470274-52126-1-git-send-email-yang.shi@linux.alibaba.com>
+ <1563470274-52126-2-git-send-email-yang.shi@linux.alibaba.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190719021218.GB18022@altlinux.org>
+In-Reply-To: <1563470274-52126-2-git-send-email-yang.shi@linux.alibaba.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Dmitry V. Levin" <ldv@altlinux.org>
-Cc: Arnd Bergmann <arnd@arndb.de>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, Linus Torvalds <torvalds@linux-foundation.org>, containers@lists.linux-foundation.org
+To: Yang Shi <yang.shi@linux.alibaba.com>, mhocko@kernel.org, mgorman@techsingularity.net, akpm@linux-foundation.org
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 19, 2019 at 05:12:18AM +0300, Dmitry V. Levin wrote:
-> On Thu, Jul 18, 2019 at 11:29:50PM +0200, Arnd Bergmann wrote:
-> [...]
-> > 5. you get the same problem with seccomp and strace that
-> >    clone3() has -- these and others only track the register
-> >    arguments by default.
+On 7/18/19 7:17 PM, Yang Shi wrote:
+> When both MPOL_MF_MOVE* and MPOL_MF_STRICT was specified, mbind() should
+> try best to migrate misplaced pages, if some of the pages could not be
+> migrated, then return -EIO.
 > 
-> Just for the record, this is definitely not the case for strace:
-> it decodes arrays, structures, netlink messages, and so on by default.
+> There are three different sub-cases:
+> 1. vma is not migratable
+> 2. vma is migratable, but there are unmovable pages
+> 3. vma is migratable, pages are movable, but migrate_pages() fails
+> 
+> If #1 happens, kernel would just abort immediately, then return -EIO,
+> after the commit a7f40cfe3b7ada57af9b62fd28430eeb4a7cfcb7 ("mm:
+> mempolicy: make mbind() return -EIO when MPOL_MF_STRICT is specified").
+> 
+> If #3 happens, kernel would set policy and migrate pages with best-effort,
+> but won't rollback the migrated pages and reset the policy back.
+> 
+> Before that commit, they behaves in the same way.  It'd better to keep
+> their behavior consistent.  But, rolling back the migrated pages and
+> resetting the policy back sounds not feasible, so just make #1 behave as
+> same as #3.
+> 
+> Userspace will know that not everything was successfully migrated (via
+> -EIO), and can take whatever steps it deems necessary - attempt rollback,
+> determine which exact page(s) are violating the policy, etc.
+> 
+> Make queue_pages_range() return 1 to indicate there are unmovable pages
+> or vma is not migratable.
+> 
+> The #2 is not handled correctly in the current kernel, the following
+> patch will fix it.
+> 
+> Cc: Vlastimil Babka <vbabka@suse.cz>
+> Cc: Michal Hocko <mhocko@suse.com>
+> Cc: Mel Gorman <mgorman@techsingularity.net>
+> Signed-off-by: Yang Shi <yang.shi@linux.alibaba.com>
 
-There sure is value in trying to design syscalls that can be handled
-nicely by seccomp but that shouldn't become a burden on designing
-extensible syscalls.
-I suggested a session for Ksummit where we can discuss if and how we can
-make seccomp more compatible with pointer-args in syscalls.
+Reviewed-by: Vlastimil Babka <vbabka@suse.cz>
 
-Christian
+Some nits below (I guess Andrew can incorporate them, no need to resend)
+
+...
+
+> @@ -488,15 +496,15 @@ static int queue_pages_pte_range(pmd_t *pmd, unsigned long addr,
+>  	struct queue_pages *qp = walk->private;
+>  	unsigned long flags = qp->flags;
+>  	int ret;
+> +	bool has_unmovable = false;
+>  	pte_t *pte;
+>  	spinlock_t *ptl;
+>  
+>  	ptl = pmd_trans_huge_lock(pmd, vma);
+>  	if (ptl) {
+>  		ret = queue_pages_pmd(pmd, ptl, addr, end, walk);
+> -		if (ret > 0)
+> -			return 0;
+> -		else if (ret < 0)
+> +		/* THP was split, fall through to pte walk */
+> +		if (ret != 2)
+>  			return ret;
+
+The comment should better go here after the if, as that's where fall through
+happens.
+
+>  	}
+>  
+> @@ -519,14 +527,21 @@ static int queue_pages_pte_range(pmd_t *pmd, unsigned long addr,
+>  		if (!queue_pages_required(page, qp))
+>  			continue;
+>  		if (flags & (MPOL_MF_MOVE | MPOL_MF_MOVE_ALL)) {
+> -			if (!vma_migratable(vma))
+> +			/* MPOL_MF_STRICT must be specified if we get here */
+> +			if (!vma_migratable(vma)) {
+> +				has_unmovable |= true;
+
+'|=' is weird, just use '='
+
+>  				break;
+> +			}
+>  			migrate_page_add(page, qp->pagelist, flags);
+>  		} else
+>  			break;
+>  	}
+>  	pte_unmap_unlock(pte - 1, ptl);
+>  	cond_resched();
+> +
+> +	if (has_unmovable)
+> +		return 1;
+> +
+>  	return addr != end ? -EIO : 0;
+>  }
+>  
+...
+> @@ -1259,11 +1286,12 @@ static long do_mbind(unsigned long start, unsigned long len,
+>  				putback_movable_pages(&pagelist);
+>  		}
+>  
+> -		if (nr_failed && (flags & MPOL_MF_STRICT))
+> +		if ((ret > 0) || (nr_failed && (flags & MPOL_MF_STRICT)))
+>  			err = -EIO;
+>  	} else
+>  		putback_movable_pages(&pagelist);
+>  
+> +up_out:
+>  	up_write(&mm->mmap_sem);
+>   mpol_out:
+
+The new label made the wrong identation of this one stand out, so I'd just fix
+it up while here.
+
+Thanks!
+
+>  	mpol_put(new);
+> 
