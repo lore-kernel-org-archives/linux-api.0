@@ -1,57 +1,70 @@
-From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [PATCH ghak90 V6 02/10] audit: add container id
-Date: Thu, 18 Jul 2019 17:52:58 -0400
-Message-ID: <CAHC9VhTYV02ws3QcezER5cY+Xt+tExcJEO-dumTDx=FXGFh3nw@mail.gmail.com>
-References: <20190529153427.GB8959@cisco> <CAHC9VhSF3AjErX37+eeusJ7+XRw8yuPsmqBTRwc9EVoRBh_3Tw@mail.gmail.com>
- <20190529222835.GD8959@cisco> <CAHC9VhRS66VGtug3fq3RTGHDvfGmBJG6yRJ+iMxm3cxnNF-zJw@mail.gmail.com>
- <20190530170913.GA16722@mail.hallyn.com> <CAHC9VhThLiQzGYRUWmSuVfOC6QCDmA75BDB7Eg7V8HX4x7ymQg@mail.gmail.com>
- <20190708180558.5bar6ripag3sdadl@madcap2.tricolour.ca> <CAHC9VhRTT7JWqNnynvK04wKerjc-3UJ6R1uPtjCAPVr_tW-7MA@mail.gmail.com>
- <20190716220320.sotbfqplgdructg7@madcap2.tricolour.ca> <CAHC9VhScHizB2r5q3T5s0P3jkYdvzBPPudDksosYFp_TO7W9-Q@mail.gmail.com>
- <20190718005145.eshekqfr3navqqiy@madcap2.tricolour.ca>
+From: "Dmitry V. Levin" <ldv@altlinux.org>
+Subject: Re: [PATCH v9 08/10] open: openat2(2) syscall
+Date: Fri, 19 Jul 2019 04:59:34 +0300
+Message-ID: <20190719015933.GA18022@altlinux.org>
+References: <20190706145737.5299-1-cyphar@cyphar.com>
+ <20190706145737.5299-9-cyphar@cyphar.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="huq684BweRXVnRxX"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190718005145.eshekqfr3navqqiy@madcap2.tricolour.ca>
+Content-Disposition: inline
+In-Reply-To: <20190706145737.5299-9-cyphar@cyphar.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Guy Briggs <rgb@redhat.com>
-Cc: "Serge E. Hallyn" <serge@hallyn.com>, Tycho Andersen <tycho@tycho.ws>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, ebiederm@xmission.com, nhorman@tuxdriver.com
+To: Aleksa Sarai <cyphar@cyphar.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Christian Brauner <christian@brauner.io>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, Linus Torvalds <torvalds@linux-foundation.org>, containers@lists.linux-f
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 17, 2019 at 8:52 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> On 2019-07-16 19:30, Paul Moore wrote:
 
-...
+--huq684BweRXVnRxX
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-> > We can trust capable(CAP_AUDIT_CONTROL) for enforcing audit container
-> > ID policy, we can not trust ns_capable(CAP_AUDIT_CONTROL).
->
-> Ok.  So does a process in a non-init user namespace have two (or more)
-> sets of capabilities stored in creds, one in the init_user_ns, and one
-> in current_user_ns?  Or does it get stripped of all its capabilities in
-> init_user_ns once it has its own set in current_user_ns?  If the former,
-> then we can use capable().  If the latter, we need another mechanism, as
-> you have suggested might be needed.
+On Sun, Jul 07, 2019 at 12:57:35AM +1000, Aleksa Sarai wrote:
+[...]
+> +/**
+> + * Arguments for how openat2(2) should open the target path. If @extra i=
+s zero,
+> + * then openat2(2) is identical to openat(2).
+> + *
+> + * @flags: O_* flags (unknown flags ignored).
 
-Unfortunately I think the problem is that ultimately we need to allow
-any container orchestrator that has been given privileges to manage
-the audit container ID to also grant that privilege to any of the
-child process/containers it manages.  I don't believe we can do that
-with capabilities based on the code I've looked at, and the
-discussions I've had, but if you find a way I would leave to hear it.
+What was the rationale for implementing this semantics?
+Ignoring unknown flags makes potential extension of this new interface
+problematic.  This has bitten us many times already, so ...
 
-> If some random unprivileged user wants to fire up a container
-> orchestrator/engine in his own user namespace, then audit needs to be
-> namespaced.  Can we safely discard this scenario for now?
+> + * @mode: O_CREAT file mode (ignored otherwise).
+> + * @upgrade_mask: restrict how the O_PATH may be re-opened (ignored othe=
+rwise).
+> + * @resolve: RESOLVE_* flags (-EINVAL on unknown flags).
 
-I think the only time we want to allow a container orchestrator to
-manage the audit container ID is if it has been granted that privilege
-by someone who has that privilege already.  In the zero-container, or
-single-level of containers, case this is relatively easy, and we can
-accomplish it using CAP_AUDIT_CONTROL as the privilege.  If we start
-nesting container orchestrators it becomes more complicated as we need
-to be able to support granting and inheriting this privilege in a
-manner; this is why I suggested a new mechanism *may* be necessary.
+=2E.. could you consider implementing this (-EINVAL on unknown flags) seman=
+tics
+for @flags as well, please?
 
---
-paul moore
-www.paul-moore.com
+
+--=20
+ldv
+
+--huq684BweRXVnRxX
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIcBAEBCAAGBQJdMSQFAAoJEAVFT+BVnCUIuaAP/3pgUoQA466F6S8jYN6F/icf
+oiQHExdeO3ruxRdNl1gi7af0RxQCiprfNIoD7KQyWSnyUyUm0Cdd7PzpEKXuumQi
+pN6ZTEO2bQeSs7AjCNpLrTgKcuOo/pZbNN7InAHKLB7k2xKKeBbdaVypgGiAEDjT
+JK+4s+8JcJoSg+d69G428QP2qpoHyIZJ5437gYv5rJbL9BRihwwvWF2OQ4TXrd6I
+YnyxPFRRZnfiN3HNbNlJjtMgt5g0AisLuahpJaDMq0NaXnBOosDm9jBAhVOX0CSB
+LUNByCygXeBKv9VuyrO4KnLXS3ORGfK38SDGqz3kFYy1quNRAGKgOXPnGXfb2xbZ
+bRCqyuxkSUOIfLKA6q9jnqO9RoUeOtLglFUT/5JpixTaoxSFN3Y6GlJFcnw+cVm+
+oWH4A/IoST68FCfbOMff976O36pakuWbsVGVsdv384OEHfWaf7c10P9EQc3fhgF3
+JoeY5ht9R1k8HWNOlCuCeHfTwSyLG3T/TROuZYtz65RdPemuuPSPERr+GzOtO9Fn
++wQmK99JlE3nhoyv5CmtqCmMQWhYZedqjbjs5wIq7tjalerg6TakNMmhzTGz5l8T
+i+3EfyMHhEtwq+2YNhdaPEmjfdBzyI3stxtEkURya0BnCgbYsP2mTIP8UbLGDqsY
+EJZiRtPRFfVoePwqT8Ux
+=zLLc
+-----END PGP SIGNATURE-----
+
+--huq684BweRXVnRxX--
