@@ -1,86 +1,111 @@
 From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH ghak90 V6 02/10] audit: add container id
-Date: Fri, 19 Jul 2019 11:00:24 -0500
-Message-ID: <87muhadnfr.fsf@xmission.com>
-References: <20190529153427.GB8959@cisco>
-        <CAHC9VhSF3AjErX37+eeusJ7+XRw8yuPsmqBTRwc9EVoRBh_3Tw@mail.gmail.com>
-        <20190529222835.GD8959@cisco>
-        <CAHC9VhRS66VGtug3fq3RTGHDvfGmBJG6yRJ+iMxm3cxnNF-zJw@mail.gmail.com>
-        <20190530170913.GA16722@mail.hallyn.com>
-        <CAHC9VhThLiQzGYRUWmSuVfOC6QCDmA75BDB7Eg7V8HX4x7ymQg@mail.gmail.com>
-        <20190708180558.5bar6ripag3sdadl@madcap2.tricolour.ca>
-        <CAHC9VhRTT7JWqNnynvK04wKerjc-3UJ6R1uPtjCAPVr_tW-7MA@mail.gmail.com>
-        <20190716220320.sotbfqplgdructg7@madcap2.tricolour.ca>
-        <CAHC9VhScHizB2r5q3T5s0P3jkYdvzBPPudDksosYFp_TO7W9-Q@mail.gmail.com>
-        <20190718005145.eshekqfr3navqqiy@madcap2.tricolour.ca>
-        <CAHC9VhTYV02ws3QcezER5cY+Xt+tExcJEO-dumTDx=FXGFh3nw@mail.gmail.com>
+Subject: Re: [PATCH ghak90 V6 03/10] audit: read container ID of a process
+Date: Fri, 19 Jul 2019 11:03:35 -0500
+Message-ID: <87d0i6dnag.fsf@xmission.com>
+References: <cover.1554732921.git.rgb@redhat.com>
+        <cover.1554732921.git.rgb@redhat.com>
+        <846df5e5bf5a49094fede082a2ace135ab6f5772.1554732921.git.rgb@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <CAHC9VhTYV02ws3QcezER5cY+Xt+tExcJEO-dumTDx=FXGFh3nw@mail.gmail.com>
-        (Paul Moore's message of "Thu, 18 Jul 2019 17:52:58 -0400")
-Sender: netdev-owner@vger.kernel.org
-To: Paul Moore <paul@paul-moore.com>
-Cc: Richard Guy Briggs <rgb@redhat.com>, "Serge E. Hallyn" <serge@hallyn.com>, Tycho Andersen <tycho@tycho.ws>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, nhorman@tuxdriver.com
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <846df5e5bf5a49094fede082a2ace135ab6f5772.1554732921.git.rgb@redhat.com>
+        (Richard Guy Briggs's message of "Mon, 8 Apr 2019 23:39:10 -0400")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Richard Guy Briggs <rgb@redhat.com>
+Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, Paul Moore <paul@paul-moore.com>, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, eparis@parisplace.org, serge@hallyn.com, nhorman@tuxdriver.com
 List-Id: linux-api@vger.kernel.org
 
-Paul Moore <paul@paul-moore.com> writes:
+Richard Guy Briggs <rgb@redhat.com> writes:
 
-> On Wed, Jul 17, 2019 at 8:52 PM Richard Guy Briggs <rgb@redhat.com> wrote:
->> On 2019-07-16 19:30, Paul Moore wrote:
+> Add support for reading the audit container identifier from the proc
+> filesystem.
 >
-> ...
+> This is a read from the proc entry of the form
+> /proc/PID/audit_containerid where PID is the process ID of the task
+> whose audit container identifier is sought.
 >
->> > We can trust capable(CAP_AUDIT_CONTROL) for enforcing audit container
->> > ID policy, we can not trust ns_capable(CAP_AUDIT_CONTROL).
->>
->> Ok.  So does a process in a non-init user namespace have two (or more)
->> sets of capabilities stored in creds, one in the init_user_ns, and one
->> in current_user_ns?  Or does it get stripped of all its capabilities in
->> init_user_ns once it has its own set in current_user_ns?  If the former,
->> then we can use capable().  If the latter, we need another mechanism, as
->> you have suggested might be needed.
+> The read expects up to a u64 value (unset: 18446744073709551615).
 >
-> Unfortunately I think the problem is that ultimately we need to allow
-> any container orchestrator that has been given privileges to manage
-> the audit container ID to also grant that privilege to any of the
-> child process/containers it manages.  I don't believe we can do that
-> with capabilities based on the code I've looked at, and the
-> discussions I've had, but if you find a way I would leave to hear it.
+> This read requires CAP_AUDIT_CONTROL.
 
->> If some random unprivileged user wants to fire up a container
->> orchestrator/engine in his own user namespace, then audit needs to be
->> namespaced.  Can we safely discard this scenario for now?
->
-> I think the only time we want to allow a container orchestrator to
-> manage the audit container ID is if it has been granted that privilege
-> by someone who has that privilege already.  In the zero-container, or
-> single-level of containers, case this is relatively easy, and we can
-> accomplish it using CAP_AUDIT_CONTROL as the privilege.  If we start
-> nesting container orchestrators it becomes more complicated as we need
-> to be able to support granting and inheriting this privilege in a
-> manner; this is why I suggested a new mechanism *may* be necessary.
+This scares me.    As this seems to make it easy to reuse an audit
+containerid for non-audit purporses.
 
-
-Let me segway a bit and see if I can get this conversation out of the
-rut it seems to have drifted into.
-
-Unprivileged containers and nested containers exist today and are going
-to become increasingly common.  Let that be a given.
-
-As I recall the interesting thing for audit to log is actions by
-privileged processes.  Audit can log more but generally configuring
-logging by of the actions of unprivileged users is effectively a self
-DOS.
-
-So I think the initial implementation can safely ignore actions of
-nested containers and unprivileged containers because you don't care
-about their actions. 
-
-If we start allow running audit in a container then we need to deal with
-all of the nesting issues but until then I don't think you folks care.
-
-Or am I wrong.  Do the requirements for securely auditing things from
-the kernel care about the actions of unprivileged users?
+I would think it would be safer and easier to poke audit and ask it to
+log a message with your audit container id.
 
 Eric
+
+
+> Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> Acked-by: Serge Hallyn <serge@hallyn.com>
+> Acked-by: Neil Horman <nhorman@tuxdriver.com>
+> Reviewed-by: Ondrej Mosnacek <omosnace@redhat.com>
+> ---
+>  fs/proc/base.c | 25 ++++++++++++++++++++++---
+>  1 file changed, 22 insertions(+), 3 deletions(-)
+>
+> diff --git a/fs/proc/base.c b/fs/proc/base.c
+> index 43fd0c4b87de..acc70239d0cb 100644
+> --- a/fs/proc/base.c
+> +++ b/fs/proc/base.c
+> @@ -1211,7 +1211,7 @@ static ssize_t oom_score_adj_write(struct file *file, const char __user *buf,
+>  };
+>  
+>  #ifdef CONFIG_AUDIT
+> -#define TMPBUFLEN 11
+> +#define TMPBUFLEN 21
+>  static ssize_t proc_loginuid_read(struct file * file, char __user * buf,
+>  				  size_t count, loff_t *ppos)
+>  {
+> @@ -1295,6 +1295,24 @@ static ssize_t proc_sessionid_read(struct file * file, char __user * buf,
+>  	.llseek		= generic_file_llseek,
+>  };
+>  
+> +static ssize_t proc_contid_read(struct file *file, char __user *buf,
+> +				  size_t count, loff_t *ppos)
+> +{
+> +	struct inode *inode = file_inode(file);
+> +	struct task_struct *task = get_proc_task(inode);
+> +	ssize_t length;
+> +	char tmpbuf[TMPBUFLEN];
+> +
+> +	if (!task)
+> +		return -ESRCH;
+> +	/* if we don't have caps, reject */
+> +	if (!capable(CAP_AUDIT_CONTROL))
+> +		return -EPERM;
+> +	length = scnprintf(tmpbuf, TMPBUFLEN, "%llu", audit_get_contid(task));
+> +	put_task_struct(task);
+> +	return simple_read_from_buffer(buf, count, ppos, tmpbuf, length);
+> +}
+> +
+>  static ssize_t proc_contid_write(struct file *file, const char __user *buf,
+>  				   size_t count, loff_t *ppos)
+>  {
+> @@ -1325,6 +1343,7 @@ static ssize_t proc_contid_write(struct file *file, const char __user *buf,
+>  }
+>  
+>  static const struct file_operations proc_contid_operations = {
+> +	.read		= proc_contid_read,
+>  	.write		= proc_contid_write,
+>  	.llseek		= generic_file_llseek,
+>  };
+> @@ -3067,7 +3086,7 @@ static int proc_stack_depth(struct seq_file *m, struct pid_namespace *ns,
+>  #ifdef CONFIG_AUDIT
+>  	REG("loginuid",   S_IWUSR|S_IRUGO, proc_loginuid_operations),
+>  	REG("sessionid",  S_IRUGO, proc_sessionid_operations),
+> -	REG("audit_containerid", S_IWUSR, proc_contid_operations),
+> +	REG("audit_containerid", S_IWUSR|S_IRUSR, proc_contid_operations),
+>  #endif
+>  #ifdef CONFIG_FAULT_INJECTION
+>  	REG("make-it-fail", S_IRUGO|S_IWUSR, proc_fault_inject_operations),
+> @@ -3466,7 +3485,7 @@ static int proc_tid_comm_permission(struct inode *inode, int mask)
+>  #ifdef CONFIG_AUDIT
+>  	REG("loginuid",  S_IWUSR|S_IRUGO, proc_loginuid_operations),
+>  	REG("sessionid",  S_IRUGO, proc_sessionid_operations),
+> -	REG("audit_containerid", S_IWUSR, proc_contid_operations),
+> +	REG("audit_containerid", S_IWUSR|S_IRUSR, proc_contid_operations),
+>  #endif
+>  #ifdef CONFIG_FAULT_INJECTION
+>  	REG("make-it-fail", S_IRUGO|S_IWUSR, proc_fault_inject_operations),
