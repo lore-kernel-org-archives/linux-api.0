@@ -1,351 +1,141 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH ghak90 V6 02/10] audit: add container id
-Date: Fri, 19 Jul 2019 11:07:36 -0500
-Message-ID: <87y30uc8jb.fsf@xmission.com>
-References: <cover.1554732921.git.rgb@redhat.com>
-        <cover.1554732921.git.rgb@redhat.com>
-        <9edad39c40671fb53f28d76862304cc2647029c6.1554732921.git.rgb@redhat.com>
+From: Yang Shi <yang.shi@linux.alibaba.com>
+Subject: Re: [v3 PATCH 2/2] mm: mempolicy: handle vma with unmovable pages
+ mapped correctly in mbind
+Date: Fri, 19 Jul 2019 09:17:35 -0700
+Message-ID: <2a753062-a6bd-d767-085a-0bf9847ea067@linux.alibaba.com>
+References: <1563470274-52126-1-git-send-email-yang.shi@linux.alibaba.com>
+ <1563470274-52126-3-git-send-email-yang.shi@linux.alibaba.com>
+ <6ba72e56-9f62-36bf-ded7-f337522715d5@suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <9edad39c40671fb53f28d76862304cc2647029c6.1554732921.git.rgb@redhat.com>
-        (Richard Guy Briggs's message of "Mon, 8 Apr 2019 23:39:09 -0400")
+In-Reply-To: <6ba72e56-9f62-36bf-ded7-f337522715d5@suse.cz>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Richard Guy Briggs <rgb@redhat.com>
-Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, Paul Moore <paul@paul-moore.com>, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, eparis@parisplace.org, serge@hallyn.com, nhorman@tuxdriver.com
+To: Vlastimil Babka <vbabka@suse.cz>, mhocko@kernel.org, mgorman@techsingularity.net, akpm@linux-foundation.org
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Richard Guy Briggs <rgb@redhat.com> writes:
 
-> Implement the proc fs write to set the audit container identifier of a
-> process, emitting an AUDIT_CONTAINER_OP record to document the event.
->
-> This is a write from the container orchestrator task to a proc entry of
-> the form /proc/PID/audit_containerid where PID is the process ID of the
-> newly created task that is to become the first task in a container, or
-> an additional task added to a container.
->
-> The write expects up to a u64 value (unset: 18446744073709551615).
->
-> The writer must have capability CAP_AUDIT_CONTROL.
->
-> This will produce a record such as this:
->   type=CONTAINER_OP msg=audit(2018-06-06 12:39:29.636:26949) : op=set opid=2209 contid=123456 old-contid=18446744073709551615 pid=628 auid=root uid=root tty=ttyS0 ses=1 subj=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023 comm=bash exe=/usr/bin/bash res=yes
->
-> The "op" field indicates an initial set.  The "pid" to "ses" fields are
-> the orchestrator while the "opid" field is the object's PID, the process
-> being "contained".  New and old audit container identifier values are
-> given in the "contid" fields, while res indicates its success.
->
-> It is not permitted to unset the audit container identifier.
-> A child inherits its parent's audit container identifier.
 
-Why get proc involved in this?  I know it more or less fits as
-this is about a process and it's descendants.  But this seems to
-encouarge being able to read this value, and being able to read
-this value seems to encourage misuse.
-
-So I am not of fan of using proc for this.
-
-> Please see the github audit kernel issue for the main feature:
->   https://github.com/linux-audit/audit-kernel/issues/90
-> Please see the github audit userspace issue for supporting additions:
->   https://github.com/linux-audit/audit-userspace/issues/51
-> Please see the github audit testsuiite issue for the test case:
->   https://github.com/linux-audit/audit-testsuite/issues/64
-> Please see the github audit wiki for the feature overview:
->   https://github.com/linux-audit/audit-kernel/wiki/RFE-Audit-Container-ID
+On 7/19/19 6:01 AM, Vlastimil Babka wrote:
+> On 7/18/19 7:17 PM, Yang Shi wrote:
+>> When running syzkaller internally, we ran into the below bug on 4.9.x
+>> kernel:
+>>
+>> kernel BUG at mm/huge_memory.c:2124!
+>> invalid opcode: 0000 [#1] SMP KASAN
+>> Dumping ftrace buffer:
+>>     (ftrace buffer empty)
+>> Modules linked in:
+>> CPU: 0 PID: 1518 Comm: syz-executor107 Not tainted 4.9.168+ #2
+>> Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 0.5.1 01/01/2011
+>> task: ffff880067b34900 task.stack: ffff880068998000
+>> RIP: 0010:[<ffffffff81895d6b>]  [<ffffffff81895d6b>] split_huge_page_to_list+0x8fb/0x1030 mm/huge_memory.c:2124
+>> RSP: 0018:ffff88006899f980  EFLAGS: 00010286
+>> RAX: 0000000000000000 RBX: ffffea00018f1700 RCX: 0000000000000000
+>> RDX: 1ffffd400031e2e7 RSI: 0000000000000001 RDI: ffffea00018f1738
+>> RBP: ffff88006899f9e8 R08: 0000000000000001 R09: 0000000000000000
+>> R10: 0000000000000000 R11: fffffbfff0d8b13e R12: ffffea00018f1400
+>> R13: ffffea00018f1400 R14: ffffea00018f1720 R15: ffffea00018f1401
+>> FS:  00007fa333996740(0000) GS:ffff88006c600000(0000) knlGS:0000000000000000
+>> CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+>> CR2: 0000000020000040 CR3: 0000000066b9c000 CR4: 00000000000606f0
+>> Stack:
+>>   0000000000000246 ffff880067b34900 0000000000000000 ffff88007ffdc000
+>>   0000000000000000 ffff88006899f9e8 ffffffff812b4015 ffff880064c64e18
+>>   ffffea00018f1401 dffffc0000000000 ffffea00018f1700 0000000020ffd000
+>> Call Trace:
+>>   [<ffffffff818490f1>] split_huge_page include/linux/huge_mm.h:100 [inline]
+>>   [<ffffffff818490f1>] queue_pages_pte_range+0x7e1/0x1480 mm/mempolicy.c:538
+>>   [<ffffffff817ed0da>] walk_pmd_range mm/pagewalk.c:50 [inline]
+>>   [<ffffffff817ed0da>] walk_pud_range mm/pagewalk.c:90 [inline]
+>>   [<ffffffff817ed0da>] walk_pgd_range mm/pagewalk.c:116 [inline]
+>>   [<ffffffff817ed0da>] __walk_page_range+0x44a/0xdb0 mm/pagewalk.c:208
+>>   [<ffffffff817edb94>] walk_page_range+0x154/0x370 mm/pagewalk.c:285
+>>   [<ffffffff81844515>] queue_pages_range+0x115/0x150 mm/mempolicy.c:694
+>>   [<ffffffff8184f493>] do_mbind mm/mempolicy.c:1241 [inline]
+>>   [<ffffffff8184f493>] SYSC_mbind+0x3c3/0x1030 mm/mempolicy.c:1370
+>>   [<ffffffff81850146>] SyS_mbind+0x46/0x60 mm/mempolicy.c:1352
+>>   [<ffffffff810097e2>] do_syscall_64+0x1d2/0x600 arch/x86/entry/common.c:282
+>>   [<ffffffff82ff6f93>] entry_SYSCALL_64_after_swapgs+0x5d/0xdb
+>> Code: c7 80 1c 02 00 e8 26 0a 76 01 <0f> 0b 48 c7 c7 40 46 45 84 e8 4c
+>> RIP  [<ffffffff81895d6b>] split_huge_page_to_list+0x8fb/0x1030 mm/huge_memory.c:2124
+>>   RSP <ffff88006899f980>
+> ...
 >
-> Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> Acked-by: Serge Hallyn <serge@hallyn.com>
-> Acked-by: Steve Grubb <sgrubb@redhat.com>
-> Acked-by: Neil Horman <nhorman@tuxdriver.com>
-> Reviewed-by: Ondrej Mosnacek <omosnace@redhat.com>
-> ---
->  fs/proc/base.c             | 36 ++++++++++++++++++++++++
->  include/linux/audit.h      | 25 +++++++++++++++++
->  include/uapi/linux/audit.h |  2 ++
->  kernel/audit.c             | 69 ++++++++++++++++++++++++++++++++++++++++++++++
->  kernel/audit.h             |  1 +
->  kernel/auditsc.c           |  4 +++
->  6 files changed, 137 insertions(+)
+>> @@ -532,7 +531,14 @@ static int queue_pages_pte_range(pmd_t *pmd, unsigned long addr,
+>>   				has_unmovable |= true;
+>>   				break;
+>>   			}
+>> -			migrate_page_add(page, qp->pagelist, flags);
+>> +
+>> +			/*
+>> +			 * Do not abort immediately since there may be
+>> +			 * temporary off LRU pages in the range.  Still
+>> +			 * need migrate other LRU pages.
+>> +			 */
+>> +			if (migrate_page_add(page, qp->pagelist, flags))
+>> +				has_unmovable |= true;
+> Also = instead of |=
+
+OK
+
 >
-> diff --git a/fs/proc/base.c b/fs/proc/base.c
-> index ddef482f1334..43fd0c4b87de 100644
-> --- a/fs/proc/base.c
-> +++ b/fs/proc/base.c
-> @@ -1294,6 +1294,40 @@ static ssize_t proc_sessionid_read(struct file * file, char __user * buf,
->  	.read		= proc_sessionid_read,
->  	.llseek		= generic_file_llseek,
->  };
-> +
-> +static ssize_t proc_contid_write(struct file *file, const char __user *buf,
-> +				   size_t count, loff_t *ppos)
-> +{
-> +	struct inode *inode = file_inode(file);
-> +	u64 contid;
-> +	int rv;
-> +	struct task_struct *task = get_proc_task(inode);
-> +
-> +	if (!task)
-> +		return -ESRCH;
-> +	if (*ppos != 0) {
-> +		/* No partial writes. */
-> +		put_task_struct(task);
-> +		return -EINVAL;
-> +	}
-> +
-> +	rv = kstrtou64_from_user(buf, count, 10, &contid);
-> +	if (rv < 0) {
-> +		put_task_struct(task);
-> +		return rv;
-> +	}
-> +
-> +	rv = audit_set_contid(task, contid);
-> +	put_task_struct(task);
-> +	if (rv < 0)
-> +		return rv;
-> +	return count;
-> +}
-> +
-> +static const struct file_operations proc_contid_operations = {
-> +	.write		= proc_contid_write,
-> +	.llseek		= generic_file_llseek,
-> +};
->  #endif
->  
->  #ifdef CONFIG_FAULT_INJECTION
-> @@ -3033,6 +3067,7 @@ static int proc_stack_depth(struct seq_file *m, struct pid_namespace *ns,
->  #ifdef CONFIG_AUDIT
->  	REG("loginuid",   S_IWUSR|S_IRUGO, proc_loginuid_operations),
->  	REG("sessionid",  S_IRUGO, proc_sessionid_operations),
-> +	REG("audit_containerid", S_IWUSR, proc_contid_operations),
->  #endif
->  #ifdef CONFIG_FAULT_INJECTION
->  	REG("make-it-fail", S_IRUGO|S_IWUSR, proc_fault_inject_operations),
-> @@ -3431,6 +3466,7 @@ static int proc_tid_comm_permission(struct inode *inode, int mask)
->  #ifdef CONFIG_AUDIT
->  	REG("loginuid",  S_IWUSR|S_IRUGO, proc_loginuid_operations),
->  	REG("sessionid",  S_IRUGO, proc_sessionid_operations),
-> +	REG("audit_containerid", S_IWUSR, proc_contid_operations),
->  #endif
->  #ifdef CONFIG_FAULT_INJECTION
->  	REG("make-it-fail", S_IRUGO|S_IWUSR, proc_fault_inject_operations),
-> diff --git a/include/linux/audit.h b/include/linux/audit.h
-> index bde346e73f0c..301337776193 100644
-> --- a/include/linux/audit.h
-> +++ b/include/linux/audit.h
-> @@ -89,6 +89,7 @@ struct audit_field {
->  struct audit_task_info {
->  	kuid_t			loginuid;
->  	unsigned int		sessionid;
-> +	u64			contid;
->  #ifdef CONFIG_AUDITSYSCALL
->  	struct audit_context	*ctx;
->  #endif
-> @@ -189,6 +190,15 @@ static inline unsigned int audit_get_sessionid(struct task_struct *tsk)
->  	return tsk->audit->sessionid;
->  }
->  
-> +extern int audit_set_contid(struct task_struct *tsk, u64 contid);
-> +
-> +static inline u64 audit_get_contid(struct task_struct *tsk)
-> +{
-> +	if (!tsk->audit)
-> +		return AUDIT_CID_UNSET;
-> +	return tsk->audit->contid;
-> +}
-> +
->  extern u32 audit_enabled;
->  #else /* CONFIG_AUDIT */
->  static inline int audit_alloc(struct task_struct *task)
-> @@ -250,6 +260,11 @@ static inline unsigned int audit_get_sessionid(struct task_struct *tsk)
->  	return AUDIT_SID_UNSET;
->  }
->  
-> +static inline u64 audit_get_contid(struct task_struct *tsk)
-> +{
-> +	return AUDIT_CID_UNSET;
-> +}
-> +
->  #define audit_enabled AUDIT_OFF
->  #endif /* CONFIG_AUDIT */
->  
-> @@ -606,6 +621,16 @@ static inline bool audit_loginuid_set(struct task_struct *tsk)
->  	return uid_valid(audit_get_loginuid(tsk));
->  }
->  
-> +static inline bool audit_contid_valid(u64 contid)
-> +{
-> +	return contid != AUDIT_CID_UNSET;
-> +}
-> +
-> +static inline bool audit_contid_set(struct task_struct *tsk)
-> +{
-> +	return audit_contid_valid(audit_get_contid(tsk));
-> +}
-> +
->  static inline void audit_log_string(struct audit_buffer *ab, const char *buf)
->  {
->  	audit_log_n_string(ab, buf, strlen(buf));
-> diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
-> index 3901c51c0b93..4a6a8bf1de32 100644
-> --- a/include/uapi/linux/audit.h
-> +++ b/include/uapi/linux/audit.h
-> @@ -71,6 +71,7 @@
->  #define AUDIT_TTY_SET		1017	/* Set TTY auditing status */
->  #define AUDIT_SET_FEATURE	1018	/* Turn an audit feature on or off */
->  #define AUDIT_GET_FEATURE	1019	/* Get which features are enabled */
-> +#define AUDIT_CONTAINER_OP	1020	/* Define the container id and info */
->  
->  #define AUDIT_FIRST_USER_MSG	1100	/* Userspace messages mostly uninteresting to kernel */
->  #define AUDIT_USER_AVC		1107	/* We filter this differently */
-> @@ -485,6 +486,7 @@ struct audit_tty_status {
->  
->  #define AUDIT_UID_UNSET (unsigned int)-1
->  #define AUDIT_SID_UNSET ((unsigned int)-1)
-> +#define AUDIT_CID_UNSET ((u64)-1)
->  
->  /* audit_rule_data supports filter rules with both integer and string
->   * fields.  It corresponds with AUDIT_ADD_RULE, AUDIT_DEL_RULE and
-> diff --git a/kernel/audit.c b/kernel/audit.c
-> index 3fb09783cd4a..182b0f2c183d 100644
-> --- a/kernel/audit.c
-> +++ b/kernel/audit.c
-> @@ -244,6 +244,7 @@ int audit_alloc(struct task_struct *tsk)
->  	}
->  	info->loginuid = audit_get_loginuid(current);
->  	info->sessionid = audit_get_sessionid(current);
-> +	info->contid = audit_get_contid(current);
->  	tsk->audit = info;
->  
->  	ret = audit_alloc_syscall(tsk);
-> @@ -258,6 +259,7 @@ int audit_alloc(struct task_struct *tsk)
->  struct audit_task_info init_struct_audit = {
->  	.loginuid = INVALID_UID,
->  	.sessionid = AUDIT_SID_UNSET,
-> +	.contid = AUDIT_CID_UNSET,
->  #ifdef CONFIG_AUDITSYSCALL
->  	.ctx = NULL,
->  #endif
-> @@ -2341,6 +2343,73 @@ int audit_set_loginuid(kuid_t loginuid)
->  }
->  
->  /**
-> + * audit_set_contid - set current task's audit contid
-> + * @contid: contid value
-> + *
-> + * Returns 0 on success, -EPERM on permission failure.
-> + *
-> + * Called (set) from fs/proc/base.c::proc_contid_write().
-> + */
-> +int audit_set_contid(struct task_struct *task, u64 contid)
-> +{
-> +	u64 oldcontid;
-> +	int rc = 0;
-> +	struct audit_buffer *ab;
-> +	uid_t uid;
-> +	struct tty_struct *tty;
-> +	char comm[sizeof(current->comm)];
-> +
-> +	task_lock(task);
-> +	/* Can't set if audit disabled */
-> +	if (!task->audit) {
-> +		task_unlock(task);
-> +		return -ENOPROTOOPT;
-> +	}
-> +	oldcontid = audit_get_contid(task);
-> +	read_lock(&tasklist_lock);
-> +	/* Don't allow the audit containerid to be unset */
-> +	if (!audit_contid_valid(contid))
-> +		rc = -EINVAL;
-> +	/* if we don't have caps, reject */
-> +	else if (!capable(CAP_AUDIT_CONTROL))
-> +		rc = -EPERM;
-> +	/* if task has children or is not single-threaded, deny */
-> +	else if (!list_empty(&task->children))
-> +		rc = -EBUSY;
-> +	else if (!(thread_group_leader(task) && thread_group_empty(task)))
-> +		rc = -EALREADY;
-> +	read_unlock(&tasklist_lock);
-> +	if (!rc)
-> +		task->audit->contid = contid;
-> +	task_unlock(task);
-> +
-> +	if (!audit_enabled)
-> +		return rc;
-> +
-> +	ab = audit_log_start(audit_context(), GFP_KERNEL, AUDIT_CONTAINER_OP);
-> +	if (!ab)
-> +		return rc;
-> +
-> +	uid = from_kuid(&init_user_ns, task_uid(current));
-> +	tty = audit_get_tty();
-> +	audit_log_format(ab,
-> +			 "op=set opid=%d contid=%llu old-contid=%llu pid=%d uid=%u auid=%u tty=%s ses=%u",
-> +			 task_tgid_nr(task), contid, oldcontid,
-> +			 task_tgid_nr(current), uid,
-> +			 from_kuid(&init_user_ns, audit_get_loginuid(current)),
-> +			 tty ? tty_name(tty) : "(none)",
-> +			 audit_get_sessionid(current));
-> +	audit_put_tty(tty);
-> +	audit_log_task_context(ab);
-> +	audit_log_format(ab, " comm=");
-> +	audit_log_untrustedstring(ab, get_task_comm(comm, current));
-> +	audit_log_d_path_exe(ab, current->mm);
-> +	audit_log_format(ab, " res=%d", !rc);
-> +	audit_log_end(ab);
-> +	return rc;
-> +}
-> +
-> +/**
->   * audit_log_end - end one audit record
->   * @ab: the audit_buffer
->   *
-> diff --git a/kernel/audit.h b/kernel/audit.h
-> index c00e2ee3c6b3..e2912924af0d 100644
-> --- a/kernel/audit.h
-> +++ b/kernel/audit.h
-> @@ -148,6 +148,7 @@ struct audit_context {
->  	kuid_t		    target_uid;
->  	unsigned int	    target_sessionid;
->  	u32		    target_sid;
-> +	u64		    target_cid;
->  	char		    target_comm[TASK_COMM_LEN];
->  
->  	struct audit_tree_refs *trees, *first_trees;
-> diff --git a/kernel/auditsc.c b/kernel/auditsc.c
-> index fd7ca983de4f..1f7edf035b16 100644
-> --- a/kernel/auditsc.c
-> +++ b/kernel/auditsc.c
-> @@ -113,6 +113,7 @@ struct audit_aux_data_pids {
->  	kuid_t			target_uid[AUDIT_AUX_PIDS];
->  	unsigned int		target_sessionid[AUDIT_AUX_PIDS];
->  	u32			target_sid[AUDIT_AUX_PIDS];
-> +	u64			target_cid[AUDIT_AUX_PIDS];
->  	char 			target_comm[AUDIT_AUX_PIDS][TASK_COMM_LEN];
->  	int			pid_count;
->  };
-> @@ -2368,6 +2369,7 @@ void __audit_ptrace(struct task_struct *t)
->  	context->target_uid = task_uid(t);
->  	context->target_sessionid = audit_get_sessionid(t);
->  	security_task_getsecid(t, &context->target_sid);
-> +	context->target_cid = audit_get_contid(t);
->  	memcpy(context->target_comm, t->comm, TASK_COMM_LEN);
->  }
->  
-> @@ -2408,6 +2410,7 @@ int audit_signal_info(int sig, struct task_struct *t)
->  		ctx->target_uid = t_uid;
->  		ctx->target_sessionid = audit_get_sessionid(t);
->  		security_task_getsecid(t, &ctx->target_sid);
-> +		ctx->target_cid = audit_get_contid(t);
->  		memcpy(ctx->target_comm, t->comm, TASK_COMM_LEN);
->  		return 0;
->  	}
-> @@ -2429,6 +2432,7 @@ int audit_signal_info(int sig, struct task_struct *t)
->  	axp->target_uid[axp->pid_count] = t_uid;
->  	axp->target_sessionid[axp->pid_count] = audit_get_sessionid(t);
->  	security_task_getsecid(t, &axp->target_sid[axp->pid_count]);
-> +	axp->target_cid[axp->pid_count] = audit_get_contid(t);
->  	memcpy(axp->target_comm[axp->pid_count], t->comm, TASK_COMM_LEN);
->  	axp->pid_count++;
+>>   		} else
+>>   			break;
+>>   	}
+>> @@ -961,10 +967,21 @@ static long do_get_mempolicy(int *policy, nodemask_t *nmask,
+>>   /*
+>>    * page migration, thp tail pages can be passed.
+>>    */
+>> -static void migrate_page_add(struct page *page, struct list_head *pagelist,
+>> +static int migrate_page_add(struct page *page, struct list_head *pagelist,
+>>   				unsigned long flags)
+>>   {
+>>   	struct page *head = compound_head(page);
+>> +
+>> +	/*
+>> +	 * Non-movable page may reach here.  And, there may be
+>> +	 * temporary off LRU pages or non-LRU movable pages.
+>> +	 * Treat them as unmovable pages since they can't be
+>> +	 * isolated, so they can't be moved at the moment.  It
+>> +	 * should return -EIO for this case too.
+>> +	 */
+>> +	if (!PageLRU(head) && (flags & MPOL_MF_STRICT))
+>> +		return -EIO;
+> As this test is racy, why not just use the result of isolate_lru_page().
+
+Sounds good to me. Will fix in v4.
+
+Thanks,
+Yang
+
+>
+>> +
+>>   	/*
+>>   	 * Avoid migrating a page that is shared with others.
+>>   	 */
+>> @@ -976,6 +993,8 @@ static void migrate_page_add(struct page *page, struct list_head *pagelist,
+>>   				hpage_nr_pages(head));
+>>   		}
+>>   	}
+>> +
+>> +	return 0;
+>>   }
+>>   
+>>   /* page allocation callback for NUMA node migration */
+>> @@ -1178,9 +1197,10 @@ static struct page *new_page(struct page *page, unsigned long start)
+>>   }
+>>   #else
+>>   
+>> -static void migrate_page_add(struct page *page, struct list_head *pagelist,
+>> +static int migrate_page_add(struct page *page, struct list_head *pagelist,
+>>   				unsigned long flags)
+>>   {
+>> +	return -EIO;
+>>   }
+>>   
+>>   int do_migrate_pages(struct mm_struct *mm, const nodemask_t *from,
+>>
