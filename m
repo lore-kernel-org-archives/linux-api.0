@@ -1,12 +1,12 @@
 From: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
-Subject: [PATCH bpf-next v10 06/10] bpf,landlock: Add a new map type: inode
-Date: Sun, 21 Jul 2019 23:31:12 +0200
-Message-ID: <20190721213116.23476-7-mic@digikod.net>
+Subject: [PATCH bpf-next v10 09/10] bpf,landlock: Add tests for Landlock
+Date: Sun, 21 Jul 2019 23:31:15 +0200
+Message-ID: <20190721213116.23476-10-mic@digikod.net>
 References: <20190721213116.23476-1-mic@digikod.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
-Return-path: <kernel-hardening-return-16512-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+Return-path: <kernel-hardening-return-16515-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
 List-Post: <mailto:kernel-hardening@lists.openwall.com>
 List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
 List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
@@ -16,25 +16,7 @@ To: linux-kernel@vger.kernel.org
 Cc: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>, Alexander Viro <viro@zeniv.linux.org.uk>, Alexei Starovoitov <ast@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <jmorris@namei.org>, Jann Horn <jann@thejh.net>, John Johansen <john.johansen@canonical.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Michael Kerrisk <mtk.manpages@gmail.com>, =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mickael.salaun@ssi.gouv.fr>, Paul
 List-Id: linux-api@vger.kernel.org
 
-FIXME: 64-bits in the doc
-
-This new map store arbitrary values referenced by inode keys.  The map
-can be updated from user space with file descriptor pointing to inodes
-tied to a file system.  From an eBPF (Landlock) program point of view,
-such a map is read-only and can only be used to retrieved a value tied
-to a given inode.  This is useful to recognize an inode tagged by user
-space, without access right to this inode (i.e. no need to have a write
-access to this inode).
-
-Add dedicated BPF functions to handle this type of map:
-* bpf_inode_htab_map_update_elem()
-* bpf_inode_htab_map_lookup_elem()
-* bpf_inode_htab_map_delete_elem()
-
-This new map require a dedicated helper inode_map_lookup_elem() because
-of the key which is a pointer to an opaque data (only provided by the
-kernel).  This act like a (physical or cryptographic) key, which is why
-it is also not allowed to get the next key.
+Test basic context access, ptrace protection and filesystem hooks.
 
 Signed-off-by: Mickaël Salaün <mic@digikod.net>
 Cc: Alexei Starovoitov <ast@kernel.org>
@@ -44,855 +26,674 @@ Cc: David S. Miller <davem@davemloft.net>
 Cc: James Morris <jmorris@namei.org>
 Cc: Kees Cook <keescook@chromium.org>
 Cc: Serge E. Hallyn <serge@hallyn.com>
-Cc: Jann Horn <jann@thejh.net>
+Cc: Shuah Khan <shuah@kernel.org>
+Cc: Will Drewry <wad@chromium.org>
 ---
 
 Changes since v9:
-* use a hash map for the inode map: integrate inodemap.c into hashtab.c
-  * add map_put_key() to struct bpf_map_ops to enable to put an inode
-    reference used as key
-  * allow arbitrary value size instead of 64-bits
-* handle inode and map lifetime with LSM hooks
-* check access for inode lookup via syscall: similar to adding xattr,
-  except it does not touch the file system (which is handy for read-only
-  ones)
-* force read-only inode map for Landlock programs
+* replace subtype with expected_attach_type and expected_attach_triggers
 * rename inode_map_lookup() into inode_map_lookup_elem()
-* fix inode and mnt checks (suggested by Al Viro)
+* check for inode map entry without value (which is now possible thanks
+  to the pointer null check)
+* use read-only inode map for Landlock programs
 
 Changes since v8:
-* remove prog chaining and object tagging to ease review
-* use bpf_map_init_from_attr()
+* update eBPF include path for macros
+* use TEST_GEN_PROGS and use the generic "clean" target
+* add more verbose errors
+* update the bpf/verifier files
+* remove chain tests (from landlock and bpf/verifier)
+* replace the whitelist tests with blacklist tests (because of stateless
+  Landlock programs): remove "dotdot" tests and other depth tests
+* sync the landlock Makefile with its bpf sibling directory and use
+  bpf_load_program_xattr()
 
 Changes since v7:
-* new design with a dedicated map and a BPF function to tie a value to
-  an inode
-* add the ability to set or get a tag on an inode from a Landlock
-  program
+* update tests and add new ones for filesystem hierarchy and Landlock
+  chains.
 
 Changes since v6:
-* remove WARN_ON() for missing dentry->d_inode
-* refactor bpf_landlock_func_proto() (suggested by Kees Cook)
+* use the new kselftest_harness.h
+* use const variables
+* replace ASSERT_STEP with ASSERT_*
+* rename BPF_PROG_TYPE_LANDLOCK to BPF_PROG_TYPE_LANDLOCK_RULE
+* force sample library rebuild
+* fix install target
 
 Changes since v5:
-* cosmetic fixes and rebase
-
-Changes since v4:
-* use a file abstraction (handle) to wrap inode, dentry, path and file
-  structs
-* remove bpf_landlock_cmp_fs_beneath()
-* rename the BPF helper and move it to kernel/bpf/
-* tighten helpers accessible by a Landlock rule
-
-Changes since v3:
-* remove bpf_landlock_cmp_fs_prop() (suggested by Alexei Starovoitov)
-* add hooks dealing with struct inode and struct path pointers:
-  inode_permission and inode_getattr
-* add abstraction over eBPF helper arguments thanks to wrapping structs
-* add bpf_landlock_get_fs_mode() helper to check file type and mode
-* merge WARN_ON() (suggested by Kees Cook)
-* fix and update bpf_helpers.h
-* use BPF_CALL_* for eBPF helpers (suggested by Alexei Starovoitov)
-* make handle arraymap safe (RCU) and remove buggy synchronize_rcu()
-* factor out the arraymay walk
-* use size_t to index array (suggested by Jann Horn)
-
-Changes since v2:
-* add MNT_INTERNAL check to only add file handle from user-visible FS
-  (e.g. no anonymous inode)
-* replace struct file* with struct path* in map_landlock_handle
-* add BPF protos
-* fix bpf_landlock_cmp_fs_prop_with_struct_file()
+* add subtype test
+* add ptrace tests
+* split and rename files
+* cleanup and rebase
 ---
- include/linux/bpf.h            |  16 +++
- include/linux/bpf_types.h      |   3 +
- include/linux/landlock.h       |   4 +
- include/uapi/linux/bpf.h       |  12 +-
- kernel/bpf/core.c              |   2 +
- kernel/bpf/hashtab.c           | 253 +++++++++++++++++++++++++++++++++
- kernel/bpf/syscall.c           |  27 +++-
- kernel/bpf/verifier.c          |  14 ++
- security/landlock/common.h     |  14 ++
- security/landlock/hooks_fs.c   |  85 +++++++++++
- security/landlock/init.c       |  13 ++
- tools/include/uapi/linux/bpf.h |  12 +-
- tools/lib/bpf/libbpf_probes.c  |   1 +
- 13 files changed, 453 insertions(+), 3 deletions(-)
+ tools/testing/selftests/Makefile              |   1 +
+ tools/testing/selftests/bpf/test_verifier.c   |   1 +
+ .../testing/selftests/bpf/verifier/landlock.c |  24 ++
+ tools/testing/selftests/landlock/.gitignore   |   4 +
+ tools/testing/selftests/landlock/Makefile     |  39 +++
+ tools/testing/selftests/landlock/test.h       |  50 ++++
+ tools/testing/selftests/landlock/test_base.c  |  24 ++
+ tools/testing/selftests/landlock/test_fs.c    | 256 ++++++++++++++++++
+ .../testing/selftests/landlock/test_ptrace.c  | 148 ++++++++++
+ 9 files changed, 547 insertions(+)
+ create mode 100644 tools/testing/selftests/bpf/verifier/landlock.c
+ create mode 100644 tools/testing/selftests/landlock/.gitignore
+ create mode 100644 tools/testing/selftests/landlock/Makefile
+ create mode 100644 tools/testing/selftests/landlock/test.h
+ create mode 100644 tools/testing/selftests/landlock/test_base.c
+ create mode 100644 tools/testing/selftests/landlock/test_fs.c
+ create mode 100644 tools/testing/selftests/landlock/test_ptrace.c
 
-diff --git a/include/linux/bpf.h b/include/linux/bpf.h
-index 6d9c7a08713e..c507438e56b5 100644
---- a/include/linux/bpf.h
-+++ b/include/linux/bpf.h
-@@ -47,6 +47,7 @@ struct bpf_map_ops {
- 	void *(*map_fd_get_ptr)(struct bpf_map *map, struct file *map_file,
- 				int fd);
- 	void (*map_fd_put_ptr)(void *ptr);
-+	void (*map_put_key)(void *key);
- 	u32 (*map_gen_lookup)(struct bpf_map *map, struct bpf_insn *insn_buf);
- 	u32 (*map_fd_sys_lookup_elem)(void *ptr);
- 	void (*map_seq_show_elem)(struct bpf_map *map, void *key,
-@@ -208,6 +209,8 @@ enum bpf_arg_type {
- 	ARG_PTR_TO_INT,		/* pointer to int */
- 	ARG_PTR_TO_LONG,	/* pointer to long */
- 	ARG_PTR_TO_SOCKET,	/* pointer to bpf_sock (fullsock) */
-+
-+	ARG_PTR_TO_INODE,	/* pointer to a struct inode */
- };
- 
- /* type of values returned from helper functions */
-@@ -278,6 +281,7 @@ enum bpf_reg_type {
- 	PTR_TO_TCP_SOCK_OR_NULL, /* reg points to struct tcp_sock or NULL */
- 	PTR_TO_TP_BUFFER,	 /* reg points to a writable raw tp's buffer */
- 	PTR_TO_XDP_SOCK,	 /* reg points to struct xdp_sock */
-+	PTR_TO_INODE,		 /* reg points to struct inode */
- };
- 
- /* The information passed from prog-specific *_is_valid_access
-@@ -479,6 +483,7 @@ struct bpf_event_entry {
- 	struct rcu_head rcu;
- };
- 
-+
- bool bpf_prog_array_compatible(struct bpf_array *array, const struct bpf_prog *fp);
- int bpf_prog_calc_tag(struct bpf_prog *fp);
- 
-@@ -684,6 +689,16 @@ int bpf_fd_array_map_lookup_elem(struct bpf_map *map, void *key, u32 *value);
- int bpf_fd_htab_map_update_elem(struct bpf_map *map, struct file *map_file,
- 				void *key, void *value, u64 map_flags);
- int bpf_fd_htab_map_lookup_elem(struct bpf_map *map, void *key, u32 *value);
-+int bpf_inode_fd_htab_map_lookup_elem(struct bpf_map *map, int *key, void *value);
-+int bpf_inode_fd_htab_map_delete_elem(struct bpf_map *map, int *key);
-+int bpf_inode_ptr_unlocked_htab_map_delete_elem(struct bpf_map *map,
-+						struct inode **key,
-+						bool remove_in_inode);
-+int bpf_inode_ptr_locked_htab_map_delete_elem(struct bpf_map *map,
-+					      struct inode **key,
-+					      bool remove_in_inode);
-+int bpf_inode_fd_htab_map_update_elem(struct bpf_map *map, int *key,
-+				      void *value, u64 map_flags);
- 
- int bpf_get_file_flag(int flags);
- int bpf_check_uarg_tail_zero(void __user *uaddr, size_t expected_size,
-@@ -1055,6 +1070,7 @@ extern const struct bpf_func_proto bpf_get_local_storage_proto;
- extern const struct bpf_func_proto bpf_strtol_proto;
- extern const struct bpf_func_proto bpf_strtoul_proto;
- extern const struct bpf_func_proto bpf_tcp_sock_proto;
-+extern const struct bpf_func_proto bpf_inode_map_lookup_elem_proto;
- 
- /* Shared helpers among cBPF and eBPF. */
- void bpf_user_rnd_init_once(void);
-diff --git a/include/linux/bpf_types.h b/include/linux/bpf_types.h
-index 2ab647323f3a..ea177818d67e 100644
---- a/include/linux/bpf_types.h
-+++ b/include/linux/bpf_types.h
-@@ -80,3 +80,6 @@ BPF_MAP_TYPE(BPF_MAP_TYPE_REUSEPORT_SOCKARRAY, reuseport_array_ops)
- #endif
- BPF_MAP_TYPE(BPF_MAP_TYPE_QUEUE, queue_map_ops)
- BPF_MAP_TYPE(BPF_MAP_TYPE_STACK, stack_map_ops)
-+#ifdef CONFIG_SECURITY_LANDLOCK
-+BPF_MAP_TYPE(BPF_MAP_TYPE_INODE, htab_inode_ops)
-+#endif
-diff --git a/include/linux/landlock.h b/include/linux/landlock.h
-index 8ac7942f50fc..731b89cdf977 100644
---- a/include/linux/landlock.h
-+++ b/include/linux/landlock.h
-@@ -9,6 +9,7 @@
- #ifndef _LINUX_LANDLOCK_H
- #define _LINUX_LANDLOCK_H
- 
-+#include <linux/bpf.h>
- #include <linux/errno.h>
- #include <linux/sched.h> /* task_struct */
- 
-@@ -31,4 +32,7 @@ static inline void get_seccomp_landlock(struct task_struct *tsk)
- }
- #endif /* CONFIG_SECCOMP_FILTER && CONFIG_SECURITY_LANDLOCK */
- 
-+int landlock_inode_add_map(struct inode *inode, struct bpf_map *map);
-+void landlock_inode_remove_map(struct inode *inode, const struct bpf_map *map);
-+
- #endif /* _LINUX_LANDLOCK_H */
-diff --git a/include/uapi/linux/bpf.h b/include/uapi/linux/bpf.h
-index d68613f737f3..2da054ca9c8b 100644
---- a/include/uapi/linux/bpf.h
-+++ b/include/uapi/linux/bpf.h
-@@ -134,6 +134,7 @@ enum bpf_map_type {
- 	BPF_MAP_TYPE_QUEUE,
- 	BPF_MAP_TYPE_STACK,
- 	BPF_MAP_TYPE_SK_STORAGE,
-+	BPF_MAP_TYPE_INODE,
- };
- 
- /* Note that tracing related programs such as
-@@ -2717,6 +2718,14 @@ union bpf_attr {
-  *		**-EPERM** if no permission to send the *sig*.
-  *
-  *		**-EAGAIN** if bpf program can try again.
-+ *
-+ * void *bpf_inode_map_lookup_elem(struct bpf_map *map, const void *key)
-+ *	Description
-+ *		Perform a lookup in *map* for an entry associated to an inode
-+ *		*key*.
-+ *	Return
-+ *		Map value associated to *key*, or **NULL** if no entry was
-+ *		found.
-  */
- #define __BPF_FUNC_MAPPER(FN)		\
- 	FN(unspec),			\
-@@ -2828,7 +2837,8 @@ union bpf_attr {
- 	FN(strtoul),			\
- 	FN(sk_storage_get),		\
- 	FN(sk_storage_delete),		\
--	FN(send_signal),
-+	FN(send_signal),		\
-+	FN(inode_map_lookup_elem),
- 
- /* integer value in 'imm' field of BPF_CALL instruction selects which helper
-  * function eBPF program intends to call
-diff --git a/kernel/bpf/core.c b/kernel/bpf/core.c
-index 16079550db6d..4177c818e5cd 100644
---- a/kernel/bpf/core.c
-+++ b/kernel/bpf/core.c
-@@ -2040,6 +2040,8 @@ const struct bpf_func_proto bpf_get_current_comm_proto __weak;
- const struct bpf_func_proto bpf_get_current_cgroup_id_proto __weak;
- const struct bpf_func_proto bpf_get_local_storage_proto __weak;
- 
-+const struct bpf_func_proto bpf_inode_map_update_proto __weak;
-+
- const struct bpf_func_proto * __weak bpf_get_trace_printk_proto(void)
- {
- 	return NULL;
-diff --git a/kernel/bpf/hashtab.c b/kernel/bpf/hashtab.c
-index 22066a62c8c9..4fc7755042f0 100644
---- a/kernel/bpf/hashtab.c
-+++ b/kernel/bpf/hashtab.c
-@@ -1,13 +1,21 @@
- // SPDX-License-Identifier: GPL-2.0-only
- /* Copyright (c) 2011-2014 PLUMgrid, http://plumgrid.com
-  * Copyright (c) 2016 Facebook
-+ * Copyright (c) 2017-2019 Mickaël Salaün <mic@digikod.net>
-+ * Copyright (c) 2019 ANSSI
-  */
-+#include <asm/resource.h> /* RLIMIT_NOFILE */
+diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
+index 25b43a8c2b15..1949fbb3098e 100644
+--- a/tools/testing/selftests/Makefile
++++ b/tools/testing/selftests/Makefile
+@@ -21,6 +21,7 @@ TARGETS += ir
+ TARGETS += kcmp
+ TARGETS += kexec
+ TARGETS += kvm
++TARGETS += landlock
+ TARGETS += lib
+ TARGETS += livepatch
+ TARGETS += membarrier
+diff --git a/tools/testing/selftests/bpf/test_verifier.c b/tools/testing/selftests/bpf/test_verifier.c
+index b0773291012a..b8542431c78b 100644
+--- a/tools/testing/selftests/bpf/test_verifier.c
++++ b/tools/testing/selftests/bpf/test_verifier.c
+@@ -30,6 +30,7 @@
  #include <linux/bpf.h>
+ #include <linux/if_ether.h>
  #include <linux/btf.h>
-+#include <linux/err.h>
- #include <linux/jhash.h>
-+#include <linux/fs.h> /* iput() */
- #include <linux/filter.h>
 +#include <linux/landlock.h>
-+#include <linux/mount.h> /* MNT_INTERNAL */
- #include <linux/rculist_nulls.h>
- #include <linux/random.h>
-+#include <linux/sched/signal.h> /* rlimit() */
- #include <uapi/linux/btf.h>
- #include "percpu_freelist.h"
- #include "bpf_lru_list.h"
-@@ -684,6 +692,8 @@ static void free_htab_elem(struct bpf_htab *htab, struct htab_elem *l)
  
- 		map->ops->map_fd_put_ptr(ptr);
- 	}
-+	if (map->ops->map_put_key)
-+		map->ops->map_put_key(l->key);
- 
- 	if (htab_is_prealloc(htab)) {
- 		__pcpu_freelist_push(&htab->freelist, &l->fnode);
-@@ -1514,3 +1524,246 @@ const struct bpf_map_ops htab_of_maps_map_ops = {
- 	.map_gen_lookup = htab_of_map_gen_lookup,
- 	.map_check_btf = map_check_no_btf,
- };
-+
-+/* inode_htab */
-+
-+static int inode_htab_map_alloc_check(union bpf_attr *attr)
+ #include <bpf/bpf.h>
+ #include <bpf/libbpf.h>
+diff --git a/tools/testing/selftests/bpf/verifier/landlock.c b/tools/testing/selftests/bpf/verifier/landlock.c
+new file mode 100644
+index 000000000000..eaf6dddbf208
+--- /dev/null
++++ b/tools/testing/selftests/bpf/verifier/landlock.c
+@@ -0,0 +1,24 @@
 +{
-+	/* only allow root to create this type of map (for now), should be
-+	 * removed when Landlock will be usable by unprivileged users */
-+	if (!capable(CAP_SYS_ADMIN))
-+		return -EPERM;
-+
-+	/* the key is a file descriptor */
-+	if (attr->max_entries == 0 || attr->key_size != sizeof(int) ||
-+	    (attr->map_flags & ~(BPF_F_RDONLY | BPF_F_WRONLY |
-+				 BPF_F_RDONLY_PROG)) ||
-+	    /* for now, force read-only map for eBPF programs because only
-+	     * bpf_inode_map_lookup_elem() enable to access them */
-+	    !(attr->map_flags & BPF_F_RDONLY_PROG) ||
-+	    bpf_map_attr_numa_node(attr) != NUMA_NO_NODE)
-+		return -EINVAL;
-+
-+	/*
-+	 * Limit number of entries in an inode map to the maximum number of
-+	 * open files for the current process. The maximum number of file
-+	 * references (including all inode maps) for a process is then
-+	 * (RLIMIT_NOFILE - 1) * RLIMIT_NOFILE. If the process' RLIMIT_NOFILE
-+	 * is 0, then any entry update is forbidden.
-+	 *
-+	 * An eBPF program can inherit all the inode map FD. The worse case is
-+	 * to fill a bunch of arraymaps, create an eBPF program, close the
-+	 * inode map FDs, and start again. The maximum number of inode map
-+	 * entries can then be close to RLIMIT_NOFILE^3.
-+	 */
-+	if (attr->max_entries > rlimit(RLIMIT_NOFILE))
-+		return -EMFILE;
-+
-+	/* decorelate UAPI from kernel API */
-+	attr->key_size = sizeof(struct inode *);
-+
-+	return htab_map_alloc_check(attr);
-+}
-+
-+static void inode_htab_put_key(void *key)
++	"landlock/fs_walk: always accept",
++	.insns = {
++		BPF_MOV32_IMM(BPF_REG_0, 0),
++		BPF_EXIT_INSN(),
++	},
++	.result = ACCEPT,
++	.prog_type = BPF_PROG_TYPE_LANDLOCK_HOOK,
++	.expected_attach_type = BPF_LANDLOCK_FS_WALK,
++},
 +{
-+	struct inode **inode = key;
++	"landlock/fs_pick: read context",
++	.insns = {
++		BPF_MOV64_REG(BPF_REG_6, BPF_REG_1),
++		BPF_LDX_MEM(BPF_DW, BPF_REG_7, BPF_REG_6,
++			offsetof(struct landlock_ctx_fs_pick, inode)),
++		BPF_MOV32_IMM(BPF_REG_0, 0),
++		BPF_EXIT_INSN(),
++	},
++	.result = ACCEPT,
++	.prog_type = BPF_PROG_TYPE_LANDLOCK_HOOK,
++	.expected_attach_type = BPF_LANDLOCK_FS_PICK,
++	.expected_attach_triggers = LANDLOCK_TRIGGER_FS_PICK_READ,
++},
+diff --git a/tools/testing/selftests/landlock/.gitignore b/tools/testing/selftests/landlock/.gitignore
+new file mode 100644
+index 000000000000..25b9cd834c3c
+--- /dev/null
++++ b/tools/testing/selftests/landlock/.gitignore
+@@ -0,0 +1,4 @@
++/test_base
++/test_fs
++/test_ptrace
++/tmp_*
+diff --git a/tools/testing/selftests/landlock/Makefile b/tools/testing/selftests/landlock/Makefile
+new file mode 100644
+index 000000000000..7a253bf6d580
+--- /dev/null
++++ b/tools/testing/selftests/landlock/Makefile
+@@ -0,0 +1,39 @@
++LIBDIR := ../../../lib
++BPFDIR := $(LIBDIR)/bpf
++APIDIR := ../../../include/uapi
++GENDIR := ../../../../include/generated
++GENHDR := $(GENDIR)/autoconf.h
 +
-+	if ((*inode)->i_state & I_FREEING)
-+		return;
-+	iput(*inode);
-+}
++ifneq ($(wildcard $(GENHDR)),)
++  GENFLAGS := -DHAVE_GENHDR
++endif
 +
-+/* called from syscall or (never) from eBPF program */
-+static int map_get_next_no_key(struct bpf_map *map, void *key, void *next_key)
-+{
-+	/* do not leak a file descriptor */
-+	return -ENOTSUPP;
-+}
++BPFOBJS := $(BPFDIR)/bpf.o $(BPFDIR)/nlattr.o
++LOADOBJ := ../../../../samples/bpf/bpf_load.o
 +
-+/* must call iput(inode) after this call */
-+static struct inode *inode_from_fd(int ufd, bool check_access)
-+{
-+	struct inode *ret;
-+	struct fd f;
-+	int deny;
++CFLAGS += -Wl,-no-as-needed -Wall -O2 -I$(APIDIR) -I$(LIBDIR) -I$(BPFDIR) -I$(GENDIR) $(GENFLAGS) -I../../../include
++LDFLAGS += -lelf
 +
-+	f = fdget(ufd);
-+	if (unlikely(!f.file))
-+		return ERR_PTR(-EBADF);
-+	/* TODO?: add this check when called from an eBPF program too (already
-+	* checked by the LSM parent hooks anyway) */
-+	if (unlikely(IS_PRIVATE(file_inode(f.file)))) {
-+		ret = ERR_PTR(-EINVAL);
-+		goto put_fd;
-+	}
-+	/* check if the FD is tied to a mount point */
-+	/* TODO?: add this check when called from an eBPF program too */
-+	if (unlikely(f.file->f_path.mnt->mnt_flags & MNT_INTERNAL)) {
-+		ret = ERR_PTR(-EINVAL);
-+		goto put_fd;
-+	}
-+	if (check_access) {
-+		/*
-+		* must be allowed to access attributes from this file to then
-+		* be able to compare an inode to its map entry
-+		*/
-+		deny = security_inode_getattr(&f.file->f_path);
-+		if (deny) {
-+			ret = ERR_PTR(deny);
-+			goto put_fd;
-+		}
-+	}
-+	ret = file_inode(f.file);
-+	ihold(ret);
++test_src = $(wildcard test_*.c)
 +
-+put_fd:
-+	fdput(f);
-+	return ret;
-+}
++test_objs := $(test_src:.c=)
 +
++TEST_GEN_PROGS := $(test_objs)
++
++.PHONY: all clean force
++
++all: $(test_objs)
++
++# force a rebuild of BPFOBJS when its dependencies are updated
++force:
++
++# rebuild bpf.o as a workaround for the samples/bpf bug
++$(BPFOBJS): $(LOADOBJ) force
++	$(MAKE) -C $(BPFDIR)
++
++$(LOADOBJ): force
++	$(MAKE) -C $(dir $(LOADOBJ))
++
++$(test_objs): $(BPFOBJS) $(LOADOBJ) ../kselftest_harness.h
++
++include ../lib.mk
+diff --git a/tools/testing/selftests/landlock/test.h b/tools/testing/selftests/landlock/test.h
+new file mode 100644
+index 000000000000..e1e86a804180
+--- /dev/null
++++ b/tools/testing/selftests/landlock/test.h
+@@ -0,0 +1,50 @@
++/* SPDX-License-Identifier: GPL-2.0 */
 +/*
-+ * The key is a FD when called from a syscall, but an inode address when called
-+ * from an eBPF program.
-+ */
-+
-+/* called from syscall */
-+int bpf_inode_fd_htab_map_lookup_elem(struct bpf_map *map, int *key, void *value)
-+{
-+	void *ptr;
-+	struct inode *inode;
-+	int ret;
-+
-+	/* check inode access */
-+	inode = inode_from_fd(*key, true);
-+	if (IS_ERR(inode))
-+		return PTR_ERR(inode);
-+
-+	rcu_read_lock();
-+	ptr = htab_map_lookup_elem(map, &inode);
-+	iput(inode);
-+	if (IS_ERR(ptr)) {
-+		ret = PTR_ERR(ptr);
-+	} else if (!ptr) {
-+		ret = -ENOENT;
-+	} else {
-+		ret = 0;
-+		copy_map_value(map, value, ptr);
-+	}
-+	rcu_read_unlock();
-+	return ret;
-+}
-+
-+/* called from kernel */
-+int bpf_inode_ptr_locked_htab_map_delete_elem(struct bpf_map *map,
-+		struct inode **key, bool remove_in_inode)
-+{
-+	if (remove_in_inode)
-+		landlock_inode_remove_map(*key, map);
-+	return htab_map_delete_elem(map, key);
-+}
-+
-+/* called from syscall */
-+int bpf_inode_fd_htab_map_delete_elem(struct bpf_map *map, int *key)
-+{
-+	struct inode *inode;
-+	int ret;
-+
-+	/* do not check inode access (similar to directory check) */
-+	inode = inode_from_fd(*key, false);
-+	if (IS_ERR(inode))
-+		return PTR_ERR(inode);
-+	ret = bpf_inode_ptr_locked_htab_map_delete_elem(map, &inode, true);
-+	iput(inode);
-+	return ret;
-+}
-+
-+/* called from syscall */
-+int bpf_inode_fd_htab_map_update_elem(struct bpf_map *map, int *key, void *value,
-+		u64 map_flags)
-+{
-+	struct inode *inode;
-+	int ret;
-+
-+	WARN_ON_ONCE(!rcu_read_lock_held());
-+
-+	/* check inode access */
-+	inode = inode_from_fd(*key, true);
-+	if (IS_ERR(inode))
-+		return PTR_ERR(inode);
-+	ret = htab_map_update_elem(map, &inode, value, map_flags);
-+	if (!ret)
-+		ret = landlock_inode_add_map(inode, map);
-+	iput(inode);
-+	return ret;
-+}
-+
-+static void inode_htab_map_free(struct bpf_map *map)
-+{
-+	struct bpf_htab *htab = container_of(map, struct bpf_htab, map);
-+	struct hlist_nulls_node *n;
-+	struct hlist_nulls_head *head;
-+	struct htab_elem *l;
-+	int i;
-+
-+	for (i = 0; i < htab->n_buckets; i++) {
-+		head = select_bucket(htab, i);
-+		hlist_nulls_for_each_entry_safe(l, n, head, hash_node) {
-+			landlock_inode_remove_map(*((struct inode **)l->key), map);
-+		}
-+	}
-+	htab_map_free(map);
-+}
-+
-+/* use the map_inode_lookup_elem() helper instead */
-+static void *map_lookup_no_elem(struct bpf_map *map, void *key)
-+{
-+	WARN_ON_ONCE(1);
-+	return NULL;
-+}
-+
-+static int map_delete_no_elem(struct bpf_map *map, void *key)
-+{
-+	WARN_ON_ONCE(1);
-+	return -ENOTSUPP;
-+}
-+
-+static int map_update_no_elem(struct bpf_map *map, void *key, void *value,
-+		u64 flags)
-+{
-+	WARN_ON_ONCE(1);
-+	return -ENOTSUPP;
-+}
-+
-+const struct bpf_map_ops htab_inode_ops = {
-+	.map_alloc_check = inode_htab_map_alloc_check,
-+	.map_alloc = htab_map_alloc,
-+	.map_free = inode_htab_map_free,
-+	.map_put_key = inode_htab_put_key,
-+	.map_get_next_key = map_get_next_no_key,
-+	.map_lookup_elem = map_lookup_no_elem,
-+	.map_delete_elem = map_delete_no_elem,
-+	.map_update_elem = map_update_no_elem,
-+	.map_check_btf = map_check_no_btf,
-+};
-+
-+/*
-+ * We need a dedicated helper to deal with inode maps because the key is a
-+ * pointer to an opaque data, only provided by the kernel.  This really act
-+ * like a (physical or cryptographic) key, which is why it is also not allowed
-+ * to get the next key with map_get_next_key().
-+ */
-+BPF_CALL_2(bpf_inode_map_lookup_elem, struct bpf_map *, map, void *, key)
-+{
-+	WARN_ON_ONCE(!rcu_read_lock_held());
-+	return (unsigned long)htab_map_lookup_elem(map, &key);
-+}
-+
-+const struct bpf_func_proto bpf_inode_map_lookup_elem_proto = {
-+	.func		= bpf_inode_map_lookup_elem,
-+	.gpl_only	= false,
-+	.pkt_access	= true,
-+	.ret_type	= RET_PTR_TO_MAP_VALUE_OR_NULL,
-+	.arg1_type	= ARG_CONST_MAP_PTR,
-+	.arg2_type	= ARG_PTR_TO_INODE,
-+};
-diff --git a/kernel/bpf/syscall.c b/kernel/bpf/syscall.c
-index b2a8cb14f28e..e46441c42b68 100644
---- a/kernel/bpf/syscall.c
-+++ b/kernel/bpf/syscall.c
-@@ -801,6 +801,8 @@ static int map_lookup_elem(union bpf_attr *attr)
- 	} else if (map->map_type == BPF_MAP_TYPE_QUEUE ||
- 		   map->map_type == BPF_MAP_TYPE_STACK) {
- 		err = map->ops->map_peek_elem(map, value);
-+	} else if (map->map_type == BPF_MAP_TYPE_INODE) {
-+		err = bpf_inode_fd_htab_map_lookup_elem(map, key, value);
- 	} else {
- 		rcu_read_lock();
- 		if (map->ops->map_lookup_elem_sys_only)
-@@ -951,6 +953,10 @@ static int map_update_elem(union bpf_attr *attr)
- 	} else if (map->map_type == BPF_MAP_TYPE_QUEUE ||
- 		   map->map_type == BPF_MAP_TYPE_STACK) {
- 		err = map->ops->map_push_elem(map, value, attr->flags);
-+	} else if (map->map_type == BPF_MAP_TYPE_INODE) {
-+		rcu_read_lock();
-+		err = bpf_inode_fd_htab_map_update_elem(map, key, value, attr->flags);
-+		rcu_read_unlock();
- 	} else {
- 		rcu_read_lock();
- 		err = map->ops->map_update_elem(map, key, value, attr->flags);
-@@ -1006,7 +1012,10 @@ static int map_delete_elem(union bpf_attr *attr)
- 	preempt_disable();
- 	__this_cpu_inc(bpf_prog_active);
- 	rcu_read_lock();
--	err = map->ops->map_delete_elem(map, key);
-+	if (map->map_type == BPF_MAP_TYPE_INODE)
-+		err = bpf_inode_fd_htab_map_delete_elem(map, key);
-+	else
-+		err = map->ops->map_delete_elem(map, key);
- 	rcu_read_unlock();
- 	__this_cpu_dec(bpf_prog_active);
- 	preempt_enable();
-@@ -1018,6 +1027,22 @@ static int map_delete_elem(union bpf_attr *attr)
- 	return err;
- }
- 
-+int bpf_inode_ptr_unlocked_htab_map_delete_elem(struct bpf_map *map,
-+						struct inode **key, bool remove_in_inode)
-+{
-+	int err;
-+
-+	preempt_disable();
-+	__this_cpu_inc(bpf_prog_active);
-+	rcu_read_lock();
-+	err = bpf_inode_ptr_locked_htab_map_delete_elem(map, key, remove_in_inode);
-+	rcu_read_unlock();
-+	__this_cpu_dec(bpf_prog_active);
-+	preempt_enable();
-+	maybe_wait_bpf_programs(map);
-+	return err;
-+}
-+
- /* last field in 'union bpf_attr' used by this command */
- #define BPF_MAP_GET_NEXT_KEY_LAST_FIELD next_key
- 
-diff --git a/kernel/bpf/verifier.c b/kernel/bpf/verifier.c
-index 026c68cb9116..3972b9f02dac 100644
---- a/kernel/bpf/verifier.c
-+++ b/kernel/bpf/verifier.c
-@@ -400,6 +400,7 @@ static const char * const reg_type_str[] = {
- 	[PTR_TO_TCP_SOCK_OR_NULL] = "tcp_sock_or_null",
- 	[PTR_TO_TP_BUFFER]	= "tp_buffer",
- 	[PTR_TO_XDP_SOCK]	= "xdp_sock",
-+	[PTR_TO_INODE]		= "inode",
- };
- 
- static char slot_type_char[] = {
-@@ -1846,6 +1847,7 @@ static bool is_spillable_regtype(enum bpf_reg_type type)
- 	case PTR_TO_TCP_SOCK:
- 	case PTR_TO_TCP_SOCK_OR_NULL:
- 	case PTR_TO_XDP_SOCK:
-+	case PTR_TO_INODE:
- 		return true;
- 	default:
- 		return false;
-@@ -3306,6 +3308,10 @@ static int check_func_arg(struct bpf_verifier_env *env, u32 regno,
- 			verbose(env, "verifier internal error\n");
- 			return -EFAULT;
- 		}
-+	} else if (arg_type == ARG_PTR_TO_INODE) {
-+		expected_type = PTR_TO_INODE;
-+		if (type != expected_type)
-+			goto err_type;
- 	} else if (arg_type_is_mem_ptr(arg_type)) {
- 		expected_type = PTR_TO_STACK;
- 		/* One exception here. In case function allows for NULL to be
-@@ -3511,6 +3517,10 @@ static int check_map_func_compatibility(struct bpf_verifier_env *env,
- 		    func_id != BPF_FUNC_sk_storage_delete)
- 			goto error;
- 		break;
-+	case BPF_MAP_TYPE_INODE:
-+		if (func_id != BPF_FUNC_inode_map_lookup_elem)
-+			goto error;
-+		break;
- 	default:
- 		break;
- 	}
-@@ -3579,6 +3589,10 @@ static int check_map_func_compatibility(struct bpf_verifier_env *env,
- 		if (map->map_type != BPF_MAP_TYPE_SK_STORAGE)
- 			goto error;
- 		break;
-+	case BPF_FUNC_inode_map_lookup_elem:
-+		if (map->map_type != BPF_MAP_TYPE_INODE)
-+			goto error;
-+		break;
- 	default:
- 		break;
- 	}
-diff --git a/security/landlock/common.h b/security/landlock/common.h
-index b2ee018eb6fc..b0ba3f31ac7d 100644
---- a/security/landlock/common.h
-+++ b/security/landlock/common.h
-@@ -11,6 +11,7 @@
- 
- #include <linux/bpf.h> /* enum bpf_attach_type */
- #include <linux/filter.h> /* bpf_prog */
-+#include <linux/lsm_hooks.h> /* lsm_blob_sizes */
- #include <linux/refcount.h> /* refcount_t */
- #include <uapi/linux/landlock.h> /* LANDLOCK_TRIGGER_* */
- 
-@@ -23,6 +24,8 @@
- #define _LANDLOCK_TRIGGER_FS_PICK_LAST	LANDLOCK_TRIGGER_FS_PICK_WRITE
- #define _LANDLOCK_TRIGGER_FS_PICK_MASK	((_LANDLOCK_TRIGGER_FS_PICK_LAST << 1ULL) - 1)
- 
-+extern struct lsm_blob_sizes landlock_blob_sizes;
-+
- enum landlock_hook_type {
- 	LANDLOCK_HOOK_FS_PICK = 1,
- 	LANDLOCK_HOOK_FS_WALK,
-@@ -55,6 +58,17 @@ struct landlock_prog_set {
- 	refcount_t usage;
- };
- 
-+struct landlock_inode_map {
-+	struct list_head list;
-+	struct rcu_head rcu_put;
-+	struct bpf_map *map;
-+	/*
-+	 * It would be nice to remove the inode field, but it is necessary for
-+	 * call_rcu() .
-+	 */
-+	struct inode *inode;
-+};
-+
- /**
-  * get_hook_index - get an index for the programs of struct landlock_prog_set
-  *
-diff --git a/security/landlock/hooks_fs.c b/security/landlock/hooks_fs.c
-index 3f81b7fc2938..8c9d6a333111 100644
---- a/security/landlock/hooks_fs.c
-+++ b/security/landlock/hooks_fs.c
-@@ -46,6 +46,12 @@ bool landlock_is_valid_access_fs_pick(int off, enum bpf_access_type type,
- 		enum bpf_reg_type *reg_type, int *max_size)
- {
- 	switch (off) {
-+	case offsetof(struct landlock_ctx_fs_pick, inode):
-+		if (type != BPF_READ)
-+			return false;
-+		*reg_type = PTR_TO_INODE;
-+		*max_size = sizeof(u64);
-+		return true;
- 	default:
- 		return false;
- 	}
-@@ -55,6 +61,12 @@ bool landlock_is_valid_access_fs_walk(int off, enum bpf_access_type type,
- 		enum bpf_reg_type *reg_type, int *max_size)
- {
- 	switch (off) {
-+	case offsetof(struct landlock_ctx_fs_walk, inode):
-+		if (type != BPF_READ)
-+			return false;
-+		*reg_type = PTR_TO_INODE;
-+		*max_size = sizeof(u64);
-+		return true;
- 	default:
- 		return false;
- 	}
-@@ -237,8 +249,79 @@ static int hook_sb_pivotroot(const struct path *old_path,
- 			new_path->dentry->d_inode);
- }
- 
-+/* inode helpers */
-+
-+static inline struct list_head *inode_landlock(const struct inode *inode)
-+{
-+	return inode->i_security + landlock_blob_sizes.lbs_inode;
-+}
-+
-+int landlock_inode_add_map(struct inode *inode, struct bpf_map *map)
-+{
-+	struct landlock_inode_map *inode_map;
-+
-+	inode_map = kzalloc(sizeof(*inode_map), GFP_ATOMIC);
-+	if (!inode_map)
-+		return -ENOMEM;
-+	INIT_LIST_HEAD(&inode_map->list);
-+	inode_map->map = map;
-+	inode_map->inode = inode;
-+	list_add_tail(&inode_map->list, inode_landlock(inode));
-+	return 0;
-+}
-+
-+static void put_landlock_inode_map(struct rcu_head *head)
-+{
-+	struct landlock_inode_map *inode_map;
-+	int err;
-+
-+	inode_map = container_of(head, struct landlock_inode_map, rcu_put);
-+	err = bpf_inode_ptr_unlocked_htab_map_delete_elem(inode_map->map,
-+			&inode_map->inode, false);
-+	bpf_map_put(inode_map->map);
-+	kfree(inode_map);
-+}
-+
-+void landlock_inode_remove_map(struct inode *inode, const struct bpf_map *map)
-+{
-+	struct landlock_inode_map *inode_map;
-+	bool found = false;
-+
-+	rcu_read_lock();
-+	list_for_each_entry_rcu(inode_map, inode_landlock(inode), list) {
-+		if (inode_map->map == map) {
-+			found = true;
-+			list_del_rcu(&inode_map->list);
-+			kfree_rcu(inode_map, rcu_put);
-+			break;
-+		}
-+	}
-+	rcu_read_unlock();
-+	WARN_ON(!found);
-+}
-+
- /* inode hooks */
- 
-+static int hook_inode_alloc_security(struct inode *inode)
-+{
-+	struct list_head *ll_inode = inode_landlock(inode);
-+
-+	INIT_LIST_HEAD(ll_inode);
-+	return 0;
-+}
-+
-+static void hook_inode_free_security(struct inode *inode)
-+{
-+	struct landlock_inode_map *inode_map;
-+
-+	rcu_read_lock();
-+	list_for_each_entry_rcu(inode_map, inode_landlock(inode), list) {
-+		list_del_rcu(&inode_map->list);
-+		call_rcu(&inode_map->rcu_put, put_landlock_inode_map);
-+	}
-+	rcu_read_unlock();
-+}
-+
- /* a directory inode contains only one dentry */
- static int hook_inode_create(struct inode *dir, struct dentry *dentry,
- 		umode_t mode)
-@@ -517,6 +600,8 @@ static struct security_hook_list landlock_hooks[] = {
- 	LSM_HOOK_INIT(sb_mount, hook_sb_mount),
- 	LSM_HOOK_INIT(sb_pivotroot, hook_sb_pivotroot),
- 
-+	LSM_HOOK_INIT(inode_alloc_security, hook_inode_alloc_security),
-+	LSM_HOOK_INIT(inode_free_security, hook_inode_free_security),
- 	LSM_HOOK_INIT(inode_create, hook_inode_create),
- 	LSM_HOOK_INIT(inode_link, hook_inode_link),
- 	LSM_HOOK_INIT(inode_unlink, hook_inode_unlink),
-diff --git a/security/landlock/init.c b/security/landlock/init.c
-index 391e88bd4d3a..eec4467cb5ee 100644
---- a/security/landlock/init.c
-+++ b/security/landlock/init.c
-@@ -104,6 +104,18 @@ static const struct bpf_func_proto *bpf_landlock_func_proto(
- 	default:
- 		break;
- 	}
-+
-+	switch (get_hook_type(prog)) {
-+	case LANDLOCK_HOOK_FS_WALK:
-+	case LANDLOCK_HOOK_FS_PICK:
-+		switch (func_id) {
-+		case BPF_FUNC_inode_map_lookup_elem:
-+			return &bpf_inode_map_lookup_elem_proto;
-+		default:
-+			break;
-+		}
-+		break;
-+	}
- 	return NULL;
- }
- 
-@@ -123,6 +135,7 @@ static int __init landlock_init(void)
- }
- 
- struct lsm_blob_sizes landlock_blob_sizes __lsm_ro_after_init = {
-+	.lbs_inode = sizeof(struct list_head),
- };
- 
- DEFINE_LSM(LANDLOCK_NAME) = {
-diff --git a/tools/include/uapi/linux/bpf.h b/tools/include/uapi/linux/bpf.h
-index 7b7a4f6c3104..7a55535f5dc1 100644
---- a/tools/include/uapi/linux/bpf.h
-+++ b/tools/include/uapi/linux/bpf.h
-@@ -134,6 +134,7 @@ enum bpf_map_type {
- 	BPF_MAP_TYPE_QUEUE,
- 	BPF_MAP_TYPE_STACK,
- 	BPF_MAP_TYPE_SK_STORAGE,
-+	BPF_MAP_TYPE_INODE,
- };
- 
- /* Note that tracing related programs such as
-@@ -2714,6 +2715,14 @@ union bpf_attr {
-  *		**-EPERM** if no permission to send the *sig*.
-  *
-  *		**-EAGAIN** if bpf program can try again.
++ * Landlock helpers
 + *
-+ * void *bpf_inode_map_lookup_elem(struct bpf_map *map, const void *key)
-+ *	Description
-+ *		Perform a lookup in *map* for an entry associated to an inode
-+ *		*key*.
-+ *	Return
-+ *		Map value associated to *key*, or **NULL** if no entry was
-+ *		found.
-  */
- #define __BPF_FUNC_MAPPER(FN)		\
- 	FN(unspec),			\
-@@ -2825,7 +2834,8 @@ union bpf_attr {
- 	FN(strtoul),			\
- 	FN(sk_storage_get),		\
- 	FN(sk_storage_delete),		\
--	FN(send_signal),
-+	FN(send_signal),		\
-+	FN(inode_map_lookup_elem),
- 
- /* integer value in 'imm' field of BPF_CALL instruction selects which helper
-  * function eBPF program intends to call
-diff --git a/tools/lib/bpf/libbpf_probes.c b/tools/lib/bpf/libbpf_probes.c
-index 03c910d1f84c..98875221310d 100644
---- a/tools/lib/bpf/libbpf_probes.c
-+++ b/tools/lib/bpf/libbpf_probes.c
-@@ -250,6 +250,7 @@ bool bpf_probe_map_type(enum bpf_map_type map_type, __u32 ifindex)
- 	case BPF_MAP_TYPE_XSKMAP:
- 	case BPF_MAP_TYPE_SOCKHASH:
- 	case BPF_MAP_TYPE_REUSEPORT_SOCKARRAY:
-+	case BPF_MAP_TYPE_INODE:
- 	default:
- 		break;
- 	}
++ * Copyright © 2017-2019 Mickaël Salaün <mic@digikod.net>
++ * Copyright © 2019 ANSSI
++ */
++
++#include <bpf/bpf.h>
++#include <errno.h>
++#include <linux/filter.h>
++#include <linux/landlock.h>
++#include <linux/seccomp.h>
++#include <sys/prctl.h>
++#include <sys/syscall.h>
++
++#include "../kselftest_harness.h"
++#include "../../../../samples/bpf/bpf_load.h"
++
++#ifndef SECCOMP_PREPEND_LANDLOCK_PROG
++#define SECCOMP_PREPEND_LANDLOCK_PROG	4
++#endif
++
++#ifndef seccomp
++static int __attribute__((unused)) seccomp(unsigned int op, unsigned int flags,
++		void *args)
++{
++	errno = 0;
++	return syscall(__NR_seccomp, op, flags, args);
++}
++#endif
++
++/* bpf_load_program() with subtype */
++static int __attribute__((unused)) ll_bpf_load_program(
++		const struct bpf_insn *insns, size_t insns_cnt, char *log_buf,
++		size_t log_buf_sz, const enum bpf_attach_type attach_type,
++		__u64 attach_triggers)
++{
++	struct bpf_load_program_attr load_attr;
++
++	memset(&load_attr, 0, sizeof(struct bpf_load_program_attr));
++	load_attr.prog_type = BPF_PROG_TYPE_LANDLOCK_HOOK;
++	load_attr.expected_attach_type = attach_type;
++	load_attr.expected_attach_triggers = attach_triggers;
++	load_attr.insns = insns;
++	load_attr.insns_cnt = insns_cnt;
++	load_attr.license = "GPL";
++
++	return bpf_load_program_xattr(&load_attr, log_buf, log_buf_sz);
++}
+diff --git a/tools/testing/selftests/landlock/test_base.c b/tools/testing/selftests/landlock/test_base.c
+new file mode 100644
+index 000000000000..db46f39048cb
+--- /dev/null
++++ b/tools/testing/selftests/landlock/test_base.c
+@@ -0,0 +1,24 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Landlock tests - base
++ *
++ * Copyright © 2017-2019 Mickaël Salaün <mic@digikod.net>
++ */
++
++#define _GNU_SOURCE
++#include <errno.h>
++
++#include "test.h"
++
++TEST(seccomp_landlock)
++{
++	int ret;
++
++	ret = seccomp(SECCOMP_PREPEND_LANDLOCK_PROG, 0, NULL);
++	EXPECT_EQ(-1, ret);
++	EXPECT_EQ(EFAULT, errno) {
++		TH_LOG("Kernel does not support CONFIG_SECURITY_LANDLOCK");
++	}
++}
++
++TEST_HARNESS_MAIN
+diff --git a/tools/testing/selftests/landlock/test_fs.c b/tools/testing/selftests/landlock/test_fs.c
+new file mode 100644
+index 000000000000..f35b99fcb70f
+--- /dev/null
++++ b/tools/testing/selftests/landlock/test_fs.c
+@@ -0,0 +1,256 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Landlock tests - file system
++ *
++ * Copyright © 2018-2019 Mickaël Salaün <mic@digikod.net>
++ */
++
++#include <bpf/bpf.h> /* bpf_create_map() */
++#include <fcntl.h> /* O_DIRECTORY */
++#include <sys/stat.h> /* statbuf */
++#include <unistd.h> /* faccessat() */
++
++#include "test.h"
++
++#define TEST_PATH_TRIGGERS ( \
++		LANDLOCK_TRIGGER_FS_PICK_OPEN | \
++		LANDLOCK_TRIGGER_FS_PICK_READDIR | \
++		LANDLOCK_TRIGGER_FS_PICK_EXECUTE | \
++		LANDLOCK_TRIGGER_FS_PICK_GETATTR)
++
++static void test_path_rel(struct __test_metadata *_metadata, int dirfd,
++		const char *path, int ret)
++{
++	int fd;
++	struct stat statbuf;
++
++	ASSERT_EQ(ret, faccessat(dirfd, path, R_OK | X_OK, 0));
++	ASSERT_EQ(ret, fstatat(dirfd, path, &statbuf, 0));
++	fd = openat(dirfd, path, O_DIRECTORY);
++	if (ret) {
++		ASSERT_EQ(-1, fd);
++	} else {
++		ASSERT_NE(-1, fd);
++		EXPECT_EQ(0, close(fd));
++	}
++}
++
++static void test_path(struct __test_metadata *_metadata, const char *path,
++		int ret)
++{
++	return test_path_rel(_metadata, AT_FDCWD, path, ret);
++}
++
++static const char d1[] = "/usr";
++static const char d2[] = "/usr/share";
++static const char d3[] = "/usr/share/doc";
++
++TEST(fs_base)
++{
++	test_path(_metadata, d1, 0);
++	test_path(_metadata, d2, 0);
++	test_path(_metadata, d3, 0);
++}
++
++#define MAP_VALUE_DENY 1
++
++static int create_denied_inode_map(struct __test_metadata *_metadata,
++		const char *const dirs[])
++{
++	int map, key, dirs_len, i;
++	__u64 value = MAP_VALUE_DENY;
++
++	ASSERT_NE(NULL, dirs) {
++		TH_LOG("No directory list\n");
++	}
++	ASSERT_NE(NULL, dirs[0]) {
++		TH_LOG("Empty directory list\n");
++	}
++
++	/* get the number of dir entries */
++	for (dirs_len = 0; dirs[dirs_len]; dirs_len++);
++	map = bpf_create_map(BPF_MAP_TYPE_INODE, sizeof(key), sizeof(value),
++			dirs_len, BPF_F_RDONLY_PROG);
++	ASSERT_NE(-1, map) {
++		TH_LOG("Failed to create a map of %d elements: %s\n", dirs_len,
++				strerror(errno));
++	}
++
++	for (i = 0; dirs[i]; i++) {
++		key = open(dirs[i], O_RDONLY | O_CLOEXEC | O_DIRECTORY);
++		ASSERT_NE(-1, key) {
++			TH_LOG("Failed to open directory \"%s\": %s\n", dirs[i],
++					strerror(errno));
++		}
++		ASSERT_EQ(0, bpf_map_update_elem(map, &key, &value, BPF_ANY)) {
++			TH_LOG("Failed to update the map with \"%s\": %s\n",
++					dirs[i], strerror(errno));
++		}
++		close(key);
++	}
++	return map;
++}
++
++static void enforce_map(struct __test_metadata *_metadata, int map,
++		bool subpath)
++{
++	const struct bpf_insn prog_deny[] = {
++		BPF_ALU64_REG(BPF_MOV, BPF_REG_6, BPF_REG_1),
++		/* look for the requested inode in the map */
++		BPF_LDX_MEM(BPF_DW, BPF_REG_2, BPF_REG_6,
++			offsetof(struct landlock_ctx_fs_walk, inode)),
++		BPF_LD_MAP_FD(BPF_REG_1, map), /* 2 instructions */
++		BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0,
++				BPF_FUNC_inode_map_lookup_elem),
++		/* if there is no mark, then allow access to this inode */
++		BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 2),
++		BPF_LDX_MEM(BPF_DW, BPF_REG_1, BPF_REG_0, 0),
++		/* otherwise, deny access to this inode */
++		BPF_JMP_IMM(BPF_JEQ, BPF_REG_1, MAP_VALUE_DENY, 2),
++		BPF_MOV32_IMM(BPF_REG_0, LANDLOCK_RET_ALLOW),
++		BPF_EXIT_INSN(),
++		BPF_MOV32_IMM(BPF_REG_0, LANDLOCK_RET_DENY),
++		BPF_EXIT_INSN(),
++	};
++	int fd_walk = -1, fd_pick;
++	char log[1024] = "";
++
++	if (subpath) {
++		fd_walk = ll_bpf_load_program((const struct bpf_insn *)&prog_deny,
++				sizeof(prog_deny) / sizeof(struct bpf_insn),
++				log, sizeof(log), BPF_LANDLOCK_FS_WALK, 0);
++		ASSERT_NE(-1, fd_walk) {
++			TH_LOG("Failed to load fs_walk program: %s\n%s",
++					strerror(errno), log);
++		}
++		ASSERT_EQ(0, seccomp(SECCOMP_PREPEND_LANDLOCK_PROG, 0, &fd_walk)) {
++			TH_LOG("Failed to apply Landlock program: %s", strerror(errno));
++		}
++		EXPECT_EQ(0, close(fd_walk));
++	}
++
++	fd_pick = ll_bpf_load_program((const struct bpf_insn *)&prog_deny,
++			sizeof(prog_deny) / sizeof(struct bpf_insn), log,
++			sizeof(log), BPF_LANDLOCK_FS_PICK, TEST_PATH_TRIGGERS);
++	ASSERT_NE(-1, fd_pick) {
++		TH_LOG("Failed to load fs_pick program: %s\n%s",
++				strerror(errno), log);
++	}
++	ASSERT_EQ(0, seccomp(SECCOMP_PREPEND_LANDLOCK_PROG, 0, &fd_pick)) {
++		TH_LOG("Failed to apply Landlock program: %s", strerror(errno));
++	}
++	EXPECT_EQ(0, close(fd_pick));
++}
++
++static void check_map_blacklist(struct __test_metadata *_metadata,
++		bool subpath)
++{
++	int map = create_denied_inode_map(_metadata, (const char *const [])
++			{ d2, NULL });
++	ASSERT_NE(-1, map);
++	enforce_map(_metadata, map, subpath);
++	test_path(_metadata, d1, 0);
++	test_path(_metadata, d2, -1);
++	test_path(_metadata, d3, subpath ? -1 : 0);
++	EXPECT_EQ(0, close(map));
++}
++
++TEST(fs_map_blacklist_literal)
++{
++	check_map_blacklist(_metadata, false);
++}
++
++TEST(fs_map_blacklist_subpath)
++{
++	check_map_blacklist(_metadata, true);
++}
++
++static const char r2[] = ".";
++static const char r3[] = "./doc";
++
++enum relative_access {
++	REL_OPEN,
++	REL_CHDIR,
++	REL_CHROOT,
++};
++
++static void check_access(struct __test_metadata *_metadata,
++		bool enforce, enum relative_access rel)
++{
++	int dirfd;
++	int map = -1;
++
++	if (rel == REL_CHROOT)
++		ASSERT_NE(-1, chdir(d2));
++	if (enforce) {
++		map = create_denied_inode_map(_metadata, (const char *const [])
++				{ d3, NULL });
++		ASSERT_NE(-1, map);
++		enforce_map(_metadata, map, true);
++	}
++	switch (rel) {
++	case REL_OPEN:
++		dirfd = open(d2, O_DIRECTORY);
++		ASSERT_NE(-1, dirfd);
++		break;
++	case REL_CHDIR:
++		ASSERT_NE(-1, chdir(d2));
++		dirfd = AT_FDCWD;
++		break;
++	case REL_CHROOT:
++		ASSERT_NE(-1, chroot(d2)) {
++			TH_LOG("Failed to chroot: %s\n", strerror(errno));
++		}
++		dirfd = AT_FDCWD;
++		break;
++	default:
++		ASSERT_TRUE(false);
++		return;
++	}
++
++	test_path_rel(_metadata, dirfd, r2, 0);
++	test_path_rel(_metadata, dirfd, r3, enforce ? -1 : 0);
++
++	if (rel == REL_OPEN)
++		EXPECT_EQ(0, close(dirfd));
++	if (enforce)
++		EXPECT_EQ(0, close(map));
++}
++
++TEST(fs_allow_open)
++{
++	/* no enforcement, via open */
++	check_access(_metadata, false, REL_OPEN);
++}
++
++TEST(fs_allow_chdir)
++{
++	/* no enforcement, via chdir */
++	check_access(_metadata, false, REL_CHDIR);
++}
++
++TEST(fs_allow_chroot)
++{
++	/* no enforcement, via chroot */
++	check_access(_metadata, false, REL_CHROOT);
++}
++
++TEST(fs_deny_open)
++{
++	/* enforcement without tag, via open */
++	check_access(_metadata, true, REL_OPEN);
++}
++
++TEST(fs_deny_chdir)
++{
++	/* enforcement without tag, via chdir */
++	check_access(_metadata, true, REL_CHDIR);
++}
++
++TEST(fs_deny_chroot)
++{
++	/* enforcement without tag, via chroot */
++	check_access(_metadata, true, REL_CHROOT);
++}
++
++TEST_HARNESS_MAIN
+diff --git a/tools/testing/selftests/landlock/test_ptrace.c b/tools/testing/selftests/landlock/test_ptrace.c
+new file mode 100644
+index 000000000000..b190a809ceec
+--- /dev/null
++++ b/tools/testing/selftests/landlock/test_ptrace.c
+@@ -0,0 +1,148 @@
++// SPDX-License-Identifier: GPL-2.0
++/*
++ * Landlock tests - ptrace
++ *
++ * Copyright © 2017-2019 Mickaël Salaün <mic@digikod.net>
++ */
++
++#define _GNU_SOURCE
++#include <signal.h> /* raise */
++#include <sys/ptrace.h>
++#include <sys/types.h> /* waitpid */
++#include <sys/wait.h> /* waitpid */
++#include <unistd.h> /* fork, pipe */
++
++#include "test.h"
++
++static void apply_null_sandbox(struct __test_metadata *_metadata)
++{
++	const struct bpf_insn prog_accept[] = {
++		BPF_MOV32_IMM(BPF_REG_0, 0),
++		BPF_EXIT_INSN(),
++	};
++	int prog;
++	char log[256] = "";
++
++	prog = ll_bpf_load_program((const struct bpf_insn *)&prog_accept,
++			sizeof(prog_accept) / sizeof(struct bpf_insn), log,
++			sizeof(log), BPF_LANDLOCK_FS_PICK, LANDLOCK_TRIGGER_FS_PICK_OPEN);
++	ASSERT_NE(-1, prog) {
++		TH_LOG("Failed to load minimal rule: %s\n%s",
++				strerror(errno), log);
++	}
++	ASSERT_EQ(0, seccomp(SECCOMP_PREPEND_LANDLOCK_PROG, 0, &prog)) {
++		TH_LOG("Failed to apply minimal rule: %s", strerror(errno));
++	}
++	EXPECT_EQ(0, close(prog));
++}
++
++/* PTRACE_TRACEME and PTRACE_ATTACH without Landlock rules effect */
++static void check_ptrace(struct __test_metadata *_metadata,
++		int sandbox_both, int sandbox_parent, int sandbox_child,
++		int expect_ptrace)
++{
++	pid_t child;
++	int status;
++	int pipefd[2];
++
++	ASSERT_EQ(0, pipe(pipefd));
++	if (sandbox_both)
++		apply_null_sandbox(_metadata);
++
++	child = fork();
++	ASSERT_LE(0, child);
++	if (child == 0) {
++		char buf;
++
++		EXPECT_EQ(0, close(pipefd[1]));
++		if (sandbox_child)
++			apply_null_sandbox(_metadata);
++
++		/* test traceme */
++		ASSERT_EQ(expect_ptrace, ptrace(PTRACE_TRACEME));
++		if (expect_ptrace) {
++			ASSERT_EQ(EPERM, errno);
++		} else {
++			ASSERT_EQ(0, raise(SIGSTOP));
++		}
++
++		/* sync */
++		ASSERT_EQ(1, read(pipefd[0], &buf, 1)) {
++			TH_LOG("Failed to read() sync from parent");
++		}
++		ASSERT_EQ('.', buf);
++		_exit(_metadata->passed ? EXIT_SUCCESS : EXIT_FAILURE);
++	}
++
++	EXPECT_EQ(0, close(pipefd[0]));
++	if (sandbox_parent)
++		apply_null_sandbox(_metadata);
++
++	/* test traceme */
++	if (!expect_ptrace) {
++		ASSERT_EQ(child, waitpid(child, &status, 0));
++		ASSERT_EQ(1, WIFSTOPPED(status));
++		ASSERT_EQ(0, ptrace(PTRACE_DETACH, child, NULL, 0));
++	}
++	/* test attach */
++	ASSERT_EQ(expect_ptrace, ptrace(PTRACE_ATTACH, child, NULL, 0));
++	if (expect_ptrace) {
++		ASSERT_EQ(EPERM, errno);
++	} else {
++		ASSERT_EQ(child, waitpid(child, &status, 0));
++		ASSERT_EQ(1, WIFSTOPPED(status));
++		ASSERT_EQ(0, ptrace(PTRACE_CONT, child, NULL, 0));
++	}
++
++	/* sync */
++	ASSERT_EQ(1, write(pipefd[1], ".", 1)) {
++		TH_LOG("Failed to write() sync to child");
++	}
++	ASSERT_EQ(child, waitpid(child, &status, 0));
++	if (WIFSIGNALED(status) || WEXITSTATUS(status))
++		_metadata->passed = 0;
++}
++
++TEST(ptrace_allow_without_sandbox)
++{
++	/* no sandbox */
++	check_ptrace(_metadata, 0, 0, 0, 0);
++}
++
++TEST(ptrace_allow_with_one_sandbox)
++{
++	/* child sandbox */
++	check_ptrace(_metadata, 0, 0, 1, 0);
++}
++
++TEST(ptrace_allow_with_nested_sandbox)
++{
++	/* inherited and child sandbox */
++	check_ptrace(_metadata, 1, 0, 1, 0);
++}
++
++TEST(ptrace_deny_with_parent_sandbox)
++{
++	/* parent sandbox */
++	check_ptrace(_metadata, 0, 1, 0, -1);
++}
++
++TEST(ptrace_deny_with_nested_and_parent_sandbox)
++{
++	/* inherited and parent sandbox */
++	check_ptrace(_metadata, 1, 1, 0, -1);
++}
++
++TEST(ptrace_deny_with_forked_sandbox)
++{
++	/* inherited, parent and child sandbox */
++	check_ptrace(_metadata, 1, 1, 1, -1);
++}
++
++TEST(ptrace_deny_with_sibling_sandbox)
++{
++	/* parent and child sandbox */
++	check_ptrace(_metadata, 0, 1, 1, -1);
++}
++
++TEST_HARNESS_MAIN
 -- 
 2.22.0
