@@ -1,8 +1,8 @@
 From: Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH v7 07/17] fs-verity: add the hook for file
- ->open()
-Date: Mon, 22 Jul 2019 09:50:51 -0700
-Message-ID: <20190722165101.12840-8-ebiggers@kernel.org>
+Subject: [PATCH v7 13/17] fs-verity: support builtin file
+ signatures
+Date: Mon, 22 Jul 2019 09:50:57 -0700
+Message-ID: <20190722165101.12840-14-ebiggers@kernel.org>
 References: <20190722165101.12840-1-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -23,535 +23,465 @@ List-Id: linux-api@vger.kernel.org
 
 From: Eric Biggers <ebiggers@google.com>
 
-Add the fsverity_file_open() function, which prepares an fs-verity file
-to be read from.  If not already done, it loads the fs-verity descriptor
-from the filesystem and sets up an fsverity_info structure for the inode
-which describes the Merkle tree and contains the file measurement.  It
-also denies all attempts to open verity files for writing.
+To meet some users' needs, add optional support for having fs-verity
+handle a portion of the authentication policy in the kernel.  An
+".fs-verity" keyring is created to which X.509 certificates can be
+added; then a sysctl 'fs.verity.require_signatures' can be set to cause
+the kernel to enforce that all fs-verity files contain a signature of
+their file measurement by a key in this keyring.
 
-This commit also begins the include/linux/fsverity.h header, which
-declares the interface between fs/verity/ and filesystems.
+See the "Built-in signature verification" section of
+Documentation/filesystems/fsverity.rst for the full documentation.
 
 Reviewed-by: Theodore Ts'o <tytso@mit.edu>
-Reviewed-by: Jaegeuk Kim <jaegeuk@kernel.org>
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
- fs/verity/Makefile           |   3 +-
- fs/verity/fsverity_private.h |  54 +++++-
- fs/verity/init.c             |   6 +
- fs/verity/open.c             | 318 +++++++++++++++++++++++++++++++++++
- include/linux/fsverity.h     |  71 ++++++++
- 5 files changed, 449 insertions(+), 3 deletions(-)
- create mode 100644 fs/verity/open.c
- create mode 100644 include/linux/fsverity.h
+ fs/verity/Kconfig            |  17 ++++
+ fs/verity/Makefile           |   2 +
+ fs/verity/enable.c           |  20 ++++-
+ fs/verity/fsverity_private.h |  48 ++++++++++-
+ fs/verity/init.c             |   6 ++
+ fs/verity/open.c             |  27 ++++--
+ fs/verity/signature.c        | 157 +++++++++++++++++++++++++++++++++++
+ fs/verity/verify.c           |   6 ++
+ 8 files changed, 269 insertions(+), 14 deletions(-)
+ create mode 100644 fs/verity/signature.c
 
+diff --git a/fs/verity/Kconfig b/fs/verity/Kconfig
+index c2bca0b01ecfa..88fb25119899d 100644
+--- a/fs/verity/Kconfig
++++ b/fs/verity/Kconfig
+@@ -36,3 +36,20 @@ config FS_VERITY_DEBUG
+ 	  Enable debugging messages related to fs-verity by default.
+ 
+ 	  Say N unless you are an fs-verity developer.
++
++config FS_VERITY_BUILTIN_SIGNATURES
++	bool "FS Verity builtin signature support"
++	depends on FS_VERITY
++	select SYSTEM_DATA_VERIFICATION
++	help
++	  Support verifying signatures of verity files against the X.509
++	  certificates that have been loaded into the ".fs-verity"
++	  kernel keyring.
++
++	  This is meant as a relatively simple mechanism that can be
++	  used to provide an authenticity guarantee for verity files, as
++	  an alternative to IMA appraisal.  Userspace programs still
++	  need to check that the verity bit is set in order to get an
++	  authenticity guarantee.
++
++	  If unsure, say N.
 diff --git a/fs/verity/Makefile b/fs/verity/Makefile
-index 398f3f85fa184..e6a8951c493a5 100644
+index 6f7675ae0a311..570e9136334d4 100644
 --- a/fs/verity/Makefile
 +++ b/fs/verity/Makefile
-@@ -1,4 +1,5 @@
- # SPDX-License-Identifier: GPL-2.0
+@@ -6,3 +6,5 @@ obj-$(CONFIG_FS_VERITY) += enable.o \
+ 			   measure.o \
+ 			   open.o \
+ 			   verify.o
++
++obj-$(CONFIG_FS_VERITY_BUILTIN_SIGNATURES) += signature.o
+diff --git a/fs/verity/enable.c b/fs/verity/enable.c
+index ae66e0a50f05e..3371d51563962 100644
+--- a/fs/verity/enable.c
++++ b/fs/verity/enable.c
+@@ -153,7 +153,7 @@ static int enable_verity(struct file *filp,
+ 	const struct fsverity_operations *vops = inode->i_sb->s_vop;
+ 	struct merkle_tree_params params = { };
+ 	struct fsverity_descriptor *desc;
+-	size_t desc_size = sizeof(*desc);
++	size_t desc_size = sizeof(*desc) + arg->sig_size;
+ 	struct fsverity_info *vi;
+ 	int err;
  
- obj-$(CONFIG_FS_VERITY) += hash_algs.o \
--			   init.o
-+			   init.o \
-+			   open.o
+@@ -175,6 +175,16 @@ static int enable_verity(struct file *filp,
+ 	}
+ 	desc->salt_size = arg->salt_size;
+ 
++	/* Get the signature if the user provided one */
++	if (arg->sig_size &&
++	    copy_from_user(desc->signature,
++			   (const u8 __user *)(uintptr_t)arg->sig_ptr,
++			   arg->sig_size)) {
++		err = -EFAULT;
++		goto out;
++	}
++	desc->sig_size = cpu_to_le32(arg->sig_size);
++
+ 	desc->data_size = cpu_to_le64(inode->i_size);
+ 
+ 	/* Prepare the Merkle tree parameters */
+@@ -230,6 +240,10 @@ static int enable_verity(struct file *filp,
+ 		goto rollback;
+ 	}
+ 
++	if (arg->sig_size)
++		pr_debug("Storing a %u-byte PKCS#7 signature alongside the file\n",
++			 arg->sig_size);
++
+ 	/*
+ 	 * Tell the filesystem to finish enabling verity on the file.
+ 	 * Serialized with ->begin_enable_verity() by the inode lock.
+@@ -296,8 +310,8 @@ int fsverity_ioctl_enable(struct file *filp, const void __user *uarg)
+ 	if (arg.salt_size > FIELD_SIZEOF(struct fsverity_descriptor, salt))
+ 		return -EMSGSIZE;
+ 
+-	if (arg.sig_size)
+-		return -EINVAL;
++	if (arg.sig_size > FS_VERITY_MAX_SIGNATURE_SIZE)
++		return -EMSGSIZE;
+ 
+ 	/*
+ 	 * Require a regular file with write access.  But the actual fd must
 diff --git a/fs/verity/fsverity_private.h b/fs/verity/fsverity_private.h
-index 9697aaebb5dc1..c79746ff335e1 100644
+index 02a547f0667c1..e74c79b64d889 100644
 --- a/fs/verity/fsverity_private.h
 +++ b/fs/verity/fsverity_private.h
-@@ -15,8 +15,7 @@
- #define pr_fmt(fmt) "fs-verity: " fmt
- 
- #include <crypto/sha.h>
--#include <linux/fs.h>
--#include <uapi/linux/fsverity.h>
-+#include <linux/fsverity.h>
- 
- struct ahash_request;
- 
-@@ -59,6 +58,40 @@ struct merkle_tree_params {
- 	u64 level_start[FS_VERITY_MAX_LEVELS];
+@@ -75,23 +75,41 @@ struct fsverity_info {
  };
  
-+/**
-+ * fsverity_info - cached verity metadata for an inode
-+ *
-+ * When a verity file is first opened, an instance of this struct is allocated
-+ * and stored in ->i_verity_info; it remains until the inode is evicted.  It
-+ * caches information about the Merkle tree that's needed to efficiently verify
-+ * data read from the file.  It also caches the file measurement.  The Merkle
-+ * tree pages themselves are not cached here, but the filesystem may cache them.
-+ */
-+struct fsverity_info {
-+	struct merkle_tree_params tree_params;
-+	u8 root_hash[FS_VERITY_MAX_DIGEST_SIZE];
-+	u8 measurement[FS_VERITY_MAX_DIGEST_SIZE];
-+	const struct inode *inode;
-+};
+ /*
+- * Merkle tree properties.  The file measurement is the hash of this structure.
++ * Merkle tree properties.  The file measurement is the hash of this structure
++ * excluding the signature and with the sig_size field set to 0.
+  */
+ struct fsverity_descriptor {
+ 	__u8 version;		/* must be 1 */
+ 	__u8 hash_algorithm;	/* Merkle tree hash algorithm */
+ 	__u8 log_blocksize;	/* log2 of size of data and tree blocks */
+ 	__u8 salt_size;		/* size of salt in bytes; 0 if none */
+-	__le32 sig_size;	/* reserved, must be 0 */
++	__le32 sig_size;	/* size of signature in bytes; 0 if none */
+ 	__le64 data_size;	/* size of file the Merkle tree is built over */
+ 	__u8 root_hash[64];	/* Merkle tree root hash */
+ 	__u8 salt[32];		/* salt prepended to each hashed block */
+ 	__u8 __reserved[144];	/* must be 0's */
++	__u8 signature[];	/* optional PKCS#7 signature */
+ };
+ 
+ /* Arbitrary limit to bound the kmalloc() size.  Can be changed. */
+ #define FS_VERITY_MAX_DESCRIPTOR_SIZE	16384
+ 
++#define FS_VERITY_MAX_SIGNATURE_SIZE	(FS_VERITY_MAX_DESCRIPTOR_SIZE - \
++					 sizeof(struct fsverity_descriptor))
 +
 +/*
-+ * Merkle tree properties.  The file measurement is the hash of this structure.
++ * Format in which verity file measurements are signed.  This is the same as
++ * 'struct fsverity_digest', except here some magic bytes are prepended to
++ * provide some context about what is being signed in case the same key is used
++ * for non-fsverity purposes, and here the fields have fixed endianness.
 + */
-+struct fsverity_descriptor {
-+	__u8 version;		/* must be 1 */
-+	__u8 hash_algorithm;	/* Merkle tree hash algorithm */
-+	__u8 log_blocksize;	/* log2 of size of data and tree blocks */
-+	__u8 salt_size;		/* size of salt in bytes; 0 if none */
-+	__le32 sig_size;	/* reserved, must be 0 */
-+	__le64 data_size;	/* size of file the Merkle tree is built over */
-+	__u8 root_hash[64];	/* Merkle tree root hash */
-+	__u8 salt[32];		/* salt prepended to each hashed block */
-+	__u8 __reserved[144];	/* must be 0's */
++struct fsverity_signed_digest {
++	char magic[8];			/* must be "FSVerity" */
++	__le16 digest_algorithm;
++	__le16 digest_size;
++	__u8 digest[];
 +};
-+
-+/* Arbitrary limit to bound the kmalloc() size.  Can be changed. */
-+#define FS_VERITY_MAX_DESCRIPTOR_SIZE	16384
 +
  /* hash_algs.c */
  
  extern struct fsverity_hash_alg fsverity_hash_algs[];
-@@ -85,4 +118,21 @@ fsverity_msg(const struct inode *inode, const char *level,
- #define fsverity_err(inode, fmt, ...)		\
- 	fsverity_msg((inode), KERN_ERR, fmt, ##__VA_ARGS__)
+@@ -127,7 +145,7 @@ int fsverity_init_merkle_tree_params(struct merkle_tree_params *params,
+ 				     const u8 *salt, size_t salt_size);
  
-+/* open.c */
+ struct fsverity_info *fsverity_create_info(const struct inode *inode,
+-					   const void *desc, size_t desc_size);
++					   void *desc, size_t desc_size);
+ 
+ void fsverity_set_info(struct inode *inode, struct fsverity_info *vi);
+ 
+@@ -136,8 +154,32 @@ void fsverity_free_info(struct fsverity_info *vi);
+ int __init fsverity_init_info_cache(void);
+ void __init fsverity_exit_info_cache(void);
+ 
++/* signature.c */
 +
-+int fsverity_init_merkle_tree_params(struct merkle_tree_params *params,
-+				     const struct inode *inode,
-+				     unsigned int hash_algorithm,
-+				     unsigned int log_blocksize,
-+				     const u8 *salt, size_t salt_size);
++#ifdef CONFIG_FS_VERITY_BUILTIN_SIGNATURES
++int fsverity_verify_signature(const struct fsverity_info *vi,
++			      const struct fsverity_descriptor *desc,
++			      size_t desc_size);
 +
-+struct fsverity_info *fsverity_create_info(const struct inode *inode,
-+					   const void *desc, size_t desc_size);
++int __init fsverity_init_signature(void);
++#else /* !CONFIG_FS_VERITY_BUILTIN_SIGNATURES */
++static inline int
++fsverity_verify_signature(const struct fsverity_info *vi,
++			  const struct fsverity_descriptor *desc,
++			  size_t desc_size)
++{
++	return 0;
++}
 +
-+void fsverity_set_info(struct inode *inode, struct fsverity_info *vi);
++static inline int fsverity_init_signature(void)
++{
++	return 0;
++}
++#endif /* !CONFIG_FS_VERITY_BUILTIN_SIGNATURES */
 +
-+void fsverity_free_info(struct fsverity_info *vi);
-+
-+int __init fsverity_init_info_cache(void);
-+
+ /* verify.c */
+ 
+ int __init fsverity_init_workqueue(void);
++void __init fsverity_exit_workqueue(void);
+ 
  #endif /* _FSVERITY_PRIVATE_H */
 diff --git a/fs/verity/init.c b/fs/verity/init.c
-index 40076bbe452a4..fff1fd6343357 100644
+index b593805aafcc8..94c104e00861d 100644
 --- a/fs/verity/init.c
 +++ b/fs/verity/init.c
-@@ -33,8 +33,14 @@ void fsverity_msg(const struct inode *inode, const char *level,
+@@ -45,9 +45,15 @@ static int __init fsverity_init(void)
+ 	if (err)
+ 		goto err_exit_info_cache;
  
- static int __init fsverity_init(void)
- {
-+	int err;
-+
- 	fsverity_check_hash_algs();
- 
-+	err = fsverity_init_info_cache();
++	err = fsverity_init_signature();
 +	if (err)
-+		return err;
++		goto err_exit_workqueue;
 +
  	pr_debug("Initialized fs-verity\n");
  	return 0;
- }
+ 
++err_exit_workqueue:
++	fsverity_exit_workqueue();
+ err_exit_info_cache:
+ 	fsverity_exit_info_cache();
+ 	return err;
 diff --git a/fs/verity/open.c b/fs/verity/open.c
-new file mode 100644
-index 0000000000000..8013f77f907eb
---- /dev/null
+index 3636a1ed8e2c4..63d1004b688cb 100644
+--- a/fs/verity/open.c
 +++ b/fs/verity/open.c
-@@ -0,0 +1,318 @@
+@@ -122,22 +122,32 @@ int fsverity_init_merkle_tree_params(struct merkle_tree_params *params,
+ 	return err;
+ }
+ 
+-/* Compute the file measurement by hashing the fsverity_descriptor. */
++/*
++ * Compute the file measurement by hashing the fsverity_descriptor excluding the
++ * signature and with the sig_size field set to 0.
++ */
+ static int compute_file_measurement(const struct fsverity_hash_alg *hash_alg,
+-				    const struct fsverity_descriptor *desc,
++				    struct fsverity_descriptor *desc,
+ 				    u8 *measurement)
+ {
+-	return fsverity_hash_buffer(hash_alg, desc, sizeof(*desc), measurement);
++	__le32 sig_size = desc->sig_size;
++	int err;
++
++	desc->sig_size = 0;
++	err = fsverity_hash_buffer(hash_alg, desc, sizeof(*desc), measurement);
++	desc->sig_size = sig_size;
++
++	return err;
+ }
+ 
+ /*
+  * Validate the given fsverity_descriptor and create a new fsverity_info from
+- * it.
++ * it.  The signature (if present) is also checked.
+  */
+ struct fsverity_info *fsverity_create_info(const struct inode *inode,
+-					   const void *_desc, size_t desc_size)
++					   void *_desc, size_t desc_size)
+ {
+-	const struct fsverity_descriptor *desc = _desc;
++	struct fsverity_descriptor *desc = _desc;
+ 	struct fsverity_info *vi;
+ 	int err;
+ 
+@@ -153,8 +163,7 @@ struct fsverity_info *fsverity_create_info(const struct inode *inode,
+ 		return ERR_PTR(-EINVAL);
+ 	}
+ 
+-	if (desc->sig_size ||
+-	    memchr_inv(desc->__reserved, 0, sizeof(desc->__reserved))) {
++	if (memchr_inv(desc->__reserved, 0, sizeof(desc->__reserved))) {
+ 		fsverity_err(inode, "Reserved bits set in descriptor");
+ 		return ERR_PTR(-EINVAL);
+ 	}
+@@ -198,6 +207,8 @@ struct fsverity_info *fsverity_create_info(const struct inode *inode,
+ 	pr_debug("Computed file measurement: %s:%*phN\n",
+ 		 vi->tree_params.hash_alg->name,
+ 		 vi->tree_params.digest_size, vi->measurement);
++
++	err = fsverity_verify_signature(vi, desc, desc_size);
+ out:
+ 	if (err) {
+ 		fsverity_free_info(vi);
+diff --git a/fs/verity/signature.c b/fs/verity/signature.c
+new file mode 100644
+index 0000000000000..c8b255232de54
+--- /dev/null
++++ b/fs/verity/signature.c
+@@ -0,0 +1,157 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * fs/verity/open.c: opening fs-verity files
++ * fs/verity/signature.c: verification of builtin signatures
 + *
 + * Copyright 2019 Google LLC
 + */
 +
 +#include "fsverity_private.h"
 +
++#include <linux/cred.h>
++#include <linux/key.h>
 +#include <linux/slab.h>
++#include <linux/verification.h>
 +
-+static struct kmem_cache *fsverity_info_cachep;
++/*
++ * /proc/sys/fs/verity/require_signatures
++ * If 1, all verity files must have a valid builtin signature.
++ */
++static int fsverity_require_signatures;
++
++/*
++ * Keyring that contains the trusted X.509 certificates.
++ *
++ * Only root (kuid=0) can modify this.  Also, root may use
++ * keyctl_restrict_keyring() to prevent any more additions.
++ */
++static struct key *fsverity_keyring;
 +
 +/**
-+ * fsverity_init_merkle_tree_params() - initialize Merkle tree parameters
-+ * @params: the parameters struct to initialize
-+ * @inode: the inode for which the Merkle tree is being built
-+ * @hash_algorithm: number of hash algorithm to use
-+ * @log_blocksize: log base 2 of block size to use
-+ * @salt: pointer to salt (optional)
-+ * @salt_size: size of salt, possibly 0
++ * fsverity_verify_signature() - check a verity file's signature
 + *
-+ * Validate the hash algorithm and block size, then compute the tree topology
-+ * (num levels, num blocks in each level, etc.) and initialize @params.
++ * If the file's fs-verity descriptor includes a signature of the file
++ * measurement, verify it against the certificates in the fs-verity keyring.
 + *
-+ * Return: 0 on success, -errno on failure
++ * Return: 0 on success (signature valid or not required); -errno on failure
 + */
-+int fsverity_init_merkle_tree_params(struct merkle_tree_params *params,
-+				     const struct inode *inode,
-+				     unsigned int hash_algorithm,
-+				     unsigned int log_blocksize,
-+				     const u8 *salt, size_t salt_size)
++int fsverity_verify_signature(const struct fsverity_info *vi,
++			      const struct fsverity_descriptor *desc,
++			      size_t desc_size)
 +{
-+	const struct fsverity_hash_alg *hash_alg;
++	const struct inode *inode = vi->inode;
++	const struct fsverity_hash_alg *hash_alg = vi->tree_params.hash_alg;
++	const u32 sig_size = le32_to_cpu(desc->sig_size);
++	struct fsverity_signed_digest *d;
 +	int err;
-+	u64 blocks;
-+	u64 offset;
-+	int level;
 +
-+	memset(params, 0, sizeof(*params));
-+
-+	hash_alg = fsverity_get_hash_alg(inode, hash_algorithm);
-+	if (IS_ERR(hash_alg))
-+		return PTR_ERR(hash_alg);
-+	params->hash_alg = hash_alg;
-+	params->digest_size = hash_alg->digest_size;
-+
-+	params->hashstate = fsverity_prepare_hash_state(hash_alg, salt,
-+							salt_size);
-+	if (IS_ERR(params->hashstate)) {
-+		err = PTR_ERR(params->hashstate);
-+		params->hashstate = NULL;
-+		fsverity_err(inode, "Error %d preparing hash state", err);
-+		goto out_err;
-+	}
-+
-+	if (log_blocksize != PAGE_SHIFT) {
-+		fsverity_warn(inode, "Unsupported log_blocksize: %u",
-+			      log_blocksize);
-+		err = -EINVAL;
-+		goto out_err;
-+	}
-+	params->log_blocksize = log_blocksize;
-+	params->block_size = 1 << log_blocksize;
-+
-+	if (WARN_ON(!is_power_of_2(params->digest_size))) {
-+		err = -EINVAL;
-+		goto out_err;
-+	}
-+	if (params->block_size < 2 * params->digest_size) {
-+		fsverity_warn(inode,
-+			      "Merkle tree block size (%u) too small for hash algorithm \"%s\"",
-+			      params->block_size, hash_alg->name);
-+		err = -EINVAL;
-+		goto out_err;
-+	}
-+	params->log_arity = params->log_blocksize - ilog2(params->digest_size);
-+	params->hashes_per_block = 1 << params->log_arity;
-+
-+	pr_debug("Merkle tree uses %s with %u-byte blocks (%u hashes/block), salt=%*phN\n",
-+		 hash_alg->name, params->block_size, params->hashes_per_block,
-+		 (int)salt_size, salt);
-+
-+	/*
-+	 * Compute the number of levels in the Merkle tree and create a map from
-+	 * level to the starting block of that level.  Level 'num_levels - 1' is
-+	 * the root and is stored first.  Level 0 is the level directly "above"
-+	 * the data blocks and is stored last.
-+	 */
-+
-+	/* Compute number of levels and the number of blocks in each level */
-+	blocks = (inode->i_size + params->block_size - 1) >> log_blocksize;
-+	pr_debug("Data is %lld bytes (%llu blocks)\n", inode->i_size, blocks);
-+	while (blocks > 1) {
-+		if (params->num_levels >= FS_VERITY_MAX_LEVELS) {
-+			fsverity_err(inode, "Too many levels in Merkle tree");
-+			err = -EINVAL;
-+			goto out_err;
++	if (sig_size == 0) {
++		if (fsverity_require_signatures) {
++			fsverity_err(inode,
++				     "require_signatures=1, rejecting unsigned file!");
++			return -EPERM;
 +		}
-+		blocks = (blocks + params->hashes_per_block - 1) >>
-+			 params->log_arity;
-+		/* temporarily using level_start[] to store blocks in level */
-+		params->level_start[params->num_levels++] = blocks;
-+	}
-+
-+	/* Compute the starting block of each level */
-+	offset = 0;
-+	for (level = (int)params->num_levels - 1; level >= 0; level--) {
-+		blocks = params->level_start[level];
-+		params->level_start[level] = offset;
-+		pr_debug("Level %d is %llu blocks starting at index %llu\n",
-+			 level, blocks, offset);
-+		offset += blocks;
-+	}
-+
-+	params->tree_size = offset << log_blocksize;
-+	return 0;
-+
-+out_err:
-+	kfree(params->hashstate);
-+	memset(params, 0, sizeof(*params));
-+	return err;
-+}
-+
-+/* Compute the file measurement by hashing the fsverity_descriptor. */
-+static int compute_file_measurement(const struct fsverity_hash_alg *hash_alg,
-+				    const struct fsverity_descriptor *desc,
-+				    u8 *measurement)
-+{
-+	return fsverity_hash_buffer(hash_alg, desc, sizeof(*desc), measurement);
-+}
-+
-+/*
-+ * Validate the given fsverity_descriptor and create a new fsverity_info from
-+ * it.
-+ */
-+struct fsverity_info *fsverity_create_info(const struct inode *inode,
-+					   const void *_desc, size_t desc_size)
-+{
-+	const struct fsverity_descriptor *desc = _desc;
-+	struct fsverity_info *vi;
-+	int err;
-+
-+	if (desc_size < sizeof(*desc)) {
-+		fsverity_err(inode, "Unrecognized descriptor size: %zu bytes",
-+			     desc_size);
-+		return ERR_PTR(-EINVAL);
-+	}
-+
-+	if (desc->version != 1) {
-+		fsverity_err(inode, "Unrecognized descriptor version: %u",
-+			     desc->version);
-+		return ERR_PTR(-EINVAL);
-+	}
-+
-+	if (desc->sig_size ||
-+	    memchr_inv(desc->__reserved, 0, sizeof(desc->__reserved))) {
-+		fsverity_err(inode, "Reserved bits set in descriptor");
-+		return ERR_PTR(-EINVAL);
-+	}
-+
-+	if (desc->salt_size > sizeof(desc->salt)) {
-+		fsverity_err(inode, "Invalid salt_size: %u", desc->salt_size);
-+		return ERR_PTR(-EINVAL);
-+	}
-+
-+	if (le64_to_cpu(desc->data_size) != inode->i_size) {
-+		fsverity_err(inode,
-+			     "Wrong data_size: %llu (desc) != %lld (inode)",
-+			     le64_to_cpu(desc->data_size), inode->i_size);
-+		return ERR_PTR(-EINVAL);
-+	}
-+
-+	vi = kmem_cache_zalloc(fsverity_info_cachep, GFP_KERNEL);
-+	if (!vi)
-+		return ERR_PTR(-ENOMEM);
-+	vi->inode = inode;
-+
-+	err = fsverity_init_merkle_tree_params(&vi->tree_params, inode,
-+					       desc->hash_algorithm,
-+					       desc->log_blocksize,
-+					       desc->salt, desc->salt_size);
-+	if (err) {
-+		fsverity_err(inode,
-+			     "Error %d initializing Merkle tree parameters",
-+			     err);
-+		goto out;
-+	}
-+
-+	memcpy(vi->root_hash, desc->root_hash, vi->tree_params.digest_size);
-+
-+	err = compute_file_measurement(vi->tree_params.hash_alg, desc,
-+				       vi->measurement);
-+	if (err) {
-+		fsverity_err(inode, "Error %d computing file measurement", err);
-+		goto out;
-+	}
-+	pr_debug("Computed file measurement: %s:%*phN\n",
-+		 vi->tree_params.hash_alg->name,
-+		 vi->tree_params.digest_size, vi->measurement);
-+out:
-+	if (err) {
-+		fsverity_free_info(vi);
-+		vi = ERR_PTR(err);
-+	}
-+	return vi;
-+}
-+
-+void fsverity_set_info(struct inode *inode, struct fsverity_info *vi)
-+{
-+	/*
-+	 * Multiple processes may race to set ->i_verity_info, so use cmpxchg.
-+	 * This pairs with the READ_ONCE() in fsverity_get_info().
-+	 */
-+	if (cmpxchg(&inode->i_verity_info, NULL, vi) != NULL)
-+		fsverity_free_info(vi);
-+}
-+
-+void fsverity_free_info(struct fsverity_info *vi)
-+{
-+	if (!vi)
-+		return;
-+	kfree(vi->tree_params.hashstate);
-+	kmem_cache_free(fsverity_info_cachep, vi);
-+}
-+
-+/* Ensure the inode has an ->i_verity_info */
-+static int ensure_verity_info(struct inode *inode)
-+{
-+	struct fsverity_info *vi = fsverity_get_info(inode);
-+	struct fsverity_descriptor *desc;
-+	int res;
-+
-+	if (vi)
 +		return 0;
++	}
 +
-+	res = inode->i_sb->s_vop->get_verity_descriptor(inode, NULL, 0);
-+	if (res < 0) {
-+		fsverity_err(inode,
-+			     "Error %d getting verity descriptor size", res);
-+		return res;
++	if (sig_size > desc_size - sizeof(*desc)) {
++		fsverity_err(inode, "Signature overflows verity descriptor");
++		return -EBADMSG;
 +	}
-+	if (res > FS_VERITY_MAX_DESCRIPTOR_SIZE) {
-+		fsverity_err(inode, "Verity descriptor is too large (%d bytes)",
-+			     res);
-+		return -EMSGSIZE;
-+	}
-+	desc = kmalloc(res, GFP_KERNEL);
-+	if (!desc)
++
++	d = kzalloc(sizeof(*d) + hash_alg->digest_size, GFP_KERNEL);
++	if (!d)
 +		return -ENOMEM;
-+	res = inode->i_sb->s_vop->get_verity_descriptor(inode, desc, res);
-+	if (res < 0) {
-+		fsverity_err(inode, "Error %d reading verity descriptor", res);
-+		goto out_free_desc;
++	memcpy(d->magic, "FSVerity", 8);
++	d->digest_algorithm = cpu_to_le16(hash_alg - fsverity_hash_algs);
++	d->digest_size = cpu_to_le16(hash_alg->digest_size);
++	memcpy(d->digest, vi->measurement, hash_alg->digest_size);
++
++	err = verify_pkcs7_signature(d, sizeof(*d) + hash_alg->digest_size,
++				     desc->signature, sig_size,
++				     fsverity_keyring,
++				     VERIFYING_UNSPECIFIED_SIGNATURE,
++				     NULL, NULL);
++	kfree(d);
++
++	if (err) {
++		if (err == -ENOKEY)
++			fsverity_err(inode,
++				     "File's signing cert isn't in the fs-verity keyring");
++		else if (err == -EKEYREJECTED)
++			fsverity_err(inode, "Incorrect file signature");
++		else if (err == -EBADMSG)
++			fsverity_err(inode, "Malformed file signature");
++		else
++			fsverity_err(inode, "Error %d verifying file signature",
++				     err);
++		return err;
 +	}
 +
-+	vi = fsverity_create_info(inode, desc, res);
-+	if (IS_ERR(vi)) {
-+		res = PTR_ERR(vi);
-+		goto out_free_desc;
-+	}
-+
-+	fsverity_set_info(inode, vi);
-+	res = 0;
-+out_free_desc:
-+	kfree(desc);
-+	return res;
-+}
-+
-+/**
-+ * fsverity_file_open() - prepare to open a verity file
-+ * @inode: the inode being opened
-+ * @filp: the struct file being set up
-+ *
-+ * When opening a verity file, deny the open if it is for writing.  Otherwise,
-+ * set up the inode's ->i_verity_info if not already done.
-+ *
-+ * When combined with fscrypt, this must be called after fscrypt_file_open().
-+ * Otherwise, we won't have the key set up to decrypt the verity metadata.
-+ *
-+ * Return: 0 on success, -errno on failure
-+ */
-+int fsverity_file_open(struct inode *inode, struct file *filp)
-+{
-+	if (!IS_VERITY(inode))
-+		return 0;
-+
-+	if (filp->f_mode & FMODE_WRITE) {
-+		pr_debug("Denying opening verity file (ino %lu) for write\n",
-+			 inode->i_ino);
-+		return -EPERM;
-+	}
-+
-+	return ensure_verity_info(inode);
-+}
-+EXPORT_SYMBOL_GPL(fsverity_file_open);
-+
-+/**
-+ * fsverity_cleanup_inode() - free the inode's verity info, if present
-+ *
-+ * Filesystems must call this on inode eviction to free ->i_verity_info.
-+ */
-+void fsverity_cleanup_inode(struct inode *inode)
-+{
-+	fsverity_free_info(inode->i_verity_info);
-+	inode->i_verity_info = NULL;
-+}
-+EXPORT_SYMBOL_GPL(fsverity_cleanup_inode);
-+
-+int __init fsverity_init_info_cache(void)
-+{
-+	fsverity_info_cachep = KMEM_CACHE_USERCOPY(fsverity_info,
-+						   SLAB_RECLAIM_ACCOUNT,
-+						   measurement);
-+	if (!fsverity_info_cachep)
-+		return -ENOMEM;
++	pr_debug("Valid signature for file measurement %s:%*phN\n",
++		 hash_alg->name, hash_alg->digest_size, vi->measurement);
 +	return 0;
 +}
-diff --git a/include/linux/fsverity.h b/include/linux/fsverity.h
-new file mode 100644
-index 0000000000000..09b04dab64520
---- /dev/null
-+++ b/include/linux/fsverity.h
-@@ -0,0 +1,71 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+/*
-+ * fs-verity: read-only file-based authenticity protection
-+ *
-+ * This header declares the interface between the fs/verity/ support layer and
-+ * filesystems that support fs-verity.
-+ *
-+ * Copyright 2019 Google LLC
-+ */
 +
-+#ifndef _LINUX_FSVERITY_H
-+#define _LINUX_FSVERITY_H
++#ifdef CONFIG_SYSCTL
++static struct ctl_table_header *fsverity_sysctl_header;
 +
-+#include <linux/fs.h>
-+#include <uapi/linux/fsverity.h>
-+
-+/* Verity operations for filesystems */
-+struct fsverity_operations {
-+
-+	/**
-+	 * Get the verity descriptor of the given inode.
-+	 *
-+	 * @inode: an inode with the S_VERITY flag set
-+	 * @buf: buffer in which to place the verity descriptor
-+	 * @bufsize: size of @buf, or 0 to retrieve the size only
-+	 *
-+	 * If bufsize == 0, then the size of the verity descriptor is returned.
-+	 * Otherwise the verity descriptor is written to 'buf' and its actual
-+	 * size is returned; -ERANGE is returned if it's too large.  This may be
-+	 * called by multiple processes concurrently on the same inode.
-+	 *
-+	 * Return: the size on success, -errno on failure
-+	 */
-+	int (*get_verity_descriptor)(struct inode *inode, void *buf,
-+				     size_t bufsize);
++static const struct ctl_path fsverity_sysctl_path[] = {
++	{ .procname = "fs", },
++	{ .procname = "verity", },
++	{ }
 +};
 +
-+#ifdef CONFIG_FS_VERITY
++static struct ctl_table fsverity_sysctl_table[] = {
++	{
++		.procname       = "require_signatures",
++		.data           = &fsverity_require_signatures,
++		.maxlen         = sizeof(int),
++		.mode           = 0644,
++		.proc_handler   = proc_dointvec_minmax,
++		.extra1         = SYSCTL_ZERO,
++		.extra2         = SYSCTL_ONE,
++	},
++	{ }
++};
 +
-+static inline struct fsverity_info *fsverity_get_info(const struct inode *inode)
++static int __init fsverity_sysctl_init(void)
 +{
-+	/* pairs with the cmpxchg() in fsverity_set_info() */
-+	return READ_ONCE(inode->i_verity_info);
++	fsverity_sysctl_header = register_sysctl_paths(fsverity_sysctl_path,
++						       fsverity_sysctl_table);
++	if (!fsverity_sysctl_header) {
++		pr_err("sysctl registration failed!\n");
++		return -ENOMEM;
++	}
++	return 0;
 +}
-+
-+/* open.c */
-+
-+extern int fsverity_file_open(struct inode *inode, struct file *filp);
-+extern void fsverity_cleanup_inode(struct inode *inode);
-+
-+#else /* !CONFIG_FS_VERITY */
-+
-+static inline struct fsverity_info *fsverity_get_info(const struct inode *inode)
++#else /* !CONFIG_SYSCTL */
++static inline int __init fsverity_sysctl_init(void)
 +{
-+	return NULL;
++	return 0;
 +}
++#endif /* !CONFIG_SYSCTL */
 +
-+/* open.c */
-+
-+static inline int fsverity_file_open(struct inode *inode, struct file *filp)
++int __init fsverity_init_signature(void)
 +{
-+	return IS_VERITY(inode) ? -EOPNOTSUPP : 0;
-+}
++	struct key *ring;
++	int err;
 +
-+static inline void fsverity_cleanup_inode(struct inode *inode)
++	ring = keyring_alloc(".fs-verity", KUIDT_INIT(0), KGIDT_INIT(0),
++			     current_cred(), KEY_POS_SEARCH |
++				KEY_USR_VIEW | KEY_USR_READ | KEY_USR_WRITE |
++				KEY_USR_SEARCH | KEY_USR_SETATTR,
++			     KEY_ALLOC_NOT_IN_QUOTA, NULL, NULL);
++	if (IS_ERR(ring))
++		return PTR_ERR(ring);
++
++	err = fsverity_sysctl_init();
++	if (err)
++		goto err_put_ring;
++
++	fsverity_keyring = ring;
++	return 0;
++
++err_put_ring:
++	key_put(ring);
++	return err;
++}
+diff --git a/fs/verity/verify.c b/fs/verity/verify.c
+index 62ab8f6a8ea11..3e8f2de44667f 100644
+--- a/fs/verity/verify.c
++++ b/fs/verity/verify.c
+@@ -273,3 +273,9 @@ int __init fsverity_init_workqueue(void)
+ 		return -ENOMEM;
+ 	return 0;
+ }
++
++void __init fsverity_exit_workqueue(void)
 +{
++	destroy_workqueue(fsverity_read_workqueue);
++	fsverity_read_workqueue = NULL;
 +}
-+
-+#endif	/* !CONFIG_FS_VERITY */
-+
-+#endif	/* _LINUX_FSVERITY_H */
 -- 
 2.22.0
