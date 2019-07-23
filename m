@@ -1,80 +1,74 @@
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mickael.salaun@ssi.gouv.fr>
-Subject: Re: [PATCH bpf-next v10 06/10] bpf,landlock: Add a new map type:
- inode
-Date: Wed, 31 Jul 2019 21:11:10 +0200
-Message-ID: <59e8fab9-34df-0ebe-ca6b-8b34bf582b75@ssi.gouv.fr>
-References: <20190721213116.23476-1-mic@digikod.net>
- <20190721213116.23476-7-mic@digikod.net>
- <20190727014048.3czy3n2hi6hfdy3m@ast-mbp.dhcp.thefacebook.com>
- <a870c2c9-d2f7-e0fa-c8cc-35dbf8b5b87d@ssi.gouv.fr>
- <CAADnVQLqkfVijWoOM29PxCL_yK6K0fr8B89r4c5EKgddevJhGQ@mail.gmail.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH v1 1/2] mm/page_idle: Add support for per-pid page_idle
+ using virtual indexing
+Date: Tue, 23 Jul 2019 08:05:25 +0200
+Message-ID: <20190723060525.GA4552@dhcp22.suse.cz>
+References: <20190722213205.140845-1-joel@joelfernandes.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAADnVQLqkfVijWoOM29PxCL_yK6K0fr8B89r4c5EKgddevJhGQ@mail.gmail.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <20190722213205.140845-1-joel@joelfernandes.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Cc: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>, LKML <linux-kernel@vger.kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Alexei Starovoitov <ast@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@amacapital.net>, Arnaldo Carvalho de Melo <acme@kernel.org>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, "David S . Miller" <davem@davemloft.net>, "Eric W . Biederman" <ebiederm@xmission.com>, James Morris <jmorris@namei.org>, Jann Horn <jann@thejh.net>, John Johansen <john.johansen@canonical.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Paul Moore <paul@paul-moore.com>
+To: "Joel Fernandes (Google)" <joel@joelfernandes.org>
+Cc: linux-kernel@vger.kernel.org, vdavydov.dev@gmail.com, Brendan Gregg <bgregg@netflix.com>, kernel-team@android.com, Alexey Dobriyan <adobriyan@gmail.com>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, carmenjackson@google.com, Christian Hansen <chansen3@cisco.com>, Colin Ian King <colin.king@canonical.com>, dancol@google.com, David Howells <dhowells@redhat.com>, fmayer@google.com, joaodias@google.com, joelaf@google.com, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Kirill Tkhai <ktkhai@virtuozzo.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, linux-doc@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, Mike Rapoport <rppt@linux.ibm.com>, minchan@google.com, minchan@kernel.org, namhyung@g
 List-Id: linux-api@vger.kernel.org
 
+[Cc linux-api - please always do CC this list when introducing a user
+ visible API]
 
+On Mon 22-07-19 17:32:04, Joel Fernandes (Google) wrote:
+> The page_idle tracking feature currently requires looking up the pagemap
+> for a process followed by interacting with /sys/kernel/mm/page_idle.
+> This is quite cumbersome and can be error-prone too. If between
+> accessing the per-PID pagemap and the global page_idle bitmap, if
+> something changes with the page then the information is not accurate.
+> More over looking up PFN from pagemap in Android devices is not
+> supported by unprivileged process and requires SYS_ADMIN and gives 0 for
+> the PFN.
+> 
+> This patch adds support to directly interact with page_idle tracking at
+> the PID level by introducing a /proc/<pid>/page_idle file. This
+> eliminates the need for userspace to calculate the mapping of the page.
+> It follows the exact same semantics as the global
+> /sys/kernel/mm/page_idle, however it is easier to use for some usecases
+> where looking up PFN is not needed and also does not require SYS_ADMIN.
+> It ended up simplifying userspace code, solving the security issue
+> mentioned and works quite well. SELinux does not need to be turned off
+> since no pagemap look up is needed.
+> 
+> In Android, we are using this for the heap profiler (heapprofd) which
+> profiles and pin points code paths which allocates and leaves memory
+> idle for long periods of time.
+> 
+> Documentation material:
+> The idle page tracking API for virtual address indexing using virtual page
+> frame numbers (VFN) is located at /proc/<pid>/page_idle. It is a bitmap
+> that follows the same semantics as /sys/kernel/mm/page_idle/bitmap
+> except that it uses virtual instead of physical frame numbers.
+> 
+> This idle page tracking API can be simpler to use than physical address
+> indexing, since the pagemap for a process does not need to be looked up
+> to mark or read a page's idle bit. It is also more accurate than
+> physical address indexing since in physical address indexing, address
+> space changes can occur between reading the pagemap and reading the
+> bitmap. In virtual address indexing, the process's mmap_sem is held for
+> the duration of the access.
 
-On 31/07/2019 20:58, Alexei Starovoitov wrote:
-> On Wed, Jul 31, 2019 at 11:46 AM Micka=C3=ABl Sala=C3=BCn
-> <mickael.salaun@ssi.gouv.fr> wrote:
->>>> +    for (i =3D 0; i < htab->n_buckets; i++) {
->>>> +            head =3D select_bucket(htab, i);
->>>> +            hlist_nulls_for_each_entry_safe(l, n, head, hash_node) {
->>>> +                    landlock_inode_remove_map(*((struct inode **)l->k=
-ey), map);
->>>> +            }
->>>> +    }
->>>> +    htab_map_free(map);
->>>> +}
->>>
->>> user space can delete the map.
->>> that will trigger inode_htab_map_free() which will call
->>> landlock_inode_remove_map().
->>> which will simply itereate the list and delete from the list.
->>
->> landlock_inode_remove_map() removes the reference to the map (being
->> freed) from the inode (with an RCU lock).
->
-> I'm going to ignore everything else for now and focus only on this bit,
-> since it's fundamental issue to address before this discussion can
-> go any further.
-> rcu_lock is not a spin_lock. I'm pretty sure you know this.
-> But you're arguing that it's somehow protecting from the race
-> I mentioned above?
->
+I didn't get to read the actual code but the overall idea makes sense to
+me. I can see this being useful for userspace memory management (along
+with remote MADV_PAGEOUT, MADV_COLD).
 
-I was just clarifying your comment to avoid misunderstanding about what
-is being removed.
+Normally I would object that a cumbersome nature of the existing
+interface can be hidden in a userspace but I do agree that rowhammer has
+made this one close to unusable for anything but a privileged process.
 
-As said in the full response, there is currently a race but, if I add a
-bpf_map_inc() call when the map is referenced by inode->security, then I
-don't see how a race could occur because such added map could only be
-freed in a security_inode_free() (as long as it retains a reference to
-this inode).
+I do not think you can make any argument about accuracy because
+the information will never be accurate. Sure the race window is smaller
+in principle but you can hardly say anything about how much or whether
+at all.
 
-
---
-Micka=C3=ABl Sala=C3=BCn
-ANSSI/SDE/ST/LAM
-
-Les donn=C3=A9es =C3=A0 caract=C3=A8re personnel recueillies et trait=C3=A9=
-es dans le cadre de cet =C3=A9change, le sont =C3=A0 seule fin d=E2=80=99ex=
-=C3=A9cution d=E2=80=99une relation professionnelle et s=E2=80=99op=C3=A8re=
-nt dans cette seule finalit=C3=A9 et pour la dur=C3=A9e n=C3=A9cessaire =C3=
-=A0 cette relation. Si vous souhaitez faire usage de vos droits de consulta=
-tion, de rectification et de suppression de vos donn=C3=A9es, veuillez cont=
-acter contact.rgpd@sgdsn.gouv.fr. Si vous avez re=C3=A7u ce message par err=
-eur, nous vous remercions d=E2=80=99en informer l=E2=80=99exp=C3=A9diteur e=
-t de d=C3=A9truire le message. The personal data collected and processed du=
-ring this exchange aims solely at completing a business relationship and is=
- limited to the necessary duration of that relationship. If you wish to use=
- your rights of consultation, rectification and deletion of your data, plea=
-se contact: contact.rgpd@sgdsn.gouv.fr. If you have received this message i=
-n error, we thank you for informing the sender and destroying the message.
+Thanks.
+-- 
+Michal Hocko
+SUSE Labs
