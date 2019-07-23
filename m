@@ -1,74 +1,116 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH v1 1/2] mm/page_idle: Add support for per-pid page_idle
- using virtual indexing
-Date: Tue, 23 Jul 2019 08:05:25 +0200
-Message-ID: <20190723060525.GA4552@dhcp22.suse.cz>
-References: <20190722213205.140845-1-joel@joelfernandes.org>
+From: Minchan Kim <minchan@kernel.org>
+Subject: [PATCH v6 0/5] Introduce MADV_COLD and MADV_PAGEOUT
+Date: Tue, 23 Jul 2019 15:25:34 +0900
+Message-ID: <20190723062539.198697-1-minchan@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190722213205.140845-1-joel@joelfernandes.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Joel Fernandes (Google)" <joel@joelfernandes.org>
-Cc: linux-kernel@vger.kernel.org, vdavydov.dev@gmail.com, Brendan Gregg <bgregg@netflix.com>, kernel-team@android.com, Alexey Dobriyan <adobriyan@gmail.com>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, carmenjackson@google.com, Christian Hansen <chansen3@cisco.com>, Colin Ian King <colin.king@canonical.com>, dancol@google.com, David Howells <dhowells@redhat.com>, fmayer@google.com, joaodias@google.com, joelaf@google.com, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Kirill Tkhai <ktkhai@virtuozzo.com>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, linux-doc@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, Mike Rapoport <rppt@linux.ibm.com>, minchan@google.com, minchan@kernel.org, namhyung@g
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-mm <linux-mm@kvack.org>, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Tim Murray <timmurray@google.com>, Joel Fernandes <joel@joelfernandes.org>, Suren Baghdasaryan <surenb@google.com>, Daniel Colascione <dancol@google.com>, Shakeel Butt <shakeelb@google.com>, Sonny Rao <sonnyrao@google.com>, oleksandr@redhat.com, hdanton@sina.com, lizeb@google.com, Dave Hansen <dave.hansen@intel.com>, "Kirill A . Shutemov" <kirill.shutemov@linux.intel.com>, Minchan Kim <minchan@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-[Cc linux-api - please always do CC this list when introducing a user
- visible API]
+This patch is part of previous series:
+https://lore.kernel.org/lkml/20190531064313.193437-1-minchan@kernel.org/
+Originally, it was created for external madvise hinting feature.
 
-On Mon 22-07-19 17:32:04, Joel Fernandes (Google) wrote:
-> The page_idle tracking feature currently requires looking up the pagemap
-> for a process followed by interacting with /sys/kernel/mm/page_idle.
-> This is quite cumbersome and can be error-prone too. If between
-> accessing the per-PID pagemap and the global page_idle bitmap, if
-> something changes with the page then the information is not accurate.
-> More over looking up PFN from pagemap in Android devices is not
-> supported by unprivileged process and requires SYS_ADMIN and gives 0 for
-> the PFN.
-> 
-> This patch adds support to directly interact with page_idle tracking at
-> the PID level by introducing a /proc/<pid>/page_idle file. This
-> eliminates the need for userspace to calculate the mapping of the page.
-> It follows the exact same semantics as the global
-> /sys/kernel/mm/page_idle, however it is easier to use for some usecases
-> where looking up PFN is not needed and also does not require SYS_ADMIN.
-> It ended up simplifying userspace code, solving the security issue
-> mentioned and works quite well. SELinux does not need to be turned off
-> since no pagemap look up is needed.
-> 
-> In Android, we are using this for the heap profiler (heapprofd) which
-> profiles and pin points code paths which allocates and leaves memory
-> idle for long periods of time.
-> 
-> Documentation material:
-> The idle page tracking API for virtual address indexing using virtual page
-> frame numbers (VFN) is located at /proc/<pid>/page_idle. It is a bitmap
-> that follows the same semantics as /sys/kernel/mm/page_idle/bitmap
-> except that it uses virtual instead of physical frame numbers.
-> 
-> This idle page tracking API can be simpler to use than physical address
-> indexing, since the pagemap for a process does not need to be looked up
-> to mark or read a page's idle bit. It is also more accurate than
-> physical address indexing since in physical address indexing, address
-> space changes can occur between reading the pagemap and reading the
-> bitmap. In virtual address indexing, the process's mmap_sem is held for
-> the duration of the access.
+https://lkml.org/lkml/2019/5/31/463
+Michal wanted to separte the discussion from external hinting interface
+so this patchset includes only first part of my entire patchset
 
-I didn't get to read the actual code but the overall idea makes sense to
-me. I can see this being useful for userspace memory management (along
-with remote MADV_PAGEOUT, MADV_COLD).
+  - introduce MADV_COLD and MADV_PAGEOUT hint to madvise.
 
-Normally I would object that a cumbersome nature of the existing
-interface can be hidden in a userspace but I do agree that rowhammer has
-made this one close to unusable for anything but a privileged process.
-
-I do not think you can make any argument about accuracy because
-the information will never be accurate. Sure the race window is smaller
-in principle but you can hardly say anything about how much or whether
-at all.
+However, I keep entire description for others for easier understanding
+why this kinds of hint was born.
 
 Thanks.
+
+This patchset is against on mmotm-2019-07-18-16-08.
+
+Below is description of previous entire patchset.
+
+================= &< =====================
+
+- Background
+
+The Android terminology used for forking a new process and starting an app
+from scratch is a cold start, while resuming an existing app is a hot start.
+While we continually try to improve the performance of cold starts, hot
+starts will always be significantly less power hungry as well as faster so
+we are trying to make hot start more likely than cold start.
+
+To increase hot start, Android userspace manages the order that apps should
+be killed in a process called ActivityManagerService. ActivityManagerService
+tracks every Android app or service that the user could be interacting with
+at any time and translates that into a ranked list for lmkd(low memory
+killer daemon). They are likely to be killed by lmkd if the system has to
+reclaim memory. In that sense they are similar to entries in any other cache.
+Those apps are kept alive for opportunistic performance improvements but
+those performance improvements will vary based on the memory requirements of
+individual workloads.
+
+- Problem
+
+Naturally, cached apps were dominant consumers of memory on the system.
+However, they were not significant consumers of swap even though they are
+good candidate for swap. Under investigation, swapping out only begins
+once the low zone watermark is hit and kswapd wakes up, but the overall
+allocation rate in the system might trip lmkd thresholds and cause a cached
+process to be killed(we measured performance swapping out vs. zapping the
+memory by killing a process. Unsurprisingly, zapping is 10x times faster
+even though we use zram which is much faster than real storage) so kill
+from lmkd will often satisfy the high zone watermark, resulting in very
+few pages actually being moved to swap.
+
+- Approach
+
+The approach we chose was to use a new interface to allow userspace to
+proactively reclaim entire processes by leveraging platform information.
+This allowed us to bypass the inaccuracy of the kernel’s LRUs for pages
+that are known to be cold from userspace and to avoid races with lmkd
+by reclaiming apps as soon as they entered the cached state. Additionally,
+it could provide many chances for platform to use much information to
+optimize memory efficiency.
+
+To achieve the goal, the patchset introduce two new options for madvise.
+One is MADV_COLD which will deactivate activated pages and the other is
+MADV_PAGEOUT which will reclaim private pages instantly. These new options
+complement MADV_DONTNEED and MADV_FREE by adding non-destructive ways to
+gain some free memory space. MADV_PAGEOUT is similar to MADV_DONTNEED in a way
+that it hints the kernel that memory region is not currently needed and
+should be reclaimed immediately; MADV_COLD is similar to MADV_FREE in a way
+that it hints the kernel that memory region is not currently needed and
+should be reclaimed when memory pressure rises.
+
+* v5 - http://lore.kernel.org/lkml/20190714233401.36909-1-minchan@kernel.org
+* v4 - http://lore.kernel.org/lkml/20190711012528.176050-1-minchan@kernel.org
+* v3 - http://lore.kernel.org/lkml/20190627115405.255259-1-minchan@kernel.org
+* v2 - http://lore.kernel.org/lkml/20190610111252.239156-1-minchan@kernel.org
+* v1 - http://lore.kernel.org/lkml/20190603053655.127730-1-minchan@kernel.org
+
+Minchan Kim (5):
+  mm: introduce MADV_COLD
+  mm: change PAGEREF_RECLAIM_CLEAN with PAGE_REFRECLAIM
+  mm: account nr_isolated_xxx in [isolate|putback]_lru_page
+  mm: introduce MADV_PAGEOUT
+  mm: factor out common parts between MADV_COLD and MADV_PAGEOUT
+
+ include/linux/swap.h                   |   2 +
+ include/uapi/asm-generic/mman-common.h |   2 +
+ mm/compaction.c                        |   2 -
+ mm/gup.c                               |   7 +-
+ mm/internal.h                          |   2 +-
+ mm/khugepaged.c                        |   3 -
+ mm/madvise.c                           | 274 ++++++++++++++++++++++++-
+ mm/memory-failure.c                    |   3 -
+ mm/memory_hotplug.c                    |   4 -
+ mm/mempolicy.c                         |   6 +-
+ mm/migrate.c                           |  37 +---
+ mm/oom_kill.c                          |   2 +-
+ mm/swap.c                              |  42 ++++
+ mm/vmscan.c                            |  83 +++++++-
+ 14 files changed, 404 insertions(+), 65 deletions(-)
+
 -- 
-Michal Hocko
-SUSE Labs
+2.22.0.657.g960e92d24f-goog
