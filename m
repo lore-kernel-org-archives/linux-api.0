@@ -1,217 +1,125 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v3 06/12] fpga: dfl: add id_table for dfl private feature driver
-Date: Tue, 23 Jul 2019 12:51:29 +0800
-Message-ID: <1563857495-26692-7-git-send-email-hao.wu@intel.com>
+Subject: [PATCH v3 10/12] fpga: dfl: fme: add capability sysfs interfaces
+Date: Tue, 23 Jul 2019 12:51:33 +0800
+Message-ID: <1563857495-26692-11-git-send-email-hao.wu@intel.com>
 References: <1563857495-26692-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1563857495-26692-1-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: gregkh@linuxfoundation.org, mdf@kernel.org, linux-fpga@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, atull@kernel.org, Wu Hao <hao.wu@intel.com>, Xu Yilun <yilun.xu@intel.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, atull@kernel.org, Wu Hao <hao.wu@intel.com>, Luwei Kang <luwei.kang@intel.com>, Xu Yilun <yilun.xu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds id_table for each dfl private feature driver,
-it allows to reuse same private feature driver to match and support
-multiple dfl private features.
+This patch adds 3 read-only sysfs interfaces for FPGA Management Engine
+(FME) block for capabilities including cache_size, fabric_version and
+socket_id.
 
+Signed-off-by: Luwei Kang <luwei.kang@intel.com>
 Signed-off-by: Xu Yilun <yilun.xu@intel.com>
 Signed-off-by: Wu Hao <hao.wu@intel.com>
-Acked-by: Moritz Fischer <mdf@kernel.org>
 Acked-by: Alan Tull <atull@kernel.org>
 Signed-off-by: Moritz Fischer <mdf@kernel.org>
 ---
-v2: rebased, remove DRV/MODULE_VERSION modifications
+v2: rebased.
+v3: update kernel version and date in sysfs doc
 ---
- drivers/fpga/dfl-afu-main.c | 14 ++++++++++++--
- drivers/fpga/dfl-fme-main.c | 11 ++++++++---
- drivers/fpga/dfl-fme-pr.c   |  7 ++++++-
- drivers/fpga/dfl-fme.h      |  3 ++-
- drivers/fpga/dfl.c          | 18 ++++++++++++++++--
- drivers/fpga/dfl.h          | 21 +++++++++++++++------
- 6 files changed, 59 insertions(+), 15 deletions(-)
+ Documentation/ABI/testing/sysfs-platform-dfl-fme | 23 ++++++++++++
+ drivers/fpga/dfl-fme-main.c                      | 48 ++++++++++++++++++++++++
+ 2 files changed, 71 insertions(+)
 
-diff --git a/drivers/fpga/dfl-afu-main.c b/drivers/fpga/dfl-afu-main.c
-index 9025314..fbd9553 100644
---- a/drivers/fpga/dfl-afu-main.c
-+++ b/drivers/fpga/dfl-afu-main.c
-@@ -435,6 +435,11 @@ static void port_hdr_uinit(struct platform_device *pdev,
- 	return ret;
- }
- 
-+static const struct dfl_feature_id port_hdr_id_table[] = {
-+	{.id = PORT_FEATURE_ID_HEADER,},
-+	{0,}
-+};
+diff --git a/Documentation/ABI/testing/sysfs-platform-dfl-fme b/Documentation/ABI/testing/sysfs-platform-dfl-fme
+index 8fa4feb..269e807 100644
+--- a/Documentation/ABI/testing/sysfs-platform-dfl-fme
++++ b/Documentation/ABI/testing/sysfs-platform-dfl-fme
+@@ -21,3 +21,26 @@ Contact:	Wu Hao <hao.wu@intel.com>
+ Description:	Read-only. It returns Bitstream (static FPGA region) meta
+ 		data, which includes the synthesis date, seed and other
+ 		information of this static FPGA region.
 +
- static const struct dfl_feature_ops port_hdr_ops = {
- 	.init = port_hdr_init,
- 	.uinit = port_hdr_uinit,
-@@ -496,6 +501,11 @@ static void port_afu_uinit(struct platform_device *pdev,
- 	device_remove_groups(&pdev->dev, port_afu_groups);
- }
- 
-+static const struct dfl_feature_id port_afu_id_table[] = {
-+	{.id = PORT_FEATURE_ID_AFU,},
-+	{0,}
-+};
++What:		/sys/bus/platform/devices/dfl-fme.0/cache_size
++Date:		July 2019
++KernelVersion:  5.4
++Contact:	Wu Hao <hao.wu@intel.com>
++Description:	Read-only. It returns cache size of this FPGA device.
 +
- static const struct dfl_feature_ops port_afu_ops = {
- 	.init = port_afu_init,
- 	.uinit = port_afu_uinit,
-@@ -503,11 +513,11 @@ static void port_afu_uinit(struct platform_device *pdev,
- 
- static struct dfl_feature_driver port_feature_drvs[] = {
- 	{
--		.id = PORT_FEATURE_ID_HEADER,
-+		.id_table = port_hdr_id_table,
- 		.ops = &port_hdr_ops,
- 	},
- 	{
--		.id = PORT_FEATURE_ID_AFU,
-+		.id_table = port_afu_id_table,
- 		.ops = &port_afu_ops,
- 	},
- 	{
++What:		/sys/bus/platform/devices/dfl-fme.0/fabric_version
++Date:		July 2019
++KernelVersion:  5.4
++Contact:	Wu Hao <hao.wu@intel.com>
++Description:	Read-only. It returns fabric version of this FPGA device.
++		Userspace applications need this information to select
++		best data channels per different fabric design.
++
++What:		/sys/bus/platform/devices/dfl-fme.0/socket_id
++Date:		July 2019
++KernelVersion:  5.4
++Contact:	Wu Hao <hao.wu@intel.com>
++Description:	Read-only. It returns socket_id to indicate which socket
++		this FPGA belongs to, only valid for integrated solution.
++		User only needs this information, in case standard numa node
++		can't provide correct information.
 diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-main.c
-index e61e0fe..e333f19 100644
+index e333f19..c8703c4 100644
 --- a/drivers/fpga/dfl-fme-main.c
 +++ b/drivers/fpga/dfl-fme-main.c
-@@ -133,6 +133,11 @@ static long fme_hdr_ioctl(struct platform_device *pdev,
- 	return -ENODEV;
+@@ -73,10 +73,58 @@ static ssize_t bitstream_metadata_show(struct device *dev,
  }
+ static DEVICE_ATTR_RO(bitstream_metadata);
  
-+static const struct dfl_feature_id fme_hdr_id_table[] = {
-+	{.id = FME_FEATURE_ID_HEADER,},
-+	{0,}
-+};
-+
- static const struct dfl_feature_ops fme_hdr_ops = {
- 	.init = fme_hdr_init,
- 	.uinit = fme_hdr_uinit,
-@@ -141,12 +146,12 @@ static long fme_hdr_ioctl(struct platform_device *pdev,
- 
- static struct dfl_feature_driver fme_feature_drvs[] = {
- 	{
--		.id = FME_FEATURE_ID_HEADER,
-+		.id_table = fme_hdr_id_table,
- 		.ops = &fme_hdr_ops,
- 	},
- 	{
--		.id = FME_FEATURE_ID_PR_MGMT,
--		.ops = &pr_mgmt_ops,
-+		.id_table = fme_pr_mgmt_id_table,
-+		.ops = &fme_pr_mgmt_ops,
- 	},
- 	{
- 		.ops = NULL,
-diff --git a/drivers/fpga/dfl-fme-pr.c b/drivers/fpga/dfl-fme-pr.c
-index cd94ba8..52f1745 100644
---- a/drivers/fpga/dfl-fme-pr.c
-+++ b/drivers/fpga/dfl-fme-pr.c
-@@ -483,7 +483,12 @@ static long fme_pr_ioctl(struct platform_device *pdev,
- 	return ret;
- }
- 
--const struct dfl_feature_ops pr_mgmt_ops = {
-+const struct dfl_feature_id fme_pr_mgmt_id_table[] = {
-+	{.id = FME_FEATURE_ID_PR_MGMT,},
-+	{0}
-+};
-+
-+const struct dfl_feature_ops fme_pr_mgmt_ops = {
- 	.init = pr_mgmt_init,
- 	.uinit = pr_mgmt_uinit,
- 	.ioctl = fme_pr_ioctl,
-diff --git a/drivers/fpga/dfl-fme.h b/drivers/fpga/dfl-fme.h
-index de20755..7a021c4 100644
---- a/drivers/fpga/dfl-fme.h
-+++ b/drivers/fpga/dfl-fme.h
-@@ -35,6 +35,7 @@ struct dfl_fme {
- 	struct dfl_feature_platform_data *pdata;
- };
- 
--extern const struct dfl_feature_ops pr_mgmt_ops;
-+extern const struct dfl_feature_ops fme_pr_mgmt_ops;
-+extern const struct dfl_feature_id fme_pr_mgmt_id_table[];
- 
- #endif /* __DFL_FME_H */
-diff --git a/drivers/fpga/dfl.c b/drivers/fpga/dfl.c
-index c3a8e1d..3eb67ab 100644
---- a/drivers/fpga/dfl.c
-+++ b/drivers/fpga/dfl.c
-@@ -281,6 +281,21 @@ static int dfl_feature_instance_init(struct platform_device *pdev,
- 	return ret;
- }
- 
-+static bool dfl_feature_drv_match(struct dfl_feature *feature,
-+				  struct dfl_feature_driver *driver)
++static ssize_t cache_size_show(struct device *dev,
++			       struct device_attribute *attr, char *buf)
 +{
-+	const struct dfl_feature_id *ids = driver->id_table;
++	void __iomem *base;
++	u64 v;
 +
-+	if (ids) {
-+		while (ids->id) {
-+			if (ids->id == feature->id)
-+				return true;
-+			ids++;
-+		}
-+	}
-+	return false;
++	base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_HEADER);
++
++	v = readq(base + FME_HDR_CAP);
++
++	return sprintf(buf, "%u\n",
++		       (unsigned int)FIELD_GET(FME_CAP_CACHE_SIZE, v));
 +}
++static DEVICE_ATTR_RO(cache_size);
 +
- /**
-  * dfl_fpga_dev_feature_init - init for sub features of dfl feature device
-  * @pdev: feature device.
-@@ -301,8 +316,7 @@ int dfl_fpga_dev_feature_init(struct platform_device *pdev,
- 
- 	while (drv->ops) {
- 		dfl_fpga_dev_for_each_feature(pdata, feature) {
--			/* match feature and drv using id */
--			if (feature->id == drv->id) {
-+			if (dfl_feature_drv_match(feature, drv)) {
- 				ret = dfl_feature_instance_init(pdev, pdata,
- 								feature, drv);
- 				if (ret)
-diff --git a/drivers/fpga/dfl.h b/drivers/fpga/dfl.h
-index 77b5137..f44fda1 100644
---- a/drivers/fpga/dfl.h
-+++ b/drivers/fpga/dfl.h
-@@ -30,8 +30,8 @@
- /* plus one for fme device */
- #define MAX_DFL_FEATURE_DEV_NUM    (MAX_DFL_FPGA_PORT_NUM + 1)
- 
--/* Reserved 0x0 for Header Group Register and 0xff for AFU */
--#define FEATURE_ID_FIU_HEADER		0x0
-+/* Reserved 0xfe for Header Group Register and 0xff for AFU */
-+#define FEATURE_ID_FIU_HEADER		0xfe
- #define FEATURE_ID_AFU			0xff
- 
- #define FME_FEATURE_ID_HEADER		FEATURE_ID_FIU_HEADER
-@@ -169,13 +169,22 @@ struct dfl_fpga_port_ops {
- int dfl_fpga_check_port_id(struct platform_device *pdev, void *pport_id);
- 
- /**
-- * struct dfl_feature_driver - sub feature's driver
-+ * struct dfl_feature_id - dfl private feature id
-  *
-- * @id: sub feature id.
-- * @ops: ops of this sub feature.
-+ * @id: unique dfl private feature id.
-  */
--struct dfl_feature_driver {
-+struct dfl_feature_id {
- 	u64 id;
-+};
++static ssize_t fabric_version_show(struct device *dev,
++				   struct device_attribute *attr, char *buf)
++{
++	void __iomem *base;
++	u64 v;
 +
-+/**
-+ * struct dfl_feature_driver - dfl private feature driver
-+ *
-+ * @id_table: id_table for dfl private features supported by this driver.
-+ * @ops: ops of this dfl private feature driver.
-+ */
-+struct dfl_feature_driver {
-+	const struct dfl_feature_id *id_table;
- 	const struct dfl_feature_ops *ops;
++	base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_HEADER);
++
++	v = readq(base + FME_HDR_CAP);
++
++	return sprintf(buf, "%u\n",
++		       (unsigned int)FIELD_GET(FME_CAP_FABRIC_VERID, v));
++}
++static DEVICE_ATTR_RO(fabric_version);
++
++static ssize_t socket_id_show(struct device *dev,
++			      struct device_attribute *attr, char *buf)
++{
++	void __iomem *base;
++	u64 v;
++
++	base = dfl_get_feature_ioaddr_by_id(dev, FME_FEATURE_ID_HEADER);
++
++	v = readq(base + FME_HDR_CAP);
++
++	return sprintf(buf, "%u\n",
++		       (unsigned int)FIELD_GET(FME_CAP_SOCKET_ID, v));
++}
++static DEVICE_ATTR_RO(socket_id);
++
+ static struct attribute *fme_hdr_attrs[] = {
+ 	&dev_attr_ports_num.attr,
+ 	&dev_attr_bitstream_id.attr,
+ 	&dev_attr_bitstream_metadata.attr,
++	&dev_attr_cache_size.attr,
++	&dev_attr_fabric_version.attr,
++	&dev_attr_socket_id.attr,
+ 	NULL,
  };
- 
+ ATTRIBUTE_GROUPS(fme_hdr);
 -- 
 1.8.3.1
