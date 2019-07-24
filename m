@@ -1,64 +1,50 @@
-From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [v4 PATCH 2/2] mm: mempolicy: handle vma with unmovable pages
- mapped correctly in mbind
-Date: Wed, 24 Jul 2019 10:19:34 +0200
-Message-ID: <6aeca7cf-d9da-95cc-e6dc-a10c2978c523@suse.cz>
-References: <1563556862-54056-1-git-send-email-yang.shi@linux.alibaba.com>
- <1563556862-54056-3-git-send-email-yang.shi@linux.alibaba.com>
- <6c948a96-7af1-c0d2-b3df-5fe613284d4f@suse.cz>
- <20190722180231.b7abbe8bdb046d725bdd9e6b@linux-foundation.org>
- <a9b8cae7-4bca-3c98-99f9-6b92de7e5909@linux.alibaba.com>
+From: Greg KH <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH v3 02/12] fpga: dfl: fme: add
+ DFL_FPGA_FME_PORT_RELEASE/ASSIGN ioctl support.
+Date: Wed, 24 Jul 2019 11:33:57 +0200
+Message-ID: <20190724093357.GA29532@kroah.com>
+References: <1563857495-26692-1-git-send-email-hao.wu@intel.com>
+ <1563857495-26692-3-git-send-email-hao.wu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <a9b8cae7-4bca-3c98-99f9-6b92de7e5909@linux.alibaba.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <1563857495-26692-3-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yang Shi <yang.shi@linux.alibaba.com>, Andrew Morton <akpm@linux-foundation.org>
-Cc: mhocko@kernel.org, mgorman@techsingularity.net, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+To: Wu Hao <hao.wu@intel.com>
+Cc: mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, atull@kernel.org, Zhang Yi Z <yi.z.zhang@intel.com>, Xu Yilun <yilun.xu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On 7/23/19 7:35 AM, Yang Shi wrote:
-> 
-> 
-> On 7/22/19 6:02 PM, Andrew Morton wrote:
->> On Mon, 22 Jul 2019 09:25:09 +0200 Vlastimil Babka <vbabka@suse.cz> wrote:
->>
->>>> since there may be pages off LRU temporarily.  We should migrate other
->>>> pages if MPOL_MF_MOVE* is specified.  Set has_unmovable flag if some
->>>> paged could not be not moved, then return -EIO for mbind() eventually.
->>>>
->>>> With this change the above test would return -EIO as expected.
->>>>
->>>> Cc: Vlastimil Babka <vbabka@suse.cz>
->>>> Cc: Michal Hocko <mhocko@suse.com>
->>>> Cc: Mel Gorman <mgorman@techsingularity.net>
->>>> Signed-off-by: Yang Shi <yang.shi@linux.alibaba.com>
->>> Reviewed-by: Vlastimil Babka <vbabka@suse.cz>
->> Thanks.
->>
->> I'm a bit surprised that this doesn't have a cc:stable.  Did we
->> consider that?
-> 
-> The VM_BUG just happens on 4.9, and it is enabled only by CONFIG_VM. For 
-> post-4.9 kernel, this fixes the semantics of mbind which should be not a 
-> regression IMHO.
+On Tue, Jul 23, 2019 at 12:51:25PM +0800, Wu Hao wrote:
+> +/**
+> + * dfl_fpga_cdev_config_port - configure a port feature dev
+> + * @cdev: parent container device.
+> + * @port_id: id of the port feature device.
+> + * @release: release port or assign port back.
+> + *
+> + * This function allows user to release port platform device or assign it back.
+> + * e.g. to safely turn one port from PF into VF for PCI device SRIOV support,
+> + * release port platform device is one necessary step.
+> + */
+> +int dfl_fpga_cdev_config_port(struct dfl_fpga_cdev *cdev, int port_id,
+> +			      bool release)
+> +{
+> +	return release ? detach_port_dev(cdev, port_id) :
+> +			 attach_port_dev(cdev, port_id);
+> +}
+> +EXPORT_SYMBOL_GPL(dfl_fpga_cdev_config_port);
 
-4.9 is a LTS kernel, so perhaps worth trying?
+That's a horrible api.  Every time you see this call in code, you have
+to go and look up what "bool" means here.  There's no reason for it.
 
->>
->> Also, is this patch dependent upon "mm: mempolicy: make the behavior
->> consistent when MPOL_MF_MOVE* and MPOL_MF_STRICT were specified"?
->> Doesn't look that way..
-> 
-> No, it depends on patch #1.
-> 
->>
->> Also, I have a note that you had concerns with "mm: mempolicy: make the
->> behavior consistent when MPOL_MF_MOVE* and MPOL_MF_STRICT were
->> specified".  What is the status now?
-> 
-> Vlastimil had given his Reviewed-by.
+Just have 2 different functions, one that attaches a port, and one that
+detaches it.  That way when you read the code that calls this function,
+you know what it does instantly without having to go look up some api
+function somewhere else.
 
-Yes, the concerns were resolved.
+Write code for people to read first.  And you are saving nothing here by
+trying to do two different things in the same exact function.
+
+thanks,
+
+greg k-h
