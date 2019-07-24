@@ -1,211 +1,187 @@
-From: Andy Lutomirski <luto@amacapital.net>
+From: Song Liu <songliubraving@fb.com>
 Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
-Date: Tue, 23 Jul 2019 18:40:28 -0700
-Message-ID: <1DE886F3-3982-45DE-B545-67AD6A4871AB@amacapital.net>
-References: <20190627201923.2589391-1-songliubraving@fb.com> <20190627201923.2589391-2-songliubraving@fb.com> <21894f45-70d8-dfca-8c02-044f776c5e05@kernel.org> <3C595328-3ABE-4421-9772-8D41094A4F57@fb.com> <CALCETrWBnH4Q43POU8cQ7YMjb9LioK28FDEQf7aHZbdf1eBZWg@mail.gmail.com> <0DE7F23E-9CD2-4F03-82B5-835506B59056@fb.com> <CALCETrWBWbNFJvsTCeUchu3BZJ3SH3dvtXLUB2EhnPrzFfsLNA@mail.gmail.com> <201907021115.DCD56BBABB@keescook> <CALCETrXTta26CTtEDnzvtd03-WOGdXcnsAogP8JjLkcj4-mHvg@mail.gmail.com> <4A7A225A-6C23-4C0F-9A95-7C6C56B281ED@fb.com> <CALCETrX2bMnwC6_t4b_G-hzJSfMPrkK4YKs5ebcecv2LJ0rt3w@mail.gmail.com> <514D5453-0AEE-420F-AEB6-3F4F58C62E7E@fb.com>
-Mime-Version: 1.0 (1.0)
-Content-Type: text/plain;
-        charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Date: Wed, 24 Jul 2019 06:30:58 +0000
+Message-ID: <7F51F8B8-CF4C-4D82-AAE1-F0F28951DB7F@fb.com>
+References: <20190627201923.2589391-1-songliubraving@fb.com>
+ <20190627201923.2589391-2-songliubraving@fb.com>
+ <21894f45-70d8-dfca-8c02-044f776c5e05@kernel.org>
+ <3C595328-3ABE-4421-9772-8D41094A4F57@fb.com>
+ <CALCETrWBnH4Q43POU8cQ7YMjb9LioK28FDEQf7aHZbdf1eBZWg@mail.gmail.com>
+ <0DE7F23E-9CD2-4F03-82B5-835506B59056@fb.com>
+ <CALCETrWBWbNFJvsTCeUchu3BZJ3SH3dvtXLUB2EhnPrzFfsLNA@mail.gmail.com>
+ <201907021115.DCD56BBABB@keescook>
+ <CALCETrXTta26CTtEDnzvtd03-WOGdXcnsAogP8JjLkcj4-mHvg@mail.gmail.com>
+ <4A7A225A-6C23-4C0F-9A95-7C6C56B281ED@fb.com>
+ <CALCETrX2bMnwC6_t4b_G-hzJSfMPrkK4YKs5ebcecv2LJ0rt3w@mail.gmail.com>
+ <514D5453-0AEE-420F-AEB6-3F4F58C62E7E@fb.com>
+ <1DE886F3-3982-45DE-B545-67AD6A4871AB@amacapital.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <514D5453-0AEE-420F-AEB6-3F4F58C62E7E@fb.com>
+In-Reply-To: <1DE886F3-3982-45DE-B545-67AD6A4871AB@amacapital.net>
+Content-Language: en-US
+Content-ID: <EFB0CEDB4E2B584EB66CE08BF2DDEB8F@namprd15.prod.outlook.com>
 Sender: netdev-owner@vger.kernel.org
-To: Song Liu <songliubraving@fb.com>
+To: Andy Lutomirski <luto@amacapital.net>
 Cc: Andy Lutomirski <luto@kernel.org>, Kees Cook <keescook@chromium.org>, "linux-security@vger.kernel.org" <linux-security@vger.kernel.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-
-
-> On Jul 23, 2019, at 3:56 PM, Song Liu <songliubraving@fb.com> wrote:
->=20
->=20
->=20
->> On Jul 23, 2019, at 8:11 AM, Andy Lutomirski <luto@kernel.org> wrote:
->>=20
->> On Mon, Jul 22, 2019 at 1:54 PM Song Liu <songliubraving@fb.com> wrote:
->>>=20
->>> Hi Andy, Lorenz, and all,
->>>=20
->>>> On Jul 2, 2019, at 2:32 PM, Andy Lutomirski <luto@kernel.org> wrote:
->>>>=20
->>>> On Tue, Jul 2, 2019 at 2:04 PM Kees Cook <keescook@chromium.org> wrote:=
-
->>>>>=20
->>>>>> On Mon, Jul 01, 2019 at 06:59:13PM -0700, Andy Lutomirski wrote:
->>>>>> I think I'm understanding your motivation.  You're not trying to make=
-
->>>>>> bpf() generically usable without privilege -- you're trying to create=
-
->>>>>> a way to allow certain users to access dangerous bpf functionality
->>>>>> within some limits.
->>>>>>=20
->>>>>> That's a perfectly fine goal, but I think you're reinventing the
->>>>>> wheel, and the wheel you're reinventing is quite complicated and
->>>>>> already exists.  I think you should teach bpftool to be secure when
->>>>>> installed setuid root or with fscaps enabled and put your policy in
->>>>>> bpftool.  If you want to harden this a little bit, it would seem
->>>>>> entirely reasonable to add a new CAP_BPF_ADMIN and change some, but
->>>>>> not all, of the capable() checks to check CAP_BPF_ADMIN instead of th=
-e
->>>>>> capabilities that they currently check.
->>>>>=20
->>>>> If finer grained controls are wanted, it does seem like the /dev/bpf
->>>>> path makes the most sense. open, request abilities, use fd. The open c=
-an
->>>>> be mediated by DAC and LSM. The request can be mediated by LSM. This
->>>>> provides a way to add policy at the LSM level and at the tool level.
->>>>> (i.e. For tool-level controls: leave LSM wide open, make /dev/bpf owne=
-d
->>>>> by "bpfadmin" and bpftool becomes setuid "bpfadmin". For fine-grained
->>>>> controls, leave /dev/bpf wide open and add policy to SELinux, etc.)
->>>>>=20
->>>>> With only a new CAP, you don't get the fine-grained controls. (The
->>>>> "request abilities" part is the key there.)
->>>>=20
->>>> Sure you do: the effective set.  It has somewhat bizarre defaults, but
->>>> I don't think that's a real problem.  Also, this wouldn't be like
->>>> CAP_DAC_READ_SEARCH -- you can't accidentally use your BPF caps.
->>>>=20
->>>> I think that a /dev capability-like object isn't totally nuts, but I
->>>> think we should do it well, and this patch doesn't really achieve
->>>> that.  But I don't think bpf wants fine-grained controls like this at
->>>> all -- as I pointed upthread, a fine-grained solution really wants
->>>> different treatment for the different capable() checks, and a bunch of
->>>> them won't resemble capabilities or /dev/bpf at all.
->>>=20
->>> With 5.3-rc1 out, I am back on this. :)
->>>=20
->>> How about we modify the set as:
->>> 1. Introduce sys_bpf_with_cap() that takes fd of /dev/bpf.
->>=20
->> I'm fine with this in principle, but:
->>=20
->>> 2. Better handling of capable() calls through bpf code. I guess the
->>>    biggest problem here is is_priv in verifier.c:bpf_check().
->>=20
->> I think it would be good to understand exactly what /dev/bpf will
->> enable one to do.  Without some care, it would just become the next
->> CAP_SYS_ADMIN: if you can open it, sure, you're not root, but you can
->> intercept network traffic, modify cgroup behavior, and do plenty of
->> other things, any of which can probably be used to completely take
->> over the system.
->=20
-> Well, yes. sys_bpf() is pretty powerful.=20
->=20
-> The goal of /dev/bpf is to enable special users to call sys_bpf(). In=20
-> the meanwhile, such users should not take down the whole system easily
-> by accident, e.g., with rm -rf /.
-
-That=E2=80=99s easy, though =E2=80=94 bpftool could learn to read /etc/bpfus=
-ers before allowing ruid !=3D 0.
-
->=20
-> It is similar to CAP_BPF_ADMIN, without really adding the CAP_. =20
->=20
-> I think adding new CAP_ requires much more effort.=20
->=20
-
-A new CAP_ is straightforward =E2=80=94 add the definition and change the ma=
-x cap.
-
->>=20
->> It would also be nice to understand why you can't do what you need to
->> do entirely in user code using setuid or fscaps.
->=20
-> It is not very easy to achieve the same control: only certain users can
-> run certain tools (bpftool, etc.).=20
->=20
-> The closest approach I can find is:
->  1. use libcap (pam_cap) to give CAP_SETUID to certain users;
->  2. add setuid(0) to bpftool.
->=20
-> The difference between this approach and /dev/bpf is that certain users
-> would be able to run other tools that call setuid(). Though I am not=20
-> sure how many tools call setuid(), and how risky they are.=20
-
-I think you=E2=80=99re misunderstanding me. Install bpftool with either the s=
-etuid (S_ISUID) mode or with an appropriate fscap bit =E2=80=94 see the setc=
-ap(8) manpage.
-
-The downside of this approach is that it won=E2=80=99t work well in a contai=
-ner, and containers are cool these days :)
-
->=20
->>=20
->> Finally, at risk of rehashing some old arguments, I'll point out that
->> the bpf() syscall is an unusual design to begin with.  As an example,
->> consider bpf_prog_attach().  Outside of bpf(), if I want to change the
->> behavior of a cgroup, I would write to a file in
->> /sys/kernel/cgroup/unified/whatever/, and normal DAC and MAC rules
->> apply.  With bpf(), however, I just call bpf() to attach a program to
->> the cgroup.  bpf() says "oh, you are capable(CAP_NET_ADMIN) -- go for
->> it!".  Unless I missed something major, and I just re-read the code,
->> there is no check that the caller has write or LSM permission to
->> anything at all in cgroupfs, and the existing API would make it very
->> awkward to impose any kind of DAC rules here.
->>=20
->> So I think it might actually be time to repay some techincal debt and
->> come up with a real fix.  As a less intrusive approach, you could see
->> about requiring ownership of the cgroup directory instead of
->> CAP_NET_ADMIN.  As a more intrusive but perhaps better approach, you
->> could invert the logic to to make it work like everything outside of
->> cgroup: add pseudo-files like bpf.inet_ingress to the cgroup
->> directories, and require a writable fd to *that* to a new improved
->> attach API.  If a user could do:
->>=20
->> int fd =3D open("/sys/fs/cgroup/.../bpf.inet_attach", O_RDWR);  /* usual
->> DAC and MAC policy applies */
->> int bpf_fd =3D setup the bpf stuff;  /* no privilege required, unless
->> the program is huge or needs is_priv */
->> bpf(BPF_IMPROVED_ATTACH, target =3D fd, program =3D bpf_fd);
->>=20
->> there would be no capabilities or global privilege at all required for
->> this.  It would just work with cgroup delegation, containers, etc.
->>=20
->> I think you could even pull off this type of API change with only
->> libbpf changes.  In particular, there's this code:
->>=20
->> int bpf_prog_attach(int prog_fd, int target_fd, enum bpf_attach_type type=
-,
->>                   unsigned int flags)
->> {
->>       union bpf_attr attr;
->>=20
->>       memset(&attr, 0, sizeof(attr));
->>       attr.target_fd     =3D target_fd;
->>       attr.attach_bpf_fd =3D prog_fd;
->>       attr.attach_type   =3D type;
->>       attr.attach_flags  =3D flags;
->>=20
->>       return sys_bpf(BPF_PROG_ATTACH, &attr, sizeof(attr));
->> }
->>=20
->> This would instead do something like:
->>=20
->> int specific_target_fd =3D openat(target_fd, bpf_type_to_target[type], O_=
-RDWR);
->> attr.target_fd =3D specific_target_fd;
->> ...
->>=20
->> return sys_bpf(BPF_PROG_IMPROVED_ATTACH, &attr, sizeof(attr));
->>=20
->> Would this solve your problem without needing /dev/bpf at all?
->=20
-> This gives fine grain access control. I think it solves the problem.=20
-> But it also requires a lot of rework to sys_bpf(). And it may also=20
-> break backward/forward compatibility?
->=20
-
-I think the compatibility issue is manageable. The current bpf() interface w=
-ould be supported for at least several years, and libbpf could detect that t=
-he new interface isn=E2=80=99t supported and fall back the old interface
-
-> Personally, I think it is an overkill for the original motivation:=20
-> call sys_bpf() with special user instead of root.=20
-
-It=E2=80=99s overkill for your specific use case, but I=E2=80=99m trying to e=
-ncourage you to either solve your problem entirely in userspace or to solve a=
- more general problem in the kernel :)
-
-In furtherance of bpf=E2=80=99s goal of world domination, I think it would b=
-e great if it Just Worked in a container. My proposal does this.
+DQoNCj4gT24gSnVsIDIzLCAyMDE5LCBhdCA2OjQwIFBNLCBBbmR5IEx1dG9taXJza2kgPGx1dG9A
+YW1hY2FwaXRhbC5uZXQ+IHdyb3RlOg0KPiANCj4gDQo+IA0KPj4gT24gSnVsIDIzLCAyMDE5LCBh
+dCAzOjU2IFBNLCBTb25nIExpdSA8c29uZ2xpdWJyYXZpbmdAZmIuY29tPiB3cm90ZToNCj4+IA0K
+Pj4gDQo+PiANCj4+PiBPbiBKdWwgMjMsIDIwMTksIGF0IDg6MTEgQU0sIEFuZHkgTHV0b21pcnNr
+aSA8bHV0b0BrZXJuZWwub3JnPiB3cm90ZToNCj4+PiANCj4+PiBPbiBNb24sIEp1bCAyMiwgMjAx
+OSBhdCAxOjU0IFBNIFNvbmcgTGl1IDxzb25nbGl1YnJhdmluZ0BmYi5jb20+IHdyb3RlOg0KPj4+
+PiANCj4+Pj4gSGkgQW5keSwgTG9yZW56LCBhbmQgYWxsLA0KPj4+PiANCj4+Pj4+IE9uIEp1bCAy
+LCAyMDE5LCBhdCAyOjMyIFBNLCBBbmR5IEx1dG9taXJza2kgPGx1dG9Aa2VybmVsLm9yZz4gd3Jv
+dGU6DQo+Pj4+PiANCj4+Pj4+IE9uIFR1ZSwgSnVsIDIsIDIwMTkgYXQgMjowNCBQTSBLZWVzIENv
+b2sgPGtlZXNjb29rQGNocm9taXVtLm9yZz4gd3JvdGU6DQo+Pj4+Pj4gDQo+Pj4+Pj4+IE9uIE1v
+biwgSnVsIDAxLCAyMDE5IGF0IDA2OjU5OjEzUE0gLTA3MDAsIEFuZHkgTHV0b21pcnNraSB3cm90
+ZToNCj4+Pj4+Pj4gSSB0aGluayBJJ20gdW5kZXJzdGFuZGluZyB5b3VyIG1vdGl2YXRpb24uICBZ
+b3UncmUgbm90IHRyeWluZyB0byBtYWtlDQo+Pj4+Pj4+IGJwZigpIGdlbmVyaWNhbGx5IHVzYWJs
+ZSB3aXRob3V0IHByaXZpbGVnZSAtLSB5b3UncmUgdHJ5aW5nIHRvIGNyZWF0ZQ0KPj4+Pj4+PiBh
+IHdheSB0byBhbGxvdyBjZXJ0YWluIHVzZXJzIHRvIGFjY2VzcyBkYW5nZXJvdXMgYnBmIGZ1bmN0
+aW9uYWxpdHkNCj4+Pj4+Pj4gd2l0aGluIHNvbWUgbGltaXRzLg0KPj4+Pj4+PiANCj4+Pj4+Pj4g
+VGhhdCdzIGEgcGVyZmVjdGx5IGZpbmUgZ29hbCwgYnV0IEkgdGhpbmsgeW91J3JlIHJlaW52ZW50
+aW5nIHRoZQ0KPj4+Pj4+PiB3aGVlbCwgYW5kIHRoZSB3aGVlbCB5b3UncmUgcmVpbnZlbnRpbmcg
+aXMgcXVpdGUgY29tcGxpY2F0ZWQgYW5kDQo+Pj4+Pj4+IGFscmVhZHkgZXhpc3RzLiAgSSB0aGlu
+ayB5b3Ugc2hvdWxkIHRlYWNoIGJwZnRvb2wgdG8gYmUgc2VjdXJlIHdoZW4NCj4+Pj4+Pj4gaW5z
+dGFsbGVkIHNldHVpZCByb290IG9yIHdpdGggZnNjYXBzIGVuYWJsZWQgYW5kIHB1dCB5b3VyIHBv
+bGljeSBpbg0KPj4+Pj4+PiBicGZ0b29sLiAgSWYgeW91IHdhbnQgdG8gaGFyZGVuIHRoaXMgYSBs
+aXR0bGUgYml0LCBpdCB3b3VsZCBzZWVtDQo+Pj4+Pj4+IGVudGlyZWx5IHJlYXNvbmFibGUgdG8g
+YWRkIGEgbmV3IENBUF9CUEZfQURNSU4gYW5kIGNoYW5nZSBzb21lLCBidXQNCj4+Pj4+Pj4gbm90
+IGFsbCwgb2YgdGhlIGNhcGFibGUoKSBjaGVja3MgdG8gY2hlY2sgQ0FQX0JQRl9BRE1JTiBpbnN0
+ZWFkIG9mIHRoZQ0KPj4+Pj4+PiBjYXBhYmlsaXRpZXMgdGhhdCB0aGV5IGN1cnJlbnRseSBjaGVj
+ay4NCj4+Pj4+PiANCj4+Pj4+PiBJZiBmaW5lciBncmFpbmVkIGNvbnRyb2xzIGFyZSB3YW50ZWQs
+IGl0IGRvZXMgc2VlbSBsaWtlIHRoZSAvZGV2L2JwZg0KPj4+Pj4+IHBhdGggbWFrZXMgdGhlIG1v
+c3Qgc2Vuc2UuIG9wZW4sIHJlcXVlc3QgYWJpbGl0aWVzLCB1c2UgZmQuIFRoZSBvcGVuIGNhbg0K
+Pj4+Pj4+IGJlIG1lZGlhdGVkIGJ5IERBQyBhbmQgTFNNLiBUaGUgcmVxdWVzdCBjYW4gYmUgbWVk
+aWF0ZWQgYnkgTFNNLiBUaGlzDQo+Pj4+Pj4gcHJvdmlkZXMgYSB3YXkgdG8gYWRkIHBvbGljeSBh
+dCB0aGUgTFNNIGxldmVsIGFuZCBhdCB0aGUgdG9vbCBsZXZlbC4NCj4+Pj4+PiAoaS5lLiBGb3Ig
+dG9vbC1sZXZlbCBjb250cm9sczogbGVhdmUgTFNNIHdpZGUgb3BlbiwgbWFrZSAvZGV2L2JwZiBv
+d25lZA0KPj4+Pj4+IGJ5ICJicGZhZG1pbiIgYW5kIGJwZnRvb2wgYmVjb21lcyBzZXR1aWQgImJw
+ZmFkbWluIi4gRm9yIGZpbmUtZ3JhaW5lZA0KPj4+Pj4+IGNvbnRyb2xzLCBsZWF2ZSAvZGV2L2Jw
+ZiB3aWRlIG9wZW4gYW5kIGFkZCBwb2xpY3kgdG8gU0VMaW51eCwgZXRjLikNCj4+Pj4+PiANCj4+
+Pj4+PiBXaXRoIG9ubHkgYSBuZXcgQ0FQLCB5b3UgZG9uJ3QgZ2V0IHRoZSBmaW5lLWdyYWluZWQg
+Y29udHJvbHMuIChUaGUNCj4+Pj4+PiAicmVxdWVzdCBhYmlsaXRpZXMiIHBhcnQgaXMgdGhlIGtl
+eSB0aGVyZS4pDQo+Pj4+PiANCj4+Pj4+IFN1cmUgeW91IGRvOiB0aGUgZWZmZWN0aXZlIHNldC4g
+IEl0IGhhcyBzb21ld2hhdCBiaXphcnJlIGRlZmF1bHRzLCBidXQNCj4+Pj4+IEkgZG9uJ3QgdGhp
+bmsgdGhhdCdzIGEgcmVhbCBwcm9ibGVtLiAgQWxzbywgdGhpcyB3b3VsZG4ndCBiZSBsaWtlDQo+
+Pj4+PiBDQVBfREFDX1JFQURfU0VBUkNIIC0tIHlvdSBjYW4ndCBhY2NpZGVudGFsbHkgdXNlIHlv
+dXIgQlBGIGNhcHMuDQo+Pj4+PiANCj4+Pj4+IEkgdGhpbmsgdGhhdCBhIC9kZXYgY2FwYWJpbGl0
+eS1saWtlIG9iamVjdCBpc24ndCB0b3RhbGx5IG51dHMsIGJ1dCBJDQo+Pj4+PiB0aGluayB3ZSBz
+aG91bGQgZG8gaXQgd2VsbCwgYW5kIHRoaXMgcGF0Y2ggZG9lc24ndCByZWFsbHkgYWNoaWV2ZQ0K
+Pj4+Pj4gdGhhdC4gIEJ1dCBJIGRvbid0IHRoaW5rIGJwZiB3YW50cyBmaW5lLWdyYWluZWQgY29u
+dHJvbHMgbGlrZSB0aGlzIGF0DQo+Pj4+PiBhbGwgLS0gYXMgSSBwb2ludGVkIHVwdGhyZWFkLCBh
+IGZpbmUtZ3JhaW5lZCBzb2x1dGlvbiByZWFsbHkgd2FudHMNCj4+Pj4+IGRpZmZlcmVudCB0cmVh
+dG1lbnQgZm9yIHRoZSBkaWZmZXJlbnQgY2FwYWJsZSgpIGNoZWNrcywgYW5kIGEgYnVuY2ggb2YN
+Cj4+Pj4+IHRoZW0gd29uJ3QgcmVzZW1ibGUgY2FwYWJpbGl0aWVzIG9yIC9kZXYvYnBmIGF0IGFs
+bC4NCj4+Pj4gDQo+Pj4+IFdpdGggNS4zLXJjMSBvdXQsIEkgYW0gYmFjayBvbiB0aGlzLiA6KQ0K
+Pj4+PiANCj4+Pj4gSG93IGFib3V0IHdlIG1vZGlmeSB0aGUgc2V0IGFzOg0KPj4+PiAxLiBJbnRy
+b2R1Y2Ugc3lzX2JwZl93aXRoX2NhcCgpIHRoYXQgdGFrZXMgZmQgb2YgL2Rldi9icGYuDQo+Pj4g
+DQo+Pj4gSSdtIGZpbmUgd2l0aCB0aGlzIGluIHByaW5jaXBsZSwgYnV0Og0KPj4+IA0KPj4+PiAy
+LiBCZXR0ZXIgaGFuZGxpbmcgb2YgY2FwYWJsZSgpIGNhbGxzIHRocm91Z2ggYnBmIGNvZGUuIEkg
+Z3Vlc3MgdGhlDQo+Pj4+ICAgYmlnZ2VzdCBwcm9ibGVtIGhlcmUgaXMgaXNfcHJpdiBpbiB2ZXJp
+Zmllci5jOmJwZl9jaGVjaygpLg0KPj4+IA0KPj4+IEkgdGhpbmsgaXQgd291bGQgYmUgZ29vZCB0
+byB1bmRlcnN0YW5kIGV4YWN0bHkgd2hhdCAvZGV2L2JwZiB3aWxsDQo+Pj4gZW5hYmxlIG9uZSB0
+byBkby4gIFdpdGhvdXQgc29tZSBjYXJlLCBpdCB3b3VsZCBqdXN0IGJlY29tZSB0aGUgbmV4dA0K
+Pj4+IENBUF9TWVNfQURNSU46IGlmIHlvdSBjYW4gb3BlbiBpdCwgc3VyZSwgeW91J3JlIG5vdCBy
+b290LCBidXQgeW91IGNhbg0KPj4+IGludGVyY2VwdCBuZXR3b3JrIHRyYWZmaWMsIG1vZGlmeSBj
+Z3JvdXAgYmVoYXZpb3IsIGFuZCBkbyBwbGVudHkgb2YNCj4+PiBvdGhlciB0aGluZ3MsIGFueSBv
+ZiB3aGljaCBjYW4gcHJvYmFibHkgYmUgdXNlZCB0byBjb21wbGV0ZWx5IHRha2UNCj4+PiBvdmVy
+IHRoZSBzeXN0ZW0uDQo+PiANCj4+IFdlbGwsIHllcy4gc3lzX2JwZigpIGlzIHByZXR0eSBwb3dl
+cmZ1bC4gDQo+PiANCj4+IFRoZSBnb2FsIG9mIC9kZXYvYnBmIGlzIHRvIGVuYWJsZSBzcGVjaWFs
+IHVzZXJzIHRvIGNhbGwgc3lzX2JwZigpLiBJbiANCj4+IHRoZSBtZWFud2hpbGUsIHN1Y2ggdXNl
+cnMgc2hvdWxkIG5vdCB0YWtlIGRvd24gdGhlIHdob2xlIHN5c3RlbSBlYXNpbHkNCj4+IGJ5IGFj
+Y2lkZW50LCBlLmcuLCB3aXRoIHJtIC1yZiAvLg0KPiANCj4gVGhhdOKAmXMgZWFzeSwgdGhvdWdo
+IOKAlCBicGZ0b29sIGNvdWxkIGxlYXJuIHRvIHJlYWQgL2V0Yy9icGZ1c2VycyBiZWZvcmUgYWxs
+b3dpbmcgcnVpZCAhPSAwLg0KDQpUaGlzIGlzIGEgZ3JlYXQgaWRlYSEgZnNjYXBzICsgL2V0Yy9i
+cGZ1c2VycyBzaG91bGQgZG8gdGhlIHRyaWNrLiANCg0KPiANCj4+IA0KPj4gSXQgaXMgc2ltaWxh
+ciB0byBDQVBfQlBGX0FETUlOLCB3aXRob3V0IHJlYWxseSBhZGRpbmcgdGhlIENBUF8uICANCj4+
+IA0KPj4gSSB0aGluayBhZGRpbmcgbmV3IENBUF8gcmVxdWlyZXMgbXVjaCBtb3JlIGVmZm9ydC4g
+DQo+PiANCj4gDQo+IEEgbmV3IENBUF8gaXMgc3RyYWlnaHRmb3J3YXJkIOKAlCBhZGQgdGhlIGRl
+ZmluaXRpb24gYW5kIGNoYW5nZSB0aGUgbWF4IGNhcC4NCj4gDQo+Pj4gDQo+Pj4gSXQgd291bGQg
+YWxzbyBiZSBuaWNlIHRvIHVuZGVyc3RhbmQgd2h5IHlvdSBjYW4ndCBkbyB3aGF0IHlvdSBuZWVk
+IHRvDQo+Pj4gZG8gZW50aXJlbHkgaW4gdXNlciBjb2RlIHVzaW5nIHNldHVpZCBvciBmc2NhcHMu
+DQo+PiANCj4+IEl0IGlzIG5vdCB2ZXJ5IGVhc3kgdG8gYWNoaWV2ZSB0aGUgc2FtZSBjb250cm9s
+OiBvbmx5IGNlcnRhaW4gdXNlcnMgY2FuDQo+PiBydW4gY2VydGFpbiB0b29scyAoYnBmdG9vbCwg
+ZXRjLikuIA0KPj4gDQo+PiBUaGUgY2xvc2VzdCBhcHByb2FjaCBJIGNhbiBmaW5kIGlzOg0KPj4g
+MS4gdXNlIGxpYmNhcCAocGFtX2NhcCkgdG8gZ2l2ZSBDQVBfU0VUVUlEIHRvIGNlcnRhaW4gdXNl
+cnM7DQo+PiAyLiBhZGQgc2V0dWlkKDApIHRvIGJwZnRvb2wuDQo+PiANCj4+IFRoZSBkaWZmZXJl
+bmNlIGJldHdlZW4gdGhpcyBhcHByb2FjaCBhbmQgL2Rldi9icGYgaXMgdGhhdCBjZXJ0YWluIHVz
+ZXJzDQo+PiB3b3VsZCBiZSBhYmxlIHRvIHJ1biBvdGhlciB0b29scyB0aGF0IGNhbGwgc2V0dWlk
+KCkuIFRob3VnaCBJIGFtIG5vdCANCj4+IHN1cmUgaG93IG1hbnkgdG9vbHMgY2FsbCBzZXR1aWQo
+KSwgYW5kIGhvdyByaXNreSB0aGV5IGFyZS4gDQo+IA0KPiBJIHRoaW5rIHlvdeKAmXJlIG1pc3Vu
+ZGVyc3RhbmRpbmcgbWUuIEluc3RhbGwgYnBmdG9vbCB3aXRoIGVpdGhlciB0aGUgc2V0dWlkIChT
+X0lTVUlEKSBtb2RlIG9yIHdpdGggYW4gYXBwcm9wcmlhdGUgZnNjYXAgYml0IOKAlCBzZWUgdGhl
+IHNldGNhcCg4KSBtYW5wYWdlLg0KPiANCj4gVGhlIGRvd25zaWRlIG9mIHRoaXMgYXBwcm9hY2gg
+aXMgdGhhdCBpdCB3b27igJl0IHdvcmsgd2VsbCBpbiBhIGNvbnRhaW5lciwgYW5kIGNvbnRhaW5l
+cnMgYXJlIGNvb2wgdGhlc2UgZGF5cyA6KQ0KPiANCj4+IA0KPj4+IA0KPj4+IEZpbmFsbHksIGF0
+IHJpc2sgb2YgcmVoYXNoaW5nIHNvbWUgb2xkIGFyZ3VtZW50cywgSSdsbCBwb2ludCBvdXQgdGhh
+dA0KPj4+IHRoZSBicGYoKSBzeXNjYWxsIGlzIGFuIHVudXN1YWwgZGVzaWduIHRvIGJlZ2luIHdp
+dGguICBBcyBhbiBleGFtcGxlLA0KPj4+IGNvbnNpZGVyIGJwZl9wcm9nX2F0dGFjaCgpLiAgT3V0
+c2lkZSBvZiBicGYoKSwgaWYgSSB3YW50IHRvIGNoYW5nZSB0aGUNCj4+PiBiZWhhdmlvciBvZiBh
+IGNncm91cCwgSSB3b3VsZCB3cml0ZSB0byBhIGZpbGUgaW4NCj4+PiAvc3lzL2tlcm5lbC9jZ3Jv
+dXAvdW5pZmllZC93aGF0ZXZlci8sIGFuZCBub3JtYWwgREFDIGFuZCBNQUMgcnVsZXMNCj4+PiBh
+cHBseS4gIFdpdGggYnBmKCksIGhvd2V2ZXIsIEkganVzdCBjYWxsIGJwZigpIHRvIGF0dGFjaCBh
+IHByb2dyYW0gdG8NCj4+PiB0aGUgY2dyb3VwLiAgYnBmKCkgc2F5cyAib2gsIHlvdSBhcmUgY2Fw
+YWJsZShDQVBfTkVUX0FETUlOKSAtLSBnbyBmb3INCj4+PiBpdCEiLiAgVW5sZXNzIEkgbWlzc2Vk
+IHNvbWV0aGluZyBtYWpvciwgYW5kIEkganVzdCByZS1yZWFkIHRoZSBjb2RlLA0KPj4+IHRoZXJl
+IGlzIG5vIGNoZWNrIHRoYXQgdGhlIGNhbGxlciBoYXMgd3JpdGUgb3IgTFNNIHBlcm1pc3Npb24g
+dG8NCj4+PiBhbnl0aGluZyBhdCBhbGwgaW4gY2dyb3VwZnMsIGFuZCB0aGUgZXhpc3RpbmcgQVBJ
+IHdvdWxkIG1ha2UgaXQgdmVyeQ0KPj4+IGF3a3dhcmQgdG8gaW1wb3NlIGFueSBraW5kIG9mIERB
+QyBydWxlcyBoZXJlLg0KPj4+IA0KPj4+IFNvIEkgdGhpbmsgaXQgbWlnaHQgYWN0dWFsbHkgYmUg
+dGltZSB0byByZXBheSBzb21lIHRlY2hpbmNhbCBkZWJ0IGFuZA0KPj4+IGNvbWUgdXAgd2l0aCBh
+IHJlYWwgZml4LiAgQXMgYSBsZXNzIGludHJ1c2l2ZSBhcHByb2FjaCwgeW91IGNvdWxkIHNlZQ0K
+Pj4+IGFib3V0IHJlcXVpcmluZyBvd25lcnNoaXAgb2YgdGhlIGNncm91cCBkaXJlY3RvcnkgaW5z
+dGVhZCBvZg0KPj4+IENBUF9ORVRfQURNSU4uICBBcyBhIG1vcmUgaW50cnVzaXZlIGJ1dCBwZXJo
+YXBzIGJldHRlciBhcHByb2FjaCwgeW91DQo+Pj4gY291bGQgaW52ZXJ0IHRoZSBsb2dpYyB0byB0
+byBtYWtlIGl0IHdvcmsgbGlrZSBldmVyeXRoaW5nIG91dHNpZGUgb2YNCj4+PiBjZ3JvdXA6IGFk
+ZCBwc2V1ZG8tZmlsZXMgbGlrZSBicGYuaW5ldF9pbmdyZXNzIHRvIHRoZSBjZ3JvdXANCj4+PiBk
+aXJlY3RvcmllcywgYW5kIHJlcXVpcmUgYSB3cml0YWJsZSBmZCB0byAqdGhhdCogdG8gYSBuZXcg
+aW1wcm92ZWQNCj4+PiBhdHRhY2ggQVBJLiAgSWYgYSB1c2VyIGNvdWxkIGRvOg0KPj4+IA0KPj4+
+IGludCBmZCA9IG9wZW4oIi9zeXMvZnMvY2dyb3VwLy4uLi9icGYuaW5ldF9hdHRhY2giLCBPX1JE
+V1IpOyAgLyogdXN1YWwNCj4+PiBEQUMgYW5kIE1BQyBwb2xpY3kgYXBwbGllcyAqLw0KPj4+IGlu
+dCBicGZfZmQgPSBzZXR1cCB0aGUgYnBmIHN0dWZmOyAgLyogbm8gcHJpdmlsZWdlIHJlcXVpcmVk
+LCB1bmxlc3MNCj4+PiB0aGUgcHJvZ3JhbSBpcyBodWdlIG9yIG5lZWRzIGlzX3ByaXYgKi8NCj4+
+PiBicGYoQlBGX0lNUFJPVkVEX0FUVEFDSCwgdGFyZ2V0ID0gZmQsIHByb2dyYW0gPSBicGZfZmQp
+Ow0KPj4+IA0KPj4+IHRoZXJlIHdvdWxkIGJlIG5vIGNhcGFiaWxpdGllcyBvciBnbG9iYWwgcHJp
+dmlsZWdlIGF0IGFsbCByZXF1aXJlZCBmb3INCj4+PiB0aGlzLiAgSXQgd291bGQganVzdCB3b3Jr
+IHdpdGggY2dyb3VwIGRlbGVnYXRpb24sIGNvbnRhaW5lcnMsIGV0Yy4NCj4+PiANCj4+PiBJIHRo
+aW5rIHlvdSBjb3VsZCBldmVuIHB1bGwgb2ZmIHRoaXMgdHlwZSBvZiBBUEkgY2hhbmdlIHdpdGgg
+b25seQ0KPj4+IGxpYmJwZiBjaGFuZ2VzLiAgSW4gcGFydGljdWxhciwgdGhlcmUncyB0aGlzIGNv
+ZGU6DQo+Pj4gDQo+Pj4gaW50IGJwZl9wcm9nX2F0dGFjaChpbnQgcHJvZ19mZCwgaW50IHRhcmdl
+dF9mZCwgZW51bSBicGZfYXR0YWNoX3R5cGUgdHlwZSwNCj4+PiAgICAgICAgICAgICAgICAgIHVu
+c2lnbmVkIGludCBmbGFncykNCj4+PiB7DQo+Pj4gICAgICB1bmlvbiBicGZfYXR0ciBhdHRyOw0K
+Pj4+IA0KPj4+ICAgICAgbWVtc2V0KCZhdHRyLCAwLCBzaXplb2YoYXR0cikpOw0KPj4+ICAgICAg
+YXR0ci50YXJnZXRfZmQgICAgID0gdGFyZ2V0X2ZkOw0KPj4+ICAgICAgYXR0ci5hdHRhY2hfYnBm
+X2ZkID0gcHJvZ19mZDsNCj4+PiAgICAgIGF0dHIuYXR0YWNoX3R5cGUgICA9IHR5cGU7DQo+Pj4g
+ICAgICBhdHRyLmF0dGFjaF9mbGFncyAgPSBmbGFnczsNCj4+PiANCj4+PiAgICAgIHJldHVybiBz
+eXNfYnBmKEJQRl9QUk9HX0FUVEFDSCwgJmF0dHIsIHNpemVvZihhdHRyKSk7DQo+Pj4gfQ0KPj4+
+IA0KPj4+IFRoaXMgd291bGQgaW5zdGVhZCBkbyBzb21ldGhpbmcgbGlrZToNCj4+PiANCj4+PiBp
+bnQgc3BlY2lmaWNfdGFyZ2V0X2ZkID0gb3BlbmF0KHRhcmdldF9mZCwgYnBmX3R5cGVfdG9fdGFy
+Z2V0W3R5cGVdLCBPX1JEV1IpOw0KPj4+IGF0dHIudGFyZ2V0X2ZkID0gc3BlY2lmaWNfdGFyZ2V0
+X2ZkOw0KPj4+IC4uLg0KPj4+IA0KPj4+IHJldHVybiBzeXNfYnBmKEJQRl9QUk9HX0lNUFJPVkVE
+X0FUVEFDSCwgJmF0dHIsIHNpemVvZihhdHRyKSk7DQo+Pj4gDQo+Pj4gV291bGQgdGhpcyBzb2x2
+ZSB5b3VyIHByb2JsZW0gd2l0aG91dCBuZWVkaW5nIC9kZXYvYnBmIGF0IGFsbD8NCj4+IA0KPj4g
+VGhpcyBnaXZlcyBmaW5lIGdyYWluIGFjY2VzcyBjb250cm9sLiBJIHRoaW5rIGl0IHNvbHZlcyB0
+aGUgcHJvYmxlbS4gDQo+PiBCdXQgaXQgYWxzbyByZXF1aXJlcyBhIGxvdCBvZiByZXdvcmsgdG8g
+c3lzX2JwZigpLiBBbmQgaXQgbWF5IGFsc28gDQo+PiBicmVhayBiYWNrd2FyZC9mb3J3YXJkIGNv
+bXBhdGliaWxpdHk/DQo+PiANCj4gDQo+IEkgdGhpbmsgdGhlIGNvbXBhdGliaWxpdHkgaXNzdWUg
+aXMgbWFuYWdlYWJsZS4gVGhlIGN1cnJlbnQgYnBmKCkgaW50ZXJmYWNlIHdvdWxkIGJlIHN1cHBv
+cnRlZCBmb3IgYXQgbGVhc3Qgc2V2ZXJhbCB5ZWFycywgYW5kIGxpYmJwZiBjb3VsZCBkZXRlY3Qg
+dGhhdCB0aGUgbmV3IGludGVyZmFjZSBpc27igJl0IHN1cHBvcnRlZCBhbmQgZmFsbCBiYWNrIHRo
+ZSBvbGQgaW50ZXJmYWNlDQoNCllvdSBhcmUgcmlnaHQuIE5ldyBCUEZfUFJPR19JTVBST1ZFRF9B
+VFRBQ0ggaGVscHMgY29tcGF0aWJpbGl0eS4gDQpJIG1pc3NlZCB0aGF0IHBhcnQuIA0KDQo+IA0K
+Pj4gUGVyc29uYWxseSwgSSB0aGluayBpdCBpcyBhbiBvdmVya2lsbCBmb3IgdGhlIG9yaWdpbmFs
+IG1vdGl2YXRpb246IA0KPj4gY2FsbCBzeXNfYnBmKCkgd2l0aCBzcGVjaWFsIHVzZXIgaW5zdGVh
+ZCBvZiByb290LiANCj4gDQo+IEl04oCZcyBvdmVya2lsbCBmb3IgeW91ciBzcGVjaWZpYyB1c2Ug
+Y2FzZSwgYnV0IEnigJltIHRyeWluZyB0byBlbmNvdXJhZ2UgeW91IHRvIGVpdGhlciBzb2x2ZSB5
+b3VyIHByb2JsZW0gZW50aXJlbHkgaW4gdXNlcnNwYWNlIG9yIHRvIHNvbHZlIGEgbW9yZSBnZW5l
+cmFsIHByb2JsZW0gaW4gdGhlIGtlcm5lbCA6KQ0KDQpJIGRvIGxpa2UgYm90aCBwcm9wb3NhbHMu
+IFRoYW5rcyBmb3IgdGhlc2UgaW52YWx1YWJsZSBzdWdnZXN0aW9ucy4gDQoNCj4gDQo+IEluIGZ1
+cnRoZXJhbmNlIG9mIGJwZuKAmXMgZ29hbCBvZiB3b3JsZCBkb21pbmF0aW9uLCBJIHRoaW5rIGl0
+IHdvdWxkIGJlIGdyZWF0IGlmIGl0IEp1c3QgV29ya2VkIGluIGEgY29udGFpbmVyLiBNeSBwcm9w
+b3NhbCBkb2VzIHRoaXMuDQoNCkxldCBtZSB0aGluayBtb3JlIGFib3V0IHRoaXMgYW5kIGRpc2N1
+c3Mgd2l0aCB0aGUgdGVhbS4gDQoNClRoYW5rcyBhZ2FpbiwgDQpTb25n
