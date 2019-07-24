@@ -1,575 +1,211 @@
-From: Daniel Rosenberg <drosen@google.com>
-Subject: [PATCH v4 3/3] f2fs: Support case-insensitive file name lookups
-Date: Tue, 23 Jul 2019 16:05:29 -0700
-Message-ID: <20190723230529.251659-4-drosen@google.com>
-References: <20190723230529.251659-1-drosen@google.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190723230529.251659-1-drosen@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <yuchao0@huawei.com>, Jonathan Corbet <corbet@lwn.net>, linux-f2fs-devel@lists.sourceforge.net
-Cc: linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, kernel-team@android.com, Daniel Rosenberg <drosen@google.com>
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
+Date: Tue, 23 Jul 2019 18:40:28 -0700
+Message-ID: <1DE886F3-3982-45DE-B545-67AD6A4871AB@amacapital.net>
+References: <20190627201923.2589391-1-songliubraving@fb.com> <20190627201923.2589391-2-songliubraving@fb.com> <21894f45-70d8-dfca-8c02-044f776c5e05@kernel.org> <3C595328-3ABE-4421-9772-8D41094A4F57@fb.com> <CALCETrWBnH4Q43POU8cQ7YMjb9LioK28FDEQf7aHZbdf1eBZWg@mail.gmail.com> <0DE7F23E-9CD2-4F03-82B5-835506B59056@fb.com> <CALCETrWBWbNFJvsTCeUchu3BZJ3SH3dvtXLUB2EhnPrzFfsLNA@mail.gmail.com> <201907021115.DCD56BBABB@keescook> <CALCETrXTta26CTtEDnzvtd03-WOGdXcnsAogP8JjLkcj4-mHvg@mail.gmail.com> <4A7A225A-6C23-4C0F-9A95-7C6C56B281ED@fb.com> <CALCETrX2bMnwC6_t4b_G-hzJSfMPrkK4YKs5ebcecv2LJ0rt3w@mail.gmail.com> <514D5453-0AEE-420F-AEB6-3F4F58C62E7E@fb.com>
+Mime-Version: 1.0 (1.0)
+Content-Type: text/plain;
+        charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <514D5453-0AEE-420F-AEB6-3F4F58C62E7E@fb.com>
+Sender: netdev-owner@vger.kernel.org
+To: Song Liu <songliubraving@fb.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Kees Cook <keescook@chromium.org>, "linux-security@vger.kernel.org" <linux-security@vger.kernel.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Modeled after commit b886ee3e778e ("ext4: Support case-insensitive file
-name lookups")
 
-"""
-This patch implements the actual support for case-insensitive file name
-lookups in f2fs, based on the feature bit and the encoding stored in the
-superblock.
 
-A filesystem that has the casefold feature set is able to configure
-directories with the +F (F2FS_CASEFOLD_FL) attribute, enabling lookups
-to succeed in that directory in a case-insensitive fashion, i.e: match
-a directory entry even if the name used by userspace is not a byte per
-byte match with the disk name, but is an equivalent case-insensitive
-version of the Unicode string.  This operation is called a
-case-insensitive file name lookup.
+> On Jul 23, 2019, at 3:56 PM, Song Liu <songliubraving@fb.com> wrote:
+>=20
+>=20
+>=20
+>> On Jul 23, 2019, at 8:11 AM, Andy Lutomirski <luto@kernel.org> wrote:
+>>=20
+>> On Mon, Jul 22, 2019 at 1:54 PM Song Liu <songliubraving@fb.com> wrote:
+>>>=20
+>>> Hi Andy, Lorenz, and all,
+>>>=20
+>>>> On Jul 2, 2019, at 2:32 PM, Andy Lutomirski <luto@kernel.org> wrote:
+>>>>=20
+>>>> On Tue, Jul 2, 2019 at 2:04 PM Kees Cook <keescook@chromium.org> wrote:=
 
-The feature is configured as an inode attribute applied to directories
-and inherited by its children.  This attribute can only be enabled on
-empty directories for filesystems that support the encoding feature,
-thus preventing collision of file names that only differ by case.
+>>>>>=20
+>>>>>> On Mon, Jul 01, 2019 at 06:59:13PM -0700, Andy Lutomirski wrote:
+>>>>>> I think I'm understanding your motivation.  You're not trying to make=
 
-* dcache handling:
+>>>>>> bpf() generically usable without privilege -- you're trying to create=
 
-For a +F directory, F2Fs only stores the first equivalent name dentry
-used in the dcache. This is done to prevent unintentional duplication of
-dentries in the dcache, while also allowing the VFS code to quickly find
-the right entry in the cache despite which equivalent string was used in
-a previous lookup, without having to resort to ->lookup().
+>>>>>> a way to allow certain users to access dangerous bpf functionality
+>>>>>> within some limits.
+>>>>>>=20
+>>>>>> That's a perfectly fine goal, but I think you're reinventing the
+>>>>>> wheel, and the wheel you're reinventing is quite complicated and
+>>>>>> already exists.  I think you should teach bpftool to be secure when
+>>>>>> installed setuid root or with fscaps enabled and put your policy in
+>>>>>> bpftool.  If you want to harden this a little bit, it would seem
+>>>>>> entirely reasonable to add a new CAP_BPF_ADMIN and change some, but
+>>>>>> not all, of the capable() checks to check CAP_BPF_ADMIN instead of th=
+e
+>>>>>> capabilities that they currently check.
+>>>>>=20
+>>>>> If finer grained controls are wanted, it does seem like the /dev/bpf
+>>>>> path makes the most sense. open, request abilities, use fd. The open c=
+an
+>>>>> be mediated by DAC and LSM. The request can be mediated by LSM. This
+>>>>> provides a way to add policy at the LSM level and at the tool level.
+>>>>> (i.e. For tool-level controls: leave LSM wide open, make /dev/bpf owne=
+d
+>>>>> by "bpfadmin" and bpftool becomes setuid "bpfadmin". For fine-grained
+>>>>> controls, leave /dev/bpf wide open and add policy to SELinux, etc.)
+>>>>>=20
+>>>>> With only a new CAP, you don't get the fine-grained controls. (The
+>>>>> "request abilities" part is the key there.)
+>>>>=20
+>>>> Sure you do: the effective set.  It has somewhat bizarre defaults, but
+>>>> I don't think that's a real problem.  Also, this wouldn't be like
+>>>> CAP_DAC_READ_SEARCH -- you can't accidentally use your BPF caps.
+>>>>=20
+>>>> I think that a /dev capability-like object isn't totally nuts, but I
+>>>> think we should do it well, and this patch doesn't really achieve
+>>>> that.  But I don't think bpf wants fine-grained controls like this at
+>>>> all -- as I pointed upthread, a fine-grained solution really wants
+>>>> different treatment for the different capable() checks, and a bunch of
+>>>> them won't resemble capabilities or /dev/bpf at all.
+>>>=20
+>>> With 5.3-rc1 out, I am back on this. :)
+>>>=20
+>>> How about we modify the set as:
+>>> 1. Introduce sys_bpf_with_cap() that takes fd of /dev/bpf.
+>>=20
+>> I'm fine with this in principle, but:
+>>=20
+>>> 2. Better handling of capable() calls through bpf code. I guess the
+>>>    biggest problem here is is_priv in verifier.c:bpf_check().
+>>=20
+>> I think it would be good to understand exactly what /dev/bpf will
+>> enable one to do.  Without some care, it would just become the next
+>> CAP_SYS_ADMIN: if you can open it, sure, you're not root, but you can
+>> intercept network traffic, modify cgroup behavior, and do plenty of
+>> other things, any of which can probably be used to completely take
+>> over the system.
+>=20
+> Well, yes. sys_bpf() is pretty powerful.=20
+>=20
+> The goal of /dev/bpf is to enable special users to call sys_bpf(). In=20
+> the meanwhile, such users should not take down the whole system easily
+> by accident, e.g., with rm -rf /.
 
-d_hash() of casefolded directories is implemented as the hash of the
-casefolded string, such that we always have a well-known bucket for all
-the equivalencies of the same string. d_compare() uses the
-utf8_strncasecmp() infrastructure, which handles the comparison of
-equivalent, same case, names as well.
+That=E2=80=99s easy, though =E2=80=94 bpftool could learn to read /etc/bpfus=
+ers before allowing ruid !=3D 0.
 
-For now, negative lookups are not inserted in the dcache, since they
-would need to be invalidated anyway, because we can't trust missing file
-dentries.  This is bad for performance but requires some leveraging of
-the vfs layer to fix.  We can live without that for now, and so does
-everyone else.
+>=20
+> It is similar to CAP_BPF_ADMIN, without really adding the CAP_. =20
+>=20
+> I think adding new CAP_ requires much more effort.=20
+>=20
 
-* on-disk data:
+A new CAP_ is straightforward =E2=80=94 add the definition and change the ma=
+x cap.
 
-Despite using a specific version of the name as the internal
-representation within the dcache, the name stored and fetched from the
-disk is a byte-per-byte match with what the user requested, making this
-implementation 'name-preserving'. i.e. no actual information is lost
-when writing to storage.
+>>=20
+>> It would also be nice to understand why you can't do what you need to
+>> do entirely in user code using setuid or fscaps.
+>=20
+> It is not very easy to achieve the same control: only certain users can
+> run certain tools (bpftool, etc.).=20
+>=20
+> The closest approach I can find is:
+>  1. use libcap (pam_cap) to give CAP_SETUID to certain users;
+>  2. add setuid(0) to bpftool.
+>=20
+> The difference between this approach and /dev/bpf is that certain users
+> would be able to run other tools that call setuid(). Though I am not=20
+> sure how many tools call setuid(), and how risky they are.=20
 
-DX is supported by modifying the hashes used in +F directories to make
-them case/encoding-aware.  The new disk hashes are calculated as the
-hash of the full casefolded string, instead of the string directly.
-This allows us to efficiently search for file names in the htree without
-requiring the user to provide an exact name.
+I think you=E2=80=99re misunderstanding me. Install bpftool with either the s=
+etuid (S_ISUID) mode or with an appropriate fscap bit =E2=80=94 see the setc=
+ap(8) manpage.
 
-* Dealing with invalid sequences:
+The downside of this approach is that it won=E2=80=99t work well in a contai=
+ner, and containers are cool these days :)
 
-By default, when a invalid UTF-8 sequence is identified, ext4 will treat
-it as an opaque byte sequence, ignoring the encoding and reverting to
-the old behavior for that unique file.  This means that case-insensitive
-file name lookup will not work only for that file.  An optional bit can
-be set in the superblock telling the filesystem code and userspace tools
-to enforce the encoding.  When that optional bit is set, any attempt to
-create a file name using an invalid UTF-8 sequence will fail and return
-an error to userspace.
+>=20
+>>=20
+>> Finally, at risk of rehashing some old arguments, I'll point out that
+>> the bpf() syscall is an unusual design to begin with.  As an example,
+>> consider bpf_prog_attach().  Outside of bpf(), if I want to change the
+>> behavior of a cgroup, I would write to a file in
+>> /sys/kernel/cgroup/unified/whatever/, and normal DAC and MAC rules
+>> apply.  With bpf(), however, I just call bpf() to attach a program to
+>> the cgroup.  bpf() says "oh, you are capable(CAP_NET_ADMIN) -- go for
+>> it!".  Unless I missed something major, and I just re-read the code,
+>> there is no check that the caller has write or LSM permission to
+>> anything at all in cgroupfs, and the existing API would make it very
+>> awkward to impose any kind of DAC rules here.
+>>=20
+>> So I think it might actually be time to repay some techincal debt and
+>> come up with a real fix.  As a less intrusive approach, you could see
+>> about requiring ownership of the cgroup directory instead of
+>> CAP_NET_ADMIN.  As a more intrusive but perhaps better approach, you
+>> could invert the logic to to make it work like everything outside of
+>> cgroup: add pseudo-files like bpf.inet_ingress to the cgroup
+>> directories, and require a writable fd to *that* to a new improved
+>> attach API.  If a user could do:
+>>=20
+>> int fd =3D open("/sys/fs/cgroup/.../bpf.inet_attach", O_RDWR);  /* usual
+>> DAC and MAC policy applies */
+>> int bpf_fd =3D setup the bpf stuff;  /* no privilege required, unless
+>> the program is huge or needs is_priv */
+>> bpf(BPF_IMPROVED_ATTACH, target =3D fd, program =3D bpf_fd);
+>>=20
+>> there would be no capabilities or global privilege at all required for
+>> this.  It would just work with cgroup delegation, containers, etc.
+>>=20
+>> I think you could even pull off this type of API change with only
+>> libbpf changes.  In particular, there's this code:
+>>=20
+>> int bpf_prog_attach(int prog_fd, int target_fd, enum bpf_attach_type type=
+,
+>>                   unsigned int flags)
+>> {
+>>       union bpf_attr attr;
+>>=20
+>>       memset(&attr, 0, sizeof(attr));
+>>       attr.target_fd     =3D target_fd;
+>>       attr.attach_bpf_fd =3D prog_fd;
+>>       attr.attach_type   =3D type;
+>>       attr.attach_flags  =3D flags;
+>>=20
+>>       return sys_bpf(BPF_PROG_ATTACH, &attr, sizeof(attr));
+>> }
+>>=20
+>> This would instead do something like:
+>>=20
+>> int specific_target_fd =3D openat(target_fd, bpf_type_to_target[type], O_=
+RDWR);
+>> attr.target_fd =3D specific_target_fd;
+>> ...
+>>=20
+>> return sys_bpf(BPF_PROG_IMPROVED_ATTACH, &attr, sizeof(attr));
+>>=20
+>> Would this solve your problem without needing /dev/bpf at all?
+>=20
+> This gives fine grain access control. I think it solves the problem.=20
+> But it also requires a lot of rework to sys_bpf(). And it may also=20
+> break backward/forward compatibility?
+>=20
 
-* Normalization algorithm:
+I think the compatibility issue is manageable. The current bpf() interface w=
+ould be supported for at least several years, and libbpf could detect that t=
+he new interface isn=E2=80=99t supported and fall back the old interface
 
-The UTF-8 algorithms used to compare strings in f2fs is implemented
-in fs/unicode, and is based on a previous version developed by
-SGI.  It implements the Canonical decomposition (NFD) algorithm
-described by the Unicode specification 12.1, or higher, combined with
-the elimination of ignorable code points (NFDi) and full
-case-folding (CF) as documented in fs/unicode/utf8_norm.c.
+> Personally, I think it is an overkill for the original motivation:=20
+> call sys_bpf() with special user instead of root.=20
 
-NFD seems to be the best normalization method for F2FS because:
+It=E2=80=99s overkill for your specific use case, but I=E2=80=99m trying to e=
+ncourage you to either solve your problem entirely in userspace or to solve a=
+ more general problem in the kernel :)
 
-  - It has a lower cost than NFC/NFKC (which requires
-    decomposing to NFD as an intermediary step)
-  - It doesn't eliminate important semantic meaning like
-    compatibility decompositions.
-
-Although:
-
-- This implementation is not completely linguistic accurate, because
-different languages have conflicting rules, which would require the
-specialization of the filesystem to a given locale, which brings all
-sorts of problems for removable media and for users who use more than
-one language.
-"""
-
-Signed-off-by: Daniel Rosenberg <drosen@google.com>
----
- fs/f2fs/dir.c    | 126 +++++++++++++++++++++++++++++++++++++++++++----
- fs/f2fs/f2fs.h   |  15 ++++--
- fs/f2fs/file.c   |  16 +++++-
- fs/f2fs/hash.c   |  35 ++++++++++++-
- fs/f2fs/inline.c |   4 +-
- fs/f2fs/inode.c  |   4 +-
- fs/f2fs/namei.c  |  21 ++++++++
- fs/f2fs/super.c  |   1 +
- 8 files changed, 203 insertions(+), 19 deletions(-)
-
-diff --git a/fs/f2fs/dir.c b/fs/f2fs/dir.c
-index 85a1528f319f2..2913483473f30 100644
---- a/fs/f2fs/dir.c
-+++ b/fs/f2fs/dir.c
-@@ -8,6 +8,7 @@
- #include <linux/fs.h>
- #include <linux/f2fs_fs.h>
- #include <linux/sched/signal.h>
-+#include <linux/unicode.h>
- #include "f2fs.h"
- #include "node.h"
- #include "acl.h"
-@@ -81,7 +82,8 @@ static unsigned long dir_block_index(unsigned int level,
- 	return bidx;
- }
- 
--static struct f2fs_dir_entry *find_in_block(struct page *dentry_page,
-+static struct f2fs_dir_entry *find_in_block(struct inode *dir,
-+				struct page *dentry_page,
- 				struct fscrypt_name *fname,
- 				f2fs_hash_t namehash,
- 				int *max_slots,
-@@ -93,7 +95,7 @@ static struct f2fs_dir_entry *find_in_block(struct page *dentry_page,
- 
- 	dentry_blk = (struct f2fs_dentry_block *)page_address(dentry_page);
- 
--	make_dentry_ptr_block(NULL, &d, dentry_blk);
-+	make_dentry_ptr_block(dir, &d, dentry_blk);
- 	de = f2fs_find_target_dentry(fname, namehash, max_slots, &d);
- 	if (de)
- 		*res_page = dentry_page;
-@@ -101,6 +103,39 @@ static struct f2fs_dir_entry *find_in_block(struct page *dentry_page,
- 	return de;
- }
- 
-+#ifdef CONFIG_UNICODE
-+/*
-+ * Test whether a case-insensitive directory entry matches the filename
-+ * being searched for.
-+ *
-+ * Returns: 0 if the directory entry matches, more than 0 if it
-+ * doesn't match or less than zero on error.
-+ */
-+int f2fs_ci_compare(const struct inode *parent, const struct qstr *name,
-+		    const struct qstr *entry)
-+{
-+	const struct f2fs_sb_info *sbi = F2FS_SB(parent->i_sb);
-+	const struct unicode_map *um = sbi->s_encoding;
-+	int ret;
-+
-+	ret = utf8_strncasecmp(um, name, entry);
-+	if (ret < 0) {
-+		/* Handle invalid character sequence as either an error
-+		 * or as an opaque byte sequence.
-+		 */
-+		if (f2fs_has_strict_mode(sbi))
-+			return -EINVAL;
-+
-+		if (name->len != entry->len)
-+			return 1;
-+
-+		return !!memcmp(name->name, entry->name, name->len);
-+	}
-+
-+	return ret;
-+}
-+#endif
-+
- struct f2fs_dir_entry *f2fs_find_target_dentry(struct fscrypt_name *fname,
- 			f2fs_hash_t namehash, int *max_slots,
- 			struct f2fs_dentry_ptr *d)
-@@ -108,6 +143,9 @@ struct f2fs_dir_entry *f2fs_find_target_dentry(struct fscrypt_name *fname,
- 	struct f2fs_dir_entry *de;
- 	unsigned long bit_pos = 0;
- 	int max_len = 0;
-+#ifdef CONFIG_UNICODE
-+	struct qstr entry;
-+#endif
- 
- 	if (max_slots)
- 		*max_slots = 0;
-@@ -119,16 +157,28 @@ struct f2fs_dir_entry *f2fs_find_target_dentry(struct fscrypt_name *fname,
- 		}
- 
- 		de = &d->dentry[bit_pos];
-+#ifdef CONFIG_UNICODE
-+		entry.name = d->filename[bit_pos];
-+		entry.len = de->name_len;
-+#endif
- 
- 		if (unlikely(!de->name_len)) {
- 			bit_pos++;
- 			continue;
- 		}
-+		if (de->hash_code == namehash) {
-+#ifdef CONFIG_UNICODE
-+			if (F2FS_SB(d->inode->i_sb)->s_encoding &&
-+					IS_CASEFOLDED(d->inode) &&
-+					!f2fs_ci_compare(d->inode,
-+						fname->usr_fname, &entry))
-+				goto found;
- 
--		if (de->hash_code == namehash &&
--		    fscrypt_match_name(fname, d->filename[bit_pos],
--				       le16_to_cpu(de->name_len)))
--			goto found;
-+#endif
-+			if (fscrypt_match_name(fname, d->filename[bit_pos],
-+						le16_to_cpu(de->name_len)))
-+				goto found;
-+		}
- 
- 		if (max_slots && max_len > *max_slots)
- 			*max_slots = max_len;
-@@ -157,7 +207,7 @@ static struct f2fs_dir_entry *find_in_level(struct inode *dir,
- 	struct f2fs_dir_entry *de = NULL;
- 	bool room = false;
- 	int max_slots;
--	f2fs_hash_t namehash = f2fs_dentry_hash(&name, fname);
-+	f2fs_hash_t namehash = f2fs_dentry_hash(dir, &name, fname);
- 
- 	nbucket = dir_buckets(level, F2FS_I(dir)->i_dir_level);
- 	nblock = bucket_blocks(level);
-@@ -179,8 +229,8 @@ static struct f2fs_dir_entry *find_in_level(struct inode *dir,
- 			}
- 		}
- 
--		de = find_in_block(dentry_page, fname, namehash, &max_slots,
--								res_page);
-+		de = find_in_block(dir, dentry_page, fname, namehash,
-+							&max_slots, res_page);
- 		if (de)
- 			break;
- 
-@@ -250,6 +300,14 @@ struct f2fs_dir_entry *f2fs_find_entry(struct inode *dir,
- 	struct fscrypt_name fname;
- 	int err;
- 
-+#ifdef CONFIG_UNICODE
-+	if (f2fs_has_strict_mode(F2FS_I_SB(dir)) && IS_CASEFOLDED(dir) &&
-+			utf8_validate(F2FS_I_SB(dir)->s_encoding, child)) {
-+		*res_page = ERR_PTR(-EINVAL);
-+		return NULL;
-+	}
-+#endif
-+
- 	err = fscrypt_setup_filename(dir, child, 1, &fname);
- 	if (err) {
- 		if (err == -ENOENT)
-@@ -504,7 +562,7 @@ int f2fs_add_regular_entry(struct inode *dir, const struct qstr *new_name,
- 
- 	level = 0;
- 	slots = GET_DENTRY_SLOTS(new_name->len);
--	dentry_hash = f2fs_dentry_hash(new_name, NULL);
-+	dentry_hash = f2fs_dentry_hash(dir, new_name, NULL);
- 
- 	current_depth = F2FS_I(dir)->i_current_depth;
- 	if (F2FS_I(dir)->chash == dentry_hash) {
-@@ -943,3 +1001,51 @@ const struct file_operations f2fs_dir_operations = {
- 	.compat_ioctl   = f2fs_compat_ioctl,
- #endif
- };
-+
-+#ifdef CONFIG_UNICODE
-+static int f2fs_d_compare(const struct dentry *dentry, unsigned int len,
-+			  const char *str, const struct qstr *name)
-+{
-+	struct qstr qstr = {.name = str, .len = len };
-+
-+	if (!IS_CASEFOLDED(dentry->d_parent->d_inode)) {
-+		if (len != name->len)
-+			return -1;
-+		return memcmp(str, name, len);
-+	}
-+
-+	return f2fs_ci_compare(dentry->d_parent->d_inode, name, &qstr);
-+}
-+
-+static int f2fs_d_hash(const struct dentry *dentry, struct qstr *str)
-+{
-+	struct f2fs_sb_info *sbi = F2FS_SB(dentry->d_sb);
-+	const struct unicode_map *um = sbi->s_encoding;
-+	unsigned char *norm;
-+	int len, ret = 0;
-+
-+	if (!IS_CASEFOLDED(dentry->d_inode))
-+		return 0;
-+
-+	norm = f2fs_kmalloc(sbi, PATH_MAX, GFP_ATOMIC);
-+	if (!norm)
-+		return -ENOMEM;
-+
-+	len = utf8_casefold(um, str, norm, PATH_MAX);
-+	if (len < 0) {
-+		if (f2fs_has_strict_mode(sbi))
-+			ret = -EINVAL;
-+		goto out;
-+	}
-+	str->hash = full_name_hash(dentry, norm, len);
-+out:
-+	kvfree(norm);
-+	return ret;
-+}
-+
-+const struct dentry_operations f2fs_dentry_ops = {
-+	.d_hash = f2fs_d_hash,
-+	.d_compare = f2fs_d_compare,
-+};
-+#endif
-+
-diff --git a/fs/f2fs/f2fs.h b/fs/f2fs/f2fs.h
-index c6c7904572d0d..31fd2a268ba14 100644
---- a/fs/f2fs/f2fs.h
-+++ b/fs/f2fs/f2fs.h
-@@ -2364,10 +2364,12 @@ static inline void f2fs_change_bit(unsigned int nr, char *addr)
- #define F2FS_INDEX_FL			0x00001000 /* hash-indexed directory */
- #define F2FS_DIRSYNC_FL			0x00010000 /* dirsync behaviour (directories only) */
- #define F2FS_PROJINHERIT_FL		0x20000000 /* Create with parents projid */
-+#define F2FS_CASEFOLD_FL		0x40000000 /* Casefolded file */
- 
- /* Flags that should be inherited by new inodes from their parent. */
- #define F2FS_FL_INHERITED (F2FS_SYNC_FL | F2FS_NODUMP_FL | F2FS_NOATIME_FL | \
--			   F2FS_DIRSYNC_FL | F2FS_PROJINHERIT_FL)
-+			   F2FS_DIRSYNC_FL | F2FS_PROJINHERIT_FL | \
-+			   F2FS_CASEFOLD_FL)
- 
- /* Flags that are appropriate for regular files (all but dir-specific ones). */
- #define F2FS_REG_FLMASK		(~(F2FS_DIRSYNC_FL | F2FS_PROJINHERIT_FL))
-@@ -2930,6 +2932,10 @@ int f2fs_update_extension_list(struct f2fs_sb_info *sbi, const char *name,
- 							bool hot, bool set);
- struct dentry *f2fs_get_parent(struct dentry *child);
- 
-+extern int f2fs_ci_compare(const struct inode *parent,
-+			   const struct qstr *name,
-+			   const struct qstr *entry);
-+
- /*
-  * dir.c
-  */
-@@ -2993,8 +2999,8 @@ int f2fs_sanity_check_ckpt(struct f2fs_sb_info *sbi);
- /*
-  * hash.c
-  */
--f2fs_hash_t f2fs_dentry_hash(const struct qstr *name_info,
--				struct fscrypt_name *fname);
-+f2fs_hash_t f2fs_dentry_hash(const struct inode *dir,
-+		const struct qstr *name_info, struct fscrypt_name *fname);
- 
- /*
-  * node.c
-@@ -3437,6 +3443,9 @@ static inline void f2fs_destroy_root_stats(void) { }
- #endif
- 
- extern const struct file_operations f2fs_dir_operations;
-+#ifdef CONFIG_UNICODE
-+extern const struct dentry_operations f2fs_dentry_ops;
-+#endif
- extern const struct file_operations f2fs_file_operations;
- extern const struct inode_operations f2fs_file_inode_operations;
- extern const struct address_space_operations f2fs_dblock_aops;
-diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-index f8d46df8fa9ee..7ab2e6fea5b82 100644
---- a/fs/f2fs/file.c
-+++ b/fs/f2fs/file.c
-@@ -1660,7 +1660,16 @@ static int f2fs_setflags_common(struct inode *inode, u32 iflags, u32 mask)
- 		return -EPERM;
- 
- 	oldflags = fi->i_flags;
-+	if ((iflags ^ oldflags) & F2FS_CASEFOLD_FL) {
-+		if (!f2fs_sb_has_casefold(F2FS_I_SB(inode)))
-+			return -EOPNOTSUPP;
-+
-+		if (!S_ISDIR(inode->i_mode))
-+			return -ENOTDIR;
- 
-+		if (!f2fs_empty_dir(inode))
-+			return -ENOTEMPTY;
-+	}
- 	if ((iflags ^ oldflags) & (F2FS_APPEND_FL | F2FS_IMMUTABLE_FL))
- 		if (!capable(CAP_LINUX_IMMUTABLE))
- 			return -EPERM;
-@@ -1699,6 +1708,7 @@ static const struct {
- 	{ F2FS_INDEX_FL,	FS_INDEX_FL },
- 	{ F2FS_DIRSYNC_FL,	FS_DIRSYNC_FL },
- 	{ F2FS_PROJINHERIT_FL,	FS_PROJINHERIT_FL },
-+	{ F2FS_CASEFOLD_FL,	FS_CASEFOLD_FL },
- };
- 
- #define F2FS_GETTABLE_FS_FL (		\
-@@ -1712,7 +1722,8 @@ static const struct {
- 		FS_PROJINHERIT_FL |	\
- 		FS_ENCRYPT_FL |		\
- 		FS_INLINE_DATA_FL |	\
--		FS_NOCOW_FL)
-+		FS_NOCOW_FL |		\
-+		FS_CASEFOLD_FL)
- 
- #define F2FS_SETTABLE_FS_FL (		\
- 		FS_SYNC_FL |		\
-@@ -1721,7 +1732,8 @@ static const struct {
- 		FS_NODUMP_FL |		\
- 		FS_NOATIME_FL |		\
- 		FS_DIRSYNC_FL |		\
--		FS_PROJINHERIT_FL)
-+		FS_PROJINHERIT_FL |	\
-+		FS_CASEFOLD_FL)
- 
- /* Convert f2fs on-disk i_flags to FS_IOC_{GET,SET}FLAGS flags */
- static inline u32 f2fs_iflags_to_fsflags(u32 iflags)
-diff --git a/fs/f2fs/hash.c b/fs/f2fs/hash.c
-index cc82f142f811f..99e79934f5088 100644
---- a/fs/f2fs/hash.c
-+++ b/fs/f2fs/hash.c
-@@ -14,6 +14,7 @@
- #include <linux/f2fs_fs.h>
- #include <linux/cryptohash.h>
- #include <linux/pagemap.h>
-+#include <linux/unicode.h>
- 
- #include "f2fs.h"
- 
-@@ -67,7 +68,7 @@ static void str2hashbuf(const unsigned char *msg, size_t len,
- 		*buf++ = pad;
- }
- 
--f2fs_hash_t f2fs_dentry_hash(const struct qstr *name_info,
-+static f2fs_hash_t __f2fs_dentry_hash(const struct qstr *name_info,
- 				struct fscrypt_name *fname)
- {
- 	__u32 hash;
-@@ -103,3 +104,35 @@ f2fs_hash_t f2fs_dentry_hash(const struct qstr *name_info,
- 	f2fs_hash = cpu_to_le32(hash & ~F2FS_HASH_COL_BIT);
- 	return f2fs_hash;
- }
-+
-+f2fs_hash_t f2fs_dentry_hash(const struct inode *dir,
-+		const struct qstr *name_info, struct fscrypt_name *fname)
-+{
-+#ifdef CONFIG_UNICODE
-+	struct f2fs_sb_info *sbi = F2FS_SB(dir->i_sb);
-+	const struct unicode_map *um = sbi->s_encoding;
-+	int r, dlen;
-+	unsigned char *buff;
-+	struct qstr *folded;
-+
-+	if (name_info->len && IS_CASEFOLDED(dir)) {
-+		buff = f2fs_kzalloc(sbi, sizeof(char) * PATH_MAX, GFP_KERNEL);
-+		if (!buff)
-+			return -ENOMEM;
-+
-+		dlen = utf8_casefold(um, name_info, buff, PATH_MAX);
-+		if (dlen < 0) {
-+			kvfree(buff);
-+			goto opaque_seq;
-+		}
-+		folded->name = buff;
-+		folded->len = dlen;
-+		r = __f2fs_dentry_hash(folded, fname);
-+
-+		kvfree(buff);
-+		return r;
-+	}
-+opaque_seq:
-+#endif
-+	return __f2fs_dentry_hash(name_info, fname);
-+}
-diff --git a/fs/f2fs/inline.c b/fs/f2fs/inline.c
-index 3613efca8c00c..354f71cf9e6ba 100644
---- a/fs/f2fs/inline.c
-+++ b/fs/f2fs/inline.c
-@@ -320,7 +320,7 @@ struct f2fs_dir_entry *f2fs_find_in_inline_dir(struct inode *dir,
- 		return NULL;
- 	}
- 
--	namehash = f2fs_dentry_hash(&name, fname);
-+	namehash = f2fs_dentry_hash(dir, &name, fname);
- 
- 	inline_dentry = inline_data_addr(dir, ipage);
- 
-@@ -580,7 +580,7 @@ int f2fs_add_inline_entry(struct inode *dir, const struct qstr *new_name,
- 
- 	f2fs_wait_on_page_writeback(ipage, NODE, true, true);
- 
--	name_hash = f2fs_dentry_hash(new_name, NULL);
-+	name_hash = f2fs_dentry_hash(dir, new_name, NULL);
- 	f2fs_update_dentry(ino, mode, &d, new_name, name_hash, bit_pos);
- 
- 	set_page_dirty(ipage);
-diff --git a/fs/f2fs/inode.c b/fs/f2fs/inode.c
-index a33d7a849b2df..9a1f0d6616577 100644
---- a/fs/f2fs/inode.c
-+++ b/fs/f2fs/inode.c
-@@ -46,9 +46,11 @@ void f2fs_set_inode_flags(struct inode *inode)
- 		new_fl |= S_DIRSYNC;
- 	if (file_is_encrypt(inode))
- 		new_fl |= S_ENCRYPTED;
-+	if (flags & F2FS_CASEFOLD_FL)
-+		new_fl |= S_CASEFOLD;
- 	inode_set_flags(inode, new_fl,
- 			S_SYNC|S_APPEND|S_IMMUTABLE|S_NOATIME|S_DIRSYNC|
--			S_ENCRYPTED);
-+			S_ENCRYPTED|S_CASEFOLD);
- }
- 
- static void __get_inode_rdev(struct inode *inode, struct f2fs_inode *ri)
-diff --git a/fs/f2fs/namei.c b/fs/f2fs/namei.c
-index c5b99042e6f2b..727de2f8620f2 100644
---- a/fs/f2fs/namei.c
-+++ b/fs/f2fs/namei.c
-@@ -489,6 +489,17 @@ static struct dentry *f2fs_lookup(struct inode *dir, struct dentry *dentry,
- 		goto out_iput;
- 	}
- out_splice:
-+#ifdef CONFIG_UNICODE
-+	if (!inode && IS_CASEFOLDED(dir)) {
-+		/* Eventually we want to call d_add_ci(dentry, NULL)
-+		 * for negative dentries in the encoding case as
-+		 * well.  For now, prevent the negative dentry
-+		 * from being cached.
-+		 */
-+		trace_f2fs_lookup_end(dir, dentry, ino, err);
-+		return NULL;
-+	}
-+#endif
- 	new = d_splice_alias(inode, dentry);
- 	err = PTR_ERR_OR_ZERO(new);
- 	trace_f2fs_lookup_end(dir, dentry, ino, err);
-@@ -537,6 +548,16 @@ static int f2fs_unlink(struct inode *dir, struct dentry *dentry)
- 		goto fail;
- 	}
- 	f2fs_delete_entry(de, page, dir, inode);
-+#ifdef CONFIG_UNICODE
-+	/* VFS negative dentries are incompatible with Encoding and
-+	 * Case-insensitiveness. Eventually we'll want avoid
-+	 * invalidating the dentries here, alongside with returning the
-+	 * negative dentries at f2fs_lookup(), when it is  better
-+	 * supported by the VFS for the CI case.
-+	 */
-+	if (IS_CASEFOLDED(dir))
-+		d_invalidate(dentry);
-+#endif
- 	f2fs_unlock_op(sbi);
- 
- 	if (IS_DIRSYNC(dir))
-diff --git a/fs/f2fs/super.c b/fs/f2fs/super.c
-index 068db78a1e03e..20bf5fc3c5333 100644
---- a/fs/f2fs/super.c
-+++ b/fs/f2fs/super.c
-@@ -3108,6 +3108,7 @@ static int f2fs_setup_casefold(struct f2fs_sb_info *sbi)
- 
- 		sbi->s_encoding = encoding;
- 		sbi->s_encoding_flags = encoding_flags;
-+		sbi->sb->s_d_op = &f2fs_dentry_ops;
- 	}
- #else
- 	if (f2fs_sb_has_casefold(sbi)) {
--- 
-2.22.0.657.g960e92d24f-goog
+In furtherance of bpf=E2=80=99s goal of world domination, I think it would b=
+e great if it Just Worked in a container. My proposal does this.
