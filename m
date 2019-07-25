@@ -1,83 +1,69 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [PATCH 4/5] pidfd: add CLONE_WAIT_PID
-Date: Thu, 25 Jul 2019 11:57:19 -0500
-Message-ID: <878ssmuk5s.fsf@xmission.com>
-References: <20190724144651.28272-1-christian@brauner.io>
-        <20190724144651.28272-5-christian@brauner.io>
-        <20190725103543.GF4707@redhat.com>
-        <20190725104006.7myahvjtnbcgu3in@brauner.io>
-        <20190725112503.GG4707@redhat.com> <20190725114359.GH4707@redhat.com>
-        <20190725122650.4i3arct5rpchqmyt@brauner.io>
+From: Yang Shi <yang.shi@linux.alibaba.com>
+Subject: Re: [v4 PATCH 2/2] mm: mempolicy: handle vma with unmovable pages
+ mapped correctly in mbind
+Date: Thu, 25 Jul 2019 10:38:18 -0700
+Message-ID: <6fbe0abe-d27f-36ba-ef91-09daec4b4d35@linux.alibaba.com>
+References: <1563556862-54056-1-git-send-email-yang.shi@linux.alibaba.com>
+ <1563556862-54056-3-git-send-email-yang.shi@linux.alibaba.com>
+ <6c948a96-7af1-c0d2-b3df-5fe613284d4f@suse.cz>
+ <20190722180231.b7abbe8bdb046d725bdd9e6b@linux-foundation.org>
+ <a9b8cae7-4bca-3c98-99f9-6b92de7e5909@linux.alibaba.com>
+ <6aeca7cf-d9da-95cc-e6dc-a10c2978c523@suse.cz>
+ <20190724174423.1826c92f72ce9c815ebc72d9@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190725122650.4i3arct5rpchqmyt@brauner.io> (Christian Brauner's
-        message of "Thu, 25 Jul 2019 14:26:51 +0200")
+In-Reply-To: <20190724174423.1826c92f72ce9c815ebc72d9@linux-foundation.org>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian@brauner.io>
-Cc: Oleg Nesterov <oleg@redhat.com>, linux-kernel@vger.kernel.org, arnd@arndb.de, keescook@chromium.org, joel@joelfernandes.org, tglx@linutronix.de, tj@kernel.org, dhowells@redhat.com, jannh@google.com, luto@kernel.org, akpm@linux-foundation.org, cyphar@cyphar.com, torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, kernel-team@android.com, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, linux-api@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>, Vlastimil Babka <vbabka@suse.cz>
+Cc: mhocko@kernel.org, mgorman@techsingularity.net, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Christian Brauner <christian@brauner.io> writes:
 
-> On Thu, Jul 25, 2019 at 01:43:59PM +0200, Oleg Nesterov wrote:
->> Or. We can change wait_consider_task() to not clear ->notask_error if
->> WXXX and the child is PF_WAIT_PID.
->> 
->> This way you can "safely" use wait() without WNOHANG, it won't block if
->> all the children which can report an even are PF_WAIT_PID.
->> 
->> But I do not understand your use-cases, I have no idea if this can help
+
+On 7/24/19 5:44 PM, Andrew Morton wrote:
+> On Wed, 24 Jul 2019 10:19:34 +0200 Vlastimil Babka <vbabka@suse.cz> wrote:
 >
-> One usecase (among others listed in the commit message) are shared
-> libraries. P_ALL is usually something you can't really use in a shared
-> library because you have no idea what else might be fork()ed off. Only
-> the main program can use this but none of the auxiliary libraries that
-> it uses.
-> The other way around you want to be able fork() off something without
-> affecting P_ALL in the main program.
-> The key is that you want to be able to create child processes in a
-> shared library without the main programing having to know about this so
-> that it can use P_ALL and never get stuff from the library.
+>> On 7/23/19 7:35 AM, Yang Shi wrote:
+>>>
+>>> On 7/22/19 6:02 PM, Andrew Morton wrote:
+>>>> On Mon, 22 Jul 2019 09:25:09 +0200 Vlastimil Babka <vbabka@suse.cz> wrote:
+>>>>
+>>>>>> since there may be pages off LRU temporarily.  We should migrate other
+>>>>>> pages if MPOL_MF_MOVE* is specified.  Set has_unmovable flag if some
+>>>>>> paged could not be not moved, then return -EIO for mbind() eventually.
+>>>>>>
+>>>>>> With this change the above test would return -EIO as expected.
+>>>>>>
+>>>>>> Cc: Vlastimil Babka <vbabka@suse.cz>
+>>>>>> Cc: Michal Hocko <mhocko@suse.com>
+>>>>>> Cc: Mel Gorman <mgorman@techsingularity.net>
+>>>>>> Signed-off-by: Yang Shi <yang.shi@linux.alibaba.com>
+>>>>> Reviewed-by: Vlastimil Babka <vbabka@suse.cz>
+>>>> Thanks.
+>>>>
+>>>> I'm a bit surprised that this doesn't have a cc:stable.  Did we
+>>>> consider that?
+>>> The VM_BUG just happens on 4.9, and it is enabled only by CONFIG_VM. For
+>>> post-4.9 kernel, this fixes the semantics of mbind which should be not a
+>>> regression IMHO.
+>> 4.9 is a LTS kernel, so perhaps worth trying?
+>>
+> OK, I'll add cc:stable to
+
+Thanks.
+
 >
-> Assume you have a project with a main loop with a million things
-> happening in that mainloop like some gui app running an avi video. For
-> example, gtk uses gstreamer which forks off all codecs in child
-> processes which are sandboxed for security. So gstreamer is using helper
-> processes in the background which are my children now. Now I'm creating
-> four more additional helper processes as well. Now, in my (glib, qt
-> whatever) mainloop on SIGCHLD some part of the app is checking with
-> WNHOANG and finds a process has exited. It's cleaning this thing up now
-> but it's not a process it wanted to clean up. The other part of the app
-> is now doing waitid(P_PID, pid) but will find the process already gone
-> it wanted to reap.
+> mm-mempolicy-make-the-behavior-consistent-when-mpol_mf_move-and-mpol_mf_strict-were-specified.patch
 >
-> I hope I'm expressing this well enough.
+> and
+>
+> mm-mempolicy-handle-vma-with-unmovable-pages-mapped-correctly-in-mbind.patch
+>
+> Do we have a Fixes: for these patches?
 
-
-I think so.
-
-A) I think Oleg is correct that you should test the flag in
-   do_wait_thread rather than elsewhere.
-
-B) We have a deficiency in do_wait that should be addressed.  The
-   do_wait function does not have a fast path for waiting on a
-   particular process.  For adding this functionality I such a fast path
-   goes from a nice to have to a necessity for getting all of the
-   fiddly details correct.
-
-C) I believe the semantics should be that while such a file descriptor
-   is open, only that file descriptor can be used to reap the process.
-   And that it should be allowed to pass the file descriptor between
-   processes.  Which means the parent can die and the process be
-   reparted to init and we should still be able to reap the process with
-   the file descriptor.
-
-D) I think it is a toss up how we should deal with such a process when
-   the file descriptor is closed.  Setting the process to autoreap
-   or reparent to init and let init deal with it.  My inclination is
-   that autoreap is the correct behavior.
-   
-Eric
-
-  
+It looks the problem has existed since very beginning. The oldest commit 
+which I can find is dc9aa5b9d65fd11b1f5246b46ec610ee8b83c6dd ("[PATCH] 
+Swap Migration V5: MPOL_MF_MOVE interface"), which is a 2.6.16 commit.
