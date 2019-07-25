@@ -1,42 +1,42 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: Re: [PATCH 2/5] pidfd: add pidfd_wait()
-Date: Thu, 25 Jul 2019 12:21:56 +0200
-Message-ID: <20190725102156.nqnngsrb6dwmyztb@brauner.io>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [PATCH 4/5] pidfd: add CLONE_WAIT_PID
+Date: Thu, 25 Jul 2019 12:30:48 +0200
+Message-ID: <20190725103048.GE4707@redhat.com>
 References: <20190724144651.28272-1-christian@brauner.io>
- <20190724144651.28272-3-christian@brauner.io>
- <20190725101626.GD4707@redhat.com>
+ <20190724144651.28272-5-christian@brauner.io>
+ <CAG48ez3nuY__qvctoOnX7mQbjjP4chEs4K-OPxSQficiPLS18w@mail.gmail.com>
+ <CFB4D39F-24B9-4AD9-B19C-E2D14D38A808@brauner.io>
+ <CAG48ez1vd4Yhd3DqHVjTWM-N0MaNnX9n8MNV7MEyU5m3XDu+kQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190725101626.GD4707@redhat.com>
+In-Reply-To: <CAG48ez1vd4Yhd3DqHVjTWM-N0MaNnX9n8MNV7MEyU5m3XDu+kQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>
-Cc: linux-kernel@vger.kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, joel@joelfernandes.org, tglx@linutronix.de, tj@kernel.org, dhowells@redhat.com, jannh@google.com, luto@kernel.org, akpm@linux-foundation.org, cyphar@cyphar.com, torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, kernel-team@android.com, linux-api@vger.kernel.org
+To: Jann Horn <jannh@google.com>
+Cc: Christian Brauner <christian@brauner.io>, kernel list <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, "Joel Fernandes (Google)" <joel@joelfernandes.org>, Thomas Gleixner <tglx@linutronix.de>, Tejun Heo <tj@kernel.org>, David Howells <dhowells@redhat.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Aleksa Sarai <cyphar@cyphar.com>, Linus Torvalds <torvalds@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, kernel-team <kernel-team@android.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jul 25, 2019 at 12:16:27PM +0200, Oleg Nesterov wrote:
-> On 07/24, Christian Brauner wrote:
-> >
-> > +SYSCALL_DEFINE6(pidfd_wait, int, pidfd, int __user *, stat_addr,
-> > +		siginfo_t __user *, info, struct rusage __user *, ru,
-> > +		unsigned int, states, unsigned int, flags)
-> > +{
-> 
-> Oh, I too think that P_PIDFD makes more sense.
+On 07/24, Jann Horn wrote:
+>
+> --- a/kernel/fork.c
+> +++ b/kernel/fork.c
+> @@ -1902,6 +1902,10 @@ static __latent_entropy struct task_struct *copy_process(
+>         delayacct_tsk_init(p);  /* Must remain after dup_task_struct() */
+>         p->flags &= ~(PF_SUPERPRIV | PF_WQ_WORKER | PF_IDLE);
+>         p->flags |= PF_FORKNOEXEC;
+> +       if (!(clone_flags & CLONE_THREAD))
+> +               p->flags &= ~PF_PF_WAIT_PID;
+> +       if (clone_flags & CLONE_WAIT_PID)
+> +               p->flags |= PF_PF_WAIT_PID;
 
-I have already updated the patch to introduce P_PIDFD.
+agreed, but then the "if (!thread_group_leader(tsk))" block in de_thread()
+should also copy PF_PF_WAIT_PID.
 
-> 
-> and could you explain in the changelog why? I am not arguing and if
-> nothing else this is consistent with other pidfd features, but if you
-> are parent/debugger you can't hit the problem with pid-reuse, unless
-> you races with your sub-threads.
+> An alternative would be to not use p->flags at all, but instead make
+> this a property of the signal_struct - since the property is shared by
+> all threads, that might make more sense?
 
-One of the things is that later on this will allow us to make it
-possible to retrieve the exit status via waitid(P_PIDFD) for non-parent
-processes if handed a _suitable_ pidfd that has this feature set. Maybe
-even - if safe - make it possible to wait on a process as a non-parent.
-And some tools just really want to do away with pids completely.
+I tend to agree.
 
-Christian
+Oleg.
