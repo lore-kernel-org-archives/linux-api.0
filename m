@@ -1,42 +1,39 @@
 From: Oleg Nesterov <oleg@redhat.com>
 Subject: Re: [PATCH 4/5] pidfd: add CLONE_WAIT_PID
-Date: Thu, 25 Jul 2019 12:30:48 +0200
-Message-ID: <20190725103048.GE4707@redhat.com>
+Date: Thu, 25 Jul 2019 12:35:44 +0200
+Message-ID: <20190725103543.GF4707@redhat.com>
 References: <20190724144651.28272-1-christian@brauner.io>
  <20190724144651.28272-5-christian@brauner.io>
- <CAG48ez3nuY__qvctoOnX7mQbjjP4chEs4K-OPxSQficiPLS18w@mail.gmail.com>
- <CFB4D39F-24B9-4AD9-B19C-E2D14D38A808@brauner.io>
- <CAG48ez1vd4Yhd3DqHVjTWM-N0MaNnX9n8MNV7MEyU5m3XDu+kQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAG48ez1vd4Yhd3DqHVjTWM-N0MaNnX9n8MNV7MEyU5m3XDu+kQ@mail.gmail.com>
+In-Reply-To: <20190724144651.28272-5-christian@brauner.io>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: Christian Brauner <christian@brauner.io>, kernel list <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>, "Joel Fernandes (Google)" <joel@joelfernandes.org>, Thomas Gleixner <tglx@linutronix.de>, Tejun Heo <tj@kernel.org>, David Howells <dhowells@redhat.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Aleksa Sarai <cyphar@cyphar.com>, Linus Torvalds <torvalds@linux-foundation.org>, Al Viro <viro@zeniv.linux.org.uk>, kernel-team <kernel-team@android.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Linux API <linux-api@vger.kernel.org>
+To: Christian Brauner <christian@brauner.io>
+Cc: linux-kernel@vger.kernel.org, arnd@arndb.de, ebiederm@xmission.com, keescook@chromium.org, joel@joelfernandes.org, tglx@linutronix.de, tj@kernel.org, dhowells@redhat.com, jannh@google.com, luto@kernel.org, akpm@linux-foundation.org, cyphar@cyphar.com, torvalds@linux-foundation.org, viro@zeniv.linux.org.uk, kernel-team@android.com, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 07/24, Jann Horn wrote:
+On 07/24, Christian Brauner wrote:
 >
-> --- a/kernel/fork.c
-> +++ b/kernel/fork.c
-> @@ -1902,6 +1902,10 @@ static __latent_entropy struct task_struct *copy_process(
->         delayacct_tsk_init(p);  /* Must remain after dup_task_struct() */
->         p->flags &= ~(PF_SUPERPRIV | PF_WQ_WORKER | PF_IDLE);
->         p->flags |= PF_FORKNOEXEC;
-> +       if (!(clone_flags & CLONE_THREAD))
-> +               p->flags &= ~PF_PF_WAIT_PID;
-> +       if (clone_flags & CLONE_WAIT_PID)
-> +               p->flags |= PF_PF_WAIT_PID;
+> If CLONE_WAIT_PID is set the newly created process will not be
+> considered by process wait requests that wait generically on children
+> such as:
 
-agreed, but then the "if (!thread_group_leader(tsk))" block in de_thread()
-should also copy PF_PF_WAIT_PID.
+I have to admit this feature looks a bit exotic to me...
 
-> An alternative would be to not use p->flags at all, but instead make
-> this a property of the signal_struct - since the property is shared by
-> all threads, that might make more sense?
+> --- a/kernel/exit.c
+> +++ b/kernel/exit.c
+> @@ -1019,6 +1019,9 @@ eligible_child(struct wait_opts *wo, bool ptrace, struct task_struct *p)
+>  	if (!eligible_pid(wo, p))
+>  		return 0;
+>
+> +	if ((p->flags & PF_WAIT_PID) && (wo->wo_type != PIDTYPE_PID))
+> +		return 0;
 
-I tend to agree.
+Even if ptrace == T ?
+
+This doesn't look right. Say, strace should work even if its tracee (or
+one of the tracees) has PF_WAIT_PID.
 
 Oleg.
