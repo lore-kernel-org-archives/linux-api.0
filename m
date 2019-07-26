@@ -1,304 +1,66 @@
-From: Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH v7 09/16] fscrypt: add an HKDF-SHA512
- implementation
-Date: Fri, 26 Jul 2019 15:41:34 -0700
-Message-ID: <20190726224141.14044-10-ebiggers@kernel.org>
-References: <20190726224141.14044-1-ebiggers@kernel.org>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: Regression in 5.3 for some FS_USERNS_MOUNT (aka
+ user-namespace-mountable) filesystems
+Date: Fri, 26 Jul 2019 15:47:02 -0700
+Message-ID: <CAHk-=wgK254RkZg9oAv+Wt4V9zqYJMm3msTofvTUfA9dJw6piQ@mail.gmail.com>
+References: <20190726115956.ifj5j4apn3tmwk64@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-In-Reply-To: <20190726224141.14044-1-ebiggers@kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: linux-fscrypt@vger.kernel.org
-Cc: Satya Tangirala <satyat@google.com>, linux-api@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, keyrings@vger.kernel.org, linux-mtd@lists.infradead.org, linux-crypto@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, Paul Crowley <paulcrowley@google.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190726115956.ifj5j4apn3tmwk64@brauner.io>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christian Brauner <christian@brauner.io>
+Cc: Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, David Howells <dhowells@redhat.com>, Miklos Szeredi <miklos@szeredi.hu>, "Eric W. Biederman" <ebiederm@xmission.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Eric Biggers <ebiggers@google.com>
+On Fri, Jul 26, 2019 at 5:00 AM Christian Brauner <christian@brauner.io> wrote:
+>
+> The commit that introduced the regression is:
+>
+> commit 0ce0cf12fc4c6a089717ff613d76457052cf4303
+> Author: Al Viro <viro@zeniv.linux.org.uk>
+> Date:   Sun May 12 15:42:48 2019 -0400
+>
+>     consolidate the capability checks in sget_{fc,userns}()
+>
+>     ... into a common helper - mount_capable(type, userns)
 
-Add an implementation of HKDF (RFC 5869) to fscrypt, for the purpose of
-deriving additional key material from the fscrypt master keys for v2
-encryption policies.  HKDF is a key derivation function built on top of
-HMAC.  We choose SHA-512 for the underlying unkeyed hash, and use an
-"hmac(sha512)" transform allocated from the crypto API.
+The commit message there tries to imply that it's just consolidating
+existing checks, but you're right - that's not at all the case.
 
-We'll be using this to replace the AES-ECB based KDF currently used to
-derive the per-file encryption keys.  While the AES-ECB based KDF is
-believed to meet the original security requirements, it is nonstandard
-and has problems that don't exist in modern KDFs such as HKDF:
+In sget_fc(), the tests are all the exact same tests, but it uses a
+different 'user_ns' after the commit. It *used* to use fc->user_ns,
+now it uses 'user_ns' which depends on that 'global' bit.
 
-1. It's reversible.  Given a derived key and nonce, an attacker can
-   easily compute the master key.  This is okay if the master key and
-   derived keys are equally hard to compromise, but now we'd like to be
-   more robust against threats such as a derived key being compromised
-   through a timing attack, or a derived key for an in-use file being
-   compromised after the master key has already been removed.
+And in sget_userns(), the userns is the same, but the tests are
+different. Before that commit, it *always* checked for capability in
+user_ns, and then (for non-FS_USERNS_MOUNT) it checked for capability
+in the init namespace.
 
-2. It doesn't evenly distribute the entropy from the master key; each 16
-   input bytes only affects the corresponding 16 output bytes.
+I guess the semantic change in sget_userns() is immaterial - if you
+have CAP_SYS_ADMIN in the init namespace, you will have it in user_ns
+too.
 
-3. It isn't easily extensible to deriving other values or keys, such as
-   a public hash for securely identifying the key, or per-mode keys.
-   Per-mode keys will be immediately useful for Adiantum encryption, for
-   which fscrypt currently uses the master key directly, introducing
-   unnecessary usage constraints.  Per-mode keys will also be useful for
-   hardware inline encryption, which is currently being worked on.
+But the sget_fc() semantic change is a more serious change. Maybe that
+was just unintentional, and Al _meant_ to pass in "fc->user_ns", but
+didn't?
 
-HKDF solves all the above problems.
+Of course, then later on, commit 20284ab7427f ("switch mount_capable()
+to fs_context") drops that argument entirely, and hardcodes the
+decision to look at fc->global.
 
-Signed-off-by: Eric Biggers <ebiggers@google.com>
----
- fs/crypto/Kconfig           |   2 +
- fs/crypto/Makefile          |   1 +
- fs/crypto/fscrypt_private.h |  15 +++
- fs/crypto/hkdf.c            | 181 ++++++++++++++++++++++++++++++++++++
- 4 files changed, 199 insertions(+)
- create mode 100644 fs/crypto/hkdf.c
+But that fc->global decision wasn't there originally, and is incorrect
+since it breaks existing users.
 
-diff --git a/fs/crypto/Kconfig b/fs/crypto/Kconfig
-index 5fdf24877c178..ff5a1746cbae4 100644
---- a/fs/crypto/Kconfig
-+++ b/fs/crypto/Kconfig
-@@ -7,6 +7,8 @@ config FS_ENCRYPTION
- 	select CRYPTO_ECB
- 	select CRYPTO_XTS
- 	select CRYPTO_CTS
-+	select CRYPTO_SHA512
-+	select CRYPTO_HMAC
- 	select KEYS
- 	help
- 	  Enable encryption of files and directories.  This
-diff --git a/fs/crypto/Makefile b/fs/crypto/Makefile
-index a640d486800da..3333e2ac859fa 100644
---- a/fs/crypto/Makefile
-+++ b/fs/crypto/Makefile
-@@ -3,6 +3,7 @@ obj-$(CONFIG_FS_ENCRYPTION)	+= fscrypto.o
- 
- fscrypto-y := crypto.o \
- 	      fname.o \
-+	      hkdf.o \
- 	      hooks.o \
- 	      keyring.o \
- 	      keysetup.o \
-diff --git a/fs/crypto/fscrypt_private.h b/fs/crypto/fscrypt_private.h
-index 3616232b4798e..92567efec2cd5 100644
---- a/fs/crypto/fscrypt_private.h
-+++ b/fs/crypto/fscrypt_private.h
-@@ -172,6 +172,21 @@ extern bool fscrypt_fname_encrypted_size(const struct inode *inode,
- 					 u32 orig_len, u32 max_len,
- 					 u32 *encrypted_len_ret);
- 
-+/* hkdf.c */
-+
-+struct fscrypt_hkdf {
-+	struct crypto_shash *hmac_tfm;
-+};
-+
-+extern int fscrypt_init_hkdf(struct fscrypt_hkdf *hkdf, const u8 *master_key,
-+			     unsigned int master_key_size);
-+
-+extern int fscrypt_hkdf_expand(struct fscrypt_hkdf *hkdf, u8 context,
-+			       const u8 *info, unsigned int infolen,
-+			       u8 *okm, unsigned int okmlen);
-+
-+extern void fscrypt_destroy_hkdf(struct fscrypt_hkdf *hkdf);
-+
- /* keyring.c */
- 
- /*
-diff --git a/fs/crypto/hkdf.c b/fs/crypto/hkdf.c
-new file mode 100644
-index 0000000000000..f21873e1b4674
---- /dev/null
-+++ b/fs/crypto/hkdf.c
-@@ -0,0 +1,181 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Implementation of HKDF ("HMAC-based Extract-and-Expand Key Derivation
-+ * Function"), aka RFC 5869.  See also the original paper (Krawczyk 2010):
-+ * "Cryptographic Extraction and Key Derivation: The HKDF Scheme".
-+ *
-+ * This is used to derive keys from the fscrypt master keys.
-+ *
-+ * Copyright 2019 Google LLC
-+ */
-+
-+#include <crypto/hash.h>
-+#include <crypto/sha.h>
-+
-+#include "fscrypt_private.h"
-+
-+/*
-+ * HKDF supports any unkeyed cryptographic hash algorithm, but fscrypt uses
-+ * SHA-512 because it is reasonably secure and efficient; and since it produces
-+ * a 64-byte digest, deriving an AES-256-XTS key preserves all 64 bytes of
-+ * entropy from the master key and requires only one iteration of HKDF-Expand.
-+ */
-+#define HKDF_HMAC_ALG		"hmac(sha512)"
-+#define HKDF_HASHLEN		SHA512_DIGEST_SIZE
-+
-+/*
-+ * HKDF consists of two steps:
-+ *
-+ * 1. HKDF-Extract: extract a pseudorandom key of length HKDF_HASHLEN bytes from
-+ *    the input keying material and optional salt.
-+ * 2. HKDF-Expand: expand the pseudorandom key into output keying material of
-+ *    any length, parameterized by an application-specific info string.
-+ *
-+ * HKDF-Extract can be skipped if the input is already a pseudorandom key of
-+ * length HKDF_HASHLEN bytes.  However, cipher modes other than AES-256-XTS take
-+ * shorter keys, and we don't want to force users of those modes to provide
-+ * unnecessarily long master keys.  Thus fscrypt still does HKDF-Extract.  No
-+ * salt is used, since fscrypt master keys should already be pseudorandom and
-+ * there's no way to persist a random salt per master key from kernel mode.
-+ */
-+
-+/* HKDF-Extract (RFC 5869 section 2.2), unsalted */
-+static int hkdf_extract(struct crypto_shash *hmac_tfm, const u8 *ikm,
-+			unsigned int ikmlen, u8 prk[HKDF_HASHLEN])
-+{
-+	static const u8 default_salt[HKDF_HASHLEN];
-+	SHASH_DESC_ON_STACK(desc, hmac_tfm);
-+	int err;
-+
-+	err = crypto_shash_setkey(hmac_tfm, default_salt, HKDF_HASHLEN);
-+	if (err)
-+		return err;
-+
-+	desc->tfm = hmac_tfm;
-+	err = crypto_shash_digest(desc, ikm, ikmlen, prk);
-+	shash_desc_zero(desc);
-+	return err;
-+}
-+
-+/*
-+ * Compute HKDF-Extract using the given master key as the input keying material,
-+ * and prepare an HMAC transform object keyed by the resulting pseudorandom key.
-+ *
-+ * Afterwards, the keyed HMAC transform object can be used for HKDF-Expand many
-+ * times without having to recompute HKDF-Extract each time.
-+ */
-+int fscrypt_init_hkdf(struct fscrypt_hkdf *hkdf, const u8 *master_key,
-+		      unsigned int master_key_size)
-+{
-+	struct crypto_shash *hmac_tfm;
-+	u8 prk[HKDF_HASHLEN];
-+	int err;
-+
-+	hmac_tfm = crypto_alloc_shash(HKDF_HMAC_ALG, 0, 0);
-+	if (IS_ERR(hmac_tfm)) {
-+		fscrypt_err(NULL, "Error allocating " HKDF_HMAC_ALG ": %ld",
-+			    PTR_ERR(hmac_tfm));
-+		return PTR_ERR(hmac_tfm);
-+	}
-+
-+	if (WARN_ON(crypto_shash_digestsize(hmac_tfm) != sizeof(prk))) {
-+		err = -EINVAL;
-+		goto err_free_tfm;
-+	}
-+
-+	err = hkdf_extract(hmac_tfm, master_key, master_key_size, prk);
-+	if (err)
-+		goto err_free_tfm;
-+
-+	err = crypto_shash_setkey(hmac_tfm, prk, sizeof(prk));
-+	if (err)
-+		goto err_free_tfm;
-+
-+	hkdf->hmac_tfm = hmac_tfm;
-+	goto out;
-+
-+err_free_tfm:
-+	crypto_free_shash(hmac_tfm);
-+out:
-+	memzero_explicit(prk, sizeof(prk));
-+	return err;
-+}
-+
-+/*
-+ * HKDF-Expand (RFC 5869 section 2.3).  This expands the pseudorandom key, which
-+ * was already keyed into 'hkdf->hmac_tfm' by fscrypt_init_hkdf(), into 'okmlen'
-+ * bytes of output keying material parameterized by the application-specific
-+ * 'info' of length 'infolen' bytes, prefixed by "fscrypt\0" and the 'context'
-+ * byte.  This is thread-safe and may be called by multiple threads in parallel.
-+ *
-+ * ('context' isn't part of the HKDF specification; it's just a prefix fscrypt
-+ * adds to its application-specific info strings to guarantee that it doesn't
-+ * accidentally repeat an info string when using HKDF for different purposes.)
-+ */
-+int fscrypt_hkdf_expand(struct fscrypt_hkdf *hkdf, u8 context,
-+			const u8 *info, unsigned int infolen,
-+			u8 *okm, unsigned int okmlen)
-+{
-+	SHASH_DESC_ON_STACK(desc, hkdf->hmac_tfm);
-+	u8 prefix[9];
-+	unsigned int i;
-+	int err;
-+	const u8 *prev = NULL;
-+	u8 counter = 1;
-+	u8 tmp[HKDF_HASHLEN];
-+
-+	if (WARN_ON(okmlen > 255 * HKDF_HASHLEN))
-+		return -EINVAL;
-+
-+	desc->tfm = hkdf->hmac_tfm;
-+
-+	memcpy(prefix, "fscrypt\0", 8);
-+	prefix[8] = context;
-+
-+	for (i = 0; i < okmlen; i += HKDF_HASHLEN) {
-+
-+		err = crypto_shash_init(desc);
-+		if (err)
-+			goto out;
-+
-+		if (prev) {
-+			err = crypto_shash_update(desc, prev, HKDF_HASHLEN);
-+			if (err)
-+				goto out;
-+		}
-+
-+		err = crypto_shash_update(desc, prefix, sizeof(prefix));
-+		if (err)
-+			goto out;
-+
-+		err = crypto_shash_update(desc, info, infolen);
-+		if (err)
-+			goto out;
-+
-+		BUILD_BUG_ON(sizeof(counter) != 1);
-+		if (okmlen - i < HKDF_HASHLEN) {
-+			err = crypto_shash_finup(desc, &counter, 1, tmp);
-+			if (err)
-+				goto out;
-+			memcpy(&okm[i], tmp, okmlen - i);
-+			memzero_explicit(tmp, sizeof(tmp));
-+		} else {
-+			err = crypto_shash_finup(desc, &counter, 1, &okm[i]);
-+			if (err)
-+				goto out;
-+		}
-+		counter++;
-+		prev = &okm[i];
-+	}
-+	err = 0;
-+out:
-+	if (unlikely(err))
-+		memzero_explicit(okm, okmlen); /* so caller doesn't need to */
-+	shash_desc_zero(desc);
-+	return err;
-+}
-+
-+void fscrypt_destroy_hkdf(struct fscrypt_hkdf *hkdf)
-+{
-+	crypto_free_shash(hkdf->hmac_tfm);
-+}
--- 
-2.22.0
+What gets much more confusing about this is that the two different
+users then moved around. The sget_userns() case got moved to
+legacy_get_tree(), and then joined together in vfs_get_tree(), and
+then split and moved out to do_new_mount() and vfs_fsconfig_locked().
+
+And that "joined together into vfs_get_tree()" must be wrong, because
+the two cases used two different namespace rules. The sget_userns()
+case *did* have that "global" flag check, while the sget_fc() did not.
+
+Messy. Al?
+
+               Linus
