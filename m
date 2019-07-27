@@ -1,65 +1,160 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: Regression in 5.3 for some FS_USERNS_MOUNT (aka user-namespace-mountable) filesystems
-Date: Sat, 27 Jul 2019 06:20:18 -0500
-Message-ID: <87h877pvv1.fsf@xmission.com>
+From: Al Viro <viro@zeniv.linux.org.uk>
+Subject: Re: Regression in 5.3 for some FS_USERNS_MOUNT (aka
+ user-namespace-mountable) filesystems
+Date: Sat, 27 Jul 2019 13:37:05 +0100
+Message-ID: <20190727123705.GP1131@ZenIV.linux.org.uk>
 References: <20190726115956.ifj5j4apn3tmwk64@brauner.io>
-        <CAHk-=wgK254RkZg9oAv+Wt4V9zqYJMm3msTofvTUfA9dJw6piQ@mail.gmail.com>
-        <20190726232220.GM1131@ZenIV.linux.org.uk>
-        <878sskqp7p.fsf@xmission.com>
-        <20190727022826.GO1131@ZenIV.linux.org.uk>
+ <CAHk-=wgK254RkZg9oAv+Wt4V9zqYJMm3msTofvTUfA9dJw6piQ@mail.gmail.com>
+ <20190726232220.GM1131@ZenIV.linux.org.uk>
+ <878sskqp7p.fsf@xmission.com>
+ <20190727022826.GO1131@ZenIV.linux.org.uk>
+ <87h877pvv1.fsf@xmission.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190727022826.GO1131@ZenIV.linux.org.uk> (Al Viro's message of
-        "Sat, 27 Jul 2019 03:28:26 +0100")
+Content-Disposition: inline
+In-Reply-To: <87h877pvv1.fsf@xmission.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Al Viro <viro@zeniv.linux.org.uk>
+To: "Eric W. Biederman" <ebiederm@xmission.com>
 Cc: Linus Torvalds <torvalds@linux-foundation.org>, Christian Brauner <christian@brauner.io>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, David Howells <dhowells@redhat.com>, Miklos Szeredi <miklos@szeredi.hu>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Al Viro <viro@zeniv.linux.org.uk> writes:
+On Sat, Jul 27, 2019 at 06:20:18AM -0500, Eric W. Biederman wrote:
 
-> On Fri, Jul 26, 2019 at 07:46:18PM -0500, Eric W. Biederman wrote:
->
->> If someone had bothered to actually look at how I was proposing to clean
->> things up before the new mount api we would already have that.  Sigh.
->> 
->> You should be able to get away with something like this which moves the
->> checks earlier and makes things clearer.  My old patch against the pre
->> new mount api code.
->
-> Check your instances of ->permission(); AFAICS in all cases it's (in
-> current terms)
-> 	return ns_capable(fc->user_ns, CAP_SYS_ADMIN) ? 0 : -EPERM;
+> > In principle I like killing FS_USERNS_MOUNT flag, but when a method
+> > is always either NULL or exact same function...
+> 
+> Either you are being dramatic or you read the patch much too quickly.
 
+Or you've done the same to my reply.  I'm not saying that in the
+posted form the instances are the same; I'm saying that they are
+all equivalent to exact same code - ns_capable(fc->user_ns, CAP_SYS_ADMIN),
+that is.
 
-Yes.  Because I refactored all of the logic to be in terms of current
-before we even get to the filesystem.  The idea is on a per filesystem
-basis to know which namespaces for the filesystem will be selected
-and to check those.
+> userns_mount_permission covers the common case of FS_USERNS_MOUNT.
+> Then there are the cases where you need to know how the filesystem is
+> going to map current into the filesystem that will be mounted.  Those
+> are: proc_mount_permission, sysfs_mount_permission,
+> mqueue_mount_permission, cgroup_mount_permission,
 
-Since all that version of the patch converts is the old API we know
-from only looking at current what needs to be checked.
++static int proc_mount_permission(void)
++{
++       struct pid_namespace *ns = task_active_pid_ns(current);
++       return ns_capable(ns->user_ns, CAP_SYS_ADMIN) ? 0 : -EPERM;
++}
 
-> In principle I like killing FS_USERNS_MOUNT flag, but when a method
-> is always either NULL or exact same function...
+compare with
+        ctx->pid_ns = get_pid_ns(task_active_pid_ns(current));
+        put_user_ns(fc->user_ns);
+        fc->user_ns = get_user_ns(ctx->pid_ns->user_ns);
+in proc_init_fs_context().  Notice anything?  With those 'orrible
+API changes proc_mount_permissions() and userns_mount_permission()
+can actually become identical.  Because the default case is
+to leave fc->user_ns set to current_user_ns().
 
-Either you are being dramatic or you read the patch much too quickly.
+cgroup case:
++static int cgroup_mount_permission(void)
++{
++       struct cgroup_namespace *ns = current->nsproxy->cgroup_ns;
++       return ns_capable(ns->user_ns, CAP_SYS_ADMIN) ? 0 : -EPERM;
++}
 
-userns_mount_permission covers the common case of FS_USERNS_MOUNT.
-Then there are the cases where you need to know how the filesystem is
-going to map current into the filesystem that will be mounted.  Those
-are: proc_mount_permission, sysfs_mount_permission,
-mqueue_mount_permission, cgroup_mount_permission,
+with
+        ctx->ns = current->nsproxy->cgroup_ns;
+...
+        put_user_ns(fc->user_ns);
+        fc->user_ns = get_user_ns(ctx->ns->user_ns);
+in cgroup_init_fs_context().  IOW, again your instances fold together.
 
-So yes I agree the function of interest is always capable in some form,
-we just need the filesystem specific logic to check to see if we will
-have capable over the filesystem that will be mounted.
+mqueue:
+        ctx->ipc_ns = get_ipc_ns(current->nsproxy->ipc_ns);
+        put_user_ns(fc->user_ns);
+        fc->user_ns = get_user_ns(ctx->ipc_ns->user_ns);
+in mqueue_init_fs_context() and
++static int mqueue_mount_permission(void)
++{
++       struct ipc_namespace *ns = current->nsproxy->ipc_ns;
++       return ns_capable(ns->user_ns, CAP_SYS_ADMIN) ? 0 : -EPERM;
++}
 
-I don't doubt that the new mount api has added a few new complexities.
+Same situation.
 
-*Shrug*  I have done my best to keep it simple, and to help avoid
-breaking changes.   When you never post your patches for public review,
-and don't take any feedback it is difficult to give help.
++static int sysfs_mount_permission(void)
++{
++       struct net *net = current->nsproxy->net_ns;
++       return ns_capable(net->user_ns, CAP_SYS_ADMIN) ? 0 : -EPERM;
++}
 
-Eric
+with
+        kfc->ns_tag = netns = kobj_ns_grab_current(KOBJ_NS_TYPE_NET);
+...
+        if (netns) {
+                put_user_ns(fc->user_ns);
+                fc->user_ns = get_user_ns(netns->user_ns);
+        }
+Now, _that_ is interesting.  Here the variants diverge - in case
+USER_NS && !NET_NS fc->user_ns is left at current_user_ns().
+
+That, BTW, is the only case where the old checks are left in:
+        if (!(fc->sb_flags & SB_KERNMOUNT)) {
+                if (!kobj_ns_current_may_mount(KOBJ_NS_TYPE_NET))
+                        return -EPERM;
+        }
+in sysfs_init_fs_context() papers over that case and I'd love to
+get rid of that irregularity.  Which, AFAICS, can be done by
+unconditional
+	put_user_ns(fc->user_ns);
+	fc->user_ns = get_user_ns(current->nsproxy->net_ns->user_ns);
+whatever the .config we have.  On NET_NS ones it'll be identical
+to ->user_ns of what kobj_ns_grab_current(KOBJ_NS_TYPE_NET) returns,
+on !NET_NS it'll get mount_capable() do the right thing without
+that wart with init_fs_context() doing that extra check.
+
+> So yes I agree the function of interest is always capable in some form,
+> we just need the filesystem specific logic to check to see if we will
+> have capable over the filesystem that will be mounted.
+> 
+> I don't doubt that the new mount api has added a few new complexities.
+
+So far it looks like *in this particular case* complexities would be
+reduced - with one exception all your ->permission() instances become
+identical.
+
+Moreover, even in that case we still get the right overall behaviour
+with the same instance...
+
+So do you have any specific objections to behaviour in vfs.git #fixes
+and/or to adding
+
+diff --git a/fs/sysfs/mount.c b/fs/sysfs/mount.c
+index db81cfbab9d6..c5b3c7d4d360 100644
+--- a/fs/sysfs/mount.c
++++ b/fs/sysfs/mount.c
+@@ -57,11 +57,6 @@ static int sysfs_init_fs_context(struct fs_context *fc)
+ 	struct kernfs_fs_context *kfc;
+ 	struct net *netns;
+ 
+-	if (!(fc->sb_flags & SB_KERNMOUNT)) {
+-		if (!kobj_ns_current_may_mount(KOBJ_NS_TYPE_NET))
+-			return -EPERM;
+-	}
+-
+ 	kfc = kzalloc(sizeof(struct kernfs_fs_context), GFP_KERNEL);
+ 	if (!kfc)
+ 		return -ENOMEM;
+@@ -71,10 +66,8 @@ static int sysfs_init_fs_context(struct fs_context *fc)
+ 	kfc->magic = SYSFS_MAGIC;
+ 	fc->fs_private = kfc;
+ 	fc->ops = &sysfs_fs_context_ops;
+-	if (netns) {
+-		put_user_ns(fc->user_ns);
+-		fc->user_ns = get_user_ns(netns->user_ns);
+-	}
++	put_user_ns(fc->user_ns);
++	fc->user_ns = get_user_ns(current->nsproxy->net_ns->user_ns);
+ 	fc->global = true;
+ 	return 0;
+ }
+
+on top of that?  The last one shouldn't change the behaviour, but it
+certainly looks like a nice wartectomy; not #fixes material, though.
