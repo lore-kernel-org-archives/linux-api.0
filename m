@@ -1,14 +1,15 @@
 From: Chao Yu <chao@kernel.org>
-Subject: Re: [f2fs-dev] [PATCH v4 1/3] fs: Reserve flag for casefolding
-Date: Sun, 28 Jul 2019 08:36:11 +0800
-Message-ID: <056a12d4-d787-9a3d-9ad4-4d1136b2a197@kernel.org>
+Subject: Re: [f2fs-dev] [PATCH v4 2/3] f2fs: include charset encoding
+ information in the superblock
+Date: Sun, 28 Jul 2019 08:45:51 +0800
+Message-ID: <af60ce55-1a29-d8da-81e4-77c880f4a0d0@kernel.org>
 References: <20190723230529.251659-1-drosen@google.com>
- <20190723230529.251659-2-drosen@google.com>
+ <20190723230529.251659-3-drosen@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190723230529.251659-2-drosen@google.com>
+In-Reply-To: <20190723230529.251659-3-drosen@google.com>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 To: Daniel Rosenberg <drosen@google.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <yuchao0@huawei.com>, Jonathan Corbet <corbet@lwn.net>, linux-f2fs-devel@lists.sourceforge.net
@@ -16,8 +17,32 @@ Cc: linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kern
 List-Id: linux-api@vger.kernel.org
 
 On 2019-7-24 7:05, Daniel Rosenberg via Linux-f2fs-devel wrote:
-> In preparation for including the casefold feature within f2fs, elevate
-> the EXT4_CASEFOLD_FL flag to FS_CASEFOLD_FL.
+> Add charset encoding to f2fs to support casefolding. It is modeled after
+> the same feature introduced in commit c83ad55eaa91 ("ext4: include charset
+> encoding information in the superblock")
+> 
+> Currently this is not compatible with encryption, similar to the current
+> ext4 imlpementation. This will change in the future.
+> 
+> From the ext4 patch:
+> """
+> The s_encoding field stores a magic number indicating the encoding
+> format and version used globally by file and directory names in the
+> filesystem.  The s_encoding_flags defines policies for using the charset
+> encoding, like how to handle invalid sequences.  The magic number is
+> mapped to the exact charset table, but the mapping is specific to ext4.
+> Since we don't have any commitment to support old encodings, the only
+> encoding I am supporting right now is utf8-12.1.0.
+> 
+> The current implementation prevents the user from enabling encoding and
+> per-directory encryption on the same filesystem at the same time.  The
+> incompatibility between these features lies in how we do efficient
+> directory searches when we cannot be sure the encryption of the user
+> provided fname will match the actual hash stored in the disk without
+> decrypting every directory entry, because of normalization cases.  My
+> quickest solution is to simply block the concurrent use of these
+> features for now, and enable it later, once we have a better solution.
+> """
 > 
 > Signed-off-by: Daniel Rosenberg <drosen@google.com>
 
