@@ -1,16 +1,16 @@
 From: "Theodore Y. Ts'o" <tytso@mit.edu>
-Subject: Re: [PATCH v7 11/16] fscrypt: allow unprivileged users to add/remove
- keys for v2 policies
-Date: Sun, 28 Jul 2019 17:22:26 -0400
-Message-ID: <20190728212226.GL6088@mit.edu>
+Subject: Re: [PATCH v7 12/16] fscrypt: require that key be added when setting
+ a v2 encryption policy
+Date: Sun, 28 Jul 2019 17:24:02 -0400
+Message-ID: <20190728212402.GM6088@mit.edu>
 References: <20190726224141.14044-1-ebiggers@kernel.org>
- <20190726224141.14044-12-ebiggers@kernel.org>
+ <20190726224141.14044-13-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org>
 Content-Disposition: inline
-In-Reply-To: <20190726224141.14044-12-ebiggers@kernel.org>
+In-Reply-To: <20190726224141.14044-13-ebiggers@kernel.org>
 List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
  <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
 List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
@@ -24,24 +24,25 @@ To: Eric Biggers <ebiggers@kernel.org>
 Cc: Satya Tangirala <satyat@google.com>, linux-api@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-fscrypt@vger.kernel.org, keyrings@vger.kernel.org, linux-mtd@lists.infradead.org, linux-crypto@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, Paul Crowley <paulcrowley@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 26, 2019 at 03:41:36PM -0700, Eric Biggers wrote:
-> diff --git a/fs/crypto/keyring.c b/fs/crypto/keyring.c
-> index 56e085c2ed8c6..307533d4d7c51 100644
-> --- a/fs/crypto/keyring.c
-> +++ b/fs/crypto/keyring.c
-> +		if (mk->mk_users->keys.nr_leaves_on_tree != 0) {
-> +			/*
-> +			 * Other users have still added the key too.  We removed
-> +			 * the current user's usage of the key if there was one,
-> +			 * but we still can't remove the key itself.
-> +			 */
-> +			err = -EUSERS;
-> +			up_write(&key->sem);
-> +			goto out_put_key;
+On Fri, Jul 26, 2019 at 03:41:37PM -0700, Eric Biggers wrote:
+> From: Eric Biggers <ebiggers@google.com>
+> 
+> By looking up the master keys in a filesystem-level keyring rather than
+> in the calling processes' key hierarchy, it becomes possible for a user
+> to set an encryption policy which refers to some key they don't actually
+> know, then encrypt their files using that key.  Cryptographically this
+> isn't much of a problem, but the semantics of this would be a bit weird.
+> Thus, enforce that a v2 encryption policy can only be set if the user
+> has previously added the key, or has capable(CAP_FOWNER).
+> 
+> We tolerate that this problem will continue to exist for v1 encryption
+> policies, however; there is no way around that.
+> 
+> Signed-off-by: Eric Biggers <ebiggers@google.com>
 
-I commented about this on an earlier patch, but I'm not convinced we
-should be returning EUSERS here.  Returning success might be a better
-choice.
+Looks good, feel free to add:
+
+Reviewed-by: Theodore Ts'o <tytso@mit.edu>
 
 					- Ted
 
