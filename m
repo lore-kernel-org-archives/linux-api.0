@@ -1,69 +1,68 @@
 From: "Theodore Y. Ts'o" <tytso@mit.edu>
-Subject: Re: [PATCH v7 09/16] fscrypt: add an HKDF-SHA512
- implementation
-Date: Sun, 28 Jul 2019 15:39:49 -0400
-Message-ID: <20190728193949.GI6088@mit.edu>
+Subject: Re: [PATCH v7 10/16] fscrypt: v2 encryption policy support
+Date: Sun, 28 Jul 2019 17:17:30 -0400
+Message-ID: <20190728211730.GK6088@mit.edu>
 References: <20190726224141.14044-1-ebiggers@kernel.org>
- <20190726224141.14044-10-ebiggers@kernel.org>
+ <20190726224141.14044-11-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org>
 Content-Disposition: inline
-In-Reply-To: <20190726224141.14044-10-ebiggers@kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+In-Reply-To: <20190726224141.14044-11-ebiggers@kernel.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
+List-Post: <mailto:linux-mtd@lists.infradead.org>
+List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-mtd" <linux-mtd-bounces@lists.infradead.org>
+Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org
 To: Eric Biggers <ebiggers@kernel.org>
 Cc: Satya Tangirala <satyat@google.com>, linux-api@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-fscrypt@vger.kernel.org, keyrings@vger.kernel.org, linux-mtd@lists.infradead.org, linux-crypto@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, Paul Crowley <paulcrowley@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 26, 2019 at 03:41:34PM -0700, Eric Biggers wrote:
-> From: Eric Biggers <ebiggers@google.com>
-> 
-> Add an implementation of HKDF (RFC 5869) to fscrypt, for the purpose of
-> deriving additional key material from the fscrypt master keys for v2
-> encryption policies.  HKDF is a key derivation function built on top of
-> HMAC.  We choose SHA-512 for the underlying unkeyed hash, and use an
-> "hmac(sha512)" transform allocated from the crypto API.
-> 
-> We'll be using this to replace the AES-ECB based KDF currently used to
-> derive the per-file encryption keys.  While the AES-ECB based KDF is
-> believed to meet the original security requirements, it is nonstandard
-> and has problems that don't exist in modern KDFs such as HKDF:
-> 
-> 1. It's reversible.  Given a derived key and nonce, an attacker can
->    easily compute the master key.  This is okay if the master key and
->    derived keys are equally hard to compromise, but now we'd like to be
->    more robust against threats such as a derived key being compromised
->    through a timing attack, or a derived key for an in-use file being
->    compromised after the master key has already been removed.
-> 
-> 2. It doesn't evenly distribute the entropy from the master key; each 16
->    input bytes only affects the corresponding 16 output bytes.
-> 
-> 3. It isn't easily extensible to deriving other values or keys, such as
->    a public hash for securely identifying the key, or per-mode keys.
->    Per-mode keys will be immediately useful for Adiantum encryption, for
->    which fscrypt currently uses the master key directly, introducing
->    unnecessary usage constraints.  Per-mode keys will also be useful for
->    hardware inline encryption, which is currently being worked on.
-> 
-> HKDF solves all the above problems.
-> 
-> Signed-off-by: Eric Biggers <ebiggers@google.com>
+On Fri, Jul 26, 2019 at 03:41:35PM -0700, Eric Biggers wrote:
+> @@ -319,6 +329,31 @@ int fscrypt_ioctl_add_key(struct file *filp, void __user *_uarg)
+>  	if (!capable(CAP_SYS_ADMIN))
+>  		goto out_wipe_secret;
+>  
+> +	if (arg.key_spec.type != FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR) {
 
-Unless I missed something there's nothing here which is fscrypt
-specific.  Granted that it's somewhat unlikely that someone would want
-to implement (the very bloated) IKE from IPSEC in the kernel, I wonder
-if there might be other users of HKDF, and whether this would be
-better placed in lib/ or crypto/ instead of fs/crypto?
+This should be "== FSCRYPT_KEY_SPEC_TYPE_INDENTIFIER" instead.  That's
+because you use the identifier part of the union:
 
-Other than that, looks good.  Feel free to add:
+> +		/* Calculate the key identifier and return it to userspace. */
+> +		err = fscrypt_hkdf_expand(&secret.hkdf,
+> +					  HKDF_CONTEXT_KEY_IDENTIFIER,
+> +					  NULL, 0, arg.key_spec.u.identifier,
 
-Reviewed-by: Theodore Ts'o <tytso@mit.edu>
+If we ever add a new key specifier type, and alternative in the union,
+this is going to come back to bite us.
+
+> +	if (policy->version == FSCRYPT_POLICY_V1) {
+> +		/*
+> +		 * The original encryption policy version provided no way of
+> +		 * verifying that the correct master key was supplied, which was
+> +		 * insecure in scenarios where multiple users have access to the
+> +		 * same encrypted files (even just read-only access).
+
+Which scenario do you have in mind?  With read-only access, Alice can
+fetch the encryption policy for a directory, and introduce a key with
+the same descriptor, but the "wrong" key, but that's only going to
+affect Alice's use of the key.  It won't affect what key is used by
+Bob, since Alice doesn't have write access to Bob's keyrings.
+
+If what you mean is the risk when there is a single global
+filesystem-specific keyring, where Alice could introduce a "wrong" key
+identified with a specific descriptor, then sure, Alice could trick
+Bob into encrypting his data with the wrong key (one known to Alice).
+But we don't allow keys usable by V1 policies to be used in the
+filesystem-specific keyring, do we?
+
+						- Ted
+
+______________________________________________________
+Linux MTD discussion mailing list
+http://lists.infradead.org/mailman/listinfo/linux-mtd/
