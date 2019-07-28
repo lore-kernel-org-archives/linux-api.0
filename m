@@ -1,68 +1,69 @@
 From: "Theodore Y. Ts'o" <tytso@mit.edu>
-Subject: Re: [PATCH v7 08/16] fscrypt: add FS_IOC_GET_ENCRYPTION_KEY_STATUS
- ioctl
-Date: Sun, 28 Jul 2019 15:30:12 -0400
-Message-ID: <20190728193012.GH6088@mit.edu>
+Subject: Re: [PATCH v7 09/16] fscrypt: add an HKDF-SHA512
+ implementation
+Date: Sun, 28 Jul 2019 15:39:49 -0400
+Message-ID: <20190728193949.GI6088@mit.edu>
 References: <20190726224141.14044-1-ebiggers@kernel.org>
- <20190726224141.14044-9-ebiggers@kernel.org>
+ <20190726224141.14044-10-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org>
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
 Content-Disposition: inline
-In-Reply-To: <20190726224141.14044-9-ebiggers@kernel.org>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
- <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
-List-Post: <mailto:linux-mtd@lists.infradead.org>
-List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
- <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-mtd" <linux-mtd-bounces@lists.infradead.org>
-Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org
+In-Reply-To: <20190726224141.14044-10-ebiggers@kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: Eric Biggers <ebiggers@kernel.org>
 Cc: Satya Tangirala <satyat@google.com>, linux-api@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-fscrypt@vger.kernel.org, keyrings@vger.kernel.org, linux-mtd@lists.infradead.org, linux-crypto@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, Paul Crowley <paulcrowley@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 26, 2019 at 03:41:33PM -0700, Eric Biggers wrote:
+On Fri, Jul 26, 2019 at 03:41:34PM -0700, Eric Biggers wrote:
 > From: Eric Biggers <ebiggers@google.com>
 > 
-> Add a new fscrypt ioctl, FS_IOC_GET_ENCRYPTION_KEY_STATUS.  Given a key
-> specified by 'struct fscrypt_key_specifier' (the same way a key is
-> specified for the other fscrypt key management ioctls), it returns
-> status information in a 'struct fscrypt_get_key_status_arg'.
+> Add an implementation of HKDF (RFC 5869) to fscrypt, for the purpose of
+> deriving additional key material from the fscrypt master keys for v2
+> encryption policies.  HKDF is a key derivation function built on top of
+> HMAC.  We choose SHA-512 for the underlying unkeyed hash, and use an
+> "hmac(sha512)" transform allocated from the crypto API.
 > 
-> The main motivation for this is that applications need to be able to
-> check whether an encrypted directory is "unlocked" or not, so that they
-> can add the key if it is not, and avoid adding the key (which may
-> involve prompting the user for a passphrase) if it already is.
+> We'll be using this to replace the AES-ECB based KDF currently used to
+> derive the per-file encryption keys.  While the AES-ECB based KDF is
+> believed to meet the original security requirements, it is nonstandard
+> and has problems that don't exist in modern KDFs such as HKDF:
 > 
-> It's possible to use some workarounds such as checking whether opening a
-> regular file fails with ENOKEY, or checking whether the filenames "look
-> like gibberish" or not.  However, no workaround is usable in all cases.
+> 1. It's reversible.  Given a derived key and nonce, an attacker can
+>    easily compute the master key.  This is okay if the master key and
+>    derived keys are equally hard to compromise, but now we'd like to be
+>    more robust against threats such as a derived key being compromised
+>    through a timing attack, or a derived key for an in-use file being
+>    compromised after the master key has already been removed.
 > 
-> Like the other key management ioctls, the keyrings syscalls may seem at
-> first to be a good fit for this.  Unfortunately, they are not.  Even if
-> we exposed the keyring ID of the ->s_master_keys keyring and gave
-> everyone Search permission on it (note: currently the keyrings
-> permission system would also allow everyone to "invalidate" the keyring
-> too), the fscrypt keys have an additional state that doesn't map cleanly
-> to the keyrings API: the secret can be removed, but we can be still
-> tracking the files that were using the key, and the removal can be
-> re-attempted or the secret added again.
+> 2. It doesn't evenly distribute the entropy from the master key; each 16
+>    input bytes only affects the corresponding 16 output bytes.
 > 
-> After later patches, some applications will also need a way to determine
-> whether a key was added by the current user vs. by some other user.
-> Reserved fields are included in fscrypt_get_key_status_arg for this and
-> other future extensions.
+> 3. It isn't easily extensible to deriving other values or keys, such as
+>    a public hash for securely identifying the key, or per-mode keys.
+>    Per-mode keys will be immediately useful for Adiantum encryption, for
+>    which fscrypt currently uses the master key directly, introducing
+>    unnecessary usage constraints.  Per-mode keys will also be useful for
+>    hardware inline encryption, which is currently being worked on.
+> 
+> HKDF solves all the above problems.
 > 
 > Signed-off-by: Eric Biggers <ebiggers@google.com>
 
-Looks good, feel free to add:
+Unless I missed something there's nothing here which is fscrypt
+specific.  Granted that it's somewhat unlikely that someone would want
+to implement (the very bloated) IKE from IPSEC in the kernel, I wonder
+if there might be other users of HKDF, and whether this would be
+better placed in lib/ or crypto/ instead of fs/crypto?
+
+Other than that, looks good.  Feel free to add:
 
 Reviewed-by: Theodore Ts'o <tytso@mit.edu>
-
-
-______________________________________________________
-Linux MTD discussion mailing list
-http://lists.infradead.org/mailman/listinfo/linux-mtd/
