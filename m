@@ -1,51 +1,52 @@
 From: Chao Yu <chao@kernel.org>
-Subject: Re: [f2fs-dev] [PATCH v4 2/3] f2fs: include charset encoding
- information in the superblock
-Date: Sun, 28 Jul 2019 08:45:51 +0800
-Message-ID: <af60ce55-1a29-d8da-81e4-77c880f4a0d0@kernel.org>
+Subject: Re: [PATCH v4 3/3] f2fs: Support case-insensitive file
+ name lookups
+Date: Sun, 28 Jul 2019 08:55:30 +0800
+Message-ID: <9362e4ed-2be8-39f5-b4d9-9c86e37ab993@kernel.org>
 References: <20190723230529.251659-1-drosen@google.com>
- <20190723230529.251659-3-drosen@google.com>
+ <20190723230529.251659-4-drosen@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190723230529.251659-3-drosen@google.com>
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+In-Reply-To: <20190723230529.251659-4-drosen@google.com>
 Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
 To: Daniel Rosenberg <drosen@google.com>, Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <yuchao0@huawei.com>, Jonathan Corbet <corbet@lwn.net>, linux-f2fs-devel@lists.sourceforge.net
-Cc: linux-doc@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, kernel-team@android.com
+Cc: linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, kernel-team@android.com, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 On 2019-7-24 7:05, Daniel Rosenberg via Linux-f2fs-devel wrote:
-> Add charset encoding to f2fs to support casefolding. It is modeled after
-> the same feature introduced in commit c83ad55eaa91 ("ext4: include charset
-> encoding information in the superblock")
-> 
-> Currently this is not compatible with encryption, similar to the current
-> ext4 imlpementation. This will change in the future.
-> 
-> From the ext4 patch:
-> """
-> The s_encoding field stores a magic number indicating the encoding
-> format and version used globally by file and directory names in the
-> filesystem.  The s_encoding_flags defines policies for using the charset
-> encoding, like how to handle invalid sequences.  The magic number is
-> mapped to the exact charset table, but the mapping is specific to ext4.
-> Since we don't have any commitment to support old encodings, the only
-> encoding I am supporting right now is utf8-12.1.0.
-> 
-> The current implementation prevents the user from enabling encoding and
-> per-directory encryption on the same filesystem at the same time.  The
-> incompatibility between these features lies in how we do efficient
-> directory searches when we cannot be sure the encryption of the user
-> provided fname will match the actual hash stored in the disk without
-> decrypting every directory entry, because of normalization cases.  My
-> quickest solution is to simply block the concurrent use of these
-> features for now, and enable it later, once we have a better solution.
-> """
-> 
-> Signed-off-by: Daniel Rosenberg <drosen@google.com>
+>  /* Flags that are appropriate for regular files (all but dir-specific ones). */
+>  #define F2FS_REG_FLMASK		(~(F2FS_DIRSYNC_FL | F2FS_PROJINHERIT_FL))
 
-Reviewed-by: Chao Yu <yuchao0@huawei.com>
+We missed to add F2FS_CASEFOLD_FL here to exclude it in F2FS_REG_FLMASK.
+
+> @@ -1660,7 +1660,16 @@ static int f2fs_setflags_common(struct inode *inode, u32 iflags, u32 mask)
+>  		return -EPERM;
+>  
+>  	oldflags = fi->i_flags;
+> +	if ((iflags ^ oldflags) & F2FS_CASEFOLD_FL) {
+> +		if (!f2fs_sb_has_casefold(F2FS_I_SB(inode)))
+> +			return -EOPNOTSUPP;
+> +
+> +		if (!S_ISDIR(inode->i_mode))
+> +			return -ENOTDIR;
+>  
+> +		if (!f2fs_empty_dir(inode))
+> +			return -ENOTEMPTY;
+> +	}
+
+I applied the patches based on last Jaegeuk's dev branch, it seems we needs to
+adjust above code a bit. Otherwise it looks good to me.
+
+BTW, it looks the patchset works fine with generic/556 testcase.
 
 Thanks,
