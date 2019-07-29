@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv5 36/37] selftests/timens: Add a simple perf test for clock_gettime()
-Date: Mon, 29 Jul 2019 22:57:18 +0100
-Message-ID: <20190729215758.28405-37-dima@arista.com>
+Subject: [PATCHv5 33/37] selftest/timens: Add a test for clock_nanosleep()
+Date: Mon, 29 Jul 2019 22:57:15 +0100
+Message-ID: <20190729215758.28405-34-dima@arista.com>
 References: <20190729215758.28405-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,320 +14,143 @@ List-Id: linux-api@vger.kernel.org
 
 From: Andrei Vagin <avagin@gmail.com>
 
+Check that clock_nanosleep() takes into account clock offsets.
+
 Signed-off-by: Andrei Vagin <avagin@gmail.com>
 Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- tools/testing/selftests/timens/.gitignore     |   2 +
- tools/testing/selftests/timens/Makefile       |  10 +-
- tools/testing/selftests/timens/gettime_perf.c | 101 +++++++++++
- .../selftests/timens/gettime_perf_cold.c      | 160 ++++++++++++++++++
- 4 files changed, 271 insertions(+), 2 deletions(-)
- create mode 100644 tools/testing/selftests/timens/gettime_perf.c
- create mode 100644 tools/testing/selftests/timens/gettime_perf_cold.c
+ tools/testing/selftests/timens/.gitignore     |   1 +
+ tools/testing/selftests/timens/Makefile       |   2 +-
+ .../selftests/timens/clock_nanosleep.c        | 102 ++++++++++++++++++
+ 3 files changed, 104 insertions(+), 1 deletion(-)
+ create mode 100644 tools/testing/selftests/timens/clock_nanosleep.c
 
 diff --git a/tools/testing/selftests/timens/.gitignore b/tools/testing/selftests/timens/.gitignore
-index 3b7eda8f35ce..16292e4d08a5 100644
+index b609f6ee9fb9..9b6c8ddac2c8 100644
 --- a/tools/testing/selftests/timens/.gitignore
 +++ b/tools/testing/selftests/timens/.gitignore
-@@ -1,4 +1,6 @@
- clock_nanosleep
-+gettime_perf
-+gettime_perf_cold
- procfs
+@@ -1,2 +1,3 @@
++clock_nanosleep
  timens
- timer
+ timerfd
 diff --git a/tools/testing/selftests/timens/Makefile b/tools/testing/selftests/timens/Makefile
-index ae1ffd24cc43..97e0460eaf48 100644
+index 66b90cd28e5c..76a1dc891184 100644
 --- a/tools/testing/selftests/timens/Makefile
 +++ b/tools/testing/selftests/timens/Makefile
-@@ -1,6 +1,12 @@
--TEST_GEN_PROGS := timens timerfd timer clock_nanosleep procfs
-+TEST_GEN_PROGS := timens timerfd timer clock_nanosleep procfs gettime_perf
-+
-+uname_M := $(shell uname -m 2>/dev/null || echo not)
-+ARCH ?= $(shell echo $(uname_M) | sed -e s/i.86/i386/)
-+ifeq ($(ARCH),x86_64)
-+TEST_GEN_PROGS += gettime_perf_cold
-+endif
+@@ -1,4 +1,4 @@
+-TEST_GEN_PROGS := timens timerfd
++TEST_GEN_PROGS := timens timerfd clock_nanosleep
  
  CFLAGS := -Wall -Werror
--LDFLAGS := -lrt
-+LDFLAGS := -lrt -ldl
  
- include ../lib.mk
-diff --git a/tools/testing/selftests/timens/gettime_perf.c b/tools/testing/selftests/timens/gettime_perf.c
+diff --git a/tools/testing/selftests/timens/clock_nanosleep.c b/tools/testing/selftests/timens/clock_nanosleep.c
 new file mode 100644
-index 000000000000..f7d7832c0293
+index 000000000000..7956e65d3032
 --- /dev/null
-+++ b/tools/testing/selftests/timens/gettime_perf.c
-@@ -0,0 +1,101 @@
++++ b/tools/testing/selftests/timens/clock_nanosleep.c
+@@ -0,0 +1,102 @@
 +// SPDX-License-Identifier: GPL-2.0
 +#define _GNU_SOURCE
-+#include <sys/types.h>
-+#include <sys/stat.h>
-+#include <errno.h>
-+#include <fcntl.h>
 +#include <sched.h>
-+#include <time.h>
-+#include <stdio.h>
-+#include <unistd.h>
++
++#include <sys/timerfd.h>
 +#include <sys/syscall.h>
-+#include <dlfcn.h>
++#include <time.h>
++#include <unistd.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <stdint.h>
 +
 +#include "log.h"
 +#include "timens.h"
 +
-+//#define TEST_SYSCALL
-+
-+typedef int (*vgettime_t)(clockid_t, struct timespec *);
-+
-+vgettime_t vdso_clock_gettime;
-+
-+static void fill_function_pointers(void)
++static long long get_elapsed_time(int clockid, struct timespec *start)
 +{
-+	void *vdso = dlopen("linux-vdso.so.1",
-+			    RTLD_LAZY | RTLD_LOCAL | RTLD_NOLOAD);
-+	if (!vdso)
-+		vdso = dlopen("linux-gate.so.1",
-+			      RTLD_LAZY | RTLD_LOCAL | RTLD_NOLOAD);
-+	if (!vdso) {
-+		pr_err("[WARN]\tfailed to find vDSO\n");
-+		return;
++	struct timespec curr;
++	long long secs, nsecs;
++
++	if (clock_gettime(clockid, &curr) == -1)
++		return pr_perror("clock_gettime");
++
++	secs = curr.tv_sec - start->tv_sec;
++	nsecs = curr.tv_nsec - start->tv_nsec;
++	if (nsecs < 0) {
++		secs--;
++		nsecs += 1000000000;
 +	}
-+
-+	vdso_clock_gettime = (vgettime_t)dlsym(vdso, "__vdso_clock_gettime");
-+	if (!vdso_clock_gettime)
-+		pr_err("Warning: failed to find clock_gettime in vDSO\n");
-+
++	if (nsecs > 1000000000) {
++		secs++;
++		nsecs -= 1000000000;
++	}
++	return secs * 1000 + nsecs / 1000000;
 +}
 +
-+static void test(clock_t clockid, char *clockstr, bool in_ns)
++int run_test(int clockid)
 +{
-+	struct timespec tp, start;
-+	long i = 0;
-+	const int timeout = 3;
++	long long elapsed;
++	int i;
 +
-+#ifndef TEST_SYSCALL
-+	vdso_clock_gettime(clockid, &start);
-+#else
-+	syscall(__NR_clock_gettime, clockid, &start);
-+#endif
-+	tp = start;
-+	for (tp = start; start.tv_sec + timeout > tp.tv_sec ||
-+			 (start.tv_sec + timeout == tp.tv_sec &&
-+			  start.tv_nsec > tp.tv_nsec); i++) {
-+#ifndef TEST_SYSCALL
-+		vdso_clock_gettime(clockid, &tp);
-+#else
-+		syscall(__NR_clock_gettime, clockid, &tp);
-+#endif
++	for (i = 0; i < 2; i++) {
++		struct timespec now = {};
++		struct timespec start;
++
++		if (clock_gettime(clockid, &start) == -1)
++			return pr_perror("clock_gettime");
++
++
++		if (i == 1) {
++			now.tv_sec = start.tv_sec;
++			now.tv_nsec = start.tv_nsec;
++		}
++
++		now.tv_sec += 2;
++		clock_nanosleep(clockid, i ? TIMER_ABSTIME : 0, &now, NULL);
++
++		elapsed = get_elapsed_time(clockid, &start);
++		if (elapsed < 1900 || elapsed > 2100) {
++			pr_fail("clockid: %d abs: %d elapsed: %lld\n",
++				clockid, i, elapsed);
++			return 1;
++		}
++		ksft_test_result_pass("clockid: %d abs:%d\n", clockid, i);
 +	}
 +
-+	ksft_test_result_pass("%s:\tclock: %10s\tcycles:\t%10ld\n",
-+			      in_ns ? "ns" : "host", clockstr, i);
++	return 0;
 +}
 +
 +int main(int argc, char *argv[])
 +{
-+	time_t offset = 10;
-+	int nsfd;
++	int ret, nsfd;
++
++	nscheck();
 +
 +	ksft_set_plan(4);
 +
-+	fill_function_pointers();
-+
-+	test(CLOCK_MONOTONIC, "monotonic", false);
-+	test(CLOCK_BOOTTIME, "boottime", false);
-+
-+	nscheck();
-+
 +	if (unshare(CLONE_NEWTIME))
-+		return pr_perror("Can't unshare() timens");
++		return pr_perror("unshare");
++
++	if (_settime(CLOCK_MONOTONIC, 7 * 24 * 3600))
++		return 1;
++	if (_settime(CLOCK_BOOTTIME, 9 * 24 * 3600))
++		return 1;
 +
 +	nsfd = open("/proc/self/ns/time_for_children", O_RDONLY);
 +	if (nsfd < 0)
-+		return pr_perror("Can't open a time namespace");
-+
-+	if (_settime(CLOCK_MONOTONIC, offset))
-+		return 1;
-+	if (_settime(CLOCK_BOOTTIME, offset))
-+		return 1;
++		return pr_perror("Unable to open timens_for_children");
 +
 +	if (setns(nsfd, CLONE_NEWTIME))
-+		return pr_perror("setns");
++		return pr_perror("Unable to set timens");
 +
-+	test(CLOCK_MONOTONIC, "monotonic", true);
-+	test(CLOCK_BOOTTIME, "boottime", true);
++	ret = 0;
++	ret |= run_test(CLOCK_MONOTONIC);
++	ret |= run_test(CLOCK_BOOTTIME_ALARM);
 +
++	if (ret)
++		ksft_exit_fail();
 +	ksft_exit_pass();
-+	return 0;
-+}
-diff --git a/tools/testing/selftests/timens/gettime_perf_cold.c b/tools/testing/selftests/timens/gettime_perf_cold.c
-new file mode 100644
-index 000000000000..2ab0869744a6
---- /dev/null
-+++ b/tools/testing/selftests/timens/gettime_perf_cold.c
-@@ -0,0 +1,160 @@
-+// SPDX-License-Identifier: GPL-2.0
-+#define _GNU_SOURCE
-+#include <sys/types.h>
-+#include <sys/mman.h>
-+#include <sys/stat.h>
-+#include <errno.h>
-+#include <fcntl.h>
-+#include <sched.h>
-+#include <time.h>
-+#include <stdio.h>
-+#include <unistd.h>
-+#include <sys/syscall.h>
-+#include <string.h>
-+#include <dlfcn.h>
-+#include <signal.h>
-+
-+#include "log.h"
-+#include "timens.h"
-+
-+#define PAGE_SIZE 4096
-+#define CACHE_LINE_SIZE 64
-+
-+typedef int (*vgettime_t)(clockid_t, struct timespec *);
-+
-+vgettime_t vdso_clock_gettime;
-+
-+static void fill_function_pointers(void)
-+{
-+	void *vdso = dlopen("linux-vdso.so.1",
-+			    RTLD_LAZY | RTLD_LOCAL | RTLD_NOLOAD);
-+	if (!vdso)
-+		vdso = dlopen("linux-gate.so.1",
-+			      RTLD_LAZY | RTLD_LOCAL | RTLD_NOLOAD);
-+	if (!vdso) {
-+		pr_err("[WARN]\tfailed to find vDSO\n");
-+		return;
-+	}
-+
-+	vdso_clock_gettime = (vgettime_t)dlsym(vdso, "__vdso_clock_gettime");
-+	if (!vdso_clock_gettime)
-+		pr_err("Warning: failed to find clock_gettime in vDSO\n");
-+
++	return ret;
 +}
 +
-+static inline __attribute__((always_inline)) unsigned long long rdtsc(void)
-+{
-+	unsigned int hi, lo;
-+
-+	__asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
-+	return ((unsigned long long) lo) | (((unsigned long long)hi) << 32);
-+}
-+
-+static inline __attribute__((always_inline)) void test(clock_t clockid, char *clockstr)
-+{
-+	struct timespec tp;
-+	long long s, e;
-+
-+	s = rdtsc();
-+	vdso_clock_gettime(clockid, &tp);
-+	e = rdtsc();
-+	printf("%lld\n", e - s);
-+}
-+
-+static inline void clflush(volatile void *__p)
-+{
-+	asm volatile("clflush %0" : "+m"(*(volatile char *)__p));
-+}
-+
-+void *pg_addr;
-+void sigh(int sig)
-+{
-+	void *addr;
-+
-+	addr = mmap(pg_addr, PAGE_SIZE, PROT_READ,
-+			MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
-+	if (addr != pg_addr) {
-+		pr_perror("Unable to map %lx", (long) pg_addr);
-+		exit(1);
-+	}
-+}
-+
-+int main(int argc, char **argv)
-+{
-+	time_t offset = 10;
-+	void *vdso_start = 0, *vdso_end = 0;
-+	void *vvar_start = 0, *vvar_end = 0;
-+	char buf[PAGE_SIZE];
-+	int nsfd, i;
-+	FILE *maps;
-+
-+	fill_function_pointers();
-+	if (argc == 1)
-+		goto out;
-+	nscheck();
-+
-+	if (unshare(CLONE_NEWTIME))
-+		return pr_perror("Can't unshare() timens");
-+
-+	nsfd = open("/proc/self/ns/time_for_children", O_RDONLY);
-+	if (nsfd < 0)
-+		return pr_perror("Can't open a time namespace");
-+
-+	if (_settime(CLOCK_MONOTONIC, offset))
-+		return 1;
-+
-+	if (setns(nsfd, CLONE_NEWTIME))
-+		return pr_perror("setns");
-+
-+out:
-+	maps = fopen("/proc/self/maps", "r");
-+	if (!maps) {
-+		pr_perror("Unable to open /proc/self/maps");
-+		return 1;
-+	}
-+
-+	while (fgets(buf, sizeof(buf), maps)) {
-+		unsigned long start, end;
-+		char tail[PAGE_SIZE];
-+		int r;
-+
-+		r = sscanf(buf, "%lx-%lx %*s %*s %*s %*s %s\n", &start, &end, tail);
-+
-+		if (r < 3)
-+			continue;
-+
-+		if (strcmp(tail, "[vdso]") == 0) {
-+			vdso_start = (void *)start;
-+			vdso_end = (void *)end;
-+		}
-+		if (strcmp(tail, "[vvar]") == 0) {
-+			vvar_start = (void *)start;
-+			vvar_end = (void *)end;
-+		}
-+	}
-+	if (!vvar_start || !vdso_start) {
-+		pr_err("Unable to find vdso\n");
-+		return 1;
-+	}
-+
-+	/* Map zero pages instead of unreadable vdso pages. */
-+	signal(SIGSEGV, sigh);
-+	signal(SIGBUS, sigh);
-+	for (pg_addr = vdso_start; pg_addr < vdso_end; pg_addr += PAGE_SIZE)
-+		buf[0] += *(char *)pg_addr;
-+	for (pg_addr = vvar_start; pg_addr < vvar_end; pg_addr += PAGE_SIZE)
-+		buf[0] += *(char *)pg_addr;
-+	signal(SIGSEGV, SIG_DFL);
-+	signal(SIGBUS, SIG_DFL);
-+
-+	for (i = 0; i < 10240; i++) {
-+		void *p;
-+
-+		for (p = vdso_start; p < vdso_end; p += CACHE_LINE_SIZE)
-+			clflush(p);
-+		for (p = vvar_start; p < vvar_end; p += CACHE_LINE_SIZE)
-+			clflush(p);
-+		test(CLOCK_MONOTONIC, "monotonic");
-+	}
-+	return 0;
-+}
 -- 
 2.22.0
