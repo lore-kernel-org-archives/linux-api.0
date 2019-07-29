@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv5 26/37] vdso: Introduce vdso_static_branch_unlikely()
-Date: Mon, 29 Jul 2019 22:57:08 +0100
-Message-ID: <20190729215758.28405-27-dima@arista.com>
+Subject: [PATCHv5 25/37] x86/vdso: Switch image on setns()/clone()
+Date: Mon, 29 Jul 2019 22:57:07 +0100
+Message-ID: <20190729215758.28405-26-dima@arista.com>
 References: <20190729215758.28405-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -9,114 +9,134 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190729215758.28405-1-dima@arista.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Andrei Vagin <avagin@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api
+Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
-
-From: Andrei Vagin <avagin@gmail.com>
 
 As it has been discussed on timens RFC, adding a new conditional branch
 `if (inside_time_ns)` on VDSO for all processes is undesirable.
+It will add a penalty for everybody as branch predictor may mispredict
+the jump. Also there are instruction cache lines wasted on cmp/jmp.
+
+Those effects of introducing time namespace are very much unwanted
+having in mind how much work have been spent on micro-optimisation
+vdso code.
 
 Addressing those problems, there are two versions of VDSO's .so:
 for host tasks (without any penalty) and for processes inside of time
 namespace with clk_to_ns() that subtracts offsets from host's time.
 
-Introduce vdso_static_branch_unlikely(), which is similar to
-static_branch_unlikely(); alias it with timens_static_branch_unlikely()
-under CONFIG_TIME_NS.
+Whenever a user does setns() or unshare(CLONE_TIMENS) followed
+by clone(), change VDSO image in mm and zap VVAR/VDSO page tables.
+They will be re-faulted with corresponding image and VVAR offsets.
 
-The timens code in vdso will look like this:
-
-   if (timens_static_branch_unlikely()) {
-	   clk_to_ns(clk, ts);
-   }
-
-The version of vdso which is compiled from sources will never execute
-clk_to_ns(). And then we can patch the 'no-op' in the straight-line
-codepath with a 'jump' instruction to the out-of-line true branch and
-get the timens version of the vdso library.
-
+Co-developed-by: Andrei Vagin <avagin@gmail.com>
 Signed-off-by: Andrei Vagin <avagin@gmail.com>
-Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- arch/x86/include/asm/jump_label.h | 14 ++++++++++++++
- lib/vdso/gettimeofday.c           | 10 ++++++++--
- 2 files changed, 22 insertions(+), 2 deletions(-)
+ arch/x86/entry/vdso/vma.c   | 23 +++++++++++++++++++++++
+ arch/x86/include/asm/vdso.h |  1 +
+ kernel/time_namespace.c     | 11 +++++++++++
+ 3 files changed, 35 insertions(+)
 
-diff --git a/arch/x86/include/asm/jump_label.h b/arch/x86/include/asm/jump_label.h
-index 06c3cc22a058..376efb53183b 100644
---- a/arch/x86/include/asm/jump_label.h
-+++ b/arch/x86/include/asm/jump_label.h
-@@ -53,6 +53,20 @@ static __always_inline bool arch_static_branch_jump(struct static_key *key, bool
- 	return true;
- }
+diff --git a/arch/x86/entry/vdso/vma.c b/arch/x86/entry/vdso/vma.c
+index 8a8211fd4cfc..91cf5a5c8c9e 100644
+--- a/arch/x86/entry/vdso/vma.c
++++ b/arch/x86/entry/vdso/vma.c
+@@ -25,6 +25,7 @@
+ #include <asm/cpufeature.h>
+ #include <clocksource/hyperv_timer.h>
+ #include <asm/page.h>
++#include <asm/tlb.h>
  
-+static __always_inline bool vdso_static_branch_unlikely(void)
+ #if defined(CONFIG_X86_64)
+ unsigned int __read_mostly vdso64_enabled = 1;
+@@ -266,6 +267,28 @@ static const struct vm_special_mapping vvar_mapping = {
+ 	.mremap = vvar_mremap,
+ };
+ 
++#ifdef CONFIG_TIME_NS
++int vdso_join_timens(struct task_struct *task)
 +{
-+	asm_volatile_goto("1:\n\t"
-+		".byte " __stringify(STATIC_KEY_INIT_NOP) "\n\t"
-+		 ".pushsection __jump_table,  \"aw\"\n\t"
-+		 "2: .word 1b - 2b, %l[l_yes] - 2b\n\t"
-+		 ".popsection\n\t"
-+		 : :  :  : l_yes);
++	struct mm_struct *mm = task->mm;
++	struct vm_area_struct *vma;
 +
-+	return false;
-+l_yes:
-+	return true;
++	if (down_write_killable(&mm->mmap_sem))
++		return -EINTR;
++
++	for (vma = mm->mmap; vma; vma = vma->vm_next) {
++		unsigned long size = vma->vm_end - vma->vm_start;
++
++		if (vma_is_special_mapping(vma, &vvar_mapping) ||
++		    vma_is_special_mapping(vma, &vdso_mapping))
++			zap_page_range(vma, vma->vm_start, size);
++	}
++
++	up_write(&mm->mmap_sem);
++	return 0;
 +}
++#endif
 +
- #else	/* __ASSEMBLY__ */
+ /*
+  * Add vdso and vvar mappings to current process.
+  * @image          - blob to map
+diff --git a/arch/x86/include/asm/vdso.h b/arch/x86/include/asm/vdso.h
+index 03f468c63a24..ccf89dedd04f 100644
+--- a/arch/x86/include/asm/vdso.h
++++ b/arch/x86/include/asm/vdso.h
+@@ -45,6 +45,7 @@ extern struct vdso_image vdso_image_32;
+ extern void __init init_vdso_image(struct vdso_image *image);
  
- .macro STATIC_JUMP_IF_TRUE target, key, def
-diff --git a/lib/vdso/gettimeofday.c b/lib/vdso/gettimeofday.c
-index 7525433f8ba4..605bdb92055d 100644
---- a/lib/vdso/gettimeofday.c
-+++ b/lib/vdso/gettimeofday.c
-@@ -8,6 +8,7 @@
- #include <linux/kernel.h>
- #include <linux/hrtimer_defs.h>
- #include <linux/timens_offsets.h>
-+#include <linux/jump_label.h>
- #include <vdso/datapage.h>
- #include <vdso/helpers.h>
+ extern int map_vdso_once(const struct vdso_image *image, unsigned long addr);
++extern int vdso_join_timens(struct task_struct *task);
  
-@@ -43,6 +44,8 @@ u64 vdso_calc_delta(u64 cycles, u64 last, u64 mask, u32 mult)
- extern u8 timens_page
- 	__attribute__((visibility("hidden")));
+ #endif /* __ASSEMBLER__ */
  
-+#define timens_static_branch_unlikely vdso_static_branch_unlikely
-+
- notrace static __always_inline void clk_to_ns(clockid_t clk, struct __kernel_timespec *ts)
+diff --git a/kernel/time_namespace.c b/kernel/time_namespace.c
+index 9807c5c90cb2..4b2eb92ad595 100644
+--- a/kernel/time_namespace.c
++++ b/kernel/time_namespace.c
+@@ -15,6 +15,7 @@
+ #include <linux/cred.h>
+ #include <linux/err.h>
+ #include <linux/mm.h>
++#include <asm/vdso.h>
+ 
+ ktime_t do_timens_ktime_to_host(clockid_t clockid, ktime_t tim,
+ 				struct timens_offsets *ns_offsets)
+@@ -199,6 +200,7 @@ static void timens_put(struct ns_common *ns)
+ static int timens_install(struct nsproxy *nsproxy, struct ns_common *new)
  {
- 	struct timens_offsets *timens = (struct timens_offsets *) &timens_page;
-@@ -79,6 +82,7 @@ notrace static __always_inline void clk_to_ns(clockid_t clk, struct __kernel_tim
- }
- #else
- notrace static __always_inline void clk_to_ns(clockid_t clk, struct __kernel_timespec *ts) {}
-+notrace static __always_inline bool timens_static_branch_unlikely(void) { return false; }
- #endif
+ 	struct time_namespace *ns = to_time_ns(new);
++	int ret;
  
- static int do_hres(const struct vdso_data *vd, clockid_t clk,
-@@ -108,7 +112,8 @@ static int do_hres(const struct vdso_data *vd, clockid_t clk,
- 	ts->tv_sec = sec + __iter_div_u64_rem(ns, NSEC_PER_SEC, &ns);
- 	ts->tv_nsec = ns;
+ 	if (!thread_group_empty(current))
+ 		return -EINVAL;
+@@ -207,6 +209,10 @@ static int timens_install(struct nsproxy *nsproxy, struct ns_common *new)
+ 	    !ns_capable(current_user_ns(), CAP_SYS_ADMIN))
+ 		return -EPERM;
  
--	clk_to_ns(clk, ts);
-+	if (timens_static_branch_unlikely())
-+		clk_to_ns(clk, ts);
++	ret = vdso_join_timens(current);
++	if (ret)
++		return ret;
++
+ 	get_time_ns(ns);
+ 	get_time_ns(ns);
+ 	put_time_ns(nsproxy->time_ns);
+@@ -221,10 +227,15 @@ int timens_on_fork(struct nsproxy *nsproxy, struct task_struct *tsk)
+ {
+ 	struct ns_common *nsc = &nsproxy->time_ns_for_children->ns;
+ 	struct time_namespace *ns = to_time_ns(nsc);
++	int ret;
  
- 	return 0;
- }
-@@ -125,7 +130,8 @@ static void do_coarse(const struct vdso_data *vd, clockid_t clk,
- 		ts->tv_nsec = vdso_ts->nsec;
- 	} while (unlikely(vdso_read_retry(vd, seq)));
+ 	if (nsproxy->time_ns == nsproxy->time_ns_for_children)
+ 		return 0;
  
--	clk_to_ns(clk, ts);
-+	if (timens_static_branch_unlikely())
-+		clk_to_ns(clk, ts);
- }
- 
- static __maybe_unused int
++	ret = vdso_join_timens(tsk);
++	if (ret)
++		return ret;
++
+ 	get_time_ns(ns);
+ 	put_time_ns(nsproxy->time_ns);
+ 	nsproxy->time_ns = ns;
 -- 
 2.22.0
