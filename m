@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv5 13/37] posix-timers: Make timer_settime() time namespace aware
-Date: Mon, 29 Jul 2019 22:57:33 +0100
-Message-ID: <20190729215758.28405-52-dima@arista.com>
+Subject: [PATCHv5 09/37] posix-clocks: Introduce CLOCK_MONOTONIC time namespace offsets
+Date: Mon, 29 Jul 2019 22:57:29 +0100
+Message-ID: <20190729215758.28405-48-dima@arista.com>
 References: <20190729215758.28405-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -9,43 +9,118 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190729215758.28405-1-dima@arista.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Andrei Vagin <avagin@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api
+Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Andrei Vagin <avagin@openvz.org>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Andrei Vagin <avagin@gmail.com>
+From: Andrei Vagin <avagin@openvz.org>
 
-Wire timer_settime() syscall into time namespace virtualization.
-
-sys_timer_settime() calls the ktime->timer_set() callback. Right now,
-common_timer_set() is the only implementation for the callback.
-
-There user-supplied timer's value is converted from timespec64 to ktime
-and then timens_ktime_to_host() can be used to convert namespace's time
-to the host time.
-
-Inside a time namespace kernel's time differ on a fixed offset from
-a user-supplied, but only absolute values (TIMER_ABSTIME) must
-be converted.
+Add monotonic time virtualisation for time namespace.
+Introduce timespec for monotionic clock into timens offsets and wire
+clock_gettime() syscall.
 
 Signed-off-by: Andrei Vagin <avagin@openvz.org>
 Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- kernel/time/posix-timers.c | 2 ++
- 1 file changed, 2 insertions(+)
+ include/linux/time_namespace.h | 8 ++++++++
+ include/linux/timens_offsets.h | 1 +
+ kernel/time/posix-stubs.c      | 2 ++
+ kernel/time/posix-timers.c     | 4 ++++
+ 4 files changed, 15 insertions(+)
 
+diff --git a/include/linux/time_namespace.h b/include/linux/time_namespace.h
+index b6985aa87479..186c134fe222 100644
+--- a/include/linux/time_namespace.h
++++ b/include/linux/time_namespace.h
+@@ -40,6 +40,13 @@ static inline void put_time_ns(struct time_namespace *ns)
+ 	kref_put(&ns->kref, free_time_ns);
+ }
+ 
++static inline void timens_add_monotonic(struct timespec64 *ts)
++{
++	struct timens_offsets *ns_offsets = current->nsproxy->time_ns->offsets;
++
++	if (ns_offsets)
++		*ts = timespec64_add(*ts, ns_offsets->monotonic);
++}
+ 
+ #else
+ static inline struct time_namespace *get_time_ns(struct time_namespace *ns)
+@@ -65,6 +72,7 @@ static inline int timens_on_fork(struct nsproxy *nsproxy, struct task_struct *ts
+ 	return 0;
+ }
+ 
++static inline void timens_add_monotonic(struct timespec64 *ts) {}
+ #endif
+ 
+ #endif /* _LINUX_TIMENS_H */
+diff --git a/include/linux/timens_offsets.h b/include/linux/timens_offsets.h
+index 7d7cb68ea778..eaac2c82be5c 100644
+--- a/include/linux/timens_offsets.h
++++ b/include/linux/timens_offsets.h
+@@ -3,6 +3,7 @@
+ #define _LINUX_TIME_OFFSETS_H
+ 
+ struct timens_offsets {
++	struct timespec64 monotonic;
+ };
+ 
+ #endif
+diff --git a/kernel/time/posix-stubs.c b/kernel/time/posix-stubs.c
+index 67df65f887ac..17c67e0aecd8 100644
+--- a/kernel/time/posix-stubs.c
++++ b/kernel/time/posix-stubs.c
+@@ -14,6 +14,7 @@
+ #include <linux/ktime.h>
+ #include <linux/timekeeping.h>
+ #include <linux/posix-timers.h>
++#include <linux/time_namespace.h>
+ #include <linux/compat.h>
+ 
+ #ifdef CONFIG_ARCH_HAS_SYSCALL_WRAPPER
+@@ -77,6 +78,7 @@ int do_clock_gettime(clockid_t which_clock, struct timespec64 *tp)
+ 		break;
+ 	case CLOCK_MONOTONIC:
+ 		ktime_get_ts64(tp);
++		timens_add_monotonic(tp);
+ 		break;
+ 	case CLOCK_BOOTTIME:
+ 		ktime_get_boottime_ts64(tp);
 diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
-index 265fbc816520..c979e720a5a1 100644
+index aae7ab53790d..cfeb0477d1f9 100644
 --- a/kernel/time/posix-timers.c
 +++ b/kernel/time/posix-timers.c
-@@ -857,6 +857,8 @@ int common_timer_set(struct k_itimer *timr, int flags,
+@@ -30,6 +30,7 @@
+ #include <linux/hashtable.h>
+ #include <linux/compat.h>
+ #include <linux/nospec.h>
++#include <linux/time_namespace.h>
  
- 	timr->it_interval = timespec64_to_ktime(new_setting->it_interval);
- 	expires = timespec64_to_ktime(new_setting->it_value);
-+	if (flags & TIMER_ABSTIME)
-+		expires = timens_ktime_to_host(timr->it_clock, expires);
- 	sigev_none = timr->it_sigev_notify == SIGEV_NONE;
+ #include "timekeeping.h"
+ #include "posix-timers.h"
+@@ -196,6 +197,7 @@ static int posix_clock_realtime_adj(const clockid_t which_clock,
+ int posix_get_timespec(clockid_t which_clock, struct timespec64 *tp)
+ {
+ 	ktime_get_ts64(tp);
++	timens_add_monotonic(tp);
+ 	return 0;
+ }
  
- 	kc->timer_arm(timr, expires, flags & TIMER_ABSTIME, sigev_none);
+@@ -210,6 +212,7 @@ static ktime_t posix_get_ktime(clockid_t which_clock)
+ static int posix_get_monotonic_raw(clockid_t which_clock, struct timespec64 *tp)
+ {
+ 	ktime_get_raw_ts64(tp);
++	timens_add_monotonic(tp);
+ 	return 0;
+ }
+ 
+@@ -224,6 +227,7 @@ static int posix_get_monotonic_coarse(clockid_t which_clock,
+ 						struct timespec64 *tp)
+ {
+ 	ktime_get_coarse_ts64(tp);
++	timens_add_monotonic(tp);
+ 	return 0;
+ }
+ 
 -- 
 2.22.0
