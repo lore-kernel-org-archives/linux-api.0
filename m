@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv5 22/37] x86/vdso: Rename vdso_image {.data=>.text}
-Date: Mon, 29 Jul 2019 22:57:04 +0100
-Message-ID: <20190729215758.28405-23-dima@arista.com>
+Subject: [PATCHv5 20/37] x86/vdso/Makefile: Add vobjs32
+Date: Mon, 29 Jul 2019 22:57:02 +0100
+Message-ID: <20190729215758.28405-21-dima@arista.com>
 References: <20190729215758.28405-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,66 +12,67 @@ To: linux-kernel@vger.kernel.org
 Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-To avoid any confusion with VVAR.
+Treat ia32/i386 objects in array the same As for 64-bit vdso objects.
+This is a preparation ground to avoid code duplication on introduction
+timens vdso.
 
 Co-developed-by: Andrei Vagin <avagin@openvz.org>
 Signed-off-by: Andrei Vagin <avagin@openvz.org>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- arch/x86/entry/vdso/vdso2c.h | 2 +-
- arch/x86/entry/vdso/vma.c    | 6 +++---
- arch/x86/include/asm/vdso.h  | 2 +-
- 3 files changed, 5 insertions(+), 5 deletions(-)
+ arch/x86/entry/vdso/Makefile | 15 +++++----------
+ 1 file changed, 5 insertions(+), 10 deletions(-)
 
-diff --git a/arch/x86/entry/vdso/vdso2c.h b/arch/x86/entry/vdso/vdso2c.h
-index 80be339ee93e..7556bb70ed8b 100644
---- a/arch/x86/entry/vdso/vdso2c.h
-+++ b/arch/x86/entry/vdso/vdso2c.h
-@@ -158,7 +158,7 @@ static void BITSFUNC(go)(void *raw_addr, size_t raw_len,
- 	fprintf(outfile, "\n};\n\n");
+diff --git a/arch/x86/entry/vdso/Makefile b/arch/x86/entry/vdso/Makefile
+index 8df549138193..d4bffc4cabd1 100644
+--- a/arch/x86/entry/vdso/Makefile
++++ b/arch/x86/entry/vdso/Makefile
+@@ -24,6 +24,8 @@ VDSO32-$(CONFIG_IA32_EMULATION)	:= y
  
- 	fprintf(outfile, "const struct vdso_image %s = {\n", image_name);
--	fprintf(outfile, "\t.data = raw_data,\n");
-+	fprintf(outfile, "\t.text = raw_data,\n");
- 	fprintf(outfile, "\t.size = %lu,\n", mapping_size);
- 	if (alt_sec) {
- 		fprintf(outfile, "\t.alt = %lu,\n",
-diff --git a/arch/x86/entry/vdso/vma.c b/arch/x86/entry/vdso/vma.c
-index 3f05418642a8..2dc4f0b5481c 100644
---- a/arch/x86/entry/vdso/vma.c
-+++ b/arch/x86/entry/vdso/vma.c
-@@ -32,8 +32,8 @@ void __init init_vdso_image(const struct vdso_image *image)
- {
- 	BUG_ON(image->size % PAGE_SIZE != 0);
+ # files to link into the vdso
+ vobjs-y := vdso-note.o vclock_gettime.o vgetcpu.o
++vobjs32-y := vdso32/note.o vdso32/system_call.o vdso32/sigreturn.o
++vobjs32-y += vdso32/vclock_gettime.o
  
--	apply_alternatives((struct alt_instr *)(image->data + image->alt),
--			   (struct alt_instr *)(image->data + image->alt +
-+	apply_alternatives((struct alt_instr *)(image->text + image->alt),
-+			   (struct alt_instr *)(image->text + image->alt +
- 						image->alt_len));
- }
+ # files to link into kernel
+ obj-y				+= vma.o
+@@ -37,10 +39,12 @@ vdso_img-$(VDSO32-y)		+= 32
+ obj-$(VDSO32-y)			+= vdso32-setup.o
  
-@@ -47,7 +47,7 @@ static vm_fault_t vdso_fault(const struct vm_special_mapping *sm,
- 	if (!image || (vmf->pgoff << PAGE_SHIFT) >= image->size)
- 		return VM_FAULT_SIGBUS;
+ vobjs := $(foreach F,$(vobjs-y),$(obj)/$F)
++vobjs32 := $(foreach F,$(vobjs32-y),$(obj)/$F)
  
--	vmf->page = virt_to_page(image->data + (vmf->pgoff << PAGE_SHIFT));
-+	vmf->page = virt_to_page(image->text + (vmf->pgoff << PAGE_SHIFT));
- 	get_page(vmf->page);
- 	return 0;
- }
-diff --git a/arch/x86/include/asm/vdso.h b/arch/x86/include/asm/vdso.h
-index 230474e2ddb5..dffdc12cc7d6 100644
---- a/arch/x86/include/asm/vdso.h
-+++ b/arch/x86/include/asm/vdso.h
-@@ -11,7 +11,7 @@
- #include <linux/mm_types.h>
+ $(obj)/vdso.o: $(obj)/vdso.so
  
- struct vdso_image {
--	void *data;
-+	void *text;
- 	unsigned long size;   /* Always a multiple of PAGE_SIZE */
+ targets += vdso.lds $(vobjs-y)
++targets += vdso32/vdso32.lds $(vobjs32-y)
  
- 	unsigned long alt, alt_len;
+ # Build the vDSO image C files and link them in.
+ vdso_img_objs := $(vdso_img-y:%=vdso-image-%.o)
+@@ -131,10 +135,6 @@ $(obj)/vdsox32.so.dbg: $(obj)/vdsox32.lds $(vobjx32s) FORCE
+ CPPFLAGS_vdso32.lds = $(CPPFLAGS_vdso.lds)
+ VDSO_LDFLAGS_vdso32.lds = -m elf_i386 -soname linux-gate.so.1
+ 
+-targets += vdso32/vdso32.lds
+-targets += vdso32/note.o vdso32/system_call.o vdso32/sigreturn.o
+-targets += vdso32/vclock_gettime.o
+-
+ KBUILD_AFLAGS_32 := $(filter-out -m64,$(KBUILD_AFLAGS)) -DBUILD_VDSO
+ $(obj)/vdso32.so.dbg: KBUILD_AFLAGS = $(KBUILD_AFLAGS_32)
+ $(obj)/vdso32.so.dbg: asflags-$(CONFIG_X86_64) += -m32
+@@ -159,12 +159,7 @@ endif
+ 
+ $(obj)/vdso32.so.dbg: KBUILD_CFLAGS = $(KBUILD_CFLAGS_32)
+ 
+-$(obj)/vdso32.so.dbg: FORCE \
+-		      $(obj)/vdso32/vdso32.lds \
+-		      $(obj)/vdso32/vclock_gettime.o \
+-		      $(obj)/vdso32/note.o \
+-		      $(obj)/vdso32/system_call.o \
+-		      $(obj)/vdso32/sigreturn.o
++$(obj)/vdso32.so.dbg: $(obj)/vdso32/vdso32.lds $(vobjs32) FORCE
+ 	$(call if_changed,vdso_and_check)
+ 
+ #
 -- 
 2.22.0
