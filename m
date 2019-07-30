@@ -1,96 +1,77 @@
-From: Song Liu <songliubraving@fb.com>
-Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
-Date: Tue, 30 Jul 2019 05:07:25 +0000
-Message-ID: <369476A8-4CE1-43DA-9239-06437C0384C7@fb.com>
-References: <20190627201923.2589391-1-songliubraving@fb.com>
- <20190627201923.2589391-2-songliubraving@fb.com>
- <21894f45-70d8-dfca-8c02-044f776c5e05@kernel.org>
- <3C595328-3ABE-4421-9772-8D41094A4F57@fb.com>
- <CALCETrWBnH4Q43POU8cQ7YMjb9LioK28FDEQf7aHZbdf1eBZWg@mail.gmail.com>
- <0DE7F23E-9CD2-4F03-82B5-835506B59056@fb.com>
- <CALCETrWBWbNFJvsTCeUchu3BZJ3SH3dvtXLUB2EhnPrzFfsLNA@mail.gmail.com>
- <201907021115.DCD56BBABB@keescook>
- <CALCETrXTta26CTtEDnzvtd03-WOGdXcnsAogP8JjLkcj4-mHvg@mail.gmail.com>
- <4A7A225A-6C23-4C0F-9A95-7C6C56B281ED@fb.com>
- <CALCETrX2bMnwC6_t4b_G-hzJSfMPrkK4YKs5ebcecv2LJ0rt3w@mail.gmail.com>
- <514D5453-0AEE-420F-AEB6-3F4F58C62E7E@fb.com>
- <1DE886F3-3982-45DE-B545-67AD6A4871AB@amacapital.net>
- <7F51F8B8-CF4C-4D82-AAE1-F0F28951DB7F@fb.com>
- <77354A95-4107-41A7-8936-D144F01C3CA4@fb.com>
+From: Joel Fernandes <joel@joelfernandes.org>
+Subject: Re: [PATCH v3 1/2] mm/page_idle: Add per-pid idle page tracking using
+ virtual indexing
+Date: Tue, 30 Jul 2019 09:06:36 -0400
+Message-ID: <CAEXW_YQN+htU-LpYQ_jxepVdRhO0byw1pWFrsbU2XsH=8FDKLA@mail.gmail.com>
+References: <20190726152319.134152-1-joel@joelfernandes.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <77354A95-4107-41A7-8936-D144F01C3CA4@fb.com>
-Content-Language: en-US
-Content-ID: <D618CF5378938B4EB6BB91CC24C6E28C@namprd15.prod.outlook.com>
-Sender: netdev-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Andy Lutomirski <luto@kernel.org>, Kees Cook <keescook@chromium.org>, "linux-security@vger.kernel.org" <linux-security@vger.kernel.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190726152319.134152-1-joel@joelfernandes.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: LKML <linux-kernel@vger.kernel.org>
+Cc: Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Brendan Gregg <bgregg@netflix.com>, Christian Hansen <chansen3@cisco.com>, Daniel Colascione <dancol@google.com>, Florian Mayer <fmayer@google.com>, John Dias <joaodias@google.com>, Joel Fernandes <joelaf@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, kernel-team <kernel-team@android.com>, Linux API <linux-api@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Michal Hocko <mhocko@suse.com>, Mike Rapoport <rppt@linux.ibm.com>, Minchan Kim <minchan@kernel.org>, Namhyung Kim <namhyung@google.com>, Roman Gushchin <guro@fb.com>
 List-Id: linux-api@vger.kernel.org
 
-SGkgQW5keSwgDQoNCj4gT24gSnVsIDI3LCAyMDE5LCBhdCAxMToyMCBBTSwgU29uZyBMaXUgPHNv
-bmdsaXVicmF2aW5nQGZiLmNvbT4gd3JvdGU6DQo+IA0KPiBIaSBBbmR5LCANCj4gDQo+Pj4+PiAN
-Cj4+Pj4gDQo+Pj4+IFdlbGwsIHllcy4gc3lzX2JwZigpIGlzIHByZXR0eSBwb3dlcmZ1bC4gDQo+
-Pj4+IA0KPj4+PiBUaGUgZ29hbCBvZiAvZGV2L2JwZiBpcyB0byBlbmFibGUgc3BlY2lhbCB1c2Vy
-cyB0byBjYWxsIHN5c19icGYoKS4gSW4gDQo+Pj4+IHRoZSBtZWFud2hpbGUsIHN1Y2ggdXNlcnMg
-c2hvdWxkIG5vdCB0YWtlIGRvd24gdGhlIHdob2xlIHN5c3RlbSBlYXNpbHkNCj4+Pj4gYnkgYWNj
-aWRlbnQsIGUuZy4sIHdpdGggcm0gLXJmIC8uDQo+Pj4gDQo+Pj4gVGhhdOKAmXMgZWFzeSwgdGhv
-dWdoIOKAlCBicGZ0b29sIGNvdWxkIGxlYXJuIHRvIHJlYWQgL2V0Yy9icGZ1c2VycyBiZWZvcmUg
-YWxsb3dpbmcgcnVpZCAhPSAwLg0KPj4gDQo+PiBUaGlzIGlzIGEgZ3JlYXQgaWRlYSEgZnNjYXBz
-ICsgL2V0Yy9icGZ1c2VycyBzaG91bGQgZG8gdGhlIHRyaWNrLiANCj4gDQo+IEFmdGVyIHNvbWUg
-ZGlzY3Vzc2lvbnMgYW5kIG1vcmUgdGhpbmtpbmcgb24gdGhpcywgSSBoYXZlIHNvbWUgY29uY2Vy
-bnMgDQo+IHdpdGggdGhlIHVzZXIgc3BhY2Ugb25seSBhcHByb2FjaC4gIA0KPiANCj4gSUlVQywg
-eW91ciBwcm9wb3NhbCBmb3IgdXNlciBzcGFjZSBvbmx5IGFwcHJvYWNoIGlzIGxpa2U6IA0KPiAN
-Cj4gMS4gYnBmdG9vbCAoYW5kIG90aGVyIHRvb2xzKSBjaGVjayAvZXRjL2JwZnVzZXJzIGFuZCBv
-bmx5IGRvIA0KPiAgIHNldHVpZCBmb3IgYWxsb3dlZCB1c2VyczoNCj4gDQo+IAlpbnQgbWFpbigp
-DQo+IAl7DQo+IAkJaWYgKC8qIHVpZCBpbiAvZXRjL2JwZnVzZXJzICovKQ0KPiAJCQlzZXR1aWQo
-MCk7DQo+IAkJc3lzX2JwZiguLi4pOw0KPiAJfQ0KPiANCj4gMi4gYnBmdG9vbCAoYW5kIG90aGVy
-IHRvb2xzKSBpcyBpbnN0YWxsZWQgd2l0aCBDQVBfU0VUVUlEOg0KPiANCj4gCXNldGNhcCBjYXBf
-c2V0dWlkPWUrcCAvYmluL2JwZnRvb2wNCj4gDQo+IDMuIHN5cyBhZG1pbiBtYWludGFpbnMgcHJv
-cGVyIC9ldGMvYnBmdXNlcnMuIA0KPiANCj4gVGhpcyBhcHByb2FjaCBpcyBub3QgaWRlYWwsIGJl
-Y2F1c2Ugd2UgbmVlZCB0byB0cnVzdCB0aGUgdG9vbCB0byBnaXZlIA0KPiBpdCBDQVBfU0VUVUlE
-LiBBIGhhY2tlZCB0b29sIGNvdWxkIGVhc2lseSBieXBhc3MgL2V0Yy9icGZ1c2VycyBjaGVjaw0K
-PiBvciB1c2Ugb3RoZXIgcm9vdCBvbmx5IHN5cyBjYWxscyBhZnRlciBzZXR1aWQoMCkuIA0KPiAN
-Cg0KSSB3b3VsZCBsaWtlIG1vcmUgY29tbWVudHMgb24gdGhpcy4gDQoNCkN1cnJlbnRseSwgYnBm
-IHBlcm1pc3Npb24gaXMgbW9yZSBvciBsZXNzICJyb290IG9yIG5vdGhpbmciLCB3aGljaCB3ZSAN
-CndvdWxkIGxpa2UgdG8gY2hhbmdlLiANCg0KVGhlIHNob3J0IHRlcm0gZ29hbCBpcyB0byBzZXBh
-cmF0ZSBicGYgZnJvbSByb290LCBpbiBvdGhlciB3b3JkcywgaXQgaXMgDQoiYWxsIG9yIG5vdGhp
-bmciLiBTcGVjaWFsIHVzZXIgc3BhY2UgdXRpbGl0aWVzLCBzdWNoIGFzIHN5c3RlbWQsIHdvdWxk
-DQpiZW5lZml0IGZyb20gdGhpcy4gT25jZSB0aGlzIGlzIGltcGxlbWVudGVkLCBzeXN0ZW1kIGNh
-biBjYWxsIHN5c19icGYoKSANCndoZW4gaXQgaXMgbm90IHJ1bm5pbmcgYXMgcm9vdC4gDQoNCklu
-IGxvbmdlciB0ZXJtLCBpdCBtYXkgYmUgdXNlZnVsIHRvIHByb3ZpZGUgZmluZXIgZ3JhaW4gcGVy
-bWlzc2lvbiBvZiANCnN5c19icGYoKS4gRm9yIGV4YW1wbGUsIHN5c19icGYoKSBzaG91bGQgYmUg
-YXdhcmUgb2YgY29udGFpbmVyczsgYW5kDQp1c2VyIG1heSBvbmx5IGhhdmUgYWNjZXNzIHRvIGNl
-cnRhaW4gYnBmIG1hcHMuIExldCdzIGNhbGwgdGhpcyANCiJmaW5lIGdyYWluIiBjYXBhYmlsaXR5
-LiANCg0KDQpTaW5jZSB3ZSBhcmUgc2VlaW5nIG5ldyB1c2UgY2FzZXMgZXZlcnkgeWVhciwgd2Ug
-d2lsbCBuZWVkIG1hbnkgDQppdGVyYXRpb25zIHRvIGltcGxlbWVudCB0aGUgZmluZSBncmFpbiBw
-ZXJtaXNzaW9uLiBJIHRoaW5rIHdlIG5lZWQgYW4gDQpBUEkgdGhhdCBpcyBmbGV4aWJsZSBlbm91
-Z2ggdG8gY292ZXIgZGlmZmVyZW50IHR5cGVzIG9mIHBlcm1pc3Npb24gDQpjb250cm9sLiANCg0K
-Rm9yIGV4YW1wbGUsIGJwZl93aXRoX2NhcCgpIGNhbiBiZSBmbGV4aWJsZToNCg0KCWJwZl93aXRo
-X2NhcChjbWQsIGF0dHIsIHNpemUsIHBlcm1fZmQpOw0KDQpXZSBjYW4gZ2V0IGRpZmZlcmVudCB0
-eXBlcyBvZiBwZXJtaXNzaW9uIHZpYSBkaWZmZXJlbnQgY29tYmluYXRpb25zIG9mIA0KYXJndW1l
-bnRzOg0KDQogICAgQSBwZXJtX2ZkIHRvIC9kZXYvYnBmIGdpdmVzIGFjY2VzcyB0byBhbGwgc3lz
-X2JwZigpIGNvbW1hbmRzLCBzbyANCiAgICB0aGlzIGlzICJhbGwgb3Igbm90aGluZyIgcGVybWlz
-c2lvbi4gDQoNCiAgICBBIHBlcm1fZmQgdG8gL3N5cy9mcy9jZ3JvdXAvLi4uL2JwZi54eHggd291
-bGQgb25seSBhbGxvdyBzb21lIA0KICAgIGNvbW1hbmRzIHRvIHRoaXMgc3BlY2lmaWMgY2dyb3Vw
-LiANCg0KDQpBbGV4ZWkgcmFpc2VkIGFub3RoZXIgaWRlYSBpbiBvZmZsaW5lIGRpc2N1c3Npb25z
-OiBpbnN0ZWFkIG9mIGFkZGluZw0KYnBmX3dpdGhfY2FwKCksIHdlIGFkZCBhIGNvbW1hbmQgTE9B
-RF9QRVJNX0ZELCB3aGljaCBlbmFibGVzIHNwZWNpYWwNCnBlcm1pc3Npb24gZm9yIHRoZSBfbmV4
-dF8gc3lzX2JwZigpIGZyb20gY3VycmVudCB0YXNrOg0KDQogICAgYnBmKExPQURfUEVSTV9GRCwg
-cGVybV9mZCk7DQogICAgLyogdGhlIG5leHQgc3lzX2JwZigpIHVzZXMgcGVybWlzc2lvbiBmcm9t
-IHBlcm1fZmQgKi8NCiAgICBicGYoY21kLCBhdHRyLCBzaXplKTsNCg0KVGhpcyBpcyBlcXVpdmFs
-ZW50IHRvIGJwZl93aXRoX2NhcChjbWQsIGF0dHIsIHNpemUsIHBlcm1fZmQpLCBidXQgDQpkb2Vz
-bid0IHJlcXVpcmUgdGhlIG5ldyBzeXMgY2FsbC4gDQoNCg0KRm9yIGJvdGggdGhlc2UgaWRlYXMs
-IHdlIHdpbGwgc3RhcnQgd2l0aCAvZGV2L2JwZi4gQXMgd2UgZ3JvdyB0aGUNCmZpbmUgZ3JhaW4g
-cGVybWlzc2lvbiBjb250cm9sLCBmZXdlciB1c2Vycy9wcm9jZXNzZXMgd2lsbCBuZWVkIGFjY2Vz
-cyANCnRvIC9kZXYvYnBmLiANCg0KDQpQbGVhc2UgbGV0IHVzIGtub3cgeW91ciB0aG91Z2h0IG9u
-IHRoaXMuIFdvdWxkIHRoaXMgbWFrZSAvZGV2L2JwZiANCm1vcmUgcmVhc29uYWJsZT8gOi0pDQoN
-CkEgZmV3IG5vdGVzIGZvciBwcmV2aW91cyBkaXNjdXNzaW9uczoNCg0KMS4gVXNlciBzcGFjZSBv
-bmx5IGFwcHJvYWNoIGRvZXNuJ3Qgd29yaywgZXZlbiBmb3IgImFsbCBvciBub3RoaW5nIiANCiAg
-IHBlcm1pc3Npb24gY29udHJvbC4gSSBleHBhbmRlZCB0aGUgZGlzY3Vzc2lvbiBpbiB0aGUgcHJl
-dmlvdXMNCiAgIGVtYWlsLiBQbGVhc2UgbGV0IG1lIGtub3cgaWYgSSBtaXNzZWQgYW55dGhpbmcg
-dGhlcmUuIA0KDQoyLiBQZXJtaXNzaW9uIGNvbnRyb2wgb25seSBhdCBCUEZfUFJPR19BVFRBQ0gg
-dGltZSBpcyBub3Qgc3VmZmljaWVudC4NCiAgIFdlIG5lZWQgcGVybWlzc2lvbiBjb250cm9sIGR1
-cmluZyBCUEZfUFJPR19MT0FELCBlLmcuLCBpc19wcml2IGluIA0KICAgdGhlIHZlcmlmaWVyLiAN
-Cg0KVGhhbmtzLA0KU29uZw==
+On Fri, Jul 26, 2019 at 11:23 AM Joel Fernandes (Google)
+<joel@joelfernandes.org> wrote:
+>
+> The page_idle tracking feature currently requires looking up the pagemap
+> for a process followed by interacting with /sys/kernel/mm/page_idle.
+> Looking up PFN from pagemap in Android devices is not supported by
+> unprivileged process and requires SYS_ADMIN and gives 0 for the PFN.
+>
+> This patch adds support to directly interact with page_idle tracking at
+> the PID level by introducing a /proc/<pid>/page_idle file.  It follows
+> the exact same semantics as the global /sys/kernel/mm/page_idle, but now
+> looking up PFN through pagemap is not needed since the interface uses
+> virtual frame numbers, and at the same time also does not require
+> SYS_ADMIN.
+>
+> In Android, we are using this for the heap profiler (heapprofd) which
+> profiles and pin points code paths which allocates and leaves memory
+> idle for long periods of time. This method solves the security issue
+> with userspace learning the PFN, and while at it is also shown to yield
+> better results than the pagemap lookup, the theory being that the window
+> where the address space can change is reduced by eliminating the
+> intermediate pagemap look up stage. In virtual address indexing, the
+> process's mmap_sem is held for the duration of the access.
+>
+> Signed-off-by: Joel Fernandes (Google) <joel@joelfernandes.org>
+>
+> ---
+> v2->v3:
+> Fixed a bug where I was doing a kfree that is not needed due to not
+> needing to do GFP_ATOMIC allocations.
+>
+> v1->v2:
+> Mark swap ptes as idle (Minchan)
+> Avoid need for GFP_ATOMIC (Andrew)
+> Get rid of idle_page_list lock by moving list to stack
+
+I believe all suggestions have been addressed.  Do these look good now?
+
+thanks,
+
+ - Joel
+
+
+
+> Internal review -> v1:
+> Fixes from Suren.
+> Corrections to change log, docs (Florian, Sandeep)
+>
+>  fs/proc/base.c            |   3 +
+>  fs/proc/internal.h        |   1 +
+>  fs/proc/task_mmu.c        |  57 +++++++
+>  include/linux/page_idle.h |   4 +
+>  mm/page_idle.c            | 340 +++++++++++++++++++++++++++++++++-----
+>  5 files changed, 360 insertions(+), 45 deletions(-)
+>
+> diff --git a/fs/proc/base.c b/fs/proc/base.c
+> index 77eb628ecc7f..a58dd74606e9 100644
+> --- a/fs/proc/base.c
+> +++ b/fs/proc/base.c
+> @@ -3021,6 +3021,9 @@ static const struct pid_entry tgid_base_stuff[] = {
+>         REG("smaps",      S_IRUGO, proc_pid_smaps_operations),
+>         REG("smaps_rollup", S_IRUGO, proc_pid_smaps_rollup_operations),
