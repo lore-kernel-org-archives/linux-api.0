@@ -1,77 +1,142 @@
-From: Joel Fernandes <joel@joelfernandes.org>
-Subject: Re: [PATCH v3 1/2] mm/page_idle: Add per-pid idle page tracking using
- virtual indexing
-Date: Tue, 30 Jul 2019 09:06:36 -0400
-Message-ID: <CAEXW_YQN+htU-LpYQ_jxepVdRhO0byw1pWFrsbU2XsH=8FDKLA@mail.gmail.com>
-References: <20190726152319.134152-1-joel@joelfernandes.org>
+From: Matthew Garrett <matthewgarrett@google.com>
+Subject: [PATCH] tracefs: Restrict tracefs when the kernel is locked down
+Date: Tue, 30 Jul 2019 11:47:34 -0700
+Message-ID: <20190730184734.202386-1-matthewgarrett@google.com>
+References: <20190724222354.7cbd6c6e@oasis.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190726152319.134152-1-joel@joelfernandes.org>
+In-Reply-To: <20190724222354.7cbd6c6e@oasis.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
-To: LKML <linux-kernel@vger.kernel.org>
-Cc: Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Brendan Gregg <bgregg@netflix.com>, Christian Hansen <chansen3@cisco.com>, Daniel Colascione <dancol@google.com>, Florian Mayer <fmayer@google.com>, John Dias <joaodias@google.com>, Joel Fernandes <joelaf@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, kernel-team <kernel-team@android.com>, Linux API <linux-api@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Michal Hocko <mhocko@suse.com>, Mike Rapoport <rppt@linux.ibm.com>, Minchan Kim <minchan@kernel.org>, Namhyung Kim <namhyung@google.com>, Roman Gushchin <guro@fb.com>
+To: Steven Rostedt <rostedt@goodmis.org>
+Cc: jmorris@namei.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Matthew Garrett <matthewgarrett@google.com>, Matthew Garrett <mjg59@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 26, 2019 at 11:23 AM Joel Fernandes (Google)
-<joel@joelfernandes.org> wrote:
->
-> The page_idle tracking feature currently requires looking up the pagemap
-> for a process followed by interacting with /sys/kernel/mm/page_idle.
-> Looking up PFN from pagemap in Android devices is not supported by
-> unprivileged process and requires SYS_ADMIN and gives 0 for the PFN.
->
-> This patch adds support to directly interact with page_idle tracking at
-> the PID level by introducing a /proc/<pid>/page_idle file.  It follows
-> the exact same semantics as the global /sys/kernel/mm/page_idle, but now
-> looking up PFN through pagemap is not needed since the interface uses
-> virtual frame numbers, and at the same time also does not require
-> SYS_ADMIN.
->
-> In Android, we are using this for the heap profiler (heapprofd) which
-> profiles and pin points code paths which allocates and leaves memory
-> idle for long periods of time. This method solves the security issue
-> with userspace learning the PFN, and while at it is also shown to yield
-> better results than the pagemap lookup, the theory being that the window
-> where the address space can change is reduced by eliminating the
-> intermediate pagemap look up stage. In virtual address indexing, the
-> process's mmap_sem is held for the duration of the access.
->
-> Signed-off-by: Joel Fernandes (Google) <joel@joelfernandes.org>
->
-> ---
-> v2->v3:
-> Fixed a bug where I was doing a kfree that is not needed due to not
-> needing to do GFP_ATOMIC allocations.
->
-> v1->v2:
-> Mark swap ptes as idle (Minchan)
-> Avoid need for GFP_ATOMIC (Andrew)
-> Get rid of idle_page_list lock by moving list to stack
+Tracefs may release more information about the kernel than desirable, so
+restrict it when the kernel is locked down in confidentiality mode by
+preventing open().
 
-I believe all suggestions have been addressed.  Do these look good now?
+Signed-off-by: Matthew Garrett <mjg59@google.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+---
 
-thanks,
+Added the iput()
 
- - Joel
+ fs/tracefs/inode.c           | 40 +++++++++++++++++++++++++++++++++++-
+ include/linux/security.h     |  1 +
+ security/lockdown/lockdown.c |  1 +
+ 3 files changed, 41 insertions(+), 1 deletion(-)
 
-
-
-> Internal review -> v1:
-> Fixes from Suren.
-> Corrections to change log, docs (Florian, Sandeep)
->
->  fs/proc/base.c            |   3 +
->  fs/proc/internal.h        |   1 +
->  fs/proc/task_mmu.c        |  57 +++++++
->  include/linux/page_idle.h |   4 +
->  mm/page_idle.c            | 340 +++++++++++++++++++++++++++++++++-----
->  5 files changed, 360 insertions(+), 45 deletions(-)
->
-> diff --git a/fs/proc/base.c b/fs/proc/base.c
-> index 77eb628ecc7f..a58dd74606e9 100644
-> --- a/fs/proc/base.c
-> +++ b/fs/proc/base.c
-> @@ -3021,6 +3021,9 @@ static const struct pid_entry tgid_base_stuff[] = {
->         REG("smaps",      S_IRUGO, proc_pid_smaps_operations),
->         REG("smaps_rollup", S_IRUGO, proc_pid_smaps_rollup_operations),
+diff --git a/fs/tracefs/inode.c b/fs/tracefs/inode.c
+index eeeae0475da9..fb4d1d89ce53 100644
+--- a/fs/tracefs/inode.c
++++ b/fs/tracefs/inode.c
+@@ -20,6 +20,7 @@
+ #include <linux/parser.h>
+ #include <linux/magic.h>
+ #include <linux/slab.h>
++#include <linux/security.h>
+ 
+ #define TRACEFS_DEFAULT_MODE	0700
+ 
+@@ -27,6 +28,23 @@ static struct vfsmount *tracefs_mount;
+ static int tracefs_mount_count;
+ static bool tracefs_registered;
+ 
++static int default_open_file(struct inode *inode, struct file *filp)
++{
++	struct dentry *dentry = filp->f_path.dentry;
++	struct file_operations *real_fops;
++	int ret;
++
++	if (!dentry)
++		return -EINVAL;
++
++	ret = security_locked_down(LOCKDOWN_TRACEFS);
++	if (ret)
++		return ret;
++
++	real_fops = dentry->d_fsdata;
++	return real_fops->open(inode, filp);
++}
++
+ static ssize_t default_read_file(struct file *file, char __user *buf,
+ 				 size_t count, loff_t *ppos)
+ {
+@@ -221,6 +239,12 @@ static int tracefs_apply_options(struct super_block *sb)
+ 	return 0;
+ }
+ 
++static void tracefs_destroy_inode(struct inode *inode)
++{
++	if (S_ISREG(inode->i_mode))
++		kfree(inode->i_fop);
++}
++
+ static int tracefs_remount(struct super_block *sb, int *flags, char *data)
+ {
+ 	int err;
+@@ -256,6 +280,7 @@ static int tracefs_show_options(struct seq_file *m, struct dentry *root)
+ 
+ static const struct super_operations tracefs_super_operations = {
+ 	.statfs		= simple_statfs,
++	.destroy_inode  = tracefs_destroy_inode,
+ 	.remount_fs	= tracefs_remount,
+ 	.show_options	= tracefs_show_options,
+ };
+@@ -387,6 +412,7 @@ struct dentry *tracefs_create_file(const char *name, umode_t mode,
+ 				   struct dentry *parent, void *data,
+ 				   const struct file_operations *fops)
+ {
++	struct file_operations *proxy_fops;
+ 	struct dentry *dentry;
+ 	struct inode *inode;
+ 
+@@ -402,8 +428,20 @@ struct dentry *tracefs_create_file(const char *name, umode_t mode,
+ 	if (unlikely(!inode))
+ 		return failed_creating(dentry);
+ 
++	proxy_fops = kzalloc(sizeof(struct file_operations), GFP_KERNEL);
++	if (unlikely(!proxy_fops)) {
++		iput(inode);
++		return failed_creating(dentry);
++	}
++
++	if (!fops)
++		fops = &tracefs_file_operations;
++
++	dentry->d_fsdata = (void *)fops;
++	memcpy(proxy_fops, fops, sizeof(*proxy_fops));
++	proxy_fops->open = default_open_file;
+ 	inode->i_mode = mode;
+-	inode->i_fop = fops ? fops : &tracefs_file_operations;
++	inode->i_fop = proxy_fops;
+ 	inode->i_private = data;
+ 	d_instantiate(dentry, inode);
+ 	fsnotify_create(dentry->d_parent->d_inode, dentry);
+diff --git a/include/linux/security.h b/include/linux/security.h
+index d92323b44a3f..807dc0d24982 100644
+--- a/include/linux/security.h
++++ b/include/linux/security.h
+@@ -121,6 +121,7 @@ enum lockdown_reason {
+ 	LOCKDOWN_KPROBES,
+ 	LOCKDOWN_BPF_READ,
+ 	LOCKDOWN_PERF,
++	LOCKDOWN_TRACEFS,
+ 	LOCKDOWN_CONFIDENTIALITY_MAX,
+ };
+ 
+diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
+index 88064ce1c844..173191562047 100644
+--- a/security/lockdown/lockdown.c
++++ b/security/lockdown/lockdown.c
+@@ -36,6 +36,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
+ 	[LOCKDOWN_KPROBES] = "use of kprobes",
+ 	[LOCKDOWN_BPF_READ] = "use of bpf to read kernel RAM",
+ 	[LOCKDOWN_PERF] = "unsafe use of perf",
++	[LOCKDOWN_TRACEFS] = "use of tracefs",
+ 	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
+ };
+ 
+-- 
+2.22.0.770.g0f2c4a37fd-goog
