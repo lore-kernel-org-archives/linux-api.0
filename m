@@ -1,60 +1,138 @@
-From: Dmitry Safonov <0x7f454c46@gmail.com>
-Subject: Re: [PATCHv4 02/28] timens: Add timens_offsets
-Date: Mon, 29 Jul 2019 23:26:37 +0100
-Message-ID: <6e58d0dd-61ae-8566-0f64-badbfe1b20d1@gmail.com>
-References: <20190612192628.23797-1-dima@arista.com>
- <20190612192628.23797-3-dima@arista.com>
- <alpine.DEB.2.21.1906141510100.1722@nanos.tec.linutronix.de>
+From: Jaegeuk Kim <jaegeuk@kernel.org>
+Subject: Re: [PATCH v7 14/16] f2fs: wire up new fscrypt ioctls
+Date: Mon, 29 Jul 2019 17:36:24 -0700
+Message-ID: <20190730003624.GA47389@jaegeuk-macbookpro.roam.corp.google.com>
+References: <20190726224141.14044-1-ebiggers@kernel.org>
+ <20190726224141.14044-15-ebiggers@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.21.1906141510100.1722@nanos.tec.linutronix.de>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>, Dmitry Safonov <dima@arista.com>
-Cc: linux-kernel@vger.kernel.org, Andrei Vagin <avagin@openvz.org>, Adrian Reber <adrian@lisas.de>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
+Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org>
+Content-Disposition: inline
+In-Reply-To: <20190726224141.14044-15-ebiggers@kernel.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
+List-Post: <mailto:linux-mtd@lists.infradead.org>
+List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-mtd" <linux-mtd-bounces@lists.infradead.org>
+Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: Satya Tangirala <satyat@google.com>, linux-api@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-fscrypt@vger.kernel.org, keyrings@vger.kernel.org, linux-mtd@lists.infradead.org, linux-crypto@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, Paul Crowley <paulcrowley@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Thomas,
-
-On 6/14/19 2:11 PM, Thomas Gleixner wrote:
-> On Wed, 12 Jun 2019, Dmitry Safonov wrote:
+On 07/26, Eric Biggers wrote:
+> From: Eric Biggers <ebiggers@google.com>
 > 
->> From: Andrei Vagin <avagin@openvz.org>
->>
->> Introduce offsets for time namespace. They will contain an adjustment
->> needed to convert clocks to/from host's.
->>
->> Allocate one page for each time namespace that will be premapped into
->> userspace among vvar pages.
->> index 000000000000..7d7cb68ea778
->> --- /dev/null
->> +++ b/include/linux/timens_offsets.h
->> @@ -0,0 +1,8 @@
->> +/* SPDX-License-Identifier: GPL-2.0 */
->> +#ifndef _LINUX_TIME_OFFSETS_H
->> +#define _LINUX_TIME_OFFSETS_H
->> +
->> +struct timens_offsets {
->> +};
+> Wire up the new ioctls for adding and removing fscrypt keys to/from the
+> filesystem, and the new ioctl for retrieving v2 encryption policies.
 > 
-> That empty struct which is nowhere used looks odd. Can you move that to the
-> patch which actually makes use of it?
+> FS_IOC_REMOVE_ENCRYPTION_KEY also required making f2fs_drop_inode() call
+> fscrypt_drop_inode().
+> 
+> For more details see Documentation/filesystems/fscrypt.rst and the
+> fscrypt patches that added the implementation of these ioctls.
+> 
+> Signed-off-by: Eric Biggers <ebiggers@google.com>
 
-I've tried to move the structure into patch
-[PATCHv4 05/28] timens: Introduce CLOCK_BOOTTIME offset
-but that resulted in an ugly patch.
+Acked-by: Jaegeuk Kim <jaegeuk@kernel.org>
 
-Then I've tried to make it an opaque type here [to keep
-allocation/freeing in one commit], and change to a full structure in the
-following CLOCK_BOOTTIME patch, but that wasn't any prettier.
+Thanks,
 
-So, we've [with Andrei] addressed your critics but this in v5.
+> ---
+>  fs/f2fs/file.c  | 46 ++++++++++++++++++++++++++++++++++++++++++++++
+>  fs/f2fs/super.c |  2 ++
+>  2 files changed, 48 insertions(+)
+> 
+> diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
+> index f8d46df8fa9ee..d81dda290b829 100644
+> --- a/fs/f2fs/file.c
+> +++ b/fs/f2fs/file.c
+> @@ -2184,6 +2184,40 @@ static int f2fs_ioc_get_encryption_pwsalt(struct file *filp, unsigned long arg)
+>  	return err;
+>  }
+>  
+> +static int f2fs_ioc_get_encryption_policy_ex(struct file *filp,
+> +					     unsigned long arg)
+> +{
+> +	if (!f2fs_sb_has_encrypt(F2FS_I_SB(file_inode(filp))))
+> +		return -EOPNOTSUPP;
+> +
+> +	return fscrypt_ioctl_get_policy_ex(filp, (void __user *)arg);
+> +}
+> +
+> +static int f2fs_ioc_add_encryption_key(struct file *filp, unsigned long arg)
+> +{
+> +	if (!f2fs_sb_has_encrypt(F2FS_I_SB(file_inode(filp))))
+> +		return -EOPNOTSUPP;
+> +
+> +	return fscrypt_ioctl_add_key(filp, (void __user *)arg);
+> +}
+> +
+> +static int f2fs_ioc_remove_encryption_key(struct file *filp, unsigned long arg)
+> +{
+> +	if (!f2fs_sb_has_encrypt(F2FS_I_SB(file_inode(filp))))
+> +		return -EOPNOTSUPP;
+> +
+> +	return fscrypt_ioctl_remove_key(filp, (const void __user *)arg);
+> +}
+> +
+> +static int f2fs_ioc_get_encryption_key_status(struct file *filp,
+> +					      unsigned long arg)
+> +{
+> +	if (!f2fs_sb_has_encrypt(F2FS_I_SB(file_inode(filp))))
+> +		return -EOPNOTSUPP;
+> +
+> +	return fscrypt_ioctl_get_key_status(filp, (void __user *)arg);
+> +}
+> +
+>  static int f2fs_ioc_gc(struct file *filp, unsigned long arg)
+>  {
+>  	struct inode *inode = file_inode(filp);
+> @@ -3109,6 +3143,14 @@ long f2fs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+>  		return f2fs_ioc_get_encryption_policy(filp, arg);
+>  	case F2FS_IOC_GET_ENCRYPTION_PWSALT:
+>  		return f2fs_ioc_get_encryption_pwsalt(filp, arg);
+> +	case FS_IOC_GET_ENCRYPTION_POLICY_EX:
+> +		return f2fs_ioc_get_encryption_policy_ex(filp, arg);
+> +	case FS_IOC_ADD_ENCRYPTION_KEY:
+> +		return f2fs_ioc_add_encryption_key(filp, arg);
+> +	case FS_IOC_REMOVE_ENCRYPTION_KEY:
+> +		return f2fs_ioc_remove_encryption_key(filp, arg);
+> +	case FS_IOC_GET_ENCRYPTION_KEY_STATUS:
+> +		return f2fs_ioc_get_encryption_key_status(filp, arg);
+>  	case F2FS_IOC_GARBAGE_COLLECT:
+>  		return f2fs_ioc_gc(filp, arg);
+>  	case F2FS_IOC_GARBAGE_COLLECT_RANGE:
+> @@ -3236,6 +3278,10 @@ long f2fs_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+>  	case F2FS_IOC_SET_ENCRYPTION_POLICY:
+>  	case F2FS_IOC_GET_ENCRYPTION_PWSALT:
+>  	case F2FS_IOC_GET_ENCRYPTION_POLICY:
+> +	case FS_IOC_GET_ENCRYPTION_POLICY_EX:
+> +	case FS_IOC_ADD_ENCRYPTION_KEY:
+> +	case FS_IOC_REMOVE_ENCRYPTION_KEY:
+> +	case FS_IOC_GET_ENCRYPTION_KEY_STATUS:
+>  	case F2FS_IOC_GARBAGE_COLLECT:
+>  	case F2FS_IOC_GARBAGE_COLLECT_RANGE:
+>  	case F2FS_IOC_WRITE_CHECKPOINT:
+> diff --git a/fs/f2fs/super.c b/fs/f2fs/super.c
+> index 6de6cda440315..f5fae8d511a20 100644
+> --- a/fs/f2fs/super.c
+> +++ b/fs/f2fs/super.c
+> @@ -913,6 +913,8 @@ static int f2fs_drop_inode(struct inode *inode)
+>  		return 0;
+>  	}
+>  	ret = generic_drop_inode(inode);
+> +	if (!ret)
+> +		ret = fscrypt_drop_inode(inode);
+>  	trace_f2fs_drop_inode(inode, ret);
+>  	return ret;
+>  }
+> -- 
+> 2.22.0
 
-Just to let you know, that we haven't silently ignored your review, but
-found that it might be prettier to keep the patch as-is..
-I'll move it in v6 if it still makes sense in v5.
-
-Thanks much for your time,
-          Dmitry
+______________________________________________________
+Linux MTD discussion mailing list
+http://lists.infradead.org/mailman/listinfo/linux-mtd/
