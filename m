@@ -1,48 +1,96 @@
-From: "Theodore Y. Ts'o" <tytso@mit.edu>
-Subject: Re: [PATCH v7 15/16] ubifs: wire up new fscrypt ioctls
-Date: Mon, 29 Jul 2019 20:39:12 -0400
-Message-ID: <20190730003912.GB16445@mit.edu>
-References: <20190726224141.14044-1-ebiggers@kernel.org>
- <20190726224141.14044-16-ebiggers@kernel.org>
+From: Song Liu <songliubraving@fb.com>
+Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
+Date: Tue, 30 Jul 2019 05:07:25 +0000
+Message-ID: <369476A8-4CE1-43DA-9239-06437C0384C7@fb.com>
+References: <20190627201923.2589391-1-songliubraving@fb.com>
+ <20190627201923.2589391-2-songliubraving@fb.com>
+ <21894f45-70d8-dfca-8c02-044f776c5e05@kernel.org>
+ <3C595328-3ABE-4421-9772-8D41094A4F57@fb.com>
+ <CALCETrWBnH4Q43POU8cQ7YMjb9LioK28FDEQf7aHZbdf1eBZWg@mail.gmail.com>
+ <0DE7F23E-9CD2-4F03-82B5-835506B59056@fb.com>
+ <CALCETrWBWbNFJvsTCeUchu3BZJ3SH3dvtXLUB2EhnPrzFfsLNA@mail.gmail.com>
+ <201907021115.DCD56BBABB@keescook>
+ <CALCETrXTta26CTtEDnzvtd03-WOGdXcnsAogP8JjLkcj4-mHvg@mail.gmail.com>
+ <4A7A225A-6C23-4C0F-9A95-7C6C56B281ED@fb.com>
+ <CALCETrX2bMnwC6_t4b_G-hzJSfMPrkK4YKs5ebcecv2LJ0rt3w@mail.gmail.com>
+ <514D5453-0AEE-420F-AEB6-3F4F58C62E7E@fb.com>
+ <1DE886F3-3982-45DE-B545-67AD6A4871AB@amacapital.net>
+ <7F51F8B8-CF4C-4D82-AAE1-F0F28951DB7F@fb.com>
+ <77354A95-4107-41A7-8936-D144F01C3CA4@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org>
-Content-Disposition: inline
-In-Reply-To: <20190726224141.14044-16-ebiggers@kernel.org>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
- <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
-List-Post: <mailto:linux-mtd@lists.infradead.org>
-List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
- <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-mtd" <linux-mtd-bounces@lists.infradead.org>
-Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: Satya Tangirala <satyat@google.com>, linux-api@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-fscrypt@vger.kernel.org, keyrings@vger.kernel.org, linux-mtd@lists.infradead.org, linux-crypto@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, Paul Crowley <paulcrowley@google.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <77354A95-4107-41A7-8936-D144F01C3CA4@fb.com>
+Content-Language: en-US
+Content-ID: <D618CF5378938B4EB6BB91CC24C6E28C@namprd15.prod.outlook.com>
+Sender: netdev-owner@vger.kernel.org
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Andy Lutomirski <luto@kernel.org>, Kees Cook <keescook@chromium.org>, "linux-security@vger.kernel.org" <linux-security@vger.kernel.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Jul 26, 2019 at 03:41:40PM -0700, Eric Biggers wrote:
-> From: Eric Biggers <ebiggers@google.com>
-> 
-> Wire up the new ioctls for adding and removing fscrypt keys to/from the
-> filesystem, and the new ioctl for retrieving v2 encryption policies.
-> 
-> FS_IOC_REMOVE_ENCRYPTION_KEY also required making UBIFS use
-> fscrypt_drop_inode().
-> 
-> For more details see Documentation/filesystems/fscrypt.rst and the
-> fscrypt patches that added the implementation of these ioctls.
-> 
-> Signed-off-by: Eric Biggers <ebiggers@google.com>
-
-Looks good:
-
-Reviewed-by: Theodore Ts'o <tytso@mit.edu>
-
-					- Ted
-
-______________________________________________________
-Linux MTD discussion mailing list
-http://lists.infradead.org/mailman/listinfo/linux-mtd/
+SGkgQW5keSwgDQoNCj4gT24gSnVsIDI3LCAyMDE5LCBhdCAxMToyMCBBTSwgU29uZyBMaXUgPHNv
+bmdsaXVicmF2aW5nQGZiLmNvbT4gd3JvdGU6DQo+IA0KPiBIaSBBbmR5LCANCj4gDQo+Pj4+PiAN
+Cj4+Pj4gDQo+Pj4+IFdlbGwsIHllcy4gc3lzX2JwZigpIGlzIHByZXR0eSBwb3dlcmZ1bC4gDQo+
+Pj4+IA0KPj4+PiBUaGUgZ29hbCBvZiAvZGV2L2JwZiBpcyB0byBlbmFibGUgc3BlY2lhbCB1c2Vy
+cyB0byBjYWxsIHN5c19icGYoKS4gSW4gDQo+Pj4+IHRoZSBtZWFud2hpbGUsIHN1Y2ggdXNlcnMg
+c2hvdWxkIG5vdCB0YWtlIGRvd24gdGhlIHdob2xlIHN5c3RlbSBlYXNpbHkNCj4+Pj4gYnkgYWNj
+aWRlbnQsIGUuZy4sIHdpdGggcm0gLXJmIC8uDQo+Pj4gDQo+Pj4gVGhhdOKAmXMgZWFzeSwgdGhv
+dWdoIOKAlCBicGZ0b29sIGNvdWxkIGxlYXJuIHRvIHJlYWQgL2V0Yy9icGZ1c2VycyBiZWZvcmUg
+YWxsb3dpbmcgcnVpZCAhPSAwLg0KPj4gDQo+PiBUaGlzIGlzIGEgZ3JlYXQgaWRlYSEgZnNjYXBz
+ICsgL2V0Yy9icGZ1c2VycyBzaG91bGQgZG8gdGhlIHRyaWNrLiANCj4gDQo+IEFmdGVyIHNvbWUg
+ZGlzY3Vzc2lvbnMgYW5kIG1vcmUgdGhpbmtpbmcgb24gdGhpcywgSSBoYXZlIHNvbWUgY29uY2Vy
+bnMgDQo+IHdpdGggdGhlIHVzZXIgc3BhY2Ugb25seSBhcHByb2FjaC4gIA0KPiANCj4gSUlVQywg
+eW91ciBwcm9wb3NhbCBmb3IgdXNlciBzcGFjZSBvbmx5IGFwcHJvYWNoIGlzIGxpa2U6IA0KPiAN
+Cj4gMS4gYnBmdG9vbCAoYW5kIG90aGVyIHRvb2xzKSBjaGVjayAvZXRjL2JwZnVzZXJzIGFuZCBv
+bmx5IGRvIA0KPiAgIHNldHVpZCBmb3IgYWxsb3dlZCB1c2VyczoNCj4gDQo+IAlpbnQgbWFpbigp
+DQo+IAl7DQo+IAkJaWYgKC8qIHVpZCBpbiAvZXRjL2JwZnVzZXJzICovKQ0KPiAJCQlzZXR1aWQo
+MCk7DQo+IAkJc3lzX2JwZiguLi4pOw0KPiAJfQ0KPiANCj4gMi4gYnBmdG9vbCAoYW5kIG90aGVy
+IHRvb2xzKSBpcyBpbnN0YWxsZWQgd2l0aCBDQVBfU0VUVUlEOg0KPiANCj4gCXNldGNhcCBjYXBf
+c2V0dWlkPWUrcCAvYmluL2JwZnRvb2wNCj4gDQo+IDMuIHN5cyBhZG1pbiBtYWludGFpbnMgcHJv
+cGVyIC9ldGMvYnBmdXNlcnMuIA0KPiANCj4gVGhpcyBhcHByb2FjaCBpcyBub3QgaWRlYWwsIGJl
+Y2F1c2Ugd2UgbmVlZCB0byB0cnVzdCB0aGUgdG9vbCB0byBnaXZlIA0KPiBpdCBDQVBfU0VUVUlE
+LiBBIGhhY2tlZCB0b29sIGNvdWxkIGVhc2lseSBieXBhc3MgL2V0Yy9icGZ1c2VycyBjaGVjaw0K
+PiBvciB1c2Ugb3RoZXIgcm9vdCBvbmx5IHN5cyBjYWxscyBhZnRlciBzZXR1aWQoMCkuIA0KPiAN
+Cg0KSSB3b3VsZCBsaWtlIG1vcmUgY29tbWVudHMgb24gdGhpcy4gDQoNCkN1cnJlbnRseSwgYnBm
+IHBlcm1pc3Npb24gaXMgbW9yZSBvciBsZXNzICJyb290IG9yIG5vdGhpbmciLCB3aGljaCB3ZSAN
+CndvdWxkIGxpa2UgdG8gY2hhbmdlLiANCg0KVGhlIHNob3J0IHRlcm0gZ29hbCBpcyB0byBzZXBh
+cmF0ZSBicGYgZnJvbSByb290LCBpbiBvdGhlciB3b3JkcywgaXQgaXMgDQoiYWxsIG9yIG5vdGhp
+bmciLiBTcGVjaWFsIHVzZXIgc3BhY2UgdXRpbGl0aWVzLCBzdWNoIGFzIHN5c3RlbWQsIHdvdWxk
+DQpiZW5lZml0IGZyb20gdGhpcy4gT25jZSB0aGlzIGlzIGltcGxlbWVudGVkLCBzeXN0ZW1kIGNh
+biBjYWxsIHN5c19icGYoKSANCndoZW4gaXQgaXMgbm90IHJ1bm5pbmcgYXMgcm9vdC4gDQoNCklu
+IGxvbmdlciB0ZXJtLCBpdCBtYXkgYmUgdXNlZnVsIHRvIHByb3ZpZGUgZmluZXIgZ3JhaW4gcGVy
+bWlzc2lvbiBvZiANCnN5c19icGYoKS4gRm9yIGV4YW1wbGUsIHN5c19icGYoKSBzaG91bGQgYmUg
+YXdhcmUgb2YgY29udGFpbmVyczsgYW5kDQp1c2VyIG1heSBvbmx5IGhhdmUgYWNjZXNzIHRvIGNl
+cnRhaW4gYnBmIG1hcHMuIExldCdzIGNhbGwgdGhpcyANCiJmaW5lIGdyYWluIiBjYXBhYmlsaXR5
+LiANCg0KDQpTaW5jZSB3ZSBhcmUgc2VlaW5nIG5ldyB1c2UgY2FzZXMgZXZlcnkgeWVhciwgd2Ug
+d2lsbCBuZWVkIG1hbnkgDQppdGVyYXRpb25zIHRvIGltcGxlbWVudCB0aGUgZmluZSBncmFpbiBw
+ZXJtaXNzaW9uLiBJIHRoaW5rIHdlIG5lZWQgYW4gDQpBUEkgdGhhdCBpcyBmbGV4aWJsZSBlbm91
+Z2ggdG8gY292ZXIgZGlmZmVyZW50IHR5cGVzIG9mIHBlcm1pc3Npb24gDQpjb250cm9sLiANCg0K
+Rm9yIGV4YW1wbGUsIGJwZl93aXRoX2NhcCgpIGNhbiBiZSBmbGV4aWJsZToNCg0KCWJwZl93aXRo
+X2NhcChjbWQsIGF0dHIsIHNpemUsIHBlcm1fZmQpOw0KDQpXZSBjYW4gZ2V0IGRpZmZlcmVudCB0
+eXBlcyBvZiBwZXJtaXNzaW9uIHZpYSBkaWZmZXJlbnQgY29tYmluYXRpb25zIG9mIA0KYXJndW1l
+bnRzOg0KDQogICAgQSBwZXJtX2ZkIHRvIC9kZXYvYnBmIGdpdmVzIGFjY2VzcyB0byBhbGwgc3lz
+X2JwZigpIGNvbW1hbmRzLCBzbyANCiAgICB0aGlzIGlzICJhbGwgb3Igbm90aGluZyIgcGVybWlz
+c2lvbi4gDQoNCiAgICBBIHBlcm1fZmQgdG8gL3N5cy9mcy9jZ3JvdXAvLi4uL2JwZi54eHggd291
+bGQgb25seSBhbGxvdyBzb21lIA0KICAgIGNvbW1hbmRzIHRvIHRoaXMgc3BlY2lmaWMgY2dyb3Vw
+LiANCg0KDQpBbGV4ZWkgcmFpc2VkIGFub3RoZXIgaWRlYSBpbiBvZmZsaW5lIGRpc2N1c3Npb25z
+OiBpbnN0ZWFkIG9mIGFkZGluZw0KYnBmX3dpdGhfY2FwKCksIHdlIGFkZCBhIGNvbW1hbmQgTE9B
+RF9QRVJNX0ZELCB3aGljaCBlbmFibGVzIHNwZWNpYWwNCnBlcm1pc3Npb24gZm9yIHRoZSBfbmV4
+dF8gc3lzX2JwZigpIGZyb20gY3VycmVudCB0YXNrOg0KDQogICAgYnBmKExPQURfUEVSTV9GRCwg
+cGVybV9mZCk7DQogICAgLyogdGhlIG5leHQgc3lzX2JwZigpIHVzZXMgcGVybWlzc2lvbiBmcm9t
+IHBlcm1fZmQgKi8NCiAgICBicGYoY21kLCBhdHRyLCBzaXplKTsNCg0KVGhpcyBpcyBlcXVpdmFs
+ZW50IHRvIGJwZl93aXRoX2NhcChjbWQsIGF0dHIsIHNpemUsIHBlcm1fZmQpLCBidXQgDQpkb2Vz
+bid0IHJlcXVpcmUgdGhlIG5ldyBzeXMgY2FsbC4gDQoNCg0KRm9yIGJvdGggdGhlc2UgaWRlYXMs
+IHdlIHdpbGwgc3RhcnQgd2l0aCAvZGV2L2JwZi4gQXMgd2UgZ3JvdyB0aGUNCmZpbmUgZ3JhaW4g
+cGVybWlzc2lvbiBjb250cm9sLCBmZXdlciB1c2Vycy9wcm9jZXNzZXMgd2lsbCBuZWVkIGFjY2Vz
+cyANCnRvIC9kZXYvYnBmLiANCg0KDQpQbGVhc2UgbGV0IHVzIGtub3cgeW91ciB0aG91Z2h0IG9u
+IHRoaXMuIFdvdWxkIHRoaXMgbWFrZSAvZGV2L2JwZiANCm1vcmUgcmVhc29uYWJsZT8gOi0pDQoN
+CkEgZmV3IG5vdGVzIGZvciBwcmV2aW91cyBkaXNjdXNzaW9uczoNCg0KMS4gVXNlciBzcGFjZSBv
+bmx5IGFwcHJvYWNoIGRvZXNuJ3Qgd29yaywgZXZlbiBmb3IgImFsbCBvciBub3RoaW5nIiANCiAg
+IHBlcm1pc3Npb24gY29udHJvbC4gSSBleHBhbmRlZCB0aGUgZGlzY3Vzc2lvbiBpbiB0aGUgcHJl
+dmlvdXMNCiAgIGVtYWlsLiBQbGVhc2UgbGV0IG1lIGtub3cgaWYgSSBtaXNzZWQgYW55dGhpbmcg
+dGhlcmUuIA0KDQoyLiBQZXJtaXNzaW9uIGNvbnRyb2wgb25seSBhdCBCUEZfUFJPR19BVFRBQ0gg
+dGltZSBpcyBub3Qgc3VmZmljaWVudC4NCiAgIFdlIG5lZWQgcGVybWlzc2lvbiBjb250cm9sIGR1
+cmluZyBCUEZfUFJPR19MT0FELCBlLmcuLCBpc19wcml2IGluIA0KICAgdGhlIHZlcmlmaWVyLiAN
+Cg0KVGhhbmtzLA0KU29uZw==
