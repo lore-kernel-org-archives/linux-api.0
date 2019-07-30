@@ -1,142 +1,107 @@
-From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH] tracefs: Restrict tracefs when the kernel is locked down
-Date: Tue, 30 Jul 2019 11:47:34 -0700
-Message-ID: <20190730184734.202386-1-matthewgarrett@google.com>
-References: <20190724222354.7cbd6c6e@oasis.local.home>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
+Date: Tue, 30 Jul 2019 13:20:10 -0700
+Message-ID: <CALCETrVS5FwtmTyspyg-UNoZTHes9wUNbbsvNYwQwXUUfrtaiQ@mail.gmail.com>
+References: <20190627201923.2589391-1-songliubraving@fb.com>
+ <20190627201923.2589391-2-songliubraving@fb.com> <21894f45-70d8-dfca-8c02-044f776c5e05@kernel.org>
+ <3C595328-3ABE-4421-9772-8D41094A4F57@fb.com> <CALCETrWBnH4Q43POU8cQ7YMjb9LioK28FDEQf7aHZbdf1eBZWg@mail.gmail.com>
+ <0DE7F23E-9CD2-4F03-82B5-835506B59056@fb.com> <CALCETrWBWbNFJvsTCeUchu3BZJ3SH3dvtXLUB2EhnPrzFfsLNA@mail.gmail.com>
+ <201907021115.DCD56BBABB@keescook> <CALCETrXTta26CTtEDnzvtd03-WOGdXcnsAogP8JjLkcj4-mHvg@mail.gmail.com>
+ <4A7A225A-6C23-4C0F-9A95-7C6C56B281ED@fb.com> <CALCETrX2bMnwC6_t4b_G-hzJSfMPrkK4YKs5ebcecv2LJ0rt3w@mail.gmail.com>
+ <514D5453-0AEE-420F-AEB6-3F4F58C62E7E@fb.com> <1DE886F3-3982-45DE-B545-67AD6A4871AB@amacapital.net>
+ <7F51F8B8-CF4C-4D82-AAE1-F0F28951DB7F@fb.com> <77354A95-4107-41A7-8936-D144F01C3CA4@fb.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190724222354.7cbd6c6e@oasis.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
-Cc: jmorris@namei.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Matthew Garrett <matthewgarrett@google.com>, Matthew Garrett <mjg59@google.com>
+Content-Transfer-Encoding: quoted-printable
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <77354A95-4107-41A7-8936-D144F01C3CA4@fb.com>
+Sender: netdev-owner@vger.kernel.org
+To: Song Liu <songliubraving@fb.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Kees Cook <keescook@chromium.org>, "linux-security@vger.kernel.org" <linux-security@vger.kernel.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Tracefs may release more information about the kernel than desirable, so
-restrict it when the kernel is locked down in confidentiality mode by
-preventing open().
+On Sat, Jul 27, 2019 at 11:20 AM Song Liu <songliubraving@fb.com> wrote:
+>
+> Hi Andy,
+>
+> >>>>
+> >>>
+> >>> Well, yes. sys_bpf() is pretty powerful.
+> >>>
+> >>> The goal of /dev/bpf is to enable special users to call sys_bpf(). In
+> >>> the meanwhile, such users should not take down the whole system easil=
+y
+> >>> by accident, e.g., with rm -rf /.
+> >>
+> >> That=E2=80=99s easy, though =E2=80=94 bpftool could learn to read /etc=
+/bpfusers before allowing ruid !=3D 0.
+> >
+> > This is a great idea! fscaps + /etc/bpfusers should do the trick.
+>
+> After some discussions and more thinking on this, I have some concerns
+> with the user space only approach.
+>
+> IIUC, your proposal for user space only approach is like:
+>
+> 1. bpftool (and other tools) check /etc/bpfusers and only do
+>    setuid for allowed users:
+>
+>         int main()
+>         {
+>                 if (/* uid in /etc/bpfusers */)
+>                         setuid(0);
+>                 sys_bpf(...);
+>         }
+>
+> 2. bpftool (and other tools) is installed with CAP_SETUID:
+>
+>         setcap cap_setuid=3De+p /bin/bpftool
+>
 
-Signed-off-by: Matthew Garrett <mjg59@google.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>
----
+You have this a bit backwards.  You wouldn't use CAP_SETUID.  You
+would use the setuid *mode* bit, i.e. chmod 4111 (or 4100 and use ACLs
+to further lock it down).  Or you could use setcap cap_sys_admin=3Dp,
+although the details vary.  It woks a bit like this:
 
-Added the iput()
+First, if you are running with elevated privilege due to SUID or
+fscaps, the kernel and glibc offer you a degree of protection: you are
+protected from ptrace(), LD_PRELOAD, etc.  You are *not* protected
+from yourself.  For example, you may be running in a context in which
+an attacker has malicious values in your environment variables, CWD,
+etc.  Do you need to carefully decide whether you are willing to run
+with elevated privilege on behalf of the user, which you learn like
+this:
 
- fs/tracefs/inode.c           | 40 +++++++++++++++++++++++++++++++++++-
- include/linux/security.h     |  1 +
- security/lockdown/lockdown.c |  1 +
- 3 files changed, 41 insertions(+), 1 deletion(-)
+uid_t real_uid =3D getuid();
 
-diff --git a/fs/tracefs/inode.c b/fs/tracefs/inode.c
-index eeeae0475da9..fb4d1d89ce53 100644
---- a/fs/tracefs/inode.c
-+++ b/fs/tracefs/inode.c
-@@ -20,6 +20,7 @@
- #include <linux/parser.h>
- #include <linux/magic.h>
- #include <linux/slab.h>
-+#include <linux/security.h>
- 
- #define TRACEFS_DEFAULT_MODE	0700
- 
-@@ -27,6 +28,23 @@ static struct vfsmount *tracefs_mount;
- static int tracefs_mount_count;
- static bool tracefs_registered;
- 
-+static int default_open_file(struct inode *inode, struct file *filp)
-+{
-+	struct dentry *dentry = filp->f_path.dentry;
-+	struct file_operations *real_fops;
-+	int ret;
-+
-+	if (!dentry)
-+		return -EINVAL;
-+
-+	ret = security_locked_down(LOCKDOWN_TRACEFS);
-+	if (ret)
-+		return ret;
-+
-+	real_fops = dentry->d_fsdata;
-+	return real_fops->open(inode, filp);
-+}
-+
- static ssize_t default_read_file(struct file *file, char __user *buf,
- 				 size_t count, loff_t *ppos)
- {
-@@ -221,6 +239,12 @@ static int tracefs_apply_options(struct super_block *sb)
- 	return 0;
- }
- 
-+static void tracefs_destroy_inode(struct inode *inode)
-+{
-+	if (S_ISREG(inode->i_mode))
-+		kfree(inode->i_fop);
-+}
-+
- static int tracefs_remount(struct super_block *sb, int *flags, char *data)
- {
- 	int err;
-@@ -256,6 +280,7 @@ static int tracefs_show_options(struct seq_file *m, struct dentry *root)
- 
- static const struct super_operations tracefs_super_operations = {
- 	.statfs		= simple_statfs,
-+	.destroy_inode  = tracefs_destroy_inode,
- 	.remount_fs	= tracefs_remount,
- 	.show_options	= tracefs_show_options,
- };
-@@ -387,6 +412,7 @@ struct dentry *tracefs_create_file(const char *name, umode_t mode,
- 				   struct dentry *parent, void *data,
- 				   const struct file_operations *fops)
- {
-+	struct file_operations *proxy_fops;
- 	struct dentry *dentry;
- 	struct inode *inode;
- 
-@@ -402,8 +428,20 @@ struct dentry *tracefs_create_file(const char *name, umode_t mode,
- 	if (unlikely(!inode))
- 		return failed_creating(dentry);
- 
-+	proxy_fops = kzalloc(sizeof(struct file_operations), GFP_KERNEL);
-+	if (unlikely(!proxy_fops)) {
-+		iput(inode);
-+		return failed_creating(dentry);
-+	}
-+
-+	if (!fops)
-+		fops = &tracefs_file_operations;
-+
-+	dentry->d_fsdata = (void *)fops;
-+	memcpy(proxy_fops, fops, sizeof(*proxy_fops));
-+	proxy_fops->open = default_open_file;
- 	inode->i_mode = mode;
--	inode->i_fop = fops ? fops : &tracefs_file_operations;
-+	inode->i_fop = proxy_fops;
- 	inode->i_private = data;
- 	d_instantiate(dentry, inode);
- 	fsnotify_create(dentry->d_parent->d_inode, dentry);
-diff --git a/include/linux/security.h b/include/linux/security.h
-index d92323b44a3f..807dc0d24982 100644
---- a/include/linux/security.h
-+++ b/include/linux/security.h
-@@ -121,6 +121,7 @@ enum lockdown_reason {
- 	LOCKDOWN_KPROBES,
- 	LOCKDOWN_BPF_READ,
- 	LOCKDOWN_PERF,
-+	LOCKDOWN_TRACEFS,
- 	LOCKDOWN_CONFIDENTIALITY_MAX,
- };
- 
-diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
-index 88064ce1c844..173191562047 100644
---- a/security/lockdown/lockdown.c
-+++ b/security/lockdown/lockdown.c
-@@ -36,6 +36,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
- 	[LOCKDOWN_KPROBES] = "use of kprobes",
- 	[LOCKDOWN_BPF_READ] = "use of bpf to read kernel RAM",
- 	[LOCKDOWN_PERF] = "unsafe use of perf",
-+	[LOCKDOWN_TRACEFS] = "use of tracefs",
- 	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
- };
- 
--- 
-2.22.0.770.g0f2c4a37fd-goog
+Your decision may may depend on command-line arguments as well (i.e.
+you might want to allow tracing but not filtering, say).  Once you've
+made this decision, the details vary:
+
+For SUID, you either continue to run with euid =3D=3D 0, or you drop
+privilege using something like:
+
+if (setresuid(real_uid, real_uid, real_uid) !=3D 0) {
+ /* optionally print an error to stderr */
+ exit(1);
+}
+
+For fscaps, if you want to be privileged, you use something like
+capng_update(); capng_apply() to set CAP_SYS_ADMIN to be effective
+when you want privilege.  If you want to be unprivileged (because
+bpfusers says so, for example), you could use capng_update() to drop
+CAP_SYS_ADMIN entirely and see if the calls still work without
+privilege.  But this is a little bit awkward, since you don't directly
+know whether the user that invoked you in the first place had
+CAP_SYS_ADMIN to begin with.
+
+In general, SUID is a bit easier to work with.
+
+
+> This approach is not ideal, because we need to trust the tool to give
+> it CAP_SETUID. A hacked tool could easily bypass /etc/bpfusers check
+> or use other root only sys calls after setuid(0).
+
+How?  The whole SUID mechanism is designed fairly carefully to prevent
+this.  /bin/sudo is likely to be SUID on your system, but you can't
+just "hack" it to become root.
