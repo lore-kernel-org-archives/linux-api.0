@@ -1,8 +1,8 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V37 16/29] acpi: Disable ACPI table override if the kernel is
+Subject: [PATCH V37 13/29] x86/msr: Restrict MSR access when the kernel is
  locked down
-Date: Wed, 31 Jul 2019 15:16:04 -0700
-Message-ID: <20190731221617.234725-17-matthewgarrett@google.com>
+Date: Wed, 31 Jul 2019 15:16:01 -0700
+Message-ID: <20190731221617.234725-14-matthewgarrett@google.com>
 References: <20190731221617.234725-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -10,53 +10,82 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190731221617.234725-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Linn Crosetto <lcrosetto@gmail.com>, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>, linux-acpi@vger.kernel.org
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Matthew Garrett <mjg59@srcf.ucam.org>, Matthew Garrett <mjg59@google.com>, David Howells <dhowells@redhat.com>, Kees Cook <keescook@chromium.org>, Thomas Gleixner <tglx@linutronix.de>, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Linn Crosetto <lcrosetto@gmail.com>
+From: Matthew Garrett <mjg59@srcf.ucam.org>
 
->From the kernel documentation (initrd_table_override.txt):
+Writing to MSRs should not be allowed if the kernel is locked down, since
+it could lead to execution of arbitrary code in kernel mode.  Based on a
+patch by Kees Cook.
 
-  If the ACPI_INITRD_TABLE_OVERRIDE compile option is true, it is possible
-  to override nearly any ACPI table provided by the BIOS with an
-  instrumented, modified one.
-
-When lockdown is enabled, the kernel should disallow any unauthenticated
-changes to kernel space.  ACPI tables contain code invoked by the kernel,
-so do not allow ACPI tables to be overridden if the kernel is locked down.
-
-Signed-off-by: Linn Crosetto <lcrosetto@gmail.com>
-Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Matthew Garrett <mjg59@google.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
-cc: linux-acpi@vger.kernel.org
+Signed-off-by: David Howells <dhowells@redhat.com>
+Acked-by: Kees Cook <keescook@chromium.org>
+Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+cc: x86@kernel.org
 ---
- drivers/acpi/tables.c | 6 ++++++
- 1 file changed, 6 insertions(+)
+ arch/x86/kernel/msr.c        | 8 ++++++++
+ include/linux/security.h     | 1 +
+ security/lockdown/lockdown.c | 1 +
+ 3 files changed, 10 insertions(+)
 
-diff --git a/drivers/acpi/tables.c b/drivers/acpi/tables.c
-index b32327759380..180ac4329763 100644
---- a/drivers/acpi/tables.c
-+++ b/drivers/acpi/tables.c
-@@ -20,6 +20,7 @@
- #include <linux/memblock.h>
- #include <linux/earlycpio.h>
- #include <linux/initrd.h>
+diff --git a/arch/x86/kernel/msr.c b/arch/x86/kernel/msr.c
+index 3db2252b958d..1547be359d7f 100644
+--- a/arch/x86/kernel/msr.c
++++ b/arch/x86/kernel/msr.c
+@@ -34,6 +34,7 @@
+ #include <linux/notifier.h>
+ #include <linux/uaccess.h>
+ #include <linux/gfp.h>
 +#include <linux/security.h>
- #include "internal.h"
  
- #ifdef CONFIG_ACPI_CUSTOM_DSDT
-@@ -578,6 +579,11 @@ void __init acpi_table_upgrade(void)
- 	if (table_nr == 0)
- 		return;
+ #include <asm/cpufeature.h>
+ #include <asm/msr.h>
+@@ -79,6 +80,10 @@ static ssize_t msr_write(struct file *file, const char __user *buf,
+ 	int err = 0;
+ 	ssize_t bytes = 0;
  
-+	if (security_locked_down(LOCKDOWN_ACPI_TABLES)) {
-+		pr_notice("kernel is locked down, ignoring table override\n");
-+		return;
-+	}
++	err = security_locked_down(LOCKDOWN_MSR);
++	if (err)
++		return err;
 +
- 	acpi_tables_addr =
- 		memblock_find_in_range(0, ACPI_TABLE_UPGRADE_MAX_PHYS,
- 				       all_tables_size, PAGE_SIZE);
+ 	if (count % 8)
+ 		return -EINVAL;	/* Invalid chunk size */
+ 
+@@ -130,6 +135,9 @@ static long msr_ioctl(struct file *file, unsigned int ioc, unsigned long arg)
+ 			err = -EFAULT;
+ 			break;
+ 		}
++		err = security_locked_down(LOCKDOWN_MSR);
++		if (err)
++			break;
+ 		err = wrmsr_safe_regs_on_cpu(cpu, regs);
+ 		if (err)
+ 			break;
+diff --git a/include/linux/security.h b/include/linux/security.h
+index 79250b2ffb8f..155ff026eca4 100644
+--- a/include/linux/security.h
++++ b/include/linux/security.h
+@@ -109,6 +109,7 @@ enum lockdown_reason {
+ 	LOCKDOWN_HIBERNATION,
+ 	LOCKDOWN_PCI_ACCESS,
+ 	LOCKDOWN_IOPORT,
++	LOCKDOWN_MSR,
+ 	LOCKDOWN_INTEGRITY_MAX,
+ 	LOCKDOWN_CONFIDENTIALITY_MAX,
+ };
+diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
+index 316f7cf4e996..d99c0bee739d 100644
+--- a/security/lockdown/lockdown.c
++++ b/security/lockdown/lockdown.c
+@@ -24,6 +24,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
+ 	[LOCKDOWN_HIBERNATION] = "hibernation",
+ 	[LOCKDOWN_PCI_ACCESS] = "direct PCI access",
+ 	[LOCKDOWN_IOPORT] = "raw io port access",
++	[LOCKDOWN_MSR] = "raw MSR access",
+ 	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
+ 	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
+ };
 -- 
 2.22.0.770.g0f2c4a37fd-goog
