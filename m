@@ -1,7 +1,7 @@
 From: Song Liu <songliubraving@fb.com>
 Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
-Date: Wed, 31 Jul 2019 07:44:44 +0000
-Message-ID: <B167C8E2-76B9-4FAF-9903-2C3C0D7CB329@fb.com>
+Date: Wed, 31 Jul 2019 08:10:16 +0000
+Message-ID: <D4040C0C-47D6-4852-933C-59EB53C05242@fb.com>
 References: <20190627201923.2589391-1-songliubraving@fb.com>
  <20190627201923.2589391-2-songliubraving@fb.com>
  <21894f45-70d8-dfca-8c02-044f776c5e05@kernel.org>
@@ -17,100 +17,105 @@ References: <20190627201923.2589391-1-songliubraving@fb.com>
  <1DE886F3-3982-45DE-B545-67AD6A4871AB@amacapital.net>
  <7F51F8B8-CF4C-4D82-AAE1-F0F28951DB7F@fb.com>
  <77354A95-4107-41A7-8936-D144F01C3CA4@fb.com>
- <CALCETrVS5FwtmTyspyg-UNoZTHes9wUNbbsvNYwQwXUUfrtaiQ@mail.gmail.com>
+ <369476A8-4CE1-43DA-9239-06437C0384C7@fb.com>
+ <CALCETrUpVMrk7aaf0trfg9AfZ4fy279uJgZH7V+gZzjFw=hUxA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <CALCETrVS5FwtmTyspyg-UNoZTHes9wUNbbsvNYwQwXUUfrtaiQ@mail.gmail.com>
+In-Reply-To: <CALCETrUpVMrk7aaf0trfg9AfZ4fy279uJgZH7V+gZzjFw=hUxA@mail.gmail.com>
 Content-Language: en-US
-Content-ID: <9122C7C82A47CE43B716A2187D3F1C34@namprd15.prod.outlook.com>
+Content-ID: <5E5B76352B389D4A87E904B6B19E7BF7@namprd15.prod.outlook.com>
 Sender: netdev-owner@vger.kernel.org
 To: Andy Lutomirski <luto@kernel.org>
-Cc: Kees Cook <keescook@chromium.org>, "linux-security@vger.kernel.org" <linux-security@vger.kernel.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>
+Cc: Kees Cook <keescook@chromium.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-SGkgQW5keSwNCg0KPiBPbiBKdWwgMzAsIDIwMTksIGF0IDE6MjAgUE0sIEFuZHkgTHV0b21pcnNr
-aSA8bHV0b0BrZXJuZWwub3JnPiB3cm90ZToNCj4gDQo+IE9uIFNhdCwgSnVsIDI3LCAyMDE5IGF0
-IDExOjIwIEFNIFNvbmcgTGl1IDxzb25nbGl1YnJhdmluZ0BmYi5jb20+IHdyb3RlOg0KPj4gDQo+
-PiBIaSBBbmR5LA0KPj4gDQo+Pj4+Pj4gDQo+Pj4+PiANCj4+Pj4+IFdlbGwsIHllcy4gc3lzX2Jw
-ZigpIGlzIHByZXR0eSBwb3dlcmZ1bC4NCj4+Pj4+IA0KPj4+Pj4gVGhlIGdvYWwgb2YgL2Rldi9i
-cGYgaXMgdG8gZW5hYmxlIHNwZWNpYWwgdXNlcnMgdG8gY2FsbCBzeXNfYnBmKCkuIEluDQo+Pj4+
-PiB0aGUgbWVhbndoaWxlLCBzdWNoIHVzZXJzIHNob3VsZCBub3QgdGFrZSBkb3duIHRoZSB3aG9s
-ZSBzeXN0ZW0gZWFzaWx5DQo+Pj4+PiBieSBhY2NpZGVudCwgZS5nLiwgd2l0aCBybSAtcmYgLy4N
-Cj4+Pj4gDQo+Pj4+IFRoYXTigJlzIGVhc3ksIHRob3VnaCDigJQgYnBmdG9vbCBjb3VsZCBsZWFy
-biB0byByZWFkIC9ldGMvYnBmdXNlcnMgYmVmb3JlIGFsbG93aW5nIHJ1aWQgIT0gMC4NCj4+PiAN
-Cj4+PiBUaGlzIGlzIGEgZ3JlYXQgaWRlYSEgZnNjYXBzICsgL2V0Yy9icGZ1c2VycyBzaG91bGQg
-ZG8gdGhlIHRyaWNrLg0KPj4gDQo+PiBBZnRlciBzb21lIGRpc2N1c3Npb25zIGFuZCBtb3JlIHRo
-aW5raW5nIG9uIHRoaXMsIEkgaGF2ZSBzb21lIGNvbmNlcm5zDQo+PiB3aXRoIHRoZSB1c2VyIHNw
-YWNlIG9ubHkgYXBwcm9hY2guDQo+PiANCj4+IElJVUMsIHlvdXIgcHJvcG9zYWwgZm9yIHVzZXIg
-c3BhY2Ugb25seSBhcHByb2FjaCBpcyBsaWtlOg0KPj4gDQo+PiAxLiBicGZ0b29sIChhbmQgb3Ro
-ZXIgdG9vbHMpIGNoZWNrIC9ldGMvYnBmdXNlcnMgYW5kIG9ubHkgZG8NCj4+ICAgc2V0dWlkIGZv
-ciBhbGxvd2VkIHVzZXJzOg0KPj4gDQo+PiAgICAgICAgaW50IG1haW4oKQ0KPj4gICAgICAgIHsN
-Cj4+ICAgICAgICAgICAgICAgIGlmICgvKiB1aWQgaW4gL2V0Yy9icGZ1c2VycyAqLykNCj4+ICAg
-ICAgICAgICAgICAgICAgICAgICAgc2V0dWlkKDApOw0KPj4gICAgICAgICAgICAgICAgc3lzX2Jw
-ZiguLi4pOw0KPj4gICAgICAgIH0NCj4+IA0KPj4gMi4gYnBmdG9vbCAoYW5kIG90aGVyIHRvb2xz
-KSBpcyBpbnN0YWxsZWQgd2l0aCBDQVBfU0VUVUlEOg0KPj4gDQo+PiAgICAgICAgc2V0Y2FwIGNh
-cF9zZXR1aWQ9ZStwIC9iaW4vYnBmdG9vbA0KPj4gDQo+IA0KPiBZb3UgaGF2ZSB0aGlzIGEgYml0
-IGJhY2t3YXJkcy4gIFlvdSB3b3VsZG4ndCB1c2UgQ0FQX1NFVFVJRC4gIFlvdQ0KPiB3b3VsZCB1
-c2UgdGhlIHNldHVpZCAqbW9kZSogYml0LCBpLmUuIGNobW9kIDQxMTEgKG9yIDQxMDAgYW5kIHVz
-ZSBBQ0xzDQo+IHRvIGZ1cnRoZXIgbG9jayBpdCBkb3duKS4gIE9yIHlvdSBjb3VsZCB1c2Ugc2V0
-Y2FwIGNhcF9zeXNfYWRtaW49cCwNCj4gYWx0aG91Z2ggdGhlIGRldGFpbHMgdmFyeS4gIEl0IHdv
-a3MgYSBiaXQgbGlrZSB0aGlzOg0KPiANCj4gRmlyc3QsIGlmIHlvdSBhcmUgcnVubmluZyB3aXRo
-IGVsZXZhdGVkIHByaXZpbGVnZSBkdWUgdG8gU1VJRCBvcg0KPiBmc2NhcHMsIHRoZSBrZXJuZWwg
-YW5kIGdsaWJjIG9mZmVyIHlvdSBhIGRlZ3JlZSBvZiBwcm90ZWN0aW9uOiB5b3UgYXJlDQo+IHBy
-b3RlY3RlZCBmcm9tIHB0cmFjZSgpLCBMRF9QUkVMT0FELCBldGMuICBZb3UgYXJlICpub3QqIHBy
-b3RlY3RlZA0KPiBmcm9tIHlvdXJzZWxmLiAgRm9yIGV4YW1wbGUsIHlvdSBtYXkgYmUgcnVubmlu
-ZyBpbiBhIGNvbnRleHQgaW4gd2hpY2gNCj4gYW4gYXR0YWNrZXIgaGFzIG1hbGljaW91cyB2YWx1
-ZXMgaW4geW91ciBlbnZpcm9ubWVudCB2YXJpYWJsZXMsIENXRCwNCj4gZXRjLiAgRG8geW91IG5l
-ZWQgdG8gY2FyZWZ1bGx5IGRlY2lkZSB3aGV0aGVyIHlvdSBhcmUgd2lsbGluZyB0byBydW4NCj4g
-d2l0aCBlbGV2YXRlZCBwcml2aWxlZ2Ugb24gYmVoYWxmIG9mIHRoZSB1c2VyLCB3aGljaCB5b3Ug
-bGVhcm4gbGlrZQ0KPiB0aGlzOg0KPiANCj4gdWlkX3QgcmVhbF91aWQgPSBnZXR1aWQoKTsNCj4g
-DQo+IFlvdXIgZGVjaXNpb24gbWF5IG1heSBkZXBlbmQgb24gY29tbWFuZC1saW5lIGFyZ3VtZW50
-cyBhcyB3ZWxsIChpLmUuDQo+IHlvdSBtaWdodCB3YW50IHRvIGFsbG93IHRyYWNpbmcgYnV0IG5v
-dCBmaWx0ZXJpbmcsIHNheSkuICBPbmNlIHlvdSd2ZQ0KPiBtYWRlIHRoaXMgZGVjaXNpb24sIHRo
-ZSBkZXRhaWxzIHZhcnk6DQo+IA0KPiBGb3IgU1VJRCwgeW91IGVpdGhlciBjb250aW51ZSB0byBy
-dW4gd2l0aCBldWlkID09IDAsIG9yIHlvdSBkcm9wDQo+IHByaXZpbGVnZSB1c2luZyBzb21ldGhp
-bmcgbGlrZToNCj4gDQo+IGlmIChzZXRyZXN1aWQocmVhbF91aWQsIHJlYWxfdWlkLCByZWFsX3Vp
-ZCkgIT0gMCkgew0KPiAvKiBvcHRpb25hbGx5IHByaW50IGFuIGVycm9yIHRvIHN0ZGVyciAqLw0K
-PiBleGl0KDEpOw0KPiB9DQo+IA0KPiBGb3IgZnNjYXBzLCBpZiB5b3Ugd2FudCB0byBiZSBwcml2
-aWxlZ2VkLCB5b3UgdXNlIHNvbWV0aGluZyBsaWtlDQo+IGNhcG5nX3VwZGF0ZSgpOyBjYXBuZ19h
-cHBseSgpIHRvIHNldCBDQVBfU1lTX0FETUlOIHRvIGJlIGVmZmVjdGl2ZQ0KPiB3aGVuIHlvdSB3
-YW50IHByaXZpbGVnZS4gIElmIHlvdSB3YW50IHRvIGJlIHVucHJpdmlsZWdlZCAoYmVjYXVzZQ0K
-PiBicGZ1c2VycyBzYXlzIHNvLCBmb3IgZXhhbXBsZSksIHlvdSBjb3VsZCB1c2UgY2FwbmdfdXBk
-YXRlKCkgdG8gZHJvcA0KPiBDQVBfU1lTX0FETUlOIGVudGlyZWx5IGFuZCBzZWUgaWYgdGhlIGNh
-bGxzIHN0aWxsIHdvcmsgd2l0aG91dA0KPiBwcml2aWxlZ2UuICBCdXQgdGhpcyBpcyBhIGxpdHRs
-ZSBiaXQgYXdrd2FyZCwgc2luY2UgeW91IGRvbid0IGRpcmVjdGx5DQo+IGtub3cgd2hldGhlciB0
-aGUgdXNlciB0aGF0IGludm9rZWQgeW91IGluIHRoZSBmaXJzdCBwbGFjZSBoYWQNCj4gQ0FQX1NZ
-U19BRE1JTiB0byBiZWdpbiB3aXRoLg0KPiANCj4gSW4gZ2VuZXJhbCwgU1VJRCBpcyBhIGJpdCBl
-YXNpZXIgdG8gd29yayB3aXRoLg0KDQpUaGFua3MgYSBsb3QgZm9yIHRoZXNlIGV4cGxhbmF0aW9u
-cy4gSSBsZWFybmVkIGEgbG90IHRvZGF5IHZpYSByZWFkaW5nDQp0aGlzIGVtYWlsIGFuZCBHb29n
-bGluZy4gDQoNCj4gDQo+PiBUaGlzIGFwcHJvYWNoIGlzIG5vdCBpZGVhbCwgYmVjYXVzZSB3ZSBu
-ZWVkIHRvIHRydXN0IHRoZSB0b29sIHRvIGdpdmUNCj4+IGl0IENBUF9TRVRVSUQuIEEgaGFja2Vk
-IHRvb2wgY291bGQgZWFzaWx5IGJ5cGFzcyAvZXRjL2JwZnVzZXJzIGNoZWNrDQo+PiBvciB1c2Ug
-b3RoZXIgcm9vdCBvbmx5IHN5cyBjYWxscyBhZnRlciBzZXR1aWQoMCkuDQo+IA0KPiBIb3c/ICBU
-aGUgd2hvbGUgU1VJRCBtZWNoYW5pc20gaXMgZGVzaWduZWQgZmFpcmx5IGNhcmVmdWxseSB0byBw
-cmV2ZW50DQo+IHRoaXMuICAvYmluL3N1ZG8gaXMgbGlrZWx5IHRvIGJlIFNVSUQgb24geW91ciBz
-eXN0ZW0sIGJ1dCB5b3UgY2FuJ3QNCj4ganVzdCAiaGFjayIgaXQgdG8gYmVjb21lIHJvb3QuDQoN
-CkkgZ3Vlc3MgImhhY2tlZCIgd2FzIG5vdCB0aGUgcmlnaHQgZGVzY3JpcHRpb24uIEkgc2hvdWxk
-IGhhdmUgdXNlZCANCiJidWdneSIgaW5zdGVhZC4gDQoNClNVSUQgbWVjaGFuaXNtIGlzIGdyZWF0
-IGZvciBzbWFsbCBhbmQgc29saWQgdG9vbHMsIGxpa2Ugc3VkbywgcGFzc3dkLA0KbW91bnQsIGV0
-Yy4gVGhlIHVzZXIgb3Igc3lzIGFkbWluIGNvdWxkIHRydXN0IHRoZSB0b29sIHRvIGFsd2F5cyBk
-byB0aGUgDQpyaWdodCB0aGluZy4gT24gdGhlIG90aGVyIGhhbmQsIEkgdGhpbmsgU1VJRCBpcyBu
-b3QgaWRlYWwgZm9yIGNvbXBsZXgNCnRvb2xzIHRoYXQgYXJlIHVuZGVyIGhlYXZ5IGRldmVsb3Bt
-ZW50LiBBcyB5b3UgbWVudGlvbmVkLCBTVUlEIGRvZXNuJ3QgDQpwcm90ZWN0IGFnYWluc3Qgb25l
-c2VsZi4gVGhlcmVmb3JlLCBpdCB3b24ndCBwcm90ZWN0IHRoZSBzeXN0ZW0gZnJvbSANCmJ1Z2d5
-IHRvb2wgdGhhdCB1c2VzIFNVSUQgb24gc29tZXRoaW5nIGl0IHNob3VsZCBub3QuIA0KDQpJIHRo
-aW5rIFNVSUQgaXMgZ29vZCBmb3IgYnBmdG9vbCwgYmVjYXVzZSBpdCBpcyBlYXN5IHRvIHVzZSBT
-VUlEIA0KY29ycmVjdGx5IGluIGJwZnRvb2wuIEJ1dCwgaXQgaXMgbm90IGVhc3kgdG8gdXNlIFNV
-SUQgY29ycmVjdGx5IGluIA0Kc3lzdGVtZC4gDQoNCnN5c3RlbWQgYW5kIHNpbWlsYXIgdXNlciBz
-cGFjZSBkYWVtb25zIHVzZSBzeXNfYnBmKCkgdG8gbWFuYWdlIGNncm91cCANCmJwZiBwcm9ncmFt
-cyBhbmQgbWFwcyAoQlBGX01BUF9UWVBFXypDR1JPVVAqLCBCUEZfUFJPR19UWVBFX0NHUk9VUF8q
-LCANCkJQRl9DR1JPVVBfKikuIFRoZSBkYWVtb24gcnVucyBpbiB0aGUgYmFja2dyb3VuZCwgYW5k
-IGhhbmRsZXMgdXNlciANCnJlcXVlc3RzIHRvIGF0dGFjaC9kZXRhY2ggQlBGIHByb2dyYW1zLiBJ
-ZiB0aGUgZGFlbW9uIHVzZXMgU1VJRCBvciANCnNpbWlsYXIgbWVjaGFuaXNtLCBpdCBoYXMgdG8g
-dXNlIGV1aWQgPT0gMCBmb3Igc3lzX2JwZigpLiBIb3dldmVyLCANCnN1Y2ggZGFlbW9ucyBhcmUg
-dXN1YWxseSBwcmV0dHkgY29tcGxpY2F0ZWQuIEl0IGlzIG5vdCBlYXN5IHRvIHByb3ZlIA0KdGhl
-IGRhZW1vbiB3b24ndCBtaXN1c2UgZXVpZCA9PSAwLiANCg0KRG9lcyB0aGlzIG1ha2Ugc2Vuc2Ug
-c28gZmFyPyBJIHdpbGwgZGlzY3VzcyBtb3JlIGFib3V0IGNncm91cCBpbiB0aGUgDQpuZXh0IGVt
-YWlsLiANCg0KVGhhbmtzLA0KU29uZw==
+
+
+> On Jul 30, 2019, at 1:24 PM, Andy Lutomirski <luto@kernel.org> wrote:
+>=20
+> On Mon, Jul 29, 2019 at 10:07 PM Song Liu <songliubraving@fb.com> wrote:
+>>=20
+>> Hi Andy,
+>>=20
+>>> On Jul 27, 2019, at 11:20 AM, Song Liu <songliubraving@fb.com> wrote:
+>>>=20
+>>> Hi Andy,
+>>>=20
+>>>=20
+
+[...]
+
+>>>=20
+>>=20
+>> I would like more comments on this.
+>>=20
+>> Currently, bpf permission is more or less "root or nothing", which we
+>> would like to change.
+>>=20
+>> The short term goal is to separate bpf from root, in other words, it is
+>> "all or nothing". Special user space utilities, such as systemd, would
+>> benefit from this. Once this is implemented, systemd can call sys_bpf()
+>> when it is not running as root.
+>=20
+> As generally nasty as Linux capabilities are, this sounds like a good
+> use for CAP_BPF_ADMIN.
+
+I actually agree CAP_BPF_ADMIN makes sense. The hard part is to make=20
+existing tools (setcap, getcap, etc.) and libraries aware of the new CAP.
+
+>=20
+> But what do you have in mind?  Isn't non-root systemd mostly just the
+> user systemd session?  That should *not* have bpf() privileges until
+> bpf() is improved such that you can't use it to compromise the system.
+
+cgroup bpf is the major use case here. A less important use case is to=20
+run bpf selftests without being root.=20
+
+>=20
+>>=20
+>> In longer term, it may be useful to provide finer grain permission of
+>> sys_bpf(). For example, sys_bpf() should be aware of containers; and
+>> user may only have access to certain bpf maps. Let's call this
+>> "fine grain" capability.
+>>=20
+>>=20
+>> Since we are seeing new use cases every year, we will need many
+>> iterations to implement the fine grain permission. I think we need an
+>> API that is flexible enough to cover different types of permission
+>> control.
+>>=20
+>> For example, bpf_with_cap() can be flexible:
+>>=20
+>>        bpf_with_cap(cmd, attr, size, perm_fd);
+>>=20
+>> We can get different types of permission via different combinations of
+>> arguments:
+>>=20
+>>    A perm_fd to /dev/bpf gives access to all sys_bpf() commands, so
+>>    this is "all or nothing" permission.
+>>=20
+>>    A perm_fd to /sys/fs/cgroup/.../bpf.xxx would only allow some
+>>    commands to this specific cgroup.
+>>=20
+>=20
+> I don't see why you need to invent a whole new mechanism for this.
+> The entire cgroup ecosystem outside bpf() does just fine using the
+> write permission on files in cgroupfs to control access.  Why can't
+> bpf() do the same thing?
+
+It is easier to use write permission for BPF_PROG_ATTACH. But it is=20
+not easy to do the same for other bpf commands: BPF_PROG_LOAD and=20
+BPF_MAP_*. A lot of these commands don't have target concept. Maybe=20
+we should have target concept for all these commands. But that is a=20
+much bigger project. OTOH, "all or nothing" model allows all these=20
+commands at once.
+
+Well, that being said, I will look more into using write permission=20
+in cgroupfs.=20
+
+Thanks again for all these comments and suggestions. Please let us=20
+know your future thoughts and insights.=20
+
+Song
