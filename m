@@ -1,94 +1,90 @@
-From: Nathan Chancellor <natechancellor@gmail.com>
-Subject: Re: [PATCH v4 3/3] f2fs: Support case-insensitive file name lookups
-Date: Wed, 31 Jul 2019 10:57:48 -0700
-Message-ID: <20190731175748.GA48637@archlinux-threadripper>
-References: <20190723230529.251659-1-drosen@google.com>
- <20190723230529.251659-4-drosen@google.com>
+From: Eric Biggers <ebiggers@kernel.org>
+Subject: Re: [PATCH v7 07/16] fscrypt: add
+ FS_IOC_REMOVE_ENCRYPTION_KEY ioctl
+Date: Wed, 31 Jul 2019 11:38:02 -0700
+Message-ID: <20190731183802.GA687@sol.localdomain>
+References: <20190726224141.14044-1-ebiggers@kernel.org>
+ <20190726224141.14044-8-ebiggers@kernel.org>
+ <20190728192417.GG6088@mit.edu> <20190729195827.GF169027@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
 Content-Disposition: inline
-In-Reply-To: <20190723230529.251659-4-drosen@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Rosenberg <drosen@google.com>
-Cc: Jaegeuk Kim <jaegeuk@kernel.org>, Chao Yu <yuchao0@huawei.com>, Jonathan Corbet <corbet@lwn.net>, linux-f2fs-devel@lists.sourceforge.net, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, kernel-team@android.com
+In-Reply-To: <20190729195827.GF169027@gmail.com>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+To: "Theodore Y. Ts'o" <tytso@mit.edu>, linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-mtd@lists.infradead.org, linux-api@vger.kernel.org, linux-crypto@vger.kernel.org, keyrings@vger.kernel.org, Paul Crowley <paulcrowley@google.com>, Satya Tangirala <satyat@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi all,
+On Mon, Jul 29, 2019 at 12:58:28PM -0700, Eric Biggers wrote:
+> On Sun, Jul 28, 2019 at 03:24:17PM -0400, Theodore Y. Ts'o wrote:
+> > > +
+> > > +/*
+> > > + * Try to remove an fscrypt master encryption key.  If other users have also
+> > > + * added the key, we'll remove the current user's usage of the key, then return
+> > > + * -EUSERS.  Otherwise we'll continue on and try to actually remove the key.
+> > 
+> > Nit: this should be moved to patch #11
+> > 
+> > Also, perror(EUSERS) will display "Too many users" which is going to
+> > be confusing.  I understand why you chose this; we would like to
+> > distinguish between there are still inodes using this key, and there
+> > are other users using this key.
+> > 
+> > Do we really need to return EUSERS in this case?  It's actually not an
+> > *error* that other users are using the key.  After all, the unlink(2)
+> > system call doesn't return an advisory error when you delete a file
+> > which has other hard links.  And an application which does care about
+> > this detail can always call FS_IOC_ENCRYPTION_KEY_STATUS() and check
+> > user_count.
+> > 
+> 
+> Returning 0 when the key wasn't fully removed might also be confusing.  But I
+> guess you're right that returning an error doesn't match how syscalls usually
+> work.  It did remove the current user's usage of the key, after all, rather than
+> completely fail.  And as you point out, if someone cares about other users
+> having added the key, they can use FS_IOC_GET_ENCRYPTION_KEY_STATUS.
+> 
+> So I guess I'll change it to 0.
+> 
 
-<snip>
+So after making this change and thinking about it some more, I'm not sure it's
+actually an improvement.
 
-> diff --git a/fs/f2fs/hash.c b/fs/f2fs/hash.c
-> index cc82f142f811f..99e79934f5088 100644
-> --- a/fs/f2fs/hash.c
-> +++ b/fs/f2fs/hash.c
-> @@ -14,6 +14,7 @@
->  #include <linux/f2fs_fs.h>
->  #include <linux/cryptohash.h>
->  #include <linux/pagemap.h>
-> +#include <linux/unicode.h>
->  
->  #include "f2fs.h"
->  
-> @@ -67,7 +68,7 @@ static void str2hashbuf(const unsigned char *msg, size_t len,
->  		*buf++ = pad;
->  }
->  
-> -f2fs_hash_t f2fs_dentry_hash(const struct qstr *name_info,
-> +static f2fs_hash_t __f2fs_dentry_hash(const struct qstr *name_info,
->  				struct fscrypt_name *fname)
->  {
->  	__u32 hash;
-> @@ -103,3 +104,35 @@ f2fs_hash_t f2fs_dentry_hash(const struct qstr *name_info,
->  	f2fs_hash = cpu_to_le32(hash & ~F2FS_HASH_COL_BIT);
->  	return f2fs_hash;
->  }
-> +
-> +f2fs_hash_t f2fs_dentry_hash(const struct inode *dir,
-> +		const struct qstr *name_info, struct fscrypt_name *fname)
-> +{
-> +#ifdef CONFIG_UNICODE
-> +	struct f2fs_sb_info *sbi = F2FS_SB(dir->i_sb);
-> +	const struct unicode_map *um = sbi->s_encoding;
-> +	int r, dlen;
-> +	unsigned char *buff;
-> +	struct qstr *folded;
-> +
-> +	if (name_info->len && IS_CASEFOLDED(dir)) {
-> +		buff = f2fs_kzalloc(sbi, sizeof(char) * PATH_MAX, GFP_KERNEL);
-> +		if (!buff)
-> +			return -ENOMEM;
-> +
-> +		dlen = utf8_casefold(um, name_info, buff, PATH_MAX);
-> +		if (dlen < 0) {
-> +			kvfree(buff);
-> +			goto opaque_seq;
-> +		}
-> +		folded->name = buff;
-> +		folded->len = dlen;
-> +		r = __f2fs_dentry_hash(folded, fname);
-> +
-> +		kvfree(buff);
-> +		return r;
-> +	}
-> +opaque_seq:
-> +#endif
-> +	return __f2fs_dentry_hash(name_info, fname);
-> +}
+The normal use case for this ioctl is to "lock" some encrypted directory(s).  If
+it returns 0 and doesn't lock the directory(s), that's unexpected.
 
-Clang now warns:
+This is perhaps different from what users expect from unlink().  It's well known
+that unlink() just deletes the filename, not the file itself if it's still open
+or has other links.  And unlink() by itself isn't meant for use cases where the
+file absolutely must be securely erased.  But FS_IOC_REMOVE_ENCRYPTION_KEY
+really is meant primarily for that sort of thing.
 
-fs/f2fs/hash.c:128:3: warning: variable 'folded' is uninitialized when used here [-Wuninitialized]
-                folded->name = buff;
-                ^~~~~~
-fs/f2fs/hash.c:116:21: note: initialize the variable 'folded' to silence this warning
-        struct qstr *folded;
-                           ^
-                            = NULL
-1 warning generated.
+To give a concrete example: my patch for the userspace tool
+https://github.com/google/fscrypt adds a command 'fscrypt lock' which locks an
+encrypted directory.  If, say, someone runs 'fscrypt unlock' as uid 0 and then
+'fscrypt lock' as uid 1000, then FS_IOC_REMOVE_ENCRYPTION_KEY can't actually
+remove the key.  I need to make the tool show a proper error message in this
+case.  To do so, it would help to get a unique error code (e.g. EUSERS) from
+FS_IOC_REMOVE_ENCRYPTION_KEY, rather than get the ambiguous error code ENOKEY
+and have to call FS_IOC_GET_ENCRYPTION_KEY_STATUS to get the real status.
 
-I assume that it wants to be initialized with f2fs_kzalloc as well but
-I am not familiar with this code and what it expects to do.
+Also, we already have the EBUSY case.  This means that the ioctl removed the
+master key secret itself; however, some files were still in-use, so the key
+remains in the "incompletely removed" state.  If we were actually going for
+unlink() semantics, then for consistency this case really ought to return 0 and
+unlink the key object, and people who care about in-use files would need to use
+FS_IOC_GET_ENCRYPTION_KEY_STATUS.  But most people *will* care about this, and
+may even want to retry the ioctl later, which isn't something you can do with
+pure unlink() semantics.
 
-Please look into this when you get a chance!
-Nathan
+So I'm leaning towards keeping the EUSERS and EBUSY errors.
+
+- Eric
