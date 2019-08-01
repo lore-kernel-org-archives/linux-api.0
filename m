@@ -1,153 +1,42 @@
-From: Jaegeuk Kim <jaegeuk@kernel.org>
-Subject: Re: [PATCH v4 3/3] f2fs: Support case-insensitive file name lookups
-Date: Wed, 31 Jul 2019 21:05:20 -0700
-Message-ID: <20190801040520.GA84433@jaegeuk-macbookpro.roam.corp.google.com>
-References: <20190723230529.251659-1-drosen@google.com>
- <20190723230529.251659-4-drosen@google.com>
- <20190731175748.GA48637@archlinux-threadripper>
- <5d6c5da8-ad1e-26e2-0a3d-84949cd4e9aa@huawei.com>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCHv5 28/37] x86/vdso: Enable static branches for the timens vdso
+Date: Wed, 31 Jul 2019 22:21:33 -0700
+Message-ID: <CALCETrXL6pzDoHfn9Niw_CxNX-_W3=yotDYuqK+kxPhOLofmNA@mail.gmail.com>
+References: <20190729215758.28405-1-dima@arista.com> <20190729215758.28405-29-dima@arista.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <5d6c5da8-ad1e-26e2-0a3d-84949cd4e9aa@huawei.com>
+In-Reply-To: <20190729215758.28405-29-dima@arista.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Chao Yu <yuchao0@huawei.com>
-Cc: Nathan Chancellor <natechancellor@gmail.com>, Daniel Rosenberg <drosen@google.com>, Jonathan Corbet <corbet@lwn.net>, linux-f2fs-devel@lists.sourceforge.net, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, kernel-team@android.com
+To: Dmitry Safonov <dima@arista.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, Dmitry Safonov <0x7f454c46@gmail.com>, Andrei Vagin <avagin@gmail.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, Linux Containers <containers@lists.linux-foundation.org>, criu
 List-Id: linux-api@vger.kernel.org
 
-On 08/01, Chao Yu wrote:
-> Hi Nathan,
-> 
-> Thanks for the report! :)
-> 
-> On 2019/8/1 1:57, Nathan Chancellor wrote:
-> > Hi all,
-> > 
-> > <snip>
-> > 
-> >> diff --git a/fs/f2fs/hash.c b/fs/f2fs/hash.c
-> >> index cc82f142f811f..99e79934f5088 100644
-> >> --- a/fs/f2fs/hash.c
-> >> +++ b/fs/f2fs/hash.c
-> >> @@ -14,6 +14,7 @@
-> >>  #include <linux/f2fs_fs.h>
-> >>  #include <linux/cryptohash.h>
-> >>  #include <linux/pagemap.h>
-> >> +#include <linux/unicode.h>
-> >>  
-> >>  #include "f2fs.h"
-> >>  
-> >> @@ -67,7 +68,7 @@ static void str2hashbuf(const unsigned char *msg, size_t len,
-> >>  		*buf++ = pad;
-> >>  }
-> >>  
-> >> -f2fs_hash_t f2fs_dentry_hash(const struct qstr *name_info,
-> >> +static f2fs_hash_t __f2fs_dentry_hash(const struct qstr *name_info,
-> >>  				struct fscrypt_name *fname)
-> >>  {
-> >>  	__u32 hash;
-> >> @@ -103,3 +104,35 @@ f2fs_hash_t f2fs_dentry_hash(const struct qstr *name_info,
-> >>  	f2fs_hash = cpu_to_le32(hash & ~F2FS_HASH_COL_BIT);
-> >>  	return f2fs_hash;
-> >>  }
-> >> +
-> >> +f2fs_hash_t f2fs_dentry_hash(const struct inode *dir,
-> >> +		const struct qstr *name_info, struct fscrypt_name *fname)
-> >> +{
-> >> +#ifdef CONFIG_UNICODE
-> >> +	struct f2fs_sb_info *sbi = F2FS_SB(dir->i_sb);
-> >> +	const struct unicode_map *um = sbi->s_encoding;
-> >> +	int r, dlen;
-> >> +	unsigned char *buff;
-> >> +	struct qstr *folded;
-> >> +
-> >> +	if (name_info->len && IS_CASEFOLDED(dir)) {
-> >> +		buff = f2fs_kzalloc(sbi, sizeof(char) * PATH_MAX, GFP_KERNEL);
-> >> +		if (!buff)
-> >> +			return -ENOMEM;
-> >> +
-> >> +		dlen = utf8_casefold(um, name_info, buff, PATH_MAX);
-> >> +		if (dlen < 0) {
-> >> +			kvfree(buff);
-> >> +			goto opaque_seq;
-> >> +		}
-> >> +		folded->name = buff;
-> >> +		folded->len = dlen;
-> >> +		r = __f2fs_dentry_hash(folded, fname);
-> >> +
-> >> +		kvfree(buff);
-> >> +		return r;
-> >> +	}
-> >> +opaque_seq:
-> >> +#endif
-> >> +	return __f2fs_dentry_hash(name_info, fname);
-> >> +}
-> > 
-> > Clang now warns:
-> > 
-> > fs/f2fs/hash.c:128:3: warning: variable 'folded' is uninitialized when used here [-Wuninitialized]
-> >                 folded->name = buff;
-> >                 ^~~~~~
-> > fs/f2fs/hash.c:116:21: note: initialize the variable 'folded' to silence this warning
-> >         struct qstr *folded;
-> >                            ^
-> >                             = NULL
-> > 1 warning generated.
-> > 
-> > I assume that it wants to be initialized with f2fs_kzalloc as well but
-> > I am not familiar with this code and what it expects to do.
-> > 
-> > Please look into this when you get a chance!
-> 
-> That should be a bug, it needs to define a struct qstr type variable rather than
-> a pointer there.
-> 
-> Jaegeuk, could you fix this in you branch?
+On Mon, Jul 29, 2019 at 2:58 PM Dmitry Safonov <dima@arista.com> wrote:
+>
+> From: Andrei Vagin <avagin@gmail.com>
+>
+> As it has been discussed on timens RFC, adding a new conditional branch
+> `if (inside_time_ns)` on VDSO for all processes is undesirable.
+>
+> Addressing those problems, there are two versions of VDSO's .so:
+> for host tasks (without any penalty) and for processes inside of time
+> namespace with clk_to_ns() that subtracts offsets from host's time.
+>
+> The timens code in vdso looks like this:
+>
+> if (timens_static_branch_unlikely()) {
+>        clk_to_ns(clk, ts);
+> }
 
-Yeah, let me apply this.
+I'm confused.  Now we effectively have *three* versions: the vDSO
+without timens, and vDSO with timens but with it switched off, and the
+vDSO with timens on.  This seems like too much.
 
---- a/fs/f2fs/hash.c
-+++ b/fs/f2fs/hash.c
-@@ -113,25 +113,27 @@ f2fs_hash_t f2fs_dentry_hash(const struct inode *dir,
-        const struct unicode_map *um = sbi->s_encoding;
-        int r, dlen;
-        unsigned char *buff;
--       struct qstr *folded;
-+       struct qstr folded;
+What you need is, IMO, a static-branch-ish thing that is per mm.  This
+has a fundamental problem that the vDSO can be modified using
+FOLL_FORCE.  Perhaps any CoW of the vDSO should implicitly switch the
+static branch on, which at least gives some degree of correctness even
+if it's a bit surprising.
 
--       if (name_info->len && IS_CASEFOLDED(dir)) {
--               buff = f2fs_kzalloc(sbi, sizeof(char) * PATH_MAX, GFP_KERNEL);
--               if (!buff)
--                       return -ENOMEM;
-+       if (!name_info->len || !IS_CASEFOLDED(dir))
-+               goto opaque_seq;
-
--               dlen = utf8_casefold(um, name_info, buff, PATH_MAX);
--               if (dlen < 0) {
--                       kvfree(buff);
--                       goto opaque_seq;
--               }
--               folded->name = buff;
--               folded->len = dlen;
--               r = __f2fs_dentry_hash(folded, fname);
-+       buff = f2fs_kzalloc(sbi, sizeof(char) * PATH_MAX, GFP_KERNEL);
-+       if (!buff)
-+               return -ENOMEM;
-
-+       dlen = utf8_casefold(um, name_info, buff, PATH_MAX);
-+       if (dlen < 0) {
-                kvfree(buff);
--               return r;
-+               goto opaque_seq;
-        }
-+       folded.name = buff;
-+       folded.len = dlen;
-+       r = __f2fs_dentry_hash(&folded, fname);
-+
-+       kvfree(buff);
-+       return r;
-+
- opaque_seq:
- #endif
-        return __f2fs_dentry_hash(name_info, fname);
+--Andy
