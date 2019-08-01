@@ -1,90 +1,111 @@
-From: "Theodore Y. Ts'o" <tytso@mit.edu>
-Subject: Re: [PATCH v7 07/16] fscrypt: add FS_IOC_REMOVE_ENCRYPTION_KEY ioctl
-Date: Wed, 31 Jul 2019 19:38:43 -0400
-Message-ID: <20190731233843.GA2769@mit.edu>
-References: <20190726224141.14044-1-ebiggers@kernel.org>
- <20190726224141.14044-8-ebiggers@kernel.org>
- <20190728192417.GG6088@mit.edu> <20190729195827.GF169027@gmail.com>
- <20190731183802.GA687@sol.localdomain>
+From: Chao Yu <yuchao0@huawei.com>
+Subject: Re: [PATCH v4 3/3] f2fs: Support case-insensitive file name lookups
+Date: Thu, 1 Aug 2019 09:11:13 +0800
+Message-ID: <5d6c5da8-ad1e-26e2-0a3d-84949cd4e9aa@huawei.com>
+References: <20190723230529.251659-1-drosen@google.com>
+ <20190723230529.251659-4-drosen@google.com>
+ <20190731175748.GA48637@archlinux-threadripper>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org>
-Content-Disposition: inline
-In-Reply-To: <20190731183802.GA687@sol.localdomain>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
- <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
-List-Post: <mailto:linux-mtd@lists.infradead.org>
-List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
- <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-mtd" <linux-mtd-bounces@lists.infradead.org>
-Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org
-To: linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-mtd@lists.infradead.org, linux-api@vger.kernel.org, linux-crypto@vger.kernel.org, keyrings@vger.kernel.org, Paul Crowley <paulcrowley@google.com>, Satya Tangirala <satyat@google.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190731175748.GA48637@archlinux-threadripper>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Nathan Chancellor <natechancellor@gmail.com>, Daniel Rosenberg <drosen@google.com>
+Cc: Jaegeuk Kim <jaegeuk@kernel.org>, Jonathan Corbet <corbet@lwn.net>, linux-f2fs-devel@lists.sourceforge.net, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, kernel-team@android.com
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 31, 2019 at 11:38:02AM -0700, Eric Biggers wrote:
+Hi Nathan,
+
+Thanks for the report! :)
+
+On 2019/8/1 1:57, Nathan Chancellor wrote:
+> Hi all,
 > 
-> This is perhaps different from what users expect from unlink().  It's well known
-> that unlink() just deletes the filename, not the file itself if it's still open
-> or has other links.  And unlink() by itself isn't meant for use cases where the
-> file absolutely must be securely erased.  But FS_IOC_REMOVE_ENCRYPTION_KEY
-> really is meant primarily for that sort of thing.
+> <snip>
+> 
+>> diff --git a/fs/f2fs/hash.c b/fs/f2fs/hash.c
+>> index cc82f142f811f..99e79934f5088 100644
+>> --- a/fs/f2fs/hash.c
+>> +++ b/fs/f2fs/hash.c
+>> @@ -14,6 +14,7 @@
+>>  #include <linux/f2fs_fs.h>
+>>  #include <linux/cryptohash.h>
+>>  #include <linux/pagemap.h>
+>> +#include <linux/unicode.h>
+>>  
+>>  #include "f2fs.h"
+>>  
+>> @@ -67,7 +68,7 @@ static void str2hashbuf(const unsigned char *msg, size_t len,
+>>  		*buf++ = pad;
+>>  }
+>>  
+>> -f2fs_hash_t f2fs_dentry_hash(const struct qstr *name_info,
+>> +static f2fs_hash_t __f2fs_dentry_hash(const struct qstr *name_info,
+>>  				struct fscrypt_name *fname)
+>>  {
+>>  	__u32 hash;
+>> @@ -103,3 +104,35 @@ f2fs_hash_t f2fs_dentry_hash(const struct qstr *name_info,
+>>  	f2fs_hash = cpu_to_le32(hash & ~F2FS_HASH_COL_BIT);
+>>  	return f2fs_hash;
+>>  }
+>> +
+>> +f2fs_hash_t f2fs_dentry_hash(const struct inode *dir,
+>> +		const struct qstr *name_info, struct fscrypt_name *fname)
+>> +{
+>> +#ifdef CONFIG_UNICODE
+>> +	struct f2fs_sb_info *sbi = F2FS_SB(dir->i_sb);
+>> +	const struct unicode_map *um = sbi->s_encoding;
+>> +	int r, dlen;
+>> +	unsigned char *buff;
+>> +	struct qstr *folded;
+>> +
+>> +	if (name_info->len && IS_CASEFOLDED(dir)) {
+>> +		buff = f2fs_kzalloc(sbi, sizeof(char) * PATH_MAX, GFP_KERNEL);
+>> +		if (!buff)
+>> +			return -ENOMEM;
+>> +
+>> +		dlen = utf8_casefold(um, name_info, buff, PATH_MAX);
+>> +		if (dlen < 0) {
+>> +			kvfree(buff);
+>> +			goto opaque_seq;
+>> +		}
+>> +		folded->name = buff;
+>> +		folded->len = dlen;
+>> +		r = __f2fs_dentry_hash(folded, fname);
+>> +
+>> +		kvfree(buff);
+>> +		return r;
+>> +	}
+>> +opaque_seq:
+>> +#endif
+>> +	return __f2fs_dentry_hash(name_info, fname);
+>> +}
+> 
+> Clang now warns:
+> 
+> fs/f2fs/hash.c:128:3: warning: variable 'folded' is uninitialized when used here [-Wuninitialized]
+>                 folded->name = buff;
+>                 ^~~~~~
+> fs/f2fs/hash.c:116:21: note: initialize the variable 'folded' to silence this warning
+>         struct qstr *folded;
+>                            ^
+>                             = NULL
+> 1 warning generated.
+> 
+> I assume that it wants to be initialized with f2fs_kzalloc as well but
+> I am not familiar with this code and what it expects to do.
+> 
+> Please look into this when you get a chance!
 
-Seems to me that part of the confusion is FS_IOC_REMOVE_ENCRYPTION_KEY
-does two things.  One is "remove the user's handle on the key".  The
-other is "purge all keys" (which requires root).  So it does two
-different things with one ioctl.
+That should be a bug, it needs to define a struct qstr type variable rather than
+a pointer there.
 
-> To give a concrete example: my patch for the userspace tool
-> https://github.com/google/fscrypt adds a command 'fscrypt lock' which locks an
-> encrypted directory.  If, say, someone runs 'fscrypt unlock' as uid 0 and then
-> 'fscrypt lock' as uid 1000, then FS_IOC_REMOVE_ENCRYPTION_KEY can't actually
-> remove the key.  I need to make the tool show a proper error message in this
-> case.  To do so, it would help to get a unique error code (e.g. EUSERS) from
-> FS_IOC_REMOVE_ENCRYPTION_KEY, rather than get the ambiguous error code ENOKEY
-> and have to call FS_IOC_GET_ENCRYPTION_KEY_STATUS to get the real status.
+Jaegeuk, could you fix this in you branch?
 
-What about having "fscrypt lock" call FS_IOC_GET_ENCRYPTION_KEY_STATUS
-and print a warning message saying, "we can't lock it because N other
-users who have registered a key".  I'd argue fscrypt should do this
-regardless of whether or not FS_IOC_REMOVE_ENCRYPTION_KEY returns
-EUSERS or not.
+Thanks,
 
-> Also, we already have the EBUSY case.  This means that the ioctl removed the
-> master key secret itself; however, some files were still in-use, so the key
-> remains in the "incompletely removed" state.  If we were actually going for
-> unlink() semantics, then for consistency this case really ought to return 0 and
-> unlink the key object, and people who care about in-use files would need to use
-> FS_IOC_GET_ENCRYPTION_KEY_STATUS.  But most people *will* care about this, and
-> may even want to retry the ioctl later, which isn't something youh can do with
-> pure unlink() semantics.
-
-It seems to me that the EBUSY and EUSERS errors should be status bits
-which gets returned to the user in a bitfield --- and if the key has
-been removed, or the user's claim on the key's existence has been
-removed, the ioctl returns success.
-
-That way we don't have to deal with the semantic disconnect where some
-errors don't actually change system state, and other errors that *do*
-change system state (as in, the key gets removed, or the user's claim
-on the key gets removed), but still returns than error.
-
-We could also add a flag which indicates where if there are files that
-are still busy, or there are other users keeping a key in use, the
-ioctl fails hard and returns an error.  At least that way we keep
-consistency where an error means, "nothing has changed".
-
-	    	     	   	  	   - Ted
-
-P.S.  BTW, one of the comments which I didn't make was the
-documentation didn't adequately explain which error codes means,
-"success but with a caveat", and which errors means, "we failed and
-didn't do anything".  But since I was arguing for changing the
-behavior, I decided not to complain about the documentation.
-
-
-______________________________________________________
-Linux MTD discussion mailing list
-http://lists.infradead.org/mailman/listinfo/linux-mtd/
+> Nathan
+> .
+> 
