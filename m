@@ -1,123 +1,57 @@
-From: "Theodore Y. Ts'o" <tytso@mit.edu>
-Subject: Re: [f2fs-dev] [PATCH v7 07/16] fscrypt: add
- FS_IOC_REMOVE_ENCRYPTION_KEY ioctl
-Date: Thu, 1 Aug 2019 01:31:08 -0400
-Message-ID: <20190801053108.GD2769@mit.edu>
-References: <20190726224141.14044-1-ebiggers@kernel.org>
- <20190726224141.14044-8-ebiggers@kernel.org>
- <20190728192417.GG6088@mit.edu> <20190729195827.GF169027@gmail.com>
- <20190731183802.GA687@sol.localdomain>
- <20190731233843.GA2769@mit.edu>
- <20190801011140.GB687@sol.localdomain>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCHv5 25/37] x86/vdso: Switch image on setns()/clone()
+Date: Wed, 31 Jul 2019 22:34:26 -0700
+Message-ID: <CALCETrUpOhTCQkhB3S73LBFAiTp07PwXP32Q6Bn0m2LTqiw9hA@mail.gmail.com>
+References: <20190729215758.28405-1-dima@arista.com> <20190729215758.28405-26-dima@arista.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org>
-Content-Disposition: inline
-In-Reply-To: <20190801011140.GB687@sol.localdomain>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
- <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
-List-Post: <mailto:linux-mtd@lists.infradead.org>
-List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
- <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-mtd" <linux-mtd-bounces@lists.infradead.org>
-Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org
-To: linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-mtd@lists.infradead.org, linux-api@vger.kernel.org, linux-crypto@vger.kernel.org, keyrings@vger.kernel.org, Paul Crowley <paulcrowley@google.com>, Satya Tangirala <satyat@google.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190729215758.28405-26-dima@arista.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dmitry Safonov <dima@arista.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, Dmitry Safonov <0x7f454c46@gmail.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, Linux Containers <containers@lists.linux-foundation.org>, criu@openvz.org, Linux API <linux-api@vger.ke>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Jul 31, 2019 at 06:11:40PM -0700, Eric Biggers wrote:
-> 
-> Well, it's either
-> 
-> 1a. Remove the user's handle.
-> 	OR 
-> 1b. Remove all users' handles.  (FSCRYPT_REMOVE_KEY_FLAG_ALL_USERS)
-> 
-> Then
-> 
-> 2. If no handles remain, try to evict all inodes that use the key.
-> 
-> By "purge all keys" do you mean step (2)?  Note that it doesn't require root by
-> itself; root is only required to remove other users' handles (1b).
+On Mon, Jul 29, 2019 at 2:58 PM Dmitry Safonov <dima@arista.com> wrote:
+>
+> As it has been discussed on timens RFC, adding a new conditional branch
+> `if (inside_time_ns)` on VDSO for all processes is undesirable.
+> It will add a penalty for everybody as branch predictor may mispredict
+> the jump. Also there are instruction cache lines wasted on cmp/jmp.
 
-No, I was talking about 1b.  I'd argue that 1a and 1b should be
-different ioctl.  1b requires root, and 1a doesn't.
 
-And 1a should just mean, "I don't need to use the encrypted files any
-more".  In the PAM passphrase case, when you are just logging out, 1a
-is what's needed, and success is just fine.  pam_session won't *care*
-whether or not there are other users keeping the key in use.
+>
+> +#ifdef CONFIG_TIME_NS
+> +int vdso_join_timens(struct task_struct *task)
+> +{
+> +       struct mm_struct *mm = task->mm;
+> +       struct vm_area_struct *vma;
+> +
+> +       if (down_write_killable(&mm->mmap_sem))
+> +               return -EINTR;
+> +
+> +       for (vma = mm->mmap; vma; vma = vma->vm_next) {
+> +               unsigned long size = vma->vm_end - vma->vm_start;
+> +
+> +               if (vma_is_special_mapping(vma, &vvar_mapping) ||
+> +                   vma_is_special_mapping(vma, &vdso_mapping))
+> +                       zap_page_range(vma, vma->vm_start, size);
+> +       }
 
-The problem with "fscrypt lock" is that the non-privileged user sort
-of wants to do REMOVE_FLAG_KEY_FLAG_FOR_ALL_USERS, but they doesn't
-have the privileges to do it, and they are hoping that removing their
-own key removes it the key from the system.  That to me seems to be
-the fundamental disconnect.  The "fscrypt unlock" and "fscrypt lock"
-commands comes from the v1 key management, and requires root.  It's
-the translation to unprivileged mode where "fscrypt lock" seems to
-have problems.
+This is, unfortunately, fundamentally buggy.  If any thread is in the
+vDSO or has the vDSO on the stack (due to a signal, for example), this
+will crash it.  I can think of three solutions:
 
-> > What about having "fscrypt lock" call FS_IOC_GET_ENCRYPTION_KEY_STATUS
-> > and print a warning message saying, "we can't lock it because N other
-> > users who have registered a key".  I'd argue fscrypt should do this
-> > regardless of whether or not FS_IOC_REMOVE_ENCRYPTION_KEY returns
-> > EUSERS or not.
-> 
-> Shouldn't "fscrypt lock" still remove the user's handle, as opposed to refuse to
-> do anything, though?  So it would still need to callh
-> FS_IOC_REMOVE_ENCRYPTION_KEY, and could get the status from it rather than also
-> needing to call FS_IOC_GET_ENCRYPTION_KEY_STATUS.
-> 
-> Though, FS_IOC_GET_ENCRYPTION_KEY_STATUS would be needed if we wanted to show
-> the specific count of other users.
- 
-So my perspective is that the ioctl's should have very clean
-semantics, and errors should be consistent with how the Unix system
-calls and error reporting.
+1. Say that you can't setns() if you have other mms and ignore the
+signal issue.  Anything with green threads will disapprove.  It's also
+rather gross.
 
-If we need to make "fscrypt lock" and "fscrypt unlock" have semantics
-that are more consistent with previous user interface choices, then
-fscrypt can use FS_IOC_GET_ENCRYPTION_KEY_STATUS to print the warning
-before it calls FS_IOC_REMOVE_ENCRYPTION_KEY --- with "fscrypt purge_keys"
-calling something like FS_IOC_REMOVE_ALL_USER_ENCRYPTION_KEYS.
+2. Make it so that you can flip the static branch safely.  As in my
+other email, you'll need to deal with CoW somehow,
 
-> > It seems to me that the EBUSY and EUSERS errors should be status bits
-> > which gets returned to the user in a bitfield --- and if the key has
-> > been removed, or the user's claim on the key's existence has been
-> > removed, the ioctl returns success.
-> > 
-> > That way we don't have to deal with the semantic disconnect where some
-> > errors don't actually change system state, and other errors that *do*
-> > change system state (as in, the key gets removed, or the user's claim
-> > on the key gets removed), but still returns than error.
-> > 
-> 
-> Do you mean use a positive return value, or do you mean add an output field to
-> the struct passed to the ioctl?
+3. Make it so that you can't change timens, or at least that you can't
+turn timens on or off, without execve() or fork().
 
-I meant adding an output field.  I see EBUSY and EUSERS as status bits
-which *some* use cases might find useful.  Other use cases, such as in
-the pam_keys session logout code, we won't care at *all* about those
-status reporting (or error codes).  So if EBUSY and EUSERS are
-returned as errors, then it adds to complexity of those programs
-whichd don't care.  (And even for those that do, it's still a bit more
-complex since they has to distinguish between EBUSY, EUSERS, or other
-errors --- in fact, *all* programs which use
-FS_IOC_REMOVE_ENCRYPTION_KEY will *have* to check for EBUSY and
-ESUSERS whether they care or not.)
-
-> Either way note that it doesn't really need to be a bitfield, since you can't
-> have both statuses at the same time.  I.e. if there are still other users, we
-> couldn't have even gotten to checking for in-use files.
-
-That's actually an implementation detail, though, right?  In theory,
-we could check to see if there are any in-use files, independently of
-whether there are any users or not.
-
-					- Ted
-
-______________________________________________________
-Linux MTD discussion mailing list
-http://lists.infradead.org/mailman/listinfo/linux-mtd/
+BTW, that static branch probably needs to be aligned to a cache line
+or something similar to avoid all the nastiness with trying to poke
+text that might be concurrently executing.  This will be a mess.
