@@ -1,53 +1,46 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCHv5 28/37] x86/vdso: Enable static branches for the timens
- vdso
-Date: Thu, 1 Aug 2019 08:48:10 +0200 (CEST)
-Message-ID: <alpine.DEB.2.21.1908010841500.1788@nanos.tec.linutronix.de>
-References: <20190729215758.28405-1-dima@arista.com> <20190729215758.28405-29-dima@arista.com> <CALCETrXL6pzDoHfn9Niw_CxNX-_W3=yotDYuqK+kxPhOLofmNA@mail.gmail.com>
+From: Patrick Bellasi <patrick.bellasi@arm.com>
+Subject: Re: [PATCH v12 1/6] sched/core: uclamp: Extend CPU's cgroup
+ controller
+Date: Thu, 1 Aug 2019 11:40:14 +0100
+Message-ID: <20190801104014.amwvjdvabedsd5t7@e110439-lin>
+References: <20190718181748.28446-1-patrick.bellasi@arm.com>
+ <20190718181748.28446-2-patrick.bellasi@arm.com>
+ <20190725114104.GA32159@blackbody.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrXL6pzDoHfn9Niw_CxNX-_W3=yotDYuqK+kxPhOLofmNA@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <20190725114104.GA32159@blackbody.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Dmitry Safonov <dima@arista.com>, LKML <linux-kernel@vger.kernel.org>, Dmitry Safonov <0x7f454c46@gmail.com>, Andrei Vagin <avagin@gmail.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Vincenzo Frascino <vincenzo.frascino@arm.com>, Linux Containers <containers@lists.linux-foundation.org>, criu@openvz.org, Linux API <linux-api@vger.kernel.o>
+To: Michal =?utf-8?Q?Koutn=C3=BD?= <mkoutny@suse.com>
+Cc: cgroups@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, Alessio Balsini <balsini@android.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Quentin Perret <quentin.perret@arm.com>, Joel Fernandes <joelaf@google.com>, Paul Turner <pjt@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>, Todd Kjos <tkjos@google.com>, Peter Zijlstra <peterz@infradead.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Tejun Heo <tj@kernel.org>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Juri Lelli <juri.lelli@redhat.com>, Ingo Molnar <mingo@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 31 Jul 2019, Andy Lutomirski wrote:
-> On Mon, Jul 29, 2019 at 2:58 PM Dmitry Safonov <dima@arista.com> wrote:
-> > As it has been discussed on timens RFC, adding a new conditional branch
-> > `if (inside_time_ns)` on VDSO for all processes is undesirable.
-> >
-> > Addressing those problems, there are two versions of VDSO's .so:
-> > for host tasks (without any penalty) and for processes inside of time
-> > namespace with clk_to_ns() that subtracts offsets from host's time.
-> >
-> > The timens code in vdso looks like this:
-> >
-> > if (timens_static_branch_unlikely()) {
-> >        clk_to_ns(clk, ts);
-> > }
-> 
-> I'm confused.  Now we effectively have *three* versions: the vDSO
-> without timens, and vDSO with timens but with it switched off, and the
-> vDSO with timens on.  This seems like too much.
+On 25-Jul 13:41, Michal Koutný wrote:
+> On Thu, Jul 18, 2019 at 07:17:43PM +0100, Patrick Bellasi <patrick.bellasi@arm.com> wrote:
+> > +static ssize_t cpu_uclamp_min_write(struct kernfs_open_file *of,
+> > +				    char *buf, size_t nbytes,
+> > +				    loff_t off)
+> > +{
+> > [...]
+> > +static ssize_t cpu_uclamp_max_write(struct kernfs_open_file *of,
+> > +				    char *buf, size_t nbytes,
+> > +				    loff_t off)
+> > +{
+> > [...]
+> These two functions are almost identical yet not trivial. I think it
+> wouldn be better to have the code at one place only and distinguish by
+> the passed clamp_id.
 
-The problem is that if you have a single VDSO, then omce one process joins
-a time namespace _ALL_ other processes get an extra conditional with at
-least one extra  cache line as a bonus.
+Good point, since the removal of the boundary checks on values we now
+have two identical methods. I'll factor our the common code in a
+single function.
 
-This has been discussed at Plumbers last year and the agreement was to
-create VDSO plain (no namespace support) and VDSO extra (namespace
-support).
+Cheers,
+Patrick
 
-The performance hit of the conditional + one etra cache line for tasks
-which do not use a time name space is measurable.
+-- 
+#include <best/regards.h>
 
-That also avoids the whole mess of dealing with the static branch being
-flipped. The time name space property is determined on fork/exec _before_
-anything can touch the VDSO and depending on it the approriate version of
-the VDSO is loaded.
-
-Thanks,
-
-	tglx
+Patrick Bellasi
