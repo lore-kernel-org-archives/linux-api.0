@@ -1,117 +1,138 @@
-From: Song Liu <songliubraving@fb.com>
-Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
-Date: Fri, 2 Aug 2019 07:21:33 +0000
-Message-ID: <5A2FCD7E-7F54-41E5-BFAE-BB9494E74F2D@fb.com>
-References: <20190627201923.2589391-1-songliubraving@fb.com>
- <20190627201923.2589391-2-songliubraving@fb.com>
- <21894f45-70d8-dfca-8c02-044f776c5e05@kernel.org>
- <3C595328-3ABE-4421-9772-8D41094A4F57@fb.com>
- <CALCETrWBnH4Q43POU8cQ7YMjb9LioK28FDEQf7aHZbdf1eBZWg@mail.gmail.com>
- <0DE7F23E-9CD2-4F03-82B5-835506B59056@fb.com>
- <CALCETrWBWbNFJvsTCeUchu3BZJ3SH3dvtXLUB2EhnPrzFfsLNA@mail.gmail.com>
- <201907021115.DCD56BBABB@keescook>
- <CALCETrXTta26CTtEDnzvtd03-WOGdXcnsAogP8JjLkcj4-mHvg@mail.gmail.com>
- <4A7A225A-6C23-4C0F-9A95-7C6C56B281ED@fb.com>
- <CALCETrX2bMnwC6_t4b_G-hzJSfMPrkK4YKs5ebcecv2LJ0rt3w@mail.gmail.com>
- <514D5453-0AEE-420F-AEB6-3F4F58C62E7E@fb.com>
- <1DE886F3-3982-45DE-B545-67AD6A4871AB@amacapital.net>
- <7F51F8B8-CF4C-4D82-AAE1-F0F28951DB7F@fb.com>
- <77354A95-4107-41A7-8936-D144F01C3CA4@fb.com>
- <369476A8-4CE1-43DA-9239-06437C0384C7@fb.com>
- <CALCETrUpVMrk7aaf0trfg9AfZ4fy279uJgZH7V+gZzjFw=hUxA@mail.gmail.com>
- <D4040C0C-47D6-4852-933C-59EB53C05242@fb.com>
- <CALCETrVoZL1YGUxx3kM-d21TWVRKdKw=f2B8aE5wc2zmX1cQ4g@mail.gmail.com>
+From: Chao Yu <yuchao0@huawei.com>
+Subject: Re: [PATCH v7 14/16] f2fs: wire up new fscrypt ioctls
+Date: Fri, 2 Aug 2019 16:10:15 +0800
+Message-ID: <e3cf53a7-faf2-0321-22de-07d2e2783752@huawei.com>
+References: <20190726224141.14044-1-ebiggers@kernel.org>
+ <20190726224141.14044-15-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <CALCETrVoZL1YGUxx3kM-d21TWVRKdKw=f2B8aE5wc2zmX1cQ4g@mail.gmail.com>
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+In-Reply-To: <20190726224141.14044-15-ebiggers@kernel.org>
 Content-Language: en-US
-Content-ID: <4D40F33B94638543A6BA3E1D1275382F@namprd15.prod.outlook.com>
-Sender: netdev-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Kees Cook <keescook@chromium.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+To: Eric Biggers <ebiggers@kernel.org>, linux-fscrypt@vger.kernel.org
+Cc: Satya Tangirala <satyat@google.com>, linux-api@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, keyrings@vger.kernel.org, linux-mtd@lists.infradead.org, linux-crypto@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, Paul Crowley <paulcrowley@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Andy,
+Hi Eric,
 
-> On Jul 31, 2019, at 12:09 PM, Andy Lutomirski <luto@kernel.org> wrote:
->=20
-> On Wed, Jul 31, 2019 at 1:10 AM Song Liu <songliubraving@fb.com> wrote:
->>=20
->>=20
->>=20
->>> On Jul 30, 2019, at 1:24 PM, Andy Lutomirski <luto@kernel.org> wrote:
->>>=20
->>> On Mon, Jul 29, 2019 at 10:07 PM Song Liu <songliubraving@fb.com> wrote=
-:
->>>>=20
->>>> Hi Andy,
->>>>=20
->>>>> On Jul 27, 2019, at 11:20 AM, Song Liu <songliubraving@fb.com> wrote:
->>>>>=20
->>>>> Hi Andy,
->>>>>=20
->>>>>=20
->>=20
->> [...]
->>=20
->>>>>=20
->>>>=20
->>>> I would like more comments on this.
->>>>=20
->>>> Currently, bpf permission is more or less "root or nothing", which we
->>>> would like to change.
->>>>=20
->>>> The short term goal is to separate bpf from root, in other words, it i=
-s
->>>> "all or nothing". Special user space utilities, such as systemd, would
->>>> benefit from this. Once this is implemented, systemd can call sys_bpf(=
-)
->>>> when it is not running as root.
->>>=20
->>> As generally nasty as Linux capabilities are, this sounds like a good
->>> use for CAP_BPF_ADMIN.
->>=20
->> I actually agree CAP_BPF_ADMIN makes sense. The hard part is to make
->> existing tools (setcap, getcap, etc.) and libraries aware of the new CAP=
-.
->=20
-> It's been done before -- it's not that hard.  IMO the main tricky bit
-> would be try be somewhat careful about defining exactly what
-> CAP_BPF_ADMIN does.
+On 2019/7/27 6:41, Eric Biggers wrote:
+> From: Eric Biggers <ebiggers@google.com>
+> 
+> Wire up the new ioctls for adding and removing fscrypt keys to/from the
+> filesystem, and the new ioctl for retrieving v2 encryption policies.
+> 
+> FS_IOC_REMOVE_ENCRYPTION_KEY also required making f2fs_drop_inode() call
+> fscrypt_drop_inode().
+> 
+> For more details see Documentation/filesystems/fscrypt.rst and the
+> fscrypt patches that added the implementation of these ioctls.
+> 
+> Signed-off-by: Eric Biggers <ebiggers@google.com>
 
-Agreed. I think defining CAP_BPF_ADMIN could be a good topic for the=20
-Plumbers conference.=20
+Reviewed-by: Chao Yu <yuchao0@huawei.com>
 
-OTOH, I don't think we have to wait for CAP_BPF_ADMIN to allow daemons=20
-like systemd to do sys_bpf() without root.=20
+BTW, do you think it needs to make xxfs_has_support_encrypt() function be a
+common interface defined in struct fscrypt_operations, as I see all
+fscrypt_ioctl_*() needs to check with it, tho such cleanup is minor...
 
->=20
->>> I don't see why you need to invent a whole new mechanism for this.
->>> The entire cgroup ecosystem outside bpf() does just fine using the
->>> write permission on files in cgroupfs to control access.  Why can't
->>> bpf() do the same thing?
->>=20
->> It is easier to use write permission for BPF_PROG_ATTACH. But it is
->> not easy to do the same for other bpf commands: BPF_PROG_LOAD and
->> BPF_MAP_*. A lot of these commands don't have target concept. Maybe
->> we should have target concept for all these commands. But that is a
->> much bigger project. OTOH, "all or nothing" model allows all these
->> commands at once.
->=20
-> For BPF_PROG_LOAD, I admit I've never understood why permission is
-> required at all.  I think that CAP_SYS_ADMIN or similar should be
-> needed to get is_priv in the verifier, but I think that should mainly
-> be useful for tracing, and that requires lots of privilege anyway.
-> BPF_MAP_* is probably the trickiest part.  One solution would be some
-> kind of bpffs, but I'm sure other solutions are possible.
+Thanks,
 
-Improving permission management of cgroup_bpf is another good topic to
-discuss. However, it is also an overkill for current use case.=20
-
-Let me get more details about the use case, so that we have a clear=20
-picture about short term and long term goals.=20
-
-Thanks again for your suggestions.=20
-Song
+> ---
+>  fs/f2fs/file.c  | 46 ++++++++++++++++++++++++++++++++++++++++++++++
+>  fs/f2fs/super.c |  2 ++
+>  2 files changed, 48 insertions(+)
+> 
+> diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
+> index f8d46df8fa9ee..d81dda290b829 100644
+> --- a/fs/f2fs/file.c
+> +++ b/fs/f2fs/file.c
+> @@ -2184,6 +2184,40 @@ static int f2fs_ioc_get_encryption_pwsalt(struct file *filp, unsigned long arg)
+>  	return err;
+>  }
+>  
+> +static int f2fs_ioc_get_encryption_policy_ex(struct file *filp,
+> +					     unsigned long arg)
+> +{
+> +	if (!f2fs_sb_has_encrypt(F2FS_I_SB(file_inode(filp))))
+> +		return -EOPNOTSUPP;
+> +
+> +	return fscrypt_ioctl_get_policy_ex(filp, (void __user *)arg);
+> +}
+> +
+> +static int f2fs_ioc_add_encryption_key(struct file *filp, unsigned long arg)
+> +{
+> +	if (!f2fs_sb_has_encrypt(F2FS_I_SB(file_inode(filp))))
+> +		return -EOPNOTSUPP;
+> +
+> +	return fscrypt_ioctl_add_key(filp, (void __user *)arg);
+> +}
+> +
+> +static int f2fs_ioc_remove_encryption_key(struct file *filp, unsigned long arg)
+> +{
+> +	if (!f2fs_sb_has_encrypt(F2FS_I_SB(file_inode(filp))))
+> +		return -EOPNOTSUPP;
+> +
+> +	return fscrypt_ioctl_remove_key(filp, (const void __user *)arg);
+> +}
+> +
+> +static int f2fs_ioc_get_encryption_key_status(struct file *filp,
+> +					      unsigned long arg)
+> +{
+> +	if (!f2fs_sb_has_encrypt(F2FS_I_SB(file_inode(filp))))
+> +		return -EOPNOTSUPP;
+> +
+> +	return fscrypt_ioctl_get_key_status(filp, (void __user *)arg);
+> +}
+> +
+>  static int f2fs_ioc_gc(struct file *filp, unsigned long arg)
+>  {
+>  	struct inode *inode = file_inode(filp);
+> @@ -3109,6 +3143,14 @@ long f2fs_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+>  		return f2fs_ioc_get_encryption_policy(filp, arg);
+>  	case F2FS_IOC_GET_ENCRYPTION_PWSALT:
+>  		return f2fs_ioc_get_encryption_pwsalt(filp, arg);
+> +	case FS_IOC_GET_ENCRYPTION_POLICY_EX:
+> +		return f2fs_ioc_get_encryption_policy_ex(filp, arg);
+> +	case FS_IOC_ADD_ENCRYPTION_KEY:
+> +		return f2fs_ioc_add_encryption_key(filp, arg);
+> +	case FS_IOC_REMOVE_ENCRYPTION_KEY:
+> +		return f2fs_ioc_remove_encryption_key(filp, arg);
+> +	case FS_IOC_GET_ENCRYPTION_KEY_STATUS:
+> +		return f2fs_ioc_get_encryption_key_status(filp, arg);
+>  	case F2FS_IOC_GARBAGE_COLLECT:
+>  		return f2fs_ioc_gc(filp, arg);
+>  	case F2FS_IOC_GARBAGE_COLLECT_RANGE:
+> @@ -3236,6 +3278,10 @@ long f2fs_compat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+>  	case F2FS_IOC_SET_ENCRYPTION_POLICY:
+>  	case F2FS_IOC_GET_ENCRYPTION_PWSALT:
+>  	case F2FS_IOC_GET_ENCRYPTION_POLICY:
+> +	case FS_IOC_GET_ENCRYPTION_POLICY_EX:
+> +	case FS_IOC_ADD_ENCRYPTION_KEY:
+> +	case FS_IOC_REMOVE_ENCRYPTION_KEY:
+> +	case FS_IOC_GET_ENCRYPTION_KEY_STATUS:
+>  	case F2FS_IOC_GARBAGE_COLLECT:
+>  	case F2FS_IOC_GARBAGE_COLLECT_RANGE:
+>  	case F2FS_IOC_WRITE_CHECKPOINT:
+> diff --git a/fs/f2fs/super.c b/fs/f2fs/super.c
+> index 6de6cda440315..f5fae8d511a20 100644
+> --- a/fs/f2fs/super.c
+> +++ b/fs/f2fs/super.c
+> @@ -913,6 +913,8 @@ static int f2fs_drop_inode(struct inode *inode)
+>  		return 0;
+>  	}
+>  	ret = generic_drop_inode(inode);
+> +	if (!ret)
+> +		ret = fscrypt_drop_inode(inode);
+>  	trace_f2fs_drop_inode(inode, ret);
+>  	return ret;
+>  }
+> 
