@@ -1,177 +1,117 @@
-From: Eric Biggers <ebiggers@kernel.org>
-Subject: Re: [PATCH v7 07/16] fscrypt: add FS_IOC_REMOVE_ENCRYPTION_KEY ioctl
-Date: Thu, 1 Aug 2019 21:38:27 -0700
-Message-ID: <20190802043827.GA19201@sol.localdomain>
-References: <20190726224141.14044-1-ebiggers@kernel.org>
- <20190726224141.14044-8-ebiggers@kernel.org>
- <20190728192417.GG6088@mit.edu> <20190729195827.GF169027@gmail.com>
- <20190731183802.GA687@sol.localdomain>
- <20190731233843.GA2769@mit.edu>
- <20190801011140.GB687@sol.localdomain>
- <20190801053108.GD2769@mit.edu> <20190801220432.GC223822@gmail.com>
+From: Song Liu <songliubraving@fb.com>
+Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
+Date: Fri, 2 Aug 2019 07:21:33 +0000
+Message-ID: <5A2FCD7E-7F54-41E5-BFAE-BB9494E74F2D@fb.com>
+References: <20190627201923.2589391-1-songliubraving@fb.com>
+ <20190627201923.2589391-2-songliubraving@fb.com>
+ <21894f45-70d8-dfca-8c02-044f776c5e05@kernel.org>
+ <3C595328-3ABE-4421-9772-8D41094A4F57@fb.com>
+ <CALCETrWBnH4Q43POU8cQ7YMjb9LioK28FDEQf7aHZbdf1eBZWg@mail.gmail.com>
+ <0DE7F23E-9CD2-4F03-82B5-835506B59056@fb.com>
+ <CALCETrWBWbNFJvsTCeUchu3BZJ3SH3dvtXLUB2EhnPrzFfsLNA@mail.gmail.com>
+ <201907021115.DCD56BBABB@keescook>
+ <CALCETrXTta26CTtEDnzvtd03-WOGdXcnsAogP8JjLkcj4-mHvg@mail.gmail.com>
+ <4A7A225A-6C23-4C0F-9A95-7C6C56B281ED@fb.com>
+ <CALCETrX2bMnwC6_t4b_G-hzJSfMPrkK4YKs5ebcecv2LJ0rt3w@mail.gmail.com>
+ <514D5453-0AEE-420F-AEB6-3F4F58C62E7E@fb.com>
+ <1DE886F3-3982-45DE-B545-67AD6A4871AB@amacapital.net>
+ <7F51F8B8-CF4C-4D82-AAE1-F0F28951DB7F@fb.com>
+ <77354A95-4107-41A7-8936-D144F01C3CA4@fb.com>
+ <369476A8-4CE1-43DA-9239-06437C0384C7@fb.com>
+ <CALCETrUpVMrk7aaf0trfg9AfZ4fy279uJgZH7V+gZzjFw=hUxA@mail.gmail.com>
+ <D4040C0C-47D6-4852-933C-59EB53C05242@fb.com>
+ <CALCETrVoZL1YGUxx3kM-d21TWVRKdKw=f2B8aE5wc2zmX1cQ4g@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org>
-Content-Disposition: inline
-In-Reply-To: <20190801220432.GC223822@gmail.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
- <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
-List-Post: <mailto:linux-mtd@lists.infradead.org>
-List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
- <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-mtd" <linux-mtd-bounces@lists.infradead.org>
-Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org
-To: "Theodore Y. Ts'o" <tytso@mit.edu>, linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-mtd@lists.infradead.org, linux-api@vger.kernel.org, linux-crypto@vger.kernel.org, keyrings@vger.kernel.org, Paul Crowley <paulcrowley@google.com>, Satya Tangirala <satyat@google.com>
+Content-Transfer-Encoding: quoted-printable
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <CALCETrVoZL1YGUxx3kM-d21TWVRKdKw=f2B8aE5wc2zmX1cQ4g@mail.gmail.com>
+Content-Language: en-US
+Content-ID: <4D40F33B94638543A6BA3E1D1275382F@namprd15.prod.outlook.com>
+Sender: netdev-owner@vger.kernel.org
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Kees Cook <keescook@chromium.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 01, 2019 at 03:04:34PM -0700, Eric Biggers wrote:
-> On Thu, Aug 01, 2019 at 01:31:08AM -0400, Theodore Y. Ts'o wrote:
-> > On Wed, Jul 31, 2019 at 06:11:40PM -0700, Eric Biggers wrote:
-> > > 
-> > > Well, it's either
-> > > 
-> > > 1a. Remove the user's handle.
-> > > 	OR 
-> > > 1b. Remove all users' handles.  (FSCRYPT_REMOVE_KEY_FLAG_ALL_USERS)
-> > > 
-> > > Then
-> > > 
-> > > 2. If no handles remain, try to evict all inodes that use the key.
-> > > 
-> > > By "purge all keys" do you mean step (2)?  Note that it doesn't require root by
-> > > itself; root is only required to remove other users' handles (1b).
-> > 
-> > No, I was talking about 1b.  I'd argue that 1a and 1b should be
-> > different ioctl.  1b requires root, and 1a doesn't.
-> > 
-> [...]
-> > > 
-> > > Do you mean use a positive return value, or do you mean add an output field to
-> > > the struct passed to the ioctl?
-> > 
-> > I meant adding an output field.  I see EBUSY and EUSERS as status bits
-> > which *some* use cases might find useful.
-> 
-> Ted, would you be happy with the following API?
-> 
+Hi Andy,
 
-Here's a slightly updated version (I missed removing some stale text):
+> On Jul 31, 2019, at 12:09 PM, Andy Lutomirski <luto@kernel.org> wrote:
+>=20
+> On Wed, Jul 31, 2019 at 1:10 AM Song Liu <songliubraving@fb.com> wrote:
+>>=20
+>>=20
+>>=20
+>>> On Jul 30, 2019, at 1:24 PM, Andy Lutomirski <luto@kernel.org> wrote:
+>>>=20
+>>> On Mon, Jul 29, 2019 at 10:07 PM Song Liu <songliubraving@fb.com> wrote=
+:
+>>>>=20
+>>>> Hi Andy,
+>>>>=20
+>>>>> On Jul 27, 2019, at 11:20 AM, Song Liu <songliubraving@fb.com> wrote:
+>>>>>=20
+>>>>> Hi Andy,
+>>>>>=20
+>>>>>=20
+>>=20
+>> [...]
+>>=20
+>>>>>=20
+>>>>=20
+>>>> I would like more comments on this.
+>>>>=20
+>>>> Currently, bpf permission is more or less "root or nothing", which we
+>>>> would like to change.
+>>>>=20
+>>>> The short term goal is to separate bpf from root, in other words, it i=
+s
+>>>> "all or nothing". Special user space utilities, such as systemd, would
+>>>> benefit from this. Once this is implemented, systemd can call sys_bpf(=
+)
+>>>> when it is not running as root.
+>>>=20
+>>> As generally nasty as Linux capabilities are, this sounds like a good
+>>> use for CAP_BPF_ADMIN.
+>>=20
+>> I actually agree CAP_BPF_ADMIN makes sense. The hard part is to make
+>> existing tools (setcap, getcap, etc.) and libraries aware of the new CAP=
+.
+>=20
+> It's been done before -- it's not that hard.  IMO the main tricky bit
+> would be try be somewhat careful about defining exactly what
+> CAP_BPF_ADMIN does.
 
-Removing keys
--------------
+Agreed. I think defining CAP_BPF_ADMIN could be a good topic for the=20
+Plumbers conference.=20
 
-Two ioctls are available for removing a key that was added by
-`FS_IOC_ADD_ENCRYPTION_KEY`_:
+OTOH, I don't think we have to wait for CAP_BPF_ADMIN to allow daemons=20
+like systemd to do sys_bpf() without root.=20
 
-- `FS_IOC_REMOVE_ENCRYPTION_KEY`_
-- `FS_IOC_REMOVE_ENCRYPTION_KEY_ALL_USERS`_
+>=20
+>>> I don't see why you need to invent a whole new mechanism for this.
+>>> The entire cgroup ecosystem outside bpf() does just fine using the
+>>> write permission on files in cgroupfs to control access.  Why can't
+>>> bpf() do the same thing?
+>>=20
+>> It is easier to use write permission for BPF_PROG_ATTACH. But it is
+>> not easy to do the same for other bpf commands: BPF_PROG_LOAD and
+>> BPF_MAP_*. A lot of these commands don't have target concept. Maybe
+>> we should have target concept for all these commands. But that is a
+>> much bigger project. OTOH, "all or nothing" model allows all these
+>> commands at once.
+>=20
+> For BPF_PROG_LOAD, I admit I've never understood why permission is
+> required at all.  I think that CAP_SYS_ADMIN or similar should be
+> needed to get is_priv in the verifier, but I think that should mainly
+> be useful for tracing, and that requires lots of privilege anyway.
+> BPF_MAP_* is probably the trickiest part.  One solution would be some
+> kind of bpffs, but I'm sure other solutions are possible.
 
-These two ioctls differ only in cases where v2 policy keys are added
-or removed by non-root users.
+Improving permission management of cgroup_bpf is another good topic to
+discuss. However, it is also an overkill for current use case.=20
 
-These ioctls don't work on keys that were added via the legacy
-process-subscribed keyrings mechanism.
+Let me get more details about the use case, so that we have a clear=20
+picture about short term and long term goals.=20
 
-Before using these ioctls, read the `Kernel memory compromise`_
-section for a discussion of the security goals and limitations of
-these ioctls.
-
-FS_IOC_REMOVE_ENCRYPTION_KEY
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The FS_IOC_REMOVE_ENCRYPTION_KEY ioctl removes a claim to a master
-encryption key from the filesystem, and possibly removes the key
-itself.  It can be executed on any file or directory on the target
-filesystem, but using the filesystem's root directory is recommended.
-It takes in a pointer to a :c:type:`struct fscrypt_remove_key_arg`,
-defined as follows::
-
-    struct fscrypt_remove_key_arg {
-            struct fscrypt_key_specifier key_spec;
-    #define FSCRYPT_KEY_REMOVAL_STATUS_FLAG_FILES_BUSY      0x00000001
-    #define FSCRYPT_KEY_REMOVAL_STATUS_FLAG_OTHER_USERS     0x00000002
-            __u32 removal_status_flags;     /* output */
-            __u32 __reserved[5];
-    };
-
-This structure must be zeroed, then initialized as follows:
-
-- The key to remove is specified by ``key_spec``:
-
-    - To remove a key used by v1 encryption policies, set
-      ``key_spec.type`` to FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR and fill
-      in ``key_spec.u.descriptor``.  To remove this type of key, the
-      calling process must have the CAP_SYS_ADMIN capability in the
-      initial user namespace.
-
-    - To remove a key used by v2 encryption policies, set
-      ``key_spec.type`` to FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER and fill
-      in ``key_spec.u.identifier``.
-
-For v2 policy keys, this ioctl is usable by non-root users.  However,
-to make this possible, it actually just removes the current user's
-claim to the key, undoing a single call to FS_IOC_ADD_ENCRYPTION_KEY.
-Only after all claims are removed is the key really removed.
-
-For example, if FS_IOC_ADD_ENCRYPTION_KEY was called with uid 1000,
-then the key will be "claimed" by uid 1000, and
-FS_IOC_REMOVE_ENCRYPTION_KEY will only succeed as uid 1000.  Or, if
-both uids 1000 and 2000 added the key, then for each uid
-FS_IOC_REMOVE_ENCRYPTION_KEY will only remove their own claim.  Only
-once *both* are removed is the key really removed.  (Think of it like
-unlinking a file that may have hard links.)
-
-If FS_IOC_REMOVE_ENCRYPTION_KEY really removes the key, it will also
-try to "lock" all files that had been unlocked with the key.  It won't
-lock files that are still in-use, so this ioctl is expected to be used
-in cooperation with userspace ensuring that none of the files are
-still open.  However, if necessary, the ioctl can be executed again
-later to retry locking any remaining files.
-
-FS_IOC_REMOVE_ENCRYPTION_KEY returns 0 if either the key was removed
-(but may still have files remaining to be locked), the user's claim to
-the key was removed, or the key was already removed but had files
-remaining to be the locked so the ioctl retried locking them.  In any
-of these cases, ``removal_status_flags`` is filled in with the
-following informational status flags:
-
-- ``FSCRYPT_KEY_REMOVAL_STATUS_FLAG_FILES_BUSY``: set if some file(s)
-  are still in-use.  Not guaranteed to be set in the case where only
-  the user's claim to the key was removed.
-- ``FSCRYPT_KEY_REMOVAL_STATUS_FLAG_OTHER_USERS``: set if only the
-  user's claim to the key was removed, not the key itself
-
-FS_IOC_REMOVE_ENCRYPTION_KEY can fail with the following errors:
-
-- ``EACCES``: The FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR key specifier type
-  was specified, but the caller does not have the CAP_SYS_ADMIN
-  capability in the initial user namespace
-- ``EINVAL``: invalid key specifier type, or reserved bits were set
-- ``ENOKEY``: the key object was not found at all, i.e. it was never
-  added in the first place or was already fully removed including all
-  files locked; or, the user does not have a claim to the key.
-- ``ENOTTY``: this type of filesystem does not implement encryption
-- ``EOPNOTSUPP``: the kernel was not configured with encryption
-  support for this filesystem, or the filesystem superblock has not
-  had encryption enabled on it
-
-FS_IOC_REMOVE_ENCRYPTION_KEY_ALL_USERS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-FS_IOC_REMOVE_ENCRYPTION_KEY_ALL_USERS is exactly the same as
-`FS_IOC_REMOVE_ENCRYPTION_KEY`_, except that for v2 policy keys, the
-ALL_USERS version of the ioctl will remove all users' claims to the
-key, not just the current user's.  I.e., the key itself will always be
-removed, no matter how many users have added it.  This difference is
-only meaningful if non-root users are adding and removing keys.
-
-Because of this, FS_IOC_REMOVE_ENCRYPTION_KEY_ALL_USERS also requires
-"root", namely the CAP_SYS_ADMIN capability in the initial user
-namespace.  Otherwise it will fail with ``EACCES``.
-
-______________________________________________________
-Linux MTD discussion mailing list
-http://lists.infradead.org/mailman/listinfo/linux-mtd/
+Thanks again for your suggestions.=20
+Song
