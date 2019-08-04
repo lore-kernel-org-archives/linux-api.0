@@ -1,72 +1,195 @@
-From: Chao Yu <chao@kernel.org>
-Subject: [PATCH v7 14/16] f2fs: wire up new fscrypt ioctls
-Date: Sun, 4 Aug 2019 17:42:11 +0800
-Message-ID: <88479efb-6625-8778-f802-e159ec60a374@kernel.org>
-References: <20190726224141.14044-1-ebiggers@kernel.org>
- <20190726224141.14044-15-ebiggers@kernel.org>
- <e3cf53a7-faf2-0321-22de-07d2e2783752@huawei.com>
- <20190802173148.GA51937@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-In-Reply-To: <20190802173148.GA51937@gmail.com>
-Content-Language: en-US
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: Chao Yu <yuchao0@huawei.com>, linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-mtd@lists.infradead.org, linux-api@vger.kernel.org, linux-crypto@vger.kernel.org, keyrings@vger.kernel.org, Paul Crowley <paulcrowley@google.com>, Satya Tangirala <satyat@google.com>
+From: Wu Hao <hao.wu@intel.com>
+Subject: [PATCH v4 02/12] fpga: dfl: pci: enable SRIOV support.
+Date: Sun,  4 Aug 2019 18:20:12 +0800
+Message-ID: <1564914022-3710-3-git-send-email-hao.wu@intel.com>
+References: <1564914022-3710-1-git-send-email-hao.wu@intel.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1564914022-3710-1-git-send-email-hao.wu@intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: gregkh@linuxfoundation.org, mdf@kernel.org, linux-fpga@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, atull@kernel.org, Wu Hao <hao.wu@intel.com>, Zhang Yi Z <yi.z.zhang@intel.com>, Xu Yilun <yilun.xu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On 2019-8-3 1:31, Eric Biggers wrote:
-> On Fri, Aug 02, 2019 at 04:10:15PM +0800, Chao Yu wrote:
->> Hi Eric,
->>
->> On 2019/7/27 6:41, Eric Biggers wrote:
->>> From: Eric Biggers <ebiggers@google.com>
->>>
->>> Wire up the new ioctls for adding and removing fscrypt keys to/from the
->>> filesystem, and the new ioctl for retrieving v2 encryption policies.
->>>
->>> FS_IOC_REMOVE_ENCRYPTION_KEY also required making f2fs_drop_inode() call
->>> fscrypt_drop_inode().
->>>
->>> For more details see Documentation/filesystems/fscrypt.rst and the
->>> fscrypt patches that added the implementation of these ioctls.
->>>
->>> Signed-off-by: Eric Biggers <ebiggers@google.com>
->>
->> Reviewed-by: Chao Yu <yuchao0@huawei.com>
->>
->> BTW, do you think it needs to make xxfs_has_support_encrypt() function be a
->> common interface defined in struct fscrypt_operations, as I see all
->> fscrypt_ioctl_*() needs to check with it, tho such cleanup is minor...
->>
-> 
-> Maybe.  It would work nicely for ext4 and f2fs, but ubifs does things
-> differently since it automatically enables the encryption feature if needed.
-> So we'd have to make the callback optional.
+This patch enables the standard sriov support. It allows user to
+enable SRIOV (and VFs), then user could pass through accelerators
+(VFs) into virtual machine or use VFs directly in host.
 
-Correct, ubifs can leave the callback as NULL function pointer.
+Signed-off-by: Zhang Yi Z <yi.z.zhang@intel.com>
+Signed-off-by: Xu Yilun <yilun.xu@intel.com>
+Signed-off-by: Wu Hao <hao.wu@intel.com>
+Acked-by: Alan Tull <atull@kernel.org>
+Acked-by: Moritz Fischer <mdf@kernel.org>
+Signed-off-by: Moritz Fischer <mdf@kernel.org>
+---
+v2: remove DRV/MODULE_VERSION modifications.
+v4: split __dfl_fpga_cdev_config_port_vf into 2 functions with
+    locking added.
+---
+ drivers/fpga/dfl-pci.c | 36 ++++++++++++++++++++++
+ drivers/fpga/dfl.c     | 82 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ drivers/fpga/dfl.h     |  3 +-
+ 3 files changed, 120 insertions(+), 1 deletion(-)
 
-> 
-> In any case, I think this should be separate from this patchset.
-
-Yup, it can be done in a separated patch if need.
-
-Thanks,
-
-> 
-> - Eric
-> 
-> 
-> _______________________________________________
-> Linux-f2fs-devel mailing list
-> Linux-f2fs-devel@lists.sourceforge.net
-> https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel
-> 
+diff --git a/drivers/fpga/dfl-pci.c b/drivers/fpga/dfl-pci.c
+index 66b5720..89ca292 100644
+--- a/drivers/fpga/dfl-pci.c
++++ b/drivers/fpga/dfl-pci.c
+@@ -223,8 +223,43 @@ int cci_pci_probe(struct pci_dev *pcidev, const struct pci_device_id *pcidevid)
+ 	return ret;
+ }
+ 
++static int cci_pci_sriov_configure(struct pci_dev *pcidev, int num_vfs)
++{
++	struct cci_drvdata *drvdata = pci_get_drvdata(pcidev);
++	struct dfl_fpga_cdev *cdev = drvdata->cdev;
++	int ret = 0;
++
++	if (!num_vfs) {
++		/*
++		 * disable SRIOV and then put released ports back to default
++		 * PF access mode.
++		 */
++		pci_disable_sriov(pcidev);
++
++		dfl_fpga_cdev_config_ports_pf(cdev);
++
++	} else {
++		/*
++		 * before enable SRIOV, put released ports into VF access mode
++		 * first of all.
++		 */
++		ret = dfl_fpga_cdev_config_ports_vf(cdev, num_vfs);
++		if (ret)
++			return ret;
++
++		ret = pci_enable_sriov(pcidev, num_vfs);
++		if (ret)
++			dfl_fpga_cdev_config_ports_pf(cdev);
++	}
++
++	return ret;
++}
++
+ static void cci_pci_remove(struct pci_dev *pcidev)
+ {
++	if (dev_is_pf(&pcidev->dev))
++		cci_pci_sriov_configure(pcidev, 0);
++
+ 	cci_remove_feature_devs(pcidev);
+ 	pci_disable_pcie_error_reporting(pcidev);
+ }
+@@ -234,6 +269,7 @@ static void cci_pci_remove(struct pci_dev *pcidev)
+ 	.id_table = cci_pcie_id_tbl,
+ 	.probe = cci_pci_probe,
+ 	.remove = cci_pci_remove,
++	.sriov_configure = cci_pci_sriov_configure,
+ };
+ 
+ module_pci_driver(cci_pci_driver);
+diff --git a/drivers/fpga/dfl.c b/drivers/fpga/dfl.c
+index 70ffe8b..b913704 100644
+--- a/drivers/fpga/dfl.c
++++ b/drivers/fpga/dfl.c
+@@ -1131,6 +1131,88 @@ int dfl_fpga_cdev_assign_port(struct dfl_fpga_cdev *cdev, int port_id)
+ }
+ EXPORT_SYMBOL_GPL(dfl_fpga_cdev_assign_port);
+ 
++static void config_port_access_mode(struct device *fme_dev, int port_id,
++				    bool is_vf)
++{
++	void __iomem *base;
++	u64 v;
++
++	base = dfl_get_feature_ioaddr_by_id(fme_dev, FME_FEATURE_ID_HEADER);
++
++	v = readq(base + FME_HDR_PORT_OFST(port_id));
++
++	v &= ~FME_PORT_OFST_ACC_CTRL;
++	v |= FIELD_PREP(FME_PORT_OFST_ACC_CTRL,
++			is_vf ? FME_PORT_OFST_ACC_VF : FME_PORT_OFST_ACC_PF);
++
++	writeq(v, base + FME_HDR_PORT_OFST(port_id));
++}
++
++#define config_port_vf_mode(dev, id) config_port_access_mode(dev, id, true)
++#define config_port_pf_mode(dev, id) config_port_access_mode(dev, id, false)
++
++/**
++ * dfl_fpga_cdev_config_ports_pf - configure ports to PF access mode
++ *
++ * @cdev: parent container device.
++ *
++ * This function is needed in sriov configuration routine. It could be used to
++ * configure the all released ports from VF access mode to PF.
++ */
++void dfl_fpga_cdev_config_ports_pf(struct dfl_fpga_cdev *cdev)
++{
++	struct dfl_feature_platform_data *pdata;
++
++	mutex_lock(&cdev->lock);
++	list_for_each_entry(pdata, &cdev->port_dev_list, node) {
++		if (device_is_registered(&pdata->dev->dev))
++			continue;
++
++		config_port_pf_mode(cdev->fme_dev, pdata->id);
++	}
++	mutex_unlock(&cdev->lock);
++}
++EXPORT_SYMBOL_GPL(dfl_fpga_cdev_config_ports_pf);
++
++/**
++ * dfl_fpga_cdev_config_ports_vf - configure ports to VF access mode
++ *
++ * @cdev: parent container device.
++ * @num_vfs: VF device number.
++ *
++ * This function is needed in sriov configuration routine. It could be used to
++ * configure the released ports from PF access mode to VF.
++ *
++ * Return: 0 on success, negative error code otherwise.
++ */
++int dfl_fpga_cdev_config_ports_vf(struct dfl_fpga_cdev *cdev, int num_vfs)
++{
++	struct dfl_feature_platform_data *pdata;
++	int ret = 0;
++
++	mutex_lock(&cdev->lock);
++	/*
++	 * can't turn multiple ports into 1 VF device, only 1 port for 1 VF
++	 * device, so if released port number doesn't match VF device number,
++	 * then reject the request with -EINVAL error code.
++	 */
++	if (cdev->released_port_num != num_vfs) {
++		ret = -EINVAL;
++		goto done;
++	}
++
++	list_for_each_entry(pdata, &cdev->port_dev_list, node) {
++		if (device_is_registered(&pdata->dev->dev))
++			continue;
++
++		config_port_vf_mode(cdev->fme_dev, pdata->id);
++	}
++done:
++	mutex_unlock(&cdev->lock);
++	return ret;
++}
++EXPORT_SYMBOL_GPL(dfl_fpga_cdev_config_ports_vf);
++
+ static void __exit dfl_fpga_exit(void)
+ {
+ 	dfl_chardev_uinit();
+diff --git a/drivers/fpga/dfl.h b/drivers/fpga/dfl.h
+index 6f7855e..b3f2f53 100644
+--- a/drivers/fpga/dfl.h
++++ b/drivers/fpga/dfl.h
+@@ -416,5 +416,6 @@ struct platform_device *
+ 
+ int dfl_fpga_cdev_release_port(struct dfl_fpga_cdev *cdev, int port_id);
+ int dfl_fpga_cdev_assign_port(struct dfl_fpga_cdev *cdev, int port_id);
+-
++void dfl_fpga_cdev_config_ports_pf(struct dfl_fpga_cdev *cdev);
++int dfl_fpga_cdev_config_ports_vf(struct dfl_fpga_cdev *cdev, int num_vf);
+ #endif /* __FPGA_DFL_H */
+-- 
+1.8.3.1
