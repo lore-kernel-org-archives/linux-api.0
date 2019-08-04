@@ -1,73 +1,111 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v4 00/12] FPGA DFL updates
-Date: Sun,  4 Aug 2019 18:20:10 +0800
-Message-ID: <1564914022-3710-1-git-send-email-hao.wu@intel.com>
+Subject: [PATCH v4 06/12] fpga: dfl: afu: export __port_enable/disable function.
+Date: Sun,  4 Aug 2019 18:20:16 +0800
+Message-ID: <1564914022-3710-7-git-send-email-hao.wu@intel.com>
+References: <1564914022-3710-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1564914022-3710-1-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: gregkh@linuxfoundation.org, mdf@kernel.org, linux-fpga@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, atull@kernel.org, Wu Hao <hao.wu@intel.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, atull@kernel.org, Wu Hao <hao.wu@intel.com>, Xu Yilun <yilun.xu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Greg,
+As these two functions are used by other private features. e.g.
+in error reporting private feature, it requires to check port status
+and reset port for error clearing.
 
-This is v4 patchset which adds more features to FPGA DFL. The avx512
-partial reconfiguration support patch is dropped for now as need
-to address some opens first.
+Signed-off-by: Xu Yilun <yilun.xu@intel.com>
+Signed-off-by: Wu Hao <hao.wu@intel.com>
+Acked-by: Moritz Fischer <mdf@kernel.org>
+Acked-by: Alan Tull <atull@kernel.org>
+Signed-off-by: Moritz Fischer <mdf@kernel.org>
+---
+v2: rebased
+---
+ drivers/fpga/dfl-afu-main.c | 25 ++++++++++++++-----------
+ drivers/fpga/dfl-afu.h      |  3 +++
+ 2 files changed, 17 insertions(+), 11 deletions(-)
 
-Main changes from v3:
-  - drop avx512 partail reconfiguration patch for now.
-  - split dfl_fpga_cdev_config_port to 2 functions *_release/assign_port
-    (#1).
-  - split __dfl_fpga_cdev_config_port_vf into 2 functions with locking
-    added (#2).
-  - improve description in sysfs doc to avoid misunderstanding (#3).
-  - switch to boolean in sysfs entry store function (#3).
-  - remove dev_dbg in init/uinit callback function (#7, #9, #11).
-  - remove uinit callback which does does nothing (#8, #9)
-
-Main changes from v2:
-  - update kernel version/date in sysfs doc (patch #4, #5, #8, #10, #11).
-  - add back Documentation patch (patch #12).
-
-Main changes from v1:
-  - remove DRV/MODULE_VERSION modifications. (patch #1, #3, #4, #6)
-  - remove argsz from new ioctls. (patch #2)
-  - replace sysfs_create/remove_* with device_add/remove_* for sysfs entries.
-    (patch #5, #8, #11)
-
-Wu Hao (12):
-  fpga: dfl: fme: add DFL_FPGA_FME_PORT_RELEASE/ASSIGN ioctl support.
-  fpga: dfl: pci: enable SRIOV support.
-  fpga: dfl: afu: add AFU state related sysfs interfaces
-  fpga: dfl: afu: add userclock sysfs interfaces.
-  fpga: dfl: add id_table for dfl private feature driver
-  fpga: dfl: afu: export __port_enable/disable function.
-  fpga: dfl: afu: add error reporting support.
-  fpga: dfl: make uinit callback optional
-  fpga: dfl: afu: add STP (SignalTap) support
-  fpga: dfl: fme: add capability sysfs interfaces
-  fpga: dfl: fme: add global error reporting support
-  Documentation: fpga: dfl: add descriptions for virtualization and new
-    interfaces.
-
- Documentation/ABI/testing/sysfs-platform-dfl-fme  |  98 ++++++
- Documentation/ABI/testing/sysfs-platform-dfl-port | 106 ++++++
- Documentation/fpga/dfl.rst                        | 105 ++++++
- drivers/fpga/Makefile                             |   3 +-
- drivers/fpga/dfl-afu-error.c                      | 221 +++++++++++++
- drivers/fpga/dfl-afu-main.c                       | 319 +++++++++++++++++-
- drivers/fpga/dfl-afu.h                            |   7 +
- drivers/fpga/dfl-fme-error.c                      | 381 ++++++++++++++++++++++
- drivers/fpga/dfl-fme-main.c                       | 105 +++++-
- drivers/fpga/dfl-fme-pr.c                         |   7 +-
- drivers/fpga/dfl-fme.h                            |   5 +-
- drivers/fpga/dfl-pci.c                            |  36 ++
- drivers/fpga/dfl.c                                | 216 +++++++++++-
- drivers/fpga/dfl.h                                |  54 ++-
- include/uapi/linux/fpga-dfl.h                     |  18 +
- 15 files changed, 1640 insertions(+), 41 deletions(-)
- create mode 100644 drivers/fpga/dfl-afu-error.c
- create mode 100644 drivers/fpga/dfl-fme-error.c
-
+diff --git a/drivers/fpga/dfl-afu-main.c b/drivers/fpga/dfl-afu-main.c
+index e013afb..e312179 100644
+--- a/drivers/fpga/dfl-afu-main.c
++++ b/drivers/fpga/dfl-afu-main.c
+@@ -22,14 +22,16 @@
+ #include "dfl-afu.h"
+ 
+ /**
+- * port_enable - enable a port
++ * __port_enable - enable a port
+  * @pdev: port platform device.
+  *
+  * Enable Port by clear the port soft reset bit, which is set by default.
+  * The AFU is unable to respond to any MMIO access while in reset.
+- * port_enable function should only be used after port_disable function.
++ * __port_enable function should only be used after __port_disable function.
++ *
++ * The caller needs to hold lock for protection.
+  */
+-static void port_enable(struct platform_device *pdev)
++void __port_enable(struct platform_device *pdev)
+ {
+ 	struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
+ 	void __iomem *base;
+@@ -52,13 +54,14 @@ static void port_enable(struct platform_device *pdev)
+ #define RST_POLL_TIMEOUT 1000 /* us */
+ 
+ /**
+- * port_disable - disable a port
++ * __port_disable - disable a port
+  * @pdev: port platform device.
+  *
+- * Disable Port by setting the port soft reset bit, it puts the port into
+- * reset.
++ * Disable Port by setting the port soft reset bit, it puts the port into reset.
++ *
++ * The caller needs to hold lock for protection.
+  */
+-static int port_disable(struct platform_device *pdev)
++int __port_disable(struct platform_device *pdev)
+ {
+ 	struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
+ 	void __iomem *base;
+@@ -104,9 +107,9 @@ static int __port_reset(struct platform_device *pdev)
+ {
+ 	int ret;
+ 
+-	ret = port_disable(pdev);
++	ret = __port_disable(pdev);
+ 	if (!ret)
+-		port_enable(pdev);
++		__port_enable(pdev);
+ 
+ 	return ret;
+ }
+@@ -806,9 +809,9 @@ static int port_enable_set(struct platform_device *pdev, bool enable)
+ 
+ 	mutex_lock(&pdata->lock);
+ 	if (enable)
+-		port_enable(pdev);
++		__port_enable(pdev);
+ 	else
+-		ret = port_disable(pdev);
++		ret = __port_disable(pdev);
+ 	mutex_unlock(&pdata->lock);
+ 
+ 	return ret;
+diff --git a/drivers/fpga/dfl-afu.h b/drivers/fpga/dfl-afu.h
+index 0c7630a..35e60c5 100644
+--- a/drivers/fpga/dfl-afu.h
++++ b/drivers/fpga/dfl-afu.h
+@@ -79,6 +79,9 @@ struct dfl_afu {
+ 	struct dfl_feature_platform_data *pdata;
+ };
+ 
++void __port_enable(struct platform_device *pdev);
++int __port_disable(struct platform_device *pdev);
++
+ void afu_mmio_region_init(struct dfl_feature_platform_data *pdata);
+ int afu_mmio_region_add(struct dfl_feature_platform_data *pdata,
+ 			u32 region_index, u64 region_size, u64 phys, u32 flags);
 -- 
 1.8.3.1
