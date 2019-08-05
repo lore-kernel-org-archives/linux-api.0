@@ -1,111 +1,100 @@
-From: Andy Lutomirski <luto@kernel.org>
+From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
 Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
-Date: Mon, 5 Aug 2019 10:23:10 -0700
-Message-ID: <CALCETrXX-Jeb4wiQuL6FUai4wNMmMiUxuLLh_Lb9mT7h=0GgAw@mail.gmail.com>
-References: <20190627201923.2589391-1-songliubraving@fb.com>
- <20190627201923.2589391-2-songliubraving@fb.com> <21894f45-70d8-dfca-8c02-044f776c5e05@kernel.org>
- <3C595328-3ABE-4421-9772-8D41094A4F57@fb.com> <CALCETrWBnH4Q43POU8cQ7YMjb9LioK28FDEQf7aHZbdf1eBZWg@mail.gmail.com>
- <0DE7F23E-9CD2-4F03-82B5-835506B59056@fb.com> <CALCETrWBWbNFJvsTCeUchu3BZJ3SH3dvtXLUB2EhnPrzFfsLNA@mail.gmail.com>
- <201907021115.DCD56BBABB@keescook> <CALCETrXTta26CTtEDnzvtd03-WOGdXcnsAogP8JjLkcj4-mHvg@mail.gmail.com>
- <4A7A225A-6C23-4C0F-9A95-7C6C56B281ED@fb.com> <CALCETrX2bMnwC6_t4b_G-hzJSfMPrkK4YKs5ebcecv2LJ0rt3w@mail.gmail.com>
- <514D5453-0AEE-420F-AEB6-3F4F58C62E7E@fb.com> <1DE886F3-3982-45DE-B545-67AD6A4871AB@amacapital.net>
- <7F51F8B8-CF4C-4D82-AAE1-F0F28951DB7F@fb.com> <77354A95-4107-41A7-8936-D144F01C3CA4@fb.com>
- <369476A8-4CE1-43DA-9239-06437C0384C7@fb.com> <CALCETrUpVMrk7aaf0trfg9AfZ4fy279uJgZH7V+gZzjFw=hUxA@mail.gmail.com>
- <D4040C0C-47D6-4852-933C-59EB53C05242@fb.com> <CALCETrVoZL1YGUxx3kM-d21TWVRKdKw=f2B8aE5wc2zmX1cQ4g@mail.gmail.com>
- <5A2FCD7E-7F54-41E5-BFAE-BB9494E74F2D@fb.com> <CALCETrU7NbBnXXsw1B+DvTkfTVRBFWXuJ8cZERCCNvdFG6KqRw@mail.gmail.com>
+Date: Mon, 5 Aug 2019 12:21:24 -0700
+Message-ID: <20190805192122.laxcaz75k4vxdspn@ast-mbp>
+References: <369476A8-4CE1-43DA-9239-06437C0384C7@fb.com>
+ <CALCETrUpVMrk7aaf0trfg9AfZ4fy279uJgZH7V+gZzjFw=hUxA@mail.gmail.com>
+ <D4040C0C-47D6-4852-933C-59EB53C05242@fb.com>
+ <CALCETrVoZL1YGUxx3kM-d21TWVRKdKw=f2B8aE5wc2zmX1cQ4g@mail.gmail.com>
+ <5A2FCD7E-7F54-41E5-BFAE-BB9494E74F2D@fb.com>
+ <CALCETrU7NbBnXXsw1B+DvTkfTVRBFWXuJ8cZERCCNvdFG6KqRw@mail.gmail.com>
  <CALCETrUjh6DdgW1qSuSRd1_=0F9CqB8+sNj__e_6AHEvh_BaxQ@mail.gmail.com>
- <CALCETrWtE2U4EvZVYeq8pSmQjBzF2PHH+KxYW8FSeF+W=1FYjw@mail.gmail.com> <EE7B7AE1-3D44-4561-94B9-E97A626A251D@fb.com>
+ <CALCETrWtE2U4EvZVYeq8pSmQjBzF2PHH+KxYW8FSeF+W=1FYjw@mail.gmail.com>
+ <EE7B7AE1-3D44-4561-94B9-E97A626A251D@fb.com>
+ <CALCETrXX-Jeb4wiQuL6FUai4wNMmMiUxuLLh_Lb9mT7h=0GgAw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <EE7B7AE1-3D44-4561-94B9-E97A626A251D@fb.com>
+Content-Disposition: inline
+In-Reply-To: <CALCETrXX-Jeb4wiQuL6FUai4wNMmMiUxuLLh_Lb9mT7h=0GgAw@mail.gmail.com>
 Sender: netdev-owner@vger.kernel.org
-To: Song Liu <songliubraving@fb.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Kees Cook <keescook@chromium.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Song Liu <songliubraving@fb.com>, Kees Cook <keescook@chromium.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Aug 5, 2019 at 12:37 AM Song Liu <songliubraving@fb.com> wrote:
->
-> Hi Andy,
->
+On Mon, Aug 05, 2019 at 10:23:10AM -0700, Andy Lutomirski wrote:
+> 
+> I refreshed the branch again.  I had a giant hole in my previous idea
+> that we could deprivilege program loading: some BPF functions need
+> privilege.  Now I have a changelog comment to that effect and a patch
+> that sketches out a way to addressing this.
+> 
+> I don't think I'm going to have time soon to actually get any of this
+> stuff mergeable, and it would be fantastic if you or someone else who
+> likes working of bpf were to take this code and run with it.  Feel
+> free to add my Signed-off-by, and I'd be happy to help review.
 
-> >
-> > # mount -t bpf bpf /sys/fs/bpf
-> > # cd /sys/fs/bpf
-> > # mkdir luto
-> > # chown luto: luto
-> > # setpriv --euid=1000 --ruid=1000 bash
-> > $ pwd
-> > /sys/fs/bpf
-> > bash-5.0$ ls -l
-> > total 0
-> > drwxr-xr-x 2 luto luto 0 Aug  4 22:41 luto
-> > bash-5.0$ bpftool map create /sys/fs/bpf/luto/filename type hash key 8
-> > value 8 entries 64 name mapname
-> > bash-5.0$ bpftool map dump pinned /sys/fs/bpf/luto/filename
-> > Found 0 elements
-> >
-> > # chown root: /sys/fs/bpf/luto/filename
-> >
-> > $ bpftool map dump pinned /sys/fs/bpf/luto/filename
-> > Error: bpf obj get (/sys/fs/bpf/luto): Permission denied
-> >
-> > So I think it's possible to get a respectable subset of bpf()
-> > functionality working without privilege in short order :)
->
-> I think we have two key questions to answer:
->   1. What subset of bpf() functionality will the users need?
->   2. Who are the users?
->
-> Different answers to these two questions lead to different directions.
->
->
-> In our use case, the answers are
->   1) almost all bpf() functionality
->   2) highly trusted users (sudoers)
->
-> So our initial approach of /dev/bpf allows all bpf() functionality
-> in one bit in task_struct. (Yes, we can just sudo. But, we would
-> rather not use sudo when possible.)
+Thanks a lot for working on patches and helping us with the design!
 
-For this, I think some compelling evidence is needed that a new kernel
-mechanism is actually better than sudo and better than making bpftool
-privileged as previously discussed :)
+Can you resend the patches to the mailing list?
+It's kinda hard to reply/review to patches that are somewhere in the web.
+I'm still trying to understand the main idea.
+If I'm reading things correctly:
+patch 1 "add access permissions to bpf fds"
+  just passes the flags ?
+patch 2 "Don't require mknod() permission to pin an object" 
+ makes sense in isolation.
+patch 3 "Allow creating all program types without privilege"
+  is not right.
+patch 4 "Add a way to mark functions as requiring privilege"
+ is an interesting idea, but I don't think it helps that much.
 
->
->
-> "cgroup management" use case may have answers like:
->   1) cgroup_bpf only
->   2) users in their own containers
->
-> For this case, getting cgroup_bpf related features (cgroup_bpf progs;
-> some map types, etc.) work with unprivileged users would be the right
-> direction.
+So the main thing we're trying to solve with augmented bpf syscall
+and/or /dev/bpf is to be able to use root-only features of bpf when
+trused process already dropped root permissions.
+These features include bpf2bpf calls, bounded loops, special maps (like LPM), etc.
 
-:)
+Attaching to a cgroup already has file based permission checks.
+The user needs to open cgroup directory to attach.
+acls on cgroup dir can already be used to prevent attaching to
+certain parts of cgroup hierarchy.
 
->
->
-> "USDT tracing" use case may have answers like:
->   1) uprobe, stockmap, histogram, etc.
->   2) unprivileged user, w/ or w/o containers
->
-> For this case, the first step is likely hacking sys_perf_event_open().
->
+It seems this discussion is centered around making /dev/bpf to
+let unpriv (and not trusted) users (humans) to do bpf.
+That's not quite the case.
+It's a good use case, but not the one we're after at the moment.
+In our enviroment bpftrace, bpftool, all bcc tools are pre-installed
+and the users (humans) can simply 'sudo' to run them.
+Adding suid bit to installed bpftool binary is doable, but there is no need.
+'sudo' works just fine.
+What we need is to drop privileges sooner in daemons like systemd.
+Container management daemon runs in the nested containers.
+These trusted daemons need to have access to full bpf, but they
+don't want to be root all the time.
+They cannot flip back and forth via seteuid to root every time they
+need to do bpf.
+Hence the idea is to have a file that this daemon can open,
+then drop privileges and still keep doing bpf things because FD is held.
+Outer container daemon can pass this /dev/bpf's FD to inner daemon, etc.
+This /dev/bpf would be accessible to root only.
+There is no desire to open it up to non-root.
 
-This would be nice.
+It seems there is concern that /dev/bpf is unnecessary special.
+How about we combine bpffs and /dev/bpf ideas?
+Like we can have a special file name in bpffs.
+The root would do 'touch /sys/fs/bpf/privileges' and it would behave
+just like /dev/bpf, but now it can be in any bpffs directory and acls
+to bpffs mount would work as-is.
 
->
-> I guess we will need more discussions to decide how to make bpf()
-> work better for all these (and more) use cases.
->
+CAP_BPF is also good idea. I think for the enviroment where untrusted
+and unprivileged users want to run 'bpftrace' that would be perfect mechanism.
+getcap /bin/bpftrace would have cap_bpf, cap_kprobe and whatever else.
+Sort of like /bin/ping.
+But I don't see how cap_bpf helps to solve our trusted root daemon problem.
+imo open ("/sys/fs/bpf/privileges") and pass that FD into bpf syscall
+is the only viable mechanism.
 
-I refreshed the branch again.  I had a giant hole in my previous idea
-that we could deprivilege program loading: some BPF functions need
-privilege.  Now I have a changelog comment to that effect and a patch
-that sketches out a way to addressing this.
-
-I don't think I'm going to have time soon to actually get any of this
-stuff mergeable, and it would be fantastic if you or someone else who
-likes working of bpf were to take this code and run with it.  Feel
-free to add my Signed-off-by, and I'd be happy to help review.
+Note the verifier does very different amount of work for unpriv vs root.
+It does speculative execution analysis, pointer leak checks for unpriv.
+So we gotta pass special flag to the verifier to make it act like it's
+loading a program for root.
