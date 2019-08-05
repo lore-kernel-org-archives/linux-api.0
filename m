@@ -1,217 +1,222 @@
-From: Song Liu <songliubraving@fb.com>
-Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
-Date: Mon, 5 Aug 2019 07:36:50 +0000
-Message-ID: <EE7B7AE1-3D44-4561-94B9-E97A626A251D@fb.com>
-References: <20190627201923.2589391-1-songliubraving@fb.com>
- <20190627201923.2589391-2-songliubraving@fb.com>
- <21894f45-70d8-dfca-8c02-044f776c5e05@kernel.org>
- <3C595328-3ABE-4421-9772-8D41094A4F57@fb.com>
- <CALCETrWBnH4Q43POU8cQ7YMjb9LioK28FDEQf7aHZbdf1eBZWg@mail.gmail.com>
- <0DE7F23E-9CD2-4F03-82B5-835506B59056@fb.com>
- <CALCETrWBWbNFJvsTCeUchu3BZJ3SH3dvtXLUB2EhnPrzFfsLNA@mail.gmail.com>
- <201907021115.DCD56BBABB@keescook>
- <CALCETrXTta26CTtEDnzvtd03-WOGdXcnsAogP8JjLkcj4-mHvg@mail.gmail.com>
- <4A7A225A-6C23-4C0F-9A95-7C6C56B281ED@fb.com>
- <CALCETrX2bMnwC6_t4b_G-hzJSfMPrkK4YKs5ebcecv2LJ0rt3w@mail.gmail.com>
- <514D5453-0AEE-420F-AEB6-3F4F58C62E7E@fb.com>
- <1DE886F3-3982-45DE-B545-67AD6A4871AB@amacapital.net>
- <7F51F8B8-CF4C-4D82-AAE1-F0F28951DB7F@fb.com>
- <77354A95-4107-41A7-8936-D144F01C3CA4@fb.com>
- <369476A8-4CE1-43DA-9239-06437C0384C7@fb.com>
- <CALCETrUpVMrk7aaf0trfg9AfZ4fy279uJgZH7V+gZzjFw=hUxA@mail.gmail.com>
- <D4040C0C-47D6-4852-933C-59EB53C05242@fb.com>
- <CALCETrVoZL1YGUxx3kM-d21TWVRKdKw=f2B8aE5wc2zmX1cQ4g@mail.gmail.com>
- <5A2FCD7E-7F54-41E5-BFAE-BB9494E74F2D@fb.com>
- <CALCETrU7NbBnXXsw1B+DvTkfTVRBFWXuJ8cZERCCNvdFG6KqRw@mail.gmail.com>
- <CALCETrUjh6DdgW1qSuSRd1_=0F9CqB8+sNj__e_6AHEvh_BaxQ@mail.gmail.com>
- <CALCETrWtE2U4EvZVYeq8pSmQjBzF2PHH+KxYW8FSeF+W=1FYjw@mail.gmail.com>
+From: Minchan Kim <minchan@kernel.org>
+Subject: Re: [PATCH v3 1/2] mm/page_idle: Add per-pid idle page tracking
+ using virtual indexing
+Date: Mon, 5 Aug 2019 16:55:47 +0900
+Message-ID: <20190805075547.GA196934@google.com>
+References: <20190726152319.134152-1-joel@joelfernandes.org>
+ <20190731085335.GD155569@google.com>
+ <20190731171937.GA75376@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <CALCETrWtE2U4EvZVYeq8pSmQjBzF2PHH+KxYW8FSeF+W=1FYjw@mail.gmail.com>
-Content-Language: en-US
-Content-ID: <929F87C777254648A2737B8F6F5EF976@namprd15.prod.outlook.com>
-Sender: netdev-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Kees Cook <keescook@chromium.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190731171937.GA75376@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Joel Fernandes <joel@joelfernandes.org>
+Cc: linux-kernel@vger.kernel.org, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Brendan Gregg <bgregg@netflix.com>, Christian Hansen <chansen3@cisco.com>, dancol@google.com, fmayer@google.com, joaodias@google.com, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, kernel-team@android.com, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, Michal Hocko <mhocko@suse.com>, Mike Rapoport <rppt@linux.ibm.com>, namhyung@google.com, Roman Gushchin <guro@fb.com>, Stephen Rothwell <sfr@canb.auug.org.au>, surenb@google.com, tkjos@google.com, Vladimir Davydov <vdavydov.dev@gmail.com>, Vlastimil Babka <vbabka@suse.cz>, wvw@google.com
 List-Id: linux-api@vger.kernel.org
 
-Hi Andy,=20
+Hi Joel,
 
-> On Aug 4, 2019, at 10:47 PM, Andy Lutomirski <luto@kernel.org> wrote:
->=20
-> On Sun, Aug 4, 2019 at 5:08 PM Andy Lutomirski <luto@kernel.org> wrote:
->>=20
->> On Sun, Aug 4, 2019 at 3:16 PM Andy Lutomirski <luto@kernel.org> wrote:
->>>=20
->>> On Fri, Aug 2, 2019 at 12:22 AM Song Liu <songliubraving@fb.com> wrote:
->>>>=20
->>>> Hi Andy,
->>>>=20
->>>>> I actually agree CAP_BPF_ADMIN makes sense. The hard part is to make
->>>>>> existing tools (setcap, getcap, etc.) and libraries aware of the new=
- CAP.
->>>>>=20
->>>>> It's been done before -- it's not that hard.  IMO the main tricky bit
->>>>> would be try be somewhat careful about defining exactly what
->>>>> CAP_BPF_ADMIN does.
->>>>=20
->>>> Agreed. I think defining CAP_BPF_ADMIN could be a good topic for the
->>>> Plumbers conference.
->>>>=20
->>>> OTOH, I don't think we have to wait for CAP_BPF_ADMIN to allow daemons
->>>> like systemd to do sys_bpf() without root.
->>>=20
->>> I don't understand the use case here.  Are you talking about systemd
->>> --user?  As far as I know, a user is expected to be able to fully
->>> control their systemd --user process, so giving it unrestricted bpf
->>> access is very close to giving it superuser access, and this doesn't
->>> sound like a good idea.  I think that, if systemd --user needs bpf(),
->>> it either needs real unprivileged bpf() or it needs a privileged
->>> helper (SUID or a daemon) to intermediate this access.
->>>=20
->>>>=20
->>>>>=20
->>>>>>> I don't see why you need to invent a whole new mechanism for this.
->>>>>>> The entire cgroup ecosystem outside bpf() does just fine using the
->>>>>>> write permission on files in cgroupfs to control access.  Why can't
->>>>>>> bpf() do the same thing?
->>>>>>=20
->>>>>> It is easier to use write permission for BPF_PROG_ATTACH. But it is
->>>>>> not easy to do the same for other bpf commands: BPF_PROG_LOAD and
->>>>>> BPF_MAP_*. A lot of these commands don't have target concept. Maybe
->>>>>> we should have target concept for all these commands. But that is a
->>>>>> much bigger project. OTOH, "all or nothing" model allows all these
->>>>>> commands at once.
->>>>>=20
->>>>> For BPF_PROG_LOAD, I admit I've never understood why permission is
->>>>> required at all.  I think that CAP_SYS_ADMIN or similar should be
->>>>> needed to get is_priv in the verifier, but I think that should mainly
->>>>> be useful for tracing, and that requires lots of privilege anyway.
->>>>> BPF_MAP_* is probably the trickiest part.  One solution would be some
->>>>> kind of bpffs, but I'm sure other solutions are possible.
->>>>=20
->>>> Improving permission management of cgroup_bpf is another good topic to
->>>> discuss. However, it is also an overkill for current use case.
->>>>=20
->>>=20
->>> I looked at the code some more, and I don't think this is so hard
->>> after all.  As I understand it, all of the map..by_id stuff is, to
->>> some extent, deprecated in favor of persistent maps.  As I see it, the
->>> map..by_id calls should require privilege forever, although I can
->>> imagine ways to scope that privilege to a namespace if the maps
->>> themselves were to be scoped to a namespace.
->>>=20
->>> Instead, unprivileged tools would use the persistent map interface
->>> roughly like this:
->>>=20
->>> $ bpftool map create /sys/fs/bpf/my_dir/filename type hash key 8 value
->>> 8 entries 64 name mapname
->>>=20
->>> This would require that the caller have either CAP_DAC_OVERRIDE or
->>> that the caller have permission to create files in /sys/fs/bpf/my_dir
->>> (using the same rules as for any filesystem), and the resulting map
->>> would end up owned by the creating user and have mode 0600 (or maybe
->>> 0666, or maybe a new bpf_attr parameter) modified by umask.  Then all
->>> the various capable() checks that are currently involved in accessing
->>> a persistent map would instead check FMODE_READ or FMODE_WRITE on the
->>> map file as appropriate.
->>>=20
->>> Half of this stuff already works.  I just set my system up like this:
->>>=20
->>> $ ls -l /sys/fs/bpf
->>> total 0
->>> drwxr-xr-x. 3 luto luto 0 Aug  4 15:10 luto
->>>=20
->>> $ mkdir /sys/fs/bpf/luto/test
->>>=20
->>> $ ls -l /sys/fs/bpf/luto
->>> total 0
->>> drwxrwxr-x. 2 luto luto 0 Aug  4 15:10 test
->>>=20
->>> I bet that making the bpf() syscalls work appropriately in this
->>> context without privilege would only be a couple of hours of work.
->>> The hard work, creating bpffs and making it function, is already done
->>> :)
->>>=20
->>> P.S. The docs for bpftool create are less than fantastic.  The
->>> complete lack of any error message at all when the syscall returns
->>> -EACCES is also not fantastic.
->>=20
->> This isn't remotely finished, but I spent a bit of time fiddling with th=
-is:
->>=20
->> https://git.kernel.org/pub/scm/linux/kernel/git/luto/linux.git/commit/?h=
-=3Dbpf/perms
->>=20
->> What do you think?  (It's obviously not done.  It doesn't compile, and
->> I haven't gotten to the permissions needed to do map operations.  I
->> also haven't touched the capable() checks.)
->=20
-> I updated the branch.  It compiles, and basic map functionality works!
+On Wed, Jul 31, 2019 at 01:19:37PM -0400, Joel Fernandes wrote:
+> > > -static struct page *page_idle_get_page(unsigned long pfn)
+> > > +static struct page *page_idle_get_page(struct page *page_in)
+> > 
+> > Looks weird function name after you changed the argument.
+> > Maybe "bool check_valid_page(struct page *page)"?
+> 
+> 
+> I don't think so, this function does a get_page_unless_zero() on the page as well.
+> 
+> > >  {
+> > >  	struct page *page;
+> > >  	pg_data_t *pgdat;
+> > >  
+> > > -	if (!pfn_valid(pfn))
+> > > -		return NULL;
+> > > -
+> > > -	page = pfn_to_page(pfn);
+> > > +	page = page_in;
+> > >  	if (!page || !PageLRU(page) ||
+> > >  	    !get_page_unless_zero(page))
+> > >  		return NULL;
+> > > @@ -51,6 +49,18 @@ static struct page *page_idle_get_page(unsigned long pfn)
+> > >  	return page;
+> > >  }
+> > >  
+> > > +/*
+> > > + * This function tries to get a user memory page by pfn as described above.
+> > > + */
+> > > +static struct page *page_idle_get_page_pfn(unsigned long pfn)
+> > 
+> > So we could use page_idle_get_page name here.
+> 
+> 
+> Based on above comment, I prefer to keep same name. Do you agree?
 
-Thanks a lot for trying this out. This is a very interesting direction
-that we will explore.=20
+Yes, I agree. Just please add a comment about refcount in the description
+on page_idle_get_page.
 
->=20
-> # mount -t bpf bpf /sys/fs/bpf
-> # cd /sys/fs/bpf
-> # mkdir luto
-> # chown luto: luto
-> # setpriv --euid=3D1000 --ruid=3D1000 bash
-> $ pwd
-> /sys/fs/bpf
-> bash-5.0$ ls -l
-> total 0
-> drwxr-xr-x 2 luto luto 0 Aug  4 22:41 luto
-> bash-5.0$ bpftool map create /sys/fs/bpf/luto/filename type hash key 8
-> value 8 entries 64 name mapname
-> bash-5.0$ bpftool map dump pinned /sys/fs/bpf/luto/filename
-> Found 0 elements
->=20
-> # chown root: /sys/fs/bpf/luto/filename
->=20
-> $ bpftool map dump pinned /sys/fs/bpf/luto/filename
-> Error: bpf obj get (/sys/fs/bpf/luto): Permission denied
->=20
-> So I think it's possible to get a respectable subset of bpf()
-> functionality working without privilege in short order :)
+> 
+> 
+> > > +	return page_idle_get_page(pfn_to_page(pfn));
+> > > +}
+> > > +
+> > >  static bool page_idle_clear_pte_refs_one(struct page *page,
+> > >  					struct vm_area_struct *vma,
+> > >  					unsigned long addr, void *arg)
+> > > @@ -118,6 +128,47 @@ static void page_idle_clear_pte_refs(struct page *page)
+> > >  		unlock_page(page);
+> > >  }
+> > >  
+> > > +/* Helper to get the start and end frame given a pos and count */
+> > > +static int page_idle_get_frames(loff_t pos, size_t count, struct mm_struct *mm,
+> > > +				unsigned long *start, unsigned long *end)
+> > > +{
+> > > +	unsigned long max_frame;
+> > > +
+> > > +	/* If an mm is not given, assume we want physical frames */
+> > > +	max_frame = mm ? (mm->task_size >> PAGE_SHIFT) : max_pfn;
+> > > +
+> > > +	if (pos % BITMAP_CHUNK_SIZE || count % BITMAP_CHUNK_SIZE)
+> > > +		return -EINVAL;
+> > > +
+> > > +	*start = pos * BITS_PER_BYTE;
+> > > +	if (*start >= max_frame)
+> > > +		return -ENXIO;
+> > > +
+> > > +	*end = *start + count * BITS_PER_BYTE;
+> > > +	if (*end > max_frame)
+> > > +		*end = max_frame;
+> > > +	return 0;
+> > > +}
+> > > +
+> > > +static bool page_really_idle(struct page *page)
+> > 
+> > Just minor:
+> > Instead of creating new API, could we combine page_is_idle with
+> > introducing furthere argument pte_check?
+> 
+> 
+> I cannot see in the code where pte_check will be false when this is called? I
+> could rename the function to page_idle_check_ptes() if that's Ok with you.
 
-I think we have two key questions to answer:=20
-  1. What subset of bpf() functionality will the users need?
-  2. Who are the users?=20
+What I don't like is _*really*_ part of the funcion name.
 
-Different answers to these two questions lead to different directions.
+I see several page_is_idle calls in huge_memory.c, migration.c, swap.c.
+They could just check only page flag so they could use "false" with pte_check.
 
+< snip >
+ 
+> > > +ssize_t page_idle_proc_generic(struct file *file, char __user *ubuff,
+> > > +			       size_t count, loff_t *pos,
+> > > +			       struct task_struct *tsk, int write)
+> > > +{
+> > > +	int ret;
+> > > +	char *buffer;
+> > > +	u64 *out;
+> > > +	unsigned long start_addr, end_addr, start_frame, end_frame;
+> > > +	struct mm_struct *mm = file->private_data;
+> > > +	struct mm_walk walk = { .pmd_entry = pte_page_idle_proc_range, };
+> > > +	struct page_node *cur;
+> > > +	struct page_idle_proc_priv priv;
+> > > +	bool walk_error = false;
+> > > +	LIST_HEAD(idle_page_list);
+> > > +
+> > > +	if (!mm || !mmget_not_zero(mm))
+> > > +		return -EINVAL;
+> > > +
+> > > +	if (count > PAGE_SIZE)
+> > > +		count = PAGE_SIZE;
+> > > +
+> > > +	buffer = kzalloc(PAGE_SIZE, GFP_KERNEL);
+> > > +	if (!buffer) {
+> > > +		ret = -ENOMEM;
+> > > +		goto out_mmput;
+> > > +	}
+> > > +	out = (u64 *)buffer;
+> > > +
+> > > +	if (write && copy_from_user(buffer, ubuff, count)) {
+> > > +		ret = -EFAULT;
+> > > +		goto out;
+> > > +	}
+> > > +
+> > > +	ret = page_idle_get_frames(*pos, count, mm, &start_frame, &end_frame);
+> > > +	if (ret)
+> > > +		goto out;
+> > > +
+> > > +	start_addr = (start_frame << PAGE_SHIFT);
+> > > +	end_addr = (end_frame << PAGE_SHIFT);
+> > > +	priv.buffer = buffer;
+> > > +	priv.start_addr = start_addr;
+> > > +	priv.write = write;
+> > > +
+> > > +	priv.idle_page_list = &idle_page_list;
+> > > +	priv.cur_page_node = 0;
+> > > +	priv.page_nodes = kzalloc(sizeof(struct page_node) *
+> > > +				  (end_frame - start_frame), GFP_KERNEL);
+> > > +	if (!priv.page_nodes) {
+> > > +		ret = -ENOMEM;
+> > > +		goto out;
+> > > +	}
+> > > +
+> > > +	walk.private = &priv;
+> > > +	walk.mm = mm;
+> > > +
+> > > +	down_read(&mm->mmap_sem);
+> > > +
+> > > +	/*
+> > > +	 * idle_page_list is needed because walk_page_vma() holds ptlock which
+> > > +	 * deadlocks with page_idle_clear_pte_refs(). So we have to collect all
+> > > +	 * pages first, and then call page_idle_clear_pte_refs().
+> > > +	 */
+> > 
+> > Thanks for the comment, I was curious why you want to have
+> > idle_page_list and the reason is here.
+> > 
+> > How about making this /proc/<pid>/page_idle per-process granuariy,
+> > unlike system level /sys/xxx/page_idle? What I meant is not to check
+> > rmap to see any reference from random process but just check only
+> > access from the target process. It would be more proper as /proc/
+> > <pid>/ interface and good for per-process tracking as well as
+> > fast.
+> 
+> 
+> I prefer not to do this for the following reasons:
+> (1) It makes a feature lost, now accesses to shared pages will not be
+> accounted properly. 
 
-In our use case, the answers are=20
-  1) almost all bpf() functionality
-  2) highly trusted users (sudoers)
+Do you really want to check global attribute by per-process interface?
+That would be doable with existing idle page tracking feature and that's
+the one of reasons page idle tracking was born(e.g. even, page cache
+for non-mapped) unlike clear_refs.
+Once we create a new interface by per-process, just checking the process
+-granuariy access check sounds more reasonable to me.
 
-So our initial approach of /dev/bpf allows all bpf() functionality
-in one bit in task_struct. (Yes, we can just sudo. But, we would=20
-rather not use sudo when possible.)
+With that, we could catch only idle pages of the target process even though
+the page was touched by several other processes.
+If the user want to know global level access point, they could use
+exisint interface(If there is a concern(e.g., security) to use existing
+idle page tracking, let's discuss it as other topic how we could make
+existing feature more useful).
 
+IOW, my point is that we already have global access check(1. from ptes
+among several processes, 2. from page flag for non-mapped pages) feature
+from from existing idle page tracking interface and now we are about to create
+new interface for per-process wise so I wanted to create a particular
+feature which cannot be covered by existing iterface.
 
-"cgroup management" use case may have answers like:
-  1) cgroup_bpf only
-  2) users in their own containers
+> 
+> (2) It makes it inconsistent with other idle page tracking mechanism. I
 
-For this case, getting cgroup_bpf related features (cgroup_bpf progs;=20
-some map types, etc.) work with unprivileged users would be the right=20
-direction.=20
+That's the my comment to create different idle page tracking we couldn't
+do with existing interface.
 
+> prefer if post per-process. At the heart of it, the tracking is always at the
 
-"USDT tracing" use case may have answers like:
-  1) uprobe, stockmap, histogram, etc.
-  2) unprivileged user, w/ or w/o containers
+What does it mean "post per-process"?
 
-For this case, the first step is likely hacking sys_perf_event_open().=20
+> physical page level -- I feel that is how it should be. Other drawback, is
+> also we have to document this subtlety.
 
-
-I guess we will need more discussions to decide how to make bpf()=20
-work better for all these (and more) use cases.=20
-
-Thanks,
-Song
+Sorry, Could you elaborate it a bit?
