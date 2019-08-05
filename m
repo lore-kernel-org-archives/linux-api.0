@@ -1,7 +1,8 @@
 From: Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH v8 13/20] fscrypt: v2 encryption policy support
-Date: Mon,  5 Aug 2019 09:25:14 -0700
-Message-ID: <20190805162521.90882-14-ebiggers@kernel.org>
+Subject: [PATCH v8 20/20] fscrypt: document the new ioctls and
+ policy version
+Date: Mon,  5 Aug 2019 09:25:21 -0700
+Message-ID: <20190805162521.90882-21-ebiggers@kernel.org>
 References: <20190805162521.90882-1-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,1468 +23,896 @@ List-Id: linux-api@vger.kernel.org
 
 From: Eric Biggers <ebiggers@google.com>
 
-Add a new fscrypt policy version, "v2".  It has the following changes
-from the original policy version, which we call "v1" (*):
-
-- Master keys (the user-provided encryption keys) are only ever used as
-  input to HKDF-SHA512.  This is more flexible and less error-prone, and
-  it avoids the quirks and limitations of the AES-128-ECB based KDF.
-  Three classes of cryptographically isolated subkeys are defined:
-
-    - Per-file keys, like used in v1 policies except for the new KDF.
-
-    - Per-mode keys.  These implement the semantics of the DIRECT_KEY
-      flag, which for v1 policies made the master key be used directly.
-      These are also planned to be used for inline encryption when
-      support for it is added.
-
-    - Key identifiers (see below).
-
-- Each master key is identified by a 16-byte master_key_identifier,
-  which is derived from the key itself using HKDF-SHA512.  This prevents
-  users from associating the wrong key with an encrypted file or
-  directory.  This was easily possible with v1 policies, which
-  identified the key by an arbitrary 8-byte master_key_descriptor.
-
-- The key must be provided in the filesystem-level keyring, not in a
-  process-subscribed keyring.
-
-The following UAPI additions are made:
-
-- The existing ioctl FS_IOC_SET_ENCRYPTION_POLICY can now be passed a
-  fscrypt_policy_v2 to set a v2 encryption policy.  It's disambiguated
-  from fscrypt_policy/fscrypt_policy_v1 by the version code prefix.
-
-- A new ioctl FS_IOC_GET_ENCRYPTION_POLICY_EX is added.  It allows
-  getting the v1 or v2 encryption policy of an encrypted file or
-  directory.  The existing FS_IOC_GET_ENCRYPTION_POLICY ioctl could not
-  be used because it did not have a way for userspace to indicate which
-  policy structure is expected.  The new ioctl includes a size field, so
-  it is extensible to future fscrypt policy versions.
-
-- The ioctls FS_IOC_ADD_ENCRYPTION_KEY, FS_IOC_REMOVE_ENCRYPTION_KEY,
-  and FS_IOC_GET_ENCRYPTION_KEY_STATUS now support managing keys for v2
-  encryption policies.  Such keys are kept logically separate from keys
-  for v1 encryption policies, and are identified by 'identifier' rather
-  than by 'descriptor'.  The 'identifier' need not be provided when
-  adding a key, since the kernel will calculate it anyway.
-
-This patch temporarily keeps adding/removing v2 policy keys behind the
-same permission check done for adding/removing v1 policy keys:
-capable(CAP_SYS_ADMIN).  However, the next patch will carefully take
-advantage of the cryptographically secure master_key_identifier to allow
-non-root users to add/remove v2 policy keys, thus providing a full
-replacement for v1 policies.
-
-(*) Actually, in the API fscrypt_policy::version is 0 while on-disk
-    fscrypt_context::format is 1.  But I believe it makes the most sense
-    to advance both to '2' to have them be in sync, and to consider the
-    numbering to start at 1 except for the API quirk.
+Update the fscrypt documentation file to catch up to all the latest
+changes, including the new ioctls to manage master encryption keys in
+the filesystem-level keyring and the support for v2 encryption policies.
 
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
- fs/crypto/crypto.c           |   2 +-
- fs/crypto/fname.c            |   3 +-
- fs/crypto/fscrypt_private.h  | 187 +++++++++++++---
- fs/crypto/keyring.c          |  35 ++-
- fs/crypto/keysetup.c         | 202 +++++++++++++----
- fs/crypto/keysetup_v1.c      |  18 +-
- fs/crypto/policy.c           | 422 ++++++++++++++++++++++++++---------
- include/linux/fscrypt.h      |   9 +-
- include/uapi/linux/fscrypt.h |  57 ++++-
- 9 files changed, 741 insertions(+), 194 deletions(-)
+ Documentation/filesystems/fscrypt.rst | 729 ++++++++++++++++++++++----
+ 1 file changed, 613 insertions(+), 116 deletions(-)
 
-diff --git a/fs/crypto/crypto.c b/fs/crypto/crypto.c
-index 65ca077e8d585f..32a7ad0098cc28 100644
---- a/fs/crypto/crypto.c
-+++ b/fs/crypto/crypto.c
-@@ -141,7 +141,7 @@ void fscrypt_generate_iv(union fscrypt_iv *iv, u64 lblk_num,
- 	memset(iv, 0, ci->ci_mode->ivsize);
- 	iv->lblk_num = cpu_to_le64(lblk_num);
+diff --git a/Documentation/filesystems/fscrypt.rst b/Documentation/filesystems/fscrypt.rst
+index d60b885c402401..4289c29d7c5a2c 100644
+--- a/Documentation/filesystems/fscrypt.rst
++++ b/Documentation/filesystems/fscrypt.rst
+@@ -72,6 +72,9 @@ Online attacks
+ fscrypt (and storage encryption in general) can only provide limited
+ protection, if any at all, against online attacks.  In detail:
  
--	if (ci->ci_flags & FSCRYPT_POLICY_FLAG_DIRECT_KEY)
-+	if (fscrypt_is_direct_key_policy(&ci->ci_policy))
- 		memcpy(iv->nonce, ci->ci_nonce, FS_KEY_DERIVATION_NONCE_SIZE);
- 
- 	if (ci->ci_essiv_tfm != NULL)
-diff --git a/fs/crypto/fname.c b/fs/crypto/fname.c
-index f4977d44d69b81..3da3707c10e33d 100644
---- a/fs/crypto/fname.c
-+++ b/fs/crypto/fname.c
-@@ -181,7 +181,8 @@ static int base64_decode(const char *src, int len, u8 *dst)
- bool fscrypt_fname_encrypted_size(const struct inode *inode, u32 orig_len,
- 				  u32 max_len, u32 *encrypted_len_ret)
- {
--	int padding = 4 << (inode->i_crypt_info->ci_flags &
-+	const struct fscrypt_info *ci = inode->i_crypt_info;
-+	int padding = 4 << (fscrypt_policy_flags(&ci->ci_policy) &
- 			    FSCRYPT_POLICY_FLAGS_PAD_MASK);
- 	u32 encrypted_len;
- 
-diff --git a/fs/crypto/fscrypt_private.h b/fs/crypto/fscrypt_private.h
-index 9556e9499dc59c..c89e37d38e42f8 100644
---- a/fs/crypto/fscrypt_private.h
-+++ b/fs/crypto/fscrypt_private.h
-@@ -20,27 +20,127 @@
- 
- #define FSCRYPT_MIN_KEY_SIZE		16
- 
--/**
-- * Encryption context for inode
-- *
-- * Protector format:
-- *  1 byte: Protector format (1 = this version)
-- *  1 byte: File contents encryption mode
-- *  1 byte: File names encryption mode
-- *  1 byte: Flags
-- *  8 bytes: Master Key descriptor
-- *  16 bytes: Encryption Key derivation nonce
-- */
--struct fscrypt_context {
--	u8 format;
-+#define FSCRYPT_CONTEXT_V1	1
-+#define FSCRYPT_CONTEXT_V2	2
++Side-channel attacks
++~~~~~~~~~~~~~~~~~~~~
 +
-+struct fscrypt_context_v1 {
-+	u8 version; /* FSCRYPT_CONTEXT_V1 */
- 	u8 contents_encryption_mode;
- 	u8 filenames_encryption_mode;
- 	u8 flags;
- 	u8 master_key_descriptor[FSCRYPT_KEY_DESCRIPTOR_SIZE];
- 	u8 nonce[FS_KEY_DERIVATION_NONCE_SIZE];
--} __packed;
-+};
+ fscrypt is only resistant to side-channel attacks, such as timing or
+ electromagnetic attacks, to the extent that the underlying Linux
+ Cryptographic API algorithms are.  If a vulnerable algorithm is used,
+@@ -80,29 +83,90 @@ attacker to mount a side channel attack against the online system.
+ Side channel attacks may also be mounted against applications
+ consuming decrypted data.
  
--#define FS_ENCRYPTION_CONTEXT_FORMAT_V1		1
-+struct fscrypt_context_v2 {
-+	u8 version; /* FSCRYPT_CONTEXT_V2 */
-+	u8 contents_encryption_mode;
-+	u8 filenames_encryption_mode;
-+	u8 flags;
-+	u8 __reserved[4];
-+	u8 master_key_identifier[FSCRYPT_KEY_IDENTIFIER_SIZE];
-+	u8 nonce[FS_KEY_DERIVATION_NONCE_SIZE];
-+};
-+
-+/**
-+ * fscrypt_context - the encryption context of an inode
-+ *
-+ * This is the on-disk equivalent of an fscrypt_policy, stored alongside each
-+ * encrypted file usually in a hidden extended attribute.  It contains the
-+ * fields from the fscrypt_policy, in order to identify the encryption algorithm
-+ * and key with which the file is encrypted.  It also contains a nonce that was
-+ * randomly generated by fscrypt itself; this is used as KDF input or as a tweak
-+ * to cause different files to be encrypted differently.
-+ */
-+union fscrypt_context {
-+	u8 version;
-+	struct fscrypt_context_v1 v1;
-+	struct fscrypt_context_v2 v2;
-+};
-+
-+/*
-+ * Return the size expected for the given fscrypt_context based on its version
-+ * number, or 0 if the context version is unrecognized.
-+ */
-+static inline int fscrypt_context_size(const union fscrypt_context *ctx)
-+{
-+	switch (ctx->version) {
-+	case FSCRYPT_CONTEXT_V1:
-+		BUILD_BUG_ON(sizeof(ctx->v1) != 28);
-+		return sizeof(ctx->v1);
-+	case FSCRYPT_CONTEXT_V2:
-+		BUILD_BUG_ON(sizeof(ctx->v2) != 40);
-+		return sizeof(ctx->v2);
-+	}
-+	return 0;
-+}
-+
-+#undef fscrypt_policy
-+union fscrypt_policy {
-+	u8 version;
-+	struct fscrypt_policy_v1 v1;
-+	struct fscrypt_policy_v2 v2;
-+};
-+
-+/*
-+ * Return the size expected for the given fscrypt_policy based on its version
-+ * number, or 0 if the policy version is unrecognized.
-+ */
-+static inline int fscrypt_policy_size(const union fscrypt_policy *policy)
-+{
-+	switch (policy->version) {
-+	case FSCRYPT_POLICY_V1:
-+		return sizeof(policy->v1);
-+	case FSCRYPT_POLICY_V2:
-+		return sizeof(policy->v2);
-+	}
-+	return 0;
-+}
-+
-+/* Return the contents encryption mode of a valid encryption policy */
-+static inline u8
-+fscrypt_policy_contents_mode(const union fscrypt_policy *policy)
-+{
-+	switch (policy->version) {
-+	case FSCRYPT_POLICY_V1:
-+		return policy->v1.contents_encryption_mode;
-+	case FSCRYPT_POLICY_V2:
-+		return policy->v2.contents_encryption_mode;
-+	}
-+	BUG();
-+}
-+
-+/* Return the filenames encryption mode of a valid encryption policy */
-+static inline u8
-+fscrypt_policy_fnames_mode(const union fscrypt_policy *policy)
-+{
-+	switch (policy->version) {
-+	case FSCRYPT_POLICY_V1:
-+		return policy->v1.filenames_encryption_mode;
-+	case FSCRYPT_POLICY_V2:
-+		return policy->v2.filenames_encryption_mode;
-+	}
-+	BUG();
-+}
-+
-+/* Return the flags (FSCRYPT_POLICY_FLAG*) of a valid encryption policy */
-+static inline u8
-+fscrypt_policy_flags(const union fscrypt_policy *policy)
-+{
-+	switch (policy->version) {
-+	case FSCRYPT_POLICY_V1:
-+		return policy->v1.flags;
-+	case FSCRYPT_POLICY_V2:
-+		return policy->v2.flags;
-+	}
-+	BUG();
-+}
-+
-+static inline bool
-+fscrypt_is_direct_key_policy(const union fscrypt_policy *policy)
-+{
-+	return fscrypt_policy_flags(policy) & FSCRYPT_POLICY_FLAG_DIRECT_KEY;
-+}
- 
- /**
-  * For encrypted symlinks, the ciphertext length is stored at the beginning
-@@ -70,8 +170,8 @@ struct fscrypt_info {
- 	struct crypto_cipher *ci_essiv_tfm;
- 
- 	/*
--	 * Encryption mode used for this inode.  It corresponds to either
--	 * ci_data_mode or ci_filename_mode, depending on the inode type.
-+	 * Encryption mode used for this inode.  It corresponds to either the
-+	 * contents or filenames encryption mode, depending on the inode type.
- 	 */
- 	struct fscrypt_mode *ci_mode;
- 
-@@ -97,11 +197,10 @@ struct fscrypt_info {
- 	 */
- 	struct fscrypt_direct_key *ci_direct_key;
- 
--	/* fields from the fscrypt_context */
--	u8 ci_data_mode;
--	u8 ci_filename_mode;
--	u8 ci_flags;
--	u8 ci_master_key_descriptor[FSCRYPT_KEY_DESCRIPTOR_SIZE];
-+	/* The encryption policy used by this inode */
-+	union fscrypt_policy ci_policy;
-+
-+	/* This inode's nonce, copied from the fscrypt_context */
- 	u8 ci_nonce[FS_KEY_DERIVATION_NONCE_SIZE];
- };
- 
-@@ -181,6 +280,17 @@ struct fscrypt_hkdf {
- extern int fscrypt_init_hkdf(struct fscrypt_hkdf *hkdf, const u8 *master_key,
- 			     unsigned int master_key_size);
- 
-+/*
-+ * The list of contexts in which fscrypt uses HKDF.  These values are used as
-+ * the first byte of the HKDF application-specific info string to guarantee that
-+ * info strings are never repeated between contexts.  This ensures that all HKDF
-+ * outputs are unique and cryptographically isolated, i.e. knowledge of one
-+ * output doesn't reveal another.
-+ */
-+#define HKDF_CONTEXT_KEY_IDENTIFIER	1
-+#define HKDF_CONTEXT_PER_FILE_KEY	2
-+#define HKDF_CONTEXT_PER_MODE_KEY	3
-+
- extern int fscrypt_hkdf_expand(struct fscrypt_hkdf *hkdf, u8 context,
- 			       const u8 *info, unsigned int infolen,
- 			       u8 *okm, unsigned int okmlen);
-@@ -194,10 +304,16 @@ extern void fscrypt_destroy_hkdf(struct fscrypt_hkdf *hkdf);
-  */
- struct fscrypt_master_key_secret {
- 
--	/* Size of the raw key in bytes */
-+	/*
-+	 * For v2 policy keys: HKDF context keyed by this master key.
-+	 * For v1 policy keys: not set (hkdf.hmac_tfm == NULL).
-+	 */
-+	struct fscrypt_hkdf	hkdf;
-+
-+	/* Size of the raw key in bytes.  Set even if ->raw isn't set. */
- 	u32			size;
- 
--	/* The raw key */
-+	/* For v1 policy keys: the raw key.  Wiped for v2 policy keys. */
- 	u8			raw[FSCRYPT_MAX_KEY_SIZE];
- 
- } __randomize_layout;
-@@ -223,7 +339,12 @@ struct fscrypt_master_key {
- 	 */
- 	struct fscrypt_master_key_secret	mk_secret;
- 
--	/* Arbitrary key descriptor which was assigned by userspace */
-+	/*
-+	 * For v1 policy keys: an arbitrary key descriptor which was assigned by
-+	 * userspace (->descriptor).
-+	 *
-+	 * For v2 policy keys: a cryptographic hash of this key (->identifier).
-+	 */
- 	struct fscrypt_key_specifier		mk_spec;
- 
- 	/*
-@@ -242,6 +363,9 @@ struct fscrypt_master_key {
- 	struct list_head	mk_decrypted_inodes;
- 	spinlock_t		mk_decrypted_inodes_lock;
- 
-+	/* Per-mode tfms for DIRECT_KEY policies, allocated on-demand */
-+	struct crypto_skcipher	*mk_mode_keys[__FSCRYPT_MODE_MAX + 1];
-+
- } __randomize_layout;
- 
- static inline bool
-@@ -263,6 +387,8 @@ static inline const char *master_key_spec_type(
- 	switch (spec->type) {
- 	case FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR:
- 		return "descriptor";
-+	case FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER:
-+		return "identifier";
- 	}
- 	return "[unknown]";
- }
-@@ -272,6 +398,8 @@ static inline int master_key_spec_len(const struct fscrypt_key_specifier *spec)
- 	switch (spec->type) {
- 	case FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR:
- 		return FSCRYPT_KEY_DESCRIPTOR_SIZE;
-+	case FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER:
-+		return FSCRYPT_KEY_IDENTIFIER_SIZE;
- 	}
- 	return 0;
- }
-@@ -315,5 +443,14 @@ extern int fscrypt_setup_v1_file_key(struct fscrypt_info *ci,
- 
- extern int fscrypt_setup_v1_file_key_via_subscribed_keyrings(
- 					struct fscrypt_info *ci);
-+/* policy.c */
-+
-+extern bool fscrypt_policies_equal(const union fscrypt_policy *policy1,
-+				   const union fscrypt_policy *policy2);
-+extern bool fscrypt_supported_policy(const union fscrypt_policy *policy_u,
-+				     const struct inode *inode);
-+extern int fscrypt_policy_from_context(union fscrypt_policy *policy_u,
-+				       const union fscrypt_context *ctx_u,
-+				       int ctx_size);
- 
- #endif /* _FSCRYPT_PRIVATE_H */
-diff --git a/fs/crypto/keyring.c b/fs/crypto/keyring.c
-index 17bdfbc2938880..5adb33f638019e 100644
---- a/fs/crypto/keyring.c
-+++ b/fs/crypto/keyring.c
-@@ -17,6 +17,7 @@
-  * information about these ioctls.
-  */
- 
-+#include <crypto/skcipher.h>
- #include <linux/key-type.h>
- #include <linux/seq_file.h>
- 
-@@ -24,6 +25,7 @@
- 
- static void wipe_master_key_secret(struct fscrypt_master_key_secret *secret)
- {
-+	fscrypt_destroy_hkdf(&secret->hkdf);
- 	memzero_explicit(secret, sizeof(*secret));
- }
- 
-@@ -36,7 +38,13 @@ static void move_master_key_secret(struct fscrypt_master_key_secret *dst,
- 
- static void free_master_key(struct fscrypt_master_key *mk)
- {
-+	size_t i;
-+
- 	wipe_master_key_secret(&mk->mk_secret);
-+
-+	for (i = 0; i < ARRAY_SIZE(mk->mk_mode_keys); i++)
-+		crypto_free_skcipher(mk->mk_mode_keys[i]);
-+
- 	kzfree(mk);
- }
- 
-@@ -109,7 +117,7 @@ static struct key *search_fscrypt_keyring(struct key *keyring,
- #define FSCRYPT_FS_KEYRING_DESCRIPTION_SIZE	\
- 	(CONST_STRLEN("fscrypt-") + FIELD_SIZEOF(struct super_block, s_id))
- 
--#define FSCRYPT_MK_DESCRIPTION_SIZE	(2 * FSCRYPT_KEY_DESCRIPTOR_SIZE + 1)
-+#define FSCRYPT_MK_DESCRIPTION_SIZE	(2 * FSCRYPT_KEY_IDENTIFIER_SIZE + 1)
- 
- static void format_fs_keyring_description(
- 			char description[FSCRYPT_FS_KEYRING_DESCRIPTION_SIZE],
-@@ -314,6 +322,31 @@ int fscrypt_ioctl_add_key(struct file *filp, void __user *_uarg)
- 	if (!capable(CAP_SYS_ADMIN))
- 		goto out_wipe_secret;
- 
-+	if (arg.key_spec.type == FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER) {
-+		err = fscrypt_init_hkdf(&secret.hkdf, secret.raw, secret.size);
-+		if (err)
-+			goto out_wipe_secret;
-+
-+		/*
-+		 * Now that the HKDF context is initialized, the raw key is no
-+		 * longer needed.
-+		 */
-+		memzero_explicit(secret.raw, secret.size);
-+
-+		/* Calculate the key identifier and return it to userspace. */
-+		err = fscrypt_hkdf_expand(&secret.hkdf,
-+					  HKDF_CONTEXT_KEY_IDENTIFIER,
-+					  NULL, 0, arg.key_spec.u.identifier,
-+					  FSCRYPT_KEY_IDENTIFIER_SIZE);
-+		if (err)
-+			goto out_wipe_secret;
-+		err = -EFAULT;
-+		if (copy_to_user(uarg->key_spec.u.identifier,
-+				 arg.key_spec.u.identifier,
-+				 FSCRYPT_KEY_IDENTIFIER_SIZE))
-+			goto out_wipe_secret;
-+	}
-+
- 	err = add_master_key(sb, &secret, &arg.key_spec);
- out_wipe_secret:
- 	wipe_master_key_secret(&secret);
-diff --git a/fs/crypto/keysetup.c b/fs/crypto/keysetup.c
-index 7b60a47fc73c73..f423d48264dba9 100644
---- a/fs/crypto/keysetup.c
-+++ b/fs/crypto/keysetup.c
-@@ -52,20 +52,14 @@ static struct fscrypt_mode available_modes[] = {
- };
- 
- static struct fscrypt_mode *
--select_encryption_mode(const struct fscrypt_info *ci, const struct inode *inode)
-+select_encryption_mode(const union fscrypt_policy *policy,
-+		       const struct inode *inode)
- {
--	if (!fscrypt_valid_enc_modes(ci->ci_data_mode, ci->ci_filename_mode)) {
--		fscrypt_warn(inode,
--			     "Unsupported encryption modes (contents mode %d, filenames mode %d)",
--			     ci->ci_data_mode, ci->ci_filename_mode);
--		return ERR_PTR(-EINVAL);
--	}
+-After an encryption key has been provided, fscrypt is not designed to
+-hide the plaintext file contents or filenames from other users on the
+-same system, regardless of the visibility of the keyring key.
+-Instead, existing access control mechanisms such as file mode bits,
+-POSIX ACLs, LSMs, or mount namespaces should be used for this purpose.
+-Also note that as long as the encryption keys are *anywhere* in
+-memory, an online attacker can necessarily compromise them by mounting
+-a physical attack or by exploiting any kernel security vulnerability
+-which provides an arbitrary memory read primitive.
 -
- 	if (S_ISREG(inode->i_mode))
--		return &available_modes[ci->ci_data_mode];
-+		return &available_modes[fscrypt_policy_contents_mode(policy)];
- 
- 	if (S_ISDIR(inode->i_mode) || S_ISLNK(inode->i_mode))
--		return &available_modes[ci->ci_filename_mode];
-+		return &available_modes[fscrypt_policy_fnames_mode(policy)];
- 
- 	WARN_ONCE(1, "fscrypt: filesystem tried to load encryption info for inode %lu, which is not encryptable (file type %d)\n",
- 		  inode->i_ino, (inode->i_mode & S_IFMT));
-@@ -211,6 +205,82 @@ int fscrypt_set_derived_key(struct fscrypt_info *ci, const u8 *derived_key)
- 	return 0;
- }
- 
-+static int setup_per_mode_key(struct fscrypt_info *ci,
-+			      struct fscrypt_master_key *mk)
-+{
-+	struct fscrypt_mode *mode = ci->ci_mode;
-+	u8 mode_num = mode - available_modes;
-+	struct crypto_skcipher *tfm, *prev_tfm;
-+	u8 mode_key[FSCRYPT_MAX_KEY_SIZE];
-+	int err;
-+
-+	if (WARN_ON(mode_num >= ARRAY_SIZE(mk->mk_mode_keys)))
-+		return -EINVAL;
-+
-+	/* pairs with cmpxchg() below */
-+	tfm = READ_ONCE(mk->mk_mode_keys[mode_num]);
-+	if (likely(tfm != NULL))
-+		goto done;
-+
-+	BUILD_BUG_ON(sizeof(mode_num) != 1);
-+	err = fscrypt_hkdf_expand(&mk->mk_secret.hkdf,
-+				  HKDF_CONTEXT_PER_MODE_KEY,
-+				  &mode_num, sizeof(mode_num),
-+				  mode_key, mode->keysize);
-+	if (err)
-+		return err;
-+	tfm = fscrypt_allocate_skcipher(mode, mode_key, ci->ci_inode);
-+	memzero_explicit(mode_key, mode->keysize);
-+	if (IS_ERR(tfm))
-+		return PTR_ERR(tfm);
-+
-+	/* pairs with READ_ONCE() above */
-+	prev_tfm = cmpxchg(&mk->mk_mode_keys[mode_num], NULL, tfm);
-+	if (prev_tfm != NULL) {
-+		crypto_free_skcipher(tfm);
-+		tfm = prev_tfm;
-+	}
-+done:
-+	ci->ci_ctfm = tfm;
-+	return 0;
-+}
-+
-+static int fscrypt_setup_v2_file_key(struct fscrypt_info *ci,
-+				     struct fscrypt_master_key *mk)
-+{
-+	u8 derived_key[FSCRYPT_MAX_KEY_SIZE];
-+	int err;
-+
-+	if (ci->ci_policy.v2.flags & FSCRYPT_POLICY_FLAG_DIRECT_KEY) {
-+		/*
-+		 * DIRECT_KEY: instead of deriving per-file keys, the per-file
-+		 * nonce will be included in all the IVs.  But unlike v1
-+		 * policies, for v2 policies in this case we don't encrypt with
-+		 * the master key directly but rather derive a per-mode key.
-+		 * This ensures that the master key is consistently used only
-+		 * for HKDF, avoiding key reuse issues.
-+		 */
-+		if (!fscrypt_mode_supports_direct_key(ci->ci_mode)) {
-+			fscrypt_warn(ci->ci_inode,
-+				     "Direct key flag not allowed with %s",
-+				     ci->ci_mode->friendly_name);
-+			return -EINVAL;
-+		}
-+		return setup_per_mode_key(ci, mk);
-+	}
-+
-+	err = fscrypt_hkdf_expand(&mk->mk_secret.hkdf,
-+				  HKDF_CONTEXT_PER_FILE_KEY,
-+				  ci->ci_nonce, FS_KEY_DERIVATION_NONCE_SIZE,
-+				  derived_key, ci->ci_mode->keysize);
-+	if (err)
-+		return err;
-+
-+	err = fscrypt_set_derived_key(ci, derived_key);
-+	memzero_explicit(derived_key, ci->ci_mode->keysize);
-+	return err;
-+}
-+
- /*
-  * Find the master key, then set up the inode's actual encryption key.
-  *
-@@ -229,15 +299,36 @@ static int setup_file_encryption_key(struct fscrypt_info *ci,
- 	struct fscrypt_key_specifier mk_spec;
- 	int err;
- 
--	mk_spec.type = FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR;
--	memcpy(mk_spec.u.descriptor, ci->ci_master_key_descriptor,
--	       FSCRYPT_KEY_DESCRIPTOR_SIZE);
-+	switch (ci->ci_policy.version) {
-+	case FSCRYPT_POLICY_V1:
-+		mk_spec.type = FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR;
-+		memcpy(mk_spec.u.descriptor,
-+		       ci->ci_policy.v1.master_key_descriptor,
-+		       FSCRYPT_KEY_DESCRIPTOR_SIZE);
-+		break;
-+	case FSCRYPT_POLICY_V2:
-+		mk_spec.type = FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER;
-+		memcpy(mk_spec.u.identifier,
-+		       ci->ci_policy.v2.master_key_identifier,
-+		       FSCRYPT_KEY_IDENTIFIER_SIZE);
-+		break;
-+	default:
-+		WARN_ON(1);
-+		return -EINVAL;
-+	}
- 
- 	key = fscrypt_find_master_key(ci->ci_inode->i_sb, &mk_spec);
- 	if (IS_ERR(key)) {
--		if (key != ERR_PTR(-ENOKEY))
-+		if (key != ERR_PTR(-ENOKEY) ||
-+		    ci->ci_policy.version != FSCRYPT_POLICY_V1)
- 			return PTR_ERR(key);
- 
-+		/*
-+		 * As a legacy fallback for v1 policies, search for the key in
-+		 * the current task's subscribed keyrings too.  Don't move this
-+		 * to before the search of ->s_master_keys, since users
-+		 * shouldn't be able to override filesystem-level keys.
-+		 */
- 		return fscrypt_setup_v1_file_key_via_subscribed_keyrings(ci);
- 	}
- 
-@@ -250,6 +341,12 @@ static int setup_file_encryption_key(struct fscrypt_info *ci,
- 		goto out_release_key;
- 	}
- 
-+	/*
-+	 * Require that the master key be at least as long as the derived key.
-+	 * Otherwise, the derived key cannot possibly contain as much entropy as
-+	 * that required by the encryption mode it will be used for.  For v1
-+	 * policies it's also required for the KDF to work at all.
-+	 */
- 	if (mk->mk_secret.size < ci->ci_mode->keysize) {
- 		fscrypt_warn(NULL,
- 			     "key with %s %*phN is too short (got %u bytes, need %u+ bytes)",
-@@ -260,7 +357,18 @@ static int setup_file_encryption_key(struct fscrypt_info *ci,
- 		goto out_release_key;
- 	}
- 
--	err = fscrypt_setup_v1_file_key(ci, mk->mk_secret.raw);
-+	switch (ci->ci_policy.version) {
-+	case FSCRYPT_POLICY_V1:
-+		err = fscrypt_setup_v1_file_key(ci, mk->mk_secret.raw);
-+		break;
-+	case FSCRYPT_POLICY_V2:
-+		err = fscrypt_setup_v2_file_key(ci, mk);
-+		break;
-+	default:
-+		WARN_ON(1);
-+		err = -EINVAL;
-+		break;
-+	}
- 	if (err)
- 		goto out_release_key;
- 
-@@ -282,7 +390,8 @@ static void put_crypt_info(struct fscrypt_info *ci)
- 
- 	if (ci->ci_direct_key) {
- 		fscrypt_put_direct_key(ci->ci_direct_key);
--	} else {
-+	} else if ((ci->ci_ctfm != NULL || ci->ci_essiv_tfm != NULL) &&
-+		   !fscrypt_is_direct_key_policy(&ci->ci_policy)) {
- 		crypto_free_skcipher(ci->ci_ctfm);
- 		crypto_free_cipher(ci->ci_essiv_tfm);
- 	}
-@@ -312,7 +421,7 @@ static void put_crypt_info(struct fscrypt_info *ci)
- int fscrypt_get_encryption_info(struct inode *inode)
- {
- 	struct fscrypt_info *crypt_info;
--	struct fscrypt_context ctx;
-+	union fscrypt_context ctx;
- 	struct fscrypt_mode *mode;
- 	struct key *master_key = NULL;
- 	int res;
-@@ -335,27 +444,12 @@ int fscrypt_get_encryption_info(struct inode *inode)
- 		}
- 		/* Fake up a context for an unencrypted directory */
- 		memset(&ctx, 0, sizeof(ctx));
--		ctx.format = FS_ENCRYPTION_CONTEXT_FORMAT_V1;
--		ctx.contents_encryption_mode = FSCRYPT_MODE_AES_256_XTS;
--		ctx.filenames_encryption_mode = FSCRYPT_MODE_AES_256_CTS;
--		memset(ctx.master_key_descriptor, 0x42,
-+		ctx.version = FSCRYPT_CONTEXT_V1;
-+		ctx.v1.contents_encryption_mode = FSCRYPT_MODE_AES_256_XTS;
-+		ctx.v1.filenames_encryption_mode = FSCRYPT_MODE_AES_256_CTS;
-+		memset(ctx.v1.master_key_descriptor, 0x42,
- 		       FSCRYPT_KEY_DESCRIPTOR_SIZE);
--	} else if (res != sizeof(ctx)) {
--		fscrypt_warn(inode,
--			     "Unknown encryption context size (%d bytes)", res);
--		return -EINVAL;
--	}
+-While it is ostensibly possible to "evict" keys from the system,
+-recently accessed encrypted files will remain accessible at least
+-until the filesystem is unmounted or the VFS caches are dropped, e.g.
+-using ``echo 2 > /proc/sys/vm/drop_caches``.  Even after that, if the
+-RAM is compromised before being powered off, it will likely still be
+-possible to recover portions of the plaintext file contents, if not
+-some of the encryption keys as well.  (Since Linux v4.12, all
+-in-kernel keys related to fscrypt are sanitized before being freed.
+-However, userspace would need to do its part as well.)
 -
--	if (ctx.format != FS_ENCRYPTION_CONTEXT_FORMAT_V1) {
--		fscrypt_warn(inode, "Unknown encryption context version (%d)",
--			     ctx.format);
--		return -EINVAL;
--	}
+-Currently, fscrypt does not prevent a user from maliciously providing
+-an incorrect key for another user's existing encrypted files.  A
+-protection against this is planned.
++Unauthorized file access
++~~~~~~~~~~~~~~~~~~~~~~~~
++
++After an encryption key has been added, fscrypt does not hide the
++plaintext file contents or filenames from other users on the same
++system.  Instead, existing access control mechanisms such as file mode
++bits, POSIX ACLs, LSMs, or namespaces should be used for this purpose.
++
++(For the reasoning behind this, understand that while the key is
++added, the confidentiality of the data, from the perspective of the
++system itself, is *not* protected by the mathematical properties of
++encryption but rather only by the correctness of the kernel.
++Therefore, any encryption-specific access control checks would merely
++be enforced by kernel *code* and therefore would be largely redundant
++with the wide variety of access control mechanisms already available.)
++
++Kernel memory compromise
++~~~~~~~~~~~~~~~~~~~~~~~~
++
++An attacker who compromises the system enough to read from arbitrary
++memory, e.g. by mounting a physical attack or by exploiting a kernel
++security vulnerability, can compromise all encryption keys that are
++currently in use.
++
++However, fscrypt allows encryption keys to be removed from the kernel,
++which may protect them from later compromise.
++
++In more detail, the FS_IOC_REMOVE_ENCRYPTION_KEY ioctl (or the
++FS_IOC_REMOVE_ENCRYPTION_KEY_ALL_USERS ioctl) can wipe a master
++encryption key from kernel memory.  If it does so, it will also try to
++evict all cached inodes which had been "unlocked" using the key,
++thereby wiping their per-file keys and making them once again appear
++"locked", i.e. in ciphertext or encrypted form.
++
++However, these ioctls have some limitations:
++
++- Per-file keys for in-use files will *not* be removed or wiped.
++  Therefore, for maximum effect, userspace should close the relevant
++  encrypted files and directories before removing a master key, as
++  well as kill any processes whose working directory is in an affected
++  encrypted directory.
++
++- The kernel cannot magically wipe copies of the master key(s) that
++  userspace might have as well.  Therefore, userspace must wipe all
++  copies of the master key(s) it makes as well; normally this should
++  be done immediately after FS_IOC_ADD_ENCRYPTION_KEY, without waiting
++  for FS_IOC_REMOVE_ENCRYPTION_KEY.  Naturally, the same also applies
++  to all higher levels in the key hierarchy.  Userspace should also
++  follow other security precautions such as mlock()ing memory
++  containing keys to prevent it from being swapped out.
++
++- In general, decrypted contents and filenames in the kernel VFS
++  caches are freed but not wiped.  Therefore, portions thereof may be
++  recoverable from freed memory, even after the corresponding key(s)
++  were wiped.  To partially solve this, you can set
++  CONFIG_PAGE_POISONING=y in your kernel config and add page_poison=1
++  to your kernel command line.  However, this has a performance cost.
++
++- Secret keys might still exist in CPU registers, in crypto
++  accelerator hardware (if used by the crypto API to implement any of
++  the algorithms), or in other places not explicitly considered here.
++
++Limitations of v1 policies
++~~~~~~~~~~~~~~~~~~~~~~~~~~
++
++v1 encryption policies have some weaknesses with respect to online
++attacks:
++
++- There is no verification that the provided master key is correct.
++  Therefore, a malicious user can temporarily associate the wrong key
++  with another user's encrypted files to which they have read-only
++  access.  Because of filesystem caching, the wrong key will then be
++  used by the other user's accesses to those files, even if the other
++  user has the correct key in their own keyring.  This violates the
++  meaning of "read-only access".
++
++- A compromise of a per-file key also compromises the master key from
++  which it was derived.
++
++- Non-root users cannot securely remove encryption keys.
++
++All the above problems are fixed with v2 encryption policies.  For
++this reason among others, it is recommended to use v2 encryption
++policies on all new encrypted directories.
+ 
+ Key hierarchy
+ =============
+@@ -123,11 +187,52 @@ appropriate master key.  There can be any number of master keys, each
+ of which protects any number of directory trees on any number of
+ filesystems.
+ 
+-Userspace should generate master keys either using a cryptographically
+-secure random number generator, or by using a KDF (Key Derivation
+-Function).  Note that whenever a KDF is used to "stretch" a
+-lower-entropy secret such as a passphrase, it is critical that a KDF
+-designed for this purpose be used, such as scrypt, PBKDF2, or Argon2.
++Master keys must be real cryptographic keys, i.e. indistinguishable
++from random bytestrings of the same length.  This implies that users
++**must not** directly use a password as a master key, zero-pad a
++shorter key, or repeat a shorter key.  Security cannot be guaranteed
++if userspace makes any such error, as the cryptographic proofs and
++analysis would no longer apply.
++
++Instead, users should generate master keys either using a
++cryptographically secure random number generator, or by using a KDF
++(Key Derivation Function).  The kernel does not do any key stretching;
++therefore, if userspace derives the key from a low-entropy secret such
++as a passphrase, it is critical that a KDF designed for this purpose
++be used, such as scrypt, PBKDF2, or Argon2.
++
++Key derivation function
++-----------------------
++
++With one exception, fscrypt never uses the master key(s) for
++encryption directly.  Instead, they are only used as input to a KDF
++(Key Derivation Function) to derive the actual keys.
++
++The KDF used for a particular master key differs depending on whether
++the key is used for v1 encryption policies or for v2 encryption
++policies.  Users **must not** use the same key for both v1 and v2
++encryption policies.  (No real-world attack is currently known on this
++specific case of key reuse, but its security cannot be guaranteed
++since the cryptographic proofs and analysis would no longer apply.)
++
++For v1 encryption policies, the KDF only supports deriving per-file
++encryption keys.  It works by encrypting the master key with
++AES-128-ECB, using the file's 16-byte nonce as the AES key.  The
++resulting ciphertext is used as the derived key.  If the ciphertext is
++longer than needed, then it is truncated to the needed length.
++
++For v2 encryption policies, the KDF is HKDF-SHA512.  The master key is
++passed as the "input keying material", no salt is used, and a distinct
++"application-specific information string" is used for each distinct
++key to be derived.  For example, when a per-file encryption key is
++derived, the application-specific information string is the file's
++nonce prefixed with "fscrypt\\0" and a context byte.  Different
++context bytes are used for other types of derived keys.
++
++HKDF-SHA512 is preferred to the original AES-128-ECB based KDF because
++HKDF is more flexible, is nonreversible, and evenly distributes
++entropy from the master key.  HKDF is also standardized and widely
++used by other software, whereas the AES-128-ECB based KDF is ad-hoc.
+ 
+ Per-file keys
+ -------------
+@@ -138,29 +243,9 @@ files doesn't map to the same ciphertext, or vice versa.  In most
+ cases, fscrypt does this by deriving per-file keys.  When a new
+ encrypted inode (regular file, directory, or symlink) is created,
+ fscrypt randomly generates a 16-byte nonce and stores it in the
+-inode's encryption xattr.  Then, it uses a KDF (Key Derivation
+-Function) to derive the file's key from the master key and nonce.
 -
--	if (ctx.flags & ~FSCRYPT_POLICY_FLAGS_VALID) {
--		fscrypt_warn(inode, "Unknown encryption context flags (0x%02x)",
--			     ctx.flags);
--		return -EINVAL;
-+		res = sizeof(ctx.v1);
- 	}
- 
- 	crypt_info = kmem_cache_zalloc(fscrypt_info_cachep, GFP_NOFS);
-@@ -364,14 +458,34 @@ int fscrypt_get_encryption_info(struct inode *inode)
- 
- 	crypt_info->ci_inode = inode;
- 
--	crypt_info->ci_flags = ctx.flags;
--	crypt_info->ci_data_mode = ctx.contents_encryption_mode;
--	crypt_info->ci_filename_mode = ctx.filenames_encryption_mode;
--	memcpy(crypt_info->ci_master_key_descriptor, ctx.master_key_descriptor,
--	       FSCRYPT_KEY_DESCRIPTOR_SIZE);
--	memcpy(crypt_info->ci_nonce, ctx.nonce, FS_KEY_DERIVATION_NONCE_SIZE);
-+	res = fscrypt_policy_from_context(&crypt_info->ci_policy, &ctx, res);
-+	if (res) {
-+		fscrypt_warn(inode,
-+			     "Unrecognized or corrupt encryption context");
-+		goto out;
-+	}
-+
-+	switch (ctx.version) {
-+	case FSCRYPT_CONTEXT_V1:
-+		memcpy(crypt_info->ci_nonce, ctx.v1.nonce,
-+		       FS_KEY_DERIVATION_NONCE_SIZE);
-+		break;
-+	case FSCRYPT_CONTEXT_V2:
-+		memcpy(crypt_info->ci_nonce, ctx.v2.nonce,
-+		       FS_KEY_DERIVATION_NONCE_SIZE);
-+		break;
-+	default:
-+		WARN_ON(1);
-+		res = -EINVAL;
-+		goto out;
-+	}
-+
-+	if (!fscrypt_supported_policy(&crypt_info->ci_policy, inode)) {
-+		res = -EINVAL;
-+		goto out;
-+	}
- 
--	mode = select_encryption_mode(crypt_info, inode);
-+	mode = select_encryption_mode(&crypt_info->ci_policy, inode);
- 	if (IS_ERR(mode)) {
- 		res = PTR_ERR(mode);
- 		goto out;
-diff --git a/fs/crypto/keysetup_v1.c b/fs/crypto/keysetup_v1.c
-index 631690bb6ed54c..ad1a36c370c3fb 100644
---- a/fs/crypto/keysetup_v1.c
-+++ b/fs/crypto/keysetup_v1.c
-@@ -189,12 +189,13 @@ find_or_insert_direct_key(struct fscrypt_direct_key *to_insert,
- 	 */
- 
- 	BUILD_BUG_ON(sizeof(hash_key) > FSCRYPT_KEY_DESCRIPTOR_SIZE);
--	memcpy(&hash_key, ci->ci_master_key_descriptor, sizeof(hash_key));
-+	memcpy(&hash_key, ci->ci_policy.v1.master_key_descriptor,
-+	       sizeof(hash_key));
- 
- 	spin_lock(&fscrypt_direct_keys_lock);
- 	hash_for_each_possible(fscrypt_direct_keys, dk, dk_node, hash_key) {
--		if (memcmp(ci->ci_master_key_descriptor, dk->dk_descriptor,
--			   FSCRYPT_KEY_DESCRIPTOR_SIZE) != 0)
-+		if (memcmp(ci->ci_policy.v1.master_key_descriptor,
-+			   dk->dk_descriptor, FSCRYPT_KEY_DESCRIPTOR_SIZE) != 0)
- 			continue;
- 		if (ci->ci_mode != dk->dk_mode)
- 			continue;
-@@ -237,7 +238,7 @@ fscrypt_get_direct_key(const struct fscrypt_info *ci, const u8 *raw_key)
- 		dk->dk_ctfm = NULL;
- 		goto err_free_dk;
- 	}
--	memcpy(dk->dk_descriptor, ci->ci_master_key_descriptor,
-+	memcpy(dk->dk_descriptor, ci->ci_policy.v1.master_key_descriptor,
- 	       FSCRYPT_KEY_DESCRIPTOR_SIZE);
- 	memcpy(dk->dk_raw, raw_key, ci->ci_mode->keysize);
- 
-@@ -262,7 +263,8 @@ static int setup_v1_file_key_direct(struct fscrypt_info *ci,
- 		return -EINVAL;
- 	}
- 
--	if (ci->ci_data_mode != ci->ci_filename_mode) {
-+	if (ci->ci_policy.v1.contents_encryption_mode !=
-+	    ci->ci_policy.v1.filenames_encryption_mode) {
- 		fscrypt_warn(ci->ci_inode,
- 			     "Direct key mode not allowed with different contents and filenames modes");
- 		return -EINVAL;
-@@ -308,7 +310,7 @@ static int setup_v1_file_key_derived(struct fscrypt_info *ci,
- 
- int fscrypt_setup_v1_file_key(struct fscrypt_info *ci, const u8 *raw_master_key)
- {
--	if (ci->ci_flags & FSCRYPT_POLICY_FLAG_DIRECT_KEY)
-+	if (ci->ci_policy.v1.flags & FSCRYPT_POLICY_FLAG_DIRECT_KEY)
- 		return setup_v1_file_key_direct(ci, raw_master_key);
- 	else
- 		return setup_v1_file_key_derived(ci, raw_master_key);
-@@ -321,11 +323,11 @@ int fscrypt_setup_v1_file_key_via_subscribed_keyrings(struct fscrypt_info *ci)
- 	int err;
- 
- 	key = find_and_lock_process_key(FSCRYPT_KEY_DESC_PREFIX,
--					ci->ci_master_key_descriptor,
-+					ci->ci_policy.v1.master_key_descriptor,
- 					ci->ci_mode->keysize, &payload);
- 	if (key == ERR_PTR(-ENOKEY) && ci->ci_inode->i_sb->s_cop->key_prefix) {
- 		key = find_and_lock_process_key(ci->ci_inode->i_sb->s_cop->key_prefix,
--						ci->ci_master_key_descriptor,
-+						ci->ci_policy.v1.master_key_descriptor,
- 						ci->ci_mode->keysize, &payload);
- 	}
- 	if (IS_ERR(key))
-diff --git a/fs/crypto/policy.c b/fs/crypto/policy.c
-index da7ae9c8b4ad0b..0141d338c1fdb2 100644
---- a/fs/crypto/policy.c
-+++ b/fs/crypto/policy.c
-@@ -5,8 +5,9 @@
-  * Copyright (C) 2015, Google, Inc.
-  * Copyright (C) 2015, Motorola Mobility.
-  *
-- * Written by Michael Halcrow, 2015.
-+ * Originally written by Michael Halcrow, 2015.
-  * Modified by Jaegeuk Kim, 2015.
-+ * Modified by Eric Biggers, 2019 for v2 policy support.
-  */
- 
- #include <linux/random.h>
-@@ -14,70 +15,291 @@
- #include <linux/mount.h>
- #include "fscrypt_private.h"
- 
--/*
-- * check whether an encryption policy is consistent with an encryption context
-+/**
-+ * fscrypt_policies_equal - check whether two encryption policies are the same
-+ *
-+ * Return: %true if equal, else %false
-  */
--static bool is_encryption_context_consistent_with_policy(
--				const struct fscrypt_context *ctx,
--				const struct fscrypt_policy *policy)
-+bool fscrypt_policies_equal(const union fscrypt_policy *policy1,
-+			    const union fscrypt_policy *policy2)
- {
--	return memcmp(ctx->master_key_descriptor, policy->master_key_descriptor,
--		      FSCRYPT_KEY_DESCRIPTOR_SIZE) == 0 &&
--		(ctx->flags == policy->flags) &&
--		(ctx->contents_encryption_mode ==
--		 policy->contents_encryption_mode) &&
--		(ctx->filenames_encryption_mode ==
--		 policy->filenames_encryption_mode);
-+	if (policy1->version != policy2->version)
-+		return false;
-+
-+	return !memcmp(policy1, policy2, fscrypt_policy_size(policy1));
- }
- 
--static int create_encryption_context_from_policy(struct inode *inode,
--				const struct fscrypt_policy *policy)
-+/**
-+ * fscrypt_supported_policy - check whether an encryption policy is supported
-+ *
-+ * Given an encryption policy, check whether all its encryption modes and other
-+ * settings are supported by this kernel.  (But we don't currently don't check
-+ * for crypto API support here, so attempting to use an algorithm not configured
-+ * into the crypto API will still fail later.)
-+ *
-+ * Return: %true if supported, else %false
-+ */
-+bool fscrypt_supported_policy(const union fscrypt_policy *policy_u,
-+			      const struct inode *inode)
- {
--	struct fscrypt_context ctx;
-+	switch (policy_u->version) {
-+	case FSCRYPT_POLICY_V1: {
-+		const struct fscrypt_policy_v1 *policy = &policy_u->v1;
-+
-+		if (!fscrypt_valid_enc_modes(policy->contents_encryption_mode,
-+					     policy->filenames_encryption_mode)) {
-+			fscrypt_warn(inode,
-+				     "Unsupported encryption modes (contents %d, filenames %d)",
-+				     policy->contents_encryption_mode,
-+				     policy->filenames_encryption_mode);
-+			return false;
-+		}
-+
-+		if (policy->flags & ~FSCRYPT_POLICY_FLAGS_VALID) {
-+			fscrypt_warn(inode,
-+				     "Unsupported encryption flags (0x%02x)",
-+				     policy->flags);
-+			return false;
-+		}
-+
-+		return true;
-+	}
-+	case FSCRYPT_POLICY_V2: {
-+		const struct fscrypt_policy_v2 *policy = &policy_u->v2;
-+
-+		if (!fscrypt_valid_enc_modes(policy->contents_encryption_mode,
-+					     policy->filenames_encryption_mode)) {
-+			fscrypt_warn(inode,
-+				     "Unsupported encryption modes (contents %d, filenames %d)",
-+				     policy->contents_encryption_mode,
-+				     policy->filenames_encryption_mode);
-+			return false;
-+		}
-+
-+		if (policy->flags & ~FSCRYPT_POLICY_FLAGS_VALID) {
-+			fscrypt_warn(inode,
-+				     "Unsupported encryption flags (0x%02x)",
-+				     policy->flags);
-+			return false;
-+		}
-+
-+		if (memchr_inv(policy->__reserved, 0,
-+			       sizeof(policy->__reserved))) {
-+			fscrypt_warn(inode,
-+				     "Reserved bits set in encryption policy");
-+			return false;
-+		}
-+
-+		return true;
-+	}
-+	}
-+	return false;
-+}
-+
-+/**
-+ * fscrypt_new_context_from_policy - create a new fscrypt_context from a policy
-+ *
-+ * Create an fscrypt_context for an inode that is being assigned the given
-+ * encryption policy.  A new nonce is randomly generated.
-+ *
-+ * Return: the size of the new context in bytes.
-+ */
-+static int fscrypt_new_context_from_policy(union fscrypt_context *ctx_u,
-+					   const union fscrypt_policy *policy_u)
-+{
-+	memset(ctx_u, 0, sizeof(*ctx_u));
-+
-+	switch (policy_u->version) {
-+	case FSCRYPT_POLICY_V1: {
-+		const struct fscrypt_policy_v1 *policy = &policy_u->v1;
-+		struct fscrypt_context_v1 *ctx = &ctx_u->v1;
-+
-+		ctx->version = FSCRYPT_CONTEXT_V1;
-+		ctx->contents_encryption_mode =
-+			policy->contents_encryption_mode;
-+		ctx->filenames_encryption_mode =
-+			policy->filenames_encryption_mode;
-+		ctx->flags = policy->flags;
-+		memcpy(ctx->master_key_descriptor,
-+		       policy->master_key_descriptor,
-+		       sizeof(ctx->master_key_descriptor));
-+		get_random_bytes(ctx->nonce, sizeof(ctx->nonce));
-+		return sizeof(*ctx);
-+	}
-+	case FSCRYPT_POLICY_V2: {
-+		const struct fscrypt_policy_v2 *policy = &policy_u->v2;
-+		struct fscrypt_context_v2 *ctx = &ctx_u->v2;
-+
-+		ctx->version = FSCRYPT_CONTEXT_V2;
-+		ctx->contents_encryption_mode =
-+			policy->contents_encryption_mode;
-+		ctx->filenames_encryption_mode =
-+			policy->filenames_encryption_mode;
-+		ctx->flags = policy->flags;
-+		memcpy(ctx->master_key_identifier,
-+		       policy->master_key_identifier,
-+		       sizeof(ctx->master_key_identifier));
-+		get_random_bytes(ctx->nonce, sizeof(ctx->nonce));
-+		return sizeof(*ctx);
-+	}
-+	}
-+	BUG();
-+}
- 
--	ctx.format = FS_ENCRYPTION_CONTEXT_FORMAT_V1;
--	memcpy(ctx.master_key_descriptor, policy->master_key_descriptor,
--					FSCRYPT_KEY_DESCRIPTOR_SIZE);
-+/**
-+ * fscrypt_policy_from_context - convert an fscrypt_context to an fscrypt_policy
-+ *
-+ * Given an fscrypt_context, build the corresponding fscrypt_policy.
-+ *
-+ * Return: 0 on success, or -EINVAL if the fscrypt_context has an unrecognized
-+ * version number or size.
-+ *
-+ * This does *not* validate the settings within the policy itself, e.g. the
-+ * modes, flags, and reserved bits.  Use fscrypt_supported_policy() for that.
-+ */
-+int fscrypt_policy_from_context(union fscrypt_policy *policy_u,
-+				const union fscrypt_context *ctx_u,
-+				int ctx_size)
-+{
-+	memset(policy_u, 0, sizeof(*policy_u));
- 
--	if (!fscrypt_valid_enc_modes(policy->contents_encryption_mode,
--				     policy->filenames_encryption_mode))
-+	if (ctx_size <= 0 || ctx_size != fscrypt_context_size(ctx_u))
- 		return -EINVAL;
- 
--	if (policy->flags & ~FSCRYPT_POLICY_FLAGS_VALID)
-+	switch (ctx_u->version) {
-+	case FSCRYPT_CONTEXT_V1: {
-+		const struct fscrypt_context_v1 *ctx = &ctx_u->v1;
-+		struct fscrypt_policy_v1 *policy = &policy_u->v1;
-+
-+		policy->version = FSCRYPT_POLICY_V1;
-+		policy->contents_encryption_mode =
-+			ctx->contents_encryption_mode;
-+		policy->filenames_encryption_mode =
-+			ctx->filenames_encryption_mode;
-+		policy->flags = ctx->flags;
-+		memcpy(policy->master_key_descriptor,
-+		       ctx->master_key_descriptor,
-+		       sizeof(policy->master_key_descriptor));
-+		return 0;
-+	}
-+	case FSCRYPT_CONTEXT_V2: {
-+		const struct fscrypt_context_v2 *ctx = &ctx_u->v2;
-+		struct fscrypt_policy_v2 *policy = &policy_u->v2;
-+
-+		policy->version = FSCRYPT_POLICY_V2;
-+		policy->contents_encryption_mode =
-+			ctx->contents_encryption_mode;
-+		policy->filenames_encryption_mode =
-+			ctx->filenames_encryption_mode;
-+		policy->flags = ctx->flags;
-+		memcpy(policy->__reserved, ctx->__reserved,
-+		       sizeof(policy->__reserved));
-+		memcpy(policy->master_key_identifier,
-+		       ctx->master_key_identifier,
-+		       sizeof(policy->master_key_identifier));
-+		return 0;
-+	}
-+	}
-+	/* unreachable */
-+	return -EINVAL;
-+}
-+
-+/* Retrieve an inode's encryption policy */
-+static int fscrypt_get_policy(struct inode *inode, union fscrypt_policy *policy)
-+{
-+	const struct fscrypt_info *ci;
-+	union fscrypt_context ctx;
-+	int ret;
-+
-+	ci = READ_ONCE(inode->i_crypt_info);
-+	if (ci) {
-+		/* key available, use the cached policy */
-+		*policy = ci->ci_policy;
-+		return 0;
-+	}
-+
-+	if (!IS_ENCRYPTED(inode))
-+		return -ENODATA;
-+
-+	ret = inode->i_sb->s_cop->get_context(inode, &ctx, sizeof(ctx));
-+	if (ret < 0)
-+		return (ret == -ERANGE) ? -EINVAL : ret;
-+
-+	return fscrypt_policy_from_context(policy, &ctx, ret);
-+}
-+
-+static int set_encryption_policy(struct inode *inode,
-+				 const union fscrypt_policy *policy)
-+{
-+	union fscrypt_context ctx;
-+	int ctxsize;
-+
-+	if (!fscrypt_supported_policy(policy, inode))
- 		return -EINVAL;
- 
--	ctx.contents_encryption_mode = policy->contents_encryption_mode;
--	ctx.filenames_encryption_mode = policy->filenames_encryption_mode;
--	ctx.flags = policy->flags;
--	BUILD_BUG_ON(sizeof(ctx.nonce) != FS_KEY_DERIVATION_NONCE_SIZE);
--	get_random_bytes(ctx.nonce, FS_KEY_DERIVATION_NONCE_SIZE);
-+	if (policy->version == FSCRYPT_POLICY_V1) {
-+		/*
-+		 * The original encryption policy version provided no way of
-+		 * verifying that the correct master key was supplied, which was
-+		 * insecure in scenarios where multiple users have access to the
-+		 * same encrypted files (even just read-only access).  The new
-+		 * encryption policy version fixes this and also implies use of
-+		 * an improved key derivation function and allows non-root users
-+		 * to securely remove keys.  So as long as compatibility with
-+		 * old kernels isn't required, it is recommended to use the new
-+		 * policy version for all new encrypted directories.
-+		 */
-+		pr_warn_once("%s (pid %d) is setting deprecated v1 encryption policy; recommend upgrading to v2.\n",
-+			     current->comm, current->pid);
-+	}
- 
--	return inode->i_sb->s_cop->set_context(inode, &ctx, sizeof(ctx), NULL);
-+	ctxsize = fscrypt_new_context_from_policy(&ctx, policy);
-+
-+	return inode->i_sb->s_cop->set_context(inode, &ctx, ctxsize, NULL);
- }
- 
- int fscrypt_ioctl_set_policy(struct file *filp, const void __user *arg)
- {
--	struct fscrypt_policy policy;
-+	union fscrypt_policy policy;
-+	union fscrypt_policy existing_policy;
- 	struct inode *inode = file_inode(filp);
-+	u8 version;
-+	int size;
- 	int ret;
--	struct fscrypt_context ctx;
- 
--	if (copy_from_user(&policy, arg, sizeof(policy)))
-+	if (get_user(policy.version, (const u8 __user *)arg))
- 		return -EFAULT;
- 
-+	size = fscrypt_policy_size(&policy);
-+	if (size <= 0)
-+		return -EINVAL;
-+
-+	/*
-+	 * We should just copy the remaining 'size - 1' bytes here, but a
-+	 * bizarre bug in gcc 7 and earlier (fixed by gcc r255731) causes gcc to
-+	 * think that size can be 0 here (despite the check above!) *and* that
-+	 * it's a compile-time constant.  Thus it would think copy_from_user()
-+	 * is passed compile-time constant ULONG_MAX, causing the compile-time
-+	 * buffer overflow check to fail, breaking the build. This only occurred
-+	 * when building an i386 kernel with -Os and branch profiling enabled.
-+	 *
-+	 * Work around it by just copying the first byte again...
-+	 */
-+	version = policy.version;
-+	if (copy_from_user(&policy, arg, size))
-+		return -EFAULT;
-+	policy.version = version;
-+
- 	if (!inode_owner_or_capable(inode))
- 		return -EACCES;
- 
--	if (policy.version != 0)
--		return -EINVAL;
+-The Adiantum encryption mode (see `Encryption modes and usage`_) is
+-special, since it accepts longer IVs and is suitable for both contents
+-and filenames encryption.  For it, a "direct key" option is offered
+-where the file's nonce is included in the IVs and the master key is
+-used for encryption directly.  This improves performance; however,
+-users must not use the same master key for any other encryption mode.
 -
- 	ret = mnt_want_write_file(filp);
- 	if (ret)
- 		return ret;
- 
- 	inode_lock(inode);
- 
--	ret = inode->i_sb->s_cop->get_context(inode, &ctx, sizeof(ctx));
-+	ret = fscrypt_get_policy(inode, &existing_policy);
- 	if (ret == -ENODATA) {
- 		if (!S_ISDIR(inode->i_mode))
- 			ret = -ENOTDIR;
-@@ -86,14 +308,10 @@ int fscrypt_ioctl_set_policy(struct file *filp, const void __user *arg)
- 		else if (!inode->i_sb->s_cop->empty_dir(inode))
- 			ret = -ENOTEMPTY;
- 		else
--			ret = create_encryption_context_from_policy(inode,
--								    &policy);
--	} else if (ret == sizeof(ctx) &&
--		   is_encryption_context_consistent_with_policy(&ctx,
--								&policy)) {
--		/* The file already uses the same encryption policy. */
--		ret = 0;
--	} else if (ret >= 0 || ret == -ERANGE) {
-+			ret = set_encryption_policy(inode, &policy);
-+	} else if (ret == -EINVAL ||
-+		   (ret == 0 && !fscrypt_policies_equal(&policy,
-+							&existing_policy))) {
- 		/* The file already uses a different encryption policy. */
- 		ret = -EEXIST;
- 	}
-@@ -105,37 +323,57 @@ int fscrypt_ioctl_set_policy(struct file *filp, const void __user *arg)
- }
- EXPORT_SYMBOL(fscrypt_ioctl_set_policy);
- 
-+/* Original ioctl version; can only get the original policy version */
- int fscrypt_ioctl_get_policy(struct file *filp, void __user *arg)
- {
--	struct inode *inode = file_inode(filp);
--	struct fscrypt_context ctx;
--	struct fscrypt_policy policy;
--	int res;
-+	union fscrypt_policy policy;
-+	int err;
- 
--	if (!IS_ENCRYPTED(inode))
--		return -ENODATA;
-+	err = fscrypt_get_policy(file_inode(filp), &policy);
-+	if (err)
-+		return err;
- 
--	res = inode->i_sb->s_cop->get_context(inode, &ctx, sizeof(ctx));
--	if (res < 0 && res != -ERANGE)
--		return res;
--	if (res != sizeof(ctx))
--		return -EINVAL;
--	if (ctx.format != FS_ENCRYPTION_CONTEXT_FORMAT_V1)
-+	if (policy.version != FSCRYPT_POLICY_V1)
- 		return -EINVAL;
- 
--	policy.version = 0;
--	policy.contents_encryption_mode = ctx.contents_encryption_mode;
--	policy.filenames_encryption_mode = ctx.filenames_encryption_mode;
--	policy.flags = ctx.flags;
--	memcpy(policy.master_key_descriptor, ctx.master_key_descriptor,
--				FSCRYPT_KEY_DESCRIPTOR_SIZE);
+-Below, the KDF and design considerations are described in more detail.
 -
--	if (copy_to_user(arg, &policy, sizeof(policy)))
-+	if (copy_to_user(arg, &policy, sizeof(policy.v1)))
- 		return -EFAULT;
- 	return 0;
- }
- EXPORT_SYMBOL(fscrypt_ioctl_get_policy);
- 
-+/* Extended ioctl version; can get policies of any version */
-+int fscrypt_ioctl_get_policy_ex(struct file *filp, void __user *uarg)
-+{
-+	struct fscrypt_get_policy_ex_arg arg;
-+	union fscrypt_policy *policy = (union fscrypt_policy *)&arg.policy;
-+	size_t policy_size;
-+	int err;
-+
-+	/* arg is policy_size, then policy */
-+	BUILD_BUG_ON(offsetof(typeof(arg), policy_size) != 0);
-+	BUILD_BUG_ON(offsetofend(typeof(arg), policy_size) !=
-+		     offsetof(typeof(arg), policy));
-+	BUILD_BUG_ON(sizeof(arg.policy) != sizeof(*policy));
-+
-+	err = fscrypt_get_policy(file_inode(filp), policy);
-+	if (err)
-+		return err;
-+	policy_size = fscrypt_policy_size(policy);
-+
-+	if (copy_from_user(&arg, uarg, sizeof(arg.policy_size)))
-+		return -EFAULT;
-+
-+	if (policy_size > arg.policy_size)
-+		return -EOVERFLOW;
-+	arg.policy_size = policy_size;
-+
-+	if (copy_to_user(uarg, &arg, sizeof(arg.policy_size) + policy_size))
-+		return -EFAULT;
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(fscrypt_ioctl_get_policy_ex);
-+
- /**
-  * fscrypt_has_permitted_context() - is a file's encryption policy permitted
-  *				     within its directory?
-@@ -157,10 +395,8 @@ EXPORT_SYMBOL(fscrypt_ioctl_get_policy);
-  */
- int fscrypt_has_permitted_context(struct inode *parent, struct inode *child)
- {
--	const struct fscrypt_operations *cops = parent->i_sb->s_cop;
--	const struct fscrypt_info *parent_ci, *child_ci;
--	struct fscrypt_context parent_ctx, child_ctx;
--	int res;
-+	union fscrypt_policy parent_policy, child_policy;
-+	int err;
- 
- 	/* No restrictions on file types which are never encrypted */
- 	if (!S_ISREG(child->i_mode) && !S_ISDIR(child->i_mode) &&
-@@ -190,41 +426,22 @@ int fscrypt_has_permitted_context(struct inode *parent, struct inode *child)
- 	 * In any case, if an unexpected error occurs, fall back to "forbidden".
- 	 */
- 
--	res = fscrypt_get_encryption_info(parent);
--	if (res)
-+	err = fscrypt_get_encryption_info(parent);
-+	if (err)
- 		return 0;
--	res = fscrypt_get_encryption_info(child);
--	if (res)
-+	err = fscrypt_get_encryption_info(child);
-+	if (err)
- 		return 0;
--	parent_ci = READ_ONCE(parent->i_crypt_info);
--	child_ci = READ_ONCE(child->i_crypt_info);
+-The current KDF works by encrypting the master key with AES-128-ECB,
+-using the file's nonce as the AES key.  The output is used as the
+-derived key.  If the output is longer than needed, then it is
+-truncated to the needed length.
 -
--	if (parent_ci && child_ci) {
--		return memcmp(parent_ci->ci_master_key_descriptor,
--			      child_ci->ci_master_key_descriptor,
--			      FSCRYPT_KEY_DESCRIPTOR_SIZE) == 0 &&
--			(parent_ci->ci_data_mode == child_ci->ci_data_mode) &&
--			(parent_ci->ci_filename_mode ==
--			 child_ci->ci_filename_mode) &&
--			(parent_ci->ci_flags == child_ci->ci_flags);
--	}
+-Note: this KDF meets the primary security requirement, which is to
+-produce unique derived keys that preserve the entropy of the master
+-key, assuming that the master key is already a good pseudorandom key.
+-However, it is nonstandard and has some problems such as being
+-reversible, so it is generally considered to be a mistake!  It may be
+-replaced with HKDF or another more standard KDF in the future.
++inode's encryption xattr.  Then, it uses a KDF (as described in `Key
++derivation function`_) to derive the file's key from the master key
++and nonce.
  
--	res = cops->get_context(parent, &parent_ctx, sizeof(parent_ctx));
--	if (res != sizeof(parent_ctx))
-+	err = fscrypt_get_policy(parent, &parent_policy);
-+	if (err)
- 		return 0;
+ Key derivation was chosen over key wrapping because wrapped keys would
+ require larger xattrs which would be less likely to fit in-line in the
+@@ -176,6 +261,37 @@ rejected as it would have prevented ext4 filesystems from being
+ resized, and by itself still wouldn't have been sufficient to prevent
+ the same key from being directly reused for both XTS and CTS-CBC.
  
--	res = cops->get_context(child, &child_ctx, sizeof(child_ctx));
--	if (res != sizeof(child_ctx))
-+	err = fscrypt_get_policy(child, &child_policy);
-+	if (err)
- 		return 0;
- 
--	return memcmp(parent_ctx.master_key_descriptor,
--		      child_ctx.master_key_descriptor,
--		      FSCRYPT_KEY_DESCRIPTOR_SIZE) == 0 &&
--		(parent_ctx.contents_encryption_mode ==
--		 child_ctx.contents_encryption_mode) &&
--		(parent_ctx.filenames_encryption_mode ==
--		 child_ctx.filenames_encryption_mode) &&
--		(parent_ctx.flags == child_ctx.flags);
-+	return fscrypt_policies_equal(&parent_policy, &child_policy);
- }
- EXPORT_SYMBOL(fscrypt_has_permitted_context);
- 
-@@ -240,7 +457,8 @@ EXPORT_SYMBOL(fscrypt_has_permitted_context);
- int fscrypt_inherit_context(struct inode *parent, struct inode *child,
- 						void *fs_data, bool preload)
- {
--	struct fscrypt_context ctx;
-+	union fscrypt_context ctx;
-+	int ctxsize;
- 	struct fscrypt_info *ci;
- 	int res;
- 
-@@ -252,16 +470,10 @@ int fscrypt_inherit_context(struct inode *parent, struct inode *child,
- 	if (ci == NULL)
- 		return -ENOKEY;
- 
--	ctx.format = FS_ENCRYPTION_CONTEXT_FORMAT_V1;
--	ctx.contents_encryption_mode = ci->ci_data_mode;
--	ctx.filenames_encryption_mode = ci->ci_filename_mode;
--	ctx.flags = ci->ci_flags;
--	memcpy(ctx.master_key_descriptor, ci->ci_master_key_descriptor,
--	       FSCRYPT_KEY_DESCRIPTOR_SIZE);
--	get_random_bytes(ctx.nonce, FS_KEY_DERIVATION_NONCE_SIZE);
-+	ctxsize = fscrypt_new_context_from_policy(&ctx, &ci->ci_policy);
++DIRECT_KEY and per-mode keys
++----------------------------
 +
- 	BUILD_BUG_ON(sizeof(ctx) != FSCRYPT_SET_CONTEXT_MAX_SIZE);
--	res = parent->i_sb->s_cop->set_context(child, &ctx,
--						sizeof(ctx), fs_data);
-+	res = parent->i_sb->s_cop->set_context(child, &ctx, ctxsize, fs_data);
- 	if (res)
- 		return res;
- 	return preload ? fscrypt_get_encryption_info(child): 0;
-diff --git a/include/linux/fscrypt.h b/include/linux/fscrypt.h
-index 6628d09585bdc3..8b8ff048404297 100644
---- a/include/linux/fscrypt.h
-+++ b/include/linux/fscrypt.h
-@@ -43,7 +43,7 @@ struct fscrypt_name {
- #define fname_len(p)		((p)->disk_name.len)
- 
- /* Maximum value for the third parameter of fscrypt_operations.set_context(). */
--#define FSCRYPT_SET_CONTEXT_MAX_SIZE	28
-+#define FSCRYPT_SET_CONTEXT_MAX_SIZE	40
- 
- #ifdef CONFIG_FS_ENCRYPTION
- /*
-@@ -135,6 +135,7 @@ extern void fscrypt_free_bounce_page(struct page *bounce_page);
- /* policy.c */
- extern int fscrypt_ioctl_set_policy(struct file *, const void __user *);
- extern int fscrypt_ioctl_get_policy(struct file *, void __user *);
-+extern int fscrypt_ioctl_get_policy_ex(struct file *, void __user *);
- extern int fscrypt_has_permitted_context(struct inode *, struct inode *);
- extern int fscrypt_inherit_context(struct inode *, struct inode *,
- 					void *, bool);
-@@ -361,6 +362,12 @@ static inline int fscrypt_ioctl_get_policy(struct file *filp, void __user *arg)
- 	return -EOPNOTSUPP;
- }
- 
-+static inline int fscrypt_ioctl_get_policy_ex(struct file *filp,
-+					      void __user *arg)
-+{
-+	return -EOPNOTSUPP;
-+}
++The Adiantum encryption mode (see `Encryption modes and usage`_) is
++suitable for both contents and filenames encryption, and it accepts
++long IVs --- long enough to hold both an 8-byte logical block number
++and a 16-byte per-file nonce.  Also, the overhead of each Adiantum key
++is greater than that of an AES-256-XTS key.
 +
- static inline int fscrypt_has_permitted_context(struct inode *parent,
- 						struct inode *child)
- {
-diff --git a/include/uapi/linux/fscrypt.h b/include/uapi/linux/fscrypt.h
-index ed5995b150166a..f961ebf83e9861 100644
---- a/include/uapi/linux/fscrypt.h
-+++ b/include/uapi/linux/fscrypt.h
-@@ -10,15 +10,13 @@
++Therefore, to improve performance and save memory, for Adiantum a
++"direct key" configuration is supported.  When the user has enabled
++this by setting FSCRYPT_POLICY_FLAG_DIRECT_KEY in the fscrypt policy,
++per-file keys are not used.  Instead, whenever any data (contents or
++filenames) is encrypted, the file's 16-byte nonce is included in the
++IV.  Moreover:
++
++- For v1 encryption policies, the encryption is done directly with the
++  master key.  Because of this, users **must not** use the same master
++  key for any other purpose, even for other v1 policies.
++
++- For v2 encryption policies, the encryption is done with a per-mode
++  key derived using the KDF.  Users may use the same master key for
++  other v2 encryption policies.
++
++Key identifiers
++---------------
++
++For master keys used for v2 encryption policies, a unique 16-byte "key
++identifier" is also derived using the KDF.  This value is stored in
++the clear, since it is needed to reliably identify the key itself.
++
+ Encryption modes and usage
+ ==========================
  
- #include <linux/types.h>
+@@ -270,24 +386,44 @@ User API
+ Setting an encryption policy
+ ----------------------------
  
--#define FSCRYPT_KEY_DESCRIPTOR_SIZE	8
++FS_IOC_SET_ENCRYPTION_POLICY
++~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++
+ The FS_IOC_SET_ENCRYPTION_POLICY ioctl sets an encryption policy on an
+ empty directory or verifies that a directory or regular file already
+ has the specified encryption policy.  It takes in a pointer to a
+-:c:type:`struct fscrypt_policy`, defined as follows::
++:c:type:`struct fscrypt_policy_v1` or a :c:type:`struct
++fscrypt_policy_v2`, defined as follows::
+ 
+-    #define FSCRYPT_KEY_DESCRIPTOR_SIZE  8
 -
- /* Encryption policy flags */
- #define FSCRYPT_POLICY_FLAGS_PAD_4		0x00
- #define FSCRYPT_POLICY_FLAGS_PAD_8		0x01
- #define FSCRYPT_POLICY_FLAGS_PAD_16		0x02
- #define FSCRYPT_POLICY_FLAGS_PAD_32		0x03
- #define FSCRYPT_POLICY_FLAGS_PAD_MASK		0x03
--#define FSCRYPT_POLICY_FLAG_DIRECT_KEY		0x04	/* use master key directly */
-+#define FSCRYPT_POLICY_FLAG_DIRECT_KEY		0x04
- #define FSCRYPT_POLICY_FLAGS_VALID		0x07
- 
- /* Encryption algorithms */
-@@ -27,14 +25,24 @@
- #define FSCRYPT_MODE_AES_128_CBC		5
- #define FSCRYPT_MODE_AES_128_CTS		6
- #define FSCRYPT_MODE_ADIANTUM			9
-+#define __FSCRYPT_MODE_MAX			9
- 
--struct fscrypt_policy {
-+/*
-+ * Legacy policy version; ad-hoc KDF and no key verification.
-+ * For new encrypted directories, use fscrypt_policy_v2 instead.
-+ *
-+ * Careful: the .version field for this is actually 0, not 1.
-+ */
-+#define FSCRYPT_POLICY_V1		0
-+#define FSCRYPT_KEY_DESCRIPTOR_SIZE	8
-+struct fscrypt_policy_v1 {
- 	__u8 version;
- 	__u8 contents_encryption_mode;
- 	__u8 filenames_encryption_mode;
- 	__u8 flags;
- 	__u8 master_key_descriptor[FSCRYPT_KEY_DESCRIPTOR_SIZE];
- };
-+#define fscrypt_policy	fscrypt_policy_v1
- 
- /*
-  * Process-subscribed "logon" key description prefix and payload format.
-@@ -50,14 +58,45 @@ struct fscrypt_key {
- };
- 
- /*
-- * Keys are specified by an arbitrary 8-byte key "descriptor",
-- * matching fscrypt_policy::master_key_descriptor.
-+ * New policy version with HKDF and key verification (recommended).
-+ */
-+#define FSCRYPT_POLICY_V2		2
-+#define FSCRYPT_KEY_IDENTIFIER_SIZE	16
-+struct fscrypt_policy_v2 {
-+	__u8 version;
-+	__u8 contents_encryption_mode;
-+	__u8 filenames_encryption_mode;
-+	__u8 flags;
-+	__u8 __reserved[4];
-+	__u8 master_key_identifier[FSCRYPT_KEY_IDENTIFIER_SIZE];
-+};
+-    struct fscrypt_policy {
++    #define FSCRYPT_POLICY_V1               0
++    #define FSCRYPT_KEY_DESCRIPTOR_SIZE     8
++    struct fscrypt_policy_v1 {
+             __u8 version;
+             __u8 contents_encryption_mode;
+             __u8 filenames_encryption_mode;
+             __u8 flags;
+             __u8 master_key_descriptor[FSCRYPT_KEY_DESCRIPTOR_SIZE];
+     };
++    #define fscrypt_policy  fscrypt_policy_v1
 +
-+/* Struct passed to FS_IOC_GET_ENCRYPTION_POLICY_EX */
-+struct fscrypt_get_policy_ex_arg {
-+	__u64 policy_size; /* input/output */
-+	union {
-+		__u8 version;
-+		struct fscrypt_policy_v1 v1;
-+		struct fscrypt_policy_v2 v2;
-+	} policy; /* output */
-+};
-+
-+/*
-+ * v1 policy keys are specified by an arbitrary 8-byte key "descriptor",
-+ * matching fscrypt_policy_v1::master_key_descriptor.
-  */
- #define FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR	1
++    #define FSCRYPT_POLICY_V2               2
++    #define FSCRYPT_KEY_IDENTIFIER_SIZE     16
++    struct fscrypt_policy_v2 {
++            __u8 version;
++            __u8 contents_encryption_mode;
++            __u8 filenames_encryption_mode;
++            __u8 flags;
++            __u8 __reserved[4];
++            __u8 master_key_identifier[FSCRYPT_KEY_IDENTIFIER_SIZE];
++    };
  
- /*
-- * Specifies a key.  This doesn't contain the actual key itself; this is just
-- * the "name" of the key.
-+ * v2 policy keys are specified by a 16-byte key "identifier" which the kernel
-+ * calculates as a cryptographic hash of the key itself,
-+ * matching fscrypt_policy_v2::master_key_identifier.
-+ */
-+#define FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER	2
-+
-+/*
-+ * Specifies a key, either for v1 or v2 policies.  This doesn't contain the
-+ * actual key itself; this is just the "name" of the key.
-  */
- struct fscrypt_key_specifier {
- 	__u32 type;	/* one of FSCRYPT_KEY_SPEC_TYPE_* */
-@@ -65,6 +104,7 @@ struct fscrypt_key_specifier {
- 	union {
- 		__u8 __reserved[32]; /* reserve some extra space */
- 		__u8 descriptor[FSCRYPT_KEY_DESCRIPTOR_SIZE];
-+		__u8 identifier[FSCRYPT_KEY_IDENTIFIER_SIZE];
- 	} u;
- };
+ This structure must be initialized as follows:
  
-@@ -101,6 +141,7 @@ struct fscrypt_get_key_status_arg {
- #define FS_IOC_SET_ENCRYPTION_POLICY		_IOR('f', 19, struct fscrypt_policy)
- #define FS_IOC_GET_ENCRYPTION_PWSALT		_IOW('f', 20, __u8[16])
- #define FS_IOC_GET_ENCRYPTION_POLICY		_IOW('f', 21, struct fscrypt_policy)
-+#define FS_IOC_GET_ENCRYPTION_POLICY_EX		_IOWR('f', 22, __u8[9]) /* size + version */
- #define FS_IOC_ADD_ENCRYPTION_KEY		_IOWR('f', 23, struct fscrypt_add_key_arg)
- #define FS_IOC_REMOVE_ENCRYPTION_KEY		_IOWR('f', 24, struct fscrypt_remove_key_arg)
- #define FS_IOC_GET_ENCRYPTION_KEY_STATUS	_IOWR('f', 26, struct fscrypt_get_key_status_arg)
+-- ``version`` must be 0.
++- ``version`` must be FSCRYPT_POLICY_V1 (0) if the struct is
++  :c:type:`fscrypt_policy_v1` or FSCRYPT_POLICY_V2 (2) if the struct
++  is :c:type:`fscrypt_policy_v2`.  (Note: we refer to the original
++  policy version as "v1", though its version code is really 0.)  For
++  new encrypted directories, use v2 policies.
+ 
+ - ``contents_encryption_mode`` and ``filenames_encryption_mode`` must
+   be set to constants from ``<linux/fscrypt.h>`` which identify the
+@@ -297,21 +433,30 @@ This structure must be initialized as follows:
+ 
+ - ``flags`` must contain a value from ``<linux/fscrypt.h>`` which
+   identifies the amount of NUL-padding to use when encrypting
+-  filenames.  If unsure, use FSCRYPT_POLICY_FLAGS_PAD_32 (0x3).  In
+-  addition, if the chosen encryption modes are both
++  filenames.  If unsure, use FSCRYPT_POLICY_FLAGS_PAD_32 (0x3).
++  Additionally, if the encryption modes are both
+   FSCRYPT_MODE_ADIANTUM, this can contain
+-  FSCRYPT_POLICY_FLAG_DIRECT_KEY to specify that the master key should
+-  be used directly, without key derivation.
++  FSCRYPT_POLICY_FLAG_DIRECT_KEY; see `DIRECT_KEY and per-mode keys`_.
++
++- For v2 encryption policies, ``__reserved`` must be zeroed.
+ 
+-- ``master_key_descriptor`` specifies how to find the master key in
+-  the keyring; see `Adding keys`_.  It is up to userspace to choose a
+-  unique ``master_key_descriptor`` for each master key.  The e4crypt
+-  and fscrypt tools use the first 8 bytes of
++- For v1 encryption policies, ``master_key_descriptor`` specifies how
++  to find the master key in a keyring; see `Adding keys`_.  It is up
++  to userspace to choose a unique ``master_key_descriptor`` for each
++  master key.  The e4crypt and fscrypt tools use the first 8 bytes of
+   ``SHA-512(SHA-512(master_key))``, but this particular scheme is not
+   required.  Also, the master key need not be in the keyring yet when
+   FS_IOC_SET_ENCRYPTION_POLICY is executed.  However, it must be added
+   before any files can be created in the encrypted directory.
+ 
++  For v2 encryption policies, ``master_key_descriptor`` has been
++  replaced with ``master_key_identifier``, which is longer and cannot
++  be arbitrarily chosen.  Instead, the key must first be added using
++  `FS_IOC_ADD_ENCRYPTION_KEY`_.  Then, the ``key_spec.u.identifier``
++  the kernel returned in the :c:type:`struct fscrypt_add_key_arg` must
++  be used as the ``master_key_identifier`` in the :c:type:`struct
++  fscrypt_policy_v2`.
++
+ If the file is not yet encrypted, then FS_IOC_SET_ENCRYPTION_POLICY
+ verifies that the file is an empty directory.  If so, the specified
+ encryption policy is assigned to the directory, turning it into an
+@@ -327,6 +472,15 @@ policy exactly matches the actual one.  If they match, then the ioctl
+ returns 0.  Otherwise, it fails with EEXIST.  This works on both
+ regular files and directories, including nonempty directories.
+ 
++When a v2 encryption policy is assigned to a directory, it is also
++required that either the specified key has been added by the current
++user or that the caller has CAP_FOWNER in the initial user namespace.
++(This is needed to prevent a user from encrypting their data with
++another user's key.)  The key must remain added while
++FS_IOC_SET_ENCRYPTION_POLICY is executing.  However, if the new
++encrypted directory does not need to be accessed immediately, then the
++key can be removed right away afterwards.
++
+ Note that the ext4 filesystem does not allow the root directory to be
+ encrypted, even if it is empty.  Users who want to encrypt an entire
+ filesystem with one key should consider using dm-crypt instead.
+@@ -339,7 +493,11 @@ FS_IOC_SET_ENCRYPTION_POLICY can fail with the following errors:
+ - ``EEXIST``: the file is already encrypted with an encryption policy
+   different from the one specified
+ - ``EINVAL``: an invalid encryption policy was specified (invalid
+-  version, mode(s), or flags)
++  version, mode(s), or flags; or reserved bits were set)
++- ``ENOKEY``: a v2 encryption policy was specified, but the key with
++  the specified ``master_key_identifier`` has not been added, nor does
++  the process have the CAP_FOWNER capability in the initial user
++  namespace
+ - ``ENOTDIR``: the file is unencrypted and is a regular file, not a
+   directory
+ - ``ENOTEMPTY``: the file is unencrypted and is a nonempty directory
+@@ -358,25 +516,78 @@ FS_IOC_SET_ENCRYPTION_POLICY can fail with the following errors:
+ Getting an encryption policy
+ ----------------------------
+ 
+-The FS_IOC_GET_ENCRYPTION_POLICY ioctl retrieves the :c:type:`struct
+-fscrypt_policy`, if any, for a directory or regular file.  See above
+-for the struct definition.  No additional permissions are required
+-beyond the ability to open the file.
++Two ioctls are available to get a file's encryption policy:
++
++- `FS_IOC_GET_ENCRYPTION_POLICY_EX`_
++- `FS_IOC_GET_ENCRYPTION_POLICY`_
++
++The extended (_EX) version of the ioctl is more general and is
++recommended to use when possible.  However, on older kernels only the
++original ioctl is available.  Applications should try the extended
++version, and if it fails with ENOTTY fall back to the original
++version.
++
++FS_IOC_GET_ENCRYPTION_POLICY_EX
++~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++
++The FS_IOC_GET_ENCRYPTION_POLICY_EX ioctl retrieves the encryption
++policy, if any, for a directory or regular file.  No additional
++permissions are required beyond the ability to open the file.  It
++takes in a pointer to a :c:type:`struct fscrypt_get_policy_ex_arg`,
++defined as follows::
++
++    struct fscrypt_get_policy_ex_arg {
++            __u64 policy_size; /* input/output */
++            union {
++                    __u8 version;
++                    struct fscrypt_policy_v1 v1;
++                    struct fscrypt_policy_v2 v2;
++            } policy; /* output */
++    };
++
++The caller must initialize ``policy_size`` to the size available for
++the policy struct, i.e. ``sizeof(arg.policy)``.
++
++On success, the policy struct is returned in ``policy``, and its
++actual size is returned in ``policy_size``.  ``policy.version`` should
++be checked to determine the version of policy returned.  Note that the
++version code for the "v1" policy is actually 0 (FSCRYPT_POLICY_V1).
+ 
+-FS_IOC_GET_ENCRYPTION_POLICY can fail with the following errors:
++FS_IOC_GET_ENCRYPTION_POLICY_EX can fail with the following errors:
+ 
+ - ``EINVAL``: the file is encrypted, but it uses an unrecognized
+-  encryption context format
++  encryption policy version
+ - ``ENODATA``: the file is not encrypted
+-- ``ENOTTY``: this type of filesystem does not implement encryption
++- ``ENOTTY``: this type of filesystem does not implement encryption,
++  or this kernel is too old to support FS_IOC_GET_ENCRYPTION_POLICY_EX
++  (try FS_IOC_GET_ENCRYPTION_POLICY instead)
+ - ``EOPNOTSUPP``: the kernel was not configured with encryption
+   support for this filesystem
++- ``EOVERFLOW``: the file is encrypted and uses a recognized
++  encryption policy version, but the policy struct does not fit into
++  the provided buffer
+ 
+ Note: if you only need to know whether a file is encrypted or not, on
+ most filesystems it is also possible to use the FS_IOC_GETFLAGS ioctl
+ and check for FS_ENCRYPT_FL, or to use the statx() system call and
+ check for STATX_ATTR_ENCRYPTED in stx_attributes.
+ 
++FS_IOC_GET_ENCRYPTION_POLICY
++~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++
++The FS_IOC_GET_ENCRYPTION_POLICY ioctl can also retrieve the
++encryption policy, if any, for a directory or regular file.  However,
++unlike `FS_IOC_GET_ENCRYPTION_POLICY_EX`_,
++FS_IOC_GET_ENCRYPTION_POLICY only supports the original policy
++version.  It takes in a pointer directly to a :c:type:`struct
++fscrypt_policy_v1` rather than a :c:type:`struct
++fscrypt_get_policy_ex_arg`.
++
++The error codes for FS_IOC_GET_ENCRYPTION_POLICY are the same as those
++for FS_IOC_GET_ENCRYPTION_POLICY_EX, except that
++FS_IOC_GET_ENCRYPTION_POLICY also returns ``EINVAL`` if the file is
++encrypted using a newer encryption policy version.
++
+ Getting the per-filesystem salt
+ -------------------------------
+ 
+@@ -392,8 +603,115 @@ generate and manage any needed salt(s) in userspace.
+ Adding keys
+ -----------
+ 
+-To provide a master key, userspace must add it to an appropriate
+-keyring using the add_key() system call (see:
++FS_IOC_ADD_ENCRYPTION_KEY
++~~~~~~~~~~~~~~~~~~~~~~~~~
++
++The FS_IOC_ADD_ENCRYPTION_KEY ioctl adds a master encryption key to
++the filesystem, making all files on the filesystem which were
++encrypted using that key appear "unlocked", i.e. in plaintext form.
++It can be executed on any file or directory on the target filesystem,
++but using the filesystem's root directory is recommended.  It takes in
++a pointer to a :c:type:`struct fscrypt_add_key_arg`, defined as
++follows::
++
++    struct fscrypt_add_key_arg {
++            struct fscrypt_key_specifier key_spec;
++            __u32 raw_size;
++            __u32 __reserved[9];
++            __u8 raw[];
++    };
++
++    #define FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR        1
++    #define FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER        2
++
++    struct fscrypt_key_specifier {
++            __u32 type;     /* one of FSCRYPT_KEY_SPEC_TYPE_* */
++            __u32 __reserved;
++            union {
++                    __u8 __reserved[32]; /* reserve some extra space */
++                    __u8 descriptor[FSCRYPT_KEY_DESCRIPTOR_SIZE];
++                    __u8 identifier[FSCRYPT_KEY_IDENTIFIER_SIZE];
++            } u;
++    };
++
++:c:type:`struct fscrypt_add_key_arg` must be zeroed, then initialized
++as follows:
++
++- If the key is being added for use by v1 encryption policies, then
++  ``key_spec.type`` must contain FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR, and
++  ``key_spec.u.descriptor`` must contain the descriptor of the key
++  being added, corresponding to the value in the
++  ``master_key_descriptor`` field of :c:type:`struct
++  fscrypt_policy_v1`.  To add this type of key, the calling process
++  must have the CAP_SYS_ADMIN capability in the initial user
++  namespace.
++
++  Alternatively, if the key is being added for use by v2 encryption
++  policies, then ``key_spec.type`` must contain
++  FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER, and ``key_spec.u.identifier`` is
++  an *output* field which the kernel fills in with a cryptographic
++  hash of the key.  To add this type of key, the calling process does
++  not need any privileges.  However, the number of keys that can be
++  added is limited by the user's quota for the keyrings service (see
++  ``Documentation/security/keys/core.rst``).
++
++- ``raw_size`` must be the size of the ``raw`` key provided, in bytes.
++
++- ``raw`` is a variable-length field which must contain the actual
++  key, ``raw_size`` bytes long.
++
++For v2 policy keys, the kernel keeps track of which user (identified
++by effective user ID) added the key, and only allows the key to be
++removed by that user --- or by "root", if they use
++`FS_IOC_REMOVE_ENCRYPTION_KEY_ALL_USERS`_.
++
++However, if another user has added the key, it may be desirable to
++prevent that other user from unexpectedly removing it.  Therefore,
++FS_IOC_ADD_ENCRYPTION_KEY may also be used to add a v2 policy key
++*again*, even if it's already added by other user(s).  In this case,
++FS_IOC_ADD_ENCRYPTION_KEY will just install a claim to the key for the
++current user, rather than actually add the key again (but the raw key
++must still be provided, as a proof of knowledge).
++
++FS_IOC_ADD_ENCRYPTION_KEY returns 0 if either the key or a claim to
++the key was either added or already exists.
++
++FS_IOC_ADD_ENCRYPTION_KEY can fail with the following errors:
++
++- ``EACCES``: FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR was specified, but the
++  caller does not have the CAP_SYS_ADMIN capability in the initial
++  user namespace
++- ``EDQUOT``: the key quota for this user would be exceeded by adding
++  the key
++- ``EINVAL``: invalid key size or key specifier type, or reserved bits
++  were set
++- ``ENOTTY``: this type of filesystem does not implement encryption
++- ``EOPNOTSUPP``: the kernel was not configured with encryption
++  support for this filesystem, or the filesystem superblock has not
++  had encryption enabled on it
++
++Legacy method
++~~~~~~~~~~~~~
++
++For v1 encryption policies, a master encryption key can also be
++provided by adding it to a process-subscribed keyring, e.g. to a
++session keyring, or to a user keyring if the user keyring is linked
++into the session keyring.
++
++This method is deprecated (and not supported for v2 encryption
++policies) for several reasons.  First, it cannot be used in
++combination with FS_IOC_REMOVE_ENCRYPTION_KEY (see `Removing keys`_),
++so for removing a key a workaround such as keyctl_unlink() in
++combination with ``sync; echo 2 > /proc/sys/vm/drop_caches`` would
++have to be used.  Second, it doesn't match the fact that the
++locked/unlocked status of encrypted files (i.e. whether they appear to
++be in plaintext form or in ciphertext form) is global.  This mismatch
++has caused much confusion as well as real problems when processes
++running under different UIDs, such as a ``sudo`` command, need to
++access encrypted files.
++
++Nevertheless, to add a key to one of the process-subscribed keyrings,
++the add_key() system call can be used (see:
+ ``Documentation/security/keys/core.rst``).  The key type must be
+ "logon"; keys of this type are kept in kernel memory and cannot be
+ read back by userspace.  The key description must be "fscrypt:"
+@@ -401,12 +719,12 @@ followed by the 16-character lower case hex representation of the
+ ``master_key_descriptor`` that was set in the encryption policy.  The
+ key payload must conform to the following structure::
+ 
+-    #define FSCRYPT_MAX_KEY_SIZE 64
++    #define FSCRYPT_MAX_KEY_SIZE            64
+ 
+     struct fscrypt_key {
+-            u32 mode;
+-            u8 raw[FSCRYPT_MAX_KEY_SIZE];
+-            u32 size;
++            __u32 mode;
++            __u8 raw[FSCRYPT_MAX_KEY_SIZE];
++            __u32 size;
+     };
+ 
+ ``mode`` is ignored; just set it to 0.  The actual key is provided in
+@@ -418,26 +736,194 @@ with a filesystem-specific prefix such as "ext4:".  However, the
+ filesystem-specific prefixes are deprecated and should not be used in
+ new programs.
+ 
+-There are several different types of keyrings in which encryption keys
+-may be placed, such as a session keyring, a user session keyring, or a
+-user keyring.  Each key must be placed in a keyring that is "attached"
+-to all processes that might need to access files encrypted with it, in
+-the sense that request_key() will find the key.  Generally, if only
+-processes belonging to a specific user need to access a given
+-encrypted directory and no session keyring has been installed, then
+-that directory's key should be placed in that user's user session
+-keyring or user keyring.  Otherwise, a session keyring should be
+-installed if needed, and the key should be linked into that session
+-keyring, or in a keyring linked into that session keyring.
+-
+-Note: introducing the complex visibility semantics of keyrings here
+-was arguably a mistake --- especially given that by design, after any
+-process successfully opens an encrypted file (thereby setting up the
+-per-file key), possessing the keyring key is not actually required for
+-any process to read/write the file until its in-memory inode is
+-evicted.  In the future there probably should be a way to provide keys
+-directly to the filesystem instead, which would make the intended
+-semantics clearer.
++Removing keys
++-------------
++
++Two ioctls are available for removing a key that was added by
++`FS_IOC_ADD_ENCRYPTION_KEY`_:
++
++- `FS_IOC_REMOVE_ENCRYPTION_KEY`_
++- `FS_IOC_REMOVE_ENCRYPTION_KEY_ALL_USERS`_
++
++These two ioctls differ only in cases where v2 policy keys are added
++or removed by non-root users.
++
++These ioctls don't work on keys that were added via the legacy
++process-subscribed keyrings mechanism.
++
++Before using these ioctls, read the `Kernel memory compromise`_
++section for a discussion of the security goals and limitations of
++these ioctls.
++
++FS_IOC_REMOVE_ENCRYPTION_KEY
++~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++
++The FS_IOC_REMOVE_ENCRYPTION_KEY ioctl removes a claim to a master
++encryption key from the filesystem, and possibly removes the key
++itself.  It can be executed on any file or directory on the target
++filesystem, but using the filesystem's root directory is recommended.
++It takes in a pointer to a :c:type:`struct fscrypt_remove_key_arg`,
++defined as follows::
++
++    struct fscrypt_remove_key_arg {
++            struct fscrypt_key_specifier key_spec;
++    #define FSCRYPT_KEY_REMOVAL_STATUS_FLAG_FILES_BUSY      0x00000001
++    #define FSCRYPT_KEY_REMOVAL_STATUS_FLAG_OTHER_USERS     0x00000002
++            __u32 removal_status_flags;     /* output */
++            __u32 __reserved[5];
++    };
++
++This structure must be zeroed, then initialized as follows:
++
++- The key to remove is specified by ``key_spec``:
++
++    - To remove a key used by v1 encryption policies, set
++      ``key_spec.type`` to FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR and fill
++      in ``key_spec.u.descriptor``.  To remove this type of key, the
++      calling process must have the CAP_SYS_ADMIN capability in the
++      initial user namespace.
++
++    - To remove a key used by v2 encryption policies, set
++      ``key_spec.type`` to FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER and fill
++      in ``key_spec.u.identifier``.
++
++For v2 policy keys, this ioctl is usable by non-root users.  However,
++to make this possible, it actually just removes the current user's
++claim to the key, undoing a single call to FS_IOC_ADD_ENCRYPTION_KEY.
++Only after all claims are removed is the key really removed.
++
++For example, if FS_IOC_ADD_ENCRYPTION_KEY was called with uid 1000,
++then the key will be "claimed" by uid 1000, and
++FS_IOC_REMOVE_ENCRYPTION_KEY will only succeed as uid 1000.  Or, if
++both uids 1000 and 2000 added the key, then for each uid
++FS_IOC_REMOVE_ENCRYPTION_KEY will only remove their own claim.  Only
++once *both* are removed is the key really removed.  (Think of it like
++unlinking a file that may have hard links.)
++
++If FS_IOC_REMOVE_ENCRYPTION_KEY really removes the key, it will also
++try to "lock" all files that had been unlocked with the key.  It won't
++lock files that are still in-use, so this ioctl is expected to be used
++in cooperation with userspace ensuring that none of the files are
++still open.  However, if necessary, this ioctl can be executed again
++later to retry locking any remaining files.
++
++FS_IOC_REMOVE_ENCRYPTION_KEY returns 0 if either the key was removed
++(but may still have files remaining to be locked), the user's claim to
++the key was removed, or the key was already removed but had files
++remaining to be the locked so the ioctl retried locking them.  In any
++of these cases, ``removal_status_flags`` is filled in with the
++following informational status flags:
++
++- ``FSCRYPT_KEY_REMOVAL_STATUS_FLAG_FILES_BUSY``: set if some file(s)
++  are still in-use.  Not guaranteed to be set in the case where only
++  the user's claim to the key was removed.
++- ``FSCRYPT_KEY_REMOVAL_STATUS_FLAG_OTHER_USERS``: set if only the
++  user's claim to the key was removed, not the key itself
++
++FS_IOC_REMOVE_ENCRYPTION_KEY can fail with the following errors:
++
++- ``EACCES``: The FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR key specifier type
++  was specified, but the caller does not have the CAP_SYS_ADMIN
++  capability in the initial user namespace
++- ``EINVAL``: invalid key specifier type, or reserved bits were set
++- ``ENOKEY``: the key object was not found at all, i.e. it was never
++  added in the first place or was already fully removed including all
++  files locked; or, the user does not have a claim to the key (but
++  someone else does).
++- ``ENOTTY``: this type of filesystem does not implement encryption
++- ``EOPNOTSUPP``: the kernel was not configured with encryption
++  support for this filesystem, or the filesystem superblock has not
++  had encryption enabled on it
++
++FS_IOC_REMOVE_ENCRYPTION_KEY_ALL_USERS
++~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++
++FS_IOC_REMOVE_ENCRYPTION_KEY_ALL_USERS is exactly the same as
++`FS_IOC_REMOVE_ENCRYPTION_KEY`_, except that for v2 policy keys, the
++ALL_USERS version of the ioctl will remove all users' claims to the
++key, not just the current user's.  I.e., the key itself will always be
++removed, no matter how many users have added it.  This difference is
++only meaningful if non-root users are adding and removing keys.
++
++Because of this, FS_IOC_REMOVE_ENCRYPTION_KEY_ALL_USERS also requires
++"root", namely the CAP_SYS_ADMIN capability in the initial user
++namespace.  Otherwise it will fail with EACCES.
++
++Getting key status
++------------------
++
++FS_IOC_GET_ENCRYPTION_KEY_STATUS
++~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
++
++The FS_IOC_GET_ENCRYPTION_KEY_STATUS ioctl retrieves the status of a
++master encryption key.  It can be executed on any file or directory on
++the target filesystem, but using the filesystem's root directory is
++recommended.  It takes in a pointer to a :c:type:`struct
++fscrypt_get_key_status_arg`, defined as follows::
++
++    struct fscrypt_get_key_status_arg {
++            /* input */
++            struct fscrypt_key_specifier key_spec;
++            __u32 __reserved[6];
++
++            /* output */
++    #define FSCRYPT_KEY_STATUS_ABSENT               1
++    #define FSCRYPT_KEY_STATUS_PRESENT              2
++    #define FSCRYPT_KEY_STATUS_INCOMPLETELY_REMOVED 3
++            __u32 status;
++    #define FSCRYPT_KEY_STATUS_FLAG_ADDED_BY_SELF   0x00000001
++            __u32 status_flags;
++            __u32 user_count;
++            __u32 __out_reserved[13];
++    };
++
++The caller must zero all input fields, then fill in ``key_spec``:
++
++    - To get the status of a key for v1 encryption policies, set
++      ``key_spec.type`` to FSCRYPT_KEY_SPEC_TYPE_DESCRIPTOR and fill
++      in ``key_spec.u.descriptor``.
++
++    - To get the status of a key for v2 encryption policies, set
++      ``key_spec.type`` to FSCRYPT_KEY_SPEC_TYPE_IDENTIFIER and fill
++      in ``key_spec.u.identifier``.
++
++On success, 0 is returned and the kernel fills in the output fields:
++
++- ``status`` indicates whether the key is absent, present, or
++  incompletely removed.  Incompletely removed means that the master
++  secret has been removed, but some files are still in use; i.e.,
++  `FS_IOC_REMOVE_ENCRYPTION_KEY`_ returned 0 but set the informational
++  status flag FSCRYPT_KEY_REMOVAL_STATUS_FLAG_FILES_BUSY.
++
++- ``status_flags`` can contain the following flags:
++
++    - ``FSCRYPT_KEY_STATUS_FLAG_ADDED_BY_SELF`` indicates that the key
++      has added by the current user.  This is only set for keys
++      identified by ``identifier`` rather than by ``descriptor``.
++
++- ``user_count`` specifies the number of users who have added the key.
++  This is only set for keys identified by ``identifier`` rather than
++  by ``descriptor``.
++
++FS_IOC_GET_ENCRYPTION_KEY_STATUS can fail with the following errors:
++
++- ``EINVAL``: invalid key specifier type, or reserved bits were set
++- ``ENOTTY``: this type of filesystem does not implement encryption
++- ``EOPNOTSUPP``: the kernel was not configured with encryption
++  support for this filesystem, or the filesystem superblock has not
++  had encryption enabled on it
++
++Among other use cases, FS_IOC_GET_ENCRYPTION_KEY_STATUS can be useful
++for determining whether the key for a given encrypted directory needs
++to be added before prompting the user for the passphrase needed to
++derive the key.
++
++FS_IOC_GET_ENCRYPTION_KEY_STATUS can only get the status of keys in
++the filesystem-level keyring, i.e. the keyring managed by
++`FS_IOC_ADD_ENCRYPTION_KEY`_ and `FS_IOC_REMOVE_ENCRYPTION_KEY`_.  It
++cannot get the status of a key that has only been added for use by v1
++encryption policies using the legacy mechanism involving
++process-subscribed keyrings.
+ 
+ Access semantics
+ ================
+@@ -500,7 +986,7 @@ Without the key
+ 
+ Some filesystem operations may be performed on encrypted regular
+ files, directories, and symlinks even before their encryption key has
+-been provided:
++been added, or after their encryption key has been removed:
+ 
+ - File metadata may be read, e.g. using stat().
+ 
+@@ -565,20 +1051,20 @@ Encryption context
+ ------------------
+ 
+ An encryption policy is represented on-disk by a :c:type:`struct
+-fscrypt_context`.  It is up to individual filesystems to decide where
+-to store it, but normally it would be stored in a hidden extended
+-attribute.  It should *not* be exposed by the xattr-related system
+-calls such as getxattr() and setxattr() because of the special
+-semantics of the encryption xattr.  (In particular, there would be
+-much confusion if an encryption policy were to be added to or removed
+-from anything other than an empty directory.)  The struct is defined
+-as follows::
++fscrypt_context_v1` or a :c:type:`struct fscrypt_context_v2`.  It is
++up to individual filesystems to decide where to store it, but normally
++it would be stored in a hidden extended attribute.  It should *not* be
++exposed by the xattr-related system calls such as getxattr() and
++setxattr() because of the special semantics of the encryption xattr.
++(In particular, there would be much confusion if an encryption policy
++were to be added to or removed from anything other than an empty
++directory.)  These structs are defined as follows::
+ 
+-    #define FSCRYPT_KEY_DESCRIPTOR_SIZE  8
+     #define FS_KEY_DERIVATION_NONCE_SIZE 16
+ 
+-    struct fscrypt_context {
+-            u8 format;
++    #define FSCRYPT_KEY_DESCRIPTOR_SIZE  8
++    struct fscrypt_context_v1 {
++            u8 version;
+             u8 contents_encryption_mode;
+             u8 filenames_encryption_mode;
+             u8 flags;
+@@ -586,12 +1072,23 @@ as follows::
+             u8 nonce[FS_KEY_DERIVATION_NONCE_SIZE];
+     };
+ 
+-Note that :c:type:`struct fscrypt_context` contains the same
+-information as :c:type:`struct fscrypt_policy` (see `Setting an
+-encryption policy`_), except that :c:type:`struct fscrypt_context`
+-also contains a nonce.  The nonce is randomly generated by the kernel
+-and is used to derive the inode's encryption key as described in
+-`Per-file keys`_.
++    #define FSCRYPT_KEY_IDENTIFIER_SIZE  16
++    struct fscrypt_context_v2 {
++            u8 version;
++            u8 contents_encryption_mode;
++            u8 filenames_encryption_mode;
++            u8 flags;
++            u8 __reserved[4];
++            u8 master_key_identifier[FSCRYPT_KEY_IDENTIFIER_SIZE];
++            u8 nonce[FS_KEY_DERIVATION_NONCE_SIZE];
++    };
++
++The context structs contain the same information as the corresponding
++policy structs (see `Setting an encryption policy`_), except that the
++context structs also contain a nonce.  The nonce is randomly generated
++by the kernel and is used as KDF input or as a tweak to cause
++different files to be encrypted differently; see `Per-file keys`_ and
++`DIRECT_KEY and per-mode keys`_.
+ 
+ Data path changes
+ -----------------
 -- 
 2.22.0.770.g0f2c4a37fd-goog
