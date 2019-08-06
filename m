@@ -1,84 +1,58 @@
-From: Joel Fernandes <joel@joelfernandes.org>
-Subject: Re: [PATCH v4 3/5] [RFC] arm64: Add support for idle bit in swap PTE
-Date: Tue, 6 Aug 2019 11:20:01 -0400
-Message-ID: <20190806152001.GA39951@google.com>
-References: <20190805170451.26009-1-joel@joelfernandes.org>
- <20190805170451.26009-3-joel@joelfernandes.org>
- <20190806084203.GJ11812@dhcp22.suse.cz>
- <20190806103627.GA218260@google.com>
- <20190806104755.GR11812@dhcp22.suse.cz>
- <20190806111446.GA117316@google.com>
- <20190806115703.GY11812@dhcp22.suse.cz>
- <20190806144747.GA72938@google.com>
+From: Michal =?iso-8859-1?Q?Koutn=FD?= <mkoutny@suse.com>
+Subject: Re: [PATCH v13 1/6] sched/core: uclamp: Extend CPU's cgroup
+ controller
+Date: Tue, 6 Aug 2019 18:11:34 +0200
+Message-ID: <20190806161133.GA18532@blackbody.suse.cz>
+References: <20190802090853.4810-1-patrick.bellasi@arm.com>
+ <20190802090853.4810-2-patrick.bellasi@arm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190806144747.GA72938@google.com>
+In-Reply-To: <20190802090853.4810-2-patrick.bellasi@arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Minchan Kim <minchan@kernel.org>
-Cc: Michal Hocko <mhocko@kernel.org>, linux-kernel@vger.kernel.org, Robin Murphy <robin.murphy@arm.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Brendan Gregg <bgregg@netflix.com>, Catalin Marinas <catalin.marinas@arm.com>, Christian Hansen <chansen3@cisco.com>, dancol@google.com, fmayer@google.com, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, kernel-team@android.com, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, Mike Rapoport <rppt@linux.ibm.com>, namhyung@google.com, paulmck@linux.ibm.com, Roman Gushchin <guro@fb.com>, Stephen Rothwell <sfr@>
+To: Patrick Bellasi <patrick.bellasi@arm.com>
+Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, cgroups@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>, Alessio Balsini <balsini@android.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 06, 2019 at 11:47:47PM +0900, Minchan Kim wrote:
-> On Tue, Aug 06, 2019 at 01:57:03PM +0200, Michal Hocko wrote:
-> > On Tue 06-08-19 07:14:46, Joel Fernandes wrote:
-> > > On Tue, Aug 06, 2019 at 12:47:55PM +0200, Michal Hocko wrote:
-> > > > On Tue 06-08-19 06:36:27, Joel Fernandes wrote:
-> > > > > On Tue, Aug 06, 2019 at 10:42:03AM +0200, Michal Hocko wrote:
-> > > > > > On Mon 05-08-19 13:04:49, Joel Fernandes (Google) wrote:
-> > > > > > > This bit will be used by idle page tracking code to correctly identify
-> > > > > > > if a page that was swapped out was idle before it got swapped out.
-> > > > > > > Without this PTE bit, we lose information about if a page is idle or not
-> > > > > > > since the page frame gets unmapped.
-> > > > > > 
-> > > > > > And why do we need that? Why cannot we simply assume all swapped out
-> > > > > > pages to be idle? They were certainly idle enough to be reclaimed,
-> > > > > > right? Or what does idle actualy mean here?
-> > > > > 
-> > > > > Yes, but other than swapping, in Android a page can be forced to be swapped
-> > > > > out as well using the new hints that Minchan is adding?
-> > > > 
-> > > > Yes and that is effectivelly making them idle, no?
-> > > 
-> > > That depends on how you think of it.
-> > 
-> > I would much prefer to have it documented so that I do not have to guess ;)
-> > 
-> > > If you are thinking of a monitoring
-> > > process like a heap profiler, then from the heap profiler's (that only cares
-> > > about the process it is monitoring) perspective it will look extremely odd if
-> > > pages that are recently accessed by the process appear to be idle which would
-> > > falsely look like those processes are leaking memory. The reality being,
-> > > Android forced those pages into swap because of other reasons. I would like
-> > > for the swapping mechanism, whether forced swapping or memory reclaim, not to
-> > > interfere with the idle detection.
-> > 
-> > Hmm, but how are you going to handle situation when the page is unmapped
-> > and refaulted again (e.g. a normal reclaim of a pagecache)? You are
-> > losing that information same was as in the swapout case, no? Or am I
-> > missing something?
-> 
-> If page is unmapped, it's not a idle memory any longer because it's
-> free memory. We could detect the pte is not present.
+On Fri, Aug 02, 2019 at 10:08:48AM +0100, Patrick Bellasi <patrick.bellasi@arm.com> wrote:
+> +static ssize_t cpu_uclamp_write(struct kernfs_open_file *of, char *buf,
+> +				size_t nbytes, loff_t off,
+> +				enum uclamp_id clamp_id)
+> +{
+> +	struct uclamp_request req;
+> +	struct task_group *tg;
+> +
+> +	req = capacity_from_percent(buf);
+> +	if (req.ret)
+> +		return req.ret;
+> +
+> +	rcu_read_lock();
+This should be the uclamp_mutex.
 
-I think Michal is not talking of explictly being unmapped, but about the case
-where a file-backed mapped page is unmapped due to memory pressure ? This is
-similar to the swap situation.
+(The compound results of the series is correct as the lock is introduced
+in "sched/core: uclamp: Propagate parent clamps".
+This is just for the happiness of cherry-pickers/bisectors.)
 
-Basically... file page is marked idle, then it is accessed by userspace. Then
-memory pressure drops it off the page cache so the idle information is lost.
-Next time we check the page_idle, we miss that it was accessed indeed.
+> +static inline void cpu_uclamp_print(struct seq_file *sf,
+> +				    enum uclamp_id clamp_id)
+> +{
+> [...]
+> +	rcu_read_lock();
+> +	tg = css_tg(seq_css(sf));
+> +	util_clamp = tg->uclamp_req[clamp_id].value;
+> +	rcu_read_unlock();
+Why is the rcu_read_lock() needed here? (I'm considering the comment in
+of_css() that should apply here (and it seems that similar uses in other
+seq_file handlers also skip this).)
 
-It is not an issue for the heap profiler or anonymous memory per-se. But is
-similar to the swap situation.
-
-> If page is refaulted, it's not a idle memory any longer because it's
-> accessed again. We could detect it because the newly allocated page
-> doesn't have a PG_idle page flag.
-
-In the refault case, yes it should not be a problem.
-
-thanks,
-
- - Joel
+> @@ -7369,6 +7506,20 @@ static struct cftype cpu_legacy_files[] = {
+> [...]
+> +		.name = "uclamp.min",
+> [...]
+> +		.name = "uclamp.max",
+I don't see technical reasons why uclamp couldn't work on legacy
+hierarchy and Tejun acked the series, despite that I'll ask -- should
+the new attributes be exposed in v1 controller hierarchy (taking into
+account the legacy API is sort of frozen and potential maintenance needs
+spanning both hierarchies)?
