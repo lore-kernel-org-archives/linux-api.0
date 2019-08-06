@@ -1,7 +1,7 @@
-From: Minchan Kim <minchan@kernel.org>
+From: Joel Fernandes <joel@joelfernandes.org>
 Subject: Re: [PATCH v4 3/5] [RFC] arm64: Add support for idle bit in swap PTE
-Date: Tue, 6 Aug 2019 20:07:37 +0900
-Message-ID: <20190806110737.GB32615@google.com>
+Date: Tue, 6 Aug 2019 07:14:46 -0400
+Message-ID: <20190806111446.GA117316@google.com>
 References: <20190805170451.26009-1-joel@joelfernandes.org>
  <20190805170451.26009-3-joel@joelfernandes.org>
  <20190806084203.GJ11812@dhcp22.suse.cz>
@@ -14,7 +14,7 @@ Content-Disposition: inline
 In-Reply-To: <20190806104755.GR11812@dhcp22.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Michal Hocko <mhocko@kernel.org>
-Cc: Joel Fernandes <joel@joelfernandes.org>, linux-kernel@vger.kernel.org, Robin Murphy <robin.murphy@arm.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Brendan Gregg <bgregg@netflix.com>, Catalin Marinas <catalin.marinas@arm.com>, Christian Hansen <chansen3@cisco.com>, dancol@google.com, fmayer@google.com, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, kernel-team@android.com, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, Mike Rapoport <rppt@linux.ibm.com>, namhyung@google.com, paulmck@linux.ibm.com, Roman Gushchin <guro@fb.com>, Stephen
+Cc: linux-kernel@vger.kernel.org, Robin Murphy <robin.murphy@arm.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Brendan Gregg <bgregg@netflix.com>, Catalin Marinas <catalin.marinas@arm.com>, Christian Hansen <chansen3@cisco.com>, dancol@google.com, fmayer@google.com, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, kernel-team@android.com, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, Mike Rapoport <rppt@linux.ibm.com>, minchan@kernel.org, namhyung@google.com, paulmck@linux.ibm.com, Roman Gushchin <guro@fb.com>, Stephen Rothwell <sfr@canb.auug.org.>
 List-Id: linux-api@vger.kernel.org
 
 On Tue, Aug 06, 2019 at 12:47:55PM +0200, Michal Hocko wrote:
@@ -35,8 +35,37 @@ On Tue, Aug 06, 2019 at 12:47:55PM +0200, Michal Hocko wrote:
 > 
 > Yes and that is effectivelly making them idle, no?
 
-1. mark page-A idle which was present at that time.
-2. run workload
-3. page-A is touched several times
-4. *sudden* memory pressure happen so finally page A is finally swapped out
-5. now see the page A idle - but it's incorrect.
+That depends on how you think of it. If you are thinking of a monitoring
+process like a heap profiler, then from the heap profiler's (that only cares
+about the process it is monitoring) perspective it will look extremely odd if
+pages that are recently accessed by the process appear to be idle which would
+falsely look like those processes are leaking memory. The reality being,
+Android forced those pages into swap because of other reasons. I would like
+for the swapping mechanism, whether forced swapping or memory reclaim, not to
+interfere with the idle detection.
+
+This is just an effort to make the idle tracking a little bit better. We
+would like to not lose the 'accessed' information of the pages.
+
+Initially, I had proposed what you are suggesting as well however the above
+reasons made me to do it like this. Also Minchan and Konstantin suggested
+this, so there are more people interested in the swap idle bit. Minchan, can
+you provide more thoughts here? (He is on 2-week vacation from today so
+hopefully replies before he vanishes ;-)).
+
+Also assuming all swap pages as idle has other "semantic" issues. It is quite
+odd if a swapped page is automatically marked as idle without userspace
+telling it to. Consider the following set of events: 1. Userspace marks only
+a certain memory region as idle. 2. Userspace reads back the bits
+corresponding to a bigger region. Part of this bigger region is swapped.
+Userspace expects all of the pages it did not mark, to have idle bit set to
+'0' because it never marked them as idle. However if it is now surprised by
+what it read back (not all '0' read back). Since a page is swapped, it will
+be now marked "automatically" as idle as per your proposal, even if userspace
+never marked it explicity before. This would be quite confusing/ambiguous.
+
+I will include this and other information in future commit messages.
+
+thanks,
+
+ - Joel
