@@ -1,110 +1,91 @@
 From: Joel Fernandes <joel@joelfernandes.org>
-Subject: Re: [PATCH v4 3/5] [RFC] arm64: Add support for idle bit in swap PTE
-Date: Tue, 6 Aug 2019 06:36:27 -0400
-Message-ID: <20190806103627.GA218260@google.com>
+Subject: Re: [PATCH v4 4/5] page_idle: Drain all LRU pagevec before idle
+ tracking
+Date: Tue, 6 Aug 2019 06:45:54 -0400
+Message-ID: <20190806104554.GB218260@google.com>
 References: <20190805170451.26009-1-joel@joelfernandes.org>
- <20190805170451.26009-3-joel@joelfernandes.org>
- <20190806084203.GJ11812@dhcp22.suse.cz>
+ <20190805170451.26009-4-joel@joelfernandes.org>
+ <20190806084357.GK11812@dhcp22.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190806084203.GJ11812@dhcp22.suse.cz>
+In-Reply-To: <20190806084357.GK11812@dhcp22.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Michal Hocko <mhocko@kernel.org>
-Cc: linux-kernel@vger.kernel.org, Robin Murphy <robin.murphy@arm.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Brendan Gregg <bgregg@netflix.com>, Catalin Marinas <catalin.marinas@arm.com>, Christian Hansen <chansen3@cisco.com>, dancol@google.com, fmayer@google.com, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, kernel-team@android.com, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, Mike Rapoport <rppt@linux.ibm.com>, minchan@kernel.org, namhyung@google.com, paulmck@linux.ibm.com, Roman Gushchin <guro@fb.com>, Stephen Rothwell <sfr@canb.auug.org.>
+Cc: linux-kernel@vger.kernel.org, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Brendan Gregg <bgregg@netflix.com>, Catalin Marinas <catalin.marinas@arm.com>, Christian Hansen <chansen3@cisco.com>, dancol@google.com, fmayer@google.com, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, kernel-team@android.com, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, Mike Rapoport <rppt@linux.ibm.com>, minchan@kernel.org, namhyung@google.com, paulmck@linux.ibm.com, Robin Murphy <robin.murphy@arm.com>, Roman Gushchin <guro@fb.com>, Stephen Rothwell <sfr@canb.a>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 06, 2019 at 10:42:03AM +0200, Michal Hocko wrote:
-> On Mon 05-08-19 13:04:49, Joel Fernandes (Google) wrote:
-> > This bit will be used by idle page tracking code to correctly identify
-> > if a page that was swapped out was idle before it got swapped out.
-> > Without this PTE bit, we lose information about if a page is idle or not
-> > since the page frame gets unmapped.
+On Tue, Aug 06, 2019 at 10:43:57AM +0200, Michal Hocko wrote:
+> On Mon 05-08-19 13:04:50, Joel Fernandes (Google) wrote:
+> > During idle tracking, we see that sometimes faulted anon pages are in
+> > pagevec but are not drained to LRU. Idle tracking considers pages only
+> > on LRU. Drain all CPU's LRU before starting idle tracking.
 > 
-> And why do we need that? Why cannot we simply assume all swapped out
-> pages to be idle? They were certainly idle enough to be reclaimed,
-> right? Or what does idle actualy mean here?
+> Please expand on why does this matter enough to introduce a potentially
+> expensinve draining which has to schedule a work on each CPU and wait
+> for them to finish.
 
-Yes, but other than swapping, in Android a page can be forced to be swapped
-out as well using the new hints that Minchan is adding?
+Sure, I can expand. I am able to find multiple issues involving this. One
+issue looks like idle tracking is completely broken. It shows up in my
+testing as if a page that is marked as idle is always "accessed" -- because
+it was never marked as idle (due to not draining of pagevec).
 
-Also, even if they were idle enough to be swapped, there is a chance that they
-were marked as idle and *accessed* before the swapping. Due to swapping, the
-"page was accessed since we last marked it as idle" information is lost. I am
-able to verify this.
+The other issue shows up as a failure in my "swap test", with the following
+sequence:
+1. Allocate some pages
+2. Write to them
+3. Mark them as idle                                    <--- fails
+4. Introduce some memory pressure to induce swapping.
+5. Check the swap bit I introduced in this series.      <--- fails to set idle
+                                                             bit in swap PTE.
 
-Idle in this context means the same thing as in page idle tracking terms, the
-page was not accessed by userspace since we last marked it as idle (using
-/proc/<pid>/page_idle).
+Draining the pagevec in advance fixes both of these issues.
+
+This operation even if expensive is only done once during the access of the
+page_idle file. Did you have a better fix in mind?
 
 thanks,
 
  - Joel
 
 
-> > In this patch we reuse PTE_DEVMAP bit since idle page tracking only
-> > works on user pages in the LRU. Device pages should not consitute those
-> > so it should be unused and safe to use.
-> > 
-> > Cc: Robin Murphy <robin.murphy@arm.com>
 > > Signed-off-by: Joel Fernandes (Google) <joel@joelfernandes.org>
 > > ---
-> >  arch/arm64/Kconfig                    |  1 +
-> >  arch/arm64/include/asm/pgtable-prot.h |  1 +
-> >  arch/arm64/include/asm/pgtable.h      | 15 +++++++++++++++
-> >  3 files changed, 17 insertions(+)
+> >  mm/page_idle.c | 6 ++++++
+> >  1 file changed, 6 insertions(+)
 > > 
-> > diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
-> > index 3adcec05b1f6..9d1412c693d7 100644
-> > --- a/arch/arm64/Kconfig
-> > +++ b/arch/arm64/Kconfig
-> > @@ -128,6 +128,7 @@ config ARM64
-> >  	select HAVE_ARCH_MMAP_RND_BITS
-> >  	select HAVE_ARCH_MMAP_RND_COMPAT_BITS if COMPAT
-> >  	select HAVE_ARCH_PREL32_RELOCATIONS
-> > +	select HAVE_ARCH_PTE_SWP_PGIDLE
-> >  	select HAVE_ARCH_SECCOMP_FILTER
-> >  	select HAVE_ARCH_STACKLEAK
-> >  	select HAVE_ARCH_THREAD_STRUCT_WHITELIST
-> > diff --git a/arch/arm64/include/asm/pgtable-prot.h b/arch/arm64/include/asm/pgtable-prot.h
-> > index 92d2e9f28f28..917b15c5d63a 100644
-> > --- a/arch/arm64/include/asm/pgtable-prot.h
-> > +++ b/arch/arm64/include/asm/pgtable-prot.h
-> > @@ -18,6 +18,7 @@
-> >  #define PTE_SPECIAL		(_AT(pteval_t, 1) << 56)
-> >  #define PTE_DEVMAP		(_AT(pteval_t, 1) << 57)
-> >  #define PTE_PROT_NONE		(_AT(pteval_t, 1) << 58) /* only when !PTE_VALID */
-> > +#define PTE_SWP_PGIDLE		PTE_DEVMAP		 /* for idle page tracking during swapout */
+> > diff --git a/mm/page_idle.c b/mm/page_idle.c
+> > index a5b00d63216c..2972367a599f 100644
+> > --- a/mm/page_idle.c
+> > +++ b/mm/page_idle.c
+> > @@ -180,6 +180,8 @@ static ssize_t page_idle_bitmap_read(struct file *file, struct kobject *kobj,
+> >  	unsigned long pfn, end_pfn;
+> >  	int bit, ret;
 > >  
-> >  #ifndef __ASSEMBLY__
+> > +	lru_add_drain_all();
+> > +
+> >  	ret = page_idle_get_frames(pos, count, NULL, &pfn, &end_pfn);
+> >  	if (ret == -ENXIO)
+> >  		return 0;  /* Reads beyond max_pfn do nothing */
+> > @@ -211,6 +213,8 @@ static ssize_t page_idle_bitmap_write(struct file *file, struct kobject *kobj,
+> >  	unsigned long pfn, end_pfn;
+> >  	int bit, ret;
 > >  
-> > diff --git a/arch/arm64/include/asm/pgtable.h b/arch/arm64/include/asm/pgtable.h
-> > index 3f5461f7b560..558f5ebd81ba 100644
-> > --- a/arch/arm64/include/asm/pgtable.h
-> > +++ b/arch/arm64/include/asm/pgtable.h
-> > @@ -212,6 +212,21 @@ static inline pte_t pte_mkdevmap(pte_t pte)
-> >  	return set_pte_bit(pte, __pgprot(PTE_DEVMAP));
-> >  }
+> > +	lru_add_drain_all();
+> > +
+> >  	ret = page_idle_get_frames(pos, count, NULL, &pfn, &end_pfn);
+> >  	if (ret)
+> >  		return ret;
+> > @@ -428,6 +432,8 @@ ssize_t page_idle_proc_generic(struct file *file, char __user *ubuff,
+> >  	walk.private = &priv;
+> >  	walk.mm = mm;
 > >  
-> > +static inline int pte_swp_page_idle(pte_t pte)
-> > +{
-> > +	return 0;
-> > +}
+> > +	lru_add_drain_all();
 > > +
-> > +static inline pte_t pte_swp_mkpage_idle(pte_t pte)
-> > +{
-> > +	return set_pte_bit(pte, __pgprot(PTE_SWP_PGIDLE));
-> > +}
-> > +
-> > +static inline pte_t pte_swp_clear_page_idle(pte_t pte)
-> > +{
-> > +	return clear_pte_bit(pte, __pgprot(PTE_SWP_PGIDLE));
-> > +}
-> > +
-> >  static inline void set_pte(pte_t *ptep, pte_t pte)
-> >  {
-> >  	WRITE_ONCE(*ptep, pte);
+> >  	down_read(&mm->mmap_sem);
+> >  
+> >  	/*
 > > -- 
 > > 2.22.0.770.g0f2c4a37fd-goog
 > 
