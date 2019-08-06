@@ -1,7 +1,7 @@
-From: Minchan Kim <minchan@kernel.org>
+From: Joel Fernandes <joel@joelfernandes.org>
 Subject: Re: [PATCH v4 3/5] [RFC] arm64: Add support for idle bit in swap PTE
-Date: Tue, 6 Aug 2019 23:47:47 +0900
-Message-ID: <20190806144747.GA72938@google.com>
+Date: Tue, 6 Aug 2019 11:20:01 -0400
+Message-ID: <20190806152001.GA39951@google.com>
 References: <20190805170451.26009-1-joel@joelfernandes.org>
  <20190805170451.26009-3-joel@joelfernandes.org>
  <20190806084203.GJ11812@dhcp22.suse.cz>
@@ -9,59 +9,76 @@ References: <20190805170451.26009-1-joel@joelfernandes.org>
  <20190806104755.GR11812@dhcp22.suse.cz>
  <20190806111446.GA117316@google.com>
  <20190806115703.GY11812@dhcp22.suse.cz>
+ <20190806144747.GA72938@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190806115703.GY11812@dhcp22.suse.cz>
+In-Reply-To: <20190806144747.GA72938@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: Joel Fernandes <joel@joelfernandes.org>, linux-kernel@vger.kernel.org, Robin Murphy <robin.murphy@arm.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Brendan Gregg <bgregg@netflix.com>, Catalin Marinas <catalin.marinas@arm.com>, Christian Hansen <chansen3@cisco.com>, dancol@google.com, fmayer@google.com, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, kernel-team@android.com, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, Mike Rapoport <rppt@linux.ibm.com>, namhyung@google.com, paulmck@linux.ibm.com, Roman Gushchin <guro@fb.com>, Stephen
+To: Minchan Kim <minchan@kernel.org>
+Cc: Michal Hocko <mhocko@kernel.org>, linux-kernel@vger.kernel.org, Robin Murphy <robin.murphy@arm.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Brendan Gregg <bgregg@netflix.com>, Catalin Marinas <catalin.marinas@arm.com>, Christian Hansen <chansen3@cisco.com>, dancol@google.com, fmayer@google.com, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, kernel-team@android.com, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, Mike Rapoport <rppt@linux.ibm.com>, namhyung@google.com, paulmck@linux.ibm.com, Roman Gushchin <guro@fb.com>, Stephen Rothwell <sfr@>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 06, 2019 at 01:57:03PM +0200, Michal Hocko wrote:
-> On Tue 06-08-19 07:14:46, Joel Fernandes wrote:
-> > On Tue, Aug 06, 2019 at 12:47:55PM +0200, Michal Hocko wrote:
-> > > On Tue 06-08-19 06:36:27, Joel Fernandes wrote:
-> > > > On Tue, Aug 06, 2019 at 10:42:03AM +0200, Michal Hocko wrote:
-> > > > > On Mon 05-08-19 13:04:49, Joel Fernandes (Google) wrote:
-> > > > > > This bit will be used by idle page tracking code to correctly identify
-> > > > > > if a page that was swapped out was idle before it got swapped out.
-> > > > > > Without this PTE bit, we lose information about if a page is idle or not
-> > > > > > since the page frame gets unmapped.
+On Tue, Aug 06, 2019 at 11:47:47PM +0900, Minchan Kim wrote:
+> On Tue, Aug 06, 2019 at 01:57:03PM +0200, Michal Hocko wrote:
+> > On Tue 06-08-19 07:14:46, Joel Fernandes wrote:
+> > > On Tue, Aug 06, 2019 at 12:47:55PM +0200, Michal Hocko wrote:
+> > > > On Tue 06-08-19 06:36:27, Joel Fernandes wrote:
+> > > > > On Tue, Aug 06, 2019 at 10:42:03AM +0200, Michal Hocko wrote:
+> > > > > > On Mon 05-08-19 13:04:49, Joel Fernandes (Google) wrote:
+> > > > > > > This bit will be used by idle page tracking code to correctly identify
+> > > > > > > if a page that was swapped out was idle before it got swapped out.
+> > > > > > > Without this PTE bit, we lose information about if a page is idle or not
+> > > > > > > since the page frame gets unmapped.
+> > > > > > 
+> > > > > > And why do we need that? Why cannot we simply assume all swapped out
+> > > > > > pages to be idle? They were certainly idle enough to be reclaimed,
+> > > > > > right? Or what does idle actualy mean here?
 > > > > > 
-> > > > > And why do we need that? Why cannot we simply assume all swapped out
-> > > > > pages to be idle? They were certainly idle enough to be reclaimed,
-> > > > > right? Or what does idle actualy mean here?
+> > > > > Yes, but other than swapping, in Android a page can be forced to be swapped
+> > > > > out as well using the new hints that Minchan is adding?
 > > > > 
-> > > > Yes, but other than swapping, in Android a page can be forced to be swapped
-> > > > out as well using the new hints that Minchan is adding?
+> > > > Yes and that is effectivelly making them idle, no?
 > > > 
-> > > Yes and that is effectivelly making them idle, no?
+> > > That depends on how you think of it.
 > > 
-> > That depends on how you think of it.
+> > I would much prefer to have it documented so that I do not have to guess ;)
+> > 
+> > > If you are thinking of a monitoring
+> > > process like a heap profiler, then from the heap profiler's (that only cares
+> > > about the process it is monitoring) perspective it will look extremely odd if
+> > > pages that are recently accessed by the process appear to be idle which would
+> > > falsely look like those processes are leaking memory. The reality being,
+> > > Android forced those pages into swap because of other reasons. I would like
+> > > for the swapping mechanism, whether forced swapping or memory reclaim, not to
+> > > interfere with the idle detection.
+> > 
+> > Hmm, but how are you going to handle situation when the page is unmapped
+> > and refaulted again (e.g. a normal reclaim of a pagecache)? You are
+> > losing that information same was as in the swapout case, no? Or am I
+> > missing something?
 > 
-> I would much prefer to have it documented so that I do not have to guess ;)
-> 
-> > If you are thinking of a monitoring
-> > process like a heap profiler, then from the heap profiler's (that only cares
-> > about the process it is monitoring) perspective it will look extremely odd if
-> > pages that are recently accessed by the process appear to be idle which would
-> > falsely look like those processes are leaking memory. The reality being,
-> > Android forced those pages into swap because of other reasons. I would like
-> > for the swapping mechanism, whether forced swapping or memory reclaim, not to
-> > interfere with the idle detection.
-> 
-> Hmm, but how are you going to handle situation when the page is unmapped
-> and refaulted again (e.g. a normal reclaim of a pagecache)? You are
-> losing that information same was as in the swapout case, no? Or am I
-> missing something?
+> If page is unmapped, it's not a idle memory any longer because it's
+> free memory. We could detect the pte is not present.
 
-If page is unmapped, it's not a idle memory any longer because it's
-free memory. We could detect the pte is not present.
+I think Michal is not talking of explictly being unmapped, but about the case
+where a file-backed mapped page is unmapped due to memory pressure ? This is
+similar to the swap situation.
 
-If page is refaulted, it's not a idle memory any longer because it's
-accessed again. We could detect it because the newly allocated page
-doesn't have a PG_idle page flag.
+Basically... file page is marked idle, then it is accessed by userspace. Then
+memory pressure drops it off the page cache so the idle information is lost.
+Next time we check the page_idle, we miss that it was accessed indeed.
 
-Both case, idle page tracking couldn't report them as IDLE so it's okay.
+It is not an issue for the heap profiler or anonymous memory per-se. But is
+similar to the swap situation.
+
+> If page is refaulted, it's not a idle memory any longer because it's
+> accessed again. We could detect it because the newly allocated page
+> doesn't have a PG_idle page flag.
+
+In the refault case, yes it should not be a problem.
+
+thanks,
+
+ - Joel
