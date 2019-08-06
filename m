@@ -1,70 +1,60 @@
 From: Joel Fernandes <joel@joelfernandes.org>
-Subject: Re: [PATCH v4 4/5] page_idle: Drain all LRU pagevec before idle
- tracking
-Date: Tue, 6 Aug 2019 07:19:21 -0400
-Message-ID: <20190806111921.GB117316@google.com>
+Subject: Re: [PATCH v4 3/5] [RFC] arm64: Add support for idle bit in swap PTE
+Date: Tue, 6 Aug 2019 07:26:06 -0400
+Message-ID: <20190806112606.GC117316@google.com>
 References: <20190805170451.26009-1-joel@joelfernandes.org>
- <20190805170451.26009-4-joel@joelfernandes.org>
- <20190806084357.GK11812@dhcp22.suse.cz>
- <20190806104554.GB218260@google.com>
- <20190806105149.GT11812@dhcp22.suse.cz>
+ <20190805170451.26009-3-joel@joelfernandes.org>
+ <20190806084203.GJ11812@dhcp22.suse.cz>
+ <20190806103627.GA218260@google.com>
+ <20190806104755.GR11812@dhcp22.suse.cz>
+ <20190806110737.GB32615@google.com>
+ <20190806111452.GW11812@dhcp22.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190806105149.GT11812@dhcp22.suse.cz>
+In-Reply-To: <20190806111452.GW11812@dhcp22.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Michal Hocko <mhocko@kernel.org>
-Cc: linux-kernel@vger.kernel.org, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Brendan Gregg <bgregg@netflix.com>, Catalin Marinas <catalin.marinas@arm.com>, Christian Hansen <chansen3@cisco.com>, dancol@google.com, fmayer@google.com, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, kernel-team@android.com, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, Mike Rapoport <rppt@linux.ibm.com>, minchan@kernel.org, namhyung@google.com, paulmck@linux.ibm.com, Robin Murphy <robin.murphy@arm.com>, Roman Gushchin <guro@fb.com>, Stephen Rothwell <sfr@canb.a>
+Cc: Minchan Kim <minchan@kernel.org>, linux-kernel@vger.kernel.org, Robin Murphy <robin.murphy@arm.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Brendan Gregg <bgregg@netflix.com>, Catalin Marinas <catalin.marinas@arm.com>, Christian Hansen <chansen3@cisco.com>, dancol@google.com, fmayer@google.com, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, kernel-team@android.com, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, Mike Rapoport <rppt@linux.ibm.com>, namhyung@google.com, paulmck@linux.ibm.com, Roman Gushchin <guro@fb.com>, Stephen Rothwell <sfr@>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 06, 2019 at 12:51:49PM +0200, Michal Hocko wrote:
-> On Tue 06-08-19 06:45:54, Joel Fernandes wrote:
-> > On Tue, Aug 06, 2019 at 10:43:57AM +0200, Michal Hocko wrote:
-> > > On Mon 05-08-19 13:04:50, Joel Fernandes (Google) wrote:
-> > > > During idle tracking, we see that sometimes faulted anon pages are in
-> > > > pagevec but are not drained to LRU. Idle tracking considers pages only
-> > > > on LRU. Drain all CPU's LRU before starting idle tracking.
+On Tue, Aug 06, 2019 at 01:14:52PM +0200, Michal Hocko wrote:
+> On Tue 06-08-19 20:07:37, Minchan Kim wrote:
+> > On Tue, Aug 06, 2019 at 12:47:55PM +0200, Michal Hocko wrote:
+> > > On Tue 06-08-19 06:36:27, Joel Fernandes wrote:
+> > > > On Tue, Aug 06, 2019 at 10:42:03AM +0200, Michal Hocko wrote:
+> > > > > On Mon 05-08-19 13:04:49, Joel Fernandes (Google) wrote:
+> > > > > > This bit will be used by idle page tracking code to correctly identify
+> > > > > > if a page that was swapped out was idle before it got swapped out.
+> > > > > > Without this PTE bit, we lose information about if a page is idle or not
+> > > > > > since the page frame gets unmapped.
+> > > > > 
+> > > > > And why do we need that? Why cannot we simply assume all swapped out
+> > > > > pages to be idle? They were certainly idle enough to be reclaimed,
+> > > > > right? Or what does idle actualy mean here?
+> > > > 
+> > > > Yes, but other than swapping, in Android a page can be forced to be swapped
+> > > > out as well using the new hints that Minchan is adding?
 > > > 
-> > > Please expand on why does this matter enough to introduce a potentially
-> > > expensinve draining which has to schedule a work on each CPU and wait
-> > > for them to finish.
+> > > Yes and that is effectivelly making them idle, no?
 > > 
-> > Sure, I can expand. I am able to find multiple issues involving this. One
-> > issue looks like idle tracking is completely broken. It shows up in my
-> > testing as if a page that is marked as idle is always "accessed" -- because
-> > it was never marked as idle (due to not draining of pagevec).
-> > 
-> > The other issue shows up as a failure in my "swap test", with the following
-> > sequence:
-> > 1. Allocate some pages
-> > 2. Write to them
-> > 3. Mark them as idle                                    <--- fails
-> > 4. Introduce some memory pressure to induce swapping.
-> > 5. Check the swap bit I introduced in this series.      <--- fails to set idle
-> >                                                              bit in swap PTE.
-> > 
-> > Draining the pagevec in advance fixes both of these issues.
+> > 1. mark page-A idle which was present at that time.
+> > 2. run workload
+> > 3. page-A is touched several times
+> > 4. *sudden* memory pressure happen so finally page A is finally swapped out
+> > 5. now see the page A idle - but it's incorrect.
 > 
-> This belongs to the changelog.
+> Could you expand on what you mean by idle exactly? Why pageout doesn't
+> really qualify as "mark-idle and reclaim"? Also could you describe a
+> usecase where the swapout distinction really matters and it would lead
+> to incorrect behavior?
 
-Sure, will add.
+Michal,
+Did you read this post ? :
+https://lore.kernel.org/lkml/20190806104715.GC218260@google.com/T/#m4ece68ceaf6e54d4d29e974f5f4c1080e733f6c1
 
-
-> > This operation even if expensive is only done once during the access of the
-> > page_idle file. Did you have a better fix in mind?
-> 
-> Can we set the idle bit also for non-lru pages as long as they are
-> reachable via pte?
-
-Not at the moment with the current page idle tracking code. PageLRU(page)
-flag is checked in page_idle_get_page().
-
-Even if we could set it for non-LRU, the idle bit (page flag) would not be
-cleared if page is not on LRU because page-reclaim code (page_referenced() I
-believe) would not clear it. This whole mechanism depends on page-reclaim. Or
-did I miss your point?
-
+Just wanted to be sure you did not miss it.
 
 thanks,
 
