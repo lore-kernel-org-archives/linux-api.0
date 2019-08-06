@@ -1,65 +1,49 @@
-From: Joel Fernandes <joel@joelfernandes.org>
-Subject: Re: [PATCH v4 1/5] mm/page_idle: Add per-pid idle page tracking
- using virtual indexing
-Date: Tue, 6 Aug 2019 06:47:15 -0400
-Message-ID: <20190806104715.GC218260@google.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH v4 3/5] [RFC] arm64: Add support for idle bit in swap PTE
+Date: Tue, 6 Aug 2019 12:47:55 +0200
+Message-ID: <20190806104755.GR11812@dhcp22.suse.cz>
 References: <20190805170451.26009-1-joel@joelfernandes.org>
- <20190806085605.GL11812@dhcp22.suse.cz>
+ <20190805170451.26009-3-joel@joelfernandes.org>
+ <20190806084203.GJ11812@dhcp22.suse.cz>
+ <20190806103627.GA218260@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190806085605.GL11812@dhcp22.suse.cz>
+In-Reply-To: <20190806103627.GA218260@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: linux-kernel@vger.kernel.org, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Brendan Gregg <bgregg@netflix.com>, Catalin Marinas <catalin.marinas@arm.com>, Christian Hansen <chansen3@cisco.com>, dancol@google.com, fmayer@google.com, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, kernel-team@android.com, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, Mike Rapoport <rppt@linux.ibm.com>, minchan@kernel.org, namhyung@google.com, paulmck@linux.ibm.com, Robin Murphy <robin.murphy@arm.com>, Roman Gushchin <guro@fb.com>, Stephen Rothwell <sfr@canb.a>
+To: Joel Fernandes <joel@joelfernandes.org>
+Cc: linux-kernel@vger.kernel.org, Robin Murphy <robin.murphy@arm.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Brendan Gregg <bgregg@netflix.com>, Catalin Marinas <catalin.marinas@arm.com>, Christian Hansen <chansen3@cisco.com>, dancol@google.com, fmayer@google.com, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, kernel-team@android.com, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, Mike Rapoport <rppt@linux.ibm.com>, minchan@kernel.org, namhyung@google.com, paulmck@linux.ibm.com, Roman Gushchin <guro@fb.com>, Stephen Rothwell <sfr@canb.auug.org.>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 06, 2019 at 10:56:05AM +0200, Michal Hocko wrote:
-> On Mon 05-08-19 13:04:47, Joel Fernandes (Google) wrote:
-> > The page_idle tracking feature currently requires looking up the pagemap
-> > for a process followed by interacting with /sys/kernel/mm/page_idle.
-> > Looking up PFN from pagemap in Android devices is not supported by
-> > unprivileged process and requires SYS_ADMIN and gives 0 for the PFN.
+On Tue 06-08-19 06:36:27, Joel Fernandes wrote:
+> On Tue, Aug 06, 2019 at 10:42:03AM +0200, Michal Hocko wrote:
+> > On Mon 05-08-19 13:04:49, Joel Fernandes (Google) wrote:
+> > > This bit will be used by idle page tracking code to correctly identify
+> > > if a page that was swapped out was idle before it got swapped out.
+> > > Without this PTE bit, we lose information about if a page is idle or not
+> > > since the page frame gets unmapped.
 > > 
-> > This patch adds support to directly interact with page_idle tracking at
-> > the PID level by introducing a /proc/<pid>/page_idle file.  It follows
-> > the exact same semantics as the global /sys/kernel/mm/page_idle, but now
-> > looking up PFN through pagemap is not needed since the interface uses
-> > virtual frame numbers, and at the same time also does not require
-> > SYS_ADMIN.
-> > 
-> > In Android, we are using this for the heap profiler (heapprofd) which
-> > profiles and pin points code paths which allocates and leaves memory
-> > idle for long periods of time. This method solves the security issue
-> > with userspace learning the PFN, and while at it is also shown to yield
-> > better results than the pagemap lookup, the theory being that the window
-> > where the address space can change is reduced by eliminating the
-> > intermediate pagemap look up stage. In virtual address indexing, the
-> > process's mmap_sem is held for the duration of the access.
+> > And why do we need that? Why cannot we simply assume all swapped out
+> > pages to be idle? They were certainly idle enough to be reclaimed,
+> > right? Or what does idle actualy mean here?
 > 
-> As already mentioned in one of the previous versions. The interface
-> seems sane and the usecase as well. So I do not really have high level
-> objections.
+> Yes, but other than swapping, in Android a page can be forced to be swapped
+> out as well using the new hints that Minchan is adding?
 
-That is great to know.
+Yes and that is effectivelly making them idle, no?
 
-> From a quick look at the patch I would just object to pulling swap idle
-> tracking into this patch because it makes the review harder and it is
-> essentially a dead code until a later patch. I am also not sure whether
-> that is really necessary and it really begs for an explicit
-> justification.
-
-Ok I will split it out, and also expand on the need for it a bit more.
-
+> Also, even if they were idle enough to be swapped, there is a chance that they
+> were marked as idle and *accessed* before the swapping. Due to swapping, the
+> "page was accessed since we last marked it as idle" information is lost. I am
+> able to verify this.
 > 
-> I will try to go through the patch more carefully later as time allows.
+> Idle in this context means the same thing as in page idle tracking terms, the
+> page was not accessed by userspace since we last marked it as idle (using
+> /proc/<pid>/page_idle).
 
-Thanks a lot.
+Please describe a usecase and why that information might be useful.
 
-> > Signed-off-by: Joel Fernandes (Google) <joel@joelfernandes.org>
-> -- 
-> Michal Hocko
-> SUSE Labs
-
- - Joel
+-- 
+Michal Hocko
+SUSE Labs
