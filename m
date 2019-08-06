@@ -1,98 +1,66 @@
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Subject: Re: [RFC PATCH v1 1/5] fs: Add support for an O_MAYEXEC flag on
- sys_open()
-Date: Tue, 6 Aug 2019 18:40:48 +0200
-Message-ID: <0a16e842-d636-60ac-427a-3500224f4f8d@digikod.net>
-References: <20181212081712.32347-1-mic@digikod.net>
- <20181212081712.32347-2-mic@digikod.net>
- <20181212144306.GA19945@quack2.suse.cz>
- <CALCETrVeZ0eufFXwfhtaG_j+AdvbzEWE0M3wjXMWVEO7pj+xkw@mail.gmail.com>
+From: Paul Crowley via Linux-f2fs-devel
+ <linux-f2fs-devel@lists.sourceforge.net>
+Subject: Re: [PATCH v8 12/20] fscrypt: add an HKDF-SHA512
+ implementation
+Date: Tue, 6 Aug 2019 13:43:27 -0700
+Message-ID: <CA+_SqcBkR_8Z9EUTpK-dEW4PN+9P5OgJnqYDHtOhG+P1LjotPA@mail.gmail.com>
+References: <20190805162521.90882-1-ebiggers@kernel.org>
+ <20190805162521.90882-13-ebiggers@kernel.org>
+Reply-To: Paul Crowley <paulcrowley@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <kernel-hardening-return-16729-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <CALCETrVeZ0eufFXwfhtaG_j+AdvbzEWE0M3wjXMWVEO7pj+xkw@mail.gmail.com>
-Content-Language: en-US
-To: Andy Lutomirski <luto@kernel.org>, Jan Kara <jack@suse.cz>, Song Liu <songliubraving@fb.com>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>
-Cc: LKML <linux-kernel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, James Morris <jmorris@namei.org>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Michael Kerrisk <mtk.manpages@gmail.com>, =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mickael.salaun@ssi.gouv.fr>, Mimi Zohar <zohar@linux.ibm.com>, =?UTF-8?Q?Philippe_Tr=c3=a9buchet?= <philippe.trebuchet@ssi.gouv.fr>, Shuah Khan <shuah@kernel.org>, Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>, Vincent Strubel <vincent.strubel@ssi.gouv.fr>, Yves-Alexis Perez <yves-alexis.perez@ssi.gouv.fr>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+In-Reply-To: <20190805162521.90882-13-ebiggers@kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: Satya Tangirala <satyat@google.com>, Theodore Ts'o <tytso@mit.edu>, linux-api@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-fscrypt@vger.kernel.org, keyrings@vger.kernel.org, linux-mtd@lists.infradead.org, linux-crypto@vger.kernel.org, linux-fsdevel@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, linux-ext4@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+On Mon, 5 Aug 2019 at 09:28, Eric Biggers <ebiggers@kernel.org> wrote:
+>
+> From: Eric Biggers <ebiggers@google.com>
+>
+> Add an implementation of HKDF (RFC 5869) to fscrypt, for the purpose of
+> deriving additional key material from the fscrypt master keys for v2
+> encryption policies.  HKDF is a key derivation function built on top of
+> HMAC.  We choose SHA-512 for the underlying unkeyed hash, and use an
+> "hmac(sha512)" transform allocated from the crypto API.
+>
+> We'll be using this to replace the AES-ECB based KDF currently used to
+> derive the per-file encryption keys.  While the AES-ECB based KDF is
+> believed to meet the original security requirements, it is nonstandard
+> and has problems that don't exist in modern KDFs such as HKDF:
+>
+> 1. It's reversible.  Given a derived key and nonce, an attacker can
+>    easily compute the master key.  This is okay if the master key and
+>    derived keys are equally hard to compromise, but now we'd like to be
+>    more robust against threats such as a derived key being compromised
+>    through a timing attack, or a derived key for an in-use file being
+>    compromised after the master key has already been removed.
+>
+> 2. It doesn't evenly distribute the entropy from the master key; each 16
+>    input bytes only affects the corresponding 16 output bytes.
+>
+> 3. It isn't easily extensible to deriving other values or keys, such as
+>    a public hash for securely identifying the key, or per-mode keys.
+>    Per-mode keys will be immediately useful for Adiantum encryption, for
+>    which fscrypt currently uses the master key directly, introducing
+>    unnecessary usage constraints.  Per-mode keys will also be useful for
+>    hardware inline encryption, which is currently being worked on.
+>
+> HKDF solves all the above problems.
+>
+> Reviewed-by: Theodore Ts'o <tytso@mit.edu>
+> Signed-off-by: Eric Biggers <ebiggers@google.com>
 
-On 05/08/2019 01:55, Andy Lutomirski wrote:
-> On Wed, Dec 12, 2018 at 6:43 AM Jan Kara <jack@suse.cz> wrote:
->>
->> On Wed 12-12-18 09:17:08, Mickaël Salaün wrote:
->>> When the O_MAYEXEC flag is passed, sys_open() may be subject to
->>> additional restrictions depending on a security policy implemented by an
->>> LSM through the inode_permission hook.
->>>
->>> The underlying idea is to be able to restrict scripts interpretation
->>> according to a policy defined by the system administrator.  For this to
->>> be possible, script interpreters must use the O_MAYEXEC flag
->>> appropriately.  To be fully effective, these interpreters also need to
->>> handle the other ways to execute code (for which the kernel can't help):
->>> command line parameters (e.g., option -e for Perl), module loading
->>> (e.g., option -m for Python), stdin, file sourcing, environment
->>> variables, configuration files...  According to the threat model, it may
->>> be acceptable to allow some script interpreters (e.g. Bash) to interpret
->>> commands from stdin, may it be a TTY or a pipe, because it may not be
->>> enough to (directly) perform syscalls.
->>>
->>> A simple security policy implementation is available in a following
->>> patch for Yama.
->>>
->>> This is an updated subset of the patch initially written by Vincent
->>> Strubel for CLIP OS:
->>> https://github.com/clipos-archive/src_platform_clip-patches/blob/f5cb330d6b684752e403b4e41b39f7004d88e561/1901_open_mayexec.patch
->>> This patch has been used for more than 10 years with customized script
->>> interpreters.  Some examples can be found here:
->>> https://github.com/clipos-archive/clipos4_portage-overlay/search?q=O_MAYEXEC
->>>
->>> Signed-off-by: Mickaël Salaün <mic@digikod.net>
->>> Signed-off-by: Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>
->>> Signed-off-by: Vincent Strubel <vincent.strubel@ssi.gouv.fr>
->>> Reviewed-by: Philippe Trébuchet <philippe.trebuchet@ssi.gouv.fr>
->>> Cc: Al Viro <viro@zeniv.linux.org.uk>
->>> Cc: Kees Cook <keescook@chromium.org>
->>> Cc: Mickaël Salaün <mickael.salaun@ssi.gouv.fr>
->>
->> ...
->>
->>> diff --git a/fs/open.c b/fs/open.c
->>> index 0285ce7dbd51..75479b79a58f 100644
->>> --- a/fs/open.c
->>> +++ b/fs/open.c
->>> @@ -974,6 +974,10 @@ static inline int build_open_flags(int flags, umode_t mode, struct open_flags *o
->>>       if (flags & O_APPEND)
->>>               acc_mode |= MAY_APPEND;
->>>
->>> +     /* Check execution permissions on open. */
->>> +     if (flags & O_MAYEXEC)
->>> +             acc_mode |= MAY_OPENEXEC;
->>> +
->>>       op->acc_mode = acc_mode;
->>>
->>>       op->intent = flags & O_PATH ? 0 : LOOKUP_OPEN;
->>
->> I don't feel experienced enough in security to tell whether we want this
->> functionality or not. But if we do this, shouldn't we also set FMODE_EXEC
->> on the resulting struct file? That way also security_file_open() can be
->> used to arbitrate such executable opens and in particular
->> fanotify permission event FAN_OPEN_EXEC will get properly generated which I
->> guess is desirable (support for it is sitting in my tree waiting for the
->> merge window) - adding some audit people involved in FAN_OPEN_EXEC to
->> CC. Just an idea...
->>
-> 
-> I would really like to land this patch.  I'm fiddling with making
-> bpffs handle permissions intelligently, and the lack of a way to say
-> "hey, I want to open this bpf program so that I can run it" is
-> annoying.
+Looks good, feel free to add:
 
-Are you OK with this series? What about Aleksa's work on openat2(), and
-Sean's work on SGX/noexec? Is it time to send a new patch series (with a
-dedicated LSM instead of Yama)?
+Reviewed-by: Paul Crowley <paulcrowley@google.com>
