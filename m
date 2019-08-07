@@ -1,38 +1,119 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
-Date: Wed, 7 Aug 2019 06:52:36 -0700
-Message-ID: <945BCF23-839C-418C-9FBF-46889AE84CA4@amacapital.net>
-References: <D4040C0C-47D6-4852-933C-59EB53C05242@fb.com> <CALCETrVoZL1YGUxx3kM-d21TWVRKdKw=f2B8aE5wc2zmX1cQ4g@mail.gmail.com> <5A2FCD7E-7F54-41E5-BFAE-BB9494E74F2D@fb.com> <CALCETrU7NbBnXXsw1B+DvTkfTVRBFWXuJ8cZERCCNvdFG6KqRw@mail.gmail.com> <CALCETrUjh6DdgW1qSuSRd1_=0F9CqB8+sNj__e_6AHEvh_BaxQ@mail.gmail.com> <CALCETrWtE2U4EvZVYeq8pSmQjBzF2PHH+KxYW8FSeF+W=1FYjw@mail.gmail.com> <EE7B7AE1-3D44-4561-94B9-E97A626A251D@fb.com> <CALCETrXX-Jeb4wiQuL6FUai4wNMmMiUxuLLh_Lb9mT7h=0GgAw@mail.gmail.com> <20190805192122.laxcaz75k4vxdspn@ast-mbp> <CALCETrVtPs8gY-H4gmzSqPboid3CB++n50SvYd6RU9YVde_-Ow@mail.gmail.com> <20190806011134.p5baub5l3t5fkmou@ast-mbp> <CALCETrXEHL3+NAY6P6vUj7Pvd9ZpZsYC6VCLXOaNxb90a_POGw@mail.gmail.com> <CACAyw9_fVZFW_x4uyTAiRfeH6oq1KHv0uB2wO84u5JZyD+Unaw@mail.gmail.com>
-Mime-Version: 1.0 (1.0)
-Content-Type: text/plain;
-        charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <CACAyw9_fVZFW_x4uyTAiRfeH6oq1KHv0uB2wO84u5JZyD+Unaw@mail.gmail.com>
-Sender: netdev-owner@vger.kernel.org
-To: Lorenz Bauer <lmb@cloudflare.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Alexei Starovoitov <alexei.starovoitov@gmail.com>, Song Liu <songliubraving@fb.com>, Kees Cook <keescook@chromium.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [PATCH glibc 2.31 2/5] glibc: sched_getcpu(): use rseq cpu_id TLS on Linux (v5)
+Date: Wed,  7 Aug 2019 10:27:23 -0400
+Message-ID: <20190807142726.2579-3-mathieu.desnoyers@efficios.com>
+References: <20190807142726.2579-1-mathieu.desnoyers@efficios.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190807142726.2579-1-mathieu.desnoyers@efficios.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Carlos O'Donell <carlos@redhat.com>
+Cc: Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha@sourceware.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+When available, use the cpu_id field from __rseq_abi on Linux to
+implement sched_getcpu(). Fall-back on the vgetcpu vDSO if unavailable.
 
-> On Aug 7, 2019, at 2:03 AM, Lorenz Bauer <lmb@cloudflare.com> wrote:
->=20
->> On Wed, 7 Aug 2019 at 06:24, Andy Lutomirski <luto@kernel.org> wrote:
->> a) Those that, by design, control privileged operations.  This
->> includes most attach calls, but it also includes allow_ptr_leaks,
->> bpf_probe_read(), and quite a few other things.  It also includes all
->> of the by_id calls, I think, unless some clever modification to the
->> way they worked would isolate different users' objects.  I think that
->> persistent objects can do pretty much everything that by_id users
->> would need, so this isn't a big deal.
->=20
-> Slightly OT, since this is an implementation question: GET_MAP_FD_BY_ID
-> is useful to iterate a nested map. This isn't covered by rights to
-> persistent objects,
-> so it would need some thought.
->=20
->=20
+Benchmarks:
 
-A call to get an fd to a map referenced by a map to which you already have a=
-n fd seems reasonable to me. The new fd would inherit the old fd=E2=80=99s a=
-ccess mode.=
+x86-64: Intel E5-2630 v3@2.40GHz, 16-core, hyperthreading
+
+glibc sched_getcpu():                     13.7 ns (baseline)
+glibc sched_getcpu() using rseq:           2.5 ns (speedup:  5.5x)
+inline load cpuid from __rseq_abi TLS:     0.8 ns (speedup: 17.1x)
+
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: Carlos O'Donell <carlos@redhat.com>
+CC: Florian Weimer <fweimer@redhat.com>
+CC: Joseph Myers <joseph@codesourcery.com>
+CC: Szabolcs Nagy <szabolcs.nagy@arm.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Paul Turner <pjt@google.com>
+CC: libc-alpha@sourceware.org
+CC: linux-kernel@vger.kernel.org
+CC: linux-api@vger.kernel.org
+---
+Changes since v1:
+- rseq is only used if both __NR_rseq and RSEQ_SIG are defined.
+
+Changes since v2:
+- remove duplicated __rseq_abi extern declaration.
+
+Changes since v3:
+- update ChangeLog.
+
+Changes since v4:
+- Use atomic_load_relaxed to load the __rseq_abi.cpu_id field, a
+  consequence of the fact that __rseq_abi is not volatile anymore.
+- Include atomic.h which provides atomic_load_relaxed.
+---
+ ChangeLog                              |  5 +++++
+ sysdeps/unix/sysv/linux/sched_getcpu.c | 25 +++++++++++++++++++++++--
+ 2 files changed, 28 insertions(+), 2 deletions(-)
+
+diff --git a/ChangeLog b/ChangeLog
+index 9a1930248f..128a7b4baa 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -1,3 +1,8 @@
++2019-08-06  Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
++
++	* sysdeps/unix/sysv/linux/sched_getcpu.c: use rseq cpu_id TLS on
++	Linux.
++
+ 2019-08-06  Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+ 
+ 	* NEWS: Add Restartable Sequences feature description.
+diff --git a/sysdeps/unix/sysv/linux/sched_getcpu.c b/sysdeps/unix/sysv/linux/sched_getcpu.c
+index fb0d317f83..01a818f5b0 100644
+--- a/sysdeps/unix/sysv/linux/sched_getcpu.c
++++ b/sysdeps/unix/sysv/linux/sched_getcpu.c
+@@ -18,14 +18,15 @@
+ #include <errno.h>
+ #include <sched.h>
+ #include <sysdep.h>
++#include <atomic.h>
+ 
+ #ifdef HAVE_GETCPU_VSYSCALL
+ # define HAVE_VSYSCALL
+ #endif
+ #include <sysdep-vdso.h>
+ 
+-int
+-sched_getcpu (void)
++static int
++vsyscall_sched_getcpu (void)
+ {
+ #ifdef __NR_getcpu
+   unsigned int cpu;
+@@ -37,3 +38,23 @@ sched_getcpu (void)
+   return -1;
+ #endif
+ }
++
++#ifdef __NR_rseq
++#include <sys/rseq.h>
++#endif
++
++#if defined __NR_rseq && defined RSEQ_SIG
++int
++sched_getcpu (void)
++{
++  int cpu_id = atomic_load_relaxed (&__rseq_abi.cpu_id);
++
++  return cpu_id >= 0 ? cpu_id : vsyscall_sched_getcpu ();
++}
++#else
++int
++sched_getcpu (void)
++{
++  return vsyscall_sched_getcpu ();
++}
++#endif
+-- 
+2.17.1
