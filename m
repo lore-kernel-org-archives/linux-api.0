@@ -1,39 +1,71 @@
-From: Lorenz Bauer <lmb@cloudflare.com>
-Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
-Date: Wed, 7 Aug 2019 10:03:57 +0100
-Message-ID: <CACAyw9_fVZFW_x4uyTAiRfeH6oq1KHv0uB2wO84u5JZyD+Unaw@mail.gmail.com>
-References: <D4040C0C-47D6-4852-933C-59EB53C05242@fb.com> <CALCETrVoZL1YGUxx3kM-d21TWVRKdKw=f2B8aE5wc2zmX1cQ4g@mail.gmail.com>
- <5A2FCD7E-7F54-41E5-BFAE-BB9494E74F2D@fb.com> <CALCETrU7NbBnXXsw1B+DvTkfTVRBFWXuJ8cZERCCNvdFG6KqRw@mail.gmail.com>
- <CALCETrUjh6DdgW1qSuSRd1_=0F9CqB8+sNj__e_6AHEvh_BaxQ@mail.gmail.com>
- <CALCETrWtE2U4EvZVYeq8pSmQjBzF2PHH+KxYW8FSeF+W=1FYjw@mail.gmail.com>
- <EE7B7AE1-3D44-4561-94B9-E97A626A251D@fb.com> <CALCETrXX-Jeb4wiQuL6FUai4wNMmMiUxuLLh_Lb9mT7h=0GgAw@mail.gmail.com>
- <20190805192122.laxcaz75k4vxdspn@ast-mbp> <CALCETrVtPs8gY-H4gmzSqPboid3CB++n50SvYd6RU9YVde_-Ow@mail.gmail.com>
- <20190806011134.p5baub5l3t5fkmou@ast-mbp> <CALCETrXEHL3+NAY6P6vUj7Pvd9ZpZsYC6VCLXOaNxb90a_POGw@mail.gmail.com>
+From: Greg KH <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH v4 11/12] fpga: dfl: fme: add global error reporting
+ support
+Date: Wed, 7 Aug 2019 11:30:58 +0200
+Message-ID: <20190807093058.GA8326@kroah.com>
+References: <1564914022-3710-1-git-send-email-hao.wu@intel.com>
+ <1564914022-3710-12-git-send-email-hao.wu@intel.com>
+ <20190805155626.GD8107@kroah.com>
+ <20190807024521.GD24158@hao-dev>
+ <20190807080825.GA10344@hao-dev>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <CALCETrXEHL3+NAY6P6vUj7Pvd9ZpZsYC6VCLXOaNxb90a_POGw@mail.gmail.com>
-Sender: netdev-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Alexei Starovoitov <alexei.starovoitov@gmail.com>, Song Liu <songliubraving@fb.com>, Kees Cook <keescook@chromium.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190807080825.GA10344@hao-dev>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Wu Hao <hao.wu@intel.com>
+Cc: mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, atull@kernel.org, Luwei Kang <luwei.kang@intel.com>, Ananda Ravuri <ananda.ravuri@intel.com>, Xu Yilun <yilun.xu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 7 Aug 2019 at 06:24, Andy Lutomirski <luto@kernel.org> wrote:
-> a) Those that, by design, control privileged operations.  This
-> includes most attach calls, but it also includes allow_ptr_leaks,
-> bpf_probe_read(), and quite a few other things.  It also includes all
-> of the by_id calls, I think, unless some clever modification to the
-> way they worked would isolate different users' objects.  I think that
-> persistent objects can do pretty much everything that by_id users
-> would need, so this isn't a big deal.
+On Wed, Aug 07, 2019 at 04:08:25PM +0800, Wu Hao wrote:
+> On Wed, Aug 07, 2019 at 10:45:22AM +0800, Wu Hao wrote:
+> > On Mon, Aug 05, 2019 at 05:56:26PM +0200, Greg KH wrote:
+> > > On Sun, Aug 04, 2019 at 06:20:21PM +0800, Wu Hao wrote:
+> > > > +static int fme_global_err_init(struct platform_device *pdev,
+> > > > +			       struct dfl_feature *feature)
+> > > > +{
+> > > > +	struct device *dev;
+> > > > +	int ret = 0;
+> > > > +
+> > > > +	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
+> > > > +	if (!dev)
+> > > > +		return -ENOMEM;
+> > > > +
+> > > > +	dev->parent = &pdev->dev;
+> > > > +	dev->release = err_dev_release;
+> > > > +	dev_set_name(dev, "errors");
+> > > > +
+> > > > +	fme_error_enable(feature);
+> > > > +
+> > > > +	ret = device_register(dev);
+> > > > +	if (ret) {
+> > > > +		put_device(dev);
+> > > > +		return ret;
+> > > > +	}
+> > > > +
+> > > > +	ret = device_add_groups(dev, error_groups);
+> > > 
+> > > cute, but no, you do not create a whole struct device for a subdir.  Use
+> > > the attribute group name like you did on earlier patches.
+> > 
+> > Sure, let me fix it in the next version.
+> > 
+> > > 
+> > > And again, you raced userspace and lost :(
+> > 
+> > Same here, could you please give some more hints here?
+> 
+> Oh.. I see..
+> 
+> I should follow [1] as this is a platform driver. I will fix it. Thanks!
+> 
+> [PATCH 00/11] Platform drivers, provide a way to add sysfs groups easily
+> 
+> [1]https://lkml.org/lkml/2019/7/4/181
 
-Slightly OT, since this is an implementation question: GET_MAP_FD_BY_ID
-is useful to iterate a nested map. This isn't covered by rights to
-persistent objects,
-so it would need some thought.
+Yes, that is the correct thing to do.
 
--- 
-Lorenz Bauer  |  Systems Engineer
-6th Floor, County Hall/The Riverside Building, SE1 7PB, UK
+thanks,
 
-www.cloudflare.com
+greg k-h
