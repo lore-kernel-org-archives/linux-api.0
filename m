@@ -1,71 +1,104 @@
-From: Greg KH <gregkh@linuxfoundation.org>
-Subject: Re: [PATCH v4 11/12] fpga: dfl: fme: add global error reporting
- support
-Date: Wed, 7 Aug 2019 11:30:58 +0200
-Message-ID: <20190807093058.GA8326@kroah.com>
-References: <1564914022-3710-1-git-send-email-hao.wu@intel.com>
- <1564914022-3710-12-git-send-email-hao.wu@intel.com>
- <20190805155626.GD8107@kroah.com>
- <20190807024521.GD24158@hao-dev>
- <20190807080825.GA10344@hao-dev>
+From: Joel Fernandes <joel@joelfernandes.org>
+Subject: Re: [PATCH v4 1/5] mm/page_idle: Add per-pid idle page tracking
+ using virtual indexing
+Date: Wed, 7 Aug 2019 06:00:13 -0400
+Message-ID: <20190807100013.GC169551@google.com>
+References: <20190805170451.26009-1-joel@joelfernandes.org>
+ <20190806151921.edec128271caccb5214fc1bd@linux-foundation.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190807080825.GA10344@hao-dev>
+In-Reply-To: <20190806151921.edec128271caccb5214fc1bd@linux-foundation.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Wu Hao <hao.wu@intel.com>
-Cc: mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, atull@kernel.org, Luwei Kang <luwei.kang@intel.com>, Ananda Ravuri <ananda.ravuri@intel.com>, Xu Yilun <yilun.xu@intel.com>
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-kernel@vger.kernel.org, Alexey Dobriyan <adobriyan@gmail.com>, Borislav Petkov <bp@alien8.de>, Brendan Gregg <bgregg@netflix.com>, Catalin Marinas <catalin.marinas@arm.com>, Christian Hansen <chansen3@cisco.com>, dancol@google.com, fmayer@google.com, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, kernel-team@android.com, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, Michal Hocko <mhocko@suse.com>, Mike Rapoport <rppt@linux.ibm.com>, minchan@kernel.org, namhyung@google.com, paulmck@linux.ibm.com, Robin Murphy <robin.murphy@arm.com>, Roman Gushchin <guro@fb.com>, Stephen Rothwell <sfr@canb.auug.org.au>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Aug 07, 2019 at 04:08:25PM +0800, Wu Hao wrote:
-> On Wed, Aug 07, 2019 at 10:45:22AM +0800, Wu Hao wrote:
-> > On Mon, Aug 05, 2019 at 05:56:26PM +0200, Greg KH wrote:
-> > > On Sun, Aug 04, 2019 at 06:20:21PM +0800, Wu Hao wrote:
-> > > > +static int fme_global_err_init(struct platform_device *pdev,
-> > > > +			       struct dfl_feature *feature)
-> > > > +{
-> > > > +	struct device *dev;
-> > > > +	int ret = 0;
-> > > > +
-> > > > +	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
-> > > > +	if (!dev)
-> > > > +		return -ENOMEM;
-> > > > +
-> > > > +	dev->parent = &pdev->dev;
-> > > > +	dev->release = err_dev_release;
-> > > > +	dev_set_name(dev, "errors");
-> > > > +
-> > > > +	fme_error_enable(feature);
-> > > > +
-> > > > +	ret = device_register(dev);
-> > > > +	if (ret) {
-> > > > +		put_device(dev);
-> > > > +		return ret;
-> > > > +	}
-> > > > +
-> > > > +	ret = device_add_groups(dev, error_groups);
-> > > 
-> > > cute, but no, you do not create a whole struct device for a subdir.  Use
-> > > the attribute group name like you did on earlier patches.
-> > 
-> > Sure, let me fix it in the next version.
-> > 
-> > > 
-> > > And again, you raced userspace and lost :(
-> > 
-> > Same here, could you please give some more hints here?
-> 
-> Oh.. I see..
-> 
-> I should follow [1] as this is a platform driver. I will fix it. Thanks!
-> 
-> [PATCH 00/11] Platform drivers, provide a way to add sysfs groups easily
-> 
-> [1]https://lkml.org/lkml/2019/7/4/181
+On Tue, Aug 06, 2019 at 03:19:21PM -0700, Andrew Morton wrote:
+> (cc Brendan's other email address, hoping for review input ;))
 
-Yes, that is the correct thing to do.
+;)
+
+> On Mon,  5 Aug 2019 13:04:47 -0400 "Joel Fernandes (Google)" <joel@joelfernandes.org> wrote:
+> 
+> > The page_idle tracking feature currently requires looking up the pagemap
+> > for a process followed by interacting with /sys/kernel/mm/page_idle.
+> > Looking up PFN from pagemap in Android devices is not supported by
+> > unprivileged process and requires SYS_ADMIN and gives 0 for the PFN.
+> > 
+> > This patch adds support to directly interact with page_idle tracking at
+> > the PID level by introducing a /proc/<pid>/page_idle file.  It follows
+> > the exact same semantics as the global /sys/kernel/mm/page_idle, but now
+> > looking up PFN through pagemap is not needed since the interface uses
+> > virtual frame numbers, and at the same time also does not require
+> > SYS_ADMIN.
+> > 
+> > In Android, we are using this for the heap profiler (heapprofd) which
+> > profiles and pin points code paths which allocates and leaves memory
+> > idle for long periods of time. This method solves the security issue
+> > with userspace learning the PFN, and while at it is also shown to yield
+> > better results than the pagemap lookup, the theory being that the window
+> > where the address space can change is reduced by eliminating the
+> > intermediate pagemap look up stage. In virtual address indexing, the
+> > process's mmap_sem is held for the duration of the access.
+> 
+> Quite a lot of changes to the page_idle code.  Has this all been
+> runtime tested on architectures where
+> CONFIG_HAVE_ARCH_PTE_SWP_PGIDLE=n?  That could be x86 with a little
+> Kconfig fiddle-for-testing-purposes.
+
+I will do this Kconfig fiddle test with CONFIG_HAVE_ARCH_PTE_SWP_PGIDLE=n and test
+the patch as well.
+
+In previous series, this flag was not there (which should have been
+equivalent to the above test), and things are working fine.
+
+> > 8 files changed, 376 insertions(+), 45 deletions(-)
+> 
+> Quite a lot of new code unconditionally added to major architectures. 
+> Are we confident that everyone will want this feature?
+
+I did not follow, could you clarify more? All of this diff stat is not to
+architecture code:
+
+ arch/Kconfig                  |   3 ++
+ fs/proc/base.c                |   3 ++
+ fs/proc/internal.h            |   1 +
+ fs/proc/task_mmu.c            |  43 +++++++++++++++++++++
+ include/asm-generic/pgtable.h |   6 +++
+ include/linux/page_idle.h     |   4 ++
+ mm/page_idle.c                | 359 +++++++++++++++++++++++++++++..
+ mm/rmap.c                     |   2 +
+ 8 files changed, 376 insertions(+), 45 deletions(-)
+
+The arcitecture change is in a later patch, and is not that many lines.
+
+Also, I am planning to split the swap functionality of the patch into a
+separate one for easier review.
+
+> > +static int proc_page_idle_open(struct inode *inode, struct file *file)
+> > +{
+> > +	struct mm_struct *mm;
+> > +
+> > +	mm = proc_mem_open(inode, PTRACE_MODE_READ);
+> > +	if (IS_ERR(mm))
+> > +		return PTR_ERR(mm);
+> > +	file->private_data = mm;
+> > +	return 0;
+> > +}
+> > +
+> > +static int proc_page_idle_release(struct inode *inode, struct file *file)
+> > +{
+> > +	struct mm_struct *mm = file->private_data;
+> > +
+> > +	if (mm)
+> 
+> I suspect the test isn't needed?  proc_page_idle_release) won't be
+> called if proc_page_idle_open() failed?
+
+Yes you are right, will remove the test.
 
 thanks,
 
-greg k-h
+ - Joel
