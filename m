@@ -1,8 +1,7 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V38 05/29] Restrict /dev/{mem,kmem,port} when the kernel is
- locked down
-Date: Wed,  7 Aug 2019 17:06:57 -0700
-Message-ID: <20190808000721.124691-6-matthewgarrett@google.com>
+Subject: [PATCH V38 04/29] Enforce module signatures if the kernel is locked down
+Date: Wed,  7 Aug 2019 17:06:56 -0700
+Message-ID: <20190808000721.124691-5-matthewgarrett@google.com>
 References: <20190808000721.124691-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -10,78 +9,127 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190808000721.124691-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Matthew Garrett <mjg59@srcf.ucam.org>, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>, x86@kernel.org
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Matthew Garrett <matthewgarrett@google.com>, Kees Cook <keescook@chromium.org>, Jessica Yu <jeyu@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Matthew Garrett <mjg59@srcf.ucam.org>
+From: David Howells <dhowells@redhat.com>
 
-Allowing users to read and write to core kernel memory makes it possible
-for the kernel to be subverted, avoiding module loading restrictions, and
-also to steal cryptographic information.
+If the kernel is locked down, require that all modules have valid
+signatures that we can verify.
 
-Disallow /dev/mem and /dev/kmem from being opened this when the kernel has
-been locked down to prevent this.
+I have adjusted the errors generated:
 
-Also disallow /dev/port from being opened to prevent raw ioport access and
-thus DMA from being used to accomplish the same thing.
+ (1) If there's no signature (ENODATA) or we can't check it (ENOPKG,
+     ENOKEY), then:
+
+     (a) If signatures are enforced then EKEYREJECTED is returned.
+
+     (b) If there's no signature or we can't check it, but the kernel is
+	 locked down then EPERM is returned (this is then consistent with
+	 other lockdown cases).
+
+ (2) If the signature is unparseable (EBADMSG, EINVAL), the signature fails
+     the check (EKEYREJECTED) or a system error occurs (eg. ENOMEM), we
+     return the error we got.
+
+Note that the X.509 code doesn't check for key expiry as the RTC might not
+be valid or might not have been transferred to the kernel's clock yet.
+
+ [Modified by Matthew Garrett to remove the IMA integration. This will
+  be replaced with integration with the IMA architecture policy
+  patchset.]
 
 Signed-off-by: David Howells <dhowells@redhat.com>
-Signed-off-by: Matthew Garrett <mjg59@google.com>
+Signed-off-by: Matthew Garrett <matthewgarrett@google.com>
 Reviewed-by: Kees Cook <keescook@chromium.org>
-Cc: x86@kernel.org
+Cc: Jessica Yu <jeyu@kernel.org>
 ---
- drivers/char/mem.c           | 7 +++++--
- include/linux/security.h     | 1 +
- security/lockdown/lockdown.c | 1 +
- 3 files changed, 7 insertions(+), 2 deletions(-)
+ include/linux/security.h     |  1 +
+ kernel/module.c              | 37 +++++++++++++++++++++++++++++-------
+ security/lockdown/lockdown.c |  1 +
+ 3 files changed, 32 insertions(+), 7 deletions(-)
 
-diff --git a/drivers/char/mem.c b/drivers/char/mem.c
-index b08dc50f9f26..d0148aee1aab 100644
---- a/drivers/char/mem.c
-+++ b/drivers/char/mem.c
-@@ -29,8 +29,8 @@
- #include <linux/export.h>
- #include <linux/io.h>
- #include <linux/uio.h>
--
- #include <linux/uaccess.h>
-+#include <linux/security.h>
- 
- #ifdef CONFIG_IA64
- # include <linux/efi.h>
-@@ -786,7 +786,10 @@ static loff_t memory_lseek(struct file *file, loff_t offset, int orig)
- 
- static int open_port(struct inode *inode, struct file *filp)
- {
--	return capable(CAP_SYS_RAWIO) ? 0 : -EPERM;
-+	if (!capable(CAP_SYS_RAWIO))
-+		return -EPERM;
-+
-+	return security_locked_down(LOCKDOWN_DEV_MEM);
- }
- 
- #define zero_lseek	null_lseek
 diff --git a/include/linux/security.h b/include/linux/security.h
-index 8e70063074a1..9458152601b5 100644
+index 54a0532ec12f..8e70063074a1 100644
 --- a/include/linux/security.h
 +++ b/include/linux/security.h
-@@ -104,6 +104,7 @@ enum lsm_event {
+@@ -103,6 +103,7 @@ enum lsm_event {
+  */
  enum lockdown_reason {
  	LOCKDOWN_NONE,
- 	LOCKDOWN_MODULE_SIGNATURE,
-+	LOCKDOWN_DEV_MEM,
++	LOCKDOWN_MODULE_SIGNATURE,
  	LOCKDOWN_INTEGRITY_MAX,
  	LOCKDOWN_CONFIDENTIALITY_MAX,
  };
+diff --git a/kernel/module.c b/kernel/module.c
+index cd8df516666d..318209889e26 100644
+--- a/kernel/module.c
++++ b/kernel/module.c
+@@ -2771,8 +2771,9 @@ static inline void kmemleak_load_module(const struct module *mod,
+ #ifdef CONFIG_MODULE_SIG
+ static int module_sig_check(struct load_info *info, int flags)
+ {
+-	int err = -ENOKEY;
++	int err = -ENODATA;
+ 	const unsigned long markerlen = sizeof(MODULE_SIG_STRING) - 1;
++	const char *reason;
+ 	const void *mod = info->hdr;
+ 
+ 	/*
+@@ -2787,16 +2788,38 @@ static int module_sig_check(struct load_info *info, int flags)
+ 		err = mod_verify_sig(mod, info);
+ 	}
+ 
+-	if (!err) {
++	switch (err) {
++	case 0:
+ 		info->sig_ok = true;
+ 		return 0;
+-	}
+ 
+-	/* Not having a signature is only an error if we're strict. */
+-	if (err == -ENOKEY && !is_module_sig_enforced())
+-		err = 0;
++		/* We don't permit modules to be loaded into trusted kernels
++		 * without a valid signature on them, but if we're not
++		 * enforcing, certain errors are non-fatal.
++		 */
++	case -ENODATA:
++		reason = "Loading of unsigned module";
++		goto decide;
++	case -ENOPKG:
++		reason = "Loading of module with unsupported crypto";
++		goto decide;
++	case -ENOKEY:
++		reason = "Loading of module with unavailable key";
++	decide:
++		if (is_module_sig_enforced()) {
++			pr_notice("%s is rejected\n", reason);
++			return -EKEYREJECTED;
++		}
+ 
+-	return err;
++		return security_locked_down(LOCKDOWN_MODULE_SIGNATURE);
++
++		/* All other errors are fatal, including nomem, unparseable
++		 * signatures and signature check failures - even if signatures
++		 * aren't required.
++		 */
++	default:
++		return err;
++	}
+ }
+ #else /* !CONFIG_MODULE_SIG */
+ static int module_sig_check(struct load_info *info, int flags)
 diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
-index 2c53fd9f5c9b..d2ef29d9f0b2 100644
+index d30c4d254b5f..2c53fd9f5c9b 100644
 --- a/security/lockdown/lockdown.c
 +++ b/security/lockdown/lockdown.c
-@@ -19,6 +19,7 @@ static enum lockdown_reason kernel_locked_down;
+@@ -18,6 +18,7 @@ static enum lockdown_reason kernel_locked_down;
+ 
  static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
  	[LOCKDOWN_NONE] = "none",
- 	[LOCKDOWN_MODULE_SIGNATURE] = "unsigned module loading",
-+	[LOCKDOWN_DEV_MEM] = "/dev/mem,kmem,port",
++	[LOCKDOWN_MODULE_SIGNATURE] = "unsigned module loading",
  	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
  	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
  };
