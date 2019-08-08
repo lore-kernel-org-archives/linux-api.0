@@ -1,36 +1,67 @@
-From: James Morris <jmorris@namei.org>
-Subject: Re: [PATCH V38 19/29] Lock down module params that specify hardware
- parameters (eg. ioport)
-Date: Fri, 9 Aug 2019 02:33:37 +1000 (AEST)
-Message-ID: <alpine.LRH.2.21.1908090232530.31143@namei.org>
-References: <20190808000721.124691-1-matthewgarrett@google.com> <20190808000721.124691-20-matthewgarrett@google.com> <20190808111246.GA29211@linux-8ccs>
+From: Michal =?iso-8859-1?Q?Koutn=FD?= <mkoutny@suse.com>
+Subject: Re: [PATCH v13 2/6] sched/core: uclamp: Propagate parent clamps
+Date: Thu, 8 Aug 2019 19:16:21 +0200
+Message-ID: <20190808171620.GE8617@blackbody.suse.cz>
+References: <20190802090853.4810-1-patrick.bellasi@arm.com>
+ <20190802090853.4810-3-patrick.bellasi@arm.com>
+ <20190806161153.GA19991@blackbody.suse.cz>
+ <87h86r4rvp.fsf@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="M/SuVGWktc5uNpra"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190808111246.GA29211@linux-8ccs>
+Content-Disposition: inline
+In-Reply-To: <87h86r4rvp.fsf@arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jessica Yu <jeyu@kernel.org>
-Cc: Matthew Garrett <matthewgarrett@google.com>, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>
+To: Patrick Bellasi <patrick.bellasi@arm.com>
+Cc: Alessio Balsini <balsini@android.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Quentin Perret <quentin.perret@arm.com>, Joel Fernandes <joelaf@google.com>, Paul Turner <pjt@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>, Todd Kjos <tkjos@google.com>, Peter Zijlstra <peterz@infradead.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Tejun Heo <tj@kernel.org>, VincentGuittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Juri Lelli <juri.lelli@redhat.com>, Ingo Molnar <mingo@redhat.com>, cgroups@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 8 Aug 2019, Jessica Yu wrote:
 
-> > +#ifdef CONFIG_MODULES
-> > +#define mod_name(mod) ((mod)->name)
-> > +#else
-> > +#define mod_name(mod) "unknown"
-> > +#endif
-> > +
-> 
-> Hm, I don't think mod_name is used anywhere?
-> 
-> But other than that:
-> 
-> Acked-by: Jessica Yu <jeyu@kernel.org>
-> 
+--M/SuVGWktc5uNpra
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Matthew: no need to respin the patchset just for this. 
+On Thu, Aug 08, 2019 at 04:08:10PM +0100, Patrick Bellasi <patrick.bellasi@=
+arm.com> wrote:
+> Well, if I've got correctly your comment in the previous message, I
+> would say that at this stage we don't need RCU looks at all.
+Agreed.
 
--- 
-James Morris
-<jmorris@namei.org>
+> Reason being that cpu_util_update_eff() gets called only from
+> cpu_uclamp_write() which is from an ongoing write operation on a cgroup
+> attribute and thus granted to be available.
+>=20
+> We will eventually need to move the RCU look only down the stack when
+> uclamp_update_active_tasks() gets called to update the RUNNABLE tasks on
+> a RQ... or perhaps we don't need them since we already get the
+> task_rq_lock() for each task we visit.
+Unless you remove css_for_each_descendant_pre() in
+cpu_util_update_eff(), the rcu_read_lock() cannot go below it.
+(You'd be RCU-accessing other csses that aren't pinned in the write.)
+
+Michal
+
+--M/SuVGWktc5uNpra
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEEoQaUCWq8F2Id1tNia1+riC5qSgFAl1MWN8ACgkQia1+riC5
+qSityw/+JXOBnu4pwW3aN+tZLpsDmQp30H/RvF8UM9xruXiajWC8seiPhBHO/K+d
+NTgTcMYp4XLXOBDOPR1OvFFLAhgv38xf4R4+kyvg9Z6Yq0jRbOQR6t/foXIOEKV4
+OhkPVNl57zVqJoUmTMN5I7ld8AM/dA4RPas3vG9qLrALc1cycaSGmeTNRNzGo3Ga
+zhNO5KOYipeQoMJJw+KslJgfUctj7YPLKrIDeqt7wRJ6s1rJ8srqlR4QJiqnwvpt
+Adit3pj4WaOMaYJhX7HuAgEn26kwKkX1Edw9a7BJQny2Zu+CxPrR7AkHPD/eTJyG
+XHHBBhW3vsKGYkOSpSTavv1Pc+402OkteacYPiP7Hh38UHPEeOnKjAwJFnDRDUKJ
+mwOw08r0d7tMZKBnMgchOPtpOATD2M9/No9z8TVFoxILfcXpMjEQE6apYVNH2rvl
+vJkH7wujXxbkWCgL6xopQdyG//G/vGHrPPWJmlhNMvL4Y/KRwj7zEqMvOHC1XQAt
+WpqQGv5uI6R0WZv31qSIkoXGsfnNx2oz/tR16SpAQUvKRu7en2KwgvzHQGbBfXmV
+LuNR/iu0/tuOac76MEvdu3dAAyoccmdmYmBZSKm0/+wcqDAa8SKu3CIWhWb8Bu5P
++LzuhocAwLPW4ZGSUxuQ+np/D+SyqOJSIhJIlqAmSPtG6TMDGkI=
+=LPyl
+-----END PGP SIGNATURE-----
+
+--M/SuVGWktc5uNpra--
