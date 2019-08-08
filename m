@@ -1,8 +1,8 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V38 17/29] Prohibit PCMCIA CIS storage when the kernel is
+Subject: [PATCH V38 05/29] Restrict /dev/{mem,kmem,port} when the kernel is
  locked down
-Date: Wed,  7 Aug 2019 17:07:09 -0700
-Message-ID: <20190808000721.124691-18-matthewgarrett@google.com>
+Date: Wed,  7 Aug 2019 17:06:57 -0700
+Message-ID: <20190808000721.124691-6-matthewgarrett@google.com>
 References: <20190808000721.124691-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -10,68 +10,78 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190808000721.124691-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Dominik Brodowski <linux@dominikbrodowski.net>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Matthew Garrett <mjg59@srcf.ucam.org>, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: David Howells <dhowells@redhat.com>
+From: Matthew Garrett <mjg59@srcf.ucam.org>
 
-Prohibit replacement of the PCMCIA Card Information Structure when the
-kernel is locked down.
+Allowing users to read and write to core kernel memory makes it possible
+for the kernel to be subverted, avoiding module loading restrictions, and
+also to steal cryptographic information.
 
-Suggested-by: Dominik Brodowski <linux@dominikbrodowski.net>
+Disallow /dev/mem and /dev/kmem from being opened this when the kernel has
+been locked down to prevent this.
+
+Also disallow /dev/port from being opened to prevent raw ioport access and
+thus DMA from being used to accomplish the same thing.
+
 Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Matthew Garrett <mjg59@google.com>
 Reviewed-by: Kees Cook <keescook@chromium.org>
+Cc: x86@kernel.org
 ---
- drivers/pcmcia/cistpl.c      | 5 +++++
+ drivers/char/mem.c           | 7 +++++--
  include/linux/security.h     | 1 +
  security/lockdown/lockdown.c | 1 +
- 3 files changed, 7 insertions(+)
+ 3 files changed, 7 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/pcmcia/cistpl.c b/drivers/pcmcia/cistpl.c
-index abd029945cc8..629359fe3513 100644
---- a/drivers/pcmcia/cistpl.c
-+++ b/drivers/pcmcia/cistpl.c
-@@ -21,6 +21,7 @@
- #include <linux/pci.h>
- #include <linux/ioport.h>
+diff --git a/drivers/char/mem.c b/drivers/char/mem.c
+index b08dc50f9f26..d0148aee1aab 100644
+--- a/drivers/char/mem.c
++++ b/drivers/char/mem.c
+@@ -29,8 +29,8 @@
+ #include <linux/export.h>
  #include <linux/io.h>
+ #include <linux/uio.h>
+-
+ #include <linux/uaccess.h>
 +#include <linux/security.h>
- #include <asm/byteorder.h>
- #include <asm/unaligned.h>
  
-@@ -1575,6 +1576,10 @@ static ssize_t pccard_store_cis(struct file *filp, struct kobject *kobj,
- 	struct pcmcia_socket *s;
- 	int error;
+ #ifdef CONFIG_IA64
+ # include <linux/efi.h>
+@@ -786,7 +786,10 @@ static loff_t memory_lseek(struct file *file, loff_t offset, int orig)
  
-+	error = security_locked_down(LOCKDOWN_PCMCIA_CIS);
-+	if (error)
-+		return error;
+ static int open_port(struct inode *inode, struct file *filp)
+ {
+-	return capable(CAP_SYS_RAWIO) ? 0 : -EPERM;
++	if (!capable(CAP_SYS_RAWIO))
++		return -EPERM;
 +
- 	s = to_socket(container_of(kobj, struct device, kobj));
++	return security_locked_down(LOCKDOWN_DEV_MEM);
+ }
  
- 	if (off)
+ #define zero_lseek	null_lseek
 diff --git a/include/linux/security.h b/include/linux/security.h
-index 1c32522b3c5a..3773ad09b831 100644
+index 8e70063074a1..9458152601b5 100644
 --- a/include/linux/security.h
 +++ b/include/linux/security.h
-@@ -111,6 +111,7 @@ enum lockdown_reason {
- 	LOCKDOWN_IOPORT,
- 	LOCKDOWN_MSR,
- 	LOCKDOWN_ACPI_TABLES,
-+	LOCKDOWN_PCMCIA_CIS,
+@@ -104,6 +104,7 @@ enum lsm_event {
+ enum lockdown_reason {
+ 	LOCKDOWN_NONE,
+ 	LOCKDOWN_MODULE_SIGNATURE,
++	LOCKDOWN_DEV_MEM,
  	LOCKDOWN_INTEGRITY_MAX,
  	LOCKDOWN_CONFIDENTIALITY_MAX,
  };
 diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
-index ecb51b1a5c03..22482e1b9a77 100644
+index 2c53fd9f5c9b..d2ef29d9f0b2 100644
 --- a/security/lockdown/lockdown.c
 +++ b/security/lockdown/lockdown.c
-@@ -26,6 +26,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
- 	[LOCKDOWN_IOPORT] = "raw io port access",
- 	[LOCKDOWN_MSR] = "raw MSR access",
- 	[LOCKDOWN_ACPI_TABLES] = "modifying ACPI tables",
-+	[LOCKDOWN_PCMCIA_CIS] = "direct PCMCIA CIS storage",
+@@ -19,6 +19,7 @@ static enum lockdown_reason kernel_locked_down;
+ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
+ 	[LOCKDOWN_NONE] = "none",
+ 	[LOCKDOWN_MODULE_SIGNATURE] = "unsigned module loading",
++	[LOCKDOWN_DEV_MEM] = "/dev/mem,kmem,port",
  	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
  	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
  };
