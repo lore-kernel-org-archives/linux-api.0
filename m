@@ -1,145 +1,62 @@
-From: Jessica Yu <jeyu@kernel.org>
-Subject: Re: [PATCH V38 19/29] Lock down module params that specify hardware
- parameters (eg. ioport)
-Date: Thu, 8 Aug 2019 13:12:46 +0200
-Message-ID: <20190808111246.GA29211@linux-8ccs>
-References: <20190808000721.124691-1-matthewgarrett@google.com>
- <20190808000721.124691-20-matthewgarrett@google.com>
+From: Patrick Bellasi <patrick.bellasi@arm.com>
+Subject: Re: [PATCH v13 2/6] sched/core: uclamp: Propagate parent clamps
+Date: Thu, 08 Aug 2019 16:08:10 +0100
+Message-ID: <87h86r4rvp.fsf@arm.com>
+References: <20190802090853.4810-1-patrick.bellasi@arm.com> <20190802090853.4810-3-patrick.bellasi@arm.com> <20190806161153.GA19991@blackbody.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190808000721.124691-20-matthewgarrett@google.com>
+In-reply-to: <20190806161153.GA19991@blackbody.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Matthew Garrett <matthewgarrett@google.com>
-Cc: jmorris@namei.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Alan Cox <gnomes@lxorguk.ukuu.org.uk>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>
+To: Michal =?utf-8?Q?Koutn=C3=BD?= <mkoutny@suse.com>
+Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, cgroups@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>, Alessio Balsini <balsini@android.com>
 List-Id: linux-api@vger.kernel.org
 
-+++ Matthew Garrett [07/08/19 17:07 -0700]:
->From: David Howells <dhowells@redhat.com>
->
->Provided an annotation for module parameters that specify hardware
->parameters (such as io ports, iomem addresses, irqs, dma channels, fixed
->dma buffers and other types).
->
->Suggested-by: Alan Cox <gnomes@lxorguk.ukuu.org.uk>
->Signed-off-by: David Howells <dhowells@redhat.com>
->Signed-off-by: Matthew Garrett <mjg59@google.com>
->Reviewed-by: Kees Cook <keescook@chromium.org>
->Cc: Jessica Yu <jeyu@kernel.org>
->---
-> include/linux/security.h     |  1 +
-> kernel/params.c              | 27 ++++++++++++++++++++++-----
-> security/lockdown/lockdown.c |  1 +
-> 3 files changed, 24 insertions(+), 5 deletions(-)
->
->diff --git a/include/linux/security.h b/include/linux/security.h
->index 8f7048395114..43fa3486522b 100644
->--- a/include/linux/security.h
->+++ b/include/linux/security.h
->@@ -113,6 +113,7 @@ enum lockdown_reason {
-> 	LOCKDOWN_ACPI_TABLES,
-> 	LOCKDOWN_PCMCIA_CIS,
-> 	LOCKDOWN_TIOCSSERIAL,
->+	LOCKDOWN_MODULE_PARAMETERS,
-> 	LOCKDOWN_INTEGRITY_MAX,
-> 	LOCKDOWN_CONFIDENTIALITY_MAX,
-> };
->diff --git a/kernel/params.c b/kernel/params.c
->index cf448785d058..35f138fce762 100644
->--- a/kernel/params.c
->+++ b/kernel/params.c
->@@ -12,6 +12,7 @@
-> #include <linux/err.h>
-> #include <linux/slab.h>
-> #include <linux/ctype.h>
->+#include <linux/security.h>
->
-> #ifdef CONFIG_SYSFS
-> /* Protects all built-in parameters, modules use their own param_lock */
->@@ -96,13 +97,19 @@ bool parameq(const char *a, const char *b)
-> 	return parameqn(a, b, strlen(a)+1);
-> }
->
->-static void param_check_unsafe(const struct kernel_param *kp)
->+static bool param_check_unsafe(const struct kernel_param *kp)
-> {
->+	if (kp->flags & KERNEL_PARAM_FL_HWPARAM &&
->+	    security_locked_down(LOCKDOWN_MODULE_PARAMETERS))
->+		return false;
->+
-> 	if (kp->flags & KERNEL_PARAM_FL_UNSAFE) {
-> 		pr_notice("Setting dangerous option %s - tainting kernel\n",
-> 			  kp->name);
-> 		add_taint(TAINT_USER, LOCKDEP_STILL_OK);
-> 	}
->+
->+	return true;
-> }
->
-> static int parse_one(char *param,
->@@ -132,8 +139,10 @@ static int parse_one(char *param,
-> 			pr_debug("handling %s with %p\n", param,
-> 				params[i].ops->set);
-> 			kernel_param_lock(params[i].mod);
->-			param_check_unsafe(&params[i]);
->-			err = params[i].ops->set(val, &params[i]);
->+			if (param_check_unsafe(&params[i]))
->+				err = params[i].ops->set(val, &params[i]);
->+			else
->+				err = -EPERM;
-> 			kernel_param_unlock(params[i].mod);
-> 			return err;
-> 		}
->@@ -541,6 +550,12 @@ static ssize_t param_attr_show(struct module_attribute *mattr,
-> 	return count;
-> }
->
->+#ifdef CONFIG_MODULES
->+#define mod_name(mod) ((mod)->name)
->+#else
->+#define mod_name(mod) "unknown"
->+#endif
->+
 
-Hm, I don't think mod_name is used anywhere?
+On Tue, Aug 06, 2019 at 17:11:53 +0100, Michal Koutný wrote...
 
-But other than that:
+> On Fri, Aug 02, 2019 at 10:08:49AM +0100, Patrick Bellasi <patrick.bellasi@arm.com> wrote:
+>> @@ -7095,6 +7149,7 @@ static ssize_t cpu_uclamp_write(struct kernfs_open_file *of, char *buf,
+>>  	if (req.ret)
+>>  		return req.ret;
+>>  
+>> +	mutex_lock(&uclamp_mutex);
+>>  	rcu_read_lock();
+>>  
+>>  	tg = css_tg(of_css(of));
+>> @@ -7107,7 +7162,11 @@ static ssize_t cpu_uclamp_write(struct kernfs_open_file *of, char *buf,
+>>  	 */
+>>  	tg->uclamp_pct[clamp_id] = req.percent;
+>>  
+>> +	/* Update effective clamps to track the most restrictive value */
+>> +	cpu_util_update_eff(of_css(of));
+>> +
+>>  	rcu_read_unlock();
+>> +	mutex_unlock(&uclamp_mutex);
+> Following my remarks to "[PATCH v13 1/6] sched/core: uclamp: Extend
+> CPU's cgroup", I wonder if the rcu_read_lock() couldn't be moved right
+> before cpu_util_update_eff(). And by extension rcu_read_(un)lock could
+> be hidden into cpu_util_update_eff() closer to its actual need.
 
-Acked-by: Jessica Yu <jeyu@kernel.org>
+Well, if I've got correctly your comment in the previous message, I
+would say that at this stage we don't need RCU looks at all.
 
-Thanks!
+Reason being that cpu_util_update_eff() gets called only from
+cpu_uclamp_write() which is from an ongoing write operation on a cgroup
+attribute and thus granted to be available.
 
-Jessica
+We will eventually need to move the RCU look only down the stack when
+uclamp_update_active_tasks() gets called to update the RUNNABLE tasks on
+a RQ... or perhaps we don't need them since we already get the
+task_rq_lock() for each task we visit.
 
-> /* sysfs always hands a nul-terminated string in buf.  We rely on that. */
-> static ssize_t param_attr_store(struct module_attribute *mattr,
-> 				struct module_kobject *mk,
->@@ -553,8 +568,10 @@ static ssize_t param_attr_store(struct module_attribute *mattr,
-> 		return -EPERM;
->
-> 	kernel_param_lock(mk->mod);
->-	param_check_unsafe(attribute->param);
->-	err = attribute->param->ops->set(buf, attribute->param);
->+	if (param_check_unsafe(attribute->param))
->+		err = attribute->param->ops->set(buf, attribute->param);
->+	else
->+		err = -EPERM;
-> 	kernel_param_unlock(mk->mod);
-> 	if (!err)
-> 		return len;
->diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
->index 00a3a6438dd2..5177938cfa0d 100644
->--- a/security/lockdown/lockdown.c
->+++ b/security/lockdown/lockdown.c
->@@ -28,6 +28,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
-> 	[LOCKDOWN_ACPI_TABLES] = "modifying ACPI tables",
-> 	[LOCKDOWN_PCMCIA_CIS] = "direct PCMCIA CIS storage",
-> 	[LOCKDOWN_TIOCSSERIAL] = "reconfiguration of serial port IO",
->+	[LOCKDOWN_MODULE_PARAMETERS] = "unsafe module parameters",
-> 	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
-> 	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
-> };
->-- 
->2.22.0.770.g0f2c4a37fd-goog
->
+Is that correct?
+
+Cheers,
+Patrick
+
+-- 
+#include <best/regards.h>
+
+Patrick Bellasi
