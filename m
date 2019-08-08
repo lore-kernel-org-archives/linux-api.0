@@ -1,7 +1,7 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V38 04/29] Enforce module signatures if the kernel is locked down
-Date: Wed,  7 Aug 2019 17:06:56 -0700
-Message-ID: <20190808000721.124691-5-matthewgarrett@google.com>
+Subject: [PATCH V38 02/29] security: Add a "locked down" LSM hook
+Date: Wed,  7 Aug 2019 17:06:54 -0700
+Message-ID: <20190808000721.124691-3-matthewgarrett@google.com>
 References: <20190808000721.124691-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -9,129 +9,112 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190808000721.124691-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Matthew Garrett <matthewgarrett@google.com>, Kees Cook <keescook@chromium.org>, Jessica Yu <jeyu@kernel.org>
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Matthew Garrett <matthewgarrett@google.com>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>, Casey Schaufler <casey@schaufler-ca.com>
 List-Id: linux-api@vger.kernel.org
 
-From: David Howells <dhowells@redhat.com>
+Add a mechanism to allow LSMs to make a policy decision around whether
+kernel functionality that would allow tampering with or examining the
+runtime state of the kernel should be permitted.
 
-If the kernel is locked down, require that all modules have valid
-signatures that we can verify.
-
-I have adjusted the errors generated:
-
- (1) If there's no signature (ENODATA) or we can't check it (ENOPKG,
-     ENOKEY), then:
-
-     (a) If signatures are enforced then EKEYREJECTED is returned.
-
-     (b) If there's no signature or we can't check it, but the kernel is
-	 locked down then EPERM is returned (this is then consistent with
-	 other lockdown cases).
-
- (2) If the signature is unparseable (EBADMSG, EINVAL), the signature fails
-     the check (EKEYREJECTED) or a system error occurs (eg. ENOMEM), we
-     return the error we got.
-
-Note that the X.509 code doesn't check for key expiry as the RTC might not
-be valid or might not have been transferred to the kernel's clock yet.
-
- [Modified by Matthew Garrett to remove the IMA integration. This will
-  be replaced with integration with the IMA architecture policy
-  patchset.]
-
-Signed-off-by: David Howells <dhowells@redhat.com>
-Signed-off-by: Matthew Garrett <matthewgarrett@google.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
-Cc: Jessica Yu <jeyu@kernel.org>
+Signed-off-by: Matthew Garrett <mjg59@google.com>
+Acked-by: Kees Cook <keescook@chromium.org>
+Acked-by: Casey Schaufler <casey@schaufler-ca.com>
 ---
- include/linux/security.h     |  1 +
- kernel/module.c              | 37 +++++++++++++++++++++++++++++-------
- security/lockdown/lockdown.c |  1 +
- 3 files changed, 32 insertions(+), 7 deletions(-)
+ include/linux/lsm_hooks.h |  2 ++
+ include/linux/security.h  | 32 ++++++++++++++++++++++++++++++++
+ security/security.c       |  6 ++++++
+ 3 files changed, 40 insertions(+)
 
+diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
+index aebb0e032072..29c22cf40113 100644
+--- a/include/linux/lsm_hooks.h
++++ b/include/linux/lsm_hooks.h
+@@ -1807,6 +1807,7 @@ union security_list_options {
+ 	int (*bpf_prog_alloc_security)(struct bpf_prog_aux *aux);
+ 	void (*bpf_prog_free_security)(struct bpf_prog_aux *aux);
+ #endif /* CONFIG_BPF_SYSCALL */
++	int (*locked_down)(enum lockdown_reason what);
+ };
+ 
+ struct security_hook_heads {
+@@ -2046,6 +2047,7 @@ struct security_hook_heads {
+ 	struct hlist_head bpf_prog_alloc_security;
+ 	struct hlist_head bpf_prog_free_security;
+ #endif /* CONFIG_BPF_SYSCALL */
++	struct hlist_head locked_down;
+ } __randomize_layout;
+ 
+ /*
 diff --git a/include/linux/security.h b/include/linux/security.h
-index 54a0532ec12f..8e70063074a1 100644
+index 66a2fcbe6ab0..c2b1204e8e26 100644
 --- a/include/linux/security.h
 +++ b/include/linux/security.h
-@@ -103,6 +103,7 @@ enum lsm_event {
-  */
- enum lockdown_reason {
- 	LOCKDOWN_NONE,
-+	LOCKDOWN_MODULE_SIGNATURE,
- 	LOCKDOWN_INTEGRITY_MAX,
- 	LOCKDOWN_CONFIDENTIALITY_MAX,
+@@ -77,6 +77,33 @@ enum lsm_event {
+ 	LSM_POLICY_CHANGE,
  };
-diff --git a/kernel/module.c b/kernel/module.c
-index cd8df516666d..318209889e26 100644
---- a/kernel/module.c
-+++ b/kernel/module.c
-@@ -2771,8 +2771,9 @@ static inline void kmemleak_load_module(const struct module *mod,
- #ifdef CONFIG_MODULE_SIG
- static int module_sig_check(struct load_info *info, int flags)
- {
--	int err = -ENOKEY;
-+	int err = -ENODATA;
- 	const unsigned long markerlen = sizeof(MODULE_SIG_STRING) - 1;
-+	const char *reason;
- 	const void *mod = info->hdr;
  
- 	/*
-@@ -2787,16 +2788,38 @@ static int module_sig_check(struct load_info *info, int flags)
- 		err = mod_verify_sig(mod, info);
- 	}
- 
--	if (!err) {
-+	switch (err) {
-+	case 0:
- 		info->sig_ok = true;
- 		return 0;
--	}
- 
--	/* Not having a signature is only an error if we're strict. */
--	if (err == -ENOKEY && !is_module_sig_enforced())
--		err = 0;
-+		/* We don't permit modules to be loaded into trusted kernels
-+		 * without a valid signature on them, but if we're not
-+		 * enforcing, certain errors are non-fatal.
-+		 */
-+	case -ENODATA:
-+		reason = "Loading of unsigned module";
-+		goto decide;
-+	case -ENOPKG:
-+		reason = "Loading of module with unsupported crypto";
-+		goto decide;
-+	case -ENOKEY:
-+		reason = "Loading of module with unavailable key";
-+	decide:
-+		if (is_module_sig_enforced()) {
-+			pr_notice("%s is rejected\n", reason);
-+			return -EKEYREJECTED;
-+		}
- 
--	return err;
-+		return security_locked_down(LOCKDOWN_MODULE_SIGNATURE);
++/*
++ * These are reasons that can be passed to the security_locked_down()
++ * LSM hook. Lockdown reasons that protect kernel integrity (ie, the
++ * ability for userland to modify kernel code) are placed before
++ * LOCKDOWN_INTEGRITY_MAX.  Lockdown reasons that protect kernel
++ * confidentiality (ie, the ability for userland to extract
++ * information from the running kernel that would otherwise be
++ * restricted) are placed before LOCKDOWN_CONFIDENTIALITY_MAX.
++ *
++ * LSM authors should note that the semantics of any given lockdown
++ * reason are not guaranteed to be stable - the same reason may block
++ * one set of features in one kernel release, and a slightly different
++ * set of features in a later kernel release. LSMs that seek to expose
++ * lockdown policy at any level of granularity other than "none",
++ * "integrity" or "confidentiality" are responsible for either
++ * ensuring that they expose a consistent level of functionality to
++ * userland, or ensuring that userland is aware that this is
++ * potentially a moving target. It is easy to misuse this information
++ * in a way that could break userspace. Please be careful not to do
++ * so.
++ */
++enum lockdown_reason {
++	LOCKDOWN_NONE,
++	LOCKDOWN_INTEGRITY_MAX,
++	LOCKDOWN_CONFIDENTIALITY_MAX,
++};
 +
-+		/* All other errors are fatal, including nomem, unparseable
-+		 * signatures and signature check failures - even if signatures
-+		 * aren't required.
-+		 */
-+	default:
-+		return err;
-+	}
- }
- #else /* !CONFIG_MODULE_SIG */
- static int module_sig_check(struct load_info *info, int flags)
-diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
-index d30c4d254b5f..2c53fd9f5c9b 100644
---- a/security/lockdown/lockdown.c
-+++ b/security/lockdown/lockdown.c
-@@ -18,6 +18,7 @@ static enum lockdown_reason kernel_locked_down;
+ /* These functions are in security/commoncap.c */
+ extern int cap_capable(const struct cred *cred, struct user_namespace *ns,
+ 		       int cap, unsigned int opts);
+@@ -393,6 +420,7 @@ void security_inode_invalidate_secctx(struct inode *inode);
+ int security_inode_notifysecctx(struct inode *inode, void *ctx, u32 ctxlen);
+ int security_inode_setsecctx(struct dentry *dentry, void *ctx, u32 ctxlen);
+ int security_inode_getsecctx(struct inode *inode, void **ctx, u32 *ctxlen);
++int security_locked_down(enum lockdown_reason what);
+ #else /* CONFIG_SECURITY */
  
- static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
- 	[LOCKDOWN_NONE] = "none",
-+	[LOCKDOWN_MODULE_SIGNATURE] = "unsigned module loading",
- 	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
- 	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
- };
+ static inline int call_blocking_lsm_notifier(enum lsm_event event, void *data)
+@@ -1205,6 +1233,10 @@ static inline int security_inode_getsecctx(struct inode *inode, void **ctx, u32
+ {
+ 	return -EOPNOTSUPP;
+ }
++static inline int security_locked_down(enum lockdown_reason what)
++{
++	return 0;
++}
+ #endif	/* CONFIG_SECURITY */
+ 
+ #ifdef CONFIG_SECURITY_NETWORK
+diff --git a/security/security.c b/security/security.c
+index 90f1e291c800..ce6c945bf347 100644
+--- a/security/security.c
++++ b/security/security.c
+@@ -2392,3 +2392,9 @@ void security_bpf_prog_free(struct bpf_prog_aux *aux)
+ 	call_void_hook(bpf_prog_free_security, aux);
+ }
+ #endif /* CONFIG_BPF_SYSCALL */
++
++int security_locked_down(enum lockdown_reason what)
++{
++	return call_int_hook(locked_down, 0, what);
++}
++EXPORT_SYMBOL(security_locked_down);
 -- 
 2.22.0.770.g0f2c4a37fd-goog
