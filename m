@@ -1,67 +1,56 @@
 From: Michal =?iso-8859-1?Q?Koutn=FD?= <mkoutny@suse.com>
-Subject: Re: [PATCH v13 2/6] sched/core: uclamp: Propagate parent clamps
-Date: Thu, 8 Aug 2019 19:16:21 +0200
-Message-ID: <20190808171620.GE8617@blackbody.suse.cz>
+Subject: Re: [PATCH v13 1/6] sched/core: uclamp: Extend CPU's cgroup
+ controller
+Date: Thu, 8 Aug 2019 19:19:49 +0200
+Message-ID: <20190808171948.GF8617@blackbody.suse.cz>
 References: <20190802090853.4810-1-patrick.bellasi@arm.com>
- <20190802090853.4810-3-patrick.bellasi@arm.com>
- <20190806161153.GA19991@blackbody.suse.cz>
- <87h86r4rvp.fsf@arm.com>
+ <20190802090853.4810-2-patrick.bellasi@arm.com>
+ <20190806161133.GA18532@blackbody.suse.cz>
+ <87imr74sfh.fsf@arm.com>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="M/SuVGWktc5uNpra"
+        protocol="application/pgp-signature"; boundary="w3uUfsyyY1Pqa/ej"
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <87h86r4rvp.fsf@arm.com>
+In-Reply-To: <87imr74sfh.fsf@arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Patrick Bellasi <patrick.bellasi@arm.com>
 Cc: Alessio Balsini <balsini@android.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Quentin Perret <quentin.perret@arm.com>, Joel Fernandes <joelaf@google.com>, Paul Turner <pjt@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>, Todd Kjos <tkjos@google.com>, Peter Zijlstra <peterz@infradead.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Tejun Heo <tj@kernel.org>, VincentGuittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Juri Lelli <juri.lelli@redhat.com>, Ingo Molnar <mingo@redhat.com>, cgroups@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 
---M/SuVGWktc5uNpra
+--w3uUfsyyY1Pqa/ej
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
 
-On Thu, Aug 08, 2019 at 04:08:10PM +0100, Patrick Bellasi <patrick.bellasi@=
-arm.com> wrote:
-> Well, if I've got correctly your comment in the previous message, I
-> would say that at this stage we don't need RCU looks at all.
-Agreed.
-
-> Reason being that cpu_util_update_eff() gets called only from
-> cpu_uclamp_write() which is from an ongoing write operation on a cgroup
-> attribute and thus granted to be available.
->=20
-> We will eventually need to move the RCU look only down the stack when
-> uclamp_update_active_tasks() gets called to update the RUNNABLE tasks on
-> a RQ... or perhaps we don't need them since we already get the
-> task_rq_lock() for each task we visit.
-Unless you remove css_for_each_descendant_pre() in
-cpu_util_update_eff(), the rcu_read_lock() cannot go below it.
-(You'd be RCU-accessing other csses that aren't pinned in the write.)
+On Thu, Aug 08, 2019 at 04:10:21PM +0100, Patrick Bellasi <patrick.bellasi@arm.com> wrote:
+> Not sure to get what you mean here: I'm currently exposing uclamp to
+> both v1 and v2 hierarchies.
+cpu controller has different API for v1 and v2 hierarchies. My question
+reworded is -- are the new knobs exposed in the legacy API
+intentionally/for a reason?
 
 Michal
 
---M/SuVGWktc5uNpra
+--w3uUfsyyY1Pqa/ej
 Content-Type: application/pgp-signature; name="signature.asc"
 Content-Description: Digital signature
 
 -----BEGIN PGP SIGNATURE-----
 
-iQIzBAEBCAAdFiEEEoQaUCWq8F2Id1tNia1+riC5qSgFAl1MWN8ACgkQia1+riC5
-qSityw/+JXOBnu4pwW3aN+tZLpsDmQp30H/RvF8UM9xruXiajWC8seiPhBHO/K+d
-NTgTcMYp4XLXOBDOPR1OvFFLAhgv38xf4R4+kyvg9Z6Yq0jRbOQR6t/foXIOEKV4
-OhkPVNl57zVqJoUmTMN5I7ld8AM/dA4RPas3vG9qLrALc1cycaSGmeTNRNzGo3Ga
-zhNO5KOYipeQoMJJw+KslJgfUctj7YPLKrIDeqt7wRJ6s1rJ8srqlR4QJiqnwvpt
-Adit3pj4WaOMaYJhX7HuAgEn26kwKkX1Edw9a7BJQny2Zu+CxPrR7AkHPD/eTJyG
-XHHBBhW3vsKGYkOSpSTavv1Pc+402OkteacYPiP7Hh38UHPEeOnKjAwJFnDRDUKJ
-mwOw08r0d7tMZKBnMgchOPtpOATD2M9/No9z8TVFoxILfcXpMjEQE6apYVNH2rvl
-vJkH7wujXxbkWCgL6xopQdyG//G/vGHrPPWJmlhNMvL4Y/KRwj7zEqMvOHC1XQAt
-WpqQGv5uI6R0WZv31qSIkoXGsfnNx2oz/tR16SpAQUvKRu7en2KwgvzHQGbBfXmV
-LuNR/iu0/tuOac76MEvdu3dAAyoccmdmYmBZSKm0/+wcqDAa8SKu3CIWhWb8Bu5P
-+LzuhocAwLPW4ZGSUxuQ+np/D+SyqOJSIhJIlqAmSPtG6TMDGkI=
-=LPyl
+iQIzBAEBCAAdFiEEEoQaUCWq8F2Id1tNia1+riC5qSgFAl1MWbQACgkQia1+riC5
+qSheLA/+K7nnjU6jLvL7D5MExUa3wdqwsunab8LGEYk4LMYktDs1F5j/xYnmae/Q
+iKPCSZhH+F4JDs3KlFhc4i7iroFAIdZXU7IArLa9vcTONhCYzt1EbmStW0QkjIQw
+92w4FH3iPYIveSqDGwsU7zJsiwYHKjLQBSbeIrUM3ylvk0cfioap1WdZNS7/GEKR
+XcAgoyT2by2VArF0cxF38q1NCtre+Ash2T2r/3zM59arQb5OuR7uaXjloGeBAHox
+LQR539L9WsYPUx7qxNGeQxBPjzIbEHpApxmW2zwpV7It3qbiQaCOdf0KBjweaRri
+uIzCCq3PlwPqI+2klp57SNFEffrVYAS8MaBfz5eKD5MPIFw0r8/CO3pFSaGtZIUB
+Bbkl9ditoSPcaVYgcVuxgEwQbRanoS1jy6QTKoL2HGQ0ag3ThQYdxx7YQBsv3BV3
+kjr988xDEi8dP15NEk83/eqrnUu5tbo2tOiN2THbhKlpFew6a/aYb7TIBzGUhKJN
+NouRmmvfp0fSo1lCsNuOjgp9rImU3jHgbhOUBavBPlt0GCGXk7CNtsuMCzjLw954
+9kmjP0lSh4k8Nmm0vsODdmKbI6JPj8tAwM/LPCPBGgY+wKlAfD84Dgx6STN5tlmv
+uXyjHfelyL0velgb7yHnwVW7sxvN9/q52X9dwe5TbCzWwB4g5ak=
+=qSBD
 -----END PGP SIGNATURE-----
 
---M/SuVGWktc5uNpra--
+--w3uUfsyyY1Pqa/ej--
