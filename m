@@ -1,7 +1,7 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V38 24/29] Lock down perf when in confidentiality mode
-Date: Wed,  7 Aug 2019 17:07:16 -0700
-Message-ID: <20190808000721.124691-25-matthewgarrett@google.com>
+Subject: [PATCH V38 20/29] x86/mmiotrace: Lock down the testmmiotrace module
+Date: Wed,  7 Aug 2019 17:07:12 -0700
+Message-ID: <20190808000721.124691-21-matthewgarrett@google.com>
 References: <20190808000721.124691-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -9,67 +9,79 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190808000721.124691-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>, Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@redhat.com>, Arnaldo Carvalho de Melo <acme@kernel.org>
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Matthew Garrett <mjg59@google.com>, Steven Rostedt <rostedt@goodmis.org>, Kees Cook <keescook@chromium.org>, Ingo Molnar <mingo@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
 From: David Howells <dhowells@redhat.com>
 
-Disallow the use of certain perf facilities that might allow userspace to
-access kernel data.
+The testmmiotrace module shouldn't be permitted when the kernel is locked
+down as it can be used to arbitrarily read and write MMIO space. This is
+a runtime check rather than buildtime in order to allow configurations
+where the same kernel may be run in both locked down or permissive modes
+depending on local policy.
 
-Signed-off-by: David Howells <dhowells@redhat.com>
+Suggested-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: David Howells <dhowells@redhat.com
 Signed-off-by: Matthew Garrett <mjg59@google.com>
+Acked-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 Reviewed-by: Kees Cook <keescook@chromium.org>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Arnaldo Carvalho de Melo <acme@kernel.org>
+cc: Thomas Gleixner <tglx@linutronix.de>
+cc: Steven Rostedt <rostedt@goodmis.org>
+cc: Ingo Molnar <mingo@kernel.org>
+cc: "H. Peter Anvin" <hpa@zytor.com>
+cc: x86@kernel.org
 ---
+ arch/x86/mm/testmmiotrace.c  | 5 +++++
  include/linux/security.h     | 1 +
- kernel/events/core.c         | 7 +++++++
  security/lockdown/lockdown.c | 1 +
- 3 files changed, 9 insertions(+)
+ 3 files changed, 7 insertions(+)
 
+diff --git a/arch/x86/mm/testmmiotrace.c b/arch/x86/mm/testmmiotrace.c
+index 0881e1ff1e58..a8bd952e136d 100644
+--- a/arch/x86/mm/testmmiotrace.c
++++ b/arch/x86/mm/testmmiotrace.c
+@@ -8,6 +8,7 @@
+ #include <linux/module.h>
+ #include <linux/io.h>
+ #include <linux/mmiotrace.h>
++#include <linux/security.h>
+ 
+ static unsigned long mmio_address;
+ module_param_hw(mmio_address, ulong, iomem, 0);
+@@ -115,6 +116,10 @@ static void do_test_bulk_ioremapping(void)
+ static int __init init(void)
+ {
+ 	unsigned long size = (read_far) ? (8 << 20) : (16 << 10);
++	int ret = security_locked_down(LOCKDOWN_MMIOTRACE);
++
++	if (ret)
++		return ret;
+ 
+ 	if (mmio_address == 0) {
+ 		pr_err("you have to use the module argument mmio_address.\n");
 diff --git a/include/linux/security.h b/include/linux/security.h
-index 8dd1741a52cd..8ef366de70b0 100644
+index 43fa3486522b..3f7b6a4cd65a 100644
 --- a/include/linux/security.h
 +++ b/include/linux/security.h
-@@ -119,6 +119,7 @@ enum lockdown_reason {
- 	LOCKDOWN_KCORE,
- 	LOCKDOWN_KPROBES,
- 	LOCKDOWN_BPF_READ,
-+	LOCKDOWN_PERF,
+@@ -114,6 +114,7 @@ enum lockdown_reason {
+ 	LOCKDOWN_PCMCIA_CIS,
+ 	LOCKDOWN_TIOCSSERIAL,
+ 	LOCKDOWN_MODULE_PARAMETERS,
++	LOCKDOWN_MMIOTRACE,
+ 	LOCKDOWN_INTEGRITY_MAX,
  	LOCKDOWN_CONFIDENTIALITY_MAX,
  };
- 
-diff --git a/kernel/events/core.c b/kernel/events/core.c
-index c1f52a749db2..5c520b60163a 100644
---- a/kernel/events/core.c
-+++ b/kernel/events/core.c
-@@ -10826,6 +10826,13 @@ SYSCALL_DEFINE5(perf_event_open,
- 	    perf_paranoid_kernel() && !capable(CAP_SYS_ADMIN))
- 		return -EACCES;
- 
-+	err = security_locked_down(LOCKDOWN_PERF);
-+	if (err && (attr.sample_type & PERF_SAMPLE_REGS_INTR))
-+		/* REGS_INTR can leak data, lockdown must prevent this */
-+		return err;
-+
-+	err = 0;
-+
- 	/*
- 	 * In cgroup mode, the pid argument is used to pass the fd
- 	 * opened to the cgroup directory in cgroupfs. The cpu argument
 diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
-index 1b89d3e8e54d..fb437a7ef5f2 100644
+index 5177938cfa0d..37b7d7e50474 100644
 --- a/security/lockdown/lockdown.c
 +++ b/security/lockdown/lockdown.c
-@@ -34,6 +34,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
- 	[LOCKDOWN_KCORE] = "/proc/kcore access",
- 	[LOCKDOWN_KPROBES] = "use of kprobes",
- 	[LOCKDOWN_BPF_READ] = "use of bpf to read kernel RAM",
-+	[LOCKDOWN_PERF] = "unsafe use of perf",
+@@ -29,6 +29,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
+ 	[LOCKDOWN_PCMCIA_CIS] = "direct PCMCIA CIS storage",
+ 	[LOCKDOWN_TIOCSSERIAL] = "reconfiguration of serial port IO",
+ 	[LOCKDOWN_MODULE_PARAMETERS] = "unsafe module parameters",
++	[LOCKDOWN_MMIOTRACE] = "unsafe mmio",
+ 	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
  	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
  };
- 
 -- 
 2.22.0.770.g0f2c4a37fd-goog
