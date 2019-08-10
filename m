@@ -1,37 +1,31 @@
-From: Alistair Francis <alistair.francis@wdc.com>
-Subject: [PATCH] syscalls: Update the syscall #defines to match uapi
-Date: Fri,  9 Aug 2019 18:07:58 -0700
-Message-ID: <20190810010758.16407-1-alistair.francis@wdc.com>
+From: James Morris <jmorris@namei.org>
+Subject: Re: [PATCH V38 00/29] security: Add support for locking down the
+ kernel
+Date: Sat, 10 Aug 2019 16:08:42 +1000 (AEST)
+Message-ID: <alpine.LRH.2.21.1908101608260.25186@namei.org>
+References: <20190808000721.124691-1-matthewgarrett@google.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190808000721.124691-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, arnd@arndb.de
-Cc: deepa.kernel@gmail.com, alistair23@gmail.com, Alistair Francis <alistair.francis@wdc.com>
+To: Matthew Garrett <matthewgarrett@google.com>
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Update the #defines around sys_fstat64() and sys_fstatat64() to match
-the #defines around the __NR3264_fstatat and __NR3264_fstat definitions
-in include/uapi/asm-generic/unistd.h. This avoids compiler failures if
-one is defined.
+On Wed, 7 Aug 2019, Matthew Garrett wrote:
 
-Signed-off-by: Alistair Francis <alistair.francis@wdc.com>
----
- include/linux/syscalls.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+> Fixed an unused function parameter in patch 19, otherwise identical to
+> V37.
 
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 2bcef4c70183..e4bf5e480d60 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -512,7 +512,7 @@ asmlinkage long sys_readlinkat(int dfd, const char __user *path, char __user *bu
- asmlinkage long sys_newfstatat(int dfd, const char __user *filename,
- 			       struct stat __user *statbuf, int flag);
- asmlinkage long sys_newfstat(unsigned int fd, struct stat __user *statbuf);
--#if defined(__ARCH_WANT_STAT64) || defined(__ARCH_WANT_COMPAT_STAT64)
-+#if defined(__ARCH_WANT_NEW_STAT) || defined(__ARCH_WANT_STAT64)
- asmlinkage long sys_fstat64(unsigned long fd, struct stat64 __user *statbuf);
- asmlinkage long sys_fstatat64(int dfd, const char __user *filename,
- 			       struct stat64 __user *statbuf, int flag);
+Applied to
+git://git.kernel.org/pub/scm/linux/kernel/git/jmorris/linux-security.git next-lockdown
+and next-testing
+  
+Please verify and test, as I had to make a few minor fixups for my v5.2   
+base.
+
+
 -- 
-2.22.0
+James Morris
+<jmorris@namei.org>
