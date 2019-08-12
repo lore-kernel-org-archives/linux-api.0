@@ -1,115 +1,51 @@
-From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v5 5/9] fpga: dfl: afu: expose __afu_port_enable/disable function.
-Date: Mon, 12 Aug 2019 10:50:00 +0800
-Message-ID: <1565578204-13969-6-git-send-email-hao.wu@intel.com>
-References: <1565578204-13969-1-git-send-email-hao.wu@intel.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH] syscalls: Update the syscall #defines to match uapi
+Date: Mon, 12 Aug 2019 11:48:55 +0200
+Message-ID: <CAK8P3a2wYMsBRm1X-TFo1d7-B7Xug9gwqF77HitoE7wmOqD7rw@mail.gmail.com>
+References: <20190810010758.16407-1-alistair.francis@wdc.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1565578204-13969-1-git-send-email-hao.wu@intel.com>
+In-Reply-To: <20190810010758.16407-1-alistair.francis@wdc.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: gregkh@linuxfoundation.org, mdf@kernel.org, linux-fpga@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, atull@kernel.org, Wu Hao <hao.wu@intel.com>, Xu Yilun <yilun.xu@intel.com>
+To: Alistair Francis <alistair.francis@wdc.com>
+Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Deepa Dinamani <deepa.kernel@gmail.com>, Alistair Francis <alistair23@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-As these two functions are used by other private features within the
-same driver module but different driver files. e.g. in error reporting
-private feature, it requires to clear errors when port is in reset.
+On Sat, Aug 10, 2019 at 3:11 AM Alistair Francis
+<alistair.francis@wdc.com> wrote:
+>
+> Update the #defines around sys_fstat64() and sys_fstatat64() to match
+> the #defines around the __NR3264_fstatat and __NR3264_fstat definitions
+> in include/uapi/asm-generic/unistd.h. This avoids compiler failures if
+> one is defined.
 
-Signed-off-by: Xu Yilun <yilun.xu@intel.com>
-Signed-off-by: Wu Hao <hao.wu@intel.com>
-Acked-by: Moritz Fischer <mdf@kernel.org>
-Acked-by: Alan Tull <atull@kernel.org>
-Signed-off-by: Moritz Fischer <mdf@kernel.org>
----
-v2: rebased
-v5: add afu prefix to __port_enable/disable function to keep
-    alignment with other func exposed across different afu files.
----
- drivers/fpga/dfl-afu-main.c | 26 +++++++++++++++-----------
- drivers/fpga/dfl-afu.h      |  4 ++++
- 2 files changed, 19 insertions(+), 11 deletions(-)
+What is the compiler failure you get?
 
-diff --git a/drivers/fpga/dfl-afu-main.c b/drivers/fpga/dfl-afu-main.c
-index f0b45f2..449185c 100644
---- a/drivers/fpga/dfl-afu-main.c
-+++ b/drivers/fpga/dfl-afu-main.c
-@@ -22,14 +22,17 @@
- #include "dfl-afu.h"
- 
- /**
-- * port_enable - enable a port
-+ * __afu_port_enable - enable a port by clear reset
-  * @pdev: port platform device.
-  *
-  * Enable Port by clear the port soft reset bit, which is set by default.
-  * The AFU is unable to respond to any MMIO access while in reset.
-- * port_enable function should only be used after port_disable function.
-+ * __afu_port_enable function should only be used after __afu_port_disable
-+ * function.
-+ *
-+ * The caller needs to hold lock for protection.
-  */
--static void port_enable(struct platform_device *pdev)
-+void __afu_port_enable(struct platform_device *pdev)
- {
- 	struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
- 	void __iomem *base;
-@@ -52,13 +55,14 @@ static void port_enable(struct platform_device *pdev)
- #define RST_POLL_TIMEOUT 1000 /* us */
- 
- /**
-- * port_disable - disable a port
-+ * __afu_port_disable - disable a port by hold reset
-  * @pdev: port platform device.
-  *
-- * Disable Port by setting the port soft reset bit, it puts the port into
-- * reset.
-+ * Disable Port by setting the port soft reset bit, it puts the port into reset.
-+ *
-+ * The caller needs to hold lock for protection.
-  */
--static int port_disable(struct platform_device *pdev)
-+int __afu_port_disable(struct platform_device *pdev)
- {
- 	struct dfl_feature_platform_data *pdata = dev_get_platdata(&pdev->dev);
- 	void __iomem *base;
-@@ -104,9 +108,9 @@ static int __port_reset(struct platform_device *pdev)
- {
- 	int ret;
- 
--	ret = port_disable(pdev);
-+	ret = __afu_port_disable(pdev);
- 	if (!ret)
--		port_enable(pdev);
-+		__afu_port_enable(pdev);
- 
- 	return ret;
- }
-@@ -799,9 +803,9 @@ static int port_enable_set(struct platform_device *pdev, bool enable)
- 
- 	mutex_lock(&pdata->lock);
- 	if (enable)
--		port_enable(pdev);
-+		__afu_port_enable(pdev);
- 	else
--		ret = port_disable(pdev);
-+		ret = __afu_port_disable(pdev);
- 	mutex_unlock(&pdata->lock);
- 
- 	return ret;
-diff --git a/drivers/fpga/dfl-afu.h b/drivers/fpga/dfl-afu.h
-index 0c7630a..83683f2 100644
---- a/drivers/fpga/dfl-afu.h
-+++ b/drivers/fpga/dfl-afu.h
-@@ -79,6 +79,10 @@ struct dfl_afu {
- 	struct dfl_feature_platform_data *pdata;
- };
- 
-+/* hold pdata->lock when call __afu_port_enable/disable */
-+void __afu_port_enable(struct platform_device *pdev);
-+int __afu_port_disable(struct platform_device *pdev);
-+
- void afu_mmio_region_init(struct dfl_feature_platform_data *pdata);
- int afu_mmio_region_add(struct dfl_feature_platform_data *pdata,
- 			u32 region_index, u64 region_size, u64 phys, u32 flags);
--- 
-1.8.3.1
+> Signed-off-by: Alistair Francis <alistair.francis@wdc.com>
+> ---
+>  include/linux/syscalls.h | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+>
+> diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+> index 2bcef4c70183..e4bf5e480d60 100644
+> --- a/include/linux/syscalls.h
+> +++ b/include/linux/syscalls.h
+> @@ -512,7 +512,7 @@ asmlinkage long sys_readlinkat(int dfd, const char __user *path, char __user *bu
+>  asmlinkage long sys_newfstatat(int dfd, const char __user *filename,
+>                                struct stat __user *statbuf, int flag);
+>  asmlinkage long sys_newfstat(unsigned int fd, struct stat __user *statbuf);
+> -#if defined(__ARCH_WANT_STAT64) || defined(__ARCH_WANT_COMPAT_STAT64)
+> +#if defined(__ARCH_WANT_NEW_STAT) || defined(__ARCH_WANT_STAT64)
+>  asmlinkage long sys_fstat64(unsigned long fd, struct stat64 __user *statbuf);
+>  asmlinkage long sys_fstatat64(int dfd, const char __user *filename,
+>                                struct stat64 __user *statbuf, int flag);
+
+I think this is wrong: when __ARCH_WANT_NEW_STAT is set, we are
+on a 64-bit architecture and only want the sys_newfstat{,at} system
+calls, not sys_fstat{,at}64 that gets used on 32-bit machines.
+
+The #if check in the syscalls.h file also matches the definition of
+the function.
+
+       Arnd
