@@ -1,39 +1,44 @@
-From: Alistair Francis <alistair23@gmail.com>
-Subject: Re: [PATCH] syscalls: Update the syscall #defines to match uapi
-Date: Sun, 11 Aug 2019 20:04:22 -0700
-Message-ID: <CAKmqyKN58BfEr2R+W=08r795zRKAT1nK_G2v6U2kQSANr+90Vg@mail.gmail.com>
-References: <20190810010758.16407-1-alistair.francis@wdc.com> <CALCETrVArr5TTbXayDZ9rz90iGoytGW2bnV5_ZOunhOsPR1u4g@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+From: Wu Hao <hao.wu@intel.com>
+Subject: [PATCH v5 1/9] fpga: dfl: make init callback optional
+Date: Mon, 12 Aug 2019 10:49:56 +0800
+Message-ID: <1565578204-13969-2-git-send-email-hao.wu@intel.com>
+References: <1565578204-13969-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrVArr5TTbXayDZ9rz90iGoytGW2bnV5_ZOunhOsPR1u4g@mail.gmail.com>
+In-Reply-To: <1565578204-13969-1-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Alistair Francis <alistair.francis@wdc.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Deepa Dinamani <deepa.kernel@gmail.com>
+To: gregkh@linuxfoundation.org, mdf@kernel.org, linux-fpga@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, atull@kernel.org, Wu Hao <hao.wu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Aug 11, 2019 at 5:00 PM Andy Lutomirski <luto@kernel.org> wrote:
->
-> On Fri, Aug 9, 2019 at 6:11 PM Alistair Francis
-> <alistair.francis@wdc.com> wrote:
-> >
-> > Update the #defines around sys_fstat64() and sys_fstatat64() to match
-> > the #defines around the __NR3264_fstatat and __NR3264_fstat definitions
-> > in include/uapi/asm-generic/unistd.h. This avoids compiler failures if
-> > one is defined.
->
-> What do you mean by "if one is defined"?
+This patch makes init callback of sub features optional. With
+this change, people don't need to prepare any empty init callback.
 
-Yeah, I guess that isn't clear. What I mean is that if
-__ARCH_WANT_NEW_STAT is defined but __ARCH_WANT_STAT64 isn't currently
-it will fail to build.
+Signed-off-by: Wu Hao <hao.wu@intel.com>
+---
+ drivers/fpga/dfl.c | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
 
->
-> The patch seems like it's probably okay, but I can't understand the changelog.
-
-I can send a v2 with an updated commit message.
-
-Alistair
-
->
-> --Andy
+diff --git a/drivers/fpga/dfl.c b/drivers/fpga/dfl.c
+index c0512af..96a2b82 100644
+--- a/drivers/fpga/dfl.c
++++ b/drivers/fpga/dfl.c
+@@ -271,11 +271,13 @@ static int dfl_feature_instance_init(struct platform_device *pdev,
+ 				     struct dfl_feature *feature,
+ 				     struct dfl_feature_driver *drv)
+ {
+-	int ret;
++	int ret = 0;
+ 
+-	ret = drv->ops->init(pdev, feature);
+-	if (ret)
+-		return ret;
++	if (drv->ops->init) {
++		ret = drv->ops->init(pdev, feature);
++		if (ret)
++			return ret;
++	}
+ 
+ 	feature->ops = drv->ops;
+ 
+-- 
+1.8.3.1
