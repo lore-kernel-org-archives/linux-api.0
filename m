@@ -1,35 +1,58 @@
-From: James Morris <jmorris@namei.org>
-Subject: Re: [PATCH V38 00/29] security: Add support for locking down the
- kernel
-Date: Tue, 13 Aug 2019 08:29:33 +1000 (AEST)
-Message-ID: <alpine.LRH.2.21.1908130829070.3198@namei.org>
-References: <20190808000721.124691-1-matthewgarrett@google.com> <alpine.LRH.2.21.1908101608260.25186@namei.org> <CACdnJusx3N_ZoH4=+tqt85K9J5wmUnC-+bTtG_5qSD_TYu74+A@mail.gmail.com> <alpine.LRH.2.21.1908130339130.14197@namei.org>
+From: "Theodore Y. Ts'o" <tytso@mit.edu>
+Subject: Re: [PATCH v8 06/20] fscrypt: refactor key setup code in preparation
+ for v2 policies
+Date: Mon, 12 Aug 2019 18:38:22 -0400
+Message-ID: <20190812223822.GE28705@mit.edu>
+References: <20190805162521.90882-1-ebiggers@kernel.org>
+ <20190805162521.90882-7-ebiggers@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LRH.2.21.1908130339130.14197@namei.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Matthew Garrett <mjg59@google.com>
-Cc: LSM List <linux-security-module@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org>
+Content-Disposition: inline
+In-Reply-To: <20190805162521.90882-7-ebiggers@kernel.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-mtd/>
+List-Post: <mailto:linux-mtd@lists.infradead.org>
+List-Help: <mailto:linux-mtd-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-mtd>,
+ <mailto:linux-mtd-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-mtd" <linux-mtd-bounces@lists.infradead.org>
+Errors-To: linux-mtd-bounces+gldm-linux-mtd-36=gmane.org@lists.infradead.org
+To: Eric Biggers <ebiggers@kernel.org>
+Cc: Satya Tangirala <satyat@google.com>, linux-api@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, linux-fscrypt@vger.kernel.org, keyrings@vger.kernel.org, linux-mtd@lists.infradead.org, linux-crypto@vger.kernel.org, linux-fsdevel@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, linux-ext4@vger.kernel.org, Paul Crowley <paulcrowley@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 13 Aug 2019, James Morris wrote:
-
-> On Mon, 12 Aug 2019, Matthew Garrett wrote:
+On Mon, Aug 05, 2019 at 09:25:07AM -0700, Eric Biggers wrote:
+> From: Eric Biggers <ebiggers@google.com>
 > 
-> > On Fri, Aug 9, 2019 at 11:08 PM James Morris <jmorris@namei.org> wrote:
-> > > Please verify and test, as I had to make a few minor fixups for my v5.2
-> > > base.
-> > 
-> > Thanks James - there's a few small fixups required, would you like
-> > those as separate patches or should I just send you a fixed copy of
-> > the original patchset?
+> Do some more refactoring of the key setup code, in preparation for
+> introducing a filesystem-level keyring and v2 encryption policies:
 > 
-> Given there are a few, an updated copy of the patchset will be best.
+> - Now that ci_inode exists, don't pass around the inode unnecessarily.
+> 
+> - Define a function setup_file_encryption_key() which handles the crypto
+>   key setup given an under-construction fscrypt_info.  Don't pass the
+>   fscrypt_context, since everything is in the fscrypt_info.
+>   [This will be extended for v2 policies and the fs-level keyring.]
+> 
+> - Define a function fscrypt_set_derived_key() which sets the per-file
+>   key, without depending on anything specific to v1 policies.
+>   [This will also be used for v2 policies.]
+> 
+> - Define a function fscrypt_setup_v1_file_key() which takes the raw
+>   master key, thus separating finding the key from using it.
+>   [This will also be used if the key is found in the fs-level keyring.]
+> 
+> Signed-off-by: Eric Biggers <ebiggers@google.com>
 
-Actually, that's a lot of patches to resend, just send updates against my 
-next-lockdown branch.
+Looks good, you can add:
 
--- 
-James Morris
-<jmorris@namei.org>
+Reviewed-by: Theodore Ts'o <tytso@mit.edu>
+
+						- Ted
+
+______________________________________________________
+Linux MTD discussion mailing list
+http://lists.infradead.org/mailman/listinfo/linux-mtd/
