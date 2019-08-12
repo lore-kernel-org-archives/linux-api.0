@@ -1,164 +1,237 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v5 9/9] Documentation: fpga: dfl: add descriptions for virtualization and new interfaces.
-Date: Mon, 12 Aug 2019 10:50:04 +0800
-Message-ID: <1565578204-13969-10-git-send-email-hao.wu@intel.com>
+Subject: [PATCH v5 4/9] fpga: dfl: afu: add userclock sysfs interfaces.
+Date: Mon, 12 Aug 2019 10:49:59 +0800
+Message-ID: <1565578204-13969-5-git-send-email-hao.wu@intel.com>
 References: <1565578204-13969-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1565578204-13969-1-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: gregkh@linuxfoundation.org, mdf@kernel.org, linux-fpga@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, atull@kernel.org, Wu Hao <hao.wu@intel.com>, Xu Yilun <yilun.xu@intel.com>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, atull@kernel.org, Wu Hao <hao.wu@intel.com>, Ananda Ravuri <ananda.ravuri@intel.com>, Russ Weight <russell.h.weight@intel.com>, Xu Yilun <yilun.xu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-This patch adds virtualization support description for DFL based
-FPGA devices (based on PCIe SRIOV), and introductions to new
-interfaces added by new dfl private feature drivers.
+This patch introduces userclock sysfs interfaces for AFU, user
+could use these interfaces for clock setting to AFU.
 
-[mdf@kernel.org: Fixed up to make it work with new reStructuredText docs]
+Please note that, this is only working for port header feature
+with revision 0, for later revisions, userclock setting is moved
+to a separated private feature, so one revision sysfs interface
+is exposed to userspace application for this purpose too.
+
+Signed-off-by: Ananda Ravuri <ananda.ravuri@intel.com>
+Signed-off-by: Russ Weight <russell.h.weight@intel.com>
 Signed-off-by: Xu Yilun <yilun.xu@intel.com>
 Signed-off-by: Wu Hao <hao.wu@intel.com>
 Acked-by: Alan Tull <atull@kernel.org>
 Signed-off-by: Moritz Fischer <mdf@kernel.org>
 ---
- Documentation/fpga/dfl.rst | 105 +++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 105 insertions(+)
+v2: rebased, and switched to use device_add/remove_groups for sysfs
+v3: update kernel version and date in sysfs doc
+v4: rebased.
+v5: drop sysfs add/remove in init/uinit callback.
+    add missed locking for sysfs.
+    use is_visible to decide if hardware supports userclk or not.
+    remove revision sysfs entry.
+---
+ Documentation/ABI/testing/sysfs-platform-dfl-port |  28 ++++++
+ drivers/fpga/dfl-afu-main.c                       | 111 +++++++++++++++++++++-
+ drivers/fpga/dfl.h                                |   9 ++
+ 3 files changed, 147 insertions(+), 1 deletion(-)
 
-diff --git a/Documentation/fpga/dfl.rst b/Documentation/fpga/dfl.rst
-index 2f125ab..6fa483f 100644
---- a/Documentation/fpga/dfl.rst
-+++ b/Documentation/fpga/dfl.rst
-@@ -87,6 +87,8 @@ The following functions are exposed through ioctls:
- - Get driver API version (DFL_FPGA_GET_API_VERSION)
- - Check for extensions (DFL_FPGA_CHECK_EXTENSION)
- - Program bitstream (DFL_FPGA_FME_PORT_PR)
-+- Assign port to PF (DFL_FPGA_FME_PORT_ASSIGN)
-+- Release port from PF (DFL_FPGA_FME_PORT_RELEASE)
+diff --git a/Documentation/ABI/testing/sysfs-platform-dfl-port b/Documentation/ABI/testing/sysfs-platform-dfl-port
+index 1ab3e6f..c2660e4 100644
+--- a/Documentation/ABI/testing/sysfs-platform-dfl-port
++++ b/Documentation/ABI/testing/sysfs-platform-dfl-port
+@@ -46,3 +46,31 @@ Contact:	Wu Hao <hao.wu@intel.com>
+ Description:	Read-write. Read or set AFU latency tolerance reporting value.
+ 		Set ltr to 1 if the AFU can tolerate latency >= 40us or set it
+ 		to 0 if it is latency sensitive.
++
++What:		/sys/bus/platform/devices/dfl-port.0/userclk_freqcmd
++Date:		August 2019
++KernelVersion:	5.4
++Contact:	Wu Hao <hao.wu@intel.com>
++Description:	Write-only. User writes command to this interface to set
++		userclock to AFU.
++
++What:		/sys/bus/platform/devices/dfl-port.0/userclk_freqsts
++Date:		August 2019
++KernelVersion:	5.4
++Contact:	Wu Hao <hao.wu@intel.com>
++Description:	Read-only. Read this file to get the status of issued command
++		to userclck_freqcmd.
++
++What:		/sys/bus/platform/devices/dfl-port.0/userclk_freqcntrcmd
++Date:		August 2019
++KernelVersion:	5.4
++Contact:	Wu Hao <hao.wu@intel.com>
++Description:	Write-only. User writes command to this interface to set
++		userclock counter.
++
++What:		/sys/bus/platform/devices/dfl-port.0/userclk_freqcntrsts
++Date:		August 2019
++KernelVersion:	5.4
++Contact:	Wu Hao <hao.wu@intel.com>
++Description:	Read-only. Read this file to get the status of issued command
++		to userclck_freqcntrcmd.
+diff --git a/drivers/fpga/dfl-afu-main.c b/drivers/fpga/dfl-afu-main.c
+index e955149..f0b45f2 100644
+--- a/drivers/fpga/dfl-afu-main.c
++++ b/drivers/fpga/dfl-afu-main.c
+@@ -274,17 +274,126 @@ static int port_get_id(struct platform_device *pdev)
+ }
+ static DEVICE_ATTR_RO(power_state);
  
- More functions are exposed through sysfs
- (/sys/class/fpga_region/regionX/dfl-fme.n/):
-@@ -102,6 +104,10 @@ More functions are exposed through sysfs
-      one FPGA device may have more than one port, this sysfs interface indicates
-      how many ports the FPGA device has.
++static ssize_t
++userclk_freqcmd_store(struct device *dev, struct device_attribute *attr,
++		      const char *buf, size_t count)
++{
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
++	u64 userclk_freq_cmd;
++	void __iomem *base;
++
++	if (kstrtou64(buf, 0, &userclk_freq_cmd))
++		return -EINVAL;
++
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_HEADER);
++
++	mutex_lock(&pdata->lock);
++	writeq(userclk_freq_cmd, base + PORT_HDR_USRCLK_CMD0);
++	mutex_unlock(&pdata->lock);
++
++	return count;
++}
++static DEVICE_ATTR_WO(userclk_freqcmd);
++
++static ssize_t
++userclk_freqcntrcmd_store(struct device *dev, struct device_attribute *attr,
++			  const char *buf, size_t count)
++{
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
++	u64 userclk_freqcntr_cmd;
++	void __iomem *base;
++
++	if (kstrtou64(buf, 0, &userclk_freqcntr_cmd))
++		return -EINVAL;
++
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_HEADER);
++
++	mutex_lock(&pdata->lock);
++	writeq(userclk_freqcntr_cmd, base + PORT_HDR_USRCLK_CMD1);
++	mutex_unlock(&pdata->lock);
++
++	return count;
++}
++static DEVICE_ATTR_WO(userclk_freqcntrcmd);
++
++static ssize_t
++userclk_freqsts_show(struct device *dev, struct device_attribute *attr,
++		     char *buf)
++{
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
++	u64 userclk_freqsts;
++	void __iomem *base;
++
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_HEADER);
++
++	mutex_lock(&pdata->lock);
++	userclk_freqsts = readq(base + PORT_HDR_USRCLK_STS0);
++	mutex_unlock(&pdata->lock);
++
++	return sprintf(buf, "0x%llx\n", (unsigned long long)userclk_freqsts);
++}
++static DEVICE_ATTR_RO(userclk_freqsts);
++
++static ssize_t
++userclk_freqcntrsts_show(struct device *dev, struct device_attribute *attr,
++			 char *buf)
++{
++	struct dfl_feature_platform_data *pdata = dev_get_platdata(dev);
++	u64 userclk_freqcntrsts;
++	void __iomem *base;
++
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_HEADER);
++
++	mutex_lock(&pdata->lock);
++	userclk_freqcntrsts = readq(base + PORT_HDR_USRCLK_STS1);
++	mutex_unlock(&pdata->lock);
++
++	return sprintf(buf, "0x%llx\n",
++		       (unsigned long long)userclk_freqcntrsts);
++}
++static DEVICE_ATTR_RO(userclk_freqcntrsts);
++
+ static struct attribute *port_hdr_attrs[] = {
+ 	&dev_attr_id.attr,
+ 	&dev_attr_ltr.attr,
+ 	&dev_attr_ap1_event.attr,
+ 	&dev_attr_ap2_event.attr,
+ 	&dev_attr_power_state.attr,
++	&dev_attr_userclk_freqcmd.attr,
++	&dev_attr_userclk_freqcntrcmd.attr,
++	&dev_attr_userclk_freqsts.attr,
++	&dev_attr_userclk_freqcntrsts.attr,
+ 	NULL,
+ };
  
-+ Global error reporting management (errors/)
-+     error reporting sysfs interfaces allow user to read errors detected by the
-+     hardware, and clear the logged errors.
++static umode_t port_hdr_attrs_visible(struct kobject *kobj,
++				      struct attribute *attr, int n)
++{
++	struct device *dev = kobj_to_dev(kobj);
++	umode_t mode = attr->mode;
++	void __iomem *base;
 +
++	base = dfl_get_feature_ioaddr_by_id(dev, PORT_FEATURE_ID_HEADER);
++
++	if (dfl_feature_revision(base) > 0) {
++		/*
++		 * userclk sysfs interfaces are only visible in case port
++		 * revision is 0, as hardware with revision >0 doesn't
++		 * support this.
++		 */
++		if (attr == &dev_attr_userclk_freqcmd.attr ||
++		    attr == &dev_attr_userclk_freqcntrcmd.attr ||
++		    attr == &dev_attr_userclk_freqsts.attr ||
++		    attr == &dev_attr_userclk_freqcntrsts.attr)
++			mode = 0;
++	}
++
++	return mode;
++}
++
+ static const struct attribute_group port_hdr_group = {
+-	.attrs = port_hdr_attrs,
++	.attrs      = port_hdr_attrs,
++	.is_visible = port_hdr_attrs_visible,
+ };
  
- FIU - PORT
- ==========
-@@ -143,6 +149,10 @@ More functions are exposed through sysfs:
-  Read Accelerator GUID (afu_id)
-      afu_id indicates which PR bitstream is programmed to this AFU.
+ static int port_hdr_init(struct platform_device *pdev,
+diff --git a/drivers/fpga/dfl.h b/drivers/fpga/dfl.h
+index 856ea4e..9f0e656 100644
+--- a/drivers/fpga/dfl.h
++++ b/drivers/fpga/dfl.h
+@@ -120,6 +120,10 @@
+ #define PORT_HDR_CAP		0x30
+ #define PORT_HDR_CTRL		0x38
+ #define PORT_HDR_STS		0x40
++#define PORT_HDR_USRCLK_CMD0	0x50
++#define PORT_HDR_USRCLK_CMD1	0x58
++#define PORT_HDR_USRCLK_STS0	0x60
++#define PORT_HDR_USRCLK_STS1	0x68
  
-+ Error reporting (errors/)
-+     error reporting sysfs interfaces allow user to read port/afu errors
-+     detected by the hardware, and clear the logged errors.
-+
+ /* Port Capability Register Bitfield */
+ #define PORT_CAP_PORT_NUM	GENMASK_ULL(1, 0)	/* ID of this port */
+@@ -355,6 +359,11 @@ static inline bool dfl_feature_is_port(void __iomem *base)
+ 		(FIELD_GET(DFH_ID, v) == DFH_ID_FIU_PORT);
+ }
  
- DFL Framework Overview
- ======================
-@@ -218,6 +228,101 @@ the compat_id exposed by the target FPGA region. This check is usually done by
- userspace before calling the reconfiguration IOCTL.
- 
- 
-+FPGA virtualization - PCIe SRIOV
-+================================
-+This section describes the virtualization support on DFL based FPGA device to
-+enable accessing an accelerator from applications running in a virtual machine
-+(VM). This section only describes the PCIe based FPGA device with SRIOV support.
++static inline u8 dfl_feature_revision(void __iomem *base)
++{
++	return (u8)FIELD_GET(DFH_REVISION, readq(base + DFH));
++}
 +
-+Features supported by the particular FPGA device are exposed through Device
-+Feature Lists, as illustrated below:
-+
-+::
-+
-+    +-------------------------------+  +-------------+
-+    |              PF               |  |     VF      |
-+    +-------------------------------+  +-------------+
-+        ^            ^         ^              ^
-+        |            |         |              |
-+  +-----|------------|---------|--------------|-------+
-+  |     |            |         |              |       |
-+  |  +-----+     +-------+ +-------+      +-------+   |
-+  |  | FME |     | Port0 | | Port1 |      | Port2 |   |
-+  |  +-----+     +-------+ +-------+      +-------+   |
-+  |                  ^         ^              ^       |
-+  |                  |         |              |       |
-+  |              +-------+ +------+       +-------+   |
-+  |              |  AFU  | |  AFU |       |  AFU  |   |
-+  |              +-------+ +------+       +-------+   |
-+  |                                                   |
-+  |            DFL based FPGA PCIe Device             |
-+  +---------------------------------------------------+
-+
-+FME is always accessed through the physical function (PF).
-+
-+Ports (and related AFUs) are accessed via PF by default, but could be exposed
-+through virtual function (VF) devices via PCIe SRIOV. Each VF only contains
-+1 Port and 1 AFU for isolation. Users could assign individual VFs (accelerators)
-+created via PCIe SRIOV interface, to virtual machines.
-+
-+The driver organization in virtualization case is illustrated below:
-+::
-+
-+    +-------++------++------+             |
-+    | FME   || FME  || FME  |             |
-+    | FPGA  || FPGA || FPGA |             |
-+    |Manager||Bridge||Region|             |
-+    +-------++------++------+             |
-+    +-----------------------+  +--------+ |             +--------+
-+    |          FME          |  |  AFU   | |             |  AFU   |
-+    |         Module        |  | Module | |             | Module |
-+    +-----------------------+  +--------+ |             +--------+
-+          +-----------------------+       |       +-----------------------+
-+          | FPGA Container Device |       |       | FPGA Container Device |
-+          |  (FPGA Base Region)   |       |       |  (FPGA Base Region)   |
-+          +-----------------------+       |       +-----------------------+
-+            +------------------+          |         +------------------+
-+            | FPGA PCIE Module |          | Virtual | FPGA PCIE Module |
-+            +------------------+   Host   | Machine +------------------+
-+   -------------------------------------- | ------------------------------
-+             +---------------+            |          +---------------+
-+             | PCI PF Device |            |          | PCI VF Device |
-+             +---------------+            |          +---------------+
-+
-+FPGA PCIe device driver is always loaded first once a FPGA PCIe PF or VF device
-+is detected. It:
-+
-+* Finishes enumeration on both FPGA PCIe PF and VF device using common
-+  interfaces from DFL framework.
-+* Supports SRIOV.
-+
-+The FME device driver plays a management role in this driver architecture, it
-+provides ioctls to release Port from PF and assign Port to PF. After release
-+a port from PF, then it's safe to expose this port through a VF via PCIe SRIOV
-+sysfs interface.
-+
-+To enable accessing an accelerator from applications running in a VM, the
-+respective AFU's port needs to be assigned to a VF using the following steps:
-+
-+#. The PF owns all AFU ports by default. Any port that needs to be
-+   reassigned to a VF must first be released through the
-+   DFL_FPGA_FME_PORT_RELEASE ioctl on the FME device.
-+
-+#. Once N ports are released from PF, then user can use command below
-+   to enable SRIOV and VFs. Each VF owns only one Port with AFU.
-+
-+   ::
-+
-+      echo N > $PCI_DEVICE_PATH/sriov_numvfs
-+
-+#. Pass through the VFs to VMs
-+
-+#. The AFU under VF is accessible from applications in VM (using the
-+   same driver inside the VF).
-+
-+Note that an FME can't be assigned to a VF, thus PR and other management
-+functions are only available via the PF.
-+
- Device enumeration
- ==================
- This section introduces how applications enumerate the fpga device from
+ /**
+  * struct dfl_fpga_enum_info - DFL FPGA enumeration information
+  *
 -- 
 1.8.3.1
