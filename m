@@ -1,76 +1,77 @@
 From: Wu Hao <hao.wu@intel.com>
-Subject: [PATCH v5 0/9] FPGA DFL updates
-Date: Mon, 12 Aug 2019 10:49:55 +0800
-Message-ID: <1565578204-13969-1-git-send-email-hao.wu@intel.com>
+Subject: [PATCH v5 2/9] fpga: dfl: fme: convert platform_driver to use dev_groups
+Date: Mon, 12 Aug 2019 10:49:57 +0800
+Message-ID: <1565578204-13969-3-git-send-email-hao.wu@intel.com>
+References: <1565578204-13969-1-git-send-email-hao.wu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1565578204-13969-1-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: gregkh@linuxfoundation.org, mdf@kernel.org, linux-fpga@vger.kernel.org
 Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, atull@kernel.org, Wu Hao <hao.wu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Greg,
+This patch takes advantage of driver core which helps to create
+and remove sysfs attribute files, so there is no need to register
+sysfs entries manually in dfl-fme platform river code.
 
-This is v5 patchset which adds more features to FPGA DFL. Marjor changes
-against v4 are sysfs related code rework to address comments on v4.
+Signed-off-by: Wu Hao <hao.wu@intel.com>
+---
+ drivers/fpga/dfl-fme-main.c | 29 ++---------------------------
+ 1 file changed, 2 insertions(+), 27 deletions(-)
 
-Please help to take a look. Thanks!
-
-Main changes from v4:
-  - convert code to use dev_groups for sysfs entries (#2, #3, #4, #6, #8).
-  - clean up for empty init function after remove sysfs add/remove (#1).
-  - introduce is_visible for sysfs groups (#3, #4, #6, #8).
-  - remove revision sysfs entries (#4, #6, #8).
-  - improve naming on shared functions (#5).
-  - reorganize sysfs entries for port and fme error reporting (#6, #8).
-
-Main changes from v3:
-  - drop avx512 partail reconfiguration patch for now.
-  - split dfl_fpga_cdev_config_port to 2 functions *_release/assign_port
-    (#1).
-  - split __dfl_fpga_cdev_config_port_vf into 2 functions with locking
-    added (#2).
-  - improve description in sysfs doc to avoid misunderstanding (#3).
-  - switch to boolean in sysfs entry store function (#3).
-  - remove dev_dbg in init/uinit callback function (#7, #9, #11).
-  - remove uinit callback which does does nothing (#8, #9)
-
-Main changes from v2:
-  - update kernel version/date in sysfs doc (patch #4, #5, #8, #10, #11).
-  - add back Documentation patch (patch #12).
-
-Main changes from v1:
-  - remove DRV/MODULE_VERSION modifications. (patch #1, #3, #4, #6)
-  - remove argsz from new ioctls. (patch #2)
-  - replace sysfs_create/remove_* with device_add/remove_* for sysfs entries.
-    (patch #5, #8, #11)
-
-Wu Hao (9):
-  fpga: dfl: make init callback optional
-  fpga: dfl: fme: convert platform_driver to use dev_groups
-  fpga: dfl: afu: convert platform_driver to use dev_groups
-  fpga: dfl: afu: add userclock sysfs interfaces.
-  fpga: dfl: afu: expose __afu_port_enable/disable function.
-  fpga: dfl: afu: add error reporting support.
-  fpga: dfl: afu: add STP (SignalTap) support
-  fpga: dfl: fme: add global error reporting support
-  Documentation: fpga: dfl: add descriptions for virtualization and new
-    interfaces.
-
- Documentation/ABI/testing/sysfs-platform-dfl-fme  |  62 ++++
- Documentation/ABI/testing/sysfs-platform-dfl-port |  53 ++++
- Documentation/fpga/dfl.rst                        | 105 +++++++
- drivers/fpga/Makefile                             |   3 +-
- drivers/fpga/dfl-afu-error.c                      | 230 ++++++++++++++
- drivers/fpga/dfl-afu-main.c                       | 230 +++++++++++---
- drivers/fpga/dfl-afu.h                            |   9 +
- drivers/fpga/dfl-fme-error.c                      | 359 ++++++++++++++++++++++
- drivers/fpga/dfl-fme-main.c                       |  42 +--
- drivers/fpga/dfl-fme.h                            |   3 +
- drivers/fpga/dfl.c                                |  10 +-
- drivers/fpga/dfl.h                                |   9 +
- 12 files changed, 1041 insertions(+), 74 deletions(-)
- create mode 100644 drivers/fpga/dfl-afu-error.c
- create mode 100644 drivers/fpga/dfl-fme-error.c
-
+diff --git a/drivers/fpga/dfl-fme-main.c b/drivers/fpga/dfl-fme-main.c
+index f033f1c..bf8114d 100644
+--- a/drivers/fpga/dfl-fme-main.c
++++ b/drivers/fpga/dfl-fme-main.c
+@@ -129,30 +129,6 @@ static ssize_t socket_id_show(struct device *dev,
+ };
+ ATTRIBUTE_GROUPS(fme_hdr);
+ 
+-static int fme_hdr_init(struct platform_device *pdev,
+-			struct dfl_feature *feature)
+-{
+-	void __iomem *base = feature->ioaddr;
+-	int ret;
+-
+-	dev_dbg(&pdev->dev, "FME HDR Init.\n");
+-	dev_dbg(&pdev->dev, "FME cap %llx.\n",
+-		(unsigned long long)readq(base + FME_HDR_CAP));
+-
+-	ret = device_add_groups(&pdev->dev, fme_hdr_groups);
+-	if (ret)
+-		return ret;
+-
+-	return 0;
+-}
+-
+-static void fme_hdr_uinit(struct platform_device *pdev,
+-			  struct dfl_feature *feature)
+-{
+-	dev_dbg(&pdev->dev, "FME HDR UInit.\n");
+-	device_remove_groups(&pdev->dev, fme_hdr_groups);
+-}
+-
+ static long fme_hdr_ioctl_release_port(struct dfl_feature_platform_data *pdata,
+ 				       unsigned long arg)
+ {
+@@ -199,8 +175,6 @@ static long fme_hdr_ioctl(struct platform_device *pdev,
+ };
+ 
+ static const struct dfl_feature_ops fme_hdr_ops = {
+-	.init = fme_hdr_init,
+-	.uinit = fme_hdr_uinit,
+ 	.ioctl = fme_hdr_ioctl,
+ };
+ 
+@@ -361,7 +335,8 @@ static int fme_remove(struct platform_device *pdev)
+ 
+ static struct platform_driver fme_driver = {
+ 	.driver	= {
+-		.name    = DFL_FPGA_FEATURE_DEV_FME,
++		.name       = DFL_FPGA_FEATURE_DEV_FME,
++		.dev_groups = fme_hdr_groups,
+ 	},
+ 	.probe   = fme_probe,
+ 	.remove  = fme_remove,
 -- 
 1.8.3.1
