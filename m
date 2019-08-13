@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v8 13/14] x86: Discard .note.gnu.property sections
-Date: Tue, 13 Aug 2019 13:53:58 -0700
-Message-ID: <20190813205359.12196-14-yu-cheng.yu@intel.com>
+Subject: [PATCH v8 07/14] x86/cet/ibt: Add ENDBR to op-code-map
+Date: Tue, 13 Aug 2019 13:53:52 -0700
+Message-ID: <20190813205359.12196-8-yu-cheng.yu@intel.com>
 References: <20190813205359.12196-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190813205359.12196-1-yu-cheng.yu@intel.com>
@@ -10,73 +10,78 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-From: "H.J. Lu" <hjl.tools@gmail.com>
+Add control transfer terminating instructions:
 
-With the command-line option, -mx86-used-note=yes, the x86 assembler
-in binutils 2.32 and above generates a program property note in a note
-section, .note.gnu.property, to encode used x86 ISAs and features.
-To exclude .note.gnu.property sections from NOTE segment in x86 kernel
-linker script:
+ENDBR64/ENDBR32:
+    Mark a valid 64/32-bit control transfer endpoint.
 
-PHDRS {
- text PT_LOAD FLAGS(5);
- data PT_LOAD FLAGS(6);
- percpu PT_LOAD FLAGS(6);
- init PT_LOAD FLAGS(7);
- note PT_NOTE FLAGS(0);
-}
-SECTIONS
-{
-...
- .notes : AT(ADDR(.notes) - 0xffffffff80000000) { __start_notes = .; KEEP(*(.not
-e.*)) __stop_notes = .; } :text :note
-...
-}
-
-this patch discards .note.gnu.property sections in kernel linker script
-by adding
-
- /DISCARD/ : {
-  *(.note.gnu.property)
- }
-
-before .notes sections.  Since .exit.text and .exit.data sections are
-discarded at runtime, it undefines EXIT_TEXT and EXIT_DATA to exclude
-.exit.text and .exit.data sections from default discarded sections.
-
-Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/kernel/vmlinux.lds.S | 10 ++++++++++
- 1 file changed, 10 insertions(+)
+ arch/x86/lib/x86-opcode-map.txt               | 13 +++++++++++--
+ tools/objtool/arch/x86/lib/x86-opcode-map.txt | 13 +++++++++++--
+ 2 files changed, 22 insertions(+), 4 deletions(-)
 
-diff --git a/arch/x86/kernel/vmlinux.lds.S b/arch/x86/kernel/vmlinux.lds.S
-index e2feacf921a0..5ef137493a85 100644
---- a/arch/x86/kernel/vmlinux.lds.S
-+++ b/arch/x86/kernel/vmlinux.lds.S
-@@ -146,6 +146,10 @@ SECTIONS
- 		_etext = .;
- 	} :text = 0x9090
+diff --git a/arch/x86/lib/x86-opcode-map.txt b/arch/x86/lib/x86-opcode-map.txt
+index c5e825d44766..fbc53481bc59 100644
+--- a/arch/x86/lib/x86-opcode-map.txt
++++ b/arch/x86/lib/x86-opcode-map.txt
+@@ -620,7 +620,16 @@ ea: SAVEPREVSSP (f3)
+ # Skip 0xeb-0xff
+ EndTable
  
-+	/* .note.gnu.property sections should be discarded */
-+	/DISCARD/ : {
-+		*(.note.gnu.property)
-+	}
- 	NOTES :text :note
+-Table: 3-byte opcode 2 (0x0f 0x38)
++Table: 3-byte opcode 2 (0x0f 0x1e)
++Referrer:
++AVXcode:
++# Skip 0x00-0xf9
++fa: ENDBR64 (f3)
++fb: ENDBR32 (f3)
++#skip 0xfc-0xff
++EndTable
++
++Table: 3-byte opcode 3 (0x0f 0x38)
+ Referrer: 3-byte escape 1
+ AVXcode: 2
+ # 0x0f 0x38 0x00-0x0f
+@@ -804,7 +813,7 @@ f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v) | WRSS Pq,Qq
+ f7: BEXTR Gy,Ey,By (v) | SHLX Gy,Ey,By (66),(v) | SARX Gy,Ey,By (F3),(v) | SHRX Gy,Ey,By (F2),(v)
+ EndTable
  
- 	EXCEPTION_TABLE(16) :text = 0x9090
-@@ -415,6 +419,12 @@ SECTIONS
- 	STABS_DEBUG
- 	DWARF_DEBUG
+-Table: 3-byte opcode 3 (0x0f 0x3a)
++Table: 3-byte opcode 4 (0x0f 0x3a)
+ Referrer: 3-byte escape 2
+ AVXcode: 3
+ # 0x0f 0x3a 0x00-0xff
+diff --git a/tools/objtool/arch/x86/lib/x86-opcode-map.txt b/tools/objtool/arch/x86/lib/x86-opcode-map.txt
+index c5e825d44766..fbc53481bc59 100644
+--- a/tools/objtool/arch/x86/lib/x86-opcode-map.txt
++++ b/tools/objtool/arch/x86/lib/x86-opcode-map.txt
+@@ -620,7 +620,16 @@ ea: SAVEPREVSSP (f3)
+ # Skip 0xeb-0xff
+ EndTable
  
-+	/* Sections to be discarded.  EXIT_TEXT and EXIT_DATA discard at
-+	 * runtime, not link time. */
-+#undef EXIT_TEXT
-+#define EXIT_TEXT
-+#undef EXIT_DATA
-+#define EXIT_DATA
- 	DISCARDS
- 	/DISCARD/ : {
- 		*(.eh_frame)
+-Table: 3-byte opcode 2 (0x0f 0x38)
++Table: 3-byte opcode 2 (0x0f 0x1e)
++Referrer:
++AVXcode:
++# Skip 0x00-0xf9
++fa: ENDBR64 (f3)
++fb: ENDBR32 (f3)
++#skip 0xfc-0xff
++EndTable
++
++Table: 3-byte opcode 3 (0x0f 0x38)
+ Referrer: 3-byte escape 1
+ AVXcode: 2
+ # 0x0f 0x38 0x00-0x0f
+@@ -804,7 +813,7 @@ f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v) | WRSS Pq,Qq
+ f7: BEXTR Gy,Ey,By (v) | SHLX Gy,Ey,By (66),(v) | SARX Gy,Ey,By (F3),(v) | SHRX Gy,Ey,By (F2),(v)
+ EndTable
+ 
+-Table: 3-byte opcode 3 (0x0f 0x3a)
++Table: 3-byte opcode 4 (0x0f 0x3a)
+ Referrer: 3-byte escape 2
+ AVXcode: 3
+ # 0x0f 0x3a 0x00-0xff
 -- 
 2.17.1
