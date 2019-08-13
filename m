@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v8 12/14] x86/cet: Add PTRACE interface for CET
-Date: Tue, 13 Aug 2019 13:53:57 -0700
-Message-ID: <20190813205359.12196-13-yu-cheng.yu@intel.com>
+Subject: [PATCH v8 11/14] x86/vsyscall/64: Fixup shadow stack and branch tracking for vsyscall
+Date: Tue, 13 Aug 2019 13:53:56 -0700
+Message-ID: <20190813205359.12196-12-yu-cheng.yu@intel.com>
 References: <20190813205359.12196-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190813205359.12196-1-yu-cheng.yu@intel.com>
@@ -10,144 +10,73 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-Add REGSET_CET64/REGSET_CET32 to get/set CET MSRs:
-
-    IA32_U_CET (user-mode CET settings) and
-    IA32_PL3_SSP (user-mode shadow stack)
+When emulating a RET, also unwind the task's shadow stack and cancel
+the current branch tracking status.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/include/asm/fpu/regset.h |  7 +++---
- arch/x86/kernel/fpu/regset.c      | 41 +++++++++++++++++++++++++++++++
- arch/x86/kernel/ptrace.c          | 16 ++++++++++++
- include/uapi/linux/elf.h          |  1 +
- 4 files changed, 62 insertions(+), 3 deletions(-)
+ arch/x86/entry/vsyscall/vsyscall_64.c    | 29 ++++++++++++++++++++++++
+ arch/x86/entry/vsyscall/vsyscall_trace.h |  1 +
+ 2 files changed, 30 insertions(+)
 
-diff --git a/arch/x86/include/asm/fpu/regset.h b/arch/x86/include/asm/fpu/regset.h
-index d5bdffb9d27f..edad0d889084 100644
---- a/arch/x86/include/asm/fpu/regset.h
-+++ b/arch/x86/include/asm/fpu/regset.h
-@@ -7,11 +7,12 @@
+diff --git a/arch/x86/entry/vsyscall/vsyscall_64.c b/arch/x86/entry/vsyscall/vsyscall_64.c
+index e7c596dea947..27ff81f75c82 100644
+--- a/arch/x86/entry/vsyscall/vsyscall_64.c
++++ b/arch/x86/entry/vsyscall/vsyscall_64.c
+@@ -38,6 +38,9 @@
+ #include <asm/fixmap.h>
+ #include <asm/traps.h>
+ #include <asm/paravirt.h>
++#include <asm/fpu/xstate.h>
++#include <asm/fpu/types.h>
++#include <asm/fpu/internal.h>
  
- #include <linux/regset.h>
- 
--extern user_regset_active_fn regset_fpregs_active, regset_xregset_fpregs_active;
-+extern user_regset_active_fn regset_fpregs_active, regset_xregset_fpregs_active,
-+				cetregs_active;
- extern user_regset_get_fn fpregs_get, xfpregs_get, fpregs_soft_get,
--				xstateregs_get;
-+				xstateregs_get, cetregs_get;
- extern user_regset_set_fn fpregs_set, xfpregs_set, fpregs_soft_set,
--				 xstateregs_set;
-+				 xstateregs_set, cetregs_set;
- 
- /*
-  * xstateregs_active == regset_fpregs_active. Please refer to the comment
-diff --git a/arch/x86/kernel/fpu/regset.c b/arch/x86/kernel/fpu/regset.c
-index d652b939ccfb..2937ec9d9215 100644
---- a/arch/x86/kernel/fpu/regset.c
-+++ b/arch/x86/kernel/fpu/regset.c
-@@ -156,6 +156,47 @@ int xstateregs_set(struct task_struct *target, const struct user_regset *regset,
- 	return ret;
- }
- 
-+int cetregs_active(struct task_struct *target, const struct user_regset *regset)
-+{
-+#ifdef CONFIG_X86_INTEL_CET
-+	if (target->thread.cet.shstk_enabled || target->thread.cet.ibt_enabled)
-+		return regset->n;
+ #define CREATE_TRACE_POINTS
+ #include "vsyscall_trace.h"
+@@ -286,6 +289,32 @@ bool emulate_vsyscall(unsigned long error_code,
+ 	/* Emulate a ret instruction. */
+ 	regs->ip = caller;
+ 	regs->sp += 8;
++
++	/* Unwind shadow stack. */
++
++#ifdef CONFIG_X86_INTEL_SHADOW_STACK_USER
++	if (current->thread.cet.shstk_enabled) {
++		u64 r;
++
++		modify_fpu_regs_begin();
++		rdmsrl(MSR_IA32_PL3_SSP, r);
++		wrmsrl(MSR_IA32_PL3_SSP, r + 8);
++		modify_fpu_regs_end();
++	}
 +#endif
-+	return 0;
-+}
 +
-+int cetregs_get(struct task_struct *target, const struct user_regset *regset,
-+		unsigned int pos, unsigned int count,
-+		void *kbuf, void __user *ubuf)
-+{
-+	struct fpu *fpu = &target->thread.fpu;
-+	struct cet_user_state *cetregs;
++	/* Fixup branch tracking */
++#ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
++	if (current->thread.cet.ibt_enabled) {
++		u64 r;
 +
-+	if (!boot_cpu_has(X86_FEATURE_SHSTK))
-+		return -ENODEV;
++		modify_fpu_regs_begin();
++		rdmsrl(MSR_IA32_U_CET, r);
++		wrmsrl(MSR_IA32_U_CET, r & ~MSR_IA32_CET_WAIT_ENDBR);
++		modify_fpu_regs_end();
++	}
++#endif
 +
-+	cetregs = get_xsave_addr(&fpu->state.xsave, XFEATURE_CET_USER);
-+
-+	fpu__prepare_read(fpu);
-+	return user_regset_copyout(&pos, &count, &kbuf, &ubuf, cetregs, 0, -1);
-+}
-+
-+int cetregs_set(struct task_struct *target, const struct user_regset *regset,
-+		  unsigned int pos, unsigned int count,
-+		  const void *kbuf, const void __user *ubuf)
-+{
-+	struct fpu *fpu = &target->thread.fpu;
-+	struct cet_user_state *cetregs;
-+
-+	if (!boot_cpu_has(X86_FEATURE_SHSTK))
-+		return -ENODEV;
-+
-+	cetregs = get_xsave_addr(&fpu->state.xsave, XFEATURE_CET_USER);
-+
-+	fpu__prepare_write(fpu);
-+	return user_regset_copyin(&pos, &count, &kbuf, &ubuf, cetregs, 0, -1);
-+}
-+
- #if defined CONFIG_X86_32 || defined CONFIG_IA32_EMULATION
+ 	return true;
  
- /*
-diff --git a/arch/x86/kernel/ptrace.c b/arch/x86/kernel/ptrace.c
-index 3c5bbe8e4120..4bae0faa5331 100644
---- a/arch/x86/kernel/ptrace.c
-+++ b/arch/x86/kernel/ptrace.c
-@@ -52,7 +52,9 @@ enum x86_regset {
- 	REGSET_IOPERM64 = REGSET_XFP,
- 	REGSET_XSTATE,
- 	REGSET_TLS,
-+	REGSET_CET64 = REGSET_TLS,
- 	REGSET_IOPERM32,
-+	REGSET_CET32,
- };
+ sigsegv:
+diff --git a/arch/x86/entry/vsyscall/vsyscall_trace.h b/arch/x86/entry/vsyscall/vsyscall_trace.h
+index 3c3f9765a85c..7aa2101ada44 100644
+--- a/arch/x86/entry/vsyscall/vsyscall_trace.h
++++ b/arch/x86/entry/vsyscall/vsyscall_trace.h
+@@ -25,6 +25,7 @@ TRACE_EVENT(emulate_vsyscall,
+ #endif
  
- struct pt_regs_offset {
-@@ -1239,6 +1241,13 @@ static struct user_regset x86_64_regsets[] __ro_after_init = {
- 		.size = sizeof(long), .align = sizeof(long),
- 		.active = ioperm_active, .get = ioperm_get
- 	},
-+	[REGSET_CET64] = {
-+		.core_note_type = NT_X86_CET,
-+		.n = sizeof(struct cet_user_state) / sizeof(u64),
-+		.size = sizeof(u64), .align = sizeof(u64),
-+		.active = cetregs_active, .get = cetregs_get,
-+		.set = cetregs_set
-+	},
- };
- 
- static const struct user_regset_view user_x86_64_view = {
-@@ -1294,6 +1303,13 @@ static struct user_regset x86_32_regsets[] __ro_after_init = {
- 		.size = sizeof(u32), .align = sizeof(u32),
- 		.active = ioperm_active, .get = ioperm_get
- 	},
-+	[REGSET_CET32] = {
-+		.core_note_type = NT_X86_CET,
-+		.n = sizeof(struct cet_user_state) / sizeof(u64),
-+		.size = sizeof(u64), .align = sizeof(u64),
-+		.active = cetregs_active, .get = cetregs_get,
-+		.set = cetregs_set
-+	},
- };
- 
- static const struct user_regset_view user_x86_32_view = {
-diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
-index 530ce08467c2..349c435a2ce1 100644
---- a/include/uapi/linux/elf.h
-+++ b/include/uapi/linux/elf.h
-@@ -401,6 +401,7 @@ typedef struct elf64_shdr {
- #define NT_386_TLS	0x200		/* i386 TLS slots (struct user_desc) */
- #define NT_386_IOPERM	0x201		/* x86 io permission bitmap (1=deny) */
- #define NT_X86_XSTATE	0x202		/* x86 extended state using xsave */
-+#define NT_X86_CET	0x203		/* x86 cet state */
- #define NT_S390_HIGH_GPRS	0x300	/* s390 upper register halves */
- #define NT_S390_TIMER	0x301		/* s390 timer register */
- #define NT_S390_TODCMP	0x302		/* s390 TOD clock comparator register */
+ #undef TRACE_INCLUDE_PATH
++#undef TRACE_INCLUDE_FILE
+ #define TRACE_INCLUDE_PATH ../../arch/x86/entry/vsyscall/
+ #define TRACE_INCLUDE_FILE vsyscall_trace
+ #include <trace/define_trace.h>
 -- 
 2.17.1
