@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v8 11/14] x86/vsyscall/64: Fixup shadow stack and branch tracking for vsyscall
-Date: Tue, 13 Aug 2019 13:53:56 -0700
-Message-ID: <20190813205359.12196-12-yu-cheng.yu@intel.com>
+Subject: [PATCH v8 13/14] x86: Discard .note.gnu.property sections
+Date: Tue, 13 Aug 2019 13:53:58 -0700
+Message-ID: <20190813205359.12196-14-yu-cheng.yu@intel.com>
 References: <20190813205359.12196-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190813205359.12196-1-yu-cheng.yu@intel.com>
@@ -10,73 +10,73 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-When emulating a RET, also unwind the task's shadow stack and cancel
-the current branch tracking status.
+From: "H.J. Lu" <hjl.tools@gmail.com>
 
+With the command-line option, -mx86-used-note=yes, the x86 assembler
+in binutils 2.32 and above generates a program property note in a note
+section, .note.gnu.property, to encode used x86 ISAs and features.
+To exclude .note.gnu.property sections from NOTE segment in x86 kernel
+linker script:
+
+PHDRS {
+ text PT_LOAD FLAGS(5);
+ data PT_LOAD FLAGS(6);
+ percpu PT_LOAD FLAGS(6);
+ init PT_LOAD FLAGS(7);
+ note PT_NOTE FLAGS(0);
+}
+SECTIONS
+{
+...
+ .notes : AT(ADDR(.notes) - 0xffffffff80000000) { __start_notes = .; KEEP(*(.not
+e.*)) __stop_notes = .; } :text :note
+...
+}
+
+this patch discards .note.gnu.property sections in kernel linker script
+by adding
+
+ /DISCARD/ : {
+  *(.note.gnu.property)
+ }
+
+before .notes sections.  Since .exit.text and .exit.data sections are
+discarded at runtime, it undefines EXIT_TEXT and EXIT_DATA to exclude
+.exit.text and .exit.data sections from default discarded sections.
+
+Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/entry/vsyscall/vsyscall_64.c    | 29 ++++++++++++++++++++++++
- arch/x86/entry/vsyscall/vsyscall_trace.h |  1 +
- 2 files changed, 30 insertions(+)
+ arch/x86/kernel/vmlinux.lds.S | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
-diff --git a/arch/x86/entry/vsyscall/vsyscall_64.c b/arch/x86/entry/vsyscall/vsyscall_64.c
-index e7c596dea947..27ff81f75c82 100644
---- a/arch/x86/entry/vsyscall/vsyscall_64.c
-+++ b/arch/x86/entry/vsyscall/vsyscall_64.c
-@@ -38,6 +38,9 @@
- #include <asm/fixmap.h>
- #include <asm/traps.h>
- #include <asm/paravirt.h>
-+#include <asm/fpu/xstate.h>
-+#include <asm/fpu/types.h>
-+#include <asm/fpu/internal.h>
+diff --git a/arch/x86/kernel/vmlinux.lds.S b/arch/x86/kernel/vmlinux.lds.S
+index e2feacf921a0..5ef137493a85 100644
+--- a/arch/x86/kernel/vmlinux.lds.S
++++ b/arch/x86/kernel/vmlinux.lds.S
+@@ -146,6 +146,10 @@ SECTIONS
+ 		_etext = .;
+ 	} :text = 0x9090
  
- #define CREATE_TRACE_POINTS
- #include "vsyscall_trace.h"
-@@ -286,6 +289,32 @@ bool emulate_vsyscall(unsigned long error_code,
- 	/* Emulate a ret instruction. */
- 	regs->ip = caller;
- 	regs->sp += 8;
-+
-+	/* Unwind shadow stack. */
-+
-+#ifdef CONFIG_X86_INTEL_SHADOW_STACK_USER
-+	if (current->thread.cet.shstk_enabled) {
-+		u64 r;
-+
-+		modify_fpu_regs_begin();
-+		rdmsrl(MSR_IA32_PL3_SSP, r);
-+		wrmsrl(MSR_IA32_PL3_SSP, r + 8);
-+		modify_fpu_regs_end();
++	/* .note.gnu.property sections should be discarded */
++	/DISCARD/ : {
++		*(.note.gnu.property)
 +	}
-+#endif
-+
-+	/* Fixup branch tracking */
-+#ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
-+	if (current->thread.cet.ibt_enabled) {
-+		u64 r;
-+
-+		modify_fpu_regs_begin();
-+		rdmsrl(MSR_IA32_U_CET, r);
-+		wrmsrl(MSR_IA32_U_CET, r & ~MSR_IA32_CET_WAIT_ENDBR);
-+		modify_fpu_regs_end();
-+	}
-+#endif
-+
- 	return true;
+ 	NOTES :text :note
  
- sigsegv:
-diff --git a/arch/x86/entry/vsyscall/vsyscall_trace.h b/arch/x86/entry/vsyscall/vsyscall_trace.h
-index 3c3f9765a85c..7aa2101ada44 100644
---- a/arch/x86/entry/vsyscall/vsyscall_trace.h
-+++ b/arch/x86/entry/vsyscall/vsyscall_trace.h
-@@ -25,6 +25,7 @@ TRACE_EVENT(emulate_vsyscall,
- #endif
+ 	EXCEPTION_TABLE(16) :text = 0x9090
+@@ -415,6 +419,12 @@ SECTIONS
+ 	STABS_DEBUG
+ 	DWARF_DEBUG
  
- #undef TRACE_INCLUDE_PATH
-+#undef TRACE_INCLUDE_FILE
- #define TRACE_INCLUDE_PATH ../../arch/x86/entry/vsyscall/
- #define TRACE_INCLUDE_FILE vsyscall_trace
- #include <trace/define_trace.h>
++	/* Sections to be discarded.  EXIT_TEXT and EXIT_DATA discard at
++	 * runtime, not link time. */
++#undef EXIT_TEXT
++#define EXIT_TEXT
++#undef EXIT_DATA
++#define EXIT_DATA
+ 	DISCARDS
+ 	/DISCARD/ : {
+ 		*(.eh_frame)
 -- 
 2.17.1
