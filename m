@@ -1,150 +1,125 @@
-From: Dave Hansen <dave.hansen@intel.com>
-Subject: Re: [PATCH v8 11/27] x86/mm: Introduce _PAGE_DIRTY_SW
-Date: Tue, 13 Aug 2019 16:02:22 -0700
-Message-ID: <dac2d62b-9045-4767-87dd-eac12e7abafd@intel.com>
-References: <20190813205225.12032-1-yu-cheng.yu@intel.com>
- <20190813205225.12032-12-yu-cheng.yu@intel.com>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
+Date: Tue, 13 Aug 2019 16:06:00 -0700
+Message-ID: <CALCETrVT-dDXQGukGs5S1DkzvQv9_e=axzr_GyEd2c4T4z8Qng@mail.gmail.com>
+References: <5A2FCD7E-7F54-41E5-BFAE-BB9494E74F2D@fb.com> <CALCETrU7NbBnXXsw1B+DvTkfTVRBFWXuJ8cZERCCNvdFG6KqRw@mail.gmail.com>
+ <CALCETrUjh6DdgW1qSuSRd1_=0F9CqB8+sNj__e_6AHEvh_BaxQ@mail.gmail.com>
+ <CALCETrWtE2U4EvZVYeq8pSmQjBzF2PHH+KxYW8FSeF+W=1FYjw@mail.gmail.com>
+ <EE7B7AE1-3D44-4561-94B9-E97A626A251D@fb.com> <CALCETrXX-Jeb4wiQuL6FUai4wNMmMiUxuLLh_Lb9mT7h=0GgAw@mail.gmail.com>
+ <20190805192122.laxcaz75k4vxdspn@ast-mbp> <CALCETrVtPs8gY-H4gmzSqPboid3CB++n50SvYd6RU9YVde_-Ow@mail.gmail.com>
+ <20190806011134.p5baub5l3t5fkmou@ast-mbp> <CALCETrXEHL3+NAY6P6vUj7Pvd9ZpZsYC6VCLXOaNxb90a_POGw@mail.gmail.com>
+ <20190813215823.3sfbakzzjjykyng2@ast-mbp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190813205225.12032-12-yu-cheng.yu@intel.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20190813215823.3sfbakzzjjykyng2@ast-mbp>
+Sender: netdev-owner@vger.kernel.org
+To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Song Liu <songliubraving@fb.com>, Kees Cook <keescook@chromium.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-> +#if defined(CONFIG_X86_INTEL_SHADOW_STACK_USER)
-> +static inline pte_t pte_move_flags(pte_t pte, pteval_t from, pteval_t to)
-> +{
-> +	if (pte_flags(pte) & from)
-> +		pte = pte_set_flags(pte_clear_flags(pte, from), to);
-> +	return pte;
+On Tue, Aug 13, 2019 at 2:58 PM Alexei Starovoitov
+<alexei.starovoitov@gmail.com> wrote:
+>
+> On Tue, Aug 06, 2019 at 10:24:25PM -0700, Andy Lutomirski wrote:
+> > >
+> > > Inside containers and inside nested containers we need to start processes
+> > > that will use bpf. All of the processes are trusted.
+> >
+> > Trusted by whom?  In a non-nested container, the container manager
+> > *might* be trusted by the outside world.  In a *nested* container,
+> > unless the inner container management is controlled from outside the
+> > outer container, it's not trusted.  I don't know much about how
+> > Facebook's containers work, but the LXC/LXD/Podman world is moving
+> > very strongly toward user namespaces and maximally-untrusted
+> > containers, and I think bpf() should work in that context.
+>
+> agree that containers (namespaces) reduce amount of trust necessary
+> for apps to run, but the end goal is not security though.
+> Linux has become a single user system.
+> If user can ssh into the host they can become root.
+> If arbitrary code can run on the host it will be break out of any sandbox.
 
-Why is this conditional on the compile option and not a runtime check?
+I would argue that this is a reasonable assumption to make if you're
+designing a system using Linux, but it's not a valid assumption to
+make as kernel developers.  Otherwise we should just give everyone
+CAP_SYS_ADMIN and call it a day.  There really is a difference between
+root and non-root.
 
-> +}
-> +#else
-> +static inline pte_t pte_move_flags(pte_t pte, pteval_t from, pteval_t to)
-> +{
-> +	return pte;
-> +}
-> +#endif
+> Containers are not providing the level of security that is enough
+> to run arbitrary code. VMs can do it better, but cpu bugs don't make it easy.
+> Containers are used to make production systems safer.
+> Some people call it more 'secure', but it's clearly not secure for
+> arbitrary code and that is what kernel.unprivileged_bpf_disabled allows.
+> When we say 'unprivileged bpf' we really mean arbitrary malicious bpf program.
+> It's been a constant source of pain. The constant blinding, randomization,
+> verifier speculative analysis, all spectre v1, v2, v4 mitigations
+> are simply not worth it. It's a lot of complex kernel code without users.
 
-Why do we need this function?  It's not mentioned in the changelog or
-commented.
+Seccomp really will want eBPF some day, and it should work without
+privilege.  Maybe it should be a restricted subset of eBPF, and
+Spectre will always be an issue until dramatically better hardware
+shows up, but I think people will want the ability for regular
+programs to load eBPF seccomp programs.
 
->  static inline pte_t pte_mkclean(pte_t pte)
->  {
-> -	return pte_clear_flags(pte, _PAGE_DIRTY);
-> +	return pte_clear_flags(pte, _PAGE_DIRTY_BITS);
->  }
->  
->  static inline pte_t pte_mkold(pte_t pte)
-> @@ -322,6 +336,7 @@ static inline pte_t pte_mkold(pte_t pte)
->  
->  static inline pte_t pte_wrprotect(pte_t pte)
->  {
-> +	pte = pte_move_flags(pte, _PAGE_DIRTY_HW, _PAGE_DIRTY_SW);
->  	return pte_clear_flags(pte, _PAGE_RW);
->  }
+> Hence I prefer this /dev/bpf mechanism to be as simple a possible.
+> The applications that will use it are going to be just as trusted as systemd.
 
-Please comment what this is doing and why.
+I still don't understand your systemd example.  systemd --users is not
+trusted systemwide in any respect.  The main PID 1 systemd is root.
+No matter how you dice it, granting a user systemd instance extra bpf
+access is tantamount to granting the user extra bpf access in general.
 
-> @@ -332,9 +347,24 @@ static inline pte_t pte_mkexec(pte_t pte)
->  
->  static inline pte_t pte_mkdirty(pte_t pte)
->  {
-> +	pteval_t dirty = (!IS_ENABLED(CONFIG_X86_INTEL_SHADOW_STACK_USER) ||
-> +			   pte_write(pte)) ? _PAGE_DIRTY_HW:_PAGE_DIRTY_SW;
-
-This is *really* hard for me to read and parse.  How about:
-
-	pte_t dirty = _PAGE_DIRTY_HW;
-
-	/*
-	 * When Shadow Stacks are enabled, read-only PTEs can
-	 * not have the hardware dirty bit set and must use
-	 * the software bit.
-	 */
-	if (IS_ENABLED(CONFIG_X86_INTEL_SHADOW_STACK_USER) &&
-	    !pte_write(pte))
-		dirty = _PAGE_DIRTY_SW;
+It sounds to me like you're thinking of eBPF as a feature a bit like
+unprivileged user namespaces: *in principle*, it's supposed to be safe
+to give any unprivileged process the ability to use it, and you
+consider security flaws in it to be bugs worth fixing.  But you think
+it's a large attack surface and that most unprivileged programs
+shouldn't be allowed to use it.  Is that reasonable?
 
 
-> +	return pte_set_flags(pte, dirty | _PAGE_SOFT_DIRTY);
-> +}
-> +
-> +#ifdef CONFIG_ARCH_HAS_SHSTK
-> +static inline pte_t pte_mkdirty_shstk(pte_t pte)
-> +{
-> +	pte = pte_clear_flags(pte, _PAGE_DIRTY_SW);
->  	return pte_set_flags(pte, _PAGE_DIRTY_HW | _PAGE_SOFT_DIRTY);
->  }
-
-Why does the _PAGE_DIRTY_SW *HAVE* to be cleared on shstk pages?
-
-> +static inline bool pte_dirty_hw(pte_t pte)
-> +{
-> +	return pte_flags(pte) & _PAGE_DIRTY_HW;
-> +}
-> +#endif
-
-Why are these #ifdef'd?
-
->  static inline pte_t pte_mkyoung(pte_t pte)
->  {
->  	return pte_set_flags(pte, _PAGE_ACCESSED);
-> @@ -342,6 +372,7 @@ static inline pte_t pte_mkyoung(pte_t pte)
->  
->  static inline pte_t pte_mkwrite(pte_t pte)
->  {
-> +	pte = pte_move_flags(pte, _PAGE_DIRTY_SW, _PAGE_DIRTY_HW);
->  	return pte_set_flags(pte, _PAGE_RW);
->  }
-
-It also isn't clear to me why this *must* move bits here.  Its doubly
-unclear why you would need to do this on systems when shadow stacks are
-compiled in but disabled.
-
-<snip>
-
-Same comments for pmds and puds.
-
-> -
->  /* mprotect needs to preserve PAT bits when updating vm_page_prot */
->  #define pgprot_modify pgprot_modify
->  static inline pgprot_t pgprot_modify(pgprot_t oldprot, pgprot_t newprot)
-> @@ -1178,6 +1254,19 @@ static inline int pmd_write(pmd_t pmd)
->  	return pmd_flags(pmd) & _PAGE_RW;
->  }
->  
-> +static inline pmd_t pmd_modify(pmd_t pmd, pgprot_t newprot)
-> +{
-> +	pmdval_t val = pmd_val(pmd), oldval = val;
-> +
-> +	val &= _HPAGE_CHG_MASK;
-> +	val |= check_pgprot(newprot) & ~_HPAGE_CHG_MASK;
-> +	val = flip_protnone_guard(oldval, val, PHYSICAL_PMD_PAGE_MASK);
-> +	if ((pmd_write(pmd) && !(pgprot_val(newprot) & _PAGE_RW)))
-> +		return pmd_move_flags(__pmd(val), _PAGE_DIRTY_HW,
-> +				      _PAGE_DIRTY_SW);
-> +	return __pmd(val);
-> +}
-
-Why was this function moved?  This makes it really hard to review what
-you changed
-
-I'm going to stop reading this code now.  It needs a lot more care and
-feeding to make it reviewable.  Please go back, double-check your
-changelogs and flesh them out, then please try to make the code more
-readable and understandable by commenting it.
-
-Please take all of the compile-time checks and ask yourself whether they
-need to be or *can* be runtime checks.  Consider what the overhead is of
-non-shadowstack systems running shadowstack-required code.
-
-Please also reconcile the supervisor XSAVE portion of your patches with
-the ones that Fenghua has been sending around.  I've given quite a bit
-of feedback to improve those.  Please consolidate and agree on a common
-set of patches with him.
+>
+> > > To solve your concern of bypassing all capable checks...
+> > > How about we do /dev/bpf/full_verifier first?
+> > > It will replace capable() checks in the verifier only.
+> >
+> > I'm not convinced that "in the verifier" is the right distinction.
+> > Telling administrators that some setting lets certain users bypass
+> > bpf() verifier checks doesn't have a clear enough meaning.
+>
+> linux is a single user system. there are no administrators any more.
+> No doubt, folks will disagree, but that game is over.
+> At least on bpf side it's done.
+>
+> > I propose,
+> > instead, that the current capable() checks be divided into three
+> > categories:
+>
+> I don't see a use case for these categories.
+> All bpf programs extend the kernel in some way.
+> The kernel vs user is one category.
+> Conceptually CAP_BPF is enough. It would be similar to CAP_NET_ADMIN.
+> When application has CAP_NET_ADMIN it covers all of networking knobs.
+> There is no use case that would warrant fine grain CAP_ROUTE_ADMIN,
+> CAP_ETHTOOL_ADMIN, CAP_ETH0_ADMIN, etc.
+> Similarly CAP_BPF as the only knob is enough.
+> The only disadvantage of CAP_BPF is that it's not possible to
+> pass it from one systemd-like daemon to another systemd-like daemon.
+> Hence /dev/bpf idea and passing file descriptor.
+>
+> > This type of thing actually fits quite nicely into an idea I've been
+> > thinking about for a while called "implicit rights". In very brief
+> > summary, there would be objects called /dev/rights/xyz, where xyz is
+> > the same of a "right".  If there is a readable object of the right
+> > type at the literal path "/dev/rights/xyz", then you have right xyz.
+> > There's a bit more flexibility on top of this.  BPF could use
+> > /dev/rights/bpf/maptypes/lpm and
+> > /dev/rights/bpf/verifier/bounded_loops, for example.  Other non-BPF
+> > use cases include a biggie:
+> > /dev/rights/namespace/create_unprivileged_userns.
+> > /dev/rights/bind_port/80 would be nice, too.
+>
+> The concept of "implicit rights" is very nice and I'm sure it will
+> be a good fit somewhere, but I don't see why use it in bpf space.
+> There is no use case for fine grain partition of bpf features.
+>
