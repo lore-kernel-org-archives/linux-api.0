@@ -1,54 +1,106 @@
-From: Alistair Francis <alistair23@gmail.com>
-Subject: Re: [PATCH] syscalls: Update the syscall #defines to match uapi
-Date: Tue, 13 Aug 2019 15:04:24 -0700
-Message-ID: <CAKmqyKMxN1_DQOngTeUkh2EOX28trcbgsfOEXCaN2YK9EBdD8g@mail.gmail.com>
-References: <20190810010758.16407-1-alistair.francis@wdc.com>
- <CAK8P3a2wYMsBRm1X-TFo1d7-B7Xug9gwqF77HitoE7wmOqD7rw@mail.gmail.com>
- <CAKmqyKNH7G=_gs2Hfc3OZMFaHzUwU8fSomfu_r92hJrnJHJT3A@mail.gmail.com> <CAK8P3a0phB6hb=Da6V=CWWmi_oYwUcpSRi6CZTqAPz7QXKFJTA@mail.gmail.com>
+From: Daniel Colascione <dancol@google.com>
+Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
+Date: Tue, 13 Aug 2019 15:26:28 -0700
+Message-ID: <CAKOZuev8XY5+shG8SiWcx4z12QnkgzhcUqCHs9t+eV2z-6nzPA@mail.gmail.com>
+References: <5A2FCD7E-7F54-41E5-BFAE-BB9494E74F2D@fb.com> <CALCETrU7NbBnXXsw1B+DvTkfTVRBFWXuJ8cZERCCNvdFG6KqRw@mail.gmail.com>
+ <CALCETrUjh6DdgW1qSuSRd1_=0F9CqB8+sNj__e_6AHEvh_BaxQ@mail.gmail.com>
+ <CALCETrWtE2U4EvZVYeq8pSmQjBzF2PHH+KxYW8FSeF+W=1FYjw@mail.gmail.com>
+ <EE7B7AE1-3D44-4561-94B9-E97A626A251D@fb.com> <CALCETrXX-Jeb4wiQuL6FUai4wNMmMiUxuLLh_Lb9mT7h=0GgAw@mail.gmail.com>
+ <20190805192122.laxcaz75k4vxdspn@ast-mbp> <CALCETrVtPs8gY-H4gmzSqPboid3CB++n50SvYd6RU9YVde_-Ow@mail.gmail.com>
+ <20190806011134.p5baub5l3t5fkmou@ast-mbp> <CALCETrXEHL3+NAY6P6vUj7Pvd9ZpZsYC6VCLXOaNxb90a_POGw@mail.gmail.com>
+ <20190813215823.3sfbakzzjjykyng2@ast-mbp>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAK8P3a0phB6hb=Da6V=CWWmi_oYwUcpSRi6CZTqAPz7QXKFJTA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Alistair Francis <alistair.francis@wdc.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Deepa Dinamani <deepa.kernel@gmail.com>
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20190813215823.3sfbakzzjjykyng2@ast-mbp>
+Sender: netdev-owner@vger.kernel.org
+To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Song Liu <songliubraving@fb.com>, Kees Cook <keescook@chromium.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 13, 2019 at 12:41 PM Arnd Bergmann <arnd@arndb.de> wrote:
+On Tue, Aug 13, 2019 at 2:58 PM Alexei Starovoitov
+<alexei.starovoitov@gmail.com> wrote:
 >
-> On Tue, Aug 13, 2019 at 9:01 PM Alistair Francis <alistair23@gmail.com> wrote:
-> > On Mon, Aug 12, 2019 at 2:49 AM Arnd Bergmann <arnd@arndb.de> wrote:
->
-> > > > diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-> > > > index 2bcef4c70183..e4bf5e480d60 100644
-> > > > --- a/include/linux/syscalls.h
-> > > > +++ b/include/linux/syscalls.h
-> > > > @@ -512,7 +512,7 @@ asmlinkage long sys_readlinkat(int dfd, const char __user *path, char __user *bu
-> > > >  asmlinkage long sys_newfstatat(int dfd, const char __user *filename,
-> > > >                                struct stat __user *statbuf, int flag);
-> > > >  asmlinkage long sys_newfstat(unsigned int fd, struct stat __user *statbuf);
-> > > > -#if defined(__ARCH_WANT_STAT64) || defined(__ARCH_WANT_COMPAT_STAT64)
-> > > > +#if defined(__ARCH_WANT_NEW_STAT) || defined(__ARCH_WANT_STAT64)
-> > > >  asmlinkage long sys_fstat64(unsigned long fd, struct stat64 __user *statbuf);
-> > > >  asmlinkage long sys_fstatat64(int dfd, const char __user *filename,
-> > > >                                struct stat64 __user *statbuf, int flag);
+> On Tue, Aug 06, 2019 at 10:24:25PM -0700, Andy Lutomirski wrote:
 > > >
-> > > I think this is wrong: when __ARCH_WANT_NEW_STAT is set, we are
-> > > on a 64-bit architecture and only want the sys_newfstat{,at} system
-> > > calls, not sys_fstat{,at}64 that gets used on 32-bit machines.
+> > > Inside containers and inside nested containers we need to start processes
+> > > that will use bpf. All of the processes are trusted.
 > >
-> > Ah, that would make sense then. I don't think you will see the error then.
+> > Trusted by whom?  In a non-nested container, the container manager
+> > *might* be trusted by the outside world.  In a *nested* container,
+> > unless the inner container management is controlled from outside the
+> > outer container, it's not trusted.  I don't know much about how
+> > Facebook's containers work, but the LXC/LXD/Podman world is moving
+> > very strongly toward user namespaces and maximally-untrusted
+> > containers, and I think bpf() should work in that context.
 >
-> So we don't need this patch to build riscv32 kernels, right? It's possible
-> that it was the result of an incorrect forward port of some other patch,
-> as older riscv32 kernels did provide stat64(), but newer ones only have
-> statx().
-
-The issue came up when I was just changing some things for testing and
-I thought it was a bug that others might run into. It isn't directly
-related to the riscv32 kernel.
-
-Alistair
-
+> agree that containers (namespaces) reduce amount of trust necessary
+> for apps to run, but the end goal is not security though.
+> Linux has become a single user system.
+> If user can ssh into the host they can become root.
+> If arbitrary code can run on the host it will be break out of any sandbox.
+> Containers are not providing the level of security that is enough
+> to run arbitrary code. VMs can do it better, but cpu bugs don't make it easy.
+> Containers are used to make production systems safer.
+> Some people call it more 'secure', but it's clearly not secure for
+> arbitrary code and that is what kernel.unprivileged_bpf_disabled allows.
+> When we say 'unprivileged bpf' we really mean arbitrary malicious bpf program.
+> It's been a constant source of pain. The constant blinding, randomization,
+> verifier speculative analysis, all spectre v1, v2, v4 mitigations
+> are simply not worth it. It's a lot of complex kernel code without users.
+> There is not a single use case to allow arbitrary malicious bpf
+> program to be loaded and executed.
+> As soon as we have /dev/bpf to allow all of bpf to be used without root
+> we will set sysctl kernel.unprivileged_bpf_disabled=1
+> Hence I prefer this /dev/bpf mechanism to be as simple a possible.
+> The applications that will use it are going to be just as trusted as systemd.
 >
->        Arnd
+> > > To solve your concern of bypassing all capable checks...
+> > > How about we do /dev/bpf/full_verifier first?
+> > > It will replace capable() checks in the verifier only.
+> >
+> > I'm not convinced that "in the verifier" is the right distinction.
+> > Telling administrators that some setting lets certain users bypass
+> > bpf() verifier checks doesn't have a clear enough meaning.
+>
+> linux is a single user system. there are no administrators any more.
+> No doubt, folks will disagree, but that game is over.
+> At least on bpf side it's done.
+>
+> > I propose,
+> > instead, that the current capable() checks be divided into three
+> > categories:
+>
+> I don't see a use case for these categories.
+> All bpf programs extend the kernel in some way.
+> The kernel vs user is one category.
+> Conceptually CAP_BPF is enough. It would be similar to CAP_NET_ADMIN.
+> When application has CAP_NET_ADMIN it covers all of networking knobs.
+> There is no use case that would warrant fine grain CAP_ROUTE_ADMIN,
+> CAP_ETHTOOL_ADMIN, CAP_ETH0_ADMIN, etc.
+> Similarly CAP_BPF as the only knob is enough.
+> The only disadvantage of CAP_BPF is that it's not possible to
+> pass it from one systemd-like daemon to another systemd-like daemon.
+> Hence /dev/bpf idea and passing file descriptor.
+>
+> > This type of thing actually fits quite nicely into an idea I've been
+> > thinking about for a while called "implicit rights". In very brief
+> > summary, there would be objects called /dev/rights/xyz, where xyz is
+> > the same of a "right".  If there is a readable object of the right
+> > type at the literal path "/dev/rights/xyz", then you have right xyz.
+> > There's a bit more flexibility on top of this.  BPF could use
+> > /dev/rights/bpf/maptypes/lpm and
+> > /dev/rights/bpf/verifier/bounded_loops, for example.  Other non-BPF
+> > use cases include a biggie:
+> > /dev/rights/namespace/create_unprivileged_userns.
+> > /dev/rights/bind_port/80 would be nice, too.
+>
+> The concept of "implicit rights" is very nice and I'm sure it will
+> be a good fit somewhere, but I don't see why use it in bpf space.
+> There is no use case for fine grain partition of bpf features.
+
+Isn't this "implicit rights" model just another kind of ambient
+authority --- one that constrains the otherwise-free filesystem
+namespace to boot? IMHO, the kernel should be moving toward explicit
+authorization tokens modeled by file descriptors and away from
+contextual authorization decisions.
