@@ -1,57 +1,82 @@
-From: Joel Fernandes <joel@joelfernandes.org>
-Subject: Re: [PATCH v5 2/6] mm/page_idle: Add support for handling swapped
- PG_Idle pages
-Date: Tue, 13 Aug 2019 11:36:59 -0400
-Message-ID: <20190813153659.GD14622@google.com>
+From: Daniel Gruss <daniel.gruss@iaik.tugraz.at>
+Subject: Re: [PATCH v5 1/6] mm/page_idle: Add per-pid idle page tracking using
+ virtual index
+Date: Tue, 13 Aug 2019 17:34:16 +0200
+Message-ID: <d6ae7f06-f0ef-ec00-a020-98e7cfada281@iaik.tugraz.at>
 References: <20190807171559.182301-1-joel@joelfernandes.org>
- <20190807171559.182301-2-joel@joelfernandes.org>
- <20190813150450.GN17933@dhcp22.suse.cz>
+ <CAG48ez0ysprvRiENhBkLeV9YPTN_MB18rbu2HDa2jsWo5FYR8g@mail.gmail.com>
+ <20190813100856.GF17933@dhcp22.suse.cz>
+ <CAG48ez2cuqe_VYhhaqw8Hcyswv47cmz2XmkqNdvkXEhokMVaXg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190813150450.GN17933@dhcp22.suse.cz>
+In-Reply-To: <CAG48ez2cuqe_VYhhaqw8Hcyswv47cmz2XmkqNdvkXEhokMVaXg@mail.gmail.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>, khlebnikov@yandex-team.ru
-Cc: linux-kernel@vger.kernel.org, Minchan Kim <minchan@kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Brendan Gregg <bgregg@netflix.com>, Catalin Marinas <catalin.marinas@arm.com>, Christian Hansen <chansen3@cisco.com>, dancol@google.com, fmayer@google.com, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, kernel-team@android.com, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, Mike Rapoport <rppt@linux.ibm.com>, namhyung@google.com, paulmck@linux.ibm.com, Robin Murphy <robin.murphy@arm.com>, Roman Gushchin <guro@fb.com>, Stephen Rothwell <sfr@>
+To: Jann Horn <jannh@google.com>, Michal Hocko <mhocko@kernel.org>, "Joel Fernandes (Google)" <joel@joelfernandes.org>
+Cc: kernel list <linux-kernel@vger.kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Brendan Gregg <bgregg@netflix.com>, Catalin Marinas <catalin.marinas@arm.com>, Christian Hansen <chansen3@cisco.com>, Daniel Colascione <dancol@google.com>, fmayer@google.com, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Joel Fernandes <joelaf@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, kernel-team <kernel-team@android.com>, Linux API <linux-api@vger.kernel.org>, linux-doc@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, Mike Rapoport <rppt@linux.ibm.com>, Minchan Kim <minchan>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 13, 2019 at 05:04:50PM +0200, Michal Hocko wrote:
-> On Wed 07-08-19 13:15:55, Joel Fernandes (Google) wrote:
-> > Idle page tracking currently does not work well in the following
-> > scenario:
-> >  1. mark page-A idle which was present at that time.
-> >  2. run workload
-> >  3. page-A is not touched by workload
-> >  4. *sudden* memory pressure happen so finally page A is finally swapped out
-> >  5. now see the page A - it appears as if it was accessed (pte unmapped
-> >     so idle bit not set in output) - but it's incorrect.
-> > 
-> > To fix this, we store the idle information into a new idle bit of the
-> > swap PTE during swapping of anonymous pages.
-> >
-> > Also in the future, madvise extensions will allow a system process
-> > manager (like Android's ActivityManager) to swap pages out of a process
-> > that it knows will be cold. To an external process like a heap profiler
-> > that is doing idle tracking on another process, this procedure will
-> > interfere with the idle page tracking similar to the above steps.
+On 8/13/19 5:29 PM, Jann Horn wrote:
+> On Tue, Aug 13, 2019 at 12:09 PM Michal Hocko <mhocko@kernel.org> wrote:
+>> On Mon 12-08-19 20:14:38, Jann Horn wrote:
+>>> On Wed, Aug 7, 2019 at 7:16 PM Joel Fernandes (Google)
+>>> <joel@joelfernandes.org> wrote:
+>>>> The page_idle tracking feature currently requires looking up the pagemap
+>>>> for a process followed by interacting with /sys/kernel/mm/page_idle.
+>>>> Looking up PFN from pagemap in Android devices is not supported by
+>>>> unprivileged process and requires SYS_ADMIN and gives 0 for the PFN.
+>>>>
+>>>> This patch adds support to directly interact with page_idle tracking at
+>>>> the PID level by introducing a /proc/<pid>/page_idle file.  It follows
+>>>> the exact same semantics as the global /sys/kernel/mm/page_idle, but now
+>>>> looking up PFN through pagemap is not needed since the interface uses
+>>>> virtual frame numbers, and at the same time also does not require
+>>>> SYS_ADMIN.
+>>>>
+>>>> In Android, we are using this for the heap profiler (heapprofd) which
+>>>> profiles and pin points code paths which allocates and leaves memory
+>>>> idle for long periods of time. This method solves the security issue
+>>>> with userspace learning the PFN, and while at it is also shown to yield
+>>>> better results than the pagemap lookup, the theory being that the window
+>>>> where the address space can change is reduced by eliminating the
+>>>> intermediate pagemap look up stage. In virtual address indexing, the
+>>>> process's mmap_sem is held for the duration of the access.
+>>>
+>>> What happens when you use this interface on shared pages, like memory
+>>> inherited from the zygote, library file mappings and so on? If two
+>>> profilers ran concurrently for two different processes that both map
+>>> the same libraries, would they end up messing up each other's data?
+>>
+>> Yup PageIdle state is shared. That is the page_idle semantic even now
+>> IIRC.
+>>
+>>> Can this be used to observe which library pages other processes are
+>>> accessing, even if you don't have access to those processes, as long
+>>> as you can map the same libraries? I realize that there are already a
+>>> bunch of ways to do that with side channels and such; but if you're
+>>> adding an interface that allows this by design, it seems to me like
+>>> something that should be gated behind some sort of privilege check.
+>>
+>> Hmm, you need to be priviledged to get the pfn now and without that you
+>> cannot get to any page so the new interface is weakening the rules.
+>> Maybe we should limit setting the idle state to processes with the write
+>> status. Or do you think that even observing idle status is useful for
+>> practical side channel attacks? If yes, is that a problem of the
+>> profiler which does potentially dangerous things?
 > 
-> This could be solved by checking the !present/swapped out pages
-> right? Whoever decided to put the page out to the swap just made it
-> idle effectively.  So the monitor can make some educated guess for
-> tracking. If that is fundamentally not possible then please describe
-> why.
+> I suppose read-only access isn't a real problem as long as the
+> profiler isn't writing the idle state in a very tight loop... but I
+> don't see a usecase where you'd actually want that? As far as I can
+> tell, if you can't write the idle state, being able to read it is
+> pretty much useless.
+> 
+> If the profiler only wants to profile process-private memory, then
+> that should be implementable in a safe way in principle, I think, but
+> since Joel said that they want to profile CoW memory as well, I think
+> that's inherently somewhat dangerous.
 
-But the monitoring process (profiler) does not have control over the 'whoever
-made it effectively idle' process.
-
-As you said it will be a guess, it will not be accurate.
-
-I am curious what is your concern with using a bit in the swap PTE?
-
-(Adding Konstantin as well since we may be interested in this, since we also
-suggested this idea).
-
-thanks,
-
- - Joel
+I agree that allowing profiling of shared pages would leak information.
+To me the use case is not entirely clear. This is not a feature that
+would normally be run in everyday computer usage, right?
