@@ -1,65 +1,44 @@
-From: Konstantin Khlebnikov <koct9i@gmail.com>
-Subject: Re: [PATCH v5 2/6] mm/page_idle: Add support for handling swapped
- PG_Idle pages
-Date: Tue, 13 Aug 2019 22:24:06 +0300
-Message-ID: <CALYGNiOj4pxZAMvM_3fJZ0xJ0E5-FfSRQbGdxb4eFC37USCYvA@mail.gmail.com>
-References: <20190807171559.182301-1-joel@joelfernandes.org>
- <20190807171559.182301-2-joel@joelfernandes.org> <20190813150450.GN17933@dhcp22.suse.cz>
- <20190813153659.GD14622@google.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH] syscalls: Update the syscall #defines to match uapi
+Date: Tue, 13 Aug 2019 21:41:17 +0200
+Message-ID: <CAK8P3a0phB6hb=Da6V=CWWmi_oYwUcpSRi6CZTqAPz7QXKFJTA@mail.gmail.com>
+References: <20190810010758.16407-1-alistair.francis@wdc.com>
+ <CAK8P3a2wYMsBRm1X-TFo1d7-B7Xug9gwqF77HitoE7wmOqD7rw@mail.gmail.com> <CAKmqyKNH7G=_gs2Hfc3OZMFaHzUwU8fSomfu_r92hJrnJHJT3A@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190813153659.GD14622@google.com>
+In-Reply-To: <CAKmqyKNH7G=_gs2Hfc3OZMFaHzUwU8fSomfu_r92hJrnJHJT3A@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Joel Fernandes <joel@joelfernandes.org>
-Cc: Michal Hocko <mhocko@kernel.org>, =?UTF-8?B?0JrQvtC90YHRgtCw0L3RgtC40L0g0KXQu9C10LHQvdC40LrQvtCy?= <khlebnikov@yandex-team.ru>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Minchan Kim <minchan@kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Brendan Gregg <bgregg@netflix.com>, Catalin Marinas <catalin.marinas@arm.com>, Christian Hansen <chansen3@cisco.com>, dancol@google.com, fmayer@google.com, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, kernel-team@android.com, Linux API <linux-api@vger.kernel.org>, linux-doc@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.or>
+To: Alistair Francis <alistair23@gmail.com>
+Cc: Alistair Francis <alistair.francis@wdc.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Deepa Dinamani <deepa.kernel@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 13, 2019 at 6:37 PM Joel Fernandes <joel@joelfernandes.org> wrote:
->
-> On Tue, Aug 13, 2019 at 05:04:50PM +0200, Michal Hocko wrote:
-> > On Wed 07-08-19 13:15:55, Joel Fernandes (Google) wrote:
-> > > Idle page tracking currently does not work well in the following
-> > > scenario:
-> > >  1. mark page-A idle which was present at that time.
-> > >  2. run workload
-> > >  3. page-A is not touched by workload
-> > >  4. *sudden* memory pressure happen so finally page A is finally swapped out
-> > >  5. now see the page A - it appears as if it was accessed (pte unmapped
-> > >     so idle bit not set in output) - but it's incorrect.
-> > >
-> > > To fix this, we store the idle information into a new idle bit of the
-> > > swap PTE during swapping of anonymous pages.
-> > >
-> > > Also in the future, madvise extensions will allow a system process
-> > > manager (like Android's ActivityManager) to swap pages out of a process
-> > > that it knows will be cold. To an external process like a heap profiler
-> > > that is doing idle tracking on another process, this procedure will
-> > > interfere with the idle page tracking similar to the above steps.
+On Tue, Aug 13, 2019 at 9:01 PM Alistair Francis <alistair23@gmail.com> wrote:
+> On Mon, Aug 12, 2019 at 2:49 AM Arnd Bergmann <arnd@arndb.de> wrote:
+
+> > > diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+> > > index 2bcef4c70183..e4bf5e480d60 100644
+> > > --- a/include/linux/syscalls.h
+> > > +++ b/include/linux/syscalls.h
+> > > @@ -512,7 +512,7 @@ asmlinkage long sys_readlinkat(int dfd, const char __user *path, char __user *bu
+> > >  asmlinkage long sys_newfstatat(int dfd, const char __user *filename,
+> > >                                struct stat __user *statbuf, int flag);
+> > >  asmlinkage long sys_newfstat(unsigned int fd, struct stat __user *statbuf);
+> > > -#if defined(__ARCH_WANT_STAT64) || defined(__ARCH_WANT_COMPAT_STAT64)
+> > > +#if defined(__ARCH_WANT_NEW_STAT) || defined(__ARCH_WANT_STAT64)
+> > >  asmlinkage long sys_fstat64(unsigned long fd, struct stat64 __user *statbuf);
+> > >  asmlinkage long sys_fstatat64(int dfd, const char __user *filename,
+> > >                                struct stat64 __user *statbuf, int flag);
 > >
-> > This could be solved by checking the !present/swapped out pages
-> > right? Whoever decided to put the page out to the swap just made it
-> > idle effectively.  So the monitor can make some educated guess for
-> > tracking. If that is fundamentally not possible then please describe
-> > why.
+> > I think this is wrong: when __ARCH_WANT_NEW_STAT is set, we are
+> > on a 64-bit architecture and only want the sys_newfstat{,at} system
+> > calls, not sys_fstat{,at}64 that gets used on 32-bit machines.
 >
-> But the monitoring process (profiler) does not have control over the 'whoever
-> made it effectively idle' process.
->
-> As you said it will be a guess, it will not be accurate.
+> Ah, that would make sense then. I don't think you will see the error then.
 
-Yep. Without saving idle bit in swap entry (and presuming that all swap is idle)
-profiler could miss access. This patch adds accurate tracking almost for free.
-After that profiler could work with any pace without races.
+So we don't need this patch to build riscv32 kernels, right? It's possible
+that it was the result of an incorrect forward port of some other patch,
+as older riscv32 kernels did provide stat64(), but newer ones only have
+statx().
 
->
-> I am curious what is your concern with using a bit in the swap PTE?
->
-> (Adding Konstantin as well since we may be interested in this, since we also
-> suggested this idea).
->
-> thanks,
->
->  - Joel
->
->
+       Arnd
