@@ -1,21 +1,30 @@
-From: Dave Hansen <dave.hansen@intel.com>
-Subject: Re: [PATCH v8 09/27] mm/mmap: Prevent Shadow Stack VMA merges
-Date: Tue, 13 Aug 2019 15:34:00 -0700
-Message-ID: <5ba3d1b3-5587-e7dd-b9de-9a954172d31f@intel.com>
-References: <20190813205225.12032-1-yu-cheng.yu@intel.com>
- <20190813205225.12032-10-yu-cheng.yu@intel.com>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH v8 15/27] mm: Handle shadow stack page fault
+Date: Tue, 13 Aug 2019 15:55:07 -0700
+Message-ID: <CALCETrVKbqzivPfUOiGi5efHUpEsfPkNzP0CrmAZzcwUgf7quA@mail.gmail.com>
+References: <20190813205225.12032-1-yu-cheng.yu@intel.com> <20190813205225.12032-16-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190813205225.12032-10-yu-cheng.yu@intel.com>
-Content-Language: en-US
+In-Reply-To: <20190813205225.12032-16-yu-cheng.yu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: X86 ML <x86@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, LKML <linux-kernel@vger.kernel.org>, "open list:DOCUMENTATION" <linux-doc@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@or>
 List-Id: linux-api@vger.kernel.org
 
-On 8/13/19 1:52 PM, Yu-cheng Yu wrote:
-> To prevent function call/return spills into the next shadow stack
-> area, do not merge shadow stack areas.
+On Tue, Aug 13, 2019 at 2:02 PM Yu-cheng Yu <yu-cheng.yu@intel.com> wrote:
+>
+> When a task does fork(), its shadow stack (SHSTK) must be duplicated
+> for the child.  This patch implements a flow similar to copy-on-write
+> of an anonymous page, but for SHSTK.
+>
+> A SHSTK PTE must be RO and dirty.  This dirty bit requirement is used
+> to effect the copying.  In copy_one_pte(), clear the dirty bit from a
+> SHSTK PTE to cause a page fault upon the next SHSTK access.  At that
+> time, fix the PTE and copy/re-use the page.
 
-How does this prevent call/return spills?
+Is using VM_SHSTK and special-casing all of this really better than
+using a special mapping or other pseudo-file-backed VMA and putting
+all the magic in the vm_operations?
+
+--Andy
