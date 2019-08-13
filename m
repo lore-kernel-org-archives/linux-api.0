@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v8 08/27] mm: Introduce VM_SHSTK for shadow stack memory
-Date: Tue, 13 Aug 2019 13:52:06 -0700
-Message-ID: <20190813205225.12032-9-yu-cheng.yu@intel.com>
+Subject: [PATCH v8 14/27] x86/mm: Shadow stack page fault error checking
+Date: Tue, 13 Aug 2019 13:52:12 -0700
+Message-ID: <20190813205225.12032-15-yu-cheng.yu@intel.com>
 References: <20190813205225.12032-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190813205225.12032-1-yu-cheng.yu@intel.com>
@@ -10,59 +10,76 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-VM_SHSTK indicates a shadow stack memory area.
-The shadow stack is implemented only for the 64-bit kernel.
+If a page fault is triggered by a shadow stack access (e.g. call/ret)
+or shadow stack management instructions (e.g. wrussq), then bit[6] of
+the page fault error code is set.
+
+In access_error(), verify a shadow stack page fault is within a
+shadow stack memory area.  It is always an error otherwise.
+
+For a valid shadow stack access, set FAULT_FLAG_WRITE to effect
+copy-on-write.
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- fs/proc/task_mmu.c | 3 +++
- include/linux/mm.h | 8 ++++++++
- 2 files changed, 11 insertions(+)
+ arch/x86/include/asm/traps.h |  2 ++
+ arch/x86/mm/fault.c          | 18 ++++++++++++++++++
+ 2 files changed, 20 insertions(+)
 
-diff --git a/fs/proc/task_mmu.c b/fs/proc/task_mmu.c
-index 731642e0f5a0..09521579cc8e 100644
---- a/fs/proc/task_mmu.c
-+++ b/fs/proc/task_mmu.c
-@@ -684,6 +684,9 @@ static void show_smap_vma_flags(struct seq_file *m, struct vm_area_struct *vma)
- 		[ilog2(VM_PKEY_BIT4)]	= "",
- #endif
- #endif /* CONFIG_ARCH_HAS_PKEYS */
-+#ifdef CONFIG_X86_INTEL_SHADOW_STACK_USER
-+		[ilog2(VM_SHSTK)]	= "ss",
-+#endif
- 	};
- 	size_t i;
+diff --git a/arch/x86/include/asm/traps.h b/arch/x86/include/asm/traps.h
+index 8691261faeb0..918b0e48b2eb 100644
+--- a/arch/x86/include/asm/traps.h
++++ b/arch/x86/include/asm/traps.h
+@@ -166,6 +166,7 @@ enum {
+  *   bit 3 ==				1: use of reserved bit detected
+  *   bit 4 ==				1: fault was an instruction fetch
+  *   bit 5 ==				1: protection keys block access
++ *   bit 6 ==				1: shadow stack access fault
+  */
+ enum x86_pf_error_code {
+ 	X86_PF_PROT	=		1 << 0,
+@@ -174,5 +175,6 @@ enum x86_pf_error_code {
+ 	X86_PF_RSVD	=		1 << 3,
+ 	X86_PF_INSTR	=		1 << 4,
+ 	X86_PF_PK	=		1 << 5,
++	X86_PF_SHSTK	=		1 << 6,
+ };
+ #endif /* _ASM_X86_TRAPS_H */
+diff --git a/arch/x86/mm/fault.c b/arch/x86/mm/fault.c
+index 9ceacd1156db..75ec38d125fc 100644
+--- a/arch/x86/mm/fault.c
++++ b/arch/x86/mm/fault.c
+@@ -1187,6 +1187,17 @@ access_error(unsigned long error_code, struct vm_area_struct *vma)
+ 				       (error_code & X86_PF_INSTR), foreign))
+ 		return 1;
  
-diff --git a/include/linux/mm.h b/include/linux/mm.h
-index 0334ca97c584..bc58585014c9 100644
---- a/include/linux/mm.h
-+++ b/include/linux/mm.h
-@@ -298,11 +298,13 @@ extern unsigned int kobjsize(const void *objp);
- #define VM_HIGH_ARCH_BIT_2	34	/* bit only usable on 64-bit architectures */
- #define VM_HIGH_ARCH_BIT_3	35	/* bit only usable on 64-bit architectures */
- #define VM_HIGH_ARCH_BIT_4	36	/* bit only usable on 64-bit architectures */
-+#define VM_HIGH_ARCH_BIT_5	37	/* bit only usable on 64-bit architectures */
- #define VM_HIGH_ARCH_0	BIT(VM_HIGH_ARCH_BIT_0)
- #define VM_HIGH_ARCH_1	BIT(VM_HIGH_ARCH_BIT_1)
- #define VM_HIGH_ARCH_2	BIT(VM_HIGH_ARCH_BIT_2)
- #define VM_HIGH_ARCH_3	BIT(VM_HIGH_ARCH_BIT_3)
- #define VM_HIGH_ARCH_4	BIT(VM_HIGH_ARCH_BIT_4)
-+#define VM_HIGH_ARCH_5	BIT(VM_HIGH_ARCH_BIT_5)
- #endif /* CONFIG_ARCH_USES_HIGH_VMA_FLAGS */
- 
- #ifdef CONFIG_ARCH_HAS_PKEYS
-@@ -340,6 +342,12 @@ extern unsigned int kobjsize(const void *objp);
- # define VM_MPX		VM_NONE
- #endif
- 
-+#ifdef CONFIG_X86_INTEL_SHADOW_STACK_USER
-+# define VM_SHSTK	VM_HIGH_ARCH_5
-+#else
-+# define VM_SHSTK	VM_NONE
-+#endif
++	/*
++	 * Verify X86_PF_SHSTK is within a shadow stack VMA.
++	 * It is always an error if there is a shadow stack
++	 * fault outside a shadow stack VMA.
++	 */
++	if (error_code & X86_PF_SHSTK) {
++		if (!(vma->vm_flags & VM_SHSTK))
++			return 1;
++		return 0;
++	}
 +
- #ifndef VM_GROWSUP
- # define VM_GROWSUP	VM_NONE
- #endif
+ 	if (error_code & X86_PF_WRITE) {
+ 		/* write, present and write, not present: */
+ 		if (unlikely(!(vma->vm_flags & VM_WRITE)))
+@@ -1344,6 +1355,13 @@ void do_user_addr_fault(struct pt_regs *regs,
+ 
+ 	perf_sw_event(PERF_COUNT_SW_PAGE_FAULTS, 1, regs, address);
+ 
++	/*
++	 * If the fault is caused by a shadow stack access,
++	 * i.e. CALL/RET/SAVEPREVSSP/RSTORSSP, then set
++	 * FAULT_FLAG_WRITE to effect copy-on-write.
++	 */
++	if (hw_error_code & X86_PF_SHSTK)
++		flags |= FAULT_FLAG_WRITE;
+ 	if (hw_error_code & X86_PF_WRITE)
+ 		flags |= FAULT_FLAG_WRITE;
+ 	if (hw_error_code & X86_PF_INSTR)
 -- 
 2.17.1
