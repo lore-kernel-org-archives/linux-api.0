@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v8 10/14] x86/vsyscall/64: Add ENDBR64 to vsyscall entry points
-Date: Tue, 13 Aug 2019 13:53:55 -0700
-Message-ID: <20190813205359.12196-11-yu-cheng.yu@intel.com>
+Subject: [PATCH v8 09/14] x86/vdso/32: Add ENDBR32 to __kernel_vsyscall entry point
+Date: Tue, 13 Aug 2019 13:53:54 -0700
+Message-ID: <20190813205359.12196-10-yu-cheng.yu@intel.com>
 References: <20190813205359.12196-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190813205359.12196-1-yu-cheng.yu@intel.com>
@@ -12,44 +12,28 @@ List-Id: linux-api@vger.kernel.org
 
 From: "H.J. Lu" <hjl.tools@gmail.com>
 
-Add ENDBR64 to vsyscall entry points.
+Add ENDBR32 to __kernel_vsyscall entry point.
 
 Acked-by: Andy Lutomirski <luto@kernel.org>
 Signed-off-by: H.J. Lu <hjl.tools@gmail.com>
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/entry/vsyscall/vsyscall_emu_64.S | 9 +++++++++
- 1 file changed, 9 insertions(+)
+ arch/x86/entry/vdso/vdso32/system_call.S | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/arch/x86/entry/vsyscall/vsyscall_emu_64.S b/arch/x86/entry/vsyscall/vsyscall_emu_64.S
-index 2e203f3a25a7..040696333457 100644
---- a/arch/x86/entry/vsyscall/vsyscall_emu_64.S
-+++ b/arch/x86/entry/vsyscall/vsyscall_emu_64.S
-@@ -17,16 +17,25 @@ __PAGE_ALIGNED_DATA
- 	.type __vsyscall_page, @object
- __vsyscall_page:
- 
+diff --git a/arch/x86/entry/vdso/vdso32/system_call.S b/arch/x86/entry/vdso/vdso32/system_call.S
+index 263d7433dea8..2fc8141fff4e 100644
+--- a/arch/x86/entry/vdso/vdso32/system_call.S
++++ b/arch/x86/entry/vdso/vdso32/system_call.S
+@@ -14,6 +14,9 @@
+ 	ALIGN
+ __kernel_vsyscall:
+ 	CFI_STARTPROC
 +#ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
-+	endbr64
++	endbr32
 +#endif
- 	mov $__NR_gettimeofday, %rax
- 	syscall
- 	ret
- 
- 	.balign 1024, 0xcc
-+#ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
-+	endbr64
-+#endif
- 	mov $__NR_time, %rax
- 	syscall
- 	ret
- 
- 	.balign 1024, 0xcc
-+#ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
-+	endbr64
-+#endif
- 	mov $__NR_getcpu, %rax
- 	syscall
- 	ret
+ 	/*
+ 	 * Reshuffle regs so that all of any of the entry instructions
+ 	 * will preserve enough state.
 -- 
 2.17.1
