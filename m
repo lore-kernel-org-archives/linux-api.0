@@ -1,7 +1,7 @@
 From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: [PATCH v8 04/14] mm/mmap: Add IBT bitmap size to address space limit check
-Date: Tue, 13 Aug 2019 13:53:49 -0700
-Message-ID: <20190813205359.12196-5-yu-cheng.yu@intel.com>
+Subject: [PATCH v8 12/14] x86/cet: Add PTRACE interface for CET
+Date: Tue, 13 Aug 2019 13:53:57 -0700
+Message-ID: <20190813205359.12196-13-yu-cheng.yu@intel.com>
 References: <20190813205359.12196-1-yu-cheng.yu@intel.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190813205359.12196-1-yu-cheng.yu@intel.com>
@@ -10,73 +10,144 @@ To: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linu
 Cc: Yu-cheng Yu <yu-cheng.yu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-The indirect branch tracking legacy bitmap takes a large address
-space.  This causes may_expand_vm() failure on the address limit
-check.  For a IBT-enabled task, add the bitmap size to the
-address limit.
+Add REGSET_CET64/REGSET_CET32 to get/set CET MSRs:
+
+    IA32_U_CET (user-mode CET settings) and
+    IA32_PL3_SSP (user-mode shadow stack)
 
 Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 ---
- arch/x86/include/asm/mmu_context.h | 10 ++++++++++
- mm/mmap.c                          | 19 ++++++++++++++++++-
- 2 files changed, 28 insertions(+), 1 deletion(-)
+ arch/x86/include/asm/fpu/regset.h |  7 +++---
+ arch/x86/kernel/fpu/regset.c      | 41 +++++++++++++++++++++++++++++++
+ arch/x86/kernel/ptrace.c          | 16 ++++++++++++
+ include/uapi/linux/elf.h          |  1 +
+ 4 files changed, 62 insertions(+), 3 deletions(-)
 
-diff --git a/arch/x86/include/asm/mmu_context.h b/arch/x86/include/asm/mmu_context.h
-index a9a768529540..e18e89ef332d 100644
---- a/arch/x86/include/asm/mmu_context.h
-+++ b/arch/x86/include/asm/mmu_context.h
-@@ -360,6 +360,16 @@ static inline unsigned long __get_current_cr3_fast(void)
- 	return cr3;
+diff --git a/arch/x86/include/asm/fpu/regset.h b/arch/x86/include/asm/fpu/regset.h
+index d5bdffb9d27f..edad0d889084 100644
+--- a/arch/x86/include/asm/fpu/regset.h
++++ b/arch/x86/include/asm/fpu/regset.h
+@@ -7,11 +7,12 @@
+ 
+ #include <linux/regset.h>
+ 
+-extern user_regset_active_fn regset_fpregs_active, regset_xregset_fpregs_active;
++extern user_regset_active_fn regset_fpregs_active, regset_xregset_fpregs_active,
++				cetregs_active;
+ extern user_regset_get_fn fpregs_get, xfpregs_get, fpregs_soft_get,
+-				xstateregs_get;
++				xstateregs_get, cetregs_get;
+ extern user_regset_set_fn fpregs_set, xfpregs_set, fpregs_soft_set,
+-				 xstateregs_set;
++				 xstateregs_set, cetregs_set;
+ 
+ /*
+  * xstateregs_active == regset_fpregs_active. Please refer to the comment
+diff --git a/arch/x86/kernel/fpu/regset.c b/arch/x86/kernel/fpu/regset.c
+index d652b939ccfb..2937ec9d9215 100644
+--- a/arch/x86/kernel/fpu/regset.c
++++ b/arch/x86/kernel/fpu/regset.c
+@@ -156,6 +156,47 @@ int xstateregs_set(struct task_struct *target, const struct user_regset *regset,
+ 	return ret;
  }
  
-+#ifdef CONFIG_X86_INTEL_BRANCH_TRACKING_USER
-+static inline unsigned long arch_as_limit(void)
++int cetregs_active(struct task_struct *target, const struct user_regset *regset)
 +{
-+	if (current->thread.cet.ibt_enabled)
-+		return IBT_BITMAP_SIZE;
-+	else
-+		return 0;
-+}
++#ifdef CONFIG_X86_INTEL_CET
++	if (target->thread.cet.shstk_enabled || target->thread.cet.ibt_enabled)
++		return regset->n;
 +#endif
-+
- typedef struct {
- 	struct mm_struct *mm;
- } temp_mm_state_t;
-diff --git a/mm/mmap.c b/mm/mmap.c
-index 1acded00f003..1bfd9aec9aed 100644
---- a/mm/mmap.c
-+++ b/mm/mmap.c
-@@ -3283,13 +3283,30 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
- 	return NULL;
- }
- 
-+#ifndef CONFIG_ARCH_HAS_AS_LIMIT
-+static inline unsigned long arch_as_limit(void)
-+{
 +	return 0;
 +}
-+#endif
 +
- /*
-  * Return true if the calling process may expand its vm space by the passed
-  * number of pages
-  */
- bool may_expand_vm(struct mm_struct *mm, vm_flags_t flags, unsigned long npages)
- {
--	if (mm->total_vm + npages > rlimit(RLIMIT_AS) >> PAGE_SHIFT)
-+	unsigned long as_limit = rlimit(RLIMIT_AS);
-+	unsigned long as_limit_plus = as_limit + arch_as_limit();
++int cetregs_get(struct task_struct *target, const struct user_regset *regset,
++		unsigned int pos, unsigned int count,
++		void *kbuf, void __user *ubuf)
++{
++	struct fpu *fpu = &target->thread.fpu;
++	struct cet_user_state *cetregs;
 +
-+	/* as_limit_plus overflowed */
-+	if (as_limit_plus < as_limit)
-+		as_limit_plus = RLIM_INFINITY;
++	if (!boot_cpu_has(X86_FEATURE_SHSTK))
++		return -ENODEV;
 +
-+	if (as_limit_plus > as_limit)
-+		as_limit = as_limit_plus;
++	cetregs = get_xsave_addr(&fpu->state.xsave, XFEATURE_CET_USER);
 +
-+	if (mm->total_vm + npages > as_limit >> PAGE_SHIFT)
- 		return false;
++	fpu__prepare_read(fpu);
++	return user_regset_copyout(&pos, &count, &kbuf, &ubuf, cetregs, 0, -1);
++}
++
++int cetregs_set(struct task_struct *target, const struct user_regset *regset,
++		  unsigned int pos, unsigned int count,
++		  const void *kbuf, const void __user *ubuf)
++{
++	struct fpu *fpu = &target->thread.fpu;
++	struct cet_user_state *cetregs;
++
++	if (!boot_cpu_has(X86_FEATURE_SHSTK))
++		return -ENODEV;
++
++	cetregs = get_xsave_addr(&fpu->state.xsave, XFEATURE_CET_USER);
++
++	fpu__prepare_write(fpu);
++	return user_regset_copyin(&pos, &count, &kbuf, &ubuf, cetregs, 0, -1);
++}
++
+ #if defined CONFIG_X86_32 || defined CONFIG_IA32_EMULATION
  
- 	if (is_data_mapping(flags) &&
+ /*
+diff --git a/arch/x86/kernel/ptrace.c b/arch/x86/kernel/ptrace.c
+index 3c5bbe8e4120..4bae0faa5331 100644
+--- a/arch/x86/kernel/ptrace.c
++++ b/arch/x86/kernel/ptrace.c
+@@ -52,7 +52,9 @@ enum x86_regset {
+ 	REGSET_IOPERM64 = REGSET_XFP,
+ 	REGSET_XSTATE,
+ 	REGSET_TLS,
++	REGSET_CET64 = REGSET_TLS,
+ 	REGSET_IOPERM32,
++	REGSET_CET32,
+ };
+ 
+ struct pt_regs_offset {
+@@ -1239,6 +1241,13 @@ static struct user_regset x86_64_regsets[] __ro_after_init = {
+ 		.size = sizeof(long), .align = sizeof(long),
+ 		.active = ioperm_active, .get = ioperm_get
+ 	},
++	[REGSET_CET64] = {
++		.core_note_type = NT_X86_CET,
++		.n = sizeof(struct cet_user_state) / sizeof(u64),
++		.size = sizeof(u64), .align = sizeof(u64),
++		.active = cetregs_active, .get = cetregs_get,
++		.set = cetregs_set
++	},
+ };
+ 
+ static const struct user_regset_view user_x86_64_view = {
+@@ -1294,6 +1303,13 @@ static struct user_regset x86_32_regsets[] __ro_after_init = {
+ 		.size = sizeof(u32), .align = sizeof(u32),
+ 		.active = ioperm_active, .get = ioperm_get
+ 	},
++	[REGSET_CET32] = {
++		.core_note_type = NT_X86_CET,
++		.n = sizeof(struct cet_user_state) / sizeof(u64),
++		.size = sizeof(u64), .align = sizeof(u64),
++		.active = cetregs_active, .get = cetregs_get,
++		.set = cetregs_set
++	},
+ };
+ 
+ static const struct user_regset_view user_x86_32_view = {
+diff --git a/include/uapi/linux/elf.h b/include/uapi/linux/elf.h
+index 530ce08467c2..349c435a2ce1 100644
+--- a/include/uapi/linux/elf.h
++++ b/include/uapi/linux/elf.h
+@@ -401,6 +401,7 @@ typedef struct elf64_shdr {
+ #define NT_386_TLS	0x200		/* i386 TLS slots (struct user_desc) */
+ #define NT_386_IOPERM	0x201		/* x86 io permission bitmap (1=deny) */
+ #define NT_X86_XSTATE	0x202		/* x86 extended state using xsave */
++#define NT_X86_CET	0x203		/* x86 cet state */
+ #define NT_S390_HIGH_GPRS	0x300	/* s390 upper register halves */
+ #define NT_S390_TIMER	0x301		/* s390 timer register */
+ #define NT_S390_TODCMP	0x302		/* s390 TOD clock comparator register */
 -- 
 2.17.1
