@@ -1,215 +1,56 @@
 From: Joel Fernandes <joel@joelfernandes.org>
-Subject: Re: [PATCH v5 1/6] mm/page_idle: Add per-pid idle page tracking
- using virtual index
-Date: Tue, 13 Aug 2019 11:30:20 -0400
-Message-ID: <20190813153020.GC14622@google.com>
+Subject: Re: [PATCH v5 2/6] mm/page_idle: Add support for handling swapped
+ PG_Idle pages
+Date: Tue, 13 Aug 2019 11:36:59 -0400
+Message-ID: <20190813153659.GD14622@google.com>
 References: <20190807171559.182301-1-joel@joelfernandes.org>
- <CAG48ez0ysprvRiENhBkLeV9YPTN_MB18rbu2HDa2jsWo5FYR8g@mail.gmail.com>
+ <20190807171559.182301-2-joel@joelfernandes.org>
+ <20190813150450.GN17933@dhcp22.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAG48ez0ysprvRiENhBkLeV9YPTN_MB18rbu2HDa2jsWo5FYR8g@mail.gmail.com>
+In-Reply-To: <20190813150450.GN17933@dhcp22.suse.cz>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: kernel list <linux-kernel@vger.kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Brendan Gregg <bgregg@netflix.com>, Catalin Marinas <catalin.marinas@arm.com>, Christian Hansen <chansen3@cisco.com>, Daniel Colascione <dancol@google.com>, fmayer@google.com, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, kernel-team <kernel-team@android.com>, Linux API <linux-api@vger.kernel.org>, linux-doc@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, Michal Hocko <mhocko@suse.com>, Mike Rapoport <rppt@linux.ibm.com>, Minchan Kim <minchan@kernel.org>, namhyu
+To: Michal Hocko <mhocko@kernel.org>, khlebnikov@yandex-team.ru
+Cc: linux-kernel@vger.kernel.org, Minchan Kim <minchan@kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Brendan Gregg <bgregg@netflix.com>, Catalin Marinas <catalin.marinas@arm.com>, Christian Hansen <chansen3@cisco.com>, dancol@google.com, fmayer@google.com, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, kernel-team@android.com, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, Mike Rapoport <rppt@linux.ibm.com>, namhyung@google.com, paulmck@linux.ibm.com, Robin Murphy <robin.murphy@arm.com>, Roman Gushchin <guro@fb.com>, Stephen Rothwell <sfr@>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Aug 12, 2019 at 08:14:38PM +0200, Jann Horn wrote:
-[snip] 
-> > +/* Helper to get the start and end frame given a pos and count */
-> > +static int page_idle_get_frames(loff_t pos, size_t count, struct mm_struct *mm,
-> > +                               unsigned long *start, unsigned long *end)
-> > +{
-> > +       unsigned long max_frame;
-> > +
-> > +       /* If an mm is not given, assume we want physical frames */
-> > +       max_frame = mm ? (mm->task_size >> PAGE_SHIFT) : max_pfn;
-> > +
-> > +       if (pos % BITMAP_CHUNK_SIZE || count % BITMAP_CHUNK_SIZE)
-> > +               return -EINVAL;
-> > +
-> > +       *start = pos * BITS_PER_BYTE;
-> > +       if (*start >= max_frame)
-> > +               return -ENXIO;
-> > +
-> > +       *end = *start + count * BITS_PER_BYTE;
-> > +       if (*end > max_frame)
-> > +               *end = max_frame;
-> > +       return 0;
-> > +}
+On Tue, Aug 13, 2019 at 05:04:50PM +0200, Michal Hocko wrote:
+> On Wed 07-08-19 13:15:55, Joel Fernandes (Google) wrote:
+> > Idle page tracking currently does not work well in the following
+> > scenario:
+> >  1. mark page-A idle which was present at that time.
+> >  2. run workload
+> >  3. page-A is not touched by workload
+> >  4. *sudden* memory pressure happen so finally page A is finally swapped out
+> >  5. now see the page A - it appears as if it was accessed (pte unmapped
+> >     so idle bit not set in output) - but it's incorrect.
+> > 
+> > To fix this, we store the idle information into a new idle bit of the
+> > swap PTE during swapping of anonymous pages.
+> >
+> > Also in the future, madvise extensions will allow a system process
+> > manager (like Android's ActivityManager) to swap pages out of a process
+> > that it knows will be cold. To an external process like a heap profiler
+> > that is doing idle tracking on another process, this procedure will
+> > interfere with the idle page tracking similar to the above steps.
 > 
-> You could add some overflow checks for the multiplications. I haven't
-> seen any place where it actually matters, but it seems unclean; and in
-> particular, on a 32-bit architecture where the maximum user address is
-> very high (like with a 4G:4G split), it looks like this function might
-> theoretically return with `*start > *end`, which could be confusing to
-> callers.
+> This could be solved by checking the !present/swapped out pages
+> right? Whoever decided to put the page out to the swap just made it
+> idle effectively.  So the monitor can make some educated guess for
+> tracking. If that is fundamentally not possible then please describe
+> why.
 
-I could store the multiplication result in unsigned long long (since we are
-bounds checking with max_frame, start > end would not occur). Something like
-the following (with extraneous casts). But I'll think some more about the
-point you are raising.
+But the monitoring process (profiler) does not have control over the 'whoever
+made it effectively idle' process.
 
-diff --git a/mm/page_idle.c b/mm/page_idle.c
-index 1ea21bbb36cb..8fd7a5559986 100644
---- a/mm/page_idle.c
-+++ b/mm/page_idle.c
-@@ -135,6 +135,7 @@ static int page_idle_get_frames(loff_t pos, size_t count, struct mm_struct *mm,
- 				unsigned long *start, unsigned long *end)
- {
- 	unsigned long max_frame;
-+	unsigned long long tmp;
- 
- 	/* If an mm is not given, assume we want physical frames */
- 	max_frame = mm ? (mm->task_size >> PAGE_SHIFT) : max_pfn;
-@@ -142,13 +143,16 @@ static int page_idle_get_frames(loff_t pos, size_t count, struct mm_struct *mm,
- 	if (pos % BITMAP_CHUNK_SIZE || count % BITMAP_CHUNK_SIZE)
- 		return -EINVAL;
- 
--	*start = pos * BITS_PER_BYTE;
--	if (*start >= max_frame)
-+	tmp = pos * BITS_PER_BYTE;
-+	if (tmp >= (unsigned long long)max_frame)
- 		return -ENXIO;
-+	*start = (unsigned long)tmp;
- 
--	*end = *start + count * BITS_PER_BYTE;
--	if (*end > max_frame)
-+	tmp = *start + count * BITS_PER_BYTE;
-+	if (tmp > (unsigned long long)max_frame)
- 		*end = max_frame;
-+	else
-+		*end = (unsigned long)tmp;
- 	return 0;
- }
- 
-> [...]
-> >         for (; pfn < end_pfn; pfn++) {
-> >                 bit = pfn % BITMAP_CHUNK_BITS;
-> >                 if (!bit)
-> >                         *out = 0ULL;
-> > -               page = page_idle_get_page(pfn);
-> > -               if (page) {
-> > -                       if (page_is_idle(page)) {
-> > -                               /*
-> > -                                * The page might have been referenced via a
-> > -                                * pte, in which case it is not idle. Clear
-> > -                                * refs and recheck.
-> > -                                */
-> > -                               page_idle_clear_pte_refs(page);
-> > -                               if (page_is_idle(page))
-> > -                                       *out |= 1ULL << bit;
-> > -                       }
-> > +               page = page_idle_get_page_pfn(pfn);
-> > +               if (page && page_idle_pte_check(page)) {
-> > +                       *out |= 1ULL << bit;
-> >                         put_page(page);
-> >                 }
-> 
-> The `page && !page_idle_pte_check(page)` case looks like it's missing
-> a put_page(); you probably intended to write something like this?
-> 
->     page = page_idle_get_page_pfn(pfn);
->     if (page) {
->         if (page_idle_pte_check(page))
->             *out |= 1ULL << bit;
->         put_page(page);
->     }
+As you said it will be a guess, it will not be accurate.
 
-Ah, you're right. Will fix, good eyes and thank you!
+I am curious what is your concern with using a bit in the swap PTE?
 
-> [...]
-> > +/*  page_idle tracking for /proc/<pid>/page_idle */
-> > +
-> > +struct page_node {
-> > +       struct page *page;
-> > +       unsigned long addr;
-> > +       struct list_head list;
-> > +};
-> > +
-> > +struct page_idle_proc_priv {
-> > +       unsigned long start_addr;
-> > +       char *buffer;
-> > +       int write;
-> > +
-> > +       /* Pre-allocate and provide nodes to pte_page_idle_proc_add() */
-> > +       struct page_node *page_nodes;
-> > +       int cur_page_node;
-> > +       struct list_head *idle_page_list;
-> > +};
-> 
-> A linked list is a weird data structure to use if the list elements
-> are just consecutive array elements.
-
-Not all of the pages will be considered in the later parts of the code, some
-pages are skipped.
-
-However, in v4 I added an array to allocate all the page_node structures,
-since Andrew did not want GFP_ATOMIC allocations of individual list nodes.
-
-So I think I could get rid of the linked list and leave the unused
-page_node(s) as NULL, but I don't know I have to check if that is possible. I
-could be missing a corner case, regardless I'll make a note of this and try!
-
-> > +/*
-> > + * Add page to list to be set as idle later.
-> > + */
-> > +static void pte_page_idle_proc_add(struct page *page,
-> > +                              unsigned long addr, struct mm_walk *walk)
-> > +{
-> > +       struct page *page_get = NULL;
-> > +       struct page_node *pn;
-> > +       int bit;
-> > +       unsigned long frames;
-> > +       struct page_idle_proc_priv *priv = walk->private;
-> > +       u64 *chunk = (u64 *)priv->buffer;
-> > +
-> > +       if (priv->write) {
-> > +               VM_BUG_ON(!page);
-> > +
-> > +               /* Find whether this page was asked to be marked */
-> > +               frames = (addr - priv->start_addr) >> PAGE_SHIFT;
-> > +               bit = frames % BITMAP_CHUNK_BITS;
-> > +               chunk = &chunk[frames / BITMAP_CHUNK_BITS];
-> > +               if (((*chunk >> bit) & 1) == 0)
-> > +                       return;
-> 
-> This means that BITMAP_CHUNK_SIZE is UAPI on big-endian systems,
-> right? My opinion is that it would be slightly nicer to design the
-> UAPI such that incrementing virtual addresses are mapped to
-> incrementing offsets in the buffer (iow, either use bytewise access or
-> use little-endian), but I'm not going to ask you to redesign the UAPI
-> this late.
-
-That would also be slow and consume more memory in userspace buffers.
-Currently, a 64-bit (8 byte) chunk accounts for 64 pages worth or 256KB.
-
-Also I wanted to keep the interface consistent with the global
-/sys/kernel/mm/page_idle interface.
-
-> [...]
-> > +ssize_t page_idle_proc_generic(struct file *file, char __user *ubuff,
-> > +                              size_t count, loff_t *pos, int write)
-> > +{
-> [...]
-> > +       down_read(&mm->mmap_sem);
-> [...]
-> > +
-> > +       if (!write && !walk_error)
-> > +               ret = copy_to_user(ubuff, buffer, count);
-> > +
-> > +       up_read(&mm->mmap_sem);
-> 
-> I'd move the up_read() above the copy_to_user(); copy_to_user() can
-> block, and there's no reason to hold the mmap_sem across
-> copy_to_user().
-
-Will do.
-
-> Sorry about only chiming in at v5 with all this.
-
-No problem, I'm glad you did!
+(Adding Konstantin as well since we may be interested in this, since we also
+suggested this idea).
 
 thanks,
 
