@@ -1,63 +1,100 @@
-From: Alistair Francis <alistair23@gmail.com>
-Subject: Re: [PATCH] syscalls: Update the syscall #defines to match uapi
-Date: Tue, 13 Aug 2019 11:57:20 -0700
-Message-ID: <CAKmqyKNH7G=_gs2Hfc3OZMFaHzUwU8fSomfu_r92hJrnJHJT3A@mail.gmail.com>
-References: <20190810010758.16407-1-alistair.francis@wdc.com> <CAK8P3a2wYMsBRm1X-TFo1d7-B7Xug9gwqF77HitoE7wmOqD7rw@mail.gmail.com>
+From: Joel Fernandes <joel@joelfernandes.org>
+Subject: Re: [PATCH v5 1/6] mm/page_idle: Add per-pid idle page tracking
+ using virtual index
+Date: Tue, 13 Aug 2019 15:18:11 -0400
+Message-ID: <20190813191811.GA117503@google.com>
+References: <20190807171559.182301-1-joel@joelfernandes.org>
+ <CAG48ez0ysprvRiENhBkLeV9YPTN_MB18rbu2HDa2jsWo5FYR8g@mail.gmail.com>
+ <20190813100856.GF17933@dhcp22.suse.cz>
+ <CAG48ez2cuqe_VYhhaqw8Hcyswv47cmz2XmkqNdvkXEhokMVaXg@mail.gmail.com>
+ <d6ae7f06-f0ef-ec00-a020-98e7cfada281@iaik.tugraz.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAK8P3a2wYMsBRm1X-TFo1d7-B7Xug9gwqF77HitoE7wmOqD7rw@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <d6ae7f06-f0ef-ec00-a020-98e7cfada281@iaik.tugraz.at>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Alistair Francis <alistair.francis@wdc.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Deepa Dinamani <deepa.kernel@gmail.com>
+To: Daniel Gruss <daniel.gruss@iaik.tugraz.at>
+Cc: Jann Horn <jannh@google.com>, Michal Hocko <mhocko@kernel.org>, kernel list <linux-kernel@vger.kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Brendan Gregg <bgregg@netflix.com>, Catalin Marinas <catalin.marinas@arm.com>, Christian Hansen <chansen3@cisco.com>, Daniel Colascione <dancol@google.com>, fmayer@google.com, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, kernel-team <kernel-team@android.com>, Linux API <linux-api@vger.kernel.org>, linux-doc@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, Mike Rapoport <rppt@linux.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Aug 12, 2019 at 2:49 AM Arnd Bergmann <arnd@arndb.de> wrote:
->
-> On Sat, Aug 10, 2019 at 3:11 AM Alistair Francis
-> <alistair.francis@wdc.com> wrote:
-> >
-> > Update the #defines around sys_fstat64() and sys_fstatat64() to match
-> > the #defines around the __NR3264_fstatat and __NR3264_fstat definitions
-> > in include/uapi/asm-generic/unistd.h. This avoids compiler failures if
-> > one is defined.
->
-> What is the compiler failure you get?
+On Tue, Aug 13, 2019 at 05:34:16PM +0200, Daniel Gruss wrote:
+> On 8/13/19 5:29 PM, Jann Horn wrote:
+> > On Tue, Aug 13, 2019 at 12:09 PM Michal Hocko <mhocko@kernel.org> wrote:
+> >> On Mon 12-08-19 20:14:38, Jann Horn wrote:
+> >>> On Wed, Aug 7, 2019 at 7:16 PM Joel Fernandes (Google)
+> >>> <joel@joelfernandes.org> wrote:
+> >>>> The page_idle tracking feature currently requires looking up the pagemap
+> >>>> for a process followed by interacting with /sys/kernel/mm/page_idle.
+> >>>> Looking up PFN from pagemap in Android devices is not supported by
+> >>>> unprivileged process and requires SYS_ADMIN and gives 0 for the PFN.
+> >>>>
+> >>>> This patch adds support to directly interact with page_idle tracking at
+> >>>> the PID level by introducing a /proc/<pid>/page_idle file.  It follows
+> >>>> the exact same semantics as the global /sys/kernel/mm/page_idle, but now
+> >>>> looking up PFN through pagemap is not needed since the interface uses
+> >>>> virtual frame numbers, and at the same time also does not require
+> >>>> SYS_ADMIN.
+> >>>>
+> >>>> In Android, we are using this for the heap profiler (heapprofd) which
+> >>>> profiles and pin points code paths which allocates and leaves memory
+> >>>> idle for long periods of time. This method solves the security issue
+> >>>> with userspace learning the PFN, and while at it is also shown to yield
+> >>>> better results than the pagemap lookup, the theory being that the window
+> >>>> where the address space can change is reduced by eliminating the
+> >>>> intermediate pagemap look up stage. In virtual address indexing, the
+> >>>> process's mmap_sem is held for the duration of the access.
+> >>>
+> >>> What happens when you use this interface on shared pages, like memory
+> >>> inherited from the zygote, library file mappings and so on? If two
+> >>> profilers ran concurrently for two different processes that both map
+> >>> the same libraries, would they end up messing up each other's data?
+> >>
+> >> Yup PageIdle state is shared. That is the page_idle semantic even now
+> >> IIRC.
+> >>
+> >>> Can this be used to observe which library pages other processes are
+> >>> accessing, even if you don't have access to those processes, as long
+> >>> as you can map the same libraries? I realize that there are already a
+> >>> bunch of ways to do that with side channels and such; but if you're
+> >>> adding an interface that allows this by design, it seems to me like
+> >>> something that should be gated behind some sort of privilege check.
+> >>
+> >> Hmm, you need to be priviledged to get the pfn now and without that you
+> >> cannot get to any page so the new interface is weakening the rules.
+> >> Maybe we should limit setting the idle state to processes with the write
+> >> status. Or do you think that even observing idle status is useful for
+> >> practical side channel attacks? If yes, is that a problem of the
+> >> profiler which does potentially dangerous things?
+> > 
+> > I suppose read-only access isn't a real problem as long as the
+> > profiler isn't writing the idle state in a very tight loop... but I
+> > don't see a usecase where you'd actually want that? As far as I can
+> > tell, if you can't write the idle state, being able to read it is
+> > pretty much useless.
+> > 
+> > If the profiler only wants to profile process-private memory, then
+> > that should be implementable in a safe way in principle, I think, but
+> > since Joel said that they want to profile CoW memory as well, I think
+> > that's inherently somewhat dangerous.
+> 
+> I agree that allowing profiling of shared pages would leak information.
 
-I don't have it infornt of me but it was along the lines of
-sys_fstat64/sys_fstatat64 not being defined when __ARCH_WANT_NEW_STAT
-is defined but __ARCH_WANT_STAT64 isn't.
+Will think more about it. If we limit it to private pages, then it could
+become useless. Consider a scenario where:
+A process allocates a some memory, then forks a bunch of worker processes
+that read that memory and perform some work with them. Per-PID page idle
+tracking is now run on the parent processes. Now it should appear that the
+pages are actively accessed (not-idle). If we don't track shared pages, then
+we cannot detect if those pages are really due to memory leaking, or if they
+are there for a purpose and are actively used.
 
->
-> > Signed-off-by: Alistair Francis <alistair.francis@wdc.com>
-> > ---
-> >  include/linux/syscalls.h | 2 +-
-> >  1 file changed, 1 insertion(+), 1 deletion(-)
-> >
-> > diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-> > index 2bcef4c70183..e4bf5e480d60 100644
-> > --- a/include/linux/syscalls.h
-> > +++ b/include/linux/syscalls.h
-> > @@ -512,7 +512,7 @@ asmlinkage long sys_readlinkat(int dfd, const char __user *path, char __user *bu
-> >  asmlinkage long sys_newfstatat(int dfd, const char __user *filename,
-> >                                struct stat __user *statbuf, int flag);
-> >  asmlinkage long sys_newfstat(unsigned int fd, struct stat __user *statbuf);
-> > -#if defined(__ARCH_WANT_STAT64) || defined(__ARCH_WANT_COMPAT_STAT64)
-> > +#if defined(__ARCH_WANT_NEW_STAT) || defined(__ARCH_WANT_STAT64)
-> >  asmlinkage long sys_fstat64(unsigned long fd, struct stat64 __user *statbuf);
-> >  asmlinkage long sys_fstatat64(int dfd, const char __user *filename,
-> >                                struct stat64 __user *statbuf, int flag);
->
-> I think this is wrong: when __ARCH_WANT_NEW_STAT is set, we are
-> on a 64-bit architecture and only want the sys_newfstat{,at} system
-> calls, not sys_fstat{,at}64 that gets used on 32-bit machines.
+> To me the use case is not entirely clear. This is not a feature that
+> would normally be run in everyday computer usage, right?
 
-Ah, that would make sense then. I don't think you will see the error then.
+Generally, this to be used as a debugging feature that helps developers
+detect memory leaks in their programs.
 
-Alistair
+thanks,
 
->
-> The #if check in the syscalls.h file also matches the definition of
-> the function.
->
->        Arnd
+ - Joel
