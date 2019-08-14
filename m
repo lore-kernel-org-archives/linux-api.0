@@ -1,49 +1,31 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [RESEND PATCH 1/2 -mm] mm: account lazy free pages separately
-Date: Wed, 14 Aug 2019 14:53:34 +0200
-Message-ID: <20190814125334.GX17933@dhcp22.suse.cz>
-References: <1565308665-24747-1-git-send-email-yang.shi@linux.alibaba.com>
- <20190809083216.GM18351@dhcp22.suse.cz>
- <1a3c4185-c7ab-8d6f-8191-77dce02025a7@linux.alibaba.com>
- <20190809180238.GS18351@dhcp22.suse.cz>
- <79c90f6b-fcac-02e1-015a-0eaa4eafdf7d@linux.alibaba.com>
- <564a0860-94f1-6301-5527-5c2272931d8b@suse.cz>
+From: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Subject: Re: [PATCH v8 01/27] Documentation/x86: Add CET description
+Date: Wed, 14 Aug 2019 08:57:19 -0700
+Message-ID: <84fc1b3bb2dbcf52ca79cb1141a431e087f082b5.camel@intel.com>
+References: <20190813205225.12032-1-yu-cheng.yu@intel.com>
+         <20190813205225.12032-2-yu-cheng.yu@intel.com>
+         <87tvakgofi.fsf@oldenburg2.str.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <564a0860-94f1-6301-5527-5c2272931d8b@suse.cz>
+In-Reply-To: <87tvakgofi.fsf@oldenburg2.str.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Vlastimil Babka <vbabka@suse.cz>
-Cc: Yang Shi <yang.shi@linux.alibaba.com>, kirill.shutemov@linux.intel.com, hannes@cmpxchg.org, rientjes@google.com, akpm@linux-foundation.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
+To: Florian Weimer <fweimer@redhat.com>
+Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel
 List-Id: linux-api@vger.kernel.org
 
-On Wed 14-08-19 14:49:18, Vlastimil Babka wrote:
-> On 8/9/19 8:26 PM, Yang Shi wrote:
-> > Here the new counter is introduced for patch 2/2 to account deferred 
-> > split THPs into available memory since NR_ANON_THPS may contain 
-> > non-deferred split THPs.
-> > 
-> > I could use an internal counter for deferred split THPs, but if it is 
-> > accounted by mod_node_page_state, why not just show it in /proc/meminfo? 
+On Wed, 2019-08-14 at 10:07 +0200, Florian Weimer wrote:
+> * Yu-cheng Yu:
 > 
-> The answer to "Why not" is that it becomes part of userspace API (btw this
-> patchset should have CC'd linux-api@ - please do for further iterations) and
-> even if the implementation detail of deferred splitting might change in the
-> future, we'll basically have to keep the counter (even with 0 value) in
-> /proc/meminfo forever.
+> > +ENDBR
+> > +    The compiler inserts an ENDBR at all valid branch targets.  Any
+> > +    CALL/JMP to a target without an ENDBR triggers a control
+> > +    protection fault.
 > 
-> Also, quite recently we have added the following counter:
-> 
-> KReclaimable: Kernel allocations that the kernel will attempt to reclaim
->               under memory pressure. Includes SReclaimable (below), and other
->               direct allocations with a shrinker.
-> 
-> Although THP allocations are not exactly "kernel allocations", once they are
-> unmapped, they are in fact kernel-only, so IMHO it wouldn't be a big stretch to
-> add the lazy THP pages there?
+> Is this really correct?  I think ENDBR is needed only for indirect
+> branch targets where the jump/call does not have a NOTRACK prefix.
 
-That would indeed fit in much better than a dedicated counter.
--- 
-Michal Hocko
-SUSE Labs
+You are right.  I will fix the wording.
+
+Yu-cheng
