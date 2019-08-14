@@ -1,31 +1,48 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [PATCH v8 01/27] Documentation/x86: Add CET description
-Date: Wed, 14 Aug 2019 10:07:45 +0200
-Message-ID: <87tvakgofi.fsf@oldenburg2.str.redhat.com>
-References: <20190813205225.12032-1-yu-cheng.yu@intel.com>
-        <20190813205225.12032-2-yu-cheng.yu@intel.com>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [RESEND PATCH 1/2 -mm] mm: account lazy free pages separately
+Date: Wed, 14 Aug 2019 14:49:18 +0200
+Message-ID: <564a0860-94f1-6301-5527-5c2272931d8b@suse.cz>
+References: <1565308665-24747-1-git-send-email-yang.shi@linux.alibaba.com>
+ <20190809083216.GM18351@dhcp22.suse.cz>
+ <1a3c4185-c7ab-8d6f-8191-77dce02025a7@linux.alibaba.com>
+ <20190809180238.GS18351@dhcp22.suse.cz>
+ <79c90f6b-fcac-02e1-015a-0eaa4eafdf7d@linux.alibaba.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190813205225.12032-2-yu-cheng.yu@intel.com> (Yu-cheng Yu's
-        message of "Tue, 13 Aug 2019 13:51:59 -0700")
+In-Reply-To: <79c90f6b-fcac-02e1-015a-0eaa4eafdf7d@linux.alibaba.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pavel
+To: Yang Shi <yang.shi@linux.alibaba.com>, Michal Hocko <mhocko@kernel.org>
+Cc: kirill.shutemov@linux.intel.com, hannes@cmpxchg.org, rientjes@google.com, akpm@linux-foundation.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-* Yu-cheng Yu:
+On 8/9/19 8:26 PM, Yang Shi wrote:
+> Here the new counter is introduced for patch 2/2 to account deferred 
+> split THPs into available memory since NR_ANON_THPS may contain 
+> non-deferred split THPs.
+> 
+> I could use an internal counter for deferred split THPs, but if it is 
+> accounted by mod_node_page_state, why not just show it in /proc/meminfo? 
 
-> +ENDBR
-> +    The compiler inserts an ENDBR at all valid branch targets.  Any
-> +    CALL/JMP to a target without an ENDBR triggers a control
-> +    protection fault.
+The answer to "Why not" is that it becomes part of userspace API (btw this
+patchset should have CC'd linux-api@ - please do for further iterations) and
+even if the implementation detail of deferred splitting might change in the
+future, we'll basically have to keep the counter (even with 0 value) in
+/proc/meminfo forever.
 
-Is this really correct?  I think ENDBR is needed only for indirect
-branch targets where the jump/call does not have a NOTRACK prefix.  In
-general, for security hardening, it seems best to minimize the number of
-ENDBR instructions, and use NOTRACK for indirect jumps which derive the
-branch target address from information that cannot be modified.
+Also, quite recently we have added the following counter:
 
-Thanks,
-Florian
+KReclaimable: Kernel allocations that the kernel will attempt to reclaim
+              under memory pressure. Includes SReclaimable (below), and other
+              direct allocations with a shrinker.
+
+Although THP allocations are not exactly "kernel allocations", once they are
+unmapped, they are in fact kernel-only, so IMHO it wouldn't be a big stretch to
+add the lazy THP pages there?
+
+> Or we fix NR_ANON_THPS and show deferred split THPs in /proc/meminfo?
+> 
+>>
+> 
