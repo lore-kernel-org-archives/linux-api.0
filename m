@@ -1,42 +1,98 @@
-From: Marek Szyprowski <m.szyprowski@samsung.com>
-Subject: [PATCH] tracefs: Fix NULL pointer dereference when no lockdown is
- used
-Date: Wed, 14 Aug 2019 08:12:37 +0200
-Message-ID: <20190814061237.17406-1-m.szyprowski@samsung.com>
-References: <3028ed35-3b6d-459f-f3c8-103c5636fe95@samsung.com>
-        <CGME20190814061246eucas1p128cae99a14f27bc79fa2aa72084a0413@eucas1p1.samsung.com>
-Content-Type: text/plain; charset="utf-8"
+From: Borislav Petkov <bp@alien8.de>
+Subject: Re: [PATCH V38 15/29] acpi: Ignore acpi_rsdp kernel param when the
+ kernel has been locked down
+Date: Wed, 14 Aug 2019 09:26:02 +0200
+Message-ID: <20190814072602.GA27836@zn.tnic>
+References: <20190808000721.124691-1-matthewgarrett@google.com>
+ <20190808000721.124691-16-matthewgarrett@google.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <3028ed35-3b6d-459f-f3c8-103c5636fe95@samsung.com>
+Content-Disposition: inline
+In-Reply-To: <20190808000721.124691-16-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Marek Szyprowski <m.szyprowski@samsung.com>, Matthew Garrett <mjg59@google.com>, Steven Rostedt <rostedt@goodmis.org>, James Morris <jmorris@namei.org>, Krzysztof Kozlowski <krzk@kernel.org>, Bartlomiej Zolnierkiewicz <b.zolnierkie@samsung.com>, linux-security-module@vger.kernel.org, linux-api@vger.kernel.org, Matthew Garrett <matthewgarrett@google.com>
+To: Matthew Garrett <matthewgarrett@google.com>
+Cc: jmorris@namei.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Josh Boyer <jwboyer@redhat.com>, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>, Dave Young <dyoung@redhat.com>, linux-acpi@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Commit 757ff7244358 ("tracefs: Restrict tracefs when the kernel is locked
-down") added infrastructure for restricting tracefs access when lockdown
-is enabled. It however broke tracefs operation when no lockdown is used.
-Fix this issue by adding missing check for a NULL ->open() callback.
+On Wed, Aug 07, 2019 at 05:07:07PM -0700, Matthew Garrett wrote:
+> From: Josh Boyer <jwboyer@redhat.com>
+> 
+> This option allows userspace to pass the RSDP address to the kernel, which
+> makes it possible for a user to modify the workings of hardware. Reject
+> the option when the kernel is locked down. This requires some reworking
+> of the existing RSDP command line logic, since the early boot code also
+> makes use of a command-line passed RSDP when locating the SRAT table
+> before the lockdown code has been initialised. This is achieved by
+> separating the command line RSDP path in the early boot code from the
+> generic RSDP path, and then copying the command line RSDP into boot
+> params in the kernel proper if lockdown is not enabled. If lockdown is
+> enabled and an RSDP is provided on the command line, this will only be
+> used when parsing SRAT (which shouldn't permit kernel code execution)
+> and will be ignored in the rest of the kernel.
+> 
+> (Modified by Matthew Garrett in order to handle the early boot RSDP
+> environment)
+> 
+> Signed-off-by: Josh Boyer <jwboyer@redhat.com>
+> Signed-off-by: David Howells <dhowells@redhat.com>
+> Signed-off-by: Matthew Garrett <mjg59@google.com>
+> Reviewed-by: Kees Cook <keescook@chromium.org>
+> cc: Dave Young <dyoung@redhat.com>
+> cc: linux-acpi@vger.kernel.org
+> ---
+>  arch/x86/boot/compressed/acpi.c | 19 +++++++++++++------
+>  arch/x86/include/asm/acpi.h     |  9 +++++++++
+>  arch/x86/include/asm/x86_init.h |  2 ++
+>  arch/x86/kernel/acpi/boot.c     |  5 +++++
+>  arch/x86/kernel/x86_init.c      |  1 +
+>  drivers/acpi/osl.c              | 14 +++++++++++++-
+>  include/linux/acpi.h            |  6 ++++++
+>  7 files changed, 49 insertions(+), 7 deletions(-)
+> 
+> diff --git a/arch/x86/boot/compressed/acpi.c b/arch/x86/boot/compressed/acpi.c
+> index 15255f388a85..149795c369f2 100644
+> --- a/arch/x86/boot/compressed/acpi.c
+> +++ b/arch/x86/boot/compressed/acpi.c
+> @@ -26,7 +26,7 @@ struct mem_vector immovable_mem[MAX_NUMNODES*2];
+>   */
+>  #define MAX_ADDR_LEN 19
+>  
+> -static acpi_physical_address get_acpi_rsdp(void)
+> +static acpi_physical_address get_cmdline_acpi_rsdp(void)
+>  {
+>  	acpi_physical_address addr = 0;
+>  
+> @@ -278,10 +278,7 @@ acpi_physical_address get_rsdp_addr(void)
+>  {
+>  	acpi_physical_address pa;
+>  
+> -	pa = get_acpi_rsdp();
+> -
+> -	if (!pa)
+> -		pa = boot_params->acpi_rsdp_addr;
 
-Fixes: 757ff7244358 ("tracefs: Restrict tracefs when the kernel is locked down")
-Reported-by: Krzysztof Kozlowski <krzk@kernel.org>
-Signed-off-by: Marek Szyprowski <m.szyprowski@samsung.com>
----
- fs/tracefs/inode.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+AFAICT, this looks like it would break current usage: get_rsdp_addr()
+needs to call get_acpi_rsdp() which you've now called
+get_cmdline_acpi_rsdp() to parse "acpi_rsdp=" but it ain't happening
+anymore.
 
-diff --git a/fs/tracefs/inode.c b/fs/tracefs/inode.c
-index 12a325fb4cbd..8efff7603032 100644
---- a/fs/tracefs/inode.c
-+++ b/fs/tracefs/inode.c
-@@ -43,7 +43,7 @@ static int default_open_file(struct inode *inode, struct file *filp)
- 		return ret;
- 
- 	real_fops = dentry->d_fsdata;
--	return real_fops->open(inode, filp);
-+	return real_fops->open ? real_fops->open(inode, filp) : 0;
- }
- 
- static ssize_t default_read_file(struct file *file, char __user *buf,
+Where the parsing is happening now is in get_acpi_srat_table() which is
+not present in configs with
+
+#if defined(CONFIG_RANDOMIZE_BASE) && defined(CONFIG_MEMORY_HOTREMOVE)
+
+false and thus not available to early code anymore.
+
+I think the cleaner/easier approach would be to clear
+boot_params->acpi_rsdp_addr after SRAT has been parsed in lockdown
+configurations so that nothing else uses the supplied RDSP address
+anymore. But I could very well be missing something...
+
+Thx.
+
 -- 
-2.17.1
+Regards/Gruss,
+    Boris.
+
+Good mailing practices for 400: avoid top-posting and trim the reply.
