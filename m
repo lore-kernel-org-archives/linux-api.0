@@ -1,95 +1,74 @@
-From: Joel Fernandes <joel@joelfernandes.org>
-Subject: Re: [PATCH v5 2/6] mm/page_idle: Add support for handling swapped
- PG_Idle pages
-Date: Wed, 14 Aug 2019 12:32:03 -0400
-Message-ID: <20190814163203.GB59398@google.com>
-References: <20190807171559.182301-1-joel@joelfernandes.org>
- <20190807171559.182301-2-joel@joelfernandes.org>
- <20190813150450.GN17933@dhcp22.suse.cz>
- <20190813153659.GD14622@google.com>
- <20190814080531.GP17933@dhcp22.suse.cz>
+From: Scott Wood <swood@redhat.com>
+Subject: Re: [PATCH v3 01/12] fpga: dfl: fme: support 512bit data width PR
+Date: Wed, 14 Aug 2019 11:34:15 -0500
+Message-ID: <32c46e3de1a6641eb0d5940868f7d8b8a30181d3.camel@redhat.com>
+References: <1563857495-26692-1-git-send-email-hao.wu@intel.com>
+         <1563857495-26692-2-git-send-email-hao.wu@intel.com>
+         <20190724093532.GB29532@kroah.com> <20190724142235.GE8463@hao-dev>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190814080531.GP17933@dhcp22.suse.cz>
+In-Reply-To: <20190724142235.GE8463@hao-dev>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michal Hocko <mhocko@kernel.org>
-Cc: khlebnikov@yandex-team.ru, linux-kernel@vger.kernel.org, Minchan Kim <minchan@kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Brendan Gregg <bgregg@netflix.com>, Catalin Marinas <catalin.marinas@arm.com>, Christian Hansen <chansen3@cisco.com>, dancol@google.com, fmayer@google.com, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, kernel-team@android.com, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, Mike Rapoport <rppt@linux.ibm.com>, namhyung@google.com, paulmck@linux.ibm.com, Robin Murphy <robin.murphy@arm.com>, Roman Gushchin <guro@fb.c>
+To: Wu Hao <hao.wu@intel.com>, Greg KH <gregkh@linuxfoundation.org>
+Cc: mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, atull@kernel.org, Ananda Ravuri <ananda.ravuri@intel.com>, Xu Yilun <yilun.xu@intel.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Aug 14, 2019 at 10:05:31AM +0200, Michal Hocko wrote:
-> On Tue 13-08-19 11:36:59, Joel Fernandes wrote:
-> > On Tue, Aug 13, 2019 at 05:04:50PM +0200, Michal Hocko wrote:
-> > > On Wed 07-08-19 13:15:55, Joel Fernandes (Google) wrote:
-> > > > Idle page tracking currently does not work well in the following
-> > > > scenario:
-> > > >  1. mark page-A idle which was present at that time.
-> > > >  2. run workload
-> > > >  3. page-A is not touched by workload
-> > > >  4. *sudden* memory pressure happen so finally page A is finally swapped out
-> > > >  5. now see the page A - it appears as if it was accessed (pte unmapped
-> > > >     so idle bit not set in output) - but it's incorrect.
-> > > > 
-> > > > To fix this, we store the idle information into a new idle bit of the
-> > > > swap PTE during swapping of anonymous pages.
-> > > >
-> > > > Also in the future, madvise extensions will allow a system process
-> > > > manager (like Android's ActivityManager) to swap pages out of a process
-> > > > that it knows will be cold. To an external process like a heap profiler
-> > > > that is doing idle tracking on another process, this procedure will
-> > > > interfere with the idle page tracking similar to the above steps.
-> > > 
-> > > This could be solved by checking the !present/swapped out pages
-> > > right? Whoever decided to put the page out to the swap just made it
-> > > idle effectively.  So the monitor can make some educated guess for
-> > > tracking. If that is fundamentally not possible then please describe
-> > > why.
+On Wed, 2019-07-24 at 22:22 +0800, Wu Hao wrote:
+> On Wed, Jul 24, 2019 at 11:35:32AM +0200, Greg KH wrote:
+> > On Tue, Jul 23, 2019 at 12:51:24PM +0800, Wu Hao wrote:
+> > >  
+> > > @@ -67,8 +69,43 @@
+> > >  #define PR_WAIT_TIMEOUT   8000000
+> > >  #define PR_HOST_STATUS_IDLE	0
+> > >  
+> > > +#if defined(CONFIG_X86) && defined(CONFIG_AS_AVX512)
+> > > +
+> > > +#include <linux/cpufeature.h>
+> > > +#include <asm/fpu/api.h>
+> > > +
+> > > +static inline int is_cpu_avx512_enabled(void)
+> > > +{
+> > > +	return cpu_feature_enabled(X86_FEATURE_AVX512F);
+> > > +}
 > > 
-> > But the monitoring process (profiler) does not have control over the 'whoever
-> > made it effectively idle' process.
+> > That's a very arch specific function, why would a driver ever care about
+> > this?
 > 
-> Why does that matter? Whether it is a global/memcg reclaim or somebody
-> calling MADV_PAGEOUT or whatever it is a decision to make the page not
-> hot. Sure you could argue that a missing idle bit on swap entries might
-> mean that the swap out decision was pre-mature/sub-optimal/wrong but is
-> this the aim of the interface?
+> Yes, this is only applied to a specific FPGA solution, which FPGA
+> has been integrated with XEON. Hardware indicates this using register
+> to software. As it's cpu integrated solution, so CPU always has this
+> AVX512 capability. The only check we do, is make sure this is not
+> manually disabled by kernel.
 > 
-> > As you said it will be a guess, it will not be accurate.
+> With this hardware, software could use AVX512 to accelerate the FPGA
+> partial reconfiguration as mentioned in the patch commit message.
+> It brings performance benifits to people who uses it. This is only one
+> optimization (512 vs 32bit data write to hw) for a specific hardware.
+
+I thought earlier you said that 512 bit accesses were required for this
+particular integrated-only version of the device, and not just an
+optimization?
+
+> > > +#else
+> > > +static inline int is_cpu_avx512_enabled(void)
+> > > +{
+> > > +	return 0;
+> > > +}
+> > > +
+> > > +static inline void copy512(const void *src, void __iomem *dst)
+> > > +{
+> > > +	WARN_ON_ONCE(1);
+> > 
+> > Are you trying to get reports from syzbot?  :)
 > 
-> Yes and the point I am trying to make is that having some space and not
-> giving a guarantee sounds like a safer option for this interface because
-
-I do see your point of view, but jJust because a future (and possibly not
-going to happen) usecase which you mentioned as pte reclaim, makes you feel
-that userspace may be subject to inaccuracies anyway, doesn't mean we should
-make everything inaccurate..  We already know idle page tracking is not
-completely accurate. But that doesn't mean we miss out on the opportunity to
-make the "non pte-reclaim" usecase inaccurate as well. 
-
-IMO, we should do our best for today, and not hypothesize. How likely is pte
-reclaim and is there a thread to describe that direction?
-
-> > I am curious what is your concern with using a bit in the swap PTE?
+> Oh.. no.. I will remove it. :)
 > 
-> ... It is a promiss of the semantic I find limiting for future. The bit
-> in the pte might turn out insufficient (e.g. pte reclaim) so teaching
-> the userspace to consider this a hard guarantee is a ticket to problems
-> later on. Maybe I am overly paranoid because I have seen so many "nice
-> to have" features turning into a maintenance burden in the past.
-> 
-> If this is really considered mostly debugging purpouse interface then a
-> certain level of imprecision should be tolerateable. If there is a
-> really strong real world usecase that simply has no other way to go
-> then this might be added later. Adding an information is always safer
-> than take it away.
-> 
-> That being said, if I am a minority voice here then I will not really
-> stand in the way and won't nack the patch. I will not ack it neither
-> though.
+> Thank you very much!
 
-Ok.
+What's wrong with this?  The driver should never call copy512() if
+is_cpu_avx512_enabled() returns 0, and if syzbot can somehow make the driver
+do so, then yes we do want a report.
 
-thanks,
-
- - Joel
+-Scott
