@@ -1,108 +1,238 @@
-From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
-Date: Tue, 13 Aug 2019 17:57:39 -0700
-Message-ID: <20190814005737.4qg6wh4a53vmso2v@ast-mbp>
-References: <CALCETrUjh6DdgW1qSuSRd1_=0F9CqB8+sNj__e_6AHEvh_BaxQ@mail.gmail.com>
- <CALCETrWtE2U4EvZVYeq8pSmQjBzF2PHH+KxYW8FSeF+W=1FYjw@mail.gmail.com>
- <EE7B7AE1-3D44-4561-94B9-E97A626A251D@fb.com>
- <CALCETrXX-Jeb4wiQuL6FUai4wNMmMiUxuLLh_Lb9mT7h=0GgAw@mail.gmail.com>
- <20190805192122.laxcaz75k4vxdspn@ast-mbp>
- <CALCETrVtPs8gY-H4gmzSqPboid3CB++n50SvYd6RU9YVde_-Ow@mail.gmail.com>
- <20190806011134.p5baub5l3t5fkmou@ast-mbp>
- <CALCETrXEHL3+NAY6P6vUj7Pvd9ZpZsYC6VCLXOaNxb90a_POGw@mail.gmail.com>
- <20190813215823.3sfbakzzjjykyng2@ast-mbp>
- <CALCETrVT-dDXQGukGs5S1DkzvQv9_e=axzr_GyEd2c4T4z8Qng@mail.gmail.com>
+From: Dave Young <dyoung@redhat.com>
+Subject: Re: [PATCH V38 15/29] acpi: Ignore acpi_rsdp kernel param when the
+ kernel has been locked down
+Date: Wed, 14 Aug 2019 10:51:13 +0800
+Message-ID: <20190814025113.GA7058@dhcp-128-65.nay.redhat.com>
+References: <20190808000721.124691-1-matthewgarrett@google.com>
+ <20190808000721.124691-16-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <netdev-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CALCETrVT-dDXQGukGs5S1DkzvQv9_e=axzr_GyEd2c4T4z8Qng@mail.gmail.com>
-Sender: netdev-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Song Liu <songliubraving@fb.com>, Kees Cook <keescook@chromium.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
+In-Reply-To: <20190808000721.124691-16-matthewgarrett@google.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Matthew Garrett <matthewgarrett@google.com>
+Cc: jmorris@namei.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Josh Boyer <jwboyer@redhat.com>, bhe@redhat.com, kasong@redhat.com, Borislav Petkov <bp@suse.de>, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>, linux-acpi@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 13, 2019 at 04:06:00PM -0700, Andy Lutomirski wrote:
-> On Tue, Aug 13, 2019 at 2:58 PM Alexei Starovoitov
-> <alexei.starovoitov@gmail.com> wrote:
-> >
-> > On Tue, Aug 06, 2019 at 10:24:25PM -0700, Andy Lutomirski wrote:
-> > > >
-> > > > Inside containers and inside nested containers we need to start processes
-> > > > that will use bpf. All of the processes are trusted.
-> > >
-> > > Trusted by whom?  In a non-nested container, the container manager
-> > > *might* be trusted by the outside world.  In a *nested* container,
-> > > unless the inner container management is controlled from outside the
-> > > outer container, it's not trusted.  I don't know much about how
-> > > Facebook's containers work, but the LXC/LXD/Podman world is moving
-> > > very strongly toward user namespaces and maximally-untrusted
-> > > containers, and I think bpf() should work in that context.
-> >
-> > agree that containers (namespaces) reduce amount of trust necessary
-> > for apps to run, but the end goal is not security though.
-> > Linux has become a single user system.
-> > If user can ssh into the host they can become root.
-> > If arbitrary code can run on the host it will be break out of any sandbox.
+On 08/07/19 at 05:07pm, Matthew Garrett wrote:
+> From: Josh Boyer <jwboyer@redhat.com>
 > 
-> I would argue that this is a reasonable assumption to make if you're
-> designing a system using Linux, but it's not a valid assumption to
-> make as kernel developers.  Otherwise we should just give everyone
-> CAP_SYS_ADMIN and call it a day.  There really is a difference between
-> root and non-root.
-
-hmm. No. Kernel developers should not make any assumptions.
-They should guide their design by real use cases instead. That includes studing
-what people do now and hacks they use to workaround lack of interfaces.
-Effecitvely bpf is root only. There are no unpriv users.
-This root applications go out of their way to reduce privileges
-while they still want to use bpf. That is the need that /dev/bpf is solving.
-
+> This option allows userspace to pass the RSDP address to the kernel, which
+> makes it possible for a user to modify the workings of hardware. Reject
+> the option when the kernel is locked down. This requires some reworking
+> of the existing RSDP command line logic, since the early boot code also
+> makes use of a command-line passed RSDP when locating the SRAT table
+> before the lockdown code has been initialised. This is achieved by
+> separating the command line RSDP path in the early boot code from the
+> generic RSDP path, and then copying the command line RSDP into boot
+> params in the kernel proper if lockdown is not enabled. If lockdown is
+> enabled and an RSDP is provided on the command line, this will only be
+> used when parsing SRAT (which shouldn't permit kernel code execution)
+> and will be ignored in the rest of the kernel.
 > 
-> > Containers are not providing the level of security that is enough
-> > to run arbitrary code. VMs can do it better, but cpu bugs don't make it easy.
-> > Containers are used to make production systems safer.
-> > Some people call it more 'secure', but it's clearly not secure for
-> > arbitrary code and that is what kernel.unprivileged_bpf_disabled allows.
-> > When we say 'unprivileged bpf' we really mean arbitrary malicious bpf program.
-> > It's been a constant source of pain. The constant blinding, randomization,
-> > verifier speculative analysis, all spectre v1, v2, v4 mitigations
-> > are simply not worth it. It's a lot of complex kernel code without users.
+> (Modified by Matthew Garrett in order to handle the early boot RSDP
+> environment)
 > 
-> Seccomp really will want eBPF some day, and it should work without
-> privilege.  Maybe it should be a restricted subset of eBPF, and
-> Spectre will always be an issue until dramatically better hardware
-> shows up, but I think people will want the ability for regular
-> programs to load eBPF seccomp programs.
-
-I'm absolutely against using eBPF in seccomp.
-Precisely due to discussions like the current one.
-
+> Signed-off-by: Josh Boyer <jwboyer@redhat.com>
+> Signed-off-by: David Howells <dhowells@redhat.com>
+> Signed-off-by: Matthew Garrett <mjg59@google.com>
+> Reviewed-by: Kees Cook <keescook@chromium.org>
+> cc: Dave Young <dyoung@redhat.com>
+> cc: linux-acpi@vger.kernel.org
+> ---
+>  arch/x86/boot/compressed/acpi.c | 19 +++++++++++++------
+>  arch/x86/include/asm/acpi.h     |  9 +++++++++
+>  arch/x86/include/asm/x86_init.h |  2 ++
+>  arch/x86/kernel/acpi/boot.c     |  5 +++++
+>  arch/x86/kernel/x86_init.c      |  1 +
+>  drivers/acpi/osl.c              | 14 +++++++++++++-
+>  include/linux/acpi.h            |  6 ++++++
+>  7 files changed, 49 insertions(+), 7 deletions(-)
 > 
-> > Hence I prefer this /dev/bpf mechanism to be as simple a possible.
-> > The applications that will use it are going to be just as trusted as systemd.
+> diff --git a/arch/x86/boot/compressed/acpi.c b/arch/x86/boot/compressed/acpi.c
+> index 15255f388a85..149795c369f2 100644
+> --- a/arch/x86/boot/compressed/acpi.c
+> +++ b/arch/x86/boot/compressed/acpi.c
+> @@ -26,7 +26,7 @@ struct mem_vector immovable_mem[MAX_NUMNODES*2];
+>   */
+>  #define MAX_ADDR_LEN 19
+>  
+> -static acpi_physical_address get_acpi_rsdp(void)
+> +static acpi_physical_address get_cmdline_acpi_rsdp(void)
+>  {
+>  	acpi_physical_address addr = 0;
+>  
+> @@ -278,10 +278,7 @@ acpi_physical_address get_rsdp_addr(void)
+>  {
+>  	acpi_physical_address pa;
+>  
+> -	pa = get_acpi_rsdp();
+> -
+> -	if (!pa)
+> -		pa = boot_params->acpi_rsdp_addr;
+> +	pa = boot_params->acpi_rsdp_addr;
+>  
+>  	/*
+>  	 * Try to get EFI data from setup_data. This can happen when we're a
+> @@ -311,7 +308,17 @@ static unsigned long get_acpi_srat_table(void)
+>  	char arg[10];
+>  	u8 *entry;
+>  
+> -	rsdp = (struct acpi_table_rsdp *)(long)boot_params->acpi_rsdp_addr;
+> +	/*
+> +	 * Check whether we were given an RSDP on the command line. We don't
+> +	 * stash this in boot params because the kernel itself may have
+> +	 * different ideas about whether to trust a command-line parameter.
+> +	 */
+> +	rsdp = (struct acpi_table_rsdp *)get_cmdline_acpi_rsdp();
+> +
+> +	if (!rsdp)
+> +		rsdp = (struct acpi_table_rsdp *)(long)
+> +			boot_params->acpi_rsdp_addr;
+> +
+>  	if (!rsdp)
+>  		return 0;
+>  
+> diff --git a/arch/x86/include/asm/acpi.h b/arch/x86/include/asm/acpi.h
+> index aac686e1e005..bc9693c9107e 100644
+> --- a/arch/x86/include/asm/acpi.h
+> +++ b/arch/x86/include/asm/acpi.h
+> @@ -117,6 +117,12 @@ static inline bool acpi_has_cpu_in_madt(void)
+>  	return !!acpi_lapic;
+>  }
+>  
+> +#define ACPI_HAVE_ARCH_SET_ROOT_POINTER
+> +static inline void acpi_arch_set_root_pointer(u64 addr)
+> +{
+> +	x86_init.acpi.set_root_pointer(addr);
+> +}
+> +
+>  #define ACPI_HAVE_ARCH_GET_ROOT_POINTER
+>  static inline u64 acpi_arch_get_root_pointer(void)
+>  {
+> @@ -125,6 +131,7 @@ static inline u64 acpi_arch_get_root_pointer(void)
+>  
+>  void acpi_generic_reduced_hw_init(void);
+>  
+> +void x86_default_set_root_pointer(u64 addr);
+>  u64 x86_default_get_root_pointer(void);
+>  
+>  #else /* !CONFIG_ACPI */
+> @@ -138,6 +145,8 @@ static inline void disable_acpi(void) { }
+>  
+>  static inline void acpi_generic_reduced_hw_init(void) { }
+>  
+> +static inline void x86_default_set_root_pointer(u64 addr) { }
+> +
+>  static inline u64 x86_default_get_root_pointer(void)
+>  {
+>  	return 0;
+> diff --git a/arch/x86/include/asm/x86_init.h b/arch/x86/include/asm/x86_init.h
+> index ac0934189017..19435858df5f 100644
+> --- a/arch/x86/include/asm/x86_init.h
+> +++ b/arch/x86/include/asm/x86_init.h
+> @@ -134,10 +134,12 @@ struct x86_hyper_init {
+>  
+>  /**
+>   * struct x86_init_acpi - x86 ACPI init functions
+> + * @set_root_poitner:		set RSDP address
+>   * @get_root_pointer:		get RSDP address
+>   * @reduced_hw_early_init:	hardware reduced platform early init
+>   */
+>  struct x86_init_acpi {
+> +	void (*set_root_pointer)(u64 addr);
+>  	u64 (*get_root_pointer)(void);
+>  	void (*reduced_hw_early_init)(void);
+>  };
+> diff --git a/arch/x86/kernel/acpi/boot.c b/arch/x86/kernel/acpi/boot.c
+> index 17b33ef604f3..04205ce127a1 100644
+> --- a/arch/x86/kernel/acpi/boot.c
+> +++ b/arch/x86/kernel/acpi/boot.c
+> @@ -1760,6 +1760,11 @@ void __init arch_reserve_mem_area(acpi_physical_address addr, size_t size)
+>  	e820__update_table_print();
+>  }
+>  
+> +void x86_default_set_root_pointer(u64 addr)
+> +{
+> +	boot_params.acpi_rsdp_addr = addr;
+> +}
+> +
+>  u64 x86_default_get_root_pointer(void)
+>  {
+>  	return boot_params.acpi_rsdp_addr;
+> diff --git a/arch/x86/kernel/x86_init.c b/arch/x86/kernel/x86_init.c
+> index 1bef687faf22..18a799c8fa28 100644
+> --- a/arch/x86/kernel/x86_init.c
+> +++ b/arch/x86/kernel/x86_init.c
+> @@ -95,6 +95,7 @@ struct x86_init_ops x86_init __initdata = {
+>  	},
+>  
+>  	.acpi = {
+> +		.set_root_pointer	= x86_default_set_root_pointer,
+>  		.get_root_pointer	= x86_default_get_root_pointer,
+>  		.reduced_hw_early_init	= acpi_generic_reduced_hw_init,
+>  	},
+> diff --git a/drivers/acpi/osl.c b/drivers/acpi/osl.c
+> index 9c0edf2fc0dd..d43df3a3fa8d 100644
+> --- a/drivers/acpi/osl.c
+> +++ b/drivers/acpi/osl.c
+> @@ -26,6 +26,7 @@
+>  #include <linux/list.h>
+>  #include <linux/jiffies.h>
+>  #include <linux/semaphore.h>
+> +#include <linux/security.h>
+>  
+>  #include <asm/io.h>
+>  #include <linux/uaccess.h>
+> @@ -180,8 +181,19 @@ acpi_physical_address __init acpi_os_get_root_pointer(void)
+>  	acpi_physical_address pa;
+>  
+>  #ifdef CONFIG_KEXEC
+> -	if (acpi_rsdp)
+> +	/*
+> +	 * We may have been provided with an RSDP on the command line,
+> +	 * but if a malicious user has done so they may be pointing us
+> +	 * at modified ACPI tables that could alter kernel behaviour -
+> +	 * so, we check the lockdown status before making use of
+> +	 * it. If we trust it then also stash it in an architecture
+> +	 * specific location (if appropriate) so it can be carried
+> +	 * over further kexec()s.
+> +	 */
+> +	if (acpi_rsdp && !security_locked_down(LOCKDOWN_ACPI_TABLES)) {
+> +		acpi_arch_set_root_pointer(acpi_rsdp);
+>  		return acpi_rsdp;
+> +	}
+>  #endif
+>  	pa = acpi_arch_get_root_pointer();
+>  	if (pa)
+> diff --git a/include/linux/acpi.h b/include/linux/acpi.h
+> index e40e1e27ed8e..6b35f2f4cab3 100644
+> --- a/include/linux/acpi.h
+> +++ b/include/linux/acpi.h
+> @@ -643,6 +643,12 @@ bool acpi_gtdt_c3stop(int type);
+>  int acpi_arch_timer_mem_init(struct arch_timer_mem *timer_mem, int *timer_count);
+>  #endif
+>  
+> +#ifndef ACPI_HAVE_ARCH_SET_ROOT_POINTER
+> +static inline void acpi_arch_set_root_pointer(u64 addr)
+> +{
+> +}
+> +#endif
+> +
+>  #ifndef ACPI_HAVE_ARCH_GET_ROOT_POINTER
+>  static inline u64 acpi_arch_get_root_pointer(void)
+>  {
+> -- 
+> 2.22.0.770.g0f2c4a37fd-goog
 > 
-> I still don't understand your systemd example.  systemd --users is not
-> trusted systemwide in any respect.  The main PID 1 systemd is root.
-> No matter how you dice it, granting a user systemd instance extra bpf
-> access is tantamount to granting the user extra bpf access in general.
 
-People use systemd --user while their kernel have 'undef CONFIG_USER_NS'.
+I'm not sure why this series get posted quickly again.  As for this
+patch it was restructured according the early rsdp parsing code, so
+personally I think keep the original Reviewed-by is questionable and it
+needs another review.  But I did not find time to read it carefully.
 
-> It sounds to me like you're thinking of eBPF as a feature a bit like
-> unprivileged user namespaces: *in principle*, it's supposed to be safe
-> to give any unprivileged process the ability to use it, and you
-> consider security flaws in it to be bugs worth fixing. But you think
-> it's a large attack surface and that most unprivileged programs
-> shouldn't be allowed to use it.  Is that reasonable?
+Add several cc to void it slipped.
 
-I think there should be no unprivileged bpf at all,
-because over all these years we've seen zero use cases.
-Hence all new features are root only.
-LPM map is a prime example. There was not a single security bug in there.
-There were few functional bugs, but not security issues.
-These bugs didn't crash the kernel and didn't expose any data.
-Yet we still keep LPM as root only.
-Can we flip the switch and make it non-root? It's trivial single line patch ?
-and security risk is very low?
-Nope, since it will not address the underlying issue.
+Thanks
+Dave
