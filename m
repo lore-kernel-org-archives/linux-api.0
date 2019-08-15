@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv6 15/36] posix-timers: Make clock_nanosleep() time namespace aware
-Date: Thu, 15 Aug 2019 17:38:15 +0100
-Message-ID: <20190815163836.2927-16-dima@arista.com>
+Subject: [PATCHv6 14/36] hrtimers: Prepare hrtimer_nanosleep() for time namespaces
+Date: Thu, 15 Aug 2019 17:38:14 +0100
+Message-ID: <20190815163836.2927-15-dima@arista.com>
 References: <20190815163836.2927-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,107 +14,99 @@ List-Id: linux-api@vger.kernel.org
 
 From: Andrei Vagin <avagin@gmail.com>
 
-clock_nanosleep() accepts absolute values of expiration time, if the
-TIMER_ABSTIME flag is set. This value is in the task time namespace,
-which has to be converted to the host time namespace.
+clock_nanosleep() accepts absolute values of expiration time when
+TIMER_ABSTIME flag is set. This absolute value is inside the task's
+time namespace, and has to be converted to the host's time.
+
+There is timens_ktime_to_host() helper for converting time, but
+it accepts ktime argument.
+
+As a preparation, make hrtimer_nanosleep() accept a clock value in ktime
+instead of timespec64.
 
 Signed-off-by: Andrei Vagin <avagin@openvz.org>
 Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- kernel/time/posix-stubs.c  | 12 ++++++++++--
- kernel/time/posix-timers.c | 21 ++++++++++++++++++---
- 2 files changed, 28 insertions(+), 5 deletions(-)
+ include/linux/hrtimer.h   | 2 +-
+ kernel/time/hrtimer.c     | 8 ++++----
+ kernel/time/posix-stubs.c | 4 ++--
+ 3 files changed, 7 insertions(+), 7 deletions(-)
 
+diff --git a/include/linux/hrtimer.h b/include/linux/hrtimer.h
+index 5df4bcff96d5..ed49ef359f26 100644
+--- a/include/linux/hrtimer.h
++++ b/include/linux/hrtimer.h
+@@ -500,7 +500,7 @@ static inline u64 hrtimer_forward_now(struct hrtimer *timer,
+ /* Precise sleep: */
+ 
+ extern int nanosleep_copyout(struct restart_block *, struct timespec64 *);
+-extern long hrtimer_nanosleep(const struct timespec64 *rqtp,
++extern long hrtimer_nanosleep(ktime_t rqtp,
+ 			      const enum hrtimer_mode mode,
+ 			      const clockid_t clockid);
+ 
+diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
+index 499122752649..fc972ae0de02 100644
+--- a/kernel/time/hrtimer.c
++++ b/kernel/time/hrtimer.c
+@@ -1886,7 +1886,7 @@ static long __sched hrtimer_nanosleep_restart(struct restart_block *restart)
+ 	return ret;
+ }
+ 
+-long hrtimer_nanosleep(const struct timespec64 *rqtp,
++long hrtimer_nanosleep(ktime_t rqtp,
+ 		       const enum hrtimer_mode mode, const clockid_t clockid)
+ {
+ 	struct restart_block *restart;
+@@ -1899,7 +1899,7 @@ long hrtimer_nanosleep(const struct timespec64 *rqtp,
+ 		slack = 0;
+ 
+ 	hrtimer_init_sleeper_on_stack(&t, clockid, mode);
+-	hrtimer_set_expires_range_ns(&t.timer, timespec64_to_ktime(*rqtp), slack);
++	hrtimer_set_expires_range_ns(&t.timer, rqtp, slack);
+ 	ret = do_nanosleep(&t, mode);
+ 	if (ret != -ERESTART_RESTARTBLOCK)
+ 		goto out;
+@@ -1934,7 +1934,7 @@ SYSCALL_DEFINE2(nanosleep, struct __kernel_timespec __user *, rqtp,
+ 
+ 	current->restart_block.nanosleep.type = rmtp ? TT_NATIVE : TT_NONE;
+ 	current->restart_block.nanosleep.rmtp = rmtp;
+-	return hrtimer_nanosleep(&tu, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
++	return hrtimer_nanosleep(timespec64_to_ktime(tu), HRTIMER_MODE_REL, CLOCK_MONOTONIC);
+ }
+ 
+ #endif
+@@ -1954,7 +1954,7 @@ SYSCALL_DEFINE2(nanosleep_time32, struct old_timespec32 __user *, rqtp,
+ 
+ 	current->restart_block.nanosleep.type = rmtp ? TT_COMPAT : TT_NONE;
+ 	current->restart_block.nanosleep.compat_rmtp = rmtp;
+-	return hrtimer_nanosleep(&tu, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
++	return hrtimer_nanosleep(timespec64_to_ktime(tu), HRTIMER_MODE_REL, CLOCK_MONOTONIC);
+ }
+ #endif
+ 
 diff --git a/kernel/time/posix-stubs.c b/kernel/time/posix-stubs.c
-index 2ccefc9ce184..47ee2684d250 100644
+index edaf075d1ee4..2ccefc9ce184 100644
 --- a/kernel/time/posix-stubs.c
 +++ b/kernel/time/posix-stubs.c
-@@ -129,6 +129,7 @@ SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
- 		struct __kernel_timespec __user *, rmtp)
- {
- 	struct timespec64 t;
-+	ktime_t texp;
- 
- 	switch (which_clock) {
- 	case CLOCK_REALTIME:
-@@ -147,7 +148,10 @@ SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
+@@ -147,7 +147,7 @@ SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
  		rmtp = NULL;
  	current->restart_block.nanosleep.type = rmtp ? TT_NATIVE : TT_NONE;
  	current->restart_block.nanosleep.rmtp = rmtp;
--	return hrtimer_nanosleep(timespec64_to_ktime(t), flags & TIMER_ABSTIME ?
-+	texp = timespec64_to_ktime(t);
-+	if (flags & TIMER_ABSTIME)
-+		texp = timens_ktime_to_host(clockid, texp);
-+	return hrtimer_nanosleep(texp, flags & TIMER_ABSTIME ?
+-	return hrtimer_nanosleep(&t, flags & TIMER_ABSTIME ?
++	return hrtimer_nanosleep(timespec64_to_ktime(t), flags & TIMER_ABSTIME ?
  				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL,
  				 which_clock);
  }
-@@ -215,6 +219,7 @@ SYSCALL_DEFINE4(clock_nanosleep_time32, clockid_t, which_clock, int, flags,
- 		struct old_timespec32 __user *, rmtp)
- {
- 	struct timespec64 t;
-+	ktime texp;
- 
- 	switch (which_clock) {
- 	case CLOCK_REALTIME:
-@@ -233,7 +238,10 @@ SYSCALL_DEFINE4(clock_nanosleep_time32, clockid_t, which_clock, int, flags,
+@@ -233,7 +233,7 @@ SYSCALL_DEFINE4(clock_nanosleep_time32, clockid_t, which_clock, int, flags,
  		rmtp = NULL;
  	current->restart_block.nanosleep.type = rmtp ? TT_COMPAT : TT_NONE;
  	current->restart_block.nanosleep.compat_rmtp = rmtp;
--	return hrtimer_nanosleep(timespec64_to_ktime(t), flags & TIMER_ABSTIME ?
-+	texp = timespec64_to_ktime(t);
-+	if (flags & TIMER_ABSTIME)
-+		texp = timens_ktime_to_host(clockid, texp);
-+	return hrtimer_nanosleep(texp, flags & TIMER_ABSTIME ?
+-	return hrtimer_nanosleep(&t, flags & TIMER_ABSTIME ?
++	return hrtimer_nanosleep(timespec64_to_ktime(t), flags & TIMER_ABSTIME ?
  				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL,
  				 which_clock);
  }
-diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
-index 1f30e3ef0918..c71eedd17c94 100644
---- a/kernel/time/posix-timers.c
-+++ b/kernel/time/posix-timers.c
-@@ -1227,7 +1227,22 @@ SYSCALL_DEFINE2(clock_getres_time32, clockid_t, which_clock,
- static int common_nsleep(const clockid_t which_clock, int flags,
- 			 const struct timespec64 *rqtp)
- {
--	return hrtimer_nanosleep(rqtp, flags & TIMER_ABSTIME ?
-+	ktime_t texp = timespec64_to_ktime(*rqtp);
-+
-+	return hrtimer_nanosleep(texp, flags & TIMER_ABSTIME ?
-+				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL,
-+				 which_clock);
-+}
-+
-+static int common_nsleep_timens(const clockid_t which_clock, int flags,
-+			 const struct timespec64 *rqtp)
-+{
-+	ktime_t texp = timespec64_to_ktime(*rqtp);
-+
-+	if (flags & TIMER_ABSTIME)
-+		texp = timens_ktime_to_host(which_clock, texp);
-+
-+	return hrtimer_nanosleep(texp, flags & TIMER_ABSTIME ?
- 				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL,
- 				 which_clock);
- }
-@@ -1308,7 +1323,7 @@ static const struct k_clock clock_monotonic = {
- 	.clock_getres		= posix_get_hrtimer_res,
- 	.clock_get_timespec	= posix_get_monotonic_timespec,
- 	.clock_get_ktime	= posix_get_monotonic_ktime,
--	.nsleep			= common_nsleep,
-+	.nsleep			= common_nsleep_timens,
- 	.timer_create		= common_timer_create,
- 	.timer_set		= common_timer_set,
- 	.timer_get		= common_timer_get,
-@@ -1355,7 +1370,7 @@ static const struct k_clock clock_boottime = {
- 	.clock_getres		= posix_get_hrtimer_res,
- 	.clock_get_ktime	= posix_get_boottime_ktime,
- 	.clock_get_timespec	= posix_get_boottime_timespec,
--	.nsleep			= common_nsleep,
-+	.nsleep			= common_nsleep_timens,
- 	.timer_create		= common_timer_create,
- 	.timer_set		= common_timer_set,
- 	.timer_get		= common_timer_get,
 -- 
 2.22.0
