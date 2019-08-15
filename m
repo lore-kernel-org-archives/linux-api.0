@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv6 30/36] selftest/timens: Add Time Namespace test for supported clocks
-Date: Thu, 15 Aug 2019 17:38:30 +0100
-Message-ID: <20190815163836.2927-31-dima@arista.com>
+Subject: [PATCHv6 27/36] x86/vdso: Enable static branches for the timens vdso
+Date: Thu, 15 Aug 2019 17:38:27 +0100
+Message-ID: <20190815163836.2927-28-dima@arista.com>
 References: <20190815163836.2927-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -9,363 +9,158 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190815163836.2927-1-dima@arista.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
+Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Andrei Vagin <avagin@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api
 List-Id: linux-api@vger.kernel.org
 
-A test to check that all supported clocks work on host and inside
-a new time namespace. Use both ways to get time: through VDSO and
-by entering the kernel with implicit syscall.
+From: Andrei Vagin <avagin@gmail.com>
 
-Introduce a new timens directory in selftests framework for
-the next timens tests.
+As it has been discussed on timens RFC, adding a new conditional branch
+`if (inside_time_ns)` on VDSO for all processes is undesirable.
 
-Co-developed-by: Andrei Vagin <avagin@openvz.org>
-Signed-off-by: Andrei Vagin <avagin@openvz.org>
+Addressing those problems, there are two versions of VDSO's .so:
+for host tasks (without any penalty) and for processes inside of time
+namespace with clk_to_ns() that subtracts offsets from host's time.
+
+The timens code in vdso looks like this:
+
+if (timens_static_branch_unlikely()) {
+       clk_to_ns(clk, ts);
+}
+
+This static branch is disabled by default. And the code generated consist
+of a single atomic 'no-op' instruction, in the straight-line code path.
+
+Enable static branches in the timens vdso: the 'no-op' instruction
+gets replaced with a 'jump' instruction to the out-of-line true branch.
+
+Signed-off-by: Andrei Vagin <avagin@gmail.com>
+Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- tools/testing/selftests/Makefile          |   1 +
- tools/testing/selftests/timens/.gitignore |   1 +
- tools/testing/selftests/timens/Makefile   |   5 +
- tools/testing/selftests/timens/config     |   1 +
- tools/testing/selftests/timens/log.h      |  26 +++
- tools/testing/selftests/timens/timens.c   | 185 ++++++++++++++++++++++
- tools/testing/selftests/timens/timens.h   |  63 ++++++++
- 7 files changed, 282 insertions(+)
- create mode 100644 tools/testing/selftests/timens/.gitignore
- create mode 100644 tools/testing/selftests/timens/Makefile
- create mode 100644 tools/testing/selftests/timens/config
- create mode 100644 tools/testing/selftests/timens/log.h
- create mode 100644 tools/testing/selftests/timens/timens.c
- create mode 100644 tools/testing/selftests/timens/timens.h
+ arch/x86/entry/vdso/vma.c    | 30 ++++++++++++++++++++++++------
+ arch/x86/kernel/jump_label.c | 14 ++++++++++++++
+ include/linux/jump_label.h   |  8 ++++++++
+ init/Kconfig                 |  1 +
+ 4 files changed, 47 insertions(+), 6 deletions(-)
 
-diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-index 25b43a8c2b15..6fc63b84a857 100644
---- a/tools/testing/selftests/Makefile
-+++ b/tools/testing/selftests/Makefile
-@@ -47,6 +47,7 @@ TARGETS += splice
- TARGETS += static_keys
- TARGETS += sync
- TARGETS += sysctl
-+TARGETS += timens
- ifneq (1, $(quicktest))
- TARGETS += timers
- endif
-diff --git a/tools/testing/selftests/timens/.gitignore b/tools/testing/selftests/timens/.gitignore
-new file mode 100644
-index 000000000000..27a693229ce1
---- /dev/null
-+++ b/tools/testing/selftests/timens/.gitignore
-@@ -0,0 +1 @@
-+timens
-diff --git a/tools/testing/selftests/timens/Makefile b/tools/testing/selftests/timens/Makefile
-new file mode 100644
-index 000000000000..b877efb78974
---- /dev/null
-+++ b/tools/testing/selftests/timens/Makefile
-@@ -0,0 +1,5 @@
-+TEST_GEN_PROGS := timens
+diff --git a/arch/x86/entry/vdso/vma.c b/arch/x86/entry/vdso/vma.c
+index 91cf5a5c8c9e..1a3eb4656eb6 100644
+--- a/arch/x86/entry/vdso/vma.c
++++ b/arch/x86/entry/vdso/vma.c
+@@ -15,6 +15,7 @@
+ #include <linux/cpu.h>
+ #include <linux/ptrace.h>
+ #include <linux/time_namespace.h>
++#include <linux/jump_label.h>
+ #include <asm/pvclock.h>
+ #include <asm/vgtod.h>
+ #include <asm/proto.h>
+@@ -31,20 +32,37 @@
+ unsigned int __read_mostly vdso64_enabled = 1;
+ #endif
+ 
+-void __init init_vdso_image(struct vdso_image *image)
++#ifdef CONFIG_TIME_NS
++static __init void init_timens(struct vdso_image *image)
+ {
+-	BUG_ON(image->size % PAGE_SIZE != 0);
++	struct vdso_jump_entry *entries;
++	unsigned long entries_nr;
 +
-+CFLAGS := -Wall -Werror
++	if (WARN_ON(image->jump_table == -1UL))
++		return;
+ 
+-	apply_alternatives((struct alt_instr *)(image->text + image->alt),
+-			   (struct alt_instr *)(image->text + image->alt +
+-						image->alt_len));
+-#ifdef CONFIG_TIME_NS
+ 	image->text_timens = vmalloc_32(image->size);
+ 	if (WARN_ON(image->text_timens == NULL))
+ 		return;
+ 
+ 	memcpy(image->text_timens, image->text, image->size);
 +
-+include ../lib.mk
-diff --git a/tools/testing/selftests/timens/config b/tools/testing/selftests/timens/config
-new file mode 100644
-index 000000000000..4480620f6f49
---- /dev/null
-+++ b/tools/testing/selftests/timens/config
-@@ -0,0 +1 @@
-+CONFIG_TIME_NS=y
-diff --git a/tools/testing/selftests/timens/log.h b/tools/testing/selftests/timens/log.h
-new file mode 100644
-index 000000000000..db64df2a8483
---- /dev/null
-+++ b/tools/testing/selftests/timens/log.h
-@@ -0,0 +1,26 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
++	entries = image->text_timens + image->jump_table;
++	entries_nr = image->jump_table_len / sizeof(struct vdso_jump_entry);
++	apply_vdso_jump_labels(entries, entries_nr);
++}
++#else
++static inline void init_timens(struct vdso_image *image) {}
+ #endif
 +
-+#ifndef __SELFTEST_TIMENS_LOG_H__
-+#define __SELFTEST_TIMENS_LOG_H__
++void __init init_vdso_image(struct vdso_image *image)
++{
++	BUG_ON(image->size % PAGE_SIZE != 0);
 +
-+#define pr_msg(fmt, lvl, ...)						\
-+	ksft_print_msg("[%s] (%s:%d)\t" fmt "\n",			\
-+			lvl, __FILE__, __LINE__, ##__VA_ARGS__)
++	apply_alternatives((struct alt_instr *)(image->text + image->alt),
++			   (struct alt_instr *)(image->text + image->alt +
++						image->alt_len));
++	init_timens(image);
+ }
+ 
+ struct linux_binprm;
+diff --git a/arch/x86/kernel/jump_label.c b/arch/x86/kernel/jump_label.c
+index 044053235302..7820ac61b688 100644
+--- a/arch/x86/kernel/jump_label.c
++++ b/arch/x86/kernel/jump_label.c
+@@ -24,6 +24,20 @@ union jump_code_union {
+ 	} __attribute__((packed));
+ };
+ 
++__init void apply_vdso_jump_labels(struct vdso_jump_entry *ent, unsigned long nr)
++{
++	while (nr--) {
++		void *code_addr	= (void *)ent + ent->code;
++		union jump_code_union jmp;
 +
-+#define pr_p(func, fmt, ...)	func(fmt ": %m", ##__VA_ARGS__)
++		jmp.jump	= 0xe9; /* JMP rel32 */
++		jmp.offset	= ent->target - ent->code - JUMP_LABEL_NOP_SIZE;
++		memcpy(code_addr, &jmp, JUMP_LABEL_NOP_SIZE);
 +
-+#define pr_err(fmt, ...)						\
-+	({								\
-+		ksft_test_result_error(fmt "\n", ##__VA_ARGS__);		\
-+		-1;							\
-+	})
++		ent++;
++	}
++}
 +
-+#define pr_fail(fmt, ...)					\
-+	({							\
-+		ksft_test_result_fail(fmt, ##__VA_ARGS__);	\
-+		-1;						\
-+	})
-+
-+#define pr_perror(fmt, ...)	pr_p(pr_err, fmt, ##__VA_ARGS__)
-+
-+#endif
-diff --git a/tools/testing/selftests/timens/timens.c b/tools/testing/selftests/timens/timens.c
-new file mode 100644
-index 000000000000..55d38f02eb64
---- /dev/null
-+++ b/tools/testing/selftests/timens/timens.c
-@@ -0,0 +1,185 @@
-+// SPDX-License-Identifier: GPL-2.0
-+#define _GNU_SOURCE
-+#include <errno.h>
-+#include <fcntl.h>
-+#include <sched.h>
-+#include <stdio.h>
-+#include <stdbool.h>
-+#include <sys/stat.h>
-+#include <sys/syscall.h>
-+#include <sys/types.h>
-+#include <time.h>
-+#include <unistd.h>
-+#include <time.h>
-+#include <string.h>
-+
-+#include "log.h"
-+#include "timens.h"
-+
-+/*
-+ * Test shouldn't be run for a day, so add 10 days to child
-+ * time and check parent's time to be in the same day.
-+ */
-+#define DAY_IN_SEC			(60*60*24)
-+#define TEN_DAYS_IN_SEC			(10*DAY_IN_SEC)
-+
-+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
-+
-+struct test_clock {
-+	clockid_t id;
-+	char *name;
-+	/*
-+	 * off_id is -1 if a clock has own offset, or it contains an index
-+	 * which contains a right offset of this clock.
-+	 */
-+	int off_id;
-+	time_t offset;
+ static void bug_at(unsigned char *ip, int line)
+ {
+ 	/*
+diff --git a/include/linux/jump_label.h b/include/linux/jump_label.h
+index 3526c0aee954..bb9d828ee49a 100644
+--- a/include/linux/jump_label.h
++++ b/include/linux/jump_label.h
+@@ -125,6 +125,11 @@ struct jump_entry {
+ 	long key;	// key may be far away from the core kernel under KASLR
+ };
+ 
++struct vdso_jump_entry {
++	u16 code;
++	u16 target;
 +};
 +
-+#define ct(clock, off_id)	{ clock, #clock, off_id }
-+static struct test_clock clocks[] = {
-+	ct(CLOCK_BOOTTIME, -1),
-+	ct(CLOCK_BOOTTIME_ALARM, 1),
-+	ct(CLOCK_MONOTONIC, -1),
-+	ct(CLOCK_MONOTONIC_COARSE, 1),
-+	ct(CLOCK_MONOTONIC_RAW, 1),
-+};
-+#undef ct
+ static inline unsigned long jump_entry_code(const struct jump_entry *entry)
+ {
+ 	return (unsigned long)&entry->code + entry->code;
+@@ -229,6 +234,9 @@ extern void static_key_enable(struct static_key *key);
+ extern void static_key_disable(struct static_key *key);
+ extern void static_key_enable_cpuslocked(struct static_key *key);
+ extern void static_key_disable_cpuslocked(struct static_key *key);
++extern void apply_vdso_jump_labels(struct vdso_jump_entry *ent,
++				   unsigned long nr);
 +
-+static int child_ns, parent_ns = -1;
-+
-+static int switch_ns(int fd)
-+{
-+	if (setns(fd, CLONE_NEWTIME)) {
-+		pr_perror("setns()");
-+		return -1;
-+	}
-+
-+	return 0;
-+}
-+
-+static int init_namespaces(void)
-+{
-+	char path[] = "/proc/self/ns/time_for_children";
-+	struct stat st1, st2;
-+
-+	if (parent_ns == -1) {
-+		parent_ns = open(path, O_RDONLY);
-+		if (parent_ns <= 0)
-+			return pr_perror("Unable to open %s", path);
-+	}
-+
-+	if (fstat(parent_ns, &st1))
-+		return pr_perror("Unable to stat the parent timens");
-+
-+	if (unshare(CLONE_NEWTIME))
-+		return pr_perror("Can't unshare() timens");
-+
-+	child_ns = open(path, O_RDONLY);
-+	if (child_ns <= 0)
-+		return pr_perror("Unable to open %s", path);
-+
-+	if (fstat(child_ns, &st2))
-+		return pr_perror("Unable to stat the timens");
-+
-+	if (st1.st_ino == st2.st_ino)
-+		return pr_perror("The same child_ns after CLONE_NEWTIME");
-+
-+	return 0;
-+}
-+
-+static int test_gettime(clockid_t clock_index, bool raw_syscall, time_t offset)
-+{
-+	struct timespec child_ts_new, parent_ts_old, cur_ts;
-+	char *entry = raw_syscall ? "syscall" : "vdso";
-+	double precision = 0.0;
-+
-+	switch (clocks[clock_index].id) {
-+	case CLOCK_MONOTONIC_COARSE:
-+	case CLOCK_MONOTONIC_RAW:
-+		precision = -2.0;
-+		break;
-+	}
-+
-+	if (switch_ns(parent_ns))
-+		return pr_err("switch_ns(%d)", child_ns);
-+
-+	if (_gettime(clocks[clock_index].id, &parent_ts_old, raw_syscall))
-+		return -1;
-+
-+	child_ts_new.tv_nsec = parent_ts_old.tv_nsec;
-+	child_ts_new.tv_sec = parent_ts_old.tv_sec + offset;
-+
-+	if (switch_ns(child_ns))
-+		return pr_err("switch_ns(%d)", child_ns);
-+
-+	if (_gettime(clocks[clock_index].id, &cur_ts, raw_syscall))
-+		return -1;
-+
-+	if (difftime(cur_ts.tv_sec, child_ts_new.tv_sec) < precision) {
-+		ksft_test_result_fail(
-+			"Child's %s (%s) time has not changed: %lu -> %lu [%lu]\n",
-+			clocks[clock_index].name, entry, parent_ts_old.tv_sec,
-+			child_ts_new.tv_sec, cur_ts.tv_sec);
-+		return -1;
-+	}
-+
-+	if (switch_ns(parent_ns))
-+		return pr_err("switch_ns(%d)", parent_ns);
-+
-+	if (_gettime(clocks[clock_index].id, &cur_ts, raw_syscall))
-+		return -1;
-+
-+	if (difftime(cur_ts.tv_sec, parent_ts_old.tv_sec) > DAY_IN_SEC) {
-+		ksft_test_result_fail(
-+			"Parent's %s (%s) time has changed: %lu -> %lu [%lu]\n",
-+			clocks[clock_index].name, entry, parent_ts_old.tv_sec,
-+			child_ts_new.tv_sec, cur_ts.tv_sec);
-+		/* Let's play nice and put it closer to original */
-+		clock_settime(clocks[clock_index].id, &cur_ts);
-+		return -1;
-+	}
-+
-+	ksft_test_result_pass("Passed for %s (%s)\n",
-+				clocks[clock_index].name, entry);
-+	return 0;
-+}
-+
-+int main(int argc, char *argv[])
-+{
-+	unsigned int i;
-+	time_t offset;
-+	int ret = 0;
-+
-+	nscheck();
-+
-+	ksft_set_plan(ARRAY_SIZE(clocks) * 2);
-+
-+	if (init_namespaces())
-+		return 1;
-+
-+	/* Offsets have to be set before tasks enter the namespace. */
-+	for (i = 0; i < ARRAY_SIZE(clocks); i++) {
-+		if (clocks[i].off_id != -1)
-+			continue;
-+		offset = TEN_DAYS_IN_SEC + i * 1000;
-+		clocks[i].offset = offset;
-+		if (_settime(clocks[i].id, offset))
-+			return 1;
-+	}
-+
-+	for (i = 0; i < ARRAY_SIZE(clocks); i++) {
-+		if (clocks[i].off_id != -1)
-+			offset = clocks[clocks[i].off_id].offset;
-+		else
-+			offset = clocks[i].offset;
-+		ret |= test_gettime(i, true, offset);
-+		ret |= test_gettime(i, false, offset);
-+	}
-+
-+	if (ret)
-+		ksft_exit_fail();
-+
-+	ksft_exit_pass();
-+	return !!ret;
-+}
-diff --git a/tools/testing/selftests/timens/timens.h b/tools/testing/selftests/timens/timens.h
-new file mode 100644
-index 000000000000..77c127384810
---- /dev/null
-+++ b/tools/testing/selftests/timens/timens.h
-@@ -0,0 +1,63 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+#ifndef __TIMENS_H__
-+#define __TIMENS_H__
-+
-+#include <fcntl.h>
-+#include <unistd.h>
-+#include <stdlib.h>
-+#include <stdbool.h>
-+
-+#include "../kselftest.h"
-+
-+#ifndef CLONE_NEWTIME
-+# define CLONE_NEWTIME	0x00000080
-+#endif
-+
-+static inline int _settime(clockid_t clk_id, time_t offset)
-+{
-+	int fd, len;
-+	char buf[4096];
-+
-+	if (clk_id == CLOCK_MONOTONIC_COARSE || clk_id == CLOCK_MONOTONIC_RAW)
-+		clk_id = CLOCK_MONOTONIC;
-+
-+	len = snprintf(buf, sizeof(buf), "%d %ld 0", clk_id, offset);
-+
-+	fd = open("/proc/self/timens_offsets", O_WRONLY);
-+	if (fd < 0)
-+		return pr_perror("/proc/self/timens_offsets");
-+
-+	if (write(fd, buf, len) != len)
-+		return pr_perror("/proc/self/timens_offsets");
-+
-+	close(fd);
-+
-+	return 0;
-+}
-+
-+static inline int _gettime(clockid_t clk_id, struct timespec *res, bool raw_syscall)
-+{
-+	int err;
-+
-+	if (!raw_syscall) {
-+		if (clock_gettime(clk_id, res)) {
-+			pr_perror("clock_gettime(%d)", (int)clk_id);
-+			return -1;
-+		}
-+		return 0;
-+	}
-+
-+	err = syscall(SYS_clock_gettime, clk_id, res);
-+	if (err)
-+		pr_perror("syscall(SYS_clock_gettime(%d))", (int)clk_id);
-+
-+	return err;
-+}
-+
-+static inline void nscheck(void)
-+{
-+	if (access("/proc/self/ns/time", F_OK) < 0)
-+		ksft_exit_skip("Time namespaces are not supported\n");
-+}
-+
-+#endif
+ 
+ /*
+  * We should be using ATOMIC_INIT() for initializing .enabled, but
+diff --git a/init/Kconfig b/init/Kconfig
+index 7adf939eeaa8..7d2bad36a1be 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1075,6 +1075,7 @@ config UTS_NS
+ config TIME_NS
+ 	bool "TIME namespace"
+ 	depends on ARCH_HAS_VDSO_TIME_NS
++	depends on JUMP_LABEL
+ 	default y
+ 	help
+ 	  In this namespace boottime and monotonic clocks can be set.
 -- 
 2.22.0
