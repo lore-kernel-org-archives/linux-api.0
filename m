@@ -1,98 +1,164 @@
-From: Jordan Glover <Golden_Miller83@protonmail.ch>
-Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
-Date: Thu, 15 Aug 2019 11:24:54 +0000
-Message-ID: <HG0x24u69mnaMFKuxHVAzHpyjwsD5-U6RpqFRua87wGWQCHg00Q8ZqPeA_5kJ9l-d6oe0cXa4HyYXMnOO0Aofp_LcPcQdG0WFV21z1MbgcE=@protonmail.ch>
-References: <EE7B7AE1-3D44-4561-94B9-E97A626A251D@fb.com>
- <CALCETrVtPs8gY-H4gmzSqPboid3CB++n50SvYd6RU9YVde_-Ow@mail.gmail.com>
- <20190806011134.p5baub5l3t5fkmou@ast-mbp>
- <CALCETrXEHL3+NAY6P6vUj7Pvd9ZpZsYC6VCLXOaNxb90a_POGw@mail.gmail.com>
- <20190813215823.3sfbakzzjjykyng2@ast-mbp>
- <CALCETrVT-dDXQGukGs5S1DkzvQv9_e=axzr_GyEd2c4T4z8Qng@mail.gmail.com>
- <20190814005737.4qg6wh4a53vmso2v@ast-mbp>
- <CALCETrUkqUprujww26VxHwkdXQ3DWJH8nnL2VBYpK2EU0oX_YA@mail.gmail.com>
- <20190814220545.co5pucyo5jk3weiv@ast-mbp.dhcp.thefacebook.com>
-Reply-To: Jordan Glover <Golden_Miller83@protonmail.ch>
+From: Dmitry Safonov <dima@arista.com>
+Subject: [PATCHv6 02/36] timens: Add timens_offsets
+Date: Thu, 15 Aug 2019 17:38:02 +0100
+Message-ID: <20190815163836.2927-3-dima@arista.com>
+References: <20190815163836.2927-1-dima@arista.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20190814220545.co5pucyo5jk3weiv@ast-mbp.dhcp.thefacebook.com>
-Sender: netdev-owner@vger.kernel.org
-To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Daniel Colascione <dancol@google.com>, Song Liu <songliubraving@fb.com>, Kees Cook <keescook@chromium.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190815163836.2927-1-dima@arista.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Andrei Vagin <avagin@openvz.org>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wednesday, August 14, 2019 10:05 PM, Alexei Starovoitov <alexei.starovoi=
-tov@gmail.com> wrote:
+From: Andrei Vagin <avagin@openvz.org>
 
-> On Wed, Aug 14, 2019 at 10:51:23AM -0700, Andy Lutomirski wrote:
->
-> > If eBPF is genuinely not usable by programs that are not fully trusted
-> > by the admin, then no kernel changes at all are needed. Programs that
-> > want to reduce their own privileges can easily fork() a privileged
-> > subprocess or run a little helper to which they delegate BPF
-> > operations. This is far more flexible than anything that will ever be
-> > in the kernel because it allows the helper to verify that the rest of
-> > the program is doing exactly what it's supposed to and restrict eBPF
-> > operations to exactly the subset that is needed. So a container
-> > manager or network manager that drops some provilege could have a
-> > little bpf-helper that manages its BPF XDP, firewalling, etc
-> > configuration. The two processes would talk over a socketpair.
->
-> there were three projects that tried to delegate bpf operations.
-> All of them failed.
-> bpf operational workflow is much more complex than you're imagining.
-> fork() also doesn't work for all cases.
-> I gave this example before: consider multiple systemd-like deamons
-> that need to do bpf operations that want to pass this 'bpf capability'
-> to other deamons written by other teams. Some of them will start
-> non-root, but still need to do bpf. They will be rpm installed
-> and live upgraded while running.
-> We considered to make systemd such centralized bpf delegation
-> authority too. It didn't work. bpf in kernel grows quickly.
-> libbpf part grows independently. llvm keeps evolving.
-> All of them are being changed while system overall has to stay
-> operational. Centralized approach breaks apart.
->
-> > The interesting cases you're talking about really do involved
-> > unprivileged or less privileged eBPF, though. Let's see:
-> > systemd --user: systemd --user is not privileged at all. There's no
-> > issue of reducing privilege, since systemd --user doesn't have any
-> > privilege to begin with. But systemd supports some eBPF features, and
-> > presumably it would like to support them in the systemd --user case.
-> > This is unprivileged eBPF.
->
-> Let's disambiguate the terminology.
-> This /dev/bpf patch set started as describing the feature as 'unprivilege=
-d bpf'.
-> I think that was a mistake.
-> Let's call systemd-like deamon usage of bpf 'less privileged bpf'.
-> This is not unprivileged.
-> 'unprivileged bpf' is what sysctl kernel.unprivileged_bpf_disabled contro=
-ls.
->
-> There is a huge difference between the two.
-> I'm against extending 'unprivileged bpf' even a bit more than what it is
-> today for many reasons mentioned earlier.
-> The /dev/bpf is about 'less privileged'.
-> Less privileged than root. We need to split part of full root capability
-> into bpf capability. So that most of the root can be dropped.
-> This is very similar to what cap_net_admin does.
-> cap_net_amdin can bring down eth0 which is just as bad as crashing the bo=
-x.
-> cap_net_admin is very much privileged. Just 'less privileged' than root.
-> Same thing for cap_bpf.
->
-> May be we should do both cap_bpf and /dev/bpf to make it clear that
-> this is the same thing. Two interfaces to achieve the same result.
->
+Introduce offsets for time namespace. They will contain an adjustment
+needed to convert clocks to/from host's.
 
-systemd --user processes aren't "less privileged". The are COMPLETELY unpri=
-vileged.
-Granting them cap_bpf is the same as granting it to every other unprivilege=
-d user
-process. Also unprivileged user process can start systemd --user process wi=
-th any
-command they like.
+Allocate one page for each time namespace that will be premapped into
+userspace among vvar pages.
 
-Jordan
+A new namespace is created with the same offsets as the time namespace
+of the current process.
+
+Signed-off-by: Andrei Vagin <avagin@openvz.org>
+Co-developed-by: Dmitry Safonov <dima@arista.com>
+Signed-off-by: Dmitry Safonov <dima@arista.com>
+---
+ MAINTAINERS                    |  1 +
+ include/linux/time_namespace.h | 18 ++++++++++++++++++
+ include/linux/timens_offsets.h | 10 ++++++++++
+ kernel/time_namespace.c        | 16 ++++++++++++++--
+ 4 files changed, 43 insertions(+), 2 deletions(-)
+ create mode 100644 include/linux/timens_offsets.h
+
+diff --git a/MAINTAINERS b/MAINTAINERS
+index 97b7737f5aba..527aee1e616f 100644
+--- a/MAINTAINERS
++++ b/MAINTAINERS
+@@ -12899,6 +12899,7 @@ S:	Maintained
+ F:	fs/timerfd.c
+ F:	include/linux/timer*
+ F:	include/linux/time_namespace.h
++F:	include/linux/timens_offsets.h
+ F:	kernel/time_namespace.c
+ F:	kernel/time/*timer*
+ 
+diff --git a/include/linux/time_namespace.h b/include/linux/time_namespace.h
+index 9507ed7072fe..334c1a1c6607 100644
+--- a/include/linux/time_namespace.h
++++ b/include/linux/time_namespace.h
+@@ -8,6 +8,7 @@
+ #include <linux/nsproxy.h>
+ #include <linux/ns_common.h>
+ #include <linux/err.h>
++#include <linux/timens_offsets.h>
+ 
+ struct user_namespace;
+ extern struct user_namespace init_user_ns;
+@@ -39,6 +40,21 @@ static inline void put_time_ns(struct time_namespace *ns)
+ 	kref_put(&ns->kref, free_time_ns);
+ }
+ 
++static inline void timens_add_monotonic(struct timespec64 *ts)
++{
++	struct timens_offsets *ns_offsets = current->nsproxy->time_ns->offsets;
++
++	if (ns_offsets)
++		*ts = timespec64_add(*ts, ns_offsets->monotonic);
++}
++
++static inline void timens_add_boottime(struct timespec64 *ts)
++{
++	struct timens_offsets *ns_offsets = current->nsproxy->time_ns->offsets;
++
++	if (ns_offsets)
++		*ts = timespec64_add(*ts, ns_offsets->boottime);
++}
+ 
+ #else
+ static inline struct time_namespace *get_time_ns(struct time_namespace *ns)
+@@ -64,6 +80,8 @@ static inline int timens_on_fork(struct nsproxy *nsproxy, struct task_struct *ts
+ 	return 0;
+ }
+ 
++static inline void timens_add_monotonic(struct timespec64 *ts) {}
++static inline void timens_add_boottime(struct timespec64 *ts) {}
+ #endif
+ 
+ #endif /* _LINUX_TIMENS_H */
+diff --git a/include/linux/timens_offsets.h b/include/linux/timens_offsets.h
+new file mode 100644
+index 000000000000..e93aabaa5e45
+--- /dev/null
++++ b/include/linux/timens_offsets.h
+@@ -0,0 +1,10 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++#ifndef _LINUX_TIME_OFFSETS_H
++#define _LINUX_TIME_OFFSETS_H
++
++struct timens_offsets {
++	struct timespec64 monotonic;
++	struct timespec64 boottime;
++};
++
++#endif
+diff --git a/kernel/time_namespace.c b/kernel/time_namespace.c
+index 8fd8384b7261..394a9e168e7c 100644
+--- a/kernel/time_namespace.c
++++ b/kernel/time_namespace.c
+@@ -14,6 +14,7 @@
+ #include <linux/slab.h>
+ #include <linux/cred.h>
+ #include <linux/err.h>
++#include <linux/mm.h>
+ 
+ static struct ucounts *inc_time_namespaces(struct user_namespace *ns)
+ {
+@@ -47,6 +48,7 @@ static struct time_namespace *clone_time_ns(struct user_namespace *user_ns,
+ {
+ 	struct time_namespace *ns;
+ 	struct ucounts *ucounts;
++	struct page *page;
+ 	int err;
+ 
+ 	err = -ENOSPC;
+@@ -59,15 +61,24 @@ static struct time_namespace *clone_time_ns(struct user_namespace *user_ns,
+ 	if (!ns)
+ 		goto fail_dec;
+ 
++	page = alloc_page(GFP_KERNEL | __GFP_ZERO);
++	if (!page)
++		goto fail_free;
++	ns->offsets = page_address(page);
++	if (old_ns->offsets)
++		memcpy(ns->offsets, old_ns->offsets, sizeof(struct timens_offsets));
++	BUILD_BUG_ON(sizeof(*ns->offsets) > PAGE_SIZE);
++
+ 	err = ns_alloc_inum(&ns->ns);
+ 	if (err)
+-		goto fail_free;
++		goto fail_page;
+ 
+ 	ns->ucounts = ucounts;
+ 	ns->ns.ops = &timens_operations;
+ 	ns->user_ns = get_user_ns(user_ns);
+ 	return ns;
+-
++fail_page:
++	free_page((unsigned long)ns->offsets);
+ fail_free:
+ 	kfree(ns);
+ fail_dec:
+@@ -95,6 +106,7 @@ void free_time_ns(struct kref *kref)
+ 	struct time_namespace *ns;
+ 
+ 	ns = container_of(kref, struct time_namespace, kref);
++	free_page((unsigned long)ns->offsets);
+ 	dec_time_namespaces(ns->ucounts);
+ 	put_user_ns(ns->user_ns);
+ 	ns_free_inum(&ns->ns);
+-- 
+2.22.0
