@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv6 05/36] alarmtimer: Rename gettime() callback to get_ktime()
-Date: Thu, 15 Aug 2019 17:38:05 +0100
-Message-ID: <20190815163836.2927-6-dima@arista.com>
+Subject: [PATCHv6 06/36] alarmtimer: Provide get_timespec() callback
+Date: Thu, 15 Aug 2019 17:38:06 +0100
+Message-ID: <20190815163836.2927-7-dima@arista.com>
 References: <20190815163836.2927-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -15,169 +15,95 @@ List-Id: linux-api@vger.kernel.org
 From: Andrei Vagin <avagin@gmail.com>
 
 The upcoming support for time namespaces requires to have access to:
-  - The time in a tasks time namespace for sys_clock_gettime()
+  - The time in a task's time namespace for sys_clock_gettime()
   - The time in the root name space for common_timer_get()
 
-struct alarm_base needs to follow the same name convention, so rename
-.gettime() callback into get_ktime() as a preparation for introducing
-get_timespec().
+Wire up alarm bases with get_timespec().
 
 Suggested-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Andrei Vagin <avagin@gmail.com>
 Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- kernel/time/alarmtimer.c | 34 +++++++++++++++++-----------------
- 1 file changed, 17 insertions(+), 17 deletions(-)
+ include/linux/posix-timers.h | 3 +++
+ kernel/time/alarmtimer.c     | 8 ++++++--
+ kernel/time/posix-timers.c   | 4 ++--
+ 3 files changed, 11 insertions(+), 4 deletions(-)
 
+diff --git a/include/linux/posix-timers.h b/include/linux/posix-timers.h
+index 604cec0e41ba..ec2b2d8b95f6 100644
+--- a/include/linux/posix-timers.h
++++ b/include/linux/posix-timers.h
+@@ -128,4 +128,7 @@ void set_process_cpu_timer(struct task_struct *task, unsigned int clock_idx,
+ void update_rlimit_cpu(struct task_struct *task, unsigned long rlim_new);
+ 
+ void posixtimer_rearm(struct kernel_siginfo *info);
++
++int posix_get_realtime_timespec(clockid_t which_clock, struct timespec64 *tp);
++int posix_get_boottime_timespec(const clockid_t which_clock, struct timespec64 *tp);
+ #endif
 diff --git a/kernel/time/alarmtimer.c b/kernel/time/alarmtimer.c
-index 995dd5aa68f0..5af13c859d03 100644
+index 5af13c859d03..7732f0aabf6a 100644
 --- a/kernel/time/alarmtimer.c
 +++ b/kernel/time/alarmtimer.c
-@@ -36,13 +36,13 @@
-  * struct alarm_base - Alarm timer bases
+@@ -37,12 +37,15 @@
   * @lock:		Lock for syncrhonized access to the base
   * @timerqueue:		Timerqueue head managing the list of events
-- * @gettime:		Function to read the time correlating to the base
-+ * @get_ktime:		Function to read the time correlating to the base
+  * @get_ktime:		Function to read the time correlating to the base
++ * @get_timespec:	Function to read the namespace time correlating to the base
   * @base_clockid:	clockid for the base
   */
  static struct alarm_base {
  	spinlock_t		lock;
  	struct timerqueue_head	timerqueue;
--	ktime_t			(*gettime)(void);
-+	ktime_t			(*get_ktime)(void);
+ 	ktime_t			(*get_ktime)(void);
++	int			(*get_timespec)(const clockid_t which_clock,
++						struct timespec64 *tp);
  	clockid_t		base_clockid;
  } alarm_bases[ALARM_NUMTYPE];
  
-@@ -207,7 +207,7 @@ static enum hrtimer_restart alarmtimer_fired(struct hrtimer *timer)
- 	spin_unlock_irqrestore(&base->lock, flags);
- 
- 	if (alarm->function)
--		restart = alarm->function(alarm, base->gettime());
-+		restart = alarm->function(alarm, base->get_ktime());
- 
- 	spin_lock_irqsave(&base->lock, flags);
- 	if (restart != ALARMTIMER_NORESTART) {
-@@ -217,7 +217,7 @@ static enum hrtimer_restart alarmtimer_fired(struct hrtimer *timer)
- 	}
- 	spin_unlock_irqrestore(&base->lock, flags);
- 
--	trace_alarmtimer_fired(alarm, base->gettime());
-+	trace_alarmtimer_fired(alarm, base->get_ktime());
- 	return ret;
- 
- }
-@@ -225,7 +225,7 @@ static enum hrtimer_restart alarmtimer_fired(struct hrtimer *timer)
- ktime_t alarm_expires_remaining(const struct alarm *alarm)
- {
- 	struct alarm_base *base = &alarm_bases[alarm->type];
--	return ktime_sub(alarm->node.expires, base->gettime());
-+	return ktime_sub(alarm->node.expires, base->get_ktime());
- }
- EXPORT_SYMBOL_GPL(alarm_expires_remaining);
- 
-@@ -270,7 +270,7 @@ static int alarmtimer_suspend(struct device *dev)
- 		spin_unlock_irqrestore(&base->lock, flags);
- 		if (!next)
- 			continue;
--		delta = ktime_sub(next->expires, base->gettime());
-+		delta = ktime_sub(next->expires, base->get_ktime());
- 		if (!min || (delta < min)) {
- 			expires = next->expires;
- 			min = delta;
-@@ -364,7 +364,7 @@ void alarm_start(struct alarm *alarm, ktime_t start)
- 	hrtimer_start(&alarm->timer, alarm->node.expires, HRTIMER_MODE_ABS);
- 	spin_unlock_irqrestore(&base->lock, flags);
- 
--	trace_alarmtimer_start(alarm, base->gettime());
-+	trace_alarmtimer_start(alarm, base->get_ktime());
- }
- EXPORT_SYMBOL_GPL(alarm_start);
- 
-@@ -377,7 +377,7 @@ void alarm_start_relative(struct alarm *alarm, ktime_t start)
- {
- 	struct alarm_base *base = &alarm_bases[alarm->type];
- 
--	start = ktime_add_safe(start, base->gettime());
-+	start = ktime_add_safe(start, base->get_ktime());
- 	alarm_start(alarm, start);
- }
- EXPORT_SYMBOL_GPL(alarm_start_relative);
-@@ -414,7 +414,7 @@ int alarm_try_to_cancel(struct alarm *alarm)
- 		alarmtimer_dequeue(base, alarm);
- 	spin_unlock_irqrestore(&base->lock, flags);
- 
--	trace_alarmtimer_cancel(alarm, base->gettime());
-+	trace_alarmtimer_cancel(alarm, base->get_ktime());
- 	return ret;
- }
- EXPORT_SYMBOL_GPL(alarm_try_to_cancel);
-@@ -474,7 +474,7 @@ u64 alarm_forward_now(struct alarm *alarm, ktime_t interval)
- {
- 	struct alarm_base *base = &alarm_bases[alarm->type];
- 
--	return alarm_forward(alarm, base->gettime(), interval);
-+	return alarm_forward(alarm, base->get_ktime(), interval);
- }
- EXPORT_SYMBOL_GPL(alarm_forward_now);
- 
-@@ -500,7 +500,7 @@ static void alarmtimer_freezerset(ktime_t absexp, enum alarmtimer_type type)
- 		return;
- 	}
- 
--	delta = ktime_sub(absexp, base->gettime());
-+	delta = ktime_sub(absexp, base->get_ktime());
- 
- 	spin_lock_irqsave(&freezer_delta_lock, flags);
- 	if (!freezer_delta || (delta < freezer_delta)) {
-@@ -619,7 +619,7 @@ static void alarm_timer_arm(struct k_itimer *timr, ktime_t expires,
- 	struct alarm_base *base = &alarm_bases[alarm->type];
- 
- 	if (!absolute)
--		expires = ktime_add_safe(expires, base->gettime());
-+		expires = ktime_add_safe(expires, base->get_ktime());
- 	if (sigev_none)
- 		alarm->node.expires = expires;
- 	else
-@@ -657,7 +657,7 @@ static int alarm_clock_get_timespec(clockid_t which_clock, struct timespec64 *tp
+@@ -657,8 +660,7 @@ static int alarm_clock_get_timespec(clockid_t which_clock, struct timespec64 *tp
  	if (!alarmtimer_get_rtcdev())
  		return -EINVAL;
  
--	*tp = ktime_to_timespec64(base->gettime());
-+	*tp = ktime_to_timespec64(base->get_ktime());
- 	return 0;
+-	*tp = ktime_to_timespec64(base->get_ktime());
+-	return 0;
++	return base->get_timespec(base->base_clockid, tp);
  }
  
-@@ -734,7 +734,7 @@ static int alarmtimer_do_nsleep(struct alarm *alarm, ktime_t absexp,
- 		struct timespec64 rmt;
- 		ktime_t rem;
- 
--		rem = ktime_sub(absexp, alarm_bases[type].gettime());
-+		rem = ktime_sub(absexp, alarm_bases[type].get_ktime());
- 
- 		if (rem <= 0)
- 			return 0;
-@@ -803,7 +803,7 @@ static int alarm_timer_nsleep(const clockid_t which_clock, int flags,
- 	exp = timespec64_to_ktime(*tsreq);
- 	/* Convert (if necessary) to absolute time */
- 	if (flags != TIMER_ABSTIME) {
--		ktime_t now = alarm_bases[type].gettime();
-+		ktime_t now = alarm_bases[type].get_ktime();
- 
- 		exp = ktime_add_safe(now, exp);
- 	}
-@@ -868,9 +868,9 @@ static int __init alarmtimer_init(void)
- 
+ /**
+@@ -869,8 +871,10 @@ static int __init alarmtimer_init(void)
  	/* Initialize alarm bases */
  	alarm_bases[ALARM_REALTIME].base_clockid = CLOCK_REALTIME;
--	alarm_bases[ALARM_REALTIME].gettime = &ktime_get_real;
-+	alarm_bases[ALARM_REALTIME].get_ktime = &ktime_get_real;
+ 	alarm_bases[ALARM_REALTIME].get_ktime = &ktime_get_real;
++	alarm_bases[ALARM_REALTIME].get_timespec = posix_get_realtime_timespec,
  	alarm_bases[ALARM_BOOTTIME].base_clockid = CLOCK_BOOTTIME;
--	alarm_bases[ALARM_BOOTTIME].gettime = &ktime_get_boottime;
-+	alarm_bases[ALARM_BOOTTIME].get_ktime = &ktime_get_boottime;
+ 	alarm_bases[ALARM_BOOTTIME].get_ktime = &ktime_get_boottime;
++	alarm_bases[ALARM_BOOTTIME].get_timespec = posix_get_boottime_timespec;
  	for (i = 0; i < ALARM_NUMTYPE; i++) {
  		timerqueue_init_head(&alarm_bases[i].timerqueue);
  		spin_lock_init(&alarm_bases[i].lock);
+diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
+index 4e89e342cfcc..43049c5f1a22 100644
+--- a/kernel/time/posix-timers.c
++++ b/kernel/time/posix-timers.c
+@@ -165,7 +165,7 @@ static inline void unlock_timer(struct k_itimer *timr, unsigned long flags)
+ }
+ 
+ /* Get clock_realtime */
+-static int posix_get_realtime_timespec(clockid_t which_clock, struct timespec64 *tp)
++int posix_get_realtime_timespec(clockid_t which_clock, struct timespec64 *tp)
+ {
+ 	ktime_get_real_ts64(tp);
+ 	return 0;
+@@ -222,7 +222,7 @@ static int posix_get_coarse_res(const clockid_t which_clock, struct timespec64 *
+ 	return 0;
+ }
+ 
+-static int posix_get_boottime_timespec(const clockid_t which_clock, struct timespec64 *tp)
++int posix_get_boottime_timespec(const clockid_t which_clock, struct timespec64 *tp)
+ {
+ 	ktime_get_boottime_ts64(tp);
+ 	return 0;
 -- 
 2.22.0
