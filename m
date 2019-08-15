@@ -1,105 +1,121 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCHv6 22/36] x86/vdso: Add offsets page in vvar
-Date: Thu, 15 Aug 2019 21:21:21 +0200 (CEST)
-Message-ID: <alpine.DEB.2.21.1908152117231.1908@nanos.tec.linutronix.de>
-References: <20190815163836.2927-1-dima@arista.com> <20190815163836.2927-23-dima@arista.com>
+Subject: Re: [PATCHv6 28/36] posix-clocks: Add align for timens_offsets
+Date: Thu, 15 Aug 2019 21:22:26 +0200 (CEST)
+Message-ID: <alpine.DEB.2.21.1908152010230.1908@nanos.tec.linutronix.de>
+References: <20190815163836.2927-1-dima@arista.com> <20190815163836.2927-29-dima@arista.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190815163836.2927-23-dima@arista.com>
+In-Reply-To: <20190815163836.2927-29-dima@arista.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Dmitry Safonov <dima@arista.com>
-Cc: linux-kernel@vger.kernel.org, Dmitry Safonov <0x7f454c46@gmail.com>, Andrei Vagin <avagin@openvz.org>, Adrian Reber <adrian@lisas.de>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org, Andrei Vagin <avagin@gmail.com>
+Cc: linux-kernel@vger.kernel.org, Dmitry Safonov <0x7f454c46@gmail.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
 On Thu, 15 Aug 2019, Dmitry Safonov wrote:
-> ---
->  arch/Kconfig                          |  5 +++
->  arch/x86/Kconfig                      |  1 +
->  arch/x86/entry/vdso/vdso-layout.lds.S |  9 ++++-
->  arch/x86/entry/vdso/vdso2c.c          |  3 ++
->  arch/x86/entry/vdso/vma.c             | 12 +++++++
->  arch/x86/include/asm/vdso.h           |  1 +
->  init/Kconfig                          |  1 +
->  lib/vdso/gettimeofday.c               | 47 +++++++++++++++++++++++++++
 
-This needs to be split into the generic lib/vdso part and then x86 making
-use of it.
+> Align offsets so that time namespace will work for ia32 applications on
+> x86_64 host.
 
-> +#ifdef CONFIG_TIME_NS
+That's true for any 64 bit arch which supports 32bit user space and should
+be folded into the patch which introduces the offset store.
 
-This should be COMPILE_WITH_TIME_NS and not CONFIG_TIME_NS
+> +/*
+> + * Time offsets need align as they're placed on VVAR page,
+> + * which is used by x86_64 and ia32 VDSO code.
+> + * On ia32 offset::tv_sec (u64) has align(4), so re-align offsets
+> + * to the same positions as 64-bit offsets.
 
-> +extern u8 timens_page
-> +	__attribute__((visibility("hidden")));
-> +
-> +notrace static __always_inline void clk_to_ns(clockid_t clk, struct __kernel_timespec *ts)
+This is generic code. Please do not add x86'isms here. The alignement
+problem is more or less the same for any 64bit arch which supports 32bit
+user space. And it's even worse on BE.
 
-This needs notrace because?
+> + * On 64-bit big-endian systems VDSO should convert to timespec64
+> + * to timespec ...
 
-> +{
-> +	struct timens_offsets *timens = (struct timens_offsets *) &timens_page;
-> +	struct timespec64 *offset64;
-> +
-> +	switch (clk) {
-> +	case CLOCK_MONOTONIC:
-> +	case CLOCK_MONOTONIC_COARSE:
-> +	case CLOCK_MONOTONIC_RAW:
-> +		offset64 = &timens->monotonic;
-> +		break;
-> +	case CLOCK_BOOTTIME:
-> +		offset64 = &timens->boottime;
-> +		break;
-> +	default:
-> +		return;
-> +	}
-> +
-> +	/*
-> +	 * The kernel allows to set a negative offset only if the current clock
-> +	 * value in a namespace is positive, so the result tv_sec can't be
-> +	 * negative here.
-> +	 */
-> +	ts->tv_nsec += offset64->tv_nsec;
-> +	ts->tv_sec += offset64->tv_sec;
-> +	if (ts->tv_nsec >= NSEC_PER_SEC) {
-> +		ts->tv_nsec -= NSEC_PER_SEC;
-> +		ts->tv_sec++;
-> +	}
-> +	if (ts->tv_nsec < 0) {
-> +		ts->tv_nsec += NSEC_PER_SEC;
-> +		ts->tv_sec--;
-> +	}
+What?
 
-That's broken for 32bit user space on 64bit hosts. On LE due to
-misalignment and on BE because 32bit will read always 0.
+> ... because of a padding occurring between the fields.
 
-> +}
-> +#else
-> +notrace static __always_inline void clk_to_ns(clockid_t clk, struct __kernel_timespec *ts) {}
-> +#endif
-> +
->  static int do_hres(const struct vdso_data *vd, clockid_t clk,
->  		   struct __kernel_timespec *ts)
->  {
-> @@ -65,6 +108,8 @@ static int do_hres(const struct vdso_data *vd, clockid_t clk,
->  	ts->tv_sec = sec + __iter_div_u64_rem(ns, NSEC_PER_SEC, &ns);
->  	ts->tv_nsec = ns;
->  
-> +	clk_to_ns(clk, ts);
-> +
->  	return 0;
->  }
->  
-> @@ -79,6 +124,8 @@ static void do_coarse(const struct vdso_data *vd, clockid_t clk,
->  		ts->tv_sec = vdso_ts->sec;
->  		ts->tv_nsec = vdso_ts->nsec;
->  	} while (unlikely(vdso_read_retry(vd, seq)));
-> +
-> +	clk_to_ns(clk, ts);
->  }
->  
->  static __maybe_unused int
-> -- 
-> 2.22.0
-> 
-> 
+There is no padding between the fields.
+
+32bit BE (powerpc)
+
+struct timespec64 {
+	time64_t                   tv_sec;               /*     0     8 */
+	long int                   tv_nsec;              /*     8     4 */
+
+tv_nsec is directly after tv_sec
+
+};
+
+64bit LE and BE (x86, powerpc64)
+
+struct timespec64 {
+	time64_t                   tv_sec;               /*     0     8 */
+	long int                   tv_nsec;              /*     8     8 */
+};
+
+The problem for BE is that the 64bit host uses long int to store
+tv_nsec. So the 32bit userspace will always read 0 because it reads byte
+2/3 as seen from the 64 host side.
+
+So using struct timespec64 for the offset is wrong. You really need to open
+code that offset storage if you don't want to end up with weird workarounds
+for BE.
+
+Something like this:
+
+struct timens_offs {
+	  time64_t	tv_sec;
+	  s64		tv_nsec;
+};
+
+Then your offset store becomes:
+
+struct timens_offsets {
+	struct timens_offs	monotonic;
+	struct timens_offs	boottime;
+};
+
+which needs tweaks to your conversion functions:
+
+static inline void timens_add_monotonic(struct timespec64 *ts)
+{
+	struct timens_offsets *ns_offsets = current->nsproxy->time_ns->offsets;
+	struct timens_offs *mo = &ns_offsets->monotonic;
+
+	if (ns_offsets) {
+		set_normalized_timespec64(ts, ts->tv_sec + mo->tv_sec,
+                                	  ts->tv_nsec + mo->tv_nsec);
+	}
+}
+
+And for your to host conversion you need:
+
+	case CLOCK_MONOTONIC:
+		mo = &ns_offsets->monotonic;
+		offset = ktime_set(mo->tv_sec, mo->tv_nsec);
+		break;
+
+Similar changes are needed in the VDSO and the proc interface
+obviously. Then this works for any arch without magic BE fixups. You get
+the idea.
+
+And ideally you change that storage to:
+
+struct timens_offs {
+	  time64_t	tv_sec;
+	  s64		tv_nsec;
+	  ktime_t	nsecs;
+};
+
+and do the conversion once in the proc write. Then your to host conversion
+can use 'nsecs' and spare the multiplication on every invocation.
+
+	case CLOCK_MONOTONIC:
+    		offset = ns_offsets.monotonic.nsecs;
+
+Thanks,
+
+	tglx
