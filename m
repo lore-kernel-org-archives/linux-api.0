@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv6 10/36] kernel: Add do_timens_ktime_to_host() helper
-Date: Thu, 15 Aug 2019 17:38:10 +0100
-Message-ID: <20190815163836.2927-11-dima@arista.com>
+Subject: [PATCHv6 07/36] posix-clocks: Introduce clock_get_ktime() callback
+Date: Thu, 15 Aug 2019 17:38:07 +0100
+Message-ID: <20190815163836.2927-8-dima@arista.com>
 References: <20190815163836.2927-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,105 +14,182 @@ List-Id: linux-api@vger.kernel.org
 
 From: Andrei Vagin <avagin@gmail.com>
 
-The helper subtracts namespace's clock offset from the given time
-and checks that the result is in [0, KTIME_MAX].
+The callsite in common_timer_get() has already a comment:
+    /*
+     * The timespec64 based conversion is suboptimal, but it's not
+     * worth to implement yet another callback.
+     */
+    kc->clock_get(timr->it_clock, &ts64);
+    now = timespec64_to_ktime(ts64);
 
+The upcoming support for time namespaces requires to have access to:
+- The time in a task's time namespace for sys_clock_gettime()
+- The time in the root name space for common_timer_get()
+
+That adds a valid reason to finally implement a separate callback which
+returns the time in ktime_t format.
+
+Suggested-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Andrei Vagin <avagin@gmail.com>
 Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- include/linux/time_namespace.h | 17 ++++++++++++++
- kernel/time_namespace.c        | 43 ++++++++++++++++++++++++++++++++++
- 2 files changed, 60 insertions(+)
+ kernel/time/alarmtimer.c   | 19 ++++++++++++++++++-
+ kernel/time/posix-timers.c | 26 +++++++++++++++++++++++++-
+ kernel/time/posix-timers.h |  3 +++
+ 3 files changed, 46 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/time_namespace.h b/include/linux/time_namespace.h
-index 334c1a1c6607..9ba9664ff0ab 100644
---- a/include/linux/time_namespace.h
-+++ b/include/linux/time_namespace.h
-@@ -56,6 +56,18 @@ static inline void timens_add_boottime(struct timespec64 *ts)
- 		*ts = timespec64_add(*ts, ns_offsets->boottime);
+diff --git a/kernel/time/alarmtimer.c b/kernel/time/alarmtimer.c
+index 7732f0aabf6a..c8f8cf3d7d08 100644
+--- a/kernel/time/alarmtimer.c
++++ b/kernel/time/alarmtimer.c
+@@ -651,7 +651,7 @@ static int alarm_clock_getres(const clockid_t which_clock, struct timespec64 *tp
+  * @which_clock: clockid
+  * @tp: timespec to fill.
+  *
+- * Provides the underlying alarm base time.
++ * Provides the underlying alarm base time in a tasks time namespace.
+  */
+ static int alarm_clock_get_timespec(clockid_t which_clock, struct timespec64 *tp)
+ {
+@@ -663,6 +663,22 @@ static int alarm_clock_get_timespec(clockid_t which_clock, struct timespec64 *tp
+ 	return base->get_timespec(base->base_clockid, tp);
  }
  
-+ktime_t do_timens_ktime_to_host(clockid_t clockid, ktime_t tim,
-+				struct timens_offsets *offsets);
-+static inline ktime_t timens_ktime_to_host(clockid_t clockid, ktime_t tim)
++/**
++ * alarm_clock_get_ktime - posix clock_get_ktime interface
++ * @which_clock: clockid
++ *
++ * Provides the underlying alarm base time in the root namespace.
++ */
++static ktime_t alarm_clock_get_ktime(clockid_t which_clock)
 +{
-+	struct timens_offsets *offsets = current->nsproxy->time_ns->offsets;
++	struct alarm_base *base = &alarm_bases[clock2alarm(which_clock)];
 +
-+	if (!offsets)
-+		return tim;
++	if (!alarmtimer_get_rtcdev())
++		return -EINVAL;
 +
-+	return do_timens_ktime_to_host(clockid, tim, offsets);
++	return base->get_ktime();
 +}
 +
- #else
- static inline struct time_namespace *get_time_ns(struct time_namespace *ns)
+ /**
+  * alarm_timer_create - posix timer_create interface
+  * @new_timer: k_itimer pointer to manage
+@@ -826,6 +842,7 @@ static int alarm_timer_nsleep(const clockid_t which_clock, int flags,
+ 
+ const struct k_clock alarm_clock = {
+ 	.clock_getres		= alarm_clock_getres,
++	.clock_get_ktime	= alarm_clock_get_ktime,
+ 	.clock_get_timespec	= alarm_clock_get_timespec,
+ 	.timer_create		= alarm_timer_create,
+ 	.timer_set		= common_timer_set,
+diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
+index 43049c5f1a22..7cf1216050d1 100644
+--- a/kernel/time/posix-timers.c
++++ b/kernel/time/posix-timers.c
+@@ -171,6 +171,11 @@ int posix_get_realtime_timespec(clockid_t which_clock, struct timespec64 *tp)
+ 	return 0;
+ }
+ 
++static ktime_t posix_get_realtime_ktime(clockid_t which_clock)
++{
++	return ktime_get_real();
++}
++
+ /* Set clock_realtime */
+ static int posix_clock_realtime_set(const clockid_t which_clock,
+ 				    const struct timespec64 *tp)
+@@ -193,6 +198,11 @@ static int posix_get_monotonic_timespec(clockid_t which_clock, struct timespec64
+ 	return 0;
+ }
+ 
++static ktime_t posix_get_monotonic_ktime(clockid_t which_clock)
++{
++	return ktime_get();
++}
++
+ /*
+  * Get monotonic-raw time for posix timers
+  */
+@@ -228,12 +238,22 @@ int posix_get_boottime_timespec(const clockid_t which_clock, struct timespec64 *
+ 	return 0;
+ }
+ 
++static ktime_t posix_get_boottime_ktime(const clockid_t which_clock)
++{
++	return ktime_get_boottime();
++}
++
+ static int posix_get_tai_timespec(clockid_t which_clock, struct timespec64 *tp)
  {
-@@ -82,6 +94,11 @@ static inline int timens_on_fork(struct nsproxy *nsproxy, struct task_struct *ts
+ 	ktime_get_clocktai_ts64(tp);
+ 	return 0;
+ }
  
- static inline void timens_add_monotonic(struct timespec64 *ts) {}
- static inline void timens_add_boottime(struct timespec64 *ts) {}
-+
-+static inline ktime_t timens_ktime_to_host(clockid_t clockid, ktime_t tim)
++static ktime_t posix_get_tai_ktime(clockid_t which_clock)
 +{
-+	return tim;
-+}
- #endif
- 
- #endif /* _LINUX_TIMENS_H */
-diff --git a/kernel/time_namespace.c b/kernel/time_namespace.c
-index 394a9e168e7c..ff2c5de7e815 100644
---- a/kernel/time_namespace.c
-+++ b/kernel/time_namespace.c
-@@ -16,6 +16,49 @@
- #include <linux/err.h>
- #include <linux/mm.h>
- 
-+ktime_t do_timens_ktime_to_host(clockid_t clockid, ktime_t tim,
-+				struct timens_offsets *ns_offsets)
-+{
-+	ktime_t offset;
-+
-+	switch (clockid) {
-+	case CLOCK_MONOTONIC:
-+		offset = timespec64_to_ktime(ns_offsets->monotonic);
-+		break;
-+	case CLOCK_BOOTTIME:
-+	case CLOCK_BOOTTIME_ALARM:
-+		offset = timespec64_to_ktime(ns_offsets->boottime);
-+		break;
-+	default:
-+		return tim;
-+	}
-+
-+	/*
-+	 * Check that @tim value is in [offset, KTIME_MAX + offset]
-+	 * and subtract offset.
-+	 */
-+	if (tim < offset) {
-+		/*
-+		 * User can specify @tim *absolute* value - if it's lesser than
-+		 * the time namespace's offset - it's already expired.
-+		 */
-+		tim = 0;
-+	} else if (KTIME_MAX - tim < -offset) {
-+		/*
-+		 * User-supplied @tim may be close or even equal KTIME_MAX
-+		 * and time namespace offset can be negative.
-+		 * Let's check (tim - offset) for an overflow.
-+		 * Return KTIME_MAX in such case, as the time value is
-+		 * thousands *years* in future anyway.
-+		 */
-+		tim = KTIME_MAX;
-+	} else {
-+		tim = ktime_sub(tim, offset);
-+	}
-+
-+	return tim;
++	return ktime_get_clocktai();
 +}
 +
- static struct ucounts *inc_time_namespaces(struct user_namespace *ns)
+ static int posix_get_hrtimer_res(clockid_t which_clock, struct timespec64 *tp)
  {
- 	return inc_ucount(ns, current_euid(), UCOUNT_TIME_NAMESPACES);
+ 	tp->tv_sec = 0;
+@@ -781,7 +801,7 @@ static void common_hrtimer_arm(struct k_itimer *timr, ktime_t expires,
+ 	 * Posix magic: Relative CLOCK_REALTIME timers are not affected by
+ 	 * clock modifications, so they become CLOCK_MONOTONIC based under the
+ 	 * hood. See hrtimer_init(). Update timr->kclock, so the generic
+-	 * functions which use timr->kclock->clock_get_timespec() work.
++	 * functions which use timr->kclock->clock_get_*() work.
+ 	 *
+ 	 * Note: it_clock stays unmodified, because the next timer_set() might
+ 	 * use ABSTIME, so it needs to switch back.
+@@ -1268,6 +1288,7 @@ SYSCALL_DEFINE4(clock_nanosleep_time32, clockid_t, which_clock, int, flags,
+ static const struct k_clock clock_realtime = {
+ 	.clock_getres		= posix_get_hrtimer_res,
+ 	.clock_get_timespec	= posix_get_realtime_timespec,
++	.clock_get_ktime	= posix_get_realtime_ktime,
+ 	.clock_set		= posix_clock_realtime_set,
+ 	.clock_adj		= posix_clock_realtime_adj,
+ 	.nsleep			= common_nsleep,
+@@ -1285,6 +1306,7 @@ static const struct k_clock clock_realtime = {
+ static const struct k_clock clock_monotonic = {
+ 	.clock_getres		= posix_get_hrtimer_res,
+ 	.clock_get_timespec	= posix_get_monotonic_timespec,
++	.clock_get_ktime	= posix_get_monotonic_ktime,
+ 	.nsleep			= common_nsleep,
+ 	.timer_create		= common_timer_create,
+ 	.timer_set		= common_timer_set,
+@@ -1314,6 +1336,7 @@ static const struct k_clock clock_monotonic_coarse = {
+ 
+ static const struct k_clock clock_tai = {
+ 	.clock_getres		= posix_get_hrtimer_res,
++	.clock_get_ktime	= posix_get_tai_ktime,
+ 	.clock_get_timespec	= posix_get_tai_timespec,
+ 	.nsleep			= common_nsleep,
+ 	.timer_create		= common_timer_create,
+@@ -1329,6 +1352,7 @@ static const struct k_clock clock_tai = {
+ 
+ static const struct k_clock clock_boottime = {
+ 	.clock_getres		= posix_get_hrtimer_res,
++	.clock_get_ktime	= posix_get_boottime_ktime,
+ 	.clock_get_timespec	= posix_get_boottime_timespec,
+ 	.nsleep			= common_nsleep,
+ 	.timer_create		= common_timer_create,
+diff --git a/kernel/time/posix-timers.h b/kernel/time/posix-timers.h
+index b3cc9ee36a6b..183994f7e466 100644
+--- a/kernel/time/posix-timers.h
++++ b/kernel/time/posix-timers.h
+@@ -6,8 +6,11 @@ struct k_clock {
+ 				struct timespec64 *tp);
+ 	int	(*clock_set)(const clockid_t which_clock,
+ 			     const struct timespec64 *tp);
++	/* Returns the clock value in the current time namespace. */
+ 	int	(*clock_get_timespec)(const clockid_t which_clock,
+ 				      struct timespec64 *tp);
++	/* Returns the clock value in the root time namespace. */
++	ktime_t	(*clock_get_ktime)(const clockid_t which_clock);
+ 	int	(*clock_adj)(const clockid_t which_clock, struct __kernel_timex *tx);
+ 	int	(*timer_create)(struct k_itimer *timer);
+ 	int	(*nsleep)(const clockid_t which_clock, int flags,
 -- 
 2.22.0
