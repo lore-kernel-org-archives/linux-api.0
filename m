@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv6 13/36] alarmtimer: Make nanosleep time namespace aware
-Date: Thu, 15 Aug 2019 17:38:13 +0100
-Message-ID: <20190815163836.2927-14-dima@arista.com>
+Subject: [PATCHv6 12/36] posix-timers: Make timer_settime() time namespace aware
+Date: Thu, 15 Aug 2019 17:38:12 +0100
+Message-ID: <20190815163836.2927-13-dima@arista.com>
 References: <20190815163836.2927-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,29 +14,38 @@ List-Id: linux-api@vger.kernel.org
 
 From: Andrei Vagin <avagin@gmail.com>
 
-clock_nanosleep() accepts absolute values of expiration time when
-TIMER_ABSTIME flag is set. This absolute value is inside the task's
-time namespace, and has to be converted to the host's time.
+Wire timer_settime() syscall into time namespace virtualization.
+
+sys_timer_settime() calls the ktime->timer_set() callback. Right now,
+common_timer_set() is the only implementation for the callback.
+
+There user-supplied timer's value is converted from timespec64 to ktime
+and then timens_ktime_to_host() can be used to convert namespace's time
+to the host time.
+
+Inside a time namespace kernel's time differ on a fixed offset from
+a user-supplied, but only absolute values (TIMER_ABSTIME) must
+be converted.
 
 Signed-off-by: Andrei Vagin <avagin@openvz.org>
 Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- kernel/time/alarmtimer.c | 2 ++
+ kernel/time/posix-timers.c | 2 ++
  1 file changed, 2 insertions(+)
 
-diff --git a/kernel/time/alarmtimer.c b/kernel/time/alarmtimer.c
-index fbf18b26faed..751ed7f3cab2 100644
---- a/kernel/time/alarmtimer.c
-+++ b/kernel/time/alarmtimer.c
-@@ -825,6 +825,8 @@ static int alarm_timer_nsleep(const clockid_t which_clock, int flags,
- 		ktime_t now = alarm_bases[type].get_ktime();
+diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
+index 365ac40d46b1..1f30e3ef0918 100644
+--- a/kernel/time/posix-timers.c
++++ b/kernel/time/posix-timers.c
+@@ -891,6 +891,8 @@ int common_timer_set(struct k_itimer *timr, int flags,
  
- 		exp = ktime_add_safe(now, exp);
-+	} else {
-+		exp = timens_ktime_to_host(which_clock, exp);
- 	}
+ 	timr->it_interval = timespec64_to_ktime(new_setting->it_interval);
+ 	expires = timespec64_to_ktime(new_setting->it_value);
++	if (flags & TIMER_ABSTIME)
++		expires = timens_ktime_to_host(timr->it_clock, expires);
+ 	sigev_none = timr->it_sigev_notify == SIGEV_NONE;
  
- 	ret = alarmtimer_do_nsleep(&alarm, exp, type);
+ 	kc->timer_arm(timr, expires, flags & TIMER_ABSTIME, sigev_none);
 -- 
 2.22.0
