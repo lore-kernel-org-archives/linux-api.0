@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv6 25/36] vdso: Introduce vdso_static_branch_unlikely()
-Date: Thu, 15 Aug 2019 17:38:25 +0100
-Message-ID: <20190815163836.2927-26-dima@arista.com>
+Subject: [PATCHv6 20/36] x86/vdso: Restrict splitting VVAR VMA
+Date: Thu, 15 Aug 2019 17:38:20 +0100
+Message-ID: <20190815163836.2927-21-dima@arista.com>
 References: <20190815163836.2927-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -9,114 +9,53 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190815163836.2927-1-dima@arista.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Andrei Vagin <avagin@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api
+Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Andrei Vagin <avagin@gmail.com>
+Although, time namespace can work with VVAR VMA split, it seems worth
+to forbid splitting VVAR resulting in stricter ABI and reducing amount
+of corner-cases to consider while working further on VDSO.
 
-As it has been discussed on timens RFC, adding a new conditional branch
-`if (inside_time_ns)` on VDSO for all processes is undesirable.
+I don't think there is any use-case for partial mremap() of vvar,
+but if there is any - this patch can be easily reverted.
 
-Addressing those problems, there are two versions of VDSO's .so:
-for host tasks (without any penalty) and for processes inside of time
-namespace with clk_to_ns() that subtracts offsets from host's time.
-
-Introduce vdso_static_branch_unlikely(), which is similar to
-static_branch_unlikely(); alias it with timens_static_branch_unlikely()
-under CONFIG_TIME_NS.
-
-The timens code in vdso will look like this:
-
-   if (timens_static_branch_unlikely()) {
-	   clk_to_ns(clk, ts);
-   }
-
-The version of vdso which is compiled from sources will never execute
-clk_to_ns(). And then we can patch the 'no-op' in the straight-line
-codepath with a 'jump' instruction to the out-of-line true branch and
-get the timens version of the vdso library.
-
-Signed-off-by: Andrei Vagin <avagin@gmail.com>
-Co-developed-by: Dmitry Safonov <dima@arista.com>
+Co-developed-by: Andrei Vagin <avagin@openvz.org>
+Signed-off-by: Andrei Vagin <avagin@openvz.org>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- arch/x86/include/asm/jump_label.h | 14 ++++++++++++++
- lib/vdso/gettimeofday.c           | 10 ++++++++--
- 2 files changed, 22 insertions(+), 2 deletions(-)
+ arch/x86/entry/vdso/vma.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
 
-diff --git a/arch/x86/include/asm/jump_label.h b/arch/x86/include/asm/jump_label.h
-index 06c3cc22a058..376efb53183b 100644
---- a/arch/x86/include/asm/jump_label.h
-+++ b/arch/x86/include/asm/jump_label.h
-@@ -53,6 +53,20 @@ static __always_inline bool arch_static_branch_jump(struct static_key *key, bool
- 	return true;
- }
- 
-+static __always_inline bool vdso_static_branch_unlikely(void)
-+{
-+	asm_volatile_goto("1:\n\t"
-+		".byte " __stringify(STATIC_KEY_INIT_NOP) "\n\t"
-+		 ".pushsection __jump_table,  \"aw\"\n\t"
-+		 "2: .word 1b - 2b, %l[l_yes] - 2b\n\t"
-+		 ".popsection\n\t"
-+		 : :  :  : l_yes);
-+
-+	return false;
-+l_yes:
-+	return true;
-+}
-+
- #else	/* __ASSEMBLY__ */
- 
- .macro STATIC_JUMP_IF_TRUE target, key, def
-diff --git a/lib/vdso/gettimeofday.c b/lib/vdso/gettimeofday.c
-index 8589c66ff3e7..7df8fa6c03fa 100644
---- a/lib/vdso/gettimeofday.c
-+++ b/lib/vdso/gettimeofday.c
-@@ -8,6 +8,7 @@
- #include <linux/kernel.h>
- #include <linux/hrtimer_defs.h>
- #include <linux/timens_offsets.h>
-+#include <linux/jump_label.h>
- #include <vdso/datapage.h>
- #include <vdso/helpers.h>
- 
-@@ -43,6 +44,8 @@ u64 vdso_calc_delta(u64 cycles, u64 last, u64 mask, u32 mult)
- extern u8 timens_page
- 	__attribute__((visibility("hidden")));
- 
-+#define timens_static_branch_unlikely vdso_static_branch_unlikely
-+
- notrace static __always_inline void clk_to_ns(clockid_t clk, struct __kernel_timespec *ts)
- {
- 	struct timens_offsets *timens = (struct timens_offsets *) &timens_page;
-@@ -79,6 +82,7 @@ notrace static __always_inline void clk_to_ns(clockid_t clk, struct __kernel_tim
- }
- #else
- notrace static __always_inline void clk_to_ns(clockid_t clk, struct __kernel_timespec *ts) {}
-+notrace static __always_inline bool timens_static_branch_unlikely(void) { return false; }
- #endif
- 
- static int do_hres(const struct vdso_data *vd, clockid_t clk,
-@@ -108,7 +112,8 @@ static int do_hres(const struct vdso_data *vd, clockid_t clk,
- 	ts->tv_sec = sec + __iter_div_u64_rem(ns, NSEC_PER_SEC, &ns);
- 	ts->tv_nsec = ns;
- 
--	clk_to_ns(clk, ts);
-+	if (timens_static_branch_unlikely())
-+		clk_to_ns(clk, ts);
- 
+diff --git a/arch/x86/entry/vdso/vma.c b/arch/x86/entry/vdso/vma.c
+index 349a61d8bf34..3f05418642a8 100644
+--- a/arch/x86/entry/vdso/vma.c
++++ b/arch/x86/entry/vdso/vma.c
+@@ -84,6 +84,18 @@ static int vdso_mremap(const struct vm_special_mapping *sm,
  	return 0;
  }
-@@ -125,7 +130,8 @@ static void do_coarse(const struct vdso_data *vd, clockid_t clk,
- 		ts->tv_nsec = vdso_ts->nsec;
- 	} while (unlikely(vdso_read_retry(vd, seq)));
  
--	clk_to_ns(clk, ts);
-+	if (timens_static_branch_unlikely())
-+		clk_to_ns(clk, ts);
- }
++static int vvar_mremap(const struct vm_special_mapping *sm,
++		struct vm_area_struct *new_vma)
++{
++	unsigned long new_size = new_vma->vm_end - new_vma->vm_start;
++	const struct vdso_image *image = new_vma->vm_mm->context.vdso_image;
++
++	if (new_size != -image->sym_vvar_start)
++		return -EINVAL;
++
++	return 0;
++}
++
+ static vm_fault_t vvar_fault(const struct vm_special_mapping *sm,
+ 		      struct vm_area_struct *vma, struct vm_fault *vmf)
+ {
+@@ -136,6 +148,7 @@ static const struct vm_special_mapping vdso_mapping = {
+ static const struct vm_special_mapping vvar_mapping = {
+ 	.name = "[vvar]",
+ 	.fault = vvar_fault,
++	.mremap = vvar_mremap,
+ };
  
- static __maybe_unused int
+ /*
 -- 
 2.22.0
