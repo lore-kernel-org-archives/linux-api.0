@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv6 14/36] hrtimers: Prepare hrtimer_nanosleep() for time namespaces
-Date: Thu, 15 Aug 2019 17:38:14 +0100
-Message-ID: <20190815163836.2927-15-dima@arista.com>
+Subject: [PATCHv6 10/36] kernel: Add do_timens_ktime_to_host() helper
+Date: Thu, 15 Aug 2019 17:38:10 +0100
+Message-ID: <20190815163836.2927-11-dima@arista.com>
 References: <20190815163836.2927-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,99 +14,105 @@ List-Id: linux-api@vger.kernel.org
 
 From: Andrei Vagin <avagin@gmail.com>
 
-clock_nanosleep() accepts absolute values of expiration time when
-TIMER_ABSTIME flag is set. This absolute value is inside the task's
-time namespace, and has to be converted to the host's time.
+The helper subtracts namespace's clock offset from the given time
+and checks that the result is in [0, KTIME_MAX].
 
-There is timens_ktime_to_host() helper for converting time, but
-it accepts ktime argument.
-
-As a preparation, make hrtimer_nanosleep() accept a clock value in ktime
-instead of timespec64.
-
-Signed-off-by: Andrei Vagin <avagin@openvz.org>
+Signed-off-by: Andrei Vagin <avagin@gmail.com>
 Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- include/linux/hrtimer.h   | 2 +-
- kernel/time/hrtimer.c     | 8 ++++----
- kernel/time/posix-stubs.c | 4 ++--
- 3 files changed, 7 insertions(+), 7 deletions(-)
+ include/linux/time_namespace.h | 17 ++++++++++++++
+ kernel/time_namespace.c        | 43 ++++++++++++++++++++++++++++++++++
+ 2 files changed, 60 insertions(+)
 
-diff --git a/include/linux/hrtimer.h b/include/linux/hrtimer.h
-index 5df4bcff96d5..ed49ef359f26 100644
---- a/include/linux/hrtimer.h
-+++ b/include/linux/hrtimer.h
-@@ -500,7 +500,7 @@ static inline u64 hrtimer_forward_now(struct hrtimer *timer,
- /* Precise sleep: */
- 
- extern int nanosleep_copyout(struct restart_block *, struct timespec64 *);
--extern long hrtimer_nanosleep(const struct timespec64 *rqtp,
-+extern long hrtimer_nanosleep(ktime_t rqtp,
- 			      const enum hrtimer_mode mode,
- 			      const clockid_t clockid);
- 
-diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
-index 499122752649..fc972ae0de02 100644
---- a/kernel/time/hrtimer.c
-+++ b/kernel/time/hrtimer.c
-@@ -1886,7 +1886,7 @@ static long __sched hrtimer_nanosleep_restart(struct restart_block *restart)
- 	return ret;
+diff --git a/include/linux/time_namespace.h b/include/linux/time_namespace.h
+index 334c1a1c6607..9ba9664ff0ab 100644
+--- a/include/linux/time_namespace.h
++++ b/include/linux/time_namespace.h
+@@ -56,6 +56,18 @@ static inline void timens_add_boottime(struct timespec64 *ts)
+ 		*ts = timespec64_add(*ts, ns_offsets->boottime);
  }
  
--long hrtimer_nanosleep(const struct timespec64 *rqtp,
-+long hrtimer_nanosleep(ktime_t rqtp,
- 		       const enum hrtimer_mode mode, const clockid_t clockid)
++ktime_t do_timens_ktime_to_host(clockid_t clockid, ktime_t tim,
++				struct timens_offsets *offsets);
++static inline ktime_t timens_ktime_to_host(clockid_t clockid, ktime_t tim)
++{
++	struct timens_offsets *offsets = current->nsproxy->time_ns->offsets;
++
++	if (!offsets)
++		return tim;
++
++	return do_timens_ktime_to_host(clockid, tim, offsets);
++}
++
+ #else
+ static inline struct time_namespace *get_time_ns(struct time_namespace *ns)
  {
- 	struct restart_block *restart;
-@@ -1899,7 +1899,7 @@ long hrtimer_nanosleep(const struct timespec64 *rqtp,
- 		slack = 0;
+@@ -82,6 +94,11 @@ static inline int timens_on_fork(struct nsproxy *nsproxy, struct task_struct *ts
  
- 	hrtimer_init_sleeper_on_stack(&t, clockid, mode);
--	hrtimer_set_expires_range_ns(&t.timer, timespec64_to_ktime(*rqtp), slack);
-+	hrtimer_set_expires_range_ns(&t.timer, rqtp, slack);
- 	ret = do_nanosleep(&t, mode);
- 	if (ret != -ERESTART_RESTARTBLOCK)
- 		goto out;
-@@ -1934,7 +1934,7 @@ SYSCALL_DEFINE2(nanosleep, struct __kernel_timespec __user *, rqtp,
- 
- 	current->restart_block.nanosleep.type = rmtp ? TT_NATIVE : TT_NONE;
- 	current->restart_block.nanosleep.rmtp = rmtp;
--	return hrtimer_nanosleep(&tu, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
-+	return hrtimer_nanosleep(timespec64_to_ktime(tu), HRTIMER_MODE_REL, CLOCK_MONOTONIC);
- }
- 
- #endif
-@@ -1954,7 +1954,7 @@ SYSCALL_DEFINE2(nanosleep_time32, struct old_timespec32 __user *, rqtp,
- 
- 	current->restart_block.nanosleep.type = rmtp ? TT_COMPAT : TT_NONE;
- 	current->restart_block.nanosleep.compat_rmtp = rmtp;
--	return hrtimer_nanosleep(&tu, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
-+	return hrtimer_nanosleep(timespec64_to_ktime(tu), HRTIMER_MODE_REL, CLOCK_MONOTONIC);
- }
+ static inline void timens_add_monotonic(struct timespec64 *ts) {}
+ static inline void timens_add_boottime(struct timespec64 *ts) {}
++
++static inline ktime_t timens_ktime_to_host(clockid_t clockid, ktime_t tim)
++{
++	return tim;
++}
  #endif
  
-diff --git a/kernel/time/posix-stubs.c b/kernel/time/posix-stubs.c
-index edaf075d1ee4..2ccefc9ce184 100644
---- a/kernel/time/posix-stubs.c
-+++ b/kernel/time/posix-stubs.c
-@@ -147,7 +147,7 @@ SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
- 		rmtp = NULL;
- 	current->restart_block.nanosleep.type = rmtp ? TT_NATIVE : TT_NONE;
- 	current->restart_block.nanosleep.rmtp = rmtp;
--	return hrtimer_nanosleep(&t, flags & TIMER_ABSTIME ?
-+	return hrtimer_nanosleep(timespec64_to_ktime(t), flags & TIMER_ABSTIME ?
- 				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL,
- 				 which_clock);
- }
-@@ -233,7 +233,7 @@ SYSCALL_DEFINE4(clock_nanosleep_time32, clockid_t, which_clock, int, flags,
- 		rmtp = NULL;
- 	current->restart_block.nanosleep.type = rmtp ? TT_COMPAT : TT_NONE;
- 	current->restart_block.nanosleep.compat_rmtp = rmtp;
--	return hrtimer_nanosleep(&t, flags & TIMER_ABSTIME ?
-+	return hrtimer_nanosleep(timespec64_to_ktime(t), flags & TIMER_ABSTIME ?
- 				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL,
- 				 which_clock);
- }
+ #endif /* _LINUX_TIMENS_H */
+diff --git a/kernel/time_namespace.c b/kernel/time_namespace.c
+index 394a9e168e7c..ff2c5de7e815 100644
+--- a/kernel/time_namespace.c
++++ b/kernel/time_namespace.c
+@@ -16,6 +16,49 @@
+ #include <linux/err.h>
+ #include <linux/mm.h>
+ 
++ktime_t do_timens_ktime_to_host(clockid_t clockid, ktime_t tim,
++				struct timens_offsets *ns_offsets)
++{
++	ktime_t offset;
++
++	switch (clockid) {
++	case CLOCK_MONOTONIC:
++		offset = timespec64_to_ktime(ns_offsets->monotonic);
++		break;
++	case CLOCK_BOOTTIME:
++	case CLOCK_BOOTTIME_ALARM:
++		offset = timespec64_to_ktime(ns_offsets->boottime);
++		break;
++	default:
++		return tim;
++	}
++
++	/*
++	 * Check that @tim value is in [offset, KTIME_MAX + offset]
++	 * and subtract offset.
++	 */
++	if (tim < offset) {
++		/*
++		 * User can specify @tim *absolute* value - if it's lesser than
++		 * the time namespace's offset - it's already expired.
++		 */
++		tim = 0;
++	} else if (KTIME_MAX - tim < -offset) {
++		/*
++		 * User-supplied @tim may be close or even equal KTIME_MAX
++		 * and time namespace offset can be negative.
++		 * Let's check (tim - offset) for an overflow.
++		 * Return KTIME_MAX in such case, as the time value is
++		 * thousands *years* in future anyway.
++		 */
++		tim = KTIME_MAX;
++	} else {
++		tim = ktime_sub(tim, offset);
++	}
++
++	return tim;
++}
++
+ static struct ucounts *inc_time_namespaces(struct user_namespace *ns)
+ {
+ 	return inc_ucount(ns, current_euid(), UCOUNT_TIME_NAMESPACES);
 -- 
 2.22.0
