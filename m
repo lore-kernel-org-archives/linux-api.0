@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv6 11/36] timerfd: Make timerfd_settime() time namespace aware
-Date: Thu, 15 Aug 2019 17:38:11 +0100
-Message-ID: <20190815163836.2927-12-dima@arista.com>
+Subject: [PATCHv6 13/36] alarmtimer: Make nanosleep time namespace aware
+Date: Thu, 15 Aug 2019 17:38:13 +0100
+Message-ID: <20190815163836.2927-14-dima@arista.com>
 References: <20190815163836.2927-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,37 +14,29 @@ List-Id: linux-api@vger.kernel.org
 
 From: Andrei Vagin <avagin@gmail.com>
 
-timerfd_settime() accepts an absolute value of the experation time if
-TFD_TIMER_ABSTIME is specified. This value is in task's time namespace
-and has to be converted to the host's time namespace.
+clock_nanosleep() accepts absolute values of expiration time when
+TIMER_ABSTIME flag is set. This absolute value is inside the task's
+time namespace, and has to be converted to the host's time.
 
-Signed-off-by: Andrei Vagin <avagin@gmail.com>
+Signed-off-by: Andrei Vagin <avagin@openvz.org>
 Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- fs/timerfd.c | 3 +++
- 1 file changed, 3 insertions(+)
+ kernel/time/alarmtimer.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/fs/timerfd.c b/fs/timerfd.c
-index 48305ba41e3c..f9da5752a79e 100644
---- a/fs/timerfd.c
-+++ b/fs/timerfd.c
-@@ -26,6 +26,7 @@
- #include <linux/syscalls.h>
- #include <linux/compat.h>
- #include <linux/rcupdate.h>
-+#include <linux/time_namespace.h>
+diff --git a/kernel/time/alarmtimer.c b/kernel/time/alarmtimer.c
+index fbf18b26faed..751ed7f3cab2 100644
+--- a/kernel/time/alarmtimer.c
++++ b/kernel/time/alarmtimer.c
+@@ -825,6 +825,8 @@ static int alarm_timer_nsleep(const clockid_t which_clock, int flags,
+ 		ktime_t now = alarm_bases[type].get_ktime();
  
- struct timerfd_ctx {
- 	union {
-@@ -196,6 +197,8 @@ static int timerfd_setup(struct timerfd_ctx *ctx, int flags,
+ 		exp = ktime_add_safe(now, exp);
++	} else {
++		exp = timens_ktime_to_host(which_clock, exp);
  	}
  
- 	if (texp != 0) {
-+		if (flags & TFD_TIMER_ABSTIME)
-+			texp = timens_ktime_to_host(clockid, texp);
- 		if (isalarm(ctx)) {
- 			if (flags & TFD_TIMER_ABSTIME)
- 				alarm_start(&ctx->t.alarm, texp);
+ 	ret = alarmtimer_do_nsleep(&alarm, exp, type);
 -- 
 2.22.0
