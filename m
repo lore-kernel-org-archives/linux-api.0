@@ -1,63 +1,57 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via
- /dev/bpf
-Date: Fri, 16 Aug 2019 22:28:29 +0200 (CEST)
-Message-ID: <alpine.DEB.2.21.1908162211270.1923@nanos.tec.linutronix.de>
-References: <20190806011134.p5baub5l3t5fkmou@ast-mbp> <CALCETrUkqUprujww26VxHwkdXQ3DWJH8nnL2VBYpK2EU0oX_YA@mail.gmail.com> <20190814220545.co5pucyo5jk3weiv@ast-mbp.dhcp.thefacebook.com> <HG0x24u69mnaMFKuxHVAzHpyjwsD5-U6RpqFRua87wGWQCHg00Q8ZqPeA_5kJ9l-d6oe0cXa4HyYXMnOO0Aofp_LcPcQdG0WFV21z1MbgcE=@protonmail.ch>
- <20190815172856.yoqvgu2yfrgbkowu@ast-mbp.dhcp.thefacebook.com> <CALCETrUv+g+cb79FJ1S4XuV0K=kowFkPXpzoC99svoOfs4-Kvg@mail.gmail.com> <20190815230808.2o2qe7a72cwdce2m@ast-mbp.dhcp.thefacebook.com>
- <fkD3fs46a1YnR4lh0tEG-g3tDnDcyZuzji7bAUR9wujPLLl75ZhI8Yk-H1jZpSugO7qChVeCwxAMmxLdeoF2QFS3ZzuYlh7zmeZOmhDJxww=@protonmail.ch> <alpine.DEB.2.21.1908161158490.1873@nanos.tec.linutronix.de> <lGGTLXBsX3V6p1Z4TkdzAjxbNywaPS2HwX5WLleAkmXNcnKjTPpWnP6DnceSsy8NKt5NBRBbuoAb0woKTcDhJXVoFb7Ygk3Skfj8j6rVfMQ=@protonmail.ch>
- <20190816195233.vzqqbqrivnooohq6@ast-mbp.dhcp.thefacebook.com>
+From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
+Date: Fri, 16 Aug 2019 14:45:44 -0700
+Message-ID: <20190816214542.inpt6p655whc2ejw@ast-mbp.dhcp.thefacebook.com>
+References: <EE7B7AE1-3D44-4561-94B9-E97A626A251D@fb.com>
+ <CALCETrXX-Jeb4wiQuL6FUai4wNMmMiUxuLLh_Lb9mT7h=0GgAw@mail.gmail.com>
+ <20190805192122.laxcaz75k4vxdspn@ast-mbp>
+ <CALCETrVtPs8gY-H4gmzSqPboid3CB++n50SvYd6RU9YVde_-Ow@mail.gmail.com>
+ <20190806011134.p5baub5l3t5fkmou@ast-mbp>
+ <CALCETrXEHL3+NAY6P6vUj7Pvd9ZpZsYC6VCLXOaNxb90a_POGw@mail.gmail.com>
+ <20190813215823.3sfbakzzjjykyng2@ast-mbp>
+ <201908151203.FE87970@keescook>
+ <20190815234622.t65oxm5mtfzy6fhg@ast-mbp.dhcp.thefacebook.com>
+ <B0364660-AD6A-4E5C-B04F-3B6DA78B4BBE@amacapital.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20190816195233.vzqqbqrivnooohq6@ast-mbp.dhcp.thefacebook.com>
+Content-Disposition: inline
+In-Reply-To: <B0364660-AD6A-4E5C-B04F-3B6DA78B4BBE@amacapital.net>
 Sender: netdev-owner@vger.kernel.org
-To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Cc: Jordan Glover <Golden_Miller83@protonmail.ch>, Andy Lutomirski <luto@kernel.org>, Daniel Colascione <dancol@google.com>, Song Liu <songliubraving@fb.com>, Kees Cook <keescook@chromium.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@kernel.org>, Song Liu <songliubraving@fb.com>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Alexei,
+On Thu, Aug 15, 2019 at 05:54:59PM -0700, Andy Lutomirski wrote:
+> 
+> 
+> > On Aug 15, 2019, at 4:46 PM, Alexei Starovoitov <alexei.starovoitov@gmail.com> wrote:
+> 
+> 
+> >> 
+> >> I'm not sure why you draw the line for VMs -- they're just as buggy
+> >> as anything else. Regardless, I reject this line of thinking: yes,
+> >> all software is buggy, but that isn't a reason to give up.
+> > 
+> > hmm. are you saying you want kernel community to work towards
+> > making containers (namespaces) being able to run arbitrary code
+> > downloaded from the internet?
+> 
+> Yes.
+> 
+> As an example, Sandstorm uses a combination of namespaces (user, network, mount, ipc) and a moderately permissive seccomp policy to run arbitrary code. Not just little snippets, either — node.js, Mongo, MySQL, Meteor, and other fairly heavyweight stacks can all run under Sandstorm, with the whole stack (database engine binaries, etc) supplied by entirely untrusted customers.  During the time Sandstorm was under active development, I can recall *one* bug that would have allowed a sandbox escape. That’s a pretty good track record.  (Also, Meltdown and Spectre, sigh.)
 
-On Fri, 16 Aug 2019, Alexei Starovoitov wrote:
-> It's both of the above when 'systemd' is not taken literally.
-> To earlier Thomas's point: the use case is not only about systemd.
-> There are other containers management systems.
+exactly: "meltdown", "spectre", "sigh".
+Side channels effectively stalled the work on secure containers.
+And killed projects like sandstorm.
+Why work on improving kaslr when there are several ways to
+get kernel addresses through hw bugs? Patch mouse holes when roof is leaking ?
+In case of unprivileged bpf I'm confident that all known holes are patched.
+Until disclosures stop happening with the frequency they do now the time
+of bpf developers is better spent on something other than unprivileged bpf.
 
-<SNIP>
+> I’m suggesting that you engage the security community ...
+> .. so that normal users can use bpf filtering
 
-> These daemons need to drop privileges to make the system safer == less
-> prone to corruption due to bugs in themselves. Not necessary security
-> bugs.
-
-Let's take a step back.
-
-While real usecases are helpful to understand a design decision, the design
-needs to be usecase independent.
-
-The kernel provides mechanisms, not policies. My impression of this whole
-discussion is that it is policy driven. That's the wrong approach.
-
-So let's look at the mechanisms which we have at hand:
-
- 1) Capabilities
- 
- 2) SUID and dropping priviledges
-
- 3) Seccomp and LSM
-
-Now the real interesting questions are:
-
- A) What kind of restrictions does BPF allow? Is it a binary on/off or is
-    there a more finegrained control of BPF functionality?
-
-    TBH, I can't tell.
-
- B) Depending on the answer to #A what is the control possibility for
-    #1/#2/#3 ?
-
-Answering those questions gives us a real scope of what can be achieved
-independent of use cases and wishful thought out policies.
-
-Thanks,
-
-	tglx
+yes, but not soon. unfortunately.
