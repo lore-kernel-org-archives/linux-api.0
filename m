@@ -1,30 +1,88 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCHv6 28/36] posix-clocks: Add align for timens_offsets
-Date: Fri, 16 Aug 2019 08:36:29 +0200 (CEST)
-Message-ID: <alpine.DEB.2.21.1908160835130.1908@nanos.tec.linutronix.de>
-References: <20190815163836.2927-1-dima@arista.com> <20190815163836.2927-29-dima@arista.com> <alpine.DEB.2.21.1908152010230.1908@nanos.tec.linutronix.de>
+From: Jordan Glover <Golden_Miller83@protonmail.ch>
+Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
+Date: Fri, 16 Aug 2019 09:34:45 +0000
+Message-ID: <fkD3fs46a1YnR4lh0tEG-g3tDnDcyZuzji7bAUR9wujPLLl75ZhI8Yk-H1jZpSugO7qChVeCwxAMmxLdeoF2QFS3ZzuYlh7zmeZOmhDJxww=@protonmail.ch>
+References: <20190806011134.p5baub5l3t5fkmou@ast-mbp>
+ <CALCETrVT-dDXQGukGs5S1DkzvQv9_e=axzr_GyEd2c4T4z8Qng@mail.gmail.com>
+ <20190814005737.4qg6wh4a53vmso2v@ast-mbp>
+ <CALCETrUkqUprujww26VxHwkdXQ3DWJH8nnL2VBYpK2EU0oX_YA@mail.gmail.com>
+ <20190814220545.co5pucyo5jk3weiv@ast-mbp.dhcp.thefacebook.com>
+ <HG0x24u69mnaMFKuxHVAzHpyjwsD5-U6RpqFRua87wGWQCHg00Q8ZqPeA_5kJ9l-d6oe0cXa4HyYXMnOO0Aofp_LcPcQdG0WFV21z1MbgcE=@protonmail.ch>
+ <20190815172856.yoqvgu2yfrgbkowu@ast-mbp.dhcp.thefacebook.com>
+ <CALCETrUv+g+cb79FJ1S4XuV0K=kowFkPXpzoC99svoOfs4-Kvg@mail.gmail.com>
+ <20190815230808.2o2qe7a72cwdce2m@ast-mbp.dhcp.thefacebook.com>
+Reply-To: Jordan Glover <Golden_Miller83@protonmail.ch>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.21.1908152010230.1908@nanos.tec.linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Dmitry Safonov <dima@arista.com>
-Cc: linux-kernel@vger.kernel.org, Dmitry Safonov <0x7f454c46@gmail.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20190815230808.2o2qe7a72cwdce2m@ast-mbp.dhcp.thefacebook.com>
+Sender: netdev-owner@vger.kernel.org
+To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Daniel Colascione <dancol@google.com>, Song Liu <songliubraving@fb.com>, Kees Cook <keescook@chromium.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 15 Aug 2019, Thomas Gleixner wrote:
-> So using struct timespec64 for the offset is wrong. You really need to open
-> code that offset storage if you don't want to end up with weird workarounds
-> for BE.
-> 
-> Something like this:
-> 
-> struct timens_offs {
-> 	  time64_t	tv_sec;
-> 	  s64		tv_nsec;
+On Thursday, August 15, 2019 11:08 PM, Alexei Starovoitov <alexei.starovoit=
+ov@gmail.com> wrote:
 
-Actually that should use 'int' for the tv_nsec part.
+> On Thu, Aug 15, 2019 at 11:36:43AM -0700, Andy Lutomirski wrote:
+>
+> > On Thu, Aug 15, 2019 at 10:29 AM Alexei Starovoitov
+> > alexei.starovoitov@gmail.com wrote:
+> >
+> > > On Thu, Aug 15, 2019 at 11:24:54AM +0000, Jordan Glover wrote:
+> > >
+> > > > systemd --user processes aren't "less privileged". The are COMPLETE=
+LY unprivileged.
+> > > > Granting them cap_bpf is the same as granting it to every other unp=
+rivileged user
+> > > > process. Also unprivileged user process can start systemd --user pr=
+ocess with any
+> > > > command they like.
+> > >
+> > > systemd itself is trusted. It's the same binary whether it runs as pi=
+d=3D1
+> > > or as pid=3D123. One of the use cases is to make IPAddressDeny=3D wor=
+k with --user.
+> > > Subset of that feature already works with AmbientCapabilities=3DCAP_N=
+ET_ADMIN.
+> > > CAP_BPF is a natural step in the same direction.
+> >
+> > I have the feeling that we're somehow speaking different languages.
+> > What, precisely, do you mean when you say "systemd itself is trusted"?
+> > Do you mean "the administrator trusts that the /lib/systemd/systemd
+> > binary is not malicious"? Do you mean "the administrator trusts that
+> > the running systemd process is not malicious"?
+>
+> please see
+> https://github.com/systemd/systemd/commit/4c1567f29aeb60a6741874bca8a8e3a=
+0bd69ed01
+> I'm not advocating for or against this approach.
+> Call it 'security hole' or 'better security'.
+> There are two categories of people for any feature like this.
+> My point that there is a demand to use bpf for non-root and CAP_NET_ADMIN
+> level of privileges is acceptable.
+> Another option is to relax all of bpf to CAP_NET_ADMIN instead of CAP_SYS=
+_ADMIN.
+> But CAP_BPF is clearly better way.
+>
 
-Thanks,
+Do you realize it's not possible to grant CAP_NET_ADMIN or any other CAP in
+"systemd --user" service? Trying to do so will fail with:
+"Failed to apply ambient capabilities (before UID change): Operation not pe=
+rmitted"
 
-	tglx
+I think it's crucial to clear that point to avoid confusion in this discuss=
+ion
+where people are talking about different things.
+
+On the other hand running "systemd --system" service with:
+
+User=3Dnobody
+AmbientCapabilities=3DCAP_NET_ADMIN
+
+is perfectly legit and clears some security concerns as only privileged use=
+r
+can start such service.
+
+Jordan
