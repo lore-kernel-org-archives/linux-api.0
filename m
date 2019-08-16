@@ -1,111 +1,312 @@
-From: Song Liu <songliubraving@fb.com>
-Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
-Date: Fri, 16 Aug 2019 05:56:20 +0000
-Message-ID: <4F52274A-CD70-4261-A255-2C4A7E818141@fb.com>
-References: <CALCETrUjh6DdgW1qSuSRd1_=0F9CqB8+sNj__e_6AHEvh_BaxQ@mail.gmail.com>
- <CALCETrWtE2U4EvZVYeq8pSmQjBzF2PHH+KxYW8FSeF+W=1FYjw@mail.gmail.com>
- <EE7B7AE1-3D44-4561-94B9-E97A626A251D@fb.com>
- <CALCETrXX-Jeb4wiQuL6FUai4wNMmMiUxuLLh_Lb9mT7h=0GgAw@mail.gmail.com>
- <20190805192122.laxcaz75k4vxdspn@ast-mbp>
- <CALCETrVtPs8gY-H4gmzSqPboid3CB++n50SvYd6RU9YVde_-Ow@mail.gmail.com>
- <20190806011134.p5baub5l3t5fkmou@ast-mbp>
- <CALCETrXEHL3+NAY6P6vUj7Pvd9ZpZsYC6VCLXOaNxb90a_POGw@mail.gmail.com>
- <20190813215823.3sfbakzzjjykyng2@ast-mbp> <201908151203.FE87970@keescook>
- <20190815234622.t65oxm5mtfzy6fhg@ast-mbp.dhcp.thefacebook.com>
- <B0364660-AD6A-4E5C-B04F-3B6DA78B4BBE@amacapital.net>
+From: Andrei Vagin <avagin@gmail.com>
+Subject: Re: [PATCHv6 01/36] ns: Introduce Time Namespace
+Date: Thu, 15 Aug 2019 23:11:19 -0700
+Message-ID: <20190816061119.GA14312@gmail.com>
+References: <20190815163836.2927-1-dima@arista.com>
+ <20190815163836.2927-2-dima@arista.com>
+ <alpine.DEB.2.21.1908151908230.1908@nanos.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <B0364660-AD6A-4E5C-B04F-3B6DA78B4BBE@amacapital.net>
-Content-Language: en-US
-Content-ID: <5CAAA3EA589AD74FAB87425A3C3BEBA7@namprd15.prod.outlook.com>
-Sender: netdev-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Alexei Starovoitov <alexei.starovoitov@gmail.com>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@kernel.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
+Content-Type: text/plain; charset=koi8-r
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.21.1908151908230.1908@nanos.tec.linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: Dmitry Safonov <dima@arista.com>, linux-kernel@vger.kernel.org, Dmitry Safonov <0x7f454c46@gmail.com>, Andrei Vagin <avagin@openvz.org>, Adrian Reber <adrian@lisas.de>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-DQoNCj4gT24gQXVnIDE1LCAyMDE5LCBhdCA1OjU0IFBNLCBBbmR5IEx1dG9taXJza2kgPGx1dG9A
-YW1hY2FwaXRhbC5uZXQ+IHdyb3RlOg0KPiANCj4gDQo+IA0KPj4gT24gQXVnIDE1LCAyMDE5LCBh
-dCA0OjQ2IFBNLCBBbGV4ZWkgU3Rhcm92b2l0b3YgPGFsZXhlaS5zdGFyb3ZvaXRvdkBnbWFpbC5j
-b20+IHdyb3RlOg0KPiANCj4gDQo+Pj4gDQo+Pj4gSSdtIG5vdCBzdXJlIHdoeSB5b3UgZHJhdyB0
-aGUgbGluZSBmb3IgVk1zIC0tIHRoZXkncmUganVzdCBhcyBidWdneQ0KPj4+IGFzIGFueXRoaW5n
-IGVsc2UuIFJlZ2FyZGxlc3MsIEkgcmVqZWN0IHRoaXMgbGluZSBvZiB0aGlua2luZzogeWVzLA0K
-Pj4+IGFsbCBzb2Z0d2FyZSBpcyBidWdneSwgYnV0IHRoYXQgaXNuJ3QgYSByZWFzb24gdG8gZ2l2
-ZSB1cC4NCj4+IA0KPj4gaG1tLiBhcmUgeW91IHNheWluZyB5b3Ugd2FudCBrZXJuZWwgY29tbXVu
-aXR5IHRvIHdvcmsgdG93YXJkcw0KPj4gbWFraW5nIGNvbnRhaW5lcnMgKG5hbWVzcGFjZXMpIGJl
-aW5nIGFibGUgdG8gcnVuIGFyYml0cmFyeSBjb2RlDQo+PiBkb3dubG9hZGVkIGZyb20gdGhlIGlu
-dGVybmV0Pw0KPiANCj4gWWVzLg0KPiANCj4gQXMgYW4gZXhhbXBsZSwgU2FuZHN0b3JtIHVzZXMg
-YSBjb21iaW5hdGlvbiBvZiBuYW1lc3BhY2VzICh1c2VyLCBuZXR3b3JrLCBtb3VudCwgaXBjKSBh
-bmQgYSBtb2RlcmF0ZWx5IHBlcm1pc3NpdmUgc2VjY29tcCBwb2xpY3kgdG8gcnVuIGFyYml0cmFy
-eSBjb2RlLiBOb3QganVzdCBsaXR0bGUgc25pcHBldHMsIGVpdGhlciDigJQgbm9kZS5qcywgTW9u
-Z28sIE15U1FMLCBNZXRlb3IsIGFuZCBvdGhlciBmYWlybHkgaGVhdnl3ZWlnaHQgc3RhY2tzIGNh
-biBhbGwgcnVuIHVuZGVyIFNhbmRzdG9ybSwgd2l0aCB0aGUgd2hvbGUgc3RhY2sgKGRhdGFiYXNl
-IGVuZ2luZSBiaW5hcmllcywgZXRjKSBzdXBwbGllZCBieSBlbnRpcmVseSB1bnRydXN0ZWQgY3Vz
-dG9tZXJzLiAgRHVyaW5nIHRoZSB0aW1lIFNhbmRzdG9ybSB3YXMgdW5kZXIgYWN0aXZlIGRldmVs
-b3BtZW50LCBJIGNhbiByZWNhbGwgKm9uZSogYnVnIHRoYXQgd291bGQgaGF2ZSBhbGxvd2VkIGEg
-c2FuZGJveCBlc2NhcGUuIFRoYXTigJlzIGEgcHJldHR5IGdvb2QgdHJhY2sgcmVjb3JkLiAgKEFs
-c28sIE1lbHRkb3duIGFuZCBTcGVjdHJlLCBzaWdoLikNCj4gDQo+IFRvIGJlIGNsZWFyLCBTYW5k
-c3Rvcm0gZGlkIG5vdCBhbGxvdyBjcmVhdGlvbiBvZiBhIHVzZXJucyBieSB0aGUgdW50cnVzdGVk
-IGNvZGUsIGFuZCBTYW5kc3Rvcm0gd291bGQgaGF2ZSBoZWF2aWx5IHJlc3RyaWN0ZWQgYnBmKCks
-IGJ1dCB0aGF0IHNob3VsZCBvbmx5IGJlIG5lY2Vzc2FyeSBiZWNhdXNlIG9mIHRoZSBwb3NzaWJp
-bGl0eSBvZiBrZXJuZWwgYnVncywgbm90IGJlY2F1c2Ugb2YgdGhlIG92ZXJhbGwgZGVzaWduLg0K
-PiANCj4gQWxleGVpLCBJ4oCZbSB0cnlpbmcgdG8gZW5jb3VyYWdlIHlvdSB0byBhaW0gZm9yIHNv
-bWV0aGluZyBldmVuIGJldHRlciB0aGFuIHlvdSBoYXZlIG5vdy4gUmlnaHQgbm93LCBpZiB5b3Ug
-Z3JhbnQgYSB1c2VyIHZhcmlvdXMgdmVyeSBzdHJvbmcgY2FwYWJpbGl0aWVzLCB0aGF0IHVzZXLi
-gJlzIHN5c3RlbWQgY2FuIHVzZSBicGYgbmV0d29yayBmaWx0ZXJzLiAgWW91ciBwcm9wb3NhbCB3
-b3VsZCBhbGxvdyB0aGlzIHdpdGggYSBkaWZmZXJlbnQsIGJ1dCBzdGlsbCB2ZXJ5IHN0cm9uZywg
-c2V0IG9mIGNhcGFiaWxpdGllcy4gVGhlcmXigJlzIG5vdGhpbmcgd3Jvbmcgd2l0aCB0aGlzIHBl
-ciBzZSwgYnV0IEkgdGhpbmsgeW91IGNhbiBhaW0gbXVjaCBoaWdoZXI6DQo+IA0KPiBDQVBfTkVU
-X0FETUlOIGFuZCB5b3VyIENBUF9CUEYgYm90aCBlZmZlY3RpdmVseSBhbGxvdyB0aGUgaG9sZGVy
-IHRvIHRha2Ugb3ZlciB0aGUgc3lzdGVtLCAqYnkgZGVzaWduKi4gIEnigJltIHN1Z2dlc3Rpbmcg
-dGhhdCB5b3UgZW5nYWdlIHRoZSBzZWN1cml0eSBjb21tdW5pdHkgKEtlZXMsIG15c2VsZiwgQWxl
-a3NhLCBKYW5uLCBTZXJnZSwgQ2hyaXN0aWFuLCBldGMpIHRvIGFpbSBmb3Igc29tZXRoaW5nIGJl
-dHRlcjogbWFrZSBpdCBzbyB0aGF0IGEgbm9ybWFsIExpbnV4IGRpc3RybyB3b3VsZCBiZSB3aWxs
-aW5nIHRvIHJlbGF4IGl0cyBzZXR0aW5ncyBlbm91Z2ggc28gdGhhdCBub3JtYWwgdXNlcnMgY2Fu
-IHVzZSBicGYgZmlsdGVyaW5nIGluIHRoZSBzeXN0ZW1kIHVuaXRzIGFuZCBtYXliZSBldmVudHVh
-bGx5IHVzZSBldmVuIG1vcmUgYnBmKCkgY2FwYWJpbGl0aWVzLiBBbmQgbGV04oCZcyBtYWtlIGlz
-IHRvIHRoYXQgbWFpbnN0cmVhbSBjb250YWluZXIgbWFuYWdlcnMgKHRoYXQgdXNlIHVzZXJucyEp
-IHdpbGwgYmUgd2lsbGluZyAoYXMgYW4gb3B0aW9uKSB0byBkZWxlZ2F0ZSBicGYoKSB0byB0aGVp
-ciBjb250YWluZXJzLiBXZeKAmXJlIGhhcHB5IHRvIGhlbHAgZGVzaWduLCByZXZpZXcsIGFuZCBl
-dmVuIHdyaXRlIGNvZGUsIGJ1dCB3ZSBuZWVkIHlvdSB0byBiZSB3aWxsaW5nIHRvIHdvcmsgd2l0
-aCB1cyB0byBtYWtlIGEgZGVzaWduIHRoYXQgc2VlbXMgbGlrZSBpdCB3aWxsIHdvcmsgYW5kIHRo
-ZW4gdG8gd2FpdCBsb25nIGVub3VnaCB0byBtZXJnZSBpdCBmb3IgdXMgdG8gdGhpbmsgYWJvdXQg
-aXQsIHRyeSB0byBwb2tlIGhvbGVzIGluIGl0LCBhbmQgY29udmluY2Ugb3Vyc2VsdmVzIGFuZCBl
-YWNoIG90aGVyIHRoYXQgaXQgaGFzIGEgZ29vZCBjaGFuY2Ugb2YgYmVpbmcgc291bmQuDQo+IA0K
-PiBPYnZpb3VzbHkgdGhlcmUgd2lsbCBiZSBtYW55IGNhc2VzIHdoZXJlIGFuIHVucHJpdmlsZWdl
-ZCBwcm9ncmFtIHNob3VsZCAqbm90KiBiZSBhYmxlIHRvIHVzZSBicGYoKSBJUCBmaWx0ZXJpbmcs
-IGJ1dCBsZXTigJlzIG1ha2UgaXQgc28gdGhhdCBlbmFibGluZyB0aGVzZSBhZHZhbmNlZCBmZWF0
-dXJlcyBkb2VzIG5vdCBhdXRvbWF0aWNhbGx5IGdpdmUgYXdheSB0aGUga2V5cyB0byB0aGUga2lu
-Z2RvbS4NCj4gDQo+IChTYW5kc3Rvcm0gc3RpbGwgZXhpc3RzIGJ1dCBpcyBubyBsb25nZXIgYXMg
-YWN0aXZlbHkgZGV2ZWxvcGVkLCBzYWRseS4pDQoNCkkgYW0gdHJ5aW5nIHRvIHVuZGVyc3RhbmQg
-ZGlmZmVyZW50IHBlcnNwZWN0aXZlcyBoZXJlLiANCg0KRGlzY2xhaW1lcjogQWxleGVpIGFuZCBJ
-IGJvdGggd29yayBmb3IgRmFjZWJvb2suIEJ1dCBoZSBtYXkgZGlzYWdyZWUgDQp3aXRoIGV2ZXJ5
-dGhpbmcgSSBhbSBhYm91dCB0byBzYXkgYmVsb3csIGJlY2F1c2Ugd2UgaGF2ZW4ndCBzeW5jJ2Vk
-IA0KYWJvdXQgdGhpcyBmb3IgYSB3aGlsZS4gOikNCg0KSSB0aGluayB0aGVyZSBhcmUgdHdvIHR5
-cGVzIG9mIHVzZSBjYXNlcyBoZXJlOiANCg0KICAgIDEuIENBUF9CUEZfQURNSU46IG9uZSBiaWcg
-a2V5IHRvIGFsbCBzeXNfYnBmKCkuIA0KICAgIDIuIENBUF9CUEY6IHN1YnNldCBvZiBzeXNfYnBm
-KCkgdGhhdCBpcyBzYWZlIGZvciBjb250YWluZXJzLg0KDQpJSVVDLCBjdXJyZW50bHksIENBUF9C
-UEZfQURNSU4gaXMgKGFsbW9zdCkgc2FtZSBhcyBDQVBfU1lTX0FETUlOLiANCkFuZCB0aGVyZSBh
-cmVuJ3QgbWFueSByZWFsIHdvcmxkIHVzZSBjYXNlcyBmb3IgQ0FQX0JQRi4gDQoNClRoZSAvZGV2
-L2JwZiBwYXRjaCB0cmllcyB0byBzZXBhcmF0ZSBDQVBfQlBGX0FETUlOIGZyb20gQ0FQX1NZU19B
-RE1JTi4NCk9uIHRoZSBvdGhlciBoYW5kLCBBbmR5IHdvdWxkIGxpa2UgdG8gaW50cm9kdWNlIENB
-UF9CUEYgYW5kIGJ1aWxkDQphbWF6aW5nIHVzZSBjYXNlcyBhcm91bmQgaXQgKGNoaWNrZW4tZWdn
-IHByb2JsZW0pLiANCg0KRGlkIEkgbWlzdW5kZXJzdGFuZCBhbnl0aGluZz8NCg0KSWYgbm90LCBJ
-IHRoaW5rIHRoZXNlIHR3byB1c2UgY2FzZXMgZG8gbm90IHJlYWxseSBjb25mbGljdCB3aXRoIGVh
-Y2gNCm90aGVyLCBhbmQgd2UgcHJvYmFibHkgbmVlZCBib3RoIG9mIHRoZW0uIFRoZW4sIHRoZSBu
-ZXh0IHF1ZXN0aW9uIGlzIA0KZG8gd2UgcmVhbGx5IG5lZWQgYm90aC9laXRoZXIgb2YgdGhlbS4g
-TWF5YmUgaGF2aW5nIHR3byBzZXBhcmF0ZSANCmRpc2N1c3Npb25zIHdvdWxkIG1ha2UgaXQgZWFz
-aWVyPw0KDQoNClRoZSBmb2xsb3dpbmcgYXJlIHNvbWUgcXVlc3Rpb25zIEkgYW0gdHJ5aW5nIHRv
-IHVuZGVyc3RhbmQgZm9yIA0KdGhlIHR3byBjYXNlcy4gDQoNCkZvciBDQVBfQlBGX0FETUlOIChv
-ciAvZGV2L2JwZik6DQpDYW4gd2UganVzdCB1c2UgQ0FQX05FVF9BRE1JTj8gSXQgaXMgc2FmZXIg
-dGhhbiBDQVBfU1lTX0FETUlOLCBhbmQNCnJldXNlIGV4aXN0aW5nIENBUF8gc2hvdWxkIGJlIGVh
-c2llciB0aGFuIGludHJvZHVjaW5nIGEgbmV3IG9uZT8gDQoNCkZvciBDQVBfQlBGOiANCkRvIHdl
-IHJlYWxseSBuZWVkIGl0IGZvciB0aGUgY29udGFpbmVycz8gSXMgaXQgcG9zc2libGUgdG8gaW1w
-bGVtZW50IA0KYWxsIGNvbnRhaW5lciB1c2UgY2FzZXMgd2l0aCBTVUlEPyBBdCB0aGlzIG1vbWVu
-dCwgSSB0aGluayBTVUlEIGlzIA0KdGhlIHJpZ2h0IHdheSB0byBnbyBmb3IgdGhpcyB1c2UgY2Fz
-ZSwgYmVjYXVzZSB0aGlzIGlzIGxpa2VseSB0byANCnN0YXJ0IHdpdGggYSBzbWFsbCBzZXQgb2Yg
-ZnVuY3Rpb25hbGl0aWVzLiBXZSBjYW4gaW50cm9kdWNlIENBUF9CUEYNCndoZW4gdGhlIGNvbnRh
-aW5lciB1c2UgY2FzZSBpcyB0b28gY29tcGxpY2F0ZWQgZm9yIFNVSUQuIA0KDQoNCkkgaG9wZSBz
-b21lIG9mIHRoZXNlIHF1ZXN0aW9ucy90aG91Z2h0cyB3b3VsZCBtYWtlIHNvbWUgc2Vuc2U/DQoN
-ClRoYW5rcywNClNvbmc=
+On Thu, Aug 15, 2019 at 07:19:12PM +0200, Thomas Gleixner wrote:
+> Dmitry,
+> 
+> On Thu, 15 Aug 2019, Dmitry Safonov wrote:
+> > diff --git a/MAINTAINERS b/MAINTAINERS
+> > index 420567d1519a..97b7737f5aba 100644
+> > --- a/MAINTAINERS
+> > +++ b/MAINTAINERS
+> > @@ -12898,6 +12898,8 @@ T:	git git://git.kernel.org/pub/scm/linux/kernel/git/tip/tip.git timers/core
+> >  S:	Maintained
+> >  F:	fs/timerfd.c
+> >  F:	include/linux/timer*
+> > +F:	include/linux/time_namespace.h
+> > +F:	kernel/time_namespace.c
+> 
+> Shouldn't this be kernel/time/namespace.c so all that stuff is lumped
+> together. No strong opinion though.
+
+Sure, we can move this in kernel/time. I don't remember why I decided to
+place it in kernel/.
+
+> 
+> > +++ b/kernel/time_namespace.c
+> > +static struct ucounts *inc_time_namespaces(struct user_namespace *ns)
+> > +{
+> > +	return inc_ucount(ns, current_euid(), UCOUNT_TIME_NAMESPACES);
+> > +}
+> > +
+> > +static void dec_time_namespaces(struct ucounts *ucounts)
+> > +{
+> > +	dec_ucount(ucounts, UCOUNT_TIME_NAMESPACES);
+> > +}
+> > +
+> > +static struct time_namespace *create_time_ns(void)
+> > +{
+> > +	struct time_namespace *time_ns;
+> > +
+> > +	time_ns = kmalloc(sizeof(struct time_namespace), GFP_KERNEL);
+> 
+> Shouldn't this use kzalloc()? There are tons of members in that struct.
+
+I don't think so. All of other members are initialized in clone_time_ns.
+Maybe we don't need this helper. When I wrote this code, I looked at
+kernel/utsname.c. I will think what we can do here to make this code
+more clear.
+
+> 
+> > +	if (time_ns) {
+> > +		kref_init(&time_ns->kref);
+> > +		time_ns->initialized = false;
+> 
+> And you spare this one.
+
+This one should be initialized in clone_time_ns too.
+> 
+> > +	}
+> > +	return time_ns;
+> > +}
+> > +
+> > +/*
+> > + * Clone a new ns copying @old_ns, setting refcount to 1
+> > + * @old_ns: namespace to clone
+> > + * Return the new ns or ERR_PTR.
+> 
+> If you use kernel-doc style then please use te proper syntax
+> 
+> /*
+>  * clone_time_ns - Clone a time namespace
+>  * @old_ns:	Namespace to clone
+>  *
+>  * Clone @old_ns and set the clone refcount to 1
+>  *
+>  * Return: The new namespace or ERR_PTR.
+>  */
+
+Will fix. Thanks!
+
+> 
+> > + */
+> > +static struct time_namespace *clone_time_ns(struct user_namespace *user_ns,
+> > +					  struct time_namespace *old_ns)
+> > +{
+> > +	struct time_namespace *ns;
+> > +	struct ucounts *ucounts;
+> > +	int err;
+> > +
+> > +	err = -ENOSPC;
+> > +	ucounts = inc_time_namespaces(user_ns);
+> > +	if (!ucounts)
+> > +		goto fail;
+> > +
+> > +	err = -ENOMEM;
+> > +	ns = create_time_ns();
+> > +	if (!ns)
+> > +		goto fail_dec;
+> > +
+> > +	err = ns_alloc_inum(&ns->ns);
+> > +	if (err)
+> > +		goto fail_free;
+> > +
+> > +	ns->ucounts = ucounts;
+> > +	ns->ns.ops = &timens_operations;
+> > +	ns->user_ns = get_user_ns(user_ns);
+> > +	return ns;
+> > +
+> > +fail_free:
+> > +	kfree(ns);
+> > +fail_dec:
+> > +	dec_time_namespaces(ucounts);
+> > +fail:
+> > +	return ERR_PTR(err);
+> > +}
+> > +
+> > +/*
+> > + * Add a reference to old_ns, or clone it if @flags specify CLONE_NEWTIME.
+> > + * In latter case, changes to the time of this process won't be seen by parent,
+> > + * and vice versa.
+> 
+> Ditto
+
+Will fix.
+
+> 
+> > + */
+> > +struct time_namespace *copy_time_ns(unsigned long flags,
+> > +	struct user_namespace *user_ns, struct time_namespace *old_ns)
+> > +{
+> > +	if (!(flags & CLONE_NEWTIME))
+> > +		return get_time_ns(old_ns);
+> > +
+> > +	return clone_time_ns(user_ns, old_ns);
+> > +}
+> > +
+> > +void free_time_ns(struct kref *kref)
+> > +{
+> > +	struct time_namespace *ns;
+> > +
+> > +	ns = container_of(kref, struct time_namespace, kref);
+> > +	dec_time_namespaces(ns->ucounts);
+> > +	put_user_ns(ns->user_ns);
+> > +	ns_free_inum(&ns->ns);
+> > +	kfree(ns);
+> > +}
+> > +
+> > +static struct time_namespace *to_time_ns(struct ns_common *ns)
+> > +{
+> > +	return container_of(ns, struct time_namespace, ns);
+> > +}
+> > +
+> > +static struct ns_common *timens_get(struct task_struct *task)
+> > +{
+> > +	struct time_namespace *ns = NULL;
+> > +	struct nsproxy *nsproxy;
+> > +
+> > +	task_lock(task);
+> > +	nsproxy = task->nsproxy;
+> > +	if (nsproxy) {
+> > +		ns = nsproxy->time_ns;
+> > +		get_time_ns(ns);
+> > +	}
+> > +	task_unlock(task);
+> > +
+> > +	return ns ? &ns->ns : NULL;
+> > +}
+> > +
+> > +static struct ns_common *timens_for_children_get(struct task_struct *task)
+> > +{
+> > +	struct time_namespace *ns = NULL;
+> > +	struct nsproxy *nsproxy;
+> > +
+> > +	task_lock(task);
+> > +	nsproxy = task->nsproxy;
+> > +	if (nsproxy) {
+> > +		ns = nsproxy->time_ns_for_children;
+> > +		get_time_ns(ns);
+> > +	}
+> > +	task_unlock(task);
+> > +
+> > +	return ns ? &ns->ns : NULL;
+> > +}
+> > +
+> > +static void timens_put(struct ns_common *ns)
+> > +{
+> > +	put_time_ns(to_time_ns(ns));
+> > +}
+> > +
+> > +static int timens_install(struct nsproxy *nsproxy, struct ns_common *new)
+> > +{
+> > +	struct time_namespace *ns = to_time_ns(new);
+> > +
+> > +	if (!current_is_single_threaded())
+> > +		return -EUSERS;
+> > +
+> > +	if (!ns_capable(ns->user_ns, CAP_SYS_ADMIN) ||
+> > +	    !ns_capable(current_user_ns(), CAP_SYS_ADMIN))
+> > +		return -EPERM;
+> > +
+> > +	get_time_ns(ns);
+> > +	get_time_ns(ns);
+> 
+> Why is this a double get?
+
+Because we change nsproxy->time_ns and nsproxy->time_ns_for_children.
+
+Probably, I need to reorgonize the code this way:
+
+	get_time_ns(ns);
+	put_time_ns(nsproxy->time_ns);
+	nsproxy->time_ns = ns;
+
+	get_time_ns(ns);
+	put_time_ns(nsproxy->time_ns_for_children);
+	nsproxy->time_ns_for_children = ns;
+> 
+> > +	put_time_ns(nsproxy->time_ns);
+> > +	put_time_ns(nsproxy->time_ns_for_children);
+> > +	nsproxy->time_ns = ns;
+> > +	nsproxy->time_ns_for_children = ns;
+> > +	ns->initialized = true;
+> > +	return 0;
+> > +}
+> > +
+> > +int timens_on_fork(struct nsproxy *nsproxy, struct task_struct *tsk)
+> > +{
+> > +	struct ns_common *nsc = &nsproxy->time_ns_for_children->ns;
+> > +	struct time_namespace *ns = to_time_ns(nsc);
+> > +
+> > +	if (nsproxy->time_ns == nsproxy->time_ns_for_children)
+> > +		return 0;
+> > +
+> > +	get_time_ns(ns);
+> > +	put_time_ns(nsproxy->time_ns);
+> > +	nsproxy->time_ns = ns;
+> > +	ns->initialized = true;
+> 
+> Isn't that one initialized already?
+
+When we discussed time namespaces last year, we decided that clock
+offsets can be set only before any task enters a namespace.
+
+When a namespace is created, ns->initialized is set to false. When a
+task enters the namespace, ns->initialized is set to true.
+
+Namespace clock offsets can be changed only if ns->initialized is false.
+
+A new task can be forked to a specified time namespace or it can call
+setns, so we set ns->initialized to true in timens_on_fork and
+timens_install.
+
+> 
+> > +
+> > +	return 0;
+> > +}
+> > +
+> > +static struct user_namespace *timens_owner(struct ns_common *ns)
+> > +{
+> > +	return to_time_ns(ns)->user_ns;
+> > +}
+> > +
+> > +const struct proc_ns_operations timens_operations = {
+> > +	.name		= "time",
+> > +	.type		= CLONE_NEWTIME,
+> > +	.get		= timens_get,
+> > +	.put		= timens_put,
+> > +	.install	= timens_install,
+> > +	.owner		= timens_owner,
+> > +};
+> > +
+> > +const struct proc_ns_operations timens_for_children_operations = {
+> > +	.name		= "time_for_children",
+> > +	.type		= CLONE_NEWTIME,
+> > +	.get		= timens_for_children_get,
+> > +	.put		= timens_put,
+> > +	.install	= timens_install,
+> > +	.owner		= timens_owner,
+> > +};
+> > +
+> > +struct time_namespace init_time_ns = {
+> > +	.kref = KREF_INIT(3),
+> > +	.user_ns = &init_user_ns,
+> > +	.ns.inum = PROC_TIME_INIT_INO,
+> > +	.ns.ops = &timens_operations,
+> > +};
+> 
+> Inconsisten formatting. The above static initializers are nicely
+> tabular. This on not.
+
+Will fix. Thanks.
+
+Thanks,
+Andrei
+> 
+> Thanks,
+> 
+> 	tglx
