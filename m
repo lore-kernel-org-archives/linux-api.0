@@ -1,128 +1,36 @@
-From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
-Date: Thu, 15 Aug 2019 16:46:23 -0700
-Message-ID: <20190815234622.t65oxm5mtfzy6fhg@ast-mbp.dhcp.thefacebook.com>
-References: <CALCETrUjh6DdgW1qSuSRd1_=0F9CqB8+sNj__e_6AHEvh_BaxQ@mail.gmail.com>
- <CALCETrWtE2U4EvZVYeq8pSmQjBzF2PHH+KxYW8FSeF+W=1FYjw@mail.gmail.com>
- <EE7B7AE1-3D44-4561-94B9-E97A626A251D@fb.com>
- <CALCETrXX-Jeb4wiQuL6FUai4wNMmMiUxuLLh_Lb9mT7h=0GgAw@mail.gmail.com>
- <20190805192122.laxcaz75k4vxdspn@ast-mbp>
- <CALCETrVtPs8gY-H4gmzSqPboid3CB++n50SvYd6RU9YVde_-Ow@mail.gmail.com>
- <20190806011134.p5baub5l3t5fkmou@ast-mbp>
- <CALCETrXEHL3+NAY6P6vUj7Pvd9ZpZsYC6VCLXOaNxb90a_POGw@mail.gmail.com>
- <20190813215823.3sfbakzzjjykyng2@ast-mbp>
- <201908151203.FE87970@keescook>
+From: Randy Dunlap <rdunlap@infradead.org>
+Subject: Re: [PATCHv6 16/36] fd/proc: Respect boottime inside time namespace
+ for /proc/uptime
+Date: Thu, 15 Aug 2019 17:46:13 -0700
+Message-ID: <4db5d721-ae09-028e-64b6-4af371000acc@infradead.org>
+References: <20190815163836.2927-1-dima@arista.com>
+ <20190815163836.2927-17-dima@arista.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <netdev-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <201908151203.FE87970@keescook>
-Sender: netdev-owner@vger.kernel.org
-To: Kees Cook <keescook@chromium.org>
-Cc: Andy Lutomirski <luto@kernel.org>, Song Liu <songliubraving@fb.com>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190815163836.2927-17-dima@arista.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dmitry Safonov <dima@arista.com>, linux-kernel@vger.kernel.org
+Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 15, 2019 at 12:46:41PM -0700, Kees Cook wrote:
-> On Tue, Aug 13, 2019 at 02:58:25PM -0700, Alexei Starovoitov wrote:
-> > agree that containers (namespaces) reduce amount of trust necessary
-> > for apps to run, but the end goal is not security though.
+On 8/15/19 9:38 AM, Dmitry Safonov wrote:
+> Co-developed-by: Andrei Vagin <avagin@openvz.org>
+> Signed-off-by: Andrei Vagin <avagin@openvz.org>
+> Signed-off-by: Dmitry Safonov <dima@arista.com>
+> ---
+>  fs/proc/uptime.c | 3 +++
+>  1 file changed, 3 insertions(+)
 > 
-> Unsurprisingly, I totally disagree: this is the very definition of
-> improved "security": reduced attack surface, confined trust, etc.
+> diff --git a/fs/proc/uptime.c b/fs/proc/uptime.c
+> index a4c2791ab70b..5a1b228964fb 100644
+> --- a/fs/proc/uptime.c
+> +++ b/fs/proc/uptime.c
 
-there are different ways to define the meaning of the word "security".
-Of course containers reduce attack surface, etc.
-The 'attack surface' as a mitigation from malicious users is not always the goal
-of running containers. Ask yourself why containers are used in the datacenters
-where only root can ssh into a server, only signed packages can
-ever be installed, no browsers running, and no remote code is ever downloaded?
+Please fix $Subject (s/fd/fs/)
 
-> > Linux has become a single user system.
-> 
-> I hope this is just hyperbole, because it's not true in reality. I agree
-> that the vast majority of Linux devices are single-user-at-a-time
-> systems now (rather than the "shell servers" of yore), but the system
-> still has to be expected to confine users from each other, root, and the
-> hardware. Switching users on Chrome OS or a distro laptop, etc is still
-> very much expected to _mean_ something.
-
-of course.
-
-> 
-> > If user can ssh into the host they can become root.
-> > If arbitrary code can run on the host it will be break out of any sandbox.
-> > Containers are not providing the level of security that is enough
-> > to run arbitrary code. VMs can do it better, but cpu bugs don't make it easy.
-> 
-> I'm not sure why you draw the line for VMs -- they're just as buggy
-> as anything else. Regardless, I reject this line of thinking: yes,
-> all software is buggy, but that isn't a reason to give up.
-
-hmm. are you saying you want kernel community to work towards
-making containers (namespaces) being able to run arbitrary code
-downloaded from the internet?
-In other words the problems solved by user space sandboxing, gvisor, etc
-should be solved by the kernel?
-I really don't think it's a good idea.
-
-> If you look at software safety as a binary, you will always be
-> disappointed. If you look at it as it manifests in the real world,
-> then there is some perspective to be had. Reachability of flaws becomes
-> a major factor; exploit chain length becomes a factor. There are very
-> real impacts to be had from security hardening, sandboxing, etc. Of
-> course nothing is perfect, but the current state of the world isn't
-> as you describe. (And I say this with the knowledge of how long
-> the lifetime of bugs are in the kernel.)
-
-No arguing here. Security today is mainly the number of layers.
-Hardening at all levels, sanboxing do help.
-namespaces is one of the layers provided by the kernel.
-The point that the kernel did its job already.
-All other security layers are in user space.
-Looking for bugs at every layer is still must have.
-In the kernel, systemd, qemu, OS, browsers, etc.
-Containers provide one level of security. VMs have another.
-
-> > Some people call it more 'secure', but it's clearly not secure for
-> > arbitrary code
-> 
-> Perhaps it's just a language issue. "More secure" and "safer" mean
-> mostly the same thing to me. I tend to think "safer" is actually
-> a superset that includes things that wreck the user experience but
-> aren't actually in the privilege manipulation realm. In the traditional
-> "security" triad of confidentiality, integrity, and availability, I tend
-> to weigh availability less highly, but a bug that stops someone from
-> doing their work but doesn't wreck data, let them switch users, etc,
-> is still considered a "security" issue by many folks. The fewer bugs
-> someone is exposed to improves their security, safety, whatever. The
-> easiest way to do that is confinement and its associated attack surface
-> reduction. tl;dr: security and safety are very use-case-specific
-> continuum, not a binary state.
-
-yep
-
-> 
-> > When we say 'unprivileged bpf' we really mean arbitrary malicious bpf program.
-> > It's been a constant source of pain. The constant blinding, randomization,
-> > verifier speculative analysis, all spectre v1, v2, v4 mitigations
-> > are simply not worth it. It's a lot of complex kernel code without users.
-> > There is not a single use case to allow arbitrary malicious bpf
-> > program to be loaded and executed.
-> 
-> The world isn't binary (safe code/malicious code), and we need to build
-> systems that can be used safely even when things go wrong. Yes, probably
-> no one has a system that _intentionally_ feeds eBPF into the kernel from
-> a web form. But there is probably someone who does it unintentionally,
-> or has a user login exposed on a system where unpriv BPF is enabled. The
-> point is to create primitives as safely as possible so when things DO
-> go wrong, they fail safe instead of making things worse.
-> 
-> I'm all for a "less privileged than root" API for eBPF, but I get worried
-> when I see "security" being treated as a binary state. Especially when
-> it is considered an always-failed state. :)
-
-'security as always failed state' ? hmm.
-not sure where this impression came from.
-One of the goals here is to do sysctl kernel.unprivileged_bpf_disabled=1
-which will make the system overall _more_ secure.
-I hope we can agree on that.
+thanks.
+-- 
+~Randy
