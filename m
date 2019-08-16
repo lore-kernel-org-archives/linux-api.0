@@ -1,78 +1,63 @@
-From: Dmitry Safonov <0x7f454c46@gmail.com>
-Subject: Re: [PATCHv6 22/36] x86/vdso: Add offsets page in vvar
-Date: Fri, 16 Aug 2019 21:20:59 +0100
-Message-ID: <1a97f7a5-9380-fdb1-6b00-070950347355@gmail.com>
-References: <20190815163836.2927-1-dima@arista.com>
- <20190815163836.2927-23-dima@arista.com>
- <alpine.DEB.2.21.1908152117231.1908@nanos.tec.linutronix.de>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via
+ /dev/bpf
+Date: Fri, 16 Aug 2019 22:28:29 +0200 (CEST)
+Message-ID: <alpine.DEB.2.21.1908162211270.1923@nanos.tec.linutronix.de>
+References: <20190806011134.p5baub5l3t5fkmou@ast-mbp> <CALCETrUkqUprujww26VxHwkdXQ3DWJH8nnL2VBYpK2EU0oX_YA@mail.gmail.com> <20190814220545.co5pucyo5jk3weiv@ast-mbp.dhcp.thefacebook.com> <HG0x24u69mnaMFKuxHVAzHpyjwsD5-U6RpqFRua87wGWQCHg00Q8ZqPeA_5kJ9l-d6oe0cXa4HyYXMnOO0Aofp_LcPcQdG0WFV21z1MbgcE=@protonmail.ch>
+ <20190815172856.yoqvgu2yfrgbkowu@ast-mbp.dhcp.thefacebook.com> <CALCETrUv+g+cb79FJ1S4XuV0K=kowFkPXpzoC99svoOfs4-Kvg@mail.gmail.com> <20190815230808.2o2qe7a72cwdce2m@ast-mbp.dhcp.thefacebook.com>
+ <fkD3fs46a1YnR4lh0tEG-g3tDnDcyZuzji7bAUR9wujPLLl75ZhI8Yk-H1jZpSugO7qChVeCwxAMmxLdeoF2QFS3ZzuYlh7zmeZOmhDJxww=@protonmail.ch> <alpine.DEB.2.21.1908161158490.1873@nanos.tec.linutronix.de> <lGGTLXBsX3V6p1Z4TkdzAjxbNywaPS2HwX5WLleAkmXNcnKjTPpWnP6DnceSsy8NKt5NBRBbuoAb0woKTcDhJXVoFb7Ygk3Skfj8j6rVfMQ=@protonmail.ch>
+ <20190816195233.vzqqbqrivnooohq6@ast-mbp.dhcp.thefacebook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.21.1908152117231.1908@nanos.tec.linutronix.de>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>, Dmitry Safonov <dima@arista.com>
-Cc: linux-kernel@vger.kernel.org, Andrei Vagin <avagin@openvz.org>, Adrian Reber <adrian@lisas.de>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org, Andrei Vagin <avagin@gmail.com>
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20190816195233.vzqqbqrivnooohq6@ast-mbp.dhcp.thefacebook.com>
+Sender: netdev-owner@vger.kernel.org
+To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Cc: Jordan Glover <Golden_Miller83@protonmail.ch>, Andy Lutomirski <luto@kernel.org>, Daniel Colascione <dancol@google.com>, Song Liu <songliubraving@fb.com>, Kees Cook <keescook@chromium.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Thomas,
+Alexei,
 
-On 8/15/19 8:21 PM, Thomas Gleixner wrote:
-> On Thu, 15 Aug 2019, Dmitry Safonov wrote:
->> ---
->>  arch/Kconfig                          |  5 +++
->>  arch/x86/Kconfig                      |  1 +
->>  arch/x86/entry/vdso/vdso-layout.lds.S |  9 ++++-
->>  arch/x86/entry/vdso/vdso2c.c          |  3 ++
->>  arch/x86/entry/vdso/vma.c             | 12 +++++++
->>  arch/x86/include/asm/vdso.h           |  1 +
->>  init/Kconfig                          |  1 +
->>  lib/vdso/gettimeofday.c               | 47 +++++++++++++++++++++++++++
-> 
-> This needs to be split into the generic lib/vdso part and then x86 making
-> use of it.
+On Fri, 16 Aug 2019, Alexei Starovoitov wrote:
+> It's both of the above when 'systemd' is not taken literally.
+> To earlier Thomas's point: the use case is not only about systemd.
+> There are other containers management systems.
 
-Ok
+<SNIP>
 
->> +#ifdef CONFIG_TIME_NS
-> 
-> This should be COMPILE_WITH_TIME_NS and not CONFIG_TIME_NS
-> 
->> +extern u8 timens_page
->> +	__attribute__((visibility("hidden")));
->> +
->> +notrace static __always_inline void clk_to_ns(clockid_t clk, struct __kernel_timespec *ts)
-> 
-> This needs notrace because?
+> These daemons need to drop privileges to make the system safer == less
+> prone to corruption due to bugs in themselves. Not necessary security
+> bugs.
 
-Heh, well it's alive from the time it was in arch/x86.
-I believe, functions there had it since commit 23adec554a76 ("x86: add
-notrace annotations to vsyscall"). Probably, lib/vdso is compiled
-without mcount in the Makefile somewhere.
-Will drop.
+Let's take a step back.
 
-[..]
->> +	/*
->> +	 * The kernel allows to set a negative offset only if the current clock
->> +	 * value in a namespace is positive, so the result tv_sec can't be
->> +	 * negative here.
->> +	 */
->> +	ts->tv_nsec += offset64->tv_nsec;
->> +	ts->tv_sec += offset64->tv_sec;
->> +	if (ts->tv_nsec >= NSEC_PER_SEC) {
->> +		ts->tv_nsec -= NSEC_PER_SEC;
->> +		ts->tv_sec++;
->> +	}
->> +	if (ts->tv_nsec < 0) {
->> +		ts->tv_nsec += NSEC_PER_SEC;
->> +		ts->tv_sec--;
->> +	}
-> 
-> That's broken for 32bit user space on 64bit hosts. On LE due to
-> misalignment and on BE because 32bit will read always 0.
+While real usecases are helpful to understand a design decision, the design
+needs to be usecase independent.
 
-Ugh, will look into that.
+The kernel provides mechanisms, not policies. My impression of this whole
+discussion is that it is policy driven. That's the wrong approach.
+
+So let's look at the mechanisms which we have at hand:
+
+ 1) Capabilities
+ 
+ 2) SUID and dropping priviledges
+
+ 3) Seccomp and LSM
+
+Now the real interesting questions are:
+
+ A) What kind of restrictions does BPF allow? Is it a binary on/off or is
+    there a more finegrained control of BPF functionality?
+
+    TBH, I can't tell.
+
+ B) Depending on the answer to #A what is the control possibility for
+    #1/#2/#3 ?
+
+Answering those questions gives us a real scope of what can be achieved
+independent of use cases and wishful thought out policies.
 
 Thanks,
-          Dmitry
+
+	tglx
