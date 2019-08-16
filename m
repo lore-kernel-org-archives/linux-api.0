@@ -1,74 +1,111 @@
-From: Andy Lutomirski <luto@amacapital.net>
+From: Song Liu <songliubraving@fb.com>
 Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
-Date: Thu, 15 Aug 2019 17:54:59 -0700
-Message-ID: <B0364660-AD6A-4E5C-B04F-3B6DA78B4BBE@amacapital.net>
-References: <CALCETrUjh6DdgW1qSuSRd1_=0F9CqB8+sNj__e_6AHEvh_BaxQ@mail.gmail.com> <CALCETrWtE2U4EvZVYeq8pSmQjBzF2PHH+KxYW8FSeF+W=1FYjw@mail.gmail.com> <EE7B7AE1-3D44-4561-94B9-E97A626A251D@fb.com> <CALCETrXX-Jeb4wiQuL6FUai4wNMmMiUxuLLh_Lb9mT7h=0GgAw@mail.gmail.com> <20190805192122.laxcaz75k4vxdspn@ast-mbp> <CALCETrVtPs8gY-H4gmzSqPboid3CB++n50SvYd6RU9YVde_-Ow@mail.gmail.com> <20190806011134.p5baub5l3t5fkmou@ast-mbp> <CALCETrXEHL3+NAY6P6vUj7Pvd9ZpZsYC6VCLXOaNxb90a_POGw@mail.gmail.com> <20190813215823.3sfbakzzjjykyng2@ast-mbp> <201908151203.FE87970@keescook> <20190815234622.t65oxm5mtfzy6fhg@ast-mbp.dhcp.thefacebook.com>
-Mime-Version: 1.0 (1.0)
-Content-Type: text/plain;
-        charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Date: Fri, 16 Aug 2019 05:56:20 +0000
+Message-ID: <4F52274A-CD70-4261-A255-2C4A7E818141@fb.com>
+References: <CALCETrUjh6DdgW1qSuSRd1_=0F9CqB8+sNj__e_6AHEvh_BaxQ@mail.gmail.com>
+ <CALCETrWtE2U4EvZVYeq8pSmQjBzF2PHH+KxYW8FSeF+W=1FYjw@mail.gmail.com>
+ <EE7B7AE1-3D44-4561-94B9-E97A626A251D@fb.com>
+ <CALCETrXX-Jeb4wiQuL6FUai4wNMmMiUxuLLh_Lb9mT7h=0GgAw@mail.gmail.com>
+ <20190805192122.laxcaz75k4vxdspn@ast-mbp>
+ <CALCETrVtPs8gY-H4gmzSqPboid3CB++n50SvYd6RU9YVde_-Ow@mail.gmail.com>
+ <20190806011134.p5baub5l3t5fkmou@ast-mbp>
+ <CALCETrXEHL3+NAY6P6vUj7Pvd9ZpZsYC6VCLXOaNxb90a_POGw@mail.gmail.com>
+ <20190813215823.3sfbakzzjjykyng2@ast-mbp> <201908151203.FE87970@keescook>
+ <20190815234622.t65oxm5mtfzy6fhg@ast-mbp.dhcp.thefacebook.com>
+ <B0364660-AD6A-4E5C-B04F-3B6DA78B4BBE@amacapital.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20190815234622.t65oxm5mtfzy6fhg@ast-mbp.dhcp.thefacebook.com>
+In-Reply-To: <B0364660-AD6A-4E5C-B04F-3B6DA78B4BBE@amacapital.net>
+Content-Language: en-US
+Content-ID: <5CAAA3EA589AD74FAB87425A3C3BEBA7@namprd15.prod.outlook.com>
 Sender: netdev-owner@vger.kernel.org
-To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@kernel.org>, Song Liu <songliubraving@fb.com>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
+To: Andy Lutomirski <luto@amacapital.net>
+Cc: Alexei Starovoitov <alexei.starovoitov@gmail.com>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@kernel.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-
-
-> On Aug 15, 2019, at 4:46 PM, Alexei Starovoitov <alexei.starovoitov@gmail.=
-com> wrote:
-
-
->>=20
->> I'm not sure why you draw the line for VMs -- they're just as buggy
->> as anything else. Regardless, I reject this line of thinking: yes,
->> all software is buggy, but that isn't a reason to give up.
->=20
-> hmm. are you saying you want kernel community to work towards
-> making containers (namespaces) being able to run arbitrary code
-> downloaded from the internet?
-
-Yes.
-
-As an example, Sandstorm uses a combination of namespaces (user, network, mo=
-unt, ipc) and a moderately permissive seccomp policy to run arbitrary code. N=
-ot just little snippets, either =E2=80=94 node.js, Mongo, MySQL, Meteor, and=
- other fairly heavyweight stacks can all run under Sandstorm, with the whole=
- stack (database engine binaries, etc) supplied by entirely untrusted custom=
-ers.  During the time Sandstorm was under active development, I can recall *=
-one* bug that would have allowed a sandbox escape. That=E2=80=99s a pretty g=
-ood track record.  (Also, Meltdown and Spectre, sigh.)
-
-To be clear, Sandstorm did not allow creation of a userns by the untrusted c=
-ode, and Sandstorm would have heavily restricted bpf(), but that should only=
- be necessary because of the possibility of kernel bugs, not because of the o=
-verall design.
-
-Alexei, I=E2=80=99m trying to encourage you to aim for something even better=
- than you have now. Right now, if you grant a user various very strong capab=
-ilities, that user=E2=80=99s systemd can use bpf network filters.  Your prop=
-osal would allow this with a different, but still very strong, set of capabi=
-lities. There=E2=80=99s nothing wrong with this per se, but I think you can a=
-im much higher:
-
-CAP_NET_ADMIN and your CAP_BPF both effectively allow the holder to take ove=
-r the system, *by design*.  I=E2=80=99m suggesting that you engage the secur=
-ity community (Kees, myself, Aleksa, Jann, Serge, Christian, etc) to aim for=
- something better: make it so that a normal Linux distro would be willing to=
- relax its settings enough so that normal users can use bpf filtering in the=
- systemd units and maybe eventually use even more bpf() capabilities. And le=
-t=E2=80=99s make is to that mainstream container managers (that use userns!)=
- will be willing (as an option) to delegate bpf() to their containers. We=E2=
-=80=99re happy to help design, review, and even write code, but we need you t=
-o be willing to work with us to make a design that seems like it will work a=
-nd then to wait long enough to merge it for us to think about it, try to pok=
-e holes in it, and convince ourselves and each other that it has a good chan=
-ce of being sound.
-
-Obviously there will be many cases where an unprivileged program should *not=
-* be able to use bpf() IP filtering, but let=E2=80=99s make it so that enabl=
-ing these advanced features does not automatically give away the keys to the=
- kingdom.
-
-(Sandstorm still exists but is no longer as actively developed, sadly.)=
+DQoNCj4gT24gQXVnIDE1LCAyMDE5LCBhdCA1OjU0IFBNLCBBbmR5IEx1dG9taXJza2kgPGx1dG9A
+YW1hY2FwaXRhbC5uZXQ+IHdyb3RlOg0KPiANCj4gDQo+IA0KPj4gT24gQXVnIDE1LCAyMDE5LCBh
+dCA0OjQ2IFBNLCBBbGV4ZWkgU3Rhcm92b2l0b3YgPGFsZXhlaS5zdGFyb3ZvaXRvdkBnbWFpbC5j
+b20+IHdyb3RlOg0KPiANCj4gDQo+Pj4gDQo+Pj4gSSdtIG5vdCBzdXJlIHdoeSB5b3UgZHJhdyB0
+aGUgbGluZSBmb3IgVk1zIC0tIHRoZXkncmUganVzdCBhcyBidWdneQ0KPj4+IGFzIGFueXRoaW5n
+IGVsc2UuIFJlZ2FyZGxlc3MsIEkgcmVqZWN0IHRoaXMgbGluZSBvZiB0aGlua2luZzogeWVzLA0K
+Pj4+IGFsbCBzb2Z0d2FyZSBpcyBidWdneSwgYnV0IHRoYXQgaXNuJ3QgYSByZWFzb24gdG8gZ2l2
+ZSB1cC4NCj4+IA0KPj4gaG1tLiBhcmUgeW91IHNheWluZyB5b3Ugd2FudCBrZXJuZWwgY29tbXVu
+aXR5IHRvIHdvcmsgdG93YXJkcw0KPj4gbWFraW5nIGNvbnRhaW5lcnMgKG5hbWVzcGFjZXMpIGJl
+aW5nIGFibGUgdG8gcnVuIGFyYml0cmFyeSBjb2RlDQo+PiBkb3dubG9hZGVkIGZyb20gdGhlIGlu
+dGVybmV0Pw0KPiANCj4gWWVzLg0KPiANCj4gQXMgYW4gZXhhbXBsZSwgU2FuZHN0b3JtIHVzZXMg
+YSBjb21iaW5hdGlvbiBvZiBuYW1lc3BhY2VzICh1c2VyLCBuZXR3b3JrLCBtb3VudCwgaXBjKSBh
+bmQgYSBtb2RlcmF0ZWx5IHBlcm1pc3NpdmUgc2VjY29tcCBwb2xpY3kgdG8gcnVuIGFyYml0cmFy
+eSBjb2RlLiBOb3QganVzdCBsaXR0bGUgc25pcHBldHMsIGVpdGhlciDigJQgbm9kZS5qcywgTW9u
+Z28sIE15U1FMLCBNZXRlb3IsIGFuZCBvdGhlciBmYWlybHkgaGVhdnl3ZWlnaHQgc3RhY2tzIGNh
+biBhbGwgcnVuIHVuZGVyIFNhbmRzdG9ybSwgd2l0aCB0aGUgd2hvbGUgc3RhY2sgKGRhdGFiYXNl
+IGVuZ2luZSBiaW5hcmllcywgZXRjKSBzdXBwbGllZCBieSBlbnRpcmVseSB1bnRydXN0ZWQgY3Vz
+dG9tZXJzLiAgRHVyaW5nIHRoZSB0aW1lIFNhbmRzdG9ybSB3YXMgdW5kZXIgYWN0aXZlIGRldmVs
+b3BtZW50LCBJIGNhbiByZWNhbGwgKm9uZSogYnVnIHRoYXQgd291bGQgaGF2ZSBhbGxvd2VkIGEg
+c2FuZGJveCBlc2NhcGUuIFRoYXTigJlzIGEgcHJldHR5IGdvb2QgdHJhY2sgcmVjb3JkLiAgKEFs
+c28sIE1lbHRkb3duIGFuZCBTcGVjdHJlLCBzaWdoLikNCj4gDQo+IFRvIGJlIGNsZWFyLCBTYW5k
+c3Rvcm0gZGlkIG5vdCBhbGxvdyBjcmVhdGlvbiBvZiBhIHVzZXJucyBieSB0aGUgdW50cnVzdGVk
+IGNvZGUsIGFuZCBTYW5kc3Rvcm0gd291bGQgaGF2ZSBoZWF2aWx5IHJlc3RyaWN0ZWQgYnBmKCks
+IGJ1dCB0aGF0IHNob3VsZCBvbmx5IGJlIG5lY2Vzc2FyeSBiZWNhdXNlIG9mIHRoZSBwb3NzaWJp
+bGl0eSBvZiBrZXJuZWwgYnVncywgbm90IGJlY2F1c2Ugb2YgdGhlIG92ZXJhbGwgZGVzaWduLg0K
+PiANCj4gQWxleGVpLCBJ4oCZbSB0cnlpbmcgdG8gZW5jb3VyYWdlIHlvdSB0byBhaW0gZm9yIHNv
+bWV0aGluZyBldmVuIGJldHRlciB0aGFuIHlvdSBoYXZlIG5vdy4gUmlnaHQgbm93LCBpZiB5b3Ug
+Z3JhbnQgYSB1c2VyIHZhcmlvdXMgdmVyeSBzdHJvbmcgY2FwYWJpbGl0aWVzLCB0aGF0IHVzZXLi
+gJlzIHN5c3RlbWQgY2FuIHVzZSBicGYgbmV0d29yayBmaWx0ZXJzLiAgWW91ciBwcm9wb3NhbCB3
+b3VsZCBhbGxvdyB0aGlzIHdpdGggYSBkaWZmZXJlbnQsIGJ1dCBzdGlsbCB2ZXJ5IHN0cm9uZywg
+c2V0IG9mIGNhcGFiaWxpdGllcy4gVGhlcmXigJlzIG5vdGhpbmcgd3Jvbmcgd2l0aCB0aGlzIHBl
+ciBzZSwgYnV0IEkgdGhpbmsgeW91IGNhbiBhaW0gbXVjaCBoaWdoZXI6DQo+IA0KPiBDQVBfTkVU
+X0FETUlOIGFuZCB5b3VyIENBUF9CUEYgYm90aCBlZmZlY3RpdmVseSBhbGxvdyB0aGUgaG9sZGVy
+IHRvIHRha2Ugb3ZlciB0aGUgc3lzdGVtLCAqYnkgZGVzaWduKi4gIEnigJltIHN1Z2dlc3Rpbmcg
+dGhhdCB5b3UgZW5nYWdlIHRoZSBzZWN1cml0eSBjb21tdW5pdHkgKEtlZXMsIG15c2VsZiwgQWxl
+a3NhLCBKYW5uLCBTZXJnZSwgQ2hyaXN0aWFuLCBldGMpIHRvIGFpbSBmb3Igc29tZXRoaW5nIGJl
+dHRlcjogbWFrZSBpdCBzbyB0aGF0IGEgbm9ybWFsIExpbnV4IGRpc3RybyB3b3VsZCBiZSB3aWxs
+aW5nIHRvIHJlbGF4IGl0cyBzZXR0aW5ncyBlbm91Z2ggc28gdGhhdCBub3JtYWwgdXNlcnMgY2Fu
+IHVzZSBicGYgZmlsdGVyaW5nIGluIHRoZSBzeXN0ZW1kIHVuaXRzIGFuZCBtYXliZSBldmVudHVh
+bGx5IHVzZSBldmVuIG1vcmUgYnBmKCkgY2FwYWJpbGl0aWVzLiBBbmQgbGV04oCZcyBtYWtlIGlz
+IHRvIHRoYXQgbWFpbnN0cmVhbSBjb250YWluZXIgbWFuYWdlcnMgKHRoYXQgdXNlIHVzZXJucyEp
+IHdpbGwgYmUgd2lsbGluZyAoYXMgYW4gb3B0aW9uKSB0byBkZWxlZ2F0ZSBicGYoKSB0byB0aGVp
+ciBjb250YWluZXJzLiBXZeKAmXJlIGhhcHB5IHRvIGhlbHAgZGVzaWduLCByZXZpZXcsIGFuZCBl
+dmVuIHdyaXRlIGNvZGUsIGJ1dCB3ZSBuZWVkIHlvdSB0byBiZSB3aWxsaW5nIHRvIHdvcmsgd2l0
+aCB1cyB0byBtYWtlIGEgZGVzaWduIHRoYXQgc2VlbXMgbGlrZSBpdCB3aWxsIHdvcmsgYW5kIHRo
+ZW4gdG8gd2FpdCBsb25nIGVub3VnaCB0byBtZXJnZSBpdCBmb3IgdXMgdG8gdGhpbmsgYWJvdXQg
+aXQsIHRyeSB0byBwb2tlIGhvbGVzIGluIGl0LCBhbmQgY29udmluY2Ugb3Vyc2VsdmVzIGFuZCBl
+YWNoIG90aGVyIHRoYXQgaXQgaGFzIGEgZ29vZCBjaGFuY2Ugb2YgYmVpbmcgc291bmQuDQo+IA0K
+PiBPYnZpb3VzbHkgdGhlcmUgd2lsbCBiZSBtYW55IGNhc2VzIHdoZXJlIGFuIHVucHJpdmlsZWdl
+ZCBwcm9ncmFtIHNob3VsZCAqbm90KiBiZSBhYmxlIHRvIHVzZSBicGYoKSBJUCBmaWx0ZXJpbmcs
+IGJ1dCBsZXTigJlzIG1ha2UgaXQgc28gdGhhdCBlbmFibGluZyB0aGVzZSBhZHZhbmNlZCBmZWF0
+dXJlcyBkb2VzIG5vdCBhdXRvbWF0aWNhbGx5IGdpdmUgYXdheSB0aGUga2V5cyB0byB0aGUga2lu
+Z2RvbS4NCj4gDQo+IChTYW5kc3Rvcm0gc3RpbGwgZXhpc3RzIGJ1dCBpcyBubyBsb25nZXIgYXMg
+YWN0aXZlbHkgZGV2ZWxvcGVkLCBzYWRseS4pDQoNCkkgYW0gdHJ5aW5nIHRvIHVuZGVyc3RhbmQg
+ZGlmZmVyZW50IHBlcnNwZWN0aXZlcyBoZXJlLiANCg0KRGlzY2xhaW1lcjogQWxleGVpIGFuZCBJ
+IGJvdGggd29yayBmb3IgRmFjZWJvb2suIEJ1dCBoZSBtYXkgZGlzYWdyZWUgDQp3aXRoIGV2ZXJ5
+dGhpbmcgSSBhbSBhYm91dCB0byBzYXkgYmVsb3csIGJlY2F1c2Ugd2UgaGF2ZW4ndCBzeW5jJ2Vk
+IA0KYWJvdXQgdGhpcyBmb3IgYSB3aGlsZS4gOikNCg0KSSB0aGluayB0aGVyZSBhcmUgdHdvIHR5
+cGVzIG9mIHVzZSBjYXNlcyBoZXJlOiANCg0KICAgIDEuIENBUF9CUEZfQURNSU46IG9uZSBiaWcg
+a2V5IHRvIGFsbCBzeXNfYnBmKCkuIA0KICAgIDIuIENBUF9CUEY6IHN1YnNldCBvZiBzeXNfYnBm
+KCkgdGhhdCBpcyBzYWZlIGZvciBjb250YWluZXJzLg0KDQpJSVVDLCBjdXJyZW50bHksIENBUF9C
+UEZfQURNSU4gaXMgKGFsbW9zdCkgc2FtZSBhcyBDQVBfU1lTX0FETUlOLiANCkFuZCB0aGVyZSBh
+cmVuJ3QgbWFueSByZWFsIHdvcmxkIHVzZSBjYXNlcyBmb3IgQ0FQX0JQRi4gDQoNClRoZSAvZGV2
+L2JwZiBwYXRjaCB0cmllcyB0byBzZXBhcmF0ZSBDQVBfQlBGX0FETUlOIGZyb20gQ0FQX1NZU19B
+RE1JTi4NCk9uIHRoZSBvdGhlciBoYW5kLCBBbmR5IHdvdWxkIGxpa2UgdG8gaW50cm9kdWNlIENB
+UF9CUEYgYW5kIGJ1aWxkDQphbWF6aW5nIHVzZSBjYXNlcyBhcm91bmQgaXQgKGNoaWNrZW4tZWdn
+IHByb2JsZW0pLiANCg0KRGlkIEkgbWlzdW5kZXJzdGFuZCBhbnl0aGluZz8NCg0KSWYgbm90LCBJ
+IHRoaW5rIHRoZXNlIHR3byB1c2UgY2FzZXMgZG8gbm90IHJlYWxseSBjb25mbGljdCB3aXRoIGVh
+Y2gNCm90aGVyLCBhbmQgd2UgcHJvYmFibHkgbmVlZCBib3RoIG9mIHRoZW0uIFRoZW4sIHRoZSBu
+ZXh0IHF1ZXN0aW9uIGlzIA0KZG8gd2UgcmVhbGx5IG5lZWQgYm90aC9laXRoZXIgb2YgdGhlbS4g
+TWF5YmUgaGF2aW5nIHR3byBzZXBhcmF0ZSANCmRpc2N1c3Npb25zIHdvdWxkIG1ha2UgaXQgZWFz
+aWVyPw0KDQoNClRoZSBmb2xsb3dpbmcgYXJlIHNvbWUgcXVlc3Rpb25zIEkgYW0gdHJ5aW5nIHRv
+IHVuZGVyc3RhbmQgZm9yIA0KdGhlIHR3byBjYXNlcy4gDQoNCkZvciBDQVBfQlBGX0FETUlOIChv
+ciAvZGV2L2JwZik6DQpDYW4gd2UganVzdCB1c2UgQ0FQX05FVF9BRE1JTj8gSXQgaXMgc2FmZXIg
+dGhhbiBDQVBfU1lTX0FETUlOLCBhbmQNCnJldXNlIGV4aXN0aW5nIENBUF8gc2hvdWxkIGJlIGVh
+c2llciB0aGFuIGludHJvZHVjaW5nIGEgbmV3IG9uZT8gDQoNCkZvciBDQVBfQlBGOiANCkRvIHdl
+IHJlYWxseSBuZWVkIGl0IGZvciB0aGUgY29udGFpbmVycz8gSXMgaXQgcG9zc2libGUgdG8gaW1w
+bGVtZW50IA0KYWxsIGNvbnRhaW5lciB1c2UgY2FzZXMgd2l0aCBTVUlEPyBBdCB0aGlzIG1vbWVu
+dCwgSSB0aGluayBTVUlEIGlzIA0KdGhlIHJpZ2h0IHdheSB0byBnbyBmb3IgdGhpcyB1c2UgY2Fz
+ZSwgYmVjYXVzZSB0aGlzIGlzIGxpa2VseSB0byANCnN0YXJ0IHdpdGggYSBzbWFsbCBzZXQgb2Yg
+ZnVuY3Rpb25hbGl0aWVzLiBXZSBjYW4gaW50cm9kdWNlIENBUF9CUEYNCndoZW4gdGhlIGNvbnRh
+aW5lciB1c2UgY2FzZSBpcyB0b28gY29tcGxpY2F0ZWQgZm9yIFNVSUQuIA0KDQoNCkkgaG9wZSBz
+b21lIG9mIHRoZXNlIHF1ZXN0aW9ucy90aG91Z2h0cyB3b3VsZCBtYWtlIHNvbWUgc2Vuc2U/DQoN
+ClRoYW5rcywNClNvbmc=
