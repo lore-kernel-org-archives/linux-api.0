@@ -1,107 +1,103 @@
-From: Dmitry Safonov <0x7f454c46@gmail.com>
-Subject: Re: [PATCHv6 23/36] x86/vdso: Allocate timens vdso
-Date: Fri, 16 Aug 2019 23:47:24 +0100
-Message-ID: <483678c7-7687-5445-f09e-e45e9460d559@gmail.com>
-References: <20190815163836.2927-1-dima@arista.com>
- <20190815163836.2927-24-dima@arista.com>
- <b719199a-ed91-610b-38bc-015a0749f600@kernel.org>
- <alpine.DEB.2.21.1908162208190.1923@nanos.tec.linutronix.de>
+From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via /dev/bpf
+Date: Sat, 17 Aug 2019 08:02:47 -0700
+Message-ID: <20190817150245.xxzxqjpvgqsxmloe@ast-mbp>
+References: <20190814220545.co5pucyo5jk3weiv@ast-mbp.dhcp.thefacebook.com>
+ <HG0x24u69mnaMFKuxHVAzHpyjwsD5-U6RpqFRua87wGWQCHg00Q8ZqPeA_5kJ9l-d6oe0cXa4HyYXMnOO0Aofp_LcPcQdG0WFV21z1MbgcE=@protonmail.ch>
+ <20190815172856.yoqvgu2yfrgbkowu@ast-mbp.dhcp.thefacebook.com>
+ <CALCETrUv+g+cb79FJ1S4XuV0K=kowFkPXpzoC99svoOfs4-Kvg@mail.gmail.com>
+ <20190815230808.2o2qe7a72cwdce2m@ast-mbp.dhcp.thefacebook.com>
+ <fkD3fs46a1YnR4lh0tEG-g3tDnDcyZuzji7bAUR9wujPLLl75ZhI8Yk-H1jZpSugO7qChVeCwxAMmxLdeoF2QFS3ZzuYlh7zmeZOmhDJxww=@protonmail.ch>
+ <alpine.DEB.2.21.1908161158490.1873@nanos.tec.linutronix.de>
+ <lGGTLXBsX3V6p1Z4TkdzAjxbNywaPS2HwX5WLleAkmXNcnKjTPpWnP6DnceSsy8NKt5NBRBbuoAb0woKTcDhJXVoFb7Ygk3Skfj8j6rVfMQ=@protonmail.ch>
+ <20190816195233.vzqqbqrivnooohq6@ast-mbp.dhcp.thefacebook.com>
+ <alpine.DEB.2.21.1908162211270.1923@nanos.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.21.1908162208190.1923@nanos.tec.linutronix.de>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@kernel.org>
-Cc: Dmitry Safonov <dima@arista.com>, linux-kernel@vger.kernel.org, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <netdev-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.21.1908162211270.1923@nanos.tec.linutronix.de>
+Sender: netdev-owner@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: Jordan Glover <Golden_Miller83@protonmail.ch>, Andy Lutomirski <luto@kernel.org>, Daniel Colascione <dancol@google.com>, Song Liu <songliubraving@fb.com>, Kees Cook <keescook@chromium.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Andy, Thomas,
-
-thank you very much for your time and the reviews, appreciate that.
-
-On 8/16/19 9:10 PM, Thomas Gleixner wrote:
-> On Fri, 16 Aug 2019, Andy Lutomirski wrote:
-[..]
->> I'm unconvinced that any of this magic is wise.  I think you should make a
->> special timens vvar page that causes the normal fastpath to fail (using a
->> special vclock mode, a special seq value, or a special "last" value) and then
->> make the failure path detect that timens is in use and use the timens path.
-
-I see. That's so clever, it haven't come on my mind.
-Hmm, is that better because of the price of 5-byte NOP?
-I'm a bit afraid to complicate that seq/vclock logic more..
-
-So, what I'm driving at is would you change your mind if timens still
-had boot-time dynamic patching but without introducing NOP?
-
-We've got the point that you want to have no penalty at all for host
-tasks [on RFC reply] by introducing `if` as trashing cache and branch
-predictor, but I wasn't sure if NOP is also unacceptable.
-
-At that moment we had a "plan B" with something that was half-wittedly
-called "retcalls". The basic idea is that all that the timens brings
-into vdso are calls clk_to_ns(), which are all placed in tails of
-functions. So, if we could just memcpy() function returns in host vdso
-over introduced time-ns tail calls - it would be a very same code that
-lied before. There is a draft of those [1], that actually works on x86
-on both mine and Andrei's machines.
-
-Consulting with Andrei, I've decided that we better stick to
-static_branchs as they are well known and have already backends for
-other architectures. We probably mistakenly decided that a price of NOP
-on scalar machines is negligible and would be acceptable.
-
-Would those self-invented "retcalls" be something that could be reviewed
-and potentially accepted in further iterations?
-
-[1]
-https://github.com/0x7f454c46/linux/commit/ab0eeb646f43#diff-c22e1e73e7367f371e1f12e3877ea12f
-
-> My initial suggestion still stands. Do that at compile time. It really does
-> not matter whether we have another 2 or 3 variants of vdso binaries.
+On Fri, Aug 16, 2019 at 10:28:29PM +0200, Thomas Gleixner wrote:
+> Alexei,
 > 
-> Use it and be done with it. No special magic, just straight forward
-> decisions to use a timens capable VDSO or not.
+> On Fri, 16 Aug 2019, Alexei Starovoitov wrote:
+> > It's both of the above when 'systemd' is not taken literally.
+> > To earlier Thomas's point: the use case is not only about systemd.
+> > There are other containers management systems.
+> 
+> <SNIP>
+> 
+> > These daemons need to drop privileges to make the system safer == less
+> > prone to corruption due to bugs in themselves. Not necessary security
+> > bugs.
+> 
+> Let's take a step back.
+> 
+> While real usecases are helpful to understand a design decision, the design
+> needs to be usecase independent.
+> 
+> The kernel provides mechanisms, not policies. My impression of this whole
+> discussion is that it is policy driven. That's the wrong approach.
 
-I believe that was something we did in version 1 of the patches set.
-It doesn't sound like a rocket science to do, but it resulted in a
-couple of ugly patches.
+not sure what you mean by 'policy driven'.
+Proposed CAP_BPF is a policy?
 
-The post-attempt notes about downsides of doing it compile-time are:
+My desire to do kernel.unprivileged_bpf_disabled=1 is driven by
+text in Documentation/x86/mds.rst which says:
+"There is one exception, which is untrusted BPF. The functionality of
+untrusted BPF is limited, but it needs to be thoroughly investigated
+whether it can be used to create such a construct."
 
-1. There is additional .so for each vdso: 64-bit, ia32, x32. The same
-for every architecture to-be supported. It adds rules in Makefiles. [2]
-2. If we still intend to keep setns() working without exec(), function
-entries on both host/namespace vdso should be aligned to each other [3].
-That results in a patch to vdso2c to generate offsets [4, 5] and in
-linker magic to align another vdso [6].
-3. As unexpected consequence, we also need to align local functions on
-vdso [7].
+commit 6a9e52927251 ("x86/speculation/mds: Add mds_clear_cpu_buffers()")
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Borislav Petkov <bp@suse.de>
+Reviewed-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Reviewed-by: Frederic Weisbecker <frederic@kernel.org>
+Reviewed-by: Jon Masters <jcm@redhat.com>
+Tested-by: Jon Masters <jcm@redhat.com>
 
-So, it might be all related to my lack of skills, but it seems to bring
-some big amount of complexity into build process. And in my point of
-view, major issue is that it would not scale easily when the day will
-come and there will be a need to introduce another vdso.so. As I didn't
-want to be the guy that happens to be remembered as "he wrote this
-unmaintainable pile of garbage", I've taken dynamic patching approach
-that is done once a boot time.
+The way I read this text:
+- there is a concern that mds is exploitable via bpf
+- there is a desire to investigate to address this concern
 
-Regardless, we both with Andrei want to improve the patches set and make
-it acceptable and easy to maintain in future. I hope, that our effort to
-do that is visible through evolution of patches. And we're very glad
-that we've constructive critics and such patient maintainers.
-So, if I'm mistaken in those points about compile-time vdso(s), or you
-have in mind a plan how-to avoid those, I'd appreciate and rework it to
-that direction.
+I'm committed to help with the investigation.
 
-[2] lkml.kernel.org/r/20190206001107.16488-14-dima@arista.com
-[3] lkml.kernel.org/r/20190206001107.16488-15-dima@arista.com
-[4] lkml.kernel.org/r/20190206001107.16488-16-dima@arista.com
-[5] lkml.kernel.org/r/20190206001107.16488-17-dima@arista.com
-[6] lkml.kernel.org/r/20190206001107.16488-19-dima@arista.com
-[7] lkml.kernel.org/r/20190206001107.16488-20-dima@arista.com
+In the mean time I propose a path to do
+kernel.unprivileged_bpf_disabled=1 which is CAP_BPF.
 
-Thanks,
-          Dmitry
+Can kernel.unprivileged_bpf_disabled=1 be used now?
+Yes, but it will weaken overall system security because things that
+use unpriv to load bpf and CAP_NET_ADMIN to attach bpf would need
+to move to stronger CAP_SYS_ADMIN.
+
+With CAP_BPF both load and attach would happen under CAP_BPF
+instead of CAP_SYS_ADMIN.
+
+> So let's look at the mechanisms which we have at hand:
+> 
+>  1) Capabilities
+>  
+>  2) SUID and dropping priviledges
+> 
+>  3) Seccomp and LSM
+> 
+> Now the real interesting questions are:
+> 
+>  A) What kind of restrictions does BPF allow? Is it a binary on/off or is
+>     there a more finegrained control of BPF functionality?
+> 
+>     TBH, I can't tell.
+> 
+>  B) Depending on the answer to #A what is the control possibility for
+>     #1/#2/#3 ?
+
+Can any of the mechanisms 1/2/3 address the concern in mds.rst?
+
+I believe Andy wants to expand the attack surface when
+kernel.unprivileged_bpf_disabled=0
+Before that happens I'd like the community to work on addressing the text above.
