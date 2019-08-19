@@ -1,90 +1,87 @@
-From: Wu Hao <hao.wu@intel.com>
-Subject: Re: [PATCH v5 0/9] FPGA DFL updates
-Date: Mon, 19 Aug 2019 13:31:33 +0800
-Message-ID: <20190819053133.GA31244@hao-dev>
-References: <1565578204-13969-1-git-send-email-hao.wu@intel.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH v2 bpf-next 1/4] bpf: unprivileged BPF access via
+ /dev/bpf
+Date: Mon, 19 Aug 2019 11:15:11 +0200 (CEST)
+Message-ID: <alpine.DEB.2.21.1908191103130.1923@nanos.tec.linutronix.de>
+References: <20190814220545.co5pucyo5jk3weiv@ast-mbp.dhcp.thefacebook.com> <HG0x24u69mnaMFKuxHVAzHpyjwsD5-U6RpqFRua87wGWQCHg00Q8ZqPeA_5kJ9l-d6oe0cXa4HyYXMnOO0Aofp_LcPcQdG0WFV21z1MbgcE=@protonmail.ch> <20190815172856.yoqvgu2yfrgbkowu@ast-mbp.dhcp.thefacebook.com>
+ <CALCETrUv+g+cb79FJ1S4XuV0K=kowFkPXpzoC99svoOfs4-Kvg@mail.gmail.com> <20190815230808.2o2qe7a72cwdce2m@ast-mbp.dhcp.thefacebook.com> <fkD3fs46a1YnR4lh0tEG-g3tDnDcyZuzji7bAUR9wujPLLl75ZhI8Yk-H1jZpSugO7qChVeCwxAMmxLdeoF2QFS3ZzuYlh7zmeZOmhDJxww=@protonmail.ch>
+ <alpine.DEB.2.21.1908161158490.1873@nanos.tec.linutronix.de> <lGGTLXBsX3V6p1Z4TkdzAjxbNywaPS2HwX5WLleAkmXNcnKjTPpWnP6DnceSsy8NKt5NBRBbuoAb0woKTcDhJXVoFb7Ygk3Skfj8j6rVfMQ=@protonmail.ch> <20190816195233.vzqqbqrivnooohq6@ast-mbp.dhcp.thefacebook.com>
+ <alpine.DEB.2.21.1908162211270.1923@nanos.tec.linutronix.de> <20190817150245.xxzxqjpvgqsxmloe@ast-mbp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1565578204-13969-1-git-send-email-hao.wu@intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: gregkh@linuxfoundation.org, mdf@kernel.org, linux-fpga@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, atull@kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20190817150245.xxzxqjpvgqsxmloe@ast-mbp>
+Sender: netdev-owner@vger.kernel.org
+To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Cc: Jordan Glover <Golden_Miller83@protonmail.ch>, Andy Lutomirski <luto@kernel.org>, Daniel Colascione <dancol@google.com>, Song Liu <songliubraving@fb.com>, Kees Cook <keescook@chromium.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Aug 12, 2019 at 10:49:55AM +0800, Wu Hao wrote:
-> Hi Greg,
-> 
-> This is v5 patchset which adds more features to FPGA DFL. Marjor changes
-> against v4 are sysfs related code rework to address comments on v4.
-> 
-> Please help to take a look. Thanks!
+Alexei,
 
-Hi Greg,
+On Sat, 17 Aug 2019, Alexei Starovoitov wrote:
+> On Fri, Aug 16, 2019 at 10:28:29PM +0200, Thomas Gleixner wrote:
+> > On Fri, 16 Aug 2019, Alexei Starovoitov wrote:
+> > While real usecases are helpful to understand a design decision, the design
+> > needs to be usecase independent.
+> > 
+> > The kernel provides mechanisms, not policies. My impression of this whole
+> > discussion is that it is policy driven. That's the wrong approach.
+> 
+> not sure what you mean by 'policy driven'.
+> Proposed CAP_BPF is a policy?
 
-Did you get a chance to take a look at this new version patchset? :)
+I was referring to the discussion as a whole.
+ 
+> Can kernel.unprivileged_bpf_disabled=1 be used now?
+> Yes, but it will weaken overall system security because things that
+> use unpriv to load bpf and CAP_NET_ADMIN to attach bpf would need
+> to move to stronger CAP_SYS_ADMIN.
+> 
+> With CAP_BPF both load and attach would happen under CAP_BPF
+> instead of CAP_SYS_ADMIN.
 
-Thanks
-Hao
+I'm not arguing against that.
 
+> > So let's look at the mechanisms which we have at hand:
+> > 
+> >  1) Capabilities
+> >  
+> >  2) SUID and dropping priviledges
+> > 
+> >  3) Seccomp and LSM
+> > 
+> > Now the real interesting questions are:
+> > 
+> >  A) What kind of restrictions does BPF allow? Is it a binary on/off or is
+> >     there a more finegrained control of BPF functionality?
+> > 
+> >     TBH, I can't tell.
+> > 
+> >  B) Depending on the answer to #A what is the control possibility for
+> >     #1/#2/#3 ?
 > 
-> Main changes from v4:
->   - convert code to use dev_groups for sysfs entries (#2, #3, #4, #6, #8).
->   - clean up for empty init function after remove sysfs add/remove (#1).
->   - introduce is_visible for sysfs groups (#3, #4, #6, #8).
->   - remove revision sysfs entries (#4, #6, #8).
->   - improve naming on shared functions (#5).
->   - reorganize sysfs entries for port and fme error reporting (#6, #8).
-> 
-> Main changes from v3:
->   - drop avx512 partail reconfiguration patch for now.
->   - split dfl_fpga_cdev_config_port to 2 functions *_release/assign_port
->     (#1).
->   - split __dfl_fpga_cdev_config_port_vf into 2 functions with locking
->     added (#2).
->   - improve description in sysfs doc to avoid misunderstanding (#3).
->   - switch to boolean in sysfs entry store function (#3).
->   - remove dev_dbg in init/uinit callback function (#7, #9, #11).
->   - remove uinit callback which does does nothing (#8, #9)
-> 
-> Main changes from v2:
->   - update kernel version/date in sysfs doc (patch #4, #5, #8, #10, #11).
->   - add back Documentation patch (patch #12).
-> 
-> Main changes from v1:
->   - remove DRV/MODULE_VERSION modifications. (patch #1, #3, #4, #6)
->   - remove argsz from new ioctls. (patch #2)
->   - replace sysfs_create/remove_* with device_add/remove_* for sysfs entries.
->     (patch #5, #8, #11)
-> 
-> Wu Hao (9):
->   fpga: dfl: make init callback optional
->   fpga: dfl: fme: convert platform_driver to use dev_groups
->   fpga: dfl: afu: convert platform_driver to use dev_groups
->   fpga: dfl: afu: add userclock sysfs interfaces.
->   fpga: dfl: afu: expose __afu_port_enable/disable function.
->   fpga: dfl: afu: add error reporting support.
->   fpga: dfl: afu: add STP (SignalTap) support
->   fpga: dfl: fme: add global error reporting support
->   Documentation: fpga: dfl: add descriptions for virtualization and new
->     interfaces.
-> 
->  Documentation/ABI/testing/sysfs-platform-dfl-fme  |  62 ++++
->  Documentation/ABI/testing/sysfs-platform-dfl-port |  53 ++++
->  Documentation/fpga/dfl.rst                        | 105 +++++++
->  drivers/fpga/Makefile                             |   3 +-
->  drivers/fpga/dfl-afu-error.c                      | 230 ++++++++++++++
->  drivers/fpga/dfl-afu-main.c                       | 230 +++++++++++---
->  drivers/fpga/dfl-afu.h                            |   9 +
->  drivers/fpga/dfl-fme-error.c                      | 359 ++++++++++++++++++++++
->  drivers/fpga/dfl-fme-main.c                       |  42 +--
->  drivers/fpga/dfl-fme.h                            |   3 +
->  drivers/fpga/dfl.c                                |  10 +-
->  drivers/fpga/dfl.h                                |   9 +
->  12 files changed, 1041 insertions(+), 74 deletions(-)
->  create mode 100644 drivers/fpga/dfl-afu-error.c
->  create mode 100644 drivers/fpga/dfl-fme-error.c
-> 
-> -- 
-> 1.8.3.1
+> Can any of the mechanisms 1/2/3 address the concern in mds.rst?
+
+Well, that depends. As with any other security policy which is implemented
+via these mechanisms, the policy can be strict enough to prevent it by not
+allowing certain operations. The more fine-grained the control is, it
+allows the administrator who implements the policy to remove the
+'dangerous' parts from an untrusted user.
+
+So really question #A is important for this. Is BPF just providing a binary
+ON/OFF knob or does it allow to disable/enable certain aspects of BPF
+functionality in a more fine grained way? If the latter, then it might be
+possible to control functionality which might be abused for exploits of
+some sorts (including MDS) in a way which allows other parts of BBF to be
+exposed to less priviledged contexts.
+
+> I believe Andy wants to expand the attack surface when
+> kernel.unprivileged_bpf_disabled=0
+> Before that happens I'd like the community to work on addressing the text above.
+
+Well, that text above can be removed when the BPF wizards are entirely sure
+that BPF cannot be abused to exploit stuff. 
+
+Thanks,
+
+	tglx
