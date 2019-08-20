@@ -1,8 +1,7 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V40 22/29] lockdown: Lock down tracing and perf kprobes when
- in confidentiality mode
-Date: Mon, 19 Aug 2019 17:17:58 -0700
-Message-ID: <20190820001805.241928-23-matthewgarrett@google.com>
+Subject: [PATCH V40 24/29] lockdown: Lock down perf when in confidentiality mode
+Date: Mon, 19 Aug 2019 17:18:00 -0700
+Message-ID: <20190820001805.241928-25-matthewgarrett@google.com>
 References: <20190820001805.241928-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -10,77 +9,66 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190820001805.241928-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Alexei Starovoitov <alexei.starovoitov@gmail.com>, Matthew Garrett <mjg59@google.com>, Masami Hiramatsu <mhiramat@kernel.org>, Kees Cook <keescook@chromium.org>, "Naveen N . Rao" <naveen.n.rao@linux.ibm.com>, Anil S Keshavamurthy <anil.s.keshavamurthy@intel.com>, davem@davemloft.net
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>, Peter Zijlstra <peterz@infradead.org>, Ingo Molnar <mingo@redhat.com>, Arnaldo Carvalho de Melo <acme@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
 From: David Howells <dhowells@redhat.com>
 
-Disallow the creation of perf and ftrace kprobes when the kernel is
-locked down in confidentiality mode by preventing their registration.
-This prevents kprobes from being used to access kernel memory to steal
-crypto data, but continues to allow the use of kprobes from signed
-modules.
+Disallow the use of certain perf facilities that might allow userspace to
+access kernel data.
 
-Reported-by: Alexei Starovoitov <alexei.starovoitov@gmail.com>
 Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Matthew Garrett <mjg59@google.com>
-Acked-by: Masami Hiramatsu <mhiramat@kernel.org>
 Reviewed-by: Kees Cook <keescook@chromium.org>
-Cc: Naveen N. Rao <naveen.n.rao@linux.ibm.com>
-Cc: Anil S Keshavamurthy <anil.s.keshavamurthy@intel.com>
-Cc: davem@davemloft.net
-Cc: Masami Hiramatsu <mhiramat@kernel.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Ingo Molnar <mingo@redhat.com>
+Cc: Arnaldo Carvalho de Melo <acme@kernel.org>
 Signed-off-by: James Morris <jmorris@namei.org>
 ---
  include/linux/security.h     | 1 +
- kernel/trace/trace_kprobe.c  | 5 +++++
+ kernel/events/core.c         | 7 +++++++
  security/lockdown/lockdown.c | 1 +
- 3 files changed, 7 insertions(+)
+ 3 files changed, 9 insertions(+)
 
 diff --git a/include/linux/security.h b/include/linux/security.h
-index 669e8de5299d..0b2529dbf0f4 100644
+index e604f4c67f03..b94f1e697537 100644
 --- a/include/linux/security.h
 +++ b/include/linux/security.h
-@@ -117,6 +117,7 @@ enum lockdown_reason {
- 	LOCKDOWN_MMIOTRACE,
- 	LOCKDOWN_INTEGRITY_MAX,
+@@ -119,6 +119,7 @@ enum lockdown_reason {
  	LOCKDOWN_KCORE,
-+	LOCKDOWN_KPROBES,
+ 	LOCKDOWN_KPROBES,
+ 	LOCKDOWN_BPF_READ,
++	LOCKDOWN_PERF,
  	LOCKDOWN_CONFIDENTIALITY_MAX,
  };
  
-diff --git a/kernel/trace/trace_kprobe.c b/kernel/trace/trace_kprobe.c
-index 7d736248a070..fcb28b0702b2 100644
---- a/kernel/trace/trace_kprobe.c
-+++ b/kernel/trace/trace_kprobe.c
-@@ -11,6 +11,7 @@
- #include <linux/uaccess.h>
- #include <linux/rculist.h>
- #include <linux/error-injection.h>
-+#include <linux/security.h>
+diff --git a/kernel/events/core.c b/kernel/events/core.c
+index f85929ce13be..8732f980a4fc 100644
+--- a/kernel/events/core.c
++++ b/kernel/events/core.c
+@@ -10798,6 +10798,13 @@ SYSCALL_DEFINE5(perf_event_open,
+ 	    perf_paranoid_kernel() && !capable(CAP_SYS_ADMIN))
+ 		return -EACCES;
  
- #include "trace_dynevent.h"
- #include "trace_kprobe_selftest.h"
-@@ -415,6 +416,10 @@ static int __register_trace_kprobe(struct trace_kprobe *tk)
- {
- 	int i, ret;
- 
-+	ret = security_locked_down(LOCKDOWN_KPROBES);
-+	if (ret)
-+		return ret;
++	err = security_locked_down(LOCKDOWN_PERF);
++	if (err && (attr.sample_type & PERF_SAMPLE_REGS_INTR))
++		/* REGS_INTR can leak data, lockdown must prevent this */
++		return err;
 +
- 	if (trace_probe_is_registered(&tk->tp))
- 		return -EINVAL;
- 
++	err = 0;
++
+ 	/*
+ 	 * In cgroup mode, the pid argument is used to pass the fd
+ 	 * opened to the cgroup directory in cgroupfs. The cpu argument
 diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
-index 403b30357f75..27b2cf51e443 100644
+index 2397772c56bd..3d7b1039457b 100644
 --- a/security/lockdown/lockdown.c
 +++ b/security/lockdown/lockdown.c
-@@ -32,6 +32,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
- 	[LOCKDOWN_MMIOTRACE] = "unsafe mmio",
- 	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
+@@ -34,6 +34,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
  	[LOCKDOWN_KCORE] = "/proc/kcore access",
-+	[LOCKDOWN_KPROBES] = "use of kprobes",
+ 	[LOCKDOWN_KPROBES] = "use of kprobes",
+ 	[LOCKDOWN_BPF_READ] = "use of bpf to read kernel RAM",
++	[LOCKDOWN_PERF] = "unsafe use of perf",
  	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
  };
  
