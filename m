@@ -1,7 +1,7 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V40 27/29] tracefs: Restrict tracefs when the kernel is locked down
-Date: Mon, 19 Aug 2019 17:18:03 -0700
-Message-ID: <20190820001805.241928-28-matthewgarrett@google.com>
+Subject: [PATCH V40 20/29] x86/mmiotrace: Lock down the testmmiotrace module
+Date: Mon, 19 Aug 2019 17:17:56 -0700
+Message-ID: <20190820001805.241928-21-matthewgarrett@google.com>
 References: <20190820001805.241928-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -9,137 +9,80 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190820001805.241928-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Matthew Garrett <matthewgarrett@google.com>, Matthew Garrett <mjg59@google.com>, Steven Rostedt <rostedt@goodmis.org>, Ben Hutchings <ben@decadent.org.uk>
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Thomas Gleixner <tglx@linutronix.de>, Matthew Garrett <mjg59@google.com>, Steven Rostedt <rostedt@goodmis.org>, Kees Cook <keescook@chromium.org>, Ingo Molnar <mingo@kernel.org>, "H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Tracefs may release more information about the kernel than desirable, so
-restrict it when the kernel is locked down in confidentiality mode by
-preventing open().
+From: David Howells <dhowells@redhat.com>
 
-(Fixed by Ben Hutchings to avoid a null dereference in
-default_file_open())
+The testmmiotrace module shouldn't be permitted when the kernel is locked
+down as it can be used to arbitrarily read and write MMIO space. This is
+a runtime check rather than buildtime in order to allow configurations
+where the same kernel may be run in both locked down or permissive modes
+depending on local policy.
 
+Suggested-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: David Howells <dhowells@redhat.com
 Signed-off-by: Matthew Garrett <mjg59@google.com>
-Reviewed-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
-Cc: Ben Hutchings <ben@decadent.org.uk>
+Acked-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
+Reviewed-by: Kees Cook <keescook@chromium.org>
+cc: Thomas Gleixner <tglx@linutronix.de>
+cc: Steven Rostedt <rostedt@goodmis.org>
+cc: Ingo Molnar <mingo@kernel.org>
+cc: "H. Peter Anvin" <hpa@zytor.com>
+cc: x86@kernel.org
+Signed-off-by: James Morris <jmorris@namei.org>
 ---
- fs/tracefs/inode.c           | 42 +++++++++++++++++++++++++++++++++++-
- include/linux/security.h     |  1 +
- security/lockdown/lockdown.c |  1 +
- 3 files changed, 43 insertions(+), 1 deletion(-)
+ arch/x86/mm/testmmiotrace.c  | 5 +++++
+ include/linux/security.h     | 1 +
+ security/lockdown/lockdown.c | 1 +
+ 3 files changed, 7 insertions(+)
 
-diff --git a/fs/tracefs/inode.c b/fs/tracefs/inode.c
-index a5bab190a297..761af8ce4015 100644
---- a/fs/tracefs/inode.c
-+++ b/fs/tracefs/inode.c
-@@ -20,6 +20,7 @@
- #include <linux/parser.h>
- #include <linux/magic.h>
- #include <linux/slab.h>
+diff --git a/arch/x86/mm/testmmiotrace.c b/arch/x86/mm/testmmiotrace.c
+index 0881e1ff1e58..a8bd952e136d 100644
+--- a/arch/x86/mm/testmmiotrace.c
++++ b/arch/x86/mm/testmmiotrace.c
+@@ -8,6 +8,7 @@
+ #include <linux/module.h>
+ #include <linux/io.h>
+ #include <linux/mmiotrace.h>
 +#include <linux/security.h>
  
- #define TRACEFS_DEFAULT_MODE	0700
- 
-@@ -27,6 +28,25 @@ static struct vfsmount *tracefs_mount;
- static int tracefs_mount_count;
- static bool tracefs_registered;
- 
-+static int default_open_file(struct inode *inode, struct file *filp)
-+{
-+	struct dentry *dentry = filp->f_path.dentry;
-+	struct file_operations *real_fops;
-+	int ret;
+ static unsigned long mmio_address;
+ module_param_hw(mmio_address, ulong, iomem, 0);
+@@ -115,6 +116,10 @@ static void do_test_bulk_ioremapping(void)
+ static int __init init(void)
+ {
+ 	unsigned long size = (read_far) ? (8 << 20) : (16 << 10);
++	int ret = security_locked_down(LOCKDOWN_MMIOTRACE);
 +
-+	if (!dentry)
-+		return -EINVAL;
-+
-+	ret = security_locked_down(LOCKDOWN_TRACEFS);
 +	if (ret)
 +		return ret;
-+
-+	real_fops = dentry->d_fsdata;
-+	if (!real_fops->open)
-+		return 0;
-+	return real_fops->open(inode, filp);
-+}
-+
- static ssize_t default_read_file(struct file *file, char __user *buf,
- 				 size_t count, loff_t *ppos)
- {
-@@ -221,6 +241,12 @@ static int tracefs_apply_options(struct super_block *sb)
- 	return 0;
- }
  
-+static void tracefs_destroy_inode(struct inode *inode)
-+{
-+	if (S_ISREG(inode->i_mode))
-+		kfree(inode->i_fop);
-+}
-+
- static int tracefs_remount(struct super_block *sb, int *flags, char *data)
- {
- 	int err;
-@@ -257,6 +283,7 @@ static int tracefs_show_options(struct seq_file *m, struct dentry *root)
- static const struct super_operations tracefs_super_operations = {
- 	.statfs		= simple_statfs,
- 	.remount_fs	= tracefs_remount,
-+	.destroy_inode  = tracefs_destroy_inode,
- 	.show_options	= tracefs_show_options,
- };
- 
-@@ -387,6 +414,7 @@ struct dentry *tracefs_create_file(const char *name, umode_t mode,
- 				   struct dentry *parent, void *data,
- 				   const struct file_operations *fops)
- {
-+	struct file_operations *proxy_fops;
- 	struct dentry *dentry;
- 	struct inode *inode;
- 
-@@ -402,8 +430,20 @@ struct dentry *tracefs_create_file(const char *name, umode_t mode,
- 	if (unlikely(!inode))
- 		return failed_creating(dentry);
- 
-+	proxy_fops = kzalloc(sizeof(struct file_operations), GFP_KERNEL);
-+	if (unlikely(!proxy_fops)) {
-+		iput(inode);
-+		return failed_creating(dentry);
-+	}
-+
-+	if (!fops)
-+		fops = &tracefs_file_operations;
-+
-+	dentry->d_fsdata = (void *)fops;
-+	memcpy(proxy_fops, fops, sizeof(*proxy_fops));
-+	proxy_fops->open = default_open_file;
- 	inode->i_mode = mode;
--	inode->i_fop = fops ? fops : &tracefs_file_operations;
-+	inode->i_fop = proxy_fops;
- 	inode->i_private = data;
- 	d_instantiate(dentry, inode);
- 	fsnotify_create(dentry->d_parent->d_inode, dentry);
+ 	if (mmio_address == 0) {
+ 		pr_err("you have to use the module argument mmio_address.\n");
 diff --git a/include/linux/security.h b/include/linux/security.h
-index 152824b6f456..429f9f03372b 100644
+index 1a3404f9c060..d8db7ea4c4bf 100644
 --- a/include/linux/security.h
 +++ b/include/linux/security.h
-@@ -121,6 +121,7 @@ enum lockdown_reason {
- 	LOCKDOWN_KPROBES,
- 	LOCKDOWN_BPF_READ,
- 	LOCKDOWN_PERF,
-+	LOCKDOWN_TRACEFS,
+@@ -114,6 +114,7 @@ enum lockdown_reason {
+ 	LOCKDOWN_PCMCIA_CIS,
+ 	LOCKDOWN_TIOCSSERIAL,
+ 	LOCKDOWN_MODULE_PARAMETERS,
++	LOCKDOWN_MMIOTRACE,
+ 	LOCKDOWN_INTEGRITY_MAX,
  	LOCKDOWN_CONFIDENTIALITY_MAX,
  };
- 
 diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
-index edd1fff0147d..84df03b1f5a7 100644
+index 0fa434294667..2eadbe0667e7 100644
 --- a/security/lockdown/lockdown.c
 +++ b/security/lockdown/lockdown.c
-@@ -36,6 +36,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
- 	[LOCKDOWN_KPROBES] = "use of kprobes",
- 	[LOCKDOWN_BPF_READ] = "use of bpf to read kernel RAM",
- 	[LOCKDOWN_PERF] = "unsafe use of perf",
-+	[LOCKDOWN_TRACEFS] = "use of tracefs",
+@@ -29,6 +29,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
+ 	[LOCKDOWN_PCMCIA_CIS] = "direct PCMCIA CIS storage",
+ 	[LOCKDOWN_TIOCSSERIAL] = "reconfiguration of serial port IO",
+ 	[LOCKDOWN_MODULE_PARAMETERS] = "unsafe module parameters",
++	[LOCKDOWN_MMIOTRACE] = "unsafe mmio",
+ 	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
  	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
  };
- 
 -- 
 2.23.0.rc1.153.gdeed80330f-goog
