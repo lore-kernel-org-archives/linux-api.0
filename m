@@ -1,8 +1,7 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V40 17/29] lockdown: Prohibit PCMCIA CIS storage when the
- kernel is locked down
-Date: Mon, 19 Aug 2019 17:17:53 -0700
-Message-ID: <20190820001805.241928-18-matthewgarrett@google.com>
+Subject: [PATCH V40 18/29] lockdown: Lock down TIOCSSERIAL
+Date: Mon, 19 Aug 2019 17:17:54 -0700
+Message-ID: <20190820001805.241928-19-matthewgarrett@google.com>
 References: <20190820001805.241928-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -10,69 +9,73 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190820001805.241928-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Dominik Brodowski <linux@dominikbrodowski.net>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, David Howells <dhowells@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>, Jiri Slaby <jslaby@suse.com>, linux-serial@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 From: David Howells <dhowells@redhat.com>
 
-Prohibit replacement of the PCMCIA Card Information Structure when the
-kernel is locked down.
+Lock down TIOCSSERIAL as that can be used to change the ioport and irq
+settings on a serial port.  This only appears to be an issue for the serial
+drivers that use the core serial code.  All other drivers seem to either
+ignore attempts to change port/irq or give an error.
 
-Suggested-by: Dominik Brodowski <linux@dominikbrodowski.net>
+Reported-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Matthew Garrett <mjg59@google.com>
 Reviewed-by: Kees Cook <keescook@chromium.org>
+cc: Jiri Slaby <jslaby@suse.com>
+Cc: linux-serial@vger.kernel.org
 Signed-off-by: James Morris <jmorris@namei.org>
 ---
- drivers/pcmcia/cistpl.c      | 5 +++++
- include/linux/security.h     | 1 +
- security/lockdown/lockdown.c | 1 +
+ drivers/tty/serial/serial_core.c | 5 +++++
+ include/linux/security.h         | 1 +
+ security/lockdown/lockdown.c     | 1 +
  3 files changed, 7 insertions(+)
 
-diff --git a/drivers/pcmcia/cistpl.c b/drivers/pcmcia/cistpl.c
-index abd029945cc8..629359fe3513 100644
---- a/drivers/pcmcia/cistpl.c
-+++ b/drivers/pcmcia/cistpl.c
-@@ -21,6 +21,7 @@
- #include <linux/pci.h>
- #include <linux/ioport.h>
- #include <linux/io.h>
+diff --git a/drivers/tty/serial/serial_core.c b/drivers/tty/serial/serial_core.c
+index 83f4dd0bfd74..bbad407557b9 100644
+--- a/drivers/tty/serial/serial_core.c
++++ b/drivers/tty/serial/serial_core.c
+@@ -22,6 +22,7 @@
+ #include <linux/serial_core.h>
+ #include <linux/delay.h>
+ #include <linux/mutex.h>
 +#include <linux/security.h>
- #include <asm/byteorder.h>
- #include <asm/unaligned.h>
  
-@@ -1575,6 +1576,10 @@ static ssize_t pccard_store_cis(struct file *filp, struct kobject *kobj,
- 	struct pcmcia_socket *s;
- 	int error;
+ #include <linux/irq.h>
+ #include <linux/uaccess.h>
+@@ -862,6 +863,10 @@ static int uart_set_info(struct tty_struct *tty, struct tty_port *port,
+ 		goto check_and_exit;
+ 	}
  
-+	error = security_locked_down(LOCKDOWN_PCMCIA_CIS);
-+	if (error)
-+		return error;
++	retval = security_locked_down(LOCKDOWN_TIOCSSERIAL);
++	if (retval && (change_irq || change_port))
++		goto exit;
 +
- 	s = to_socket(container_of(kobj, struct device, kobj));
- 
- 	if (off)
+ 	/*
+ 	 * Ask the low level driver to verify the settings.
+ 	 */
 diff --git a/include/linux/security.h b/include/linux/security.h
-index 390e39395112..683f0607e6f2 100644
+index 683f0607e6f2..b4a85badb03a 100644
 --- a/include/linux/security.h
 +++ b/include/linux/security.h
-@@ -111,6 +111,7 @@ enum lockdown_reason {
- 	LOCKDOWN_IOPORT,
+@@ -112,6 +112,7 @@ enum lockdown_reason {
  	LOCKDOWN_MSR,
  	LOCKDOWN_ACPI_TABLES,
-+	LOCKDOWN_PCMCIA_CIS,
+ 	LOCKDOWN_PCMCIA_CIS,
++	LOCKDOWN_TIOCSSERIAL,
  	LOCKDOWN_INTEGRITY_MAX,
  	LOCKDOWN_CONFIDENTIALITY_MAX,
  };
 diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
-index 6d44db0ddffa..db3477585972 100644
+index db3477585972..771c77f9c04a 100644
 --- a/security/lockdown/lockdown.c
 +++ b/security/lockdown/lockdown.c
-@@ -26,6 +26,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
- 	[LOCKDOWN_IOPORT] = "raw io port access",
+@@ -27,6 +27,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
  	[LOCKDOWN_MSR] = "raw MSR access",
  	[LOCKDOWN_ACPI_TABLES] = "modifying ACPI tables",
-+	[LOCKDOWN_PCMCIA_CIS] = "direct PCMCIA CIS storage",
+ 	[LOCKDOWN_PCMCIA_CIS] = "direct PCMCIA CIS storage",
++	[LOCKDOWN_TIOCSSERIAL] = "reconfiguration of serial port IO",
  	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
  	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
  };
