@@ -1,182 +1,23 @@
-From: Bjorn Helgaas <helgaas@kernel.org>
+From: Matthew Garrett <mjg59@google.com>
 Subject: Re: [PATCH V40 11/29] PCI: Lock down BAR access when the kernel is
  locked down
-Date: Tue, 20 Aug 2019 14:45:14 -0500
-Message-ID: <20190820194514.GC14450@google.com>
+Date: Tue, 20 Aug 2019 14:04:40 -0700
+Message-ID: <CACdnJutVe5O2bJZLWQL=e2msudY_i0Mq6vj9B0NautnjRqRVfg@mail.gmail.com>
 References: <20190820001805.241928-1-matthewgarrett@google.com>
- <20190820001805.241928-12-matthewgarrett@google.com>
+ <20190820001805.241928-12-matthewgarrett@google.com> <20190820194514.GC14450@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190820001805.241928-12-matthewgarrett@google.com>
+In-Reply-To: <20190820194514.GC14450@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Matthew Garrett <matthewgarrett@google.com>
-Cc: jmorris@namei.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Matthew Garrett <mjg59@srcf.ucam.org>, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>, linux-pci@vger.kernel.org
+To: Bjorn Helgaas <helgaas@kernel.org>
+Cc: James Morris <jmorris@namei.org>, LSM List <linux-security-module@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Matthew Garrett <mjg59@srcf.ucam.org>, David Howells <dhowells@redhat.com>, Kees Cook <keescook@chromium.org>, linux-pci@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Aug 19, 2019 at 05:17:47PM -0700, Matthew Garrett wrote:
-> From: Matthew Garrett <mjg59@srcf.ucam.org>
-> 
-> Any hardware that can potentially generate DMA has to be locked down in
-> order to avoid it being possible for an attacker to modify kernel code,
-> allowing them to circumvent disabled module loading or module signing.
-> Default to paranoid - in future we can potentially relax this for
-> sufficiently IOMMU-isolated devices.
-> 
-> Signed-off-by: David Howells <dhowells@redhat.com>
-> Signed-off-by: Matthew Garrett <mjg59@google.com>
-> Acked-by: Bjorn Helgaas <bhelgaas@google.com>
-> Reviewed-by: Kees Cook <keescook@chromium.org>
-> cc: linux-pci@vger.kernel.org
-> Signed-off-by: James Morris <jmorris@namei.org>
+On Tue, Aug 20, 2019 at 12:45 PM Bjorn Helgaas <helgaas@kernel.org> wrote:
+> Since I've acked this and it's 11/29, I've been assuming you intend
+> to merge the whole series together.  But the fact that it's up to V40
+> makes me wonder if you're waiting for me to merge this one.  Just let
+> me know either way.
 
-Since I've acked this and it's 11/29, I've been assuming you intend
-to merge the whole series together.  But the fact that it's up to V40
-makes me wonder if you're waiting for me to merge this one.  Just let
-me know either way.
-
-> ---
->  drivers/pci/pci-sysfs.c      | 16 ++++++++++++++++
->  drivers/pci/proc.c           | 14 ++++++++++++--
->  drivers/pci/syscall.c        |  4 +++-
->  include/linux/security.h     |  1 +
->  security/lockdown/lockdown.c |  1 +
->  5 files changed, 33 insertions(+), 3 deletions(-)
-> 
-> diff --git a/drivers/pci/pci-sysfs.c b/drivers/pci/pci-sysfs.c
-> index 6d27475e39b2..ec103a7e13fc 100644
-> --- a/drivers/pci/pci-sysfs.c
-> +++ b/drivers/pci/pci-sysfs.c
-> @@ -903,6 +903,11 @@ static ssize_t pci_write_config(struct file *filp, struct kobject *kobj,
->  	unsigned int size = count;
->  	loff_t init_off = off;
->  	u8 *data = (u8 *) buf;
-> +	int ret;
-> +
-> +	ret = security_locked_down(LOCKDOWN_PCI_ACCESS);
-> +	if (ret)
-> +		return ret;
->  
->  	if (off > dev->cfg_size)
->  		return 0;
-> @@ -1164,6 +1169,11 @@ static int pci_mmap_resource(struct kobject *kobj, struct bin_attribute *attr,
->  	int bar = (unsigned long)attr->private;
->  	enum pci_mmap_state mmap_type;
->  	struct resource *res = &pdev->resource[bar];
-> +	int ret;
-> +
-> +	ret = security_locked_down(LOCKDOWN_PCI_ACCESS);
-> +	if (ret)
-> +		return ret;
->  
->  	if (res->flags & IORESOURCE_MEM && iomem_is_exclusive(res->start))
->  		return -EINVAL;
-> @@ -1240,6 +1250,12 @@ static ssize_t pci_write_resource_io(struct file *filp, struct kobject *kobj,
->  				     struct bin_attribute *attr, char *buf,
->  				     loff_t off, size_t count)
->  {
-> +	int ret;
-> +
-> +	ret = security_locked_down(LOCKDOWN_PCI_ACCESS);
-> +	if (ret)
-> +		return ret;
-> +
->  	return pci_resource_io(filp, kobj, attr, buf, off, count, true);
->  }
->  
-> diff --git a/drivers/pci/proc.c b/drivers/pci/proc.c
-> index 445b51db75b0..e29b0d5ced62 100644
-> --- a/drivers/pci/proc.c
-> +++ b/drivers/pci/proc.c
-> @@ -13,6 +13,7 @@
->  #include <linux/seq_file.h>
->  #include <linux/capability.h>
->  #include <linux/uaccess.h>
-> +#include <linux/security.h>
->  #include <asm/byteorder.h>
->  #include "pci.h"
->  
-> @@ -115,7 +116,11 @@ static ssize_t proc_bus_pci_write(struct file *file, const char __user *buf,
->  	struct pci_dev *dev = PDE_DATA(ino);
->  	int pos = *ppos;
->  	int size = dev->cfg_size;
-> -	int cnt;
-> +	int cnt, ret;
-> +
-> +	ret = security_locked_down(LOCKDOWN_PCI_ACCESS);
-> +	if (ret)
-> +		return ret;
->  
->  	if (pos >= size)
->  		return 0;
-> @@ -196,6 +201,10 @@ static long proc_bus_pci_ioctl(struct file *file, unsigned int cmd,
->  #endif /* HAVE_PCI_MMAP */
->  	int ret = 0;
->  
-> +	ret = security_locked_down(LOCKDOWN_PCI_ACCESS);
-> +	if (ret)
-> +		return ret;
-> +
->  	switch (cmd) {
->  	case PCIIOC_CONTROLLER:
->  		ret = pci_domain_nr(dev->bus);
-> @@ -238,7 +247,8 @@ static int proc_bus_pci_mmap(struct file *file, struct vm_area_struct *vma)
->  	struct pci_filp_private *fpriv = file->private_data;
->  	int i, ret, write_combine = 0, res_bit = IORESOURCE_MEM;
->  
-> -	if (!capable(CAP_SYS_RAWIO))
-> +	if (!capable(CAP_SYS_RAWIO) ||
-> +	    security_locked_down(LOCKDOWN_PCI_ACCESS))
->  		return -EPERM;
->  
->  	if (fpriv->mmap_state == pci_mmap_io) {
-> diff --git a/drivers/pci/syscall.c b/drivers/pci/syscall.c
-> index d96626c614f5..31e39558d49d 100644
-> --- a/drivers/pci/syscall.c
-> +++ b/drivers/pci/syscall.c
-> @@ -7,6 +7,7 @@
->  
->  #include <linux/errno.h>
->  #include <linux/pci.h>
-> +#include <linux/security.h>
->  #include <linux/syscalls.h>
->  #include <linux/uaccess.h>
->  #include "pci.h"
-> @@ -90,7 +91,8 @@ SYSCALL_DEFINE5(pciconfig_write, unsigned long, bus, unsigned long, dfn,
->  	u32 dword;
->  	int err = 0;
->  
-> -	if (!capable(CAP_SYS_ADMIN))
-> +	if (!capable(CAP_SYS_ADMIN) ||
-> +	    security_locked_down(LOCKDOWN_PCI_ACCESS))
->  		return -EPERM;
->  
->  	dev = pci_get_domain_bus_and_slot(0, bus, dfn);
-> diff --git a/include/linux/security.h b/include/linux/security.h
-> index 80ac7fb27aa9..2b763f0ee352 100644
-> --- a/include/linux/security.h
-> +++ b/include/linux/security.h
-> @@ -107,6 +107,7 @@ enum lockdown_reason {
->  	LOCKDOWN_DEV_MEM,
->  	LOCKDOWN_KEXEC,
->  	LOCKDOWN_HIBERNATION,
-> +	LOCKDOWN_PCI_ACCESS,
->  	LOCKDOWN_INTEGRITY_MAX,
->  	LOCKDOWN_CONFIDENTIALITY_MAX,
->  };
-> diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
-> index 3462f7edcaac..410e90eda848 100644
-> --- a/security/lockdown/lockdown.c
-> +++ b/security/lockdown/lockdown.c
-> @@ -22,6 +22,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
->  	[LOCKDOWN_DEV_MEM] = "/dev/mem,kmem,port",
->  	[LOCKDOWN_KEXEC] = "kexec of unsigned images",
->  	[LOCKDOWN_HIBERNATION] = "hibernation",
-> +	[LOCKDOWN_PCI_ACCESS] = "direct PCI access",
->  	[LOCKDOWN_INTEGRITY_MAX] = "integrity",
->  	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
->  };
-> -- 
-> 2.23.0.rc1.153.gdeed80330f-goog
-> 
+James has merged the series.
