@@ -1,8 +1,8 @@
 From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH V40 07/29] lockdown: Copy secure_boot flag in boot params
- across kexec reboot
-Date: Mon, 19 Aug 2019 17:17:43 -0700
-Message-ID: <20190820001805.241928-8-matthewgarrett@google.com>
+Subject: [PATCH V40 09/29] kexec_file: Restrict at runtime if the kernel is
+ locked down
+Date: Mon, 19 Aug 2019 17:17:45 -0700
+Message-ID: <20190820001805.241928-10-matthewgarrett@google.com>
 References: <20190820001805.241928-1-matthewgarrett@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -10,43 +10,40 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190820001805.241928-1-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Dave Young <dyoung@redhat.com>, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>, kexec@lists.infradead.org
+Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Jiri Bohac <jbohac@suse.cz>, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, kexec@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
-From: Dave Young <dyoung@redhat.com>
+From: Jiri Bohac <jbohac@suse.cz>
 
-Kexec reboot in case secure boot being enabled does not keep the secure
-boot mode in new kernel, so later one can load unsigned kernel via legacy
-kexec_load.  In this state, the system is missing the protections provided
-by secure boot.
+When KEXEC_SIG is not enabled, kernel should not load images through
+kexec_file systemcall if the kernel is locked down.
 
-Adding a patch to fix this by retain the secure_boot flag in original
-kernel.
+[Modified by David Howells to fit with modifications to the previous patch
+ and to return -EPERM if the kernel is locked down for consistency with
+ other lockdowns. Modified by Matthew Garrett to remove the IMA
+ integration, which will be replaced by integrating with the IMA
+ architecture policy patches.]
 
-secure_boot flag in boot_params is set in EFI stub, but kexec bypasses the
-stub.  Fixing this issue by copying secure_boot flag across kexec reboot.
-
-Signed-off-by: Dave Young <dyoung@redhat.com>
+Signed-off-by: Jiri Bohac <jbohac@suse.cz>
 Signed-off-by: David Howells <dhowells@redhat.com>
 Signed-off-by: Matthew Garrett <mjg59@google.com>
-Reviewed-by: Kees Cook <keescook@chromium.org>
 cc: kexec@lists.infradead.org
-Signed-off-by: James Morris <jmorris@namei.org>
 ---
- arch/x86/kernel/kexec-bzimage64.c | 1 +
- 1 file changed, 1 insertion(+)
+ kernel/kexec_file.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/arch/x86/kernel/kexec-bzimage64.c b/arch/x86/kernel/kexec-bzimage64.c
-index f03237e3f192..5d64a22f99ce 100644
---- a/arch/x86/kernel/kexec-bzimage64.c
-+++ b/arch/x86/kernel/kexec-bzimage64.c
-@@ -180,6 +180,7 @@ setup_efi_state(struct boot_params *params, unsigned long params_load_addr,
- 	if (efi_enabled(EFI_OLD_MEMMAP))
- 		return 0;
+diff --git a/kernel/kexec_file.c b/kernel/kexec_file.c
+index 972931201995..43109ef4d6bf 100644
+--- a/kernel/kexec_file.c
++++ b/kernel/kexec_file.c
+@@ -208,7 +208,7 @@ kimage_validate_signature(struct kimage *image)
+ 			return ret;
+ 		}
  
-+	params->secure_boot = boot_params.secure_boot;
- 	ei->efi_loader_signature = current_ei->efi_loader_signature;
- 	ei->efi_systab = current_ei->efi_systab;
- 	ei->efi_systab_hi = current_ei->efi_systab_hi;
+-		return 0;
++		return security_locked_down(LOCKDOWN_KEXEC);
+ 
+ 		/* All other errors are fatal, including nomem, unparseable
+ 		 * signatures and signature check failures - even if signatures
 -- 
 2.23.0.rc1.153.gdeed80330f-goog
