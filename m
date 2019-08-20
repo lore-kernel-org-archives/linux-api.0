@@ -1,30 +1,57 @@
-From: James Morris <jmorris@namei.org>
-Subject: Re: [PATCH V40 00/29] Add kernel lockdown functionality
-Date: Mon, 19 Aug 2019 23:45:52 -0700 (PDT)
-Message-ID: <alpine.LRH.2.21.1908192345270.12391@namei.org>
-References: <20190820001805.241928-1-matthewgarrett@google.com>
+From: Dave Martin <Dave.Martin@arm.com>
+Subject: Re: [PATCH v8 22/27] binfmt_elf: Extract .note.gnu.property from an
+ ELF file
+Date: Tue, 20 Aug 2019 11:02:10 +0100
+Message-ID: <20190820100208.GO10425@arm.com>
+References: <20190813205225.12032-1-yu-cheng.yu@intel.com>
+ <20190813205225.12032-23-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190820001805.241928-1-matthewgarrett@google.com>
+Content-Disposition: inline
+In-Reply-To: <20190813205225.12032-23-yu-cheng.yu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Matthew Garrett <matthewgarrett@google.com>
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 19 Aug 2019, Matthew Garrett wrote:
+On Tue, Aug 13, 2019 at 01:52:20PM -0700, Yu-cheng Yu wrote:
+> An ELF file's .note.gnu.property indicates features the executable file
+> can support.  For example, the property GNU_PROPERTY_X86_FEATURE_1_AND
+> indicates the file supports GNU_PROPERTY_X86_FEATURE_1_IBT and/or
+> GNU_PROPERTY_X86_FEATURE_1_SHSTK.
+> 
+> With this patch, if an arch needs to setup features from ELF properties,
+> it needs CONFIG_ARCH_USE_GNU_PROPERTY to be set, and specific
+> arch_parse_property() and arch_setup_property().
+> 
+> For example, for X86_64:
+> 
+> int arch_setup_property(void *ehdr, void *phdr, struct file *f, bool inter)
+> {
+> 	int r;
+> 	uint32_t property;
+> 
+> 	r = get_gnu_property(ehdr, phdr, f, GNU_PROPERTY_X86_FEATURE_1_AND,
+> 			     &property);
+> 	...
+> }
+> 
+> This patch is derived from code provided by H.J. Lu <hjl.tools@gmail.com>.
+> 
+> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
 
-> After chatting with James in person, I'm resending the full set with the
-> fixes merged in in order to avoid any bisect issues. There should be no
-> functional changes other than avoiding build failures with some configs,
-> and fixing the oops in tracefs.
+[...]
 
-Applied to
-git://git.kernel.org/pub/scm/linux/kernel/git/jmorris/linux-security.git next-lockdown
-and next-testing
+For the hell of it, I tried implementing an alternate version [1] that
+tries to integrate into the existing ELF loader more directly.
 
-Thanks!
+This may or may not be a better approach, but tries to solve some
+issues such as not repeatedly reading and parsing the properties.
 
--- 
-James Morris
-<jmorris@namei.org>
+Cheers
+---Dave
+
+
+[1] [RFC PATCH 0/2] ELF: Alternate program property parser
+https://lore.kernel.org/lkml/1566295063-7387-1-git-send-email-Dave.Martin@arm.com/
