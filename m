@@ -1,79 +1,72 @@
-From: Wu Hao <hao.wu@intel.com>
-Subject: Re: [PATCH v5 1/9] fpga: dfl: make init callback optional
-Date: Wed, 21 Aug 2019 13:12:04 +0800
-Message-ID: <20190821051204.GA27866@hao-dev>
-References: <1565578204-13969-1-git-send-email-hao.wu@intel.com>
- <1565578204-13969-2-git-send-email-hao.wu@intel.com>
- <20190821032406.GA28625@archbox>
+From: Borislav Petkov <bp@alien8.de>
+Subject: Re: [PATCH v8 02/27] x86/cpufeatures: Add CET CPU feature flags for
+ Control-flow Enforcement Technology (CET)
+Date: Wed, 21 Aug 2019 12:20:52 +0200
+Message-ID: <20190821102052.GD6752@zn.tnic>
+References: <20190813205225.12032-1-yu-cheng.yu@intel.com>
+ <20190813205225.12032-3-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190821032406.GA28625@archbox>
+In-Reply-To: <20190813205225.12032-3-yu-cheng.yu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Moritz Fischer <mdf@kernel.org>
-Cc: gregkh@linuxfoundation.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, atull@kernel.org
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Pa
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 20, 2019 at 08:24:06PM -0700, Moritz Fischer wrote:
-> Hi,
+On Tue, Aug 13, 2019 at 01:52:00PM -0700, Yu-cheng Yu wrote:
+> Add CPU feature flags for Control-flow Enforcement Technology (CET).
 > 
-> On Mon, Aug 12, 2019 at 10:49:56AM +0800, Wu Hao wrote:
-> > This patch makes init callback of sub features optional. With
-> > this change, people don't need to prepare any empty init callback.
-> > 
-> > Signed-off-by: Wu Hao <hao.wu@intel.com>
+> CPUID.(EAX=7,ECX=0):ECX[bit 7] Shadow stack
+> CPUID.(EAX=7,ECX=0):EDX[bit 20] Indirect branch tracking
 > 
-> Acked-by: Moritz Fischer <mdf@kernel.org>
-> > ---
-> >  drivers/fpga/dfl.c | 10 ++++++----
-> >  1 file changed, 6 insertions(+), 4 deletions(-)
-> > 
-> > diff --git a/drivers/fpga/dfl.c b/drivers/fpga/dfl.c
-> > index c0512af..96a2b82 100644
-> > --- a/drivers/fpga/dfl.c
-> > +++ b/drivers/fpga/dfl.c
-> > @@ -271,11 +271,13 @@ static int dfl_feature_instance_init(struct platform_device *pdev,
-> >  				     struct dfl_feature *feature,
-> >  				     struct dfl_feature_driver *drv)
-> >  {
-> > -	int ret;
-> > +	int ret = 0;
-> >  
-> > -	ret = drv->ops->init(pdev, feature);
-> > -	if (ret)
-> > -		return ret;
-> > +	if (drv->ops->init) {
-> > +		ret = drv->ops->init(pdev, feature);
-> > +		if (ret)
-> > +			return ret;
-> > +	}
-> >  
-> >  	feature->ops = drv->ops;
+> Reviewed-by: Borislav Petkov <bp@suse.de>
+> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+> ---
+>  arch/x86/include/asm/cpufeatures.h | 2 ++
+>  arch/x86/kernel/cpu/cpuid-deps.c   | 2 ++
+>  2 files changed, 4 insertions(+)
 > 
-> You could swap it around maybe like so:
-> 
-> int dfl_feature_instance_init() ...
-> {
-> 	feature->ops = drv->ops;
-> 	if (drv->ops->init)
-> 		return drv->ops->init(pdev, feature);
-> 
-> 	return 0;
-> }
-> 
-> With the caveat that feature->ops gets always set ...
-> 
-> Your call.
+> diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
+> index e880f2408e29..122265ab46c1 100644
+> --- a/arch/x86/include/asm/cpufeatures.h
+> +++ b/arch/x86/include/asm/cpufeatures.h
+> @@ -334,6 +334,7 @@
+>  #define X86_FEATURE_OSPKE		(16*32+ 4) /* OS Protection Keys Enable */
+>  #define X86_FEATURE_WAITPKG		(16*32+ 5) /* UMONITOR/UMWAIT/TPAUSE Instructions */
+>  #define X86_FEATURE_AVX512_VBMI2	(16*32+ 6) /* Additional AVX512 Vector Bit Manipulation Instructions */
+> +#define X86_FEATURE_SHSTK		(16*32+ 7) /* Shadow Stack */
+>  #define X86_FEATURE_GFNI		(16*32+ 8) /* Galois Field New Instructions */
+>  #define X86_FEATURE_VAES		(16*32+ 9) /* Vector AES */
+>  #define X86_FEATURE_VPCLMULQDQ		(16*32+10) /* Carry-Less Multiplication Double Quadword */
+> @@ -358,6 +359,7 @@
+>  #define X86_FEATURE_MD_CLEAR		(18*32+10) /* VERW clears CPU buffers */
+>  #define X86_FEATURE_TSX_FORCE_ABORT	(18*32+13) /* "" TSX_FORCE_ABORT */
+>  #define X86_FEATURE_PCONFIG		(18*32+18) /* Intel PCONFIG */
+> +#define X86_FEATURE_IBT			(18*32+20) /* Indirect Branch Tracking */
+>  #define X86_FEATURE_SPEC_CTRL		(18*32+26) /* "" Speculation Control (IBRS + IBPB) */
+>  #define X86_FEATURE_INTEL_STIBP		(18*32+27) /* "" Single Thread Indirect Branch Predictors */
+>  #define X86_FEATURE_FLUSH_L1D		(18*32+28) /* Flush L1D cache */
+> diff --git a/arch/x86/kernel/cpu/cpuid-deps.c b/arch/x86/kernel/cpu/cpuid-deps.c
+> index b5353244749b..9bf35f081080 100644
+> --- a/arch/x86/kernel/cpu/cpuid-deps.c
+> +++ b/arch/x86/kernel/cpu/cpuid-deps.c
+> @@ -68,6 +68,8 @@ static const struct cpuid_dep cpuid_deps[] = {
+>  	{ X86_FEATURE_CQM_MBM_TOTAL,	X86_FEATURE_CQM_LLC   },
+>  	{ X86_FEATURE_CQM_MBM_LOCAL,	X86_FEATURE_CQM_LLC   },
+>  	{ X86_FEATURE_AVX512_BF16,	X86_FEATURE_AVX512VL  },
+> +	{ X86_FEATURE_SHSTK,		X86_FEATURE_XSAVES    },
+> +	{ X86_FEATURE_IBT,		X86_FEATURE_XSAVES    },
 
-Hi Moritz,
+This hunk needs re-tabbing after:
 
-Thanks a lot for the review and comments. It does simplify the code,
-will modify it.
+1e0c08e3034d ("cpu/cpuid-deps: Add a tab to cpuid dependent features")
 
-Thanks
-Hao
+Thx.
 
-> 
-> Thanks,
-> Moritz
+-- 
+Regards/Gruss,
+    Boris.
+
+Good mailing practices for 400: avoid top-posting and trim the reply.
