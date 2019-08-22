@@ -1,7 +1,7 @@
 From: Patrick Bellasi <patrick.bellasi@arm.com>
-Subject: [PATCH v14 2/6] sched/core: uclamp: Propagate parent clamps
-Date: Thu, 22 Aug 2019 14:28:07 +0100
-Message-ID: <20190822132811.31294-3-patrick.bellasi@arm.com>
+Subject: [PATCH v14 5/6] sched/core: uclamp: Update CPU's refcount on TG's clamp changes
+Date: Thu, 22 Aug 2019 14:28:10 +0100
+Message-ID: <20190822132811.31294-6-patrick.bellasi@arm.com>
 References: <20190822132811.31294-1-patrick.bellasi@arm.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,24 +12,15 @@ To: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kerne
 Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Michal Koutny <mkoutny@suse.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>, Alessio Balsini <balsini@android.com>
 List-Id: linux-api@vger.kernel.org
 
-In order to properly support hierarchical resources control, the cgroup
-delegation model requires that attribute writes from a child group never
-fail but still are locally consistent and constrained based on parent's
-assigned resources. This requires to properly propagate and aggregate
-parent attributes down to its descendants.
+On updates of task group (TG) clamp values, ensure that these new values
+are enforced on all RUNNABLE tasks of the task group, i.e. all RUNNABLE
+tasks are immediately boosted and/or capped as requested.
 
-Implement this mechanism by adding a new "effective" clamp value for each
-task group. The effective clamp value is defined as the smaller value
-between the clamp value of a group and the effective clamp value of its
-parent. This is the actual clamp value enforced on tasks in a task group.
-
-Since it's possible for a cpu.uclamp.min value to be bigger than the
-cpu.uclamp.max value, ensure local consistency by restricting each
-"protection" (i.e. min utilization) with the corresponding "limit"
-(i.e. max utilization).
-
-Do that at effective clamps propagation to ensure all user-space write
-never fails while still always tracking the most restrictive values.
+Do that each time we update effective clamps from cpu_util_update_eff().
+Use the *cgroup_subsys_state (css) to walk the list of tasks in each
+affected TG and update their RUNNABLE tasks.
+Update each task by using the same mechanism used for cpu affinity masks
+updates, i.e. by taking the rq lock.
 
 Signed-off-by: Patrick Bellasi <patrick.bellasi@arm.com>
 Reviewed-by: Michal Koutny <mkoutny@suse.com>
@@ -38,98 +29,85 @@ Cc: Ingo Molnar <mingo@redhat.com>
 Cc: Peter Zijlstra <peterz@infradead.org>
 Cc: Tejun Heo <tj@kernel.org>
 ---
- kernel/sched/core.c  | 44 ++++++++++++++++++++++++++++++++++++++++++++
- kernel/sched/sched.h |  2 ++
- 2 files changed, 46 insertions(+)
+ kernel/sched/core.c | 58 ++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 57 insertions(+), 1 deletion(-)
 
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 7b610e1a4cda..8dab64247597 100644
+index 04fc161e4dbe..fc2dc86a2abe 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -1166,6 +1166,7 @@ static void __init init_uclamp(void)
- 		uclamp_default[clamp_id] = uc_max;
- #ifdef CONFIG_UCLAMP_TASK_GROUP
- 		root_task_group.uclamp_req[clamp_id] = uc_max;
-+		root_task_group.uclamp[clamp_id] = uc_max;
- #endif
- 	}
- }
-@@ -6824,6 +6825,7 @@ static inline void alloc_uclamp_sched_group(struct task_group *tg,
- 	for_each_clamp_id(clamp_id) {
- 		uclamp_se_set(&tg->uclamp_req[clamp_id],
- 			      uclamp_none(clamp_id), false);
-+		tg->uclamp[clamp_id] = parent->uclamp[clamp_id];
- 	}
- #endif
- }
-@@ -7070,6 +7072,45 @@ static void cpu_cgroup_attach(struct cgroup_taskset *tset)
+@@ -1043,6 +1043,57 @@ static inline void uclamp_rq_dec(struct rq *rq, struct task_struct *p)
+ 		uclamp_rq_dec_id(rq, p, clamp_id);
  }
  
- #ifdef CONFIG_UCLAMP_TASK_GROUP
-+static void cpu_util_update_eff(struct cgroup_subsys_state *css)
++static inline void
++uclamp_update_active(struct task_struct *p, unsigned int clamp_id)
 +{
-+	struct cgroup_subsys_state *top_css = css;
-+	struct uclamp_se *uc_parent = NULL;
-+	struct uclamp_se *uc_se = NULL;
-+	unsigned int eff[UCLAMP_CNT];
-+	unsigned int clamp_id;
-+	unsigned int clamps;
++	struct rq_flags rf;
++	struct rq *rq;
 +
-+	css_for_each_descendant_pre(css, top_css) {
-+		uc_parent = css_tg(css)->parent
-+			? css_tg(css)->parent->uclamp : NULL;
++	/*
++	 * Lock the task and the rq where the task is (or was) queued.
++	 *
++	 * We might lock the (previous) rq of a !RUNNABLE task, but that's the
++	 * price to pay to safely serialize util_{min,max} updates with
++	 * enqueues, dequeues and migration operations.
++	 * This is the same locking schema used by __set_cpus_allowed_ptr().
++	 */
++	rq = task_rq_lock(p, &rf);
 +
-+		for_each_clamp_id(clamp_id) {
-+			/* Assume effective clamps matches requested clamps */
-+			eff[clamp_id] = css_tg(css)->uclamp_req[clamp_id].value;
-+			/* Cap effective clamps with parent's effective clamps */
-+			if (uc_parent &&
-+			    eff[clamp_id] > uc_parent[clamp_id].value) {
-+				eff[clamp_id] = uc_parent[clamp_id].value;
-+			}
-+		}
-+		/* Ensure protection is always capped by limit */
-+		eff[UCLAMP_MIN] = min(eff[UCLAMP_MIN], eff[UCLAMP_MAX]);
++	/*
++	 * Setting the clamp bucket is serialized by task_rq_lock().
++	 * If the task is not yet RUNNABLE and its task_struct is not
++	 * affecting a valid clamp bucket, the next time it's enqueued,
++	 * it will already see the updated clamp bucket value.
++	 */
++	if (!p->uclamp[clamp_id].active)
++		goto done;
 +
-+		/* Propagate most restrictive effective clamps */
-+		clamps = 0x0;
-+		uc_se = css_tg(css)->uclamp;
-+		for_each_clamp_id(clamp_id) {
-+			if (eff[clamp_id] == uc_se[clamp_id].value)
-+				continue;
-+			uc_se[clamp_id].value = eff[clamp_id];
-+			uc_se[clamp_id].bucket_id = uclamp_bucket_id(eff[clamp_id]);
-+			clamps |= (0x1 << clamp_id);
-+		}
-+		if (!clamps)
-+			css = css_rightmost_descendant(css);
-+	}
++	uclamp_rq_dec_id(rq, p, clamp_id);
++	uclamp_rq_inc_id(rq, p, clamp_id);
++
++done:
++
++	task_rq_unlock(rq, p, &rf);
 +}
- 
- #define _POW10(exp) ((unsigned int)1e##exp)
- #define POW10(exp) _POW10(exp)
-@@ -7133,6 +7174,9 @@ static ssize_t cpu_uclamp_write(struct kernfs_open_file *of, char *buf,
- 	 */
- 	tg->uclamp_pct[clamp_id] = req.percent;
- 
-+	/* Update effective clamps to track the most restrictive value */
-+	cpu_util_update_eff(of_css(of));
 +
- 	rcu_read_unlock();
- 	mutex_unlock(&uclamp_mutex);
++static inline void
++uclamp_update_active_tasks(struct cgroup_subsys_state *css,
++			   unsigned int clamps)
++{
++	struct css_task_iter it;
++	struct task_struct *p;
++	unsigned int clamp_id;
++
++	css_task_iter_start(css, 0, &it);
++	while ((p = css_task_iter_next(&it))) {
++		for_each_clamp_id(clamp_id) {
++			if ((0x1 << clamp_id) & clamps)
++				uclamp_update_active(p, clamp_id);
++		}
++	}
++	css_task_iter_end(&it);
++}
++
+ #ifdef CONFIG_UCLAMP_TASK_GROUP
+ static void cpu_util_update_eff(struct cgroup_subsys_state *css);
+ static void uclamp_update_root_tg(void)
+@@ -7160,8 +7211,13 @@ static void cpu_util_update_eff(struct cgroup_subsys_state *css)
+ 			uc_se[clamp_id].bucket_id = uclamp_bucket_id(eff[clamp_id]);
+ 			clamps |= (0x1 << clamp_id);
+ 		}
+-		if (!clamps)
++		if (!clamps) {
+ 			css = css_rightmost_descendant(css);
++			continue;
++		}
++
++		/* Immediately update descendants RUNNABLE tasks */
++		uclamp_update_active_tasks(css, clamps);
+ 	}
+ }
  
-diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index ae1be61fb279..5b343112a47b 100644
---- a/kernel/sched/sched.h
-+++ b/kernel/sched/sched.h
-@@ -397,6 +397,8 @@ struct task_group {
- 	unsigned int		uclamp_pct[UCLAMP_CNT];
- 	/* Clamp values requested for a task group */
- 	struct uclamp_se	uclamp_req[UCLAMP_CNT];
-+	/* Effective clamp values used for a task group */
-+	struct uclamp_se	uclamp[UCLAMP_CNT];
- #endif
- 
- };
 -- 
 2.22.0
