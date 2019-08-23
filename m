@@ -1,128 +1,43 @@
-From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Subject: Re: RFC: very rough draft of a bpf permission model
-Date: Thu, 22 Aug 2019 16:26:21 -0700
-Message-ID: <20190822232620.p5tql4rrlzlk35z7@ast-mbp.dhcp.thefacebook.com>
-References: <CALCETrWtE2U4EvZVYeq8pSmQjBzF2PHH+KxYW8FSeF+W=1FYjw@mail.gmail.com>
- <EE7B7AE1-3D44-4561-94B9-E97A626A251D@fb.com>
- <CALCETrXX-Jeb4wiQuL6FUai4wNMmMiUxuLLh_Lb9mT7h=0GgAw@mail.gmail.com>
- <20190805192122.laxcaz75k4vxdspn@ast-mbp>
- <CALCETrVtPs8gY-H4gmzSqPboid3CB++n50SvYd6RU9YVde_-Ow@mail.gmail.com>
- <20190806011134.p5baub5l3t5fkmou@ast-mbp>
- <CALCETrXEHL3+NAY6P6vUj7Pvd9ZpZsYC6VCLXOaNxb90a_POGw@mail.gmail.com>
- <98fee747-795a-ff10-fa98-10ddb5afcc03@iogearbox.net>
- <CALCETrUWQbPK3Pc6P5i_UqHPXJmZVyvuYXfq+VRtD6A3emaRhw@mail.gmail.com>
- <CALCETrWU4xJh4UBg0BboCwdGrgj+dUShsH5ETpiRgEpXJTEfQA@mail.gmail.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH v8 11/27] x86/mm: Introduce _PAGE_DIRTY_SW
+Date: Fri, 23 Aug 2019 16:02:33 +0200
+Message-ID: <20190823140233.GC2332@hirez.programming.kicks-ass.net>
+References: <20190813205225.12032-1-yu-cheng.yu@intel.com>
+ <20190813205225.12032-12-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <netdev-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CALCETrWU4xJh4UBg0BboCwdGrgj+dUShsH5ETpiRgEpXJTEfQA@mail.gmail.com>
-Sender: netdev-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Daniel Borkmann <daniel@iogearbox.net>, Song Liu <songliubraving@fb.com>, Kees Cook <keescook@chromium.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, Chenbo Feng <chenbofeng.kernel@gmail.com>
+In-Reply-To: <20190813205225.12032-12-yu-cheng.yu@intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>
+Cc: x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>, Nadav Amit <nadav.amit@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 22, 2019 at 08:17:54AM -0700, Andy Lutomirski wrote:
-> BPF security strawman, v0.1
-> 
-> This is very rough.  Most of this, especially the API details, needs
-> work before it's ready to implement.  The whole concept also needs
-> review.
-> 
-> = Goals =
-> 
-> The overall goal is to make it possible to use eBPF without having
-> what is effectively administrator access.  For example, an eBPF user
-> should not be able to directly tamper with other processes (unless
-> this permission is explicitly granted) and should not be able to
-> read or write other users' eBPF maps.
-> 
-> It should be possible to use eBPF inside a user namespace without breaking
-> the userns security model.
-> 
-> Due to the risk of speculation attacks and such being carried out via
-> eBPF, it should not become possible to use too much of eBPF without the
-> administrator's permission.  (NB: it is already possible to use
-> *classic* BPF without any permission, and classic BPF is translated
-> internally to eBPF, so this goal can only be met to a limited extent.)
+On Tue, Aug 13, 2019 at 01:52:09PM -0700, Yu-cheng Yu wrote:
 
-agree with the goals.
+> +static inline pte_t pte_move_flags(pte_t pte, pteval_t from, pteval_t to)
+> +{
+> +	if (pte_flags(pte) & from)
+> +		pte = pte_set_flags(pte_clear_flags(pte, from), to);
+> +	return pte;
+> +}
 
-> = Definitions =
-> 
-> Global capability: A capability bit in the caller's effective mask, so
-> long as the caller is in the root user namespace.  Tasks in non-root
-> user namespaces never have global capabilibies.  This is what capable()
-> checks.
-> 
-> Namespace capability: A capability over a specific user namespace.
-> Tasks in a user namespace have all the capabilities in their effective
-> mask over their user namespace.  A namespace capability generally
-> indicates that the capability applies to the user namespace itself and
-> to all non-user namespaces that live in the user namespace.  For
-> example, CAP_NET_ADMIN means that you can configure all networks
-> namespaces in the current user namespace.  This is what ns_capable()
-> checks.
+Aside of the whole conditional thing (I agree it would be better to have
+this unconditionally); the function doesn't really do as advertised.
 
-definitions make sense too.
+That is, if @from is clear, it doesn't endeavour to make sure @to is
+also clear.
 
-> Anything that requires a global capability will not work in a non-root
-> user namespace.
-> 
-> = unprivileged_bpf_disabled =
-> 
-> Nothing in here supercedes unprivileged_bpf_disabled.  If
-> unprivileged_bpf_disabled = 1, then these proposals should not allow anything
-> that is disallowed today.  The idea is to make unprivileged_bpf_disabled=0
-> both safer and more useful.
+Now it might be sufficient, but in that case it really needs a comment
+and or different name.
 
-... a bunch of new features skipped for brevity...
+An implementation that actually moves the bit is something like:
 
-You're proposing all of the above in addition to CAP_BPF, right?
-Otherwise I don't see how it addresses the use cases I kept
-explaining for the last few weeks.
+	pteval_t a,b;
 
-I don't mind additional features if people who propose them
-actively help to maintain that new code and address inevitable
-side channel issues in the new code.
-But first things first.
-
-Here is another example of use case that CAP_BPF is solving:
-The daemon X is started by pid=1 and currently runs as root.
-It loads a bunch of tracing progs and attaches them to kprobes
-and tracepoints. It also loads cgroup-bpf progs and attaches them
-to cgroups. All progs are collecting data about the system and
-logging it for further analysis.
-There can be different bugs (not security bugs) in the daemon.
-Simple coding bugs, but due to processing running as root they
-may make the system inoperable. There is a strong desire to
-drop privileges for this daemon. Let it do all BPF things the
-way it does today and drop root, since other operations do not
-require root.
-Essentially a bunch of daemons run as root only because
-they need bpf. This tracing bpf is looking into kernel memory
-and using bpf_probe_read. Clearly it's not _secure_. But it's _safe_.
-The system is not going to crash because of BPF,
-but it can easily crash because of simple coding bugs in the user
-space bits of that daemon.
-
-Flagging functions is not going to help this case.
-bpf_probe_read is necessary.
-pointer-to-integer-conversions is also necessary.
-bypass hardening features is also necessary for speed,
-since this data collection is 24/7.
-cgroup.subtree_control idea can help some of it, but not all.
-
-I still think that CAP_BPF is the best way to split this root privilege
-universe into smaller 'bpf piece'. Just like CAP_NET_ADMIN splits
-all of root into networking specific privileges.
-
-Potentially we can go sysctl_perf_event_paranoid approach, but
-it's less flexible, since it's single sysctl for the whole system.
-
-Loading progs via FD instead of memory is something that android folks
-proposed some time ago. The need is real. Whether it's going to be
-loading via FD or some other form of signing the program is TBD.
-imo this is orthogonal.
-
-I hope I answered all points of your proposal.
+	a = native_pte_value(pte);
+	b = (a >> from_bit) & 1;
+	a &= ~((1ULL << from_bit) | (1ULL << to_bit));
+	a |= b << to_bit;
+	return make_native_pte(a);
