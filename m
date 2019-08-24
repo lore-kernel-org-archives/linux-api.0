@@ -1,95 +1,61 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: RFC: very rough draft of a bpf permission model
-Date: Fri, 23 Aug 2019 16:09:11 -0700
-Message-ID: <CALCETrUhXrZaJy8omX_DsH0rAY98YEqR64VuisQSz2Rru8Dqpg@mail.gmail.com>
-References: <CALCETrWtE2U4EvZVYeq8pSmQjBzF2PHH+KxYW8FSeF+W=1FYjw@mail.gmail.com>
- <EE7B7AE1-3D44-4561-94B9-E97A626A251D@fb.com> <CALCETrXX-Jeb4wiQuL6FUai4wNMmMiUxuLLh_Lb9mT7h=0GgAw@mail.gmail.com>
- <20190805192122.laxcaz75k4vxdspn@ast-mbp> <CALCETrVtPs8gY-H4gmzSqPboid3CB++n50SvYd6RU9YVde_-Ow@mail.gmail.com>
- <20190806011134.p5baub5l3t5fkmou@ast-mbp> <CALCETrXEHL3+NAY6P6vUj7Pvd9ZpZsYC6VCLXOaNxb90a_POGw@mail.gmail.com>
- <98fee747-795a-ff10-fa98-10ddb5afcc03@iogearbox.net> <CALCETrUWQbPK3Pc6P5i_UqHPXJmZVyvuYXfq+VRtD6A3emaRhw@mail.gmail.com>
- <CALCETrWU4xJh4UBg0BboCwdGrgj+dUShsH5ETpiRgEpXJTEfQA@mail.gmail.com> <20190822232620.p5tql4rrlzlk35z7@ast-mbp.dhcp.thefacebook.com>
+From: Daniel Colascione <dancol@google.com>
+Subject: Re: [PATCH RESEND v11 7/8] open: openat2(2) syscall
+Date: Sat, 24 Aug 2019 13:17:33 -0700
+Message-ID: <CAKOZuesfxRBJe314rkTKXtjXdz6ki3uAUBYVbu5Q2rd3=ADphQ@mail.gmail.com>
+References: <20190820033406.29796-1-cyphar@cyphar.com> <20190820033406.29796-8-cyphar@cyphar.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20190822232620.p5tql4rrlzlk35z7@ast-mbp.dhcp.thefacebook.com>
-Sender: netdev-owner@vger.kernel.org
-To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Song Liu <songliubraving@fb.com>, Kees Cook <keescook@chromium.org>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Alexei Starovoitov <ast@kernel.org>, Kernel Team <Kernel-team@fb.com>, Lorenz Bauer <lmb@cloudflare.com>, Jann Horn <jannh@google.com>, Greg KH <gregkh@linuxfoundation.org>, Linux API <linux-api@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, Chenbo Feng <chenbofeng.kernel@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190820033406.29796-8-cyphar@cyphar.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Aleksa Sarai <cyphar@cyphar.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Christian Brauner <christian@brauner.io>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <asarai@suse.de>, Linus Torvalds <torvalds@linux-foundation.org>, containers@lists.linux-f
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 22, 2019 at 4:26 PM Alexei Starovoitov
-<alexei.starovoitov@gmail.com> wrote:
-> You're proposing all of the above in addition to CAP_BPF, right?
-> Otherwise I don't see how it addresses the use cases I kept
-> explaining for the last few weeks.
+On Mon, Aug 19, 2019 at 8:37 PM Aleksa Sarai <cyphar@cyphar.com> wrote:
+>
+> The most obvious syscall to add support for the new LOOKUP_* scoping
+> flags would be openat(2). However, there are a few reasons why this is
+> not the best course of action:
+>
+>  * The new LOOKUP_* flags are intended to be security features, and
+>    openat(2) will silently ignore all unknown flags. This means that
+>    users would need to avoid foot-gunning themselves constantly when
+>    using this interface if it were part of openat(2). This can be fixed
+>    by having userspace libraries handle this for users[1], but should be
+>    avoided if possible.
+>
+>  * Resolution scoping feels like a different operation to the existing
+>    O_* flags. And since openat(2) has limited flag space, it seems to be
+>    quite wasteful to clutter it with 5 flags that are all
+>    resolution-related. Arguably O_NOFOLLOW is also a resolution flag but
+>    its entire purpose is to error out if you encounter a trailing
+>    symlink -- not to scope resolution.
+>
+>  * Other systems would be able to reimplement this syscall allowing for
+>    cross-OS standardisation rather than being hidden amongst O_* flags
+>    which may result in it not being used by all the parties that might
+>    want to use it (file servers, web servers, container runtimes, etc).
+>
+>  * It gives us the opportunity to iterate on the O_PATH interface. In
+>    particular, the new @how->upgrade_mask field for fd re-opening is
+>    only possible because we have a clean slate without needing to re-use
+>    the ACC_MODE flag design nor the existing openat(2) @mode semantics.
+>
+> To this end, we introduce the openat2(2) syscall. It provides all of the
+> features of openat(2) through the @how->flags argument, but also
+> also provides a new @how->resolve argument which exposes RESOLVE_* flags
+> that map to our new LOOKUP_* flags. It also eliminates the long-standing
+> ugliness of variadic-open(2) by embedding it in a struct.
+>
+> In order to allow for userspace to lock down their usage of file
+> descriptor re-opening, openat2(2) has the ability for users to disallow
+> certain re-opening modes through @how->upgrade_mask. At the moment,
+> there is no UPGRADE_NOEXEC. The open_how struct is padded to 64 bytes
+> for future extensions (all of the reserved bits must be zeroed).
 
-None of my proposal is intended to exclude changes like CAP_BPF to
-make privileged bpf() operations need less privilege.  But I think
-it's very hard to evaluate CAP_BPF without both a full description of
-exactly what CAP_BPF would do and what at least one full example of a
-user would look like.
-
-I also think that users who want CAP_BPF should look at manipulating
-their effective capability set instead.  A daemon that wants to use
-bpf() but otherwise minimize the chance of accidentally causing a
-problem can use capset() to clear its effective and inheritable masks.
-Then, each time it wants to call bpf(), it could re-add CAP_SYS_ADMIN
-or CAP_NET_ADMIN to its effective set, call bpf(), and then clear its
-effective set again.  This works in current kernels and is generally
-good practice.
-
-Aside from this, and depending on exactly what CAP_BPF would be, I
-have some further concerns.  Looking at your example in this email:
-
-> Here is another example of use case that CAP_BPF is solving:
-> The daemon X is started by pid=1 and currently runs as root.
-> It loads a bunch of tracing progs and attaches them to kprobes
-> and tracepoints. It also loads cgroup-bpf progs and attaches them
-> to cgroups. All progs are collecting data about the system and
-> logging it for further analysis.
-
-This needs more than just bpf().  Creating a perf kprobe event
-requires CAP_SYS_ADMIN, and without a perf kprobe event, you can't
-attach a bpf program.  And the privilege to attach bpf programs to
-cgroups without any DAC or MAC checks (which is what the current API
-does) is an extremely broad privilege that is not that much weaker
-than CAP_SYS_ADMIN or CAP_NET_ADMIN.  Also:
-
-> This tracing bpf is looking into kernel memory
-> and using bpf_probe_read. Clearly it's not _secure_. But it's _safe_.
-> The system is not going to crash because of BPF,
-> but it can easily crash because of simple coding bugs in the user
-> space bits of that daemon.
-
-The BPF verifier and interpreter, taken in isolation, may be extremely
-safe, but attaching BPF programs to various hooks can easily take down
-the system, deliberately or by accident.  A handler, especially if it
-can access user memory or otherwise fault, will explode if attached to
-an inappropriate kprobe, hw_breakpoint, or function entry trace event.
-(I and the other maintainers consider this to be a bug if it happens,
-and we'll fix it, but these bugs definitely exist.)  A cgroup-bpf hook
-that blocks all network traffic will effectively kill a machine,
-especially if it's a server.  A bpf program that runs excessively
-slowly attached to a high-frequency hook will kill the system, too.
-(I bet a buggy bpf program that calls bpf_probe_read() on an unmapped
-address repeatedly could be make extremely slow.  Page faults take
-thousands to tens of thousands of cycles.)  A bpf firewall rule that's
-wrong can cut a machine off from the network -- I've killed machines
-using iptables more than once, and bpf isn't magically safer.
-
-Something finer-grained can mitigate some of this.  CAP_BPF as I think
-you're imagining it will not.
-
-I'm wondering if something like CAP_TRACING would make sense.
-CAP_TRACING would allow operations that can reveal kernel memory and
-other secret kernel state but that do not, by design, allow modifying
-system behavior.  So, for example, CAP_TRACING would allow privileged
-perf_event_open() operations and privileged bpf verifier usage.  But
-it would not allow cgroup-bpf unless further restrictions were added,
-and it would not allow the *_BY_ID operations, as those can modify
-other users' bpf programs' behavior.
-
-(To get CAP_TRACING to work with cgroup-bpf, there could be a flag to
-attach a "tracing" bpf program to a cgroup.  This program would run in
-addition to normal or MULTI programs, but it would not be allowed to
-return a rejection result.)
+Why pad the structure when new functionality (perhaps accommodated via
+a larger structure) could be signaled by passing a new flag? Adding
+reserved fields to a structure with a size embedded in the ABI makes a
+lot of sense --- e.g., pthread_mutex_t can't grow. But this structure
+can grow, so the reservation seems needless to me.
