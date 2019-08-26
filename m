@@ -1,63 +1,49 @@
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [PATCH V40 10/29] hibernate: Disable when the kernel is locked
- down
-Date: Sun, 25 Aug 2019 11:51:06 +0200
-Message-ID: <20190825095106.GD1644@amd>
-References: <20190820001805.241928-1-matthewgarrett@google.com>
- <20190820001805.241928-11-matthewgarrett@google.com>
+From: sbaugh@catern.com
+Subject: Re: [PATCH RESEND v11 7/8] open: openat2(2) syscall
+Date: Mon, 26 Aug 2019 19:50:50 +0000
+Message-ID: <854l2366zp.fsf@catern.com>
+References: <20190820033406.29796-1-cyphar@cyphar.com>
+ <20190820033406.29796-8-cyphar@cyphar.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-        protocol="application/pgp-signature"; boundary="u65IjBhB3TIa72Vp"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190820001805.241928-11-matthewgarrett@google.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Matthew Garrett <matthewgarrett@google.com>
-Cc: jmorris@namei.org, linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Josh Boyer <jwboyer@fedoraproject.org>, David Howells <dhowells@redhat.com>, Matthew Garrett <mjg59@google.com>, Kees Cook <keescook@chromium.org>, rjw@rjwysocki.net, linux-pm@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
+List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
+List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
+List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
+List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
+List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
+ <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
+Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
+Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+Cc: linux-arch@vger.kernel.org, sparclinux@vger.kernel.org, linux-ia64@vger.kernel.org, linux-parisc@vger.kernel.org, linux-sh@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@vger.kernel.org, linuxppc-dev@ozlabs.org, linux-alpha@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-arm-kernel@lists.infradead.org
 List-Id: linux-api@vger.kernel.org
 
+Aleksa Sarai <cyphar@cyphar.com> writes:
+> To this end, we introduce the openat2(2) syscall. It provides all of the
+> features of openat(2) through the @how->flags argument, but also
+> also provides a new @how->resolve argument which exposes RESOLVE_* flags
+> that map to our new LOOKUP_* flags. It also eliminates the long-standing
+> ugliness of variadic-open(2) by embedding it in a struct.
 
---u65IjBhB3TIa72Vp
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+I don't like this usage of a structure in memory to pass arguments that
+would fit in registers. This would be quite inconvenient for me as a
+userspace developer.
 
-On Mon 2019-08-19 17:17:46, Matthew Garrett wrote:
-> From: Josh Boyer <jwboyer@fedoraproject.org>
->=20
-> There is currently no way to verify the resume image when returning
-> from hibernate.  This might compromise the signed modules trust model,
-> so until we can work with signed hibernate images we disable it when the
-> kernel is locked down.
->=20
-> Signed-off-by: Josh Boyer <jwboyer@fedoraproject.org>
-> Signed-off-by: David Howells <dhowells@redhat.com>
-> Signed-off-by: Matthew Garrett <mjg59@google.com>
-> Reviewed-by: Kees Cook <keescook@chromium.org>
-> Cc: rjw@rjwysocki.net
-> Cc: pavel@ucw.cz
-> cc: linux-pm@vger.kernel.org
-> Signed-off-by: James Morris <jmorris@namei.org>
+Others have brought up issues with this: the issue of seccomp, and the
+issue of mismatch between the userspace interface and the kernel
+interface, are the most important for me. I want to add another,
+admittedly somewhat niche, concern.
 
-Acked-by: Pavel Machek <pavel@ucw.cz>
+This interfaces requires a program to allocate memory (even on the
+stack) just to pass arguments to the kernel which could be passed
+without allocating that memory. That makes it more difficult and less
+efficient to use this syscall in any case where memory is not so easily
+allocatable: such as early program startup or assembly, where the stack
+may be limited in size or not even available yet, or when injecting a
+syscall while ptracing.
 
-									Pavel
-
---=20
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blo=
-g.html
-
---u65IjBhB3TIa72Vp
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iEYEARECAAYFAl1iWgoACgkQMOfwapXb+vJjIgCfUZfnFSM3yMH7xIKKwWsgpi8u
-qu4An2fFN+zbwRtWr/eFuPbuIfXNlZOF
-=jHC1
------END PGP SIGNATURE-----
-
---u65IjBhB3TIa72Vp--
+A struct-passing interface was needed for clone, since we ran out of
+registers; but we have not run out of registers yet for openat, so it
+would be nice to avoid this if we can. We can always expand later...
