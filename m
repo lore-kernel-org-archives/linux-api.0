@@ -1,168 +1,149 @@
-From: Andy Lutomirski <luto@kernel.org>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH bpf-next] bpf, capabilities: introduce CAP_BPF
-Date: Tue, 27 Aug 2019 16:01:08 -0700
-Message-ID: <CALCETrV8iJv9+Ai11_1_r6MapPhhwt9hjxi=6EoixytabTScqg@mail.gmail.com>
+Date: Tue, 27 Aug 2019 19:21:44 -0400
+Message-ID: <20190827192144.3b38b25a@gandalf.local.home>
 References: <20190827205213.456318-1-ast@kernel.org>
+        <CALCETrV8iJv9+Ai11_1_r6MapPhhwt9hjxi=6EoixytabTScqg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20190827205213.456318-1-ast@kernel.org>
+In-Reply-To: <CALCETrV8iJv9+Ai11_1_r6MapPhhwt9hjxi=6EoixytabTScqg@mail.gmail.com>
 Sender: netdev-owner@vger.kernel.org
-To: Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, LSM List <linux-security-module@vger.kernel.org>, James Morris <jmorris@namei.org>, Jann Horn <jannh@google.com>, Peter Zijlstra <peterz@infradead.org>, Masami Hiramatsu <mhiramat@kernel.org>, Steven Rostedt <rostedt@goodmis.org>
-Cc: "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Network Development <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, LSM List <linux-security-module@vger.kernel.org>, James Morris <jmorris@namei.org>, Jann Horn <jannh@google.com>, Peter Zijlstra <peterz@infradead.org>, Masami Hiramatsu <mhiramat@kernel.org>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Network Development <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-[adding some security and tracing folks to cc]
+On Tue, 27 Aug 2019 16:01:08 -0700
+Andy Lutomirski <luto@kernel.org> wrote:
 
-On Tue, Aug 27, 2019 at 1:52 PM Alexei Starovoitov <ast@kernel.org> wrote:
->
-> Introduce CAP_BPF that allows loading all types of BPF programs,
-> create most map types, load BTF, iterate programs and maps.
-> CAP_BPF alone is not enough to attach or run programs.
->
-> Networking:
->
-> CAP_BPF and CAP_NET_ADMIN are necessary to:
-> - attach to cgroup-bpf hooks like INET_INGRESS, INET_SOCK_CREATE, INET4_CONNECT
-> - run networking bpf programs (like xdp, skb, flow_dissector)
->
-> Tracing:
->
-> CAP_BPF and perf_paranoid_tracepoint_raw() (which is kernel.perf_event_paranoid == -1)
-> are necessary to:
-> - attach bpf program to raw tracepoint
-> - use bpf_trace_printk() in all program types (not only tracing programs)
-> - create bpf stackmap
->
-> To attach bpf to perf_events perf_event_open() needs to succeed as usual.
->
-> CAP_BPF controls BPF side.
-> CAP_NET_ADMIN controls intersection where BPF calls into networking.
-> perf_paranoid_tracepoint_raw controls intersection where BPF calls into tracing.
->
-> In the future CAP_TRACING could be introduced to control
-> creation of kprobe/uprobe and attaching bpf to perf_events.
-> In such case bpf_probe_read() thin wrapper would be controlled by CAP_BPF.
-> Whereas probe_read() would be controlled by CAP_TRACING.
-> CAP_TRACING would also control generic kprobe+probe_read.
-> CAP_BPF and CAP_TRACING would be necessary for tracing bpf programs
-> that want to use bpf_probe_read.
+> [adding some security and tracing folks to cc]
+> 
+> On Tue, Aug 27, 2019 at 1:52 PM Alexei Starovoitov <ast@kernel.org> wrote:
+> >
+> > Introduce CAP_BPF that allows loading all types of BPF programs,
+> > create most map types, load BTF, iterate programs and maps.
+> > CAP_BPF alone is not enough to attach or run programs.
+> >
+> > Networking:
+> >
+> > CAP_BPF and CAP_NET_ADMIN are necessary to:
+> > - attach to cgroup-bpf hooks like INET_INGRESS, INET_SOCK_CREATE, INET4_CONNECT
+> > - run networking bpf programs (like xdp, skb, flow_dissector)
+> >
+> > Tracing:
+> >
+> > CAP_BPF and perf_paranoid_tracepoint_raw() (which is kernel.perf_event_paranoid == -1)
+> > are necessary to:
+> > - attach bpf program to raw tracepoint
+> > - use bpf_trace_printk() in all program types (not only tracing programs)
+> > - create bpf stackmap
+> >
+> > To attach bpf to perf_events perf_event_open() needs to succeed as usual.
+> >
+> > CAP_BPF controls BPF side.
+> > CAP_NET_ADMIN controls intersection where BPF calls into networking.
+> > perf_paranoid_tracepoint_raw controls intersection where BPF calls into tracing.
+> >
+> > In the future CAP_TRACING could be introduced to control
+> > creation of kprobe/uprobe and attaching bpf to perf_events.
+> > In such case bpf_probe_read() thin wrapper would be controlled by CAP_BPF.
+> > Whereas probe_read() would be controlled by CAP_TRACING.
+> > CAP_TRACING would also control generic kprobe+probe_read.
+> > CAP_BPF and CAP_TRACING would be necessary for tracing bpf programs
+> > that want to use bpf_probe_read.
 
-First, some high-level review:
+No mention of the tracefs (/sys/kernel/tracing) file?
+  
+> 
+> First, some high-level review:
+> 
+> Can you write up some clear documentation aimed at administrators that
+> says what CAP_BPF does?  For example, is it expected that CAP_BPF by
+> itself permits reading all kernel memory?  Why might one grant it?
+> 
+> Can you give at least one fully described use case where CAP_BPF
+> solves a real-world problem that is not solved by existing mechanisms?
 
-Can you write up some clear documentation aimed at administrators that
-says what CAP_BPF does?  For example, is it expected that CAP_BPF by
-itself permits reading all kernel memory?  Why might one grant it?
-
-Can you give at least one fully described use case where CAP_BPF
-solves a real-world problem that is not solved by existing mechanisms?
-
-Changing the capability that some existing operation requires could
-break existing programs.  The old capability may need to be accepted
-as well.
-
-I'm inclined to suggest that CAP_TRACING be figured out or rejected
-before something like this gets applied.
-
-
->
-> Signed-off-by: Alexei Starovoitov <ast@kernel.org>
-> ---
-> I would prefer to introduce CAP_TRACING soon, since it
-> will make tracing and networking permission model symmetrical.
->
-
-Here's my proposal for CAP_TRACING, documentation-style:
-
---- begin ---
-
-CAP_TRACING enables a task to use various kernel features to trace
-running user programs and the kernel itself.  CAP_TRACING also enables
-a task to bypass some speculation attack countermeasures.  A task in
-the init user namespace with CAP_TRACING will be able to tell exactly
-what kernel code is executed and when, and will be able to read kernel
-registers and kernel memory.  It will, similarly, be able to read the
-state of other user tasks.
-
-Specifically, CAP_TRACING allows the following operations.  It may
-allow more operations in the future:
-
- - Full use of perf_event_open(), similarly to the effect of
-kernel.perf_event_paranoid == -1.
-
- - Loading and attaching tracing BPF programs, including use of BPF
-raw tracepoints.
-
- - Use of BPF stack maps.
-
- - Use of bpf_probe_read() and bpf_trace_printk().
-
- - Use of unsafe pointer-to-integer conversions in BPF.
-
- - Bypassing of BPF's speculation attack hardening measures and
-constant blinding.  (Note: other mechanisms might also allow this.)
-
-CAP_TRACING does not override normal permissions on sysfs or debugfs.
-This means that, unless a new interface for programming kprobes and
-such is added, it does not directly allow use of kprobes.
-
-If CAP_TRACING, by itself, enables a task to crash or otherwise
-corrupt the kernel or other tasks, this will be considered a kernel
-bug.
-
-CAP_TRACING in a non-init user namespace may, in the future, allow
-tracing of other tasks in that user namespace or its descendants.  It
-will not enable kernel tracing or tracing of tasks outside the user
-namespace in question.
-
---- end ---
-
-Does this sound good?  The idea here is that CAP_TRACING should be
-very useful even without CAP_BPF, which allows CAP_BPF to be less
-powerful.
-
-> +bool cap_bpf_tracing(void)
-> +{
-> +       return capable(CAP_SYS_ADMIN) ||
-> +              (capable(CAP_BPF) && !perf_paranoid_tracepoint_raw());
-> +}
-
-If auditing is on, this will audit the wrong thing.  James, I think a
-helper like:
-
-bool ns_either_cap(struct user_ns *ns, int preferred_cap, int other_cap);
-
-would help.  ns_either_cap returns true if either cap is held (i.e.
-effective, as usual).  On success, it audits preferred_cap if held and
-other_cap otherwise.  On failure, it audits preferred_cap.  Does this
-sound right?
-
-Also, for reference, perf_paranoid_tracepoint_raw() is this:
-
-static inline bool perf_paranoid_tracepoint_raw(void)
-{
-        return sysctl_perf_event_paranoid > -1;
-}
-
-so the overall effect of cap_bpf_tracing() is rather odd, and it seems
-to control a few things that don't obvious all have similar security
-effects.
+At least for CAP_TRACING (if it were to allow read/write access
+to /sys/kernel/tracing), that would be very useful. It would be useful
+to those that basically own their machines, and want to trace their
+applications all the way into the kernel without having to run as full
+root.
 
 
-> @@ -2080,7 +2083,10 @@ static int bpf_prog_test_run(const union bpf_attr *attr,
->         struct bpf_prog *prog;
->         int ret = -ENOTSUPP;
->
-> -       if (!capable(CAP_SYS_ADMIN))
-> +       if (!capable(CAP_NET_ADMIN) || !capable(CAP_BPF))
-> +               /* test_run callback is available for networking progs only.
-> +                * Add cap_bpf_tracing() above when tracing progs become runable.
-> +                */
+> 
+> Changing the capability that some existing operation requires could
+> break existing programs.  The old capability may need to be accepted
+> as well.
+> 
+> I'm inclined to suggest that CAP_TRACING be figured out or rejected
+> before something like this gets applied.
+> 
+> 
+> >
+> > Signed-off-by: Alexei Starovoitov <ast@kernel.org>
+> > ---
+> > I would prefer to introduce CAP_TRACING soon, since it
+> > will make tracing and networking permission model symmetrical.
+> >  
+> 
+> Here's my proposal for CAP_TRACING, documentation-style:
+> 
+> --- begin ---
+> 
+> CAP_TRACING enables a task to use various kernel features to trace
+> running user programs and the kernel itself.  CAP_TRACING also enables
+> a task to bypass some speculation attack countermeasures.  A task in
+> the init user namespace with CAP_TRACING will be able to tell exactly
+> what kernel code is executed and when, and will be able to read kernel
+> registers and kernel memory.  It will, similarly, be able to read the
+> state of other user tasks.
+> 
+> Specifically, CAP_TRACING allows the following operations.  It may
+> allow more operations in the future:
+> 
+>  - Full use of perf_event_open(), similarly to the effect of
+> kernel.perf_event_paranoid == -1.
+> 
+>  - Loading and attaching tracing BPF programs, including use of BPF
+> raw tracepoints.
+> 
+>  - Use of BPF stack maps.
+> 
+>  - Use of bpf_probe_read() and bpf_trace_printk().
+> 
+>  - Use of unsafe pointer-to-integer conversions in BPF.
+> 
+>  - Bypassing of BPF's speculation attack hardening measures and
+> constant blinding.  (Note: other mechanisms might also allow this.)
+> 
+> CAP_TRACING does not override normal permissions on sysfs or debugfs.
+> This means that, unless a new interface for programming kprobes and
+> such is added, it does not directly allow use of kprobes.
 
-I think test_run should probably be CAP_SYS_ADMIN forever.  test_run
-is the only way that one can run a bpf program and call helper
-functions via the program if one doesn't have permission to attach the
-program.  Also, if there's a way to run a speculation attack via a bpf
-program, test_run will make it much easier to do in a controlled
-environment.  Finally, when debugging bpf programs, developers can use
-their own computers or a VM.
+kprobes can be created in the tracefs filesystem (which is separate from
+debugfs, tracefs just gets automatically mounted
+in /sys/kernel/debug/tracing when debugfs is mounted) from the
+kprobe_events file. /sys/kernel/tracing is just the tracefs
+directory without debugfs, and was created specifically to allow
+tracing to be access without opening up the can of worms in debugfs.
+
+Should we allow CAP_TRACING access to /proc/kallsyms? as it is helpful
+to convert perf and trace-cmd's function pointers into names. Once you
+allow tracing of the kernel, hiding /proc/kallsyms is pretty useless.
+
+-- Steve
+
+> 
+> If CAP_TRACING, by itself, enables a task to crash or otherwise
+> corrupt the kernel or other tasks, this will be considered a kernel
+> bug.
+> 
+> CAP_TRACING in a non-init user namespace may, in the future, allow
+> tracing of other tasks in that user namespace or its descendants.  It
+> will not enable kernel tracing or tracing of tasks outside the user
+> namespace in question.
+> 
+> --- end ---
+> 
