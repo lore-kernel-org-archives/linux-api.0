@@ -1,39 +1,78 @@
-From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH bpf-next] bpf, capabilities: introduce CAP_BPF
-Date: Tue, 27 Aug 2019 17:38:14 -0700
-Message-ID: <20190828003813.fkar6udy5vq4loe5@ast-mbp.dhcp.thefacebook.com>
+Date: Tue, 27 Aug 2019 20:44:33 -0400
+Message-ID: <20190827204433.3af91faf@gandalf.local.home>
 References: <20190827205213.456318-1-ast@kernel.org>
- <CALCETrV8iJv9+Ai11_1_r6MapPhhwt9hjxi=6EoixytabTScqg@mail.gmail.com>
- <20190827192144.3b38b25a@gandalf.local.home>
+        <CALCETrV8iJv9+Ai11_1_r6MapPhhwt9hjxi=6EoixytabTScqg@mail.gmail.com>
+        <20190827192144.3b38b25a@gandalf.local.home>
+        <CALCETrUOHRMkBRJi_s30CjZdOLDGtdMOEgqfgPf+q0x+Fw7LtQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <netdev-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190827192144.3b38b25a@gandalf.local.home>
+In-Reply-To: <CALCETrUOHRMkBRJi_s30CjZdOLDGtdMOEgqfgPf+q0x+Fw7LtQ@mail.gmail.com>
 Sender: netdev-owner@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
-Cc: Andy Lutomirski <luto@kernel.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, LSM List <linux-security-module@vger.kernel.org>, James Morris <jmorris@namei.org>, Jann Horn <jannh@google.com>, Peter Zijlstra <peterz@infradead.org>, Masami Hiramatsu <mhiramat@kernel.org>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Network Development <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, LSM List <linux-security-module@vger.kernel.org>, James Morris <jmorris@namei.org>, Jann Horn <jannh@google.com>, Peter Zijlstra <peterz@infradead.org>, Masami Hiramatsu <mhiramat@kernel.org>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Network Development <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 27, 2019 at 07:21:44PM -0400, Steven Rostedt wrote:
+On Tue, 27 Aug 2019 16:34:47 -0700
+Andy Lutomirski <luto@kernel.org> wrote:
+
+> > > CAP_TRACING does not override normal permissions on sysfs or debugfs.
+> > > This means that, unless a new interface for programming kprobes and
+> > > such is added, it does not directly allow use of kprobes.  
+> >
+> > kprobes can be created in the tracefs filesystem (which is separate from
+> > debugfs, tracefs just gets automatically mounted
+> > in /sys/kernel/debug/tracing when debugfs is mounted) from the
+> > kprobe_events file. /sys/kernel/tracing is just the tracefs
+> > directory without debugfs, and was created specifically to allow
+> > tracing to be access without opening up the can of worms in debugfs.  
 > 
-> At least for CAP_TRACING (if it were to allow read/write access
-> to /sys/kernel/tracing), that would be very useful. It would be useful
-> to those that basically own their machines, and want to trace their
-> applications all the way into the kernel without having to run as full
-> root.
+> I think that, in principle, CAP_TRACING should allow this, but I'm not
+> sure how to achieve that.  I suppose we could set up
+> inode_operations.permission on tracefs, but what exactly would it do?
+> Would it be just like generic_permission() except that it would look
+> at CAP_TRACING instead of CAP_DAC_OVERRIDE?  That is, you can use
+> tracefs if you have CAP_TRACING *or* acl access?  Or would it be:
+> 
+> int tracing_permission(struct inode *inode, int mask)
+> {
+>   if (!capable(CAP_TRACING))
+>     return -EPERM;
+> 
+>   return generic_permission(inode, mask);
+> }
 
-+1
+Perhaps we should make a group for it?
 
-The proposal is to have CAP_TRACING to control perf and ftrace.
-perf and trace-cmd binaries could be installed with CAP_TRACING and that's
-all they need to do full tracing.
+> 
+> Which would mean that you need ACL *and* CAP_TRACING, so
+> administrators would change the mode to 777.  That's a bit scary.
+> 
+> And this still doesn't let people even *find* tracefs, since it's
+> hidden in debugfs.
+> 
+> So maybe make CAP_TRACING override ACLs but also add /sys/fs/tracing
+> and mount tracefs there, too, so that regular users can at least find
+> the mountpoint.
 
-I can craft a patch for perf_event_open side and demo CAP_TRACING.
-Once that cap bit is ready you can use it on ftrace side?
+I think you missed what I said. It's not hidden in /sys/kernel/debug.
+If you enable tracefs, you have /sys/kernel/tracing created, and is
+completely separate from debugfs. I only have it *also* automatically
+mounted to /sys/kernel/debug/tracing for backward compatibility
+reasons, as older versions of trace-cmd will only mount debugfs (as
+root), and expect to find it there.
 
-> Should we allow CAP_TRACING access to /proc/kallsyms? as it is helpful
-> to convert perf and trace-cmd's function pointers into names. Once you
-> allow tracing of the kernel, hiding /proc/kallsyms is pretty useless.
+ mount -t tracefs nodev /sys/kernel/tracing
 
-yep.
+-- Steve
+
+> 
+> >
+> > Should we allow CAP_TRACING access to /proc/kallsyms? as it is helpful
+> > to convert perf and trace-cmd's function pointers into names. Once you
+> > allow tracing of the kernel, hiding /proc/kallsyms is pretty useless.  
+> 
+> I think we should.
