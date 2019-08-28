@@ -1,28 +1,144 @@
-From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+From: Andy Lutomirski <luto@kernel.org>
 Subject: Re: [PATCH bpf-next] bpf, capabilities: introduce CAP_BPF
-Date: Tue, 27 Aug 2019 21:49:05 -0700
-Message-ID: <20190828044903.nv3hvinkkolnnxtv@ast-mbp.dhcp.thefacebook.com>
-References: <20190827205213.456318-1-ast@kernel.org>
- <CALCETrV8iJv9+Ai11_1_r6MapPhhwt9hjxi=6EoixytabTScqg@mail.gmail.com>
+Date: Tue, 27 Aug 2019 23:12:29 -0700
+Message-ID: <CALCETrW1o+Lazi2Ng6b9JN6jeJffgdW9f3HvqYhNo4TpHRXW=g@mail.gmail.com>
+References: <20190827205213.456318-1-ast@kernel.org> <CALCETrV8iJv9+Ai11_1_r6MapPhhwt9hjxi=6EoixytabTScqg@mail.gmail.com>
  <20190828003447.htgzsxs5oevn3eys@ast-mbp.dhcp.thefacebook.com>
- <CALCETrVbPPPr=BdPAx=tJKxD3oLXP4OVSgCYrB_E4vb6idELow@mail.gmail.com>
- <CALCETrVVQs1s27y8fB17JtQi-VzTq1YZPTPy3k=fKhQB1X-KKA@mail.gmail.com>
+ <CALCETrVbPPPr=BdPAx=tJKxD3oLXP4OVSgCYrB_E4vb6idELow@mail.gmail.com> <20190828044340.zeha3k3cmmxgfqj7@ast-mbp.dhcp.thefacebook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <netdev-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrVVQs1s27y8fB17JtQi-VzTq1YZPTPy3k=fKhQB1X-KKA@mail.gmail.com>
+In-Reply-To: <20190828044340.zeha3k3cmmxgfqj7@ast-mbp.dhcp.thefacebook.com>
 Sender: netdev-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, LSM List <linux-security-module@vger.kernel.org>, James Morris <jmorris@namei.org>, Jann Horn <jannh@google.com>, Peter Zijlstra <peterz@infradead.org>, Masami Hiramatsu <mhiramat@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Network Development <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
+To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, LSM List <linux-security-module@vger.kernel.org>, James Morris <jmorris@namei.org>, Jann Horn <jannh@google.com>, Peter Zijlstra <peterz@infradead.org>, Masami Hiramatsu <mhiramat@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Network Development <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Aug 27, 2019 at 07:00:40PM -0700, Andy Lutomirski wrote:
-> 
-> Let me put this a bit differently. Part of the point is that
-> CAP_TRACING should allow a user or program to trace without being able
-> to corrupt the system. CAP_BPF as you’ve proposed it *can* likely
-> crash the system.
+On Tue, Aug 27, 2019 at 9:43 PM Alexei Starovoitov
+<alexei.starovoitov@gmail.com> wrote:
+>
+> On Tue, Aug 27, 2019 at 05:55:41PM -0700, Andy Lutomirski wrote:
+> >
+> > I was hoping for something in Documentation/admin-guide, not in a
+> > changelog that's hard to find.
+>
+> eventually yes.
+>
+> > >
+> > > > Changing the capability that some existing operation requires could
+> > > > break existing programs.  The old capability may need to be accepted
+> > > > as well.
+> > >
+> > > As far as I can see there is no ABI breakage. Please point out
+> > > which line of the patch may break it.
+> >
+> > As a more or less arbitrary selection:
+> >
+> >  void bpf_prog_kallsyms_add(struct bpf_prog *fp)
+> >  {
+> >         if (!bpf_prog_kallsyms_candidate(fp) ||
+> > -           !capable(CAP_SYS_ADMIN))
+> > +           !capable(CAP_BPF))
+> >                 return;
+> >
+> > Before your patch, a task with CAP_SYS_ADMIN could do this.  Now it
+> > can't.  Per the usual Linux definition of "ABI break", this is an ABI
+> > break if and only if someone actually did this in a context where they
+> > have CAP_SYS_ADMIN but not all capabilities.  How confident are you
+> > that no one does things like this?
+> >  void bpf_prog_kallsyms_add(struct bpf_prog *fp)
+> >  {
+> >         if (!bpf_prog_kallsyms_candidate(fp) ||
+> > -           !capable(CAP_SYS_ADMIN))
+> > +           !capable(CAP_BPF))
+> >                 return;
+>
+> Yes. I'm confident that apps don't drop everything and
+> leave cap_sys_admin only before doing bpf() syscall, since it would
+> break their own use of networking.
+> Hence I'm not going to do the cap_syslog-like "deprecated" message mess
+> because of this unfounded concern.
+> If I turn out to be wrong we will add this "deprecated mess" later.
+>
+> >
+> > From the previous discussion, you want to make progress toward solving
+> > a lot of problems with CAP_BPF.  One of them was making BPF
+> > firewalling more generally useful. By making CAP_BPF grant the ability
+> > to read kernel memory, you will make administrators much more nervous
+> > to grant CAP_BPF.
+>
+> Andy, were your email hacked?
+> I explained several times that in this proposal
+> CAP_BPF _and_ CAP_TRACING _both_ are necessary to read kernel memory.
+> CAP_BPF alone is _not enough_.
 
-Really? I'm still waiting for your example where bpf+kprobe crashes the system...
+You have indeed said this many times.  You've stated it as a matter of
+fact as though it cannot possibly discussed.  I'm asking you to
+justify it.
+
+> > Similarly, and correct me if I'm wrong, most of
+> > these capabilities are primarily or only useful for tracing, so I
+> > don't see why users without CAP_TRACING should get them.
+> > bpf_trace_printk(), in particular, even has "trace" in its name :)
+> >
+> > Also, if a task has CAP_TRACING, it's expected to be able to trace the
+> > system -- that's the whole point.  Why shouldn't it be able to use BPF
+> > to trace the system better?
+>
+> CAP_TRACING shouldn't be able to do BPF because BPF is not tracing only.
+
+What does "do BPF" even mean?  seccomp() does BPF.  SO_ATTACH_FILTER
+does BPF.  Saying that using BPF should require a specific capability
+seems kind of like saying that using the network should require a
+specific capability.  Linux (and Unixy systems in general) distinguish
+between binding low-number ports, binding high-number ports, using raw
+sockets, and changing the system's IP address.  These have different
+implications and require different capabilities.
+
+It seems like you are specifically trying to add a new switch to turn
+as much of BPF as possible on and off.  Why?
+
+> >
+> > test_run allows fully controlled inputs, in a context where a program
+> > can trivially flush caches, mistrain branch predictors, etc first.  It
+> > seems to me that, if a JITted bpf program contains an exploitable
+> > speculation gadget (MDS, Spectre v1, RSB, or anything else),
+>
+> speaking of MDS... I already asked you to help investigate its
+> applicability with existing bpf exposure. Are you going to do that?
+
+I am blissfully uninvolved in MDS, and I don't know all that much more
+about the overall mechanism than a random reader of tech news :)  ISTM
+there are two meaningful ways that BPF could be involved: a BPF
+program could leak info into the state exposed by MDS, or a BPF
+program could try to read that state.  From what little I understand,
+it's essentially inevitable that BPF leaks information into MDS state,
+and this is probably even controllable by an attacker that understands
+MDS in enough detail.    So the interesting questions are: can BPF be
+used to read MDS state and can BPF be used to leak information in a
+more useful way than the rest of the kernel to an attacker.
+
+Keeping in mind that the kernel will flush MDS state on every exit to
+usermode, I think the most likely attack is to try to read MDS state
+with BPF.  This could happen, I suppose -- BPF programs can easily
+contain the usual speculation gadgets of "do something and read an
+address that depends on the outcome".  Fortunately, outside of
+bpf_probe_read(), AFAIK BPF programs can't directly touch user memory,
+and an attacker that is allowed to use bpf_probe_read() doesn't need
+MDS to read things.
+
+So it's not entirely obvious to me how an attack would be mounted.
+test_run would make it a lot easier, I think.
+
+>
+> > it will
+> > be *much* easier to exploit it using test_run than using normal
+> > network traffic.  Similarly, normal network traffic will have network
+> > headers that are valid enough to have caused the BPF program to be
+> > invoked in the first place.  test_run can inject arbitrary garbage.
+>
+> Please take a look at Jann's var1 exploit. Was it hard to run bpf prog
+> in controlled environment without test_run command ?
+>
+
+Can you send me a link?
