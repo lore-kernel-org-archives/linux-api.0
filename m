@@ -1,71 +1,77 @@
-From: Spencer Baugh <sbaugh@catern.com>
-Subject: Re: [PATCH RESEND v11 7/8] open: openat2(2) syscall
-Date: Wed, 28 Aug 2019 20:17:07 +0000
-Message-ID: <85y2zd3v0c.fsf@catern.com>
-References: <20190820033406.29796-1-cyphar@cyphar.com>
- <20190820033406.29796-8-cyphar@cyphar.com> <854l2366zp.fsf@catern.com>
- <4da231cd52880991d8a038adb8fbb2ef3d724db9.camel@kernel.org>
+From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Subject: Re: [PATCH bpf-next] bpf, capabilities: introduce CAP_BPF
+Date: Wed, 28 Aug 2019 15:08:28 -0700
+Message-ID: <20190828220826.nlkpp632rsomocve@ast-mbp.dhcp.thefacebook.com>
+References: <20190827205213.456318-1-ast@kernel.org>
+ <CALCETrV8iJv9+Ai11_1_r6MapPhhwt9hjxi=6EoixytabTScqg@mail.gmail.com>
+ <20190828071421.GK2332@hirez.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <4da231cd52880991d8a038adb8fbb2ef3d724db9.camel@kernel.org>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Jeff Layton <jlayton@kernel.org>, linux-fsdevel@vger.kernel.org
-Cc: linux-arch@vger.kernel.org, linux-ia64@vger.kernel.org, linux-parisc@vger.kernel.org, linux-sh@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-mips@vger.kernel.org, linuxppc-dev@ozlabs.org, linux-alpha@vger.kernel.org, sparclinux@vger.kernel.org, linux-arm-kernel@lists.infradead.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <netdev-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190828071421.GK2332@hirez.programming.kicks-ass.net>
+Sender: netdev-owner@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: Andy Lutomirski <luto@kernel.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, LSM List <linux-security-module@vger.kernel.org>, James Morris <jmorris@namei.org>, Jann Horn <jannh@google.com>, Masami Hiramatsu <mhiramat@kernel.org>, Steven Rostedt <rostedt@goodmis.org>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Network Development <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Jeff Layton <jlayton@kernel.org> writes:
-> On Mon, 2019-08-26 at 19:50 +0000, sbaugh@catern.com wrote:
->> Aleksa Sarai <cyphar@cyphar.com> writes:
->> > To this end, we introduce the openat2(2) syscall. It provides all of the
->> > features of openat(2) through the @how->flags argument, but also
->> > also provides a new @how->resolve argument which exposes RESOLVE_* flags
->> > that map to our new LOOKUP_* flags. It also eliminates the long-standing
->> > ugliness of variadic-open(2) by embedding it in a struct.
->> 
->> I don't like this usage of a structure in memory to pass arguments that
->> would fit in registers. This would be quite inconvenient for me as a
->> userspace developer.
->> 
->> Others have brought up issues with this: the issue of seccomp, and the
->> issue of mismatch between the userspace interface and the kernel
->> interface, are the most important for me. I want to add another,
->> admittedly somewhat niche, concern.
->> 
->> This interfaces requires a program to allocate memory (even on the
->> stack) just to pass arguments to the kernel which could be passed
->> without allocating that memory. That makes it more difficult and less
->> efficient to use this syscall in any case where memory is not so easily
->> allocatable: such as early program startup or assembly, where the stack
->> may be limited in size or not even available yet, or when injecting a
->> syscall while ptracing.
->> 
->> A struct-passing interface was needed for clone, since we ran out of
->> registers; but we have not run out of registers yet for openat, so it
->> would be nice to avoid this if we can. We can always expand later...
->> 
->
-> We can't really expand later like you suggest.
->
-> Suppose in a couple of years that we need to add some new argument to
-> openat2 that isn't just a new flag. If all these values are passed by
-> individual arguments, you can't add one later without adding yet another
-> syscall.
+On Wed, Aug 28, 2019 at 09:14:21AM +0200, Peter Zijlstra wrote:
+> On Tue, Aug 27, 2019 at 04:01:08PM -0700, Andy Lutomirski wrote:
+> 
+> > > Tracing:
+> > >
+> > > CAP_BPF and perf_paranoid_tracepoint_raw() (which is kernel.perf_event_paranoid == -1)
+> > > are necessary to:
+> 
+> That's not tracing, that's perf.
+> 
+> > > +bool cap_bpf_tracing(void)
+> > > +{
+> > > +       return capable(CAP_SYS_ADMIN) ||
+> > > +              (capable(CAP_BPF) && !perf_paranoid_tracepoint_raw());
+> > > +}
+> 
+> A whole long time ago, I proposed we introduce CAP_PERF or something
+> along those lines; as a replacement for that horrible crap Android and
+> Debian ship. But nobody was ever interested enough.
+> 
+> The nice thing about that is that you can then disallow perf/tracing in
+> general, but tag the perf executable (and similar tools) with the
+> capability so that unpriv users can still use it, but only limited
+> through the tool, not the syscalls directly.
 
-Sure we can. This new syscall doesn't need to use all 6 available
-arguments. It can enforce that the unused ones are 0. Then if we
-eventually run out of flags and need to switch to pass arguments via
-struct, we can just use one of the unused arguments for that purpose.
+Exactly.
+Similar motivation for CAP_BPF as well.
 
-Even if we used all 6 arguments, in the worst-case scenario, the last
-flag we add could change the interpretation of some other argument so it
-can be used to pass a pointer to a struct.
+re: your first comment above.
+I'm not sure what difference you see in words 'tracing' and 'perf'.
+I really hope we don't partition the overall tracing category
+into CAP_PERF and CAP_FTRACE only because these pieces are maintained
+by different people.
+On one side perf_event_open() isn't really doing tracing (as step by
+step ftracing of function sequences), but perf_event_open() opens
+an event and the sequence of events (may include IP) becomes a trace.
+imo CAP_TRACING is the best name to descibe the privileged space
+of operations possible via perf_event_open, ftrace, kprobe, stack traces, etc.
+
+Another reason are kuprobes. They can be crated via perf_event_open
+and via tracefs. Are they in CAP_PERF or in CAP_FTRACE ? In both, right?
+Should then CAP_KPROBE be used ? that would be an overkill.
+It would partition the space even further without obvious need.
+
+Looking from BPF angle... BPF doesn't have integration with ftrace yet.
+bpf_trace_printk is using ftrace mechanism, but that's 1% of ftrace.
+In the long run I really like to see bpf using all of ftrace.
+Whereas bpf is using a lot of 'perf'.
+And extending some perf things in bpf specific way.
+Take a look at how BPF_F_STACK_BUILD_ID. It's clearly perf/stack_tracing
+feature that generic perf can use one day.
+Currently it sits in bpf land and accessible via bpf only.
+Though its bpf only today I categorize it under CAP_TRACING.
+
+I think CAP_TRACING privilege should allow task to do all of perf_event_open,
+kuprobe, stack trace, ftrace, and kallsyms.
+We can think of some exceptions that should stay under CAP_SYS_ADMIN,
+but most of the functionality available by 'perf' binary should be
+usable with CAP_TRACING. 'perf' can do bpf too.
+With CAP_BPF it would be all set.
