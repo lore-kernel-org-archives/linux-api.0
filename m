@@ -1,26 +1,55 @@
-From: Toke =?utf-8?Q?H=C3=B8iland-J=C3=B8rgensen?= <toke@redhat.com>
-Subject: Re: [PATCH v2 bpf-next 1/3] capability: introduce CAP_BPF and CAP_TRACING
-Date: Thu, 29 Aug 2019 09:44:18 +0200
-Message-ID: <87ef14iffx.fsf@toke.dk>
-References: <20190829051253.1927291-1-ast@kernel.org>
+From: Sasha Levin <sashal@kernel.org>
+Subject: [PATCH AUTOSEL 4.19 09/29] selftests: fib_rule_tests: use pre-defined DEV_ADDR
+Date: Thu, 29 Aug 2019 06:49:49 -0400
+Message-ID: <20190829105009.2265-9-sashal@kernel.org>
+References: <20190829105009.2265-1-sashal@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Transfer-Encoding: 8bit
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20190829051253.1927291-1-ast@kernel.org>
+In-Reply-To: <20190829105009.2265-1-sashal@kernel.org>
 Sender: netdev-owner@vger.kernel.org
-To: Alexei Starovoitov <ast@kernel.org>, luto@amacapital.net
-Cc: davem@davemloft.net, peterz@infradead.org, rostedt@goodmis.org, netdev@vger.kernel.org, bpf@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
+To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
+Cc: Hangbin Liu <liuhangbin@gmail.com>, David Ahern <dsahern@gmail.com>, "David S . Miller" <davem@davemloft.net>, Sasha Levin <sashal@kernel.org>, netdev@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Alexei Starovoitov <ast@kernel.org> writes:
+From: Hangbin Liu <liuhangbin@gmail.com>
 
-> CAP_BPF allows the following BPF operations:
-> - Loading all types of BPF programs
-> - Creating all types of BPF maps except:
->    - stackmap that needs CAP_TRACING
->    - devmap that needs CAP_NET_ADMIN
->    - cpumap that needs CAP_SYS_ADMIN
+[ Upstream commit 34632975cafdd07ce80e85c2eda4e9c16b5f2faa ]
 
-Why CAP_SYS_ADMIN instead of CAP_NET_ADMIN for cpumap?
+DEV_ADDR is defined but not used. Use it in address setting.
+Do the same with IPv6 for consistency.
 
--Toke
+Reported-by: David Ahern <dsahern@gmail.com>
+Fixes: fc82d93e57e3 ("selftests: fib_rule_tests: fix local IPv4 address typo")
+Signed-off-by: Hangbin Liu <liuhangbin@gmail.com>
+Signed-off-by: David S. Miller <davem@davemloft.net>
+Signed-off-by: Sasha Levin <sashal@kernel.org>
+---
+ tools/testing/selftests/net/fib_rule_tests.sh | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/tools/testing/selftests/net/fib_rule_tests.sh b/tools/testing/selftests/net/fib_rule_tests.sh
+index 1ba069967fa2b..ba2d9fab28d0f 100755
+--- a/tools/testing/selftests/net/fib_rule_tests.sh
++++ b/tools/testing/selftests/net/fib_rule_tests.sh
+@@ -15,6 +15,7 @@ GW_IP6=2001:db8:1::2
+ SRC_IP6=2001:db8:1::3
+ 
+ DEV_ADDR=192.51.100.1
++DEV_ADDR6=2001:db8:1::1
+ DEV=dummy0
+ 
+ log_test()
+@@ -55,8 +56,8 @@ setup()
+ 
+ 	$IP link add dummy0 type dummy
+ 	$IP link set dev dummy0 up
+-	$IP address add 192.51.100.1/24 dev dummy0
+-	$IP -6 address add 2001:db8:1::1/64 dev dummy0
++	$IP address add $DEV_ADDR/24 dev dummy0
++	$IP -6 address add $DEV_ADDR6/64 dev dummy0
+ 
+ 	set +e
+ }
+-- 
+2.20.1
