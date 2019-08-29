@@ -1,48 +1,50 @@
 From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Subject: Re: [PATCH v2 bpf-next 1/3] capability: introduce CAP_BPF and
- CAP_TRACING
-Date: Thu, 29 Aug 2019 10:25:40 -0700
-Message-ID: <20190829172539.j4qnhokhdflvkfm2@ast-mbp.dhcp.thefacebook.com>
+Subject: Re: [PATCH v2 bpf-next 2/3] bpf: implement CAP_BPF
+Date: Thu, 29 Aug 2019 10:28:54 -0700
+Message-ID: <20190829172852.xhxtd6ruwdnhvvdt@ast-mbp.dhcp.thefacebook.com>
 References: <20190829051253.1927291-1-ast@kernel.org>
- <a5ef2f94-acca-eb66-b48c-899494a9f8d0@6wind.com>
+ <20190829051253.1927291-2-ast@kernel.org>
+ <B28631A9-BB92-404A-BD58-7A737BCF10C9@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <netdev-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <a5ef2f94-acca-eb66-b48c-899494a9f8d0@6wind.com>
+In-Reply-To: <B28631A9-BB92-404A-BD58-7A737BCF10C9@fb.com>
 Sender: netdev-owner@vger.kernel.org
-To: Nicolas Dichtel <nicolas.dichtel@6wind.com>
-Cc: Alexei Starovoitov <ast@kernel.org>, luto@amacapital.net, davem@davemloft.net, peterz@infradead.org, rostedt@goodmis.org, netdev@vger.kernel.org, bpf@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
+To: Song Liu <songliubraving@fb.com>
+Cc: Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, "davem@davemloft.net" <davem@davemloft.net>, "peterz@infradead.org" <peterz@infradead.org>, "rostedt@goodmis.org" <rostedt@goodmis.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "bpf@vger.kernel.org" <bpf@vger.kernel.org>, Kernel Team <Kernel-team@fb.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 29, 2019 at 03:36:42PM +0200, Nicolas Dichtel wrote:
-> Le 29/08/2019 à 07:12, Alexei Starovoitov a écrit :
-> [snip]
-> > CAP_BPF and CAP_NET_ADMIN together allow the following:
-> > - Attach to cgroup-bpf hooks and query
-> > - skb, xdp, flow_dissector test_run command
+On Thu, Aug 29, 2019 at 06:04:42AM +0000, Song Liu wrote:
+> 
+> 
+> > On Aug 28, 2019, at 10:12 PM, Alexei Starovoitov <ast@kernel.org> wrote:
 > > 
-> > CAP_NET_ADMIN allows:
-> > - Attach networking bpf programs to xdp, tc, lwt, flow dissector
-> I'm not sure to understand the difference between these last two points.
-> But, with the current kernel, CAP_NET_ADMIN is not enough to attach bpf prog
-> with tc and it's still not enough after your patch.
-> The following command is rejected:
-> $ tc filter add dev eth0 ingress matchall action bpf obj ./tc_test_kern.o sec test
 > 
-> Prog section 'test' rejected: Operation not permitted (1)!
->  - Type:         4
->  - Instructions: 22 (0 over limit)
->  - License:      GPL
+> [...]
 > 
-> Verifier analysis:
+> > diff --git a/tools/testing/selftests/bpf/test_verifier.c b/tools/testing/selftests/bpf/test_verifier.c
+> > index 44e2d640b088..91a7f25512ca 100644
+> > --- a/tools/testing/selftests/bpf/test_verifier.c
+> > +++ b/tools/testing/selftests/bpf/test_verifier.c
+> > @@ -805,10 +805,20 @@ static void do_test_fixup(struct bpf_test *test, enum bpf_prog_type prog_type,
+> > 	}
+> > }
+> > 
+> > +struct libcap {
+> > +	struct __user_cap_header_struct hdr;
+> > +	struct __user_cap_data_struct data[2];
+> > +};
+> > +
 > 
-> Error fetching program/map!
-> bad action parsing
-> parse_action: bad value (5:bpf)!
-> Illegal "action"
+> I am confused by struct libcap. Why do we need it? 
 
-because tc/iproute2 is doing load and attach.
-Currently load needs cap_sys_admin and
-attach needs cap_net_admin.
+because libcap is not compatible with new kernel.
+It needs to be recompiled with new capability.h
+Otherwise it limits max to CAP_AUDIT_READ
+Any value higher it will error during cap_get_flag.
+And will silently ignore it during cap_set_flag.
+Not a great library decision.
+
+Thankfully this struct above is exactly the kernel api.
+One doesn't really need libcap. It's imo easier to do without it.
