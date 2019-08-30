@@ -1,27 +1,44 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH 10/11] selinux: Implement the watch_key security hook [ver #7]
-Date: Fri, 30 Aug 2019 15:23:41 +0100
-Message-ID: <5368.1567175021@warthog.procyon.org.uk>
-References: <21eb33e8-5624-0124-8690-bbea41a1b589@tycho.nsa.gov> <156717343223.2204.15875738850129174524.stgit@warthog.procyon.org.uk> <156717352079.2204.16378075382991665807.stgit@warthog.procyon.org.uk>
+From: Philipp Rudo <prudo@linux.ibm.com>
+Subject: Re: [PATCH V40 08/29] kexec_file: split KEXEC_VERIFY_SIG into
+ KEXEC_SIG and KEXEC_SIG_FORCE
+Date: Fri, 30 Aug 2019 16:26:22 +0200
+Message-ID: <20190830162622.534a0b8f@laptop-ibm>
+References: <20190820001805.241928-1-matthewgarrett@google.com>
+        <20190820001805.241928-9-matthewgarrett@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <21eb33e8-5624-0124-8690-bbea41a1b589@tycho.nsa.gov>
-Content-ID: <5366.1567175021.1@warthog.procyon.org.uk>
+In-Reply-To: <20190820001805.241928-9-matthewgarrett@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Stephen Smalley <sds@tycho.nsa.gov>
-Cc: dhowells@redhat.com, viro@zeniv.linux.org.uk, Casey Schaufler <casey@schaufler-ca.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Matthew Garrett <matthewgarrett@google.com>
+Cc: jmorris@namei.org, Jiri Bohac <jbohac@suse.cz>, linux-api@vger.kernel.org, kexec@lists.infradead.org, linux-kernel@vger.kernel.org, Matthew Garrett <mjg59@google.com>, David Howells <dhowells@redhat.com>, linux-security-module@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Stephen Smalley <sds@tycho.nsa.gov> wrote:
+Hi Matthew,
 
-> > +	u32 sid = cred_sid(current_cred());
-> 
-> How does this differ from current_sid()?
-> 
-> And has current_sid() not been converted to use selinux_cred()? Looks like
-> selinux_kernfs_init_security() also uses current_security() directly.
+found a typo ...
 
-It probably doesn't - okay I'll use that instead.
+On Mon, 19 Aug 2019 17:17:44 -0700
+Matthew Garrett <matthewgarrett@google.com> wrote:
 
-David
+[...]
+
+> index 6d0635ceddd0..9b4f37a4edf1 100644
+> --- a/arch/s390/kernel/kexec_elf.c
+> +++ b/arch/s390/kernel/kexec_elf.c
+> @@ -130,7 +130,7 @@ static int s390_elf_probe(const char *buf, unsigned long len)
+>  const struct kexec_file_ops s390_kexec_elf_ops = {
+>  	.probe = s390_elf_probe,
+>  	.load = s390_elf_load,
+> -#ifdef CONFIG_KEXEC_VERIFY_SIG
+> +#ifdef CONFIG_KEXEC__SIG
+		      ^^
+... here.
+>  	.verify_sig = s390_verify_sig,
+> -#endif /* CONFIG_KEXEC_VERIFY_SIG */
+> +#endif /* CONFIG_KEXEC_SIG */
+>  };
+
+Thanks
+Philipp
