@@ -1,7 +1,7 @@
 From: Andy Lutomirski <luto@kernel.org>
-Subject: [PATCH 5/7] random: Remove the blocking pool
-Date: Thu, 29 Aug 2019 18:11:40 -0700
-Message-ID: <20b68f4b045d071d3c653f4381c043a76e332861.1567126741.git.luto@kernel.org>
+Subject: [PATCH 7/7] random: Remove kernel.random.read_wakeup_threshold
+Date: Thu, 29 Aug 2019 18:11:42 -0700
+Message-ID: <49f02ca58d95d1036ecc21c98ee544ddac5511ed.1567126741.git.luto@kernel.org>
 References: <cover.1567126741.git.luto@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,209 +12,56 @@ To: Theodore Tso <tytso@google.com>
 Cc: LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, "Jason A. Donenfeld" <Jason@zx2c4.com>, Andy Lutomirski <luto@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-There is no longer any interface to read data from the blocking
-pool, so remove it.
-
-This enables quite a bit of code deletion, much of which will be
-done in subsequent patches.
+It has no effect any more, so remove it.  We can revert this if
+there is some user code that expects to be able to set this sysctl.
 
 Signed-off-by: Andy Lutomirski <luto@kernel.org>
 ---
- drivers/char/random.c | 106 ------------------------------------------
- 1 file changed, 106 deletions(-)
+ drivers/char/random.c | 18 +-----------------
+ 1 file changed, 1 insertion(+), 17 deletions(-)
 
 diff --git a/drivers/char/random.c b/drivers/char/random.c
-index 29a158d9353c..4521138231ed 100644
+index 99fea5cc29a8..2a284f30cac4 100644
 --- a/drivers/char/random.c
 +++ b/drivers/char/random.c
-@@ -470,7 +470,6 @@ static const struct poolinfo {
- /*
-  * Static global variables
-  */
--static DECLARE_WAIT_QUEUE_HEAD(random_read_wait);
- static DECLARE_WAIT_QUEUE_HEAD(random_write_wait);
- static struct fasync_struct *fasync;
- 
-@@ -530,7 +529,6 @@ struct entropy_store {
- 	__u32 *pool;
- 	const char *name;
- 	struct entropy_store *pull;
--	struct work_struct push_work;
- 
- 	/* read-write data: */
- 	unsigned long last_pulled;
-@@ -549,9 +547,7 @@ static ssize_t _extract_entropy(struct entropy_store *r, void *buf,
- 				size_t nbytes, int fips);
- 
- static void crng_reseed(struct crng_state *crng, struct entropy_store *r);
--static void push_to_pool(struct work_struct *work);
- static __u32 input_pool_data[INPUT_POOL_WORDS] __latent_entropy;
--static __u32 blocking_pool_data[OUTPUT_POOL_WORDS] __latent_entropy;
- 
- static struct entropy_store input_pool = {
- 	.poolinfo = &poolinfo_table[0],
-@@ -560,16 +556,6 @@ static struct entropy_store input_pool = {
- 	.pool = input_pool_data
- };
- 
--static struct entropy_store blocking_pool = {
--	.poolinfo = &poolinfo_table[1],
--	.name = "blocking",
--	.pull = &input_pool,
--	.lock = __SPIN_LOCK_UNLOCKED(blocking_pool.lock),
--	.pool = blocking_pool_data,
--	.push_work = __WORK_INITIALIZER(blocking_pool.push_work,
--					push_to_pool),
--};
--
- static __u32 const twist_table[8] = {
- 	0x00000000, 0x3b6e20c8, 0x76dc4190, 0x4db26158,
- 	0xedb88320, 0xd6d6a3e8, 0x9b64c2b0, 0xa00ae278 };
-@@ -765,15 +751,11 @@ static void credit_entropy_bits(struct entropy_store *r, int nbits)
- 		entropy_count = 0;
- 	} else if (entropy_count > pool_size)
- 		entropy_count = pool_size;
--	if ((r == &blocking_pool) && !r->initialized &&
--	    (entropy_count >> ENTROPY_SHIFT) > 128)
--		has_initialized = 1;
- 	if (cmpxchg(&r->entropy_count, orig, entropy_count) != orig)
- 		goto retry;
- 
- 	if (has_initialized) {
- 		r->initialized = 1;
--		wake_up_interruptible(&random_read_wait);
- 		kill_fasync(&fasync, SIGIO, POLL_IN);
- 	}
- 
-@@ -782,7 +764,6 @@ static void credit_entropy_bits(struct entropy_store *r, int nbits)
- 
- 	if (r == &input_pool) {
- 		int entropy_bits = entropy_count >> ENTROPY_SHIFT;
--		struct entropy_store *other = &blocking_pool;
- 
- 		if (crng_init < 2) {
- 			if (entropy_bits < 128)
-@@ -790,27 +771,6 @@ static void credit_entropy_bits(struct entropy_store *r, int nbits)
- 			crng_reseed(&primary_crng, r);
- 			entropy_bits = r->entropy_count >> ENTROPY_SHIFT;
- 		}
--
--		/* initialize the blocking pool if necessary */
--		if (entropy_bits >= random_read_wakeup_bits &&
--		    !other->initialized) {
--			schedule_work(&other->push_work);
--			return;
--		}
--
--		/* should we wake readers? */
--		if (entropy_bits >= random_read_wakeup_bits &&
--		    wq_has_sleeper(&random_read_wait)) {
--			wake_up_interruptible(&random_read_wait);
--		}
--		/* If the input pool is getting full, and the blocking
--		 * pool has room, send some entropy to the blocking
--		 * pool.
--		 */
--		if (!work_pending(&other->push_work) &&
--		    (ENTROPY_BITS(r) > 6 * r->poolinfo->poolbytes) &&
--		    (ENTROPY_BITS(other) <= 6 * other->poolinfo->poolbytes))
--			schedule_work(&other->push_work);
- 	}
- }
- 
-@@ -1422,22 +1382,6 @@ static void _xfer_secondary_pool(struct entropy_store *r, size_t nbytes)
- 	credit_entropy_bits(r, bytes*8);
- }
+@@ -369,12 +369,6 @@
+ #define ENTROPY_SHIFT 3
+ #define ENTROPY_BITS(r) ((r)->entropy_count >> ENTROPY_SHIFT)
  
 -/*
-- * Used as a workqueue function so that when the input pool is getting
-- * full, we can "spill over" some entropy to the output pools.  That
-- * way the output pools can store some of the excess entropy instead
-- * of letting it go to waste.
+- * The minimum number of bits of entropy before we wake up a read on
+- * /dev/random.  Should be enough to do a significant reseed.
 - */
--static void push_to_pool(struct work_struct *work)
--{
--	struct entropy_store *r = container_of(work, struct entropy_store,
--					      push_work);
--	BUG_ON(!r);
--	_xfer_secondary_pool(r, random_read_wakeup_bits/8);
--	trace_push_to_pool(r->name, r->entropy_count >> ENTROPY_SHIFT,
--			   r->pull->entropy_count >> ENTROPY_SHIFT);
--}
+-static int random_read_wakeup_bits = 64;
 -
  /*
-  * This function decides how many bytes to actually take from the
-  * given pool, and also debits the entropy count accordingly.
-@@ -1616,54 +1560,6 @@ static ssize_t extract_entropy(struct entropy_store *r, void *buf,
- 	return _extract_entropy(r, buf, nbytes, fips_enabled);
- }
+  * If the entropy count falls under this number of bits, then we
+  * should wake up processes which are selecting or polling on write
+@@ -1982,8 +1976,7 @@ SYSCALL_DEFINE3(getrandom, char __user *, buf, size_t, count,
  
--/*
-- * This function extracts randomness from the "entropy pool", and
-- * returns it in a userspace buffer.
-- */
--static ssize_t extract_entropy_user(struct entropy_store *r, void __user *buf,
--				    size_t nbytes)
--{
--	ssize_t ret = 0, i;
--	__u8 tmp[EXTRACT_SIZE];
--	int large_request = (nbytes > 256);
--
--	trace_extract_entropy_user(r->name, nbytes, ENTROPY_BITS(r), _RET_IP_);
--	if (!r->initialized && r->pull) {
--		xfer_secondary_pool(r, ENTROPY_BITS(r->pull)/8);
--		if (!r->initialized)
--			return 0;
--	}
--	xfer_secondary_pool(r, nbytes);
--	nbytes = account(r, nbytes, 0, 0);
--
--	while (nbytes) {
--		if (large_request && need_resched()) {
--			if (signal_pending(current)) {
--				if (ret == 0)
--					ret = -ERESTARTSYS;
--				break;
--			}
--			schedule();
--		}
--
--		extract_buf(r, tmp);
--		i = min_t(int, nbytes, EXTRACT_SIZE);
--		if (copy_to_user(buf, tmp, i)) {
--			ret = -EFAULT;
--			break;
--		}
--
--		nbytes -= i;
--		buf += i;
--		ret += i;
--	}
--
--	/* Wipe data just returned from memory */
--	memzero_explicit(tmp, sizeof(tmp));
--
--	return ret;
--}
--
- #define warn_unseeded_randomness(previous) \
- 	_warn_unseeded_randomness(__func__, (void *) _RET_IP_, (previous))
+ #include <linux/sysctl.h>
  
-@@ -1893,7 +1789,6 @@ static void __init init_std_data(struct entropy_store *r)
- int __init rand_initialize(void)
- {
- 	init_std_data(&input_pool);
--	init_std_data(&blocking_pool);
- 	crng_initialize(&primary_crng);
- 	crng_global_init_time = jiffies;
- 	if (ratelimit_disable) {
-@@ -2053,7 +1948,6 @@ static long random_ioctl(struct file *f, unsigned int cmd, unsigned long arg)
- 		if (!capable(CAP_SYS_ADMIN))
- 			return -EPERM;
- 		input_pool.entropy_count = 0;
--		blocking_pool.entropy_count = 0;
- 		return 0;
- 	case RNDRESEEDCRNG:
- 		if (!capable(CAP_SYS_ADMIN))
+-static int min_read_thresh = 8, min_write_thresh;
+-static int max_read_thresh = OUTPUT_POOL_WORDS * 32;
++static int min_write_thresh;
+ static int max_write_thresh = INPUT_POOL_WORDS * 32;
+ static int random_min_urandom_seed = 60;
+ static char sysctl_bootid[16];
+@@ -2058,15 +2051,6 @@ struct ctl_table random_table[] = {
+ 		.proc_handler	= proc_do_entropy,
+ 		.data		= &input_pool.entropy_count,
+ 	},
+-	{
+-		.procname	= "read_wakeup_threshold",
+-		.data		= &random_read_wakeup_bits,
+-		.maxlen		= sizeof(int),
+-		.mode		= 0644,
+-		.proc_handler	= proc_dointvec_minmax,
+-		.extra1		= &min_read_thresh,
+-		.extra2		= &max_read_thresh,
+-	},
+ 	{
+ 		.procname	= "write_wakeup_threshold",
+ 		.data		= &random_write_wakeup_bits,
 -- 
 2.21.0
