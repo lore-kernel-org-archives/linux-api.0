@@ -1,55 +1,57 @@
-From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Subject: Re: [PATCH v2 bpf-next 1/3] capability: introduce CAP_BPF and
- CAP_TRACING
-Date: Thu, 29 Aug 2019 14:10:55 -0700
-Message-ID: <20190829211053.5ani4al6mnhvvk5o@ast-mbp.dhcp.thefacebook.com>
-References: <20190829051253.1927291-1-ast@kernel.org>
- <87ef14iffx.fsf@toke.dk>
- <20190829172410.j36gjxt6oku5zh6s@ast-mbp.dhcp.thefacebook.com>
- <87imqfhmo2.fsf@toke.dk>
- <20190829222530.3c6163ac@carbon>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: [PATCH 0/7] Rework random blocking
+Date: Thu, 29 Aug 2019 18:11:35 -0700
+Message-ID: <cover.1567126741.git.luto@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: 8bit
-Return-path: <netdev-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190829222530.3c6163ac@carbon>
-Sender: netdev-owner@vger.kernel.org
-To: Jesper Dangaard Brouer <brouer@redhat.com>
-Cc: Toke =?utf-8?Q?H=C3=B8iland-J=C3=B8rgensen?= <toke@redhat.com>, Alexei Starovoitov <ast@kernel.org>, luto@amacapital.net, davem@davemloft.net, peterz@infradead.org, rostedt@goodmis.org, netdev@vger.kernel.org, bpf@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Theodore Tso <tytso@google.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, "Jason A. Donenfeld" <Jason@zx2c4.com>, Andy Lutomirski <luto@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 29, 2019 at 10:25:30PM +0200, Jesper Dangaard Brouer wrote:
-> On Thu, 29 Aug 2019 20:05:49 +0200
-> Toke Høiland-Jørgensen <toke@redhat.com> wrote:
-> 
-> > Alexei Starovoitov <alexei.starovoitov@gmail.com> writes:
-> > 
-> > > On Thu, Aug 29, 2019 at 09:44:18AM +0200, Toke Høiland-Jørgensen wrote:  
-> > >> Alexei Starovoitov <ast@kernel.org> writes:
-> > >>   
-> > >> > CAP_BPF allows the following BPF operations:
-> > >> > - Loading all types of BPF programs
-> > >> > - Creating all types of BPF maps except:
-> > >> >    - stackmap that needs CAP_TRACING
-> > >> >    - devmap that needs CAP_NET_ADMIN
-> > >> >    - cpumap that needs CAP_SYS_ADMIN  
-> > >> 
-> > >> Why CAP_SYS_ADMIN instead of CAP_NET_ADMIN for cpumap?  
-> > >
-> > > Currently it's cap_sys_admin and I think it should stay this way
-> > > because it creates kthreads.  
-> > 
-> > Ah, right. I can sorta see that makes sense because of the kthreads, but
-> > it also means that you can use all of XDP *except* cpumap with
-> > CAP_NET_ADMIN+CAP_BPF. That is bound to create confusion, isn't it?
->  
-> Hmm... I see 'cpumap' primarily as a network stack feature.  It is about
-> starting the network stack on a specific CPU, allocating and building
-> SKBs on that remote CPU.  It can only be used together with XDP_REDIRECT.
-> I would prefer CAP_NET_ADMIN like the devmap, to keep the XDP
-> capabilities consistent.
+This makes two major semantic changes to Linux's random APIs:
 
-I don't mind relaxing cpumap to cap_net_admin.
-Looking at the reaction to the rest of the set. I'd rather discuss it
-and do it later after basic cap_bpf is in.
+It adds getentropy(..., GRND_INSECURE).  This causes getentropy to
+always return *something*.  There is no guarantee whatsoever that
+the result will be cryptographically random or even unique, but the
+kernel will give the best quality random output it can.  The name is
+a big hint: the resulting output is INSECURE.
+
+The purpose of this is to allow programs that genuinely want
+best-effort entropy to get it without resorting to /dev/urandom.
+Plenty of programs do this because they need to do *something*
+during boot and they can't afford to wait.  Calling it "INSECURE" is
+probably the best we can do to discourage using this API for things
+that need security.
+
+This series also removes the blocking pool and makes /dev/random
+work just like getentropy(..., 0) and makes GRND_RANDOM a no-op.  I
+believe that Linux's blocking pool has outlived its usefulness.
+Linux's CRNG generates output that is good enough to use even for
+key generation.  The blocking pool is not stronger in any material
+way, and keeping it around requires a lot of infrastructure of
+dubious value.
+
+This series should not break any existing programs.  /dev/urandom is
+unchanged.  /dev/random will still block just after booting, but it
+will block less than it used to.  getentropy() with existing flags
+will return output that is, for practical purposes, just as strong
+as before.
+
+Andy Lutomirski (7):
+  random: Don't wake crng_init_wait when crng_init == 1
+  random: Add GRND_INSECURE to return best-effort non-cryptographic
+    bytes
+  random: Ignore GRND_RANDOM in getentropy(2)
+  random: Make /dev/random be almost like /dev/urandom
+  random: Remove the blocking pool
+  random: Delete code to pull data into pools
+  random: Remove kernel.random.read_wakeup_threshold
+
+ drivers/char/random.c       | 234 ++++--------------------------------
+ include/uapi/linux/random.h |   4 +-
+ 2 files changed, 27 insertions(+), 211 deletions(-)
+
+-- 
+2.21.0
