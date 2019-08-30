@@ -1,37 +1,79 @@
-From: Nicolas Dichtel <nicolas.dichtel@6wind.com>
-Subject: Re: [PATCH v2 bpf-next 2/3] bpf: implement CAP_BPF
-Date: Fri, 30 Aug 2019 17:19:02 +0200
-Message-ID: <59ac111e-7ce7-5e00-32c9-9b55482fe701@6wind.com>
-References: <20190829051253.1927291-1-ast@kernel.org>
- <20190829051253.1927291-2-ast@kernel.org>
- <ed8796f5-eaea-c87d-ddd9-9d624059e5ee@iogearbox.net>
- <20190829173034.up5g74onaekp53zd@ast-mbp.dhcp.thefacebook.com>
-Reply-To: nicolas.dichtel@6wind.com
+From: Stephen Smalley <sds@tycho.nsa.gov>
+Subject: Re: [PATCH 10/11] selinux: Implement the watch_key security hook [ver
+ #7]
+Date: Fri, 30 Aug 2019 11:41:16 -0400
+Message-ID: <87de7cc1-435e-1b56-afec-bc041c193317@tycho.nsa.gov>
+References: <21eb33e8-5624-0124-8690-bbea41a1b589@tycho.nsa.gov>
+ <156717343223.2204.15875738850129174524.stgit@warthog.procyon.org.uk>
+ <156717352079.2204.16378075382991665807.stgit@warthog.procyon.org.uk>
+ <13308.1567176090@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20190829173034.up5g74onaekp53zd@ast-mbp.dhcp.thefacebook.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <13308.1567176090@warthog.procyon.org.uk>
 Content-Language: en-US
-Sender: netdev-owner@vger.kernel.org
-To: Alexei Starovoitov <alexei.starovoitov@gmail.com>, Daniel Borkmann <daniel@iogearbox.net>
-Cc: Alexei Starovoitov <ast@kernel.org>, luto@amacapital.net, davem@davemloft.net, peterz@infradead.org, rostedt@goodmis.org, netdev@vger.kernel.org, bpf@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
+To: David Howells <dhowells@redhat.com>
+Cc: viro@zeniv.linux.org.uk, Casey Schaufler <casey@schaufler-ca.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Le 29/08/2019 à 19:30, Alexei Starovoitov a écrit :
-[snip]
-> These are the links that showing that k8 can delegates caps.
-> Are you saying that you know of folks who specifically
-> delegate cap_sys_admin and cap_net_admin _only_ to a container to run bpf in there?
+On 8/30/19 10:41 AM, David Howells wrote:
+> How about the attached instead, then?
+
+Works for me.
+
 > 
-Yes, we need cap_sys_admin only to load bpf:
-tc filter add dev eth0 ingress matchall action bpf obj ./tc_test_kern.o sec test
+> David
+> ---
+> commit 00444a695b35c602230ac2cabb4f1d7e94e3966d
+> Author: David Howells <dhowells@redhat.com>
+> Date:   Thu Aug 29 17:01:34 2019 +0100
+> 
+>      selinux: Implement the watch_key security hook
+>      
+>      Implement the watch_key security hook to make sure that a key grants the
+>      caller View permission in order to set a watch on a key.
+>      
+>      For the moment, the watch_devices security hook is left unimplemented as
+>      it's not obvious what the object should be since the queue is global and
+>      didn't previously exist.
+>      
+>      Signed-off-by: David Howells <dhowells@redhat.com>
 
-I'm not sure to understand why cap_net_admin is not enough to run the previous
-command (ie why load is forbidden).
+Acked-by: Stephen Smalley <sds@tycho.nsa.gov>
 
-I want to avoid sys_admin, thus cap_bpf will be ok. But we need to manage the
-backward compatibility.
-
-Regards,
-Nicolas
+> 
+> diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
+> index 74dd46de01b6..88df06969bed 100644
+> --- a/security/selinux/hooks.c
+> +++ b/security/selinux/hooks.c
+> @@ -6533,6 +6533,17 @@ static int selinux_key_getsecurity(struct key *key, char **_buffer)
+>   	*_buffer = context;
+>   	return rc;
+>   }
+> +
+> +#ifdef CONFIG_KEY_NOTIFICATIONS
+> +static int selinux_watch_key(struct key *key)
+> +{
+> +	struct key_security_struct *ksec = key->security;
+> +	u32 sid = current_sid();
+> +
+> +	return avc_has_perm(&selinux_state,
+> +			    sid, ksec->sid, SECCLASS_KEY, KEY_NEED_VIEW, NULL);
+> +}
+> +#endif
+>   #endif
+>   
+>   #ifdef CONFIG_SECURITY_INFINIBAND
+> @@ -6965,6 +6976,9 @@ static struct security_hook_list selinux_hooks[] __lsm_ro_after_init = {
+>   	LSM_HOOK_INIT(key_free, selinux_key_free),
+>   	LSM_HOOK_INIT(key_permission, selinux_key_permission),
+>   	LSM_HOOK_INIT(key_getsecurity, selinux_key_getsecurity),
+> +#ifdef CONFIG_KEY_NOTIFICATIONS
+> +	LSM_HOOK_INIT(watch_key, selinux_watch_key),
+> +#endif
+>   #endif
+>   
+>   #ifdef CONFIG_AUDIT
+> 
