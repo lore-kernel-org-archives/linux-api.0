@@ -1,64 +1,72 @@
 From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH v14 1/6] sched/core: uclamp: Extend CPU's cgroup
- controller
-Date: Fri, 30 Aug 2019 11:45:05 +0200
-Message-ID: <20190830094505.GA2369@hirez.programming.kicks-ass.net>
+Subject: Re: [PATCH v14 5/6] sched/core: uclamp: Update CPU's refcount on
+ TG's clamp changes
+Date: Fri, 30 Aug 2019 11:48:34 +0200
+Message-ID: <20190830094834.GB2369@hirez.programming.kicks-ass.net>
 References: <20190822132811.31294-1-patrick.bellasi@arm.com>
- <20190822132811.31294-2-patrick.bellasi@arm.com>
+ <20190822132811.31294-6-patrick.bellasi@arm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190822132811.31294-2-patrick.bellasi@arm.com>
+In-Reply-To: <20190822132811.31294-6-patrick.bellasi@arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Patrick Bellasi <patrick.bellasi@arm.com>
 Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, cgroups@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Michal Koutny <mkoutny@suse.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>, Alessio Balsini <balsini@android.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Aug 22, 2019 at 02:28:06PM +0100, Patrick Bellasi wrote:
-> +#define _POW10(exp) ((unsigned int)1e##exp)
-> +#define POW10(exp) _POW10(exp)
+On Thu, Aug 22, 2019 at 02:28:10PM +0100, Patrick Bellasi wrote:
 
-What is this magic? You're forcing a float literal into an integer.
-Surely that deserves a comment!
-
-> +struct uclamp_request {
-> +#define UCLAMP_PERCENT_SHIFT	2
-> +#define UCLAMP_PERCENT_SCALE	(100 * POW10(UCLAMP_PERCENT_SHIFT))
-> +	s64 percent;
-> +	u64 util;
-> +	int ret;
-> +};
-> +
-> +static inline struct uclamp_request
-> +capacity_from_percent(char *buf)
+> diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+> index 04fc161e4dbe..fc2dc86a2abe 100644
+> --- a/kernel/sched/core.c
+> +++ b/kernel/sched/core.c
+> @@ -1043,6 +1043,57 @@ static inline void uclamp_rq_dec(struct rq *rq, struct task_struct *p)
+>  		uclamp_rq_dec_id(rq, p, clamp_id);
+>  }
+>  
+> +static inline void
+> +uclamp_update_active(struct task_struct *p, unsigned int clamp_id)
 > +{
-> +	struct uclamp_request req = {
-> +		.percent = UCLAMP_PERCENT_SCALE,
-> +		.util = SCHED_CAPACITY_SCALE,
-> +		.ret = 0,
-> +	};
+> +	struct rq_flags rf;
+> +	struct rq *rq;
 > +
-> +	buf = strim(buf);
-> +	if (strncmp("max", buf, 4)) {
+> +	/*
+> +	 * Lock the task and the rq where the task is (or was) queued.
+> +	 *
+> +	 * We might lock the (previous) rq of a !RUNNABLE task, but that's the
+> +	 * price to pay to safely serialize util_{min,max} updates with
+> +	 * enqueues, dequeues and migration operations.
+> +	 * This is the same locking schema used by __set_cpus_allowed_ptr().
+> +	 */
+> +	rq = task_rq_lock(p, &rf);
 
-That is either a bug, and you meant to write: strncmp(buf, "max", 3), or
-it is not, and then you could've written: strcmp(buf, "max")
+Since modifying cgroup parameters is priv only, this should be OK I
+suppose. Priv can already DoS the system anyway.
 
-But as written it doesn't make sense.
-
-> +		req.ret = cgroup_parse_float(buf, UCLAMP_PERCENT_SHIFT,
-> +					     &req.percent);
-> +		if (req.ret)
-> +			return req;
-> +		if (req.percent > UCLAMP_PERCENT_SCALE) {
-> +			req.ret = -ERANGE;
-> +			return req;
-> +		}
+> +	/*
+> +	 * Setting the clamp bucket is serialized by task_rq_lock().
+> +	 * If the task is not yet RUNNABLE and its task_struct is not
+> +	 * affecting a valid clamp bucket, the next time it's enqueued,
+> +	 * it will already see the updated clamp bucket value.
+> +	 */
+> +	if (!p->uclamp[clamp_id].active)
+> +		goto done;
 > +
-> +		req.util = req.percent << SCHED_CAPACITY_SHIFT;
-> +		req.util = DIV_ROUND_CLOSEST_ULL(req.util, UCLAMP_PERCENT_SCALE);
-> +	}
+> +	uclamp_rq_dec_id(rq, p, clamp_id);
+> +	uclamp_rq_inc_id(rq, p, clamp_id);
 > +
-> +	return req;
+> +done:
+
+I'm thinking that:
+
+	if (p->uclamp[clamp_id].active) {
+		uclamp_rq_dec_id(rq, p, clamp_id);
+		uclamp_rq_inc_id(rq, p, clamp_id);
+	}
+
+was too obvious? ;-)
+
+> +
+> +	task_rq_unlock(rq, p, &rf);
 > +}
