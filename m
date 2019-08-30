@@ -1,83 +1,66 @@
 From: David Howells <dhowells@redhat.com>
-Subject: watch_devices(2) manpage
-Date: Fri, 30 Aug 2019 15:15:49 +0100
-Message-ID: <4596.1567174549@warthog.procyon.org.uk>
+Subject: keyctl_watch_key.3 manpage
+Date: Fri, 30 Aug 2019 15:16:32 +0100
+Message-ID: <4677.1567174592@warthog.procyon.org.uk>
 References: <156717343223.2204.15875738850129174524.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <156717343223.2204.15875738850129174524.stgit@warthog.procyon.org.uk>
-Content-ID: <4595.1567174549.1@warthog.procyon.org.uk>
+Content-ID: <4676.1567174592.1@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
 To: viro@zeniv.linux.org.uk
 Cc: dhowells@redhat.com, Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-'\" t
-.\" Copyright (c) 2019 David Howells <dhowells@redhat.com>
 .\"
-.\" %%%LICENSE_START(VERBATIM)
-.\" Permission is granted to make and distribute verbatim copies of this
-.\" manual provided the copyright notice and this permission notice are
-.\" preserved on all copies.
+.\" Copyright (C) 2019 Red Hat, Inc. All Rights Reserved.
+.\" Written by David Howells (dhowells@redhat.com)
 .\"
-.\" Permission is granted to copy and distribute modified versions of this
-.\" manual under the conditions for verbatim copying, provided that the
-.\" entire resulting derived work is distributed under the terms of a
-.\" permission notice identical to this one.
+.\" This program is free software; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License
+.\" as published by the Free Software Foundation; either version
+.\" 2 of the License, or (at your option) any later version.
 .\"
-.\" Since the Linux kernel and libraries are constantly changing, this
-.\" manual page may be incorrect or out-of-date.  The author(s) assume no
-.\" responsibility for errors or omissions, or for damages resulting from
-.\" the use of the information contained herein.  The author(s) may not
-.\" have taken the same level of care in the production of this manual,
-.\" which is licensed free of charge, as they might when working
-.\" professionally.
-.\"
-.\" Formatted or processed versions of this manual, if unaccompanied by
-.\" the source, must acknowledge the copyright and authors of this work.
-.\" %%%LICENSE_END
-.\"
-.TH WATCH_DEVICES 2 2019-08-29 "Linux" "Linux Programmer's Manual"
+.TH KEYCTL_GRANT_PERMISSION 3 "28 Aug 2019" Linux "Linux Key Management Calls"
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .SH NAME
-watch_devices \- Watch for global device notifications
+keyctl_watch_key \- Watch for changes to a key
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .SH SYNOPSIS
 .nf
-.B #include <linux/watch_queue.h>
-.br
-.B #include <unistd.h>
-.br
-.BI "int watch_devices(int " watch_fd ", int " watch_id ", unsigned int " flags );
-.fi
-.PP
-.IR Note :
-There are no glibc wrappers for these system calls.
+.B #include <keyutils.h>
+.sp
+.BI "long keyctl_watch_key(key_serial_t " key ,
+.BI "                      int " watch_queue_fd
+.BI "                      int " watch_id ");"
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .SH DESCRIPTION
+.BR keyctl_watch_key ()
+sets or removes a watch on
+.IR key .
 .PP
-.BR watch_devices ()
-attaches a watch on the global device notification source to a previously
-opened and configured watch queue.  See
-.BR watch_queue (7)
-for more information on how to set up and use those.
+.I watch_id
+specifies the ID for a watch that will be included in notification messages.
+It can be between 0 and 255 to add a key; it should be -1 to remove a key.
 .PP
-The global device notification source is provided with events from a number of
-sources, including block device errors and USB events.  Each notification type
-has a specific format.
-
+.I watch_queue_fd
+is a file descriptor attached to a watch_queue device instance.  Multiple
+openings of a device provide separate instances.  Each device instance can
+only have one watch on any particular key.
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-.SS Block Device Notifications
-Events on block devices, such as I/O errors are posted to any watching queues.
-The message format is:
+.SS Notification Record
+.PP
+Key-specific notification messages that the kernel emits into the buffer have
+the following format:
 .PP
 .in +4n
 .EX
-struct block_notification {
+struct key_notification {
 	struct watch_notification watch;
-	__u64	dev;
-	__u64	sector;
+	__u32	key_id;
+	__u32	aux;
 };
 .EE
 .in
@@ -85,56 +68,81 @@ struct block_notification {
 The
 .I watch.type
 field will be set to
-.BR WATCH_TYPE_BLOCK_NOTIFY ,
-the
+.B WATCH_TYPE_KEY_NOTIFY
+and the
 .I watch.subtype
-field will contain a constant that indicates the particular event that occurred
-and the watch_id passed to watch_devices() will be placed in
+field will contain one of the following constants, indicating the event that
+occurred and the watch_id passed to keyctl_watch_key() will be placed in
 .I watch.info
-in the ID field.
-.PP
-.I dev
-will contain the major and minor device numbers in
-.B dev_t
-form and
-.I sector
-will contain the first sector the notification pertains to.
-.PP
-The following events are defined:
-.PP
-.in +4n
-.TS
-lB l.
-NOTIFY_BLOCK_ERROR_TIMEOUT
-NOTIFY_BLOCK_ERROR_NO_SPACE
-NOTIFY_BLOCK_ERROR_RECOVERABLE_TRANSPORT
-NOTIFY_BLOCK_ERROR_CRITICAL_TARGET
-NOTIFY_BLOCK_ERROR_CRITICAL_NEXUS
-NOTIFY_BLOCK_ERROR_CRITICAL_MEDIUM
-NOTIFY_BLOCK_ERROR_PROTECTION
-NOTIFY_BLOCK_ERROR_KERNEL_RESOURCE
-NOTIFY_BLOCK_ERROR_DEVICE_RESOURCE
-NOTIFY_BLOCK_ERROR_IO
-.TE
-.in
-.PP
-All of which indicate error conditions.
-
+in the ID field.  The following events are defined:
+.TP
+.B NOTIFY_KEY_INSTANTIATED
+This indicates that a watched key got instantiated or negatively instantiated.
+.I key_id
+indicates the key that was instantiated and
+.I aux
+is unused.
+.TP
+.B NOTIFY_KEY_UPDATED
+This indicates that a watched key got updated or instantiated by update.
+.I key_id
+indicates the key that was updated and
+.I aux
+is unused.
+.TP
+.B NOTIFY_KEY_LINKED
+This indicates that a key got linked into a watched keyring.
+.I key_id
+indicates the keyring that was modified
+.I aux
+indicates the key that was added.
+.TP
+.B NOTIFY_KEY_UNLINKED
+This indicates that a key got unlinked from a watched keyring.
+.I key_id
+indicates the keyring that was modified
+.I aux
+indicates the key that was removed.
+.TP
+.B NOTIFY_KEY_CLEARED
+This indicates that a watched keyring got cleared.
+.I key_id
+indicates the keyring that was cleared and
+.I aux
+is unused.
+.TP
+.B NOTIFY_KEY_REVOKED
+This indicates that a watched key got revoked.
+.I key_id
+indicates the key that was revoked and
+.I aux
+is unused.
+.TP
+.B NOTIFY_KEY_INVALIDATED
+This indicates that a watched key got invalidated.
+.I key_id
+indicates the key that was invalidated and
+.I aux
+is unused.
+.TP
+.B NOTIFY_KEY_SETATTR
+This indicates that a watched key had its attributes (owner, group,
+permissions, timeout) modified.
+.I key_id
+indicates the key that was modified and
+.I aux
+is unused.
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-.SS USB Device Notifications
-Events on USB devices, such as I/O errors are posted to any watching queues.
-The message format is:
+.SS Removal Notification
+When a watched key is garbage collected, all of its watches are automatically
+destroyed and a notification is delivered to each watcher.  This will normally
+be an extended notification of the form:
 .PP
 .in +4n
 .EX
-struct usb_notification {
-        struct watch_notification watch;
-        __u32   error;
-        __u32   reserved;
-        __u8    name_len;
-        __u8    name[0];
+struct watch_notification_removal {
+	struct watch_notification watch;
+	__u64	id;
 };
 .EE
 .in
@@ -142,92 +150,73 @@ struct usb_notification {
 The
 .I watch.type
 field will be set to
-.BR WATCH_TYPE_USB_NOTIFY ,
-the
+.B WATCH_TYPE_META
+and the
 .I watch.subtype
-field will contain a constant that indicates the particular event that occurred
-and the watch_id passed to watch_devices() will be placed in
+field will contain
+.BR WATCH_META_REMOVAL_NOTIFICATION .
+If the extended notification is given, then the length will be 2 units,
+otherwise it will be 1 and only the header will be present.
+.PP
+The watch_id passed to
+.IR keyctl_watch_key ()
+will be placed in
 .I watch.info
 in the ID field.
 .PP
-.IR name " and " name_len
-indicates the textual name of the USB device that originated the notification.
-The name will be truncated to
-.B USB_NOTIFICATION_MAX_NAME_LEN
-if it is longer than that.
+If the extension is present,
+.I id
+will be set to the ID of the destroyed key.
 .PP
-The following subtypes are currently defined:
-.TP
-.B NOTIFY_USB_DEVICE_ADD
-A new USB device has been plugged in.
-.TP
-.B NOTIFY_USB_DEVICE_REMOVE
-A USB device has been unplugged.
-.TP
-.B NOTIFY_USB_BUS_ADD
-A new USB bus is now available.
-.TP
-.B NOTIFY_USB_BUS_REMOVE
-A USB bus has been removed.
-.TP
-.B NOTIFY_USB_DEVICE_RESET
-A USB device has been reset.
-.TP
-.B NOTIFY_USB_DEVICE_ERROR
-A USB device has generated an error; a suitable error code will have been
-placed in
-.IR error .
-
-
-.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .SH RETURN VALUE
-On success, the function returns 0.  On error, \-1 is returned, and
+On success
+.BR keyctl_watch_key ()
+returns
+.B 0 .
+On error, the value
+.B -1
+will be returned and
 .I errno
-is set appropriately.
+will have been set to an appropriate error.
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .SH ERRORS
-The following errors may be returned:
 .TP
-.B EBADF
-.I watch_fd
-is an invalid file descriptor.
+.B ENOKEY
+The specified key does not exist.
 .TP
-.B EBADSLT
-The watch does not exist and so cannot be removed.
+.B EKEYEXPIRED
+The specified key has expired.
+.TP
+.B EKEYREVOKED
+The specified key has been revoked.
+.TP
+.B EACCES
+The named key exists, but does not grant
+.B view
+permission to the calling process.
 .TP
 .B EBUSY
-The source is already attached to the watch device instance specified by
-.I watch_fd
-and so cannot be added.
+The specified key already has a watch on it for that device instance (add
+only).
 .TP
-.B EINVAL
-.I watch_fd
-does not refer to a watch_queue device file.
-.TP
-.B EINVAL
-.IR watch_fd " or " watch_id
-is out of range.
-.TP
-.B EINVAL
-Unsupported
-.I flags
-set.
-.TP
-.B ENOMEM
-Insufficient memory available to allocate a watch record.
-.TP
-.B EPERM
-The caller does not have the required privileges.
-.SH CONFORMING TO
-These functions are Linux-specific and should not be used in programs intended
-to be portable.
-.SH VERSIONS
-The notification queue driver first appeared in v??? of the Linux kernel.
-.SH NOTES
-Glibc does not (yet) provide a wrapper for the
-.BR watch_devices "()"
-system call; call it using
-.BR syscall (2).
+.B EBADSLT
+The specified key doesn't have a watch on it (removal only).
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.SH LINKING
+This is a library function that can be found in
+.IR libkeyutils .
+When linking,
+.B \-lkeyutils
+should be specified to the linker.
+.\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .SH SEE ALSO
-.BR watch_queue (7)
+.ad l
+.nh
+.BR keyctl (1),
+.BR add_key (2),
+.BR keyctl (2),
+.BR request_key (2),
+.BR keyctl (3),
+.BR keyrings (7),
+.BR keyutils (7)
