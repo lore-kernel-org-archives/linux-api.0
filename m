@@ -1,8 +1,8 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [PATCH 02/11] security: Add hooks to rule on setting a watch [ver
- #7]
-Date: Fri, 30 Aug 2019 14:57:30 +0100
-Message-ID: <156717345053.2204.2379669144728869813.stgit@warthog.procyon.org.uk>
+Subject: [PATCH 03/11] security: Add a hook for the point of notification
+ insertion [ver #7]
+Date: Fri, 30 Aug 2019 14:57:39 +0100
+Message-ID: <156717345929.2204.8865868667476300227.stgit@warthog.procyon.org.uk>
 References: <156717343223.2204.15875738850129174524.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -14,9 +14,17 @@ To: viro@zeniv.linux.org.uk
 Cc: dhowells@redhat.com, Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>dhowells@redhat.com, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.orglinux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Add security hooks that will allow an LSM to rule on whether or not a watch
-may be set.  More than one hook is required as the watches watch different
-types of object.
+Add a security hook that allows an LSM to rule on whether a notification
+message is allowed to be inserted into a particular watch queue.
+
+The hook is given the following information:
+
+ (1) The credentials of the triggerer (which may be init_cred for a system
+     notification, eg. a hardware error).
+
+ (2) The credentials of the whoever set the watch.
+
+ (3) The notification message.
 
 Signed-off-by: David Howells <dhowells@redhat.com>
 cc: Casey Schaufler <casey@schaufler-ca.com>
@@ -24,110 +32,104 @@ cc: Stephen Smalley <sds@tycho.nsa.gov>
 cc: linux-security-module@vger.kernel.org
 ---
 
- include/linux/lsm_hooks.h |   24 ++++++++++++++++++++++++
- include/linux/security.h  |   17 +++++++++++++++++
- security/security.c       |   14 ++++++++++++++
- 3 files changed, 55 insertions(+)
+ include/linux/lsm_hooks.h |   14 ++++++++++++++
+ include/linux/security.h  |   15 ++++++++++++++-
+ security/security.c       |    9 +++++++++
+ 3 files changed, 37 insertions(+), 1 deletion(-)
 
 diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
-index df1318d85f7d..b0cdefcda4e6 100644
+index b0cdefcda4e6..257d803dcf6f 100644
 --- a/include/linux/lsm_hooks.h
 +++ b/include/linux/lsm_hooks.h
-@@ -1413,6 +1413,18 @@
-  *	@ctx is a pointer in which to place the allocated security context.
-  *	@ctxlen points to the place to put the length of @ctx.
+@@ -1424,6 +1424,12 @@
+  *	Check to see if a process is allowed to watch for event notifications
+  *	from devices (as a global set).
   *
-+ * Security hooks for the general notification queue:
-+ *
-+ * @watch_key:
-+ *	Check to see if a process is allowed to watch for event notifications
-+ *	from a key or keyring.
-+ *	@key: The key to watch.
-+ *
-+ * @watch_devices:
-+ *	Check to see if a process is allowed to watch for event notifications
-+ *	from devices (as a global set).
-+ *
-+ *
++ * @post_notification:
++ *	Check to see if a watch notification can be posted to a particular
++ *	queue.
++ *	@w_cred: The credentials of the whoever set the watch.
++ *	@cred: The event-triggerer's credentials
++ *	@n: The notification being posted
+  *
   * Security hooks for using the eBPF maps and programs functionalities through
   * eBPF syscalls.
-  *
-@@ -1688,6 +1700,12 @@ union security_list_options {
- 	int (*inode_notifysecctx)(struct inode *inode, void *ctx, u32 ctxlen);
- 	int (*inode_setsecctx)(struct dentry *dentry, void *ctx, u32 ctxlen);
- 	int (*inode_getsecctx)(struct inode *inode, void **ctx, u32 *ctxlen);
-+#ifdef CONFIG_KEY_NOTIFICATIONS
-+	int (*watch_key)(struct key *key);
-+#endif
-+#ifdef CONFIG_DEVICE_NOTIFICATIONS
-+	int (*watch_devices)(void);
+@@ -1706,6 +1712,11 @@ union security_list_options {
+ #ifdef CONFIG_DEVICE_NOTIFICATIONS
+ 	int (*watch_devices)(void);
+ #endif
++#ifdef CONFIG_WATCH_QUEUE
++	int (*post_notification)(const struct cred *w_cred,
++				 const struct cred *cred,
++				 struct watch_notification *n);
 +#endif
  
  #ifdef CONFIG_SECURITY_NETWORK
  	int (*unix_stream_connect)(struct sock *sock, struct sock *other,
-@@ -1964,6 +1982,12 @@ struct security_hook_heads {
- 	struct hlist_head inode_notifysecctx;
- 	struct hlist_head inode_setsecctx;
- 	struct hlist_head inode_getsecctx;
-+#ifdef CONFIG_KEY_NOTIFICATIONS
-+	struct hlist_head watch_key;
-+#endif
-+#ifdef CONFIG_DEVICE_NOTIFICATIONS
-+	struct hlist_head watch_devices;
-+#endif
+@@ -1988,6 +1999,9 @@ struct security_hook_heads {
+ #ifdef CONFIG_DEVICE_NOTIFICATIONS
+ 	struct hlist_head watch_devices;
+ #endif
++#ifdef CONFIG_WATCH_QUEUE
++	struct hlist_head post_notification;
++#endif /* CONFIG_WATCH_QUEUE */
  #ifdef CONFIG_SECURITY_NETWORK
  	struct hlist_head unix_stream_connect;
  	struct hlist_head unix_may_send;
 diff --git a/include/linux/security.h b/include/linux/security.h
-index 5f7441abbf42..3be44354d308 100644
+index 3be44354d308..24c54b9ff0a1 100644
 --- a/include/linux/security.h
 +++ b/include/linux/security.h
-@@ -1206,6 +1206,23 @@ static inline int security_inode_getsecctx(struct inode *inode, void **ctx, u32
- }
- #endif	/* CONFIG_SECURITY */
+@@ -57,6 +57,8 @@ struct mm_struct;
+ struct fs_context;
+ struct fs_parameter;
+ enum fs_value_type;
++struct watch;
++struct watch_notification;
  
-+#if defined(CONFIG_SECURITY) && defined(CONFIG_KEY_NOTIFICATIONS)
-+int security_watch_key(struct key *key);
+ /* Default (no) options for the capable function */
+ #define CAP_OPT_NONE 0x0
+@@ -1222,6 +1224,18 @@ static inline int security_watch_devices(void)
+ 	return 0;
+ }
+ #endif
++#if defined(CONFIG_SECURITY) && defined(CONFIG_WATCH_QUEUE)
++int security_post_notification(const struct cred *w_cred,
++			       const struct cred *cred,
++			       struct watch_notification *n);
 +#else
-+static inline int security_watch_key(struct key *key)
++static inline int security_post_notification(const struct cred *w_cred,
++					     const struct cred *cred,
++					     struct watch_notification *n)
 +{
 +	return 0;
 +}
 +#endif
-+#if defined(CONFIG_SECURITY) && defined(CONFIG_DEVICE_NOTIFICATIONS)
-+int security_watch_devices(void);
-+#else
-+static inline int security_watch_devices(void)
-+{
-+	return 0;
-+}
-+#endif
-+
+ 
  #ifdef CONFIG_SECURITY_NETWORK
  
- int security_unix_stream_connect(struct sock *sock, struct sock *other, struct sock *newsk);
+@@ -1847,4 +1861,3 @@ static inline void security_bpf_prog_free(struct bpf_prog_aux *aux)
+ #endif /* CONFIG_BPF_SYSCALL */
+ 
+ #endif /* ! __LINUX_SECURITY_H */
+-
 diff --git a/security/security.c b/security/security.c
-index 250ee2d76406..007eb48bc848 100644
+index 007eb48bc848..b719c5a5b2ba 100644
 --- a/security/security.c
 +++ b/security/security.c
-@@ -1916,6 +1916,20 @@ int security_inode_getsecctx(struct inode *inode, void **ctx, u32 *ctxlen)
+@@ -1916,6 +1916,15 @@ int security_inode_getsecctx(struct inode *inode, void **ctx, u32 *ctxlen)
  }
  EXPORT_SYMBOL(security_inode_getsecctx);
  
-+#ifdef CONFIG_KEY_NOTIFICATIONS
-+int security_watch_key(struct key *key)
++#ifdef CONFIG_WATCH_QUEUE
++int security_post_notification(const struct cred *w_cred,
++			       const struct cred *cred,
++			       struct watch_notification *n)
 +{
-+	return call_int_hook(watch_key, 0, key);
++	return call_int_hook(post_notification, 0, w_cred, cred, n);
 +}
-+#endif
++#endif /* CONFIG_WATCH_QUEUE */
 +
-+#ifdef CONFIG_DEVICE_NOTIFICATIONS
-+int security_watch_devices(void)
-+{
-+	return call_int_hook(watch_devices, 0);
-+}
-+#endif
-+
- #ifdef CONFIG_SECURITY_NETWORK
- 
- int security_unix_stream_connect(struct sock *sock, struct sock *other, struct sock *newsk)
+ #ifdef CONFIG_KEY_NOTIFICATIONS
+ int security_watch_key(struct key *key)
+ {
