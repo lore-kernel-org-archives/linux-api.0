@@ -1,88 +1,87 @@
-From: Song Liu <songliubraving@fb.com>
-Subject: Re: [PATCH v2 bpf-next 2/3] bpf: implement CAP_BPF
-Date: Thu, 29 Aug 2019 06:04:42 +0000
-Message-ID: <B28631A9-BB92-404A-BD58-7A737BCF10C9@fb.com>
-References: <20190829051253.1927291-1-ast@kernel.org>
- <20190829051253.1927291-2-ast@kernel.org>
+From: Patrick Bellasi <patrick.bellasi@arm.com>
+Subject: Re: [PATCH v14 1/6] sched/core: uclamp: Extend CPU's cgroup controller
+Date: Mon, 02 Sep 2019 07:38:53 +0100
+Message-ID: <87zhjnnqz2.fsf@arm.com>
+References: <20190822132811.31294-1-patrick.bellasi@arm.com> <20190822132811.31294-2-patrick.bellasi@arm.com> <20190830094505.GA2369@hirez.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20190829051253.1927291-2-ast@kernel.org>
-Content-Language: en-US
-Content-ID: <71D458617FE4954DA46A61851BAB0604@namprd15.prod.outlook.com>
-Sender: netdev-owner@vger.kernel.org
-To: Alexei Starovoitov <ast@kernel.org>
-Cc: Andy Lutomirski <luto@amacapital.net>, "davem@davemloft.net" <davem@davemloft.net>, "peterz@infradead.org" <peterz@infradead.org>, "rostedt@goodmis.org" <rostedt@goodmis.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "bpf@vger.kernel.org" <bpf@vger.kernel.org>, Kernel Team <Kernel-team@fb.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-reply-to: <20190830094505.GA2369@hirez.programming.kicks-ass.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: linux-kernel@vger.kernel.org, linux-pm@vger.kernel.org, linux-api@vger.kernel.org, cgroups@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Tejun Heo <tj@kernel.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Paul Turner <pjt@google.com>, Michal Koutny <mkoutny@suse.com>, Quentin Perret <quentin.perret@arm.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Juri Lelli <juri.lelli@redhat.com>, Todd Kjos <tkjos@google.com>, Joel Fernandes <joelaf@google.com>, Steve Muckle <smuckle@google.com>, Suren Baghdasaryan <surenb@google.com>, Alessio Balsini <balsini@android.com>
 List-Id: linux-api@vger.kernel.org
 
 
+On Fri, Aug 30, 2019 at 09:45:05 +0000, Peter Zijlstra wrote...
 
-> On Aug 28, 2019, at 10:12 PM, Alexei Starovoitov <ast@kernel.org> wrote:
->=20
+> On Thu, Aug 22, 2019 at 02:28:06PM +0100, Patrick Bellasi wrote:
+>> +#define _POW10(exp) ((unsigned int)1e##exp)
+>> +#define POW10(exp) _POW10(exp)
+>
+> What is this magic? You're forcing a float literal into an integer.
+> Surely that deserves a comment!
 
-[...]
+Yes, I'm introducing the two constants:
+  UCLAMP_PERCENT_SHIFT,
+  UCLAMP_PERCENT_SCALE
+similar to what we have for CAPACITY. Moreover, I need both 100*100 (for
+the scale) and 100 further down in the code for the: 
 
-> diff --git a/tools/testing/selftests/bpf/test_verifier.c b/tools/testing/=
-selftests/bpf/test_verifier.c
-> index 44e2d640b088..91a7f25512ca 100644
-> --- a/tools/testing/selftests/bpf/test_verifier.c
-> +++ b/tools/testing/selftests/bpf/test_verifier.c
-> @@ -805,10 +805,20 @@ static void do_test_fixup(struct bpf_test *test, en=
-um bpf_prog_type prog_type,
-> 	}
-> }
->=20
-> +struct libcap {
-> +	struct __user_cap_header_struct hdr;
-> +	struct __user_cap_data_struct data[2];
-> +};
-> +
+	percent = div_u64_rem(percent, POW10(UCLAMP_PERCENT_SHIFT), &rem);
 
-I am confused by struct libcap. Why do we need it?=20
+used in cpu_uclamp_print().
 
-> static int set_admin(bool admin)
-> {
-> 	cap_t caps;
-> -	const cap_value_t cap_val =3D CAP_SYS_ADMIN;
-> +	/* need CAP_BPF to load progs and CAP_NET_ADMIN to run networking progs=
-,
-> +	 * and CAP_TRACING to create stackmap
-> +	 */
-> +	const cap_value_t cap_net_admin =3D CAP_NET_ADMIN;
-> +	const cap_value_t cap_sys_admin =3D CAP_SYS_ADMIN;
-> +	struct libcap *cap;
-> 	int ret =3D -1;
->=20
-> 	caps =3D cap_get_proc();
-> @@ -816,11 +826,26 @@ static int set_admin(bool admin)
-> 		perror("cap_get_proc");
-> 		return -1;
-> 	}
-> -	if (cap_set_flag(caps, CAP_EFFECTIVE, 1, &cap_val,
-> +	cap =3D (struct libcap *)caps;
-> +	if (cap_set_flag(caps, CAP_EFFECTIVE, 1, &cap_sys_admin, CAP_CLEAR)) {
-> +		perror("cap_set_flag clear admin");
-> +		goto out;
-> +	}
-> +	if (cap_set_flag(caps, CAP_EFFECTIVE, 1, &cap_net_admin,
-> 				admin ? CAP_SET : CAP_CLEAR)) {
-> -		perror("cap_set_flag");
-> +		perror("cap_set_flag set_or_clear net");
-> 		goto out;
-> 	}
-> +	/* libcap is likely old and simply ignores CAP_BPF and CAP_TRACING,
-> +	 * so update effective bits manually
-> +	 */
-> +	if (admin) {
-> +		cap->data[1].effective |=3D 1 << (38 /* CAP_BPF */ - 32);
-> +		cap->data[1].effective |=3D 1 << (39 /* CAP_TRACING */ - 32);
-> +	} else {
-> +		cap->data[1].effective &=3D ~(1 << (38 - 32));
-> +		cap->data[1].effective &=3D ~(1 << (39 - 32));
-> +	}
+That's why adding a compile time support to compute a 10^N is useful.
 
-And why we do not need cap->data[0]?
+C provides the "1eN" literal, I just convert it to integer and to do
+that at compile time I need a two level macros.
 
-Thanks,
-Song
+What if I add this comment just above the macro definitions:
+
+/*
+ * Integer 10^N with a given N exponent by casting to integer the literal "1eN"
+ * C expression. Since there is no way to convert a macro argument (N) into a
+ * character constant, use two levels of macros.
+ */
+
+is this clear enough?
+
+>
+>> +struct uclamp_request {
+>> +#define UCLAMP_PERCENT_SHIFT	2
+>> +#define UCLAMP_PERCENT_SCALE	(100 * POW10(UCLAMP_PERCENT_SHIFT))
+>> +	s64 percent;
+>> +	u64 util;
+>> +	int ret;
+>> +};
+>> +
+>> +static inline struct uclamp_request
+>> +capacity_from_percent(char *buf)
+>> +{
+>> +	struct uclamp_request req = {
+>> +		.percent = UCLAMP_PERCENT_SCALE,
+>> +		.util = SCHED_CAPACITY_SCALE,
+>> +		.ret = 0,
+>> +	};
+>> +
+>> +	buf = strim(buf);
+>> +	if (strncmp("max", buf, 4)) {
+>
+> That is either a bug, and you meant to write: strncmp(buf, "max", 3),
+> or it is not, and then you could've written: strcmp(buf, "max")
+
+I don't think it's a bug.
+
+The usage of 4 is intentional, to force a '\0' check while using
+strncmp(). Otherwise, strncmp(buf, "max", 3) would accept also strings
+starting by "max", which we don't want.
+
+> But as written it doesn't make sense.
+
+The code is safe but I agree that strcmp() does just the same and it
+does not generate confusion. That's actually a pretty good example
+on how it's not always better to use strncmp() instead of strcmp().
+
+Cheers,
+Patrick
