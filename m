@@ -1,51 +1,74 @@
-From: Yoshihiro Shimoda <yoshihiro.shimoda.uh@renesas.com>
-Subject: RE: [PATCH 06/11] Add a general, global device notification watch
- list [ver #7]
-Date: Tue, 3 Sep 2019 08:34:49 +0000
-Message-ID: <TYAPR01MB454492E48362BED351E797B2D8B90@TYAPR01MB4544.jpnprd01.prod.outlook.com>
-References: <156717343223.2204.15875738850129174524.stgit@warthog.procyon.org.uk>
- <156717348608.2204.16592073177201775472.stgit@warthog.procyon.org.uk>
+From: Michal =?iso-8859-1?Q?Koutn=FD?= <mkoutny@suse.com>
+Subject: Re: [PATCH v14 1/6] sched/core: uclamp: Extend CPU's cgroup
+ controller
+Date: Tue, 3 Sep 2019 10:52:48 +0200
+Message-ID: <20190903085248.GB8756@blackbody.suse.cz>
+References: <20190822132811.31294-1-patrick.bellasi@arm.com>
+ <20190822132811.31294-2-patrick.bellasi@arm.com>
+ <CAJuCfpGWtrg02LNE3PJZag9-LLVT=by2v+9x_tm1PyoXwZ8DqQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="VrqPEDrXMn8OVzN4"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <156717348608.2204.16592073177201775472.stgit@warthog.procyon.org.uk>
-Content-Language: ja-JP
+Content-Disposition: inline
+In-Reply-To: <CAJuCfpGWtrg02LNE3PJZag9-LLVT=by2v+9x_tm1PyoXwZ8DqQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>
-Cc: Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, "nicolas.dichtel@6wind.com" <nicolas.dichtel@6wind.com>, "raven@themaw.net" <raven@themaw.net>, Christian Brauner <christian@brauner.io>, "keyrings@vger.kernel.org" <keyrings@vger.kernel.org>, "linux-usb@vger.kernel.org" <linux-usb@vger.kernel.org>, "linux-security-module@vger.kernel.org" <linux-security-module@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>"linux-security-module@vger.kernel.org" <linux-security-module@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.k>
+To: Suren Baghdasaryan <surenb@google.com>
+Cc: Patrick Bellasi <patrick.bellasi@arm.com>, Alessio Balsini <balsini@android.com>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Morten Rasmussen <morten.rasmussen@arm.com>, Quentin Perret <quentin.perret@arm.com>, Joel Fernandes <joelaf@google.com>, Paul Turner <pjt@google.com>, Steve Muckle <smuckle@google.com>, Todd Kjos <tkjos@google.com>, Peter Zijlstra <peterz@infradead.org>, "Rafael J . Wysocki" <rafael.j.wysocki@intel.com>, Tejun Heo <tj@kernel.org>, Vincent Guittot <vincent.guittot@linaro.org>, Viresh Kumar <viresh.kumar@linaro.org>, Juri Lelli <juri.lelli@redhat.com>, Ingo Molnar <mingo@redhat.com>, cgroups mailinglist <cgroups@vger.kernel.org>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-pm@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-SGksDQoNCj4gRnJvbTogRGF2aWQgSG93ZWxscywgU2VudDogRnJpZGF5LCBBdWd1c3QgMzAsIDIw
-MTkgMTA6NTggUE0NCjxzbmlwPg0KPiAtLS0NCj4gDQo+ICBEb2N1bWVudGF0aW9uL3dhdGNoX3F1
-ZXVlLnJzdCAgICAgICAgICAgICAgIHwgICAyMiArKysrKystDQo+ICBhcmNoL2FscGhhL2tlcm5l
-bC9zeXNjYWxscy9zeXNjYWxsLnRibCAgICAgIHwgICAgMQ0KPiAgYXJjaC9hcm0vdG9vbHMvc3lz
-Y2FsbC50YmwgICAgICAgICAgICAgICAgICB8ICAgIDENCj4gIGFyY2gvaWE2NC9rZXJuZWwvc3lz
-Y2FsbHMvc3lzY2FsbC50YmwgICAgICAgfCAgICAxDQoNCkl0IHNlZW1zIHRvIGxhY2sgbW9kaWZp
-Y2F0aW9uIGZvciBhcmNoL2FybTY0Lg0KDQpJJ20gbm90IHN1cmUgd2hldGhlciB0aGlzIGlzIHJl
-bGF0ZWQsIGJ1dCBteSBlbnZpcm9ubWVudCAoUi1DYXIgSDMgLyByOGE3Nzk1KQ0KY2Fubm90IGJv
-b3Qgb24gbmV4dC0yMDE5MDkwMiB3aGljaCBjb250YWlucyB0aGlzIHBhdGNoLiBJIGZvdW5kIGFu
-IGlzc3VlDQpvbiB0aGUgcGF0Y2ggMDgvMTEsIHNvIEknbGwgcmVwb3J0IG9uIHRoZSBlbWFpbCB0
-aHJlYWQgbGF0ZXIuDQoNCj4gIGFyY2gvbTY4ay9rZXJuZWwvc3lzY2FsbHMvc3lzY2FsbC50Ymwg
-ICAgICAgfCAgICAxDQo+ICBhcmNoL21pY3JvYmxhemUva2VybmVsL3N5c2NhbGxzL3N5c2NhbGwu
-dGJsIHwgICAgMQ0KPiAgYXJjaC9taXBzL2tlcm5lbC9zeXNjYWxscy9zeXNjYWxsX24zMi50Ymwg
-ICB8ICAgIDENCj4gIGFyY2gvbWlwcy9rZXJuZWwvc3lzY2FsbHMvc3lzY2FsbF9uNjQudGJsICAg
-fCAgICAxDQo+ICBhcmNoL21pcHMva2VybmVsL3N5c2NhbGxzL3N5c2NhbGxfbzMyLnRibCAgIHwg
-ICAgMQ0KPiAgYXJjaC9wYXJpc2Mva2VybmVsL3N5c2NhbGxzL3N5c2NhbGwudGJsICAgICB8ICAg
-IDENCj4gIGFyY2gvcG93ZXJwYy9rZXJuZWwvc3lzY2FsbHMvc3lzY2FsbC50YmwgICAgfCAgICAx
-DQo+ICBhcmNoL3MzOTAva2VybmVsL3N5c2NhbGxzL3N5c2NhbGwudGJsICAgICAgIHwgICAgMQ0K
-PiAgYXJjaC9zaC9rZXJuZWwvc3lzY2FsbHMvc3lzY2FsbC50YmwgICAgICAgICB8ICAgIDENCj4g
-IGFyY2gvc3BhcmMva2VybmVsL3N5c2NhbGxzL3N5c2NhbGwudGJsICAgICAgfCAgICAxDQo+ICBh
-cmNoL3g4Ni9lbnRyeS9zeXNjYWxscy9zeXNjYWxsXzMyLnRibCAgICAgIHwgICAgMQ0KPiAgYXJj
-aC94ODYvZW50cnkvc3lzY2FsbHMvc3lzY2FsbF82NC50YmwgICAgICB8ICAgIDENCj4gIGFyY2gv
-eHRlbnNhL2tlcm5lbC9zeXNjYWxscy9zeXNjYWxsLnRibCAgICAgfCAgICAxDQo+ICBkcml2ZXJz
-L2Jhc2UvS2NvbmZpZyAgICAgICAgICAgICAgICAgICAgICAgIHwgICAgOSArKysNCj4gIGRyaXZl
-cnMvYmFzZS9NYWtlZmlsZSAgICAgICAgICAgICAgICAgICAgICAgfCAgICAxDQo+ICBkcml2ZXJz
-L2Jhc2Uvd2F0Y2guYyAgICAgICAgICAgICAgICAgICAgICAgIHwgICA5MCArKysrKysrKysrKysr
-KysrKysrKysrKysrKysNCj4gIGluY2x1ZGUvbGludXgvZGV2aWNlLmggICAgICAgICAgICAgICAg
-ICAgICAgfCAgICA3ICsrDQo+ICBpbmNsdWRlL2xpbnV4L3N5c2NhbGxzLmggICAgICAgICAgICAg
-ICAgICAgIHwgICAgMQ0KPiAgaW5jbHVkZS91YXBpL2FzbS1nZW5lcmljL3VuaXN0ZC5oICAgICAg
-ICAgICB8ICAgIDQgKw0KPiAga2VybmVsL3N5c19uaS5jICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICB8ICAgIDENCj4gIDI0IGZpbGVzIGNoYW5nZWQsIDE0OSBpbnNlcnRpb25zKCspLCAyIGRl
-bGV0aW9ucygtKQ0KPiAgY3JlYXRlIG1vZGUgMTAwNjQ0IGRyaXZlcnMvYmFzZS93YXRjaC5jDQoN
-CkJlc3QgcmVnYXJkcywNCllvc2hpaGlybyBTaGltb2RhDQoNCg==
+
+--VrqPEDrXMn8OVzN4
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+On Mon, Sep 02, 2019 at 04:02:57PM -0700, Suren Baghdasaryan <surenb@google=
+=2Ecom> wrote:
+> > +static inline void cpu_uclamp_print(struct seq_file *sf,
+> > +                                   enum uclamp_id clamp_id)
+> > [...]
+> > +       rcu_read_lock();
+> > +       tg =3D css_tg(seq_css(sf));
+> > +       util_clamp =3D tg->uclamp_req[clamp_id].value;
+> > +       rcu_read_unlock();
+> > +
+> > +       if (util_clamp =3D=3D SCHED_CAPACITY_SCALE) {
+> > +               seq_puts(sf, "max\n");
+> > +               return;
+> > +       }
+> > +
+> > +       percent =3D tg->uclamp_pct[clamp_id];
+>=20
+> You are taking RCU lock when accessing tg->uclamp_req but not when
+> accessing tg->uclamp_pct.
+Good point.
+
+> Is that intentional? Can tg be destroyed under you?
+Actually, the rcu_read{,un}lock should be unnecessary in the context of
+the kernfs file op handler -- the tg/css won't go away as long as its
+kernfs file is being worked with.
+
+
+--VrqPEDrXMn8OVzN4
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEEoQaUCWq8F2Id1tNia1+riC5qSgFAl1uKdYACgkQia1+riC5
+qSjfnQ/7BeUT18FFFi99Yyw3HCELlyDCFeWq85E5tsiLPEIlUV0DWFe5st1TugIz
+RUQBMlHdM4UsgbRX8J//envlsT6aFD4ZMNp9LdYAK/PUMo8b68B63vsBBNLVfCNm
+ayv6/oowRNcbo4c3NQ2V5eiIt/X8V4JWQHRr4IpM+U6DwmWBQ9hpsKH7yXlcHYQv
+px/as6LKBxDtpURI4SUTm8sva7roOi1uixZ25BwPurRDisZlY990IGClMtOsW3S8
+Ik59LppHO1YHee5B+ifFdPvmqvv3QdJVOjQBL050MdLPS6advmVSvmt/GRSr1MAa
+kj7c8reeTo1jlHO9YmT2qqt+vsxfYMJxudnujXnQ5FZI60ibhSbLclDiEsc8028r
+HpNJFNFkTZiURjJd39wJr3zSuXoFafIkc24s4QYDywHoSajloMc9xrqUTv3z+pdW
+fhSdekB+3paS04Hesmnr4rV6a6Uo6hYatSEADG3XFbIv5TEBLOXK6bYv/KMKLj8X
+98U43Ude0YmGi/B3HH6UYJFbXqrU5kBhlD/3S/RwF/NBhwPJM8bSZmzVJhWvXVDw
+0DAcrfxiexS7Pp4kG2BFXlUGyTkN+2DRi+3ymiSW4y2+5DuYDvStFBw7Ud7eQZzN
+YkkBGQzTAmUzb0wpHOHhQ3diiq914WViZpwSuxVZ7FNaJgdGe3s=
+=B4jM
+-----END PGP SIGNATURE-----
+
+--VrqPEDrXMn8OVzN4--
