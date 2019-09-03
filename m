@@ -1,29 +1,51 @@
 From: David Howells <dhowells@redhat.com>
-Subject: Re: [PATCH 08/11] usb: Add USB subsystem notifications [ver #7]
-Date: Tue, 03 Sep 2019 17:29:21 +0100
-Message-ID: <29419.1567528161@warthog.procyon.org.uk>
-References: <20190903161202.GB22754@roeck-us.net> <20190903125129.GA18838@roeck-us.net> <156717343223.2204.15875738850129174524.stgit@warthog.procyon.org.uk> <156717350329.2204.7056537095039252263.stgit@warthog.procyon.org.uk> <7481.1567526867@warthog.procyon.org.uk>
+Subject: Re: [PATCH 04/11] General notification queue with user mmap()'able ring buffer [ver #7]
+Date: Tue, 03 Sep 2019 17:37:10 +0100
+Message-ID: <27533.1567528630@warthog.procyon.org.uk>
+References: <20190903085706.7700-1-hdanton@sina.com> <156717343223.2204.15875738850129174524.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190903161202.GB22754@roeck-us.net>
-Content-ID: <29418.1567528161.1@warthog.procyon.org.uk>
+In-Reply-To: <20190903085706.7700-1-hdanton@sina.com>
+Content-ID: <27532.1567528630.1@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Guenter Roeck <linux@roeck-us.net>
+To: Hillf Danton <hdanton@sina.com>
 Cc: dhowells@redhat.com, viro@zeniv.linux.org.uk, Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-block@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Guenter Roeck <linux@roeck-us.net> wrote:
+Hillf Danton <hdanton@sina.com> wrote:
 
-> > > This added call to usbdev_remove() results in a crash when running
-> > > the qemu "tosa" emulation. Removing the call fixes the problem.
-> > 
-> > Yeah - I'm going to drop the bus notification messages for now.
-> > 
-> It is not the bus notification itself causing problems. It is the
-> call to usbdev_remove().
+> > +	for (i = 0; i < wf->nr_filters; i++) {
+> > +		wt = &wf->filters[i];
+> > +		if (n->type == wt->type &&
+> > +		    (wt->subtype_filter[n->subtype >> 5] &
+> > +		     (1U << (n->subtype & 31))) &&
+> 
+> Replace the pure numbers with something easier to understand.
 
-Unfortunately, I don't know how to fix it and don't have much time to
-investigate it right now - and it's something that can be added back later.
+How about the following:
+
+static bool filter_watch_notification(const struct watch_filter *wf,
+				      const struct watch_notification *n)
+{
+	const struct watch_type_filter *wt;
+	unsigned int st_bits = sizeof(wt->subtype_filter[0]) * 8;
+	unsigned int st_index = n->subtype / st_bits;
+	unsigned int st_bit = 1U << (n->subtype % st_bits);
+	int i;
+
+	if (!test_bit(n->type, wf->type_filter))
+		return false;
+
+	for (i = 0; i < wf->nr_filters; i++) {
+		wt = &wf->filters[i];
+		if (n->type == wt->type &&
+		    (wt->subtype_filter[st_index] & st_bit) &&
+		    (n->info & wt->info_mask) == wt->info_filter)
+			return true;
+	}
+
+	return false; /* If there is a filter, the default is to reject. */
+}
 
 David
