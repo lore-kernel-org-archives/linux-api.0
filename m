@@ -1,59 +1,59 @@
-From: Randy Dunlap <rdunlap@infradead.org>
-Subject: Re: [PATCH v12 11/12] open: openat2(2) syscall
-Date: Wed, 4 Sep 2019 14:00:20 -0700
-Message-ID: <5e31b450-75b8-f037-dca7-b1bd547cf339@infradead.org>
-References: <20190904201933.10736-1-cyphar@cyphar.com>
- <20190904201933.10736-12-cyphar@cyphar.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH v12 10/12] namei: aggressively check for nd->root escape
+ on ".." resolution
+Date: Wed, 4 Sep 2019 14:09:48 -0700
+Message-ID: <CAHk-=wiod1rQMU+6Zew=cLE8uX4tUdf42bM5eKngMnNVS2My7g@mail.gmail.com>
+References: <20190904201933.10736-1-cyphar@cyphar.com> <20190904201933.10736-11-cyphar@cyphar.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190904201933.10736-12-cyphar@cyphar.com>
-Content-Language: en-US
+In-Reply-To: <20190904201933.10736-11-cyphar@cyphar.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Christian Brauner <christian@brauner.io>
-Cc: Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Alexander Shishkin <alexander.shishkin@linux.intel.com>, Jiri Olsa <jolsa@redhat.com>, Namhyung Kim <namhyung@kernel.org>, Aleksa Sarai <asarai@suse.de>, Linus Torvalds <torvalds@linux-foundation.org>, containers@lists.linux-foundation.org, linux-alpha@vger.kernel.org, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-arm-kernel@lists.infradead.
+To: Aleksa Sarai <cyphar@cyphar.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Christian Brauner <christian@brauner.io>, Jann Horn <jannh@google.com>, Kees Cook <keescook@chromium.org>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Rasmus
 List-Id: linux-api@vger.kernel.org
 
-Hi,
-just noisy nits here:
+On Wed, Sep 4, 2019 at 1:23 PM Aleksa Sarai <cyphar@cyphar.com> wrote:
+>
+> This patch allows for LOOKUP_BENEATH and LOOKUP_IN_ROOT to safely permit
+> ".." resolution (in the case of LOOKUP_BENEATH the resolution will still
+> fail if ".." resolution would resolve a path outside of the root --
+> while LOOKUP_IN_ROOT will chroot(2)-style scope it). Magic-link jumps
+> are still disallowed entirely because now they could result in
+> inconsistent behaviour if resolution encounters a subsequent ".."[*].
 
-On 9/4/19 1:19 PM, Aleksa Sarai wrote:
+This is the only patch in the series that makes me go "umm".
 
-> diff --git a/include/uapi/linux/fcntl.h b/include/uapi/linux/fcntl.h
-> index 1d338357df8a..479baf2da10e 100644
-> --- a/include/uapi/linux/fcntl.h
-> +++ b/include/uapi/linux/fcntl.h
-> @@ -93,5 +93,47 @@
->  
->  #define AT_RECURSIVE		0x8000	/* Apply to the entire subtree */
->  
-> +/**
+Why is it ok to re-initialize m_seq, which is used by other things
+too? I think it's because we're out of RCU lookup, but there's no
+comment about it, and it looks iffy to me. I'd rather have a separate
+sequence count that doesn't have two users with different lifetime
+rules.
 
-/** means "the following is kernel-doc", but it's not, so please either make
-it kernel-doc format or just use /* to begin the comment.
+But even apart from that, I think from a "patch continuity" standpoint
+it would be better to introduce the sequence counts as just an error
+condition first - iow, not have the "path_is_under()" check, but just
+return -EXDEV if the sequence number doesn't match.
 
-> + * Arguments for how openat2(2) should open the target path. If @resolve is
-> + * zero, then openat2(2) operates identically to openat(2).
-> + *
-> + * However, unlike openat(2), unknown bits in @flags result in -EINVAL rather
-> + * than being silently ignored. In addition, @mode (or @upgrade_mask) must be
-> + * zero unless one of {O_CREAT, O_TMPFILE, O_PATH} are set.
-> + *
-> + * @flags: O_* flags.
-> + * @mode: O_CREAT/O_TMPFILE file mode.
-> + * @upgrade_mask: UPGRADE_* flags (to restrict O_PATH re-opening).
-> + * @resolve: RESOLVE_* flags.
-> + */
-> +struct open_how {
-> +	__u32 flags;
-> +	union {
-> +		__u16 mode;
-> +		__u16 upgrade_mask;
-> +	};
-> +	__u16 resolve;
-> +};
+So you'd have three stages:
 
+ 1) ".." always returns -EXDEV
 
--- 
-~Randy
+ 2) ".." returns -EXDEV if there was a concurrent rename/mount
+
+ 3) ".." returns -EXDEV if there was a concurrent rename/mount and we
+reset the sequence numbers and check if you escaped.
+
+becasue the sequence number reset really does make me go "hmm", plus I
+get this nagging little feeling in the back of my head that you can
+cause nasty O(n^2) lookup cost behavior with deep paths, lots of "..",
+and repeated path_is_under() calls.
+
+So (1) sounds safe. (2) sounds simple. And (3) is where I think subtle
+things start happening.
+
+Also, I'm not 100% convinced that (3) is needed at all. I think the
+retry could be done in user space instead, which needs to have a
+fallback anyway. Yes? No?
+
+                 Linus
