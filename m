@@ -1,40 +1,178 @@
-From: Matthew Garrett <mjg59@google.com>
-Subject: Re: [PATCH V40 04/29] lockdown: Enforce module signatures if the
- kernel is locked down
-Date: Wed, 4 Sep 2019 09:57:52 -0700
-Message-ID: <CACdnJuuTRQM9SQvLMqW+C=6ukQPpvkwqFZ6U+wnL4uYxcG14Ww@mail.gmail.com>
-References: <20190820001805.241928-1-matthewgarrett@google.com>
- <20190820001805.241928-5-matthewgarrett@google.com> <3638.1567182673@warthog.procyon.org.uk>
+From: Alexei Starovoitov <ast@kernel.org>
+Subject: [PATCH v3 bpf-next 1/3] capability: introduce CAP_BPF and CAP_TRACING
+Date: Wed, 4 Sep 2019 11:43:33 -0700
+Message-ID: <20190904184335.360074-1-ast@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <3638.1567182673@warthog.procyon.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: James Morris <jmorris@namei.org>, LSM List <linux-security-module@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Jessica Yu <jeyu@kernel.org>
+Content-Type: text/plain
+Content-Transfer-Encoding: 8BIT
+Return-path: <netdev-owner@vger.kernel.org>
+Sender: netdev-owner@vger.kernel.org
+To: davem@davemloft.net
+Cc: daniel@iogearbox.net, peterz@infradead.org, luto@amacapital.net, netdev@vger.kernel.org, bpf@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Aug 30, 2019 at 9:31 AM David Howells <dhowells@redhat.com> wrote:
->
-> Matthew Garrett <matthewgarrett@google.com> wrote:
->
-> >  enum lockdown_reason {
-> >       LOCKDOWN_NONE,
-> > +     LOCKDOWN_MODULE_SIGNATURE,
-> >       LOCKDOWN_INTEGRITY_MAX,
-> >       LOCKDOWN_CONFIDENTIALITY_MAX,
-> >  };
->
-> Aren't you mixing disjoint sets?
+Split BPF and perf/tracing operations that are allowed under
+CAP_SYS_ADMIN into corresponding CAP_BPF and CAP_TRACING.
+For backward compatibility include them in CAP_SYS_ADMIN as well.
 
-The goal is to be able to check whether any given lockdown reason is a
-matter of integrity or confidentiality in a straightforward way.
+The end result provides simple safety model for applications that use BPF:
+- for tracing program types
+  BPF_PROG_TYPE_{KPROBE, TRACEPOINT, PERF_EVENT, RAW_TRACEPOINT, etc}
+  use CAP_BPF and CAP_TRACING
+- for networking program types
+  BPF_PROG_TYPE_{SCHED_CLS, XDP, CGROUP_SKB, SK_SKB, etc}
+  use CAP_BPF and CAP_NET_ADMIN
 
-> > +     [LOCKDOWN_MODULE_SIGNATURE] = "unsigned module loading",
->
-> Wouldn't it be better to pass this string as a parameter to
-> security_locked_down()?
+There are few exceptions from this simple rule:
+- bpf_trace_printk() is allowed in networking programs, but it's using
+  ftrace mechanism, hence this helper needs additional CAP_TRACING.
+- cpumap is used by XDP programs. Currently it's kept under CAP_SYS_ADMIN,
+  but could be relaxed to CAP_NET_ADMIN in the future.
+- BPF_F_ZERO_SEED flag for hash/lru map is allowed under CAP_SYS_ADMIN only
+  to discourage production use.
+- BPF HW offload is allowed under CAP_SYS_ADMIN.
+- cg_sysctl, cg_device, lirc program types are neither networking nor tracing.
+  They can be loaded under CAP_BPF, but attach is allowed under CAP_NET_ADMIN.
+  This will be cleaned up in the future.
 
-I thought about that, but it's not how any other LSM hooks behave. I
-think it's probably easier to revisit that when we see how other LSMs
-want to make use of the data.
+userid=nobody + (CAP_TRACING | CAP_NET_ADMIN) + CAP_BPF is safer than
+typical setup with userid=root and sudo by existing bpf applications.
+It's not secure, since these capabilities:
+- allow bpf progs access arbitrary memory
+- let tasks access any bpf map
+- let tasks attach/detach any bpf prog
+
+bpftool, bpftrace, bcc tools binaries should not be installed with
+cap_bpf+cap_tracing, since unpriv users will be able to read kernel secrets.
+
+CAP_BPF, CAP_NET_ADMIN, CAP_TRACING are roughly equal in terms of
+damage they can make to the system.
+Example:
+CAP_NET_ADMIN can stop network traffic. CAP_BPF can write into map
+and if that map is used by firewall-like bpf prog the network traffic
+may stop.
+CAP_BPF allows many bpf prog_load commands in parallel. The verifier
+may consume large amount of memory and significantly slow down the system.
+CAP_TRACING allows many kprobes that can slow down the system.
+
+In the future more fine-grained bpf permissions may be added.
+
+v2->v3:
+- dropped ftrace and kallsyms from CAP_TRACING description.
+  In the future these mechanisms can start using it too.
+- added CAP_SYS_ADMIN backward compatibility.
+
+Signed-off-by: Alexei Starovoitov <ast@kernel.org>
+---
+ include/linux/capability.h          | 18 +++++++++++
+ include/uapi/linux/capability.h     | 48 ++++++++++++++++++++++++++++-
+ security/selinux/include/classmap.h |  4 +--
+ 3 files changed, 67 insertions(+), 3 deletions(-)
+
+diff --git a/include/linux/capability.h b/include/linux/capability.h
+index ecce0f43c73a..13eb49c75797 100644
+--- a/include/linux/capability.h
++++ b/include/linux/capability.h
+@@ -247,6 +247,24 @@ static inline bool ns_capable_setid(struct user_namespace *ns, int cap)
+ 	return true;
+ }
+ #endif /* CONFIG_MULTIUSER */
++
++static inline bool capable_bpf(void)
++{
++	return capable(CAP_SYS_ADMIN) || capable(CAP_BPF);
++}
++static inline bool capable_tracing(void)
++{
++	return capable(CAP_SYS_ADMIN) || capable(CAP_TRACING);
++}
++static inline bool capable_bpf_tracing(void)
++{
++	return capable(CAP_SYS_ADMIN) || (capable(CAP_BPF) && capable(CAP_TRACING));
++}
++static inline bool capable_bpf_net_admin(void)
++{
++	return (capable(CAP_SYS_ADMIN) || capable(CAP_BPF)) && capable(CAP_NET_ADMIN);
++}
++
+ extern bool privileged_wrt_inode_uidgid(struct user_namespace *ns, const struct inode *inode);
+ extern bool capable_wrt_inode_uidgid(const struct inode *inode, int cap);
+ extern bool file_ns_capable(const struct file *file, struct user_namespace *ns, int cap);
+diff --git a/include/uapi/linux/capability.h b/include/uapi/linux/capability.h
+index 240fdb9a60f6..fb71dee0ac2b 100644
+--- a/include/uapi/linux/capability.h
++++ b/include/uapi/linux/capability.h
+@@ -366,8 +366,54 @@ struct vfs_ns_cap_data {
+ 
+ #define CAP_AUDIT_READ		37
+ 
++/*
++ * CAP_BPF allows the following BPF operations:
++ * - Loading all types of BPF programs
++ * - Creating all types of BPF maps except:
++ *    - stackmap that needs CAP_TRACING
++ *    - devmap that needs CAP_NET_ADMIN
++ *    - cpumap that needs CAP_SYS_ADMIN
++ * - Advanced verifier features
++ *   - Indirect variable access
++ *   - Bounded loops
++ *   - BPF to BPF function calls
++ *   - Scalar precision tracking
++ *   - Larger complexity limits
++ *   - Dead code elimination
++ *   - And potentially other features
++ * - Use of pointer-to-integer conversions in BPF programs
++ * - Bypassing of speculation attack hardening measures
++ * - Loading BPF Type Format (BTF) data
++ * - Iterate system wide loaded programs, maps, BTF objects
++ * - Retrieve xlated and JITed code of BPF programs
++ * - Access maps and programs via id
++ * - Use bpf_spin_lock() helper
++ *
++ * CAP_BPF and CAP_TRACING together allow the following:
++ * - bpf_probe_read to read arbitrary kernel memory
++ * - bpf_trace_printk to print data to ftrace ring buffer
++ * - Attach to raw_tracepoint
++ * - Query association between kprobe/tracepoint and bpf program
++ *
++ * CAP_BPF and CAP_NET_ADMIN together allow the following:
++ * - Attach to cgroup-bpf hooks and query
++ * - skb, xdp, flow_dissector test_run command
++ *
++ * CAP_NET_ADMIN allows:
++ * - Attach networking bpf programs to xdp, tc, lwt, flow dissector
++ */
++#define CAP_BPF			38
++
++/*
++ * CAP_TRACING allows:
++ * - Full use of perf_event_open(), similarly to the effect of
++ *   kernel.perf_event_paranoid == -1
++ * - Creation of [ku][ret]probe
++ * - Attach tracing bpf programs to perf events
++ */
++#define CAP_TRACING		39
+ 
+-#define CAP_LAST_CAP         CAP_AUDIT_READ
++#define CAP_LAST_CAP         CAP_TRACING
+ 
+ #define cap_valid(x) ((x) >= 0 && (x) <= CAP_LAST_CAP)
+ 
+diff --git a/security/selinux/include/classmap.h b/security/selinux/include/classmap.h
+index 201f7e588a29..0b364e245163 100644
+--- a/security/selinux/include/classmap.h
++++ b/security/selinux/include/classmap.h
+@@ -26,9 +26,9 @@
+ 	    "audit_control", "setfcap"
+ 
+ #define COMMON_CAP2_PERMS  "mac_override", "mac_admin", "syslog", \
+-		"wake_alarm", "block_suspend", "audit_read"
++		"wake_alarm", "block_suspend", "audit_read", "bpf", "tracing"
+ 
+-#if CAP_LAST_CAP > CAP_AUDIT_READ
++#if CAP_LAST_CAP > CAP_TRACING
+ #error New capability defined, please update COMMON_CAP2_PERMS.
+ #endif
+ 
+-- 
+2.20.0
