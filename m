@@ -1,41 +1,40 @@
 From: Matthew Garrett <mjg59@google.com>
-Subject: Re: [PATCH V40 03/29] security: Add a static lockdown policy LSM
-Date: Wed, 4 Sep 2019 09:51:16 -0700
-Message-ID: <CACdnJuvR7mqhpzEQZdgw9EE_PsM-QWQ_JmwFLcoeLbAuKCHnOA@mail.gmail.com>
+Subject: Re: [PATCH V40 04/29] lockdown: Enforce module signatures if the
+ kernel is locked down
+Date: Wed, 4 Sep 2019 09:57:52 -0700
+Message-ID: <CACdnJuuTRQM9SQvLMqW+C=6ukQPpvkwqFZ6U+wnL4uYxcG14Ww@mail.gmail.com>
 References: <20190820001805.241928-1-matthewgarrett@google.com>
- <20190820001805.241928-4-matthewgarrett@google.com> <3440.1567182506@warthog.procyon.org.uk>
+ <20190820001805.241928-5-matthewgarrett@google.com> <3638.1567182673@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <3440.1567182506@warthog.procyon.org.uk>
+In-Reply-To: <3638.1567182673@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
 To: David Howells <dhowells@redhat.com>
-Cc: James Morris <jmorris@namei.org>, LSM List <linux-security-module@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>
+Cc: James Morris <jmorris@namei.org>, LSM List <linux-security-module@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Jessica Yu <jeyu@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Aug 30, 2019 at 9:28 AM David Howells <dhowells@redhat.com> wrote:
+On Fri, Aug 30, 2019 at 9:31 AM David Howells <dhowells@redhat.com> wrote:
 >
 > Matthew Garrett <matthewgarrett@google.com> wrote:
 >
-> > +static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
+> >  enum lockdown_reason {
+> >       LOCKDOWN_NONE,
+> > +     LOCKDOWN_MODULE_SIGNATURE,
+> >       LOCKDOWN_INTEGRITY_MAX,
+> >       LOCKDOWN_CONFIDENTIALITY_MAX,
+> >  };
 >
-> const char *const maybe?
+> Aren't you mixing disjoint sets?
 
-Seems reasonable.
+The goal is to be able to check whether any given lockdown reason is a
+matter of integrity or confidentiality in a straightforward way.
 
-> > +static enum lockdown_reason lockdown_levels[] = {LOCKDOWN_NONE,
-> > +                                              LOCKDOWN_INTEGRITY_MAX,
-> > +                                              LOCKDOWN_CONFIDENTIALITY_MAX};
-> > +
+> > +     [LOCKDOWN_MODULE_SIGNATURE] = "unsigned module loading",
 >
-> const?
->
-> Isn't this also a 1:1 mapping?
+> Wouldn't it be better to pass this string as a parameter to
+> security_locked_down()?
 
-Sorry, a 1:1 mapping to what?
-
-> > +static int lock_kernel_down(const char *where, enum lockdown_reason level)
->
-> Is the last parameter the reason or the level?  You're mixing the terms.
-
-Fair.
+I thought about that, but it's not how any other LSM hooks behave. I
+think it's probably easier to revisit that when we see how other LSMs
+want to make use of the data.
