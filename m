@@ -1,178 +1,190 @@
 From: Alexei Starovoitov <ast@kernel.org>
-Subject: [PATCH v3 bpf-next 1/3] capability: introduce CAP_BPF and CAP_TRACING
-Date: Wed, 4 Sep 2019 11:43:33 -0700
-Message-ID: <20190904184335.360074-1-ast@kernel.org>
+Subject: [PATCH v3 bpf-next 3/3] perf: implement CAP_TRACING
+Date: Wed, 4 Sep 2019 11:43:35 -0700
+Message-ID: <20190904184335.360074-3-ast@kernel.org>
+References: <20190904184335.360074-1-ast@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 8BIT
 Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20190904184335.360074-1-ast@kernel.org>
 Sender: netdev-owner@vger.kernel.org
 To: davem@davemloft.net
 Cc: daniel@iogearbox.net, peterz@infradead.org, luto@amacapital.net, netdev@vger.kernel.org, bpf@vger.kernel.org, kernel-team@fb.com, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Split BPF and perf/tracing operations that are allowed under
-CAP_SYS_ADMIN into corresponding CAP_BPF and CAP_TRACING.
-For backward compatibility include them in CAP_SYS_ADMIN as well.
-
-The end result provides simple safety model for applications that use BPF:
-- for tracing program types
-  BPF_PROG_TYPE_{KPROBE, TRACEPOINT, PERF_EVENT, RAW_TRACEPOINT, etc}
-  use CAP_BPF and CAP_TRACING
-- for networking program types
-  BPF_PROG_TYPE_{SCHED_CLS, XDP, CGROUP_SKB, SK_SKB, etc}
-  use CAP_BPF and CAP_NET_ADMIN
-
-There are few exceptions from this simple rule:
-- bpf_trace_printk() is allowed in networking programs, but it's using
-  ftrace mechanism, hence this helper needs additional CAP_TRACING.
-- cpumap is used by XDP programs. Currently it's kept under CAP_SYS_ADMIN,
-  but could be relaxed to CAP_NET_ADMIN in the future.
-- BPF_F_ZERO_SEED flag for hash/lru map is allowed under CAP_SYS_ADMIN only
-  to discourage production use.
-- BPF HW offload is allowed under CAP_SYS_ADMIN.
-- cg_sysctl, cg_device, lirc program types are neither networking nor tracing.
-  They can be loaded under CAP_BPF, but attach is allowed under CAP_NET_ADMIN.
-  This will be cleaned up in the future.
-
-userid=nobody + (CAP_TRACING | CAP_NET_ADMIN) + CAP_BPF is safer than
-typical setup with userid=root and sudo by existing bpf applications.
-It's not secure, since these capabilities:
-- allow bpf progs access arbitrary memory
-- let tasks access any bpf map
-- let tasks attach/detach any bpf prog
-
-bpftool, bpftrace, bcc tools binaries should not be installed with
-cap_bpf+cap_tracing, since unpriv users will be able to read kernel secrets.
-
-CAP_BPF, CAP_NET_ADMIN, CAP_TRACING are roughly equal in terms of
-damage they can make to the system.
-Example:
-CAP_NET_ADMIN can stop network traffic. CAP_BPF can write into map
-and if that map is used by firewall-like bpf prog the network traffic
-may stop.
-CAP_BPF allows many bpf prog_load commands in parallel. The verifier
-may consume large amount of memory and significantly slow down the system.
-CAP_TRACING allows many kprobes that can slow down the system.
-
-In the future more fine-grained bpf permissions may be added.
-
-v2->v3:
-- dropped ftrace and kallsyms from CAP_TRACING description.
-  In the future these mechanisms can start using it too.
-- added CAP_SYS_ADMIN backward compatibility.
+Implement permissions as stated in uapi/linux/capability.h
 
 Signed-off-by: Alexei Starovoitov <ast@kernel.org>
 ---
- include/linux/capability.h          | 18 +++++++++++
- include/uapi/linux/capability.h     | 48 ++++++++++++++++++++++++++++-
- security/selinux/include/classmap.h |  4 +--
- 3 files changed, 67 insertions(+), 3 deletions(-)
+ arch/powerpc/perf/core-book3s.c |  4 ++--
+ arch/x86/events/intel/bts.c     |  2 +-
+ arch/x86/events/intel/core.c    |  2 +-
+ arch/x86/events/intel/p4.c      |  2 +-
+ kernel/events/core.c            | 14 +++++++-------
+ kernel/events/hw_breakpoint.c   |  2 +-
+ kernel/trace/trace_event_perf.c |  4 ++--
+ 7 files changed, 15 insertions(+), 15 deletions(-)
 
-diff --git a/include/linux/capability.h b/include/linux/capability.h
-index ecce0f43c73a..13eb49c75797 100644
---- a/include/linux/capability.h
-+++ b/include/linux/capability.h
-@@ -247,6 +247,24 @@ static inline bool ns_capable_setid(struct user_namespace *ns, int cap)
- 	return true;
+diff --git a/arch/powerpc/perf/core-book3s.c b/arch/powerpc/perf/core-book3s.c
+index ca92e01d0bd1..a204a3c6c68b 100644
+--- a/arch/powerpc/perf/core-book3s.c
++++ b/arch/powerpc/perf/core-book3s.c
+@@ -204,7 +204,7 @@ static inline void perf_get_data_addr(struct pt_regs *regs, u64 *addrp)
+ 	if (!(mmcra & MMCRA_SAMPLE_ENABLE) || sdar_valid)
+ 		*addrp = mfspr(SPRN_SDAR);
+ 
+-	if (perf_paranoid_kernel() && !capable(CAP_SYS_ADMIN) &&
++	if (perf_paranoid_kernel() && !capable_tracing() &&
+ 		is_kernel_addr(mfspr(SPRN_SDAR)))
+ 		*addrp = 0;
  }
- #endif /* CONFIG_MULTIUSER */
-+
-+static inline bool capable_bpf(void)
-+{
-+	return capable(CAP_SYS_ADMIN) || capable(CAP_BPF);
-+}
-+static inline bool capable_tracing(void)
-+{
-+	return capable(CAP_SYS_ADMIN) || capable(CAP_TRACING);
-+}
-+static inline bool capable_bpf_tracing(void)
-+{
-+	return capable(CAP_SYS_ADMIN) || (capable(CAP_BPF) && capable(CAP_TRACING));
-+}
-+static inline bool capable_bpf_net_admin(void)
-+{
-+	return (capable(CAP_SYS_ADMIN) || capable(CAP_BPF)) && capable(CAP_NET_ADMIN);
-+}
-+
- extern bool privileged_wrt_inode_uidgid(struct user_namespace *ns, const struct inode *inode);
- extern bool capable_wrt_inode_uidgid(const struct inode *inode, int cap);
- extern bool file_ns_capable(const struct file *file, struct user_namespace *ns, int cap);
-diff --git a/include/uapi/linux/capability.h b/include/uapi/linux/capability.h
-index 240fdb9a60f6..fb71dee0ac2b 100644
---- a/include/uapi/linux/capability.h
-+++ b/include/uapi/linux/capability.h
-@@ -366,8 +366,54 @@ struct vfs_ns_cap_data {
+@@ -472,7 +472,7 @@ static void power_pmu_bhrb_read(struct cpu_hw_events *cpuhw)
+ 			 * exporting it to userspace (avoid exposure of regions
+ 			 * where we could have speculative execution)
+ 			 */
+-			if (perf_paranoid_kernel() && !capable(CAP_SYS_ADMIN) &&
++			if (perf_paranoid_kernel() && !capable_tracing() &&
+ 				is_kernel_addr(addr))
+ 				continue;
  
- #define CAP_AUDIT_READ		37
+diff --git a/arch/x86/events/intel/bts.c b/arch/x86/events/intel/bts.c
+index 5ee3fed881d3..bd713b2dd7c2 100644
+--- a/arch/x86/events/intel/bts.c
++++ b/arch/x86/events/intel/bts.c
+@@ -550,7 +550,7 @@ static int bts_event_init(struct perf_event *event)
+ 	 * users to profile the kernel.
+ 	 */
+ 	if (event->attr.exclude_kernel && perf_paranoid_kernel() &&
+-	    !capable(CAP_SYS_ADMIN))
++	    !capable_tracing())
+ 		return -EACCES;
  
-+/*
-+ * CAP_BPF allows the following BPF operations:
-+ * - Loading all types of BPF programs
-+ * - Creating all types of BPF maps except:
-+ *    - stackmap that needs CAP_TRACING
-+ *    - devmap that needs CAP_NET_ADMIN
-+ *    - cpumap that needs CAP_SYS_ADMIN
-+ * - Advanced verifier features
-+ *   - Indirect variable access
-+ *   - Bounded loops
-+ *   - BPF to BPF function calls
-+ *   - Scalar precision tracking
-+ *   - Larger complexity limits
-+ *   - Dead code elimination
-+ *   - And potentially other features
-+ * - Use of pointer-to-integer conversions in BPF programs
-+ * - Bypassing of speculation attack hardening measures
-+ * - Loading BPF Type Format (BTF) data
-+ * - Iterate system wide loaded programs, maps, BTF objects
-+ * - Retrieve xlated and JITed code of BPF programs
-+ * - Access maps and programs via id
-+ * - Use bpf_spin_lock() helper
-+ *
-+ * CAP_BPF and CAP_TRACING together allow the following:
-+ * - bpf_probe_read to read arbitrary kernel memory
-+ * - bpf_trace_printk to print data to ftrace ring buffer
-+ * - Attach to raw_tracepoint
-+ * - Query association between kprobe/tracepoint and bpf program
-+ *
-+ * CAP_BPF and CAP_NET_ADMIN together allow the following:
-+ * - Attach to cgroup-bpf hooks and query
-+ * - skb, xdp, flow_dissector test_run command
-+ *
-+ * CAP_NET_ADMIN allows:
-+ * - Attach networking bpf programs to xdp, tc, lwt, flow dissector
-+ */
-+#define CAP_BPF			38
-+
-+/*
-+ * CAP_TRACING allows:
-+ * - Full use of perf_event_open(), similarly to the effect of
-+ *   kernel.perf_event_paranoid == -1
-+ * - Creation of [ku][ret]probe
-+ * - Attach tracing bpf programs to perf events
-+ */
-+#define CAP_TRACING		39
+ 	if (x86_add_exclusive(x86_lbr_exclusive_bts))
+diff --git a/arch/x86/events/intel/core.c b/arch/x86/events/intel/core.c
+index 648260b5f367..277b12c054fa 100644
+--- a/arch/x86/events/intel/core.c
++++ b/arch/x86/events/intel/core.c
+@@ -3307,7 +3307,7 @@ static int intel_pmu_hw_config(struct perf_event *event)
+ 	if (x86_pmu.version < 3)
+ 		return -EINVAL;
  
--#define CAP_LAST_CAP         CAP_AUDIT_READ
-+#define CAP_LAST_CAP         CAP_TRACING
+-	if (perf_paranoid_cpu() && !capable(CAP_SYS_ADMIN))
++	if (perf_paranoid_cpu() && !capable_tracing())
+ 		return -EACCES;
  
- #define cap_valid(x) ((x) >= 0 && (x) <= CAP_LAST_CAP)
+ 	event->hw.config |= ARCH_PERFMON_EVENTSEL_ANY;
+diff --git a/arch/x86/events/intel/p4.c b/arch/x86/events/intel/p4.c
+index dee579efb2b2..f379a358c9cb 100644
+--- a/arch/x86/events/intel/p4.c
++++ b/arch/x86/events/intel/p4.c
+@@ -776,7 +776,7 @@ static int p4_validate_raw_event(struct perf_event *event)
+ 	 * the user needs special permissions to be able to use it
+ 	 */
+ 	if (p4_ht_active() && p4_event_bind_map[v].shared) {
+-		if (perf_paranoid_cpu() && !capable(CAP_SYS_ADMIN))
++		if (perf_paranoid_cpu() && !capable_tracing())
+ 			return -EACCES;
+ 	}
  
-diff --git a/security/selinux/include/classmap.h b/security/selinux/include/classmap.h
-index 201f7e588a29..0b364e245163 100644
---- a/security/selinux/include/classmap.h
-+++ b/security/selinux/include/classmap.h
-@@ -26,9 +26,9 @@
- 	    "audit_control", "setfcap"
+diff --git a/kernel/events/core.c b/kernel/events/core.c
+index 0463c1151bae..eaba102e5d91 100644
+--- a/kernel/events/core.c
++++ b/kernel/events/core.c
+@@ -4134,7 +4134,7 @@ find_get_context(struct pmu *pmu, struct task_struct *task,
  
- #define COMMON_CAP2_PERMS  "mac_override", "mac_admin", "syslog", \
--		"wake_alarm", "block_suspend", "audit_read"
-+		"wake_alarm", "block_suspend", "audit_read", "bpf", "tracing"
+ 	if (!task) {
+ 		/* Must be root to operate on a CPU event: */
+-		if (perf_paranoid_cpu() && !capable(CAP_SYS_ADMIN))
++		if (perf_paranoid_cpu() && !capable_tracing())
+ 			return ERR_PTR(-EACCES);
  
--#if CAP_LAST_CAP > CAP_AUDIT_READ
-+#if CAP_LAST_CAP > CAP_TRACING
- #error New capability defined, please update COMMON_CAP2_PERMS.
- #endif
+ 		cpuctx = per_cpu_ptr(pmu->pmu_cpu_context, cpu);
+@@ -8741,7 +8741,7 @@ static int perf_kprobe_event_init(struct perf_event *event)
+ 	if (event->attr.type != perf_kprobe.type)
+ 		return -ENOENT;
  
+-	if (!capable(CAP_SYS_ADMIN))
++	if (!capable_tracing())
+ 		return -EACCES;
+ 
+ 	/*
+@@ -8801,7 +8801,7 @@ static int perf_uprobe_event_init(struct perf_event *event)
+ 	if (event->attr.type != perf_uprobe.type)
+ 		return -ENOENT;
+ 
+-	if (!capable(CAP_SYS_ADMIN))
++	if (!capable_tracing())
+ 		return -EACCES;
+ 
+ 	/*
+@@ -10588,7 +10588,7 @@ static int perf_copy_attr(struct perf_event_attr __user *uattr,
+ 		}
+ 		/* privileged levels capture (kernel, hv): check permissions */
+ 		if ((mask & PERF_SAMPLE_BRANCH_PERM_PLM)
+-		    && perf_paranoid_kernel() && !capable(CAP_SYS_ADMIN))
++		    && perf_paranoid_kernel() && !capable_tracing())
+ 			return -EACCES;
+ 	}
+ 
+@@ -10807,12 +10807,12 @@ SYSCALL_DEFINE5(perf_event_open,
+ 		return err;
+ 
+ 	if (!attr.exclude_kernel) {
+-		if (perf_paranoid_kernel() && !capable(CAP_SYS_ADMIN))
++		if (perf_paranoid_kernel() && !capable_tracing())
+ 			return -EACCES;
+ 	}
+ 
+ 	if (attr.namespaces) {
+-		if (!capable(CAP_SYS_ADMIN))
++		if (!capable_tracing())
+ 			return -EACCES;
+ 	}
+ 
+@@ -10826,7 +10826,7 @@ SYSCALL_DEFINE5(perf_event_open,
+ 
+ 	/* Only privileged users can get physical addresses */
+ 	if ((attr.sample_type & PERF_SAMPLE_PHYS_ADDR) &&
+-	    perf_paranoid_kernel() && !capable(CAP_SYS_ADMIN))
++	    perf_paranoid_kernel() && !capable_tracing())
+ 		return -EACCES;
+ 
+ 	/*
+diff --git a/kernel/events/hw_breakpoint.c b/kernel/events/hw_breakpoint.c
+index c5cd852fe86b..8bc4d7d8c913 100644
+--- a/kernel/events/hw_breakpoint.c
++++ b/kernel/events/hw_breakpoint.c
+@@ -404,7 +404,7 @@ static int hw_breakpoint_parse(struct perf_event *bp,
+ 		 * Don't let unprivileged users set a breakpoint in the trap
+ 		 * path to avoid trap recursion attacks.
+ 		 */
+-		if (!capable(CAP_SYS_ADMIN))
++		if (!capable_tracing())
+ 			return -EPERM;
+ 	}
+ 
+diff --git a/kernel/trace/trace_event_perf.c b/kernel/trace/trace_event_perf.c
+index 0892e38ed6fb..6861307f14d6 100644
+--- a/kernel/trace/trace_event_perf.c
++++ b/kernel/trace/trace_event_perf.c
+@@ -46,7 +46,7 @@ static int perf_trace_event_perm(struct trace_event_call *tp_event,
+ 
+ 	/* The ftrace function trace is allowed only for root. */
+ 	if (ftrace_event_is_function(tp_event)) {
+-		if (perf_paranoid_tracepoint_raw() && !capable(CAP_SYS_ADMIN))
++		if (perf_paranoid_tracepoint_raw() && !capable_tracing())
+ 			return -EPERM;
+ 
+ 		if (!is_sampling_event(p_event))
+@@ -82,7 +82,7 @@ static int perf_trace_event_perm(struct trace_event_call *tp_event,
+ 	 * ...otherwise raw tracepoint data can be a severe data leak,
+ 	 * only allow root to have these.
+ 	 */
+-	if (perf_paranoid_tracepoint_raw() && !capable(CAP_SYS_ADMIN))
++	if (perf_paranoid_tracepoint_raw() && !capable_tracing())
+ 		return -EPERM;
+ 
+ 	return 0;
 -- 
 2.20.0
