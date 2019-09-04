@@ -1,39 +1,68 @@
-From: Alexei Starovoitov <ast@fb.com>
-Subject: Re: [PATCH v2 bpf-next 2/3] bpf: implement CAP_BPF
-Date: Wed, 4 Sep 2019 01:39:28 +0000
-Message-ID: <46df2c36-4276-33c0-626b-c51e77b3a04f@fb.com>
-References: <20190829051253.1927291-1-ast@kernel.org>
- <20190829051253.1927291-2-ast@kernel.org>
- <ed8796f5-eaea-c87d-ddd9-9d624059e5ee@iogearbox.net>
- <20190829173034.up5g74onaekp53zd@ast-mbp.dhcp.thefacebook.com>
- <59ac111e-7ce7-5e00-32c9-9b55482fe701@6wind.com>
+From: Yoshihiro Shimoda <yoshihiro.shimoda.uh@renesas.com>
+Subject: RE: [PATCH 08/11] usb: Add USB subsystem notifications [ver #7]
+Date: Wed, 4 Sep 2019 01:53:01 +0000
+Message-ID: <TYAPR01MB45441054C3956CCA7BBD80CBD8B80@TYAPR01MB4544.jpnprd01.prod.outlook.com>
+References: <156717343223.2204.15875738850129174524.stgit@warthog.procyon.org.uk>
+ <156717350329.2204.7056537095039252263.stgit@warthog.procyon.org.uk>
+ <TYAPR01MB4544829484474FC61E850F32D8B90@TYAPR01MB4544.jpnprd01.prod.outlook.com>
+ <20190903093720.GD12325@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <59ac111e-7ce7-5e00-32c9-9b55482fe701@6wind.com>
-Content-Language: en-US
-Content-ID: <032BE727726D484FB96AD8BCF8C8DC4F@namprd15.prod.outlook.com>
-Sender: netdev-owner@vger.kernel.org
-To: "nicolas.dichtel@6wind.com" <nicolas.dichtel@6wind.com>, Alexei Starovoitov <alexei.starovoitov@gmail.com>, Daniel Borkmann <daniel@iogearbox.net>
-Cc: Alexei Starovoitov <ast@kernel.org>, "luto@amacapital.net" <luto@amacapital.net>, "davem@davemloft.net" <davem@davemloft.net>, "peterz@infradead.org" <peterz@infradead.org>, "rostedt@goodmis.org" <rostedt@goodmis.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "bpf@vger.kernel.org" <bpf@vger.kernel.org>, Kernel Team <Kernel-team@fb.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190903093720.GD12325@kroah.com>
+Content-Language: ja-JP
+Sender: linux-kernel-owner@vger.kernel.org
+To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: David Howells <dhowells@redhat.com>, "viro@zeniv.linux.org.uk" <viro@zeniv.linux.org.uk>, Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, "nicolas.dichtel@6wind.com" <nicolas.dichtel@6wind.com>, "raven@themaw.net" <raven@themaw.net>, Christian Brauner <christian@brauner.io>, "keyrings@vger.kernel.org" <keyrings@vger.kernel.org>, "linux-usb@vger.kernel.org" <linux-usb@vger.kernel.org>, "linux-security-module@vger.kernel.org" <linux-security-module@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-block@vger.kernel.org" <linux-block@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-T24gOC8zMC8xOSA4OjE5IEFNLCBOaWNvbGFzIERpY2h0ZWwgd3JvdGU6DQo+IExlIDI5LzA4LzIw
-MTkgw6AgMTk6MzAsIEFsZXhlaSBTdGFyb3ZvaXRvdiBhIMOpY3JpdMKgOg0KPiBbc25pcF0NCj4+
-IFRoZXNlIGFyZSB0aGUgbGlua3MgdGhhdCBzaG93aW5nIHRoYXQgazggY2FuIGRlbGVnYXRlcyBj
-YXBzLg0KPj4gQXJlIHlvdSBzYXlpbmcgdGhhdCB5b3Uga25vdyBvZiBmb2xrcyB3aG8gc3BlY2lm
-aWNhbGx5DQo+PiBkZWxlZ2F0ZSBjYXBfc3lzX2FkbWluIGFuZCBjYXBfbmV0X2FkbWluIF9vbmx5
-XyB0byBhIGNvbnRhaW5lciB0byBydW4gYnBmIGluIHRoZXJlPw0KPj4NCj4gWWVzLCB3ZSBuZWVk
-IGNhcF9zeXNfYWRtaW4gb25seSB0byBsb2FkIGJwZjoNCj4gdGMgZmlsdGVyIGFkZCBkZXYgZXRo
-MCBpbmdyZXNzIG1hdGNoYWxsIGFjdGlvbiBicGYgb2JqIC4vdGNfdGVzdF9rZXJuLm8gc2VjIHRl
-c3QNCj4gDQo+IEknbSBub3Qgc3VyZSB0byB1bmRlcnN0YW5kIHdoeSBjYXBfbmV0X2FkbWluIGlz
-IG5vdCBlbm91Z2ggdG8gcnVuIHRoZSBwcmV2aW91cw0KPiBjb21tYW5kIChpZSB3aHkgbG9hZCBp
-cyBmb3JiaWRkZW4pLg0KDQpiZWNhdXNlIGJwZiBzeXNjYWxsIHByb2dfbG9hZCBjb21tYW5kIHJl
-cXVpcmVzIGNhcF9zeXNfYWRtaW4gaW4NCnRoZSBjdXJyZW50IGltcGxlbWVudGF0aW9uLg0KDQo+
-IEkgd2FudCB0byBhdm9pZCBzeXNfYWRtaW4sIHRodXMgY2FwX2JwZiB3aWxsIGJlIG9rLiBCdXQg
-d2UgbmVlZCB0byBtYW5hZ2UgdGhlDQo+IGJhY2t3YXJkIGNvbXBhdGliaWxpdHkuDQoNCnJlOiBi
-YWNrd2FyZCBjb21wYXRpYmlsaXR5Li4uDQpkbyB5b3Uga25vdyBvZiBhbnkgY2FzZSB3aGVyZSB0
-YXNrIGlzIHJ1bm5pbmcgdW5kZXIgdXNlcmlkPW5vYm9keQ0Kd2l0aCBjYXBfc3lzX2FkbWluIGFu
-ZCBjYXBfbmV0X2FkbWluIGluIG9yZGVyIHRvIGRvIGJwZiA/DQoNCklmIG5vdCB0aGVuIHdoYXQg
-aXMgdGhlIGNvbmNlcm4gYWJvdXQgY29tcGF0aWJpbGl0eT8NCg==
+Hi Greg,
+
+> From: Greg Kroah-Hartman, Sent: Tuesday, September 3, 2019 6:37 PM
+<snip>
+> > > +void post_usb_bus_notification(const struct usb_bus *ubus,
+> >
+> > This function's argument is struct usb_bus *, but ...
+> >
+> > > +			       enum usb_notification_type subtype, u32 error)
+> > > +{
+> > > +	post_usb_notification(ubus->bus_name, subtype, error);
+> > > +}
+> > > +#endif
+> > > +
+> > >  static int usbdev_notify(struct notifier_block *self,
+> > >  			       unsigned long action, void *dev)
+> > >  {
+> > >  	switch (action) {
+> > >  	case USB_DEVICE_ADD:
+> > > +		post_usb_device_notification(dev, NOTIFY_USB_DEVICE_ADD, 0);
+> > >  		break;
+> > >  	case USB_DEVICE_REMOVE:
+> > > +		post_usb_device_notification(dev, NOTIFY_USB_DEVICE_REMOVE, 0);
+> > > +		usbdev_remove(dev);
+> > > +		break;
+> > > +	case USB_BUS_ADD:
+> > > +		post_usb_bus_notification(dev, NOTIFY_USB_BUS_ADD, 0);
+> > > +		break;
+> > > +	case USB_BUS_REMOVE:
+> > > +		post_usb_bus_notification(dev, NOTIFY_USB_BUS_REMOVE, 0);
+> > >  		usbdev_remove(dev);
+> >
+> > this function calls usbdev_remove() with incorrect argument if the acti=
+on
+> > is USB_BUS_REMOVE. So, this seems to cause the following issue [1] on
+> > my environment (R-Car H3 / r8a7795 on next-20190902) [2]. However, I ha=
+ve
+> > no idea how to fix the issue, so I report this issue at the first step.
+>=20
+> As a few of us just discussed this on IRC, these bus notifiers should
+> probably be dropped as these are the incorrect structure type as you
+> found out.  Thanks for the report.
+
+Thank you for the discussion. I got it.
+
+Best regards,
+Yoshihiro Shimoda
+
+> greg k-h
