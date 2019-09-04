@@ -1,7 +1,7 @@
 From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: [PATCH v12 03/12] sched_setattr: switch to copy_struct_{to,from}_user()
-Date: Thu,  5 Sep 2019 06:19:24 +1000
-Message-ID: <20190904201933.10736-4-cyphar@cyphar.com>
+Subject: [PATCH v12 04/12] perf_event_open: switch to copy_struct_from_user()
+Date: Thu,  5 Sep 2019 06:19:25 +1000
+Message-ID: <20190904201933.10736-5-cyphar@cyphar.com>
 References: <20190904201933.10736-1-cyphar@cyphar.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -13,42 +13,45 @@ Cc: Aleksa Sarai <cyphar@cyphar.com>, Eric Biederman <ebiederm@xmission.com>, An
 List-Id: linux-api@vger.kernel.org
 
 The change is very straightforward, and takes advantage of the (very
-minor) efficiency improvements in copy_struct_{to,from}_user() -- that
-the memchr_inv() check is done on a buffer instead of one-at-at-time
-with get_user() or put_user().
+minor) efficiency improvements in copy_struct_from_user() -- that the
+memchr_inv() check is done on a buffer instead of one-at-at-time with
+get_user().
 
 Signed-off-by: Aleksa Sarai <cyphar@cyphar.com>
 ---
- kernel/sched/core.c | 85 ++++++---------------------------------------
- 1 file changed, 10 insertions(+), 75 deletions(-)
+ kernel/events/core.c | 45 ++++++++------------------------------------
+ 1 file changed, 8 insertions(+), 37 deletions(-)
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 010d578118d6..2f58b07d3468 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -4900,9 +4900,6 @@ static int sched_copy_attr(struct sched_attr __user *uattr, struct sched_attr *a
+diff --git a/kernel/events/core.c b/kernel/events/core.c
+index 0463c1151bae..fe5f58443ba6 100644
+--- a/kernel/events/core.c
++++ b/kernel/events/core.c
+@@ -10498,55 +10498,26 @@ static int perf_copy_attr(struct perf_event_attr __user *uattr,
  	u32 size;
  	int ret;
  
--	if (!access_ok(uattr, SCHED_ATTR_SIZE_VER0))
+-	if (!access_ok(uattr, PERF_ATTR_SIZE_VER0))
 -		return -EFAULT;
 -
- 	/* Zero the full structure, so that a short copy will be nice: */
+-	/*
+-	 * zero the full structure, so that a short copy will be nice.
+-	 */
++	/* Zero the full structure, so that a short copy will be nice. */
  	memset(attr, 0, sizeof(*attr));
  
-@@ -4910,45 +4907,19 @@ static int sched_copy_attr(struct sched_attr __user *uattr, struct sched_attr *a
+ 	ret = get_user(size, &uattr->size);
  	if (ret)
  		return ret;
  
--	/* Bail out on silly large: */
--	if (size > PAGE_SIZE)
+-	if (size > PAGE_SIZE)	/* silly large */
 -		goto err_size;
 -
- 	/* ABI compatibility quirk: */
- 	if (!size)
- 		size = SCHED_ATTR_SIZE_VER0;
+-	if (!size)		/* abi compat */
++	/* ABI compatibility quirk: */
++	if (!size)
+ 		size = PERF_ATTR_SIZE_VER0;
 -
- 	if (size < SCHED_ATTR_SIZE_VER0)
+ 	if (size < PERF_ATTR_SIZE_VER0)
  		goto err_size;
  
 -	/*
@@ -84,82 +87,8 @@ index 010d578118d6..2f58b07d3468 100644
 -	if (ret)
 -		return -EFAULT;
 -
- 	if ((attr->sched_flags & SCHED_FLAG_UTIL_CLAMP) &&
- 	    size < SCHED_ATTR_SIZE_VER1)
- 		return -EINVAL;
-@@ -5105,51 +5076,15 @@ SYSCALL_DEFINE2(sched_getparam, pid_t, pid, struct sched_param __user *, param)
- 	return retval;
- }
+ 	attr->size = size;
  
--static int sched_read_attr(struct sched_attr __user *uattr,
--			   struct sched_attr *attr,
--			   unsigned int usize)
--{
--	int ret;
--
--	if (!access_ok(uattr, usize))
--		return -EFAULT;
--
--	/*
--	 * If we're handed a smaller struct than we know of,
--	 * ensure all the unknown bits are 0 - i.e. old
--	 * user-space does not get uncomplete information.
--	 */
--	if (usize < sizeof(*attr)) {
--		unsigned char *addr;
--		unsigned char *end;
--
--		addr = (void *)attr + usize;
--		end  = (void *)attr + sizeof(*attr);
--
--		for (; addr < end; addr++) {
--			if (*addr)
--				return -EFBIG;
--		}
--
--		attr->size = usize;
--	}
--
--	ret = copy_to_user(uattr, attr, attr->size);
--	if (ret)
--		return -EFAULT;
--
--	return 0;
--}
--
- /**
-  * sys_sched_getattr - similar to sched_getparam, but with sched_attr
-  * @pid: the pid in question.
-  * @uattr: structure containing the extended parameters.
-- * @size: sizeof(attr) for fwd/bwd comp.
-+ * @usize: sizeof(attr) for fwd/bwd comp.
-  * @flags: for future extension.
-  */
- SYSCALL_DEFINE4(sched_getattr, pid_t, pid, struct sched_attr __user *, uattr,
--		unsigned int, size, unsigned int, flags)
-+		unsigned int, usize, unsigned int, flags)
- {
- 	struct sched_attr attr = {
- 		.size = sizeof(struct sched_attr),
-@@ -5157,8 +5092,8 @@ SYSCALL_DEFINE4(sched_getattr, pid_t, pid, struct sched_attr __user *, uattr,
- 	struct task_struct *p;
- 	int retval;
- 
--	if (!uattr || pid < 0 || size > PAGE_SIZE ||
--	    size < SCHED_ATTR_SIZE_VER0 || flags)
-+	if (!uattr || pid < 0 || usize > PAGE_SIZE ||
-+	    usize < SCHED_ATTR_SIZE_VER0 || flags)
- 		return -EINVAL;
- 
- 	rcu_read_lock();
-@@ -5188,7 +5123,7 @@ SYSCALL_DEFINE4(sched_getattr, pid_t, pid, struct sched_attr __user *, uattr,
- 
- 	rcu_read_unlock();
- 
--	retval = sched_read_attr(uattr, &attr, size);
-+	retval = copy_struct_to_user(uattr, usize, &attr, sizeof(attr));
- 	return retval;
- 
- out_unlock:
+ 	if (attr->__reserved_1)
 -- 
 2.23.0
