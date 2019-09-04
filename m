@@ -1,46 +1,62 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [PATCH v12 10/12] namei: aggressively check for nd->root escape
- on ".." resolution
-Date: Wed, 4 Sep 2019 15:16:49 -0700
-Message-ID: <CAHk-=wgcJq21Hydh7Tx5-o8empoPp7ULDBw0Am-du_Pa+fcftQ@mail.gmail.com>
-References: <20190904201933.10736-1-cyphar@cyphar.com> <20190904201933.10736-11-cyphar@cyphar.com>
- <CAHk-=wiod1rQMU+6Zew=cLE8uX4tUdf42bM5eKngMnNVS2My7g@mail.gmail.com> <20190904214856.vnvom7h5xontvngq@yavin.dot.cyphar.com>
+From: David Howells <dhowells@redhat.com>
+Subject: [PATCH 10/11] selinux: Implement the watch_key security hook [ver
+ #8]
+Date: Wed, 04 Sep 2019 23:17:14 +0100
+Message-ID: <156763543468.18676.2518876207052977804.stgit@warthog.procyon.org.uk>
+References: <156763534546.18676.3530557439501101639.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190904214856.vnvom7h5xontvngq@yavin.dot.cyphar.com>
+In-Reply-To: <156763534546.18676.3530557439501101639.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Christian Brauner <christian@brauner.io>, Jann Horn <jannh@google.com>, Kees Cook <keescook@chromium.org>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Rasmus
+To: keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block@vger.kernel.org
+Cc: dhowells@redhat.com, torvalds@linux-foundation.org, Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>dhowells@redhat.com, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.orglinux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Sep 4, 2019 at 2:49 PM Aleksa Sarai <cyphar@cyphar.com> wrote:
->
-> Hinting to userspace to do a retry (with -EAGAIN as you mention in your
-> other mail) wouldn't be a bad thing at all, though you'd almost
-> certainly get quite a few spurious -EAGAINs -- &{mount,rename}_lock are
-> global for the entire machine, after all.
+Implement the watch_key security hook to make sure that a key grants the
+caller View permission in order to set a watch on a key.
 
-I'd hope that we have some future (possibly very long-term)
-alternative that is not quite system-global, but yes, right now they
-are.
+For the moment, the watch_devices security hook is left unimplemented as
+it's not obvious what the object should be since the queue is global and
+didn't previously exist.
 
-Which is one reason I'd rather see EAGAIN in user space - yes, it
-probably makes it even easier to trigger, but it also means that user
-space might be able to do something about it when it does trigger.
+Signed-off-by: David Howells <dhowells@redhat.com>
+Acked-by: Stephen Smalley <sds@tycho.nsa.gov>
+---
 
-For example, maybe user space can first just use an untrusted path
-as-is, and if it gets EAGAIN or EXDEV, it may be that user space can
-simplify the path (ie turn "xyz/.../abc" into just "abc".
+ security/selinux/hooks.c |   14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
 
-And even if user space doesn't do anything like that, I suspect a
-performance problem is going to be a whole lot easier to debug and
-report when somebody ends up seeing excessive retries happening. As a
-developer you'll see it in profiles or in system call traces, rather
-than it resulting in very odd possible slowdowns for the kernel.
-
-And yeah, it would probably be best to then at least delay doing
-option 3 indefinitely, just to make sure user space knows about and
-actually has a test-case for that EAGAIN happening.
-
-              Linus
+diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
+index 74dd46de01b6..88df06969bed 100644
+--- a/security/selinux/hooks.c
++++ b/security/selinux/hooks.c
+@@ -6533,6 +6533,17 @@ static int selinux_key_getsecurity(struct key *key, char **_buffer)
+ 	*_buffer = context;
+ 	return rc;
+ }
++
++#ifdef CONFIG_KEY_NOTIFICATIONS
++static int selinux_watch_key(struct key *key)
++{
++	struct key_security_struct *ksec = key->security;
++	u32 sid = current_sid();
++
++	return avc_has_perm(&selinux_state,
++			    sid, ksec->sid, SECCLASS_KEY, KEY_NEED_VIEW, NULL);
++}
++#endif
+ #endif
+ 
+ #ifdef CONFIG_SECURITY_INFINIBAND
+@@ -6965,6 +6976,9 @@ static struct security_hook_list selinux_hooks[] __lsm_ro_after_init = {
+ 	LSM_HOOK_INIT(key_free, selinux_key_free),
+ 	LSM_HOOK_INIT(key_permission, selinux_key_permission),
+ 	LSM_HOOK_INIT(key_getsecurity, selinux_key_getsecurity),
++#ifdef CONFIG_KEY_NOTIFICATIONS
++	LSM_HOOK_INIT(watch_key, selinux_watch_key),
++#endif
+ #endif
+ 
+ #ifdef CONFIG_AUDIT
