@@ -1,83 +1,191 @@
-From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: Re: [PATCH v12 01/12] lib: introduce copy_struct_{to,from}_user
- helpers
-Date: Thu, 5 Sep 2019 23:40:17 +1000
-Message-ID: <20190905134017.rstiqa6v6roslzlu@yavin.dot.cyphar.com>
-References: <20190904201933.10736-1-cyphar@cyphar.com>
- <20190904201933.10736-2-cyphar@cyphar.com>
- <20190905110544.d6c5t7rx25kvywmi@wittgenstein>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: [PATCH 2/2] ipc: fix sparc64 ipc() wrapper
+Date: Thu,  5 Sep 2019 17:21:25 +0200
+Message-ID: <20190905152155.1392871-2-arnd@arndb.de>
+References: <20190905152155.1392871-1-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="lfmn5rszd42a2efo"
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190905110544.d6c5t7rx25kvywmi@wittgenstein>
+In-Reply-To: <20190905152155.1392871-1-arnd@arndb.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian.brauner@ubuntu.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Christian Brauner <christian@brauner.io>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg
+To: linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Deepa Dinamani <deepa.kernel@gmail.com>, Christian Brauner <christian@brauner.io>, Manfred Spraul <manfred@colorfullife.com>, Davidlohr Bueso <dave@stgolabs.net>
+Cc: linux-arch@vger.kernel.org, y2038@lists.linaro.org, Dominik Brodowski <linux@dominikbrodowski.net>, Matt Turner <mattst88@gmail.com>, stable@vger.kernel.org, sparclinux@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+Matt bisected a sparc64 specific issue with semctl, shmctl and msgctl
+to a commit from my y2038 series in linux-5.1, as I missed the custom
+sys_ipc() wrapper that sparc64 uses in place of the generic version that
+I patched.
 
---lfmn5rszd42a2efo
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+The problem is that the sys_{sem,shm,msg}ctl() functions in the kernel
+now do not allow being called with the IPC_64 flag any more, resulting
+in a -EINVAL error when they don't recognize the command.
 
-On 2019-09-05, Christian Brauner <christian.brauner@ubuntu.com> wrote:
-> On Thu, Sep 05, 2019 at 06:19:22AM +1000, Aleksa Sarai wrote:
-> > A common pattern for syscall extensions is increasing the size of a
-> > struct passed from userspace, such that the zero-value of the new fields
-> > result in the old kernel behaviour (allowing for a mix of userspace and
-> > kernel vintages to operate on one another in most cases). This is done
-> > in both directions -- hence two helpers -- though it's more common to
-> > have to copy user space structs into kernel space.
-> >=20
-> > Previously there was no common lib/ function that implemented
-> > the necessary extension-checking semantics (and different syscalls
-> > implemented them slightly differently or incompletely[1]). A future
-> > patch replaces all of the common uses of this pattern to use the new
-> > copy_struct_{to,from}_user() helpers.
-> >=20
-> > [1]: For instance {sched_setattr,perf_event_open,clone3}(2) all do do
-> >      similar checks to copy_struct_from_user() while rt_sigprocmask(2)
-> >      always rejects differently-sized struct arguments.
-> >=20
-> > Suggested-by: Rasmus Villemoes <linux@rasmusvillemoes.dk>
-> > Signed-off-by: Aleksa Sarai <cyphar@cyphar.com>
+Instead, the correct way to do this now is to call the internal
+ksys_old_{sem,shm,msg}ctl() functions to select the API version.
 
-[...]
+As we generally move towards these functions anyway, change all of
+sparc_ipc() to consistently use those in place of the sys_*() versions,
+and move the required ksys_*() declarations into linux/syscalls.h
 
-> > +	if (unlikely(!access_ok(src, usize)))
-> > +		return -EFAULT;
-> > +
-> > +	/* Deal with trailing bytes. */
-> > +	if (usize < ksize)
-> > +		memset(dst + size, 0, rest);
-[...]
-> That's a change in behavior for clone3() and sched at least, no? Unless
-> - which I guess you might have done - you have moved the "error out when
-> the struct is too small" part before the call to copy_struct_from_user()
-> for them.
+Reported-by: Matt Turner <mattst88@gmail.com>
+Fixes: 275f22148e87 ("ipc: rename old-style shmctl/semctl/msgctl syscalls")
+Cc: stable@vger.kernel.org
+Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+---
+Hi Matt,
 
-Yes, I've put the minimum size check to the callers in all of the
-cases (in the case of clone3() I've #define'd a CLONE_ARGS_SIZE_VER0 to
-match the others -- see patch 2 of the series).
+Can you check that this solves your problem?
+---
+ arch/sparc/kernel/sys_sparc_64.c | 30 +++++++++++++++---------------
+ include/linux/syscalls.h         | 19 +++++++++++++++++++
+ ipc/util.h                       | 25 ++-----------------------
+ 3 files changed, 36 insertions(+), 38 deletions(-)
 
---=20
-Aleksa Sarai
-Senior Software Engineer (Containers)
-SUSE Linux GmbH
-<https://www.cyphar.com/>
-
---lfmn5rszd42a2efo
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXXEQPQAKCRCdlLljIbnQ
-EmI0AQDWLDq3CfEAPKhr2gyUgsbcgKNMnsXSA4qFj1Jjd61fzQEAqPhisgSoisGO
-mIYO56C9d94ktWhTGVP9Bs10TG3V/Ac=
-=1PLZ
------END PGP SIGNATURE-----
-
---lfmn5rszd42a2efo--
+diff --git a/arch/sparc/kernel/sys_sparc_64.c b/arch/sparc/kernel/sys_sparc_64.c
+index ccc88926bc00..5ad0494df367 100644
+--- a/arch/sparc/kernel/sys_sparc_64.c
++++ b/arch/sparc/kernel/sys_sparc_64.c
+@@ -340,21 +340,21 @@ SYSCALL_DEFINE6(sparc_ipc, unsigned int, call, int, first, unsigned long, second
+ 	if (call <= SEMTIMEDOP) {
+ 		switch (call) {
+ 		case SEMOP:
+-			err = sys_semtimedop(first, ptr,
+-					     (unsigned int)second, NULL);
++			err = ksys_semtimedop(first, ptr,
++					      (unsigned int)second, NULL);
+ 			goto out;
+ 		case SEMTIMEDOP:
+-			err = sys_semtimedop(first, ptr, (unsigned int)second,
++			err = ksys_semtimedop(first, ptr, (unsigned int)second,
+ 				(const struct __kernel_timespec __user *)
+-					     (unsigned long) fifth);
++					      (unsigned long) fifth);
+ 			goto out;
+ 		case SEMGET:
+-			err = sys_semget(first, (int)second, (int)third);
++			err = ksys_semget(first, (int)second, (int)third);
+ 			goto out;
+ 		case SEMCTL: {
+-			err = sys_semctl(first, second,
+-					 (int)third | IPC_64,
+-					 (unsigned long) ptr);
++			err = ksys_old_semctl(first, second,
++					      (int)third | IPC_64,
++					      (unsigned long) ptr);
+ 			goto out;
+ 		}
+ 		default:
+@@ -365,18 +365,18 @@ SYSCALL_DEFINE6(sparc_ipc, unsigned int, call, int, first, unsigned long, second
+ 	if (call <= MSGCTL) {
+ 		switch (call) {
+ 		case MSGSND:
+-			err = sys_msgsnd(first, ptr, (size_t)second,
++			err = ksys_msgsnd(first, ptr, (size_t)second,
+ 					 (int)third);
+ 			goto out;
+ 		case MSGRCV:
+-			err = sys_msgrcv(first, ptr, (size_t)second, fifth,
++			err = ksys_msgrcv(first, ptr, (size_t)second, fifth,
+ 					 (int)third);
+ 			goto out;
+ 		case MSGGET:
+-			err = sys_msgget((key_t)first, (int)second);
++			err = ksys_msgget((key_t)first, (int)second);
+ 			goto out;
+ 		case MSGCTL:
+-			err = sys_msgctl(first, (int)second | IPC_64, ptr);
++			err = ksys_old_msgctl(first, (int)second | IPC_64, ptr);
+ 			goto out;
+ 		default:
+ 			err = -ENOSYS;
+@@ -396,13 +396,13 @@ SYSCALL_DEFINE6(sparc_ipc, unsigned int, call, int, first, unsigned long, second
+ 			goto out;
+ 		}
+ 		case SHMDT:
+-			err = sys_shmdt(ptr);
++			err = ksys_shmdt(ptr);
+ 			goto out;
+ 		case SHMGET:
+-			err = sys_shmget(first, (size_t)second, (int)third);
++			err = ksys_shmget(first, (size_t)second, (int)third);
+ 			goto out;
+ 		case SHMCTL:
+-			err = sys_shmctl(first, (int)second | IPC_64, ptr);
++			err = ksys_old_shmctl(first, (int)second | IPC_64, ptr);
+ 			goto out;
+ 		default:
+ 			err = -ENOSYS;
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 88145da7d140..f7c561c4dcdd 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -1402,4 +1402,23 @@ static inline unsigned int ksys_personality(unsigned int personality)
+ 	return old;
+ }
+ 
++/* for __ARCH_WANT_SYS_IPC */
++long ksys_semtimedop(int semid, struct sembuf __user *tsops,
++		     unsigned int nsops,
++		     const struct __kernel_timespec __user *timeout);
++long ksys_semget(key_t key, int nsems, int semflg);
++long ksys_old_semctl(int semid, int semnum, int cmd, unsigned long arg);
++long ksys_msgget(key_t key, int msgflg);
++long ksys_old_msgctl(int msqid, int cmd, struct msqid_ds __user *buf);
++long ksys_msgrcv(int msqid, struct msgbuf __user *msgp, size_t msgsz,
++		 long msgtyp, int msgflg);
++long ksys_msgsnd(int msqid, struct msgbuf __user *msgp, size_t msgsz,
++		 int msgflg);
++long ksys_shmget(key_t key, size_t size, int shmflg);
++long ksys_shmdt(char __user *shmaddr);
++long ksys_old_shmctl(int shmid, int cmd, struct shmid_ds __user *buf);
++long compat_ksys_semtimedop(int semid, struct sembuf __user *tsems,
++			    unsigned int nsops,
++			    const struct old_timespec32 __user *timeout);
++
+ #endif
+diff --git a/ipc/util.h b/ipc/util.h
+index 0fcf8e719b76..5766c61aed0e 100644
+--- a/ipc/util.h
++++ b/ipc/util.h
+@@ -276,29 +276,7 @@ static inline int compat_ipc_parse_version(int *cmd)
+ 	*cmd &= ~IPC_64;
+ 	return version;
+ }
+-#endif
+ 
+-/* for __ARCH_WANT_SYS_IPC */
+-long ksys_semtimedop(int semid, struct sembuf __user *tsops,
+-		     unsigned int nsops,
+-		     const struct __kernel_timespec __user *timeout);
+-long ksys_semget(key_t key, int nsems, int semflg);
+-long ksys_old_semctl(int semid, int semnum, int cmd, unsigned long arg);
+-long ksys_msgget(key_t key, int msgflg);
+-long ksys_old_msgctl(int msqid, int cmd, struct msqid_ds __user *buf);
+-long ksys_msgrcv(int msqid, struct msgbuf __user *msgp, size_t msgsz,
+-		 long msgtyp, int msgflg);
+-long ksys_msgsnd(int msqid, struct msgbuf __user *msgp, size_t msgsz,
+-		 int msgflg);
+-long ksys_shmget(key_t key, size_t size, int shmflg);
+-long ksys_shmdt(char __user *shmaddr);
+-long ksys_old_shmctl(int shmid, int cmd, struct shmid_ds __user *buf);
+-
+-/* for CONFIG_ARCH_WANT_OLD_COMPAT_IPC */
+-long compat_ksys_semtimedop(int semid, struct sembuf __user *tsems,
+-			    unsigned int nsops,
+-			    const struct old_timespec32 __user *timeout);
+-#ifdef CONFIG_COMPAT
+ long compat_ksys_old_semctl(int semid, int semnum, int cmd, int arg);
+ long compat_ksys_old_msgctl(int msqid, int cmd, void __user *uptr);
+ long compat_ksys_msgrcv(int msqid, compat_uptr_t msgp, compat_ssize_t msgsz,
+@@ -306,6 +284,7 @@ long compat_ksys_msgrcv(int msqid, compat_uptr_t msgp, compat_ssize_t msgsz,
+ long compat_ksys_msgsnd(int msqid, compat_uptr_t msgp,
+ 		       compat_ssize_t msgsz, int msgflg);
+ long compat_ksys_old_shmctl(int shmid, int cmd, void __user *uptr);
+-#endif /* CONFIG_COMPAT */
++
++#endif
+ 
+ #endif
+-- 
+2.20.0
