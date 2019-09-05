@@ -1,79 +1,44 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: Why add the general notification queue and its sources
-Date: Thu, 5 Sep 2019 10:19:54 -0700
-Message-ID: <CAHk-=wjQ5Fpv0D7rxX0W=obx9xoOAxJ_Cr+pGCYOAi2S9FiCNg@mail.gmail.com>
-References: <156763534546.18676.3530557439501101639.stgit@warthog.procyon.org.uk>
- <CAHk-=wh5ZNE9pBwrnr5MX3iqkUP4nspz17rtozrSxs5-OGygNw@mail.gmail.com> <17703.1567702907@warthog.procyon.org.uk>
+From: Matt Turner <mattst88@gmail.com>
+Subject: Re: [PATCH 2/2] ipc: fix sparc64 ipc() wrapper
+Date: Thu, 5 Sep 2019 10:22:36 -0700
+Message-ID: <CAEdQ38G24-s0x+xKzUfg1GH8JAPtcAq5e5L37SnOZ3gQth1STQ@mail.gmail.com>
+References: <20190905152155.1392871-1-arnd@arndb.de> <20190905152155.1392871-2-arnd@arndb.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <17703.1567702907@warthog.procyon.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, rstrode@redhat.com, swhiteho@redhat.com, Nicolas Dichtel <nicolas.dichtel@6wind.com>, raven@themaw.net, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, Christian Brauner <christian@brauner.io>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <20190905152155.1392871-2-arnd@arndb.de>
+Sender: stable-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: LKML <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, "Eric W. Biederman" <ebiederm@xmission.com>, Deepa Dinamani <deepa.kernel@gmail.com>, Christian Brauner <christian@brauner.io>, Manfred Spraul <manfred@colorfullife.com>, Davidlohr Bueso <dave@stgolabs.net>, Linux-Arch <linux-arch@vger.kernel.org>, y2038 Mailman List <y2038@lists.linaro.org>, Dominik Brodowski <linux@dominikbrodowski.net>, stable@vger.kernel.org, sparclinux@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 5, 2019 at 10:01 AM David Howells <dhowells@redhat.com> wrote:
-> >
-> > I'm just going to be very blunt about this, and say that there is no
-> > way I can merge any of this *ever*, unless other people stand up and
-> > say that
-> >
-> >  (a) they'll use it
-> >
-> > and
-> >
-> >  (b) they'll actively develop it and participate in testing and coding
+On Thu, Sep 5, 2019 at 8:23 AM Arnd Bergmann <arnd@arndb.de> wrote:
 >
-> Besides the core notification buffer which ties this together, there are a
-> number of sources that I've implemented, not all of which are in this patch
-> series:
+> Matt bisected a sparc64 specific issue with semctl, shmctl and msgctl
+> to a commit from my y2038 series in linux-5.1, as I missed the custom
+> sys_ipc() wrapper that sparc64 uses in place of the generic version that
+> I patched.
+>
+> The problem is that the sys_{sem,shm,msg}ctl() functions in the kernel
+> now do not allow being called with the IPC_64 flag any more, resulting
+> in a -EINVAL error when they don't recognize the command.
+>
+> Instead, the correct way to do this now is to call the internal
+> ksys_old_{sem,shm,msg}ctl() functions to select the API version.
+>
+> As we generally move towards these functions anyway, change all of
+> sparc_ipc() to consistently use those in place of the sys_*() versions,
+> and move the required ksys_*() declarations into linux/syscalls.h
+>
+> Reported-by: Matt Turner <mattst88@gmail.com>
+> Fixes: 275f22148e87 ("ipc: rename old-style shmctl/semctl/msgctl syscalls")
+> Cc: stable@vger.kernel.org
+> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+> ---
+> Hi Matt,
+>
+> Can you check that this solves your problem?
 
-You've at least now answered part of the "Why", but you didn't
-actually answer the whole "another developer" part.
+Works great. Thank you Arnd!
 
-I really don't like how nobody else than you seems to even look at any
-of the key handling patches. Because nobody else seems to care.
-
-This seems to be another new subsystem / driver that has the same
-pattern. If it's all just you, I don't want to merge it, because I
-really want more than just other developers doing "Reviewed-by" after
-looking at somebody elses code that they don't actually use or really
-care about.
-
-See what I'm saying?
-
-New features that go into the kernel should have multiple users. Not a
-single developer who pushes both the kernel feature and the single use
-of that feature.
-
-This very much comes from me reverting the key ACL pull. Not only did
-I revert it, ABSOLUTELY NOBODY even reacted to the revert. Nobody
-stepped up and said they they want that new ACL code, and pushed for a
-fix. There was some very little murmuring about it when Mimi at least
-figured out _why_ it broke, but other than that all the noise I saw
-about the revert was Eric Biggers pointing out it broke other things
-too, and that it had actually broken some test suites. But since it
-hadn't even been in linux-next, that too had been noticed much too
-late.
-
-See what I'm saying? This whole "David Howells does his own features
-that nobody else uses" needs to stop. You need to have a champion. I
-just don't feel safe pulling these kinds of changes from you, because
-I get the feeling that ABSOLUTELY NOBODY ELSE ever really looked at it
-or really cared.
-
-Most of the patches has nobody else even Cc'd, and even the patches
-that do have some "Reviewed-by" feel more like somebody else went "ok,
-the change looks fine to me", without any other real attachment to the
-code.
-
-New kernel features and interfaces really need to have a higher
-barrier of entry than one developer working on his or her own thing.
-
-Is that a change from 25 years ago? Or yes it is. We can point to lots
-of "single developer did a thing" from years past. But things have
-changed. And once bitten, twice shy: I really am a _lot_ more nervous
-about all these key changes now.
-
-                    Linus
+Tested-by: Matt Turner <mattst88@gmail.com>
