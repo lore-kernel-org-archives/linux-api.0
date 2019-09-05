@@ -1,86 +1,67 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: Why add the general notification queue and its sources
-Date: Thu, 05 Sep 2019 22:32:44 +0100
-Message-ID: <5396.1567719164@warthog.procyon.org.uk>
-References: <CAHk-=wjcsxQ8QB_v=cwBQw4pkJg7pp-bBsdWyPivFO_OeF-y+g@mail.gmail.com> <156763534546.18676.3530557439501101639.stgit@warthog.procyon.org.uk> <CAHk-=wh5ZNE9pBwrnr5MX3iqkUP4nspz17rtozrSxs5-OGygNw@mail.gmail.com> <17703.1567702907@warthog.procyon.org.uk> <CAHk-=wjQ5Fpv0D7rxX0W=obx9xoOAxJ_Cr+pGCYOAi2S9FiCNg@mail.gmail.com> <CAKCoTu7ms_Mr-q08d9XB3uascpzwBa5LF9JTT2aq8uUsoFE8aQ@mail.gmail.com>
+From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Subject: Re: [PATCH v2 bpf-next 2/3] bpf: implement CAP_BPF
+Date: Thu, 5 Sep 2019 15:00:40 -0700
+Message-ID: <20190905220038.77qqrkrqmjtco6ld@ast-mbp.dhcp.thefacebook.com>
+References: <20190829051253.1927291-1-ast@kernel.org>
+ <20190829051253.1927291-2-ast@kernel.org>
+ <ed8796f5-eaea-c87d-ddd9-9d624059e5ee@iogearbox.net>
+ <20190829173034.up5g74onaekp53zd@ast-mbp.dhcp.thefacebook.com>
+ <59ac111e-7ce7-5e00-32c9-9b55482fe701@6wind.com>
+ <46df2c36-4276-33c0-626b-c51e77b3a04f@fb.com>
+ <5e36a193-8ad9-77e7-e2ff-429fb521a79c@iogearbox.net>
+ <99acd443-69d7-f53a-1af0-263e0b73abef@fb.com>
+ <acc09eaf-5289-9457-3ce1-f27efb6013b8@iogearbox.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=wjcsxQ8QB_v=cwBQw4pkJg7pp-bBsdWyPivFO_OeF-y+g@mail.gmail.com>
-Content-ID: <5395.1567719164.1@warthog.procyon.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dhowells@redhat.com, Ray Strode <rstrode@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Steven Whitehouse <swhiteho@redhat.com>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, raven@themaw.net, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, Christian Brauner <christian@brauner.io>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, "Ray, Debarshi" <debarshi.ray@gmail.com>, Robbie Harwood <rharwood@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <netdev-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <acc09eaf-5289-9457-3ce1-f27efb6013b8@iogearbox.net>
+Sender: netdev-owner@vger.kernel.org
+To: Daniel Borkmann <daniel@iogearbox.net>
+Cc: Alexei Starovoitov <ast@fb.com>, "nicolas.dichtel@6wind.com" <nicolas.dichtel@6wind.com>, Alexei Starovoitov <ast@kernel.org>, "luto@amacapital.net" <luto@amacapital.net>, "davem@davemloft.net" <davem@davemloft.net>, "peterz@infradead.org" <peterz@infradead.org>, "rostedt@goodmis.org" <rostedt@goodmis.org>, "netdev@vger.kernel.org" <netdev@vger.kernel.org>, "bpf@vger.kernel.org" <bpf@vger.kernel.org>, Kernel Team <Kernel-team@fb.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Linus Torvalds <torvalds@linux-foundation.org> wrote:
+On Thu, Sep 05, 2019 at 10:37:03AM +0200, Daniel Borkmann wrote:
+> On 9/4/19 5:21 PM, Alexei Starovoitov wrote:
+> > On 9/4/19 8:16 AM, Daniel Borkmann wrote:
+> > > opening/creating BPF maps" error="Unable to create map
+> > > /run/cilium/bpffs/tc/globals/cilium_lxc: operation not permitted"
+> > > subsys=daemon
+> > > 2019-09-04T14:11:47.28178666Z level=fatal msg="Error while creating
+> > > daemon" error="Unable to create map
+> > > /run/cilium/bpffs/tc/globals/cilium_lxc: operation not permitted"
+> > > subsys=daemon
+> > 
+> > Ok. We have to include caps in both cap_sys_admin and cap_bpf then.
+> > 
+> > > And /same/ deployment with reverted patches, hence no CAP_BPF gets it up
+> > > and running again:
+> > > 
+> > > # kubectl get pods --all-namespaces -o wide
+> > 
+> > Can you share what this magic commands do underneath?
+> 
+> What do you mean by magic commands? Latter is showing all pods in the cluster:
+> 
+> https://kubernetes.io/docs/reference/kubectl/cheatsheet/#viewing-finding-resources
 
-> Also, what is the security model here? Open a special character
-> device, and you get access to random notifications from random
-> sources?
->
-> That makes no sense. Do they have the same security permissions?
+"magic" in a sense that I have no idea how k8s "services" and "pods" map
+to kernel namespaces.
 
-Sigh.  It doesn't work like that.  I tried to describe this in the manpages I
-referred to in the cover note.  Obviously I didn't do a good enough job.  Let
-me try and explain the general workings and the security model here.
+> Checking moby go code, it seems to exec with GetAllCapabilities which returns
+> all of the capabilities it is aware of, and afaics, they seem to be using
+> the below go library to get the hard-coded list from where obviously CAP_BPF
+> is unknown which might also explain the breakage I've been seeing:
+> 
+> https://github.com/syndtr/gocapability/blob/33e07d32887e1e06b7c025f27ce52f62c7990bc0/capability/enum_gen.go
 
- (1) /dev/watch_queue just implements locked-in-memory buffers.  It gets you
-     no events by simply opening it.
-
-     Each time you open it you get your own private buffer.  Buffers are not
-     shares.  Creation of buffers is limited by ENFILE, EMFILE and
-     RLIMIT_MEMLOCK.
-
- (2) A buffer is implemented as a pollable ring buffer, with the head pointer
-     belonging to the kernel and the tail pointer belonging to userspace.
-     Userspace mmaps the buffer.
-
-     The kernel *only ever* reads the head and tail pointer from a buffer; it
-     never reads anything else.
-
-     When it wants to post a message to a buffer, the kernel reads the
-     pointers and then does one of three things:
-
-	(a) If the pointers were incoherent it drops the message.
-
-	(b) If the buffer was full the kernel writes a flag to indicate this
-	    and drops the message.
-
-	(c) Otherwise, the kernel writes a message and maybe padding at the
-     	    place(s) it expects and writes the head pointer.  If userspace was
-     	    busy trashing the place, that should not cause a problem for the
-     	    kernel.
-
-     The buffer pointers are expected to run to the end and wrap naturally;
-     they're only masked off at the point of actually accessing the buffer.
-
- (3) You connect event sources to your buffer, e.g.:
-
-	fd = open("/dev/watch_queue", ...);
-	keyctl_watch_key(KEY_SPEC_SESSION_KEYRING, fd, ...);
-
-     or:
-
-	watch_mount(AT_FDCWD, "/net", 0, fd, ...);
-
-     Security is checked at the point of connection to make sure you have
-     permission to access that source.  You have to have View permission on a
-     key/keyring for key events, for example, and you have to have execute
-     permission on a directory for mount events.
-
-     The LSM gets a look-in too: Smack checks you have read permission on a
-     key for example.
-
- (4) You can connect multiple sources of different types to your buffer and a
-     source can be connected to multiple buffers at a time.
-
- (5) Security is checked when an event is delivered to make sure the triggerer
-     of the event has permission to give you that event.  Smack requires that
-     the triggerer has write permission on the opener of the buffer for
-     example.
-
- (6) poll() signals POLLIN|POLLRDNORM if there is stuff in the buffer and
-     POLLERR if the pointers are incoherent.
-
-David
+thanks for the link.
+That library is much better written than libcap.
+capability_linux.go is reading cap_last_cap dynamically and it can understand
+proposed CAP_BPF, CAP_TRACING without need o be recompiled (unlike libcap).
+So passing new caps to k8s should be trivial. The library won't know
+their names, but passing by number looks to be already supported.
+I'm still not sure which part of k8s setup clears the caps and
+why this v2 set doesn't work, but that doesn't matter any more.
+I believe I addressed this compat issue in v3 set.
+Could you please give a try just repeating your previous commands?
