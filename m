@@ -1,108 +1,85 @@
-From: Song Liu <songliubraving@fb.com>
-Subject: Re: [PATCH v3 bpf-next 2/3] bpf: implement CAP_BPF
-Date: Thu, 5 Sep 2019 16:08:44 +0000
-Message-ID: <A0BD5C17-3118-4C90-825F-23CE187209EA@fb.com>
-References: <20190904184335.360074-1-ast@kernel.org>
- <20190904184335.360074-2-ast@kernel.org>
- <CE3B644F-D1A5-49F7-96B6-FD663C5F8961@fb.com>
- <20190905013245.wguhhcxvxt5rnc6h@ast-mbp.dhcp.thefacebook.com>
- <E342EC2A-24F6-4581-BFDC-119B5E02B560@fb.com>
- <20190905031518.behyq7olkh6fjsoe@ast-mbp.dhcp.thefacebook.com>
+From: Aleksa Sarai <cyphar@cyphar.com>
+Subject: Re: [PATCH v12 01/12] lib: introduce copy_struct_{to,from}_user
+ helpers
+Date: Fri, 6 Sep 2019 03:01:06 +1000
+Message-ID: <20190905170106.7j4nmgwnvkcwn6md@yavin.dot.cyphar.com>
+References: <20190904201933.10736-1-cyphar@cyphar.com>
+ <20190904201933.10736-2-cyphar@cyphar.com>
+ <20190905073205.GY2332@hirez.programming.kicks-ass.net>
+ <20190905092622.tlb6nn3uisssdfbu@yavin.dot.cyphar.com>
+ <20190905094305.GJ2349@hirez.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20190905031518.behyq7olkh6fjsoe@ast-mbp.dhcp.thefacebook.com>
-Content-Language: en-US
-Content-ID: <4A33147E45FBAE45A2DA4C175F6E64EE@namprd15.prod.outlook.com>
-Sender: netdev-owner@vger.kernel.org
-To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Cc: Alexei Starovoitov <ast@kernel.org>, "David S . Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@amacapital.net>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Kernel Team <Kernel-team@fb.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="kmvm5dxbzyhfjvqj"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190905094305.GJ2349@hirez.programming.kicks-ass.net>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Christian Brauner <christian@brauner.io>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Alexander
 List-Id: linux-api@vger.kernel.org
 
 
+--kmvm5dxbzyhfjvqj
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-> On Sep 4, 2019, at 8:15 PM, Alexei Starovoitov <alexei.starovoitov@gmail.=
-com> wrote:
+On 2019-09-05, Peter Zijlstra <peterz@infradead.org> wrote:
+> On Thu, Sep 05, 2019 at 07:26:22PM +1000, Aleksa Sarai wrote:
+> > On 2019-09-05, Peter Zijlstra <peterz@infradead.org> wrote:
+> > > On Thu, Sep 05, 2019 at 06:19:22AM +1000, Aleksa Sarai wrote:
+> > > > +
+> > > > +		while (rest > 0) {
+> > > > +			size_t bufsize =3D min(rest, sizeof(buffer));
+> > > > +
+> > > > +			if (__copy_from_user(buffer, addr, bufsize))
+> > > > +				return -EFAULT;
+> > > > +			if (memchr_inv(buffer, 0, bufsize))
+> > > > +				return -E2BIG;
+> > > > +
+> > > > +			addr +=3D bufsize;
+> > > > +			rest -=3D bufsize;
+> > > > +		}
+> > >=20
+> > > The perf implementation uses get_user(); but if that is too slow, sur=
+ely
+> > > we can do something with uaccess_try() here?
+> >=20
+> > Is there a non-x86-specific way to do that (unless I'm mistaken only x86
+> > has uaccess_try() or the other *_try() wrappers)? The main "performance
+> > improvement" (if you can even call it that) is that we use memchr_inv()
+> > which finds non-matching characters more efficiently than just doing a
+> > loop.
 >=20
-> On Thu, Sep 05, 2019 at 02:51:51AM +0000, Song Liu wrote:
->>=20
->>=20
->>> On Sep 4, 2019, at 6:32 PM, Alexei Starovoitov <alexei.starovoitov@gmai=
-l.com> wrote:
->>>=20
->>> On Thu, Sep 05, 2019 at 12:34:36AM +0000, Song Liu wrote:
->>>>=20
->>>>=20
->>>>> On Sep 4, 2019, at 11:43 AM, Alexei Starovoitov <ast@kernel.org> wrot=
-e:
->>>>>=20
->>>>> Implement permissions as stated in uapi/linux/capability.h
->>>>>=20
->>>>> Signed-off-by: Alexei Starovoitov <ast@kernel.org>
->>>>>=20
->>>>=20
->>>> [...]
->>>>=20
->>>>> @@ -1648,11 +1648,11 @@ static int bpf_prog_load(union bpf_attr *attr=
-, union bpf_attr __user *uattr)
->>>>> 	is_gpl =3D license_is_gpl_compatible(license);
->>>>>=20
->>>>> 	if (attr->insn_cnt =3D=3D 0 ||
->>>>> -	    attr->insn_cnt > (capable(CAP_SYS_ADMIN) ? BPF_COMPLEXITY_LIMIT=
-_INSNS : BPF_MAXINSNS))
->>>>> +	    attr->insn_cnt > (capable_bpf() ? BPF_COMPLEXITY_LIMIT_INSNS : =
-BPF_MAXINSNS))
->>>>> 		return -E2BIG;
->>>>> 	if (type !=3D BPF_PROG_TYPE_SOCKET_FILTER &&
->>>>> 	    type !=3D BPF_PROG_TYPE_CGROUP_SKB &&
->>>>> -	    !capable(CAP_SYS_ADMIN))
->>>>> +	    !capable_bpf())
->>>>> 		return -EPERM;
->>>>=20
->>>> Do we allow load BPF_PROG_TYPE_SOCKET_FILTER and BPF_PROG_TYPE_CGROUP_=
-SKB
->>>> without CAP_BPF? If so, maybe highlight in the header?
->>>=20
->>> of course. there is no change in behavior.
->>> 'highlight in the header'?
->>> you mean in commit log?
->>> I think it's a bit weird to describe things in commit that patch
->>> is _not_ changing vs things that patch does actually change.
->>> This type of comment would be great in a doc though.
->>> The doc will be coming separately in the follow up assuming
->>> the whole thing lands. I'll remember to note that bit.
->>=20
->> I meant capability.h:
->>=20
->> + * CAP_BPF allows the following BPF operations:
->> + * - Loading all types of BPF programs
->>=20
->> But CAP_BPF is not required to load all types of programs.=20
->=20
-> yes, but above statement is still correct, right?
->=20
-> And right below it says:
-> * CAP_BPF allows the following BPF operations:
-> * - Loading all types of BPF programs
-> * - Creating all types of BPF maps except:
-> *    - stackmap that needs CAP_TRACING
-> *    - devmap that needs CAP_NET_ADMIN
-> *    - cpumap that needs CAP_SYS_ADMIN
-> which is also correct, but CAP_BPF is not required
-> for array, hash, prog_array, percpu, map-in-map ...
-> except their lru variants...
-> and except if they contain bpf_spin_lock...
-> and if they need BTF it currently can be loaded with cap_sys_admin only..=
-.
->=20
-> If we say something about socket_filter, cg_skb progs in capability.h
-> we should clarify maps as well, but then it will become too big for .h
-> The comments in capability.h already look too long to me.
-> All that info and a lot more belongs in the doc.
+> Oh, you're right, that's x86 only :/
 
-Agreed. We cannot put all these details in capability.h. Doc/wikipages=20
-would be better fit for these information.=20
+Though, I just had an idea -- am I wrong to think that the following
+would work just as well (without the need for an intermediate buffer)?
 
-Thanks,
-Song
+   if (memchr_inv((const char __force *) src + size, 0, rest))
+     return -E2BIG;
+
+Or is this type of thing very much frowned upon? What if it was a
+separate memchr_inv_user() instead -- I feel as though there's not a
+strong argument for needing to use a buffer when we're single-passing
+the __user buffer and doing a basic boolean check.
+
+--=20
+Aleksa Sarai
+Senior Software Engineer (Containers)
+SUSE Linux GmbH
+<https://www.cyphar.com/>
+
+--kmvm5dxbzyhfjvqj
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXXE/TgAKCRCdlLljIbnQ
+Eo4lAP4vz7qxi6aZbZTeed0ZbnEtPkuMnCkFo0v18rHfgnM6xgD/bV/SICkzrufH
+DwNHgRAu5z8daivqeybakfQqvQMhpA4=
+=SteT
+-----END PGP SIGNATURE-----
+
+--kmvm5dxbzyhfjvqj--
