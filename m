@@ -1,77 +1,42 @@
-From: Ray Strode <rstrode@redhat.com>
-Subject: Re: Why add the general notification queue and its sources
-Date: Thu, 5 Sep 2019 14:32:40 -0400
-Message-ID: <CAKCoTu7ms_Mr-q08d9XB3uascpzwBa5LF9JTT2aq8uUsoFE8aQ@mail.gmail.com>
-References: <156763534546.18676.3530557439501101639.stgit@warthog.procyon.org.uk>
- <CAHk-=wh5ZNE9pBwrnr5MX3iqkUP4nspz17rtozrSxs5-OGygNw@mail.gmail.com>
- <17703.1567702907@warthog.procyon.org.uk> <CAHk-=wjQ5Fpv0D7rxX0W=obx9xoOAxJ_Cr+pGCYOAi2S9FiCNg@mail.gmail.com>
+From: Christian Brauner <christian.brauner@ubuntu.com>
+Subject: Re: [PATCH v12 01/12] lib: introduce copy_struct_{to,from}_user
+ helpers
+Date: Thu, 5 Sep 2019 20:35:32 +0200
+Message-ID: <20190905183532.GA25049@localhost>
+References: <20190904201933.10736-1-cyphar@cyphar.com>
+ <20190904201933.10736-2-cyphar@cyphar.com>
+ <20190905180750.GQ1131@ZenIV.linux.org.uk>
+ <20190905182303.7f6bxpa2enbgcegv@wittgenstein>
+ <20190905182801.GR1131@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=wjQ5Fpv0D7rxX0W=obx9xoOAxJ_Cr+pGCYOAi2S9FiCNg@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <20190905182801.GR1131@ZenIV.linux.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: David Howells <dhowells@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Steven Whitehouse <swhiteho@redhat.com>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, raven@themaw.net, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, Christian Brauner <christian@brauner.io>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, "Ray, Debarshi" <debarshi.ray@gmail.com>, Robbie Harwood <rharwood@redhat.com>
+To: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Aleksa Sarai <cyphar@cyphar.com>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Christian Brauner <christian@brauner.io>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@r>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+On Thu, Sep 05, 2019 at 07:28:01PM +0100, Al Viro wrote:
+> On Thu, Sep 05, 2019 at 08:23:03PM +0200, Christian Brauner wrote:
+> 
+> > Because every caller of that function right now has that limit set
+> > anyway iirc. So we can either remove it from here and place it back for
+> > the individual callers or leave it in the helper.
+> > Also, I'm really asking, why not? Is it unreasonable to have an upper
+> > bound on the size (for a long time probably) or are you disagreeing with
+> > PAGE_SIZE being used? PAGE_SIZE limit is currently used by sched, perf,
+> > bpf, and clone3 and in a few other places.
+> 
+> For a primitive that can be safely used with any size (OK, any within
+> the usual 2Gb limit)?  Why push the random policy into the place where
+> it doesn't belong?
 
-On Thu, Sep 5, 2019 at 1:20 PM Linus Torvalds
-<torvalds@linux-foundation.org> wrote:
-> You've at least now answered part of the "Why", but you didn't
-> actually answer the whole "another developer" part.
-It's certainly something we've wanted in the GNOME world for a long time:
+Ah, the "not in the helper part" makes sense.
+As long as leave the check for the callers themselves.
 
-See for instance
-
-https://bugzilla.redhat.com/show_bug.cgi?id=991110
-
-and
-
-https://bugzilla.gnome.org/show_bug.cgi?id=707402
-
-from all the way back 2013.  These are the alternatives I can think of:
-
-- poll? status quo, but not great for obvious wakeup reasons
-- use a different credential cache collection type that does support
-change notification?
-some of the other types do support change notification, but have their
-own set of
-problems. But maybe we should just go back to DIR type credential
-cache collections
-and try to figure out the life cycle problems they pose, i don't
-know... or get more
-man power behind KCM...
-- manage change notification entirely from userspace.  assume credentials will
-always be put in place from krb5-libs entry points, and just skip
-notification if
-it happens out from under the libraries. maybe upstream kerberos guys would
-be onboard with this, I don't know. This seems less robust than having
-the kernel
-in the loop, though.
-
-> I really don't like how nobody else than you seems to even look at any
-> of the key handling patches. Because nobody else seems to care.
-I've got no insight here, so i'll just throw a dart...
-
-viro, is this something you have any interest in watching closer?
-
-> See what I'm saying? This whole "David Howells does his own features
-> that nobody else uses" needs to stop. You need to have a champion. I
-> just don't feel safe pulling these kinds of changes from you, because
-> I get the feeling that ABSOLUTELY NOBODY ELSE ever really looked at it
-> or really cared.
-I get the "one man is not enough for proper maintenance" argument, and
-maybe it's true.  I don't know.
-
-But I just want to point out, I have been asking dhowells for this change
-notification API for years, so it's not something he did on his own and for
-no particularly good reason. It solves a real problem and has a real-world
-use case.
-
-He kindly did it because I (and Robbie Harwood and others) asked him about
-it, off and on, and  he was able to fit it onto his priority list for us.
->From this thread, it sounds like he solved a problem for Greg too, killing a
-couple birds with one stone?
-
---Ray
+> 
+> Seriously, what's the point?  If they want to have a large chunk of
+> userland memory zeroed or checked for non-zeroes - why would that
+> be a problem?
