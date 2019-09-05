@@ -1,47 +1,82 @@
-From: Anatoly Pugachev <matorola@gmail.com>
-Subject: Re: [PATCH 2/2] ipc: fix sparc64 ipc() wrapper
-Date: Thu, 5 Sep 2019 23:38:39 +0300
-Message-ID: <CADxRZqxkj+vdAOtZYmKtavy5nCtNFAUgfZ6k12nYeNcPYB+ssw@mail.gmail.com>
-References: <20190905152155.1392871-1-arnd@arndb.de> <20190905152155.1392871-2-arnd@arndb.de>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: Why add the general notification queue and its sources
+Date: Thu, 5 Sep 2019 13:39:00 -0700
+Message-ID: <CAHk-=wjcsxQ8QB_v=cwBQw4pkJg7pp-bBsdWyPivFO_OeF-y+g@mail.gmail.com>
+References: <156763534546.18676.3530557439501101639.stgit@warthog.procyon.org.uk>
+ <CAHk-=wh5ZNE9pBwrnr5MX3iqkUP4nspz17rtozrSxs5-OGygNw@mail.gmail.com>
+ <17703.1567702907@warthog.procyon.org.uk> <CAHk-=wjQ5Fpv0D7rxX0W=obx9xoOAxJ_Cr+pGCYOAi2S9FiCNg@mail.gmail.com>
+ <CAKCoTu7ms_Mr-q08d9XB3uascpzwBa5LF9JTT2aq8uUsoFE8aQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190905152155.1392871-2-arnd@arndb.de>
+In-Reply-To: <CAKCoTu7ms_Mr-q08d9XB3uascpzwBa5LF9JTT2aq8uUsoFE8aQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Linux Kernel list <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, "Eric W. Biederman" <ebiederm@xmission.com>, Deepa Dinamani <deepa.kernel@gmail.com>, Christian Brauner <christian@brauner.io>, Manfred Spraul <manfred@colorfullife.com>, Davidlohr Bueso <dave@stgolabs.net>, linux-arch@vger.kernel.org, y2038@lists.linaro.org, Dominik Brodowski <linux@dominikbrodowski.net>, Matt Turner <mattst88@gmail.com>, stable@vger.kernel.org, Sparc kernel list <sparclinux@vger.kernel.org>, linux-api@vger.kernel.org
+To: Ray Strode <rstrode@redhat.com>
+Cc: David Howells <dhowells@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Steven Whitehouse <swhiteho@redhat.com>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, raven@themaw.net, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, Christian Brauner <christian@brauner.io>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, "Ray, Debarshi" <debarshi.ray@gmail.com>, Robbie Harwood <rharwood@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 5, 2019 at 9:39 PM Arnd Bergmann <arnd@arndb.de> wrote:
+On Thu, Sep 5, 2019 at 11:33 AM Ray Strode <rstrode@redhat.com> wrote:
 >
-> Matt bisected a sparc64 specific issue with semctl, shmctl and msgctl
-> to a commit from my y2038 series in linux-5.1, as I missed the custom
-> sys_ipc() wrapper that sparc64 uses in place of the generic version that
-> I patched.
+> Hi,
 >
-> The problem is that the sys_{sem,shm,msg}ctl() functions in the kernel
-> now do not allow being called with the IPC_64 flag any more, resulting
-> in a -EINVAL error when they don't recognize the command.
+> On Thu, Sep 5, 2019 at 1:20 PM Linus Torvalds
+> <torvalds@linux-foundation.org> wrote:
+> > You've at least now answered part of the "Why", but you didn't
+> > actually answer the whole "another developer" part.
+> It's certainly something we've wanted in the GNOME world for a long time:
 >
-> Instead, the correct way to do this now is to call the internal
-> ksys_old_{sem,shm,msg}ctl() functions to select the API version.
+> See for instance
 >
-> As we generally move towards these functions anyway, change all of
-> sparc_ipc() to consistently use those in place of the sys_*() versions,
-> and move the required ksys_*() declarations into linux/syscalls.h
->
-> Reported-by: Matt Turner <mattst88@gmail.com>
-> Fixes: 275f22148e87 ("ipc: rename old-style shmctl/semctl/msgctl syscalls")
-> Cc: stable@vger.kernel.org
-> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
+> https://bugzilla.redhat.com/show_bug.cgi?id=991110
 
+That is *way* too specific to make for any kind of generic
+notification mechanism.
 
-Not Matt,
+Also, what is the security model here? Open a special character
+device, and you get access to random notifications from random
+sources?
 
-but this patch fixes util-linux.git ipcs test-suite (make check)
-regression for me on current sparc64 git kernel (5.3.0-rc7), which was
-broken somewhere in between 4.19 (debian unstable kernel) and 5.3-rcX.
+That makes no sense. Do they have the same security permissions?
 
-Thanks!
+USB error reporting is one thing - and has completely different
+security rules than some per-user key thing (or system? or namespace?
+Or what?)
 
-PS: wanted to bisect kernel, but Matt did it first.
+And why would you do a broken big-key thing in the kernel in the first
+place? Why don't you just have a kernel key to indirectly encrypt
+using a key and "additional user space data". The kernel should simply
+not take care of insane 1MB keys.
+
+Big keys just don't make sense for a kernel. Just use the backing
+store THAT YOU HAVE TO HAVE ANYWAY. Introduce some "indirect key"
+instead that is used to encrypt and authenticate the backing store.
+
+And mix in /proc/mounts tracking, which has a namespace component and
+completely different events and security model (likely "none" - since
+you can always read your own /proc/mounts).
+
+So honestly, this all just makes me go "user interfaces are hard, all
+the users seem to have *completely* different requirements, and nobody
+has apparently really tested this in practice".
+
+Maybe a generic notification mechanism is sensible. But I don't see
+how security issues could *possibly* be unified, and some of the
+examples given (particularly "track changes to /proc/mounts") seem to
+have obviously better alternatives (as in "just support poll() on
+it").
+
+All this discussion has convinced me of is that this whole thing is
+half-baked and not ready even on a conceptual level.
+
+So as far as I'm concerned, I think I want things like actual
+"Tested-by:" lines from actual users, because it's not clear that this
+makes sense. Gnome certainly should work as a regular user, if you
+need a system daemon for it with root privileges you might as well
+just do any notification entirely inside that daemon in user space.
+Same goes for /proc/mounts - which as mentioned has a much more
+obvious interface for waiting anyway.
+
+User interfaces need a lot of thought and testing. They shouldn't be
+ad-hoc "maybe this could work for X, Y and Z" theories.
+
+                    Linus
