@@ -1,44 +1,125 @@
-From: Matt Turner <mattst88@gmail.com>
-Subject: Re: [PATCH 2/2] ipc: fix sparc64 ipc() wrapper
-Date: Thu, 5 Sep 2019 10:22:36 -0700
-Message-ID: <CAEdQ38G24-s0x+xKzUfg1GH8JAPtcAq5e5L37SnOZ3gQth1STQ@mail.gmail.com>
-References: <20190905152155.1392871-1-arnd@arndb.de> <20190905152155.1392871-2-arnd@arndb.de>
+From: Al Viro <viro@zeniv.linux.org.uk>
+Subject: Re: [PATCH v12 01/12] lib: introduce copy_struct_{to,from}_user
+ helpers
+Date: Thu, 5 Sep 2019 19:07:50 +0100
+Message-ID: <20190905180750.GQ1131@ZenIV.linux.org.uk>
+References: <20190904201933.10736-1-cyphar@cyphar.com>
+ <20190904201933.10736-2-cyphar@cyphar.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <20190905152155.1392871-2-arnd@arndb.de>
-Sender: stable-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: LKML <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, "Eric W. Biederman" <ebiederm@xmission.com>, Deepa Dinamani <deepa.kernel@gmail.com>, Christian Brauner <christian@brauner.io>, Manfred Spraul <manfred@colorfullife.com>, Davidlohr Bueso <dave@stgolabs.net>, Linux-Arch <linux-arch@vger.kernel.org>, y2038 Mailman List <y2038@lists.linaro.org>, Dominik Brodowski <linux@dominikbrodowski.net>, stable@vger.kernel.org, sparclinux@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20190904201933.10736-2-cyphar@cyphar.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Aleksa Sarai <cyphar@cyphar.com>
+Cc: Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Christian Brauner <christian@brauner.io>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Alexander
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 5, 2019 at 8:23 AM Arnd Bergmann <arnd@arndb.de> wrote:
->
-> Matt bisected a sparc64 specific issue with semctl, shmctl and msgctl
-> to a commit from my y2038 series in linux-5.1, as I missed the custom
-> sys_ipc() wrapper that sparc64 uses in place of the generic version that
-> I patched.
->
-> The problem is that the sys_{sem,shm,msg}ctl() functions in the kernel
-> now do not allow being called with the IPC_64 flag any more, resulting
-> in a -EINVAL error when they don't recognize the command.
->
-> Instead, the correct way to do this now is to call the internal
-> ksys_old_{sem,shm,msg}ctl() functions to select the API version.
->
-> As we generally move towards these functions anyway, change all of
-> sparc_ipc() to consistently use those in place of the sys_*() versions,
-> and move the required ksys_*() declarations into linux/syscalls.h
->
-> Reported-by: Matt Turner <mattst88@gmail.com>
-> Fixes: 275f22148e87 ("ipc: rename old-style shmctl/semctl/msgctl syscalls")
-> Cc: stable@vger.kernel.org
-> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
-> ---
-> Hi Matt,
->
-> Can you check that this solves your problem?
+On Thu, Sep 05, 2019 at 06:19:22AM +1000, Aleksa Sarai wrote:
+> +/*
+> + * "memset(p, 0, size)" but for user space buffers. Caller must have already
+> + * checked access_ok(p, size).
+> + */
+> +static int __memzero_user(void __user *p, size_t s)
+> +{
+> +	const char zeros[BUFFER_SIZE] = {};
+> +	while (s > 0) {
+> +		size_t n = min(s, sizeof(zeros));
+> +
+> +		if (__copy_to_user(p, zeros, n))
+> +			return -EFAULT;
+> +
+> +		p += n;
+> +		s -= n;
+> +	}
+> +	return 0;
+> +}
 
-Works great. Thank you Arnd!
+That's called clear_user().
 
-Tested-by: Matt Turner <mattst88@gmail.com>
+> +int copy_struct_to_user(void __user *dst, size_t usize,
+> +			const void *src, size_t ksize)
+> +{
+> +	size_t size = min(ksize, usize);
+> +	size_t rest = abs(ksize - usize);
+> +
+> +	if (unlikely(usize > PAGE_SIZE))
+> +		return -EFAULT;
+
+Why?
+
+> +	} else if (usize > ksize) {
+> +		if (__memzero_user(dst + size, rest))
+> +			return -EFAULT;
+> +	}
+> +	/* Copy the interoperable parts of the struct. */
+> +	if (__copy_to_user(dst, src, size))
+> +		return -EFAULT;
+
+Why not simply clear_user() and copy_to_user()?
+
+> +int copy_struct_from_user(void *dst, size_t ksize,
+> +			  const void __user *src, size_t usize)
+> +{
+> +	size_t size = min(ksize, usize);
+> +	size_t rest = abs(ksize - usize);
+
+Cute, but... you would be just as well without that 'rest' thing.
+
+> +
+> +	if (unlikely(usize > PAGE_SIZE))
+> +		return -EFAULT;
+
+Again, why?
+
+> +	if (unlikely(!access_ok(src, usize)))
+> +		return -EFAULT;
+
+Why not simply copy_from_user() here?
+
+> +	/* Deal with trailing bytes. */
+> +	if (usize < ksize)
+> +		memset(dst + size, 0, rest);
+> +	else if (usize > ksize) {
+> +		const void __user *addr = src + size;
+> +		char buffer[BUFFER_SIZE] = {};
+> +
+> +		while (rest > 0) {
+> +			size_t bufsize = min(rest, sizeof(buffer));
+> +
+> +			if (__copy_from_user(buffer, addr, bufsize))
+> +				return -EFAULT;
+> +			if (memchr_inv(buffer, 0, bufsize))
+> +				return -E2BIG;
+
+Frankly, that looks like a candidate for is_all_zeroes_user().
+With the loop like above serving as a dumb default.  And on
+badly alighed address it _will_ be dumb.  Probably too much
+so - something like
+	if ((unsigned long)addr & 1) {
+		u8 v;
+		if (get_user(v, (__u8 __user *)addr))
+			return -EFAULT;
+		if (v)
+			return -E2BIG;
+		addr++;
+	}
+	if ((unsigned long)addr & 2) {
+		u16 v;
+		if (get_user(v, (__u16 __user *)addr))
+			return -EFAULT;
+		if (v)
+			return -E2BIG;
+		addr +=2;
+	}
+	if ((unsigned long)addr & 4) {
+		u32 v;
+		if (get_user(v, (__u32 __user *)addr))
+			return -EFAULT;
+		if (v)
+			return -E2BIG;
+	}
+	<read the rest like you currently do>
+would be saner, and things like x86 could trivially add an
+asm variant - it's not hard.  Incidentally, memchr_inv() is
+an overkill in this case...
