@@ -1,51 +1,94 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: Why add the general notification queue and its sources
-Date: Thu, 5 Sep 2019 15:08:42 -0700
-Message-ID: <CAHk-=wgbCXea1a9OTWgMMvcsCGGiNiPp+ty-edZrBWn63NCYdw@mail.gmail.com>
-References: <156763534546.18676.3530557439501101639.stgit@warthog.procyon.org.uk>
- <CAHk-=wh5ZNE9pBwrnr5MX3iqkUP4nspz17rtozrSxs5-OGygNw@mail.gmail.com>
- <17703.1567702907@warthog.procyon.org.uk> <CAHk-=wjQ5Fpv0D7rxX0W=obx9xoOAxJ_Cr+pGCYOAi2S9FiCNg@mail.gmail.com>
- <CAKCoTu7ms_Mr-q08d9XB3uascpzwBa5LF9JTT2aq8uUsoFE8aQ@mail.gmail.com>
- <CAHk-=wjcsxQ8QB_v=cwBQw4pkJg7pp-bBsdWyPivFO_OeF-y+g@mail.gmail.com> <5396.1567719164@warthog.procyon.org.uk>
+From: Al Viro <viro@zeniv.linux.org.uk>
+Subject: Re: [PATCH v12 01/12] lib: introduce copy_struct_{to,from}_user
+ helpers
+Date: Thu, 5 Sep 2019 23:31:48 +0100
+Message-ID: <20190905223148.GS1131@ZenIV.linux.org.uk>
+References: <20190904201933.10736-1-cyphar@cyphar.com>
+ <20190904201933.10736-2-cyphar@cyphar.com>
+ <20190905180750.GQ1131@ZenIV.linux.org.uk>
+ <20190905182303.7f6bxpa2enbgcegv@wittgenstein>
+ <20190905182801.GR1131@ZenIV.linux.org.uk>
+ <20190905195618.pwzgvuzadkfpznfz@yavin.dot.cyphar.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5396.1567719164@warthog.procyon.org.uk>
+Content-Disposition: inline
+In-Reply-To: <20190905195618.pwzgvuzadkfpznfz@yavin.dot.cyphar.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Ray Strode <rstrode@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Steven Whitehouse <swhiteho@redhat.com>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, raven@themaw.net, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, Christian Brauner <christian@brauner.io>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, "Ray, Debarshi" <debarshi.ray@gmail.com>, Robbie Harwood <rharwood@redhat.com>
+To: Aleksa Sarai <cyphar@cyphar.com>
+Cc: Christian Brauner <christian.brauner@ubuntu.com>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Christian Brauner <christian@brauner.io>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 5, 2019 at 2:32 PM David Howells <dhowells@redhat.com> wrote:
->
->  (1) /dev/watch_queue just implements locked-in-memory buffers.  It gets you
->      no events by simply opening it.
+On Fri, Sep 06, 2019 at 05:56:18AM +1000, Aleksa Sarai wrote:
+> On 2019-09-05, Al Viro <viro@zeniv.linux.org.uk> wrote:
+> > On Thu, Sep 05, 2019 at 08:23:03PM +0200, Christian Brauner wrote:
+> > 
+> > > Because every caller of that function right now has that limit set
+> > > anyway iirc. So we can either remove it from here and place it back for
+> > > the individual callers or leave it in the helper.
+> > > Also, I'm really asking, why not? Is it unreasonable to have an upper
+> > > bound on the size (for a long time probably) or are you disagreeing with
+> > > PAGE_SIZE being used? PAGE_SIZE limit is currently used by sched, perf,
+> > > bpf, and clone3 and in a few other places.
+> > 
+> > For a primitive that can be safely used with any size (OK, any within
+> > the usual 2Gb limit)?  Why push the random policy into the place where
+> > it doesn't belong?
+> > 
+> > Seriously, what's the point?  If they want to have a large chunk of
+> > userland memory zeroed or checked for non-zeroes - why would that
+> > be a problem?
+> 
+> Thinking about it some more, there isn't really any r/w amplification --
+> so there isn't much to gain by passing giant structs. Though, if we are
+> going to permit 2GB buffers, isn't that also an argument to use
+> memchr_inv()? :P
 
-Cool. In-memory buffers.
+I'm not sure I understand the last bit.  If you look at what copy_from_user()
+does on misaligned source/destination, especially on architectures that
+really, really do not like unaligned access...
 
-But I know - we *have* one of those. There's already a system call for
-it, and has been forever. One that we then extended to allow people to
-change the buffer size, and do a lot of other things with.
+Case in point: alpha (and it's not unusual in that respect).  What it boils
+down to is
+	copy bytes until the destination is aligned
+	if source and destination are both aligned
+		copy word by word
+	else
+		read word by word, storing the mix of two adjacent words
+	copy the rest byte by byte
 
-It's called "pipe()". And you can give the writing side to other user
-space processes too, in case you are running an older kernel that
-didn't have some "event pipe support". It comes with resource
-management, because people already use those things.
+The unpleasant case (to and from having different remainders modulo 8) is
+basically
 
-If you want to make a message protocol on top of it, it has cool
-atomicity guarantees for any message size less than PIPE_BUF, but to
-make things simple, maybe just say "fixed record sizes of 64 bytes" or
-something like that for events.
+	if (count >= 8) {
+		u64 *aligned = (u64 *)(from & ~7);
+		u64 *dest = (u64 *)to;
+		int bitshift = (from & 7) * 8;
+		u64 prev, next;
 
-Then you can use them from things like perl scripts, not just magical
-C programs.
+		prev = aligned[0];
+		do {   
+			next = aligned[1];
+			prev <<= bitshift;
+			prev |= next >> (64 - bitshift);
+			*dest++ = prev;
+			aligned++;  
+			prev = next;
+			from += 8;
+			to += 8;
+			count -= 8;
+		} while (count >= 8);
+	}
 
-Why do we need a new kind of super-fancy high-speed thing for event reporting?
+Now, mix that with "... and do memchr_inv() on the copy to find if we'd
+copied any non-zeroes, nevermind where" and it starts looking really
+ridiculous.
 
-If you have *so* many events that pipe handling is a performance
-issue, you have something seriously wrong going on.
+We should just read the fscking source, aligned down to word boundary
+and check each word being read.  The first and the last ones - masked.
+All there is to it.  On almost all architectures that'll work well
+enough; s390 might want something more elaborate (there even word-by-word
+copies are costly, but I'd suggest talking to them for details).
 
-So no. I'm not interested in a magical memory-mapped pipe that is
-actually more limited than the real thing.
-
-                  Linus
+Something like bool all_zeroes_user(const void __user *p, size_t count)
+would probably be a sane API...
