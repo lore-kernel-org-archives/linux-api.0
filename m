@@ -1,41 +1,69 @@
-From: Ray Strode <rstrode@redhat.com>
-Subject: Re: Why add the general notification queue and its sources
-Date: Thu, 5 Sep 2019 14:51:14 -0400
-Message-ID: <CAKCoTu7ms4ckwDA_-onuJg+famnMzGZE9gGUcqqMz0kCAAECRg@mail.gmail.com>
-References: <156763534546.18676.3530557439501101639.stgit@warthog.procyon.org.uk>
- <CAHk-=wh5ZNE9pBwrnr5MX3iqkUP4nspz17rtozrSxs5-OGygNw@mail.gmail.com>
- <17703.1567702907@warthog.procyon.org.uk> <CAHk-=wjQ5Fpv0D7rxX0W=obx9xoOAxJ_Cr+pGCYOAi2S9FiCNg@mail.gmail.com>
- <11667f69-fbb5-28d2-3c31-7f865f2b93e5@redhat.com>
+From: Aleksa Sarai <cyphar@cyphar.com>
+Subject: Re: [PATCH v12 01/12] lib: introduce copy_struct_{to,from}_user
+ helpers
+Date: Fri, 6 Sep 2019 05:56:18 +1000
+Message-ID: <20190905195618.pwzgvuzadkfpznfz@yavin.dot.cyphar.com>
+References: <20190904201933.10736-1-cyphar@cyphar.com>
+ <20190904201933.10736-2-cyphar@cyphar.com>
+ <20190905180750.GQ1131@ZenIV.linux.org.uk>
+ <20190905182303.7f6bxpa2enbgcegv@wittgenstein>
+ <20190905182801.GR1131@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="lkob4nx2s4nikwgg"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <11667f69-fbb5-28d2-3c31-7f865f2b93e5@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20190905182801.GR1131@ZenIV.linux.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Steven Whitehouse <swhiteho@redhat.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, David Howells <dhowells@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, raven@themaw.net, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, Christian Brauner <christian@brauner.io>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, David Lehman <dlehman@redhat.com>, Ian Kent <ikent@redhat.com>
+To: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Christian Brauner <christian.brauner@ubuntu.com>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Christian Brauner <christian@brauner.io>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
 
-On Thu, Sep 5, 2019 at 2:37 PM Steven Whitehouse <swhiteho@redhat.com> wrote:
-> The original reason for the mount notification mechanism was so that we
-> are able to provide information to GUIs and similar filesystem and
-> storage management tools, matching the state of the filesystem with the
-> state of the underlying devices. This is part of a larger project
-> entitled "Project Springfield" to try and provide better management
-> tools for storage and filesystems. I've copied David Lehman in, since he
-> can provide a wider view on this topic.
-So one problem that I've heard discussed before is what happens in a thinp
-setup when the disk space is overallocated and gets used up. IIRC, the
-volumes just sort of eat themselves?
+--lkob4nx2s4nikwgg
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Getting proper notification of looming catastrophic failure to the
-workstation user
-before it's too late would be useful, indeed.
+On 2019-09-05, Al Viro <viro@zeniv.linux.org.uk> wrote:
+> On Thu, Sep 05, 2019 at 08:23:03PM +0200, Christian Brauner wrote:
+>=20
+> > Because every caller of that function right now has that limit set
+> > anyway iirc. So we can either remove it from here and place it back for
+> > the individual callers or leave it in the helper.
+> > Also, I'm really asking, why not? Is it unreasonable to have an upper
+> > bound on the size (for a long time probably) or are you disagreeing with
+> > PAGE_SIZE being used? PAGE_SIZE limit is currently used by sched, perf,
+> > bpf, and clone3 and in a few other places.
+>=20
+> For a primitive that can be safely used with any size (OK, any within
+> the usual 2Gb limit)?  Why push the random policy into the place where
+> it doesn't belong?
+>=20
+> Seriously, what's the point?  If they want to have a large chunk of
+> userland memory zeroed or checked for non-zeroes - why would that
+> be a problem?
 
-I don't know if this new mechanism dhowells has development can help with that,
-and/or if solving that problem is part of the Project Springfield
-initiative or not. Do you
-know off hand?
+Thinking about it some more, there isn't really any r/w amplification --
+so there isn't much to gain by passing giant structs. Though, if we are
+going to permit 2GB buffers, isn't that also an argument to use
+memchr_inv()? :P
 
---Ray
+--=20
+Aleksa Sarai
+Senior Software Engineer (Containers)
+SUSE Linux GmbH
+<https://www.cyphar.com/>
+
+--lkob4nx2s4nikwgg
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXXFoXwAKCRCdlLljIbnQ
+EkH6AP4mTXfGXldo6DW9pN3b8QgoKfRKIsKKRirvrHzSGLXpkgEAgJQFw7jvGxM5
+R7P96Ylo52dN3tmTa+41vZfPhMozHwA=
+=OHll
+-----END PGP SIGNATURE-----
+
+--lkob4nx2s4nikwgg--
