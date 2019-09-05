@@ -1,102 +1,190 @@
-From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Subject: Re: [PATCH v3 bpf-next 2/3] bpf: implement CAP_BPF
-Date: Wed, 4 Sep 2019 20:15:20 -0700
-Message-ID: <20190905031518.behyq7olkh6fjsoe@ast-mbp.dhcp.thefacebook.com>
-References: <20190904184335.360074-1-ast@kernel.org>
- <20190904184335.360074-2-ast@kernel.org>
- <CE3B644F-D1A5-49F7-96B6-FD663C5F8961@fb.com>
- <20190905013245.wguhhcxvxt5rnc6h@ast-mbp.dhcp.thefacebook.com>
- <E342EC2A-24F6-4581-BFDC-119B5E02B560@fb.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH v12 01/12] lib: introduce copy_struct_{to,from}_user
+ helpers
+Date: Thu, 5 Sep 2019 09:32:05 +0200
+Message-ID: <20190905073205.GY2332@hirez.programming.kicks-ass.net>
+References: <20190904201933.10736-1-cyphar@cyphar.com>
+ <20190904201933.10736-2-cyphar@cyphar.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <netdev-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <E342EC2A-24F6-4581-BFDC-119B5E02B560@fb.com>
-Sender: netdev-owner@vger.kernel.org
-To: Song Liu <songliubraving@fb.com>
-Cc: Alexei Starovoitov <ast@kernel.org>, "David S . Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@amacapital.net>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Kernel Team <Kernel-team@fb.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+In-Reply-To: <20190904201933.10736-2-cyphar@cyphar.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Aleksa Sarai <cyphar@cyphar.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Christian Brauner <christian@brauner.io>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Alexander
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 05, 2019 at 02:51:51AM +0000, Song Liu wrote:
-> 
-> 
-> > On Sep 4, 2019, at 6:32 PM, Alexei Starovoitov <alexei.starovoitov@gmail.com> wrote:
-> > 
-> > On Thu, Sep 05, 2019 at 12:34:36AM +0000, Song Liu wrote:
-> >> 
-> >> 
-> >>> On Sep 4, 2019, at 11:43 AM, Alexei Starovoitov <ast@kernel.org> wrote:
-> >>> 
-> >>> Implement permissions as stated in uapi/linux/capability.h
-> >>> 
-> >>> Signed-off-by: Alexei Starovoitov <ast@kernel.org>
-> >>> 
-> >> 
-> >> [...]
-> >> 
-> >>> @@ -1648,11 +1648,11 @@ static int bpf_prog_load(union bpf_attr *attr, union bpf_attr __user *uattr)
-> >>> 	is_gpl = license_is_gpl_compatible(license);
-> >>> 
-> >>> 	if (attr->insn_cnt == 0 ||
-> >>> -	    attr->insn_cnt > (capable(CAP_SYS_ADMIN) ? BPF_COMPLEXITY_LIMIT_INSNS : BPF_MAXINSNS))
-> >>> +	    attr->insn_cnt > (capable_bpf() ? BPF_COMPLEXITY_LIMIT_INSNS : BPF_MAXINSNS))
-> >>> 		return -E2BIG;
-> >>> 	if (type != BPF_PROG_TYPE_SOCKET_FILTER &&
-> >>> 	    type != BPF_PROG_TYPE_CGROUP_SKB &&
-> >>> -	    !capable(CAP_SYS_ADMIN))
-> >>> +	    !capable_bpf())
-> >>> 		return -EPERM;
-> >> 
-> >> Do we allow load BPF_PROG_TYPE_SOCKET_FILTER and BPF_PROG_TYPE_CGROUP_SKB
-> >> without CAP_BPF? If so, maybe highlight in the header?
-> > 
-> > of course. there is no change in behavior.
-> > 'highlight in the header'?
-> > you mean in commit log?
-> > I think it's a bit weird to describe things in commit that patch
-> > is _not_ changing vs things that patch does actually change.
-> > This type of comment would be great in a doc though.
-> > The doc will be coming separately in the follow up assuming
-> > the whole thing lands. I'll remember to note that bit.
-> 
-> I meant capability.h:
-> 
-> + * CAP_BPF allows the following BPF operations:
-> + * - Loading all types of BPF programs
-> 
-> But CAP_BPF is not required to load all types of programs. 
+On Thu, Sep 05, 2019 at 06:19:22AM +1000, Aleksa Sarai wrote:
+> +/**
+> + * copy_struct_to_user: copy a struct to user space
+> + * @dst:   Destination address, in user space.
+> + * @usize: Size of @dst struct.
+> + * @src:   Source address, in kernel space.
+> + * @ksize: Size of @src struct.
+> + *
+> + * Copies a struct from kernel space to user space, in a way that guarantees
+> + * backwards-compatibility for struct syscall arguments (as long as future
+> + * struct extensions are made such that all new fields are *appended* to the
+> + * old struct, and zeroed-out new fields have the same meaning as the old
+> + * struct).
+> + *
+> + * @ksize is just sizeof(*dst), and @usize should've been passed by user space.
+> + * The recommended usage is something like the following:
+> + *
+> + *   SYSCALL_DEFINE2(foobar, struct foo __user *, uarg, size_t, usize)
+> + *   {
+> + *      int err;
+> + *      struct foo karg = {};
+> + *
+> + *      // do something with karg
+> + *
+> + *      err = copy_struct_to_user(uarg, usize, &karg, sizeof(karg));
+> + *      if (err)
+> + *        return err;
+> + *
+> + *      // ...
+> + *   }
+> + *
+> + * There are three cases to consider:
+> + *  * If @usize == @ksize, then it's copied verbatim.
+> + *  * If @usize < @ksize, then kernel space is "returning" a newer struct to an
+> + *    older user space. In order to avoid user space getting incomplete
+> + *    information (new fields might be important), all trailing bytes in @src
+> + *    (@ksize - @usize) must be zerored
 
-yes, but above statement is still correct, right?
+s/zerored/zero/, right?
 
-And right below it says:
- * CAP_BPF allows the following BPF operations:
- * - Loading all types of BPF programs
- * - Creating all types of BPF maps except:
- *    - stackmap that needs CAP_TRACING
- *    - devmap that needs CAP_NET_ADMIN
- *    - cpumap that needs CAP_SYS_ADMIN
-which is also correct, but CAP_BPF is not required
-for array, hash, prog_array, percpu, map-in-map ...
-except their lru variants...
-and except if they contain bpf_spin_lock...
-and if they need BTF it currently can be loaded with cap_sys_admin only...
+>                                          , otherwise -EFBIG is returned.
 
-If we say something about socket_filter, cg_skb progs in capability.h
-we should clarify maps as well, but then it will become too big for .h
-The comments in capability.h already look too long to me.
-All that info and a lot more belongs in the doc.
+'Funny' that, copy_struct_from_user() below seems to use E2BIG.
 
-> On a second thought, I am not sure whether we will keep capability.h
-> up to date with all features. So this is probably OK.
+> + *  * If @usize > @ksize, then the kernel is "returning" an older struct to a
+> + *    newer user space. The trailing bytes in @dst (@usize - @ksize) will be
+> + *    zero-filled.
+> + *
+> + * Returns (in all cases, some data may have been copied):
+> + *  * -EFBIG:  (@usize < @ksize) and there are non-zero trailing bytes in @src.
+> + *  * -EFAULT: access to user space failed.
+> + */
+> +int copy_struct_to_user(void __user *dst, size_t usize,
+> +			const void *src, size_t ksize)
+> +{
+> +	size_t size = min(ksize, usize);
+> +	size_t rest = abs(ksize - usize);
+> +
+> +	if (unlikely(usize > PAGE_SIZE))
+> +		return -EFAULT;
 
-It's clearly not for cap_sys_admin.
-cap_net_admin is not up to date either.
-These two are kitchen sink of anything root-like and networking-root like.
-Developers didn't bother updating that .h
-With CAP_BPF we can enforce through patch acceptance policy that
-major new things (like big verifier features) should have a line
-in capability.h
-Though .h is not a replacement for proper doc which will come as follow up.
-Unlike bpf.h that serves as a template for auto-generating man pages
-capability.h is not such thing. I won't change often either.
-So normal doc is a better way to document all details.
+Not documented above. Implementation consistent with *from*, but see
+below.
+
+> +	if (unlikely(!access_ok(dst, usize)))
+> +		return -EFAULT;
+> +
+> +	/* Deal with trailing bytes. */
+> +	if (usize < ksize) {
+> +		if (memchr_inv(src + size, 0, rest))
+> +			return -EFBIG;
+> +	} else if (usize > ksize) {
+> +		if (__memzero_user(dst + size, rest))
+> +			return -EFAULT;
+> +	}
+> +	/* Copy the interoperable parts of the struct. */
+> +	if (__copy_to_user(dst, src, size))
+> +		return -EFAULT;
+> +	return 0;
+> +}
+> +EXPORT_SYMBOL(copy_struct_to_user);
+> +
+> +/**
+> + * copy_struct_from_user: copy a struct from user space
+> + * @dst:   Destination address, in kernel space. This buffer must be @ksize
+> + *         bytes long.
+> + * @ksize: Size of @dst struct.
+> + * @src:   Source address, in user space.
+> + * @usize: (Alleged) size of @src struct.
+> + *
+> + * Copies a struct from user space to kernel space, in a way that guarantees
+> + * backwards-compatibility for struct syscall arguments (as long as future
+> + * struct extensions are made such that all new fields are *appended* to the
+> + * old struct, and zeroed-out new fields have the same meaning as the old
+> + * struct).
+> + *
+> + * @ksize is just sizeof(*dst), and @usize should've been passed by user space.
+> + * The recommended usage is something like the following:
+> + *
+> + *   SYSCALL_DEFINE2(foobar, const struct foo __user *, uarg, size_t, usize)
+> + *   {
+> + *      int err;
+> + *      struct foo karg = {};
+> + *
+> + *      err = copy_struct_from_user(&karg, sizeof(karg), uarg, size);
+> + *      if (err)
+> + *        return err;
+> + *
+> + *      // ...
+> + *   }
+> + *
+> + * There are three cases to consider:
+> + *  * If @usize == @ksize, then it's copied verbatim.
+> + *  * If @usize < @ksize, then the user space has passed an old struct to a
+> + *    newer kernel. The rest of the trailing bytes in @dst (@ksize - @usize)
+> + *    are to be zero-filled.
+> + *  * If @usize > @ksize, then the user space has passed a new struct to an
+> + *    older kernel. The trailing bytes unknown to the kernel (@usize - @ksize)
+> + *    are checked to ensure they are zeroed, otherwise -E2BIG is returned.
+> + *
+> + * Returns (in all cases, some data may have been copied):
+> + *  * -E2BIG:  (@usize > @ksize) and there are non-zero trailing bytes in @src.
+> + *  * -E2BIG:  @usize is "too big" (at time of writing, >PAGE_SIZE).
+> + *  * -EFAULT: access to user space failed.
+> + */
+> +int copy_struct_from_user(void *dst, size_t ksize,
+> +			  const void __user *src, size_t usize)
+> +{
+> +	size_t size = min(ksize, usize);
+> +	size_t rest = abs(ksize - usize);
+> +
+> +	if (unlikely(usize > PAGE_SIZE))
+> +		return -EFAULT;
+
+Documented above as returning -E2BIG.
+
+> +	if (unlikely(!access_ok(src, usize)))
+> +		return -EFAULT;
+> +
+> +	/* Deal with trailing bytes. */
+> +	if (usize < ksize)
+> +		memset(dst + size, 0, rest);
+> +	else if (usize > ksize) {
+> +		const void __user *addr = src + size;
+> +		char buffer[BUFFER_SIZE] = {};
+
+Isn't that too big for on-stack?
+
+> +
+> +		while (rest > 0) {
+> +			size_t bufsize = min(rest, sizeof(buffer));
+> +
+> +			if (__copy_from_user(buffer, addr, bufsize))
+> +				return -EFAULT;
+> +			if (memchr_inv(buffer, 0, bufsize))
+> +				return -E2BIG;
+> +
+> +			addr += bufsize;
+> +			rest -= bufsize;
+> +		}
+
+The perf implementation uses get_user(); but if that is too slow, surely
+we can do something with uaccess_try() here?
+
+> +	}
+> +	/* Copy the interoperable parts of the struct. */
+> +	if (__copy_from_user(dst, src, size))
+> +		return -EFAULT;
+> +	return 0;
+> +}
+> +EXPORT_SYMBOL(copy_struct_from_user);
+
+And personally I'm not a big fan of EXPORT_SYMBOL().
