@@ -1,36 +1,39 @@
-From: Al Viro <viro@zeniv.linux.org.uk>
-Subject: Re: [PATCH v12 01/12] lib: introduce copy_struct_{to,from}_user
- helpers
-Date: Thu, 5 Sep 2019 19:28:01 +0100
-Message-ID: <20190905182801.GR1131@ZenIV.linux.org.uk>
-References: <20190904201933.10736-1-cyphar@cyphar.com>
- <20190904201933.10736-2-cyphar@cyphar.com>
- <20190905180750.GQ1131@ZenIV.linux.org.uk>
- <20190905182303.7f6bxpa2enbgcegv@wittgenstein>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: Re: Why add the general notification queue and its sources
+Date: Thu, 5 Sep 2019 20:33:05 +0200
+Message-ID: <20190905183305.GA22877@kroah.com>
+References: <CAHk-=wh5ZNE9pBwrnr5MX3iqkUP4nspz17rtozrSxs5-OGygNw@mail.gmail.com>
+ <156763534546.18676.3530557439501101639.stgit@warthog.procyon.org.uk>
+ <17703.1567702907@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190905182303.7f6bxpa2enbgcegv@wittgenstein>
+In-Reply-To: <17703.1567702907@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian.brauner@ubuntu.com>
-Cc: Aleksa Sarai <cyphar@cyphar.com>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Christian Brauner <christian@brauner.io>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@r>
+To: David Howells <dhowells@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, rstrode@redhat.com, swhiteho@redhat.com, nicolas.dichtel@6wind.com, raven@themaw.net, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, Christian Brauner <christian@brauner.io>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Sep 05, 2019 at 08:23:03PM +0200, Christian Brauner wrote:
+On Thu, Sep 05, 2019 at 06:01:47PM +0100, David Howells wrote:
+>  (2) USB notifications.
+> 
+>      GregKH was looking for a way to do USB notifications as I was looking to
+>      find additional sources to implement.  I'm not sure how he wants to use
+>      them, but I'll let him speak to that himself.
 
-> Because every caller of that function right now has that limit set
-> anyway iirc. So we can either remove it from here and place it back for
-> the individual callers or leave it in the helper.
-> Also, I'm really asking, why not? Is it unreasonable to have an upper
-> bound on the size (for a long time probably) or are you disagreeing with
-> PAGE_SIZE being used? PAGE_SIZE limit is currently used by sched, perf,
-> bpf, and clone3 and in a few other places.
+We are getting people asking for all sorts of "error reporting" events
+that can happen in the USB subsystem that we have started to abuse the
+KOBJ_CHANGE uevent notification for.  At the same time your patches were
+submitted, someone else submitted yet-another-USB-error patchset.  This
+type of user/kernel interface is much easier to use than abusing uevents
+for USB errors and general notifications about what happened with USB
+devices (more than just add/remove that uevents have).
 
-For a primitive that can be safely used with any size (OK, any within
-the usual 2Gb limit)?  Why push the random policy into the place where
-it doesn't belong?
+So yes, I would like this, and I am sure the ChromeOS people would like
+it too given that I rejected their patcheset with the assumption that
+this could be done with the notification queue api "soon" :)
 
-Seriously, what's the point?  If they want to have a large chunk of
-userland memory zeroed or checked for non-zeroes - why would that
-be a problem?
+thanks,
+
+greg k-h
