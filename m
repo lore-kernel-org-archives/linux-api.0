@@ -1,50 +1,115 @@
-From: Song Liu <songliubraving@fb.com>
-Subject: Re: [PATCH v3 bpf-next 2/3] bpf: implement CAP_BPF
-Date: Thu, 5 Sep 2019 00:34:36 +0000
-Message-ID: <CE3B644F-D1A5-49F7-96B6-FD663C5F8961@fb.com>
-References: <20190904184335.360074-1-ast@kernel.org>
- <20190904184335.360074-2-ast@kernel.org>
+From: Daniel Colascione <dancol@google.com>
+Subject: [RFC] Add critical process prctl
+Date: Wed,  4 Sep 2019 17:53:13 -0700
+Message-ID: <20190905005313.126823-1-dancol@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20190904184335.360074-2-ast@kernel.org>
-Content-Language: en-US
-Content-ID: <4EBF0FA92799CA46BFE7231B56ECE867@namprd15.prod.outlook.com>
-Sender: netdev-owner@vger.kernel.org
-To: Alexei Starovoitov <ast@kernel.org>
-Cc: "David S . Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@amacapital.net>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Kernel Team <Kernel-team@fb.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: dancol@google.com, timmurray@google.com, surenb@google.com, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+A task with CAP_SYS_ADMIN can mark itself PR_SET_TASK_CRITICAL,
+meaning that if the task ever exits, the kernel panics. This facility
+is intended for use by low-level core system processes that cannot
+gracefully restart without a reboot. This prctl allows these processes
+to ensure that the system restarts when they die regardless of whether
+the rest of userspace is operational.
 
+Signed-off-by: Daniel Colascione <dancol@google.com>
+---
+ include/linux/sched.h      |  5 +++++
+ include/uapi/linux/prctl.h |  5 +++++
+ kernel/exit.c              |  2 ++
+ kernel/sys.c               | 19 +++++++++++++++++++
+ 4 files changed, 31 insertions(+)
 
-> On Sep 4, 2019, at 11:43 AM, Alexei Starovoitov <ast@kernel.org> wrote:
->=20
-> Implement permissions as stated in uapi/linux/capability.h
->=20
-> Signed-off-by: Alexei Starovoitov <ast@kernel.org>
->=20
-
-[...]
-
-> @@ -1648,11 +1648,11 @@ static int bpf_prog_load(union bpf_attr *attr, un=
-ion bpf_attr __user *uattr)
-> 	is_gpl =3D license_is_gpl_compatible(license);
->=20
-> 	if (attr->insn_cnt =3D=3D 0 ||
-> -	    attr->insn_cnt > (capable(CAP_SYS_ADMIN) ? BPF_COMPLEXITY_LIMIT_INS=
-NS : BPF_MAXINSNS))
-> +	    attr->insn_cnt > (capable_bpf() ? BPF_COMPLEXITY_LIMIT_INSNS : BPF_=
-MAXINSNS))
-> 		return -E2BIG;
-> 	if (type !=3D BPF_PROG_TYPE_SOCKET_FILTER &&
-> 	    type !=3D BPF_PROG_TYPE_CGROUP_SKB &&
-> -	    !capable(CAP_SYS_ADMIN))
-> +	    !capable_bpf())
-> 		return -EPERM;
-
-Do we allow load BPF_PROG_TYPE_SOCKET_FILTER and BPF_PROG_TYPE_CGROUP_SKB
-without CAP_BPF? If so, maybe highlight in the header?
-
-Thanks,
-Song
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 9f51932bd543..29420b9ebb63 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1526,6 +1526,7 @@ static inline bool is_percpu_thread(void)
+ #define PFA_SPEC_IB_DISABLE		5	/* Indirect branch speculation restricted */
+ #define PFA_SPEC_IB_FORCE_DISABLE	6	/* Indirect branch speculation permanently restricted */
+ #define PFA_SPEC_SSB_NOEXEC		7	/* Speculative Store Bypass clear on execve() */
++#define PFA_CRITICAL                    8       /* Panic system if process exits */
+ 
+ #define TASK_PFA_TEST(name, func)					\
+ 	static inline bool task_##func(struct task_struct *p)		\
+@@ -1568,6 +1569,10 @@ TASK_PFA_CLEAR(SPEC_IB_DISABLE, spec_ib_disable)
+ TASK_PFA_TEST(SPEC_IB_FORCE_DISABLE, spec_ib_force_disable)
+ TASK_PFA_SET(SPEC_IB_FORCE_DISABLE, spec_ib_force_disable)
+ 
++TASK_PFA_TEST(CRITICAL, critical)
++TASK_PFA_SET(CRITICAL, critical)
++TASK_PFA_CLEAR(CRITICAL, critical)
++
+ static inline void
+ current_restore_flags(unsigned long orig_flags, unsigned long flags)
+ {
+diff --git a/include/uapi/linux/prctl.h b/include/uapi/linux/prctl.h
+index 094bb03b9cc2..4964723bbd47 100644
+--- a/include/uapi/linux/prctl.h
++++ b/include/uapi/linux/prctl.h
+@@ -229,4 +229,9 @@ struct prctl_mm_map {
+ # define PR_PAC_APDBKEY			(1UL << 3)
+ # define PR_PAC_APGAKEY			(1UL << 4)
+ 
++/* Per-task criticality control */
++#define PR_SET_TASK_CRITICAL 55
++#define PR_CRITICAL_NOT_CRITICAL 0
++#define PR_CRITICAL_CRITICAL 1
++
+ #endif /* _LINUX_PRCTL_H */
+diff --git a/kernel/exit.c b/kernel/exit.c
+index 5b4a5dcce8f8..9b3d3411d935 100644
+--- a/kernel/exit.c
++++ b/kernel/exit.c
+@@ -788,6 +788,8 @@ void __noreturn do_exit(long code)
+ 		panic("Aiee, killing interrupt handler!");
+ 	if (unlikely(!tsk->pid))
+ 		panic("Attempted to kill the idle task!");
++	if (unlikely(task_critical(tsk)))
++		panic("Critical task died!");
+ 
+ 	/*
+ 	 * If do_exit is called because this processes oopsed, it's possible
+diff --git a/kernel/sys.c b/kernel/sys.c
+index 2969304c29fe..097e05ebaf94 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -2269,6 +2269,20 @@ int __weak arch_prctl_spec_ctrl_set(struct task_struct *t, unsigned long which,
+ 	return -EINVAL;
+ }
+ 
++int task_do_set_critical(struct task_struct *t, unsigned long opt)
++{
++	if (opt != PR_CRITICAL_NOT_CRITICAL &&
++	    opt != PR_CRITICAL_CRITICAL)
++		return -EINVAL;
++	if (!capable(CAP_SYS_ADMIN))
++		return -EPERM;
++	if (opt == PR_CRITICAL_NOT_CRITICAL)
++		task_clear_critical(t);
++	else
++		task_set_critical(t);
++	return 0;
++}
++
+ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ 		unsigned long, arg4, unsigned long, arg5)
+ {
+@@ -2492,6 +2506,11 @@ SYSCALL_DEFINE5(prctl, int, option, unsigned long, arg2, unsigned long, arg3,
+ 			return -EINVAL;
+ 		error = PAC_RESET_KEYS(me, arg2);
+ 		break;
++	case PR_SET_TASK_CRITICAL:
++		if (arg3 || arg4 || arg5)
++			return -EINVAL;
++		error = task_do_set_critical(me, arg2);
++		break;
+ 	default:
+ 		error = -EINVAL;
+ 		break;
+-- 
+2.23.0.187.g17f5b7556c-goog
