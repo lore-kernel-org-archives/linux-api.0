@@ -1,65 +1,47 @@
-From: David Lehman <dlehman@redhat.com>
-Subject: Re: Why add the general notification queue and its sources
-Date: Thu, 05 Sep 2019 16:09:58 -0400
-Message-ID: <d19e8783e7fe47e51fbc12bf33c95fea16c93070.camel@redhat.com>
-References: <156763534546.18676.3530557439501101639.stgit@warthog.procyon.org.uk>
-         <CAHk-=wh5ZNE9pBwrnr5MX3iqkUP4nspz17rtozrSxs5-OGygNw@mail.gmail.com>
-         <17703.1567702907@warthog.procyon.org.uk>
-         <CAHk-=wjQ5Fpv0D7rxX0W=obx9xoOAxJ_Cr+pGCYOAi2S9FiCNg@mail.gmail.com>
-         <11667f69-fbb5-28d2-3c31-7f865f2b93e5@redhat.com>
-         <CAKCoTu7ms4ckwDA_-onuJg+famnMzGZE9gGUcqqMz0kCAAECRg@mail.gmail.com>
+From: Anatoly Pugachev <matorola@gmail.com>
+Subject: Re: [PATCH 2/2] ipc: fix sparc64 ipc() wrapper
+Date: Thu, 5 Sep 2019 23:38:39 +0300
+Message-ID: <CADxRZqxkj+vdAOtZYmKtavy5nCtNFAUgfZ6k12nYeNcPYB+ssw@mail.gmail.com>
+References: <20190905152155.1392871-1-arnd@arndb.de> <20190905152155.1392871-2-arnd@arndb.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAKCoTu7ms4ckwDA_-onuJg+famnMzGZE9gGUcqqMz0kCAAECRg@mail.gmail.com>
+In-Reply-To: <20190905152155.1392871-2-arnd@arndb.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Ray Strode <rstrode@redhat.com>, Steven Whitehouse <swhiteho@redhat.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, David Howells <dhowells@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, raven@themaw.net, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, Christian Brauner <christian@brauner.io>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Ian Kent <ikent@redhat.com>
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Linux Kernel list <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, "Eric W. Biederman" <ebiederm@xmission.com>, Deepa Dinamani <deepa.kernel@gmail.com>, Christian Brauner <christian@brauner.io>, Manfred Spraul <manfred@colorfullife.com>, Davidlohr Bueso <dave@stgolabs.net>, linux-arch@vger.kernel.org, y2038@lists.linaro.org, Dominik Brodowski <linux@dominikbrodowski.net>, Matt Turner <mattst88@gmail.com>, stable@vger.kernel.org, Sparc kernel list <sparclinux@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, 2019-09-05 at 14:51 -0400, Ray Strode wrote:
-> Hi,
-> 
-> On Thu, Sep 5, 2019 at 2:37 PM Steven Whitehouse <swhiteho@redhat.com
-> > wrote:
-> > The original reason for the mount notification mechanism was so
-> > that we
-> > are able to provide information to GUIs and similar filesystem and
-> > storage management tools, matching the state of the filesystem with
-> > the
-> > state of the underlying devices. This is part of a larger project
-> > entitled "Project Springfield" to try and provide better management
-> > tools for storage and filesystems. I've copied David Lehman in,
-> > since he
-> > can provide a wider view on this topic.
-> So one problem that I've heard discussed before is what happens in a
-> thinp
-> setup when the disk space is overallocated and gets used up. IIRC,
-> the
-> volumes just sort of eat themselves?
-> 
-> Getting proper notification of looming catastrophic failure to the
-> workstation user
-> before it's too late would be useful, indeed.
-> 
-> I don't know if this new mechanism dhowells has development can help
-> with that,
-
-My understanding is that there is already a dm devent that gets sent
-when the low water mark is crossed for a thin pool, but there is
-nothing in userspace that knows how to effectively get the user's
-attention at that time.
-
-> and/or if solving that problem is part of the Project Springfield
-> initiative or not. Do you
-> know off hand?
-
-We have been looking into building a userspace event notification
-service (for storage, initially) to aggregate and add context to low-
-level events such as these, providing a single source for all kinds of
-storage events with an excellent signal:noise ratio. Thin pool
-exhaustion is high on the list of problems we would want to address.
+On Thu, Sep 5, 2019 at 9:39 PM Arnd Bergmann <arnd@arndb.de> wrote:
+>
+> Matt bisected a sparc64 specific issue with semctl, shmctl and msgctl
+> to a commit from my y2038 series in linux-5.1, as I missed the custom
+> sys_ipc() wrapper that sparc64 uses in place of the generic version that
+> I patched.
+>
+> The problem is that the sys_{sem,shm,msg}ctl() functions in the kernel
+> now do not allow being called with the IPC_64 flag any more, resulting
+> in a -EINVAL error when they don't recognize the command.
+>
+> Instead, the correct way to do this now is to call the internal
+> ksys_old_{sem,shm,msg}ctl() functions to select the API version.
+>
+> As we generally move towards these functions anyway, change all of
+> sparc_ipc() to consistently use those in place of the sys_*() versions,
+> and move the required ksys_*() declarations into linux/syscalls.h
+>
+> Reported-by: Matt Turner <mattst88@gmail.com>
+> Fixes: 275f22148e87 ("ipc: rename old-style shmctl/semctl/msgctl syscalls")
+> Cc: stable@vger.kernel.org
+> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
 
 
-David
+Not Matt,
+
+but this patch fixes util-linux.git ipcs test-suite (make check)
+regression for me on current sparc64 git kernel (5.3.0-rc7), which was
+broken somewhere in between 4.19 (debian unstable kernel) and 5.3-rcX.
+
+Thanks!
+
+PS: wanted to bisect kernel, but Matt did it first.
