@@ -1,191 +1,108 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: [PATCH 2/2] ipc: fix sparc64 ipc() wrapper
-Date: Thu,  5 Sep 2019 17:21:25 +0200
-Message-ID: <20190905152155.1392871-2-arnd@arndb.de>
-References: <20190905152155.1392871-1-arnd@arndb.de>
+From: Song Liu <songliubraving@fb.com>
+Subject: Re: [PATCH v3 bpf-next 2/3] bpf: implement CAP_BPF
+Date: Thu, 5 Sep 2019 16:08:44 +0000
+Message-ID: <A0BD5C17-3118-4C90-825F-23CE187209EA@fb.com>
+References: <20190904184335.360074-1-ast@kernel.org>
+ <20190904184335.360074-2-ast@kernel.org>
+ <CE3B644F-D1A5-49F7-96B6-FD663C5F8961@fb.com>
+ <20190905013245.wguhhcxvxt5rnc6h@ast-mbp.dhcp.thefacebook.com>
+ <E342EC2A-24F6-4581-BFDC-119B5E02B560@fb.com>
+ <20190905031518.behyq7olkh6fjsoe@ast-mbp.dhcp.thefacebook.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190905152155.1392871-1-arnd@arndb.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Deepa Dinamani <deepa.kernel@gmail.com>, Christian Brauner <christian@brauner.io>, Manfred Spraul <manfred@colorfullife.com>, Davidlohr Bueso <dave@stgolabs.net>
-Cc: linux-arch@vger.kernel.org, y2038@lists.linaro.org, Dominik Brodowski <linux@dominikbrodowski.net>, Matt Turner <mattst88@gmail.com>, stable@vger.kernel.org, sparclinux@vger.kernel.org, linux-api@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20190905031518.behyq7olkh6fjsoe@ast-mbp.dhcp.thefacebook.com>
+Content-Language: en-US
+Content-ID: <4A33147E45FBAE45A2DA4C175F6E64EE@namprd15.prod.outlook.com>
+Sender: netdev-owner@vger.kernel.org
+To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Cc: Alexei Starovoitov <ast@kernel.org>, "David S . Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@amacapital.net>, Networking <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Kernel Team <Kernel-team@fb.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Matt bisected a sparc64 specific issue with semctl, shmctl and msgctl
-to a commit from my y2038 series in linux-5.1, as I missed the custom
-sys_ipc() wrapper that sparc64 uses in place of the generic version that
-I patched.
 
-The problem is that the sys_{sem,shm,msg}ctl() functions in the kernel
-now do not allow being called with the IPC_64 flag any more, resulting
-in a -EINVAL error when they don't recognize the command.
 
-Instead, the correct way to do this now is to call the internal
-ksys_old_{sem,shm,msg}ctl() functions to select the API version.
+> On Sep 4, 2019, at 8:15 PM, Alexei Starovoitov <alexei.starovoitov@gmail.=
+com> wrote:
+>=20
+> On Thu, Sep 05, 2019 at 02:51:51AM +0000, Song Liu wrote:
+>>=20
+>>=20
+>>> On Sep 4, 2019, at 6:32 PM, Alexei Starovoitov <alexei.starovoitov@gmai=
+l.com> wrote:
+>>>=20
+>>> On Thu, Sep 05, 2019 at 12:34:36AM +0000, Song Liu wrote:
+>>>>=20
+>>>>=20
+>>>>> On Sep 4, 2019, at 11:43 AM, Alexei Starovoitov <ast@kernel.org> wrot=
+e:
+>>>>>=20
+>>>>> Implement permissions as stated in uapi/linux/capability.h
+>>>>>=20
+>>>>> Signed-off-by: Alexei Starovoitov <ast@kernel.org>
+>>>>>=20
+>>>>=20
+>>>> [...]
+>>>>=20
+>>>>> @@ -1648,11 +1648,11 @@ static int bpf_prog_load(union bpf_attr *attr=
+, union bpf_attr __user *uattr)
+>>>>> 	is_gpl =3D license_is_gpl_compatible(license);
+>>>>>=20
+>>>>> 	if (attr->insn_cnt =3D=3D 0 ||
+>>>>> -	    attr->insn_cnt > (capable(CAP_SYS_ADMIN) ? BPF_COMPLEXITY_LIMIT=
+_INSNS : BPF_MAXINSNS))
+>>>>> +	    attr->insn_cnt > (capable_bpf() ? BPF_COMPLEXITY_LIMIT_INSNS : =
+BPF_MAXINSNS))
+>>>>> 		return -E2BIG;
+>>>>> 	if (type !=3D BPF_PROG_TYPE_SOCKET_FILTER &&
+>>>>> 	    type !=3D BPF_PROG_TYPE_CGROUP_SKB &&
+>>>>> -	    !capable(CAP_SYS_ADMIN))
+>>>>> +	    !capable_bpf())
+>>>>> 		return -EPERM;
+>>>>=20
+>>>> Do we allow load BPF_PROG_TYPE_SOCKET_FILTER and BPF_PROG_TYPE_CGROUP_=
+SKB
+>>>> without CAP_BPF? If so, maybe highlight in the header?
+>>>=20
+>>> of course. there is no change in behavior.
+>>> 'highlight in the header'?
+>>> you mean in commit log?
+>>> I think it's a bit weird to describe things in commit that patch
+>>> is _not_ changing vs things that patch does actually change.
+>>> This type of comment would be great in a doc though.
+>>> The doc will be coming separately in the follow up assuming
+>>> the whole thing lands. I'll remember to note that bit.
+>>=20
+>> I meant capability.h:
+>>=20
+>> + * CAP_BPF allows the following BPF operations:
+>> + * - Loading all types of BPF programs
+>>=20
+>> But CAP_BPF is not required to load all types of programs.=20
+>=20
+> yes, but above statement is still correct, right?
+>=20
+> And right below it says:
+> * CAP_BPF allows the following BPF operations:
+> * - Loading all types of BPF programs
+> * - Creating all types of BPF maps except:
+> *    - stackmap that needs CAP_TRACING
+> *    - devmap that needs CAP_NET_ADMIN
+> *    - cpumap that needs CAP_SYS_ADMIN
+> which is also correct, but CAP_BPF is not required
+> for array, hash, prog_array, percpu, map-in-map ...
+> except their lru variants...
+> and except if they contain bpf_spin_lock...
+> and if they need BTF it currently can be loaded with cap_sys_admin only..=
+.
+>=20
+> If we say something about socket_filter, cg_skb progs in capability.h
+> we should clarify maps as well, but then it will become too big for .h
+> The comments in capability.h already look too long to me.
+> All that info and a lot more belongs in the doc.
 
-As we generally move towards these functions anyway, change all of
-sparc_ipc() to consistently use those in place of the sys_*() versions,
-and move the required ksys_*() declarations into linux/syscalls.h
+Agreed. We cannot put all these details in capability.h. Doc/wikipages=20
+would be better fit for these information.=20
 
-Reported-by: Matt Turner <mattst88@gmail.com>
-Fixes: 275f22148e87 ("ipc: rename old-style shmctl/semctl/msgctl syscalls")
-Cc: stable@vger.kernel.org
-Signed-off-by: Arnd Bergmann <arnd@arndb.de>
----
-Hi Matt,
-
-Can you check that this solves your problem?
----
- arch/sparc/kernel/sys_sparc_64.c | 30 +++++++++++++++---------------
- include/linux/syscalls.h         | 19 +++++++++++++++++++
- ipc/util.h                       | 25 ++-----------------------
- 3 files changed, 36 insertions(+), 38 deletions(-)
-
-diff --git a/arch/sparc/kernel/sys_sparc_64.c b/arch/sparc/kernel/sys_sparc_64.c
-index ccc88926bc00..5ad0494df367 100644
---- a/arch/sparc/kernel/sys_sparc_64.c
-+++ b/arch/sparc/kernel/sys_sparc_64.c
-@@ -340,21 +340,21 @@ SYSCALL_DEFINE6(sparc_ipc, unsigned int, call, int, first, unsigned long, second
- 	if (call <= SEMTIMEDOP) {
- 		switch (call) {
- 		case SEMOP:
--			err = sys_semtimedop(first, ptr,
--					     (unsigned int)second, NULL);
-+			err = ksys_semtimedop(first, ptr,
-+					      (unsigned int)second, NULL);
- 			goto out;
- 		case SEMTIMEDOP:
--			err = sys_semtimedop(first, ptr, (unsigned int)second,
-+			err = ksys_semtimedop(first, ptr, (unsigned int)second,
- 				(const struct __kernel_timespec __user *)
--					     (unsigned long) fifth);
-+					      (unsigned long) fifth);
- 			goto out;
- 		case SEMGET:
--			err = sys_semget(first, (int)second, (int)third);
-+			err = ksys_semget(first, (int)second, (int)third);
- 			goto out;
- 		case SEMCTL: {
--			err = sys_semctl(first, second,
--					 (int)third | IPC_64,
--					 (unsigned long) ptr);
-+			err = ksys_old_semctl(first, second,
-+					      (int)third | IPC_64,
-+					      (unsigned long) ptr);
- 			goto out;
- 		}
- 		default:
-@@ -365,18 +365,18 @@ SYSCALL_DEFINE6(sparc_ipc, unsigned int, call, int, first, unsigned long, second
- 	if (call <= MSGCTL) {
- 		switch (call) {
- 		case MSGSND:
--			err = sys_msgsnd(first, ptr, (size_t)second,
-+			err = ksys_msgsnd(first, ptr, (size_t)second,
- 					 (int)third);
- 			goto out;
- 		case MSGRCV:
--			err = sys_msgrcv(first, ptr, (size_t)second, fifth,
-+			err = ksys_msgrcv(first, ptr, (size_t)second, fifth,
- 					 (int)third);
- 			goto out;
- 		case MSGGET:
--			err = sys_msgget((key_t)first, (int)second);
-+			err = ksys_msgget((key_t)first, (int)second);
- 			goto out;
- 		case MSGCTL:
--			err = sys_msgctl(first, (int)second | IPC_64, ptr);
-+			err = ksys_old_msgctl(first, (int)second | IPC_64, ptr);
- 			goto out;
- 		default:
- 			err = -ENOSYS;
-@@ -396,13 +396,13 @@ SYSCALL_DEFINE6(sparc_ipc, unsigned int, call, int, first, unsigned long, second
- 			goto out;
- 		}
- 		case SHMDT:
--			err = sys_shmdt(ptr);
-+			err = ksys_shmdt(ptr);
- 			goto out;
- 		case SHMGET:
--			err = sys_shmget(first, (size_t)second, (int)third);
-+			err = ksys_shmget(first, (size_t)second, (int)third);
- 			goto out;
- 		case SHMCTL:
--			err = sys_shmctl(first, (int)second | IPC_64, ptr);
-+			err = ksys_old_shmctl(first, (int)second | IPC_64, ptr);
- 			goto out;
- 		default:
- 			err = -ENOSYS;
-diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
-index 88145da7d140..f7c561c4dcdd 100644
---- a/include/linux/syscalls.h
-+++ b/include/linux/syscalls.h
-@@ -1402,4 +1402,23 @@ static inline unsigned int ksys_personality(unsigned int personality)
- 	return old;
- }
- 
-+/* for __ARCH_WANT_SYS_IPC */
-+long ksys_semtimedop(int semid, struct sembuf __user *tsops,
-+		     unsigned int nsops,
-+		     const struct __kernel_timespec __user *timeout);
-+long ksys_semget(key_t key, int nsems, int semflg);
-+long ksys_old_semctl(int semid, int semnum, int cmd, unsigned long arg);
-+long ksys_msgget(key_t key, int msgflg);
-+long ksys_old_msgctl(int msqid, int cmd, struct msqid_ds __user *buf);
-+long ksys_msgrcv(int msqid, struct msgbuf __user *msgp, size_t msgsz,
-+		 long msgtyp, int msgflg);
-+long ksys_msgsnd(int msqid, struct msgbuf __user *msgp, size_t msgsz,
-+		 int msgflg);
-+long ksys_shmget(key_t key, size_t size, int shmflg);
-+long ksys_shmdt(char __user *shmaddr);
-+long ksys_old_shmctl(int shmid, int cmd, struct shmid_ds __user *buf);
-+long compat_ksys_semtimedop(int semid, struct sembuf __user *tsems,
-+			    unsigned int nsops,
-+			    const struct old_timespec32 __user *timeout);
-+
- #endif
-diff --git a/ipc/util.h b/ipc/util.h
-index 0fcf8e719b76..5766c61aed0e 100644
---- a/ipc/util.h
-+++ b/ipc/util.h
-@@ -276,29 +276,7 @@ static inline int compat_ipc_parse_version(int *cmd)
- 	*cmd &= ~IPC_64;
- 	return version;
- }
--#endif
- 
--/* for __ARCH_WANT_SYS_IPC */
--long ksys_semtimedop(int semid, struct sembuf __user *tsops,
--		     unsigned int nsops,
--		     const struct __kernel_timespec __user *timeout);
--long ksys_semget(key_t key, int nsems, int semflg);
--long ksys_old_semctl(int semid, int semnum, int cmd, unsigned long arg);
--long ksys_msgget(key_t key, int msgflg);
--long ksys_old_msgctl(int msqid, int cmd, struct msqid_ds __user *buf);
--long ksys_msgrcv(int msqid, struct msgbuf __user *msgp, size_t msgsz,
--		 long msgtyp, int msgflg);
--long ksys_msgsnd(int msqid, struct msgbuf __user *msgp, size_t msgsz,
--		 int msgflg);
--long ksys_shmget(key_t key, size_t size, int shmflg);
--long ksys_shmdt(char __user *shmaddr);
--long ksys_old_shmctl(int shmid, int cmd, struct shmid_ds __user *buf);
--
--/* for CONFIG_ARCH_WANT_OLD_COMPAT_IPC */
--long compat_ksys_semtimedop(int semid, struct sembuf __user *tsems,
--			    unsigned int nsops,
--			    const struct old_timespec32 __user *timeout);
--#ifdef CONFIG_COMPAT
- long compat_ksys_old_semctl(int semid, int semnum, int cmd, int arg);
- long compat_ksys_old_msgctl(int msqid, int cmd, void __user *uptr);
- long compat_ksys_msgrcv(int msqid, compat_uptr_t msgp, compat_ssize_t msgsz,
-@@ -306,6 +284,7 @@ long compat_ksys_msgrcv(int msqid, compat_uptr_t msgp, compat_ssize_t msgsz,
- long compat_ksys_msgsnd(int msqid, compat_uptr_t msgp,
- 		       compat_ssize_t msgsz, int msgflg);
- long compat_ksys_old_shmctl(int shmid, int cmd, void __user *uptr);
--#endif /* CONFIG_COMPAT */
-+
-+#endif
- 
- #endif
--- 
-2.20.0
+Thanks,
+Song
