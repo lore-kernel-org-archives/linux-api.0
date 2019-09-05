@@ -1,35 +1,98 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: Why add the general notification queue and its sources
-Date: Fri, 06 Sep 2019 00:18:28 +0100
-Message-ID: <14883.1567725508@warthog.procyon.org.uk>
-References: <CAHk-=wgbCXea1a9OTWgMMvcsCGGiNiPp+ty-edZrBWn63NCYdw@mail.gmail.com> <156763534546.18676.3530557439501101639.stgit@warthog.procyon.org.uk> <CAHk-=wh5ZNE9pBwrnr5MX3iqkUP4nspz17rtozrSxs5-OGygNw@mail.gmail.com> <17703.1567702907@warthog.procyon.org.uk> <CAHk-=wjQ5Fpv0D7rxX0W=obx9xoOAxJ_Cr+pGCYOAi2S9FiCNg@mail.gmail.com> <CAKCoTu7ms_Mr-q08d9XB3uascpzwBa5LF9JTT2aq8uUsoFE8aQ@mail.gmail.com> <CAHk-=wjcsxQ8QB_v=cwBQw4pkJg7pp-bBsdWyPivFO_OeF-y+g@mail.gmail.com> <5396.1567719164@warthog.procyon.org.uk>
+From: Al Viro <viro@zeniv.linux.org.uk>
+Subject: Re: [PATCH v12 01/12] lib: introduce copy_struct_{to,from}_user
+ helpers
+Date: Fri, 6 Sep 2019 00:49:44 +0100
+Message-ID: <20190905234944.GT1131@ZenIV.linux.org.uk>
+References: <20190904201933.10736-1-cyphar@cyphar.com>
+ <20190904201933.10736-2-cyphar@cyphar.com>
+ <20190905180750.GQ1131@ZenIV.linux.org.uk>
+ <20190905230003.bek7vqdvruzi4ybx@yavin.dot.cyphar.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=wgbCXea1a9OTWgMMvcsCGGiNiPp+ty-edZrBWn63NCYdw@mail.gmail.com>
-Content-ID: <14882.1567725508.1@warthog.procyon.org.uk>
+Content-Disposition: inline
+In-Reply-To: <20190905230003.bek7vqdvruzi4ybx@yavin.dot.cyphar.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dhowells@redhat.com, Ray Strode <rstrode@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Steven Whitehouse <swhiteho@redhat.com>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, raven@themaw.net, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, Christian Brauner <christian@brauner.io>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, "Ray, Debarshi" <debarshi.ray@gmail.com>, Robbie Harwood <rharwood@redhat.com>
+To: Aleksa Sarai <cyphar@cyphar.com>
+Cc: Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Christian Brauner <christian@brauner.io>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Alexander
 List-Id: linux-api@vger.kernel.org
 
-Linus Torvalds <torvalds@linux-foundation.org> wrote:
-
-> But I know - we *have* one of those. There's already a system call for
-> it, and has been forever. One that we then extended to allow people to
-> change the buffer size, and do a lot of other things with.
+On Fri, Sep 06, 2019 at 09:00:03AM +1000, Aleksa Sarai wrote:
+> > > +			return -EFAULT;
+> > > +	}
+> > > +	/* Copy the interoperable parts of the struct. */
+> > > +	if (__copy_to_user(dst, src, size))
+> > > +		return -EFAULT;
+> > 
+> > Why not simply clear_user() and copy_to_user()?
 > 
-> It's called "pipe()". And you can give the writing side to other user
-> space processes too, in case you are running an older kernel that
-> didn't have some "event pipe support". It comes with resource
-> management, because people already use those things.
+> I'm not sure I understand what you mean -- are you asking why we need to
+> do memchr_inv(src + size, 0, rest) earlier?
 
-Can you write into a pipe from softirq context and/or with spinlocks held
-and/or with the RCU read lock held?  That is a requirement.  Another is that
-messages get inserted whole or not at all (or if they are truncated, the size
-field gets updated).
+I'm asking why bother with __ and separate access_ok().
 
-Since one end would certainly be attached to an fd, it looks on the face of it
-that writing into the pipe would require taking pipe->mutex.
+> > 	if ((unsigned long)addr & 1) {
+> > 		u8 v;
+> > 		if (get_user(v, (__u8 __user *)addr))
+> > 			return -EFAULT;
+> > 		if (v)
+> > 			return -E2BIG;
+> > 		addr++;
+> > 	}
+> > 	if ((unsigned long)addr & 2) {
+> > 		u16 v;
+> > 		if (get_user(v, (__u16 __user *)addr))
+> > 			return -EFAULT;
+> > 		if (v)
+> > 			return -E2BIG;
+> > 		addr +=2;
+> > 	}
+> > 	if ((unsigned long)addr & 4) {
+> > 		u32 v;
+> > 		if (get_user(v, (__u32 __user *)addr))
+> > 			return -EFAULT;
+> > 		if (v)
+> > 			return -E2BIG;
+> > 	}
+> > 	<read the rest like you currently do>
 
-David
+Actually, this is a dumb way to do it - page size on anything
+is going to be a multiple of 8, so you could just as well
+read 8 bytes from an address aligned down.  Then mask the
+bytes you don't want to check out and see if there's anything
+left.
+
+You can have readability boundaries inside a page - it's either
+the entire page (let alone a single word) being readable, or
+it's EFAULT for all parts.
+
+> > would be saner, and things like x86 could trivially add an
+> > asm variant - it's not hard.  Incidentally, memchr_inv() is
+> > an overkill in this case...
+> 
+> Why is memchr_inv() overkill?
+
+Look at its implementation; you only care if there are
+non-zeroes, you don't give a damn where in the buffer
+the first one would be.  All you need is the same logics
+as in "from userland" case
+	if (!count)
+		return true;
+	offset = (unsigned long)from & 7
+	p = (u64 *)(from - offset);
+	v = *p++;
+	if (offset) {	// unaligned
+		count += offset;
+		v &= ~aligned_byte_mask(offset); // see strnlen_user.c
+	}
+	while (count > 8) {
+		if (v)
+			return false;
+		v = *p++;
+		count -= 8;
+	}
+	if (count != 8)
+		v &= aligned_byte_mask(count);
+	return v == 0;
+
+All there is to it...
