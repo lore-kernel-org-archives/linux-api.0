@@ -1,124 +1,84 @@
-From: Robbie Harwood <rharwood@redhat.com>
-Subject: Re: Why add the general notification queue and its sources
-Date: Fri, 06 Sep 2019 15:53:38 -0400
-Message-ID: <jlg7e6l19rx.fsf@redhat.com>
-References: <156763534546.18676.3530557439501101639.stgit@warthog.procyon.org.uk> <CAHk-=wh5ZNE9pBwrnr5MX3iqkUP4nspz17rtozrSxs5-OGygNw@mail.gmail.com> <17703.1567702907@warthog.procyon.org.uk> <CAHk-=wjQ5Fpv0D7rxX0W=obx9xoOAxJ_Cr+pGCYOAi2S9FiCNg@mail.gmail.com> <CAKCoTu7ms_Mr-q08d9XB3uascpzwBa5LF9JTT2aq8uUsoFE8aQ@mail.gmail.com> <CAHk-=wjcsxQ8QB_v=cwBQw4pkJg7pp-bBsdWyPivFO_OeF-y+g@mail.gmail.com> <CAKCoTu70E9cbVu=jVG4EiXnTNiG-znvri6Omh2t++1zRw+639Q@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: multipart/signed; boundary="=-=-=";
-        micalg=pgp-sha512; protocol="application/pgp-signature"
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH v2 1/5] fs: Add support for an O_MAYEXEC flag on sys_open()
+Date: Fri, 6 Sep 2019 13:06:00 -0700
+Message-ID: <D2A57C7B-B0FD-424E-9F81-B858FFF21FF0@amacapital.net>
+References: <20190906152455.22757-1-mic@digikod.net> <20190906152455.22757-2-mic@digikod.net> <87ef0te7v3.fsf@oldenburg2.str.redhat.com> <75442f3b-a3d8-12db-579a-2c5983426b4d@ssi.gouv.fr> <f53ec45fd253e96d1c8d0ea6f9cca7f68afa51e3.camel@kernel.org> <20190906171335.d7mc3no5tdrcn6r5@yavin.dot.cyphar.com> <e1ac9428e6b768ac3145aafbe19b24dd6cf410b9.camel@kernel.org>
+Mime-Version: 1.0 (1.0)
+Content-Type: text/plain;
+        charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAKCoTu70E9cbVu=jVG4EiXnTNiG-znvri6Omh2t++1zRw+639Q@mail.gmail.com>
+In-Reply-To: <e1ac9428e6b768ac3145aafbe19b24dd6cf410b9.camel@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Ray Strode <rstrode@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>
-Cc: David Howells <dhowells@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Steven Whitehouse <swhiteho@redhat.com>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, raven@themaw.net, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, Christian Brauner <christian@brauner.io>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, "Ray, Debarshi" <debarshi.ray@gmail.com>
+To: Jeff Layton <jlayton@kernel.org>
+Cc: Aleksa Sarai <cyphar@cyphar.com>, =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mickael.salaun@ssi.gouv.fr>, Florian Weimer <fweimer@redhat.com>, =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mic@digikod.net>, linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, Christian Heimes <christian@python.org>, Daniel Borkmann <daniel@iogearbox.net>, Eric Chiang <ericchiang@google.com>, James Morris <jmorris@namei.org>, Jan Kara <jack@suse.cz>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Matthew Wilcox <willy@infradead.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Mimi Zohar <zohar@linux.ibm.com>=?u
 List-Id: linux-api@vger.kernel.org
 
---=-=-=
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
 
-Ray Strode <rstrode@redhat.com> writes:
 
-> Linus Torvalds <torvalds@linux-foundation.org> wrote:
->
->> That is *way* too specific to make for any kind of generic
->> notification mechanism.
->
-> Well from my standpoint, I just don't want to have to poll... I don't
-> have a strong opinion about how it looks architecturally to reach that
-> goal.
->
-> Ideally, at a higher level, I want the userspace api that gnome uses
-> to be something like:
->
-> err =3D krb5_cc_watch (ctx, ccache, (krb5_cc_change_fct) on_cc_change ,
-> &watch_fd);
->
-> then a watch_fd would get handed back and caller could poll on it. if
-> it woke up poll(), caller would do
->
-> krb5_cc_watch_update (ctx, ccache, watch_fd)
->
-> or so and it would trigger on_cc_change to get called (or something like =
-that).
->
-> If under the hood, fd comes from opening /dev/watch_queue, and
-> krb5_cc_watch_update reads from some mmap'ed buffer to decide whether
-> or not to call on_cc_change, that's fine with me.
->
-> If under the hood, fd comes from a pipe fd returned from some ioctl or
-> syscall, and krb5_cc_watch_update reads messages directly from that fd
-> to decide whether or not to call on_cc_change, that's fine with
-> me. too.
->
-> it could be an eventfd too, or whatever, too, just as long as its
-> something I can add to poll() and don't have to intermittently poll
-> ... :-)
->
->
->> And why would you do a broken big-key thing in the kernel in the
->> first place? Why don't you just have a kernel key to indirectly
->> encrypt using a key and "additional user space data". The kernel
->> should simply not take care of insane 1MB keys.
->
-> =F0=9F=A4=B7 dunno.  I assume you're referencing the discussions from com=
-ment 0
-> on that 2013 bug.  I wasn't involved in those discussions, I just
-> chimed in after they happened trying to avoid having to add polling
-> :-)
->
-> I have no idea why a ticket would get that large. I assume it only is
-> in weird edge cases.
+> On Sep 6, 2019, at 12:43 PM, Jeff Layton <jlayton@kernel.org> wrote:
+>=20
+>> On Sat, 2019-09-07 at 03:13 +1000, Aleksa Sarai wrote:
+>>> On 2019-09-06, Jeff Layton <jlayton@kernel.org> wrote:
+>>>> On Fri, 2019-09-06 at 18:06 +0200, Micka=C3=ABl Sala=C3=BCn wrote:
+>>>>> On 06/09/2019 17:56, Florian Weimer wrote:
+>>>>> Let's assume I want to add support for this to the glibc dynamic loade=
+r,
+>>>>> while still being able to run on older kernels.
+>>>>>=20
+>>>>> Is it safe to try the open call first, with O_MAYEXEC, and if that fai=
+ls
+>>>>> with EINVAL, try again without O_MAYEXEC?
+>>>>=20
+>>>> The kernel ignore unknown open(2) flags, so yes, it is safe even for
+>>>> older kernel to use O_MAYEXEC.
+>>>>=20
+>>>=20
+>>> Well...maybe. What about existing programs that are sending down bogus
+>>> open flags? Once you turn this on, they may break...or provide a way to
+>>> circumvent the protections this gives.
+>>=20
+>> It should be noted that this has been a valid concern for every new O_*
+>> flag introduced (and yet we still introduced new flags, despite the
+>> concern) -- though to be fair, O_TMPFILE actually does have a
+>> work-around with the O_DIRECTORY mask setup.
+>>=20
+>> The openat2() set adds O_EMPTYPATH -- though in fairness it's also
+>> backwards compatible because empty path strings have always given ENOENT
+>> (or EINVAL?) while O_EMPTYPATH is a no-op non-empty strings.
+>>=20
+>>> Maybe this should be a new flag that is only usable in the new openat2()=
 
-Sadly they're not weird, but yes.  Kerberos tickets can get decently
-large due to Microsoft's PACs (see MS-PAC and MS-KILE), which we need to
-process, understand, and store for Active Directory interop.  I'm not
-sure if I've personally made one over 1MB, but it could easily occur
-given enough claims (MS-ADTS).
+>>> syscall that's still under discussion? That syscall will enforce that
+>>> all flags are recognized. You presumably wouldn't need the sysctl if you=
 
-> Anyway, gnome treats the tickets as opaque blobs.  it doesn't do anything
-> with them other than tell the user when they need to get refreshed...
->
-> all the actual key manipulation happens from krb5 libraries.
->
-> of course, one advantage of having the tickets kernel side is nfs
-> could in theory access them directly, rather than up calling back to
-> userspace...
+>>> went that route too.
+>>=20
+>> I'm also interested in whether we could add an UPGRADE_NOEXEC flag to
+>> how->upgrade_mask for the openat2(2) patchset (I reserved a flag bit for
+>> it, since I'd heard about this work through the grape-vine).
+>>=20
+>=20
+> I rather like the idea of having openat2 fds be non-executable by
+> default, and having userland request it specifically via O_MAYEXEC (or
+> some similar openat2 flag) if it's needed. Then you could add an
+> UPGRADE_EXEC flag instead?
+>=20
+> That seems like something reasonable to do with a brand new API, and
+> might be very helpful for preventing certain classes of attacks.
+>=20
+>=20
 
-Easy availability to filesystems is in fact the main theoretical
-advantage of the keyring for us in krb5 (and, for whatever it's worth,
-is why we're interested in namespaced keyrings for containers).  Our
-privilege separation mechanism (gssproxy) is cache-type agnostic, and we
-do have other credential cache types (KCM and DIR/FILE) in the
-implementation.
+There are at least four concepts of executability here:
 
-Thanks,
-=2D-Robbie
+- Just check the file mode and any other relevant permissions. Return a norm=
+al fd.  Makes sense for script interpreters, perhaps.
 
-=2D-
-Robbie Harwood
-Kerberos Development Lead
-Security Engineering Team
-Red Hat, Inc.
-Boston, MA, US
+- Make the fd fexecve-able.
 
---=-=-=
-Content-Type: application/pgp-signature; name="signature.asc"
+- Make the resulting fd mappable PROT_EXEC.
 
------BEGIN PGP SIGNATURE-----
+- Make the resulting fd upgradable.
 
-iQIzBAEBCgAdFiEEA5qc6hnelQjDaHWqJTL5F2qVpEIFAl1yuUIACgkQJTL5F2qV
-pEKhxBAApTOa699cr0sDXl0rHPK+Ibj1T49ryHpbykhJ30RKQmC9xRFoxqJmN/N9
-sy+xVpHxUikuVktp6So7ZNXh6mcY7bKYzZUpT/LITdDRo/NZxgAwk3DSLxXVNwWx
-6h0lJTX95uHxfdxLlYJOOTyndCgdXGDAr2jFovZo06mb/VPK1WL4q5mIjTKtN47u
-lG2YnU6SyY/zLwL3BKaQnUq/VruFbuQm+28zwsrVmZEZxIBs/bNcnkD0vT+mOTTa
-dXVqi6VNmXmtlsctsVbCXAQSNXOVC+K3qZBZAEJo5kObyRwctzIUOehOLnGZ89/K
-5mny02IPPLCpvUBhvVYroE0lyLKHpbkWnXyGmcPTNpyKNa5bylsoZmN4DWZevdQn
-hPrar7/gYlPoaQOot2VVYMeqn0rT4XJLf/DzG0YsSmMD5EUd5/0GZ8TVTw2iZKnj
-FIhGdP0MwIYrGARma830/iffk4dLj/qzn8K1mpgr2aaYBzQOalyrE8DJ7xgba386
-S1A+hlwSY7Byi4aFXT/vZgGrJ9FEPStD2N8xYHYdntZKe0t3TqCHEn8SM57yN6mR
-aOvzPHaPG/4OsCuugySMtR/8uzGY/tSuItEQF/vLX8azZkeyPLsqBLRyUsCLPGAV
-Zv+fpFJtNC8PYLtUiZXRYYk4THFX20bIU/Ky8LCiRs0vddyhHvc=
-=Si8+
------END PGP SIGNATURE-----
---=-=-=--
+I=E2=80=99m not at all convinced that the kernel needs to distinguish all th=
+ese, but at least upgradability should be its own thing IMO.=
