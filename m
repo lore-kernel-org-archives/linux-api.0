@@ -1,138 +1,30 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: Why add the general notification queue and its sources
-Date: Fri, 6 Sep 2019 08:35:46 -0700
-Message-ID: <CAHk-=wiR1fpahgKuxSOQY6OfgjWD+MKz8UF6qUQ6V_y2TC_V6w@mail.gmail.com>
-References: <156763534546.18676.3530557439501101639.stgit@warthog.procyon.org.uk>
- <CAHk-=wh5ZNE9pBwrnr5MX3iqkUP4nspz17rtozrSxs5-OGygNw@mail.gmail.com>
- <17703.1567702907@warthog.procyon.org.uk> <CAHk-=wjQ5Fpv0D7rxX0W=obx9xoOAxJ_Cr+pGCYOAi2S9FiCNg@mail.gmail.com>
- <CAKCoTu7ms_Mr-q08d9XB3uascpzwBa5LF9JTT2aq8uUsoFE8aQ@mail.gmail.com>
- <CAHk-=wjcsxQ8QB_v=cwBQw4pkJg7pp-bBsdWyPivFO_OeF-y+g@mail.gmail.com>
- <5396.1567719164@warthog.procyon.org.uk> <CAHk-=wgbCXea1a9OTWgMMvcsCGGiNiPp+ty-edZrBWn63NCYdw@mail.gmail.com>
- <14883.1567725508@warthog.procyon.org.uk> <CAHk-=wjt2Eb+yEDOcQwCa0SrZ4cWu967OtQG8Vz21c=n5ZP1Nw@mail.gmail.com>
- <27732.1567764557@warthog.procyon.org.uk>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: [PATCH v2 1/5] fs: Add support for an O_MAYEXEC flag on sys_open()
+Date: Fri, 06 Sep 2019 17:56:32 +0200
+Message-ID: <87ef0te7v3.fsf@oldenburg2.str.redhat.com>
+References: <20190906152455.22757-1-mic@digikod.net>
+        <20190906152455.22757-2-mic@digikod.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <27732.1567764557@warthog.procyon.org.uk>
+In-Reply-To: <20190906152455.22757-2-mic@digikod.net> (=?utf-8?Q?=22Micka?=
+ =?utf-8?Q?=C3=ABl_Sala=C3=BCn=22's?=
+        message of "Fri, 6 Sep 2019 17:24:51 +0200")
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Ray Strode <rstrode@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Steven Whitehouse <swhiteho@redhat.com>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, raven@themaw.net, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, Christian Brauner <christian@brauner.io>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, "Ray, Debarshi" <debarshi.ray@gmail.com>, Robbie Harwood <rharwood@redhat.com>
+To: =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mic@digikod.net>
+Cc: linux-kernel@vger.kernel.org, Aleksa Sarai <cyphar@cyphar.com>, Alexei Starovoitov <ast@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, Christian Heimes <christian@python.org>, Daniel Borkmann <daniel@iogearbox.net>, Eric Chiang <ericchiang@google.com>, James Morris <jmorris@namei.org>, Jan Kara <jack@suse.cz>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Matthew Wilcox <willy@infradead.org>, Michael Kerrisk <mtk.manpages@gmail.com>, =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mickael.salaun@ssi.gouv.fr>, Mimi Zohar <zohar@linux.ibm.com>, Philippe =?utf-8?Q?Tr=C3=A9buchet?= <philippe.trebuchet@ssi.gouv.fr>, Scott Shell <scottsh@micr>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 6, 2019 at 3:09 AM David Howells <dhowells@redhat.com> wrote:
->
-> Linus Torvalds <torvalds@linux-foundation.org> wrote:
->
-> > But it's *literally* just finding the places that work with
-> > pipe->curbuf/nrbufs and making them use atomic updates.
->
-> No.  It really isn't.  That's two variables that describe the occupied section
-> of the buffer.  Unless you have something like a 68020 with CAS2, or put them
-> next to each other so you can use CMPXCHG8, you can't do that.
->
-> They need converting to head/tail pointers first.
+Let's assume I want to add support for this to the glibc dynamic loader,
+while still being able to run on older kernels.
 
-You misunderstand - because I phrased it badly. I meant "atomic" in
-the traditional kernel sense, as in "usable in not thread context" (eg
-GFP_ATOMIC etc).
+Is it safe to try the open call first, with O_MAYEXEC, and if that fails
+with EINVAL, try again without O_MAYEXEC?
 
-I'd start out just using a spinlock.
+Or do I risk disabling this security feature if I do that?
 
-I do agree that we could try to be fancy and do it entirely locklessly
-too, and I mentioned that in another part:
+Do we need a different way for recognizing kernel support.  (Note that
+we cannot probe paths in /proc for various reasons.)
 
- "[..] it should not
-  be all that hard to just make the whole "curbuf/nrbufs" handling use
-  its own locking (maybe even some lockless atomics and cmpxchg)"
-
-but I also very much agree that it's much more complex.
-
-The main complexity of a lockless thing is actually almost certainly
-not in curbuf/nrbufs, because those could easily be packed as two
-16-bit values in a 32-bit entity and then regular cmpxchg works fine.
-
-No, the complexity in the lockless model is that then you have to be
-very careful with the "buf[]" array update too.  Maybe that's trivial
-(just make sure that they are NULL when not used), but it just looks
-less than wonderfully easy.
-
-So a lockless update I'm sure is _doable_ with some cleverness, but is
-probably not really worth it.
-
-That's particularly true since we already *have* a spinlock that we
-would take anyway: the we could strive to use the waitqueue spinlock
-in pipe->wait, and not even really add any new locking. That would
-require a bit of cleverness too and re-ordering things more, but we do
-that in other places (eg completions, but the fs_pin code does it too,
-and a few other cases.
-
-Look for "wake_up_locked()" and friends, which is a sure-fire sign
-that somebody is playing games and taking the wait-queue lock manually
-for their own nefarious reasons.
-
-> > They really would work with almost anything. You could even mix-and-match
-> > "data generated by kernel" and "data done by 'write()' or 'splice()' by a
-> > user process".
->
-> Imagine that userspace writes a large message and takes the mutex.  At the
-> same time something in softirq context decides *it* wants to write a message -
-> it can't take the mutex and it can't wait, so the userspace write would have
-> to cause the kernel message to be dropped.
-
-No. You're missing the point entirely.
-
-The mutex is entirely immaterial for the "insert a message". It is
-only used for user-space synchronization. The "add message to the pipe
-buffers" would only do the low-level buffer updates (whether using a
-new spinlock, re-using the pipe waitqueue lock, or entirely
-locklessly, ends up being then just an implementation detail).
-
-Note that user-space writes are defined to be atomic, but they are (a)
-not ordered and (b) only atomic up to a single buffer entry (which is
-that PIPE_BUF limit). So you can always put in a new buffer entry at
-any time.
-
-Obviously if a user space write just fills up the whole queue (or
-_other_ messages fill up the whole queue) you'd have to drop the
-notification. But that's always true. That's true even in your thing.
-The only difference is that we _allow_ other user spaces to write to
-the notification queue too.
-
-But if you don't want to allow that, then don't give out the write
-side of the pipe to any untrusted user space.
-
-But in *general*, allowing user space to write to the pipe is a great
-feature: it means that your notification source *can* be a user space
-daemon that you gave the write side of the pipe to (possibly using fd
-passing, possibly by just forking your own user-space child or cloning
-a thread).
-
-So for example, from a consumer standpoint, you can start off doing
-these things in user space with a helper thread that feeds the pipe
-(for example, polling /proc/mounts every second), and then when you've
-prototyped it and are happy with it, you can add the system call (or
-ioctl or whatever) to make the kernel generate the messages so that
-you don't have to poll.
-
-But now, once you have the kernel patch, you already have a proven
-user, and you can show numbers ("My user-space thing works, but it
-uses up 0.1% CPU time and has that nasty up-to-one-second latency
-because of polling"). Ta-daa!
-
-End result: it's backwards compatible, it's prototypable, and it's
-fairly easily extensible. Want to add a new source of events? Just
-pass the pipe to any random piece of code you want. It needs kernel
-support only when you've proven the concept _and_ you can show that
-"yeah, this user space polling model is a real performance or
-complexity problem" or whatever.
-
-This is why I like pipes. You can use them today. They are simple, and
-extensible, and you don't need to come up with a new subsystem and
-some untested ad-hoc thing that nobody has actually used.
-
-And they work automatically with all the existing infrastructure. They
-work with whatever perl or shell scripts, they work with poll/select
-loops, they work with user-space sources of events, they are just very
-flexible.
-
-                     Linus
+Thanks,
+Florian
