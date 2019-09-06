@@ -1,199 +1,133 @@
 From: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
-Subject: [PATCH v2 3/5] fs: Enable to enforce noexec mounts or file exec through O_MAYEXEC
-Date: Fri,  6 Sep 2019 17:24:53 +0200
-Message-ID: <20190906152455.22757-4-mic@digikod.net>
+Subject: [PATCH v2 1/5] fs: Add support for an O_MAYEXEC flag on sys_open()
+Date: Fri,  6 Sep 2019 17:24:51 +0200
+Message-ID: <20190906152455.22757-2-mic@digikod.net>
 References: <20190906152455.22757-1-mic@digikod.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
-Return-path: <kernel-hardening-return-16840-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20190906152455.22757-1-mic@digikod.net>
+Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>, Aleksa Sarai <cyphar@cyphar.com>, Alexei Starovoitov <ast@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, Christian Heimes <christian@python.org>, Daniel Borkmann <daniel@iogearbox.net>, Eric Chiang <ericchiang@google.com>, Florian Weimer <fweimer@redhat.com>, James Morris <jmorris@namei.org>, Jan Kara <jack@suse.cz>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Matthew Wilcox <willy@infradead.org>, Michael Kerrisk <mtk.manpages@gmail.com>, =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mickael.salaun@ssi.gouv.fr>, Mimi Zohar <zohar@linux.ibm.com>, =?UTF-8?q?Philippe=20Tr=C3=A9buchet?= <philippe.trebu>
+Cc: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>, Aleksa Sarai <cyphar@cyphar.com>, Alexei Starovoitov <ast@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, Christian Heimes <christian@python.org>, Daniel Borkmann <daniel@iogearbox.net>, Eric Chiang <ericchiang@google.com>, Florian Weimer <fweimer@redhat.com>, James Morris <jmorris@namei.org>, Jan Kara <jack@suse.cz>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Matthew Wilcox <willy@infradead.org>, Michael Kerrisk <mtk.manpages@gmail.com>, =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mickael.salaun@ssi.gouv.fr>, Mimi Zohar <zohar@linux.ibm.com>, =?UTF-8?q?Philippe=20Tr=C3=A9
 List-Id: linux-api@vger.kernel.org
 
-Enable to either propagate the mount options from the underlying VFS
-mount to prevent execution, or to propagate the file execute permission.
-This may allow a script interpreter to check execution permissions
-before reading commands from a file.
+When the O_MAYEXEC flag is passed, sys_open() may be subject to
+additional restrictions depending on a security policy implemented by an
+LSM through the inode_permission hook.
 
-The main goal is to be able to protect the kernel by restricting
-arbitrary syscalls that an attacker could perform with a crafted binary
-or certain script languages.  It also improves multilevel isolation
-by reducing the ability of an attacker to use side channels with
-specific code.  These restrictions can natively be enforced for ELF
-binaries (with the noexec mount option) but require this kernel
-extension to properly handle scripts (e.g., Python, Perl).
+The underlying idea is to be able to restrict scripts interpretation
+according to a policy defined by the system administrator.  For this to
+be possible, script interpreters must use the O_MAYEXEC flag
+appropriately.  To be fully effective, these interpreters also need to
+handle the other ways to execute code (for which the kernel can't help):
+command line parameters (e.g., option -e for Perl), module loading
+(e.g., option -m for Python), stdin, file sourcing, environment
+variables, configuration files...  According to the threat model, it may
+be acceptable to allow some script interpreters (e.g. Bash) to interpret
+commands from stdin, may it be a TTY or a pipe, because it may not be
+enough to (directly) perform syscalls.
 
-Add a new sysctl fs.open_mayexec_enforce to control this behavior.  A
-following patch adds documentation.
+A simple security policy implementation is available in a following
+patch for Yama.
+
+This is an updated subset of the patch initially written by Vincent
+Strubel for CLIP OS:
+https://github.com/clipos-archive/src_platform_clip-patches/blob/f5cb330d6b684752e403b4e41b39f7004d88e561/1901_open_mayexec.patch
+This patch has been used for more than 10 years with customized script
+interpreters.  Some examples can be found here:
+https://github.com/clipos-archive/clipos4_portage-overlay/search?q=O_MAYEXEC
 
 Changes since v1:
-* move code from Yama to the FS subsystem (suggested by Kees Cook)
-* make omayexec_inode_permission() static (suggested by Jann Horn)
-* use mode 0600 for the sysctl
-* only match regular files (not directories nor other types), which
-  follows the same semantic as commit 73601ea5b7b1 ("fs/open.c: allow
-  opening only regular files during execve()")
+* set __FMODE_EXEC when using O_MAYEXEC to make this information
+  available through the new fanotify/FAN_OPEN_EXEC event (suggested by
+  Jan Kara and Matthew Bobrowski)
 
 Signed-off-by: Mickaël Salaün <mic@digikod.net>
+Signed-off-by: Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>
+Signed-off-by: Vincent Strubel <vincent.strubel@ssi.gouv.fr>
 Reviewed-by: Philippe Trébuchet <philippe.trebuchet@ssi.gouv.fr>
-Reviewed-by: Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>
 Cc: Al Viro <viro@zeniv.linux.org.uk>
 Cc: Kees Cook <keescook@chromium.org>
 Cc: Mickaël Salaün <mickael.salaun@ssi.gouv.fr>
 ---
- fs/namei.c         | 68 ++++++++++++++++++++++++++++++++++++++++++++++
- include/linux/fs.h |  3 ++
- kernel/sysctl.c    |  7 +++++
- 3 files changed, 78 insertions(+)
+ fs/fcntl.c                       | 2 +-
+ fs/open.c                        | 6 ++++++
+ include/linux/fcntl.h            | 2 +-
+ include/linux/fs.h               | 2 ++
+ include/uapi/asm-generic/fcntl.h | 3 +++
+ 5 files changed, 13 insertions(+), 2 deletions(-)
 
-diff --git a/fs/namei.c b/fs/namei.c
-index 0a6b9483d0cb..abd29a76ecef 100644
---- a/fs/namei.c
-+++ b/fs/namei.c
-@@ -39,6 +39,7 @@
- #include <linux/bitops.h>
- #include <linux/init_task.h>
- #include <linux/uaccess.h>
-+#include <linux/sysctl.h>
+diff --git a/fs/fcntl.c b/fs/fcntl.c
+index 3d40771e8e7c..4cf05a2fd162 100644
+--- a/fs/fcntl.c
++++ b/fs/fcntl.c
+@@ -1031,7 +1031,7 @@ static int __init fcntl_init(void)
+ 	 * Exceptions: O_NONBLOCK is a two bit define on parisc; O_NDELAY
+ 	 * is defined as O_NONBLOCK on some platforms and not on others.
+ 	 */
+-	BUILD_BUG_ON(21 - 1 /* for O_RDONLY being 0 */ !=
++	BUILD_BUG_ON(22 - 1 /* for O_RDONLY being 0 */ !=
+ 		HWEIGHT32(
+ 			(VALID_OPEN_FLAGS & ~(O_NONBLOCK | O_NDELAY)) |
+ 			__FMODE_EXEC | __FMODE_NONOTIFY));
+diff --git a/fs/open.c b/fs/open.c
+index a59abe3c669a..1b9b6fedf7cd 100644
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -989,6 +989,12 @@ static inline int build_open_flags(int flags, umode_t mode, struct open_flags *o
+ 		acc_mode = 0;
+ 	}
  
- #include "internal.h"
- #include "mount.h"
-@@ -411,6 +412,34 @@ static int sb_permission(struct super_block *sb, struct inode *inode, int mask)
- 	return 0;
- }
- 
-+#define OMAYEXEC_ENFORCE_NONE	0
-+#define OMAYEXEC_ENFORCE_MOUNT	(1 << 0)
-+#define OMAYEXEC_ENFORCE_FILE	(1 << 1)
-+#define _OMAYEXEC_LAST		OMAYEXEC_ENFORCE_FILE
-+#define _OMAYEXEC_MASK		((_OMAYEXEC_LAST << 1) - 1)
-+
-+/**
-+ * omayexec_inode_permission - check O_MAYEXEC before accessing an inode
-+ * @inode: inode structure to check
-+ * @mask: permission mask
-+ *
-+ * Return 0 if access is permitted, -EACCES otherwise.
-+ */
-+static int omayexec_inode_permission(struct inode *inode, int mask)
-+{
-+	if (!(mask & MAY_OPENEXEC))
-+		return 0;
-+
-+	if ((sysctl_omayexec_enforce & OMAYEXEC_ENFORCE_MOUNT) &&
-+			!(mask & MAY_EXECMOUNT))
-+		return -EACCES;
-+
-+	if (sysctl_omayexec_enforce & OMAYEXEC_ENFORCE_FILE)
-+		return generic_permission(inode, MAY_EXEC);
-+
-+	return 0;
-+}
-+
- /**
-  * inode_permission - Check for access rights to a given inode
-  * @inode: Inode to check permission on
-@@ -454,10 +483,48 @@ int inode_permission(struct inode *inode, int mask)
- 	if (retval)
- 		return retval;
- 
-+	retval = omayexec_inode_permission(inode, mask);
-+	if (retval)
-+		return retval;
-+
- 	return security_inode_permission(inode, mask);
- }
- EXPORT_SYMBOL(inode_permission);
- 
-+/*
-+ * Handle open_mayexec_enforce sysctl
-+ */
-+#ifdef CONFIG_SYSCTL
-+int proc_omayexec(struct ctl_table *table, int write, void __user *buffer,
-+		size_t *lenp, loff_t *ppos)
-+{
-+	int error;
-+
-+	if (write) {
-+		struct ctl_table table_copy;
-+		int tmp_mayexec_enforce;
-+
-+		if (!capable(CAP_MAC_ADMIN))
-+			return -EPERM;
-+		tmp_mayexec_enforce = *((int *)table->data);
-+		table_copy = *table;
-+		/* do not erase sysctl_omayexec_enforce */
-+		table_copy.data = &tmp_mayexec_enforce;
-+		error = proc_dointvec(&table_copy, write, buffer, lenp, ppos);
-+		if (error)
-+			return error;
-+		if ((tmp_mayexec_enforce | _OMAYEXEC_MASK) != _OMAYEXEC_MASK)
-+			return -EINVAL;
-+		*((int *)table->data) = tmp_mayexec_enforce;
-+	} else {
-+		error = proc_dointvec(table, write, buffer, lenp, ppos);
-+		if (error)
-+			return error;
++	/* Check execution permissions on open. */
++	if (flags & O_MAYEXEC) {
++		acc_mode |= MAY_OPENEXEC;
++		flags |= __FMODE_EXEC;
 +	}
-+	return 0;
-+}
-+#endif
 +
- /**
-  * path_get - get a reference to a path
-  * @path: path to get the reference to
-@@ -887,6 +954,7 @@ int sysctl_protected_symlinks __read_mostly = 0;
- int sysctl_protected_hardlinks __read_mostly = 0;
- int sysctl_protected_fifos __read_mostly;
- int sysctl_protected_regular __read_mostly;
-+int sysctl_omayexec_enforce __read_mostly = OMAYEXEC_ENFORCE_NONE;
+ 	op->open_flag = flags;
  
- /**
-  * may_follow_link - Check symlink following for unsafe situations
+ 	/* O_TRUNC implies we need access checks for write permissions */
+diff --git a/include/linux/fcntl.h b/include/linux/fcntl.h
+index d019df946cb2..af88fb6c8313 100644
+--- a/include/linux/fcntl.h
++++ b/include/linux/fcntl.h
+@@ -9,7 +9,7 @@
+ 	(O_RDONLY | O_WRONLY | O_RDWR | O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC | \
+ 	 O_APPEND | O_NDELAY | O_NONBLOCK | O_NDELAY | __O_SYNC | O_DSYNC | \
+ 	 FASYNC	| O_DIRECT | O_LARGEFILE | O_DIRECTORY | O_NOFOLLOW | \
+-	 O_NOATIME | O_CLOEXEC | O_PATH | __O_TMPFILE)
++	 O_NOATIME | O_CLOEXEC | O_PATH | __O_TMPFILE | O_MAYEXEC)
+ 
+ #ifndef force_o_largefile
+ #define force_o_largefile() (!IS_ENABLED(CONFIG_ARCH_32BIT_OFF_T))
 diff --git a/include/linux/fs.h b/include/linux/fs.h
-index e57609dac8dd..735f5950cfed 100644
+index 997a530ff4e9..848f5711bdf0 100644
 --- a/include/linux/fs.h
 +++ b/include/linux/fs.h
-@@ -81,6 +81,7 @@ extern int sysctl_protected_symlinks;
- extern int sysctl_protected_hardlinks;
- extern int sysctl_protected_fifos;
- extern int sysctl_protected_regular;
-+extern int sysctl_omayexec_enforce;
+@@ -99,6 +99,8 @@ typedef int (dio_iodone_t)(struct kiocb *iocb, loff_t offset,
+ #define MAY_CHDIR		0x00000040
+ /* called from RCU mode, don't block */
+ #define MAY_NOT_BLOCK		0x00000080
++/* the inode is opened with O_MAYEXEC */
++#define MAY_OPENEXEC		0x00000100
  
- typedef __kernel_rwf_t rwf_t;
+ /*
+  * flags in file.f_mode.  Note that FMODE_READ and FMODE_WRITE must correspond
+diff --git a/include/uapi/asm-generic/fcntl.h b/include/uapi/asm-generic/fcntl.h
+index 9dc0bf0c5a6e..cbb9425d6e7c 100644
+--- a/include/uapi/asm-generic/fcntl.h
++++ b/include/uapi/asm-generic/fcntl.h
+@@ -97,6 +97,9 @@
+ #define O_NDELAY	O_NONBLOCK
+ #endif
  
-@@ -3452,6 +3453,8 @@ int proc_nr_dentry(struct ctl_table *table, int write,
- 		  void __user *buffer, size_t *lenp, loff_t *ppos);
- int proc_nr_inodes(struct ctl_table *table, int write,
- 		   void __user *buffer, size_t *lenp, loff_t *ppos);
-+int proc_omayexec(struct ctl_table *table, int write, void __user *buffer,
-+		size_t *lenp, loff_t *ppos);
- int __init get_filesystem_list(char *buf);
- 
- #define __FMODE_EXEC		((__force int) FMODE_EXEC)
-diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index 078950d9605b..eaaeb229a828 100644
---- a/kernel/sysctl.c
-+++ b/kernel/sysctl.c
-@@ -1911,6 +1911,13 @@ static struct ctl_table fs_table[] = {
- 		.extra1		= SYSCTL_ZERO,
- 		.extra2		= &two,
- 	},
-+	{
-+		.procname       = "open_mayexec_enforce",
-+		.data           = &sysctl_omayexec_enforce,
-+		.maxlen         = sizeof(int),
-+		.mode           = 0600,
-+		.proc_handler   = proc_omayexec,
-+	},
- #if defined(CONFIG_BINFMT_MISC) || defined(CONFIG_BINFMT_MISC_MODULE)
- 	{
- 		.procname	= "binfmt_misc",
++/* command execution from file is intended, check exec permissions */
++#define O_MAYEXEC	040000000
++
+ #define F_DUPFD		0	/* dup */
+ #define F_GETFD		1	/* get close_on_exec */
+ #define F_SETFD		2	/* set/clear close_on_exec */
 -- 
 2.23.0
