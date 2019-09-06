@@ -1,102 +1,91 @@
 From: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
-Subject: [PATCH v2 0/5] Add support for O_MAYEXEC
-Date: Fri,  6 Sep 2019 17:24:50 +0200
-Message-ID: <20190906152455.22757-1-mic@digikod.net>
+Subject: [PATCH v2 5/5] doc: Add documentation for the fs.open_mayexec_enforce sysctl
+Date: Fri,  6 Sep 2019 17:24:55 +0200
+Message-ID: <20190906152455.22757-6-mic@digikod.net>
+References: <20190906152455.22757-1-mic@digikod.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
-Return-path: <kernel-hardening-return-16841-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190906152455.22757-1-mic@digikod.net>
+Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>, Aleksa Sarai <cyphar@cyphar.com>, Alexei Starovoitov <ast@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, Christian Heimes <christian@python.org>, Daniel Borkmann <daniel@iogearbox.net>, Eric Chiang <ericchiang@google.com>, Florian Weimer <fweimer@redhat.com>, James Morris <jmorris@namei.org>, Jan Kara <jack@suse.cz>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Matthew Wilcox <willy@infradead.org>, Michael Kerrisk <mtk.manpages@gmail.com>, =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mickael.salaun@ssi.gouv.fr>, Mimi Zohar <zohar@linux.ibm.com>, =?UTF-8?q?Philippe=20Tr=C3=A9buchet?= <philippe.trebu>
+Cc: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>, Aleksa Sarai <cyphar@cyphar.com>, Alexei Starovoitov <ast@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, Christian Heimes <christian@python.org>, Daniel Borkmann <daniel@iogearbox.net>, Eric Chiang <ericchiang@google.com>, Florian Weimer <fweimer@redhat.com>, James Morris <jmorris@namei.org>, Jan Kara <jack@suse.cz>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Matthew Wilcox <willy@infradead.org>, Michael Kerrisk <mtk.manpages@gmail.com>, =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mickael.salaun@ssi.gouv.fr>, Mimi Zohar <zohar@linux.ibm.com>, =?UTF-8?q?Philippe=20Tr=C3=A9
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+Changes since v1:
+* move from LSM/Yama to sysctl/fs
 
-The goal of this patch series is to control script interpretation.  A
-new O_MAYEXEC flag used by sys_open() is added to enable userspace
-script interpreter to delegate to the kernel (and thus the system
-security policy) the permission to interpret/execute scripts or other
-files containing what can be seen as commands.
+Signed-off-by: Mickaël Salaün <mic@digikod.net>
+Reviewed-by: Philippe Trébuchet <philippe.trebuchet@ssi.gouv.fr>
+Reviewed-by: Thibaut Sautereau <thibaut.sautereau@ssi.gouv.fr>
+Cc: Jonathan Corbet <corbet@lwn.net>
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Mickaël Salaün <mickael.salaun@ssi.gouv.fr>
+---
+ Documentation/admin-guide/sysctl/fs.rst | 43 +++++++++++++++++++++++++
+ 1 file changed, 43 insertions(+)
 
-This second series mainly differ from the previous one [1] by moving the
-basic security policy from Yama to the filesystem subsystem.  This
-policy can be enforced by the system administrator through a sysctl
-configuration consistent with the mount points.
-
-Furthermore, the security policy can also be delegated to an LSM, either
-a MAC system or an integrity system.  For instance, the new kernel
-MAY_OPENEXEC flag closes a major IMA measurement/appraisal interpreter
-integrity gap by bringing the ability to check the use of scripts [2].
-Other uses are expected, such as for openat2(2) [3], SGX integration
-[4], and bpffs [5].
-
-Userspace need to adapt to take advantage of this new feature.  For
-example, the PEP 578 [6] (Runtime Audit Hooks) enables Python 3.8 to be
-extended with policy enforcement points related to code interpretation,
-which can be used to align with the PowerShell audit features.
-Additional Python security improvements (e.g. a limited interpreter
-withou -c, stdin piping of code) are on their way.
-
-The initial idea come from CLIP OS and the original implementation has
-been used for more than 10 years:
-https://github.com/clipos-archive/clipos4_doc
-
-An introduction to O_MAYEXEC was given at the Linux Security Summit
-Europe 2018 - Linux Kernel Security Contributions by ANSSI:
-https://www.youtube.com/watch?v=chNjCRtPKQY&t=17m15s
-The "write xor execute" principle was explained at Kernel Recipes 2018 -
-CLIP OS: a defense-in-depth OS:
-https://www.youtube.com/watch?v=PjRE0uBtkHU&t=11m14s
-
-This patch series can be applied on top of v5.3-rc7.  This can be tested
-with CONFIG_SYSCTL.  I would really appreciate constructive comments on
-this patch series.
-
-
-# Changes since v1
-
-* move code from Yama to the FS subsystem
-* set __FMODE_EXEC when using O_MAYEXEC to make this information
-  available through the new fanotify/FAN_OPEN_EXEC event
-* only match regular files (not directories nor other types), which
-  follows the same semantic as commit 73601ea5b7b1 ("fs/open.c: allow
-  opening only regular files during execve()")
-* improve tests
-
-[1] https://lore.kernel.org/lkml/20181212081712.32347-1-mic@digikod.net/
-[2] https://lore.kernel.org/lkml/1544647356.4028.105.camel@linux.ibm.com/
-[3] https://lore.kernel.org/lkml/20190904201933.10736-6-cyphar@cyphar.com/
-[4] https://lore.kernel.org/lkml/CALCETrVovr8XNZSroey7pHF46O=kj_c5D9K8h=z2T_cNrpvMig@mail.gmail.com/
-[5] https://lore.kernel.org/lkml/CALCETrVeZ0eufFXwfhtaG_j+AdvbzEWE0M3wjXMWVEO7pj+xkw@mail.gmail.com/
-[6] https://www.python.org/dev/peps/pep-0578/
-
-Regards,
-
-Mickaël Salaün (5):
-  fs: Add support for an O_MAYEXEC flag on sys_open()
-  fs: Add a MAY_EXECMOUNT flag to infer the noexec mount propertie
-  fs: Enable to enforce noexec mounts or file exec through O_MAYEXEC
-  selftest/exec: Add tests for O_MAYEXEC enforcing
-  doc: Add documentation for the fs.open_mayexec_enforce sysctl
-
- Documentation/admin-guide/sysctl/fs.rst     |  43 +++
- fs/fcntl.c                                  |   2 +-
- fs/namei.c                                  |  70 +++++
- fs/open.c                                   |   6 +
- include/linux/fcntl.h                       |   2 +-
- include/linux/fs.h                          |   7 +
- include/uapi/asm-generic/fcntl.h            |   3 +
- kernel/sysctl.c                             |   7 +
- tools/testing/selftests/exec/.gitignore     |   1 +
- tools/testing/selftests/exec/Makefile       |   4 +-
- tools/testing/selftests/exec/omayexec.c     | 317 ++++++++++++++++++++
- tools/testing/selftests/kselftest_harness.h |   3 +
- 12 files changed, 462 insertions(+), 3 deletions(-)
- create mode 100644 tools/testing/selftests/exec/omayexec.c
-
+diff --git a/Documentation/admin-guide/sysctl/fs.rst b/Documentation/admin-guide/sysctl/fs.rst
+index 2a45119e3331..f2f5bbe428d6 100644
+--- a/Documentation/admin-guide/sysctl/fs.rst
++++ b/Documentation/admin-guide/sysctl/fs.rst
+@@ -37,6 +37,7 @@ Currently, these files are in /proc/sys/fs:
+ - inode-nr
+ - inode-state
+ - nr_open
++- open_mayexec_enforce
+ - overflowuid
+ - overflowgid
+ - pipe-user-pages-hard
+@@ -165,6 +166,48 @@ system needs to prune the inode list instead of allocating
+ more.
+ 
+ 
++open_mayexec_enforce
++--------------------
++
++The ``O_MAYEXEC`` flag can be passed to :manpage:`open(2)` to only open regular
++files that are expected to be executable.  If the file is not identified as
++executable, then the syscall returns -EACCES.  This may allow a script
++interpreter to check executable permission before reading commands from a file.
++One interesting use case is to enforce a "write xor execute" policy through
++interpreters.
++
++Thanks to this flag, it is possible to enforce the ``noexec`` mount option
++(i.e.  the underlying mount point of the file is mounted with MNT_NOEXEC or its
++underlying superblock is SB_I_NOEXEC) not only on ELF binaries but also on
++scripts.  This may be possible thanks to script interpreters using the
++``O_MAYEXEC`` flag.  The executable permission is then checked before reading
++commands from a file, and thus can enforce the ``noexec`` at the interpreter
++level by propagating this security policy to the scripts.  To be fully
++effective, these interpreters also need to handle the other ways to execute
++code (for which the kernel can't help): command line parameters (e.g., option
++``-e`` for Perl), module loading (e.g., option ``-m`` for Python), stdin, file
++sourcing, environment variables, configuration files...  According to the
++threat model, it may be acceptable to allow some script interpreters (e.g.
++Bash) to interpret commands from stdin, may it be a TTY or a pipe, because it
++may not be enough to (directly) perform syscalls.
++
++There is two complementary security policies: enforce the ``noexec`` mount
++option, or enforce executable file permission.  These policies are handled by
++the ``fs.open_mayexec_enforce`` sysctl (writable only with ``CAP_MAC_ADMIN``)
++as a bitmask:
++
++1 - mount restriction:
++    check that the mount options for the underlying VFS mount do not prevent
++    execution.
++
++2 - file permission restriction:
++    check that the to-be-opened file is marked as executable for the current
++    process (e.g., POSIX permissions).
++
++Code samples can be found in tools/testing/selftests/exec/omayexec.c and
++https://github.com/clipos-archive/clipos4_portage-overlay/search?q=O_MAYEXEC .
++
++
+ overflowgid & overflowuid
+ -------------------------
+ 
 -- 
 2.23.0
