@@ -1,30 +1,79 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [PATCH v2 1/5] fs: Add support for an O_MAYEXEC flag on sys_open()
-Date: Fri, 06 Sep 2019 17:56:32 +0200
-Message-ID: <87ef0te7v3.fsf@oldenburg2.str.redhat.com>
-References: <20190906152455.22757-1-mic@digikod.net>
-        <20190906152455.22757-2-mic@digikod.net>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: Why add the general notification queue and its sources
+Date: Fri, 6 Sep 2019 08:53:09 -0700
+Message-ID: <CAHk-=wioHmz69394xKRqFkhK8si86P_704KgcwjKxawLAYAiug@mail.gmail.com>
+References: <156763534546.18676.3530557439501101639.stgit@warthog.procyon.org.uk>
+ <CAHk-=wh5ZNE9pBwrnr5MX3iqkUP4nspz17rtozrSxs5-OGygNw@mail.gmail.com>
+ <17703.1567702907@warthog.procyon.org.uk> <CAHk-=wjQ5Fpv0D7rxX0W=obx9xoOAxJ_Cr+pGCYOAi2S9FiCNg@mail.gmail.com>
+ <CAKCoTu7ms_Mr-q08d9XB3uascpzwBa5LF9JTT2aq8uUsoFE8aQ@mail.gmail.com>
+ <CAHk-=wjcsxQ8QB_v=cwBQw4pkJg7pp-bBsdWyPivFO_OeF-y+g@mail.gmail.com>
+ <5396.1567719164@warthog.procyon.org.uk> <CAHk-=wgbCXea1a9OTWgMMvcsCGGiNiPp+ty-edZrBWn63NCYdw@mail.gmail.com>
+ <14883.1567725508@warthog.procyon.org.uk> <CAHk-=wjt2Eb+yEDOcQwCa0SrZ4cWu967OtQG8Vz21c=n5ZP1Nw@mail.gmail.com>
+ <27732.1567764557@warthog.procyon.org.uk> <CAHk-=wiR1fpahgKuxSOQY6OfgjWD+MKz8UF6qUQ6V_y2TC_V6w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190906152455.22757-2-mic@digikod.net> (=?utf-8?Q?=22Micka?=
- =?utf-8?Q?=C3=ABl_Sala=C3=BCn=22's?=
-        message of "Fri, 6 Sep 2019 17:24:51 +0200")
+In-Reply-To: <CAHk-=wiR1fpahgKuxSOQY6OfgjWD+MKz8UF6qUQ6V_y2TC_V6w@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mic@digikod.net>
-Cc: linux-kernel@vger.kernel.org, Aleksa Sarai <cyphar@cyphar.com>, Alexei Starovoitov <ast@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, Christian Heimes <christian@python.org>, Daniel Borkmann <daniel@iogearbox.net>, Eric Chiang <ericchiang@google.com>, James Morris <jmorris@namei.org>, Jan Kara <jack@suse.cz>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Matthew Wilcox <willy@infradead.org>, Michael Kerrisk <mtk.manpages@gmail.com>, =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mickael.salaun@ssi.gouv.fr>, Mimi Zohar <zohar@linux.ibm.com>, Philippe =?utf-8?Q?Tr=C3=A9buchet?= <philippe.trebuchet@ssi.gouv.fr>, Scott Shell <scottsh@micr>
+To: David Howells <dhowells@redhat.com>
+Cc: Ray Strode <rstrode@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Steven Whitehouse <swhiteho@redhat.com>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, raven@themaw.net, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, Christian Brauner <christian@brauner.io>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, "Ray, Debarshi" <debarshi.ray@gmail.com>, Robbie Harwood <rharwood@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Let's assume I want to add support for this to the glibc dynamic loader,
-while still being able to run on older kernels.
+On Fri, Sep 6, 2019 at 8:35 AM Linus Torvalds
+<torvalds@linux-foundation.org> wrote:
+>
+> This is why I like pipes. You can use them today. They are simple, and
+> extensible, and you don't need to come up with a new subsystem and
+> some untested ad-hoc thing that nobody has actually used.
 
-Is it safe to try the open call first, with O_MAYEXEC, and if that fails
-with EINVAL, try again without O_MAYEXEC?
+The only _real_ complexity is to make sure that events are reliably parseable.
 
-Or do I risk disabling this security feature if I do that?
+That's where you really want to use the Linux-only "packet pipe"
+thing, becasue otherwise you have to have size markers or other things
+to delineate events. But if you do that, then it really becomes
+trivial.
 
-Do we need a different way for recognizing kernel support.  (Note that
-we cannot probe paths in /proc for various reasons.)
+And I checked, we made it available to user space, even if the
+original reason for that code was kernel-only autofs use: you just
+need to make the pipe be O_DIRECT.
 
-Thanks,
-Florian
+This overly stupid program shows off the feature:
+
+        #define _GNU_SOURCE
+        #include <fcntl.h>
+        #include <unistd.h>
+
+        int main(int argc, char **argv)
+        {
+                int fd[2];
+                char buf[10];
+
+                pipe2(fd, O_DIRECT | O_NONBLOCK);
+                write(fd[1], "hello", 5);
+                write(fd[1], "hi", 2);
+                read(fd[0], buf, sizeof(buf));
+                read(fd[0], buf, sizeof(buf));
+                return 0;
+        }
+
+and it you strace it (because I was too lazy to add error handling or
+printing of results), you'll see
+
+    write(4, "hello", 5)                    = 5
+    write(4, "hi", 2)                       = 2
+    read(3, "hello", 10)                    = 5
+    read(3, "hi", 10)                       = 2
+
+note how you got packets of data on the reader side, instead of
+getting the traditional "just buffer it as a stream".
+
+So now you can even have multiple readers of the same event pipe, and
+packetization is obvious and trivial. Of course, I'm not sure why
+you'd want to have multiple readers, and you'd lose _ordering_, but if
+all events are independent, this _might_ be a useful thing in a
+threaded environment. Maybe.
+
+(Side note: a zero-sized write will not cause a zero-sized packet. It
+will just be dropped).
+
+               Linus
