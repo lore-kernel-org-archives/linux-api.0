@@ -1,410 +1,138 @@
-From: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
-Subject: [PATCH v2 4/5] selftest/exec: Add tests for O_MAYEXEC enforcing
-Date: Fri,  6 Sep 2019 17:24:54 +0200
-Message-ID: <20190906152455.22757-5-mic@digikod.net>
-References: <20190906152455.22757-1-mic@digikod.net>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: Why add the general notification queue and its sources
+Date: Fri, 6 Sep 2019 08:35:46 -0700
+Message-ID: <CAHk-=wiR1fpahgKuxSOQY6OfgjWD+MKz8UF6qUQ6V_y2TC_V6w@mail.gmail.com>
+References: <156763534546.18676.3530557439501101639.stgit@warthog.procyon.org.uk>
+ <CAHk-=wh5ZNE9pBwrnr5MX3iqkUP4nspz17rtozrSxs5-OGygNw@mail.gmail.com>
+ <17703.1567702907@warthog.procyon.org.uk> <CAHk-=wjQ5Fpv0D7rxX0W=obx9xoOAxJ_Cr+pGCYOAi2S9FiCNg@mail.gmail.com>
+ <CAKCoTu7ms_Mr-q08d9XB3uascpzwBa5LF9JTT2aq8uUsoFE8aQ@mail.gmail.com>
+ <CAHk-=wjcsxQ8QB_v=cwBQw4pkJg7pp-bBsdWyPivFO_OeF-y+g@mail.gmail.com>
+ <5396.1567719164@warthog.procyon.org.uk> <CAHk-=wgbCXea1a9OTWgMMvcsCGGiNiPp+ty-edZrBWn63NCYdw@mail.gmail.com>
+ <14883.1567725508@warthog.procyon.org.uk> <CAHk-=wjt2Eb+yEDOcQwCa0SrZ4cWu967OtQG8Vz21c=n5ZP1Nw@mail.gmail.com>
+ <27732.1567764557@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190906152455.22757-1-mic@digikod.net>
+In-Reply-To: <27732.1567764557@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>, Aleksa Sarai <cyphar@cyphar.com>, Alexei Starovoitov <ast@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, Christian Heimes <christian@python.org>, Daniel Borkmann <daniel@iogearbox.net>, Eric Chiang <ericchiang@google.com>, Florian Weimer <fweimer@redhat.com>, James Morris <jmorris@namei.org>, Jan Kara <jack@suse.cz>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Matthew Wilcox <willy@infradead.org>, Michael Kerrisk <mtk.manpages@gmail.com>, =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mickael.salaun@ssi.gouv.fr>, Mimi Zohar <zohar@linux.ibm.com>, =?UTF-8?q?Philippe=20Tr=C3=A9
+To: David Howells <dhowells@redhat.com>
+Cc: Ray Strode <rstrode@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Steven Whitehouse <swhiteho@redhat.com>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, raven@themaw.net, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, Christian Brauner <christian@brauner.io>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, "Ray, Debarshi" <debarshi.ray@gmail.com>, Robbie Harwood <rharwood@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Test propagation of noexec mount points or file executability through
-files open with or without O_MAYEXEC.
+On Fri, Sep 6, 2019 at 3:09 AM David Howells <dhowells@redhat.com> wrote:
+>
+> Linus Torvalds <torvalds@linux-foundation.org> wrote:
+>
+> > But it's *literally* just finding the places that work with
+> > pipe->curbuf/nrbufs and making them use atomic updates.
+>
+> No.  It really isn't.  That's two variables that describe the occupied section
+> of the buffer.  Unless you have something like a 68020 with CAS2, or put them
+> next to each other so you can use CMPXCHG8, you can't do that.
+>
+> They need converting to head/tail pointers first.
 
-Changes since v1:
-* move tests from yama to exec
-* fix _GNU_SOURCE in kselftest_harness.h
-* add a new test sysctl_access_write to check if CAP_MAC_ADMIN is taken
-  into account
-* test directory execution which is always forbidden since commit
-  73601ea5b7b1 ("fs/open.c: allow opening only regular files during
-  execve()"), and also check that even the root user can not bypass file
-  execution checks
-* make sure delete_workspace() always as enough right to succeed
-* cosmetic cleanup
+You misunderstand - because I phrased it badly. I meant "atomic" in
+the traditional kernel sense, as in "usable in not thread context" (eg
+GFP_ATOMIC etc).
 
-Signed-off-by: Mickaël Salaün <mic@digikod.net>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Mickaël Salaün <mickael.salaun@ssi.gouv.fr>
-Cc: Shuah Khan <shuah@kernel.org>
----
- tools/testing/selftests/exec/.gitignore     |   1 +
- tools/testing/selftests/exec/Makefile       |   4 +-
- tools/testing/selftests/exec/omayexec.c     | 317 ++++++++++++++++++++
- tools/testing/selftests/kselftest_harness.h |   3 +
- 4 files changed, 324 insertions(+), 1 deletion(-)
- create mode 100644 tools/testing/selftests/exec/omayexec.c
+I'd start out just using a spinlock.
 
-diff --git a/tools/testing/selftests/exec/.gitignore b/tools/testing/selftests/exec/.gitignore
-index b02279da6fa1..78487c987c07 100644
---- a/tools/testing/selftests/exec/.gitignore
-+++ b/tools/testing/selftests/exec/.gitignore
-@@ -1,3 +1,4 @@
-+/omayexec
- subdir*
- script*
- execveat
-diff --git a/tools/testing/selftests/exec/Makefile b/tools/testing/selftests/exec/Makefile
-index 33339e31e365..a62b9ca306e7 100644
---- a/tools/testing/selftests/exec/Makefile
-+++ b/tools/testing/selftests/exec/Makefile
-@@ -3,7 +3,7 @@ CFLAGS = -Wall
- CFLAGS += -Wno-nonnull
- CFLAGS += -D_GNU_SOURCE
- 
--TEST_GEN_PROGS := execveat
-+TEST_GEN_PROGS := execveat omayexec
- TEST_GEN_FILES := execveat.symlink execveat.denatured script subdir
- # Makefile is a run-time dependency, since it's accessed by the execveat test
- TEST_FILES := Makefile
-@@ -26,3 +26,5 @@ $(OUTPUT)/execveat.denatured: $(OUTPUT)/execveat
- 	cp $< $@
- 	chmod -x $@
- 
-+$(OUTPUT)/omayexec: omayexec.c ../kselftest_harness.h
-+	$(CC) $(CFLAGS) -Wl,-no-as-needed $(LDFLAGS) -lcap $< -o $@
-diff --git a/tools/testing/selftests/exec/omayexec.c b/tools/testing/selftests/exec/omayexec.c
-new file mode 100644
-index 000000000000..e4307b5a5417
---- /dev/null
-+++ b/tools/testing/selftests/exec/omayexec.c
-@@ -0,0 +1,317 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * O_MAYEXEC tests
-+ *
-+ * Copyright © 2018-2019 ANSSI
-+ *
-+ * Author: Mickaël Salaün <mic@digikod.net>
-+ */
-+
-+#include <errno.h>
-+#include <fcntl.h> /* O_CLOEXEC */
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h> /* strlen */
-+#include <sys/capability.h>
-+#include <sys/mount.h>
-+#include <sys/stat.h> /* mkdir */
-+#include <unistd.h> /* unlink, rmdir */
-+
-+#include "../kselftest_harness.h"
-+
-+#ifndef O_MAYEXEC
-+#define O_MAYEXEC      040000000
-+#endif
-+
-+#define SYSCTL_MAYEXEC	"/proc/sys/fs/open_mayexec_enforce"
-+
-+#define BIN_DIR		"./test-mount"
-+#define BIN_PATH	BIN_DIR "/file"
-+#define DIR_PATH	BIN_DIR "/directory"
-+
-+#define ALLOWED		1
-+#define DENIED		0
-+
-+static void ignore_dac(struct __test_metadata *_metadata, int override)
-+{
-+	cap_t caps;
-+	const cap_value_t cap_val[2] = {
-+		CAP_DAC_OVERRIDE,
-+		CAP_DAC_READ_SEARCH,
-+	};
-+
-+	caps = cap_get_proc();
-+	ASSERT_TRUE(!!caps);
-+	ASSERT_FALSE(cap_set_flag(caps, CAP_EFFECTIVE, 2, cap_val,
-+				override ? CAP_SET : CAP_CLEAR));
-+	ASSERT_FALSE(cap_set_proc(caps));
-+	EXPECT_FALSE(cap_free(caps));
-+}
-+
-+static void ignore_mac(struct __test_metadata *_metadata, int override)
-+{
-+	cap_t caps;
-+	const cap_value_t cap_val[1] = {
-+		CAP_MAC_ADMIN,
-+	};
-+
-+	caps = cap_get_proc();
-+	ASSERT_TRUE(!!caps);
-+	ASSERT_FALSE(cap_set_flag(caps, CAP_EFFECTIVE, 1, cap_val,
-+				override ? CAP_SET : CAP_CLEAR));
-+	ASSERT_FALSE(cap_set_proc(caps));
-+	EXPECT_FALSE(cap_free(caps));
-+}
-+
-+static void test_omx(struct __test_metadata *_metadata,
-+		const char *const path, const int exec_allowed)
-+{
-+	int fd;
-+
-+	/* without O_MAYEXEC */
-+	fd = open(path, O_RDONLY | O_CLOEXEC);
-+	ASSERT_NE(-1, fd);
-+	EXPECT_FALSE(close(fd));
-+
-+	/* with O_MAYEXEC */
-+	fd = open(path, O_RDONLY | O_CLOEXEC | O_MAYEXEC);
-+	if (exec_allowed) {
-+		/* open should succeed */
-+		ASSERT_NE(-1, fd);
-+		EXPECT_FALSE(close(fd));
-+	} else {
-+		/* open should return EACCES */
-+		ASSERT_EQ(-1, fd);
-+		ASSERT_EQ(EACCES, errno);
-+	}
-+}
-+
-+static void test_omx_dir_file(struct __test_metadata *_metadata,
-+		const char *const dir_path, const char *const file_path,
-+		const int exec_allowed)
-+{
-+	/*
-+	 * directory execution is always denied since commit 73601ea5b7b1
-+	 * ("fs/open.c: allow opening only regular files during execve()")
-+	 */
-+	test_omx(_metadata, dir_path, DENIED);
-+	test_omx(_metadata, file_path, exec_allowed);
-+}
-+
-+static void test_dir_file(struct __test_metadata *_metadata,
-+		const char *const dir_path, const char *const file_path,
-+		const int exec_allowed)
-+{
-+	/* test as root */
-+	ignore_dac(_metadata, 1);
-+	test_omx_dir_file(_metadata, dir_path, file_path, exec_allowed);
-+
-+	/* test without bypass */
-+	ignore_dac(_metadata, 0);
-+	test_omx_dir_file(_metadata, dir_path, file_path, exec_allowed);
-+}
-+
-+static void sysctl_write(struct __test_metadata *_metadata,
-+		const char *path, const char *value)
-+{
-+	int fd;
-+	size_t len_value;
-+	ssize_t len_wrote;
-+
-+	fd = open(path, O_WRONLY | O_CLOEXEC);
-+	ASSERT_NE(-1, fd);
-+	len_value = strlen(value);
-+	len_wrote = write(fd, value, len_value);
-+	ASSERT_EQ(len_wrote, len_value);
-+	EXPECT_FALSE(close(fd));
-+}
-+
-+static void create_workspace(struct __test_metadata *_metadata,
-+		int mount_exec, int file_exec)
-+{
-+	int fd;
-+
-+	/*
-+	 * Cleanup previous workspace if any error previously happened (don't
-+	 * check errors).
-+	 */
-+	umount(BIN_DIR);
-+	rmdir(BIN_DIR);
-+
-+	/* create a clean mount point */
-+	ASSERT_FALSE(mkdir(BIN_DIR, 00700));
-+	ASSERT_FALSE(mount("test", BIN_DIR, "tmpfs",
-+				MS_MGC_VAL | (mount_exec ? 0 : MS_NOEXEC),
-+				"mode=0700,size=4k"));
-+
-+	/* create a test file */
-+	fd = open(BIN_PATH, O_CREAT | O_RDONLY | O_CLOEXEC,
-+			file_exec ? 00500 : 00400);
-+	ASSERT_NE(-1, fd);
-+	EXPECT_NE(-1, close(fd));
-+
-+	/* create a test directory */
-+	ASSERT_FALSE(mkdir(DIR_PATH, file_exec ? 00500 : 00400));
-+}
-+
-+static void delete_workspace(struct __test_metadata *_metadata)
-+{
-+	ignore_mac(_metadata, 1);
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "0");
-+
-+	/* no need to unlink BIN_PATH nor DIR_PATH */
-+	ASSERT_FALSE(umount(BIN_DIR));
-+	ASSERT_FALSE(rmdir(BIN_DIR));
-+}
-+
-+FIXTURE_DATA(mount_exec_file_exec) { };
-+
-+FIXTURE_SETUP(mount_exec_file_exec)
-+{
-+	create_workspace(_metadata, 1, 1);
-+}
-+
-+FIXTURE_TEARDOWN(mount_exec_file_exec)
-+{
-+	delete_workspace(_metadata);
-+}
-+
-+TEST_F(mount_exec_file_exec, mount)
-+{
-+	/* enforce mount exec check */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "1");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, ALLOWED);
-+}
-+
-+TEST_F(mount_exec_file_exec, file)
-+{
-+	/* enforce file exec check */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "2");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, ALLOWED);
-+}
-+
-+TEST_F(mount_exec_file_exec, mount_file)
-+{
-+	/* enforce mount and file exec check */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "3");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, ALLOWED);
-+}
-+
-+FIXTURE_DATA(mount_exec_file_noexec) { };
-+
-+FIXTURE_SETUP(mount_exec_file_noexec)
-+{
-+	create_workspace(_metadata, 1, 0);
-+}
-+
-+FIXTURE_TEARDOWN(mount_exec_file_noexec)
-+{
-+	delete_workspace(_metadata);
-+}
-+
-+TEST_F(mount_exec_file_noexec, mount)
-+{
-+	/* enforce mount exec check */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "1");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, ALLOWED);
-+}
-+
-+TEST_F(mount_exec_file_noexec, file)
-+{
-+	/* enforce file exec check */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "2");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, DENIED);
-+}
-+
-+TEST_F(mount_exec_file_noexec, mount_file)
-+{
-+	/* enforce mount and file exec check */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "3");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, DENIED);
-+}
-+
-+FIXTURE_DATA(mount_noexec_file_exec) { };
-+
-+FIXTURE_SETUP(mount_noexec_file_exec)
-+{
-+	create_workspace(_metadata, 0, 1);
-+}
-+
-+FIXTURE_TEARDOWN(mount_noexec_file_exec)
-+{
-+	delete_workspace(_metadata);
-+}
-+
-+TEST_F(mount_noexec_file_exec, mount)
-+{
-+	/* enforce mount exec check */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "1");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, DENIED);
-+}
-+
-+TEST_F(mount_noexec_file_exec, file)
-+{
-+	/* enforce file exec check */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "2");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, ALLOWED);
-+}
-+
-+TEST_F(mount_noexec_file_exec, mount_file)
-+{
-+	/* enforce mount and file exec check */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "3");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, DENIED);
-+}
-+
-+FIXTURE_DATA(mount_noexec_file_noexec) { };
-+
-+FIXTURE_SETUP(mount_noexec_file_noexec)
-+{
-+	create_workspace(_metadata, 0, 0);
-+}
-+
-+FIXTURE_TEARDOWN(mount_noexec_file_noexec)
-+{
-+	delete_workspace(_metadata);
-+}
-+
-+TEST_F(mount_noexec_file_noexec, mount)
-+{
-+	/* enforce mount exec check */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "1");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, DENIED);
-+}
-+
-+TEST_F(mount_noexec_file_noexec, file)
-+{
-+	/* enforce file exec check */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "2");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, DENIED);
-+}
-+
-+TEST_F(mount_noexec_file_noexec, mount_file)
-+{
-+	/* enforce mount and file exec check */
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "3");
-+	test_dir_file(_metadata, DIR_PATH, BIN_PATH, DENIED);
-+}
-+
-+TEST(sysctl_access_write)
-+{
-+	int fd;
-+	ssize_t len_wrote;
-+
-+	ignore_mac(_metadata, 1);
-+	sysctl_write(_metadata, SYSCTL_MAYEXEC, "0");
-+
-+	ignore_mac(_metadata, 0);
-+	fd = open(SYSCTL_MAYEXEC, O_WRONLY | O_CLOEXEC);
-+	ASSERT_NE(-1, fd);
-+	len_wrote = write(fd, "0", 1);
-+	ASSERT_EQ(len_wrote, -1);
-+	EXPECT_FALSE(close(fd));
-+
-+	ignore_mac(_metadata, 1);
-+}
-+
-+TEST_HARNESS_MAIN
-diff --git a/tools/testing/selftests/kselftest_harness.h b/tools/testing/selftests/kselftest_harness.h
-index 5336b26506ab..6ae816fa2f62 100644
---- a/tools/testing/selftests/kselftest_harness.h
-+++ b/tools/testing/selftests/kselftest_harness.h
-@@ -50,7 +50,10 @@
- #ifndef __KSELFTEST_HARNESS_H
- #define __KSELFTEST_HARNESS_H
- 
-+#ifndef _GNU_SOURCE
- #define _GNU_SOURCE
-+#endif
-+
- #include <asm/types.h>
- #include <errno.h>
- #include <stdbool.h>
--- 
-2.23.0
+I do agree that we could try to be fancy and do it entirely locklessly
+too, and I mentioned that in another part:
+
+ "[..] it should not
+  be all that hard to just make the whole "curbuf/nrbufs" handling use
+  its own locking (maybe even some lockless atomics and cmpxchg)"
+
+but I also very much agree that it's much more complex.
+
+The main complexity of a lockless thing is actually almost certainly
+not in curbuf/nrbufs, because those could easily be packed as two
+16-bit values in a 32-bit entity and then regular cmpxchg works fine.
+
+No, the complexity in the lockless model is that then you have to be
+very careful with the "buf[]" array update too.  Maybe that's trivial
+(just make sure that they are NULL when not used), but it just looks
+less than wonderfully easy.
+
+So a lockless update I'm sure is _doable_ with some cleverness, but is
+probably not really worth it.
+
+That's particularly true since we already *have* a spinlock that we
+would take anyway: the we could strive to use the waitqueue spinlock
+in pipe->wait, and not even really add any new locking. That would
+require a bit of cleverness too and re-ordering things more, but we do
+that in other places (eg completions, but the fs_pin code does it too,
+and a few other cases.
+
+Look for "wake_up_locked()" and friends, which is a sure-fire sign
+that somebody is playing games and taking the wait-queue lock manually
+for their own nefarious reasons.
+
+> > They really would work with almost anything. You could even mix-and-match
+> > "data generated by kernel" and "data done by 'write()' or 'splice()' by a
+> > user process".
+>
+> Imagine that userspace writes a large message and takes the mutex.  At the
+> same time something in softirq context decides *it* wants to write a message -
+> it can't take the mutex and it can't wait, so the userspace write would have
+> to cause the kernel message to be dropped.
+
+No. You're missing the point entirely.
+
+The mutex is entirely immaterial for the "insert a message". It is
+only used for user-space synchronization. The "add message to the pipe
+buffers" would only do the low-level buffer updates (whether using a
+new spinlock, re-using the pipe waitqueue lock, or entirely
+locklessly, ends up being then just an implementation detail).
+
+Note that user-space writes are defined to be atomic, but they are (a)
+not ordered and (b) only atomic up to a single buffer entry (which is
+that PIPE_BUF limit). So you can always put in a new buffer entry at
+any time.
+
+Obviously if a user space write just fills up the whole queue (or
+_other_ messages fill up the whole queue) you'd have to drop the
+notification. But that's always true. That's true even in your thing.
+The only difference is that we _allow_ other user spaces to write to
+the notification queue too.
+
+But if you don't want to allow that, then don't give out the write
+side of the pipe to any untrusted user space.
+
+But in *general*, allowing user space to write to the pipe is a great
+feature: it means that your notification source *can* be a user space
+daemon that you gave the write side of the pipe to (possibly using fd
+passing, possibly by just forking your own user-space child or cloning
+a thread).
+
+So for example, from a consumer standpoint, you can start off doing
+these things in user space with a helper thread that feeds the pipe
+(for example, polling /proc/mounts every second), and then when you've
+prototyped it and are happy with it, you can add the system call (or
+ioctl or whatever) to make the kernel generate the messages so that
+you don't have to poll.
+
+But now, once you have the kernel patch, you already have a proven
+user, and you can show numbers ("My user-space thing works, but it
+uses up 0.1% CPU time and has that nasty up-to-one-second latency
+because of polling"). Ta-daa!
+
+End result: it's backwards compatible, it's prototypable, and it's
+fairly easily extensible. Want to add a new source of events? Just
+pass the pipe to any random piece of code you want. It needs kernel
+support only when you've proven the concept _and_ you can show that
+"yeah, this user space polling model is a real performance or
+complexity problem" or whatever.
+
+This is why I like pipes. You can use them today. They are simple, and
+extensible, and you don't need to come up with a new subsystem and
+some untested ad-hoc thing that nobody has actually used.
+
+And they work automatically with all the existing infrastructure. They
+work with whatever perl or shell scripts, they work with poll/select
+loops, they work with user-space sources of events, they are just very
+flexible.
+
+                     Linus
