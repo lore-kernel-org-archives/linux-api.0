@@ -1,79 +1,67 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: Why add the general notification queue and its sources
-Date: Fri, 6 Sep 2019 08:53:09 -0700
-Message-ID: <CAHk-=wioHmz69394xKRqFkhK8si86P_704KgcwjKxawLAYAiug@mail.gmail.com>
-References: <156763534546.18676.3530557439501101639.stgit@warthog.procyon.org.uk>
- <CAHk-=wh5ZNE9pBwrnr5MX3iqkUP4nspz17rtozrSxs5-OGygNw@mail.gmail.com>
- <17703.1567702907@warthog.procyon.org.uk> <CAHk-=wjQ5Fpv0D7rxX0W=obx9xoOAxJ_Cr+pGCYOAi2S9FiCNg@mail.gmail.com>
- <CAKCoTu7ms_Mr-q08d9XB3uascpzwBa5LF9JTT2aq8uUsoFE8aQ@mail.gmail.com>
- <CAHk-=wjcsxQ8QB_v=cwBQw4pkJg7pp-bBsdWyPivFO_OeF-y+g@mail.gmail.com>
- <5396.1567719164@warthog.procyon.org.uk> <CAHk-=wgbCXea1a9OTWgMMvcsCGGiNiPp+ty-edZrBWn63NCYdw@mail.gmail.com>
- <14883.1567725508@warthog.procyon.org.uk> <CAHk-=wjt2Eb+yEDOcQwCa0SrZ4cWu967OtQG8Vz21c=n5ZP1Nw@mail.gmail.com>
- <27732.1567764557@warthog.procyon.org.uk> <CAHk-=wiR1fpahgKuxSOQY6OfgjWD+MKz8UF6qUQ6V_y2TC_V6w@mail.gmail.com>
+From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mickael.salaun@ssi.gouv.fr>
+Subject: Re: [PATCH v2 1/5] fs: Add support for an O_MAYEXEC flag on
+ sys_open()
+Date: Fri, 6 Sep 2019 18:06:25 +0200
+Message-ID: <75442f3b-a3d8-12db-579a-2c5983426b4d@ssi.gouv.fr>
+References: <20190906152455.22757-1-mic@digikod.net>
+ <20190906152455.22757-2-mic@digikod.net>
+ <87ef0te7v3.fsf@oldenburg2.str.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=wiR1fpahgKuxSOQY6OfgjWD+MKz8UF6qUQ6V_y2TC_V6w@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Ray Strode <rstrode@redhat.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Steven Whitehouse <swhiteho@redhat.com>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, raven@themaw.net, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, Christian Brauner <christian@brauner.io>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux List Kernel Mailing <linux-kernel@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, "Ray, Debarshi" <debarshi.ray@gmail.com>, Robbie Harwood <rharwood@redhat.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <kernel-hardening-return-16846-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+List-Post: <mailto:kernel-hardening@lists.openwall.com>
+List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
+List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
+List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+In-Reply-To: <87ef0te7v3.fsf@oldenburg2.str.redhat.com>
+Content-Language: en-US
+To: Florian Weimer <fweimer@redhat.com>, =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
+Cc: linux-kernel@vger.kernel.org, Aleksa Sarai <cyphar@cyphar.com>, Alexei Starovoitov <ast@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, Christian Heimes <christian@python.org>, Daniel Borkmann <daniel@iogearbox.net>, Eric Chiang <ericchiang@google.com>, James Morris <jmorris@namei.org>, Jan Kara <jack@suse.cz>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Matthew Wilcox <willy@infradead.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Mimi Zohar <zohar@linux.ibm.com>, =?UTF-8?Q?Philippe_Tr=c3=a9buchet?= <philippe.trebuchet@ssi.gouv.fr>, Scott Shell <scottsh@microsoft.com>, Sean Christopherson <sean.j.christopherson@intel.com>, Shuah Khan <shuah@kernel.org>, Song Liu <songliubraving@fb.com>, Steve Dower <steve.dower@python.org>, Steve Grubb <sgrubb@>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 6, 2019 at 8:35 AM Linus Torvalds
-<torvalds@linux-foundation.org> wrote:
+
+On 06/09/2019 17:56, Florian Weimer wrote:
+> Let's assume I want to add support for this to the glibc dynamic loader,
+> while still being able to run on older kernels.
 >
-> This is why I like pipes. You can use them today. They are simple, and
-> extensible, and you don't need to come up with a new subsystem and
-> some untested ad-hoc thing that nobody has actually used.
+> Is it safe to try the open call first, with O_MAYEXEC, and if that fails
+> with EINVAL, try again without O_MAYEXEC?
 
-The only _real_ complexity is to make sure that events are reliably parseable.
+The kernel ignore unknown open(2) flags, so yes, it is safe even for
+older kernel to use O_MAYEXEC.
 
-That's where you really want to use the Linux-only "packet pipe"
-thing, becasue otherwise you have to have size markers or other things
-to delineate events. But if you do that, then it really becomes
-trivial.
+>
+> Or do I risk disabling this security feature if I do that?
 
-And I checked, we made it available to user space, even if the
-original reason for that code was kernel-only autofs use: you just
-need to make the pipe be O_DIRECT.
+It is only a security feature if the kernel support it, otherwise it is
+a no-op.
 
-This overly stupid program shows off the feature:
+>
+> Do we need a different way for recognizing kernel support.  (Note that
+> we cannot probe paths in /proc for various reasons.)
 
-        #define _GNU_SOURCE
-        #include <fcntl.h>
-        #include <unistd.h>
+There is no need to probe for kernel support.
 
-        int main(int argc, char **argv)
-        {
-                int fd[2];
-                char buf[10];
+>
+> Thanks,
+> Florian
+>
 
-                pipe2(fd, O_DIRECT | O_NONBLOCK);
-                write(fd[1], "hello", 5);
-                write(fd[1], "hi", 2);
-                read(fd[0], buf, sizeof(buf));
-                read(fd[0], buf, sizeof(buf));
-                return 0;
-        }
+--
+Micka=C3=ABl Sala=C3=BCn
 
-and it you strace it (because I was too lazy to add error handling or
-printing of results), you'll see
-
-    write(4, "hello", 5)                    = 5
-    write(4, "hi", 2)                       = 2
-    read(3, "hello", 10)                    = 5
-    read(3, "hi", 10)                       = 2
-
-note how you got packets of data on the reader side, instead of
-getting the traditional "just buffer it as a stream".
-
-So now you can even have multiple readers of the same event pipe, and
-packetization is obvious and trivial. Of course, I'm not sure why
-you'd want to have multiple readers, and you'd lose _ordering_, but if
-all events are independent, this _might_ be a useful thing in a
-threaded environment. Maybe.
-
-(Side note: a zero-sized write will not cause a zero-sized packet. It
-will just be dropped).
-
-               Linus
+Les donn=C3=A9es =C3=A0 caract=C3=A8re personnel recueillies et trait=C3=A9=
+es dans le cadre de cet =C3=A9change, le sont =C3=A0 seule fin d=E2=80=99ex=
+=C3=A9cution d=E2=80=99une relation professionnelle et s=E2=80=99op=C3=A8re=
+nt dans cette seule finalit=C3=A9 et pour la dur=C3=A9e n=C3=A9cessaire =C3=
+=A0 cette relation. Si vous souhaitez faire usage de vos droits de consulta=
+tion, de rectification et de suppression de vos donn=C3=A9es, veuillez cont=
+acter contact.rgpd@sgdsn.gouv.fr. Si vous avez re=C3=A7u ce message par err=
+eur, nous vous remercions d=E2=80=99en informer l=E2=80=99exp=C3=A9diteur e=
+t de d=C3=A9truire le message. The personal data collected and processed du=
+ring this exchange aims solely at completing a business relationship and is=
+ limited to the necessary duration of that relationship. If you wish to use=
+ your rights of consultation, rectification and deletion of your data, plea=
+se contact: contact.rgpd@sgdsn.gouv.fr. If you have received this message i=
+n error, we thank you for informing the sender and destroying the message.
