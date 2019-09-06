@@ -1,73 +1,97 @@
-From: Tycho Andersen <tycho@tycho.ws>
-Subject: Re: [PATCH v2 1/5] fs: Add support for an O_MAYEXEC flag on
- sys_open()
-Date: Fri, 6 Sep 2019 12:46:20 -0600
-Message-ID: <20190906184620.GI7627@cisco>
+From: Steve Grubb <sgrubb@redhat.com>
+Subject: Re: [PATCH v2 0/5] Add support for O_MAYEXEC
+Date: Fri, 06 Sep 2019 14:50:02 -0400
+Message-ID: <2989749.1YmIBkDdQn@x2>
 References: <20190906152455.22757-1-mic@digikod.net>
- <20190906152455.22757-2-mic@digikod.net>
- <87ef0te7v3.fsf@oldenburg2.str.redhat.com>
- <75442f3b-a3d8-12db-579a-2c5983426b4d@ssi.gouv.fr>
- <20190906170739.kk3opr2phidb7ilb@yavin.dot.cyphar.com>
- <20190906172050.v44f43psd6qc6awi@wittgenstein>
- <20190906174041.GH7627@cisco>
- <87v9u5cmb0.fsf@oldenburg2.str.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <87v9u5cmb0.fsf@oldenburg2.str.redhat.com>
+In-Reply-To: <20190906152455.22757-1-mic@digikod.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>
-Cc: Christian Brauner <christian.brauner@ubuntu.com>, Aleksa Sarai <cyphar@cyphar.com>, =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mickael.salaun@ssi.gouv.fr>, =?iso-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>, linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, Christian Heimes <christian@python.org>, Daniel Borkmann <daniel@iogearbox.net>, Eric Chiang <ericchiang@google.com>, James Morris <jmorris@namei.org>, Jan Kara <jack@suse.cz>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Matthew Wilcox <willy@infradead.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Mimi Zohar <zohar@linux.ibm.com>
+To: =?ISO-8859-1?Q?Micka=EBl_Sala=FCn?= <mic@digikod.net>
+Cc: linux-kernel@vger.kernel.org, Aleksa Sarai <cyphar@cyphar.com>, Alexei Starovoitov <ast@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, Christian Heimes <christian@python.org>, Daniel Borkmann <daniel@iogearbox.net>, Eric Chiang <ericchiang@google.com>, Florian Weimer <fweimer@redhat.com>, James Morris <jmorris@namei.org>, Jan Kara <jack@suse.cz>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Matthew Wilcox <willy@infradead.org>, Michael Kerrisk <mtk.manpages@gmail.com>, =?ISO-8859-1?Q?Micka=EBl_Sala=FCn?= <mickael.salaun@ssi.gouv.fr>, Mimi Zohar <zohar@linux.ibm.com>, Philippe =?ISO-8859-1?Q?Tr=E9buchet?= <philippe.trebuchet@s>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 06, 2019 at 08:27:31PM +0200, Florian Weimer wrote:
-> * Tycho Andersen:
-> 
-> > On Fri, Sep 06, 2019 at 07:20:51PM +0200, Christian Brauner wrote:
-> >> On Sat, Sep 07, 2019 at 03:07:39AM +1000, Aleksa Sarai wrote:
-> >> > On 2019-09-06, Mickaël Salaün <mickael.salaun@ssi.gouv.fr> wrote:
-> >> > > 
-> >> > > On 06/09/2019 17:56, Florian Weimer wrote:
-> >> > > > Let's assume I want to add support for this to the glibc dynamic loader,
-> >> > > > while still being able to run on older kernels.
-> >> > > >
-> >> > > > Is it safe to try the open call first, with O_MAYEXEC, and if that fails
-> >> > > > with EINVAL, try again without O_MAYEXEC?
-> >> > > 
-> >> > > The kernel ignore unknown open(2) flags, so yes, it is safe even for
-> >> > > older kernel to use O_MAYEXEC.
-> >> > 
-> >> > Depends on your definition of "safe" -- a security feature that you will
-> >> > silently not enable on older kernels doesn't sound super safe to me.
-> >> > Unfortunately this is a limitation of open(2) that we cannot change --
-> >> > which is why the openat2(2) proposal I've been posting gives -EINVAL for
-> >> > unknown O_* flags.
-> >> > 
-> >> > There is a way to probe for support (though unpleasant), by creating a
-> >> > test O_MAYEXEC fd and then checking if the flag is present in
-> >> > /proc/self/fdinfo/$n.
-> >> 
-> >> Which Florian said they can't do for various reasons.
-> >> 
-> >> It is a major painpoint if there's no easy way for userspace to probe
-> >> for support. Especially if it's security related which usually means
-> >> that you want to know whether this feature works or not.
-> >
-> > What about just trying to violate the policy via fexecve() instead of
-> > looking around in /proc? Still ugly, though.
-> 
-> How would we do this?  This is about opening the main executable as part
-> of an explicit loader invocation.  Typically, an fexecve will succeed
-> and try to run the program, but with the wrong dynamic loader.
+On Friday, September 6, 2019 11:24:50 AM EDT Mickaël Salaün wrote:
+> The goal of this patch series is to control script interpretation.  A
+> new O_MAYEXEC flag used by sys_open() is added to enable userspace
+> script interpreter to delegate to the kernel (and thus the system
+> security policy) the permission to interpret/execute scripts or other
+> files containing what can be seen as commands.
 
-Yeah, fexecve() was a think-o, sorry, you don't need to go that far. I
-was thinking do what the tests in this series do: create a tmpfs with
-MS_NOEXEC, put an executable file in it, and try and open it with
-O_MAYEXEC. If that works, the kernel doesn't support the flag, and it
-should give you -EACCES if the kernel does support the flag.
+The problem is that this is only a gentleman's handshake. If I don't tell the
+kernel that what I'm opening is tantamount to executing it, then the security
+feature is never invoked. It is simple to strip the flags off of any system
+call without needing privileges. For example:
 
-Still a lot of work, though. Seems better to just use openat2.
+#define _GNU_SOURCE
+#include <link.h>
+#include <fcntl.h>
+#include <string.h>
 
-Tycho
+unsigned int
+la_version(unsigned int version)
+{
+    return version;
+}
+
+unsigned int
+la_objopen(struct link_map *map, Lmid_t lmid, uintptr_t *cookie)
+{
+    return LA_FLG_BINDTO | LA_FLG_BINDFROM;
+}
+
+typedef int (*openat_t) (int dirfd, const char *pathname, int flags, mode_t mode);
+static openat_t real_openat = 0L;
+int my_openat(int dirfd, const char *pathname, int flags, mode_t mode)
+{
+        flags &= ~O_CLOEXEC;
+        return real_openat(dirfd, pathname, flags, mode);
+}
+
+uintptr_t
+la_symbind64(Elf64_Sym *sym, unsigned int ndx, uintptr_t *refcook,
+        uintptr_t *defcook, unsigned int *flags, const char *symname)
+{
+    if (real_openat == 0L && strcmp(symname, "openat") == 0) {
+        real_openat = (openat_t) sym->st_value;
+        return (uintptr_t) my_openat;
+    }
+    return sym->st_value;
+}
+
+gcc -c -g -Wno-unused-parameter -W -Wall -Wundef -O2 -Wp,-D_GLIBCXX_ASSERTIONS -fexceptions -fPIC  test.c
+gcc -o strip-flags.so.0 -shared -Wl,-soname,strip-flags.so.0 -ldl test.o
+
+Now, let's make a test program:
+
+#include <stdio.h>
+#include <dirent.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+int main(void)
+{
+        int dir_fd, fd;
+        DIR *d = opendir("/etc");
+        dir_fd = dirfd(d);
+        fd = openat(dir_fd, "passwd", O_RDONLY|O_CLOEXEC);
+        close (fd);
+        closedir(d);
+        return 0;
+}
+
+gcc -g -W -Wall -Wundef test.c -o test
+
+OK, let's see what happens.
+$ strace ./test 2>&1 | grep passwd
+openat(3, "passwd", O_RDONLY|O_CLOEXEC) = 4
+
+Now with LD_AUDIT
+$ LD_AUDIT=/home/sgrubb/test/openflags/strip-flags.so.0 strace ./test 2>&1 | grep passwd
+openat(3, "passwd", O_RDONLY)           = 4
+
+No O_CLOEXEC flag.
+
+-Steve
