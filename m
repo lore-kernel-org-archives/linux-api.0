@@ -1,51 +1,41 @@
-From: Christian Brauner <christian.brauner@ubuntu.com>
-Subject: Re: [PATCH v2 1/5] fs: Add support for an O_MAYEXEC flag on
- sys_open()
-Date: Fri, 6 Sep 2019 19:20:51 +0200
-Message-ID: <20190906172050.v44f43psd6qc6awi@wittgenstein>
-References: <20190906152455.22757-1-mic@digikod.net>
- <20190906152455.22757-2-mic@digikod.net>
- <87ef0te7v3.fsf@oldenburg2.str.redhat.com>
- <75442f3b-a3d8-12db-579a-2c5983426b4d@ssi.gouv.fr>
- <20190906170739.kk3opr2phidb7ilb@yavin.dot.cyphar.com>
+From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Subject: Re: [PATCH v3 bpf-next 2/3] bpf: implement CAP_BPF
+Date: Fri, 6 Sep 2019 10:22:51 -0700
+Message-ID: <CAADnVQ+D9JTgqMbx4mfX-9ShpLEdzKpxf1R4Sq9r5-bH+aADZg@mail.gmail.com>
+References: <20190904184335.360074-2-ast@kernel.org> <201909070002.v6gbdPOK%lkp@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20190906170739.kk3opr2phidb7ilb@yavin.dot.cyphar.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Aleksa Sarai <cyphar@cyphar.com>
-Cc: =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mickael.salaun@ssi.gouv.fr>, Florian Weimer <fweimer@redhat.com>, =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mic@digikod.net>, linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Al Viro <viro@zeniv.linux.org.uk>, Andy Lutomirski <luto@kernel.org>, Christian Heimes <christian@python.org>, Daniel Borkmann <daniel@iogearbox.net>, Eric Chiang <ericchiang@google.com>, James Morris <jmorris@namei.org>, Jan Kara <jack@suse.cz>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Matthew Garrett <mjg59@google.com>, Matthew Wilcox <willy@infradead.org>, Michael Kerrisk <mtk.manpages@gmail.com>, Mimi Zohar <zohar@linux.ibm.com>, Philippe
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <201909070002.v6gbdPOK%lkp@intel.com>
+Sender: netdev-owner@vger.kernel.org
+To: kbuild test robot <lkp@intel.com>
+Cc: Alexei Starovoitov <ast@kernel.org>, kbuild-all@01.org, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Peter Zijlstra <peterz@infradead.org>, Andy Lutomirski <luto@amacapital.net>, Network Development <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Kernel Team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Sep 07, 2019 at 03:07:39AM +1000, Aleksa Sarai wrote:
-> On 2019-09-06, Mickaël Salaün <mickael.salaun@ssi.gouv.fr> wrote:
-> > 
-> > On 06/09/2019 17:56, Florian Weimer wrote:
-> > > Let's assume I want to add support for this to the glibc dynamic loader,
-> > > while still being able to run on older kernels.
-> > >
-> > > Is it safe to try the open call first, with O_MAYEXEC, and if that fails
-> > > with EINVAL, try again without O_MAYEXEC?
-> > 
-> > The kernel ignore unknown open(2) flags, so yes, it is safe even for
-> > older kernel to use O_MAYEXEC.
-> 
-> Depends on your definition of "safe" -- a security feature that you will
-> silently not enable on older kernels doesn't sound super safe to me.
-> Unfortunately this is a limitation of open(2) that we cannot change --
-> which is why the openat2(2) proposal I've been posting gives -EINVAL for
-> unknown O_* flags.
-> 
-> There is a way to probe for support (though unpleasant), by creating a
-> test O_MAYEXEC fd and then checking if the flag is present in
-> /proc/self/fdinfo/$n.
+On Fri, Sep 6, 2019 at 9:21 AM kbuild test robot <lkp@intel.com> wrote:
+>
+> Hi Alexei,
+>
+> I love your patch! Perhaps something to improve:
+>
+> [auto build test WARNING on bpf-next/master]
+>
+> url:    https://github.com/0day-ci/linux/commits/Alexei-Starovoitov/capability-introduce-CAP_BPF-and-CAP_TRACING/20190906-215814
+> base:   https://kernel.googlesource.com/pub/scm/linux/kernel/git/bpf/bpf-next.git master
+> config: x86_64-allmodconfig (attached as .config)
+> compiler: gcc-7 (Debian 7.4.0-11) 7.4.0
+> reproduce:
+>         # save the attached .config to linux build tree
+>         make ARCH=x86_64
+>
+> If you fix the issue, kindly add following tag
+> Reported-by: kbuild test robot <lkp@intel.com>
+>
+> All warnings (new ones prefixed by >>):
+>
+>    kernel//bpf/syscall.c: In function 'bpf_prog_test_run':
+> >> kernel//bpf/syscall.c:2087:6: warning: the address of 'capable_bpf_net_admin' will always evaluate as 'true' [-Waddress]
+>      if (!capable_bpf_net_admin)
+>          ^
 
-Which Florian said they can't do for various reasons.
-
-It is a major painpoint if there's no easy way for userspace to probe
-for support. Especially if it's security related which usually means
-that you want to know whether this feature works or not.
-
-Christian
+argh. fixing and rebasing.
