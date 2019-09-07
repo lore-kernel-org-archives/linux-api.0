@@ -1,62 +1,67 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v12 11/12] open: openat2(2) syscall
-Date: Sat, 7 Sep 2019 11:15:09 -0700
-Message-ID: <EE7399FD-7587-407B-B628-1D92CFD6B120@amacapital.net>
-References: <20190904201933.10736-1-cyphar@cyphar.com> <20190904201933.10736-12-cyphar@cyphar.com> <7236f382d72130f2afbbe8940e72cc67e5c6dce0.camel@kernel.org> <CAHk-=whZx97Nm-gUK0ppofj2RA2LLz2vmaDUTKSSV-+yYB9q_Q@mail.gmail.com> <C81D6D29-F6BF-48E6-A15E-3ABCB2C992E5@amacapital.net> <CAHk-=whe90Ec_RRrMRLE0=bJOHNS9YmVwcytVxmrfK3oCuZF6A@mail.gmail.com>
-Mime-Version: 1.0 (1.0)
-Content-Type: text/plain;
-        charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=whe90Ec_RRrMRLE0=bJOHNS9YmVwcytVxmrfK3oCuZF6A@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Jeff Layton <jlayton@kernel.org>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Christian Brauner <christian@brauner.io>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH 2/2] ipc: fix sparc64 ipc() wrapper
+Date: Sat, 7 Sep 2019 21:49:53 +0200
+Message-ID: <CAK8P3a3KkH3MeU4H0SJmrs-jQ9ZA5HksG2uGDfe-=NTXh1UeHQ@mail.gmail.com>
+References: <20190905152155.1392871-1-arnd@arndb.de>
+ <20190905152155.1392871-2-arnd@arndb.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
+In-Reply-To: <20190905152155.1392871-2-arnd@arndb.de>
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+To: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Deepa Dinamani <deepa.kernel@gmail.com>, Christian Brauner <christian@brauner.io>, Manfred Spraul <manfred@colorfullife.com>, Davidlohr Bueso <dave@stgolabs.net>
+Cc: linux-arch <linux-arch@vger.kernel.org>, y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, "# 3.4.x" <stable@vger.kernel.org>, Dominik Brodowski <linux@dominikbrodowski.net>, sparclinux <sparclinux@vger.kernel.org>, Matt Turner <mattst88@gmail.com>, Anatolij Gustschin <agust@denx.de>
 List-Id: linux-api@vger.kernel.org
 
-
-> On Sep 7, 2019, at 10:45 AM, Linus Torvalds <torvalds@linux-foundation.org=
-> wrote:
->=20
->> On Sat, Sep 7, 2019 at 10:42 AM Andy Lutomirski <luto@amacapital.net> wro=
-te:
->>=20
->> Linus, you rejected resolveat() because you wanted a *nice* API
->=20
-> No. I rejected resoveat() because it was a completely broken garbage
-> API that couldn't do even basic stuff right (like O_CREAT).
->=20
-> We have a ton of flag space in the new openat2() model, we might as
-> well leave the old flags alone that people are (a) used to and (b) we
-> have code to support _anyway_.
->=20
-> Making up a new flag namespace is only going to cause us - and users -
-> more work, and more confusion. For no actual advantage. It's not going
-> to be "cleaner". It's just going to be worse.
->=20
->=20
-
-If we keep all the flag bits in the same mask with the same values, then we=E2=
-=80=99re stuck with O_RDONLY=3D0 and everything that implies.  We=E2=80=99ll=
- have UPGRADE_READ that works differently from the missing plain-old-READ bi=
-t, and we can=E2=80=99t express execute-only-no-read-or-write. This sucks.
-
-Can we at least split the permission bits into their own mask and make bits 0=
- and 1 illegal in the main set of flags in openat2?
-
-There=E2=80=99s another thread going on right now about adding a bit along t=
-he lines of =E2=80=9CMAYEXEC=E2=80=9D, and one of the conclusions was that i=
-t should wait for openat2 so that it can have same semantics. If we=E2=80=99=
-re stuck with O_RDONLY and friends, then MAYEXEC is doomed to being at least=
- a bit nonsensical.
-
-As an analogy, AMD64 introduced bigger PTEs but kept the same nonsense encod=
-ing of read and write permission. And then we got NX, and now we=E2=80=99re g=
-etting little holes in the encoding stolen by CET to mean new silly things. =
- I don=E2=80=99t know if you=E2=80=99ve been following the various rounds of=
- patches, but it is truly horrible. The mapping from meaning to the actual b=
-its is *shit*, and AMD64 should have made a clean break instead.
-
-open()=E2=80=99s permission bits are basically the same situation. And the k=
-ernel *already* has a non-type-safe translation layer. Please, please let op=
-enat2() at least get rid of the turd in open()=E2=80=99s bits 0 and 1.
+T24gVGh1LCBTZXAgNSwgMjAxOSBhdCA1OjI0IFBNIEFybmQgQmVyZ21hbm4gPGFybmRAYXJuZGIu
+ZGU+IHdyb3RlOgoKPiBkaWZmIC0tZ2l0IGEvYXJjaC9zcGFyYy9rZXJuZWwvc3lzX3NwYXJjXzY0
+LmMgYi9hcmNoL3NwYXJjL2tlcm5lbC9zeXNfc3BhcmNfNjQuYwo+IGluZGV4IGNjYzg4OTI2YmMw
+MC4uNWFkMDQ5NGRmMzY3IDEwMDY0NAo+IC0tLSBhL2FyY2gvc3BhcmMva2VybmVsL3N5c19zcGFy
+Y182NC5jCj4gKysrIGIvYXJjaC9zcGFyYy9rZXJuZWwvc3lzX3NwYXJjXzY0LmMKPiBAQCAtMzQw
+LDIxICszNDAsMjEgQEAgU1lTQ0FMTF9ERUZJTkU2KHNwYXJjX2lwYywgdW5zaWduZWQgaW50LCBj
+YWxsLCBpbnQsIGZpcnN0LCB1bnNpZ25lZCBsb25nLCBzZWNvbmQKPiAgICAgICAgIGlmIChjYWxs
+IDw9IFNFTVRJTUVET1ApIHsKPiAgICAgICAgICAgICAgICAgc3dpdGNoIChjYWxsKSB7Cj4gICAg
+ICAgICAgICAgICAgIGNhc2UgU0VNT1A6Cj4gLSAgICAgICAgICAgICAgICAgICAgICAgZXJyID0g
+c3lzX3NlbXRpbWVkb3AoZmlyc3QsIHB0ciwKPiAtICAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAodW5zaWduZWQgaW50KXNlY29uZCwgTlVMTCk7Cj4gKyAgICAgICAg
+ICAgICAgICAgICAgICAgZXJyID0ga3N5c19zZW10aW1lZG9wKGZpcnN0LCBwdHIsCj4gKyAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICh1bnNpZ25lZCBpbnQpc2Vj
+b25kLCBOVUxMKTsKPiAgICAgICAgICAgICAgICAgICAgICAgICBnb3RvIG91dDsKClRoZSB6ZXJv
+LWRheSBib3QgZm91bmQgYSBsaW5rIGVycm9yIGluIHNwYXJjNjQgYWxsbm9jb25maWc6CgogICBh
+cmNoL3NwYXJjL2tlcm5lbC9zeXNfc3BhcmNfNjQubzogSW4gZnVuY3Rpb24gYF9fc2Vfc3lzX3Nw
+YXJjX2lwYyc6Cj4+IHN5c19zcGFyY182NC5jOigudGV4dCsweDcyNCk6IHVuZGVmaW5lZCByZWZl
+cmVuY2UgdG8gYGtzeXNfc2VtdGltZWRvcCcKPj4gc3lzX3NwYXJjXzY0LmM6KC50ZXh0KzB4NzZj
+KTogdW5kZWZpbmVkIHJlZmVyZW5jZSB0byBga3N5c19vbGRfbXNnY3RsJwo+PiBzeXNfc3BhcmNf
+NjQuYzooLnRleHQrMHg3YTgpOiB1bmRlZmluZWQgcmVmZXJlbmNlIHRvIGBrc3lzX3NlbWdldCcK
+Pj4gc3lzX3NwYXJjXzY0LmM6KC50ZXh0KzB4N2M4KTogdW5kZWZpbmVkIHJlZmVyZW5jZSB0byBg
+a3N5c19vbGRfc2VtY3RsJwo+PiBzeXNfc3BhcmNfNjQuYzooLnRleHQrMHg3ZTQpOiB1bmRlZmlu
+ZWQgcmVmZXJlbmNlIHRvIGBrc3lzX21zZ3NuZCcKPj4gc3lzX3NwYXJjXzY0LmM6KC50ZXh0KzB4
+N2ZjKTogdW5kZWZpbmVkIHJlZmVyZW5jZSB0byBga3N5c19zaG1nZXQnCj4+IHN5c19zcGFyY182
+NC5jOigudGV4dCsweDgwOCk6IHVuZGVmaW5lZCByZWZlcmVuY2UgdG8gYGtzeXNfc2htZHQnCiAg
+IHN5c19zcGFyY182NC5jOigudGV4dCsweDgyOCk6IHVuZGVmaW5lZCByZWZlcmVuY2UgdG8gYGtz
+eXNfc2VtdGltZWRvcCcKPj4gc3lzX3NwYXJjXzY0LmM6KC50ZXh0KzB4ODQ0KTogdW5kZWZpbmVk
+IHJlZmVyZW5jZSB0byBga3N5c19vbGRfc2htY3RsJwo+PiBzeXNfc3BhcmNfNjQuYzooLnRleHQr
+MHg4NTgpOiB1bmRlZmluZWQgcmVmZXJlbmNlIHRvIGBrc3lzX21zZ2dldCcKPj4gc3lzX3NwYXJj
+XzY0LmM6KC50ZXh0KzB4ODZjKTogdW5kZWZpbmVkIHJlZmVyZW5jZSB0byBga3N5c19tc2dyY3Yn
+CgpJJ3ZlIGFkZGVkIHRoaXMgaHVuayB0byBteSBwYXRjaCBhbmQgcGxhbiB0byBzZW5kIGJvdGgg
+Zml4ZXMgdG8gTGludXMKaW4gdGhlIG5leHQgZmV3IGRheXMsIGFmdGVyIEkgZ2V0IGEgcG9zaXRp
+dmUgcmVwb3J0IGZyb20gdGhlIGJvdCBhcyB3ZWxsOgoKLS0tIGEvYXJjaC9zcGFyYy9rZXJuZWwv
+c3lzX3NwYXJjXzY0LmMKKysrIGIvYXJjaC9zcGFyYy9rZXJuZWwvc3lzX3NwYXJjXzY0LmMKQEAg
+LTMzNiw2ICszMzYsOSBAQCBTWVNDQUxMX0RFRklORTYoc3BhcmNfaXBjLCB1bnNpZ25lZCBpbnQs
+IGNhbGwsCmludCwgZmlyc3QsIHVuc2lnbmVkIGxvbmcsIHNlY29uZAogewogICAgICAgIGxvbmcg
+ZXJyOwoKKyAgICAgICBpZiAoIUlTX0VOQUJMRUQoQ09ORklHX1NZU1ZJUEMpKQorICAgICAgICAg
+ICAgICAgcmV0dXJuIC1FTk9TWVM7CisKICAgICAgICAvKiBObyBuZWVkIGZvciBiYWNrd2FyZCBj
+b21wYXRpYmlsaXR5LiBXZSBjYW4gc3RhcnQgZnJlc2guLi4gKi8KCiAgICAgICAgaWYgKGNhbGwg
+PD0gU0VNVElNRURPUCkgewogICAgICAgICAgICAgICAgc3dpdGNoIChjYWxsKSB7Cl9fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fClkyMDM4IG1haWxpbmcgbGlz
+dApZMjAzOEBsaXN0cy5saW5hcm8ub3JnCmh0dHBzOi8vbGlzdHMubGluYXJvLm9yZy9tYWlsbWFu
+L2xpc3RpbmZvL3kyMDM4Cg==
