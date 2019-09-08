@@ -1,67 +1,74 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH 2/2] ipc: fix sparc64 ipc() wrapper
-Date: Sat, 7 Sep 2019 21:49:53 +0200
-Message-ID: <CAK8P3a3KkH3MeU4H0SJmrs-jQ9ZA5HksG2uGDfe-=NTXh1UeHQ@mail.gmail.com>
-References: <20190905152155.1392871-1-arnd@arndb.de>
- <20190905152155.1392871-2-arnd@arndb.de>
+From: Aleksa Sarai <cyphar@cyphar.com>
+Subject: Re: [PATCH v12 11/12] open: openat2(2) syscall
+Date: Mon, 9 Sep 2019 02:24:19 +1000
+Message-ID: <20190908162419.yrzm2s7rflqgdxig@yavin>
+References: <20190904201933.10736-1-cyphar@cyphar.com>
+ <20190904201933.10736-12-cyphar@cyphar.com>
+ <7236f382d72130f2afbbe8940e72cc67e5c6dce0.camel@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <20190905152155.1392871-2-arnd@arndb.de>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, "David S. Miller" <davem@davemloft.net>, Arnd Bergmann <arnd@arndb.de>, "Eric W. Biederman" <ebiederm@xmission.com>, Deepa Dinamani <deepa.kernel@gmail.com>, Christian Brauner <christian@brauner.io>, Manfred Spraul <manfred@colorfullife.com>, Davidlohr Bueso <dave@stgolabs.net>
-Cc: linux-arch <linux-arch@vger.kernel.org>, y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, "# 3.4.x" <stable@vger.kernel.org>, Dominik Brodowski <linux@dominikbrodowski.net>, sparclinux <sparclinux@vger.kernel.org>, Matt Turner <mattst88@gmail.com>, Anatolij Gustschin <agust@denx.de>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="gzznbyzuni6ynbc5"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <7236f382d72130f2afbbe8940e72cc67e5c6dce0.camel@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Jeff Layton <jlayton@kernel.org>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Christian Brauner <christian@brauner.io>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Alexander
 List-Id: linux-api@vger.kernel.org
 
-T24gVGh1LCBTZXAgNSwgMjAxOSBhdCA1OjI0IFBNIEFybmQgQmVyZ21hbm4gPGFybmRAYXJuZGIu
-ZGU+IHdyb3RlOgoKPiBkaWZmIC0tZ2l0IGEvYXJjaC9zcGFyYy9rZXJuZWwvc3lzX3NwYXJjXzY0
-LmMgYi9hcmNoL3NwYXJjL2tlcm5lbC9zeXNfc3BhcmNfNjQuYwo+IGluZGV4IGNjYzg4OTI2YmMw
-MC4uNWFkMDQ5NGRmMzY3IDEwMDY0NAo+IC0tLSBhL2FyY2gvc3BhcmMva2VybmVsL3N5c19zcGFy
-Y182NC5jCj4gKysrIGIvYXJjaC9zcGFyYy9rZXJuZWwvc3lzX3NwYXJjXzY0LmMKPiBAQCAtMzQw
-LDIxICszNDAsMjEgQEAgU1lTQ0FMTF9ERUZJTkU2KHNwYXJjX2lwYywgdW5zaWduZWQgaW50LCBj
-YWxsLCBpbnQsIGZpcnN0LCB1bnNpZ25lZCBsb25nLCBzZWNvbmQKPiAgICAgICAgIGlmIChjYWxs
-IDw9IFNFTVRJTUVET1ApIHsKPiAgICAgICAgICAgICAgICAgc3dpdGNoIChjYWxsKSB7Cj4gICAg
-ICAgICAgICAgICAgIGNhc2UgU0VNT1A6Cj4gLSAgICAgICAgICAgICAgICAgICAgICAgZXJyID0g
-c3lzX3NlbXRpbWVkb3AoZmlyc3QsIHB0ciwKPiAtICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAodW5zaWduZWQgaW50KXNlY29uZCwgTlVMTCk7Cj4gKyAgICAgICAg
-ICAgICAgICAgICAgICAgZXJyID0ga3N5c19zZW10aW1lZG9wKGZpcnN0LCBwdHIsCj4gKyAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICh1bnNpZ25lZCBpbnQpc2Vj
-b25kLCBOVUxMKTsKPiAgICAgICAgICAgICAgICAgICAgICAgICBnb3RvIG91dDsKClRoZSB6ZXJv
-LWRheSBib3QgZm91bmQgYSBsaW5rIGVycm9yIGluIHNwYXJjNjQgYWxsbm9jb25maWc6CgogICBh
-cmNoL3NwYXJjL2tlcm5lbC9zeXNfc3BhcmNfNjQubzogSW4gZnVuY3Rpb24gYF9fc2Vfc3lzX3Nw
-YXJjX2lwYyc6Cj4+IHN5c19zcGFyY182NC5jOigudGV4dCsweDcyNCk6IHVuZGVmaW5lZCByZWZl
-cmVuY2UgdG8gYGtzeXNfc2VtdGltZWRvcCcKPj4gc3lzX3NwYXJjXzY0LmM6KC50ZXh0KzB4NzZj
-KTogdW5kZWZpbmVkIHJlZmVyZW5jZSB0byBga3N5c19vbGRfbXNnY3RsJwo+PiBzeXNfc3BhcmNf
-NjQuYzooLnRleHQrMHg3YTgpOiB1bmRlZmluZWQgcmVmZXJlbmNlIHRvIGBrc3lzX3NlbWdldCcK
-Pj4gc3lzX3NwYXJjXzY0LmM6KC50ZXh0KzB4N2M4KTogdW5kZWZpbmVkIHJlZmVyZW5jZSB0byBg
-a3N5c19vbGRfc2VtY3RsJwo+PiBzeXNfc3BhcmNfNjQuYzooLnRleHQrMHg3ZTQpOiB1bmRlZmlu
-ZWQgcmVmZXJlbmNlIHRvIGBrc3lzX21zZ3NuZCcKPj4gc3lzX3NwYXJjXzY0LmM6KC50ZXh0KzB4
-N2ZjKTogdW5kZWZpbmVkIHJlZmVyZW5jZSB0byBga3N5c19zaG1nZXQnCj4+IHN5c19zcGFyY182
-NC5jOigudGV4dCsweDgwOCk6IHVuZGVmaW5lZCByZWZlcmVuY2UgdG8gYGtzeXNfc2htZHQnCiAg
-IHN5c19zcGFyY182NC5jOigudGV4dCsweDgyOCk6IHVuZGVmaW5lZCByZWZlcmVuY2UgdG8gYGtz
-eXNfc2VtdGltZWRvcCcKPj4gc3lzX3NwYXJjXzY0LmM6KC50ZXh0KzB4ODQ0KTogdW5kZWZpbmVk
-IHJlZmVyZW5jZSB0byBga3N5c19vbGRfc2htY3RsJwo+PiBzeXNfc3BhcmNfNjQuYzooLnRleHQr
-MHg4NTgpOiB1bmRlZmluZWQgcmVmZXJlbmNlIHRvIGBrc3lzX21zZ2dldCcKPj4gc3lzX3NwYXJj
-XzY0LmM6KC50ZXh0KzB4ODZjKTogdW5kZWZpbmVkIHJlZmVyZW5jZSB0byBga3N5c19tc2dyY3Yn
-CgpJJ3ZlIGFkZGVkIHRoaXMgaHVuayB0byBteSBwYXRjaCBhbmQgcGxhbiB0byBzZW5kIGJvdGgg
-Zml4ZXMgdG8gTGludXMKaW4gdGhlIG5leHQgZmV3IGRheXMsIGFmdGVyIEkgZ2V0IGEgcG9zaXRp
-dmUgcmVwb3J0IGZyb20gdGhlIGJvdCBhcyB3ZWxsOgoKLS0tIGEvYXJjaC9zcGFyYy9rZXJuZWwv
-c3lzX3NwYXJjXzY0LmMKKysrIGIvYXJjaC9zcGFyYy9rZXJuZWwvc3lzX3NwYXJjXzY0LmMKQEAg
-LTMzNiw2ICszMzYsOSBAQCBTWVNDQUxMX0RFRklORTYoc3BhcmNfaXBjLCB1bnNpZ25lZCBpbnQs
-IGNhbGwsCmludCwgZmlyc3QsIHVuc2lnbmVkIGxvbmcsIHNlY29uZAogewogICAgICAgIGxvbmcg
-ZXJyOwoKKyAgICAgICBpZiAoIUlTX0VOQUJMRUQoQ09ORklHX1NZU1ZJUEMpKQorICAgICAgICAg
-ICAgICAgcmV0dXJuIC1FTk9TWVM7CisKICAgICAgICAvKiBObyBuZWVkIGZvciBiYWNrd2FyZCBj
-b21wYXRpYmlsaXR5LiBXZSBjYW4gc3RhcnQgZnJlc2guLi4gKi8KCiAgICAgICAgaWYgKGNhbGwg
-PD0gU0VNVElNRURPUCkgewogICAgICAgICAgICAgICAgc3dpdGNoIChjYWxsKSB7Cl9fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fClkyMDM4IG1haWxpbmcgbGlz
-dApZMjAzOEBsaXN0cy5saW5hcm8ub3JnCmh0dHBzOi8vbGlzdHMubGluYXJvLm9yZy9tYWlsbWFu
-L2xpc3RpbmZvL3kyMDM4Cg==
+
+--gzznbyzuni6ynbc5
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+On 2019-09-07, Jeff Layton <jlayton@kernel.org> wrote:
+> On Thu, 2019-09-05 at 06:19 +1000, Aleksa Sarai wrote:
+> > + * @flags: O_* flags.
+> > + * @mode: O_CREAT/O_TMPFILE file mode.
+> > + * @upgrade_mask: UPGRADE_* flags (to restrict O_PATH re-opening).
+> > + * @resolve: RESOLVE_* flags.
+> > + */
+> > +struct open_how {
+> > +	__u32 flags;
+> > +	union {
+> > +		__u16 mode;
+> > +		__u16 upgrade_mask;
+> > +	};
+> > +	__u16 resolve;
+> > +};
+> > +
+> > +#define OPEN_HOW_SIZE_VER0	8 /* sizeof first published struct */
+> > +
+>=20
+> Hmm, there is no version field. When you want to expand this in the
+> future, what is the plan? Add a new flag to indicate that it's some
+> length?
+
+The "version number" is the size of the struct. Any extensions we make
+are appended to the struct (openat2 now takes a size_t argument), and
+the new copy_struct_{to,from}_user() helpers handle all of the
+permutations of {old,new} kernel and {old,new} user space.
+
+This is how clone3(), sched_[gs]etattr() and perf_event_open() all
+operate (all of the sigset syscalls operate similarly but don't
+gracefully handle different kernel vintages -- you just get -EINVAL).
+
+--=20
+Aleksa Sarai
+Senior Software Engineer (Containers)
+SUSE Linux GmbH
+<https://www.cyphar.com/>
+
+--gzznbyzuni6ynbc5
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXXUrMAAKCRCdlLljIbnQ
+EgC+AQCVKXVqUiPLaSjLjt+ByWrSsopM/OM3NwCHHZ5oD+CB1gD/cSuQohVmXskg
+v8dQLpd9K1QW//8GG3Aa/FRHhqPAfAU=
+=G4Hw
+-----END PGP SIGNATURE-----
+
+--gzznbyzuni6ynbc5--
