@@ -1,117 +1,66 @@
 From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH v4 bpf-next 1/4] capability: introduce CAP_BPF and CAP_TRACING
-Date: Mon, 9 Sep 2019 15:52:27 -0700
-Message-ID: <CALCETrVCimrLCzdZ2Jgb-AFd-Ptjd+MmyD-XW=baSt6uOOTtEg@mail.gmail.com>
-References: <20190906231053.1276792-1-ast@kernel.org> <20190906231053.1276792-2-ast@kernel.org>
+Subject: Re: [PATCH 0/7] Rework random blocking
+Date: Mon, 9 Sep 2019 15:57:46 -0700
+Message-ID: <CALCETrXfDSjgNieM3Q9bVH-7gAePXT=SXWxvzOsyb8xp_2ymQA@mail.gmail.com>
+References: <cover.1567126741.git.luto@kernel.org> <20190909094230.GB27626@amd>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20190906231053.1276792-2-ast@kernel.org>
-Sender: netdev-owner@vger.kernel.org
-To: Alexei Starovoitov <ast@kernel.org>, James Morris <jmorris@namei.org>, LSM List <linux-security-module@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Steven Rostedt <rostedt@goodmis.org>
-Cc: "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Peter Zijlstra <peterz@infradead.org>, Network Development <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190909094230.GB27626@amd>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Pavel Machek <pavel@ucw.cz>
+Cc: Andy Lutomirski <luto@kernel.org>, Theodore Tso <tytso@google.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, "Jason A. Donenfeld" <Jason@zx2c4.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 6, 2019 at 4:10 PM Alexei Starovoitov <ast@kernel.org> wrote:
+On Mon, Sep 9, 2019 at 2:42 AM Pavel Machek <pavel@ucw.cz> wrote:
 >
-> Split BPF and perf/tracing operations that are allowed under
-> CAP_SYS_ADMIN into corresponding CAP_BPF and CAP_TRACING.
-> For backward compatibility include them in CAP_SYS_ADMIN as well.
+> On Thu 2019-08-29 18:11:35, Andy Lutomirski wrote:
+> > This makes two major semantic changes to Linux's random APIs:
+> >
+> > It adds getentropy(..., GRND_INSECURE).  This causes getentropy to
+> > always return *something*.  There is no guarantee whatsoever that
+> > the result will be cryptographically random or even unique, but the
+> > kernel will give the best quality random output it can.  The name is
+> > a big hint: the resulting output is INSECURE.
+> >
+> > The purpose of this is to allow programs that genuinely want
+> > best-effort entropy to get it without resorting to /dev/urandom.
+> > Plenty of programs do this because they need to do *something*
+> > during boot and they can't afford to wait.  Calling it "INSECURE" is
+> > probably the best we can do to discourage using this API for things
+> > that need security.
+> >
+> > This series also removes the blocking pool and makes /dev/random
+> > work just like getentropy(..., 0) and makes GRND_RANDOM a no-op.  I
+> > believe that Linux's blocking pool has outlived its usefulness.
+> > Linux's CRNG generates output that is good enough to use even for
+> > key generation.  The blocking pool is not stronger in any material
+> > way, and keeping it around requires a lot of infrastructure of
+> > dubious value.
 >
-> The end result provides simple safety model for applications that use BPF:
-> - for tracing program types
->   BPF_PROG_TYPE_{KPROBE, TRACEPOINT, PERF_EVENT, RAW_TRACEPOINT, etc}
->   use CAP_BPF and CAP_TRACING
-> - for networking program types
->   BPF_PROG_TYPE_{SCHED_CLS, XDP, CGROUP_SKB, SK_SKB, etc}
->   use CAP_BPF and CAP_NET_ADMIN
->
-> There are few exceptions from this simple rule:
-> - bpf_trace_printk() is allowed in networking programs, but it's using
->   ftrace mechanism, hence this helper needs additional CAP_TRACING.
-> - cpumap is used by XDP programs. Currently it's kept under CAP_SYS_ADMIN,
->   but could be relaxed to CAP_NET_ADMIN in the future.
-> - BPF_F_ZERO_SEED flag for hash/lru map is allowed under CAP_SYS_ADMIN only
->   to discourage production use.
-> - BPF HW offload is allowed under CAP_SYS_ADMIN.
-> - cg_sysctl, cg_device, lirc program types are neither networking nor tracing.
->   They can be loaded under CAP_BPF, but attach is allowed under CAP_NET_ADMIN.
->   This will be cleaned up in the future.
->
-> userid=nobody + (CAP_TRACING | CAP_NET_ADMIN) + CAP_BPF is safer than
-> typical setup with userid=root and sudo by existing bpf applications.
-> It's not secure, since these capabilities:
-> - allow bpf progs access arbitrary memory
-> - let tasks access any bpf map
-> - let tasks attach/detach any bpf prog
->
-> bpftool, bpftrace, bcc tools binaries should not be installed with
-> cap_bpf+cap_tracing, since unpriv users will be able to read kernel secrets.
->
-> CAP_BPF, CAP_NET_ADMIN, CAP_TRACING are roughly equal in terms of
-> damage they can make to the system.
-> Example:
-> CAP_NET_ADMIN can stop network traffic. CAP_BPF can write into map
-> and if that map is used by firewall-like bpf prog the network traffic
-> may stop.
-> CAP_BPF allows many bpf prog_load commands in parallel. The verifier
-> may consume large amount of memory and significantly slow down the system.
-> CAP_TRACING allows many kprobes that can slow down the system.
+> Could you give some more justification? If crng is good enough for
+> you, you can use /dev/urandom...
 
-Do we want to split CAP_TRACE_KERNEL and CAP_TRACE_USER?  It's not
-entirely clear to me that it's useful.
+Take a look at the diffstat.  The random code is extremely security
+sensitive, and it's made considerably more complicated by the need to
+support the blocking semantics for /dev/random.  My primary argument
+is that there is no real reason for the kernel to continue to support
+it.
 
 >
-> In the future more fine-grained bpf permissions may be added.
 >
-> Existing unprivileged BPF operations are not affected.
-> In particular unprivileged users are allowed to load socket_filter and cg_skb
-> program types and to create array, hash, prog_array, map-in-map map types.
+> are
 >
-> Signed-off-by: Alexei Starovoitov <ast@kernel.org>
-> ---
->  include/linux/capability.h          | 18 +++++++++++
->  include/uapi/linux/capability.h     | 49 ++++++++++++++++++++++++++++-
->  security/selinux/include/classmap.h |  4 +--
->  3 files changed, 68 insertions(+), 3 deletions(-)
+> > This series should not break any existing programs.  /dev/urandom is
+> > unchanged.  /dev/random will still block just after booting, but it
+> > will block less than it used to.  getentropy() with existing flags
+> > will return output that is, for practical purposes, just as strong
+> > as before.
 >
-> diff --git a/include/linux/capability.h b/include/linux/capability.h
-> index ecce0f43c73a..13eb49c75797 100644
-> --- a/include/linux/capability.h
-> +++ b/include/linux/capability.h
-> @@ -247,6 +247,24 @@ static inline bool ns_capable_setid(struct user_namespace *ns, int cap)
->         return true;
->  }
->  #endif /* CONFIG_MULTIUSER */
-> +
-> +static inline bool capable_bpf(void)
-> +{
-> +       return capable(CAP_SYS_ADMIN) || capable(CAP_BPF);
-> +}
-> +static inline bool capable_tracing(void)
-> +{
-> +       return capable(CAP_SYS_ADMIN) || capable(CAP_TRACING);
-> +}
-> +static inline bool capable_bpf_tracing(void)
-> +{
-> +       return capable(CAP_SYS_ADMIN) || (capable(CAP_BPF) && capable(CAP_TRACING));
-> +}
-> +static inline bool capable_bpf_net_admin(void)
-> +{
-> +       return (capable(CAP_SYS_ADMIN) || capable(CAP_BPF)) && capable(CAP_NET_ADMIN);
-> +}
-> +
+> So what is the exact semantic of /dev/random after your change?
 
-These helpers are all wrong, unfortunately, since they will produce
-inappropriate audit events.  capable_bpf() should look more like this:
+Reads return immediately if the CRNG is initialized, i.e reads return
+immediately if and only if getentropy(..., 0) would succeed.
+Otherwise reads block.
 
-if (capable_noaudit(CAP_BPF))
-  return capable(CAP_BPF);
-if (capable_noaudit(CAP_SYS_ADMIN))
-  return capable(CAP_SYS_ADMIN);
-
-return capable(CAP_BPF);
-
-James, etc: should there instead be new helpers to do this more
-generically rather than going through the noaudit contortions?  My
-code above is horrible.
+--Andy
