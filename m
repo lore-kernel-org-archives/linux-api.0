@@ -1,10 +1,9 @@
 From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mickael.salaun@ssi.gouv.fr>
 Subject: Re: [PATCH v2 1/5] fs: Add support for an O_MAYEXEC flag on
  sys_open()
-Date: Mon, 9 Sep 2019 14:28:57 +0200
-Message-ID: <fa592f31-3fbf-d0da-d31a-d14a89488219@ssi.gouv.fr>
-References: <20190906152455.22757-1-mic@digikod.net>
- <20190906152455.22757-2-mic@digikod.net>
+Date: Mon, 9 Sep 2019 14:33:51 +0200
+Message-ID: <045db737-107f-d06a-04ea-fdd0758de062@ssi.gouv.fr>
+References: <20190906152455.22757-2-mic@digikod.net>
  <87ef0te7v3.fsf@oldenburg2.str.redhat.com>
  <75442f3b-a3d8-12db-579a-2c5983426b4d@ssi.gouv.fr>
  <f53ec45fd253e96d1c8d0ea6f9cca7f68afa51e3.camel@kernel.org>
@@ -12,12 +11,14 @@ References: <20190906152455.22757-1-mic@digikod.net>
  <5a59b309f9d0603d8481a483e16b5d12ecb77540.camel@kernel.org>
  <alpine.LRH.2.21.1909061202070.18660@namei.org>
  <49e98ece-e85f-3006-159b-2e04ba67019e@ssi.gouv.fr>
- <20190909115437.jwpyslcdhhvzo7g5@yavin>
+ <alpine.LRH.2.21.1909090309260.27895@namei.org>
+ <073cb831-7c6b-1882-9b7d-eb810a2ef955@ssi.gouv.fr>
+ <20190909122802.imfx6wp4zeroktuz@yavin>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190909115437.jwpyslcdhhvzo7g5@yavin>
+In-Reply-To: <20190909122802.imfx6wp4zeroktuz@yavin>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 To: Aleksa Sarai <cyphar@cyphar.com>
@@ -25,96 +26,59 @@ Cc: James Morris <jmorris@namei.org>, Jeff Layton <jlayton@kernel.org>, Florian 
 List-Id: linux-api@vger.kernel.org
 
 
-On 09/09/2019 13:54, Aleksa Sarai wrote:
+On 09/09/2019 14:28, Aleksa Sarai wrote:
 > On 2019-09-09, Micka=EBl Sala=FCn <mickael.salaun@ssi.gouv.fr> wrote:
->> On 06/09/2019 21:03, James Morris wrote:
->>> On Fri, 6 Sep 2019, Jeff Layton wrote:
+>> On 09/09/2019 12:12, James Morris wrote:
+>>> On Mon, 9 Sep 2019, Micka=EBl Sala=FCn wrote:
+>>>> As I said, O_MAYEXEC should be ignored if it is not supported by the
+>>>> kernel, which perfectly fit with the current open(2) flags behavior, a=
+nd
+>>>> should also behave the same with openat2(2).
 >>>
->>>> The fact that open and openat didn't vet unknown flags is really a bug=
-.
->>>>
->>>> Too late to fix it now, of course, and as Aleksa points out, we've
->>>> worked around that in the past. Now though, we have a new openat2
->>>> syscall on the horizon. There's little need to continue these sorts of
->>>> hacks.
->>>>
->>>> New open flags really have no place in the old syscalls, IMO.
->>>
->>> Agree here. It's unfortunate but a reality and Linus will reject any su=
-ch
->>> changes which break existing userspace.
+>>> The problem here is programs which are already using the value of
+>>> O_MAYEXEC, which will break.  Hence, openat2(2).
 >>
->> Do you mean that adding new flags to open(2) is not possible?
+>> Well, it still depends on the sysctl, which doesn't enforce anything by
+>> default, hence doesn't break existing behavior, and this unused flags
+>> could be fixed/removed or reported by sysadmins or distro developers.
 >
-> It is possible, as long as there is no case where a program that works
-> today (and passes garbage to the unused bits in flags) works with the
-> change.
+> Okay, but then this means that new programs which really want to enforce
+> O_MAYEXEC (and know that they really do want this feature) won't be able
+> to unless an admin has set the relevant sysctl. Not to mention that the
+> old-kernel fallback will not cover the "it's disabled by the sysctl"
+> case -- so the fallback handling would need to be:
 >
-> O_TMPFILE was okay because it's actually two flags (one is O_DIRECTORY)
-> and no working program does file IO to a directory (there are also some
-> other tricky things done there, I'll admit I don't fully understand it).
+>     int fd =3D open("foo", O_MAYEXEC|O_RDONLY);
+>     if (!(fcntl(fd, F_GETFL) & O_MAYEXEC))
+>         fallback();
+>     if (!sysctl_feature_is_enabled)
+>         fallback();
 >
-> O_EMPTYPATH works because it's a no-op with non-empty path strings, and
-> empty path strings have always given an error (so no working program
-> does it today).
->
-> However, O_MAYEXEC will result in programs that pass garbage bits to
-> potentially get -EACCES that worked previously.
->
->> As I said, O_MAYEXEC should be ignored if it is not supported by the
->> kernel, which perfectly fit with the current open(2) flags behavior, and
->> should also behave the same with openat2(2).
->
-> NACK on having that behaviour with openat2(2). -EINVAL on unknown flags
-> is how all other syscalls work (any new syscall proposed today that
-> didn't do that would be rightly rejected), and is a quirk of open(2)
-> which unfortunately cannot be fixed. The fact that *every new O_ flag
-> needs to work around this problem* should be an indication that this
-> interface mis-design should not be allowed to infect any more syscalls.
+> However, there is still a race here -- if an administrator enables
+> O_MAYEXEC after the program gets the fd, then you still won't hit the
+> fallback (and you can't tell that O_MAYEXEC checks weren't done).
 
-It's definitely OK (and a sane interface) to always return -EINVAL for
-unknown flags with openat2(2) (and other new syscalls). With openat2(2),
-userland need to handle the case where some flags may be unknown to the
-kernel (and handling the fact that this syscall may be unknown too). So
-there is not an issue with openat2(2).
-
-However, *userland* should not try to infer possible security
-restrictions from the O_MAYEXEC flag (then, my use of "ignore" above),
-which may return -EACCES or not, according to the current running system
-security policy.
-
-Following this reasoning, the current behavior or open(2) is fine for
-O_MAYEXEC. The openat2(2) strict flag handling (i.e. -EINVAL) is fine
-too for O_MAYEXEC.
+I just replied to this concern here:
+https://lore.kernel.org/lkml/70e4244e-4dfb-6e67-416b-445e383aa1b5@ssi.gouv.=
+fr/
 
 >
-> Note that this point is regardless of the fact that O_MAYEXEC is a
-> *security* flag -- if userspace wants to have a secure fallback on
-> old kernels (which is "the right thing" to do) they would have to do
-> more work than necessary. And programs that don't care don't have to do
-> anything special.
+> You could fix the issue with the sysctl by clearing O_MAYEXEC from
+> f_flags if the sysctl is disabled. You could also avoid some of the
+> problems with it being a global setting by making it a prctl(2) which
+> processes can opt-in to (though this has its own major problems).
 
-Most of the time this reasoning is good for most security stuff.
-However, the O_MAYEXEC flag is not a security feature on its own, it is
-an indication to the kernel to how this file would be used by userland.
-The *kernel* security policy may tell back to userland if the system
-security policy allow it or not. Most of the time, Policy Decision
-Points (PDP) and Policy Enforcement Points (PEP) are in the same
-software component (e.g. the kernel). Here the kernel is the PDP and
-userland interpreters are PDP. Obviously, it means that these
-interpreters must be (sub)part of your TCB (thanks to other security
-features).
+Security definition and enforcement should be manageable by sysadmins
+and distro developers.
 
 >
-> However with -EINVAL, the programs doing "the right thing" get an easy
-> -EINVAL check. And programs that don't care can just un-set O_MAYEXEC
-> and retry. You should be forced to deal with the case where a flag is
-> not supported -- and this is doubly true of security flags!
+> Sorry, but I'm just really not a fan of this.
 
-I'm in favor of doing this for openat2(2) with O_MAYEXEC, but it is not
-because of the "security purposes" of this flag, as I said above, it is
-because it is a saner ABI that every syscall should follow. But again,
-it doesn't change my point about open(2). :)
+I guess there is some misunderstanding. I just replied to another thread
+and I think it should answer your concerns (especially about the PDP and
+PEP):
+https://lore.kernel.org/lkml/70e4244e-4dfb-6e67-416b-445e383aa1b5@ssi.gouv.=
+fr/
 
 
 --
