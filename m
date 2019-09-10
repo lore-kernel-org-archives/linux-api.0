@@ -1,46 +1,27 @@
-From: Matthew Garrett <matthewgarrett@google.com>
-Subject: [PATCH 1/2] security: constify some arrays in lockdown LSM
-Date: Tue, 10 Sep 2019 03:03:17 -0700
-Message-ID: <20190910100318.204420-2-matthewgarrett@google.com>
-References: <20190910100318.204420-1-matthewgarrett@google.com>
+From: Matthew Garrett <mjg59@google.com>
+Subject: Re: [PATCH V40 03/29] security: Add a static lockdown policy LSM
+Date: Tue, 10 Sep 2019 06:06:17 -0400
+Message-ID: <CACdnJuvfJ-L-3a5PVL+fWi6XwKb7EBONG8jEwbR=uHkA3wcxOQ@mail.gmail.com>
+References: <20190820001805.241928-1-matthewgarrett@google.com>
+ <20190820001805.241928-4-matthewgarrett@google.com> <3440.1567182506@warthog.procyon.org.uk>
+ <CACdnJuvR7mqhpzEQZdgw9EE_PsM-QWQ_JmwFLcoeLbAuKCHnOA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190910100318.204420-1-matthewgarrett@google.com>
+In-Reply-To: <CACdnJuvR7mqhpzEQZdgw9EE_PsM-QWQ_JmwFLcoeLbAuKCHnOA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: jmorris@namei.org
-Cc: linux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Matthew Garrett <matthewgarrett@google.com>, Matthew Garrett <mjg59@google.com>, David Howells <dhowells@redhat.com>
+To: David Howells <dhowells@redhat.com>
+Cc: James Morris <jmorris@namei.org>, LSM List <linux-security-module@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-No reason for these not to be const.
+On Wed, Sep 4, 2019 at 12:51 PM Matthew Garrett <mjg59@google.com> wrote:
+> On Fri, Aug 30, 2019 at 9:28 AM David Howells <dhowells@redhat.com> wrote:
+> > > +static int lock_kernel_down(const char *where, enum lockdown_reason level)
+> >
+> > Is the last parameter the reason or the level?  You're mixing the terms.
+>
+> Fair.
 
-Signed-off-by: Matthew Garrett <mjg59@google.com>
-Suggested-by: David Howells <dhowells@redhat.com>
----
- security/lockdown/lockdown.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/security/lockdown/lockdown.c b/security/lockdown/lockdown.c
-index 0068cec77c05..8a10b43daf74 100644
---- a/security/lockdown/lockdown.c
-+++ b/security/lockdown/lockdown.c
-@@ -16,7 +16,7 @@
- 
- static enum lockdown_reason kernel_locked_down;
- 
--static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
-+static const char *const lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
- 	[LOCKDOWN_NONE] = "none",
- 	[LOCKDOWN_MODULE_SIGNATURE] = "unsigned module loading",
- 	[LOCKDOWN_DEV_MEM] = "/dev/mem,kmem,port",
-@@ -40,7 +40,7 @@ static char *lockdown_reasons[LOCKDOWN_CONFIDENTIALITY_MAX+1] = {
- 	[LOCKDOWN_CONFIDENTIALITY_MAX] = "confidentiality",
- };
- 
--static enum lockdown_reason lockdown_levels[] = {LOCKDOWN_NONE,
-+static const enum lockdown_reason lockdown_levels[] = {LOCKDOWN_NONE,
- 						 LOCKDOWN_INTEGRITY_MAX,
- 						 LOCKDOWN_CONFIDENTIALITY_MAX};
- 
--- 
-2.23.0.162.g0b9fbb3734-goog
+Actually, on re-reading, I think this correct - this is setting the
+lockdown level, it's just that the lockdown level is an enum
+lockdown_reason for the sake of convenience.
