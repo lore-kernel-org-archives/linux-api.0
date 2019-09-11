@@ -1,57 +1,41 @@
-From: Guenter Roeck <linux@roeck-us.net>
-Subject: Re: [PATCH v6 1/3] Documentation: fpga: dfl: add descriptions for
- thermal/power management interfaces
-Date: Tue, 10 Sep 2019 12:29:17 -0700
-Message-ID: <20190910192917.GA1566@roeck-us.net>
-References: <1568094640-4920-1-git-send-email-hao.wu@intel.com>
- <1568094640-4920-2-git-send-email-hao.wu@intel.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH 1/4] rseq: Fix: Reject unknown flags on rseq unregister
+Date: Tue, 10 Sep 2019 20:27:41 -0400
+Message-ID: <20190911002744.8690-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1568094640-4920-2-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Wu Hao <hao.wu@intel.com>
-Cc: mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-hwmon@vger.kernel.org, jdelvare@suse.com, gregkh@linuxfoundation.org, Xu Yilun <yilun.xu@intel.com>
+To: Thomas Gleixner <tglx@linutronix.de>, Peter Zijlstra <peterz@infradead.org>, Paul Turner <pjt@google.com>
+Cc: linux-kernel@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, "Paul E. McKenney" <paulmck@linux.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, "H . Peter Anvin" <hpa@zytor.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Sep 10, 2019 at 01:50:38PM +0800, Wu Hao wrote:
-> From: Xu Yilun <yilun.xu@intel.com>
-> 
-> This patch add introductions to thermal/power interfaces. They are
-> implemented as hwmon sysfs interfaces by thermal/power private
-> feature drivers.
-> 
-> Signed-off-by: Xu Yilun <yilun.xu@intel.com>
-> Signed-off-by: Wu Hao <hao.wu@intel.com>
+It is preferrable to reject unknown flags within rseq unregistration
+rather than to ignore them. It is an oversight caused by the fact that
+the check for unknown flags is after the rseq unregister flag check.
 
-Acked-by: Guenter Roeck <linux@roeck-us.net>
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Peter Zijlstra (Intel) <peterz@infradead.org>
+Cc: "Paul E. McKenney" <paulmck@linux.ibm.com>
+Cc: Boqun Feng <boqun.feng@gmail.com>
+Cc: "H . Peter Anvin" <hpa@zytor.com>
+Cc: Paul Turner <pjt@google.com>
+Cc: linux-api@vger.kernel.org
+---
+ kernel/rseq.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-> ---
->  Documentation/fpga/dfl.rst | 10 ++++++++++
->  1 file changed, 10 insertions(+)
-> 
-> diff --git a/Documentation/fpga/dfl.rst b/Documentation/fpga/dfl.rst
-> index 6fa483f..094fc8a 100644
-> --- a/Documentation/fpga/dfl.rst
-> +++ b/Documentation/fpga/dfl.rst
-> @@ -108,6 +108,16 @@ More functions are exposed through sysfs
->       error reporting sysfs interfaces allow user to read errors detected by the
->       hardware, and clear the logged errors.
->  
-> + Power management (dfl_fme_power hwmon)
-> +     power management hwmon sysfs interfaces allow user to read power management
-> +     information (power consumption, thresholds, threshold status, limits, etc.)
-> +     and configure power thresholds for different throttling levels.
-> +
-> + Thermal management (dfl_fme_thermal hwmon)
-> +     thermal management hwmon sysfs interfaces allow user to read thermal
-> +     management information (current temperature, thresholds, threshold status,
-> +     etc.).
-> +
->  
->  FIU - PORT
->  ==========
-> -- 
-> 1.8.3.1
-> 
+diff --git a/kernel/rseq.c b/kernel/rseq.c
+index 27c48eb7de40..a4f86a9d6937 100644
+--- a/kernel/rseq.c
++++ b/kernel/rseq.c
+@@ -310,6 +310,8 @@ SYSCALL_DEFINE4(rseq, struct rseq __user *, rseq, u32, rseq_len,
+ 	int ret;
+ 
+ 	if (flags & RSEQ_FLAG_UNREGISTER) {
++		if (flags & ~RSEQ_FLAG_UNREGISTER)
++			return -EINVAL;
+ 		/* Unregister rseq for current thread. */
+ 		if (current->rseq != rseq || !current->rseq)
+ 			return -EINVAL;
+-- 
+2.17.1
