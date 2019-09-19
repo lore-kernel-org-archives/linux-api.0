@@ -1,7 +1,7 @@
 From: Omar Sandoval <osandov@osandov.com>
-Subject: [RFC PATCH 1/3] fs: pass READ/WRITE to kiocb_set_rw_flags()
-Date: Wed, 18 Sep 2019 23:53:44 -0700
-Message-ID: <d23a40f0ad3fa0631fe6189b94811be473e7cc4a.1568875700.git.osandov@fb.com>
+Subject: [RFC PATCH 3/3] btrfs: implement encoded (compressed) writes
+Date: Wed, 18 Sep 2019 23:53:47 -0700
+Message-ID: <17fd5172adea93180afc8066cc8dfc37d827637f.1568875700.git.osandov@fb.com>
 References: <cover.1568875700.git.osandov@fb.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -9,151 +9,392 @@ Return-path: <linux-btrfs-owner@vger.kernel.org>
 In-Reply-To: <cover.1568875700.git.osandov@fb.com>
 Sender: linux-btrfs-owner@vger.kernel.org
 To: linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org
-Cc: Dave Chinner <david@fromorbit.com>, linux-api@vger.kernel.org, kernel-team@fb.com, Jan Kara <jack@suse.cz>, Jens Axboe <axboe@kernel.dk>
+Cc: Dave Chinner <david@fromorbit.com>, linux-api@vger.kernel.org, kernel-team@fb.com
 List-Id: linux-api@vger.kernel.org
 
 From: Omar Sandoval <osandov@fb.com>
 
-A following change will want to check whether an IO is a read or write
-in kiocb_set_rw_flags(). Additionally, aio and io_uring currently set
-the IOCB_WRITE flag on a kiocb right before calling call_write_iter(),
-but we can move that into the common code.
+This adds support to Btrfs for the RWF_ENCODED flag to pwritev2(). The
+implementation is similar to direct I/O: we have to flush any ordered
+extents, invalidate the page cache, and do the io tree/delalloc/extent
+map/ordered extent dance. From there, we can reuse the compression code
+with a minor modification to distinguish the write from writeback.
 
-Cc: Jan Kara <jack@suse.cz>
-Cc: Jens Axboe <axboe@kernel.dk>
 Signed-off-by: Omar Sandoval <osandov@fb.com>
 ---
- fs/aio.c           | 9 ++++-----
- fs/io_uring.c      | 9 ++++-----
- fs/read_write.c    | 2 +-
- include/linux/fs.h | 5 ++++-
- 4 files changed, 13 insertions(+), 12 deletions(-)
+ fs/btrfs/compression.c |   6 +-
+ fs/btrfs/compression.h |   5 +-
+ fs/btrfs/ctree.h       |   4 +
+ fs/btrfs/file.c        |  40 +++++++--
+ fs/btrfs/inode.c       | 190 ++++++++++++++++++++++++++++++++++++++++-
+ 5 files changed, 232 insertions(+), 13 deletions(-)
 
-diff --git a/fs/aio.c b/fs/aio.c
-index 01e0fb9ae45a..72195e182db2 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -1442,7 +1442,7 @@ static void aio_complete_rw(struct kiocb *kiocb, long res, long res2)
- 	iocb_put(iocb);
- }
+diff --git a/fs/btrfs/compression.c b/fs/btrfs/compression.c
+index b05b361e2062..6632dd8d2e4d 100644
+--- a/fs/btrfs/compression.c
++++ b/fs/btrfs/compression.c
+@@ -276,7 +276,8 @@ static void end_compressed_bio_write(struct bio *bio)
+ 			bio->bi_status == BLK_STS_OK);
+ 	cb->compressed_pages[0]->mapping = NULL;
  
--static int aio_prep_rw(struct kiocb *req, const struct iocb *iocb)
-+static int aio_prep_rw(int rw, struct kiocb *req, const struct iocb *iocb)
+-	end_compressed_writeback(inode, cb);
++	if (cb->writeback)
++		end_compressed_writeback(inode, cb);
+ 	/* note, our inode could be gone now */
+ 
+ 	/*
+@@ -311,7 +312,7 @@ blk_status_t btrfs_submit_compressed_write(struct inode *inode, u64 start,
+ 				 unsigned long compressed_len,
+ 				 struct page **compressed_pages,
+ 				 unsigned long nr_pages,
+-				 unsigned int write_flags)
++				 unsigned int write_flags, bool writeback)
  {
- 	int ret;
+ 	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+ 	struct bio *bio = NULL;
+@@ -336,6 +337,7 @@ blk_status_t btrfs_submit_compressed_write(struct inode *inode, u64 start,
+ 	cb->mirror_num = 0;
+ 	cb->compressed_pages = compressed_pages;
+ 	cb->compressed_len = compressed_len;
++	cb->writeback = writeback;
+ 	cb->orig_bio = NULL;
+ 	cb->nr_pages = nr_pages;
  
-@@ -1469,7 +1469,7 @@ static int aio_prep_rw(struct kiocb *req, const struct iocb *iocb)
- 	} else
- 		req->ki_ioprio = get_current_ioprio();
+diff --git a/fs/btrfs/compression.h b/fs/btrfs/compression.h
+index 4cb8be9ff88b..d4176384ec15 100644
+--- a/fs/btrfs/compression.h
++++ b/fs/btrfs/compression.h
+@@ -47,6 +47,9 @@ struct compressed_bio {
+ 	/* the compression algorithm for this bio */
+ 	int compress_type;
  
--	ret = kiocb_set_rw_flags(req, iocb->aio_rw_flags);
-+	ret = kiocb_set_rw_flags(rw, req, iocb->aio_rw_flags);
- 	if (unlikely(ret))
- 		return ret;
- 
-@@ -1525,7 +1525,7 @@ static int aio_read(struct kiocb *req, const struct iocb *iocb,
- 	struct file *file;
- 	int ret;
- 
--	ret = aio_prep_rw(req, iocb);
-+	ret = aio_prep_rw(READ, req, iocb);
- 	if (ret)
- 		return ret;
- 	file = req->ki_filp;
-@@ -1553,7 +1553,7 @@ static int aio_write(struct kiocb *req, const struct iocb *iocb,
- 	struct file *file;
- 	int ret;
- 
--	ret = aio_prep_rw(req, iocb);
-+	ret = aio_prep_rw(WRITE, req, iocb);
- 	if (ret)
- 		return ret;
- 	file = req->ki_filp;
-@@ -1579,7 +1579,6 @@ static int aio_write(struct kiocb *req, const struct iocb *iocb,
- 			__sb_start_write(file_inode(file)->i_sb, SB_FREEZE_WRITE, true);
- 			__sb_writers_release(file_inode(file)->i_sb, SB_FREEZE_WRITE);
- 		}
--		req->ki_flags |= IOCB_WRITE;
- 		aio_rw_done(req, call_write_iter(file, req, &iter));
- 	}
- 	kfree(iovec);
-diff --git a/fs/io_uring.c b/fs/io_uring.c
-index 0dadbdbead0f..548525cb1699 100644
---- a/fs/io_uring.c
-+++ b/fs/io_uring.c
-@@ -1002,7 +1002,7 @@ static bool io_file_supports_async(struct file *file)
- 	return false;
- }
- 
--static int io_prep_rw(struct io_kiocb *req, const struct sqe_submit *s,
-+static int io_prep_rw(int rw, struct io_kiocb *req, const struct sqe_submit *s,
- 		      bool force_nonblock)
- {
- 	const struct io_uring_sqe *sqe = s->sqe;
-@@ -1031,7 +1031,7 @@ static int io_prep_rw(struct io_kiocb *req, const struct sqe_submit *s,
- 	} else
- 		kiocb->ki_ioprio = get_current_ioprio();
- 
--	ret = kiocb_set_rw_flags(kiocb, READ_ONCE(sqe->rw_flags));
-+	ret = kiocb_set_rw_flags(rw, kiocb, READ_ONCE(sqe->rw_flags));
- 	if (unlikely(ret))
- 		return ret;
- 
-@@ -1258,7 +1258,7 @@ static int io_read(struct io_kiocb *req, const struct sqe_submit *s,
- 	size_t iov_count;
- 	ssize_t read_size, ret;
- 
--	ret = io_prep_rw(req, s, force_nonblock);
-+	ret = io_prep_rw(READ, req, s, force_nonblock);
- 	if (ret)
- 		return ret;
- 	file = kiocb->ki_filp;
-@@ -1319,7 +1319,7 @@ static int io_write(struct io_kiocb *req, const struct sqe_submit *s,
- 	size_t iov_count;
- 	ssize_t ret;
- 
--	ret = io_prep_rw(req, s, force_nonblock);
-+	ret = io_prep_rw(WRITE, req, s, force_nonblock);
- 	if (ret)
- 		return ret;
- 
-@@ -1363,7 +1363,6 @@ static int io_write(struct io_kiocb *req, const struct sqe_submit *s,
- 			__sb_writers_release(file_inode(file)->i_sb,
- 						SB_FREEZE_WRITE);
- 		}
--		kiocb->ki_flags |= IOCB_WRITE;
- 
- 		ret2 = call_write_iter(file, kiocb, &iter);
- 		if (!force_nonblock || ret2 != -EAGAIN) {
-diff --git a/fs/read_write.c b/fs/read_write.c
-index 5bbf587f5bc1..a6548a9d965d 100644
---- a/fs/read_write.c
-+++ b/fs/read_write.c
-@@ -682,7 +682,7 @@ static ssize_t do_iter_readv_writev(struct file *filp, struct iov_iter *iter,
- 	ssize_t ret;
- 
- 	init_sync_kiocb(&kiocb, filp);
--	ret = kiocb_set_rw_flags(&kiocb, flags);
-+	ret = kiocb_set_rw_flags(type, &kiocb, flags);
- 	if (ret)
- 		return ret;
- 	kiocb.ki_pos = (ppos ? *ppos : 0);
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index ffe35d97afcb..75c4b7680385 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -3351,8 +3351,11 @@ static inline int iocb_flags(struct file *file)
- 	return res;
- }
- 
--static inline int kiocb_set_rw_flags(struct kiocb *ki, rwf_t flags)
-+static inline int kiocb_set_rw_flags(int rw, struct kiocb *ki, rwf_t flags)
- {
-+	if (rw == WRITE)
-+		ki->ki_flags |= IOCB_WRITE;
++	/* Whether this is a write for writeback. */
++	bool writeback;
 +
- 	if (unlikely(flags & ~RWF_SUPPORTED))
+ 	/* number of compressed pages in the array */
+ 	unsigned long nr_pages;
+ 
+@@ -93,7 +96,7 @@ blk_status_t btrfs_submit_compressed_write(struct inode *inode, u64 start,
+ 				  unsigned long compressed_len,
+ 				  struct page **compressed_pages,
+ 				  unsigned long nr_pages,
+-				  unsigned int write_flags);
++				  unsigned int write_flags, bool writeback);
+ blk_status_t btrfs_submit_compressed_read(struct inode *inode, struct bio *bio,
+ 				 int mirror_num, unsigned long bio_flags);
+ 
+diff --git a/fs/btrfs/ctree.h b/fs/btrfs/ctree.h
+index 19d669d12ca1..76962d319316 100644
+--- a/fs/btrfs/ctree.h
++++ b/fs/btrfs/ctree.h
+@@ -2905,6 +2905,10 @@ int btrfs_run_delalloc_range(struct inode *inode, struct page *locked_page,
+ int btrfs_writepage_cow_fixup(struct page *page, u64 start, u64 end);
+ void btrfs_writepage_endio_finish_ordered(struct page *page, u64 start,
+ 					  u64 end, int uptodate);
++
++ssize_t btrfs_encoded_write(struct kiocb *iocb, struct iov_iter *from,
++			    struct encoded_iov *encoded);
++
+ extern const struct dentry_operations btrfs_dentry_operations;
+ 
+ /* ioctl.c */
+diff --git a/fs/btrfs/file.c b/fs/btrfs/file.c
+index 8fe4eb7e5045..068b7f2cc243 100644
+--- a/fs/btrfs/file.c
++++ b/fs/btrfs/file.c
+@@ -1872,8 +1872,7 @@ static void update_time_for_write(struct inode *inode)
+ 		inode_inc_iversion(inode);
+ }
+ 
+-static ssize_t btrfs_file_write_iter(struct kiocb *iocb,
+-				    struct iov_iter *from)
++static ssize_t btrfs_file_write_iter(struct kiocb *iocb, struct iov_iter *from)
+ {
+ 	struct file *file = iocb->ki_filp;
+ 	struct inode *inode = file_inode(file);
+@@ -1883,14 +1882,22 @@ static ssize_t btrfs_file_write_iter(struct kiocb *iocb,
+ 	u64 end_pos;
+ 	ssize_t num_written = 0;
+ 	const bool sync = iocb->ki_flags & IOCB_DSYNC;
++	struct encoded_iov encoded;
+ 	ssize_t err;
+ 	loff_t pos;
+ 	size_t count;
+ 	loff_t oldsize;
+ 	int clean_page = 0;
+ 
+-	if (!(iocb->ki_flags & IOCB_DIRECT) &&
+-	    (iocb->ki_flags & IOCB_NOWAIT))
++	if (iocb->ki_flags & IOCB_ENCODED) {
++		err = import_encoded_write(iocb, &encoded, from);
++		if (err)
++			return err;
++	}
++
++	if ((iocb->ki_flags & IOCB_NOWAIT) &&
++	    (!(iocb->ki_flags & IOCB_DIRECT) ||
++	     (iocb->ki_flags & IOCB_ENCODED)))
  		return -EOPNOTSUPP;
  
+ 	if (!inode_trylock(inode)) {
+@@ -1899,14 +1906,27 @@ static ssize_t btrfs_file_write_iter(struct kiocb *iocb,
+ 		inode_lock(inode);
+ 	}
+ 
+-	err = generic_write_checks(iocb, from);
+-	if (err <= 0) {
++	if (iocb->ki_flags & IOCB_ENCODED) {
++		err = generic_encoded_write_checks(iocb, &encoded);
++		if (err) {
++			inode_unlock(inode);
++			return err;
++		}
++		count = encoded.unencoded_len;
++	} else {
++		err = generic_write_checks(iocb, from);
++		if (err < 0) {
++			inode_unlock(inode);
++			return err;
++		}
++		count = iov_iter_count(from);
++	}
++	if (count == 0) {
+ 		inode_unlock(inode);
+ 		return err;
+ 	}
+ 
+ 	pos = iocb->ki_pos;
+-	count = iov_iter_count(from);
+ 	if (iocb->ki_flags & IOCB_NOWAIT) {
+ 		/*
+ 		 * We will allocate space in case nodatacow is not set,
+@@ -1965,7 +1985,9 @@ static ssize_t btrfs_file_write_iter(struct kiocb *iocb,
+ 	if (sync)
+ 		atomic_inc(&BTRFS_I(inode)->sync_writers);
+ 
+-	if (iocb->ki_flags & IOCB_DIRECT) {
++	if (iocb->ki_flags & IOCB_ENCODED) {
++		num_written = btrfs_encoded_write(iocb, from, &encoded);
++	} else if (iocb->ki_flags & IOCB_DIRECT) {
+ 		num_written = __btrfs_direct_write(iocb, from);
+ 	} else {
+ 		num_written = btrfs_buffered_write(iocb, from);
+@@ -3440,7 +3462,7 @@ static loff_t btrfs_file_llseek(struct file *file, loff_t offset, int whence)
+ 
+ static int btrfs_file_open(struct inode *inode, struct file *filp)
+ {
+-	filp->f_mode |= FMODE_NOWAIT;
++	filp->f_mode |= FMODE_NOWAIT | FMODE_ENCODED_IO;
+ 	return generic_file_open(inode, filp);
+ }
+ 
+diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
+index a0546401bc0a..90ca8537df8e 100644
+--- a/fs/btrfs/inode.c
++++ b/fs/btrfs/inode.c
+@@ -865,7 +865,7 @@ static noinline void submit_compressed_extents(struct async_chunk *async_chunk)
+ 				    ins.objectid,
+ 				    ins.offset, async_extent->pages,
+ 				    async_extent->nr_pages,
+-				    async_chunk->write_flags)) {
++				    async_chunk->write_flags, true)) {
+ 			struct page *p = async_extent->pages[0];
+ 			const u64 start = async_extent->start;
+ 			const u64 end = start + async_extent->ram_size - 1;
+@@ -10590,6 +10590,194 @@ void btrfs_set_range_writeback(struct extent_io_tree *tree, u64 start, u64 end)
+ 	}
+ }
+ 
++ssize_t btrfs_encoded_write(struct kiocb *iocb, struct iov_iter *from,
++			    struct encoded_iov *encoded)
++{
++	struct file *file = iocb->ki_filp;
++	struct inode *inode = file_inode(file);
++	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
++	struct btrfs_root *root = BTRFS_I(inode)->root;
++	struct extent_io_tree *io_tree = &BTRFS_I(inode)->io_tree;
++	struct extent_changeset *data_reserved = NULL;
++	struct extent_state *cached_state = NULL;
++	int compression;
++	u64 disk_num_bytes, num_bytes;
++	u64 start, end;
++	unsigned long nr_pages, i;
++	struct page **pages;
++	struct btrfs_key ins;
++	struct extent_map *em;
++	ssize_t ret;
++
++	switch (encoded->compression) {
++	case ENCODED_IOV_COMPRESSION_ZLIB:
++		compression = BTRFS_COMPRESS_ZLIB;
++		break;
++	case ENCODED_IOV_COMPRESSION_LZO:
++		compression = BTRFS_COMPRESS_LZO;
++		break;
++	case ENCODED_IOV_COMPRESSION_ZSTD:
++		compression = BTRFS_COMPRESS_ZSTD;
++		break;
++	default:
++		return -EINVAL;
++	}
++
++	disk_num_bytes = iov_iter_count(from);
++
++	/* The extent size must be sane. */
++	if (encoded->unencoded_len > BTRFS_MAX_UNCOMPRESSED ||
++	    disk_num_bytes > BTRFS_MAX_COMPRESSED ||
++	    disk_num_bytes == 0)
++		return -EINVAL;
++
++	/*
++	 * The compressed data on disk must be sector-aligned. For convenience,
++	 * we extend the compressed data with zeroes if it isn't.
++	 */
++	disk_num_bytes = ALIGN(disk_num_bytes, fs_info->sectorsize);
++	/*
++	 * The extent in the file must also be sector-aligned. However, we allow
++	 * a write which ends at or extends i_size to have an unaligned length;
++	 * we round up the extent size and set i_size to the given length.
++	 */
++	start = iocb->ki_pos;
++	if (!IS_ALIGNED(start, fs_info->sectorsize))
++		return -EINVAL;
++	if (start + encoded->unencoded_len >= inode->i_size) {
++		num_bytes = ALIGN(encoded->unencoded_len, fs_info->sectorsize);
++	} else {
++		num_bytes = encoded->unencoded_len;
++		if (!IS_ALIGNED(num_bytes, fs_info->sectorsize))
++			return -EINVAL;
++	}
++	end = start + num_bytes - 1;
++
++	/*
++	 * It's valid for compressed data to be larger than or the same size as
++	 * the decompressed data. However, for buffered I/O, we never write out
++	 * a compressed extent unless it's smaller than the decompressed data,
++	 * so for now, let's not allow creating such extents explicity, either.
++	 */
++	if (disk_num_bytes >= num_bytes)
++		return -EINVAL;
++
++	nr_pages = (disk_num_bytes + PAGE_SIZE - 1) >> PAGE_SHIFT;
++	pages = kvcalloc(nr_pages, sizeof(struct page *), GFP_USER);
++	if (!pages)
++		return -ENOMEM;
++	for (i = 0; i < nr_pages; i++) {
++		size_t bytes;
++		char *kaddr;
++
++		pages[i] = alloc_page(GFP_USER);
++		if (!pages[i]) {
++			ret = -ENOMEM;
++			goto out_pages;
++		}
++		kaddr = kmap(pages[i]);
++		bytes = min_t(size_t, PAGE_SIZE, iov_iter_count(from));
++		if (copy_from_iter(kaddr, bytes, from) != bytes) {
++			kunmap(pages[i]);
++			ret = -EFAULT;
++			goto out_pages;
++		}
++		if (bytes < PAGE_SIZE)
++			memset(kaddr + bytes, 0, PAGE_SIZE - bytes);
++		kunmap(pages[i]);
++	}
++
++	for (;;) {
++		struct btrfs_ordered_extent *ordered;
++
++		lock_extent_bits(io_tree, start, end, &cached_state);
++		ordered = btrfs_lookup_ordered_range(BTRFS_I(inode), start,
++						     end - start + 1);
++		if (!ordered &&
++		    !filemap_range_has_page(inode->i_mapping, start, end))
++			break;
++		if (ordered)
++			btrfs_put_ordered_extent(ordered);
++		unlock_extent_cached(&BTRFS_I(inode)->io_tree, start, end,
++				     &cached_state);
++		cond_resched();
++		ret = btrfs_wait_ordered_range(inode, start, end);
++		if (ret)
++			goto out_pages;
++		ret = invalidate_inode_pages2_range(inode->i_mapping,
++						    start >> PAGE_SHIFT,
++						    end >> PAGE_SHIFT);
++		if (ret)
++			goto out_pages;
++	}
++
++	ret = btrfs_delalloc_reserve_space(inode, &data_reserved, start,
++					   num_bytes);
++	if (ret)
++		goto out_unlock;
++
++	ret = btrfs_reserve_extent(root, num_bytes, disk_num_bytes,
++				   disk_num_bytes, 0, 0, &ins, 1, 1);
++	if (ret)
++		goto out_delalloc_release;
++
++	em = create_io_em(inode, start, num_bytes, start, ins.objectid,
++			  ins.offset, ins.offset, num_bytes, compression,
++			  BTRFS_ORDERED_COMPRESSED);
++	if (IS_ERR(em)) {
++		ret = PTR_ERR(em);
++		goto out_free_reserve;
++	}
++	free_extent_map(em);
++
++	ret = btrfs_add_ordered_extent_compress(inode, start, ins.objectid,
++						num_bytes, ins.offset,
++						BTRFS_ORDERED_COMPRESSED,
++						compression);
++	if (ret) {
++		btrfs_drop_extent_cache(BTRFS_I(inode), start, end, 0);
++		goto out_free_reserve;
++	}
++	btrfs_dec_block_group_reservations(fs_info, ins.objectid);
++
++	if (start + encoded->unencoded_len > inode->i_size)
++		i_size_write(inode, start + encoded->unencoded_len);
++
++	unlock_extent_cached(io_tree, start, end, &cached_state);
++
++	btrfs_delalloc_release_extents(BTRFS_I(inode), num_bytes, false);
++
++	if (btrfs_submit_compressed_write(inode, start, num_bytes, ins.objectid,
++					  ins.offset, pages, nr_pages, 0,
++					  false)) {
++		struct page *page = pages[0];
++
++		page->mapping = inode->i_mapping;
++		btrfs_writepage_endio_finish_ordered(page, start, end, 0);
++		page->mapping = NULL;
++		ret = -EIO;
++		goto out_pages;
++	}
++	iocb->ki_pos += encoded->unencoded_len;
++	return encoded->unencoded_len;
++
++out_free_reserve:
++	btrfs_dec_block_group_reservations(fs_info, ins.objectid);
++	btrfs_free_reserved_extent(fs_info, ins.objectid, ins.offset, 1);
++out_delalloc_release:
++	btrfs_delalloc_release_space(inode, data_reserved, start, num_bytes,
++				     true);
++out_unlock:
++	unlock_extent_cached(io_tree, start, end, &cached_state);
++out_pages:
++	for (i = 0; i < nr_pages; i++) {
++		if (pages[i])
++			put_page(pages[i]);
++	}
++	kvfree(pages);
++	return ret;
++}
++
+ #ifdef CONFIG_SWAP
+ /*
+  * Add an entry indicating a block group or device which is pinned by a
 -- 
 2.23.0
