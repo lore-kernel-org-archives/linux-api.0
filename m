@@ -1,206 +1,57 @@
-From: Omar Sandoval <osandov@osandov.com>
-Subject: [PATCH] readv.2: Document new RWF_ENCODED flag to pwritev2()
-Date: Wed, 18 Sep 2019 23:53:45 -0700
-Message-ID: <5026db117fb57fa480706a7a77460e4288e69180.1568875837.git.osandov@fb.com>
-References: <cover.1568875700.git.osandov@fb.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [RFC PATCH 2/3] fs: add RWF_ENCODED for writing compressed data
+Date: Thu, 19 Sep 2019 17:44:12 +0200
+Message-ID: <CAG48ez2GKv15Uj6Wzv0sG5v2bXyrSaCtRTw5Ok_ovja_CiO_fQ@mail.gmail.com>
+References: <cover.1568875700.git.osandov@fb.com> <230a76e65372a8fb3ec62ce167d9322e5e342810.1568875700.git.osandov@fb.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <cover.1568875700.git.osandov@fb.com>
+In-Reply-To: <230a76e65372a8fb3ec62ce167d9322e5e342810.1568875700.git.osandov@fb.com>
 Sender: linux-btrfs-owner@vger.kernel.org
-To: linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org
-Cc: Dave Chinner <david@fromorbit.com>, linux-api@vger.kernel.org, kernel-team@fb.com
+To: Omar Sandoval <osandov@osandov.com>, Jens Axboe <axboe@kernel.dk>
+Cc: linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-btrfs@vger.kernel.org, Dave Chinner <david@fromorbit.com>, Linux API <linux-api@vger.kernel.org>, Kernel Team <kernel-team@fb.com>, Andy Lutomirski <luto@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Omar Sandoval <osandov@fb.com>
+On Thu, Sep 19, 2019 at 8:54 AM Omar Sandoval <osandov@osandov.com> wrote:
+> Btrfs can transparently compress data written by the user. However, we'd
+> like to add an interface to write pre-compressed data directly to the
+> filesystem. This adds support for so-called "encoded writes" via
+> pwritev2().
+>
+> A new RWF_ENCODED flags indicates that a write is "encoded". If this
+> flag is set, iov[0].iov_base points to a struct encoded_iov which
+> contains metadata about the write: namely, the compression algorithm and
+> the unencoded (i.e., decompressed) length of the extent. iov[0].iov_len
+> must be set to sizeof(struct encoded_iov), which can be used to extend
+> the interface in the future. The remaining iovecs contain the encoded
+> extent.
+>
+> A similar interface for reading encoded data can be added to preadv2()
+> in the future.
+>
+> Filesystems must indicate that they support encoded writes by setting
+> FMODE_ENCODED_IO in ->file_open().
+[...]
+> +int import_encoded_write(struct kiocb *iocb, struct encoded_iov *encoded,
+> +                        struct iov_iter *from)
+> +{
+> +       if (iov_iter_single_seg_count(from) != sizeof(*encoded))
+> +               return -EINVAL;
+> +       if (copy_from_iter(encoded, sizeof(*encoded), from) != sizeof(*encoded))
+> +               return -EFAULT;
+> +       if (encoded->compression == ENCODED_IOV_COMPRESSION_NONE &&
+> +           encoded->encryption == ENCODED_IOV_ENCRYPTION_NONE) {
+> +               iocb->ki_flags &= ~IOCB_ENCODED;
+> +               return 0;
+> +       }
+> +       if (encoded->compression > ENCODED_IOV_COMPRESSION_TYPES ||
+> +           encoded->encryption > ENCODED_IOV_ENCRYPTION_TYPES)
+> +               return -EINVAL;
+> +       if (!capable(CAP_SYS_ADMIN))
+> +               return -EPERM;
 
-Signed-off-by: Omar Sandoval <osandov@fb.com>
----
- man2/readv.2 | 156 +++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 156 insertions(+)
-
-diff --git a/man2/readv.2 b/man2/readv.2
-index af27aa63e..7d32b3bd2 100644
---- a/man2/readv.2
-+++ b/man2/readv.2
-@@ -265,6 +265,135 @@ the data is always appended to the end of the file.
- However, if the
- .I offset
- argument is \-1, the current file offset is updated.
-+.TP
-+.BR RWF_ENCODED " (since Linux 5.5)"
-+Read or write encoded (e.g., compressed) data.
-+.I iov[0].iov_base
-+points to an
-+.I
-+encoded_iov
-+structure, defined in
-+.I <linux/fs.h>
-+as:
-+.IP
-+.in +4n
-+.EX
-+struct encoded_iov {
-+    __u64 unencoded_len;
-+    __u32 compression;
-+    __u32 encryption;
-+};
-+.EE
-+.in
-+.IP
-+.I iov[0].iov_len
-+must be set to
-+.IR "sizeof(struct\ encoded_iov)" .
-+.IP
-+.I compression
-+is one of
-+.B ENCODED_IOV_COMPRESSION_NONE
-+(zero),
-+.BR ENCODED_IOV_COMPRESSION_ZLIB ,
-+.BR ENCODED_IOV_COMPRESSION_LZO ,
-+or
-+.BR ENCODED_IOV_COMPRESSION_ZSTD .
-+.I encryption
-+is currently always
-+.B ENCODED_IOV_ENCRYPTION_NONE
-+(zero).
-+.I unencoded_len
-+is the length of the unencoded (i.e., decrypted and decompressed) data.
-+If
-+.I offset
-+is -1, then the current file offset is incremented by the unencoded length.
-+.IP
-+For
-+.BR pwritev2 (),
-+the remaining buffers in the
-+.I iov
-+array should point to the encoded data;
-+.I unencoded_len
-+should be set to the logical length of the data in the file; and
-+.I compression
-+and
-+.I encryption
-+should be set to indicate the encoding.
-+The calling process must have the
-+.B CAP_SYS_ADMIN
-+capability.
-+If
-+.I compression
-+is
-+.B ENCODED_IOV_COMPRESSION_NONE
-+and
-+.I encryption
-+is
-+.BR ENCODED_IOV_ENCRYPTION_NONE ,
-+then
-+.I unencoded_len
-+is ignored and the write behaves as if the
-+.B RWF_ENCODED
-+flag was not specified.
-+.IP
-+As of Linux 5.5, this flag is only implemented for
-+.BR pwritev2 (),
-+and only on Btrfs with the following requirements:
-+.RS
-+.IP \(bu 3
-+.I offset
-+(or the current file offset if
-+.I offset
-+is -1) must be aligned to the sector size of the filesystem.
-+.IP \(bu
-+.I unencoded_len
-+and the length of the encoded data must each be no more than 128 KiB.
-+This limit may increase in the future.
-+.IP \(bu
-+.I unencoded_len
-+must be non-zero.
-+.IP \(bu
-+.I unencoded_len
-+must be aligned to the sector size of the filesystem,
-+unless the data ends at or beyond the current end of the file.
-+.IP \(bu
-+If
-+.I compression
-+is not
-+.BR ENCODED_IOV_COMPRESSION_NONE ,
-+then the length of the encoded data rounded up to the nearest sector must be less than
-+.IR unencoded_len .
-+.IP \(bu
-+If
-+.I compression
-+is
-+.BR ENCODED_IOV_COMPRESSION_ZLIB ,
-+then the encoded data must be a single zlib stream.
-+.IP \(bu
-+If
-+.I compression
-+is
-+.BR ENCODED_IOV_COMPRESSION_LZO ,
-+then the encoded data must be be compressed page by page with LZO1X
-+and wrapped in the format described in the Linux kernel source file
-+.IR fs/btrfs/lzo.c .
-+.IP \(bu
-+If
-+.I compression
-+is
-+.BR ENCODED_IOV_COMPRESSION_ZSTD ,
-+then the encoded data must be a single zstd stream,
-+and the
-+.I windowLog
-+compression parameter must be no more than 17.
-+.RE
-+.IP
-+Note that the encoded data is not validated when it is written.
-+If it is not valid (e.g., it cannot be decompressed,
-+or its decompressed length does not match
-+.IR unencoded_len ),
-+then a subsequent read may result in an error or return truncated data.
-+.\" TODO: how should this interact with O_DIRECT?
- .SH RETURN VALUE
- On success,
- .BR readv (),
-@@ -284,6 +413,13 @@ than requested (see
- and
- .BR write (2)).
- .PP
-+If
-+.B
-+RWF_ENCODED
-+was specified in
-+.IR flags ,
-+then the return value is the unencoded number of bytes.
-+.PP
- On error, \-1 is returned, and \fIerrno\fP is set appropriately.
- .SH ERRORS
- The errors are as given for
-@@ -312,8 +448,28 @@ The vector count,
- .IR iovcnt ,
- is less than zero or greater than the permitted maximum.
- .TP
-+.B EINVAL
-+.B RWF_ENCODED
-+is specified in
-+.I flags
-+and the alignment and/or size requirements are not met.
-+.TP
- .B EOPNOTSUPP
- An unknown flag is specified in \fIflags\fP.
-+.TP
-+.B EOPNOTSUPP
-+.B RWF_ENCODED
-+is specified in
-+.I flags
-+and the filesystem does not implement encoded I/O.
-+.TP
-+.B EPERM
-+.B RWF_ENCODED
-+is specified in
-+.I flags
-+and the calling process does not have the
-+.B CAP_SYS_ADMIN
-+capability.
- .SH VERSIONS
- .BR preadv ()
- and
--- 
-2.23.0
+How does this capable() check interact with io_uring? Without having
+looked at this in detail, I suspect that when an encoded write is
+requested through io_uring, the capable() check might be executed on
+something like a workqueue worker thread, which is probably running
+with a full capability set.
