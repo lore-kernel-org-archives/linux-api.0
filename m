@@ -1,77 +1,241 @@
 From: Richard Guy Briggs <rgb@redhat.com>
-Subject: [PATCH ghak90 V7 19/21] audit: check cont depth
-Date: Wed, 18 Sep 2019 21:22:36 -0400
-Message-ID: <8cb68e43b55b1b0a021710402ded89444edaf13c.1568834525.git.rgb@redhat.com>
+Subject: [PATCH ghak90 V7 20/21] audit: add capcontid to set contid outside init_user_ns
+Date: Wed, 18 Sep 2019 21:22:37 -0400
+Message-ID: <214163d11a75126f610bcedfad67a4d89575dc77.1568834525.git.rgb@redhat.com>
 References: <cover.1568834524.git.rgb@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <netdev-owner@vger.kernel.org>
 In-Reply-To: <cover.1568834524.git.rgb@redhat.com>
 In-Reply-To: <cover.1568834524.git.rgb@redhat.com>
 References: <cover.1568834524.git.rgb@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: netdev-owner@vger.kernel.org
 To: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org
 Cc: Paul Moore <paul@paul-moore.com>, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, eparis@parisplace.org, serge@hallyn.com, ebiederm@xmission.com, nhorman@tuxdriver.com, dwalsh@redhat.com, mpatel@redhat.com, Richard Guy Briggs <rgb@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Set an arbitrary limit on the depth of audit container identifier
-nesting to limit abuse.
+Provide a mechanism similar to CAP_AUDIT_CONTROL to explicitly give a
+process in a non-init user namespace the capability to set audit
+container identifiers.
+
+Use audit netlink message types AUDIT_GET_CAPCONTID 1027 and
+AUDIT_SET_CAPCONTID 1028.  The message format includes the data
+structure:
+struct audit_capcontid_status {
+        pid_t   pid;
+        u32     enable;
+};
 
 Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
 ---
- kernel/audit.c | 21 +++++++++++++++++++++
- kernel/audit.h |  2 ++
- 2 files changed, 23 insertions(+)
+ include/linux/audit.h      | 14 +++++++
+ include/uapi/linux/audit.h |  2 +
+ kernel/audit.c             | 98 +++++++++++++++++++++++++++++++++++++++++++++-
+ kernel/audit.h             |  5 +++
+ 4 files changed, 117 insertions(+), 2 deletions(-)
 
-diff --git a/kernel/audit.c b/kernel/audit.c
-index 848fd1c8c579..a70c9184e5d9 100644
---- a/kernel/audit.c
-+++ b/kernel/audit.c
-@@ -2667,6 +2667,22 @@ int audit_signal_info(int sig, struct task_struct *t)
- 	return audit_signal_info_syscall(t);
+diff --git a/include/linux/audit.h b/include/linux/audit.h
+index 1ce27af686ea..dcc53e62e266 100644
+--- a/include/linux/audit.h
++++ b/include/linux/audit.h
+@@ -117,6 +117,7 @@ struct audit_task_info {
+ 	kuid_t			loginuid;
+ 	unsigned int		sessionid;
+ 	struct audit_cont	*cont;
++	u32			capcontid;
+ #ifdef CONFIG_AUDITSYSCALL
+ 	struct audit_context	*ctx;
+ #endif
+@@ -224,6 +225,14 @@ static inline unsigned int audit_get_sessionid(struct task_struct *tsk)
+ 	return tsk->audit->sessionid;
  }
  
-+static int audit_contid_depth(struct audit_cont *cont)
++static inline u32 audit_get_capcontid(struct task_struct *tsk)
 +{
-+	struct audit_cont *parent;
-+	int depth = 1;
-+
-+	if (!cont)
++	if (!tsk->audit)
 +		return 0;
-+
-+	parent = cont->parent;
-+	while (parent) {
-+		depth++;
-+		parent = parent->parent;
-+	}
-+	return depth;
++	return tsk->audit->capcontid;
 +}
 +
- struct audit_cont *audit_cont(struct task_struct *tsk)
++extern int audit_set_capcontid(struct task_struct *tsk, u32 enable);
+ extern int audit_set_contid(struct task_struct *tsk, u64 contid);
+ 
+ static inline u64 audit_get_contid(struct task_struct *tsk)
+@@ -309,6 +318,11 @@ static inline unsigned int audit_get_sessionid(struct task_struct *tsk)
+ 	return AUDIT_SID_UNSET;
+ }
+ 
++static inline u32 audit_get_capcontid(struct task_struct *tsk)
++{
++	return 0;
++}
++
+ static inline u64 audit_get_contid(struct task_struct *tsk)
  {
- 	if (!tsk->audit || !tsk->audit->cont)
-@@ -2785,6 +2801,11 @@ int audit_set_contid(struct task_struct *task, u64 contid)
- 			rc = -ENOSPC;
- 			goto conterror;
- 		}
-+		/* Set max contid depth */
-+		if (audit_contid_depth(audit_cont(current->real_parent)) >= AUDIT_CONTID_DEPTH) {
-+			rc = -EMLINK;
-+			goto conterror;
-+		}
- 		if (!newcont) {
- 			newcont = kmalloc(sizeof(struct audit_cont), GFP_ATOMIC);
- 			if (newcont) {
+ 	return AUDIT_CID_UNSET;
+diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
+index eef42c8eea77..011b0a8ee9b2 100644
+--- a/include/uapi/linux/audit.h
++++ b/include/uapi/linux/audit.h
+@@ -78,6 +78,8 @@
+ #define AUDIT_GET_LOGINUID	1024	/* Get loginuid of a task */
+ #define AUDIT_SET_LOGINUID	1025	/* Set loginuid of a task */
+ #define AUDIT_GET_SESSIONID	1026	/* Set sessionid of a task */
++#define AUDIT_GET_CAPCONTID	1027	/* Get cap_contid of a task */
++#define AUDIT_SET_CAPCONTID	1028	/* Set cap_contid of a task */
+ 
+ #define AUDIT_FIRST_USER_MSG	1100	/* Userspace messages mostly uninteresting to kernel */
+ #define AUDIT_USER_AVC		1107	/* We filter this differently */
+diff --git a/kernel/audit.c b/kernel/audit.c
+index a70c9184e5d9..7160da464849 100644
+--- a/kernel/audit.c
++++ b/kernel/audit.c
+@@ -1192,6 +1192,14 @@ static int audit_netlink_ok(struct sk_buff *skb, u16 msg_type)
+ 	case AUDIT_GET_SESSIONID:
+ 		return 0;
+ 		break;
++	case AUDIT_GET_CAPCONTID:
++	case AUDIT_SET_CAPCONTID:
++	case AUDIT_GET_CONTID:
++	case AUDIT_SET_CONTID:
++		if (!netlink_capable(skb, CAP_AUDIT_CONTROL) && !audit_get_capcontid(current))
++			return -EPERM;
++		return 0;
++		break;
+ 	default:  /* do more checks below */
+ 		break;
+ 	}
+@@ -1227,8 +1235,6 @@ static int audit_netlink_ok(struct sk_buff *skb, u16 msg_type)
+ 	case AUDIT_TTY_SET:
+ 	case AUDIT_TRIM:
+ 	case AUDIT_MAKE_EQUIV:
+-	case AUDIT_GET_CONTID:
+-	case AUDIT_SET_CONTID:
+ 	case AUDIT_SET_LOGINUID:
+ 		/* Only support auditd and auditctl in initial pid namespace
+ 		 * for now. */
+@@ -1304,6 +1310,23 @@ static int audit_get_contid_status(struct sk_buff *skb)
+ 	return 0;
+ }
+ 
++static int audit_get_capcontid_status(struct sk_buff *skb)
++{
++	struct nlmsghdr *nlh = nlmsg_hdr(skb);
++	u32 seq = nlh->nlmsg_seq;
++	void *data = nlmsg_data(nlh);
++	struct audit_capcontid_status cs;
++
++	cs.pid = ((struct audit_capcontid_status *)data)->pid;
++	if (!cs.pid)
++		cs.pid = task_tgid_nr(current);
++	rcu_read_lock();
++	cs.enable = audit_get_capcontid(find_task_by_vpid(cs.pid));
++	rcu_read_unlock();
++	audit_send_reply(skb, seq, AUDIT_GET_CAPCONTID, 0, 0, &cs, sizeof(cs));
++	return 0;
++}
++
+ struct audit_loginuid_status { uid_t loginuid; };
+ 
+ static int audit_get_loginuid_status(struct sk_buff *skb)
+@@ -1779,6 +1802,27 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
+ 		if (err)
+ 			return err;
+ 		break;
++	case AUDIT_SET_CAPCONTID: {
++		struct audit_capcontid_status *s = data;
++		struct task_struct *tsk;
++
++		/* check if new data is valid */
++		if (nlmsg_len(nlh) < sizeof(*s))
++			return -EINVAL;
++		tsk = find_get_task_by_vpid(s->pid);
++		if (!tsk)
++			return -EINVAL;
++
++		err = audit_set_capcontid(tsk, s->enable);
++		put_task_struct(tsk);
++		return err;
++		break;
++	}
++	case AUDIT_GET_CAPCONTID:
++		err = audit_get_capcontid_status(skb);
++		if (err)
++			return err;
++		break;
+ 	case AUDIT_SET_LOGINUID: {
+ 		uid_t *loginuid = data;
+ 		kuid_t kloginuid;
+@@ -2711,6 +2755,56 @@ static struct task_struct *audit_cont_owner(struct task_struct *tsk)
+ 	return NULL;
+ }
+ 
++int audit_set_capcontid(struct task_struct *task, u32 enable)
++{
++	u32 oldcapcontid;
++	int rc = 0;
++	struct audit_buffer *ab;
++	uid_t uid;
++	struct tty_struct *tty;
++	char comm[sizeof(current->comm)];
++
++	if (!task->audit)
++		return -ENOPROTOOPT;
++	oldcapcontid = audit_get_capcontid(task);
++	/* if task is not descendant, block */
++	if (task == current)
++		rc = -EBADSLT;
++	else if (!task_is_descendant(current, task))
++		rc = -EXDEV;
++	else if (current_user_ns() == &init_user_ns) {
++		if (!capable(CAP_AUDIT_CONTROL) && !audit_get_capcontid(current))
++			rc = -EPERM;
++	}
++	if (!rc)
++		task->audit->capcontid = enable;
++
++	if (!audit_enabled)
++		return rc;
++
++	ab = audit_log_start(audit_context(), GFP_KERNEL, AUDIT_SET_CAPCONTID);
++	if (!ab)
++		return rc;
++
++	uid = from_kuid(&init_user_ns, task_uid(current));
++	tty = audit_get_tty();
++	audit_log_format(ab,
++			 "opid=%d capcontid=%u old-capcontid=%u pid=%d uid=%u auid=%u tty=%s ses=%u",
++			 task_tgid_nr(task), enable, oldcapcontid,
++			 task_tgid_nr(current), uid,
++			 from_kuid(&init_user_ns, audit_get_loginuid(current)),
++			 tty ? tty_name(tty) : "(none)",
++			 audit_get_sessionid(current));
++	audit_put_tty(tty);
++	audit_log_task_context(ab);
++	audit_log_format(ab, " comm=");
++	audit_log_untrustedstring(ab, get_task_comm(comm, current));
++	audit_log_d_path_exe(ab, current->mm);
++	audit_log_format(ab, " res=%d", !rc);
++	audit_log_end(ab);
++	return rc;
++}
++
+ /*
+  * audit_set_contid - set current task's audit contid
+  * @task: target task
 diff --git a/kernel/audit.h b/kernel/audit.h
-index 89b7de323c13..cb25341c1a0f 100644
+index cb25341c1a0f..ac4694e88485 100644
 --- a/kernel/audit.h
 +++ b/kernel/audit.h
-@@ -231,6 +231,8 @@ struct audit_contid_status {
+@@ -231,6 +231,11 @@ struct audit_contid_status {
  	u64	id;
  };
  
-+#define AUDIT_CONTID_DEPTH	5
++struct audit_capcontid_status {
++	pid_t	pid;
++	u32	enable;
++};
 +
- /* Indicates that audit should log the full pathname. */
- #define AUDIT_NAME_FULL -1
+ #define AUDIT_CONTID_DEPTH	5
  
+ /* Indicates that audit should log the full pathname. */
 -- 
 1.8.3.1
