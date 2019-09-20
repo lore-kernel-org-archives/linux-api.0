@@ -1,60 +1,64 @@
-From: Willy Tarreau <w@1wt.eu>
-Subject: Re: [PATCH RFC v4 1/1] random: WARN on large getrandom() waits and
- introduce getrandom2()
-Date: Fri, 20 Sep 2019 20:16:23 +0200
-Message-ID: <20190920181623.GB1889@1wt.eu>
-References: <20190915052242.GG19710@mit.edu>
- <CAHk-=wgg2T=3KxrO-BY3nHJgMEyApjnO3cwbQb_0vxsn9qKN8Q@mail.gmail.com>
- <20190918211503.GA1808@darwi-home-pc>
- <20190918211713.GA2225@darwi-home-pc>
- <CAHk-=wiCqDiU7SE3FLn2W26MS_voUAuqj5XFa1V_tiGTrrW-zQ@mail.gmail.com>
- <20190920134609.GA2113@pc>
- <CALCETrWvE5es3i+to33y6jw=Yf0Tw6ZfV-6QWjZT5v0fo76tWw@mail.gmail.com>
- <CAHk-=wgW8rN2EVL_Rdn63V9vQO0GkZ=RQFeqqsYJM==8fujpPg@mail.gmail.com>
- <CALCETrV=4TX2a4uV5t2xOFzv+zM_jnOtMLJna8Vb7uXz6S=wSw@mail.gmail.com>
- <CAHk-=wjpTWgpo6d24pTv+ubfea_uEomX-sHjjOkdACfV-8Nmkg@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: Andy Lutomirski <luto@amacapital.net>
+Subject: Re: [PATCH RFC v4 1/1] random: WARN on large getrandom() waits and introduce getrandom2()
+Date: Fri, 20 Sep 2019 11:29:52 -0700
+Message-ID: <7D3731D2-348F-4561-A52D-AA7DAAEE258B@amacapital.net>
+References: <78a4b774-ef6b-62cb-57db-8e1ff8d29f72@gmail.com>
+Mime-Version: 1.0 (1.0)
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHk-=wjpTWgpo6d24pTv+ubfea_uEomX-sHjjOkdACfV-8Nmkg@mail.gmail.com>
+In-Reply-To: <78a4b774-ef6b-62cb-57db-8e1ff8d29f72@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Andy Lutomirski <luto@kernel.org>, "Ahmed S. Darwish" <darwish.07@gmail.com>, Lennart Poettering <mzxreary@0pointer.de>, "Theodore Y. Ts'o" <tytso@mit.edu>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Matthew Garrett <mjg59@srcf.ucam.org>, lkml <linux-kernel@vger.kernel.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>
+To: "Alexander E. Patrakov" <patrakov@gmail.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, "Ahmed S. Darwish" <darwish.07@gmail.com>, Lennart Poettering <mzxreary@0pointer.de>, "Theodore Y. Ts'o" <tytso@mit.edu>, "Eric W. Biederman" <ebiederm@xmission.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, lkml <linux-kernel@vger.kernel.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 20, 2019 at 11:09:53AM -0700, Linus Torvalds wrote:
-(...)
-> So:
-> 
->  - GRND_INSECURE is (GRND_EXPLICIT | GRND_NONBLOCK)
-> 
->    As in "I explicitly ask you not to just not ever block": urandom
-> 
->  - GRND_SECURE_BLOCKING is (GRND_EXPLICIT | GRND_RANDOM)
-> 
->    As in "I explicitly ask you for those secure random numbers"
-> 
->  - GRND_SECURE_NONBLOCKING is (GRND_EXPLICIT | GRND_RANDOM | GRND_NONBLOCK)
-> 
->    As in "I want explicitly secure random numbers, but return -EAGAIN
-> if that would block".
-> 
-> Which are the three sane behaviors (that last one is useful for the "I
-> can try to generate entropy if you don't have any" case. I'm not sure
-> anybody will do it, but it definitely conceptually makes sense).
-> 
-> And I agree that your naming is better.
-> 
-> I had it as just "GRND_SECURE" for the blocking version, and
-> "GRND_SECURE | GRND_NONBLOCK" for the "secure but return EAGAIN if you
-> would need to block for entropy" version.
-> 
-> But explicitly stating the blockingness in the name makes it clearer
-> to the people who just want GRND_INSECURE, and makes them realize that
-> they don't want the blocking version.
 
-I really like it this way. Explicit and full control for the application
-plus reasonable backwards compatibility, it sounds pretty good.
 
-Willy
+> On Sep 20, 2019, at 11:15 AM, Alexander E. Patrakov <patrakov@gmail.com> w=
+rote:
+>=20
+> =EF=BB=BF20.09.2019 22:52, Andy Lutomirski =D0=BF=D0=B8=D1=88=D0=B5=D1=82:=
+
+>> I think that, given existing software, we should make two or three
+>> changes to fix the basic problems here:
+>> 1. Add GRND_INSECURE: at least let new applications do the right thing
+>> going forward.
+>> 2. Fix what is arguably a straight up kernel bug, not even an ABI
+>> issue: when a user program is blocking in getrandom(..., 0), the
+>> kernel happily sits there doing absolutely nothing and deadlocks the
+>> system as a result.  This IMO isn't an ABI issue -- it's an
+>> implementation problem.  How about we make getrandom() (probably
+>> actually wait_for_random_bytes()) do something useful to try to seed
+>> the RNG if the system is otherwise not doing IO.
+>> 3. Optionally, entirely in user code: Get glibc to add new *library*
+>> functions: getentropy_secure_blocking() and getentropy_insecure() or
+>> whatever they want to call them.  Deprecate getentropy().
+>> I think #2 is critical.  Right now, suppose someone has a system that
+>> neets to do a secure network request (a la Red Hat's Clevis).  I have
+>> no idea what Clevis actually does, but it wouldn't be particularly
+>> crazy to do a DH exchange or sign with an EC key to ask some network
+>> server to help unlock a dm-crypt volume.  If the system does this at
+>> boot, it needs to use getrandom(..., 0), GRND_EXPLICIT, or whatever,
+>> because it NEEDS a secure random number.  No about of ABI fiddling
+>> will change this.  The kernel should *work* in this case rather than
+>> deadlocking.
+>=20
+> Let me express a little bit of disagreement with the logic here.
+>=20
+> I do agree that #2 is critical, and the Clevis use case is a perfect examp=
+le why it is important. I doubt that it is solvable without trusting jitter e=
+ntropy, or without provoking a dummy read on a random block device, just for=
+ timings, or maybe some other interaction with the external world - but Will=
+y already said "it seems fishy". However, _if_ it is solved, then we don't n=
+eed GRND_INSECURE, because solving #2 is equivalent to magically making secu=
+re random numbers always available.
+>=20
+>=20
+
+I beg to differ. There is a big difference between =E2=80=9Cdo your best *ri=
+ght now*=E2=80=9D and =E2=80=9Cgive me a real secure result in a vaguely tim=
+ely manner=E2=80=9D.
+
+For example, the former is useful for ASLR or hash table randomization. The l=
+atter is not.=
