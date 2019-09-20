@@ -1,112 +1,51 @@
-From: Andy Lutomirski <luto@kernel.org>
+From: "Ahmed S. Darwish" <darwish.07@gmail.com>
 Subject: Re: [PATCH RFC v4 1/1] random: WARN on large getrandom() waits and
  introduce getrandom2()
-Date: Fri, 20 Sep 2019 10:52:30 -0700
-Message-ID: <CALCETrV=4TX2a4uV5t2xOFzv+zM_jnOtMLJna8Vb7uXz6S=wSw@mail.gmail.com>
-References: <20190912034421.GA2085@darwi-home-pc> <20190912082530.GA27365@mit.edu>
- <CAHk-=wjyH910+JRBdZf_Y9G54c1M=LBF8NKXB6vJcm9XjLnRfg@mail.gmail.com>
- <20190914122500.GA1425@darwi-home-pc> <008f17bc-102b-e762-a17c-e2766d48f515@gmail.com>
- <20190915052242.GG19710@mit.edu> <CAHk-=wgg2T=3KxrO-BY3nHJgMEyApjnO3cwbQb_0vxsn9qKN8Q@mail.gmail.com>
- <20190918211503.GA1808@darwi-home-pc> <20190918211713.GA2225@darwi-home-pc>
+Date: Fri, 20 Sep 2019 19:56:46 +0200
+Message-ID: <20190920175646.GA6969@pc>
+References: <CAHk-=wjyH910+JRBdZf_Y9G54c1M=LBF8NKXB6vJcm9XjLnRfg@mail.gmail.com>
+ <20190914122500.GA1425@darwi-home-pc>
+ <008f17bc-102b-e762-a17c-e2766d48f515@gmail.com>
+ <20190915052242.GG19710@mit.edu>
+ <CAHk-=wgg2T=3KxrO-BY3nHJgMEyApjnO3cwbQb_0vxsn9qKN8Q@mail.gmail.com>
+ <20190918211503.GA1808@darwi-home-pc>
+ <20190918211713.GA2225@darwi-home-pc>
  <CAHk-=wiCqDiU7SE3FLn2W26MS_voUAuqj5XFa1V_tiGTrrW-zQ@mail.gmail.com>
- <20190920134609.GA2113@pc> <CALCETrWvE5es3i+to33y6jw=Yf0Tw6ZfV-6QWjZT5v0fo76tWw@mail.gmail.com>
- <CAHk-=wgW8rN2EVL_Rdn63V9vQO0GkZ=RQFeqqsYJM==8fujpPg@mail.gmail.com>
+ <20190920134609.GA2113@pc>
+ <20190920172609.GA1832@1wt.eu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=wgW8rN2EVL_Rdn63V9vQO0GkZ=RQFeqqsYJM==8fujpPg@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <20190920172609.GA1832@1wt.eu>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Andy Lutomirski <luto@kernel.org>, "Ahmed S. Darwish" <darwish.07@gmail.com>, Lennart Poettering <mzxreary@0pointer.de>, "Theodore Y. Ts'o" <tytso@mit.edu>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, lkml <linux-kernel@vger.kernel.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>
+To: Willy Tarreau <w@1wt.eu>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Lennart Poettering <mzxreary@0pointer.de>, "Theodore Y. Ts'o" <tytso@mit.edu>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Matthew Garrett <mjg59@srcf.ucam.org>, lkml <linux-kernel@vger.kernel.org>, linux-ext4@vger.kernel.org, linux-api@vger.kernel.org, linux-man@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 20, 2019 at 9:30 AM Linus Torvalds
-<torvalds@linux-foundation.org> wrote:
->
-> On Fri, Sep 20, 2019 at 7:34 AM Andy Lutomirski <luto@kernel.org> wrote:
+On Fri, Sep 20, 2019 at 07:26:09PM +0200, Willy Tarreau wrote:
+> Hi Ahmed,
+> 
+> On Fri, Sep 20, 2019 at 03:46:09PM +0200, Ahmed S. Darwish wrote:
+> > Problem is, glibc is still *really* slow in adopting linux syscall
+> > wrappers, so I'm not optimistic about that...
 > >
-> > What is this GRND_EXPLICIT thing?
->
-> Your own email gives the explanation:
->
-> > Linus, I disagree that blocking while waiting for randomness is an
-> > error.  Sometimes you want to generate a key
->
-> That's *exactly* why GRND_EXPLICIT needs to be done regardless.
->
-> The keyword there is "Sometimes".
->
-> But people currently use "getrandom(0)" when they DO NOT want a key,
-> they just want some miscellaneous random numbers for some totally
-> non-security-related reason.
->
-> And that will continue. Exactly because the people who do not want a
-> key by definition aren't thinking about it very hard.
+> > I still see the new system call as the sanest path, even provided
+> > the cost of a new syscall number..
+> 
+> New syscalls are always a pain to deal with in userland, because when
+> they are introduced, everyone wants them long before they're available
+> in glibc. So userland has to define NR_xxx for each supported arch and
+> to perform the call itself.
+> 
+> With flags adoption is instantaneous. Just #ifndef/#define, check if
+> the flag is supported and that's done. The only valid reason for a new
+> syscall is when the API changes (e.g. one extra arg, a la accept4()),
+> which doesn't seem to be the case here. Otherwise please by all means
+> avoid this in general.
+> 
 
-I fully agree that this is a problem.  It's a problem we brought on
-ourselves because we screwed up the ABI from the beginning.  The
-question is what to do about it that doesn't cause its own set of
-nasty problems.
+I see. Thanks a lot for the explanation above :)
 
-> So GRND_EXPLICIT is there very much to make sure people who want true
-> secure keys will say so, and five years from now we will not have the
-> confusion between "Oh, I wasn't thinking about bootup". Because at a
-> minimum, in the near future getrandom(0) will warn about the
-> ambiguity. Or it will use some questionable jitter entropy that some
-> real key users will look at sideways and go "I don't want that".
-
-There are programs that call getrandom(0) *today* that expect secure
-output.  openssl does a horrible dance in which it calls getentropy()
-if available and falls back to syscall(__NR_getrandom, buf, buflen, 0)
-otherwise.  We can't break this use case.  Changing the semantics of
-getrandom(0) out from under them seems like the worst kind of ABI
-break -- existing applications will *appear* to continue working but
-will, in fact, become insecure.
-
-IMO, from the beginning, we should have done this:
-
-GRND_INSECURE: insecure.  always works.
-
-GRND_SECURE_BLOCKING: does exactly what it says.
-
-0: -EINVAL.
-
-Using it correctly would be obvious.  Something like GRND_EXPLICIT
-would be a head-scratcher: people would have to look at the man page
-and actually think about it, and it's still easy to get wrong:
-
-getrandom(..., GRND_EXPLICIT): just fscking give me a number.  it
-seems to work and it shuts up the warning
-
-And we're back to square one.
-
-
-I think that, given existing software, we should make two or three
-changes to fix the basic problems here:
-
-1. Add GRND_INSECURE: at least let new applications do the right thing
-going forward.
-
-2. Fix what is arguably a straight up kernel bug, not even an ABI
-issue: when a user program is blocking in getrandom(..., 0), the
-kernel happily sits there doing absolutely nothing and deadlocks the
-system as a result.  This IMO isn't an ABI issue -- it's an
-implementation problem.  How about we make getrandom() (probably
-actually wait_for_random_bytes()) do something useful to try to seed
-the RNG if the system is otherwise not doing IO.
-
-3. Optionally, entirely in user code: Get glibc to add new *library*
-functions: getentropy_secure_blocking() and getentropy_insecure() or
-whatever they want to call them.  Deprecate getentropy().
-
-I think #2 is critical.  Right now, suppose someone has a system that
-neets to do a secure network request (a la Red Hat's Clevis).  I have
-no idea what Clevis actually does, but it wouldn't be particularly
-crazy to do a DH exchange or sign with an EC key to ask some network
-server to help unlock a dm-crypt volume.  If the system does this at
-boot, it needs to use getrandom(..., 0), GRND_EXPLICIT, or whatever,
-because it NEEDS a secure random number.  No about of ABI fiddling
-will change this.  The kernel should *work* in this case rather than
-deadlocking.
-
---Andy
+--
+Ahmed Darwish
