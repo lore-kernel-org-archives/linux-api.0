@@ -1,26 +1,69 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH v2 0/7] Rework random blocking
-Date: Fri, 20 Sep 2019 07:46:19 -0700
-Message-ID: <CALCETrWeWQeotMXbY2yKOmWbhW7HZLYdFBUVcFy3vCmSnm+9Sw@mail.gmail.com>
-References: <cover.1568990048.git.luto@kernel.org>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [RFC PATCH 2/3] fs: add RWF_ENCODED for writing compressed data
+Date: Fri, 20 Sep 2019 10:25:04 -0600
+Message-ID: <cf85b314-2cf7-4fcb-c116-21a271ab50fc@kernel.dk>
+References: <cover.1568875700.git.osandov@fb.com>
+ <230a76e65372a8fb3ec62ce167d9322e5e342810.1568875700.git.osandov@fb.com>
+ <CAG48ez2GKv15Uj6Wzv0sG5v2bXyrSaCtRTw5Ok_ovja_CiO_fQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1568990048.git.luto@kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Theodore Tso <tytso@google.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, "Jason A. Donenfeld" <Jason@zx2c4.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, Lennart Poettering <mzxreary@0pointer.de>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+In-Reply-To: <CAG48ez2GKv15Uj6Wzv0sG5v2bXyrSaCtRTw5Ok_ovja_CiO_fQ@mail.gmail.com>
+Content-Language: en-US
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Jann Horn <jannh@google.com>, Omar Sandoval <osandov@osandov.com>
+Cc: linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-btrfs@vger.kernel.org, Dave Chinner <david@fromorbit.com>, Linux API <linux-api@vger.kernel.org>, Kernel Team <kernel-team@fb.com>, Andy Lutomirski <luto@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 20, 2019 at 7:36 AM Andy Lutomirski <luto@kernel.org> wrote:
->
-> This makes two major semantic changes to Linux's random APIs:
+On 9/19/19 9:44 AM, Jann Horn wrote:
+> On Thu, Sep 19, 2019 at 8:54 AM Omar Sandoval <osandov@osandov.com> wrote:
+>> Btrfs can transparently compress data written by the user. However, we'd
+>> like to add an interface to write pre-compressed data directly to the
+>> filesystem. This adds support for so-called "encoded writes" via
+>> pwritev2().
+>>
+>> A new RWF_ENCODED flags indicates that a write is "encoded". If this
+>> flag is set, iov[0].iov_base points to a struct encoded_iov which
+>> contains metadata about the write: namely, the compression algorithm and
+>> the unencoded (i.e., decompressed) length of the extent. iov[0].iov_len
+>> must be set to sizeof(struct encoded_iov), which can be used to extend
+>> the interface in the future. The remaining iovecs contain the encoded
+>> extent.
+>>
+>> A similar interface for reading encoded data can be added to preadv2()
+>> in the future.
+>>
+>> Filesystems must indicate that they support encoded writes by setting
+>> FMODE_ENCODED_IO in ->file_open().
+> [...]
+>> +int import_encoded_write(struct kiocb *iocb, struct encoded_iov *encoded,
+>> +                        struct iov_iter *from)
+>> +{
+>> +       if (iov_iter_single_seg_count(from) != sizeof(*encoded))
+>> +               return -EINVAL;
+>> +       if (copy_from_iter(encoded, sizeof(*encoded), from) != sizeof(*encoded))
+>> +               return -EFAULT;
+>> +       if (encoded->compression == ENCODED_IOV_COMPRESSION_NONE &&
+>> +           encoded->encryption == ENCODED_IOV_ENCRYPTION_NONE) {
+>> +               iocb->ki_flags &= ~IOCB_ENCODED;
+>> +               return 0;
+>> +       }
+>> +       if (encoded->compression > ENCODED_IOV_COMPRESSION_TYPES ||
+>> +           encoded->encryption > ENCODED_IOV_ENCRYPTION_TYPES)
+>> +               return -EINVAL;
+>> +       if (!capable(CAP_SYS_ADMIN))
+>> +               return -EPERM;
+> 
+> How does this capable() check interact with io_uring? Without having
+> looked at this in detail, I suspect that when an encoded write is
+> requested through io_uring, the capable() check might be executed on
+> something like a workqueue worker thread, which is probably running
+> with a full capability set.
 
-Hmm.  I have at least two issues in here that need fixing:
+If we can hit -EAGAIN before doing the import in io_uring, then yes,
+this will probably bypass the check as it'll only happen from the
+worker.
 
- - getrandom() can warn.  Whoops.
-
- - Repeatedly calling getentropy in GRND_INSECURE mode will interfere
-will CRNG init.
-
-v3 will fix these issues.
+-- 
+Jens Axboe
