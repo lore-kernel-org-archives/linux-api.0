@@ -1,52 +1,26 @@
-From: Jan Kara <jack@suse.cz>
-Subject: Re: [RFC PATCH 1/3] fs: pass READ/WRITE to kiocb_set_rw_flags()
-Date: Fri, 20 Sep 2019 16:38:55 +0200
-Message-ID: <20190920143855.GD25765@quack2.suse.cz>
-References: <cover.1568875700.git.osandov@fb.com>
- <d23a40f0ad3fa0631fe6189b94811be473e7cc4a.1568875700.git.osandov@fb.com>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH v2 0/7] Rework random blocking
+Date: Fri, 20 Sep 2019 07:46:19 -0700
+Message-ID: <CALCETrWeWQeotMXbY2yKOmWbhW7HZLYdFBUVcFy3vCmSnm+9Sw@mail.gmail.com>
+References: <cover.1568990048.git.luto@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <d23a40f0ad3fa0631fe6189b94811be473e7cc4a.1568875700.git.osandov@fb.com>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Omar Sandoval <osandov@osandov.com>
-Cc: linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org, Dave Chinner <david@fromorbit.com>, linux-api@vger.kernel.org, kernel-team@fb.com, Jan Kara <jack@suse.cz>, Jens Axboe <axboe@kernel.dk>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <cover.1568990048.git.luto@kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Theodore Tso <tytso@google.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, "Jason A. Donenfeld" <Jason@zx2c4.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, Lennart Poettering <mzxreary@0pointer.de>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed 18-09-19 23:53:44, Omar Sandoval wrote:
-> From: Omar Sandoval <osandov@fb.com>
-> 
-> A following change will want to check whether an IO is a read or write
-> in kiocb_set_rw_flags(). Additionally, aio and io_uring currently set
-> the IOCB_WRITE flag on a kiocb right before calling call_write_iter(),
-> but we can move that into the common code.
-> 
-> Cc: Jan Kara <jack@suse.cz>
-> Cc: Jens Axboe <axboe@kernel.dk>
-> Signed-off-by: Omar Sandoval <osandov@fb.com>
-...
-> index ffe35d97afcb..75c4b7680385 100644
-> --- a/include/linux/fs.h
-> +++ b/include/linux/fs.h
-> @@ -3351,8 +3351,11 @@ static inline int iocb_flags(struct file *file)
->  	return res;
->  }
->  
-> -static inline int kiocb_set_rw_flags(struct kiocb *ki, rwf_t flags)
-> +static inline int kiocb_set_rw_flags(int rw, struct kiocb *ki, rwf_t flags)
->  {
-> +	if (rw == WRITE)
-> +		ki->ki_flags |= IOCB_WRITE;
-> +
->  	if (unlikely(flags & ~RWF_SUPPORTED))
->  		return -EOPNOTSUPP;
+On Fri, Sep 20, 2019 at 7:36 AM Andy Lutomirski <luto@kernel.org> wrote:
+>
+> This makes two major semantic changes to Linux's random APIs:
 
-I'd find it more natural if the destination argument (i.e., kiocb) stayed
-to be the first argument of the function. Otherwise the patch looks good to
-me.
+Hmm.  I have at least two issues in here that need fixing:
 
-								Honza
--- 
-Jan Kara <jack@suse.com>
-SUSE Labs, CR
+ - getrandom() can warn.  Whoops.
+
+ - Repeatedly calling getentropy in GRND_INSECURE mode will interfere
+will CRNG init.
+
+v3 will fix these issues.
