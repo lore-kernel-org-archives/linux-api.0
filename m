@@ -1,69 +1,61 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [RFC PATCH 2/3] fs: add RWF_ENCODED for writing compressed data
-Date: Fri, 20 Sep 2019 10:25:04 -0600
-Message-ID: <cf85b314-2cf7-4fcb-c116-21a271ab50fc@kernel.dk>
-References: <cover.1568875700.git.osandov@fb.com>
- <230a76e65372a8fb3ec62ce167d9322e5e342810.1568875700.git.osandov@fb.com>
- <CAG48ez2GKv15Uj6Wzv0sG5v2bXyrSaCtRTw5Ok_ovja_CiO_fQ@mail.gmail.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH RFC v4 1/1] random: WARN on large getrandom() waits and
+ introduce getrandom2()
+Date: Fri, 20 Sep 2019 09:29:51 -0700
+Message-ID: <CAHk-=wgW8rN2EVL_Rdn63V9vQO0GkZ=RQFeqqsYJM==8fujpPg@mail.gmail.com>
+References: <20190912034421.GA2085@darwi-home-pc> <20190912082530.GA27365@mit.edu>
+ <CAHk-=wjyH910+JRBdZf_Y9G54c1M=LBF8NKXB6vJcm9XjLnRfg@mail.gmail.com>
+ <20190914122500.GA1425@darwi-home-pc> <008f17bc-102b-e762-a17c-e2766d48f515@gmail.com>
+ <20190915052242.GG19710@mit.edu> <CAHk-=wgg2T=3KxrO-BY3nHJgMEyApjnO3cwbQb_0vxsn9qKN8Q@mail.gmail.com>
+ <20190918211503.GA1808@darwi-home-pc> <20190918211713.GA2225@darwi-home-pc>
+ <CAHk-=wiCqDiU7SE3FLn2W26MS_voUAuqj5XFa1V_tiGTrrW-zQ@mail.gmail.com>
+ <20190920134609.GA2113@pc> <CALCETrWvE5es3i+to33y6jw=Yf0Tw6ZfV-6QWjZT5v0fo76tWw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <CAG48ez2GKv15Uj6Wzv0sG5v2bXyrSaCtRTw5Ok_ovja_CiO_fQ@mail.gmail.com>
-Content-Language: en-US
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>, Omar Sandoval <osandov@osandov.com>
-Cc: linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-btrfs@vger.kernel.org, Dave Chinner <david@fromorbit.com>, Linux API <linux-api@vger.kernel.org>, Kernel Team <kernel-team@fb.com>, Andy Lutomirski <luto@kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CALCETrWvE5es3i+to33y6jw=Yf0Tw6ZfV-6QWjZT5v0fo76tWw@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andy Lutomirski <luto@kernel.org>
+Cc: "Ahmed S. Darwish" <darwish.07@gmail.com>, Lennart Poettering <mzxreary@0pointer.de>, "Theodore Y. Ts'o" <tytso@mit.edu>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, lkml <linux-kernel@vger.kernel.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 9/19/19 9:44 AM, Jann Horn wrote:
-> On Thu, Sep 19, 2019 at 8:54 AM Omar Sandoval <osandov@osandov.com> wrote:
->> Btrfs can transparently compress data written by the user. However, we'd
->> like to add an interface to write pre-compressed data directly to the
->> filesystem. This adds support for so-called "encoded writes" via
->> pwritev2().
->>
->> A new RWF_ENCODED flags indicates that a write is "encoded". If this
->> flag is set, iov[0].iov_base points to a struct encoded_iov which
->> contains metadata about the write: namely, the compression algorithm and
->> the unencoded (i.e., decompressed) length of the extent. iov[0].iov_len
->> must be set to sizeof(struct encoded_iov), which can be used to extend
->> the interface in the future. The remaining iovecs contain the encoded
->> extent.
->>
->> A similar interface for reading encoded data can be added to preadv2()
->> in the future.
->>
->> Filesystems must indicate that they support encoded writes by setting
->> FMODE_ENCODED_IO in ->file_open().
-> [...]
->> +int import_encoded_write(struct kiocb *iocb, struct encoded_iov *encoded,
->> +                        struct iov_iter *from)
->> +{
->> +       if (iov_iter_single_seg_count(from) != sizeof(*encoded))
->> +               return -EINVAL;
->> +       if (copy_from_iter(encoded, sizeof(*encoded), from) != sizeof(*encoded))
->> +               return -EFAULT;
->> +       if (encoded->compression == ENCODED_IOV_COMPRESSION_NONE &&
->> +           encoded->encryption == ENCODED_IOV_ENCRYPTION_NONE) {
->> +               iocb->ki_flags &= ~IOCB_ENCODED;
->> +               return 0;
->> +       }
->> +       if (encoded->compression > ENCODED_IOV_COMPRESSION_TYPES ||
->> +           encoded->encryption > ENCODED_IOV_ENCRYPTION_TYPES)
->> +               return -EINVAL;
->> +       if (!capable(CAP_SYS_ADMIN))
->> +               return -EPERM;
-> 
-> How does this capable() check interact with io_uring? Without having
-> looked at this in detail, I suspect that when an encoded write is
-> requested through io_uring, the capable() check might be executed on
-> something like a workqueue worker thread, which is probably running
-> with a full capability set.
+On Fri, Sep 20, 2019 at 7:34 AM Andy Lutomirski <luto@kernel.org> wrote:
+>
+> What is this GRND_EXPLICIT thing?
 
-If we can hit -EAGAIN before doing the import in io_uring, then yes,
-this will probably bypass the check as it'll only happen from the
-worker.
+Your own email gives the explanation:
 
--- 
-Jens Axboe
+> Linus, I disagree that blocking while waiting for randomness is an
+> error.  Sometimes you want to generate a key
+
+That's *exactly* why GRND_EXPLICIT needs to be done regardless.
+
+The keyword there is "Sometimes".
+
+But people currently use "getrandom(0)" when they DO NOT want a key,
+they just want some miscellaneous random numbers for some totally
+non-security-related reason.
+
+And that will continue. Exactly because the people who do not want a
+key by definition aren't thinking about it very hard.
+
+So the interface was very much mis-designed from the get-go. It was
+designed purely for key people, even though generating keys is by no
+means the most common reason for wanting a block of "random" numbers.
+
+So GRND_EXPLICIT is there very much to make sure people who want true
+secure keys will say so, and five years from now we will not have the
+confusion between "Oh, I wasn't thinking about bootup". Because at a
+minimum, in the near future getrandom(0) will warn about the
+ambiguity. Or it will use some questionable jitter entropy that some
+real key users will look at sideways and go "I don't want that".
+
+This is an ABI design issue. The old ABI was fundamentally misdesigned
+and actively encouraged the current situation of mixing secure and
+insecure callers for that getrandom(0).
+
+And it's entirely orthogonal to _any_ actual technical change we will
+do (like removing the old GRND_RANDOM behavior entirely, which is
+insane for other reasons and nobody ever wanted or likely used).
+
+            Linus
