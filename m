@@ -1,64 +1,52 @@
-From: Andy Lutomirski <luto@kernel.org>
+From: Willy Tarreau <w@1wt.eu>
 Subject: Re: [PATCH RFC v4 1/1] random: WARN on large getrandom() waits and
  introduce getrandom2()
-Date: Fri, 20 Sep 2019 16:30:20 -0700
-Message-ID: <CALCETrWCjGHKnKikj+YVw22Ufpmnh1TCdGPjG2RL-qzsF=wisA@mail.gmail.com>
-References: <20190912034421.GA2085@darwi-home-pc> <20190912082530.GA27365@mit.edu>
- <CAHk-=wjyH910+JRBdZf_Y9G54c1M=LBF8NKXB6vJcm9XjLnRfg@mail.gmail.com>
- <20190914122500.GA1425@darwi-home-pc> <008f17bc-102b-e762-a17c-e2766d48f515@gmail.com>
- <20190915052242.GG19710@mit.edu> <CAHk-=wgg2T=3KxrO-BY3nHJgMEyApjnO3cwbQb_0vxsn9qKN8Q@mail.gmail.com>
- <20190918211503.GA1808@darwi-home-pc> <20190918211713.GA2225@darwi-home-pc>
- <CAHk-=wiCqDiU7SE3FLn2W26MS_voUAuqj5XFa1V_tiGTrrW-zQ@mail.gmail.com>
- <20190920134609.GA2113@pc> <CALCETrWvE5es3i+to33y6jw=Yf0Tw6ZfV-6QWjZT5v0fo76tWw@mail.gmail.com>
+Date: Sat, 21 Sep 2019 05:05:47 +0200
+Message-ID: <20190921030547.GF1889@1wt.eu>
+References: <20190920134609.GA2113@pc>
+ <CALCETrWvE5es3i+to33y6jw=Yf0Tw6ZfV-6QWjZT5v0fo76tWw@mail.gmail.com>
  <CAHk-=wgW8rN2EVL_Rdn63V9vQO0GkZ=RQFeqqsYJM==8fujpPg@mail.gmail.com>
  <CALCETrV=4TX2a4uV5t2xOFzv+zM_jnOtMLJna8Vb7uXz6S=wSw@mail.gmail.com>
  <CAHk-=wjpTWgpo6d24pTv+ubfea_uEomX-sHjjOkdACfV-8Nmkg@mail.gmail.com>
  <CALCETrUEqjFmPvpcJQwJe3dNbz8eaJ4k3_AV2u0v96MffjLn+g@mail.gmail.com>
  <CAHk-=whJ3kmcZp=Ws+uXnRB9KokG6nXSQCSuBnerG--jkAfP5w@mail.gmail.com>
- <CALCETrXMp3dJaKDm+RQijQEUuPNPmpKWr8Ljf+RqycXChGnKrw@mail.gmail.com> <CAHk-=whz7Okts01ygAP6GZWBvCV7s==CKjghmOp+r+LWketBYQ@mail.gmail.com>
+ <CALCETrXMp3dJaKDm+RQijQEUuPNPmpKWr8Ljf+RqycXChGnKrw@mail.gmail.com>
+ <CAHk-=whz7Okts01ygAP6GZWBvCV7s==CKjghmOp+r+LWketBYQ@mail.gmail.com>
+ <CALCETrWCjGHKnKikj+YVw22Ufpmnh1TCdGPjG2RL-qzsF=wisA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=whz7Okts01ygAP6GZWBvCV7s==CKjghmOp+r+LWketBYQ@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <CALCETrWCjGHKnKikj+YVw22Ufpmnh1TCdGPjG2RL-qzsF=wisA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Andy Lutomirski <luto@kernel.org>, "Ahmed S. Darwish" <darwish.07@gmail.com>, Lennart Poettering <mzxreary@0pointer.de>, "Theodore Y. Ts'o" <tytso@mit.edu>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, lkml <linux-kernel@vger.kernel.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, "Ahmed S. Darwish" <darwish.07@gmail.com>, Lennart Poettering <mzxreary@0pointer.de>, "Theodore Y. Ts'o" <tytso@mit.edu>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Matthew Garrett <mjg59@srcf.ucam.org>, lkml <linux-kernel@vger.kernel.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 20, 2019 at 3:44 PM Linus Torvalds
-<torvalds@linux-foundation.org> wrote:
->
-> On Fri, Sep 20, 2019 at 1:51 PM Andy Lutomirski <luto@kernel.org> wrote:
-> >
-> > To be clear, when I say "blocking", I mean "blocks until we're ready,
-> > but we make sure we're ready in a moderately timely manner".
->
-> .. an I want a pony.
->
-> The problem is that you start from an assumption that we simply can't
-> seem to do.
+On Fri, Sep 20, 2019 at 04:30:20PM -0700, Andy Lutomirski wrote:
+> So I think that just improving the
+> getrandom()-is-blocking-on-x86-and-arm behavior, adding GRND_INSECURE
+> and GRND_SECURE_BLOCKING, and adding the warning if 0 is passed is
+> good enough.
 
-Eh, fair enough, I wasn't thinking about platforms without fast clocks.
+I think so as well. Anyway, keep in mind that *with a sane API*,
+userland can improve very quickly (faster than kernel deployments in
+field). But userland developers need reliable and testable support for
+features. If it's enough to do #ifndef GRND_xxx/#define GRND_xxx and
+call getrandom() with these flags to detect support, it's basically 5
+reliable lines of code to add to userland to make a warning disappear
+and/or to allow a system that previously failed to boot to now boot. So
+this gives strong incentive to userland to adopt the new API, provided
+there's a way for the developer to understand what's happening (which
+the warning does).
 
-I'm very nervous about allowing getrandom(..., 0) to fail with
--EAGAIN, though.  On a very, very brief search, I didn't find any
-programs that would incorrectly assume it worked, but I can easily
-imagine programs crashing, and that might be bad, too.  At the end of
-the day, most user programmers who call getrandom() really did notice
-that we flubbed the ABI, and either they were too lazy to fall back to
-/dev/urandom, or they didn't want to for some reason, or they
-genuinely want the blocking behavior.  And people who work with little
-embedded systems without good clocks that basically can't generate
-random numbers already know this, and they have little scripts to help
-out.
+If we do it right, all we'll hear are userland developers complaining
+that those stupid kernel developers have changed their API again and
+really don't know what they want. That will be a good sign that the
+warning flows back to them and that adoption is taking.
 
-So I think that just improving the
-getrandom()-is-blocking-on-x86-and-arm behavior, adding GRND_INSECURE
-and GRND_SECURE_BLOCKING, and adding the warning if 0 is passed is
-good enough.  I suppose we could also have separate
-GRND_SECURE_BLOCKING and GRND_SECURE_BLOCK_FOREVER.  We could also say
-that, if you want to block forever, you should poll() on /dev/random
-(with my patches applied, where this actually does what users would
-want).
+And if the change is small enough, maybe it could make sense to backport
+it to stable versions to fix boot issues. With a testable feature it
+does make sense.
 
---Andy
+Willy
