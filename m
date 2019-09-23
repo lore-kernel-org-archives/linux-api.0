@@ -1,45 +1,154 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [PATCH RFC v4 1/1] random: WARN on large getrandom() waits and introduce getrandom2()
-Date: Sat, 21 Sep 2019 08:07:12 +0200
-Message-ID: <87blvefai7.fsf@oldenburg2.str.redhat.com>
-References: <20190912034421.GA2085@darwi-home-pc>
-        <20190912082530.GA27365@mit.edu>
-        <CAHk-=wjyH910+JRBdZf_Y9G54c1M=LBF8NKXB6vJcm9XjLnRfg@mail.gmail.com>
-        <20190914122500.GA1425@darwi-home-pc>
-        <008f17bc-102b-e762-a17c-e2766d48f515@gmail.com>
-        <20190915052242.GG19710@mit.edu>
-        <CAHk-=wgg2T=3KxrO-BY3nHJgMEyApjnO3cwbQb_0vxsn9qKN8Q@mail.gmail.com>
-        <20190918211503.GA1808@darwi-home-pc>
-        <20190918211713.GA2225@darwi-home-pc>
-        <CAHk-=wiCqDiU7SE3FLn2W26MS_voUAuqj5XFa1V_tiGTrrW-zQ@mail.gmail.com>
-        <20190920134609.GA2113@pc>
-        <CALCETrWvE5es3i+to33y6jw=Yf0Tw6ZfV-6QWjZT5v0fo76tWw@mail.gmail.com>
-        <CAHk-=wgW8rN2EVL_Rdn63V9vQO0GkZ=RQFeqqsYJM==8fujpPg@mail.gmail.com>
-        <CALCETrV=4TX2a4uV5t2xOFzv+zM_jnOtMLJna8Vb7uXz6S=wSw@mail.gmail.com>
-        <CAHk-=wjpTWgpo6d24pTv+ubfea_uEomX-sHjjOkdACfV-8Nmkg@mail.gmail.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: For review: pidfd_open(2) manual page
+Date: Mon, 23 Sep 2019 11:11:53 +0200
+Message-ID: <90399dee-53d8-a82c-3871-9ec8f94601ce@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=wjpTWgpo6d24pTv+ubfea_uEomX-sHjjOkdACfV-8Nmkg@mail.gmail.com>
-        (Linus Torvalds's message of "Fri, 20 Sep 2019 11:09:53 -0700")
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Andy Lutomirski <luto@kernel.org>, "Ahmed S. Darwish" <darwish.07@gmail.com>, Lennart Poettering <mzxreary@0pointer.de>, "Theodore Y. Ts'o" <tytso@mit.edu>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, lkml <linux-kernel@vger.kernel.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>
+To: Christian Brauner <christian@brauner.io>, Jann Horn <jannh@google.com>, Daniel Colascione <dancol@google.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Joel Fernandes <joel@joelfernandes.org>
+Cc: mtk.manpages@gmail.com, Linux API <linux-api@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, Oleg Nesterov <oleg@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-* Linus Torvalds:
+Hello Christian and all,
 
-> Violently agreed. And that's kind of what the GRND_EXPLICIT is really
-> aiming for.
->
-> However, it's worth noting that nobody should ever use GRND_EXPLICIT
-> directly. That's just the name for the bit. The actual users would use
-> GRND_INSECURE or GRND_SECURE.
+Below, I have the rendered version of the current draft of
+the pidfd_open(2) manual page that I have written.
+The page source can be found in a Git branch at:
+https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/log/?h=draft_pidfd
 
-Should we switch glibc's getentropy to GRND_EXPLICIT?  Or something
-else?
+I would be pleased to receive corrections and notes on any
+details that should be added. (For example, are there error
+cases that I have missed?)
 
-I don't think we want to print a kernel warning for this function.
+Would you be able to review please?
 
 Thanks,
-Florian
+
+Michael
+
+
+NAME
+       pidfd_open - obtain a file descriptor that refers to a process
+
+SYNOPSIS
+       int pidfd_open(pid_t pid, unsigned int flags);
+
+DESCRIPTION
+       The  pidfd_open()  system creates a file descriptor that refers to
+       the process whose PID is specified in pid.  The file descriptor is
+       returned  as the function result; the close-on-exec flag is set on
+       the file descriptor.
+
+       The flags argument is reserved for  future  use;  currently,  this
+       argument must be specified as 0.
+
+RETURN VALUE
+       On  success,  pidfd_open()  returns a nonnegative file descriptor.
+       On success, -1 is returned and errno is set to indicate the  cause
+       of the error.
+
+ERRORS
+       EINVAL flags is not 0.
+
+       EINVAL pid is not valid.
+
+       ESRCH  The process specified by pid does not exist.
+
+VERSIONS
+       pidfd_open() first appeared in Linux 5.3.
+
+CONFORMING TO
+       pidfd_open() is Linux specific.
+
+NOTES
+       Currently, there is no glibc wrapper for this system call; call it
+       using syscall(2).
+
+       The pidfd_send_signal(2) system call can be used to send a  signal
+       to the process referred to by a PID file descriptor.
+
+       A  PID  file descriptor can be monitored using poll(2), select(2),
+       and epoll(7).  When the process that it refers to terminates,  the
+       file descriptor indicates as readable.  Note, however, that in the
+       current implementation, nothing can be read from the file descrip‐
+       tor.
+
+       The  pidfd_open()  system call is the preferred way of obtaining a
+       PID file descriptor.  The alternative is to obtain a file descrip‐
+       tor by opening a /proc/[pid] directory.  However, the latter tech‐
+       nique is possible only if the proc(5) file system is mounted; fur‐
+       thermore,  the  file  descriptor  obtained in this way is not pol‐
+       lable.
+
+       See also the discussion of the CLONE_PIDFD flag in clone(2).
+
+EXAMPLE
+       The program below opens a PID  file  descriptor  for  the  process
+       whose PID is specified as its command-line argument.  It then mon‐
+       itors the file descriptor for readability (POLLIN) using  poll(2).
+       When  the  process  with  the specified by PID terminates, poll(2)
+       returns, and indicates that the file descriptor is readable.
+
+   Program source
+
+       #define _GNU_SOURCE
+       #include <sys/syscall.h>
+       #include <unistd.h>
+       #include <poll.h>
+       #include <stdlib.h>
+       #include <stdio.h>
+
+       #ifndef __NR_pidfd_open
+       #define __NR_pidfd_open 434
+       #endif
+
+       static
+       int pidfd_open(pid_t pid, unsigned int flags)
+       {
+           return syscall(__NR_pidfd_open, pid, flags);
+       }
+
+       int
+       main(int argc, char *argv[])
+       {
+           struct pollfd pollfd;
+           int pidfd, ready;
+
+           if (argc != 2) {
+               fprintf(stderr, "Usage: %s <pid>\n", argv[0]);
+               exit(EXIT_SUCCESS);
+           }
+
+           pidfd = pidfd_open(atoi(argv[1]), 0);
+           if (pidfd == -1) {
+               perror("pidfd_open");
+               exit(EXIT_FAILURE);
+           }
+
+           pollfd.fd = pidfd;
+           pollfd.events = POLLIN;
+
+           ready = poll(&pollfd, 1, -1);
+           if (ready == -1) {
+               perror("poll");
+               exit(EXIT_FAILURE);
+           }
+
+           printf("Events (0x%x): POLLIN is %sset\n", pollfd.revents,
+                   (pollfd.revents & POLLIN) ? "" : "not ");
+
+           exit(EXIT_SUCCESS);
+       }
+
+SEE ALSO
+       clone(2),  kill(2),  pidfd_send_signal(2),   poll(2),   select(2),
+       epoll(7)
+
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
