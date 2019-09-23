@@ -1,76 +1,60 @@
-From: Christian Brauner <christian.brauner@ubuntu.com>
-Subject: Re: For review: pidfd_open(2) manual page
-Date: Mon, 23 Sep 2019 16:47:13 +0200
-Message-ID: <20190923144711.ssbrg6bdquhewo7q@wittgenstein>
-References: <90399dee-53d8-a82c-3871-9ec8f94601ce@gmail.com>
- <87tv939td6.fsf@mid.deneb.enyo.de>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH RFC v4 1/1] random: WARN on large getrandom() waits and
+ introduce getrandom2()
+Date: Mon, 23 Sep 2019 11:33:21 -0700
+Message-ID: <CALCETrWM9opVj+BBrHnnTakTLunW_fB9RM+VSNpNSkR9drDjMw@mail.gmail.com>
+References: <20190912034421.GA2085@darwi-home-pc> <20190912082530.GA27365@mit.edu>
+ <CAHk-=wjyH910+JRBdZf_Y9G54c1M=LBF8NKXB6vJcm9XjLnRfg@mail.gmail.com>
+ <20190914122500.GA1425@darwi-home-pc> <008f17bc-102b-e762-a17c-e2766d48f515@gmail.com>
+ <20190915052242.GG19710@mit.edu> <CAHk-=wgg2T=3KxrO-BY3nHJgMEyApjnO3cwbQb_0vxsn9qKN8Q@mail.gmail.com>
+ <20190918211503.GA1808@darwi-home-pc> <20190918211713.GA2225@darwi-home-pc>
+ <CAHk-=wiCqDiU7SE3FLn2W26MS_voUAuqj5XFa1V_tiGTrrW-zQ@mail.gmail.com>
+ <20190920134609.GA2113@pc> <CALCETrWvE5es3i+to33y6jw=Yf0Tw6ZfV-6QWjZT5v0fo76tWw@mail.gmail.com>
+ <CAHk-=wgW8rN2EVL_Rdn63V9vQO0GkZ=RQFeqqsYJM==8fujpPg@mail.gmail.com>
+ <CALCETrV=4TX2a4uV5t2xOFzv+zM_jnOtMLJna8Vb7uXz6S=wSw@mail.gmail.com>
+ <CAHk-=wjpTWgpo6d24pTv+ubfea_uEomX-sHjjOkdACfV-8Nmkg@mail.gmail.com> <87blvefai7.fsf@oldenburg2.str.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <87tv939td6.fsf@mid.deneb.enyo.de>
+In-Reply-To: <87blvefai7.fsf@oldenburg2.str.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fw@deneb.enyo.de>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Christian Brauner <christian@brauner.io>, Jann Horn <jannh@google.com>, Daniel Colascione <dancol@google.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Joel Fernandes <joel@joelfernandes.org>, Linux API <linux-api@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, Oleg Nesterov <oleg@redhat.com>
+To: Florian Weimer <fweimer@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, "Ahmed S. Darwish" <darwish.07@gmail.com>, Lennart Poettering <mzxreary@0pointer.de>, "Theodore Y. Ts'o" <tytso@mit.edu>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, lkml <linux-kernel@vger.kernel.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Sep 23, 2019 at 12:53:09PM +0200, Florian Weimer wrote:
-> * Michael Kerrisk:
-> 
-> > SYNOPSIS
-> >        int pidfd_open(pid_t pid, unsigned int flags);
-> 
-> Should this mention <sys/types.h> for pid_t?
-> 
-> > ERRORS
-> >        EINVAL flags is not 0.
+On Fri, Sep 20, 2019 at 11:07 PM Florian Weimer <fweimer@redhat.com> wrote:
+>
+> * Linus Torvalds:
+>
+> > Violently agreed. And that's kind of what the GRND_EXPLICIT is really
+> > aiming for.
 > >
-> >        EINVAL pid is not valid.
-> >
-> >        ESRCH  The process specified by pid does not exist.
-> 
-> Presumably, EMFILE and ENFILE are also possible errors, and so is
-> ENOMEM.
+> > However, it's worth noting that nobody should ever use GRND_EXPLICIT
+> > directly. That's just the name for the bit. The actual users would use
+> > GRND_INSECURE or GRND_SECURE.
+>
+> Should we switch glibc's getentropy to GRND_EXPLICIT?  Or something
+> else?
+>
+> I don't think we want to print a kernel warning for this function.
+>
 
-So, error codes that could surface are:
-EMFILE: too many open files
-ENODEV: the anon inode filesystem is not available in this kernel (unlikely)
-ENOMEM: not enough memory (to allocate the backing struct file)
-ENFILE: you're over the max_files limit which can be set through proc
+Contemplating this question, I think the answer is that we should just
+not introduce GRND_EXPLICIT or anything like it.  glibc is going to
+have to do *something*, and getentropy() is unlikely to just go away.
+The explicitly documented semantics are that it blocks if the RNG
+isn't seeded.
 
-I think that should be it.
+Similarly, FreeBSD has getrandom():
 
-> 
-> >        A  PID  file descriptor can be monitored using poll(2), select(2),
-> >        and epoll(7).  When the process that it refers to terminates,  the
-> >        file descriptor indicates as readable.  Note, however, that in the
-> >        current implementation, nothing can be read from the file descrip‐
-> >        tor.
-> 
-> “is indicated as readable” or “becomes readable”?  Will reading block?
-> 
-> >        The  pidfd_open()  system call is the preferred way of obtaining a
-> >        PID file descriptor.  The alternative is to obtain a file descrip‐
-> >        tor by opening a /proc/[pid] directory.  However, the latter tech‐
-> >        nique is possible only if the proc(5) file system is mounted; fur‐
-> >        thermore,  the  file  descriptor  obtained in this way is not pol‐
-> >        lable.
-> 
-> One question is whether the glibc wrapper should fall back back to the
-> /proc subdirectory if it is not available.  Probably not.
+https://www.freebsd.org/cgi/man.cgi?query=getrandom&sektion=2&manpath=freebsd-release-ports
 
-No, that would not be transparent to userspace. Especially because both
-fds differ in what can be done with them.
+and if we make getrandom(..., 0) warn, then we have a situation where
+the *correct* (if regrettable) way to use the function on FreeBSD
+causes a warning on Linux.
 
-> 
-> >        static
-> >        int pidfd_open(pid_t pid, unsigned int flags)
-> >        {
-> >            return syscall(__NR_pidfd_open, pid, flags);
-> >        }
-> 
-> Please call this function something else (not pidfd_open), so that the
-> example continues to work if glibc provides the system call wrapper.
-
-Agreed!
+Let's just add GRND_INSECURE, make the blocking mode work better, and,
+if we're feeling a bit more adventurous, add GRND_SECURE_BLOCKING as a
+better replacement for 0, convince FreeBSD to add it too, and then
+worry about deprecating 0 once we at least get some agreement from the
+FreeBSD camp.
