@@ -1,81 +1,89 @@
 From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: For review: pidfd_open(2) manual page
-Date: Mon, 23 Sep 2019 22:22:22 +0200
-Message-ID: <39790bc7-f417-1172-0f06-5cdefabda7e1@gmail.com>
-References: <90399dee-53d8-a82c-3871-9ec8f94601ce@gmail.com>
- <87tv939td6.fsf@mid.deneb.enyo.de>
- <CAKOZuetTgKjgWZpCaBz8q662MwVQ-UhrV4oWFqKEWr35mQTFLw@mail.gmail.com>
+Subject: Re: For review: pidfd_send_signal(2) manual page
+Date: Mon, 23 Sep 2019 22:27:47 +0200
+Message-ID: <ca28a4d7-0c0e-2dee-b875-dc28b5dd0f0c@gmail.com>
+References: <f21dbd73-5ef4-fb5b-003f-ff4fec34a1de@gmail.com>
+ <20190923142932.2gujbddnzyp4ujeu@wittgenstein>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAKOZuetTgKjgWZpCaBz8q662MwVQ-UhrV4oWFqKEWr35mQTFLw@mail.gmail.com>
+In-Reply-To: <20190923142932.2gujbddnzyp4ujeu@wittgenstein>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Colascione <dancol@google.com>, Florian Weimer <fw@deneb.enyo.de>
-Cc: mtk.manpages@gmail.com, Christian Brauner <christian@brauner.io>, Jann Horn <jannh@google.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Joel Fernandes <joel@joelfernandes.org>, Linux API <linux-api@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, Oleg Nesterov <oleg@redhat.com>
+To: Christian Brauner <christian.brauner@ubuntu.com>
+Cc: mtk.manpages@gmail.com, Oleg Nesterov <oleg@redhat.com>, Christian Brauner <christian@brauner.io>, Jann Horn <jannh@google.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Daniel Colascione <dancol@google.com>, Joel Fernandes <joel@joelfernandes.org>, linux-man <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello Daniel,
+Hello Christian,
 
-Than you for reviewing the page!
-
-On 9/23/19 1:26 PM, Daniel Colascione wrote:
-> On Mon, Sep 23, 2019 at 3:53 AM Florian Weimer <fw@deneb.enyo.de> wrote:
+On 9/23/19 4:29 PM, Christian Brauner wrote:
+> On Mon, Sep 23, 2019 at 11:12:00AM +0200, Michael Kerrisk (man-pages) wrote:
+>> Hello Christian and all,
 >>
->> * Michael Kerrisk:
+>> Below, I have the rendered version of the current draft of
+>> the pidfd_send_signal(2) manual page that I have written.
+>> The page source can be found in a Git branch at:
+>> https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/log/?h=draft_pidfd
 >>
->>> SYNOPSIS
->>>        int pidfd_open(pid_t pid, unsigned int flags);
+>> I would be pleased to receive corrections and notes on any
+>> details that should be added. (For example, are there error
+>> cases that I have missed?)
 >>
->> Should this mention <sys/types.h> for pid_t?
->>
->>> ERRORS
->>>        EINVAL flags is not 0.
->>>
->>>        EINVAL pid is not valid.
->>>
->>>        ESRCH  The process specified by pid does not exist.
->>
->> Presumably, EMFILE and ENFILE are also possible errors, and so is
->> ENOMEM.
->>
->>>        A  PID  file descriptor can be monitored using poll(2), select(2),
->>>        and epoll(7).  When the process that it refers to terminates,  the
->>>        file descriptor indicates as readable.
+>> Would you be able to review please?
 > 
-> The phrase "becomes readable" is simpler than "indicates as readable"
-> and conveys the same meaning. I agree with Florian's comment on this
-> point below.
-
-See my reply to Florian. (I did change the text here.)
-
->>> Note, however, that in the
->>>        current implementation, nothing can be read from the file descrip‐
->>>        tor.
->>
->> “is indicated as readable” or “becomes readable”?  Will reading block?
->>
->>>        The  pidfd_open()  system call is the preferred way of obtaining a
->>>        PID file descriptor.  The alternative is to obtain a file descrip‐
->>>        tor by opening a /proc/[pid] directory.  However, the latter tech‐
->>>        nique is possible only if the proc(5) file system is mounted; fur‐
->>>        thermore,  the  file  descriptor  obtained in this way is not pol‐
->>>        lable.
+> Michael,
 > 
-> Referring to procfs directory FDs as pidfds will probably confuse
-> people. I'd just omit this paragraph.
-
-See my reply to Christian (and feel free to argue the point, please).
-So far, I have made no change here.
-
->> One question is whether the glibc wrapper should fall back back to the
->> /proc subdirectory if it is not available.  Probably not.
+> A big big thank you for doing this! Really appreciated.
+> I'm happy to review this!
 > 
-> I'd prefer that glibc not provide this kind of fallback.
-> posix_fallocate-style emulation is, IMHO, too surprising.
+>>
+>> Thanks,
+>>
+>> Michael
+>>
+>>
+>> NAME
+>>        pidfd_send_signal - send a signal to a process specified by a file
+>>        descriptor
+>>
+>> SYNOPSIS
+>>        int pidfd_send_signal(int pidfd, int sig, siginfo_t info,
+>>                              unsigned int flags);
+>>
+>> DESCRIPTION
+>>        The pidfd_send_signal() system call sends the signal  sig  to  the
+>>        target  process  referred  to by pidfd, a PID file descriptor that
+>>        refers to a process.
+>>
+>>        If the info argument points to a  siginfo_t  buffer,  that  buffer
+>>        should be populated as described in rt_sigqueueinfo(2).
+>>
+>>        If  the  info  argument  is  a NULL pointer, this is equivalent to
+>>        specifying a pointer to a siginfo_t buffer whose fields match  the
+>>        values  that  are  implicitly supplied when a signal is sent using
+>>        kill(2):
+>>
+>>        *  si_signo is set to the signal number;
+>>        *  si_errno is set to 0;
+>>        *  si_code is set to SI_USER;
+>>        *  si_pid is set to the caller's PID; and
+>>        *  si_uid is set to the caller's real user ID.
+>>
+>>        The calling process must either be in the same  PID  namespace  as
+>>        the  process  referred  to  by pidfd, or be in an ancestor of that
+>>        namespace.
+>>
+>>        The flags argument is reserved for  future  use;  currently,  this
+>>        argument must be specified as 0.
+>>
+>> RETURN VALUE
+>>        On  success,  pidfd_send_signal()  returns  0.   On success, -1 is
+> 
+> This should probably be "On error, -1 is [...]".
 
-Agreed.
+Thanks. Fixed.
+
 
 Cheers,
 
