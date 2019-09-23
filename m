@@ -1,65 +1,48 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: For review: pidfd_open(2) manual page
-Date: Mon, 23 Sep 2019 22:57:40 +0200
-Message-ID: <d3f5191a-3026-6ce1-5cf2-6be8e0f4a989@gmail.com>
-References: <90399dee-53d8-a82c-3871-9ec8f94601ce@gmail.com>
- <87tv939td6.fsf@mid.deneb.enyo.de>
- <63566f1f-667d-50ca-ae85-784924d09af4@gmail.com>
- <874l12924w.fsf@mid.deneb.enyo.de>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: For review: pidfd_send_signal(2) manual page
+Date: Mon, 23 Sep 2019 16:27:45 -0500
+Message-ID: <87ftkmu2i6.fsf@x220.int.ebiederm.org>
+References: <f21dbd73-5ef4-fb5b-003f-ff4fec34a1de@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <874l12924w.fsf@mid.deneb.enyo.de>
-Content-Language: en-US
+In-Reply-To: <f21dbd73-5ef4-fb5b-003f-ff4fec34a1de@gmail.com> (Michael
+        Kerrisk's message of "Mon, 23 Sep 2019 11:12:00 +0200")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fw@deneb.enyo.de>
-Cc: mtk.manpages@gmail.com, Christian Brauner <christian@brauner.io>, Jann Horn <jannh@google.com>, Daniel Colascione <dancol@google.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Joel Fernandes <joel@joelfernandes.org>, Linux API <linux-api@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, Oleg Nesterov <oleg@redhat.com>
+To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Cc: Oleg Nesterov <oleg@redhat.com>, Christian Brauner <christian@brauner.io>, Jann Horn <jannh@google.com>, Daniel Colascione <dancol@google.com>, Joel Fernandes <joel@joelfernandes.org>, linux-man <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello Florian,
+"Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com> writes:
 
-On 9/23/19 10:41 PM, Florian Weimer wrote:
-> * Michael Kerrisk:
-> 
->>>>        static
->>>>        int pidfd_open(pid_t pid, unsigned int flags)
->>>>        {
->>>>            return syscall(__NR_pidfd_open, pid, flags);
->>>>        }
->>>
->>> Please call this function something else (not pidfd_open), so that the
->>> example continues to work if glibc provides the system call wrapper.
->>
->> I figured that if the syscall does get added to glibc, then I would
->> modify the example. In the meantime, this does seem the most natural
->> way of doing things, since the example then uses the real syscall
->> name as it would be used if there were a wrapper function.
-> 
-> The problem is that programs do this as well, so they fail to build
-> once they are built on a newer glibc version.
+> Hello Christian and all,
+>
+> Below, I have the rendered version of the current draft of
+> the pidfd_send_signal(2) manual page that I have written.
+> The page source can be found in a Git branch at:
+> https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/log/?h=draft_pidfd
+>
+> I would be pleased to receive corrections and notes on any
+> details that should be added. (For example, are there error
+> cases that I have missed?)
+>
+> Would you be able to review please?
+>
+> Thanks,
+>
+> Michael
+>
+>
+> NAME
+>        pidfd_send_signal - send a signal to a process specified by a file
+>        descriptor
+>
+> SYNOPSIS
+>        int pidfd_send_signal(int pidfd, int sig, siginfo_t info,
 
-But isn't such a failure a good thing? I mean: it encourages
-people to rid their programs of uses of syscall(2).
+ This needs to be "siginfo_t *info," -----------------------^
 
->> But, this leads to the question: what do you think the likelihood
->> is that this system call will land in glibc?
-> 
-> Quite likely.  It's easy enough to document, there are no P&C issues,
-> and it doesn't need any new types.
+>                              unsigned int flags);
+>
 
-Okay.
-
-> pidfd_send_signal is slightly more difficult because we probably need
-> to add rt_sigqueueinfo first, for consistency.
-
-Okay. I see that's a little more problematic.
-
-Cheers,
-
-Michael
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+Eric
