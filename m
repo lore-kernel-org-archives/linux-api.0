@@ -1,7 +1,7 @@
 From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: [PATCH v1 3/4] sched_setattr: switch to copy_struct_from_user()
-Date: Wed, 25 Sep 2019 18:59:14 +0200
-Message-ID: <20190925165915.8135-4-cyphar@cyphar.com>
+Subject: [PATCH v1 1/4] lib: introduce copy_struct_from_user() helper
+Date: Wed, 25 Sep 2019 18:59:12 +0200
+Message-ID: <20190925165915.8135-2-cyphar@cyphar.com>
 References: <20190925165915.8135-1-cyphar@cyphar.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,95 +12,208 @@ To: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Alexa
 Cc: Aleksa Sarai <cyphar@cyphar.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Al Viro <viro@zeniv.linux.org.uk>, Linus Torvalds <torvalds@linux-foundation.org>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The change is very straightforward, and helps unify the syscall
-interface for struct-from-userspace syscalls. Ideally we could also
-unify sched_getattr(2)-style syscalls as well, but unfortunately the
-correct semantics for such syscalls are much less clear (see [1] for
-more detail). In future we could come up with a more sane idea for how
-the syscall interface should look.
+A common pattern for syscall extensions is increasing the size of a
+struct passed from userspace, such that the zero-value of the new fields
+result in the old kernel behaviour (allowing for a mix of userspace and
+kernel vintages to operate on one another in most cases).
+
+While this interface exists for communication in both directions, only
+one interface is straightforward to have reasonable semantics for
+(userspace passing a struct to the kernel). For kernel returns to
+userspace, what the correct semantics are (whether there should be an
+error if userspace is unaware of a new extension) is very
+syscall-dependent and thus probably cannot be unified between syscalls
+(a good example of this problem is [1]).
+
+Previously there was no common lib/ function that implemented
+the necessary extension-checking semantics (and different syscalls
+implemented them slightly differently or incompletely[2]). Future
+patches replace common uses of this pattern to make use of
+copy_struct_from_user().
 
 [1]: commit 1251201c0d34 ("sched/core: Fix uclamp ABI bug, clean up and
      robustify sched_read_attr() ABI logic and code")
 
+[2]: For instance {sched_setattr,perf_event_open,clone3}(2) all do do
+     similar checks to copy_struct_from_user() while rt_sigprocmask(2)
+     always rejects differently-sized struct arguments.
+
+Suggested-by: Rasmus Villemoes <linux@rasmusvillemoes.dk>
 Signed-off-by: Aleksa Sarai <cyphar@cyphar.com>
 ---
- kernel/sched/core.c | 43 +++++++------------------------------------
- 1 file changed, 7 insertions(+), 36 deletions(-)
+ include/linux/uaccess.h |  4 +++
+ lib/Makefile            |  2 +-
+ lib/strnlen_user.c      | 52 +++++++++++++++++++++++++++++
+ lib/struct_user.c       | 73 +++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 130 insertions(+), 1 deletion(-)
+ create mode 100644 lib/struct_user.c
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index df9f1fe5689b..cdb2f5e29b88 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -4900,9 +4900,6 @@ static int sched_copy_attr(struct sched_attr __user *uattr, struct sched_attr *a
- 	u32 size;
- 	int ret;
+diff --git a/include/linux/uaccess.h b/include/linux/uaccess.h
+index 34a038563d97..824569e309e4 100644
+--- a/include/linux/uaccess.h
++++ b/include/linux/uaccess.h
+@@ -230,6 +230,10 @@ static inline unsigned long __copy_from_user_inatomic_nocache(void *to,
  
--	if (!access_ok(uattr, SCHED_ATTR_SIZE_VER0))
--		return -EFAULT;
--
- 	/* Zero the full structure, so that a short copy will be nice: */
- 	memset(attr, 0, sizeof(*attr));
+ #endif		/* ARCH_HAS_NOCACHE_UACCESS */
  
-@@ -4910,45 +4907,19 @@ static int sched_copy_attr(struct sched_attr __user *uattr, struct sched_attr *a
- 	if (ret)
- 		return ret;
++extern int is_zeroed_user(const void __user *from, size_t count);
++extern int copy_struct_from_user(void *dst, size_t ksize,
++				 const void __user *src, size_t usize);
++
+ /*
+  * probe_kernel_read(): safely attempt to read from a location
+  * @dst: pointer to the buffer that shall take the data
+diff --git a/lib/Makefile b/lib/Makefile
+index 29c02a924973..d86c71feaf0a 100644
+--- a/lib/Makefile
++++ b/lib/Makefile
+@@ -28,7 +28,7 @@ endif
+ CFLAGS_string.o := $(call cc-option, -fno-stack-protector)
+ endif
  
--	/* Bail out on silly large: */
--	if (size > PAGE_SIZE)
--		goto err_size;
--
- 	/* ABI compatibility quirk: */
- 	if (!size)
- 		size = SCHED_ATTR_SIZE_VER0;
--
--	if (size < SCHED_ATTR_SIZE_VER0)
-+	if (size < SCHED_ATTR_SIZE_VER0 || size > PAGE_SIZE)
- 		goto err_size;
- 
--	/*
--	 * If we're handed a bigger struct than we know of,
--	 * ensure all the unknown bits are 0 - i.e. new
--	 * user-space does not rely on any kernel feature
--	 * extensions we dont know about yet.
--	 */
--	if (size > sizeof(*attr)) {
--		unsigned char __user *addr;
--		unsigned char __user *end;
--		unsigned char val;
--
--		addr = (void __user *)uattr + sizeof(*attr);
--		end  = (void __user *)uattr + size;
--
--		for (; addr < end; addr++) {
--			ret = get_user(val, addr);
--			if (ret)
--				return ret;
--			if (val)
--				goto err_size;
--		}
--		size = sizeof(*attr);
-+	ret = copy_struct_from_user(attr, sizeof(*attr), uattr, size);
-+	if (ret) {
-+		if (ret == -E2BIG)
-+			goto err_size;
-+		return ret;
- 	}
- 
--	ret = copy_from_user(attr, uattr, size);
--	if (ret)
--		return -EFAULT;
--
- 	if ((attr->sched_flags & SCHED_FLAG_UTIL_CLAMP) &&
- 	    size < SCHED_ATTR_SIZE_VER1)
- 		return -EINVAL;
-@@ -5148,7 +5119,7 @@ sched_attr_copy_to_user(struct sched_attr __user *uattr,
-  * sys_sched_getattr - similar to sched_getparam, but with sched_attr
-  * @pid: the pid in question.
-  * @uattr: structure containing the extended parameters.
-- * @usize: sizeof(attr) that user-space knows about, for forwards and backwards compatibility.
-+ * @usize: sizeof(attr) for fwd/bwd comp.
-  * @flags: for future extension.
-  */
- SYSCALL_DEFINE4(sched_getattr, pid_t, pid, struct sched_attr __user *, uattr,
+-lib-y := ctype.o string.o vsprintf.o cmdline.o \
++lib-y := ctype.o string.o struct_user.o vsprintf.o cmdline.o \
+ 	 rbtree.o radix-tree.o timerqueue.o xarray.o \
+ 	 idr.o extable.o \
+ 	 sha1.o chacha.o irq_regs.o argv_split.o \
+diff --git a/lib/strnlen_user.c b/lib/strnlen_user.c
+index 7f2db3fe311f..7eb665732954 100644
+--- a/lib/strnlen_user.c
++++ b/lib/strnlen_user.c
+@@ -123,3 +123,55 @@ long strnlen_user(const char __user *str, long count)
+ 	return 0;
+ }
+ EXPORT_SYMBOL(strnlen_user);
++
++/**
++ * is_zeroed_user: check if a userspace buffer is full of zeros
++ * @from:  Source address, in userspace.
++ * @size: Size of buffer.
++ *
++ * This is effectively shorthand for "memchr_inv(from, 0, size) == NULL" for
++ * userspace addresses. If there are non-zero bytes present then false is
++ * returned, otherwise true is returned.
++ *
++ * Returns:
++ *  * -EFAULT: access to userspace failed.
++ */
++int is_zeroed_user(const void __user *from, size_t size)
++{
++	u64 val;
++	uintptr_t align = (uintptr_t) from % 8;
++
++	if (unlikely(!size))
++		return true;
++
++	from -= align;
++	size += align;
++
++	if (!user_access_begin(from, size))
++		return -EFAULT;
++
++	while (size >= 8) {
++		unsafe_get_user(val, (u64 __user *) from, err_fault);
++		if (align) {
++			/* @from is unaligned. */
++			val &= ~aligned_byte_mask(align);
++			align = 0;
++		}
++		if (val)
++			goto done;
++		from += 8;
++		size -= 8;
++	}
++	if (size) {
++		/* (@from + @size) is unaligned. */
++		unsafe_get_user(val, (u64 __user *) from, err_fault);
++		val &= aligned_byte_mask(size);
++	}
++
++done:
++	user_access_end();
++	return (val == 0);
++err_fault:
++	user_access_end();
++	return -EFAULT;
++}
+diff --git a/lib/struct_user.c b/lib/struct_user.c
+new file mode 100644
+index 000000000000..57d79eb53bfa
+--- /dev/null
++++ b/lib/struct_user.c
+@@ -0,0 +1,73 @@
++// SPDX-License-Identifier: GPL-2.0-or-later
++/*
++ * Copyright (C) 2019 SUSE LLC
++ * Copyright (C) 2019 Aleksa Sarai <cyphar@cyphar.com>
++ */
++
++#include <linux/types.h>
++#include <linux/export.h>
++#include <linux/uaccess.h>
++#include <linux/kernel.h>
++#include <linux/string.h>
++
++/**
++ * copy_struct_from_user: copy a struct from userspace
++ * @dst:   Destination address, in kernel space. This buffer must be @ksize
++ *         bytes long.
++ * @ksize: Size of @dst struct.
++ * @src:   Source address, in userspace.
++ * @usize: (Alleged) size of @src struct.
++ *
++ * Copies a struct from userspace to kernel space, in a way that guarantees
++ * backwards-compatibility for struct syscall arguments (as long as future
++ * struct extensions are made such that all new fields are *appended* to the
++ * old struct, and zeroed-out new fields have the same meaning as the old
++ * struct).
++ *
++ * @ksize is just sizeof(*dst), and @usize should've been passed by userspace.
++ * The recommended usage is something like the following:
++ *
++ *   SYSCALL_DEFINE2(foobar, const struct foo __user *, uarg, size_t, usize)
++ *   {
++ *      int err;
++ *      struct foo karg = {};
++ *
++ *      err = copy_struct_from_user(&karg, sizeof(karg), uarg, size);
++ *      if (err)
++ *        return err;
++ *
++ *      // ...
++ *   }
++ *
++ * There are three cases to consider:
++ *  * If @usize == @ksize, then it's copied verbatim.
++ *  * If @usize < @ksize, then the userspace has passed an old struct to a
++ *    newer kernel. The rest of the trailing bytes in @dst (@ksize - @usize)
++ *    are to be zero-filled.
++ *  * If @usize > @ksize, then the userspace has passed a new struct to an
++ *    older kernel. The trailing bytes unknown to the kernel (@usize - @ksize)
++ *    are checked to ensure they are zeroed, otherwise -E2BIG is returned.
++ *
++ * Returns (in all cases, some data may have been copied):
++ *  * -E2BIG:  (@usize > @ksize) and there are non-zero trailing bytes in @src.
++ *  * -EFAULT: access to userspace failed.
++ */
++int copy_struct_from_user(void *dst, size_t ksize,
++			  const void __user *src, size_t usize)
++{
++	size_t size = min(ksize, usize);
++	size_t rest = max(ksize, usize) - size;
++
++	/* Deal with trailing bytes. */
++	if (usize < ksize) {
++		memset(dst + size, 0, rest);
++	} else if (usize > ksize) {
++		int ret = is_zeroed_user(src + size, rest);
++		if (ret <= 0)
++			return ret ?: -E2BIG;
++	}
++	/* Copy the interoperable parts of the struct. */
++	if (copy_from_user(dst, src, size))
++		return -EFAULT;
++	return 0;
++}
 -- 
 2.23.0
