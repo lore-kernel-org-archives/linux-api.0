@@ -1,155 +1,43 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: For review: pidfd_send_signal(2) manual page
-Date: Wed, 25 Sep 2019 16:29:56 +0200
-Message-ID: <1d413e4b-30a6-9ab5-546d-a4db95b4b6eb@gmail.com>
-References: <f21dbd73-5ef4-fb5b-003f-ff4fec34a1de@gmail.com>
- <87pnjr9rth.fsf@mid.deneb.enyo.de>
- <20190923142325.jowzbnwjw7g7si7j@wittgenstein>
- <90dd38d5-34b3-b72f-8e5a-b51f944f22fb@gmail.com>
- <20190924195701.7pw2olbviieqsg5q@wittgenstein>
- <b76adb4c-826b-6493-ba75-a9863066d3b1@gmail.com>
- <20190924215316.gxev2anuqffegocw@wittgenstein>
- <331cc245-3f70-dd43-31f9-8c1680ca6b20@gmail.com>
- <20190925135308.rev5tczcigyuchae@wittgenstein>
+From: Chris Mason <clm@fb.com>
+Subject: Re: [RFC PATCH 2/3] add RWF_ENCODED for writing compressed data
+Date: Wed, 25 Sep 2019 14:56:15 +0000
+Message-ID: <FF3F534F-B40D-4D7D-956B-F1B63C4751CC@fb.com>
+References: <cover.1568875700.git.osandov@fb.com>
+ <230a76e65372a8fb3ec62ce167d9322e5e342810.1568875700.git.osandov@fb.com>
+ <CAG48ez2GKv15Uj6Wzv0sG5v2bXyrSaCtRTw5Ok_ovja_CiO_fQ@mail.gmail.com>
+ <20190924171513.GA39872@vader> <20190924193513.GA45540@vader>
+ <CAG48ez1NQBNR1XeVQYGoopEk=g_KedUr+7jxLQTaO+V8JCeweQ@mail.gmail.com>
+ <20190925071129.GB804@dread.disaster.area>
+ <60c48ac5-b215-44e1-a628-6145d84a4ce3@www.fastmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190925135308.rev5tczcigyuchae@wittgenstein>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+In-Reply-To: <60c48ac5-b215-44e1-a628-6145d84a4ce3@www.fastmail.com>
 Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian.brauner@ubuntu.com>
-Cc: mtk.manpages@gmail.com, Florian Weimer <fw@deneb.enyo.de>, Oleg Nesterov <oleg@redhat.com>, Jann Horn <jannh@google.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Daniel Colascione <dancol@google.com>, Joel Fernandes <joel@joelfernandes.org>, linux-man <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Colin Walters <walters@verbum.org>
+Cc: Dave Chinner <david@fromorbit.com>, Jann Horn <jannh@google.com>, Omar Sandoval <osandov@osandov.com>, Aleksa Sarai <cyphar@cyphar.com>, Jens Axboe <axboe@kernel.dk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, "linux-btrfs@vger.kernel.org" <linux-btrfs@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kernel Team <Kernel-team@fb.com>, Andy Lutomirski <luto@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello Christian,
+On 25 Sep 2019, at 8:07, Colin Walters wrote:
 
-On 9/25/19 3:53 PM, Christian Brauner wrote:
-> On Wed, Sep 25, 2019 at 03:46:26PM +0200, Michael Kerrisk (man-pages) wrote:
->> On 9/24/19 11:53 PM, Christian Brauner wrote:
->>> On Tue, Sep 24, 2019 at 11:00:03PM +0200, Michael Kerrisk (man-pages) wrote:
->>>> Hello Christian,
->>>>
->>>>>>> If you're the parent of the process you can do this without CLONE_PIDFD:
->>>>>>> pid = fork();
->>>>>>> pidfd = pidfd_open();
->>>>>>> ret = pidfd_send_signal(pidfd, 0, NULL, 0);
->>>>>>> if (ret < 0 && errno == ESRCH)
->>>>>>> 	/* pidfd refers to another, recycled process */
->>>>>>
->>>>>> Although there is still the race between the fork() and the
->>>>>> pidfd_open(), right?
->>>>>
->>>>> Actually no and my code is even too complex.
->>>>> If you are the parent, and this is really a sequence that obeys the
->>>>> ordering pidfd_open() before waiting:
->>>>>
->>>>> pid = fork();
->>>>> if (pid == 0)
->>>>> 	exit(EXIT_SUCCESS);
->>>>> pidfd = pidfd_open(pid, 0);
->>>>> waitid(pid, ...);
->>>>>
->>>>> Then you are guaranteed that pidfd will refer to pid. No recycling can
->>>>> happen since the process has not been waited upon yet (That is,
->>>>
->>>> D'oh! Yes, of course. 
->>>>
->>>>> excluding special cases such as where you have a mainloop where a
->>>>> callback reacts to a SIGCHLD event and waits on the child behind your
->>>>> back and your next callback in the mainloop calls pidfd_open() while the
->>>>> pid has been recycled etc.).
->>>>> A race could only appear in sequences where waiting happens before
->>>>> pidfd_open():
->>>>>
->>>>> pid = fork();
->>>>> if (pid == 0)
->>>>> 	exit(EXIT_SUCCESS);
->>>>> waitid(pid, ...);
->>>>> pidfd = pidfd_open(pid, 0);
->>>>>
->>>>> which honestly simply doesn't make any sense. So if you're the parent
->>>>> and you combine fork() + pidfd_open() correctly things should be fine
->>>>> without even having to verify via pidfd_send_signal() (I missed that in
->>>>> my first mail.).
->>>>
->>>> Thanks for the additional detail.
->>>
->>> You're very welcome.
->>>
->>>>
->>>> I added the following to the pidfd_open() page, to
->>>> prevent people making the same thinko as me:
->>>>
->>>>        The following code sequence can be used to obtain a file  descrip‐
->>>>        tor for the child of fork(2):
->>>>
->>>>            pid = fork();
->>>>            if (pid > 0) {     /* If parent */
->>>>                pidfd = pidfd_open(pid, 0);
->>>>                ...
->>>>            }
->>>>
->>>>        Even  if  the  child process has already terminated by the time of
->>>>        the pidfd_open() call, the returned file descriptor is  guaranteed
->>>>        to refer to the child because the parent has not yet waited on the
->>>>        child (and therefore, the child's ID has not been recycled).
->>>
->>> Thanks! I'm fine with the example. The code illustrates the basics. If
->>> you want to go overboard, you can mention my callback example and put my
->>> SIG_IGN code snippet from my earlier mails (cf. [1] and [2]) in there.
->>> But imho, that'll complicate the manpage and I'm not sure it's worth it.
+> On Wed, Sep 25, 2019, at 3:11 AM, Dave Chinner wrote:
 >>
->> I agree that we should not complicate this discussion with more code,
->> but how about we refine the text as follows:
->>
->>        The following code sequence can be used to obtain a file  descrip‐
->>        tor for the child of fork(2):
->>
->>            pid = fork();
->>            if (pid > 0) {     /* If parent */
->>                pidfd = pidfd_open(pid, 0);
->>                ...
->>            }
->>
->>        Even  if  the  child  has  already  terminated  by the time of the
->>        pidfd_open() call, its PID will not have  been  recycled  and  the
->>        returned  file  descriptor  will  refer  to  the  resulting zombie
->>        process.  Note, however, that this is guaranteed only if the  fol‐
->>        lowing conditions hold true:
->>
->>        *  the  disposition  of  SIGCHLD  has  not  been explicitly set to
->>           SIG_IGN (see sigaction(2)); and
-> 
-> Ugh, I forgot a third one. There's also SA_NOCLDWAIT. When set and
-> the SIGCHLD handler is set to SIG_DFL then no zombie processes are
-> created and no SIGCHLD signal is sent. When an explicit handler for
-> SIGCHLD is set then a SIGCHLD signal is generated but the process will
-> still not be turned into a zombie...
+>> We're talking about user data read/write access here, not some
+>> special security capability. Access to the data has already been
+>> permission checked, so why should the format that the data is
+>> supplied to the kernel in suddenly require new privilege checks?
+>
+> What happens with BTRFS today if userspace provides invalid compressed=20
+> data via this interface?  Does that show up as filesystem corruption=20
+> later?  If the data is verified at write time, wouldn't that be losing=20
+> most of the speed advantages of providing pre-compressed data?
 
-Oh, yes. I added:
+The data is verified while being decompressed, but that's a fairly large=20
+fuzzing surface (all of zstd, zlib, and lzo).  A lot of people will=20
+correctly argue that we already have that fuzzing surface today, but I'd=20
+rather not make a really easy way to stuff arbitrary bytes through the=20
+kernel decompression code until all the projects involved sign off.
 
-       *  the SA_NOCLDSTOP flag was not specified  while  establishing  a
-          handler  for  SIGCHLD  or while setting the disposition of that
-          signal to SIG_DFL (see sigaction(2));
-
->>        *  the zombie process was not  reaped  elsewhere  in  the  program
->>           (e.g.,  either  by an asynchronously executed signal handler or
->>           by wait(2) or similar in another thread).
->>
->>        If these conditions don't hold true, then the child process should
-> 
-> "If any of these conditions does not hold, the child process..."
-> 
-> That might be clearer. But I leave the call on that to you. :)
-
-Yep, your wording is better. Fixed.
-
-Thanks,
-
-Michael
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+-chris
