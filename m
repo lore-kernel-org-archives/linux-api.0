@@ -1,56 +1,91 @@
 From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: [PATCH v1 0/4] lib: introduce copy_struct_from_user() helper
-Date: Wed, 25 Sep 2019 18:59:11 +0200
-Message-ID: <20190925165915.8135-1-cyphar@cyphar.com>
+Subject: [PATCH v1 2/4] clone3: switch to copy_struct_from_user()
+Date: Wed, 25 Sep 2019 18:59:13 +0200
+Message-ID: <20190925165915.8135-3-cyphar@cyphar.com>
+References: <20190925165915.8135-1-cyphar@cyphar.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190925165915.8135-1-cyphar@cyphar.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Alexander Shishkin <alexander.shishkin@linux.intel.com>, Jiri Olsa <jolsa@redhat.com>, Namhyung Kim <namhyung@kernel.org>, Christian Brauner <christian@brauner.io>
 Cc: Aleksa Sarai <cyphar@cyphar.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Al Viro <viro@zeniv.linux.org.uk>, Linus Torvalds <torvalds@linux-foundation.org>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This series was split off from the openat2(2) syscall discussion[1].
-However, the copy_struct_to_user() helper has been dropped, because
-after some discussion it appears that there is no really obvious
-semantics for how copy_struct_to_user() should work on mixed-vintages
-(for instance, whether [2] is the correct semantics for all syscalls).
+The change is very straightforward, and helps unify the syscall
+interface for struct-from-userspace syscalls. Additionally, explicitly
+define CLONE_ARGS_SIZE_VER0 to match the other users of the
+struct-extension pattern.
 
-A common pattern for syscall extensions is increasing the size of a
-struct passed from userspace, such that the zero-value of the new fields
-result in the old kernel behaviour (allowing for a mix of userspace and
-kernel vintages to operate on one another in most cases).
-
-Previously there was no common lib/ function that implemented
-the necessary extension-checking semantics (and different syscalls
-implemented them slightly differently or incompletely[3]). This series
-implements the helper and ports several syscalls to use it.
-
-[1]: https://lore.kernel.org/lkml/20190904201933.10736-1-cyphar@cyphar.com/
-
-[2]: commit 1251201c0d34 ("sched/core: Fix uclamp ABI bug, clean up and
-     robustify sched_read_attr() ABI logic and code")
-
-[3]: For instance {sched_setattr,perf_event_open,clone3}(2) all do do
-     similar checks to copy_struct_from_user() while rt_sigprocmask(2)
-     always rejects differently-sized struct arguments.
-
-Aleksa Sarai (4):
-  lib: introduce copy_struct_from_user() helper
-  clone3: switch to copy_struct_from_user()
-  sched_setattr: switch to copy_struct_from_user()
-  perf_event_open: switch to copy_struct_from_user()
-
- include/linux/uaccess.h    |  4 +++
+Signed-off-by: Aleksa Sarai <cyphar@cyphar.com>
+---
  include/uapi/linux/sched.h |  2 ++
- kernel/events/core.c       | 47 +++++-------------------
- kernel/fork.c              | 34 ++++--------------
- kernel/sched/core.c        | 43 ++++------------------
- lib/Makefile               |  2 +-
- lib/strnlen_user.c         | 52 +++++++++++++++++++++++++++
- lib/struct_user.c          | 73 ++++++++++++++++++++++++++++++++++++++
- 8 files changed, 155 insertions(+), 102 deletions(-)
- create mode 100644 lib/struct_user.c
+ kernel/fork.c              | 34 +++++++---------------------------
+ 2 files changed, 9 insertions(+), 27 deletions(-)
 
+diff --git a/include/uapi/linux/sched.h b/include/uapi/linux/sched.h
+index b3105ac1381a..0945805982b4 100644
+--- a/include/uapi/linux/sched.h
++++ b/include/uapi/linux/sched.h
+@@ -47,6 +47,8 @@ struct clone_args {
+ 	__aligned_u64 tls;
+ };
+ 
++#define CLONE_ARGS_SIZE_VER0 64 /* sizeof first published struct */
++
+ /*
+  * Scheduling policies
+  */
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 541fd805fb88..a86e3841ee4e 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -2530,39 +2530,19 @@ SYSCALL_DEFINE5(clone, unsigned long, clone_flags, unsigned long, newsp,
+ #ifdef __ARCH_WANT_SYS_CLONE3
+ noinline static int copy_clone_args_from_user(struct kernel_clone_args *kargs,
+ 					      struct clone_args __user *uargs,
+-					      size_t size)
++					      size_t usize)
+ {
++	int err;
+ 	struct clone_args args;
+ 
+-	if (unlikely(size > PAGE_SIZE))
++	if (unlikely(usize > PAGE_SIZE))
+ 		return -E2BIG;
+-
+-	if (unlikely(size < sizeof(struct clone_args)))
++	if (unlikely(usize < CLONE_ARGS_SIZE_VER0))
+ 		return -EINVAL;
+ 
+-	if (unlikely(!access_ok(uargs, size)))
+-		return -EFAULT;
+-
+-	if (size > sizeof(struct clone_args)) {
+-		unsigned char __user *addr;
+-		unsigned char __user *end;
+-		unsigned char val;
+-
+-		addr = (void __user *)uargs + sizeof(struct clone_args);
+-		end = (void __user *)uargs + size;
+-
+-		for (; addr < end; addr++) {
+-			if (get_user(val, addr))
+-				return -EFAULT;
+-			if (val)
+-				return -E2BIG;
+-		}
+-
+-		size = sizeof(struct clone_args);
+-	}
+-
+-	if (copy_from_user(&args, uargs, size))
+-		return -EFAULT;
++	err = copy_struct_from_user(&args, sizeof(args), uargs, usize);
++	if (err)
++		return err;
+ 
+ 	/*
+ 	 * Verify that higher 32bits of exit_signal are unset and that
 -- 
 2.23.0
