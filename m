@@ -1,85 +1,119 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: For review: pidfd_send_signal(2) manual page
-Date: Wed, 25 Sep 2019 03:48:45 +0200
-Message-ID: <CAG48ez17sqfpmzDKyPBm+h4P8LtCC8_V=StySK2gXcxGaD4mxg@mail.gmail.com>
-References: <f21dbd73-5ef4-fb5b-003f-ff4fec34a1de@gmail.com> <87pnjr9rth.fsf@mid.deneb.enyo.de>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [RFC PATCH 2/3] fs: add RWF_ENCODED for writing compressed data
+Date: Wed, 25 Sep 2019 17:11:29 +1000
+Message-ID: <20190925071129.GB804@dread.disaster.area>
+References: <cover.1568875700.git.osandov@fb.com>
+ <230a76e65372a8fb3ec62ce167d9322e5e342810.1568875700.git.osandov@fb.com>
+ <CAG48ez2GKv15Uj6Wzv0sG5v2bXyrSaCtRTw5Ok_ovja_CiO_fQ@mail.gmail.com>
+ <20190924171513.GA39872@vader>
+ <20190924193513.GA45540@vader>
+ <CAG48ez1NQBNR1XeVQYGoopEk=g_KedUr+7jxLQTaO+V8JCeweQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87pnjr9rth.fsf@mid.deneb.enyo.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fw@deneb.enyo.de>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Christian Brauner <christian@brauner.io>, "Eric W. Biederman" <ebiederm@xmission.com>, Daniel Colascione <dancol@google.com>, Joel Fernandes <joel@joelfernandes.org>, linux-man <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAG48ez1NQBNR1XeVQYGoopEk=g_KedUr+7jxLQTaO+V8JCeweQ@mail.gmail.com>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Jann Horn <jannh@google.com>
+Cc: Omar Sandoval <osandov@osandov.com>, Aleksa Sarai <cyphar@cyphar.com>, Jens Axboe <axboe@kernel.dk>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-btrfs@vger.kernel.org, Linux API <linux-api@vger.kernel.org>, Kernel Team <kernel-team@fb.com>, Andy Lutomirski <luto@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Sep 23, 2019 at 1:26 PM Florian Weimer <fw@deneb.enyo.de> wrote:
-> * Michael Kerrisk:
-> >        The  pidfd_send_signal()  system call allows the avoidance of ra=
-ce
-> >        conditions that occur when using traditional interfaces  (such  =
-as
-> >        kill(2)) to signal a process.  The problem is that the tradition=
-al
-> >        interfaces specify the target process via a process ID (PID), wi=
-th
-> >        the  result  that the sender may accidentally send a signal to t=
-he
-> >        wrong process if the originally intended target process has term=
-i=E2=80=90
-> >        nated  and its PID has been recycled for another process.  By co=
-n=E2=80=90
-> >        trast, a PID file descriptor is a stable reference to  a  specif=
-ic
-> >        process;  if  that  process  terminates,  then the file descript=
-or
-> >        ceases to be  valid  and  the  caller  of  pidfd_send_signal()  =
-is
-> >        informed of this fact via an ESRCH error.
->
-> It would be nice to explain somewhere how you can avoid the race using
-> a PID descriptor.  Is there anything else besides CLONE_PIDFD?
+On Tue, Sep 24, 2019 at 10:01:41PM +0200, Jann Horn wrote:
+> On Tue, Sep 24, 2019 at 9:35 PM Omar Sandoval <osandov@osandov.com> wrote:
+> > On Tue, Sep 24, 2019 at 10:15:13AM -0700, Omar Sandoval wrote:
+> > > On Thu, Sep 19, 2019 at 05:44:12PM +0200, Jann Horn wrote:
+> > > > On Thu, Sep 19, 2019 at 8:54 AM Omar Sandoval <osandov@osandov.com> wrote:
+> > > > > Btrfs can transparently compress data written by the user. However, we'd
+> > > > > like to add an interface to write pre-compressed data directly to the
+> > > > > filesystem. This adds support for so-called "encoded writes" via
+> > > > > pwritev2().
+> > > > >
+> > > > > A new RWF_ENCODED flags indicates that a write is "encoded". If this
+> > > > > flag is set, iov[0].iov_base points to a struct encoded_iov which
+> > > > > contains metadata about the write: namely, the compression algorithm and
+> > > > > the unencoded (i.e., decompressed) length of the extent. iov[0].iov_len
+> > > > > must be set to sizeof(struct encoded_iov), which can be used to extend
+> > > > > the interface in the future. The remaining iovecs contain the encoded
+> > > > > extent.
+> > > > >
+> > > > > A similar interface for reading encoded data can be added to preadv2()
+> > > > > in the future.
+> > > > >
+> > > > > Filesystems must indicate that they support encoded writes by setting
+> > > > > FMODE_ENCODED_IO in ->file_open().
+> > > > [...]
+> > > > > +int import_encoded_write(struct kiocb *iocb, struct encoded_iov *encoded,
+> > > > > +                        struct iov_iter *from)
+> > > > > +{
+> > > > > +       if (iov_iter_single_seg_count(from) != sizeof(*encoded))
+> > > > > +               return -EINVAL;
+> > > > > +       if (copy_from_iter(encoded, sizeof(*encoded), from) != sizeof(*encoded))
+> > > > > +               return -EFAULT;
+> > > > > +       if (encoded->compression == ENCODED_IOV_COMPRESSION_NONE &&
+> > > > > +           encoded->encryption == ENCODED_IOV_ENCRYPTION_NONE) {
+> > > > > +               iocb->ki_flags &= ~IOCB_ENCODED;
+> > > > > +               return 0;
+> > > > > +       }
+> > > > > +       if (encoded->compression > ENCODED_IOV_COMPRESSION_TYPES ||
+> > > > > +           encoded->encryption > ENCODED_IOV_ENCRYPTION_TYPES)
+> > > > > +               return -EINVAL;
+> > > > > +       if (!capable(CAP_SYS_ADMIN))
+> > > > > +               return -EPERM;
+> > > >
+> > > > How does this capable() check interact with io_uring? Without having
+> > > > looked at this in detail, I suspect that when an encoded write is
+> > > > requested through io_uring, the capable() check might be executed on
+> > > > something like a workqueue worker thread, which is probably running
+> > > > with a full capability set.
+> > >
+> > > I discussed this more with Jens. You're right, per-IO permission checks
+> > > aren't going to work. In fully-polled mode, we never get an opportunity
+> > > to check capabilities in right context. So, this will probably require a
+> > > new open flag.
+> >
+> > Actually, file_ns_capable() accomplishes the same thing without a new
+> > open flag. Changing the capable() check to file_ns_capable() in
+> > init_user_ns should be enough.
+> 
+> +Aleksa for openat2() and open() space
+> 
+> Mmh... but if the file descriptor has been passed through a privilege
+> boundary, it isn't really clear whether the original opener of the
+> file intended for this to be possible. For example, if (as a
+> hypothetical example) the init process opens a service's logfile with
+> root privileges, then passes the file descriptor to that logfile to
+> the service on execve(), that doesn't mean that the service should be
+> able to perform compressed writes into that file, I think.
 
-My favorite example here is that you could implement "killall" without
-PID reuse races. With /proc/$pid file descriptors, you could do it
-like this (rough pseudocode with missing error handling and resource
-leaks and such):
+Where's the privilege boundary that is being crossed?
 
-for each pid {
-  procfs_pid_fd =3D open("/proc/"+pid);
-  if (procfs_pid_fd =3D=3D -1) continue;
-  comm_fd =3D openat(procfs_pid_fd, "comm");
-  if (comm_fd =3D=3D -1) continue;
-  char buf[1000];
-  int n =3D read(comm_fd, buf, sizeof(buf)-1);
-  buf[n] =3D 0;
-  if (strcmp(buf, expected_comm) =3D=3D 0) {
-    pidfd_send_signal(procfs_pid_fd, SIGKILL, NULL, 0);
-  }
-}
+We're talking about user data read/write access here, not some
+special security capability. Access to the data has already been
+permission checked, so why should the format that the data is
+supplied to the kernel in suddenly require new privilege checks?
 
-If you want to avoid using a procfs fd for this, I think you can still
-do it, the dance just gets more complicated:
+i.e. writing encoded data to a file requires exactly the same
+access permissions as writing cleartext data to the file. The only
+extra information here is whether the _filesystem_ supports encoded
+data, and that doesn't change regardless of what the open file gets
+passed to. Hence the capability is either there or it isn't, it
+doesn't transform not matter what privilege boundary the file is
+passed across. Similarly, we have permission to access the data
+or we don't through the struct file, it doesn't transform either.
 
-for each pid {
-  procfs_pid_fd =3D open("/proc/"+pid);
-  if (procfs_pid_fd =3D=3D -1) continue;
-  pid_fd =3D pidfd_open(pid, 0);
-  if (pid_fd =3D=3D -1) continue;
-  /* at this point procfs_pid_fd and pid_fd may refer to different processe=
-s */
-  comm_fd =3D openat(procfs_pid_fd, "comm");
-  if (comm_fd =3D=3D -1) continue;
-  /* at this point we know that procfs_pid_fd and pid_fd refer to the
-same struct pid, because otherwise the procfs_pid_fd must point to a
-directory that throws -ESRCH for everything */
-  char buf[1000];
-  int n =3D read(comm_fd, buf, sizeof(buf)-1);
-  buf[n] =3D 0;
-  if (strcmp(buf, expected_comm) =3D=3D 0) {
-    pidfd_send_signal(pid_fd, SIGKILL, NULL, 0);
-  }
-}
+Hence I don't see why CAP_SYS_ADMIN or any special permissions are
+needed for an application with access permissions to file data to
+use these RWF_ENCODED IO interfaces. I am inclined to think the
+permission check here is wrong and should be dropped, and then all
+these issues go away.
 
-But I don't think anyone is actually interested in using pidfds for
-this kind of usecase right now.
+Yes, the app that is going to use this needs root perms because it
+accesses all data in the fs (it's a backup app!), but that doesn't
+mean you can only use RWF_ENCODED if you have root perms.
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
