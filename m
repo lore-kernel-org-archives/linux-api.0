@@ -1,31 +1,27 @@
 From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
 Subject: Re: For review: pidfd_send_signal(2) manual page
-Date: Wed, 25 Sep 2019 15:46:09 +0200
-Message-ID: <b2519fb3-8bf5-d821-ae48-dad4435330f4@gmail.com>
+Date: Wed, 25 Sep 2019 15:46:26 +0200
+Message-ID: <331cc245-3f70-dd43-31f9-8c1680ca6b20@gmail.com>
 References: <f21dbd73-5ef4-fb5b-003f-ff4fec34a1de@gmail.com>
  <87pnjr9rth.fsf@mid.deneb.enyo.de>
  <20190923142325.jowzbnwjw7g7si7j@wittgenstein>
  <90dd38d5-34b3-b72f-8e5a-b51f944f22fb@gmail.com>
  <20190924195701.7pw2olbviieqsg5q@wittgenstein>
  <b76adb4c-826b-6493-ba75-a9863066d3b1@gmail.com>
- <CAKOZueuJ=En9=mtFvhpmsnjqMAOjVmffaVwwzpe=ieHemxH3mw@mail.gmail.com>
+ <20190924215316.gxev2anuqffegocw@wittgenstein>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAKOZueuJ=En9=mtFvhpmsnjqMAOjVmffaVwwzpe=ieHemxH3mw@mail.gmail.com>
+In-Reply-To: <20190924215316.gxev2anuqffegocw@wittgenstein>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Colascione <dancol@google.com>
-Cc: mtk.manpages@gmail.com, Christian Brauner <christian.brauner@ubuntu.com>, Florian Weimer <fw@deneb.enyo.de>, Oleg Nesterov <oleg@redhat.com>, Jann Horn <jannh@google.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Joel Fernandes <joel@joelfernandes.org>, linux-man <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>
+To: Christian Brauner <christian.brauner@ubuntu.com>
+Cc: mtk.manpages@gmail.com, Florian Weimer <fw@deneb.enyo.de>, Oleg Nesterov <oleg@redhat.com>, Jann Horn <jannh@google.com>, "Eric W. Biederman" <ebiederm@xmission.com>, Daniel Colascione <dancol@google.com>, Joel Fernandes <joel@joelfernandes.org>, linux-man <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, lkml <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hello Daniel,
-
-On 9/24/19 11:08 PM, Daniel Colascione wrote:
-> On Tue, Sep 24, 2019 at 2:00 PM Michael Kerrisk (man-pages)
-> <mtk.manpages@gmail.com> wrote:
->>
+On 9/24/19 11:53 PM, Christian Brauner wrote:
+> On Tue, Sep 24, 2019 at 11:00:03PM +0200, Michael Kerrisk (man-pages) wrote:
 >> Hello Christian,
 >>
 >>>>> If you're the parent of the process you can do this without CLONE_PIDFD:
@@ -33,7 +29,7 @@ On 9/24/19 11:08 PM, Daniel Colascione wrote:
 >>>>> pidfd = pidfd_open();
 >>>>> ret = pidfd_send_signal(pidfd, 0, NULL, 0);
 >>>>> if (ret < 0 && errno == ESRCH)
->>>>>     /* pidfd refers to another, recycled process */
+>>>>> 	/* pidfd refers to another, recycled process */
 >>>>
 >>>> Although there is still the race between the fork() and the
 >>>> pidfd_open(), right?
@@ -44,38 +40,25 @@ On 9/24/19 11:08 PM, Daniel Colascione wrote:
 >>>
 >>> pid = fork();
 >>> if (pid == 0)
->>>       exit(EXIT_SUCCESS);
+>>> 	exit(EXIT_SUCCESS);
 >>> pidfd = pidfd_open(pid, 0);
 >>> waitid(pid, ...);
 >>>
 >>> Then you are guaranteed that pidfd will refer to pid. No recycling can
 >>> happen since the process has not been waited upon yet (That is,
 >>
->> D'oh! Yes, of course.
-> 
-> You still have a race if you're the parent and you have SIGCHLD set to
-> SIG_IGN though.
-
-Yes, thanks for reminding me of that (as did Christian also).
-
+>> D'oh! Yes, of course. 
+>>
 >>> excluding special cases such as where you have a mainloop where a
 >>> callback reacts to a SIGCHLD event and waits on the child behind your
 >>> back and your next callback in the mainloop calls pidfd_open() while the
 >>> pid has been recycled etc.).
-> 
-> That's a pretty common case though, especially if you're a library.
-
-I presume that conventionally the only real resolution of this kind of
-problem is that the mainloop SIGCHLD call back has a waitpid() loop
-that (in a nonblocking fashion) loops checking each of the PIDs created
-by the mainloop, right?
-
 >>> A race could only appear in sequences where waiting happens before
 >>> pidfd_open():
 >>>
 >>> pid = fork();
 >>> if (pid == 0)
->>>       exit(EXIT_SUCCESS);
+>>> 	exit(EXIT_SUCCESS);
 >>> waitid(pid, ...);
 >>> pidfd = pidfd_open(pid, 0);
 >>>
@@ -85,6 +68,9 @@ by the mainloop, right?
 >>> my first mail.).
 >>
 >> Thanks for the additional detail.
+> 
+> You're very welcome.
+> 
 >>
 >> I added the following to the pidfd_open() page, to
 >> prevent people making the same thinko as me:
@@ -103,11 +89,38 @@ by the mainloop, right?
 >>        to refer to the child because the parent has not yet waited on the
 >>        child (and therefore, the child's ID has not been recycled).
 > 
-> I'd prefer that sample code be robust in all cases.
+> Thanks! I'm fine with the example. The code illustrates the basics. If
+> you want to go overboard, you can mention my callback example and put my
+> SIG_IGN code snippet from my earlier mails (cf. [1] and [2]) in there.
+> But imho, that'll complicate the manpage and I'm not sure it's worth it.
 
-I'm not clear what you think is missing. Or do you mean that the code
-can't be robust in the face of (1) waitpid(-1) in another thread or an
-asynchronous SIGCHLD handler and (2) SIGCHLD disposition set to SIG_IGN?
+I agree that we should not complicate this discussion with more code,
+but how about we refine the text as follows:
+
+       The following code sequence can be used to obtain a file  descrip‐
+       tor for the child of fork(2):
+
+           pid = fork();
+           if (pid > 0) {     /* If parent */
+               pidfd = pidfd_open(pid, 0);
+               ...
+           }
+
+       Even  if  the  child  has  already  terminated  by the time of the
+       pidfd_open() call, its PID will not have  been  recycled  and  the
+       returned  file  descriptor  will  refer  to  the  resulting zombie
+       process.  Note, however, that this is guaranteed only if the  fol‐
+       lowing conditions hold true:
+
+       *  the  disposition  of  SIGCHLD  has  not  been explicitly set to
+          SIG_IGN (see sigaction(2)); and
+
+       *  the zombie process was not  reaped  elsewhere  in  the  program
+          (e.g.,  either  by an asynchronously executed signal handler or
+          by wait(2) or similar in another thread).
+
+       If these conditions don't hold true, then the child process should
+       instead be created using clone(2) with the CLONE_PID flag.
 
 Thanks,
 
