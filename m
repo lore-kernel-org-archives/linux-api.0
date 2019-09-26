@@ -1,71 +1,90 @@
-From: "Ahmed S. Darwish" <darwish.07@gmail.com>
-Subject: Re: [PATCH RFC v4 1/1] random: WARN on large getrandom() waits and
- introduce getrandom2()
-Date: Thu, 26 Sep 2019 23:11:50 +0200
-Message-ID: <20190926211150.GA1085@darwi-home-pc>
-References: <20190918211503.GA1808@darwi-home-pc>
- <20190918211713.GA2225@darwi-home-pc>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH v5 1/1] random: getrandom(2): warn on large CRNG waits,
+ introduce new flags
+Date: Thu, 26 Sep 2019 14:39:44 -0700
+Message-ID: <9a9715dc-e30b-24fb-a754-464449cafb2f@kernel.org>
+References: <20190912082530.GA27365@mit.edu>
+ <CAHk-=wjyH910+JRBdZf_Y9G54c1M=LBF8NKXB6vJcm9XjLnRfg@mail.gmail.com>
+ <20190914122500.GA1425@darwi-home-pc>
+ <008f17bc-102b-e762-a17c-e2766d48f515@gmail.com>
+ <20190915052242.GG19710@mit.edu>
+ <CAHk-=wgg2T=3KxrO-BY3nHJgMEyApjnO3cwbQb_0vxsn9qKN8Q@mail.gmail.com>
+ <20190918211503.GA1808@darwi-home-pc> <20190918211713.GA2225@darwi-home-pc>
  <CAHk-=wiCqDiU7SE3FLn2W26MS_voUAuqj5XFa1V_tiGTrrW-zQ@mail.gmail.com>
- <20190920134609.GA2113@pc>
- <CALCETrWvE5es3i+to33y6jw=Yf0Tw6ZfV-6QWjZT5v0fo76tWw@mail.gmail.com>
- <CAHk-=wgW8rN2EVL_Rdn63V9vQO0GkZ=RQFeqqsYJM==8fujpPg@mail.gmail.com>
- <CALCETrV=4TX2a4uV5t2xOFzv+zM_jnOtMLJna8Vb7uXz6S=wSw@mail.gmail.com>
- <CAHk-=wjpTWgpo6d24pTv+ubfea_uEomX-sHjjOkdACfV-8Nmkg@mail.gmail.com>
- <87blvefai7.fsf@oldenburg2.str.redhat.com>
- <CALCETrWM9opVj+BBrHnnTakTLunW_fB9RM+VSNpNSkR9drDjMw@mail.gmail.com>
+ <20190926204217.GA1366@pc> <20190926204425.GA2198@pc>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CALCETrWM9opVj+BBrHnnTakTLunW_fB9RM+VSNpNSkR9drDjMw@mail.gmail.com>
+In-Reply-To: <20190926204425.GA2198@pc>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: Florian Weimer <fweimer@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Lennart Poettering <mzxreary@0pointer.de>, "Theodore Y. Ts'o" <tytso@mit.edu>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, lkml <linux-kernel@vger.kernel.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>
+To: "Ahmed S. Darwish" <darwish.07@gmail.com>, Linus Torvalds <torvalds@linux-foundation.org>, "Theodore Y. Ts'o" <tytso@mit.edu>
+Cc: Florian Weimer <fweimer@redhat.com>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Lennart Poettering <mzxreary@0pointer.de>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, Michael Kerrisk <mtk.manpages@gmail.com>, lkml <linux-kernel@vger.kernel.org>, linux-ext4 <linux-ext4@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Sep 23, 2019 at 11:33:21AM -0700, Andy Lutomirski wrote:
-> On Fri, Sep 20, 2019 at 11:07 PM Florian Weimer <fweimer@redhat.com> wrote:
-> >
-> > * Linus Torvalds:
-> >
-> > > Violently agreed. And that's kind of what the GRND_EXPLICIT is really
-> > > aiming for.
-> > >
-> > > However, it's worth noting that nobody should ever use GRND_EXPLICIT
-> > > directly. That's just the name for the bit. The actual users would use
-> > > GRND_INSECURE or GRND_SECURE.
-> >
-> > Should we switch glibc's getentropy to GRND_EXPLICIT?  Or something
-> > else?
-> >
-> > I don't think we want to print a kernel warning for this function.
-> >
+On 9/26/19 1:44 PM, Ahmed S. Darwish wrote:
+> Since Linux v3.17, getrandom(2) has been created as a new and more
+> secure interface for pseudorandom data requests.  It attempted to
+> solve three problems, as compared to /dev/urandom:
 > 
-> Contemplating this question, I think the answer is that we should just
-> not introduce GRND_EXPLICIT or anything like it.  glibc is going to
-> have to do *something*, and getentropy() is unlikely to just go away.
-> The explicitly documented semantics are that it blocks if the RNG
-> isn't seeded.
+>    1. the need to access filesystem paths, which can fail, e.g. under a
+>       chroot
 > 
-> Similarly, FreeBSD has getrandom():
+>    2. the need to open a file descriptor, which can fail under file
+>       descriptor exhaustion attacks
 > 
-> https://www.freebsd.org/cgi/man.cgi?query=getrandom&sektion=2&manpath=freebsd-release-ports
+>    3. the possibility of getting not-so-random data from /dev/urandom,
+>       due to an incompletely initialized kernel entropy pool
 > 
-> and if we make getrandom(..., 0) warn, then we have a situation where
-> the *correct* (if regrettable) way to use the function on FreeBSD
-> causes a warning on Linux.
+> To solve the third point, getrandom(2) was made to block until a
+> proper amount of entropy has been accumulated to initialize the CRNG
+> ChaCha20 cipher.  This made the system call have no guaranteed
+> upper-bound for its initial waiting time.
 > 
-> Let's just add GRND_INSECURE, make the blocking mode work better, and,
-> if we're feeling a bit more adventurous, add GRND_SECURE_BLOCKING as a
-> better replacement for 0, ...
+> Thus when it was introduced at c6e9d6f38894 ("random: introduce
+> getrandom(2) system call"), it came with a clear warning: "Any
+> userspace program which uses this new functionality must take care to
+> assure that if it is used during the boot process, that it will not
+> cause the init scripts or other portions of the system startup to hang
+> indefinitely."
+> 
+> Unfortunately, due to multiple factors, including not having this
+> warning written in a scary-enough language in the manpages, and due to
+> glibc since v2.25 implementing a BSD-like getentropy(3) in terms of
+> getrandom(2), modern user-space is calling getrandom(2) in the boot
+> path everywhere (e.g. Qt, GDM, etc.)
+> 
+> Embedded Linux systems were first hit by this, and reports of embedded
+> systems "getting stuck at boot" began to be common.  Over time, the
+> issue began to even creep into consumer-level x86 laptops: mainstream
+> distributions, like Debian Buster, began to recommend installing
+> haveged as a duct-tape workaround... just to let the system boot.
+> 
+> Moreover, filesystem optimizations in EXT4 and XFS, e.g. b03755ad6f33
+> ("ext4: make __ext4_get_inode_loc plug"), which merged directory
+> lookup code inode table IO, and very fast systemd boots, further
+> exaggerated the problem by limiting interrupt-based entropy sources.
+> This led to large delays until the kernel's cryptographic random
+> number generator (CRNG) got initialized.
+> 
+> On a Thinkpad E480 x86 laptop and an ArchLinux user-space, the ext4
+> commit earlier mentioned reliably blocked the system on GDM boot.
+> Mitigate the problem, as a first step, in two ways:
+> 
+>    1. Issue a big WARN_ON when any process gets stuck on getrandom(2)
+>       for more than CONFIG_GETRANDOM_WAIT_THRESHOLD_SEC seconds.
+> 
+>    2. Introduce new getrandom(2) flags, with clear semantics that can
+>       hopefully guide user-space in doing the right thing.
+> 
+> Set CONFIG_GETRANDOM_WAIT_THRESHOLD_SEC to a heuristic 30-second
+> default value. System integrators and distribution builders are deeply
+> encouraged not to increase it much: during system boot, you either
+> have entropy, or you don't. And if you didn't have entropy, it will
+> stay like this forever, because if you had, you wouldn't have blocked
+> in the first place. It's an atomic "either/or" situation, with no
+> middle ground. Please think twice.
 
-This is what's now done in the just-submitted V5, except the "make the
-blocking mode work better" part:
-
-    https://lkml.kernel.org/r/20190926204217.GA1366@pc
-
-It's a very conservative patch so far IMHO (minus the loud warning).
-
-Thanks,
---
-Ahmed Darwish
+So what do we expect glibc's getentropy() to do?  If it just adds the 
+new flag to shut up the warning, we haven't really accomplished much.
