@@ -1,82 +1,98 @@
-From: Christian Brauner <christian.brauner@ubuntu.com>
-Subject: Re: [PATCH v2 1/4] lib: introduce copy_struct_from_user() helper
-Date: Fri, 27 Sep 2019 10:20:17 +0200
-Message-ID: <20190927082016.jsis76s26uverj5r@wittgenstein>
-References: <20190925230332.18690-1-cyphar@cyphar.com>
- <20190925230332.18690-2-cyphar@cyphar.com>
- <20190925232139.45sbhj34fj7yvxer@wittgenstein>
- <20190927010736.gy3vvvkjhwlybosj@yavin.dot.cyphar.com>
+From: Neil Horman <nhorman@tuxdriver.com>
+Subject: Re: [PATCH ghak90 V7 06/21] audit: contid limit of 32k imposed to
+ avoid DoS
+Date: Fri, 27 Sep 2019 08:51:42 -0400
+Message-ID: <20190927125142.GA25764@hmswarspite.think-freely.org>
+References: <cover.1568834524.git.rgb@redhat.com>
+ <230e91cd3e50a3d8015daac135c24c4c58cf0a21.1568834524.git.rgb@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <netdev-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190927010736.gy3vvvkjhwlybosj@yavin.dot.cyphar.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Alexander Shishkin <alexander.shishkin@linux.intel.com>, Jiri Olsa <jolsa@redhat.com>, Namhyung Kim <namhyung@kernel.org>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Al Viro <viro@zeniv.linux.org.uk>, Linus Torvalds <torvalds@linux-foundation.org>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+In-Reply-To: <230e91cd3e50a3d8015daac135c24c4c58cf0a21.1568834524.git.rgb@redhat.com>
+Sender: netdev-owner@vger.kernel.org
+To: Richard Guy Briggs <rgb@redhat.com>
+Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, Paul Moore <paul@paul-moore.com>, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, eparis@parisplace.org, serge@hallyn.com, ebiederm@xmission.com, dwalsh@redhat.com, mpatel@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Sep 27, 2019 at 11:07:36AM +1000, Aleksa Sarai wrote:
-> On 2019-09-26, Christian Brauner <christian.brauner@ubuntu.com> wrote:
-> > On Thu, Sep 26, 2019 at 01:03:29AM +0200, Aleksa Sarai wrote:
-> > > +int is_zeroed_user(const void __user *from, size_t size)
-> > > +{
-> > > +	unsigned long val;
-> > > +	uintptr_t align = (uintptr_t) from % sizeof(unsigned long);
-> > > +
-> > > +	if (unlikely(!size))
-> > > +		return true;
-> > 
-> > You're returning "true" and another implicit boolean with (val == 0)
-> > down below but -EFAULT in other places. But that function is int
-> > is_zeroed_user() Would probably be good if you either switch to bool
-> > is_zeroed_user() as the name suggests or rename the function and have
-> > it return an int everywhere.
+On Wed, Sep 18, 2019 at 09:22:23PM -0400, Richard Guy Briggs wrote:
+> Set an arbitrary limit on the number of audit container identifiers to
+> limit abuse.
 > 
-> I just checked, and in C11 (and presumably in older specs) it is
-> guaranteed that "true" and "false" from <stdbool.h> have the values 1
-> and 0 (respectively) [§7.18]. So this is perfectly well-defined.
+> Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> ---
+>  kernel/audit.c | 8 ++++++++
+>  kernel/audit.h | 4 ++++
+>  2 files changed, 12 insertions(+)
 > 
-If you declare a function as returning an int, return ints and don't mix
-returning ints and "proper" C boolean types. This:
+> diff --git a/kernel/audit.c b/kernel/audit.c
+> index 53d13d638c63..329916534dd2 100644
+> --- a/kernel/audit.c
+> +++ b/kernel/audit.c
+> @@ -139,6 +139,7 @@ struct audit_net {
+>  struct list_head audit_inode_hash[AUDIT_INODE_BUCKETS];
+>  /* Hash for contid-based rules */
+>  struct list_head audit_contid_hash[AUDIT_CONTID_BUCKETS];
+> +int audit_contid_count = 0;
+>  
+>  static struct kmem_cache *audit_buffer_cache;
+>  
+> @@ -2384,6 +2385,7 @@ void audit_cont_put(struct audit_cont *cont)
+>  		put_task_struct(cont->owner);
+>  		list_del_rcu(&cont->list);
+>  		kfree_rcu(cont, rcu);
+> +		audit_contid_count--;
+>  	}
+>  }
+>  
+> @@ -2456,6 +2458,11 @@ int audit_set_contid(struct task_struct *task, u64 contid)
+>  					goto conterror;
+>  				}
+>  			}
+> +		/* Set max contids */
+> +		if (audit_contid_count > AUDIT_CONTID_COUNT) {
+> +			rc = -ENOSPC;
+> +			goto conterror;
+> +		}
+You should check for audit_contid_count == AUDIT_CONTID_COUNT here, no?
+or at least >=, since you increment it below.  Otherwise its possible
+that you will exceed it by one in the full condition.
 
-static int foo()
-{
-	if (bla)
-		return true;
-	return -1;
-}
+>  		if (!newcont) {
+>  			newcont = kmalloc(sizeof(struct audit_cont), GFP_ATOMIC);
+>  			if (newcont) {
+> @@ -2465,6 +2472,7 @@ int audit_set_contid(struct task_struct *task, u64 contid)
+>  				newcont->owner = current;
+>  				refcount_set(&newcont->refcount, 1);
+>  				list_add_rcu(&newcont->list, &audit_contid_hash[h]);
+> +				audit_contid_count++;
+>  			} else {
+>  				rc = -ENOMEM;
+>  				goto conterror;
+> diff --git a/kernel/audit.h b/kernel/audit.h
+> index 162de8366b32..543f1334ba47 100644
+> --- a/kernel/audit.h
+> +++ b/kernel/audit.h
+> @@ -219,6 +219,10 @@ static inline int audit_hash_contid(u64 contid)
+>  	return (contid & (AUDIT_CONTID_BUCKETS-1));
+>  }
+>  
+> +extern int audit_contid_count;
+> +
+> +#define AUDIT_CONTID_COUNT	1 << 16
+> +
+Just to ask the question, since it wasn't clear in the changelog, what
+abuse are you avoiding here?  Ostensibly you should be able to create as
+many container ids as you have space for, and the simple creation of
+container ids doesn't seem like the resource strain I would be concerned
+about here, given that an orchestrator can still create as many
+containers as the system will otherwise allow, which will consume
+significantly more ram/disk/etc.
 
-is just messy.
-
+>  /* Indicates that audit should log the full pathname. */
+>  #define AUDIT_NAME_FULL -1
+>  
+> -- 
+> 1.8.3.1
 > 
-> Personally, I think it's more readable to have:
 > 
->   if (unlikely(size == 0))
->     return true;
->   /* ... */
->   return (val == 0);
-> 
-> compared to:
-> 
->   if (unlikely(size == 0))
->     return 1;
->   /* ... */
->   return val ? 0 : 1;
-
-Just do:
-
-if (unlikely(size == 0))
-	return 1;
-/* ... */
-return (val == 0);
-
-You don't need to change the last return.
-
-Also, as I said in a previous mail: Please wait for rc1 (that's just two
-days) to be out so you can base your patchset on that as there are
-changes in mainline that cause a merge conflict with your changes.
-
-Thanks!
-Christian
