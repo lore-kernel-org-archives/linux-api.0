@@ -1,83 +1,109 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH bpf-next] bpf, capabilities: introduce CAP_BPF
-Date: Mon, 30 Sep 2019 11:31:29 -0700
-Message-ID: <201909301129.5A1129C@keescook>
-References: <20190827205213.456318-1-ast@kernel.org>
- <CALCETrV8iJv9+Ai11_1_r6MapPhhwt9hjxi=6EoixytabTScqg@mail.gmail.com>
- <20190828003447.htgzsxs5oevn3eys@ast-mbp.dhcp.thefacebook.com>
- <CALCETrVbPPPr=BdPAx=tJKxD3oLXP4OVSgCYrB_E4vb6idELow@mail.gmail.com>
- <20190828044340.zeha3k3cmmxgfqj7@ast-mbp.dhcp.thefacebook.com>
- <CALCETrW1o+Lazi2Ng6b9JN6jeJffgdW9f3HvqYhNo4TpHRXW=g@mail.gmail.com>
- <20190828225512.q6qbvkdiqih2iewk@ast-mbp.dhcp.thefacebook.com>
- <DA52992F-4862-4945-8482-FE619A04C753@amacapital.net>
- <20190829040721.ef6rumbaunkavyrr@ast-mbp.dhcp.thefacebook.com>
- <20190928193727.1769e90c@oasis.local.home>
+From: Aleksa Sarai <cyphar@cyphar.com>
+Subject: Re: [PATCH v13 7/9] open: openat2(2) syscall
+Date: Tue, 1 Oct 2019 08:41:59 +1000
+Message-ID: <20190930224159.gp2hqm57qxlm2eat@yavin.dot.cyphar.com>
+References: <20190930183316.10190-8-cyphar@cyphar.com>
+ <201910010404.WLqR1mUW%lkp@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <netdev-owner@vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="t4elbyhlilsmpd4b"
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20190928193727.1769e90c@oasis.local.home>
-Sender: netdev-owner@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
-Cc: Alexei Starovoitov <alexei.starovoitov@gmail.com>, Andy Lutomirski <luto@amacapital.net>, Andy Lutomirski <luto@kernel.org>, Alexei Starovoitov <ast@kernel.org>, LSM List <linux-security-module@vger.kernel.org>, James Morris <jmorris@namei.org>, Jann Horn <jannh@google.com>, Peter Zijlstra <peterz@infradead.org>, Masami Hiramatsu <mhiramat@kernel.org>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Network Development <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
+In-Reply-To: <201910010404.WLqR1mUW%lkp@intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: kbuild test robot <lkp@intel.com>
+Cc: kbuild-all@01.org, Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, Alexander Shishkin <alexander.shishkin@linux.intel.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Alexei Starovoitov <ast@kernel.org>, linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org, sparclinux@vger.kernel.org, Jiri Olsa <jolsa@redhat.com>, linux-arch@vger.kernel.org, linux-s390@vger.kernel.org, Tycho Andersen <tycho@tycho.ws>, Aleksa Sarai <asarai@suse>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Sep 28, 2019 at 07:37:27PM -0400, Steven Rostedt wrote:
-> On Wed, 28 Aug 2019 21:07:24 -0700
-> Alexei Starovoitov <alexei.starovoitov@gmail.com> wrote:
-> > > 
-> > > This won’t make me much more comfortable, since CAP_BPF lets it do an ever-growing set of nasty things. I’d much rather one or both of two things happen:
-> > > 
-> > > 1. Give it CAP_TRACING only. It can leak my data, but it’s rather hard for it to crash my laptop, lose data, or cause other shenanigans.
-> > > 
-> > > 2. Improve it a bit do all the privileged ops are wrapped by capset().
-> > > 
-> > > Does this make sense?  I’m a security person on occasion. I find
-> > > vulnerabilities and exploit them deliberately and I break things by
-> > > accident on a regular basis. In my considered opinion, CAP_TRACING
-> > > alone, even extended to cover part of BPF as I’ve described, is
-> > > decently safe. Getting root with just CAP_TRACING will be decently
-> > > challenging, especially if I don’t get to read things like sshd’s
-> > > memory, and improvements to mitigate even that could be added.  I
-> > > am quite confident that attacks starting with CAP_TRACING will have
-> > > clear audit signatures if auditing is on.  I am also confident that
-> > > CAP_BPF *will* allow DoS and likely privilege escalation, and this
-> > > will only get more likely as BPF gets more widely used. And, if
-> > > BPF-based auditing ever becomes a thing, writing to the audit
-> > > daemon’s maps will be a great way to cover one’s tracks.  
-> > 
-> > CAP_TRACING, as I'm proposing it, will allow full tracefs access.
-> > I think Steven and Massami prefer that as well.
-> > That includes kprobe with probe_kernel_read.
-> > That also means mini-DoS by installing kprobes everywhere or running
-> > too much ftrace.
-> 
-> I was talking with Kees at Plumbers about this, and we were talking
-> about just using simple file permissions. I started playing with some
-> patches to allow the tracefs be visible but by default it would only be
-> visible by root.
-> 
->  rwx------
-> 
-> Then a start up script (or perhaps mount options) could change the
-> group owner, and change this to:
-> 
->  rwxrwx---
-> 
-> Where anyone in the group assigned (say "tracing") gets full access to
-> the file system.
-> 
-> The more I was playing with this, the less I see the need for
-> CAP_TRACING for ftrace and reading the format files.
 
-Nice! Thanks for playing with this. I like it because it gives us a way
-to push policy into userspace (group membership, etc), and provides a
-clean way (hopefully) do separate "read" (kernel memory confidentiality)
-from "write" (kernel memory integrity), which wouldn't have been possible
-with a single new CAP_...
+--t4elbyhlilsmpd4b
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
--Kees
+On 2019-10-01, kbuild test robot <lkp@intel.com> wrote:
+> Hi Aleksa,
+>=20
+> Thank you for the patch! Yet something to improve:
+>=20
+> [auto build test ERROR on linus/master]
+> [cannot apply to v5.4-rc1 next-20190930]
+> [if your patch is applied to the wrong git tree, please drop us a note to=
+ help
+> improve the system. BTW, we also suggest to use '--base' option to specif=
+y the
+> base tree in git format-patch, please see https://stackoverflow.com/a/374=
+06982]
 
--- 
-Kees Cook
+I forgot to include --base to signify this series depends on the
+copy_struct_from_user() one. I'll include it in the next version.
+
+> url:    https://github.com/0day-ci/linux/commits/Aleksa-Sarai/namei-opena=
+t2-2-path-resolution-restrictions/20191001-025628
+> config: i386-defconfig (attached as .config)
+> compiler: gcc-7 (Debian 7.4.0-13) 7.4.0
+> reproduce:
+>         # save the attached .config to linux build tree
+>         make ARCH=3Di386=20
+>=20
+> If you fix the issue, kindly add following tag
+> Reported-by: kbuild test robot <lkp@intel.com>
+>=20
+> All errors (new ones prefixed by >>):
+>=20
+>    fs/open.c: In function '__do_sys_openat2':
+> >> fs/open.c:1173:8: error: implicit declaration of function 'copy_struct=
+_from_user'; did you mean 'copy_siginfo_from_user'? [-Werror=3Dimplicit-fun=
+ction-declaration]
+>      err =3D copy_struct_from_user(&tmp, sizeof(tmp), how, usize);
+>            ^~~~~~~~~~~~~~~~~~~~~
+>            copy_siginfo_from_user
+>    cc1: some warnings being treated as errors
+>=20
+> vim +1173 fs/open.c
+>=20
+>   1163=09
+>   1164	SYSCALL_DEFINE4(openat2, int, dfd, const char __user *, filename,
+>   1165			const struct open_how __user *, how, size_t, usize)
+>   1166	{
+>   1167		int err;
+>   1168		struct open_how tmp;
+>   1169=09
+>   1170		if (unlikely(usize < OPEN_HOW_SIZE_VER0))
+>   1171			return -EINVAL;
+>   1172=09
+> > 1173		err =3D copy_struct_from_user(&tmp, sizeof(tmp), how, usize);
+>   1174		if (err)
+>   1175			return err;
+>   1176=09
+>   1177		if (force_o_largefile())
+>   1178			tmp.flags |=3D O_LARGEFILE;
+>   1179=09
+>   1180		return do_sys_open(dfd, filename, &tmp);
+>   1181	}
+>   1182=09
+>=20
+> ---
+> 0-DAY kernel test infrastructure                Open Source Technology Ce=
+nter
+> https://lists.01.org/pipermail/kbuild-all                   Intel Corpora=
+tion
+
+--=20
+Aleksa Sarai
+Senior Software Engineer (Containers)
+SUSE Linux GmbH
+<https://www.cyphar.com/>
+
+--t4elbyhlilsmpd4b
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXZKEtAAKCRCdlLljIbnQ
+EmxJAQDTSUj176CMMvs56b+zPL9VCZGAIFkQ+0fXCW8y6GyasAD/d8NBlZ2zmc9b
+DdtZcltEmeWc0Rd4LR1wAUrHajuvTAU=
+=sSPC
+-----END PGP SIGNATURE-----
+
+--t4elbyhlilsmpd4b--
