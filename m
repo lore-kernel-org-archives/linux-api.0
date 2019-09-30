@@ -1,100 +1,58 @@
-From: Aleksa Sarai <asarai@suse.de>
-Subject: [PATCH RESEND v3 4/4] perf_event_open: switch to copy_struct_from_user()
-Date: Tue,  1 Oct 2019 05:15:26 +1000
-Message-ID: <20190930191526.19544-5-asarai@suse.de>
-References: <20190930191526.19544-1-asarai@suse.de>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: [PATCH] io_uring: use __kernel_timespec in timeout ABI
+Date: Mon, 30 Sep 2019 22:20:39 +0200
+Message-ID: <20190930202055.1748710-1-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <libc-alpha-return-105511-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-In-Reply-To: <20190930191526.19544-1-asarai@suse.de>
-To: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Alexander Shishkin <alexander.shishkin@linux.intel.com>, Jiri Olsa <jolsa@redhat.com>, Namhyung Kim <namhyung@kernel.org>, Christian Brauner <christian@brauner.io>, Kees Cook <keescook@chromium.org>
-Cc: Aleksa Sarai <cyphar@cyphar.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Al Viro <viro@zeniv.linux.org.uk>, Linus Torvalds <torvalds@linux-foundation.org>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Hannes Reinecke <hare@suse.com>, Arnd Bergmann <arnd@arndb.de>, y2038@lists.linaro.org, linux-api@vger.kernel.org, Jackie Liu <liuyun01@kylinos.cn>, linux-kernel@vger.kernel.org, linux-block@vger.kernel.org, =?UTF-8?q?Stefan=20B=C3=BChler?= <source@stbuehler.de>, Alexander Viro <viro@zeniv.linux.org.uk>, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Hristo Venev <hristo@venev.name>
 List-Id: linux-api@vger.kernel.org
 
-From: Aleksa Sarai <cyphar@cyphar.com>
-
-The change is very straightforward, and helps unify the syscall
-interface for struct-from-userspace syscalls.
-
-Signed-off-by: Aleksa Sarai <cyphar@cyphar.com>
----
- kernel/events/core.c | 47 +++++++++-----------------------------------
- 1 file changed, 9 insertions(+), 38 deletions(-)
-
-diff --git a/kernel/events/core.c b/kernel/events/core.c
-index 4655adbbae10..3f0cb82e4fbc 100644
---- a/kernel/events/core.c
-+++ b/kernel/events/core.c
-@@ -10586,55 +10586,26 @@ static int perf_copy_attr(struct perf_event_attr __user *uattr,
- 	u32 size;
- 	int ret;
- 
--	if (!access_ok(uattr, PERF_ATTR_SIZE_VER0))
--		return -EFAULT;
--
--	/*
--	 * zero the full structure, so that a short copy will be nice.
--	 */
-+	/* Zero the full structure, so that a short copy will be nice. */
- 	memset(attr, 0, sizeof(*attr));
- 
- 	ret = get_user(size, &uattr->size);
- 	if (ret)
- 		return ret;
- 
--	if (size > PAGE_SIZE)	/* silly large */
--		goto err_size;
--
--	if (!size)		/* abi compat */
-+	/* ABI compatibility quirk: */
-+	if (!size)
- 		size = PERF_ATTR_SIZE_VER0;
--
--	if (size < PERF_ATTR_SIZE_VER0)
-+	if (size < PERF_ATTR_SIZE_VER0 || size > PAGE_SIZE)
- 		goto err_size;
- 
--	/*
--	 * If we're handed a bigger struct than we know of,
--	 * ensure all the unknown bits are 0 - i.e. new
--	 * user-space does not rely on any kernel feature
--	 * extensions we dont know about yet.
--	 */
--	if (size > sizeof(*attr)) {
--		unsigned char __user *addr;
--		unsigned char __user *end;
--		unsigned char val;
--
--		addr = (void __user *)uattr + sizeof(*attr);
--		end  = (void __user *)uattr + size;
--
--		for (; addr < end; addr++) {
--			ret = get_user(val, addr);
--			if (ret)
--				return ret;
--			if (val)
--				goto err_size;
--		}
--		size = sizeof(*attr);
-+	ret = copy_struct_from_user(attr, sizeof(*attr), uattr, size);
-+	if (ret) {
-+		if (ret == -E2BIG)
-+			goto err_size;
-+		return ret;
- 	}
- 
--	ret = copy_from_user(attr, uattr, size);
--	if (ret)
--		return -EFAULT;
--
- 	attr->size = size;
- 
- 	if (attr->__reserved_1)
--- 
-2.23.0
+QWxsIHN5c3RlbSBjYWxscyB1c2Ugc3RydWN0IF9fa2VybmVsX3RpbWVzcGVjIGluc3RlYWQgb2Yg
+dGhlIG9sZCBzdHJ1Y3QKdGltZXNwZWMsIGJ1dCB0aGlzIG9uZSB3YXMganVzdCBhZGRlZCB3aXRo
+IHRoZSBvbGQtc3R5bGUgQUJJLiBDaGFuZ2UgaXQKbm93IHRvIGVuZm9yY2UgdGhlIHVzZSBvZiBf
+X2tlcm5lbF90aW1lc3BlYywgYXZvaWRpbmcgQUJJIGNvbmZ1c2lvbiBhbmQKdGhlIG5lZWQgZm9y
+IGNvbXBhdCBoYW5kbGVycyBvbiAzMi1iaXQgYXJjaGl0ZWN0dXJlcy4KCkFueSB1c2VyIHNwYWNl
+IGNhbGxlciB3aWxsIGhhdmUgdG8gdXNlIF9fa2VybmVsX3RpbWVzcGVjIG5vdywgYnV0IHRoaXMK
+aXMgdW5hbWJpZ3VvdXMgYW5kIHdvcmtzIGZvciBhbnkgQyBsaWJyYXJ5IHJlZ2FyZGxlc3Mgb2Yg
+dGhlIHRpbWVfdApkZWZpbml0aW9uLiBBIG5pY2VyIHdheSB0byBzcGVjaWZ5IHRoZSB0aW1lb3V0
+IHdvdWxkIGhhdmUgYmVlbiBhIGxlc3MKYW1iaWd1b3VzIDY0LWJpdCBuYW5vc2Vjb25kIHZhbHVl
+LCBidXQgSSBzdXBwb3NlIGl0J3MgdG9vIGxhdGUgbm93IHRvCmNoYW5nZSB0aGF0IGFzIHRoaXMg
+d291bGQgaW1wYWN0IGJvdGggMzItYml0IGFuZCA2NC1iaXQgdXNlcnMuCgpGaXhlczogNTI2MmY1
+Njc5ODdkICgiaW9fdXJpbmc6IElPUklOR19PUF9USU1FT1VUIHN1cHBvcnQiKQpTaWduZWQtb2Zm
+LWJ5OiBBcm5kIEJlcmdtYW5uIDxhcm5kQGFybmRiLmRlPgotLS0KIGZzL2lvX3VyaW5nLmMgfCA4
+ICsrKystLS0tCiAxIGZpbGUgY2hhbmdlZCwgNCBpbnNlcnRpb25zKCspLCA0IGRlbGV0aW9ucygt
+KQoKZGlmZiAtLWdpdCBhL2ZzL2lvX3VyaW5nLmMgYi9mcy9pb191cmluZy5jCmluZGV4IGFhOGFj
+NTU3NDkzYy4uOGEwMzgxZjFhNDNiIDEwMDY0NAotLS0gYS9mcy9pb191cmluZy5jCisrKyBiL2Zz
+L2lvX3VyaW5nLmMKQEAgLTE4OTIsMTUgKzE4OTIsMTUgQEAgc3RhdGljIGludCBpb190aW1lb3V0
+KHN0cnVjdCBpb19raW9jYiAqcmVxLCBjb25zdCBzdHJ1Y3QgaW9fdXJpbmdfc3FlICpzcWUpCiAJ
+dW5zaWduZWQgY291bnQsIHJlcV9kaXN0LCB0YWlsX2luZGV4OwogCXN0cnVjdCBpb19yaW5nX2N0
+eCAqY3R4ID0gcmVxLT5jdHg7CiAJc3RydWN0IGxpc3RfaGVhZCAqZW50cnk7Ci0Jc3RydWN0IHRp
+bWVzcGVjIHRzOworCXN0cnVjdCB0aW1lc3BlYzY0IHRzOwogCiAJaWYgKHVubGlrZWx5KGN0eC0+
+ZmxhZ3MgJiBJT1JJTkdfU0VUVVBfSU9QT0xMKSkKIAkJcmV0dXJuIC1FSU5WQUw7CiAJaWYgKHNx
+ZS0+ZmxhZ3MgfHwgc3FlLT5pb3ByaW8gfHwgc3FlLT5idWZfaW5kZXggfHwgc3FlLT50aW1lb3V0
+X2ZsYWdzIHx8CiAJICAgIHNxZS0+bGVuICE9IDEpCiAJCXJldHVybiAtRUlOVkFMOwotCWlmIChj
+b3B5X2Zyb21fdXNlcigmdHMsICh2b2lkIF9fdXNlciAqKSAodW5zaWduZWQgbG9uZykgc3FlLT5h
+ZGRyLAotCSAgICBzaXplb2YodHMpKSkKKworCWlmIChnZXRfdGltZXNwZWM2NCgmdHMsIHU2NF90
+b191c2VyX3B0cihzcWUtPmFkZHIpKSkKIAkJcmV0dXJuIC1FRkFVTFQ7CiAKIAkvKgpAQCAtMTkz
+NCw3ICsxOTM0LDcgQEAgc3RhdGljIGludCBpb190aW1lb3V0KHN0cnVjdCBpb19raW9jYiAqcmVx
+LCBjb25zdCBzdHJ1Y3QgaW9fdXJpbmdfc3FlICpzcWUpCiAKIAlocnRpbWVyX2luaXQoJnJlcS0+
+dGltZW91dC50aW1lciwgQ0xPQ0tfTU9OT1RPTklDLCBIUlRJTUVSX01PREVfUkVMKTsKIAlyZXEt
+PnRpbWVvdXQudGltZXIuZnVuY3Rpb24gPSBpb190aW1lb3V0X2ZuOwotCWhydGltZXJfc3RhcnQo
+JnJlcS0+dGltZW91dC50aW1lciwgdGltZXNwZWNfdG9fa3RpbWUodHMpLAorCWhydGltZXJfc3Rh
+cnQoJnJlcS0+dGltZW91dC50aW1lciwgdGltZXNwZWM2NF90b19rdGltZSh0cyksCiAJCQlIUlRJ
+TUVSX01PREVfUkVMKTsKIAlyZXR1cm4gMDsKIH0KLS0gCjIuMjAuMAoKX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KWTIwMzggbWFpbGluZyBsaXN0ClkyMDM4
+QGxpc3RzLmxpbmFyby5vcmcKaHR0cHM6Ly9saXN0cy5saW5hcm8ub3JnL21haWxtYW4vbGlzdGlu
+Zm8veTIwMzgK
