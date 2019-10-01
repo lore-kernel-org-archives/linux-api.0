@@ -1,185 +1,29 @@
-From: kbuild test robot <lkp@intel.com>
-Subject: Re: [PATCH v13 7/9] open: openat2(2) syscall
-Date: Tue, 1 Oct 2019 13:06:23 +0800
-Message-ID: <201910011326.iTYOtJYo%lkp@intel.com>
-References: <20190930183316.10190-8-cyphar@cyphar.com>
+From: Qian Cai <cai@lca.pw>
+Subject: Re: [PATCH -next] treewide: remove unused argument in lock_release()
+Date: Tue, 01 Oct 2019 08:46:44 -0400
+Message-ID: <1569934004.5576.249.camel@lca.pw>
+References: <1568909380-32199-1-git-send-email-cai@lca.pw>
+         <20190930072938.GK4553@hirez.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-Content-Disposition: inline
-In-Reply-To: <20190930183316.10190-8-cyphar@cyphar.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-Cc: linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Alexei Starovoitov <ast@kernel.org>, linux-mips@vger.kernel.org, David Howells <dhowells@redhat.com>, linux-kselftest@vger.kernel.org, sparclinux@vger.kernel.org, Jiri Olsa <jolsa@redhat.com>, linux-arch@vger.kernel.org, linux-s390@vger.kernel.org, Tycho Andersen <tycho@tycho.ws>, Aleksa Sarai <asarai@suse.de>, Shuah Khan <shuah@kernel.org>, Alexander Shishkin <alexander.shishkin@linux.intel.com>, Ingo Molnar <mingo@redhat.com>, Christian Brauner <christian@brauner.io>, Eric Biederman <ebiederm@xmission.com>, linux-xtensa@linux-xtensa.org, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Jann Horn <jannh@google.com>, Oleg Nesterov <oleg@redhat.com>, Aleksa Sarai <cyphar@cyphar.com>, Al Viro <viro@zeniv.linux.org.uk>
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20190930072938.GK4553@hirez.programming.kicks-ass.net>
+Sender: netdev-owner@vger.kernel.org
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: akpm@linux-foundation.org, mingo@redhat.com, will@kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, maarten.lankhorst@linux.intel.com, mripard@kernel.org, sean@poorly.run, airlied@linux.ie, daniel@ffwll.ch, dri-devel@lists.freedesktop.org, gregkh@linuxfoundation.org, jslaby@suse.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, joonas.lahtinen@linux.intel.com, rodrigo.vivi@intel.com, intel-gfx@lists.freedesktop.org, tytso@mit.edu, jack@suse.com, linux-ext4@vger.kernel.org, tj@kernel.org, mark@fasheh.com, jlbec@evilplan.org, joseph.qi@linux.alibaba.com, ocfs2-devel@oss.oracle.com, davem@davemloft.net, st@kernel.org, daniel@iogearbox.net, netdev@vger.kernel.org, bpf@vger.kernel.org, duyuyang@gmail.com, juri.lelli@redhat.com, vincent.guittot@linaro.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Aleksa,
+On Mon, 2019-09-30 at 09:29 +0200, Peter Zijlstra wrote:
+> On Thu, Sep 19, 2019 at 12:09:40PM -0400, Qian Cai wrote:
+> > Since the commit b4adfe8e05f1 ("locking/lockdep: Remove unused argument
+> > in __lock_release"), @nested is no longer used in lock_release(), so
+> > remove it from all lock_release() calls and friends.
+> 
+> Right; I never did this cleanup for not wanting the churn, but as long
+> as it applies I'll take it.
 
-Thank you for the patch! Perhaps something to improve:
-
-[auto build test WARNING on linus/master]
-[cannot apply to v5.4-rc1 next-20191001]
-[if your patch is applied to the wrong git tree, please drop us a note to help
-improve the system. BTW, we also suggest to use '--base' option to specify the
-base tree in git format-patch, please see https://stackoverflow.com/a/37406982]
-
-url:    https://github.com/0day-ci/linux/commits/Aleksa-Sarai/namei-openat2-2-path-resolution-restrictions/20191001-025628
-reproduce:
-        # apt-get install sparse
-        # sparse version: v0.6.1-rc1-37-gd466a02-dirty
-        make ARCH=x86_64 allmodconfig
-        make C=1 CF='-fdiagnostic-prefix -D__CHECK_ENDIAN__'
-
-If you fix the issue, kindly add following tag
-Reported-by: kbuild test robot <lkp@intel.com>
-
-
-sparse warnings: (new ones prefixed by >>)
-
-   fs/open.c:757:13: sparse: sparse: restricted fmode_t degrades to integer
-   fs/open.c:983:18: sparse: sparse: restricted fmode_t degrades to integer
->> fs/open.c:1011:36: sparse: sparse: invalid assignment: |=
->> fs/open.c:1011:36: sparse:    left side has type int
->> fs/open.c:1011:36: sparse:    right side has type restricted fmode_t
-   fs/open.c:1013:36: sparse: sparse: invalid assignment: |=
-   fs/open.c:1013:36: sparse:    left side has type int
-   fs/open.c:1013:36: sparse:    right side has type restricted fmode_t
->> fs/open.c:1029:24: sparse: sparse: incorrect type in assignment (different base types) @@    expected restricted fmode_t [usertype] opath_mask @@    got pe] opath_mask @@
->> fs/open.c:1029:24: sparse:    expected restricted fmode_t [usertype] opath_mask
->> fs/open.c:1029:24: sparse:    got int opath_mask
->> fs/open.c:1011:36: sparse: sparse: invalid assignment: |=
->> fs/open.c:1011:36: sparse:    left side has type int
->> fs/open.c:1011:36: sparse:    right side has type restricted fmode_t
-   fs/open.c:1013:36: sparse: sparse: invalid assignment: |=
-   fs/open.c:1013:36: sparse:    left side has type int
-   fs/open.c:1013:36: sparse:    right side has type restricted fmode_t
->> fs/open.c:1029:24: sparse: sparse: incorrect type in assignment (different base types) @@    expected restricted fmode_t [usertype] opath_mask @@    got pe] opath_mask @@
->> fs/open.c:1029:24: sparse:    expected restricted fmode_t [usertype] opath_mask
->> fs/open.c:1029:24: sparse:    got int opath_mask
->> fs/open.c:1011:36: sparse: sparse: invalid assignment: |=
->> fs/open.c:1011:36: sparse:    left side has type int
->> fs/open.c:1011:36: sparse:    right side has type restricted fmode_t
-   fs/open.c:1013:36: sparse: sparse: invalid assignment: |=
-   fs/open.c:1013:36: sparse:    left side has type int
-   fs/open.c:1013:36: sparse:    right side has type restricted fmode_t
->> fs/open.c:1029:24: sparse: sparse: incorrect type in assignment (different base types) @@    expected restricted fmode_t [usertype] opath_mask @@    got pe] opath_mask @@
->> fs/open.c:1029:24: sparse:    expected restricted fmode_t [usertype] opath_mask
->> fs/open.c:1029:24: sparse:    got int opath_mask
-   fs/open.c:1173:15: sparse: sparse: undefined identifier 'copy_struct_from_user'
-
-vim +1011 fs/open.c
-
-   957	
-   958	static inline int build_open_flags(const struct open_how *how,
-   959					   struct open_flags *op)
-   960	{
-   961		int flags = how->flags;
-   962		int lookup_flags = 0;
-   963		int opath_mask = 0;
-   964		int acc_mode = ACC_MODE(flags);
-   965	
-   966		/*
-   967		 * Older syscalls still clear these bits before calling
-   968		 * build_open_flags(), but openat2(2) checks all its arguments.
-   969		 */
-   970		if (flags & ~VALID_OPEN_FLAGS)
-   971			return -EINVAL;
-   972		if (how->resolve & ~VALID_RESOLVE_FLAGS)
-   973			return -EINVAL;
-   974		if (!(how->flags & (O_PATH | O_CREAT | __O_TMPFILE)) && how->mode != 0)
-   975			return -EINVAL;
-   976	
-   977		if (flags & (O_CREAT | __O_TMPFILE))
-   978			op->mode = (how->mode & S_IALLUGO) | S_IFREG;
-   979		else
-   980			op->mode = 0;
-   981	
-   982		/* Must never be set by userspace */
- > 983		flags &= ~FMODE_NONOTIFY & ~O_CLOEXEC;
-   984	
-   985		/*
-   986		 * O_SYNC is implemented as __O_SYNC|O_DSYNC.  As many places only
-   987		 * check for O_DSYNC if the need any syncing at all we enforce it's
-   988		 * always set instead of having to deal with possibly weird behaviour
-   989		 * for malicious applications setting only __O_SYNC.
-   990		 */
-   991		if (flags & __O_SYNC)
-   992			flags |= O_DSYNC;
-   993	
-   994		if (flags & __O_TMPFILE) {
-   995			if ((flags & O_TMPFILE_MASK) != O_TMPFILE)
-   996				return -EINVAL;
-   997			if (!(acc_mode & MAY_WRITE))
-   998				return -EINVAL;
-   999		} else if (flags & O_PATH) {
-  1000			/*
-  1001			 * If we have O_PATH in the open flag. Then we
-  1002			 * cannot have anything other than the below set of flags
-  1003			 */
-  1004			flags &= O_DIRECTORY | O_NOFOLLOW | O_PATH;
-  1005			acc_mode = 0;
-  1006	
-  1007			/* Allow userspace to restrict the re-opening of O_PATH fds. */
-  1008			if (how->upgrade_mask & ~VALID_UPGRADE_FLAGS)
-  1009				return -EINVAL;
-  1010			if (!(how->upgrade_mask & UPGRADE_NOREAD))
-> 1011				opath_mask |= FMODE_PATH_READ;
-  1012			if (!(how->upgrade_mask & UPGRADE_NOWRITE))
-  1013				opath_mask |= FMODE_PATH_WRITE;
-  1014		}
-  1015	
-  1016		op->open_flag = flags;
-  1017	
-  1018		/* O_TRUNC implies we need access checks for write permissions */
-  1019		if (flags & O_TRUNC)
-  1020			acc_mode |= MAY_WRITE;
-  1021	
-  1022		/* Allow the LSM permission hook to distinguish append
-  1023		   access from general write access. */
-  1024		if (flags & O_APPEND)
-  1025			acc_mode |= MAY_APPEND;
-  1026	
-  1027		op->acc_mode = acc_mode;
-  1028		op->intent = flags & O_PATH ? 0 : LOOKUP_OPEN;
-> 1029		op->opath_mask = opath_mask;
-  1030	
-  1031		if (flags & O_CREAT) {
-  1032			op->intent |= LOOKUP_CREATE;
-  1033			if (flags & O_EXCL)
-  1034				op->intent |= LOOKUP_EXCL;
-  1035		}
-  1036	
-  1037		if (flags & O_DIRECTORY)
-  1038			lookup_flags |= LOOKUP_DIRECTORY;
-  1039		if (!(flags & O_NOFOLLOW))
-  1040			lookup_flags |= LOOKUP_FOLLOW;
-  1041		if (flags & O_EMPTYPATH)
-  1042			lookup_flags |= LOOKUP_EMPTY;
-  1043	
-  1044		if (how->resolve & RESOLVE_NO_XDEV)
-  1045			lookup_flags |= LOOKUP_NO_XDEV;
-  1046		if (how->resolve & RESOLVE_NO_MAGICLINKS)
-  1047			lookup_flags |= LOOKUP_NO_MAGICLINKS;
-  1048		if (how->resolve & RESOLVE_NO_SYMLINKS)
-  1049			lookup_flags |= LOOKUP_NO_SYMLINKS;
-  1050		if (how->resolve & RESOLVE_BENEATH)
-  1051			lookup_flags |= LOOKUP_BENEATH;
-  1052		if (how->resolve & RESOLVE_IN_ROOT)
-  1053			lookup_flags |= LOOKUP_IN_ROOT;
-  1054	
-  1055		op->lookup_flags = lookup_flags;
-  1056		return 0;
-  1057	}
-  1058	
-
----
-0-DAY kernel test infrastructure                Open Source Technology Center
-https://lists.01.org/pipermail/kbuild-all                   Intel Corporation
+Not sure when you would like to merge this. As you know, the longer it is
+pending, the more churn it could have. If you could give me rough timeline
+(i.e., aim for v5.4-rc2 or v5.5), I'll double-check for breakage and rebase it
+if necessary.
