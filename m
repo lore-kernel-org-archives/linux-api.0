@@ -1,51 +1,80 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH] io_uring: use __kernel_timespec in timeout ABI
-Date: Tue, 1 Oct 2019 17:57:42 +0200
-Message-ID: <CAK8P3a19TDk0uo1eu4CcaKHvQCPUJGMjBV8Txtpgvg1ifAgW_A@mail.gmail.com>
-References: <20190930202055.1748710-1-arnd@arndb.de>
- <8d5d34da-e1f0-1ab5-461e-f3145e52c48a@kernel.dk>
- <623e1d27-d3b1-3241-bfd4-eb94ce70da14@kernel.dk>
- <CAK8P3a3AAFXNmpQwuirzM+jgEQGj9tMC_5oaSs4CfiEVGmTkZg@mail.gmail.com>
- <ca0a5bbe-c20e-d5be-110e-942c604ad2d7@kernel.dk>
+From: Christian Brauner <christian.brauner@ubuntu.com>
+Subject: Re: [PATCH v4 0/4] lib: introduce copy_struct_from_user() helper
+Date: Tue, 1 Oct 2019 18:01:45 +0200
+Message-ID: <20191001160144.z4y7gz4yla76apq4@wittgenstein>
+References: <20191001011055.19283-1-cyphar@cyphar.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <ca0a5bbe-c20e-d5be-110e-942c604ad2d7@kernel.dk>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: Jens Axboe <axboe@kernel.dk>
-Cc: Hannes Reinecke <hare@suse.com>, y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, Jackie Liu <liuyun01@kylinos.cn>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-block <linux-block@vger.kernel.org>, =?UTF-8?Q?Stefan_B=C3=BChler?= <source@stbuehler.de>, Alexander Viro <viro@zeniv.linux.org.uk>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Hristo Venev <hristo@venev.name>
+Content-Type: text/plain; charset=utf-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20191001011055.19283-1-cyphar@cyphar.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Aleksa Sarai <cyphar@cyphar.com>, Kees Cook <keescook@chromium.org>
+Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Alexander Shishkin <alexander.shishkin@linux.intel.com>, Jiri Olsa <jolsa@redhat.com>, Namhyung Kim <namhyung@kernel.org>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Al Viro <viro@zeniv.linux.org.uk>, Linus Torvalds <torvalds@linux-foundation.org>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-T24gVHVlLCBPY3QgMSwgMjAxOSBhdCA1OjUyIFBNIEplbnMgQXhib2UgPGF4Ym9lQGtlcm5lbC5k
-az4gd3JvdGU6Cj4gT24gMTAvMS8xOSA5OjQ5IEFNLCBBcm5kIEJlcmdtYW5uIHdyb3RlOgo+ID4g
-T24gVHVlLCBPY3QgMSwgMjAxOSBhdCA1OjM4IFBNIEplbnMgQXhib2UgPGF4Ym9lQGtlcm5lbC5k
-az4gd3JvdGU6Cgo+ID4gV2hhdCdzIHdyb25nIHdpdGggdXNpbmcgX19rZXJuZWxfdGltZXNwZWM/
-IEp1c3QgdGhlIG5hbWU/Cj4gPiBJIHN1cHBvc2UgbGlidXJpbmcgY291bGQgYWRkIGEgbWFjcm8g
-dG8gZ2l2ZSBpdCBhIGRpZmZlcmVudCBuYW1lCj4gPiBmb3IgaXRzIHVzZXJzLgo+Cj4gSnVzdCB0
-aGF0IGl0IHNlZW1zIEkgbmVlZCB0byBtYWtlIGl0IGF2YWlsYWJsZSB0aHJvdWdoIGxpYnVyaW5n
-IG9uCj4gc3lzdGVtcyB0aGF0IGRvbid0IGhhdmUgaXQgeWV0LiBOb3QgYSBiaWcgZGVhbCwgdGhv
-dWdoLgoKQWgsIHJpZ2h0LiBJIHQgd291bGQgbm90IGNvdmVyIHRoZSBjYXNlIG9mIGJ1aWxkaW5n
-IGFnYWluc3Qga2VybmVsCmhlYWRlcnMgZWFybGllciB0aGFuIGxpbnV4LTUuMSBidXQgcnVubmlu
-ZyBvbiBhIDUuNCsga2VybmVsLgoKSSBhc3N1bWVkIHRoYXQgdGhhdCB5b3Ugd291bGQgcmVxdWly
-ZSBuZXcga2VybmVsIGhlYWRlcnMgYW55d2F5LApidXQgaWYgeW91IGhhdmUgYSBjb3B5IG9mIHRo
-ZSBpb191cmluZyBoZWFkZXIsIHRoYXQgaXMgbm90IG5lY2Vzc2FyeS4KCj4gT25lIHRoaW5nIHRo
-YXQgc3RydWNrIG1lIGFib3V0IHRoaXMgYXBwcm9hY2ggLSB3ZSB0aGVuIGxvc2UgdGhlIGFiaWxp
-dHkgdG8KPiBkaWZmZXJlbnRpYXRlIGJldHdlZW4gImRvbid0IHdhbnQgYSB0aW1lZCB0aW1lb3V0
-IiB3aXRoIHRzID09IE5VTEwsIHZzCj4gdHZfc2VjIGFuZCB0dl9uc2VjIGJvdGggYmVpbmcgMC4K
-CllvdSBjb3VsZCBhbHdheXMgZGVmaW5lIGEgc3BlY2lhbCBjb25zdGFudCBzdWNoIGFzCicjZGVm
-aW5lIElPX1VSSU5HX1RJTUVPVVRfTkVWRVIgLTF1bGwnIGlmIHlvdSB3YW50IHRvCnN1cHBvcnQg
-Zm9yICduZXZlciB3YWl0IGlmIGl0J3Mgbm90IGFscmVhZHkgZG9uZScgYW5kICd3YWl0IGluZGVm
-aW5pdGVseScuCgo+IEkgdGhpbmsgSSdsbCBzdHVjayB3aXRoIHRoYXQgeW91IGhhZCBhbmQganVz
-dCB1c2UgX19rZXJuZWxfdGltZXNwZWMgaW4KPiBsaWJ1cmluZy4KCk9rLgoKICAgICAgIEFybmQK
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KWTIwMzggbWFp
-bGluZyBsaXN0ClkyMDM4QGxpc3RzLmxpbmFyby5vcmcKaHR0cHM6Ly9saXN0cy5saW5hcm8ub3Jn
-L21haWxtYW4vbGlzdGluZm8veTIwMzgK
+On Tue, Oct 01, 2019 at 11:10:51AM +1000, Aleksa Sarai wrote:
+> Patch changelog:
+>  v4:
+>   * __always_inline copy_struct_from_user(). [Kees Cook]
+>   * Rework test_user_copy.ko changes. [Kees Cook]
+>  v3: <https://lore.kernel.org/lkml/20190930182810.6090-1-cyphar@cyphar.com/>
+>      <https://lore.kernel.org/lkml/20190930191526.19544-1-asarai@suse.de/>
+>  v2: <https://lore.kernel.org/lkml/20190925230332.18690-1-cyphar@cyphar.com/>
+>  v1: <https://lore.kernel.org/lkml/20190925165915.8135-1-cyphar@cyphar.com/>
+> 
+> This series was split off from the openat2(2) syscall discussion[1].
+> However, the copy_struct_to_user() helper has been dropped, because
+> after some discussion it appears that there is no really obvious
+> semantics for how copy_struct_to_user() should work on mixed-vintages
+> (for instance, whether [2] is the correct semantics for all syscalls).
+> 
+> A common pattern for syscall extensions is increasing the size of a
+> struct passed from userspace, such that the zero-value of the new fields
+> result in the old kernel behaviour (allowing for a mix of userspace and
+> kernel vintages to operate on one another in most cases).
+> 
+> Previously there was no common lib/ function that implemented
+> the necessary extension-checking semantics (and different syscalls
+> implemented them slightly differently or incompletely[3]). This series
+> implements the helper and ports several syscalls to use it.
+> 
+> Some in-kernel selftests are included in this patch. More complete
+> self-tests for copy_struct_from_user() are included in the openat2()
+> patchset.
+> 
+> [1]: https://lore.kernel.org/lkml/20190904201933.10736-1-cyphar@cyphar.com/
+> 
+> [2]: commit 1251201c0d34 ("sched/core: Fix uclamp ABI bug, clean up and
+>      robustify sched_read_attr() ABI logic and code")
+> 
+> [3]: For instance {sched_setattr,perf_event_open,clone3}(2) all do do
+>      similar checks to copy_struct_from_user() while rt_sigprocmask(2)
+>      always rejects differently-sized struct arguments.
+> 
+> Aleksa Sarai (4):
+>   lib: introduce copy_struct_from_user() helper
+>   clone3: switch to copy_struct_from_user()
+>   sched_setattr: switch to copy_struct_from_user()
+>   perf_event_open: switch to copy_struct_from_user()
+> 
+>  include/linux/bitops.h     |   7 ++
+>  include/linux/uaccess.h    |  70 +++++++++++++++++++
+>  include/uapi/linux/sched.h |   2 +
+>  kernel/events/core.c       |  47 +++----------
+>  kernel/fork.c              |  34 ++--------
+>  kernel/sched/core.c        |  43 ++----------
+>  lib/strnlen_user.c         |   8 +--
+>  lib/test_user_copy.c       | 136 +++++++++++++++++++++++++++++++++++--
+>  lib/usercopy.c             |  55 +++++++++++++++
+>  9 files changed, 288 insertions(+), 114 deletions(-)
+
+I've picked this up now and it's sitting in
+https://git.kernel.org/pub/scm/linux/kernel/git/brauner/linux.git/log/?h=copy_struct_from_user
+
+It should show up in linux-next tomorrow. I will let this sit there for
+a few days but overall this seems good to have in rc2.
+If someone objects and prefers to take it through their tree I can drop
+it.
+
+Christian
