@@ -1,77 +1,51 @@
-From: Jens Axboe <axboe@kernel.dk>
+From: Arnd Bergmann <arnd@arndb.de>
 Subject: Re: [PATCH] io_uring: use __kernel_timespec in timeout ABI
-Date: Tue, 1 Oct 2019 09:52:27 -0600
-Message-ID: <ca0a5bbe-c20e-d5be-110e-942c604ad2d7@kernel.dk>
+Date: Tue, 1 Oct 2019 17:57:42 +0200
+Message-ID: <CAK8P3a19TDk0uo1eu4CcaKHvQCPUJGMjBV8Txtpgvg1ifAgW_A@mail.gmail.com>
 References: <20190930202055.1748710-1-arnd@arndb.de>
  <8d5d34da-e1f0-1ab5-461e-f3145e52c48a@kernel.dk>
  <623e1d27-d3b1-3241-bfd4-eb94ce70da14@kernel.dk>
  <CAK8P3a3AAFXNmpQwuirzM+jgEQGj9tMC_5oaSs4CfiEVGmTkZg@mail.gmail.com>
+ <ca0a5bbe-c20e-d5be-110e-942c604ad2d7@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAK8P3a3AAFXNmpQwuirzM+jgEQGj9tMC_5oaSs4CfiEVGmTkZg@mail.gmail.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, =?UTF-8?Q?Stefan_B=c3=bchler?= <source@stbuehler.de>, Hannes Reinecke <hare@suse.com>, Jackie Liu <liuyun01@kylinos.cn>, Andrew Morton <akpm@linux-foundation.org>, Hristo Venev <hristo@venev.name>, linux-block <linux-block@vger.kernel.org>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
+In-Reply-To: <ca0a5bbe-c20e-d5be-110e-942c604ad2d7@kernel.dk>
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+To: Jens Axboe <axboe@kernel.dk>
+Cc: Hannes Reinecke <hare@suse.com>, y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, Jackie Liu <liuyun01@kylinos.cn>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-block <linux-block@vger.kernel.org>, =?UTF-8?Q?Stefan_B=C3=BChler?= <source@stbuehler.de>, Alexander Viro <viro@zeniv.linux.org.uk>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Hristo Venev <hristo@venev.name>
 List-Id: linux-api@vger.kernel.org
 
-On 10/1/19 9:49 AM, Arnd Bergmann wrote:
-> On Tue, Oct 1, 2019 at 5:38 PM Jens Axboe <axboe@kernel.dk> wrote:
->>
->> On 10/1/19 8:09 AM, Jens Axboe wrote:
->>> On 9/30/19 2:20 PM, Arnd Bergmann wrote:
->>>> All system calls use struct __kernel_timespec instead of the old struct
->>>> timespec, but this one was just added with the old-style ABI. Change it
->>>> now to enforce the use of __kernel_timespec, avoiding ABI confusion and
->>>> the need for compat handlers on 32-bit architectures.
->>>>
->>>> Any user space caller will have to use __kernel_timespec now, but this
->>>> is unambiguous and works for any C library regardless of the time_t
->>>> definition. A nicer way to specify the timeout would have been a less
->>>> ambiguous 64-bit nanosecond value, but I suppose it's too late now to
->>>> change that as this would impact both 32-bit and 64-bit users.
->>>
->>> Thanks for catching that, Arnd. Applied.
->>
->> On second thought - since there appears to be no good 64-bit timespec
->> available to userspace, the alternative here is including on in liburing.
-> 
-> What's wrong with using __kernel_timespec? Just the name?
-> I suppose liburing could add a macro to give it a different name
-> for its users.
-
-Just that it seems I need to make it available through liburing on
-systems that don't have it yet. Not a big deal, though.
-
->> That seems kinda crappy in terms of API, so why not just use a 64-bit nsec
->> value as you suggest? There's on released kernel with this feature yet, so
->> there's nothing stopping us from just changing the API to be based on
->> a single 64-bit nanosecond timeout.
-> 
-> Certainly fine with me.
-> 
->> +       timeout = READ_ONCE(sqe->addr);
->>          hrtimer_init(&req->timeout.timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
->>          req->timeout.timer.function = io_timeout_fn;
->> -       hrtimer_start(&req->timeout.timer, timespec_to_ktime(ts),
->> +       hrtimer_start(&req->timeout.timer, ns_to_ktime(timeout),
-> 
-> It seems a little odd to use the 'addr' field as something that's not
-> an address,
-> and I'm not sure I understand the logic behind when you use a READ_ONCE()
-> as opposed to simply accessing the sqe the way it is done a few lines
-> earlier.
-> 
-> The time handling definitely looks good to me.
-
-One thing that struck me about this approach - we then lose the ability to
-differentiate between "don't want a timed timeout" with ts == NULL, vs
-tv_sec and tv_nsec both being 0.
-
-I think I'll stuck with that you had and just use __kernel_timespec in
-liburing.
-
--- 
-Jens Axboe
+T24gVHVlLCBPY3QgMSwgMjAxOSBhdCA1OjUyIFBNIEplbnMgQXhib2UgPGF4Ym9lQGtlcm5lbC5k
+az4gd3JvdGU6Cj4gT24gMTAvMS8xOSA5OjQ5IEFNLCBBcm5kIEJlcmdtYW5uIHdyb3RlOgo+ID4g
+T24gVHVlLCBPY3QgMSwgMjAxOSBhdCA1OjM4IFBNIEplbnMgQXhib2UgPGF4Ym9lQGtlcm5lbC5k
+az4gd3JvdGU6Cgo+ID4gV2hhdCdzIHdyb25nIHdpdGggdXNpbmcgX19rZXJuZWxfdGltZXNwZWM/
+IEp1c3QgdGhlIG5hbWU/Cj4gPiBJIHN1cHBvc2UgbGlidXJpbmcgY291bGQgYWRkIGEgbWFjcm8g
+dG8gZ2l2ZSBpdCBhIGRpZmZlcmVudCBuYW1lCj4gPiBmb3IgaXRzIHVzZXJzLgo+Cj4gSnVzdCB0
+aGF0IGl0IHNlZW1zIEkgbmVlZCB0byBtYWtlIGl0IGF2YWlsYWJsZSB0aHJvdWdoIGxpYnVyaW5n
+IG9uCj4gc3lzdGVtcyB0aGF0IGRvbid0IGhhdmUgaXQgeWV0LiBOb3QgYSBiaWcgZGVhbCwgdGhv
+dWdoLgoKQWgsIHJpZ2h0LiBJIHQgd291bGQgbm90IGNvdmVyIHRoZSBjYXNlIG9mIGJ1aWxkaW5n
+IGFnYWluc3Qga2VybmVsCmhlYWRlcnMgZWFybGllciB0aGFuIGxpbnV4LTUuMSBidXQgcnVubmlu
+ZyBvbiBhIDUuNCsga2VybmVsLgoKSSBhc3N1bWVkIHRoYXQgdGhhdCB5b3Ugd291bGQgcmVxdWly
+ZSBuZXcga2VybmVsIGhlYWRlcnMgYW55d2F5LApidXQgaWYgeW91IGhhdmUgYSBjb3B5IG9mIHRo
+ZSBpb191cmluZyBoZWFkZXIsIHRoYXQgaXMgbm90IG5lY2Vzc2FyeS4KCj4gT25lIHRoaW5nIHRo
+YXQgc3RydWNrIG1lIGFib3V0IHRoaXMgYXBwcm9hY2ggLSB3ZSB0aGVuIGxvc2UgdGhlIGFiaWxp
+dHkgdG8KPiBkaWZmZXJlbnRpYXRlIGJldHdlZW4gImRvbid0IHdhbnQgYSB0aW1lZCB0aW1lb3V0
+IiB3aXRoIHRzID09IE5VTEwsIHZzCj4gdHZfc2VjIGFuZCB0dl9uc2VjIGJvdGggYmVpbmcgMC4K
+CllvdSBjb3VsZCBhbHdheXMgZGVmaW5lIGEgc3BlY2lhbCBjb25zdGFudCBzdWNoIGFzCicjZGVm
+aW5lIElPX1VSSU5HX1RJTUVPVVRfTkVWRVIgLTF1bGwnIGlmIHlvdSB3YW50IHRvCnN1cHBvcnQg
+Zm9yICduZXZlciB3YWl0IGlmIGl0J3Mgbm90IGFscmVhZHkgZG9uZScgYW5kICd3YWl0IGluZGVm
+aW5pdGVseScuCgo+IEkgdGhpbmsgSSdsbCBzdHVjayB3aXRoIHRoYXQgeW91IGhhZCBhbmQganVz
+dCB1c2UgX19rZXJuZWxfdGltZXNwZWMgaW4KPiBsaWJ1cmluZy4KCk9rLgoKICAgICAgIEFybmQK
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KWTIwMzggbWFp
+bGluZyBsaXN0ClkyMDM4QGxpc3RzLmxpbmFyby5vcmcKaHR0cHM6Ly9saXN0cy5saW5hcm8ub3Jn
+L21haWxtYW4vbGlzdGluZm8veTIwMzgK
