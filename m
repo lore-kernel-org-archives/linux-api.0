@@ -1,79 +1,50 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH bpf-next] bpf, capabilities: introduce CAP_BPF
-Date: Tue, 1 Oct 2019 18:47:31 -0400
-Message-ID: <20191001184731.0ec98c7a@gandalf.local.home>
-References: <CALCETrV8iJv9+Ai11_1_r6MapPhhwt9hjxi=6EoixytabTScqg@mail.gmail.com>
-        <20190828003447.htgzsxs5oevn3eys@ast-mbp.dhcp.thefacebook.com>
-        <CALCETrVbPPPr=BdPAx=tJKxD3oLXP4OVSgCYrB_E4vb6idELow@mail.gmail.com>
-        <20190828044340.zeha3k3cmmxgfqj7@ast-mbp.dhcp.thefacebook.com>
-        <CALCETrW1o+Lazi2Ng6b9JN6jeJffgdW9f3HvqYhNo4TpHRXW=g@mail.gmail.com>
-        <20190828225512.q6qbvkdiqih2iewk@ast-mbp.dhcp.thefacebook.com>
-        <DA52992F-4862-4945-8482-FE619A04C753@amacapital.net>
-        <20190829040721.ef6rumbaunkavyrr@ast-mbp.dhcp.thefacebook.com>
-        <20190928193727.1769e90c@oasis.local.home>
-        <201909301129.5A1129C@keescook>
-        <20191001012226.vwpe56won5r7gbrz@ast-mbp.dhcp.thefacebook.com>
-        <20191001181052.43c9fabb@gandalf.local.home>
-        <6e8b910c-a739-857d-4867-395bd369bc6a@fb.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [RFC][PATCH] sysctl: Remove the sysctl system call
+Date: Tue, 01 Oct 2019 17:53:27 -0500
+Message-ID: <87imp8hyc8.fsf@x220.int.ebiederm.org>
+References: <8736gcjosv.fsf@x220.int.ebiederm.org>
+        <201910011140.EA0181F13@keescook>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <6e8b910c-a739-857d-4867-395bd369bc6a@fb.com>
-Sender: netdev-owner@vger.kernel.org
-To: Alexei Starovoitov <ast@fb.com>
-Cc: Alexei Starovoitov <alexei.starovoitov@gmail.com>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Andy Lutomirski <luto@kernel.org>, Alexei Starovoitov <ast@kernel.org>, LSM List <linux-security-module@vger.kernel.org>, James Morris <jmorris@namei.org>, Jann Horn <jannh@google.com>, Peter Zijlstra <peterz@infradead.org>, Masami Hiramatsu <mhiramat@kernel.org>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Network Development <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Kernel Team <Kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <201910011140.EA0181F13@keescook> (Kees Cook's message of "Tue, 1
+        Oct 2019 11:46:45 -0700")
+Sender: linux-kernel-owner@vger.kernel.org
+To: Kees Cook <keescook@chromium.org>
+Cc: linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Andi Kleen <andi@firstfloor.org>, Andi Kleen <ak@linux.intel.com>, Cong Wang <xiyou.wangcong@gmail.com>, Luis Chamberlain <mcgrof@kernel.org>, Apelete Seketeli <apelete@seketeli.net>, Arnd Bergmann <arnd@arndb.de>, Chee Nouk Phoon <cnphoon@altera.com>, Chris Zankel <chris@zankel.net>, Christian Ruppert <christian.ruppert@abilis.com>, Greg Ungerer <gerg@uclinux.org>, Helge Deller <deller@gmx.de>, Hongliang Tao <taohl@lemote.com>, Huacai Chen <chenhc@lemote.com>, Jonas Jensen <jonas.jensen@gmail.com>, Josh Boyer <jwboyer@gmail.com>, Jun Nie <jun.nie@linaro.org>, Lars-Peter Clausen <lars@metafoo.de>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 1 Oct 2019 22:18:18 +0000
-Alexei Starovoitov <ast@fb.com> wrote:
+Kees Cook <keescook@chromium.org> writes:
 
-> > And then you can just format the string from the bpf_trace_printk()
-> > into msg, and then have:
-> > 
-> > 	trace_bpf_print(msg);  
-> 
-> It's an interesting idea, but I don't think it can work.
-> Please see bpf_trace_printk implementation in kernel/trace/bpf_trace.c
-> It's a lot more than string printing.
+> On Tue, Oct 01, 2019 at 01:36:32PM -0500, Eric W. Biederman wrote:
+>> 
+>> This system call has been deprecated almost since it was introduced, and
+>> in a survey of the linux distributions I can no longer find any of them
+>> that enable CONFIG_SYSCTL_SYSCALL.  The only indication that I can find
+>> that anyone might care is that a few of the defconfigs in the kernel
+>> enable CONFIG_SYSCTL_SYSCALL.  However this appears in only 31 of 414
+>> defconfigs in the kernel, so I suspect this symbols presence is simply
+>> because it is harmless to include rather than because it is necessary.
+>> 
+>> As there appear to be no users of the sysctl system call, remove the
+>> code.  As this removes one of the few uses of the internal kernel mount
+>> of proc I hope this allows for even more simplifications of the proc
+>> filesystem.
+>
+> I'm for it. :) I tripped over this being deprecated over a decade ago. :P
+>
+> I think you can actually take this further and remove (or at least
+> empty) the uapi/linux/sysctl.h file too.
 
-Well, trace_printk() is just string printing. I was thinking that the
-bpf_trace_printk() could just use a vsnprintf() into a temporary buffer
-(like trace_printk() does), and then call the trace event to write it
-out.
+I copied everyone who had put this into a defconfig and I will wait a
+little more to see if anyone screams.  I think it is a safe guess that
+several of the affected configurations are dead (or at least
+unmaintained) as I received 17 bounces when copying everyone.
 
-> 
-> > The user could then just enable the trace event from the file system. I
-> > could also work on making instances work like /tmp does (with the
-> > sticky bit) in creation. That way people with write access to the
-> > instances directory, can make their own buffers that they can use (and
-> > others can't access).  
-> 
-> We tried instances in bcc in the past and eventually removed all the 
-> support. The overhead of instances is too high to be usable.
+I would make it a followup that removes uapi/linux/sysctl.h.  I don't
+see anything in it that isn't about the sysctl system call.  I will keep
+it a separate patch as I can imagine something silly that needs the
+header file to compile.  A separate patch would make a revert easier
+if we find something like that.
 
-What overhead? An ftrace instance should not have any more overhead than
-the root one does (it's the same code). Or are you talking about memory
-overhead?
-
-> 
-> > 
-> >   
-> >>
-> >> Both 'trace' and 'trace_pipe' have quirky side effects.
-> >> Like opening 'trace' file will make all parallel trace_printk() to be ignored.
-> >> While reading 'trace_pipe' file will clear it.
-> >> The point that traditional 'read' and 'write' ACLs don't map as-is
-> >> to tracefs, so I would be careful categorizing things into
-> >> confidentiality vs integrity only based on access type.  
-> > 
-> > What exactly is the bpf_trace_printk() used for? I may have other ideas
-> > that can help.  
-> 
-> It's debugging of bpf programs. Same is what printk() is used for
-> by kernel developers.
-> 
-
-How is it extracted? Just read from the trace or trace_pipe file?
-
--- Steve
+Eric
