@@ -1,68 +1,79 @@
-From: Alexei Starovoitov <ast@fb.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH bpf-next] bpf, capabilities: introduce CAP_BPF
-Date: Tue, 1 Oct 2019 22:18:18 +0000
-Message-ID: <6e8b910c-a739-857d-4867-395bd369bc6a@fb.com>
+Date: Tue, 1 Oct 2019 18:47:31 -0400
+Message-ID: <20191001184731.0ec98c7a@gandalf.local.home>
 References: <CALCETrV8iJv9+Ai11_1_r6MapPhhwt9hjxi=6EoixytabTScqg@mail.gmail.com>
- <20190828003447.htgzsxs5oevn3eys@ast-mbp.dhcp.thefacebook.com>
- <CALCETrVbPPPr=BdPAx=tJKxD3oLXP4OVSgCYrB_E4vb6idELow@mail.gmail.com>
- <20190828044340.zeha3k3cmmxgfqj7@ast-mbp.dhcp.thefacebook.com>
- <CALCETrW1o+Lazi2Ng6b9JN6jeJffgdW9f3HvqYhNo4TpHRXW=g@mail.gmail.com>
- <20190828225512.q6qbvkdiqih2iewk@ast-mbp.dhcp.thefacebook.com>
- <DA52992F-4862-4945-8482-FE619A04C753@amacapital.net>
- <20190829040721.ef6rumbaunkavyrr@ast-mbp.dhcp.thefacebook.com>
- <20190928193727.1769e90c@oasis.local.home> <201909301129.5A1129C@keescook>
- <20191001012226.vwpe56won5r7gbrz@ast-mbp.dhcp.thefacebook.com>
- <20191001181052.43c9fabb@gandalf.local.home>
+        <20190828003447.htgzsxs5oevn3eys@ast-mbp.dhcp.thefacebook.com>
+        <CALCETrVbPPPr=BdPAx=tJKxD3oLXP4OVSgCYrB_E4vb6idELow@mail.gmail.com>
+        <20190828044340.zeha3k3cmmxgfqj7@ast-mbp.dhcp.thefacebook.com>
+        <CALCETrW1o+Lazi2Ng6b9JN6jeJffgdW9f3HvqYhNo4TpHRXW=g@mail.gmail.com>
+        <20190828225512.q6qbvkdiqih2iewk@ast-mbp.dhcp.thefacebook.com>
+        <DA52992F-4862-4945-8482-FE619A04C753@amacapital.net>
+        <20190829040721.ef6rumbaunkavyrr@ast-mbp.dhcp.thefacebook.com>
+        <20190928193727.1769e90c@oasis.local.home>
+        <201909301129.5A1129C@keescook>
+        <20191001012226.vwpe56won5r7gbrz@ast-mbp.dhcp.thefacebook.com>
+        <20191001181052.43c9fabb@gandalf.local.home>
+        <6e8b910c-a739-857d-4867-395bd369bc6a@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20191001181052.43c9fabb@gandalf.local.home>
-Content-Language: en-US
-Content-ID: <EAB5DFA59163744E82DF87EC84BC2EBC@namprd15.prod.outlook.com>
+In-Reply-To: <6e8b910c-a739-857d-4867-395bd369bc6a@fb.com>
 Sender: netdev-owner@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>, Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Andy Lutomirski <luto@kernel.org>, Alexei Starovoitov <ast@kernel.org>, LSM List <linux-security-module@vger.kernel.org>, James Morris <jmorris@namei.org>, Jann Horn <jannh@google.com>, Peter Zijlstra <peterz@infradead.org>, Masami Hiramatsu <mhiramat@kernel.org>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Network Development <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Kernel Team <Kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
+To: Alexei Starovoitov <ast@fb.com>
+Cc: Alexei Starovoitov <alexei.starovoitov@gmail.com>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Andy Lutomirski <luto@kernel.org>, Alexei Starovoitov <ast@kernel.org>, LSM List <linux-security-module@vger.kernel.org>, James Morris <jmorris@namei.org>, Jann Horn <jannh@google.com>, Peter Zijlstra <peterz@infradead.org>, Masami Hiramatsu <mhiramat@kernel.org>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Network Development <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Kernel Team <Kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-T24gMTAvMS8xOSAzOjEwIFBNLCBTdGV2ZW4gUm9zdGVkdCB3cm90ZToNCj4gT24gTW9uLCAzMCBT
-ZXAgMjAxOSAxODoyMjoyOCAtMDcwMA0KPiBBbGV4ZWkgU3Rhcm92b2l0b3YgPGFsZXhlaS5zdGFy
-b3ZvaXRvdkBnbWFpbC5jb20+IHdyb3RlOg0KPiANCj4+IHRyYWNlZnMgaXMgYSBmaWxlIHN5c3Rl
-bSwgc28gY2xlYXJseSBmaWxlIGJhc2VkIGFjbHMgYXJlIG11Y2ggYmV0dGVyIGZpdA0KPj4gZm9y
-IGFsbCB0cmFjZWZzIG9wZXJhdGlvbnMuDQo+PiBCdXQgdGhhdCBpcyBub3QgdGhlIGNhc2UgZm9y
-IGZ0cmFjZSBvdmVyYWxsLg0KPj4gYnBmX3RyYWNlX3ByaW50aygpIGNhbGxzIHRyYWNlX3ByaW50
-aygpIHRoYXQgZHVtcHMgaW50byB0cmFjZSBwaXBlLg0KPj4gVGVjaG5pY2FsbHkgaXQncyBmdHJh
-Y2Ugb3BlcmF0aW9uLCBidXQgaXQgY2Fubm90IGJlIGNvbnRyb2xsZWQgYnkgdHJhY2Vmcw0KPj4g
-YW5kIGJ5IGZpbGUgcGVybWlzc2lvbnMuIFRoYXQncyB0aGUgbW90aXZhdGlvbiB0byBndWFyZCBi
-cGZfdHJhY2VfcHJpbnRrKCkNCj4+IHVzYWdlIGZyb20gYnBmIHByb2dyYW0gd2l0aCBDQVBfVFJB
-Q0lORy4NCj4gDQo+IEJUVywgSSdkIHJhdGhlciBoYXZlIGJwZiB1c2UgYW4gZXZlbnQgdGhhdCBy
-ZWNvcmRzIGEgc3RyaW5nIHRoYW4gdXNpbmcNCj4gdHJhY2UgcHJpbnRrIGl0c2VsZi4NCj4gDQo+
-IFBlcmhhcHMgc29tZXRoaW5nIGxpa2UgImJwZl9wcmludCIgZXZlbnQ/IFRoYXQgY291bGQgYmUg
-ZGVmaW5lZCBsaWtlOg0KPiANCj4gVFJBQ0VfRVZFTlQoYnBmX3ByaW50LA0KPiAJVFBfUFJPVE8o
-Y29uc3QgY2hhciAqbXNnKSwNCj4gCVRQX0FSR1MobXNnKSwNCj4gCVRQX1NUUlVDVF9fZW50cnko
-DQo+IAkJX19zdHJpbmcobXNnLCBtc2cpDQo+IAkpLA0KPiAJVFBfZmFzdF9hc3NpZ24oDQo+IAkJ
-X19hc3NpZ25fc3RyKG1zZywgbXNnKQ0KPiAJKSwNCj4gCVRQX3ByaW50aygibXNnPSVzIiwgX19n
-ZXRfc3RyKG1zZykpDQo+ICk7DQo+IA0KPiBBbmQgdGhlbiB5b3UgY2FuIGp1c3QgZm9ybWF0IHRo
-ZSBzdHJpbmcgZnJvbSB0aGUgYnBmX3RyYWNlX3ByaW50aygpDQo+IGludG8gbXNnLCBhbmQgdGhl
-biBoYXZlOg0KPiANCj4gCXRyYWNlX2JwZl9wcmludChtc2cpOw0KDQpJdCdzIGFuIGludGVyZXN0
-aW5nIGlkZWEsIGJ1dCBJIGRvbid0IHRoaW5rIGl0IGNhbiB3b3JrLg0KUGxlYXNlIHNlZSBicGZf
-dHJhY2VfcHJpbnRrIGltcGxlbWVudGF0aW9uIGluIGtlcm5lbC90cmFjZS9icGZfdHJhY2UuYw0K
-SXQncyBhIGxvdCBtb3JlIHRoYW4gc3RyaW5nIHByaW50aW5nLg0KDQo+IFRoZSB1c2VyIGNvdWxk
-IHRoZW4ganVzdCBlbmFibGUgdGhlIHRyYWNlIGV2ZW50IGZyb20gdGhlIGZpbGUgc3lzdGVtLiBJ
-DQo+IGNvdWxkIGFsc28gd29yayBvbiBtYWtpbmcgaW5zdGFuY2VzIHdvcmsgbGlrZSAvdG1wIGRv
-ZXMgKHdpdGggdGhlDQo+IHN0aWNreSBiaXQpIGluIGNyZWF0aW9uLiBUaGF0IHdheSBwZW9wbGUg
-d2l0aCB3cml0ZSBhY2Nlc3MgdG8gdGhlDQo+IGluc3RhbmNlcyBkaXJlY3RvcnksIGNhbiBtYWtl
-IHRoZWlyIG93biBidWZmZXJzIHRoYXQgdGhleSBjYW4gdXNlIChhbmQNCj4gb3RoZXJzIGNhbid0
-IGFjY2VzcykuDQoNCldlIHRyaWVkIGluc3RhbmNlcyBpbiBiY2MgaW4gdGhlIHBhc3QgYW5kIGV2
-ZW50dWFsbHkgcmVtb3ZlZCBhbGwgdGhlIA0Kc3VwcG9ydC4gVGhlIG92ZXJoZWFkIG9mIGluc3Rh
-bmNlcyBpcyB0b28gaGlnaCB0byBiZSB1c2FibGUuDQoNCj4gDQo+IA0KPj4NCj4+IEJvdGggJ3Ry
-YWNlJyBhbmQgJ3RyYWNlX3BpcGUnIGhhdmUgcXVpcmt5IHNpZGUgZWZmZWN0cy4NCj4+IExpa2Ug
-b3BlbmluZyAndHJhY2UnIGZpbGUgd2lsbCBtYWtlIGFsbCBwYXJhbGxlbCB0cmFjZV9wcmludGso
-KSB0byBiZSBpZ25vcmVkLg0KPj4gV2hpbGUgcmVhZGluZyAndHJhY2VfcGlwZScgZmlsZSB3aWxs
-IGNsZWFyIGl0Lg0KPj4gVGhlIHBvaW50IHRoYXQgdHJhZGl0aW9uYWwgJ3JlYWQnIGFuZCAnd3Jp
-dGUnIEFDTHMgZG9uJ3QgbWFwIGFzLWlzDQo+PiB0byB0cmFjZWZzLCBzbyBJIHdvdWxkIGJlIGNh
-cmVmdWwgY2F0ZWdvcml6aW5nIHRoaW5ncyBpbnRvDQo+PiBjb25maWRlbnRpYWxpdHkgdnMgaW50
-ZWdyaXR5IG9ubHkgYmFzZWQgb24gYWNjZXNzIHR5cGUuDQo+IA0KPiBXaGF0IGV4YWN0bHkgaXMg
-dGhlIGJwZl90cmFjZV9wcmludGsoKSB1c2VkIGZvcj8gSSBtYXkgaGF2ZSBvdGhlciBpZGVhcw0K
-PiB0aGF0IGNhbiBoZWxwLg0KDQpJdCdzIGRlYnVnZ2luZyBvZiBicGYgcHJvZ3JhbXMuIFNhbWUg
-aXMgd2hhdCBwcmludGsoKSBpcyB1c2VkIGZvcg0KYnkga2VybmVsIGRldmVsb3BlcnMuDQoNCg==
+On Tue, 1 Oct 2019 22:18:18 +0000
+Alexei Starovoitov <ast@fb.com> wrote:
+
+> > And then you can just format the string from the bpf_trace_printk()
+> > into msg, and then have:
+> > 
+> > 	trace_bpf_print(msg);  
+> 
+> It's an interesting idea, but I don't think it can work.
+> Please see bpf_trace_printk implementation in kernel/trace/bpf_trace.c
+> It's a lot more than string printing.
+
+Well, trace_printk() is just string printing. I was thinking that the
+bpf_trace_printk() could just use a vsnprintf() into a temporary buffer
+(like trace_printk() does), and then call the trace event to write it
+out.
+
+> 
+> > The user could then just enable the trace event from the file system. I
+> > could also work on making instances work like /tmp does (with the
+> > sticky bit) in creation. That way people with write access to the
+> > instances directory, can make their own buffers that they can use (and
+> > others can't access).  
+> 
+> We tried instances in bcc in the past and eventually removed all the 
+> support. The overhead of instances is too high to be usable.
+
+What overhead? An ftrace instance should not have any more overhead than
+the root one does (it's the same code). Or are you talking about memory
+overhead?
+
+> 
+> > 
+> >   
+> >>
+> >> Both 'trace' and 'trace_pipe' have quirky side effects.
+> >> Like opening 'trace' file will make all parallel trace_printk() to be ignored.
+> >> While reading 'trace_pipe' file will clear it.
+> >> The point that traditional 'read' and 'write' ACLs don't map as-is
+> >> to tracefs, so I would be careful categorizing things into
+> >> confidentiality vs integrity only based on access type.  
+> > 
+> > What exactly is the bpf_trace_printk() used for? I may have other ideas
+> > that can help.  
+> 
+> It's debugging of bpf programs. Same is what printk() is used for
+> by kernel developers.
+> 
+
+How is it extracted? Just read from the trace or trace_pipe file?
+
+-- Steve
