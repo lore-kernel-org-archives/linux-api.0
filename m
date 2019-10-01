@@ -1,29 +1,32 @@
-From: Qian Cai <cai@lca.pw>
-Subject: Re: [PATCH -next] treewide: remove unused argument in lock_release()
-Date: Tue, 01 Oct 2019 08:46:44 -0400
-Message-ID: <1569934004.5576.249.camel@lca.pw>
-References: <1568909380-32199-1-git-send-email-cai@lca.pw>
-         <20190930072938.GK4553@hirez.programming.kicks-ass.net>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [PATCH] io_uring: use __kernel_timespec in timeout ABI
+Date: Tue, 1 Oct 2019 08:09:19 -0600
+Message-ID: <8d5d34da-e1f0-1ab5-461e-f3145e52c48a@kernel.dk>
+References: <20190930202055.1748710-1-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20190930072938.GK4553@hirez.programming.kicks-ass.net>
-Sender: netdev-owner@vger.kernel.org
-To: Peter Zijlstra <peterz@infradead.org>
-Cc: akpm@linux-foundation.org, mingo@redhat.com, will@kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, maarten.lankhorst@linux.intel.com, mripard@kernel.org, sean@poorly.run, airlied@linux.ie, daniel@ffwll.ch, dri-devel@lists.freedesktop.org, gregkh@linuxfoundation.org, jslaby@suse.com, viro@zeniv.linux.org.uk, linux-fsdevel@vger.kernel.org, joonas.lahtinen@linux.intel.com, rodrigo.vivi@intel.com, intel-gfx@lists.freedesktop.org, tytso@mit.edu, jack@suse.com, linux-ext4@vger.kernel.org, tj@kernel.org, mark@fasheh.com, jlbec@evilplan.org, joseph.qi@linux.alibaba.com, ocfs2-devel@oss.oracle.com, davem@davemloft.net, st@kernel.org, daniel@iogearbox.net, netdev@vger.kernel.org, bpf@vger.kernel.org, duyuyang@gmail.com, juri.lelli@redhat.com, vincent.guittot@linaro.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190930202055.1748710-1-arnd@arndb.de>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: y2038@lists.linaro.org, linux-api@vger.kernel.org, Alexander Viro <viro@zeniv.linux.org.uk>, =?UTF-8?Q?Stefan_B=c3=bchler?= <source@stbuehler.de>, Hannes Reinecke <hare@suse.com>, Jackie Liu <liuyun01@kylinos.cn>, Andrew Morton <akpm@linux-foundation.org>, Hristo Venev <hristo@venev.name>, linux-block@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2019-09-30 at 09:29 +0200, Peter Zijlstra wrote:
-> On Thu, Sep 19, 2019 at 12:09:40PM -0400, Qian Cai wrote:
-> > Since the commit b4adfe8e05f1 ("locking/lockdep: Remove unused argument
-> > in __lock_release"), @nested is no longer used in lock_release(), so
-> > remove it from all lock_release() calls and friends.
+On 9/30/19 2:20 PM, Arnd Bergmann wrote:
+> All system calls use struct __kernel_timespec instead of the old struct
+> timespec, but this one was just added with the old-style ABI. Change it
+> now to enforce the use of __kernel_timespec, avoiding ABI confusion and
+> the need for compat handlers on 32-bit architectures.
 > 
-> Right; I never did this cleanup for not wanting the churn, but as long
-> as it applies I'll take it.
+> Any user space caller will have to use __kernel_timespec now, but this
+> is unambiguous and works for any C library regardless of the time_t
+> definition. A nicer way to specify the timeout would have been a less
+> ambiguous 64-bit nanosecond value, but I suppose it's too late now to
+> change that as this would impact both 32-bit and 64-bit users.
 
-Not sure when you would like to merge this. As you know, the longer it is
-pending, the more churn it could have. If you could give me rough timeline
-(i.e., aim for v5.4-rc2 or v5.5), I'll double-check for breakage and rebase it
-if necessary.
+Thanks for catching that, Arnd. Applied.
+
+-- 
+Jens Axboe
