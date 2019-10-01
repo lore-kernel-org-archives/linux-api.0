@@ -1,58 +1,36 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [PATCH] io_uring: use __kernel_timespec in timeout ABI
-Date: Tue, 01 Oct 2019 18:07:27 +0200
-Message-ID: <874l0stpog.fsf@oldenburg2.str.redhat.com>
-References: <20190930202055.1748710-1-arnd@arndb.de>
-        <8d5d34da-e1f0-1ab5-461e-f3145e52c48a@kernel.dk>
-        <623e1d27-d3b1-3241-bfd4-eb94ce70da14@kernel.dk>
-        <CAK8P3a3AAFXNmpQwuirzM+jgEQGj9tMC_5oaSs4CfiEVGmTkZg@mail.gmail.com>
+From: Kees Cook <keescook@chromium.org>
+Subject: Re: [PATCH v4 1/4] lib: introduce copy_struct_from_user() helper
+Date: Tue, 1 Oct 2019 09:28:42 -0700
+Message-ID: <201910010928.243849D@keescook>
+References: <20191001011055.19283-1-cyphar@cyphar.com>
+ <20191001011055.19283-2-cyphar@cyphar.com>
+ <201909301856.01255535BD@keescook>
+ <20191001023126.qhzeiwmtoo4agy7t@wittgenstein>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAK8P3a3AAFXNmpQwuirzM+jgEQGj9tMC_5oaSs4CfiEVGmTkZg@mail.gmail.com>
-        (Arnd Bergmann's message of "Tue, 1 Oct 2019 17:49:43 +0200")
+Content-Disposition: inline
+In-Reply-To: <20191001023126.qhzeiwmtoo4agy7t@wittgenstein>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Jens Axboe <axboe@kernel.dk>, y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Stefan =?utf-8?Q?B=C3=BChler?= <source@stbuehler.de>, Hannes Reinecke <hare@suse.com>, Jackie Liu <liuyun01@kylinos.cn>, Andrew Morton <akpm@linux-foundation.org>, Hristo Venev <hristo@venev.name>, linux-block <linux-block@vger.kernel.org>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+To: Christian Brauner <christian.brauner@ubuntu.com>
+Cc: Aleksa Sarai <cyphar@cyphar.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Alexander Shishkin <alexander.shishkin@linux.intel.com>, Jiri Olsa <jolsa@redhat.com>, Namhyung Kim <namhyung@kernel.org>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Al Viro <viro@zeniv.linux.org.uk>, Linus Torvalds <torvalds@linux-foundation.org>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-* Arnd Bergmann:
+On Tue, Oct 01, 2019 at 04:31:27AM +0200, Christian Brauner wrote:
+> On Mon, Sep 30, 2019 at 06:58:39PM -0700, Kees Cook wrote:
+> > On Tue, Oct 01, 2019 at 11:10:52AM +1000, Aleksa Sarai wrote:
+> > > +static __always_inline
+> > > +int copy_struct_from_user(void *dst, size_t ksize,
+> > > +			  const void __user *src, size_t usize)
+> > 
+> > And of course I forgot to realize both this and check_zeroed_user()
+> > should also have the __must_check attribute. Sorry for forgetting that
+> > earlier!
+> 
+> Just said to Aleksa that I'll just fix this up when I apply so he
+> doesn't have to resend. You ok with this, Kees?
 
-> On Tue, Oct 1, 2019 at 5:38 PM Jens Axboe <axboe@kernel.dk> wrote:
->>
->> On 10/1/19 8:09 AM, Jens Axboe wrote:
->> > On 9/30/19 2:20 PM, Arnd Bergmann wrote:
->> >> All system calls use struct __kernel_timespec instead of the old struct
->> >> timespec, but this one was just added with the old-style ABI. Change it
->> >> now to enforce the use of __kernel_timespec, avoiding ABI confusion and
->> >> the need for compat handlers on 32-bit architectures.
->> >>
->> >> Any user space caller will have to use __kernel_timespec now, but this
->> >> is unambiguous and works for any C library regardless of the time_t
->> >> definition. A nicer way to specify the timeout would have been a less
->> >> ambiguous 64-bit nanosecond value, but I suppose it's too late now to
->> >> change that as this would impact both 32-bit and 64-bit users.
->> >
->> > Thanks for catching that, Arnd. Applied.
->>
->> On second thought - since there appears to be no good 64-bit timespec
->> available to userspace, the alternative here is including on in liburing.
->
-> What's wrong with using __kernel_timespec? Just the name?
-> I suppose liburing could add a macro to give it a different name
-> for its users.
+Yup; that's totally fine. Thanks!
 
-Yes, mostly the name.
-
-__ names are reserved for the C/C++ implementation (which does not
-include the kernel).  __kernel_timespec looks like an internal kernel
-type to the uninitiated, not a UAPI type.
-
-Once we have struct timespec64 in userspace, you also end up with
-copying stuff around or introducing aliasing violations.
-
-I'm not saying those concerns are valid, but you asked what's wrong with
-it. 8-)
-
-Thanks,
-Florian
+-- 
+Kees Cook
