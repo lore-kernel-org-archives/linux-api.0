@@ -1,37 +1,77 @@
-From: Kees Cook <keescook@chromium.org>
-Subject: Re: [RFC][PATCH] sysctl: Remove the sysctl system call
-Date: Tue, 1 Oct 2019 11:46:45 -0700
-Message-ID: <201910011140.EA0181F13@keescook>
-References: <8736gcjosv.fsf@x220.int.ebiederm.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH bpf-next] bpf, capabilities: introduce CAP_BPF
+Date: Tue, 1 Oct 2019 18:10:52 -0400
+Message-ID: <20191001181052.43c9fabb@gandalf.local.home>
+References: <CALCETrV8iJv9+Ai11_1_r6MapPhhwt9hjxi=6EoixytabTScqg@mail.gmail.com>
+        <20190828003447.htgzsxs5oevn3eys@ast-mbp.dhcp.thefacebook.com>
+        <CALCETrVbPPPr=BdPAx=tJKxD3oLXP4OVSgCYrB_E4vb6idELow@mail.gmail.com>
+        <20190828044340.zeha3k3cmmxgfqj7@ast-mbp.dhcp.thefacebook.com>
+        <CALCETrW1o+Lazi2Ng6b9JN6jeJffgdW9f3HvqYhNo4TpHRXW=g@mail.gmail.com>
+        <20190828225512.q6qbvkdiqih2iewk@ast-mbp.dhcp.thefacebook.com>
+        <DA52992F-4862-4945-8482-FE619A04C753@amacapital.net>
+        <20190829040721.ef6rumbaunkavyrr@ast-mbp.dhcp.thefacebook.com>
+        <20190928193727.1769e90c@oasis.local.home>
+        <201909301129.5A1129C@keescook>
+        <20191001012226.vwpe56won5r7gbrz@ast-mbp.dhcp.thefacebook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <8736gcjosv.fsf@x220.int.ebiederm.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Andi Kleen <andi@firstfloor.org>, Andi Kleen <ak@linux.intel.com>, Cong Wang <xiyou.wangcong@gmail.com>, Luis Chamberlain <mcgrof@kernel.org>, Alex Smith <alex.smith@imgtec.com>, Anders Berg <anders.berg@lsi.com>, Apelete Seketeli <apelete@seketeli.net>, Arnd Bergmann <arnd@arndb.de>, Chee Nouk Phoon <cnphoon@altera.com>, Chris Zankel <chris@zankel.net>, Christian Ruppert <christian.ruppert@abilis.com>, Greg Ungerer <gerg@uclinux.org>, Harvey Hunt <harvey.hunt@imgtec.com>, Helge Deller <deller@gmx.de>, Hongliang Tao <taohl@lemote.com>, Hua Yan <yanh@lemote.com>, Huacai Chen <chenhc@lemote.com>, John Crispin <blo>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20191001012226.vwpe56won5r7gbrz@ast-mbp.dhcp.thefacebook.com>
+Sender: netdev-owner@vger.kernel.org
+To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Andy Lutomirski <luto@kernel.org>, Alexei Starovoitov <ast@kernel.org>, LSM List <linux-security-module@vger.kernel.org>, James Morris <jmorris@namei.org>, Jann Horn <jannh@google.com>, Peter Zijlstra <peterz@infradead.org>, Masami Hiramatsu <mhiramat@kernel.org>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Network Development <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, kernel-team <kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 01, 2019 at 01:36:32PM -0500, Eric W. Biederman wrote:
+On Mon, 30 Sep 2019 18:22:28 -0700
+Alexei Starovoitov <alexei.starovoitov@gmail.com> wrote:
+
+> tracefs is a file system, so clearly file based acls are much better fit
+> for all tracefs operations.
+> But that is not the case for ftrace overall.
+> bpf_trace_printk() calls trace_printk() that dumps into trace pipe.
+> Technically it's ftrace operation, but it cannot be controlled by tracefs
+> and by file permissions. That's the motivation to guard bpf_trace_printk()
+> usage from bpf program with CAP_TRACING.
+
+BTW, I'd rather have bpf use an event that records a string than using
+trace printk itself.
+
+Perhaps something like "bpf_print" event? That could be defined like:
+
+TRACE_EVENT(bpf_print,
+	TP_PROTO(const char *msg),
+	TP_ARGS(msg),
+	TP_STRUCT__entry(
+		__string(msg, msg)
+	),
+	TP_fast_assign(
+		__assign_str(msg, msg)
+	),
+	TP_printk("msg=%s", __get_str(msg))
+);
+
+And then you can just format the string from the bpf_trace_printk()
+into msg, and then have:
+
+	trace_bpf_print(msg);
+
+The user could then just enable the trace event from the file system. I
+could also work on making instances work like /tmp does (with the
+sticky bit) in creation. That way people with write access to the
+instances directory, can make their own buffers that they can use (and
+others can't access).
+
+
 > 
-> This system call has been deprecated almost since it was introduced, and
-> in a survey of the linux distributions I can no longer find any of them
-> that enable CONFIG_SYSCTL_SYSCALL.  The only indication that I can find
-> that anyone might care is that a few of the defconfigs in the kernel
-> enable CONFIG_SYSCTL_SYSCALL.  However this appears in only 31 of 414
-> defconfigs in the kernel, so I suspect this symbols presence is simply
-> because it is harmless to include rather than because it is necessary.
-> 
-> As there appear to be no users of the sysctl system call, remove the
-> code.  As this removes one of the few uses of the internal kernel mount
-> of proc I hope this allows for even more simplifications of the proc
-> filesystem.
+> Both 'trace' and 'trace_pipe' have quirky side effects.
+> Like opening 'trace' file will make all parallel trace_printk() to be ignored.
+> While reading 'trace_pipe' file will clear it.
+> The point that traditional 'read' and 'write' ACLs don't map as-is
+> to tracefs, so I would be careful categorizing things into
+> confidentiality vs integrity only based on access type.
 
-I'm for it. :) I tripped over this being deprecated over a decade ago. :P
+What exactly is the bpf_trace_printk() used for? I may have other ideas
+that can help.
 
-I think you can actually take this further and remove (or at least
-empty) the uapi/linux/sysctl.h file too.
-
--- 
-Kees Cook
+-- Steve
