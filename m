@@ -1,7 +1,7 @@
 From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: [PATCH v4 2/4] clone3: switch to copy_struct_from_user()
-Date: Tue,  1 Oct 2019 11:10:53 +1000
-Message-ID: <20191001011055.19283-3-cyphar@cyphar.com>
+Subject: [PATCH v4 3/4] sched_setattr: switch to copy_struct_from_user()
+Date: Tue,  1 Oct 2019 11:10:54 +1000
+Message-ID: <20191001011055.19283-4-cyphar@cyphar.com>
 References: <20191001011055.19283-1-cyphar@cyphar.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -13,80 +13,95 @@ Cc: Aleksa Sarai <cyphar@cyphar.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk
 List-Id: linux-api@vger.kernel.org
 
 The change is very straightforward, and helps unify the syscall
-interface for struct-from-userspace syscalls. Additionally, explicitly
-define CLONE_ARGS_SIZE_VER0 to match the other users of the
-struct-extension pattern.
+interface for struct-from-userspace syscalls. Ideally we could also
+unify sched_getattr(2)-style syscalls as well, but unfortunately the
+correct semantics for such syscalls are much less clear (see [1] for
+more detail). In future we could come up with a more sane idea for how
+the syscall interface should look.
+
+[1]: commit 1251201c0d34 ("sched/core: Fix uclamp ABI bug, clean up and
+     robustify sched_read_attr() ABI logic and code")
 
 Reviewed-by: Kees Cook <keescook@chromium.org>
 Signed-off-by: Aleksa Sarai <cyphar@cyphar.com>
 ---
- include/uapi/linux/sched.h |  2 ++
- kernel/fork.c              | 34 +++++++---------------------------
- 2 files changed, 9 insertions(+), 27 deletions(-)
+ kernel/sched/core.c | 43 +++++++------------------------------------
+ 1 file changed, 7 insertions(+), 36 deletions(-)
 
-diff --git a/include/uapi/linux/sched.h b/include/uapi/linux/sched.h
-index b3105ac1381a..0945805982b4 100644
---- a/include/uapi/linux/sched.h
-+++ b/include/uapi/linux/sched.h
-@@ -47,6 +47,8 @@ struct clone_args {
- 	__aligned_u64 tls;
- };
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 7880f4f64d0e..dd05a378631a 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -5106,9 +5106,6 @@ static int sched_copy_attr(struct sched_attr __user *uattr, struct sched_attr *a
+ 	u32 size;
+ 	int ret;
  
-+#define CLONE_ARGS_SIZE_VER0 64 /* sizeof first published struct */
-+
- /*
-  * Scheduling policies
-  */
-diff --git a/kernel/fork.c b/kernel/fork.c
-index f9572f416126..2ef529869c64 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -2525,39 +2525,19 @@ SYSCALL_DEFINE5(clone, unsigned long, clone_flags, unsigned long, newsp,
- #ifdef __ARCH_WANT_SYS_CLONE3
- noinline static int copy_clone_args_from_user(struct kernel_clone_args *kargs,
- 					      struct clone_args __user *uargs,
--					      size_t size)
-+					      size_t usize)
- {
-+	int err;
- 	struct clone_args args;
- 
--	if (unlikely(size > PAGE_SIZE))
-+	if (unlikely(usize > PAGE_SIZE))
- 		return -E2BIG;
--
--	if (unlikely(size < sizeof(struct clone_args)))
-+	if (unlikely(usize < CLONE_ARGS_SIZE_VER0))
- 		return -EINVAL;
- 
--	if (unlikely(!access_ok(uargs, size)))
+-	if (!access_ok(uattr, SCHED_ATTR_SIZE_VER0))
 -		return -EFAULT;
 -
--	if (size > sizeof(struct clone_args)) {
+ 	/* Zero the full structure, so that a short copy will be nice: */
+ 	memset(attr, 0, sizeof(*attr));
+ 
+@@ -5116,45 +5113,19 @@ static int sched_copy_attr(struct sched_attr __user *uattr, struct sched_attr *a
+ 	if (ret)
+ 		return ret;
+ 
+-	/* Bail out on silly large: */
+-	if (size > PAGE_SIZE)
+-		goto err_size;
+-
+ 	/* ABI compatibility quirk: */
+ 	if (!size)
+ 		size = SCHED_ATTR_SIZE_VER0;
+-
+-	if (size < SCHED_ATTR_SIZE_VER0)
++	if (size < SCHED_ATTR_SIZE_VER0 || size > PAGE_SIZE)
+ 		goto err_size;
+ 
+-	/*
+-	 * If we're handed a bigger struct than we know of,
+-	 * ensure all the unknown bits are 0 - i.e. new
+-	 * user-space does not rely on any kernel feature
+-	 * extensions we dont know about yet.
+-	 */
+-	if (size > sizeof(*attr)) {
 -		unsigned char __user *addr;
 -		unsigned char __user *end;
 -		unsigned char val;
 -
--		addr = (void __user *)uargs + sizeof(struct clone_args);
--		end = (void __user *)uargs + size;
+-		addr = (void __user *)uattr + sizeof(*attr);
+-		end  = (void __user *)uattr + size;
 -
 -		for (; addr < end; addr++) {
--			if (get_user(val, addr))
--				return -EFAULT;
+-			ret = get_user(val, addr);
+-			if (ret)
+-				return ret;
 -			if (val)
--				return -E2BIG;
+-				goto err_size;
 -		}
--
--		size = sizeof(struct clone_args);
--	}
--
--	if (copy_from_user(&args, uargs, size))
--		return -EFAULT;
-+	err = copy_struct_from_user(&args, sizeof(args), uargs, usize);
-+	if (err)
-+		return err;
+-		size = sizeof(*attr);
++	ret = copy_struct_from_user(attr, sizeof(*attr), uattr, size);
++	if (ret) {
++		if (ret == -E2BIG)
++			goto err_size;
++		return ret;
+ 	}
  
- 	/*
- 	 * Verify that higher 32bits of exit_signal are unset and that
+-	ret = copy_from_user(attr, uattr, size);
+-	if (ret)
+-		return -EFAULT;
+-
+ 	if ((attr->sched_flags & SCHED_FLAG_UTIL_CLAMP) &&
+ 	    size < SCHED_ATTR_SIZE_VER1)
+ 		return -EINVAL;
+@@ -5354,7 +5325,7 @@ sched_attr_copy_to_user(struct sched_attr __user *uattr,
+  * sys_sched_getattr - similar to sched_getparam, but with sched_attr
+  * @pid: the pid in question.
+  * @uattr: structure containing the extended parameters.
+- * @usize: sizeof(attr) that user-space knows about, for forwards and backwards compatibility.
++ * @usize: sizeof(attr) for fwd/bwd comp.
+  * @flags: for future extension.
+  */
+ SYSCALL_DEFINE4(sched_getattr, pid_t, pid, struct sched_attr __user *, uattr,
 -- 
 2.23.0
