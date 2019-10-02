@@ -1,35 +1,85 @@
-From: ebiederm@xmission.com (Eric W. Biederman)
-Subject: Re: [RFC][PATCH] sysctl: Remove the sysctl system call
-Date: Wed, 02 Oct 2019 09:49:48 -0500
-Message-ID: <87v9t7gq2b.fsf@x220.int.ebiederm.org>
-References: <8736gcjosv.fsf@x220.int.ebiederm.org>
-        <201910011140.EA0181F13@keescook>
-        <87imp8hyc8.fsf@x220.int.ebiederm.org>
-        <CAK8P3a1zLATC7rzYxSpAK-z=NJ1rw7-3ZgHqCOJUUf6b9HwK1A@mail.gmail.com>
+From: Alexei Starovoitov <ast@fb.com>
+Subject: Re: [PATCH bpf-next] bpf, capabilities: introduce CAP_BPF
+Date: Wed, 2 Oct 2019 17:18:21 +0000
+Message-ID: <a98725c6-a7db-1d9f-7033-5ecd96438c8d@fb.com>
+References: <CALCETrV8iJv9+Ai11_1_r6MapPhhwt9hjxi=6EoixytabTScqg@mail.gmail.com>
+ <20190828003447.htgzsxs5oevn3eys@ast-mbp.dhcp.thefacebook.com>
+ <CALCETrVbPPPr=BdPAx=tJKxD3oLXP4OVSgCYrB_E4vb6idELow@mail.gmail.com>
+ <20190828044340.zeha3k3cmmxgfqj7@ast-mbp.dhcp.thefacebook.com>
+ <CALCETrW1o+Lazi2Ng6b9JN6jeJffgdW9f3HvqYhNo4TpHRXW=g@mail.gmail.com>
+ <20190828225512.q6qbvkdiqih2iewk@ast-mbp.dhcp.thefacebook.com>
+ <DA52992F-4862-4945-8482-FE619A04C753@amacapital.net>
+ <20190829040721.ef6rumbaunkavyrr@ast-mbp.dhcp.thefacebook.com>
+ <20190928193727.1769e90c@oasis.local.home> <201909301129.5A1129C@keescook>
+ <20191001012226.vwpe56won5r7gbrz@ast-mbp.dhcp.thefacebook.com>
+ <20191001181052.43c9fabb@gandalf.local.home>
+ <6e8b910c-a739-857d-4867-395bd369bc6a@fb.com>
+ <20191001184731.0ec98c7a@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAK8P3a1zLATC7rzYxSpAK-z=NJ1rw7-3ZgHqCOJUUf6b9HwK1A@mail.gmail.com>
-        (Arnd Bergmann's message of "Wed, 2 Oct 2019 09:31:01 +0200")
-Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Kees Cook <keescook@chromium.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Andi Kleen <andi@firstfloor.org>, Andi Kleen <ak@linux.intel.com>, Cong Wang <xiyou.wangcong@gmail.com>, Luis Chamberlain <mcgrof@kernel.org>, Apelete Seketeli <apelete@seketeli.net>, Chee Nouk Phoon <cnphoon@altera.com>, Chris Zankel <chris@zankel.net>, Christian Ruppert <christian.ruppert@abilis.com>, Greg Ungerer <gerg@uclinux.org>, Helge Deller <deller@gmx.de>, Hongliang Tao <taohl@lemote.com>, Huacai Chen <chenhc@lemote.com>, Jonas Jensen <jonas.jensen@gmail.com>, Josh Boyer <jwboyer@gmail.com>, Jun Nie <jun.nie@linaro.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20191001184731.0ec98c7a@gandalf.local.home>
+Content-Language: en-US
+Content-ID: <6C67F4DB606ECE4B98C15C3E6FFF0E7B@namprd15.prod.outlook.com>
+Sender: netdev-owner@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
+Cc: Alexei Starovoitov <alexei.starovoitov@gmail.com>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Andy Lutomirski <luto@kernel.org>, Alexei Starovoitov <ast@kernel.org>, LSM List <linux-security-module@vger.kernel.org>, James Morris <jmorris@namei.org>, Jann Horn <jannh@google.com>, Peter Zijlstra <peterz@infradead.org>, Masami Hiramatsu <mhiramat@kernel.org>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Network Development <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Kernel Team <Kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Arnd Bergmann <arnd@arndb.de> writes:
-
-> On Wed, Oct 2, 2019 at 12:54 AM Eric W. Biederman <ebiederm@xmission.com> wrote:
-
->> arch/arm/configs/lpc32xx_defconfig:CONFIG_SYSCTL_SYSCALL=y
->> arch/arm/configs/moxart_defconfig:CONFIG_SYSCTL_SYSCALL=y
->
-> Ancient hardware, but still in active use. These tend to have very little
-> RAM, but they both enable CONFIG_PROC_FS.
-
-You actually have to enable CONFIG_PROC_FS to enable
-CONFIG_SYSCTL_SYSCALL at this point.  CONFIG_SYSCTL_SYSCALL is just an
-emulation of the old interface built on top of /proc.
-
-Thank you for the feedback.
-
-Eric
+T24gMTAvMS8xOSAzOjQ3IFBNLCBTdGV2ZW4gUm9zdGVkdCB3cm90ZToNCj4gT24gVHVlLCAxIE9j
+dCAyMDE5IDIyOjE4OjE4ICswMDAwDQo+IEFsZXhlaSBTdGFyb3ZvaXRvdiA8YXN0QGZiLmNvbT4g
+d3JvdGU6DQo+IA0KPj4+IEFuZCB0aGVuIHlvdSBjYW4ganVzdCBmb3JtYXQgdGhlIHN0cmluZyBm
+cm9tIHRoZSBicGZfdHJhY2VfcHJpbnRrKCkNCj4+PiBpbnRvIG1zZywgYW5kIHRoZW4gaGF2ZToN
+Cj4+Pg0KPj4+IAl0cmFjZV9icGZfcHJpbnQobXNnKTsNCj4+DQo+PiBJdCdzIGFuIGludGVyZXN0
+aW5nIGlkZWEsIGJ1dCBJIGRvbid0IHRoaW5rIGl0IGNhbiB3b3JrLg0KPj4gUGxlYXNlIHNlZSBi
+cGZfdHJhY2VfcHJpbnRrIGltcGxlbWVudGF0aW9uIGluIGtlcm5lbC90cmFjZS9icGZfdHJhY2Uu
+Yw0KPj4gSXQncyBhIGxvdCBtb3JlIHRoYW4gc3RyaW5nIHByaW50aW5nLg0KPiANCj4gV2VsbCwg
+dHJhY2VfcHJpbnRrKCkgaXMganVzdCBzdHJpbmcgcHJpbnRpbmcuIEkgd2FzIHRoaW5raW5nIHRo
+YXQgdGhlDQo+IGJwZl90cmFjZV9wcmludGsoKSBjb3VsZCBqdXN0IHVzZSBhIHZzbnByaW50Zigp
+IGludG8gYSB0ZW1wb3JhcnkgYnVmZmVyDQo+IChsaWtlIHRyYWNlX3ByaW50aygpIGRvZXMpLCBh
+bmQgdGhlbiBjYWxsIHRoZSB0cmFjZSBldmVudCB0byB3cml0ZSBpdA0KPiBvdXQuDQoNCmFyZSB5
+b3UgcHJvcG9zaW5nIHRvIHJlcGxpY2F0ZSBnZXRfdHJhY2VfYnVmKCkgZnVuY3Rpb25hbGl0eQ0K
+aW50byBicGZfdHJhY2VfcHJpbnRrPw0KU28gcHJpbnQgaW50byB0ZW1wIHN0cmluZyBidWZmZXIg
+aXMgZG9uZSB0d2ljZT8NCkknbSBub3QgZXhjaXRlZCBhYm91dCBzdWNoIGhhY2suDQpBbmQgd2hh
+dCdzIHRoZSBnb2FsPyBzbyB0aGF0IHRyYWNlX2JwZl9wcmludChzdHJpbmdfbXNnKTsNCmNhbiBn
+byB0aHJvdWdoIF9ydW4tdGltZV8gY2hlY2sgd2hldGhlciB0aGF0IHBhcnRpY3VsYXIgdHJhY2Ug
+ZXZlbnQNCndhcyBhbGxvd2VkIGluIHRyYWNlZnMgPw0KVGhhdCdzIG5vdCBob3cgZmlsZSBzeXN0
+ZW0gYWNscyBhcmUgdHlwaWNhbGx5IGRlc2lnbmVkLg0KVGhlIHBlcm1pc3Npb24gY2hlY2sgaXMg
+YXQgb3BlbigpLiBOb3QgYXQgd3JpdGUoKS4NCklmIEkgdW5kZXJzdG9vZCB5b3UgY29ycmVjdGx5
+IHlvdSdyZSBwcm9wb3NpbmcgdG8gY2hlY2sgcGVybWlzc2lvbnMNCmF0IGJwZiBwcm9ncmFtIHJ1
+bi10aW1lIHdoaWNoIGlzIG5vIGdvb2QuDQoNCmJwZl90cmFjZV9wcmludGsoKSBhbHJlYWR5IGhh
+cyBvbmUgc21hbGwgYnVmZmVyIGZvcg0KcHJvYmVfa2VybmVsX3JlYWQtaW5nIGFuIHVua25vd24g
+c3RyaW5nIHRvIHBhc3MgaW50byAlcy4NClRoYXQncyBub3QgZnRyYWNlLiBUaGF0J3MgY29yZSB0
+cmFjaW5nLiBUaGF0IGFzcGVjdCBpcyBjb3ZlcmVkIGJ5IA0KQ0FQX1RSQUNJTkcgYXMgd2VsbC4N
+Cg0KDQo+Pg0KPj4+IFRoZSB1c2VyIGNvdWxkIHRoZW4ganVzdCBlbmFibGUgdGhlIHRyYWNlIGV2
+ZW50IGZyb20gdGhlIGZpbGUgc3lzdGVtLiBJDQo+Pj4gY291bGQgYWxzbyB3b3JrIG9uIG1ha2lu
+ZyBpbnN0YW5jZXMgd29yayBsaWtlIC90bXAgZG9lcyAod2l0aCB0aGUNCj4+PiBzdGlja3kgYml0
+KSBpbiBjcmVhdGlvbi4gVGhhdCB3YXkgcGVvcGxlIHdpdGggd3JpdGUgYWNjZXNzIHRvIHRoZQ0K
+Pj4+IGluc3RhbmNlcyBkaXJlY3RvcnksIGNhbiBtYWtlIHRoZWlyIG93biBidWZmZXJzIHRoYXQg
+dGhleSBjYW4gdXNlIChhbmQNCj4+PiBvdGhlcnMgY2FuJ3QgYWNjZXNzKS4NCj4+DQo+PiBXZSB0
+cmllZCBpbnN0YW5jZXMgaW4gYmNjIGluIHRoZSBwYXN0IGFuZCBldmVudHVhbGx5IHJlbW92ZWQg
+YWxsIHRoZQ0KPj4gc3VwcG9ydC4gVGhlIG92ZXJoZWFkIG9mIGluc3RhbmNlcyBpcyB0b28gaGln
+aCB0byBiZSB1c2FibGUuDQo+IA0KPiBXaGF0IG92ZXJoZWFkPyBBbiBmdHJhY2UgaW5zdGFuY2Ug
+c2hvdWxkIG5vdCBoYXZlIGFueSBtb3JlIG92ZXJoZWFkIHRoYW4NCj4gdGhlIHJvb3Qgb25lIGRv
+ZXMgKGl0J3MgdGhlIHNhbWUgY29kZSkuIE9yIGFyZSB5b3UgdGFsa2luZyBhYm91dCBtZW1vcnkN
+Cj4gb3ZlcmhlYWQ/DQoNClllcy4gTWVtb3J5IG92ZXJoZWFkLiBIdW1hbiB1c2VycyBkb2luZyBj
+YXQvZWNobyBpbnRvIHRyYWNlZnMgd29uJ3QgYmUNCmNyZWF0aW5nIG1hbnkgaW5zdGFuY2VzLCBz
+byB0aGF0J3MgdGhlIG9ubHkgcHJhY3RpY2FsIHVzYWdlIG9mIHRoZW0uDQoNCj4gDQo+Pg0KPj4+
+DQo+Pj4gICAgDQo+Pj4+DQo+Pj4+IEJvdGggJ3RyYWNlJyBhbmQgJ3RyYWNlX3BpcGUnIGhhdmUg
+cXVpcmt5IHNpZGUgZWZmZWN0cy4NCj4+Pj4gTGlrZSBvcGVuaW5nICd0cmFjZScgZmlsZSB3aWxs
+IG1ha2UgYWxsIHBhcmFsbGVsIHRyYWNlX3ByaW50aygpIHRvIGJlIGlnbm9yZWQuDQo+Pj4+IFdo
+aWxlIHJlYWRpbmcgJ3RyYWNlX3BpcGUnIGZpbGUgd2lsbCBjbGVhciBpdC4NCj4+Pj4gVGhlIHBv
+aW50IHRoYXQgdHJhZGl0aW9uYWwgJ3JlYWQnIGFuZCAnd3JpdGUnIEFDTHMgZG9uJ3QgbWFwIGFz
+LWlzDQo+Pj4+IHRvIHRyYWNlZnMsIHNvIEkgd291bGQgYmUgY2FyZWZ1bCBjYXRlZ29yaXppbmcg
+dGhpbmdzIGludG8NCj4+Pj4gY29uZmlkZW50aWFsaXR5IHZzIGludGVncml0eSBvbmx5IGJhc2Vk
+IG9uIGFjY2VzcyB0eXBlLg0KPj4+DQo+Pj4gV2hhdCBleGFjdGx5IGlzIHRoZSBicGZfdHJhY2Vf
+cHJpbnRrKCkgdXNlZCBmb3I/IEkgbWF5IGhhdmUgb3RoZXIgaWRlYXMNCj4+PiB0aGF0IGNhbiBo
+ZWxwLg0KPj4NCj4+IEl0J3MgZGVidWdnaW5nIG9mIGJwZiBwcm9ncmFtcy4gU2FtZSBpcyB3aGF0
+IHByaW50aygpIGlzIHVzZWQgZm9yDQo+PiBieSBrZXJuZWwgZGV2ZWxvcGVycy4NCj4+DQo+IA0K
+PiBIb3cgaXMgaXQgZXh0cmFjdGVkPyBKdXN0IHJlYWQgZnJvbSB0aGUgdHJhY2Ugb3IgdHJhY2Vf
+cGlwZSBmaWxlPw0KDQp5ZXAuIEp1c3QgbGlrZSBrZXJuZWwgZGV2cyBsb29rIGF0IGRtZXNnIHdo
+ZW4gdGhleSBzcHJpbmtsZSBwcmludGsuDQpidHcsIGlmIHlvdSBjYW4gZml4ICd0cmFjZScgZmls
+ZSBpc3N1ZSB0aGF0IHN0b3BzIGFsbCB0cmFjZV9wcmludGsNCndoaWxlICd0cmFjZScgZmlsZSBp
+cyBvcGVuIHRoYXQgd291bGQgYmUgZ3JlYXQuDQpTb21lIHVzZXJzIGhhdmUgYmVlbiBiaXR0ZW4g
+YnkgdGhpcyBiZWhhdmlvci4gV2UgZXZlbiBkb2N1bWVudGVkIGl0Lg0K
