@@ -1,33 +1,126 @@
-From: Helge Deller <deller@gmx.de>
-Subject: Re: [RFC][PATCH] sysctl: Remove the sysctl system call
-Date: Wed, 2 Oct 2019 20:52:22 +0200
-Message-ID: <1dc9f6c4-d1ff-8add-4d42-1c2d1ae685f6@gmx.de>
-References: <8736gcjosv.fsf@x220.int.ebiederm.org>
- <201910011140.EA0181F13@keescook> <87imp8hyc8.fsf@x220.int.ebiederm.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH bpf-next] bpf, capabilities: introduce CAP_BPF
+Date: Wed, 2 Oct 2019 19:00:27 -0400
+Message-ID: <20191002190027.4e204ea8@gandalf.local.home>
+References: <CALCETrV8iJv9+Ai11_1_r6MapPhhwt9hjxi=6EoixytabTScqg@mail.gmail.com>
+        <20190828003447.htgzsxs5oevn3eys@ast-mbp.dhcp.thefacebook.com>
+        <CALCETrVbPPPr=BdPAx=tJKxD3oLXP4OVSgCYrB_E4vb6idELow@mail.gmail.com>
+        <20190828044340.zeha3k3cmmxgfqj7@ast-mbp.dhcp.thefacebook.com>
+        <CALCETrW1o+Lazi2Ng6b9JN6jeJffgdW9f3HvqYhNo4TpHRXW=g@mail.gmail.com>
+        <20190828225512.q6qbvkdiqih2iewk@ast-mbp.dhcp.thefacebook.com>
+        <DA52992F-4862-4945-8482-FE619A04C753@amacapital.net>
+        <20190829040721.ef6rumbaunkavyrr@ast-mbp.dhcp.thefacebook.com>
+        <20190928193727.1769e90c@oasis.local.home>
+        <201909301129.5A1129C@keescook>
+        <20191001012226.vwpe56won5r7gbrz@ast-mbp.dhcp.thefacebook.com>
+        <20191001181052.43c9fabb@gandalf.local.home>
+        <6e8b910c-a739-857d-4867-395bd369bc6a@fb.com>
+        <20191001184731.0ec98c7a@gandalf.local.home>
+        <a98725c6-a7db-1d9f-7033-5ecd96438c8d@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87imp8hyc8.fsf@x220.int.ebiederm.org>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>, Kees Cook <keescook@chromium.org>
-Cc: linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Linus Torvalds <torvalds@linux-foundation.org>, Andi Kleen <andi@firstfloor.org>, Andi Kleen <ak@linux.intel.com>, Cong Wang <xiyou.wangcong@gmail.com>, Luis Chamberlain <mcgrof@kernel.org>, Apelete Seketeli <apelete@seketeli.net>, Arnd Bergmann <arnd@arndb.de>, Chee Nouk Phoon <cnphoon@altera.com>, Chris Zankel <chris@zankel.net>, Christian Ruppert <christian.ruppert@abilis.com>, Greg Ungerer <gerg@uclinux.org>, Hongliang Tao <taohl@lemote.com>, Huacai Chen <chenhc@lemote.com>, Jonas Jensen <jonas.jensen@gmail.com>, Josh Boyer <jwboyer@gmail.com>, Jun Nie <jun.nie@linaro.org>, Lars-Peter Clausen <lars@metafoo.de>, Ley Foon Tan <lftan@altera.com>Lin
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <a98725c6-a7db-1d9f-7033-5ecd96438c8d@fb.com>
+Sender: netdev-owner@vger.kernel.org
+To: Alexei Starovoitov <ast@fb.com>
+Cc: Alexei Starovoitov <alexei.starovoitov@gmail.com>, Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Andy Lutomirski <luto@kernel.org>, Alexei Starovoitov <ast@kernel.org>, LSM List <linux-security-module@vger.kernel.org>, James Morris <jmorris@namei.org>, Jann Horn <jannh@google.com>, Peter Zijlstra <peterz@infradead.org>, Masami Hiramatsu <mhiramat@kernel.org>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Network Development <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Kernel Team <Kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 02.10.19 00:53, Eric W. Biederman wrote:
-> Kees Cook <keescook@chromium.org> writes:
->>> As there appear to be no users of the sysctl system call, remove the
->>> code....>...
-> I copied everyone who had put this into a defconfig and I will wait a
-> little more to see if anyone screams.  I think it is a safe guess that
-> several of the affected configurations are dead (or at least
-> unmaintained) as I received 17 bounces when copying everyone.
+On Wed, 2 Oct 2019 17:18:21 +0000
+Alexei Starovoitov <ast@fb.com> wrote:
 
-  arch/parisc/configs/c8000_defconfig         |    1 -
-  arch/parisc/configs/generic-32bit_defconfig |    1 -
+> >> It's an interesting idea, but I don't think it can work.
+> >> Please see bpf_trace_printk implementation in kernel/trace/bpf_trace.c
+> >> It's a lot more than string printing.  
+> > 
+> > Well, trace_printk() is just string printing. I was thinking that the
+> > bpf_trace_printk() could just use a vsnprintf() into a temporary buffer
+> > (like trace_printk() does), and then call the trace event to write it
+> > out.  
+> 
+> are you proposing to replicate get_trace_buf() functionality
+> into bpf_trace_printk?
 
-I'm not aware that we require the sysctl syscall somewhere on parisc,
-so I think it's safe to remove the code.
+No, do you need bpf_trace_printk() to run in all contexts?
+trace_printk() does the get_trace_buf() dance so that it can be called
+without locks and from any context including NMIs.
 
-Helge
+> So print into temp string buffer is done twice?
+> I'm not excited about such hack.
+> And what's the goal? so that trace_bpf_print(string_msg);
+> can go through _run-time_ check whether that particular trace event
+> was allowed in tracefs ?
+
+No, just to use a standard event instead of hacking into
+trace_printk().
+
+> That's not how file system acls are typically designed.
+> The permission check is at open(). Not at write().
+> If I understood you correctly you're proposing to check permissions
+> at bpf program run-time which is no good.
+> 
+> bpf_trace_printk() already has one small buffer for
+> probe_kernel_read-ing an unknown string to pass into %s.
+> That's not ftrace. That's core tracing. That aspect is covered by 
+> CAP_TRACING as well.
+
+Then use that buffer.
+
+> 
+> 
+> >>  
+> >>> The user could then just enable the trace event from the file system. I
+> >>> could also work on making instances work like /tmp does (with the
+> >>> sticky bit) in creation. That way people with write access to the
+> >>> instances directory, can make their own buffers that they can use (and
+> >>> others can't access).  
+> >>
+> >> We tried instances in bcc in the past and eventually removed all the
+> >> support. The overhead of instances is too high to be usable.  
+> > 
+> > What overhead? An ftrace instance should not have any more overhead than
+> > the root one does (it's the same code). Or are you talking about memory
+> > overhead?  
+> 
+> Yes. Memory overhead. Human users doing cat/echo into tracefs won't be
+> creating many instances, so that's the only practical usage of them.
+
+If it's a real event, it can go into any of the ftrace buffers (top
+level or instance), but it gives you the choice.
+
+> 
+> >   
+> >>  
+> >>>
+> >>>      
+> >>>>
+> >>>> Both 'trace' and 'trace_pipe' have quirky side effects.
+> >>>> Like opening 'trace' file will make all parallel trace_printk() to be ignored.
+> >>>> While reading 'trace_pipe' file will clear it.
+> >>>> The point that traditional 'read' and 'write' ACLs don't map as-is
+> >>>> to tracefs, so I would be careful categorizing things into
+> >>>> confidentiality vs integrity only based on access type.  
+> >>>
+> >>> What exactly is the bpf_trace_printk() used for? I may have other ideas
+> >>> that can help.  
+> >>
+> >> It's debugging of bpf programs. Same is what printk() is used for
+> >> by kernel developers.
+> >>  
+> > 
+> > How is it extracted? Just read from the trace or trace_pipe file?  
+> 
+> yep. Just like kernel devs look at dmesg when they sprinkle printk.
+> btw, if you can fix 'trace' file issue that stops all trace_printk
+> while 'trace' file is open that would be great.
+> Some users have been bitten by this behavior. We even documented it.
+
+The behavior is documented as well in the ftrace documentation. That's
+why we suggest the trace_pipe redirected into a file so that you don't
+lose data (unless the writer goes too fast). If you prefer a producer
+consumer where you lose newer events (like perf does), you can turn off
+overwrite mode, and it will drop events when the buffer is full (see
+options/overwrite).
+
+-- Steve
