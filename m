@@ -1,7 +1,7 @@
 From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: [PATCH RFC 3/3] openat2.2: document new openat2(2) syscall
-Date: Fri,  4 Oct 2019 00:55:41 +1000
-Message-ID: <20191003145542.17490-4-cyphar@cyphar.com>
+Subject: [PATCH RFC 3/3] openat2.2: document new syscall
+Date: Fri,  4 Oct 2019 00:55:42 +1000
+Message-ID: <20191003145542.17490-5-cyphar@cyphar.com>
 References: <20191003145542.17490-1-cyphar@cyphar.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -11,12 +11,6 @@ Sender: linux-kernel-owner@vger.kernel.org
 To: Al Viro <viro@zeniv.linux.org.uk>, Michael Kerrisk <mtk.manpages@gmail.com>
 Cc: Aleksa Sarai <cyphar@cyphar.com>, Christian Brauner <christian@brauner.io>, Aleksa Sarai <asarai@suse.de>, linux-man@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
-
-Rather than trying to merge the new syscall documentation into open.2
-(which would probably result in the man-page being incomprehensible),
-instead the new syscall gets its own dedicated page with links between
-open(2) and openat2(2) to avoid duplicating information such as the list
-of O_* flags or common errors.
 
 Signed-off-by: Aleksa Sarai <cyphar@cyphar.com>
 ---
