@@ -1,38 +1,141 @@
 From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: [PATCH RFC 0/3] document openat2(2) patch series
-Date: Fri,  4 Oct 2019 00:55:38 +1000
-Message-ID: <20191003145542.17490-1-cyphar@cyphar.com>
+Subject: [PATCH RFC 2/3] open.2: add O_EMPTYPATH documentation
+Date: Fri,  4 Oct 2019 00:55:40 +1000
+Message-ID: <20191003145542.17490-3-cyphar@cyphar.com>
+References: <20191003145542.17490-1-cyphar@cyphar.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20191003145542.17490-1-cyphar@cyphar.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Al Viro <viro@zeniv.linux.org.uk>, Michael Kerrisk <mtk.manpages@gmail.com>
 Cc: Aleksa Sarai <cyphar@cyphar.com>, Christian Brauner <christian@brauner.io>, Aleksa Sarai <asarai@suse.de>, linux-man@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-This is a first draft of the man-page changes for the openat2(2) patch
-series I'm working on[1]. It includes information about the magic-link
-changes as well as the primary new features (O_EMPTYPATH and openat2).
+Some of the wording around empty paths in path_resolution(7) also needed
+to be reworked since it's now legal (if you pass O_EMPTYPATH).
 
-Let me know what you think. I might go into too much detail about how
-extension of openat2(2) will work -- let me know if that section should
-be dropped (while it is useful for userspace to understand, it isn't
-really that necessary to explain exactly what the semantics are -- it
-will usually just transparently work).
+Signed-off-by: Aleksa Sarai <cyphar@cyphar.com>
+---
+ man2/open.2            | 42 +++++++++++++++++++++++++++++++++++++++++-
+ man7/path_resolution.7 | 17 ++++++++++++++++-
+ 2 files changed, 57 insertions(+), 2 deletions(-)
 
-[1]: https://lore.kernel.org/lkml/20190930183316.10190-1-cyphar@cyphar.com/
-
-Aleksa Sarai (3):
-  symlink.7: document magic-links more completely
-  open.2: add O_EMPTYPATH documentation
-  openat2.2: document new openat2(2) syscall
-
- man2/open.2            |  47 ++++-
- man2/openat2.2         | 381 +++++++++++++++++++++++++++++++++++++++++
- man7/path_resolution.7 |  89 ++++++++--
- man7/symlink.7         |  39 ++++-
- 4 files changed, 528 insertions(+), 28 deletions(-)
- create mode 100644 man2/openat2.2
-
+diff --git a/man2/open.2 b/man2/open.2
+index b0f485b41589..7217fe056e5e 100644
+--- a/man2/open.2
++++ b/man2/open.2
+@@ -48,7 +48,7 @@
+ .\" FIXME . Apr 08: The next POSIX revision has O_EXEC, O_SEARCH, and
+ .\" O_TTYINIT.  Eventually these may need to be documented.  --mtk
+ .\"
+-.TH OPEN 2 2018-04-30 "Linux" "Linux Programmer's Manual"
++.TH OPEN 2 2019-10-03 "Linux" "Linux Programmer's Manual"
+ .SH NAME
+ open, openat, creat \- open and possibly create a file
+ .SH SYNOPSIS
+@@ -421,6 +421,21 @@ was followed by a call to
+ .BR fdatasync (2)).
+ .IR "See NOTES below" .
+ .TP
++.BR O_EMPTYPATH " (since Linux 5.FOO)"
++If \fIpathname\fP is an empty string, re-open the the file descriptor given as
++the \fIdirfd\fP argument to
++.BR openat (2).
++This can be used with both ordinary (file and directory) and \fBO_PATH\fP file
++descriptors, but cannot be used with
++.BR AT_FDCWD
++(or as an argument to plain
++.BR open (2).) When re-opening an \fBO_PATH\fP file descriptor, the same "link
++mode" restrictions apply as with re-opening through
++.BR proc (5)
++(see
++.BR path_resolution "(7) and " symlink (7)
++for more details.)
++.TP
+ .B O_EXCL
+ Ensure that this call creates the file:
+ if this flag is specified in conjunction with
+@@ -668,6 +683,13 @@ with
+ (or via procfs using
+ .BR AT_SYMLINK_FOLLOW )
+ even if the file is not a directory.
++You can even "re-open" (or upgrade) an
++.BR O_PATH
++file descriptor by using
++.BR O_EMPTYPATH
++(see the section for
++.BR O_EMPTYPATH
++for more details.)
+ .IP *
+ Passing the file descriptor to another process via a UNIX domain socket
+ (see
+@@ -958,6 +980,15 @@ is not allowed.
+ (See also
+ .BR path_resolution (7).)
+ .TP
++.B EBADF
++.I pathname
++was an empty string (and
++.B O_EMPTYPATH
++was passed) with
++.BR open (2)
++(instead of
++.BR openat (2).)
++.TP
+ .B EDQUOT
+ Where
+ .B O_CREAT
+@@ -1203,6 +1234,15 @@ The following additional errors can occur for
+ .I dirfd
+ is not a valid file descriptor.
+ .TP
++.B EBADF
++.I pathname
++was an empty string (and
++.B O_EMPTYPATH
++was passed), but the provided
++.I dirfd
++was an invalid file descriptor (or was
++.BR AT_FDCWD .)
++.TP
+ .B ENOTDIR
+ .I pathname
+ is a relative pathname and
+diff --git a/man7/path_resolution.7 b/man7/path_resolution.7
+index 46f25ec4cdfa..85dd354e9a93 100644
+--- a/man7/path_resolution.7
++++ b/man7/path_resolution.7
+@@ -22,7 +22,7 @@
+ .\" the source, must acknowledge the copyright and authors of this work.
+ .\" %%%LICENSE_END
+ .\"
+-.TH PATH_RESOLUTION 7 2017-11-26 "Linux" "Linux Programmer's Manual"
++.TH PATH_RESOLUTION 7 2019-10-03 "Linux" "Linux Programmer's Manual"
+ .SH NAME
+ path_resolution \- how a pathname is resolved to a file
+ .SH DESCRIPTION
+@@ -198,6 +198,21 @@ successfully.
+ Linux returns
+ .B ENOENT
+ in this case.
++.PP
++As of Linux 5.FOO, an empty path argument can be used to indicate the "re-open"
++an existing file descriptor if
++.B O_EMPTYPATH
++is passed as a flag argument to
++.BR openat (2),
++with the
++.I dfd
++argument indicating which file descriptor to "re-open". This is approximately
++equivalent to opening
++.I /proc/self/fd/$fd
++where
++.I $fd
++is the open file descriptor to be "re-opened".
++
+ .SS Permissions
+ The permission bits of a file consist of three groups of three bits; see
+ .BR chmod (1)
 -- 
 2.23.0
