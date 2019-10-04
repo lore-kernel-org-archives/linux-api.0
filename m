@@ -1,45 +1,68 @@
-From: Florian Weimer <fw@deneb.enyo.de>
-Subject: vger mail woes? (was: Re: [RFC][PATCH] sysctl: Remove the sysctl system call)
-Date: Fri, 04 Oct 2019 09:31:27 +0200
-Message-ID: <87bluxge5s.fsf_-_@mid.deneb.enyo.de>
-References: <8736gcjosv.fsf@x220.int.ebiederm.org>
-        <201910011140.EA0181F13@keescook> <87y2y271ws.fsf@mid.deneb.enyo.de>
-        <20191003210814.gh7rbbv6bpxlhz3w@wittgenstein>
+From: Alexei Starovoitov <ast@fb.com>
+Subject: Re: trace_printk issue. Was: [PATCH bpf-next] bpf, capabilities:
+ introduce CAP_BPF
+Date: Fri, 4 Oct 2019 19:56:04 +0000
+Message-ID: <36f0efac-d6b6-9439-d4c6-361d84cb3429@fb.com>
+References: <DA52992F-4862-4945-8482-FE619A04C753@amacapital.net>
+ <20190829040721.ef6rumbaunkavyrr@ast-mbp.dhcp.thefacebook.com>
+ <20190928193727.1769e90c@oasis.local.home> <201909301129.5A1129C@keescook>
+ <20191001012226.vwpe56won5r7gbrz@ast-mbp.dhcp.thefacebook.com>
+ <20191001181052.43c9fabb@gandalf.local.home>
+ <6e8b910c-a739-857d-4867-395bd369bc6a@fb.com>
+ <20191001184731.0ec98c7a@gandalf.local.home>
+ <a98725c6-a7db-1d9f-7033-5ecd96438c8d@fb.com>
+ <20191002190027.4e204ea8@gandalf.local.home>
+ <20191003161838.7lz746aa2lzl7qi4@ast-mbp.dhcp.thefacebook.com>
+ <20191003124148.4b94a720@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191003210814.gh7rbbv6bpxlhz3w@wittgenstein> (Christian
-        Brauner's message of "Thu, 3 Oct 2019 23:08:14 +0200")
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian.brauner@ubuntu.com>
-Cc: Kees Cook <keescook@chromium.org>, "Eric W. Biederman" <ebiederm@xmission.com>, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Jann Horn <jannh@google.com>, Arnd Bergmann <arnd@arndb.de>, Helge Deller <deller@gmx.de>, postmaster@vger.kernel.org, David Miller <davem@davemloft.net>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20191003124148.4b94a720@gandalf.local.home>
+Content-Language: en-US
+Content-ID: <7F8F31F328B1684A9E3CD6F78B415287@namprd15.prod.outlook.com>
+Sender: netdev-owner@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>, Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Andy Lutomirski <luto@kernel.org>, Alexei Starovoitov <ast@kernel.org>, LSM List <linux-security-module@vger.kernel.org>, James Morris <jmorris@namei.org>, Jann Horn <jannh@google.com>, Peter Zijlstra <peterz@infradead.org>, Masami Hiramatsu <mhiramat@kernel.org>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Network Development <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Kernel Team <Kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-* Christian Brauner:
-
-> On Thu, Oct 03, 2019 at 08:56:19AM +0200, Florian Weimer wrote:
->> Is anyone else getting a very incomplete set of messages in this
->> thread?
->> 
->> These changes likely matter to glibc, and I've yet to see the actual
->> patch.  Would someone please forward it to me?
->> 
->> The original message didn't make it into the lore.kernel.org archives
->> (the cross-post to linux-kernel should have taken care of that).
->
-> Yeah, I didn't get it either and the repost too weirdly enough.
-
-I got curious and tried to repost the repost to vger.kernel.org (in
-the hope to bypass any SMTP callout verifications that may still be
-failing for Eric), and got this:
-
-2019-10-04 07:09:29 1iGHiT-00007b-Na <= fw@deneb.enyo.de H=(deneb.enyo.de) [172.17.203.2] P=esmtps X=TLS1.2:ECDHE_RSA_AES_256_GCM_SHA384:256 CV=no S=72580 id=87h84pgf6h.fsf@mid.deneb.enyo.de
-2019-10-04 07:09:37 1iGHiT-00007b-Na => linux-api@vger.kernel.org R=dnslookup T=remote_smtp_ext H=vger.kernel.org [209.132.180.67] C="250 2.7.1 Looks like Linux source DIFF email.. BF:<S 1>; S1728766AbfJDHJg"
-2019-10-04 07:09:37 1iGHiT-00007b-Na -> linux-arch@vger.kernel.org R=dnslookup T=remote_smtp_ext H=vger.kernel.org [209.132.180.67] C="250 2.7.1 Looks like Linux source DIFF email.. BF:<S 1>; S1728766AbfJDHJg"
-2019-10-04 07:09:37 1iGHiT-00007b-Na -> linux-kernel@vger.kernel.org R=dnslookup T=remote_smtp_ext H=vger.kernel.org [209.132.180.67] C="250 2.7.1 Looks like Linux source DIFF email.. BF:<S 1>; S1728766AbfJDHJg"
-2019-10-04 07:09:37 1iGHiT-00007b-Na Completed
-
-But nothing came back.  Timestamps are UTC.
-
-Dave, could please have a look, assuming that you are still involved
-with vger operations?
+T24gMTAvMy8xOSA5OjQxIEFNLCBTdGV2ZW4gUm9zdGVkdCB3cm90ZToNCj4gT24gVGh1LCAzIE9j
+dCAyMDE5IDA5OjE4OjQwIC0wNzAwDQo+IEFsZXhlaSBTdGFyb3ZvaXRvdiA8YWxleGVpLnN0YXJv
+dm9pdG92QGdtYWlsLmNvbT4gd3JvdGU6DQo+IA0KPj4gSSB0aGluayBkcm9wcGluZyBsYXN0IGV2
+ZW50cyBpcyBqdXN0IGFzIGJhZC4gSXMgdGhlcmUgYSBtb2RlIHRvIG92ZXJ3cml0ZSBvbGQNCj4+
+IGFuZCBrZWVwIHRoZSBsYXN0IE4gKGxpa2UgcGVyZiBkb2VzKSA/DQo+IA0KPiBXZWxsLCBpdCBk
+cm9wcyBpdCBieSBwYWdlcy4gVGh1cyB5b3Ugc2hvdWxkIGFsd2F5cyBoYXZlIHRoZSBsYXN0IHBh
+Z2UNCj4gb2YgZXZlbnRzLg0KPiANCj4+IFBldGVyIFd1IGJyb3VnaHQgdGhpcyBpc3N1ZSB0byBt
+eSBhdHRlbnRpb24gaW4NCj4+IGNvbW1pdCA1NWMzM2RmYmViODMgKCJicGY6IGNsYXJpZnkgd2hl
+biBicGZfdHJhY2VfcHJpbnRrIGRpc2NhcmRzIGxpbmVzIikuDQo+PiBBbmQgbGF0ZXIgc2VudCBz
+aW1pbGFyIGRvYyBmaXggdG8gZnRyYWNlLnJzdC4NCj4gDQo+IEl0IHdhcyBkb2N1bWVudGVkIHRo
+ZXJlLCBoZSBqdXN0IGVsYWJvcmF0ZWQgb24gaXQgbW9yZToNCj4gDQo+ICAgICAgICAgIFRoaXMg
+ZmlsZSBob2xkcyB0aGUgb3V0cHV0IG9mIHRoZSB0cmFjZSBpbiBhIGh1bWFuDQo+ICAgICAgICAg
+IHJlYWRhYmxlIGZvcm1hdCAoZGVzY3JpYmVkIGJlbG93KS4gTm90ZSwgdHJhY2luZyBpcyB0ZW1w
+b3JhcmlseQ0KPiAtICAgICAgIGRpc2FibGVkIHdoaWxlIHRoaXMgZmlsZSBpcyBiZWluZyByZWFk
+IChvcGVuZWQpLg0KPiArICAgICAgIGRpc2FibGVkIHdoZW4gdGhlIGZpbGUgaXMgb3BlbiBmb3Ig
+cmVhZGluZy4gT25jZSBhbGwgcmVhZGVycw0KPiArICAgICAgIGFyZSBjbG9zZWQsIHRyYWNpbmcg
+aXMgcmUtZW5hYmxlZC4NCj4gDQo+IA0KPj4gVG8gYmUgaG9uZXN0IGlmIEkga25ldyBvZiB0aGlz
+IHRyYWNlX3ByaW50ayBxdWlyayBJIHdvdWxkIG5vdCBoYXZlIHBpY2tlZCBpdA0KPj4gYXMgYSBk
+ZWJ1Z2dpbmcgbWVjaGFuaXNtIGZvciBicGYuDQo+PiBJIHVyZ2UgeW91IHRvIGZpeCBpdC4NCj4g
+DQo+IEl0J3Mgbm90IGEgdHJpdmlhbCBmaXggYnkgZmFyLg0KPiANCj4gTm90ZSwgdHJ5aW5nIHRv
+IHJlYWQgdGhlIHRyYWNlIGZpbGUgd2l0aG91dCBkaXNhYmxpbmcgdGhlIHdyaXRlcyB0byBpdCwN
+Cj4gd2lsbCBtb3N0IGxpa2VseSBtYWtlIHJlYWRpbmcgaXQgd2hlbiBmdW5jdGlvbiB0cmFjaW5n
+IGVuYWJsZWQgdG90YWxseQ0KPiBnYXJiYWdlLCBhcyB0aGUgYnVmZmVyIHdpbGwgbW9zdCBsaWtl
+bHkgYmUgZmlsbGVkIGZvciBldmVyeSByZWFkIGV2ZW50Lg0KPiBUaGF0IGlzLCBlYWNoIHJlYWQg
+ZXZlbnQgd2lsbCBub3QgYmUgcmVsYXRlZCB0byB0aGUgbmV4dCBldmVudCB0aGF0IGlzDQo+IHJl
+YWQsIG1ha2luZyBpdCB2ZXJ5IGNvbmZ1c2luZy4NCj4gDQo+IEFsdGhvdWdoLCBJIG1heSBiZSBh
+YmxlIHRvIG1ha2UgaXQgd29yayBwZXIgcGFnZS4gVGhhdCB3YXkgeW91IGdldCBhdA0KPiBsZWFz
+dCBhIHBhZ2Ugd29ydGggb2YgZXZlbnRzLg0KDQpUaGF0IHNvdW5kcyBtdWNoIGJldHRlci4gQXMg
+bG9uZyBhcyB0cmFjZV9wcmludGsoKSBkb2Vzbid0IGRpc2FwcGVhcg0KaW50byB0aGUgdm9pZCwg
+aXQncyBnb29kLg0KDQpCdXQgdGhlIHBhcnQgSSdtIG5vdCBnZXR0aW5nIGlzIHdoeSB0cmFjZV9w
+cmludGsoKSBoYXMNCmlmICh0cmFjaW5nX2Rpc2FibGVkKSBnb3RvIG91dDsNCg0KSXQncyBhIGNv
+bmN1cnJlbnQgcmluZyBidWZmZXIuIE9uZSBjcHUgY2FuIHdyaXRlIGludG8gaXQgd2hpbGUNCmFu
+b3RoZXIgcmVhZGluZy4gV2hhdCBpcyB0aGUgcG9pbnQgZGlzYWJsaW5nIHRyYWNlX3ByaW50ayBp
+biBwYXJ0aWN1bGFyPw0KRWFjaCBfX2J1ZmZlcl91bmxvY2tfY29tbWl0IGlzIGFuIGF0b21pYyBy
+aW5nIGJ1ZmZlciB1cGRhdGUsDQpzbyByZWFkIGZyb20gdHJhY2Ugd2lsbCBlaXRoZXIgc2VlIGl0
+IGFzIGEgd2hvbGUgb3Igd29uJ3Qgc2VlIGl0Lg0KJ3RyYWNlX3BpcGUnIGNsZWFybHkgd29ya3Mg
+ZmluZS4gV2h5ICd0cmFjZScgaXMgYW55IGRpZmZlcmVudD8NCkp1c3Qga2VlcCB0cmFjaW5nIGVu
+YWJsZWQgYW5kIGtlZXAgcmVhZGluZyBpdCB1bnRpbCB0aGUgZW5kIG9mIGN1cnJlbnQNCnJpbmcg
+YnVmZmVyLiBXaGV0aGVyIG9wZW4oKSBkZXRlcm1pbmVzIGN1cnJlbnQgb3IgaXQgcmVhZHMgdW50
+aWwgbmV4dD0wDQppcyBhbiBpbXBsZW1lbnRhdGlvbiBkZXRhaWwuDQo=
