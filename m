@@ -1,68 +1,63 @@
-From: Alexei Starovoitov <ast@fb.com>
-Subject: Re: trace_printk issue. Was: [PATCH bpf-next] bpf, capabilities:
- introduce CAP_BPF
-Date: Fri, 4 Oct 2019 19:56:04 +0000
-Message-ID: <36f0efac-d6b6-9439-d4c6-361d84cb3429@fb.com>
-References: <DA52992F-4862-4945-8482-FE619A04C753@amacapital.net>
- <20190829040721.ef6rumbaunkavyrr@ast-mbp.dhcp.thefacebook.com>
- <20190928193727.1769e90c@oasis.local.home> <201909301129.5A1129C@keescook>
- <20191001012226.vwpe56won5r7gbrz@ast-mbp.dhcp.thefacebook.com>
- <20191001181052.43c9fabb@gandalf.local.home>
- <6e8b910c-a739-857d-4867-395bd369bc6a@fb.com>
- <20191001184731.0ec98c7a@gandalf.local.home>
- <a98725c6-a7db-1d9f-7033-5ecd96438c8d@fb.com>
- <20191002190027.4e204ea8@gandalf.local.home>
- <20191003161838.7lz746aa2lzl7qi4@ast-mbp.dhcp.thefacebook.com>
- <20191003124148.4b94a720@gandalf.local.home>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH RFC 1/3] symlink.7: document magic-links more completely
+Date: Mon, 7 Oct 2019 18:36:40 +0200
+Message-ID: <CAG48ez2LuOGAXgKftZKfDKxhdb6xcBTdoK468-HXdcpxCW4r4w@mail.gmail.com>
+References: <20191003145542.17490-1-cyphar@cyphar.com> <20191003145542.17490-2-cyphar@cyphar.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20191003124148.4b94a720@gandalf.local.home>
-Content-Language: en-US
-Content-ID: <7F8F31F328B1684A9E3CD6F78B415287@namprd15.prod.outlook.com>
-Sender: netdev-owner@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>, Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Cc: Kees Cook <keescook@chromium.org>, Andy Lutomirski <luto@amacapital.net>, Andy Lutomirski <luto@kernel.org>, Alexei Starovoitov <ast@kernel.org>, LSM List <linux-security-module@vger.kernel.org>, James Morris <jmorris@namei.org>, Jann Horn <jannh@google.com>, Peter Zijlstra <peterz@infradead.org>, Masami Hiramatsu <mhiramat@kernel.org>, "David S. Miller" <davem@davemloft.net>, Daniel Borkmann <daniel@iogearbox.net>, Network Development <netdev@vger.kernel.org>, bpf <bpf@vger.kernel.org>, Kernel Team <Kernel-team@fb.com>, Linux API <linux-api@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20191003145542.17490-2-cyphar@cyphar.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Aleksa Sarai <cyphar@cyphar.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Michael Kerrisk <mtk.manpages@gmail.com>, Christian Brauner <christian@brauner.io>, Aleksa Sarai <asarai@suse.de>, linux-man <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-T24gMTAvMy8xOSA5OjQxIEFNLCBTdGV2ZW4gUm9zdGVkdCB3cm90ZToNCj4gT24gVGh1LCAzIE9j
-dCAyMDE5IDA5OjE4OjQwIC0wNzAwDQo+IEFsZXhlaSBTdGFyb3ZvaXRvdiA8YWxleGVpLnN0YXJv
-dm9pdG92QGdtYWlsLmNvbT4gd3JvdGU6DQo+IA0KPj4gSSB0aGluayBkcm9wcGluZyBsYXN0IGV2
-ZW50cyBpcyBqdXN0IGFzIGJhZC4gSXMgdGhlcmUgYSBtb2RlIHRvIG92ZXJ3cml0ZSBvbGQNCj4+
-IGFuZCBrZWVwIHRoZSBsYXN0IE4gKGxpa2UgcGVyZiBkb2VzKSA/DQo+IA0KPiBXZWxsLCBpdCBk
-cm9wcyBpdCBieSBwYWdlcy4gVGh1cyB5b3Ugc2hvdWxkIGFsd2F5cyBoYXZlIHRoZSBsYXN0IHBh
-Z2UNCj4gb2YgZXZlbnRzLg0KPiANCj4+IFBldGVyIFd1IGJyb3VnaHQgdGhpcyBpc3N1ZSB0byBt
-eSBhdHRlbnRpb24gaW4NCj4+IGNvbW1pdCA1NWMzM2RmYmViODMgKCJicGY6IGNsYXJpZnkgd2hl
-biBicGZfdHJhY2VfcHJpbnRrIGRpc2NhcmRzIGxpbmVzIikuDQo+PiBBbmQgbGF0ZXIgc2VudCBz
-aW1pbGFyIGRvYyBmaXggdG8gZnRyYWNlLnJzdC4NCj4gDQo+IEl0IHdhcyBkb2N1bWVudGVkIHRo
-ZXJlLCBoZSBqdXN0IGVsYWJvcmF0ZWQgb24gaXQgbW9yZToNCj4gDQo+ICAgICAgICAgIFRoaXMg
-ZmlsZSBob2xkcyB0aGUgb3V0cHV0IG9mIHRoZSB0cmFjZSBpbiBhIGh1bWFuDQo+ICAgICAgICAg
-IHJlYWRhYmxlIGZvcm1hdCAoZGVzY3JpYmVkIGJlbG93KS4gTm90ZSwgdHJhY2luZyBpcyB0ZW1w
-b3JhcmlseQ0KPiAtICAgICAgIGRpc2FibGVkIHdoaWxlIHRoaXMgZmlsZSBpcyBiZWluZyByZWFk
-IChvcGVuZWQpLg0KPiArICAgICAgIGRpc2FibGVkIHdoZW4gdGhlIGZpbGUgaXMgb3BlbiBmb3Ig
-cmVhZGluZy4gT25jZSBhbGwgcmVhZGVycw0KPiArICAgICAgIGFyZSBjbG9zZWQsIHRyYWNpbmcg
-aXMgcmUtZW5hYmxlZC4NCj4gDQo+IA0KPj4gVG8gYmUgaG9uZXN0IGlmIEkga25ldyBvZiB0aGlz
-IHRyYWNlX3ByaW50ayBxdWlyayBJIHdvdWxkIG5vdCBoYXZlIHBpY2tlZCBpdA0KPj4gYXMgYSBk
-ZWJ1Z2dpbmcgbWVjaGFuaXNtIGZvciBicGYuDQo+PiBJIHVyZ2UgeW91IHRvIGZpeCBpdC4NCj4g
-DQo+IEl0J3Mgbm90IGEgdHJpdmlhbCBmaXggYnkgZmFyLg0KPiANCj4gTm90ZSwgdHJ5aW5nIHRv
-IHJlYWQgdGhlIHRyYWNlIGZpbGUgd2l0aG91dCBkaXNhYmxpbmcgdGhlIHdyaXRlcyB0byBpdCwN
-Cj4gd2lsbCBtb3N0IGxpa2VseSBtYWtlIHJlYWRpbmcgaXQgd2hlbiBmdW5jdGlvbiB0cmFjaW5n
-IGVuYWJsZWQgdG90YWxseQ0KPiBnYXJiYWdlLCBhcyB0aGUgYnVmZmVyIHdpbGwgbW9zdCBsaWtl
-bHkgYmUgZmlsbGVkIGZvciBldmVyeSByZWFkIGV2ZW50Lg0KPiBUaGF0IGlzLCBlYWNoIHJlYWQg
-ZXZlbnQgd2lsbCBub3QgYmUgcmVsYXRlZCB0byB0aGUgbmV4dCBldmVudCB0aGF0IGlzDQo+IHJl
-YWQsIG1ha2luZyBpdCB2ZXJ5IGNvbmZ1c2luZy4NCj4gDQo+IEFsdGhvdWdoLCBJIG1heSBiZSBh
-YmxlIHRvIG1ha2UgaXQgd29yayBwZXIgcGFnZS4gVGhhdCB3YXkgeW91IGdldCBhdA0KPiBsZWFz
-dCBhIHBhZ2Ugd29ydGggb2YgZXZlbnRzLg0KDQpUaGF0IHNvdW5kcyBtdWNoIGJldHRlci4gQXMg
-bG9uZyBhcyB0cmFjZV9wcmludGsoKSBkb2Vzbid0IGRpc2FwcGVhcg0KaW50byB0aGUgdm9pZCwg
-aXQncyBnb29kLg0KDQpCdXQgdGhlIHBhcnQgSSdtIG5vdCBnZXR0aW5nIGlzIHdoeSB0cmFjZV9w
-cmludGsoKSBoYXMNCmlmICh0cmFjaW5nX2Rpc2FibGVkKSBnb3RvIG91dDsNCg0KSXQncyBhIGNv
-bmN1cnJlbnQgcmluZyBidWZmZXIuIE9uZSBjcHUgY2FuIHdyaXRlIGludG8gaXQgd2hpbGUNCmFu
-b3RoZXIgcmVhZGluZy4gV2hhdCBpcyB0aGUgcG9pbnQgZGlzYWJsaW5nIHRyYWNlX3ByaW50ayBp
-biBwYXJ0aWN1bGFyPw0KRWFjaCBfX2J1ZmZlcl91bmxvY2tfY29tbWl0IGlzIGFuIGF0b21pYyBy
-aW5nIGJ1ZmZlciB1cGRhdGUsDQpzbyByZWFkIGZyb20gdHJhY2Ugd2lsbCBlaXRoZXIgc2VlIGl0
-IGFzIGEgd2hvbGUgb3Igd29uJ3Qgc2VlIGl0Lg0KJ3RyYWNlX3BpcGUnIGNsZWFybHkgd29ya3Mg
-ZmluZS4gV2h5ICd0cmFjZScgaXMgYW55IGRpZmZlcmVudD8NCkp1c3Qga2VlcCB0cmFjaW5nIGVu
-YWJsZWQgYW5kIGtlZXAgcmVhZGluZyBpdCB1bnRpbCB0aGUgZW5kIG9mIGN1cnJlbnQNCnJpbmcg
-YnVmZmVyLiBXaGV0aGVyIG9wZW4oKSBkZXRlcm1pbmVzIGN1cnJlbnQgb3IgaXQgcmVhZHMgdW50
-aWwgbmV4dD0wDQppcyBhbiBpbXBsZW1lbnRhdGlvbiBkZXRhaWwuDQo=
+On Thu, Oct 3, 2019 at 4:56 PM Aleksa Sarai <cyphar@cyphar.com> wrote:
+> Traditionally, magic-links have not been a well-understood topic in
+> Linux. Given the new changes in their semantics (related to the link
+> mode of trailing magic-links), it seems like a good opportunity to shine
+> more light on magic-links and their semantics.
+[...]
+> +++ b/man7/symlink.7
+> @@ -84,6 +84,25 @@ as they are implemented on Linux and other systems,
+>  are outlined here.
+>  It is important that site-local applications also conform to these rules,
+>  so that the user interface can be as consistent as possible.
+> +.SS Magic-links
+> +There is a special class of symlink-like objects known as "magic-links" which
+
+I think names like that normally aren't hypenated in english, and
+instead of "magic-links", it'd be "magic links"? Just like how you
+wouldn't write "symbolic-link", but "symbolic link". But this is
+bikeshedding, and if you disagree, feel free to ignore this comment.
+
+> +can be found in certain pseudo-filesystems such as
+> +.BR proc (5)
+> +(examples include
+> +.IR /proc/[pid]/exe " and " /proc/[pid]/fd/* .)
+> +Unlike normal symlinks, magic-links are not resolved through
+
+nit: AFAICS symlinks are always referred to as "symbolic links"
+throughout the manpages.
+
+> +pathname-expansion, but instead act as direct references to the kernel's own
+> +representation of a file handle. As such, these magic-links allow users to
+> +access files which cannot be referenced with normal paths (such as unlinked
+> +files still referenced by a running program.)
+
+Could maybe add "and files in different mount namespaces" as another
+example here; at least for me, that's the main usecases for
+/proc/*/root.
+
+[...]
+> +However, magic-links do not follow this rule. They can have a non-0777 mode,
+> +which is used for permission checks when the final
+> +component of an
+> +.BR open (2)'s
+
+Maybe leave out the "open" part, since the same restriction has to
+also apply to other syscalls operating on files, like truncate() and
+so on?
+
+> +path is a magic-link (see
+> +.BR path_resolution (7).)
