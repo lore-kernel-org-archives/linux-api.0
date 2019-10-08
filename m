@@ -1,113 +1,50 @@
-From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: Re: [PATCH RFC 1/3] symlink.7: document magic-links more completely
-Date: Tue, 8 Oct 2019 12:33:46 +1100
-Message-ID: <20191008013346.7qft2qqz4wz7ld35@yavin.dot.cyphar.com>
-References: <20191003145542.17490-1-cyphar@cyphar.com>
- <20191003145542.17490-2-cyphar@cyphar.com>
- <CAG48ez2LuOGAXgKftZKfDKxhdb6xcBTdoK468-HXdcpxCW4r4w@mail.gmail.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: [REPOST][RFC][PATCH] sysctl: Remove the sysctl system call
+Date: Tue, 8 Oct 2019 12:30:35 +0200
+Message-ID: <4c3e4883-706e-fd1b-4f4f-0653eabeb027@gmail.com>
+References: <8736gcjosv.fsf@x220.int.ebiederm.org>
+ <201910011140.EA0181F13@keescook> <87y2y271ws.fsf@mid.deneb.enyo.de>
+ <87tv8pftjj.fsf_-_@x220.int.ebiederm.org> <201910031404.C30A0F16@keescook>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="2q45tajd22yttzl5"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAG48ez2LuOGAXgKftZKfDKxhdb6xcBTdoK468-HXdcpxCW4r4w@mail.gmail.com>
+In-Reply-To: <201910031404.C30A0F16@keescook>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Michael Kerrisk <mtk.manpages@gmail.com>, Christian Brauner <christian@brauner.io>, Aleksa Sarai <asarai@suse.de>, linux-man <linux-man@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>
+To: Kees Cook <keescook@chromium.org>, "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: mtk.manpages@gmail.com, Florian Weimer <fw@deneb.enyo.de>, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Jann Horn <jannh@google.com>, Arnd Bergmann <arnd@arndb.de>, Helge Deller <deller@gmx.de>
 List-Id: linux-api@vger.kernel.org
 
+On 10/3/19 11:05 PM, Kees Cook wrote:
+> On Thu, Oct 03, 2019 at 03:44:32PM -0500, Eric W. Biederman wrote:
+>>
+>> This system call has been deprecated almost since it was introduced, and none
+>> of the common distributions enable it.  The only indication that I can find that
+>> anyone might care is that a few of the defconfigs in the kernel enable it.  However
+>> that is a small fractions of the defconfigs so I suspect it just a lack of care
+>> rather than a reflection of software using the the sysctl system call.
+>>
+>> As there appear to be no users of the sysctl system call, remove the
+>> code so that the proc filesystem can be simplified.
+> 
+> nitpick: line lengths near 80 characters
+> 
+>> Signed-off-by: "Eric W. Biederman" <ebiederm@xmission.com>
+> 
+> But, yes, I would love to see this gone. :)
+> 
+> Reviewed-by: Kees Cook <keescook@chromium.org>
 
---2q45tajd22yttzl5
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+And for the record, the manual page has since 2007 documented that 
+this system call is likely to go away in the future.
 
-On 2019-10-07, Jann Horn <jannh@google.com> wrote:
-> On Thu, Oct 3, 2019 at 4:56 PM Aleksa Sarai <cyphar@cyphar.com> wrote:
-> > Traditionally, magic-links have not been a well-understood topic in
-> > Linux. Given the new changes in their semantics (related to the link
-> > mode of trailing magic-links), it seems like a good opportunity to shine
-> > more light on magic-links and their semantics.
-> [...]
-> > +++ b/man7/symlink.7
-> > @@ -84,6 +84,25 @@ as they are implemented on Linux and other systems,
-> >  are outlined here.
-> >  It is important that site-local applications also conform to these rul=
-es,
-> >  so that the user interface can be as consistent as possible.
-> > +.SS Magic-links
-> > +There is a special class of symlink-like objects known as "magic-links=
-" which
->=20
-> I think names like that normally aren't hypenated in english, and
-> instead of "magic-links", it'd be "magic links"? Just like how you
-> wouldn't write "symbolic-link", but "symbolic link". But this is
-> bikeshedding, and if you disagree, feel free to ignore this comment.
+Cheers,
 
-Looking at it now, I think you're right -- I hyphenated it here because
-that's how I wrote it when documenting the feature in comments. But I
-think that's because "symlink" and "magic-link" (the "abbreviated"
-versions) seem to match better than "symlink" and "magic link".
+Michael
 
-I'll use "magic link" in documentation, but "magic-link" for all cases
-where I would normally write "symlink".
 
-> > +can be found in certain pseudo-filesystems such as
-> > +.BR proc (5)
-> > +(examples include
-> > +.IR /proc/[pid]/exe " and " /proc/[pid]/fd/* .)
-> > +Unlike normal symlinks, magic-links are not resolved through
->=20
-> nit: AFAICS symlinks are always referred to as "symbolic links"
-> throughout the manpages.
-
-:+1:
-
-> > +pathname-expansion, but instead act as direct references to the kernel=
-'s own
-> > +representation of a file handle. As such, these magic-links allow user=
-s to
-> > +access files which cannot be referenced with normal paths (such as unl=
-inked
-> > +files still referenced by a running program.)
->=20
-> Could maybe add "and files in different mount namespaces" as another
-> example here; at least for me, that's the main usecases for
-> /proc/*/root.
-
-Will do.
-
-> [...]
-> > +However, magic-links do not follow this rule. They can have a non-0777=
- mode,
-> > +which is used for permission checks when the final
-> > +component of an
-> > +.BR open (2)'s
->=20
-> Maybe leave out the "open" part, since the same restriction has to
-> also apply to other syscalls operating on files, like truncate() and
-> so on?
-
-Yes (though I've just realised I hadn't implemented that -- oops.) Given
-how expansive this patchset will get -- I might end up splitting it into
-the magic-link stuff (and O_EMPTYPATH) and a separate series for
-openat2(2) and the path resolution restrictions.
-
---=20
-Aleksa Sarai
-Senior Software Engineer (Containers)
-SUSE Linux GmbH
-<https://www.cyphar.com/>
-
---2q45tajd22yttzl5
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXZvndgAKCRCdlLljIbnQ
-Em8rAP9zDYU4BspEqrhHWm9St1g7MKKDDBGjzIBK742FA4EA6gD9FXqkmZPXhZHY
-m/PlSBGP4lC67Pms1YwaoDM1pk2x+Ak=
-=dsvW
------END PGP SIGNATURE-----
-
---2q45tajd22yttzl5--
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
