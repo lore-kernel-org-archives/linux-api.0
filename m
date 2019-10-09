@@ -1,27 +1,67 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [MANPAGE PATCH] Add manpage for fsinfo(2)
-Date: Wed, 09 Oct 2019 13:02:20 +0100
-Message-ID: <17943.1570622540@warthog.procyon.org.uk>
-References: <515a67cd-f847-8885-da30-1eab3931f1fb@gmail.com> <153126269451.14533.13592791373864325188.stgit@warthog.procyon.org.uk> <153126248868.14533.9751473662727327569.stgit@warthog.procyon.org.uk> <15519.1531263314@warthog.procyon.org.uk>
+From: Christian Kellner <ckellner@redhat.com>
+Subject: [PATCH v2 1/2] pidfd: show pids for nested pid namespaces in fdinfo
+Date: Wed,  9 Oct 2019 18:05:30 +0200
+Message-ID: <20191009160532.20674-1-ckellner@redhat.com>
+References: <20191008133641.23019-1-ckellner@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <515a67cd-f847-8885-da30-1eab3931f1fb@gmail.com>
-Content-ID: <17942.1570622540.1@warthog.procyon.org.uk>
+In-Reply-To: <20191008133641.23019-1-ckellner@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Cc: dhowells@redhat.com, viro@zeniv.linux.org.uk, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, linux-man@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>
+To: linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, Christian Kellner <christian@kellner.me>, Christian Brauner <christian@brauner.io>, Andrew Morton <akpm@linux-foundation.org>, "Peter Zijlstra (Intel)" <peterz@infradead.org>, Ingo Molnar <mingo@kernel.org>, Michal Hocko <mhocko@suse.com>, Elena Reshetova <elena.reshetova@intel.com>, Thomas Gleixner <tglx@linutronix.de>, Roman Gushchin <guro@fb.com>, Andrea Arcangeli <aarcange@redhat.com>, "Joel Fernandes (Google)" <joel@joelfernandes.org>, Al Viro <viro@zeniv.linux.org.uk>, "Dmitry V. Levin" <ldv@altlinux.org>
 List-Id: linux-api@vger.kernel.org
 
-Michael Kerrisk (man-pages) <mtk.manpages@gmail.com> wrote:
+From: Christian Kellner <christian@kellner.me>
 
-> There is no fsinfo(2) in the system call in the kernel currently.
-> Will that call still be added,
+The fdinfo file for a process file descriptor already contains the
+pid of the process in the callers namespaces. Additionally, if pid
+namespaces are configured, show the process ids of the process in
+all nested namespaces in the same format as in the procfs status
+file, i.e. "NSPid:\t%d\%d...". This allows the easy identification
+of the processes in nested namespaces.
 
-Hopefully, but I'm not sure it'll be ready by the next merge window.
+Signed-off-by: Christian Kellner <christian@kellner.me>
+---
 
-> or was it replaced by fsconfig(2),
+Changes in v2:
+- Moved into separate function to avoid multiple ifdefs as suggested
+  by Michal Hocko
 
-They're different things and not interchangeable.
+ kernel/fork.c | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
 
-David
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 5a0fd518e04e..f7a59ef046e9 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -1681,12 +1681,27 @@ static int pidfd_release(struct inode *inode, struct file *file)
+ }
+ 
+ #ifdef CONFIG_PROC_FS
++static void pidfd_nspid(struct seq_file *m, struct pid *pid)
++{
++#ifdef CONFIG_PID_NS
++	struct pid_namespace *ns = proc_pid_ns(file_inode(m->file));
++	int i;
++
++	seq_puts(m, "\nNSpid:");
++	for (i = ns->level; i <= pid->level; i++) {
++		ns = pid->numbers[i].ns;
++		seq_put_decimal_ull(m, "\t", pid_nr_ns(pid, ns));
++	}
++#endif
++}
++
+ static void pidfd_show_fdinfo(struct seq_file *m, struct file *f)
+ {
+ 	struct pid_namespace *ns = proc_pid_ns(file_inode(m->file));
+ 	struct pid *pid = f->private_data;
+ 
+ 	seq_put_decimal_ull(m, "Pid:\t", pid_nr_ns(pid, ns));
++	pidfd_nspid(m, pid);
+ 	seq_putc(m, '\n');
+ }
+ #endif
+-- 
+2.21.0
