@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv7 17/33] x86/vdso: Restrict splitting VVAR VMA
-Date: Fri, 11 Oct 2019 02:23:25 +0100
-Message-ID: <20191011012341.846266-18-dima@arista.com>
+Subject: [PATCHv7 15/33] posix-timers: Make clock_nanosleep() time namespace aware
+Date: Fri, 11 Oct 2019 02:23:23 +0100
+Message-ID: <20191011012341.846266-16-dima@arista.com>
 References: <20191011012341.846266-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -9,53 +9,108 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20191011012341.846266-1-dima@arista.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
+Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Andrei Vagin <avagin@openvz.org>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Forbid splitting VVAR resulting in stricter ABI and reducing amount
-of corner-cases to consider while working further on VDSO.
+From: Andrei Vagin <avagin@openvz.org>
 
-As offset from timens to VVAR page is computed compile-time,
-the pages in VVAR should stay together and not being partically
-mremap()'ed.
+clock_nanosleep() accepts absolute values of expiration time, if the
+TIMER_ABSTIME flag is set. This value is in the task time namespace,
+which has to be converted to the host time namespace.
 
-Co-developed-by: Andrei Vagin <avagin@openvz.org>
 Signed-off-by: Andrei Vagin <avagin@openvz.org>
+Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- arch/x86/entry/vdso/vma.c | 13 +++++++++++++
- 1 file changed, 13 insertions(+)
+ kernel/time/posix-stubs.c  | 12 ++++++++++--
+ kernel/time/posix-timers.c | 17 +++++++++++++++--
+ 2 files changed, 25 insertions(+), 4 deletions(-)
 
-diff --git a/arch/x86/entry/vdso/vma.c b/arch/x86/entry/vdso/vma.c
-index f5937742b290..000db8282cc8 100644
---- a/arch/x86/entry/vdso/vma.c
-+++ b/arch/x86/entry/vdso/vma.c
-@@ -84,6 +84,18 @@ static int vdso_mremap(const struct vm_special_mapping *sm,
- 	return 0;
+diff --git a/kernel/time/posix-stubs.c b/kernel/time/posix-stubs.c
+index 2ccefc9ce184..47ee2684d250 100644
+--- a/kernel/time/posix-stubs.c
++++ b/kernel/time/posix-stubs.c
+@@ -129,6 +129,7 @@ SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
+ 		struct __kernel_timespec __user *, rmtp)
+ {
+ 	struct timespec64 t;
++	ktime_t texp;
+ 
+ 	switch (which_clock) {
+ 	case CLOCK_REALTIME:
+@@ -147,7 +148,10 @@ SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
+ 		rmtp = NULL;
+ 	current->restart_block.nanosleep.type = rmtp ? TT_NATIVE : TT_NONE;
+ 	current->restart_block.nanosleep.rmtp = rmtp;
+-	return hrtimer_nanosleep(timespec64_to_ktime(t), flags & TIMER_ABSTIME ?
++	texp = timespec64_to_ktime(t);
++	if (flags & TIMER_ABSTIME)
++		texp = timens_ktime_to_host(clockid, texp);
++	return hrtimer_nanosleep(texp, flags & TIMER_ABSTIME ?
+ 				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL,
+ 				 which_clock);
+ }
+@@ -215,6 +219,7 @@ SYSCALL_DEFINE4(clock_nanosleep_time32, clockid_t, which_clock, int, flags,
+ 		struct old_timespec32 __user *, rmtp)
+ {
+ 	struct timespec64 t;
++	ktime texp;
+ 
+ 	switch (which_clock) {
+ 	case CLOCK_REALTIME:
+@@ -233,7 +238,10 @@ SYSCALL_DEFINE4(clock_nanosleep_time32, clockid_t, which_clock, int, flags,
+ 		rmtp = NULL;
+ 	current->restart_block.nanosleep.type = rmtp ? TT_COMPAT : TT_NONE;
+ 	current->restart_block.nanosleep.compat_rmtp = rmtp;
+-	return hrtimer_nanosleep(timespec64_to_ktime(t), flags & TIMER_ABSTIME ?
++	texp = timespec64_to_ktime(t);
++	if (flags & TIMER_ABSTIME)
++		texp = timens_ktime_to_host(clockid, texp);
++	return hrtimer_nanosleep(texp, flags & TIMER_ABSTIME ?
+ 				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL,
+ 				 which_clock);
+ }
+diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
+index c0ae1f6d2add..ccae99a645e1 100644
+--- a/kernel/time/posix-timers.c
++++ b/kernel/time/posix-timers.c
+@@ -1228,6 +1228,19 @@ static int common_nsleep(const clockid_t which_clock, int flags,
+ 				 which_clock);
  }
  
-+static int vvar_mremap(const struct vm_special_mapping *sm,
-+		struct vm_area_struct *new_vma)
++static int common_nsleep_timens(const clockid_t which_clock, int flags,
++			 const struct timespec64 *rqtp)
 +{
-+	unsigned long new_size = new_vma->vm_end - new_vma->vm_start;
-+	const struct vdso_image *image = new_vma->vm_mm->context.vdso_image;
++	ktime_t texp = timespec64_to_ktime(*rqtp);
 +
-+	if (new_size != -image->sym_vvar_start)
-+		return -EINVAL;
++	if (flags & TIMER_ABSTIME)
++		texp = timens_ktime_to_host(which_clock, texp);
 +
-+	return 0;
++	return hrtimer_nanosleep(texp, flags & TIMER_ABSTIME ?
++				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL,
++				 which_clock);
 +}
 +
- static vm_fault_t vvar_fault(const struct vm_special_mapping *sm,
- 		      struct vm_area_struct *vma, struct vm_fault *vmf)
- {
-@@ -136,6 +148,7 @@ static const struct vm_special_mapping vdso_mapping = {
- static const struct vm_special_mapping vvar_mapping = {
- 	.name = "[vvar]",
- 	.fault = vvar_fault,
-+	.mremap = vvar_mremap,
- };
- 
- /*
+ SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
+ 		const struct __kernel_timespec __user *, rqtp,
+ 		struct __kernel_timespec __user *, rmtp)
+@@ -1305,7 +1318,7 @@ static const struct k_clock clock_monotonic = {
+ 	.clock_getres		= posix_get_hrtimer_res,
+ 	.clock_get_timespec	= posix_get_monotonic_timespec,
+ 	.clock_get_ktime	= posix_get_monotonic_ktime,
+-	.nsleep			= common_nsleep,
++	.nsleep			= common_nsleep_timens,
+ 	.timer_create		= common_timer_create,
+ 	.timer_set		= common_timer_set,
+ 	.timer_get		= common_timer_get,
+@@ -1354,7 +1367,7 @@ static const struct k_clock clock_boottime = {
+ 	.clock_getres		= posix_get_hrtimer_res,
+ 	.clock_get_ktime	= posix_get_boottime_ktime,
+ 	.clock_get_timespec	= posix_get_boottime_timespec,
+-	.nsleep			= common_nsleep,
++	.nsleep			= common_nsleep_timens,
+ 	.timer_create		= common_timer_create,
+ 	.timer_set		= common_timer_set,
+ 	.timer_get		= common_timer_get,
 -- 
 2.23.0
