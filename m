@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv7 33/33] selftests/timens: Check for right timens offsets after fork and exec
-Date: Fri, 11 Oct 2019 02:23:41 +0100
-Message-ID: <20191011012341.846266-34-dima@arista.com>
+Subject: [PATCHv7 31/33] selftests/timens: Add timer offsets test
+Date: Fri, 11 Oct 2019 02:23:39 +0100
+Message-ID: <20191011012341.846266-32-dima@arista.com>
 References: <20191011012341.846266-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -9,158 +9,183 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20191011012341.846266-1-dima@arista.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Andrei Vagin <avagin@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api
+Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Andrei Vagin <avagin@openvz.org>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Andrei Vagin <avagin@gmail.com>
+From: Andrei Vagin <avagin@openvz.org>
+
+Check that timer_create() takes into account clock offsets.
 
 Output on success:
- 1..1
- ok 1 exec
- # Pass 1 Fail 0 Xfail 0 Xpass 0 Skip 0 Error 0
-
-Output on failure:
- 1..1
- not ok 1 36016 16
- Bail out!
+ 1..3
+ ok 1 clockid=7
+ ok 2 clockid=1
+ ok 3 clockid=9
+ # Pass 3 Fail 0 Xfail 0 Xpass 0 Skip 0 Error 0
 
 Output with lack of permissions:
- 1..1
+ 1..3
  not ok 1 # SKIP need to run as root
 
 Output without support of time namespaces:
- 1..1
+ 1..3
  not ok 1 # SKIP Time namespaces are not supported
 
 Signed-off-by: Andrei Vagin <avagin@gmail.com>
 Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- tools/testing/selftests/timens/.gitignore |  1 +
- tools/testing/selftests/timens/Makefile   |  2 +-
- tools/testing/selftests/timens/exec.c     | 94 +++++++++++++++++++++++
- 3 files changed, 96 insertions(+), 1 deletion(-)
- create mode 100644 tools/testing/selftests/timens/exec.c
+ tools/testing/selftests/timens/.gitignore |   1 +
+ tools/testing/selftests/timens/Makefile   |   3 +-
+ tools/testing/selftests/timens/timer.c    | 118 ++++++++++++++++++++++
+ 3 files changed, 121 insertions(+), 1 deletion(-)
+ create mode 100644 tools/testing/selftests/timens/timer.c
 
 diff --git a/tools/testing/selftests/timens/.gitignore b/tools/testing/selftests/timens/.gitignore
-index 16292e4d08a5..789f21e81028 100644
+index 94ffdd9cead7..3b7eda8f35ce 100644
 --- a/tools/testing/selftests/timens/.gitignore
 +++ b/tools/testing/selftests/timens/.gitignore
 @@ -1,4 +1,5 @@
  clock_nanosleep
-+exec
- gettime_perf
- gettime_perf_cold
  procfs
+ timens
++timer
+ timerfd
 diff --git a/tools/testing/selftests/timens/Makefile b/tools/testing/selftests/timens/Makefile
-index 6aefcaccb8f4..e9fb30bd8aeb 100644
+index e4913f2991d4..08164548a49d 100644
 --- a/tools/testing/selftests/timens/Makefile
 +++ b/tools/testing/selftests/timens/Makefile
-@@ -1,4 +1,4 @@
--TEST_GEN_PROGS := timens timerfd timer clock_nanosleep procfs
-+TEST_GEN_PROGS := timens timerfd timer clock_nanosleep procfs exec
- TEST_GEN_PROGS_EXTENDED := gettime_perf
+@@ -1,5 +1,6 @@
+-TEST_GEN_PROGS := timens timerfd clock_nanosleep procfs
++TEST_GEN_PROGS := timens timerfd timer clock_nanosleep procfs
  
  CFLAGS := -Wall -Werror -pthread
-diff --git a/tools/testing/selftests/timens/exec.c b/tools/testing/selftests/timens/exec.c
++LDFLAGS := -lrt
+ 
+ include ../lib.mk
+diff --git a/tools/testing/selftests/timens/timer.c b/tools/testing/selftests/timens/timer.c
 new file mode 100644
-index 000000000000..87b47b557a7a
+index 000000000000..5164cafd408d
 --- /dev/null
-+++ b/tools/testing/selftests/timens/exec.c
-@@ -0,0 +1,94 @@
++++ b/tools/testing/selftests/timens/timer.c
+@@ -0,0 +1,118 @@
 +// SPDX-License-Identifier: GPL-2.0
 +#define _GNU_SOURCE
-+#include <errno.h>
-+#include <fcntl.h>
 +#include <sched.h>
-+#include <stdio.h>
-+#include <stdbool.h>
-+#include <sys/stat.h>
++
 +#include <sys/syscall.h>
 +#include <sys/types.h>
 +#include <sys/wait.h>
 +#include <time.h>
 +#include <unistd.h>
++#include <stdlib.h>
++#include <stdio.h>
++#include <stdint.h>
++#include <signal.h>
 +#include <time.h>
-+#include <string.h>
 +
 +#include "log.h"
 +#include "timens.h"
 +
-+#define OFFSET (36000)
++int run_test(int clockid, struct timespec now)
++{
++	struct itimerspec new_value;
++	long long elapsed;
++	timer_t fd;
++	int i;
++
++	for (i = 0; i < 2; i++) {
++		struct sigevent sevp = {.sigev_notify = SIGEV_NONE};
++		int flags = 0;
++
++		new_value.it_value.tv_sec = 3600;
++		new_value.it_value.tv_nsec = 0;
++		new_value.it_interval.tv_sec = 1;
++		new_value.it_interval.tv_nsec = 0;
++
++		if (i == 1) {
++			new_value.it_value.tv_sec += now.tv_sec;
++			new_value.it_value.tv_nsec += now.tv_nsec;
++		}
++
++		if (timer_create(clockid, &sevp, &fd) == -1)
++			return pr_perror("timerfd_create");
++
++		if (i == 1)
++			flags |= TIMER_ABSTIME;
++		if (timer_settime(fd, flags, &new_value, NULL) == -1)
++			return pr_perror("timerfd_settime");
++
++		if (timer_gettime(fd, &new_value) == -1)
++			return pr_perror("timerfd_gettime");
++
++		elapsed = new_value.it_value.tv_sec;
++		if (abs(elapsed - 3600) > 60) {
++			ksft_test_result_fail("clockid: %d elapsed: %lld\n",
++					      clockid, elapsed);
++			return 1;
++		}
++	}
++
++	ksft_test_result_pass("clockid=%d\n", clockid);
++
++	return 0;
++}
 +
 +int main(int argc, char *argv[])
 +{
-+	struct timespec now, tst;
-+	int status, i;
++	int ret, status, len, fd;
++	char buf[4096];
 +	pid_t pid;
-+
-+	if (argc > 1) {
-+		if (sscanf(argv[1], "%ld", &now.tv_sec) != 1)
-+			return pr_perror("sscanf");
-+
-+		for (i = 0; i < 2; i++) {
-+			_gettime(CLOCK_MONOTONIC, &tst, i);
-+			if (abs(tst.tv_sec - now.tv_sec) > 5)
-+				return pr_fail("%ld %ld\n", now.tv_sec, tst.tv_sec);
-+		}
-+		return 0;
-+	}
++	struct timespec btime_now, mtime_now;
 +
 +	nscheck();
 +
-+	ksft_set_plan(1);
++	ksft_set_plan(3);
 +
-+	clock_gettime(CLOCK_MONOTONIC, &now);
++	clock_gettime(CLOCK_MONOTONIC, &mtime_now);
++	clock_gettime(CLOCK_BOOTTIME, &btime_now);
 +
 +	if (unshare_timens())
 +		return 1;
 +
-+	if (_settime(CLOCK_MONOTONIC, OFFSET))
-+		return 1;
++	len = snprintf(buf, sizeof(buf), "%d %d 0\n%d %d 0",
++			CLOCK_MONOTONIC, 70 * 24 * 3600,
++			CLOCK_BOOTTIME, 9 * 24 * 3600);
++	fd = open("/proc/self/timens_offsets", O_WRONLY);
++	if (fd < 0)
++		return pr_perror("/proc/self/timens_offsets");
 +
-+	for (i = 0; i < 2; i++) {
-+		_gettime(CLOCK_MONOTONIC, &tst, i);
-+		if (abs(tst.tv_sec - now.tv_sec) > 5)
-+			return pr_fail("%ld %ld\n",
-+					now.tv_sec, tst.tv_sec);
-+	}
++	if (write(fd, buf, len) != len)
++		return pr_perror("/proc/self/timens_offsets");
 +
-+	if (argc > 1)
-+		return 0;
++	close(fd);
++	mtime_now.tv_sec += 70 * 24 * 3600;
++	btime_now.tv_sec += 9 * 24 * 3600;
 +
 +	pid = fork();
 +	if (pid < 0)
-+		return pr_perror("fork");
-+
++		return pr_perror("Unable to fork");
 +	if (pid == 0) {
-+		char now_str[64];
-+		char *cargv[] = {"exec", now_str, NULL};
-+		char *cenv[] = {NULL};
++		ret = 0;
++		ret |= run_test(CLOCK_BOOTTIME, btime_now);
++		ret |= run_test(CLOCK_MONOTONIC, mtime_now);
++		ret |= run_test(CLOCK_BOOTTIME_ALARM, btime_now);
 +
-+		/* Check that a child process is in the new timens. */
-+		for (i = 0; i < 2; i++) {
-+			_gettime(CLOCK_MONOTONIC, &tst, i);
-+			if (abs(tst.tv_sec - now.tv_sec - OFFSET) > 5)
-+				return pr_fail("%ld %ld\n",
-+						now.tv_sec + OFFSET, tst.tv_sec);
-+		}
-+
-+		/* Check for proper vvar offsets after execve. */
-+		snprintf(now_str, sizeof(now_str), "%ld", now.tv_sec + OFFSET);
-+		execve("/proc/self/exe", cargv, cenv);
-+		return pr_perror("execve");
++		if (ret)
++			ksft_exit_fail();
++		ksft_exit_pass();
++		return ret;
 +	}
 +
 +	if (waitpid(pid, &status, 0) != pid)
-+		return pr_perror("waitpid");
++		return pr_perror("Unable to wait the child process");
 +
-+	if (status)
-+		ksft_exit_fail();
++	if (WIFEXITED(status))
++		return WEXITSTATUS(status);
 +
-+	ksft_test_result_pass("exec\n");
-+	ksft_exit_pass();
-+	return 0;
++	return 1;
 +}
++
 -- 
 2.23.0
