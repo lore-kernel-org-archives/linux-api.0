@@ -1,269 +1,70 @@
-From: Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [PATCH v2 2/2] tests: test CLONE3_CLEAR_SIGHAND
-Date: Fri, 11 Oct 2019 12:25:37 +0200
-Message-ID: <20191011102537.27502-2-christian.brauner@ubuntu.com>
-References: <20191011102537.27502-1-christian.brauner@ubuntu.com>
+From: Christian Kellner <ckellner@redhat.com>
+Subject: [PATCH v3 1/2] pidfd: show pids for nested pid namespaces in fdinfo
+Date: Fri, 11 Oct 2019 14:23:20 +0200
+Message-ID: <20191011122323.7770-1-ckellner@redhat.com>
+References: <20191009160532.20674-1-ckellner@redhat.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191011102537.27502-1-christian.brauner@ubuntu.com>
+In-Reply-To: <20191009160532.20674-1-ckellner@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, Oleg Nesterov <oleg@redhat.com>, Florian Weimer <fweimer@redhat.com>, libc-alpha@sourceware.org
-Cc: Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Juri Lelli <juri.lelli@redhat.com>, Vincent Guittot <vincent.guittot@linaro.org>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Steven Rostedt <rostedt@goodmis.org>, Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>, Shuah Khan <shuah@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.com>, Elena Reshetova <elena.reshetova@intel.com>, Thomas Gleixner <tglx@linutronix.de>, Roman Gushchin <guro@fb.com>, Andrea Arcangeli <aarcange@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Aleksa Sarai <cyphar@cyphar.com>, "Dmitry V. Levin" <ldv@altlinux.org>, linux-kselftest@vger.kernel.org, Christian Brauner <christian.brauner@ubuntu.com>
+To: linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, Christian Kellner <christian@kellner.me>, Christian Brauner <christian@brauner.io>, Andrew Morton <akpm@linux-foundation.org>, "Peter Zijlstra (Intel)" <peterz@infradead.org>, Ingo Molnar <mingo@kernel.org>, Michal Hocko <mhocko@suse.com>, Thomas Gleixner <tglx@linutronix.de>, Elena Reshetova <elena.reshetova@intel.com>, Roman Gushchin <guro@fb.com>, Andrea Arcangeli <aarcange@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Aleksa Sarai <cyphar@cyphar.com>, "Dmitry V. Levin" <ldv@altlinux.org>
 List-Id: linux-api@vger.kernel.org
 
-Test that CLONE3_CLEAR_SIGHAND resets signal handlers to SIG_DFL for the
-child process and that CLONE3_CLEAR_SIGHAND and CLONE_SIGHAND are
-mutually exclusive.
+From: Christian Kellner <christian@kellner.me>
 
-Cc: Florian Weimer <fweimer@redhat.com>
-Cc: libc-alpha@sourceware.org
-Cc: linux-api@vger.kernel.org
-Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+The fdinfo file for a process file descriptor already contains the
+pid of the process in the callers namespaces. Additionally, if pid
+namespaces are configured, show the process ids of the process in
+all nested namespaces in the same format as in the procfs status
+file, i.e. "NSPid:\t%d\%d...". This allows the easy identification
+of the processes in nested namespaces.
+
+Signed-off-by: Christian Kellner <christian@kellner.me>
 ---
-/* v1 */
-Link: https://lore.kernel.org/r/20191010133518.5420-2-christian.brauner@ubuntu.com
 
-/* v2 */
-- Christian Brauner <christian.brauner@ubuntu.com>:
-  - remove unused variable
-  - reuse variable in child process instead od declaring a new one
-  - move check for mutual exclusivity of CLONE_SIGHAND and
-    CLONE3_CLEAR_SIGHAND to top of test before setting up signal
-    handlers
-  - rename variables
----
- MAINTAINERS                                   |   1 +
- tools/testing/selftests/Makefile              |   1 +
- tools/testing/selftests/clone3/.gitignore     |   1 +
- tools/testing/selftests/clone3/Makefile       |   7 +
- .../selftests/clone3/clone3_clear_sighand.c   | 172 ++++++++++++++++++
- 5 files changed, 182 insertions(+)
- create mode 100644 tools/testing/selftests/clone3/.gitignore
- create mode 100644 tools/testing/selftests/clone3/Makefile
- create mode 100644 tools/testing/selftests/clone3/clone3_clear_sighand.c
+Changes in v2:
+- Moved into separate function to avoid multiple ifdefs as suggested
+  by Michal Hocko
+Changes in v3:
+- Helper function takes struct pid_namespace *ns param and got a new
+  name
 
-diff --git a/MAINTAINERS b/MAINTAINERS
-index 55199ef7fa74..582275d85607 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -12828,6 +12828,7 @@ S:	Maintained
- T:	git git://git.kernel.org/pub/scm/linux/kernel/git/brauner/linux.git
- F:	samples/pidfd/
- F:	tools/testing/selftests/pidfd/
-+F:	tools/testing/selftests/clone3/
- K:	(?i)pidfd
- K:	(?i)clone3
- K:	\b(clone_args|kernel_clone_args)\b
-diff --git a/tools/testing/selftests/Makefile b/tools/testing/selftests/Makefile
-index c3feccb99ff5..6bf7aeb47650 100644
---- a/tools/testing/selftests/Makefile
-+++ b/tools/testing/selftests/Makefile
-@@ -4,6 +4,7 @@ TARGETS += bpf
- TARGETS += breakpoints
- TARGETS += capabilities
- TARGETS += cgroup
-+TARGETS += clone3
- TARGETS += cpufreq
- TARGETS += cpu-hotplug
- TARGETS += drivers/dma-buf
-diff --git a/tools/testing/selftests/clone3/.gitignore b/tools/testing/selftests/clone3/.gitignore
-new file mode 100644
-index 000000000000..6c9f98097774
---- /dev/null
-+++ b/tools/testing/selftests/clone3/.gitignore
-@@ -0,0 +1 @@
-+clone3_clear_sighand
-diff --git a/tools/testing/selftests/clone3/Makefile b/tools/testing/selftests/clone3/Makefile
-new file mode 100644
-index 000000000000..3ecd56ebc99d
---- /dev/null
-+++ b/tools/testing/selftests/clone3/Makefile
-@@ -0,0 +1,7 @@
-+# SPDX-License-Identifier: GPL-2.0-only
-+CFLAGS += -g -I../../../../usr/include/
+ kernel/fork.c | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
+
+diff --git a/kernel/fork.c b/kernel/fork.c
+index bcdf53125210..183950aad82b 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -1695,12 +1695,27 @@ static int pidfd_release(struct inode *inode, struct file *file)
+ }
+ 
+ #ifdef CONFIG_PROC_FS
++static inline void print_pidfd_nspid(struct seq_file *m, struct pid *pid,
++				     struct pid_namespace *ns)
++{
++#ifdef CONFIG_PID_NS
++	int i;
 +
-+TEST_GEN_PROGS := clone3_clear_sighand
-+
-+include ../lib.mk
-+
-diff --git a/tools/testing/selftests/clone3/clone3_clear_sighand.c b/tools/testing/selftests/clone3/clone3_clear_sighand.c
-new file mode 100644
-index 000000000000..1a3adc206e74
---- /dev/null
-+++ b/tools/testing/selftests/clone3/clone3_clear_sighand.c
-@@ -0,0 +1,172 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+
-+#define _GNU_SOURCE
-+#include <errno.h>
-+#include <sched.h>
-+#include <signal.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <unistd.h>
-+#include <linux/sched.h>
-+#include <linux/types.h>
-+#include <sys/syscall.h>
-+#include <sys/wait.h>
-+
-+#include "../kselftest.h"
-+
-+#ifndef CLONE3_CLEAR_SIGHAND
-+#define CLONE3_CLEAR_SIGHAND 0x100000000ULL
++	seq_puts(m, "\nNSpid:");
++	for (i = ns->level; i <= pid->level; i++) {
++		ns = pid->numbers[i].ns;
++		seq_put_decimal_ull(m, "\t", pid_nr_ns(pid, ns));
++	}
 +#endif
-+
-+#ifndef __NR_clone3
-+#define __NR_clone3 -1
-+struct clone_args {
-+	__aligned_u64 flags;
-+	__aligned_u64 pidfd;
-+	__aligned_u64 child_tid;
-+	__aligned_u64 parent_tid;
-+	__aligned_u64 exit_signal;
-+	__aligned_u64 stack;
-+	__aligned_u64 stack_size;
-+	__aligned_u64 tls;
-+};
-+#endif
-+
-+static pid_t sys_clone3(struct clone_args *args, size_t size)
-+{
-+	return syscall(__NR_clone3, args, size);
 +}
 +
-+static void test_clone3_supported(void)
-+{
-+	pid_t pid;
-+	struct clone_args args = {};
-+
-+	if (__NR_clone3 < 0)
-+		ksft_exit_skip("clone3() syscall is not supported\n");
-+
-+	/* Set to something that will always cause EINVAL. */
-+	args.exit_signal = -1;
-+	pid = sys_clone3(&args, sizeof(args));
-+	if (!pid)
-+		exit(EXIT_SUCCESS);
-+
-+	if (pid > 0) {
-+		wait(NULL);
-+		ksft_exit_fail_msg(
-+			"Managed to create child process with invalid exit_signal\n");
-+	}
-+
-+	if (errno == ENOSYS)
-+		ksft_exit_skip("clone3() syscall is not supported\n");
-+
-+	ksft_print_msg("clone3() syscall supported\n");
-+}
-+
-+static void nop_handler(int signo)
-+{
-+}
-+
-+static int wait_for_pid(pid_t pid)
-+{
-+	int status, ret;
-+
-+again:
-+	ret = waitpid(pid, &status, 0);
-+	if (ret == -1) {
-+		if (errno == EINTR)
-+			goto again;
-+
-+		return -1;
-+	}
-+
-+	if (!WIFEXITED(status))
-+		return -1;
-+
-+	return WEXITSTATUS(status);
-+}
-+
-+static void test_clone3_clear_sighand(void)
-+{
-+	int ret;
-+	pid_t pid;
-+	struct clone_args args = {};
-+	struct sigaction act;
-+
-+	/*
-+	 * Check that CLONE3_CLEAR_SIGHAND and CLONE_SIGHAND are mutually
-+	 * exclusive.
-+	 */
-+	args.flags |= CLONE3_CLEAR_SIGHAND | CLONE_SIGHAND;
-+	args.exit_signal = SIGCHLD;
-+	pid = sys_clone3(&args, sizeof(args));
-+	if (pid > 0)
-+		ksft_exit_fail_msg(
-+			"clone3(CLONE3_CLEAR_SIGHAND | CLONE_SIGHAND) succeeded\n");
-+
-+	act.sa_handler = nop_handler;
-+	ret = sigemptyset(&act.sa_mask);
-+	if (ret < 0)
-+		ksft_exit_fail_msg("%s - sigemptyset() failed\n",
-+				   strerror(errno));
-+
-+	act.sa_flags = 0;
-+
-+	/* Register signal handler for SIGUSR1 */
-+	ret = sigaction(SIGUSR1, &act, NULL);
-+	if (ret < 0)
-+		ksft_exit_fail_msg(
-+			"%s - sigaction(SIGUSR1, &act, NULL) failed\n",
-+			strerror(errno));
-+
-+	/* Register signal handler for SIGUSR2 */
-+	ret = sigaction(SIGUSR2, &act, NULL);
-+	if (ret < 0)
-+		ksft_exit_fail_msg(
-+			"%s - sigaction(SIGUSR2, &act, NULL) failed\n",
-+			strerror(errno));
-+
-+	/* Check that CLONE3_CLEAR_SIGHAND works. */
-+	args.flags = CLONE3_CLEAR_SIGHAND;
-+	pid = sys_clone3(&args, sizeof(args));
-+	if (pid < 0)
-+		ksft_exit_fail_msg("%s - clone3(CLONE3_CLEAR_SIGHAND) failed\n",
-+				   strerror(errno));
-+
-+	if (pid == 0) {
-+		ret = sigaction(SIGUSR1, NULL, &act);
-+		if (ret < 0)
-+			exit(EXIT_FAILURE);
-+
-+		if (act.sa_handler != SIG_DFL)
-+			exit(EXIT_FAILURE);
-+
-+		ret = sigaction(SIGUSR2, NULL, &act);
-+		if (ret < 0)
-+			exit(EXIT_FAILURE);
-+
-+		if (act.sa_handler != SIG_DFL)
-+			exit(EXIT_FAILURE);
-+
-+		exit(EXIT_SUCCESS);
-+	}
-+
-+	ret = wait_for_pid(pid);
-+	if (ret)
-+		ksft_exit_fail_msg(
-+			"Failed to clear signal handler for child process\n");
-+
-+	ksft_test_result_pass("Cleared signal handlers for child process\n");
-+}
-+
-+int main(int argc, char **argv)
-+{
-+	ksft_print_header();
-+	ksft_set_plan(1);
-+
-+	test_clone3_supported();
-+	test_clone3_clear_sighand();
-+
-+	return ksft_exit_pass();
-+}
+ static void pidfd_show_fdinfo(struct seq_file *m, struct file *f)
+ {
+ 	struct pid_namespace *ns = proc_pid_ns(file_inode(m->file));
+ 	struct pid *pid = f->private_data;
+ 
+ 	seq_put_decimal_ull(m, "Pid:\t", pid_nr_ns(pid, ns));
++	print_pidfd_nspid(m, pid, ns);
+ 	seq_putc(m, '\n');
+ }
+ #endif
 -- 
-2.23.0
+2.21.0
