@@ -1,34 +1,71 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
+From: Ben Hutchings <ben@decadent.org.uk>
 Subject: Re: [PATCH] tracefs: Do not allocate and free proxy_ops for lockdown
-Date: Fri, 11 Oct 2019 12:24:23 -0700
-Message-ID: <CAHk-=wh_JH5-hC3yk8X3Ja8XMTuW68-ozuqZdMw7fcHpcpHuUw@mail.gmail.com>
-References: <20191011135458.7399da44@gandalf.local.home> <CAHk-=wj7fGPKUspr579Cii-w_y60PtRaiDgKuxVtBAMK0VNNkA@mail.gmail.com>
- <20191011143610.21bcd9c0@gandalf.local.home>
+Date: Fri, 11 Oct 2019 20:50:56 +0100
+Message-ID: <c327ecb762ef788ef248ed5c006eeef5afa3b798.camel@decadent.org.uk>
+References: <20191011135458.7399da44@gandalf.local.home>
+         <CAHk-=wj7fGPKUspr579Cii-w_y60PtRaiDgKuxVtBAMK0VNNkA@mail.gmail.com>
+         <20191011143610.21bcd9c0@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: multipart/signed; micalg="pgp-sha512";
+        protocol="application/pgp-signature"; boundary="=-RVTAo56FC6JdCy3TcbW7"
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20191011143610.21bcd9c0@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
-Cc: LKML <linux-kernel@vger.kernel.org>, Matthew Garrett <matthewgarrett@google.com>, James Morris James Morris <jmorris@namei.org>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Ben Hutchings <ben@decadent.org.uk>, Al Viro <viro@zeniv.linux.org.uk>
+To: Steven Rostedt <rostedt@goodmis.org>, Linus Torvalds <torvalds@linux-foundation.org>
+Cc: LKML <linux-kernel@vger.kernel.org>, Matthew Garrett <matthewgarrett@google.com>, James Morris James Morris <jmorris@namei.org>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Al Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 11, 2019 at 11:36 AM Steven Rostedt <rostedt@goodmis.org> wrote:
->
+
+--=-RVTAo56FC6JdCy3TcbW7
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+On Fri, 2019-10-11 at 14:36 -0400, Steven Rostedt wrote:
 > On Fri, 11 Oct 2019 11:20:30 -0700
 > Linus Torvalds <torvalds@linux-foundation.org> wrote:
->
+>=20
 > > Willing to do that instead?
->
+>=20
 > Honestly, what you described was my preferred solution ;-)
->
+>=20
 > I just didn't want to upset the lockdown crowd if a new tracefs file
 > was opened without doing this.
+>=20
+> Once locked down is set, can it ever be undone without rebooting?
+[...]
 
-Well, since they introduced a bug in your code that killed your
-machine with the patch _they_ did, I don't think they get to complain
-when you fix it the way you (and me) want to...
+Earlier versions of the lockdown patch set added a magic SysRq command
+to turn it off.  That's not currently present upstream but there may be
+plans to add it.
 
-Fair is fair.
+Ben.
 
-             Linus
+--=20
+Ben Hutchings
+It is easier to change the specification to fit the program
+than vice versa.
+
+
+
+--=-RVTAo56FC6JdCy3TcbW7
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAABCgAdFiEErCspvTSmr92z9o8157/I7JWGEQkFAl2g3SAACgkQ57/I7JWG
+EQlqjg//T/3zBWsuiQaVH1xm1ZKL0fiUmrONKKaR1YvKqTh3/48OycmNuiS5JouH
+sehyxtKXJcTHTYDfbVy7+x2wWWWeHXKIZaHOUwBkGgsB6BK4SdUVLpb8uR8ye+Vt
+WzXoy0N2/qdlg1JZC7SuIAZf3qI1WdCEFW/QFoHqUKDe89aE/8nCFdbp1hqDo5kr
+SidNRHNT0WUAVlbHaZa2ykhYFF9j3vVtT11DwcLNtugV4PKBm5q+lo6bo4G1K1QT
+mVygSOiRnVbsFrQ1FXOi7YFRcMeImimWgFJKxxhN3lVKE2KtD1Ngr9132ZySizkM
+ysXXzk0bpCmDfxQh8v5ztA5SCqjTs/RAj21OXr+0s2iJlOyS6lgDIvpte480IMRg
+u9CnOQgzn4w0O0Ya2NSvEs3vPwak2EmDRF38t0VIoBWnDL19yxKiykAhgjVZDDX9
+8FI7MWgsRLEp2Oe/4Qm36gNHvZ0AWP+dMwMWVEReEFMs+mu6WmsColUB9XwWVuqY
+iaELrt1d6QDxPqDOZ7Np3TpPstcxB891E8AOOtDox9S/xksqOiIEHhVf8UwoqzW7
+SkLexfXtGdQi0drgiSshOCpBaaXQfjgqoI3k8ipNm9Sx3IL3S2D9fTQVt9rXhYHw
+XhL95M7SYkGLGcMAD+Ew7R2PEMSGpsVNMsVYyVXzFTLAO+Rc6fg=
+=3b+F
+-----END PGP SIGNATURE-----
+
+--=-RVTAo56FC6JdCy3TcbW7--
