@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv7 10/33] kernel: Add do_timens_ktime_to_host() helper
-Date: Fri, 11 Oct 2019 02:23:18 +0100
-Message-ID: <20191011012341.846266-11-dima@arista.com>
+Subject: [PATCHv7 12/33] posix-timers: Make timer_settime() time namespace aware
+Date: Fri, 11 Oct 2019 02:23:20 +0100
+Message-ID: <20191011012341.846266-13-dima@arista.com>
 References: <20191011012341.846266-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,95 +14,38 @@ List-Id: linux-api@vger.kernel.org
 
 From: Andrei Vagin <avagin@gmail.com>
 
-The helper subtracts namespace's clock offset from the given time
-and checks that the result is in [0, KTIME_MAX].
+Wire timer_settime() syscall into time namespace virtualization.
 
-Signed-off-by: Andrei Vagin <avagin@gmail.com>
+sys_timer_settime() calls the ktime->timer_set() callback. Right now,
+common_timer_set() is the only implementation for the callback.
+
+There user-supplied timer's value is converted from timespec64 to ktime
+and then timens_ktime_to_host() can be used to convert namespace's time
+to the host time.
+
+Inside a time namespace kernel's time differ on a fixed offset from
+a user-supplied, but only absolute values (TIMER_ABSTIME) must
+be converted.
+
+Signed-off-by: Andrei Vagin <avagin@openvz.org>
 Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- include/linux/time_namespace.h | 14 +++++++++++++
- kernel/time/namespace.c        | 36 ++++++++++++++++++++++++++++++++++
- 2 files changed, 50 insertions(+)
+ kernel/time/posix-timers.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/include/linux/time_namespace.h b/include/linux/time_namespace.h
-index 3d429c7ecca5..9a77d3854830 100644
---- a/include/linux/time_namespace.h
-+++ b/include/linux/time_namespace.h
-@@ -57,6 +57,15 @@ static inline void timens_add_boottime(struct timespec64 *ts)
- 	*ts = timespec64_add(*ts, ns_offsets->boottime);
- }
+diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
+index d8b5bd4cbae1..6e350cc8f600 100644
+--- a/kernel/time/posix-timers.c
++++ b/kernel/time/posix-timers.c
+@@ -885,6 +885,8 @@ int common_timer_set(struct k_itimer *timr, int flags,
  
-+ktime_t do_timens_ktime_to_host(clockid_t clockid, ktime_t tim,
-+				struct timens_offsets *offsets);
-+static inline ktime_t timens_ktime_to_host(clockid_t clockid, ktime_t tim)
-+{
-+	struct timens_offsets *offsets = &current->nsproxy->time_ns->offsets;
-+
-+	return do_timens_ktime_to_host(clockid, tim, offsets);
-+}
-+
- #else
- static inline struct time_namespace *get_time_ns(struct time_namespace *ns)
- {
-@@ -83,6 +92,11 @@ static inline int timens_on_fork(struct nsproxy *nsproxy, struct task_struct *ts
+ 	timr->it_interval = timespec64_to_ktime(new_setting->it_interval);
+ 	expires = timespec64_to_ktime(new_setting->it_value);
++	if (flags & TIMER_ABSTIME)
++		expires = timens_ktime_to_host(timr->it_clock, expires);
+ 	sigev_none = timr->it_sigev_notify == SIGEV_NONE;
  
- static inline void timens_add_monotonic(struct timespec64 *ts) {}
- static inline void timens_add_boottime(struct timespec64 *ts) {}
-+
-+static inline ktime_t timens_ktime_to_host(clockid_t clockid, ktime_t tim)
-+{
-+	return tim;
-+}
- #endif
- 
- #endif /* _LINUX_TIMENS_H */
-diff --git a/kernel/time/namespace.c b/kernel/time/namespace.c
-index c2a58e45fc4b..1a0fbaa5d2d4 100644
---- a/kernel/time/namespace.c
-+++ b/kernel/time/namespace.c
-@@ -16,6 +16,42 @@
- #include <linux/err.h>
- #include <linux/mm.h>
- 
-+ktime_t do_timens_ktime_to_host(clockid_t clockid, ktime_t tim,
-+				struct timens_offsets *ns_offsets)
-+{
-+	ktime_t offset;
-+
-+	switch (clockid) {
-+	case CLOCK_MONOTONIC:
-+		offset = timespec64_to_ktime(ns_offsets->monotonic);
-+		break;
-+	case CLOCK_BOOTTIME:
-+	case CLOCK_BOOTTIME_ALARM:
-+		offset = timespec64_to_ktime(ns_offsets->boottime);
-+		break;
-+	default:
-+		return tim;
-+	}
-+
-+	/*
-+	 * Check that @tim value is in [offset, KTIME_MAX + offset]
-+	 * and subtract offset.
-+	 */
-+	if (tim < offset) {
-+		/*
-+		 * User can specify @tim *absolute* value - if it's lesser than
-+		 * the time namespace's offset - it's already expired.
-+		 */
-+		tim = 0;
-+	} else {
-+		tim = ktime_sub(tim, offset);
-+		if (unlikely(tim > KTIME_MAX))
-+			tim = KTIME_MAX;
-+	}
-+
-+	return tim;
-+}
-+
- static struct ucounts *inc_time_namespaces(struct user_namespace *ns)
- {
- 	return inc_ucount(ns, current_euid(), UCOUNT_TIME_NAMESPACES);
+ 	kc->timer_arm(timr, expires, flags & TIMER_ABSTIME, sigev_none);
 -- 
 2.23.0
