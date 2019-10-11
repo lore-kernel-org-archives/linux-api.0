@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv7 12/33] posix-timers: Make timer_settime() time namespace aware
-Date: Fri, 11 Oct 2019 02:23:20 +0100
-Message-ID: <20191011012341.846266-13-dima@arista.com>
+Subject: [PATCHv7 11/33] timerfd: Make timerfd_settime() time namespace aware
+Date: Fri, 11 Oct 2019 02:23:19 +0100
+Message-ID: <20191011012341.846266-12-dima@arista.com>
 References: <20191011012341.846266-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,38 +14,37 @@ List-Id: linux-api@vger.kernel.org
 
 From: Andrei Vagin <avagin@gmail.com>
 
-Wire timer_settime() syscall into time namespace virtualization.
+timerfd_settime() accepts an absolute value of the expiration time if
+TFD_TIMER_ABSTIME is specified. This value is in task's time namespace
+and has to be converted to the host's time namespace.
 
-sys_timer_settime() calls the ktime->timer_set() callback. Right now,
-common_timer_set() is the only implementation for the callback.
-
-There user-supplied timer's value is converted from timespec64 to ktime
-and then timens_ktime_to_host() can be used to convert namespace's time
-to the host time.
-
-Inside a time namespace kernel's time differ on a fixed offset from
-a user-supplied, but only absolute values (TIMER_ABSTIME) must
-be converted.
-
-Signed-off-by: Andrei Vagin <avagin@openvz.org>
+Signed-off-by: Andrei Vagin <avagin@gmail.com>
 Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- kernel/time/posix-timers.c | 2 ++
- 1 file changed, 2 insertions(+)
+ fs/timerfd.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
-index d8b5bd4cbae1..6e350cc8f600 100644
---- a/kernel/time/posix-timers.c
-+++ b/kernel/time/posix-timers.c
-@@ -885,6 +885,8 @@ int common_timer_set(struct k_itimer *timr, int flags,
+diff --git a/fs/timerfd.c b/fs/timerfd.c
+index 48305ba41e3c..f9da5752a79e 100644
+--- a/fs/timerfd.c
++++ b/fs/timerfd.c
+@@ -26,6 +26,7 @@
+ #include <linux/syscalls.h>
+ #include <linux/compat.h>
+ #include <linux/rcupdate.h>
++#include <linux/time_namespace.h>
  
- 	timr->it_interval = timespec64_to_ktime(new_setting->it_interval);
- 	expires = timespec64_to_ktime(new_setting->it_value);
-+	if (flags & TIMER_ABSTIME)
-+		expires = timens_ktime_to_host(timr->it_clock, expires);
- 	sigev_none = timr->it_sigev_notify == SIGEV_NONE;
+ struct timerfd_ctx {
+ 	union {
+@@ -196,6 +197,8 @@ static int timerfd_setup(struct timerfd_ctx *ctx, int flags,
+ 	}
  
- 	kc->timer_arm(timr, expires, flags & TIMER_ABSTIME, sigev_none);
+ 	if (texp != 0) {
++		if (flags & TFD_TIMER_ABSTIME)
++			texp = timens_ktime_to_host(clockid, texp);
+ 		if (isalarm(ctx)) {
+ 			if (flags & TFD_TIMER_ABSTIME)
+ 				alarm_start(&ctx->t.alarm, texp);
 -- 
 2.23.0
