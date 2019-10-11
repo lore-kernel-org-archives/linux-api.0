@@ -1,42 +1,34 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH] tracefs: Do not allocate and free proxy_ops for
- lockdown
-Date: Fri, 11 Oct 2019 14:36:10 -0400
-Message-ID: <20191011143610.21bcd9c0@gandalf.local.home>
-References: <20191011135458.7399da44@gandalf.local.home>
-        <CAHk-=wj7fGPKUspr579Cii-w_y60PtRaiDgKuxVtBAMK0VNNkA@mail.gmail.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH] tracefs: Do not allocate and free proxy_ops for lockdown
+Date: Fri, 11 Oct 2019 12:24:23 -0700
+Message-ID: <CAHk-=wh_JH5-hC3yk8X3Ja8XMTuW68-ozuqZdMw7fcHpcpHuUw@mail.gmail.com>
+References: <20191011135458.7399da44@gandalf.local.home> <CAHk-=wj7fGPKUspr579Cii-w_y60PtRaiDgKuxVtBAMK0VNNkA@mail.gmail.com>
+ <20191011143610.21bcd9c0@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=wj7fGPKUspr579Cii-w_y60PtRaiDgKuxVtBAMK0VNNkA@mail.gmail.com>
+In-Reply-To: <20191011143610.21bcd9c0@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Cc: LKML <linux-kernel@vger.kernel.org>, Matthew Garrett <matthewgarrett@google.com>, James Morris James Morris <jmorris@namei.org>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Ben Hutchings <ben@decadent.org.uk>, Al Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 11 Oct 2019 11:20:30 -0700
-Linus Torvalds <torvalds@linux-foundation.org> wrote:
+On Fri, Oct 11, 2019 at 11:36 AM Steven Rostedt <rostedt@goodmis.org> wrote:
+>
+> On Fri, 11 Oct 2019 11:20:30 -0700
+> Linus Torvalds <torvalds@linux-foundation.org> wrote:
+>
+> > Willing to do that instead?
+>
+> Honestly, what you described was my preferred solution ;-)
+>
+> I just didn't want to upset the lockdown crowd if a new tracefs file
+> was opened without doing this.
 
-> Willing to do that instead?
+Well, since they introduced a bug in your code that killed your
+machine with the patch _they_ did, I don't think they get to complain
+when you fix it the way you (and me) want to...
 
-Honestly, what you described was my preferred solution ;-)
+Fair is fair.
 
-I just didn't want to upset the lockdown crowd if a new tracefs file
-was opened without doing this.
-
-Once locked down is set, can it ever be undone without rebooting? If
-not, a lockdown call could also trigger setting tracing_disabled to 1.
-Which is much stronger, as that was the code we added to kill tracing
-if anything abnormal was detected (and it does a hard shutdown of all
-the tracing utilities).
-
-It's set to one on bootup and cleared, after tracing is initialized.
-But it is never cleared again. If lockdown can be enabled at bootup, we
-could simply not clear it, and we can have something to allow lockdown
-to set it as well.
-
-Currently, the only places tracing_disabled gets set is in the self
-tests and if the ring buffer gets corrupted.
-
--- Steve
+             Linus
