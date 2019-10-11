@@ -1,70 +1,193 @@
 From: Christian Kellner <ckellner@redhat.com>
-Subject: [PATCH v3 1/2] pidfd: show pids for nested pid namespaces in fdinfo
-Date: Fri, 11 Oct 2019 14:23:20 +0200
-Message-ID: <20191011122323.7770-1-ckellner@redhat.com>
+Subject: [PATCH v3 2/2] pidfd: add tests for NSpid info in fdinfo
+Date: Fri, 11 Oct 2019 14:23:21 +0200
+Message-ID: <20191011122323.7770-2-ckellner@redhat.com>
 References: <20191009160532.20674-1-ckellner@redhat.com>
+ <20191011122323.7770-1-ckellner@redhat.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191009160532.20674-1-ckellner@redhat.com>
+In-Reply-To: <20191011122323.7770-1-ckellner@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: linux-api@vger.kernel.org, Christian Kellner <christian@kellner.me>, Christian Brauner <christian@brauner.io>, Andrew Morton <akpm@linux-foundation.org>, "Peter Zijlstra (Intel)" <peterz@infradead.org>, Ingo Molnar <mingo@kernel.org>, Michal Hocko <mhocko@suse.com>, Thomas Gleixner <tglx@linutronix.de>, Elena Reshetova <elena.reshetova@intel.com>, Roman Gushchin <guro@fb.com>, Andrea Arcangeli <aarcange@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Aleksa Sarai <cyphar@cyphar.com>, "Dmitry V. Levin" <ldv@altlinux.org>
+Cc: linux-api@vger.kernel.org, Christian Kellner <christian@kellner.me>, Christian Brauner <christian@brauner.io>, Shuah Khan <shuah@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, "Peter Zijlstra (Intel)" <peterz@infradead.org>, Ingo Molnar <mingo@kernel.org>, Michal Hocko <mhocko@suse.com>, Thomas Gleixner <tglx@linutronix.de>, Elena Reshetova <elena.reshetova@intel.com>, Roman Gushchin <guro@fb.com>, Andrea Arcangeli <aarcange@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Aleksa Sarai <cyphar@cyphar.com>, "Dmitry V. Levin" <ldv@altlinux.org>, linux-kselftest@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 From: Christian Kellner <christian@kellner.me>
 
-The fdinfo file for a process file descriptor already contains the
-pid of the process in the callers namespaces. Additionally, if pid
-namespaces are configured, show the process ids of the process in
-all nested namespaces in the same format as in the procfs status
-file, i.e. "NSPid:\t%d\%d...". This allows the easy identification
-of the processes in nested namespaces.
+Add tests that check that if pid namespaces are configured the fdinfo
+file of a pidfd contains an NSpid: entry containing the process id
+in the current and additionally all nested namespaces.
 
 Signed-off-by: Christian Kellner <christian@kellner.me>
 ---
+ tools/testing/selftests/pidfd/Makefile        |  2 +-
+ tools/testing/selftests/pidfd/pidfd.h         | 12 +++
+ .../selftests/pidfd/pidfd_fdinfo_test.c       | 98 +++++++++++++++++++
+ tools/testing/selftests/pidfd/pidfd_test.c    | 12 ---
+ 4 files changed, 111 insertions(+), 13 deletions(-)
+ create mode 100644 tools/testing/selftests/pidfd/pidfd_fdinfo_test.c
 
-Changes in v2:
-- Moved into separate function to avoid multiple ifdefs as suggested
-  by Michal Hocko
-Changes in v3:
-- Helper function takes struct pid_namespace *ns param and got a new
-  name
-
- kernel/fork.c | 15 +++++++++++++++
- 1 file changed, 15 insertions(+)
-
-diff --git a/kernel/fork.c b/kernel/fork.c
-index bcdf53125210..183950aad82b 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -1695,12 +1695,27 @@ static int pidfd_release(struct inode *inode, struct file *file)
+diff --git a/tools/testing/selftests/pidfd/Makefile b/tools/testing/selftests/pidfd/Makefile
+index 7550f08822a3..43db1b98e845 100644
+--- a/tools/testing/selftests/pidfd/Makefile
++++ b/tools/testing/selftests/pidfd/Makefile
+@@ -1,7 +1,7 @@
+ # SPDX-License-Identifier: GPL-2.0-only
+ CFLAGS += -g -I../../../../usr/include/ -pthread
+ 
+-TEST_GEN_PROGS := pidfd_test pidfd_open_test pidfd_poll_test pidfd_wait
++TEST_GEN_PROGS := pidfd_test pidfd_fdinfo_test pidfd_open_test pidfd_poll_test pidfd_wait
+ 
+ include ../lib.mk
+ 
+diff --git a/tools/testing/selftests/pidfd/pidfd.h b/tools/testing/selftests/pidfd/pidfd.h
+index c6bc68329f4b..2946d788645b 100644
+--- a/tools/testing/selftests/pidfd/pidfd.h
++++ b/tools/testing/selftests/pidfd/pidfd.h
+@@ -84,4 +84,16 @@ static inline int sys_pidfd_send_signal(int pidfd, int sig, siginfo_t *info,
+ 	return syscall(__NR_pidfd_send_signal, pidfd, sig, info, flags);
  }
  
- #ifdef CONFIG_PROC_FS
-+static inline void print_pidfd_nspid(struct seq_file *m, struct pid *pid,
-+				     struct pid_namespace *ns)
++static pid_t pidfd_clone(int flags, int *pidfd, int (*fn)(void *))
 +{
-+#ifdef CONFIG_PID_NS
-+	int i;
++	size_t stack_size = 1024;
++	char *stack[1024] = { 0 };
 +
-+	seq_puts(m, "\nNSpid:");
-+	for (i = ns->level; i <= pid->level; i++) {
-+		ns = pid->numbers[i].ns;
-+		seq_put_decimal_ull(m, "\t", pid_nr_ns(pid, ns));
-+	}
++#ifdef __ia64__
++	return __clone2(fn, stack, stack_size, flags | SIGCHLD, NULL, pidfd);
++#else
++	return clone(fn, stack + stack_size, flags | SIGCHLD, NULL, pidfd);
 +#endif
 +}
 +
- static void pidfd_show_fdinfo(struct seq_file *m, struct file *f)
- {
- 	struct pid_namespace *ns = proc_pid_ns(file_inode(m->file));
- 	struct pid *pid = f->private_data;
+ #endif /* __PIDFD_H */
+diff --git a/tools/testing/selftests/pidfd/pidfd_fdinfo_test.c b/tools/testing/selftests/pidfd/pidfd_fdinfo_test.c
+new file mode 100644
+index 000000000000..fbae502ad8ad
+--- /dev/null
++++ b/tools/testing/selftests/pidfd/pidfd_fdinfo_test.c
+@@ -0,0 +1,98 @@
++// SPDX-License-Identifier: GPL-2.0
++
++#define _GNU_SOURCE
++#include <errno.h>
++#include <fcntl.h>
++#include <linux/types.h>
++#include <sched.h>
++#include <signal.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <syscall.h>
++#include <sys/wait.h>
++
++#include "pidfd.h"
++#include "../kselftest.h"
++
++static int child_fdinfo_nspid_test(void *args)
++{
++	ksft_print_msg("Child: pid %d\n", getpid());
++	return 0;
++}
++
++static int compare_fdinfo_nspid(int pidfd, char *expect, size_t len)
++{
++	char path[512];
++	FILE *f;
++	size_t n = 0;
++	ssize_t k;
++	char *line = NULL;
++	int r = -1;
++
++	snprintf(path, sizeof(path), "/proc/self/fdinfo/%d", pidfd);
++
++	f = fopen(path, "re");
++	if (!f)
++		return -1;
++
++	while ((k = getline(&line, &n, f)) != -1) {
++		if (strncmp(line, "NSpid:", 6))
++			continue;
++
++		line[k - 1] = '\0';
++		ksft_print_msg("Child: fdinfo NSpid line: '%s'.\n", line);
++		r = strncmp(line + 6, expect, len);
++		break;
++	}
++
++	free(line);
++	fclose(f);
++
++	return r;
++}
++
++static void test_pidfd_fdinfo_nspid(void)
++{
++	char expect[512];
++	int pid, pidfd = 0;
++	int n, r;
++	const char *test_name = "pidfd check for NSpid information in fdinfo";
++
++	pid = pidfd_clone(CLONE_PIDFD | CLONE_NEWPID | CLONE_NEWUSER, &pidfd,
++			  child_fdinfo_nspid_test);
++	if (pid < 0)
++		ksft_exit_fail_msg(
++			"%s test: pidfd_clone failed (ret %d, errno %d)\n",
++			test_name, pid, errno);
++
++	ksft_print_msg("Parent: child-pid: %d\n", pid);
++
++	/* The child will have pid 1 in the new pid namespace,
++	 * so the line must be 'NSPid:\t<pid>\t1'
++	 */
++	n = snprintf(expect, sizeof(expect), "\t%d\t%d", pid, 1);
++	r = compare_fdinfo_nspid(pidfd, expect, n);
++
++	(void)close(pidfd);
++
++	if (wait_for_pid(pid))
++		ksft_exit_fail_msg(
++			"%s test: waitpid failed (ret %d, errno %d)\n",
++			test_name, r, errno);
++
++	if (r != 0)
++		ksft_exit_fail_msg("%s test: Failed\n", test_name);
++	else
++		ksft_test_result_pass("%s test: Passed\n", test_name);
++}
++
++int main(int argc, char **argv)
++{
++	ksft_print_header();
++	ksft_set_plan(1);
++
++	test_pidfd_fdinfo_nspid();
++
++	return ksft_exit_pass();
++}
+diff --git a/tools/testing/selftests/pidfd/pidfd_test.c b/tools/testing/selftests/pidfd/pidfd_test.c
+index 7aff2d3b42c0..9cf0b6b3e389 100644
+--- a/tools/testing/selftests/pidfd/pidfd_test.c
++++ b/tools/testing/selftests/pidfd/pidfd_test.c
+@@ -27,18 +27,6 @@
  
- 	seq_put_decimal_ull(m, "Pid:\t", pid_nr_ns(pid, ns));
-+	print_pidfd_nspid(m, pid, ns);
- 	seq_putc(m, '\n');
- }
- #endif
+ #define MAX_EVENTS 5
+ 
+-static pid_t pidfd_clone(int flags, int *pidfd, int (*fn)(void *))
+-{
+-	size_t stack_size = 1024;
+-	char *stack[1024] = { 0 };
+-
+-#ifdef __ia64__
+-	return __clone2(fn, stack, stack_size, flags | SIGCHLD, NULL, pidfd);
+-#else
+-	return clone(fn, stack + stack_size, flags | SIGCHLD, NULL, pidfd);
+-#endif
+-}
+-
+ static int signal_received;
+ 
+ static void set_signal_received_on_sigusr1(int sig)
 -- 
 2.21.0
