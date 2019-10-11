@@ -1,48 +1,94 @@
 From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [PATCH ghak90 V7 14/21] audit: contid check descendancy and nesting
-Date: Thu, 10 Oct 2019 20:40:03 -0400
-Message-ID: <CAHC9VhSRmn46DcazH4Q35vOSxVoEu8PsX79aurkHkFymRoMwag@mail.gmail.com>
-References: <cover.1568834524.git.rgb@redhat.com> <16abf1b2aafeb5f1b8dae20b9a4836e54f959ca5.1568834524.git.rgb@redhat.com>
+Subject: Re: [PATCH ghak90 V7 15/21] sched: pull task_is_descendant into kernel/sched/core.c
+Date: Thu, 10 Oct 2019 20:40:17 -0400
+Message-ID: <CAHC9VhRSpuNZTFvFmZ50M4bQS8raAJb_mX5qvnPWdPM71YqUwg@mail.gmail.com>
+References: <cover.1568834524.git.rgb@redhat.com> <ff8a73c7841ef788c60f13f90d036b321af0e431.1568834524.git.rgb@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <16abf1b2aafeb5f1b8dae20b9a4836e54f959ca5.1568834524.git.rgb@redhat.com>
-Sender: netdev-owner@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <ff8a73c7841ef788c60f13f90d036b321af0e431.1568834524.git.rgb@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Richard Guy Briggs <rgb@redhat.com>
 Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com, Dan Walsh <dwalsh@redhat.com>, mpatel@redhat.com
 List-Id: linux-api@vger.kernel.org
 
 On Wed, Sep 18, 2019 at 9:26 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> ?fixup! audit: convert to contid list to check for orch/engine ownership
-
-?
-
-> Require the target task to be a descendant of the container
-> orchestrator/engine.
+> Since the task_is_descendant() function is used in YAMA and in audit,
+> pull the function into kernel/core/sched.c
 >
-> You would only change the audit container ID from one set or inherited
-> value to another if you were nesting containers.
->
-> If changing the contid, the container orchestrator/engine must be a
-> descendant and not same orchestrator as the one that set it so it is not
-> possible to change the contid of another orchestrator's container.
-
-Did you mean to say that the container orchestrator must be an
-ancestor of the target, and the same orchestrator as the one that set
-the target process' audit container ID?
-
-Or maybe I'm missing something about what you are trying to do?
-
 > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
 > ---
->  kernel/audit.c | 70 +++++++++++++++++++++++++++++++++++++++++++++++++++-------
->  1 file changed, 62 insertions(+), 8 deletions(-)
+>  include/linux/sched.h    |  3 +++
+>  kernel/audit.c           | 33 ---------------------------------
+>  kernel/sched/core.c      | 33 +++++++++++++++++++++++++++++++++
+>  security/yama/yama_lsm.c | 33 ---------------------------------
+>  4 files changed, 36 insertions(+), 66 deletions(-)
+
+I'm not really reviewing this as I'm still a little confused from
+patch 14/21, but if 14/21 works out as correct this patch should be
+squashed into that one.
+
+> diff --git a/include/linux/sched.h b/include/linux/sched.h
+> index a936d162513a..b251f018f4db 100644
+> --- a/include/linux/sched.h
+> +++ b/include/linux/sched.h
+> @@ -1988,4 +1988,7 @@ static inline void rseq_syscall(struct pt_regs *regs)
 >
+>  const struct cpumask *sched_trace_rd_span(struct root_domain *rd);
+>
+> +extern int task_is_descendant(struct task_struct *parent,
+> +                             struct task_struct *child);
+> +
+>  #endif
 > diff --git a/kernel/audit.c b/kernel/audit.c
-> index 9ce7a1ec7a92..69fe1e9af7cb 100644
+> index 69fe1e9af7cb..4fe7678304dd 100644
 > --- a/kernel/audit.c
 > +++ b/kernel/audit.c
-> @@ -2560,6 +2560,39 @@ static struct task_struct *audit_cont_owner(struct task_struct *tsk)
+> @@ -2560,39 +2560,6 @@ static struct task_struct *audit_cont_owner(struct task_struct *tsk)
+>  }
+>
+>  /*
+> - * task_is_descendant - walk up a process family tree looking for a match
+> - * @parent: the process to compare against while walking up from child
+> - * @child: the process to start from while looking upwards for parent
+> - *
+> - * Returns 1 if child is a descendant of parent, 0 if not.
+> - */
+> -static int task_is_descendant(struct task_struct *parent,
+> -                             struct task_struct *child)
+> -{
+> -       int rc = 0;
+> -       struct task_struct *walker = child;
+> -
+> -       if (!parent || !child)
+> -               return 0;
+> -
+> -       rcu_read_lock();
+> -       if (!thread_group_leader(parent))
+> -               parent = rcu_dereference(parent->group_leader);
+> -       while (walker->pid > 0) {
+> -               if (!thread_group_leader(walker))
+> -                       walker = rcu_dereference(walker->group_leader);
+> -               if (walker == parent) {
+> -                       rc = 1;
+> -                       break;
+> -               }
+> -               walker = rcu_dereference(walker->real_parent);
+> -       }
+> -       rcu_read_unlock();
+> -
+> -       return rc;
+> -}
+> -
+> -/*
+>   * audit_set_contid - set current task's audit contid
+>   * @task: target task
+>   * @contid: contid value
+> diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+> index 2b037f195473..7ba9e07381fa 100644
+> --- a/kernel/sched/core.c
+> +++ b/kernel/sched/core.c
+> @@ -7509,6 +7509,39 @@ void dump_cpu_task(int cpu)
 >  }
 >
 >  /*
@@ -52,7 +98,7 @@ Or maybe I'm missing something about what you are trying to do?
 > + *
 > + * Returns 1 if child is a descendant of parent, 0 if not.
 > + */
-> +static int task_is_descendant(struct task_struct *parent,
+> +int task_is_descendant(struct task_struct *parent,
 > +                             struct task_struct *child)
 > +{
 > +       int rc = 0;
@@ -79,58 +125,54 @@ Or maybe I'm missing something about what you are trying to do?
 > +}
 > +
 > +/*
->   * audit_set_contid - set current task's audit contid
->   * @task: target task
->   * @contid: contid value
-> @@ -2587,22 +2620,43 @@ int audit_set_contid(struct task_struct *task, u64 contid)
->         oldcontid = audit_get_contid(task);
->         read_lock(&tasklist_lock);
->         /* Don't allow the contid to be unset */
-> -       if (!audit_contid_valid(contid))
-> +       if (!audit_contid_valid(contid)) {
->                 rc = -EINVAL;
-> +               goto unlock;
-> +       }
->         /* Don't allow the contid to be set to the same value again */
-> -       else if (contid == oldcontid) {
-> +       if (contid == oldcontid) {
->                 rc = -EADDRINUSE;
-> +               goto unlock;
-> +       }
->         /* if we don't have caps, reject */
-> -       else if (!capable(CAP_AUDIT_CONTROL))
-> +       if (!capable(CAP_AUDIT_CONTROL)) {
->                 rc = -EPERM;
-> -       /* if task has children or is not single-threaded, deny */
-> -       else if (!list_empty(&task->children))
-> +               goto unlock;
-> +       }
-> +       /* if task has children, deny */
-> +       if (!list_empty(&task->children)) {
->                 rc = -EBUSY;
-> -       else if (!(thread_group_leader(task) && thread_group_empty(task)))
-> +               goto unlock;
-> +       }
-> +       /* if task is not single-threaded, deny */
-> +       if (!(thread_group_leader(task) && thread_group_empty(task))) {
->                 rc = -EALREADY;
-> -       /* if contid is already set, deny */
-> -       else if (audit_contid_set(task))
-> +               goto unlock;
-> +       }
-> +       /* if task is not descendant, block */
-> +       if (task == current) {
-> +               rc = -EBADSLT;
-> +               goto unlock;
-> +       }
-> +       if (!task_is_descendant(current, task)) {
-> +               rc = -EXDEV;
-> +               goto unlock;
-> +       }
-> +       /* only allow contid setting again if nesting */
-> +       if (audit_contid_set(task) && current == audit_cont_owner(task))
->                 rc = -ECHILD;
-> +unlock:
->         read_unlock(&tasklist_lock);
->         if (!rc) {
->                 struct audit_cont *oldcont = audit_cont(task);
+>   * Nice levels are multiplicative, with a gentle 10% change for every
+>   * nice level changed. I.e. when a CPU-bound task goes from nice 0 to
+>   * nice 1, it will get ~10% less CPU time than another CPU-bound task
+> diff --git a/security/yama/yama_lsm.c b/security/yama/yama_lsm.c
+> index 94dc346370b1..25eae205eae8 100644
+> --- a/security/yama/yama_lsm.c
+> +++ b/security/yama/yama_lsm.c
+> @@ -263,39 +263,6 @@ static int yama_task_prctl(int option, unsigned long arg2, unsigned long arg3,
+>  }
+>
+>  /**
+> - * task_is_descendant - walk up a process family tree looking for a match
+> - * @parent: the process to compare against while walking up from child
+> - * @child: the process to start from while looking upwards for parent
+> - *
+> - * Returns 1 if child is a descendant of parent, 0 if not.
+> - */
+> -static int task_is_descendant(struct task_struct *parent,
+> -                             struct task_struct *child)
+> -{
+> -       int rc = 0;
+> -       struct task_struct *walker = child;
+> -
+> -       if (!parent || !child)
+> -               return 0;
+> -
+> -       rcu_read_lock();
+> -       if (!thread_group_leader(parent))
+> -               parent = rcu_dereference(parent->group_leader);
+> -       while (walker->pid > 0) {
+> -               if (!thread_group_leader(walker))
+> -                       walker = rcu_dereference(walker->group_leader);
+> -               if (walker == parent) {
+> -                       rc = 1;
+> -                       break;
+> -               }
+> -               walker = rcu_dereference(walker->real_parent);
+> -       }
+> -       rcu_read_unlock();
+> -
+> -       return rc;
+> -}
+> -
+> -/**
+>   * ptracer_exception_found - tracer registered as exception for this tracee
+>   * @tracer: the task_struct of the process attempting ptrace
+>   * @tracee: the task_struct of the process to be ptraced
+
+--
+paul moore
+www.paul-moore.com
