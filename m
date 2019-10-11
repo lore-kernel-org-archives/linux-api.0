@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv7 29/33] selftests/timens: Add a test for clock_nanosleep()
-Date: Fri, 11 Oct 2019 02:23:37 +0100
-Message-ID: <20191011012341.846266-30-dima@arista.com>
+Subject: [PATCHv7 25/33] x86/vdso: Zap vvar pages on switch a time namspace
+Date: Fri, 11 Oct 2019 02:23:33 +0100
+Message-ID: <20191011012341.846266-26-dima@arista.com>
 References: <20191011012341.846266-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -9,206 +9,123 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20191011012341.846266-1-dima@arista.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Andrei Vagin <avagin@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api
+Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Andrei Vagin <avagin@gmail.com>
+The VVAR page layout depends on whether a task belongs to the root or
+non-root time namespace. Whenever a task changes its namespace, the VVAR
+page tables are cleared and then they will re-faulted with a
+corresponding layout.
 
-Check that clock_nanosleep() takes into account clock offsets.
-
-Output on success:
- 1..4
- ok 1 clockid: 1 abs:0
- ok 2 clockid: 1 abs:1
- ok 3 clockid: 9 abs:0
- ok 4 clockid: 9 abs:1
-
-Output with lack of permissions:
- 1..4
- not ok 1 # SKIP need to run as root
-
-Output without support of time namespaces:
- 1..4
- not ok 1 # SKIP Time namespaces are not supported
-
+Co-developed-by: Andrei Vagin <avagin@gmail.com>
 Signed-off-by: Andrei Vagin <avagin@gmail.com>
-Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- tools/testing/selftests/timens/.gitignore     |   1 +
- tools/testing/selftests/timens/Makefile       |   4 +-
- .../selftests/timens/clock_nanosleep.c        | 143 ++++++++++++++++++
- 3 files changed, 146 insertions(+), 2 deletions(-)
- create mode 100644 tools/testing/selftests/timens/clock_nanosleep.c
+ arch/x86/entry/vdso/vma.c      | 27 +++++++++++++++++++++++++++
+ include/linux/time_namespace.h |  3 +++
+ kernel/time/namespace.c        | 10 ++++++++++
+ 3 files changed, 40 insertions(+)
 
-diff --git a/tools/testing/selftests/timens/.gitignore b/tools/testing/selftests/timens/.gitignore
-index b609f6ee9fb9..9b6c8ddac2c8 100644
---- a/tools/testing/selftests/timens/.gitignore
-+++ b/tools/testing/selftests/timens/.gitignore
-@@ -1,2 +1,3 @@
-+clock_nanosleep
- timens
- timerfd
-diff --git a/tools/testing/selftests/timens/Makefile b/tools/testing/selftests/timens/Makefile
-index 66b90cd28e5c..801e7ab2f8bf 100644
---- a/tools/testing/selftests/timens/Makefile
-+++ b/tools/testing/selftests/timens/Makefile
-@@ -1,5 +1,5 @@
--TEST_GEN_PROGS := timens timerfd
-+TEST_GEN_PROGS := timens timerfd clock_nanosleep
+diff --git a/arch/x86/entry/vdso/vma.c b/arch/x86/entry/vdso/vma.c
+index d6cb8a16f368..57ada3e95f8d 100644
+--- a/arch/x86/entry/vdso/vma.c
++++ b/arch/x86/entry/vdso/vma.c
+@@ -50,6 +50,7 @@ void __init init_vdso_image(const struct vdso_image *image)
+ 						image->alt_len));
+ }
  
--CFLAGS := -Wall -Werror
-+CFLAGS := -Wall -Werror -pthread
++static const struct vm_special_mapping vvar_mapping;
+ struct linux_binprm;
  
- include ../lib.mk
-diff --git a/tools/testing/selftests/timens/clock_nanosleep.c b/tools/testing/selftests/timens/clock_nanosleep.c
-new file mode 100644
-index 000000000000..0f4eab6e4669
---- /dev/null
-+++ b/tools/testing/selftests/timens/clock_nanosleep.c
-@@ -0,0 +1,143 @@
-+// SPDX-License-Identifier: GPL-2.0
-+#define _GNU_SOURCE
-+#include <sched.h>
+ static vm_fault_t vdso_fault(const struct vm_special_mapping *sm,
+@@ -127,6 +128,32 @@ static struct page *find_timens_vvar_page(struct vm_area_struct *vma)
+ 
+ 	return NULL;
+ }
 +
-+#include <sys/timerfd.h>
-+#include <sys/syscall.h>
-+#include <time.h>
-+#include <unistd.h>
-+#include <stdlib.h>
-+#include <stdio.h>
-+#include <stdint.h>
-+#include <pthread.h>
-+#include <signal.h>
-+#include <string.h>
-+
-+#include "log.h"
-+#include "timens.h"
-+
-+void test_sig(int sig) {
-+	if (sig == SIGUSR2)
-+		pthread_exit(NULL);
-+}
-+
-+struct thread_args {
-+	struct timespec *now, *rem;
-+	pthread_mutex_t *lock;
-+	int clockid;
-+	int abs;
-+};
-+
-+void *call_nanosleep(void *_args)
++/*
++ * The vvar page layout depends on whether a task belongs to the root or
++ * non-root time namespace. Whenever a task changes its namespace, the VVAR
++ * page tables are cleared and then they will re-faulted with a
++ * corresponding layout.
++ * See also the comment near timens_setup_vdso_data() for details.
++ */
++int vdso_join_timens(struct task_struct *task, struct time_namespace *ns)
 +{
-+	struct thread_args *args = _args;
-+	clock_nanosleep(args->clockid, args->abs ? TIMER_ABSTIME : 0, args->now, args->rem);
-+	pthread_mutex_unlock(args->lock);
-+	return NULL;
-+}
++	struct mm_struct *mm = task->mm;
++	struct vm_area_struct *vma;
 +
-+int run_test(int clockid, int abs)
-+{
-+	struct timespec now = {}, rem;
-+	struct thread_args args = { .now = &now, .rem = &rem, .clockid = clockid};
-+	struct timespec start;
-+	pthread_mutex_t lock;
-+	pthread_t thread;
-+	int j, ok, ret;
++	if (down_write_killable(&mm->mmap_sem))
++		return -EINTR;
 +
-+	signal(SIGUSR1, test_sig);
-+	signal(SIGUSR2, test_sig);
++	for (vma = mm->mmap; vma; vma = vma->vm_next) {
++		unsigned long size = vma->vm_end - vma->vm_start;
 +
-+	pthread_mutex_init(&lock, NULL);
-+	pthread_mutex_lock(&lock);
-+
-+	if (clock_gettime(clockid, &start) == -1)
-+		return pr_perror("clock_gettime");
-+
-+
-+	if (abs) {
-+		now.tv_sec = start.tv_sec;
-+		now.tv_nsec = start.tv_nsec;
++		if (vma_is_special_mapping(vma, &vvar_mapping))
++			zap_page_range(vma, vma->vm_start, size);
 +	}
 +
-+	now.tv_sec += 3600;
-+	args.abs = abs;
-+	args.lock = &lock;
-+	ret = pthread_create(&thread, NULL, call_nanosleep, &args);
-+	if (ret != 0) {
-+		pr_err("Unable to create a thread: %s", strerror(ret));
-+		return 1;
-+	}
-+
-+	/* Wait when the thread will call clock_nanosleep(). */
-+	ok = 0;
-+	for (j = 0; j < 8; j++) {
-+		/* The maximum timeout is about 5 seconds. */
-+		usleep(10000 << j);
-+
-+		/* Try to interrupt clock_nanosleep(). */
-+		pthread_kill(thread, SIGUSR1);
-+
-+		usleep(10000 << j);
-+		/* Check whether clock_nanosleep() has been interrupted or not. */
-+		if (pthread_mutex_trylock(&lock) == 0) {
-+			/**/
-+			ok = 1;
-+			break;
-+		}
-+	}
-+	if (!ok)
-+		pthread_kill(thread, SIGUSR2);
-+	pthread_join(thread, NULL);
-+	pthread_mutex_destroy(&lock);
-+
-+	if (!ok) {
-+		ksft_test_result_pass("clockid: %d abs:%d timeout\n", clockid, abs);
-+		return 1;
-+	}
-+
-+	if (rem.tv_sec < 3300 || rem.tv_sec > 3900) {
-+		pr_fail("clockid: %d abs: %d remain: %ld\n",
-+			clockid, abs, rem.tv_sec);
-+		return 1;
-+	}
-+	ksft_test_result_pass("clockid: %d abs:%d\n", clockid, abs);
-+
++	up_write(&mm->mmap_sem);
 +	return 0;
 +}
+ #else
+ static inline struct page *find_timens_vvar_page(struct vm_area_struct *vma)
+ {
+diff --git a/include/linux/time_namespace.h b/include/linux/time_namespace.h
+index c479cfda2c3e..dcf3dbf2836b 100644
+--- a/include/linux/time_namespace.h
++++ b/include/linux/time_namespace.h
+@@ -30,6 +30,9 @@ struct time_namespace {
+ extern struct time_namespace init_time_ns;
+ 
+ #ifdef CONFIG_TIME_NS
++extern int vdso_join_timens(struct task_struct *task,
++			    struct time_namespace *ns);
 +
-+int main(int argc, char *argv[])
-+{
-+	int ret, nsfd;
+ static inline struct time_namespace *get_time_ns(struct time_namespace *ns)
+ {
+ 	kref_get(&ns->kref);
+diff --git a/kernel/time/namespace.c b/kernel/time/namespace.c
+index e14cd1ca387d..0dc0742ed1ee 100644
+--- a/kernel/time/namespace.c
++++ b/kernel/time/namespace.c
+@@ -280,6 +280,7 @@ static void timens_put(struct ns_common *ns)
+ static int timens_install(struct nsproxy *nsproxy, struct ns_common *new)
+ {
+ 	struct time_namespace *ns = to_time_ns(new);
++	int err;
+ 
+ 	if (!current_is_single_threaded())
+ 		return -EUSERS;
+@@ -290,6 +291,10 @@ static int timens_install(struct nsproxy *nsproxy, struct ns_common *new)
+ 
+ 	timens_set_vvar_page(current, ns);
+ 
++	err = vdso_join_timens(current, ns);
++	if (err)
++		return err;
 +
-+	nscheck();
+ 	get_time_ns(ns);
+ 	put_time_ns(nsproxy->time_ns);
+ 	nsproxy->time_ns = ns;
+@@ -304,6 +309,7 @@ int timens_on_fork(struct nsproxy *nsproxy, struct task_struct *tsk)
+ {
+ 	struct ns_common *nsc = &nsproxy->time_ns_for_children->ns;
+ 	struct time_namespace *ns = to_time_ns(nsc);
++	int err;
+ 
+ 	/* create_new_namespaces() already incremented the ref counter */
+ 	if (nsproxy->time_ns == nsproxy->time_ns_for_children)
+@@ -311,6 +317,10 @@ int timens_on_fork(struct nsproxy *nsproxy, struct task_struct *tsk)
+ 
+ 	timens_set_vvar_page(tsk, ns);
+ 
++	err = vdso_join_timens(tsk, ns);
++	if (err)
++		return err;
 +
-+	ksft_set_plan(4);
-+
-+	if (unshare_timens())
-+		return 1;
-+
-+	if (_settime(CLOCK_MONOTONIC, 7 * 24 * 3600))
-+		return 1;
-+	if (_settime(CLOCK_BOOTTIME, 9 * 24 * 3600))
-+		return 1;
-+
-+	nsfd = open("/proc/self/ns/time_for_children", O_RDONLY);
-+	if (nsfd < 0)
-+		return pr_perror("Unable to open timens_for_children");
-+
-+	if (setns(nsfd, CLONE_NEWTIME))
-+		return pr_perror("Unable to set timens");
-+
-+	ret = 0;
-+	ret |= run_test(CLOCK_MONOTONIC, 0);
-+	ret |= run_test(CLOCK_MONOTONIC, 1);
-+	ret |= run_test(CLOCK_BOOTTIME_ALARM, 0);
-+	ret |= run_test(CLOCK_BOOTTIME_ALARM, 1);
-+
-+	if (ret)
-+		ksft_exit_fail();
-+	ksft_exit_pass();
-+	return ret;
-+}
-+
+ 	get_time_ns(ns);
+ 	put_time_ns(nsproxy->time_ns);
+ 	nsproxy->time_ns = ns;
 -- 
 2.23.0
