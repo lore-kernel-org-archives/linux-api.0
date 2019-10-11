@@ -1,70 +1,141 @@
-From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [PATCH ghak90 V7 18/21] audit: track container nesting
-Date: Thu, 10 Oct 2019 20:40:58 -0400
-Message-ID: <CAHC9VhT3QNHxXCc_QsC5K5HadAv7AqwNw-Fk+yLECquE_dKmfQ@mail.gmail.com>
-References: <cover.1568834524.git.rgb@redhat.com>
-	<a6b00624ac746bc0df9dd0044311b8364374b25b.1568834525.git.rgb@redhat.com>
+From: Dmitry Safonov <dima@arista.com>
+Subject: [PATCHv7 04/33] posix-clocks: Rename .clock_get_timespec() callbacks accordingly
+Date: Fri, 11 Oct 2019 02:23:12 +0100
+Message-ID: <20191011012341.846266-5-dima@arista.com>
+References: <20191011012341.846266-1-dima@arista.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-audit-bounces@redhat.com>
-In-Reply-To: <a6b00624ac746bc0df9dd0044311b8364374b25b.1568834525.git.rgb@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/options/linux-audit>,
-	<mailto:linux-audit-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/linux-audit>
-List-Post: <mailto:linux-audit@redhat.com>
-List-Help: <mailto:linux-audit-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/linux-audit>,
-	<mailto:linux-audit-request@redhat.com?subject=subscribe>
-Sender: linux-audit-bounces@redhat.com
-Errors-To: linux-audit-bounces@redhat.com
-To: Richard Guy Briggs <rgb@redhat.com>
-Cc: nhorman@tuxdriver.com, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, LKML <linux-kernel@vger.kernel.org>, dhowells@redhat.com, Linux-Audit Mailing List <linux-audit@redhat.com>, netfilter-devel@vger.kernel.org, ebiederm@xmission.com, simo@redhat.com, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, Eric Paris <eparis@parisplace.org>, mpatel@redhat.com, Serge Hallyn <serge@hallyn.com>
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20191011012341.846266-1-dima@arista.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Andrei Vagin <avagin@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Sep 18, 2019 at 9:27 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> Track the parent container of a container to be able to filter and
-> report nesting.
->
-> Now that we have a way to track and check the parent container of a
-> container, fixup other patches, or squash all nesting fixes together.
->
-> fixup! audit: add container id
-> fixup! audit: log drop of contid on exit of last task
-> fixup! audit: log container info of syscalls
-> fixup! audit: add containerid filtering
-> fixup! audit: NETFILTER_PKT: record each container ID associated with a netNS
-> fixup! audit: convert to contid list to check for orch/engine ownership softirq (for netfilter) audit: protect contid list lock from softirq
->
-> Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-> ---
->  include/linux/audit.h |  1 +
->  kernel/audit.c        | 67 ++++++++++++++++++++++++++++++++++++++++++---------
->  kernel/audit.h        |  3 +++
->  kernel/auditfilter.c  | 20 ++++++++++++++-
->  kernel/auditsc.c      |  2 +-
->  5 files changed, 79 insertions(+), 14 deletions(-)
+From: Andrei Vagin <avagin@gmail.com>
 
-This is my last comment of the patchset because this is where it
-starts to get a little weird.  I know we've talked about fixup!
-patches some in the past, but perhaps I didn't do a very good job
-communicating my poin; let me try again.
+The upcoming support for time namespaces requires to have access to:
+  - The time in a task's time namespace for sys_clock_gettime()
+  - The time in the root name space for common_timer_get()
 
-Submitting a fixup patch is okay if you've already posted a (lengthy)
-patchset and there was a small nit that someone uncovered that needed
-to be fixed prior to merging, assuming everyone (this includes the
-reviewer, the patch author, and the maintainer) is okay with the
-author posting the fix as fixup! patch then go for it.  Done this way,
-fixup patches can save a lot of development, testing, and review time.
-However, in my opinion it is wrong to submit a patchset that has fixup
-patches as part of the original posting.  In this case fixup patches
-have the opposite effect: the patchset becomes more complicated,
-reviews take longer, and the likelihood of missing important details
-increases.
+That adds a valid reason to finally implement a separate callback which
+returns the time in ktime_t format in (struct k_clock).
 
-When in doubt, don't submit separate fixup patches, fold them into the
-original patches instead.
+As a preparation ground for introducing clock_get_ktime(), the original
+callback clock_get() was renamed into clock_get_timespec().
+Reflect the renaming into callbacks realizations.
 
---
-paul moore
-www.paul-moore.com
+Suggested-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Andrei Vagin <avagin@gmail.com>
+Co-developed-by: Dmitry Safonov <dima@arista.com>
+Signed-off-by: Dmitry Safonov <dima@arista.com>
+---
+ kernel/time/alarmtimer.c   |  6 +++---
+ kernel/time/posix-timers.c | 16 ++++++++--------
+ 2 files changed, 11 insertions(+), 11 deletions(-)
+
+diff --git a/kernel/time/alarmtimer.c b/kernel/time/alarmtimer.c
+index 8523df726fee..62b06cfa710d 100644
+--- a/kernel/time/alarmtimer.c
++++ b/kernel/time/alarmtimer.c
+@@ -657,13 +657,13 @@ static int alarm_clock_getres(const clockid_t which_clock, struct timespec64 *tp
+ }
+ 
+ /**
+- * alarm_clock_get - posix clock_get_timespec interface
++ * alarm_clock_get_timespec - posix clock_get_timespec interface
+  * @which_clock: clockid
+  * @tp: timespec to fill.
+  *
+  * Provides the underlying alarm base time.
+  */
+-static int alarm_clock_get(clockid_t which_clock, struct timespec64 *tp)
++static int alarm_clock_get_timespec(clockid_t which_clock, struct timespec64 *tp)
+ {
+ 	struct alarm_base *base = &alarm_bases[clock2alarm(which_clock)];
+ 
+@@ -837,7 +837,7 @@ static int alarm_timer_nsleep(const clockid_t which_clock, int flags,
+ 
+ const struct k_clock alarm_clock = {
+ 	.clock_getres		= alarm_clock_getres,
+-	.clock_get_timespec	= alarm_clock_get,
++	.clock_get_timespec	= alarm_clock_get_timespec,
+ 	.timer_create		= alarm_timer_create,
+ 	.timer_set		= common_timer_set,
+ 	.timer_del		= common_timer_del,
+diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
+index 44d4f9cb782d..68d4690cc225 100644
+--- a/kernel/time/posix-timers.c
++++ b/kernel/time/posix-timers.c
+@@ -165,7 +165,7 @@ static inline void unlock_timer(struct k_itimer *timr, unsigned long flags)
+ }
+ 
+ /* Get clock_realtime */
+-static int posix_clock_realtime_get(clockid_t which_clock, struct timespec64 *tp)
++static int posix_get_realtime_timespec(clockid_t which_clock, struct timespec64 *tp)
+ {
+ 	ktime_get_real_ts64(tp);
+ 	return 0;
+@@ -187,7 +187,7 @@ static int posix_clock_realtime_adj(const clockid_t which_clock,
+ /*
+  * Get monotonic time for posix timers
+  */
+-static int posix_ktime_get_ts(clockid_t which_clock, struct timespec64 *tp)
++static int posix_get_monotonic_timespec(clockid_t which_clock, struct timespec64 *tp)
+ {
+ 	ktime_get_ts64(tp);
+ 	return 0;
+@@ -222,13 +222,13 @@ static int posix_get_coarse_res(const clockid_t which_clock, struct timespec64 *
+ 	return 0;
+ }
+ 
+-static int posix_get_boottime(const clockid_t which_clock, struct timespec64 *tp)
++static int posix_get_boottime_timespec(const clockid_t which_clock, struct timespec64 *tp)
+ {
+ 	ktime_get_boottime_ts64(tp);
+ 	return 0;
+ }
+ 
+-static int posix_get_tai(clockid_t which_clock, struct timespec64 *tp)
++static int posix_get_tai_timespec(clockid_t which_clock, struct timespec64 *tp)
+ {
+ 	ktime_get_clocktai_ts64(tp);
+ 	return 0;
+@@ -1261,7 +1261,7 @@ SYSCALL_DEFINE4(clock_nanosleep_time32, clockid_t, which_clock, int, flags,
+ 
+ static const struct k_clock clock_realtime = {
+ 	.clock_getres		= posix_get_hrtimer_res,
+-	.clock_get_timespec	= posix_clock_realtime_get,
++	.clock_get_timespec	= posix_get_realtime_timespec,
+ 	.clock_set		= posix_clock_realtime_set,
+ 	.clock_adj		= posix_clock_realtime_adj,
+ 	.nsleep			= common_nsleep,
+@@ -1279,7 +1279,7 @@ static const struct k_clock clock_realtime = {
+ 
+ static const struct k_clock clock_monotonic = {
+ 	.clock_getres		= posix_get_hrtimer_res,
+-	.clock_get_timespec	= posix_ktime_get_ts,
++	.clock_get_timespec	= posix_get_monotonic_timespec,
+ 	.nsleep			= common_nsleep,
+ 	.timer_create		= common_timer_create,
+ 	.timer_set		= common_timer_set,
+@@ -1310,7 +1310,7 @@ static const struct k_clock clock_monotonic_coarse = {
+ 
+ static const struct k_clock clock_tai = {
+ 	.clock_getres		= posix_get_hrtimer_res,
+-	.clock_get_timespec	= posix_get_tai,
++	.clock_get_timespec	= posix_get_tai_timespec,
+ 	.nsleep			= common_nsleep,
+ 	.timer_create		= common_timer_create,
+ 	.timer_set		= common_timer_set,
+@@ -1326,7 +1326,7 @@ static const struct k_clock clock_tai = {
+ 
+ static const struct k_clock clock_boottime = {
+ 	.clock_getres		= posix_get_hrtimer_res,
+-	.clock_get_timespec	= posix_get_boottime,
++	.clock_get_timespec	= posix_get_boottime_timespec,
+ 	.nsleep			= common_nsleep,
+ 	.timer_create		= common_timer_create,
+ 	.timer_set		= common_timer_set,
+-- 
+2.23.0
