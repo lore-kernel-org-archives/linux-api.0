@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv7 14/33] hrtimers: Prepare hrtimer_nanosleep() for time namespaces
-Date: Fri, 11 Oct 2019 02:23:22 +0100
-Message-ID: <20191011012341.846266-15-dima@arista.com>
+Subject: [PATCHv7 18/33] lib/vdso: Add unlikely() hint into vdso_read_begin()
+Date: Fri, 11 Oct 2019 02:23:26 +0100
+Message-ID: <20191011012341.846266-19-dima@arista.com>
 References: <20191011012341.846266-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,134 +14,43 @@ List-Id: linux-api@vger.kernel.org
 
 From: Andrei Vagin <avagin@gmail.com>
 
-clock_nanosleep() accepts absolute values of expiration time when
-TIMER_ABSTIME flag is set. This absolute value is inside the task's
-time namespace, and has to be converted to the host's time.
+Place the branch with no concurrent write before contended case.
 
-There is timens_ktime_to_host() helper for converting time, but
-it accepts ktime argument.
+Performance numbers for Intel(R) Core(TM) i5-6300U CPU @ 2.40GHz
+(more clock_gettime() cycles - the better):
+        | before    | after
+-----------------------------------
+        | 150252214 | 153242367
+        | 150301112 | 153324800
+        | 150392773 | 153125401
+        | 150373957 | 153399355
+        | 150303157 | 153489417
+        | 150365237 | 153494270
+-----------------------------------
+avg     | 150331408 | 153345935
+diff %  | 2	    | 0
+-----------------------------------
+stdev % | 0.3	    | 0.1
 
-As a preparation, make hrtimer_nanosleep() accept a clock value in ktime
-instead of timespec64.
-
-Signed-off-by: Andrei Vagin <avagin@openvz.org>
+Signed-off-by: Andrei Vagin <avagin@gmail.com>
 Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- include/linux/hrtimer.h        | 2 +-
- kernel/time/hrtimer.c          | 8 ++++----
- kernel/time/posix-stubs.c      | 4 ++--
- kernel/time/posix-timers.c     | 4 +++-
- tools/perf/examples/bpf/5sec.c | 6 ++++--
- 5 files changed, 14 insertions(+), 10 deletions(-)
+ include/vdso/helpers.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/include/linux/hrtimer.h b/include/linux/hrtimer.h
-index 1b9a51a1bccb..cdcb2e9cd54a 100644
---- a/include/linux/hrtimer.h
-+++ b/include/linux/hrtimer.h
-@@ -502,7 +502,7 @@ static inline u64 hrtimer_forward_now(struct hrtimer *timer,
- /* Precise sleep: */
- 
- extern int nanosleep_copyout(struct restart_block *, struct timespec64 *);
--extern long hrtimer_nanosleep(const struct timespec64 *rqtp,
-+extern long hrtimer_nanosleep(ktime_t rqtp,
- 			      const enum hrtimer_mode mode,
- 			      const clockid_t clockid);
- 
-diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
-index 0d4dc241c0fb..19cc504bd7cc 100644
---- a/kernel/time/hrtimer.c
-+++ b/kernel/time/hrtimer.c
-@@ -1907,7 +1907,7 @@ static long __sched hrtimer_nanosleep_restart(struct restart_block *restart)
- 	return ret;
- }
- 
--long hrtimer_nanosleep(const struct timespec64 *rqtp,
-+long hrtimer_nanosleep(ktime_t rqtp,
- 		       const enum hrtimer_mode mode, const clockid_t clockid)
+diff --git a/include/vdso/helpers.h b/include/vdso/helpers.h
+index 01641dbb68ef..9a2af9fca45e 100644
+--- a/include/vdso/helpers.h
++++ b/include/vdso/helpers.h
+@@ -10,7 +10,7 @@ static __always_inline u32 vdso_read_begin(const struct vdso_data *vd)
  {
- 	struct restart_block *restart;
-@@ -1920,7 +1920,7 @@ long hrtimer_nanosleep(const struct timespec64 *rqtp,
- 		slack = 0;
+ 	u32 seq;
  
- 	hrtimer_init_sleeper_on_stack(&t, clockid, mode);
--	hrtimer_set_expires_range_ns(&t.timer, timespec64_to_ktime(*rqtp), slack);
-+	hrtimer_set_expires_range_ns(&t.timer, rqtp, slack);
- 	ret = do_nanosleep(&t, mode);
- 	if (ret != -ERESTART_RESTARTBLOCK)
- 		goto out;
-@@ -1955,7 +1955,7 @@ SYSCALL_DEFINE2(nanosleep, struct __kernel_timespec __user *, rqtp,
+-	while ((seq = READ_ONCE(vd->seq)) & 1)
++	while (unlikely((seq = READ_ONCE(vd->seq)) & 1))
+ 		cpu_relax();
  
- 	current->restart_block.nanosleep.type = rmtp ? TT_NATIVE : TT_NONE;
- 	current->restart_block.nanosleep.rmtp = rmtp;
--	return hrtimer_nanosleep(&tu, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
-+	return hrtimer_nanosleep(timespec64_to_ktime(tu), HRTIMER_MODE_REL, CLOCK_MONOTONIC);
- }
- 
- #endif
-@@ -1975,7 +1975,7 @@ SYSCALL_DEFINE2(nanosleep_time32, struct old_timespec32 __user *, rqtp,
- 
- 	current->restart_block.nanosleep.type = rmtp ? TT_COMPAT : TT_NONE;
- 	current->restart_block.nanosleep.compat_rmtp = rmtp;
--	return hrtimer_nanosleep(&tu, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
-+	return hrtimer_nanosleep(timespec64_to_ktime(tu), HRTIMER_MODE_REL, CLOCK_MONOTONIC);
- }
- #endif
- 
-diff --git a/kernel/time/posix-stubs.c b/kernel/time/posix-stubs.c
-index edaf075d1ee4..2ccefc9ce184 100644
---- a/kernel/time/posix-stubs.c
-+++ b/kernel/time/posix-stubs.c
-@@ -147,7 +147,7 @@ SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
- 		rmtp = NULL;
- 	current->restart_block.nanosleep.type = rmtp ? TT_NATIVE : TT_NONE;
- 	current->restart_block.nanosleep.rmtp = rmtp;
--	return hrtimer_nanosleep(&t, flags & TIMER_ABSTIME ?
-+	return hrtimer_nanosleep(timespec64_to_ktime(t), flags & TIMER_ABSTIME ?
- 				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL,
- 				 which_clock);
- }
-@@ -233,7 +233,7 @@ SYSCALL_DEFINE4(clock_nanosleep_time32, clockid_t, which_clock, int, flags,
- 		rmtp = NULL;
- 	current->restart_block.nanosleep.type = rmtp ? TT_COMPAT : TT_NONE;
- 	current->restart_block.nanosleep.compat_rmtp = rmtp;
--	return hrtimer_nanosleep(&t, flags & TIMER_ABSTIME ?
-+	return hrtimer_nanosleep(timespec64_to_ktime(t), flags & TIMER_ABSTIME ?
- 				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL,
- 				 which_clock);
- }
-diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
-index 6e350cc8f600..c0ae1f6d2add 100644
---- a/kernel/time/posix-timers.c
-+++ b/kernel/time/posix-timers.c
-@@ -1221,7 +1221,9 @@ SYSCALL_DEFINE2(clock_getres_time32, clockid_t, which_clock,
- static int common_nsleep(const clockid_t which_clock, int flags,
- 			 const struct timespec64 *rqtp)
- {
--	return hrtimer_nanosleep(rqtp, flags & TIMER_ABSTIME ?
-+	ktime_t texp = timespec64_to_ktime(*rqtp);
-+
-+	return hrtimer_nanosleep(texp, flags & TIMER_ABSTIME ?
- 				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL,
- 				 which_clock);
- }
-diff --git a/tools/perf/examples/bpf/5sec.c b/tools/perf/examples/bpf/5sec.c
-index b9c203219691..e6b6181c6dc6 100644
---- a/tools/perf/examples/bpf/5sec.c
-+++ b/tools/perf/examples/bpf/5sec.c
-@@ -41,9 +41,11 @@
- 
- #include <bpf.h>
- 
--int probe(hrtimer_nanosleep, rqtp->tv_sec)(void *ctx, int err, long sec)
-+#define NSEC_PER_SEC	1000000000L
-+
-+int probe(hrtimer_nanosleep, rqtp)(void *ctx, int err, long long sec)
- {
--	return sec == 5;
-+	return sec / NSEC_PER_SEC == 5ULL;
- }
- 
- license(GPL);
+ 	smp_rmb();
 -- 
 2.23.0
