@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv7 32/33] selftests/timens: Add a simple perf test for clock_gettime()
-Date: Fri, 11 Oct 2019 02:23:40 +0100
-Message-ID: <20191011012341.846266-33-dima@arista.com>
+Subject: [PATCHv7 33/33] selftests/timens: Check for right timens offsets after fork and exec
+Date: Fri, 11 Oct 2019 02:23:41 +0100
+Message-ID: <20191011012341.846266-34-dima@arista.com>
 References: <20191011012341.846266-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -15,153 +15,150 @@ List-Id: linux-api@vger.kernel.org
 From: Andrei Vagin <avagin@gmail.com>
 
 Output on success:
-1..4
- ok 1 host:	clock:  monotonic	cycles:	 148323947
- ok 2 host:	clock:   boottime	cycles:	 148577503
- ok 3 ns:	clock:  monotonic	cycles:	 137659217
- ok 4 ns:	clock:   boottime	cycles:	 137959154
- # Pass 4 Fail 0 Xfail 0 Xpass 0 Skip 0 Error 0
+ 1..1
+ ok 1 exec
+ # Pass 1 Fail 0 Xfail 0 Xpass 0 Skip 0 Error 0
+
+Output on failure:
+ 1..1
+ not ok 1 36016 16
+ Bail out!
 
 Output with lack of permissions:
- 1..4
- ok 1 host:	clock:  monotonic	cycles:	 145671139
- ok 2 host:	clock:   boottime	cycles:	 146958357
- not ok 3 # SKIP need to run as root
+ 1..1
+ not ok 1 # SKIP need to run as root
 
 Output without support of time namespaces:
- 1..4
- ok 1 host:	clock:  monotonic	cycles:	 145671139
- ok 2 host:	clock:   boottime	cycles:	 146958357
- not ok 3 # SKIP Time namespaces are not supported
+ 1..1
+ not ok 1 # SKIP Time namespaces are not supported
 
 Signed-off-by: Andrei Vagin <avagin@gmail.com>
 Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- tools/testing/selftests/timens/.gitignore     |  2 +
- tools/testing/selftests/timens/Makefile       |  3 +-
- tools/testing/selftests/timens/gettime_perf.c | 91 +++++++++++++++++++
- 3 files changed, 95 insertions(+), 1 deletion(-)
- create mode 100644 tools/testing/selftests/timens/gettime_perf.c
+ tools/testing/selftests/timens/.gitignore |  1 +
+ tools/testing/selftests/timens/Makefile   |  2 +-
+ tools/testing/selftests/timens/exec.c     | 94 +++++++++++++++++++++++
+ 3 files changed, 96 insertions(+), 1 deletion(-)
+ create mode 100644 tools/testing/selftests/timens/exec.c
 
 diff --git a/tools/testing/selftests/timens/.gitignore b/tools/testing/selftests/timens/.gitignore
-index 3b7eda8f35ce..16292e4d08a5 100644
+index 16292e4d08a5..789f21e81028 100644
 --- a/tools/testing/selftests/timens/.gitignore
 +++ b/tools/testing/selftests/timens/.gitignore
-@@ -1,4 +1,6 @@
+@@ -1,4 +1,5 @@
  clock_nanosleep
-+gettime_perf
-+gettime_perf_cold
++exec
+ gettime_perf
+ gettime_perf_cold
  procfs
- timens
- timer
 diff --git a/tools/testing/selftests/timens/Makefile b/tools/testing/selftests/timens/Makefile
-index 08164548a49d..6aefcaccb8f4 100644
+index 6aefcaccb8f4..e9fb30bd8aeb 100644
 --- a/tools/testing/selftests/timens/Makefile
 +++ b/tools/testing/selftests/timens/Makefile
-@@ -1,6 +1,7 @@
- TEST_GEN_PROGS := timens timerfd timer clock_nanosleep procfs
-+TEST_GEN_PROGS_EXTENDED := gettime_perf
+@@ -1,4 +1,4 @@
+-TEST_GEN_PROGS := timens timerfd timer clock_nanosleep procfs
++TEST_GEN_PROGS := timens timerfd timer clock_nanosleep procfs exec
+ TEST_GEN_PROGS_EXTENDED := gettime_perf
  
  CFLAGS := -Wall -Werror -pthread
--LDFLAGS := -lrt
-+LDFLAGS := -lrt -ldl
- 
- include ../lib.mk
-diff --git a/tools/testing/selftests/timens/gettime_perf.c b/tools/testing/selftests/timens/gettime_perf.c
+diff --git a/tools/testing/selftests/timens/exec.c b/tools/testing/selftests/timens/exec.c
 new file mode 100644
-index 000000000000..3a6d9c485de5
+index 000000000000..87b47b557a7a
 --- /dev/null
-+++ b/tools/testing/selftests/timens/gettime_perf.c
-@@ -0,0 +1,91 @@
++++ b/tools/testing/selftests/timens/exec.c
+@@ -0,0 +1,94 @@
 +// SPDX-License-Identifier: GPL-2.0
 +#define _GNU_SOURCE
-+#include <sys/types.h>
-+#include <sys/stat.h>
 +#include <errno.h>
 +#include <fcntl.h>
 +#include <sched.h>
-+#include <time.h>
 +#include <stdio.h>
-+#include <unistd.h>
++#include <stdbool.h>
++#include <sys/stat.h>
 +#include <sys/syscall.h>
-+#include <dlfcn.h>
++#include <sys/types.h>
++#include <sys/wait.h>
++#include <time.h>
++#include <unistd.h>
++#include <time.h>
++#include <string.h>
 +
 +#include "log.h"
 +#include "timens.h"
 +
-+typedef int (*vgettime_t)(clockid_t, struct timespec *);
-+
-+vgettime_t vdso_clock_gettime;
-+
-+static void fill_function_pointers(void)
-+{
-+	void *vdso = dlopen("linux-vdso.so.1",
-+			    RTLD_LAZY | RTLD_LOCAL | RTLD_NOLOAD);
-+	if (!vdso)
-+		vdso = dlopen("linux-gate.so.1",
-+			      RTLD_LAZY | RTLD_LOCAL | RTLD_NOLOAD);
-+	if (!vdso) {
-+		pr_err("[WARN]\tfailed to find vDSO\n");
-+		return;
-+	}
-+
-+	vdso_clock_gettime = (vgettime_t)dlsym(vdso, "__vdso_clock_gettime");
-+	if (!vdso_clock_gettime)
-+		pr_err("Warning: failed to find clock_gettime in vDSO\n");
-+
-+}
-+
-+static void test(clock_t clockid, char *clockstr, bool in_ns)
-+{
-+	struct timespec tp, start;
-+	long i = 0;
-+	const int timeout = 3;
-+
-+	vdso_clock_gettime(clockid, &start);
-+	tp = start;
-+	for (tp = start; start.tv_sec + timeout > tp.tv_sec ||
-+			 (start.tv_sec + timeout == tp.tv_sec &&
-+			  start.tv_nsec > tp.tv_nsec); i++) {
-+		vdso_clock_gettime(clockid, &tp);
-+	}
-+
-+	ksft_test_result_pass("%s:\tclock: %10s\tcycles:\t%10ld\n",
-+			      in_ns ? "ns" : "host", clockstr, i);
-+}
++#define OFFSET (36000)
 +
 +int main(int argc, char *argv[])
 +{
-+	time_t offset = 10;
-+	int nsfd;
++	struct timespec now, tst;
++	int status, i;
++	pid_t pid;
 +
-+	ksft_set_plan(4);
++	if (argc > 1) {
++		if (sscanf(argv[1], "%ld", &now.tv_sec) != 1)
++			return pr_perror("sscanf");
 +
-+	fill_function_pointers();
-+
-+	test(CLOCK_MONOTONIC, "monotonic", false);
-+	test(CLOCK_BOOTTIME, "boottime", false);
++		for (i = 0; i < 2; i++) {
++			_gettime(CLOCK_MONOTONIC, &tst, i);
++			if (abs(tst.tv_sec - now.tv_sec) > 5)
++				return pr_fail("%ld %ld\n", now.tv_sec, tst.tv_sec);
++		}
++		return 0;
++	}
 +
 +	nscheck();
++
++	ksft_set_plan(1);
++
++	clock_gettime(CLOCK_MONOTONIC, &now);
 +
 +	if (unshare_timens())
 +		return 1;
 +
-+	nsfd = open("/proc/self/ns/time_for_children", O_RDONLY);
-+	if (nsfd < 0)
-+		return pr_perror("Can't open a time namespace");
-+
-+	if (_settime(CLOCK_MONOTONIC, offset))
-+		return 1;
-+	if (_settime(CLOCK_BOOTTIME, offset))
++	if (_settime(CLOCK_MONOTONIC, OFFSET))
 +		return 1;
 +
-+	if (setns(nsfd, CLONE_NEWTIME))
-+		return pr_perror("setns");
++	for (i = 0; i < 2; i++) {
++		_gettime(CLOCK_MONOTONIC, &tst, i);
++		if (abs(tst.tv_sec - now.tv_sec) > 5)
++			return pr_fail("%ld %ld\n",
++					now.tv_sec, tst.tv_sec);
++	}
 +
-+	test(CLOCK_MONOTONIC, "monotonic", true);
-+	test(CLOCK_BOOTTIME, "boottime", true);
++	if (argc > 1)
++		return 0;
 +
++	pid = fork();
++	if (pid < 0)
++		return pr_perror("fork");
++
++	if (pid == 0) {
++		char now_str[64];
++		char *cargv[] = {"exec", now_str, NULL};
++		char *cenv[] = {NULL};
++
++		/* Check that a child process is in the new timens. */
++		for (i = 0; i < 2; i++) {
++			_gettime(CLOCK_MONOTONIC, &tst, i);
++			if (abs(tst.tv_sec - now.tv_sec - OFFSET) > 5)
++				return pr_fail("%ld %ld\n",
++						now.tv_sec + OFFSET, tst.tv_sec);
++		}
++
++		/* Check for proper vvar offsets after execve. */
++		snprintf(now_str, sizeof(now_str), "%ld", now.tv_sec + OFFSET);
++		execve("/proc/self/exe", cargv, cenv);
++		return pr_perror("execve");
++	}
++
++	if (waitpid(pid, &status, 0) != pid)
++		return pr_perror("waitpid");
++
++	if (status)
++		ksft_exit_fail();
++
++	ksft_test_result_pass("exec\n");
 +	ksft_exit_pass();
 +	return 0;
 +}
