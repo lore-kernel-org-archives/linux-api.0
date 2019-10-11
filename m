@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv7 19/33] lib/vdso: Prepare for time namespace support
-Date: Fri, 11 Oct 2019 02:23:27 +0100
-Message-ID: <20191011012341.846266-20-dima@arista.com>
+Subject: [PATCHv7 22/33] time: Allocate per-timens vvar page
+Date: Fri, 11 Oct 2019 02:23:30 +0100
+Message-ID: <20191011012341.846266-23-dima@arista.com>
 References: <20191011012341.846266-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -9,315 +9,213 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20191011012341.846266-1-dima@arista.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
+Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Thomas Gleixner <tglx@linutronix.de>
+VDSO support for Time namespace needs to set up a page with the same
+layout as VVAR. That timens page will be placed on position of VVAR page
+inside namespace. That page contains time namespace clock offsets and it
+has vdso_data->seq set to 1 to enforce the slow path and
+vdso_data->clock_mode set to VCLOCK_TIMENS to enforce the time namespace
+handling path.
 
-To support time namespaces in the vdso with a minimal impact on regular non
-time namespace affected tasks, the namespace handling needs to be hidden in
-a slow path.
+Allocate the timens page during namespace creation. Setup the offsets
+when the first task enters the ns and freeze them to guarantee the pace
+of monotonic/boottime clocks and to avoid breakage of applications.
 
-The most obvious place is vdso_seq_begin(). If a task belongs to a time
-namespace then the VVAR page which contains the system wide vdso data is
-replaced with a namespace specific page which has the same layout as the
-VVAR page. That page has vdso_data->seq set to 1 to enforce the slow path
-and vdso_data->clock_mode set to VCLOCK_TIMENS to enforce the time
-namespace handling path.
-
-The extra check in the case that vdso_data->seq is odd, e.g. a concurrent
-update of the vdso data is in progress, is not really affecting regular
-tasks which are not part of a time namespace as the task is spin waiting
-for the update to finish and vdso_data->seq to become even again.
-
-If a time namespace task hits that code path, it invokes the corresponding
-time getter function which retrieves the real VVAR page, reads host time
-and then adds the offset for the requested clock which is stored in the
-special VVAR page.
-
-If VDSO time namespace support is disabled the whole magic is compiled out.
-
-Initial testing shows that the disabled case is almost identical to the
-host case which does not take the slow timens path. With the special timens
-page installed the performance hit is constant time and in the range of
-5-7%.
-
-For the vdso functions which are not using the sequence count an
-unconditional check for vdso_data->clock_mode is added which switches to
-the real vdso when the clock_mode is VCLOCK_TIMENS.
+The design decision is to have a global offset_lock which is used
+during namespace offsets set up and to freeze offsets when first task
+joins the new ns. That is better in terms of memory usage comparing
+to having per-ns mutex that's used only during the set up period.
 
 Suggested-by: Andy Lutomirski <luto@kernel.org>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Based-on-work-by: Thomas Gleixner <tglx@linutronix.de>
+Co-developed-by: Andrei Vagin <avagin@gmail.com>
 Signed-off-by: Andrei Vagin <avagin@gmail.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- include/linux/time.h    |   6 ++
- include/vdso/datapage.h |  19 +++++-
- lib/vdso/Kconfig        |   6 ++
- lib/vdso/gettimeofday.c | 128 +++++++++++++++++++++++++++++++++++++++-
- 4 files changed, 155 insertions(+), 4 deletions(-)
+ include/linux/time_namespace.h |   3 +
+ kernel/time/namespace.c        | 103 ++++++++++++++++++++++++++++++++-
+ 2 files changed, 105 insertions(+), 1 deletion(-)
 
-diff --git a/include/linux/time.h b/include/linux/time.h
-index 27d83fd2ae61..b1a592638d7d 100644
---- a/include/linux/time.h
-+++ b/include/linux/time.h
-@@ -96,4 +96,10 @@ static inline bool itimerspec64_valid(const struct itimerspec64 *its)
-  */
- #define time_after32(a, b)	((s32)((u32)(b) - (u32)(a)) < 0)
- #define time_before32(b, a)	time_after32(a, b)
-+
-+struct timens_offset {
-+	s64	sec;
-+	u64	nsec;
-+};
-+
- #endif
-diff --git a/include/vdso/datapage.h b/include/vdso/datapage.h
-index 2e302c0f41f7..65a38acce27e 100644
---- a/include/vdso/datapage.h
-+++ b/include/vdso/datapage.h
-@@ -21,6 +21,8 @@
- #define CS_RAW		1
- #define CS_BASES	(CS_RAW + 1)
+diff --git a/include/linux/time_namespace.h b/include/linux/time_namespace.h
+index 772911945944..c479cfda2c3e 100644
+--- a/include/linux/time_namespace.h
++++ b/include/linux/time_namespace.h
+@@ -23,6 +23,9 @@ struct time_namespace {
+ 	struct ucounts *ucounts;
+ 	struct ns_common ns;
+ 	struct timens_offsets offsets;
++	struct page *vvar_page;
++	/* Disallow changing offsets after any task joined namespace. */
++	bool frozen_offsets;
+ } __randomize_layout;
+ extern struct time_namespace init_time_ns;
  
-+#define VCLOCK_TIMENS	UINT_MAX
-+
- /**
-  * struct vdso_timestamp - basetime per clock_id
-  * @sec:	seconds
-@@ -48,6 +50,7 @@ struct vdso_timestamp {
-  * @mult:		clocksource multiplier
-  * @shift:		clocksource shift
-  * @basetime[clock_id]:	basetime per clock_id
-+ * @offset[clock_id]:	time namespace offset per clock_id
-  * @tz_minuteswest:	minutes west of Greenwich
-  * @tz_dsttime:		type of DST correction
-  * @hrtimer_res:	hrtimer resolution
-@@ -55,6 +58,17 @@ struct vdso_timestamp {
-  *
-  * vdso_data will be accessed by 64 bit and compat code at the same time
-  * so we should be careful before modifying this structure.
-+ *
-+ * @basetime is used to store the base time for the system wide time getter
-+ * VVAR page.
-+ *
-+ * @offset is used by the special time namespace VVAR pages which are
-+ * installed instead of the real VVAR page. These namespace pages must set
-+ * @seq to 1 and @clock_mode to VLOCK_TIMENS to force the code into the
-+ * time namespace slow path. The namespace aware functions retrieve the
-+ * real system wide VVAR page, read host time and add the per clock offset.
-+ * For clocks which are not affected by time namespace adjustement the
-+ * offset must be zero.
-  */
- struct vdso_data {
- 	u32			seq;
-@@ -65,7 +79,10 @@ struct vdso_data {
- 	u32			mult;
- 	u32			shift;
+diff --git a/kernel/time/namespace.c b/kernel/time/namespace.c
+index 1a0fbaa5d2d4..e14cd1ca387d 100644
+--- a/kernel/time/namespace.c
++++ b/kernel/time/namespace.c
+@@ -15,6 +15,7 @@
+ #include <linux/cred.h>
+ #include <linux/err.h>
+ #include <linux/mm.h>
++#include <vdso/datapage.h>
  
--	struct vdso_timestamp	basetime[VDSO_BASES];
-+	union {
-+		struct vdso_timestamp	basetime[VDSO_BASES];
-+		struct timens_offset	offset[VDSO_BASES];
-+	};
+ ktime_t do_timens_ktime_to_host(clockid_t clockid, ktime_t tim,
+ 				struct timens_offsets *ns_offsets)
+@@ -90,16 +91,23 @@ static struct time_namespace *clone_time_ns(struct user_namespace *user_ns,
  
- 	s32			tz_minuteswest;
- 	s32			tz_dsttime;
-diff --git a/lib/vdso/Kconfig b/lib/vdso/Kconfig
-index 9fe698ff62ec..85276de70dba 100644
---- a/lib/vdso/Kconfig
-+++ b/lib/vdso/Kconfig
-@@ -24,4 +24,10 @@ config GENERIC_COMPAT_VDSO
- 	help
- 	  This config option enables the compat VDSO layer.
+ 	kref_init(&ns->kref);
  
-+config VDSO_TIMENS
-+	bool
-+	help
-+	  Selected by architectures which support time namespaces in the
-+	  VDSO
++	ns->vvar_page = alloc_page(GFP_KERNEL | __GFP_ZERO);
++	if (!ns->vvar_page)
++		goto fail_free;
 +
- endif
-diff --git a/lib/vdso/gettimeofday.c b/lib/vdso/gettimeofday.c
-index e630e7ff57f1..25244b677823 100644
---- a/lib/vdso/gettimeofday.c
-+++ b/lib/vdso/gettimeofday.c
-@@ -38,6 +38,51 @@ u64 vdso_calc_delta(u64 cycles, u64 last, u64 mask, u32 mult)
- }
- #endif
+ 	err = ns_alloc_inum(&ns->ns);
+ 	if (err)
+-		goto fail_free;
++		goto fail_free_page;
  
-+#ifndef CONFIG_VDSO_TIMENS
-+static __always_inline
-+const struct vdso_data *__arch_get_timens_vdso_data(void)
-+{
-+	return NULL;
-+}
-+#endif
-+
-+static int do_hres_timens(const struct vdso_data *vdns, clockid_t clk,
-+		      struct __kernel_timespec *ts)
-+{
-+	const struct vdso_data *vd = __arch_get_timens_vdso_data();
-+	const struct vdso_timestamp *vdso_ts = &vd->basetime[clk];
-+	const struct timens_offset *offs = &vdns->offset[clk];
-+	u64 cycles, last, ns;
-+	s64 sec;
-+	u32 seq;
-+
-+	do {
-+		seq = vdso_read_begin(vd);
-+		cycles = __arch_get_hw_counter(vd->clock_mode);
-+		ns = vdso_ts->nsec;
-+		last = vd->cycle_last;
-+		if (unlikely((s64)cycles < 0))
-+			return -1;
-+
-+		ns += vdso_calc_delta(cycles, last, vd->mask, vd->mult);
-+		ns >>= vd->shift;
-+		sec = vdso_ts->sec;
-+	} while (unlikely(vdso_read_retry(vd, seq)));
-+
-+	/* Add the namespace offset */
-+	sec += offs->sec;
-+	ns += offs->nsec;
-+
-+	/*
-+	 * Do this outside the loop: a race inside the loop could result
-+	 * in __iter_div_u64_rem() being extremely slow.
-+	 */
-+	ts->tv_sec = sec + __iter_div_u64_rem(ns, NSEC_PER_SEC, &ns);
-+	ts->tv_nsec = ns;
-+
-+	return 0;
-+}
-+
- static int do_hres(const struct vdso_data *vd, clockid_t clk,
- 		   struct __kernel_timespec *ts)
- {
-@@ -46,7 +91,28 @@ static int do_hres(const struct vdso_data *vd, clockid_t clk,
- 	u32 seq;
+ 	ns->ucounts = ucounts;
+ 	ns->ns.ops = &timens_operations;
+ 	ns->user_ns = get_user_ns(user_ns);
+ 	ns->offsets = old_ns->offsets;
++	ns->frozen_offsets = false;
+ 	return ns;
  
- 	do {
--		seq = vdso_read_begin(vd);
-+		/*
-+		 * Open coded to handle VCLOCK_TIMENS. Time namespace
-+		 * enabled tasks have a special VVAR page installed which
-+		 * has vd->seq set to 1 and vd->clock_mode set to
-+		 * VCLOCK_TIMENS. For non time namespace affected tasks
-+		 * this does not affect performance because if vd->seq is
-+		 * odd, i.e. a concurrent update is in progress the extra
-+		 * check for vd->clock_mode is just a few extra
-+		 * instructions while spin waiting for vd->seq to become
-+		 * even again.
-+		 */
-+		while (1) {
-+			seq = READ_ONCE(vd->seq);
-+			if (likely(!(seq & 1)))
-+				break;
-+			if (IS_ENABLED(CONFIG_VDSO_TIMENS) &&
-+			    vd->clock_mode == VCLOCK_TIMENS)
-+				return do_hres_timens(vd, clk, ts);
-+			cpu_relax();
-+		}
-+		smp_rmb();
-+
- 		cycles = __arch_get_hw_counter(vd->clock_mode);
- 		ns = vdso_ts->nsec;
- 		last = vd->cycle_last;
-@@ -68,6 +134,34 @@ static int do_hres(const struct vdso_data *vd, clockid_t clk,
- 	return 0;
++fail_free_page:
++	__free_page(ns->vvar_page);
+ fail_free:
+ 	kfree(ns);
+ fail_dec:
+@@ -128,6 +136,93 @@ struct time_namespace *copy_time_ns(unsigned long flags,
+ 	return clone_time_ns(user_ns, old_ns);
  }
  
-+static void do_coarse_timens(const struct vdso_data *vdns, clockid_t clk,
-+			 struct __kernel_timespec *ts)
++static struct timens_offset offset_from_ts(struct timespec64 off)
 +{
-+	const struct vdso_data *vd = __arch_get_timens_vdso_data();
-+	const struct vdso_timestamp *vdso_ts = &vd->basetime[clk];
-+	const struct timens_offset *offs = &vdns->offset[clk];
-+	u64 nsec;
-+	s64 sec;
-+	s32 seq;
++	struct timens_offset ret;
 +
-+	do {
-+		seq = vdso_read_begin(vd);
-+		sec = vdso_ts->sec;
-+		nsec = vdso_ts->nsec;
-+	} while (unlikely(vdso_read_retry(vd, seq)));
++	ret.sec = off.tv_sec;
++	ret.nsec = off.tv_nsec;
 +
-+	/* Add the namespace offset */
-+	sec += offs->sec;
-+	nsec += offs->nsec;
-+
-+	/*
-+	 * Do this outside the loop: a race inside the loop could result
-+	 * in __iter_div_u64_rem() being extremely slow.
-+	 */
-+	ts->tv_sec = sec + __iter_div_u64_rem(nsec, NSEC_PER_SEC, &nsec);
-+	ts->tv_nsec = nsec;
++	return ret;
 +}
 +
- static void do_coarse(const struct vdso_data *vd, clockid_t clk,
- 		      struct __kernel_timespec *ts)
++/*
++ * A time namespace VVAR page has the same layout as the VVAR page which
++ * contains the system wide VDSO data.
++ *
++ * For a normal task the VVAR pages are installed in the normal ordering:
++ *     VVAR
++ *     PVCLOCK
++ *     HVCLOCK
++ *     TIMENS   <- Not really required
++ *
++ * Now for a timens task the pages are installed in the following order:
++ *     TIMENS
++ *     PVCLOCK
++ *     HVCLOCK
++ *     VVAR
++ *
++ * The check for vdso_data->clock_mode is in the unlikely path of
++ * the seq begin magic. So for the non-timens case most of the time
++ * 'seq' is even, so the branch is not taken.
++ *
++ * If 'seq' is odd, i.e. a concurrent update is in progress, the extra check
++ * for vdso_data->clock_mode is a non-issue. The task is spin waiting for the
++ * update to finish and for 'seq' to become even anyway.
++ *
++ * Timens page has vdso_data->clock_mode set to VCLOCK_TIMENS which enforces
++ * the time namespace handling path.
++ */
++static void timens_setup_vdso_data(struct vdso_data *vdata,
++				   struct time_namespace *ns)
++{
++	struct timens_offset *offset = vdata->offset;
++	struct timens_offset monotonic = offset_from_ts(ns->offsets.monotonic);
++	struct timens_offset boottime = offset_from_ts(ns->offsets.boottime);
++
++	vdata->seq			= 1;
++	vdata->clock_mode		= VCLOCK_TIMENS;
++	offset[CLOCK_MONOTONIC]		= monotonic;
++	offset[CLOCK_MONOTONIC_RAW]	= monotonic;
++	offset[CLOCK_MONOTONIC_COARSE]	= monotonic;
++	offset[CLOCK_BOOTTIME]		= boottime;
++	offset[CLOCK_BOOTTIME_ALARM]	= boottime;
++}
++
++/*
++ * Protects possibly multiple offsets writers racing each other
++ * and tasks entering the namespace.
++ */
++static DEFINE_MUTEX(offset_lock);
++
++static void timens_set_vvar_page(struct task_struct *task,
++				struct time_namespace *ns)
++{
++	struct vdso_data *vdata;
++	unsigned int i;
++
++	if (ns == &init_time_ns)
++		return;
++
++	/* Fast-path, taken by every task in namespace except the first. */
++	if (likely(ns->frozen_offsets))
++		return;
++
++	mutex_lock(&offset_lock);
++	/* Nothing to-do: vvar_page has been already initialized. */
++	if (ns->frozen_offsets)
++		goto out;
++
++	ns->frozen_offsets = true;
++	vdata = arch_get_vdso_data(page_address(ns->vvar_page));
++
++	for (i = 0; i < CS_BASES; i++)
++		timens_setup_vdso_data(&vdata[i], ns);
++
++out:
++	mutex_unlock(&offset_lock);
++}
++
+ void free_time_ns(struct kref *kref)
  {
-@@ -75,7 +169,23 @@ static void do_coarse(const struct vdso_data *vd, clockid_t clk,
- 	u32 seq;
+ 	struct time_namespace *ns;
+@@ -136,6 +231,7 @@ void free_time_ns(struct kref *kref)
+ 	dec_time_namespaces(ns->ucounts);
+ 	put_user_ns(ns->user_ns);
+ 	ns_free_inum(&ns->ns);
++	__free_page(ns->vvar_page);
+ 	kfree(ns);
+ }
  
- 	do {
--		seq = vdso_read_begin(vd);
-+		/*
-+		 * Open coded to handle VCLOCK_TIMENS. See comment in
-+		 * do_hres().
-+		 */
-+		while (1) {
-+			seq = READ_ONCE(vd->seq);
-+			if (likely(!(seq & 1)))
-+				break;
-+			if (IS_ENABLED(CONFIG_VDSO_TIMENS) &&
-+			    vd->clock_mode == VCLOCK_TIMENS) {
-+				do_coarse_timens(vd, clk, ts);
-+				return;
-+			}
-+			cpu_relax();
-+		}
-+		smp_rmb();
-+
- 		ts->tv_sec = vdso_ts->sec;
- 		ts->tv_nsec = vdso_ts->nsec;
- 	} while (unlikely(vdso_read_retry(vd, seq)));
-@@ -156,6 +266,10 @@ __cvdso_gettimeofday(struct __kernel_old_timeval *tv, struct timezone *tz)
- 	}
+@@ -192,6 +288,8 @@ static int timens_install(struct nsproxy *nsproxy, struct ns_common *new)
+ 	    !ns_capable(current_user_ns(), CAP_SYS_ADMIN))
+ 		return -EPERM;
  
- 	if (unlikely(tz != NULL)) {
-+		if (IS_ENABLED(CONFIG_VDSO_TIMENS) &&
-+		    vd->clock_mode == VCLOCK_TIMENS)
-+			vd = __arch_get_timens_vdso_data();
++	timens_set_vvar_page(current, ns);
 +
- 		tz->tz_minuteswest = vd[CS_HRES_COARSE].tz_minuteswest;
- 		tz->tz_dsttime = vd[CS_HRES_COARSE].tz_dsttime;
- 	}
-@@ -167,7 +281,12 @@ __cvdso_gettimeofday(struct __kernel_old_timeval *tv, struct timezone *tz)
- static __maybe_unused time_t __cvdso_time(time_t *time)
- {
- 	const struct vdso_data *vd = __arch_get_vdso_data();
--	time_t t = READ_ONCE(vd[CS_HRES_COARSE].basetime[CLOCK_REALTIME].sec);
-+	time_t t;
-+
-+	if (IS_ENABLED(CONFIG_VDSO_TIMENS) && vd->clock_mode == VCLOCK_TIMENS)
-+		vd = __arch_get_timens_vdso_data();
-+
-+	t = READ_ONCE(vd[CS_HRES_COARSE].basetime[CLOCK_REALTIME].sec);
+ 	get_time_ns(ns);
+ 	put_time_ns(nsproxy->time_ns);
+ 	nsproxy->time_ns = ns;
+@@ -211,6 +309,8 @@ int timens_on_fork(struct nsproxy *nsproxy, struct task_struct *tsk)
+ 	if (nsproxy->time_ns == nsproxy->time_ns_for_children)
+ 		return 0;
  
- 	if (time)
- 		*time = t;
-@@ -189,6 +308,9 @@ int __cvdso_clock_getres_common(clockid_t clock, struct __kernel_timespec *res)
- 	if (unlikely((u32) clock >= MAX_CLOCKS))
- 		return -1;
- 
-+	if (IS_ENABLED(CONFIG_VDSO_TIMENS) && vd->clock_mode == VCLOCK_TIMENS)
-+		vd = __arch_get_timens_vdso_data();
++	timens_set_vvar_page(tsk, ns);
 +
- 	hrtimer_res = READ_ONCE(vd[CS_HRES_COARSE].hrtimer_res);
- 	/*
- 	 * Convert the clockid to a bitmask and use it to check which
+ 	get_time_ns(ns);
+ 	put_time_ns(nsproxy->time_ns);
+ 	nsproxy->time_ns = ns;
+@@ -246,6 +346,7 @@ struct time_namespace init_time_ns = {
+ 	.user_ns	= &init_user_ns,
+ 	.ns.inum	= PROC_TIME_INIT_INO,
+ 	.ns.ops		= &timens_operations,
++	.frozen_offsets	= true,
+ };
+ 
+ static int __init time_ns_init(void)
 -- 
 2.23.0
