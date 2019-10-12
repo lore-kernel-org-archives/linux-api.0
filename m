@@ -1,176 +1,114 @@
-From: Christian Brauner <christian.brauner@ubuntu.com>
-Subject: Re: [PATCH] pidfd: add NSpid entries to fdinfo
-Date: Sat, 12 Oct 2019 12:21:20 +0200
-Message-ID: <20191012102119.qq2adlnxjxrkslca@wittgenstein>
-References: <CAG48ez1hk9d-qAPcRy9QOgNuO8u3Y_hu_3=GZoFYLY+oMdo8xg@mail.gmail.com>
- <20191012101922.24168-1-christian.brauner@ubuntu.com>
+From: Daniel Colascione <dancol@google.com>
+Subject: [PATCH 3/7] Add a UFFD_SECURE flag to the userfaultfd API.
+Date: Sat, 12 Oct 2019 12:15:58 -0700
+Message-ID: <20191012191602.45649-4-dancol@google.com>
+References: <20191012191602.45649-1-dancol@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20191012101922.24168-1-christian.brauner@ubuntu.com>
+In-Reply-To: <20191012191602.45649-1-dancol@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: jannh@google.com
-Cc: aarcange@redhat.com, akpm@linux-foundation.org, christian@kellner.me, ckellner@redhat.com, cyphar@cyphar.com, elena.reshetova@intel.com, guro@fb.com, ldv@altlinux.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, mhocko@suse.com, mingo@kernel.org, peterz@infradead.org, tglx@linutronix.de, viro@zeniv.linux.org.uk
+To: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, lokeshgidra@google.com, dancol@google.com, nnk@google.com
+Cc: nosh@google.com, timmurray@google.com
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Oct 12, 2019 at 12:19:22PM +0200, Christian Brauner wrote:
-> Currently, the fdinfo file of contains the field Pid:
-> It contains the pid a given pidfd refers to in the pid namespace of the
-> opener's procfs instance.
-> If the pid namespace of the process is not a descendant of the pid
-> namespace of the procfs instance 0 will be shown as its pid. This is
-> similar to calling getppid() on a process who's parent is out of it's
-> pid namespace (e.g. when moving a process into a sibling pid namespace
-> via setns()).
-> 
-> Add an NSpid field for easy retrieval of the pid in all descendant pid
-> namespaces:
-> If pid namespaces are supported this field will contain the pid a given
-> pidfd refers to for all descendant pid namespaces starting from the
-> current pid namespace of the opener's procfs instance, i.e. the first
-> pid entry for Pid and NSpid will be identical.
-> If the pid namespace of the process is not a descendant of the pid
-> namespace of the procfs instance 0 will be shown as its first NSpid and
-> no other NSpid entries will be shown.
-> Note that this differs from the Pid and NSpid fields in
-> /proc/<pid>/status where Pid and NSpid are always shown relative to the
-> pid namespace of the opener's procfs instace. The difference becomes
-> obvious when sending around a pidfd between pid namespaces from
-> different trees, i.e. where no ancestoral relation is present between
-> the pid namespaces:
-> 1. sending around pidfd:
-> - create two new pid namespaces ns1 and ns2 in the initial pid namespace
->   (Also take care to create new mount namespaces in the new pid
->   namespace and mount procfs.)
-> - create a process with a pidfd in ns1
-> - send pidfd from ns1 to ns2
-> - read /proc/self/fdinfo/<pidfd> and observe that Pid and NSpid entry
->   are 0
-> - create a process with a pidfd in
-> - open a pidfd for a process in the initial pid namespace
-> 2. sending around /proc/<pid>/status fd:
-> - create two new pid namespaces ns1 and ns2 in the initial pid namespace
->   (Also take care to create new mount namespaces in the new pid
->   namespace and mount procfs.)
-> - create a process in ns1
-> - open /proc/<pid>/status in the initial pid namespace for the process
->   you created in ns1
-> - send statusfd from initial pid namespace to ns2
-> - read statusfd and observe:
->   - that Pid will contain the pid of the process as seen from the init
->   - that NSpid will contain the pids of the process for all descendant
->     pid namespaces starting from the initial pid namespace
-> 
-> Cc: Jann Horn <jannh@google.com>
-> Cc: linux-api@vger.kernel.org
-> Co-Developed-by: Christian Kellner <christian@kellner.me>
-> Signed-off-by: Christian Kellner <christian@kellner.me>
-> Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+The new secure flag makes userfaultfd use a new "secure" anonymous
+file object instead of the default one, letting security modules
+supervise userfaultfd use.
 
-I think this might be more what we want.
-I tried to think of cases where the first entry of Pid is not identical
-to the first entry of NSpid but I came up with none. Maybe you do, Jann?
+Requiring that users pass a new flag lets us avoid changing the
+semantics for existing callers.
 
-Christian, this is just a quick stab I took. Feel free to pick this up
-as a template.
+Signed-off-by: Daniel Colascione <dancol@google.com>
+---
+ fs/userfaultfd.c                 | 28 +++++++++++++++++++++++++---
+ include/uapi/linux/userfaultfd.h |  8 ++++++++
+ 2 files changed, 33 insertions(+), 3 deletions(-)
 
-Thanks!
-Christian
-
-> ---
->  kernel/fork.c | 73 ++++++++++++++++++++++++++++++++++++++++++++++++++-
->  1 file changed, 72 insertions(+), 1 deletion(-)
-> 
-> diff --git a/kernel/fork.c b/kernel/fork.c
-> index 1f6c45f6a734..b155bad92d9c 100644
-> --- a/kernel/fork.c
-> +++ b/kernel/fork.c
-> @@ -1695,12 +1695,83 @@ static int pidfd_release(struct inode *inode, struct file *file)
->  }
->  
->  #ifdef CONFIG_PROC_FS
-> +/**
-> + * pidfd_show_fdinfo - print information about a pidfd
-> + * @m: proc fdinfo file
-> + * @f: file referencing a pidfd
-> + *
-> + * Pid:
-> + * This function will print the pid a given pidfd refers to in the pid
-> + * namespace of the opener's procfs instance.
-> + * If the pid namespace of the process is not a descendant of the pid
-> + * namespace of the procfs instance 0 will be shown as its pid. This is
-> + * similar to calling getppid() on a process who's parent is out of it's
-> + * pid namespace (e.g. when moving a process into a sibling pid namespace
-> + * via setns()).
-> + *
-> + * NSpid:
-> + * If pid namespaces are supported then this function will also print the
-> + * pid a given pidfd refers to for all descendant pid namespaces starting
-> + * from the current pid namespace of the opener's procfs instance, i.e. the
-> + * first pid entry for Pid and NSpid will be identical.
-> + * If the pid namespace of the process is not a descendant of the pid
-> + * namespace of the procfs instance 0 will be shown as its first NSpid and
-> + * no other NSpid entries will be shown.
-> + * Note that this differs from the Pid and NSpid fields in
-> + * /proc/<pid>/status where Pid and NSpid are always shown relative to the
-> + * pid namespace of the opener's procfs instace. The difference becomes
-> + * obvious when sending around a pidfd between pid namespaces from
-> + * different trees, i.e. where no ancestoral relation is present between
-> + * the pid namespaces:
-> + * 1. sending around pidfd:
-> + * - create two new pid namespaces ns1 and ns2 in the initial pid namespace
-> + *   (Also take care to create new mount namespaces in the new pid
-> + *   namespace and mount procfs.)
-> + * - create a process with a pidfd in ns1
-> + * - send pidfd from ns1 to ns2
-> + * - read /proc/self/fdinfo/<pidfd> and observe that Pid and NSpid entry
-> + *   are 0
-> + * - create a process with a pidfd in
-> + * - open a pidfd for a process in the initial pid namespace
-> + * 2. sending around /proc/<pid>/status fd:
-> + * - create two new pid namespaces ns1 and ns2 in the initial pid namespace
-> + *   (Also take care to create new mount namespaces in the new pid
-> + *   namespace and mount procfs.)
-> + * - create a process in ns1
-> + * - open /proc/<pid>/status in the initial pid namespace for the process
-> + *   you created in ns1
-> + * - send statusfd from initial pid namespace to ns2
-> + * - read statusfd and observe:
-> + *   - that Pid will contain the pid of the process as seen from the init
-> + *   - that NSpid will contain the pids of the process for all descendant
-> + *     pid namespaces starting from the initial pid namespace
-> + */
->  static void pidfd_show_fdinfo(struct seq_file *m, struct file *f)
->  {
->  	struct pid_namespace *ns = proc_pid_ns(file_inode(m->file));
->  	struct pid *pid = f->private_data;
-> +	pid_t nr = pid_nr_ns(pid, ns);
-> +
-> +	seq_put_decimal_ull(m, "Pid:\t", nr);
-> +
-> +#ifdef CONFIG_PID_NS
-> +	seq_puts(m, "\nNSpid:");
-> +	if (nr == 0) {
-> +		/*
-> +		 * If nr is zero the pid namespace of the procfs and the
-> +		 * pid namespace of the pidfd are neither the same pid
-> +		 * namespace nor are they ancestors. Since NSpid and Pid
-> +		 * are always identical in their first entry shortcut it
-> +		 * and simply print 0.
-> +		 */
-> +		seq_put_decimal_ull(m, "\t", nr);
-> +	} else {
-> +		int i;
-> +		for (i = ns->level; i <= pid->level; i++)
-> +			seq_put_decimal_ull(m, "\t", pid_nr_ns(pid, pid->numbers[i].ns));
-> +	}
-> +#endif
->  
-> -	seq_put_decimal_ull(m, "Pid:\t", pid_nr_ns(pid, ns));
->  	seq_putc(m, '\n');
->  }
->  #endif
-> -- 
-> 2.23.0
-> 
+diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
+index f9fd18670e22..29f920fb236e 100644
+--- a/fs/userfaultfd.c
++++ b/fs/userfaultfd.c
+@@ -1022,6 +1022,13 @@ static int resolve_userfault_fork(struct userfaultfd_ctx *ctx,
+ {
+ 	int fd;
+ 
++	/*
++	 * Using a secure-mode UFFD to monitor forks isn't supported
++	 * right now.
++	 */
++	if (new->flags & UFFD_SECURE)
++		return -EOPNOTSUPP;
++
+ 	fd = anon_inode_getfd("[userfaultfd]", &userfaultfd_fops, new,
+ 			      O_RDWR | (new->flags & UFFD_SHARED_FCNTL_FLAGS));
+ 	if (fd < 0)
+@@ -1841,6 +1848,18 @@ static int userfaultfd_api(struct userfaultfd_ctx *ctx,
+ 		ret = -EINVAL;
+ 		goto out;
+ 	}
++	if ((ctx->flags & UFFD_SECURE) &&
++	    (features & UFFD_FEATURE_EVENT_FORK)) {
++		/*
++		 * We don't support UFFD_FEATURE_EVENT_FORK on a
++		 * secure-mode UFFD: doing so would need us to
++		 * construct the new file object in the context of the
++		 * fork child, and it's not worth it right now.
++		 */
++		ret = -EINVAL;
++		goto out;
++	}
++
+ 	/* report all available features and ioctls to userland */
+ 	uffdio_api.features = UFFD_API_FEATURES;
+ 	uffdio_api.ioctls = UFFD_API_IOCTLS;
+@@ -1942,6 +1961,7 @@ SYSCALL_DEFINE1(userfaultfd, int, flags)
+ {
+ 	struct userfaultfd_ctx *ctx;
+ 	int fd;
++	static const int uffd_flags = UFFD_SECURE;
+ 
+ 	if (!sysctl_unprivileged_userfaultfd && !capable(CAP_SYS_PTRACE))
+ 		return -EPERM;
+@@ -1951,8 +1971,9 @@ SYSCALL_DEFINE1(userfaultfd, int, flags)
+ 	/* Check the UFFD_* constants for consistency.  */
+ 	BUILD_BUG_ON(UFFD_CLOEXEC != O_CLOEXEC);
+ 	BUILD_BUG_ON(UFFD_NONBLOCK != O_NONBLOCK);
++	BUILD_BUG_ON(UFFD_SHARED_FCNTL_FLAGS & uffd_flags);
+ 
+-	if (flags & ~UFFD_SHARED_FCNTL_FLAGS)
++	if (flags & ~(UFFD_SHARED_FCNTL_FLAGS | uffd_flags))
+ 		return -EINVAL;
+ 
+ 	ctx = kmem_cache_alloc(userfaultfd_ctx_cachep, GFP_KERNEL);
+@@ -1969,8 +1990,9 @@ SYSCALL_DEFINE1(userfaultfd, int, flags)
+ 	/* prevent the mm struct to be freed */
+ 	mmgrab(ctx->mm);
+ 
+-	fd = anon_inode_getfd("[userfaultfd]", &userfaultfd_fops, ctx,
+-			      O_RDWR | (flags & UFFD_SHARED_FCNTL_FLAGS));
++	fd = anon_inode_getfd2("[userfaultfd]", &userfaultfd_fops, ctx,
++			       O_RDWR | (flags & UFFD_SHARED_FCNTL_FLAGS),
++			       ((flags & UFFD_SECURE) ? ANON_INODE_SECURE : 0));
+ 	if (fd < 0) {
+ 		mmdrop(ctx->mm);
+ 		kmem_cache_free(userfaultfd_ctx_cachep, ctx);
+diff --git a/include/uapi/linux/userfaultfd.h b/include/uapi/linux/userfaultfd.h
+index 48f1a7c2f1f0..12d7d40d7f25 100644
+--- a/include/uapi/linux/userfaultfd.h
++++ b/include/uapi/linux/userfaultfd.h
+@@ -231,4 +231,12 @@ struct uffdio_zeropage {
+ 	__s64 zeropage;
+ };
+ 
++/*
++ * Flags for the userfaultfd(2) system call itself.
++ */
++
++/*
++ * Create a userfaultfd with MAC security checks enabled.
++ */
++#define UFFD_SECURE 1
+ #endif /* _LINUX_USERFAULTFD_H */
+-- 
+2.23.0.700.g56cf767bdb-goog
