@@ -1,7 +1,7 @@
 From: Daniel Colascione <dancol@google.com>
-Subject: [PATCH 3/7] Add a UFFD_SECURE flag to the userfaultfd API.
-Date: Sat, 12 Oct 2019 12:15:58 -0700
-Message-ID: <20191012191602.45649-4-dancol@google.com>
+Subject: [PATCH 1/7] Add a new flags-accepting interface for anonymous inodes
+Date: Sat, 12 Oct 2019 12:15:56 -0700
+Message-ID: <20191012191602.45649-2-dancol@google.com>
 References: <20191012191602.45649-1-dancol@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -12,103 +12,178 @@ To: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, lokeshgidra@google.
 Cc: nosh@google.com, timmurray@google.com
 List-Id: linux-api@vger.kernel.org
 
-The new secure flag makes userfaultfd use a new "secure" anonymous
-file object instead of the default one, letting security modules
-supervise userfaultfd use.
-
-Requiring that users pass a new flag lets us avoid changing the
-semantics for existing callers.
+Add functions forwarding from the old names to the new ones so we
+don't need to change any callers.
 
 Signed-off-by: Daniel Colascione <dancol@google.com>
 ---
- fs/userfaultfd.c                 | 28 +++++++++++++++++++++++++---
- include/uapi/linux/userfaultfd.h |  8 ++++++++
- 2 files changed, 33 insertions(+), 3 deletions(-)
+ fs/anon_inodes.c            | 62 ++++++++++++++++++++++---------------
+ include/linux/anon_inodes.h | 27 +++++++++++++---
+ 2 files changed, 59 insertions(+), 30 deletions(-)
 
-diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
-index f9fd18670e22..29f920fb236e 100644
---- a/fs/userfaultfd.c
-+++ b/fs/userfaultfd.c
-@@ -1022,6 +1022,13 @@ static int resolve_userfault_fork(struct userfaultfd_ctx *ctx,
- {
- 	int fd;
- 
-+	/*
-+	 * Using a secure-mode UFFD to monitor forks isn't supported
-+	 * right now.
-+	 */
-+	if (new->flags & UFFD_SECURE)
-+		return -EOPNOTSUPP;
-+
- 	fd = anon_inode_getfd("[userfaultfd]", &userfaultfd_fops, new,
- 			      O_RDWR | (new->flags & UFFD_SHARED_FCNTL_FLAGS));
- 	if (fd < 0)
-@@ -1841,6 +1848,18 @@ static int userfaultfd_api(struct userfaultfd_ctx *ctx,
- 		ret = -EINVAL;
- 		goto out;
- 	}
-+	if ((ctx->flags & UFFD_SECURE) &&
-+	    (features & UFFD_FEATURE_EVENT_FORK)) {
-+		/*
-+		 * We don't support UFFD_FEATURE_EVENT_FORK on a
-+		 * secure-mode UFFD: doing so would need us to
-+		 * construct the new file object in the context of the
-+		 * fork child, and it's not worth it right now.
-+		 */
-+		ret = -EINVAL;
-+		goto out;
-+	}
-+
- 	/* report all available features and ioctls to userland */
- 	uffdio_api.features = UFFD_API_FEATURES;
- 	uffdio_api.ioctls = UFFD_API_IOCTLS;
-@@ -1942,6 +1961,7 @@ SYSCALL_DEFINE1(userfaultfd, int, flags)
- {
- 	struct userfaultfd_ctx *ctx;
- 	int fd;
-+	static const int uffd_flags = UFFD_SECURE;
- 
- 	if (!sysctl_unprivileged_userfaultfd && !capable(CAP_SYS_PTRACE))
- 		return -EPERM;
-@@ -1951,8 +1971,9 @@ SYSCALL_DEFINE1(userfaultfd, int, flags)
- 	/* Check the UFFD_* constants for consistency.  */
- 	BUILD_BUG_ON(UFFD_CLOEXEC != O_CLOEXEC);
- 	BUILD_BUG_ON(UFFD_NONBLOCK != O_NONBLOCK);
-+	BUILD_BUG_ON(UFFD_SHARED_FCNTL_FLAGS & uffd_flags);
- 
--	if (flags & ~UFFD_SHARED_FCNTL_FLAGS)
-+	if (flags & ~(UFFD_SHARED_FCNTL_FLAGS | uffd_flags))
- 		return -EINVAL;
- 
- 	ctx = kmem_cache_alloc(userfaultfd_ctx_cachep, GFP_KERNEL);
-@@ -1969,8 +1990,9 @@ SYSCALL_DEFINE1(userfaultfd, int, flags)
- 	/* prevent the mm struct to be freed */
- 	mmgrab(ctx->mm);
- 
--	fd = anon_inode_getfd("[userfaultfd]", &userfaultfd_fops, ctx,
--			      O_RDWR | (flags & UFFD_SHARED_FCNTL_FLAGS));
-+	fd = anon_inode_getfd2("[userfaultfd]", &userfaultfd_fops, ctx,
-+			       O_RDWR | (flags & UFFD_SHARED_FCNTL_FLAGS),
-+			       ((flags & UFFD_SECURE) ? ANON_INODE_SECURE : 0));
- 	if (fd < 0) {
- 		mmdrop(ctx->mm);
- 		kmem_cache_free(userfaultfd_ctx_cachep, ctx);
-diff --git a/include/uapi/linux/userfaultfd.h b/include/uapi/linux/userfaultfd.h
-index 48f1a7c2f1f0..12d7d40d7f25 100644
---- a/include/uapi/linux/userfaultfd.h
-+++ b/include/uapi/linux/userfaultfd.h
-@@ -231,4 +231,12 @@ struct uffdio_zeropage {
- 	__s64 zeropage;
+diff --git a/fs/anon_inodes.c b/fs/anon_inodes.c
+index 89714308c25b..caa36019afca 100644
+--- a/fs/anon_inodes.c
++++ b/fs/anon_inodes.c
+@@ -56,60 +56,71 @@ static struct file_system_type anon_inode_fs_type = {
  };
  
-+/*
-+ * Flags for the userfaultfd(2) system call itself.
-+ */
+ /**
+- * anon_inode_getfile - creates a new file instance by hooking it up to an
+- *                      anonymous inode, and a dentry that describe the "class"
+- *                      of the file
++ * anon_inode_getfile2 - creates a new file instance by hooking it up to
++ *                       an anonymous inode, and a dentry that describe
++ *                       the "class" of the file
+  *
+  * @name:    [in]    name of the "class" of the new file
+  * @fops:    [in]    file operations for the new file
+  * @priv:    [in]    private data for the new file (will be file's private_data)
+- * @flags:   [in]    flags
++ * @flags:   [in]    flags for the file
++ * @anon_inode_flags: [in] flags for anon_inode*
+  *
+- * Creates a new file by hooking it on a single inode. This is useful for files
++ * Creates a new file by hooking it on an unspecified inode. This is useful for files
+  * that do not need to have a full-fledged inode in order to operate correctly.
+  * All the files created with anon_inode_getfile() will share a single inode,
+  * hence saving memory and avoiding code duplication for the file/inode/dentry
+  * setup.  Returns the newly created file* or an error pointer.
++ *
++ * anon_inode_flags must be zero.
+  */
+-struct file *anon_inode_getfile(const char *name,
+-				const struct file_operations *fops,
+-				void *priv, int flags)
++struct file *anon_inode_getfile2(const char *name,
++				 const struct file_operations *fops,
++				 void *priv, int flags, int anon_inode_flags)
+ {
++	struct inode *inode;
+ 	struct file *file;
+ 
+-	if (IS_ERR(anon_inode_inode))
+-		return ERR_PTR(-ENODEV);
+-
+-	if (fops->owner && !try_module_get(fops->owner))
+-		return ERR_PTR(-ENOENT);
++	if (anon_inode_flags)
++		return ERR_PTR(-EINVAL);
+ 
++	inode =	anon_inode_inode;
++	if (IS_ERR(inode))
++		return ERR_PTR(-ENODEV);
+ 	/*
+-	 * We know the anon_inode inode count is always greater than zero,
+-	 * so ihold() is safe.
++	 * We know the anon_inode inode count is always
++	 * greater than zero, so ihold() is safe.
+ 	 */
+-	ihold(anon_inode_inode);
+-	file = alloc_file_pseudo(anon_inode_inode, anon_inode_mnt, name,
++	ihold(inode);
 +
-+/*
-+ * Create a userfaultfd with MAC security checks enabled.
-+ */
-+#define UFFD_SECURE 1
- #endif /* _LINUX_USERFAULTFD_H */
++	if (fops->owner && !try_module_get(fops->owner)) {
++		file = ERR_PTR(-ENOENT);
++		goto err;
++	}
++
++	file = alloc_file_pseudo(inode, anon_inode_mnt, name,
+ 				 flags & (O_ACCMODE | O_NONBLOCK), fops);
+ 	if (IS_ERR(file))
+ 		goto err;
+ 
+-	file->f_mapping = anon_inode_inode->i_mapping;
++	file->f_mapping = inode->i_mapping;
+ 
+ 	file->private_data = priv;
+ 
+ 	return file;
+ 
+ err:
+-	iput(anon_inode_inode);
++	iput(inode);
+ 	module_put(fops->owner);
+ 	return file;
+ }
+ EXPORT_SYMBOL_GPL(anon_inode_getfile);
++EXPORT_SYMBOL_GPL(anon_inode_getfile2);
+ 
+ /**
+- * anon_inode_getfd - creates a new file instance by hooking it up to an
+- *                    anonymous inode, and a dentry that describe the "class"
+- *                    of the file
++ * anon_inode_getfd2 - creates a new file instance by hooking it up to an
++ *                     anonymous inode, and a dentry that describe the "class"
++ *                     of the file
+  *
+  * @name:    [in]    name of the "class" of the new file
+  * @fops:    [in]    file operations for the new file
+@@ -122,8 +133,8 @@ EXPORT_SYMBOL_GPL(anon_inode_getfile);
+  * hence saving memory and avoiding code duplication for the file/inode/dentry
+  * setup.  Returns new descriptor or an error code.
+  */
+-int anon_inode_getfd(const char *name, const struct file_operations *fops,
+-		     void *priv, int flags)
++int anon_inode_getfd2(const char *name, const struct file_operations *fops,
++		      void *priv, int flags, int anon_inode_flags)
+ {
+ 	int error, fd;
+ 	struct file *file;
+@@ -133,7 +144,7 @@ int anon_inode_getfd(const char *name, const struct file_operations *fops,
+ 		return error;
+ 	fd = error;
+ 
+-	file = anon_inode_getfile(name, fops, priv, flags);
++	file = anon_inode_getfile2(name, fops, priv, flags, anon_inode_flags);
+ 	if (IS_ERR(file)) {
+ 		error = PTR_ERR(file);
+ 		goto err_put_unused_fd;
+@@ -147,6 +158,7 @@ int anon_inode_getfd(const char *name, const struct file_operations *fops,
+ 	return error;
+ }
+ EXPORT_SYMBOL_GPL(anon_inode_getfd);
++EXPORT_SYMBOL_GPL(anon_inode_getfd2);
+ 
+ static int __init anon_inode_init(void)
+ {
+diff --git a/include/linux/anon_inodes.h b/include/linux/anon_inodes.h
+index d0d7d96261ad..10699462dcb1 100644
+--- a/include/linux/anon_inodes.h
++++ b/include/linux/anon_inodes.h
+@@ -11,11 +11,28 @@
+ 
+ struct file_operations;
+ 
+-struct file *anon_inode_getfile(const char *name,
+-				const struct file_operations *fops,
+-				void *priv, int flags);
+-int anon_inode_getfd(const char *name, const struct file_operations *fops,
+-		     void *priv, int flags);
++#define ANON_INODE_SECURE 1
++
++struct file *anon_inode_getfile2(const char *name,
++				 const struct file_operations *fops,
++				 void *priv, int flags, int anon_inode_flags);
++int anon_inode_getfd2(const char *name, const struct file_operations *fops,
++		      void *priv, int flags, int anon_inode_flags);
++
++static inline int anon_inode_getfd(const char *name,
++				   const struct file_operations *fops,
++				   void *priv, int flags)
++{
++	return anon_inode_getfd2(name, fops, priv, flags, 0);
++}
++
++static inline struct file *anon_inode_getfile(const char *name,
++					      const struct file_operations *fops,
++					      void *priv, int flags)
++{
++	return anon_inode_getfile2(name, fops, priv, flags, 0);
++}
++
+ 
+ #endif /* _LINUX_ANON_INODES_H */
+ 
 -- 
 2.23.0.700.g56cf767bdb-goog
