@@ -1,7 +1,7 @@
 From: Daniel Colascione <dancol@google.com>
-Subject: [PATCH 2/7] Add a concept of a "secure" anonymous file
-Date: Sat, 12 Oct 2019 12:15:57 -0700
-Message-ID: <20191012191602.45649-3-dancol@google.com>
+Subject: [PATCH 7/7] Add a new sysctl for limiting userfaultfd to user mode faults
+Date: Sat, 12 Oct 2019 12:16:02 -0700
+Message-ID: <20191012191602.45649-8-dancol@google.com>
 References: <20191012191602.45649-1-dancol@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -12,157 +12,109 @@ To: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, lokeshgidra@google.
 Cc: nosh@google.com, timmurray@google.com
 List-Id: linux-api@vger.kernel.org
 
-A secure anonymous file is one we hooked up to its own inode (as
-opposed to the shared inode we use for non-secure anonymous files). A
-new selinux hook gives security modules a chance to initialize, label,
-and veto the creation of these secure anonymous files. Security
-modules had limit ability to interact with non-secure anonymous files
-due to all of these files sharing a single inode.
+Add a new sysctl knob unprivileged_userfaultfd_user_mode_only.
+This sysctl can be set to either zero or one. When zero (the default)
+the system lets all users call userfaultfd with or without
+UFFD_USER_MODE_ONLY, modulo other access controls. When
+unprivileged_userfaultfd_user_mode_only is set to one, users without
+CAP_SYS_PTRACE must pass UFFD_USER_MODE_ONLY to userfaultfd or the API
+will fail with EPERM. This facility allows administrators to reduce
+the likelihood that an attacker with access to userfaultfd can delay
+faulting kernel code to widen timing windows for other exploits.
 
 Signed-off-by: Daniel Colascione <dancol@google.com>
 ---
- fs/anon_inodes.c          | 45 ++++++++++++++++++++++++++++++---------
- include/linux/lsm_hooks.h |  8 +++++++
- include/linux/security.h  |  2 ++
- security/security.c       |  8 +++++++
- 4 files changed, 53 insertions(+), 10 deletions(-)
+ Documentation/admin-guide/sysctl/vm.rst | 13 +++++++++++++
+ fs/userfaultfd.c                        | 12 ++++++++++--
+ include/linux/userfaultfd_k.h           |  1 +
+ kernel/sysctl.c                         |  9 +++++++++
+ 4 files changed, 33 insertions(+), 2 deletions(-)
 
-diff --git a/fs/anon_inodes.c b/fs/anon_inodes.c
-index caa36019afca..d68d76523ad3 100644
---- a/fs/anon_inodes.c
-+++ b/fs/anon_inodes.c
-@@ -55,6 +55,23 @@ static struct file_system_type anon_inode_fs_type = {
- 	.kill_sb	= kill_anon_super,
+diff --git a/Documentation/admin-guide/sysctl/vm.rst b/Documentation/admin-guide/sysctl/vm.rst
+index 6664eec7bd35..330fd82b3f4e 100644
+--- a/Documentation/admin-guide/sysctl/vm.rst
++++ b/Documentation/admin-guide/sysctl/vm.rst
+@@ -849,6 +849,19 @@ they pass the UFFD_SECURE, enabling MAC security checks.
+ 
+ The default value is 1.
+ 
++unprivileged_userfaultfd_user_mode_only
++========================================
++
++This flag controls whether unprivileged users can use the userfaultfd
++system calls to handle page faults in kernel mode.  If set to zero,
++userfaultfd works with or without UFFD_USER_MODE_ONLY, modulo
++unprivileged_userfaultfd above.  If set to one, users without
++SYS_CAP_PTRACE must pass UFFD_USER_MODE_ONLY in order for userfaultfd
++to succeed.  Prohibiting use of userfaultfd for handling faults from
++kernel mode may make certain vulnerabilities more difficult
++to exploit.
++
++The default value is 0.
+ 
+ user_reserve_kbytes
+ ===================
+diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
+index aaed9347973e..02addd425ab7 100644
+--- a/fs/userfaultfd.c
++++ b/fs/userfaultfd.c
+@@ -29,6 +29,7 @@
+ #include <linux/hugetlb.h>
+ 
+ int sysctl_unprivileged_userfaultfd __read_mostly = 1;
++int sysctl_unprivileged_userfaultfd_user_mode_only __read_mostly = 0;
+ 
+ static struct kmem_cache *userfaultfd_ctx_cachep __read_mostly;
+ 
+@@ -1963,8 +1964,15 @@ SYSCALL_DEFINE1(userfaultfd, int, flags)
+ 	struct userfaultfd_ctx *ctx;
+ 	int fd;
+ 	static const int uffd_flags = UFFD_SECURE | UFFD_USER_MODE_ONLY;
+-	bool need_cap_check = sysctl_unprivileged_userfaultfd == 0 ||
+-		(sysctl_unprivileged_userfaultfd == 2 && !(flags & UFFD_SECURE));
++	bool need_cap_check = false;
++
++	if (sysctl_unprivileged_userfaultfd == 0 ||
++	    (sysctl_unprivileged_userfaultfd == 2 && !(flags & UFFD_SECURE)))
++		need_cap_check = true;
++
++	if (sysctl_unprivileged_userfaultfd_user_mode_only &&
++	    (flags & UFFD_USER_MODE_ONLY) == 0)
++		need_cap_check = true;
+ 
+ 	if (need_cap_check && !capable(CAP_SYS_PTRACE))
+ 		return -EPERM;
+diff --git a/include/linux/userfaultfd_k.h b/include/linux/userfaultfd_k.h
+index 549c8b0cca52..efe14abb2dc8 100644
+--- a/include/linux/userfaultfd_k.h
++++ b/include/linux/userfaultfd_k.h
+@@ -29,6 +29,7 @@
+ #define UFFD_FLAGS_SET (EFD_SHARED_FCNTL_FLAGS)
+ 
+ extern int sysctl_unprivileged_userfaultfd;
++extern int sysctl_unprivileged_userfaultfd_user_mode_only;
+ 
+ extern const struct file_operations userfaultfd_fops;
+ 
+diff --git a/kernel/sysctl.c b/kernel/sysctl.c
+index fc98d5df344e..4f296676c0ac 100644
+--- a/kernel/sysctl.c
++++ b/kernel/sysctl.c
+@@ -1740,6 +1740,15 @@ static struct ctl_table vm_table[] = {
+ 		.extra1		= SYSCTL_ZERO,
+ 		.extra2		= &two,
+ 	},
++	{
++		.procname	= "unprivileged_userfaultfd_user_mode_only",
++		.data		= &sysctl_unprivileged_userfaultfd_user_mode_only,
++		.maxlen		= sizeof(sysctl_unprivileged_userfaultfd_user_mode_only),
++		.mode		= 0644,
++		.proc_handler	= proc_dointvec_minmax,
++		.extra1		= SYSCTL_ZERO,
++		.extra2		= SYSCTL_ONE,
++	},
+ #endif
+ 	{ }
  };
- 
-+struct inode *anon_inode_make_secure_inode(const char *name,
-+					   const struct file_operations *fops)
-+{
-+	struct inode *inode;
-+	int error;
-+	inode = alloc_anon_inode(anon_inode_mnt->mnt_sb);
-+	if (IS_ERR(inode))
-+		return ERR_PTR(PTR_ERR(inode));
-+	inode->i_flags &= ~S_PRIVATE;
-+	error =	security_inode_init_security_anon(inode, name, fops);
-+	if (error) {
-+		iput(inode);
-+		return ERR_PTR(error);
-+	}
-+	return inode;
-+}
-+
- /**
-  * anon_inode_getfile2 - creates a new file instance by hooking it up to
-  *                       an anonymous inode, and a dentry that describe
-@@ -72,7 +89,9 @@ static struct file_system_type anon_inode_fs_type = {
-  * hence saving memory and avoiding code duplication for the file/inode/dentry
-  * setup.  Returns the newly created file* or an error pointer.
-  *
-- * anon_inode_flags must be zero.
-+ * If anon_inode_flags contains ANON_INODE_SECURE, create a new inode
-+ * and enable security checks for it. Otherwise, attach a new file to
-+ * a singleton placeholder inode with security checks disabled.
-  */
- struct file *anon_inode_getfile2(const char *name,
- 				 const struct file_operations *fops,
-@@ -81,17 +100,23 @@ struct file *anon_inode_getfile2(const char *name,
- 	struct inode *inode;
- 	struct file *file;
- 
--	if (anon_inode_flags)
-+	if (anon_inode_flags & ~ANON_INODE_SECURE)
- 		return ERR_PTR(-EINVAL);
- 
--	inode =	anon_inode_inode;
--	if (IS_ERR(inode))
--		return ERR_PTR(-ENODEV);
--	/*
--	 * We know the anon_inode inode count is always
--	 * greater than zero, so ihold() is safe.
--	 */
--	ihold(inode);
-+	if (anon_inode_flags & ANON_INODE_SECURE) {
-+		inode =	anon_inode_make_secure_inode(name, fops);
-+		if (IS_ERR(inode))
-+			return ERR_PTR(PTR_ERR(inode));
-+	} else {
-+		inode =	anon_inode_inode;
-+		if (IS_ERR(inode))
-+			return ERR_PTR(-ENODEV);
-+		/*
-+		 * We know the anon_inode inode count is always
-+		 * greater than zero, so ihold() is safe.
-+		 */
-+		ihold(inode);
-+	}
- 
- 	if (fops->owner && !try_module_get(fops->owner)) {
- 		file = ERR_PTR(-ENOENT);
-diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
-index a3763247547c..3744ce9e9172 100644
---- a/include/linux/lsm_hooks.h
-+++ b/include/linux/lsm_hooks.h
-@@ -215,6 +215,10 @@
-  *	Returns 0 if @name and @value have been successfully set,
-  *	-EOPNOTSUPP if no security attribute is needed, or
-  *	-ENOMEM on memory allocation failure.
-+ * @inode_init_security_anon:
-+ *      Set up a secure anonymous inode.
-+ *	Returns 0 on success. Returns -EPERM if	the security module denies
-+ *	the creation of this inode.
-  * @inode_create:
-  *	Check permission to create a regular file.
-  *	@dir contains inode structure of the parent of the new file.
-@@ -1552,6 +1556,9 @@ union security_list_options {
- 					const struct qstr *qstr,
- 					const char **name, void **value,
- 					size_t *len);
-+	int (*inode_init_security_anon)(struct inode *inode,
-+					const char *name,
-+					const struct file_operations *fops);
- 	int (*inode_create)(struct inode *dir, struct dentry *dentry,
- 				umode_t mode);
- 	int (*inode_link)(struct dentry *old_dentry, struct inode *dir,
-@@ -1876,6 +1883,7 @@ struct security_hook_heads {
- 	struct hlist_head inode_alloc_security;
- 	struct hlist_head inode_free_security;
- 	struct hlist_head inode_init_security;
-+	struct hlist_head inode_init_security_anon;
- 	struct hlist_head inode_create;
- 	struct hlist_head inode_link;
- 	struct hlist_head inode_unlink;
-diff --git a/include/linux/security.h b/include/linux/security.h
-index a8d59d612d27..5b6f7e0de577 100644
---- a/include/linux/security.h
-+++ b/include/linux/security.h
-@@ -315,6 +315,8 @@ void security_inode_free(struct inode *inode);
- int security_inode_init_security(struct inode *inode, struct inode *dir,
- 				 const struct qstr *qstr,
- 				 initxattrs initxattrs, void *fs_data);
-+int security_inode_init_security_anon(struct inode *inode, const char *name,
-+				      const struct file_operations *fops);
- int security_old_inode_init_security(struct inode *inode, struct inode *dir,
- 				     const struct qstr *qstr, const char **name,
- 				     void **value, size_t *len);
-diff --git a/security/security.c b/security/security.c
-index 1bc000f834e2..c87695f66413 100644
---- a/security/security.c
-+++ b/security/security.c
-@@ -1001,6 +1001,14 @@ int security_inode_init_security(struct inode *inode, struct inode *dir,
- }
- EXPORT_SYMBOL(security_inode_init_security);
- 
-+int
-+security_inode_init_security_anon(struct inode *inode,
-+				  const char *name,
-+				  const struct file_operations *fops)
-+{
-+	return call_int_hook(inode_init_security_anon, 0, inode, name, fops);
-+}
-+
- int security_old_inode_init_security(struct inode *inode, struct inode *dir,
- 				     const struct qstr *qstr, const char **name,
- 				     void **value, size_t *len)
 -- 
 2.23.0.700.g56cf767bdb-goog
