@@ -1,7 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH 6/7 v2] tracing: Add some more locked_down checks
-Date: Fri, 11 Oct 2019 20:57:53 -0400
-Message-ID: <20191012005921.411873502@goodmis.org>
+Subject: [PATCH 1/7 v2] tracefs: Revert ccbd54ff54e8 ("tracefs: Restrict tracefs when the
+ kernel is locked down")
+Date: Fri, 11 Oct 2019 20:57:48 -0400
+Message-ID: <20191012005920.630331484@goodmis.org>
 References: <20191012005747.210722465@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -13,403 +14,161 @@ List-Id: linux-api@vger.kernel.org
 
 From: "Steven Rostedt (VMware)" <rostedt@goodmis.org>
 
-Added various checks on open tracefs calls to see if tracefs is in lockdown
-mode, and if so, to return -EPERM.
+Running the latest kernel through my "make instances" stress tests, I
+triggered the following bug (with KASAN and kmemleak enabled):
 
-Note, the event format files (which are basically standard on all machines)
-as well as the enabled_functions file (which shows what is currently being
-traced) are not lockde down. Perhaps they should be, but it seems counter
-intuitive to lockdown information to help you know if the system has been
-modified.
+mkdir invoked oom-killer:
+gfp_mask=0x40cd0(GFP_KERNEL|__GFP_COMP|__GFP_RECLAIMABLE), order=0,
+oom_score_adj=0
+CPU: 1 PID: 2229 Comm: mkdir Not tainted 5.4.0-rc2-test #325
+Hardware name: MSI MS-7823/CSM-H87M-G43 (MS-7823), BIOS V1.6 02/22/2014
+Call Trace:
+ dump_stack+0x64/0x8c
+ dump_header+0x43/0x3b7
+ ? trace_hardirqs_on+0x48/0x4a
+ oom_kill_process+0x68/0x2d5
+ out_of_memory+0x2aa/0x2d0
+ __alloc_pages_nodemask+0x96d/0xb67
+ __alloc_pages_node+0x19/0x1e
+ alloc_slab_page+0x17/0x45
+ new_slab+0xd0/0x234
+ ___slab_alloc.constprop.86+0x18f/0x336
+ ? alloc_inode+0x2c/0x74
+ ? irq_trace+0x12/0x1e
+ ? tracer_hardirqs_off+0x1d/0xd7
+ ? __slab_alloc.constprop.85+0x21/0x53
+ __slab_alloc.constprop.85+0x31/0x53
+ ? __slab_alloc.constprop.85+0x31/0x53
+ ? alloc_inode+0x2c/0x74
+ kmem_cache_alloc+0x50/0x179
+ ? alloc_inode+0x2c/0x74
+ alloc_inode+0x2c/0x74
+ new_inode_pseudo+0xf/0x48
+ new_inode+0x15/0x25
+ tracefs_get_inode+0x23/0x7c
+ ? lookup_one_len+0x54/0x6c
+ tracefs_create_file+0x53/0x11d
+ trace_create_file+0x15/0x33
+ event_create_dir+0x2a3/0x34b
+ __trace_add_new_event+0x1c/0x26
+ event_trace_add_tracer+0x56/0x86
+ trace_array_create+0x13e/0x1e1
+ instance_mkdir+0x8/0x17
+ tracefs_syscall_mkdir+0x39/0x50
+ ? get_dname+0x31/0x31
+ vfs_mkdir+0x78/0xa3
+ do_mkdirat+0x71/0xb0
+ sys_mkdir+0x19/0x1b
+ do_fast_syscall_32+0xb0/0xed
 
-Link: http://lkml.kernel.org/r/CAHk-=wj7fGPKUspr579Cii-w_y60PtRaiDgKuxVtBAMK0VNNkA@mail.gmail.com
+I bisected this down to the addition of the proxy_ops into tracefs for
+lockdown. It appears that the allocation of the proxy_ops and then freeing
+it in the destroy_inode callback, is causing havoc with the memory system.
+Reading the documentation about destroy_inode and talking with Linus about
+this, this is buggy and wrong.
 
+Instead of allocating the proxy_ops (and then having to free it) the checks
+should be done by the open functions themselves, and not hack into the
+tracefs directory. First revert the tracefs updates for locked_down and then
+later we can add the locked_down checks in the kernel/trace files.
+
+Link: http://lkml.kernel.org/r/20191011135458.7399da44@gandalf.local.home
+
+Fixes: ccbd54ff54e8 ("tracefs: Restrict tracefs when the kernel is locked down")
 Suggested-by: Linus Torvalds <torvalds@linux-foundation.org>
 Signed-off-by: Steven Rostedt (VMware) <rostedt@goodmis.org>
 ---
- kernel/trace/ftrace.c               | 23 ++++++++++++++++++++++-
- kernel/trace/trace.c                |  8 ++++++++
- kernel/trace/trace_events.c         |  8 ++++++++
- kernel/trace/trace_events_hist.c    | 11 +++++++++++
- kernel/trace/trace_events_trigger.c |  8 +++++++-
- kernel/trace/trace_kprobe.c         | 12 +++++++++++-
- kernel/trace/trace_printk.c         |  7 +++++++
- kernel/trace/trace_stack.c          |  8 ++++++++
- kernel/trace/trace_stat.c           |  6 +++++-
- kernel/trace/trace_uprobe.c         | 11 +++++++++++
- 10 files changed, 98 insertions(+), 4 deletions(-)
+ fs/tracefs/inode.c | 42 +-----------------------------------------
+ 1 file changed, 1 insertion(+), 41 deletions(-)
 
-diff --git a/kernel/trace/ftrace.c b/kernel/trace/ftrace.c
-index 8b765a55e01c..f296d89be757 100644
---- a/kernel/trace/ftrace.c
-+++ b/kernel/trace/ftrace.c
-@@ -18,6 +18,7 @@
- #include <linux/clocksource.h>
- #include <linux/sched/task.h>
- #include <linux/kallsyms.h>
-+#include <linux/security.h>
- #include <linux/seq_file.h>
- #include <linux/tracefs.h>
- #include <linux/hardirq.h>
-@@ -3486,6 +3487,11 @@ static int
- ftrace_avail_open(struct inode *inode, struct file *file)
- {
- 	struct ftrace_iterator *iter;
-+	int ret;
-+
-+	ret = security_locked_down(LOCKDOWN_TRACEFS);
-+	if (ret)
-+		return ret;
- 
- 	if (unlikely(ftrace_disabled))
- 		return -ENODEV;
-@@ -3505,6 +3511,15 @@ ftrace_enabled_open(struct inode *inode, struct file *file)
- {
- 	struct ftrace_iterator *iter;
- 
-+	/*
-+	 * This shows us what functions are currently being
-+	 * traced and by what. Not sure if we want lockdown
-+	 * to hide such critical information for an admin.
-+	 * Although, perhaps it can show information we don't
-+	 * want people to see, but if something is tracing
-+	 * something, we probably want to know about it.
-+	 */
-+
- 	iter = __seq_open_private(file, &show_ftrace_seq_ops, sizeof(*iter));
- 	if (!iter)
- 		return -ENOMEM;
-@@ -3625,6 +3640,7 @@ ftrace_filter_open(struct inode *inode, struct file *file)
- {
- 	struct ftrace_ops *ops = inode->i_private;
- 
-+	/* Checks for tracefs lockdown */
- 	return ftrace_regex_open(ops,
- 			FTRACE_ITER_FILTER | FTRACE_ITER_DO_PROBES,
- 			inode, file);
-@@ -3635,6 +3651,7 @@ ftrace_notrace_open(struct inode *inode, struct file *file)
- {
- 	struct ftrace_ops *ops = inode->i_private;
- 
-+	/* Checks for tracefs lockdown */
- 	return ftrace_regex_open(ops, FTRACE_ITER_NOTRACE,
- 				 inode, file);
- }
-@@ -5203,9 +5220,13 @@ static int
- __ftrace_graph_open(struct inode *inode, struct file *file,
- 		    struct ftrace_graph_data *fgd)
- {
--	int ret = 0;
-+	int ret;
- 	struct ftrace_hash *new_hash = NULL;
- 
-+	ret = security_locked_down(LOCKDOWN_TRACEFS);
-+	if (ret)
-+		return ret;
-+
- 	if (file->f_mode & FMODE_WRITE) {
- 		const int size_bits = FTRACE_HASH_DEFAULT_BITS;
- 
-diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index 26ee280f852b..2b4eff383505 100644
---- a/kernel/trace/trace.c
-+++ b/kernel/trace/trace.c
-@@ -17,6 +17,7 @@
- #include <linux/stacktrace.h>
- #include <linux/writeback.h>
- #include <linux/kallsyms.h>
-+#include <linux/security.h>
- #include <linux/seq_file.h>
- #include <linux/notifier.h>
- #include <linux/irqflags.h>
-@@ -306,6 +307,12 @@ void trace_array_put(struct trace_array *this_tr)
- 
- int tracing_check_open_get_tr(struct trace_array *tr)
- {
-+	int ret;
-+
-+	ret = security_locked_down(LOCKDOWN_TRACEFS);
-+	if (ret)
-+		return ret;
-+
- 	if (tracing_disabled)
- 		return -ENODEV;
- 
-@@ -6813,6 +6820,7 @@ static int snapshot_raw_open(struct inode *inode, struct file *filp)
- 	struct ftrace_buffer_info *info;
- 	int ret;
- 
-+	/* The following checks for tracefs lockdown */
- 	ret = tracing_buffers_open(inode, filp);
- 	if (ret < 0)
- 		return ret;
-diff --git a/kernel/trace/trace_events.c b/kernel/trace/trace_events.c
-index ae35d6cb802a..994b7a408c5f 100644
---- a/kernel/trace/trace_events.c
-+++ b/kernel/trace/trace_events.c
-@@ -12,6 +12,7 @@
- #define pr_fmt(fmt) fmt
- 
- #include <linux/workqueue.h>
-+#include <linux/security.h>
- #include <linux/spinlock.h>
- #include <linux/kthread.h>
- #include <linux/tracefs.h>
-@@ -1294,6 +1295,8 @@ static int trace_format_open(struct inode *inode, struct file *file)
- 	struct seq_file *m;
- 	int ret;
- 
-+	/* Do we want to hide event format files on tracefs lockdown? */
-+
- 	ret = seq_open(file, &trace_format_seq_ops);
- 	if (ret < 0)
- 		return ret;
-@@ -1750,6 +1753,10 @@ ftrace_event_open(struct inode *inode, struct file *file,
- 	struct seq_file *m;
- 	int ret;
- 
-+	ret = security_locked_down(LOCKDOWN_TRACEFS);
-+	if (ret)
-+		return ret;
-+
- 	ret = seq_open(file, seq_ops);
- 	if (ret < 0)
- 		return ret;
-@@ -1774,6 +1781,7 @@ ftrace_event_avail_open(struct inode *inode, struct file *file)
- {
- 	const struct seq_operations *seq_ops = &show_event_seq_ops;
- 
-+	/* Checks for tracefs lockdown */
- 	return ftrace_event_open(inode, file, seq_ops);
- }
- 
-diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index dd18d76bf1bd..57648c5aa679 100644
---- a/kernel/trace/trace_events_hist.c
-+++ b/kernel/trace/trace_events_hist.c
-@@ -7,6 +7,7 @@
- 
- #include <linux/module.h>
- #include <linux/kallsyms.h>
-+#include <linux/security.h>
- #include <linux/mutex.h>
+diff --git a/fs/tracefs/inode.c b/fs/tracefs/inode.c
+index 9fc14e38927f..eeeae0475da9 100644
+--- a/fs/tracefs/inode.c
++++ b/fs/tracefs/inode.c
+@@ -20,7 +20,6 @@
+ #include <linux/parser.h>
+ #include <linux/magic.h>
  #include <linux/slab.h>
- #include <linux/stacktrace.h>
-@@ -1448,6 +1449,10 @@ static int synth_events_open(struct inode *inode, struct file *file)
- {
- 	int ret;
- 
-+	ret = security_locked_down(LOCKDOWN_TRACEFS);
-+	if (ret)
-+		return ret;
-+
- 	if ((file->f_mode & FMODE_WRITE) && (file->f_flags & O_TRUNC)) {
- 		ret = dyn_events_release_all(&synth_event_ops);
- 		if (ret < 0)
-@@ -5515,6 +5520,12 @@ static int hist_show(struct seq_file *m, void *v)
- 
- static int event_hist_open(struct inode *inode, struct file *file)
- {
-+	int ret;
-+
-+	ret = security_locked_down(LOCKDOWN_TRACEFS);
-+	if (ret)
-+		return ret;
-+
- 	return single_open(file, hist_show, file);
- }
- 
-diff --git a/kernel/trace/trace_events_trigger.c b/kernel/trace/trace_events_trigger.c
-index 2a2912cb4533..2cd53ca21b51 100644
---- a/kernel/trace/trace_events_trigger.c
-+++ b/kernel/trace/trace_events_trigger.c
-@@ -5,6 +5,7 @@
-  * Copyright (C) 2013 Tom Zanussi <tom.zanussi@linux.intel.com>
-  */
- 
-+#include <linux/security.h>
- #include <linux/module.h>
- #include <linux/ctype.h>
- #include <linux/mutex.h>
-@@ -173,7 +174,11 @@ static const struct seq_operations event_triggers_seq_ops = {
- 
- static int event_trigger_regex_open(struct inode *inode, struct file *file)
- {
--	int ret = 0;
-+	int ret;
-+
-+	ret = security_locked_down(LOCKDOWN_TRACEFS);
-+	if (ret)
-+		return ret;
- 
- 	mutex_lock(&event_mutex);
- 
-@@ -292,6 +297,7 @@ event_trigger_write(struct file *filp, const char __user *ubuf,
- static int
- event_trigger_open(struct inode *inode, struct file *filp)
- {
-+	/* Checks for tracefs lockdown */
- 	return event_trigger_regex_open(inode, filp);
- }
- 
-diff --git a/kernel/trace/trace_kprobe.c b/kernel/trace/trace_kprobe.c
-index 324ffbea3556..1552a95c743b 100644
---- a/kernel/trace/trace_kprobe.c
-+++ b/kernel/trace/trace_kprobe.c
-@@ -7,11 +7,11 @@
-  */
- #define pr_fmt(fmt)	"trace_kprobe: " fmt
- 
-+#include <linux/security.h>
- #include <linux/module.h>
- #include <linux/uaccess.h>
- #include <linux/rculist.h>
- #include <linux/error-injection.h>
 -#include <linux/security.h>
  
- #include <asm/setup.h>  /* for COMMAND_LINE_SIZE */
+ #define TRACEFS_DEFAULT_MODE	0700
  
-@@ -936,6 +936,10 @@ static int probes_open(struct inode *inode, struct file *file)
- {
- 	int ret;
+@@ -28,25 +27,6 @@ static struct vfsmount *tracefs_mount;
+ static int tracefs_mount_count;
+ static bool tracefs_registered;
  
-+	ret = security_locked_down(LOCKDOWN_TRACEFS);
-+	if (ret)
-+		return ret;
-+
- 	if ((file->f_mode & FMODE_WRITE) && (file->f_flags & O_TRUNC)) {
- 		ret = dyn_events_release_all(&trace_kprobe_ops);
- 		if (ret < 0)
-@@ -988,6 +992,12 @@ static const struct seq_operations profile_seq_op = {
- 
- static int profile_open(struct inode *inode, struct file *file)
- {
-+	int ret;
-+
-+	ret = security_locked_down(LOCKDOWN_TRACEFS);
-+	if (ret)
-+		return ret;
-+
- 	return seq_open(file, &profile_seq_op);
- }
- 
-diff --git a/kernel/trace/trace_printk.c b/kernel/trace/trace_printk.c
-index c3fd849d4a8f..d4e31e969206 100644
---- a/kernel/trace/trace_printk.c
-+++ b/kernel/trace/trace_printk.c
-@@ -6,6 +6,7 @@
-  *
-  */
- #include <linux/seq_file.h>
-+#include <linux/security.h>
- #include <linux/uaccess.h>
- #include <linux/kernel.h>
- #include <linux/ftrace.h>
-@@ -348,6 +349,12 @@ static const struct seq_operations show_format_seq_ops = {
- static int
- ftrace_formats_open(struct inode *inode, struct file *file)
- {
-+	int ret;
-+
-+	ret = security_locked_down(LOCKDOWN_TRACEFS);
-+	if (ret)
-+		return ret;
-+
- 	return seq_open(file, &show_format_seq_ops);
- }
- 
-diff --git a/kernel/trace/trace_stack.c b/kernel/trace/trace_stack.c
-index ec9a34a97129..4df9a209f7ca 100644
---- a/kernel/trace/trace_stack.c
-+++ b/kernel/trace/trace_stack.c
-@@ -5,6 +5,7 @@
-  */
- #include <linux/sched/task_stack.h>
- #include <linux/stacktrace.h>
-+#include <linux/security.h>
- #include <linux/kallsyms.h>
- #include <linux/seq_file.h>
- #include <linux/spinlock.h>
-@@ -470,6 +471,12 @@ static const struct seq_operations stack_trace_seq_ops = {
- 
- static int stack_trace_open(struct inode *inode, struct file *file)
- {
-+	int ret;
-+
-+	ret = security_locked_down(LOCKDOWN_TRACEFS);
-+	if (ret)
-+		return ret;
-+
- 	return seq_open(file, &stack_trace_seq_ops);
- }
- 
-@@ -487,6 +494,7 @@ stack_trace_filter_open(struct inode *inode, struct file *file)
- {
- 	struct ftrace_ops *ops = inode->i_private;
- 
-+	/* Checks for tracefs lockdown */
- 	return ftrace_regex_open(ops, FTRACE_ITER_FILTER,
- 				 inode, file);
- }
-diff --git a/kernel/trace/trace_stat.c b/kernel/trace/trace_stat.c
-index 75bf1bcb4a8a..9ab0a1a7ad5e 100644
---- a/kernel/trace/trace_stat.c
-+++ b/kernel/trace/trace_stat.c
-@@ -9,7 +9,7 @@
-  *
-  */
- 
+-static int default_open_file(struct inode *inode, struct file *filp)
+-{
+-	struct dentry *dentry = filp->f_path.dentry;
+-	struct file_operations *real_fops;
+-	int ret;
 -
-+#include <linux/security.h>
- #include <linux/list.h>
- #include <linux/slab.h>
- #include <linux/rbtree.h>
-@@ -238,6 +238,10 @@ static int tracing_stat_open(struct inode *inode, struct file *file)
- 	struct seq_file *m;
- 	struct stat_session *session = inode->i_private;
- 
-+	ret = security_locked_down(LOCKDOWN_TRACEFS);
-+	if (ret)
-+		return ret;
-+
- 	ret = stat_seq_init(session);
- 	if (ret)
- 		return ret;
-diff --git a/kernel/trace/trace_uprobe.c b/kernel/trace/trace_uprobe.c
-index dd884341f5c5..352073d36585 100644
---- a/kernel/trace/trace_uprobe.c
-+++ b/kernel/trace/trace_uprobe.c
-@@ -7,6 +7,7 @@
-  */
- #define pr_fmt(fmt)	"trace_uprobe: " fmt
- 
-+#include <linux/security.h>
- #include <linux/ctype.h>
- #include <linux/module.h>
- #include <linux/uaccess.h>
-@@ -769,6 +770,10 @@ static int probes_open(struct inode *inode, struct file *file)
+-	if (!dentry)
+-		return -EINVAL;
+-
+-	ret = security_locked_down(LOCKDOWN_TRACEFS);
+-	if (ret)
+-		return ret;
+-
+-	real_fops = dentry->d_fsdata;
+-	if (!real_fops->open)
+-		return 0;
+-	return real_fops->open(inode, filp);
+-}
+-
+ static ssize_t default_read_file(struct file *file, char __user *buf,
+ 				 size_t count, loff_t *ppos)
  {
- 	int ret;
- 
-+	ret = security_locked_down(LOCKDOWN_TRACEFS);
-+	if (ret)
-+		return ret;
-+
- 	if ((file->f_mode & FMODE_WRITE) && (file->f_flags & O_TRUNC)) {
- 		ret = dyn_events_release_all(&trace_uprobe_ops);
- 		if (ret)
-@@ -818,6 +823,12 @@ static const struct seq_operations profile_seq_op = {
- 
- static int profile_open(struct inode *inode, struct file *file)
- {
-+	int ret;
-+
-+	ret = security_locked_down(LOCKDOWN_TRACEFS);
-+	if (ret)
-+		return ret;
-+
- 	return seq_open(file, &profile_seq_op);
+@@ -241,12 +221,6 @@ static int tracefs_apply_options(struct super_block *sb)
+ 	return 0;
  }
  
+-static void tracefs_destroy_inode(struct inode *inode)
+-{
+-	if (S_ISREG(inode->i_mode))
+-		kfree(inode->i_fop);
+-}
+-
+ static int tracefs_remount(struct super_block *sb, int *flags, char *data)
+ {
+ 	int err;
+@@ -283,7 +257,6 @@ static int tracefs_show_options(struct seq_file *m, struct dentry *root)
+ static const struct super_operations tracefs_super_operations = {
+ 	.statfs		= simple_statfs,
+ 	.remount_fs	= tracefs_remount,
+-	.destroy_inode  = tracefs_destroy_inode,
+ 	.show_options	= tracefs_show_options,
+ };
+ 
+@@ -414,7 +387,6 @@ struct dentry *tracefs_create_file(const char *name, umode_t mode,
+ 				   struct dentry *parent, void *data,
+ 				   const struct file_operations *fops)
+ {
+-	struct file_operations *proxy_fops;
+ 	struct dentry *dentry;
+ 	struct inode *inode;
+ 
+@@ -430,20 +402,8 @@ struct dentry *tracefs_create_file(const char *name, umode_t mode,
+ 	if (unlikely(!inode))
+ 		return failed_creating(dentry);
+ 
+-	proxy_fops = kzalloc(sizeof(struct file_operations), GFP_KERNEL);
+-	if (unlikely(!proxy_fops)) {
+-		iput(inode);
+-		return failed_creating(dentry);
+-	}
+-
+-	if (!fops)
+-		fops = &tracefs_file_operations;
+-
+-	dentry->d_fsdata = (void *)fops;
+-	memcpy(proxy_fops, fops, sizeof(*proxy_fops));
+-	proxy_fops->open = default_open_file;
+ 	inode->i_mode = mode;
+-	inode->i_fop = proxy_fops;
++	inode->i_fop = fops ? fops : &tracefs_file_operations;
+ 	inode->i_private = data;
+ 	d_instantiate(dentry, inode);
+ 	fsnotify_create(dentry->d_parent->d_inode, dentry);
 -- 
 2.23.0
