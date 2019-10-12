@@ -1,7 +1,7 @@
 From: Daniel Colascione <dancol@google.com>
-Subject: [PATCH 4/7] Teach SELinux about a new userfaultfd class
-Date: Sat, 12 Oct 2019 12:15:59 -0700
-Message-ID: <20191012191602.45649-5-dancol@google.com>
+Subject: [PATCH 2/7] Add a concept of a "secure" anonymous file
+Date: Sat, 12 Oct 2019 12:15:57 -0700
+Message-ID: <20191012191602.45649-3-dancol@google.com>
 References: <20191012191602.45649-1-dancol@google.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -12,160 +12,157 @@ To: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, lokeshgidra@google.
 Cc: nosh@google.com, timmurray@google.com
 List-Id: linux-api@vger.kernel.org
 
-Use the secure anonymous inode LSM hook we just added to let SELinux
-policy place restrictions on userfaultfd use. The create operation
-applies to processes creating new instances of these file objects;
-transfer between processes is covered by restrictions on read, write,
-and ioctl access already checked inside selinux_file_receive.
+A secure anonymous file is one we hooked up to its own inode (as
+opposed to the shared inode we use for non-secure anonymous files). A
+new selinux hook gives security modules a chance to initialize, label,
+and veto the creation of these secure anonymous files. Security
+modules had limit ability to interact with non-secure anonymous files
+due to all of these files sharing a single inode.
 
 Signed-off-by: Daniel Colascione <dancol@google.com>
 ---
- fs/userfaultfd.c                    |  4 +-
- include/linux/userfaultfd_k.h       |  2 +
- security/selinux/hooks.c            | 68 +++++++++++++++++++++++++++++
- security/selinux/include/classmap.h |  2 +
- 4 files changed, 73 insertions(+), 3 deletions(-)
+ fs/anon_inodes.c          | 45 ++++++++++++++++++++++++++++++---------
+ include/linux/lsm_hooks.h |  8 +++++++
+ include/linux/security.h  |  2 ++
+ security/security.c       |  8 +++++++
+ 4 files changed, 53 insertions(+), 10 deletions(-)
 
-diff --git a/fs/userfaultfd.c b/fs/userfaultfd.c
-index 29f920fb236e..1123089c3d55 100644
---- a/fs/userfaultfd.c
-+++ b/fs/userfaultfd.c
-@@ -1014,8 +1014,6 @@ static __poll_t userfaultfd_poll(struct file *file, poll_table *wait)
- 	}
- }
+diff --git a/fs/anon_inodes.c b/fs/anon_inodes.c
+index caa36019afca..d68d76523ad3 100644
+--- a/fs/anon_inodes.c
++++ b/fs/anon_inodes.c
+@@ -55,6 +55,23 @@ static struct file_system_type anon_inode_fs_type = {
+ 	.kill_sb	= kill_anon_super,
+ };
  
--static const struct file_operations userfaultfd_fops;
--
- static int resolve_userfault_fork(struct userfaultfd_ctx *ctx,
- 				  struct userfaultfd_ctx *new,
- 				  struct uffd_msg *msg)
-@@ -1934,7 +1932,7 @@ static void userfaultfd_show_fdinfo(struct seq_file *m, struct file *f)
- }
- #endif
- 
--static const struct file_operations userfaultfd_fops = {
-+const struct file_operations userfaultfd_fops = {
- #ifdef CONFIG_PROC_FS
- 	.show_fdinfo	= userfaultfd_show_fdinfo,
- #endif
-diff --git a/include/linux/userfaultfd_k.h b/include/linux/userfaultfd_k.h
-index ac9d71e24b81..549c8b0cca52 100644
---- a/include/linux/userfaultfd_k.h
-+++ b/include/linux/userfaultfd_k.h
-@@ -30,6 +30,8 @@
- 
- extern int sysctl_unprivileged_userfaultfd;
- 
-+extern const struct file_operations userfaultfd_fops;
-+
- extern vm_fault_t handle_userfault(struct vm_fault *vmf, unsigned long reason);
- 
- extern ssize_t mcopy_atomic(struct mm_struct *dst_mm, unsigned long dst_start,
-diff --git a/security/selinux/hooks.c b/security/selinux/hooks.c
-index 9625b99e677f..0b3a36cbfbdc 100644
---- a/security/selinux/hooks.c
-+++ b/security/selinux/hooks.c
-@@ -92,6 +92,10 @@
- #include <linux/fsnotify.h>
- #include <linux/fanotify.h>
- 
-+#ifdef CONFIG_USERFAULTFD
-+#include <linux/userfaultfd_k.h>
-+#endif
-+
- #include "avc.h"
- #include "objsec.h"
- #include "netif.h"
-@@ -2943,6 +2947,69 @@ static int selinux_inode_init_security(struct inode *inode, struct inode *dir,
- 	return 0;
- }
- 
-+static int selinux_inode_init_security_anon(struct inode *inode,
-+					    const char *name,
-+					    const struct file_operations *fops)
++struct inode *anon_inode_make_secure_inode(const char *name,
++					   const struct file_operations *fops)
 +{
-+	const struct task_security_struct *tsec = selinux_cred(current_cred());
-+	struct common_audit_data ad;
-+	struct inode_security_struct *isec;
-+
-+	if (unlikely(IS_PRIVATE(inode)))
-+		return 0;
-+
-+	/*
-+	 * We shouldn't be creating secure anonymous inodes before LSM
-+	 * initialization completes.
-+	 */
-+	if (unlikely(!selinux_state.initialized))
-+		return -EBUSY;
-+
-+	isec = selinux_inode(inode);
-+
-+	/*
-+	 * We only get here once per ephemeral inode.  The inode has
-+	 * been initialized via inode_alloc_security but is otherwise
-+	 * untouched, so check that the state is as
-+	 * inode_alloc_security left it.
-+	 */
-+	BUG_ON(isec->initialized != LABEL_INVALID);
-+	BUG_ON(isec->sclass != SECCLASS_FILE);
-+
-+#ifdef CONFIG_USERFAULTFD
-+	if (fops == &userfaultfd_fops)
-+		isec->sclass = SECCLASS_UFFD;
-+#endif
-+
-+	if (isec->sclass == SECCLASS_FILE) {
-+		printk(KERN_WARNING "refusing to create secure anonymous inode "
-+		       "of unknown type");
-+		return -EOPNOTSUPP;
++	struct inode *inode;
++	int error;
++	inode = alloc_anon_inode(anon_inode_mnt->mnt_sb);
++	if (IS_ERR(inode))
++		return ERR_PTR(PTR_ERR(inode));
++	inode->i_flags &= ~S_PRIVATE;
++	error =	security_inode_init_security_anon(inode, name, fops);
++	if (error) {
++		iput(inode);
++		return ERR_PTR(error);
 +	}
-+	/*
-+	 * Always give secure anonymous inodes the sid of the
-+	 * creating task.
-+	 */
-+
-+	isec->sid = tsec->sid;
-+	isec->initialized = LABEL_INITIALIZED;
-+
-+	/*
-+	 * Now that we've initialized security, check whether we're
-+	 * allowed to actually create this type of anonymous inode.
-+	 */
-+
-+	ad.type = LSM_AUDIT_DATA_INODE;
-+	ad.u.inode = inode;
-+
-+	return avc_has_perm(&selinux_state,
-+			    tsec->sid,
-+			    isec->sid,
-+			    isec->sclass,
-+			    FILE__CREATE,
-+			    &ad);
++	return inode;
 +}
 +
- static int selinux_inode_create(struct inode *dir, struct dentry *dentry, umode_t mode)
- {
- 	return may_create(dir, dentry, SECCLASS_FILE);
-@@ -6840,6 +6907,7 @@ static struct security_hook_list selinux_hooks[] __lsm_ro_after_init = {
- 	LSM_HOOK_INIT(inode_alloc_security, selinux_inode_alloc_security),
- 	LSM_HOOK_INIT(inode_free_security, selinux_inode_free_security),
- 	LSM_HOOK_INIT(inode_init_security, selinux_inode_init_security),
-+	LSM_HOOK_INIT(inode_init_security_anon, selinux_inode_init_security_anon),
- 	LSM_HOOK_INIT(inode_create, selinux_inode_create),
- 	LSM_HOOK_INIT(inode_link, selinux_inode_link),
- 	LSM_HOOK_INIT(inode_unlink, selinux_inode_unlink),
-diff --git a/security/selinux/include/classmap.h b/security/selinux/include/classmap.h
-index 32e9b03be3dd..41bc5da78048 100644
---- a/security/selinux/include/classmap.h
-+++ b/security/selinux/include/classmap.h
-@@ -244,6 +244,8 @@ struct security_class_mapping secclass_map[] = {
- 	  {"map_create", "map_read", "map_write", "prog_load", "prog_run"} },
- 	{ "xdp_socket",
- 	  { COMMON_SOCK_PERMS, NULL } },
-+	{ "uffd",
-+	  { COMMON_FILE_PERMS, NULL } },
- 	{ NULL }
-   };
+ /**
+  * anon_inode_getfile2 - creates a new file instance by hooking it up to
+  *                       an anonymous inode, and a dentry that describe
+@@ -72,7 +89,9 @@ static struct file_system_type anon_inode_fs_type = {
+  * hence saving memory and avoiding code duplication for the file/inode/dentry
+  * setup.  Returns the newly created file* or an error pointer.
+  *
+- * anon_inode_flags must be zero.
++ * If anon_inode_flags contains ANON_INODE_SECURE, create a new inode
++ * and enable security checks for it. Otherwise, attach a new file to
++ * a singleton placeholder inode with security checks disabled.
+  */
+ struct file *anon_inode_getfile2(const char *name,
+ 				 const struct file_operations *fops,
+@@ -81,17 +100,23 @@ struct file *anon_inode_getfile2(const char *name,
+ 	struct inode *inode;
+ 	struct file *file;
  
+-	if (anon_inode_flags)
++	if (anon_inode_flags & ~ANON_INODE_SECURE)
+ 		return ERR_PTR(-EINVAL);
+ 
+-	inode =	anon_inode_inode;
+-	if (IS_ERR(inode))
+-		return ERR_PTR(-ENODEV);
+-	/*
+-	 * We know the anon_inode inode count is always
+-	 * greater than zero, so ihold() is safe.
+-	 */
+-	ihold(inode);
++	if (anon_inode_flags & ANON_INODE_SECURE) {
++		inode =	anon_inode_make_secure_inode(name, fops);
++		if (IS_ERR(inode))
++			return ERR_PTR(PTR_ERR(inode));
++	} else {
++		inode =	anon_inode_inode;
++		if (IS_ERR(inode))
++			return ERR_PTR(-ENODEV);
++		/*
++		 * We know the anon_inode inode count is always
++		 * greater than zero, so ihold() is safe.
++		 */
++		ihold(inode);
++	}
+ 
+ 	if (fops->owner && !try_module_get(fops->owner)) {
+ 		file = ERR_PTR(-ENOENT);
+diff --git a/include/linux/lsm_hooks.h b/include/linux/lsm_hooks.h
+index a3763247547c..3744ce9e9172 100644
+--- a/include/linux/lsm_hooks.h
++++ b/include/linux/lsm_hooks.h
+@@ -215,6 +215,10 @@
+  *	Returns 0 if @name and @value have been successfully set,
+  *	-EOPNOTSUPP if no security attribute is needed, or
+  *	-ENOMEM on memory allocation failure.
++ * @inode_init_security_anon:
++ *      Set up a secure anonymous inode.
++ *	Returns 0 on success. Returns -EPERM if	the security module denies
++ *	the creation of this inode.
+  * @inode_create:
+  *	Check permission to create a regular file.
+  *	@dir contains inode structure of the parent of the new file.
+@@ -1552,6 +1556,9 @@ union security_list_options {
+ 					const struct qstr *qstr,
+ 					const char **name, void **value,
+ 					size_t *len);
++	int (*inode_init_security_anon)(struct inode *inode,
++					const char *name,
++					const struct file_operations *fops);
+ 	int (*inode_create)(struct inode *dir, struct dentry *dentry,
+ 				umode_t mode);
+ 	int (*inode_link)(struct dentry *old_dentry, struct inode *dir,
+@@ -1876,6 +1883,7 @@ struct security_hook_heads {
+ 	struct hlist_head inode_alloc_security;
+ 	struct hlist_head inode_free_security;
+ 	struct hlist_head inode_init_security;
++	struct hlist_head inode_init_security_anon;
+ 	struct hlist_head inode_create;
+ 	struct hlist_head inode_link;
+ 	struct hlist_head inode_unlink;
+diff --git a/include/linux/security.h b/include/linux/security.h
+index a8d59d612d27..5b6f7e0de577 100644
+--- a/include/linux/security.h
++++ b/include/linux/security.h
+@@ -315,6 +315,8 @@ void security_inode_free(struct inode *inode);
+ int security_inode_init_security(struct inode *inode, struct inode *dir,
+ 				 const struct qstr *qstr,
+ 				 initxattrs initxattrs, void *fs_data);
++int security_inode_init_security_anon(struct inode *inode, const char *name,
++				      const struct file_operations *fops);
+ int security_old_inode_init_security(struct inode *inode, struct inode *dir,
+ 				     const struct qstr *qstr, const char **name,
+ 				     void **value, size_t *len);
+diff --git a/security/security.c b/security/security.c
+index 1bc000f834e2..c87695f66413 100644
+--- a/security/security.c
++++ b/security/security.c
+@@ -1001,6 +1001,14 @@ int security_inode_init_security(struct inode *inode, struct inode *dir,
+ }
+ EXPORT_SYMBOL(security_inode_init_security);
+ 
++int
++security_inode_init_security_anon(struct inode *inode,
++				  const char *name,
++				  const struct file_operations *fops)
++{
++	return call_int_hook(inode_init_security_anon, 0, inode, name, fops);
++}
++
+ int security_old_inode_init_security(struct inode *inode, struct inode *dir,
+ 				     const struct qstr *qstr, const char **name,
+ 				     void **value, size_t *len)
 -- 
 2.23.0.700.g56cf767bdb-goog
