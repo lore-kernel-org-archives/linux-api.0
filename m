@@ -1,58 +1,46 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 1/7 v2] tracefs: Revert ccbd54ff54e8 ("tracefs: Restrict
- tracefs when the kernel is locked down")
-Date: Sat, 12 Oct 2019 20:39:22 -0400
-Message-ID: <20191012203922.3f29b258@gandalf.local.home>
-References: <20191012005747.210722465@goodmis.org>
-        <20191012005920.630331484@goodmis.org>
-        <CAHk-=whE7GjKz9LtEVNw=zEgWr65N1mU7t2rA4MLiia8Zit6DQ@mail.gmail.com>
-        <20191012203502.065258d2@gandalf.local.home>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH 4/7] Teach SELinux about a new userfaultfd class
+Date: Sat, 12 Oct 2019 17:46:16 -0700
+Message-ID: <CALCETrWFFbgdR3qtsQhxdMbaocoeHHkwpTQ-mQKJ4mgWBHz-Ng@mail.gmail.com>
+References: <20191012191602.45649-1-dancol@google.com> <20191012191602.45649-5-dancol@google.com>
+ <CALCETrVmYQ9xikif--RSAWhboY1yj=piEAEuPzisf+b+qEX4uA@mail.gmail.com> <CAKOZuevQD-xsy_PrvT7F3Pqaoo5apZFukj2ZKLLQKup1cwgZ-A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191012203502.065258d2@gandalf.local.home>
+In-Reply-To: <CAKOZuevQD-xsy_PrvT7F3Pqaoo5apZFukj2ZKLLQKup1cwgZ-A@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Matthew Garrett <matthewgarrett@google.com>, James Morris James Morris <jmorris@namei.org>, LSM List <linux-security-module@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Ben Hutchings <ben@decadent.org.uk>, Al Viro <viro@zeniv.linux.org.uk>
+To: Daniel Colascione <dancol@google.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Lokesh Gidra <lokeshgidra@google.com>, Nick Kralevich <nnk@google.com>, Nosh Minwalla <nosh@google.com>, Tim Murray <timmurray@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, 12 Oct 2019 20:35:02 -0400
-Steven Rostedt <rostedt@goodmis.org> wrote:
-
-> On Sat, 12 Oct 2019 15:56:15 -0700
-> Linus Torvalds <torvalds@linux-foundation.org> wrote:
-> 
-> > On Fri, Oct 11, 2019 at 5:59 PM Steven Rostedt <rostedt@goodmis.org> wrote:  
+On Sat, Oct 12, 2019 at 5:12 PM Daniel Colascione <dancol@google.com> wrote:
+>
+> On Sat, Oct 12, 2019 at 4:09 PM Andy Lutomirski <luto@kernel.org> wrote:
+> >
+> > On Sat, Oct 12, 2019 at 12:16 PM Daniel Colascione <dancol@google.com> wrote:
 > > >
-> > >
-> > > I bisected this down to the addition of the proxy_ops into tracefs for
-> > > lockdown. It appears that the allocation of the proxy_ops and then freeing
-> > > it in the destroy_inode callback, is causing havoc with the memory system.
-> > > Reading the documentation about destroy_inode and talking with Linus about
-> > > this, this is buggy and wrong.    
-> > 
-> > Can you still add the explanation about the inode memory leak to this message?
-> > 
-> > Right now it just says "it's buggy and wrong". True. But doesn't
-> > explain _why_ it is buggy and wrong.
-> >   
-> 
-> Sure. The patches just finished my testing (along with other fixes that
-> I need to send you). I have to make a few other updates in the change
-> log though, so I'll be rebasing them (but not touching the code), to
-> clean up the change logs.
-> 
+> > > Use the secure anonymous inode LSM hook we just added to let SELinux
+> > > policy place restrictions on userfaultfd use. The create operation
+> > > applies to processes creating new instances of these file objects;
+> > > transfer between processes is covered by restrictions on read, write,
+> > > and ioctl access already checked inside selinux_file_receive.
+> >
+> > This is great, and I suspect we'll want it for things like SGX, too.
+> > But the current design seems like it will make it essentially
+> > impossible for SELinux to reference an anon_inode class whose
+> > file_operations are in a module, and moving file_operations out of a
+> > module would be nasty.
+> >
+> > Could this instead be keyed off a new struct anon_inode_class, an
+> > enum, or even just a string?
+>
+> The new LSM hook already receives the string that callers pass to the
+> anon_inode APIs; modules can look at that instead of the fops if they
+> want. The reason to pass both the name and the fops through the hook
+> is to allow LSMs to match using fops comparison (which seems less
+> prone to breakage) when possible and rely on string matching when it
+> isn't.
 
-I updated this change log to state:
-
-"I bisected this down to the addition of the proxy_ops into tracefs for
-lockdown. It appears that the allocation of the proxy_ops and then freeing
-it in the destroy_inode callback, is causing havoc with the memory system.
-Reading the documentation about destroy_inode and talking with Linus about
-this, this is buggy and wrong. When defining the destroy_inode() method, it 
-is expected that the destroy_inode() will also free the inode, and not just 
-the extra allocations done in the creation of the inode. The faulty commit 
-causes a memory leak of the inode data structure when they are deleted."
-
--- Steve
+I suppose that whoever makes the first module that wants to use this
+mechanism can have the fun task of reworking it.  There's nothing
+user-visible here that would make it hard to change in the future.
