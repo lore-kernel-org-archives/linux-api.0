@@ -1,25 +1,40 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH 6/7] Allow users to require UFFD_SECURE
-Date: Sat, 12 Oct 2019 16:12:49 -0700
-Message-ID: <CALCETrWF61dmSpMEYvqa2FHWL8Zj6GJtevFTfymV20CCjiqRcg@mail.gmail.com>
-References: <20191012191602.45649-1-dancol@google.com> <20191012191602.45649-7-dancol@google.com>
+From: Daniel Colascione <dancol@google.com>
+Subject: Re: [PATCH 4/7] Teach SELinux about a new userfaultfd class
+Date: Sat, 12 Oct 2019 17:11:40 -0700
+Message-ID: <CAKOZuevQD-xsy_PrvT7F3Pqaoo5apZFukj2ZKLLQKup1cwgZ-A@mail.gmail.com>
+References: <20191012191602.45649-1-dancol@google.com> <20191012191602.45649-5-dancol@google.com>
+ <CALCETrVmYQ9xikif--RSAWhboY1yj=piEAEuPzisf+b+qEX4uA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191012191602.45649-7-dancol@google.com>
+In-Reply-To: <CALCETrVmYQ9xikif--RSAWhboY1yj=piEAEuPzisf+b+qEX4uA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Colascione <dancol@google.com>
-Cc: Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, lokeshgidra@google.com, Nick Kralevich <nnk@google.com>, nosh@google.com, Tim Murray <timmurray@google.com>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Lokesh Gidra <lokeshgidra@google.com>, Nick Kralevich <nnk@google.com>, Nosh Minwalla <nosh@google.com>, Tim Murray <timmurray@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Oct 12, 2019 at 12:16 PM Daniel Colascione <dancol@google.com> wrote:
+On Sat, Oct 12, 2019 at 4:09 PM Andy Lutomirski <luto@kernel.org> wrote:
 >
-> This change adds 2 as an allowable value for
-> unprivileged_userfaultfd. (Previously, this sysctl could be either 0
-> or 1.) When unprivileged_userfaultfd is 2, users with CAP_SYS_PTRACE
-> may create userfaultfd with or without UFFD_SECURE, but users without
-> CAP_SYS_PTRACE must pass UFFD_SECURE to userfaultfd in order for the
-> system call to succeed, effectively forcing them to opt into
-> additional security checks.
+> On Sat, Oct 12, 2019 at 12:16 PM Daniel Colascione <dancol@google.com> wrote:
+> >
+> > Use the secure anonymous inode LSM hook we just added to let SELinux
+> > policy place restrictions on userfaultfd use. The create operation
+> > applies to processes creating new instances of these file objects;
+> > transfer between processes is covered by restrictions on read, write,
+> > and ioctl access already checked inside selinux_file_receive.
+>
+> This is great, and I suspect we'll want it for things like SGX, too.
+> But the current design seems like it will make it essentially
+> impossible for SELinux to reference an anon_inode class whose
+> file_operations are in a module, and moving file_operations out of a
+> module would be nasty.
+>
+> Could this instead be keyed off a new struct anon_inode_class, an
+> enum, or even just a string?
 
-This patch can go away entirely if you make UFFD_SECURE automatic.
+The new LSM hook already receives the string that callers pass to the
+anon_inode APIs; modules can look at that instead of the fops if they
+want. The reason to pass both the name and the fops through the hook
+is to allow LSMs to match using fops comparison (which seems less
+prone to breakage) when possible and rely on string matching when it
+isn't.
