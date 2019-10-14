@@ -1,77 +1,62 @@
 From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH 1/7] Add a new flags-accepting interface for anonymous inodes
-Date: Mon, 14 Oct 2019 17:38:45 +0200
-Message-ID: <CAG48ez3yOPAC3mTJdQ5_8aARQPe+siid5jaa8U+aMtfj-bUJ2g@mail.gmail.com>
-References: <20191012191602.45649-1-dancol@google.com> <20191012191602.45649-2-dancol@google.com>
+Subject: Re: [PATCH 3/7] Add a UFFD_SECURE flag to the userfaultfd API.
+Date: Mon, 14 Oct 2019 18:04:22 +0200
+Message-ID: <CAG48ez3P27-xqdjKLqfP_0Q_v9K92CgEjU4C=kob2Ax7=NoZbA@mail.gmail.com>
+References: <20191012191602.45649-1-dancol@google.com> <20191012191602.45649-4-dancol@google.com>
+ <CALCETrVZHd+csdRL-uKbVN3Z7yeNNtxiDy-UsutMi=K3ZgCiYw@mail.gmail.com>
+ <CAKOZuevUqs_Oe1UEwguQK7Ate3ai1DSVSij=0R=vmz9LzX4k6Q@mail.gmail.com> <CALCETrUyq=J37gU-MYXqLdoi7uH7iNNVRjvcGUT11JA1QuTFyg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191012191602.45649-2-dancol@google.com>
+In-Reply-To: <CALCETrUyq=J37gU-MYXqLdoi7uH7iNNVRjvcGUT11JA1QuTFyg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Colascione <dancol@google.com>
-Cc: Linux API <linux-api@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, Lokesh Gidra <lokeshgidra@google.com>, Nick Kralevich <nnk@google.com>, nosh@google.com, Tim Murray <timmurray@google.com>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Daniel Colascione <dancol@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Andrea Arcangeli <aarcange@redhat.com>, Pavel Emelyanov <xemul@parallels.com>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Lokesh Gidra <lokeshgidra@google.com>, Nick Kralevich <nnk@google.com>, Nosh Minwalla <nosh@google.com>, Tim Murray <timmurray@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Oct 12, 2019 at 9:16 PM Daniel Colascione <dancol@google.com> wrote:
-> Add functions forwarding from the old names to the new ones so we
-> don't need to change any callers.
-
-This patch does more than the commit message says; it also refactors
-the body of the function. (I would've moved that refactoring over into
-patch 2, but I guess this works, too.)
-
+On Sun, Oct 13, 2019 at 3:14 AM Andy Lutomirski <luto@kernel.org> wrote:
+> [adding more people because this is going to be an ABI break, sigh]
+> On Sat, Oct 12, 2019 at 5:52 PM Daniel Colascione <dancol@google.com> wrote:
+> > On Sat, Oct 12, 2019 at 4:10 PM Andy Lutomirski <luto@kernel.org> wrote:
+> > > On Sat, Oct 12, 2019 at 12:16 PM Daniel Colascione <dancol@google.com> wrote:
+> > > > The new secure flag makes userfaultfd use a new "secure" anonymous
+> > > > file object instead of the default one, letting security modules
+> > > > supervise userfaultfd use.
+> > > >
+> > > > Requiring that users pass a new flag lets us avoid changing the
+> > > > semantics for existing callers.
+> > >
+> > > Is there any good reason not to make this be the default?
+> > >
+> > >
+> > > The only downside I can see is that it would increase the memory usage
+> > > of userfaultfd(), but that doesn't seem like such a big deal.  A
+> > > lighter-weight alternative would be to have a single inode shared by
+> > > all userfaultfd instances, which would require a somewhat different
+> > > internal anon_inode API.
+> >
+> > I'd also prefer to just make SELinux use mandatory, but there's a
+> > nasty interaction with UFFD_EVENT_FORK. Adding a new UFFD_SECURE mode
+> > which blocks UFFD_EVENT_FORK sidesteps this problem. Maybe you know a
+> > better way to deal with it.
 [...]
-> -struct file *anon_inode_getfile(const char *name,
-> -                               const struct file_operations *fops,
-> -                               void *priv, int flags)
-> +struct file *anon_inode_getfile2(const char *name,
-> +                                const struct file_operations *fops,
-> +                                void *priv, int flags, int anon_inode_flags)
-
-(AFAIK, normal kernel style is to slap a "__" prefix in front of the
-function name instead of appending a digit, but I guess it doesn't
-really matter.)
-
->  {
-> +       struct inode *inode;
->         struct file *file;
+> Now that you've pointed this mechanism out, it is utterly and
+> completely broken and should be removed from the kernel outright or at
+> least severely restricted.  A .read implementation MUST NOT ACT ON THE
+> CALLING TASK.  Ever.  Just imagine the effect of passing a userfaultfd
+> as stdin to a setuid program.
 >
-> -       if (IS_ERR(anon_inode_inode))
-> -               return ERR_PTR(-ENODEV);
-> -
-> -       if (fops->owner && !try_module_get(fops->owner))
-> -               return ERR_PTR(-ENOENT);
-> +       if (anon_inode_flags)
-> +               return ERR_PTR(-EINVAL);
->
-> +       inode = anon_inode_inode;
-> +       if (IS_ERR(inode))
-> +               return ERR_PTR(-ENODEV);
->         /*
-> -        * We know the anon_inode inode count is always greater than zero,
-> -        * so ihold() is safe.
-> +        * We know the anon_inode inode count is always
-> +        * greater than zero, so ihold() is safe.
->          */
+> So I think the right solution might be to attempt to *remove*
+> UFFD_EVENT_FORK.  Maybe the solution is to say that, unless the
+> creator of a userfaultfd() has global CAP_SYS_ADMIN, then it cannot
+> use UFFD_FEATURE_EVENT_FORK) and print a warning (once) when
+> UFFD_FEATURE_EVENT_FORK is allowed.  And, after some suitable
+> deprecation period, just remove it.  If it's genuinely useful, it
+> needs an entirely new API based on ioctl() or a syscall.  Or even
+> recvmsg() :)
 
-This looks like maybe you started editing the comment, then un-did the
-change, but left the modified line wrapping in your patch? Please
-avoid that - code changes with no real reason make "git blame" output
-more annoying and create trouble when porting patches between kernel
-versions.
-
-[...]
->  EXPORT_SYMBOL_GPL(anon_inode_getfile);
-> +EXPORT_SYMBOL_GPL(anon_inode_getfile2);
-[...]
->  EXPORT_SYMBOL_GPL(anon_inode_getfd);
-> +EXPORT_SYMBOL_GPL(anon_inode_getfd2);
-
-Since anon_inode_getfd() is now a static inline function in
-include/linux/anon_inodes.h, exporting it doesn't make sense anymore.
-Same for anon_inode_getfile().
-
-[...]
-> +#define ANON_INODE_SECURE 1
-
-That #define belongs in a later patch, right?
+FWIW, <https://codesearch.debian.net/search?q=UFFD_FEATURE_EVENT_FORK&literal=1>
+just shows the kernel, kernel selftests, and strace code for decoding
+syscall arguments. CRIU uses it though (probably for postcopy live
+migration / lazy migration?), I guess that code isn't in debian for
+some reason.
