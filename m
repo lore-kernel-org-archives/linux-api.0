@@ -1,121 +1,160 @@
-From: Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [PATCH v3 1/2] clone3: add CLONE_CLEAR_SIGHAND
-Date: Mon, 14 Oct 2019 12:45:37 +0200
-Message-ID: <20191014104538.3096-1-christian.brauner@ubuntu.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH] pidfd: add NSpid entries to fdinfo
+Date: Mon, 14 Oct 2019 17:09:58 +0200
+Message-ID: <CAG48ez0SG3LLeLtqmf5Q8aZL3J8b5XwgNbgDr72jSnq2QBac8Q@mail.gmail.com>
+References: <CAG48ez1hk9d-qAPcRy9QOgNuO8u3Y_hu_3=GZoFYLY+oMdo8xg@mail.gmail.com>
+ <20191012101922.24168-1-christian.brauner@ubuntu.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20191012101922.24168-1-christian.brauner@ubuntu.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, Oleg Nesterov <oleg@redhat.com>, Florian Weimer <fweimer@redhat.com>, Arnd Bergmann <arnd@arndb.de>, libc-alpha@sourceware.org
-Cc: David Howells <dhowells@redhat.com>, Jann Horn <jannh@google.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Juri Lelli <juri.lelli@redhat.com>, Vincent Guittot <vincent.guittot@linaro.org>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Steven Rostedt <rostedt@goodmis.org>, Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>, Shuah Khan <shuah@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.com>, Elena Reshetova <elena.reshetova@intel.com>, Thomas Gleixner <tglx@linutronix.de>, Roman Gushchin <guro@fb.com>, Andrea Arcangeli <aarcange@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Aleksa Sarai <cyphar@cyphar.com>, "Dmitry V. Levin" <ldv@altlinux.org>, linux-kselftest@vger
+To: Christian Brauner <christian.brauner@ubuntu.com>
+Cc: Andrea Arcangeli <aarcange@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Christian Kellner <christian@kellner.me>, Christian Kellner <ckellner@redhat.com>, Aleksa Sarai <cyphar@cyphar.com>, Elena Reshetova <elena.reshetova@intel.com>, Roman Gushchin <guro@fb.com>, "Dmitry V. Levin" <ldv@altlinux.org>, Linux API <linux-api@vger.kernel.org>, kernel list <linux-kernel@vger.kernel.org>, Michal Hocko <mhocko@suse.com>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Al Viro <viro@zeniv.linux.org.uk>
 List-Id: linux-api@vger.kernel.org
 
-Reset all signal handlers of the child not set to SIG_IGN to SIG_DFL.
-Mutually exclusive with CLONE_SIGHAND to not disturb other thread's
-signal handler.
+On Sat, Oct 12, 2019 at 12:19 PM Christian Brauner
+<christian.brauner@ubuntu.com> wrote:
+> Currently, the fdinfo file of contains the field Pid:
 
-In the spirit of closer cooperation between glibc developers and kernel
-developers (cf. [2]) this patchset came out of a discussion on the glibc
-mailing list for improving posix_spawn() (cf. [1], [3], [4]). Kernel
-support for this feature has been explicitly requested by glibc and I
-see no reason not to help them with this.
+nit: something missing after "of"?
 
-The child helper process on Linux posix_spawn must ensure that no signal
-handlers are enabled, so the signal disposition must be either SIG_DFL
-or SIG_IGN. However, it requires a sigprocmask to obtain the current
-signal mask and at least _NSIG sigaction calls to reset the signal
-handlers for each posix_spawn call or complex state tracking that might
-lead to data corruption in glibc. Adding this flags lets glibc avoid
-these problems.
+> It contains the pid a given pidfd refers to in the pid namespace of the
+> opener's procfs instance.
 
-[1]: https://www.sourceware.org/ml/libc-alpha/2019-10/msg00149.html
-[3]: https://www.sourceware.org/ml/libc-alpha/2019-10/msg00158.html
-[4]: https://www.sourceware.org/ml/libc-alpha/2019-10/msg00160.html
-[2]: https://lwn.net/Articles/799331/
-     '[...] by asking for better cooperation with the C-library projects
-     in general. They should be copied on patches containing ABI
-     changes, for example. I noted that there are often times where
-     C-library developers wish the kernel community had done things
-     differently; how could those be avoided in the future? Members of
-     the audience suggested that more glibc developers should perhaps
-     join the linux-api list. The other suggestion was to "copy Florian
-     on everything".'
-Cc: Oleg Nesterov <oleg@redhat.com>
-Cc: Florian Weimer <fweimer@redhat.com>
-Cc: libc-alpha@sourceware.org
-Cc: linux-api@vger.kernel.org
-Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
----
-/* v1 */
-Link: https://lore.kernel.org/r/20191010133518.5420-1-christian.brauner@ubuntu.com
+s/opener's // here and in various places below? "the opener's" is
+kinda misleading since it sounds as if it has something to do with
+task identity.
 
-/* v2 */
-Link: https://lore.kernel.org/r/20191011102537.27502-1-christian.brauner@ubuntu.com
-- Florian Weimer <fweimer@redhat.com>:
-  - update comment in clone3_args_valid()
+> If the pid namespace of the process is not a descendant of the pid
+> namespace of the procfs instance 0 will be shown as its pid. This is
+> similar to calling getppid() on a process who's parent is out of it's
 
-/* v3 */
-- "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>:
-  - s/CLONE3_CLEAR_SIGHAND/CLONE_CLEAR_SIGHAND/g
----
- include/uapi/linux/sched.h |  3 +++
- kernel/fork.c              | 16 +++++++++++-----
- 2 files changed, 14 insertions(+), 5 deletions(-)
+nit: s/who's/whose/
 
-diff --git a/include/uapi/linux/sched.h b/include/uapi/linux/sched.h
-index 99335e1f4a27..1d500ed03c63 100644
---- a/include/uapi/linux/sched.h
-+++ b/include/uapi/linux/sched.h
-@@ -33,6 +33,9 @@
- #define CLONE_NEWNET		0x40000000	/* New network namespace */
- #define CLONE_IO		0x80000000	/* Clone io context */
- 
-+/* Flags for the clone3() syscall. */
-+#define CLONE_CLEAR_SIGHAND 0x100000000ULL /* Clear any signal handler and reset to SIG_DFL. */
-+
- #ifndef __ASSEMBLY__
- /**
-  * struct clone_args - arguments for the clone3 syscall
-diff --git a/kernel/fork.c b/kernel/fork.c
-index 1f6c45f6a734..aa5b5137f071 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -1517,6 +1517,11 @@ static int copy_sighand(unsigned long clone_flags, struct task_struct *tsk)
- 	spin_lock_irq(&current->sighand->siglock);
- 	memcpy(sig->action, current->sighand->action, sizeof(sig->action));
- 	spin_unlock_irq(&current->sighand->siglock);
-+
-+	/* Reset all signal handler not set to SIG_IGN to SIG_DFL. */
-+	if (clone_flags & CLONE_CLEAR_SIGHAND)
-+		flush_signal_handlers(tsk, 0);
-+
- 	return 0;
- }
- 
-@@ -2563,11 +2568,8 @@ noinline static int copy_clone_args_from_user(struct kernel_clone_args *kargs,
- 
- static bool clone3_args_valid(const struct kernel_clone_args *kargs)
- {
--	/*
--	 * All lower bits of the flag word are taken.
--	 * Verify that no other unknown flags are passed along.
--	 */
--	if (kargs->flags & ~CLONE_LEGACY_FLAGS)
-+	/* Verify that no unknown flags are passed along. */
-+	if (kargs->flags & ~(CLONE_LEGACY_FLAGS | CLONE_CLEAR_SIGHAND))
- 		return false;
- 
- 	/*
-@@ -2577,6 +2579,10 @@ static bool clone3_args_valid(const struct kernel_clone_args *kargs)
- 	if (kargs->flags & (CLONE_DETACHED | CSIGNAL))
- 		return false;
- 
-+	if ((kargs->flags & (CLONE_SIGHAND | CLONE_CLEAR_SIGHAND)) ==
-+	    (CLONE_SIGHAND | CLONE_CLEAR_SIGHAND))
-+		return false;
-+
- 	if ((kargs->flags & (CLONE_THREAD | CLONE_PARENT)) &&
- 	    kargs->exit_signal)
- 		return false;
--- 
-2.23.0
+nit: s/it's/its/
+
+> pid namespace (e.g. when moving a process into a sibling pid namespace
+> via setns()).
+
+You can't move a process into a PID namespace via setns(), you can
+only set the PID namespace for its children; and even then, you can't
+set that to a sibling PID namespace, you can only move into descendant
+PID namespaces.
+
+> Add an NSpid field for easy retrieval of the pid in all descendant pid
+> namespaces:
+> If pid namespaces are supported this field will contain the pid a given
+> pidfd refers to for all descendant pid namespaces starting from the
+> current pid namespace of the opener's procfs instance, i.e. the first
+
+s/current // - neither tasks nor procfs instances can change which pid
+namespace they're associated with
+
+> pid entry for Pid and NSpid will be identical.
+
+*the Pid field and the first entry in the NSpid field?
+
+> If the pid namespace of the process is not a descendant of the pid
+> namespace of the procfs instance 0 will be shown as its first NSpid and
+> no other NSpid entries will be shown.
+> Note that this differs from the Pid and NSpid fields in
+> /proc/<pid>/status where Pid and NSpid are always shown relative to the
+> pid namespace of the opener's procfs instace. The difference becomes
+> obvious when sending around a pidfd between pid namespaces from
+> different trees, i.e. where no ancestoral relation is present between
+> the pid namespaces:
+> 1. sending around pidfd:
+> - create two new pid namespaces ns1 and ns2 in the initial pid namespace
+>   (Also take care to create new mount namespaces in the new pid
+>   namespace and mount procfs.)
+> - create a process with a pidfd in ns1
+> - send pidfd from ns1 to ns2
+> - read /proc/self/fdinfo/<pidfd> and observe that Pid and NSpid entry
+>   are 0
+> - create a process with a pidfd in
+
+truncated phrase?
+
+> - open a pidfd for a process in the initial pid namespace
+> 2. sending around /proc/<pid>/status fd:
+> - create two new pid namespaces ns1 and ns2 in the initial pid namespace
+>   (Also take care to create new mount namespaces in the new pid
+>   namespace and mount procfs.)
+> - create a process in ns1
+> - open /proc/<pid>/status in the initial pid namespace for the process
+>   you created in ns1
+> - send statusfd from initial pid namespace to ns2
+> - read statusfd and observe:
+>   - that Pid will contain the pid of the process as seen from the init
+>   - that NSpid will contain the pids of the process for all descendant
+>     pid namespaces starting from the initial pid namespace
+
+You don't need fd passing for case 2, you can just look at the procfs
+instance that's mounted in the initial mount namespace. Using fd
+passing in this example kinda obfuscates what's going on, in my
+opinion.
+
+
+> +/**
+> + * pidfd_show_fdinfo - print information about a pidfd
+> + * @m: proc fdinfo file
+> + * @f: file referencing a pidfd
+> + *
+> + * Pid:
+> + * This function will print the pid a given pidfd refers to in the pid
+> + * namespace of the opener's procfs instance.
+> + * If the pid namespace of the process is not a descendant of the pid
+> + * namespace of the procfs instance 0 will be shown as its pid. This is
+> + * similar to calling getppid() on a process who's parent is out of it's
+> + * pid namespace (e.g. when moving a process into a sibling pid namespace
+> + * via setns()).
+> + * NSpid:
+> + * If pid namespaces are supported then this function will also print the
+> + * pid a given pidfd refers to for all descendant pid namespaces starting
+> + * from the current pid namespace of the opener's procfs instance, i.e. the
+> + * first pid entry for Pid and NSpid will be identical.
+> + * If the pid namespace of the process is not a descendant of the pid
+> + * namespace of the procfs instance 0 will be shown as its first NSpid and
+> + * no other NSpid entries will be shown.
+> + * Note that this differs from the Pid and NSpid fields in
+> + * /proc/<pid>/status where Pid and NSpid are always shown relative to the
+> + * pid namespace of the opener's procfs instace. The difference becomes
+> + * obvious when sending around a pidfd between pid namespaces from
+> + * different trees, i.e. where no ancestoral relation is present between
+> + * the pid namespaces:
+> + * 1. sending around pidfd:
+> + * - create two new pid namespaces ns1 and ns2 in the initial pid namespace
+> + *   (Also take care to create new mount namespaces in the new pid
+> + *   namespace and mount procfs.)
+> + * - create a process with a pidfd in ns1
+> + * - send pidfd from ns1 to ns2
+> + * - read /proc/self/fdinfo/<pidfd> and observe that Pid and NSpid entry
+> + *   are 0
+> + * - create a process with a pidfd in
+> + * - open a pidfd for a process in the initial pid namespace
+> + * 2. sending around /proc/<pid>/status fd:
+> + * - create two new pid namespaces ns1 and ns2 in the initial pid namespace
+> + *   (Also take care to create new mount namespaces in the new pid
+> + *   namespace and mount procfs.)
+> + * - create a process in ns1
+> + * - open /proc/<pid>/status in the initial pid namespace for the process
+> + *   you created in ns1
+> + * - send statusfd from initial pid namespace to ns2
+> + * - read statusfd and observe:
+> + *   - that Pid will contain the pid of the process as seen from the init
+> + *   - that NSpid will contain the pids of the process for all descendant
+> + *     pid namespaces starting from the initial pid namespace
+> + */
+
+See above, same problems as in the commit message. Actually, since you
+have a big comment block with this text, there's no reason to repeat
+it in the commit message, right?
+
+(By the way, only slightly related to this patch: At the moment, if
+you have a pidfd to a task that has already been reaped, and the PID
+has been reallocated to another task, the pidfd will still show up in
+/proc/*/fdinfo/* as if it referred to a non-dead process, right? Might
+be worth considering whether you want to probe ->tasks[PIDTYPE_PID] or
+->tasks[PIDTYPE_TGID] for NULL-ness when printing fdinfo, or something
+like that.)
