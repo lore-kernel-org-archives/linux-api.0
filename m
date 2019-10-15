@@ -1,7 +1,7 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [RFC PATCH 01/21] pipe: Reduce #inclusion of pipe_fs_i.h
-Date: Tue, 15 Oct 2019 22:47:58 +0100
-Message-ID: <157117607843.15019.8325197788819637475.stgit@warthog.procyon.org.uk>
+Subject: [RFC PATCH 02/21] Add a prelocked wake-up
+Date: Tue, 15 Oct 2019 22:48:07 +0100
+Message-ID: <157117608708.15019.1998141309054662114.stgit@warthog.procyon.org.uk>
 References: <157117606853.15019.15459271147790470307.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
@@ -13,50 +13,45 @@ To: torvalds@linux-foundation.org
 Cc: dhowells@redhat.com, Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>dhowells@redhat.com, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.orglinux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Remove some #inclusions of linux/pipe_fs_i.h that don't seem to be
-necessary any more.
+Add a wakeup call for a case whereby the caller already has the waitqueue
+spinlock held.  This can be used by pipes to alter the ring buffer indices
+under the spinlock.
 
 Signed-off-by: David Howells <dhowells@redhat.com>
 ---
 
- fs/exec.c                  |    1 -
- fs/ocfs2/aops.c            |    1 -
- security/smack/smack_lsm.c |    1 -
- 3 files changed, 3 deletions(-)
+ include/linux/wait.h |    2 ++
+ kernel/sched/wait.c  |    7 +++++++
+ 2 files changed, 9 insertions(+)
 
-diff --git a/fs/exec.c b/fs/exec.c
-index 555e93c7dec8..57bc7ef8d31b 100644
---- a/fs/exec.c
-+++ b/fs/exec.c
-@@ -59,7 +59,6 @@
- #include <linux/kmod.h>
- #include <linux/fsnotify.h>
- #include <linux/fs_struct.h>
--#include <linux/pipe_fs_i.h>
- #include <linux/oom.h>
- #include <linux/compat.h>
- #include <linux/vmalloc.h>
-diff --git a/fs/ocfs2/aops.c b/fs/ocfs2/aops.c
-index 8de1c9d644f6..c50ac6b7415b 100644
---- a/fs/ocfs2/aops.c
-+++ b/fs/ocfs2/aops.c
-@@ -11,7 +11,6 @@
- #include <linux/pagemap.h>
- #include <asm/byteorder.h>
- #include <linux/swap.h>
--#include <linux/pipe_fs_i.h>
- #include <linux/mpage.h>
- #include <linux/quotaops.h>
- #include <linux/blkdev.h>
-diff --git a/security/smack/smack_lsm.c b/security/smack/smack_lsm.c
-index abeb09c30633..ecea41ce919b 100644
---- a/security/smack/smack_lsm.c
-+++ b/security/smack/smack_lsm.c
-@@ -28,7 +28,6 @@
- #include <linux/icmpv6.h>
- #include <linux/slab.h>
- #include <linux/mutex.h>
--#include <linux/pipe_fs_i.h>
- #include <net/cipso_ipv4.h>
- #include <net/ip.h>
- #include <net/ipv6.h>
+diff --git a/include/linux/wait.h b/include/linux/wait.h
+index 3eb7cae8206c..d511b298a20c 100644
+--- a/include/linux/wait.h
++++ b/include/linux/wait.h
+@@ -229,6 +229,8 @@ void __wake_up_sync(struct wait_queue_head *wq_head, unsigned int mode, int nr);
+ 	__wake_up(x, TASK_INTERRUPTIBLE, 1, poll_to_key(m))
+ #define wake_up_interruptible_sync_poll(x, m)					\
+ 	__wake_up_sync_key((x), TASK_INTERRUPTIBLE, 1, poll_to_key(m))
++void prelocked_wake_up_interruptible_sync_poll(struct wait_queue_head *wq_head,
++					       __poll_t mask);
+ 
+ #define ___wait_cond_timeout(condition)						\
+ ({										\
+diff --git a/kernel/sched/wait.c b/kernel/sched/wait.c
+index c1e566a114ca..43fbbbe9af27 100644
+--- a/kernel/sched/wait.c
++++ b/kernel/sched/wait.c
+@@ -126,6 +126,13 @@ static void __wake_up_common_lock(struct wait_queue_head *wq_head, unsigned int
+ 	} while (bookmark.flags & WQ_FLAG_BOOKMARK);
+ }
+ 
++void prelocked_wake_up_interruptible_sync_poll(struct wait_queue_head *wq_head,
++					       __poll_t mask)
++{
++	__wake_up_common(wq_head, TASK_INTERRUPTIBLE, 1, WF_SYNC,
++			 poll_to_key(mask), NULL);
++}
++
+ /**
+  * __wake_up - wake up threads blocked on a waitqueue.
+  * @wq_head: the waitqueue
