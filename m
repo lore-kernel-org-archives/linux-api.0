@@ -1,251 +1,295 @@
-From: Omar Sandoval <osandov@osandov.com>
-Subject: [RFC PATCH v2 2/5] fs: add RWF_ENCODED for reading/writing compressed data
-Date: Tue, 15 Oct 2019 11:42:40 -0700
-Message-ID: <7f98cf5409cf2b583cd5b3451fc739fd3428873b.1571164762.git.osandov@fb.com>
-References: <cover.1571164762.git.osandov@fb.com>
+From: David Howells <dhowells@redhat.com>
+Subject: [RFC PATCH 00/21] pipe: Keyrings, Block and USB notifications
+Date: Tue, 15 Oct 2019 22:47:48 +0100
+Message-ID: <157117606853.15019.15459271147790470307.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-In-Reply-To: <cover.1571164762.git.osandov@fb.com>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org
-Cc: Dave Chinner <david@fromorbit.com>, Jann Horn <jannh@google.com>, linux-api@vger.kernel.org, kernel-team@fb.com
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: torvalds@linux-foundation.org
+Cc: dhowells@redhat.com, Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>dhowells@redhat.com, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.orglinux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Omar Sandoval <osandov@fb.com>
 
-Btrfs supports transparent compression: data written by the user can be
-compressed when written to disk and decompressed when read back.
-However, we'd like to add an interface to write pre-compressed data
-directly to the filesystem, and the matching interface to read
-compressed data without decompressing it. This adds support for
-so-called "encoded I/O" via preadv2() and pwritev2().
+Here's a set of patches to add a general notification queue concept and to
+add event sources such as:
 
-A new RWF_ENCODED flags indicates that a read or write is "encoded". If
-this flag is set, iov[0].iov_base points to a struct encoded_iov which
-is used for metadata: namely, the compression algorithm, unencoded
-(i.e., decompressed) length, and what subrange of the unencoded data
-should be used (needed for truncated or hole-punched extents and when
-reading in the middle of an extent). For reads, the filesystem returns
-this information; for writes, the caller provides it to the filesystem.
-iov[0].iov_len must be set to sizeof(struct encoded_iov), which can be
-used to extend the interface in the future. The remaining iovecs contain
-the encoded extent.
+ (1) Keys/keyrings, such as linking and unlinking keys and changing their
+     attributes.
 
-Filesystems must indicate that they support encoded writes by setting
-FMODE_ENCODED_IO in ->file_open().
+ (2) General device events (single common queue) including:
 
-Signed-off-by: Omar Sandoval <osandov@fb.com>
+     - Block layer events, such as device errors
+
+     - USB subsystem events, such as device attach/remove, device reset,
+       device errors.
+
+I have patches for adding superblock and mount topology watches also,
+though those are not in this set as there are other dependencies.
+
+LSM hooks are included:
+
+ (1) A set of hooks are provided that allow an LSM to rule on whether or
+     not a watch may be set.  Each of these hooks takes a different
+     "watched object" parameter, so they're not really shareable.  The LSM
+     should use current's credentials.  [Wanted by SELinux & Smack]
+
+ (2) A hook is provided to allow an LSM to rule on whether or not a
+     particular message may be posted to a particular queue.  This is given
+     the credentials from the event generator (which may be the system) and
+     the watch setter.  [Wanted by Smack]
+
+I've provided SELinux and Smack with implementations of some of these hooks.
+
+
+Design decisions:
+
+ (1) The notification queue is built on top of a standard pipe.  Messages are
+     effectively spliced in.
+
+	pipe2(fds, O_TMPFILE); // Note that O_TMPFILE is just hacked in atm
+
+     which is then configured::
+
+	ioctl(fds[1], IOC_WATCH_QUEUE_SET_SIZE, queue_depth);
+	ioctl(fds[1], IOC_WATCH_QUEUE_SET_FILTER, &filter);
+
+     Messages are then read out of the pipe using read().
+
+ (2) It should be possible to allow write() to insert data into the
+     notification pipes too, but this is currently disabled as the kernel has
+     to be able to insert messages into the pipe *without* holding pipe->mutex
+     and the code to make this work needs careful auditing.
+
+ (3) sendfile(), splice() and vmsplice() are disabled on notification pipes
+     because of the pipe->mutex issue and also because they sometimes want to
+     revert what they just did - but one or more notification messages
+     might've been interleaved in the ring.
+
+ (4) The kernel inserts messages with the wait queue spinlock held.  This
+     means that pipe_read() and pipe_write() have to take the spinlock to
+     update the queue pointers.
+
+ (5) Records in the buffer are binary, typed and have a length so that they
+     can be of varying size.
+
+     This allows multiple heterogeneous sources to share a common buffer;
+     there are 16 million types available, of which I've used just a few,
+     so there is scope for others to be used.  Tags may be specified when a
+     watchpoint is created to help distinguish the sources.
+
+ (6) Records are filterable as types have up to 256 subtypes that can be
+     individually filtered.  Other filtration is also available.
+
+ (7) Notification pipes don't interfere with each other; each may be bound to
+     a different set of watches.  Any particular notification will be copied
+     to all the queues that are currently watching for it - and only those
+     that are watching for it.
+
+ (8) When recording a notification, the kernel will not sleep, but will rather
+     mark a queue as having lost a message if there's insufficient space.
+     read() will fabricate a loss notification message at an appropriate point
+     later.
+
+ (9) The notification pipe is created and then watchpoints are attached to it,
+     using one of:
+
+	keyctl_watch_key(KEY_SPEC_SESSION_KEYRING, fds[1], 0x01);
+	watch_devices(fds[1], 0x02, 0);
+
+     where in both cases, fd indicates the queue and the number after is a
+     tag between 0 and 255.
+
+(10) Watches are removed if either the notification pipe is destroyed or the
+     watched object is destroyed.  In the latter case, a message will be
+     generated indicating the enforced watch removal.
+
+
+Things I want to avoid:
+
+ (1) Introducing features that make the core VFS dependent on the network
+     stack or networking namespaces (ie. usage of netlink).
+
+ (2) Dumping all this stuff into dmesg and having a daemon that sits there
+     parsing the output and distributing it as this then puts the
+     responsibility for security into userspace and makes handling
+     namespaces tricky.  Further, dmesg might not exist or might be
+     inaccessible inside a container.
+
+ (3) Letting users see events they shouldn't be able to see.
+
+
+Benchmarks:
+
+PATCHES BENCHMARK	BEST		TOTAL BYTES	AVG BYTES	STDDEV
+======= =============== =============== =============== =============== ===============
+0	pipe		      305798752	    36324188187	      302701568		6128384
+0	vmsplice	      432261032	    49377769035	      411481408	       60638553
+0	splice		      284943309	    27769149338	      231409577	      171374033
+
+prelock pipe		      307500893	    36470120589	      303917671		9970065
+prelock vmsplice	      437991897	    51502859114	      429190492	       22841773
+prelock splice		      285469128	    28158931451	      234657762	      138350254
+
+ht	pipe		      304526362	    35934813852	      299456782	       14371537
+ht	vmsplice	      437819690	    51481865190	      429015543	       25713854
+ht	splice		      242954439	    23296773094	      194139775	      148906490
+
+r	pipe		      306166161	    36117069156	      300975576	       11493141
+r	vmsplice	      335931911	    39837793527	      331981612		9098195
+r	splice		      282334654	    27472565449	      228938045	      219399557
+
+rx	pipe		      304664843	    36059231110	      300493592		9800700
+rx	vmsplice	      446602247	    52216984680	      435141539	       31456017
+rx	splice		      277978890	    26516522263	      220971018	      199170870
+
+rxw	pipe		      304180415	    36317294286	      302644119		5967557
+rxw	vmsplice	      447361082	    51238998643	      426991655	       62191270
+rxw	splice		      277213923	    27627387718	      230228230	      173675370
+
+rxwx	pipe		      305390974	    36110185475	      300918212	       11895583
+rxwx	vmsplice	      445372781	    50668744616	      422239538	       63133543
+rxwx	splice		      280218603	    27677264384	      230643869	      196958675
+
+rxwxf	pipe		      305001592	    36325565843	      302713048		7551300
+rxwxf	vmsplice	      444316544	    50213093070	      418442442	       77117994
+rxwxf	splice		      278371338	    28859765396	      240498044	      160245812
+
+all	pipe		      298858861	    35543407781	      296195064		5173617
+all	vmsplice	      453414388	    53792295991	      448269133	       10914547
+all	splice		      279264055	    26812726990	      223439391	      212421416
+
+The patches column indicates the point in the patchset at which the benchmarks
+were taken:
+
+	0	No patches
+	prelock "Add a prelocked wake-up"
+	hr	"pipe: Use head and tail pointers for the ring, not cursor and length"
+	r	"pipe: Advance tail pointer inside of wait spinlock in pipe_read()"
+	rx	"pipe: Conditionalise wakeup in pipe_read()"
+	rxw	"pipe: Rearrange sequence in pipe_write() to preallocate slot"
+	rxwx	"pipe: Remove redundant wakeup from pipe_write()"
+	rxwxf	"pipe: Check for ring full inside of the spinlock in pipe_write()"
+	all	All of the patches
+
+The benchmark programs can be found here:
+
+	http://people.redhat.com/dhowells/pipe-bench.c
+	http://people.redhat.com/dhowells/vmsplice-bench.c
+	http://people.redhat.com/dhowells/splice-bench.c
+
+The patches can be found here also:
+
+	http://git.kernel.org/cgit/linux/kernel/git/dhowells/linux-fs.git/log/?h=pipe-experimental
+
+Changes:
+
+ ver #1:
+
+ (*) Build on top of standard pipes instead of having a driver.
+
+David
 ---
- include/linux/fs.h      | 14 +++++++
- include/uapi/linux/fs.h | 26 ++++++++++++-
- mm/filemap.c            | 82 ++++++++++++++++++++++++++++++++++-------
- 3 files changed, 108 insertions(+), 14 deletions(-)
+David Howells (21):
+      pipe: Reduce #inclusion of pipe_fs_i.h
+      Add a prelocked wake-up
+      pipe: Use head and tail pointers for the ring, not cursor and length
+      pipe: Advance tail pointer inside of wait spinlock in pipe_read()
+      pipe: Conditionalise wakeup in pipe_read()
+      pipe: Rearrange sequence in pipe_write() to preallocate slot
+      pipe: Remove redundant wakeup from pipe_write()
+      pipe: Check for ring full inside of the spinlock in pipe_write()
+      uapi: General notification queue definitions
+      security: Add hooks to rule on setting a watch
+      security: Add a hook for the point of notification insertion
+      pipe: Add general notification queue support
+      keys: Add a notification facility
+      Add sample notification program
+      pipe: Allow buffers to be marked read-whole-or-error for notifications
+      pipe: Add notification lossage handling
+      Add a general, global device notification watch list
+      block: Add block layer notifications
+      usb: Add USB subsystem notifications
+      selinux: Implement the watch_key security hook
+      smack: Implement the watch_key and post_notification hooks
 
-diff --git a/include/linux/fs.h b/include/linux/fs.h
-index e0d909d35763..54681f21e05e 100644
---- a/include/linux/fs.h
-+++ b/include/linux/fs.h
-@@ -175,6 +175,9 @@ typedef int (dio_iodone_t)(struct kiocb *iocb, loff_t offset,
- /* File does not contribute to nr_files count */
- #define FMODE_NOACCOUNT		((__force fmode_t)0x20000000)
- 
-+/* File supports encoded IO */
-+#define FMODE_ENCODED_IO	((__force fmode_t)0x40000000)
-+
- /*
-  * Flag for rw_copy_check_uvector and compat_rw_copy_check_uvector
-  * that indicates that they should check the contents of the iovec are
-@@ -314,6 +317,7 @@ enum rw_hint {
- #define IOCB_SYNC		(1 << 5)
- #define IOCB_WRITE		(1 << 6)
- #define IOCB_NOWAIT		(1 << 7)
-+#define IOCB_ENCODED		(1 << 8)
- 
- struct kiocb {
- 	struct file		*ki_filp;
-@@ -3088,6 +3092,11 @@ extern int sb_min_blocksize(struct super_block *, int);
- extern int generic_file_mmap(struct file *, struct vm_area_struct *);
- extern int generic_file_readonly_mmap(struct file *, struct vm_area_struct *);
- extern ssize_t generic_write_checks(struct kiocb *, struct iov_iter *);
-+struct encoded_iov;
-+extern int generic_encoded_write_checks(struct kiocb *, struct encoded_iov *);
-+extern ssize_t check_encoded_read(struct kiocb *, struct iov_iter *);
-+extern int import_encoded_write(struct kiocb *, struct encoded_iov *,
-+				struct iov_iter *);
- extern int generic_remap_checks(struct file *file_in, loff_t pos_in,
- 				struct file *file_out, loff_t pos_out,
- 				loff_t *count, unsigned int remap_flags);
-@@ -3403,6 +3412,11 @@ static inline int kiocb_set_rw_flags(struct kiocb *ki, rwf_t flags)
- 			return -EOPNOTSUPP;
- 		ki->ki_flags |= IOCB_NOWAIT;
- 	}
-+	if (flags & RWF_ENCODED) {
-+		if (!(ki->ki_filp->f_mode & FMODE_ENCODED_IO))
-+			return -EOPNOTSUPP;
-+		ki->ki_flags |= IOCB_ENCODED;
-+	}
- 	if (flags & RWF_HIPRI)
- 		ki->ki_flags |= IOCB_HIPRI;
- 	if (flags & RWF_DSYNC)
-diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-index 379a612f8f1d..ed92a8a257cb 100644
---- a/include/uapi/linux/fs.h
-+++ b/include/uapi/linux/fs.h
-@@ -284,6 +284,27 @@ struct fsxattr {
- 
- typedef int __bitwise __kernel_rwf_t;
- 
-+enum {
-+	ENCODED_IOV_COMPRESSION_NONE,
-+	ENCODED_IOV_COMPRESSION_ZLIB,
-+	ENCODED_IOV_COMPRESSION_LZO,
-+	ENCODED_IOV_COMPRESSION_ZSTD,
-+	ENCODED_IOV_COMPRESSION_TYPES = ENCODED_IOV_COMPRESSION_ZSTD,
-+};
-+
-+enum {
-+	ENCODED_IOV_ENCRYPTION_NONE,
-+	ENCODED_IOV_ENCRYPTION_TYPES = ENCODED_IOV_ENCRYPTION_NONE,
-+};
-+
-+struct encoded_iov {
-+	__u64 len;
-+	__u64 unencoded_len;
-+	__u64 unencoded_offset;
-+	__u32 compression;
-+	__u32 encryption;
-+};
-+
- /* high priority request, poll if possible */
- #define RWF_HIPRI	((__force __kernel_rwf_t)0x00000001)
- 
-@@ -299,8 +320,11 @@ typedef int __bitwise __kernel_rwf_t;
- /* per-IO O_APPEND */
- #define RWF_APPEND	((__force __kernel_rwf_t)0x00000010)
- 
-+/* encoded (e.g., compressed or encrypted) IO */
-+#define RWF_ENCODED	((__force __kernel_rwf_t)0x00000020)
-+
- /* mask of flags supported by the kernel */
- #define RWF_SUPPORTED	(RWF_HIPRI | RWF_DSYNC | RWF_SYNC | RWF_NOWAIT |\
--			 RWF_APPEND)
-+			 RWF_APPEND | RWF_ENCODED)
- 
- #endif /* _UAPI_LINUX_FS_H */
-diff --git a/mm/filemap.c b/mm/filemap.c
-index 1146fcfa3215..d2e6d9caf353 100644
---- a/mm/filemap.c
-+++ b/mm/filemap.c
-@@ -2948,24 +2948,15 @@ static int generic_write_check_limits(struct file *file, loff_t pos,
- 	return 0;
- }
- 
--/*
-- * Performs necessary checks before doing a write
-- *
-- * Can adjust writing position or amount of bytes to write.
-- * Returns appropriate error code that caller should return or
-- * zero in case that write should be allowed.
-- */
--inline ssize_t generic_write_checks(struct kiocb *iocb, struct iov_iter *from)
-+static int generic_write_checks_common(struct kiocb *iocb, loff_t *count)
- {
- 	struct file *file = iocb->ki_filp;
- 	struct inode *inode = file->f_mapping->host;
--	loff_t count;
--	int ret;
- 
- 	if (IS_SWAPFILE(inode))
- 		return -ETXTBSY;
- 
--	if (!iov_iter_count(from))
-+	if (!*count)
- 		return 0;
- 
- 	/* FIXME: this is for backwards compatibility with 2.4 */
-@@ -2975,8 +2966,21 @@ inline ssize_t generic_write_checks(struct kiocb *iocb, struct iov_iter *from)
- 	if ((iocb->ki_flags & IOCB_NOWAIT) && !(iocb->ki_flags & IOCB_DIRECT))
- 		return -EINVAL;
- 
--	count = iov_iter_count(from);
--	ret = generic_write_check_limits(file, iocb->ki_pos, &count);
-+	return generic_write_check_limits(iocb->ki_filp, iocb->ki_pos, count);
-+}
-+
-+/*
-+ * Performs necessary checks before doing a write
-+ *
-+ * Can adjust writing position or amount of bytes to write.
-+ * Returns a negative errno or the new number of bytes to write.
-+ */
-+inline ssize_t generic_write_checks(struct kiocb *iocb, struct iov_iter *from)
-+{
-+	loff_t count = iov_iter_count(from);
-+	int ret;
-+
-+	ret = generic_write_checks_common(iocb, &count);
- 	if (ret)
- 		return ret;
- 
-@@ -2985,6 +2989,58 @@ inline ssize_t generic_write_checks(struct kiocb *iocb, struct iov_iter *from)
- }
- EXPORT_SYMBOL(generic_write_checks);
- 
-+int generic_encoded_write_checks(struct kiocb *iocb,
-+				 struct encoded_iov *encoded)
-+{
-+	loff_t count = encoded->unencoded_len;
-+	int ret;
-+
-+	ret = generic_write_checks_common(iocb, &count);
-+	if (ret)
-+		return ret;
-+
-+	if (count != encoded->unencoded_len) {
-+		/*
-+		 * The write got truncated by generic_write_checks_common(). We
-+		 * can't do a partial encoded write.
-+		 */
-+		return -EFBIG;
-+	}
-+	return 0;
-+}
-+EXPORT_SYMBOL(generic_encoded_write_checks);
-+
-+ssize_t check_encoded_read(struct kiocb *iocb, struct iov_iter *iter)
-+{
-+	if (!(iocb->ki_filp->f_flags & O_ENCODED))
-+		return -EPERM;
-+	if (iov_iter_single_seg_count(iter) != sizeof(struct encoded_iov))
-+		return -EINVAL;
-+	return iov_iter_count(iter) - sizeof(struct encoded_iov);
-+}
-+EXPORT_SYMBOL(check_encoded_read);
-+
-+int import_encoded_write(struct kiocb *iocb, struct encoded_iov *encoded,
-+			 struct iov_iter *from)
-+{
-+	if (!(iocb->ki_filp->f_flags & O_ENCODED))
-+		return -EPERM;
-+	if (iov_iter_single_seg_count(from) != sizeof(*encoded))
-+		return -EINVAL;
-+	if (copy_from_iter(encoded, sizeof(*encoded), from) != sizeof(*encoded))
-+		return -EFAULT;
-+	if (encoded->compression == ENCODED_IOV_COMPRESSION_NONE &&
-+	    encoded->encryption == ENCODED_IOV_ENCRYPTION_NONE)
-+		return -EINVAL;
-+	if (encoded->compression > ENCODED_IOV_COMPRESSION_TYPES ||
-+	    encoded->encryption > ENCODED_IOV_ENCRYPTION_TYPES)
-+		return -EINVAL;
-+	if (encoded->unencoded_offset >= encoded->unencoded_len)
-+		return -EINVAL;
-+	return 0;
-+}
-+EXPORT_SYMBOL(import_encoded_write);
-+
- /*
-  * Performs necessary checks before doing a clone.
-  *
--- 
-2.23.0
+
+ Documentation/ioctl/ioctl-number.rst        |    1 
+ Documentation/security/keys/core.rst        |   58 ++
+ Documentation/watch_queue.rst               |  385 ++++++++++++++++
+ arch/alpha/kernel/syscalls/syscall.tbl      |    1 
+ arch/arm/tools/syscall.tbl                  |    1 
+ arch/arm64/include/asm/unistd.h             |    2 
+ arch/arm64/include/asm/unistd32.h           |    2 
+ arch/ia64/kernel/syscalls/syscall.tbl       |    1 
+ arch/m68k/kernel/syscalls/syscall.tbl       |    1 
+ arch/microblaze/kernel/syscalls/syscall.tbl |    1 
+ arch/mips/kernel/syscalls/syscall_n32.tbl   |    1 
+ arch/mips/kernel/syscalls/syscall_n64.tbl   |    1 
+ arch/mips/kernel/syscalls/syscall_o32.tbl   |    1 
+ arch/parisc/kernel/syscalls/syscall.tbl     |    1 
+ arch/powerpc/kernel/syscalls/syscall.tbl    |    1 
+ arch/s390/kernel/syscalls/syscall.tbl       |    1 
+ arch/sh/kernel/syscalls/syscall.tbl         |    1 
+ arch/sparc/kernel/syscalls/syscall.tbl      |    1 
+ arch/x86/entry/syscalls/syscall_32.tbl      |    1 
+ arch/x86/entry/syscalls/syscall_64.tbl      |    1 
+ arch/xtensa/kernel/syscalls/syscall.tbl     |    1 
+ block/Kconfig                               |    9 
+ block/blk-core.c                            |   29 +
+ drivers/base/Kconfig                        |    9 
+ drivers/base/Makefile                       |    1 
+ drivers/base/watch.c                        |   90 ++++
+ drivers/usb/core/Kconfig                    |    9 
+ drivers/usb/core/devio.c                    |   47 ++
+ drivers/usb/core/hub.c                      |    4 
+ fs/exec.c                                   |    1 
+ fs/fuse/dev.c                               |   31 +
+ fs/ocfs2/aops.c                             |    1 
+ fs/pipe.c                                   |  392 +++++++++++-----
+ fs/splice.c                                 |  195 +++++---
+ include/linux/blkdev.h                      |   15 +
+ include/linux/device.h                      |    7 
+ include/linux/key.h                         |    3 
+ include/linux/lsm_audit.h                   |    1 
+ include/linux/lsm_hooks.h                   |   38 ++
+ include/linux/pipe_fs_i.h                   |   63 ++-
+ include/linux/security.h                    |   32 +
+ include/linux/syscalls.h                    |    1 
+ include/linux/uio.h                         |    4 
+ include/linux/usb.h                         |   18 +
+ include/linux/wait.h                        |    2 
+ include/linux/watch_queue.h                 |  127 +++++
+ include/uapi/asm-generic/unistd.h           |    4 
+ include/uapi/linux/keyctl.h                 |    2 
+ include/uapi/linux/watch_queue.h            |  155 ++++++
+ init/Kconfig                                |   12 
+ kernel/Makefile                             |    1 
+ kernel/sched/wait.c                         |    7 
+ kernel/sys_ni.c                             |    1 
+ kernel/watch_queue.c                        |  660 +++++++++++++++++++++++++++
+ lib/iov_iter.c                              |  274 +++++++----
+ samples/Kconfig                             |    7 
+ samples/Makefile                            |    1 
+ samples/watch_queue/Makefile                |    7 
+ samples/watch_queue/watch_test.c            |  252 ++++++++++
+ security/keys/Kconfig                       |    9 
+ security/keys/compat.c                      |    3 
+ security/keys/gc.c                          |    5 
+ security/keys/internal.h                    |   30 +
+ security/keys/key.c                         |   38 +-
+ security/keys/keyctl.c                      |   99 ++++
+ security/keys/keyring.c                     |   20 +
+ security/keys/request_key.c                 |    4 
+ security/security.c                         |   23 +
+ security/selinux/hooks.c                    |   14 +
+ security/smack/smack_lsm.c                  |   83 +++
+ 70 files changed, 2927 insertions(+), 377 deletions(-)
+ create mode 100644 Documentation/watch_queue.rst
+ create mode 100644 drivers/base/watch.c
+ create mode 100644 include/linux/watch_queue.h
+ create mode 100644 include/uapi/linux/watch_queue.h
+ create mode 100644 kernel/watch_queue.c
+ create mode 100644 samples/watch_queue/Makefile
+ create mode 100644 samples/watch_queue/watch_test.c
