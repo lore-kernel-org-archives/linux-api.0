@@ -1,7 +1,7 @@
 From: Omar Sandoval <osandov@osandov.com>
-Subject: [PATCH man-pages] Document encoded I/O
-Date: Tue, 15 Oct 2019 11:42:37 -0700
-Message-ID: <c7e8f93596fee7bb818dc0edf29f484036be1abb.1571164851.git.osandov@fb.com>
+Subject: [RFC PATCH v2 1/5] fs: add O_ENCODED open flag
+Date: Tue, 15 Oct 2019 11:42:39 -0700
+Message-ID: <c4d2e911b7b04df9aa8418c8b11bc4c194e3808c.1571164762.git.osandov@fb.com>
 References: <cover.1571164762.git.osandov@fb.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,452 +14,108 @@ List-Id: linux-api@vger.kernel.org
 
 From: Omar Sandoval <osandov@fb.com>
 
-This adds a new page, rwf_encoded(7), providing an overview of encoded
-I/O and updates fcntl(2), open(2), and preadv2(2)/pwritev2(2) to
-reference it.
+The upcoming RWF_ENCODED operation introduces some security concerns:
+
+1. Compressed writes will pass arbitrary data to decompression
+   algorithms in the kernel.
+2. Compressed reads can leak truncated/hole punched data.
+
+Therefore, we need to require privilege for RWF_ENCODED. It's not
+possible to do the permissions checks at the time of the read or write
+because, e.g., io_uring submits IO from a worker thread. So, add an open
+flag which requires CAP_SYS_ADMIN. It can also be set and cleared with
+fcntl(). The flag is not cleared in any way on fork or exec; it should
+probably be used with O_CLOEXEC in most cases.
+
+Note that the usual issue that unknown open flags are ignored doesn't
+really matter for O_ENCODED; if the kernel doesn't support O_ENCODED,
+then it doesn't support RWF_ENCODED, either.
 
 Signed-off-by: Omar Sandoval <osandov@fb.com>
 ---
- man2/fcntl.2       |  10 +-
- man2/open.2        |  13 ++
- man2/readv.2       |  46 +++++++
- man7/rwf_encoded.7 | 297 +++++++++++++++++++++++++++++++++++++++++++++
- 4 files changed, 365 insertions(+), 1 deletion(-)
- create mode 100644 man7/rwf_encoded.7
+ fs/fcntl.c                       | 10 ++++++++--
+ fs/namei.c                       |  4 ++++
+ include/linux/fcntl.h            |  2 +-
+ include/uapi/asm-generic/fcntl.h |  4 ++++
+ 4 files changed, 17 insertions(+), 3 deletions(-)
 
-diff --git a/man2/fcntl.2 b/man2/fcntl.2
-index fce4f4c2b..76fe9cc6f 100644
---- a/man2/fcntl.2
-+++ b/man2/fcntl.2
-@@ -222,8 +222,9 @@ On Linux, this command can change only the
- .BR O_ASYNC ,
- .BR O_DIRECT ,
- .BR O_NOATIME ,
-+.BR O_NONBLOCK ,
- and
--.B O_NONBLOCK
-+.B O_ENCODED
- flags.
- It is not possible to change the
- .BR O_DSYNC
-@@ -1803,6 +1804,13 @@ Attempted to clear the
- flag on a file that has the append-only attribute set.
- .TP
- .B EPERM
-+Attempted to set the
-+.B O_ENCODED
-+flag and the calling process did not have the
-+.B CAP_SYS_ADMIN
-+capability.
-+.TP
-+.B EPERM
- .I cmd
- was
- .BR F_ADD_SEALS ,
-diff --git a/man2/open.2 b/man2/open.2
-index b0f485b41..cdd3c549c 100644
---- a/man2/open.2
-+++ b/man2/open.2
-@@ -421,6 +421,14 @@ was followed by a call to
- .BR fdatasync (2)).
- .IR "See NOTES below" .
- .TP
-+.B O_ENCODED
-+Open the file with encoded I/O permissions;
-+see
-+.BR rwf_encoded (7).
-+The caller must have the
-+.B CAP_SYS_ADMIN
-+capabilty.
-+.TP
- .B O_EXCL
- Ensure that this call creates the file:
- if this flag is specified in conjunction with
-@@ -1168,6 +1176,11 @@ did not match the owner of the file and the caller was not privileged.
- The operation was prevented by a file seal; see
- .BR fcntl (2).
- .TP
-+.B EPERM
-+The
-+.B O_ENCODED
-+flag was specified, but the caller was not privileged.
-+.TP
- .B EROFS
- .I pathname
- refers to a file on a read-only filesystem and write access was
-diff --git a/man2/readv.2 b/man2/readv.2
-index af27aa63e..aa60b980a 100644
---- a/man2/readv.2
-+++ b/man2/readv.2
-@@ -265,6 +265,11 @@ the data is always appended to the end of the file.
- However, if the
- .I offset
- argument is \-1, the current file offset is updated.
-+.TP
-+.BR RWF_ENCODED " (since Linux 5.6)"
-+Read or write encoded (e.g., compressed) data.
-+See
-+.BR rwf_encoded (7).
- .SH RETURN VALUE
- On success,
- .BR readv (),
-@@ -284,6 +289,13 @@ than requested (see
- and
- .BR write (2)).
- .PP
-+If
-+.B
-+RWF_ENCODED
-+was specified in
-+.IR flags ,
-+then the return value is the number of encoded bytes.
-+.PP
- On error, \-1 is returned, and \fIerrno\fP is set appropriately.
- .SH ERRORS
- The errors are as given for
-@@ -314,6 +326,40 @@ is less than zero or greater than the permitted maximum.
- .TP
- .B EOPNOTSUPP
- An unknown flag is specified in \fIflags\fP.
-+.TP
-+.B EOPNOTSUPP
-+.B RWF_ENCODED
-+is specified in
-+.I flags
-+and the filesystem does not implement encoded I/O.
-+.TP
-+.B EPERM
-+.B RWF_ENCODED
-+is specified in
-+.I flags
-+and the file was not opened with the
-+.B O_ENCODED
-+flag.
-+.PP
-+.BR preadv2 ()
-+can fail for the following reasons:
-+.TP
-+.B EFBIG
-+.B RWF_ENCODED
-+is specified in
-+.I flags
-+and buffers in
-+.I iov
-+were not big enough to return the encoded data.
-+.PP
-+.BR pwritev2 ()
-+can fail for the following reasons:
-+.TP
-+.B EINVAL
-+.B RWF_ENCODED
-+is specified in
-+.I flags
-+and the alignment and/or size requirements are not met.
- .SH VERSIONS
- .BR preadv ()
- and
-diff --git a/man7/rwf_encoded.7 b/man7/rwf_encoded.7
-new file mode 100644
-index 000000000..90f5292e2
---- /dev/null
-+++ b/man7/rwf_encoded.7
-@@ -0,0 +1,297 @@
-+.\" Copyright (c) 2019 by Omar Sandoval <osandov@fb.com>
-+.\"
-+.\" %%%LICENSE_START(VERBATIM)
-+.\" Permission is granted to make and distribute verbatim copies of this
-+.\" manual provided the copyright notice and this permission notice are
-+.\" preserved on all copies.
-+.\"
-+.\" Permission is granted to copy and distribute modified versions of this
-+.\" manual under the conditions for verbatim copying, provided that the
-+.\" entire resulting derived work is distributed under the terms of a
-+.\" permission notice identical to this one.
-+.\"
-+.\" Since the Linux kernel and libraries are constantly changing, this
-+.\" manual page may be incorrect or out-of-date.  The author(s) assume no
-+.\" responsibility for errors or omissions, or for damages resulting from
-+.\" the use of the information contained herein.  The author(s) may not
-+.\" have taken the same level of care in the production of this manual,
-+.\" which is licensed free of charge, as they might when working
-+.\" professionally.
-+.\"
-+.\" Formatted or processed versions of this manual, if unaccompanied by
-+.\" the source, must acknowledge the copyright and authors of this work.
-+.\" %%%LICENSE_END
-+.\"
-+.\"
-+.TH RWF_ENCODED  7 2019-10-14 "Linux" "Linux Programmer's Manual"
-+.SH NAME
-+rwf_encoded \- overview of encoded I/O
-+.SH DESCRIPTION
-+Several filesystems (e.g., Btrfs) support transparent encoding
-+(e.g., compression, encryption) of data on disk:
-+written data is encoded by the kernel before it is written to disk,
-+and read data is decoded before being returned to the user.
-+In some cases, it is useful to skip this encoding step.
-+For example, the user may want to read the compressed contents of a file
-+or write pre-compressed data directly to a file.
-+This is referred to as "encoded I/O".
-+.SS Encoded I/O API
-+Encoded I/O is specified with the
-+.B RWF_ENCODED
-+flag to
-+.BR preadv2 (2)
-+and
-+.BR pwritev2 (2).
-+If
-+.B RWF_ENCODED
-+is specified, then
-+.I iov[0].iov_base
-+points to an
-+.I
-+encoded_iov
-+structure, defined in
-+.I <linux/fs.h>
-+as:
-+.PP
-+.in +4n
-+.EX
-+struct encoded_iov {
-+    __u64 len;
-+    __u64 unencoded_len;
-+    __u64 unencoded_offset;
-+    __u32 compression;
-+    __u32 encryption;
+diff --git a/fs/fcntl.c b/fs/fcntl.c
+index 3d40771e8e7c..45ebc6df078e 100644
+--- a/fs/fcntl.c
++++ b/fs/fcntl.c
+@@ -30,7 +30,8 @@
+ #include <asm/siginfo.h>
+ #include <linux/uaccess.h>
+ 
+-#define SETFL_MASK (O_APPEND | O_NONBLOCK | O_NDELAY | O_DIRECT | O_NOATIME)
++#define SETFL_MASK (O_APPEND | O_NONBLOCK | O_NDELAY | O_DIRECT | O_NOATIME | \
++		    O_ENCODED)
+ 
+ static int setfl(int fd, struct file * filp, unsigned long arg)
+ {
+@@ -49,6 +50,11 @@ static int setfl(int fd, struct file * filp, unsigned long arg)
+ 		if (!inode_owner_or_capable(inode))
+ 			return -EPERM;
+ 
++	/* O_ENCODED can only be set by superuser */
++	if ((arg & O_ENCODED) && !(filp->f_flags & O_ENCODED) &&
++	    !capable(CAP_SYS_ADMIN))
++		return -EPERM;
 +
-+};
-+.EE
-+.in
-+.PP
-+.I iov[0].iov_len
-+must be set to
-+.IR "sizeof(struct\ encoded_iov)" .
-+The remaining buffers contain the encoded data.
-+.PP
-+.I compression
-+and
-+.I encryption
-+are the encoding fields.
-+.I compression
-+is one of
-+.B ENCODED_IOV_COMPRESSION_NONE
-+(zero),
-+.BR ENCODED_IOV_COMPRESSION_ZLIB ,
-+.BR ENCODED_IOV_COMPRESSION_LZO ,
-+or
-+.BR ENCODED_IOV_COMPRESSION_ZSTD .
-+.I encryption
-+is currently always
-+.B ENCODED_IOV_ENCRYPTION_NONE
-+(zero).
-+.PP
-+.I unencoded_len
-+is the length of the unencoded (i.e., decrypted and decompressed) data.
-+.I unencoded_offset
-+is the offset into the unencoded data where the data in the file begins
-+(strictly less than
-+.IR unencoded_len ).
-+.I len
-+is the length of the data in the file.
-+.PP
-+In most cases,
-+.I len
-+is equal to
-+.I unencoded_len
-+and
-+.I unencoded_offset
-+is zero.
-+However, it may be necessary to refer to a subset of the unencoded data,
-+usually because a read occurred in the middle of an encoded extent,
-+because part of an extent was overwritten or deallocated in some
-+way (e.g., with
-+.BR write (2),
-+.BR truncate (2),
-+or
-+.BR fallocate (2))
-+or because part of an extent was added to the file (e.g., with
-+.BR ioctl_ficlonerange (2)
-+or
-+.BR ioctl_fideduperange (2)).
-+For example, if
-+.I len
-+is 300,
-+.I unencoded_len
-+is 1000,
-+and
-+.I unencoded_offset
-+is 600,
-+then the encoded data is 1000 bytes long when decoded,
-+of which only the 300 bytes starting at offset 600 are used;
-+the first 600 and last 100 bytes should be ignored.
-+.PP
-+Additionally,
-+.I len
-+may be greater than
-+.I unencoded_len
-+-
-+.IR unencoded_offset;
-+in this case, the data in the file is longer than the unencoded data,
-+and the difference is zero-filled.
-+.PP
-+If the unencoded data is actually longer than
-+.IR unencoded_len ,
-+then it is truncated;
-+if it is shorter, then it is extended with zeroes.
-+.PP
-+For
-+.BR pwritev2 (),
-+the metadata should be specified in
-+.IR iov[0] ,
-+and the encoded data should be passed in the remaining buffers.
-+This returns the number of encoded bytes written (that is, the sum of
-+.I iov[n].iov_len
-+for 1 <=
-+.I n
-+<
-+.IR iovcnt ;
-+partial writes will not occur).
-+If the
-+.I offset
-+argument to
-+.BR pwritev2 ()
-+is -1, then the file offset is incremented by
-+.IR len .
-+At least one encoding field must be non-zero.
-+Note that the encoded data is not validated when it is written;
-+if it is not valid (e.g., it cannot be decompressed),
-+then a subsequent read may result in an error.
-+.PP
-+For
-+.BR preadv2 (),
-+the metadata is returned in
-+.IR iov[0] ,
-+and the encoded data is returned in the remaining buffers.
-+This returns the number of encoded bytes read.
-+Note that a return value of zero does not indicate end of file;
-+one should refer to
-+.I len
-+(for example, a hole in the file has a non-zero
-+.I len
-+but a zero return value).
-+A
-+.I len
-+of zero indicates end of file.
-+If the
-+.I offset
-+argument to
-+.BR preadv2 ()
-+is -1, then the file offset is incremented by
-+.IR len .
-+If the provided buffers are not large enough to return an entire encoded
-+extent,
-+then this returns -1 and sets
-+.I errno
-+to
-+.BR EFBIG .
-+This will only return one encoded extent per call.
-+This can also read data which is not encoded;
-+all encoding fields will be zero in that case.
-+.SS Security
-+Encoded I/O creates the potential for some security issues:
-+.IP * 3
-+Encoded writes allow writing arbitrary data which the kernel will decode on
-+a subsequent read. Decompression algorithms are complex and may have bugs
-+which can be exploited by malicous data.
-+.IP *
-+Encoded reads may return data which is not logically present in the file
-+(see the discussion of
-+.I len
-+vs.
-+.I unencoded_len
-+above).
-+It may not be intended for this data to be readable.
-+.PP
-+Therefore, encoded I/O requires privilege.
-+Namely, the
-+.B RWF_ENCODED
-+flag may only be used when the file was opened with the
-+.B O_ENCODED
-+flag to
-+.BR open (2),
-+which requires the
-+.B CAP_SYS_ADMIN
-+capability.
-+.B O_ENCODED
-+may be set and cleared with
-+.BR fcntl (2).
-+Note that it is not cleared on
-+.BR fork (2)
-+or
-+.BR execve (2);
-+one may wish to use
-+.B O_CLOEXEC
-+with
-+.BR O_ENCODED .
-+.SS Filesystem support
-+Encoded I/O is supported on the following filesystems:
-+.TP
-+Btrfs (since Linux 5.6)
-+.IP
-+Btrfs supports encoded reads and writes of compressed data.
-+The data is encoded as follows:
-+.RS
-+.IP * 3
-+If
-+.I compression
-+is
-+.BR ENCODED_IOV_COMPRESSION_ZLIB ,
-+then the encoded data is a single zlib stream.
-+.IP *
-+If
-+.I compression
-+is
-+.BR ENCODED_IOV_COMPRESSION_LZO ,
-+then the encoded data is compressed page by page with LZO1X
-+and wrapped in the format described in the Linux kernel source file
-+.IR fs/btrfs/lzo.c .
-+.IP *
-+If
-+.I compression
-+is
-+.BR ENCODED_IOV_COMPRESSION_ZSTD ,
-+then the encoded data is a single zstd frame compressed with the
-+.I windowLog
-+compression parameter set to no more than 17.
-+.RE
-+.IP
-+Additionally, there are some restrictions on
-+.BR pwritev2 ():
-+.RS
-+.IP * 3
-+.I offset
-+(or the current file offset if
-+.I offset
-+is -1) must be aligned to the sector size of the filesystem.
-+.IP *
-+.I len
-+must be aligned to the sector size of the filesystem
-+unless the data ends at or beyond the current end of the file.
-+.IP *
-+.I unencoded_len
-+and the length of the encoded data must each be no more than 128 KiB.
-+This limit may increase in the future.
-+.IP *
-+The length of the encoded data rounded up to the nearest sector must be
-+less than
-+.I unencoded_len
-+rounded up to the nearest sector.
-+.IP *
-+Referring to a subset of unencoded data is not yet implemented; i.e.,
-+.I len
-+must equal
-+.I unencoded_len
-+and
-+.I unencoded_offset
-+must be zero.
-+.IP *
-+Writing compressed inline extents is not yet implemented.
-+.RE
+ 	/* required for strict SunOS emulation */
+ 	if (O_NONBLOCK != O_NDELAY)
+ 	       if (arg & O_NDELAY)
+@@ -1031,7 +1037,7 @@ static int __init fcntl_init(void)
+ 	 * Exceptions: O_NONBLOCK is a two bit define on parisc; O_NDELAY
+ 	 * is defined as O_NONBLOCK on some platforms and not on others.
+ 	 */
+-	BUILD_BUG_ON(21 - 1 /* for O_RDONLY being 0 */ !=
++	BUILD_BUG_ON(22 - 1 /* for O_RDONLY being 0 */ !=
+ 		HWEIGHT32(
+ 			(VALID_OPEN_FLAGS & ~(O_NONBLOCK | O_NDELAY)) |
+ 			__FMODE_EXEC | __FMODE_NONOTIFY));
+diff --git a/fs/namei.c b/fs/namei.c
+index 671c3c1a3425..ae86b125888a 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -2978,6 +2978,10 @@ static int may_open(const struct path *path, int acc_mode, int flag)
+ 	if (flag & O_NOATIME && !inode_owner_or_capable(inode))
+ 		return -EPERM;
+ 
++	/* O_ENCODED can only be set by superuser */
++	if ((flag & O_ENCODED) && !capable(CAP_SYS_ADMIN))
++		return -EPERM;
++
+ 	return 0;
+ }
+ 
+diff --git a/include/linux/fcntl.h b/include/linux/fcntl.h
+index d019df946cb2..5fac02479639 100644
+--- a/include/linux/fcntl.h
++++ b/include/linux/fcntl.h
+@@ -9,7 +9,7 @@
+ 	(O_RDONLY | O_WRONLY | O_RDWR | O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC | \
+ 	 O_APPEND | O_NDELAY | O_NONBLOCK | O_NDELAY | __O_SYNC | O_DSYNC | \
+ 	 FASYNC	| O_DIRECT | O_LARGEFILE | O_DIRECTORY | O_NOFOLLOW | \
+-	 O_NOATIME | O_CLOEXEC | O_PATH | __O_TMPFILE)
++	 O_NOATIME | O_CLOEXEC | O_PATH | __O_TMPFILE | O_ENCODED)
+ 
+ #ifndef force_o_largefile
+ #define force_o_largefile() (!IS_ENABLED(CONFIG_ARCH_32BIT_OFF_T))
+diff --git a/include/uapi/asm-generic/fcntl.h b/include/uapi/asm-generic/fcntl.h
+index 9dc0bf0c5a6e..8c5cbd5942e3 100644
+--- a/include/uapi/asm-generic/fcntl.h
++++ b/include/uapi/asm-generic/fcntl.h
+@@ -97,6 +97,10 @@
+ #define O_NDELAY	O_NONBLOCK
+ #endif
+ 
++#ifndef O_ENCODED
++#define O_ENCODED	040000000
++#endif
++
+ #define F_DUPFD		0	/* dup */
+ #define F_GETFD		1	/* get close_on_exec */
+ #define F_SETFD		2	/* set/clear close_on_exec */
 -- 
 2.23.0
