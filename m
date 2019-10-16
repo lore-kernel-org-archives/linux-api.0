@@ -1,69 +1,48 @@
-From: Tim Chen <tim.c.chen@linux.intel.com>
-Subject: Re: [RFC PATCH 02/21] Add a prelocked wake-up
-Date: Wed, 16 Oct 2019 10:02:24 -0700
-Message-ID: <533ca3c5-1592-e59b-eafe-bc4a352a442d@linux.intel.com>
-References: <157117606853.15019.15459271147790470307.stgit@warthog.procyon.org.uk>
- <157117608708.15019.1998141309054662114.stgit@warthog.procyon.org.uk>
- <CAHk-=whiz1sHXu8SVZKEC2dup=r5JMrftPtEt6ff9Ea8dyH8yQ@mail.gmail.com>
+From: Michael Ellerman <mpe@ellerman.id.au>
+Subject: Re: [PATCH v2] usercopy: Avoid soft lockups in test_check_nonzero_user()
+Date: Thu, 17 Oct 2019 09:00:48 +1100
+Message-ID: <871rvctkof.fsf@mpe.ellerman.id.au>
+References: <20191011022447.24249-1-mpe@ellerman.id.au> <20191016122732.13467-1-mpe@ellerman.id.au> <20191016130319.vcc2mqac3ta5jjat@wittgenstein>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=whiz1sHXu8SVZKEC2dup=r5JMrftPtEt6ff9Ea8dyH8yQ@mail.gmail.com>
-Content-Language: en-US
+In-Reply-To: <20191016130319.vcc2mqac3ta5jjat@wittgenstein>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>, David Howells <dhowells@redhat.com>, Kan Liang <kan.liang@intel.com>
-Cc: Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: Christian Brauner <christian.brauner@ubuntu.com>
+Cc: cyphar@cyphar.com, mingo@redhat.com, peterz@infradead.org, alexander.shishkin@linux.intel.com, jolsa@redhat.com, namhyung@kernel.org, christian@brauner.io, keescook@chromium.org, linux@rasmusvillemoes.dk, viro@zeniv.linux.org.uk, torvalds@linux-foundation.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 10/15/19 3:14 PM, Linus Torvalds wrote:
-> On Tue, Oct 15, 2019 at 2:48 PM David Howells <dhowells@redhat.com> wrote:
->>
->> Add a wakeup call for a case whereby the caller already has the waitqueue
->> spinlock held.
-> 
-> That naming is crazy.
-> 
-> We already have helper functions like this, and they are just called
-> "wake_up_locked()".
-> 
-> So the "prelocked" naming is just odd. Make it be
-> wake_up_interruptible_sync_poll_locked().
-> 
-> The helper function should likely be
-> 
->   void __wake_up_locked_sync_key(struct wait_queue_head *wq_head,
-> unsigned int mode, void *key)
->   {
->         __wake_up_common(wq_head, mode, 1, WF_SYNC, key, NULL);
->   }
->   EXPORT_SYMBOL_GPL(__wake_up_locked_sync_key);
-> 
-> to match the other naming patterns there.
-> 
-> [ Unrelated ]
-> 
-> Looking at that mess of functions, I also wonder if we should try to
-> just remove the bookmark code again. It was cute, and it was useful,
-> but I think the problem with the page lock list may have been fixed by
-> commit 9a1ea439b16b ("mm: put_and_wait_on_page_locked() while page is
-> migrated") which avoids the retry condition with
-> migrate_page_move_mapping().
-> 
-> Tim/Kan? Do you have the problematic load still?
-> 
+Christian Brauner <christian.brauner@ubuntu.com> writes:
+> On Wed, Oct 16, 2019 at 11:27:32PM +1100, Michael Ellerman wrote:
+>> On a machine with a 64K PAGE_SIZE, the nested for loops in
+>> test_check_nonzero_user() can lead to soft lockups, eg:
+>> 
+>>   watchdog: BUG: soft lockup - CPU#4 stuck for 22s! [modprobe:611]
+>>   Modules linked in: test_user_copy(+) vmx_crypto gf128mul crc32c_vpmsum virtio_balloon ip_tables x_tables autofs4
+>>   CPU: 4 PID: 611 Comm: modprobe Tainted: G             L    5.4.0-rc1-gcc-8.2.0-00001-gf5a1a536fa14-dirty #1151
+>>   ...
+>>   NIP __might_sleep+0x20/0xc0
+>>   LR  __might_fault+0x40/0x60
+>>   Call Trace:
+>>     check_zeroed_user+0x12c/0x200
+>>     test_user_copy_init+0x67c/0x1210 [test_user_copy]
+>>     do_one_initcall+0x60/0x340
+>>     do_init_module+0x7c/0x2f0
+>>     load_module+0x2d94/0x30e0
+>>     __do_sys_finit_module+0xc8/0x150
+>>     system_call+0x5c/0x68
+>> 
+>> Even with a 4K PAGE_SIZE the test takes multiple seconds. Instead
+>> tweak it to only scan a 1024 byte region, but make it cross the
+>> page boundary.
+>> 
+>> Fixes: f5a1a536fa14 ("lib: introduce copy_struct_from_user() helper")
+>> Suggested-by: Aleksa Sarai <cyphar@cyphar.com>
+>> Signed-off-by: Michael Ellerman <mpe@ellerman.id.au>
+>
+> With Aleksa's Reviewed-by I've picked this up:
+> https://git.kernel.org/pub/scm/linux/kernel/git/brauner/linux.git/log/?h=copy_struct_from_user
 
-Unfortunately, we do not have ready access to that problematic load
-which was run by a customer on 8 socket system.  They were not
-willing to give the workload to us, and have not responded to my
-request to rerun their load with commit 9a1ea439b16b.
+Thanks. Are you planning to send that to Linus for v5.4 or v5.5 ?
 
-The commit greatly reduced migration failures with concurrent page faulting.
-And successful migrations could have prevented the big
-pile up of waiters faulting and waiting on the page, which was the
-problem the bookmark code was trying to solve.
-
-So I also tend to think that the problem should have been resolved.
-But unfortunately I don't have a ready workload to confirm.
-
-Tim
+cheers
