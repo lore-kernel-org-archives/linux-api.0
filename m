@@ -1,64 +1,111 @@
 From: Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [PATCH v2 5/5] pid: use task_alive() in pidfd_open()
-Date: Wed, 16 Oct 2019 17:36:06 +0200
-Message-ID: <20191016153606.2326-5-christian.brauner@ubuntu.com>
+Subject: [PATCH v2 1/5] pidfd: verify task is alive when printing fdinfo
+Date: Wed, 16 Oct 2019 17:36:02 +0200
+Message-ID: <20191016153606.2326-1-christian.brauner@ubuntu.com>
 References: <20191015141332.4055-1-christian.brauner@ubuntu.com>
- <20191016153606.2326-1-christian.brauner@ubuntu.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191016153606.2326-1-christian.brauner@ubuntu.com>
+In-Reply-To: <20191015141332.4055-1-christian.brauner@ubuntu.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: oleg@redhat.com, linux-kernel@vger.kernel.org
 Cc: aarcange@redhat.com, akpm@linux-foundation.org, christian@kellner.me, cyphar@cyphar.com, elena.reshetova@intel.com, guro@fb.com, jannh@google.com, ldv@altlinux.org, linux-api@vger.kernel.org, linux-kselftest@vger.kernel.org, mhocko@suse.com, mingo@kernel.org, peterz@infradead.org, shuah@kernel.org, tglx@linutronix.de, viro@zeniv.linux.org.uk, Christian Brauner <christian.brauner@ubuntu.com>
 List-Id: linux-api@vger.kernel.org
 
-Use the new task_alive() helper in pidfd_open(). This simplifies the
-code and avoids taking rcu_read_{lock,unlock}() and leads to overall
-nicer code.
+Currently, when a task is dead we still print the pid it used to use in
+the fdinfo files of its pidfds. This doesn't make much sense since the
+pid may have already been reused. So verify that the task is still
+alive by introducing the task_alive() helper which will be used by other
+callers in follow-up patches.
+If the task is not alive anymore, we will print -1. This allows us to
+differentiate between a task not being present in a given pid namespace
+- in which case we already print 0 - and a task having been reaped.
 
+Note that this uses PIDTYPE_PID for the check. Technically, we could've
+checked PIDTYPE_TGID since pidfds currently only refer to thread-group
+leaders but if they won't anymore in the future then this check becomes
+problematic without it being immediately obvious to non-experts imho. If
+a thread is created via clone(CLONE_THREAD) than struct pid has a single
+non-empty list pid->tasks[PIDTYPE_PID] and this pid can't be used as a
+PIDTYPE_TGID meaning pid->tasks[PIDTYPE_TGID] will return NULL even
+though the thread-group leader might still be very much alive. So
+checking PIDTYPE_PID is fine and is easier to maintain should we ever
+allow pidfds to refer to threads.
+
+Cc: Jann Horn <jannh@google.com>
+Cc: Christian Kellner <christian@kellner.me>
 Cc: Oleg Nesterov <oleg@redhat.com>
+Cc: linux-api@vger.kernel.org
 Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 ---
 /* v1 */
-patch not present
+Link: https://lore.kernel.org/r/20191015141332.4055-1-christian.brauner@ubuntu.com
 
 /* v2 */
-patch introduced
+- Oleg Nesterov <oleg@redhat.com>:
+  - simplify check whether task is still alive to hlist_empty()
+  - optionally introduce generic helper to replace open coded
+    hlist_emtpy() checks whether or not a task is alive
+- Christian Brauner <christian.brauner@ubuntu.com>:
+  - introduce task_alive() helper and use in pidfd_show_fdinfo()
 ---
- kernel/pid.c | 12 +++++-------
- 1 file changed, 5 insertions(+), 7 deletions(-)
+ include/linux/pid.h |  4 ++++
+ kernel/fork.c       | 17 +++++++++++------
+ 2 files changed, 15 insertions(+), 6 deletions(-)
 
-diff --git a/kernel/pid.c b/kernel/pid.c
-index 70ad4a9f728c..1f425b6c4c47 100644
---- a/kernel/pid.c
-+++ b/kernel/pid.c
-@@ -497,7 +497,7 @@ static int pidfd_create(struct pid *pid)
+diff --git a/include/linux/pid.h b/include/linux/pid.h
+index 9645b1194c98..5f1c8ce10b71 100644
+--- a/include/linux/pid.h
++++ b/include/linux/pid.h
+@@ -85,6 +85,10 @@ static inline struct pid *get_pid(struct pid *pid)
+ 
+ extern void put_pid(struct pid *pid);
+ extern struct task_struct *pid_task(struct pid *pid, enum pid_type);
++static inline bool task_alive(struct pid *pid, enum pid_type type)
++{
++	return !hlist_empty(&pid->tasks[type]);
++}
+ extern struct task_struct *get_pid_task(struct pid *pid, enum pid_type);
+ 
+ extern struct pid *get_task_pid(struct task_struct *task, enum pid_type type);
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 782986962d47..ef9a9d661079 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -1732,15 +1732,20 @@ static int pidfd_release(struct inode *inode, struct file *file)
   */
- SYSCALL_DEFINE2(pidfd_open, pid_t, pid, unsigned int, flags)
+ static void pidfd_show_fdinfo(struct seq_file *m, struct file *f)
  {
--	int fd, ret;
-+	int fd;
- 	struct pid *p;
+-	struct pid_namespace *ns = proc_pid_ns(file_inode(m->file));
+ 	struct pid *pid = f->private_data;
+-	pid_t nr = pid_nr_ns(pid, ns);
++	struct pid_namespace *ns;
++	pid_t nr = -1;
  
- 	if (flags)
-@@ -510,13 +510,11 @@ SYSCALL_DEFINE2(pidfd_open, pid_t, pid, unsigned int, flags)
- 	if (!p)
- 		return -ESRCH;
+-	seq_put_decimal_ull(m, "Pid:\t", nr);
++	if (likely(task_alive(pid, PIDTYPE_PID))) {
++		ns = proc_pid_ns(file_inode(m->file));
++		nr = pid_nr_ns(pid, ns);
++	}
++
++	seq_put_decimal_ll(m, "Pid:\t", nr);
  
--	ret = 0;
--	rcu_read_lock();
--	if (!pid_task(p, PIDTYPE_TGID))
--		ret = -EINVAL;
--	rcu_read_unlock();
-+	if (task_alive(p, PIDTYPE_TGID))
-+		fd = pidfd_create(p);
-+	else
-+		fd = -EINVAL;
+ #ifdef CONFIG_PID_NS
+-	seq_put_decimal_ull(m, "\nNSpid:\t", nr);
+-	if (nr) {
++	seq_put_decimal_ll(m, "\nNSpid:\t", nr);
++	if (nr > 0) {
+ 		int i;
  
--	fd = ret ?: pidfd_create(p);
- 	put_pid(p);
- 	return fd;
- }
+ 		/* If nr is non-zero it means that 'pid' is valid and that
+@@ -1749,7 +1754,7 @@ static void pidfd_show_fdinfo(struct seq_file *m, struct file *f)
+ 		 * Start at one below the already printed level.
+ 		 */
+ 		for (i = ns->level + 1; i <= pid->level; i++)
+-			seq_put_decimal_ull(m, "\t", pid->numbers[i].nr);
++			seq_put_decimal_ll(m, "\t", pid->numbers[i].nr);
+ 	}
+ #endif
+ 	seq_putc(m, '\n');
 -- 
 2.23.0
