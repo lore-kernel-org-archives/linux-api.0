@@ -1,26 +1,36 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [RFC PATCH 00/21] pipe: Keyrings, Block and USB notifications
-Date: Tue, 15 Oct 2019 15:32:08 -0700
-Message-ID: <CAHk-=whfCy+WCZ5SXZGi4QEhxXm=EjZjj4R9+o4q-QR3saMyfg@mail.gmail.com>
-References: <157117606853.15019.15459271147790470307.stgit@warthog.procyon.org.uk>
+From: James Morris <jmorris@namei.org>
+Subject: Re: [PATCH 0/7] Harden userfaultfd
+Date: Wed, 16 Oct 2019 11:02:07 +1100 (AEDT)
+Message-ID: <alpine.LRH.2.21.1910161100590.23617@namei.org>
+References: <20191012191602.45649-1-dancol@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <157117606853.15019.15459271147790470307.stgit@warthog.procyon.org.uk>
+In-Reply-To: <20191012191602.45649-1-dancol@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: Daniel Colascione <dancol@google.com>
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, lokeshgidra@google.com, nnk@google.com, nosh@google.com, timmurray@google.com
 List-Id: linux-api@vger.kernel.org
 
-Aside from the two small comments, the pipe side looked reasonable,
-but I stopped looking when the patches moved on to the notificaiton
-part, and maybe I missed something in the earlier ones too.
+On Sat, 12 Oct 2019, Daniel Colascione wrote:
 
-Which does bring me to the meat of this email: can we please keep the
-pipe cleanups and prepwork (and benchmarking) as a separate patch
-series? I'd like that to be done separately from the notification
-code, since it's re-organization and cleanup - while the eventual goal
-is to be able to add messages to the pipe atomically, I think the
-series makes sense (and should make sense) on its own.
+>  Documentation/admin-guide/sysctl/vm.rst | 19 +++++-
+>  fs/anon_inodes.c                        | 89 +++++++++++++++++--------
+>  fs/userfaultfd.c                        | 47 +++++++++++--
+>  include/linux/anon_inodes.h             | 27 ++++++--
+>  include/linux/lsm_hooks.h               |  8 +++
+>  include/linux/security.h                |  2 +
+>  include/linux/userfaultfd_k.h           |  3 +
+>  include/uapi/linux/userfaultfd.h        | 14 ++++
+>  kernel/sysctl.c                         |  9 +++
+>  security/security.c                     |  8 +++
+>  security/selinux/hooks.c                | 68 +++++++++++++++++++
+>  security/selinux/include/classmap.h     |  2 +
+>  12 files changed, 256 insertions(+), 40 deletions(-)
 
-          Linus
+For any changes to security/ please include the linux-security-module 
+list.
+
+-- 
+James Morris
+<jmorris@namei.org>
