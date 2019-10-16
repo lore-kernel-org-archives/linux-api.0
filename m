@@ -1,48 +1,64 @@
-From: Michael Ellerman <mpe@ellerman.id.au>
-Subject: Re: [PATCH v2] usercopy: Avoid soft lockups in test_check_nonzero_user()
-Date: Thu, 17 Oct 2019 09:00:48 +1100
-Message-ID: <871rvctkof.fsf@mpe.ellerman.id.au>
-References: <20191011022447.24249-1-mpe@ellerman.id.au> <20191016122732.13467-1-mpe@ellerman.id.au> <20191016130319.vcc2mqac3ta5jjat@wittgenstein>
+From: Andrei Vagin <avagin@gmail.com>
+Subject: Re: [PATCHv7 01/33] ns: Introduce Time Namespace
+Date: Wed, 16 Oct 2019 16:33:42 -0700
+Message-ID: <20191016233342.GA3075@gmail.com>
+References: <20191011012341.846266-1-dima@arista.com>
+ <20191011012341.846266-2-dima@arista.com>
+ <80af93da-d497-81de-2a2a-179bb3bc852d@arm.com>
+ <alpine.DEB.2.21.1910161230070.2046@nanos.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=koi8-r
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191016130319.vcc2mqac3ta5jjat@wittgenstein>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.21.1910161230070.2046@nanos.tec.linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian.brauner@ubuntu.com>
-Cc: cyphar@cyphar.com, mingo@redhat.com, peterz@infradead.org, alexander.shishkin@linux.intel.com, jolsa@redhat.com, namhyung@kernel.org, christian@brauner.io, keescook@chromium.org, linux@rasmusvillemoes.dk, viro@zeniv.linux.org.uk, torvalds@linux-foundation.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: Vincenzo Frascino <vincenzo.frascino@arm.com>, Dmitry Safonov <dima@arista.com>, linux-kernel@vger.kernel.org, Dmitry Safonov <0x7f454c46@gmail.com>, Andrei Vagin <avagin@openvz.org>, Adrian Reber <adrian@lisas.de>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Christian Brauner <christian.brauner@ubuntu.com> writes:
-> On Wed, Oct 16, 2019 at 11:27:32PM +1100, Michael Ellerman wrote:
->> On a machine with a 64K PAGE_SIZE, the nested for loops in
->> test_check_nonzero_user() can lead to soft lockups, eg:
->> 
->>   watchdog: BUG: soft lockup - CPU#4 stuck for 22s! [modprobe:611]
->>   Modules linked in: test_user_copy(+) vmx_crypto gf128mul crc32c_vpmsum virtio_balloon ip_tables x_tables autofs4
->>   CPU: 4 PID: 611 Comm: modprobe Tainted: G             L    5.4.0-rc1-gcc-8.2.0-00001-gf5a1a536fa14-dirty #1151
->>   ...
->>   NIP __might_sleep+0x20/0xc0
->>   LR  __might_fault+0x40/0x60
->>   Call Trace:
->>     check_zeroed_user+0x12c/0x200
->>     test_user_copy_init+0x67c/0x1210 [test_user_copy]
->>     do_one_initcall+0x60/0x340
->>     do_init_module+0x7c/0x2f0
->>     load_module+0x2d94/0x30e0
->>     __do_sys_finit_module+0xc8/0x150
->>     system_call+0x5c/0x68
->> 
->> Even with a 4K PAGE_SIZE the test takes multiple seconds. Instead
->> tweak it to only scan a 1024 byte region, but make it cross the
->> page boundary.
->> 
->> Fixes: f5a1a536fa14 ("lib: introduce copy_struct_from_user() helper")
->> Suggested-by: Aleksa Sarai <cyphar@cyphar.com>
->> Signed-off-by: Michael Ellerman <mpe@ellerman.id.au>
->
-> With Aleksa's Reviewed-by I've picked this up:
-> https://git.kernel.org/pub/scm/linux/kernel/git/brauner/linux.git/log/?h=copy_struct_from_user
+On Wed, Oct 16, 2019 at 12:39:11PM +0200, Thomas Gleixner wrote:
+> On Wed, 16 Oct 2019, Vincenzo Frascino wrote:
+> 
+> < Trim 250+ lines ( 3+ pages) of pointlessly wasted electrons >
+> 
+> > > --- a/init/Kconfig
+> > > +++ b/init/Kconfig
+> > > @@ -1096,6 +1096,13 @@ config UTS_NS
+> > >  	  In this namespace tasks see different info provided with the
+> > >  	  uname() system call
+> > >  
+> > > +config TIME_NS
+> > > +	bool "TIME namespace"
+> > > +	default y
+> > 
+> > Having CONFIG_TIME_NS "default y" makes so that the option is selected even on
+> > the architectures that have no support for time namespaces.
+> > The direct consequence is that the fallbacks defined in this patch are never
+> > selected and this ends up in kernel compilation errors due to missing symbols.
+> > 
+> > The error below shows what happens on arm64 (similar behavior on other
+> > architectures):
+> > 
+> > aarch64-linux-gnu-ld: kernel/time/namespace.o: in function `timens_on_fork':
+> > kernel/time/namespace.c:321: undefined reference to `vdso_join_timens'
+> > 
+> > My proposal is to keep TIME_NS "default n" (just remove "default y"), let the
+> > architectures that enable time namespaces select it and make CONFIG_TIME_NS
+> > select GENERIC_VDSO_TIME_NS if arch has HAVE_GENERIC_VDSO.
+> 
+> Nah.
+> 
+> config TIME_NS
+> 	bool "TIME namespace"
+> 	depends on GENERIC_VDSO_TIME_NS
 
-Thanks. Are you planning to send that to Linus for v5.4 or v5.5 ?
+I was thinking to fix this by the same way with a small difference.
 
-cheers
+If GENERIC_GETTIMEOFDAY isn't set, it should be safe to allow enabling
+TIME_NS. In this case, clock_gettime works via system call and we don't
+have arch-specific code in this case. Does this sound reasonable?
+
+        depends on (!GENERIC_GETTIMEOFDAY || GENERIC_VDSO_TIME_NS)
+
+Thanks,
+Andrei
