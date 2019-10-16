@@ -1,34 +1,64 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [RFC PATCH 02/21] Add a prelocked wake-up
-Date: Wed, 16 Oct 2019 08:31:48 -0700
-Message-ID: <CAHk-=wgMZR8TWpmRBPytGmWJX=C=-bCb5D2PsCx0LUNemAPexA@mail.gmail.com>
-References: <157117606853.15019.15459271147790470307.stgit@warthog.procyon.org.uk>
- <157117608708.15019.1998141309054662114.stgit@warthog.procyon.org.uk>
- <CAHk-=whiz1sHXu8SVZKEC2dup=r5JMrftPtEt6ff9Ea8dyH8yQ@mail.gmail.com> <6900.1571235985@warthog.procyon.org.uk>
+From: Christian Brauner <christian.brauner@ubuntu.com>
+Subject: [PATCH v2 5/5] pid: use task_alive() in pidfd_open()
+Date: Wed, 16 Oct 2019 17:36:06 +0200
+Message-ID: <20191016153606.2326-5-christian.brauner@ubuntu.com>
+References: <20191015141332.4055-1-christian.brauner@ubuntu.com>
+ <20191016153606.2326-1-christian.brauner@ubuntu.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <6900.1571235985@warthog.procyon.org.uk>
+In-Reply-To: <20191016153606.2326-1-christian.brauner@ubuntu.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Tim Chen <tim.c.chen@linux.intel.com>, Kan Liang <kan.liang@intel.com>, Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: oleg@redhat.com, linux-kernel@vger.kernel.org
+Cc: aarcange@redhat.com, akpm@linux-foundation.org, christian@kellner.me, cyphar@cyphar.com, elena.reshetova@intel.com, guro@fb.com, jannh@google.com, ldv@altlinux.org, linux-api@vger.kernel.org, linux-kselftest@vger.kernel.org, mhocko@suse.com, mingo@kernel.org, peterz@infradead.org, shuah@kernel.org, tglx@linutronix.de, viro@zeniv.linux.org.uk, Christian Brauner <christian.brauner@ubuntu.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 16, 2019 at 7:26 AM David Howells <dhowells@redhat.com> wrote:
->
-> Btw, is there any point in __wake_up_sync_key() taking a nr_exclusive
-> argument since it clears WF_SYNC if nr_exclusive != 1 and doesn't make sense
-> to be >1 anyway.
+Use the new task_alive() helper in pidfd_open(). This simplifies the
+code and avoids taking rcu_read_{lock,unlock}() and leads to overall
+nicer code.
 
-Ack, looks sane to me.
+Cc: Oleg Nesterov <oleg@redhat.com>
+Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+---
+/* v1 */
+patch not present
 
-We have _very_ few users of nr_exclusive. I wonder if it's even worth
-having at all, but it's definitely not worth it here.
+/* v2 */
+patch introduced
+---
+ kernel/pid.c | 12 +++++-------
+ 1 file changed, 5 insertions(+), 7 deletions(-)
 
-I'd love for nr_exclusive to go away and be replaced by WF_ALL
-instead. Right now it looks like there is one SGI driver that uses it,
-and the sbitmap code. That was all I could find.
-
-Oh well. You removing one case is at last a small amount of progress.
-
-         Linus
+diff --git a/kernel/pid.c b/kernel/pid.c
+index 70ad4a9f728c..1f425b6c4c47 100644
+--- a/kernel/pid.c
++++ b/kernel/pid.c
+@@ -497,7 +497,7 @@ static int pidfd_create(struct pid *pid)
+  */
+ SYSCALL_DEFINE2(pidfd_open, pid_t, pid, unsigned int, flags)
+ {
+-	int fd, ret;
++	int fd;
+ 	struct pid *p;
+ 
+ 	if (flags)
+@@ -510,13 +510,11 @@ SYSCALL_DEFINE2(pidfd_open, pid_t, pid, unsigned int, flags)
+ 	if (!p)
+ 		return -ESRCH;
+ 
+-	ret = 0;
+-	rcu_read_lock();
+-	if (!pid_task(p, PIDTYPE_TGID))
+-		ret = -EINVAL;
+-	rcu_read_unlock();
++	if (task_alive(p, PIDTYPE_TGID))
++		fd = pidfd_create(p);
++	else
++		fd = -EINVAL;
+ 
+-	fd = ret ?: pidfd_create(p);
+ 	put_pid(p);
+ 	return fd;
+ }
+-- 
+2.23.0
