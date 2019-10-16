@@ -1,112 +1,340 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [RFC PATCH 02/21] Add a prelocked wake-up
-Date: Wed, 16 Oct 2019 15:26:25 +0100
-Message-ID: <6900.1571235985@warthog.procyon.org.uk>
-References: <CAHk-=whiz1sHXu8SVZKEC2dup=r5JMrftPtEt6ff9Ea8dyH8yQ@mail.gmail.com> <157117606853.15019.15459271147790470307.stgit@warthog.procyon.org.uk> <157117608708.15019.1998141309054662114.stgit@warthog.procyon.org.uk>
+From: Vincenzo Frascino <vincenzo.frascino@arm.com>
+Subject: Re: [PATCHv7 19/33] lib/vdso: Prepare for time namespace support
+Date: Wed, 16 Oct 2019 15:37:10 +0100
+Message-ID: <a726e64f-bf73-4eca-6acf-75926898d88a@arm.com>
+References: <20191011012341.846266-1-dima@arista.com>
+ <20191011012341.846266-20-dima@arista.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=whiz1sHXu8SVZKEC2dup=r5JMrftPtEt6ff9Ea8dyH8yQ@mail.gmail.com>
-Content-ID: <6899.1571235985.1@warthog.procyon.org.uk>
+In-Reply-To: <20191011012341.846266-20-dima@arista.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dhowells@redhat.com, Tim Chen <tim.c.chen@linux.intel.com>, Kan Liang <kan.liang@intel.com>, Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: Dmitry Safonov <dima@arista.com>, linux-kernel@vger.kernel.org
+Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org, Andrei Vagin <avagin@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Btw, is there any point in __wake_up_sync_key() taking a nr_exclusive
-argument since it clears WF_SYNC if nr_exclusive != 1 and doesn't make sense
-to be >1 anyway.
+Hi Dmitry,
 
-David
----
-diff --git a/include/linux/wait.h b/include/linux/wait.h
-index 3eb7cae8206c..bb7676d396cd 100644
---- a/include/linux/wait.h
-+++ b/include/linux/wait.h
-@@ -201,9 +201,9 @@ void __wake_up(struct wait_queue_head *wq_head, unsigned int mode, int nr, void
- void __wake_up_locked_key(struct wait_queue_head *wq_head, unsigned int mode, void *key);
- void __wake_up_locked_key_bookmark(struct wait_queue_head *wq_head,
- 		unsigned int mode, void *key, wait_queue_entry_t *bookmark);
--void __wake_up_sync_key(struct wait_queue_head *wq_head, unsigned int mode, int nr, void *key);
-+void __wake_up_sync_key(struct wait_queue_head *wq_head, unsigned int mode, void *key);
- void __wake_up_locked(struct wait_queue_head *wq_head, unsigned int mode, int nr);
--void __wake_up_sync(struct wait_queue_head *wq_head, unsigned int mode, int nr);
-+void __wake_up_sync(struct wait_queue_head *wq_head, unsigned int mode);
- 
- #define wake_up(x)			__wake_up(x, TASK_NORMAL, 1, NULL)
- #define wake_up_nr(x, nr)		__wake_up(x, TASK_NORMAL, nr, NULL)
-@@ -214,7 +214,7 @@ void __wake_up_sync(struct wait_queue_head *wq_head, unsigned int mode, int nr);
- #define wake_up_interruptible(x)	__wake_up(x, TASK_INTERRUPTIBLE, 1, NULL)
- #define wake_up_interruptible_nr(x, nr)	__wake_up(x, TASK_INTERRUPTIBLE, nr, NULL)
- #define wake_up_interruptible_all(x)	__wake_up(x, TASK_INTERRUPTIBLE, 0, NULL)
--#define wake_up_interruptible_sync(x)	__wake_up_sync((x), TASK_INTERRUPTIBLE, 1)
-+#define wake_up_interruptible_sync(x)	__wake_up_sync((x), TASK_INTERRUPTIBLE)
- 
- /*
-  * Wakeup macros to be used to report events to the targets.
-@@ -228,7 +228,7 @@ void __wake_up_sync(struct wait_queue_head *wq_head, unsigned int mode, int nr);
- #define wake_up_interruptible_poll(x, m)					\
- 	__wake_up(x, TASK_INTERRUPTIBLE, 1, poll_to_key(m))
- #define wake_up_interruptible_sync_poll(x, m)					\
--	__wake_up_sync_key((x), TASK_INTERRUPTIBLE, 1, poll_to_key(m))
-+	__wake_up_sync_key((x), TASK_INTERRUPTIBLE, poll_to_key(m))
- 
- #define ___wait_cond_timeout(condition)						\
- ({										\
-diff --git a/kernel/exit.c b/kernel/exit.c
-index a46a50d67002..a1ff25ef050e 100644
---- a/kernel/exit.c
-+++ b/kernel/exit.c
-@@ -1435,7 +1435,7 @@ static int child_wait_callback(wait_queue_entry_t *wait, unsigned mode,
- void __wake_up_parent(struct task_struct *p, struct task_struct *parent)
- {
- 	__wake_up_sync_key(&parent->signal->wait_chldexit,
--				TASK_INTERRUPTIBLE, 1, p);
-+			   TASK_INTERRUPTIBLE, p);
- }
- 
- static long do_wait(struct wait_opts *wo)
-diff --git a/kernel/sched/wait.c b/kernel/sched/wait.c
-index c1e566a114ca..b4b52361dab7 100644
---- a/kernel/sched/wait.c
-+++ b/kernel/sched/wait.c
-@@ -169,7 +169,6 @@ EXPORT_SYMBOL_GPL(__wake_up_locked_key_bookmark);
-  * __wake_up_sync_key - wake up threads blocked on a waitqueue.
-  * @wq_head: the waitqueue
-  * @mode: which threads
-- * @nr_exclusive: how many wake-one or wake-many threads to wake up
-  * @key: opaque value to be passed to wakeup targets
-  *
-  * The sync wakeup differs that the waker knows that it will schedule
-@@ -183,26 +182,21 @@ EXPORT_SYMBOL_GPL(__wake_up_locked_key_bookmark);
-  * accessing the task state.
-  */
- void __wake_up_sync_key(struct wait_queue_head *wq_head, unsigned int mode,
--			int nr_exclusive, void *key)
-+			void *key)
- {
--	int wake_flags = 1; /* XXX WF_SYNC */
--
- 	if (unlikely(!wq_head))
- 		return;
- 
--	if (unlikely(nr_exclusive != 1))
--		wake_flags = 0;
--
--	__wake_up_common_lock(wq_head, mode, nr_exclusive, wake_flags, key);
-+	__wake_up_common_lock(wq_head, mode, 1, WF_SYNC, key);
- }
- EXPORT_SYMBOL_GPL(__wake_up_sync_key);
- 
- /*
-  * __wake_up_sync - see __wake_up_sync_key()
-  */
--void __wake_up_sync(struct wait_queue_head *wq_head, unsigned int mode, int nr_exclusive)
-+void __wake_up_sync(struct wait_queue_head *wq_head, unsigned int mode)
- {
--	__wake_up_sync_key(wq_head, mode, nr_exclusive, NULL);
-+	__wake_up_sync_key(wq_head, mode, NULL);
- }
- EXPORT_SYMBOL_GPL(__wake_up_sync);	/* For internal use only */
- 
+On 10/11/19 2:23 AM, Dmitry Safonov wrote:
+> From: Thomas Gleixner <tglx@linutronix.de>
+> 
+> To support time namespaces in the vdso with a minimal impact on regular non
+> time namespace affected tasks, the namespace handling needs to be hidden in
+> a slow path.
+> 
+> The most obvious place is vdso_seq_begin(). If a task belongs to a time
+> namespace then the VVAR page which contains the system wide vdso data is
+> replaced with a namespace specific page which has the same layout as the
+> VVAR page. That page has vdso_data->seq set to 1 to enforce the slow path
+> and vdso_data->clock_mode set to VCLOCK_TIMENS to enforce the time
+> namespace handling path.
+> 
+> The extra check in the case that vdso_data->seq is odd, e.g. a concurrent
+> update of the vdso data is in progress, is not really affecting regular
+> tasks which are not part of a time namespace as the task is spin waiting
+> for the update to finish and vdso_data->seq to become even again.
+> 
+> If a time namespace task hits that code path, it invokes the corresponding
+> time getter function which retrieves the real VVAR page, reads host time
+> and then adds the offset for the requested clock which is stored in the
+> special VVAR page.
+> 
+> If VDSO time namespace support is disabled the whole magic is compiled out.
+> 
+> Initial testing shows that the disabled case is almost identical to the
+> host case which does not take the slow timens path. With the special timens
+> page installed the performance hit is constant time and in the range of
+> 5-7%.
+> 
+> For the vdso functions which are not using the sequence count an
+> unconditional check for vdso_data->clock_mode is added which switches to
+> the real vdso when the clock_mode is VCLOCK_TIMENS.
+> 
+> Suggested-by: Andy Lutomirski <luto@kernel.org>
+> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+> Signed-off-by: Andrei Vagin <avagin@gmail.com>
+> Signed-off-by: Dmitry Safonov <dima@arista.com>
+> ---
+>  include/linux/time.h    |   6 ++
+>  include/vdso/datapage.h |  19 +++++-
+>  lib/vdso/Kconfig        |   6 ++
+>  lib/vdso/gettimeofday.c | 128 +++++++++++++++++++++++++++++++++++++++-
+>  4 files changed, 155 insertions(+), 4 deletions(-)
+> 
+> diff --git a/include/linux/time.h b/include/linux/time.h
+> index 27d83fd2ae61..b1a592638d7d 100644
+> --- a/include/linux/time.h
+> +++ b/include/linux/time.h
+> @@ -96,4 +96,10 @@ static inline bool itimerspec64_valid(const struct itimerspec64 *its)
+>   */
+>  #define time_after32(a, b)	((s32)((u32)(b) - (u32)(a)) < 0)
+>  #define time_before32(b, a)	time_after32(a, b)
+> +
+> +struct timens_offset {
+> +	s64	sec;
+> +	u64	nsec;
+> +};
+> +
+>  #endif
+> diff --git a/include/vdso/datapage.h b/include/vdso/datapage.h
+> index 2e302c0f41f7..65a38acce27e 100644
+> --- a/include/vdso/datapage.h
+> +++ b/include/vdso/datapage.h
+> @@ -21,6 +21,8 @@
+>  #define CS_RAW		1
+>  #define CS_BASES	(CS_RAW + 1)
+>  
+> +#define VCLOCK_TIMENS	UINT_MAX
+> +
+>  /**
+>   * struct vdso_timestamp - basetime per clock_id
+>   * @sec:	seconds
+> @@ -48,6 +50,7 @@ struct vdso_timestamp {
+>   * @mult:		clocksource multiplier
+>   * @shift:		clocksource shift
+>   * @basetime[clock_id]:	basetime per clock_id
+> + * @offset[clock_id]:	time namespace offset per clock_id
+>   * @tz_minuteswest:	minutes west of Greenwich
+>   * @tz_dsttime:		type of DST correction
+>   * @hrtimer_res:	hrtimer resolution
+> @@ -55,6 +58,17 @@ struct vdso_timestamp {
+>   *
+>   * vdso_data will be accessed by 64 bit and compat code at the same time
+>   * so we should be careful before modifying this structure.
+> + *
+> + * @basetime is used to store the base time for the system wide time getter
+> + * VVAR page.
+> + *
+> + * @offset is used by the special time namespace VVAR pages which are
+> + * installed instead of the real VVAR page. These namespace pages must set
+> + * @seq to 1 and @clock_mode to VLOCK_TIMENS to force the code into the
+> + * time namespace slow path. The namespace aware functions retrieve the
+> + * real system wide VVAR page, read host time and add the per clock offset.
+> + * For clocks which are not affected by time namespace adjustement the
+> + * offset must be zero.
+>   */
+>  struct vdso_data {
+>  	u32			seq;
+> @@ -65,7 +79,10 @@ struct vdso_data {
+>  	u32			mult;
+>  	u32			shift;
+>  
+> -	struct vdso_timestamp	basetime[VDSO_BASES];
+> +	union {
+> +		struct vdso_timestamp	basetime[VDSO_BASES];
+> +		struct timens_offset	offset[VDSO_BASES];
+> +	};
+>  
+>  	s32			tz_minuteswest;
+>  	s32			tz_dsttime;
+> diff --git a/lib/vdso/Kconfig b/lib/vdso/Kconfig
+> index 9fe698ff62ec..85276de70dba 100644
+> --- a/lib/vdso/Kconfig
+> +++ b/lib/vdso/Kconfig
+> @@ -24,4 +24,10 @@ config GENERIC_COMPAT_VDSO
+>  	help
+>  	  This config option enables the compat VDSO layer.
+>  
+> +config VDSO_TIMENS
+
+To uniform the naming with the rest of the file and with CONFIG_TIME_NS, can we
+please change the name of this config option in GENERIC_VDSO_TIME_NS? And then
+follow the logic explained by Thomas in patch 1 of this series.
+
+Thanks,
+Vincenzo
+
+> +	bool
+> +	help
+> +	  Selected by architectures which support time namespaces in the
+> +	  VDSO
+> +
+>  endif
+> diff --git a/lib/vdso/gettimeofday.c b/lib/vdso/gettimeofday.c
+> index e630e7ff57f1..25244b677823 100644
+> --- a/lib/vdso/gettimeofday.c
+> +++ b/lib/vdso/gettimeofday.c
+> @@ -38,6 +38,51 @@ u64 vdso_calc_delta(u64 cycles, u64 last, u64 mask, u32 mult)
+>  }
+>  #endif
+>  
+> +#ifndef CONFIG_VDSO_TIMENS
+> +static __always_inline
+> +const struct vdso_data *__arch_get_timens_vdso_data(void)
+> +{
+> +	return NULL;
+> +}
+> +#endif
+> +
+> +static int do_hres_timens(const struct vdso_data *vdns, clockid_t clk,
+> +		      struct __kernel_timespec *ts)
+> +{
+> +	const struct vdso_data *vd = __arch_get_timens_vdso_data();
+> +	const struct vdso_timestamp *vdso_ts = &vd->basetime[clk];
+> +	const struct timens_offset *offs = &vdns->offset[clk];
+> +	u64 cycles, last, ns;
+> +	s64 sec;
+> +	u32 seq;
+> +
+> +	do {
+> +		seq = vdso_read_begin(vd);
+> +		cycles = __arch_get_hw_counter(vd->clock_mode);
+> +		ns = vdso_ts->nsec;
+> +		last = vd->cycle_last;
+> +		if (unlikely((s64)cycles < 0))
+> +			return -1;
+> +
+> +		ns += vdso_calc_delta(cycles, last, vd->mask, vd->mult);
+> +		ns >>= vd->shift;
+> +		sec = vdso_ts->sec;
+> +	} while (unlikely(vdso_read_retry(vd, seq)));
+> +
+> +	/* Add the namespace offset */
+> +	sec += offs->sec;
+> +	ns += offs->nsec;
+> +
+> +	/*
+> +	 * Do this outside the loop: a race inside the loop could result
+> +	 * in __iter_div_u64_rem() being extremely slow.
+> +	 */
+> +	ts->tv_sec = sec + __iter_div_u64_rem(ns, NSEC_PER_SEC, &ns);
+> +	ts->tv_nsec = ns;
+> +
+> +	return 0;
+> +}
+> +
+>  static int do_hres(const struct vdso_data *vd, clockid_t clk,
+>  		   struct __kernel_timespec *ts)
+>  {
+> @@ -46,7 +91,28 @@ static int do_hres(const struct vdso_data *vd, clockid_t clk,
+>  	u32 seq;
+>  
+>  	do {
+> -		seq = vdso_read_begin(vd);
+> +		/*
+> +		 * Open coded to handle VCLOCK_TIMENS. Time namespace
+> +		 * enabled tasks have a special VVAR page installed which
+> +		 * has vd->seq set to 1 and vd->clock_mode set to
+> +		 * VCLOCK_TIMENS. For non time namespace affected tasks
+> +		 * this does not affect performance because if vd->seq is
+> +		 * odd, i.e. a concurrent update is in progress the extra
+> +		 * check for vd->clock_mode is just a few extra
+> +		 * instructions while spin waiting for vd->seq to become
+> +		 * even again.
+> +		 */
+> +		while (1) {
+> +			seq = READ_ONCE(vd->seq);
+> +			if (likely(!(seq & 1)))
+> +				break;
+> +			if (IS_ENABLED(CONFIG_VDSO_TIMENS) &&
+> +			    vd->clock_mode == VCLOCK_TIMENS)
+> +				return do_hres_timens(vd, clk, ts);
+> +			cpu_relax();
+> +		}
+> +		smp_rmb();
+> +
+>  		cycles = __arch_get_hw_counter(vd->clock_mode);
+>  		ns = vdso_ts->nsec;
+>  		last = vd->cycle_last;
+> @@ -68,6 +134,34 @@ static int do_hres(const struct vdso_data *vd, clockid_t clk,
+>  	return 0;
+>  }
+>  
+> +static void do_coarse_timens(const struct vdso_data *vdns, clockid_t clk,
+> +			 struct __kernel_timespec *ts)
+> +{
+> +	const struct vdso_data *vd = __arch_get_timens_vdso_data();
+> +	const struct vdso_timestamp *vdso_ts = &vd->basetime[clk];
+> +	const struct timens_offset *offs = &vdns->offset[clk];
+> +	u64 nsec;
+> +	s64 sec;
+> +	s32 seq;
+> +
+> +	do {
+> +		seq = vdso_read_begin(vd);
+> +		sec = vdso_ts->sec;
+> +		nsec = vdso_ts->nsec;
+> +	} while (unlikely(vdso_read_retry(vd, seq)));
+> +
+> +	/* Add the namespace offset */
+> +	sec += offs->sec;
+> +	nsec += offs->nsec;
+> +
+> +	/*
+> +	 * Do this outside the loop: a race inside the loop could result
+> +	 * in __iter_div_u64_rem() being extremely slow.
+> +	 */
+> +	ts->tv_sec = sec + __iter_div_u64_rem(nsec, NSEC_PER_SEC, &nsec);
+> +	ts->tv_nsec = nsec;
+> +}
+> +
+>  static void do_coarse(const struct vdso_data *vd, clockid_t clk,
+>  		      struct __kernel_timespec *ts)
+>  {
+> @@ -75,7 +169,23 @@ static void do_coarse(const struct vdso_data *vd, clockid_t clk,
+>  	u32 seq;
+>  
+>  	do {
+> -		seq = vdso_read_begin(vd);
+> +		/*
+> +		 * Open coded to handle VCLOCK_TIMENS. See comment in
+> +		 * do_hres().
+> +		 */
+> +		while (1) {
+> +			seq = READ_ONCE(vd->seq);
+> +			if (likely(!(seq & 1)))
+> +				break;
+> +			if (IS_ENABLED(CONFIG_VDSO_TIMENS) &&
+> +			    vd->clock_mode == VCLOCK_TIMENS) {
+> +				do_coarse_timens(vd, clk, ts);
+> +				return;
+> +			}
+> +			cpu_relax();
+> +		}
+> +		smp_rmb();
+> +
+>  		ts->tv_sec = vdso_ts->sec;
+>  		ts->tv_nsec = vdso_ts->nsec;
+>  	} while (unlikely(vdso_read_retry(vd, seq)));
+> @@ -156,6 +266,10 @@ __cvdso_gettimeofday(struct __kernel_old_timeval *tv, struct timezone *tz)
+>  	}
+>  
+>  	if (unlikely(tz != NULL)) {
+> +		if (IS_ENABLED(CONFIG_VDSO_TIMENS) &&
+> +		    vd->clock_mode == VCLOCK_TIMENS)
+> +			vd = __arch_get_timens_vdso_data();
+> +
+>  		tz->tz_minuteswest = vd[CS_HRES_COARSE].tz_minuteswest;
+>  		tz->tz_dsttime = vd[CS_HRES_COARSE].tz_dsttime;
+>  	}
+> @@ -167,7 +281,12 @@ __cvdso_gettimeofday(struct __kernel_old_timeval *tv, struct timezone *tz)
+>  static __maybe_unused time_t __cvdso_time(time_t *time)
+>  {
+>  	const struct vdso_data *vd = __arch_get_vdso_data();
+> -	time_t t = READ_ONCE(vd[CS_HRES_COARSE].basetime[CLOCK_REALTIME].sec);
+> +	time_t t;
+> +
+> +	if (IS_ENABLED(CONFIG_VDSO_TIMENS) && vd->clock_mode == VCLOCK_TIMENS)
+> +		vd = __arch_get_timens_vdso_data();
+> +
+> +	t = READ_ONCE(vd[CS_HRES_COARSE].basetime[CLOCK_REALTIME].sec);
+>  
+>  	if (time)
+>  		*time = t;
+> @@ -189,6 +308,9 @@ int __cvdso_clock_getres_common(clockid_t clock, struct __kernel_timespec *res)
+>  	if (unlikely((u32) clock >= MAX_CLOCKS))
+>  		return -1;
+>  
+> +	if (IS_ENABLED(CONFIG_VDSO_TIMENS) && vd->clock_mode == VCLOCK_TIMENS)
+> +		vd = __arch_get_timens_vdso_data();
+> +
+>  	hrtimer_res = READ_ONCE(vd[CS_HRES_COARSE].hrtimer_res);
+>  	/*
+>  	 * Convert the clockid to a bitmask and use it to check which
+> 
+
+-- 
+Regards,
+Vincenzo
