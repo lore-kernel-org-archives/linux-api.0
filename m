@@ -1,45 +1,34 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCHv7 19/33] lib/vdso: Prepare for time namespace support
-Date: Wed, 16 Oct 2019 17:07:13 +0200 (CEST)
-Message-ID: <alpine.DEB.2.21.1910161704120.2046@nanos.tec.linutronix.de>
-References: <20191011012341.846266-1-dima@arista.com> <20191011012341.846266-20-dima@arista.com> <a726e64f-bf73-4eca-6acf-75926898d88a@arm.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [RFC PATCH 02/21] Add a prelocked wake-up
+Date: Wed, 16 Oct 2019 08:31:48 -0700
+Message-ID: <CAHk-=wgMZR8TWpmRBPytGmWJX=C=-bCb5D2PsCx0LUNemAPexA@mail.gmail.com>
+References: <157117606853.15019.15459271147790470307.stgit@warthog.procyon.org.uk>
+ <157117608708.15019.1998141309054662114.stgit@warthog.procyon.org.uk>
+ <CAHk-=whiz1sHXu8SVZKEC2dup=r5JMrftPtEt6ff9Ea8dyH8yQ@mail.gmail.com> <6900.1571235985@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <a726e64f-bf73-4eca-6acf-75926898d88a@arm.com>
+In-Reply-To: <6900.1571235985@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Vincenzo Frascino <vincenzo.frascino@arm.com>
-Cc: Dmitry Safonov <dima@arista.com>, linux-kernel@vger.kernel.org, Dmitry Safonov <0x7f454c46@gmail.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org, Andrei Vagin <avagin@gmail.com>
+To: David Howells <dhowells@redhat.com>
+Cc: Tim Chen <tim.c.chen@linux.intel.com>, Kan Liang <kan.liang@intel.com>, Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, 16 Oct 2019, Vincenzo Frascino wrote:
+On Wed, Oct 16, 2019 at 7:26 AM David Howells <dhowells@redhat.com> wrote:
+>
+> Btw, is there any point in __wake_up_sync_key() taking a nr_exclusive
+> argument since it clears WF_SYNC if nr_exclusive != 1 and doesn't make sense
+> to be >1 anyway.
 
-< SNIP >
+Ack, looks sane to me.
 
-> > --- a/lib/vdso/Kconfig
-> > +++ b/lib/vdso/Kconfig
-> > @@ -24,4 +24,10 @@ config GENERIC_COMPAT_VDSO
-> >  	help
-> >  	  This config option enables the compat VDSO layer.
-> >  
-> > +config VDSO_TIMENS
-> 
-> To uniform the naming with the rest of the file and with CONFIG_TIME_NS, can we
-> please change the name of this config option in GENERIC_VDSO_TIME_NS? And then
-> follow the logic explained by Thomas in patch 1 of this series.
+We have _very_ few users of nr_exclusive. I wonder if it's even worth
+having at all, but it's definitely not worth it here.
 
-Can you pretty please finally start to trim your replies?
+I'd love for nr_exclusive to go away and be replaced by WF_ALL
+instead. Right now it looks like there is one SGI driver that uses it,
+and the sbitmap code. That was all I could find.
 
-If you didn't read the link I sent you earlier, then here is the relevant
-paragraph:
+Oh well. You removing one case is at last a small amount of progress.
 
-  It's an annoyance to have to scroll down through several pages of quoted
-  text to find a single line of reply or to figure out that after that
-  reply the rest of the e-mail is just useless ballast.
-
-I know that corporate mail style does not care about that, but I pretty
-much care.
-
-Thanks,
-
-	tglx
+         Linus
