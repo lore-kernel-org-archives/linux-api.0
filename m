@@ -1,64 +1,75 @@
-From: Andrei Vagin <avagin@gmail.com>
-Subject: Re: [PATCHv7 01/33] ns: Introduce Time Namespace
-Date: Wed, 16 Oct 2019 16:33:42 -0700
-Message-ID: <20191016233342.GA3075@gmail.com>
-References: <20191011012341.846266-1-dima@arista.com>
- <20191011012341.846266-2-dima@arista.com>
- <80af93da-d497-81de-2a2a-179bb3bc852d@arm.com>
- <alpine.DEB.2.21.1910161230070.2046@nanos.tec.linutronix.de>
+From: Moritz Fischer <mdf@kernel.org>
+Subject: Re: [PATCH v7 0/3] add thermal/power management features for FPGA
+ DFL drivers
+Date: Wed, 16 Oct 2019 19:35:14 -0700
+Message-ID: <20191017023514.GA31676@archbox>
+References: <1571031723-12101-1-git-send-email-hao.wu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=koi8-r
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.21.1910161230070.2046@nanos.tec.linutronix.de>
+In-Reply-To: <1571031723-12101-1-git-send-email-hao.wu@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: Vincenzo Frascino <vincenzo.frascino@arm.com>, Dmitry Safonov <dima@arista.com>, linux-kernel@vger.kernel.org, Dmitry Safonov <0x7f454c46@gmail.com>, Andrei Vagin <avagin@openvz.org>, Adrian Reber <adrian@lisas.de>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
+To: Wu Hao <hao.wu@intel.com>
+Cc: mdf@kernel.org, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, linux-hwmon@vger.kernel.org, linux@roeck-us.net, jdelvare@suse.com, gregkh@linuxfoundation.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 16, 2019 at 12:39:11PM +0200, Thomas Gleixner wrote:
-> On Wed, 16 Oct 2019, Vincenzo Frascino wrote:
+On Mon, Oct 14, 2019 at 01:42:00PM +0800, Wu Hao wrote:
+> Hi Moritz and all,
 > 
-> < Trim 250+ lines ( 3+ pages) of pointlessly wasted electrons >
+> This patchset adds thermal and power management features for FPGA DFL
+> drivers. Both patches are using hwmon as userspace interfaces.
 > 
-> > > --- a/init/Kconfig
-> > > +++ b/init/Kconfig
-> > > @@ -1096,6 +1096,13 @@ config UTS_NS
-> > >  	  In this namespace tasks see different info provided with the
-> > >  	  uname() system call
-> > >  
-> > > +config TIME_NS
-> > > +	bool "TIME namespace"
-> > > +	default y
-> > 
-> > Having CONFIG_TIME_NS "default y" makes so that the option is selected even on
-> > the architectures that have no support for time namespaces.
-> > The direct consequence is that the fallbacks defined in this patch are never
-> > selected and this ends up in kernel compilation errors due to missing symbols.
-> > 
-> > The error below shows what happens on arm64 (similar behavior on other
-> > architectures):
-> > 
-> > aarch64-linux-gnu-ld: kernel/time/namespace.o: in function `timens_on_fork':
-> > kernel/time/namespace.c:321: undefined reference to `vdso_join_timens'
-> > 
-> > My proposal is to keep TIME_NS "default n" (just remove "default y"), let the
-> > architectures that enable time namespaces select it and make CONFIG_TIME_NS
-> > select GENERIC_VDSO_TIME_NS if arch has HAVE_GENERIC_VDSO.
+> This patchset is created on top of 5.4-rc3, please help with review to see
+> if any comments, thank you very much!
 > 
-> Nah.
+> Main changes from v6:
+>  - update kernel version and date in sysfs doc.
 > 
-> config TIME_NS
-> 	bool "TIME namespace"
-> 	depends on GENERIC_VDSO_TIME_NS
+> Main changes from v5:
+>  - rebase and clean up (remove empty uinit function) per changes in recent
+>    merged dfl patches.
+>  - update date in sysfs doc.
+> 
+> Main changes from v4:
+>  - rebase due to Documentation format change (dfl.txt -> rst).
+>  - clamp threshold inputs for sysfs interfaces. (patch#3)
+>  - update sysfs doc to add more description for ltr sysfs interfaces.
+>    (patch#3)
+> 
+> Main changes from v3:
+>  - use HWMON_CHANNEL_INFO.
+> 
+> Main changes from v2:
+>  - switch to standard hwmon APIs for thermal hwmon:
+>      temp1_alarm        --> temp1_max
+>      temp1_alarm_status --> temp1_max_alarm
+>      temp1_crit_status  --> temp1_crit_alarm
+>      temp1_alarm_policy --> temp1_max_policy
+>  - switch to standard hwmon APIs for power hwmon:
+>      power1_cap         --> power1_max
+>      power1_cap_status  --> power1_max_alarm
+>      power1_crit_status --> power1_crit_alarm
+> 
+> Wu Hao (2):
+>   fpga: dfl: fme: add thermal management support
+>   fpga: dfl: fme: add power management support
+> 
+> Xu Yilun (1):
+>   Documentation: fpga: dfl: add descriptions for thermal/power
+>     management interfaces
+> 
+>  Documentation/ABI/testing/sysfs-platform-dfl-fme | 132 ++++++++
+>  Documentation/fpga/dfl.rst                       |  10 +
+>  drivers/fpga/Kconfig                             |   2 +-
+>  drivers/fpga/dfl-fme-main.c                      | 385 +++++++++++++++++++++++
+>  4 files changed, 528 insertions(+), 1 deletion(-)
+> 
+> -- 
+> 1.8.3.1
+> 
 
-I was thinking to fix this by the same way with a small difference.
-
-If GENERIC_GETTIMEOFDAY isn't set, it should be safe to allow enabling
-TIME_NS. In this case, clock_gettime works via system call and we don't
-have arch-specific code in this case. Does this sound reasonable?
-
-        depends on (!GENERIC_GETTIMEOFDAY || GENERIC_VDSO_TIME_NS)
+Series applied.
 
 Thanks,
-Andrei
+Moritz
