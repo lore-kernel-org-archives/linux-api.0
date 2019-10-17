@@ -1,178 +1,142 @@
-From: Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [PATCH v3 2/5] test: verify fdinfo for pidfd of reaped process
-Date: Thu, 17 Oct 2019 12:18:29 +0200
-Message-ID: <20191017101832.5985-2-christian.brauner@ubuntu.com>
-References: <20191016153606.2326-1-christian.brauner@ubuntu.com>
- <20191017101832.5985-1-christian.brauner@ubuntu.com>
+From: David Howells <dhowells@redhat.com>
+Subject: Re: [RFC PATCH 03/21] pipe: Use head and tail pointers for the ring, not cursor and length
+Date: Thu, 17 Oct 2019 11:53:19 +0100
+Message-ID: <8694.1571309599@warthog.procyon.org.uk>
+References: <b8799179-d389-8005-4f6d-845febc3bb23@rasmusvillemoes.dk> <157117606853.15019.15459271147790470307.stgit@warthog.procyon.org.uk> <157117609543.15019.17103851546424902507.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191017101832.5985-1-christian.brauner@ubuntu.com>
+In-Reply-To: <b8799179-d389-8005-4f6d-845febc3bb23@rasmusvillemoes.dk>
+Content-ID: <8693.1571309599.1@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: oleg@redhat.com, linux-kernel@vger.kernel.org
-Cc: aarcange@redhat.com, akpm@linux-foundation.org, christian@kellner.me, cyphar@cyphar.com, elena.reshetova@intel.com, guro@fb.com, jannh@google.com, ldv@altlinux.org, linux-api@vger.kernel.org, linux-kselftest@vger.kernel.org, mhocko@suse.com, mingo@kernel.org, peterz@infradead.org, shuah@kernel.org, tglx@linutronix.de, viro@zeniv.linux.org.uk, Christian Brauner <christian.brauner@ubuntu.com>
+To: Rasmus Villemoes <linux@rasmusvillemoes.dk>
+Cc: dhowells@redhat.com, torvalds@linux-foundation.org, Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Test that the fdinfo field of a pidfd referring to a dead process
-correctly shows Pid: -1 and NSpid: -1.
+Rasmus Villemoes <linux@rasmusvillemoes.dk> wrote:
 
-Cc: Christian Kellner <christian@kellner.me>
-Cc: linux-kselftest@vger.kernel.org
-Reviewed-by: Christian Kellner <christian@kellner.me>
-Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
----
-/* pidfd selftests */
-passed
+> >  (6) The number of free slots in the ring is "(tail + pipe->ring_size) -
+> >      head".
+> 
+> Seems an odd way of writing pipe->ring_size - (head - tail) ; i.e.
+> obviously #free slots is #size minus #occupancy.
 
-/* v1 */
-Link: https://lore.kernel.org/r/20191015141332.4055-2-christian.brauner@ubuntu.com
+Perhaps so.  The way I was looking at it is the window into which things can
+be written is tail...tail+ring_size; the number of free slots is the distance
+from head to the end of the window.
 
-/* v2 */
-Link: https://lore.kernel.org/r/20191016153606.2326-2-christian.brauner@ubuntu.com
-unchanged
+Anyway, I now have a helper that does it your way.
 
-/* v3 */
-unchanged
----
- .../selftests/pidfd/pidfd_fdinfo_test.c       | 59 ++++++++++++++-----
- 1 file changed, 45 insertions(+), 14 deletions(-)
+> >  (7) The ring is full if "head >= (tail + pipe->ring_size)", which can also
+> >      be written as "head - tail >= pipe->ring_size".
+> >
+> 
+> No it cannot, it _must_ be written in the latter form.
 
-diff --git a/tools/testing/selftests/pidfd/pidfd_fdinfo_test.c b/tools/testing/selftests/pidfd/pidfd_fdinfo_test.c
-index 3721be994abd..22558524f71c 100644
---- a/tools/testing/selftests/pidfd/pidfd_fdinfo_test.c
-+++ b/tools/testing/selftests/pidfd/pidfd_fdinfo_test.c
-@@ -113,11 +113,15 @@ static struct child clone_newns(int (*fn)(void *), void *args,
- 	return ret;
- }
- 
-+static inline void child_close(struct child *child)
-+{
-+	close(child->fd);
-+}
-+
- static inline int child_join(struct child *child, struct error *err)
- {
- 	int r;
- 
--	(void)close(child->fd);
- 	r = wait_for_pid(child->pid);
- 	if (r < 0)
- 		error_set(err, PIDFD_ERROR, "waitpid failed (ret %d, errno %d)",
-@@ -128,6 +132,12 @@ static inline int child_join(struct child *child, struct error *err)
- 	return r;
- }
- 
-+static inline int child_join_close(struct child *child, struct error *err)
-+{
-+	child_close(child);
-+	return child_join(child, err);
-+}
-+
- static inline void trim_newline(char *str)
- {
- 	char *pos = strrchr(str, '\n');
-@@ -136,8 +146,8 @@ static inline void trim_newline(char *str)
- 		*pos = '\0';
- }
- 
--static int verify_fdinfo_nspid(int pidfd, struct error *err,
--			       const char *expect, ...)
-+static int verify_fdinfo(int pidfd, struct error *err, const char *prefix,
-+			 size_t prefix_len, const char *expect, ...)
- {
- 	char buffer[512] = {0, };
- 	char path[512] = {0, };
-@@ -160,17 +170,20 @@ static int verify_fdinfo_nspid(int pidfd, struct error *err,
- 				 pidfd);
- 
- 	while (getline(&line, &n, f) != -1) {
--		if (strncmp(line, "NSpid:", 6))
-+		char *val;
-+
-+		if (strncmp(line, prefix, prefix_len))
- 			continue;
- 
- 		found = 1;
- 
--		r = strcmp(line + 6, buffer);
-+		val = line + prefix_len;
-+		r = strcmp(val, buffer);
- 		if (r != 0) {
- 			trim_newline(line);
- 			trim_newline(buffer);
--			error_set(err, PIDFD_FAIL, "NSpid: '%s' != '%s'",
--				  line + 6, buffer);
-+			error_set(err, PIDFD_FAIL, "%s '%s' != '%s'",
-+				  prefix, val, buffer);
- 		}
- 		break;
- 	}
-@@ -179,8 +192,8 @@ static int verify_fdinfo_nspid(int pidfd, struct error *err,
- 	fclose(f);
- 
- 	if (found == 0)
--		return error_set(err, PIDFD_FAIL, "NSpid not found for fd %d",
--				 pidfd);
-+		return error_set(err, PIDFD_FAIL, "%s not found for fd %d",
-+				 prefix, pidfd);
- 
- 	return PIDFD_PASS;
- }
-@@ -213,7 +226,7 @@ static int child_fdinfo_nspid_test(void *args)
- 	}
- 
- 	pidfd = *(int *)args;
--	r = verify_fdinfo_nspid(pidfd, &err, "\t0\n");
-+	r = verify_fdinfo(pidfd, &err, "NSpid:", 6, "\t0\n");
- 
- 	if (r != PIDFD_PASS)
- 		ksft_print_msg("NSpid fdinfo check failed: %s\n", err.msg);
-@@ -242,24 +255,42 @@ static void test_pidfd_fdinfo_nspid(void)
- 	/* The children will have pid 1 in the new pid namespace,
- 	 * so the line must be 'NSPid:\t<pid>\t1'.
- 	 */
--	verify_fdinfo_nspid(a.fd, &err, "\t%d\t%d\n", a.pid, 1);
--	verify_fdinfo_nspid(b.fd, &err, "\t%d\t%d\n", b.pid, 1);
-+	verify_fdinfo(a.fd, &err, "NSpid:", 6, "\t%d\t%d\n", a.pid, 1);
-+	verify_fdinfo(b.fd, &err, "NSpid:", 6, "\t%d\t%d\n", b.pid, 1);
- 
- 	/* wait for the process, check the exit status and set
- 	 * 'err' accordingly, if it is not already set.
- 	 */
-+	child_join_close(&a, &err);
-+	child_join_close(&b, &err);
-+
-+	error_report(&err, test_name);
-+}
-+
-+static void test_pidfd_dead_fdinfo(void)
-+{
-+	struct child a;
-+	struct error err = {0, };
-+	const char *test_name = "pidfd check fdinfo for dead process";
-+
-+	/* Create a new child in a new pid and mount namespace */
-+	a = clone_newns(child_fdinfo_nspid_test, NULL, &err);
-+	error_check(&err, test_name);
- 	child_join(&a, &err);
--	child_join(&b, &err);
- 
-+	verify_fdinfo(a.fd, &err, "Pid:", 4, "\t-1\n");
-+	verify_fdinfo(a.fd, &err, "NSpid:", 6, "\t-1\n");
-+	child_close(&a);
- 	error_report(&err, test_name);
- }
- 
- int main(int argc, char **argv)
- {
- 	ksft_print_header();
--	ksft_set_plan(1);
-+	ksft_set_plan(2);
- 
- 	test_pidfd_fdinfo_nspid();
-+	test_pidfd_dead_fdinfo();
- 
- 	return ksft_exit_pass();
- }
--- 
-2.23.0
+Ah, you're right.  I have a helper now for that too.
+
+> head-tail == pipe_size or head-tail >= pipe_size
+
+In general, I'd prefer ">=" just in case tail gets in front of head.
+
+Rasmus Villemoes <linux@rasmusvillemoes.dk> wrote:
+
+> > Also split pipe->buffers into pipe->ring_size (which indicates the size of
+> > the ring) and pipe->max_usage (which restricts the amount of ring that
+> > write() is allowed to fill).  This allows for a pipe that is both writable
+> > by the kernel notification facility and by userspace, allowing plenty of
+> > ring space for notifications to be added whilst preventing userspace from
+> > being able to use up too much buffer space.
+> 
+> That seems like something that should be added in a separate patch -
+> adding ->max_usage and switching appropriate users of ->ring_size over,
+> so it's more clear where you're using one or the other.
+
+Okay.
+
+> > +		ibuf = &pipe->bufs[tail];
+> 
+> I don't see where tail gets masked between tail = pipe->tail;
+
+Yeah - I missed that one.
+
+> In any case, how about seeding head and tail with something like 1<<20 when
+> creating the pipe so bugs like that are hit more quickly.
+
+That's sounds like a good idea.
+
+> > +			while (tail < head) {
+> > +				count += pipe->bufs[tail & mask].len;
+> > +				tail++;
+> >  			}
+> 
+> This is broken if head has wrapped but tail has not. It has to be "while
+> (head - tail)" or perhaps just "while (tail != head)" or something along
+> those lines.
+
+Yeah...  It's just too easy to overlook this and use ordinary comparisons.
+I've switched to "while (tail != head)".
+
+> > +	mask = pipe->ring_size - 1;
+> > +	head = pipe->head & mask;
+> > +	tail = pipe->tail & mask;
+> > +	n = pipe->head - pipe->tail;
+> 
+> I think it's confusing to "premask" head and tail here. Can you either
+> drop that (pipe_set_size should hardly be a hot path?), or perhaps call
+> them something else to avoid a future reader seeing an unmasked
+> bufs[head] and thinking that's a bug?
+
+I've made it now do the masking right before doing the memcpy calls and used
+different variable names for it:
+
+	if (n > 0) {
+		unsigned int h = head & mask;
+		unsigned int t = tail & mask;
+		if (h > t) {
+			memcpy(bufs, &pipe->bufs + t,
+			       n * sizeof(struct pipe_buffer));
+		} else {
+			unsigned int tsize = pipe->ring_size - t;
+			if (h > 0)
+				memcpy(bufs + tsize, pipe->bufs,
+				       h * sizeof(struct pipe_buffer));
+			memcpy(bufs, pipe->bufs + t,
+			       tsize * sizeof(struct pipe_buffer));
+		}
+
+> > -	data_start(i, &idx, start);
+> > -	/* some of this one + all after this one */
+> > -	npages = ((i->pipe->curbuf - idx - 1) & (i->pipe->buffers - 1)) + 1;
+> > -	capacity = min(npages,maxpages) * PAGE_SIZE - *start;
+> > +	data_start(i, &i_head, start);
+> > +	p_tail = i->pipe->tail;
+> > +	/* Amount of free space: some of this one + all after this one */
+> > +	npages = (p_tail + i->pipe->ring_size) - i_head;
+> 
+> Hm, it's not clear that this is equivalent to the old computation. Since
+> it seems repeated in a few places, could it be factored to a little
+> helper (before this patch) and the "some of this one + all after this
+> one" comment perhaps expanded to explain what is going on?
+
+Yeah...  It's a bit weird, even before my changes.
+
+However, looking at it again, it seems data_start() does the appropriate
+calculations.  If there's space in the current head buffer, it returns the
+offset to that and the head of that buffer, otherwise it advances the head
+pointer and sets the offset to 0.
+
+So I think the comment may actually be retrospective - referring to the state
+that data_start() has given us, rather than talking about the next bit of
+code.
+
+I also wonder if pipe_get_pages_alloc() is broken.  It doesn't check to see
+whether the buffer is full at the point it calls data_start().  However,
+data_start() doesn't check either and, without this patch, will simply advance
+and mask off the ring index - which may wrap.
+
+The maths in the unpatched version is pretty icky and I'm not convinced it's
+correct.
+
+David
