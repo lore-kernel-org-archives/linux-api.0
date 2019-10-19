@@ -1,165 +1,55 @@
-From: Rich Felker <dalias@libc.org>
+From: Hauke Mehrtens <hauke@hauke-m.de>
 Subject: Re: [musl] [PATCH] arm64: uapi: Fix user space compile with musl libc
-Date: Sat, 19 Oct 2019 16:29:50 -0400
-Message-ID: <20191019202950.GC16318@brightrain.aerifal.cx>
+Date: Sat, 19 Oct 2019 23:51:51 +0200
+Message-ID: <8fcff553-3309-7153-b245-6593d2728678@hauke-m.de>
 References: <20191019201717.15358-1-hauke@hauke-m.de>
+ <20191019202950.GC16318@brightrain.aerifal.cx>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-Content-Disposition: inline
-In-Reply-To: <20191019201717.15358-1-hauke@hauke-m.de>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-To: Hauke Mehrtens <hauke@hauke-m.de>
-Cc: catalin.marinas@arm.com, musl@lists.openwall.com, linux-kernel@vger.kernel.org, stable@vger.kernel.org, linux-api@vger.kernel.org, will@kernel.org, linux-arm-kernel@lists.infradead.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <20191019202950.GC16318@brightrain.aerifal.cx>
+Content-Language: en-US
+Sender: stable-owner@vger.kernel.org
+To: musl@lists.openwall.com, Rich Felker <dalias@libc.org>
+Cc: catalin.marinas@arm.com, will@kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, stable@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Oct 19, 2019 at 10:17:17PM +0200, Hauke Mehrtens wrote:
-> musl libc also defines the structures in their arch/aarch64/bits/signal.h
-> header file. Some applications like strace and gdb include both of them
-> and then the structure definitions are clashing and the build of these
-> user space applications fails.
+On 10/19/19 10:29 PM, Rich Felker wrote:
+> On Sat, Oct 19, 2019 at 10:17:17PM +0200, Hauke Mehrtens wrote:
+>> musl libc also defines the structures in their arch/aarch64/bits/signal.h
+>> header file. Some applications like strace and gdb include both of them
+>> and then the structure definitions are clashing and the build of these
+>> user space applications fails.
+>>
+>> This patch allows a libc to define a constant which tells the kernel
+>> header file that the libc already defined these structures and that they
+>> should not be defined by the kernel uapi header files any more to
+>> prevent clashes. This is done in a similar way as it is already done for
+>> other header files.
+>>
+>> When this patch was accepted into the kernel I will also update musl
+>> libc to define these constants.
 > 
-> This patch allows a libc to define a constant which tells the kernel
-> header file that the libc already defined these structures and that they
-> should not be defined by the kernel uapi header files any more to
-> prevent clashes. This is done in a similar way as it is already done for
-> other header files.
+> I don't entirely object to this outright, but I'd really like to avoid
+> adding further __UAPI_DEF_* suppressions. AIUI asm/sigcontext.h is not
+> intended to be used with userspace headers. Is it still being
+> indirectly included via some other uapi headers? (I thought that was
+> fixed..) If so, that should really be fixed first, and then we can see
+> if there's still motivation for the patch here.
 > 
-> When this patch was accepted into the kernel I will also update musl
-> libc to define these constants.
-
-I don't entirely object to this outright, but I'd really like to avoid
-adding further __UAPI_DEF_* suppressions. AIUI asm/sigcontext.h is not
-intended to be used with userspace headers. Is it still being
-indirectly included via some other uapi headers? (I thought that was
-fixed..) If so, that should really be fixed first, and then we can see
-if there's still motivation for the patch here.
-
-Rich
-
-
-> Signed-off-by: Hauke Mehrtens <hauke@hauke-m.de>
-> Cc: stable@vger.kernel.org
-> ---
->  arch/arm64/include/uapi/asm/sigcontext.h | 13 +++++++++++++
->  include/uapi/linux/libc-compat.h         | 20 ++++++++++++++++++++
->  2 files changed, 33 insertions(+)
+> Rich
 > 
-> diff --git a/arch/arm64/include/uapi/asm/sigcontext.h b/arch/arm64/include/uapi/asm/sigcontext.h
-> index 8b0ebce92427..92d911146137 100644
-> --- a/arch/arm64/include/uapi/asm/sigcontext.h
-> +++ b/arch/arm64/include/uapi/asm/sigcontext.h
-> @@ -20,7 +20,9 @@
->  #ifndef __ASSEMBLY__
->  
->  #include <linux/types.h>
-> +#include <linux/libc-compat.h>
->  
-> +#if __UAPI_DEF_SIGCONTEXT
->  /*
->   * Signal context structure - contains all info to do with the state
->   * before the signal handler was invoked.
-> @@ -35,6 +37,7 @@ struct sigcontext {
->  	/* 4K reserved for FP/SIMD state and future expansion */
->  	__u8 __reserved[4096] __attribute__((__aligned__(16)));
->  };
-> +#endif
->  
->  /*
->   * Allocation of __reserved[]:
-> @@ -57,6 +60,7 @@ struct sigcontext {
->   * generated when userspace does not opt in for any such extension.
->   */
->  
-> +#if __UAPI_DEF_AARCH64_CTX
->  /*
->   * Header to be used at the beginning of structures extending the user
->   * context. Such structures must be placed after the rt_sigframe on the stack
-> @@ -67,7 +71,9 @@ struct _aarch64_ctx {
->  	__u32 magic;
->  	__u32 size;
->  };
-> +#endif
->  
-> +#if __UAPI_DEF_FPSIMD_CONTEXT
->  #define FPSIMD_MAGIC	0x46508001
->  
->  struct fpsimd_context {
-> @@ -76,7 +82,9 @@ struct fpsimd_context {
->  	__u32 fpcr;
->  	__uint128_t vregs[32];
->  };
-> +#endif
->  
-> +#if __UAPI_DEF_ESR_CONTEXT
->  /*
->   * Note: similarly to all other integer fields, each V-register is stored in an
->   * endianness-dependent format, with the byte at offset i from the start of the
-> @@ -93,7 +101,9 @@ struct esr_context {
->  	struct _aarch64_ctx head;
->  	__u64 esr;
->  };
-> +#endif
->  
-> +#if __UAPI_DEF_EXTRA_CONTEXT
->  /*
->   * extra_context: describes extra space in the signal frame for
->   * additional structures that don't fit in sigcontext.__reserved[].
-> @@ -128,7 +138,9 @@ struct extra_context {
->  	__u32 size; /* size in bytes of the extra space */
->  	__u32 __reserved[3];
->  };
-> +#endif
->  
-> +#if __UAPI_DEF_SVE_CONTEXT
->  #define SVE_MAGIC	0x53564501
->  
->  struct sve_context {
-> @@ -136,6 +148,7 @@ struct sve_context {
->  	__u16 vl;
->  	__u16 __reserved[3];
->  };
-> +#endif
->  
->  #endif /* !__ASSEMBLY__ */
->  
-> diff --git a/include/uapi/linux/libc-compat.h b/include/uapi/linux/libc-compat.h
-> index 8254c937c9f4..a863130f4638 100644
-> --- a/include/uapi/linux/libc-compat.h
-> +++ b/include/uapi/linux/libc-compat.h
-> @@ -264,4 +264,24 @@
->  
->  #endif /* __GLIBC__ */
->  
-> +/* Definitions for arch/arm64/include/uapi/asm/sigcontext.h */
-> +#ifndef __UAPI_DEF_SIGCONTEXT
-> +#define __UAPI_DEF_SIGCONTEXT		1
-> +#endif
-> +#ifndef __UAPI_DEF_AARCH64_CTX
-> +#define __UAPI_DEF_AARCH64_CTX		1
-> +#endif
-> +#ifndef __UAPI_DEF_FPSIMD_CONTEXT
-> +#define __UAPI_DEF_FPSIMD_CONTEXT	1
-> +#endif
-> +#ifndef __UAPI_DEF_ESR_CONTEXT
-> +#define __UAPI_DEF_ESR_CONTEXT		1
-> +#endif
-> +#ifndef __UAPI_DEF_EXTRA_CONTEXT
-> +#define __UAPI_DEF_EXTRA_CONTEXT	1
-> +#endif
-> +#ifndef __UAPI_DEF_SVE_CONTEXT
-> +#define __UAPI_DEF_SVE_CONTEXT		1
-> +#endif
-> +
->  #endif /* _UAPI_LIBC_COMPAT_H */
-> -- 
-> 2.20.1
+Hi Rich,
+
+I did some more research and it looks like this patch also fixes my
+problem with strace and gdb compile:
+https://git.kernel.org/linus/9966a05c7b80f075f2bc7e48dbb108d3f2927234
+
+I will backport it in OpenWrt to kernel 4.19.
+
+Please drop my patch.
+
+It would be nice if it could go into the stable 4.19 kernel.
+
+Hauke
