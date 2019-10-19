@@ -1,154 +1,277 @@
-From: Omar Sandoval <osandov@osandov.com>
-Subject: Re: [RFC PATCH v2 5/5] btrfs: implement RWF_ENCODED writes
-Date: Fri, 18 Oct 2019 16:33:00 -0700
-Message-ID: <20191018233300.GE59713@vader>
-References: <cover.1571164762.git.osandov@fb.com>
- <904de93d9bbe630aff7f725fd587810c6eb48344.1571164762.git.osandov@fb.com>
- <0da91628-7f54-7d24-bf58-6807eb9535a5@suse.com>
- <20191018225513.GD59713@vader>
+From: Richard Guy Briggs <rgb@redhat.com>
+Subject: Re: [PATCH ghak90 V7 20/21] audit: add capcontid to set contid
+	outside init_user_ns
+Date: Fri, 18 Oct 2019 21:39:04 -0400
+Message-ID: <20191019013904.uevmrzbmztsbhpnh@madcap2.tricolour.ca>
+References: <cover.1568834524.git.rgb@redhat.com>
+	<214163d11a75126f610bcedfad67a4d89575dc77.1568834525.git.rgb@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-btrfs-owner@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-audit-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20191018225513.GD59713@vader>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Nikolay Borisov <nborisov@suse.com>
-Cc: linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, kernel-team@fb.com, Dave Chinner <david@fromorbit.com>, Jann Horn <jannh@google.com>, linux-api@vger.kernel.org
+In-Reply-To: <214163d11a75126f610bcedfad67a4d89575dc77.1568834525.git.rgb@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/options/linux-audit>,
+	<mailto:linux-audit-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/linux-audit>
+List-Post: <mailto:linux-audit@redhat.com>
+List-Help: <mailto:linux-audit-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/linux-audit>,
+	<mailto:linux-audit-request@redhat.com?subject=subscribe>
+Sender: linux-audit-bounces@redhat.com
+Errors-To: linux-audit-bounces@redhat.com
+To: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org
+Cc: nhorman@tuxdriver.com, dhowells@redhat.com, ebiederm@xmission.com, simo@redhat.com, eparis@parisplace.org, mpatel@redhat.com, serge@hallyn.com
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 18, 2019 at 03:55:13PM -0700, Omar Sandoval wrote:
-> On Wed, Oct 16, 2019 at 01:44:56PM +0300, Nikolay Borisov wrote:
-> > 
-> > 
-> > On 15.10.19 г. 21:42 ч., Omar Sandoval wrote:
-> > > From: Omar Sandoval <osandov@fb.com>
-> > > 
-> > > The implementation resembles direct I/O: we have to flush any ordered
-> > > extents, invalidate the page cache, and do the io tree/delalloc/extent
-> > > map/ordered extent dance. From there, we can reuse the compression code
-> > > with a minor modification to distinguish the write from writeback.
-> > > 
-> > > Now that read and write are implemented, this also sets the
-> > > FMODE_ENCODED_IO flag in btrfs_file_open().
-> > > 
-> > > Signed-off-by: Omar Sandoval <osandov@fb.com>
-> > > ---
-> > >  fs/btrfs/compression.c |   6 +-
-> > >  fs/btrfs/compression.h |   5 +-
-> > >  fs/btrfs/ctree.h       |   2 +
-> > >  fs/btrfs/file.c        |  40 +++++++--
-> > >  fs/btrfs/inode.c       | 197 ++++++++++++++++++++++++++++++++++++++++-
-> > >  5 files changed, 237 insertions(+), 13 deletions(-)
-> > > 
-
-[snip]
-
-> > > +	for (;;) {
-> > > +		struct btrfs_ordered_extent *ordered;
-> > > +
-> > > +		ret = btrfs_wait_ordered_range(inode, start, end - start + 1);
-> > > +		if (ret)
-> > > +			goto out_pages;
-> > > +		ret = invalidate_inode_pages2_range(inode->i_mapping,
-> > > +						    start >> PAGE_SHIFT,
-> > > +						    end >> PAGE_SHIFT);
-> > > +		if (ret)
-> > > +			goto out_pages;
-> > > +		lock_extent_bits(io_tree, start, end, &cached_state);
-> > > +		ordered = btrfs_lookup_ordered_range(BTRFS_I(inode), start,
-> > > +						     end - start + 1);
-> > > +		if (!ordered &&
-> > > +		    !filemap_range_has_page(inode->i_mapping, start, end))
-> > > +			break;
-> > > +		if (ordered)
-> > > +			btrfs_put_ordered_extent(ordered);
-> > > +		unlock_extent_cached(io_tree, start, end, &cached_state);
-> > > +		cond_resched();
-> > > +	}
-> > > +
-> > > +	ret = btrfs_delalloc_reserve_space(inode, &data_reserved, start,
-> > > +					   num_bytes);
-> > > +	if (ret)
-> > > +		goto out_unlock;
-> > > +
-> > > +	ret = btrfs_reserve_extent(root, num_bytes, disk_num_bytes,
-> > > +				   disk_num_bytes, 0, 0, &ins, 1, 1);
-> > > +	if (ret)
-> > > +		goto out_delalloc_release;
-> > > +
-> > > +	em = create_io_em(inode, start, num_bytes, start, ins.objectid,
-> > > +			  ins.offset, ins.offset, num_bytes, compression,
-> > > +			  BTRFS_ORDERED_COMPRESSED);
-> > > +	if (IS_ERR(em)) {
-> > > +		ret = PTR_ERR(em);
-> > > +		goto out_free_reserve;
-> > > +	}
-> > > +	free_extent_map(em);
-> > > +
-> > > +	ret = btrfs_add_ordered_extent_compress(inode, start, ins.objectid,
-> > > +						num_bytes, ins.offset,
-> > > +						BTRFS_ORDERED_COMPRESSED,
-> > > +						compression);
-> > > +	if (ret) {
-> > > +		btrfs_drop_extent_cache(BTRFS_I(inode), start, end, 0);
-> > > +		goto out_free_reserve;
-> > > +	}
-> > > +	btrfs_dec_block_group_reservations(fs_info, ins.objectid);
-> > > +
-> > > +	if (start + encoded->len > inode->i_size)
-> > > +		i_size_write(inode, start + encoded->len);
-> > 
-> > Don't we want the inode size to be updated once data hits disk and
-> > btrfs_finish_ordered_io is called?
+On 2019-09-18 21:22, Richard Guy Briggs wrote:
+> Provide a mechanism similar to CAP_AUDIT_CONTROL to explicitly give a
+> process in a non-init user namespace the capability to set audit
+> container identifiers.
 > 
-> Yup, you're right, this is too early.
+> Use audit netlink message types AUDIT_GET_CAPCONTID 1027 and
+> AUDIT_SET_CAPCONTID 1028.  The message format includes the data
+> structure:
+> struct audit_capcontid_status {
+>         pid_t   pid;
+>         u32     enable;
+> };
 
-Actually, no, this part is fine. Compare to the call to i_size_write()
-in btrfs_get_blocks_direct_write(): we lock the extent in the io_tree,
-create the ordered extent, update i_size, then unlock the extent. Anyone
-else who comes in is going to find the ordered extent and wait on that.
+Paul, can I get a review of the general idea here to see if you're ok
+with this way of effectively extending CAP_AUDIT_CONTROL for the sake of
+setting contid from beyond the init user namespace where capable() can't
+reach and ns_capable() is meaningless for these purposes?
 
-> > > +
-> > > +	unlock_extent_cached(io_tree, start, end, &cached_state);
-> > > +
-> > > +	btrfs_delalloc_release_extents(BTRFS_I(inode), num_bytes, false);
-> > > +
-> > > +	if (btrfs_submit_compressed_write(inode, start, num_bytes, ins.objectid,
-> > > +					  ins.offset, pages, nr_pages, 0,
-> > > +					  false)) {
-> > > +		struct page *page = pages[0];
-> > > +
-> > > +		page->mapping = inode->i_mapping;
-> > > +		btrfs_writepage_endio_finish_ordered(page, start, end, 0);
-> > > +		page->mapping = NULL;
-> > > +		ret = -EIO;
-> > > +		goto out_pages;
-> > > +	}
+Last weekend was Canadian Thanksgiving where I took an extra day for an
+annual bike trip and I'm buried to my neck in a complete kitchen gut
+(down to 1920 structural double brick and knob/tube wiring), but I've
+got fixes or responses to almost everything else you've raised which
+I'll post shortly.
+
+Thanks!
+
+> Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> ---
+>  include/linux/audit.h      | 14 +++++++
+>  include/uapi/linux/audit.h |  2 +
+>  kernel/audit.c             | 98 +++++++++++++++++++++++++++++++++++++++++++++-
+>  kernel/audit.h             |  5 +++
+>  4 files changed, 117 insertions(+), 2 deletions(-)
 > 
-> I also need to wait for the I/O to finish here.
+> diff --git a/include/linux/audit.h b/include/linux/audit.h
+> index 1ce27af686ea..dcc53e62e266 100644
+> --- a/include/linux/audit.h
+> +++ b/include/linux/audit.h
+> @@ -117,6 +117,7 @@ struct audit_task_info {
+>  	kuid_t			loginuid;
+>  	unsigned int		sessionid;
+>  	struct audit_cont	*cont;
+> +	u32			capcontid;
+>  #ifdef CONFIG_AUDITSYSCALL
+>  	struct audit_context	*ctx;
+>  #endif
+> @@ -224,6 +225,14 @@ static inline unsigned int audit_get_sessionid(struct task_struct *tsk)
+>  	return tsk->audit->sessionid;
+>  }
+>  
+> +static inline u32 audit_get_capcontid(struct task_struct *tsk)
+> +{
+> +	if (!tsk->audit)
+> +		return 0;
+> +	return tsk->audit->capcontid;
+> +}
+> +
+> +extern int audit_set_capcontid(struct task_struct *tsk, u32 enable);
+>  extern int audit_set_contid(struct task_struct *tsk, u64 contid);
+>  
+>  static inline u64 audit_get_contid(struct task_struct *tsk)
+> @@ -309,6 +318,11 @@ static inline unsigned int audit_get_sessionid(struct task_struct *tsk)
+>  	return AUDIT_SID_UNSET;
+>  }
+>  
+> +static inline u32 audit_get_capcontid(struct task_struct *tsk)
+> +{
+> +	return 0;
+> +}
+> +
+>  static inline u64 audit_get_contid(struct task_struct *tsk)
+>  {
+>  	return AUDIT_CID_UNSET;
+> diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
+> index eef42c8eea77..011b0a8ee9b2 100644
+> --- a/include/uapi/linux/audit.h
+> +++ b/include/uapi/linux/audit.h
+> @@ -78,6 +78,8 @@
+>  #define AUDIT_GET_LOGINUID	1024	/* Get loginuid of a task */
+>  #define AUDIT_SET_LOGINUID	1025	/* Set loginuid of a task */
+>  #define AUDIT_GET_SESSIONID	1026	/* Set sessionid of a task */
+> +#define AUDIT_GET_CAPCONTID	1027	/* Get cap_contid of a task */
+> +#define AUDIT_SET_CAPCONTID	1028	/* Set cap_contid of a task */
+>  
+>  #define AUDIT_FIRST_USER_MSG	1100	/* Userspace messages mostly uninteresting to kernel */
+>  #define AUDIT_USER_AVC		1107	/* We filter this differently */
+> diff --git a/kernel/audit.c b/kernel/audit.c
+> index a70c9184e5d9..7160da464849 100644
+> --- a/kernel/audit.c
+> +++ b/kernel/audit.c
+> @@ -1192,6 +1192,14 @@ static int audit_netlink_ok(struct sk_buff *skb, u16 msg_type)
+>  	case AUDIT_GET_SESSIONID:
+>  		return 0;
+>  		break;
+> +	case AUDIT_GET_CAPCONTID:
+> +	case AUDIT_SET_CAPCONTID:
+> +	case AUDIT_GET_CONTID:
+> +	case AUDIT_SET_CONTID:
+> +		if (!netlink_capable(skb, CAP_AUDIT_CONTROL) && !audit_get_capcontid(current))
+> +			return -EPERM;
+> +		return 0;
+> +		break;
+>  	default:  /* do more checks below */
+>  		break;
+>  	}
+> @@ -1227,8 +1235,6 @@ static int audit_netlink_ok(struct sk_buff *skb, u16 msg_type)
+>  	case AUDIT_TTY_SET:
+>  	case AUDIT_TRIM:
+>  	case AUDIT_MAKE_EQUIV:
+> -	case AUDIT_GET_CONTID:
+> -	case AUDIT_SET_CONTID:
+>  	case AUDIT_SET_LOGINUID:
+>  		/* Only support auditd and auditctl in initial pid namespace
+>  		 * for now. */
+> @@ -1304,6 +1310,23 @@ static int audit_get_contid_status(struct sk_buff *skb)
+>  	return 0;
+>  }
+>  
+> +static int audit_get_capcontid_status(struct sk_buff *skb)
+> +{
+> +	struct nlmsghdr *nlh = nlmsg_hdr(skb);
+> +	u32 seq = nlh->nlmsg_seq;
+> +	void *data = nlmsg_data(nlh);
+> +	struct audit_capcontid_status cs;
+> +
+> +	cs.pid = ((struct audit_capcontid_status *)data)->pid;
+> +	if (!cs.pid)
+> +		cs.pid = task_tgid_nr(current);
+> +	rcu_read_lock();
+> +	cs.enable = audit_get_capcontid(find_task_by_vpid(cs.pid));
+> +	rcu_read_unlock();
+> +	audit_send_reply(skb, seq, AUDIT_GET_CAPCONTID, 0, 0, &cs, sizeof(cs));
+> +	return 0;
+> +}
+> +
+>  struct audit_loginuid_status { uid_t loginuid; };
+>  
+>  static int audit_get_loginuid_status(struct sk_buff *skb)
+> @@ -1779,6 +1802,27 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
+>  		if (err)
+>  			return err;
+>  		break;
+> +	case AUDIT_SET_CAPCONTID: {
+> +		struct audit_capcontid_status *s = data;
+> +		struct task_struct *tsk;
+> +
+> +		/* check if new data is valid */
+> +		if (nlmsg_len(nlh) < sizeof(*s))
+> +			return -EINVAL;
+> +		tsk = find_get_task_by_vpid(s->pid);
+> +		if (!tsk)
+> +			return -EINVAL;
+> +
+> +		err = audit_set_capcontid(tsk, s->enable);
+> +		put_task_struct(tsk);
+> +		return err;
+> +		break;
+> +	}
+> +	case AUDIT_GET_CAPCONTID:
+> +		err = audit_get_capcontid_status(skb);
+> +		if (err)
+> +			return err;
+> +		break;
+>  	case AUDIT_SET_LOGINUID: {
+>  		uid_t *loginuid = data;
+>  		kuid_t kloginuid;
+> @@ -2711,6 +2755,56 @@ static struct task_struct *audit_cont_owner(struct task_struct *tsk)
+>  	return NULL;
+>  }
+>  
+> +int audit_set_capcontid(struct task_struct *task, u32 enable)
+> +{
+> +	u32 oldcapcontid;
+> +	int rc = 0;
+> +	struct audit_buffer *ab;
+> +	uid_t uid;
+> +	struct tty_struct *tty;
+> +	char comm[sizeof(current->comm)];
+> +
+> +	if (!task->audit)
+> +		return -ENOPROTOOPT;
+> +	oldcapcontid = audit_get_capcontid(task);
+> +	/* if task is not descendant, block */
+> +	if (task == current)
+> +		rc = -EBADSLT;
+> +	else if (!task_is_descendant(current, task))
+> +		rc = -EXDEV;
+> +	else if (current_user_ns() == &init_user_ns) {
+> +		if (!capable(CAP_AUDIT_CONTROL) && !audit_get_capcontid(current))
+> +			rc = -EPERM;
+> +	}
+> +	if (!rc)
+> +		task->audit->capcontid = enable;
+> +
+> +	if (!audit_enabled)
+> +		return rc;
+> +
+> +	ab = audit_log_start(audit_context(), GFP_KERNEL, AUDIT_SET_CAPCONTID);
+> +	if (!ab)
+> +		return rc;
+> +
+> +	uid = from_kuid(&init_user_ns, task_uid(current));
+> +	tty = audit_get_tty();
+> +	audit_log_format(ab,
+> +			 "opid=%d capcontid=%u old-capcontid=%u pid=%d uid=%u auid=%u tty=%s ses=%u",
+> +			 task_tgid_nr(task), enable, oldcapcontid,
+> +			 task_tgid_nr(current), uid,
+> +			 from_kuid(&init_user_ns, audit_get_loginuid(current)),
+> +			 tty ? tty_name(tty) : "(none)",
+> +			 audit_get_sessionid(current));
+> +	audit_put_tty(tty);
+> +	audit_log_task_context(ab);
+> +	audit_log_format(ab, " comm=");
+> +	audit_log_untrustedstring(ab, get_task_comm(comm, current));
+> +	audit_log_d_path_exe(ab, current->mm);
+> +	audit_log_format(ab, " res=%d", !rc);
+> +	audit_log_end(ab);
+> +	return rc;
+> +}
+> +
+>  /*
+>   * audit_set_contid - set current task's audit contid
+>   * @task: target task
+> diff --git a/kernel/audit.h b/kernel/audit.h
+> index cb25341c1a0f..ac4694e88485 100644
+> --- a/kernel/audit.h
+> +++ b/kernel/audit.h
+> @@ -231,6 +231,11 @@ struct audit_contid_status {
+>  	u64	id;
+>  };
+>  
+> +struct audit_capcontid_status {
+> +	pid_t	pid;
+> +	u32	enable;
+> +};
+> +
+>  #define AUDIT_CONTID_DEPTH	5
+>  
+>  /* Indicates that audit should log the full pathname. */
+> -- 
+> 1.8.3.1
 > 
-> > > +	iocb->ki_pos += encoded->len;
-> > > +	return orig_count;
-> > > +
-> > > +out_free_reserve:
-> > > +	btrfs_dec_block_group_reservations(fs_info, ins.objectid);
-> > > +	btrfs_free_reserved_extent(fs_info, ins.objectid, ins.offset, 1);
-> > > +out_delalloc_release:
-> > > +	btrfs_delalloc_release_space(inode, data_reserved, start, num_bytes,
-> > > +				     true);
-> > > +out_unlock:
-> > > +	unlock_extent_cached(io_tree, start, end, &cached_state);
-> > > +out_pages:
-> > > +	for (i = 0; i < nr_pages; i++) {
-> > > +		if (pages[i])
-> > > +			put_page(pages[i]);
-> > > +	}
-> > > +	kvfree(pages);
-> > > +	return ret;
-> > > +}
-> > > +
-> > >  #ifdef CONFIG_SWAP
-> > >  /*
-> > >   * Add an entry indicating a block group or device which is pinned by a
-> > > 
+
+- RGB
+
+--
+Richard Guy Briggs <rgb@redhat.com>
+Sr. S/W Engineer, Kernel Security, Base Operating Systems
+Remote, Ottawa, Red Hat Canada
+IRC: rgb, SunRaycer
+Voice: +1.647.777.2635, Internal: (81) 32635
