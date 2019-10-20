@@ -1,55 +1,74 @@
-From: Hauke Mehrtens <hauke@hauke-m.de>
-Subject: Re: [musl] [PATCH] arm64: uapi: Fix user space compile with musl libc
-Date: Sat, 19 Oct 2019 23:51:51 +0200
-Message-ID: <8fcff553-3309-7153-b245-6593d2728678@hauke-m.de>
-References: <20191019201717.15358-1-hauke@hauke-m.de>
- <20191019202950.GC16318@brightrain.aerifal.cx>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [RFC PATCH v2 0/5] fs: interface for directly reading/writing
+ compressed data
+Date: Mon, 21 Oct 2019 10:05:01 +1100
+Message-ID: <20191020230501.GA8080@dread.disaster.area>
+References: <cover.1571164762.git.osandov@fb.com>
+ <c7e8f93596fee7bb818dc0edf29f484036be1abb.1571164851.git.osandov@fb.com>
+ <cover.1571164762.git.osandov@fb.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <20191019202950.GC16318@brightrain.aerifal.cx>
-Content-Language: en-US
-Sender: stable-owner@vger.kernel.org
-To: musl@lists.openwall.com, Rich Felker <dalias@libc.org>
-Cc: catalin.marinas@arm.com, will@kernel.org, linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, stable@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <cover.1571164762.git.osandov@fb.com>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Omar Sandoval <osandov@osandov.com>
+Cc: linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org, Jann Horn <jannh@google.com>, linux-api@vger.kernel.org, kernel-team@fb.com
 List-Id: linux-api@vger.kernel.org
 
-On 10/19/19 10:29 PM, Rich Felker wrote:
-> On Sat, Oct 19, 2019 at 10:17:17PM +0200, Hauke Mehrtens wrote:
->> musl libc also defines the structures in their arch/aarch64/bits/signal.h
->> header file. Some applications like strace and gdb include both of them
->> and then the structure definitions are clashing and the build of these
->> user space applications fails.
->>
->> This patch allows a libc to define a constant which tells the kernel
->> header file that the libc already defined these structures and that they
->> should not be defined by the kernel uapi header files any more to
->> prevent clashes. This is done in a similar way as it is already done for
->> other header files.
->>
->> When this patch was accepted into the kernel I will also update musl
->> libc to define these constants.
+On Tue, Oct 15, 2019 at 11:42:38AM -0700, Omar Sandoval wrote:
+> From: Omar Sandoval <osandov@fb.com>
 > 
-> I don't entirely object to this outright, but I'd really like to avoid
-> adding further __UAPI_DEF_* suppressions. AIUI asm/sigcontext.h is not
-> intended to be used with userspace headers. Is it still being
-> indirectly included via some other uapi headers? (I thought that was
-> fixed..) If so, that should really be fixed first, and then we can see
-> if there's still motivation for the patch here.
+> Hello,
 > 
-> Rich
+> This series adds an API for reading compressed data on a filesystem
+> without decompressing it as well as support for writing compressed data
+> directly to the filesystem. It is based on my previous series which
+> added a Btrfs-specific ioctl [1], but it is now an extension to
+> preadv2()/pwritev2() as suggested by Dave Chinner [2]. I've included a
+> man page patch describing the API in detail. Test cases and examples
+> programs are available [3].
 > 
-Hi Rich,
+> The use case that I have in mind is Btrfs send/receive: currently, when
+> sending data from one compressed filesystem to another, the sending side
+> decompresses the data and the receiving side recompresses it before
+> writing it out. This is wasteful and can be avoided if we can just send
+> and write compressed extents. The send part will be implemented in a
+> separate series, as this API can stand alone.
+> 
+> Patches 1 and 2 add the VFS support. Patch 3 is a Btrfs prep patch.
+> Patch 4 implements encoded reads for Btrfs, and patch 5 implements
+> encoded writes.
+> 
+> Changes from v1 [4]:
+> 
+> - Encoded reads are now also implemented.
+> - The encoded_iov structure now includes metadata for referring to a
+>   subset of decoded data. This is required to handle certain cases where
+>   a compressed extent is truncated, hole punched, or otherwise sliced up
+>   and Btrfs chooses to reflect this in metadata instead of decompressing
+>   the whole extent and rewriting the pieces. We call these "bookend
+>   extents" in Btrfs, but any filesystem supporting transparent encoding
+>   is likely to have a similar concept.
 
-I did some more research and it looks like this patch also fixes my
-problem with strace and gdb compile:
-https://git.kernel.org/linus/9966a05c7b80f075f2bc7e48dbb108d3f2927234
+Where's the in-kernel documentation for this API? You're encoding a
+specific set of behaviours into the user API, so this needs a whole
+heap of documentation in the generic code to describe how it works
+so that other filesystems implementing have a well defined guideline
+to what they need to support.
 
-I will backport it in OpenWrt to kernel 4.19.
+Also, I don't see any test code for this - can you please add
+support for RWF_ENCODED to xfs_io and write a suite of unit tests
+for fstests that exercise the user API fully?  Given our history of
+screwing up new user APIs, this absolutely should not be merged
+until there is a full set of generic unit tests written and reviewed
+for it and support has been added to fsstress, fsx, and other test
+utilities to fuzz and stress the implementation as part of normal
+day-to-day filesystem development...
 
-Please drop my patch.
+Cheers,
 
-It would be nice if it could go into the stable 4.19 kernel.
-
-Hauke
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
