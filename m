@@ -1,142 +1,37 @@
-From: Omar Sandoval <osandov@osandov.com>
-Subject: Re: [RFC PATCH v2 2/5] fs: add RWF_ENCODED for reading/writing
- compressed data
-Date: Mon, 21 Oct 2019 12:07:09 -0700
-Message-ID: <20191021190709.GD81648@vader>
-References: <cover.1571164762.git.osandov@fb.com>
- <7f98cf5409cf2b583cd5b3451fc739fd3428873b.1571164762.git.osandov@fb.com>
- <20191021182806.GA6706@magnolia>
+From: Christian Brauner <christian.brauner@ubuntu.com>
+Subject: Re: [PATCH v3 1/2] clone3: add CLONE_CLEAR_SIGHAND
+Date: Mon, 21 Oct 2019 21:40:59 +0200
+Message-ID: <20191021194058.pwgiyu4za2srdfau@wittgenstein>
+References: <20191014104538.3096-1-christian.brauner@ubuntu.com>
+ <20191021144633.GA2720@redhat.com>
+ <20191021151255.GA3459@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-btrfs-owner@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20191021182806.GA6706@magnolia>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: "Darrick J. Wong" <darrick.wong@oracle.com>
-Cc: linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org, Dave Chinner <david@fromorbit.com>, Jann Horn <jannh@google.com>, linux-api@vger.kernel.org, kernel-team@fb.com
+In-Reply-To: <20191021151255.GA3459@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Oleg Nesterov <oleg@redhat.com>
+Cc: linux-kernel@vger.kernel.org, Florian Weimer <fweimer@redhat.com>, Arnd Bergmann <arnd@arndb.de>, libc-alpha@sourceware.org, David Howells <dhowells@redhat.com>, Jann Horn <jannh@google.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Juri Lelli <juri.lelli@redhat.com>, Vincent Guittot <vincent.guittot@linaro.org>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Steven Rostedt <rostedt@goodmis.org>, Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>, Shuah Khan <shuah@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.com>, Elena Reshetova <elena.reshetova@intel.com>, Thomas Gleixner <tglx@linutronix.de>, Roman Gushchin <guro@fb.com>, Andrea Arcangeli <aarcange@redhat.com>Al Viro <v>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 21, 2019 at 11:28:06AM -0700, Darrick J. Wong wrote:
-> On Tue, Oct 15, 2019 at 11:42:40AM -0700, Omar Sandoval wrote:
-> > From: Omar Sandoval <osandov@fb.com>
-> > 
-> > Btrfs supports transparent compression: data written by the user can be
-> > compressed when written to disk and decompressed when read back.
-> > However, we'd like to add an interface to write pre-compressed data
-> > directly to the filesystem, and the matching interface to read
-> > compressed data without decompressing it. This adds support for
-> > so-called "encoded I/O" via preadv2() and pwritev2().
-> > 
-> > A new RWF_ENCODED flags indicates that a read or write is "encoded". If
-> > this flag is set, iov[0].iov_base points to a struct encoded_iov which
-> > is used for metadata: namely, the compression algorithm, unencoded
-> > (i.e., decompressed) length, and what subrange of the unencoded data
-> > should be used (needed for truncated or hole-punched extents and when
-> > reading in the middle of an extent). For reads, the filesystem returns
-> > this information; for writes, the caller provides it to the filesystem.
-> > iov[0].iov_len must be set to sizeof(struct encoded_iov), which can be
-> > used to extend the interface in the future. The remaining iovecs contain
-> > the encoded extent.
-> > 
-> > Filesystems must indicate that they support encoded writes by setting
-> > FMODE_ENCODED_IO in ->file_open().
-> > 
-> > Signed-off-by: Omar Sandoval <osandov@fb.com>
-> > ---
-> >  include/linux/fs.h      | 14 +++++++
-> >  include/uapi/linux/fs.h | 26 ++++++++++++-
-> >  mm/filemap.c            | 82 ++++++++++++++++++++++++++++++++++-------
-> >  3 files changed, 108 insertions(+), 14 deletions(-)
-> > 
-> > diff --git a/include/linux/fs.h b/include/linux/fs.h
-> > index e0d909d35763..54681f21e05e 100644
-> > --- a/include/linux/fs.h
-> > +++ b/include/linux/fs.h
-> > @@ -175,6 +175,9 @@ typedef int (dio_iodone_t)(struct kiocb *iocb, loff_t offset,
-> >  /* File does not contribute to nr_files count */
-> >  #define FMODE_NOACCOUNT		((__force fmode_t)0x20000000)
-> >  
-> > +/* File supports encoded IO */
-> > +#define FMODE_ENCODED_IO	((__force fmode_t)0x40000000)
-> > +
-> >  /*
-> >   * Flag for rw_copy_check_uvector and compat_rw_copy_check_uvector
-> >   * that indicates that they should check the contents of the iovec are
-> > @@ -314,6 +317,7 @@ enum rw_hint {
-> >  #define IOCB_SYNC		(1 << 5)
-> >  #define IOCB_WRITE		(1 << 6)
-> >  #define IOCB_NOWAIT		(1 << 7)
-> > +#define IOCB_ENCODED		(1 << 8)
-> >  
-> >  struct kiocb {
-> >  	struct file		*ki_filp;
-> > @@ -3088,6 +3092,11 @@ extern int sb_min_blocksize(struct super_block *, int);
-> >  extern int generic_file_mmap(struct file *, struct vm_area_struct *);
-> >  extern int generic_file_readonly_mmap(struct file *, struct vm_area_struct *);
-> >  extern ssize_t generic_write_checks(struct kiocb *, struct iov_iter *);
-> > +struct encoded_iov;
-> > +extern int generic_encoded_write_checks(struct kiocb *, struct encoded_iov *);
-> > +extern ssize_t check_encoded_read(struct kiocb *, struct iov_iter *);
-> > +extern int import_encoded_write(struct kiocb *, struct encoded_iov *,
-> > +				struct iov_iter *);
-> >  extern int generic_remap_checks(struct file *file_in, loff_t pos_in,
-> >  				struct file *file_out, loff_t pos_out,
-> >  				loff_t *count, unsigned int remap_flags);
-> > @@ -3403,6 +3412,11 @@ static inline int kiocb_set_rw_flags(struct kiocb *ki, rwf_t flags)
-> >  			return -EOPNOTSUPP;
-> >  		ki->ki_flags |= IOCB_NOWAIT;
-> >  	}
-> > +	if (flags & RWF_ENCODED) {
-> > +		if (!(ki->ki_filp->f_mode & FMODE_ENCODED_IO))
-> > +			return -EOPNOTSUPP;
-> > +		ki->ki_flags |= IOCB_ENCODED;
-> > +	}
-> >  	if (flags & RWF_HIPRI)
-> >  		ki->ki_flags |= IOCB_HIPRI;
-> >  	if (flags & RWF_DSYNC)
-> > diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-> > index 379a612f8f1d..ed92a8a257cb 100644
-> > --- a/include/uapi/linux/fs.h
-> > +++ b/include/uapi/linux/fs.h
-> > @@ -284,6 +284,27 @@ struct fsxattr {
-> >  
-> >  typedef int __bitwise __kernel_rwf_t;
-> >  
-> > +enum {
-> > +	ENCODED_IOV_COMPRESSION_NONE,
-> > +	ENCODED_IOV_COMPRESSION_ZLIB,
-> > +	ENCODED_IOV_COMPRESSION_LZO,
-> > +	ENCODED_IOV_COMPRESSION_ZSTD,
-> > +	ENCODED_IOV_COMPRESSION_TYPES = ENCODED_IOV_COMPRESSION_ZSTD,
-> > +};
-> > +
-> > +enum {
-> > +	ENCODED_IOV_ENCRYPTION_NONE,
-> > +	ENCODED_IOV_ENCRYPTION_TYPES = ENCODED_IOV_ENCRYPTION_NONE,
-> > +};
-> > +
-> > +struct encoded_iov {
-> > +	__u64 len;
-> > +	__u64 unencoded_len;
-> > +	__u64 unencoded_offset;
-> > +	__u32 compression;
-> > +	__u32 encryption;
+On Mon, Oct 21, 2019 at 05:12:55PM +0200, Oleg Nesterov wrote:
+> On 10/21, Oleg Nesterov wrote:
+> >
+> > On 10/14, Christian Brauner wrote:
+> > >
+> > > The child helper process on Linux posix_spawn must ensure that no signal
+> > > handlers are enabled, so the signal disposition must be either SIG_DFL
+> > > or SIG_IGN. However, it requires a sigprocmask to obtain the current
+> > > signal mask and at least _NSIG sigaction calls to reset the signal
+> > > handlers for each posix_spawn call
+> >
+> > Plus the caller has to block/unblock all signals around clone(VM|VFORK).
+>        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 > 
-> Can we add some must-be-zero padding space at the end here for whomever
-> comes along next wanting to add more encoding info?
+> just in case... I meant that posix_spawn() has to block/unblock, not its
+> caller.
 
->From the commit message:
+Yeah, I think that is what's currently happening.
 
-iov_len must be set to sizeof(struct encoded_iov), which can be used to
-extend the interface in the future.
-
-> (And maybe a manpage and some basic testing, to reiterate Dave...)
-
-I sent a man page as part of this thread:
-
-https://lore.kernel.org/linux-btrfs/c7e8f93596fee7bb818dc0edf29f484036be1abb.1571164851.git.osandov@fb.com/
-
-See my reply to Dave, I have tests in my xfstests repo that I haven't
-sent yet.
-
-> --D
+Christian
