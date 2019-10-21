@@ -1,40 +1,44 @@
-From: Christian Brauner <christian.brauner@ubuntu.com>
-Subject: Re: [PATCH v3 1/2] clone3: add CLONE_CLEAR_SIGHAND
-Date: Mon, 21 Oct 2019 21:42:53 +0200
-Message-ID: <20191021194252.kycuedo2k2rrqfqd@wittgenstein>
-References: <20191014104538.3096-1-christian.brauner@ubuntu.com>
- <20191021144633.GA2720@redhat.com>
+From: Paul Moore <paul@paul-moore.com>
+Subject: Re: [PATCH ghak90 V7 20/21] audit: add capcontid to set contid
+ outside init_user_ns
+Date: Mon, 21 Oct 2019 15:53:20 -0400
+Message-ID: <CAHC9VhRPygA=LsHLUqv+K=ouAiPFJ6fb2_As=OT-_zB7kGc_aQ@mail.gmail.com>
+References: <cover.1568834524.git.rgb@redhat.com> <214163d11a75126f610bcedfad67a4d89575dc77.1568834525.git.rgb@redhat.com>
+ <20191019013904.uevmrzbmztsbhpnh@madcap2.tricolour.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20191021144633.GA2720@redhat.com>
+In-Reply-To: <20191019013904.uevmrzbmztsbhpnh@madcap2.tricolour.ca>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>
-Cc: linux-kernel@vger.kernel.org, Florian Weimer <fweimer@redhat.com>, Arnd Bergmann <arnd@arndb.de>, libc-alpha@sourceware.org, David Howells <dhowells@redhat.com>, Jann Horn <jannh@google.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Juri Lelli <juri.lelli@redhat.com>, Vincent Guittot <vincent.guittot@linaro.org>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Steven Rostedt <rostedt@goodmis.org>, Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>, Shuah Khan <shuah@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.com>, Elena Reshetova <elena.reshetova@intel.com>, Thomas Gleixner <tglx@linutronix.de>, Roman Gushchin <guro@fb.com>, Andrea Arcangeli <aarcange@redhat.com>Al Viro <v>
+To: Richard Guy Briggs <rgb@redhat.com>
+Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com, Dan Walsh <dwalsh@redhat.com>, mpatel@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 21, 2019 at 04:46:33PM +0200, Oleg Nesterov wrote:
-> On 10/14, Christian Brauner wrote:
+On Fri, Oct 18, 2019 at 9:39 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> On 2019-09-18 21:22, Richard Guy Briggs wrote:
+> > Provide a mechanism similar to CAP_AUDIT_CONTROL to explicitly give a
+> > process in a non-init user namespace the capability to set audit
+> > container identifiers.
 > >
-> > The child helper process on Linux posix_spawn must ensure that no signal
-> > handlers are enabled, so the signal disposition must be either SIG_DFL
-> > or SIG_IGN. However, it requires a sigprocmask to obtain the current
-> > signal mask and at least _NSIG sigaction calls to reset the signal
-> > handlers for each posix_spawn call
-> 
-> Plus the caller has to block/unblock all signals around clone(VM|VFORK).
-> 
-> Can this justify the new CLONE_ flag? Honestly, I have no idea. But the
-> patch is simple and looks technically correct to me. FWIW,
-> 
-> Reviewed-by: Oleg Nesterov <oleg@redhat.com>
+> > Use audit netlink message types AUDIT_GET_CAPCONTID 1027 and
+> > AUDIT_SET_CAPCONTID 1028.  The message format includes the data
+> > structure:
+> > struct audit_capcontid_status {
+> >         pid_t   pid;
+> >         u32     enable;
+> > };
+>
+> Paul, can I get a review of the general idea here to see if you're ok
+> with this way of effectively extending CAP_AUDIT_CONTROL for the sake of
+> setting contid from beyond the init user namespace where capable() can't
+> reach and ns_capable() is meaningless for these purposes?
 
-The problem is not just the number of syscalls but also that the
-sigaction logic is already quite complicated and would need to be even
-more complicated without this flag. That's covered mostly in the glibc
-thread though. Even just the ability to avoid potentially _NSIG syscalls
-is enough justification especially since were not scarce on flags.
+I think my previous comment about having both the procfs and netlink
+interfaces apply here.  I don't see why we need two different APIs at
+the start; explain to me why procfs isn't sufficient.  If the argument
+is simply the desire to avoid mounting procfs in the container, how
+many container orchestrators can function today without a valid /proc?
 
-Thanks! I'll pick this up for 5.5.
-Christian
+-- 
+paul moore
+www.paul-moore.com
