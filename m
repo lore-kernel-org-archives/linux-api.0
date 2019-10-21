@@ -1,38 +1,33 @@
-From: Oleg Nesterov <oleg@redhat.com>
-Subject: Re: [PATCH v3 1/2] clone3: add CLONE_CLEAR_SIGHAND
-Date: Mon, 21 Oct 2019 17:12:55 +0200
-Message-ID: <20191021151255.GA3459@redhat.com>
-References: <20191014104538.3096-1-christian.brauner@ubuntu.com>
- <20191021144633.GA2720@redhat.com>
+From: Omar Sandoval <osandov@osandov.com>
+Subject: Re: [RFC PATCH v2 5/5] btrfs: implement RWF_ENCODED writes
+Date: Mon, 21 Oct 2019 11:05:22 -0700
+Message-ID: <20191021180522.GA81648@vader>
+References: <cover.1571164762.git.osandov@fb.com>
+ <904de93d9bbe630aff7f725fd587810c6eb48344.1571164762.git.osandov@fb.com>
+ <0da91628-7f54-7d24-bf58-6807eb9535a5@suse.com>
+ <20191018225513.GD59713@vader>
+ <20191021131452.GH3001@twin.jikos.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191021144633.GA2720@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-btrfs-owner@vger.kernel.org>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian.brauner@ubuntu.com>
-Cc: linux-kernel@vger.kernel.org, Florian Weimer <fweimer@redhat.com>, Arnd Bergmann <arnd@arndb.de>, libc-alpha@sourceware.org, David Howells <dhowells@redhat.com>, Jann Horn <jannh@google.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Juri Lelli <juri.lelli@redhat.com>, Vincent Guittot <vincent.guittot@linaro.org>, Dietmar Eggemann <dietmar.eggemann@arm.com>, Steven Rostedt <rostedt@goodmis.org>, Ben Segall <bsegall@google.com>, Mel Gorman <mgorman@suse.de>, Shuah Khan <shuah@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Michal Hocko <mhocko@suse.com>, Elena Reshetova <elena.reshetova@intel.com>, Thomas Gleixner <tglx@linutronix.de>, Roman Gushchin <guro@fb.com>, Andrea Arcangeli <aarcange@redhat.com>Al Viro <v>
+In-Reply-To: <20191021131452.GH3001@twin.jikos.cz>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: dsterba@suse.cz, Nikolay Borisov <nborisov@suse.com>, linux-btrfs@vger.kernel.org, linux-fsdevel@vger.kernel.org, kernel-team@fb.com, Dave Chinner <david@fromorbit.com>, Jann Horn <jannh@google.com>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 10/21, Oleg Nesterov wrote:
->
-> On 10/14, Christian Brauner wrote:
-> >
-> > The child helper process on Linux posix_spawn must ensure that no signa=
-l
-> > handlers are enabled, so the signal disposition must be either SIG_DFL
-> > or SIG_IGN. However, it requires a sigprocmask to obtain the current
-> > signal mask and at least _NSIG sigaction calls to reset the signal
-> > handlers for each posix_spawn call
->
-> Plus the caller has to block/unblock all signals around clone(VM|VFORK).
-       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+On Mon, Oct 21, 2019 at 03:14:52PM +0200, David Sterba wrote:
+> On Fri, Oct 18, 2019 at 03:55:13PM -0700, Omar Sandoval wrote:
+> > > > +	nr_pages = (disk_num_bytes + PAGE_SIZE - 1) >> PAGE_SHIFT;
+> > > 
+> > > nit: nr_pages = DIV_ROUND_UP(disk_num_bytes, PAGE_SIZE)
+> > 
+> > disk_num_bytes is a u64, so that would expand to a 64-bit division. The
+> > compiler is probably smart enough to optimize it to a shift, but I
+> > didn't want to rely on that, because that would cause build failures on
+> > 32-bit.
+> 
+> There are several DIV_ROUND_UP(u64, PAGE_SIZE) in btrfs code, no build
+> brekages have been reported so far, you can use it.
 
-just in case... I meant that posix_spawn() has to block/unblock, not its
-caller.
-
-> Can this justify the new CLONE_ flag? Honestly, I have no idea. But the
-> patch is simple and looks technically correct to me. FWIW,
->=20
-> Reviewed-by: Oleg Nesterov <oleg@redhat.com>
+Good to know, I'll fix both places I'm doing this, then.
