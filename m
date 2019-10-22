@@ -1,8 +1,8 @@
 From: Aleksa Sarai <cyphar@cyphar.com>
 Subject: Re: [RFC PATCH v2 2/5] fs: add RWF_ENCODED for reading/writing
  compressed data
-Date: Tue, 22 Oct 2019 12:37:17 +1100
-Message-ID: <20191022013717.enwdmox4b7la4i74@yavin.dot.cyphar.com>
+Date: Tue, 22 Oct 2019 13:02:15 +1100
+Message-ID: <20191022020215.csdwgi3ky27rfidf@yavin.dot.cyphar.com>
 References: <cover.1571164762.git.osandov@fb.com>
  <7f98cf5409cf2b583cd5b3451fc739fd3428873b.1571164762.git.osandov@fb.com>
  <20191021182806.GA6706@magnolia>
@@ -10,7 +10,7 @@ References: <cover.1571164762.git.osandov@fb.com>
  <20191021190010.GC6726@magnolia>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="tel3pez3twjkfp2c"
+        protocol="application/pgp-signature"; boundary="mxlmpgqd7ndroxtm"
 Return-path: <linux-btrfs-owner@vger.kernel.org>
 Content-Disposition: inline
 In-Reply-To: <20191021190010.GC6726@magnolia>
@@ -20,7 +20,7 @@ Cc: Omar Sandoval <osandov@osandov.com>, linux-fsdevel@vger.kernel.org, linux-bt
 List-Id: linux-api@vger.kernel.org
 
 
---tel3pez3twjkfp2c
+--mxlmpgqd7ndroxtm
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
@@ -164,23 +164,25 @@ er
 >=20
 > Come to think of it, you /do/ have to specify iov_len so... yeah, do
 > that instead; we can always extend the structure later.
->=20
+
+Just to clarify -- if we want to make the interface forward-compatible
+=66rom the outset (programs built 4 years from now running on 5.5), we
+will need to implement this in the original merge. Otherwise userspace
+will need to handle backwards-compatibility themselves once new features
+are added.
+
+@Omar: If it'd make your life easier, I can send some draft patches
+	   which port copy_struct_from_user() to iovec-land.
+
 > > Also (I might be wrong) but shouldn't the __u64s be __aligned_u64 (as
 > > with syscall structure arguments)?
 >=20
 > <shrug> No idea, that's the first I've heard of that type and it doesn't
 > seem to be used by the fs code.  Why would we care about alignment for
 > an incore structure?
-
-When passing u64s from userspace, it's generally considered a good idea
-to use __aligned_u64 -- the main reason is that 32-bit userspace on a
-64-bit kernel will use different structure alignment for 64-bit fields.
-
-This means you'd need to implement a bunch of COMPAT_SYSCALL-like
-handling for that case. It's much simpler to use __aligned_u64 (and on
-the plus side I don't think you need to add any fields to ensure the
-padding is zero).
-
+>=20
+> --D
+>=20
 > >=20
 > > > (And maybe a manpage and some basic testing, to reiterate Dave...)
 > > >=20
@@ -338,15 +340,15 @@ Senior Software Engineer (Containers)
 SUSE Linux GmbH
 <https://www.cyphar.com/>
 
---tel3pez3twjkfp2c
+--mxlmpgqd7ndroxtm
 Content-Type: application/pgp-signature; name="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXa5dSQAKCRCdlLljIbnQ
-EmxRAPsGpqeyAWpLA0wtXYC//gRIdEqupPZnfJCvZPvY3+Bw6AEAo8W6ZMfu8/XN
-i9uZlXnDzE5uE0/SQfeliX1xRJWUbgM=
-=jjFU
+iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXa5jIwAKCRCdlLljIbnQ
+EiP9AQCPd9cJHG86dP5gilA67tCSPr648vdisWLNG0hQd07K2gD+MMAhWJG7Uq54
+PTIAfMGtrT/9TTgzY31SV88G9XiovAo=
+=qYWO
 -----END PGP SIGNATURE-----
 
---tel3pez3twjkfp2c--
+--mxlmpgqd7ndroxtm--
