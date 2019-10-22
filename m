@@ -1,80 +1,120 @@
-From: Andrei Vagin <avagin@gmail.com>
-Subject: Re: [PATCHv7 00/33] kernel: Introduce Time Namespace
-Date: Tue, 22 Oct 2019 01:45:23 -0700
-Message-ID: <20191022084523.GA2923@gmail.com>
-References: <20191011012341.846266-1-dima@arista.com>
- <alpine.DEB.2.21.1910171122030.1824@nanos.tec.linutronix.de>
- <20191017234748.GA26011@gmail.com>
+From: Neil Horman <nhorman@tuxdriver.com>
+Subject: Re: [PATCH ghak90 V7 20/21] audit: add capcontid to set contid
+ outside init_user_ns
+Date: Tue, 22 Oct 2019 08:13:02 -0400
+Message-ID: <20191022121302.GA9397@hmswarspite.think-freely.org>
+References: <cover.1568834524.git.rgb@redhat.com>
+ <214163d11a75126f610bcedfad67a4d89575dc77.1568834525.git.rgb@redhat.com>
+ <20191019013904.uevmrzbmztsbhpnh@madcap2.tricolour.ca>
+ <CAHC9VhRPygA=LsHLUqv+K=ouAiPFJ6fb2_As=OT-_zB7kGc_aQ@mail.gmail.com>
+ <20191021213824.6zti5ndxu7sqs772@madcap2.tricolour.ca>
+ <CAHC9VhRdNXsY4neJpSoNyJoAVEoiEc2oW5kSscF99tjmoQAxFA@mail.gmail.com>
+ <20191021235734.mgcjotdqoe73e4ha@madcap2.tricolour.ca>
+ <CAHC9VhSiwnY-+2awxvGeO4a0NgfVkOPd8fzzBVujp=HtjskTuQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=koi8-r
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20191017234748.GA26011@gmail.com>
+In-Reply-To: <CAHC9VhSiwnY-+2awxvGeO4a0NgfVkOPd8fzzBVujp=HtjskTuQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: Dmitry Safonov <dima@arista.com>, linux-kernel@vger.kernel.org, Dmitry Safonov <0x7f454c46@gmail.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
+To: Paul Moore <paul@paul-moore.com>
+Cc: Richard Guy Briggs <rgb@redhat.com>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, Dan Walsh <dwalsh@redhat.com>, mpatel@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 17, 2019 at 04:47:48PM -0700, Andrei Vagin wrote:
+On Mon, Oct 21, 2019 at 08:31:37PM -0400, Paul Moore wrote:
+> On Mon, Oct 21, 2019 at 7:58 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> > On 2019-10-21 17:43, Paul Moore wrote:
+> > > On Mon, Oct 21, 2019 at 5:38 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> > > > On 2019-10-21 15:53, Paul Moore wrote:
+> > > > > On Fri, Oct 18, 2019 at 9:39 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> > > > > > On 2019-09-18 21:22, Richard Guy Briggs wrote:
+> > > > > > > Provide a mechanism similar to CAP_AUDIT_CONTROL to explicitly give a
+> > > > > > > process in a non-init user namespace the capability to set audit
+> > > > > > > container identifiers.
+> > > > > > >
+> > > > > > > Use audit netlink message types AUDIT_GET_CAPCONTID 1027 and
+> > > > > > > AUDIT_SET_CAPCONTID 1028.  The message format includes the data
+> > > > > > > structure:
+> > > > > > > struct audit_capcontid_status {
+> > > > > > >         pid_t   pid;
+> > > > > > >         u32     enable;
+> > > > > > > };
+> > > > > >
+> > > > > > Paul, can I get a review of the general idea here to see if you're ok
+> > > > > > with this way of effectively extending CAP_AUDIT_CONTROL for the sake of
+> > > > > > setting contid from beyond the init user namespace where capable() can't
+> > > > > > reach and ns_capable() is meaningless for these purposes?
+> > > > >
+> > > > > I think my previous comment about having both the procfs and netlink
+> > > > > interfaces apply here.  I don't see why we need two different APIs at
+> > > > > the start; explain to me why procfs isn't sufficient.  If the argument
+> > > > > is simply the desire to avoid mounting procfs in the container, how
+> > > > > many container orchestrators can function today without a valid /proc?
+> > > >
+> > > > Ok, sorry, I meant to address that question from a previous patch
+> > > > comment at the same time.
+> > > >
+> > > > It was raised by Eric Biederman that the proc filesystem interface for
+> > > > audit had its limitations and he had suggested an audit netlink
+> > > > interface made more sense.
+> > >
+> > > I'm sure you've got it handy, so I'm going to be lazy and ask: archive
+> > > pointer to Eric's comments?  Just a heads-up, I'm really *not* a fan
+> > > of using the netlink interface for this, so unless Eric presents a
+> > > super compelling reason for why we shouldn't use procfs I'm inclined
+> > > to stick with /proc.
+> >
+> > It was actually a video call with Eric and Steve where that was
+> > recommended, so I can't provide you with any first-hand communication
+> > about it.  I'll get more details...
 > 
-> In my table, the "before" column is actually for the upstream kernel
-> with the 18-th patch. Here is the table with the real "before" column:
+> Yeah, that sort of information really needs to be on the list.
 > 
->         | before    | with 18/33 | CONFIG_TIME_NS=n | host      | inside timens
-> ------------------------------------------------------------------------------
-> avg     | 150331408 | 153345935  | 153588088        | 150816637 | 139192114
-> ------------------------------------------------------------------------------
-> diff %  |       98  |      100   | 100.1            | 98.3      | 90.7
-> ------------------------------------------------------------------------------
-> stdev % |       0.3 |     0.09   | 0.15             | 0.25      | 0.13
+> > So, with that out of the way, could you please comment on the general
+> > idea of what was intended to be the central idea of this mechanism to be
+> > able to nest containers beyond the initial user namespace (knowing that
+> > a /proc interface is available and the audit netlink interface isn't
+> > necessary for it to work and the latter can be easily removed)?
 > 
-> If we compare numbers in "before", "host" and "inside timens" columns, we
-> see the same results that you had. clock_gettime() works with the
-> same performance in the host namespace and 7% slower in a time
-> namespace.
+> I'm not entirely clear what you are asking about, are you asking why I
+> care about nesting container orchestrators?  Simply put, it is not
+> uncommon for the LXC/LXD folks to see nested container orchestrators,
+> so I felt it was important to support that use case.  When we
+> originally started this effort we probably should have done a better
+> job reaching out to the LXC/LXD folks, we may have caught this
+> earlier.  Regardless, we caught it, and it looks like we are on our
+> way to supporting it (that's good).
 > 
+> Are you asking why I prefer the procfs approach to setting/getting the
+> audit container ID?  For one, it makes it easier for a LSM to enforce
+> the audit container ID operations independent of the other audit
+> control APIs.  It also provides a simpler interface for container
+> orchestrators.  Both seem like desirable traits as far as I'm
+> concerned.
+> 
+I agree that one api is probably the best approach here, but I actually
+think that the netlink interface is the more flexible approach.  Its a
+little more work for userspace (you have to marshal your data into a
+netlink message before sending it, and wait for an async response), but
+thats a well known pattern, and it provides significantly more
+flexibility for the kernel.  LSM already has a hook to audit netlink
+messages in sock_sendmsg, so thats not a problem, and if you use
+netlink, you get the advantage of being able to broadcast messages
+within your network namespaces, facilitating any needed orchestrator
+co-ordination.  To do the same thing with a filesystem api, you need to
+use the fanotify api, which IIRC doesn't work on proc.
 
-I played with this a bit more and I've found that we can speed up
-clock_gettime on 5% more if we mark do_hres and do_coarse as
-__always_inline.
+Neil
 
-With the unlikely hint in vdso_read_begin and noinline for
-do_hres_timens and do_coarse_timens:
-1..8
-ok 1 host:      clock:  monotonic       cycles:  155278332
-ok 2 host:      clock: monotonic-coarse cycles:  662067077
-ok 3 host:      clock: monotonic-raw    cycles:  151218057
-ok 4 host:      clock:   boottime       cycles:  154907635
-ok 5 ns:        clock:  monotonic       cycles:  133100433
-ok 6 host:      clock: monotonic-coarse cycles:  444170219
-ok 7 host:      clock: monotonic-raw    cycles:  129550178
-ok 8 ns:        clock:   boottime       cycles:  130167136
-
-
-With __always_inline for do_hres and do_coarse:
-1..8
-ok 1 host:      clock:  monotonic       cycles:  163691015
-ok 2 host:      clock: monotonic-coarse cycles:  641443397
-ok 3 host:      clock: monotonic-raw    cycles:  163649270
-ok 4 host:      clock:   boottime       cycles:  163682242
-ok 5 ns:        clock:  monotonic       cycles:  138759212
-ok 6 host:      clock: monotonic-coarse cycles:  486149502
-ok 7 host:      clock: monotonic-raw    cycles:  134801053
-ok 8 ns:        clock:   boottime       cycles:  138675460
-# Pass 8 Fail 0 Xfail 0 Xpass 0 Skip 0 Error 0
-
-With __always_inline for do_hres, do_coarse, do_hres_timens,
-do_coarse_timens:
-1..8
-ok 1 host:	clock:  monotonic	cycles:	 158984538
-ok 2 host:	clock: monotonic-coarse	cycles:	 594932695
-ok 3 host:	clock: monotonic-raw	cycles:	 157834511
-ok 4 host:	clock:   boottime	cycles:	 158297691
-ok 5 ns:	clock:  monotonic	cycles:	 148559612
-ok 6 host:	clock: monotonic-coarse	cycles:	 468505657
-ok 7 host:	clock: monotonic-raw	cycles:	 146366575
-ok 8 ns:	clock:   boottime	cycles:	 148573015
-# Pass 8 Fail 0 Xfail 0 Xpass 0 Skip 0 Error 0
-
-Thanks,
-Andrei
+> > > > The intent was to switch to the audit netlink interface for contid,
+> > > > capcontid and to add the audit netlink interface for loginuid and
+> > > > sessionid while deprecating the proc interface for loginuid and
+> > > > sessionid.  This was alluded to in the cover letter, but not very clear,
+> > > > I'm afraid.  I have patches to remove the contid and loginuid/sessionid
+> > > > interfaces in another tree which is why I had forgotten to outline that
+> > > > plan more explicitly in the cover letter.
+> 
+> -- 
+> paul moore
+> www.paul-moore.com
+> 
