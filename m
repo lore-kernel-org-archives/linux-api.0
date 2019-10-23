@@ -1,16 +1,16 @@
 From: Vlastimil Babka <vbabka@suse.cz>
-Subject: Re: [RFC PATCH 1/2] mm, vmstat: hide /proc/pagetypeinfo from normal
- users
-Date: Wed, 23 Oct 2019 18:15:37 +0200
-Message-ID: <ed60303a-0775-c6ce-2923-df3ffe6a887f@suse.cz>
+Subject: Re: [RFC PATCH 2/2] mm, vmstat: reduce zone->lock holding time by
+ /proc/pagetypeinfo
+Date: Wed, 23 Oct 2019 18:15:56 +0200
+Message-ID: <b280d277-9870-48c4-0c0a-df4195ddd3c4@suse.cz>
 References: <20191023095607.GE3016@techsingularity.net>
  <20191023102737.32274-1-mhocko@kernel.org>
- <20191023102737.32274-2-mhocko@kernel.org>
+ <20191023102737.32274-3-mhocko@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191023102737.32274-2-mhocko@kernel.org>
+In-Reply-To: <20191023102737.32274-3-mhocko@kernel.org>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 To: Michal Hocko <mhocko@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Mel Gorman <mgorman@suse.de>, Waiman Long <longman@redhat.com>
@@ -22,35 +22,62 @@ List-Id: linux-api@vger.kernel.org
 On 10/23/19 12:27 PM, Michal Hocko wrote:
 > From: Michal Hocko <mhocko@suse.com>
 > 
-> /proc/pagetypeinfo is a debugging tool to examine internal page
-> allocator state wrt to fragmentation. It is not very useful for
-> any other use so normal users really do not need to read this file.
+> pagetypeinfo_showfree_print is called by zone->lock held in irq mode.
+> This is not really nice because it blocks both any interrupts on that
+> cpu and the page allocator. On large machines this might even trigger
+> the hard lockup detector.
 > 
-> Waiman Long has noticed that reading this file can have negative side
-> effects because zone->lock is necessary for gathering data and that
-> a) interferes with the page allocator and its users and b) can lead to
-> hard lockups on large machines which have very long free_list.
+> Considering the pagetypeinfo is a debugging tool we do not really need
+> exact numbers here. The primary reason to look at the outuput is to see
+> how pageblocks are spread among different migratetypes therefore putting
+> a bound on the number of pages on the free_list sounds like a reasonable
+> tradeoff.
 > 
-> Reduce both issues by simply not exporting the file to regular users.
+> The new output will simply tell
+> [...]
+> Node    6, zone   Normal, type      Movable >100000 >100000 >100000 >100000  41019  31560  23996  10054   3229    983    648
 > 
-> Reported-by: Waiman Long <longman@redhat.com>
-> Cc: stable
+> instead of
+> Node    6, zone   Normal, type      Movable 399568 294127 221558 102119  41019  31560  23996  10054   3229    983    648
+> 
+> The limit has been chosen arbitrary and it is a subject of a future
+> change should there be a need for that.
+> 
+> Suggested-by: Andrew Morton <akpm@linux-foundation.org>
 > Signed-off-by: Michal Hocko <mhocko@suse.com>
 > ---
->  mm/vmstat.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+>  mm/vmstat.c | 19 ++++++++++++++++++-
+>  1 file changed, 18 insertions(+), 1 deletion(-)
 > 
 > diff --git a/mm/vmstat.c b/mm/vmstat.c
-> index 6afc892a148a..4e885ecd44d1 100644
+> index 4e885ecd44d1..762034fc3b83 100644
 > --- a/mm/vmstat.c
 > +++ b/mm/vmstat.c
-> @@ -1972,7 +1972,7 @@ void __init init_mm_internals(void)
->  #endif
->  #ifdef CONFIG_PROC_FS
->  	proc_create_seq("buddyinfo", 0444, NULL, &fragmentation_op);
-> -	proc_create_seq("pagetypeinfo", 0444, NULL, &pagetypeinfo_op);
-> +	proc_create_seq("pagetypeinfo", 0400, NULL, &pagetypeinfo_op);
->  	proc_create_seq("vmstat", 0444, NULL, &vmstat_op);
->  	proc_create_seq("zoneinfo", 0444, NULL, &zoneinfo_op);
->  #endif
+> @@ -1386,8 +1386,25 @@ static void pagetypeinfo_showfree_print(struct seq_file *m,
+>  
+>  			area = &(zone->free_area[order]);
+>  
+> -			list_for_each(curr, &area->free_list[mtype])
+> +			list_for_each(curr, &area->free_list[mtype]) {
+>  				freecount++;
+> +				/*
+> +				 * Cap the free_list iteration because it might
+> +				 * be really large and we are under a spinlock
+> +				 * so a long time spent here could trigger a
+> +				 * hard lockup detector. Anyway this is a
+> +				 * debugging tool so knowing there is a handful
+> +				 * of pages in this order should be more than
+> +				 * sufficient
+> +				 */
+> +				if (freecount > 100000) {
+> +					seq_printf(m, ">%6lu ", freecount);
+> +					spin_unlock_irq(&zone->lock);
+> +					cond_resched();
+> +					spin_lock_irq(&zone->lock);
+> +					continue;
+> +				}
+> +			}
+>  			seq_printf(m, "%6lu ", freecount);
+>  		}
+>  		seq_putc(m, '\n');
 > 
