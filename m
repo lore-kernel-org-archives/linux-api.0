@@ -1,8 +1,8 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [RFC PATCH 02/10] Remove the nr_exclusive argument from
- __wake_up_sync_key() [ver #2]
-Date: Wed, 23 Oct 2019 21:17:22 +0100
-Message-ID: <157186184284.3995.13755220637594977072.stgit@warthog.procyon.org.uk>
+Subject: [RFC PATCH 03/10] Add wake_up_interruptible_sync_poll_locked() [ver
+ #2]
+Date: Wed, 23 Oct 2019 21:17:31 +0100
+Message-ID: <157186185154.3995.9042853314167941790.stgit@warthog.procyon.org.uk>
 References: <157186182463.3995.13922458878706311997.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -14,121 +14,77 @@ To: torvalds@linux-foundation.org
 Cc: dhowells@redhat.com, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>dhowells@redhat.com, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.orglinux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Remove the nr_exclusive argument from __wake_up_sync_key() and derived
-functions as everything seems to set it to 1.  Note also that if it wasn't
-set to 1, it would clear WF_SYNC anyway.
+Add a wakeup call for a case whereby the caller already has the waitqueue
+spinlock held.  This can be used by pipes to alter the ring buffer indices
+and issue a wakeup under the same spinlock.
 
 Signed-off-by: David Howells <dhowells@redhat.com>
 ---
 
- include/linux/wait.h |    8 ++++----
- kernel/exit.c        |    2 +-
- kernel/sched/wait.c  |   14 ++++----------
- 3 files changed, 9 insertions(+), 15 deletions(-)
+ include/linux/wait.h |    3 +++
+ kernel/sched/wait.c  |   23 +++++++++++++++++++++++
+ 2 files changed, 26 insertions(+)
 
 diff --git a/include/linux/wait.h b/include/linux/wait.h
-index 3eb7cae8206c..bb7676d396cd 100644
+index bb7676d396cd..3283c8d02137 100644
 --- a/include/linux/wait.h
 +++ b/include/linux/wait.h
-@@ -201,9 +201,9 @@ void __wake_up(struct wait_queue_head *wq_head, unsigne=
-d int mode, int nr, void
- void __wake_up_locked_key(struct wait_queue_head *wq_head, unsigned int mo=
-de, void *key);
+@@ -202,6 +202,7 @@ void __wake_up_locked_key(struct wait_queue_head *wq_he=
+ad, unsigned int mode, vo
  void __wake_up_locked_key_bookmark(struct wait_queue_head *wq_head,
  =09=09unsigned int mode, void *key, wait_queue_entry_t *bookmark);
--void __wake_up_sync_key(struct wait_queue_head *wq_head, unsigned int mode=
-, int nr, void *key);
-+void __wake_up_sync_key(struct wait_queue_head *wq_head, unsigned int mode=
+ void __wake_up_sync_key(struct wait_queue_head *wq_head, unsigned int mode=
 , void *key);
++void __wake_up_locked_sync_key(struct wait_queue_head *wq_head, unsigned i=
+nt mode, void *key);
  void __wake_up_locked(struct wait_queue_head *wq_head, unsigned int mode, =
 int nr);
--void __wake_up_sync(struct wait_queue_head *wq_head, unsigned int mode, in=
-t nr);
-+void __wake_up_sync(struct wait_queue_head *wq_head, unsigned int mode);
+ void __wake_up_sync(struct wait_queue_head *wq_head, unsigned int mode);
 =20
- #define wake_up(x)=09=09=09__wake_up(x, TASK_NORMAL, 1, NULL)
- #define wake_up_nr(x, nr)=09=09__wake_up(x, TASK_NORMAL, nr, NULL)
-@@ -214,7 +214,7 @@ void __wake_up_sync(struct wait_queue_head *wq_head, un=
-signed int mode, int nr);
- #define wake_up_interruptible(x)=09__wake_up(x, TASK_INTERRUPTIBLE, 1, NUL=
-L)
- #define wake_up_interruptible_nr(x, nr)=09__wake_up(x, TASK_INTERRUPTIBLE,=
- nr, NULL)
- #define wake_up_interruptible_all(x)=09__wake_up(x, TASK_INTERRUPTIBLE, 0,=
- NULL)
--#define wake_up_interruptible_sync(x)=09__wake_up_sync((x), TASK_INTERRUPT=
-IBLE, 1)
-+#define wake_up_interruptible_sync(x)=09__wake_up_sync((x), TASK_INTERRUPT=
-IBLE)
-=20
- /*
-  * Wakeup macros to be used to report events to the targets.
-@@ -228,7 +228,7 @@ void __wake_up_sync(struct wait_queue_head *wq_head, un=
-signed int mode, int nr);
- #define wake_up_interruptible_poll(x, m)=09=09=09=09=09\
+@@ -229,6 +230,8 @@ void __wake_up_sync(struct wait_queue_head *wq_head, un=
+signed int mode);
  =09__wake_up(x, TASK_INTERRUPTIBLE, 1, poll_to_key(m))
  #define wake_up_interruptible_sync_poll(x, m)=09=09=09=09=09\
--=09__wake_up_sync_key((x), TASK_INTERRUPTIBLE, 1, poll_to_key(m))
-+=09__wake_up_sync_key((x), TASK_INTERRUPTIBLE, poll_to_key(m))
+ =09__wake_up_sync_key((x), TASK_INTERRUPTIBLE, poll_to_key(m))
++#define wake_up_interruptible_sync_poll_locked(x, m)=09=09=09=09\
++=09__wake_up_locked_sync_key((x), TASK_INTERRUPTIBLE, poll_to_key(m))
 =20
  #define ___wait_cond_timeout(condition)=09=09=09=09=09=09\
  ({=09=09=09=09=09=09=09=09=09=09\
-diff --git a/kernel/exit.c b/kernel/exit.c
-index a46a50d67002..a1ff25ef050e 100644
---- a/kernel/exit.c
-+++ b/kernel/exit.c
-@@ -1435,7 +1435,7 @@ static int child_wait_callback(wait_queue_entry_t *wa=
-it, unsigned mode,
- void __wake_up_parent(struct task_struct *p, struct task_struct *parent)
- {
- =09__wake_up_sync_key(&parent->signal->wait_chldexit,
--=09=09=09=09TASK_INTERRUPTIBLE, 1, p);
-+=09=09=09   TASK_INTERRUPTIBLE, p);
- }
-=20
- static long do_wait(struct wait_opts *wo)
 diff --git a/kernel/sched/wait.c b/kernel/sched/wait.c
-index c1e566a114ca..b4b52361dab7 100644
+index b4b52361dab7..ba059fbfc53a 100644
 --- a/kernel/sched/wait.c
 +++ b/kernel/sched/wait.c
-@@ -169,7 +169,6 @@ EXPORT_SYMBOL_GPL(__wake_up_locked_key_bookmark);
-  * __wake_up_sync_key - wake up threads blocked on a waitqueue.
-  * @wq_head: the waitqueue
-  * @mode: which threads
-- * @nr_exclusive: how many wake-one or wake-many threads to wake up
-  * @key: opaque value to be passed to wakeup targets
-  *
-  * The sync wakeup differs that the waker knows that it will schedule
-@@ -183,26 +182,21 @@ EXPORT_SYMBOL_GPL(__wake_up_locked_key_bookmark);
-  * accessing the task state.
-  */
- void __wake_up_sync_key(struct wait_queue_head *wq_head, unsigned int mode=
-,
--=09=09=09int nr_exclusive, void *key)
-+=09=09=09void *key)
- {
--=09int wake_flags =3D 1; /* XXX WF_SYNC */
--
- =09if (unlikely(!wq_head))
- =09=09return;
-=20
--=09if (unlikely(nr_exclusive !=3D 1))
--=09=09wake_flags =3D 0;
--
--=09__wake_up_common_lock(wq_head, mode, nr_exclusive, wake_flags, key);
-+=09__wake_up_common_lock(wq_head, mode, 1, WF_SYNC, key);
+@@ -191,6 +191,29 @@ void __wake_up_sync_key(struct wait_queue_head *wq_hea=
+d, unsigned int mode,
  }
  EXPORT_SYMBOL_GPL(__wake_up_sync_key);
 =20
++/**
++ * __wake_up_locked_sync_key - wake up a thread blocked on a locked waitqu=
+eue.
++ * @wq_head: the waitqueue
++ * @mode: which threads
++ * @key: opaque value to be passed to wakeup targets
++ *
++ * The sync wakeup differs in that the waker knows that it will schedule
++ * away soon, so while the target thread will be woken up, it will not
++ * be migrated to another CPU - ie. the two threads are 'synchronized'
++ * with each other. This can prevent needless bouncing between CPUs.
++ *
++ * On UP it can prevent extra preemption.
++ *
++ * If this function wakes up a task, it executes a full memory barrier bef=
+ore
++ * accessing the task state.
++ */
++void __wake_up_locked_sync_key(struct wait_queue_head *wq_head,
++=09=09=09       unsigned int mode, void *key)
++{
++        __wake_up_common(wq_head, mode, 1, WF_SYNC, key, NULL);
++}
++EXPORT_SYMBOL_GPL(__wake_up_locked_sync_key);
++
  /*
   * __wake_up_sync - see __wake_up_sync_key()
   */
--void __wake_up_sync(struct wait_queue_head *wq_head, unsigned int mode, in=
-t nr_exclusive)
-+void __wake_up_sync(struct wait_queue_head *wq_head, unsigned int mode)
- {
--=09__wake_up_sync_key(wq_head, mode, nr_exclusive, NULL);
-+=09__wake_up_sync_key(wq_head, mode, NULL);
- }
- EXPORT_SYMBOL_GPL(__wake_up_sync);=09/* For internal use only */
-=20
