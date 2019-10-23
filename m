@@ -1,73 +1,110 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH 3/7] Add a UFFD_SECURE flag to the userfaultfd API.
-Date: Wed, 23 Oct 2019 12:21:18 -0700
-Message-ID: <CALCETrWY+5ynDct7eU_nDUqx=okQvjm=Y5wJvA4ahBja=CQXGw@mail.gmail.com>
-References: <20191012191602.45649-1-dancol@google.com> <20191012191602.45649-4-dancol@google.com>
- <CALCETrVZHd+csdRL-uKbVN3Z7yeNNtxiDy-UsutMi=K3ZgCiYw@mail.gmail.com>
- <CAKOZuevUqs_Oe1UEwguQK7Ate3ai1DSVSij=0R=vmz9LzX4k6Q@mail.gmail.com>
- <CALCETrUyq=J37gU-MYXqLdoi7uH7iNNVRjvcGUT11JA1QuTFyg@mail.gmail.com>
- <CAG48ez3P27-xqdjKLqfP_0Q_v9K92CgEjU4C=kob2Ax7=NoZbA@mail.gmail.com> <20191023190959.GA9902@redhat.com>
+From: Michal Hocko <mhocko@kernel.org>
+Subject: Re: [PATCH 1/2] mm, vmstat: Release zone lock more frequently when
+ reading /proc/pagetypeinfo
+Date: Wed, 23 Oct 2019 22:02:56 +0200
+Message-ID: <20191023200256.GP17610@dhcp22.suse.cz>
+References: <20191023102737.32274-3-mhocko@kernel.org>
+ <20191023173423.12532-1-longman@redhat.com>
+ <20191023180121.GN17610@dhcp22.suse.cz>
+ <58a9adaf-9a1c-398b-dce1-cb30997807c1@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191023190959.GA9902@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <58a9adaf-9a1c-398b-dce1-cb30997807c1@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andrea Arcangeli <aarcange@redhat.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>, Daniel Colascione <dancol@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Pavel Emelyanov <xemul@virtuozzo.com>, Lokesh Gidra <lokeshgidra@google.com>, Nick Kralevich <nnk@google.com>, Nosh Minwalla <nosh@google.com>, Tim Murray <timmurray@google.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+To: Waiman Long <longman@redhat.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Mel Gorman <mgorman@suse.de>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Johannes Weiner <hannes@cmpxchg.org>, Roman Gushchin <guro@fb.com>, Vlastimil Babka <vbabka@suse.cz>, Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Jann Horn <jannh@google.com>, Song Liu <songliubraving@fb.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Rafael Aquini <aquini@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 23, 2019 at 12:10 PM Andrea Arcangeli <aarcange@redhat.com> wrote:
->
-> Hello,
->
-> On Sat, Oct 12, 2019 at 06:14:23PM -0700, Andy Lutomirski wrote:
-> > [adding more people because this is going to be an ABI break, sigh]
->
-> That wouldn't break the ABI, no more than when if you boot a kernel
-> built with CONFIG_USERFAULTFD=n.
->
-> All non-cooperative features can be removed any time in a backwards
-> compatible way, the only precaution is to mark their feature bits as
-> reserved so they can't be reused for something else later.
->
-> > least severely restricted.  A .read implementation MUST NOT ACT ON THE
-> > CALLING TASK.  Ever.  Just imagine the effect of passing a userfaultfd
-> > as stdin to a setuid program.
->
-> With UFFD_EVENT_FORK, the newly created uffd that controls the child,
-> is not passed to the parent nor to the child. Instead it's passed to
-> the CRIU monitor only, which has to be already running as root and is
-> fully trusted and acts a hypervisor (despite there is no hypervisor).
->
-> By the time execve runs and any suid bit in the execve'd inode becomes
-> relevant, well before the new userland executable code can run, the
-> kernel throws away the "old_mm" controlled by any uffd and all
-> attached uffds are released as well.
->
-> All I found is your "A .read implementation MUST NOT ACT ON THE
-> CALLING TASK" as an explanation that something is broken but I need
-> further clarification.
+On Wed 23-10-19 14:14:14, Waiman Long wrote:
+> On 10/23/19 2:01 PM, Michal Hocko wrote:
+> > On Wed 23-10-19 13:34:22, Waiman Long wrote:
+> >> With a threshold of 100000, it is still possible that the zone lock
+> >> will be held for a very long time in the worst case scenario where all
+> >> the counts are just below the threshold. With up to 6 migration types
+> >> and 11 orders, it means up to 6.6 millions.
+> >>
+> >> Track the total number of list iterations done since the acquisition
+> >> of the zone lock and release it whenever 100000 iterations or more have
+> >> been completed. This will cap the lock hold time to no more than 200,000
+> >> list iterations.
+> >>
+> >> Signed-off-by: Waiman Long <longman@redhat.com>
+> >> ---
+> >>  mm/vmstat.c | 18 ++++++++++++++----
+> >>  1 file changed, 14 insertions(+), 4 deletions(-)
+> >>
+> >> diff --git a/mm/vmstat.c b/mm/vmstat.c
+> >> index 57ba091e5460..c5b82fdf54af 100644
+> >> --- a/mm/vmstat.c
+> >> +++ b/mm/vmstat.c
+> >> @@ -1373,6 +1373,7 @@ static void pagetypeinfo_showfree_print(struct seq_file *m,
+> >>  					pg_data_t *pgdat, struct zone *zone)
+> >>  {
+> >>  	int order, mtype;
+> >> +	unsigned long iteration_count = 0;
+> >>  
+> >>  	for (mtype = 0; mtype < MIGRATE_TYPES; mtype++) {
+> >>  		seq_printf(m, "Node %4d, zone %8s, type %12s ",
+> >> @@ -1397,15 +1398,24 @@ static void pagetypeinfo_showfree_print(struct seq_file *m,
+> >>  				 * of pages in this order should be more than
+> >>  				 * sufficient
+> >>  				 */
+> >> -				if (++freecount >= 100000) {
+> >> +				if (++freecount > 100000) {
+> >>  					overflow = true;
+> >> -					spin_unlock_irq(&zone->lock);
+> >> -					cond_resched();
+> >> -					spin_lock_irq(&zone->lock);
+> >> +					freecount--;
+> >>  					break;
+> >>  				}
+> >>  			}
+> >>  			seq_printf(m, "%s%6lu ", overflow ? ">" : "", freecount);
+> >> +			/*
+> >> +			 * Take a break and release the zone lock when
+> >> +			 * 100000 or more entries have been iterated.
+> >> +			 */
+> >> +			iteration_count += freecount;
+> >> +			if (iteration_count >= 100000) {
+> >> +				iteration_count = 0;
+> >> +				spin_unlock_irq(&zone->lock);
+> >> +				cond_resched();
+> >> +				spin_lock_irq(&zone->lock);
+> >> +			}
+> > Aren't you overengineering this a bit? If you are still worried then we
+> > can simply cond_resched for each order
+> > diff --git a/mm/vmstat.c b/mm/vmstat.c
+> > index c156ce24a322..ddb89f4e0486 100644
+> > --- a/mm/vmstat.c
+> > +++ b/mm/vmstat.c
+> > @@ -1399,13 +1399,13 @@ static void pagetypeinfo_showfree_print(struct seq_file *m,
+> >  				 */
+> >  				if (++freecount >= 100000) {
+> >  					overflow = true;
+> > -					spin_unlock_irq(&zone->lock);
+> > -					cond_resched();
+> > -					spin_lock_irq(&zone->lock);
+> >  					break;
+> >  				}
+> >  			}
+> >  			seq_printf(m, "%s%6lu ", overflow ? ">" : "", freecount);
+> > +			spin_unlock_irq(&zone->lock);
+> > +			cond_resched();
+> > +			spin_lock_irq(&zone->lock);
+> >  		}
+> >  		seq_putc(m, '\n');
+> >  	}
+> >
+> > I do not have a strong opinion here but I can fold this into my patch 2.
+> 
+> If the free list is empty or is very short, there is probably no need to
+> release and reacquire the lock. How about adding a check for a lower
+> bound like:
 
-There are two things going on here.
-
-1. Daniel wants to add LSM labels to userfaultfd objects.  This seems
-reasonable to me.  The question, as I understand it, is: who is the
-subject that creates a uffd referring to a forked child?  I'm sure
-this is solvable in any number of straightforward ways, but I think
-it's less important than:
-
-2. The existing ABI is busted independently of #1.  Suppose you call
-userfaultfd to get a userfaultfd and enable UFFD_FEATURE_EVENT_FORK.
-Then you do:
-
-$ sudo <&[userfaultfd number]
-
-Sudo will read it and get a new fd unexpectedly added to its fd table.
-It's worse if SCM_RIGHTS is involved.
-
-So I think we either need to declare that UFFD_FEATURE_EVENT_FORK is
-only usable by global root or we need to remove it and maybe re-add it
-in some other form.
-
-
---Andy
+Again, does it really make any sense to micro optimize something like
+this. It is a debugging tool. I would rather go simple.
+-- 
+Michal Hocko
+SUSE Labs
