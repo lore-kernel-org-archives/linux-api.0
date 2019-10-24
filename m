@@ -1,28 +1,51 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [RFC PATCH 00/10] pipe: Notification queue preparation [ver #2]
-Date: Thu, 24 Oct 2019 15:14:54 +0200
-Message-ID: <20191024131454.GB4114@hirez.programming.kicks-ass.net>
-References: <157186182463.3995.13922458878706311997.stgit@warthog.procyon.org.uk>
+From: Andrea Arcangeli <aarcange@redhat.com>
+Subject: Re: [PATCH 3/7] Add a UFFD_SECURE flag to the userfaultfd API.
+Date: Thu, 24 Oct 2019 11:10:54 -0400
+Message-ID: <20191024151054.GJ9902@redhat.com>
+References: <20191012191602.45649-1-dancol@google.com>
+ <20191012191602.45649-4-dancol@google.com>
+ <CALCETrVZHd+csdRL-uKbVN3Z7yeNNtxiDy-UsutMi=K3ZgCiYw@mail.gmail.com>
+ <CAKOZuevUqs_Oe1UEwguQK7Ate3ai1DSVSij=0R=vmz9LzX4k6Q@mail.gmail.com>
+ <CALCETrUyq=J37gU-MYXqLdoi7uH7iNNVRjvcGUT11JA1QuTFyg@mail.gmail.com>
+ <CAG48ez3P27-xqdjKLqfP_0Q_v9K92CgEjU4C=kob2Ax7=NoZbA@mail.gmail.com>
+ <20191023190959.GA9902@redhat.com>
+ <20191024090258.GA9802@linux.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=WINDOWS-1252
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20191024090258.GA9802@linux.ibm.com>
 Content-Disposition: inline
-In-Reply-To: <157186182463.3995.13922458878706311997.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: torvalds@linux-foundation.org, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Mike Rapoport <rppt@linux.ibm.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>, Daniel Colascione <dancol@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Pavel Emelyanov <xemul@virtuozzo.com>, Lokesh Gidra <lokeshgidra@google.com>, Nick Kralevich <nnk@google.com>, Nosh Minwalla <nosh@google.com>, Tim Murray <timmurray@google.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 23, 2019 at 09:17:04PM +0100, David Howells wrote:
+Hello,
 
->  (1) It removes the nr_exclusive argument from __wake_up_sync_key() as this
->      is always 1.  This prepares for step 2.
-> 
->  (2) Adds wake_up_interruptible_sync_poll_locked() so that poll can be
->      woken up from a function that's holding the poll waitqueue spinlock.
+On Thu, Oct 24, 2019 at 12:02:59PM +0300, Mike Rapoport wrote:
+> That's no the reason that UFFD_FEATURE_EVENT_FORK does not show up in
+> Debian code search, CRIU simply is not there. Debian packages CRIU only i=
+n
+> experimental and I believe that's not indexed by the code search.
+>=20
+> As for the limitations, the races were fixed, I just forgot to update the
+> wiki. As for the supported memory types and COW pages, these only affect
+> efficiency of post-copy, but not the correctness.
 
->  include/linux/wait.h       |   11 +-
->  kernel/sched/wait.c        |   37 ++++--
-> 
+That's what I was hoping for. If the wiki information is stale and
+there are no races it is totally plausible that it's being actively
+used in production so we need to fix the kernel bug. I was just
+checking because I wasn't sure anymore of the status after I read the
+wiki.
 
-Acked-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+If the CRIU initialization code that issues the uffd syscall runs as
+global root the ABI breaking permission check from Andy sounds the
+simplest for a short term fix, because it will be unnoticed by any
+production usage with CIRU --lazy-pages.
+
+Then later we could add a UFFD_FEATURE_EVENT_FORK2 that will not
+require root permission.
+
+Thanks,
+Andrea
