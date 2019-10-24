@@ -1,60 +1,28 @@
-From: Vincenzo Frascino <vincenzo.frascino@arm.com>
-Subject: Re: [PATCHv7 18/33] lib/vdso: Add unlikely() hint into
- vdso_read_begin()
-Date: Thu, 24 Oct 2019 14:14:19 +0100
-Message-ID: <c749983f-24a8-a159-5e29-6fdd741f6023@arm.com>
-References: <20191011012341.846266-1-dima@arista.com>
- <20191011012341.846266-19-dima@arista.com>
- <100f6921-9081-7eb0-7acc-f10cfb647c21@arm.com>
- <20191024061311.GA4541@gmail.com>
- <9aa9857e-ee1c-0117-bfcb-45fc6bcab866@arm.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [RFC PATCH 00/10] pipe: Notification queue preparation [ver #2]
+Date: Thu, 24 Oct 2019 15:14:54 +0200
+Message-ID: <20191024131454.GB4114@hirez.programming.kicks-ass.net>
+References: <157186182463.3995.13922458878706311997.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=koi8-r
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <9aa9857e-ee1c-0117-bfcb-45fc6bcab866@arm.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <157186182463.3995.13922458878706311997.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andrei Vagin <avagin@gmail.com>
-Cc: Dmitry Safonov <dima@arista.com>, linux-kernel@vger.kernel.org, Dmitry Safonov <0x7f454c46@gmail.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
+To: David Howells <dhowells@redhat.com>
+Cc: torvalds@linux-foundation.org, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi Andrei,
+On Wed, Oct 23, 2019 at 09:17:04PM +0100, David Howells wrote:
 
-On 10/24/19 10:30 AM, Vincenzo Frascino wrote:
-[...]
->> Here is my test:
->> https://github.com/avagin/vdso-perf
->>
->> It is calling clock_gettime() in a loop for three seconds and then
->> reports a number of iterations.
->>
+>  (1) It removes the nr_exclusive argument from __wake_up_sync_key() as this
+>      is always 1.  This prepares for step 2.
 > 
-> I am happy to run the test on arm64 and provide some results.
->
+>  (2) Adds wake_up_interruptible_sync_poll_locked() so that poll can be
+>      woken up from a function that's holding the poll waitqueue spinlock.
 
-Please find below the results:
-
-clock            | before     | after      | diff
-==================================================
-monotonic          17326692     17951770     3.6%
-monotonic-coarse   43624027     44215292     1.3%
-monotonic-raw      17541809     17554932     0.1%
-boottime           17334982     17954361     3.5%
-
-The improvement for arm64 for monotonic and boottime is around 3.5%.
-
-I created a pull request on github to send to you back the changes I had
-to do to vdso-perf to cross-compile it on arm64 [1].
-
-[1] https://github.com/avagin/vdso-perf/pull/1
-
-
->> Thanks,
->> Andrei
->>
+>  include/linux/wait.h       |   11 +-
+>  kernel/sched/wait.c        |   37 ++++--
 > 
 
--- 
-Regards,
-Vincenzo
+Acked-by: Peter Zijlstra (Intel) <peterz@infradead.org>
