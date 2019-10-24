@@ -1,154 +1,135 @@
-From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: Re: [PATCH v14 2/6] namei: LOOKUP_IN_ROOT: chroot-like path
- resolution
-Date: Thu, 24 Oct 2019 18:06:04 +1100
-Message-ID: <20191024070604.howuh6x6qrzd5jsm@yavin.dot.cyphar.com>
-References: <20191010054140.8483-1-cyphar@cyphar.com>
- <20191010054140.8483-3-cyphar@cyphar.com>
- <CAHk-=wh8L50f31vW8BwRUXhLiq3eoCQ3tg8ER4Yp2dzuU1w5rQ@mail.gmail.com>
- <20191012040815.gnc43cfmo5mnv67u@yavin.dot.cyphar.com>
- <20191012041541.milbmfbjpj5bcl5a@yavin.dot.cyphar.com>
+From: Mike Rapoport <rppt@linux.ibm.com>
+Subject: Re: [PATCH 3/7] Add a UFFD_SECURE flag to the userfaultfd API.
+Date: Thu, 24 Oct 2019 12:02:59 +0300
+Message-ID: <20191024090258.GA9802@linux.ibm.com>
+References: <20191012191602.45649-1-dancol@google.com>
+ <20191012191602.45649-4-dancol@google.com>
+ <CALCETrVZHd+csdRL-uKbVN3Z7yeNNtxiDy-UsutMi=K3ZgCiYw@mail.gmail.com>
+ <CAKOZuevUqs_Oe1UEwguQK7Ate3ai1DSVSij=0R=vmz9LzX4k6Q@mail.gmail.com>
+ <CALCETrUyq=J37gU-MYXqLdoi7uH7iNNVRjvcGUT11JA1QuTFyg@mail.gmail.com>
+ <CAG48ez3P27-xqdjKLqfP_0Q_v9K92CgEjU4C=kob2Ax7=NoZbA@mail.gmail.com>
+ <20191023190959.GA9902@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="i56sxfhksaspu3tw"
-Return-path: <libc-alpha-return-106234-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20191012041541.milbmfbjpj5bcl5a@yavin.dot.cyphar.com>
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Alexander Shishkin <alexander.shishkin@linux.intel.com>, Jiri Olsa <jolsa@redhat.com>, Namhyung Kim <namhyung@kernel.org>, Christian Brauner <christian@bra>
+In-Reply-To: <20191023190959.GA9902@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andrea Arcangeli <aarcange@redhat.com>
+Cc: Andy Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>, Daniel Colascione <dancol@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Pavel Emelyanov <xemul@virtuozzo.com>, Lokesh Gidra <lokeshgidra@google.com>, Nick Kralevich <nnk@google.com>, Nosh Minwalla <nosh@google.com>, Tim Murray <timmurray@google.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+On Wed, Oct 23, 2019 at 03:09:59PM -0400, Andrea Arcangeli wrote:
+> Hello,
+> 
+> On Sat, Oct 12, 2019 at 06:14:23PM -0700, Andy Lutomirski wrote:
+> > [adding more people because this is going to be an ABI break, sigh]
+> 
+> That wouldn't break the ABI, no more than when if you boot a kernel
+> built with CONFIG_USERFAULTFD=n.
+> 
+> All non-cooperative features can be removed any time in a backwards
+> compatible way, the only precaution is to mark their feature bits as
+> reserved so they can't be reused for something else later.
+> 
+> > least severely restricted.  A .read implementation MUST NOT ACT ON THE
+> > CALLING TASK.  Ever.  Just imagine the effect of passing a userfaultfd
+> > as stdin to a setuid program.
+> 
+> With UFFD_EVENT_FORK, the newly created uffd that controls the child,
+> is not passed to the parent nor to the child. Instead it's passed to
+> the CRIU monitor only, which has to be already running as root and is
+> fully trusted and acts a hypervisor (despite there is no hypervisor).
+> 
+> By the time execve runs and any suid bit in the execve'd inode becomes
+> relevant, well before the new userland executable code can run, the
+> kernel throws away the "old_mm" controlled by any uffd and all
+> attached uffds are released as well.
+> 
+> All I found is your "A .read implementation MUST NOT ACT ON THE
+> CALLING TASK" as an explanation that something is broken but I need
+> further clarification.
+> 
+> Of course I can see you can always open a uffd and pass it to any task
+> you are going to execve on, but that simply means the suid program
+> will be able to control you, not the other way around. If you don't
+> want to be controlled by the next task, no matter if suid or not, just
+> don't that. What I don't see is how you're going to control the suid
+> binary from the outside, the suid binary at most will block in the
+> poll, read and write syscalls and get garbage or write some garbage
+> and get an error, it won't get signals and it cannot block in any page
+> fault either, it's not immediately clear what's out of ordinary.
+> 
+> On Mon, Oct 14, 2019 at 06:04:22PM +0200, Jann Horn wrote:
+> > FWIW, <https://codesearch.debian.net/search?q=UFFD_FEATURE_EVENT_FORK&literal=1>
+> > just shows the kernel, kernel selftests, and strace code for decoding
+> > syscall arguments. CRIU uses it though (probably for postcopy live
+> > migration / lazy migration?), I guess that code isn't in debian for
+> > some reason.
+> 
+> https://criu.org/Userfaultfd#Limitations
 
---i56sxfhksaspu3tw
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+That's no the reason that UFFD_FEATURE_EVENT_FORK does not show up in
+Debian code search, CRIU simply is not there. Debian packages CRIU only in
+experimental and I believe that's not indexed by the code search.
 
-On 2019-10-12, Aleksa Sarai <cyphar@cyphar.com> wrote:
-> On 2019-10-12, Aleksa Sarai <cyphar@cyphar.com> wrote:
-> > On 2019-10-10, Linus Torvalds <torvalds@linux-foundation.org> wrote:
-> > > On Wed, Oct 9, 2019 at 10:42 PM Aleksa Sarai <cyphar@cyphar.com> wrot=
-e:
-> > > >
-> > > > --- a/fs/namei.c
-> > > > +++ b/fs/namei.c
-> > > > @@ -2277,6 +2277,11 @@ static const char *path_init(struct nameidat=
-a *nd, unsigned flags)
-> > > >
-> > > >         nd->m_seq =3D read_seqbegin(&mount_lock);
-> > > >
-> > > > +       /* LOOKUP_IN_ROOT treats absolute paths as being relative-t=
-o-dirfd. */
-> > > > +       if (flags & LOOKUP_IN_ROOT)
-> > > > +               while (*s =3D=3D '/')
-> > > > +                       s++;
-> > > > +
-> > > >         /* Figure out the starting path and root (if needed). */
-> > > >         if (*s =3D=3D '/') {
-> > > >                 error =3D nd_jump_root(nd);
-> > >=20
-> > > Hmm. Wouldn't this make more sense all inside the if (*s =3D- '/') te=
-st?
-> > > That way if would be where we check for "should we start at the root",
-> > > which seems to make more sense conceptually.
-> >=20
-> > I don't really agree (though I do think that both options are pretty
-> > ugly). Doing it before the block makes it clear that absolute paths are
-> > just treated relative-to-dirfd -- doing it inside the block makes it
-> > look more like "/" is a special-case for nd_jump_root(). And while that
->=20
-> Sorry, I meant "special-case for LOOKUP_IN_ROOT".
->=20
-> > is somewhat true, this is just a side-effect of making the code more
-> > clean -- my earlier versions reworked the dirfd handling to always grab
-> > nd->root first if LOOKUP_IS_SCOPED. I switched to this method based on
-> > Al's review.
-> >=20
-> > In fairness, I do agree that the lonely while loop looks ugly.
->=20
-> And with the old way I did it (where we grabbed nd->root first) the
-> semantics were slightly more clear -- stripping leading "/"s doesn't
-> really look as "clearly obvious" as grabbing nd->root beforehand and
-> treating "/"s normally. But the code was also needlessly more complex.
->=20
-> > > That test for '/' currently has a "} else if (..)", but that's
-> > > pointless since it ends with a "return" anyway. So the "else" logic is
-> > > just noise.
-> >=20
-> > This depends on the fact that LOOKUP_BENEATH always triggers -EXDEV for
-> > nd_jump_root() -- if we ever add another "scoped lookup" flag then the
-> > logic will have to be further reworked.
-> >=20
-> > (It should be noted that the new version doesn't always end with a
-> > "return", but you could change it to act that way given the above
-> > assumption.)
-> >=20
-> > > And if you get rid of the unnecessary else, moving the LOOKUP_IN_ROOT
-> > > inside the if-statement works fine.
-> > >=20
-> > > So this could be something like
-> > >=20
-> > >     --- a/fs/namei.c
-> > >     +++ b/fs/namei.c
-> > >     @@ -2194,11 +2196,19 @@ static const char *path_init(struct
-> > > nameidata *nd, unsigned flags)
-> > >=20
-> > >         nd->m_seq =3D read_seqbegin(&mount_lock);
-> > >         if (*s =3D=3D '/') {
-> > >     -           set_root(nd);
-> > >     -           if (likely(!nd_jump_root(nd)))
-> > >     -                   return s;
-> > >     -           return ERR_PTR(-ECHILD);
-> > >     -   } else if (nd->dfd =3D=3D AT_FDCWD) {
-> > >     +           /* LOOKUP_IN_ROOT treats absolute paths as being
-> > > relative-to-dirfd. */
-> > >     +           if (!(flags & LOOKUP_IN_ROOT)) {
-> > >     +                   set_root(nd);
-> > >     +                   if (likely(!nd_jump_root(nd)))
-> > >     +                           return s;
-> > >     +                   return ERR_PTR(-ECHILD);
-> > >     +           }
-> > >     +
-> > >     +           /* Skip initial '/' for LOOKUP_IN_ROOT */
-> > >     +           do { s++; } while (*s =3D=3D '/');
-> > >     +   }
-> > >     +
-> > >     +   if (nd->dfd =3D=3D AT_FDCWD) {
-> > >                 if (flags & LOOKUP_RCU) {
-> > >                         struct fs_struct *fs =3D current->fs;
-> > >                         unsigned seq;
-> > >=20
-> > > instead. The patch ends up slightly bigger (due to the re-indentation)
-> > > but now it handles all the "start at root" in the same place. Doesn't
-> > > that make sense?
-> >=20
-> > It is correct (though I'd need to clean it up a bit to handle
-> > nd_jump_root() correctly), and if you really would like me to change it
-> > I will -- but I just don't agree that it's cleaner.
+As for the limitations, the races were fixed, I just forgot to update the
+wiki. As for the supported memory types and COW pages, these only affect
+efficiency of post-copy, but not the correctness.
+ 
+> The CRIU developers did a truly amazing job by making container post
+> copy live migration work great for a subset of apps, that alone was an
+> amazing achievement. Is that achievement enough to use post copy live
+> migration of bare metal containers in production? Unfortunately
+> probably not and not just in debian.
+ 
+I don't know if anybody is using post-copy migration of containers in
+production, but I don't think that the reason for that would be technical.
+IMHO it's more about prevailing perception that there is no need to migrate
+containers at all, not only with post-copy, and, as the result, slow rate
+of adoption of container migration in general.
 
-Linus, did you still want me to make your proposed change?
+> If you're wrong and UFFDIO_EVENT_FORK isn't currently buggy and in
+> turn it isn't causing further maintenance burden, there is no hurry of
+> removing them, but in the long term, if none of the non-cooperative
+> features find its way in production (like it was reasonable to expect
+> initially), they must be removed from the kernel anyway, not just
+> UFFD_EVEN_FORK but all non-cooperative features associated with it.
 
---=20
-Aleksa Sarai
-Senior Software Engineer (Containers)
-SUSE Linux GmbH
-<https://www.cyphar.com/>
+... 
+ 
+> On my side, instead of trying to fix whatever issue in
+> UFFD_EVENT_FORK, I'd prefer to spend my time reviewing the uffd-wp
+> feature from Peter and the page fault enhancement patchset that Peter
+> and Linus were discussing. uffd-wp has the potential to drop fork()
+> from all apps calling fork() only to do an atomic snapshot of their
+> memory. Replacing fork() also means the uffd manager thread can decide
+> how much memory to reserve to the snapshot and it can start throttling
+> waiting for I/O completion if the threshold is exceeded, while fork
+> COWs cannot throttle and all apps using fork() risk to hit on x2
+> memory usage which can become oom-killer material if the memory size
+> of the process is huge. The side benefit is also that the way
+> userfaultfd works the fault granularity is entirely in control of
+> userland (because it's always userland that resolves the fault), it
+> could decide to use 8k or 16k even if that doesn't match the hardware
+> page size. That will allow to keep THP on without risking to hit on 2M
+> cows during the snapshot. Being able to keep THP enabled in nosql db
+> without hitting on slow 2M COW copies during snapshot, should allow a
+> further overall performance improvement when the snapshot is not
+> running than what it is possible today. In a completely different use
+> case, uffd-wp will also avoid JITs to set a dirty bit every time they
+> modify any data in memory. It should also be possible to provide the
+> same soft-dirty information in O(1) instead of O(N).
 
---i56sxfhksaspu3tw
-Content-Type: application/pgp-signature; name="signature.asc"
+If I remember correctly, there was an intention to deprecate soft-dirty in
+favor of uffd-wp, which brings us back to the necessity to have
+non-cooperative uffd because otherwise even pre-copy in CRIU will be broken
+and that *is* used in production.
+ 
+> Thanks,
+> Andrea
+> 
 
------BEGIN PGP SIGNATURE-----
-
-iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXbFNWQAKCRCdlLljIbnQ
-Ert5AP0aC5CrGCVvHOpelKBjUDOS5duq76VaVyiiUWcy3eeeFwD/aQEQPqkGREqr
-5Lo0df+nvE9H+89b7vJGbcaEZNxkTQc=
-=rtfF
------END PGP SIGNATURE-----
-
---i56sxfhksaspu3tw--
+-- 
+Sincerely yours,
+Mike.
