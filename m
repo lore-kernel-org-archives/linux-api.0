@@ -1,48 +1,137 @@
-From: Andrea Arcangeli <aarcange@redhat.com>
-Subject: Re: [PATCH 3/7] Add a UFFD_SECURE flag to the userfaultfd API.
-Date: Wed, 23 Oct 2019 20:23:12 -0400
-Message-ID: <20191024002312.GB433@redhat.com>
-References: <20191012191602.45649-1-dancol@google.com>
- <20191012191602.45649-4-dancol@google.com>
- <CALCETrVZHd+csdRL-uKbVN3Z7yeNNtxiDy-UsutMi=K3ZgCiYw@mail.gmail.com>
- <CAKOZuevUqs_Oe1UEwguQK7Ate3ai1DSVSij=0R=vmz9LzX4k6Q@mail.gmail.com>
- <CALCETrUyq=J37gU-MYXqLdoi7uH7iNNVRjvcGUT11JA1QuTFyg@mail.gmail.com>
- <CAG48ez3P27-xqdjKLqfP_0Q_v9K92CgEjU4C=kob2Ax7=NoZbA@mail.gmail.com>
- <20191023190959.GA9902@redhat.com>
- <CAKOZuetKkM=PK2QA8LdXwM8cM8qJvFu4u5bjePWai3XRnHe-pA@mail.gmail.com>
+From: Andrei Vagin <avagin@gmail.com>
+Subject: Re: [PATCHv7 18/33] lib/vdso: Add unlikely() hint into
+ vdso_read_begin()
+Date: Wed, 23 Oct 2019 23:13:11 -0700
+Message-ID: <20191024061311.GA4541@gmail.com>
+References: <20191011012341.846266-1-dima@arista.com>
+ <20191011012341.846266-19-dima@arista.com>
+ <100f6921-9081-7eb0-7acc-f10cfb647c21@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="xHFwDpU9dbj6ez1V"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAKOZuetKkM=PK2QA8LdXwM8cM8qJvFu4u5bjePWai3XRnHe-pA@mail.gmail.com>
 Content-Disposition: inline
+In-Reply-To: <100f6921-9081-7eb0-7acc-f10cfb647c21@arm.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Daniel Colascione <dancol@google.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Pavel Emelyanov <xemul@virtuozzo.com>, Lokesh Gidra <lokeshgidra@google.com>, Nick Kralevich <nnk@google.com>, Nosh Minwalla <nosh@google.com>, Tim Murray <timmurray@google.com>, Mike Rapoport <rppt@linux.vnet.ibm.com>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+To: Vincenzo Frascino <vincenzo.frascino@arm.com>
+Cc: Dmitry Safonov <dima@arista.com>, linux-kernel@vger.kernel.org, Dmitry Safonov <0x7f454c46@gmail.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 23, 2019 at 01:05:47PM -0700, Daniel Colascione wrote:
-> This is a debate that won't get resolved here. A ton of work has gone
-> into namespaces, migration, various cgroup things, and so on, and I
-> don't see that work getting torn out.
 
-This is precisely why I thought it was a good idea to support the
-non-cooperative use case too even though we had no immediate use for
-it.
+--xHFwDpU9dbj6ez1V
+Content-Type: text/plain; charset=koi8-r
+Content-Disposition: inline
 
-> Sure they can. Can't we stick processes in a memcg and set a
-> memory.high threshold beyond which threads in that cgroup will enter
-> direct reclaim on page allocations? I'd call that throttling.
+On Wed, Oct 16, 2019 at 12:24:14PM +0100, Vincenzo Frascino wrote:
+> On 10/11/19 2:23 AM, Dmitry Safonov wrote:
+> > From: Andrei Vagin <avagin@gmail.com>
+> > 
+> > Place the branch with no concurrent write before contended case.
+> > 
+> > Performance numbers for Intel(R) Core(TM) i5-6300U CPU @ 2.40GHz
+> > (more clock_gettime() cycles - the better):
+> >         | before    | after
+> > -----------------------------------
+> >         | 150252214 | 153242367
+> >         | 150301112 | 153324800
+> >         | 150392773 | 153125401
+> >         | 150373957 | 153399355
+> >         | 150303157 | 153489417
+> >         | 150365237 | 153494270
+> > -----------------------------------
+> > avg     | 150331408 | 153345935
+> > diff %  | 2	    | 0
+> > -----------------------------------
+> > stdev % | 0.3	    | 0.1
+> > 
+> > Signed-off-by: Andrei Vagin <avagin@gmail.com>
+> > Co-developed-by: Dmitry Safonov <dima@arista.com>
+> > Signed-off-by: Dmitry Safonov <dima@arista.com>
+> 
+> Reviewed-by: Vincenzo Frascino <vincenzo.frascino@arm.com>
+> Tested-by: Vincenzo Frascino <vincenzo.frascino@arm.com>
 
-The uffd-wp solution during the throttling can resolve a wrprotect
-fault in the parent for every 4k page that has been written to disk
-and it'll prioritize writing to disk those userfaults that are
-currently blocked. I don't see how you could reach an equivalent
-optimal runtime without uffd-wp and just with memcg because the
-snapshot process won't have a clue which pages are been duped by the
-COWs. The uffd-wp by avoding fork will also avoid more expensive MM
-switches during the snapshot.
+Hello Vincenzo,
 
-> This issue *has* to get fixed one way or another.
+Could you test the attached patch on aarch64? On x86, it gives about 9%
+performance improvement for CLOCK_MONOTONIC and CLOCK_BOOTTIME.
 
-Sure.
+Here is my test:
+https://github.com/avagin/vdso-perf
+
+It is calling clock_gettime() in a loop for three seconds and then
+reports a number of iterations.
+
+Thanks,
+Andrei
+
+--xHFwDpU9dbj6ez1V
+Content-Type: text/plain; charset=koi8-r
+Content-Disposition: attachment;
+	filename="0001-lib-vdso-make-do_hres-and-do_coarse-as-__always_inli.patch"
+
+>From 5252093fec4c74802e5ef501b9f1db3369430c80 Mon Sep 17 00:00:00 2001
+From: Andrei Vagin <avagin@gmail.com>
+Date: Tue, 22 Oct 2019 18:23:17 -0700
+Subject: [PATCH] lib/vdso: make do_hres and do_coarse as __always_inline
+
+Performance numbers for Intel(R) Core(TM) i5-6300U CPU @ 2.40GHz
+(more clock_gettime() cycles - the better):
+
+clock            | before     | after      | diff
+----------------------------------------------------------
+monotonic        |  153222105 |  166775025 | 8.8%
+monotonic-coarse |  671557054 |  691513017 | 3.0%
+monotonic-raw    |  147116067 |  161057395 | 9.5%
+boottime         |  153446224 |  166962668 | 9.1%
+
+Signed-off-by: Andrei Vagin <avagin@gmail.com>
+---
+ lib/vdso/gettimeofday.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/lib/vdso/gettimeofday.c b/lib/vdso/gettimeofday.c
+index e630e7ff57f1..b4f7f0f246af 100644
+--- a/lib/vdso/gettimeofday.c
++++ b/lib/vdso/gettimeofday.c
+@@ -38,7 +38,7 @@ u64 vdso_calc_delta(u64 cycles, u64 last, u64 mask, u32 mult)
+ }
+ #endif
+ 
+-static int do_hres(const struct vdso_data *vd, clockid_t clk,
++static __always_inline int do_hres(const struct vdso_data *vd, clockid_t clk,
+ 		   struct __kernel_timespec *ts)
+ {
+ 	const struct vdso_timestamp *vdso_ts = &vd->basetime[clk];
+@@ -68,7 +68,7 @@ static int do_hres(const struct vdso_data *vd, clockid_t clk,
+ 	return 0;
+ }
+ 
+-static void do_coarse(const struct vdso_data *vd, clockid_t clk,
++static __always_inline void do_coarse(const struct vdso_data *vd, clockid_t clk,
+ 		      struct __kernel_timespec *ts)
+ {
+ 	const struct vdso_timestamp *vdso_ts = &vd->basetime[clk];
+@@ -97,12 +97,16 @@ __cvdso_clock_gettime_common(clockid_t clock, struct __kernel_timespec *ts)
+ 	 */
+ 	msk = 1U << clock;
+ 	if (likely(msk & VDSO_HRES)) {
+-		return do_hres(&vd[CS_HRES_COARSE], clock, ts);
++		vd = &vd[CS_HRES_COARSE];
++out_hres:
++		return do_hres(vd, clock, ts);
+ 	} else if (msk & VDSO_COARSE) {
+ 		do_coarse(&vd[CS_HRES_COARSE], clock, ts);
+ 		return 0;
+ 	} else if (msk & VDSO_RAW) {
+-		return do_hres(&vd[CS_RAW], clock, ts);
++		vd = &vd[CS_RAW];
++		/* goto allows to avoid extra inlining of do_hres. */
++		goto out_hres;
+ 	}
+ 	return -1;
+ }
+-- 
+2.21.0
+
+
+--xHFwDpU9dbj6ez1V--
