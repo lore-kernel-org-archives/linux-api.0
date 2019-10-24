@@ -1,21 +1,59 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [RFC PATCH 04/10] pipe: Use head and tail pointers for the ring, not cursor and length [ver #2]
-Date: Thu, 24 Oct 2019 11:32:23 +0100
-Message-ID: <13194.1571913143@warthog.procyon.org.uk>
-References: <157186186167.3995.7568100174393739543.stgit@warthog.procyon.org.uk> <157186182463.3995.13922458878706311997.stgit@warthog.procyon.org.uk>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [PATCH] mm: allow unmapped hole at head side of mbind range
+Date: Thu, 24 Oct 2019 12:48:48 +0200
+Message-ID: <c90d668a-9abc-df1b-8b9c-70a6e6afd94a@suse.cz>
+References: <TY2PR04MB29753892EBAD17D9E8FECBAEE86A0@TY2PR04MB2975.apcprd04.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=gbk
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <157186186167.3995.7568100174393739543.stgit@warthog.procyon.org.uk>
-Content-ID: <13193.1571913143.1@warthog.procyon.org.uk>
+In-Reply-To: <TY2PR04MB29753892EBAD17D9E8FECBAEE86A0@TY2PR04MB2975.apcprd04.prod.outlook.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: torvalds@linux-foundation.org
-Cc: dhowells@redhat.com, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Li Xinhai <xinhai.li@outlook.com>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-I've pushed to git a new version that fixes an incomplete conversion in
-pipe_zero(), ports the powerpc virtio_console driver and fixes a comment in
-splice.
++ linux-api
 
-David
+On 10/24/19 9:35 AM, Li Xinhai wrote:
+> From: Li Xinhai  <xinhai.li@outlook.com>
+> 
+> mbind_range silently ignore unmapped hole at middle and tail of the 
+> specified range, but report EFAULT if hole at head side.
+
+
+Hmm that's unfortunate. mbind() manpage says:
+
+EFAULT Part or all of the memory range specified by nodemask and maxnode
+points outside your accessible address space.  Or, there was an unmapped
+hole in  the  specified  memory range specified by addr and len.
+
+That sounds like any hole inside the specified range should return
+EFAULT. But perhaps it can be also interpreted as you suggest, that the
+whole range is an unmapped hole. There's some risk of breaking existing
+userspace if we change it either way.
+
+> It is more reasonable to support silently ignore holes at any part of 
+> the range, only report EFAULT if the whole range is in hole.
+> 
+> Signed-off-by: Li Xinhai <xinhai.li@outlook.com>
+> ---
+> 
+>  mm/mempolicy.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> 
+> diff --git a/mm/mempolicy.c b/mm/mempolicy.c
+> index 4ae967bcf954..ae160d9936d9 100644
+> --- a/mm/mempolicy.c
+> +++ b/mm/mempolicy.c
+> @@ -738,7 +738,7 @@ static int mbind_range(struct mm_struct *mm, unsigned long start,
+>         unsigned long vmend;
+>  
+>         vma = find_vma(mm, start);
+> -       if (!vma || vma->vm_start > start)
+> +       if (!vma || vma->vm_start >= end)
+>                 return -EFAULT;
+>  
+>         prev = vma->vm_prev;
+> 
