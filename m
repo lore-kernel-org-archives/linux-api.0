@@ -1,150 +1,96 @@
 From: Richard Guy Briggs <rgb@redhat.com>
-Subject: Re: [PATCH ghak90 V7 20/21] audit: add capcontid to set contid
- outside init_user_ns
-Date: Thu, 24 Oct 2019 17:00:10 -0400
-Message-ID: <20191024210010.owwgc3bqbvtdsqws@madcap2.tricolour.ca>
+Subject: Re: [PATCH ghak90 V7 06/21] audit: contid limit of 32k imposed to
+ avoid DoS
+Date: Thu, 24 Oct 2019 17:23:35 -0400
+Message-ID: <20191024212335.y4ou7g4tsxnotvnk@madcap2.tricolour.ca>
 References: <cover.1568834524.git.rgb@redhat.com>
- <214163d11a75126f610bcedfad67a4d89575dc77.1568834525.git.rgb@redhat.com>
- <20191019013904.uevmrzbmztsbhpnh@madcap2.tricolour.ca>
- <CAHC9VhRPygA=LsHLUqv+K=ouAiPFJ6fb2_As=OT-_zB7kGc_aQ@mail.gmail.com>
- <20191021213824.6zti5ndxu7sqs772@madcap2.tricolour.ca>
- <CAHC9VhRdNXsY4neJpSoNyJoAVEoiEc2oW5kSscF99tjmoQAxFA@mail.gmail.com>
- <20191021235734.mgcjotdqoe73e4ha@madcap2.tricolour.ca>
- <CAHC9VhSiwnY-+2awxvGeO4a0NgfVkOPd8fzzBVujp=HtjskTuQ@mail.gmail.com>
+ <230e91cd3e50a3d8015daac135c24c4c58cf0a21.1568834524.git.rgb@redhat.com>
+ <20190927125142.GA25764@hmswarspite.think-freely.org>
+ <CAHC9VhRbSUCB0OZorC4+y+5uJDR5uMXdRn2LOTYGu2gcFJSrcA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=WINDOWS-1252
 Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHC9VhSiwnY-+2awxvGeO4a0NgfVkOPd8fzzBVujp=HtjskTuQ@mail.gmail.com>
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <CAHC9VhRbSUCB0OZorC4+y+5uJDR5uMXdRn2LOTYGu2gcFJSrcA@mail.gmail.com>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: netdev-owner@vger.kernel.org
 To: Paul Moore <paul@paul-moore.com>
-Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com, Dan Walsh <dwalsh@redhat.com>, mpatel@redhat.com
+Cc: Neil Horman <nhorman@tuxdriver.com>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, Dan Walsh <dwalsh@redhat.com>, mpatel@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-On 2019-10-21 20:31, Paul Moore wrote:
-> On Mon, Oct 21, 2019 at 7:58 PM Richard Guy Briggs <rgb@redhat.com> wrote=
+On 2019-10-10 20:38, Paul Moore wrote:
+> On Fri, Sep 27, 2019 at 8:52 AM Neil Horman <nhorman@tuxdriver.com> wrote=
 :
-> > On 2019-10-21 17:43, Paul Moore wrote:
-> > > On Mon, Oct 21, 2019 at 5:38 PM Richard Guy Briggs <rgb@redhat.com> w=
-rote:
-> > > > On 2019-10-21 15:53, Paul Moore wrote:
-> > > > > On Fri, Oct 18, 2019 at 9:39 PM Richard Guy Briggs <rgb@redhat.co=
-m> wrote:
-> > > > > > On 2019-09-18 21:22, Richard Guy Briggs wrote:
-> > > > > > > Provide a mechanism similar to CAP_AUDIT_CONTROL to explicitl=
-y give a
-> > > > > > > process in a non-init user namespace the capability to set au=
-dit
-> > > > > > > container identifiers.
-> > > > > > >
-> > > > > > > Use audit netlink message types AUDIT_GET_CAPCONTID 1027 and
-> > > > > > > AUDIT_SET_CAPCONTID 1028.  The message format includes the da=
-ta
-> > > > > > > structure:
-> > > > > > > struct audit_capcontid_status {
-> > > > > > >         pid_t   pid;
-> > > > > > >         u32     enable;
-> > > > > > > };
-> > > > > >
-> > > > > > Paul, can I get a review of the general idea here to see if you=
-'re ok
-> > > > > > with this way of effectively extending CAP_AUDIT_CONTROL for th=
-e sake of
-> > > > > > setting contid from beyond the init user namespace where capabl=
-e() can't
-> > > > > > reach and ns_capable() is meaningless for these purposes?
-> > > > >
-> > > > > I think my previous comment about having both the procfs and netl=
-ink
-> > > > > interfaces apply here.  I don't see why we need two different API=
-s at
-> > > > > the start; explain to me why procfs isn't sufficient.  If the arg=
-ument
-> > > > > is simply the desire to avoid mounting procfs in the container, h=
-ow
-> > > > > many container orchestrators can function today without a valid /=
-proc?
-> > > >
-> > > > Ok, sorry, I meant to address that question from a previous patch
-> > > > comment at the same time.
-> > > >
-> > > > It was raised by Eric Biederman that the proc filesystem interface =
-for
-> > > > audit had its limitations and he had suggested an audit netlink
-> > > > interface made more sense.
+> > On Wed, Sep 18, 2019 at 09:22:23PM -0400, Richard Guy Briggs wrote:
+> > > Set an arbitrary limit on the number of audit container identifiers t=
+o
+> > > limit abuse.
 > > >
-> > > I'm sure you've got it handy, so I'm going to be lazy and ask: archiv=
-e
-> > > pointer to Eric's comments?  Just a heads-up, I'm really *not* a fan
-> > > of using the netlink interface for this, so unless Eric presents a
-> > > super compelling reason for why we shouldn't use procfs I'm inclined
-> > > to stick with /proc.
+> > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> > > ---
+> > >  kernel/audit.c | 8 ++++++++
+> > >  kernel/audit.h | 4 ++++
+> > >  2 files changed, 12 insertions(+)
+> > >
+> > > diff --git a/kernel/audit.c b/kernel/audit.c
+> > > index 53d13d638c63..329916534dd2 100644
+> > > --- a/kernel/audit.c
+> > > +++ b/kernel/audit.c
+>=20
+> ...
+>=20
+> > > @@ -2465,6 +2472,7 @@ int audit_set_contid(struct task_struct *task, =
+u64 contid)
+> > >                               newcont->owner =3D current;
+> > >                               refcount_set(&newcont->refcount, 1);
+> > >                               list_add_rcu(&newcont->list, &audit_con=
+tid_hash[h]);
+> > > +                             audit_contid_count++;
+> > >                       } else {
+> > >                               rc =3D -ENOMEM;
+> > >                               goto conterror;
+> > > diff --git a/kernel/audit.h b/kernel/audit.h
+> > > index 162de8366b32..543f1334ba47 100644
+> > > --- a/kernel/audit.h
+> > > +++ b/kernel/audit.h
+> > > @@ -219,6 +219,10 @@ static inline int audit_hash_contid(u64 contid)
+> > >       return (contid & (AUDIT_CONTID_BUCKETS-1));
+> > >  }
+> > >
+> > > +extern int audit_contid_count;
+> > > +
+> > > +#define AUDIT_CONTID_COUNT   1 << 16
+> > > +
 > >
-> > It was actually a video call with Eric and Steve where that was
-> > recommended, so I can't provide you with any first-hand communication
-> > about it.  I'll get more details...
+> > Just to ask the question, since it wasn't clear in the changelog, what
+> > abuse are you avoiding here?  Ostensibly you should be able to create a=
+s
+> > many container ids as you have space for, and the simple creation of
+> > container ids doesn't seem like the resource strain I would be concerne=
+d
+> > about here, given that an orchestrator can still create as many
+> > containers as the system will otherwise allow, which will consume
+> > significantly more ram/disk/etc.
 >=20
-> Yeah, that sort of information really needs to be on the list.
+> I've got a similar question.  Up to this point in the patchset, there
+> is a potential issue of hash bucket chain lengths and traversing them
+> with a spinlock held, but it seems like we shouldn't be putting an
+> arbitrary limit on audit container IDs unless we have a good reason
+> for it.  If for some reason we do want to enforce a limit, it should
+> probably be a tunable value like a sysctl, or similar.
 
-Here's the note I had from that meeting:
+Can you separate and clarify the concerns here?
 
-- Eric raised the issue that using /proc is likely to get more and more
-  hoary due to mount namespaces and suggested that we use a netlink
-audit message (or a new syscall) to set the audit container identifier
-and since the loginuid is a similar type of operation, that it should be
-migrated over to a similar mechanism to get it away from /proc.  Get
-could be done with a netlink audit message that triggers an audit log
-message to deliver the information.  I'm reluctant to further pollute
-the syscall space if we can find another method.  The netlink audit
-message makes sense since any audit-enabled service is likely to already
-have an audit socket open.
+I plan to move this patch to the end of the patchset and make it
+optional, possibly adding a tuning mechanism.  Like the migration from
+/proc to netlink for loginuid/sessionid/contid/capcontid, this was Eric
+Biederman's concern and suggested mitigation.
 
-I don't have more detailed notes about what Eric said specifically.
+As for the first issue of the bucket chain length traversal while
+holding the list spin-lock, would you prefer to use the rcu lock to
+traverse the list and then only hold the spin-lock when modifying the
+list, and possibly even make the spin-lock more fine-grained per list?
 
-> > So, with that out of the way, could you please comment on the general
-> > idea of what was intended to be the central idea of this mechanism to b=
-e
-> > able to nest containers beyond the initial user namespace (knowing that
-> > a /proc interface is available and the audit netlink interface isn't
-> > necessary for it to work and the latter can be easily removed)?
->=20
-> I'm not entirely clear what you are asking about, are you asking why I
-> care about nesting container orchestrators?  Simply put, it is not
-> uncommon for the LXC/LXD folks to see nested container orchestrators,
-> so I felt it was important to support that use case.  When we
-> originally started this effort we probably should have done a better
-> job reaching out to the LXC/LXD folks, we may have caught this
-> earlier.  Regardless, we caught it, and it looks like we are on our
-> way to supporting it (that's good).
->=20
-> Are you asking why I prefer the procfs approach to setting/getting the
-> audit container ID?  For one, it makes it easier for a LSM to enforce
-> the audit container ID operations independent of the other audit
-> control APIs.  It also provides a simpler interface for container
-> orchestrators.  Both seem like desirable traits as far as I'm
-> concerned.
->=20
-> > > > The intent was to switch to the audit netlink interface for contid,
-> > > > capcontid and to add the audit netlink interface for loginuid and
-> > > > sessionid while deprecating the proc interface for loginuid and
-> > > > sessionid.  This was alluded to in the cover letter, but not very c=
-lear,
-> > > > I'm afraid.  I have patches to remove the contid and loginuid/sessi=
-onid
-> > > > interfaces in another tree which is why I had forgotten to outline =
-that
-> > > > plan more explicitly in the cover letter.
->=20
-> --=20
 > paul moore
-> www.paul-moore.com
 
 - RGB
-
---
-Richard Guy Briggs <rgb@redhat.com>
-Sr. S/W Engineer, Kernel Security, Base Operating Systems
-Remote, Ottawa, Red Hat Canada
-IRC: rgb, SunRaycer
-Voice: +1.647.777.2635, Internal: (81) 32635
