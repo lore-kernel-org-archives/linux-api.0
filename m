@@ -1,272 +1,532 @@
-From: Christian Brauner <christian.brauner@ubuntu.com>
-Subject: [REVIEW PATCH v5 2/3] arch: wire-up close_range()
-Date: Fri, 25 Oct 2019 14:28:50 +0200
-Message-ID: <20191025122851.30182-3-christian.brauner@ubuntu.com>
-References: <20191025122851.30182-1-christian.brauner@ubuntu.com>
+From: Sasha Levin <sashal@kernel.org>
+Subject: [PATCH AUTOSEL 4.19 04/37] rseq/selftests: x86: Work-around bogus gcc-8 optimisation
+Date: Fri, 25 Oct 2019 09:55:28 -0400
+Message-ID: <20191025135603.25093-4-sashal@kernel.org>
+References: <20191025135603.25093-1-sashal@kernel.org>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191025122851.30182-1-christian.brauner@ubuntu.com>
+In-Reply-To: <20191025135603.25093-1-sashal@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: viro@zeniv.linux.org.uk, linux-kernel@vger.kernel.org, linux-fsdevel@vger.kernel.org, torvalds@linux-foundation.org, fweimer@redhat.com
-Cc: jannh@google.com, oleg@redhat.com, tglx@linutronix.de, arnd@arndb.de, shuah@kernel.org, dhowells@redhat.com, tkjos@android.com, ldv@altlinux.org, miklos@szeredi.hu, Christian Brauner <christian.brauner@ubuntu.com>, Michael Ellerman <mpe@ellerman.id.au>, linux-api@vger.kernel.org, linux-alpha@vger.kernel.org, linux-arm-kernel@lists.infradead.org, linux-ia64@vger.kernel.org, linux-m68k@lists.linux-m68k.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, linux-s390@vger.kernel.org, linux-sh@vger.kernel.org, sparclinux@vger.kernel.org, linux-xtensa@linux-xtensa.org, linux-arch@vger.kernel.org, x86@kernel.org
+To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
+Cc: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Thomas Gleixner <tglx@linutronix.de>, Joel Fernandes <joelaf@google.com>, Catalin Marinas <catalin.marinas@arm.com>, Dave Watson <davejwatson@fb.com>, Will Deacon <will.deacon@arm.com>, Shuah Khan <shuah@kernel.org>, Andi Kleen <andi@firstfloor.org>, linux-kselftest@vger.kernel.org, "H . Peter Anvin" <hpa@zytor.com>, Chris Lameter <cl@linux.com>, Russell King <linux@arm.linux.org.uk>, Michael Kerrisk <mtk.manpages@gmail.com>, "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>, Paul Turner <pjt@google.com>, Boqun Feng <boqun.feng@gmail.com>, Josh Triplett <josh@joshtriplett.org>, Steven Rostedt <rostedt@goodmis.org>
 List-Id: linux-api@vger.kernel.org
 
-This wires up the close_range() syscall into all arches at once.
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 
-Suggested-by: Arnd Bergmann <arnd@arndb.de>
-Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
-Reviewed-by: Oleg Nesterov <oleg@redhat.com>
-Acked-by: Arnd Bergmann <arnd@arndb.de>
-Acked-by: Michael Ellerman <mpe@ellerman.id.au> (powerpc)
-Cc: Jann Horn <jannh@google.com>
-Cc: David Howells <dhowells@redhat.com>
-Cc: Dmitry V. Levin <ldv@altlinux.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Al Viro <viro@zeniv.linux.org.uk>
-Cc: Florian Weimer <fweimer@redhat.com>
-Cc: linux-api@vger.kernel.org
-Cc: linux-alpha@vger.kernel.org
-Cc: linux-arm-kernel@lists.infradead.org
-Cc: linux-ia64@vger.kernel.org
-Cc: linux-m68k@lists.linux-m68k.org
-Cc: linux-mips@vger.kernel.org
-Cc: linux-parisc@vger.kernel.org
-Cc: linuxppc-dev@lists.ozlabs.org
-Cc: linux-s390@vger.kernel.org
-Cc: linux-sh@vger.kernel.org
-Cc: sparclinux@vger.kernel.org
-Cc: linux-xtensa@linux-xtensa.org
-Cc: linux-arch@vger.kernel.org
-Cc: x86@kernel.org
+[ Upstream commit fe22983d92c15253ea8eb854acbe863fc2313759 ]
+
+gcc-8 version 8.1.0, 8.2.0, and 8.3.0 generate broken assembler with asm
+goto that have a thread-local storage "m" input operand on both x86-32
+and x86-64. For instance:
+
+__thread int var;
+
+static int fct(void)
+{
+        asm goto (      "jmp %l[testlabel]\n\t"
+                        : : [var] "m" (var) : : testlabel);
+        return 0;
+testlabel:
+        return 1;
+}
+
+int main()
+{
+        return fct();
+}
+
+% gcc-8 -O2 -o test-asm-goto test-asm-goto.c
+/tmp/ccAdHJbe.o: In function `main':
+test-asm-goto.c:(.text.startup+0x1): undefined reference to `.L2'
+collect2: error: ld returned 1 exit status
+
+% gcc-8 -m32 -O2 -o test-asm-goto test-asm-goto.c
+/tmp/ccREsVXA.o: In function `main':
+test-asm-goto.c:(.text.startup+0x1): undefined reference to `.L2'
+collect2: error: ld returned 1 exit status
+
+Work-around this compiler bug in the rseq-x86.h header by passing the
+address of the __rseq_abi TLS as a register operand rather than using
+the "m" input operand.
+
+Link: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=90193
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: Ingo Molnar <mingo@redhat.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Joel Fernandes <joelaf@google.com>
+CC: Catalin Marinas <catalin.marinas@arm.com>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Shuah Khan <shuah@kernel.org>
+CC: Andi Kleen <andi@firstfloor.org>
+CC: linux-kselftest@vger.kernel.org
+CC: "H . Peter Anvin" <hpa@zytor.com>
+CC: Chris Lameter <cl@linux.com>
+CC: Russell King <linux@arm.linux.org.uk>
+CC: Michael Kerrisk <mtk.manpages@gmail.com>
+CC: "Paul E . McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Paul Turner <pjt@google.com>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: Josh Triplett <josh@joshtriplett.org>
+CC: Steven Rostedt <rostedt@goodmis.org>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: linux-api@vger.kernel.org
+CC: Andy Lutomirski <luto@amacapital.net>
+CC: Andrew Morton <akpm@linux-foundation.org>
+CC: Linus Torvalds <torvalds@linux-foundation.org>
+Signed-off-by: Shuah Khan <skhan@linuxfoundation.org>
+Signed-off-by: Sasha Levin <sashal@kernel.org>
 ---
-/* v2 */
-not present
+ tools/testing/selftests/rseq/rseq-x86.h | 144 ++++++++++++------------
+ 1 file changed, 70 insertions(+), 74 deletions(-)
 
-/* v3 */
-not present
-
-/* v4 */
-introduced
-- Arnd Bergmann <arnd@arndb.de>:
-  - split into two patches:
-    1. add close_range()
-    2. add syscall to all arches at once
-  - bump __NR_compat_syscalls in arch/arm64/include/asm/unistd.h
-
-/* v5 */
-- Christian Brauner <christian.brauner@ubuntu.com>:
----
- arch/alpha/kernel/syscalls/syscall.tbl      | 1 +
- arch/arm/tools/syscall.tbl                  | 1 +
- arch/arm64/include/asm/unistd.h             | 2 +-
- arch/arm64/include/asm/unistd32.h           | 2 ++
- arch/ia64/kernel/syscalls/syscall.tbl       | 1 +
- arch/m68k/kernel/syscalls/syscall.tbl       | 1 +
- arch/microblaze/kernel/syscalls/syscall.tbl | 1 +
- arch/mips/kernel/syscalls/syscall_n32.tbl   | 1 +
- arch/mips/kernel/syscalls/syscall_n64.tbl   | 1 +
- arch/mips/kernel/syscalls/syscall_o32.tbl   | 1 +
- arch/parisc/kernel/syscalls/syscall.tbl     | 1 +
- arch/powerpc/kernel/syscalls/syscall.tbl    | 1 +
- arch/s390/kernel/syscalls/syscall.tbl       | 1 +
- arch/sh/kernel/syscalls/syscall.tbl         | 1 +
- arch/sparc/kernel/syscalls/syscall.tbl      | 1 +
- arch/x86/entry/syscalls/syscall_32.tbl      | 1 +
- arch/x86/entry/syscalls/syscall_64.tbl      | 1 +
- arch/xtensa/kernel/syscalls/syscall.tbl     | 1 +
- include/uapi/asm-generic/unistd.h           | 4 +++-
- 19 files changed, 22 insertions(+), 2 deletions(-)
-
-diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
-index 728fe028c02c..f08906efa5ff 100644
---- a/arch/alpha/kernel/syscalls/syscall.tbl
-+++ b/arch/alpha/kernel/syscalls/syscall.tbl
-@@ -475,3 +475,4 @@
- 543	common	fspick				sys_fspick
- 544	common	pidfd_open			sys_pidfd_open
- # 545 reserved for clone3
-+546	common	close_range			sys_close_range
-diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
-index 6da7dc4d79cc..f25716576d13 100644
---- a/arch/arm/tools/syscall.tbl
-+++ b/arch/arm/tools/syscall.tbl
-@@ -449,3 +449,4 @@
- 433	common	fspick				sys_fspick
- 434	common	pidfd_open			sys_pidfd_open
- 435	common	clone3				sys_clone3
-+436	common	close_range			sys_close_range
-diff --git a/arch/arm64/include/asm/unistd.h b/arch/arm64/include/asm/unistd.h
-index 2629a68b8724..368761302768 100644
---- a/arch/arm64/include/asm/unistd.h
-+++ b/arch/arm64/include/asm/unistd.h
-@@ -38,7 +38,7 @@
- #define __ARM_NR_compat_set_tls		(__ARM_NR_COMPAT_BASE + 5)
- #define __ARM_NR_COMPAT_END		(__ARM_NR_COMPAT_BASE + 0x800)
+diff --git a/tools/testing/selftests/rseq/rseq-x86.h b/tools/testing/selftests/rseq/rseq-x86.h
+index 089410a314e9d..a5341044a2f59 100644
+--- a/tools/testing/selftests/rseq/rseq-x86.h
++++ b/tools/testing/selftests/rseq/rseq-x86.h
+@@ -9,6 +9,16 @@
  
--#define __NR_compat_syscalls		436
-+#define __NR_compat_syscalls		437
+ #define RSEQ_SIG	0x53053053
+ 
++/*
++ * Due to a compiler optimization bug in gcc-8 with asm goto and TLS asm input
++ * operands, we cannot use "m" input operands, and rather pass the __rseq_abi
++ * address through a "r" input operand.
++ */
++
++/* Offset of cpu_id and rseq_cs fields in struct rseq. */
++#define RSEQ_CPU_ID_OFFSET	4
++#define RSEQ_CS_OFFSET		8
++
+ #ifdef __x86_64__
+ 
+ #define rseq_smp_mb()	\
+@@ -51,12 +61,12 @@ do {									\
+ #define RSEQ_ASM_STORE_RSEQ_CS(label, cs_label, rseq_cs)		\
+ 		RSEQ_INJECT_ASM(1)					\
+ 		"leaq " __rseq_str(cs_label) "(%%rip), %%rax\n\t"	\
+-		"movq %%rax, %[" __rseq_str(rseq_cs) "]\n\t"		\
++		"movq %%rax, " __rseq_str(rseq_cs) "\n\t"		\
+ 		__rseq_str(label) ":\n\t"
+ 
+ #define RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, label)		\
+ 		RSEQ_INJECT_ASM(2)					\
+-		"cmpl %[" __rseq_str(cpu_id) "], %[" __rseq_str(current_cpu_id) "]\n\t" \
++		"cmpl %[" __rseq_str(cpu_id) "], " __rseq_str(current_cpu_id) "\n\t" \
+ 		"jnz " __rseq_str(label) "\n\t"
+ 
+ #define RSEQ_ASM_DEFINE_ABORT(label, teardown, abort_label)		\
+@@ -84,14 +94,14 @@ int rseq_cmpeqv_storev(intptr_t *v, intptr_t expect, intptr_t newv, int cpu)
+ 	__asm__ __volatile__ goto (
+ 		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, abort */
+ 		/* Start rseq by storing table entry pointer into rseq_cs. */
+-		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
++		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, RSEQ_CS_OFFSET(%[rseq_abi]))
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), 4f)
+ 		RSEQ_INJECT_ASM(3)
+ 		"cmpq %[v], %[expect]\n\t"
+ 		"jnz %l[cmpfail]\n\t"
+ 		RSEQ_INJECT_ASM(4)
+ #ifdef RSEQ_COMPARE_TWICE
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, %l[error1])
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), %l[error1])
+ 		"cmpq %[v], %[expect]\n\t"
+ 		"jnz %l[error2]\n\t"
  #endif
- 
- #define __ARCH_WANT_SYS_CLONE
-diff --git a/arch/arm64/include/asm/unistd32.h b/arch/arm64/include/asm/unistd32.h
-index 94ab29cf4f00..c1309f52c8ac 100644
---- a/arch/arm64/include/asm/unistd32.h
-+++ b/arch/arm64/include/asm/unistd32.h
-@@ -879,6 +879,8 @@ __SYSCALL(__NR_fspick, sys_fspick)
- __SYSCALL(__NR_pidfd_open, sys_pidfd_open)
- #define __NR_clone3 435
- __SYSCALL(__NR_clone3, sys_clone3)
-+#define __NR_close_range 436
-+__SYSCALL(__NR_close_range, sys_close_range)
- 
- /*
-  * Please add new compat syscalls above this comment and update
-diff --git a/arch/ia64/kernel/syscalls/syscall.tbl b/arch/ia64/kernel/syscalls/syscall.tbl
-index 36d5faf4c86c..151f4fd234be 100644
---- a/arch/ia64/kernel/syscalls/syscall.tbl
-+++ b/arch/ia64/kernel/syscalls/syscall.tbl
-@@ -356,3 +356,4 @@
- 433	common	fspick				sys_fspick
- 434	common	pidfd_open			sys_pidfd_open
- # 435 reserved for clone3
-+436	common	close_range			sys_close_range
-diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
-index a88a285a0e5f..adff06c08d2f 100644
---- a/arch/m68k/kernel/syscalls/syscall.tbl
-+++ b/arch/m68k/kernel/syscalls/syscall.tbl
-@@ -435,3 +435,4 @@
- 433	common	fspick				sys_fspick
- 434	common	pidfd_open			sys_pidfd_open
- # 435 reserved for clone3
-+436	common	close_range			sys_close_range
-diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl b/arch/microblaze/kernel/syscalls/syscall.tbl
-index 09b0cd7dab0a..84aa70453704 100644
---- a/arch/microblaze/kernel/syscalls/syscall.tbl
-+++ b/arch/microblaze/kernel/syscalls/syscall.tbl
-@@ -441,3 +441,4 @@
- 433	common	fspick				sys_fspick
- 434	common	pidfd_open			sys_pidfd_open
- 435	common	clone3				sys_clone3
-+436	common	close_range			sys_close_range
-diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl b/arch/mips/kernel/syscalls/syscall_n32.tbl
-index e7c5ab38e403..0c1fdfc01ebb 100644
---- a/arch/mips/kernel/syscalls/syscall_n32.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
-@@ -374,3 +374,4 @@
- 433	n32	fspick				sys_fspick
- 434	n32	pidfd_open			sys_pidfd_open
- 435	n32	clone3				__sys_clone3
-+436	n32	close_range			sys_close_range
-diff --git a/arch/mips/kernel/syscalls/syscall_n64.tbl b/arch/mips/kernel/syscalls/syscall_n64.tbl
-index 13cd66581f3b..d1284f1ce329 100644
---- a/arch/mips/kernel/syscalls/syscall_n64.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_n64.tbl
-@@ -350,3 +350,4 @@
- 433	n64	fspick				sys_fspick
- 434	n64	pidfd_open			sys_pidfd_open
- 435	n64	clone3				__sys_clone3
-+436	n64	close_range			sys_close_range
-diff --git a/arch/mips/kernel/syscalls/syscall_o32.tbl b/arch/mips/kernel/syscalls/syscall_o32.tbl
-index 353539ea4140..7e4118d8d2ca 100644
---- a/arch/mips/kernel/syscalls/syscall_o32.tbl
-+++ b/arch/mips/kernel/syscalls/syscall_o32.tbl
-@@ -423,3 +423,4 @@
- 433	o32	fspick				sys_fspick
- 434	o32	pidfd_open			sys_pidfd_open
- 435	o32	clone3				__sys_clone3
-+436	o32	close_range			sys_close_range
-diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
-index 285ff516150c..d07f75996382 100644
---- a/arch/parisc/kernel/syscalls/syscall.tbl
-+++ b/arch/parisc/kernel/syscalls/syscall.tbl
-@@ -433,3 +433,4 @@
- 433	common	fspick				sys_fspick
- 434	common	pidfd_open			sys_pidfd_open
- 435	common	clone3				sys_clone3_wrapper
-+436	common	close_range			sys_close_range
-diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
-index 43f736ed47f2..093d91114ea8 100644
---- a/arch/powerpc/kernel/syscalls/syscall.tbl
-+++ b/arch/powerpc/kernel/syscalls/syscall.tbl
-@@ -517,3 +517,4 @@
- 433	common	fspick				sys_fspick
- 434	common	pidfd_open			sys_pidfd_open
- 435	nospu	clone3				ppc_clone3
-+436	common	close_range			sys_close_range
-diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
-index 3054e9c035a3..74565cf327ce 100644
---- a/arch/s390/kernel/syscalls/syscall.tbl
-+++ b/arch/s390/kernel/syscalls/syscall.tbl
-@@ -438,3 +438,4 @@
- 433  common	fspick			sys_fspick			sys_fspick
- 434  common	pidfd_open		sys_pidfd_open			sys_pidfd_open
- 435  common	clone3			sys_clone3			sys_clone3
-+436  common	close_range		sys_close_range			sys_close_range
-diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
-index b5ed26c4c005..11c9e5626fdd 100644
---- a/arch/sh/kernel/syscalls/syscall.tbl
-+++ b/arch/sh/kernel/syscalls/syscall.tbl
-@@ -438,3 +438,4 @@
- 433	common	fspick				sys_fspick
- 434	common	pidfd_open			sys_pidfd_open
- # 435 reserved for clone3
-+436	common	close_range			sys_close_range
-diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
-index 8c8cc7537fb2..7928240b3966 100644
---- a/arch/sparc/kernel/syscalls/syscall.tbl
-+++ b/arch/sparc/kernel/syscalls/syscall.tbl
-@@ -481,3 +481,4 @@
- 433	common	fspick				sys_fspick
- 434	common	pidfd_open			sys_pidfd_open
- # 435 reserved for clone3
-+436	common	close_range			sys_close_range
-diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
-index 3fe02546aed3..cb56003ccf2d 100644
---- a/arch/x86/entry/syscalls/syscall_32.tbl
-+++ b/arch/x86/entry/syscalls/syscall_32.tbl
-@@ -440,3 +440,4 @@
- 433	i386	fspick			sys_fspick			__ia32_sys_fspick
- 434	i386	pidfd_open		sys_pidfd_open			__ia32_sys_pidfd_open
- 435	i386	clone3			sys_clone3			__ia32_sys_clone3
-+436	i386	close_range		sys_close_range			__ia32_sys_close_range
-diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
-index c29976eca4a8..0c8be7197ca2 100644
---- a/arch/x86/entry/syscalls/syscall_64.tbl
-+++ b/arch/x86/entry/syscalls/syscall_64.tbl
-@@ -357,6 +357,7 @@
- 433	common	fspick			__x64_sys_fspick
- 434	common	pidfd_open		__x64_sys_pidfd_open
- 435	common	clone3			__x64_sys_clone3/ptregs
-+436	common	close_range		__x64_sys_close_range
- 
- #
- # x32-specific system call numbers start at 512 to avoid cache impact
-diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl b/arch/xtensa/kernel/syscalls/syscall.tbl
-index 25f4de729a6d..2526f37a6cac 100644
---- a/arch/xtensa/kernel/syscalls/syscall.tbl
-+++ b/arch/xtensa/kernel/syscalls/syscall.tbl
-@@ -406,3 +406,4 @@
- 433	common	fspick				sys_fspick
- 434	common	pidfd_open			sys_pidfd_open
- 435	common	clone3				sys_clone3
-+436	common	close_range			sys_close_range
-diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
-index 1fc8faa6e973..53c57ffb3bd6 100644
---- a/include/uapi/asm-generic/unistd.h
-+++ b/include/uapi/asm-generic/unistd.h
-@@ -850,9 +850,11 @@ __SYSCALL(__NR_pidfd_open, sys_pidfd_open)
- #define __NR_clone3 435
- __SYSCALL(__NR_clone3, sys_clone3)
+@@ -102,8 +112,7 @@ int rseq_cmpeqv_storev(intptr_t *v, intptr_t expect, intptr_t newv, int cpu)
+ 		RSEQ_ASM_DEFINE_ABORT(4, "", abort)
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+-		  [current_cpu_id]	"m" (__rseq_abi.cpu_id),
+-		  [rseq_cs]		"m" (__rseq_abi.rseq_cs),
++		  [rseq_abi]		"r" (&__rseq_abi),
+ 		  [v]			"m" (*v),
+ 		  [expect]		"r" (expect),
+ 		  [newv]		"r" (newv)
+@@ -141,15 +150,15 @@ int rseq_cmpnev_storeoffp_load(intptr_t *v, intptr_t expectnot,
+ 	__asm__ __volatile__ goto (
+ 		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, abort */
+ 		/* Start rseq by storing table entry pointer into rseq_cs. */
+-		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
++		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, RSEQ_CS_OFFSET(%[rseq_abi]))
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), 4f)
+ 		RSEQ_INJECT_ASM(3)
+ 		"movq %[v], %%rbx\n\t"
+ 		"cmpq %%rbx, %[expectnot]\n\t"
+ 		"je %l[cmpfail]\n\t"
+ 		RSEQ_INJECT_ASM(4)
+ #ifdef RSEQ_COMPARE_TWICE
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, %l[error1])
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), %l[error1])
+ 		"movq %[v], %%rbx\n\t"
+ 		"cmpq %%rbx, %[expectnot]\n\t"
+ 		"je %l[error2]\n\t"
+@@ -164,8 +173,7 @@ int rseq_cmpnev_storeoffp_load(intptr_t *v, intptr_t expectnot,
+ 		RSEQ_ASM_DEFINE_ABORT(4, "", abort)
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+-		  [current_cpu_id]	"m" (__rseq_abi.cpu_id),
+-		  [rseq_cs]		"m" (__rseq_abi.rseq_cs),
++		  [rseq_abi]		"r" (&__rseq_abi),
+ 		  /* final store input */
+ 		  [v]			"m" (*v),
+ 		  [expectnot]		"r" (expectnot),
+@@ -200,11 +208,11 @@ int rseq_addv(intptr_t *v, intptr_t count, int cpu)
+ 	__asm__ __volatile__ goto (
+ 		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, abort */
+ 		/* Start rseq by storing table entry pointer into rseq_cs. */
+-		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
++		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, RSEQ_CS_OFFSET(%[rseq_abi]))
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), 4f)
+ 		RSEQ_INJECT_ASM(3)
+ #ifdef RSEQ_COMPARE_TWICE
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, %l[error1])
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), %l[error1])
  #endif
-+#define __NR_close_range 436
-+__SYSCALL(__NR_close_range, sys_close_range)
+ 		/* final store */
+ 		"addq %[count], %[v]\n\t"
+@@ -213,8 +221,7 @@ int rseq_addv(intptr_t *v, intptr_t count, int cpu)
+ 		RSEQ_ASM_DEFINE_ABORT(4, "", abort)
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+-		  [current_cpu_id]	"m" (__rseq_abi.cpu_id),
+-		  [rseq_cs]		"m" (__rseq_abi.rseq_cs),
++		  [rseq_abi]		"r" (&__rseq_abi),
+ 		  /* final store input */
+ 		  [v]			"m" (*v),
+ 		  [count]		"er" (count)
+@@ -245,14 +252,14 @@ int rseq_cmpeqv_trystorev_storev(intptr_t *v, intptr_t expect,
+ 	__asm__ __volatile__ goto (
+ 		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, abort */
+ 		/* Start rseq by storing table entry pointer into rseq_cs. */
+-		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
++		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, RSEQ_CS_OFFSET(%[rseq_abi]))
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), 4f)
+ 		RSEQ_INJECT_ASM(3)
+ 		"cmpq %[v], %[expect]\n\t"
+ 		"jnz %l[cmpfail]\n\t"
+ 		RSEQ_INJECT_ASM(4)
+ #ifdef RSEQ_COMPARE_TWICE
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, %l[error1])
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), %l[error1])
+ 		"cmpq %[v], %[expect]\n\t"
+ 		"jnz %l[error2]\n\t"
+ #endif
+@@ -266,8 +273,7 @@ int rseq_cmpeqv_trystorev_storev(intptr_t *v, intptr_t expect,
+ 		RSEQ_ASM_DEFINE_ABORT(4, "", abort)
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+-		  [current_cpu_id]	"m" (__rseq_abi.cpu_id),
+-		  [rseq_cs]		"m" (__rseq_abi.rseq_cs),
++		  [rseq_abi]		"r" (&__rseq_abi),
+ 		  /* try store input */
+ 		  [v2]			"m" (*v2),
+ 		  [newv2]		"r" (newv2),
+@@ -315,8 +321,8 @@ int rseq_cmpeqv_cmpeqv_storev(intptr_t *v, intptr_t expect,
+ 	__asm__ __volatile__ goto (
+ 		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, abort */
+ 		/* Start rseq by storing table entry pointer into rseq_cs. */
+-		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
++		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, RSEQ_CS_OFFSET(%[rseq_abi]))
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), 4f)
+ 		RSEQ_INJECT_ASM(3)
+ 		"cmpq %[v], %[expect]\n\t"
+ 		"jnz %l[cmpfail]\n\t"
+@@ -325,7 +331,7 @@ int rseq_cmpeqv_cmpeqv_storev(intptr_t *v, intptr_t expect,
+ 		"jnz %l[cmpfail]\n\t"
+ 		RSEQ_INJECT_ASM(5)
+ #ifdef RSEQ_COMPARE_TWICE
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, %l[error1])
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), %l[error1])
+ 		"cmpq %[v], %[expect]\n\t"
+ 		"jnz %l[error2]\n\t"
+ 		"cmpq %[v2], %[expect2]\n\t"
+@@ -338,8 +344,7 @@ int rseq_cmpeqv_cmpeqv_storev(intptr_t *v, intptr_t expect,
+ 		RSEQ_ASM_DEFINE_ABORT(4, "", abort)
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+-		  [current_cpu_id]	"m" (__rseq_abi.cpu_id),
+-		  [rseq_cs]		"m" (__rseq_abi.rseq_cs),
++		  [rseq_abi]		"r" (&__rseq_abi),
+ 		  /* cmp2 input */
+ 		  [v2]			"m" (*v2),
+ 		  [expect2]		"r" (expect2),
+@@ -385,14 +390,14 @@ int rseq_cmpeqv_trymemcpy_storev(intptr_t *v, intptr_t expect,
+ 		"movq %[dst], %[rseq_scratch1]\n\t"
+ 		"movq %[len], %[rseq_scratch2]\n\t"
+ 		/* Start rseq by storing table entry pointer into rseq_cs. */
+-		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
++		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, RSEQ_CS_OFFSET(%[rseq_abi]))
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), 4f)
+ 		RSEQ_INJECT_ASM(3)
+ 		"cmpq %[v], %[expect]\n\t"
+ 		"jnz 5f\n\t"
+ 		RSEQ_INJECT_ASM(4)
+ #ifdef RSEQ_COMPARE_TWICE
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 6f)
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), 6f)
+ 		"cmpq %[v], %[expect]\n\t"
+ 		"jnz 7f\n\t"
+ #endif
+@@ -440,8 +445,7 @@ int rseq_cmpeqv_trymemcpy_storev(intptr_t *v, intptr_t expect,
+ #endif
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+-		  [current_cpu_id]	"m" (__rseq_abi.cpu_id),
+-		  [rseq_cs]		"m" (__rseq_abi.rseq_cs),
++		  [rseq_abi]		"r" (&__rseq_abi),
+ 		  /* final store input */
+ 		  [v]			"m" (*v),
+ 		  [expect]		"r" (expect),
+@@ -533,12 +537,12 @@ do {									\
  
- #undef __NR_syscalls
--#define __NR_syscalls 436
-+#define __NR_syscalls 437
+ #define RSEQ_ASM_STORE_RSEQ_CS(label, cs_label, rseq_cs)		\
+ 		RSEQ_INJECT_ASM(1)					\
+-		"movl $" __rseq_str(cs_label) ", %[rseq_cs]\n\t"	\
++		"movl $" __rseq_str(cs_label) ", " __rseq_str(rseq_cs) "\n\t"	\
+ 		__rseq_str(label) ":\n\t"
  
- /*
-  * 32 bit systems traditionally used different
+ #define RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, label)		\
+ 		RSEQ_INJECT_ASM(2)					\
+-		"cmpl %[" __rseq_str(cpu_id) "], %[" __rseq_str(current_cpu_id) "]\n\t" \
++		"cmpl %[" __rseq_str(cpu_id) "], " __rseq_str(current_cpu_id) "\n\t" \
+ 		"jnz " __rseq_str(label) "\n\t"
+ 
+ #define RSEQ_ASM_DEFINE_ABORT(label, teardown, abort_label)		\
+@@ -566,14 +570,14 @@ int rseq_cmpeqv_storev(intptr_t *v, intptr_t expect, intptr_t newv, int cpu)
+ 	__asm__ __volatile__ goto (
+ 		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, abort */
+ 		/* Start rseq by storing table entry pointer into rseq_cs. */
+-		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
++		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, RSEQ_CS_OFFSET(%[rseq_abi]))
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), 4f)
+ 		RSEQ_INJECT_ASM(3)
+ 		"cmpl %[v], %[expect]\n\t"
+ 		"jnz %l[cmpfail]\n\t"
+ 		RSEQ_INJECT_ASM(4)
+ #ifdef RSEQ_COMPARE_TWICE
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, %l[error1])
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), %l[error1])
+ 		"cmpl %[v], %[expect]\n\t"
+ 		"jnz %l[error2]\n\t"
+ #endif
+@@ -584,8 +588,7 @@ int rseq_cmpeqv_storev(intptr_t *v, intptr_t expect, intptr_t newv, int cpu)
+ 		RSEQ_ASM_DEFINE_ABORT(4, "", abort)
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+-		  [current_cpu_id]	"m" (__rseq_abi.cpu_id),
+-		  [rseq_cs]		"m" (__rseq_abi.rseq_cs),
++		  [rseq_abi]		"r" (&__rseq_abi),
+ 		  [v]			"m" (*v),
+ 		  [expect]		"r" (expect),
+ 		  [newv]		"r" (newv)
+@@ -623,15 +626,15 @@ int rseq_cmpnev_storeoffp_load(intptr_t *v, intptr_t expectnot,
+ 	__asm__ __volatile__ goto (
+ 		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, abort */
+ 		/* Start rseq by storing table entry pointer into rseq_cs. */
+-		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
++		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, RSEQ_CS_OFFSET(%[rseq_abi]))
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), 4f)
+ 		RSEQ_INJECT_ASM(3)
+ 		"movl %[v], %%ebx\n\t"
+ 		"cmpl %%ebx, %[expectnot]\n\t"
+ 		"je %l[cmpfail]\n\t"
+ 		RSEQ_INJECT_ASM(4)
+ #ifdef RSEQ_COMPARE_TWICE
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, %l[error1])
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), %l[error1])
+ 		"movl %[v], %%ebx\n\t"
+ 		"cmpl %%ebx, %[expectnot]\n\t"
+ 		"je %l[error2]\n\t"
+@@ -646,8 +649,7 @@ int rseq_cmpnev_storeoffp_load(intptr_t *v, intptr_t expectnot,
+ 		RSEQ_ASM_DEFINE_ABORT(4, "", abort)
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+-		  [current_cpu_id]	"m" (__rseq_abi.cpu_id),
+-		  [rseq_cs]		"m" (__rseq_abi.rseq_cs),
++		  [rseq_abi]		"r" (&__rseq_abi),
+ 		  /* final store input */
+ 		  [v]			"m" (*v),
+ 		  [expectnot]		"r" (expectnot),
+@@ -682,11 +684,11 @@ int rseq_addv(intptr_t *v, intptr_t count, int cpu)
+ 	__asm__ __volatile__ goto (
+ 		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, abort */
+ 		/* Start rseq by storing table entry pointer into rseq_cs. */
+-		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
++		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, RSEQ_CS_OFFSET(%[rseq_abi]))
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), 4f)
+ 		RSEQ_INJECT_ASM(3)
+ #ifdef RSEQ_COMPARE_TWICE
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, %l[error1])
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), %l[error1])
+ #endif
+ 		/* final store */
+ 		"addl %[count], %[v]\n\t"
+@@ -695,8 +697,7 @@ int rseq_addv(intptr_t *v, intptr_t count, int cpu)
+ 		RSEQ_ASM_DEFINE_ABORT(4, "", abort)
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+-		  [current_cpu_id]	"m" (__rseq_abi.cpu_id),
+-		  [rseq_cs]		"m" (__rseq_abi.rseq_cs),
++		  [rseq_abi]		"r" (&__rseq_abi),
+ 		  /* final store input */
+ 		  [v]			"m" (*v),
+ 		  [count]		"ir" (count)
+@@ -727,14 +728,14 @@ int rseq_cmpeqv_trystorev_storev(intptr_t *v, intptr_t expect,
+ 	__asm__ __volatile__ goto (
+ 		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, abort */
+ 		/* Start rseq by storing table entry pointer into rseq_cs. */
+-		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
++		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, RSEQ_CS_OFFSET(%[rseq_abi]))
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), 4f)
+ 		RSEQ_INJECT_ASM(3)
+ 		"cmpl %[v], %[expect]\n\t"
+ 		"jnz %l[cmpfail]\n\t"
+ 		RSEQ_INJECT_ASM(4)
+ #ifdef RSEQ_COMPARE_TWICE
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, %l[error1])
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), %l[error1])
+ 		"cmpl %[v], %[expect]\n\t"
+ 		"jnz %l[error2]\n\t"
+ #endif
+@@ -749,8 +750,7 @@ int rseq_cmpeqv_trystorev_storev(intptr_t *v, intptr_t expect,
+ 		RSEQ_ASM_DEFINE_ABORT(4, "", abort)
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+-		  [current_cpu_id]	"m" (__rseq_abi.cpu_id),
+-		  [rseq_cs]		"m" (__rseq_abi.rseq_cs),
++		  [rseq_abi]		"r" (&__rseq_abi),
+ 		  /* try store input */
+ 		  [v2]			"m" (*v2),
+ 		  [newv2]		"m" (newv2),
+@@ -789,15 +789,15 @@ int rseq_cmpeqv_trystorev_storev_release(intptr_t *v, intptr_t expect,
+ 	__asm__ __volatile__ goto (
+ 		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, abort */
+ 		/* Start rseq by storing table entry pointer into rseq_cs. */
+-		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
++		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, RSEQ_CS_OFFSET(%[rseq_abi]))
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), 4f)
+ 		RSEQ_INJECT_ASM(3)
+ 		"movl %[expect], %%eax\n\t"
+ 		"cmpl %[v], %%eax\n\t"
+ 		"jnz %l[cmpfail]\n\t"
+ 		RSEQ_INJECT_ASM(4)
+ #ifdef RSEQ_COMPARE_TWICE
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, %l[error1])
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), %l[error1])
+ 		"movl %[expect], %%eax\n\t"
+ 		"cmpl %[v], %%eax\n\t"
+ 		"jnz %l[error2]\n\t"
+@@ -813,8 +813,7 @@ int rseq_cmpeqv_trystorev_storev_release(intptr_t *v, intptr_t expect,
+ 		RSEQ_ASM_DEFINE_ABORT(4, "", abort)
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+-		  [current_cpu_id]	"m" (__rseq_abi.cpu_id),
+-		  [rseq_cs]		"m" (__rseq_abi.rseq_cs),
++		  [rseq_abi]		"r" (&__rseq_abi),
+ 		  /* try store input */
+ 		  [v2]			"m" (*v2),
+ 		  [newv2]		"r" (newv2),
+@@ -854,8 +853,8 @@ int rseq_cmpeqv_cmpeqv_storev(intptr_t *v, intptr_t expect,
+ 	__asm__ __volatile__ goto (
+ 		RSEQ_ASM_DEFINE_TABLE(3, 1f, 2f, 4f) /* start, commit, abort */
+ 		/* Start rseq by storing table entry pointer into rseq_cs. */
+-		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
++		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, RSEQ_CS_OFFSET(%[rseq_abi]))
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), 4f)
+ 		RSEQ_INJECT_ASM(3)
+ 		"cmpl %[v], %[expect]\n\t"
+ 		"jnz %l[cmpfail]\n\t"
+@@ -864,7 +863,7 @@ int rseq_cmpeqv_cmpeqv_storev(intptr_t *v, intptr_t expect,
+ 		"jnz %l[cmpfail]\n\t"
+ 		RSEQ_INJECT_ASM(5)
+ #ifdef RSEQ_COMPARE_TWICE
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, %l[error1])
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), %l[error1])
+ 		"cmpl %[v], %[expect]\n\t"
+ 		"jnz %l[error2]\n\t"
+ 		"cmpl %[expect2], %[v2]\n\t"
+@@ -878,8 +877,7 @@ int rseq_cmpeqv_cmpeqv_storev(intptr_t *v, intptr_t expect,
+ 		RSEQ_ASM_DEFINE_ABORT(4, "", abort)
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+-		  [current_cpu_id]	"m" (__rseq_abi.cpu_id),
+-		  [rseq_cs]		"m" (__rseq_abi.rseq_cs),
++		  [rseq_abi]		"r" (&__rseq_abi),
+ 		  /* cmp2 input */
+ 		  [v2]			"m" (*v2),
+ 		  [expect2]		"r" (expect2),
+@@ -926,15 +924,15 @@ int rseq_cmpeqv_trymemcpy_storev(intptr_t *v, intptr_t expect,
+ 		"movl %[dst], %[rseq_scratch1]\n\t"
+ 		"movl %[len], %[rseq_scratch2]\n\t"
+ 		/* Start rseq by storing table entry pointer into rseq_cs. */
+-		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
++		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, RSEQ_CS_OFFSET(%[rseq_abi]))
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), 4f)
+ 		RSEQ_INJECT_ASM(3)
+ 		"movl %[expect], %%eax\n\t"
+ 		"cmpl %%eax, %[v]\n\t"
+ 		"jnz 5f\n\t"
+ 		RSEQ_INJECT_ASM(4)
+ #ifdef RSEQ_COMPARE_TWICE
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 6f)
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), 6f)
+ 		"movl %[expect], %%eax\n\t"
+ 		"cmpl %%eax, %[v]\n\t"
+ 		"jnz 7f\n\t"
+@@ -984,8 +982,7 @@ int rseq_cmpeqv_trymemcpy_storev(intptr_t *v, intptr_t expect,
+ #endif
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+-		  [current_cpu_id]	"m" (__rseq_abi.cpu_id),
+-		  [rseq_cs]		"m" (__rseq_abi.rseq_cs),
++		  [rseq_abi]		"r" (&__rseq_abi),
+ 		  /* final store input */
+ 		  [v]			"m" (*v),
+ 		  [expect]		"m" (expect),
+@@ -1034,15 +1031,15 @@ int rseq_cmpeqv_trymemcpy_storev_release(intptr_t *v, intptr_t expect,
+ 		"movl %[dst], %[rseq_scratch1]\n\t"
+ 		"movl %[len], %[rseq_scratch2]\n\t"
+ 		/* Start rseq by storing table entry pointer into rseq_cs. */
+-		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, rseq_cs)
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 4f)
++		RSEQ_ASM_STORE_RSEQ_CS(1, 3b, RSEQ_CS_OFFSET(%[rseq_abi]))
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), 4f)
+ 		RSEQ_INJECT_ASM(3)
+ 		"movl %[expect], %%eax\n\t"
+ 		"cmpl %%eax, %[v]\n\t"
+ 		"jnz 5f\n\t"
+ 		RSEQ_INJECT_ASM(4)
+ #ifdef RSEQ_COMPARE_TWICE
+-		RSEQ_ASM_CMP_CPU_ID(cpu_id, current_cpu_id, 6f)
++		RSEQ_ASM_CMP_CPU_ID(cpu_id, RSEQ_CPU_ID_OFFSET(%[rseq_abi]), 6f)
+ 		"movl %[expect], %%eax\n\t"
+ 		"cmpl %%eax, %[v]\n\t"
+ 		"jnz 7f\n\t"
+@@ -1093,8 +1090,7 @@ int rseq_cmpeqv_trymemcpy_storev_release(intptr_t *v, intptr_t expect,
+ #endif
+ 		: /* gcc asm goto does not allow outputs */
+ 		: [cpu_id]		"r" (cpu),
+-		  [current_cpu_id]	"m" (__rseq_abi.cpu_id),
+-		  [rseq_cs]		"m" (__rseq_abi.rseq_cs),
++		  [rseq_abi]		"r" (&__rseq_abi),
+ 		  /* final store input */
+ 		  [v]			"m" (*v),
+ 		  [expect]		"m" (expect),
 -- 
-2.23.0
+2.20.1
