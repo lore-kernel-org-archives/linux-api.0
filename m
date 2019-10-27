@@ -1,47 +1,48 @@
-From: Mike Rapoport <rppt@kernel.org>
-Subject: Re: [PATCH RFC] mm: add MAP_EXCLUSIVE to create exclusive user mappings
-Date: Sun, 27 Oct 2019 13:00:13 +0200
-Message-ID: <385EB6D4-A1B0-4617-B256-181AA1C3BDE3@kernel.org>
-References: <1572171452-7958-1-git-send-email-rppt@kernel.org> <87d0eieb0i.fsf@mid.deneb.enyo.de>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH RESEND v14 2/6] namei: LOOKUP_IN_ROOT: chroot-like path resolution
+Date: Sun, 27 Oct 2019 08:05:11 -0400
+Message-ID: <CAHk-=wjPPWvm5_eR4uaHJaU1isTUk-4iXQV3Z2Px9A+w6j2nHg@mail.gmail.com>
+References: <20191026185700.10708-1-cyphar@cyphar.com> <20191026185700.10708-3-cyphar@cyphar.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
- charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87d0eieb0i.fsf@mid.deneb.enyo.de>
+In-Reply-To: <20191026185700.10708-3-cyphar@cyphar.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fw@deneb.enyo.de>
-Cc: linux-kernel@vger.kernel.org, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>, James Bottomley <jejb@linux.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, linux-api@vger.kernel.org, linux-mm@kvack.org, x86@kernel.org, Mike Rapoport <rppt@linux.ibm.com>
+To: Aleksa Sarai <cyphar@cyphar.com>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>Alexander Shishkin <a>
 List-Id: linux-api@vger.kernel.org
 
-On October 27, 2019 12:30:21 PM GMT+02:00, Florian Weimer <fw@deneb=2Eenyo=
-=2Ede> wrote:
->* Mike Rapoport:
+On Sat, Oct 26, 2019 at 2:58 PM Aleksa Sarai <cyphar@cyphar.com> wrote:
 >
->> The patch below aims to allow applications to create mappins that
->have
->> pages visible only to the owning process=2E Such mappings could be used
->to
->> store secrets so that these secrets are not visible neither to other
->> processes nor to the kernel=2E
->
->How is this expected to interact with CRIU?
+> +       /* LOOKUP_IN_ROOT treats absolute paths as being relative-to-dirfd. */
+> +       if (flags & LOOKUP_IN_ROOT)
+> +               while (*s == '/')
+> +                       s++;
+> +
+>         /* Figure out the starting path and root (if needed). */
+>         if (*s == '/') {
+>                 error = nd_jump_root(nd);
 
-CRIU dumps the memory contents using a parasite code from inside the dumpe=
-e address space, so it would work the same way as for the other mappings=2E=
- Of course, at the restore time the exclusive mapping should be recreated w=
-ith the appropriate flags=2E
+So I'm still hung up on this.
 
->> I've only tested the basic functionality, the changes should be
->verified
->> against THP/migration/compaction=2E Yet, I'd appreciate early feedback=
-=2E
->
->What are the expected semantics for VM migration?  Should it fail?
+I guess I can't help it, but I look at the above, and it makes me go
+"whoever wrote those tests wasn't thinking".
 
-I don't quite follow=2E If qemu would use such mappings it would be able t=
-o transfer them during live migration=2E
+It just annoys me how it tests for '/' completely unnecessarily.
 
---=20
-Sincerely yours,
-Mike
+If LOOKUP_IN_ROOT is true, we know the subsequent test for '/' is not
+going to match, because we just removed it. So I look at that code and
+go "that code is doing stupid things".
+
+That's why I suggested moving the LOOKUP_IN_ROOT check inside the '/' test.
+
+Alternatively, just make the logic be
+
+        if (flags & LOOKUP_IN_ROOT) {
+               .. remove '/'s ...
+        } else if (*s == '/') {
+                .. handl;e root ..
+
+and remove the next "else" clause
+
+    Linus
