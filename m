@@ -1,48 +1,54 @@
 From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [PATCH RESEND v14 2/6] namei: LOOKUP_IN_ROOT: chroot-like path resolution
-Date: Sun, 27 Oct 2019 08:05:11 -0400
-Message-ID: <CAHk-=wjPPWvm5_eR4uaHJaU1isTUk-4iXQV3Z2Px9A+w6j2nHg@mail.gmail.com>
-References: <20191026185700.10708-1-cyphar@cyphar.com> <20191026185700.10708-3-cyphar@cyphar.com>
+Subject: Re: [RFC PATCH 04/10] pipe: Use head and tail pointers for the ring,
+ not cursor and length [ver #2]
+Date: Sun, 27 Oct 2019 10:03:35 -0400
+Message-ID: <CAHk-=wh7cf3ANq-G9MmwSQiUK2d-=083C0HV_8hTGe2Mb4X7JA@mail.gmail.com>
+References: <157186182463.3995.13922458878706311997.stgit@warthog.procyon.org.uk>
+ <157186186167.3995.7568100174393739543.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191026185700.10708-3-cyphar@cyphar.com>
+In-Reply-To: <157186186167.3995.7568100174393739543.stgit@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>Alexander Shishkin <a>
+To: David Howells <dhowells@redhat.com>
+Cc: Rasmus Villemoes <linux@rasmusvillemoes.dk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Oct 26, 2019 at 2:58 PM Aleksa Sarai <cyphar@cyphar.com> wrote:
+This still has signs of that earlier series:
+
+On Wed, Oct 23, 2019 at 4:17 PM David Howells <dhowells@redhat.com> wrote:
 >
-> +       /* LOOKUP_IN_ROOT treats absolute paths as being relative-to-dirfd. */
-> +       if (flags & LOOKUP_IN_ROOT)
-> +               while (*s == '/')
-> +                       s++;
-> +
->         /* Figure out the starting path and root (if needed). */
->         if (*s == '/') {
->                 error = nd_jump_root(nd);
+>                 if (rem >= ibuf->len) {
+>                         *obuf = *ibuf;
+>                         ibuf->ops = NULL;
+> -                       pipe->curbuf = (pipe->curbuf + 1) & (pipe->buffers - 1);
+> -                       pipe->nrbufs--;
+> +                       tail++;
+> +                       pipe_commit_read(pipe, tail);
+>                 } else {
+>                         if (!pipe_buf_get(pipe, ibuf))
+>                                 goto out_free;
 
-So I'm still hung up on this.
+with those odd "pipe_commit_read/write()" helpers.
 
-I guess I can't help it, but I look at the above, and it makes me go
-"whoever wrote those tests wasn't thinking".
+They make no sense, and they don't make things more legible.
 
-It just annoys me how it tests for '/' completely unnecessarily.
+It's shorter and more obvious to just write
 
-If LOOKUP_IN_ROOT is true, we know the subsequent test for '/' is not
-going to match, because we just removed it. So I look at that code and
-go "that code is doing stupid things".
+   pipe->head = head;
 
-That's why I suggested moving the LOOKUP_IN_ROOT check inside the '/' test.
+than it is to write
 
-Alternatively, just make the logic be
+   pipe_commit_write(pipe, head);
 
-        if (flags & LOOKUP_IN_ROOT) {
-               .. remove '/'s ...
-        } else if (*s == '/') {
-                .. handl;e root ..
+Even when the addition of the notifications,  it's all under the
+pipe->wait.lock, so it's all just regular assignments.
 
-and remove the next "else" clause
+Now, if at some point it starts doing fancy lockless things, at _that_
+point the updates might become more complex, but that's a potential
+future thing that wouldn't be relevant for a while, and isn't a reason
+to make the code more obscure now.
 
-    Linus
+Hmm?
+
+             Linus
