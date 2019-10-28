@@ -1,44 +1,50 @@
-From: "Edgecombe, Rick P" <rick.p.edgecombe@intel.com>
-Subject: Re: [PATCH RFC] mm: add MAP_EXCLUSIVE to create exclusive user
- mappings
-Date: Mon, 28 Oct 2019 19:59:25 +0000
-Message-ID: <0a35765f7412937c1775daa05177b20113760aee.camel@intel.com>
+From: Florian Weimer <fw@deneb.enyo.de>
+Subject: Re: [PATCH RFC] mm: add MAP_EXCLUSIVE to create exclusive user mappings
+Date: Mon, 28 Oct 2019 21:23:17 +0100
+Message-ID: <87h83s62mi.fsf@mid.deneb.enyo.de>
 References: <1572171452-7958-1-git-send-email-rppt@kernel.org>
-         <1572171452-7958-2-git-send-email-rppt@kernel.org>
-         <20191028123124.ogkk5ogjlamvwc2s@box> <20191028130018.GA7192@rapoport-lnx>
-         <20191028131623.zwuwguhm4v4s5imh@box>
-         <20191028135521.GB4097@hirez.programming.kicks-ass.net>
+        <87d0eieb0i.fsf@mid.deneb.enyo.de>
+        <385EB6D4-A1B0-4617-B256-181AA1C3BDE3@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191028135521.GB4097@hirez.programming.kicks-ass.net>
-Content-Language: en-US
-Content-ID: <D229CC7531AD5E4DBDB18933FD17DC5A@intel.com>
+In-Reply-To: <385EB6D4-A1B0-4617-B256-181AA1C3BDE3@kernel.org> (Mike
+        Rapoport's message of "Sun, 27 Oct 2019 13:00:13 +0200")
 Sender: linux-kernel-owner@vger.kernel.org
-To: "kirill@shutemov.name" <kirill@shutemov.name>, "peterz@infradead.org" <peterz@infradead.org>
-Cc: "adobriyan@gmail.com" <adobriyan@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "rppt@kernel.org" <rppt@kernel.org>, "rostedt@goodmis.org" <rostedt@goodmis.org>, "jejb@linux.ibm.com" <jejb@linux.ibm.com>, "tglx@linutronix.de" <tglx@linutronix.de>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "dave.hansen@linux.intel.com" <dave.hansen@linux.intel.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "x86@kernel.org" <x86@kernel.org>, "akpm@linux-foundation.org" <akpm@linux-foundation.org>, "hpa@zytor.com" <hpa@zytor.com>, "mingo@redhat.com" <mingo@redhat.com>, "luto@kernel.org" <luto@kernel.org>, "rppt@linux.ibm.com" <rppt@linux.ibm.com>, "bp@alien8.de" <bp@alien8.de>, "arnd@arndb.de" <arnd@arndb.de>
+To: Mike Rapoport <rppt@kernel.org>
+Cc: linux-kernel@vger.kernel.org, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>, James Bottomley <jejb@linux.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, linux-api@vger.kernel.org, linux-mm@kvack.org, x86@kernel.org, Mike Rapoport <rppt@linux.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-T24gTW9uLCAyMDE5LTEwLTI4IGF0IDE0OjU1ICswMTAwLCBQZXRlciBaaWpsc3RyYSB3cm90ZToN
-Cj4gT24gTW9uLCBPY3QgMjgsIDIwMTkgYXQgMDQ6MTY6MjNQTSArMDMwMCwgS2lyaWxsIEEuIFNo
-dXRlbW92IHdyb3RlOg0KPiANCj4gPiBJIHRoaW5rIGFjdGl2ZSB1c2Ugb2YgdGhpcyBmZWF0dXJl
-IHdpbGwgbGVhZCB0byBwZXJmb3JtYW5jZSBkZWdyYWRhdGlvbiBvZg0KPiA+IHRoZSBzeXN0ZW0g
-d2l0aCB0aW1lLg0KPiA+IA0KPiA+IFNldHRpbmcgYSBzaW5nbGUgNGsgcGFnZSBub24tcHJlc2Vu
-dCBpbiB0aGUgZGlyZWN0IG1hcHBpbmcgd2lsbCByZXF1aXJlDQo+ID4gc3BsaXR0aW5nIDJNIG9y
-IDFHIHBhZ2Ugd2UgdXN1YWxseSBtYXAgZGlyZWN0IG1hcHBpbmcgd2l0aC4gQW5kIGl0J3Mgb25l
-DQo+ID4gd2F5IHJvYWQuIFdlIGRvbid0IGhhdmUgYW55IG1lY2hhbmlzbSB0byBtYXAgdGhlIG1l
-bW9yeSB3aXRoIGh1Z2UgcGFnZQ0KPiA+IGFnYWluIGFmdGVyIHRoZSBhcHBsaWNhdGlvbiBoYXMg
-ZnJlZWQgdGhlIHBhZ2UuDQo+IA0KPiBSaWdodCwgd2UgcmVjZW50bHkgaGFkIGEgJ2J1Zycgd2hl
-cmUgZnRyYWNlIHRyaWdnZXJlZCBzb21ldGhpbmcgbGlrZQ0KPiB0aGlzIGFuZCBmYWNlYm9vayBy
-YW4gaW50byBpdCBhcyBhIHBlcmZvcm1hbmNlIHJlZ3Jlc3Npb24uIFNvIHllcywgdGhpcw0KPiBp
-cyBhIHJlYWwgY29uY2Vybi4NCg0KRG9uJ3QgZS9jQlBGIGZpbHRlcnMgYWxzbyBicmVhayB0aGUg
-ZGlyZWN0IG1hcCBkb3duIHRvIDRrIHBhZ2VzIHdoZW4gY2FsbGluZw0Kc2V0X21lbW9yeV9ybygp
-IG9uIHRoZSBmaWx0ZXIgZm9yIDY0IGJpdCB4ODYgYW5kIGFybT8NCg0KSSd2ZSBiZWVuIHdvbmRl
-cmluZyBpZiB0aGUgcGFnZSBhbGxvY2F0b3Igc2hvdWxkIG1ha2Ugc29tZSBlZmZvcnQgdG8gZmlu
-ZCBhDQpicm9rZW4gZG93biBwYWdlIGZvciBhbnl0aGluZyB0aGF0IGNhbiBiZSBrbm93biB3aWxs
-IGhhdmUgZGlyZWN0IG1hcCBwZXJtaXNzaW9ucw0KY2hhbmdlZCAob3IgaWYgaXQgYWxyZWFkeSBn
-cm91cHMgdGhlbSBzb21laG93KS4gQnV0IGFsc28sIHdoeSBhbnkgcG90ZW50aWFsDQpzbG93ZG93
-biBvZiA0ayBwYWdlcyBvbiB0aGUgZGlyZWN0IG1hcCBoYXNuJ3QgYmVlbiBub3RpY2VkIGZvciBh
-cHBzIHRoYXQgZG8gYQ0KbG90IG9mIGluc2VydGlvbnMgYW5kIHJlbW92YWxzIG9mIEJQRiBmaWx0
-ZXJzLCBpZiB0aGlzIGlzIGluZGVlZCB0aGUgY2FzZS4NCg0KDQo=
+* Mike Rapoport:
+
+> On October 27, 2019 12:30:21 PM GMT+02:00, Florian Weimer
+> <fw@deneb.enyo.de> wrote:
+>>* Mike Rapoport:
+>>
+>>> The patch below aims to allow applications to create mappins that
+>>have
+>>> pages visible only to the owning process. Such mappings could be used
+>>to
+>>> store secrets so that these secrets are not visible neither to other
+>>> processes nor to the kernel.
+>>
+>>How is this expected to interact with CRIU?
+>
+> CRIU dumps the memory contents using a parasite code from inside the
+> dumpee address space, so it would work the same way as for the other
+> mappings. Of course, at the restore time the exclusive mapping should
+> be recreated with the appropriate flags.
+
+Hmm, so it would use a bounce buffer to perform the extraction?
+
+>>> I've only tested the basic functionality, the changes should be
+>>verified
+>>> against THP/migration/compaction. Yet, I'd appreciate early feedback.
+>>
+>>What are the expected semantics for VM migration?  Should it fail?
+>
+> I don't quite follow. If qemu would use such mappings it would be able
+> to transfer them during live migration.
+
+I was wondering if the special state is supposed to bubble up to the
+host eventually.
