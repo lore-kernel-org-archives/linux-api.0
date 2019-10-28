@@ -1,102 +1,54 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: For review: documentation of clone3() system call
-Date: Mon, 28 Oct 2019 16:12:09 +0100
-Message-ID: <CAG48ez3q=BeNcuVTKBN79kJui4vC6nw0Bfq6xc-i0neheT17TA@mail.gmail.com>
-References: <CAKgNAkjo2WHq+zESU1iuCHJJ0x-fTNrakS9-d1+BjzUuV2uf2Q@mail.gmail.com>
+From: Dave Hansen <dave.hansen@intel.com>
+Subject: Re: [PATCH RFC] mm: add MAP_EXCLUSIVE to create exclusive user
+ mappings
+Date: Mon, 28 Oct 2019 10:12:44 -0700
+Message-ID: <d6ac08fe-23f3-c2d5-24c4-88e68f3fd4d0@intel.com>
+References: <1572171452-7958-1-git-send-email-rppt@kernel.org>
+ <1572171452-7958-2-git-send-email-rppt@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAKgNAkjo2WHq+zESU1iuCHJJ0x-fTNrakS9-d1+BjzUuV2uf2Q@mail.gmail.com>
+In-Reply-To: <1572171452-7958-2-git-send-email-rppt@kernel.org>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Michael Kerrisk-manpages <mtk.manpages@gmail.com>
-Cc: Christian Brauner <christian@brauner.io>, lkml <linux-kernel@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Florian Weimer <fweimer@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@gmail.com>, Linux API <linux-api@vger.kernel.org>
+To: Mike Rapoport <rppt@kernel.org>, linux-kernel@vger.kernel.org
+Cc: Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>, James Bottomley <jejb@linux.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, linux-api@vger.kernel.org, linux-mm@kvack.org, x86@kernel.org, Mike Rapoport <rppt@linux.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Oct 25, 2019 at 6:59 PM Michael Kerrisk (man-pages)
-<mtk.manpages@gmail.com> wrote:
-> I've made a first shot at adding documentation for clone3(). You can
-> see the diff here:
-> https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/commit/?id=3D=
-faa0e55ae9e490d71c826546bbdef954a1800969
-[...]
->    clone3()
->        The  clone3() system call provides a superset of the functionality
->        of the older clone() interface.  It also provides a number of  API
->        improvements,  including: space for additional flags bits; cleaner
->        separation in the use of various arguments;  and  the  ability  to
->        specify the size of the child's stack area.
+On 10/27/19 3:17 AM, Mike Rapoport wrote:
+> The pages in these mappings are removed from the kernel direct map and
+> marked with PG_user_exclusive flag. When the exclusive area is unmapped,
+> the pages are mapped back into the direct map.
 
-You might want to note somewhere that its flags can't be
-seccomp-filtered because they're stored in memory, making it
-inappropriate to use in heavily sandboxed processes.
+This looks fun.  It's certainly simple.
 
->            struct clone_args {
->                u64 flags;        /* Flags bit mask */
->                u64 pidfd;        /* Where to store PID file descriptor
->                                     (int *) */
->                u64 child_tid;    /* Where to store child TID,
->                                     in child's memory (int *) */
->                u64 parent_tid;   /* Where to store child TID,
->                                     in parent's memory (int *) */
->                u64 exit_signal;  /* Signal to deliver to parent on
->                                     child termination */
->                u64 stack;        /* Pointer to lowest byte of stack */
->                u64 stack_size;   /* Size of stack */
->                u64 tls;          /* Location of new TLS */
->            };
->
->        The size argument that is supplied to clone3() should be  initial=
-=E2=80=90
->        ized  to  the  size of this structure.  (The existence of the size
->        argument permits future extensions to the clone_args structure.)
->
->        The stack for the child process is  specified  via  cl_args.stack,
->        which   points   to  the  lowest  byte  of  the  stack  area,  and
+But, the description is not really calling out the pros and cons very
+well.  I'm also not sure that folks will use an interface like this that
+requires up-front, special code to do an allocation instead of something
+like madvise().  That's why protection keys ended up the way it did: if
+you do this as a mmap() replacement, you need to modify all *allocators*
+to be enabled for this.  If you do it with mprotect()-style, you can
+apply it to existing allocations.
 
-Here and in the comment in the struct above, you say that .stack
-"points to the lowest byte of the stack area", but isn't that
-architecture-dependent? For most architectures, I think it should
-instead be "is the initial stack pointer", with the exception of IA64
-(and maybe others, I'm not sure). For example, on X86, when launching
-a thread with an initially empty stack, it points directly *after* the
-end of the stack area.
+Some other random thoughts:
 
->        cl_args.stack_size, which specifies  the  size  of  the  stack  in
->        bytes.   In the case where the CLONE_VM flag (see below) is speci=
-=E2=80=90
-
-stack_size is ignored on most architectures.
-
->        fied, a stack must be explicitly allocated and specified.   Other=
-=E2=80=90
->        wise,  these  two  fields  can  be  specified as NULL and 0, which
->        causes the child to use the same stack area as the parent (in  the
->        child's own virtual address space).
-[...]
->    Equivalence between clone() and clone3() arguments
->        Unlike  the  older  clone()  interface, where arguments are passed
->        individually, in the newer clone3() interface  the  arguments  are
->        packaged  into  the clone_args structure shown above.  This struc=
-=E2=80=90
->        ture allows for a superset  of  the  information  passed  via  the
->        clone() arguments.
->
->        The following table shows the equivalence between the arguments of
->        clone() and the fields in  the  clone_args  argument  supplied  to
->        clone3():
->
->               clone()         clone(3)        Notes
->                               cl_args field
->               flags & ~0xff   flags
->               parent_tid      pidfd           See CLONE_PIDFD
->               child_tid       child_tid       See CLONE_CHILD_SETTID
->               parent_tid      parent_tid      See CLONE_PARENT_SETTID
->               flags & 0xff    exit_signal
->               stack           stack
->
->               ---             stack_size
-
-(except that on ia64, stack_size also exists in clone2(), and if
-you're not on ia64, stack_size doesn't do anything, at least on X86,
-so showing them side by side like this doesn't really make sense)
+ * The page flag is probably not a good idea.  It would be probably
+   better to set _PAGE_SPECIAL on the PTE and force get_user_pages()
+   into the slow path.
+ * This really stops being "normal" memory.  You can't do futexes on it,
+   cant splice it.  Probably need a more fleshed-out list of
+   incompatible features.
+ * As Kirill noted, each 4k page ends up with a potential 1GB "blast
+   radius" of demoted pages in the direct map.  Not cool.  This is
+   probably a non-starter as it stands.
+ * The global TLB flushes are going to eat you alive.  They probably
+   border on a DoS on larger systems.
+ * Do we really want this user interface to dictate the kernel
+   implementation?  In other words, do we really want MAP_EXCLUSIVE,
+   or do we want MAP_SECRET?  One tells the kernel what do *do*, the
+   other tells the kernel what the memory *IS*.
+ * There's a lot of other stuff going on in this area: XPFO, SEV, MKTME,
+   Persistent Memory, where the kernel direct map is a liability in some
+   way.  We probably need some kind of overall, architected solution
+   rather than five or ten things all poking at the direct map.
