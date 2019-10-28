@@ -1,46 +1,57 @@
-From: Matthew Wilcox <willy@infradead.org>
-Subject: Re: [PATCH RFC] mm: add MAP_EXCLUSIVE to create exclusive user
- mappings
-Date: Mon, 28 Oct 2019 11:08:08 -0700
-Message-ID: <20191028180808.GA17669@bombadil.infradead.org>
-References: <1572171452-7958-1-git-send-email-rppt@kernel.org>
- <1572171452-7958-2-git-send-email-rppt@kernel.org>
- <d6ac08fe-23f3-c2d5-24c4-88e68f3fd4d0@intel.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: For review: documentation of clone3() system call
+Date: Mon, 28 Oct 2019 20:09:13 +0100
+Message-ID: <CAG48ez20hn8vToY+=C62nA-rbUfxh=JD6N-f7XVS3_GZOoPjxw@mail.gmail.com>
+References: <CAKgNAkjo2WHq+zESU1iuCHJJ0x-fTNrakS9-d1+BjzUuV2uf2Q@mail.gmail.com>
+ <CAG48ez3q=BeNcuVTKBN79kJui4vC6nw0Bfq6xc-i0neheT17TA@mail.gmail.com> <20191028172143.4vnnjpdljfnexaq5@wittgenstein>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <d6ac08fe-23f3-c2d5-24c4-88e68f3fd4d0@intel.com>
+In-Reply-To: <20191028172143.4vnnjpdljfnexaq5@wittgenstein>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Hansen <dave.hansen@intel.com>
-Cc: Mike Rapoport <rppt@kernel.org>, linux-kernel@vger.kernel.org, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>, James Bottomley <jejb@linux.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, linux-api@vger.kernel.org, linux-mm@kvack.org, x86@kernel.org, Mike Rapoport <rppt@linux.ibm.com>
+To: Christian Brauner <christian.brauner@ubuntu.com>
+Cc: Michael Kerrisk-manpages <mtk.manpages@gmail.com>, lkml <linux-kernel@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Florian Weimer <fweimer@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@gmail.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 28, 2019 at 10:12:44AM -0700, Dave Hansen wrote:
-> Some other random thoughts:
-> 
->  * The page flag is probably not a good idea.  It would be probably
->    better to set _PAGE_SPECIAL on the PTE and force get_user_pages()
->    into the slow path.
->  * This really stops being "normal" memory.  You can't do futexes on it,
->    cant splice it.  Probably need a more fleshed-out list of
->    incompatible features.
->  * As Kirill noted, each 4k page ends up with a potential 1GB "blast
->    radius" of demoted pages in the direct map.  Not cool.  This is
->    probably a non-starter as it stands.
->  * The global TLB flushes are going to eat you alive.  They probably
->    border on a DoS on larger systems.
->  * Do we really want this user interface to dictate the kernel
->    implementation?  In other words, do we really want MAP_EXCLUSIVE,
->    or do we want MAP_SECRET?  One tells the kernel what do *do*, the
->    other tells the kernel what the memory *IS*.
->  * There's a lot of other stuff going on in this area: XPFO, SEV, MKTME,
->    Persistent Memory, where the kernel direct map is a liability in some
->    way.  We probably need some kind of overall, architected solution
->    rather than five or ten things all poking at the direct map.
+On Mon, Oct 28, 2019 at 6:21 PM Christian Brauner
+<christian.brauner@ubuntu.com> wrote:
+> On Mon, Oct 28, 2019 at 04:12:09PM +0100, Jann Horn wrote:
+> > On Fri, Oct 25, 2019 at 6:59 PM Michael Kerrisk (man-pages)
+> > <mtk.manpages@gmail.com> wrote:
+> > > I've made a first shot at adding documentation for clone3(). You can
+> > > see the diff here:
+> > > https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/commit/?id=faa0e55ae9e490d71c826546bbdef954a1800969
+[...]
+> > You might want to note somewhere that its flags can't be
+> > seccomp-filtered because they're stored in memory, making it
+> > inappropriate to use in heavily sandboxed processes.
+>
+> Hm, I don't think that belongs on the clone manpage. Granted that
+> process creation is an important syscall but so are a bunch of others
+> that aren't filterable because of pointer arguments.
+> We can probably mention on the seccomp manpage that seccomp can't filter
+> on pointer arguments and then provide a list of examples. If you setup a
+> seccomp filter and don't know that you can't filter syscalls with
+> pointer args that seems pretty bad to begin with.
 
-Another random set of thoughts:
+Fair enough.
 
- - Should devices be permitted to DMA to/from MAP_SECRET pages?
- - How about GUP?  Can I ptrace my way into another process's secret pages?
- - What if I splice() the page into a pipe?
+[...]
+> One thing I never liked about clone() was that userspace had to know
+> about stack direction. And there is a lot of ugly code in userspace that
+> has nasty clone() wrappers like:
+[...]
+> where stack + stack_size is addition on a void pointer which usually
+> clang and gcc are not very happy about.
+> I wanted to bring this up on the mailing list soon: If possible, I don't
+> want userspace to need to know about stack direction and just have stack
+> point to the beginning and then have the kernel do the + stack_size
+> after the copy_clone_args_from_user() if the arch needs it. For example,
+> by having a dumb helder similar to copy_thread_tls()/coyp_thread() that
+> either does the + stack_size or not. Right now, clone3() is supported on
+> parisc and afaict, the stack grows upwards for it. I'm not sure if there
+> are obvious reasons why that won't work or it would be a bad idea...
+
+That would mean adding a new clone flag that redefines how those
+parameters work and describing the current behavior in the manpage as
+the behavior without the flag (which doesn't exist on 5.3), right?
