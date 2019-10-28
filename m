@@ -1,36 +1,49 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH RFC] mm: add MAP_EXCLUSIVE to create exclusive user mappings
-Date: Mon, 28 Oct 2019 14:44:23 -0600
-Message-ID: <CA5C22D9-BC3E-4B69-8DD9-4D3B75E40BD5@amacapital.net>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH RFC] mm: add MAP_EXCLUSIVE to create exclusive user
+ mappings
+Date: Mon, 28 Oct 2019 22:00:52 +0100
+Message-ID: <20191028210052.GM4643@worktop.programming.kicks-ass.net>
 References: <1572171452-7958-1-git-send-email-rppt@kernel.org>
-Mime-Version: 1.0 (1.0)
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+ <1572171452-7958-2-git-send-email-rppt@kernel.org>
+ <20191028123124.ogkk5ogjlamvwc2s@box>
+ <20191028130018.GA7192@rapoport-lnx>
+ <20191028131623.zwuwguhm4v4s5imh@box>
+ <20191028135521.GB4097@hirez.programming.kicks-ass.net>
+ <0a35765f7412937c1775daa05177b20113760aee.camel@intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1572171452-7958-1-git-send-email-rppt@kernel.org>
+Content-Disposition: inline
+In-Reply-To: <0a35765f7412937c1775daa05177b20113760aee.camel@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Rapoport <rppt@kernel.org>
-Cc: linux-kernel@vger.kernel.org, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>, James Bottomley <jejb@linux.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, linux-api@vger.kernel.org, linux-mm@kvack.org, x86@kernel.org, Mike Rapoport <rppt@linux.ibm.com>
+To: "Edgecombe, Rick P" <rick.p.edgecombe@intel.com>
+Cc: "kirill@shutemov.name" <kirill@shutemov.name>, "adobriyan@gmail.com" <adobriyan@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "rppt@kernel.org" <rppt@kernel.org>, "rostedt@goodmis.org" <rostedt@goodmis.org>, "jejb@linux.ibm.com" <jejb@linux.ibm.com>, "tglx@linutronix.de" <tglx@linutronix.de>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "dave.hansen@linux.intel.com" <dave.hansen@linux.intel.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "x86@kernel.org" <x86@kernel.org>, "akpm@linux-foundation.org" <akpm@linux-foundation.org>, "hpa@zytor.com" <hpa@zytor.com>, "mingo@redhat.com" <mingo@redhat.com>, "luto@kernel.org" <luto@kernel.org>, "rppt@linux.ibm.com" <rppt@linux.ibm.com>, "bp@alien8.de" <bp@alien8.de>, arnd@arn
 List-Id: linux-api@vger.kernel.org
 
+On Mon, Oct 28, 2019 at 07:59:25PM +0000, Edgecombe, Rick P wrote:
+> On Mon, 2019-10-28 at 14:55 +0100, Peter Zijlstra wrote:
+> > On Mon, Oct 28, 2019 at 04:16:23PM +0300, Kirill A. Shutemov wrote:
+> > 
+> > > I think active use of this feature will lead to performance degradation of
+> > > the system with time.
+> > > 
+> > > Setting a single 4k page non-present in the direct mapping will require
+> > > splitting 2M or 1G page we usually map direct mapping with. And it's one
+> > > way road. We don't have any mechanism to map the memory with huge page
+> > > again after the application has freed the page.
+> > 
+> > Right, we recently had a 'bug' where ftrace triggered something like
+> > this and facebook ran into it as a performance regression. So yes, this
+> > is a real concern.
+> 
+> Don't e/cBPF filters also break the direct map down to 4k pages when calling
+> set_memory_ro() on the filter for 64 bit x86 and arm?
+> 
+> I've been wondering if the page allocator should make some effort to find a
+> broken down page for anything that can be known will have direct map permissions
+> changed (or if it already groups them somehow). But also, why any potential
+> slowdown of 4k pages on the direct map hasn't been noticed for apps that do a
+> lot of insertions and removals of BPF filters, if this is indeed the case.
 
-> On Oct 27, 2019, at 4:17 AM, Mike Rapoport <rppt@kernel.org> wrote:
->=20
-> =EF=BB=BFFrom: Mike Rapoport <rppt@linux.ibm.com>
->=20
-> Hi,
->=20
-> The patch below aims to allow applications to create mappins that have
-> pages visible only to the owning process. Such mappings could be used to
-> store secrets so that these secrets are not visible neither to other
-> processes nor to the kernel.
->=20
-> I've only tested the basic functionality, the changes should be verified
-> against THP/migration/compaction. Yet, I'd appreciate early feedback.
-
-I=E2=80=99ve contemplated the concept a fair amount, and I think you should c=
-onsider a change to the API. In particular, rather than having it be a MAP_ f=
-lag, make it a chardev.  You can, at least at first, allow only MAP_SHARED, a=
-nd admins can decide who gets to use it.  It might also play better with the=
- VM overall, and you won=E2=80=99t need a VM_ flag for it =E2=80=94 you can j=
-ust wire up .fault to do the right thing.
+That should be limited to the module range. Random data maps could
+shatter the world.
