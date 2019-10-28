@@ -1,34 +1,53 @@
-From: Florian Weimer <fw@deneb.enyo.de>
-Subject: Re: [PATCH RFC] fs/fcntl: add fcntl F_GET_RSS
-Date: Mon, 28 Oct 2019 14:05:52 +0100
-Message-ID: <87ftjd6mvj.fsf@mid.deneb.enyo.de>
-References: <157225848971.557.16257813537984792761.stgit@buzz>
-        <87k18p6qjk.fsf@mid.deneb.enyo.de>
-        <d7e76bee-80c3-d787-b854-91e631ab29cd@yandex-team.ru>
+From: "Kirill A. Shutemov" <kirill@shutemov.name>
+Subject: Re: [PATCH RFC] mm: add MAP_EXCLUSIVE to create exclusive user
+ mappings
+Date: Mon, 28 Oct 2019 16:16:23 +0300
+Message-ID: <20191028131623.zwuwguhm4v4s5imh@box>
+References: <1572171452-7958-1-git-send-email-rppt@kernel.org>
+ <1572171452-7958-2-git-send-email-rppt@kernel.org>
+ <20191028123124.ogkk5ogjlamvwc2s@box>
+ <20191028130018.GA7192@rapoport-lnx>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <d7e76bee-80c3-d787-b854-91e631ab29cd@yandex-team.ru> (Konstantin
-        Khlebnikov's message of "Mon, 28 Oct 2019 15:55:19 +0300")
+Content-Disposition: inline
+In-Reply-To: <20191028130018.GA7192@rapoport-lnx>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Cc: linux-fsdevel@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, Michal Hocko <mhocko@suse.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Johannes Weiner <hannes@cmpxchg.org>, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, Roman Gushchin <guro@fb.com>
+To: Mike Rapoport <rppt@kernel.org>
+Cc: linux-kernel@vger.kernel.org, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>, James Bottomley <jejb@linux.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, linux-api@vger.kernel.org, linux-mm@kvack.org, x86@kernel.org, Mike Rapoport <rppt@linux.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-* Konstantin Khlebnikov:
+On Mon, Oct 28, 2019 at 02:00:19PM +0100, Mike Rapoport wrote:
+> On Mon, Oct 28, 2019 at 03:31:24PM +0300, Kirill A. Shutemov wrote:
+> > On Sun, Oct 27, 2019 at 12:17:32PM +0200, Mike Rapoport wrote:
+> > > From: Mike Rapoport <rppt@linux.ibm.com>
+> > > 
+> > > The mappings created with MAP_EXCLUSIVE are visible only in the context of
+> > > the owning process and can be used by applications to store secret
+> > > information that will not be visible not only to other processes but to the
+> > > kernel as well.
+> > > 
+> > > The pages in these mappings are removed from the kernel direct map and
+> > > marked with PG_user_exclusive flag. When the exclusive area is unmapped,
+> > > the pages are mapped back into the direct map.
+> > 
+> > I probably blind, but I don't see where you manipulate direct map...
+> 
+> __get_user_pages() calls __set_page_user_exclusive() which in turn calls
+> set_direct_map_invalid_noflush() that makes the page not present.
 
-> On 28/10/2019 14.46, Florian Weimer wrote:
->> * Konstantin Khlebnikov:
->> 
->>> This implements fcntl() for getting amount of resident memory in cache.
->>> Kernel already maintains counter for each inode, this patch just exposes
->>> it into userspace. Returned size is in kilobytes like values in procfs.
->> 
->> I think this needs a 32-bit compat implementation which clamps the
->> returned value to INT_MAX.
->> 
->
-> 32-bit machine couldn't hold more than 2TB cache in one file.
-> Even radix tree wouldn't fit into low memory area.
+Ah. okay.
 
-I meant a 32-bit process running on a 64-bit kernel.
+I think active use of this feature will lead to performance degradation of
+the system with time.
+
+Setting a single 4k page non-present in the direct mapping will require
+splitting 2M or 1G page we usually map direct mapping with. And it's one
+way road. We don't have any mechanism to map the memory with huge page
+again after the application has freed the page.
+
+It might be okay if all these pages cluster together, but I don't think we
+have a way to achieve it easily.
+
+-- 
+ Kirill A. Shutemov
