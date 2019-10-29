@@ -1,82 +1,78 @@
-From: "Reshetova, Elena" <elena.reshetova@intel.com>
-Subject: RE: [PATCH RFC] mm: add MAP_EXCLUSIVE to create exclusive user
- mappings
-Date: Tue, 29 Oct 2019 11:25:12 +0000
-Message-ID: <2236FBA76BA1254E88B949DDB74E612BA4EEC0CE@IRSMSX102.ger.corp.intel.com>
-References: <1572171452-7958-1-git-send-email-rppt@kernel.org>
+From: Christian Brauner <christian.brauner@ubuntu.com>
+Subject: Re: For review: documentation of clone3() system call
+Date: Tue, 29 Oct 2019 12:27:07 +0100
+Message-ID: <20191029112706.p5dd5yzpcgouo6n5@wittgenstein>
+References: <CAKgNAkjo2WHq+zESU1iuCHJJ0x-fTNrakS9-d1+BjzUuV2uf2Q@mail.gmail.com>
+ <CAG48ez3q=BeNcuVTKBN79kJui4vC6nw0Bfq6xc-i0neheT17TA@mail.gmail.com>
+ <20191028172143.4vnnjpdljfnexaq5@wittgenstein>
+ <CAG48ez20hn8vToY+=C62nA-rbUfxh=JD6N-f7XVS3_GZOoPjxw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1572171452-7958-1-git-send-email-rppt@kernel.org>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <CAG48ez20hn8vToY+=C62nA-rbUfxh=JD6N-f7XVS3_GZOoPjxw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Rapoport <rppt@kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
-Cc: Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>, James Bottomley <jejb@linux.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "x86@kernel.org" <x86@kernel.org>, Mike Rapoport <rppt@linux.ibm.com>, Tycho Andersen <tycho@tycho.ws>, Alan Cox <alan@linux.intel.com>
+To: Jann Horn <jannh@google.com>
+Cc: Michael Kerrisk-manpages <mtk.manpages@gmail.com>, lkml <linux-kernel@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Florian Weimer <fweimer@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@gmail.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-> The patch below aims to allow applications to create mappins that have
-> pages visible only to the owning process. Such mappings could be used to
-> store secrets so that these secrets are not visible neither to other
-> processes nor to the kernel.
+On Mon, Oct 28, 2019 at 08:09:13PM +0100, Jann Horn wrote:
+> On Mon, Oct 28, 2019 at 6:21 PM Christian Brauner
+> <christian.brauner@ubuntu.com> wrote:
+> > On Mon, Oct 28, 2019 at 04:12:09PM +0100, Jann Horn wrote:
+> > > On Fri, Oct 25, 2019 at 6:59 PM Michael Kerrisk (man-pages)
+> > > <mtk.manpages@gmail.com> wrote:
+> > > > I've made a first shot at adding documentation for clone3(). You can
+> > > > see the diff here:
+> > > > https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/commit/?id=faa0e55ae9e490d71c826546bbdef954a1800969
+> [...]
+> > > You might want to note somewhere that its flags can't be
+> > > seccomp-filtered because they're stored in memory, making it
+> > > inappropriate to use in heavily sandboxed processes.
+> >
+> > Hm, I don't think that belongs on the clone manpage. Granted that
+> > process creation is an important syscall but so are a bunch of others
+> > that aren't filterable because of pointer arguments.
+> > We can probably mention on the seccomp manpage that seccomp can't filter
+> > on pointer arguments and then provide a list of examples. If you setup a
+> > seccomp filter and don't know that you can't filter syscalls with
+> > pointer args that seems pretty bad to begin with.
+> 
+> Fair enough.
+> 
+> [...]
+> > One thing I never liked about clone() was that userspace had to know
+> > about stack direction. And there is a lot of ugly code in userspace that
+> > has nasty clone() wrappers like:
+> [...]
+> > where stack + stack_size is addition on a void pointer which usually
+> > clang and gcc are not very happy about.
+> > I wanted to bring this up on the mailing list soon: If possible, I don't
+> > want userspace to need to know about stack direction and just have stack
+> > point to the beginning and then have the kernel do the + stack_size
+> > after the copy_clone_args_from_user() if the arch needs it. For example,
+> > by having a dumb helder similar to copy_thread_tls()/coyp_thread() that
+> > either does the + stack_size or not. Right now, clone3() is supported on
+> > parisc and afaict, the stack grows upwards for it. I'm not sure if there
+> > are obvious reasons why that won't work or it would be a bad idea...
+> 
+> That would mean adding a new clone flag that redefines how those
+> parameters work and describing the current behavior in the manpage as
+> the behavior without the flag (which doesn't exist on 5.3), right?
 
-Hi Mike, 
+I would break API and if someone reports breakage we'll revert and go
+the more complicated route you outlined (see [1]).
+But I don't think it will a big deal. First, we haven't documented how
+stack needs to be passed so who knows what people currently do. Second,
+clone3() has not been out for a long time and currently does _not_
+provide features that legacy clone() does not provide apart from a
+cleaner interface. So userspace has no incentive to use clone3() over
+clone() right now. That'll change latest with v5.5 where we have new
+features on top of clone3() (CLONE_CLEAR_SIGHAND). So let's just try and
+fix it.
 
-I have actually been looking into the closely related problem for the past 
-couple of weeks (on and off). What is common here is the need for userspace
-to indicate to kernel that some pages contain secrets. And then there are
-actually a number of things that kernel can do to try to protect these secrets
-better. Unmap from direct map is one of them. Another thing is to map such
-pages as non-cached, which can help us to prevent or considerably restrict
-speculation on such pages. The initial proof of concept for marking pages as
-"UNCACHED" that I got from Dave Hansen was actually based on mlock2() 
-and a new flag for it for this purpose. Since then I have been thinking on what
-interface suits the use case better and actually selected going with new madvise() 
-flag instead because of all possible implications for fragmentation and performance. 
-My logic was that we better allocate the secret data explicitly (using mmap()) 
-to make sure that no other process data accidentally gets to suffer.
-Imagine I would allocate a buffer to hold a secret key, signal with mlock
- to protect it and suddenly my other high throughput non-secret buffer 
-(which happened to live on the same page by chance) became very slow
- and I don't even have an easy way (apart from mmap()ing it!) to guarantee
- that it won't be affected.
+[1]: This is basically what Linus has repeatedly said: it's not about
+     never breaking api in principle but rather about whether this
+     breaks someones usecase. And if it does break, we need to revert.
 
-So, I ended up towards smth like:
-
-  secret_buffer =  mmap(NULL, PAGE_SIZE, ...)
-   madvise(secret_buffer, size, MADV_SECRET)
-
-I have work in progress code here:
- https://github.com/ereshetova/linux/commits/madvise
-
-I haven't sent it for review, because it is not ready yet and I am now working
-on trying to add the page wiping functionality. Otherwise it would be useless
-to protect the page during the time it is used in userspace, but then allow it
-to get reused by a different process later after it has been released back and
-userspace was stupid enough not to wipe the contents (or was crashed on 
-purpose before it was able to wipe anything out). 
-
-We have also had some discussions with Tycho that XPFO can be also
-applied selectively for such "SECRET" marked pages and I know that he has also
-did some initial prototyping on this, so I think it would be great to decide
-on userspace interface first and then see how we can assemble together all
-these features. 
-
-The *very* far fetching goal for all of this would be something that Alan Cox
-suggested when I started looking into this - actually have a new libc function to 
-allocate memory in a secure way, which can hide all the dancing with mmap()/madvise()
-(or/and potentially interaction with a chardev that Andy was suggesting also) and
-implement an efficient allocator for such secret pages. Openssl has its
-own version of  "secure heap", which is essentially mmap area with additional 
-MLOCK_ONFAULT and MADV_DONTDUMP flags for protection. Some other 
-apps or libs must use smth similar if they want additional protection, which
-makes them to reimplement the same concept again and again. Sadly or surprisingly 
-other major libs like boringssl, mbedTLS or client like openssh do not user any mlock()/
-madvise() flags for any additional protection of secrets that they hold in memory. 
-Maybe if all of it would be behind a single secure API situation would start to 
-change in userspace towards better. 
-
-Best Regards,
-Elena.
- 
-. 
+Christian
