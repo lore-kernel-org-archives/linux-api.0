@@ -1,11 +1,13 @@
 From: Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH 0/4] statx: expose the fs-verity bit
-Date: Tue, 29 Oct 2019 13:41:37 -0700
-Message-ID: <20191029204141.145309-1-ebiggers@kernel.org>
+Subject: [PATCH 1/4] statx: define STATX_ATTR_VERITY
+Date: Tue, 29 Oct 2019 13:41:38 -0700
+Message-ID: <20191029204141.145309-2-ebiggers@kernel.org>
+References: <20191029204141.145309-1-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+In-Reply-To: <20191029204141.145309-1-ebiggers@kernel.org>
 List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
  <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
 List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
@@ -18,7 +20,11 @@ To: linux-fscrypt@vger.kernel.org
 Cc: Theodore Ts'o <tytso@mit.edu>, linux-api@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, David Howells <dhowells@redhat.com>, linux-fsdevel@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, linux-ext4@vger.kernel.org, Victor Hsieh <victorhsieh@google.com>
 List-Id: linux-api@vger.kernel.org
 
-This patchset exposes the verity bit (a.k.a. FS_VERITY_FL) via statx().
+From: Eric Biggers <ebiggers@google.com>
+
+Add a statx attribute bit STATX_ATTR_VERITY which will be set if the
+file has fs-verity enabled.  This is the statx() equivalent of
+FS_VERITY_FL which is returned by FS_IOC_GETFLAGS.
 
 This is useful because it allows applications to check whether a file is
 a verity file without opening it.  Opening a verity file can be
@@ -28,20 +34,39 @@ parsing metadata and optionally verifying a cryptographic signature.
 This is analogous to how various other bits are exposed through both
 FS_IOC_GETFLAGS and statx(), e.g. the encrypt bit.
 
-This patchset applies to v5.4-rc5.
+Signed-off-by: Eric Biggers <ebiggers@google.com>
+---
+ include/linux/stat.h      | 3 ++-
+ include/uapi/linux/stat.h | 2 +-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
 
-Eric Biggers (4):
-  statx: define STATX_ATTR_VERITY
-  ext4: support STATX_ATTR_VERITY
-  f2fs: support STATX_ATTR_VERITY
-  docs: fs-verity: mention statx() support
-
- Documentation/filesystems/fsverity.rst | 8 ++++++++
- fs/ext4/inode.c                        | 5 ++++-
- fs/f2fs/file.c                         | 5 ++++-
- include/linux/stat.h                   | 3 ++-
- include/uapi/linux/stat.h              | 2 +-
- 5 files changed, 19 insertions(+), 4 deletions(-)
-
+diff --git a/include/linux/stat.h b/include/linux/stat.h
+index 765573dc17d659..528c4baad09146 100644
+--- a/include/linux/stat.h
++++ b/include/linux/stat.h
+@@ -33,7 +33,8 @@ struct kstat {
+ 	 STATX_ATTR_IMMUTABLE |				\
+ 	 STATX_ATTR_APPEND |				\
+ 	 STATX_ATTR_NODUMP |				\
+-	 STATX_ATTR_ENCRYPTED				\
++	 STATX_ATTR_ENCRYPTED |				\
++	 STATX_ATTR_VERITY				\
+ 	 )/* Attrs corresponding to FS_*_FL flags */
+ 	u64		ino;
+ 	dev_t		dev;
+diff --git a/include/uapi/linux/stat.h b/include/uapi/linux/stat.h
+index 7b35e98d3c58b1..ad80a5c885d598 100644
+--- a/include/uapi/linux/stat.h
++++ b/include/uapi/linux/stat.h
+@@ -167,8 +167,8 @@ struct statx {
+ #define STATX_ATTR_APPEND		0x00000020 /* [I] File is append-only */
+ #define STATX_ATTR_NODUMP		0x00000040 /* [I] File is not to be dumped */
+ #define STATX_ATTR_ENCRYPTED		0x00000800 /* [I] File requires key to decrypt in fs */
+-
+ #define STATX_ATTR_AUTOMOUNT		0x00001000 /* Dir: Automount trigger */
++#define STATX_ATTR_VERITY		0x00100000 /* [I] Verity protected file */
+ 
+ 
+ #endif /* _UAPI_LINUX_STAT_H */
 -- 
 2.24.0.rc1.363.gb1bccd3e3d-goog
