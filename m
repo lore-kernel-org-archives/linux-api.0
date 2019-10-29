@@ -1,7 +1,7 @@
 From: Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH 1/4] statx: define STATX_ATTR_VERITY
-Date: Tue, 29 Oct 2019 13:41:38 -0700
-Message-ID: <20191029204141.145309-2-ebiggers@kernel.org>
+Subject: [PATCH 3/4] f2fs: support STATX_ATTR_VERITY
+Date: Tue, 29 Oct 2019 13:41:40 -0700
+Message-ID: <20191029204141.145309-4-ebiggers@kernel.org>
 References: <20191029204141.145309-1-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,51 +22,33 @@ List-Id: linux-api@vger.kernel.org
 
 From: Eric Biggers <ebiggers@google.com>
 
-Add a statx attribute bit STATX_ATTR_VERITY which will be set if the
-file has fs-verity enabled.  This is the statx() equivalent of
-FS_VERITY_FL which is returned by FS_IOC_GETFLAGS.
-
-This is useful because it allows applications to check whether a file is
-a verity file without opening it.  Opening a verity file can be
-expensive because the fsverity_info is set up on open, which involves
-parsing metadata and optionally verifying a cryptographic signature.
-
-This is analogous to how various other bits are exposed through both
-FS_IOC_GETFLAGS and statx(), e.g. the encrypt bit.
+Set the STATX_ATTR_VERITY bit when the statx() system call is used on a
+verity file on f2fs.
 
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
- include/linux/stat.h      | 3 ++-
- include/uapi/linux/stat.h | 2 +-
- 2 files changed, 3 insertions(+), 2 deletions(-)
+ fs/f2fs/file.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/include/linux/stat.h b/include/linux/stat.h
-index 765573dc17d659..528c4baad09146 100644
---- a/include/linux/stat.h
-+++ b/include/linux/stat.h
-@@ -33,7 +33,8 @@ struct kstat {
- 	 STATX_ATTR_IMMUTABLE |				\
- 	 STATX_ATTR_APPEND |				\
- 	 STATX_ATTR_NODUMP |				\
--	 STATX_ATTR_ENCRYPTED				\
-+	 STATX_ATTR_ENCRYPTED |				\
-+	 STATX_ATTR_VERITY				\
- 	 )/* Attrs corresponding to FS_*_FL flags */
- 	u64		ino;
- 	dev_t		dev;
-diff --git a/include/uapi/linux/stat.h b/include/uapi/linux/stat.h
-index 7b35e98d3c58b1..ad80a5c885d598 100644
---- a/include/uapi/linux/stat.h
-+++ b/include/uapi/linux/stat.h
-@@ -167,8 +167,8 @@ struct statx {
- #define STATX_ATTR_APPEND		0x00000020 /* [I] File is append-only */
- #define STATX_ATTR_NODUMP		0x00000040 /* [I] File is not to be dumped */
- #define STATX_ATTR_ENCRYPTED		0x00000800 /* [I] File requires key to decrypt in fs */
--
- #define STATX_ATTR_AUTOMOUNT		0x00001000 /* Dir: Automount trigger */
-+#define STATX_ATTR_VERITY		0x00100000 /* [I] Verity protected file */
+diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
+index 29bc0a542759a2..6a2e5b7d8fc74c 100644
+--- a/fs/f2fs/file.c
++++ b/fs/f2fs/file.c
+@@ -726,11 +726,14 @@ int f2fs_getattr(const struct path *path, struct kstat *stat,
+ 		stat->attributes |= STATX_ATTR_IMMUTABLE;
+ 	if (flags & F2FS_NODUMP_FL)
+ 		stat->attributes |= STATX_ATTR_NODUMP;
++	if (IS_VERITY(inode))
++		stat->attributes |= STATX_ATTR_VERITY;
  
+ 	stat->attributes_mask |= (STATX_ATTR_APPEND |
+ 				  STATX_ATTR_ENCRYPTED |
+ 				  STATX_ATTR_IMMUTABLE |
+-				  STATX_ATTR_NODUMP);
++				  STATX_ATTR_NODUMP |
++				  STATX_ATTR_VERITY);
  
- #endif /* _UAPI_LINUX_STAT_H */
+ 	generic_fillattr(inode, stat);
+ 
 -- 
 2.24.0.rc1.363.gb1bccd3e3d-goog
