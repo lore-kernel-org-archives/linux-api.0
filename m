@@ -1,34 +1,50 @@
-From: Christopher Lameter <cl@linux.com>
+From: "Kirill A. Shutemov" <kirill@shutemov.name>
 Subject: Re: [PATCH RFC] mm: add MAP_EXCLUSIVE to create exclusive user
  mappings
-Date: Tue, 29 Oct 2019 10:12:04 +0000 (UTC)
-Message-ID: <alpine.DEB.2.21.1910291011090.5411@www.lameter.com>
-References: <1572171452-7958-1-git-send-email-rppt@kernel.org> <1572171452-7958-2-git-send-email-rppt@kernel.org> <20191028123124.ogkk5ogjlamvwc2s@box> <20191028130018.GA7192@rapoport-lnx> <20191028131623.zwuwguhm4v4s5imh@box> <alpine.DEB.2.21.1910290706360.3769@www.lameter.com>
- <20191029085551.GA18773@rapoport-lnx>
+Date: Tue, 29 Oct 2019 14:00:24 +0300
+Message-ID: <20191029110024.yjytp22lhd2vekrv@box>
+References: <1572171452-7958-1-git-send-email-rppt@kernel.org>
+ <1572171452-7958-2-git-send-email-rppt@kernel.org>
+ <20191028123124.ogkk5ogjlamvwc2s@box>
+ <20191028130018.GA7192@rapoport-lnx>
+ <20191028131623.zwuwguhm4v4s5imh@box>
+ <CAA9_cmd7f2y2AAT6646S=tco3yfyLgCAC4Qp=1iTQaJqrQcOwQ@mail.gmail.com>
+ <20191029064318.s4n4gidlfjun3d47@box>
+ <20191029085602.GI4114@hirez.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191029085551.GA18773@rapoport-lnx>
+Content-Disposition: inline
+In-Reply-To: <20191029085602.GI4114@hirez.programming.kicks-ass.net>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mike Rapoport <rppt@kernel.org>
-Cc: "Kirill A. Shutemov" <kirill@shutemov.name>, linux-kernel@vger.kernel.org, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>, James Bottomley <jejb@linux.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, linux-api@vger.kernel.org, linux-mm@kvack.org, x86@kernel.org, Mike Rapoport <rppt@linux.ibm.com>
+To: Peter Zijlstra <peterz@infradead.org>
+Cc: Dan Williams <dan.j.williams@intel.com>, Mike Rapoport <rppt@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>, James Bottomley <jejb@linux.ibm.com>, Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Linux API <linux-api@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, the arch/x86 maintainers <x86@kernel.org>, Mike Rapoport <rppt@linux.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
+On Tue, Oct 29, 2019 at 09:56:02AM +0100, Peter Zijlstra wrote:
+> On Tue, Oct 29, 2019 at 09:43:18AM +0300, Kirill A. Shutemov wrote:
+> > But some CPUs don't like to have two TLB entries for the same memory with
+> > different sizes at the same time. See for instance AMD erratum 383.
+> > 
+> > Getting it right would require making the range not present, flush TLB and
+> > only then install huge page. That's what we do for userspace.
+> > 
+> > It will not fly for the direct mapping. There is no reasonable way to
+> > exclude other CPU from accessing the range while it's not present (call
+> > stop_machine()? :P). Moreover, the range may contain the code that doing
+> > the collapse or data required for it...
+> > 
+> > BTW, looks like current __split_large_page() in pageattr.c is susceptible
+> > to the errata. Maybe we can get away with the easy way...
+> 
+> As you write above, there is just no way we can have a (temporary) hole
+> in the direct map.
+> 
+> We are careful about that other errata, and make sure both translations
+> are identical wrt everything else.
 
+It's not clear if it is enough to avoid the issue. "under a highly specific
+and detailed set of conditions" is not very specific set of conditions :P
 
-On Tue, 29 Oct 2019, Mike Rapoport wrote:
-
-> I've talked with Thomas yesterday and he suggested something similar:
->
-> When the MAP_EXCLUSIVE request comes for the first time, we allocate a huge
-> page for it and then use this page as a pool of 4K pages for subsequent
-> requests. Once this huge page is full we allocate a new one and append it
-> to the pool. When all the 4K pages that comprise the huge page are freed
-> the huge page is collapsed.
-
-Or write a device driver that allows you to mmap a secure area and avoid
-all core kernel modifications?
-
-/dev/securemem or so?
-
-It may exist already.
+-- 
+ Kirill A. Shutemov
