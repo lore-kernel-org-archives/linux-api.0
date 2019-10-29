@@ -1,121 +1,102 @@
-From: Andy Lutomirski <luto@kernel.org>
+From: Dan Williams <dan.j.williams@intel.com>
 Subject: Re: [PATCH RFC] mm: add MAP_EXCLUSIVE to create exclusive user mappings
-Date: Tue, 29 Oct 2019 11:10:33 -0700
-Message-ID: <CALCETrUhGqyEJtyBQWubh=5cUt2i-N-oZJqcBM5jBnGi1saxsQ@mail.gmail.com>
+Date: Tue, 29 Oct 2019 12:43:53 -0700
+Message-ID: <CAPcyv4hDPdmHxhMF753Jt5Dk6V9bTAkGqzkyYHCiG6xowT4Ncg@mail.gmail.com>
 References: <1572171452-7958-1-git-send-email-rppt@kernel.org>
- <2236FBA76BA1254E88B949DDB74E612BA4EEC0CE@IRSMSX102.ger.corp.intel.com>
- <CALCETrWN9kc+10tf7YoBp9ixqkO_KZ=b1E_cFBr_Uogxhu68PQ@mail.gmail.com> <1572371012.4812.19.camel@linux.ibm.com>
+ <1572171452-7958-2-git-send-email-rppt@kernel.org> <20191028123124.ogkk5ogjlamvwc2s@box>
+ <20191028130018.GA7192@rapoport-lnx> <20191028131623.zwuwguhm4v4s5imh@box>
+ <CAA9_cmd7f2y2AAT6646S=tco3yfyLgCAC4Qp=1iTQaJqrQcOwQ@mail.gmail.com> <20191029064318.s4n4gidlfjun3d47@box>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1572371012.4812.19.camel@linux.ibm.com>
+In-Reply-To: <20191029064318.s4n4gidlfjun3d47@box>
 Sender: linux-kernel-owner@vger.kernel.org
-To: James Bottomley <jejb@linux.ibm.com>
-Cc: Andy Lutomirski <luto@kernel.org>, "Reshetova, Elena" <elena.reshetova@intel.com>, Mike Rapoport <rppt@kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "x86@kernel.org" <x86@kernel.org>, Mike Rapoport <rppt@linux.ibm.com>, Tycho Andersen <tycho@tycho.ws>
+To: "Kirill A. Shutemov" <kirill@shutemov.name>
+Cc: Mike Rapoport <rppt@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>, James Bottomley <jejb@linux.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Linux API <linux-api@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, the arch/x86 maintainers <x86@kernel.org>, Mike Rapoport <rppt@linux.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 29, 2019 at 10:44 AM James Bottomley <jejb@linux.ibm.com> wrote:
+On Mon, Oct 28, 2019 at 11:43 PM Kirill A. Shutemov
+<kirill@shutemov.name> wrote:
 >
-> On Tue, 2019-10-29 at 10:03 -0700, Andy Lutomirski wrote:
-> > On Tue, Oct 29, 2019 at 4:25 AM Reshetova, Elena
-> > <elena.reshetova@intel.com> wrote:
+> On Mon, Oct 28, 2019 at 10:43:51PM -0700, Dan Williams wrote:
+> > On Mon, Oct 28, 2019 at 6:16 AM Kirill A. Shutemov <kirill@shutemov.name> wrote:
 > > >
-> > > > The patch below aims to allow applications to create mappins that
-> > > > have
-> > > > pages visible only to the owning process. Such mappings could be
-> > > > used to
-> > > > store secrets so that these secrets are not visible neither to
-> > > > other
-> > > > processes nor to the kernel.
+> > > On Mon, Oct 28, 2019 at 02:00:19PM +0100, Mike Rapoport wrote:
+> > > > On Mon, Oct 28, 2019 at 03:31:24PM +0300, Kirill A. Shutemov wrote:
+> > > > > On Sun, Oct 27, 2019 at 12:17:32PM +0200, Mike Rapoport wrote:
+> > > > > > From: Mike Rapoport <rppt@linux.ibm.com>
+> > > > > >
+> > > > > > The mappings created with MAP_EXCLUSIVE are visible only in the context of
+> > > > > > the owning process and can be used by applications to store secret
+> > > > > > information that will not be visible not only to other processes but to the
+> > > > > > kernel as well.
+> > > > > >
+> > > > > > The pages in these mappings are removed from the kernel direct map and
+> > > > > > marked with PG_user_exclusive flag. When the exclusive area is unmapped,
+> > > > > > the pages are mapped back into the direct map.
+> > > > >
+> > > > > I probably blind, but I don't see where you manipulate direct map...
+> > > >
+> > > > __get_user_pages() calls __set_page_user_exclusive() which in turn calls
+> > > > set_direct_map_invalid_noflush() that makes the page not present.
 > > >
-> > > Hi Mike,
+> > > Ah. okay.
 > > >
-> > > I have actually been looking into the closely related problem for
-> > > the past
-> > > couple of weeks (on and off). What is common here is the need for
-> > > userspace
-> > > to indicate to kernel that some pages contain secrets. And then
-> > > there are
-> > > actually a number of things that kernel can do to try to protect
-> > > these secrets
-> > > better. Unmap from direct map is one of them. Another thing is to
-> > > map such
-> > > pages as non-cached, which can help us to prevent or considerably
-> > > restrict
-> > > speculation on such pages. The initial proof of concept for marking
-> > > pages as
-> > > "UNCACHED" that I got from Dave Hansen was actually based on
-> > > mlock2()
-> > > and a new flag for it for this purpose. Since then I have been
-> > > thinking on what
-> > > interface suits the use case better and actually selected going
-> > > with new madvise()
-> > > flag instead because of all possible implications for fragmentation
-> > > and performance.
+> > > I think active use of this feature will lead to performance degradation of
+> > > the system with time.
+> > >
+> > > Setting a single 4k page non-present in the direct mapping will require
+> > > splitting 2M or 1G page we usually map direct mapping with. And it's one
+> > > way road. We don't have any mechanism to map the memory with huge page
+> > > again after the application has freed the page.
+> > >
+> > > It might be okay if all these pages cluster together, but I don't think we
+> > > have a way to achieve it easily.
 > >
-> > Doing all of this with MAP_SECRET seems bad to me.  If user code
-> > wants UC memory, it should ask for UC memory -- having the kernel
-> > involved in the decision to use UC memory is a bad idea, because the
-> > performance impact of using UC memory where user code wasn't
-> > expecting it wil be so bad that the system might as well not work at
-> > all.  (For kicks, I once added a sysctl to turn off caching in
-> > CR0.  I enabled it in gnome-shell.  The system slowed down to such an
-> > extent that I was unable to enter the three or so keystrokes to turn
-> > it back off.)
-> >
-> > EXCLUSIVE makes sense.  Saying "don't ptrace this" makes sense.  UC
-> > makes sense.  But having one flag to rule them all does not make
-> > sense to me.
+> > Still, it would be worth exploring what that would look like if not
+> > for MAP_EXCLUSIVE then set_mce_nospec() that wants to punch out poison
+> > pages from the direct map. In the case of pmem, where those pages are
+> > able to be repaired, it would be nice to also repair the mapping
+> > granularity of the direct map.
 >
-> So this is a usability problem.  We have a memory flag that can be used
-> for "secrecy" for some userspace value of the word and we have a load
-> of internal properties depending on how the hardware works, including
-> potentially some hardware additions like SEV or TME, that can be used
-> to implement the property.  If we expose our hardware vagaries, the
-> user is really not going to know what to do ... and we have a limited
-> number of flags to express this, so it stands to reason that we need to
-> define "secrecy" for the user and then implement it using whatever
-> flags we have.  So I think no ptrace and no direct map make sense for
-> pretty much any value of "secrecy".  The UC bit seems to be an attempt
-> to prevent exfiltration via L1TF or other cache side channels, so it
-> looks like it should only be applied if the side channel mitigations
-> aren't active ... which would tend to indicate it's a kernel decision
-> as well.
+> The solution has to consist of two parts: finding a range to collapse and
+> actually collapsing the range into a huge page.
+>
+> Finding the collapsible range will likely require background scanning of
+> the direct mapping as we do for THP with khugepaged. It should not too
+> hard, but likely require long and tedious tuning to be effective, but not
+> too disturbing for the system.
+>
+> Alternatively, after any changes to the direct mapping, we can initiate
+> checking if the range is collapsible. Up to 1G around the changed 4k.
+> It might be more taxing than scanning if direct mapping changes often.
+>
+> Collapsing itself appears to be simple: re-check if the range is
+> collapsible under the lock, replace the page table with the huge page and
+> flush the TLB.
+>
+> But some CPUs don't like to have two TLB entries for the same memory with
+> different sizes at the same time. See for instance AMD erratum 383.
 
-I just don't think this will work in practice.  Someone will say "hey,
-let's keep this giant buffer we do crypto from, or maybe even the
-entire data area of some critical service, secret".  It will work
-*fine* at first.  But then some kernel config changes and we can't do
-DMA, and now it breaks on some configs.  Someone else will say "hey, I
-don't have L1TF or whatever mitigation, let's turn on UC", and
-everything goes to hell.
+That basic description would seem to defeat most (all?) interesting
+huge page use cases. For example dax makes no attempt to make sure
+aliased mappings of pmem are the same size between the direct map that
+the driver uses, and userspace dax mappings. So I assume there are
+more details than "all aliased mappings must be the same size".
 
-IMO the kernel should attempt to keep *all memory* secret.  Specific
-applications that want greater levels of secrecy should opt in to more
-expensive things.  Here's what's already on the table:
+> Getting it right would require making the range not present, flush TLB and
+> only then install huge page. That's what we do for userspace.
+>
+> It will not fly for the direct mapping. There is no reasonable way to
+> exclude other CPU from accessing the range while it's not present (call
+> stop_machine()? :P). Moreover, the range may contain the code that doing
+> the collapse or data required for it...
 
-Exclusive / XPFO / XPO: allocation might be extremely expensive.
-Overuse might hurt performance due to huge page fragmentation  DMA may
-not work.  Otherwise it's peachy.
-
-SEV: Works only in some contexts.  The current kernel implementation
-is, IMO, unacceptable to the extent that I wish I could go back in
-time and NAK it.
-
-TME: it's on or it's off.  There's no room for a MAP_ flag here.
-
-MKTME: of highly dubious value here.  The only useful thing here I can
-thing it would be a MAP_NOTSECRET to opt *out* of encryption for a
-specific range.  Other than that, it has all the same performance
-implications that EXCLUSIVE has.
-
-UC: Performance hit is extreme.  *Also* has the perf implications of
-exclusive.  I can't imagine this making any sense except were the user
-application is written in the expectation that UC might be used so
-that the access patterns would be reasonable.
-
-WC: Same issues as UC plus memory ordering issues such that
-unsuspecting applications will corrupt data.
-
-Trying to bundle these together with kernel- or admin-only config
-seems like a lost cause.
+At least for pmem all the access points can be controlled. pmem is
+never used for kernel text at least in the dax mode where it is
+accessed via file-backed shared mappings, or the pmem driver. So when
+I say "direct-map repair" I mean the incidental direct-map that pmem
+uses since it maps pmem with arch_add_memory(), not the typical DRAM
+direct-map that may house kernel text. Poison consumed from the kernel
+DRAM direct-map is fatal, poison consumed from dax mappings and the
+pmem driver path is recoverable and repairable.
