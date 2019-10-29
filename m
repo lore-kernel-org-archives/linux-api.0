@@ -1,83 +1,65 @@
 From: Mike Rapoport <rppt@kernel.org>
 Subject: Re: [PATCH RFC] mm: add MAP_EXCLUSIVE to create exclusive user
  mappings
-Date: Tue, 29 Oct 2019 10:19:19 +0100
-Message-ID: <20191029091918.GC18773@rapoport-lnx>
+Date: Tue, 29 Oct 2019 10:28:53 +0100
+Message-ID: <20191029092852.GD18773@rapoport-lnx>
 References: <1572171452-7958-1-git-send-email-rppt@kernel.org>
  <1572171452-7958-2-git-send-email-rppt@kernel.org>
  <d6ac08fe-23f3-c2d5-24c4-88e68f3fd4d0@intel.com>
+ <20191028180808.GA17669@bombadil.infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <d6ac08fe-23f3-c2d5-24c4-88e68f3fd4d0@intel.com>
+In-Reply-To: <20191028180808.GA17669@bombadil.infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dave Hansen <dave.hansen@intel.com>
-Cc: linux-kernel@vger.kernel.org, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>, James Bottomley <jejb@linux.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, linux-api@vger.kernel.org, linux-mm@kvack.org, x86@kernel.org, Mike Rapoport <rppt@linux.ibm.com>
+To: Matthew Wilcox <willy@infradead.org>
+Cc: Dave Hansen <dave.hansen@intel.com>, linux-kernel@vger.kernel.org, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>, James Bottomley <jejb@linux.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, linux-api@vger.kernel.org, linux-mm@kvack.org, x86@kernel.org, Mike Rapoport <rppt@linux.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 28, 2019 at 10:12:44AM -0700, Dave Hansen wrote:
-> On 10/27/19 3:17 AM, Mike Rapoport wrote:
-> > The pages in these mappings are removed from the kernel direct map and
-> > marked with PG_user_exclusive flag. When the exclusive area is unmapped,
-> > the pages are mapped back into the direct map.
+On Mon, Oct 28, 2019 at 11:08:08AM -0700, Matthew Wilcox wrote:
+> On Mon, Oct 28, 2019 at 10:12:44AM -0700, Dave Hansen wrote:
+> > Some other random thoughts:
+> > 
+> >  * The page flag is probably not a good idea.  It would be probably
+> >    better to set _PAGE_SPECIAL on the PTE and force get_user_pages()
+> >    into the slow path.
+> >  * This really stops being "normal" memory.  You can't do futexes on it,
+> >    cant splice it.  Probably need a more fleshed-out list of
+> >    incompatible features.
+> >  * As Kirill noted, each 4k page ends up with a potential 1GB "blast
+> >    radius" of demoted pages in the direct map.  Not cool.  This is
+> >    probably a non-starter as it stands.
+> >  * The global TLB flushes are going to eat you alive.  They probably
+> >    border on a DoS on larger systems.
+> >  * Do we really want this user interface to dictate the kernel
+> >    implementation?  In other words, do we really want MAP_EXCLUSIVE,
+> >    or do we want MAP_SECRET?  One tells the kernel what do *do*, the
+> >    other tells the kernel what the memory *IS*.
+> >  * There's a lot of other stuff going on in this area: XPFO, SEV, MKTME,
+> >    Persistent Memory, where the kernel direct map is a liability in some
+> >    way.  We probably need some kind of overall, architected solution
+> >    rather than five or ten things all poking at the direct map.
 > 
-> This looks fun.  It's certainly simple.
+> Another random set of thoughts:
 > 
-> But, the description is not really calling out the pros and cons very
-> well.  I'm also not sure that folks will use an interface like this that
-> requires up-front, special code to do an allocation instead of something
-> like madvise().  That's why protection keys ended up the way it did: if
-> you do this as a mmap() replacement, you need to modify all *allocators*
-> to be enabled for this.  If you do it with mprotect()-style, you can
-> apply it to existing allocations.
+>  - Should devices be permitted to DMA to/from MAP_SECRET pages?
 
-Actually, I've started with mprotect() and then realized that mmap() would
-be simpler, so I switched over to mmap().
- 
-> Some other random thoughts:
-> 
->  * The page flag is probably not a good idea.  It would be probably
->    better to set _PAGE_SPECIAL on the PTE and force get_user_pages()
->    into the slow path.
+I can't say I have a clear cut yes or no here. One possible use case for
+such pages is to read a secrets from storage directly into them. On the
+other side, DMA to/from a device can be used to exploit those secrets...
 
-The page flag won't work on 32-bit, indeed. But do we really need such
-functionality on 32-bit?
+>  - How about GUP?
 
->  * This really stops being "normal" memory.  You can't do futexes on it,
->    cant splice it.  Probably need a more fleshed-out list of
->    incompatible features.
+Do you mean GUP for "remote" memory? I'd say no.
 
-True, my bad. I should have mentioned more than THP/compaction/migration.
+>  - Can I ptrace my way into another process's secret pages?
 
->  * As Kirill noted, each 4k page ends up with a potential 1GB "blast
->    radius" of demoted pages in the direct map.  Not cool.  This is
->    probably a non-starter as it stands.
->  * The global TLB flushes are going to eat you alive.  They probably
->    border on a DoS on larger systems.
+No.
 
-As I wrote in another email, we could use some kind of pooling to reduce
-the "blast radius" and that will reduce that amount of TLB flushes as well.
-The size of the MAP_EXCLUSIVE obeys the RLIMIT_MEMLOCK and we can add a
-system-wide limit for size of such allocations.
+>  - What if I splice() the page into a pipe?
 
->  * Do we really want this user interface to dictate the kernel
->    implementation?  In other words, do we really want MAP_EXCLUSIVE,
->    or do we want MAP_SECRET?  One tells the kernel what do *do*, the
->    other tells the kernel what the memory *IS*.
-
-I hesitated quite some time between EXCLUSIVE and SECRET. I've settled down
-on EXCLUSIVE because in my view that better describes the fact that the
-region is only mapped in its owner address space. And as such it can be
-used to store secrets, but it can be used for other purposes as well.
-
->  * There's a lot of other stuff going on in this area: XPFO, SEV, MKTME,
->    Persistent Memory, where the kernel direct map is a liability in some
->    way.  We probably need some kind of overall, architected solution
->    rather than five or ten things all poking at the direct map.
-
-Agree.
- 
+I think it should fail.
 
 -- 
 Sincerely yours,
