@@ -1,7 +1,7 @@
 From: Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH 3/4] f2fs: support STATX_ATTR_VERITY
-Date: Tue, 29 Oct 2019 13:41:40 -0700
-Message-ID: <20191029204141.145309-4-ebiggers@kernel.org>
+Subject: [PATCH 4/4] docs: fs-verity: mention statx() support
+Date: Tue, 29 Oct 2019 13:41:41 -0700
+Message-ID: <20191029204141.145309-5-ebiggers@kernel.org>
 References: <20191029204141.145309-1-ebiggers@kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
@@ -22,33 +22,32 @@ List-Id: linux-api@vger.kernel.org
 
 From: Eric Biggers <ebiggers@google.com>
 
-Set the STATX_ATTR_VERITY bit when the statx() system call is used on a
-verity file on f2fs.
+Document that the statx() system call can now be used to check whether a
+file is a verity file.
 
 Signed-off-by: Eric Biggers <ebiggers@google.com>
 ---
- fs/f2fs/file.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ Documentation/filesystems/fsverity.rst | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-diff --git a/fs/f2fs/file.c b/fs/f2fs/file.c
-index 29bc0a542759a2..6a2e5b7d8fc74c 100644
---- a/fs/f2fs/file.c
-+++ b/fs/f2fs/file.c
-@@ -726,11 +726,14 @@ int f2fs_getattr(const struct path *path, struct kstat *stat,
- 		stat->attributes |= STATX_ATTR_IMMUTABLE;
- 	if (flags & F2FS_NODUMP_FL)
- 		stat->attributes |= STATX_ATTR_NODUMP;
-+	if (IS_VERITY(inode))
-+		stat->attributes |= STATX_ATTR_VERITY;
+diff --git a/Documentation/filesystems/fsverity.rst b/Documentation/filesystems/fsverity.rst
+index 42a0b6dd9e0b68..3355377a24398d 100644
+--- a/Documentation/filesystems/fsverity.rst
++++ b/Documentation/filesystems/fsverity.rst
+@@ -226,6 +226,14 @@ To do so, check for FS_VERITY_FL (0x00100000) in the returned flags.
+ The verity flag is not settable via FS_IOC_SETFLAGS.  You must use
+ FS_IOC_ENABLE_VERITY instead, since parameters must be provided.
  
- 	stat->attributes_mask |= (STATX_ATTR_APPEND |
- 				  STATX_ATTR_ENCRYPTED |
- 				  STATX_ATTR_IMMUTABLE |
--				  STATX_ATTR_NODUMP);
-+				  STATX_ATTR_NODUMP |
-+				  STATX_ATTR_VERITY);
- 
- 	generic_fillattr(inode, stat);
++statx
++-----
++
++Since Linux v5.5, the statx() system call sets STATX_ATTR_VERITY if
++the file has fs-verity enabled.  This can perform better than
++FS_IOC_GETFLAGS and FS_IOC_MEASURE_VERITY because it doesn't require
++opening the file, and opening verity files can be expensive.
++
+ Accessing verity files
+ ======================
  
 -- 
 2.24.0.rc1.363.gb1bccd3e3d-goog
