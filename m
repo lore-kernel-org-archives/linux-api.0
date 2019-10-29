@@ -1,49 +1,55 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH RFC] mm: add MAP_EXCLUSIVE to create exclusive user
- mappings
-Date: Mon, 28 Oct 2019 22:00:52 +0100
-Message-ID: <20191028210052.GM4643@worktop.programming.kicks-ass.net>
+From: Dan Williams <dan.j.williams@intel.com>
+Subject: Re: [PATCH RFC] mm: add MAP_EXCLUSIVE to create exclusive user mappings
+Date: Mon, 28 Oct 2019 22:43:51 -0700
+Message-ID: <CAA9_cmd7f2y2AAT6646S=tco3yfyLgCAC4Qp=1iTQaJqrQcOwQ@mail.gmail.com>
 References: <1572171452-7958-1-git-send-email-rppt@kernel.org>
- <1572171452-7958-2-git-send-email-rppt@kernel.org>
- <20191028123124.ogkk5ogjlamvwc2s@box>
- <20191028130018.GA7192@rapoport-lnx>
- <20191028131623.zwuwguhm4v4s5imh@box>
- <20191028135521.GB4097@hirez.programming.kicks-ass.net>
- <0a35765f7412937c1775daa05177b20113760aee.camel@intel.com>
+ <1572171452-7958-2-git-send-email-rppt@kernel.org> <20191028123124.ogkk5ogjlamvwc2s@box>
+ <20191028130018.GA7192@rapoport-lnx> <20191028131623.zwuwguhm4v4s5imh@box>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <0a35765f7412937c1775daa05177b20113760aee.camel@intel.com>
+In-Reply-To: <20191028131623.zwuwguhm4v4s5imh@box>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Edgecombe, Rick P" <rick.p.edgecombe@intel.com>
-Cc: "kirill@shutemov.name" <kirill@shutemov.name>, "adobriyan@gmail.com" <adobriyan@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "rppt@kernel.org" <rppt@kernel.org>, "rostedt@goodmis.org" <rostedt@goodmis.org>, "jejb@linux.ibm.com" <jejb@linux.ibm.com>, "tglx@linutronix.de" <tglx@linutronix.de>, "linux-mm@kvack.org" <linux-mm@kvack.org>, "dave.hansen@linux.intel.com" <dave.hansen@linux.intel.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "x86@kernel.org" <x86@kernel.org>, "akpm@linux-foundation.org" <akpm@linux-foundation.org>, "hpa@zytor.com" <hpa@zytor.com>, "mingo@redhat.com" <mingo@redhat.com>, "luto@kernel.org" <luto@kernel.org>, "rppt@linux.ibm.com" <rppt@linux.ibm.com>, "bp@alien8.de" <bp@alien8.de>, arnd@arn
+To: "Kirill A. Shutemov" <kirill@shutemov.name>
+Cc: Mike Rapoport <rppt@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>, James Bottomley <jejb@linux.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Linux API <linux-api@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, the arch/x86 maintainers <x86@kernel.org>, Mike Rapoport <rppt@linux.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 28, 2019 at 07:59:25PM +0000, Edgecombe, Rick P wrote:
-> On Mon, 2019-10-28 at 14:55 +0100, Peter Zijlstra wrote:
-> > On Mon, Oct 28, 2019 at 04:16:23PM +0300, Kirill A. Shutemov wrote:
-> > 
-> > > I think active use of this feature will lead to performance degradation of
-> > > the system with time.
-> > > 
-> > > Setting a single 4k page non-present in the direct mapping will require
-> > > splitting 2M or 1G page we usually map direct mapping with. And it's one
-> > > way road. We don't have any mechanism to map the memory with huge page
-> > > again after the application has freed the page.
-> > 
-> > Right, we recently had a 'bug' where ftrace triggered something like
-> > this and facebook ran into it as a performance regression. So yes, this
-> > is a real concern.
-> 
-> Don't e/cBPF filters also break the direct map down to 4k pages when calling
-> set_memory_ro() on the filter for 64 bit x86 and arm?
-> 
-> I've been wondering if the page allocator should make some effort to find a
-> broken down page for anything that can be known will have direct map permissions
-> changed (or if it already groups them somehow). But also, why any potential
-> slowdown of 4k pages on the direct map hasn't been noticed for apps that do a
-> lot of insertions and removals of BPF filters, if this is indeed the case.
+On Mon, Oct 28, 2019 at 6:16 AM Kirill A. Shutemov <kirill@shutemov.name> wrote:
+>
+> On Mon, Oct 28, 2019 at 02:00:19PM +0100, Mike Rapoport wrote:
+> > On Mon, Oct 28, 2019 at 03:31:24PM +0300, Kirill A. Shutemov wrote:
+> > > On Sun, Oct 27, 2019 at 12:17:32PM +0200, Mike Rapoport wrote:
+> > > > From: Mike Rapoport <rppt@linux.ibm.com>
+> > > >
+> > > > The mappings created with MAP_EXCLUSIVE are visible only in the context of
+> > > > the owning process and can be used by applications to store secret
+> > > > information that will not be visible not only to other processes but to the
+> > > > kernel as well.
+> > > >
+> > > > The pages in these mappings are removed from the kernel direct map and
+> > > > marked with PG_user_exclusive flag. When the exclusive area is unmapped,
+> > > > the pages are mapped back into the direct map.
+> > >
+> > > I probably blind, but I don't see where you manipulate direct map...
+> >
+> > __get_user_pages() calls __set_page_user_exclusive() which in turn calls
+> > set_direct_map_invalid_noflush() that makes the page not present.
+>
+> Ah. okay.
+>
+> I think active use of this feature will lead to performance degradation of
+> the system with time.
+>
+> Setting a single 4k page non-present in the direct mapping will require
+> splitting 2M or 1G page we usually map direct mapping with. And it's one
+> way road. We don't have any mechanism to map the memory with huge page
+> again after the application has freed the page.
+>
+> It might be okay if all these pages cluster together, but I don't think we
+> have a way to achieve it easily.
 
-That should be limited to the module range. Random data maps could
-shatter the world.
+Still, it would be worth exploring what that would look like if not
+for MAP_EXCLUSIVE then set_mce_nospec() that wants to punch out poison
+pages from the direct map. In the case of pmem, where those pages are
+able to be repaired, it would be nice to also repair the mapping
+granularity of the direct map.
