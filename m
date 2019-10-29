@@ -1,78 +1,52 @@
-From: Christian Brauner <christian.brauner@ubuntu.com>
-Subject: Re: For review: documentation of clone3() system call
-Date: Tue, 29 Oct 2019 12:27:07 +0100
-Message-ID: <20191029112706.p5dd5yzpcgouo6n5@wittgenstein>
-References: <CAKgNAkjo2WHq+zESU1iuCHJJ0x-fTNrakS9-d1+BjzUuV2uf2Q@mail.gmail.com>
- <CAG48ez3q=BeNcuVTKBN79kJui4vC6nw0Bfq6xc-i0neheT17TA@mail.gmail.com>
- <20191028172143.4vnnjpdljfnexaq5@wittgenstein>
- <CAG48ez20hn8vToY+=C62nA-rbUfxh=JD6N-f7XVS3_GZOoPjxw@mail.gmail.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: AMD TLB errata, (Was: [PATCH RFC] mm: add MAP_EXCLUSIVE to create
+ exclusive user mappings)
+Date: Tue, 29 Oct 2019 13:39:49 +0100
+Message-ID: <20191029123949.GL4114@hirez.programming.kicks-ass.net>
+References: <1572171452-7958-1-git-send-email-rppt@kernel.org>
+ <1572171452-7958-2-git-send-email-rppt@kernel.org>
+ <20191028123124.ogkk5ogjlamvwc2s@box>
+ <20191028130018.GA7192@rapoport-lnx>
+ <20191028131623.zwuwguhm4v4s5imh@box>
+ <CAA9_cmd7f2y2AAT6646S=tco3yfyLgCAC4Qp=1iTQaJqrQcOwQ@mail.gmail.com>
+ <20191029064318.s4n4gidlfjun3d47@box>
+ <20191029085602.GI4114@hirez.programming.kicks-ass.net>
+ <20191029110024.yjytp22lhd2vekrv@box>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAG48ez20hn8vToY+=C62nA-rbUfxh=JD6N-f7XVS3_GZOoPjxw@mail.gmail.com>
+In-Reply-To: <20191029110024.yjytp22lhd2vekrv@box>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: Michael Kerrisk-manpages <mtk.manpages@gmail.com>, lkml <linux-kernel@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Florian Weimer <fweimer@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@gmail.com>, Linux API <linux-api@vger.kernel.org>
+To: "Kirill A. Shutemov" <kirill@shutemov.name>
+Cc: Dan Williams <dan.j.williams@intel.com>, Mike Rapoport <rppt@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>, James Bottomley <jejb@linux.ibm.com>, Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Linux API <linux-api@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, the arch/x86 maintainers <x86@kernel.org>, Mike Rapoport <rppt@linux.ibm.com>, thomas.lendacky@amd.com
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Oct 28, 2019 at 08:09:13PM +0100, Jann Horn wrote:
-> On Mon, Oct 28, 2019 at 6:21 PM Christian Brauner
-> <christian.brauner@ubuntu.com> wrote:
-> > On Mon, Oct 28, 2019 at 04:12:09PM +0100, Jann Horn wrote:
-> > > On Fri, Oct 25, 2019 at 6:59 PM Michael Kerrisk (man-pages)
-> > > <mtk.manpages@gmail.com> wrote:
-> > > > I've made a first shot at adding documentation for clone3(). You can
-> > > > see the diff here:
-> > > > https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/commit/?id=faa0e55ae9e490d71c826546bbdef954a1800969
-> [...]
-> > > You might want to note somewhere that its flags can't be
-> > > seccomp-filtered because they're stored in memory, making it
-> > > inappropriate to use in heavily sandboxed processes.
-> >
-> > Hm, I don't think that belongs on the clone manpage. Granted that
-> > process creation is an important syscall but so are a bunch of others
-> > that aren't filterable because of pointer arguments.
-> > We can probably mention on the seccomp manpage that seccomp can't filter
-> > on pointer arguments and then provide a list of examples. If you setup a
-> > seccomp filter and don't know that you can't filter syscalls with
-> > pointer args that seems pretty bad to begin with.
+On Tue, Oct 29, 2019 at 02:00:24PM +0300, Kirill A. Shutemov wrote:
+> On Tue, Oct 29, 2019 at 09:56:02AM +0100, Peter Zijlstra wrote:
+> > On Tue, Oct 29, 2019 at 09:43:18AM +0300, Kirill A. Shutemov wrote:
+> > > But some CPUs don't like to have two TLB entries for the same memory with
+> > > different sizes at the same time. See for instance AMD erratum 383.
+> > > 
+> > > Getting it right would require making the range not present, flush TLB and
+> > > only then install huge page. That's what we do for userspace.
+> > > 
+> > > It will not fly for the direct mapping. There is no reasonable way to
+> > > exclude other CPU from accessing the range while it's not present (call
+> > > stop_machine()? :P). Moreover, the range may contain the code that doing
+> > > the collapse or data required for it...
+> > > 
+> > > BTW, looks like current __split_large_page() in pageattr.c is susceptible
+> > > to the errata. Maybe we can get away with the easy way...
+> > 
+> > As you write above, there is just no way we can have a (temporary) hole
+> > in the direct map.
+> > 
+> > We are careful about that other errata, and make sure both translations
+> > are identical wrt everything else.
 > 
-> Fair enough.
-> 
-> [...]
-> > One thing I never liked about clone() was that userspace had to know
-> > about stack direction. And there is a lot of ugly code in userspace that
-> > has nasty clone() wrappers like:
-> [...]
-> > where stack + stack_size is addition on a void pointer which usually
-> > clang and gcc are not very happy about.
-> > I wanted to bring this up on the mailing list soon: If possible, I don't
-> > want userspace to need to know about stack direction and just have stack
-> > point to the beginning and then have the kernel do the + stack_size
-> > after the copy_clone_args_from_user() if the arch needs it. For example,
-> > by having a dumb helder similar to copy_thread_tls()/coyp_thread() that
-> > either does the + stack_size or not. Right now, clone3() is supported on
-> > parisc and afaict, the stack grows upwards for it. I'm not sure if there
-> > are obvious reasons why that won't work or it would be a bad idea...
-> 
-> That would mean adding a new clone flag that redefines how those
-> parameters work and describing the current behavior in the manpage as
-> the behavior without the flag (which doesn't exist on 5.3), right?
+> It's not clear if it is enough to avoid the issue. "under a highly specific
+> and detailed set of conditions" is not very specific set of conditions :P
 
-I would break API and if someone reports breakage we'll revert and go
-the more complicated route you outlined (see [1]).
-But I don't think it will a big deal. First, we haven't documented how
-stack needs to be passed so who knows what people currently do. Second,
-clone3() has not been out for a long time and currently does _not_
-provide features that legacy clone() does not provide apart from a
-cleaner interface. So userspace has no incentive to use clone3() over
-clone() right now. That'll change latest with v5.5 where we have new
-features on top of clone3() (CLONE_CLEAR_SIGHAND). So let's just try and
-fix it.
-
-[1]: This is basically what Linus has repeatedly said: it's not about
-     never breaking api in principle but rather about whether this
-     breaks someones usecase. And if it does break, we need to revert.
-
-Christian
+Yeah, I know ... :/ Tom is there any chance you could shed a little more
+light on that errata?
