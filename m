@@ -1,154 +1,55 @@
-From: Omar Sandoval <osandov@osandov.com>
-Subject: Re: [RFC PATCH v2 2/5] fs: add RWF_ENCODED for reading/writing
- compressed data
-Date: Wed, 30 Oct 2019 15:26:01 -0700
-Message-ID: <20191030222601.GE326591@vader>
-References: <cover.1571164762.git.osandov@fb.com>
- <7f98cf5409cf2b583cd5b3451fc739fd3428873b.1571164762.git.osandov@fb.com>
- <20191021182806.GA6706@magnolia>
- <20191021183831.mbe4q2beqo76fqxm@yavin.dot.cyphar.com>
- <20191021190010.GC6726@magnolia>
- <20191022020215.csdwgi3ky27rfidf@yavin.dot.cyphar.com>
+From: Rasmus Villemoes <linux@rasmusvillemoes.dk>
+Subject: Re: [RFC PATCH 04/10] pipe: Use head and tail pointers for the ring,
+ not cursor and length [ver #2]
+Date: Wed, 30 Oct 2019 23:38:38 +0100
+Message-ID: <d08d13d9-8eee-9c1e-2f8d-e846063882d7@rasmusvillemoes.dk>
+References: <157186182463.3995.13922458878706311997.stgit@warthog.procyon.org.uk>
+ <157186186167.3995.7568100174393739543.stgit@warthog.procyon.org.uk>
+ <CAOi1vP97DMX8zweOLfBDOFstrjC78=6RgxK3PPj_mehCOSeoaw@mail.gmail.com>
+ <4892d186-8eb0-a282-e7e6-e79958431a54@rasmusvillemoes.dk>
+ <CAOi1vP9paV2-2_S0NgfbZDE6+5kqHXVc9xabHVC-2Ss1MmXkCg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-btrfs-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20191022020215.csdwgi3ky27rfidf@yavin.dot.cyphar.com>
-Sender: linux-btrfs-owner@vger.kernel.org
-To: Aleksa Sarai <cyphar@cyphar.com>
-Cc: "Darrick J. Wong" <darrick.wong@oracle.com>, linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org, Dave Chinner <david@fromorbit.com>, Jann Horn <jannh@google.com>, linux-api@vger.kernel.org, kernel-team@fb.com
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAOi1vP9paV2-2_S0NgfbZDE6+5kqHXVc9xabHVC-2Ss1MmXkCg@mail.gmail.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ilya Dryomov <idryomov@gmail.com>
+Cc: David Howells <dhowells@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, linux-security-module@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 22, 2019 at 01:02:15PM +1100, Aleksa Sarai wrote:
-> On 2019-10-21, Darrick J. Wong <darrick.wong@oracle.com> wrote:
-> > On Tue, Oct 22, 2019 at 05:38:31AM +1100, Aleksa Sarai wrote:
-> > > On 2019-10-21, Darrick J. Wong <darrick.wong@oracle.com> wrote:
-> > > > On Tue, Oct 15, 2019 at 11:42:40AM -0700, Omar Sandoval wrote:
-> > > > > From: Omar Sandoval <osandov@fb.com>
-> > > > > 
-> > > > > Btrfs supports transparent compression: data written by the user can be
-> > > > > compressed when written to disk and decompressed when read back.
-> > > > > However, we'd like to add an interface to write pre-compressed data
-> > > > > directly to the filesystem, and the matching interface to read
-> > > > > compressed data without decompressing it. This adds support for
-> > > > > so-called "encoded I/O" via preadv2() and pwritev2().
-> > > > > 
-> > > > > A new RWF_ENCODED flags indicates that a read or write is "encoded". If
-> > > > > this flag is set, iov[0].iov_base points to a struct encoded_iov which
-> > > > > is used for metadata: namely, the compression algorithm, unencoded
-> > > > > (i.e., decompressed) length, and what subrange of the unencoded data
-> > > > > should be used (needed for truncated or hole-punched extents and when
-> > > > > reading in the middle of an extent). For reads, the filesystem returns
-> > > > > this information; for writes, the caller provides it to the filesystem.
-> > > > > iov[0].iov_len must be set to sizeof(struct encoded_iov), which can be
-> > > > > used to extend the interface in the future. The remaining iovecs contain
-> > > > > the encoded extent.
-> > > > > 
-> > > > > Filesystems must indicate that they support encoded writes by setting
-> > > > > FMODE_ENCODED_IO in ->file_open().
-> > > > > 
-> > > > > Signed-off-by: Omar Sandoval <osandov@fb.com>
-> > > > > ---
-> > > > >  include/linux/fs.h      | 14 +++++++
-> > > > >  include/uapi/linux/fs.h | 26 ++++++++++++-
-> > > > >  mm/filemap.c            | 82 ++++++++++++++++++++++++++++++++++-------
-> > > > >  3 files changed, 108 insertions(+), 14 deletions(-)
-> > > > > 
-> > > > > diff --git a/include/linux/fs.h b/include/linux/fs.h
-> > > > > index e0d909d35763..54681f21e05e 100644
-> > > > > --- a/include/linux/fs.h
-> > > > > +++ b/include/linux/fs.h
-> > > > > @@ -175,6 +175,9 @@ typedef int (dio_iodone_t)(struct kiocb *iocb, loff_t offset,
-> > > > >  /* File does not contribute to nr_files count */
-> > > > >  #define FMODE_NOACCOUNT		((__force fmode_t)0x20000000)
-> > > > >  
-> > > > > +/* File supports encoded IO */
-> > > > > +#define FMODE_ENCODED_IO	((__force fmode_t)0x40000000)
-> > > > > +
-> > > > >  /*
-> > > > >   * Flag for rw_copy_check_uvector and compat_rw_copy_check_uvector
-> > > > >   * that indicates that they should check the contents of the iovec are
-> > > > > @@ -314,6 +317,7 @@ enum rw_hint {
-> > > > >  #define IOCB_SYNC		(1 << 5)
-> > > > >  #define IOCB_WRITE		(1 << 6)
-> > > > >  #define IOCB_NOWAIT		(1 << 7)
-> > > > > +#define IOCB_ENCODED		(1 << 8)
-> > > > >  
-> > > > >  struct kiocb {
-> > > > >  	struct file		*ki_filp;
-> > > > > @@ -3088,6 +3092,11 @@ extern int sb_min_blocksize(struct super_block *, int);
-> > > > >  extern int generic_file_mmap(struct file *, struct vm_area_struct *);
-> > > > >  extern int generic_file_readonly_mmap(struct file *, struct vm_area_struct *);
-> > > > >  extern ssize_t generic_write_checks(struct kiocb *, struct iov_iter *);
-> > > > > +struct encoded_iov;
-> > > > > +extern int generic_encoded_write_checks(struct kiocb *, struct encoded_iov *);
-> > > > > +extern ssize_t check_encoded_read(struct kiocb *, struct iov_iter *);
-> > > > > +extern int import_encoded_write(struct kiocb *, struct encoded_iov *,
-> > > > > +				struct iov_iter *);
-> > > > >  extern int generic_remap_checks(struct file *file_in, loff_t pos_in,
-> > > > >  				struct file *file_out, loff_t pos_out,
-> > > > >  				loff_t *count, unsigned int remap_flags);
-> > > > > @@ -3403,6 +3412,11 @@ static inline int kiocb_set_rw_flags(struct kiocb *ki, rwf_t flags)
-> > > > >  			return -EOPNOTSUPP;
-> > > > >  		ki->ki_flags |= IOCB_NOWAIT;
-> > > > >  	}
-> > > > > +	if (flags & RWF_ENCODED) {
-> > > > > +		if (!(ki->ki_filp->f_mode & FMODE_ENCODED_IO))
-> > > > > +			return -EOPNOTSUPP;
-> > > > > +		ki->ki_flags |= IOCB_ENCODED;
-> > > > > +	}
-> > > > >  	if (flags & RWF_HIPRI)
-> > > > >  		ki->ki_flags |= IOCB_HIPRI;
-> > > > >  	if (flags & RWF_DSYNC)
-> > > > > diff --git a/include/uapi/linux/fs.h b/include/uapi/linux/fs.h
-> > > > > index 379a612f8f1d..ed92a8a257cb 100644
-> > > > > --- a/include/uapi/linux/fs.h
-> > > > > +++ b/include/uapi/linux/fs.h
-> > > > > @@ -284,6 +284,27 @@ struct fsxattr {
-> > > > >  
-> > > > >  typedef int __bitwise __kernel_rwf_t;
-> > > > >  
-> > > > > +enum {
-> > > > > +	ENCODED_IOV_COMPRESSION_NONE,
-> > > > > +	ENCODED_IOV_COMPRESSION_ZLIB,
-> > > > > +	ENCODED_IOV_COMPRESSION_LZO,
-> > > > > +	ENCODED_IOV_COMPRESSION_ZSTD,
-> > > > > +	ENCODED_IOV_COMPRESSION_TYPES = ENCODED_IOV_COMPRESSION_ZSTD,
-> > > > > +};
-> > > > > +
-> > > > > +enum {
-> > > > > +	ENCODED_IOV_ENCRYPTION_NONE,
-> > > > > +	ENCODED_IOV_ENCRYPTION_TYPES = ENCODED_IOV_ENCRYPTION_NONE,
-> > > > > +};
-> > > > > +
-> > > > > +struct encoded_iov {
-> > > > > +	__u64 len;
-> > > > > +	__u64 unencoded_len;
-> > > > > +	__u64 unencoded_offset;
-> > > > > +	__u32 compression;
-> > > > > +	__u32 encryption;
-> > > > 
-> > > > Can we add some must-be-zero padding space at the end here for whomever
-> > > > comes along next wanting to add more encoding info?
-> > > 
-> > > I would suggest to copy the extension design of copy_struct_from_user().
-> > > Adding must-be-zero padding is a less-ideal solution to the extension
-> > > problem than length-based extension.
-> > 
-> > Come to think of it, you /do/ have to specify iov_len so... yeah, do
-> > that instead; we can always extend the structure later.
+On 30/10/2019 23.16, Ilya Dryomov wrote:
+> On Wed, Oct 30, 2019 at 9:35 PM Rasmus Villemoes
+> <linux@rasmusvillemoes.dk> wrote:
+>>
+>> On 30/10/2019 17.19, Ilya Dryomov wrote:
+>>> On Thu, Oct 24, 2019 at 11:49 AM David Howells <dhowells@redhat.com> wrote:
+>>>>  /*
+>>>> - * We use a start+len construction, which provides full use of the
+>>>> - * allocated memory.
+>>>> - * -- Florian Coosmann (FGC)
+>>>> - *
+>>>> + * We use head and tail indices that aren't masked off, except at the point of
+>>>> + * dereference, but rather they're allowed to wrap naturally.  This means there
+>>>> + * isn't a dead spot in the buffer, provided the ring size < INT_MAX.
+>>>> + * -- David Howells 2019-09-23.
+>>>
+>>> Hi David,
+>>>
+>>> Is "ring size < INT_MAX" constraint correct?
+>>
+>> No. As long as one always uses a[idx % size] to access the array, the
+>> only requirement is that size is representable in an unsigned int. Then
+>> because one also wants to do the % using simple bitmasking, that further
+>> restricts one to sizes that are a power of 2, so the end result is that
+>> the max size is 2^31 (aka INT_MAX+1).
 > 
-> Just to clarify -- if we want to make the interface forward-compatible
-> from the outset (programs built 4 years from now running on 5.5), we
-> will need to implement this in the original merge. Otherwise userspace
-> will need to handle backwards-compatibility themselves once new features
-> are added.
-> 
-> @Omar: If it'd make your life easier, I can send some draft patches
-> 	   which port copy_struct_from_user() to iovec-land.
+> I think the fact that indices are free running and wrap at a power of
+> two already restricts you to sizes the are a power of two,
 
-You're right, I didn't think about the case of newer programs on older
-kernels. I can do that for the next submission. RWF_ENCODED should
-probably translate the E2BIG from copy_struct_from_user() to EINVAL,
-though, to avoid ambiguity with the case that the buffer wasn't big
-enough to return the encoded data.
+Ah, yes, of course. When reducing indices mod n that may already have
+been implicitly reduced mod N, N must be a multiple of n for the result
+to be well-defined.
+
+Rasmus
