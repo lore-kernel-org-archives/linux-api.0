@@ -1,56 +1,144 @@
-From: Rasmus Villemoes <linux@rasmusvillemoes.dk>
-Subject: Re: [RFC PATCH 04/10] pipe: Use head and tail pointers for the ring,
- not cursor and length [ver #2]
-Date: Wed, 30 Oct 2019 21:35:09 +0100
-Message-ID: <4892d186-8eb0-a282-e7e6-e79958431a54@rasmusvillemoes.dk>
-References: <157186182463.3995.13922458878706311997.stgit@warthog.procyon.org.uk>
- <157186186167.3995.7568100174393739543.stgit@warthog.procyon.org.uk>
- <CAOi1vP97DMX8zweOLfBDOFstrjC78=6RgxK3PPj_mehCOSeoaw@mail.gmail.com>
+From: Andy Lutomirski <luto@kernel.org>
+Subject: Re: [PATCH RFC] mm: add MAP_EXCLUSIVE to create exclusive user mappings
+Date: Wed, 30 Oct 2019 14:28:21 -0700
+Message-ID: <CALCETrXajrY+0SmzkL7t++ndYwRoYLLE9VPKwSGSyW8HZx-TeA@mail.gmail.com>
+References: <1572171452-7958-1-git-send-email-rppt@kernel.org>
+ <CA5C22D9-BC3E-4B69-8DD9-4D3B75E40BD5@amacapital.net> <20191029093254.GE18773@rapoport-lnx>
+ <CALCETrUuuc4DS0cdMBtS550Wkp0x9ND3M3SgtaMgyRROnDR5Kg@mail.gmail.com> <20191030084005.GC20624@rapoport-lnx>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAOi1vP97DMX8zweOLfBDOFstrjC78=6RgxK3PPj_mehCOSeoaw@mail.gmail.com>
-Content-Language: en-US
+In-Reply-To: <20191030084005.GC20624@rapoport-lnx>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Ilya Dryomov <idryomov@gmail.com>, David Howells <dhowells@redhat.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, linux-security-module@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
+To: Mike Rapoport <rppt@kernel.org>
+Cc: Andy Lutomirski <luto@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>, James Bottomley <jejb@linux.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Linux API <linux-api@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, X86 ML <x86@kernel.org>, Mike Rapoport <rppt@linux.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-On 30/10/2019 17.19, Ilya Dryomov wrote:
-> On Thu, Oct 24, 2019 at 11:49 AM David Howells <dhowells@redhat.com> wrote:
->>  /*
->> - * We use a start+len construction, which provides full use of the
->> - * allocated memory.
->> - * -- Florian Coosmann (FGC)
->> - *
->> + * We use head and tail indices that aren't masked off, except at the point of
->> + * dereference, but rather they're allowed to wrap naturally.  This means there
->> + * isn't a dead spot in the buffer, provided the ring size < INT_MAX.
->> + * -- David Howells 2019-09-23.
-> 
-> Hi David,
-> 
-> Is "ring size < INT_MAX" constraint correct?
+On Wed, Oct 30, 2019 at 1:40 AM Mike Rapoport <rppt@kernel.org> wrote:
+>
+> On Tue, Oct 29, 2019 at 10:00:55AM -0700, Andy Lutomirski wrote:
+> > On Tue, Oct 29, 2019 at 2:33 AM Mike Rapoport <rppt@kernel.org> wrote:
+> > >
+> > > On Mon, Oct 28, 2019 at 02:44:23PM -0600, Andy Lutomirski wrote:
+> > > >
+> > > > > On Oct 27, 2019, at 4:17 AM, Mike Rapoport <rppt@kernel.org> wrot=
+e:
+> > > > >
+> > > > > =EF=BB=BFFrom: Mike Rapoport <rppt@linux.ibm.com>
+> > > > >
+> > > > > Hi,
+> > > > >
+> > > > > The patch below aims to allow applications to create mappins that=
+ have
+> > > > > pages visible only to the owning process. Such mappings could be =
+used to
+> > > > > store secrets so that these secrets are not visible neither to ot=
+her
+> > > > > processes nor to the kernel.
+> > > > >
+> > > > > I've only tested the basic functionality, the changes should be v=
+erified
+> > > > > against THP/migration/compaction. Yet, I'd appreciate early feedb=
+ack.
+> > > >
+> > > > I=E2=80=99ve contemplated the concept a fair amount, and I think yo=
+u should
+> > > > consider a change to the API. In particular, rather than having it =
+be a
+> > > > MAP_ flag, make it a chardev.  You can, at least at first, allow on=
+ly
+> > > > MAP_SHARED, and admins can decide who gets to use it.  It might als=
+o play
+> > > > better with the VM overall, and you won=E2=80=99t need a VM_ flag f=
+or it =E2=80=94 you
+> > > > can just wire up .fault to do the right thing.
+> > >
+> > > I think mmap()/mprotect()/madvise() are the natural APIs for such
+> > > interface.
+> >
+> > Then you have a whole bunch of questions to answer.  For example:
+> >
+> > What happens if you mprotect() or similar when the mapping is already
+> > in use in a way that's incompatible with MAP_EXCLUSIVE?
+>
+> Then we refuse to mprotect()? Like in any other case when vm_flags are no=
+t
+> compatible with required madvise()/mprotect() operation.
+>
 
-No. As long as one always uses a[idx % size] to access the array, the
-only requirement is that size is representable in an unsigned int. Then
-because one also wants to do the % using simple bitmasking, that further
-restricts one to sizes that are a power of 2, so the end result is that
-the max size is 2^31 (aka INT_MAX+1).
+I'm not talking about flags.  I'm talking about the case where one
+thread (or RDMA or whatever) has get_user_pages()'d a mapping and
+another thread mprotect()s it MAP_EXCLUSIVE.
 
-> I've never had to implement this free running indices scheme, but
-> the way I've always visualized it is that the top bit of the index is
-> used as a lap (as in a race) indicator, leaving 31 bits to work with
-> (in case of unsigned ints).  Should that be
-> 
->   ring size <= 2^31
-> 
-> or more precisely
-> 
->   ring size is a power of two <= 2^31
+> > Is it actually reasonable to malloc() some memory and then make it excl=
+usive?
+> >
+> > Are you permitted to map a file MAP_EXCLUSIVE?  What does it mean?
+>
+> I'd limit MAP_EXCLUSIVE only to anonymous memory.
+>
+> > What does MAP_PRIVATE | MAP_EXCLUSIVE do?
+>
+> My preference is to have only mmap() and then the semantics is more clear=
+:
+>
+> MAP_PRIVATE | MAP_EXCLUSIVE creates a pre-populated region, marks it lock=
+ed
+> and drops the pages in this region from the direct map.
+> The pages are returned back on munmap().
+> Then there is no way to change an existing area to be exclusive or vice
+> versa.
 
-Exactly. But it's kind of moot since the ring size would never be
-allowed to grow anywhere near that.
+And what happens if you fork()?  Limiting it to MAP_SHARED |
+MAP_EXCLUSIVE would about this particular nasty question.
 
-Rasmus
+>
+> > How does one pass exclusive memory via SCM_RIGHTS?  (If it's a
+> > memfd-like or chardev interface, it's trivial.  mmap(), not so much.)
+>
+> Why passing such memory via SCM_RIGHTS would be useful?
+
+Suppose I want to put a secret into exclusive memory and then send
+that secret to some other process.  The obvious approach would be to
+SCM_RIGHTS an fd over, but you can't do that with MAP_EXCLUSIVE as
+you've defined it.  In general, there are lots of use cases for memfd
+and other fd-backed memory.
+
+>
+> > And finally, there's my personal giant pet peeve: a major use of this
+> > will be for virtualization.  I suspect that a lot of people would like
+> > the majority of KVM guest memory to be unmapped from the host
+> > pagetables.  But people might also like for guest memory to be
+> > unmapped in *QEMU's* pagetables, and mmap() is a basically worthless
+> > interface for this.  Getting fd-backed memory into a guest will take
+> > some possibly major work in the kernel, but getting vma-backed memory
+> > into a guest without mapping it in the host user address space seems
+> > much, much worse.
+>
+> Well, in my view, the MAP_EXCLUSIVE is intended to keep small secrets
+> rather than use it for the entire guest memory. I even considered adding =
+a
+> limit for the mapping size, but then I decided that since RLIMIT_MEMLOCK =
+is
+> anyway enforced there is no need for a new one.
+>
+> I agree that getting fd-backed memory into a guest would be less pain tha=
+t
+> VMA, but KVM can already use memory outside the control of the kernel via
+> /dev/map [1].
+
+That series doesn't address the problem I'm talking about at all.  I'm
+saying that there is a legitimate use case where QEMU should *not*
+have a mapping of the memory.  So QEMU would create some exclusive
+memory using /dev/exclusive_memory and would tell KVM to map it into
+the guest without mapping it into QEMU's address space at all.
+
+(In fact, the way that SEV currently works is *functionally* like
+this, except that there's a bogus incoherent mapping in the QEMU
+process that is a giant can of worms.
+
+
+IMO a major benefit of a chardev approach is that you don't need a new
+VM_ flag and you don't need to worry about wiring it up everywhere in
+the core mm code.
