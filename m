@@ -1,86 +1,75 @@
-From: Richard Guy Briggs <rgb@redhat.com>
-Subject: Re: [PATCH ghak90 V7 20/21] audit: add capcontid to set contid
- outside init_user_ns
-Date: Wed, 30 Oct 2019 18:03:20 -0400
-Message-ID: <20191030220320.tnwkaj5gbzchcn7j@madcap2.tricolour.ca>
-References: <cover.1568834524.git.rgb@redhat.com>
- <214163d11a75126f610bcedfad67a4d89575dc77.1568834525.git.rgb@redhat.com>
- <20191019013904.uevmrzbmztsbhpnh@madcap2.tricolour.ca>
- <CAHC9VhRPygA=LsHLUqv+K=ouAiPFJ6fb2_As=OT-_zB7kGc_aQ@mail.gmail.com>
- <20191021213824.6zti5ndxu7sqs772@madcap2.tricolour.ca>
- <CAHC9VhRdNXsY4neJpSoNyJoAVEoiEc2oW5kSscF99tjmoQAxFA@mail.gmail.com>
- <20191021235734.mgcjotdqoe73e4ha@madcap2.tricolour.ca>
- <CAHC9VhSiwnY-+2awxvGeO4a0NgfVkOPd8fzzBVujp=HtjskTuQ@mail.gmail.com>
- <20191024210010.owwgc3bqbvtdsqws@madcap2.tricolour.ca>
- <CAHC9VhRDoX9du4XbCnBtBzsNPMGOsb-TKM1CC+sCL7HP=FuTRQ@mail.gmail.com>
+From: Ilya Dryomov <idryomov@gmail.com>
+Subject: Re: [RFC PATCH 04/10] pipe: Use head and tail pointers for the ring,
+ not cursor and length [ver #2]
+Date: Wed, 30 Oct 2019 23:16:23 +0100
+Message-ID: <CAOi1vP9paV2-2_S0NgfbZDE6+5kqHXVc9xabHVC-2Ss1MmXkCg@mail.gmail.com>
+References: <157186182463.3995.13922458878706311997.stgit@warthog.procyon.org.uk>
+ <157186186167.3995.7568100174393739543.stgit@warthog.procyon.org.uk>
+ <CAOi1vP97DMX8zweOLfBDOFstrjC78=6RgxK3PPj_mehCOSeoaw@mail.gmail.com> <4892d186-8eb0-a282-e7e6-e79958431a54@rasmusvillemoes.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252
-Content-Transfer-Encoding: quoted-printable
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <CAHC9VhRDoX9du4XbCnBtBzsNPMGOsb-TKM1CC+sCL7HP=FuTRQ@mail.gmail.com>
-Content-Disposition: inline
-Sender: netdev-owner@vger.kernel.org
-To: Paul Moore <paul@paul-moore.com>
-Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com, Dan Walsh <dwalsh@redhat.com>, mpatel@redhat.com
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <4892d186-8eb0-a282-e7e6-e79958431a54@rasmusvillemoes.dk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Rasmus Villemoes <linux@rasmusvillemoes.dk>
+Cc: David Howells <dhowells@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, linux-security-module@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 2019-10-30 16:27, Paul Moore wrote:
-> On Thu, Oct 24, 2019 at 5:00 PM Richard Guy Briggs <rgb@redhat.com> wrote=
-:
-> > Here's the note I had from that meeting:
+On Wed, Oct 30, 2019 at 9:35 PM Rasmus Villemoes
+<linux@rasmusvillemoes.dk> wrote:
+>
+> On 30/10/2019 17.19, Ilya Dryomov wrote:
+> > On Thu, Oct 24, 2019 at 11:49 AM David Howells <dhowells@redhat.com> wrote:
+> >>  /*
+> >> - * We use a start+len construction, which provides full use of the
+> >> - * allocated memory.
+> >> - * -- Florian Coosmann (FGC)
+> >> - *
+> >> + * We use head and tail indices that aren't masked off, except at the point of
+> >> + * dereference, but rather they're allowed to wrap naturally.  This means there
+> >> + * isn't a dead spot in the buffer, provided the ring size < INT_MAX.
+> >> + * -- David Howells 2019-09-23.
 > >
-> > - Eric raised the issue that using /proc is likely to get more and more
-> >   hoary due to mount namespaces and suggested that we use a netlink
-> > audit message (or a new syscall) to set the audit container identifier
-> > and since the loginuid is a similar type of operation, that it should b=
-e
-> > migrated over to a similar mechanism to get it away from /proc.  Get
-> > could be done with a netlink audit message that triggers an audit log
-> > message to deliver the information.  I'm reluctant to further pollute
-> > the syscall space if we can find another method.  The netlink audit
-> > message makes sense since any audit-enabled service is likely to alread=
-y
-> > have an audit socket open.
->=20
-> Thanks for the background info on the off-list meeting.  I would
-> encourage you to have discussions like this on-list in the future; if
-> that isn't possible, hosting a public call would okay-ish, but a
-> distant second.
+> > Hi David,
+> >
+> > Is "ring size < INT_MAX" constraint correct?
+>
+> No. As long as one always uses a[idx % size] to access the array, the
+> only requirement is that size is representable in an unsigned int. Then
+> because one also wants to do the % using simple bitmasking, that further
+> restricts one to sizes that are a power of 2, so the end result is that
+> the max size is 2^31 (aka INT_MAX+1).
 
-I'm still trying to get Eric's attention to get him to weigh in here and
-provide a more eloquent representation of his ideas and concerns.  Some
-of it was related to CRIU(sp?) issues which we've already of which we've
-already seen similar concerns in namespace identifiers including the
-device identity to qualify it.
+I think the fact that indices are free running and wrap at a power of
+two already restricts you to sizes the are a power of two, independent
+of how you do masking.  If you switch to a[idx % size], size still has
+to be a power of two for things to work when idx wraps.  Consider:
 
-> At this point in time I'm not overly concerned about /proc completely
-> going away in namespaces/containers that are full featured enough to
-> host a container orchestrator.  If/when reliance on procfs becomes an
-> issue, we can look at alternate APIs, but given the importance of
-> /proc to userspace (including to audit) I suspect we are going to see
-> it persist for some time.  I would prefer to see you to drop the audit
-> container ID netlink API portions of this patchset and focus on the
-> procfs API.
+  size = 6
+  head = tail = 4294967292, empty buffer
 
-I've already refactored the code to put the netlink bits at the end as
-completely optional pieces for completeness so they won't get in the way
-of the real substance of this patchset.  The nesting depth and total
-number of containers checks have also been punted to the end of the
-patchset to get them out of the way of discussion.
+  push  4294967292 % 6 = 0
+  push  4294967293 % 6 = 1
+  push  4294967294 % 6 = 2
+  push  4294967295 % 6 = 3
+  push           0 % 6 = 0  <-- expected 4, overwrote a[0]
 
-> Also, for the record, removing the audit loginuid from procfs is not
-> something to take lightly, if at all; like it or not, it's part of the
-> kernel API.
+>
+> > I've never had to implement this free running indices scheme, but
+> > the way I've always visualized it is that the top bit of the index is
+> > used as a lap (as in a race) indicator, leaving 31 bits to work with
+> > (in case of unsigned ints).  Should that be
+> >
+> >   ring size <= 2^31
+> >
+> > or more precisely
+> >
+> >   ring size is a power of two <= 2^31
+>
+> Exactly. But it's kind of moot since the ring size would never be
+> allowed to grow anywhere near that.
 
-Oh, I'm quite aware of how important this change is and it was discussed
-with Steve Grubb who saw the concern and value of considering such a
-disruptive change.  Removing proc support for auid/ses would be a
-long-term deprecation if accepted.
+Thanks for confirming.  Even if it's kind of moot, I think it should be
+corrected to avoid confusion.
 
-Really, I should have labelled the v7 patchset as RFC since there were
-so many new and disruptive ideas presented in it.
-
-> paul moore
-> www.paul-moore.com
-
-- RGB
+                Ilya
