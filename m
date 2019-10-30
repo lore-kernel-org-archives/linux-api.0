@@ -1,55 +1,56 @@
-From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [PATCH ghak90 V7 14/21] audit: contid check descendancy and nesting
-Date: Wed, 30 Oct 2019 16:32:54 -0400
-Message-ID: <CAHC9VhTEpVLgKk1FpFqaXH-B1jUvfRyaGffHwFrHbi3MjbRrUA@mail.gmail.com>
-References: <cover.1568834524.git.rgb@redhat.com> <16abf1b2aafeb5f1b8dae20b9a4836e54f959ca5.1568834524.git.rgb@redhat.com>
- <CAHC9VhSRmn46DcazH4Q35vOSxVoEu8PsX79aurkHkFymRoMwag@mail.gmail.com> <20191024220814.pid5ql6kvyr4ianb@madcap2.tricolour.ca>
+From: Rasmus Villemoes <linux@rasmusvillemoes.dk>
+Subject: Re: [RFC PATCH 04/10] pipe: Use head and tail pointers for the ring,
+ not cursor and length [ver #2]
+Date: Wed, 30 Oct 2019 21:35:09 +0100
+Message-ID: <4892d186-8eb0-a282-e7e6-e79958431a54@rasmusvillemoes.dk>
+References: <157186182463.3995.13922458878706311997.stgit@warthog.procyon.org.uk>
+ <157186186167.3995.7568100174393739543.stgit@warthog.procyon.org.uk>
+ <CAOi1vP97DMX8zweOLfBDOFstrjC78=6RgxK3PPj_mehCOSeoaw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20191024220814.pid5ql6kvyr4ianb@madcap2.tricolour.ca>
-Sender: netdev-owner@vger.kernel.org
-To: Richard Guy Briggs <rgb@redhat.com>
-Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com, Dan Walsh <dwalsh@redhat.com>, mpatel@redhat.com
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAOi1vP97DMX8zweOLfBDOFstrjC78=6RgxK3PPj_mehCOSeoaw@mail.gmail.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ilya Dryomov <idryomov@gmail.com>, David Howells <dhowells@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, linux-security-module@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 24, 2019 at 6:08 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> On 2019-10-10 20:40, Paul Moore wrote:
-> > On Wed, Sep 18, 2019 at 9:26 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> > > ?fixup! audit: convert to contid list to check for orch/engine ownership
-> >
-> > ?
-> >
-> > > Require the target task to be a descendant of the container
-> > > orchestrator/engine.
-> > >
-> > > You would only change the audit container ID from one set or inherited
-> > > value to another if you were nesting containers.
-> > >
-> > > If changing the contid, the container orchestrator/engine must be a
-> > > descendant and not same orchestrator as the one that set it so it is not
-> > > possible to change the contid of another orchestrator's container.
-> >
-> > Did you mean to say that the container orchestrator must be an
-> > ancestor of the target, and the same orchestrator as the one that set
-> > the target process' audit container ID?
->
-> Not quite, the first half yes, but the second half: if it was already
-> set by that orchestrator, it can't be set again.  If it is a different
-> orchestrator that is a descendant of the orchestrator that set it, then
-> allow the action.
->
-> > Or maybe I'm missing something about what you are trying to do?
->
-> Does that help clarify it?
+On 30/10/2019 17.19, Ilya Dryomov wrote:
+> On Thu, Oct 24, 2019 at 11:49 AM David Howells <dhowells@redhat.com> wrote:
+>>  /*
+>> - * We use a start+len construction, which provides full use of the
+>> - * allocated memory.
+>> - * -- Florian Coosmann (FGC)
+>> - *
+>> + * We use head and tail indices that aren't masked off, except at the point of
+>> + * dereference, but rather they're allowed to wrap naturally.  This means there
+>> + * isn't a dead spot in the buffer, provided the ring size < INT_MAX.
+>> + * -- David Howells 2019-09-23.
+> 
+> Hi David,
+> 
+> Is "ring size < INT_MAX" constraint correct?
 
-I think so, it's pretty much as you stated originally: "Require the
-target task to be a descendant of the container orchestrator/engine".
-It's possible I misread something in the patch, or got lost in all the
-?fixup! patching.  I'll take a closer look at the next revision of the
-patchset to make sure the code makes sense to me, but the logic seems
-reasonable.
+No. As long as one always uses a[idx % size] to access the array, the
+only requirement is that size is representable in an unsigned int. Then
+because one also wants to do the % using simple bitmasking, that further
+restricts one to sizes that are a power of 2, so the end result is that
+the max size is 2^31 (aka INT_MAX+1).
 
--- 
-paul moore
-www.paul-moore.com
+> I've never had to implement this free running indices scheme, but
+> the way I've always visualized it is that the top bit of the index is
+> used as a lap (as in a race) indicator, leaving 31 bits to work with
+> (in case of unsigned ints).  Should that be
+> 
+>   ring size <= 2^31
+> 
+> or more precisely
+> 
+>   ring size is a power of two <= 2^31
+
+Exactly. But it's kind of moot since the ring size would never be
+allowed to grow anywhere near that.
+
+Rasmus
