@@ -1,55 +1,114 @@
-From: Rasmus Villemoes <linux@rasmusvillemoes.dk>
-Subject: Re: [RFC PATCH 04/10] pipe: Use head and tail pointers for the ring,
- not cursor and length [ver #2]
-Date: Wed, 30 Oct 2019 23:38:38 +0100
-Message-ID: <d08d13d9-8eee-9c1e-2f8d-e846063882d7@rasmusvillemoes.dk>
-References: <157186182463.3995.13922458878706311997.stgit@warthog.procyon.org.uk>
- <157186186167.3995.7568100174393739543.stgit@warthog.procyon.org.uk>
- <CAOi1vP97DMX8zweOLfBDOFstrjC78=6RgxK3PPj_mehCOSeoaw@mail.gmail.com>
- <4892d186-8eb0-a282-e7e6-e79958431a54@rasmusvillemoes.dk>
- <CAOi1vP9paV2-2_S0NgfbZDE6+5kqHXVc9xabHVC-2Ss1MmXkCg@mail.gmail.com>
+From: Omar Sandoval <osandov@osandov.com>
+Subject: Re: [PATCH man-pages] Document encoded I/O
+Date: Wed, 30 Oct 2019 15:46:06 -0700
+Message-ID: <20191030224606.GF326591@vader>
+References: <cover.1571164762.git.osandov@fb.com>
+ <c7e8f93596fee7bb818dc0edf29f484036be1abb.1571164851.git.osandov@fb.com>
+ <CAOQ4uxh_pZSiMmD=46Mc3o0GE+svXuoC155P_9FGJXdsE4cweg@mail.gmail.com>
+ <20191021185356.GB81648@vader>
+ <CAOQ4uxgm6MWwCDO5stUwOKKSq7Ot4-Sc96F1Evc6ra5qBE+-wA@mail.gmail.com>
+ <20191023044430.alow65tnodgnu5um@yavin.dot.cyphar.com>
+ <CAOQ4uxjyNZhyU9yEYkuMnD0o=sU1vJMOYJAzjV7FDjG45gaevg@mail.gmail.com>
+ <20191023121203.pozm2xzrbxmcqpbr@yavin.dot.cyphar.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAOi1vP9paV2-2_S0NgfbZDE6+5kqHXVc9xabHVC-2Ss1MmXkCg@mail.gmail.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ilya Dryomov <idryomov@gmail.com>
-Cc: David Howells <dhowells@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, linux-security-module@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-btrfs-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20191023121203.pozm2xzrbxmcqpbr@yavin.dot.cyphar.com>
+Sender: linux-btrfs-owner@vger.kernel.org
+To: Aleksa Sarai <cyphar@cyphar.com>
+Cc: Amir Goldstein <amir73il@gmail.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Btrfs <linux-btrfs@vger.kernel.org>, Dave Chinner <david@fromorbit.com>, Jann Horn <jannh@google.com>, Linux API <linux-api@vger.kernel.org>, kernel-team@fb.com, Theodore Tso <tytso@mit.edu>
 List-Id: linux-api@vger.kernel.org
 
-On 30/10/2019 23.16, Ilya Dryomov wrote:
-> On Wed, Oct 30, 2019 at 9:35 PM Rasmus Villemoes
-> <linux@rasmusvillemoes.dk> wrote:
->>
->> On 30/10/2019 17.19, Ilya Dryomov wrote:
->>> On Thu, Oct 24, 2019 at 11:49 AM David Howells <dhowells@redhat.com> wrote:
->>>>  /*
->>>> - * We use a start+len construction, which provides full use of the
->>>> - * allocated memory.
->>>> - * -- Florian Coosmann (FGC)
->>>> - *
->>>> + * We use head and tail indices that aren't masked off, except at the point of
->>>> + * dereference, but rather they're allowed to wrap naturally.  This means there
->>>> + * isn't a dead spot in the buffer, provided the ring size < INT_MAX.
->>>> + * -- David Howells 2019-09-23.
->>>
->>> Hi David,
->>>
->>> Is "ring size < INT_MAX" constraint correct?
->>
->> No. As long as one always uses a[idx % size] to access the array, the
->> only requirement is that size is representable in an unsigned int. Then
->> because one also wants to do the % using simple bitmasking, that further
->> restricts one to sizes that are a power of 2, so the end result is that
->> the max size is 2^31 (aka INT_MAX+1).
+On Wed, Oct 23, 2019 at 11:12:03PM +1100, Aleksa Sarai wrote:
+> On 2019-10-23, Amir Goldstein <amir73il@gmail.com> wrote:
+> > > >
+> > > > No, I see why you choose to add the flag to open(2).
+> > > > I have no objection.
+> > > >
+> > > > I once had a crazy thought how to add new open flags
+> > > > in a non racy manner without adding a new syscall,
+> > > > but as you wrote, this is not relevant for O_ALLOW_ENCODED.
+> > > >
+> > > > Something like:
+> > > >
+> > > > /*
+> > > >  * Old kernels silently ignore unsupported open flags.
+> > > >  * New kernels that gets __O_CHECK_NEWFLAGS do
+> > > >  * the proper checking for unsupported flags AND set the
+> > > >  * flag __O_HAVE_NEWFLAGS.
+> > > >  */
+> > > > #define O_FLAG1 __O_CHECK_NEWFLAGS|__O_FLAG1
+> > > > #define O_HAVE_FLAG1 __O_HAVE_NEWFLAGS|__O_FLAG1
+> > > >
+> > > > fd = open(path, O_FLAG1);
+> > > > if (fd < 0)
+> > > >     return -errno;
+> > > > flags = fcntl(fd, F_GETFL, 0);
+> > > > if (flags < 0)
+> > > >     return flags;
+> > > > if ((flags & O_HAVE_FLAG1) != O_HAVE_FLAG1) {
+> > > >     close(fd);
+> > > >     return -EINVAL;
+> > > > }
+> > >
+> > > You don't need to add __O_HAVE_NEWFLAGS to do this -- this already works
+> > > today for userspace to check whether a flag works properly
+> > > (specifically, __O_FLAG1 will only be set if __O_FLAG1 is supported --
+> > > otherwise it gets cleared during build_open_flags).
+> > 
+> > That's a behavior of quite recent kernels since
+> > 629e014bb834 fs: completely ignore unknown open flags
+> > and maybe some stable kernels. Real old kernels don't have that luxury.
 > 
-> I think the fact that indices are free running and wrap at a power of
-> two already restricts you to sizes the are a power of two,
+> Ah okay -- so the key feature is that __O_CHECK_NEWFLAGS gets
+> transformed into __O_HAVE_NEWFLAGS (making it so that both the older and
+> current behaviours are detected). Apologies, I missed that on my first
+> read-through.
+> 
+> While it is a little bit ugly, it probably wouldn't be a bad idea to
+> have something like that.
+> 
+> > > The problem with adding new flags is that an *old* program running on a
+> > > *new* kernel could pass a garbage flag (__O_CHECK_NEWFLAGS for instance)
+> > > that causes an error only on the new kernel.
+> > 
+> > That's a theoretic problem. Same as O_PATH|O_TMPFILE.
+> > Show me a real life program that passes garbage files to open.
+> 
+> Has "that's a theoretical problem" helped when we faced this issue in
+> the past? I don't disagree that this is mostly theoretical, but I have a
+> feeling that this is an argument that won't hold water.
+> 
+> As for an example of semi-garbage flag passing -- systemd passes
+> O_PATH|O_NOCTTY in several places. Yes, they're known flags (so not
+> entirely applicable to this discussion) but it's also not a meaningful
+> combination of flags and yet is permitted.
+> 
+> > > The only real solution to this (and several other problems) is
+> > > openat2().
+> > 
+> > No argue about that. Come on, let's get it merged ;-)
+> 
+> Believe me, I'm trying. ;)
+> 
+> > > As for O_ALLOW_ENCODED -- the current semantics (-EPERM if it
+> > > is set without CAP_SYS_ADMIN) *will* cause backwards compatibility
+> > > issues for programs that have garbage flags set...
+> > >
+> > 
+> > Again, that's theoretical. In practice, O_ALLOW_ENCODED can work with
+> > open()/openat(). In fact, even if O_ALLOW_ENCODED gets merged after
+> > openat2(), I don't think it should be forbidden by open()/openat(),
+> > right? Do in that sense, O_ALLOW_ENCODED does not depend on openat2().
+> 
+> If it's a valid open() flag it'll also be a valid openat2(2) flag. The
+> only question is whether the garbage-flag problem justifies making it a
+> no-op for open(2).
 
-Ah, yes, of course. When reducing indices mod n that may already have
-been implicitly reduced mod N, N must be a multiple of n for the result
-to be well-defined.
-
-Rasmus
+Consider O_NOATIME: a (non-root) program passing this flag for files it
+didn't own would have been broken by kernel v2.6.8. Or, more recently, a
+program accidentally setting O_TMPFILE would suddenly get drastically
+different behavior on v3.11. These two flags technically broke backwards
+compatibility. I don't think it's worth the trouble to treat
+O_ALLOW_ENCODED any differently for open().
