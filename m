@@ -1,53 +1,82 @@
-From: Eric Biggers <ebiggers@kernel.org>
-Subject: [PATCH 4/4] docs: fs-verity: mention statx() support
-Date: Tue, 29 Oct 2019 13:41:41 -0700
-Message-ID: <20191029204141.145309-5-ebiggers@kernel.org>
-References: <20191029204141.145309-1-ebiggers@kernel.org>
+From: Yang Shi <yang.shi@linux.alibaba.com>
+Subject: Re: mbind() breaks its API definition since v5.2 by commit
+ d883544515aa (mm: mempolicy: make the behavior consistent when MPOL_MF_MOVE*
+ and MPOL_MF_STRICT were specified)
+Date: Tue, 29 Oct 2019 19:50:11 -0700
+Message-ID: <dc4864bf-8fa3-f5c8-f68c-57edc68d4662@linux.alibaba.com>
+References: <2019103010274679257634@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-In-Reply-To: <20191029204141.145309-1-ebiggers@kernel.org>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: linux-fscrypt@vger.kernel.org
-Cc: Theodore Ts'o <tytso@mit.edu>, linux-api@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, David Howells <dhowells@redhat.com>, linux-fsdevel@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, linux-ext4@vger.kernel.org, Victor Hsieh <victorhsieh@google.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <2019103010274679257634@gmail.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Li Xinhai <lixinhai.lxh@gmail.com>, linux-mm <linux-mm@kvack.org>, akpm <akpm@linux-foundation.org>, torvalds <torvalds@linux-foundation.org>
+Cc: Vlastimil Babka <vbabka@suse.cz>, Linux API <linux-api@vger.kernel.org>, Michal Hocko <mhocko@kernel.org>, Hugh Dickins <hughd@google.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, lixinhai_lxh <lixinhai_lxh@126.com>
 List-Id: linux-api@vger.kernel.org
 
-From: Eric Biggers <ebiggers@google.com>
 
-Document that the statx() system call can now be used to check whether a
-file is a verity file.
 
-Signed-off-by: Eric Biggers <ebiggers@google.com>
----
- Documentation/filesystems/fsverity.rst | 8 ++++++++
- 1 file changed, 8 insertions(+)
+On 10/29/19 7:27 PM, Li Xinhai wrote:
+> One change in do_mbind() of this commit has suspicious usage of return value of
+> queue_pages_range(), excerpt as below:
+>
+> ---
+> @@ -1243,10 +1265,15 @@ static long do_mbind(unsigned long start, unsigned long len,
+>   	if (err)
+>   		goto mpol_out;
+>   
+> -	err = queue_pages_range(mm, start, end, nmask,
+> +	ret = queue_pages_range(mm, start, end, nmask,
+>   			  flags | MPOL_MF_INVERT, &pagelist);
+> -	if (!err)
+> -		err = mbind_range(mm, start, end, new);
+> +
+> +	if (ret < 0) {      /////// convert to all possible 'ret' to '-EIO' <<<<
+> +		err = -EIO;
+> +		goto up_out;
+> +	}
+> +
+> +	err = mbind_range(mm, start, end, new);
+>   
+>   	if (!err) {
+>   		int nr_failed = 0;
+> ---
+>
+> Note that inside queue_pages_range(), the call to walk_page_range() may return
+> errors from 'test_walk' of 'struct mm_walk_ops', e.g. -EFAULT. Now, those error
+> codes are no longer reported to user space application.
+>
+>  From user space, the mbind() call need to reported error, with EFAULT, as example:
+> EFAULT
+> Part or all of the memory range specified by nodemask and maxnode points
+> outside your accessible address space. Or, there was an unmapped hole in the
+> specified memory range specified by addr and len.
 
-diff --git a/Documentation/filesystems/fsverity.rst b/Documentation/filesystems/fsverity.rst
-index 42a0b6dd9e0b68..3355377a24398d 100644
---- a/Documentation/filesystems/fsverity.rst
-+++ b/Documentation/filesystems/fsverity.rst
-@@ -226,6 +226,14 @@ To do so, check for FS_VERITY_FL (0x00100000) in the returned flags.
- The verity flag is not settable via FS_IOC_SETFLAGS.  You must use
- FS_IOC_ENABLE_VERITY instead, since parameters must be provided.
- 
-+statx
-+-----
-+
-+Since Linux v5.5, the statx() system call sets STATX_ATTR_VERITY if
-+the file has fs-verity enabled.  This can perform better than
-+FS_IOC_GETFLAGS and FS_IOC_MEASURE_VERITY because it doesn't require
-+opening the file, and opening verity files can be expensive.
-+
- Accessing verity files
- ======================
- 
--- 
-2.24.0.rc1.363.gb1bccd3e3d-goog
+Thanks for catching this. That commit was aimed to correct the return 
+values for some corner cases in mbind(), but it should not alter the 
+errno for other failure cases, i.e. -EFAULT.
+
+Could you please try the below patch (build test only)?
+
+diff --git a/mm/mempolicy.c b/mm/mempolicy.c
+index 4ae967b..99df43a 100644
+--- a/mm/mempolicy.c
++++ b/mm/mempolicy.c
+@@ -1286,7 +1286,7 @@ static long do_mbind(unsigned long start, unsigned 
+long len,
+                           flags | MPOL_MF_INVERT, &pagelist);
+
+         if (ret < 0) {
+-               err = -EIO;
++               err = ret;
+                 goto up_out;
+         }
+
+
+>
+> Please correct me if this is the intended change(and will have updated API
+> definition), or something was misunderstood.
+>
+> -Xinhai
