@@ -1,25 +1,25 @@
 From: Omar Sandoval <osandov@osandov.com>
 Subject: Re: [RFC PATCH v2 2/5] fs: add RWF_ENCODED for reading/writing
  compressed data
-Date: Wed, 30 Oct 2019 15:21:27 -0700
-Message-ID: <20191030222127.GD326591@vader>
+Date: Wed, 30 Oct 2019 15:26:01 -0700
+Message-ID: <20191030222601.GE326591@vader>
 References: <cover.1571164762.git.osandov@fb.com>
  <7f98cf5409cf2b583cd5b3451fc739fd3428873b.1571164762.git.osandov@fb.com>
  <20191021182806.GA6706@magnolia>
  <20191021183831.mbe4q2beqo76fqxm@yavin.dot.cyphar.com>
  <20191021190010.GC6726@magnolia>
- <20191022013717.enwdmox4b7la4i74@yavin.dot.cyphar.com>
+ <20191022020215.csdwgi3ky27rfidf@yavin.dot.cyphar.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-btrfs-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20191022013717.enwdmox4b7la4i74@yavin.dot.cyphar.com>
+In-Reply-To: <20191022020215.csdwgi3ky27rfidf@yavin.dot.cyphar.com>
 Sender: linux-btrfs-owner@vger.kernel.org
 To: Aleksa Sarai <cyphar@cyphar.com>
 Cc: "Darrick J. Wong" <darrick.wong@oracle.com>, linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org, Dave Chinner <david@fromorbit.com>, Jann Horn <jannh@google.com>, linux-api@vger.kernel.org, kernel-team@fb.com
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Oct 22, 2019 at 12:37:17PM +1100, Aleksa Sarai wrote:
+On Tue, Oct 22, 2019 at 01:02:15PM +1100, Aleksa Sarai wrote:
 > On 2019-10-21, Darrick J. Wong <darrick.wong@oracle.com> wrote:
 > > On Tue, Oct 22, 2019 at 05:38:31AM +1100, Aleksa Sarai wrote:
 > > > On 2019-10-21, Darrick J. Wong <darrick.wong@oracle.com> wrote:
@@ -137,21 +137,18 @@ On Tue, Oct 22, 2019 at 12:37:17PM +1100, Aleksa Sarai wrote:
 > > 
 > > Come to think of it, you /do/ have to specify iov_len so... yeah, do
 > > that instead; we can always extend the structure later.
-> > 
-> > > Also (I might be wrong) but shouldn't the __u64s be __aligned_u64 (as
-> > > with syscall structure arguments)?
-> > 
-> > <shrug> No idea, that's the first I've heard of that type and it doesn't
-> > seem to be used by the fs code.  Why would we care about alignment for
-> > an incore structure?
 > 
-> When passing u64s from userspace, it's generally considered a good idea
-> to use __aligned_u64 -- the main reason is that 32-bit userspace on a
-> 64-bit kernel will use different structure alignment for 64-bit fields.
+> Just to clarify -- if we want to make the interface forward-compatible
+> from the outset (programs built 4 years from now running on 5.5), we
+> will need to implement this in the original merge. Otherwise userspace
+> will need to handle backwards-compatibility themselves once new features
+> are added.
 > 
-> This means you'd need to implement a bunch of COMPAT_SYSCALL-like
-> handling for that case. It's much simpler to use __aligned_u64 (and on
-> the plus side I don't think you need to add any fields to ensure the
-> padding is zero).
+> @Omar: If it'd make your life easier, I can send some draft patches
+> 	   which port copy_struct_from_user() to iovec-land.
 
-I'll used __aligned_u64 for the next submission.
+You're right, I didn't think about the case of newer programs on older
+kernels. I can do that for the next submission. RWF_ENCODED should
+probably translate the E2BIG from copy_struct_from_user() to EINVAL,
+though, to avoid ambiguity with the case that the buffer wasn't big
+enough to return the encoded data.
