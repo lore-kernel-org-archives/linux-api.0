@@ -1,114 +1,143 @@
 From: Omar Sandoval <osandov@osandov.com>
-Subject: Re: [PATCH man-pages] Document encoded I/O
-Date: Wed, 30 Oct 2019 15:46:06 -0700
-Message-ID: <20191030224606.GF326591@vader>
+Subject: Re: [RFC PATCH v2 1/5] fs: add O_ENCODED open flag
+Date: Wed, 30 Oct 2019 15:55:40 -0700
+Message-ID: <20191030225540.GG326591@vader>
 References: <cover.1571164762.git.osandov@fb.com>
- <c7e8f93596fee7bb818dc0edf29f484036be1abb.1571164851.git.osandov@fb.com>
- <CAOQ4uxh_pZSiMmD=46Mc3o0GE+svXuoC155P_9FGJXdsE4cweg@mail.gmail.com>
- <20191021185356.GB81648@vader>
- <CAOQ4uxgm6MWwCDO5stUwOKKSq7Ot4-Sc96F1Evc6ra5qBE+-wA@mail.gmail.com>
- <20191023044430.alow65tnodgnu5um@yavin.dot.cyphar.com>
- <CAOQ4uxjyNZhyU9yEYkuMnD0o=sU1vJMOYJAzjV7FDjG45gaevg@mail.gmail.com>
- <20191023121203.pozm2xzrbxmcqpbr@yavin.dot.cyphar.com>
+ <c4d2e911b7b04df9aa8418c8b11bc4c194e3808c.1571164762.git.osandov@fb.com>
+ <20191019045057.2fcrzuwc27eg5naf@yavin.dot.cyphar.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-btrfs-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20191023121203.pozm2xzrbxmcqpbr@yavin.dot.cyphar.com>
+In-Reply-To: <20191019045057.2fcrzuwc27eg5naf@yavin.dot.cyphar.com>
 Sender: linux-btrfs-owner@vger.kernel.org
 To: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Amir Goldstein <amir73il@gmail.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Btrfs <linux-btrfs@vger.kernel.org>, Dave Chinner <david@fromorbit.com>, Jann Horn <jannh@google.com>, Linux API <linux-api@vger.kernel.org>, kernel-team@fb.com, Theodore Tso <tytso@mit.edu>
+Cc: linux-fsdevel@vger.kernel.org, linux-btrfs@vger.kernel.org, Dave Chinner <david@fromorbit.com>, Jann Horn <jannh@google.com>, linux-api@vger.kernel.org, kernel-team@fb.com
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 23, 2019 at 11:12:03PM +1100, Aleksa Sarai wrote:
-> On 2019-10-23, Amir Goldstein <amir73il@gmail.com> wrote:
-> > > >
-> > > > No, I see why you choose to add the flag to open(2).
-> > > > I have no objection.
-> > > >
-> > > > I once had a crazy thought how to add new open flags
-> > > > in a non racy manner without adding a new syscall,
-> > > > but as you wrote, this is not relevant for O_ALLOW_ENCODED.
-> > > >
-> > > > Something like:
-> > > >
-> > > > /*
-> > > >  * Old kernels silently ignore unsupported open flags.
-> > > >  * New kernels that gets __O_CHECK_NEWFLAGS do
-> > > >  * the proper checking for unsupported flags AND set the
-> > > >  * flag __O_HAVE_NEWFLAGS.
-> > > >  */
-> > > > #define O_FLAG1 __O_CHECK_NEWFLAGS|__O_FLAG1
-> > > > #define O_HAVE_FLAG1 __O_HAVE_NEWFLAGS|__O_FLAG1
-> > > >
-> > > > fd = open(path, O_FLAG1);
-> > > > if (fd < 0)
-> > > >     return -errno;
-> > > > flags = fcntl(fd, F_GETFL, 0);
-> > > > if (flags < 0)
-> > > >     return flags;
-> > > > if ((flags & O_HAVE_FLAG1) != O_HAVE_FLAG1) {
-> > > >     close(fd);
-> > > >     return -EINVAL;
-> > > > }
-> > >
-> > > You don't need to add __O_HAVE_NEWFLAGS to do this -- this already works
-> > > today for userspace to check whether a flag works properly
-> > > (specifically, __O_FLAG1 will only be set if __O_FLAG1 is supported --
-> > > otherwise it gets cleared during build_open_flags).
+On Sat, Oct 19, 2019 at 03:50:57PM +1100, Aleksa Sarai wrote:
+> On 2019-10-15, Omar Sandoval <osandov@osandov.com> wrote:
+> > From: Omar Sandoval <osandov@fb.com>
 > > 
-> > That's a behavior of quite recent kernels since
-> > 629e014bb834 fs: completely ignore unknown open flags
-> > and maybe some stable kernels. Real old kernels don't have that luxury.
-> 
-> Ah okay -- so the key feature is that __O_CHECK_NEWFLAGS gets
-> transformed into __O_HAVE_NEWFLAGS (making it so that both the older and
-> current behaviours are detected). Apologies, I missed that on my first
-> read-through.
-> 
-> While it is a little bit ugly, it probably wouldn't be a bad idea to
-> have something like that.
-> 
-> > > The problem with adding new flags is that an *old* program running on a
-> > > *new* kernel could pass a garbage flag (__O_CHECK_NEWFLAGS for instance)
-> > > that causes an error only on the new kernel.
+> > The upcoming RWF_ENCODED operation introduces some security concerns:
 > > 
-> > That's a theoretic problem. Same as O_PATH|O_TMPFILE.
-> > Show me a real life program that passes garbage files to open.
-> 
-> Has "that's a theoretical problem" helped when we faced this issue in
-> the past? I don't disagree that this is mostly theoretical, but I have a
-> feeling that this is an argument that won't hold water.
-> 
-> As for an example of semi-garbage flag passing -- systemd passes
-> O_PATH|O_NOCTTY in several places. Yes, they're known flags (so not
-> entirely applicable to this discussion) but it's also not a meaningful
-> combination of flags and yet is permitted.
-> 
-> > > The only real solution to this (and several other problems) is
-> > > openat2().
+> > 1. Compressed writes will pass arbitrary data to decompression
+> >    algorithms in the kernel.
+> > 2. Compressed reads can leak truncated/hole punched data.
 > > 
-> > No argue about that. Come on, let's get it merged ;-)
-> 
-> Believe me, I'm trying. ;)
-> 
-> > > As for O_ALLOW_ENCODED -- the current semantics (-EPERM if it
-> > > is set without CAP_SYS_ADMIN) *will* cause backwards compatibility
-> > > issues for programs that have garbage flags set...
-> > >
+> > Therefore, we need to require privilege for RWF_ENCODED. It's not
+> > possible to do the permissions checks at the time of the read or write
+> > because, e.g., io_uring submits IO from a worker thread. So, add an open
+> > flag which requires CAP_SYS_ADMIN. It can also be set and cleared with
+> > fcntl(). The flag is not cleared in any way on fork or exec; it should
+> > probably be used with O_CLOEXEC in most cases.
 > > 
-> > Again, that's theoretical. In practice, O_ALLOW_ENCODED can work with
-> > open()/openat(). In fact, even if O_ALLOW_ENCODED gets merged after
-> > openat2(), I don't think it should be forbidden by open()/openat(),
-> > right? Do in that sense, O_ALLOW_ENCODED does not depend on openat2().
+> > Note that the usual issue that unknown open flags are ignored doesn't
+> > really matter for O_ENCODED; if the kernel doesn't support O_ENCODED,
+> > then it doesn't support RWF_ENCODED, either.
+> > 
+> > Signed-off-by: Omar Sandoval <osandov@fb.com>
+> > ---
+> >  fs/fcntl.c                       | 10 ++++++++--
+> >  fs/namei.c                       |  4 ++++
+> >  include/linux/fcntl.h            |  2 +-
+> >  include/uapi/asm-generic/fcntl.h |  4 ++++
+> >  4 files changed, 17 insertions(+), 3 deletions(-)
+> > 
+> > diff --git a/fs/fcntl.c b/fs/fcntl.c
+> > index 3d40771e8e7c..45ebc6df078e 100644
+> > --- a/fs/fcntl.c
+> > +++ b/fs/fcntl.c
+> > @@ -30,7 +30,8 @@
+> >  #include <asm/siginfo.h>
+> >  #include <linux/uaccess.h>
+> >  
+> > -#define SETFL_MASK (O_APPEND | O_NONBLOCK | O_NDELAY | O_DIRECT | O_NOATIME)
+> > +#define SETFL_MASK (O_APPEND | O_NONBLOCK | O_NDELAY | O_DIRECT | O_NOATIME | \
+> > +		    O_ENCODED)
+> >  
+> >  static int setfl(int fd, struct file * filp, unsigned long arg)
+> >  {
+> > @@ -49,6 +50,11 @@ static int setfl(int fd, struct file * filp, unsigned long arg)
+> >  		if (!inode_owner_or_capable(inode))
+> >  			return -EPERM;
+> >  
+> > +	/* O_ENCODED can only be set by superuser */
+> > +	if ((arg & O_ENCODED) && !(filp->f_flags & O_ENCODED) &&
+> > +	    !capable(CAP_SYS_ADMIN))
+> > +		return -EPERM;
 > 
-> If it's a valid open() flag it'll also be a valid openat2(2) flag. The
-> only question is whether the garbage-flag problem justifies making it a
-> no-op for open(2).
+> I have a feeling the error should probably be an EACCES and not EPERM.
 
-Consider O_NOATIME: a (non-root) program passing this flag for files it
-didn't own would have been broken by kernel v2.6.8. Or, more recently, a
-program accidentally setting O_TMPFILE would suddenly get drastically
-different behavior on v3.11. These two flags technically broke backwards
-compatibility. I don't think it's worth the trouble to treat
-O_ALLOW_ENCODED any differently for open().
+Shrug, I wanted to make this consistent with O_NOATIME, which uses
+EPERM. EACCES seems more appropriate for lacking permissions for a
+particular path rather than for an operation, but the lines are blurry.
+
+> > +
+> >  	/* required for strict SunOS emulation */
+> >  	if (O_NONBLOCK != O_NDELAY)
+> >  	       if (arg & O_NDELAY)
+> > @@ -1031,7 +1037,7 @@ static int __init fcntl_init(void)
+> >  	 * Exceptions: O_NONBLOCK is a two bit define on parisc; O_NDELAY
+> >  	 * is defined as O_NONBLOCK on some platforms and not on others.
+> >  	 */
+> > -	BUILD_BUG_ON(21 - 1 /* for O_RDONLY being 0 */ !=
+> > +	BUILD_BUG_ON(22 - 1 /* for O_RDONLY being 0 */ !=
+> >  		HWEIGHT32(
+> >  			(VALID_OPEN_FLAGS & ~(O_NONBLOCK | O_NDELAY)) |
+> >  			__FMODE_EXEC | __FMODE_NONOTIFY));
+> > diff --git a/fs/namei.c b/fs/namei.c
+> > index 671c3c1a3425..ae86b125888a 100644
+> > --- a/fs/namei.c
+> > +++ b/fs/namei.c
+> > @@ -2978,6 +2978,10 @@ static int may_open(const struct path *path, int acc_mode, int flag)
+> >  	if (flag & O_NOATIME && !inode_owner_or_capable(inode))
+> >  		return -EPERM;
+> >  
+> > +	/* O_ENCODED can only be set by superuser */
+> > +	if ((flag & O_ENCODED) && !capable(CAP_SYS_ADMIN))
+> > +		return -EPERM;
+> 
+> I would suggest that this check be put into build_open_flags() rather
+> than putting it this late in open(). Also, same nit about the error
+> return as above.
+
+This is where we check permissions for O_NOATIME, shouldn't we keep all
+of those permission checks in the same place? build_open_flags() only
+checks for flag validity.
+
+> > +
+> >  	return 0;
+> >  }
+> >  
+> > diff --git a/include/linux/fcntl.h b/include/linux/fcntl.h
+> > index d019df946cb2..5fac02479639 100644
+> > --- a/include/linux/fcntl.h
+> > +++ b/include/linux/fcntl.h
+> > @@ -9,7 +9,7 @@
+> >  	(O_RDONLY | O_WRONLY | O_RDWR | O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC | \
+> >  	 O_APPEND | O_NDELAY | O_NONBLOCK | O_NDELAY | __O_SYNC | O_DSYNC | \
+> >  	 FASYNC	| O_DIRECT | O_LARGEFILE | O_DIRECTORY | O_NOFOLLOW | \
+> > -	 O_NOATIME | O_CLOEXEC | O_PATH | __O_TMPFILE)
+> > +	 O_NOATIME | O_CLOEXEC | O_PATH | __O_TMPFILE | O_ENCODED)
+> >  
+> >  #ifndef force_o_largefile
+> >  #define force_o_largefile() (!IS_ENABLED(CONFIG_ARCH_32BIT_OFF_T))
+> > diff --git a/include/uapi/asm-generic/fcntl.h b/include/uapi/asm-generic/fcntl.h
+> > index 9dc0bf0c5a6e..8c5cbd5942e3 100644
+> > --- a/include/uapi/asm-generic/fcntl.h
+> > +++ b/include/uapi/asm-generic/fcntl.h
+> > @@ -97,6 +97,10 @@
+> >  #define O_NDELAY	O_NONBLOCK
+> >  #endif
+> >  
+> > +#ifndef O_ENCODED
+> > +#define O_ENCODED	040000000
+> > +#endif
+> 
+> You should also define this for all of the architectures which don't use
+> the generic O_* flag values. On alpha, O_PATH is equal to the value you
+> picked (just be careful on sparc -- 0x4000000 is the next free bit, but
+> it's used by FMODE_NONOTIFY.)
+
+Good catch, I'll fix that. Thanks!
