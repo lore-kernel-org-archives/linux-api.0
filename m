@@ -1,55 +1,65 @@
-From: Andrew Morton <akpm@linux-foundation.org>
+From: "Li Xinhai" <lixinhai.lxh@gmail.com>
 Subject: Re: [PATCH v2] mm: Fix checking unmapped holes for mbind
-Date: Wed, 30 Oct 2019 21:08:36 -0700
-Message-ID: <20191030210836.a17c0649354b59961903d1a8@linux-foundation.org>
-References: <201910291756045288126@gmail.com>
+Date: Thu, 31 Oct 2019 14:01:00 +0800
+Message-ID: <2019103114005855855689@gmail.com>
+References: <201910291756045288126@gmail.com>,
+        <20191030210836.a17c0649354b59961903d1a8@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain;
+        charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <201910291756045288126@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Li Xinhai <lixinhai.lxh@gmail.com>
-Cc: "linux-mm@kvack.org" <linux-mm@kvack.org>, Babka <vbabka@suse.cz>, Hocko <mhocko@kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, API <linux-api@vger.kernel.org>, Dickins <hughd@google.com>, linux-man@vger.kernel.org
+To: akpm <akpm@linux-foundation.org>
+Cc: "linux-mm@kvack.org" <linux-mm@kvack.org>, Vlastimil Babka <vbabka@suse.cz>, Michal Hocko <mhocko@kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Hugh Dickins <hughd@google.com>, linux-man <linux-man@vger.kernel.org>, n-horiguchi <n-horiguchi@ah.jp.nec.com>
 List-Id: linux-api@vger.kernel.org
 
-(cc linux-man@vger.kernel.org)
-
-On Tue, 29 Oct 2019 17:56:06 +0800 "Li Xinhai" <lixinhai.lxh@gmail.com> wro=
-te:
-
-> queue_pages_range() will check for unmapped holes besides queue pages for
-> migration. The rules for checking unmapped holes are:
-> 1 Unmapped holes at any part of the specified range should be reported as
-> =A0 EFAULT if mbind() for none MPOL_DEFAULT cases;
-> 2 Unmapped holes at any part of the specified range should be ignored if
-> =A0 mbind() for MPOL_DEFAULT case;
-> Note that the second rule is the current implementation, but it seems
-> conflicts the Linux API definition.
-
-Can you quote the part of the API definition which you're looking at?
-
-My mbind(2) manpage says
-
-ERRORS
-       EFAULT Part or all of the memory range specified by nodemask and max=
-n-
-              ode points outside your accessible address space.  Or, there =
-was
-              an unmapped hole in the specified memory range specified by a=
-ddr
-              and len.
-
-(I assume the first sentence meant to say "specified by addr and len")
-
-I agree with your interpretation, but there's no mention here that
-MPOL_DEFAULT is treated differently and I don't see why it should be.
-
-
-More broadly, I worry that it's too late to change this - existing
-applications might fail if we change the implementation in the proposed
-fashion.  So perhaps what we should do here is to change the manpage to
-match reality?
-
-Is the current behavior causing you any problems in a real-world use
-case?
+T24gMjAxOS0xMC0zMcKgYXQgMTI6MDjCoEFuZHJldyBNb3J0b27CoHdyb3RlOgo+KGNjIGxpbnV4
+LW1hbkB2Z2VyLmtlcm5lbC5vcmcpCj4KPk9uIFR1ZSwgMjkgT2N0IDIwMTkgMTc6NTY6MDYgKzA4
+MDAgIkxpIFhpbmhhaSIgPGxpeGluaGFpLmx4aEBnbWFpbC5jb20+IHdyb3RlOgo+Cj4+IHF1ZXVl
+X3BhZ2VzX3JhbmdlKCkgd2lsbCBjaGVjayBmb3IgdW5tYXBwZWQgaG9sZXMgYmVzaWRlcyBxdWV1
+ZSBwYWdlcyBmb3IKPj4gbWlncmF0aW9uLiBUaGUgcnVsZXMgZm9yIGNoZWNraW5nIHVubWFwcGVk
+IGhvbGVzIGFyZToKPj4gMSBVbm1hcHBlZCBob2xlcyBhdCBhbnkgcGFydCBvZiB0aGUgc3BlY2lm
+aWVkIHJhbmdlIHNob3VsZCBiZSByZXBvcnRlZCBhcwo+PiDCoCBFRkFVTFQgaWYgbWJpbmQoKSBm
+b3Igbm9uZSBNUE9MX0RFRkFVTFQgY2FzZXM7Cj4+IDIgVW5tYXBwZWQgaG9sZXMgYXQgYW55IHBh
+cnQgb2YgdGhlIHNwZWNpZmllZCByYW5nZSBzaG91bGQgYmUgaWdub3JlZCBpZgo+PiDCoCBtYmlu
+ZCgpIGZvciBNUE9MX0RFRkFVTFQgY2FzZTsKPj4gTm90ZSB0aGF0IHRoZSBzZWNvbmQgcnVsZSBp
+cyB0aGUgY3VycmVudCBpbXBsZW1lbnRhdGlvbiwgYnV0IGl0IHNlZW1zCj4+IGNvbmZsaWN0cyB0
+aGUgTGludXggQVBJIGRlZmluaXRpb24uCj4KPkNhbiB5b3UgcXVvdGUgdGhlIHBhcnQgb2YgdGhl
+IEFQSSBkZWZpbml0aW9uIHdoaWNoIHlvdSdyZSBsb29raW5nIGF0Pwo+Cj5NeSBtYmluZCgyKSBt
+YW5wYWdlIHNheXMKPgo+RVJST1JTCj7CoMKgwqDCoMKgwqAgRUZBVUxUIFBhcnQgb3IgYWxsIG9m
+IHRoZSBtZW1vcnkgcmFuZ2Ugc3BlY2lmaWVkIGJ5IG5vZGVtYXNrIGFuZCBtYXhuLQo+wqDCoMKg
+wqDCoMKgwqDCoMKgwqDCoMKgwqAgb2RlIHBvaW50cyBvdXRzaWRlIHlvdXIgYWNjZXNzaWJsZSBh
+ZGRyZXNzIHNwYWNlLsKgIE9yLCB0aGVyZSB3YXMKPsKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
+IGFuIHVubWFwcGVkIGhvbGUgaW4gdGhlIHNwZWNpZmllZCBtZW1vcnkgcmFuZ2Ugc3BlY2lmaWVk
+IGJ5IGFkZHIKPsKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIGFuZCBsZW4uCj4KPihJIGFzc3Vt
+ZSB0aGUgZmlyc3Qgc2VudGVuY2UgbWVhbnQgdG8gc2F5ICJzcGVjaWZpZWQgYnkgYWRkciBhbmQg
+bGVuIikKPiAKCnRoaXMgcGFydDrCoAoiT3IsIHRoZXJlIHdhcyBhbiB1bm1hcHBlZCBob2xlIGlu
+IHRoZSBzcGVjaWZpZWQgbWVtb3J5IHJhbmdlIHNwZWNpZmllZCBieSBhZGRyIAphbmQgbGVuLiIK
+aXMgY29uY2VybmVkIGJ5IG15IHBhdGNoLgoKPkkgYWdyZWUgd2l0aCB5b3VyIGludGVycHJldGF0
+aW9uLCBidXQgdGhlcmUncyBubyBtZW50aW9uIGhlcmUgdGhhdAo+TVBPTF9ERUZBVUxUIGlzIHRy
+ZWF0ZWQgZGlmZmVyZW50bHkgYW5kIEkgZG9uJ3Qgc2VlIHdoeSBpdCBzaG91bGQgYmUuCj4gClRo
+ZSBmaXJzdCBydWxlIG1hdGNoIHRoZSBtYW5wYWdlLCBidXQgdGhlIGN1cnJlbnQgbWVtcG9saWN5
+IGltcGxlbWVudGF0aW9uIG9ubHnCoApyZXBvcnRzIEVGQVVMVCBpZiBob2xlcyBhcmUgd2l0aGlu
+IHJhbmdlLCBvciBhdCB0aGUgaGVhZCBzaWRlIG9mIHJhbmdlLiBObyBFRkFVTFTCoApyZXBvcnRl
+ZCBpZiBob2xlIGF0IHRhaWwgc2lkZSBvZiByYW5nZS4gSSBzdXBwb3NlIHRoZSBmaXJzdCBydWxl
+IGhhcyB0byBiZSBmaXhlZC4KClRoZSBzZWNvbmRlIHJ1bGUsIHdoZW4gTVBPTF9ERUZBVUxUIGlz
+IHVzZWQsIHdhcyBzdW1tYXJpemVkIGJ5IG1lIGFjY29yZGluZ8KgCnRvIG1lbXBvbGljeSBpbXBs
+ZW1lbnRhdGlvbi4gQWN0dWFsbHksIHRoaXMgcnVsZSBkb2VzIG5vdCBmb2xsb3cgbWFucGFnZSBh
+bmQgZXhzaXRzwqAKZm9yIGxvbmcgZGF5cy4gSW4gbXkgdW5kZXJzdGFuZGluZywgdGhpcyBydWxl
+IGlzIHJlYXNvbmFibGUgKGluIGNvZGUsIMKgdGhlIGludGVybmFsIGZsYWcgCk1QT0xfTUZfRElT
+Q09OVElHX09LIGlzIHVzZWQgZm9yIHRoYXQgcHVycG9zZSwgdGhlcmUgaXMgY29tbWVudHMgZm9y
+IHJlYXNvbikgCmFuZCB3ZSdkIGJldHRlcsKga2VlcCBpdC4KCj4KPk1vcmUgYnJvYWRseSwgSSB3
+b3JyeSB0aGF0IGl0J3MgdG9vIGxhdGUgdG8gY2hhbmdlIHRoaXMgLSBleGlzdGluZwo+YXBwbGlj
+YXRpb25zIG1pZ2h0IGZhaWwgaWYgd2UgY2hhbmdlIHRoZSBpbXBsZW1lbnRhdGlvbiBpbiB0aGUg
+cHJvcG9zZWQKPmZhc2hpb24uwqAgU28gcGVyaGFwcyB3aGF0IHdlIHNob3VsZCBkbyBoZXJlIGlz
+IHRvIGNoYW5nZSB0aGUgbWFucGFnZSB0bwo+bWF0Y2ggcmVhbGl0eT8KPiAKSSBwcmVmZXIgYWRk
+IGRlc2NyaXB0aW9uIGluIG1hbnBhZ2UgZm9yIHRoZSBzZWNvbmQgcnVsZSwgc28gbm8gY2hhbmdl
+IHRvIG91ciBjb2RlLiAKT25seSBmaXggZm9yIGZpcnN0IHJ1bGUuCgo+SXMgdGhlIGN1cnJlbnQg
+YmVoYXZpb3IgY2F1c2luZyB5b3UgYW55IHByb2JsZW1zIGluIGEgcmVhbC13b3JsZCB1c2UKPmNh
+c2U/IApJIHdhcyB1c2luZyBtYmluZCgpIHdpdGjCoE1QT0xfREVGQVVMVChvciBNUE9MX0JJTkQp
+IHRvIHJlc2V0IGEgcmFuZ2Ugb2YgYWRkcmVzcyAKKHdoaWNoIG1heWJlIGNvbnRpZ3VvdXMgb3Ig
+bm90IGluIHRoZSB3aG9sZSByYW5nZSkgdG8gdGhlIGRlZmF1bHQgcG9saWN5ICh0byBhIHNwZWNp
+ZmljIApub2RlKSwgYW5kIG9ic2VydmVkIHRoaXMgaXNzdWUuIElmIG1iaW5kKCkgY2FsbCBmb3Ig
+ZWFjaCBtYXBwaW5nIG9uZSBieSBvbmUsIHdlIGRvbid0IHNlZSB0aGXCoAppc3N1ZS4KCi0gWGlu
+aGFpCgo=
