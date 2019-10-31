@@ -1,32 +1,27 @@
 From: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>
-Subject: [PATCH bpf-next v12 2/7] landlock: Add the management of domains
-Date: Thu, 31 Oct 2019 17:44:40 +0100
-Message-ID: <20191031164445.29426-3-mic@digikod.net>
+Subject: [PATCH bpf-next v12 4/7] landlock: Add ptrace LSM hooks
+Date: Thu, 31 Oct 2019 17:44:42 +0100
+Message-ID: <20191031164445.29426-5-mic@digikod.net>
 References: <20191031164445.29426-1-mic@digikod.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
-Return-path: <kernel-hardening-return-17178-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20191031164445.29426-1-mic@digikod.net>
+Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, Florent Revest <revest@chromium.org>, James Morris <jmorris@namei.org>, Jann Horn <jann@thejh.net>, John Johansen <john.johansen@canonical.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, KP Singh <kpsingh@chromium.org>, Michael Kerrisk <mtk.manpages@gmail.com>, =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mickael.salaun@ssi.gouv.fr>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Stephen Smalley <sds@tych>
+Cc: =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mic@digikod.net>, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, Florent Revest <revest@chromium.org>, James Morris <jmorris@namei.org>, Jann Horn <jann@thejh.net>, John Johansen <john.johansen@canonical.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, KP Singh <kpsingh@chromium.org>, Michael Kerrisk <mtk.manpages@gmail.com>, =?UTF-8?q?Micka=C3=ABl=20Sala=C3=BCn?= <mickael.salaun@ssi.gouv.fr>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>S
 List-Id: linux-api@vger.kernel.org
 
-A Landlock domain is a set of eBPF programs.  There is a list for each
-different program types that can be run on a specific Landlock hook
-(e.g. ptrace).  A domain is tied to a set of subjects (i.e. tasks).  A
-Landlock program should not try (nor be able) to infer which subject is
-currently enforced, but to have a unique security policy for all
-subjects tied to the same domain.  This make the reasoning much easier
-and help avoid pitfalls.
+Add a first Landlock hook that can be used to enforce a security policy
+or to audit some process activities.  For a sandboxing use-case, it is
+needed to inform the kernel if a task can legitimately debug another.
+ptrace(2) can also be used by an attacker to impersonate another task
+and remain undetected while performing malicious activities.
 
-The next commits tie a domain to a task's credentials thanks to
-seccomp(2), but we could use cgroups or a security file-system to
-enforce a sysadmin-defined policy .
+Using ptrace(2) and related features on a target process can lead to a
+privilege escalation.  A sandboxed task must then be able to tell the
+kernel if another task is more privileged, via ptrace_may_access().
 
 Signed-off-by: Mickaël Salaün <mic@digikod.net>
 Cc: Alexei Starovoitov <ast@kernel.org>
@@ -38,301 +33,304 @@ Cc: Serge E. Hallyn <serge@hallyn.com>
 Cc: Will Drewry <wad@chromium.org>
 ---
 
-Changes since v11:
-* remove old code from previous refactoring (removing the program
-  chaining concept) and simplify program prepending (reported by Serge
-  E. Hallyn):
-  * simplify landlock_prepend_prog() and merge it with
-    store_landlock_prog()
-  * add new_prog_list() and rework new_landlock_domain()
-  * remove the extra page allocation checks, only rely on the eBPF
-    program checks
-* replace the -EINVAL for the duplicate program check with the -EEXIST
-
 Changes since v10:
-* rename files and names to clearly define a domain
-* create a standalone patch to ease review
+* revamp and replace the static policy with a Landlock hook which may be
+  used by the corresponding BPF_LANDLOCK_PTRACE program (attach) type
+  and a dedicated process_cmp_landlock_ptrace() BPF helper
+* check prog return value against LANDLOCK_RET_DENY (ret is a bitmask)
+
+Changes since v6:
+* factor out ptrace check
+* constify pointers
+* cleanup headers
+* use the new security_add_hooks()
 ---
- security/landlock/Makefile        |   3 +-
- security/landlock/common.h        |  38 +++++++
- security/landlock/domain_manage.c | 173 ++++++++++++++++++++++++++++++
- security/landlock/domain_manage.h |  23 ++++
- 4 files changed, 236 insertions(+), 1 deletion(-)
- create mode 100644 security/landlock/domain_manage.c
- create mode 100644 security/landlock/domain_manage.h
+ security/landlock/Makefile       |   4 +-
+ security/landlock/bpf_run.c      |  62 +++++++++++++++++
+ security/landlock/bpf_run.h      |  25 +++++++
+ security/landlock/hooks_ptrace.c | 114 +++++++++++++++++++++++++++++++
+ security/landlock/hooks_ptrace.h |  19 ++++++
+ security/landlock/init.c         |   2 +
+ 6 files changed, 224 insertions(+), 2 deletions(-)
+ create mode 100644 security/landlock/bpf_run.c
+ create mode 100644 security/landlock/bpf_run.h
+ create mode 100644 security/landlock/hooks_ptrace.c
+ create mode 100644 security/landlock/hooks_ptrace.h
 
 diff --git a/security/landlock/Makefile b/security/landlock/Makefile
-index 682b798c6b76..dd5f70185778 100644
+index 0b291f2c027c..93e4c2f31c8a 100644
 --- a/security/landlock/Makefile
 +++ b/security/landlock/Makefile
-@@ -1,4 +1,5 @@
+@@ -1,6 +1,6 @@
  obj-$(CONFIG_SECURITY_LANDLOCK) := landlock.o
  
- landlock-y := \
--	bpf_verify.o bpf_ptrace.o
-+	bpf_verify.o bpf_ptrace.o \
-+	domain_manage.o
-diff --git a/security/landlock/common.h b/security/landlock/common.h
-index 0234c4bc4acd..fb2990eb5fb4 100644
---- a/security/landlock/common.h
-+++ b/security/landlock/common.h
-@@ -11,11 +11,49 @@
- 
- #include <linux/bpf.h>
- #include <linux/filter.h>
-+#include <linux/refcount.h>
- 
- enum landlock_hook_type {
- 	LANDLOCK_HOOK_PTRACE = 1,
- };
- 
-+#define _LANDLOCK_HOOK_LAST LANDLOCK_HOOK_PTRACE
-+
-+struct landlock_prog_list {
-+	struct landlock_prog_list *prev;
-+	struct bpf_prog *prog;
-+	refcount_t usage;
-+};
-+
-+/**
-+ * struct landlock_domain - Landlock programs enforced on a set of tasks
-+ *
-+ * When prepending a new program, if &struct landlock_domain is shared with
-+ * other tasks, then duplicate it and prepend the program to this new &struct
-+ * landlock_domain.
-+ *
-+ * @usage: reference count to manage the object lifetime. When a task needs to
-+ *	   add Landlock programs and if @usage is greater than 1, then the
-+ *	   task must duplicate &struct landlock_domain to not change the
-+ *	   children's programs as well.
-+ * @programs: array of non-NULL &struct landlock_prog_list pointers
-+ */
-+struct landlock_domain {
-+	struct landlock_prog_list *programs[_LANDLOCK_HOOK_LAST];
-+	refcount_t usage;
-+};
-+
-+/**
-+ * get_hook_index - get an index for the programs of struct landlock_prog_set
-+ *
-+ * @type: a Landlock hook type
-+ */
-+static inline size_t get_hook_index(enum landlock_hook_type type)
-+{
-+	/* type ID > 0 for loaded programs */
-+	return type - 1;
-+}
-+
- static inline enum landlock_hook_type get_hook_type(const struct bpf_prog *prog)
- {
- 	switch (prog->expected_attach_type) {
-diff --git a/security/landlock/domain_manage.c b/security/landlock/domain_manage.c
+ landlock-y := init.o \
+-	bpf_verify.o bpf_ptrace.o \
++	bpf_verify.o bpf_run.o bpf_ptrace.o \
+ 	domain_manage.o domain_syscall.o \
+-	hooks_cred.o
++	hooks_cred.o hooks_ptrace.o
+diff --git a/security/landlock/bpf_run.c b/security/landlock/bpf_run.c
 new file mode 100644
-index 000000000000..8b7ce988a221
+index 000000000000..8874958bdc30
 --- /dev/null
-+++ b/security/landlock/domain_manage.c
-@@ -0,0 +1,173 @@
++++ b/security/landlock/bpf_run.c
+@@ -0,0 +1,62 @@
 +// SPDX-License-Identifier: GPL-2.0-only
 +/*
-+ * Landlock LSM - domain management
++ * Landlock LSM - eBPF program evaluation
 + *
 + * Copyright © 2016-2019 Mickaël Salaün <mic@digikod.net>
 + * Copyright © 2018-2019 ANSSI
 + */
 +
-+#include <linux/err.h>
++#include <asm/current.h>
++#include <linux/bpf.h>
 +#include <linux/errno.h>
-+#include <linux/refcount.h>
-+#include <linux/slab.h>
-+#include <linux/spinlock.h>
++#include <linux/filter.h>
++#include <linux/rculist.h>
++#include <uapi/linux/landlock.h>
 +
++#include "bpf_run.h"
 +#include "common.h"
-+#include "domain_manage.h"
++#include "hooks_ptrace.h"
 +
-+void landlock_get_domain(struct landlock_domain *dom)
++static const void *get_prog_ctx(struct landlock_hook_ctx *hook_ctx)
 +{
-+	if (!dom)
-+		return;
-+	refcount_inc(&dom->usage);
-+}
-+
-+static void put_prog_list(struct landlock_prog_list *prog_list)
-+{
-+	struct landlock_prog_list *orig = prog_list;
-+
-+	/* clean up single-reference branches iteratively */
-+	while (orig && refcount_dec_and_test(&orig->usage)) {
-+		struct landlock_prog_list *freeme = orig;
-+
-+		if (orig->prog)
-+			bpf_prog_put(orig->prog);
-+		orig = orig->prev;
-+		kfree(freeme);
++	switch (hook_ctx->type) {
++	case LANDLOCK_HOOK_PTRACE:
++		return landlock_get_ctx_ptrace(hook_ctx->ctx_ptrace);
 +	}
-+}
-+
-+void landlock_put_domain(struct landlock_domain *domain)
-+{
-+	if (domain && refcount_dec_and_test(&domain->usage)) {
-+		size_t i;
-+
-+		for (i = 0; i < ARRAY_SIZE(domain->programs); i++)
-+			put_prog_list(domain->programs[i]);
-+		kfree(domain);
-+	}
-+}
-+
-+static struct landlock_prog_list *new_prog_list(struct bpf_prog *prog)
-+{
-+	struct landlock_prog_list *new_list;
-+
-+	if (WARN_ON(IS_ERR_OR_NULL(prog)))
-+		return ERR_PTR(-EFAULT);
-+	if (prog->type != BPF_PROG_TYPE_LANDLOCK_HOOK)
-+		return ERR_PTR(-EINVAL);
-+	prog = bpf_prog_inc(prog);
-+	if (IS_ERR(prog))
-+		return ERR_CAST(prog);
-+	new_list = kzalloc(sizeof(*new_list), GFP_KERNEL);
-+	if (!new_list) {
-+		bpf_prog_put(prog);
-+		return ERR_PTR(-ENOMEM);
-+	}
-+	new_list->prog = prog;
-+	refcount_set(&new_list->usage, 1);
-+	return new_list;
-+}
-+
-+/* @prog can legitimately be NULL */
-+static struct landlock_domain *new_landlock_domain(struct bpf_prog *prog)
-+{
-+	struct landlock_domain *new_domain;
-+	struct landlock_prog_list *new_list;
-+	size_t hook;
-+
-+	/* programs[] filled with NULL values */
-+	new_domain = kzalloc(sizeof(*new_domain), GFP_KERNEL);
-+	if (!new_domain)
-+		return ERR_PTR(-ENOMEM);
-+	refcount_set(&new_domain->usage, 1);
-+	if (!prog)
-+		return new_domain;
-+	new_list = new_prog_list(prog);
-+	if (IS_ERR(new_list)) {
-+		kfree(new_domain);
-+		return ERR_CAST(new_list);
-+	}
-+	hook = get_hook_index(get_hook_type(prog));
-+	new_domain->programs[hook] = new_list;
-+	return new_domain;
++	WARN_ON(1);
++	return NULL;
 +}
 +
 +/**
-+ * landlock_prepend_prog - attach a Landlock program to @current_domain
++ * landlock_access_denied - run Landlock programs tied to a hook
 + *
-+ * Prepend @prog to @current_domain if @prog is not already in @current_domain.
++ * @domain: Landlock domain pointer
++ * @hook_ctx: non-NULL valid eBPF context pointer
 + *
-+ * @current_domain: landlock_domain pointer which is garantee to not be
-+ *                  modified elsewhere. This pointer should not be used nor
-+ *                  put/freed after the call.
-+ * @prog: non-NULL Landlock program to prepend to @current_domain. @prog will
-+ *        be owned by landlock_prepend_prog(). You can then call
-+ *        bpf_prog_put(@prog) after.
-+ *
-+ * Return @current_domain or a new pointer when OK. Return a pointer error
-+ * otherwise.
++ * Return true if at least one program return deny, false otherwise.
 + */
-+struct landlock_domain *landlock_prepend_prog(
-+		struct landlock_domain *current_domain,
-+		struct bpf_prog *prog)
++bool landlock_access_denied(struct landlock_domain *domain,
++		struct landlock_hook_ctx *hook_ctx)
 +{
-+	struct landlock_domain *oneref_domain;
-+	struct landlock_prog_list *new_list, *walker;
-+	size_t hook;
++	struct landlock_prog_list *prog_list;
++	const size_t hook = get_hook_index(hook_ctx->type);
 +
-+	if (WARN_ON(!prog))
-+		return ERR_PTR(-EFAULT);
-+	if (prog->type != BPF_PROG_TYPE_LANDLOCK_HOOK)
-+		return ERR_PTR(-EINVAL);
++	if (!domain)
++		return false;
 +
-+	/*
-+	 * Each domain contains an array of prog_list pointers.  If a domain is
-+	 * used by more than one credential, then this domain is first
-+	 * duplicated and then @prog is prepended to this new domain.  We then
-+	 * have the garantee that a domain is immutable when shared, and it can
-+	 * only be modified if it is referenced only once (by the modifier).
-+	 */
-+	if (!current_domain)
-+		return new_landlock_domain(prog);
++	for (prog_list = domain->programs[hook]; prog_list;
++			prog_list = prog_list->prev) {
++		u32 ret;
++		const void *prog_ctx;
 +
-+	hook = get_hook_index(get_hook_type(prog));
-+	/* check for similar program */
-+	for (walker = current_domain->programs[hook]; walker;
-+			walker = walker->prev) {
-+		/* don't allow duplicate programs */
-+		if (prog == walker->prog)
-+			return ERR_PTR(-EEXIST);
++		prog_ctx = get_prog_ctx(hook_ctx);
++		if (!prog_ctx || WARN_ON(IS_ERR(prog_ctx)))
++			return true;
++		rcu_read_lock();
++		ret = BPF_PROG_RUN(prog_list->prog, prog_ctx);
++		rcu_read_unlock();
++		if (ret & LANDLOCK_RET_DENY)
++			return true;
 +	}
-+
-+	new_list = new_prog_list(prog);
-+	if (IS_ERR(new_list))
-+		return ERR_CAST(new_list);
-+
-+	/* duplicate the domain if not referenced only once */
-+	if (refcount_read(&current_domain->usage) == 1) {
-+		oneref_domain = current_domain;
-+	} else {
-+		size_t i;
-+
-+		oneref_domain = new_landlock_domain(NULL);
-+		if (IS_ERR(oneref_domain)) {
-+			put_prog_list(new_list);
-+			return oneref_domain;
-+		}
-+		for (i = 0; i < ARRAY_SIZE(oneref_domain->programs); i++) {
-+			oneref_domain->programs[i] =
-+				current_domain->programs[i];
-+			if (oneref_domain->programs[i])
-+				refcount_inc(&oneref_domain->programs[i]->usage);
-+		}
-+		landlock_put_domain(current_domain);
-+		/* @current_domain may be a dangling pointer now */
-+		current_domain = NULL;
-+	}
-+
-+	/* no need to increment usage (pointer replacement) */
-+	new_list->prev = oneref_domain->programs[hook];
-+	oneref_domain->programs[hook] = new_list;
-+	return oneref_domain;
++	return false;
 +}
-diff --git a/security/landlock/domain_manage.h b/security/landlock/domain_manage.h
+diff --git a/security/landlock/bpf_run.h b/security/landlock/bpf_run.h
 new file mode 100644
-index 000000000000..5b5b49f6e3e8
+index 000000000000..3461cbb8ec12
 --- /dev/null
-+++ b/security/landlock/domain_manage.h
-@@ -0,0 +1,23 @@
++++ b/security/landlock/bpf_run.h
+@@ -0,0 +1,25 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
-+ * Landlock LSM - domain management headers
++ * Landlock LSM - eBPF program evaluation headers
 + *
 + * Copyright © 2016-2019 Mickaël Salaün <mic@digikod.net>
 + * Copyright © 2018-2019 ANSSI
 + */
 +
-+#ifndef _SECURITY_LANDLOCK_DOMAIN_MANAGE_H
-+#define _SECURITY_LANDLOCK_DOMAIN_MANAGE_H
-+
-+#include <linux/filter.h>
++#ifndef _SECURITY_LANDLOCK_BPF_RUN_H
++#define _SECURITY_LANDLOCK_BPF_RUN_H
 +
 +#include "common.h"
++#include "hooks_ptrace.h"
 +
-+void landlock_get_domain(struct landlock_domain *dom);
-+void landlock_put_domain(struct landlock_domain *dom);
++struct landlock_hook_ctx {
++	enum landlock_hook_type type;
++	union {
++		struct landlock_hook_ctx_ptrace *ctx_ptrace;
++	};
++};
 +
-+struct landlock_domain *landlock_prepend_prog(
-+		struct landlock_domain *current_domain,
-+		struct bpf_prog *prog);
++bool landlock_access_denied(struct landlock_domain *domain,
++		struct landlock_hook_ctx *hook_ctx);
 +
-+#endif /* _SECURITY_LANDLOCK_DOMAIN_MANAGE_H */
++#endif /* _SECURITY_LANDLOCK_BPF_RUN_H */
+diff --git a/security/landlock/hooks_ptrace.c b/security/landlock/hooks_ptrace.c
+new file mode 100644
+index 000000000000..8e518a472d04
+--- /dev/null
++++ b/security/landlock/hooks_ptrace.c
+@@ -0,0 +1,114 @@
++// SPDX-License-Identifier: GPL-2.0-only
++/*
++ * Landlock LSM - ptrace hooks
++ *
++ * Copyright © 2017-2019 Mickaël Salaün <mic@digikod.net>
++ * Copyright © 2019 ANSSI
++ */
++
++#include <asm/current.h>
++#include <linux/cred.h>
++#include <linux/errno.h>
++#include <linux/kernel.h>
++#include <linux/lsm_hooks.h>
++#include <linux/sched.h>
++#include <uapi/linux/landlock.h>
++
++#include "bpf_run.h"
++#include "common.h"
++#include "hooks_ptrace.h"
++
++struct landlock_hook_ctx_ptrace {
++	struct landlock_context_ptrace prog_ctx;
++};
++
++const struct landlock_context_ptrace *landlock_get_ctx_ptrace(
++		const struct landlock_hook_ctx_ptrace *hook_ctx)
++{
++	if (WARN_ON(!hook_ctx))
++		return NULL;
++
++	return &hook_ctx->prog_ctx;
++}
++
++static int check_ptrace(struct landlock_domain *domain,
++		struct task_struct *tracer, struct task_struct *tracee)
++{
++	struct landlock_hook_ctx_ptrace ctx_ptrace = {
++		.prog_ctx = {
++			.tracer = (uintptr_t)tracer,
++			.tracee = (uintptr_t)tracee,
++		},
++	};
++	struct landlock_hook_ctx hook_ctx = {
++		.type = LANDLOCK_HOOK_PTRACE,
++		.ctx_ptrace = &ctx_ptrace,
++	};
++
++	return landlock_access_denied(domain, &hook_ctx) ? -EPERM : 0;
++}
++
++/**
++ * hook_ptrace_access_check - determine whether the current process may access
++ *			      another
++ *
++ * @child: the process to be accessed
++ * @mode: the mode of attachment
++ *
++ * If the current task (i.e. tracer) has one or multiple BPF_LANDLOCK_PTRACE
++ * programs, then run them with the `struct landlock_context_ptrace` context.
++ * If one of these programs return LANDLOCK_RET_DENY, then deny access with
++ * -EPERM, else allow it by returning 0.
++ */
++static int hook_ptrace_access_check(struct task_struct *child,
++		unsigned int mode)
++{
++	struct landlock_domain *dom_current;
++	const size_t hook = get_hook_index(LANDLOCK_HOOK_PTRACE);
++
++	dom_current = landlock_cred(current_cred())->domain;
++	if (!(dom_current && dom_current->programs[hook]))
++		return 0;
++	return check_ptrace(dom_current, current, child);
++}
++
++/**
++ * hook_ptrace_traceme - determine whether another process may trace the
++ *			 current one
++ *
++ * @parent: the task proposed to be the tracer
++ *
++ * If the parent task (i.e. tracer) has one or multiple BPF_LANDLOCK_PTRACE
++ * programs, then run them with the `struct landlock_context_ptrace` context.
++ * If one of these programs return LANDLOCK_RET_DENY, then deny access with
++ * -EPERM, else allow it by returning 0.
++ */
++static int hook_ptrace_traceme(struct task_struct *parent)
++{
++	struct landlock_domain *dom_parent;
++	const size_t hook = get_hook_index(LANDLOCK_HOOK_PTRACE);
++	int ret;
++
++	rcu_read_lock();
++	dom_parent = landlock_cred(__task_cred(parent))->domain;
++	if (!(dom_parent && dom_parent->programs[hook])) {
++		ret = 0;
++		goto put_rcu;
++	}
++	ret = check_ptrace(dom_parent, parent, current);
++
++put_rcu:
++	rcu_read_unlock();
++	return ret;
++}
++
++static struct security_hook_list landlock_hooks[] = {
++	LSM_HOOK_INIT(ptrace_access_check, hook_ptrace_access_check),
++	LSM_HOOK_INIT(ptrace_traceme, hook_ptrace_traceme),
++};
++
++__init void landlock_add_hooks_ptrace(void)
++{
++	security_add_hooks(landlock_hooks, ARRAY_SIZE(landlock_hooks),
++			LANDLOCK_NAME);
++}
+diff --git a/security/landlock/hooks_ptrace.h b/security/landlock/hooks_ptrace.h
+new file mode 100644
+index 000000000000..53fe651bdb3e
+--- /dev/null
++++ b/security/landlock/hooks_ptrace.h
+@@ -0,0 +1,19 @@
++/* SPDX-License-Identifier: GPL-2.0-only */
++/*
++ * Landlock LSM - ptrace hooks headers
++ *
++ * Copyright © 2017-2019 Mickaël Salaün <mic@digikod.net>
++ * Copyright © 2019 ANSSI
++ */
++
++#ifndef _SECURITY_LANDLOCK_HOOKS_PTRACE_H
++#define _SECURITY_LANDLOCK_HOOKS_PTRACE_H
++
++struct landlock_hook_ctx_ptrace;
++
++const struct landlock_context_ptrace *landlock_get_ctx_ptrace(
++		const struct landlock_hook_ctx_ptrace *hook_ctx);
++
++__init void landlock_add_hooks_ptrace(void);
++
++#endif /* _SECURITY_LANDLOCK_HOOKS_PTRACE_H */
+diff --git a/security/landlock/init.c b/security/landlock/init.c
+index 8836ec4defd3..541aad17418e 100644
+--- a/security/landlock/init.c
++++ b/security/landlock/init.c
+@@ -10,11 +10,13 @@
+ 
+ #include "common.h"
+ #include "hooks_cred.h"
++#include "hooks_ptrace.h"
+ 
+ static int __init landlock_init(void)
+ {
+ 	pr_info(LANDLOCK_NAME ": Registering hooks\n");
+ 	landlock_add_hooks_cred();
++	landlock_add_hooks_ptrace();
+ 	return 0;
+ }
+ 
 -- 
 2.23.0
