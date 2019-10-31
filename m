@@ -1,87 +1,52 @@
-From: Paul Moore <paul@paul-moore.com>
-Subject: Re: [PATCH ghak90 V7 20/21] audit: add capcontid to set contid
- outside init_user_ns
-Date: Thu, 31 Oct 2019 09:59:48 -0400
-Message-ID: <CAHC9VhTKaBwFxEnY9vLRgtZ5ptQzF-WvwiAyVgtTNn6tt4bZqw@mail.gmail.com>
-References: <cover.1568834524.git.rgb@redhat.com> <214163d11a75126f610bcedfad67a4d89575dc77.1568834525.git.rgb@redhat.com>
- <20191019013904.uevmrzbmztsbhpnh@madcap2.tricolour.ca> <CAHC9VhRPygA=LsHLUqv+K=ouAiPFJ6fb2_As=OT-_zB7kGc_aQ@mail.gmail.com>
- <20191021213824.6zti5ndxu7sqs772@madcap2.tricolour.ca> <CAHC9VhRdNXsY4neJpSoNyJoAVEoiEc2oW5kSscF99tjmoQAxFA@mail.gmail.com>
- <20191021235734.mgcjotdqoe73e4ha@madcap2.tricolour.ca> <CAHC9VhSiwnY-+2awxvGeO4a0NgfVkOPd8fzzBVujp=HtjskTuQ@mail.gmail.com>
- <20191024210010.owwgc3bqbvtdsqws@madcap2.tricolour.ca> <CAHC9VhRDoX9du4XbCnBtBzsNPMGOsb-TKM1CC+sCL7HP=FuTRQ@mail.gmail.com>
- <20191030220320.tnwkaj5gbzchcn7j@madcap2.tricolour.ca>
+From: David Laight <David.Laight@ACULAB.COM>
+Subject: RE: [PATCH] clone3: validate stack arguments
+Date: Thu, 31 Oct 2019 14:27:30 +0000
+Message-ID: <7f59e7e573aa40f08cb0e465d8d0150e@AcuMS.aculab.com>
+References: <20191031113608.20713-1-christian.brauner@ubuntu.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20191030220320.tnwkaj5gbzchcn7j@madcap2.tricolour.ca>
-Sender: netdev-owner@vger.kernel.org
-To: Richard Guy Briggs <rgb@redhat.com>
-Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com, Dan Walsh <dwalsh@redhat.com>, mpatel@redhat.com
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <20191031113608.20713-1-christian.brauner@ubuntu.com>
+Content-Language: en-US
+Sender: stable-owner@vger.kernel.org
+To: 'Christian Brauner' <christian.brauner@ubuntu.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Florian Weimer <fweimer@redhat.com>, GNU C Library <libc-alpha@sourceware.org>
+Cc: Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, David Howells <dhowells@redhat.com>, Ingo Molnar <mingo@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <peterz@infradead.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "stable@vger.kernel.org" <stable@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Oct 30, 2019 at 6:04 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> On 2019-10-30 16:27, Paul Moore wrote:
-> > On Thu, Oct 24, 2019 at 5:00 PM Richard Guy Briggs <rgb@redhat.com> wrote:
-> > > Here's the note I had from that meeting:
-> > >
-> > > - Eric raised the issue that using /proc is likely to get more and more
-> > >   hoary due to mount namespaces and suggested that we use a netlink
-> > > audit message (or a new syscall) to set the audit container identifier
-> > > and since the loginuid is a similar type of operation, that it should be
-> > > migrated over to a similar mechanism to get it away from /proc.  Get
-> > > could be done with a netlink audit message that triggers an audit log
-> > > message to deliver the information.  I'm reluctant to further pollute
-> > > the syscall space if we can find another method.  The netlink audit
-> > > message makes sense since any audit-enabled service is likely to already
-> > > have an audit socket open.
-> >
-> > Thanks for the background info on the off-list meeting.  I would
-> > encourage you to have discussions like this on-list in the future; if
-> > that isn't possible, hosting a public call would okay-ish, but a
-> > distant second.
->
-> I'm still trying to get Eric's attention to get him to weigh in here and
-> provide a more eloquent representation of his ideas and concerns.  Some
-> of it was related to CRIU(sp?) issues which we've already of which we've
-> already seen similar concerns in namespace identifiers including the
-> device identity to qualify it.
+>From Christian Brauner
+> Sent: 31 October 2019 11:36
+> 
+> Validate the stack arguments and setup the stack depening on whether or not
+> it is growing down or up.
+> 
+...
+> -static bool clone3_args_valid(const struct kernel_clone_args *kargs)
+> +/**
+> + * clone3_stack_valid - check and prepare stack
+> + * @kargs: kernel clone args
+> + *
+> + * Verify that the stack arguments userspace gave us are sane.
+> + * In addition, set the stack direction for userspace since it's easy for us to
+> + * determine.
+> + */
+> +static inline bool clone3_stack_valid(struct kernel_clone_args *kargs)
+> +{
+> +	if (kargs->stack == 0) {
+> +		if (kargs->stack_size > 0)
+> +			return false;
+> +	} else {
+> +		if (kargs->stack_size == 0)
+> +			return false;
+> +
+> +		if (!access_ok((void __user *)kargs->stack, kargs->stack_size))
+> +			return false;
 
-Okay, let's leave this open until we hear from Eric to see if he has
-any additional information, but it's going to need to be pretty
-compelling.
+Does access_ok() do anything useful here?
+It only verifies that the buffer isn't in kernel space.
 
-> > At this point in time I'm not overly concerned about /proc completely
-> > going away in namespaces/containers that are full featured enough to
-> > host a container orchestrator.  If/when reliance on procfs becomes an
-> > issue, we can look at alternate APIs, but given the importance of
-> > /proc to userspace (including to audit) I suspect we are going to see
-> > it persist for some time.  I would prefer to see you to drop the audit
-> > container ID netlink API portions of this patchset and focus on the
-> > procfs API.
->
-> I've already refactored the code to put the netlink bits at the end as
-> completely optional pieces for completeness so they won't get in the way
-> of the real substance of this patchset.  The nesting depth and total
-> number of containers checks have also been punted to the end of the
-> patchset to get them out of the way of discussion.
+	David
 
-That's fine, but if we do decide to drop the netlink API after hearing
-from Eric, please drop those from the patchset.  Keeping the patchset
-small and focused should be a goal, and including rejected/dead
-patches (even at the end) doesn't help move towards that goal.
-
-> > Also, for the record, removing the audit loginuid from procfs is not
-> > something to take lightly, if at all; like it or not, it's part of the
-> > kernel API.
->
-> Oh, I'm quite aware of how important this change is and it was discussed
-> with Steve Grubb who saw the concern and value of considering such a
-> disruptive change.  Removing proc support for auid/ses would be a
-> long-term deprecation if accepted.
-
-As I mentioned, that comment was more "for the record" than you in
-particular; I know we've talked a lot over the years about kernel API
-stability and I'm confident you are aware of the pitfalls there. :)
-
--- 
-paul moore
-www.paul-moore.com
+-
+Registered Address Lakeside, Bramley Road, Mount Farm, Milton Keynes, MK1 1PT, UK
+Registration No: 1397386 (Wales)
