@@ -1,65 +1,149 @@
-From: "Li Xinhai" <lixinhai.lxh@gmail.com>
-Subject: Re: [PATCH v2] mm: Fix checking unmapped holes for mbind
-Date: Thu, 31 Oct 2019 14:01:00 +0800
-Message-ID: <2019103114005855855689@gmail.com>
-References: <201910291756045288126@gmail.com>,
-        <20191030210836.a17c0649354b59961903d1a8@linux-foundation.org>
+From: Mike Rapoport <rppt@kernel.org>
+Subject: Re: [PATCH RFC] mm: add MAP_EXCLUSIVE to create exclusive user
+ mappings
+Date: Thu, 31 Oct 2019 08:21:13 +0100
+Message-ID: <20191031072112.GA6990@rapoport-lnx>
+References: <1572171452-7958-1-git-send-email-rppt@kernel.org>
+ <CA5C22D9-BC3E-4B69-8DD9-4D3B75E40BD5@amacapital.net>
+ <20191029093254.GE18773@rapoport-lnx>
+ <CALCETrUuuc4DS0cdMBtS550Wkp0x9ND3M3SgtaMgyRROnDR5Kg@mail.gmail.com>
+ <20191030084005.GC20624@rapoport-lnx>
+ <CALCETrXajrY+0SmzkL7t++ndYwRoYLLE9VPKwSGSyW8HZx-TeA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-        charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CALCETrXajrY+0SmzkL7t++ndYwRoYLLE9VPKwSGSyW8HZx-TeA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: akpm <akpm@linux-foundation.org>
-Cc: "linux-mm@kvack.org" <linux-mm@kvack.org>, Vlastimil Babka <vbabka@suse.cz>, Michal Hocko <mhocko@kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Hugh Dickins <hughd@google.com>, linux-man <linux-man@vger.kernel.org>, n-horiguchi <n-horiguchi@ah.jp.nec.com>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: LKML <linux-kernel@vger.kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>, James Bottomley <jejb@linux.ibm.com>, Peter Zijlstra <peterz@infradead.org>, Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Linux API <linux-api@vger.kernel.org>, Linux-MM <linux-mm@kvack.org>, X86 ML <x86@kernel.org>, Mike Rapoport <rppt@linux.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-T24gMjAxOS0xMC0zMcKgYXQgMTI6MDjCoEFuZHJldyBNb3J0b27CoHdyb3RlOgo+KGNjIGxpbnV4
-LW1hbkB2Z2VyLmtlcm5lbC5vcmcpCj4KPk9uIFR1ZSwgMjkgT2N0IDIwMTkgMTc6NTY6MDYgKzA4
-MDAgIkxpIFhpbmhhaSIgPGxpeGluaGFpLmx4aEBnbWFpbC5jb20+IHdyb3RlOgo+Cj4+IHF1ZXVl
-X3BhZ2VzX3JhbmdlKCkgd2lsbCBjaGVjayBmb3IgdW5tYXBwZWQgaG9sZXMgYmVzaWRlcyBxdWV1
-ZSBwYWdlcyBmb3IKPj4gbWlncmF0aW9uLiBUaGUgcnVsZXMgZm9yIGNoZWNraW5nIHVubWFwcGVk
-IGhvbGVzIGFyZToKPj4gMSBVbm1hcHBlZCBob2xlcyBhdCBhbnkgcGFydCBvZiB0aGUgc3BlY2lm
-aWVkIHJhbmdlIHNob3VsZCBiZSByZXBvcnRlZCBhcwo+PiDCoCBFRkFVTFQgaWYgbWJpbmQoKSBm
-b3Igbm9uZSBNUE9MX0RFRkFVTFQgY2FzZXM7Cj4+IDIgVW5tYXBwZWQgaG9sZXMgYXQgYW55IHBh
-cnQgb2YgdGhlIHNwZWNpZmllZCByYW5nZSBzaG91bGQgYmUgaWdub3JlZCBpZgo+PiDCoCBtYmlu
-ZCgpIGZvciBNUE9MX0RFRkFVTFQgY2FzZTsKPj4gTm90ZSB0aGF0IHRoZSBzZWNvbmQgcnVsZSBp
-cyB0aGUgY3VycmVudCBpbXBsZW1lbnRhdGlvbiwgYnV0IGl0IHNlZW1zCj4+IGNvbmZsaWN0cyB0
-aGUgTGludXggQVBJIGRlZmluaXRpb24uCj4KPkNhbiB5b3UgcXVvdGUgdGhlIHBhcnQgb2YgdGhl
-IEFQSSBkZWZpbml0aW9uIHdoaWNoIHlvdSdyZSBsb29raW5nIGF0Pwo+Cj5NeSBtYmluZCgyKSBt
-YW5wYWdlIHNheXMKPgo+RVJST1JTCj7CoMKgwqDCoMKgwqAgRUZBVUxUIFBhcnQgb3IgYWxsIG9m
-IHRoZSBtZW1vcnkgcmFuZ2Ugc3BlY2lmaWVkIGJ5IG5vZGVtYXNrIGFuZCBtYXhuLQo+wqDCoMKg
-wqDCoMKgwqDCoMKgwqDCoMKgwqAgb2RlIHBvaW50cyBvdXRzaWRlIHlvdXIgYWNjZXNzaWJsZSBh
-ZGRyZXNzIHNwYWNlLsKgIE9yLCB0aGVyZSB3YXMKPsKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKg
-IGFuIHVubWFwcGVkIGhvbGUgaW4gdGhlIHNwZWNpZmllZCBtZW1vcnkgcmFuZ2Ugc3BlY2lmaWVk
-IGJ5IGFkZHIKPsKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIGFuZCBsZW4uCj4KPihJIGFzc3Vt
-ZSB0aGUgZmlyc3Qgc2VudGVuY2UgbWVhbnQgdG8gc2F5ICJzcGVjaWZpZWQgYnkgYWRkciBhbmQg
-bGVuIikKPiAKCnRoaXMgcGFydDrCoAoiT3IsIHRoZXJlIHdhcyBhbiB1bm1hcHBlZCBob2xlIGlu
-IHRoZSBzcGVjaWZpZWQgbWVtb3J5IHJhbmdlIHNwZWNpZmllZCBieSBhZGRyIAphbmQgbGVuLiIK
-aXMgY29uY2VybmVkIGJ5IG15IHBhdGNoLgoKPkkgYWdyZWUgd2l0aCB5b3VyIGludGVycHJldGF0
-aW9uLCBidXQgdGhlcmUncyBubyBtZW50aW9uIGhlcmUgdGhhdAo+TVBPTF9ERUZBVUxUIGlzIHRy
-ZWF0ZWQgZGlmZmVyZW50bHkgYW5kIEkgZG9uJ3Qgc2VlIHdoeSBpdCBzaG91bGQgYmUuCj4gClRo
-ZSBmaXJzdCBydWxlIG1hdGNoIHRoZSBtYW5wYWdlLCBidXQgdGhlIGN1cnJlbnQgbWVtcG9saWN5
-IGltcGxlbWVudGF0aW9uIG9ubHnCoApyZXBvcnRzIEVGQVVMVCBpZiBob2xlcyBhcmUgd2l0aGlu
-IHJhbmdlLCBvciBhdCB0aGUgaGVhZCBzaWRlIG9mIHJhbmdlLiBObyBFRkFVTFTCoApyZXBvcnRl
-ZCBpZiBob2xlIGF0IHRhaWwgc2lkZSBvZiByYW5nZS4gSSBzdXBwb3NlIHRoZSBmaXJzdCBydWxl
-IGhhcyB0byBiZSBmaXhlZC4KClRoZSBzZWNvbmRlIHJ1bGUsIHdoZW4gTVBPTF9ERUZBVUxUIGlz
-IHVzZWQsIHdhcyBzdW1tYXJpemVkIGJ5IG1lIGFjY29yZGluZ8KgCnRvIG1lbXBvbGljeSBpbXBs
-ZW1lbnRhdGlvbi4gQWN0dWFsbHksIHRoaXMgcnVsZSBkb2VzIG5vdCBmb2xsb3cgbWFucGFnZSBh
-bmQgZXhzaXRzwqAKZm9yIGxvbmcgZGF5cy4gSW4gbXkgdW5kZXJzdGFuZGluZywgdGhpcyBydWxl
-IGlzIHJlYXNvbmFibGUgKGluIGNvZGUsIMKgdGhlIGludGVybmFsIGZsYWcgCk1QT0xfTUZfRElT
-Q09OVElHX09LIGlzIHVzZWQgZm9yIHRoYXQgcHVycG9zZSwgdGhlcmUgaXMgY29tbWVudHMgZm9y
-IHJlYXNvbikgCmFuZCB3ZSdkIGJldHRlcsKga2VlcCBpdC4KCj4KPk1vcmUgYnJvYWRseSwgSSB3
-b3JyeSB0aGF0IGl0J3MgdG9vIGxhdGUgdG8gY2hhbmdlIHRoaXMgLSBleGlzdGluZwo+YXBwbGlj
-YXRpb25zIG1pZ2h0IGZhaWwgaWYgd2UgY2hhbmdlIHRoZSBpbXBsZW1lbnRhdGlvbiBpbiB0aGUg
-cHJvcG9zZWQKPmZhc2hpb24uwqAgU28gcGVyaGFwcyB3aGF0IHdlIHNob3VsZCBkbyBoZXJlIGlz
-IHRvIGNoYW5nZSB0aGUgbWFucGFnZSB0bwo+bWF0Y2ggcmVhbGl0eT8KPiAKSSBwcmVmZXIgYWRk
-IGRlc2NyaXB0aW9uIGluIG1hbnBhZ2UgZm9yIHRoZSBzZWNvbmQgcnVsZSwgc28gbm8gY2hhbmdl
-IHRvIG91ciBjb2RlLiAKT25seSBmaXggZm9yIGZpcnN0IHJ1bGUuCgo+SXMgdGhlIGN1cnJlbnQg
-YmVoYXZpb3IgY2F1c2luZyB5b3UgYW55IHByb2JsZW1zIGluIGEgcmVhbC13b3JsZCB1c2UKPmNh
-c2U/IApJIHdhcyB1c2luZyBtYmluZCgpIHdpdGjCoE1QT0xfREVGQVVMVChvciBNUE9MX0JJTkQp
-IHRvIHJlc2V0IGEgcmFuZ2Ugb2YgYWRkcmVzcyAKKHdoaWNoIG1heWJlIGNvbnRpZ3VvdXMgb3Ig
-bm90IGluIHRoZSB3aG9sZSByYW5nZSkgdG8gdGhlIGRlZmF1bHQgcG9saWN5ICh0byBhIHNwZWNp
-ZmljIApub2RlKSwgYW5kIG9ic2VydmVkIHRoaXMgaXNzdWUuIElmIG1iaW5kKCkgY2FsbCBmb3Ig
-ZWFjaCBtYXBwaW5nIG9uZSBieSBvbmUsIHdlIGRvbid0IHNlZSB0aGXCoAppc3N1ZS4KCi0gWGlu
-aGFpCgo=
+On Wed, Oct 30, 2019 at 02:28:21PM -0700, Andy Lutomirski wrote:
+> On Wed, Oct 30, 2019 at 1:40 AM Mike Rapoport <rppt@kernel.org> wrote:
+> >
+> > On Tue, Oct 29, 2019 at 10:00:55AM -0700, Andy Lutomirski wrote:
+> > > On Tue, Oct 29, 2019 at 2:33 AM Mike Rapoport <rppt@kernel.org> wrote:
+> > > >
+> > > > On Mon, Oct 28, 2019 at 02:44:23PM -0600, Andy Lutomirski wrote:
+> > > > >
+> > > > > > On Oct 27, 2019, at 4:17 AM, Mike Rapoport <rppt@kernel.org> wrote:
+> > > > > >
+> > > > > > ﻿From: Mike Rapoport <rppt@linux.ibm.com>
+> > > > > >
+> > > > > > Hi,
+> > > > > >
+> > > > > > The patch below aims to allow applications to create mappins that have
+> > > > > > pages visible only to the owning process. Such mappings could be used to
+> > > > > > store secrets so that these secrets are not visible neither to other
+> > > > > > processes nor to the kernel.
+> > > > > >
+> > > > > > I've only tested the basic functionality, the changes should be verified
+> > > > > > against THP/migration/compaction. Yet, I'd appreciate early feedback.
+> > > > >
+> > > > > I’ve contemplated the concept a fair amount, and I think you should
+> > > > > consider a change to the API. In particular, rather than having it be a
+> > > > > MAP_ flag, make it a chardev.  You can, at least at first, allow only
+> > > > > MAP_SHARED, and admins can decide who gets to use it.  It might also play
+> > > > > better with the VM overall, and you won’t need a VM_ flag for it — you
+> > > > > can just wire up .fault to do the right thing.
+> > > >
+> > > > I think mmap()/mprotect()/madvise() are the natural APIs for such
+> > > > interface.
+> > >
+> > > Then you have a whole bunch of questions to answer.  For example:
+> > >
+> > > What happens if you mprotect() or similar when the mapping is already
+> > > in use in a way that's incompatible with MAP_EXCLUSIVE?
+> >
+> > Then we refuse to mprotect()? Like in any other case when vm_flags are not
+> > compatible with required madvise()/mprotect() operation.
+> >
+> 
+> I'm not talking about flags.  I'm talking about the case where one
+> thread (or RDMA or whatever) has get_user_pages()'d a mapping and
+> another thread mprotect()s it MAP_EXCLUSIVE.
+> 
+> > > Is it actually reasonable to malloc() some memory and then make it exclusive?
+> > >
+> > > Are you permitted to map a file MAP_EXCLUSIVE?  What does it mean?
+> >
+> > I'd limit MAP_EXCLUSIVE only to anonymous memory.
+> >
+> > > What does MAP_PRIVATE | MAP_EXCLUSIVE do?
+> >
+> > My preference is to have only mmap() and then the semantics is more clear:
+> >
+> > MAP_PRIVATE | MAP_EXCLUSIVE creates a pre-populated region, marks it locked
+> > and drops the pages in this region from the direct map.
+> > The pages are returned back on munmap().
+> > Then there is no way to change an existing area to be exclusive or vice
+> > versa.
+> 
+> And what happens if you fork()?  Limiting it to MAP_SHARED |
+> MAP_EXCLUSIVE would about this particular nasty question.
+> 
+> >
+> > > How does one pass exclusive memory via SCM_RIGHTS?  (If it's a
+> > > memfd-like or chardev interface, it's trivial.  mmap(), not so much.)
+> >
+> > Why passing such memory via SCM_RIGHTS would be useful?
+> 
+> Suppose I want to put a secret into exclusive memory and then send
+> that secret to some other process.  The obvious approach would be to
+> SCM_RIGHTS an fd over, but you can't do that with MAP_EXCLUSIVE as
+> you've defined it.  In general, there are lots of use cases for memfd
+> and other fd-backed memory.
+> 
+> >
+> > > And finally, there's my personal giant pet peeve: a major use of this
+> > > will be for virtualization.  I suspect that a lot of people would like
+> > > the majority of KVM guest memory to be unmapped from the host
+> > > pagetables.  But people might also like for guest memory to be
+> > > unmapped in *QEMU's* pagetables, and mmap() is a basically worthless
+> > > interface for this.  Getting fd-backed memory into a guest will take
+> > > some possibly major work in the kernel, but getting vma-backed memory
+> > > into a guest without mapping it in the host user address space seems
+> > > much, much worse.
+> >
+> > Well, in my view, the MAP_EXCLUSIVE is intended to keep small secrets
+> > rather than use it for the entire guest memory. I even considered adding a
+> > limit for the mapping size, but then I decided that since RLIMIT_MEMLOCK is
+> > anyway enforced there is no need for a new one.
+> >
+> > I agree that getting fd-backed memory into a guest would be less pain that
+> > VMA, but KVM can already use memory outside the control of the kernel via
+> > /dev/map [1].
+> 
+> That series doesn't address the problem I'm talking about at all.  I'm
+> saying that there is a legitimate use case where QEMU should *not*
+> have a mapping of the memory.  So QEMU would create some exclusive
+> memory using /dev/exclusive_memory and would tell KVM to map it into
+> the guest without mapping it into QEMU's address space at all.
+> 
+> (In fact, the way that SEV currently works is *functionally* like
+> this, except that there's a bogus incoherent mapping in the QEMU
+> process that is a giant can of worms.
+> 
+> 
+> IMO a major benefit of a chardev approach is that you don't need a new
+> VM_ flag and you don't need to worry about wiring it up everywhere in
+> the core mm code.
+
+Ok, at last I'm starting to see your and Christoph's point.
+
+Just to reiterate, we can use fd-backed memory using /dev/exclusive_memory
+chardev (or some other name we'll pick after long bikeshedding) and then
+the .mmap method of this character device can do interesting things with
+the backing physical memory. Since the memory is not VMA-mapped, we do not
+have to find all the places in the core that might require a check of a VM_
+flag to ensure there is no clashes with the exclusive memory.
+
+Still, whatever we do with the mapping  properties of this memory, we need
+a solution to the splitting of huge pages that map the direct map, but this
+is an orthogonal problem in a way.
+
+-- 
+Sincerely yours,
+Mike.
