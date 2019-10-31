@@ -1,33 +1,37 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [RFC PATCH 07/10] pipe: Conditionalise wakeup in pipe_read() [ver #2]
-Date: Thu, 31 Oct 2019 15:21:22 +0000
-Message-ID: <18022.1572535282@warthog.procyon.org.uk>
-References: <fe167a90-1503-7ca2-4150-eeffd5cb1378@yandex-team.ru> <157186182463.3995.13922458878706311997.stgit@warthog.procyon.org.uk> <157186189069.3995.10292601951655075484.stgit@warthog.procyon.org.uk>
+From: Ilya Dryomov <idryomov@gmail.com>
+Subject: Re: [RFC PATCH 04/10] pipe: Use head and tail pointers for the ring,
+ not cursor and length [ver #2]
+Date: Thu, 31 Oct 2019 16:57:53 +0100
+Message-ID: <CAOi1vP9GAmy5NXJisrDssspoRcc+UHum+cyBsJTMNTjz_jieoQ@mail.gmail.com>
+References: <157186182463.3995.13922458878706311997.stgit@warthog.procyon.org.uk>
+ <157186186167.3995.7568100174393739543.stgit@warthog.procyon.org.uk>
+ <CAOi1vP97DMX8zweOLfBDOFstrjC78=6RgxK3PPj_mehCOSeoaw@mail.gmail.com>
+ <4892d186-8eb0-a282-e7e6-e79958431a54@rasmusvillemoes.dk> <16620.1572534687@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <fe167a90-1503-7ca2-4150-eeffd5cb1378@yandex-team.ru>
-Content-ID: <18021.1572535282.1@warthog.procyon.org.uk>
+In-Reply-To: <16620.1572534687@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
-Cc: dhowells@redhat.com, torvalds@linux-foundation.org, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: David Howells <dhowells@redhat.com>
+Cc: Rasmus Villemoes <linux@rasmusvillemoes.dk>, Linus Torvalds <torvalds@linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, linux-security-module@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Konstantin Khlebnikov <khlebnikov@yandex-team.ru> wrote:
+On Thu, Oct 31, 2019 at 4:11 PM David Howells <dhowells@redhat.com> wrote:
+>
+> How about:
+>
+>  * We use head and tail indices that aren't masked off, except at the
+>  * point of dereference, but rather they're allowed to wrap naturally.
+>  * This means there isn't a dead spot in the buffer, provided the ring
+>  * size is a power of two and <= 2^31.
 
-> > Only do a wakeup in pipe_read() if we made space in a completely full
-> > buffer.  The producer shouldn't be waiting on pipe->wait otherwise.
->=20
-> We could go further and wakeup writer only when at least half of buffer i=
-s
-> empty.  This gives better batching and reduces rate of context switches.
->=20
-> https://lore.kernel.org/lkml/157219118016.7078.16223055699799396042.stgit=
-@buzz/T/#u
+To me "provided" reads like this thing works without a dead spot or
+with a dead spot, depending on whether the condition is met.  I would
+say:
 
-Yeah, I saw that.  I suspect that where you put the slider may depend on th=
-e
-context.
+>  * This means there isn't a dead spot in the buffer, but the ring
+>  * size has to be a power of two and <= 2^31.
 
-David
+Thanks,
+
+                Ilya
