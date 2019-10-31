@@ -1,52 +1,55 @@
-From: David Laight <David.Laight@ACULAB.COM>
-Subject: RE: [PATCH] clone3: validate stack arguments
-Date: Thu, 31 Oct 2019 14:27:30 +0000
-Message-ID: <7f59e7e573aa40f08cb0e465d8d0150e@AcuMS.aculab.com>
-References: <20191031113608.20713-1-christian.brauner@ubuntu.com>
+From: Steve Grubb <sgrubb@redhat.com>
+Subject: Re: [PATCH ghak90 V7 20/21] audit: add capcontid to set contid outside init_user_ns
+Date: Thu, 31 Oct 2019 10:50:57 -0400
+Message-ID: <3677995.NTHC7m0fHc@x2>
+References: <cover.1568834524.git.rgb@redhat.com> <CAHC9VhRDoX9du4XbCnBtBzsNPMGOsb-TKM1CC+sCL7HP=FuTRQ@mail.gmail.com> <20191030220320.tnwkaj5gbzchcn7j@madcap2.tricolour.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <20191031113608.20713-1-christian.brauner@ubuntu.com>
-Content-Language: en-US
-Sender: stable-owner@vger.kernel.org
-To: 'Christian Brauner' <christian.brauner@ubuntu.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Florian Weimer <fweimer@redhat.com>, GNU C Library <libc-alpha@sourceware.org>
-Cc: Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, David Howells <dhowells@redhat.com>, Ingo Molnar <mingo@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <peterz@infradead.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "stable@vger.kernel.org" <stable@vger.kernel.org>
+Content-Type: text/plain; charset=WINDOWS-1252
+Content-Transfer-Encoding: 7Bit
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20191030220320.tnwkaj5gbzchcn7j@madcap2.tricolour.ca>
+Sender: netdev-owner@vger.kernel.org
+To: Richard Guy Briggs <rgb@redhat.com>
+Cc: Paul Moore <paul@paul-moore.com>, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com, Dan Walsh <dwalsh@redhat.com>, mpatel@redhat.com
 List-Id: linux-api@vger.kernel.org
 
->From Christian Brauner
-> Sent: 31 October 2019 11:36
-> 
-> Validate the stack arguments and setup the stack depening on whether or not
-> it is growing down or up.
-> 
-...
-> -static bool clone3_args_valid(const struct kernel_clone_args *kargs)
-> +/**
-> + * clone3_stack_valid - check and prepare stack
-> + * @kargs: kernel clone args
-> + *
-> + * Verify that the stack arguments userspace gave us are sane.
-> + * In addition, set the stack direction for userspace since it's easy for us to
-> + * determine.
-> + */
-> +static inline bool clone3_stack_valid(struct kernel_clone_args *kargs)
-> +{
-> +	if (kargs->stack == 0) {
-> +		if (kargs->stack_size > 0)
-> +			return false;
-> +	} else {
-> +		if (kargs->stack_size == 0)
-> +			return false;
-> +
-> +		if (!access_ok((void __user *)kargs->stack, kargs->stack_size))
-> +			return false;
+Hello,
 
-Does access_ok() do anything useful here?
-It only verifies that the buffer isn't in kernel space.
+TLDR;  I see a lot of benefit to switching away from procfs for setting auid & 
+sessionid.
 
-	David
+On Wednesday, October 30, 2019 6:03:20 PM EDT Richard Guy Briggs wrote:
+> > Also, for the record, removing the audit loginuid from procfs is not
+> > something to take lightly, if at all; like it or not, it's part of the
+> > kernel API.
 
--
-Registered Address Lakeside, Bramley Road, Mount Farm, Milton Keynes, MK1 1PT, UK
-Registration No: 1397386 (Wales)
+It can also be used by tools to iterate processes related to one user or 
+session. I use this in my Intrusion Prevention System which will land in 
+audit user space at some point in the future.
+
+
+> Oh, I'm quite aware of how important this change is and it was discussed
+> with Steve Grubb who saw the concern and value of considering such a
+> disruptive change.
+
+Actually, I advocated for syscall. I think the gist of Eric's idea was that /
+proc is the intersection of many nasty problems. By relying on it, you can't 
+simplify the API to reduce the complexity. Almost no program actually needs 
+access to /proc. ps does. But almost everything else is happy without it. For 
+example, when you setup chroot jails, you may have to add /dev/random or /
+dev/null, but almost never /proc. What does force you to add /proc is any 
+entry point daemon like sshd because it needs to set the loginuid. If we 
+switch away from /proc, then sshd or crond will no longer /require/ procfs to 
+be available which again simplifies the system design.
+
+
+> Removing proc support for auid/ses would be a
+> long-term deprecation if accepted.
+
+It might need to just be turned into readonly for a while. But then again, 
+perhaps auid and session should be part of /proc/<pid>/status? Maybe this can 
+be done independently and ahead of the container work so there is a migration 
+path for things that read auid or session. TBH, maybe this should have been 
+done from the beginning.
+
+-Steve
