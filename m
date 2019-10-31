@@ -1,102 +1,55 @@
-From: "Li Xinhai" <lixinhai.lxh@gmail.com>
+From: Andrew Morton <akpm@linux-foundation.org>
 Subject: Re: [PATCH v2] mm: Fix checking unmapped holes for mbind
-Date: Thu, 31 Oct 2019 11:15:09 +0800
-Message-ID: <2019103111150700409251@gmail.com>
+Date: Wed, 30 Oct 2019 21:08:36 -0700
+Message-ID: <20191030210836.a17c0649354b59961903d1a8@linux-foundation.org>
 References: <201910291756045288126@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-        charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <201910291756045288126@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "linux-mm@kvack.org" <linux-mm@kvack.org>, n-horiguchi <n-horiguchi@ah.jp.nec.com>, akpm <akpm@linux-foundation.org>
-Cc: Vlastimil Babka <vbabka@suse.cz>, Michal Hocko <mhocko@kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Hugh Dickins <hughd@google.com>
+To: Li Xinhai <lixinhai.lxh@gmail.com>
+Cc: "linux-mm@kvack.org" <linux-mm@kvack.org>, Babka <vbabka@suse.cz>, Hocko <mhocko@kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, API <linux-api@vger.kernel.org>, Dickins <hughd@google.com>, linux-man@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-T24gMjAxOS0xMC0yOcKgYXQgMTc6NTbCoExpIFhpbmhhacKgd3JvdGU6Cj5xdWV1ZV9wYWdlc19y
-YW5nZSgpIHdpbGwgY2hlY2sgZm9yIHVubWFwcGVkIGhvbGVzIGJlc2lkZXMgcXVldWUgcGFnZXMg
-Zm9yCj5taWdyYXRpb24uIFRoZSBydWxlcyBmb3IgY2hlY2tpbmcgdW5tYXBwZWQgaG9sZXMgYXJl
-Ogo+MSBVbm1hcHBlZCBob2xlcyBhdCBhbnkgcGFydCBvZiB0aGUgc3BlY2lmaWVkIHJhbmdlIHNo
-b3VsZCBiZSByZXBvcnRlZCBhcwo+wqAgRUZBVUxUIGlmIG1iaW5kKCkgZm9yIG5vbmUgTVBPTF9E
-RUZBVUxUIGNhc2VzOwo+MiBVbm1hcHBlZCBob2xlcyBhdCBhbnkgcGFydCBvZiB0aGUgc3BlY2lm
-aWVkIHJhbmdlIHNob3VsZCBiZSBpZ25vcmVkIGlmCj7CoCBtYmluZCgpIGZvciBNUE9MX0RFRkFV
-TFQgY2FzZTsKPk5vdGUgdGhhdCB0aGUgc2Vjb25kIHJ1bGUgaXMgdGhlIGN1cnJlbnQgaW1wbGVt
-ZW50YXRpb24sIGJ1dCBpdCBzZWVtcwo+Y29uZmxpY3RzIHRoZSBMaW51eCBBUEkgZGVmaW5pdGlv
-bi4KPgo+cXVldWVfcGFnZXNfdGVzdF93YWxrKCkgaXMgZml4ZWQgYnkgaW50cm9kdWNlIG5ldyBm
-aWVsZHMgaW4gc3RydWN0Cj5xdWV1ZV9wYWdlcyB3aGljaCBoZWxwIHRvIGNoZWNrOgo+MSBob2xl
-cyBhdCBoZWFkIGFuZCB0YWlsIHNpZGUgb2Ygc3BlY2lmaWVkIHJhbmdlOwo+MiB0aGUgd2hvbGUg
-cmFuZ2UgaXMgaW4gYSBob2xlOwo+Cj5CZXNpZGVzLCBxdWV1ZV9wYWdlc190ZXN0X3dhbGsoKSBt
-dXN0IHVwZGF0ZSBwcmV2aW91cyB2bWEgcmVjb3JkIG5vIG1hdHRlcgo+dGhlIGN1cnJlbnQgdm1h
-IHNob3VsZCBiZSBjb25zaWRlcmVkIGZvciBxdWV1ZSBwYWdlcyBvciBub3QuCj4gCgpNb3JlIGRl
-dGFpbHMgYWJvdXQgY3VycmVudCBpc3N1ZSAod2hpY2ggYnJlYWtzIHRoZSBtYmluZCgpIEFQSSBk
-ZWZpbml0aW9uKToKMS4gSW7CoHF1ZXVlX3BhZ2VzX3Rlc3Rfd2FsaygpCmNoZWNraW5nIG9uICgh
-dm1hLT52bV9uZXh0ICYmIHZtYS0+dm1fZW5kIDwgZW5kKSB3b3VsZCBuZXZlciBzdWNjZXNzLCAK
-YmVjYXVzZSAnZW5kJyBwYXNzZWQgZnJvbSB3YWxrX3BhZ2VfdGVzdCgpIG1ha2Ugc3VyZSAiZW5k
-IDw9IMKgdm1hLT52bV9lbmQiLiBzbyBob2xlwqAKYmV5b25kIHRoZSBsYXN0IHZtYSBjYW4ndCBi
-ZSBkZXRlY3RlZC7CoAoKMi7CoHF1ZXVlX3BhZ2VzX3Rlc3Rfd2FsaygpIG9ubHkgY2FsbGVkIGZv
-ciB2bWEsIGFuZCAnc3RhcnQnLCAnZW5kJyBwYXJhbWV0ZXJzIGFyZSBndWFyYW50ZWVkCndpdGhp
-biB2bWEuIFRoZW4sIGlmIHRoZSByYW5nZSBzdGFydGluZyBvciBlbmRpbmcgaW4gYW4gdW5tYXBw
-ZWQgaG9sZSwgwqAKcXVldWVfcGFnZXNfdGVzdF93YWxrKCkgZG9uJ3QgaGF2ZSBjaGFuY2UgdG8g
-YmUgY2FsbGVkIHRvIGNoZWNrLiBJbiBvdGhlciB3b3JkcywgdGhlwqAKY3VycmVudCBjb2RlIGNh
-biBkZXRlY3QgdGhpcyBjYXNlIChyYW5nZSBzcGFuIG92ZXIgaG9sZSk6ClsgwqB2bWEgwqBdWyBo
-b2xlIF1bIHZtYV0KwqAgwqBbIMKgIMKgIHJhbmdlIMKgIMKgIMKgXQpidXQgY2FudCBub3QgZGV0
-ZWN0IHRoZXNlIGNhc2UgOgpbIMKgdm1hIMKgXVsgaG9sZSBdWyB2bWFdCsKgIMKgWyDCoHJhbmdl
-IMKgXQpbIMKgdm1hIMKgXVsgaG9sZSBdWyDCoHZtYSDCoF0KwqAgwqAgwqAgwqAgwqAgwqAgWyDC
-oHJhbmdlIMKgXQoKMy4gYSBjaGVja2luZyBpbiBtYmluZF9yYW5nZSgpIHRyeSB0byByZWNvdmVy
-IGlmIHRoZSBob2xlIGlzIGluIGhlYWQgc2lkZSwgYnV0IGNhbid0wqAKcmVjb3ZlciBpZiBob2xl
-IGlzIGluIHRhaWwgc2lkZSBvZiByYW5nZS4KCi0gWGluaGFpCgo+Rml4ZXM6IDlkOGNlYmQ0YmNk
-NyAoIm1tOiBmaXggbWJpbmQgdm1hIG1lcmdlIHByb2JsZW0iKQo+Rml4ZXM6IDZmNDU3NmUzNjg3
-YiAoIm1lbXBvbGljeTogYXBwbHkgcGFnZSB0YWJsZSB3YWxrZXIgb24gcXVldWVfcGFnZXNfcmFu
-Z2UoKSIpCj5GaXhlczogNDg2ODRhNjViNGUzICgibW06IHBhZ2V3YWxrOiBmaXggbWlzYmVoYXZp
-b3Igb2Ygd2Fsa19wYWdlX3JhbmdlIGZvciB2bWEoVk1fUEZOTUFQKSIpCj5TaWduZWQtb2ZmLWJ5
-OiBMaSBYaW5oYWkgPGxpeGluaGFpLmxpQGdtYWlsLmNvbT4KPi0tLQo+Q2hhbmdlcyBpbiB2MjoK
-PsKgIC0gRml4IHRoZSB1bm1hcHBlZCBob2xlcyBjaGVja2luZyBpbiBxdWV1ZV9wYWdlc190ZXN0
-X3dhbGsoKSBpbnN0ZWFkIG9mwqAKPsKgIMKgIG1iaW5kX3JuYWdlKCkuCj4KPsKgbW0vbWVtcG9s
-aWN5LmMgfCA0NCArKysrKysrKysrKysrKysrKysrKysrKysrKysrKy0tLS0tLS0tLS0tLS0tLQo+
-wqAxIGZpbGUgY2hhbmdlZCwgMjkgaW5zZXJ0aW9ucygrKSwgMTUgZGVsZXRpb25zKC0pCj4KPmRp
-ZmYgLS1naXQgYS9tbS9tZW1wb2xpY3kuYyBiL21tL21lbXBvbGljeS5jCj5pbmRleCA0YWU5Njdi
-Y2Y5NTQuLjI0MDg3ZGZhNGRjZCAxMDA2NDQKPi0tLSBhL21tL21lbXBvbGljeS5jCj4rKysgYi9t
-bS9tZW1wb2xpY3kuYwo+QEAgLTQxMSw2ICs0MTEsOSBAQCBzdHJ1Y3QgcXVldWVfcGFnZXMgewo+
-wqAJdW5zaWduZWQgbG9uZyBmbGFnczsKPsKgCW5vZGVtYXNrX3QgKm5tYXNrOwo+wqAJc3RydWN0
-IHZtX2FyZWFfc3RydWN0ICpwcmV2Owo+Kwl1bnNpZ25lZCBsb25nIHN0YXJ0Owo+Kwl1bnNpZ25l
-ZCBsb25nIGVuZDsKPisJaW50IGluX2hvbGU7Cj7CoH07Cj7CoAo+wqAvKgo+QEAgLTYxOCwyOCAr
-NjIxLDMxIEBAIHN0YXRpYyBpbnQgcXVldWVfcGFnZXNfdGVzdF93YWxrKHVuc2lnbmVkIGxvbmcg
-c3RhcnQsIHVuc2lnbmVkIGxvbmcgZW5kLAo+wqAJdW5zaWduZWQgbG9uZyBlbmR2bWEgPSB2bWEt
-PnZtX2VuZDsKPsKgCXVuc2lnbmVkIGxvbmcgZmxhZ3MgPSBxcC0+ZmxhZ3M7Cj7CoAo+LQkvKgo+
-LQkqIE5lZWQgY2hlY2sgTVBPTF9NRl9TVFJJQ1QgdG8gcmV0dXJuIC1FSU8gaWYgcG9zc2libGUK
-Pi0JKiByZWdhcmRsZXNzIG9mIHZtYV9taWdyYXRhYmxlCj4tCSovCj4tCWlmICghdm1hX21pZ3Jh
-dGFibGUodm1hKSAmJgo+LQnCoCDCoCEoZmxhZ3MgJiBNUE9MX01GX1NUUklDVCkpCj4tCXJldHVy
-biAxOwo+LQo+KwkvKiByYW5nZSBjaGVjayBmaXJzdCAqLwo+wqAJaWYgKGVuZHZtYSA+IGVuZCkK
-PsKgCWVuZHZtYSA9IGVuZDsKPi0JaWYgKHZtYS0+dm1fc3RhcnQgPiBzdGFydCkKPi0Jc3RhcnQg
-PSB2bWEtPnZtX3N0YXJ0Owo+KwlCVUdfT04oKHZtYS0+dm1fc3RhcnQgPiBzdGFydCkgfHwgKHZt
-YS0+dm1fZW5kIDwgZW5kKSk7Cj7CoAo+KwlxcC0+aW5faG9sZSA9IDA7Cj7CoAlpZiAoIShmbGFn
-cyAmIE1QT0xfTUZfRElTQ09OVElHX09LKSkgewo+LQlpZiAoIXZtYS0+dm1fbmV4dCAmJiB2bWEt
-PnZtX2VuZCA8IGVuZCkKPisJaWYgKCghdm1hLT52bV9uZXh0ICYmIHZtYS0+dm1fZW5kIDwgcXAt
-PmVuZCkgfHwKPisJKHZtYS0+dm1fbmV4dCAmJiBxcC0+ZW5kIDwgdm1hLT52bV9uZXh0LT52bV9z
-dGFydCkpCj7CoAlyZXR1cm4gLUVGQVVMVDsKPi0JaWYgKHFwLT5wcmV2ICYmIHFwLT5wcmV2LT52
-bV9lbmQgPCB2bWEtPnZtX3N0YXJ0KQo+KwlpZiAoKHFwLT5wcmV2ICYmIHFwLT5wcmV2LT52bV9l
-bmQgPCB2bWEtPnZtX3N0YXJ0KSB8fAo+KwkoIXFwLT5wcmV2ICYmIHFwLT5zdGFydCA8IHZtYS0+
-dm1fc3RhcnQpKQo+wqAJcmV0dXJuIC1FRkFVTFQ7Cj7CoAl9Cj7CoAo+wqAJcXAtPnByZXYgPSB2
-bWE7Cj7CoAo+KwkvKgo+KwkqIE5lZWQgY2hlY2sgTVBPTF9NRl9TVFJJQ1QgdG8gcmV0dXJuIC1F
-SU8gaWYgcG9zc2libGUKPisJKiByZWdhcmRsZXNzIG9mIHZtYV9taWdyYXRhYmxlCj4rCSovCj4r
-CWlmICghdm1hX21pZ3JhdGFibGUodm1hKSAmJgo+KwnCoCDCoCEoZmxhZ3MgJiBNUE9MX01GX1NU
-UklDVCkpCj4rCXJldHVybiAxOwo+Kwo+wqAJaWYgKGZsYWdzICYgTVBPTF9NRl9MQVpZKSB7Cj7C
-oAkvKiBTaW1pbGFyIHRvIHRhc2tfbnVtYV93b3JrLCBza2lwIGluYWNjZXNzaWJsZSBWTUFzICov
-Cj7CoAlpZiAoIWlzX3ZtX2h1Z2V0bGJfcGFnZSh2bWEpICYmCj5AQCAtNjc5LDE0ICs2ODUsMjMg
-QEAgcXVldWVfcGFnZXNfcmFuZ2Uoc3RydWN0IG1tX3N0cnVjdCAqbW0sIHVuc2lnbmVkIGxvbmcg
-c3RhcnQsIHVuc2lnbmVkIGxvbmcgZW5kLAo+wqAJbm9kZW1hc2tfdCAqbm9kZXMsIHVuc2lnbmVk
-IGxvbmcgZmxhZ3MsCj7CoAlzdHJ1Y3QgbGlzdF9oZWFkICpwYWdlbGlzdCkKPsKgewo+KwlpbnQg
-ZXJyOwo+wqAJc3RydWN0IHF1ZXVlX3BhZ2VzIHFwID0gewo+wqAJLnBhZ2VsaXN0ID0gcGFnZWxp
-c3QsCj7CoAkuZmxhZ3MgPSBmbGFncywKPsKgCS5ubWFzayA9IG5vZGVzLAo+wqAJLnByZXYgPSBO
-VUxMLAo+Kwkuc3RhcnQgPSBzdGFydCwKPisJLmVuZCA9IGVuZCwKPisJLmluX2hvbGUgPSAxLAo+
-wqAJfTsKPsKgCj4tCXJldHVybiB3YWxrX3BhZ2VfcmFuZ2UobW0sIHN0YXJ0LCBlbmQsICZxdWV1
-ZV9wYWdlc193YWxrX29wcywgJnFwKTsKPisJZXJyID0gd2Fsa19wYWdlX3JhbmdlKG1tLCBzdGFy
-dCwgZW5kLCAmcXVldWVfcGFnZXNfd2Fsa19vcHMsICZxcCk7Cj4rCS8qIHdob2xlIHJhbmdlIGlu
-IHVubWFwcGVkIGhvbGUgKi8KPisJaWYgKHFwLT5pbl9ob2xlICYmICEoZmxhZ3MgJiBNUE9MX01G
-X0RJU0NPTlRJR19PSykpCj4rCWVyciA9IC1FRkFVTFQ7Cj4rCj4rCXJldHVybiBlcnI7Cj7CoH0K
-PsKgCj7CoC8qCj5AQCAtNzM4LDggKzc1Myw3IEBAIHN0YXRpYyBpbnQgbWJpbmRfcmFuZ2Uoc3Ry
-dWN0IG1tX3N0cnVjdCAqbW0sIHVuc2lnbmVkIGxvbmcgc3RhcnQsCj7CoAl1bnNpZ25lZCBsb25n
-IHZtZW5kOwo+wqAKPsKgCXZtYSA9IGZpbmRfdm1hKG1tLCBzdGFydCk7Cj4tCWlmICghdm1hIHx8
-IHZtYS0+dm1fc3RhcnQgPiBzdGFydCkKPi0JcmV0dXJuIC1FRkFVTFQ7Cj4rCUJVR19PTighdm1h
-KTsKPsKgCj7CoAlwcmV2ID0gdm1hLT52bV9wcmV2Owo+wqAJaWYgKHN0YXJ0ID4gdm1hLT52bV9z
-dGFydCkKPi0twqAKPjIuMjIuMA==
+(cc linux-man@vger.kernel.org)
+
+On Tue, 29 Oct 2019 17:56:06 +0800 "Li Xinhai" <lixinhai.lxh@gmail.com> wro=
+te:
+
+> queue_pages_range() will check for unmapped holes besides queue pages for
+> migration. The rules for checking unmapped holes are:
+> 1 Unmapped holes at any part of the specified range should be reported as
+> =A0 EFAULT if mbind() for none MPOL_DEFAULT cases;
+> 2 Unmapped holes at any part of the specified range should be ignored if
+> =A0 mbind() for MPOL_DEFAULT case;
+> Note that the second rule is the current implementation, but it seems
+> conflicts the Linux API definition.
+
+Can you quote the part of the API definition which you're looking at?
+
+My mbind(2) manpage says
+
+ERRORS
+       EFAULT Part or all of the memory range specified by nodemask and max=
+n-
+              ode points outside your accessible address space.  Or, there =
+was
+              an unmapped hole in the specified memory range specified by a=
+ddr
+              and len.
+
+(I assume the first sentence meant to say "specified by addr and len")
+
+I agree with your interpretation, but there's no mention here that
+MPOL_DEFAULT is treated differently and I don't see why it should be.
+
+
+More broadly, I worry that it's too late to change this - existing
+applications might fail if we change the implementation in the proposed
+fashion.  So perhaps what we should do here is to change the manpage to
+match reality?
+
+Is the current behavior causing you any problems in a real-world use
+case?
