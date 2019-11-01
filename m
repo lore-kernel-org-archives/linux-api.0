@@ -1,56 +1,83 @@
-From: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
-Subject: Re: [PATCH] clone3: validate stack arguments
-Date: Fri, 1 Nov 2019 14:57:10 +0000
-Message-ID: <f51d97a2-8130-0ba2-c591-638b7fd6b14d@arm.com>
-References: <20191031113608.20713-1-christian.brauner@ubuntu.com>
+From: Richard Guy Briggs <rgb@redhat.com>
+Subject: Re: [PATCH ghak90 V7 20/21] audit: add capcontid to set contid
+ outside init_user_ns
+Date: Fri, 1 Nov 2019 11:09:27 -0400
+Message-ID: <20191101150927.c5sf3n5ezfg2eano@madcap2.tricolour.ca>
+References: <cover.1568834524.git.rgb@redhat.com>
+ <CAHC9VhRDoX9du4XbCnBtBzsNPMGOsb-TKM1CC+sCL7HP=FuTRQ@mail.gmail.com>
+ <20191030220320.tnwkaj5gbzchcn7j@madcap2.tricolour.ca>
+ <3677995.NTHC7m0fHc@x2>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <20191031113608.20713-1-christian.brauner@ubuntu.com>
-Content-Language: en-US
-Content-ID: <BC1913B4DAE40F4E984CAAD8757FF6B1@eurprd08.prod.outlook.com>
-Sender: stable-owner@vger.kernel.org
-To: Christian Brauner <christian.brauner@ubuntu.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Florian Weimer <fweimer@redhat.com>, GNU C Library <libc-alpha@sourceware.org>
-Cc: nd <nd@arm.com>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, David Howells <dhowells@redhat.com>, Ingo Molnar <mingo@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <peterz@infradead.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "stable@vger.kernel.org" <stable@vger.kernel.org>
+Content-Type: text/plain; charset=WINDOWS-1252
+Content-Transfer-Encoding: quoted-printable
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <3677995.NTHC7m0fHc@x2>
+Content-Disposition: inline
+Sender: netdev-owner@vger.kernel.org
+To: Steve Grubb <sgrubb@redhat.com>
+Cc: nhorman@tuxdriver.com, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, LKML <linux-kernel@vger.kernel.org>, dhowells@redhat.com, Linux-Audit Mailing List <linux-audit@redhat.com>, netfilter-devel@vger.kernel.org, ebiederm@xmission.com, simo@redhat.com, netdev@vger.kernel.org, linux-fsdevel@vger.kernel.org, Eric Paris <eparis@parisplace.org>, mpatel@redhat.com, Serge Hallyn <serge@hallyn.com>
 List-Id: linux-api@vger.kernel.org
 
-T24gMzEvMTAvMjAxOSAxMTozNiwgQ2hyaXN0aWFuIEJyYXVuZXIgd3JvdGU6DQo+IGRpZmYgLS1n
-aXQgYS9pbmNsdWRlL3VhcGkvbGludXgvc2NoZWQuaCBiL2luY2x1ZGUvdWFwaS9saW51eC9zY2hl
-ZC5oDQo+IGluZGV4IDk5MzM1ZTFmNGEyNy4uMjViNGZhMDBiYWQxIDEwMDY0NA0KPiAtLS0gYS9p
-bmNsdWRlL3VhcGkvbGludXgvc2NoZWQuaA0KPiArKysgYi9pbmNsdWRlL3VhcGkvbGludXgvc2No
-ZWQuaA0KPiBAQCAtNTEsNiArNTEsMTAgQEANCj4gICAqICAgICAgICAgICAgICAgc2VudCB3aGVu
-IHRoZSBjaGlsZCBleGl0cy4NCj4gICAqIEBzdGFjazogICAgICAgU3BlY2lmeSB0aGUgbG9jYXRp
-b24gb2YgdGhlIHN0YWNrIGZvciB0aGUNCj4gICAqICAgICAgICAgICAgICAgY2hpbGQgcHJvY2Vz
-cy4NCj4gKyAqICAgICAgICAgICAgICAgTm90ZSwgQHN0YWNrIGlzIGV4cGVjdGVkIHRvIHBvaW50
-IHRvIHRoZQ0KPiArICogICAgICAgICAgICAgICBsb3dlc3QgYWRkcmVzcy4gVGhlIHN0YWNrIGRp
-cmVjdGlvbiB3aWxsIGJlDQo+ICsgKiAgICAgICAgICAgICAgIGRldGVybWluZWQgYnkgdGhlIGtl
-cm5lbCBhbmQgc2V0IHVwDQo+ICsgKiAgICAgICAgICAgICAgIGFwcHJvcHJpYXRlbHkgYmFzZWQg
-b24gQHN0YWNrX3NpemUuDQo+ICAgKiBAc3RhY2tfc2l6ZTogIFRoZSBzaXplIG9mIHRoZSBzdGFj
-ayBmb3IgdGhlIGNoaWxkIHByb2Nlc3MuDQo+ICAgKiBAdGxzOiAgICAgICAgIElmIENMT05FX1NF
-VFRMUyBpcyBzZXQsIHRoZSB0bHMgZGVzY3JpcHRvcg0KPiAgICogICAgICAgICAgICAgICBpcyBz
-ZXQgdG8gdGxzLg0KPiBkaWZmIC0tZ2l0IGEva2VybmVsL2ZvcmsuYyBiL2tlcm5lbC9mb3JrLmMN
-Cj4gaW5kZXggYmNkZjUzMTI1MjEwLi41NWFmNjkzMWM2ZWMgMTAwNjQ0DQo+IC0tLSBhL2tlcm5l
-bC9mb3JrLmMNCj4gKysrIGIva2VybmVsL2ZvcmsuYw0KPiBAQCAtMjU2MSw3ICsyNTYxLDM1IEBA
-IG5vaW5saW5lIHN0YXRpYyBpbnQgY29weV9jbG9uZV9hcmdzX2Zyb21fdXNlcihzdHJ1Y3Qga2Vy
-bmVsX2Nsb25lX2FyZ3MgKmthcmdzLA0KPiAgCXJldHVybiAwOw0KPiAgfQ0KPiAgDQo+IC1zdGF0
-aWMgYm9vbCBjbG9uZTNfYXJnc192YWxpZChjb25zdCBzdHJ1Y3Qga2VybmVsX2Nsb25lX2FyZ3Mg
-KmthcmdzKQ0KPiArLyoqDQo+ICsgKiBjbG9uZTNfc3RhY2tfdmFsaWQgLSBjaGVjayBhbmQgcHJl
-cGFyZSBzdGFjaw0KPiArICogQGthcmdzOiBrZXJuZWwgY2xvbmUgYXJncw0KPiArICoNCj4gKyAq
-IFZlcmlmeSB0aGF0IHRoZSBzdGFjayBhcmd1bWVudHMgdXNlcnNwYWNlIGdhdmUgdXMgYXJlIHNh
-bmUuDQo+ICsgKiBJbiBhZGRpdGlvbiwgc2V0IHRoZSBzdGFjayBkaXJlY3Rpb24gZm9yIHVzZXJz
-cGFjZSBzaW5jZSBpdCdzIGVhc3kgZm9yIHVzIHRvDQo+ICsgKiBkZXRlcm1pbmUuDQo+ICsgKi8N
-Cj4gK3N0YXRpYyBpbmxpbmUgYm9vbCBjbG9uZTNfc3RhY2tfdmFsaWQoc3RydWN0IGtlcm5lbF9j
-bG9uZV9hcmdzICprYXJncykNCj4gK3sNCj4gKwlpZiAoa2FyZ3MtPnN0YWNrID09IDApIHsNCj4g
-KwkJaWYgKGthcmdzLT5zdGFja19zaXplID4gMCkNCj4gKwkJCXJldHVybiBmYWxzZTsNCj4gKwl9
-IGVsc2Ugew0KPiArCQlpZiAoa2FyZ3MtPnN0YWNrX3NpemUgPT0gMCkNCj4gKwkJCXJldHVybiBm
-YWxzZTsNCj4gKw0KPiArCQlpZiAoIWFjY2Vzc19vaygodm9pZCBfX3VzZXIgKilrYXJncy0+c3Rh
-Y2ssIGthcmdzLT5zdGFja19zaXplKSkNCj4gKwkJCXJldHVybiBmYWxzZTsNCj4gKw0KPiArI2lm
-ICFkZWZpbmVkKENPTkZJR19TVEFDS19HUk9XU1VQKSAmJiAhZGVmaW5lZChDT05GSUdfSUE2NCkN
-Cj4gKwkJa2FyZ3MtPnN0YWNrICs9IGthcmdzLT5zdGFja19zaXplOw0KPiArI2VuZGlmDQo+ICsJ
-fQ0KDQpmcm9tIHRoZSBkZXNjcmlwdGlvbiBpdCBpcyBub3QgY2xlYXIgd2hvc2UNCnJlc3BvbnNp
-YmlsaXR5IGl0IGlzIHRvIGd1YXJhbnRlZSB0aGUgYWxpZ25tZW50DQpvZiBzcCBvbiBlbnRyeS4N
-Cg0KaSB0aGluayAwIHN0YWNrIHNpemUgbWF5IHdvcmsgaWYgc2lnbmFscyBhcmUNCmJsb2NrZWQg
-YW5kIHRoZW4gcHJvaGliaXRpbmcgaXQgbWlnaHQgbm90IGJlDQp0aGUgcmlnaHQgdGhpbmcuDQoN
-Cml0J3Mgbm90IGNsZWFyIGhvdyBsaWJjIHNob3VsZCBkZWFsIHdpdGggdjUuMw0Ka2VybmVscyB3
-aGljaCBkb24ndCBoYXZlIHRoZSBzdGFjays9c3RhY2tfc2l6ZQ0KbG9naWMuDQo=
+On 2019-10-31 10:50, Steve Grubb wrote:
+> Hello,
+>=20
+> TLDR;  I see a lot of benefit to switching away from procfs for setting a=
+uid &=20
+> sessionid.
+>=20
+> On Wednesday, October 30, 2019 6:03:20 PM EDT Richard Guy Briggs wrote:
+> > > Also, for the record, removing the audit loginuid from procfs is not
+> > > something to take lightly, if at all; like it or not, it's part of th=
+e
+> > > kernel API.
+>=20
+> It can also be used by tools to iterate processes related to one user or=
+=20
+> session. I use this in my Intrusion Prevention System which will land in=
+=20
+> audit user space at some point in the future.
+>=20
+> > Oh, I'm quite aware of how important this change is and it was discusse=
+d
+> > with Steve Grubb who saw the concern and value of considering such a
+> > disruptive change.
+>=20
+> Actually, I advocated for syscall. I think the gist of Eric's idea was th=
+at /
+> proc is the intersection of many nasty problems. By relying on it, you ca=
+n't=20
+> simplify the API to reduce the complexity. Almost no program actually nee=
+ds=20
+> access to /proc. ps does. But almost everything else is happy without it.=
+ For=20
+> example, when you setup chroot jails, you may have to add /dev/random or =
+/
+> dev/null, but almost never /proc. What does force you to add /proc is any=
+=20
+> entry point daemon like sshd because it needs to set the loginuid. If we=
+=20
+> switch away from /proc, then sshd or crond will no longer /require/ procf=
+s to=20
+> be available which again simplifies the system design.
+>=20
+> > Removing proc support for auid/ses would be a
+> > long-term deprecation if accepted.
+>=20
+> It might need to just be turned into readonly for a while. But then again=
+,=20
+> perhaps auid and session should be part of /proc/<pid>/status? Maybe this=
+ can=20
+> be done independently and ahead of the container work so there is a migra=
+tion=20
+> path for things that read auid or session. TBH, maybe this should have be=
+en=20
+> done from the beginning.
+
+How about making loginuid/contid/capcontid writable only via netlink but
+still provide the /proc interface for reading?  Deprecation of proc can
+be left as a decision for later.  This way sshd/crond/getty don't need
+/proc, but the info is still there for tools that want to read it.
+
+> -Steve
+
+- RGB
