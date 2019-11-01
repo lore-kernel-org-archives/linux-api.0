@@ -1,108 +1,148 @@
-From: Yu-cheng Yu <yu-cheng.yu@intel.com>
-Subject: Re: [PATCH v7 27/27] x86/cet/shstk: Add Shadow Stack instructions
- to opcode map
-Date: Fri, 01 Nov 2019 07:17:45 -0700
-Message-ID: <221c36d6646ea9f88d208dc02494872a34d8b61f.camel@intel.com>
-References: <20190606200646.3951-1-yu-cheng.yu@intel.com>
-         <20190606200646.3951-28-yu-cheng.yu@intel.com>
-         <93e915b9-975d-9876-8f89-8b6f2bc4586e@intel.com>
+From: Christian Brauner <christian.brauner@ubuntu.com>
+Subject: Re: [PATCH] clone3: validate stack arguments
+Date: Fri, 1 Nov 2019 15:40:22 +0100
+Message-ID: <20191101144021.p6dh7utlvqecuhua@wittgenstein>
+References: <20191031113608.20713-1-christian.brauner@ubuntu.com>
+ <20191031164653.GA24629@redhat.com>
+ <20191101110639.icbfihw3fk2nzz4o@wittgenstein>
+ <20191101123257.GA508@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <93e915b9-975d-9876-8f89-8b6f2bc4586e@intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Adrian Hunter <adrian.hunter@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>
+Content-Type: text/plain; charset=utf-8
+Return-path: <stable-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20191101123257.GA508@redhat.com>
+Sender: stable-owner@vger.kernel.org
+To: Oleg Nesterov <oleg@redhat.com>
+Cc: linux-kernel@vger.kernel.org, Florian Weimer <fweimer@redhat.com>, GNU C Library <libc-alpha@sourceware.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, David Howells <dhowells@redhat.com>, Ingo Molnar <mingo@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <peterz@infradead.org>, linux-api@vger.kernel.org, stable@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 2019-11-01 at 16:03 +0200, Adrian Hunter wrote:
-> On 6/06/19 11:06 PM, Yu-cheng Yu wrote:
-> > Add the following shadow stack management instructions.
-> > 
-> > INCSSP:
-> >     Increment shadow stack pointer by the steps specified.
-> > 
-> > RDSSP:
-> >     Read SSP register into a GPR.
-> > 
-> > SAVEPREVSSP:
-> >     Use "prev ssp" token at top of current shadow stack to
-> >     create a "restore token" on previous shadow stack.
-> > 
-> > RSTORSSP:
-> >     Restore from a "restore token" pointed by a GPR to SSP.
-> > 
-> > WRSS:
-> >     Write to kernel-mode shadow stack (kernel-mode instruction).
-> > 
-> > WRUSS:
-> >     Write to user-mode shadow stack (kernel-mode instruction).
-> > 
-> > SETSSBSY:
-> >     Verify the "supervisor token" pointed by IA32_PL0_SSP MSR,
-> >     if valid, set the token to busy, and set SSP to the value
-> >     of IA32_PL0_SSP MSR.
-> > 
-> > CLRSSBSY:
-> >     Verify the "supervisor token" pointed by a GPR, if valid,
-> >     clear the busy bit from the token.
+On Fri, Nov 01, 2019 at 01:32:57PM +0100, Oleg Nesterov wrote:
+> On 11/01, Christian Brauner wrote:
+> >
+> > On Thu, Oct 31, 2019 at 05:46:53PM +0100, Oleg Nesterov wrote:
+> > > On 10/31, Christian Brauner wrote:
+> > > >
+> > > > --- a/include/uapi/linux/sched.h
+> > > > +++ b/include/uapi/linux/sched.h
+> > > > @@ -51,6 +51,10 @@
+> > > >   *               sent when the child exits.
+> > > >   * @stack:       Specify the location of the stack for the
+> > > >   *               child process.
+> > > > + *               Note, @stack is expected to point to the
+> > > > + *               lowest address. The stack direction will be
+> > > > + *               determined by the kernel and set up
+> > > > + *               appropriately based on @stack_size.
+> > >
+> > > I can't review this patch, I have no idea what does stack_size mean
+> > > if !arch/x86.
+> >
+> > In short: nothing at all if it weren't for ia64 (and maybe parisc).
+> > But let me provide some (hopefully useful) context.
 > 
-> Does the notrack prefix also need to be catered for somehow?
+> Thanks...
+> 
+> > (Probably most of
+> > that is well-know,
+> 
+> Certainly not to me ;) Thanks.
+> 
+> > > > +static inline bool clone3_stack_valid(struct kernel_clone_args *kargs)
+> > > > +{
+> > > > +	if (kargs->stack == 0) {
+> > > > +		if (kargs->stack_size > 0)
+> > > > +			return false;
+> > > > +	} else {
+> > > > +		if (kargs->stack_size == 0)
+> > > > +			return false;
+> > >
+> > > So to implement clone3_wrapper(void *bottom_of_stack) you need to do
+> > >
+> > > 	clone3_wrapper(void *bottom_of_stack)
+> > > 	{
+> > > 		struct clone_args args = {
+> > > 			...
+> > > 			// make clone3_stack_valid() happy
+> > > 			.stack = bottom_of_stack - 1,
+> > > 			.stack_size = 1,
+> > > 		};
+> > > 	}
+> > >
+> > > looks a bit strange. OK, I agree, this example is very artificial.
+> > > But why do you think clone3() should nack stack_size == 0 ?
+> >
+> > In short, consistency.
+> 
+> And in my opinion this stack_size == 0 check destroys the consistency,
+> see below.
+> 
+> But just in case, let me say that overall I personally like this change.
+> 
+> > The best thing imho, is to clearly communicate to userspace that stack
+> > needs to point to the lowest address and stack_size to the initial range
+> > of the stack pointer
+> 
+> Agreed.
+> 
+> But the kernel can't verify that "stack" actually points to the lowest
+> address and stack_size is actually the stack size. Consider another
+> artificial
 
-Yes, I will fix it.
+Sure, but that's the similar to other structs that are passed via a
+pointer and come with a size. You could pass:
+
+setxattr(..., ..., value - size, size, ...);
+
+and the kernel would be confused as well.
 
 > 
-> > 
-> > Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
-> > ---
-> >  arch/x86/lib/x86-opcode-map.txt               | 26 +++++++++++++------
-> >  tools/objtool/arch/x86/lib/x86-opcode-map.txt | 26 +++++++++++++------
-> >  2 files changed, 36 insertions(+), 16 deletions(-)
-> > 
-> > diff --git a/arch/x86/lib/x86-opcode-map.txt b/arch/x86/lib/x86-opcode-map.txt
-> > index e0b85930dd77..c5e825d44766 100644
-> > --- a/arch/x86/lib/x86-opcode-map.txt
-> > +++ b/arch/x86/lib/x86-opcode-map.txt
-> > @@ -366,7 +366,7 @@ AVXcode: 1
-> >  1b: BNDCN Gv,Ev (F2) | BNDMOV Ev,Gv (66) | BNDMK Gv,Ev (F3) | BNDSTX Ev,Gv
-> >  1c:
-> >  1d:
-> > -1e:
-> > +1e: RDSSP Rd (F3),REX.W
-> >  1f: NOP Ev
-> >  # 0x0f 0x20-0x2f
-> >  20: MOV Rd,Cd
-> > @@ -610,7 +610,17 @@ fe: paddd Pq,Qq | vpaddd Vx,Hx,Wx (66),(v1)
-> >  ff: UD0
-> >  EndTable
-> >  
-> > -Table: 3-byte opcode 1 (0x0f 0x38)
-> > +Table: 3-byte opcode 1 (0x0f 0x01)
-> > +Referrer:
-> > +AVXcode:
-> > +# Skip 0x00-0xe7
-> > +e8: SETSSBSY (f3)
-> > +e9:
-> > +ea: SAVEPREVSSP (f3)
-> > +# Skip 0xeb-0xff
-> > +EndTable
-> > +
-> > +Table: 3-byte opcode 2 (0x0f 0x38)
-> >  Referrer: 3-byte escape 1
-> >  AVXcode: 2
-> >  # 0x0f 0x38 0x00-0x0f
-> > @@ -789,12 +799,12 @@ f0: MOVBE Gy,My | MOVBE Gw,Mw (66) | CRC32 Gd,Eb (F2) | CRC32 Gd,Eb (66&F2)
-> >  f1: MOVBE My,Gy | MOVBE Mw,Gw (66) | CRC32 Gd,Ey (F2) | CRC32 Gd,Ew (66&F2)
-> >  f2: ANDN Gy,By,Ey (v)
-> >  f3: Grp17 (1A)
-> > -f5: BZHI Gy,Ey,By (v) | PEXT Gy,By,Ey (F3),(v) | PDEP Gy,By,Ey (F2),(v)
-> > -f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v)
-> > +f5: BZHI Gy,Ey,By (v) | PEXT Gy,By,Ey (F3),(v) | PDEP Gy,By,Ey (F2),(v) | WRUSS Pq,Qq (66),REX.W
-> > +f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v) | WRSS Pq,Qq (66),REX.W
+>     	clone3_wrapper(void *bottom_of_stack, unsigned long offs)
+>     	{
+>     		struct clone_args args = {
+>     			...
+>     			// make clone3_stack_valid() happy
+>     			.stack = bottom_of_stack - offs,
+>     			.stack_size = offs,
+>     		};
+>     		sys_clone3(args);
+>     	}
+> 	
+> Now,
 > 
-> AFAICT WRSS does not have 66 prefix
+> 	clone3_wrapper(bottom_of_stack, offs);
+> 
+> is same thing for _any_ offs except offs == 0 will fail. Why? To me this
+> is not consistent, I think the "stack_size == 0" check buys nothing and
+> only adds some confusion.
 
-I will check.
+I disagree. It's a very easy contract: pass a stack and a size or
+request copy-on-write by passing both as 0.
+Sure, you can flaunt that contract but that's true of every other
+pointer + size api. The point is: the api we endorse should be simple
+and stack + stack_size is very simple.
 
-Thanks,
-Yu-cheng
+> 
+> Say, stack_size == 1 is "obviously wrong" too, this certainly means that
+> "stack" doesn't point to the lowest address (or the child will corrupt the
+> memory), but it works.
+> 
+> OK, I won't insist. Perhaps it can help to detect the case when a user
+> forgets to pass the correct stack size.
+> 
+> > > > +		if (!access_ok((void __user *)kargs->stack, kargs->stack_size))
+> > > > +			return false;
+> > >
+> > > Why?
+> >
+> > It's nice of us to tell userspace _before_ we have created a thread that
+> > it messed up its parameters instead of starting a thread that then
+> > immediately crashes.
+> 
+> Heh. Then why this code doesn't verify that at least stack + stack_size is
+> properly mmaped with PROT_READ|WRITE?
+
+access_ok() is uncomplicated.
+The other check makes a lot more assumptions. Theare are users that might
+want to have a PROT_NONE part of their stack as their own "private"
+guard page (Jann just made that point) and there are other corner cases.
+
+Christian
