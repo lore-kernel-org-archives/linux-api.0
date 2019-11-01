@@ -1,24 +1,56 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [RFC PATCH 04/10] pipe: Use head and tail pointers for the ring, not cursor and length [ver #2]
-Date: Fri, 01 Nov 2019 14:53:21 +0000
-Message-ID: <23658.1572620001@warthog.procyon.org.uk>
-References: <CAOi1vP9GAmy5NXJisrDssspoRcc+UHum+cyBsJTMNTjz_jieoQ@mail.gmail.com> <157186182463.3995.13922458878706311997.stgit@warthog.procyon.org.uk> <157186186167.3995.7568100174393739543.stgit@warthog.procyon.org.uk> <CAOi1vP97DMX8zweOLfBDOFstrjC78=6RgxK3PPj_mehCOSeoaw@mail.gmail.com> <4892d186-8eb0-a282-e7e6-e79958431a54@rasmusvillemoes.dk> <16620.1572534687@warthog.procyon.org.uk>
+From: Szabolcs Nagy <Szabolcs.Nagy@arm.com>
+Subject: Re: [PATCH] clone3: validate stack arguments
+Date: Fri, 1 Nov 2019 14:57:10 +0000
+Message-ID: <f51d97a2-8130-0ba2-c591-638b7fd6b14d@arm.com>
+References: <20191031113608.20713-1-christian.brauner@ubuntu.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAOi1vP9GAmy5NXJisrDssspoRcc+UHum+cyBsJTMNTjz_jieoQ@mail.gmail.com>
-Content-ID: <23657.1572620001.1@warthog.procyon.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ilya Dryomov <idryomov@gmail.com>
-Cc: dhowells@redhat.com, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Linus Torvalds <torvalds@linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, linux-security-module@vger.kernel.org, linux-fsdevel <linux-fsdevel@vger.kernel.org>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <20191031113608.20713-1-christian.brauner@ubuntu.com>
+Content-Language: en-US
+Content-ID: <BC1913B4DAE40F4E984CAAD8757FF6B1@eurprd08.prod.outlook.com>
+Sender: stable-owner@vger.kernel.org
+To: Christian Brauner <christian.brauner@ubuntu.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Florian Weimer <fweimer@redhat.com>, GNU C Library <libc-alpha@sourceware.org>
+Cc: nd <nd@arm.com>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, David Howells <dhowells@redhat.com>, Ingo Molnar <mingo@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <peterz@infradead.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "stable@vger.kernel.org" <stable@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Ilya Dryomov <idryomov@gmail.com> wrote:
-
-> >  * This means there isn't a dead spot in the buffer, but the ring
-> >  * size has to be a power of two and <=3D 2^31.
-
-I'll go with that, thanks.
-
-David
+T24gMzEvMTAvMjAxOSAxMTozNiwgQ2hyaXN0aWFuIEJyYXVuZXIgd3JvdGU6DQo+IGRpZmYgLS1n
+aXQgYS9pbmNsdWRlL3VhcGkvbGludXgvc2NoZWQuaCBiL2luY2x1ZGUvdWFwaS9saW51eC9zY2hl
+ZC5oDQo+IGluZGV4IDk5MzM1ZTFmNGEyNy4uMjViNGZhMDBiYWQxIDEwMDY0NA0KPiAtLS0gYS9p
+bmNsdWRlL3VhcGkvbGludXgvc2NoZWQuaA0KPiArKysgYi9pbmNsdWRlL3VhcGkvbGludXgvc2No
+ZWQuaA0KPiBAQCAtNTEsNiArNTEsMTAgQEANCj4gICAqICAgICAgICAgICAgICAgc2VudCB3aGVu
+IHRoZSBjaGlsZCBleGl0cy4NCj4gICAqIEBzdGFjazogICAgICAgU3BlY2lmeSB0aGUgbG9jYXRp
+b24gb2YgdGhlIHN0YWNrIGZvciB0aGUNCj4gICAqICAgICAgICAgICAgICAgY2hpbGQgcHJvY2Vz
+cy4NCj4gKyAqICAgICAgICAgICAgICAgTm90ZSwgQHN0YWNrIGlzIGV4cGVjdGVkIHRvIHBvaW50
+IHRvIHRoZQ0KPiArICogICAgICAgICAgICAgICBsb3dlc3QgYWRkcmVzcy4gVGhlIHN0YWNrIGRp
+cmVjdGlvbiB3aWxsIGJlDQo+ICsgKiAgICAgICAgICAgICAgIGRldGVybWluZWQgYnkgdGhlIGtl
+cm5lbCBhbmQgc2V0IHVwDQo+ICsgKiAgICAgICAgICAgICAgIGFwcHJvcHJpYXRlbHkgYmFzZWQg
+b24gQHN0YWNrX3NpemUuDQo+ICAgKiBAc3RhY2tfc2l6ZTogIFRoZSBzaXplIG9mIHRoZSBzdGFj
+ayBmb3IgdGhlIGNoaWxkIHByb2Nlc3MuDQo+ICAgKiBAdGxzOiAgICAgICAgIElmIENMT05FX1NF
+VFRMUyBpcyBzZXQsIHRoZSB0bHMgZGVzY3JpcHRvcg0KPiAgICogICAgICAgICAgICAgICBpcyBz
+ZXQgdG8gdGxzLg0KPiBkaWZmIC0tZ2l0IGEva2VybmVsL2ZvcmsuYyBiL2tlcm5lbC9mb3JrLmMN
+Cj4gaW5kZXggYmNkZjUzMTI1MjEwLi41NWFmNjkzMWM2ZWMgMTAwNjQ0DQo+IC0tLSBhL2tlcm5l
+bC9mb3JrLmMNCj4gKysrIGIva2VybmVsL2ZvcmsuYw0KPiBAQCAtMjU2MSw3ICsyNTYxLDM1IEBA
+IG5vaW5saW5lIHN0YXRpYyBpbnQgY29weV9jbG9uZV9hcmdzX2Zyb21fdXNlcihzdHJ1Y3Qga2Vy
+bmVsX2Nsb25lX2FyZ3MgKmthcmdzLA0KPiAgCXJldHVybiAwOw0KPiAgfQ0KPiAgDQo+IC1zdGF0
+aWMgYm9vbCBjbG9uZTNfYXJnc192YWxpZChjb25zdCBzdHJ1Y3Qga2VybmVsX2Nsb25lX2FyZ3Mg
+KmthcmdzKQ0KPiArLyoqDQo+ICsgKiBjbG9uZTNfc3RhY2tfdmFsaWQgLSBjaGVjayBhbmQgcHJl
+cGFyZSBzdGFjaw0KPiArICogQGthcmdzOiBrZXJuZWwgY2xvbmUgYXJncw0KPiArICoNCj4gKyAq
+IFZlcmlmeSB0aGF0IHRoZSBzdGFjayBhcmd1bWVudHMgdXNlcnNwYWNlIGdhdmUgdXMgYXJlIHNh
+bmUuDQo+ICsgKiBJbiBhZGRpdGlvbiwgc2V0IHRoZSBzdGFjayBkaXJlY3Rpb24gZm9yIHVzZXJz
+cGFjZSBzaW5jZSBpdCdzIGVhc3kgZm9yIHVzIHRvDQo+ICsgKiBkZXRlcm1pbmUuDQo+ICsgKi8N
+Cj4gK3N0YXRpYyBpbmxpbmUgYm9vbCBjbG9uZTNfc3RhY2tfdmFsaWQoc3RydWN0IGtlcm5lbF9j
+bG9uZV9hcmdzICprYXJncykNCj4gK3sNCj4gKwlpZiAoa2FyZ3MtPnN0YWNrID09IDApIHsNCj4g
+KwkJaWYgKGthcmdzLT5zdGFja19zaXplID4gMCkNCj4gKwkJCXJldHVybiBmYWxzZTsNCj4gKwl9
+IGVsc2Ugew0KPiArCQlpZiAoa2FyZ3MtPnN0YWNrX3NpemUgPT0gMCkNCj4gKwkJCXJldHVybiBm
+YWxzZTsNCj4gKw0KPiArCQlpZiAoIWFjY2Vzc19vaygodm9pZCBfX3VzZXIgKilrYXJncy0+c3Rh
+Y2ssIGthcmdzLT5zdGFja19zaXplKSkNCj4gKwkJCXJldHVybiBmYWxzZTsNCj4gKw0KPiArI2lm
+ICFkZWZpbmVkKENPTkZJR19TVEFDS19HUk9XU1VQKSAmJiAhZGVmaW5lZChDT05GSUdfSUE2NCkN
+Cj4gKwkJa2FyZ3MtPnN0YWNrICs9IGthcmdzLT5zdGFja19zaXplOw0KPiArI2VuZGlmDQo+ICsJ
+fQ0KDQpmcm9tIHRoZSBkZXNjcmlwdGlvbiBpdCBpcyBub3QgY2xlYXIgd2hvc2UNCnJlc3BvbnNp
+YmlsaXR5IGl0IGlzIHRvIGd1YXJhbnRlZSB0aGUgYWxpZ25tZW50DQpvZiBzcCBvbiBlbnRyeS4N
+Cg0KaSB0aGluayAwIHN0YWNrIHNpemUgbWF5IHdvcmsgaWYgc2lnbmFscyBhcmUNCmJsb2NrZWQg
+YW5kIHRoZW4gcHJvaGliaXRpbmcgaXQgbWlnaHQgbm90IGJlDQp0aGUgcmlnaHQgdGhpbmcuDQoN
+Cml0J3Mgbm90IGNsZWFyIGhvdyBsaWJjIHNob3VsZCBkZWFsIHdpdGggdjUuMw0Ka2VybmVscyB3
+aGljaCBkb24ndCBoYXZlIHRoZSBzdGFjays9c3RhY2tfc2l6ZQ0KbG9naWMuDQo=
