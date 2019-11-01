@@ -1,131 +1,197 @@
-From: Oleg Nesterov <oleg@redhat.com>
-Subject: Re: [PATCH] clone3: validate stack arguments
-Date: Fri, 1 Nov 2019 13:32:57 +0100
-Message-ID: <20191101123257.GA508@redhat.com>
-References: <20191031113608.20713-1-christian.brauner@ubuntu.com>
- <20191031164653.GA24629@redhat.com>
- <20191101110639.icbfihw3fk2nzz4o@wittgenstein>
+From: Adrian Hunter <adrian.hunter@intel.com>
+Subject: Re: [PATCH v7 27/27] x86/cet/shstk: Add Shadow Stack instructions to
+ opcode map
+Date: Fri, 1 Nov 2019 16:03:37 +0200
+Message-ID: <93e915b9-975d-9876-8f89-8b6f2bc4586e@intel.com>
+References: <20190606200646.3951-1-yu-cheng.yu@intel.com>
+ <20190606200646.3951-28-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252
-Content-Transfer-Encoding: quoted-printable
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <20191101110639.icbfihw3fk2nzz4o@wittgenstein>
-Content-Disposition: inline
-Sender: stable-owner@vger.kernel.org
-To: Christian Brauner <christian.brauner@ubuntu.com>
-Cc: linux-kernel@vger.kernel.org, Florian Weimer <fweimer@redhat.com>, GNU C Library <libc-alpha@sourceware.org>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, David Howells <dhowells@redhat.com>, Ingo Molnar <mingo@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <peterz@infradead.org>, linux-api@vger.kernel.org, stable@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190606200646.3951-28-yu-cheng.yu@intel.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>
 List-Id: linux-api@vger.kernel.org
 
-On 11/01, Christian Brauner wrote:
->
-> On Thu, Oct 31, 2019 at 05:46:53PM +0100, Oleg Nesterov wrote:
-> > On 10/31, Christian Brauner wrote:
-> > >
-> > > --- a/include/uapi/linux/sched.h
-> > > +++ b/include/uapi/linux/sched.h
-> > > @@ -51,6 +51,10 @@
-> > >   *               sent when the child exits.
-> > >   * @stack:       Specify the location of the stack for the
-> > >   *               child process.
-> > > + *               Note, @stack is expected to point to the
-> > > + *               lowest address. The stack direction will be
-> > > + *               determined by the kernel and set up
-> > > + *               appropriately based on @stack_size.
-> >
-> > I can't review this patch, I have no idea what does stack_size mean
-> > if !arch/x86.
->
-> In short: nothing at all if it weren't for ia64 (and maybe parisc).
-> But let me provide some (hopefully useful) context.
+On 6/06/19 11:06 PM, Yu-cheng Yu wrote:
+> Add the following shadow stack management instructions.
+> 
+> INCSSP:
+>     Increment shadow stack pointer by the steps specified.
+> 
+> RDSSP:
+>     Read SSP register into a GPR.
+> 
+> SAVEPREVSSP:
+>     Use "prev ssp" token at top of current shadow stack to
+>     create a "restore token" on previous shadow stack.
+> 
+> RSTORSSP:
+>     Restore from a "restore token" pointed by a GPR to SSP.
+> 
+> WRSS:
+>     Write to kernel-mode shadow stack (kernel-mode instruction).
+> 
+> WRUSS:
+>     Write to user-mode shadow stack (kernel-mode instruction).
+> 
+> SETSSBSY:
+>     Verify the "supervisor token" pointed by IA32_PL0_SSP MSR,
+>     if valid, set the token to busy, and set SSP to the value
+>     of IA32_PL0_SSP MSR.
+> 
+> CLRSSBSY:
+>     Verify the "supervisor token" pointed by a GPR, if valid,
+>     clear the busy bit from the token.
 
-Thanks...
+Does the notrack prefix also need to be catered for somehow?
 
-> (Probably most of
-> that is well-know,
+> 
+> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+> ---
+>  arch/x86/lib/x86-opcode-map.txt               | 26 +++++++++++++------
+>  tools/objtool/arch/x86/lib/x86-opcode-map.txt | 26 +++++++++++++------
+>  2 files changed, 36 insertions(+), 16 deletions(-)
+> 
+> diff --git a/arch/x86/lib/x86-opcode-map.txt b/arch/x86/lib/x86-opcode-map.txt
+> index e0b85930dd77..c5e825d44766 100644
+> --- a/arch/x86/lib/x86-opcode-map.txt
+> +++ b/arch/x86/lib/x86-opcode-map.txt
+> @@ -366,7 +366,7 @@ AVXcode: 1
+>  1b: BNDCN Gv,Ev (F2) | BNDMOV Ev,Gv (66) | BNDMK Gv,Ev (F3) | BNDSTX Ev,Gv
+>  1c:
+>  1d:
+> -1e:
+> +1e: RDSSP Rd (F3),REX.W
+>  1f: NOP Ev
+>  # 0x0f 0x20-0x2f
+>  20: MOV Rd,Cd
+> @@ -610,7 +610,17 @@ fe: paddd Pq,Qq | vpaddd Vx,Hx,Wx (66),(v1)
+>  ff: UD0
+>  EndTable
+>  
+> -Table: 3-byte opcode 1 (0x0f 0x38)
+> +Table: 3-byte opcode 1 (0x0f 0x01)
+> +Referrer:
+> +AVXcode:
+> +# Skip 0x00-0xe7
+> +e8: SETSSBSY (f3)
+> +e9:
+> +ea: SAVEPREVSSP (f3)
+> +# Skip 0xeb-0xff
+> +EndTable
+> +
+> +Table: 3-byte opcode 2 (0x0f 0x38)
+>  Referrer: 3-byte escape 1
+>  AVXcode: 2
+>  # 0x0f 0x38 0x00-0x0f
+> @@ -789,12 +799,12 @@ f0: MOVBE Gy,My | MOVBE Gw,Mw (66) | CRC32 Gd,Eb (F2) | CRC32 Gd,Eb (66&F2)
+>  f1: MOVBE My,Gy | MOVBE Mw,Gw (66) | CRC32 Gd,Ey (F2) | CRC32 Gd,Ew (66&F2)
+>  f2: ANDN Gy,By,Ey (v)
+>  f3: Grp17 (1A)
+> -f5: BZHI Gy,Ey,By (v) | PEXT Gy,By,Ey (F3),(v) | PDEP Gy,By,Ey (F2),(v)
+> -f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v)
+> +f5: BZHI Gy,Ey,By (v) | PEXT Gy,By,Ey (F3),(v) | PDEP Gy,By,Ey (F2),(v) | WRUSS Pq,Qq (66),REX.W
+> +f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v) | WRSS Pq,Qq (66),REX.W
 
-Certainly not to me ;) Thanks.
+AFAICT WRSS does not have 66 prefix
 
-> > > +static inline bool clone3_stack_valid(struct kernel_clone_args *karg=
-s)
-> > > +{
-> > > +=09if (kargs->stack =3D=3D 0) {
-> > > +=09=09if (kargs->stack_size > 0)
-> > > +=09=09=09return false;
-> > > +=09} else {
-> > > +=09=09if (kargs->stack_size =3D=3D 0)
-> > > +=09=09=09return false;
-> >
-> > So to implement clone3_wrapper(void *bottom_of_stack) you need to do
-> >
-> > =09clone3_wrapper(void *bottom_of_stack)
-> > =09{
-> > =09=09struct clone_args args =3D {
-> > =09=09=09...
-> > =09=09=09// make clone3_stack_valid() happy
-> > =09=09=09.stack =3D bottom_of_stack - 1,
-> > =09=09=09.stack_size =3D 1,
-> > =09=09};
-> > =09}
-> >
-> > looks a bit strange. OK, I agree, this example is very artificial.
-> > But why do you think clone3() should nack stack_size =3D=3D 0 ?
->
-> In short, consistency.
-
-And in my opinion this stack_size =3D=3D 0 check destroys the consistency,
-see below.
-
-But just in case, let me say that overall I personally like this change.
-
-> The best thing imho, is to clearly communicate to userspace that stack
-> needs to point to the lowest address and stack_size to the initial range
-> of the stack pointer
-
-Agreed.
-
-But the kernel can't verify that "stack" actually points to the lowest
-address and stack_size is actually the stack size. Consider another
-artificial
-
-    =09clone3_wrapper(void *bottom_of_stack, unsigned long offs)
-    =09{
-    =09=09struct clone_args args =3D {
-    =09=09=09...
-    =09=09=09// make clone3_stack_valid() happy
-    =09=09=09.stack =3D bottom_of_stack - offs,
-    =09=09=09.stack_size =3D offs,
-    =09=09};
-    =09=09sys_clone3(args);
-    =09}
-=09
-Now,
-
-=09clone3_wrapper(bottom_of_stack, offs);
-
-is same thing for _any_ offs except offs =3D=3D 0 will fail. Why? To me thi=
-s
-is not consistent, I think the "stack_size =3D=3D 0" check buys nothing and
-only adds some confusion.
-
-Say, stack_size =3D=3D 1 is "obviously wrong" too, this certainly means tha=
-t
-"stack" doesn't point to the lowest address (or the child will corrupt the
-memory), but it works.
-
-OK, I won't insist. Perhaps it can help to detect the case when a user
-forgets to pass the correct stack size.
-
-> > > +=09=09if (!access_ok((void __user *)kargs->stack, kargs->stack_size)=
-)
-> > > +=09=09=09return false;
-> >
-> > Why?
->
-> It's nice of us to tell userspace _before_ we have created a thread that
-> it messed up its parameters instead of starting a thread that then
-> immediately crashes.
-
-Heh. Then why this code doesn't verify that at least stack + stack_size is
-properly mmaped with PROT_READ|WRITE?
-
-Oleg.
+>  f7: BEXTR Gy,Ey,By (v) | SHLX Gy,Ey,By (66),(v) | SARX Gy,Ey,By (F3),(v) | SHRX Gy,Ey,By (F2),(v)
+>  EndTable
+>  
+> -Table: 3-byte opcode 2 (0x0f 0x3a)
+> +Table: 3-byte opcode 3 (0x0f 0x3a)
+>  Referrer: 3-byte escape 2
+>  AVXcode: 3
+>  # 0x0f 0x3a 0x00-0xff
+> @@ -948,7 +958,7 @@ GrpTable: Grp7
+>  2: LGDT Ms | XGETBV (000),(11B) | XSETBV (001),(11B) | VMFUNC (100),(11B) | XEND (101)(11B) | XTEST (110)(11B)
+>  3: LIDT Ms
+>  4: SMSW Mw/Rv
+> -5: rdpkru (110),(11B) | wrpkru (111),(11B)
+> +5: rdpkru (110),(11B) | wrpkru (111),(11B) | RSTORSSP Mq (F3)
+>  6: LMSW Ew
+>  7: INVLPG Mb | SWAPGS (o64),(000),(11B) | RDTSCP (001),(11B)
+>  EndTable
+> @@ -1019,8 +1029,8 @@ GrpTable: Grp15
+>  2: vldmxcsr Md (v1) | WRFSBASE Ry (F3),(11B)
+>  3: vstmxcsr Md (v1) | WRGSBASE Ry (F3),(11B)
+>  4: XSAVE | ptwrite Ey (F3),(11B)
+> -5: XRSTOR | lfence (11B)
+> -6: XSAVEOPT | clwb (66) | mfence (11B)
+> +5: XRSTOR | lfence (11B) | INCSSP Rd (F3),REX.W
+> +6: XSAVEOPT | clwb (66) | mfence (11B) | CLRSSBSY Mq (F3)
+>  7: clflush | clflushopt (66) | sfence (11B)
+>  EndTable
+>  
+> diff --git a/tools/objtool/arch/x86/lib/x86-opcode-map.txt b/tools/objtool/arch/x86/lib/x86-opcode-map.txt
+> index e0b85930dd77..c5e825d44766 100644
+> --- a/tools/objtool/arch/x86/lib/x86-opcode-map.txt
+> +++ b/tools/objtool/arch/x86/lib/x86-opcode-map.txt
+> @@ -366,7 +366,7 @@ AVXcode: 1
+>  1b: BNDCN Gv,Ev (F2) | BNDMOV Ev,Gv (66) | BNDMK Gv,Ev (F3) | BNDSTX Ev,Gv
+>  1c:
+>  1d:
+> -1e:
+> +1e: RDSSP Rd (F3),REX.W
+>  1f: NOP Ev
+>  # 0x0f 0x20-0x2f
+>  20: MOV Rd,Cd
+> @@ -610,7 +610,17 @@ fe: paddd Pq,Qq | vpaddd Vx,Hx,Wx (66),(v1)
+>  ff: UD0
+>  EndTable
+>  
+> -Table: 3-byte opcode 1 (0x0f 0x38)
+> +Table: 3-byte opcode 1 (0x0f 0x01)
+> +Referrer:
+> +AVXcode:
+> +# Skip 0x00-0xe7
+> +e8: SETSSBSY (f3)
+> +e9:
+> +ea: SAVEPREVSSP (f3)
+> +# Skip 0xeb-0xff
+> +EndTable
+> +
+> +Table: 3-byte opcode 2 (0x0f 0x38)
+>  Referrer: 3-byte escape 1
+>  AVXcode: 2
+>  # 0x0f 0x38 0x00-0x0f
+> @@ -789,12 +799,12 @@ f0: MOVBE Gy,My | MOVBE Gw,Mw (66) | CRC32 Gd,Eb (F2) | CRC32 Gd,Eb (66&F2)
+>  f1: MOVBE My,Gy | MOVBE Mw,Gw (66) | CRC32 Gd,Ey (F2) | CRC32 Gd,Ew (66&F2)
+>  f2: ANDN Gy,By,Ey (v)
+>  f3: Grp17 (1A)
+> -f5: BZHI Gy,Ey,By (v) | PEXT Gy,By,Ey (F3),(v) | PDEP Gy,By,Ey (F2),(v)
+> -f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v)
+> +f5: BZHI Gy,Ey,By (v) | PEXT Gy,By,Ey (F3),(v) | PDEP Gy,By,Ey (F2),(v) | WRUSS Pq,Qq (66),REX.W
+> +f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v) | WRSS Pq,Qq (66),REX.W
+>  f7: BEXTR Gy,Ey,By (v) | SHLX Gy,Ey,By (66),(v) | SARX Gy,Ey,By (F3),(v) | SHRX Gy,Ey,By (F2),(v)
+>  EndTable
+>  
+> -Table: 3-byte opcode 2 (0x0f 0x3a)
+> +Table: 3-byte opcode 3 (0x0f 0x3a)
+>  Referrer: 3-byte escape 2
+>  AVXcode: 3
+>  # 0x0f 0x3a 0x00-0xff
+> @@ -948,7 +958,7 @@ GrpTable: Grp7
+>  2: LGDT Ms | XGETBV (000),(11B) | XSETBV (001),(11B) | VMFUNC (100),(11B) | XEND (101)(11B) | XTEST (110)(11B)
+>  3: LIDT Ms
+>  4: SMSW Mw/Rv
+> -5: rdpkru (110),(11B) | wrpkru (111),(11B)
+> +5: rdpkru (110),(11B) | wrpkru (111),(11B) | RSTORSSP Mq (F3)
+>  6: LMSW Ew
+>  7: INVLPG Mb | SWAPGS (o64),(000),(11B) | RDTSCP (001),(11B)
+>  EndTable
+> @@ -1019,8 +1029,8 @@ GrpTable: Grp15
+>  2: vldmxcsr Md (v1) | WRFSBASE Ry (F3),(11B)
+>  3: vstmxcsr Md (v1) | WRGSBASE Ry (F3),(11B)
+>  4: XSAVE | ptwrite Ey (F3),(11B)
+> -5: XRSTOR | lfence (11B)
+> -6: XSAVEOPT | clwb (66) | mfence (11B)
+> +5: XRSTOR | lfence (11B) | INCSSP Rd (F3),REX.W
+> +6: XSAVEOPT | clwb (66) | mfence (11B) | CLRSSBSY Mq (F3)
+>  7: clflush | clflushopt (66) | sfence (11B)
+>  EndTable
+>  
+> 
