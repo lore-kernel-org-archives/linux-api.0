@@ -1,44 +1,41 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: tracefs splats in lockdown=confidentiality mode
-Date: Fri, 1 Nov 2019 18:15:01 -0400
-Message-ID: <20191101181501.4beff81b@grimm.local.home>
-References: <20191101210803.GA9841@xps13.dannf>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [RFC PATCH 11/10] pipe: Add fsync() support [ver #2]
+Date: Sat, 2 Nov 2019 11:53:38 -0700
+Message-ID: <CAHk-=wg_X_7JSYT-a3qHrzvuWGMyffDWtQ4n7adBp_fe5w0BsA@mail.gmail.com>
+References: <157186182463.3995.13922458878706311997.stgit@warthog.procyon.org.uk>
+ <30394.1571936252@warthog.procyon.org.uk> <c6e044cc-5596-90b7-4418-6ad7009d6d79@yandex-team.ru>
+ <17311.1572534953@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191101210803.GA9841@xps13.dannf>
+In-Reply-To: <17311.1572534953@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: dann frazier <dann.frazier@canonical.com>
-Cc: linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org, Seth Forshee <seth.forshee@canonical.com>, Matthew Garrett <matthewgarrett@google.com>, James Morris <jmorris@namei.org>, Linux API <linux-api@vger.kernel.org>, Ben Hutchings <ben@decadent.org.uk>, Al Viro <viro@zeniv.linux.org.uk>, Linus Torvalds <torvalds@linux-foundation.org>
+To: David Howells <dhowells@redhat.com>
+Cc: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 1 Nov 2019 15:08:03 -0600
-dann frazier <dann.frazier@canonical.com> wrote:
+On Thu, Oct 31, 2019 at 8:16 AM David Howells <dhowells@redhat.com> wrote:
+>
+> Konstantin Khlebnikov <khlebnikov@yandex-team.ru> wrote:
+>
+> > Similar synchronization is required for reusing memory after vmsplice()?
+> > I don't see other way how sender could safely change these pages.
+>
+> Sounds like a point - if you have multiple parallel contributors to the pipe
+> via vmsplice(), then FIONREAD is of no use.  To use use FIONREAD, you have to
+> let the pipe become empty before you can be sure.
 
-> hey,
->   fyi, I'm seeing a bunch of errors from tracefs when booting 5.4-rc5 in
-> lockdown=confidentiality mode:
-> 
-> [    1.763630] Lockdown: swapper/0: use of tracefs is restricted; see man kernel_lockdown.7
-> [    1.772332] Could not create tracefs 'available_events' entry
-> [    1.778633] Lockdown: swapper/0: use of tracefs is restricted; see man kernel_lockdown.7
-> [    1.787095] Could not create tracefs 'set_event' entry
-> [    1.792412] Lockdown: swapper/0: use of tracefs is restricted; see man kernel_lockdown.7
-> (...)
-> [    2.899481] Could not create tracefs 'set_graph_notrace' entry
-> [    2.905671] Lockdown: swapper/0: use of tracefs is restricted; see man kernel_lockdown.7
-> [    2.913934] ------------[ cut here ]------------
-> [    2.918435] Could not register function stat for cpu 0
-> [    2.923717] WARNING: CPU: 1 PID: 1 at kernel/trace/ftrace.c:987 ftrace_init_tracefs_toplevel+0x168/0x1bc
-> [    2.933939] Modules linked in:
-> [    2.937290] CPU: 1 PID: 1 Comm: 
+Well, the rules for vmsplice is simply to not change the source pages.
+It's zero-copy, after all.
 
-Looks to me that it's working as designed ;-)
+If you want to change the source pages, you need to just use write() instead.
 
-I'm guessing we could quiet these warnings for boot up though. :-/
+That said, even then the right model isn't fsync(). If you really want
+to have something like "notify me when this buffer has been used", it
+should be some kind of sequence count thing, not a "wait for empty".
 
-But there should be at least one message that states that the tracefs
-files are not being created due to lockdown.
+Which might be useful in theory, but would be something quite
+different (and honestly, I wouldn't expect it to find all that
+widespread use)
 
--- Steve
+             Linus
