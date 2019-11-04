@@ -1,10 +1,10 @@
 From: Shawn Landden <shawn@git.icu>
-Subject: [RFC PATCH] futex: extend set_robust_list to allow 2 locking ABIs at the same time.
-Date: Sun,  3 Nov 2019 16:20:04 -0800
-Message-ID: <20191104002004.25038-1-shawn@git.icu>
+Subject: [RFC v2 PATCH] futex: extend set_robust_list to allow 2 locking ABIs at the same time.
+Date: Sun,  3 Nov 2019 16:29:09 -0800
+Message-ID: <20191104002909.25783-1-shawn@git.icu>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <libc-alpha-return-106570-glibc-alpha=m.gmane.org@sourceware.org>
+Return-path: <libc-alpha-return-106571-glibc-alpha=m.gmane.org@sourceware.org>
 List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
 List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
 List-Archive: <http://sourceware.org/ml/libc-alpha/>
@@ -34,23 +34,22 @@ https://keithp.com/blogs/Shared_Memory_Fences/
 
 This can also be used to add a new ABI that uses smaller structs,
 as the existing ABI on x86_64 is a minimum of 32 bytes, and 20 bytes
-would suffice. (12 on 32-bit systems)
+would suffice.
 
-If you wants 3 ABIs (perhaps existing 32-bit, existing 64-bit, and
-small) then with this patch you are out of luck, as bit 0 is already
-taken to indicate PI locks.
+v2: fix size of compat_extended_robust_list_head
+    fix some issues with number literals being implicitly ints
 ---
- include/linux/compat.h     |   7 ++
+ include/linux/compat.h     |   5 +
  include/linux/sched.h      |   6 ++
  include/uapi/linux/futex.h |  31 +++++++
  kernel/futex.c             | 182 ++++++++++++++++++++++++-------------
- 4 files changed, 162 insertions(+), 64 deletions(-)
+ 4 files changed, 160 insertions(+), 64 deletions(-)
 
 diff --git a/include/linux/compat.h b/include/linux/compat.h
-index 16dafd9f4b86..4a9e6a1c2af0 100644
+index 16dafd9f4b86..00a0741bf658 100644
 --- a/include/linux/compat.h
 +++ b/include/linux/compat.h
-@@ -379,10 +379,17 @@ struct compat_robust_list_head {
+@@ -379,10 +379,15 @@ struct compat_robust_list_head {
  	struct compat_robust_list	list;
  	compat_long_t			futex_offset;
  	compat_uptr_t			list_op_pending;
@@ -59,8 +58,6 @@ index 16dafd9f4b86..4a9e6a1c2af0 100644
 +struct compat_extended_robust_list_head {
 +	struct compat_robust_list_head list_head;
 +	compat_long_t			futex_offset2;
-+	compat_long_t			futex_offset3;
-+	compat_long_t			futex_offset4;
 +};
 +
  #ifdef CONFIG_COMPAT_OLD_SIGACTION
@@ -136,7 +133,7 @@ index a89eb0accd5e..30c08e07f26b 100644
  #define FUTEX_WAITERS		0x80000000
  
 diff --git a/kernel/futex.c b/kernel/futex.c
-index 6d50728ef2e7..b63af0fcecfc 100644
+index 6d50728ef2e7..3a17d2d63178 100644
 --- a/kernel/futex.c
 +++ b/kernel/futex.c
 @@ -3396,17 +3396,20 @@ static int futex_wait_requeue_pi(u32 __user *uaddr, unsigned int flags,
@@ -155,7 +152,7 @@ index 6d50728ef2e7..b63af0fcecfc 100644
  		return -EINVAL;
  
 -	current->robust_list = head;
-+	current->robust_list = head & 0b11;
++	current->robust_list = head & 0b11UL;
 +	BUILD_BUG_ON(sizeof(struct robust_list_head) ==
 +		     sizeof(struct extended_robust_list_head));
 +	if (len == sizeof(struct robust_list_head))
@@ -184,7 +181,7 @@ index 6d50728ef2e7..b63af0fcecfc 100644
  		goto err_unlock;
  
 -	head = p->robust_list;
-+	head = p->robust_list & ~0b11;
++	head = p->robust_list & ~0b11UL;
 +	if (p->robust_list & 0b11 == 0b1)
 +		len = sizeof(struct robust_list_head);
 +	else
