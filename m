@@ -1,34 +1,58 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [RFC v2 PATCH] futex: extend set_robust_list to allow 2 locking
- ABIs at the same time.
-Date: Tue, 5 Nov 2019 01:10:44 +0100 (CET)
-Message-ID: <alpine.DEB.2.21.1911050104050.17054@nanos.tec.linutronix.de>
-References: <20191104002909.25783-1-shawn@git.icu> <alpine.DEB.2.21.1911041423510.5102@nanos.tec.linutronix.de>
+From: "Li Xinhai" <lixinhai.lxh@gmail.com>
+Subject: Re: [PATCH v2] mm: Fix checking unmapped holes for mbind
+Date: Tue, 5 Nov 2019 10:29:41 +0800
+Message-ID: <2019110510294042190833@gmail.com>
+References: <201910291756045288126@gmail.com>,
+        <20191030210836.a17c0649354b59961903d1a8@linux-foundation.org>,
+        <20191031112609.GG13102@dhcp22.suse.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain;
+        charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.21.1911041423510.5102@nanos.tec.linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Shawn Landden <shawn@git.icu>
-Cc: libc-alpha@sourceware.org, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Deepa Dinamani <deepa.kernel@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Keith Packard <keithp@keithp.com>, Ingo Molnar <mingo@kernel.org>, Peter Zijlstra <peterz@infradead.org>, Darren Hart <dvhart@infradead.org>
+To: Michal Hocko <mhocko@kernel.org>, akpm <akpm@linux-foundation.org>
+Cc: "linux-mm@kvack.org" <linux-mm@kvack.org>, Vlastimil Babka <vbabka@suse.cz>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Hugh Dickins <hughd@google.com>, linux-man <linux-man@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 4 Nov 2019, Thomas Gleixner wrote:
-> Please provide a proper design and explain how this should work together
-> with existing robust list using code first.
-
-Just for clarification:
-
-Any change to that interface needs to be discussed with the *libc people
-first. Your way of overriding the robust list interfacce with some ad hoc
-solution will break existing users which is not acceptable.
-
-So either the problem is solved with the *libc people in a way which allows
-them to build upon or if your intention is solely to solve the problem
-Keith described then none of this is required at all as user space can
-handle the different layouts for that magic fence implementation perfectly
-fine.
-
-Thanks,
-
-	tglx
+T24gMjAxOS0xMC0zMcKgYXQgMTk6MjbCoE1pY2hhbCBIb2Nrb8Kgd3JvdGU6Cj5PbiBXZWQgMzAt
+MTAtMTkgMjE6MDg6MzYsIEFuZHJldyBNb3J0b24gd3JvdGU6Cj4+IChjYyBsaW51eC1tYW5Admdl
+ci5rZXJuZWwub3JnKQo+Pgo+PiBPbiBUdWUsIDI5IE9jdCAyMDE5IDE3OjU2OjA2ICswODAwICJM
+aSBYaW5oYWkiIDxsaXhpbmhhaS5seGhAZ21haWwuY29tPiB3cm90ZToKPj4KPj4gPiBxdWV1ZV9w
+YWdlc19yYW5nZSgpIHdpbGwgY2hlY2sgZm9yIHVubWFwcGVkIGhvbGVzIGJlc2lkZXMgcXVldWUg
+cGFnZXMgZm9yCj4+ID4gbWlncmF0aW9uLiBUaGUgcnVsZXMgZm9yIGNoZWNraW5nIHVubWFwcGVk
+IGhvbGVzIGFyZToKPj4gPiAxIFVubWFwcGVkIGhvbGVzIGF0IGFueSBwYXJ0IG9mIHRoZSBzcGVj
+aWZpZWQgcmFuZ2Ugc2hvdWxkIGJlIHJlcG9ydGVkIGFzCj4+ID4gwqAgRUZBVUxUIGlmIG1iaW5k
+KCkgZm9yIG5vbmUgTVBPTF9ERUZBVUxUIGNhc2VzOwo+PiA+IDIgVW5tYXBwZWQgaG9sZXMgYXQg
+YW55IHBhcnQgb2YgdGhlIHNwZWNpZmllZCByYW5nZSBzaG91bGQgYmUgaWdub3JlZCBpZgo+PiA+
+IMKgIG1iaW5kKCkgZm9yIE1QT0xfREVGQVVMVCBjYXNlOwo+PiA+IE5vdGUgdGhhdCB0aGUgc2Vj
+b25kIHJ1bGUgaXMgdGhlIGN1cnJlbnQgaW1wbGVtZW50YXRpb24sIGJ1dCBpdCBzZWVtcwo+PiA+
+IGNvbmZsaWN0cyB0aGUgTGludXggQVBJIGRlZmluaXRpb24uCj4+Cj4+IENhbiB5b3UgcXVvdGUg
+dGhlIHBhcnQgb2YgdGhlIEFQSSBkZWZpbml0aW9uIHdoaWNoIHlvdSdyZSBsb29raW5nIGF0Pwo+
+Pgo+PiBNeSBtYmluZCgyKSBtYW5wYWdlIHNheXMKPj4KPj4gRVJST1JTCj4+wqDCoMKgwqDCoMKg
+wqAgRUZBVUxUIFBhcnQgb3IgYWxsIG9mIHRoZSBtZW1vcnkgcmFuZ2Ugc3BlY2lmaWVkIGJ5IG5v
+ZGVtYXNrIGFuZCBtYXhuLQo+PsKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqAgb2RlIHBvaW50
+cyBvdXRzaWRlIHlvdXIgYWNjZXNzaWJsZSBhZGRyZXNzIHNwYWNlLsKgIE9yLCB0aGVyZSB3YXMK
+Pj7CoMKgwqDCoMKgwqDCoMKgwqDCoMKgwqDCoMKgIGFuIHVubWFwcGVkIGhvbGUgaW4gdGhlIHNw
+ZWNpZmllZCBtZW1vcnkgcmFuZ2Ugc3BlY2lmaWVkIGJ5IGFkZHIKPj7CoMKgwqDCoMKgwqDCoMKg
+wqDCoMKgwqDCoMKgIGFuZCBsZW4uCj4+Cj4+IChJIGFzc3VtZSB0aGUgZmlyc3Qgc2VudGVuY2Ug
+bWVhbnQgdG8gc2F5ICJzcGVjaWZpZWQgYnkgYWRkciBhbmQgbGVuIikKPgo+TXkgdW5kZXJzdGFu
+ZGluZyBpcyB0aGF0IHRoaXMgcmVhbGx5IHJlZmVycyB0byBhcmVhIHBvaW50ZWQgdG8gYnkgbm9k
+ZW1hc2suCj5CdHcuIHdoeSB0aGVyZSBpcyBhbnkgc3BlY2lhbCBjYXNpbmcgYXJvdW5kIHRoZSB1
+bm1hcHBlZCBob2xlcyB3aXRoIHRoZQo+YWRkcmVzcyBzcGFjZSByYW5nZT8gVGhpcyBsb29rcyBs
+aWtlIGFuIGFudGlwYXR0ZXJuIHRvIG90aGVyIGFkZHJlc3MKPnNwYWNlIG9wZXJhdGlvbnMgdG8g
+bWUuIEUuZy4gbXVubWFwIHNpbXBseSB1bm1hcHMgYWxsIGV4aXN0aW5nIHZtYXMgaW4KPnRoZSBn
+aXZlbiByYW5nZSwgbXByb3RlY3QsIG1hZHZpc2UgZXRjLiBiZWhhdmUgdGhlIHNhbWUuCj4KPlNv
+IG15IHF1ZXN0aW9uIGlzLCBkbyB3ZSB3YW50IHRvIHJlbW92ZSB0aGF0IHdlaXJkIHJlc3RyaWN0
+aW9uIGFuZAo+c2ltcGx5IGFjdCBvbiBhbGwgZXhpc3RpbmcgVk1BcyBpbiB0aGUgcmFuZ2U/IFRo
+ZSBvbmx5IHNpdHVhdGlvbiB0aGlzCj5jb3VsZCByZWdyZXNzIHdvdWxkIGJlIGlmIHNvbWVib2R5
+IHVzZWQgbWJpbmQgdG8gcHJvYmUgZm9yIGV4aXN0aW5nIFZNQXMKPmFuZCB0aGF0IHNvdW5kcyBh
+IG1vcmUgdGhhbiBzZW5zaWJsZSB0byBtZS4gT3IgYW0gSSBtaXNzaW5nIGFueXRoaW5nPwo+LS0K
+Pk1pY2hhbCBIb2Nrbwo+U1VTRSBMYWJzIAoKeWVzLCBtYmluZCgpIGNhcmUgYWJvdXQgdGhlIHVu
+bWFwcGVkIGhvbGVzIGZvcsKgbm9uIE1QT0xfREVGQVVMVCBjYXNlcywgYnV0IApvdGhlciBvcGVy
+YXRpb25zIGRvbid0IGNhcmUgdGhvc2UgaG9sZXMuIEl0IHNlZW1zIG5vIGNsdWVzIGFib3V0IHdo
+eSB0aGF0IApyZXN0cmljdGlvbiB3YXMgZGVjaWRlZC4KCkF0IHByZXNlbnQsIGlmIGl0IGlzIGhh
+cmQgdG8gZGVjaWRlIHRvIHJlbW92ZSB0aGlzIHJlc3RyaWN0aW9uLCB3ZSBtYXkga2VlcCB0aGUg
+CmN1cnJlbnQgYmVoYXZpb3IuIE5ldyBwYXRjaCBwb3N0ZWQgZm9yIHRoaXMgcHVycG9zZSwgwqAK
+IltQQVRDSCB2M10gbW06IEZpeCBjaGVja2luZyB1bm1hcHBlZCBob2xlcyBmb3IgbWJpbmQiLgpU
+aGFua3MuCgpYaW5oYWkKCgo=
