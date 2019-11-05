@@ -1,80 +1,79 @@
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Subject: Re: [PATCH bpf-next v13 4/7] landlock: Add ptrace LSM hooks
-Date: Tue, 5 Nov 2019 19:01:41 +0100
-Message-ID: <23acf523-dbc4-855b-ca49-2bbfa5e7117e@digikod.net>
-References: <20191104172146.30797-1-mic@digikod.net>
- <20191104172146.30797-5-mic@digikod.net>
- <20191105171824.dfve44gjiftpnvy7@ast-mbp.dhcp.thefacebook.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: handle_exit_race && PF_EXITING
+Date: Tue, 5 Nov 2019 19:56:01 +0100 (CET)
+Message-ID: <alpine.DEB.2.21.1911051920420.1869@nanos.tec.linutronix.de>
+References: <20191104002909.25783-1-shawn@git.icu> <87woceslfs.fsf@oldenburg2.str.redhat.com> <alpine.DEB.2.21.1911051053470.17054@nanos.tec.linutronix.de> <20191105152728.GA5666@redhat.com> <alpine.DEB.2.21.1911051800070.1869@nanos.tec.linutronix.de>
+ <alpine.DEB.2.21.1911051851380.1869@nanos.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Content-Transfer-Encoding: 8bit
-Return-path: <kernel-hardening-return-17286-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <20191105171824.dfve44gjiftpnvy7@ast-mbp.dhcp.thefacebook.com>
-Content-Language: en-US
-To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Cc: linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, Florent Revest <revest@chromium.org>, James Morris <jmorris@namei.org>, Jann Horn <jann@thejh.net>, John Johansen <john.johansen@canonical.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, KP Singh <kpsingh@chromium.org>, Michael Kerrisk <mtk.manpages@gmail.com>, =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mickael.salaun@ssi.gouv.fr>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Stephen Smalley <sds@tycho.nsa.gov>, Tejun Heo <tj@kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.21.1911051851380.1869@nanos.tec.linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Oleg Nesterov <oleg@redhat.com>
+Cc: Florian Weimer <fweimer@redhat.com>, Shawn Landden <shawn@git.icu>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Deepa Dinamani <deepa.kernel@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Keith Packard <keithp@keithp.com>, Peter Zijlstra <peterz@infradead.org>
 List-Id: linux-api@vger.kernel.org
 
-
-On 05/11/2019 18:18, Alexei Starovoitov wrote:
-> On Mon, Nov 04, 2019 at 06:21:43PM +0100, Mickaël Salaün wrote:
->> Add a first Landlock hook that can be used to enforce a security policy
->> or to audit some process activities.  For a sandboxing use-case, it is
->> needed to inform the kernel if a task can legitimately debug another.
->> ptrace(2) can also be used by an attacker to impersonate another task
->> and remain undetected while performing malicious activities.
->>
->> Using ptrace(2) and related features on a target process can lead to a
->> privilege escalation.  A sandboxed task must then be able to tell the
->> kernel if another task is more privileged, via ptrace_may_access().
->>
->> Signed-off-by: Mickaël Salaün <mic@digikod.net>
-> ...
->> +static int check_ptrace(struct landlock_domain *domain,
->> +		struct task_struct *tracer, struct task_struct *tracee)
->> +{
->> +	struct landlock_hook_ctx_ptrace ctx_ptrace = {
->> +		.prog_ctx = {
->> +			.tracer = (uintptr_t)tracer,
->> +			.tracee = (uintptr_t)tracee,
->> +		},
->> +	};
+On Tue, 5 Nov 2019, Thomas Gleixner wrote:
+> On Tue, 5 Nov 2019, Thomas Gleixner wrote:
+> > On Tue, 5 Nov 2019, Oleg Nesterov wrote:
+> > > On 11/05, Thomas Gleixner wrote:
+> > > >
+> > > > Out of curiosity, what's the race issue vs. robust list which you are
+> > > > trying to solve?
+> > > 
+> > > Off-topic, but this reminds me...
+> > > 
+> > > 	#include <sched.h>
+> > > 	#include <assert.h>
+> > > 	#include <unistd.h>
+> > > 	#include <syscall.h>
+> > > 
+> > > 	#define FUTEX_LOCK_PI		6
+> > > 
+> > > 	int main(void)
+> > > 	{
+> > > 		struct sched_param sp = {};
+> > > 
+> > > 		sp.sched_priority = 2;
+> > > 		assert(sched_setscheduler(0, SCHED_FIFO, &sp) == 0);
+> > > 
+> > > 		int lock = vfork();
+> > > 		if (!lock) {
+> > > 			sp.sched_priority = 1;
+> > > 			assert(sched_setscheduler(0, SCHED_FIFO, &sp) == 0);
+> > > 			_exit(0);
+> > > 		}
+> > > 
+> > > 		syscall(__NR_futex, &lock, FUTEX_LOCK_PI, 0,0,0);
+> > > 		return 0;
+> > > 	}
+> > > 
+> > > this creates the unkillable RT process spinning in futex_lock_pi() on
+> > > a single CPU machine (or you can use taskset).
+> > 
+> > Uuurgh.
 > 
-> So you're passing two kernel pointers obfuscated as u64 into bpf program
-> yet claiming that the end goal is to make landlock unprivileged?!
-> The most basic security hole in the tool that is aiming to provide security.
-
-How could you used these pointers without dedicated BPF helpers? This
-context items are typed as PTR_TO_TASK and can't be used without a
-dedicated helper able to deal with ARG_PTR_TO_TASK. Moreover, pointer
-arithmetic is explicitly forbidden (and I added tests for that). Did I
-miss something?
-
+> But staring more at it. That's a scheduler bug.
 > 
-> I think the only way bpf-based LSM can land is both landlock and KRSI
-> developers work together on a design that solves all use cases.
+> parent	    	    	child
+> 
+>  set FIFO prio 2
+> 
+>  fork()	         ->	set FIFO prio 1
+>  		 	 sched_setscheduler(...)
+> 			   return from syscall		<= BUG
+> 
+>  		 	_exit()
+> 
+> When the child lowers its priority from 2 to 1, then the parent _must_
+> preempt the child simply because the parent is now the top priority task on
+> that CPU. Child should never reach exit before the parent blocks on the
+> futex.
 
-As I said in a previous cover letter [1], that would be great. I think
-that the current Landlock bases (almost everything from this series
-except the seccomp interface) should meet both needs, but I would like
-to have the point of view of the KRSI developers.
+I'm a moron. It's vfork() not fork() so the behaviour is expected.
 
-[1] https://lore.kernel.org/lkml/20191029171505.6650-1-mic@digikod.net/
+Staring more at the trace which shows me where this goes down the drain.
 
-> BPF is capable
-> to be a superset of all existing LSMs whereas landlock and KRSI propsals today
-> are custom solutions to specific security concerns. BPF subsystem was extended
-> with custom things in the past. In networking we have lwt, skb, tc, xdp, sk
-> program types with a lot of overlapping functionality. We couldn't figure out
-> how to generalize them into single 'networking' program. Now we can and we
-> should. Accepting two partially overlapping bpf-based LSMs would be repeating
-> the same mistake again.
+Thanks,
 
-I'll let the LSM maintainers comment on whether BPF could be a superset
-of all LSM, but given the complexity of an access-control system, I have
-some doubts though. Anyway, we need to start somewhere and then iterate.
-This patch series is a first step.
+	tglx
