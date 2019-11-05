@@ -1,78 +1,94 @@
 From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: handle_exit_race && PF_EXITING
-Date: Tue, 5 Nov 2019 19:56:01 +0100 (CET)
-Message-ID: <alpine.DEB.2.21.1911051920420.1869@nanos.tec.linutronix.de>
+Date: Tue, 5 Nov 2019 20:19:15 +0100 (CET)
+Message-ID: <alpine.DEB.2.21.1911051959260.1869@nanos.tec.linutronix.de>
 References: <20191104002909.25783-1-shawn@git.icu> <87woceslfs.fsf@oldenburg2.str.redhat.com> <alpine.DEB.2.21.1911051053470.17054@nanos.tec.linutronix.de> <20191105152728.GA5666@redhat.com> <alpine.DEB.2.21.1911051800070.1869@nanos.tec.linutronix.de>
- <alpine.DEB.2.21.1911051851380.1869@nanos.tec.linutronix.de>
+ <alpine.DEB.2.21.1911051851380.1869@nanos.tec.linutronix.de> <alpine.DEB.2.21.1911051920420.1869@nanos.tec.linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.21.1911051851380.1869@nanos.tec.linutronix.de>
+In-Reply-To: <alpine.DEB.2.21.1911051920420.1869@nanos.tec.linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Oleg Nesterov <oleg@redhat.com>
 Cc: Florian Weimer <fweimer@redhat.com>, Shawn Landden <shawn@git.icu>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Deepa Dinamani <deepa.kernel@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Keith Packard <keithp@keithp.com>, Peter Zijlstra <peterz@infradead.org>
 List-Id: linux-api@vger.kernel.org
 
 On Tue, 5 Nov 2019, Thomas Gleixner wrote:
-> On Tue, 5 Nov 2019, Thomas Gleixner wrote:
-> > On Tue, 5 Nov 2019, Oleg Nesterov wrote:
-> > > On 11/05, Thomas Gleixner wrote:
-> > > >
-> > > > Out of curiosity, what's the race issue vs. robust list which you are
-> > > > trying to solve?
-> > > 
-> > > Off-topic, but this reminds me...
-> > > 
-> > > 	#include <sched.h>
-> > > 	#include <assert.h>
-> > > 	#include <unistd.h>
-> > > 	#include <syscall.h>
-> > > 
-> > > 	#define FUTEX_LOCK_PI		6
-> > > 
-> > > 	int main(void)
-> > > 	{
-> > > 		struct sched_param sp = {};
-> > > 
-> > > 		sp.sched_priority = 2;
-> > > 		assert(sched_setscheduler(0, SCHED_FIFO, &sp) == 0);
-> > > 
-> > > 		int lock = vfork();
-> > > 		if (!lock) {
-> > > 			sp.sched_priority = 1;
-> > > 			assert(sched_setscheduler(0, SCHED_FIFO, &sp) == 0);
-> > > 			_exit(0);
-> > > 		}
-> > > 
-> > > 		syscall(__NR_futex, &lock, FUTEX_LOCK_PI, 0,0,0);
-> > > 		return 0;
-> > > 	}
-> > > 
-> > > this creates the unkillable RT process spinning in futex_lock_pi() on
-> > > a single CPU machine (or you can use taskset).
-> > 
-> > Uuurgh.
 > 
-> But staring more at it. That's a scheduler bug.
+> I'm a moron. It's vfork() not fork() so the behaviour is expected.
 > 
-> parent	    	    	child
-> 
->  set FIFO prio 2
-> 
->  fork()	         ->	set FIFO prio 1
->  		 	 sched_setscheduler(...)
-> 			   return from syscall		<= BUG
-> 
->  		 	_exit()
-> 
-> When the child lowers its priority from 2 to 1, then the parent _must_
-> preempt the child simply because the parent is now the top priority task on
-> that CPU. Child should never reach exit before the parent blocks on the
-> futex.
+> Staring more at the trace which shows me where this goes down the drain.
 
-I'm a moron. It's vfork() not fork() so the behaviour is expected.
+ parent	    	    	child
+ 
+  set FIFO prio 2
+ 
+  vfork()			->	set FIFO prio 1
+   implies wait_for_child()	 	sched_setscheduler(...)
+ 			   		exit()
+					do_exit()
+					tsk->flags |= PF_EXITING;
+ 					....
+					mm_release()
+					  exit_futex(); (NOOP in this case)
+					  complete() --> wakes parent
+ sys_futex()
+    loop infinite because
+    	 PF_EXITING is set,
+	 but PF_EXITPIDONE not
 
-Staring more at the trace which shows me where this goes down the drain.
+So the obvious question is why PF_EXITPIDONE is set way after the futex
+exit cleanup has run, but moving this right after exit_futex() would not
+solve the exit race completely because the code after setting PF_EXITING is
+preemptible. So the same crap could happen just by preemption:
+
+  task holds futex
+  ...
+  do_exit()
+    tsk->flags |= PF_EXITING;
+
+preemption (unrelated wakeup of some other higher prio task, e.g. timer)
+
+  switch_to(other_task)
+
+  return to user
+  sys_futex()
+	loop infinite as above
+
+And just for the fun of it the futex exit cleanup could trigger the wakeup
+itself before PF_EXITPIDONE is set.
+
+There is some other issue which I need to lookup again. That's a slightly
+different problem but related to futex exit race conditions.
+
+The way we can deal with that is:
+
+    do_exit()
+    tsk->flags |= PF_EXITING;
+    ...
+    mutex_lock(&tsk->futex_exit_mutex);
+    futex_exit();
+    tsk->flags |= PF_EXITPIDONE;
+    mutex_unlock(&tsk->futex_exit_mutex);
+    
+and on the futex lock_pi side:
+
+    if (!(tsk->flags & PF_EXITING))
+    	return 0;		<- All good
+
+    if (tsk->flags & PF_EXITPIDONE)
+        return -EOWNERDEAD;	<- Locker can take over
+
+    mutex_lock(&tsk->futex_exit_mutex);
+    if (tsk->flags & PF_EXITPIDONE) {
+        mutex_unlock(&tsk->futex_exit_mutex);
+        return -EOWNERDEAD;	<- Locker can take over
+    }
+
+    queue_futex();
+    mutex_unlock(&tsk->futex_exit_mutex);
+
+Not that I think it's pretty, but it plugs all holes AFAICT.
 
 Thanks,
 
