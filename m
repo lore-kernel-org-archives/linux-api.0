@@ -1,95 +1,75 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: handle_exit_race && PF_EXITING
-Date: Tue, 5 Nov 2019 20:19:15 +0100 (CET)
-Message-ID: <alpine.DEB.2.21.1911051959260.1869@nanos.tec.linutronix.de>
-References: <20191104002909.25783-1-shawn@git.icu> <87woceslfs.fsf@oldenburg2.str.redhat.com> <alpine.DEB.2.21.1911051053470.17054@nanos.tec.linutronix.de> <20191105152728.GA5666@redhat.com> <alpine.DEB.2.21.1911051800070.1869@nanos.tec.linutronix.de>
- <alpine.DEB.2.21.1911051851380.1869@nanos.tec.linutronix.de> <alpine.DEB.2.21.1911051920420.1869@nanos.tec.linutronix.de>
+From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Subject: Re: [PATCH bpf-next v13 4/7] landlock: Add ptrace LSM hooks
+Date: Tue, 5 Nov 2019 11:31:32 -0800
+Message-ID: <20191105193130.qam2eafnmgvrvjwk@ast-mbp.dhcp.thefacebook.com>
+References: <20191104172146.30797-1-mic@digikod.net>
+ <20191104172146.30797-5-mic@digikod.net>
+ <20191105171824.dfve44gjiftpnvy7@ast-mbp.dhcp.thefacebook.com>
+ <c5c6b433-7e6a-c8f8-f063-e704c3df4cc6@schaufler-ca.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.21.1911051920420.1869@nanos.tec.linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Oleg Nesterov <oleg@redhat.com>
-Cc: Florian Weimer <fweimer@redhat.com>, Shawn Landden <shawn@git.icu>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Deepa Dinamani <deepa.kernel@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Keith Packard <keithp@keithp.com>, Peter Zijlstra <peterz@infradead.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Return-path: <netdev-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <c5c6b433-7e6a-c8f8-f063-e704c3df4cc6@schaufler-ca.com>
+Sender: netdev-owner@vger.kernel.org
+To: Casey Schaufler <casey@schaufler-ca.com>
+Cc: =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mic@digikod.net>, linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, Florent Revest <revest@chromium.org>, James Morris <jmorris@namei.org>, Jann Horn <jann@thejh.net>, John Johansen <john.johansen@canonical.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, KP Singh <kpsingh@chromium.org>, Michael Kerrisk <mtk.manpages@gmail.com>, =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mickael.salaun@ssi.gouv.fr>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Stephen Smalley <sds@tych>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 5 Nov 2019, Thomas Gleixner wrote:
+On Tue, Nov 05, 2019 at 09:55:42AM -0800, Casey Schaufler wrote:
+> On 11/5/2019 9:18 AM, Alexei Starovoitov wrote:
+> > On Mon, Nov 04, 2019 at 06:21:43PM +0100, Mickaël Salaün wrote:
+> >> Add a first Landlock hook that can be used to enforce a security policy
+> >> or to audit some process activities.  For a sandboxing use-case, it is
+> >> needed to inform the kernel if a task can legitimately debug another.
+> >> ptrace(2) can also be used by an attacker to impersonate another task
+> >> and remain undetected while performing malicious activities.
+> >>
+> >> Using ptrace(2) and related features on a target process can lead to a
+> >> privilege escalation.  A sandboxed task must then be able to tell the
+> >> kernel if another task is more privileged, via ptrace_may_access().
+> >>
+> >> Signed-off-by: Mickaël Salaün <mic@digikod.net>
+> > ...
+> >> +static int check_ptrace(struct landlock_domain *domain,
+> >> +		struct task_struct *tracer, struct task_struct *tracee)
+> >> +{
+> >> +	struct landlock_hook_ctx_ptrace ctx_ptrace = {
+> >> +		.prog_ctx = {
+> >> +			.tracer = (uintptr_t)tracer,
+> >> +			.tracee = (uintptr_t)tracee,
+> >> +		},
+> >> +	};
+> > So you're passing two kernel pointers obfuscated as u64 into bpf program
+> > yet claiming that the end goal is to make landlock unprivileged?!
+> > The most basic security hole in the tool that is aiming to provide security.
+> >
+> > I think the only way bpf-based LSM can land is both landlock and KRSI
+> > developers work together on a design that solves all use cases. BPF is capable
+> > to be a superset of all existing LSMs
 > 
-> I'm a moron. It's vfork() not fork() so the behaviour is expected.
-> 
-> Staring more at the trace which shows me where this goes down the drain.
+> I can't agree with this. Nope. There are many security models
+> for which BPF introduces excessive complexity. You don't need
+> or want the generality of a general purpose programming language
+> to implement Smack or TOMOYO. Or a simple Bell & LaPadula for
+> that matter. SELinux? I can't imagine anyone trying to do that
+> in eBPF, although I'm willing to be surprised. Being able to
+> enforce a policy isn't the only criteria for an LSM. 
 
- parent	    	    	child
- 
-  set FIFO prio 2
- 
-  vfork()			->	set FIFO prio 1
-   implies wait_for_child()	 	sched_setscheduler(...)
- 			   		exit()
-					do_exit()
-					tsk->flags |= PF_EXITING;
- 					....
-					mm_release()
-					  exit_futex(); (NOOP in this case)
-					  complete() --> wakes parent
- sys_futex()
-    loop infinite because
-    	 PF_EXITING is set,
-	 but PF_EXITPIDONE not
+what are the other criteria?
 
-So the obvious question is why PF_EXITPIDONE is set way after the futex
-exit cleanup has run, but moving this right after exit_futex() would not
-solve the exit race completely because the code after setting PF_EXITING is
-preemptible. So the same crap could happen just by preemption:
+> It's got
+> to perform well and integrate with the rest of the system. 
 
-  task holds futex
-  ...
-  do_exit()
-    tsk->flags |= PF_EXITING;
+what do you mean by that?
 
-preemption (unrelated wakeup of some other higher prio task, e.g. timer)
+> I see many issues with a BPF <-> vfs interface.
 
-  switch_to(other_task)
+There is no such interface today. What do you have in mind?
 
-  return to user
-  sys_futex()
-	loop infinite as above
+> the mechanisms needed for the concerns of the day. Ideally,
+> we should be able to drop mechanisms when we decide that they
+> no longer add value.
 
-And just for the fun of it the futex exit cleanup could trigger the wakeup
-itself before PF_EXITPIDONE is set.
-
-There is some other issue which I need to lookup again. That's a slightly
-different problem but related to futex exit race conditions.
-
-The way we can deal with that is:
-
-    do_exit()
-    tsk->flags |= PF_EXITING;
-    ...
-    mutex_lock(&tsk->futex_exit_mutex);
-    futex_exit();
-    tsk->flags |= PF_EXITPIDONE;
-    mutex_unlock(&tsk->futex_exit_mutex);
-    
-and on the futex lock_pi side:
-
-    if (!(tsk->flags & PF_EXITING))
-    	return 0;		<- All good
-
-    if (tsk->flags & PF_EXITPIDONE)
-        return -EOWNERDEAD;	<- Locker can take over
-
-    mutex_lock(&tsk->futex_exit_mutex);
-    if (tsk->flags & PF_EXITPIDONE) {
-        mutex_unlock(&tsk->futex_exit_mutex);
-        return -EOWNERDEAD;	<- Locker can take over
-    }
-
-    queue_futex();
-    mutex_unlock(&tsk->futex_exit_mutex);
-
-Not that I think it's pretty, but it plugs all holes AFAICT.
-
-Thanks,
-
-	tglx
+Exactly. bpf-based lsm must not add to kernel abi.
