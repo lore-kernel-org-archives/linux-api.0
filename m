@@ -1,31 +1,29 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH 1/1] syscalls: Fix references to filenames containing
- syscall defs
-Date: Tue, 5 Nov 2019 10:34:07 +0100 (CET)
-Message-ID: <alpine.DEB.2.21.1911051033050.17054@nanos.tec.linutronix.de>
-References: <20191105022928.517526-1-farnasirim@gmail.com>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: [RFC v2 PATCH] futex: extend set_robust_list to allow 2 locking ABIs at the same time.
+Date: Tue, 05 Nov 2019 10:48:39 +0100
+Message-ID: <87woceslfs.fsf@oldenburg2.str.redhat.com>
+References: <20191104002909.25783-1-shawn@git.icu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=WINDOWS-1252
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191105022928.517526-1-farnasirim@gmail.com>
+In-Reply-To: <20191104002909.25783-1-shawn@git.icu> (Shawn Landden's message
+        of "Sun, 3 Nov 2019 16:29:09 -0800")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mohammad Nasirifar <far.nasiri.m@gmail.com>
-Cc: Arnd Bergmann <arnd@arndb.de>, Andrew Morton <akpm@linux-foundation.org>, Mohammad Nasirifar <farnasirim@gmail.com>, linux-api@vger.kernel.org, linux-arch@vger.kernel.org, linux-kernel@vger.kernel.org, Valdis Kletnieks <valdis.kletnieks@vt.edu>
+To: Shawn Landden <shawn@git.icu>
+Cc: Thomas Gleixner <tglx@linutronix.de>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Deepa Dinamani <deepa.kernel@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Keith Packard <keithp@keithp.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 4 Nov 2019, Mohammad Nasirifar wrote:
+* Shawn Landden:
 
-> Fix stale references to files containing syscall definitions in
-> 'include/linux/syscalls.h' and 'include/uapi/asm-generic/unistd.h',
-> pointing to 'kernel/itimer.c', 'kernel/hrtimer.c', and 'kernel/time.c'.
-> They are now under 'kernel/time'.
-> 
-> Also definitions of 'getpid', 'getppid', 'getuid', 'geteuid', 'getgid',
-> 'getegid', 'gettid', and 'sysinfo' are now in 'kernel/sys.c'.
+> If this new ABI is used, then bit 1 of the *next pointer of the
+> user-space robust_list indicates that the futex_offset2 value should
+> be used in place of the existing futex_offset.
 
-Can we please remove these file references completely. They are going to be
-stale sooner than later again and they really do not provide any value.
+The futex interface currently has some races which can only be fixed by
+API changes.  I'm concerned that we sacrifice the last bit for some
+rather obscure feature.  What if we need that bit for fixing the
+correctness issues?
 
 Thanks,
-
-	tglx
+Florian
