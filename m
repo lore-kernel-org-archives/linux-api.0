@@ -1,23 +1,40 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH] clone3: validate stack arguments
-Date: Tue, 5 Nov 2019 15:23:19 +0100
-Message-ID: <CAK8P3a2P0djkhfHhQUGdO3YX7QGtLeF2OH1HaJmbmRq5Nuojbg@mail.gmail.com>
-References: <20191031113608.20713-1-christian.brauner@ubuntu.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [RFC v2 PATCH] futex: extend set_robust_list to allow 2 locking
+ ABIs at the same time.
+Date: Tue, 5 Nov 2019 15:27:54 +0100 (CET)
+Message-ID: <alpine.DEB.2.21.1911051520090.17054@nanos.tec.linutronix.de>
+References: <20191104002909.25783-1-shawn@git.icu> <87woceslfs.fsf@oldenburg2.str.redhat.com> <alpine.DEB.2.21.1911051053470.17054@nanos.tec.linutronix.de> <87sgn2skm6.fsf@oldenburg2.str.redhat.com> <alpine.DEB.2.21.1911051253430.17054@nanos.tec.linutronix.de>
+ <f11d82f1-1e81-e344-3ad2-76e4cb488a3d@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191031113608.20713-1-christian.brauner@ubuntu.com>
+In-Reply-To: <f11d82f1-1e81-e344-3ad2-76e4cb488a3d@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian.brauner@ubuntu.com>
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Florian Weimer <fweimer@redhat.com>, GNU C Library <libc-alpha@sourceware.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, David Howells <dhowells@redhat.com>, Ingo Molnar <mingo@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <peterz@infradead.org>, Linux API <linux-api@vger.kernel.org>, "# 3.4.x" <stable@vger.kernel.org>
+To: Carlos O'Donell <carlos@redhat.com>
+Cc: Florian Weimer <fweimer@redhat.com>, Shawn Landden <shawn@git.icu>, libc-alpha@sourceware.org, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Deepa Dinamani <deepa.kernel@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Keith Packard <keithp@keithp.com>, Peter Zijlstra <peterz@infradead.org>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Oct 31, 2019 at 12:36 PM Christian Brauner
-<christian.brauner@ubuntu.com> wrote:
->
-> Validate the stack arguments and setup the stack depening on whether or not
-> it is growing down or up.
->
-> Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+On Tue, 5 Nov 2019, Carlos O'Donell wrote:
+> On 11/5/19 6:56 AM, Thomas Gleixner wrote:
+> The other issue is this:
+> 
+> "Robust mutexes do not take ROBUST_LIST_LIMIT into account"
+> https://sourceware.org/bugzilla/show_bug.cgi?id=19089
 
-Acked-by: Arnd Bergmann <arnd@arndb.de>
+  "The kernel limits the length of the robust mutex list to 2048 entries.
+   This constant does not seem to be exported to user space."
+
+FWIW, the constant is defined in the UAPI futex header.
+
+The main concern here is not the actual number of futexes held by a task.
+
+The real issue is that the robust list could be circular by incident or
+malice and there is no way for the kernel to figure that out. That would
+prevent the task from exiting and make it iterate over the list until
+doomsday, i.e. a nice unpriviledged DoS.
+
+So I fear the kernel cannot really help with this one.
+
+Thanks,
+
+	tglx
