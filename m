@@ -1,48 +1,53 @@
-From: Daniel Colascione <dancol@google.com>
-Subject: Re: [PATCH 1/1] userfaultfd: require CAP_SYS_PTRACE for UFFD_FEATURE_EVENT_FORK
-Date: Tue, 5 Nov 2019 09:02:09 -0800
-Message-ID: <CAKOZuet+fgaJR72YwYrHFdFVSOo6EWpcT8jUoh7se4cZb0V2aw@mail.gmail.com>
-References: <1572967777-8812-1-git-send-email-rppt@linux.ibm.com>
- <1572967777-8812-2-git-send-email-rppt@linux.ibm.com> <CAKOZuev93zDGNPX+ySg_jeUg4Z3zKMcpABekUQvHA01kTVn4=A@mail.gmail.com>
- <CALCETrX=VmSjD6kLT6tuZQ4Efhc_13vZrw1mo4Z2iKqZTT-bzg@mail.gmail.com>
- <CAKOZuetu0QWUDAycTOFzC4HEbjH99EtOhb4gJnHAuovT_StpzA@mail.gmail.com>
- <20191105163316.GI30717@redhat.com> <CAKOZuet1Hrdd7U4VVBmXNCkE6xwiUPERRHjP=A3bX6B9A4BQRQ@mail.gmail.com>
- <20191105165556.GK30717@redhat.com>
+From: Alexei Starovoitov <alexei.starovoitov@gmail.com>
+Subject: Re: [PATCH bpf-next v13 4/7] landlock: Add ptrace LSM hooks
+Date: Tue, 5 Nov 2019 09:18:26 -0800
+Message-ID: <20191105171824.dfve44gjiftpnvy7@ast-mbp.dhcp.thefacebook.com>
+References: <20191104172146.30797-1-mic@digikod.net>
+ <20191104172146.30797-5-mic@digikod.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191105165556.GK30717@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrea Arcangeli <aarcange@redhat.com>
-Cc: Andy Lutomirski <luto@kernel.org>, Mike Rapoport <rppt@linux.ibm.com>, linux-kernel <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Lokesh Gidra <lokeshgidra@google.com>, Nick Kralevich <nnk@google.com>, Nosh Minwalla <nosh@google.com>, Pavel Emelyanov <ovzxemul@gmail.com>, Tim Murray <timmurray@google.com>, Linux API <linux-api@vger.kernel.org>, linux-mm <linux-mm@kvack.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
+Return-path: <netdev-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20191104172146.30797-5-mic@digikod.net>
+Sender: netdev-owner@vger.kernel.org
+To: =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mic@digikod.net>
+Cc: linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Casey Schaufler <casey@schaufler-ca.com>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, Florent Revest <revest@chromium.org>, James Morris <jmorris@namei.org>, Jann Horn <jann@thejh.net>, John Johansen <john.johansen@canonical.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, KP Singh <kpsingh@chromium.org>, Michael Kerrisk <mtk.manpages@gmail.com>, =?utf-8?Q?Micka=C3=ABl_Sala=C3=BCn?= <mickael.salaun@ssi.gouv.fr>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Stephen Smalley <sds@tycho.nsa.gov>, Te
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 5, 2019 at 8:56 AM Andrea Arcangeli <aarcange@redhat.com> wrote:
->
-> On Tue, Nov 05, 2019 at 08:39:26AM -0800, Daniel Colascione wrote:
-> > I'm not suggesting that we fail userfaultfd(2) without CAP_SYS_PTRACE.
-> > That would, as you point out, break things. I'm talking about
-> > recording *whether* we had CAP_SYS_PTRACE in an internal flag in the
-> > uffd context when we create the thing --- and then, at ioctl time,
-> > checking that flag, not the caller's CAP_SYS_PTRACE, to see whether
-> > UFFD_FEATURE_EVENT_FORK should be made available. This way, the
-> > security check hinges on whether the caller *at create time* was
-> > privileged.
->
-> Until now it wasn't clear to me you still wanted to do the permission
-> check in UFFDIO_API time, and you only intended to move the
-> "measurement" of the capability to the syscall.
->
-> So you're suggesting to add more kernel complexity to code pending for
-> removal to achieve a theoretically more pure solution in the band-aid
-> required to defer the removal of the posix-breaking read
-> implementation of the uffd fork feature?
+On Mon, Nov 04, 2019 at 06:21:43PM +0100, Mickaël Salaün wrote:
+> Add a first Landlock hook that can be used to enforce a security policy
+> or to audit some process activities.  For a sandboxing use-case, it is
+> needed to inform the kernel if a task can legitimately debug another.
+> ptrace(2) can also be used by an attacker to impersonate another task
+> and remain undetected while performing malicious activities.
+> 
+> Using ptrace(2) and related features on a target process can lead to a
+> privilege escalation.  A sandboxed task must then be able to tell the
+> kernel if another task is more privileged, via ptrace_may_access().
+> 
+> Signed-off-by: Mickaël Salaün <mic@digikod.net>
+...
+> +static int check_ptrace(struct landlock_domain *domain,
+> +		struct task_struct *tracer, struct task_struct *tracee)
+> +{
+> +	struct landlock_hook_ctx_ptrace ctx_ptrace = {
+> +		.prog_ctx = {
+> +			.tracer = (uintptr_t)tracer,
+> +			.tracee = (uintptr_t)tracee,
+> +		},
+> +	};
 
-And you're suggesting making a security check work weirdly unlike most
-other security checks because you hope it'll get removed one day?
-Temporary solutions aren't, and if something goes into the kernel at
-all, it's worth getting right. The general rule is that access checks
-happen at open time. The kernel has already been bitten by UFFD
-exempting itself from the normal rules (e.g., the
-read(2)-makes-a-file-descriptor thing) in the name of expediency.
-There shouldn't be any more exceptions.
+So you're passing two kernel pointers obfuscated as u64 into bpf program
+yet claiming that the end goal is to make landlock unprivileged?!
+The most basic security hole in the tool that is aiming to provide security.
+
+I think the only way bpf-based LSM can land is both landlock and KRSI
+developers work together on a design that solves all use cases. BPF is capable
+to be a superset of all existing LSMs whereas landlock and KRSI propsals today
+are custom solutions to specific security concerns. BPF subsystem was extended
+with custom things in the past. In networking we have lwt, skb, tc, xdp, sk
+program types with a lot of overlapping functionality. We couldn't figure out
+how to generalize them into single 'networking' program. Now we can and we
+should. Accepting two partially overlapping bpf-based LSMs would be repeating
+the same mistake again.
