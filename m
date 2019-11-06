@@ -1,161 +1,193 @@
-From: Casey Schaufler <casey@schaufler-ca.com>
-Subject: Re: [PATCH bpf-next v13 4/7] landlock: Add ptrace LSM hooks
-Date: Tue, 5 Nov 2019 14:32:27 -0800
-Message-ID: <93f53bdd-a499-6425-111c-ab90d81874d7@schaufler-ca.com>
-References: <20191104172146.30797-1-mic@digikod.net>
- <20191104172146.30797-5-mic@digikod.net>
- <20191105171824.dfve44gjiftpnvy7@ast-mbp.dhcp.thefacebook.com>
- <c5c6b433-7e6a-c8f8-f063-e704c3df4cc6@schaufler-ca.com>
- <20191105193130.qam2eafnmgvrvjwk@ast-mbp.dhcp.thefacebook.com>
- <637736ef-c48e-ac3b-3eef-8a6a095a96f1@schaufler-ca.com>
- <20191105215453.szhdkrvuekwfz6le@ast-mbp.dhcp.thefacebook.com>
+From: Christian Brauner <christian.brauner@ubuntu.com>
+Subject: Re: [PATCH] clone3: validate stack arguments
+Date: Wed, 6 Nov 2019 03:18:30 +0100
+Message-ID: <20191106021829.zihexhy2vq4z3if3@wittgenstein>
+References: <20191031113608.20713-1-christian.brauner@ubuntu.com>
+ <20191031124037.E26AF20650@mail.kernel.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20191105215453.szhdkrvuekwfz6le@ast-mbp.dhcp.thefacebook.com>
-Content-Language: en-US
-Sender: netdev-owner@vger.kernel.org
-To: Alexei Starovoitov <alexei.starovoitov@gmail.com>
-Cc: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>, linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Daniel Borkmann <daniel@iogearbox.net>, David Drysdale <drysdale@google.com>, Florent Revest <revest@chromium.org>, James Morris <jmorris@namei.org>, Jann Horn <jann@thejh.net>, John Johansen <john.johansen@canonical.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, KP Singh <kpsingh@chromium.org>, Michael Kerrisk <mtk.manpages@gmail.com>, =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mickael.salaun@ssi.gouv.fr>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Stephen Smalley <sds@tych>
+Return-path: <stable-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20191031124037.E26AF20650@mail.kernel.org>
+Sender: stable-owner@vger.kernel.org
+To: Sasha Levin <sashal@kernel.org>
+Cc: linux-kernel@vger.kernel.org, Florian Weimer <fweimer@redhat.com>, Arnd Bergmann <arnd@arndb.de>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, David Howells <dhowells@redhat.com>, Ingo Molnar <mingo@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Peter Zijlstra <peterz@infradead.org>, linux-api@vger.kernel.org, GNU C Library <libc-alpha@sourceware.org>, stable@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On 11/5/2019 1:54 PM, Alexei Starovoitov wrote:
-> On Tue, Nov 05, 2019 at 11:55:17AM -0800, Casey Schaufler wrote:
->> On 11/5/2019 11:31 AM, Alexei Starovoitov wrote:
->>> On Tue, Nov 05, 2019 at 09:55:42AM -0800, Casey Schaufler wrote:
->>>> On 11/5/2019 9:18 AM, Alexei Starovoitov wrote:
->>>>> On Mon, Nov 04, 2019 at 06:21:43PM +0100, Micka=C3=ABl Sala=C3=BCn =
-wrote:
->>>>>> Add a first Landlock hook that can be used to enforce a security p=
-olicy
->>>>>> or to audit some process activities.  For a sandboxing use-case, i=
-t is
->>>>>> needed to inform the kernel if a task can legitimately debug anoth=
-er.
->>>>>> ptrace(2) can also be used by an attacker to impersonate another t=
-ask
->>>>>> and remain undetected while performing malicious activities.
->>>>>>
->>>>>> Using ptrace(2) and related features on a target process can lead =
-to a
->>>>>> privilege escalation.  A sandboxed task must then be able to tell =
-the
->>>>>> kernel if another task is more privileged, via ptrace_may_access()=
-=2E
->>>>>>
->>>>>> Signed-off-by: Micka=C3=ABl Sala=C3=BCn <mic@digikod.net>
->>>>> ...
->>>>>> +static int check_ptrace(struct landlock_domain *domain,
->>>>>> +		struct task_struct *tracer, struct task_struct *tracee)
->>>>>> +{
->>>>>> +	struct landlock_hook_ctx_ptrace ctx_ptrace =3D {
->>>>>> +		.prog_ctx =3D {
->>>>>> +			.tracer =3D (uintptr_t)tracer,
->>>>>> +			.tracee =3D (uintptr_t)tracee,
->>>>>> +		},
->>>>>> +	};
->>>>> So you're passing two kernel pointers obfuscated as u64 into bpf pr=
-ogram
->>>>> yet claiming that the end goal is to make landlock unprivileged?!
->>>>> The most basic security hole in the tool that is aiming to provide =
-security.
->>>>>
->>>>> I think the only way bpf-based LSM can land is both landlock and KR=
-SI
->>>>> developers work together on a design that solves all use cases. BPF=
- is capable
->>>>> to be a superset of all existing LSMs
->>>> I can't agree with this. Nope. There are many security models
->>>> for which BPF introduces excessive complexity. You don't need
->>>> or want the generality of a general purpose programming language
->>>> to implement Smack or TOMOYO. Or a simple Bell & LaPadula for
->>>> that matter. SELinux? I can't imagine anyone trying to do that
->>>> in eBPF, although I'm willing to be surprised. Being able to
->>>> enforce a policy isn't the only criteria for an LSM.=20
->>> what are the other criteria?
->> They include, but are not limited to, performance impact
->> and the ability to be analyzed.=20
-> Right and BPF is the only thing that exists in the kernel where the ver=
-ifier
-> knows precisely the number of instructions the critical path through th=
-e
-> program will take. Currently we don't quantify this cost for bpf helper=
-s, but
-> it's easy to add. Can you do this for smack? Can you tell upfront the l=
-ongest
-> execution time for all security rules?
+On Thu, Oct 31, 2019 at 12:40:36PM +0000, Sasha Levin wrote:
+> Hi,
+> 
+> [This is an automated email]
+> 
+> This commit has been processed because it contains a "Fixes:" tag,
+> fixing commit: 7f192e3cd316b fork: add clone3.
+> 
+> The bot has tested the following trees: v5.3.8.
+> 
+> v5.3.8: Failed to apply! Possible dependencies:
+>     78f6face5af34 ("sched: add kernel-doc for struct clone_args")
+> 
+> 
+> NOTE: The patch will not be queued to stable trees until it is upstream.
+> 
+> How should we proceed with this patch?
 
-There's much more to analyze than number of instructions.
-There's also completion of policy enforcement. There are
-lots of tools for measuring performance within the kernel.
+Hey Sasha,
 
->> It has to be fast, or the networking people are
->> going to have fits. You can't require the addition
->> of a pointer into the skb because it'll get rejected
->> out of hand. You can't completely refactor the vfs locking
->> to accommodate you needs.
-> I'm not sure why you got such impression. I'm not proposing to refactor=
- vfs or
-> add fields to skb.
+This has now landed in mainline (cf. [2]).
+I would suggest to backport [1] together with [2].
+The patch in [1] only documents struct clone_args and has no functional
+changes.
+If you prefer to only backport a v5.3 specific version of [2] you can
+find it inline (cf. [3]) including the base commit info for the 5.3 stable
+tree.
 
-I'm not saying you did. Those are examples of things you would
-have trouble with.
+Christian
 
->  Once we have equivalent to smack policy implemented in
-> bpf-based lsm let's do performance benchmarking and compare actual numb=
-ers
-> instead of hypothesizing about them. Which policy do you think would be=
+[1]: 78f6face5af3 ("sched: add kernel-doc for struct clone_args")
+[2]: fa729c4df558 ("clone3: validate stack arguments")
+[3]:
 
-> the most representative of smack use case?
+>From 5bc5279d0dfa90cc6af385b6e3f65958f223ccab Mon Sep 17 00:00:00 2001
+From: Christian Brauner <christian.brauner@ubuntu.com>
+Date: Thu, 31 Oct 2019 12:36:08 +0100
+Subject: [PATCH] clone3: validate stack arguments
 
-The Tizen3 Three domain model will do just fine.
-https://wiki.tizen.org/Security:SmackThreeDomainModel
+Validate the stack arguments and setup the stack depening on whether or not
+it is growing down or up.
 
+Legacy clone() required userspace to know in which direction the stack is
+growing and pass down the stack pointer appropriately. To make things more
+confusing microblaze uses a variant of the clone() syscall selected by
+CONFIG_CLONE_BACKWARDS3 that takes an additional stack_size argument.
+IA64 has a separate clone2() syscall which also takes an additional
+stack_size argument. Finally, parisc has a stack that is growing upwards.
+Userspace therefore has a lot nasty code like the following:
 
->
->>>> I see many issues with a BPF <-> vfs interface.
->>> There is no such interface today. What do you have in mind?
->> You can't implement SELinux or Smack using BPF without a way
->> to manipulate inode data.
-> Are you talking about inode->i_security ? That's not manipulating inode=
- data.
+ #define __STACK_SIZE (8 * 1024 * 1024)
+ pid_t sys_clone(int (*fn)(void *), void *arg, int flags, int *pidfd)
+ {
+         pid_t ret;
+         void *stack;
 
-Poppycock.
+         stack = malloc(__STACK_SIZE);
+         if (!stack)
+                 return -ENOMEM;
 
-> It's attaching extra metadata to inode object without changing inode it=
-self.
+ #ifdef __ia64__
+         ret = __clone2(fn, stack, __STACK_SIZE, flags | SIGCHLD, arg, pidfd);
+ #elif defined(__parisc__) /* stack grows up */
+         ret = clone(fn, stack, flags | SIGCHLD, arg, pidfd);
+ #else
+         ret = clone(fn, stack + __STACK_SIZE, flags | SIGCHLD, arg, pidfd);
+ #endif
+         return ret;
+ }
 
-Where I come from, we call that inode object data.
+or even crazier variants such as [3].
 
-> BPF can do it already via hash maps. It's not as fast as direct pointer=
- access,
+With clone3() we have the ability to validate the stack. We can check that
+when stack_size is passed, the stack pointer is valid and the other way
+around. We can also check that the memory area userspace gave us is fine to
+use via access_ok(). Furthermore, we probably should not require
+userspace to know in which direction the stack is growing. It is easy
+for us to do this in the kernel and I couldn't find the original
+reasoning behind exposing this detail to userspace.
 
-Then you're not listening. Performance MATTERS!
+/* Intentional user visible API change */
+clone3() was released with 5.3. Currently, it is not documented and very
+unclear to userspace how the stack and stack_size argument have to be
+passed. After talking to glibc folks we concluded that trying to change
+clone3() to setup the stack instead of requiring userspace to do this is
+the right course of action.
+Note, that this is an explicit change in user visible behavior we introduce
+with this patch. If it breaks someone's use-case we will revert! (And then
+e.g. place the new behavior under an appropriate flag.)
+Breaking someone's use-case is very unlikely though. First, neither glibc
+nor musl currently expose a wrapper for clone3(). Second, there is no real
+motivation for anyone to use clone3() directly since it does not provide
+features that legacy clone doesn't. New features for clone3() will first
+happen in v5.5 which is why v5.4 is still a good time to try and make that
+change now and backport it to v5.3. Searches on [4] did not reveal any
+packages calling clone3().
 
-> but for many use cases it's good enough. If it turns out to be a perfor=
-mance
-> limiting factor we will accelerate it.
+[1]: https://lore.kernel.org/r/CAG48ez3q=BeNcuVTKBN79kJui4vC6nw0Bfq6xc-i0neheT17TA@mail.gmail.com
+[2]: https://lore.kernel.org/r/20191028172143.4vnnjpdljfnexaq5@wittgenstein
+[3]: https://github.com/systemd/systemd/blob/5238e9575906297608ff802a27e2ff9effa3b338/src/basic/raw-clone.h#L31
+[4]: https://codesearch.debian.net
+Fixes: 7f192e3cd316 ("fork: add clone3")
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Jann Horn <jannh@google.com>
+Cc: David Howells <dhowells@redhat.com>
+Cc: Ingo Molnar <mingo@redhat.com>
+Cc: Oleg Nesterov <oleg@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Florian Weimer <fweimer@redhat.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: linux-api@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org
+Cc: <stable@vger.kernel.org> # 5.3
+Cc: GNU C Library <libc-alpha@sourceware.org>
+Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+Acked-by: Arnd Bergmann <arnd@arndb.de>
+Acked-by: Aleksa Sarai <cyphar@cyphar.com>
+Link: https://lore.kernel.org/r/20191031113608.20713-1-christian.brauner@ubuntu.com
+---
+ kernel/fork.c | 33 ++++++++++++++++++++++++++++++++-
+ 1 file changed, 32 insertions(+), 1 deletion(-)
 
-How many times have I heard that bit of rubbish?
-No. You can't start with a bad design and tweak it to acceptability later=
-=2E
+diff --git a/kernel/fork.c b/kernel/fork.c
+index 3647097e6783..8bbd39585301 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -2586,7 +2586,35 @@ noinline static int copy_clone_args_from_user(struct kernel_clone_args *kargs,
+ 	return 0;
+ }
+ 
+-static bool clone3_args_valid(const struct kernel_clone_args *kargs)
++/**
++ * clone3_stack_valid - check and prepare stack
++ * @kargs: kernel clone args
++ *
++ * Verify that the stack arguments userspace gave us are sane.
++ * In addition, set the stack direction for userspace since it's easy for us to
++ * determine.
++ */
++static inline bool clone3_stack_valid(struct kernel_clone_args *kargs)
++{
++	if (kargs->stack == 0) {
++		if (kargs->stack_size > 0)
++			return false;
++	} else {
++		if (kargs->stack_size == 0)
++			return false;
++
++		if (!access_ok((void __user *)kargs->stack, kargs->stack_size))
++			return false;
++
++#if !defined(CONFIG_STACK_GROWSUP) && !defined(CONFIG_IA64)
++		kargs->stack += kargs->stack_size;
++#endif
++	}
++
++	return true;
++}
++
++static bool clone3_args_valid(struct kernel_clone_args *kargs)
+ {
+ 	/*
+ 	 * All lower bits of the flag word are taken.
+@@ -2606,6 +2634,9 @@ static bool clone3_args_valid(const struct kernel_clone_args *kargs)
+ 	    kargs->exit_signal)
+ 		return false;
+ 
++	if (!clone3_stack_valid(kargs))
++		return false;
++
+ 	return true;
+ }
+ 
 
-
->>>> the mechanisms needed for the concerns of the day. Ideally,
->>>> we should be able to drop mechanisms when we decide that they
->>>> no longer add value.
->>> Exactly. bpf-based lsm must not add to kernel abi.
->> Huh? I have no idea where that came from.
-> It sounds to me that some folks in the community got wrong impression t=
-hat
-> anything that BPF accesses is magically turning that thing into stable =
-kernel
-> ABI. That is not true. BPF progs had access _all_ kernel data pointers =
-and
-> structures for years without turning the whole kernel into stable ABI. =
-I want
-> to make sure that this part is understood. This is also a requirement f=
-or
-> bpf-based LSM. It must not make LSM hooks into stable ABI.
->
+base-commit: db0655e705be645ad673b0a70160921e088517c0
+-- 
+2.23.0
