@@ -1,40 +1,46 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [RFC v2 PATCH] futex: extend set_robust_list to allow 2 locking ABIs at the same time.
-Date: Wed, 06 Nov 2019 15:04:17 +0100
-Message-ID: <87a799nlsu.fsf@oldenburg2.str.redhat.com>
-References: <20191104002909.25783-1-shawn@git.icu>
-        <87woceslfs.fsf@oldenburg2.str.redhat.com>
-        <alpine.DEB.2.21.1911051053470.17054@nanos.tec.linutronix.de>
-        <87sgn2skm6.fsf@oldenburg2.str.redhat.com>
-        <alpine.DEB.2.21.1911051253430.17054@nanos.tec.linutronix.de>
-        <f11d82f1-1e81-e344-3ad2-76e4cb488a3d@redhat.com>
-        <alpine.DEB.2.21.1911051520090.17054@nanos.tec.linutronix.de>
-        <CAKCAbMjYBpTjwyMJkkENps09o4KFoQAb_KOKp4g0BtWUXjYAzQ@mail.gmail.com>
+From: Mohammad Nasirifar <far.nasiri.m@gmail.com>
+Subject: Re: [PATCH 1/1] syscalls: Fix references to filenames containing
+ syscall defs
+Date: Wed, 6 Nov 2019 11:47:56 -0500
+Message-ID: <20191106164756.GA558585@gmail.com>
+References: <20191105022928.517526-1-farnasirim@gmail.com>
+ <alpine.DEB.2.21.1911051033050.17054@nanos.tec.linutronix.de>
+ <CAK8P3a0wyw=CwhiU34t1zBiSesf+HGBLeaV+=JVko_TjnvATHQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAKCAbMjYBpTjwyMJkkENps09o4KFoQAb_KOKp4g0BtWUXjYAzQ@mail.gmail.com>
-        (Zack Weinberg's message of "Wed, 6 Nov 2019 09:00:51 -0500")
+Content-Disposition: inline
+In-Reply-To: <CAK8P3a0wyw=CwhiU34t1zBiSesf+HGBLeaV+=JVko_TjnvATHQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Zack Weinberg <zackw@panix.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>, Carlos O'Donell <carlos@redhat.com>, Shawn Landden <shawn@git.icu>, GNU C Library <libc-alpha@sourceware.org>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Arnd Bergmann <arnd@arndb.de>, Deepa Dinamani <deepa.kernel@gmail.com>, Oleg Nesterov <oleg@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Catalin Marinas <catalin.marinas@arm.com>, Keith Packard <keithp@keithp.com>, Peter Zijlstra <peterz@infradead.org>
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Thomas Gleixner <tglx@linutronix.de>, Andrew Morton <akpm@linux-foundation.org>, Mohammad Nasirifar <farnasirim@gmail.com>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Valdis Kletnieks <valdis.kletnieks@vt.edu>
 List-Id: linux-api@vger.kernel.org
 
-* Zack Weinberg:
-
-> On Tue, Nov 5, 2019 at 9:28 AM Thomas Gleixner <tglx@linutronix.de> wrote=
-:
+On Tue, Nov 05, 2019 at 10:49:12AM +0100, Arnd Bergmann wrote:
+>On Tue, Nov 5, 2019 at 10:34 AM Thomas Gleixner <tglx@linutronix.de> wrote:
+>> On Mon, 4 Nov 2019, Mohammad Nasirifar wrote:
+>> > Fix stale references to files containing syscall definitions in
+>> > 'include/linux/syscalls.h' and 'include/uapi/asm-generic/unistd.h',
+>> > pointing to 'kernel/itimer.c', 'kernel/hrtimer.c', and 'kernel/time.c'.
+>> > They are now under 'kernel/time'.
+>> >
+>> > Also definitions of 'getpid', 'getppid', 'getuid', 'geteuid', 'getgid',
+>> > 'getegid', 'gettid', and 'sysinfo' are now in 'kernel/sys.c'.
 >>
->> The real issue is that the robust list could be circular by incident or
->> malice and there is no way for the kernel to figure that out. That would
->> prevent the task from exiting and make it iterate over the list until
->> doomsday, i.e. a nice unpriviledged DoS.
+>> Can we please remove these file references completely. They are going to be
+>> stale sooner than later again and they really do not provide any value.
+I actually refer to them a lot when locating syscall implementations,
+which is how I found out that they were stale in the first place.
 >
-> Why can't the kernel use the standard tortoise-and-hare algorithm for
-> detecting circular linked lists here?
-
-It's not guaranteed to terminate if the list is in shared memory.
-
-Thanks,
-Florian
+>+1
+>
+>Good idea!
+>
+>In the long run, I'd prefer to have a parsable format that can be used to
+>generate both the header file and the stubs that we currently provide
+>using SYSCALL_DEFINEx(), but before that I'd like the remaining two
+>unistd.h files to be converted to syscall.tbl format (Nitesh is still working
+>on that).
+Sorry I didn't understand, is there anything I can do to follow up on this?
+>
+>      Arnd
