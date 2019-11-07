@@ -1,38 +1,58 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [pipe] d60337eff1: phoronix-test-suite.noise-level.0.activity_level 144.0% improvement
-Date: Thu, 07 Nov 2019 17:42:18 +0000
-Message-ID: <25252.1573148538@warthog.procyon.org.uk>
-References: <CAHk-=wiJ+jaT5Ev-wCg7iGNNO_JFUyMDcat0KDdA2b_+n_cZCQ@mail.gmail.com> <157262967752.13142.696874122947836210.stgit@warthog.procyon.org.uk> <20191107090306.GV29418@shao2-debian>
+From: Carlos O'Donell <carlos@redhat.com>
+Subject: Re: Continuing the UAPI split
+Date: Thu, 7 Nov 2019 13:02:18 -0500
+Message-ID: <bc1d29f7-0990-b52f-7a5b-f4faf722fe16@redhat.com>
+References: <CALN7hCK0EXLXjPRPr+tuuF2-uQvkLMCFDNzGhv9HS-jrAz6Hmg@mail.gmail.com>
+ <0B17C6F2-DC2B-4192-B4AD-BD11D6B9F2B6@ubuntu.com>
+ <87zhh7j38y.fsf@oldenburg2.str.redhat.com>
+ <CALN7hCJ_umFqC1L0T19CuiGiGoVwac5807NDw4LiDqSD-VJL=Q@mail.gmail.com>
+ <87zhh7hlbl.fsf@oldenburg2.str.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=wiJ+jaT5Ev-wCg7iGNNO_JFUyMDcat0KDdA2b_+n_cZCQ@mail.gmail.com>
-Content-ID: <25251.1573148538.1@warthog.procyon.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dhowells@redhat.com, lkp report check <rong.a.chen@intel.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, lkp@lists.01.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Return-path: <libc-alpha-return-106779-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+In-Reply-To: <87zhh7hlbl.fsf@oldenburg2.str.redhat.com>
+To: Florian Weimer <fweimer@redhat.com>, Elichai Turkel <elichai.turkel@gmail.com>
+Cc: Christian Brauner <christian.brauner@ubuntu.com>, linux-api@vger.kernel.org, libc-alpha <libc-alpha@sourceware.org>
 List-Id: linux-api@vger.kernel.org
 
-Linus Torvalds <torvalds@linux-foundation.org> wrote:
+On 11/7/19 8:23 AM, Florian Weimer wrote:
+> Officially, it's supposed to work today.  We have one glibc developer
+> who says that it's easy to solve, but I disagree strongly.  The fact
+> that the problems are not fixed promptly suggests that it's anything but
+> simple.
 
-> > FYI, we noticed a 144.0% improvement of phoronix-test-suite.noise-level=
-.0.activity_level due to commit:
-> >
-> > commit: d60337eff18a3c587832ab8053a567f1da9710d2 ("[RFC PATCH 04/11] pi=
-pe: Use head and tail pointers for the ring, not cursor and length [ver #3]=
-")
->=20
-> That sounds nice, but is odd. That commit really shouldn't change
-> anything noticeable. David, any idea?
+Is that one glibc developer me? :-)
 
-Yeah, it does sound odd - the only thing that springs particularly to mind =
-is
-that maybe it's an effect of one of the preceding patches that affects the
-waitqueue stuff.
+They aren't easy to solve, but there is a magic process in place.
 
-TBH, I'm not sure what the Phoronix test suite is actually testing from the
-report.  "noise-level-1.1.0" seems more a reporting script than an actual
-test.
+Getting the definitions to line up is part of the work involved.
 
-David
+Sometimes they may not line up, in that case it doesn't work.
+
+> What I've been doing instead is to include UAPI headers directly from
+> glibc headers if it's technically feasible.  (It's not possible in POSIX
+> mode, where we have to manage the set of exported symbols closely, or
+> generally with old compilers which do not have __has_include.)  See
+> <bits/statx.h>, <bits/statx-generic.h> etc. in current glibc for an
+> example.
+
+That's really the best way to solve it if you can.
+
+> If you add more type definitions to kernel headers, this might interfere
+> with such usage of UAPI headers because today, we need to provide our
+> own definitions for many things not in UAPI headers, and the currently
+> deployed glibc headers are simply not compatible with such future
+> changes.
+
+Right.
+
+-- 
+Cheers,
+Carlos.
