@@ -1,97 +1,85 @@
-From: David Howells <dhowells@redhat.com>
-Subject: [RFC PATCH 08/14] pipe: Allow buffers to be marked
- read-whole-or-error for notifications [ver #2]
-Date: Thu, 07 Nov 2019 13:36:33 +0000
-Message-ID: <157313379331.29677.5209561321495531328.stgit@warthog.procyon.org.uk>
-References: <157313371694.29677.15388731274912671071.stgit@warthog.procyon.org.uk>
+From: Christian Brauner <christian.brauner@ubuntu.com>
+Subject: Re: Continuing the UAPI split
+Date: Thu, 7 Nov 2019 14:36:54 +0100
+Message-ID: <20191107133652.lqp5cqcdtwu22ibd@wittgenstein>
+References: <CALN7hCK0EXLXjPRPr+tuuF2-uQvkLMCFDNzGhv9HS-jrAz6Hmg@mail.gmail.com>
+ <0B17C6F2-DC2B-4192-B4AD-BD11D6B9F2B6@ubuntu.com>
+ <87zhh7j38y.fsf@oldenburg2.str.redhat.com>
+ <CALN7hCJ_umFqC1L0T19CuiGiGoVwac5807NDw4LiDqSD-VJL=Q@mail.gmail.com>
+ <87zhh7hlbl.fsf@oldenburg2.str.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <157313371694.29677.15388731274912671071.stgit@warthog.procyon.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: torvalds@linux-foundation.org
-Cc: dhowells@redhat.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>dhowells@redhat.com, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.orglinux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Return-path: <libc-alpha-return-106750-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+Content-Disposition: inline
+In-Reply-To: <87zhh7hlbl.fsf@oldenburg2.str.redhat.com>
+To: Florian Weimer <fweimer@redhat.com>
+Cc: Elichai Turkel <elichai.turkel@gmail.com>, linux-api@vger.kernel.org, libc-alpha <libc-alpha@sourceware.org>
 List-Id: linux-api@vger.kernel.org
 
-Allow a buffer to be marked such that read() must return the entire buffer
-in one go or return ENOBUFS.  Multiple buffers can be amalgamated into a
-single read, but a short read will occur if the next "whole" buffer won't
-fit.
+On Thu, Nov 07, 2019 at 02:23:26PM +0100, Florian Weimer wrote:
+> * Elichai Turkel:
+> 
+> > Thanks for the response,
+> > I'm not sure what are you suggesting exactly.
+> > A rename to the structs/types so they won't collide with libc?
+> 
+> Or use namespaces.  I mean, we have had proper technical solutions for
+> this issue for more than 20 years now.  I know that this isn't going to
+> happen, though.
+> 
+> > Prioritizing POSIX conformance in the kernel(I think that ship has long sailed)?
+> 
+> That doesn't really work anyway if userspace has different versions of
+> the type depending on feature macros.  Examples are struct stat or soon
+> struct timespec on 32-bit architectures.
+> 
+> > Or just giving up and telling users they can't just directly include
+> > both libc headers and kernel headers?
+> 
+> That's what I've been telling users if they encounter fringe cases I
+> can't fix on the glibc side.
+> 
+> It might also help if top-level types for end user use would be in
+> separate headers.  This is what we started doing internally in glibc, to
+> disentangle our own headers and eliminate cyclic dependencies.
+> 
+> > (I'm actually not sure how it works now. because there are definitely
+> > collision and if we are using ifdefs and undefs black magic you still
+> > end up with a single declaration in the end that might not be
+> > compatible with both libc and kernel)
+> 
+> Officially, it's supposed to work today.  We have one glibc developer
+> who says that it's easy to solve, but I disagree strongly.  The fact
+> that the problems are not fixed promptly suggests that it's anything but
+> simple.
+> 
+> What I've been doing instead is to include UAPI headers directly from
+> glibc headers if it's technically feasible.  (It's not possible in POSIX
 
-This is useful for watch queue notifications to make sure we don't split a
-notification across multiple reads, especially given that we need to
-fabricate an overrun record under some circumstances - and that isn't in
-the buffers.
+A problem I recently ran into that is related are problems with
+sys/wait.h and linux/wait.h.
+How P_{PID,PGID,PIDFD} used by the waitid() syscall are defined is
+different for the two headers.
+linux/wait.h uses #define for P_{PID,PGID,PIDFD} whereas sys/wait.h
+uses an enum.
+The problem is that if I simply don't rely on sys/wait.h and just do
+#ifndef P_PID
+#define P_PID <value>
+#endif
+where value is what the syscall expects then technically I need to call
+the waitid() syscall directly since it's not at all guaranteed - afaict
+- that the P_PID enum == P_PID define that glibc uses for its waitid()
+syscall wrapper.
+So I'm now in a scenario where I can't call the glibc wrapper for
+waitid() with the linux/wait.h defines and I can't call the syscall
+directly (e.g. because I want to make use of the syscall's rusage
+argument that glibc doesn't expose) with sys/wait.h's P_PID enum.
+I'm not sure what the right solution is here...
 
-Signed-off-by: David Howells <dhowells@redhat.com>
----
-
- fs/pipe.c                        |    8 +++++++-
- include/linux/pipe_fs_i.h        |    1 +
- kernel/watch_queue.c             |    2 +-
- samples/watch_queue/watch_test.c |    2 +-
- 4 files changed, 10 insertions(+), 3 deletions(-)
-
-diff --git a/fs/pipe.c b/fs/pipe.c
-index 099bf4b657dd..588355c24ee0 100644
---- a/fs/pipe.c
-+++ b/fs/pipe.c
-@@ -298,8 +298,14 @@ pipe_read(struct kiocb *iocb, struct iov_iter *to)
- =09=09=09size_t written;
- =09=09=09int error;
-=20
--=09=09=09if (chars > total_len)
-+=09=09=09if (chars > total_len) {
-+=09=09=09=09if (buf->flags & PIPE_BUF_FLAG_WHOLE) {
-+=09=09=09=09=09if (ret =3D=3D 0)
-+=09=09=09=09=09=09ret =3D -ENOBUFS;
-+=09=09=09=09=09break;
-+=09=09=09=09}
- =09=09=09=09chars =3D total_len;
-+=09=09=09}
-=20
- =09=09=09error =3D pipe_buf_confirm(pipe, buf);
- =09=09=09if (error) {
-diff --git a/include/linux/pipe_fs_i.h b/include/linux/pipe_fs_i.h
-index 816bc0d3aecd..a19d60a06869 100644
---- a/include/linux/pipe_fs_i.h
-+++ b/include/linux/pipe_fs_i.h
-@@ -8,6 +8,7 @@
- #define PIPE_BUF_FLAG_ATOMIC=090x02=09/* was atomically mapped */
- #define PIPE_BUF_FLAG_GIFT=090x04=09/* page is a gift */
- #define PIPE_BUF_FLAG_PACKET=090x08=09/* read() as a packet */
-+#define PIPE_BUF_FLAG_WHOLE=090x10=09/* read() must return entire buffer o=
-r error */
-=20
- /**
-  *=09struct pipe_buffer - a linux kernel pipe buffer
-diff --git a/kernel/watch_queue.c b/kernel/watch_queue.c
-index b73fbfe0d467..b1d30296e29b 100644
---- a/kernel/watch_queue.c
-+++ b/kernel/watch_queue.c
-@@ -115,7 +115,7 @@ static bool post_one_notification(struct watch_queue *w=
-queue,
- =09buf->ops =3D &watch_queue_pipe_buf_ops;
- =09buf->offset =3D offset;
- =09buf->len =3D len;
--=09buf->flags =3D 0;
-+=09buf->flags =3D PIPE_BUF_FLAG_WHOLE;
- =09pipe->head =3D head + 1;
-=20
- =09if (!test_and_clear_bit(note, wqueue->notes_bitmap)) {
-diff --git a/samples/watch_queue/watch_test.c b/samples/watch_queue/watch_t=
-est.c
-index 8925593bdb9b..f6fb6e813551 100644
---- a/samples/watch_queue/watch_test.c
-+++ b/samples/watch_queue/watch_test.c
-@@ -63,7 +63,7 @@ static void saw_key_change(struct watch_notification *n, =
-size_t len)
-  */
- static void consumer(int fd)
- {
--=09unsigned char buffer[4096], *p, *end;
-+=09unsigned char buffer[433], *p, *end;
- =09union {
- =09=09struct watch_notification n;
- =09=09unsigned char buf1[128];
+Christian
