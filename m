@@ -1,38 +1,52 @@
-From: Florian Weimer <fw@deneb.enyo.de>
-Subject: Re: Continuing the UAPI split
-Date: Thu, 07 Nov 2019 21:32:05 +0100
-Message-ID: <875zjvo2be.fsf@mid.deneb.enyo.de>
-References: <CALN7hCK0EXLXjPRPr+tuuF2-uQvkLMCFDNzGhv9HS-jrAz6Hmg@mail.gmail.com>
-	<0B17C6F2-DC2B-4192-B4AD-BD11D6B9F2B6@ubuntu.com>
-	<87zhh7j38y.fsf@oldenburg2.str.redhat.com>
-	<CALN7hCJ_umFqC1L0T19CuiGiGoVwac5807NDw4LiDqSD-VJL=Q@mail.gmail.com>
-	<facb4d0d-4e20-41f0-4c01-b210c677c24c@arm.com>
-	<086ffddf-553f-453d-a046-4d5e6abead21@redhat.com>
+From: Eric Biggers <ebiggers@kernel.org>
+Subject: [man-pages RFC PATCH] statx.2: document STATX_ATTR_VERITY
+Date: Thu,  7 Nov 2019 14:02:48 -0800
+Message-ID: <20191107220248.32025-1-ebiggers@kernel.org>
+References: <20191107014420.GD15212@magnolia>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <libc-alpha-return-106787-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-In-Reply-To: <086ffddf-553f-453d-a046-4d5e6abead21@redhat.com> (Carlos
-	O'Donell's message of "Thu, 7 Nov 2019 13:05:19 -0500")
-To: Carlos O'Donell <carlos@redhat.com>
-Cc: Szabolcs Nagy <Szabolcs.Nagy@arm.com>, Elichai Turkel <elichai.turkel@gmail.com>, nd <nd@arm.com>, Christian Brauner <christian.brauner@ubuntu.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, libc-alpha <libc-alpha@sourceware.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+In-Reply-To: <20191107014420.GD15212@magnolia>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+To: linux-man@vger.kernel.org
+Cc: tytso@mit.edu, darrick.wong@oracle.com, linux-api@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, dhowells@redhat.com, linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org, jaegeuk@kernel.org, linux-ext4@vger.kernel.org, victorhsieh@google.com
 List-Id: linux-api@vger.kernel.org
 
-* Carlos O'Donell:
+From: Eric Biggers <ebiggers@google.com>
 
-> On 11/7/19 11:21 AM, Szabolcs Nagy wrote:
->>> Or just giving up and telling users they can't just directly include
->>> both libc headers and kernel headers?
->> 
->> including both libc and linux headers is fragile and
->> will break differently across the different linux
->> libc implementations.
->
-> We saw this all the time working in embedded.
+Document the verity attribute for statx().
 
-Do you mean you saw problems while you working in the embedded space?
+Signed-off-by: Eric Biggers <ebiggers@google.com>
+---
+ man2/statx.2 | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+RFC since the kernel patches are currently under review.
+The kernel patches can be found here:
+https://lkml.kernel.org/linux-fscrypt/20191029204141.145309-1-ebiggers@kernel.org/T/#u
+
+diff --git a/man2/statx.2 b/man2/statx.2
+index d2f1b07b8..713bd1260 100644
+--- a/man2/statx.2
++++ b/man2/statx.2
+@@ -461,6 +461,10 @@ See
+ .TP
+ .B STATX_ATTR_ENCRYPTED
+ A key is required for the file to be encrypted by the filesystem.
++.TP
++.B STATX_ATTR_VERITY
++The file has fs-verity enabled.  It cannot be written to, and all reads from it
++will be verified against a Merkle tree.
+ .SH RETURN VALUE
+ On success, zero is returned.
+ On error, \-1 is returned, and
+-- 
+2.24.0.rc1.363.gb1bccd3e3d-goog
