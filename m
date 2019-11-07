@@ -1,67 +1,58 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: For review: documentation of clone3() system call
-Date: Thu, 7 Nov 2019 13:26:03 +0100
-Message-ID: <CAKgNAkhzaJmBuphwkXEVD+Kng7i1cHwK0DjPQ9OfNK7FJCsyyA@mail.gmail.com>
-References: <CAKgNAkjo2WHq+zESU1iuCHJJ0x-fTNrakS9-d1+BjzUuV2uf2Q@mail.gmail.com>
- <20191025170726.rqsquw4v4cuhduek@wittgenstein>
-Reply-To: mtk.manpages@gmail.com
+From: Elichai Turkel <elichai.turkel@gmail.com>
+Subject: Re: Continuing the UAPI split
+Date: Thu, 7 Nov 2019 15:03:12 +0200
+Message-ID: <CALN7hCJ_umFqC1L0T19CuiGiGoVwac5807NDw4LiDqSD-VJL=Q@mail.gmail.com>
+References: <CALN7hCK0EXLXjPRPr+tuuF2-uQvkLMCFDNzGhv9HS-jrAz6Hmg@mail.gmail.com>
+ <0B17C6F2-DC2B-4192-B4AD-BD11D6B9F2B6@ubuntu.com> <87zhh7j38y.fsf@oldenburg2.str.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191025170726.rqsquw4v4cuhduek@wittgenstein>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian.brauner@ubuntu.com>
-Cc: Christian Brauner <christian@brauner.io>, lkml <linux-kernel@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Florian Weimer <fweimer@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@gmail.com>, Linux API <linux-api@vger.kernel.org>, Jann Horn <jannh@google.com>
+Return-path: <libc-alpha-return-106748-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+In-Reply-To: <87zhh7j38y.fsf@oldenburg2.str.redhat.com>
+To: Florian Weimer <fweimer@redhat.com>
+Cc: Christian Brauner <christian.brauner@ubuntu.com>, linux-api@vger.kernel.org, libc-alpha <libc-alpha@sourceware.org>
 List-Id: linux-api@vger.kernel.org
 
-Hey, Christian,
-
-Ping!
-
-Cheers,
-
-Michael
-
-On Fri, 25 Oct 2019 at 19:09, Christian Brauner
-<christian.brauner@ubuntu.com> wrote:
+On Thu, Nov 7, 2019 at 2:10 PM Florian Weimer <fweimer@redhat.com> wrote:
 >
-> On Fri, Oct 25, 2019 at 06:59:31PM +0200, Michael Kerrisk (man-pages) wrote:
-> > Hello Christian and all,
-> >
-> > I've made a first shot at adding documentation for clone3(). You can
-> > see the diff here:
-> > https://git.kernel.org/pub/scm/docs/man-pages/man-pages.git/commit/?id=faa0e55ae9e490d71c826546bbdef954a1800969
-> >
-> > In the end, I decided that the most straightforward approach was to
-> > add the documentation as part of the existing clone(2) page. This has
-> > the advantage of avoiding duplication of information across two pages,
-> > and perhaps also makes it easier to see the commonality of the two
-> > APIs.
-> >
-> > Because the new text is integrated into the existing page, I think it
-> > makes most sense to just show that page text for review purposes. I
-> > welcome input on the below.
-> >
-> > The notable changes are:
-> > * In the first part of the page, up to and including the paragraph
-> > with the subheading "The flags bit mask"
-> > * Minor changes in the description of CLONE_CHILD_CLEARTID,
-> > CLONE_CHILD_SETTID, CLONE_PARENT_SETTID, and CLONE_PIDFD, to reflect
-> > the argument differences between clone() and clone2()
-> >
-> > Most of the resy of page is unchanged.
-> >
-> > I welcome fixes, suggestions for improvements, etc.
+> The kernel uses some POSIX names with POSIX-incompatible definitions,
+> e.g. struct msghdr.  Some libcs prioritize POSIX conformance over kernel
+> conformance and implement userspace translation for mismatch types.
+> When building against such libcs, it becomes difficult to use UAPI and
+> libc headers in a single translation unit.  (It is already difficult
+> today in some cases.)
 >
-> Thank you Michael, for doing this. I will hopefully get around to
-> reviewing this soon but it might take a few days (latest after next week
-> :( because of OSS/LSS).
+> I don't know a good solution here.  Not using POSIX names in UAPI
+> headers is one option.  Previously, we have tried to use preprocessor
+> macros to coordinate definitions, but did not work well in practice
+> (only few conflicts were ever resolved).  It does not help at all when
+> the definitions are incompatible.
 >
-> Christian
+> Thanks,
+> Florian
+>
 
+Thanks for the response,
+I'm not sure what are you suggesting exactly.
+A rename to the structs/types so they won't collide with libc?
+Prioritizing POSIX conformance in the kernel(I think that ship has long sailed)?
+Or just giving up and telling users they can't just directly include
+both libc headers and kernel headers?
+(I'm actually not sure how it works now. because there are definitely
+collision and if we are using ifdefs and undefs black magic you still
+end up with a single declaration in the end that might not be
+compatible with both libc and kernel)
 
+I'd personally really like to see a better separation between (g)libc
+and the kernel. I
+
+Thanks,
+Elichai.
 
 -- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+PGP: 5607C93B5F86650C
