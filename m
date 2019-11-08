@@ -1,76 +1,194 @@
-From: Eric Biggers <ebiggers@kernel.org>
-Subject: Re: [man-pages RFC PATCH] statx.2: document
- STATX_ATTR_VERITY
-Date: Fri, 8 Nov 2019 11:35:58 -0800
-Message-ID: <20191108193557.GA12997@gmail.com>
-References: <20191107014420.GD15212@magnolia>
- <20191107220248.32025-1-ebiggers@kernel.org>
- <5DC525E8.4060705@bfs.de>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: [PATCH 00/23] y2038 cleanups
+Date: Fri,  8 Nov 2019 22:02:21 +0100
+Message-ID: <20191108210236.1296047-1-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
-Content-Disposition: inline
-In-Reply-To: <5DC525E8.4060705@bfs.de>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
-List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
- <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
-Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
-To: walter harms <wharms@bfs.de>
-Cc: linux-man@vger.kernel.org, tytso@mit.edu, darrick.wong@oracle.com, linux-api@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, dhowells@redhat.com, linux-fscrypt@vger.kernel.org, linux-fsdevel@vger.kernel.org, jaegeuk@kernel.org, linux-ext4@vger.kernel.org, victorhsieh@google.com
+Content-Transfer-Encoding: quoted-printable
+Return-path: <owner-linux-aio@kvack.org>
+Sender: owner-linux-aio@kvack.org
+To: y2038@lists.linaro.org
+Cc: linux-kernel@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, rth@twiddle.net, tony.luck@intel.com, paul.burton@mips.com, green.hu@gmail.com, deller@gmx.de, mpe@ellerman.id.au, davem@davemloft.net, tglx@linutronix.de, x86@kernel.org, jdike@addtoit.com, richard@nod.at, viro@zeniv.linux.org.uk, bcrl@kvack.org, john.stultz@linaro.org, sboyd@kernel.org, rostedt@goodmis.org, vincenzo.frascino@arm.com, paul@paul-moore.com, sds@tycho.nsa.gov, eparis@parisplace.org, peterz@infradead.org, will@kernel.org, deepa.kernel@gmail.com, christian@brauner.io, heiko.carstens@de.ibm.com, christophe.leroy@c-s.fr, ebiederm@xmission.com, linux-alpha@vger.kernel.org, linux-ia64@vger.kernel.org, linux-mips@vger.kernel.org, linux-parisc@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, sparclinux@vger.kernel.org, linux-um@lists.infradead.org, linux-fsdevel@vger.kernel.orgli
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Nov 08, 2019 at 09:23:04AM +0100, walter harms wrote:
-> 
-> 
-> Am 07.11.2019 23:02, schrieb Eric Biggers:
-> > From: Eric Biggers <ebiggers@google.com>
-> > 
-> > Document the verity attribute for statx().
-> > 
-> > Signed-off-by: Eric Biggers <ebiggers@google.com>
-> > ---
-> >  man2/statx.2 | 4 ++++
-> >  1 file changed, 4 insertions(+)
-> > 
-> > RFC since the kernel patches are currently under review.
-> > The kernel patches can be found here:
-> > https://lkml.kernel.org/linux-fscrypt/20191029204141.145309-1-ebiggers@kernel.org/T/#u
-> > 
-> > diff --git a/man2/statx.2 b/man2/statx.2
-> > index d2f1b07b8..713bd1260 100644
-> > --- a/man2/statx.2
-> > +++ b/man2/statx.2
-> > @@ -461,6 +461,10 @@ See
-> >  .TP
-> >  .B STATX_ATTR_ENCRYPTED
-> >  A key is required for the file to be encrypted by the filesystem.
-> > +.TP
-> > +.B STATX_ATTR_VERITY
-> > +The file has fs-verity enabled.  It cannot be written to, and all reads from it
-> > +will be verified against a Merkle tree.
-> 
-> Using "Merkle tree" opens a can of worm and what will happen when the methode will change ?
-> Does it matter at all ? i would suggest "filesystem" here.
-> 
+This is a series of cleanups for the y2038 work, mostly intended
+for namespace cleaning: the kernel defines the traditional
+time_t, timeval and timespec types that often lead to y2038-unsafe
+code. Even though the unsafe usage is mostly gone from the kernel,
+having the types and associated functions around means that we
+can still grow new users, and that we may be missing conversions
+to safe types that actually matter.
 
-Fundamentally, fs-verity guarantees that all data read is verified against a
-cryptographic hash that covers the entire file.  I think it will be helpful to
-convey that here, e.g. to avoid confusion with non-cryptographic, individual
-block checksums supported by filesystems like btrfs and zfs.
+As there is no rush on any of these patches, I would either
+queue them up in linux-next through my y2038 branch, or
+Thomas could add them to the tip tree if he wants.
 
-Now, the only sane way to implement this model is with a Merkle tree, and this
-is part of the fs-verity UAPI (via the file hash), so that's where I'm coming
-from here.  Perhaps the phrase "Merkle tree" could be interpreted too strictly,
-though, so it would be better to emphasize the more abstract model.  How about
-the following?:
+As mentioned in another series, this is part of a larger
+effort to fix all the remaining bits and pieces that are
+not completed yet from the y2038 conversion, and the full
+set can be found at:
 
-	The file has fs-verity enabled.  It cannot be written to, and all reads
-	from it will be verified against a cryptographic hash that covers the
-	entire file, e.g. via a Merkle tree.
+https://git.kernel.org/pub/scm/linux/kernel/git/arnd/playground.git/log/?=
+h=3Dy2038-endgame
 
-- Eric
+Maintainers, please review and provide Acks.
+
+Let me know if you have any opinion on whether we should do
+the include last two patches of this series or not.
+
+     Arnd
+
+Arnd Bergmann (23):
+  y2038: remove CONFIG_64BIT_TIME
+  y2038: add __kernel_old_timespec and __kernel_old_time_t
+  y2038: vdso: change timeval to __kernel_old_timeval
+  y2038: vdso: change timespec to __kernel_old_timespec
+  y2038: vdso: change time_t to __kernel_old_time_t
+  y2038: vdso: nds32: open-code timespec_add_ns()
+  y2038: vdso: powerpc: avoid timespec references
+  y2038: ipc: remove __kernel_time_t reference from headers
+  y2038: stat: avoid 'time_t' in 'struct stat'
+  y2038: uapi: change __kernel_time_t to __kernel_old_time_t
+  y2038: rusage: use __kernel_old_timeval
+  y2038: syscalls: change remaining timeval to __kernel_old_timeval
+  y2038: socket: remove timespec reference in timestamping
+  y2038: make ns_to_compat_timeval use __kernel_old_timeval
+  y2038: elfcore: Use __kernel_old_timeval for process times
+  y2038: timerfd: Use timespec64 internally
+  y2038: time: avoid timespec usage in settimeofday()
+  y2038: itimer: compat handling to itimer.c
+  y2038: use compat_{get,set}_itimer on alpha
+  y2038: move itimer reset into itimer.c
+  y2038: itimer: change implementation to timespec64
+  [RFC] y2038: itimer: use ktime_t internally
+  y2038: allow disabling time32 system calls
+
+ arch/Kconfig                              |  11 +-
+ arch/alpha/kernel/osf_sys.c               |  67 +-----
+ arch/alpha/kernel/syscalls/syscall.tbl    |   4 +-
+ arch/ia64/kernel/asm-offsets.c            |   2 +-
+ arch/mips/include/uapi/asm/msgbuf.h       |   6 +-
+ arch/mips/include/uapi/asm/sembuf.h       |   4 +-
+ arch/mips/include/uapi/asm/shmbuf.h       |   6 +-
+ arch/mips/include/uapi/asm/stat.h         |  16 +-
+ arch/mips/kernel/binfmt_elfn32.c          |   4 +-
+ arch/mips/kernel/binfmt_elfo32.c          |   4 +-
+ arch/nds32/kernel/vdso/gettimeofday.c     |  61 +++--
+ arch/parisc/include/uapi/asm/msgbuf.h     |   6 +-
+ arch/parisc/include/uapi/asm/sembuf.h     |   4 +-
+ arch/parisc/include/uapi/asm/shmbuf.h     |   6 +-
+ arch/powerpc/include/asm/asm-prototypes.h |   3 +-
+ arch/powerpc/include/asm/vdso_datapage.h  |   6 +-
+ arch/powerpc/include/uapi/asm/msgbuf.h    |   6 +-
+ arch/powerpc/include/uapi/asm/sembuf.h    |   4 +-
+ arch/powerpc/include/uapi/asm/shmbuf.h    |   6 +-
+ arch/powerpc/include/uapi/asm/stat.h      |   2 +-
+ arch/powerpc/kernel/asm-offsets.c         |  18 +-
+ arch/powerpc/kernel/syscalls.c            |   4 +-
+ arch/powerpc/kernel/time.c                |   5 +-
+ arch/powerpc/kernel/vdso32/gettimeofday.S |   6 +-
+ arch/powerpc/kernel/vdso64/gettimeofday.S |   8 +-
+ arch/sparc/include/uapi/asm/msgbuf.h      |   6 +-
+ arch/sparc/include/uapi/asm/sembuf.h      |   4 +-
+ arch/sparc/include/uapi/asm/shmbuf.h      |   6 +-
+ arch/sparc/include/uapi/asm/stat.h        |  24 +-
+ arch/sparc/vdso/vclock_gettime.c          |  36 +--
+ arch/x86/entry/vdso/vclock_gettime.c      |   6 +-
+ arch/x86/entry/vsyscall/vsyscall_64.c     |   4 +-
+ arch/x86/include/uapi/asm/msgbuf.h        |   6 +-
+ arch/x86/include/uapi/asm/sembuf.h        |   4 +-
+ arch/x86/include/uapi/asm/shmbuf.h        |   6 +-
+ arch/x86/um/vdso/um_vdso.c                |  12 +-
+ fs/aio.c                                  |   2 +-
+ fs/binfmt_elf.c                           |  12 +-
+ fs/binfmt_elf_fdpic.c                     |  12 +-
+ fs/compat_binfmt_elf.c                    |   4 +-
+ fs/select.c                               |  10 +-
+ fs/timerfd.c                              |  14 +-
+ fs/utimes.c                               |   8 +-
+ include/linux/compat.h                    |  19 +-
+ include/linux/syscalls.h                  |  16 +-
+ include/linux/time.h                      |   9 +-
+ include/linux/time32.h                    |   2 +-
+ include/linux/types.h                     |   2 +-
+ include/trace/events/timer.h              |  29 +--
+ include/uapi/asm-generic/msgbuf.h         |  12 +-
+ include/uapi/asm-generic/posix_types.h    |   1 +
+ include/uapi/asm-generic/sembuf.h         |   7 +-
+ include/uapi/asm-generic/shmbuf.h         |  12 +-
+ include/uapi/linux/cyclades.h             |   6 +-
+ include/uapi/linux/elfcore.h              |   8 +-
+ include/uapi/linux/errqueue.h             |   7 +
+ include/uapi/linux/msg.h                  |   6 +-
+ include/uapi/linux/ppp_defs.h             |   4 +-
+ include/uapi/linux/resource.h             |   4 +-
+ include/uapi/linux/sem.h                  |   4 +-
+ include/uapi/linux/shm.h                  |   6 +-
+ include/uapi/linux/time.h                 |   6 +-
+ include/uapi/linux/time_types.h           |   5 +
+ include/uapi/linux/utime.h                |   4 +-
+ ipc/syscall.c                             |   2 +-
+ kernel/compat.c                           |  24 --
+ kernel/power/power.h                      |   2 +-
+ kernel/sys.c                              |   4 +-
+ kernel/sys_ni.c                           |  23 ++
+ kernel/time/hrtimer.c                     |   2 +-
+ kernel/time/itimer.c                      | 280 ++++++++++++++--------
+ kernel/time/time.c                        |  32 ++-
+ lib/vdso/gettimeofday.c                   |   4 +-
+ net/core/scm.c                            |   6 +-
+ net/socket.c                              |   2 +-
+ security/selinux/hooks.c                  |  10 +-
+ 76 files changed, 501 insertions(+), 504 deletions(-)
+
+--=20
+2.20.0
+
+Cc: rth@twiddle.net
+Cc: tony.luck@intel.com
+Cc: paul.burton@mips.com
+Cc: green.hu@gmail.com
+Cc: deller@gmx.de
+Cc: mpe@ellerman.id.au
+Cc: davem@davemloft.net
+Cc: tglx@linutronix.de
+Cc: x86@kernel.org
+Cc: jdike@addtoit.com
+Cc: richard@nod.at
+Cc: viro@zeniv.linux.org.uk
+Cc: bcrl@kvack.org
+Cc: john.stultz@linaro.org
+Cc: sboyd@kernel.org
+Cc: rostedt@goodmis.org
+Cc: arnd@arndb.de
+Cc: vincenzo.frascino@arm.com
+Cc: paul@paul-moore.com
+Cc: sds@tycho.nsa.gov
+Cc: eparis@parisplace.org
+Cc: peterz@infradead.org
+Cc: will@kernel.org
+Cc: deepa.kernel@gmail.com
+Cc: christian@brauner.io
+Cc: heiko.carstens@de.ibm.com
+Cc: christophe.leroy@c-s.fr
+Cc: ebiederm@xmission.com
+Cc: linux-kernel@vger.kernel.org
+Cc: linux-alpha@vger.kernel.org>
+Cc: linux-ia64@vger.kernel.org>
+Cc: linux-mips@vger.kernel.org>
+Cc: linux-parisc@vger.kernel.org>
+Cc: linuxppc-dev@lists.ozlabs.org>
+Cc: sparclinux@vger.kernel.org>
+Cc: linux-um@lists.infradead.org>
+Cc: linux-fsdevel@vger.kernel.org>
+Cc: linux-aio@kvack.org>
+Cc: linux-api@vger.kernel.org>
+Cc: linux-arch@vger.kernel.org>
+Cc: netdev@vger.kernel.org>
+Cc: selinux@vger.kernel.org>
+
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-aio' in
+the body to majordomo@kvack.org.  For more info on Linux AIO,
+see: http://www.kvack.org/aio/
+Don't email: <a href=mailto:"aart@kvack.org">aart@kvack.org</a>
