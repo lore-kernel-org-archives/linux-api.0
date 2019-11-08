@@ -1,104 +1,194 @@
-From: =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mic@digikod.net>
-Subject: Re: [PATCH bpf-next v13 4/7] landlock: Add ptrace LSM hooks
-Date: Fri, 8 Nov 2019 16:39:55 +0100
-Message-ID: <78b75ea3-3a7c-103c-ee00-a9c6c41bcd9c@digikod.net>
-References: <20191104172146.30797-1-mic@digikod.net>
- <20191104172146.30797-5-mic@digikod.net>
- <20191105171824.dfve44gjiftpnvy7@ast-mbp.dhcp.thefacebook.com>
- <23acf523-dbc4-855b-ca49-2bbfa5e7117e@digikod.net>
- <20191105193446.s4pswwwhrmgk6hcx@ast-mbp.dhcp.thefacebook.com>
- <20191106100655.GA18815@chromium.org>
- <813cedde-8ed7-2d3b-883d-909efa978d41@digikod.net>
- <20191106214526.GA22244@chromium.org>
- <3e208632-e7ab-3405-5196-ab1d770e20c3@digikod.net>
- <5d0f1dc5-5a99-bd6a-4acc-0cdcd062a0c9@iogearbox.net>
+From: Paul Moore <paul@paul-moore.com>
+Subject: Re: [PATCH ghak90 V7 08/21] audit: add contid support for signalling
+ the audit daemon
+Date: Fri, 8 Nov 2019 12:41:16 -0500
+Message-ID: <CAHC9VhQTz3f9p9knMP0Rsz=zH5HTEXBb7iN7o_jr=FN9sGWp8g@mail.gmail.com>
+References: <cover.1568834524.git.rgb@redhat.com> <0850eaa785e2ff30c8c4818fd53e9544b34ed884.1568834524.git.rgb@redhat.com>
+ <CAHC9VhQoFFaQACbV4QHG_NPUCJu1+V=x3=i-yyGjbsYq8HuPtg@mail.gmail.com> <20191025192031.ul3yjy2q57vsvier@madcap2.tricolour.ca>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Return-path: <kernel-hardening-return-17329-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
-List-Post: <mailto:kernel-hardening@lists.openwall.com>
-List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
-List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
-List-Subscribe: <mailto:kernel-hardening-subscribe@lists.openwall.com>
-In-Reply-To: <5d0f1dc5-5a99-bd6a-4acc-0cdcd062a0c9@iogearbox.net>
-Content-Language: en-US
-To: Daniel Borkmann <daniel@iogearbox.net>
-Cc: KP Singh <kpsingh@chromium.org>, Alexei Starovoitov <alexei.starovoitov@gmail.com>, linux-kernel@vger.kernel.org, Alexei Starovoitov <ast@kernel.org>, Andy Lutomirski <luto@amacapital.net>, Casey Schaufler <casey@schaufler-ca.com>, David Drysdale <drysdale@google.com>, Florent Revest <revest@chromium.org>, James Morris <jmorris@namei.org>, Jann Horn <jann@thejh.net>, John Johansen <john.johansen@canonical.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Michael Kerrisk <mtk.manpages@gmail.com>, =?UTF-8?Q?Micka=c3=abl_Sala=c3=bcn?= <mickael.salaun@ssi.gouv.fr>, Paul Moore <paul@paul-moore.com>, Sargun Dhillon <sargun@sargun.me>, "Serge E . Hallyn" <serge@hallyn.com>, Shuah Khan <shuah@kernel.org>, Stephen Smalley <sds@tycho.nsa.gov>, Tejun Heo <tj@>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20191025192031.ul3yjy2q57vsvier@madcap2.tricolour.ca>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Richard Guy Briggs <rgb@redhat.com>
+Cc: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, Eric Paris <eparis@parisplace.org>, Serge Hallyn <serge@hallyn.com>, ebiederm@xmission.com, nhorman@tuxdriver.com, Dan Walsh <dwalsh@redhat.com>, mpatel@redhat.com
 List-Id: linux-api@vger.kernel.org
 
+On Fri, Oct 25, 2019 at 3:20 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> On 2019-10-10 20:39, Paul Moore wrote:
+> > On Wed, Sep 18, 2019 at 9:25 PM Richard Guy Briggs <rgb@redhat.com> wrote:
+> > > Add audit container identifier support to the action of signalling the
+> > > audit daemon.
+> > >
+> > > Since this would need to add an element to the audit_sig_info struct,
+> > > a new record type AUDIT_SIGNAL_INFO2 was created with a new
+> > > audit_sig_info2 struct.  Corresponding support is required in the
+> > > userspace code to reflect the new record request and reply type.
+> > > An older userspace won't break since it won't know to request this
+> > > record type.
+> > >
+> > > Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
+> > > ---
+> > >  include/linux/audit.h       |  7 +++++++
+> > >  include/uapi/linux/audit.h  |  1 +
+> > >  kernel/audit.c              | 28 ++++++++++++++++++++++++++++
+> > >  kernel/audit.h              |  1 +
+> > >  security/selinux/nlmsgtab.c |  1 +
+> > >  5 files changed, 38 insertions(+)
+> > >
+> > > diff --git a/include/linux/audit.h b/include/linux/audit.h
+> > > index 0c18d8e30620..7b640c4da4ee 100644
+> > > --- a/include/linux/audit.h
+> > > +++ b/include/linux/audit.h
+> > > @@ -23,6 +23,13 @@ struct audit_sig_info {
+> > >         char            ctx[0];
+> > >  };
+> > >
+> > > +struct audit_sig_info2 {
+> > > +       uid_t           uid;
+> > > +       pid_t           pid;
+> > > +       u64             cid;
+> > > +       char            ctx[0];
+> > > +};
+> > > +
+> > >  struct audit_buffer;
+> > >  struct audit_context;
+> > >  struct inode;
+> > > diff --git a/include/uapi/linux/audit.h b/include/uapi/linux/audit.h
+> > > index 4ed080f28b47..693ec6e0288b 100644
+> > > --- a/include/uapi/linux/audit.h
+> > > +++ b/include/uapi/linux/audit.h
+> > > @@ -72,6 +72,7 @@
+> > >  #define AUDIT_SET_FEATURE      1018    /* Turn an audit feature on or off */
+> > >  #define AUDIT_GET_FEATURE      1019    /* Get which features are enabled */
+> > >  #define AUDIT_CONTAINER_OP     1020    /* Define the container id and info */
+> > > +#define AUDIT_SIGNAL_INFO2     1021    /* Get info auditd signal sender */
+> > >
+> > >  #define AUDIT_FIRST_USER_MSG   1100    /* Userspace messages mostly uninteresting to kernel */
+> > >  #define AUDIT_USER_AVC         1107    /* We filter this differently */
+> > > diff --git a/kernel/audit.c b/kernel/audit.c
+> > > index adfb3e6a7f0c..df3db29f5a8a 100644
+> > > --- a/kernel/audit.c
+> > > +++ b/kernel/audit.c
+> > > @@ -125,6 +125,7 @@ struct audit_net {
+> > >  kuid_t         audit_sig_uid = INVALID_UID;
+> > >  pid_t          audit_sig_pid = -1;
+> > >  u32            audit_sig_sid = 0;
+> > > +u64            audit_sig_cid = AUDIT_CID_UNSET;
+> > >
+> > >  /* Records can be lost in several ways:
+> > >     0) [suppressed in audit_alloc]
+> > > @@ -1094,6 +1095,7 @@ static int audit_netlink_ok(struct sk_buff *skb, u16 msg_type)
+> > >         case AUDIT_ADD_RULE:
+> > >         case AUDIT_DEL_RULE:
+> > >         case AUDIT_SIGNAL_INFO:
+> > > +       case AUDIT_SIGNAL_INFO2:
+> > >         case AUDIT_TTY_GET:
+> > >         case AUDIT_TTY_SET:
+> > >         case AUDIT_TRIM:
+> > > @@ -1257,6 +1259,7 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
+> > >         struct audit_buffer     *ab;
+> > >         u16                     msg_type = nlh->nlmsg_type;
+> > >         struct audit_sig_info   *sig_data;
+> > > +       struct audit_sig_info2  *sig_data2;
+> > >         char                    *ctx = NULL;
+> > >         u32                     len;
+> > >
+> > > @@ -1516,6 +1519,30 @@ static int audit_receive_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
+> > >                                  sig_data, sizeof(*sig_data) + len);
+> > >                 kfree(sig_data);
+> > >                 break;
+> > > +       case AUDIT_SIGNAL_INFO2:
+> > > +               len = 0;
+> > > +               if (audit_sig_sid) {
+> > > +                       err = security_secid_to_secctx(audit_sig_sid, &ctx, &len);
+> > > +                       if (err)
+> > > +                               return err;
+> > > +               }
+> > > +               sig_data2 = kmalloc(sizeof(*sig_data2) + len, GFP_KERNEL);
+> > > +               if (!sig_data2) {
+> > > +                       if (audit_sig_sid)
+> > > +                               security_release_secctx(ctx, len);
+> > > +                       return -ENOMEM;
+> > > +               }
+> > > +               sig_data2->uid = from_kuid(&init_user_ns, audit_sig_uid);
+> > > +               sig_data2->pid = audit_sig_pid;
+> > > +               if (audit_sig_sid) {
+> > > +                       memcpy(sig_data2->ctx, ctx, len);
+> > > +                       security_release_secctx(ctx, len);
+> > > +               }
+> > > +               sig_data2->cid = audit_sig_cid;
+> > > +               audit_send_reply(skb, seq, AUDIT_SIGNAL_INFO2, 0, 0,
+> > > +                                sig_data2, sizeof(*sig_data2) + len);
+> > > +               kfree(sig_data2);
+> > > +               break;
+> > >         case AUDIT_TTY_GET: {
+> > >                 struct audit_tty_status s;
+> > >                 unsigned int t;
+> > > @@ -2384,6 +2411,7 @@ int audit_signal_info(int sig, struct task_struct *t)
+> > >                 else
+> > >                         audit_sig_uid = uid;
+> > >                 security_task_getsecid(current, &audit_sig_sid);
+> > > +               audit_sig_cid = audit_get_contid(current);
+> > >         }
+> >
+> > I've been wondering something as I've been working my way through
+> > these patches and this patch seems like a good spot to discuss this
+> > ... Now that we have the concept of an audit container ID "lifetime"
+> > in the kernel, when do we consider the ID gone?  Is it when the last
+> > process in the container exits, or is it when we generate the last
+> > audit record which could possibly contain the audit container ID?
+> > This patch would appear to support the former, but if we wanted the
+> > latter we would need to grab a reference to the audit container ID
+> > struct so it wouldn't "die" on us before we could emit the signal info
+> > record.
+>
+> Are you concerned with the availability of the data when the audit
+> signal info record is generated, when the kernel last deals with a
+> particular contid or when userspace thinks there will be no more
+> references to it?
+>
+> I've got a bit of a dilemma with this one...
+>
+> In fact, the latter situation you describe isn't a concern at present to
+> be able to deliver the information since the value is copied into the
+> audit signal global internal variables before the signalling task dies
+> and the audit signal info record is created from those copied (cached)
+> values when requested from userspace.
+>
+> So the issue raised above I don't think is a problem.  However, patch 18
+> (which wasn't reviewed because it was a patch to a number of preceeding
+> patches) changes the reporting approach to give a chain of nested
+> contids which isn't reflected in the same level of reporting for the
+> audit signal patch/mechanism.  Solving this is a bit more complex.  We
+> could have the audit signal internal caching store a pointer to the
+> relevant container object and bump its refcount to ensure it doesn't
+> vanish until we are done with it, but the audit signal info binary
+> record format already has a variable length due to the selinux context
+> at the end of that struct and adding a second variable length element to
+> it would make it more complicated (but not impossible) to handle.
 
-On 08/11/2019 15:34, Daniel Borkmann wrote:
-> On 11/8/19 3:08 PM, Mickaël Salaün wrote:
->> On 06/11/2019 22:45, KP Singh wrote:
->>> On 06-Nov 17:55, Mickaël Salaün wrote:
->>>> On 06/11/2019 11:06, KP Singh wrote:
->>>>> On 05-Nov 11:34, Alexei Starovoitov wrote:
->>>>>> On Tue, Nov 05, 2019 at 07:01:41PM +0100, Mickaël Salaün wrote:
->>>>>>> On 05/11/2019 18:18, Alexei Starovoitov wrote:
-> [...]
->>> * Use a single BPF program type; this is necessary for a key requirement
->>>    of KRSI, i.e. runtime instrumentation. The upcoming prototype should
->>>    illustrate how this works for KRSI - note that it’s possible to vary
->>>    the context types exposed by different hooks.
->>
->> Why a single BPF program type? Do you mean *attach* types? Landlock only
->> use one program type, but will use multiple attach types.
->>
->> Why do you think it is necessary for KRSI or for runtime instrumentation?
->>
->> If it is justified, it could be a dedicated program attach type (e.g.
->> BPF_LANDLOCK_INTROSPECTION).
->>
->> What is the advantage to have the possibility to vary the context types
->> over dedicated *typed* contexts? I don't see any advantages, but at
->> least one main drawback: to require runtime checks (when helpers use
->> this generic context) instead of load time checks (thanks to static type
->> checking of the context).
-> 
-> Lets take security_sock_rcv_skb(struct sock *sk, struct sk_buff *skb)
-> as one specific example here: the running kernel has its own internal
-> btf_vmlinux and therefore a complete description of itself. From verifier
-> side we can retrieve & introspect the security_sock_rcv_skb signatue
+[side note #1: Sorry for the delay, travel/conferences have limited my
+time and I felt we needed to focus on the larger issue of
+netlink/procfs first.  Back to the other topics ...]
 
-OK, this is indeed the signature defined by the kernel API. What happen
-if this API change (e.g. if struct sock is replaced with a struct
-sock_meta)?
+[side note #2: I just realized that one can shorten "audit container
+ID" to ACID, I think that's going to be my favorite realization of the
+day :)]
 
+My concern wasn't really about the availability of the data, since as
+you said, it is copied into the record buffer, but rather a delay
+between when the audit container ID (ACID) disappears from the
+tracking/list db in the kernel to when it is emitted in an audit
+record from the kernel.  During this time is seems like it could be
+possible for the orchestrator to reintroduce the same ACID value and
+if someone is not taking into account the full audit history they
+could get confused (the full audit history should show the proper
+creation/destruction events in the correct order).  Ultimately I'm not
+sure it is a major issue, and fixing it is likely to be really ugly,
+but I think it would be good to add some comments in the code
+regarding what we guarantee as far as ACID lifetimes are concerned.
 
-> and
-> thus know that the given BPF attachment point has struct sock and struct
-> sk_buff as input arguments
-
-How does the verifier know a given BPF attachment point for a program
-without relying on its type or attach type? How and where is registered
-this mapping?
-
-To say it another way, if there is no way to differentiate two program
-targeting different hook, I don't understand how the verifier could
-check if a given program can legitimately call a helper which could read
-the tracer and tracee fields (legitimate for a ptrace hook), whereas
-this program may be attached to a sock_rcv_skb hook (and there is no way
-to know that).
-
-
-> which can then be accessed generically by the
-> prog in order to allow sk_filter_trim_cap() to pass or to drop the skb.
-> The same generic approach can be done for many of the other lsm hooks, so
-> single program type would be enough there and context is derived
-> automatically,
-> no dedicated extra context per attach type would be needed and no runtime
-> checks as you mentioned above since its still all asserted at verification
-> time.
-
-I mentioned runtime check because I though a helper should handle the
-case when it doesn't make sense for a program attached to a specific
-point/hook (e.g. ptrace) to use an input argument (e.g. sk) defined for
-another point/hook (e.g. sock_rcv_skb).
-
-
-> 
-> Thanks,
-> Daniel
-> 
-
-Thanks for this explanation Daniel.
+-- 
+paul moore
+www.paul-moore.com
