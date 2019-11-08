@@ -1,59 +1,95 @@
-From: Florian Weimer <fw@deneb.enyo.de>
-Subject: Re: Continuing the UAPI split
-Date: Fri, 08 Nov 2019 08:28:02 +0100
-Message-ID: <87sgmyvnct.fsf@mid.deneb.enyo.de>
-References: <CALN7hCK0EXLXjPRPr+tuuF2-uQvkLMCFDNzGhv9HS-jrAz6Hmg@mail.gmail.com>
-	<0B17C6F2-DC2B-4192-B4AD-BD11D6B9F2B6@ubuntu.com>
-	<87zhh7j38y.fsf@oldenburg2.str.redhat.com>
-	<CALN7hCJ_umFqC1L0T19CuiGiGoVwac5807NDw4LiDqSD-VJL=Q@mail.gmail.com>
-	<facb4d0d-4e20-41f0-4c01-b210c677c24c@arm.com>
-	<086ffddf-553f-453d-a046-4d5e6abead21@redhat.com>
-	<875zjvo2be.fsf@mid.deneb.enyo.de>
-	<70a264b5-427f-fa6e-7f70-768724202d14@redhat.com>
+From: Adrian Hunter <adrian.hunter@intel.com>
+Subject: Re: [PATCH v8 07/14] x86/cet/ibt: Add ENDBR to op-code-map
+Date: Fri, 8 Nov 2019 15:19:40 +0200
+Message-ID: <5b81028b-2230-51c4-f504-10067cb59bf8@intel.com>
+References: <20190813205359.12196-1-yu-cheng.yu@intel.com>
+ <20190813205359.12196-8-yu-cheng.yu@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <libc-alpha-return-106803-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-In-Reply-To: <70a264b5-427f-fa6e-7f70-768724202d14@redhat.com> (Carlos
-	O'Donell's message of "Thu, 7 Nov 2019 17:32:01 -0500")
-To: Carlos O'Donell <carlos@redhat.com>
-Cc: Szabolcs Nagy <Szabolcs.Nagy@arm.com>, Elichai Turkel <elichai.turkel@gmail.com>, nd <nd@arm.com>, Christian Brauner <christian.brauner@ubuntu.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, libc-alpha <libc-alpha@sourceware.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20190813205359.12196-8-yu-cheng.yu@intel.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: Yu-cheng Yu <yu-cheng.yu@intel.com>, x86@kernel.org, "H. Peter Anvin" <hpa@zytor.com>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org, linux-mm@kvack.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org, Arnd Bergmann <arnd@arndb.de>, Andy Lutomirski <luto@amacapital.net>, Balbir Singh <bsingharora@gmail.com>, Borislav Petkov <bp@alien8.de>, Cyrill Gorcunov <gorcunov@gmail.com>, Dave Hansen <dave.hansen@linux.intel.com>, Eugene Syromiatnikov <esyr@redhat.com>, Florian Weimer <fweimer@redhat.com>, "H.J. Lu" <hjl.tools@gmail.com>, Jann Horn <jannh@google.com>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Mike Kravetz <mike.kravetz@oracle.com>
 List-Id: linux-api@vger.kernel.org
 
-* Carlos O'Donell:
-
-> On 11/7/19 3:32 PM, Florian Weimer wrote:
->> * Carlos O'Donell:
->> 
->>> On 11/7/19 11:21 AM, Szabolcs Nagy wrote:
->>>>> Or just giving up and telling users they can't just directly include
->>>>> both libc headers and kernel headers?
->>>>
->>>> including both libc and linux headers is fragile and
->>>> will break differently across the different linux
->>>> libc implementations.
->>>
->>> We saw this all the time working in embedded.
->> 
->> Do you mean you saw problems while you working in the embedded space?
+On 13/08/19 11:53 PM, Yu-cheng Yu wrote:
+> Add control transfer terminating instructions:
+> 
+> ENDBR64/ENDBR32:
+>     Mark a valid 64/32-bit control transfer endpoint.
+> 
+> Signed-off-by: Yu-cheng Yu <yu-cheng.yu@intel.com>
+> ---
+>  arch/x86/lib/x86-opcode-map.txt               | 13 +++++++++++--
+>  tools/objtool/arch/x86/lib/x86-opcode-map.txt | 13 +++++++++++--
+>  2 files changed, 22 insertions(+), 4 deletions(-)
+> 
+> diff --git a/arch/x86/lib/x86-opcode-map.txt b/arch/x86/lib/x86-opcode-map.txt
+> index c5e825d44766..fbc53481bc59 100644
+> --- a/arch/x86/lib/x86-opcode-map.txt
+> +++ b/arch/x86/lib/x86-opcode-map.txt
+> @@ -620,7 +620,16 @@ ea: SAVEPREVSSP (f3)
+>  # Skip 0xeb-0xff
+>  EndTable
 >  
-> Yes, embedded Linux to be specific.
->
-> There is a strong coupling between the kernel version and the toolchain
-> version, specifically because the strategies we take to solve these
-> problems end up being brittle in this regard.
->
-> Too new a kernel and you get new header problems not solved by your
-> old libc. Too new a libc and the kernel doesn't have the header
-> coordination fixes required for the newer software that needed the
-> newer libc.
->
-> Does that clarify my point?
+> -Table: 3-byte opcode 2 (0x0f 0x38)
+> +Table: 3-byte opcode 2 (0x0f 0x1e)
+> +Referrer:
+> +AVXcode:
+> +# Skip 0x00-0xf9
+> +fa: ENDBR64 (f3)
+> +fb: ENDBR32 (f3)
 
-Yes, it does.  It wasn't clear to me if you wanted to say that this
-was actually working for the embedded case.
+endbr32 and endbr64 have 2-byte opcodes (0F 1E) and a ModRM byte, so a new
+Grp is needed
+
+> +#skip 0xfc-0xff
+> +EndTable
+> +
+> +Table: 3-byte opcode 3 (0x0f 0x38)
+>  Referrer: 3-byte escape 1
+>  AVXcode: 2
+>  # 0x0f 0x38 0x00-0x0f
+> @@ -804,7 +813,7 @@ f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v) | WRSS Pq,Qq
+>  f7: BEXTR Gy,Ey,By (v) | SHLX Gy,Ey,By (66),(v) | SARX Gy,Ey,By (F3),(v) | SHRX Gy,Ey,By (F2),(v)
+>  EndTable
+>  
+> -Table: 3-byte opcode 3 (0x0f 0x3a)
+> +Table: 3-byte opcode 4 (0x0f 0x3a)
+>  Referrer: 3-byte escape 2
+>  AVXcode: 3
+>  # 0x0f 0x3a 0x00-0xff
+> diff --git a/tools/objtool/arch/x86/lib/x86-opcode-map.txt b/tools/objtool/arch/x86/lib/x86-opcode-map.txt
+> index c5e825d44766..fbc53481bc59 100644
+> --- a/tools/objtool/arch/x86/lib/x86-opcode-map.txt
+> +++ b/tools/objtool/arch/x86/lib/x86-opcode-map.txt
+> @@ -620,7 +620,16 @@ ea: SAVEPREVSSP (f3)
+>  # Skip 0xeb-0xff
+>  EndTable
+>  
+> -Table: 3-byte opcode 2 (0x0f 0x38)
+> +Table: 3-byte opcode 2 (0x0f 0x1e)
+> +Referrer:
+> +AVXcode:
+> +# Skip 0x00-0xf9
+> +fa: ENDBR64 (f3)
+> +fb: ENDBR32 (f3)
+> +#skip 0xfc-0xff
+> +EndTable
+> +
+> +Table: 3-byte opcode 3 (0x0f 0x38)
+>  Referrer: 3-byte escape 1
+>  AVXcode: 2
+>  # 0x0f 0x38 0x00-0x0f
+> @@ -804,7 +813,7 @@ f6: ADCX Gy,Ey (66) | ADOX Gy,Ey (F3) | MULX By,Gy,rDX,Ey (F2),(v) | WRSS Pq,Qq
+>  f7: BEXTR Gy,Ey,By (v) | SHLX Gy,Ey,By (66),(v) | SARX Gy,Ey,By (F3),(v) | SHRX Gy,Ey,By (F2),(v)
+>  EndTable
+>  
+> -Table: 3-byte opcode 3 (0x0f 0x3a)
+> +Table: 3-byte opcode 4 (0x0f 0x3a)
+>  Referrer: 3-byte escape 2
+>  AVXcode: 3
+>  # 0x0f 0x3a 0x00-0xff
+> 
