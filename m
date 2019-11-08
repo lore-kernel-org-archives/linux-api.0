@@ -1,40 +1,59 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [RFC PATCH 04/14] pipe: Add O_NOTIFICATION_PIPE [ver #2]
-Date: Fri, 08 Nov 2019 06:42:50 +0000
-Message-ID: <7772.1573195370@warthog.procyon.org.uk>
-References: <CALCETrWeN9CGJHz0dzG1uH5Qjbr+xG3OKZuEd33eBY_rAzVkqQ@mail.gmail.com> <157313371694.29677.15388731274912671071.stgit@warthog.procyon.org.uk> <157313375678.29677.15875689548927466028.stgit@warthog.procyon.org.uk> <CALCETrUka9KaOKFbNKUXcA6XvoFxiXPftctSHtN4DL35Cay61w@mail.gmail.com> <6964.1573152517@warthog.procyon.org.uk>
+From: Florian Weimer <fw@deneb.enyo.de>
+Subject: Re: Continuing the UAPI split
+Date: Fri, 08 Nov 2019 08:28:02 +0100
+Message-ID: <87sgmyvnct.fsf@mid.deneb.enyo.de>
+References: <CALN7hCK0EXLXjPRPr+tuuF2-uQvkLMCFDNzGhv9HS-jrAz6Hmg@mail.gmail.com>
+	<0B17C6F2-DC2B-4192-B4AD-BD11D6B9F2B6@ubuntu.com>
+	<87zhh7j38y.fsf@oldenburg2.str.redhat.com>
+	<CALN7hCJ_umFqC1L0T19CuiGiGoVwac5807NDw4LiDqSD-VJL=Q@mail.gmail.com>
+	<facb4d0d-4e20-41f0-4c01-b210c677c24c@arm.com>
+	<086ffddf-553f-453d-a046-4d5e6abead21@redhat.com>
+	<875zjvo2be.fsf@mid.deneb.enyo.de>
+	<70a264b5-427f-fa6e-7f70-768724202d14@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrWeN9CGJHz0dzG1uH5Qjbr+xG3OKZuEd33eBY_rAzVkqQ@mail.gmail.com>
-Content-ID: <7771.1573195370.1@warthog.procyon.org.uk>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>
-Cc: dhowells@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, USB list <linux-usb@vger.kernel.org>, linux-block <linux-block@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain
+Return-path: <libc-alpha-return-106803-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
+In-Reply-To: <70a264b5-427f-fa6e-7f70-768724202d14@redhat.com> (Carlos
+	O'Donell's message of "Thu, 7 Nov 2019 17:32:01 -0500")
+To: Carlos O'Donell <carlos@redhat.com>
+Cc: Szabolcs Nagy <Szabolcs.Nagy@arm.com>, Elichai Turkel <elichai.turkel@gmail.com>, nd <nd@arm.com>, Christian Brauner <christian.brauner@ubuntu.com>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, libc-alpha <libc-alpha@sourceware.org>
 List-Id: linux-api@vger.kernel.org
 
-Andy Lutomirski <luto@kernel.org> wrote:
+* Carlos O'Donell:
 
-> I can open a normal pipe from userspace (with pipe() or pipe2()), and
-> I can have two threads.  One thread writes to the pipe with write().
-> The other thread writes with splice().  Everything works fine.
+> On 11/7/19 3:32 PM, Florian Weimer wrote:
+>> * Carlos O'Donell:
+>> 
+>>> On 11/7/19 11:21 AM, Szabolcs Nagy wrote:
+>>>>> Or just giving up and telling users they can't just directly include
+>>>>> both libc headers and kernel headers?
+>>>>
+>>>> including both libc and linux headers is fragile and
+>>>> will break differently across the different linux
+>>>> libc implementations.
+>>>
+>>> We saw this all the time working in embedded.
+>> 
+>> Do you mean you saw problems while you working in the embedded space?
+>  
+> Yes, embedded Linux to be specific.
+>
+> There is a strong coupling between the kernel version and the toolchain
+> version, specifically because the strategies we take to solve these
+> problems end up being brittle in this regard.
+>
+> Too new a kernel and you get new header problems not solved by your
+> old libc. Too new a libc and the kernel doesn't have the header
+> coordination fixes required for the newer software that needed the
+> newer libc.
+>
+> Does that clarify my point?
 
-Yes.  Every operation you do on a pipe from userspace is serialised with th=
-e
-pipe mutex - and both ends share the same pipe.
-
-> What's special about notifications?
-
-The post_notification() cannot take the pipe mutex.  It has to be callable
-from softirq context.  Linus's idea is that when you're actually altering t=
-he
-ring pointers you should hold the wake-queue spinlock, and post_notificatio=
-n()
-holds the wake queue spinlock for the duration of the operation.
-
-This means that post_notification() can be writing to the pipe whilst a
-userspace-invoked operation is holding the pipe mutex and is also doing
-something to the ring.
-
-David
+Yes, it does.  It wasn't clear to me if you wanted to say that this
+was actually working for the embedded case.
