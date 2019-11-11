@@ -1,31 +1,153 @@
-From: "Theodore Y. Ts'o" <tytso@mit.edu>
-Subject: Re: For review: documentation of clone3() system call
-Date: Mon, 11 Nov 2019 11:58:00 -0500
-Message-ID: <20191111165800.GD7017@mit.edu>
-References: <CAKgNAkjo2WHq+zESU1iuCHJJ0x-fTNrakS9-d1+BjzUuV2uf2Q@mail.gmail.com>
- <20191107151941.dw4gtul5lrtax4se@wittgenstein>
- <2eb2ab4c-b177-29aa-cdc4-420b24cfd7b3@gmail.com>
- <CAG48ez2of684J6suPZpko7JFV6hg5KQsrP0KAn8B8-C3PM9OfQ@mail.gmail.com>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: [PATCH 5.3 063/193] clone3: validate stack arguments
+Date: Mon, 11 Nov 2019 19:27:25 +0100
+Message-ID: <20191111181505.649555239@linuxfoundation.org>
+References: <20191111181459.850623879@linuxfoundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAG48ez2of684J6suPZpko7JFV6hg5KQsrP0KAn8B8-C3PM9OfQ@mail.gmail.com>
+In-Reply-To: <20191111181459.850623879@linuxfoundation.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Christian Brauner <christian.brauner@ubuntu.com>, Florian Weimer <fweimer@redhat.com>, Christian Brauner <christian@brauner.io>, lkml <linux-kernel@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Oleg Nesterov <oleg@redhat.com>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@gmail.com>, Linux API <linux-api@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>
+To: linux-kernel@vger.kernel.org
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, stable@vger.kernel.org, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, David Howells <dhowells@redhat.com>, Ingo Molnar <mingo@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, Florian Weimer <fweimer@redhat.com>, Peter Zijlstra <peterz@infradead.org>, linux-api@vger.kernel.org, GNU C Library <libc-alpha@sourceware.org>, Christian Brauner <christian.brauner@ubuntu.com>, Arnd Bergmann <arnd@arndb.de>, Aleksa Sarai <cyphar@cyphar.com>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 11, 2019 at 03:55:35PM +0100, Jann Horn wrote:
-> Not on Linux, but on OpenBSD, they do use MAP_STACK now AFAIK; this
-> was announced here:
-> <http://openbsd-archive.7691.n7.nabble.com/stack-register-checking-td338238.html>.
-> Basically they periodically check whether the userspace stack pointer
-> points into a MAP_STACK region, and if not, they kill the process. So
-> even if it's a no-op on Linux...
+From: Christian Brauner <christian.brauner@ubuntu.com>
 
-Hmm, is that something we should do in Linux?  Even if we only check
-on syscall entry, which should be pretty inexpensive, it seems like it
-would be very effective in protecting various ROP techniques.
+commit fa729c4df558936b4a1a7b3e2234011f44ede28b upstream.
 
-      	      		   	      	      - Ted
+Validate the stack arguments and setup the stack depening on whether or not
+it is growing down or up.
+
+Legacy clone() required userspace to know in which direction the stack is
+growing and pass down the stack pointer appropriately. To make things more
+confusing microblaze uses a variant of the clone() syscall selected by
+CONFIG_CLONE_BACKWARDS3 that takes an additional stack_size argument.
+IA64 has a separate clone2() syscall which also takes an additional
+stack_size argument. Finally, parisc has a stack that is growing upwards.
+Userspace therefore has a lot nasty code like the following:
+
+ #define __STACK_SIZE (8 * 1024 * 1024)
+ pid_t sys_clone(int (*fn)(void *), void *arg, int flags, int *pidfd)
+ {
+         pid_t ret;
+         void *stack;
+
+         stack = malloc(__STACK_SIZE);
+         if (!stack)
+                 return -ENOMEM;
+
+ #ifdef __ia64__
+         ret = __clone2(fn, stack, __STACK_SIZE, flags | SIGCHLD, arg, pidfd);
+ #elif defined(__parisc__) /* stack grows up */
+         ret = clone(fn, stack, flags | SIGCHLD, arg, pidfd);
+ #else
+         ret = clone(fn, stack + __STACK_SIZE, flags | SIGCHLD, arg, pidfd);
+ #endif
+         return ret;
+ }
+
+or even crazier variants such as [3].
+
+With clone3() we have the ability to validate the stack. We can check that
+when stack_size is passed, the stack pointer is valid and the other way
+around. We can also check that the memory area userspace gave us is fine to
+use via access_ok(). Furthermore, we probably should not require
+userspace to know in which direction the stack is growing. It is easy
+for us to do this in the kernel and I couldn't find the original
+reasoning behind exposing this detail to userspace.
+
+/* Intentional user visible API change */
+clone3() was released with 5.3. Currently, it is not documented and very
+unclear to userspace how the stack and stack_size argument have to be
+passed. After talking to glibc folks we concluded that trying to change
+clone3() to setup the stack instead of requiring userspace to do this is
+the right course of action.
+Note, that this is an explicit change in user visible behavior we introduce
+with this patch. If it breaks someone's use-case we will revert! (And then
+e.g. place the new behavior under an appropriate flag.)
+Breaking someone's use-case is very unlikely though. First, neither glibc
+nor musl currently expose a wrapper for clone3(). Second, there is no real
+motivation for anyone to use clone3() directly since it does not provide
+features that legacy clone doesn't. New features for clone3() will first
+happen in v5.5 which is why v5.4 is still a good time to try and make that
+change now and backport it to v5.3. Searches on [4] did not reveal any
+packages calling clone3().
+
+[1]: https://lore.kernel.org/r/CAG48ez3q=BeNcuVTKBN79kJui4vC6nw0Bfq6xc-i0neheT17TA@mail.gmail.com
+[2]: https://lore.kernel.org/r/20191028172143.4vnnjpdljfnexaq5@wittgenstein
+[3]: https://github.com/systemd/systemd/blob/5238e9575906297608ff802a27e2ff9effa3b338/src/basic/raw-clone.h#L31
+[4]: https://codesearch.debian.net
+Fixes: 7f192e3cd316 ("fork: add clone3")
+Cc: Kees Cook <keescook@chromium.org>
+Cc: Jann Horn <jannh@google.com>
+Cc: David Howells <dhowells@redhat.com>
+Cc: Ingo Molnar <mingo@redhat.com>
+Cc: Oleg Nesterov <oleg@redhat.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Florian Weimer <fweimer@redhat.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: linux-api@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org
+Cc: <stable@vger.kernel.org> # 5.3
+Cc: GNU C Library <libc-alpha@sourceware.org>
+Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+Acked-by: Arnd Bergmann <arnd@arndb.de>
+Acked-by: Aleksa Sarai <cyphar@cyphar.com>
+Link: https://lore.kernel.org/r/20191031113608.20713-1-christian.brauner@ubuntu.com
+Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+
+---
+ kernel/fork.c |   33 ++++++++++++++++++++++++++++++++-
+ 1 file changed, 32 insertions(+), 1 deletion(-)
+
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -2586,7 +2586,35 @@ noinline static int copy_clone_args_from
+ 	return 0;
+ }
+ 
+-static bool clone3_args_valid(const struct kernel_clone_args *kargs)
++/**
++ * clone3_stack_valid - check and prepare stack
++ * @kargs: kernel clone args
++ *
++ * Verify that the stack arguments userspace gave us are sane.
++ * In addition, set the stack direction for userspace since it's easy for us to
++ * determine.
++ */
++static inline bool clone3_stack_valid(struct kernel_clone_args *kargs)
++{
++	if (kargs->stack == 0) {
++		if (kargs->stack_size > 0)
++			return false;
++	} else {
++		if (kargs->stack_size == 0)
++			return false;
++
++		if (!access_ok((void __user *)kargs->stack, kargs->stack_size))
++			return false;
++
++#if !defined(CONFIG_STACK_GROWSUP) && !defined(CONFIG_IA64)
++		kargs->stack += kargs->stack_size;
++#endif
++	}
++
++	return true;
++}
++
++static bool clone3_args_valid(struct kernel_clone_args *kargs)
+ {
+ 	/*
+ 	 * All lower bits of the flag word are taken.
+@@ -2606,6 +2634,9 @@ static bool clone3_args_valid(const stru
+ 	    kargs->exit_signal)
+ 		return false;
+ 
++	if (!clone3_stack_valid(kargs))
++		return false;
++
+ 	return true;
+ }
+ 
