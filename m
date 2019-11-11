@@ -1,29 +1,37 @@
 From: Christian Brauner <christian.brauner@ubuntu.com>
-Subject: Re: [PATCH 10/23] y2038: uapi: change __kernel_time_t to
- __kernel_old_time_t
-Date: Mon, 11 Nov 2019 13:38:32 +0100
-Message-ID: <20191111123830.du25cahvat4ahg54@wittgenstein>
+Subject: Re: [PATCH 12/23] y2038: syscalls: change remaining timeval
+ to __kernel_old_timeval
+Date: Mon, 11 Nov 2019 13:44:26 +0100
+Message-ID: <20191111124425.bmsdg5e4ikpdh5bu@wittgenstein>
 References: <20191108210236.1296047-1-arnd@arndb.de>
- <20191108211323.1806194-1-arnd@arndb.de>
+ <20191108211323.1806194-3-arnd@arndb.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <y2038-bounces@lists.linaro.org>
 Content-Disposition: inline
-In-Reply-To: <20191108211323.1806194-1-arnd@arndb.de>
-Sender: linux-kernel-owner@vger.kernel.org
+In-Reply-To: <20191108211323.1806194-3-arnd@arndb.de>
+List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/y2038/>
+List-Post: <mailto:y2038@lists.linaro.org>
+List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
+List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
+ <mailto:y2038-request@lists.linaro.org?subject=subscribe>
+Errors-To: y2038-bounces@lists.linaro.org
+Sender: "Y2038" <y2038-bounces@lists.linaro.org>
 To: Arnd Bergmann <arnd@arndb.de>
-Cc: y2038@lists.linaro.org, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, linux-kernel@vger.kernel.org, Stephen Boyd <sboyd@kernel.org>, David Howells <dhowells@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Deepa Dinamani <deepa.kernel@gmail.com>, Christian Brauner <christian@brauner.io>, linux-api@vger.kernel.org
+Cc: Len Brown <len.brown@intel.com>, linux-pm@vger.kernel.org, y2038@lists.linaro.org, Benjamin Herrenschmidt <benh@kernel.crashing.org>, "Rafael J. Wysocki" <rjw@rjwysocki.net>, linux-kernel@vger.kernel.org, Stephen Boyd <sboyd@kernel.org>, Paul Mackerras <paulus@samba.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Pavel Machek <pavel@ucw.cz>, Michael Ellerman <mpe@ellerman.id.au>, linux-fsdevel@vger.kernel.org, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, linux-api@vger.kernel.org, linuxppc-dev@lists.ozlabs.org, Christian Brauner <christian@brauner.io>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Nov 08, 2019 at 10:12:09PM +0100, Arnd Bergmann wrote:
-> This is mainly a patch for clarification, and to let us remove
-> the time_t definition from the kernel to prevent new users from
-> creeping in that might not be y2038-safe.
-> 
-> All remaining uses of 'time_t' or '__kernel_time_t' are part of
-> the user API that cannot be changed by that either have a
-> replacement or that do not suffer from the y2038 overflow.
-> 
-> Signed-off-by: Arnd Bergmann <arnd@arndb.de>
-
-Acked-by: Christian Brauner <christian.brauner@ubuntu.com>
+T24gRnJpLCBOb3YgMDgsIDIwMTkgYXQgMTA6MTI6MTFQTSArMDEwMCwgQXJuZCBCZXJnbWFubiB3
+cm90ZToKPiBBbGwgb2YgdGhlIHJlbWFpbmluZyBzeXNjYWxscyB0aGF0IHBhc3MgYSB0aW1ldmFs
+IChnZXR0aW1lb2ZkYXksIHV0aW1lLAo+IGZ1dGltZXNhdCkgY2FuIHRyaXZpYWxseSBiZSBjaGFu
+Z2VkIHRvIHBhc3MgYSBfX2tlcm5lbF9vbGRfdGltZXZhbAo+IGluc3RlYWQsIHdoaWNoIGhhcyBh
+IGNvbXBhdGlibGUgbGF5b3V0LCBidXQgYXZvaWRzIGFtYmlndWl0eSB3aXRoCj4gdGhlIHRpbWV2
+YWwgdHlwZSBpbiB1c2VyIHNwYWNlLgo+IAo+IFNpZ25lZC1vZmYtYnk6IEFybmQgQmVyZ21hbm4g
+PGFybmRAYXJuZGIuZGU+CgpTZWVtcyByZWFzb25hYmxlLgpBY2tlZC1ieTogQ2hyaXN0aWFuIEJy
+YXVuZXIgPGNocmlzdGlhbi5icmF1bmVyQHVidW50dS5jb20+Cl9fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fClkyMDM4IG1haWxpbmcgbGlzdApZMjAzOEBsaXN0
+cy5saW5hcm8ub3JnCmh0dHBzOi8vbGlzdHMubGluYXJvLm9yZy9tYWlsbWFuL2xpc3RpbmZvL3ky
+MDM4Cg==
