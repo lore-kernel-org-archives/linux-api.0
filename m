@@ -1,96 +1,200 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH 1/1] userfaultfd: require CAP_SYS_PTRACE for UFFD_FEATURE_EVENT_FORK
-Date: Sun, 10 Nov 2019 09:02:45 -0800
-Message-ID: <CALCETrWxkzp5mzoqq28cbZLmwYh-k_er-8ocVoLPXXUk66Yprg@mail.gmail.com>
-References: <1572967777-8812-1-git-send-email-rppt@linux.ibm.com>
- <1572967777-8812-2-git-send-email-rppt@linux.ibm.com> <CAKOZuev93zDGNPX+ySg_jeUg4Z3zKMcpABekUQvHA01kTVn4=A@mail.gmail.com>
- <CALCETrX=VmSjD6kLT6tuZQ4Efhc_13vZrw1mo4Z2iKqZTT-bzg@mail.gmail.com>
- <20191105162424.GH30717@redhat.com> <CAKOZuet=g++G+biSP5bU-Rppu6fykU1TVUDj20NapqAYQY4r9A@mail.gmail.com>
- <20191107083902.GB3247@linux.ibm.com> <CAKOZuevhEXpMr49KmkBLEyMGsDz8WujKvOGCty8+p7cwVbmoXA@mail.gmail.com>
- <20191107153801.GF17896@redhat.com> <CAKOZueuKttjyRBgMkaBknzn+fzufZA+gJcd5wnKgiwmO37yN1g@mail.gmail.com>
- <20191107182259.GK17896@redhat.com>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: For review: documentation of clone3() system call
+Date: Mon, 11 Nov 2019 10:02:30 +0100
+Message-ID: <52e0103b-2bc4-b0c6-274f-ce7effb1799f@gmail.com>
+References: <CAKgNAkjo2WHq+zESU1iuCHJJ0x-fTNrakS9-d1+BjzUuV2uf2Q@mail.gmail.com>
+ <20191107151941.dw4gtul5lrtax4se@wittgenstein>
+ <2eb2ab4c-b177-29aa-cdc4-420b24cfd7b3@gmail.com>
+ <20191109165349.ec5jkuqt7gtm2iy2@wittgenstein>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191107182259.GK17896@redhat.com>
+In-Reply-To: <20191109165349.ec5jkuqt7gtm2iy2@wittgenstein>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andrea Arcangeli <aarcange@redhat.com>
-Cc: Daniel Colascione <dancol@google.com>, Mike Rapoport <rppt@linux.ibm.com>, Andy Lutomirski <luto@kernel.org>, linux-kernel <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Lokesh Gidra <lokeshgidra@google.com>, Nick Kralevich <nnk@google.com>, Nosh Minwalla <nosh@google.com>, Pavel Emelyanov <ovzxemul@gmail.com>, Tim Murray <timmurray@google.com>, Linux API <linux-api@vger.kernel.org>, linux-mm <linux-mm@kvack.org>
+To: Christian Brauner <christian.brauner@ubuntu.com>
+Cc: mtk.manpages@gmail.com, Florian Weimer <fweimer@redhat.com>, Christian Brauner <christian@brauner.io>, lkml <linux-kernel@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, Kees Cook <keescook@chromium.org>, Oleg Nesterov <oleg@redhat.com>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@gmail.com>, Linux API <linux-api@vger.kernel.org>, Jann Horn <jannh@google.com>, Ingo Molnar <mingo@elte.hu>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 7, 2019 at 10:23 AM Andrea Arcangeli <aarcange@redhat.com> wrote:
->
-> On Thu, Nov 07, 2019 at 08:15:53AM -0800, Daniel Colascione wrote:
-> > You're already paying for bounds checking. Receiving a message via a
-> > datagram socket is basically the same thing as what UFFD's read is
-> > doing anyway.
->
-> Except it's synchronous and there are no dynamic allocations required
-> in uffd, while af_netlink and af_unix both all deal with queue of
-> events in skbs dynamically allocated.
->
-> Ultimately if we strip away the skbs for performance reasons, there
-> wouldn't be much code to share, so if the only benefit would be to
-> call recvmsg which would still be as insecure as read for the "worse"
-> case than suid, so I don't see the point.
+Hello Christian,
 
-Not sure what you mean.
+[...]
 
->
-> And should then eventfd also become a netlink then? I mean uffd was
-> supposed to work like eventfd except it requires specialized events.
+>>>>        These  system  calls  create a new process, in a manner similar to
+>>>>        fork(2).
+>>>>
+>>>>        Unlike fork(2), these system calls  allow  the  child  process  to
+>>>>        share  parts  of  its  execution context with the calling process,
+>>>
+>>> Hm, sharing part of the execution context is not the only thing that
+>>> clone{3}() does. 
+>>
+>> True. That text has been in the page for 21 years. It probably needs
+>> a new coat of paint...
+>>
+>>> Maybe something like:
+>>>
+>>> 	Unlike fork(2), these system calls allow to create a child process with
+>>> 	different properties than its parent. For example, these syscalls allow
+>>> 	the child to share various parts of the execution context with the
+>>> 	calling process such as [...]. They also allow placing the process in a
+>>> 	new set of namespaces.
+>>>
+>>> Just a thought.
+>>
+>> A good thought...
+>>
+>> I changed the text to read:
+>>
+>>        Unlike fork(2), these system calls allow the child to  be  created
+>>        with various properties that differ from the parent.  For example,
+>>        these system calls provide more precise control over  what  pieces
+>>        of  execution  context  are shared between the calling process and
+>>        the child process.  For example, using  these  system  calls,  the
+>>        caller can control whether or not the two processes share the vir‐
+>>        tual address space, the table of file descriptors, and  the  table
+>>        of  signal handlers.  These system system calls also allow the new
+>>        child process to placed in separate namespaces(7).
+>>
+>> Okay?
+> 
+> Nit: The second and thirs sentence both start with "For example".
+> Otherwise sounds great.
 
-No. None of this even means that these objects should be sockets per
-se.  The point is that anyone who calls recvmsg() and passes a control
-buf *must* handle SCM_RIGHTS because even very old Unixes can
-materialize file descriptors.  The only exception is if the program
-knows a priori that the fd refers to a socket that can't use
-SCM_RIGHTS.
+You gotta love it when the nonnative speaker points out the style errors
+of the native speaker :-).
 
-In other words, failing to handle file descriptors returned by
-recvmsg() is an application bug.  Failing to handle file descriptors
-returned by read() is not an application bug -- it's a kernel bug.
+I fixed this.
 
-> > If you call it with a non-empty ancillary data buffer, you know to
-> > react to what you get. You're *opting into* the possibility of getting
-> > file descriptors. Sure, it's theoretically possible that a program
-> > calls recvmsg on random FDs it gets from unknown sources, sees
-> > SCM_RIGHTS unexpectedly, and just the SCM_RIGHTS message and its FD
-> > payload, but that's an outright bug, while calling read() on stdin is
-> > no bug.
->
-> I'm not talking about stdin and suid. recvmsg might mitigate the
-> concern for suid (not certain, depends on the suid, if it's generally
-> doing what you expect most suid to be doing or not), I was talking
-> about the SCM_RIGHTS receiving daemon instead, the "worse" more
-> concerning case than the suid.
->
-> I quote below Andy's relevant email:
->
-> ======
-> It's worse if SCM_RIGHTS is involved.
-> ======
->
-> Not all software will do this after calling recvmsg:
->
->     if (cmsg->cmsg_type == SCM_RIGHTS) {
->       /* oops we got attacked and an fd was involountarily installed
->          because we received another AF_UNIX from a malicious attacker
->          in control of the other end of the SCM_RIGHTS-receiving
->          AF_UNIX connection instead of our expected socket family
->          which doesn't even support SCM_RIGHTS so we would never have
->          noticed an fd was installed after recvmsg */
->     }
->
+[...]
 
-You've misunderstood what you're quoting me as saying.  I'm saying
-that the issue is worse if you pass the userfaultfd via SCM_RIGHTS to
-an unsuspecting program.  It is perfectly valid to receive a file
-descriptor via SCM_RIGHTS and then call read(), at least so long as
-you are okay with potentially blocking.
+>>>>        The stack argument specifies the location of the stack used by the
+>>>>        child process.  Since the child and calling process may share mem‐
+>>>>        ory,  it  is  not possible for the child process to execute in the
+>>>>        same stack as the  calling  process.   The  calling  process  must
+>>>>        therefore  set  up  memory  space  for  the child stack and pass a
+>>>>        pointer to this space to clone().  Stacks  grow  downward  on  all
+>>>
+>>> It might be a good idea to advise people to use mmap() to create a
+>>> stack. The "canonical" way of doing this would usually be something like
+>>>
+>>> #define DEFAULT_STACK_SIZE (4 * 1024 * 1024) /* 8 MB usually on Linux */
+>>> void *stack = mmap(NULL, DEFAULT_STACK_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, -1, 0);
+>>>
+>>> (Yes, the MAP_STACK is usally a noop but people should always include it
+>>>  in case some arch will have weird alignment requirement in which case
+>>>  this flag can be changed to actually do something...)
+>>
+>> So, I'm getting a little bit of an education here, and maybe you are
+>> going to further educate me. Long ago, I added the documentation of
+>> MAP_STACK to mmap(2), but I never quite connected the dots.
+>>
+>> However, you say MAP_STACK is *usually* a noop. As far as I can see,
+>> in current kernels it is *always* a noop. And AFAICS, since it was first
+>> added in 2.6.27 (2008), it has always been a noop.
+>>
+>> I wonder if it will always be a noop.
+>>
+>> If we go back and look at the commit:
+>>
+>> [[
+>> commit 2fdc86901d2ab30a12402b46238951d2a7891590
+>> Author: Ingo Molnar <mingo@elte.hu>
+>> Date:   Wed Aug 13 18:02:18 2008 +0200
+>>
+>>     x86: add MAP_STACK mmap flag
+>>     
+>>     as per this discussion:
+>>     
+>>        http://lkml.org/lkml/2008/8/12/423
+>>     
+>>     Pardo reported that 64-bit threaded apps, if their stacks exceed the
+>>     combined size of ~4GB, slow down drastically in pthread_create() - because
+>>     glibc uses MAP_32BIT to allocate the stacks. The use of MAP_32BIT is
+>>     a legacy hack - to speed up context switching on certain early model
+>>     64-bit P4 CPUs.
+>>     
+>>     So introduce a new flag to be used by glibc instead, to not constrain
+>>     64-bit apps like this.
+>>     
+>>     glibc can switch to this new flag straight away - it will be ignored
+>>     by the kernel. If those old CPUs ever matter to anyone, support for
+>>     it can be implemented.
+>> ]]
+>>
+>> And see also https://lwn.net/Articles/294642/
+>>
+>> So, my understanding from the above is that MAP_STACK was added to 
+>> allow a possible fix on some old architectures, should anyone decide it
+>> was worth doing the work of implementing it. But so far, after 12 years,
+>> no one did. It kind of looks like no one ever will (since those old
+>> architectures become less and less relevant).
+>>
+>> So, AFAICT, while it's not wrong to tell people to use mmap(MAP_STACKED),
+>> it doesn't provide any benefit (and perhaps never will), and it is a
+>> more clumsy than plain old malloc().
+> 
+> Apart from MAP_STACK at some point (however unlikely) becoming relevant
+> I also like that mmap() makes it explicit that the page needs to be
+> readable (PROT_READ) and writeable (PROT_WRITE) and also every
+> (relevant) libc I know uses the explicit mmap() in their pthread
+> implementation. If you prefer the malloc() as an example that's
+> obviously fine.
 
-If you receive a fd to a socket using SCM_RIGHTS and then you fail to
-check cmsg_type as above, then you have a bug regardless of
-userfaultfd.
+I think the benefits you point out are not so significant.
+The default assumption is that a given piece of memory is
+readable and writable.
 
---Andy
+Does musl use MAP_STACKED? AFAICT, it doesn't.
+
+I suppose it's not that I prefer malloc(), but rather that (first I
+was ignorant, and second that) I prefer simplicity. In fact I even
+set up a branch to change various pieces of code I had to use
+MAP_STACKED, and then had an "if I had thought about this for
+30 minutes, I might have saved myself a couple of hours of work" 
+moment after I researched the history of MAP_STACKED a little.
+
+I still don't know the answer for sure. I'm inclined to
+leave things as they are until I hear a compelling
+argument to change things.
+
+>> Yeah, but I didn't get mentioned in the commit ;-)
+> 
+> You provided your Ack after I had taken the patch into my tree and I've
+> already changed it once for Arnd's ack so I didn't want to change it
+> again.
+
+Yes. But I *motivated* the commit :-). Just saying. I'm not
+too concerned!
+
+[...]
+
+>> I changed the text here to read:
+>>
+>>        CLONE_PID (Linux 2.0 to 2.5.15)
+>>               If  CLONE_PID is set, the child process is created with the
+>>               same process ID as the calling process.  This is  good  for
+>>               hacking  the  system,  but otherwise of not much use.  From
+>>               Linux 2.3.21 onward, this flag could be specified  only  by
+>>               the system boot process (PID 0).  The flag disappeared com‐
+>>               pletely from the kernel sources in  Linux  2.5.16.   Subse‐
+>>               quently,  the  kernel  silently  ignored this bit if it was
+>>               specified in the flags mask.  Much later, the same bit  was
+>>               recycled for use as the CLONE_PIDFD flag.
+> 
+> Yip, sounds good.
+
+Are you making fun of my accent? ;-)
+
+Thanks again for your feedback, Christian.
+
+Cheers,
+
+Michael
+
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
