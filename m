@@ -1,34 +1,34 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH v24 01/12] Linux Random Number Generator
-Date: Tue, 12 Nov 2019 11:16:39 +0100 (CET)
-Message-ID: <alpine.DEB.2.21.1911121116130.1833@nanos.tec.linutronix.de>
-References: <6157374.ptSnyUpaCn@positron.chronox.de> <2369119.jSEA3qhmGI@positron.chronox.de> <alpine.DEB.2.21.1911120041060.1833@nanos.tec.linutronix.de> <9370249.4lZBqg7Imc@positron.chronox.de>
+From: Florian Weimer <fw@deneb.enyo.de>
+Subject: Re: [PATCH v24 00/12] /dev/random - a new approach with full SP800-90B compliance
+Date: Tue, 12 Nov 2019 14:23:10 +0100
+Message-ID: <875zjpfcu9.fsf@mid.deneb.enyo.de>
+References: <6157374.ptSnyUpaCn@positron.chronox.de>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="8323329-1459376004-1573553800=:1833"
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <9370249.4lZBqg7Imc@positron.chronox.de>
+In-Reply-To: <6157374.ptSnyUpaCn@positron.chronox.de> ("Stephan
+ \=\?iso-8859-1\?Q\?M\=FCller\=22's\?\=
+        message of "Mon, 11 Nov 2019 19:17:30 +0100")
 Sender: linux-kernel-owner@vger.kernel.org
-To: =?UTF-8?Q?Stephan_M=C3=BCller?= <smueller@chronox.de>
+To: Stephan =?iso-8859-1?Q?M=FCller?= <smueller@chronox.de>
 Cc: Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@sus>
 List-Id: linux-api@vger.kernel.org
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+* Stephan Müller:
 
---8323329-1459376004-1573553800=:1833
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+> * support deactivation of TRNG (i.e. blocking behavior of /dev/random)
+>   at compile time. If deactivated, /dev/random behaves like
+>   getrandom(2).
 
-On Tue, 12 Nov 2019, Stephan MÃ¼ller wrote:
-> Am Dienstag, 12. November 2019, 00:54:16 CET schrieb Thomas Gleixner:
-> > Can you please get rid of those?
-> 
-> Absolutely. I have removed that boiler plate disclaimer from all files.
+I don't quite understand this comment.  Doesn't getrandom with the
+GRND_RANDOM always behave like /dev/random?  Presumably, without the
+TRNG tap, the GRND_RANDOM flag for getrandom is ignored, and reading
+from /dev/random behaves like reading from /dev/urandom.
 
-Appreciated.
+Anyway, reading the accompanying PDF, this looks rather impressive:
+the userspace bootstrapping problem is gone (the issue where waiting
+for more entropy prevents the collection of more entropy), *and* we
+can still make the standards people happy.
 
-> Though I hope it is acceptable to wait for further comments before a 
-> resubmission.
-
-Of course!
---8323329-1459376004-1573553800=:1833--
+(Replying from my other account due to mail issues, sorry.)
