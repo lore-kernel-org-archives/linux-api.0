@@ -1,82 +1,105 @@
-From: Stephan =?ISO-8859-1?Q?M=FCller?= <smueller@chronox.de>
-Subject: Re: [PATCH v24 01/12] Linux Random Number Generator
-Date: Wed, 13 Nov 2019 00:15:18 +0100
-Message-ID: <2207651.LDDDoSycXZ@positron.chronox.de>
-References: <2369119.jSEA3qhmGI@positron.chronox.de> <201911130648.YIqEERFA%lkp@intel.com>
+From: Christian Brauner <christian.brauner@ubuntu.com>
+Subject: Re: [PATCH] Allow restricting permissions in /proc/sys
+Date: Wed, 13 Nov 2019 00:22:40 +0100
+Message-ID: <20191112232239.yevpeemgxz4wy32b@wittgenstein>
+References: <74a91362-247c-c749-5200-7bdce704ed9e@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <201911130648.YIqEERFA%lkp@intel.com>
+Content-Disposition: inline
+In-Reply-To: <74a91362-247c-c749-5200-7bdce704ed9e@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: kbuild test robot <lkp@intel.com>
-Cc: kbuild-all@lists.01.org, Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Ni
+To: Topi Miettinen <toiwoton@gmail.com>
+Cc: Luis Chamberlain <mcgrof@kernel.org>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "open list:FILESYSTEMS (VFS and infrastructure)" <linux-fsdevel@vger.kernel.org>, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Am Dienstag, 12. November 2019, 23:30:29 CET schrieb kbuild test robot:
+[Cc+ linux-api@vger.kernel.org]
 
-Hi kbuild,
+since that's potentially relevant to quite a few people.
 
-> Hi "Stephan,
+On Sun, Nov 03, 2019 at 04:55:48PM +0200, Topi Miettinen wrote:
+> Several items in /proc/sys need not be accessible to unprivileged
+> tasks. Let the system administrator change the permissions, but only
+> to more restrictive modes than what the sysctl tables allow.
 > 
-> Thank you for the patch! Yet something to improve:
-> 
-> [auto build test ERROR on char-misc/char-misc-testing]
-> [also build test ERROR on v5.4-rc7 next-20191112]
-> [if your patch is applied to the wrong git tree, please drop us a note to
-> help improve the system. BTW, we also suggest to use '--base' option to
-> specify the base tree in git format-patch, please see
-> https://stackoverflow.com/a/37406982]
-> 
-> url:   
-> https://github.com/0day-ci/linux/commits/Stephan-M-ller/dev-random-a-new-ap
-> proach-with-full-SP800-90B-compliance/20191113-040847 base:  
-> https://git.kernel.org/pub/scm/linux/kernel/git/gregkh/char-misc.git
-> 01b59c763fe2de845b65900485b141fdd7bbf93e config:
-> i386-randconfig-f003-201945 (attached as .config)
-> compiler: gcc-7 (Debian 7.4.0-14) 7.4.0
-> reproduce:
->         # save the attached .config to linux build tree
->         make ARCH=i386
-> 
-> If you fix the issue, kindly add following tag
-> Reported-by: kbuild test robot <lkp@intel.com>
-> 
-> All errors (new ones prefixed by >>):
-> 
->    In file included from <command-line>:0:0:
-> 
->    include/linux/lrng.h: In function 'lrng_set_drng_cb':
-> >> include/linux/lrng.h:80:61: error: 'EOPNOTSUPP' undeclared (first use in
-> >> this function)
-
-I need to include errno.h in lrng.h.
-
-Thank you, it will be fixed in the next installment.
-
->     lrng_set_drng_cb(const struct lrng_crypto_cb *cb) { return -EOPNOTSUPP;
-> } ^~~~~~~~~~ include/linux/lrng.h:80:61: note: each undeclared identifier
-> is reported only once for each function it appears in
-> 
-> vim +/EOPNOTSUPP +80 include/linux/lrng.h
-> 
->     74
->     75	/* Register cryptographic backend */
->     76	#ifdef CONFIG_LRNG_DRNG_SWITCH
->     77	int lrng_set_drng_cb(const struct lrng_crypto_cb *cb);
->     78	#else	/* CONFIG_LRNG_DRNG_SWITCH */
->     79	static inline int
-> 
->   > 80	lrng_set_drng_cb(const struct lrng_crypto_cb *cb) { return
->   > -EOPNOTSUPP; }
->     81	#endif	/* CONFIG_LRNG_DRNG_SWITCH */
->     82
-> 
+> Signed-off-by: Topi Miettinen <toiwoton@gmail.com>
 > ---
-> 0-DAY kernel test infrastructure                 Open Source Technology
-> Center https://lists.01.org/hyperkitty/list/kbuild-all@lists.01.org Intel
-> Corporation
-
-
-Ciao
-Stephan
+>  fs/proc/proc_sysctl.c | 41 +++++++++++++++++++++++++++++++----------
+>  1 file changed, 31 insertions(+), 10 deletions(-)
+> 
+> diff --git a/fs/proc/proc_sysctl.c b/fs/proc/proc_sysctl.c
+> index d80989b6c344..88c4ca7d2782 100644
+> --- a/fs/proc/proc_sysctl.c
+> +++ b/fs/proc/proc_sysctl.c
+> @@ -818,6 +818,10 @@ static int proc_sys_permission(struct inode *inode, int
+> mask)
+>         if ((mask & MAY_EXEC) && S_ISREG(inode->i_mode))
+>                 return -EACCES;
+> 
+> +       error = generic_permission(inode, mask);
+> +       if (error)
+> +               return error;
+> +
+>         head = grab_header(inode);
+>         if (IS_ERR(head))
+>                 return PTR_ERR(head);
+> @@ -837,9 +841,35 @@ static int proc_sys_setattr(struct dentry *dentry,
+> struct iattr *attr)
+>         struct inode *inode = d_inode(dentry);
+>         int error;
+> 
+> -       if (attr->ia_valid & (ATTR_MODE | ATTR_UID | ATTR_GID))
+> +       if (attr->ia_valid & (ATTR_UID | ATTR_GID))
+>                 return -EPERM;
+> 
+> +       if (attr->ia_valid & ATTR_MODE) {
+> +               struct ctl_table_header *head = grab_header(inode);
+> +               struct ctl_table *table = PROC_I(inode)->sysctl_entry;
+> +               umode_t max_mode = 0777; /* Only these bits may change */
+> +
+> +               if (IS_ERR(head))
+> +                       return PTR_ERR(head);
+> +
+> +               if (!table) /* global root - r-xr-xr-x */
+> +                       max_mode &= ~0222;
+> +               else /*
+> +                     * Don't allow permissions to become less
+> +                     * restrictive than the sysctl table entry
+> +                     */
+> +                       max_mode &= table->mode;
+> +
+> +               sysctl_head_finish(head);
+> +
+> +               /* Execute bits only allowed for directories */
+> +               if (!S_ISDIR(inode->i_mode))
+> +                       max_mode &= ~0111;
+> +
+> +               if (attr->ia_mode & ~S_IFMT & ~max_mode)
+> +                       return -EPERM;
+> +       }
+> +
+>         error = setattr_prepare(dentry, attr);
+>         if (error)
+>                 return error;
+> @@ -853,17 +883,8 @@ static int proc_sys_getattr(const struct path *path,
+> struct kstat *stat,
+>                             u32 request_mask, unsigned int query_flags)
+>  {
+>         struct inode *inode = d_inode(path->dentry);
+> -       struct ctl_table_header *head = grab_header(inode);
+> -       struct ctl_table *table = PROC_I(inode)->sysctl_entry;
+> -
+> -       if (IS_ERR(head))
+> -               return PTR_ERR(head);
+> 
+>         generic_fillattr(inode, stat);
+> -       if (table)
+> -               stat->mode = (stat->mode & S_IFMT) | table->mode;
+> -
+> -       sysctl_head_finish(head);
+>         return 0;
+>  }
+> 
+> -- 
+> 2.24.0.rc1
+> 
