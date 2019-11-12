@@ -1,41 +1,45 @@
 From: Kees Cook <keescook@chromium.org>
-Subject: Re: [PATCH v15 0/9] open: introduce openat2(2) syscall
-Date: Tue, 12 Nov 2019 15:01:26 -0800
-Message-ID: <201911121457.7D02692@keescook>
-References: <20191105090553.6350-1-cyphar@cyphar.com>
- <20191111132404.y523iqicbn6fivx5@yavin.dot.cyphar.com>
+Subject: Re: For review: documentation of clone3() system call
+Date: Tue, 12 Nov 2019 15:03:27 -0800
+Message-ID: <201911121502.3CADFBE3@keescook>
+References: <CAKgNAkjo2WHq+zESU1iuCHJJ0x-fTNrakS9-d1+BjzUuV2uf2Q@mail.gmail.com>
+ <20191107151941.dw4gtul5lrtax4se@wittgenstein>
+ <2eb2ab4c-b177-29aa-cdc4-420b24cfd7b3@gmail.com>
+ <CAG48ez2of684J6suPZpko7JFV6hg5KQsrP0KAn8B8-C3PM9OfQ@mail.gmail.com>
+ <20191111165800.GD7017@mit.edu>
+ <CAG48ez3K6g7NSFmeuw-4paqPQTDYmNkZ-nVvufk25EB+Us850w@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20191111132404.y523iqicbn6fivx5@yavin.dot.cyphar.com>
+In-Reply-To: <CAG48ez3K6g7NSFmeuw-4paqPQTDYmNkZ-nVvufk25EB+Us850w@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Alexander Shishkin <alexander.shishkin@linux.intel.com>
+To: Jann Horn <jannh@google.com>
+Cc: "Theodore Y. Ts'o" <tytso@mit.edu>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, Christian Brauner <christian.brauner@ubuntu.com>, Florian Weimer <fweimer@redhat.com>, Christian Brauner <christian@brauner.io>, lkml <linux-kernel@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, Oleg Nesterov <oleg@redhat.com>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@gmail.com>, Linux API <linux-api@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Nov 12, 2019 at 12:24:04AM +1100, Aleksa Sarai wrote:
-> On 2019-11-05, Aleksa Sarai <cyphar@cyphar.com> wrote:
-> > This patchset is being developed here:
-> >   <https://github.com/cyphar/linux/tree/openat2/master>
-> > 
-> > Patch changelog:
-> >  v15:
-> >   * Fix code style for LOOKUP_IN_ROOT handling in path_init(). [Linus Torvalds]
-> >   * Split out patches for each individual LOOKUP flag.
-> >   * Reword commit messages to give more background information about the
-> >     series, as well as mention the semantics of each flag in more detail.
-> > [...]
+On Mon, Nov 11, 2019 at 09:24:33PM +0100, Jann Horn wrote:
+> On Mon, Nov 11, 2019 at 5:58 PM Theodore Y. Ts'o <tytso@mit.edu> wrote:
+> > On Mon, Nov 11, 2019 at 03:55:35PM +0100, Jann Horn wrote:
+> > > Not on Linux, but on OpenBSD, they do use MAP_STACK now AFAIK; this
+> > > was announced here:
+> > > <http://openbsd-archive.7691.n7.nabble.com/stack-register-checking-td338238.html>.
+> > > Basically they periodically check whether the userspace stack pointer
+> > > points into a MAP_STACK region, and if not, they kill the process. So
+> > > even if it's a no-op on Linux...
+> >
+> > Hmm, is that something we should do in Linux?  Even if we only check
+> > on syscall entry, which should be pretty inexpensive, it seems like it
+> > would be very effective in protecting various ROP techniques.
 > 
-> Ping -- this patch hasn't been touched for a week. Thanks.
+> I'm not a big fan, especially if that would only happen on syscall
+> entry; at the point where you have enough control to perform syscalls,
+> it probably isn't too difficult to move your ROP stack over to a
+> legitimate stack.
 
-If I've been following correctly, everyone is happy with this series.
-(i.e. Linus's comment appear to have been addressed.)
-
-Perhaps the next question is should this go via a pull request by you to
-Linus directly during the v5.5 merge window, via akpm, via akpm, via
-Christian, or some other path? Besides Linus, it's not been clear who
-should "claim" this series. :)
+It does have "your process is doing something unexpected" checking,
+though, if we want to declare (and enforce) the expected behavior of
+userspace stack usage. (i.e. not strictly as a ROP defense.)
 
 -- 
 Kees Cook
