@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv8 18/34] fs/proc: Respect boottime inside time namespace for /proc/uptime
-Date: Tue, 12 Nov 2019 01:27:07 +0000
-Message-ID: <20191112012724.250792-19-dima@arista.com>
+Subject: [PATCHv8 17/34] posix-timers: Make clock_nanosleep() time namespace aware
+Date: Tue, 12 Nov 2019 01:27:06 +0000
+Message-ID: <20191112012724.250792-18-dima@arista.com>
 References: <20191112012724.250792-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -9,36 +9,108 @@ Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20191112012724.250792-1-dima@arista.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org
-Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
+Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Andrei Vagin <avagin@openvz.org>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Co-developed-by: Andrei Vagin <avagin@openvz.org>
+From: Andrei Vagin <avagin@openvz.org>
+
+clock_nanosleep() accepts absolute values of expiration time, if the
+TIMER_ABSTIME flag is set. This value is in the task time namespace,
+which has to be converted to the host time namespace.
+
 Signed-off-by: Andrei Vagin <avagin@openvz.org>
+Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- fs/proc/uptime.c | 3 +++
- 1 file changed, 3 insertions(+)
+ kernel/time/posix-stubs.c  | 12 ++++++++++--
+ kernel/time/posix-timers.c | 17 +++++++++++++++--
+ 2 files changed, 25 insertions(+), 4 deletions(-)
 
-diff --git a/fs/proc/uptime.c b/fs/proc/uptime.c
-index a4c2791ab70b..5a1b228964fb 100644
---- a/fs/proc/uptime.c
-+++ b/fs/proc/uptime.c
-@@ -5,6 +5,7 @@
- #include <linux/sched.h>
- #include <linux/seq_file.h>
- #include <linux/time.h>
-+#include <linux/time_namespace.h>
- #include <linux/kernel_stat.h>
+diff --git a/kernel/time/posix-stubs.c b/kernel/time/posix-stubs.c
+index 2ccefc9ce184..c9aba9c5df2b 100644
+--- a/kernel/time/posix-stubs.c
++++ b/kernel/time/posix-stubs.c
+@@ -129,6 +129,7 @@ SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
+ 		struct __kernel_timespec __user *, rmtp)
+ {
+ 	struct timespec64 t;
++	ktime_t texp;
  
- static int uptime_proc_show(struct seq_file *m, void *v)
-@@ -20,6 +21,8 @@ static int uptime_proc_show(struct seq_file *m, void *v)
- 		nsec += (__force u64) kcpustat_cpu(i).cpustat[CPUTIME_IDLE];
+ 	switch (which_clock) {
+ 	case CLOCK_REALTIME:
+@@ -147,7 +148,10 @@ SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
+ 		rmtp = NULL;
+ 	current->restart_block.nanosleep.type = rmtp ? TT_NATIVE : TT_NONE;
+ 	current->restart_block.nanosleep.rmtp = rmtp;
+-	return hrtimer_nanosleep(timespec64_to_ktime(t), flags & TIMER_ABSTIME ?
++	texp = timespec64_to_ktime(t);
++	if (flags & TIMER_ABSTIME)
++		texp = timens_ktime_to_host(which_clock, texp);
++	return hrtimer_nanosleep(texp, flags & TIMER_ABSTIME ?
+ 				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL,
+ 				 which_clock);
+ }
+@@ -215,6 +219,7 @@ SYSCALL_DEFINE4(clock_nanosleep_time32, clockid_t, which_clock, int, flags,
+ 		struct old_timespec32 __user *, rmtp)
+ {
+ 	struct timespec64 t;
++	ktime_t texp;
  
- 	ktime_get_boottime_ts64(&uptime);
-+	timens_add_boottime(&uptime);
+ 	switch (which_clock) {
+ 	case CLOCK_REALTIME:
+@@ -233,7 +238,10 @@ SYSCALL_DEFINE4(clock_nanosleep_time32, clockid_t, which_clock, int, flags,
+ 		rmtp = NULL;
+ 	current->restart_block.nanosleep.type = rmtp ? TT_COMPAT : TT_NONE;
+ 	current->restart_block.nanosleep.compat_rmtp = rmtp;
+-	return hrtimer_nanosleep(timespec64_to_ktime(t), flags & TIMER_ABSTIME ?
++	texp = timespec64_to_ktime(t);
++	if (flags & TIMER_ABSTIME)
++		texp = timens_ktime_to_host(which_clock, texp);
++	return hrtimer_nanosleep(texp, flags & TIMER_ABSTIME ?
+ 				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL,
+ 				 which_clock);
+ }
+diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
+index 75fee6e39e5a..ff0eb30de346 100644
+--- a/kernel/time/posix-timers.c
++++ b/kernel/time/posix-timers.c
+@@ -1228,6 +1228,19 @@ static int common_nsleep(const clockid_t which_clock, int flags,
+ 				 which_clock);
+ }
+ 
++static int common_nsleep_timens(const clockid_t which_clock, int flags,
++			 const struct timespec64 *rqtp)
++{
++	ktime_t texp = timespec64_to_ktime(*rqtp);
 +
- 	idle.tv_sec = div_u64_rem(nsec, NSEC_PER_SEC, &rem);
- 	idle.tv_nsec = rem;
- 	seq_printf(m, "%lu.%02lu %lu.%02lu\n",
++	if (flags & TIMER_ABSTIME)
++		texp = timens_ktime_to_host(which_clock, texp);
++
++	return hrtimer_nanosleep(texp, flags & TIMER_ABSTIME ?
++				 HRTIMER_MODE_ABS : HRTIMER_MODE_REL,
++				 which_clock);
++}
++
+ SYSCALL_DEFINE4(clock_nanosleep, const clockid_t, which_clock, int, flags,
+ 		const struct __kernel_timespec __user *, rqtp,
+ 		struct __kernel_timespec __user *, rmtp)
+@@ -1305,7 +1318,7 @@ static const struct k_clock clock_monotonic = {
+ 	.clock_getres		= posix_get_hrtimer_res,
+ 	.clock_get_timespec	= posix_get_monotonic_timespec,
+ 	.clock_get_ktime	= posix_get_monotonic_ktime,
+-	.nsleep			= common_nsleep,
++	.nsleep			= common_nsleep_timens,
+ 	.timer_create		= common_timer_create,
+ 	.timer_set		= common_timer_set,
+ 	.timer_get		= common_timer_get,
+@@ -1354,7 +1367,7 @@ static const struct k_clock clock_boottime = {
+ 	.clock_getres		= posix_get_hrtimer_res,
+ 	.clock_get_ktime	= posix_get_boottime_ktime,
+ 	.clock_get_timespec	= posix_get_boottime_timespec,
+-	.nsleep			= common_nsleep,
++	.nsleep			= common_nsleep_timens,
+ 	.timer_create		= common_timer_create,
+ 	.timer_set		= common_timer_set,
+ 	.timer_get		= common_timer_get,
 -- 
 2.24.0
