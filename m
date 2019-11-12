@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv8 27/34] fs/proc: Introduce /proc/pid/timens_offsets
-Date: Tue, 12 Nov 2019 01:27:16 +0000
-Message-ID: <20191112012724.250792-28-dima@arista.com>
+Subject: [PATCHv8 34/34] selftests/timens: Check for right timens offsets after fork and exec
+Date: Tue, 12 Nov 2019 01:27:23 +0000
+Message-ID: <20191112012724.250792-35-dima@arista.com>
 References: <20191112012724.250792-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,276 +14,153 @@ List-Id: linux-api@vger.kernel.org
 
 From: Andrei Vagin <avagin@gmail.com>
 
-API to set time namespace offsets for children processes, i.e.:
-echo "clockid off_ses off_nsec" > /proc/self/timens_offsets
+Output on success:
+ 1..1
+ ok 1 exec
+ # Pass 1 Fail 0 Xfail 0 Xpass 0 Skip 0 Error 0
+
+Output on failure:
+ 1..1
+ not ok 1 36016 16
+ Bail out!
+
+Output with lack of permissions:
+ 1..1
+ not ok 1 # SKIP need to run as root
+
+Output without support of time namespaces:
+ 1..1
+ not ok 1 # SKIP Time namespaces are not supported
 
 Signed-off-by: Andrei Vagin <avagin@gmail.com>
 Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- fs/proc/base.c                 |  95 +++++++++++++++++++++++++++++++
- include/linux/time_namespace.h |  10 ++++
- kernel/time/namespace.c        | 100 +++++++++++++++++++++++++++++++++
- 3 files changed, 205 insertions(+)
+ tools/testing/selftests/timens/.gitignore |  1 +
+ tools/testing/selftests/timens/Makefile   |  2 +-
+ tools/testing/selftests/timens/exec.c     | 94 +++++++++++++++++++++++
+ 3 files changed, 96 insertions(+), 1 deletion(-)
+ create mode 100644 tools/testing/selftests/timens/exec.c
 
-diff --git a/fs/proc/base.c b/fs/proc/base.c
-index ebea9501afb8..1d2007365e87 100644
---- a/fs/proc/base.c
-+++ b/fs/proc/base.c
-@@ -94,6 +94,7 @@
- #include <linux/sched/debug.h>
- #include <linux/sched/stat.h>
- #include <linux/posix-timers.h>
-+#include <linux/time_namespace.h>
- #include <trace/events/oom.h>
- #include "internal.h"
- #include "fd.h"
-@@ -1533,6 +1534,97 @@ static const struct file_operations proc_pid_sched_autogroup_operations = {
+diff --git a/tools/testing/selftests/timens/.gitignore b/tools/testing/selftests/timens/.gitignore
+index 16292e4d08a5..789f21e81028 100644
+--- a/tools/testing/selftests/timens/.gitignore
++++ b/tools/testing/selftests/timens/.gitignore
+@@ -1,4 +1,5 @@
+ clock_nanosleep
++exec
+ gettime_perf
+ gettime_perf_cold
+ procfs
+diff --git a/tools/testing/selftests/timens/Makefile b/tools/testing/selftests/timens/Makefile
+index 6aefcaccb8f4..e9fb30bd8aeb 100644
+--- a/tools/testing/selftests/timens/Makefile
++++ b/tools/testing/selftests/timens/Makefile
+@@ -1,4 +1,4 @@
+-TEST_GEN_PROGS := timens timerfd timer clock_nanosleep procfs
++TEST_GEN_PROGS := timens timerfd timer clock_nanosleep procfs exec
+ TEST_GEN_PROGS_EXTENDED := gettime_perf
  
- #endif /* CONFIG_SCHED_AUTOGROUP */
- 
-+#ifdef CONFIG_TIME_NS
-+static int timens_offsets_show(struct seq_file *m, void *v)
+ CFLAGS := -Wall -Werror -pthread
+diff --git a/tools/testing/selftests/timens/exec.c b/tools/testing/selftests/timens/exec.c
+new file mode 100644
+index 000000000000..87b47b557a7a
+--- /dev/null
++++ b/tools/testing/selftests/timens/exec.c
+@@ -0,0 +1,94 @@
++// SPDX-License-Identifier: GPL-2.0
++#define _GNU_SOURCE
++#include <errno.h>
++#include <fcntl.h>
++#include <sched.h>
++#include <stdio.h>
++#include <stdbool.h>
++#include <sys/stat.h>
++#include <sys/syscall.h>
++#include <sys/types.h>
++#include <sys/wait.h>
++#include <time.h>
++#include <unistd.h>
++#include <time.h>
++#include <string.h>
++
++#include "log.h"
++#include "timens.h"
++
++#define OFFSET (36000)
++
++int main(int argc, char *argv[])
 +{
-+	struct task_struct *p;
++	struct timespec now, tst;
++	int status, i;
++	pid_t pid;
 +
-+	p = get_proc_task(file_inode(m->file));
-+	if (!p)
-+		return -ESRCH;
-+	proc_timens_show_offsets(p, m);
++	if (argc > 1) {
++		if (sscanf(argv[1], "%ld", &now.tv_sec) != 1)
++			return pr_perror("sscanf");
 +
-+	put_task_struct(p);
++		for (i = 0; i < 2; i++) {
++			_gettime(CLOCK_MONOTONIC, &tst, i);
++			if (abs(tst.tv_sec - now.tv_sec) > 5)
++				return pr_fail("%ld %ld\n", now.tv_sec, tst.tv_sec);
++		}
++		return 0;
++	}
 +
++	nscheck();
++
++	ksft_set_plan(1);
++
++	clock_gettime(CLOCK_MONOTONIC, &now);
++
++	if (unshare_timens())
++		return 1;
++
++	if (_settime(CLOCK_MONOTONIC, OFFSET))
++		return 1;
++
++	for (i = 0; i < 2; i++) {
++		_gettime(CLOCK_MONOTONIC, &tst, i);
++		if (abs(tst.tv_sec - now.tv_sec) > 5)
++			return pr_fail("%ld %ld\n",
++					now.tv_sec, tst.tv_sec);
++	}
++
++	if (argc > 1)
++		return 0;
++
++	pid = fork();
++	if (pid < 0)
++		return pr_perror("fork");
++
++	if (pid == 0) {
++		char now_str[64];
++		char *cargv[] = {"exec", now_str, NULL};
++		char *cenv[] = {NULL};
++
++		/* Check that a child process is in the new timens. */
++		for (i = 0; i < 2; i++) {
++			_gettime(CLOCK_MONOTONIC, &tst, i);
++			if (abs(tst.tv_sec - now.tv_sec - OFFSET) > 5)
++				return pr_fail("%ld %ld\n",
++						now.tv_sec + OFFSET, tst.tv_sec);
++		}
++
++		/* Check for proper vvar offsets after execve. */
++		snprintf(now_str, sizeof(now_str), "%ld", now.tv_sec + OFFSET);
++		execve("/proc/self/exe", cargv, cenv);
++		return pr_perror("execve");
++	}
++
++	if (waitpid(pid, &status, 0) != pid)
++		return pr_perror("waitpid");
++
++	if (status)
++		ksft_exit_fail();
++
++	ksft_test_result_pass("exec\n");
++	ksft_exit_pass();
 +	return 0;
 +}
-+
-+static ssize_t
-+timens_offsets_write(struct file *file, const char __user *buf,
-+	    size_t count, loff_t *ppos)
-+{
-+	struct inode *inode = file_inode(file);
-+	struct proc_timens_offset offsets[2];
-+	char *kbuf = NULL, *pos, *next_line;
-+	struct task_struct *p;
-+	int ret, noffsets;
-+
-+	/* Only allow < page size writes at the beginning of the file */
-+	if ((*ppos != 0) || (count >= PAGE_SIZE))
-+		return -EINVAL;
-+
-+	/* Slurp in the user data */
-+	kbuf = memdup_user_nul(buf, count);
-+	if (IS_ERR(kbuf))
-+		return PTR_ERR(kbuf);
-+
-+	/* Parse the user data */
-+	ret = -EINVAL;
-+	noffsets = 0;
-+	for (pos = kbuf; pos; pos = next_line) {
-+		struct proc_timens_offset *off = &offsets[noffsets];
-+		int err;
-+
-+		/* Find the end of line and ensure we don't look past it */
-+		next_line = strchr(pos, '\n');
-+		if (next_line) {
-+			*next_line = '\0';
-+			next_line++;
-+			if (*next_line == '\0')
-+				next_line = NULL;
-+		}
-+
-+		err = sscanf(pos, "%u %lld %lu", &off->clockid,
-+				&off->val.tv_sec, &off->val.tv_nsec);
-+		if (err != 3 || off->val.tv_nsec >= NSEC_PER_SEC)
-+			goto out;
-+		noffsets++;
-+		if (noffsets == ARRAY_SIZE(offsets)) {
-+			if (next_line)
-+				count = next_line - kbuf;
-+			break;
-+		}
-+	}
-+
-+	ret = -ESRCH;
-+	p = get_proc_task(inode);
-+	if (!p)
-+		goto out;
-+	ret = proc_timens_set_offset(file, p, offsets, noffsets);
-+	put_task_struct(p);
-+	if (ret)
-+		goto out;
-+
-+	ret = count;
-+out:
-+	kfree(kbuf);
-+	return ret;
-+}
-+
-+static int timens_offsets_open(struct inode *inode, struct file *filp)
-+{
-+	return single_open(filp, timens_offsets_show, inode);
-+}
-+
-+static const struct file_operations proc_timens_offsets_operations = {
-+	.open		= timens_offsets_open,
-+	.read		= seq_read,
-+	.write		= timens_offsets_write,
-+	.llseek		= seq_lseek,
-+	.release	= single_release,
-+};
-+#endif /* CONFIG_TIME_NS */
-+
- static ssize_t comm_write(struct file *file, const char __user *buf,
- 				size_t count, loff_t *offset)
- {
-@@ -3015,6 +3107,9 @@ static const struct pid_entry tgid_base_stuff[] = {
- #endif
- #ifdef CONFIG_SCHED_AUTOGROUP
- 	REG("autogroup",  S_IRUGO|S_IWUSR, proc_pid_sched_autogroup_operations),
-+#endif
-+#ifdef CONFIG_TIME_NS
-+	REG("timens_offsets",  S_IRUGO|S_IWUSR, proc_timens_offsets_operations),
- #endif
- 	REG("comm",      S_IRUGO|S_IWUSR, proc_pid_set_comm_operations),
- #ifdef CONFIG_HAVE_ARCH_TRACEHOOK
-diff --git a/include/linux/time_namespace.h b/include/linux/time_namespace.h
-index f1cdd3a6f842..793d2486a87d 100644
---- a/include/linux/time_namespace.h
-+++ b/include/linux/time_namespace.h
-@@ -50,6 +50,16 @@ static inline void put_time_ns(struct time_namespace *ns)
- 	kref_put(&ns->kref, free_time_ns);
- }
- 
-+extern void proc_timens_show_offsets(struct task_struct *p, struct seq_file *m);
-+
-+struct proc_timens_offset {
-+	int clockid;
-+	struct timespec64 val;
-+};
-+
-+extern int proc_timens_set_offset(struct file *file, struct task_struct *p,
-+				struct proc_timens_offset *offsets, int n);
-+
- static inline void timens_add_monotonic(struct timespec64 *ts)
- {
- 	struct timens_offsets *ns_offsets = &current->nsproxy->time_ns->offsets;
-diff --git a/kernel/time/namespace.c b/kernel/time/namespace.c
-index 0dc0742ed1ee..267120f31699 100644
---- a/kernel/time/namespace.c
-+++ b/kernel/time/namespace.c
-@@ -8,6 +8,7 @@
- #include <linux/user_namespace.h>
- #include <linux/sched/signal.h>
- #include <linux/sched/task.h>
-+#include <linux/seq_file.h>
- #include <linux/proc_ns.h>
- #include <linux/export.h>
- #include <linux/time.h>
-@@ -333,6 +334,105 @@ static struct user_namespace *timens_owner(struct ns_common *ns)
- 	return to_time_ns(ns)->user_ns;
- }
- 
-+static void show_offset(struct seq_file *m, int clockid, struct timespec64 *ts)
-+{
-+	seq_printf(m, "%d %lld %ld\n", clockid, ts->tv_sec, ts->tv_nsec);
-+}
-+
-+void proc_timens_show_offsets(struct task_struct *p, struct seq_file *m)
-+{
-+	struct ns_common *ns;
-+	struct time_namespace *time_ns;
-+
-+	ns = timens_for_children_get(p);
-+	if (!ns)
-+		return;
-+	time_ns = to_time_ns(ns);
-+
-+	show_offset(m, CLOCK_MONOTONIC, &time_ns->offsets.monotonic);
-+	show_offset(m, CLOCK_BOOTTIME, &time_ns->offsets.boottime);
-+	put_time_ns(time_ns);
-+}
-+
-+int proc_timens_set_offset(struct file *file, struct task_struct *p,
-+			   struct proc_timens_offset *offsets, int noffsets)
-+{
-+	struct ns_common *ns;
-+	struct time_namespace *time_ns;
-+	struct timespec64 tp;
-+	int i, err;
-+
-+	ns = timens_for_children_get(p);
-+	if (!ns)
-+		return -ESRCH;
-+	time_ns = to_time_ns(ns);
-+
-+	if (!file_ns_capable(file, time_ns->user_ns, CAP_SYS_TIME)) {
-+		put_time_ns(time_ns);
-+		return -EPERM;
-+	}
-+
-+	for (i = 0; i < noffsets; i++) {
-+		struct proc_timens_offset *off = &offsets[i];
-+
-+		switch (off->clockid) {
-+		case CLOCK_MONOTONIC:
-+			ktime_get_ts64(&tp);
-+			break;
-+		case CLOCK_BOOTTIME:
-+			ktime_get_boottime_ts64(&tp);
-+			break;
-+		default:
-+			err = -EINVAL;
-+			goto out;
-+		}
-+
-+		err = -ERANGE;
-+
-+		if (off->val.tv_sec > KTIME_SEC_MAX || off->val.tv_sec < -KTIME_SEC_MAX)
-+			goto out;
-+
-+		tp = timespec64_add(tp, off->val);
-+		/*
-+		 * KTIME_SEC_MAX is divided by 2 to be sure that KTIME_MAX is
-+		 * still unreachable.
-+		 */
-+		if (tp.tv_sec < 0 || tp.tv_sec > KTIME_SEC_MAX / 2)
-+			goto out;
-+	}
-+
-+	mutex_lock(&offset_lock);
-+	if (time_ns->frozen_offsets) {
-+		err = -EACCES;
-+		goto out_unlock;
-+	}
-+
-+	err = 0;
-+	/* don't report errors after this line */
-+	for (i = 0; i < noffsets; i++) {
-+		struct proc_timens_offset *off = &offsets[i];
-+		struct timespec64 *offset = NULL;
-+
-+		switch (off->clockid) {
-+		case CLOCK_MONOTONIC:
-+			offset = &time_ns->offsets.monotonic;
-+			break;
-+		case CLOCK_BOOTTIME:
-+			offset = &time_ns->offsets.boottime;
-+			break;
-+		}
-+
-+		*offset = off->val;
-+	}
-+
-+out_unlock:
-+	mutex_unlock(&offset_lock);
-+out:
-+	put_time_ns(time_ns);
-+
-+	return err;
-+}
-+
- const struct proc_ns_operations timens_operations = {
- 	.name		= "time",
- 	.type		= CLONE_NEWTIME,
 -- 
 2.24.0
