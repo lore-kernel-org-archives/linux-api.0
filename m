@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv8 29/34] selftests/timens: Add a test for timerfd
-Date: Tue, 12 Nov 2019 01:27:18 +0000
-Message-ID: <20191112012724.250792-30-dima@arista.com>
+Subject: [PATCHv8 33/34] selftests/timens: Add a simple perf test for clock_gettime()
+Date: Tue, 12 Nov 2019 01:27:22 +0000
+Message-ID: <20191112012724.250792-34-dima@arista.com>
 References: <20191112012724.250792-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,191 +14,160 @@ List-Id: linux-api@vger.kernel.org
 
 From: Andrei Vagin <avagin@gmail.com>
 
-Check that timerfd_create() takes into account clock offsets.
-
 Output on success:
- 1..3
- ok 1 clockid=7
- ok 2 clockid=1
- ok 3 clockid=9
- # Pass 3 Fail 0 Xfail 0 Xpass 0 Skip 0 Error 0
-
-Output on failure:
- 1..3
- not ok 1 clockid: 7 elapsed: 0
- not ok 2 clockid: 1 elapsed: 0
- not ok 3 clockid: 9 elapsed: 0
- Bail out!
+1..4
+ ok 1 host:	clock:  monotonic	cycles:	 148323947
+ ok 2 host:	clock:   boottime	cycles:	 148577503
+ ok 3 ns:	clock:  monotonic	cycles:	 137659217
+ ok 4 ns:	clock:   boottime	cycles:	 137959154
+ # Pass 4 Fail 0 Xfail 0 Xpass 0 Skip 0 Error 0
 
 Output with lack of permissions:
- 1..3
- not ok 1 # SKIP need to run as root
+ 1..4
+ ok 1 host:	clock:  monotonic	cycles:	 145671139
+ ok 2 host:	clock:   boottime	cycles:	 146958357
+ not ok 3 # SKIP need to run as root
 
 Output without support of time namespaces:
- 1..3
- not ok 1 # SKIP Time namespaces are not supported
+ 1..4
+ ok 1 host:	clock:  monotonic	cycles:	 145671139
+ ok 2 host:	clock:   boottime	cycles:	 146958357
+ not ok 3 # SKIP Time namespaces are not supported
 
 Signed-off-by: Andrei Vagin <avagin@gmail.com>
 Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- tools/testing/selftests/timens/.gitignore |   1 +
- tools/testing/selftests/timens/Makefile   |   2 +-
- tools/testing/selftests/timens/timerfd.c  | 129 ++++++++++++++++++++++
- 3 files changed, 131 insertions(+), 1 deletion(-)
- create mode 100644 tools/testing/selftests/timens/timerfd.c
+ tools/testing/selftests/timens/.gitignore     |  2 +
+ tools/testing/selftests/timens/Makefile       |  3 +-
+ tools/testing/selftests/timens/gettime_perf.c | 95 +++++++++++++++++++
+ 3 files changed, 99 insertions(+), 1 deletion(-)
+ create mode 100644 tools/testing/selftests/timens/gettime_perf.c
 
 diff --git a/tools/testing/selftests/timens/.gitignore b/tools/testing/selftests/timens/.gitignore
-index 27a693229ce1..b609f6ee9fb9 100644
+index 3b7eda8f35ce..16292e4d08a5 100644
 --- a/tools/testing/selftests/timens/.gitignore
 +++ b/tools/testing/selftests/timens/.gitignore
-@@ -1 +1,2 @@
+@@ -1,4 +1,6 @@
+ clock_nanosleep
++gettime_perf
++gettime_perf_cold
+ procfs
  timens
-+timerfd
+ timer
 diff --git a/tools/testing/selftests/timens/Makefile b/tools/testing/selftests/timens/Makefile
-index 49a9dcc26c3a..293aed6be95e 100644
+index 08164548a49d..6aefcaccb8f4 100644
 --- a/tools/testing/selftests/timens/Makefile
 +++ b/tools/testing/selftests/timens/Makefile
-@@ -1,4 +1,4 @@
--TEST_GEN_PROGS := timens
-+TEST_GEN_PROGS := timens timerfd
+@@ -1,6 +1,7 @@
+ TEST_GEN_PROGS := timens timerfd timer clock_nanosleep procfs
++TEST_GEN_PROGS_EXTENDED := gettime_perf
  
- CFLAGS := -Wall -Werror
- LDFLAGS := -lrt
-diff --git a/tools/testing/selftests/timens/timerfd.c b/tools/testing/selftests/timens/timerfd.c
+ CFLAGS := -Wall -Werror -pthread
+-LDFLAGS := -lrt
++LDFLAGS := -lrt -ldl
+ 
+ include ../lib.mk
+diff --git a/tools/testing/selftests/timens/gettime_perf.c b/tools/testing/selftests/timens/gettime_perf.c
 new file mode 100644
-index 000000000000..619b096b7fe5
+index 000000000000..7bf841a3967b
 --- /dev/null
-+++ b/tools/testing/selftests/timens/timerfd.c
-@@ -0,0 +1,129 @@
++++ b/tools/testing/selftests/timens/gettime_perf.c
+@@ -0,0 +1,95 @@
 +// SPDX-License-Identifier: GPL-2.0
 +#define _GNU_SOURCE
-+#include <sched.h>
-+
-+#include <sys/timerfd.h>
-+#include <sys/syscall.h>
 +#include <sys/types.h>
-+#include <sys/wait.h>
++#include <sys/stat.h>
++#include <errno.h>
++#include <fcntl.h>
++#include <sched.h>
 +#include <time.h>
-+#include <unistd.h>
-+#include <stdlib.h>
 +#include <stdio.h>
-+#include <stdint.h>
++#include <unistd.h>
++#include <sys/syscall.h>
++#include <dlfcn.h>
 +
 +#include "log.h"
 +#include "timens.h"
 +
-+static int tclock_gettime(clock_t clockid, struct timespec *now)
++typedef int (*vgettime_t)(clockid_t, struct timespec *);
++
++vgettime_t vdso_clock_gettime;
++
++static void fill_function_pointers(void)
 +{
-+	if (clockid == CLOCK_BOOTTIME_ALARM)
-+		clockid = CLOCK_BOOTTIME;
-+	return clock_gettime(clockid, now);
-+}
-+
-+int run_test(int clockid, struct timespec now)
-+{
-+	struct itimerspec new_value;
-+	long long elapsed;
-+	int fd, i;
-+
-+	if (tclock_gettime(clockid, &now))
-+		return pr_perror("clock_gettime(%d)", clockid);
-+
-+	for (i = 0; i < 2; i++) {
-+		int flags = 0;
-+
-+		new_value.it_value.tv_sec = 3600;
-+		new_value.it_value.tv_nsec = 0;
-+		new_value.it_interval.tv_sec = 1;
-+		new_value.it_interval.tv_nsec = 0;
-+
-+		if (i == 1) {
-+			new_value.it_value.tv_sec += now.tv_sec;
-+			new_value.it_value.tv_nsec += now.tv_nsec;
-+		}
-+
-+		fd = timerfd_create(clockid, 0);
-+		if (fd == -1)
-+			return pr_perror("timerfd_create(%d)", clockid);
-+
-+		if (i == 1)
-+			flags |= TFD_TIMER_ABSTIME;
-+
-+		if (timerfd_settime(fd, flags, &new_value, NULL))
-+			return pr_perror("timerfd_settime(%d)", clockid);
-+
-+		if (timerfd_gettime(fd, &new_value))
-+			return pr_perror("timerfd_gettime(%d)", clockid);
-+
-+		elapsed = new_value.it_value.tv_sec;
-+		if (abs(elapsed - 3600) > 60) {
-+			ksft_test_result_fail("clockid: %d elapsed: %lld\n",
-+					      clockid, elapsed);
-+			return 1;
-+		}
-+
-+		close(fd);
++	void *vdso = dlopen("linux-vdso.so.1",
++			    RTLD_LAZY | RTLD_LOCAL | RTLD_NOLOAD);
++	if (!vdso)
++		vdso = dlopen("linux-gate.so.1",
++			      RTLD_LAZY | RTLD_LOCAL | RTLD_NOLOAD);
++	if (!vdso) {
++		pr_err("[WARN]\tfailed to find vDSO\n");
++		return;
 +	}
 +
-+	ksft_test_result_pass("clockid=%d\n", clockid);
++	vdso_clock_gettime = (vgettime_t)dlsym(vdso, "__vdso_clock_gettime");
++	if (!vdso_clock_gettime)
++		pr_err("Warning: failed to find clock_gettime in vDSO\n");
 +
-+	return 0;
++}
++
++static void test(clock_t clockid, char *clockstr, bool in_ns)
++{
++	struct timespec tp, start;
++	long i = 0;
++	const int timeout = 3;
++
++	vdso_clock_gettime(clockid, &start);
++	tp = start;
++	for (tp = start; start.tv_sec + timeout > tp.tv_sec ||
++			 (start.tv_sec + timeout == tp.tv_sec &&
++			  start.tv_nsec > tp.tv_nsec); i++) {
++		vdso_clock_gettime(clockid, &tp);
++	}
++
++	ksft_test_result_pass("%s:\tclock: %10s\tcycles:\t%10ld\n",
++			      in_ns ? "ns" : "host", clockstr, i);
 +}
 +
 +int main(int argc, char *argv[])
 +{
-+	int ret, status, len, fd;
-+	char buf[4096];
-+	pid_t pid;
-+	struct timespec btime_now, mtime_now;
++	time_t offset = 10;
++	int nsfd;
++
++	ksft_set_plan(8);
++
++	fill_function_pointers();
++
++	test(CLOCK_MONOTONIC, "monotonic", false);
++	test(CLOCK_MONOTONIC_COARSE, "monotonic-coarse", false);
++	test(CLOCK_MONOTONIC_RAW, "monotonic-raw", false);
++	test(CLOCK_BOOTTIME, "boottime", false);
 +
 +	nscheck();
-+
-+	ksft_set_plan(3);
-+
-+	clock_gettime(CLOCK_MONOTONIC, &mtime_now);
-+	clock_gettime(CLOCK_BOOTTIME, &btime_now);
 +
 +	if (unshare_timens())
 +		return 1;
 +
-+	len = snprintf(buf, sizeof(buf), "%d %d 0\n%d %d 0",
-+			CLOCK_MONOTONIC, 70 * 24 * 3600,
-+			CLOCK_BOOTTIME, 9 * 24 * 3600);
-+	fd = open("/proc/self/timens_offsets", O_WRONLY);
-+	if (fd < 0)
-+		return pr_perror("/proc/self/timens_offsets");
++	nsfd = open("/proc/self/ns/time_for_children", O_RDONLY);
++	if (nsfd < 0)
++		return pr_perror("Can't open a time namespace");
 +
-+	if (write(fd, buf, len) != len)
-+		return pr_perror("/proc/self/timens_offsets");
++	if (_settime(CLOCK_MONOTONIC, offset))
++		return 1;
++	if (_settime(CLOCK_BOOTTIME, offset))
++		return 1;
 +
-+	close(fd);
-+	mtime_now.tv_sec += 70 * 24 * 3600;
-+	btime_now.tv_sec += 9 * 24 * 3600;
++	if (setns(nsfd, CLONE_NEWTIME))
++		return pr_perror("setns");
 +
-+	pid = fork();
-+	if (pid < 0)
-+		return pr_perror("Unable to fork");
-+	if (pid == 0) {
-+		ret = 0;
-+		ret |= run_test(CLOCK_BOOTTIME, btime_now);
-+		ret |= run_test(CLOCK_MONOTONIC, mtime_now);
-+		ret |= run_test(CLOCK_BOOTTIME_ALARM, btime_now);
++	test(CLOCK_MONOTONIC, "monotonic", true);
++	test(CLOCK_MONOTONIC_COARSE, "monotonic-coarse", true);
++	test(CLOCK_MONOTONIC_RAW, "monotonic-raw", true);
++	test(CLOCK_BOOTTIME, "boottime", true);
 +
-+		if (ret)
-+			ksft_exit_fail();
-+		ksft_exit_pass();
-+		return ret;
-+	}
-+
-+	if (waitpid(pid, &status, 0) != pid)
-+		return pr_perror("Unable to wait the child process");
-+
-+	if (WIFEXITED(status))
-+		return WEXITSTATUS(status);
-+
-+	return 1;
++	ksft_exit_pass();
++	return 0;
 +}
-+
 -- 
 2.24.0
