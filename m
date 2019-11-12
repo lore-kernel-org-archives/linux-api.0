@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv8 24/34] x86/vdso: Handle faults on timens page
-Date: Tue, 12 Nov 2019 01:27:13 +0000
-Message-ID: <20191112012724.250792-25-dima@arista.com>
+Subject: [PATCHv8 22/34] x86/vdso: Add timens page
+Date: Tue, 12 Nov 2019 01:27:11 +0000
+Message-ID: <20191112012724.250792-23-dima@arista.com>
 References: <20191112012724.250792-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,124 +12,167 @@ To: linux-kernel@vger.kernel.org
 Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-If a task belongs to a time namespace then the VVAR page which contains
-the system wide VDSO data is replaced with a namespace specific page
-which has the same layout as the VVAR page.
+To support time namespaces in the VDSO with a minimal impact on regular non
+time namespace affected tasks, the namespace handling needs to be hidden in
+a slow path.
 
-Co-developed-by: Andrei Vagin <avagin@gmail.com>
-Signed-off-by: Andrei Vagin <avagin@gmail.com>
+The most obvious place is vdso_seq_begin(). If a task belongs to a time
+namespace then the VVAR page which contains the system wide VDSO data is
+replaced with a namespace specific page which has the same layout as the
+VVAR page. That page has vdso_data->seq set to 1 to enforce the slow path
+and vdso_data->clock_mode set to VCLOCK_TIMENS to enforce the time
+namespace handling path.
+
+The extra check in the case that vdso_data->seq is odd, e.g. a concurrent
+update of the VDSO data is in progress, is not really affecting regular
+tasks which are not part of a time namespace as the task is spin waiting
+for the update to finish and vdso_data->seq to become even again.
+
+If a time namespace task hits that code path, it invokes the corresponding
+time getter function which retrieves the real VVAR page, reads host time
+and then adds the offset for the requested clock which is stored in the
+special VVAR page.
+
+Allocate Timens page among VVAR pages and place vdso_data on it.
+Provide __arch_get_timens_vdso_data() helper for VDSO code to get the
+code-relative position of VVARs on that special page.
+
+Co-developed-by: Andrei Vagin <avagin@openvz.org>
+Signed-off-by: Andrei Vagin <avagin@openvz.org>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- arch/x86/entry/vdso/vma.c | 53 +++++++++++++++++++++++++++++++++++++--
- mm/mmap.c                 |  2 ++
- 2 files changed, 53 insertions(+), 2 deletions(-)
+ arch/x86/Kconfig                         |  1 +
+ arch/x86/entry/vdso/vdso-layout.lds.S    | 11 +++++++++--
+ arch/x86/entry/vdso/vdso2c.c             |  3 +++
+ arch/x86/include/asm/vdso.h              |  1 +
+ arch/x86/include/asm/vdso/gettimeofday.h |  9 +++++++++
+ arch/x86/include/asm/vvar.h              |  5 ++++-
+ 6 files changed, 27 insertions(+), 3 deletions(-)
 
-diff --git a/arch/x86/entry/vdso/vma.c b/arch/x86/entry/vdso/vma.c
-index 5dab706aca2e..f6e13ab29d94 100644
---- a/arch/x86/entry/vdso/vma.c
-+++ b/arch/x86/entry/vdso/vma.c
-@@ -14,11 +14,13 @@
- #include <linux/elf.h>
- #include <linux/cpu.h>
- #include <linux/ptrace.h>
-+#include <linux/time_namespace.h>
- #include <asm/pvclock.h>
- #include <asm/vgtod.h>
- #include <asm/proto.h>
- #include <asm/vdso.h>
- #include <asm/vvar.h>
-+#include <asm/tlb.h>
- #include <asm/page.h>
- #include <asm/desc.h>
- #include <asm/cpufeature.h>
-@@ -107,10 +109,36 @@ static int vvar_mremap(const struct vm_special_mapping *sm,
- 	return 0;
- }
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 2329f9e5b57c..58dacb97545f 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -126,6 +126,7 @@ config X86
+ 	select GENERIC_STRNLEN_USER
+ 	select GENERIC_TIME_VSYSCALL
+ 	select GENERIC_GETTIMEOFDAY
++	select GENERIC_VDSO_TIME_NS
+ 	select GUP_GET_PTE_LOW_HIGH		if X86_PAE
+ 	select HARDLOCKUP_CHECK_TIMESTAMP	if X86_64
+ 	select HAVE_ACPI_APEI			if ACPI
+diff --git a/arch/x86/entry/vdso/vdso-layout.lds.S b/arch/x86/entry/vdso/vdso-layout.lds.S
+index 2330daad67c3..ea7e0155c604 100644
+--- a/arch/x86/entry/vdso/vdso-layout.lds.S
++++ b/arch/x86/entry/vdso/vdso-layout.lds.S
+@@ -16,8 +16,8 @@ SECTIONS
+ 	 * segment.
+ 	 */
+ 
+-	vvar_start = . - 3 * PAGE_SIZE;
+-	vvar_page = vvar_start;
++	vvar_start = . - 4 * PAGE_SIZE;
++	vvar_page  = vvar_start;
+ 
+ 	/* Place all vvars at the offsets in asm/vvar.h. */
+ #define EMIT_VVAR(name, offset) vvar_ ## name = vvar_page + offset;
+@@ -26,6 +26,13 @@ SECTIONS
+ 
+ 	pvclock_page = vvar_start + PAGE_SIZE;
+ 	hvclock_page = vvar_start + 2 * PAGE_SIZE;
++	timens_page  = vvar_start + 3 * PAGE_SIZE;
++
++#undef _ASM_X86_VVAR_H
++	/* Place all vvars in timens too at the offsets in asm/vvar.h. */
++#define EMIT_VVAR(name, offset) timens_ ## name = timens_page + offset;
++#include <asm/vvar.h>
++#undef EMIT_VVAR
+ 
+ 	. = SIZEOF_HEADERS;
+ 
+diff --git a/arch/x86/entry/vdso/vdso2c.c b/arch/x86/entry/vdso/vdso2c.c
+index 3a4d8d4d39f8..3842873b3ae3 100644
+--- a/arch/x86/entry/vdso/vdso2c.c
++++ b/arch/x86/entry/vdso/vdso2c.c
+@@ -75,12 +75,14 @@ enum {
+ 	sym_vvar_page,
+ 	sym_pvclock_page,
+ 	sym_hvclock_page,
++	sym_timens_page,
+ };
+ 
+ const int special_pages[] = {
+ 	sym_vvar_page,
+ 	sym_pvclock_page,
+ 	sym_hvclock_page,
++	sym_timens_page,
+ };
+ 
+ struct vdso_sym {
+@@ -93,6 +95,7 @@ struct vdso_sym required_syms[] = {
+ 	[sym_vvar_page] = {"vvar_page", true},
+ 	[sym_pvclock_page] = {"pvclock_page", true},
+ 	[sym_hvclock_page] = {"hvclock_page", true},
++	[sym_timens_page] = {"timens_page", true},
+ 	{"VDSO32_NOTE_MASK", true},
+ 	{"__kernel_vsyscall", true},
+ 	{"__kernel_sigreturn", true},
+diff --git a/arch/x86/include/asm/vdso.h b/arch/x86/include/asm/vdso.h
+index 230474e2ddb5..bbcdc7b8f963 100644
+--- a/arch/x86/include/asm/vdso.h
++++ b/arch/x86/include/asm/vdso.h
+@@ -21,6 +21,7 @@ struct vdso_image {
+ 	long sym_vvar_page;
+ 	long sym_pvclock_page;
+ 	long sym_hvclock_page;
++	long sym_timens_page;
+ 	long sym_VDSO32_NOTE_MASK;
+ 	long sym___kernel_sigreturn;
+ 	long sym___kernel_rt_sigreturn;
+diff --git a/arch/x86/include/asm/vdso/gettimeofday.h b/arch/x86/include/asm/vdso/gettimeofday.h
+index e9ee139cf29e..4f938f8e756b 100644
+--- a/arch/x86/include/asm/vdso/gettimeofday.h
++++ b/arch/x86/include/asm/vdso/gettimeofday.h
+@@ -21,6 +21,7 @@
+ #include <clocksource/hyperv_timer.h>
+ 
+ #define __vdso_data (VVAR(_vdso_data))
++#define __timens_vdso_data (TIMENS(_vdso_data))
+ 
+ #define VDSO_HAS_TIME 1
+ 
+@@ -56,6 +57,14 @@ extern struct ms_hyperv_tsc_page hvclock_page
+ 	__attribute__((visibility("hidden")));
+ #endif
  
 +#ifdef CONFIG_TIME_NS
-+static struct page *find_timens_vvar_page(struct vm_area_struct *vma)
++static __always_inline
++const struct vdso_data *__arch_get_timens_vdso_data(void)
 +{
-+	if (likely(vma->vm_mm == current->mm))
-+		return current->nsproxy->time_ns->vvar_page;
-+
-+	/*
-+	 * VM_PFNMAP | VM_IO protect .fault() handler from being called
-+	 * through interfaces like /proc/$pid/mem or
-+	 * process_vm_{readv,writev}() as long as there's no .access()
-+	 * in special_mapping_vmops().
-+	 * For more details check_vma_flags() and __access_remote_vm()
-+	 */
-+
-+	WARN(1, "vvar_page accessed remotely");
-+
-+	return NULL;
-+}
-+#else
-+static inline struct page *find_timens_vvar_page(struct vm_area_struct *vma)
-+{
-+	return NULL;
++	return __timens_vdso_data;
 +}
 +#endif
 +
- static vm_fault_t vvar_fault(const struct vm_special_mapping *sm,
- 		      struct vm_area_struct *vma, struct vm_fault *vmf)
- {
- 	const struct vdso_image *image = vma->vm_mm->context.vdso_image;
-+	unsigned long pfn;
- 	long sym_offset;
+ #ifndef BUILD_VDSO32
  
- 	if (!image)
-@@ -130,8 +158,21 @@ static vm_fault_t vvar_fault(const struct vm_special_mapping *sm,
- 		return VM_FAULT_SIGBUS;
+ static __always_inline
+diff --git a/arch/x86/include/asm/vvar.h b/arch/x86/include/asm/vvar.h
+index ff2de3025388..183e98e49ab9 100644
+--- a/arch/x86/include/asm/vvar.h
++++ b/arch/x86/include/asm/vvar.h
+@@ -33,9 +33,12 @@ extern char __vvar_page;
  
- 	if (sym_offset == image->sym_vvar_page) {
--		return vmf_insert_pfn(vma, vmf->address,
--				__pa_symbol(&__vvar_page) >> PAGE_SHIFT);
-+		struct page *timens_page = find_timens_vvar_page(vma);
-+
-+		pfn = __pa_symbol(&__vvar_page) >> PAGE_SHIFT;
-+
-+		/*
-+		 * If a task belongs to a time namespace then a namespace
-+		 * specific VVAR is mapped with the sym_vvar_page offset and
-+		 * the real VVAR page is mapped with the sym_timens_page
-+		 * offset.
-+		 * See also the comment near timens_setup_vdso_data().
-+		 */
-+		if (timens_page)
-+			pfn = page_to_pfn(timens_page);
-+
-+		return vmf_insert_pfn(vma, vmf->address, pfn);
- 	} else if (sym_offset == image->sym_pvclock_page) {
- 		struct pvclock_vsyscall_time_info *pvti =
- 			pvclock_get_pvti_cpu0_va();
-@@ -146,6 +187,14 @@ static vm_fault_t vvar_fault(const struct vm_special_mapping *sm,
- 		if (tsc_pg && vclock_was_used(VCLOCK_HVCLOCK))
- 			return vmf_insert_pfn(vma, vmf->address,
- 					virt_to_phys(tsc_pg) >> PAGE_SHIFT);
-+	} else if (sym_offset == image->sym_timens_page) {
-+		struct page *timens_page = find_timens_vvar_page(vma);
-+
-+		if (!timens_page)
-+			return VM_FAULT_SIGBUS;
-+
-+		pfn = __pa_symbol(&__vvar_page) >> PAGE_SHIFT;
-+		return vmf_insert_pfn(vma, vmf->address, pfn);
- 	}
+ #define DECLARE_VVAR(offset, type, name)				\
+ 	extern type vvar_ ## name[CS_BASES]				\
+-	__attribute__((visibility("hidden")));
++	__attribute__((visibility("hidden")));				\
++	extern type timens_ ## name[CS_BASES]				\
++	__attribute__((visibility("hidden")));				\
  
- 	return VM_FAULT_SIGBUS;
-diff --git a/mm/mmap.c b/mm/mmap.c
-index 4d4db76a07da..73ec982f8b82 100644
---- a/mm/mmap.c
-+++ b/mm/mmap.c
-@@ -3357,6 +3357,8 @@ static const struct vm_operations_struct special_mapping_vmops = {
- 	.fault = special_mapping_fault,
- 	.mremap = special_mapping_mremap,
- 	.name = special_mapping_name,
-+	/* vDSO code relies that VVAR can't be accessed remotely */
-+	.access = NULL,
- };
+ #define VVAR(name) (vvar_ ## name)
++#define TIMENS(name) (timens_ ## name)
  
- static const struct vm_operations_struct legacy_special_mapping_vmops = {
+ #define DEFINE_VVAR(type, name)						\
+ 	type name[CS_BASES]						\
 -- 
 2.24.0
