@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv8 19/34] x86/vdso: Restrict splitting VVAR VMA
-Date: Tue, 12 Nov 2019 01:27:08 +0000
-Message-ID: <20191112012724.250792-20-dima@arista.com>
+Subject: [PATCHv8 21/34] x86/vdso: Provide vdso_data offset on vvar_page
+Date: Tue, 12 Nov 2019 01:27:10 +0000
+Message-ID: <20191112012724.250792-22-dima@arista.com>
 References: <20191112012724.250792-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,50 +12,110 @@ To: linux-kernel@vger.kernel.org
 Cc: Dmitry Safonov <0x7f454c46@gmail.com>, Dmitry Safonov <dima@arista.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Forbid splitting VVAR resulting in stricter ABI and reducing amount
-of corner-cases to consider while working further on VDSO.
+VDSO support for Time namespace needs to set up a page with the same
+layout as VVAR. That timens page will be placed on position of VVAR page
+inside namespace. That page has vdso_data->seq set to 1 to enforce
+the slow path and vdso_data->clock_mode set to VCLOCK_TIMENS to enforce
+the time namespace handling path.
 
-As offset from timens to VVAR page is computed compile-time,
-the pages in VVAR should stay together and not being partically
-mremap()'ed.
+To prepare timens page kernel needs to know the vdso_data offset.
+Provide arch_get_vdso_data() helper for locating vdso_data on VVAR page.
 
 Co-developed-by: Andrei Vagin <avagin@openvz.org>
 Signed-off-by: Andrei Vagin <avagin@openvz.org>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- arch/x86/entry/vdso/vma.c | 13 +++++++++++++
- 1 file changed, 13 insertions(+)
+ arch/x86/entry/vdso/vdso-layout.lds.S |  2 --
+ arch/x86/entry/vdso/vma.c             | 11 +++++++++++
+ arch/x86/include/asm/vvar.h           |  8 ++++----
+ arch/x86/kernel/vmlinux.lds.S         |  4 +---
+ include/linux/time_namespace.h        |  1 +
+ 5 files changed, 17 insertions(+), 9 deletions(-)
 
+diff --git a/arch/x86/entry/vdso/vdso-layout.lds.S b/arch/x86/entry/vdso/vdso-layout.lds.S
+index 93c6dc7812d0..2330daad67c3 100644
+--- a/arch/x86/entry/vdso/vdso-layout.lds.S
++++ b/arch/x86/entry/vdso/vdso-layout.lds.S
+@@ -21,9 +21,7 @@ SECTIONS
+ 
+ 	/* Place all vvars at the offsets in asm/vvar.h. */
+ #define EMIT_VVAR(name, offset) vvar_ ## name = vvar_page + offset;
+-#define __VVAR_KERNEL_LDS
+ #include <asm/vvar.h>
+-#undef __VVAR_KERNEL_LDS
+ #undef EMIT_VVAR
+ 
+ 	pvclock_page = vvar_start + PAGE_SIZE;
 diff --git a/arch/x86/entry/vdso/vma.c b/arch/x86/entry/vdso/vma.c
-index f5937742b290..000db8282cc8 100644
+index 000db8282cc8..5dab706aca2e 100644
 --- a/arch/x86/entry/vdso/vma.c
 +++ b/arch/x86/entry/vdso/vma.c
-@@ -84,6 +84,18 @@ static int vdso_mremap(const struct vm_special_mapping *sm,
- 	return 0;
- }
+@@ -24,6 +24,17 @@
+ #include <asm/cpufeature.h>
+ #include <clocksource/hyperv_timer.h>
  
-+static int vvar_mremap(const struct vm_special_mapping *sm,
-+		struct vm_area_struct *new_vma)
++#undef _ASM_X86_VVAR_H
++#define EMIT_VVAR(name, offset)	\
++	const size_t name ## _offset = offset;
++#include <asm/vvar.h>
++
++struct vdso_data *arch_get_vdso_data(void *vvar_page)
 +{
-+	unsigned long new_size = new_vma->vm_end - new_vma->vm_start;
-+	const struct vdso_image *image = new_vma->vm_mm->context.vdso_image;
-+
-+	if (new_size != -image->sym_vvar_start)
-+		return -EINVAL;
-+
-+	return 0;
++	return (struct vdso_data *)(vvar_page + _vdso_data_offset);
 +}
++#undef EMIT_VVAR
 +
- static vm_fault_t vvar_fault(const struct vm_special_mapping *sm,
- 		      struct vm_area_struct *vma, struct vm_fault *vmf)
- {
-@@ -136,6 +148,7 @@ static const struct vm_special_mapping vdso_mapping = {
- static const struct vm_special_mapping vvar_mapping = {
- 	.name = "[vvar]",
- 	.fault = vvar_fault,
-+	.mremap = vvar_mremap,
- };
+ #if defined(CONFIG_X86_64)
+ unsigned int __read_mostly vdso64_enabled = 1;
+ #endif
+diff --git a/arch/x86/include/asm/vvar.h b/arch/x86/include/asm/vvar.h
+index 32f5d9a0b90e..ff2de3025388 100644
+--- a/arch/x86/include/asm/vvar.h
++++ b/arch/x86/include/asm/vvar.h
+@@ -19,10 +19,10 @@
+ #ifndef _ASM_X86_VVAR_H
+ #define _ASM_X86_VVAR_H
  
- /*
+-#if defined(__VVAR_KERNEL_LDS)
+-
+-/* The kernel linker script defines its own magic to put vvars in the
+- * right place.
++#ifdef EMIT_VVAR
++/*
++ * EMIT_VVAR() is used by the kernel linker script to put vvars in the
++ * right place. Also, it's used by kernel code to import offsets values.
+  */
+ #define DECLARE_VVAR(offset, type, name) \
+ 	EMIT_VVAR(name, offset)
+diff --git a/arch/x86/kernel/vmlinux.lds.S b/arch/x86/kernel/vmlinux.lds.S
+index 3a1a819da137..e3296aa028fe 100644
+--- a/arch/x86/kernel/vmlinux.lds.S
++++ b/arch/x86/kernel/vmlinux.lds.S
+@@ -193,12 +193,10 @@ SECTIONS
+ 		__vvar_beginning_hack = .;
+ 
+ 		/* Place all vvars at the offsets in asm/vvar.h. */
+-#define EMIT_VVAR(name, offset) 			\
++#define EMIT_VVAR(name, offset)				\
+ 		. = __vvar_beginning_hack + offset;	\
+ 		*(.vvar_ ## name)
+-#define __VVAR_KERNEL_LDS
+ #include <asm/vvar.h>
+-#undef __VVAR_KERNEL_LDS
+ #undef EMIT_VVAR
+ 
+ 		/*
+diff --git a/include/linux/time_namespace.h b/include/linux/time_namespace.h
+index a68b1ab7b5bb..90e82654b4ce 100644
+--- a/include/linux/time_namespace.h
++++ b/include/linux/time_namespace.h
+@@ -37,6 +37,7 @@ extern struct time_namespace *copy_time_ns(unsigned long flags,
+ 	struct user_namespace *user_ns, struct time_namespace *old_ns);
+ extern void free_time_ns(struct kref *kref);
+ extern int timens_on_fork(struct nsproxy *nsproxy, struct task_struct *tsk);
++extern struct vdso_data *arch_get_vdso_data(void *vvar_page);
+ 
+ static inline void put_time_ns(struct time_namespace *ns)
+ {
 -- 
 2.24.0
