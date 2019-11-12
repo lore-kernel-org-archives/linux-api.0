@@ -1,7 +1,7 @@
 From: Dmitry Safonov <dima@arista.com>
-Subject: [PATCHv8 13/34] timerfd: Make timerfd_settime() time namespace aware
-Date: Tue, 12 Nov 2019 01:27:02 +0000
-Message-ID: <20191112012724.250792-14-dima@arista.com>
+Subject: [PATCHv8 10/34] posix-timers: Use clock_get_ktime() in common_timer_get()
+Date: Tue, 12 Nov 2019 01:26:59 +0000
+Message-ID: <20191112012724.250792-11-dima@arista.com>
 References: <20191112012724.250792-1-dima@arista.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,37 +14,42 @@ List-Id: linux-api@vger.kernel.org
 
 From: Andrei Vagin <avagin@gmail.com>
 
-timerfd_settime() accepts an absolute value of the expiration time if
-TFD_TIMER_ABSTIME is specified. This value is in task's time namespace
-and has to be converted to the host's time namespace.
+Now, when the clock_get_ktime() callback exists, the suboptimal
+timespec64-based conversion can be removed from common_timer_get().
 
+Suggested-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Andrei Vagin <avagin@gmail.com>
 Co-developed-by: Dmitry Safonov <dima@arista.com>
 Signed-off-by: Dmitry Safonov <dima@arista.com>
 ---
- fs/timerfd.c | 3 +++
- 1 file changed, 3 insertions(+)
+ kernel/time/posix-timers.c | 8 +-------
+ 1 file changed, 1 insertion(+), 7 deletions(-)
 
-diff --git a/fs/timerfd.c b/fs/timerfd.c
-index 48305ba41e3c..f9da5752a79e 100644
---- a/fs/timerfd.c
-+++ b/fs/timerfd.c
-@@ -26,6 +26,7 @@
- #include <linux/syscalls.h>
- #include <linux/compat.h>
- #include <linux/rcupdate.h>
-+#include <linux/time_namespace.h>
+diff --git a/kernel/time/posix-timers.c b/kernel/time/posix-timers.c
+index a1f6b968c5d8..fe1de4f71ace 100644
+--- a/kernel/time/posix-timers.c
++++ b/kernel/time/posix-timers.c
+@@ -665,7 +665,6 @@ void common_timer_get(struct k_itimer *timr, struct itimerspec64 *cur_setting)
+ {
+ 	const struct k_clock *kc = timr->kclock;
+ 	ktime_t now, remaining, iv;
+-	struct timespec64 ts64;
+ 	bool sig_none;
  
- struct timerfd_ctx {
- 	union {
-@@ -196,6 +197,8 @@ static int timerfd_setup(struct timerfd_ctx *ctx, int flags,
+ 	sig_none = timr->it_sigev_notify == SIGEV_NONE;
+@@ -683,12 +682,7 @@ void common_timer_get(struct k_itimer *timr, struct itimerspec64 *cur_setting)
+ 			return;
  	}
  
- 	if (texp != 0) {
-+		if (flags & TFD_TIMER_ABSTIME)
-+			texp = timens_ktime_to_host(clockid, texp);
- 		if (isalarm(ctx)) {
- 			if (flags & TFD_TIMER_ABSTIME)
- 				alarm_start(&ctx->t.alarm, texp);
+-	/*
+-	 * The timespec64 based conversion is suboptimal, but it's not
+-	 * worth to implement yet another callback.
+-	 */
+-	kc->clock_get_timespec(timr->it_clock, &ts64);
+-	now = timespec64_to_ktime(ts64);
++	now = kc->clock_get_ktime(timr->it_clock);
+ 
+ 	/*
+ 	 * When a requeue is pending or this is a SIGEV_NONE timer move the
 -- 
 2.24.0
