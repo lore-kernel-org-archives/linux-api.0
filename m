@@ -1,101 +1,85 @@
-From: Topi Miettinen <toiwoton@gmail.com>
-Subject: Re: [PATCH] Allow restricting permissions in /proc/sys
-Date: Wed, 13 Nov 2019 12:52:02 +0200
-Message-ID: <0ba24187-caf6-c851-baaa-f768885cda47@gmail.com>
-References: <74a91362-247c-c749-5200-7bdce704ed9e@gmail.com>
- <20191112232239.yevpeemgxz4wy32b@wittgenstein>
- <CALCETrUEQMdugz1t6HfK5MvDq_kOw13yuF+98euqVJgZ4WR1VA@mail.gmail.com>
+From: Naresh Kamboju <naresh.kamboju@linaro.org>
+Subject: Re: [PATCH v4 2/2] pidfd: add tests for NSpid info in fdinfo
+Date: Wed, 13 Nov 2019 17:22:33 +0530
+Message-ID: <CA+G9fYu=Z+mZs7+571PbChODV2drUYrxkdWEb7=XqkK2O3_Tyw@mail.gmail.com>
+References: <20191011122323.7770-1-ckellner@redhat.com> <20191014162034.2185-1-ckellner@redhat.com>
+ <20191014162034.2185-2-ckellner@redhat.com> <20191015100743.t6gowsic7c347ldv@wittgenstein>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CALCETrUEQMdugz1t6HfK5MvDq_kOw13yuF+98euqVJgZ4WR1VA@mail.gmail.com>
+In-Reply-To: <20191015100743.t6gowsic7c347ldv@wittgenstein>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>
-Cc: Luis Chamberlain <mcgrof@kernel.org>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "open list:FILESYSTEMS (VFS and infrastructure)" <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>
+To: Christian Brauner <christian.brauner@ubuntu.com>
+Cc: Christian Kellner <ckellner@redhat.com>, open list <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, Jann Horn <jannh@google.com>, Christian Kellner <christian@kellner.me>, Christian Brauner <christian@ubuntu.com>, Shuah Khan <shuah@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, "Peter Zijlstra (Intel)" <peterz@infradead.org>, Ingo Molnar <mingo@kernel.org>, Michal Hocko <mhocko@suse.com>, Thomas Gleixner <tglx@linutronix.de>, Elena Reshetova <elena.reshetova@intel.com>, Roman Gushchin <guro@fb.com>, Andrea Arcangeli <aarcange@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Aleksa Sarai <cyphar@cyphar.com>, "Dmitry V. Levin" <ldv@altlinux.org>, "open list:KERNEL SELFTEST FRAMEWORK" <linux-kselftest@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On 13.11.2019 6.50, Andy Lutomirski wrote:
-> On Tue, Nov 12, 2019 at 3:22 PM Christian Brauner
-> <christian.brauner@ubuntu.com> wrote:
->>
->> [Cc+ linux-api@vger.kernel.org]
->>
->> since that's potentially relevant to quite a few people.
->>
->> On Sun, Nov 03, 2019 at 04:55:48PM +0200, Topi Miettinen wrote:
->>> Several items in /proc/sys need not be accessible to unprivileged
->>> tasks. Let the system administrator change the permissions, but only
->>> to more restrictive modes than what the sysctl tables allow.
->>>
->>> Signed-off-by: Topi Miettinen <toiwoton@gmail.com>
->>> ---
->>>   fs/proc/proc_sysctl.c | 41 +++++++++++++++++++++++++++++++----------
->>>   1 file changed, 31 insertions(+), 10 deletions(-)
->>>
->>> diff --git a/fs/proc/proc_sysctl.c b/fs/proc/proc_sysctl.c
->>> index d80989b6c344..88c4ca7d2782 100644
->>> --- a/fs/proc/proc_sysctl.c
->>> +++ b/fs/proc/proc_sysctl.c
->>> @@ -818,6 +818,10 @@ static int proc_sys_permission(struct inode *inode, int
->>> mask)
->>>          if ((mask & MAY_EXEC) && S_ISREG(inode->i_mode))
->>>                  return -EACCES;
->>>
->>> +       error = generic_permission(inode, mask);
->>> +       if (error)
->>> +               return error;
->>> +
->>>          head = grab_header(inode);
->>>          if (IS_ERR(head))
->>>                  return PTR_ERR(head);
->>> @@ -837,9 +841,35 @@ static int proc_sys_setattr(struct dentry *dentry,
->>> struct iattr *attr)
->>>          struct inode *inode = d_inode(dentry);
->>>          int error;
->>>
->>> -       if (attr->ia_valid & (ATTR_MODE | ATTR_UID | ATTR_GID))
->>> +       if (attr->ia_valid & (ATTR_UID | ATTR_GID))
->>>                  return -EPERM;
-> 
-> Supporting at least ATTR_GID would make this much more useful.
+Hi Christian,
 
-Yes, also XATTR/ACL support would be useful. But so far I've tried to 
-allow only tightening of permissions.
+On Tue, 15 Oct 2019 at 15:37, Christian Brauner
+<christian.brauner@ubuntu.com> wrote:
+>
+> On Mon, Oct 14, 2019 at 06:20:33PM +0200, Christian Kellner wrote:
+> > From: Christian Kellner <christian@kellner.me>
+> >
+> > Add a test that checks that if pid namespaces are configured the fdinfo
+> > file of a pidfd contains an NSpid: entry containing the process id in
+> > the current and additionally all nested namespaces. In the case that
+> > a pidfd is from a pid namespace not in the same namespace hierarchy as
+> > the process accessing the fdinfo file, ensure the 'NSpid' shows 0 for
+> > that pidfd, analogous to the 'Pid' entry.
+> >
+> > Signed-off-by: Christian Kellner <christian@kellner.me>
+>
+> That looks reasonable to me.
 
->>>
->>> +       if (attr->ia_valid & ATTR_MODE) {
->>> +               struct ctl_table_header *head = grab_header(inode);
->>> +               struct ctl_table *table = PROC_I(inode)->sysctl_entry;
->>> +               umode_t max_mode = 0777; /* Only these bits may change */
->>> +
->>> +               if (IS_ERR(head))
->>> +                       return PTR_ERR(head);
->>> +
->>> +               if (!table) /* global root - r-xr-xr-x */
->>> +                       max_mode &= ~0222;
->>> +               else /*
->>> +                     * Don't allow permissions to become less
->>> +                     * restrictive than the sysctl table entry
->>> +                     */
->>> +                       max_mode &= table->mode;
-> 
-> Style nit: please put braces around multi-line if and else branches,
-> even if they're only multi-line because of comments.
+on arm64 Juno-r2, Hikey (hi6220) and dragonboard 410c and arm32
+Beagleboard x15 test pidfd_test failed.
+and on x86_64 and i386 test fails intermittently with TIMEOUT error.
+Test code is being used from linux next tree.
 
-OK, thanks.
+Juno-r2 test output:
+--------------------------
+# selftests pidfd pidfd_test
+pidfd: pidfd_test_ #
+# TAP version 13
+version: 13_ #
+# 1..4
+: _ #
+# # Parent pid 10586
+Parent: pid_10586 #
+# # Parent Waiting for Child (10587) to complete.
+Parent: Waiting_for #
+# # Time waited for child 0
+Time: waited_for #
+# Bail out! pidfd_poll check for premature notification on child
+thread exec test Failed
+out!: pidfd_poll_check #
+# # Planned tests != run tests (4 != 0)
+Planned: tests_!= #
+# # Pass 0 Fail 0 Xfail 0 Xpass 0 Skip 0 Error 0
+Pass: 0_Fail #
+[FAIL] 1 selftests pidfd pidfd_test # exit=1
+selftests: pidfd_pidfd_test [FAIL]
 
->>> +
->>> +               sysctl_head_finish(head);
->>> +
->>> +               /* Execute bits only allowed for directories */
->>> +               if (!S_ISDIR(inode->i_mode))
->>> +                       max_mode &= ~0111;
-> 
-> Why is this needed?
-> 
+arm32 x15 output log,
+-----------------------------
+# selftests pidfd pidfd_test
+pidfd: pidfd_test_ #
+[FAIL] 1 selftests pidfd pidfd_test # TIMEOUT
+selftests: pidfd_pidfd_test [FAIL]
 
-In general, /proc/sys does not allow executable permissions for the 
-files, so I've continued this policy.
+x86_64 output log,
+-------------------------
+# selftests pidfd pidfd_test
+pidfd: pidfd_test_ #
+[FAIL] 1 selftests pidfd pidfd_test # TIMEOUT
+selftests: pidfd_pidfd_test [FAIL]
 
--Topi
+Test results comparison,
+https://qa-reports.linaro.org/lkft/linux-mainline-oe/tests/kselftest/pidfd_pidfd_test
+https://qa-reports.linaro.org/lkft/linux-next-oe/tests/kselftest/pidfd_pidfd_test
+
+link,
+https://lkft.validation.linaro.org/scheduler/job/993549#L17835
+
+- Naresh
