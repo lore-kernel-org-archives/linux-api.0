@@ -1,61 +1,77 @@
-From: "Alexander E. Patrakov" <patrakov@gmail.com>
-Subject: Re: [PATCH v24 11/12] LRNG - add SP800-90B compliant health tests
-Date: Wed, 13 Nov 2019 11:02:40 +0500
-Message-ID: <CAN_LGv3LUjJ=8ZZxaJ=c7uDPb=ayvCNPE-UshxgBUK-Jf7qNmQ@mail.gmail.com>
-References: <6157374.ptSnyUpaCn@positron.chronox.de> <3385183.Cb3iLDTLdO@positron.chronox.de>
- <556c89ae-4272-970d-1644-cb77dc3c7946@gmail.com> <9152597.fJySsU3eCD@positron.chronox.de>
+From: Aleksa Sarai <cyphar@cyphar.com>
+Subject: Re: [PATCH v15 4/9] namei: LOOKUP_BENEATH: O_BENEATH-like scoped
+ resolution
+Date: Wed, 13 Nov 2019 18:47:57 +1100
+Message-ID: <20191113074757.5b4u5vlyx2u6pbn6@yavin.dot.cyphar.com>
+References: <20191105090553.6350-1-cyphar@cyphar.com>
+ <20191105090553.6350-5-cyphar@cyphar.com>
+ <20191113015534.GA26530@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="odomi6wtik4yoblv"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <9152597.fJySsU3eCD@positron.chronox.de>
+Content-Disposition: inline
+In-Reply-To: <20191113015534.GA26530@ZenIV.linux.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: =?UTF-8?Q?Stephan_M=C3=BCller?= <smueller@chronox.de>
-Cc: Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@suse.de>, "Peter, Matthias" <matthias>
+To: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Christian Brauner <christian.brauner@ubuntu.com>, David Drysdale <drysdale@google.com>, Andy Lutomirski <luto@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Eric Biederman <ebiederm@xmission.com>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Ras
 List-Id: linux-api@vger.kernel.org
 
-=D1=81=D1=80, 13 =D0=BD=D0=BE=D1=8F=D0=B1. 2019 =D0=B3. =D0=B2 05:38, Steph=
-an M=C3=BCller <smueller@chronox.de>:
->
-> Am Dienstag, 12. November 2019, 20:58:32 CET schrieb Alexander E. Patrako=
-v:
->
-> Hi Alexander,
->
-> > > +config LRNG_HEALTH_TESTS
-> > > +   bool "Enable noise source online health tests"
-> > > +   help
-> > > +     The online health tests validate the noise source at
-> > > +     runtime for fatal errors. These tests include SP800-90B
-> > > +     compliant tests which are invoked if the system is booted
-> > > +     with fips=3D1. In case of fatal errors during active
-> > > +     SP800-90B tests, the issue is logged and the noise
-> > > +     data is discarded. These tests are required for full
-> > > +     compliance with SP800-90B.
-> >
-> > How have you tested that these tests work at runtime? Maybe add some
-> > code under a new CONFIG item that depends on CONFIG_BROKEN that
-> > deliberately botches the RNG and triggers failures?
->
->
-> I am unable to find sensible information about CONFIG_BROKEN in the recen=
-t
-> kernel tree.
->
-> Do you happen to have a pointer on how that option is to be used?
 
-This option is not used on its own. You create a new option,
-CONFIG_TEST_LRNG_FAILURE_MODE or something like that, and put your
-code under the ifdef guarded by that option. And then, to prevent
-ordinary users and allyesconfig from selecting it, in Kconfig you say:
-"depends on BROKEN". This way, the option becomes unselectable in
-menuconfig but still works as intended when added manually to .config
-(obviously, with the BROKEN dependency removed locally).
+--odomi6wtik4yoblv
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Definition: https://github.com/torvalds/linux/blob/9c7db5004280767566e91a33=
-445bf93aa479ef02/init/Kconfig#L68
-Example usage: https://github.com/torvalds/linux/blob/c87237110f2553b4200a8=
-b3401a01198edfcf0d9/drivers/gpu/drm/i915/Kconfig.debug#L166
+On 2019-11-13, Al Viro <viro@zeniv.linux.org.uk> wrote:
+> Minor nit here - I'd split "move the conditional call of set_root()
+> into nd_jump_root()" into a separate patch before that one.  Makes
+> for fewer distractions in this one.  I'd probably fold "and be
+> ready for errors other than -ECHILD" into the same preliminary
+> patch.
 
---
-Alexander E. Patrakov
+Will do.
+
+> > +			/* Not currently safe for scoped-lookups. */
+> > +			if (unlikely(nd->flags & LOOKUP_IS_SCOPED))
+> > +				return ERR_PTR(-EXDEV);
+>=20
+> Also a candidate for doing in nd_jump_link()...
+>=20
+> > @@ -1373,8 +1403,11 @@ static int follow_dotdot_rcu(struct nameidata *n=
+d)
+> >  	struct inode *inode =3D nd->inode;
+> > =20
+> >  	while (1) {
+> > -		if (path_equal(&nd->path, &nd->root))
+> > +		if (path_equal(&nd->path, &nd->root)) {
+> > +			if (unlikely(nd->flags & LOOKUP_BENEATH))
+> > +				return -EXDEV;
+>=20
+> Umm...  Are you sure it's not -ECHILD?
+
+It wouldn't hurt to be -ECHILD -- though it's not clear to me how likely
+a success would be in REF-walk if the parent components didn't already
+trigger an unlazy_walk() in RCU-walk.
+
+I guess that also means LOOKUP_NO_XDEV should trigger -ECHILD in
+follow_dotdot_rcu()?
+
+--=20
+Aleksa Sarai
+Senior Software Engineer (Containers)
+SUSE Linux GmbH
+<https://www.cyphar.com/>
+
+--odomi6wtik4yoblv
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXcu1KgAKCRCdlLljIbnQ
+EpYSAQDaNIB4LkhLlbFgkuRPiavU6vZ03HuSIHKseqaD6uMARwD+OcGzTDahyjJ6
+YeuKal+s33ETzSjupl7K2mKfYQpA2Q0=
+=nyQ8
+-----END PGP SIGNATURE-----
+
+--odomi6wtik4yoblv--
