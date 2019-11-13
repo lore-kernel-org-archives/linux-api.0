@@ -1,40 +1,52 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH] Allow restricting permissions in /proc/sys
-Date: Wed, 13 Nov 2019 17:40:33 +0100
-Message-ID: <CAG48ez1qtVXSBCmLCWdRwfemw6u5d-Zargm-MNJV_N0WAAoVwg@mail.gmail.com>
-References: <74a91362-247c-c749-5200-7bdce704ed9e@gmail.com>
- <20191112232239.yevpeemgxz4wy32b@wittgenstein> <CAG48ez0j_7NyCyvGn8U8NS2p=CQQb=me-5KTa7k5E6xpHJphaA@mail.gmail.com>
- <13bc7935-8341-bb49-74ea-2eb58f72fd1f@gmail.com>
+From: Eric Biggers <ebiggers@kernel.org>
+Subject: Re: [PATCH 0/4] statx: expose the fs-verity bit
+Date: Wed, 13 Nov 2019 12:20:28 -0800
+Message-ID: <20191113202027.GG221701@gmail.com>
+References: <20191029204141.145309-1-ebiggers@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <13bc7935-8341-bb49-74ea-2eb58f72fd1f@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Topi Miettinen <toiwoton@gmail.com>
-Cc: Luis Chamberlain <mcgrof@kernel.org>, Kees Cook <keescook@chromium.org>, Alexey Dobriyan <adobriyan@gmail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "open list:FILESYSTEMS (VFS and infrastructure)" <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-f2fs-devel-bounces@lists.sourceforge.net>
+Content-Disposition: inline
+In-Reply-To: <20191029204141.145309-1-ebiggers@kernel.org>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/options/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-f2fs-devel>
+List-Post: <mailto:linux-f2fs-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-f2fs-devel>,
+ <mailto:linux-f2fs-devel-request@lists.sourceforge.net?subject=subscribe>
+Errors-To: linux-f2fs-devel-bounces@lists.sourceforge.net
+To: linux-fscrypt@vger.kernel.org
+Cc: Theodore Ts'o <tytso@mit.edu>, linux-api@vger.kernel.org, linux-f2fs-devel@lists.sourceforge.net, David Howells <dhowells@redhat.com>, linux-fsdevel@vger.kernel.org, Jaegeuk Kim <jaegeuk@kernel.org>, linux-ext4@vger.kernel.org, Victor Hsieh <victorhsieh@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 13, 2019 at 5:19 PM Topi Miettinen <toiwoton@gmail.com> wrote:
-> On 13.11.2019 18.00, Jann Horn wrote:
-> > On Wed, Nov 13, 2019 at 12:22 AM Christian Brauner
-> > <christian.brauner@ubuntu.com> wrote:
-> >> On Sun, Nov 03, 2019 at 04:55:48PM +0200, Topi Miettinen wrote:
-> >>> Several items in /proc/sys need not be accessible to unprivileged
-> >>> tasks. Let the system administrator change the permissions, but only
-> >>> to more restrictive modes than what the sysctl tables allow.
-[...]
-> > In kernel/ucount.c, the ->permissions handler set_permissions() grants
-> > access based on whether the caller has CAP_SYS_RESOURCE. And in
-> > net/sysctl_net.c, the handler net_ctl_permissions() grants access
-> > based on whether the caller has CAP_NET_ADMIN. This added check is
-> > going to break those, right?
-> >
->
-> Right. The comment above seems then a bit misleading:
->         /*
->          * sysctl entries that are not writeable,
->          * are _NOT_ writeable, capabilities or not.
->          */
+On Tue, Oct 29, 2019 at 01:41:37PM -0700, Eric Biggers wrote:
+> This patchset exposes the verity bit (a.k.a. FS_VERITY_FL) via statx().
+> 
+> This is useful because it allows applications to check whether a file is
+> a verity file without opening it.  Opening a verity file can be
+> expensive because the fsverity_info is set up on open, which involves
+> parsing metadata and optionally verifying a cryptographic signature.
+> 
+> This is analogous to how various other bits are exposed through both
+> FS_IOC_GETFLAGS and statx(), e.g. the encrypt bit.
+> 
+> This patchset applies to v5.4-rc5.
+> 
+> Eric Biggers (4):
+>   statx: define STATX_ATTR_VERITY
+>   ext4: support STATX_ATTR_VERITY
+>   f2fs: support STATX_ATTR_VERITY
+>   docs: fs-verity: mention statx() support
+> 
+>  Documentation/filesystems/fsverity.rst | 8 ++++++++
+>  fs/ext4/inode.c                        | 5 ++++-
+>  fs/f2fs/file.c                         | 5 ++++-
+>  include/linux/stat.h                   | 3 ++-
+>  include/uapi/linux/stat.h              | 2 +-
+>  5 files changed, 19 insertions(+), 4 deletions(-)
 
-I don't see the problem. Those handlers never make a file writable
-that doesn't have one of the three write bits (0222) set.
+Applied to fscrypt.git#fsverity for 5.5.
+
+- Eric
