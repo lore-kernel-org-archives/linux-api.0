@@ -1,61 +1,46 @@
 From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: Re: [PATCH v15 4/9] namei: LOOKUP_BENEATH: O_BENEATH-like scoped
- resolution
-Date: Wed, 13 Nov 2019 18:47:57 +1100
-Message-ID: <20191113074757.5b4u5vlyx2u6pbn6@yavin.dot.cyphar.com>
+Subject: Re: [PATCH v15 6/9] namei: LOOKUP_{IN_ROOT,BENEATH}: permit limited
+ ".." resolution
+Date: Wed, 13 Nov 2019 18:52:27 +1100
+Message-ID: <20191113075227.lu5b5uvc2nuk76uk@yavin.dot.cyphar.com>
 References: <20191105090553.6350-1-cyphar@cyphar.com>
- <20191105090553.6350-5-cyphar@cyphar.com>
- <20191113015534.GA26530@ZenIV.linux.org.uk>
+ <20191105090553.6350-7-cyphar@cyphar.com>
+ <20191113020917.GC26530@ZenIV.linux.org.uk>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="odomi6wtik4yoblv"
+        protocol="application/pgp-signature"; boundary="qprdfpbfkuvffdu5"
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20191113015534.GA26530@ZenIV.linux.org.uk>
+In-Reply-To: <20191113020917.GC26530@ZenIV.linux.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Al Viro <viro@zeniv.linux.org.uk>
-Cc: Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Christian Brauner <christian.brauner@ubuntu.com>, David Drysdale <drysdale@google.com>, Andy Lutomirski <luto@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Eric Biederman <ebiederm@xmission.com>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Ras
+Cc: Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Christian Brauner <christian.brauner@ubuntu.com>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
 
---odomi6wtik4yoblv
+--qprdfpbfkuvffdu5
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
 On 2019-11-13, Al Viro <viro@zeniv.linux.org.uk> wrote:
-> Minor nit here - I'd split "move the conditional call of set_root()
-> into nd_jump_root()" into a separate patch before that one.  Makes
-> for fewer distractions in this one.  I'd probably fold "and be
-> ready for errors other than -ECHILD" into the same preliminary
-> patch.
-
-Will do.
-
-> > +			/* Not currently safe for scoped-lookups. */
-> > +			if (unlikely(nd->flags & LOOKUP_IS_SCOPED))
-> > +				return ERR_PTR(-EXDEV);
+> On Tue, Nov 05, 2019 at 08:05:50PM +1100, Aleksa Sarai wrote:
 >=20
-> Also a candidate for doing in nd_jump_link()...
+> > One other possible alternative (which previous versions of this patch
+> > used) would be to check with path_is_under() if there was a racing
+> > rename or mount (after re-taking the relevant seqlocks). While this does
+> > work, it results in possible O(n*m) behaviour if there are many renames
+> > or mounts occuring *anywhere on the system*.
 >=20
-> > @@ -1373,8 +1403,11 @@ static int follow_dotdot_rcu(struct nameidata *n=
-d)
-> >  	struct inode *inode =3D nd->inode;
-> > =20
-> >  	while (1) {
-> > -		if (path_equal(&nd->path, &nd->root))
-> > +		if (path_equal(&nd->path, &nd->root)) {
-> > +			if (unlikely(nd->flags & LOOKUP_BENEATH))
-> > +				return -EXDEV;
->=20
-> Umm...  Are you sure it's not -ECHILD?
+> BTW, do you realize that open-by-fhandle (or working nfsd, for that matte=
+r)
+> will trigger arseloads of write_seqlock(&rename_lock) simply on d_splice_=
+alias()
+> bringing disconnected subtrees in contact with parent?
 
-It wouldn't hurt to be -ECHILD -- though it's not clear to me how likely
-a success would be in REF-walk if the parent components didn't already
-trigger an unlazy_walk() in RCU-walk.
-
-I guess that also means LOOKUP_NO_XDEV should trigger -ECHILD in
-follow_dotdot_rcu()?
+I wasn't aware of that -- that makes path_is_under() even less viable.
+I'll reword it to be clearer that path_is_under() isn't a good idea and
+why we went with -EAGAIN over an in-kernel retry.
 
 --=20
 Aleksa Sarai
@@ -63,15 +48,15 @@ Senior Software Engineer (Containers)
 SUSE Linux GmbH
 <https://www.cyphar.com/>
 
---odomi6wtik4yoblv
+--qprdfpbfkuvffdu5
 Content-Type: application/pgp-signature; name="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXcu1KgAKCRCdlLljIbnQ
-EpYSAQDaNIB4LkhLlbFgkuRPiavU6vZ03HuSIHKseqaD6uMARwD+OcGzTDahyjJ6
-YeuKal+s33ETzSjupl7K2mKfYQpA2Q0=
-=nyQ8
+iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXcu2OAAKCRCdlLljIbnQ
+EtqZAQCjNdiANKBF7WCOTHUeD48U+o/7WczR7I/1WTsCcSBp9gEA6HgEdHKRHmol
++5Fvn3Eg1Tya83fWQgWoVLu8i6CUUwE=
+=voMa
 -----END PGP SIGNATURE-----
 
---odomi6wtik4yoblv--
+--qprdfpbfkuvffdu5--
