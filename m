@@ -1,71 +1,58 @@
 From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: Re: [PATCH v15 7/9] open: introduce openat2(2) syscall
-Date: Wed, 13 Nov 2019 13:35:37 +1100
-Message-ID: <20191113023537.epcgw5u2fdbinnyj@yavin.dot.cyphar.com>
+Subject: Re: [PATCH v15 5/9] namei: LOOKUP_IN_ROOT: chroot-like scoped
+ resolution
+Date: Wed, 13 Nov 2019 13:44:14 +1100
+Message-ID: <20191113024414.wlmvtjstpnkxa36n@yavin.dot.cyphar.com>
 References: <20191105090553.6350-1-cyphar@cyphar.com>
- <20191105090553.6350-8-cyphar@cyphar.com>
- <20191113022906.GD26530@ZenIV.linux.org.uk>
+ <20191105090553.6350-6-cyphar@cyphar.com>
+ <20191113020307.GB26530@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1806869698648339356=="
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <20191113022906.GD26530@ZenIV.linux.org.uk>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="zcwix2zvi4el6ukc"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20191113020307.GB26530@ZenIV.linux.org.uk>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Al Viro <viro@zeniv.linux.org.uk>
-Cc: linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Alexei Starovoitov <ast@kernel.org>, linux-kernel@vger.kernel.org, David Howells <dhowells@redhat.com>, linux-kselftest@vger.kernel.org, sparclinux@vger.kernel.org, Jiri Olsa <jolsa@redhat.com>, linux-arch@vger.kernel.org, linux-s390@vger.kernel.org, Tycho Andersen <tycho@tycho.ws>, Aleksa Sarai <asarai@suse.de>, Shuah Khan <shuah@kernel.org>, Alexander Shishkin <alexander.shishkin@linux.intel.com>, Ingo Molnar <mingo@redhat.com>, linux-arm-kernel@lists.infradead.org, linux-mips@vger.kernel.org, linux-xtensa@linux-xtensa.org, Kees Cook <keescook@chromium.org>, Arnd Bergmann <arnd@arndb.de>, Jann Horn <jannh@google.com>, linuxppc-dev@lists.ozlabs.org, linux-m68k@lists.linux-m68k.org, Andy Lutomirski <luto@kernel.org>, Shuah Khan <skha>
+Cc: Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Christian Brauner <christian.brauner@ubuntu.com>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Alexan
 List-Id: linux-api@vger.kernel.org
 
 
---===============1806869698648339356==
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="ohhoiky5cv3wybqd"
-Content-Disposition: inline
-
-
---ohhoiky5cv3wybqd
+--zcwix2zvi4el6ukc
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
 On 2019-11-13, Al Viro <viro@zeniv.linux.org.uk> wrote:
-> On Tue, Nov 05, 2019 at 08:05:51PM +1100, Aleksa Sarai wrote:
-> > +/*
-> > + * Arguments for how openat2(2) should open the target path. If @resol=
-ve is
-> > + * zero, then openat2(2) operates very similarly to openat(2).
-> > + *
-> > + * However, unlike openat(2), unknown bits in @flags result in -EINVAL=
- rather
-> > + * than being silently ignored. @mode must be zero unless one of {O_CR=
-EAT,
-> > + * O_TMPFILE} are set, and @upgrade_mask must be zero unless O_PATH is=
- set.
-> > + *
-> > + * @flags: O_* flags.
-> > + * @mode: O_CREAT/O_TMPFILE file mode.
-> > + * @upgrade_mask: UPGRADE_* flags (to restrict O_PATH re-opening).
+> On Tue, Nov 05, 2019 at 08:05:49PM +1100, Aleksa Sarai wrote:
 >=20
-> ???
+> > @@ -2277,12 +2277,20 @@ static const char *path_init(struct nameidata *=
+nd, unsigned flags)
+> > =20
+> >  	nd->m_seq =3D read_seqbegin(&mount_lock);
+> > =20
+> > -	/* Figure out the starting path and root (if needed). */
+> > -	if (*s =3D=3D '/') {
+> > +	/* Absolute pathname -- fetch the root. */
+> > +	if (flags & LOOKUP_IN_ROOT) {
+> > +		/* With LOOKUP_IN_ROOT, act as a relative path. */
+> > +		while (*s =3D=3D '/')
+> > +			s++;
+>=20
+> Er...  Why bother skipping slashes?  I mean, not only link_path_walk()
+> will skip them just fine, you are actually risking breakage in this:
+>                 if (*s && unlikely(!d_can_lookup(dentry))) {
+>                         fdput(f);
+>                         return ERR_PTR(-ENOTDIR);
+>                 }
+> which is downstream from there with you patch, AFAICS.
 
-Sorry, that was left over from a previous revision (where the magic-link
-re-opening restrictions were part of this series).
+I switched to stripping the slashes at your suggestion a few revisions
+ago[1], and had (wrongly) assumed we needed to handle "/" somehow in
+path_init(). But you're quite right about link_path_walk() -- and I'd be
+more than happy to drop it.
 
-> > + * @resolve: RESOLVE_* flags.
-> > + */
-> > +struct open_how {
-> > +	__aligned_u64 flags;
-> > +	__u16 mode;
-> > +	__u16 __padding[3]; /* must be zeroed */
-> > +	__aligned_u64 resolve;
-> > +};
-
+[1]: https://lore.kernel.org/lkml/20190712125552.GL17978@ZenIV.linux.org.uk/
 
 --=20
 Aleksa Sarai
@@ -73,29 +60,15 @@ Senior Software Engineer (Containers)
 SUSE Linux GmbH
 <https://www.cyphar.com/>
 
---ohhoiky5cv3wybqd
+--zcwix2zvi4el6ukc
 Content-Type: application/pgp-signature; name="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXctr9QAKCRCdlLljIbnQ
-Ej91AQDSESPrMbumo+B1bVc2FthUOUuONyqVLG0aRmu7PQjnOgD7BOxMC9suhDip
-ayqrtLJhXKxmKpbFt69x0a97Rx8tGQ8=
-=4v0x
+iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXctt+gAKCRCdlLljIbnQ
+EtaOAP4wZ6FONr+jCigAii+B0S1x/aNqVoCXGa0s32/c+X1spQEAiLcI0bIEdqjF
+tuAr6TYPTrpe63nhzokAO32LJ1rVrQM=
+=G6qn
 -----END PGP SIGNATURE-----
 
---ohhoiky5cv3wybqd--
-
-
---===============1806869698648339356==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-_______________________________________________
-linux-arm-kernel mailing list
-linux-arm-kernel@lists.infradead.org
-http://lists.infradead.org/mailman/listinfo/linux-arm-kernel
-
---===============1806869698648339356==--
+--zcwix2zvi4el6ukc--
