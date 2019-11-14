@@ -1,71 +1,40 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH 17/23] y2038: time: avoid timespec usage in
- settimeofday()
-Date: Thu, 14 Nov 2019 15:04:51 +0100 (CET)
-Message-ID: <alpine.DEB.2.21.1911141457120.2507@nanos.tec.linutronix.de>
-References: <20191108210236.1296047-1-arnd@arndb.de>
- <20191108211323.1806194-8-arnd@arndb.de>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH 17/23] y2038: time: avoid timespec usage in settimeofday()
+Date: Thu, 14 Nov 2019 15:35:35 +0100
+Message-ID: <CAK8P3a0qm1FW+mqcMvzyb8WVvqtF-POMpir+WVezEObaYLCCRg@mail.gmail.com>
+References: <20191108210236.1296047-1-arnd@arndb.de> <20191108211323.1806194-8-arnd@arndb.de>
  <alpine.DEB.2.21.1911132250010.2507@nanos.tec.linutronix.de>
- <CAK8P3a2bxDZVKgcJoa99wr3tDyYckQAdk2f=RnL4vTFPjm3tXQ@mail.gmail.com>
+ <CAK8P3a2bxDZVKgcJoa99wr3tDyYckQAdk2f=RnL4vTFPjm3tXQ@mail.gmail.com> <alpine.DEB.2.21.1911141457120.2507@nanos.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-In-Reply-To: <CAK8P3a2bxDZVKgcJoa99wr3tDyYckQAdk2f=RnL4vTFPjm3tXQ@mail.gmail.com>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Jens Axboe <axboe@kernel.dk>, Corey Minyard <cminyard@mvista.com>, y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Li RongQing <lirongqing@baidu.com>, David Howells <dhowells@redhat.com>, Stephen Boyd <sboyd@kernel.org>, zhengbin <zhengbin13@huawei.com>, John Stultz <john.stultz@linaro.org>, Al Viro <viro@zeniv.linux.org.uk>, Ingo Molnar <mingo@kernel.org>, Christian Brauner <christian@brauner.io>, Deepa Dinamani <deepa.kernel@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.21.1911141457120.2507@nanos.tec.linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: y2038 Mailman List <y2038@lists.linaro.org>, John Stultz <john.stultz@linaro.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Stephen Boyd <sboyd@kernel.org>, David Howells <dhowells@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Deepa Dinamani <deepa.kernel@gmail.com>, Christian Brauner <christian@brauner.io>, Jens Axboe <axboe@kernel.dk>, Ingo Molnar <mingo@kernel.org>, Corey Minyard <cminyard@mvista.com>, zhengbin <zhengbin13@huawei.com>, Li RongQing <lirongqing@baidu.com>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-T24gVGh1LCAxNCBOb3YgMjAxOSwgQXJuZCBCZXJnbWFubiB3cm90ZToKPiBPbiBXZWQsIE5vdiAx
-MywgMjAxOSBhdCAxMDo1MyBQTSBUaG9tYXMgR2xlaXhuZXIgPHRnbHhAbGludXRyb25peC5kZT4g
-d3JvdGU6Cj4gPgo+ID4gT24gRnJpLCA4IE5vdiAyMDE5LCBBcm5kIEJlcmdtYW5uIHdyb3RlOgo+
-ID4gPiAtU1lTQ0FMTF9ERUZJTkUyKHNldHRpbWVvZmRheSwgc3RydWN0IHRpbWV2YWwgX191c2Vy
-ICosIHR2LAo+ID4gPiArU1lTQ0FMTF9ERUZJTkUyKHNldHRpbWVvZmRheSwgc3RydWN0IF9fa2Vy
-bmVsX29sZF90aW1ldmFsIF9fdXNlciAqLCB0diwKPiA+ID4gICAgICAgICAgICAgICBzdHJ1Y3Qg
-dGltZXpvbmUgX191c2VyICosIHR6KQo+ID4gPiAgewo+ID4gPiAgICAgICBzdHJ1Y3QgdGltZXNw
-ZWM2NCBuZXdfdHM7Cj4gPiA+IC0gICAgIHN0cnVjdCB0aW1ldmFsIHVzZXJfdHY7Cj4gPiA+ICAg
-ICAgIHN0cnVjdCB0aW1lem9uZSBuZXdfdHo7Cj4gPiA+Cj4gPiA+ICAgICAgIGlmICh0dikgewo+
-ID4gPiAtICAgICAgICAgICAgIGlmIChjb3B5X2Zyb21fdXNlcigmdXNlcl90diwgdHYsIHNpemVv
-ZigqdHYpKSkKPiA+ID4gKyAgICAgICAgICAgICBpZiAoZ2V0X3VzZXIobmV3X3RzLnR2X3NlYywg
-JnR2LT50dl9zZWMpIHx8Cj4gPiA+ICsgICAgICAgICAgICAgICAgIGdldF91c2VyKG5ld190cy50
-dl9uc2VjLCAmdHYtPnR2X3VzZWMpKQo+ID4gPiAgICAgICAgICAgICAgICAgICAgICAgcmV0dXJu
-IC1FRkFVTFQ7Cj4gPgo+ID4gSG93IGlzIHRoYXQgc3VwcG9zZWQgdG8gYmUgY29ycmVjdCBvbiBh
-IDMyYml0IGtlcm5lbD8KPiAKPiBJIGRvbid0IHNlZSB0aGUgcHJvYmxlbSB5b3UgYXJlIHJlZmVy
-cmluZyB0by4gVGhpcyBzaG91bGQgYmVoYXZlIHRoZQo+IHNhbWUgd2F5IG9uIGEgMzItYml0IGtl
-cm5lbCBhbmQgb24gYSA2NC1iaXQga2VybmVsLCBzaWduLWV4dGVuZGluZwo+IHRoZSB0dl9zZWMg
-ZmllbGQsIGFuZCBjb3B5aW5nIHRoZSB1c2VyIHR2X3VzZWMgZmllbGQgaW50byB0aGUKPiBrZXJu
-ZWwgdHZfbnNlYywgdG8gYmUgbXVsdGlwbGllZCBieSAxMDAwIGEgZmV3IGxpbmVzIGxhdGVyLgoK
-WW91J3JlIHJpZ2h0LiBUaXJlZCBicmFpbiBmYWlsZWQgdG8gc2VlIHRoZSBpbXBsaWNpdCBzaWdu
-IGV4dGVuc2lvbiBpbgpnZXRfdXNlcigpLgoKPiBBbSBJIG1pc3Npbmcgc29tZXRoaW5nPwoKTm8u
-Cgo+ID4gPiAtICAgICAgICAgICAgIGlmICghdGltZXZhbF92YWxpZCgmdXNlcl90dikpCj4gPiA+
-ICsgICAgICAgICAgICAgaWYgKHR2LT50dl91c2VjID4gVVNFQ19QRVJfU0VDKQo+ID4gPiAgICAg
-ICAgICAgICAgICAgICAgICAgcmV0dXJuIC1FSU5WQUw7Cj4gPgo+ID4gVGhhdCdzIGluY29tcGxl
-dGU6Cj4gPgo+ID4gc3RhdGljIGlubGluZSBib29sIHRpbWV2YWxfdmFsaWQoY29uc3Qgc3RydWN0
-IHRpbWV2YWwgKnR2KQo+ID4gewo+ID4gICAgICAgICAvKiBEYXRlcyBiZWZvcmUgMTk3MCBhcmUg
-Ym9ndXMgKi8KPiA+ICAgICAgICAgaWYgKHR2LT50dl9zZWMgPCAwKQo+ID4gICAgICAgICAgICAg
-ICAgIHJldHVybiBmYWxzZTsKPiA+Cj4gPiAgICAgICAgIC8qIENhbid0IGhhdmUgbW9yZSBtaWNy
-b3NlY29uZHMgdGhlbiBhIHNlY29uZCAqLwo+ID4gICAgICAgICBpZiAodHYtPnR2X3VzZWMgPCAw
-IHx8IHR2LT50dl91c2VjID49IFVTRUNfUEVSX1NFQykKPiA+ICAgICAgICAgICAgICAgICByZXR1
-cm4gZmFsc2U7Cj4gPgo+ID4gICAgICAgICByZXR1cm4gdHJ1ZTsKPiA+IH0KPiAKPiBNeSBpZGVh
-IHdhcyB0byBub3QgZHVwbGljYXRlIHRoZSByYW5nZSBjaGVjayB0aGF0IGlzIGRvbmUKPiBpbiBk
-b19zeXNfc2V0dGltZW9mZGF5NjQoKSBhbmQgYWdhaW4gaW4gZG9fc2V0dGltZW9mZGF5NjQ6Cj4g
-Cj4gICAgICAgICBpZiAoIXRpbWVzcGVjNjRfdmFsaWRfc2V0dG9kKHRzKSkKPiAgICAgICAgICAg
-ICAgICAgcmV0dXJuIC1FSU5WQUw7Cj4gCj4gVGhlIG9ubHkgY2hlY2sgd2Ugc2hvdWxkIG5lZWQg
-aW4gYWRkaXRpb24gdG8gdGhpcyBpcyB0byBlbnN1cmUKPiB0aGF0IHBhc3NpbmcgYW4gaW52YWxp
-ZCB0dl91c2VjIG51bWJlciBkb2Vzbid0IGJlY29tZSBhbgo+IHVuZXhwZWN0ZWRseSB2YWxpZCB0
-dl9uc2VjIGFmdGVyIHRoZSBtdWx0aXBsaWNhdGlvbi4KClJpZ2h0LCBidXQgcGxlYXNlIGFkZCBh
-IHByb3BlciBjb21tZW50IGFzIHlvdS93ZSBhcmUgZ29pbmcgdG8gc2NyYXRjaCBoZWFkcwo0IHdl
-ZWtzIGZyb20gbm93IHdoZW4gc3RhcmluZyBhdCB0aGF0IGNoZWNrIGFuZCB3b25kZXJpbmcgd2h5
-IGl0IGlzCmluY29tcGxldGUuCgpUaGFua3MsCgoJdGdseApfX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fXwpZMjAzOCBtYWlsaW5nIGxpc3QKWTIwMzhAbGlzdHMu
-bGluYXJvLm9yZwpodHRwczovL2xpc3RzLmxpbmFyby5vcmcvbWFpbG1hbi9saXN0aW5mby95MjAz
-OAo=
+On Thu, Nov 14, 2019 at 3:04 PM Thomas Gleixner <tglx@linutronix.de> wrote:
+> On Thu, 14 Nov 2019, Arnd Bergmann wrote:
+> > On Wed, Nov 13, 2019 at 10:53 PM Thomas Gleixner <tglx@linutronix.de> wrote:
+> >
+> > My idea was to not duplicate the range check that is done
+> > in do_sys_settimeofday64() and again in do_settimeofday64:
+> >
+> >         if (!timespec64_valid_settod(ts))
+> >                 return -EINVAL;
+> >
+> > The only check we should need in addition to this is to ensure
+> > that passing an invalid tv_usec number doesn't become an
+> > unexpectedly valid tv_nsec after the multiplication.
+>
+> Right, but please add a proper comment as you/we are going to scratch heads
+> 4 weeks from now when staring at that check and wondering why it is
+> incomplete.
+
+Ok, done. I had just uploaded the branch with the fixup for
+the __user pointer access in the same patch, but that version
+had introduced another typo. I hope the version I uploaded
+now has all known issues addressed for tomorrow's linux-next.
+
+      Arnd
