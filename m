@@ -1,73 +1,84 @@
-From: Stephan =?ISO-8859-1?Q?M=FCller?= <smueller@chronox.de>
-Subject: Re: [PATCH v24 11/12] LRNG - add SP800-90B compliant health tests
-Date: Thu, 14 Nov 2019 02:46:38 +0100
-Message-ID: <7132090.9rmkJY1zsi@positron.chronox.de>
-References: <6157374.ptSnyUpaCn@positron.chronox.de> <9152597.fJySsU3eCD@positron.chronox.de> <CAN_LGv3LUjJ=8ZZxaJ=c7uDPb=ayvCNPE-UshxgBUK-Jf7qNmQ@mail.gmail.com>
+From: Aleksa Sarai <cyphar@cyphar.com>
+Subject: Re: [PATCH v15 3/9] namei: LOOKUP_NO_XDEV: block mountpoint crossing
+Date: Thu, 14 Nov 2019 15:49:45 +1100
+Message-ID: <20191114044945.ldedzjrb4s7i7irr@yavin.dot.cyphar.com>
+References: <20191105090553.6350-1-cyphar@cyphar.com>
+ <20191105090553.6350-4-cyphar@cyphar.com>
+ <20191113013630.GZ26530@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="rwq4fftbhkszxm4g"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAN_LGv3LUjJ=8ZZxaJ=c7uDPb=ayvCNPE-UshxgBUK-Jf7qNmQ@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <20191113013630.GZ26530@ZenIV.linux.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Alexander E. Patrakov" <patrakov@gmail.com>
-Cc: Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@suse.de>, "Peter, Matthias" <matthias>
+To: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Christian Brauner <christian.brauner@ubuntu.com>, David Drysdale <drysdale@google.com>, Andy Lutomirski <luto@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Eric Biederman <ebiederm@xmission.com>, Andrew Morton <akpm@linux-foundation.org>, Alexei Starovoitov <ast@kernel.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, Chanho Min <chanho.min@lge.com>, Oleg Nesterov <oleg@redhat.com>, Ras
 List-Id: linux-api@vger.kernel.org
 
-Am Mittwoch, 13. November 2019, 07:02:40 CET schrieb Alexander E. Patrakov:
 
-Hi Alexander,
+--rwq4fftbhkszxm4g
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-> =D1=81=D1=80, 13 =D0=BD=D0=BE=D1=8F=D0=B1. 2019 =D0=B3. =D0=B2 05:38, Ste=
-phan M=C3=BCller <smueller@chronox.de>:
-> > Am Dienstag, 12. November 2019, 20:58:32 CET schrieb Alexander E.
-> > Patrakov:
-> >=20
-> > Hi Alexander,
-> >=20
-> > > > +config LRNG_HEALTH_TESTS
-> > > > +   bool "Enable noise source online health tests"
-> > > > +   help
-> > > > +     The online health tests validate the noise source at
-> > > > +     runtime for fatal errors. These tests include SP800-90B
-> > > > +     compliant tests which are invoked if the system is booted
-> > > > +     with fips=3D1. In case of fatal errors during active
-> > > > +     SP800-90B tests, the issue is logged and the noise
-> > > > +     data is discarded. These tests are required for full
-> > > > +     compliance with SP800-90B.
-> > >=20
-> > > How have you tested that these tests work at runtime? Maybe add some
-> > > code under a new CONFIG item that depends on CONFIG_BROKEN that
-> > > deliberately botches the RNG and triggers failures?
-> >=20
-> > I am unable to find sensible information about CONFIG_BROKEN in the rec=
-ent
-> > kernel tree.
-> >=20
-> > Do you happen to have a pointer on how that option is to be used?
+On 2019-11-13, Al Viro <viro@zeniv.linux.org.uk> wrote:
+> On Tue, Nov 05, 2019 at 08:05:47PM +1100, Aleksa Sarai wrote:
 >=20
-> This option is not used on its own. You create a new option,
-> CONFIG_TEST_LRNG_FAILURE_MODE or something like that, and put your
-> code under the ifdef guarded by that option. And then, to prevent
-> ordinary users and allyesconfig from selecting it, in Kconfig you say:
-> "depends on BROKEN". This way, the option becomes unselectable in
-> menuconfig but still works as intended when added manually to .config
-> (obviously, with the BROKEN dependency removed locally).
+> > @@ -862,6 +870,8 @@ static int nd_jump_root(struct nameidata *nd)
+> >  void nd_jump_link(struct path *path)
+> >  {
+> >  	struct nameidata *nd =3D current->nameidata;
+> > +
+> > +	nd->last_magiclink.same_mnt =3D (nd->path.mnt =3D=3D path->mnt);
+> >  	path_put(&nd->path);
+> > =20
+> >  	nd->path =3D *path;
+> > @@ -1082,6 +1092,10 @@ const char *get_link(struct nameidata *nd)
+> >  		if (nd->flags & LOOKUP_MAGICLINK_JUMPED) {
+> >  			if (unlikely(nd->flags & LOOKUP_NO_MAGICLINKS))
+> >  				return ERR_PTR(-ELOOP);
+> > +			if (unlikely(nd->flags & LOOKUP_NO_XDEV)) {
+> > +				if (!nd->last_magiclink.same_mnt)
+> > +					return ERR_PTR(-EXDEV);
+> > +			}
+> >  		}
 >=20
-> Definition:
-> https://github.com/torvalds/linux/blob/9c7db5004280767566e91a33445bf93aa4=
-79
-> ef02/init/Kconfig#L68 Example usage:
-> https://github.com/torvalds/linux/blob/c87237110f2553b4200a8b3401a01198ed=
-fc
-> f0d9/drivers/gpu/drm/i915/Kconfig.debug#L166
+> Ugh...  Wouldn't it be better to take that logics (some equivalent thereo=
+f)
+> into nd_jump_link()?  Or just have nd_jump_link() return an error...
 
-I added such support to the LRNG.
+This could be done, but the reason for stashing it away in
+last_magiclink is because of the future magic-link re-opening patches
+which can't be implemented like that without putting the open_flags
+inside nameidata (which was decided to be too ugly a while ago).
 
-Thank you for your suggestion.
->=20
-> --
-> Alexander E. Patrakov
+My point being that I could implement it this way for this series, but
+I'd have to implement something like last_magiclink when I end up
+re-posting the magic-link stuff in a few weeks.
 
+Looking at all the nd_jump_link() users, the other option is to just
+disallow magic-link crossings entirely for LOOKUP_NO_XDEV. The only
+thing allowing them permits is to resolve file descriptors that are
+pointing to the same procfs mount -- and it's unclear to me how useful
+that really is (apparmorfs and nsfs will always give -EXDEV because
+aafs_mnt and nsfs_mnt are internal kernel vfsmounts).
 
-Ciao
-Stephan
+--=20
+Aleksa Sarai
+Senior Software Engineer (Containers)
+SUSE Linux GmbH
+<https://www.cyphar.com/>
+
+--rwq4fftbhkszxm4g
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXczc5gAKCRCdlLljIbnQ
+EspyAQDQkDnU2/CfvkXyKRLh2e7ycT5D4iHdCmBXbx8LlO8DlwD/S5O/FNHgyDdy
+RVaJ7aj0OZAzg7DMx3VZRiI+He4MXw0=
+=71Jv
+-----END PGP SIGNATURE-----
+
+--rwq4fftbhkszxm4g--
