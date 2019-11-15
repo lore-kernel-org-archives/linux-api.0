@@ -1,86 +1,143 @@
-From: Rasmus Villemoes <linux@rasmusvillemoes.dk>
-Subject: Re: [PATCH 17/23] y2038: time: avoid timespec usage in settimeofday()
-Date: Fri, 15 Nov 2019 11:27:41 +0100
-Message-ID: <73a56955-552a-3a95-a410-3064401913f7@rasmusvillemoes.dk>
-References: <20191108210236.1296047-1-arnd@arndb.de>
- <20191108211323.1806194-8-arnd@arndb.de> <20191114230127.GA3580@ryzen.lan>
- <CAK8P3a3jn8GcedX=HaTFiPY+fyHPoyVUnpcX19nMZqmuUA1RzA@mail.gmail.com>
+From: David Howells <dhowells@redhat.com>
+Subject: Re: [pipe] d60337eff1: BUG:kernel_NULL_pointer_dereference,address
+Date: Fri, 15 Nov 2019 13:28:52 +0000
+Message-ID: <9279.1573824532@warthog.procyon.org.uk>
+References: <20191110031348.GE29418@shao2-debian>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=WINDOWS-1252
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAK8P3a3jn8GcedX=HaTFiPY+fyHPoyVUnpcX19nMZqmuUA1RzA@mail.gmail.com>
-Content-Language: en-US
+In-Reply-To: <20191110031348.GE29418@shao2-debian>
+Content-ID: <9278.1573824532.1@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>, Abel Vesa <abelvesa@linux.com>
-Cc: y2038 Mailman List <y2038@lists.linaro.org>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Stephen Boyd <sboyd@kernel.org>, David Howells <dhowells@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Deepa Dinamani <deepa.kernel@gmail.com>, Christian Brauner <christian@brauner.io>, Jens Axboe <axboe@kernel.dk>, Ingo Molnar <mingo@kernel.org>, Corey Minyard <cminyard@mvista.com>, zhengbin <zhengbin13@huawei.com>, Li RongQing <lirongqing@baidu.com>, Linux API <linux-api@vger.kernel.org>
+To: kernel test robot <lkp@intel.com>
+Cc: dhowells@redhat.com, torvalds@linux-foundation.org, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, lkp@lists.01.org
 List-Id: linux-api@vger.kernel.org
 
-On 15/11/2019 08.58, Arnd Bergmann wrote:
-> On Fri, Nov 15, 2019 at 12:01 AM Abel Vesa <abelvesa@linux.com> wrote:
->>
->> On 19-11-08 22:12:16, Arnd Bergmann wrote:
->>> The compat_get_timeval() and timeval_valid() interfaces
->>> are deprecated and getting removed along with the definition
->>> of struct timeval itself.
->>>
->>> Change the two implementations of the settimeofday()
->>> system call to open-code these helpers and completely
->>> avoid references to timeval.
->>>
-> 
-> I'm not sure how we get to the RCU stall, but this is almost certainly another
-> symptom of a typo I had introduced in the patch, which others have also
-> reported. This is the the fix in today's linux-next:
-> 
-> --- a/kernel/time/time.c
-> +++ b/kernel/time/time.c
-> @@ -207,7 +207,7 @@ SYSCALL_DEFINE2(settimeofday, struct
-> __kernel_old_timeval __user *, tv,
->                     get_user(new_ts.tv_nsec, &tv->tv_usec))
->                         return -EFAULT;
-> 
-> -               if (tv->tv_usec > USEC_PER_SEC)
-> +               if (new_ts->tv_usec > USEC_PER_SEC)
->                         return -EINVAL;
+kernel test robot <lkp@intel.com> wrote:
 
-Hopefully not :)
+> [    9.423019] BUG: kernel NULL pointer dereference, address: 00000000000=
+00008
+> [    9.425646] #PF: supervisor read access in kernel mode
+> [    9.427714] #PF: error_code(0x0000) - not-present page
+> [    9.429851] PGD 80000001fb937067 P4D 80000001fb937067 PUD 1739e1067 PM=
+D 0=20
+> [    9.432468] Oops: 0000 [#1] SMP PTI
+> [    9.434064] CPU: 0 PID: 178 Comm: cat Not tainted 5.4.0-rc5-00353-gd60=
+337eff18a3 #1
+> [    9.437139] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIO=
+S 1.10.2-1 04/01/2014
+> [    9.440439] RIP: 0010:iov_iter_get_pages_alloc+0x2a8/0x400
 
->                 new_ts.tv_nsec *= NSEC_PER_USEC;
+Can you tell me if the following change fixes it for you?
 
-So the actual patch in next-20191115 does
+--- a/lib/iov_iter.c
++++ b/lib/iov_iter.c
+@@ -404,7 +404,7 @@ static size_t copy_page_to_iter_pipe(struct page *page,=
+ size_t offset, size_t by
+ =09buf->offset =3D offset;
+ =09buf->len =3D bytes;
+=20
+-=09pipe->head =3D i_head;
++=09pipe->head =3D i_head + 1;
+ =09i->iov_offset =3D offset + bytes;
+ =09i->head =3D i_head;
+ out:
 
--               if (copy_from_user(&user_tv, tv, sizeof(*tv)))
-+               if (get_user(new_ts.tv_sec, &tv->tv_sec) ||
-+                   get_user(new_ts.tv_nsec, &tv->tv_usec))
-                        return -EFAULT;
+Attached is a test program that can induce some a bug in
+copy_page_to_iter_pipe() where I forgot to increment the new head when
+assigning it to pipe->head.
 
--               if (!timeval_valid(&user_tv))
-+               if (new_ts.tv_nsec > USEC_PER_SEC)
-                        return -EINVAL;
+David
+---
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <err.h>
+#include <sys/wait.h>
 
--               new_ts.tv_sec = user_tv.tv_sec;
--               new_ts.tv_nsec = user_tv.tv_usec * NSEC_PER_USEC;
-+               new_ts.tv_nsec *= NSEC_PER_USEC;
+static char buf[256 * 1024] __attribute__((aligned(512)));
+static char *filename;
+static int pipe_wfd =3D -1;
 
-But removing the "user value is < 0" check, relying on the timespec
-value being rejected later, is wrong: 1000=8*125. Multiplying by 8
-always gives a value with the low three bits clear, multiplying by 125
-is reversible. So you can take any target value with the three low bits
-clear, logic shift right by 3, multiply by 0x1cac083126e978d5 , and flip
-the top three bits as you wish to generate 8 pre-images of that target
-value. Four of those will be negative. A trivial example is 0x80..000
-(aka LONG_MIN) and its cousins 0xa0..000, 0xc0..000, 0xe0..000 which all
-become 0 and thus accepted after multiplying by NSEC_PER_USEC. But also
--858989233 (or -3689348814741906097 if long is 64 bit) become 4226200
-which isn't even a multiple of 1000 - there's 500M examples to choose
-from :)
+static void cleanup(void)
+{
+=09close(pipe_wfd);
+}
 
-I'm pretty sure it doesn't generate worse code, gcc is smart enough to
-compile "foo > BAR || foo < 0" as if it was written "(unsigned version
-of foo)foo > BAR". And while a value of USEC_PER_SEC itself will not
-overflow and then be rejeted because the real comparison done later is
-">= NSEC_PER_SEC", I think it's clearer to say "foo >= USEC_PER_SEC ||
-foo < 0) just so the same pattern is used.
+static void cleanup_child(void)
+{
+=09int w;
+=09wait(&w);
+}
 
-Rasmus
+int child(int fd)
+{
+=09ssize_t r;
+
+=09do {
+=09=09r =3D read(fd, buf, 256 * 1024);
+=09=09if (r =3D=3D -1)
+=09=09=09err(1, "read");
+=09} while (r !=3D 0);
+
+=09if (close(fd) =3D=3D -1)
+=09=09err(1, "close");
+
+=09return 0;
+}
+
+int main(int argc, char **argv)
+{
+=09ssize_t n;
+=09loff_t offset;
+=09size_t len;
+=09pid_t pid;
+=09int fd, pfd[2];
+
+=09if (argc !=3D 2) {
+=09=09fprintf(stderr, "Format: %s <file>\n", argv[1]);
+=09=09exit(2);
+=09}
+
+=09filename =3D argv[1];
+
+=09if (pipe(pfd) =3D=3D -1)
+=09=09err(1, "pipe");
+=09pipe_wfd =3D pfd[1];
+
+=09pid =3D fork();
+=09switch (pid) {
+=09case -1:
+=09=09err(1, "fork");
+=09case 0:
+=09=09close(pfd[1]);
+=09=09return child(pfd[0]);
+=09default:
+=09=09close(pfd[0]);
+=09=09atexit(cleanup_child);
+=09=09break;
+=09}
+
+=09fd =3D open(filename, O_RDONLY);
+=09if (fd =3D=3D -1)
+=09=09err(1, "%s", filename);
+
+=09atexit(cleanup);
+
+=09len =3D 256 * 1024;
+=09offset =3D 0;
+=09do {
+=09=09n =3D splice(fd, &offset, pfd[1], NULL, 256 * 1024, 0);
+=09=09if (n =3D=3D -1)
+=09=09=09err(1, "splice");
+=09} while (len -=3D n, len > 0);
+
+=09if (close(pfd[1]) =3D=3D -1)
+=09=09err(1, "close/p");
+=09if (close(fd) =3D=3D -1)
+=09=09err(1, "close/f");
+=09return 0;
+}
