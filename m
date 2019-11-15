@@ -1,64 +1,67 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: Re: [PATCH 17/23] y2038: time: avoid timespec usage in settimeofday()
-Date: Fri, 15 Nov 2019 14:50:42 +0100
-Message-ID: <CAK8P3a0KOVG7STctuPW9gzhCo_yR6uM82LohoQML8CcwQF68Xw@mail.gmail.com>
-References: <20191108210236.1296047-1-arnd@arndb.de> <20191108211323.1806194-8-arnd@arndb.de>
- <20191114230127.GA3580@ryzen.lan> <CAK8P3a3jn8GcedX=HaTFiPY+fyHPoyVUnpcX19nMZqmuUA1RzA@mail.gmail.com>
- <73a56955-552a-3a95-a410-3064401913f7@rasmusvillemoes.dk>
+From: Tom Lendacky <thomas.lendacky@amd.com>
+Subject: Re: AMD TLB errata, (Was: [PATCH RFC] mm: add MAP_EXCLUSIVE to create
+ exclusive user mappings)
+Date: Fri, 15 Nov 2019 08:12:52 -0600
+Message-ID: <1da1b025-cabc-6f04-bde5-e50830d1ecf0@amd.com>
+References: <1572171452-7958-1-git-send-email-rppt@kernel.org>
+ <1572171452-7958-2-git-send-email-rppt@kernel.org>
+ <20191028123124.ogkk5ogjlamvwc2s@box> <20191028130018.GA7192@rapoport-lnx>
+ <20191028131623.zwuwguhm4v4s5imh@box>
+ <CAA9_cmd7f2y2AAT6646S=tco3yfyLgCAC4Qp=1iTQaJqrQcOwQ@mail.gmail.com>
+ <20191029064318.s4n4gidlfjun3d47@box>
+ <20191029085602.GI4114@hirez.programming.kicks-ass.net>
+ <20191029110024.yjytp22lhd2vekrv@box>
+ <20191029123949.GL4114@hirez.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <73a56955-552a-3a95-a410-3064401913f7@rasmusvillemoes.dk>
+In-Reply-To: <20191029123949.GL4114@hirez.programming.kicks-ass.net>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Rasmus Villemoes <linux@rasmusvillemoes.dk>
-Cc: Abel Vesa <abelvesa@linux.com>, y2038 Mailman List <y2038@lists.linaro.org>, John Stultz <john.stultz@linaro.org>, Thomas Gleixner <tglx@linutronix.de>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Stephen Boyd <sboyd@kernel.org>, David Howells <dhowells@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, Deepa Dinamani <deepa.kernel@gmail.com>, Christian Brauner <christian@brauner.io>, Jens Axboe <axboe@kernel.dk>, Ingo Molnar <mingo@kernel.org>, Corey Minyard <cminyard@mvista.com>, zhengbin <zhengbin13@huawei.com>, Li RongQing <lirongqing@baidu.com>, Linux API <linux-api@vger.kernel.org>
+To: Peter Zijlstra <peterz@infradead.org>, "Kirill A. Shutemov" <kirill@shutemov.name>
+Cc: Dan Williams <dan.j.williams@intel.com>, Mike Rapoport <rppt@kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Borislav Petkov <bp@alien8.de>, Dave Hansen <dave.hansen@linux.intel.com>, James Bottomley <jejb@linux.ibm.com>, Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Linux API <linux-api@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, the arch/x86 maintainers <x86@kernel.org>, Mike Rapoport <rppt@linux.ibm.com>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Nov 15, 2019 at 11:27 AM Rasmus Villemoes
-<linux@rasmusvillemoes.dk> wrote:
-> On 15/11/2019 08.58, Arnd Bergmann wrote:
-> > On Fri, Nov 15, 2019 at 12:01 AM Abel Vesa <abelvesa@linux.com> wrote:
-> >>
-> > --- a/kernel/time/time.c
-> > +++ b/kernel/time/time.c
-> > @@ -207,7 +207,7 @@ SYSCALL_DEFINE2(settimeofday, struct
-> > __kernel_old_timeval __user *, tv,
-> >                     get_user(new_ts.tv_nsec, &tv->tv_usec))
-> >                         return -EFAULT;
-> >
-> > -               if (tv->tv_usec > USEC_PER_SEC)
-> > +               if (new_ts->tv_usec > USEC_PER_SEC)
-> >                         return -EINVAL;
->
-> Hopefully not :)
+On 10/29/19 7:39 AM, Peter Zijlstra wrote:
+> On Tue, Oct 29, 2019 at 02:00:24PM +0300, Kirill A. Shutemov wrote:
+>> On Tue, Oct 29, 2019 at 09:56:02AM +0100, Peter Zijlstra wrote:
+>>> On Tue, Oct 29, 2019 at 09:43:18AM +0300, Kirill A. Shutemov wrote:
+>>>> But some CPUs don't like to have two TLB entries for the same memory with
+>>>> different sizes at the same time. See for instance AMD erratum 383.
+>>>>
+>>>> Getting it right would require making the range not present, flush TLB and
+>>>> only then install huge page. That's what we do for userspace.
+>>>>
+>>>> It will not fly for the direct mapping. There is no reasonable way to
+>>>> exclude other CPU from accessing the range while it's not present (call
+>>>> stop_machine()? :P). Moreover, the range may contain the code that doing
+>>>> the collapse or data required for it...
+>>>>
+>>>> BTW, looks like current __split_large_page() in pageattr.c is susceptible
+>>>> to the errata. Maybe we can get away with the easy way...
+>>>
+>>> As you write above, there is just no way we can have a (temporary) hole
+>>> in the direct map.
+>>>
+>>> We are careful about that other errata, and make sure both translations
+>>> are identical wrt everything else.
+>>
+>> It's not clear if it is enough to avoid the issue. "under a highly specific
+>> and detailed set of conditions" is not very specific set of conditions :P
+> 
+> Yeah, I know ... :/ Tom is there any chance you could shed a little more
+> light on that errata?
 
-No, I misquoted from a fix that I had temporarily applied, not the
-version in linux-next.
+I talked with some of the hardware folks and if you maintain the same bits
+in the large and small pages (aside from the large page bit) until the
+flush, then the errata should not occur.
 
->
-> >                 new_ts.tv_nsec *= NSEC_PER_USEC;
->
-> So the actual patch in next-20191115 does
->
-> -               if (copy_from_user(&user_tv, tv, sizeof(*tv)))
-> +               if (get_user(new_ts.tv_sec, &tv->tv_sec) ||
-> +                   get_user(new_ts.tv_nsec, &tv->tv_usec))
->                         return -EFAULT;
->
-> -               if (!timeval_valid(&user_tv))
-> +               if (new_ts.tv_nsec > USEC_PER_SEC)
->                         return -EINVAL;
->
-> -               new_ts.tv_sec = user_tv.tv_sec;
-> -               new_ts.tv_nsec = user_tv.tv_usec * NSEC_PER_USEC;
-> +               new_ts.tv_nsec *= NSEC_PER_USEC;
->
-> But removing the "user value is < 0" check, relying on the timespec
-> value being rejected later, is wrong
+The errata really applies to mappings that end up with different attribute
+bits being set. Even then, it doesn't fail every time. There are other
+conditions required to make it fail.
 
-You are right of course, so many ways to get this one line wrong...
-Pushed more more update to the branch now.
+Thanks,
+Tom
 
-Thanks for the careful review!
-
-        Arnd
+> 
