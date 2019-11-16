@@ -1,131 +1,71 @@
-From: Nicolai Stange <nstange@suse.de>
-Subject: Re: [PATCH v25 01/12] Linux Random Number Generator
-Date: Sat, 16 Nov 2019 19:13:23 +0100
-Message-ID: <87mucvadvg.fsf@suse.de>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [PATCH v25 03/12] LRNG - /proc interface
+Date: Sat, 16 Nov 2019 17:36:25 -0600
+Message-ID: <87k17z4cna.fsf@x220.int.ebiederm.org>
 References: <6157374.ptSnyUpaCn@positron.chronox.de>
         <2787174.DQlWHN5GGo@positron.chronox.de>
-        <2645285.kI0haNqfm4@positron.chronox.de>
+        <2476454.l8LQlgn7Hv@positron.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <2645285.kI0haNqfm4@positron.chronox.de> ("Stephan
+In-Reply-To: <2476454.l8LQlgn7Hv@positron.chronox.de> ("Stephan
  \=\?utf-8\?Q\?M\=C3\=BCller\=22's\?\=
-        message of "Sat, 16 Nov 2019 10:33:20 +0100")
+        message of "Sat, 16 Nov 2019 10:34:12 +0100")
 Sender: linux-kernel-owner@vger.kernel.org
 To: Stephan =?utf-8?Q?M=C3=BCller?= <smueller@chronox.de>
-Cc: Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@sus>
+Cc: Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@suse.de>, "Peter, Matthias" <matthias.peter@bsi>
 List-Id: linux-api@vger.kernel.org
-
-Hi Stephan,
 
 Stephan Müller <smueller@chronox.de> writes:
 
-> +/* Initialize the default DRNG during boot */
+> The LRNG /proc interface provides the same files as the legacy
+> /dev/random. These files behave identically. Yet, all files are
+> documented at [1].
 
-I think that this can get called a bit too early through the
-get_random_bytes() invoked from e.g. boot_init_stack_canary(): in
-start_kernel(), there is
+For someone who works in this area a lot this description is confusing.
 
-	boot_init_stack_canary();
+You are talking about sysctls not ordinary proc files.
 
-	time_init();
+You don't have a call register_sysctl.  If you want your own
+implementation of these sysctls that would seem to be the way to get
+them.  Teach each implementation to register their own set of sysctls
+if they are enabled.
 
-On ARM (at least with arm_arch_timer.c), get_cycles() would return 0
-until
+The entire structure of the code you are adding I have quite confusing,
+and a bit messing.
 
-  time_init() => timer_probe() => arch_timer_of_init() =>
-  arch_timer_common_init() => arch_timer_arch_init() =>
-  arch_timer_delay_timer_register() => register_current_timer_delay()
+Why add a declaration of random_table in patch 1 and then delete that
+declaration in patch 3?  Nothing uses that declaration until this point.
 
-has executed and thus, ...
+What is the point of adding an extern declaration just before you
+declare the table itself?  As I understand the C language that achieves
+nothing.  I understand that is what the existing code in
+drivers/char/random.c does but that is equally buggy there.
 
-> +void lrng_drngs_init_cc20(void)
-> +{
-> +	unsigned long flags = 0;
+I also don't understand why you don't modify the existing random
+generator code into the form you want?  What is the point of a
+side-by-side replacement?  Especially since only one of them can
+be compiled into the kernel at the same time?
+
+This build a replacement and then switch over seems like a recipe for
+loosing the lessons of history because you are not making incremental
+changes that can be clearly understood, reviewed and bisected.
+
+As I read your patchset until this change your code will fail to compile
+in an ordinary configuration with proc enabled.  Have you even tested
+compiling your patchset one patch at a time?
+
+For me a great reorganization to impelment a better structure that fails
+to have a good structure on the usual merits makes me dubious about the
+entire thing.  As it can be a sign the author was pushing so hard to
+make things work he stopped looking at problematic details.
+
+Dubious-by: "Eric W. Biederman" <ebiederm@xmission.com>
+
+Eric
+
 > +
-> +	if (lrng_get_available())
-> +		return;
-> +
-> +	lrng_sdrng_lock(&lrng_sdrng_init, &flags);
-> +	if (lrng_get_available()) {
-> +		lrng_sdrng_unlock(&lrng_sdrng_init, &flags);
-> +		return;
-> +	}
-> +
-> +	if (random_get_entropy() || random_get_entropy()) {
-> +		/*
-> +		 * As the highres timer is identified here, previous interrupts
-> +		 * obtained during boot time are treated like a lowres-timer
-> +		 * would have been present.
-> +		 */
-> +		lrng_pool_configure(true, LRNG_IRQ_ENTROPY_BITS);
-> +	} else {
-> +		lrng_health_disable();
-> +		lrng_pool_configure(false, LRNG_IRQ_ENTROPY_BITS *
-> +					   LRNG_IRQ_OVERSAMPLING_FACTOR);
-> +		pr_warn("operating without high-resolution timer and applying "
-> +			"IRQ oversampling factor %u\n",
-> +			LRNG_IRQ_OVERSAMPLING_FACTOR);
-
-
-... LRNG thinks that no high-res timer is available even though there
-is:
-
-[    0.000000] lrng_sdrng: operating without high-resolution timer and applying IRQ oversampling factor 10
-[    0.000000] lrng_chacha20: ChaCha20 core initialized
-[    0.000000] lrng_chacha20: ChaCha20 core initialized
-[    0.000014] sched_clock: 32 bits at 1000kHz, resolution 1000ns, wraps every 2147483647500ns
-[    0.000036] clocksource: timer: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1911260446275 ns
-[    0.000114] bcm2835: system timer (irq = 27)
-[    0.000594] arch_timer: cp15 timer(s) running at 19.20MHz (phys).
-[    0.000613] clocksource: arch_sys_counter: mask: 0xffffffffffffff max_cycles: 0x46d987e47, max_idle_ns: 440795202767 ns
-[    0.000631] sched_clock: 56 bits at 19MHz, resolution 52ns, wraps every 4398046511078ns
-[    0.000645] Switching to timer-based delay loop, resolution 52ns
-
-Note that this last line comes from aforementioned
-register_current_timer_delay().
-
-Similarly, get_random_bytes() can get called quite early through
-WARN() => warn_slowpath_fmt() => __warn() => print_oops_end_marker() =>
-init_oops_id().
-
-Perhaps it would make sense not to do the (pool + health test)
-initalization "on-demand", but rather make sure it happens at some
-well-defined point after time_init()? Or at least that the pool +
-the health tests get reconfigured eventually?
-
-
-Thanks,
-
-Nicolai
-
-P.S: include/linux/lrng.h needs an #include <linux/errno.h> for
-     CONFIG_LRNG_DRNG_SWITCH=n
-
-
-> +	}
-> +
-> +	lrng_sdrng_reset(&lrng_sdrng_init);
-> +	lrng_cc20_init_state(&secondary_chacha20);
-> +	lrng_state_init_seed_work();
-> +	lrng_sdrng_unlock(&lrng_sdrng_init, &flags);
-> +
-> +	lrng_sdrng_lock(&lrng_sdrng_atomic, &flags);
-> +	lrng_sdrng_reset(&lrng_sdrng_atomic);
-> +	/*
-> +	 * We do not initialize the state of the atomic DRNG as it is identical
-> +	 * to the secondary DRNG at this point.
-> +	 */
-> +	lrng_sdrng_unlock(&lrng_sdrng_atomic, &flags);
-> +
-> +	lrng_trng_init();
-> +
-> +	lrng_set_available();
-> +}
-> +
-> +/* Reset LRNG such that all existing entropy is gone */
-
--- 
-SUSE Software Solutions Germany GmbH, Maxfeldstr. 5, 90409 Nürnberg, Germany
-(HRB 36809, AG Nürnberg), GF: Felix Imendörffer
+> +extern struct ctl_table random_table[];
+> +struct ctl_table random_table[] = {
+> +	{
