@@ -1,71 +1,77 @@
 From: Aleksa Sarai <asarai@suse.de>
-Subject: Re: [PATCH v16 06/12] namei: LOOKUP_NO_XDEV: block mountpoint crossing
-Date: Sun, 17 Nov 2019 04:24:15 +1100
-Message-ID: <20191116172415.brmuonasi3ef6leg@yavin.dot.cyphar.com>
+Subject: Re: [PATCH v16 02/12] namei: allow nd_jump_link() to produce errors
+Date: Sun, 17 Nov 2019 05:09:34 +1100
+Message-ID: <20191116180934.fajrkc4jqcewiuqd@yavin.dot.cyphar.com>
 References: <20191116002802.6663-1-cyphar@cyphar.com>
- <20191116002802.6663-7-cyphar@cyphar.com>
- <20191116010144.GY26530@ZenIV.linux.org.uk>
+ <20191116002802.6663-3-cyphar@cyphar.com>
+ <20191116003702.GX26530@ZenIV.linux.org.uk>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha256;
- protocol="application/pgp-signature"; boundary="zx3lfe7kocslcnhj"
-Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+        protocol="application/pgp-signature"; boundary="ushqsy2n2ywnjdre"
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20191116010144.GY26530@ZenIV.linux.org.uk>
-List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
-List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
-List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
-List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
-Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
-Sender: "Linuxppc-dev"
- <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+In-Reply-To: <20191116003702.GX26530@ZenIV.linux.org.uk>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Al Viro <viro@zeniv.linux.org.uk>
-Cc: Song Liu <songliubraving@fb.com>, linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Alexei Starovoitov <ast@kernel.org>, linux-kernel@vger.kernel.org, David Howells <dhowells@redhat.com>, linux-kselftest@vger.kernel.org, sparclinux@vger.kernel.org, containers@lists.linux-foundation.org, Christian Brauner <christian.brauner@ubuntu.com>, linux-api@vger.kernel.org, Shuah Khan <shuah@kernel.org>, linux-arch@vger.kernel.org, linux-s390@vger.kernel.org, Tycho Andersen <tycho@tycho.ws>, Daniel Borkmann <daniel@iogearbox.net>, Jiri Olsa <jolsa@redhat.com>, Alexander Shishkin <alexander.shishkin@linux.intel.com>, Ingo Molnar <mingo@redhat.com>, linux-arm-kernel@lists.infradead.org, Yonghong Song <yhs@fb.com>, linux-mips@vger.kernel.org, Andrii Nakryiko <andriin@fb.com>, bpf@vger.kernel.orgl
+Cc: Aleksa Sarai <cyphar@cyphar.com>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Martin KaFai Lau <kafai@fb.com>, Song Liu <songliubraving@fb.com>, Yonghong Song <yhs@fb.com>, Andrii Nakryiko <andriin@fb.com>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>David
 List-Id: linux-api@vger.kernel.org
 
 
---zx3lfe7kocslcnhj
+--ushqsy2n2ywnjdre
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
 On 2019-11-16, Al Viro <viro@zeniv.linux.org.uk> wrote:
-> On Sat, Nov 16, 2019 at 11:27:56AM +1100, Aleksa Sarai wrote:
+> On Sat, Nov 16, 2019 at 11:27:52AM +1100, Aleksa Sarai wrote:
+> > +	error =3D nd_jump_link(&path);
+> > +	if (error)
+> > +		path_put(&path);
 >=20
-> > @@ -1383,6 +1398,8 @@ static int follow_dotdot_rcu(struct nameidata *nd)
-> >  				return -ECHILD;
-> >  			if (&mparent->mnt =3D=3D nd->path.mnt)
-> >  				break;
-> > +			if (unlikely(nd->flags & LOOKUP_NO_XDEV))
-> > +				return -EXDEV;
-> >  			/* we know that mountpoint was pinned */
-> >  			nd->path.dentry =3D mountpoint;
-> >  			nd->path.mnt =3D &mparent->mnt;
-> > @@ -1397,6 +1414,8 @@ static int follow_dotdot_rcu(struct nameidata *nd)
-> >  			return -ECHILD;
-> >  		if (!mounted)
-> >  			break;
-> > +		if (unlikely(nd->flags & LOOKUP_NO_XDEV))
-> > +			return -EXDEV;
-> >  		nd->path.mnt =3D &mounted->mnt;
-> >  		nd->path.dentry =3D mounted->mnt.mnt_root;
-> >  		inode =3D nd->path.dentry->d_inode;
+> > +	error =3D nd_jump_link(&ns_path);
+> > +	if (error)
+> > +		path_put(&ns_path);
 >=20
-> I really don't think we should return hard errors from that function.
-> Let the caller redo it in refwalk mode.
+> > +	error =3D nd_jump_link(&path);
+> > +	if (error)
+> > +		path_put(&path);
+>=20
+> 3 calls.  Exact same boilerplate in each to handle a failure case.
+> Which spells "wrong calling conventions"; it's absolutely clear
+> that we want that path_put() inside nd_jump_link().
+>=20
+> The rule should be this: reference that used to be held in
+> *path is consumed in any case.  On success it goes into
+> nd->path, on error it's just dropped, but in any case, the
+> caller has the same refcounting environment to deal with.
+>=20
+> If you need the same boilerplate cleanup on failure again and again,
+> the calling conventions are wrong and need to be fixed.
 
-I suspected as much, though my reason for not changing it was that the
-mount_lock check should ensure that the cached status of whether ".." is
-a mountpoint crossing is correct. But I guess this is more about being
-safe than sorry, rather than an actual bug?
+Will do.
 
-> It's not the fast path, especially for this kind of errors.  Matter of
-> fact, I'm not sure about -ENOENT returned in another failure case
-> there - it's probably OK, but again, -ECHILD would be just as good.
+> And I'm not sure that int is the right return type here, to be honest.
+> void * might be better - return ERR_PTR() or NULL, so that the value
+> could be used as return value of ->get_link() that calls that thing.
 
-I can switch the -ENOENT too if you like.
+I don't agree, given that the few callers of ns_get_path() are
+inconsistent with regards to whether they should use IS_ERR() or check
+for NULL, not to mention that "void *error" reads to me as being very
+odd given how common "int error" is throughout the kernel. There's also
+the "error =3D=3D ERR_PTR(-EAGAIN)" checks which also read as being quite
+odd too.
+
+But the main motivating factor for changing it was that the one use
+where "void *" is useful (proc_ns_get_link) becomes needlessly ugly
+because of the "nd_jump_link() can return errors" change:
+
+	error =3D ERR_PTR(nd_jump_link(&ns_path));
+
+Or probably (if you don't want to rely on ERR_PTR(0) =3D=3D NULL):
+
+	int err =3D nd_jump_link(&ns_path);
+	if (err)
+		error =3D ERR_PTR(err);
 
 --=20
 Aleksa Sarai
@@ -73,15 +79,15 @@ Senior Software Engineer (Containers)
 SUSE Linux GmbH
 <https://www.cyphar.com/>
 
---zx3lfe7kocslcnhj
+--ushqsy2n2ywnjdre
 Content-Type: application/pgp-signature; name="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXdAwvAAKCRCdlLljIbnQ
-El+mAP4lkfpULZhCmvlAombEBT8rptRQqzFx9hYmJ6mvvfcYggEAsxV/+HBUu9Ag
-hFdzUslyEB9Xm9f8/lXdVVGQVVDH4w4=
-=8orS
+iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXdA7WwAKCRCdlLljIbnQ
+EkhIAQCTW+ppymqPGqw4uOB2Z70GQdn52zl46zQ6xxp5L3kEHQD9FZ2+HHtYsZC+
+LGfFupqoyojLXID+lx72AXf4CJ7KLw4=
+=aGSY
 -----END PGP SIGNATURE-----
 
---zx3lfe7kocslcnhj--
+--ushqsy2n2ywnjdre--
