@@ -1,17 +1,16 @@
 From: Aleksa Sarai <asarai@suse.de>
-Subject: Re: [PATCH v16 09/12] namei: LOOKUP_{IN_ROOT,BENEATH}: permit
- limited ".." resolution
-Date: Sun, 17 Nov 2019 03:38:46 +1100
-Message-ID: <20191116163846.gy7q5py5w2p5pgz6@yavin.dot.cyphar.com>
+Subject: Re: [PATCH v16 06/12] namei: LOOKUP_NO_XDEV: block mountpoint crossing
+Date: Sun, 17 Nov 2019 04:24:15 +1100
+Message-ID: <20191116172415.brmuonasi3ef6leg@yavin.dot.cyphar.com>
 References: <20191116002802.6663-1-cyphar@cyphar.com>
- <20191116002802.6663-10-cyphar@cyphar.com>
- <20191116010327.GZ26530@ZenIV.linux.org.uk>
+ <20191116002802.6663-7-cyphar@cyphar.com>
+ <20191116010144.GY26530@ZenIV.linux.org.uk>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha256;
- protocol="application/pgp-signature"; boundary="jveret2iy2nocuo2"
+ protocol="application/pgp-signature"; boundary="zx3lfe7kocslcnhj"
 Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
 Content-Disposition: inline
-In-Reply-To: <20191116010327.GZ26530@ZenIV.linux.org.uk>
+In-Reply-To: <20191116010144.GY26530@ZenIV.linux.org.uk>
 List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
  <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
 List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
@@ -27,33 +26,46 @@ Cc: Song Liu <songliubraving@fb.com>, linux-ia64@vger.kernel.org, linux-sh@vger.
 List-Id: linux-api@vger.kernel.org
 
 
---jveret2iy2nocuo2
+--zx3lfe7kocslcnhj
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
 On 2019-11-16, Al Viro <viro@zeniv.linux.org.uk> wrote:
-> On Sat, Nov 16, 2019 at 11:27:59AM +1100, Aleksa Sarai wrote:
+> On Sat, Nov 16, 2019 at 11:27:56AM +1100, Aleksa Sarai wrote:
 >=20
-> > +		if (unlikely(nd->flags & LOOKUP_IS_SCOPED)) {
-> > +			bool m_retry =3D read_seqretry(&mount_lock, nd->m_seq);
-> > +			bool r_retry =3D read_seqretry(&rename_lock, nd->r_seq);
-> > +
-> > +			/*
-> > +			 * If there was a racing rename or mount along our
-> > +			 * path, then we can't be sure that ".." hasn't jumped
-> > +			 * above nd->root (and so userspace should retry or use
-> > +			 * some fallback).
-> > +			 */
-> > +			if (unlikely(m_retry || r_retry))
-> > +				return -EAGAIN;
-> > +		}
-> >  	}
-> >  	return 0;
+> > @@ -1383,6 +1398,8 @@ static int follow_dotdot_rcu(struct nameidata *nd)
+> >  				return -ECHILD;
+> >  			if (&mparent->mnt =3D=3D nd->path.mnt)
+> >  				break;
+> > +			if (unlikely(nd->flags & LOOKUP_NO_XDEV))
+> > +				return -EXDEV;
+> >  			/* we know that mountpoint was pinned */
+> >  			nd->path.dentry =3D mountpoint;
+> >  			nd->path.mnt =3D &mparent->mnt;
+> > @@ -1397,6 +1414,8 @@ static int follow_dotdot_rcu(struct nameidata *nd)
+> >  			return -ECHILD;
+> >  		if (!mounted)
+> >  			break;
+> > +		if (unlikely(nd->flags & LOOKUP_NO_XDEV))
+> > +			return -EXDEV;
+> >  		nd->path.mnt =3D &mounted->mnt;
+> >  		nd->path.dentry =3D mounted->mnt.mnt_root;
+> >  		inode =3D nd->path.dentry->d_inode;
 >=20
-> Elaborate...  Do these boolean variables make any sense now, really?
+> I really don't think we should return hard errors from that function.
+> Let the caller redo it in refwalk mode.
 
-You're quite right, they don't make sense any more. I'll drop them.
+I suspected as much, though my reason for not changing it was that the
+mount_lock check should ensure that the cached status of whether ".." is
+a mountpoint crossing is correct. But I guess this is more about being
+safe than sorry, rather than an actual bug?
+
+> It's not the fast path, especially for this kind of errors.  Matter of
+> fact, I'm not sure about -ENOENT returned in another failure case
+> there - it's probably OK, but again, -ECHILD would be just as good.
+
+I can switch the -ENOENT too if you like.
 
 --=20
 Aleksa Sarai
@@ -61,15 +73,15 @@ Senior Software Engineer (Containers)
 SUSE Linux GmbH
 <https://www.cyphar.com/>
 
---jveret2iy2nocuo2
+--zx3lfe7kocslcnhj
 Content-Type: application/pgp-signature; name="signature.asc"
 
 -----BEGIN PGP SIGNATURE-----
 
-iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXdAmEwAKCRCdlLljIbnQ
-EmzcAP9tyUNvqW5Zg4vIz0RSlWzF9h1gwHR6LfkIIKqg1KM7QgEArxHmVCll9gd7
-wAho9+kZCEx+tsCxFLjGmYzXP0S9KgI=
-=OgPb
+iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXdAwvAAKCRCdlLljIbnQ
+El+mAP4lkfpULZhCmvlAombEBT8rptRQqzFx9hYmJ6mvvfcYggEAsxV/+HBUu9Ag
+hFdzUslyEB9Xm9f8/lXdVVGQVVDH4w4=
+=8orS
 -----END PGP SIGNATURE-----
 
---jveret2iy2nocuo2--
+--zx3lfe7kocslcnhj--
