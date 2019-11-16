@@ -1,44 +1,52 @@
 From: Al Viro <viro@zeniv.linux.org.uk>
-Subject: Re: [PATCH v16 02/12] namei: allow nd_jump_link() to produce errors
-Date: Sat, 16 Nov 2019 00:37:02 +0000
-Message-ID: <20191116003702.GX26530@ZenIV.linux.org.uk>
+Subject: Re: [PATCH v16 06/12] namei: LOOKUP_NO_XDEV: block mountpoint crossing
+Date: Sat, 16 Nov 2019 01:01:44 +0000
+Message-ID: <20191116010144.GY26530@ZenIV.linux.org.uk>
 References: <20191116002802.6663-1-cyphar@cyphar.com>
- <20191116002802.6663-3-cyphar@cyphar.com>
+ <20191116002802.6663-7-cyphar@cyphar.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
 Content-Disposition: inline
-In-Reply-To: <20191116002802.6663-3-cyphar@cyphar.com>
-Sender: linux-kernel-owner@vger.kernel.org
+In-Reply-To: <20191116002802.6663-7-cyphar@cyphar.com>
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
 To: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Martin KaFai Lau <kafai@fb.com>, Song Liu <songliubraving@fb.com>, Yonghong Song <yhs@fb.com>, Andrii Nakryiko <andriin@fb.com>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>
+Cc: Song Liu <songliubraving@fb.com>, linux-ia64@vger.kernel.org, linux-sh@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Alexei Starovoitov <ast@kernel.org>, linux-kernel@vger.kernel.org, David Howells <dhowells@redhat.com>, linux-kselftest@vger.kernel.org, sparclinux@vger.kernel.org, containers@lists.linux-foundation.org, Christian Brauner <christian.brauner@ubuntu.com>, linux-api@vger.kernel.org, Shuah Khan <shuah@kernel.org>, linux-arch@vger.kernel.org, linux-s390@vger.kernel.org, Tycho Andersen <tycho@tycho.ws>, Daniel Borkmann <daniel@iogearbox.net>, Jiri Olsa <jolsa@redhat.com>, Alexander Shishkin <alexander.shishkin@linux.intel.com>, Ingo Molnar <mingo@redhat.com>, linux-arm-kernel@lists.infradead.org, Yonghong Song <yhs@fb.com>, linux-mips@vger.kernel.org, Andrii Nakryiko <andriin@fb.com>, bpf@vger.kernel.orgl
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Nov 16, 2019 at 11:27:52AM +1100, Aleksa Sarai wrote:
-> +	error = nd_jump_link(&path);
-> +	if (error)
-> +		path_put(&path);
+On Sat, Nov 16, 2019 at 11:27:56AM +1100, Aleksa Sarai wrote:
 
-> +	error = nd_jump_link(&ns_path);
-> +	if (error)
-> +		path_put(&ns_path);
+> @@ -1383,6 +1398,8 @@ static int follow_dotdot_rcu(struct nameidata *nd)
+>  				return -ECHILD;
+>  			if (&mparent->mnt == nd->path.mnt)
+>  				break;
+> +			if (unlikely(nd->flags & LOOKUP_NO_XDEV))
+> +				return -EXDEV;
+>  			/* we know that mountpoint was pinned */
+>  			nd->path.dentry = mountpoint;
+>  			nd->path.mnt = &mparent->mnt;
+> @@ -1397,6 +1414,8 @@ static int follow_dotdot_rcu(struct nameidata *nd)
+>  			return -ECHILD;
+>  		if (!mounted)
+>  			break;
+> +		if (unlikely(nd->flags & LOOKUP_NO_XDEV))
+> +			return -EXDEV;
+>  		nd->path.mnt = &mounted->mnt;
+>  		nd->path.dentry = mounted->mnt.mnt_root;
+>  		inode = nd->path.dentry->d_inode;
 
-> +	error = nd_jump_link(&path);
-> +	if (error)
-> +		path_put(&path);
+I really don't think we should return hard errors from that function.
+Let the caller redo it in refwalk mode.
 
-3 calls.  Exact same boilerplate in each to handle a failure case.
-Which spells "wrong calling conventions"; it's absolutely clear
-that we want that path_put() inside nd_jump_link().
-
-The rule should be this: reference that used to be held in
-*path is consumed in any case.  On success it goes into
-nd->path, on error it's just dropped, but in any case, the
-caller has the same refcounting environment to deal with.
-
-If you need the same boilerplate cleanup on failure again and again,
-the calling conventions are wrong and need to be fixed.
-
-And I'm not sure that int is the right return type here, to be honest.
-void * might be better - return ERR_PTR() or NULL, so that the value
-could be used as return value of ->get_link() that calls that thing.
+It's not the fast path, especially for this kind of errors.  Matter of
+fact, I'm not sure about -ENOENT returned in another failure case
+there - it's probably OK, but again, -ECHILD would be just as good.
