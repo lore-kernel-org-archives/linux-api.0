@@ -1,13 +1,14 @@
 From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCH 1/3] clone.2: Fix typos
-Date: Sun, 17 Nov 2019 19:00:20 +0100
-Message-ID: <0ef00041-9952-3dea-1d6b-2d14536764d3@gmail.com>
+Subject: Re: [PATCH 2/3] clone.2: Check for MAP_FAILED not NULL on mmap()
+Date: Sun, 17 Nov 2019 19:01:18 +0100
+Message-ID: <e94e46a1-d852-f5df-352c-592d5e0e9c6a@gmail.com>
 References: <20191116114114.7066-1-christian@brauner.io>
+ <20191116114114.7066-2-christian@brauner.io>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191116114114.7066-1-christian@brauner.io>
+In-Reply-To: <20191116114114.7066-2-christian@brauner.io>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 To: Christian Brauner <christian@brauner.io>
@@ -16,8 +17,13 @@ List-Id: linux-api@vger.kernel.org
 
 On 11/16/19 12:41 PM, Christian Brauner wrote:
 > From: Christian Brauner <christian.brauner@ubuntu.com>
+> 
+> If mmap() fails it will return MAP_FAILED which according to the manpage
+> is (void *)-1 not NULL.
 
-Thanks, Christian, 
+Sigh! Bad editing on my part.
+
+Thanks, Christian.
 
 Patch applied.
 
@@ -26,35 +32,25 @@ Cheers,
 Michael
 
 
-> Fix two spelling mistakes in manpage describing the clone{2,3}()
-> syscalls/syscall wrappers.
-> 
+
 > Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
 > ---
->  man2/clone.2 | 4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
+>  man2/clone.2 | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 > 
 > diff --git a/man2/clone.2 b/man2/clone.2
-> index f67a60067..57a9eaba7 100644
+> index 57a9eaba7..faff2ada6 100644
 > --- a/man2/clone.2
 > +++ b/man2/clone.2
-> @@ -70,12 +70,12 @@ create a new ("child") process, in a manner similar to
->  .PP
->  By contrast with
->  .BR fork (2),
-> -these system cals provide more precise control over what pieces of execution
-> +these system calls provide more precise control over what pieces of execution
->  context are shared between the calling process and the child process.
->  For example, using these system calls, the caller can control whether
->  or not the two processes share the virtual address space,
->  the table of file descriptors, and the table of signal handlers.
-> -These system calls also allow the new child process to placed
-> +These system calls also allow the new child process to be placed
->  in separate
->  .BR namespaces (7).
->  .PP
-> 
-> base-commit: 91243dad42a7a62df73e3b1dfbb810adc1b8b654
+> @@ -1628,7 +1628,7 @@ main(int argc, char *argv[])
+>  
+>      stack = mmap(NULL, STACK_SIZE, PROT_READ | PROT_WRITE,
+>                   MAP_PRIVATE | MAP_ANONYMOUS | MAP_STACK, \-1, 0);
+> -    if (stack == NULL)
+> +    if (stack == MAP_FAILED)
+>          errExit("mmap");
+>  
+>      stackTop = stack + STACK_SIZE;  /* Assume stack grows downward */
 > 
 
 
