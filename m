@@ -1,85 +1,155 @@
 From: Stephan =?ISO-8859-1?Q?M=FCller?= <smueller@chronox.de>
 Subject: Re: [PATCH v25 01/12] Linux Random Number Generator
-Date: Sun, 17 Nov 2019 11:30:13 +0100
-Message-ID: <9486573.CV9Qe9s7RZ@positron.chronox.de>
-References: <6157374.ptSnyUpaCn@positron.chronox.de> <2645285.kI0haNqfm4@positron.chronox.de> <alpine.DEB.2.21.1911161216540.14348@nanos.tec.linutronix.de>
+Date: Sun, 17 Nov 2019 12:01:15 +0100
+Message-ID: <4567011.rgkcMjRUIa@positron.chronox.de>
+References: <6157374.ptSnyUpaCn@positron.chronox.de> <2645285.kI0haNqfm4@positron.chronox.de> <87mucvadvg.fsf@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.21.1911161216540.14348@nanos.tec.linutronix.de>
+In-Reply-To: <87mucvadvg.fsf@suse.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@sus>
+To: Nicolai Stange <nstange@suse.de>
+Cc: Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, "Peter, Matthias" <matthias>
 List-Id: linux-api@vger.kernel.org
 
-Am Samstag, 16. November 2019, 12:25:21 CET schrieb Thomas Gleixner:
+Am Samstag, 16. November 2019, 19:13:23 CET schrieb Nicolai Stange:
 
-Hi Thomas,
+Hi Nicolai,
 
-> On Sat, 16 Nov 2019, Stephan M=FCller wrote:
-> > +/**
-> > + * Hot code path - Callback for interrupt handler
-> > + */
-> > +void add_interrupt_randomness(int irq, int irq_flags)
-> > +{
-> > +	lrng_time_process();
-> > +
-> > +	if (!lrng_pool_highres_timer()) {
-> > +		struct pt_regs *regs =3D get_irq_regs();
-> > +		static atomic_t reg_idx =3D ATOMIC_INIT(0);
-> > +		u64 ip;
-> > +
-> > +		lrng_pool_lfsr_u32(jiffies);
-> > +		lrng_pool_lfsr_u32(irq);
-> > +		lrng_pool_lfsr_u32(irq_flags);
-> > +
-> > +		if (regs) {
-> > +			u32 *ptr =3D (u32 *)regs;
-> > +			int reg_ptr =3D atomic_add_return_relaxed(1, &reg_idx);
-> > +			size_t n =3D (sizeof(struct pt_regs) / sizeof(u32));
-> > +
-> > +			ip =3D instruction_pointer(regs);
-> > +			lrng_pool_lfsr_u32(*(ptr + (reg_ptr % n)));
-> > +		} else
-> > +			ip =3D _RET_IP_;
-> > +
-> > +		lrng_pool_lfsr_u32(ip >> 32);
-> > +		lrng_pool_lfsr_u32(ip);
-> > +	}
+> Hi Stephan,
 >=20
-> Is there a way to avoid all that processing right in the interrupt hot
-> path and just store the raw data for later processing?
+> Stephan M=FCller <smueller@chronox.de> writes:
+> > +/* Initialize the default DRNG during boot */
+>=20
+> I think that this can get called a bit too early through the
+> get_random_bytes() invoked from e.g. boot_init_stack_canary(): in
+> start_kernel(), there is
+>=20
+> 	boot_init_stack_canary();
+>=20
+> 	time_init();
+>=20
+> On ARM (at least with arm_arch_timer.c), get_cycles() would return 0
+> until
+>=20
+>   time_init() =3D> timer_probe() =3D> arch_timer_of_init() =3D>
+>   arch_timer_common_init() =3D> arch_timer_arch_init() =3D>
+>   arch_timer_delay_timer_register() =3D> register_current_timer_delay()
+>=20
+> has executed and thus, ...
+>=20
+> > +void lrng_drngs_init_cc20(void)
+> > +{
+> > +	unsigned long flags =3D 0;
+> > +
+> > +	if (lrng_get_available())
+> > +		return;
+> > +
+> > +	lrng_sdrng_lock(&lrng_sdrng_init, &flags);
+> > +	if (lrng_get_available()) {
+> > +		lrng_sdrng_unlock(&lrng_sdrng_init, &flags);
+> > +		return;
+> > +	}
+> > +
+> > +	if (random_get_entropy() || random_get_entropy()) {
+> > +		/*
+> > +		 * As the highres timer is identified here, previous interrupts
+> > +		 * obtained during boot time are treated like a lowres-timer
+> > +		 * would have been present.
+> > +		 */
+> > +		lrng_pool_configure(true, LRNG_IRQ_ENTROPY_BITS);
+> > +	} else {
+> > +		lrng_health_disable();
+> > +		lrng_pool_configure(false, LRNG_IRQ_ENTROPY_BITS *
+> > +					   LRNG_IRQ_OVERSAMPLING_FACTOR);
+> > +		pr_warn("operating without high-resolution timer and applying "
+> > +			"IRQ oversampling factor %u\n",
+> > +			LRNG_IRQ_OVERSAMPLING_FACTOR);
+>=20
+> ... LRNG thinks that no high-res timer is available even though there
+> is:
+>=20
+> [    0.000000] lrng_sdrng: operating without high-resolution timer and
+> applying IRQ oversampling factor 10 [    0.000000] lrng_chacha20: ChaCha20
+> core initialized
+> [    0.000000] lrng_chacha20: ChaCha20 core initialized
+> [    0.000014] sched_clock: 32 bits at 1000kHz, resolution 1000ns, wraps
+> every 2147483647500ns [    0.000036] clocksource: timer: mask: 0xffffffff
+> max_cycles: 0xffffffff, max_idle_ns: 1911260446275 ns [    0.000114]
+> bcm2835: system timer (irq =3D 27)
+> [    0.000594] arch_timer: cp15 timer(s) running at 19.20MHz (phys).
+> [    0.000613] clocksource: arch_sys_counter: mask: 0xffffffffffffff
+> max_cycles: 0x46d987e47, max_idle_ns: 440795202767 ns [    0.000631]
+> sched_clock: 56 bits at 19MHz, resolution 52ns, wraps every 4398046511078=
+ns
+> [    0.000645] Switching to timer-based delay loop, resolution 52ns
+>=20
+> Note that this last line comes from aforementioned
+> register_current_timer_delay().
+>=20
+> Similarly, get_random_bytes() can get called quite early through
+> WARN() =3D> warn_slowpath_fmt() =3D> __warn() =3D> print_oops_end_marker(=
+) =3D>
+> init_oops_id().
+>=20
+> Perhaps it would make sense not to do the (pool + health test)
+> initalization "on-demand", but rather make sure it happens at some
+> well-defined point after time_init()? Or at least that the pool +
+> the health tests get reconfigured eventually?
 
-The main code path is lrng_time_process(). This code is streamlined as you=
+
+Thank you very much for testing this and reporting it.
+
+I have extracted the initialization of the time source into its own functio=
+n=20
+and execute it with core_initcall. With that, the DRNG is initialized at th=
+e=20
+time it needs initialization.
+
+But the time source check is now done when time_init is completed as first=
 =20
-already suggested: it is very lightweight to the interrupt handler. Compare=
-d=20
-to the existing /dev/random implementation it is about 50% faster.
+time_init is called and then arch_call_rest_init -> rest_init -> kernel_ini=
+t -
+> kernel_init_freeable -> do_basic_setup -> do_initcalls where the initcall=
+s=20
+registered with the core_initcall callback are now executed as the first=20
+batch.
 
-When measuring the lrng_time_process, it takes on one particular test syste=
-m=20
-on average about 65 cycles where on that very same system the=20
-add_interrupt_randomness code path from the existing /dev/random takes on=20
-average about 97 cycles.
 
-The additional code you see in the add_interrupt_randomness is only execute=
-d=20
-if lrng_pool_highres_timer is not set. This is not set if the LRNG does not=
-=20
-find a high-resolution time stamp, i.e. random_get_entropy() returns 0. As =
-on=20
-most architectures this is now set, this code path is not executed.
+>=20
+>=20
+> Thanks,
+>=20
+> Nicolai
+>=20
+> P.S: include/linux/lrng.h needs an #include <linux/errno.h> for
+>      CONFIG_LRNG_DRNG_SWITCH=3Dn
 
-This additional code path serves as an emergency code to collect some data=
-=20
-that smells random and having entropy but not having really much.
-
-It may be a bit more stremlined but since it is hardly used, I left it as i=
-t=20
-is so far. Do you see the need to streamline it more at this time?
-
-Thanks a lot.
+Thank you, added.
+>=20
+> > +	}
+> > +
+> > +	lrng_sdrng_reset(&lrng_sdrng_init);
+> > +	lrng_cc20_init_state(&secondary_chacha20);
+> > +	lrng_state_init_seed_work();
+> > +	lrng_sdrng_unlock(&lrng_sdrng_init, &flags);
+> > +
+> > +	lrng_sdrng_lock(&lrng_sdrng_atomic, &flags);
+> > +	lrng_sdrng_reset(&lrng_sdrng_atomic);
+> > +	/*
+> > +	 * We do not initialize the state of the atomic DRNG as it is identic=
+al
+> > +	 * to the secondary DRNG at this point.
+> > +	 */
+> > +	lrng_sdrng_unlock(&lrng_sdrng_atomic, &flags);
+> > +
+> > +	lrng_trng_init();
+> > +
+> > +	lrng_set_available();
+> > +}
+> > +
+> > +/* Reset LRNG such that all existing entropy is gone */
 
 
 Ciao
