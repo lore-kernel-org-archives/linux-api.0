@@ -1,47 +1,64 @@
-From: Stephan =?ISO-8859-1?Q?M=FCller?= <smueller@chronox.de>
-Subject: Re: [PATCH v25 03/12] LRNG - /proc interface
-Date: Sun, 17 Nov 2019 13:16:19 +0100
-Message-ID: <3043322.Kq9igzfA0K@positron.chronox.de>
-References: <2476454.l8LQlgn7Hv@positron.chronox.de> <4EB89769-7A2C-4A03-A832-9A0539DD3336@amacapital.net>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: [PATCH 1/3] clone.2: Fix typos
+Date: Sun, 17 Nov 2019 19:00:20 +0100
+Message-ID: <0ef00041-9952-3dea-1d6b-2d14536764d3@gmail.com>
+References: <20191116114114.7066-1-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <4EB89769-7A2C-4A03-A832-9A0539DD3336@amacapital.net>
+In-Reply-To: <20191116114114.7066-1-christian@brauner.io>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Andy Lutomirski <luto@amacapital.net>
-Cc: Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@sus>
+To: Christian Brauner <christian@brauner.io>
+Cc: mtk.manpages@gmail.com, adrian@lisas.de, akpm@linux-foundation.org, arnd@arndb.de, avagin@gmail.com, christian.brauner@ubuntu.com, dhowells@redhat.com, fweimer@redhat.com, jannh@google.com, keescook@chromium.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-man@vger.kernel.org, mingo@elte.hu, oleg@redhat.com, xemul@virtuozzo.com
 List-Id: linux-api@vger.kernel.org
 
-Am Samstag, 16. November 2019, 17:39:40 CET schrieb Andy Lutomirski:
+On 11/16/19 12:41 PM, Christian Brauner wrote:
+> From: Christian Brauner <christian.brauner@ubuntu.com>
 
-Hi Andy,
+Thanks, Christian, 
 
-> > On Nov 16, 2019, at 1:40 AM, Stephan M=C3=BCller <smueller@chronox.de> =
-wrote:
-> >=20
-> > =EF=BB=BFThe LRNG /proc interface provides the same files as the legacy
-> > /dev/random. These files behave identically. Yet, all files are
-> > documented at [1].
->=20
-> Why?
+Patch applied.
 
-I am not sure here: are you referring to the documentation? Or the one=20
-additional file?
+Cheers,
 
-If it is the documentation, do you want me to add it to the patch descripti=
-on?=20
-I initially did not add it as these files were present and seemingly known=
-=20
-what they provide. But I would add that documentation to the patch descript=
-ion=20
-if this is desired.
+Michael
 
-If it is the additional file, should I move it to another place like a sysf=
-s=20
-interface?
 
-Thank you.
+> Fix two spelling mistakes in manpage describing the clone{2,3}()
+> syscalls/syscall wrappers.
+> 
+> Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+> ---
+>  man2/clone.2 | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
+> 
+> diff --git a/man2/clone.2 b/man2/clone.2
+> index f67a60067..57a9eaba7 100644
+> --- a/man2/clone.2
+> +++ b/man2/clone.2
+> @@ -70,12 +70,12 @@ create a new ("child") process, in a manner similar to
+>  .PP
+>  By contrast with
+>  .BR fork (2),
+> -these system cals provide more precise control over what pieces of execution
+> +these system calls provide more precise control over what pieces of execution
+>  context are shared between the calling process and the child process.
+>  For example, using these system calls, the caller can control whether
+>  or not the two processes share the virtual address space,
+>  the table of file descriptors, and the table of signal handlers.
+> -These system calls also allow the new child process to placed
+> +These system calls also allow the new child process to be placed
+>  in separate
+>  .BR namespaces (7).
+>  .PP
+> 
+> base-commit: 91243dad42a7a62df73e3b1dfbb810adc1b8b654
+> 
 
-Ciao
-Stephan
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
