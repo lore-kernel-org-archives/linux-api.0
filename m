@@ -1,47 +1,53 @@
-From: kernel test robot <rong.a.chen@intel.com>
-Subject: Re: [LKP] Re: [pipe] d60337eff1:
- BUG:kernel_NULL_pointer_dereference,address
-Date: Mon, 18 Nov 2019 15:53:22 +0800
-Message-ID: <35daca93-ff2b-2c7d-b837-72396ca0677a@intel.com>
-References: <9279.1573824532@warthog.procyon.org.uk>
- <20191110031348.GE29418@shao2-debian>
- <6853.1573834946@warthog.procyon.org.uk>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+From: Prakash Sangappa <prakash.sangappa@oracle.com>
+Subject: [RESEND RFC PATCH 0/1] CAP_SYS_NICE inside user namespace
+Date: Mon, 18 Nov 2019 09:01:17 -0800
+Message-ID: <1574096478-11520-1-git-send-email-prakash.sangappa@oracle.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <6853.1573834946@warthog.procyon.org.uk>
-Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>, kernel test robot <lkp@intel.com>
-Cc: torvalds@linux-foundation.org, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, lkp@lists.01.org
+To: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+Cc: ebiederm@xmission.com, tglx@linutronix.de, peterz@infradead.org, serge@hallyn.com, prakash.sangappa@oracle.com
 List-Id: linux-api@vger.kernel.org
 
-Hi David,
+Some of the capabilities(7) which affect system wide resources, are ineffective
+inside user namespaces. This restriction applies even to root user( uid 0)
+from init namespace mapped into the user namespace. One such capability
+is CAP_SYS_NICE which is required to change process priority. As a result of
+which the root user cannot perform operations like increase a process priority
+using -ve nice value or set RT priority on processes inside the user namespace.
+A workaround to deal with this restriction is to use the help of a process /
+daemon running outside the user namespace to change process priority, which is
+a an inconvenience.
 
-Yes, it can fix the problem.
+We could allow these restricted capabilities to take effect only for the root
+user from init namespace mapped inside a user namespace and limit the effect
+with use of cgroups. It would seem reasonable to deal with each of these
+restricted capabilities on a case by case basis and address them. This patch
+is concerning CAP_SYS_NICE capability. The proposal here is to selectively
+allow CAP_SYS_NICE to take effect inside user namespace only for a root user
+mapped from init name space. 
 
-Best Regards,
-Rong Chen
+Which user id gets to map the root user(uid 0) from init namespace inside its
+user namespaces is authorized thru /etc/subuid & /etc/subgid entries. Only
+system admin / root user on the system can add these entries.
+Therefore any ordinary user cannot simply map the root user(uid 0) into
+user namespaces created. Necessary cgroup bandwidth control can be used
+to limit cpu usage for such user namespaces.
 
-On 11/16/2019 12:22 AM, David Howells wrote:
-> Actually, no, this is the fix:
->
-> diff --git a/lib/iov_iter.c b/lib/iov_iter.c
-> index 7006b5b2106d..be2fc5793ddd 100644
-> --- a/lib/iov_iter.c
-> +++ b/lib/iov_iter.c
-> @@ -537,7 +537,7 @@ static size_t push_pipe(struct iov_iter *i, size_t size,
->   		buf->ops = &default_pipe_buf_ops;
->   		buf->page = page;
->   		buf->offset = 0;
-> -		buf->len = max_t(ssize_t, left, PAGE_SIZE);
-> +		buf->len = min_t(ssize_t, left, PAGE_SIZE);
->   		left -= buf->len;
->   		iter_head++;
->   		pipe->head = iter_head;
->
-> David
-> _______________________________________________
-> LKP mailing list -- lkp@lists.01.org
-> To unsubscribe send an email to lkp-leave@lists.01.org
+The capabilities(7) manpage lists all the operations / system calls that are
+subject to CAP_SYS_NICE capability check. This patch currently allows
+CAP_SYS_NICE to take effect inside a user namespace only for system calls
+affecting process priority. For completeness sake should memory
+operations(migrate_pages(2), move_pages(2), mbind(2)) mentioned in the
+manpage, also be permitted? There are no cgroup controls to limit the effect
+of these memory operations.
+
+Looking for feedback on this approach.
+
+Prakash Sangappa (1):
+  Selectively allow CAP_SYS_NICE capability inside user namespaces
+
+ kernel/sched/core.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+-- 
+2.7.4
