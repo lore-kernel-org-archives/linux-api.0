@@ -1,86 +1,121 @@
-From: Andy Lutomirski <luto@kernel.org>
+From: Stephan Mueller <smueller@chronox.de>
 Subject: Re: [PATCH v25 10/12] LRNG - add TRNG support
-Date: Tue, 19 Nov 2019 02:07:40 -0800
-Message-ID: <CALCETrUKDO1LSMnHNcPiAFQh2ri6saRiRBi9b5e699cm1_Mgsw@mail.gmail.com>
-References: <5390778.VeFRgus4bQ@positron.chronox.de> <DDB907EA-3FCC-40C7-B55B-A84BC77FD7A1@amacapital.net>
- <3159012.PsEOTp9LqO@positron.chronox.de>
+Date: Tue, 19 Nov 2019 11:46:51 +0100
+Message-ID: <25235737.Vo4cOZQZay@tauon.chronox.de>
+References: <5390778.VeFRgus4bQ@positron.chronox.de> <3159012.PsEOTp9LqO@positron.chronox.de> <CALCETrUKDO1LSMnHNcPiAFQh2ri6saRiRBi9b5e699cm1_Mgsw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <3159012.PsEOTp9LqO@positron.chronox.de>
+In-Reply-To: <CALCETrUKDO1LSMnHNcPiAFQh2ri6saRiRBi9b5e699cm1_Mgsw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: =?UTF-8?Q?Stephan_M=C3=BCller?= <smueller@chronox.de>
-Cc: Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstang>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Nov 17, 2019 at 3:11 AM Stephan M=C3=BCller <smueller@chronox.de> w=
-rote:
->
-> Am Samstag, 16. November 2019, 17:09:09 CET schrieb Andy Lutomirski:
->
-> Hi Andy,
->
-> > > On Nov 16, 2019, at 1:40 AM, Stephan M=C3=BCller <smueller@chronox.de=
-> wrote:
-> > >
-> > > =EF=BB=BFThe True Random Number Generator (TRNG) provides a random nu=
-mber
-> > > generator with prediction resistance (SP800-90A terminology) or an NT=
-G.1
-> > > (AIS 31 terminology).
-> >
-> > ...
-> >
-> > > The secondary DRNGs seed from the TRNG if it is present. In addition,
-> > > the /dev/random device accesses the TRNG.
-> > >
-> > > If the TRNG is disabled, the secondary DRNGs seed from the entropy po=
-ol
-> > > and /dev/random behaves like getrandom(2).
-> >
-> > As mentioned before, I don=E2=80=99t like this API.  An application tha=
-t, for some
-> > reason, needs a TRNG, should have an API by which it either gets a TRNG=
- or
-> > an error. Similarly, an application that wants cryptographically secure
-> > random numbers efficiently should have an API that does that.  With you=
-r
-> > design, /dev/random tries to cater to both use cases, but one of the us=
-e
-> > cases fails depending on kernel config.
-> >
-> > I think /dev/random should wait for enough entropy to initialize the sy=
-stem
-> > but should not block after that. A TRNG should have an entirely new API
-> > that is better than /dev/random.
->
-> I apologize for the misunderstanding. I assumed we would introduce such /=
-dev/
-> true_random at a later stage.
->
-> If you agree, I can certainly add /dev/true_random right now that links w=
-ith
-> the TRNG and make /dev/random behave as discussed, i.e. behave exactly li=
-ke
-> getrandom(..., 0);
+Am Dienstag, 19. November 2019, 11:07:40 CET schrieb Andy Lutomirski:
 
-Given that your series is already a decently large ABI change, I think
-it would be polite to users to make all the anticipated changes all at
-once to reduce the amount of churn everyone needs to deal with.
+Hi Andy,
 
->
-> As this would introduce a new device file now, is there a special process=
- that
-> I need to follow or do I need to copy? Which major/minor number should I =
-use?
->
-> Looking into static const struct memdev devlist[] I see
->
->          [8] =3D { "random", 0666, &random_fops, 0 },
->          [9] =3D { "urandom", 0666, &urandom_fops, 0 },
->
-> Shall a true_random be added here with [10]?
+> On Sun, Nov 17, 2019 at 3:11 AM Stephan M=C3=BCller <smueller@chronox.de>=
+ wrote:
+> > Am Samstag, 16. November 2019, 17:09:09 CET schrieb Andy Lutomirski:
+> >=20
+> > Hi Andy,
+> >=20
+> > > > On Nov 16, 2019, at 1:40 AM, Stephan M=C3=BCller <smueller@chronox.=
+de>
+> > > > wrote:
+> > > >=20
+> > > > =EF=BB=BFThe True Random Number Generator (TRNG) provides a random =
+number
+> > > > generator with prediction resistance (SP800-90A terminology) or an
+> > > > NTG.1
+> > > > (AIS 31 terminology).
+> > >=20
+> > > ...
+> > >=20
+> > > > The secondary DRNGs seed from the TRNG if it is present. In additio=
+n,
+> > > > the /dev/random device accesses the TRNG.
+> > > >=20
+> > > > If the TRNG is disabled, the secondary DRNGs seed from the entropy
+> > > > pool
+> > > > and /dev/random behaves like getrandom(2).
+> > >=20
+> > > As mentioned before, I don=E2=80=99t like this API.  An application t=
+hat, for
+> > > some
+> > > reason, needs a TRNG, should have an API by which it either gets a TR=
+NG
+> > > or
+> > > an error. Similarly, an application that wants cryptographically secu=
+re
+> > > random numbers efficiently should have an API that does that.  With y=
+our
+> > > design, /dev/random tries to cater to both use cases, but one of the =
+use
+> > > cases fails depending on kernel config.
+> > >=20
+> > > I think /dev/random should wait for enough entropy to initialize the
+> > > system
+> > > but should not block after that. A TRNG should have an entirely new A=
+PI
+> > > that is better than /dev/random.
+> >=20
+> > I apologize for the misunderstanding. I assumed we would introduce such
+> > /dev/ true_random at a later stage.
+> >=20
+> > If you agree, I can certainly add /dev/true_random right now that links
+> > with the TRNG and make /dev/random behave as discussed, i.e. behave
+> > exactly like getrandom(..., 0);
+>=20
+> Given that your series is already a decently large ABI change, I think
+> it would be polite to users to make all the anticipated changes all at
+> once to reduce the amount of churn everyone needs to deal with.
 
-I am not at all an expert on chardevs, but this sounds generally
-reasonable.  gregkh is probably the real authority here.
+I fully agree with that. This is the reason for my question to ask for how =
+to=20
+approach adding such additional interface for the TRNG. Considering that th=
+ere=20
+are use cases for the blocking interfaces, I would like to have it present=
+=20
+from the start.
+
+That said, are you planning to keep the blocking_pool considering our=20
+discussion?
+
+But may I ask why you say that there are ABI changes? The LRNG set tries to=
+ be=20
+100% API and ABI compliant to the existing random.c interfaces.
+
+The only change is the runtime-behavior (e.g. time when something is seeded=
+),=20
+performance of the interrupt handling and the kernel/user interfaces that m=
+ay=20
+be noticeable by users. I.e. there are timing changes, but no technical=20
+changes.
+
+The LRNG though would add one optional interface for kernel internal use an=
+d=20
+then the discussed /dev/true_random interface.
+>=20
+> > As this would introduce a new device file now, is there a special proce=
+ss
+> > that I need to follow or do I need to copy? Which major/minor number
+> > should I use?
+> >=20
+> > Looking into static const struct memdev devlist[] I see
+> >=20
+> >          [8] =3D { "random", 0666, &random_fops, 0 },
+> >          [9] =3D { "urandom", 0666, &urandom_fops, 0 },
+> >=20
+> > Shall a true_random be added here with [10]?
+>=20
+> I am not at all an expert on chardevs, but this sounds generally
+> reasonable.  gregkh is probably the real authority here.
+
+Thank you for the hint. Then I would like to wait for Greg on this.
+
+Ciao
+Stephan
