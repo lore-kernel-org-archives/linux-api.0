@@ -1,59 +1,46 @@
-From: "prakash.sangappa" <prakash.sangappa@oracle.com>
-Subject: Re: [RESEND RFC PATCH 1/1] Selectively allow CAP_SYS_NICE capability
- inside user namespaces
-Date: Mon, 18 Nov 2019 16:46:08 -0800
-Message-ID: <9b2dd6f5-5b0b-9c9b-e853-5795c352e092@oracle.com>
-References: <1574096478-11520-1-git-send-email-prakash.sangappa@oracle.com>
- <1574096478-11520-2-git-send-email-prakash.sangappa@oracle.com>
- <CAG48ez1i9LUd2DPoP9na9OyqXDZVRJZQqBbS1H6Dz_h7mtJ=Mw@mail.gmail.com>
-Reply-To: prakash.sangappa@oracle.com
+From: Bala S <balas2380@gmail.com>
+Subject: Suggested Patch is not working for 22851 Bugzilla issue
+Date: Tue, 19 Nov 2019 10:37:44 +0530
+Message-ID: <CAJKzgVtzD7ULwCDVRSLMCmGJNaMqvx+jVO619t3xuv2oiEsPMQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAG48ez1i9LUd2DPoP9na9OyqXDZVRJZQqBbS1H6Dz_h7mtJ=Mw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jann Horn <jannh@google.com>
-Cc: kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, Thomas Gleixner <tglx@linutronix.de>, Peter Zijlstra <peterz@infradead.org>, "Serge E. Hallyn" <serge@hallyn.com>, Christian Brauner <christian@brauner.io>
+To: mhocko@kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
+Hi Mhocko,
 
+https://sourceware.org/bugzilla/show_bug.cgi?id=3D22851
+For the above issue, I have found the patch.
 
-On 11/18/2019 11:30 AM, Jann Horn wrote:
-> On Mon, Nov 18, 2019 at 6:04 PM Prakash Sangappa
-> <prakash.sangappa@oracle.com> wrote:
->> Allow CAP_SYS_NICE to take effect for processes having effective uid of a
->> root user from init namespace.
-> [...]
->> @@ -4548,6 +4548,8 @@ int can_nice(const struct task_struct *p, const int nice)
->>          int nice_rlim = nice_to_rlimit(nice);
->>
->>          return (nice_rlim <= task_rlimit(p, RLIMIT_NICE) ||
->> +               (ns_capable(__task_cred(p)->user_ns, CAP_SYS_NICE) &&
->> +               uid_eq(current_euid(), GLOBAL_ROOT_UID)) ||
->>                  capable(CAP_SYS_NICE));
-> I very strongly dislike tying such a feature to GLOBAL_ROOT_UID.
-> Wouldn't it be better to control this through procfs, similar to
-> uid_map and gid_map? If you really need an escape hatch to become
-> privileged outside a user namespace, then I'd much prefer a file
-> "cap_map" that lets someone with appropriate capabilities in the outer
-> namespace write a bitmask of capabilities that should have effect
-> outside the container, or something like that. And limit that to bits
-> where that's sane, like CAP_SYS_NICE.
+Patch link:
+https://www.mail-archive.com/linux-kernel@vger.kernel.org/msg1561935.html
 
-Sounds reasonable. Adding a 'cap_map' file to user namespace, would give 
-more control. We could allow the  capability in 'cap_map' to take effect 
-only if corresponding capability is enabled for the user inside the user 
-namespace Ex uid 0. Start with support for CAP_SYS_NICE?
+Only change i noticed is 'MAP_FIXED_NOREPLACE' is used instead of
+'MAP_FIXED_SAFE'.
 
+I ran test case on the following targets with this patch:
 
->
-> If we tie features like this to GLOBAL_ROOT_UID, more people are going
-> to run their containers with GLOBAL_ROOT_UID. Which is a terrible,
-> terrible idea. GLOBAL_ROOT_UID gives you privilege over all sorts of
-> files that you shouldn't be able to access, and only things like mount
-> namespaces and possibly LSMs prevent you from exercising that
-> privilege. GLOBAL_ROOT_UID should only ever be given to processes that
-> you trust completely.
+1. For X86-64, Still i could see the reported issue( 'libevil.so' just
+runs =E2=80=98cat /etc/passwd')
 
-Agreed.
+2. For MIPS-64, i am not seeing the malicious file content as
+reported. But =E2=80=98ldd=E2=80=99 could not found =E2=80=98libevil.so=E2=
+=80=99.
+
+root@qemumips64:~/LIN1019-1806# ldd ./main
+        linux-vdso.so.1 (0x000000fff1f20000)
+        libevil.so =3D> not found
+        libc.so.6 =3D> /lib/libc.so.6 (0x0000005e46f70000)
+        /lib/ld.so.1 (0x000000fff7888000)
+
+I am not clear why this patch is not working for X86-64? But it is
+working for MIPS-64 with some issue.
+Please let me know, if anything is pending on this patch for the reported i=
+ssue.
+
+Thanks,
+Bala
