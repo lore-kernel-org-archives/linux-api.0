@@ -1,44 +1,58 @@
-From: Stephan =?ISO-8859-1?Q?M=FCller?= <smueller@chronox.de>
-Subject: Re: [PATCH v25 12/12] LRNG - add interface for gathering of raw entropy
-Date: Wed, 20 Nov 2019 10:01:23 +0100
-Message-ID: <1606105.I1uVafPBki@positron.chronox.de>
-References: <6157374.ptSnyUpaCn@positron.chronox.de> <3610406.x8mDjznOIz@positron.chronox.de> <ea5e2cf5-d622-03c1-eb96-7f7e4893ae04@infradead.org>
+From: "Alexander E. Patrakov" <patrakov@gmail.com>
+Subject: Re: [PATCH v25 10/12] LRNG - add TRNG support
+Date: Wed, 20 Nov 2019 14:55:46 +0500
+Message-ID: <cdf1791d-0e60-cb9f-6030-0258f12bef3c@gmail.com>
+References: <5390778.VeFRgus4bQ@positron.chronox.de>
+ <CALCETrUKDO1LSMnHNcPiAFQh2ri6saRiRBi9b5e699cm1_Mgsw@mail.gmail.com>
+ <20191119124150.GB1975017@kroah.com>
+ <19681012.svDddlc5pN@positron.chronox.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <ea5e2cf5-d622-03c1-eb96-7f7e4893ae04@infradead.org>
+In-Reply-To: <19681012.svDddlc5pN@positron.chronox.de>
+Content-Language: en-PH
 Sender: linux-kernel-owner@vger.kernel.org
-To: Randy Dunlap <rdunlap@infradead.org>
-Cc: Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@sus>
+To: =?UTF-8?Q?Stephan_M=c3=bcller?= <smueller@chronox.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@suse.de>, "Peter, Matthias" <matthias.peter@bsi.bund.de>
 List-Id: linux-api@vger.kernel.org
 
-Am Dienstag, 19. November 2019, 18:17:55 CET schrieb Randy Dunlap:
+20.11.2019 13:58, Stephan Müller пишет:
 
-Hi Randy,
+> Or another idea and apologies if I restart this conversation as there was
+> already a discussion around it: what about extending the getrandom(2) call
+> instead of adding a device file?
+> 
+> What about adding yet another flag to getrandom: GRND_TRUERANDOM and process
+> it as follows:
+> 
+>          if (flags & ~(GRND_NONBLOCK|GRND_RANDOM|GRND_INSECURE|
+> GRND_TRUERANDOM))
+>                  return -EINVAL;
+> 
+>          //From Andy's tree
+>          /*
+>           * Requesting insecure and blocking randomness at the same time makes
+>           * no sense.
+>           */
+>          if ((flags & (GRND_INSECURE|GRND_RANDOM)) == (GRND_INSECURE|
+> GRND_RANDOM))
+>                  return -EINVAL;
+> 
+> 	  /* We only allow GRND_TRUERANDOM by itself or with NONBLOCK */
+> 	  if (! ((flags & GRND_TRUERANDOM) &&
+>                 ((flags == GRND_TRUERANDOM) ||
+>                  (flags == GRND_TRUERANDOM | GRND_NONBLOCK))))
+> 		return -EINVAL;
+> 
+> 	if (flags & GRND_TRUERANDOM) {
+> 		... do the TRNG processing ...
+> 		... may return -ENOPNOTSUPP if no TRNG available ...
+> 	}
 
-> Hi,
->=20
-> On 11/16/19 1:38 AM, Stephan M=FCller wrote:
-> > diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-> > index e6ca3acc1e48..4ccc710832ef 100644
-> > --- a/drivers/char/lrng/Kconfig
-> > +++ b/drivers/char/lrng/Kconfig
-> > @@ -169,4 +169,20 @@ config LRNG_APT_CUTOFF
-> >=20
-> >  	default 325 if !LRNG_APT_BROKEN
-> >  	default 32 if LRNG_APT_BROKEN
-> >=20
-> > +config LRNG_TESTING
-> > +	bool "Enable entropy test interface to LRNG noise source"
-> > +	select CONFIG_DEBUG_FS
->=20
-> 	That should be spelled as DEBUG_FS and preferably would be "depends on"
-> 	instead of 'select'.
+This would totally miss the point of adding a device node: UNIX 
+permissions that don't allow "others" to read and deplete "true" random 
+numbers.
 
-=46ixed.
-
-Thank you very much.
-
-Ciao
-Stephan
+-- 
+Alexander E. Patrakov
