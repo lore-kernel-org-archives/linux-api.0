@@ -1,58 +1,42 @@
-From: "Alexander E. Patrakov" <patrakov@gmail.com>
-Subject: Re: [PATCH v25 10/12] LRNG - add TRNG support
-Date: Wed, 20 Nov 2019 14:55:46 +0500
-Message-ID: <cdf1791d-0e60-cb9f-6030-0258f12bef3c@gmail.com>
-References: <5390778.VeFRgus4bQ@positron.chronox.de>
- <CALCETrUKDO1LSMnHNcPiAFQh2ri6saRiRBi9b5e699cm1_Mgsw@mail.gmail.com>
- <20191119124150.GB1975017@kroah.com>
- <19681012.svDddlc5pN@positron.chronox.de>
+From: Christian Brauner <christian@brauner.io>
+Subject: [PATCH] clone.2: Mention that CLONE_PARENT is off-limits for inits
+Date: Wed, 20 Nov 2019 11:45:04 +0100
+Message-ID: <20191120104504.22411-1-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <19681012.svDddlc5pN@positron.chronox.de>
-Content-Language: en-PH
 Sender: linux-kernel-owner@vger.kernel.org
-To: =?UTF-8?Q?Stephan_M=c3=bcller?= <smueller@chronox.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@suse.de>, "Peter, Matthias" <matthias.peter@bsi.bund.de>
+To: mtk.manpages@gmail.com
+Cc: adrian@lisas.de, akpm@linux-foundation.org, arnd@arndb.de, avagin@gmail.com, christian.brauner@ubuntu.com, dhowells@redhat.com, fweimer@redhat.com, jannh@google.com, keescook@chromium.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-man@vger.kernel.org, mingo@elte.hu, oleg@redhat.com, xemul@virtuozzo.com
 List-Id: linux-api@vger.kernel.org
 
-20.11.2019 13:58, Stephan Müller пишет:
+From: Christian Brauner <christian.brauner@ubuntu.com>
 
-> Or another idea and apologies if I restart this conversation as there was
-> already a discussion around it: what about extending the getrandom(2) call
-> instead of adding a device file?
-> 
-> What about adding yet another flag to getrandom: GRND_TRUERANDOM and process
-> it as follows:
-> 
->          if (flags & ~(GRND_NONBLOCK|GRND_RANDOM|GRND_INSECURE|
-> GRND_TRUERANDOM))
->                  return -EINVAL;
-> 
->          //From Andy's tree
->          /*
->           * Requesting insecure and blocking randomness at the same time makes
->           * no sense.
->           */
->          if ((flags & (GRND_INSECURE|GRND_RANDOM)) == (GRND_INSECURE|
-> GRND_RANDOM))
->                  return -EINVAL;
-> 
-> 	  /* We only allow GRND_TRUERANDOM by itself or with NONBLOCK */
-> 	  if (! ((flags & GRND_TRUERANDOM) &&
->                 ((flags == GRND_TRUERANDOM) ||
->                  (flags == GRND_TRUERANDOM | GRND_NONBLOCK))))
-> 		return -EINVAL;
-> 
-> 	if (flags & GRND_TRUERANDOM) {
-> 		... do the TRNG processing ...
-> 		... may return -ENOPNOTSUPP if no TRNG available ...
-> 	}
+The CLONE_PARENT flag cannot but used by init processes. Let's mention
+this in the manpages to prevent suprises.
 
-This would totally miss the point of adding a device node: UNIX 
-permissions that don't allow "others" to read and deplete "true" random 
-numbers.
+Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+---
+ man2/clone.2 | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
+diff --git a/man2/clone.2 b/man2/clone.2
+index f0f29d6f1..aa98ab79b 100644
+--- a/man2/clone.2
++++ b/man2/clone.2
+@@ -646,6 +646,13 @@ if
+ .B CLONE_PARENT
+ is set, then the parent of the calling process, rather than the
+ calling process itself, will be signaled.
++.IP
++The kernel will not allow global init and init processes in pid
++namespaces to use the
++.B CLONE_PARENT
++flag. This is done to prevent the creation of multi-rooted process
++trees. It also avoids unreapable zombies in the initial pid
++namespace.
+ .TP
+ .BR CLONE_PARENT_SETTID " (since Linux 2.5.49)"
+ Store the child thread ID at the location pointed to by
 -- 
-Alexander E. Patrakov
+2.24.0
