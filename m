@@ -1,42 +1,59 @@
-From: Christian Brauner <christian@brauner.io>
-Subject: [PATCH] clone.2: Mention that CLONE_PARENT is off-limits for inits
-Date: Wed, 20 Nov 2019 11:45:04 +0100
-Message-ID: <20191120104504.22411-1-christian@brauner.io>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH v25 10/12] LRNG - add TRNG support
+Date: Wed, 20 Nov 2019 14:29:18 +0100
+Message-ID: <20191120132918.GA2892197@kroah.com>
+References: <5390778.VeFRgus4bQ@positron.chronox.de>
+ <CALCETrUKDO1LSMnHNcPiAFQh2ri6saRiRBi9b5e699cm1_Mgsw@mail.gmail.com>
+ <20191119124150.GB1975017@kroah.com>
+ <19681012.svDddlc5pN@positron.chronox.de>
 Mime-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <19681012.svDddlc5pN@positron.chronox.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: mtk.manpages@gmail.com
-Cc: adrian@lisas.de, akpm@linux-foundation.org, arnd@arndb.de, avagin@gmail.com, christian.brauner@ubuntu.com, dhowells@redhat.com, fweimer@redhat.com, jannh@google.com, keescook@chromium.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-man@vger.kernel.org, mingo@elte.hu, oleg@redhat.com, xemul@virtuozzo.com
+To: Stephan =?iso-8859-1?Q?M=FCller?= <smueller@chronox.de>
+Cc: Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@suse.de>P
 List-Id: linux-api@vger.kernel.org
 
-From: Christian Brauner <christian.brauner@ubuntu.com>
+On Wed, Nov 20, 2019 at 09:58:35AM +0100, Stephan Müller wrote:
+> Am Dienstag, 19. November 2019, 13:41:50 CET schrieb Greg Kroah-Hartman:
+> 
+> Hi Greg,
+> 
+> > On Tue, Nov 19, 2019 at 02:07:40AM -0800, Andy Lutomirski wrote:
+> > > > As this would introduce a new device file now, is there a special
+> > > > process that I need to follow or do I need to copy? Which major/minor
+> > > > number should I use?
+> > > > 
+> > > > Looking into static const struct memdev devlist[] I see
+> > > > 
+> > > >          [8] = { "random", 0666, &random_fops, 0 },
+> > > >          [9] = { "urandom", 0666, &urandom_fops, 0 },
+> > > > 
+> > > > Shall a true_random be added here with [10]?
+> > > 
+> > > I am not at all an expert on chardevs, but this sounds generally
+> > > reasonable.  gregkh is probably the real authority here.
+> > 
+> > [10] is the aio char device node, so you better not try to overlap it or
+> > bad things will happen :(
+> 
+> Thanks for your insights.
+> 
+> Which device minor number could we use?
 
-The CLONE_PARENT flag cannot but used by init processes. Let's mention
-this in the manpages to prevent suprises.
+Get your own dynamic one by using a misc device if you _REALLY_ want to
+add yet-another-char-node-for-random-data.
 
-Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
----
- man2/clone.2 | 7 +++++++
- 1 file changed, 7 insertions(+)
+But I would have thought that we all realize that this is not the way to
+do things.  Let's not have "random", "urandom", and "true_random" be
+something we want to totally confuse userspace with, that way is insane.
 
-diff --git a/man2/clone.2 b/man2/clone.2
-index f0f29d6f1..aa98ab79b 100644
---- a/man2/clone.2
-+++ b/man2/clone.2
-@@ -646,6 +646,13 @@ if
- .B CLONE_PARENT
- is set, then the parent of the calling process, rather than the
- calling process itself, will be signaled.
-+.IP
-+The kernel will not allow global init and init processes in pid
-+namespaces to use the
-+.B CLONE_PARENT
-+flag. This is done to prevent the creation of multi-rooted process
-+trees. It also avoids unreapable zombies in the initial pid
-+namespace.
- .TP
- .BR CLONE_PARENT_SETTID " (since Linux 2.5.49)"
- Store the child thread ID at the location pointed to by
--- 
-2.24.0
+Please just make the existing userspace api "just work", don't add to
+the mess.
+
+thanks,
+
+greg k-h
