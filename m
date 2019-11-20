@@ -1,77 +1,44 @@
 From: Stephan =?ISO-8859-1?Q?M=FCller?= <smueller@chronox.de>
-Subject: Re: [PATCH v25 10/12] LRNG - add TRNG support
-Date: Wed, 20 Nov 2019 09:58:35 +0100
-Message-ID: <19681012.svDddlc5pN@positron.chronox.de>
-References: <5390778.VeFRgus4bQ@positron.chronox.de> <CALCETrUKDO1LSMnHNcPiAFQh2ri6saRiRBi9b5e699cm1_Mgsw@mail.gmail.com> <20191119124150.GB1975017@kroah.com>
+Subject: Re: [PATCH v25 12/12] LRNG - add interface for gathering of raw entropy
+Date: Wed, 20 Nov 2019 10:01:23 +0100
+Message-ID: <1606105.I1uVafPBki@positron.chronox.de>
+References: <6157374.ptSnyUpaCn@positron.chronox.de> <3610406.x8mDjznOIz@positron.chronox.de> <ea5e2cf5-d622-03c1-eb96-7f7e4893ae04@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191119124150.GB1975017@kroah.com>
+In-Reply-To: <ea5e2cf5-d622-03c1-eb96-7f7e4893ae04@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Cc: Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@suse.de>P
+To: Randy Dunlap <rdunlap@infradead.org>
+Cc: Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@sus>
 List-Id: linux-api@vger.kernel.org
 
-Am Dienstag, 19. November 2019, 13:41:50 CET schrieb Greg Kroah-Hartman:
+Am Dienstag, 19. November 2019, 18:17:55 CET schrieb Randy Dunlap:
 
-Hi Greg,
+Hi Randy,
 
-> On Tue, Nov 19, 2019 at 02:07:40AM -0800, Andy Lutomirski wrote:
-> > > As this would introduce a new device file now, is there a special
-> > > process that I need to follow or do I need to copy? Which major/minor
-> > > number should I use?
-> > > 
-> > > Looking into static const struct memdev devlist[] I see
-> > > 
-> > >          [8] = { "random", 0666, &random_fops, 0 },
-> > >          [9] = { "urandom", 0666, &urandom_fops, 0 },
-> > > 
-> > > Shall a true_random be added here with [10]?
-> > 
-> > I am not at all an expert on chardevs, but this sounds generally
-> > reasonable.  gregkh is probably the real authority here.
-> 
-> [10] is the aio char device node, so you better not try to overlap it or
-> bad things will happen :(
+> Hi,
+>=20
+> On 11/16/19 1:38 AM, Stephan M=FCller wrote:
+> > diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
+> > index e6ca3acc1e48..4ccc710832ef 100644
+> > --- a/drivers/char/lrng/Kconfig
+> > +++ b/drivers/char/lrng/Kconfig
+> > @@ -169,4 +169,20 @@ config LRNG_APT_CUTOFF
+> >=20
+> >  	default 325 if !LRNG_APT_BROKEN
+> >  	default 32 if LRNG_APT_BROKEN
+> >=20
+> > +config LRNG_TESTING
+> > +	bool "Enable entropy test interface to LRNG noise source"
+> > +	select CONFIG_DEBUG_FS
+>=20
+> 	That should be spelled as DEBUG_FS and preferably would be "depends on"
+> 	instead of 'select'.
 
-Thanks for your insights.
+=46ixed.
 
-Which device minor number could we use?
-
-Or another idea and apologies if I restart this conversation as there was 
-already a discussion around it: what about extending the getrandom(2) call 
-instead of adding a device file?
-
-What about adding yet another flag to getrandom: GRND_TRUERANDOM and process 
-it as follows:
-
-        if (flags & ~(GRND_NONBLOCK|GRND_RANDOM|GRND_INSECURE|
-GRND_TRUERANDOM))
-                return -EINVAL;
-
-        //From Andy's tree
-        /*
-         * Requesting insecure and blocking randomness at the same time makes
-         * no sense.
-         */
-        if ((flags & (GRND_INSECURE|GRND_RANDOM)) == (GRND_INSECURE|
-GRND_RANDOM))
-                return -EINVAL;
-
-	  /* We only allow GRND_TRUERANDOM by itself or with NONBLOCK */
-	  if (! ((flags & GRND_TRUERANDOM) &&
-               ((flags == GRND_TRUERANDOM) ||
-                (flags == GRND_TRUERANDOM | GRND_NONBLOCK))))
-		return -EINVAL;
-
-	if (flags & GRND_TRUERANDOM) {
-		... do the TRNG processing ...
-		... may return -ENOPNOTSUPP if no TRNG available ...
-	}
-
-Thanks a lot.
-
+Thank you very much.
 
 Ciao
 Stephan
