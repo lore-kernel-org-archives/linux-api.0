@@ -1,59 +1,199 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: Re: [PATCH v25 10/12] LRNG - add TRNG support
-Date: Wed, 20 Nov 2019 14:29:18 +0100
-Message-ID: <20191120132918.GA2892197@kroah.com>
-References: <5390778.VeFRgus4bQ@positron.chronox.de>
- <CALCETrUKDO1LSMnHNcPiAFQh2ri6saRiRBi9b5e699cm1_Mgsw@mail.gmail.com>
- <20191119124150.GB1975017@kroah.com>
- <19681012.svDddlc5pN@positron.chronox.de>
+From: Neil Horman <nhorman@redhat.com>
+Subject: Re: [PATCH v25 09/12] LRNG - add Jitter RNG fast noise source
+Date: Wed, 20 Nov 2019 08:33:03 -0500
+Message-ID: <20191120133303.GA28341@hmswarspite.think-freely.org>
+References: <6157374.ptSnyUpaCn@positron.chronox.de>
+ <2787174.DQlWHN5GGo@positron.chronox.de>
+ <2377947.mlgTlHak1g@positron.chronox.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=WINDOWS-1252
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <2377947.mlgTlHak1g@positron.chronox.de>
 Content-Disposition: inline
-In-Reply-To: <19681012.svDddlc5pN@positron.chronox.de>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Stephan =?iso-8859-1?Q?M=FCller?= <smueller@chronox.de>
-Cc: Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@suse.de>P
+Cc: Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@sus>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 20, 2019 at 09:58:35AM +0100, Stephan Müller wrote:
-> Am Dienstag, 19. November 2019, 13:41:50 CET schrieb Greg Kroah-Hartman:
-> 
-> Hi Greg,
-> 
-> > On Tue, Nov 19, 2019 at 02:07:40AM -0800, Andy Lutomirski wrote:
-> > > > As this would introduce a new device file now, is there a special
-> > > > process that I need to follow or do I need to copy? Which major/minor
-> > > > number should I use?
-> > > > 
-> > > > Looking into static const struct memdev devlist[] I see
-> > > > 
-> > > >          [8] = { "random", 0666, &random_fops, 0 },
-> > > >          [9] = { "urandom", 0666, &urandom_fops, 0 },
-> > > > 
-> > > > Shall a true_random be added here with [10]?
-> > > 
-> > > I am not at all an expert on chardevs, but this sounds generally
-> > > reasonable.  gregkh is probably the real authority here.
-> > 
-> > [10] is the aio char device node, so you better not try to overlap it or
-> > bad things will happen :(
-> 
-> Thanks for your insights.
-> 
-> Which device minor number could we use?
+On Sat, Nov 16, 2019 at 10:36:52AM +0100, Stephan M=FCller wrote:
+> The Jitter RNG fast noise source implemented as part of the kernel
+> crypto API is queried for 256 bits of entropy at the time the seed
+> buffer managed by the LRNG is about to be filled.
+>=20
+> CC: "Eric W. Biederman" <ebiederm@xmission.com>
+> CC: "Alexander E. Patrakov" <patrakov@gmail.com>
+> CC: "Ahmed S. Darwish" <darwish.07@gmail.com>
+> CC: "Theodore Y. Ts'o" <tytso@mit.edu>
+> CC: Willy Tarreau <w@1wt.eu>
+> CC: Matthew Garrett <mjg59@srcf.ucam.org>
+> CC: Vito Caputo <vcaputo@pengaru.com>
+> CC: Andreas Dilger <adilger.kernel@dilger.ca>
+> CC: Jan Kara <jack@suse.cz>
+> CC: Ray Strode <rstrode@redhat.com>
+> CC: William Jon McCann <mccann@jhu.edu>
+> CC: zhangjs <zachary@baishancloud.com>
+> CC: Andy Lutomirski <luto@kernel.org>
+> CC: Florian Weimer <fweimer@redhat.com>
+> CC: Lennart Poettering <mzxreary@0pointer.de>
+> CC: Nicolai Stange <nstange@suse.de>
+> Reviewed-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
+> Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
+> Tested-by: Roman Drahtm=FCller <draht@schaltsekun.de>
+> Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
+> Tested-by: Neil Horman <nhorman@redhat.com>
+> Signed-off-by: Stephan Mueller <smueller@chronox.de>
+> ---
+>  drivers/char/lrng/Kconfig     | 11 +++++
+>  drivers/char/lrng/Makefile    |  1 +
+>  drivers/char/lrng/lrng_jent.c | 88 +++++++++++++++++++++++++++++++++++
+>  3 files changed, 100 insertions(+)
+>  create mode 100644 drivers/char/lrng/lrng_jent.c
+>=20
+> diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
+> index 03e6e2ec356b..80fc723c67d2 100644
+> --- a/drivers/char/lrng/Kconfig
+> +++ b/drivers/char/lrng/Kconfig
+> @@ -80,4 +80,15 @@ config LRNG_KCAPI
+>  =09  provided by the selected kernel crypto API RNG.
+>  endif # LRNG_DRNG_SWITCH
+> =20
+> +config LRNG_JENT
+> +=09bool "Enable Jitter RNG as LRNG Seed Source"
+> +=09select CRYPTO_JITTERENTROPY
+> +=09help
+> +=09  The Linux RNG may use the Jitter RNG as noise source. Enabling
+> +=09  this option enables the use of the Jitter RNG. Its default
+> +=09  entropy level is 16 bits of entropy per 256 data bits delivered
+> +=09  by the Jitter RNG. This entropy level can be changed at boot
+> +=09  time or at runtime with the lrng_base.jitterrng configuration
+> +=09  variable.
+> +
+>  endif # LRNG
+> diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
+> index 027b6ea51c20..a87d800c9aae 100644
+> --- a/drivers/char/lrng/Makefile
+> +++ b/drivers/char/lrng/Makefile
+> @@ -13,3 +13,4 @@ obj-$(CONFIG_SYSCTL)=09=09+=3D lrng_proc.o
+>  obj-$(CONFIG_LRNG_DRNG_SWITCH)=09+=3D lrng_switch.o
+>  obj-$(CONFIG_LRNG_DRBG)=09=09+=3D lrng_drbg.o
+>  obj-$(CONFIG_LRNG_KCAPI)=09+=3D lrng_kcapi.o
+> +obj-$(CONFIG_LRNG_JENT)=09=09+=3D lrng_jent.o
+> diff --git a/drivers/char/lrng/lrng_jent.c b/drivers/char/lrng/lrng_jent.=
+c
+> new file mode 100644
+> index 000000000000..43114a44b8f5
+> --- /dev/null
+> +++ b/drivers/char/lrng/lrng_jent.c
+> @@ -0,0 +1,88 @@
+> +// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
+> +/*
+> + * LRNG Fast Noise Source: Jitter RNG
+> + *
+> + * Copyright (C) 2016 - 2019, Stephan Mueller <smueller@chronox.de>
+> + */
+> +
+> +#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+> +
+> +#include "lrng_internal.h"
+> +
+> +/*
+> + * Estimated entropy of data is a 16th of LRNG_DRNG_SECURITY_STRENGTH_BI=
+TS.
+> + * Albeit a full entropy assessment is provided for the noise source ind=
+icating
+> + * that it provides high entropy rates and considering that it deactivat=
+es
+> + * when it detects insufficient hardware, the chosen under estimation of
+> + * entropy is considered to be acceptable to all reviewers.
+> + */
+> +static u32 jitterrng =3D LRNG_DRNG_SECURITY_STRENGTH_BITS>>4;
+> +module_param(jitterrng, uint, 0644);
+> +MODULE_PARM_DESC(jitterrng, "Entropy in bits of 256 data bits from Jitte=
+r "
+> +=09=09=09    "RNG noise source");
+> +
+> +/**
+> + * Get Jitter RNG entropy
+> + *
+> + * @outbuf buffer to store entropy
+> + * @outbuflen length of buffer
+> + * @return > 0 on success where value provides the added entropy in bits
+> + *=09   0 if no fast source was available
+> + */
+> +struct rand_data;
+> +struct rand_data *jent_lrng_entropy_collector(void);
+> +int jent_read_entropy(struct rand_data *ec, unsigned char *data,
+> +=09=09      unsigned int len);
+> +static struct rand_data *lrng_jent_state;
+> +
+> +u32 lrng_get_jent(u8 *outbuf, unsigned int outbuflen)
+> +{
+> +=09int ret;
+> +=09u32 ent_bits =3D jitterrng;
+> +=09unsigned long flags;
+> +=09static DEFINE_SPINLOCK(lrng_jent_lock);
+> +=09static int lrng_jent_initialized =3D 0;
+> +
+> +=09spin_lock_irqsave(&lrng_jent_lock, flags);
+> +
+> +=09if (!ent_bits || (lrng_jent_initialized =3D=3D -1)) {
+> +=09=09spin_unlock_irqrestore(&lrng_jent_lock, flags);
+> +=09=09return 0;
+> +=09}
+> +
+this works, but I think you can avoid the use of the spin lock on the read =
+calls
+here.  If you assign a global pointer to the value of &lrng_jent_state on i=
+nit,
+you can just take the spinlock on assignment, and assume its stable after t=
+hat
+(which it should be given that its only ever going to point to a static dat=
+a
+structure).
 
-Get your own dynamic one by using a misc device if you _REALLY_ want to
-add yet-another-char-node-for-random-data.
+Neil
 
-But I would have thought that we all realize that this is not the way to
-do things.  Let's not have "random", "urandom", and "true_random" be
-something we want to totally confuse userspace with, that way is insane.
-
-Please just make the existing userspace api "just work", don't add to
-the mess.
-
-thanks,
-
-greg k-h
+> +=09if (!lrng_jent_initialized) {
+> +=09=09lrng_jent_state =3D jent_lrng_entropy_collector();
+> +=09=09if (!lrng_jent_state) {
+> +=09=09=09jitterrng =3D 0;
+> +=09=09=09lrng_jent_initialized =3D -1;
+> +=09=09=09spin_unlock_irqrestore(&lrng_jent_lock, flags);
+> +=09=09=09pr_info("Jitter RNG unusable on current system\n");
+> +=09=09=09return 0;
+> +=09=09}
+> +=09=09lrng_jent_initialized =3D 1;
+> +=09=09pr_debug("Jitter RNG working on current system\n");
+> +=09}
+> +=09ret =3D jent_read_entropy(lrng_jent_state, outbuf, outbuflen);
+> +=09spin_unlock_irqrestore(&lrng_jent_lock, flags);
+> +
+> +=09if (ret) {
+> +=09=09pr_debug("Jitter RNG failed with %d\n", ret);
+> +=09=09return 0;
+> +=09}
+> +
+> +=09/* Obtain entropy statement */
+> +=09if (outbuflen !=3D LRNG_DRNG_SECURITY_STRENGTH_BYTES)
+> +=09=09ent_bits =3D (ent_bits * outbuflen<<3) /
+> +=09=09=09   LRNG_DRNG_SECURITY_STRENGTH_BITS;
+> +=09/* Cap entropy to buffer size in bits */
+> +=09ent_bits =3D min_t(u32, ent_bits, outbuflen<<3);
+> +=09pr_debug("obtained %u bits of entropy from Jitter RNG noise source\n"=
+,
+> +=09=09 ent_bits);
+> +
+> +=09return ent_bits;
+> +}
+> +
+> +u32 lrng_jent_entropylevel(void)
+> +{
+> +=09return min_t(u32, jitterrng, LRNG_DRNG_SECURITY_STRENGTH_BITS);
+> +}
+> --=20
+> 2.23.0
+>=20
+>=20
+>=20
+>=20
