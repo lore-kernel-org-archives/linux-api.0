@@ -1,7 +1,7 @@
 From: Omar Sandoval <osandov@osandov.com>
-Subject: [RFC PATCH v3 05/12] btrfs: don't advance offset for compressed bios in btrfs_csum_one_bio()
-Date: Wed, 20 Nov 2019 10:24:25 -0800
-Message-ID: <a669365a9165b18814c635f61ed566fdcd47a96f.1574273658.git.osandov@fb.com>
+Subject: [RFC PATCH v3 09/12] btrfs: support different disk extent size for delalloc
+Date: Wed, 20 Nov 2019 10:24:29 -0800
+Message-ID: <bfa7cb307be92418aee1cec4e23f98bf32a171de.1574273658.git.osandov@fb.com>
 References: <cover.1574273658.git.osandov@fb.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -14,149 +14,225 @@ List-Id: linux-api@vger.kernel.org
 
 From: Omar Sandoval <osandov@fb.com>
 
-btrfs_csum_one_bio() loops over each sector in the bio while keeping a
-cursor of its current logical position in the file in order to look up
-the ordered extent to add the checksums to. However, this doesn't make
-much sense for compressed extents, as a sector on disk does not
-correspond to a sector of decompressed file data. It happens to work
-because 1) the compressed bio always covers one ordered extent and 2)
-the size of the bio is always less than the size of the ordered extent.
-However, the second point will not always be true for encoded writes.
-
-Let's add a boolean parameter to btrfs_csum_one_bio() to indicate that
-it can assume that the bio only covers one ordered extent. Since we're
-already changing the signature, let's make contig bool instead of int,
-too.
+Currently, we always reserve the same extent size in the file and extent
+size on disk for delalloc because the former is the worst case for the
+latter. For RWF_ENCODED writes, we know the exact size of the extent on
+disk, which may be less than or greater than (for bookends) the size in
+the file. Add a disk_num_bytes parameter to
+btrfs_delalloc_reserve_metadata() so that we can reserve the correct
+amount of csum bytes. Additionally, make
+btrfs_free_reserve_data_space_noquota() take a number of bytes instead
+of a range, as it refers to the extent size on disk, not in the file. No
+functional change.
 
 Signed-off-by: Omar Sandoval <osandov@fb.com>
 ---
- fs/btrfs/compression.c |  5 +++--
- fs/btrfs/ctree.h       |  2 +-
- fs/btrfs/file-item.c   | 19 +++++++++++--------
- fs/btrfs/inode.c       |  8 ++++----
- 4 files changed, 19 insertions(+), 15 deletions(-)
+ fs/btrfs/ctree.h          |  3 ++-
+ fs/btrfs/delalloc-space.c | 38 +++++++++++++++++---------------------
+ fs/btrfs/delalloc-space.h |  4 ++--
+ fs/btrfs/file.c           |  3 ++-
+ fs/btrfs/inode.c          |  7 ++-----
+ fs/btrfs/relocation.c     |  4 ++--
+ 6 files changed, 27 insertions(+), 32 deletions(-)
 
-diff --git a/fs/btrfs/compression.c b/fs/btrfs/compression.c
-index 4df6f0c58dc9..05b6e404a291 100644
---- a/fs/btrfs/compression.c
-+++ b/fs/btrfs/compression.c
-@@ -374,7 +374,8 @@ blk_status_t btrfs_submit_compressed_write(struct inode *inode, u64 start,
- 			BUG_ON(ret); /* -ENOMEM */
- 
- 			if (!skip_sum) {
--				ret = btrfs_csum_one_bio(inode, bio, start, 1);
-+				ret = btrfs_csum_one_bio(inode, bio, start,
-+							 true, true);
- 				BUG_ON(ret); /* -ENOMEM */
- 			}
- 
-@@ -405,7 +406,7 @@ blk_status_t btrfs_submit_compressed_write(struct inode *inode, u64 start,
- 	BUG_ON(ret); /* -ENOMEM */
- 
- 	if (!skip_sum) {
--		ret = btrfs_csum_one_bio(inode, bio, start, 1);
-+		ret = btrfs_csum_one_bio(inode, bio, start, true, true);
- 		BUG_ON(ret); /* -ENOMEM */
- 	}
- 
 diff --git a/fs/btrfs/ctree.h b/fs/btrfs/ctree.h
-index 4bc40bf49b0e..c32741879088 100644
+index c32741879088..f9ac05d1ca60 100644
 --- a/fs/btrfs/ctree.h
 +++ b/fs/btrfs/ctree.h
-@@ -2802,7 +2802,7 @@ int btrfs_csum_file_blocks(struct btrfs_trans_handle *trans,
- 			   struct btrfs_root *root,
- 			   struct btrfs_ordered_sum *sums);
- blk_status_t btrfs_csum_one_bio(struct inode *inode, struct bio *bio,
--		       u64 file_start, int contig);
-+				u64 file_start, bool contig, bool one_ordered);
- int btrfs_lookup_csums_range(struct btrfs_root *root, u64 start, u64 end,
- 			     struct list_head *list, int search_commit);
- void btrfs_extent_item_to_extent_map(struct btrfs_inode *inode,
-diff --git a/fs/btrfs/file-item.c b/fs/btrfs/file-item.c
-index a87c40502267..c95772949b00 100644
---- a/fs/btrfs/file-item.c
-+++ b/fs/btrfs/file-item.c
-@@ -423,13 +423,14 @@ int btrfs_lookup_csums_range(struct btrfs_root *root, u64 start, u64 end,
-  * @inode:	 Owner of the data inside the bio
-  * @bio:	 Contains the data to be checksummed
-  * @file_start:  offset in file this bio begins to describe
-- * @contig:	 Boolean. If true/1 means all bio vecs in this bio are
-- *		 contiguous and they begin at @file_start in the file. False/0
-- *		 means this bio can contains potentially discontigous bio vecs
-- *		 so the logical offset of each should be calculated separately.
-+ * @contig:      If true, all bio vecs in @bio are contiguous and they begin at
-+ *               @file_start in the file. If false, @bio may contain
-+ *               discontigous bio vecs, so the logical offset of each should be
-+ *               calculated separately (@file_start is ignored).
-+ * @one_ordered: If true, @bio only refers to one ordered extent.
+@@ -2489,7 +2489,8 @@ void btrfs_subvolume_release_metadata(struct btrfs_fs_info *fs_info,
+ 				      struct btrfs_block_rsv *rsv);
+ void btrfs_delalloc_release_extents(struct btrfs_inode *inode, u64 num_bytes);
+ 
+-int btrfs_delalloc_reserve_metadata(struct btrfs_inode *inode, u64 num_bytes);
++int btrfs_delalloc_reserve_metadata(struct btrfs_inode *inode, u64 num_bytes,
++				    u64 disk_num_bytes);
+ u64 btrfs_account_ro_block_groups_free_space(struct btrfs_space_info *sinfo);
+ int btrfs_error_unpin_extent_range(struct btrfs_fs_info *fs_info,
+ 				   u64 start, u64 end);
+diff --git a/fs/btrfs/delalloc-space.c b/fs/btrfs/delalloc-space.c
+index db9f2c58eb4a..720b246772fb 100644
+--- a/fs/btrfs/delalloc-space.c
++++ b/fs/btrfs/delalloc-space.c
+@@ -153,34 +153,28 @@ int btrfs_check_data_free_space(struct inode *inode,
+ 	/* Use new btrfs_qgroup_reserve_data to reserve precious data space. */
+ 	ret = btrfs_qgroup_reserve_data(inode, reserved, start, len);
+ 	if (ret < 0)
+-		btrfs_free_reserved_data_space_noquota(inode, start, len);
++		btrfs_free_reserved_data_space_noquota(fs_info, len);
+ 	else
+ 		ret = 0;
+ 	return ret;
+ }
+ 
+ /*
+- * Called if we need to clear a data reservation for this inode
+- * Normally in a error case.
++ * Called if we need to clear a data reservation, normally in an error case.
+  *
+  * This one will *NOT* use accurate qgroup reserved space API, just for case
+  * which we can't sleep and is sure it won't affect qgroup reserved space.
+  * Like clear_bit_hook().
   */
- blk_status_t btrfs_csum_one_bio(struct inode *inode, struct bio *bio,
--		       u64 file_start, int contig)
-+				u64 file_start, bool contig, bool one_ordered)
+-void btrfs_free_reserved_data_space_noquota(struct inode *inode, u64 start,
+-					    u64 len)
++void btrfs_free_reserved_data_space_noquota(struct btrfs_fs_info *fs_info,
++					    u64 num_bytes)
  {
- 	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
- 	SHASH_DESC_ON_STACK(shash, fs_info->csum_shash);
-@@ -482,8 +483,9 @@ blk_status_t btrfs_csum_one_bio(struct inode *inode, struct bio *bio,
- 						 - 1);
+-	struct btrfs_fs_info *fs_info = btrfs_sb(inode->i_sb);
+ 	struct btrfs_space_info *data_sinfo;
  
- 		for (i = 0; i < nr_sectors; i++) {
--			if (offset >= ordered->file_offset + ordered->len ||
--				offset < ordered->file_offset) {
-+			if (!one_ordered &&
-+			    (offset >= ordered->file_offset + ordered->len ||
-+			     offset < ordered->file_offset)) {
- 				unsigned long bytes_left;
+-	/* Make sure the range is aligned to sectorsize */
+-	len = round_up(start + len, fs_info->sectorsize) -
+-	      round_down(start, fs_info->sectorsize);
+-	start = round_down(start, fs_info->sectorsize);
+-
++	num_bytes = ALIGN(num_bytes, fs_info->sectorsize);
+ 	data_sinfo = fs_info->data_sinfo;
+ 	spin_lock(&data_sinfo->lock);
+-	btrfs_space_info_update_bytes_may_use(fs_info, data_sinfo, -len);
++	btrfs_space_info_update_bytes_may_use(fs_info, data_sinfo, -num_bytes);
+ 	spin_unlock(&data_sinfo->lock);
+ }
  
- 				sums->len = this_sum_bytes;
-@@ -515,7 +517,8 @@ blk_status_t btrfs_csum_one_bio(struct inode *inode, struct bio *bio,
- 			kunmap_atomic(data);
- 			crypto_shash_final(shash, (char *)(sums->sums + index));
- 			index += csum_size;
--			offset += fs_info->sectorsize;
-+			if (!one_ordered)
-+				offset += fs_info->sectorsize;
- 			this_sum_bytes += fs_info->sectorsize;
- 			total_bytes += fs_info->sectorsize;
- 		}
+@@ -201,7 +195,7 @@ void btrfs_free_reserved_data_space(struct inode *inode,
+ 	      round_down(start, root->fs_info->sectorsize);
+ 	start = round_down(start, root->fs_info->sectorsize);
+ 
+-	btrfs_free_reserved_data_space_noquota(inode, start, len);
++	btrfs_free_reserved_data_space_noquota(root->fs_info, len);
+ 	btrfs_qgroup_free_data(inode, reserved, start, len);
+ }
+ 
+@@ -280,11 +274,11 @@ static void btrfs_calculate_inode_block_rsv_size(struct btrfs_fs_info *fs_info,
+ }
+ 
+ static void calc_inode_reservations(struct btrfs_fs_info *fs_info,
+-				    u64 num_bytes, u64 *meta_reserve,
+-				    u64 *qgroup_reserve)
++				    u64 num_bytes, u64 disk_num_bytes,
++				    u64 *meta_reserve, u64 *qgroup_reserve)
+ {
+ 	u64 nr_extents = count_max_extents(num_bytes);
+-	u64 csum_leaves = btrfs_csum_bytes_to_leaves(fs_info, num_bytes);
++	u64 csum_leaves = btrfs_csum_bytes_to_leaves(fs_info, disk_num_bytes);
+ 	u64 inode_update = btrfs_calc_metadata_size(fs_info, 1);
+ 
+ 	*meta_reserve = btrfs_calc_insert_metadata_size(fs_info,
+@@ -298,7 +292,8 @@ static void calc_inode_reservations(struct btrfs_fs_info *fs_info,
+ 	*qgroup_reserve = nr_extents * fs_info->nodesize;
+ }
+ 
+-int btrfs_delalloc_reserve_metadata(struct btrfs_inode *inode, u64 num_bytes)
++int btrfs_delalloc_reserve_metadata(struct btrfs_inode *inode, u64 num_bytes,
++				    u64 disk_num_bytes)
+ {
+ 	struct btrfs_root *root = inode->root;
+ 	struct btrfs_fs_info *fs_info = root->fs_info;
+@@ -333,6 +328,7 @@ int btrfs_delalloc_reserve_metadata(struct btrfs_inode *inode, u64 num_bytes)
+ 		mutex_lock(&inode->delalloc_mutex);
+ 
+ 	num_bytes = ALIGN(num_bytes, fs_info->sectorsize);
++	disk_num_bytes = ALIGN(disk_num_bytes, fs_info->sectorsize);
+ 
+ 	/*
+ 	 * We always want to do it this way, every other way is wrong and ends
+@@ -344,8 +340,8 @@ int btrfs_delalloc_reserve_metadata(struct btrfs_inode *inode, u64 num_bytes)
+ 	 * everything out and try again, which is bad.  This way we just
+ 	 * over-reserve slightly, and clean up the mess when we are done.
+ 	 */
+-	calc_inode_reservations(fs_info, num_bytes, &meta_reserve,
+-				&qgroup_reserve);
++	calc_inode_reservations(fs_info, num_bytes, disk_num_bytes,
++				&meta_reserve, &qgroup_reserve);
+ 	ret = btrfs_qgroup_reserve_meta_prealloc(root, qgroup_reserve, true);
+ 	if (ret)
+ 		goto out_fail;
+@@ -362,7 +358,7 @@ int btrfs_delalloc_reserve_metadata(struct btrfs_inode *inode, u64 num_bytes)
+ 	spin_lock(&inode->lock);
+ 	nr_extents = count_max_extents(num_bytes);
+ 	btrfs_mod_outstanding_extents(inode, nr_extents);
+-	inode->csum_bytes += num_bytes;
++	inode->csum_bytes += disk_num_bytes;
+ 	btrfs_calculate_inode_block_rsv_size(fs_info, inode);
+ 	spin_unlock(&inode->lock);
+ 
+@@ -474,7 +470,7 @@ int btrfs_delalloc_reserve_space(struct inode *inode,
+ 	ret = btrfs_check_data_free_space(inode, reserved, start, len);
+ 	if (ret < 0)
+ 		return ret;
+-	ret = btrfs_delalloc_reserve_metadata(BTRFS_I(inode), len);
++	ret = btrfs_delalloc_reserve_metadata(BTRFS_I(inode), len, len);
+ 	if (ret < 0)
+ 		btrfs_free_reserved_data_space(inode, *reserved, start, len);
+ 	return ret;
+diff --git a/fs/btrfs/delalloc-space.h b/fs/btrfs/delalloc-space.h
+index 54466fbd7075..f847f0a80409 100644
+--- a/fs/btrfs/delalloc-space.h
++++ b/fs/btrfs/delalloc-space.h
+@@ -13,8 +13,8 @@ void btrfs_free_reserved_data_space(struct inode *inode,
+ void btrfs_delalloc_release_space(struct inode *inode,
+ 				  struct extent_changeset *reserved,
+ 				  u64 start, u64 len, bool qgroup_free);
+-void btrfs_free_reserved_data_space_noquota(struct inode *inode, u64 start,
+-					    u64 len);
++void btrfs_free_reserved_data_space_noquota(struct btrfs_fs_info *fs_info,
++					    u64 num_bytes);
+ void btrfs_delalloc_release_metadata(struct btrfs_inode *inode, u64 num_bytes,
+ 				     bool qgroup_free);
+ int btrfs_delalloc_reserve_space(struct inode *inode,
+diff --git a/fs/btrfs/file.c b/fs/btrfs/file.c
+index 34c1a2284e03..bc7ee7c4180e 100644
+--- a/fs/btrfs/file.c
++++ b/fs/btrfs/file.c
+@@ -1669,7 +1669,8 @@ static noinline ssize_t btrfs_buffered_write(struct kiocb *iocb,
+ 
+ 		WARN_ON(reserve_bytes == 0);
+ 		ret = btrfs_delalloc_reserve_metadata(BTRFS_I(inode),
+-				reserve_bytes);
++						      reserve_bytes,
++						      reserve_bytes);
+ 		if (ret) {
+ 			if (!only_release_metadata)
+ 				btrfs_free_reserved_data_space(inode,
 diff --git a/fs/btrfs/inode.c b/fs/btrfs/inode.c
-index ad5bffb24199..4c1ed6dddfd8 100644
+index d53580ad2c46..a8bc193c99ca 100644
 --- a/fs/btrfs/inode.c
 +++ b/fs/btrfs/inode.c
-@@ -2039,7 +2039,7 @@ static blk_status_t btrfs_submit_bio_start(void *private_data, struct bio *bio,
- 	struct inode *inode = private_data;
- 	blk_status_t ret = 0;
+@@ -1963,9 +1963,7 @@ void btrfs_clear_delalloc_extent(struct inode *vfs_inode,
+ 		if (root->root_key.objectid != BTRFS_DATA_RELOC_TREE_OBJECTID &&
+ 		    do_list && !(state->state & EXTENT_NORESERVE) &&
+ 		    (*bits & EXTENT_CLEAR_DATA_RESV))
+-			btrfs_free_reserved_data_space_noquota(
+-					&inode->vfs_inode,
+-					state->start, len);
++			btrfs_free_reserved_data_space_noquota(fs_info, len);
  
--	ret = btrfs_csum_one_bio(inode, bio, 0, 0);
-+	ret = btrfs_csum_one_bio(inode, bio, 0, false, false);
- 	BUG_ON(ret); /* -ENOMEM */
- 	return 0;
- }
-@@ -2104,7 +2104,7 @@ static blk_status_t btrfs_submit_bio_hook(struct inode *inode, struct bio *bio,
- 					  0, inode, btrfs_submit_bio_start);
- 		goto out;
- 	} else if (!skip_sum) {
--		ret = btrfs_csum_one_bio(inode, bio, 0, 0);
-+		ret = btrfs_csum_one_bio(inode, bio, 0, false, false);
+ 		percpu_counter_add_batch(&fs_info->delalloc_bytes, -len,
+ 					 fs_info->delalloc_batch);
+@@ -7025,8 +7023,7 @@ static int btrfs_get_blocks_direct_write(struct extent_map **map,
+ 			 * use the existing or preallocated extent, so does not
+ 			 * need to adjust btrfs_space_info's bytes_may_use.
+ 			 */
+-			btrfs_free_reserved_data_space_noquota(inode, start,
+-							       len);
++			btrfs_free_reserved_data_space_noquota(fs_info, len);
+ 			goto skip_cow;
+ 		}
+ 	}
+diff --git a/fs/btrfs/relocation.c b/fs/btrfs/relocation.c
+index e3cec29813ee..af61e07b5094 100644
+--- a/fs/btrfs/relocation.c
++++ b/fs/btrfs/relocation.c
+@@ -3262,8 +3262,8 @@ static int relocate_file_extent_cluster(struct inode *inode,
+ 	index = (cluster->start - offset) >> PAGE_SHIFT;
+ 	last_index = (cluster->end - offset) >> PAGE_SHIFT;
+ 	while (index <= last_index) {
+-		ret = btrfs_delalloc_reserve_metadata(BTRFS_I(inode),
+-				PAGE_SIZE);
++		ret = btrfs_delalloc_reserve_metadata(BTRFS_I(inode), PAGE_SIZE,
++						      PAGE_SIZE);
  		if (ret)
  			goto out;
- 	}
-@@ -8272,7 +8272,7 @@ static blk_status_t btrfs_submit_bio_start_direct_io(void *private_data,
- {
- 	struct inode *inode = private_data;
- 	blk_status_t ret;
--	ret = btrfs_csum_one_bio(inode, bio, offset, 1);
-+	ret = btrfs_csum_one_bio(inode, bio, offset, true, false);
- 	BUG_ON(ret); /* -ENOMEM */
- 	return 0;
- }
-@@ -8379,7 +8379,7 @@ static inline blk_status_t btrfs_submit_dio_bio(struct bio *bio,
- 		 * If we aren't doing async submit, calculate the csum of the
- 		 * bio now.
- 		 */
--		ret = btrfs_csum_one_bio(inode, bio, file_offset, 1);
-+		ret = btrfs_csum_one_bio(inode, bio, file_offset, true, false);
- 		if (ret)
- 			goto err;
- 	} else {
+ 
 -- 
 2.24.0
