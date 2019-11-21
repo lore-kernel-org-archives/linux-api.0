@@ -1,56 +1,155 @@
-From: Christian Brauner <christian.brauner@ubuntu.com>
-Subject: Re: [PATCH] clone.2: Mention that CLONE_PARENT is off-limits for
- inits
-Date: Thu, 21 Nov 2019 12:27:20 +0100
-Message-ID: <20191121112719.lg3qxptnowjkpxlg@wittgenstein>
-References: <20191120104504.22411-1-christian@brauner.io>
- <ac6c1644-c6d3-c7eb-48b1-28eb9342a468@gmail.com>
+From: Nicolai Stange <nstange@suse.de>
+Subject: Re: [PATCH v25 12/12] LRNG - add interface for gathering of raw entropy
+Date: Thu, 21 Nov 2019 13:18:10 +0100
+Message-ID: <87a78pl8xp.fsf@suse.de>
+References: <6157374.ptSnyUpaCn@positron.chronox.de>
+        <2787174.DQlWHN5GGo@positron.chronox.de>
+        <3610406.x8mDjznOIz@positron.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8BIT
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <ac6c1644-c6d3-c7eb-48b1-28eb9342a468@gmail.com>
+In-Reply-To: <3610406.x8mDjznOIz@positron.chronox.de> ("Stephan
+ \=\?utf-8\?Q\?M\=C3\=BCller\=22's\?\=
+        message of "Sat, 16 Nov 2019 10:38:12 +0100")
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Cc: Christian Brauner <christian@brauner.io>, adrian@lisas.de, akpm@linux-foundation.org, arnd@arndb.de, avagin@gmail.com, dhowells@redhat.com, fweimer@redhat.com, jannh@google.com, keescook@chromium.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-man@vger.kernel.org, mingo@elte.hu, oleg@redhat.com, xemul@virtuozzo.com
+To: Stephan =?utf-8?Q?M=C3=BCller?= <smueller@chronox.de>
+Cc: Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@sus>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 21, 2019 at 10:53:50AM +0100, Michael Kerrisk (man-pages) wrote:
-> Hello Christian,
-> 
-> On 11/20/19 11:45 AM, Christian Brauner wrote:
-> > From: Christian Brauner <christian.brauner@ubuntu.com>
-> > 
-> > The CLONE_PARENT flag cannot but used by init processes. Let's mention
-> > this in the manpages to prevent suprises.
-> > 
-> > Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
-> > ---
-> >  man2/clone.2 | 7 +++++++
-> >  1 file changed, 7 insertions(+)
-> > 
-> > diff --git a/man2/clone.2 b/man2/clone.2
-> > index f0f29d6f1..aa98ab79b 100644
-> > --- a/man2/clone.2
-> > +++ b/man2/clone.2
-> > @@ -646,6 +646,13 @@ if
-> >  .B CLONE_PARENT
-> >  is set, then the parent of the calling process, rather than the
-> >  calling process itself, will be signaled.
-> > +.IP
-> > +The kernel will not allow global init and init processes in pid
-> > +namespaces to use the
-> > +.B CLONE_PARENT
-> > +flag. This is done to prevent the creation of multi-rooted process
-> > +trees. It also avoids unreapable zombies in the initial pid
-> > +namespace.
-> >  .TP
-> >  .BR CLONE_PARENT_SETTID " (since Linux 2.5.49)"
-> >  Store the child thread ID at the location pointed to by
-> 
-> Thank. I applied, and then tweaked the text a little,
-> and noted the associated EINVAL error. In the end, the
-> change is as below.
+Hi Stephan,
 
-Thanks!
-Christian
+two general remarks on debugfs usage below
+
+Stephan Müller <smueller@chronox.de> writes:
+
+> diff --git a/drivers/char/lrng/lrng_testing.c b/drivers/char/lrng/lrng_testing.c
+> new file mode 100644
+> index 000000000000..5c33d3bd2172
+> --- /dev/null
+> +++ b/drivers/char/lrng/lrng_testing.c
+
+<snip>
+
+
+> +/*
+> + * This data structure holds the dentry's of the debugfs files establishing
+> + * the interface to user space.
+> + */
+> +struct lrng_raw_debugfs {
+> +	struct dentry *lrng_raw_debugfs_root; /* root dentry */
+> +	struct dentry *lrng_raw_debugfs_lrng_raw; /* .../lrng_raw */
+> +};
+> +
+> +static struct lrng_raw_debugfs lrng_raw_debugfs;
+> +
+> +/* DebugFS operations and definition of the debugfs files */
+> +static ssize_t lrng_raw_read(struct file *file, char __user *to,
+> +			     size_t count, loff_t *ppos)
+> +{
+> +	loff_t pos = *ppos;
+> +	int ret;
+> +
+> +	if (!count)
+> +		return 0;
+> +	lrng_raw_entropy_init();
+> +	ret = lrng_raw_extract_user(to, count);
+> +	lrng_raw_entropy_fini();
+> +	if (ret < 0)
+> +		return ret;
+> +	count -= ret;
+> +	*ppos = pos + count;
+> +	return ret;
+> +}
+> +
+> +/* Module init: allocate memory, register the debugfs files */
+> +static int lrng_raw_debugfs_init(void)
+> +{
+> +	lrng_raw_debugfs.lrng_raw_debugfs_root =
+> +		debugfs_create_dir(KBUILD_MODNAME, NULL);
+> +	if (IS_ERR(lrng_raw_debugfs.lrng_raw_debugfs_root)) {
+> +		lrng_raw_debugfs.lrng_raw_debugfs_root = NULL;
+> +		return PTR_ERR(lrng_raw_debugfs.lrng_raw_debugfs_root);
+> +	}
+
+I think pointers returned by the debugfs API are not supposed to get
+checked for NULL/IS_ERR(), c.f commit ff9fb72bc077 ("debugfs: return
+error values, not NULL") or the the output from
+
+  git log --pretty=oneline | grep 'no need to check return value of debugfs_create'
+
+(Also the above code is dubious: you're effectively returning
+ PTR_ERR(NULL)).
+
+
+
+> +	return 0;
+> +}
+> +
+> +static struct file_operations lrng_raw_name_fops = {
+> +	.owner = THIS_MODULE,
+> +	.read = lrng_raw_read,
+> +};
+> +
+> +static int lrng_raw_debugfs_init_name(void)
+> +{
+> +	lrng_raw_debugfs.lrng_raw_debugfs_lrng_raw =
+> +		debugfs_create_file("lrng_raw", 0400,
+> +				    lrng_raw_debugfs.lrng_raw_debugfs_root,
+> +				    NULL, &lrng_raw_name_fops);q
+
+CONFIG_LRNG_TESTING is a bool and thus, this debugfs file can't ever get
+removed. Even if it could, this inode hasn't got any data associated
+with it and so file removal would not be a problem for lrng_raw_read().
+
+Please consider using debugfs_create_file_unsafe() instead to save
+debugfs from kmalloc()ing a proxy file_operations protecting your fops
+against concurrent file removal.
+
+
+
+> +	if (IS_ERR(lrng_raw_debugfs.lrng_raw_debugfs_lrng_raw)) {
+> +		lrng_raw_debugfs.lrng_raw_debugfs_lrng_raw = NULL;
+> +		return PTR_ERR(lrng_raw_debugfs.lrng_raw_debugfs_lrng_raw);
+> +	}
+
+Same comment regarding return value checking applies here.
+
+Thanks,
+
+Nicolai
+
+
+> +	return 0;
+> +}
+> +
+> +static int __init lrng_raw_init(void)
+> +{
+> +	int ret = lrng_raw_debugfs_init();
+> +
+> +	if (ret < 0)
+> +		return ret;
+> +
+> +	ret = lrng_raw_debugfs_init_name();
+> +	if (ret < 0)
+> +		debugfs_remove_recursive(
+> +					lrng_raw_debugfs.lrng_raw_debugfs_root);
+> +
+> +	return ret;
+> +}
+> +
+> +static void __exit lrng_raw_exit(void)
+> +{
+> +	debugfs_remove_recursive(lrng_raw_debugfs.lrng_raw_debugfs_root);
+> +}
+> +
+> +module_init(lrng_raw_init);
+> +module_exit(lrng_raw_exit);
+> +
+> +MODULE_LICENSE("Dual BSD/GPL");
+> +MODULE_AUTHOR("Stephan Mueller <smueller@chronox.de>");
+> +MODULE_DESCRIPTION("Kernel module for gathering raw entropy");
+
+-- 
+SUSE Software Solutions Germany GmbH, Maxfeldstr. 5, 90409 Nürnberg, Germany
+(HRB 36809, AG Nürnberg), GF: Felix Imendörffer
