@@ -1,56 +1,44 @@
-From: Andrei Vagin <avagin@gmail.com>
-Subject: Re: [PATCHv8 00/34] kernel: Introduce Time Namespace
-Date: Thu, 21 Nov 2019 10:05:55 -0800
-Message-ID: <20191121180555.GA440967@gmail.com>
-References: <20191112012724.250792-1-dima@arista.com>
+From: "Enrico Weigelt, metux IT consult" <lkml@metux.net>
+Subject: Re: [RESEND RFC PATCH 0/1] CAP_SYS_NICE inside user namespace
+Date: Thu, 21 Nov 2019 19:33:23 +0100
+Message-ID: <c7949242-385f-3256-b290-87640acd0577@metux.net>
+References: <1574096478-11520-1-git-send-email-prakash.sangappa@oracle.com>
+ <CAG48ez3HfUx2aRvqR_bWnGoTshrHnUzxUNt7K6Sv7cqtPDWaWw@mail.gmail.com>
+ <9a63f7ae-562e-67a6-8f40-050c58c08933@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=koi8-r
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20191112012724.250792-1-dima@arista.com>
+In-Reply-To: <9a63f7ae-562e-67a6-8f40-050c58c08933@oracle.com>
+Content-Language: tl
 Sender: linux-kernel-owner@vger.kernel.org
-To: Dmitry Safonov <dima@arista.com>
-Cc: linux-kernel@vger.kernel.org, Dmitry Safonov <0x7f454c46@gmail.com>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Ingo Molnar <mingo@redhat.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Vincenzo Frascino <vincenzo.frascino@arm.com>, containers@lists.linux-foundation.org, criu@openvz.org, linux-api@vger.kernel.org, x86@kernel.org
+To: Prakash Sangappa <prakash.sangappa@oracle.com>, Jann Horn <jannh@google.com>
+Cc: kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, Thomas Gleixner <tglx@linutronix.de>, Peter Zijlstra <peterz@infradead.org>, "Serge E. Hallyn" <serge@hallyn.com>, Christian Brauner <christian@brauner.io>
 List-Id: linux-api@vger.kernel.org
 
-Hi Thomas,
+On 18.11.19 21:34, Prakash Sangappa wrote:
 
-What is your plan on this series? We know you are probably busy with
-the next merge window. We just want to check that this is still in your
-TODO list.
+> It is more the latter. Admin should be able to explicitly decide that
+> container A
+> workload is to be given priority over other containers.
 
-On Tue, Nov 12, 2019 at 01:26:49AM +0000, Dmitry Safonov wrote:
-> 
-> v7..v8 Changes:
-> * Fix compile-time errors:
->   - on architectures without the support of time namespaces.
->   - when CONFIG_POSIX_TIMERS isn't set.
-> * Added checks in selftests for CONFIG_POSIX_TIMERS.
-> * Inline do_hres and do_coarse.
->   (And added Tested-by Vincenzo - thanks!)
-> * Make TIME_NS depends on GENERIC_VDSO_TIME_NS and set it per-arch.
-> 
-> [v1..v7 Changelogs is at the very bottom here]
-> 
-> Our performance measurements show that the price of VDSO's clock_gettime()
-> in a child time namespace is about 8% with a hot CPU cache and about 90%
+I guess, you're talking about the host's admin, correct ?
 
-Here is a typo. The price of VDSO's clock_gettime() in a child time
-namespace is about 12% with a cold CPU cache. The table with
-measurements for a cold CPU cache contains correct data.
+Shouldn't this already be possibly by tweaking the container's cgroups ?
 
-> with a cold CPU cache. There is no performance regression for host
-> processes outside time namespace on those tests.
-> 
 
-....
+--mtx
 
-> 
-> Cold CPU cache (lesser tsc per cycle - the better):
-> 
->            | before    | CONFIG_TIME_NS=n | host      | inside timens
-> --------------------------------------------------------------
-> tsc        | 476       | 480              | 487       | 531
-> stdev(tsc) | 0.6       | 1.3              | 4.3       | 5.7
-> diff (%)   | 100       | 100.9            | 102       | 112
-> 
+-- 
+Dringender Hinweis: aufgrund existenzieller Bedrohung durch "Emotet"
+sollten Sie *niemals* MS-Office-Dokumente via E-Mail annehmen/öffenen,
+selbst wenn diese von vermeintlich vertrauenswürdigen Absendern zu
+stammen scheinen. Andernfalls droht Totalschaden.
+---
+Hinweis: unverschlüsselte E-Mails können leicht abgehört und manipuliert
+werden ! Für eine vertrauliche Kommunikation senden Sie bitte ihren
+GPG/PGP-Schlüssel zu.
+---
+Enrico Weigelt, metux IT consult
+Free software and Linux embedded engineering
+info@metux.net -- +49-151-27565287
