@@ -1,89 +1,94 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: Re: [PATCH v25 10/12] LRNG - add TRNG support
-Date: Wed, 20 Nov 2019 21:32:32 +0100
-Message-ID: <20191120203232.GB3109949@kroah.com>
-References: <5390778.VeFRgus4bQ@positron.chronox.de>
- <19681012.svDddlc5pN@positron.chronox.de>
- <20191120132918.GA2892197@kroah.com>
- <1695782.oZ5Vf4nH9s@positron.chronox.de>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: [PATCH] clone.2: Mention that CLONE_PARENT is off-limits for
+ inits
+Date: Thu, 21 Nov 2019 10:53:50 +0100
+Message-ID: <ac6c1644-c6d3-c7eb-48b1-28eb9342a468@gmail.com>
+References: <20191120104504.22411-1-christian@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1695782.oZ5Vf4nH9s@positron.chronox.de>
+In-Reply-To: <20191120104504.22411-1-christian@brauner.io>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Stephan =?iso-8859-1?Q?M=FCller?= <smueller@chronox.de>
-Cc: Andy Lutomirski <luto@kernel.org>, Arnd Bergmann <arnd@arndb.de>, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@suse.de>P
+To: Christian Brauner <christian@brauner.io>
+Cc: mtk.manpages@gmail.com, adrian@lisas.de, akpm@linux-foundation.org, arnd@arndb.de, avagin@gmail.com, christian.brauner@ubuntu.com, dhowells@redhat.com, fweimer@redhat.com, jannh@google.com, keescook@chromium.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-man@vger.kernel.org, mingo@elte.hu, oleg@redhat.com, xemul@virtuozzo.com
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Nov 20, 2019 at 08:51:11PM +0100, Stephan Müller wrote:
-> Am Mittwoch, 20. November 2019, 14:29:18 CET schrieb Greg Kroah-Hartman:
-> 
-> Hi Greg,
-> 
-> > On Wed, Nov 20, 2019 at 09:58:35AM +0100, Stephan Müller wrote:
-> > > Am Dienstag, 19. November 2019, 13:41:50 CET schrieb Greg Kroah-Hartman:
-> > > 
-> > > Hi Greg,
-> > > 
-> > > > On Tue, Nov 19, 2019 at 02:07:40AM -0800, Andy Lutomirski wrote:
-> > > > > > As this would introduce a new device file now, is there a special
-> > > > > > process that I need to follow or do I need to copy? Which
-> > > > > > major/minor
-> > > > > > number should I use?
-> > > > > > 
-> > > > > > Looking into static const struct memdev devlist[] I see
-> > > > > > 
-> > > > > >          [8] = { "random", 0666, &random_fops, 0 },
-> > > > > >          [9] = { "urandom", 0666, &urandom_fops, 0 },
-> > > > > > 
-> > > > > > Shall a true_random be added here with [10]?
-> > > > > 
-> > > > > I am not at all an expert on chardevs, but this sounds generally
-> > > > > reasonable.  gregkh is probably the real authority here.
-> > > > 
-> > > > [10] is the aio char device node, so you better not try to overlap it or
-> > > > bad things will happen :(
-> > > 
-> > > Thanks for your insights.
-> > > 
-> > > Which device minor number could we use?
-> > 
-> > Get your own dynamic one by using a misc device if you _REALLY_ want to
-> > add yet-another-char-node-for-random-data.
-> > 
-> > But I would have thought that we all realize that this is not the way to
-> > do things.  Let's not have "random", "urandom", and "true_random" be
-> > something we want to totally confuse userspace with, that way is insane.
-> > 
-> > Please just make the existing userspace api "just work", don't add to
-> > the mess.
-> 
-> Thank you, I think we should follow that advise.
-> 
-> With that and considering Alexander's rightful remark we have a challenge. So, 
-> changing the syscall may not be the right way unless we find a way to restrict 
-> the permissions somehow (capability? LSM? None of that seems to be a good 
-> fit).
-> 
-> What about providing a /sys file? I.e. adding a file that:
-> 
-> a) has permissions 440 per default and maybe the ownership of root:root
-> 
-> b) allow user space to perform a chown/chgrp
-> 
-> c) only supports reading of data from user space
-> 
-> But then, how could we provide a common interface for the existing random.c 
-> and the LRNG?
-> 
-> Or should we use a proc file for that? If yes, I guess it should not be a 
-> sysctl, but a "regular" proc file that should allow a chown(2) operation. On 
-> the other hand, is proc the right place to provide a user space interface for 
-> exporting data to user?
+Hello Christian,
 
-No, do not abuse sysfs or procfs for something like this.  Use a real
-syscall please if you really need it.
+On 11/20/19 11:45 AM, Christian Brauner wrote:
+> From: Christian Brauner <christian.brauner@ubuntu.com>
+> 
+> The CLONE_PARENT flag cannot but used by init processes. Let's mention
+> this in the manpages to prevent suprises.
+> 
+> Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
+> ---
+>  man2/clone.2 | 7 +++++++
+>  1 file changed, 7 insertions(+)
+> 
+> diff --git a/man2/clone.2 b/man2/clone.2
+> index f0f29d6f1..aa98ab79b 100644
+> --- a/man2/clone.2
+> +++ b/man2/clone.2
+> @@ -646,6 +646,13 @@ if
+>  .B CLONE_PARENT
+>  is set, then the parent of the calling process, rather than the
+>  calling process itself, will be signaled.
+> +.IP
+> +The kernel will not allow global init and init processes in pid
+> +namespaces to use the
+> +.B CLONE_PARENT
+> +flag. This is done to prevent the creation of multi-rooted process
+> +trees. It also avoids unreapable zombies in the initial pid
+> +namespace.
+>  .TP
+>  .BR CLONE_PARENT_SETTID " (since Linux 2.5.49)"
+>  Store the child thread ID at the location pointed to by
 
-greg k-h
+Thank. I applied, and then tweaked the text a little,
+and noted the associated EINVAL error. In the end, the
+change is as below.
+
+Cheers,
+
+Michael
+
+index 60e746151..382f6b791 100644
+--- a/man2/clone.2
++++ b/man2/clone.2
+@@ -648,6 +648,14 @@ if
+ .B CLONE_PARENT
+ is set, then the parent of the calling process, rather than the
+ calling process itself, will be signaled.
++.IP
++The
++.B CLONE_PARENT
++flag can't be used in clone calls by the
++global init process (PID 1 in the initial PID namespace)
++and init processes in other PID namespaces.
++This restriction prevents the creation of multi-rooted process trees
++as well as the creation of unreapable zombies in the initial PID namespace.
+ .TP
+ .BR CLONE_PARENT_SETTID " (since Linux 2.5.49)"
+ Store the child thread ID at the location pointed to by
+@@ -1273,6 +1281,11 @@ were specified in the
+ .IR flags
+ mask.
+ .TP
++.BR EINVAL " (since Linux 2.6.32)"
++.\" commit 123be07b0b399670a7cc3d82fef0cb4f93ef885c
++.BR CLONE_PARENT
++was specified, and the caller is an init process.
++.TP
+ .B EINVAL
+ Returned by the glibc
+ .BR clone ()
+
+
+
+-- 
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
