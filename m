@@ -1,94 +1,228 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCH] clone.2: Mention that CLONE_PARENT is off-limits for
- inits
-Date: Thu, 21 Nov 2019 10:53:50 +0100
-Message-ID: <ac6c1644-c6d3-c7eb-48b1-28eb9342a468@gmail.com>
-References: <20191120104504.22411-1-christian@brauner.io>
+From: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+Subject: [PATCH] block: add iostat counters for flush requests
+Date: Thu, 21 Nov 2019 13:40:26 +0300
+Message-ID: <157433282607.7928.5202409984272248322.stgit@buzz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191120104504.22411-1-christian@brauner.io>
-Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian@brauner.io>
-Cc: mtk.manpages@gmail.com, adrian@lisas.de, akpm@linux-foundation.org, arnd@arndb.de, avagin@gmail.com, christian.brauner@ubuntu.com, dhowells@redhat.com, fweimer@redhat.com, jannh@google.com, keescook@chromium.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, linux-man@vger.kernel.org, mingo@elte.hu, oleg@redhat.com, xemul@virtuozzo.com
+To: linux-block@vger.kernel.org, Jens Axboe <axboe@kernel.dk>, linux-kernel@vger.kernel.org, linux-doc@vger.kernel.org
+Cc: linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, Dmitry Monakhov <dmtrmonakhov@yandex-team.ru>
 List-Id: linux-api@vger.kernel.org
 
-Hello Christian,
+Requests that triggers flushing volatile writeback cache to disk (barriers)
+have significant effect to overall performance.
 
-On 11/20/19 11:45 AM, Christian Brauner wrote:
-> From: Christian Brauner <christian.brauner@ubuntu.com>
-> 
-> The CLONE_PARENT flag cannot but used by init processes. Let's mention
-> this in the manpages to prevent suprises.
-> 
-> Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
-> ---
->  man2/clone.2 | 7 +++++++
->  1 file changed, 7 insertions(+)
-> 
-> diff --git a/man2/clone.2 b/man2/clone.2
-> index f0f29d6f1..aa98ab79b 100644
-> --- a/man2/clone.2
-> +++ b/man2/clone.2
-> @@ -646,6 +646,13 @@ if
->  .B CLONE_PARENT
->  is set, then the parent of the calling process, rather than the
->  calling process itself, will be signaled.
-> +.IP
-> +The kernel will not allow global init and init processes in pid
-> +namespaces to use the
-> +.B CLONE_PARENT
-> +flag. This is done to prevent the creation of multi-rooted process
-> +trees. It also avoids unreapable zombies in the initial pid
-> +namespace.
->  .TP
->  .BR CLONE_PARENT_SETTID " (since Linux 2.5.49)"
->  Store the child thread ID at the location pointed to by
+Block layer has sophisticated engine for combining several flush requests
+into one. But there is no statistics for actual flushes executed by disk.
+Requests which trigger flushes usually are barriers - zero-size writes.
 
-Thank. I applied, and then tweaked the text a little,
-and noted the associated EINVAL error. In the end, the
-change is as below.
+This patch adds two iostat counters into /sys/class/block/$dev/stat and
+/proc/diskstats - count of completed flush requests and their total time.
 
-Cheers,
+Signed-off-by: Konstantin Khlebnikov <khlebnikov@yandex-team.ru>
+---
+ Documentation/ABI/testing/procfs-diskstats |    5 +++++
+ Documentation/ABI/testing/sysfs-block      |    6 ++++++
+ Documentation/admin-guide/iostats.rst      |    9 +++++++++
+ Documentation/block/stat.rst               |   14 ++++++++++++--
+ block/blk-flush.c                          |   15 ++++++++++++++-
+ block/genhd.c                              |    8 ++++++--
+ block/partition-generic.c                  |    7 +++++--
+ include/linux/blk_types.h                  |    1 +
+ 8 files changed, 58 insertions(+), 7 deletions(-)
 
-Michael
-
-index 60e746151..382f6b791 100644
---- a/man2/clone.2
-+++ b/man2/clone.2
-@@ -648,6 +648,14 @@ if
- .B CLONE_PARENT
- is set, then the parent of the calling process, rather than the
- calling process itself, will be signaled.
-+.IP
-+The
-+.B CLONE_PARENT
-+flag can't be used in clone calls by the
-+global init process (PID 1 in the initial PID namespace)
-+and init processes in other PID namespaces.
-+This restriction prevents the creation of multi-rooted process trees
-+as well as the creation of unreapable zombies in the initial PID namespace.
- .TP
- .BR CLONE_PARENT_SETTID " (since Linux 2.5.49)"
- Store the child thread ID at the location pointed to by
-@@ -1273,6 +1281,11 @@ were specified in the
- .IR flags
- mask.
- .TP
-+.BR EINVAL " (since Linux 2.6.32)"
-+.\" commit 123be07b0b399670a7cc3d82fef0cb4f93ef885c
-+.BR CLONE_PARENT
-+was specified, and the caller is an init process.
-+.TP
- .B EINVAL
- Returned by the glibc
- .BR clone ()
-
-
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+diff --git a/Documentation/ABI/testing/procfs-diskstats b/Documentation/ABI/testing/procfs-diskstats
+index 2c44b4f1b060..70dcaf2481f4 100644
+--- a/Documentation/ABI/testing/procfs-diskstats
++++ b/Documentation/ABI/testing/procfs-diskstats
+@@ -29,4 +29,9 @@ Description:
+ 		17 - sectors discarded
+ 		18 - time spent discarding
+ 
++		Kernel 5.5+ appends two more fields for flush requests:
++
++		19 - flush requests completed successfully
++		20 - time spent flushing
++
+ 		For more details refer to Documentation/admin-guide/iostats.rst
+diff --git a/Documentation/ABI/testing/sysfs-block b/Documentation/ABI/testing/sysfs-block
+index f8c7c7126bb1..ed8c14f161ee 100644
+--- a/Documentation/ABI/testing/sysfs-block
++++ b/Documentation/ABI/testing/sysfs-block
+@@ -15,6 +15,12 @@ Description:
+ 		 9 - I/Os currently in progress
+ 		10 - time spent doing I/Os (ms)
+ 		11 - weighted time spent doing I/Os (ms)
++		12 - discards completed
++		13 - discards merged
++		14 - sectors discarded
++		15 - time spent discarding (ms)
++		16 - flush requests completed
++		17 - time spent flushing (ms)
+ 		For more details refer Documentation/admin-guide/iostats.rst
+ 
+ 
+diff --git a/Documentation/admin-guide/iostats.rst b/Documentation/admin-guide/iostats.rst
+index 5d63b18bd6d1..4f0462af3ca7 100644
+--- a/Documentation/admin-guide/iostats.rst
++++ b/Documentation/admin-guide/iostats.rst
+@@ -121,6 +121,15 @@ Field 15 -- # of milliseconds spent discarding
+     This is the total number of milliseconds spent by all discards (as
+     measured from __make_request() to end_that_request_last()).
+ 
++Field 16 -- # of flush requests completed
++    This is the total number of flush requests completed successfully.
++
++    Block layer combines flush requests and executes at most one at a time.
++    This counts flush requests executed by disk. Not tracked for partitions.
++
++Field 17 -- # of milliseconds spent flushing
++    This is the total number of milliseconds spent by all flush requests.
++
+ To avoid introducing performance bottlenecks, no locks are held while
+ modifying these counters.  This implies that minor inaccuracies may be
+ introduced when changes collide, so (for instance) adding up all the
+diff --git a/Documentation/block/stat.rst b/Documentation/block/stat.rst
+index 9c07bc22b0bc..77311335c08b 100644
+--- a/Documentation/block/stat.rst
++++ b/Documentation/block/stat.rst
+@@ -41,6 +41,8 @@ discard I/Os    requests      number of discard I/Os processed
+ discard merges  requests      number of discard I/Os merged with in-queue I/O
+ discard sectors sectors       number of sectors discarded
+ discard ticks   milliseconds  total wait time for discard requests
++flush I/Os      requests      number of flush I/Os processed
++flush ticks     milliseconds  total wait time for flush requests
+ =============== ============= =================================================
+ 
+ read I/Os, write I/Os, discard I/0s
+@@ -48,6 +50,14 @@ read I/Os, write I/Os, discard I/0s
+ 
+ These values increment when an I/O request completes.
+ 
++flush I/Os
++==========
++
++These values increment when an flush I/O request completes.
++
++Block layer combines flush requests and executes at most one at a time.
++This counts flush requests executed by disk. Not tracked for partitions.
++
+ read merges, write merges, discard merges
+ =========================================
+ 
+@@ -62,8 +72,8 @@ discarded from this block device.  The "sectors" in question are the
+ standard UNIX 512-byte sectors, not any device- or filesystem-specific
+ block size.  The counters are incremented when the I/O completes.
+ 
+-read ticks, write ticks, discard ticks
+-======================================
++read ticks, write ticks, discard ticks, flush ticks
++===================================================
+ 
+ These values count the number of milliseconds that I/O requests have
+ waited on this block device.  If there are multiple I/O requests waiting,
+diff --git a/block/blk-flush.c b/block/blk-flush.c
+index 1eec9cbe5a0a..1777346baf06 100644
+--- a/block/blk-flush.c
++++ b/block/blk-flush.c
+@@ -136,6 +136,17 @@ static void blk_flush_queue_rq(struct request *rq, bool add_front)
+ 	blk_mq_add_to_requeue_list(rq, add_front, true);
+ }
+ 
++static void blk_account_io_flush(struct request *rq)
++{
++	struct hd_struct *part = &rq->rq_disk->part0;
++
++	part_stat_lock();
++	part_stat_inc(part, ios[STAT_FLUSH]);
++	part_stat_add(part, nsecs[STAT_FLUSH],
++		      ktime_get_ns() - rq->start_time_ns);
++	part_stat_unlock();
++}
++
+ /**
+  * blk_flush_complete_seq - complete flush sequence
+  * @rq: PREFLUSH/FUA request being sequenced
+@@ -185,7 +196,7 @@ static void blk_flush_complete_seq(struct request *rq,
+ 
+ 	case REQ_FSEQ_DONE:
+ 		/*
+-		 * @rq was previously adjusted by blk_flush_issue() for
++		 * @rq was previously adjusted by blk_insert_flush() for
+ 		 * flush sequencing and may already have gone through the
+ 		 * flush data request completion path.  Restore @rq for
+ 		 * normal completion and end it.
+@@ -212,6 +223,8 @@ static void flush_end_io(struct request *flush_rq, blk_status_t error)
+ 	struct blk_flush_queue *fq = blk_get_flush_queue(q, flush_rq->mq_ctx);
+ 	struct blk_mq_hw_ctx *hctx;
+ 
++	blk_account_io_flush(flush_rq);
++
+ 	/* release the tag's ownership to the req cloned from */
+ 	spin_lock_irqsave(&fq->mq_flush_lock, flags);
+ 
+diff --git a/block/genhd.c b/block/genhd.c
+index 26b31fcae217..ff6268970ddc 100644
+--- a/block/genhd.c
++++ b/block/genhd.c
+@@ -1385,7 +1385,9 @@ static int diskstats_show(struct seq_file *seqf, void *v)
+ 			   "%lu %lu %lu %u "
+ 			   "%lu %lu %lu %u "
+ 			   "%u %u %u "
+-			   "%lu %lu %lu %u\n",
++			   "%lu %lu %lu %u "
++			   "%lu %u"
++			   "\n",
+ 			   MAJOR(part_devt(hd)), MINOR(part_devt(hd)),
+ 			   disk_name(gp, hd->partno, buf),
+ 			   part_stat_read(hd, ios[STAT_READ]),
+@@ -1402,7 +1404,9 @@ static int diskstats_show(struct seq_file *seqf, void *v)
+ 			   part_stat_read(hd, ios[STAT_DISCARD]),
+ 			   part_stat_read(hd, merges[STAT_DISCARD]),
+ 			   part_stat_read(hd, sectors[STAT_DISCARD]),
+-			   (unsigned int)part_stat_read_msecs(hd, STAT_DISCARD)
++			   (unsigned int)part_stat_read_msecs(hd, STAT_DISCARD),
++			   part_stat_read(hd, ios[STAT_FLUSH]),
++			   (unsigned int)part_stat_read_msecs(hd, STAT_FLUSH)
+ 			);
+ 	}
+ 	disk_part_iter_exit(&piter);
+diff --git a/block/partition-generic.c b/block/partition-generic.c
+index aee643ce13d1..3db8b73a96b1 100644
+--- a/block/partition-generic.c
++++ b/block/partition-generic.c
+@@ -127,7 +127,8 @@ ssize_t part_stat_show(struct device *dev,
+ 		"%8lu %8lu %8llu %8u "
+ 		"%8lu %8lu %8llu %8u "
+ 		"%8u %8u %8u "
+-		"%8lu %8lu %8llu %8u"
++		"%8lu %8lu %8llu %8u "
++		"%8lu %8u"
+ 		"\n",
+ 		part_stat_read(p, ios[STAT_READ]),
+ 		part_stat_read(p, merges[STAT_READ]),
+@@ -143,7 +144,9 @@ ssize_t part_stat_show(struct device *dev,
+ 		part_stat_read(p, ios[STAT_DISCARD]),
+ 		part_stat_read(p, merges[STAT_DISCARD]),
+ 		(unsigned long long)part_stat_read(p, sectors[STAT_DISCARD]),
+-		(unsigned int)part_stat_read_msecs(p, STAT_DISCARD));
++		(unsigned int)part_stat_read_msecs(p, STAT_DISCARD),
++		part_stat_read(p, ios[STAT_FLUSH]),
++		(unsigned int)part_stat_read_msecs(p, STAT_FLUSH));
+ }
+ 
+ ssize_t part_inflight_show(struct device *dev, struct device_attribute *attr,
+diff --git a/include/linux/blk_types.h b/include/linux/blk_types.h
+index d688b96d1d63..b811a673a300 100644
+--- a/include/linux/blk_types.h
++++ b/include/linux/blk_types.h
+@@ -371,6 +371,7 @@ enum stat_group {
+ 	STAT_READ,
+ 	STAT_WRITE,
+ 	STAT_DISCARD,
++	STAT_FLUSH,
+ 
+ 	NR_STAT_GROUPS
+ };
