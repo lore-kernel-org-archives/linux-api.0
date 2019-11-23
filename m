@@ -1,42 +1,200 @@
-From: Prakash Sangappa <prakash.sangappa@oracle.com>
-Subject: Re: [RESEND RFC PATCH 0/1] CAP_SYS_NICE inside user namespace
-Date: Thu, 21 Nov 2019 17:54:13 -0800
-Message-ID: <4593138d-421e-5770-6dd5-e31f103911c5@oracle.com>
-References: <1574096478-11520-1-git-send-email-prakash.sangappa@oracle.com>
- <CAG48ez3HfUx2aRvqR_bWnGoTshrHnUzxUNt7K6Sv7cqtPDWaWw@mail.gmail.com>
- <9a63f7ae-562e-67a6-8f40-050c58c08933@oracle.com>
- <c7949242-385f-3256-b290-87640acd0577@metux.net>
+From: Stephan =?ISO-8859-1?Q?M=FCller?= <smueller@chronox.de>
+Subject: [PATCH v26 02/12] LRNG - allocate one SDRNG instance per NUMA node
+Date: Sat, 23 Nov 2019 21:10:41 +0100
+Message-ID: <56236375.DK8cemDQLA@positron.chronox.de>
+References: <6157374.ptSnyUpaCn@positron.chronox.de> <2787174.DQlWHN5GGo@positron.chronox.de> <2722222.P16TYeLAVu@positron.chronox.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <c7949242-385f-3256-b290-87640acd0577@metux.net>
-Content-Language: en-US
+In-Reply-To: <2722222.P16TYeLAVu@positron.chronox.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Enrico Weigelt, metux IT consult" <lkml@metux.net>, Jann Horn <jannh@google.com>
-Cc: kernel list <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, "Eric W. Biederman" <ebiederm@xmission.com>, Thomas Gleixner <tglx@linutronix.de>, Peter Zijlstra <peterz@infradead.org>, "Serge E. Hallyn" <serge@hallyn.com>, Christian Brauner <christian@brauner.io>
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@suse.de>, "Peter, Matthias" <matth>
 List-Id: linux-api@vger.kernel.org
 
+In order to improve NUMA-locality when serving getrandom(2) requests,
+allocate one DRNG instance per node.
 
+The SDRNG instance that is present right from the start of the kernel is
+reused as the first per-NUMA-node SDRNG. For all remaining online NUMA
+nodes a new SDRNG instance is allocated.
 
-On 11/21/19 10:33 AM, Enrico Weigelt, metux IT consult wrote:
-> On 18.11.19 21:34, Prakash Sangappa wrote:
->
->> It is more the latter. Admin should be able to explicitly decide that  container A
->> workload is to be given priority over other containers.
-> I guess, you're talking about the host's admin, correct ?
+During boot time, the multiple SDRNG instances are seeded sequentially.
+With this, the first SDRNG instance (referenced as the initial SDRNG
+in the code) is completely seeded with 256 bits of entropy before the
+next SDRNG instance is completely seeded.
 
-Yes, Specifically host's admin decides which container gets the 
-privilege to increase priority of processes inside that container.
+When random numbers are requested, the NUMA-node-local SDRNG is checked
+whether it has been already fully seeded. If this is not the case, the
+initial SDRNG is used to serve the request.
 
->
-> Shouldn't this already be possibly by tweaking the container's cgroups ?
+CC: "Eric W. Biederman" <ebiederm@xmission.com>
+CC: "Alexander E. Patrakov" <patrakov@gmail.com>
+CC: "Ahmed S. Darwish" <darwish.07@gmail.com>
+CC: "Theodore Y. Ts'o" <tytso@mit.edu>
+CC: Willy Tarreau <w@1wt.eu>
+CC: Matthew Garrett <mjg59@srcf.ucam.org>
+CC: Vito Caputo <vcaputo@pengaru.com>
+CC: Andreas Dilger <adilger.kernel@dilger.ca>
+CC: Jan Kara <jack@suse.cz>
+CC: Ray Strode <rstrode@redhat.com>
+CC: William Jon McCann <mccann@jhu.edu>
+CC: zhangjs <zachary@baishancloud.com>
+CC: Andy Lutomirski <luto@kernel.org>
+CC: Florian Weimer <fweimer@redhat.com>
+CC: Lennart Poettering <mzxreary@0pointer.de>
+CC: Nicolai Stange <nstange@suse.de>
+Reviewed-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
+Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
+Tested-by: Roman Drahtm=FCller <draht@schaltsekun.de>
+Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
+Tested-by: Neil Horman <nhorman@redhat.com>
+Signed-off-by: Stephan Mueller <smueller@chronox.de>
+=2D--
+ drivers/char/lrng/Makefile        |   2 +
+ drivers/char/lrng/lrng_internal.h |   5 ++
+ drivers/char/lrng/lrng_numa.c     | 101 ++++++++++++++++++++++++++++++
+ 3 files changed, 108 insertions(+)
+ create mode 100644 drivers/char/lrng/lrng_numa.c
 
-Don't think so. The use case is that admin/user inside the container 
-needs to be able to increase the priority of some the critical processes 
-running in the container.
-
->
->
-> --mtx
->
+diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
+index 2761623715d2..a00cddb45773 100644
+=2D-- a/drivers/char/lrng/Makefile
++++ b/drivers/char/lrng/Makefile
+@@ -7,3 +7,5 @@ obj-y				+=3D lrng_pool.o lrng_aux.o \
+ 				   lrng_sw_noise.o lrng_archrandom.o \
+ 				   lrng_sdrng.o lrng_chacha20.o \
+ 				   lrng_interfaces.o \
++
++obj-$(CONFIG_NUMA)		+=3D lrng_numa.o
+diff --git a/drivers/char/lrng/lrng_internal.h b/drivers/char/lrng/lrng_int=
+ernal.h
+index 675ba28bd2e6..fb7890939089 100644
+=2D-- a/drivers/char/lrng/lrng_internal.h
++++ b/drivers/char/lrng/lrng_internal.h
+@@ -261,8 +261,13 @@ int lrng_sdrng_get_sleep(u8 *outbuf, u32 outbuflen);
+ void lrng_sdrng_force_reseed(void);
+ void lrng_sdrng_seed_work(struct work_struct *dummy);
+=20
++#ifdef CONFIG_NUMA
++struct lrng_sdrng **lrng_sdrng_instances(void);
++void lrng_drngs_numa_alloc(void);
++#else	/* CONFIG_NUMA */
+ static inline struct lrng_sdrng **lrng_sdrng_instances(void) { return NULL=
+; }
+ static inline void lrng_drngs_numa_alloc(void) { return; }
++#endif /* CONFIG_NUMA */
+=20
+ /************************** Health Test linking code *********************=
+*****/
+=20
+diff --git a/drivers/char/lrng/lrng_numa.c b/drivers/char/lrng/lrng_numa.c
+new file mode 100644
+index 000000000000..5401f927919a
+=2D-- /dev/null
++++ b/drivers/char/lrng/lrng_numa.c
+@@ -0,0 +1,101 @@
++// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
++/*
++ * LRNG NUMA support
++ *
++ * Copyright (C) 2016 - 2019, Stephan Mueller <smueller@chronox.de>
++ */
++
++#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
++
++#include <linux/lrng.h>
++#include <linux/slab.h>
++
++#include "lrng_internal.h"
++
++static struct lrng_sdrng **lrng_sdrng __read_mostly =3D NULL;
++
++struct lrng_sdrng **lrng_sdrng_instances(void)
++{
++	return lrng_sdrng;
++}
++
++/* Allocate the data structures for the per-NUMA node DRNGs */
++static void _lrng_drngs_numa_alloc(struct work_struct *work)
++{
++	struct lrng_sdrng **sdrngs;
++	struct lrng_sdrng *lrng_sdrng_init =3D lrng_sdrng_init_instance();
++	u32 node;
++	bool init_sdrng_used =3D false;
++
++	mutex_lock(&lrng_crypto_cb_update);
++
++	/* per-NUMA-node DRNGs are already present */
++	if (lrng_sdrng)
++		goto unlock;
++
++	sdrngs =3D kcalloc(nr_node_ids, sizeof(void *), GFP_KERNEL|__GFP_NOFAIL);
++	for_each_online_node(node) {
++		struct lrng_sdrng *sdrng;
++
++		if (!init_sdrng_used) {
++			sdrngs[node] =3D lrng_sdrng_init;
++			init_sdrng_used =3D true;
++			continue;
++		}
++
++		sdrng =3D kmalloc_node(sizeof(struct lrng_sdrng),
++				     GFP_KERNEL|__GFP_NOFAIL, node);
++		memset(sdrng, 0, sizeof(lrng_sdrng));
++
++		sdrng->crypto_cb =3D lrng_sdrng_init->crypto_cb;
++		sdrng->sdrng =3D sdrng->crypto_cb->lrng_drng_alloc(
++					LRNG_DRNG_SECURITY_STRENGTH_BYTES);
++		if (IS_ERR(sdrng->sdrng)) {
++			kfree(sdrng);
++			goto err;
++		}
++
++		mutex_init(&sdrng->lock);
++		spin_lock_init(&sdrng->spin_lock);
++
++		/*
++		 * No reseeding of NUMA DRNGs from previous DRNGs as this
++		 * would complicate the code. Let it simply reseed.
++		 */
++		lrng_sdrng_reset(sdrng);
++		sdrngs[node] =3D sdrng;
++
++		lrng_pool_inc_numa_node();
++		pr_info("secondary DRNG for NUMA node %d allocated\n", node);
++	}
++
++	/* Ensure that all NUMA nodes receive changed memory here. */
++	mb();
++
++	if (!cmpxchg(&lrng_sdrng, NULL, sdrngs))
++		goto unlock;
++
++err:
++	for_each_online_node(node) {
++		struct lrng_sdrng *sdrng =3D sdrngs[node];
++
++		if (sdrng =3D=3D lrng_sdrng_init)
++			continue;
++
++		if (sdrng) {
++			sdrng->crypto_cb->lrng_drng_dealloc(sdrng->sdrng);
++			kfree(sdrng);
++		}
++	}
++	kfree(sdrngs);
++
++unlock:
++	mutex_unlock(&lrng_crypto_cb_update);
++}
++
++static DECLARE_WORK(lrng_drngs_numa_alloc_work, _lrng_drngs_numa_alloc);
++
++void lrng_drngs_numa_alloc(void)
++{
++	schedule_work(&lrng_drngs_numa_alloc_work);
++}
+=2D-=20
+2.23.0
