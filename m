@@ -1,49 +1,224 @@
 From: Stephan =?ISO-8859-1?Q?M=FCller?= <smueller@chronox.de>
-Subject: [PATCH v26 10/12] LRNG - add TRNG support
-Date: Sat, 23 Nov 2019 21:34:24 +0100
-Message-ID: <33503687.hpnIkuazyB@positron.chronox.de>
-References: <6157374.ptSnyUpaCn@positron.chronox.de> <2787174.DQlWHN5GGo@positron.chronox.de> <2722222.P16TYeLAVu@positron.chronox.de>
+Subject: [PATCH v26 00/12] /dev/random - a new approach with full SP800-90B
+Date: Sat, 23 Nov 2019 21:08:41 +0100
+Message-ID: <2722222.P16TYeLAVu@positron.chronox.de>
+References: <6157374.ptSnyUpaCn@positron.chronox.de> <2787174.DQlWHN5GGo@positron.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <2722222.P16TYeLAVu@positron.chronox.de>
+In-Reply-To: <2787174.DQlWHN5GGo@positron.chronox.de>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@suse.de>, "Peter, Matthias" <matth>
+To: Stephan =?ISO-8859-1?Q?M=FCller?= <smueller@chronox.de>
+Cc: Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@sus>
 List-Id: linux-api@vger.kernel.org
 
-The True Random Number Generator (TRNG) provides a random number
-generator with prediction resistance (SP800-90A terminology) or an NTG.1
-(AIS 31 terminology).
+Hi,
 
-When enabled, it obtains random numbers from the entropy pool and
-maintains the information with how much entropy it was seeded with. The
-TRNG only generates as much output data as it has as entropy.
+The following patch set provides a different approach to /dev/random which =
+is
+called Linux Random Number Generator (LRNG) to collect entropy within the L=
+inux
+kernel. The main improvements compared to the existing /dev/random is to pr=
+ovide
+sufficient entropy during boot time as well as in virtual environments and =
+when
+using SSDs. A secondary design goal is to limit the impact of the entropy
+collection on massive parallel systems and also allow the use accelerated
+cryptographic primitives. Also, all steps of the entropic data processing a=
+re
+testable.
 
-The secondary DRNGs seed from the TRNG if it is present. In addition,
-the TRNG is accessible from user space using the getrandom system call
-with the GRND_TRUERANDOM flag.
+The LRNG patch set allows a user to select use of the existing /dev/random =
+or
+the LRNG during compile time. As the LRNG provides API and ABI compatible
+interfaces to the existing /dev/random implementation, the user can freely =
+chose
+the RNG implementation without affecting kernel or user space operations.
 
-When getrandom(GRND_TRUERANDOM) is invoked by a process possessing
-CAP_SYS_ADMIN, all available entropy in the entropy pool is used to
-serve the request. If the calling process does not possess that
-capability, entropy is drawn to the extent that the entropy pool
-will retain at least 1024 bits of entropy. This approach prevents
-unprivileged processes to deplete existing entropy preventing
-privileged callers from obtaining that entropy.
+This patch set provides early boot-time entropy which implies that no
+additional flags to the getrandom(2) system call discussed recently on
+the LKML is considered to be necessary. Yet, if additional flags are
+introduced to cover special hardware, the LRNG implementation will also
+provide them to be fully ABI and API compliant as already discussed on
+LKML.
 
-Since the secondary DRNG can draw from the entropy pool down to
-a minimum entropy level of 512 bits, it will be provided with
-entropy while an unprivileged user stresses
-getrandom(GRND_TRUERANDOM).
+The LRNG is fully compliant to SP800-90B requirements and is shipped with a
+full SP800-90B assessment and all required test tools. The existing /dev/ra=
+ndom
+implementation on the other hand has architectural limitations which
+does not easily allow to bring the implementation in compliance with
+SP800-90B. The key statement that causes concern is SP800-90B section
+3.1.6. This section denies crediting entropy to multiple similar noise
+sources. This section explicitly references different noise sources resting
+on the timing of events and their derivatives (i.e. it is a direct complaint
+to the existing existing /dev/random implementation). Therefore, SP800-90B
+now denies the very issue mentioned in [1] with the existing /dev/random
+implementation for a long time: crediting entropy to interrupts as well as
+crediting entropy to derivatives of interrupts (HID and disk events). This =
+is
+not permissible with SP800-90B.
 
-If the TRNG is disabled, the secondary DRNGs seed from the entropy
-pool. The getrandom(GRND_TRUERANDOM) call will return -EOPNOTSUPP
-in this case.
+SP800-90B specifies various requirements for the noise source(s) that seed =
+any
+DRNG including SP800-90A DRBGs. In about a year from now, SP800-90B will be
+mandated for all noise sources that provide entropy to DRBGs as part of a F=
+IPS
+140-[2|3] validation or other evaluation types. That means, if we there are=
+ no
+solutions to comply with the requirements of SP800-90B found till one year
+from now, any random number generation and ciphers based on random numbers
+on Linux will be considered and treated as not applicable and delivering
+no entropy! As /dev/urandom, getrandom(2) and /dev/random are the most
+common and prevalent noise sources for DRNGs, all these DRNGs are affected.
+This applies across the board for all validations of cryptography executing=
+ on
+Linux (kernel and user space modules).
 
-The TRNG benefits from the switchable DRNG support which implies that
-data provided via /dev/random is generated by the loaded DRNG.
+=46or users that are not interested in SP800-90B, the entire code for the
+compliance as well as test interfaces can be deselected at compile time.
+
+The design and implementation is driven by a set of goals described in [1]
+that the LRNG completely implements. Furthermore, [1] includes the full
+assessment of the SP800-90B compliance as well as a comparison with RNG
+design suggestions of SP800-90C, and AIS20/31.
+
+The LRNG provides a complete separation of the noise source maintenance
+and the collection of entropy into an entropy pool from the post-processing
+using a pseudo-random number generator. Different DRNGs are supported,
+including:
+
+* The LRNG can be compile-time enabled to replace the existing /dev/random
+  implementation. When not selecting the LRNG at compile time (default), the
+  existing /dev/random implementation is built.
+
+* Built-in ChaCha20 DRNG which has no dependency to other kernel
+  frameworks.
+
+* SP800-90A DRBG using the kernel crypto API including its accelerated
+  raw cipher implementations. This implies that the output of /dev/random,
+  getrandom(2), /dev/urandom or get_random_bytes is fully compliant to
+  SP800-90A.
+
+* Arbitrary DRNGs registered with the kernel crypto API
+
+* Full compliance with SP800-90B which covers the startup and runtime health
+  tests mandated by SP800-90B as well as providing the test tools and test
+  interfaces to obtain raw noise data securely. The test tools are provided=
+ at
+  [1].
+
+Booting the patch with the kernel command line option
+"dyndbg=3Dfile drivers/char/lrng/* +p" generates logs indicating the operat=
+ion
+of the LRNG. Each log is pre-pended with "lrng".
+
+The LRNG has a flexible design by allowing an easy replacement of the
+deterministic random number generator component.
+
+Compared to the existing /dev/random implementation, the compiled binary
+is smaller when the LRNG is compiled with all options equal to the
+existing /dev/random (i.e. only CONFIG_LRNG and
+CONFIG_LRNG_TRNG_SUPPORT are set): random.o is 52.5 kBytes whereas
+all LRNG object files are in 49 kBytes in size. The fully
+SP800-90A/SP800-90B compliant binary code (CONFIG_LRNG,
+CONFIG_LRNG_DRNG_SWITCH, CONFIG_LRNG_DRBG, CONFIG_LRNG_HEALTH_TESTS)
+uses some 61 kBytes.
+
+[1] http://www.chronox.de/lrng.html - If the patch is accepted, I would
+be volunteering to convert the documentation into RST format and
+contribute it to the Linux kernel documentation directory.
+
+Changes (compared to the previous patch set):
+
+* Extract the time initalization code into its own function
+  lrng_init_time_source and invoke it with core_initcall as reported
+  by Nicolai Stange
+
+* Add linux/errno.h include to lrng.h as suggested by Nicolai Stange
+
+* Add linux/slab.h to lrng_chacha20.h
+
+* Changed lrng_testing.c reading/writing of ring buffer to use a lock
+  as suggested by Andy Lutomirski
+
+* Use "depends on DEBUG_FS" for lrng_testing.c Kconfig entry as
+  suggested by Randy Dunlap
+
+* Remove declaration of random_table from lrng_proc.c as suggested by
+  Eric W. Biederman
+
+* Move the lrng_type file out of the sysctl table into its own file
+  /proc/lrng_type since its purpose is not to serve as a sysctl
+  as suggested by Eric W. Biederman
+
+* Update patch description for /proc patch to refer to sysctls as suggested
+  by Eric W. Biederman
+
+* /dev/random and getrandom(GRND_RANDOM) now invokes the secondary DRNG
+  ensuring that the DRNG is fully seeded before requests are served. With
+  this change, /dev/random is no TRNG any more. This change implements
+  the suggestion from Andy Lutomirski and is based on the discussions
+  previously on the LKML and the changes developed by Andy for the existing
+  random.c implementation.
+
+* Simplification of the debugfs code in lrng_testing.c as return code
+  checks are not further needed any more as suggested by Nicolai Stange.
+
+* Addition of GRND_TRUERANDOM to the getrandom(2) syscall to make the TRNG
+  externally accessible as a TRNG. The change also includes the GRND_INSECU=
+RE
+  flag as proposed by Andy Lutomirski. To avoid touching the random.h and
+  potentially clashing with Andy's patch set, I kept the symbol definitions
+  in lrng_interfaces.c noting that they should be moved to random.h. The
+  GRND_TRUERANDOM allows unprivileged user space to access the TRNG as foll=
+ows:
+  if CAP_SYS_ADMIN calls, the whole entropy available to the LRNG is used. =
+If
+  an unprivileged process invokes GRND_TRUERANDOM, at least 1024 bits of en=
+tropy
+  will remain in the pool to serve CAP_SYS_ADMIN and all secondary DRNGs
+  serving /dev/urandom, /dev/random and getrandom(.., 0) with entropy. With
+  that unprivileged processes calling GRND_TRUERANDOM have the lowest prior=
+ity
+  in getting entropy and must wait accordingly. If the TRNG is not present,
+  GRND_TRUERANDOM returns -EOPNOTSUPP. A new test tool is provided as part
+  of the LRNG test archive found at [1] allowing to analyze all four types
+  of RNGs accessible via getrandom(2).
+
+* Remove duplication of MODULE_LICENSE/AUTHOR/DESCRIPTION from lrng_testing=
+=2Ec
+
+A patch for adding power-up self tests is prepared but I did not want to ad=
+d it
+now to support code review of a code base with minimal changes. It will be
+provided once the code review is completed. With this pending code, the
+following tests are available:
+
+* power-on self test: LFSR self test
+
+* power-on self test: ChaCha20 DRNG self test
+
+* power-on self test: time stamp array handling in lrng_sw_noise.c
+
+* power-on self test: SP800-90A DRBG self test
+
+* runtime test: raw noise source data collection, if enabled
+
+* separate test: SP800-90B APT and RCT test enforcement validation if enabl=
+ed
+
+As a side node: With the switchable DRNG support offered in this patch set,
+the following areas could be removed. As the existing /dev/random has no su=
+pport
+for switchable DRNGs, however, this is not yet feasible though.
+
+* remove lrng_ready_list and all code around it in lrng_interfaces.c
+
+* remove the kernel crypto API RNG API to avoid having two random number
+  providing APIs - this would imply that all RNGs developed for this API wo=
+uld
+  be converted to the LRNG interface
 
 CC: "Eric W. Biederman" <ebiederm@xmission.com>
 CC: "Alexander E. Patrakov" <patrakov@gmail.com>
@@ -61,369 +236,70 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
-Reviewed-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
-Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
 Tested-by: Roman Drahtm=FCller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
-Tested-by: Neil Horman <nhorman@redhat.com>
-Signed-off-by: Stephan Mueller <smueller@chronox.de>
-=2D--
- drivers/char/lrng/Kconfig     |  22 +++
- drivers/char/lrng/Makefile    |   1 +
- drivers/char/lrng/lrng_trng.c | 297 ++++++++++++++++++++++++++++++++++
- 3 files changed, 320 insertions(+)
- create mode 100644 drivers/char/lrng/lrng_trng.c
 
-diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index 80fc723c67d2..122d67ee110e 100644
-=2D-- a/drivers/char/lrng/Kconfig
-+++ b/drivers/char/lrng/Kconfig
-@@ -91,4 +91,26 @@ config LRNG_JENT
- 	  time or at runtime with the lrng_base.jitterrng configuration
- 	  variable.
-=20
-+config LRNG_TRNG_SUPPORT
-+	bool "Enable True Random Number Generator support"
-+	default y
-+	help
-+	  The true random number generator (TRNG) support, also
-+	  known as DRNG with prediction resistance (SP800-90A
-+	  terminology) or NTG.1 (AIS 31 terminology), generates
-+	  random numbers after a successful reseed with entropy.
-+	  Only when new entropy is provided for a new generation
-+	  request, random data is provided with an equal amount
-+	  as entropy was added. The TRNG is available via
-+	  /dev/random.
-+
-+	  If the support is not enabled, /dev/random ensures that
-+	  it received sufficient initial entropy and will produce
-+	  random data without requiring a constant reseed with
-+	  entropy. Yet it tries to regularly reseed itself with
-+	  fresh entropy.
-+
-+	  With the TRNG support the /dev/random device will block
-+	  if insufficient entropy is available.
-+
- endif # LRNG
-diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
-index a87d800c9aae..1c72bc060bce 100644
-=2D-- a/drivers/char/lrng/Makefile
-+++ b/drivers/char/lrng/Makefile
-@@ -14,3 +14,4 @@ obj-$(CONFIG_LRNG_DRNG_SWITCH)	+=3D lrng_switch.o
- obj-$(CONFIG_LRNG_DRBG)		+=3D lrng_drbg.o
- obj-$(CONFIG_LRNG_KCAPI)	+=3D lrng_kcapi.o
- obj-$(CONFIG_LRNG_JENT)		+=3D lrng_jent.o
-+obj-$(CONFIG_LRNG_TRNG_SUPPORT)	+=3D lrng_trng.o
-diff --git a/drivers/char/lrng/lrng_trng.c b/drivers/char/lrng/lrng_trng.c
-new file mode 100644
-index 000000000000..d594d5d5bffb
-=2D-- /dev/null
-+++ b/drivers/char/lrng/lrng_trng.c
-@@ -0,0 +1,297 @@
-+// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
-+/*
-+ * LRNG True Random Number Generator (TRNG) processing
-+ *
-+ * Copyright (C) 2016 - 2019, Stephan Mueller <smueller@chronox.de>
-+ */
-+
-+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-+
-+#include <linux/capability.h>
-+#include <linux/lrng.h>
-+
-+#include "lrng_internal.h"
-+
-+/* TRNG state handle */
-+struct lrng_trng {
-+	void *trng;				/* TRNG handle */
-+	void *hash;				/* Hash handle */
-+	u32 trng_entropy_bits;			/* TRNG entropy level */
-+	const struct lrng_crypto_cb *crypto_cb;	/* Crypto callbacks */
-+	struct mutex lock;
-+};
-+
-+/* TRNG for GRND_TRUERANDOM and seed source for the secondary DRNG(s) */
-+static struct lrng_trng lrng_trng =3D {
-+	.trng		=3D &primary_chacha20,
-+	.crypto_cb	=3D &lrng_cc20_crypto_cb,
-+	.lock		=3D __MUTEX_INITIALIZER(lrng_trng.lock)
-+};
-+
-+/********************************** Helper *******************************=
-*****/
-+
-+void lrng_trng_reset(void)
-+{
-+	lrng_trng.trng_entropy_bits =3D 0;
-+	pr_debug("reset TRNG\n");
-+}
-+
-+void lrng_trng_init(void)
-+{
-+	mutex_lock(&lrng_trng.lock);
-+	lrng_trng_reset();
-+	lrng_cc20_init_state(&primary_chacha20);
-+	mutex_unlock(&lrng_trng.lock);
-+}
-+
-+u32 lrng_trng_retain(void)
-+{
-+	if (capable(CAP_SYS_ADMIN))
-+		return 0;
-+	return LRNG_EMERG_ENTROPY_TRNG_UNPRIV;
-+}
-+
-+/************************* Random Number Generation **********************=
-*****/
-+
-+/* Caller must hold lrng_trng.lock */
-+static int lrng_trng_generate(u8 *outbuf, u32 outbuflen)
-+{
-+	struct lrng_trng *trng =3D &lrng_trng;
-+	const struct lrng_crypto_cb *crypto_cb =3D trng->crypto_cb;
-+	int ret;
-+
-+	/*
-+	 * Only deliver as many bytes as the DRNG is seeded with except during
-+	 * initialization to provide a first seed to the secondary DRNG.
-+	 */
-+	if (lrng_state_min_seeded())
-+		outbuflen =3D min_t(u32, outbuflen, trng->trng_entropy_bits>>3);
-+	else
-+		outbuflen =3D min_t(u32, outbuflen,
-+				  LRNG_MIN_SEED_ENTROPY_BITS>>3);
-+	if (!outbuflen)
-+		return 0;
-+
-+	ret =3D crypto_cb->lrng_drng_generate_helper_full(trng->trng, outbuf,
-+							outbuflen);
-+	if (ret !=3D outbuflen) {
-+		pr_warn("getting random data from TRNG failed (%d)\n",
-+			ret);
-+		return ret;
-+	}
-+
-+	if (trng->trng_entropy_bits > (u32)(ret<<3))
-+		trng->trng_entropy_bits -=3D ret<<3;
-+	else
-+		trng->trng_entropy_bits =3D 0;
-+	pr_debug("obtained %d bytes of random data from TRNG\n", ret);
-+	pr_debug("TRNG entropy level at %u bits\n",
-+		 trng->trng_entropy_bits);
-+
-+	return ret;
-+}
-+
-+/**
-+ * Inject data into the TRNG with a given entropy value. The function calls
-+ * the DRNG's update function. This function also generates random data if
-+ * requested by caller. The caller is only returned the amount of random d=
-ata
-+ * that is at most equal to the amount of entropy that just seeded the DRN=
-G.
-+ *
-+ * Note, this function seeds the TRNG and generates data in an atomic oper=
-ation.
-+ *
-+ * @inbuf: buffer to inject
-+ * @inbuflen: length of inbuf
-+ * @entropy_bits: entropy value of the data in inbuf in bits
-+ * @outbuf: buffer to fill immediately after seeding to get full entropy
-+ * @outbuflen: length of outbuf
-+ * @return: number of bytes written to outbuf, 0 if outbuf is not supplied,
-+ *	    or < 0 in case of error
-+ */
-+static int lrng_trng_inject(const u8 *inbuf, u32 inbuflen, u32 entropy_bit=
-s,
-+			    u8 *outbuf, u32 outbuflen)
-+{
-+	struct lrng_trng *trng =3D &lrng_trng;
-+	int ret;
-+
-+	/* cap the maximum entropy value to the provided data length */
-+	entropy_bits =3D min_t(u32, entropy_bits, inbuflen<<3);
-+
-+	mutex_lock(&trng->lock);
-+	ret =3D trng->crypto_cb->lrng_drng_seed_helper(trng->trng, inbuf,
-+						      inbuflen);
-+	if (ret < 0) {
-+		pr_warn("(re)seeding of TRNG failed\n");
-+		goto unlock;
-+	}
-+	pr_debug("inject %u bytes with %u bits of entropy into TRNG\n",
-+		 inbuflen, entropy_bits);
-+
-+	/* Adjust the fill level indicator to at most the DRNG sec strength */
-+	trng->trng_entropy_bits =3D
-+		min_t(u32, trng->trng_entropy_bits + entropy_bits,
-+		      LRNG_DRNG_SECURITY_STRENGTH_BITS);
-+	lrng_init_ops(trng->trng_entropy_bits);
-+
-+	if (outbuf && outbuflen)
-+		ret =3D lrng_trng_generate(outbuf, outbuflen);
-+
-+unlock:
-+	mutex_unlock(&trng->lock);
-+	lrng_reader_wakeup();
-+
-+	return ret;
-+}
-+
-+/**
-+ * Seed the TRNG from the internal noise sources and generate random data.=
- The
-+ * seeding and the generation of random data is an atomic operation.
-+ *
-+ * lrng_pool_trylock() must be invoked successfully by caller.
-+ */
-+int lrng_trng_seed(u8 *outbuf, u32 outbuflen, u32 entropy_retain)
-+{
-+	struct entropy_buf entropy_buf __aligned(LRNG_KCAPI_ALIGN);
-+	struct lrng_trng *trng =3D &lrng_trng;
-+	u32 total_entropy_bits;
-+	int ret =3D 0, retrieved =3D 0;
-+
-+	/* Get available entropy in primary DRNG */
-+	if (trng->trng_entropy_bits>>3) {
-+		mutex_lock(&trng->lock);
-+		ret =3D lrng_trng_generate(outbuf, outbuflen);
-+		mutex_unlock(&trng->lock);
-+		if (ret > 0) {
-+			retrieved +=3D ret;
-+			if (ret =3D=3D outbuflen)
-+				goto out;
-+
-+			outbuf +=3D ret;
-+			outbuflen -=3D ret;
-+		}
-+		/* Disregard error code as another generate request is below. */
-+	}
-+
-+	mutex_lock(&trng->lock);
-+	total_entropy_bits =3D lrng_fill_seed_buffer(trng->crypto_cb, trng->hash,
-+						   &entropy_buf,
-+						   entropy_retain);
-+	mutex_unlock(&trng->lock);
-+
-+	/*
-+	 * Continue even of total_entropy_bits is zero - inject uninitialized
-+	 * buffer into TRNG for pure mixing in this case.
-+	 */
-+
-+	pr_debug("reseed TRNG from internal noise sources with %u bits "
-+		 "of entropy\n", total_entropy_bits);
-+
-+	ret =3D lrng_trng_inject((u8 *)&entropy_buf, sizeof(entropy_buf),
-+				total_entropy_bits,
-+				outbuf, outbuflen);
-+
-+	memzero_explicit(&entropy_buf, sizeof(entropy_buf));
-+
-+	if (ret > 0)
-+		retrieved +=3D ret;
-+
-+out:
-+	/* Allow the seeding operation to be called again */
-+	lrng_pool_unlock();
-+
-+	return (ret >=3D 0) ? retrieved : ret;
-+}
-+
-+/**
-+ * Obtain random data from TRNG with information theoretical entropy by
-+ * triggering a reseed. The TRNG will only return as many random bytes as =
-it
-+ * was seeded with.
-+ *
-+ * @outbuf: buffer to store the random data in
-+ * @outbuflen: length of outbuf
-+ * @return: < 0 on error
-+ *	    >=3D 0 the number of bytes that were obtained
-+ */
-+int lrng_trng_get(u8 *outbuf, u32 outbuflen)
-+{
-+	int ret;
-+
-+	if (!outbuf || !outbuflen)
-+		return 0;
-+
-+	lrng_drngs_init_cc20();
-+
-+	if (lrng_pool_trylock())
-+		return -EINPROGRESS;
-+	ret =3D lrng_trng_seed(outbuf, outbuflen, lrng_trng_retain());
-+	if (ret >=3D 0) {
-+		pr_debug("read %d bytes of full entropy data from TRNG\n", ret);
-+	} else {
-+		/* This is no error, but we have not generated anything */
-+		if (ret =3D=3D -EINPROGRESS)
-+			return 0;
-+		pr_debug("reading data from TRNG failed: %d\n", ret);
-+	}
-+
-+	return ret;
-+}
-+
-+#ifdef CONFIG_LRNG_DRNG_SWITCH
-+int lrng_trng_switch(const struct lrng_crypto_cb *cb)
-+{
-+	int ret;
-+	u8 seed[LRNG_DRNG_SECURITY_STRENGTH_BYTES];
-+	void *trng, *hash;
-+
-+	trng =3D cb->lrng_drng_alloc(LRNG_DRNG_SECURITY_STRENGTH_BYTES);
-+	if (IS_ERR(trng))
-+		return PTR_ERR(trng);
-+
-+	hash =3D cb->lrng_hash_alloc(seed, sizeof(seed));
-+	if (IS_ERR(hash)) {
-+		pr_warn("could not allocate new LRNG pool hash (%ld)\n",
-+			PTR_ERR(hash));
-+		cb->lrng_drng_dealloc(trng);
-+		return PTR_ERR(hash);
-+	}
-+
-+	/* Update primary DRNG */
-+	mutex_lock(&lrng_trng.lock);
-+	/* pull from existing DRNG to seed new DRNG */
-+	ret =3D lrng_trng.crypto_cb->lrng_drng_generate_helper_full(
-+					lrng_trng.trng, seed, sizeof(seed));
-+	if (ret < 0) {
-+		lrng_trng_reset();
-+		pr_warn("getting random data from TRNG failed (%d)\n", ret);
-+	} else {
-+		/*
-+		 * No change of the seed status as the old and new DRNG have
-+		 * same security strength.
-+		 */
-+		ret =3D cb->lrng_drng_seed_helper(trng, seed, ret);
-+		if (ret < 0) {
-+			lrng_trng_reset();
-+			pr_warn("seeding of new TRNG failed (%d)\n", ret);
-+		} else {
-+			pr_debug("seeded new TRNG instance from old TRNG "
-+				 "instance\n");
-+		}
-+	}
-+	memzero_explicit(seed, sizeof(seed));
-+
-+	if (!lrng_get_available())
-+		lrng_trng_reset();
-+	lrng_trng.crypto_cb->lrng_drng_dealloc(lrng_trng.trng);
-+	lrng_trng.trng =3D trng;
-+
-+	lrng_trng.crypto_cb->lrng_hash_dealloc(lrng_trng.hash);
-+	lrng_trng.hash =3D hash;
-+
-+	lrng_trng.crypto_cb =3D cb;
-+
-+	mutex_unlock(&lrng_trng.lock);
-+
-+	pr_info("TRNG allocated\n");
-+
-+	return ret;
-+}
-+#endif	/* CONFIG_LRNG_DRNG_SWITCH */
+Stephan Mueller (12):
+  Linux Random Number Generator
+  LRNG - allocate one SDRNG instance per NUMA node
+  LRNG - sysctls and /proc interface
+  LRNG - add switchable DRNG support
+  crypto: DRBG - externalize DRBG functions for LRNG
+  LRNG - add SP800-90A DRBG extension
+  LRNG - add kernel crypto API PRNG extension
+  crypto: provide access to a static Jitter RNG state
+  LRNG - add Jitter RNG fast noise source
+  LRNG - add TRNG support
+  LRNG - add SP800-90B compliant health tests
+  LRNG - add interface for gathering of raw entropy
+
+ MAINTAINERS                         |   7 +
+ crypto/drbg.c                       |  16 +-
+ crypto/jitterentropy.c              |  23 +
+ drivers/char/Kconfig                |   2 +
+ drivers/char/Makefile               |   9 +-
+ drivers/char/lrng/Kconfig           | 188 ++++++++
+ drivers/char/lrng/Makefile          |  19 +
+ drivers/char/lrng/lrng_archrandom.c |  92 ++++
+ drivers/char/lrng/lrng_aux.c        | 148 ++++++
+ drivers/char/lrng/lrng_chacha20.c   | 329 ++++++++++++++
+ drivers/char/lrng/lrng_drbg.c       | 261 +++++++++++
+ drivers/char/lrng/lrng_health.c     | 409 +++++++++++++++++
+ drivers/char/lrng/lrng_interfaces.c | 665 +++++++++++++++++++++++++++
+ drivers/char/lrng/lrng_internal.h   | 320 +++++++++++++
+ drivers/char/lrng/lrng_jent.c       |  88 ++++
+ drivers/char/lrng/lrng_kcapi.c      | 328 ++++++++++++++
+ drivers/char/lrng/lrng_numa.c       | 101 +++++
+ drivers/char/lrng/lrng_pool.c       | 671 ++++++++++++++++++++++++++++
+ drivers/char/lrng/lrng_proc.c       | 179 ++++++++
+ drivers/char/lrng/lrng_sdrng.c      | 420 +++++++++++++++++
+ drivers/char/lrng/lrng_sw_noise.c   | 144 ++++++
+ drivers/char/lrng/lrng_switch.c     | 185 ++++++++
+ drivers/char/lrng/lrng_testing.c    | 269 +++++++++++
+ drivers/char/lrng/lrng_trng.c       | 297 ++++++++++++
+ include/crypto/drbg.h               |   7 +
+ include/linux/lrng.h                |  71 +++
+ 26 files changed, 5241 insertions(+), 7 deletions(-)
+ create mode 100644 drivers/char/lrng/Kconfig
+ create mode 100644 drivers/char/lrng/Makefile
+ create mode 100644 drivers/char/lrng/lrng_archrandom.c
+ create mode 100644 drivers/char/lrng/lrng_aux.c
+ create mode 100644 drivers/char/lrng/lrng_chacha20.c
+ create mode 100644 drivers/char/lrng/lrng_drbg.c
+ create mode 100644 drivers/char/lrng/lrng_health.c
+ create mode 100644 drivers/char/lrng/lrng_interfaces.c
+ create mode 100644 drivers/char/lrng/lrng_internal.h
+ create mode 100644 drivers/char/lrng/lrng_jent.c
+ create mode 100644 drivers/char/lrng/lrng_kcapi.c
+ create mode 100644 drivers/char/lrng/lrng_numa.c
+ create mode 100644 drivers/char/lrng/lrng_pool.c
+ create mode 100644 drivers/char/lrng/lrng_proc.c
+ create mode 100644 drivers/char/lrng/lrng_sdrng.c
+ create mode 100644 drivers/char/lrng/lrng_sw_noise.c
+ create mode 100644 drivers/char/lrng/lrng_switch.c
+ create mode 100644 drivers/char/lrng/lrng_testing.c
+ create mode 100644 drivers/char/lrng/lrng_trng.c
+ create mode 100644 include/linux/lrng.h
+
 =2D-=20
 2.23.0
