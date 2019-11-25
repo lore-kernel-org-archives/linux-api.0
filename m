@@ -1,105 +1,100 @@
-From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: Re: [PATCH v17 08/13] namei: LOOKUP_BENEATH: O_BENEATH-like scoped
- resolution
-Date: Mon, 25 Nov 2019 17:03:48 +1100
-Message-ID: <20191125060348.bkdlxvoacdeyy6od@yavin.dot.cyphar.com>
-References: <20191117011713.13032-1-cyphar@cyphar.com>
- <20191117011713.13032-9-cyphar@cyphar.com>
- <20191125002604.GE4203@ZenIV.linux.org.uk>
+From: Stephan Mueller <smueller@chronox.de>
+Subject: Re: [PATCH v26 01/12] Linux Random Number Generator
+Date: Mon, 25 Nov 2019 07:29:40 +0100
+Message-ID: <1779530.Tceqp9pKDQ@tauon.chronox.de>
+References: <4092523.WvKr7FP7fE@positron.chronox.de> <201911250614.ZLzn1B8q%lkp@intel.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="n5oan2cpdmv3a5ir"
-Return-path: <libc-alpha-return-107328-glibc-alpha=m.gmane.org@sourceware.org>
-List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
-List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
-List-Archive: <http://sourceware.org/ml/libc-alpha/>
-List-Post: <mailto:libc-alpha@sourceware.org>
-List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
-Sender: libc-alpha-owner@sourceware.org
-Content-Disposition: inline
-In-Reply-To: <20191125002604.GE4203@ZenIV.linux.org.uk>
-To: Al Viro <viro@zeniv.linux.org.uk>
-Cc: Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Martin KaFai Lau <kafai@fb.com>, Song Liu <songliubraving@fb.com>, Yonghong Song <yhs@fb.com>, Andrii Nakryiko <andriin@fb.com>, Jonathan Corbet <corbet@lwn.net>, Christian Brauner <christian.brauner@ubuntu.com>, David Drysdale <drysdale@google.com>, Andy Lutomirski <luto@kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Eric Biederman <ebiederm@xmission.com>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Jann Horn <jannh@google.com>, Tycho Andersen <tycho@tycho.ws>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <201911250614.ZLzn1B8q%lkp@intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: kbuild test robot <lkp@intel.com>
+Cc: kbuild-all@lists.01.org, Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Ni
 List-Id: linux-api@vger.kernel.org
 
+Am Sonntag, 24. November 2019, 23:44:13 CET schrieb kbuild test robot:
 
---n5oan2cpdmv3a5ir
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Hi kbuild,
 
-On 2019-11-25, Al Viro <viro@zeniv.linux.org.uk> wrote:
-> On Sun, Nov 17, 2019 at 12:17:08PM +1100, Aleksa Sarai wrote:
->=20
-> > +	if (unlikely(nd->flags & LOOKUP_IS_SCOPED)) {
-> > +		/*
-> > +		 * Do a final check to ensure that the path didn't escape. Note
-> > +		 * that this should already be guaranteed by all of the other
-> > +		 * LOOKUP_IS_SCOPED checks (and delaying this check this late
-> > +		 * does open the door to some possible timing-based attacks).
-> > +		 */
-> > +		if (WARN_ON(!path_is_under(&nd->path, &nd->root)))
-> > +			return -EXDEV;
->=20
-> I don't like that.  What it gives is an ability to race that with
-> rename(), with user-triggered WARN_ON.  You *can't* promise that result of
-> lookup is in a subtree, simply because it can get moved just as you've
-> declared it to be in the clear.
->=20
-> 	Anyone who relies upon that is delusional; it really can't be done.
-> What warranties LOOKUP_IS_SCOPED is really supposed to provide?  That we =
-do not
-> attempt to walk out of the subtree rooted at the start point?  Fine, but =
-this
-> is not what this test does.  What are you trying to achieve there?  If it=
-'s
-> "what we'd got was at one point in our subtree", the test is more or less
-> right, but WARN_ON isn't.
+> Hi "Stephan,
+> 
+> Thank you for the patch! Yet something to improve:
+> 
+> [auto build test ERROR on char-misc/char-misc-testing]
+> [also build test ERROR on v5.4-rc8 next-20191122]
+> [if your patch is applied to the wrong git tree, please drop us a note to
+> help improve the system. BTW, we also suggest to use '--base' option to
+> specify the base tree in git format-patch, please see
+> https://stackoverflow.com/a/37406982]
+> 
+> url:   
+> https://github.com/0day-ci/linux/commits/Stephan-M-ller/dev-random-a-new-ap
+> proach-with-full-SP800-90B/20191125-042152 base:  
+> https://git.kernel.org/pub/scm/linux/kernel/git/gregkh/char-misc.git
+> b78cda795ac83333293f1bfa3165572a47e550c2 config: sh-allmodconfig (attached
+> as .config)
+> compiler: sh4-linux-gcc (GCC) 7.4.0
+> reproduce:
+>         wget
+> https://raw.githubusercontent.com/intel/lkp-tests/master/sbin/make.cross -O
+> ~/bin/make.cross chmod +x ~/bin/make.cross
+>         # save the attached .config to linux build tree
+>         GCC_VERSION=7.4.0 make.cross ARCH=sh
+> 
+> If you fix the issue, kindly add following tag
+> Reported-by: kbuild test robot <lkp@intel.com>
+> 
+> All error/warnings (new ones prefixed by >>):
+> 
+>    In file included from include/linux/printk.h:6:0,
+>                     from include/linux/kernel.h:15,
+>                     from include/asm-generic/bug.h:19,
+>                     from arch/sh/include/asm/bug.h:112,
+>                     from include/linux/bug.h:5,
+>                     from include/linux/mmdebug.h:5,
+>                     from include/linux/percpu.h:5,
+>                     from include/asm-generic/irq_regs.h:11,
+>                     from ./arch/sh/include/generated/asm/irq_regs.h:1,
+> 
+>                     from drivers/char/lrng/lrng_pool.c:10:
+> >> drivers/char/lrng/lrng_pool.c:216:15: error: initialization from
+> >> incompatible pointer type [-Werror=incompatible-pointer-types]
 
-You're right that (looking at this again) this chunk doesn't make too
-much sense -- though I still think it wouldn't be a bad idea to include
-it without the WARN_ON.
+The function prototype needs to return an int - I wonder why that did not show 
+in my x86 compile run.
 
-The reason I added it was as an attempt to have a last-chance check to
-make sure we don't hand out a file descriptor to userspace that is
-outside nd->root as a result of some yet-unknown namei bug (hence the
-WARN_ON). But you're quite right that I overlooked that user-space could
-trigger this maliciously.
+It will be fixed in the next set.
 
-Regarding the warranties LOOKUP_IS_SCOPED is supposed to provide --
-arguably the guarantee is meant to be "you never step outside the root
-during lookup" but that should already be implemented with the
-handle_dots() checks -- and it's not something you could easily check at
-the end of a lookup anyway. The idea was that (if for some reason those
-checks were bypassed), at the very least you wouldn't silently get a
-file descriptor which is completely outside the root.
+>     core_initcall(lrng_init_time_source);
+>                   ^
+>    include/linux/init.h:197:50: note: in definition of macro
+> '___define_initcall' __attribute__((__section__(#__sec ".init"))) = fn;
+>                                                      ^~
+>    include/linux/init.h:218:28: note: in expansion of macro
+> '__define_initcall' #define core_initcall(fn)  __define_initcall(fn, 1)
+>                                ^~~~~~~~~~~~~~~~~
+> 
+> >> drivers/char/lrng/lrng_pool.c:216:1: note: in expansion of macro
+> >> 'core_initcall'
+>     core_initcall(lrng_init_time_source);
+>     ^~~~~~~~~~~~~
+>    cc1: some warnings being treated as errors
+> 
+> vim +216 drivers/char/lrng/lrng_pool.c
+> 
+>    215
+> 
+>  > 216	core_initcall(lrng_init_time_source);
+> 
+>    217
+> 
+> ---
+> 0-DAY kernel test infrastructure                 Open Source Technology
+> Center https://lists.01.org/hyperkitty/list/kbuild-all@lists.01.org Intel
+> Corporation
 
-Looking at this again, I can see the argument that check this shouldn't
-be done at all -- but I will admit that I feel more comfortable with the
-guarantees of LOOKUP_IS_SCOPED if we had some kind of last-chance check
-to avoid a privileged process opening /etc/shadow on the host. Then
-again, libpathrs (which I assume will be the primary consumer of
-LOOKUP_IN_ROOT) already does a double-check in userspace after getting
-the file descriptor from openat2().
 
-All of that being said, I'd be happy to drop it entirely if you feel
-it's unnecessary.
 
---=20
-Aleksa Sarai
-Senior Software Engineer (Containers)
-SUSE Linux GmbH
-<https://www.cyphar.com/>
-
---n5oan2cpdmv3a5ir
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXdtuwQAKCRCdlLljIbnQ
-EhgrAQCziGLc25C4Hq/hsTYZTCJzE1b4oLj4e/P/0nPg2wdhrgD9GKxS3kIpRVhT
-Rq6CsaKi+Hr4YN+hVfgGVHLHAPRTRQA=
-=7pdt
------END PGP SIGNATURE-----
-
---n5oan2cpdmv3a5ir--
+Ciao
+Stephan
