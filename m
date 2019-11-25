@@ -1,26 +1,73 @@
-From: Al Viro <viro@zeniv.linux.org.uk>
-Subject: Re: [PATCH v17 00/13] open: introduce openat2(2) syscall
-Date: Mon, 25 Nov 2019 00:39:09 +0000
-Message-ID: <20191125003909.GH4203@ZenIV.linux.org.uk>
-References: <20191117011713.13032-1-cyphar@cyphar.com>
+From: Wu Hao <hao.wu@intel.com>
+Subject: Re: [PATCH v6 0/2] add performance reporting support to FPGA DFL
+ drivers
+Date: Mon, 25 Nov 2019 11:34:12 +0800
+Message-ID: <20191125033412.GB890@hao-dev>
+References: <1573622695-25607-1-git-send-email-hao.wu@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20191117011713.13032-1-cyphar@cyphar.com>
-List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
-List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
-List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
-List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
-Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
-Sender: "Linuxppc-dev"
- <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-To: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Song Liu <songliubraving@fb.com>, linux-ia64@vger.kernel.org, linux-doc@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Alexei Starovoitov <ast@kernel.org>, linux-kernel@vger.kernel.org, David Howells <dhowells@redhat.com>, linux-kselftest@vger.kernel.org, sparclinux@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Shuah Khan <shuah@kernel.org>, linux-arch@vger.kernel.org, linux-s390@vger.kernel.org, Tycho Andersen <tycho@tycho.ws>, Daniel Borkmann <daniel@iogearbox.net>, Jonathan Corbet <corbet@lwn.net>, Jiri Olsa <jolsa@redhat.com>, linux-sh@vger.kernel.org, Alexander Shishkin <alexander.shishkin@linux.intel.com>, Ingo Molnar <mingo@redhat.com>, linux-arm-kernel@lists.infradead.org, Yonghong Song <yhs@fb.com>, linux-mips@vger.kernel.org, Andrii Nakryiko <andriin@fb.com>, bpf@vger.ke
+In-Reply-To: <1573622695-25607-1-git-send-email-hao.wu@intel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: mdf@kernel.org, will@kernel.org, mark.rutland@arm.com, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org
+Cc: linux-api@vger.kernel.org, atull@kernel.org, gregkh@linuxfoundation.org, hao.wu@intel.com
 List-Id: linux-api@vger.kernel.org
 
-	Generally I can live with that - the only serious issue is
-with that WARN_ON() and the logics of the check in it.
+On Wed, Nov 13, 2019 at 01:24:53PM +0800, Wu Hao wrote:
+> Hi Moritz and all,
+
+Hi Will and Mark,
+
+Could you please help us on review this patchset? as this patchset mainly 
+introduced a new perf driver following the similar way as drivers/perf/*.
+
+Hi Moritz,
+
+Could you please help us on review the other parts?
+
+This patchset has been submitted for a long time but didn't receive any
+comment after v4. we appreciate any review comments! thanks in advance. :)
+
+
+Hao
+
+> 
+> This patchset adds performance reporting support for FPGA DFL drivers. It
+> introduces one pmu to expose userspace interfaces via standard perf API.
+> User could use standard perf tool to access perf events exposed via pmu.
+> 
+> This patchset is generated based on fpga/for-next branch.
+> 
+> Main changes from v5:
+>  - use dev_ext_attribute instead of fme_perf_event_attr.
+>  - use is_visible function to decide which events to expose per
+>    hardware capability, and add event_init checking for all events.
+> 
+> Main changes from v4:
+>  - rebase and clean up.
+>  - update Kconfig for PERF_EVENTS dependency.
+> 
+> Main changes from v3:
+>  - add more descriptions in doc, including how to use perf tool for these
+>    hardware counters. (patch #1)
+>  - use standard perf API instead of sysfs entries. (patch #2)
+> 
+> Wu Hao (1):
+>   fpga: dfl: fme: add performance reporting support
+> 
+> Xu Yilun (1):
+>   Documentation: fpga: dfl: add description for performance reporting
+>     support
+> 
+>  Documentation/fpga/dfl.rst  |  83 ++++
+>  drivers/fpga/Makefile       |   1 +
+>  drivers/fpga/dfl-fme-main.c |   4 +
+>  drivers/fpga/dfl-fme-perf.c | 943 ++++++++++++++++++++++++++++++++++++++++++++
+>  drivers/fpga/dfl-fme.h      |   2 +
+>  drivers/fpga/dfl.h          |   2 +
+>  6 files changed, 1035 insertions(+)
+>  create mode 100644 drivers/fpga/dfl-fme-perf.c
+> 
+> -- 
+> 1.8.3.1
