@@ -1,264 +1,108 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH][v5] x86/resctrl: Add task resctrl information display
-Date: Mon, 25 Nov 2019 10:32:16 +0100
-Message-ID: <20191125093216.GF31714@dhcp22.suse.cz>
-References: <20191125040001.28943-1-yu.c.chen@intel.com>
+From: Aleksa Sarai <cyphar@cyphar.com>
+Subject: Re: [PATCH v17 10/13] namei: LOOKUP_{IN_ROOT,BENEATH}: permit
+ limited ".." resolution
+Date: Tue, 26 Nov 2019 00:21:45 +1100
+Message-ID: <20191125132145.btaxuurs2w3ldyxf@yavin.dot.cyphar.com>
+References: <20191117011713.13032-1-cyphar@cyphar.com>
+ <20191117011713.13032-11-cyphar@cyphar.com>
+ <20191125003501.GF4203@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="xfjlpf4rp232ejv4"
+Return-path: <libc-alpha-return-107345-glibc-alpha=m.gmane.org@sourceware.org>
+List-Unsubscribe: <mailto:libc-alpha-unsubscribe-glibc-alpha=m.gmane.org@sourceware.org>
+List-Subscribe: <mailto:libc-alpha-subscribe@sourceware.org>
+List-Archive: <http://sourceware.org/ml/libc-alpha/>
+List-Post: <mailto:libc-alpha@sourceware.org>
+List-Help: <mailto:libc-alpha-help@sourceware.org>, <http://sourceware.org/ml/#faqs>
+Sender: libc-alpha-owner@sourceware.org
 Content-Disposition: inline
-In-Reply-To: <20191125040001.28943-1-yu.c.chen@intel.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Chen Yu <yu.c.chen@intel.com>
-Cc: x86@kernel.org, Chen Yu <yu.chen.surf@gmail.com>, Thomas Gleixner <tglx@linutronix.de>, Borislav Petkov <bp@alien8.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Reinette Chatre <reinette.chatre@intel.com>, Fenghua Yu <fenghua.yu@intel.com>, Tony Luck <tony.luck@intel.com>, Linus Torvalds <torvalds@linux-foundation.org>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+In-Reply-To: <20191125003501.GF4203@ZenIV.linux.org.uk>
+To: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Arnd Bergmann <arnd@arndb.de>, David Howells <dhowells@redhat.com>, Shuah Khan <shuah@kernel.org>, Shuah Khan <skhan@linuxfoundation.org>, Ingo Molnar <mingo@redhat.com>, Peter Zijlstra <peterz@infradead.org>, Alexei Starovoitov <ast@kernel.org>, Daniel Borkmann <daniel@iogearbox.net>, Martin KaFai Lau <kafai@fb.com>, Song Liu <songliubraving@fb.com>, Yonghong Song <yhs@fb.com>, Andrii Nakryiko <andriin@fb.com>, Jonathan Corbet <corbet@lwn.net>, Christian Brauner <christian.brauner@ubuntu.com>, Jann Horn <jannh@google.com>, Linus Torvalds <torvalds@linux-foundation.org>, Eric Biederman <ebiederm@xmission.com>, Andy Lutomirski <luto@kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Kees Cook <keescook@chromium.org>, Tycho Andersen <tycho@tycho.ws>, David Drysdale <drysdale@google.com>
 List-Id: linux-api@vger.kernel.org
 
-[Cc linux-api]
 
-On Mon 25-11-19 12:00:01, Chen Yu wrote:
-> Monitoring tools that want to find out which resctrl control
-> and monitor groups a task belongs to must currently read
-> the "tasks" file in every group until they locate the process
-> ID.
-> 
-> Add an additional file /proc/{pid}/resctrl to provide this
-> information.
-> 
-> The output is as followed according to Thomas's suggestion,
-> for example:
-> 
->  1)   ""
->       Resctrl is not available.
-> 
->  2)   "/"
->       Task is part of the root group, task is not associated to
->       any monitoring group.
-> 
->  3)   "/mon_groups/mon0"
->       Task is part of the root group and monitoring group mon0.
-> 
->  4)   "/group0"
->       Task is part of control group group0, task is not associated
->       to any monitoring group.
-> 
->  5)   "/group0/mon_groups/mon1"
->       Task is part of control group group0 and monitoring group mon1.
-> 
-> Tested-by: Jinshi Chen <jinshi.chen@intel.com>
-> Cc: Thomas Gleixner <tglx@linutronix.de>
-> Cc: Borislav Petkov <bp@alien8.de>
-> Cc: Ingo Molnar <mingo@redhat.com>
-> Cc: "H. Peter Anvin" <hpa@zytor.com>
-> Cc: Alexey Dobriyan <adobriyan@gmail.com>
-> Cc: Andrew Morton <akpm@linux-foundation.org>
-> Cc: Reinette Chatre <reinette.chatre@intel.com>
-> Cc: Fenghua Yu <fenghua.yu@intel.com>
-> Cc: Tony Luck <tony.luck@intel.com>
-> Cc: Michal Hocko <mhocko@suse.com>
-> Cc: Linus Torvalds <torvalds@linux-foundation.org>
-> Cc: linux-fsdevel@vger.kernel.org
-> Cc: linux-kernel@vger.kernel.org
-> Signed-off-by: Chen Yu <yu.c.chen@intel.com>
-> ---
-> v2: Reduce indentation level in proc_resctrl_show()
->     according to Boris's suggestion.
->     Create the include/linux/resctrl.h header and
->     declare proc_resctrl_show() in this file, so
->     that other architectures would probably use it
->     in the future. Different architectures should
->     implement architectural specific proc_resctrl_show()
->     accordingly.
-> 
-> v3: Return empty string if the resctrl filesystem has
->     not been mounted per Boris's suggestion.
->     Rename the config from CPU_RESCTRL to PROC_CPU_RESCTRL
->     to better represent its usage. Move PROC_CPU_RESCTRL
->     from arch/Kconfig to fs/proc/Kconfig.
->     And let PROC_CPU_RESCTRL to be depended on PROC_FS.
-> 
-> v4: According to Thomas's suggestion, changed the output
->     from multiple lines to one single line.
-> 
-> v5: According to Alexey's feedback, removed the header file
->     proc_fs.h in resctrl.h, and changed seq_puts() to
->     seq_putc() for simplicity.
-> ---
->  arch/x86/Kconfig                       |  1 +
->  arch/x86/kernel/cpu/resctrl/rdtgroup.c | 78 ++++++++++++++++++++++++++
->  fs/proc/Kconfig                        |  4 ++
->  fs/proc/base.c                         |  7 +++
->  include/linux/resctrl.h                | 14 +++++
->  5 files changed, 104 insertions(+)
->  create mode 100644 include/linux/resctrl.h
-> 
-> diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-> index 8ef85139553f..252364d18887 100644
-> --- a/arch/x86/Kconfig
-> +++ b/arch/x86/Kconfig
-> @@ -455,6 +455,7 @@ config X86_CPU_RESCTRL
->  	bool "x86 CPU resource control support"
->  	depends on X86 && (CPU_SUP_INTEL || CPU_SUP_AMD)
->  	select KERNFS
-> +	select PROC_CPU_RESCTRL		if PROC_FS
->  	help
->  	  Enable x86 CPU resource control support.
->  
-> diff --git a/arch/x86/kernel/cpu/resctrl/rdtgroup.c b/arch/x86/kernel/cpu/resctrl/rdtgroup.c
-> index 2e3b06d6bbc6..f786e7626a65 100644
-> --- a/arch/x86/kernel/cpu/resctrl/rdtgroup.c
-> +++ b/arch/x86/kernel/cpu/resctrl/rdtgroup.c
-> @@ -725,6 +725,84 @@ static int rdtgroup_tasks_show(struct kernfs_open_file *of,
->  	return ret;
->  }
->  
-> +#ifdef CONFIG_PROC_CPU_RESCTRL
-> +
-> +/*
-> + * A task can only be part of one control
-> + * group and of one monitoring group which
-> + * is associated to that control group.
-> + * So one line is simple and clear enough:
-> + *
-> + * 1)   ""
-> + *    Resctrl is not available.
-> + *
-> + * 2)   "/"
-> + *    Task is part of the root group, and it is
-> + *    not associated to any monitoring group.
-> + *
-> + * 3)   "/mon_groups/mon0"
-> + *    Task is part of the root group and monitoring
-> + *    group mon0.
-> + *
-> + * 4)   "/group0"
-> + *    Task is part of control group group0, and it is
-> + *    not associated to any monitoring group.
-> + *
-> + * 5)   "/group0/mon_groups/mon1"
-> + *    Task is part of control group group0 and monitoring
-> + *    group mon1.
-> + */
-> +int proc_resctrl_show(struct seq_file *s, struct pid_namespace *ns,
-> +		      struct pid *pid, struct task_struct *tsk)
-> +{
-> +	struct rdtgroup *rdtg;
-> +	int ret = 0;
-> +
-> +	mutex_lock(&rdtgroup_mutex);
-> +
-> +	/* Return empty if resctrl has not been mounted. */
-> +	if (!static_branch_unlikely(&rdt_enable_key))
-> +		goto unlock;
-> +
-> +	list_for_each_entry(rdtg, &rdt_all_groups, rdtgroup_list) {
-> +		struct rdtgroup *crg;
-> +
-> +		/*
-> +		 * Task information is only relevant for shareable
-> +		 * and exclusive groups.
-> +		 */
-> +		if (rdtg->mode != RDT_MODE_SHAREABLE &&
-> +		    rdtg->mode != RDT_MODE_EXCLUSIVE)
-> +			continue;
-> +
-> +		if (rdtg->closid != tsk->closid)
-> +			continue;
-> +
-> +		seq_printf(s, "/%s", rdtg->kn->name);
-> +		list_for_each_entry(crg, &rdtg->mon.crdtgrp_list,
-> +				    mon.crdtgrp_list) {
-> +			if (tsk->rmid != crg->mon.rmid)
-> +				continue;
-> +			seq_printf(s, "%smon_groups/%s",
-> +				   rdtg == &rdtgroup_default ? "" : "/",
-> +				   crg->kn->name);
-> +			break;
-> +		}
-> +		seq_putc(s, '\n');
-> +		goto unlock;
-> +	}
-> +	/*
-> +	 * The above search should succeed. Otherwise return
-> +	 * with an error.
-> +	 */
-> +	ret = -ENOENT;
-> +unlock:
-> +	mutex_unlock(&rdtgroup_mutex);
-> +
-> +	return ret;
-> +}
-> +#endif
-> +
->  static int rdt_last_cmd_status_show(struct kernfs_open_file *of,
->  				    struct seq_file *seq, void *v)
->  {
-> diff --git a/fs/proc/Kconfig b/fs/proc/Kconfig
-> index cb5629bd5fff..ae96a339d24d 100644
-> --- a/fs/proc/Kconfig
-> +++ b/fs/proc/Kconfig
-> @@ -103,3 +103,7 @@ config PROC_CHILDREN
->  config PROC_PID_ARCH_STATUS
->  	def_bool n
->  	depends on PROC_FS
-> +
-> +config PROC_CPU_RESCTRL
-> +	def_bool n
-> +	depends on PROC_FS
-> diff --git a/fs/proc/base.c b/fs/proc/base.c
-> index ebea9501afb8..0e4b8bf2b986 100644
-> --- a/fs/proc/base.c
-> +++ b/fs/proc/base.c
-> @@ -94,6 +94,7 @@
->  #include <linux/sched/debug.h>
->  #include <linux/sched/stat.h>
->  #include <linux/posix-timers.h>
-> +#include <linux/resctrl.h>
->  #include <trace/events/oom.h>
->  #include "internal.h"
->  #include "fd.h"
-> @@ -3060,6 +3061,9 @@ static const struct pid_entry tgid_base_stuff[] = {
->  #endif
->  #ifdef CONFIG_CGROUPS
->  	ONE("cgroup",  S_IRUGO, proc_cgroup_show),
-> +#endif
-> +#ifdef CONFIG_PROC_CPU_RESCTRL
-> +	ONE("resctrl", S_IRUGO, proc_resctrl_show),
->  #endif
->  	ONE("oom_score",  S_IRUGO, proc_oom_score),
->  	REG("oom_adj",    S_IRUGO|S_IWUSR, proc_oom_adj_operations),
-> @@ -3460,6 +3464,9 @@ static const struct pid_entry tid_base_stuff[] = {
->  #endif
->  #ifdef CONFIG_CGROUPS
->  	ONE("cgroup",  S_IRUGO, proc_cgroup_show),
-> +#endif
-> +#ifdef CONFIG_PROC_CPU_RESCTRL
-> +	ONE("resctrl", S_IRUGO, proc_resctrl_show),
->  #endif
->  	ONE("oom_score", S_IRUGO, proc_oom_score),
->  	REG("oom_adj",   S_IRUGO|S_IWUSR, proc_oom_adj_operations),
-> diff --git a/include/linux/resctrl.h b/include/linux/resctrl.h
-> new file mode 100644
-> index 000000000000..daf5cf64c6a6
-> --- /dev/null
-> +++ b/include/linux/resctrl.h
-> @@ -0,0 +1,14 @@
-> +/* SPDX-License-Identifier: GPL-2.0 */
-> +#ifndef _RESCTRL_H
-> +#define _RESCTRL_H
-> +
-> +#ifdef CONFIG_PROC_CPU_RESCTRL
-> +
-> +int proc_resctrl_show(struct seq_file *m,
-> +		      struct pid_namespace *ns,
-> +		      struct pid *pid,
-> +		      struct task_struct *tsk);
-> +
-> +#endif
-> +
-> +#endif /* _RESCTRL_H */
-> -- 
-> 2.17.1
+--xfjlpf4rp232ejv4
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
--- 
-Michal Hocko
-SUSE Labs
+On 2019-11-25, Al Viro <viro@zeniv.linux.org.uk> wrote:
+> On Sun, Nov 17, 2019 at 12:17:10PM +1100, Aleksa Sarai wrote:
+> > +		if (unlikely(nd->flags & LOOKUP_IS_SCOPED)) {
+> > +			/*
+> > +			 * If there was a racing rename or mount along our
+> > +			 * path, then we can't be sure that ".." hasn't jumped
+> > +			 * above nd->root (and so userspace should retry or use
+> > +			 * some fallback).
+> > +			 */
+> > +			if (unlikely(read_seqretry(&mount_lock, nd->m_seq)))
+> > +				return -EAGAIN;
+> > +			if (unlikely(read_seqretry(&rename_lock, nd->r_seq)))
+> > +				return -EAGAIN;
+> > +		}
+>=20
+> Looks like excessive barriers to me - it's
+> 	rmb
+> 	check mount_lock.sequence
+> 	rmb
+> 	check rename_lock.sequence
+
+If you like, I can switch this to
+
+	smp_rmb();
+	if (unlikely(__read_seqcount_retry(&mount_lock.seqcount, nd->m_seq)))
+		return -EAGAIN;
+	if (unlikely(__read_seqcount_retry(&rename_lock.seqcount, nd->r_seq)))
+		return -EAGAIN;
+
+Though I think it makes it more noisy (and this code-path will only be
+hit for ".." and LOOKUP_IS_SCOPED).
+
+> > @@ -2266,6 +2274,10 @@ static const char *path_init(struct nameidata *n=
+d, unsigned flags)
+> >  	nd->last_type =3D LAST_ROOT; /* if there are only slashes... */
+> >  	nd->flags =3D flags | LOOKUP_JUMPED | LOOKUP_PARENT;
+> >  	nd->depth =3D 0;
+> > +
+> > +	nd->m_seq =3D read_seqbegin(&mount_lock);
+> > +	nd->r_seq =3D read_seqbegin(&rename_lock);
+>=20
+> Same here, pretty much (fetch/rmb/fetch/rmb)
+
+Unless I'm mistaken, wouldn't we have to do
+seqcount_lockdep_reader_access() explicitly -- so it would end up
+looking something like:
+
+	seqcount_lockdep_reader_access(&mount_lock.seqcount);
+	nd->m_seq =3D __read_seqcount_begin(&mount_lock.seqcount);
+	seqcount_lockdep_reader_access(&mount_lock.seqcount);
+	nd->r_seq =3D __read_seqcount_begin(&rename_lock.seqcount);
+	smp_rmb();
+
+Given this code only runs once at the start of each lookup, I'm not sure
+it makes much sense to expand it like that and make it look uglier.
+
+If you really want to avoid the duplicate memory barriers in the common
+case I could instead gate the rename_lock grab behind LOOKUP_IS_SCOPED
+(since that's the only time it's used).
+
+--=20
+Aleksa Sarai
+Senior Software Engineer (Containers)
+SUSE Linux GmbH
+<https://www.cyphar.com/>
+
+--xfjlpf4rp232ejv4
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXdvVZQAKCRCdlLljIbnQ
+EloCAP9GizB7Q/AkzjQ85bGLdovCLYKdqf/qIT7xsbiqpcFyAgD/QswcZX+n5/jN
+nekkrDU5Lj+ZmT9lPOf3tS+I4Q4wogM=
+=viit
+-----END PGP SIGNATURE-----
+
+--xfjlpf4rp232ejv4--
