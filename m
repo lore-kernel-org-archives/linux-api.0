@@ -1,146 +1,85 @@
-From: Arnd Bergmann <arnd@arndb.de>
-Subject: [GIT PULL] y2038: syscall implementation cleanups
-Date: Wed, 27 Nov 2019 14:36:16 +0100
-Message-ID: <CAK8P3a38Q_yhiyODpFd6ZqLv=QyKRmCm8FOMuSr4RPvGtWNPYw@mail.gmail.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: [GIT PULL] sysctl: Remove the sysctl system call
+Date: Wed, 27 Nov 2019 10:55:52 -0600
+Message-ID: <87r21tuulj.fsf@x220.int.ebiederm.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <y2038-bounces@lists.linaro.org>
-List-Unsubscribe: <https://lists.linaro.org/mailman/options/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/y2038/>
-List-Post: <mailto:y2038@lists.linaro.org>
-List-Help: <mailto:y2038-request@lists.linaro.org?subject=help>
-List-Subscribe: <https://lists.linaro.org/mailman/listinfo/y2038>,
- <mailto:y2038-request@lists.linaro.org?subject=subscribe>
-Errors-To: y2038-bounces@lists.linaro.org
-Sender: "Y2038" <y2038-bounces@lists.linaro.org>
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: y2038 Mailman List <y2038@lists.linaro.org>, Linux API <linux-api@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, linuxppc-dev <linuxppc-dev@lists.ozlabs.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Cc: linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-VGhlIGZvbGxvd2luZyBjaGFuZ2VzIHNpbmNlIGNvbW1pdCBhOTlkODA4MGFhZjM1OGQ1ZDIzNTgx
-MjQ0ZTVkYTIzYjM1ZTM0MGI5OgoKICBMaW51eCA1LjQtcmM2ICgyMDE5LTExLTAzIDE0OjA3OjI2
-IC0wODAwKQoKYXJlIGF2YWlsYWJsZSBpbiB0aGUgR2l0IHJlcG9zaXRvcnkgYXQ6CgogIGdpdDov
-L2dpdC5rZXJuZWwub3JnOi9wdWIvc2NtL2xpbnV4L2tlcm5lbC9naXQvYXJuZC9wbGF5Z3JvdW5k
-LmdpdAp0YWdzL3kyMDM4LWNsZWFudXBzLTUuNQoKZm9yIHlvdSB0byBmZXRjaCBjaGFuZ2VzIHVw
-IHRvIGIxMTFkZjg0NDdhY2RlYjRiOTIyMGY5OWQ1ZDRiMjhmODNlYjU2YWQ6CgogIHkyMDM4OiBh
-bGFybTogZml4IGhhbGYtc2Vjb25kIGN1dC1vZmYgKDIwMTktMTEtMjUgMjE6NTI6MzUgKzAxMDAp
-CgotLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tCnkyMDM4OiBzeXNjYWxsIGltcGxlbWVudGF0aW9uIGNsZWFudXBzCgpUaGlzIGlz
-IGEgc2VyaWVzIG9mIGNsZWFudXBzIGZvciB0aGUgeTIwMzggd29yaywgbW9zdGx5IGludGVuZGVk
-CmZvciBuYW1lc3BhY2UgY2xlYW5pbmc6IHRoZSBrZXJuZWwgZGVmaW5lcyB0aGUgdHJhZGl0aW9u
-YWwKdGltZV90LCB0aW1ldmFsIGFuZCB0aW1lc3BlYyB0eXBlcyB0aGF0IG9mdGVuIGxlYWQgdG8g
-eTIwMzgtdW5zYWZlCmNvZGUuIEV2ZW4gdGhvdWdoIHRoZSB1bnNhZmUgdXNhZ2UgaXMgbW9zdGx5
-IGdvbmUgZnJvbSB0aGUga2VybmVsLApoYXZpbmcgdGhlIHR5cGVzIGFuZCBhc3NvY2lhdGVkIGZ1
-bmN0aW9ucyBhcm91bmQgbWVhbnMgdGhhdCB3ZQpjYW4gc3RpbGwgZ3JvdyBuZXcgdXNlcnMsIGFu
-ZCB0aGF0IHdlIG1heSBiZSBtaXNzaW5nIGNvbnZlcnNpb25zCnRvIHNhZmUgdHlwZXMgdGhhdCBh
-Y3R1YWxseSBtYXR0ZXIuCgpUaGVyZSBhcmUgc3RpbGwgYSBudW1iZXIgb2YgZHJpdmVyIHNwZWNp
-ZmljIHBhdGNoZXMgbmVlZGVkIHRvCmdldCB0aGUgbGFzdCB1c2VycyBvZiB0aGVzZSB0eXBlcyBy
-ZW1vdmVkLCB0aG9zZSBoYXZlIGJlZW4Kc3VibWl0dGVkIHRvIHRoZSByZXNwZWN0aXZlIG1haW50
-YWluZXJzLgoKTGluazogaHR0cHM6Ly9sb3JlLmtlcm5lbC5vcmcvbGttbC8yMDE5MTEwODIxMDIz
-Ni4xMjk2MDQ3LTEtYXJuZEBhcm5kYi5kZS8KU2lnbmVkLW9mZi1ieTogQXJuZCBCZXJnbWFubiA8
-YXJuZEBhcm5kYi5kZT4KCi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KQXJuZCBCZXJnbWFubiAoMjYpOgogICAgICB5MjAzODog
-cmVtb3ZlIENPTkZJR182NEJJVF9USU1FCiAgICAgIHkyMDM4OiBhZGQgX19rZXJuZWxfb2xkX3Rp
-bWVzcGVjIGFuZCBfX2tlcm5lbF9vbGRfdGltZV90CiAgICAgIHkyMDM4OiB2ZHNvOiBjaGFuZ2Ug
-dGltZXZhbCB0byBfX2tlcm5lbF9vbGRfdGltZXZhbAogICAgICB5MjAzODogdmRzbzogY2hhbmdl
-IHRpbWVzcGVjIHRvIF9fa2VybmVsX29sZF90aW1lc3BlYwogICAgICB5MjAzODogdmRzbzogY2hh
-bmdlIHRpbWVfdCB0byBfX2tlcm5lbF9vbGRfdGltZV90CiAgICAgIHkyMDM4OiB2ZHNvOiBuZHMz
-Mjogb3Blbi1jb2RlIHRpbWVzcGVjX2FkZF9ucygpCiAgICAgIHkyMDM4OiB2ZHNvOiBwb3dlcnBj
-OiBhdm9pZCB0aW1lc3BlYyByZWZlcmVuY2VzCiAgICAgIHkyMDM4OiBpcGM6IHJlbW92ZSBfX2tl
-cm5lbF90aW1lX3QgcmVmZXJlbmNlIGZyb20gaGVhZGVycwogICAgICB5MjAzODogc3RhdDogYXZv
-aWQgJ3RpbWVfdCcgaW4gJ3N0cnVjdCBzdGF0JwogICAgICB5MjAzODogdWFwaTogY2hhbmdlIF9f
-a2VybmVsX3RpbWVfdCB0byBfX2tlcm5lbF9vbGRfdGltZV90CiAgICAgIHkyMDM4OiBydXNhZ2U6
-IHVzZSBfX2tlcm5lbF9vbGRfdGltZXZhbAogICAgICB5MjAzODogc3lzY2FsbHM6IGNoYW5nZSBy
-ZW1haW5pbmcgdGltZXZhbCB0byBfX2tlcm5lbF9vbGRfdGltZXZhbAogICAgICB5MjAzODogc29j
-a2V0OiByZW1vdmUgdGltZXNwZWMgcmVmZXJlbmNlIGluIHRpbWVzdGFtcGluZwogICAgICB5MjAz
-ODogc29ja2V0OiB1c2UgX19rZXJuZWxfb2xkX3RpbWVzcGVjIGluc3RlYWQgb2YgdGltZXNwZWMK
-ICAgICAgeTIwMzg6IG1ha2UgbnNfdG9fY29tcGF0X3RpbWV2YWwgdXNlIF9fa2VybmVsX29sZF90
-aW1ldmFsCiAgICAgIHkyMDM4OiBlbGZjb3JlOiBVc2UgX19rZXJuZWxfb2xkX3RpbWV2YWwgZm9y
-IHByb2Nlc3MgdGltZXMKICAgICAgeTIwMzg6IHRpbWVyZmQ6IFVzZSB0aW1lc3BlYzY0IGludGVy
-bmFsbHkKICAgICAgeTIwMzg6IHRpbWU6IGF2b2lkIHRpbWVzcGVjIHVzYWdlIGluIHNldHRpbWVv
-ZmRheSgpCiAgICAgIHkyMDM4OiBpdGltZXI6IGNvbXBhdCBoYW5kbGluZyB0byBpdGltZXIuYwog
-ICAgICB5MjAzODogdXNlIGNvbXBhdF97Z2V0LHNldH1faXRpbWVyIG9uIGFscGhhCiAgICAgIHky
-MDM4OiBtb3ZlIGl0aW1lciByZXNldCBpbnRvIGl0aW1lci5jCiAgICAgIHkyMDM4OiBpdGltZXI6
-IGNoYW5nZSBpbXBsZW1lbnRhdGlvbiB0byB0aW1lc3BlYzY0CiAgICAgIHkyMDM4OiBhbGxvdyBk
-aXNhYmxpbmcgdGltZTMyIHN5c3RlbSBjYWxscwogICAgICB5MjAzODogZml4IHR5cG8gaW4gcG93
-ZXJwYyB2ZHNvICJMT1BBUlQiCiAgICAgIHkyMDM4OiBpcGM6IGZpeCB4MzIgQUJJIGJyZWFrYWdl
-CiAgICAgIHkyMDM4OiBhbGFybTogZml4IGhhbGYtc2Vjb25kIGN1dC1vZmYKCiBhcmNoL0tjb25m
-aWcgICAgICAgICAgICAgICAgICAgICAgICAgICAgICB8ICAxMSArLQogYXJjaC9hbHBoYS9rZXJu
-ZWwvb3NmX3N5cy5jICAgICAgICAgICAgICAgfCAgNjcgKy0tLS0tLS0tLS0KIGFyY2gvYWxwaGEv
-a2VybmVsL3N5c2NhbGxzL3N5c2NhbGwudGJsICAgIHwgICA0ICstCiBhcmNoL2lhNjQva2VybmVs
-L2FzbS1vZmZzZXRzLmMgICAgICAgICAgICB8ICAgMiArLQogYXJjaC9taXBzL2luY2x1ZGUvdWFw
-aS9hc20vbXNnYnVmLmggICAgICAgfCAgIDYgKy0KIGFyY2gvbWlwcy9pbmNsdWRlL3VhcGkvYXNt
-L3NlbWJ1Zi5oICAgICAgIHwgICA0ICstCiBhcmNoL21pcHMvaW5jbHVkZS91YXBpL2FzbS9zaG1i
-dWYuaCAgICAgICB8ICAgNiArLQogYXJjaC9taXBzL2luY2x1ZGUvdWFwaS9hc20vc3RhdC5oICAg
-ICAgICAgfCAgMTYgKy0tCiBhcmNoL21pcHMva2VybmVsL2JpbmZtdF9lbGZuMzIuYyAgICAgICAg
-ICB8ICAgNCArLQogYXJjaC9taXBzL2tlcm5lbC9iaW5mbXRfZWxmbzMyLmMgICAgICAgICAgfCAg
-IDQgKy0KIGFyY2gvbmRzMzIva2VybmVsL3Zkc28vZ2V0dGltZW9mZGF5LmMgICAgIHwgIDYxICsr
-KysrLS0tLS0KIGFyY2gvcGFyaXNjL2luY2x1ZGUvdWFwaS9hc20vbXNnYnVmLmggICAgIHwgICA2
-ICstCiBhcmNoL3BhcmlzYy9pbmNsdWRlL3VhcGkvYXNtL3NlbWJ1Zi5oICAgICB8ICAgNCArLQog
-YXJjaC9wYXJpc2MvaW5jbHVkZS91YXBpL2FzbS9zaG1idWYuaCAgICAgfCAgIDYgKy0KIGFyY2gv
-cG93ZXJwYy9pbmNsdWRlL2FzbS9hc20tcHJvdG90eXBlcy5oIHwgICAzICstCiBhcmNoL3Bvd2Vy
-cGMvaW5jbHVkZS9hc20vdmRzb19kYXRhcGFnZS5oICB8ICAgNiArLQogYXJjaC9wb3dlcnBjL2lu
-Y2x1ZGUvdWFwaS9hc20vbXNnYnVmLmggICAgfCAgIDYgKy0KIGFyY2gvcG93ZXJwYy9pbmNsdWRl
-L3VhcGkvYXNtL3NlbWJ1Zi5oICAgIHwgICA0ICstCiBhcmNoL3Bvd2VycGMvaW5jbHVkZS91YXBp
-L2FzbS9zaG1idWYuaCAgICB8ICAgNiArLQogYXJjaC9wb3dlcnBjL2luY2x1ZGUvdWFwaS9hc20v
-c3RhdC5oICAgICAgfCAgIDIgKy0KIGFyY2gvcG93ZXJwYy9rZXJuZWwvYXNtLW9mZnNldHMuYyAg
-ICAgICAgIHwgIDE4ICsrLQogYXJjaC9wb3dlcnBjL2tlcm5lbC9zeXNjYWxscy5jICAgICAgICAg
-ICAgfCAgIDQgKy0KIGFyY2gvcG93ZXJwYy9rZXJuZWwvdGltZS5jICAgICAgICAgICAgICAgIHwg
-ICA1ICstCiBhcmNoL3Bvd2VycGMva2VybmVsL3Zkc28zMi9nZXR0aW1lb2ZkYXkuUyB8ICAgNiAr
-LQogYXJjaC9wb3dlcnBjL2tlcm5lbC92ZHNvNjQvZ2V0dGltZW9mZGF5LlMgfCAgIDggKy0KIGFy
-Y2gvc3BhcmMvaW5jbHVkZS91YXBpL2FzbS9tc2didWYuaCAgICAgIHwgICA2ICstCiBhcmNoL3Nw
-YXJjL2luY2x1ZGUvdWFwaS9hc20vc2VtYnVmLmggICAgICB8ICAgNCArLQogYXJjaC9zcGFyYy9p
-bmNsdWRlL3VhcGkvYXNtL3NobWJ1Zi5oICAgICAgfCAgIDYgKy0KIGFyY2gvc3BhcmMvaW5jbHVk
-ZS91YXBpL2FzbS9zdGF0LmggICAgICAgIHwgIDI0ICsrLS0KIGFyY2gvc3BhcmMvdmRzby92Y2xv
-Y2tfZ2V0dGltZS5jICAgICAgICAgIHwgIDM2ICsrKy0tLQogYXJjaC94ODYvZW50cnkvdmRzby92
-Y2xvY2tfZ2V0dGltZS5jICAgICAgfCAgIDYgKy0KIGFyY2gveDg2L2VudHJ5L3ZzeXNjYWxsL3Zz
-eXNjYWxsXzY0LmMgICAgIHwgICA0ICstCiBhcmNoL3g4Ni9pbmNsdWRlL3VhcGkvYXNtL21zZ2J1
-Zi5oICAgICAgICB8ICAgNiArLQogYXJjaC94ODYvaW5jbHVkZS91YXBpL2FzbS9zZW1idWYuaCAg
-ICAgICAgfCAgIDQgKy0KIGFyY2gveDg2L2luY2x1ZGUvdWFwaS9hc20vc2htYnVmLmggICAgICAg
-IHwgICA2ICstCiBhcmNoL3g4Ni91bS92ZHNvL3VtX3Zkc28uYyAgICAgICAgICAgICAgICB8ICAx
-MiArLQogZnMvYWlvLmMgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAgIDIgKy0K
-IGZzL2JpbmZtdF9lbGYuYyAgICAgICAgICAgICAgICAgICAgICAgICAgIHwgIDEyICstCiBmcy9i
-aW5mbXRfZWxmX2ZkcGljLmMgICAgICAgICAgICAgICAgICAgICB8ICAxMiArLQogZnMvY29tcGF0
-X2JpbmZtdF9lbGYuYyAgICAgICAgICAgICAgICAgICAgfCAgIDQgKy0KIGZzL3NlbGVjdC5jICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgIHwgIDEwICstCiBmcy90aW1lcmZkLmMgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICB8ICAxNCArLS0KIGZzL3V0aW1lcy5jICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgIHwgICA4ICstCiBpbmNsdWRlL2xpbnV4L2NvbXBhdC5oICAgICAg
-ICAgICAgICAgICAgICB8ICAxOSArLS0KIGluY2x1ZGUvbGludXgvc2tidWZmLmggICAgICAgICAg
-ICAgICAgICAgIHwgICA3ICstCiBpbmNsdWRlL2xpbnV4L3N5c2NhbGxzLmggICAgICAgICAgICAg
-ICAgICB8ICAxNiArLS0KIGluY2x1ZGUvbGludXgvdGltZS5oICAgICAgICAgICAgICAgICAgICAg
-IHwgICA5ICstCiBpbmNsdWRlL2xpbnV4L3RpbWUzMi5oICAgICAgICAgICAgICAgICAgICB8ICAg
-MiArLQogaW5jbHVkZS9saW51eC90eXBlcy5oICAgICAgICAgICAgICAgICAgICAgfCAgIDIgKy0K
-IGluY2x1ZGUvdHJhY2UvZXZlbnRzL3RpbWVyLmggICAgICAgICAgICAgIHwgIDE2ICstLQogaW5j
-bHVkZS91YXBpL2FzbS1nZW5lcmljL21zZ2J1Zi5oICAgICAgICAgfCAgMTIgKy0KIGluY2x1ZGUv
-dWFwaS9hc20tZ2VuZXJpYy9wb3NpeF90eXBlcy5oICAgIHwgICAxICsKIGluY2x1ZGUvdWFwaS9h
-c20tZ2VuZXJpYy9zZW1idWYuaCAgICAgICAgIHwgICA3ICstCiBpbmNsdWRlL3VhcGkvYXNtLWdl
-bmVyaWMvc2htYnVmLmggICAgICAgICB8ICAxMiArLQogaW5jbHVkZS91YXBpL2xpbnV4L2N5Y2xh
-ZGVzLmggICAgICAgICAgICAgfCAgIDYgKy0KIGluY2x1ZGUvdWFwaS9saW51eC9lbGZjb3JlLmgg
-ICAgICAgICAgICAgIHwgICA4ICstCiBpbmNsdWRlL3VhcGkvbGludXgvZXJycXVldWUuaCAgICAg
-ICAgICAgICB8ICAgNyArKwogaW5jbHVkZS91YXBpL2xpbnV4L21zZy5oICAgICAgICAgICAgICAg
-ICAgfCAgIDYgKy0KIGluY2x1ZGUvdWFwaS9saW51eC9wcHBfZGVmcy5oICAgICAgICAgICAgIHwg
-ICA0ICstCiBpbmNsdWRlL3VhcGkvbGludXgvcmVzb3VyY2UuaCAgICAgICAgICAgICB8ICAgNCAr
-LQogaW5jbHVkZS91YXBpL2xpbnV4L3NlbS5oICAgICAgICAgICAgICAgICAgfCAgIDQgKy0KIGlu
-Y2x1ZGUvdWFwaS9saW51eC9zaG0uaCAgICAgICAgICAgICAgICAgIHwgICA2ICstCiBpbmNsdWRl
-L3VhcGkvbGludXgvdGltZS5oICAgICAgICAgICAgICAgICB8ICAgNiArLQogaW5jbHVkZS91YXBp
-L2xpbnV4L3RpbWVfdHlwZXMuaCAgICAgICAgICAgfCAgIDUgKwogaW5jbHVkZS91YXBpL2xpbnV4
-L3V0aW1lLmggICAgICAgICAgICAgICAgfCAgIDQgKy0KIGlwYy9zeXNjYWxsLmMgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgIHwgICAyICstCiBrZXJuZWwvY29tcGF0LmMgICAgICAgICAgICAg
-ICAgICAgICAgICAgICB8ICAyNCAtLS0tCiBrZXJuZWwvcG93ZXIvcG93ZXIuaCAgICAgICAgICAg
-ICAgICAgICAgICB8ICAgMiArLQoga2VybmVsL3N5cy5jICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgfCAgIDQgKy0KIGtlcm5lbC9zeXNfbmkuYyAgICAgICAgICAgICAgICAgICAgICAgICAg
-IHwgIDIzICsrKysKIGtlcm5lbC90aW1lL2hydGltZXIuYyAgICAgICAgICAgICAgICAgICAgIHwg
-ICAyICstCiBrZXJuZWwvdGltZS9pdGltZXIuYyAgICAgICAgICAgICAgICAgICAgICB8IDE4OSAr
-KysrKysrKysrKysrKysrKysrKystLS0tLS0tLS0KIGtlcm5lbC90aW1lL3RpbWUuYyAgICAgICAg
-ICAgICAgICAgICAgICAgIHwgIDMyICsrKy0tCiBsaWIvdmRzby9nZXR0aW1lb2ZkYXkuYyAgICAg
-ICAgICAgICAgICAgICB8ICAgNCArLQogbmV0L2NvbXBhdC5jICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgfCAgIDIgKy0KIG5ldC9jb3JlL3NjbS5jICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgIHwgICA2ICstCiBuZXQvaXB2NC90Y3AuYyAgICAgICAgICAgICAgICAgICAgICAgICAgICB8
-ICAyOCArKystLQogbmV0L3NvY2tldC5jICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgfCAg
-IDQgKy0KIHNlY3VyaXR5L3NlbGludXgvaG9va3MuYyAgICAgICAgICAgICAgICAgIHwgIDEwICst
-CiA3OSBmaWxlcyBjaGFuZ2VkLCA0NzIgaW5zZXJ0aW9ucygrKSwgNDY4IGRlbGV0aW9ucygtKQpf
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpZMjAzOCBtYWls
-aW5nIGxpc3QKWTIwMzhAbGlzdHMubGluYXJvLm9yZwpodHRwczovL2xpc3RzLmxpbmFyby5vcmcv
-bWFpbG1hbi9saXN0aW5mby95MjAzOAo=
+
+Linus,
+
+Please pull the for-linus branch from the git tree:
+
+   git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git for-linus
+
+   HEAD: 61a47c1ad3a4dc6882f01ebdc88138ac62d0df03 sysctl: Remove the sysctl system call
+
+As far as I can tell we have reached the point where no one enables the
+sysctl system call anymore.  It still is enabled in a few defconfigs
+but they are mostly the rarely used one and in asking people about
+that it was more cut & paste enabled than anything else.
+
+This is single commit that just deletes code.  Leaving just enough code
+so that the deprecated sysctl warning continues to be printed.  If my
+analysis turns out to be wrong and someone actually cares it will be
+easy to revert this commit and have the system call again.
+
+There was one new xtensa defconfig in linux-next that enabled the system
+call this cycle and when asked about it the maintainer of the code
+replied that it was not enabled on purpose.  As of today's linux-next
+tree that defconfig no longer enables the system call.
+
+I have recently amended the commit to include the review status.
+
+Some of the mailing list choked on my patch posting, I don't know why
+but here is a link to part of the review that made it to linux-kernel.
+https://lore.kernel.org/lkml/201910011140.EA0181F13@keescook/
+
+What we saw in the review discussion was that if we go a step farther
+than my patch and mess with uapi headers there are pieces of code that
+won't compile, but nothing minds the system call actually disappearing
+from the kernel.
+
+Eric W. Biederman (1):
+      sysctl: Remove the sysctl system call
+
+ arch/arc/configs/nps_defconfig              |    1 -
+ arch/arc/configs/tb10x_defconfig            |    1 -
+ arch/arm/configs/axm55xx_defconfig          |    1 -
+ arch/arm/configs/keystone_defconfig         |    1 -
+ arch/arm/configs/lpc32xx_defconfig          |    1 -
+ arch/arm/configs/moxart_defconfig           |    1 -
+ arch/arm/configs/qcom_defconfig             |    1 -
+ arch/arm/configs/zx_defconfig               |    1 -
+ arch/m68k/configs/m5475evb_defconfig        |    1 -
+ arch/mips/configs/ci20_defconfig            |    1 -
+ arch/mips/configs/loongson3_defconfig       |    1 -
+ arch/mips/configs/malta_qemu_32r6_defconfig |    1 -
+ arch/mips/configs/maltaaprp_defconfig       |    1 -
+ arch/mips/configs/maltasmvp_defconfig       |    1 -
+ arch/mips/configs/maltasmvp_eva_defconfig   |    1 -
+ arch/mips/configs/maltaup_defconfig         |    1 -
+ arch/mips/configs/omega2p_defconfig         |    1 -
+ arch/mips/configs/qi_lb60_defconfig         |    1 -
+ arch/mips/configs/vocore2_defconfig         |    1 -
+ arch/nios2/configs/10m50_defconfig          |    1 -
+ arch/nios2/configs/3c120_defconfig          |    1 -
+ arch/parisc/configs/c8000_defconfig         |    1 -
+ arch/parisc/configs/generic-32bit_defconfig |    1 -
+ arch/powerpc/configs/40x/klondike_defconfig |    1 -
+ arch/sh/configs/rsk7264_defconfig           |    1 -
+ arch/xtensa/configs/audio_kc705_defconfig   |    1 -
+ arch/xtensa/configs/cadence_csp_defconfig   |    1 -
+ arch/xtensa/configs/generic_kc705_defconfig |    1 -
+ arch/xtensa/configs/iss_defconfig           |    1 -
+ arch/xtensa/configs/nommu_kc705_defconfig   |    1 -
+ arch/xtensa/configs/smp_lx200_defconfig     |    1 -
+ arch/xtensa/configs/virt_defconfig          |    1 -
+ init/Kconfig                                |   17 -
+ kernel/sysctl_binary.c                      | 1305 ---------------------------
+ 34 files changed, 1354 deletions(-)
