@@ -1,20 +1,21 @@
 From: pr-tracker-bot@kernel.org
-Subject: Re: [GIT PULL] pipe: Notification queue preparation
-Date: Sat, 30 Nov 2019 23:05:02 +0000
-Message-ID: <157515510281.27985.4081388238466676103.pr-tracker-bot@kernel.org>
-References: <31452.1574721589@warthog.procyon.org.uk>
+Subject: Re: [GIT PULL] y2038: syscall implementation cleanups
+Date: Mon, 02 Dec 2019 00:10:15 +0000
+Message-ID: <157524541577.21884.12235201329343796550.pr-tracker-bot@kernel.org>
+References: <CAK8P3a38Q_yhiyODpFd6ZqLv=QyKRmCm8FOMuSr4RPvGtWNPYw@mail.gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <31452.1574721589@warthog.procyon.org.uk>
+In-Reply-To: <CAK8P3a38Q_yhiyODpFd6ZqLv=QyKRmCm8FOMuSr4RPvGtWNPYw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-Cc: torvalds@linux-foundation.org, dhowells@redhat.com, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, y2038 Mailman List <y2038@lists.linaro.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, linuxppc-dev <linuxppc-dev@lists.ozlabs.org>, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-The pull request you sent on Mon, 25 Nov 2019 22:39:49 +0000:
+The pull request you sent on Wed, 27 Nov 2019 14:36:16 +0100:
 
-> git://git.kernel.org/pub/scm/linux/kernel/git/dhowells/linux-fs.git tags/notifications-pipe-prep-20191115
+> git://git.kernel.org:/pub/scm/linux/kernel/git/arnd/playground.git tags/y2038-cleanups-5.5
 
 has been merged into torvalds/linux.git:
-https://git.kernel.org/torvalds/c/6a965666b7e7475c2f8c8e724703db58b8a8a445
+https://git.kernel.org/torvalds/c/ceb307474506f888e8f16dab183405ff01dffa08
 
 Thank you!
 
