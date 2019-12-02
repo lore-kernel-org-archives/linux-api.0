@@ -1,21 +1,21 @@
 From: pr-tracker-bot@kernel.org
-Subject: Re: [GIT PULL] y2038: syscall implementation cleanups
-Date: Mon, 02 Dec 2019 00:10:15 +0000
-Message-ID: <157524541577.21884.12235201329343796550.pr-tracker-bot@kernel.org>
-References: <CAK8P3a38Q_yhiyODpFd6ZqLv=QyKRmCm8FOMuSr4RPvGtWNPYw@mail.gmail.com>
+Subject: Re: [GIT PULL] sysctl: Remove the sysctl system call
+Date: Mon, 02 Dec 2019 00:10:17 +0000
+Message-ID: <157524541716.21884.4690547403694723874.pr-tracker-bot@kernel.org>
+References: <87r21tuulj.fsf@x220.int.ebiederm.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAK8P3a38Q_yhiyODpFd6ZqLv=QyKRmCm8FOMuSr4RPvGtWNPYw@mail.gmail.com>
+In-Reply-To: <87r21tuulj.fsf@x220.int.ebiederm.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, y2038 Mailman List <y2038@lists.linaro.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Thomas Gleixner <tglx@linutronix.de>, linuxppc-dev <linuxppc-dev@lists.ozlabs.org>, Linux API <linux-api@vger.kernel.org>
+To: "Eric W. Biederman" <ebiederm@xmission.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The pull request you sent on Wed, 27 Nov 2019 14:36:16 +0100:
+The pull request you sent on Wed, 27 Nov 2019 10:55:52 -0600:
 
-> git://git.kernel.org:/pub/scm/linux/kernel/git/arnd/playground.git tags/y2038-cleanups-5.5
+> git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git for-linus
 
 has been merged into torvalds/linux.git:
-https://git.kernel.org/torvalds/c/ceb307474506f888e8f16dab183405ff01dffa08
+https://git.kernel.org/torvalds/c/ad0b314e003049292a23dd248d3c3ca4a3d75f55
 
 Thank you!
 
