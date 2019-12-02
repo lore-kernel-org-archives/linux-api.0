@@ -1,24 +1,25 @@
-From: pr-tracker-bot@kernel.org
-Subject: Re: [GIT PULL] sysctl: Remove the sysctl system call
-Date: Mon, 02 Dec 2019 00:10:17 +0000
-Message-ID: <157524541716.21884.4690547403694723874.pr-tracker-bot@kernel.org>
-References: <87r21tuulj.fsf@x220.int.ebiederm.org>
+From: Matthew Garrett <mjg59@google.com>
+Subject: Re: tracefs splats in lockdown=confidentiality mode
+Date: Mon, 2 Dec 2019 15:31:52 -0800
+Message-ID: <CACdnJuuXBQ__Sb8=V7CTZfXH=5LfbiU9SmUKapJov3Cd+aHQcw@mail.gmail.com>
+References: <20191101210803.GA9841@xps13.dannf>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <87r21tuulj.fsf@x220.int.ebiederm.org>
+In-Reply-To: <20191101210803.GA9841@xps13.dannf>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, linux-kernel@vger.kernel.org, linux-arch@vger.kernel.org, linux-api@vger.kernel.org
+To: dann frazier <dann.frazier@canonical.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, Seth Forshee <seth.forshee@canonical.com>, James Morris <jmorris@namei.org>, Linux API <linux-api@vger.kernel.org>, Ben Hutchings <ben@decadent.org.uk>, Al Viro <viro@zeniv.linux.org.uk>, Linus Torvalds <torvalds@linux-foundation.org>
 List-Id: linux-api@vger.kernel.org
 
-The pull request you sent on Wed, 27 Nov 2019 10:55:52 -0600:
+On Fri, Nov 1, 2019 at 2:08 PM dann frazier <dann.frazier@canonical.com> wrote:
 
-> git://git.kernel.org/pub/scm/linux/kernel/git/ebiederm/user-namespace.git for-linus
+> [    1.763630] Lockdown: swapper/0: use of tracefs is restricted; see man kernel_lockdown.7
 
-has been merged into torvalds/linux.git:
-https://git.kernel.org/torvalds/c/ad0b314e003049292a23dd248d3c3ca4a3d75f55
+This is expected.
 
-Thank you!
+> [    2.913934] ------------[ cut here ]------------
+> [    2.918435] Could not register function stat for cpu 0
+> [    2.923717] WARNING: CPU: 1 PID: 1 at kernel/trace/ftrace.c:987 ftrace_init_tracefs_toplevel+0x168/0x1bc
 
--- 
-Deet-doot-dot, I am a bot.
-https://korg.wiki.kernel.org/userdoc/prtracker
+This is not. I'll look into it.
