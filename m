@@ -1,26 +1,20 @@
-From: Laurent Vivier <laurent@vivier.eu>
+From: Christian Brauner <christian.brauner@ubuntu.com>
 Subject: Re: [PATCH v7 1/1] ns: add binfmt_misc to the user namespace
-Date: Tue, 3 Dec 2019 10:44:44 +0100
-Message-ID: <7cb245ed-f738-7991-a09b-b27152274b9f@vivier.eu>
+Date: Tue, 3 Dec 2019 16:40:13 +0100
+Message-ID: <20191203154012.opirpicsuc6ou3cx@wittgenstein>
 References: <20191107140304.8426-1-laurent@vivier.eu>
  <20191107140304.8426-2-laurent@vivier.eu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
 In-Reply-To: <20191107140304.8426-2-laurent@vivier.eu>
-Content-Language: fr
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Dmitry Safonov <dima@arista.com>, Henning Schild <henning.schild@siemens.com>, linux-fsdevel@vger.kernel.org, James Bottomley <James.Bottomley@HansenPartnership.com>, Eric Biederman <ebiederm@xmission.com>, linux-api@vger.kernel.org, Andrei Vagin <avagin@gmail.com>, =?UTF-8?Q?C=c3=a9dric_Le_Goater?= <clg@kaod.org>, Greg Kurz <groug@kaod.org>, Jann Horn <jannh@google.com>, containers@lists.linux-foundation.org, Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kiszka <jan.kiszka@siemens.com>
+To: Laurent Vivier <laurent@vivier.eu>
+Cc: linux-kernel@vger.kernel.org, Henning Schild <henning.schild@siemens.com>, Dmitry Safonov <dima@arista.com>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, Jann Horn <jannh@google.com>, Greg Kurz <groug@kaod.org>, Alexander Viro <viro@zeniv.linux.org.uk>, James Bottomley <James.Bottomley@HansenPartnership.com>, Eric Biederman <ebiederm@xmission.com>, Jan Kiszka <jan.kiszka@siemens.com>, linux-fsdevel@vger.kernel.org, =?utf-8?Q?C=C3=A9dric?= Le Goater <clg@kaod.org>, dhowells@redhat.com
 List-Id: linux-api@vger.kernel.org
 
-Ping
-
-Thanks,
-Laurent
-
-Le 07/11/2019 à 15:03, Laurent Vivier a écrit :
+On Thu, Nov 07, 2019 at 03:03:04PM +0100, Laurent Vivier wrote:
 > This patch allows to have a different binfmt_misc configuration
 > for each new user namespace. By default, the binfmt_misc configuration
 > is the one of the previous level, but if the binfmt_misc filesystem is
@@ -159,252 +153,18 @@ Le 07/11/2019 à 15:03, Laurent Vivier a écrit :
 > +	struct binfmt_namespace *ns;
 > +
 > +	ns = binfmt_ns(file->f_path.dentry->d_sb->s_user_ns);
->  
->  	switch (res) {
->  	case 1:
-> @@ -669,7 +686,7 @@ static ssize_t bm_entry_write(struct file *file, const char __user *buffer,
->  		inode_lock(d_inode(root));
->  
->  		if (!list_empty(&e->list))
-> -			kill_node(e);
-> +			kill_node(ns, e);
->  
->  		inode_unlock(d_inode(root));
->  		break;
-> @@ -695,6 +712,7 @@ static ssize_t bm_register_write(struct file *file, const char __user *buffer,
->  	struct inode *inode;
->  	struct super_block *sb = file_inode(file)->i_sb;
->  	struct dentry *root = sb->s_root, *dentry;
-> +	struct binfmt_namespace *ns;
->  	int err = 0;
->  
->  	e = create_entry(buffer, count);
-> @@ -718,7 +736,9 @@ static ssize_t bm_register_write(struct file *file, const char __user *buffer,
->  	if (!inode)
->  		goto out2;
->  
-> -	err = simple_pin_fs(&bm_fs_type, &bm_mnt, &entry_count);
-> +	ns = binfmt_ns(file->f_path.dentry->d_sb->s_user_ns);
-> +	err = simple_pin_fs(&bm_fs_type, &ns->bm_mnt,
-> +			    &ns->entry_count);
->  	if (err) {
->  		iput(inode);
->  		inode = NULL;
-> @@ -727,12 +747,16 @@ static ssize_t bm_register_write(struct file *file, const char __user *buffer,
->  
->  	if (e->flags & MISC_FMT_OPEN_FILE) {
->  		struct file *f;
-> +		const struct cred *old_cred;
->  
-> +		old_cred = override_creds(file->f_cred);
->  		f = open_exec(e->interpreter);
-> +		revert_creds(old_cred);
->  		if (IS_ERR(f)) {
->  			err = PTR_ERR(f);
->  			pr_notice("register: failed to install interpreter file %s\n", e->interpreter);
-> -			simple_release_fs(&bm_mnt, &entry_count);
-> +			simple_release_fs(&ns->bm_mnt,
-> +					  &ns->entry_count);
->  			iput(inode);
->  			inode = NULL;
->  			goto out2;
-> @@ -745,9 +769,9 @@ static ssize_t bm_register_write(struct file *file, const char __user *buffer,
->  	inode->i_fop = &bm_entry_operations;
->  
->  	d_instantiate(dentry, inode);
-> -	write_lock(&entries_lock);
-> -	list_add(&e->list, &entries);
-> -	write_unlock(&entries_lock);
-> +	write_lock(&ns->entries_lock);
-> +	list_add(&e->list, &ns->entries);
-> +	write_unlock(&ns->entries_lock);
->  
->  	err = 0;
->  out2:
-> @@ -772,7 +796,9 @@ static const struct file_operations bm_register_operations = {
->  static ssize_t
->  bm_status_read(struct file *file, char __user *buf, size_t nbytes, loff_t *ppos)
->  {
-> -	char *s = enabled ? "enabled\n" : "disabled\n";
-> +	struct binfmt_namespace *ns =
-> +				binfmt_ns(file->f_path.dentry->d_sb->s_user_ns);
-> +	char *s = ns->enabled ? "enabled\n" : "disabled\n";
->  
->  	return simple_read_from_buffer(buf, nbytes, ppos, s, strlen(s));
->  }
-> @@ -780,25 +806,28 @@ bm_status_read(struct file *file, char __user *buf, size_t nbytes, loff_t *ppos)
->  static ssize_t bm_status_write(struct file *file, const char __user *buffer,
->  		size_t count, loff_t *ppos)
->  {
-> +	struct binfmt_namespace *ns;
->  	int res = parse_command(buffer, count);
->  	struct dentry *root;
->  
-> +	ns = binfmt_ns(file->f_path.dentry->d_sb->s_user_ns);
->  	switch (res) {
->  	case 1:
->  		/* Disable all handlers. */
-> -		enabled = 0;
-> +		ns->enabled = 0;
->  		break;
->  	case 2:
->  		/* Enable all handlers. */
-> -		enabled = 1;
-> +		ns->enabled = 1;
->  		break;
->  	case 3:
->  		/* Delete all handlers. */
->  		root = file_inode(file)->i_sb->s_root;
->  		inode_lock(d_inode(root));
->  
-> -		while (!list_empty(&entries))
-> -			kill_node(list_first_entry(&entries, Node, list));
-> +		while (!list_empty(&ns->entries))
-> +			kill_node(ns, list_first_entry(&ns->entries,
-> +						       Node, list));
->  
->  		inode_unlock(d_inode(root));
->  		break;
-> @@ -825,24 +854,53 @@ static const struct super_operations s_ops = {
->  static int bm_fill_super(struct super_block *sb, struct fs_context *fc)
->  {
->  	int err;
-> +	struct user_namespace *ns = sb->s_user_ns;
->  	static const struct tree_descr bm_files[] = {
->  		[2] = {"status", &bm_status_operations, S_IWUSR|S_IRUGO},
->  		[3] = {"register", &bm_register_operations, S_IWUSR},
->  		/* last one */ {""}
->  	};
->  
-> +	/* create a new binfmt namespace
-> +	 * if we are not in the first user namespace
-> +	 * but the binfmt namespace is the first one
-> +	 */
-> +	if (READ_ONCE(ns->binfmt_ns) == NULL) {
-> +		struct binfmt_namespace *new_ns;
-> +
-> +		new_ns = kmalloc(sizeof(struct binfmt_namespace),
-> +				 GFP_KERNEL);
-> +		if (new_ns == NULL)
-> +			return -ENOMEM;
-> +		INIT_LIST_HEAD(&new_ns->entries);
-> +		new_ns->enabled = 1;
-> +		rwlock_init(&new_ns->entries_lock);
-> +		new_ns->bm_mnt = NULL;
-> +		new_ns->entry_count = 0;
-> +		/* ensure new_ns is completely initialized before sharing it */
-> +		smp_wmb();
-> +		WRITE_ONCE(ns->binfmt_ns, new_ns);
-> +	}
-> +
->  	err = simple_fill_super(sb, BINFMTFS_MAGIC, bm_files);
->  	if (!err)
->  		sb->s_op = &s_ops;
->  	return err;
->  }
->  
-> +static void bm_free(struct fs_context *fc)
-> +{
-> +	if (fc->s_fs_info)
-> +		put_user_ns(fc->s_fs_info);
-> +}
-> +
->  static int bm_get_tree(struct fs_context *fc)
->  {
-> -	return get_tree_single(fc, bm_fill_super);
-> +	return get_tree_keyed(fc, bm_fill_super, get_user_ns(fc->user_ns));
->  }
->  
->  static const struct fs_context_operations bm_context_ops = {
-> +	.free		= bm_free,
->  	.get_tree	= bm_get_tree,
->  };
->  
-> @@ -861,6 +919,7 @@ static struct file_system_type bm_fs_type = {
->  	.owner		= THIS_MODULE,
->  	.name		= "binfmt_misc",
->  	.init_fs_context = bm_init_fs_context,
-> +	.fs_flags	= FS_USERNS_MOUNT,
->  	.kill_sb	= kill_litter_super,
->  };
->  MODULE_ALIAS_FS("binfmt_misc");
-> diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
-> index fb9f4f799554..16e6f3a97a01 100644
-> --- a/include/linux/user_namespace.h
-> +++ b/include/linux/user_namespace.h
-> @@ -52,6 +52,18 @@ enum ucount_type {
->  	UCOUNT_COUNTS,
->  };
->  
-> +#if IS_ENABLED(CONFIG_BINFMT_MISC)
-> +struct binfmt_namespace {
-> +	struct list_head entries;
-> +	rwlock_t entries_lock;
-> +	int enabled;
-> +	struct vfsmount *bm_mnt;
-> +	int entry_count;
-> +} __randomize_layout;
-> +
-> +extern struct binfmt_namespace init_binfmt_ns;
-> +#endif
-> +
->  struct user_namespace {
->  	struct uid_gid_map	uid_map;
->  	struct uid_gid_map	gid_map;
-> @@ -86,6 +98,9 @@ struct user_namespace {
->  #endif
->  	struct ucounts		*ucounts;
->  	int ucount_max[UCOUNT_COUNTS];
-> +#if IS_ENABLED(CONFIG_BINFMT_MISC)
-> +	struct binfmt_namespace *binfmt_ns;
-> +#endif
->  } __randomize_layout;
->  
->  struct ucounts {
-> diff --git a/kernel/user.c b/kernel/user.c
-> index 5235d7f49982..092b2b4d47a6 100644
-> --- a/kernel/user.c
-> +++ b/kernel/user.c
-> @@ -20,6 +20,17 @@
->  #include <linux/user_namespace.h>
->  #include <linux/proc_ns.h>
->  
-> +#if IS_ENABLED(CONFIG_BINFMT_MISC)
-> +struct binfmt_namespace init_binfmt_ns = {
-> +	.entries = LIST_HEAD_INIT(init_binfmt_ns.entries),
-> +	.enabled = 1,
-> +	.entries_lock = __RW_LOCK_UNLOCKED(init_binfmt_ns.entries_lock),
-> +	.bm_mnt = NULL,
-> +	.entry_count = 0,
-> +};
-> +EXPORT_SYMBOL_GPL(init_binfmt_ns);
-> +#endif
-> +
->  /*
->   * userns count is 1 for root user, 1 for init_uts_ns,
->   * and 1 for... ?
-> @@ -67,6 +78,9 @@ struct user_namespace init_user_ns = {
->  	.keyring_name_list = LIST_HEAD_INIT(init_user_ns.keyring_name_list),
->  	.keyring_sem = __RWSEM_INITIALIZER(init_user_ns.keyring_sem),
->  #endif
-> +#if IS_ENABLED(CONFIG_BINFMT_MISC)
-> +	.binfmt_ns = &init_binfmt_ns,
-> +#endif
->  };
->  EXPORT_SYMBOL_GPL(init_user_ns);
->  
-> diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-> index 8eadadc478f9..f42c32269e20 100644
-> --- a/kernel/user_namespace.c
-> +++ b/kernel/user_namespace.c
-> @@ -191,6 +191,9 @@ static void free_user_ns(struct work_struct *work)
->  			kfree(ns->projid_map.forward);
->  			kfree(ns->projid_map.reverse);
->  		}
-> +#if IS_ENABLED(CONFIG_BINFMT_MISC)
-> +		kfree(ns->binfmt_ns);
-> +#endif
->  		retire_userns_sysctls(ns);
->  		key_free_user_ns(ns);
->  		ns_free_inum(&ns->ns);
-> 
+
+Sorry for being so late to the party.
+
+The naked dereferences here are not very pretty and also likely mean you
+access the wrong dentry when you do (weird but possible) things like:
+
+mount -t overlay overlay -o lowerdir=/proc/sys/fs/binfmt_misc,workdir=/work,upperdir=/upper /merged
+
+(which might already cause trouble in other parts of this code)
+
+so I think it's better if you replace 
+file->f_path.dentry->d_sb->s_user_ns
+with
+file_dentry(file)->d_sb->s_user_ns
+in places where you do naked dereferences now.
