@@ -1,39 +1,25 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
+From: David Howells <dhowells@redhat.com>
 Subject: Re: [GIT PULL] pipe: Notification queue preparation
-Date: Thu, 5 Dec 2019 09:24:51 -0800
-Message-ID: <CAHk-=wi_on1EAbVi1Q01i7=0_GL=nKmz6s9677YZf74H8=Sw0g@mail.gmail.com>
-References: <31452.1574721589@warthog.procyon.org.uk> <20191205125826.GK2734@twin.jikos.cz>
- <1593.1575554217@warthog.procyon.org.uk> <CAHk-=wgwwJ+ZEtycujFdNmpS8TjwCYyT+oHfV7d-GekyaX91xg@mail.gmail.com>
+Date: Thu, 05 Dec 2019 17:25:20 +0000
+Message-ID: <21493.1575566720@warthog.procyon.org.uk>
+References: <20191205172127.GW2734@suse.cz> <20191205125826.GK2734@twin.jikos.cz> <31452.1574721589@warthog.procyon.org.uk> <1593.1575554217@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAHk-=wgwwJ+ZEtycujFdNmpS8TjwCYyT+oHfV7d-GekyaX91xg@mail.gmail.com>
+In-Reply-To: <20191205172127.GW2734@suse.cz>
+Content-ID: <21492.1575566720.1@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: David Sterba <dsterba@suse.cz>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: dsterba@suse.cz
+Cc: dhowells@redhat.com, torvalds@linux-foundation.org, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Dec 5, 2019 at 9:12 AM Linus Torvalds
-<torvalds@linux-foundation.org> wrote:
->
-> It would be interesting to hear if somebody else is waiting on the
-> read side too.
+I've just posted a couple of patches - can you check to see if they fix you=
+r
+problem?
 
-Looking once more at that commit, I find at least one bug, but I'm
-pretty sure that's not the cause of this problem.
+https://lore.kernel.org/linux-fsdevel/157556649610.20869.853707964949534356=
+7.stgit@warthog.procyon.org.uk/T/#t
 
-DavidH, watch out for things like this:
-
--       for (idx = 0; idx < pipe->nrbufs && rem < len; idx++)
-+       for (idx = tail; idx < head && rem < len; idx++)
-
-which is a completely buggy conversion.
-
-You can't compare tail and head with an inequality, it gets the
-wraparound case wrong.
-
-But I found only one of those, and it's fuse-specific, plus the
-overflow would take a long time to trigger, so I'm pretty sure this
-isn't what DavidS is reporting.
-
-               Linus
+Thanks,
+David
