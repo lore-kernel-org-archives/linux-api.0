@@ -1,170 +1,78 @@
-From: Christian Brauner <christian.brauner@ubuntu.com>
-Subject: Re: [PATCH v7 1/1] ns: add binfmt_misc to the user namespace
-Date: Tue, 3 Dec 2019 16:40:13 +0100
-Message-ID: <20191203154012.opirpicsuc6ou3cx@wittgenstein>
-References: <20191107140304.8426-1-laurent@vivier.eu>
- <20191107140304.8426-2-laurent@vivier.eu>
+From: David Sterba <dsterba@suse.cz>
+Subject: Re: [GIT PULL] pipe: Notification queue preparation
+Date: Thu, 5 Dec 2019 13:58:26 +0100
+Message-ID: <20191205125826.GK2734@twin.jikos.cz>
+References: <31452.1574721589@warthog.procyon.org.uk>
+Reply-To: dsterba@suse.cz
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20191107140304.8426-2-laurent@vivier.eu>
+In-Reply-To: <31452.1574721589@warthog.procyon.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Laurent Vivier <laurent@vivier.eu>
-Cc: linux-kernel@vger.kernel.org, Henning Schild <henning.schild@siemens.com>, Dmitry Safonov <dima@arista.com>, linux-api@vger.kernel.org, containers@lists.linux-foundation.org, Jann Horn <jannh@google.com>, Greg Kurz <groug@kaod.org>, Alexander Viro <viro@zeniv.linux.org.uk>, James Bottomley <James.Bottomley@HansenPartnership.com>, Eric Biederman <ebiederm@xmission.com>, Jan Kiszka <jan.kiszka@siemens.com>, linux-fsdevel@vger.kernel.org, =?utf-8?Q?C=C3=A9dric?= Le Goater <clg@kaod.org>, dhowells@redhat.com
+To: David Howells <dhowells@redhat.com>
+Cc: torvalds@linux-foundation.org, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Nov 07, 2019 at 03:03:04PM +0100, Laurent Vivier wrote:
-> This patch allows to have a different binfmt_misc configuration
-> for each new user namespace. By default, the binfmt_misc configuration
-> is the one of the previous level, but if the binfmt_misc filesystem is
-> mounted in the new namespace a new empty binfmt instance is created and
-> used in this namespace.
-> 
-> For instance, using "unshare" we can start a chroot of another
-> architecture and configure the binfmt_misc interpreter without being root
-> to run the binaries in this chroot.
-> 
-> Signed-off-by: Laurent Vivier <laurent@vivier.eu>
-> Acked-by: Andrei Vagin <avagin@gmail.com>
-> ---
->  fs/binfmt_misc.c               | 115 +++++++++++++++++++++++++--------
->  include/linux/user_namespace.h |  15 +++++
->  kernel/user.c                  |  14 ++++
->  kernel/user_namespace.c        |   3 +
->  4 files changed, 119 insertions(+), 28 deletions(-)
-> 
-> diff --git a/fs/binfmt_misc.c b/fs/binfmt_misc.c
-> index cdb45829354d..ba5f0d2ade96 100644
-> --- a/fs/binfmt_misc.c
-> +++ b/fs/binfmt_misc.c
-> @@ -40,9 +40,6 @@ enum {
->  	VERBOSE_STATUS = 1 /* make it zero to save 400 bytes kernel memory */
->  };
->  
-> -static LIST_HEAD(entries);
-> -static int enabled = 1;
-> -
->  enum {Enabled, Magic};
->  #define MISC_FMT_PRESERVE_ARGV0 (1 << 31)
->  #define MISC_FMT_OPEN_BINARY (1 << 30)
-> @@ -62,10 +59,7 @@ typedef struct {
->  	struct file *interp_file;
->  } Node;
->  
-> -static DEFINE_RWLOCK(entries_lock);
->  static struct file_system_type bm_fs_type;
-> -static struct vfsmount *bm_mnt;
-> -static int entry_count;
->  
->  /*
->   * Max length of the register string.  Determined by:
-> @@ -82,18 +76,37 @@ static int entry_count;
->   */
->  #define MAX_REGISTER_LENGTH 1920
->  
-> +static struct binfmt_namespace *binfmt_ns(struct user_namespace *ns)
-> +{
-> +	struct binfmt_namespace *b_ns;
-> +
-> +	while (ns) {
-> +		b_ns = READ_ONCE(ns->binfmt_ns);
-> +		if (b_ns)
-> +			return b_ns;
-> +		ns = ns->parent;
-> +	}
-> +	/* as the first user namespace is initialized with
-> +	 * &init_binfmt_ns we should never come here
-> +	 * but we try to stay safe by logging a warning
-> +	 * and returning a sane value
-> +	 */
-> +	WARN_ON_ONCE(1);
-> +	return &init_binfmt_ns;
-> +}
-> +
->  /*
->   * Check if we support the binfmt
->   * if we do, return the node, else NULL
->   * locking is done in load_misc_binary
->   */
-> -static Node *check_file(struct linux_binprm *bprm)
-> +static Node *check_file(struct binfmt_namespace *ns, struct linux_binprm *bprm)
->  {
->  	char *p = strrchr(bprm->interp, '.');
->  	struct list_head *l;
->  
->  	/* Walk all the registered handlers. */
-> -	list_for_each(l, &entries) {
-> +	list_for_each(l, &ns->entries) {
->  		Node *e = list_entry(l, Node, list);
->  		char *s;
->  		int j;
-> @@ -135,17 +148,18 @@ static int load_misc_binary(struct linux_binprm *bprm)
->  	struct file *interp_file = NULL;
->  	int retval;
->  	int fd_binary = -1;
-> +	struct binfmt_namespace *ns = binfmt_ns(current_user_ns());
->  
->  	retval = -ENOEXEC;
-> -	if (!enabled)
-> +	if (!ns->enabled)
->  		return retval;
->  
->  	/* to keep locking time low, we copy the interpreter string */
-> -	read_lock(&entries_lock);
-> -	fmt = check_file(bprm);
-> +	read_lock(&ns->entries_lock);
-> +	fmt = check_file(ns, bprm);
->  	if (fmt)
->  		dget(fmt->dentry);
-> -	read_unlock(&entries_lock);
-> +	read_unlock(&ns->entries_lock);
->  	if (!fmt)
->  		return retval;
->  
-> @@ -611,19 +625,19 @@ static void bm_evict_inode(struct inode *inode)
->  	kfree(e);
->  }
->  
-> -static void kill_node(Node *e)
-> +static void kill_node(struct binfmt_namespace *ns, Node *e)
->  {
->  	struct dentry *dentry;
->  
-> -	write_lock(&entries_lock);
-> +	write_lock(&ns->entries_lock);
->  	list_del_init(&e->list);
-> -	write_unlock(&entries_lock);
-> +	write_unlock(&ns->entries_lock);
->  
->  	dentry = e->dentry;
->  	drop_nlink(d_inode(dentry));
->  	d_drop(dentry);
->  	dput(dentry);
-> -	simple_release_fs(&bm_mnt, &entry_count);
-> +	simple_release_fs(&ns->bm_mnt, &ns->entry_count);
->  }
->  
->  /* /<entry> */
-> @@ -653,6 +667,9 @@ static ssize_t bm_entry_write(struct file *file, const char __user *buffer,
->  	struct dentry *root;
->  	Node *e = file_inode(file)->i_private;
->  	int res = parse_command(buffer, count);
-> +	struct binfmt_namespace *ns;
-> +
-> +	ns = binfmt_ns(file->f_path.dentry->d_sb->s_user_ns);
+On Mon, Nov 25, 2019 at 10:39:49PM +0000, David Howells wrote:
+> David Howells (12):
+>       pipe: Reduce #inclusion of pipe_fs_i.h
+>       Remove the nr_exclusive argument from __wake_up_sync_key()
+>       Add wake_up_interruptible_sync_poll_locked()
+>       pipe: Use head and tail pointers for the ring, not cursor and length
 
-Sorry for being so late to the party.
+This commit (8cefc107ca54c8b06438b7dc9) causes hangs of 'btrfs send'
+commands, that's eg. inside fstests or in btrfs-progs testsuite. The
+'send' uses pipe/splice to get data from kernel to userspace.
 
-The naked dereferences here are not very pretty and also likely mean you
-access the wrong dentry when you do (weird but possible) things like:
+The test that reliably worked for me leaves the process hanging with
+this stacktrace (no CPU or IO activity):
 
-mount -t overlay overlay -o lowerdir=/proc/sys/fs/binfmt_misc,workdir=/work,upperdir=/upper /merged
+[<0>] pipe_write+0x1be/0x4b0
+[<0>] new_sync_write+0x11e/0x1c0
+[<0>] vfs_write+0xc1/0x1d0
+[<0>] kernel_write+0x2c/0x40
+[<0>] send_cmd+0x78/0xf0 [btrfs]
+[<0>] send_extent_data+0x4b1/0x52c [btrfs]
+[<0>] process_extent+0xe46/0xe9d [btrfs]
+[<0>] changed_cb+0xcf5/0xd2f [btrfs]
+[<0>] send_subvol+0x8ad/0xc0b [btrfs]
+[<0>] btrfs_ioctl_send+0xe50/0xf30 [btrfs]
+[<0>] _btrfs_ioctl_send+0x80/0x110 [btrfs]
+[<0>] btrfs_ioctl+0x18e1/0x3450 [btrfs]
+[<0>] do_vfs_ioctl+0xa5/0x710
+[<0>] ksys_ioctl+0x70/0x80
+[<0>] __x64_sys_ioctl+0x16/0x20
+[<0>] do_syscall_64+0x56/0x220
+[<0>] entry_SYSCALL_64_after_hwframe+0x49/0xbe
 
-(which might already cause trouble in other parts of this code)
+I've bisected that to the mentioned commit, using test in btrfs-progs
+testsuite with command "make TEST=016\* test-misc". Normally the test
+can run up to 10 seconds, in the buggy case it stays there.
 
-so I think it's better if you replace 
-file->f_path.dentry->d_sb->s_user_ns
-with
-file_dentry(file)->d_sb->s_user_ns
-in places where you do naked dereferences now.
+I can help testing fixes or gathering more information, please let me
+know.
+
+Full bisect log:
+
+# bad: [3c0edea9b29f9be6c093f236f762202b30ac9431] pipe: Remove sync on wake_ups
+# good: [da0c9ea146cbe92b832f1b0f694840ea8eb33cce] Linux 5.4-rc2
+git bisect start '3c0edea9b29f9be6c093f236f762202b30ac9431' 'd055b4fb4d165b06d912e7f846610d120c3bb9fb^'
+# bad: [b667b867344301e24f21d4a4c844675ff61d89e1] pipe: Advance tail pointer inside of wait spinlock in pipe_read()
+git bisect bad b667b867344301e24f21d4a4c844675ff61d89e1
+# good: [f94df9890e98f2090c6a8d70c795134863b70201] Add wake_up_interruptible_sync_poll_locked()
+git bisect good f94df9890e98f2090c6a8d70c795134863b70201
+# bad: [6718b6f855a0b4962d54bd625be2718cb820cec6] pipe: Allow pipes to have kernel-reserved slots
+git bisect bad 6718b6f855a0b4962d54bd625be2718cb820cec6
+# bad: [8cefc107ca54c8b06438b7dc9cc08bc0a11d5b98] pipe: Use head and tail pointers for the ring, not cursor and length
+git bisect bad 8cefc107ca54c8b06438b7dc9cc08bc0a11d5b98
+# first bad commit: [8cefc107ca54c8b06438b7dc9cc08bc0a11d5b98] pipe: Use head and tail pointers for the ring, not cursor and length
+
+>       pipe: Allow pipes to have kernel-reserved slots
+>       pipe: Advance tail pointer inside of wait spinlock in pipe_read()
+>       pipe: Conditionalise wakeup in pipe_read()
+>       pipe: Rearrange sequence in pipe_write() to preallocate slot
+>       pipe: Remove redundant wakeup from pipe_write()
+>       pipe: Check for ring full inside of the spinlock in pipe_write()
+>       pipe: Increase the writer-wakeup threshold to reduce context-switch count
+>       pipe: Remove sync on wake_ups
