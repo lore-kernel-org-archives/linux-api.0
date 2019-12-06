@@ -1,54 +1,82 @@
-From: John Hubbard <jhubbard@nvidia.com>
-Subject: Re: [PATCH] move_pages.2: not return ENOENT if the page are already
- on the target nodes
-Date: Thu, 5 Dec 2019 17:47:35 -0800
-Message-ID: <683f6cae-0e0c-d4e4-0929-7fd1a79a2266@nvidia.com>
-References: <1575596090-115377-1-git-send-email-yang.shi@linux.alibaba.com>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [RFC PATCH] ptrace: add PTRACE_GETFD request
+Date: Fri, 6 Dec 2019 03:38:29 +0100
+Message-ID: <CAG48ez0_CCxO=stFvK=4G4Og=xe9Rtws8PEVy-cSmLqcxfE2Zw@mail.gmail.com>
+References: <20191205234450.GA26369@ircssh-2.c.rugged-nimbus-611.internal>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1575596090-115377-1-git-send-email-yang.shi@linux.alibaba.com>
-Content-Language: en-US
+In-Reply-To: <20191205234450.GA26369@ircssh-2.c.rugged-nimbus-611.internal>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yang Shi <yang.shi@linux.alibaba.com>, mtk.manpages@gmail.com, cl@linux.com, mhocko@suse.com, cai@lca.pw, akpm@linux-foundation.org
-Cc: linux-man@vger.kernel.org, linux-api@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org
+To: Sargun Dhillon <sargun@sargun.me>
+Cc: kernel list <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Tycho Andersen <tycho@tycho.ws>
 List-Id: linux-api@vger.kernel.org
 
-On 12/5/19 5:34 PM, Yang Shi wrote:
-...
-> 
-> diff --git a/man2/move_pages.2 b/man2/move_pages.2
-> index 2d96468..2a2f3cd 100644
-> --- a/man2/move_pages.2
-> +++ b/man2/move_pages.2
-> @@ -192,9 +192,8 @@ was specified or an attempt was made to migrate pages of a kernel thread.
->  One of the target nodes is not online.
->  .TP
->  .B ENOENT
-> -No pages were found that require moving.
-> -All pages are either already
-> -on the target node, not present, had an invalid address or could not be
-> +No pages were found.
-> +All pages are either not present, had an invalid address or could not be
->  moved because they were mapped by multiple processes.
+On Fri, Dec 6, 2019 at 12:44 AM Sargun Dhillon <sargun@sargun.me> wrote:
+> PTRACE_GETFD is a generic ptrace API that allows the tracer to
+> get file descriptors from the traceee.
 
-How about this wording (ignoring man formatting for the moment):
+typo: tracee
 
-No pages were moved, because all requested pages fell into one or more of
-the following cases:
+> The primary reason to use this syscall is to allow sandboxers to
+> take action on an FD on behalf of the tracee. For example, this
+> can be combined with seccomp's user notification feature to extract
+> a file descriptor and call privileged syscalls, like binding
+> a socket to a privileged port.
+[...]
+> +/* This gets a file descriptor from a running process. It doesn't require the
+> + * process to be stopped.
+> + */
+> +#define PTRACE_GETFD   0x420f
+[...]
+> +static int ptrace_getfd(struct task_struct *child, unsigned long fd)
 
-* Page not present.
-* Page has an invalid address.
-* Page is mapped by multiple processes.
+I'd make the "fd" parameter of this function an "unsigned int", given
+that that's also the argument type of fcheck_files().
 
-Reasoning: I don't like the "no pages were found" all by itself, because it
-blindly rewords the meaning of ENOENT. ENOENT is merely the closest
-symbol we have. So we use ENOENT and that's fine, but the descriptive text 
-should describe what really happened, which is "no pages were moved". If we had 
-an ENOPAGESMOVED then we'd use that. :)
+> +{
+> +       struct files_struct *files;
+> +       struct file *file;
+> +       int ret = 0;
+> +
+> +       files = get_files_struct(child);
+> +       if (!files)
+> +               return -ENOENT;
+> +
+> +       spin_lock(&files->file_lock);
+> +       file = fcheck_files(files, fd);
+> +       if (!file)
+> +               ret = -EBADF;
+> +       else
+> +               get_file(file);
+> +       spin_unlock(&files->file_lock);
+> +       put_files_struct(files);
+> +
+> +       if (ret)
+> +               goto out;
+> +
+> +       ret = get_unused_fd_flags(0);
 
-thanks,
--- 
-John Hubbard
-NVIDIA
+You're hardcoding the flags for the fd as 0, which means that there is
+no way for the caller to enable O_CLOEXEC on the fd in a way that is
+race-free against a concurrent execve(). If you can't easily plumb
+through an O_CLOEXEC flag from userspace to here, you should probably
+hardcode O_CLOEXEC here.
+
+> +       if (ret >= 0)
+> +               fd_install(ret, file);
+> +
+> +       fput(file);
+
+Annoyingly, this isn't how fd_install() works. fd_install() has
+slightly weird semantics and consumes the reference passed to it, so
+this should be:
+
+  if (ret >= 0)
+    fd_install(ret, file);
+  else
+    fput(file);
+
+> +out:
+> +       return ret;
+> +}
