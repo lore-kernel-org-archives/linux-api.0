@@ -1,65 +1,93 @@
-From: Michal Hocko <mhocko@kernel.org>
-Subject: Re: [PATCH] move_pages.2: not return ENOENT if the page are already
- on the target nodes
-Date: Fri, 6 Dec 2019 10:45:34 +0100
-Message-ID: <20191206094534.GL28317@dhcp22.suse.cz>
-References: <1575596090-115377-1-git-send-email-yang.shi@linux.alibaba.com>
- <0dc96e40-5f2b-a2fe-6e5f-b6f3d5e9ebde@nvidia.com>
+From: Oleg Nesterov <oleg@redhat.com>
+Subject: Re: [RFC PATCH] ptrace: add PTRACE_GETFD request
+Date: Fri, 6 Dec 2019 13:23:11 +0100
+Message-ID: <20191206122311.GA820@redhat.com>
+References: <20191205234450.GA26369@ircssh-2.c.rugged-nimbus-611.internal>
+ <20191206082539.gmefytwu3ylixj5d@wittgenstein>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20191206082539.gmefytwu3ylixj5d@wittgenstein>
 Content-Disposition: inline
-In-Reply-To: <0dc96e40-5f2b-a2fe-6e5f-b6f3d5e9ebde@nvidia.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: John Hubbard <jhubbard@nvidia.com>
-Cc: Yang Shi <yang.shi@linux.alibaba.com>, mtk.manpages@gmail.com, cl@linux.com, cai@lca.pw, akpm@linux-foundation.org, linux-man@vger.kernel.org, linux-api@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org
+To: Christian Brauner <christian.brauner@ubuntu.com>
+Cc: Sargun Dhillon <sargun@sargun.me>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, tycho@tycho.ws
 List-Id: linux-api@vger.kernel.org
 
-On Fri 06-12-19 00:25:53, John Hubbard wrote:
-> On 12/5/19 5:34 PM, Yang Shi wrote:
-> > Since commit e78bbfa82624 ("mm: stop returning -ENOENT
-> > from sys_move_pages() if nothing got migrated"), move_pages doesn't
-> > return -ENOENT anymore if the pages are already on the target nodes, but
-> > this change is never reflected in manpage.
-> > 
-> > Cc: Michael Kerrisk <mtk.manpages@gmail.com>
-> > Cc: Christoph Lameter <cl@linux.com>
-> > Cc: John Hubbard <jhubbard@nvidia.com>
-> > Cc: Michal Hocko <mhocko@suse.com>
-> > Cc: Qian Cai <cai@lca.pw>
-> > Signed-off-by: Yang Shi <yang.shi@linux.alibaba.com>
-> > ---
-> >   man2/move_pages.2 | 5 ++---
-> >   1 file changed, 2 insertions(+), 3 deletions(-)
-> > 
-> > diff --git a/man2/move_pages.2 b/man2/move_pages.2
-> > index 2d96468..2a2f3cd 100644
-> > --- a/man2/move_pages.2
-> > +++ b/man2/move_pages.2
-> > @@ -192,9 +192,8 @@ was specified or an attempt was made to migrate pages of a kernel thread.
-> >   One of the target nodes is not online.
-> >   .TP
-> >   .B ENOENT
-> > -No pages were found that require moving.
-> > -All pages are either already
-> > -on the target node, not present, had an invalid address or could not be
-> > +No pages were found.
-> > +All pages are either not present, had an invalid address or could not be
-> >   moved because they were mapped by multiple processes.
-> >   .TP
-> >   .B EPERM
-> > 
-> 
-> whoa, hold on. If I'm reading through the various error paths correctly, then this
-> code is *never* going to return ENOENT for the whole function. It can fill in that
-> value per-page, in the status array, but that's all. Did I get that right?
+> On Thu, Dec 05, 2019 at 11:44:53PM +0000, Sargun Dhillon wrote:
+>
+> > +static int ptrace_getfd(struct task_struct *child, unsigned long fd)
+> > +{
+> > +=09struct files_struct *files;
+> > +=09struct file *file;
+> > +=09int ret =3D 0;
+> > +
+> > +=09files =3D get_files_struct(child);
+> > +=09if (!files)
+> > +=09=09return -ENOENT;
+> > +
+> > +=09spin_lock(&files->file_lock);
+> > +=09file =3D fcheck_files(files, fd);
+> > +=09if (!file)
+> > +=09=09ret =3D -EBADF;
+> > +=09else
+> > +=09=09get_file(file);
+> > +=09spin_unlock(&files->file_lock);
+> > +=09put_files_struct(files);
 
-You are right. Both store_status and do_move_pages_to_node do overwrite
-the error code. So you are right that ENOENT return value is not
-possible. I haven't checked since when this is the case. This whole
-syscall is a disaster from the API and documentation POV.
+may be someone can finally create a helper for this, it can have more users=
+.
+say,
+=09struct file *get_task_file(task, fd)
+=09{
+=09=09struct file *file =3D NULL;
 
-Btw. Page states error codes could see some refinements as well.
--- 
-Michal Hocko
-SUSE Labs
+=09=09task_lock(task);
+=09=09rcu_read_lock();
+=09=09if (task->files) {
+=09=09=09file =3D fcheck_files(task->files, fd);
+=09=09=09if (file)
+=09=09=09=09get_file(file);
+=09=09}
+=09=09rcu_read_unlock();
+=09=09task_unlock(task);
+
+=09=09return file;
+=09}
+
+
+no need to get/put files_struct, no need to take ->file_lock.
+
+> > +
+> > +=09if (ret)
+> > +=09=09goto out;
+> > +
+> > +=09ret =3D get_unused_fd_flags(0);
+> > +=09if (ret >=3D 0)
+> > +=09=09fd_install(ret, file);
+> > +
+> > +=09fput(file);
+
+this looks wrong or I am totally confused...
+
+=09if (ret >=3D 0)
+=09=09fd_install(file);
+=09else
+=09=09fput(file);
+
+?
+
+> > @@ -1265,7 +1299,8 @@ SYSCALL_DEFINE4(ptrace, long, request, long, pid,=
+ unsigned long, addr,
+> >  =09}
+> > =20
+> >  =09ret =3D ptrace_check_attach(child, request =3D=3D PTRACE_KILL ||
+> > -=09=09=09=09  request =3D=3D PTRACE_INTERRUPT);
+> > +=09=09=09=09  request =3D=3D PTRACE_INTERRUPT ||
+> > +=09=09=09=09  request =3D=3D PTRACE_GETFD);
+
+Hmm. not sure why do you want this... But OK, we do not need to stop the tr=
+acee.
+
+Oleg.
