@@ -1,44 +1,46 @@
-From: David Howells <dhowells@redhat.com>
-Subject: Re: [RFC PATCH 04/10] pipe: Use head and tail pointers for the ring, not cursor and length [ver #2]
-Date: Fri, 06 Dec 2019 22:15:27 +0000
-Message-ID: <21300.1575670527@warthog.procyon.org.uk>
-References: <20191206214725.GA2108@latitude> <157186182463.3995.13922458878706311997.stgit@warthog.procyon.org.uk> <157186186167.3995.7568100174393739543.stgit@warthog.procyon.org.uk>
+From: Johannes Hirte <johannes.hirte@datenkhaos.de>
+Subject: Re: [RFC PATCH 04/10] pipe: Use head and tail pointers for the ring,
+ not cursor and length [ver #2]
+Date: Sat, 7 Dec 2019 01:00:30 +0100
+Message-ID: <20191207000015.GA1757@latitude>
+References: <157186182463.3995.13922458878706311997.stgit@warthog.procyon.org.uk>
+ <157186186167.3995.7568100174393739543.stgit@warthog.procyon.org.uk>
+ <20191206214725.GA2108@latitude>
+ <CAHk-=wga0MPEH5hsesi4Cy+fgaaKENMYpbg2kK8UA0qE3iupgw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191206214725.GA2108@latitude>
-Content-ID: <21299.1575670527.1@warthog.procyon.org.uk>
+Content-Disposition: inline
+In-Reply-To: <CAHk-=wga0MPEH5hsesi4Cy+fgaaKENMYpbg2kK8UA0qE3iupgw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Johannes Hirte <johannes.hirte@datenkhaos.de>
-Cc: dhowells@redhat.com, torvalds@linux-foundation.org, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: David Howells <dhowells@redhat.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Peter Zijlstra <peterz@infradead.org>, Nicolas Dichtel <nicolas.dichtel@6wind.com>, raven@themaw.net, Christian Brauner <christian@brauner.io>, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block <linux-block@vger.kernel.org>, LSM List <linux-security-module@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Johannes Hirte <johannes.hirte@datenkhaos.de> wrote:
+On 2019 Dez 06, Linus Torvalds wrote:
+> On Fri, Dec 6, 2019 at 1:47 PM Johannes Hirte
+> <johannes.hirte@datenkhaos.de> wrote:
+> >
+> > This change breaks firefox on my system. I've noticed that some pages
+> > doesn't load correctly anymore (e.g. facebook, spiegel.de). The pages
+> > start loading and than stop. Looks like firefox is waiting for some
+> > dynamic loading content. I've bisected to this commit, but can't revert
+> > because of conflicts.
+> 
+> Can you check the current git tree, and see if we've fixed it for you.
+> There are several fixes there, one being the (currently) topmost
+> commit 76f6777c9cc0 ("pipe: Fix iteration end check in
+> fuse_dev_splice_write()").
+> 
+> I _just_ pushed out that one, so check that you get it - it sometimes
+> takes a couple of minutes for the public-facing git servers to mirror
+> out. I doubt that's the one that would fix firefox, but still..
+> 
+>                Linus
 
-> > Convert pipes to use head and tail pointers for the buffer ring rather =
-than
-> > pointer and length as the latter requires two atomic ops to update (or =
-a
-> > combined op) whereas the former only requires one.
->=20
-> This change breaks firefox on my system. I've noticed that some pages
-> doesn't load correctly anymore (e.g. facebook, spiegel.de). The pages
-> start loading and than stop. Looks like firefox is waiting for some
-> dynamic loading content. I've bisected to this commit, but can't revert
-> because of conflicts.
+Tested with 5.4.0-11505-g347f56fb3890 and still the same wrong behavior.
+Reliable testcase is facebook, where timeline isn't updated with firefox.
 
-There are a number of patches committed to upstream in the last couple of d=
-ays
-that might fix your problem.  See:
-
-=09https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/log/
-
-and look for:
-
-=09pipe: Fix iteration end check in fuse_dev_splice_write()
-=09pipe: fix incorrect caching of pipe state over pipe_wait()
-=09pipe: Fix missing mask update after pipe_wait()
-=09pipe: Remove assertion from pipe_poll()
-
-David
+-- 
+Regards,
+  Johannes Hirte
