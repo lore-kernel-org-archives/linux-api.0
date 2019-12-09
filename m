@@ -1,57 +1,61 @@
-From: Wu Hao <hao.wu@intel.com>
-Subject: Re: [PATCH v6 0/2] add performance reporting support to FPGA DFL
- drivers
-Date: Mon, 9 Dec 2019 10:45:27 +0800
-Message-ID: <20191209024527.GA22625@hao-dev>
-References: <1573622695-25607-1-git-send-email-hao.wu@intel.com>
- <20191125033412.GB890@hao-dev>
- <20191125080127.GC1809@willie-the-truck>
- <20191125080839.GA6227@hao-dev>
+From: Sargun Dhillon <sargun@sargun.me>
+Subject: [PATCH v2 0/4] Add ptrace get_fd request
+Date: Mon, 9 Dec 2019 07:04:50 +0000
+Message-ID: <20191209070446.GA32336@ircssh-2.c.rugged-nimbus-611.internal>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20191125080839.GA6227@hao-dev>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Will Deacon <will@kernel.org>
-Cc: mdf@kernel.org, mark.rutland@arm.com, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, atull@kernel.org, gregkh@linuxfoundation.org
+To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org
+Cc: tycho@tycho.ws, jannh@google.com, cyphar@cyphar.com, christian.brauner@ubuntu.com, oleg@redhat.com, luto@amacapital.net, viro@zeniv.linux.org.uk
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Nov 25, 2019 at 04:08:39PM +0800, Wu Hao wrote:
-> On Mon, Nov 25, 2019 at 08:01:28AM +0000, Will Deacon wrote:
-> > On Mon, Nov 25, 2019 at 11:34:12AM +0800, Wu Hao wrote:
-> > > Hi Will and Mark,
-> > > 
-> > > Could you please help us on review this patchset? as this patchset mainly 
-> > > introduced a new perf driver following the similar way as drivers/perf/*.
-> > 
-> > Why is it not under drivers/perf/, then?
-> 
-> Hi Will
-> 
-> Thanks for the quick response. This is one sub feature for DFL based FPGAs,
-> and we plan to put this sub feature together with others, including related
-> documentation. It only registers a standard perf pmu for its userspace
-> interfaces.
-> 
-> > 
-> > > This patchset has been submitted for a long time but didn't receive any
-> > > comment after v4. we appreciate any review comments! thanks in advance. :)
-> > 
-> > Hmm, not sure I saw the previous versions. Guessing I wasn't on cc?
-> 
-> We switched to perf API from v4, and started ccing you and Mark from v5. :)
+This patchest introduces a mechanism to capture file descriptors from other
+processes via ptrace. Although this can be achieved using SCM_RIGHTS, and
+parasitic code injection, this offers a slightly more straightforward
+mechainsm. It also does not mutate the tracee in any way, nor does it
+require that the tracee is stopped, as to avoid causing issues with
+attaching debuggers or runtimes that expect syscalls to be preemptible, or
+return within a specific amount of time.
 
-Hi Will
+It has an options mechanism that's only usable to set CLOEXEC on the fd,
+but I'm thinking that it could be extended to other aspects. For example,
+for sockets, one could want to scrub the cgroup information.
 
-Did you get a chance to look into this patchset?
+In the future, the API may not require ptrace attachment, or seizing, but
+right now it does as a matter of safety.
 
-Thanks
-Hao
+Changes since the RFC v1:
 
-> 
-> Thanks
-> Hao
-> 
-> > 
-> > Will
+ * Introduce a new helper to fs/file.c to fetch a file descriptor from
+   any process. It largely uses the code suggested by Oleg, with a few
+   changes to fix locking
+ * It uses an extensible options struct to supply the FD, and option.
+ * I added a sample, using the code from the user-ptrace sample
+
+Sargun Dhillon (4):
+  vfs, fdtable: Add get_task_file helper
+  ptrace: add PTRACE_GETFD request to fetch file descriptors from
+    tracees
+  samples: split generalized user-trap code into helper file
+  samples: Add example of using PTRACE_GETFD in conjunction with user
+    trap
+
+ fs/file.c                          |  19 +++
+ include/linux/fdtable.h            |  10 ++
+ include/uapi/linux/ptrace.h        |  15 +++
+ kernel/ptrace.c                    |  35 +++++-
+ samples/seccomp/.gitignore         |   1 +
+ samples/seccomp/Makefile           |  15 ++-
+ samples/seccomp/user-trap-helper.c |  84 +++++++++++++
+ samples/seccomp/user-trap-helper.h |  13 ++
+ samples/seccomp/user-trap-ptrace.c | 193 +++++++++++++++++++++++++++++
+ samples/seccomp/user-trap.c        |  85 +------------
+ 10 files changed, 382 insertions(+), 88 deletions(-)
+ create mode 100644 samples/seccomp/user-trap-helper.c
+ create mode 100644 samples/seccomp/user-trap-helper.h
+ create mode 100644 samples/seccomp/user-trap-ptrace.c
+
+-- 
+2.20.1
