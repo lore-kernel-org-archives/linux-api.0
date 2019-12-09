@@ -1,192 +1,163 @@
-From: Christian Brauner <christian.brauner@ubuntu.com>
-Subject: Re: [PATCH v2 2/4] ptrace: add PTRACE_GETFD request to fetch file
- descriptors from tracees
-Date: Mon, 9 Dec 2019 12:23:23 +0100
-Message-ID: <20191209112323.crydahewnjxejizq@wittgenstein>
-References: <20191209070621.GA32450@ircssh-2.c.rugged-nimbus-611.internal>
- <20191209093944.g6lgt2cqkec7eaym@wittgenstein>
- <CAMp4zn8_CxB6C=4Myw7DrmWg5w3Qm+FwYVTQLnbCEBJXL4UKzg@mail.gmail.com>
+From: Vlastimil Babka <vbabka@suse.cz>
+Subject: Re: [v4 PATCH] mm: move_pages: return valid node id in status if the
+ page is already on the target node
+Date: Mon, 9 Dec 2019 16:21:31 +0100
+Message-ID: <ef6467ec-a568-d5df-9427-716cb56869d2@suse.cz>
+References: <1575584353-125392-1-git-send-email-yang.shi@linux.alibaba.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAMp4zn8_CxB6C=4Myw7DrmWg5w3Qm+FwYVTQLnbCEBJXL4UKzg@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Sargun Dhillon <sargun@sargun.me>
-Cc: LKML <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel@vger.kernel.org, Tycho Andersen <tycho@tycho.ws>, Jann Horn <jannh@google.com>, cyphar@cyphar.com, oleg@redhat.com, Andy Lutomirski <luto@amacapital.net>, viro@zeniv.linux.org.uk
+Content-Transfer-Encoding: 7bit
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <1575584353-125392-1-git-send-email-yang.shi@linux.alibaba.com>
+Content-Language: en-US
+Sender: stable-owner@vger.kernel.org
+To: Yang Shi <yang.shi@linux.alibaba.com>, fabecassis@nvidia.com, jhubbard@nvidia.com, mhocko@suse.com, cl@linux.com, mgorman@techsingularity.net, akpm@linux-foundation.org
+Cc: linux-mm@kvack.org, linux-kernel@vger.kernel.org, stable@vger.kernel.org, Linux API <linux-api@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Dec 09, 2019 at 02:55:40AM -0800, Sargun Dhillon wrote:
-> On Mon, Dec 9, 2019 at 1:39 AM Christian Brauner
-> <christian.brauner@ubuntu.com> wrote:
-> >
-> > Hey Sargun,
-> >
-> > Thanks for the patch!
-> Thanks for your review.
+Boo, v4 and nobody suggested CCing linux-api yet?
+Doing that and not trimming the reply, for reference.
+
+On 12/5/19 11:19 PM, Yang Shi wrote:
+> Felix Abecassis reports move_pages() would return random status if the
+> pages are already on the target node by the below test program:
 > 
-> >
-> > Why not simply accept O_CLOEXEC as flag? If that's not possible for some
-> > reason I'd say
-> >
-> I did this initially. My plan is to use this options field for other
-> (future) things as well, like
-> clearing (cgroup) metadata on sockets (assuming we figure out a safe
-> way to do it).
-> If we use O_CLOEXEC, it takes up an arbitrary bit which is different
-> on different
-> platforms, and working around that seems messy
+> ---8<---
 > 
-> Another way around this would be to have two members. One member which
-> is something
-> like fdflags, that just takes the fd flags, like O_CLOEXEC, and then
-> later on, we can add
-> an options member to enable these future use cases.
-
-That honestly sounds cleaner to me. I really don't like this flag
-explosion for CLOEXEC. Every new kernel api we add that deals with fds
-comes with their own set of CLOEXEC flags. The minimal thing to do is
-to make sure that at least
-NEW_CLOEXEC_THINGY == O_CLOEXEC.
-
+> int main(void)
+> {
+> 	const long node_id = 1;
+> 	const long page_size = sysconf(_SC_PAGESIZE);
+> 	const int64_t num_pages = 8;
 > 
-> What do you think?
-> > #define PTRACE_GETFD_O_CLOEXEC  O_CLOEXEC       /* open the fd with cloexec */
-> >
-> > is the right thing to do. This is fairly common:
-> >
-> > include/uapi/linux/timerfd.h:#define TFD_CLOEXEC O_CLOEXEC
-> > include/uapi/drm/drm.h:#define DRM_CLOEXEC O_CLOEXEC
-> > include/linux/userfaultfd_k.h:#define UFFD_CLOEXEC O_CLOEXEC
-> > include/linux/eventfd.h:#define EFD_CLOEXEC O_CLOEXEC
-> > include/uapi/linux/eventpoll.h:#define EPOLL_CLOEXEC O_CLOEXEC
-> > include/uapi/linux/inotify.h:/* For O_CLOEXEC and O_NONBLOCK */
-> > include/uapi/linux/inotify.h:#define IN_CLOEXEC O_CLOEXEC
-> > include/uapi/linux/mount.h:#define OPEN_TREE_CLOEXEC    O_CLOEXEC       /* Close the file on execve() */
-> >
-> > You can also add a compile-time assert to ptrace like we did for
-> > fs/namespace.c's OPEN_TREE_CLOEXEC:
-> >         BUILD_BUG_ON(OPEN_TREE_CLOEXEC != O_CLOEXEC);
-> >
-> > And I'd remove the  _O if you go with a separate flag, i.e.:
-> >
-> > #define PTRACE_GETFD_CLOEXEC    O_CLOEXEC       /* open the fd with cloexec */
-> >
-> > > +
-> > > +struct ptrace_getfd_args {
-> > > +     __u32 fd;       /* the tracee's file descriptor to get */
-> > > +     __u32 options;
-> >
-> > Nit and I'm not set on it at all but "flags" might just be better.
-> >
-> > > +} __attribute__((packed));
-> >
-> > What's the benefit in using __attribute__((packed)) here? Seems to me that:
-> >
-> 1) Are we always to assume that the compiler will give us 4-byte
-> alignment (paranoia)
-> 2) If we're to add new non-4-byte aligned members later on, is it
-> kosher to add packed
-> later on?
-
-Using explicit padding is the more common way we do this (e.g. struct
-open_how, struct statx and a lot more add explicit padding to guarantee
-alignment.).
-
+> 	unsigned long nodemask =  1 << node_id;
+> 	long ret = set_mempolicy(MPOL_BIND, &nodemask, sizeof(nodemask));
+> 	if (ret < 0)
+> 		return (EXIT_FAILURE);
 > 
-> > +struct ptrace_getfd_args {
-> > +       __u32 fd;       /* the tracee's file descriptor to get */
-> > +       __u32 options;
-> > +};
-> >
-> > would just work fine.
-> >
-> > > +
-> > >  /*
-> > >   * These values are stored in task->ptrace_message
-> > >   * by tracehook_report_syscall_* to describe the current syscall-stop.
-> > > diff --git a/kernel/ptrace.c b/kernel/ptrace.c
-> > > index cb9ddcc08119..8f619dceac6f 100644
-> > > --- a/kernel/ptrace.c
-> > > +++ b/kernel/ptrace.c
-> > > @@ -31,6 +31,7 @@
-> > >  #include <linux/cn_proc.h>
-> > >  #include <linux/compat.h>
-> > >  #include <linux/sched/signal.h>
-> > > +#include <linux/fdtable.h>
-> > >
-> > >  #include <asm/syscall.h>     /* for syscall_get_* */
-> > >
-> > > @@ -994,6 +995,33 @@ ptrace_get_syscall_info(struct task_struct *child, unsigned long user_size,
-> > >  }
-> > >  #endif /* CONFIG_HAVE_ARCH_TRACEHOOK */
-> > >
-> > > +static int ptrace_getfd(struct task_struct *child, unsigned long user_size,
-> > > +                     void __user *datavp)
-> > > +{
-> > > +     struct ptrace_getfd_args args;
-> > > +     unsigned int fd_flags = 0;
-> > > +     struct file *file;
-> > > +     int ret;
-> > > +
-> > > +     ret = copy_struct_from_user(&args, sizeof(args), datavp, user_size);
-> > > +     if (ret)
-> > > +             goto out;
-> >
-> > Why is this goto out and not just return ret?
-> >
-> > > +     if ((args.options & ~(PTRACE_GETFD_O_CLOEXEC)) != 0)
-> > > +             return -EINVAL;
-> > > +     if (args.options & PTRACE_GETFD_O_CLOEXEC)
-> > > +             fd_flags &= O_CLOEXEC;
-> > > +     file = get_task_file(child, args.fd);
-> > > +     if (!file)
-> > > +             return -EBADF;
-> > > +     ret = get_unused_fd_flags(fd_flags);
-> >
-> > Why isn't that whole thing just:
-> >
-> > ret = get_unused_fd_flags(fd_flags & {PTRACE_GETFD_}O_CLOEXEC);
-> >
-> > > +     if (ret >= 0)
-> > > +             fd_install(ret, file);
-> > > +     else
-> > > +             fput(file);
-> > > +out:
-> > > +     return ret;
-> > > +}
-> >
-> > So sm like:
-> >
-> > static int ptrace_getfd(struct task_struct *child, unsigned long user_size,
-> >                         void __user *datavp)
-> > {
-> >         struct ptrace_getfd_args args;
-> >         unsigned int fd_flags = 0;
-> >         struct file *file;
-> >         int ret;
-> >
-> >         ret = copy_struct_from_user(&args, sizeof(args), datavp, user_size);
-> >         if (ret)
-> >                 return ret;
-> >
-> >         if ((args.options & ~(PTRACE_GETFD_O_CLOEXEC)) != 0)
-> >                 return -EINVAL;
-> >
-> >         file = get_task_file(child, args.fd);
-> >         if (!file)
-> >                 return -EBADF;
-> >
-> >         /* PTRACE_GETFD_CLOEXEC == O_CLOEXEC */
-> >         ret = get_unused_fd_flags(fd_flags & PTRACE_GETFD_O_CLOEXEC);
-> Wouldn't this always be 0, since fd_flags is always 0?
+> 	void **pages = malloc(sizeof(void*) * num_pages);
+> 	for (int i = 0; i < num_pages; ++i) {
+> 		pages[i] = mmap(NULL, page_size, PROT_WRITE | PROT_READ,
+> 				MAP_PRIVATE | MAP_POPULATE | MAP_ANONYMOUS,
+> 				-1, 0);
+> 		if (pages[i] == MAP_FAILED)
+> 			return (EXIT_FAILURE);
+> 	}
+> 
+> 	ret = set_mempolicy(MPOL_DEFAULT, NULL, 0);
+> 	if (ret < 0)
+> 		return (EXIT_FAILURE);
+> 
+> 	int *nodes = malloc(sizeof(int) * num_pages);
+> 	int *status = malloc(sizeof(int) * num_pages);
+> 	for (int i = 0; i < num_pages; ++i) {
+> 		nodes[i] = node_id;
+> 		status[i] = 0xd0; /* simulate garbage values */
+> 	}
+> 
+> 	ret = move_pages(0, num_pages, pages, nodes, status, MPOL_MF_MOVE);
+> 	printf("move_pages: %ld\n", ret);
+> 	for (int i = 0; i < num_pages; ++i)
+> 		printf("status[%d] = %d\n", i, status[i]);
+> }
+> ---8<---
+> 
+> Then running the program would return nonsense status values:
+> $ ./move_pages_bug
+> move_pages: 0
+> status[0] = 208
+> status[1] = 208
+> status[2] = 208
+> status[3] = 208
+> status[4] = 208
+> status[5] = 208
+> status[6] = 208
+> status[7] = 208
+> 
+> This is because the status is not set if the page is already on the
+> target node, but move_pages() should return valid status as long as it
+> succeeds.  The valid status may be errno or node id.
+> 
+> We can't simply initialize status array to zero since the pages may be
+> not on node 0.  Fix it by updating status with node id which the page is
+> already on.
+> 
+> Fixes: a49bd4d71637 ("mm, numa: rework do_pages_move")
+> Reported-by: Felix Abecassis <fabecassis@nvidia.com>
+> Tested-by: Felix Abecassis <fabecassis@nvidia.com>
+> Suggested-by: Michal Hocko <mhocko@suse.com>
+> Reviewed-by: John Hubbard <jhubbard@nvidia.com>
+> Acked-by: Christoph Lameter <cl@linux.com>
+> Cc: Vlastimil Babka <vbabka@suse.cz>
+> Cc: Mel Gorman <mgorman@techsingularity.net>
+> Cc: <stable@vger.kernel.org> 4.17+
+> Signed-off-by: Yang Shi <yang.shi@linux.alibaba.com>
 
-You're right, I missed this. Maybe rather:
+Reviewed-by: Vlastimil Babka <vbabka@suse.cz>
 
-if (args.options & PTRACE_GETFD_O_CLOEXEC)
-        fd_flags |= O_CLOEXEC;
-
-Another question is if we shouldn't just make them cloexec by default?
-The notifier fds and pidfds already are.
-
-Christian
+> ---
+> v4: * Fixed the comments from Christopher and John and added their Acked-by
+>       and Reviewed-by.
+> v3: * Adopted the suggestion from Michal.
+> v2: * Correted the return value when add_page_for_migration() returns 1.
+> 
+>  mm/migrate.c | 23 +++++++++++++++++------
+>  1 file changed, 17 insertions(+), 6 deletions(-)
+> 
+> diff --git a/mm/migrate.c b/mm/migrate.c
+> index a8f87cb..6b44818f 100644
+> --- a/mm/migrate.c
+> +++ b/mm/migrate.c
+> @@ -1512,9 +1512,11 @@ static int do_move_pages_to_node(struct mm_struct *mm,
+>  /*
+>   * Resolves the given address to a struct page, isolates it from the LRU and
+>   * puts it to the given pagelist.
+> - * Returns -errno if the page cannot be found/isolated or 0 when it has been
+> - * queued or the page doesn't need to be migrated because it is already on
+> - * the target node
+> + * Returns:
+> + *     errno - if the page cannot be found/isolated
+> + *     0 - when it doesn't have to be migrated because it is already on the
+> + *         target node
+> + *     1 - when it has been queued
+>   */
+>  static int add_page_for_migration(struct mm_struct *mm, unsigned long addr,
+>  		int node, struct list_head *pagelist, bool migrate_all)
+> @@ -1553,7 +1555,7 @@ static int add_page_for_migration(struct mm_struct *mm, unsigned long addr,
+>  	if (PageHuge(page)) {
+>  		if (PageHead(page)) {
+>  			isolate_huge_page(page, pagelist);
+> -			err = 0;
+> +			err = 1;
+>  		}
+>  	} else {
+>  		struct page *head;
+> @@ -1563,7 +1565,7 @@ static int add_page_for_migration(struct mm_struct *mm, unsigned long addr,
+>  		if (err)
+>  			goto out_putpage;
+>  
+> -		err = 0;
+> +		err = 1;
+>  		list_add_tail(&head->lru, pagelist);
+>  		mod_node_page_state(page_pgdat(head),
+>  			NR_ISOLATED_ANON + page_is_file_cache(head),
+> @@ -1640,8 +1642,17 @@ static int do_pages_move(struct mm_struct *mm, nodemask_t task_nodes,
+>  		 */
+>  		err = add_page_for_migration(mm, addr, current_node,
+>  				&pagelist, flags & MPOL_MF_MOVE_ALL);
+> -		if (!err)
+> +
+> +		if (!err) {
+> +			/* The page is already on the target node */
+> +			err = store_status(status, i, current_node, 1);
+> +			if (err)
+> +				goto out_flush;
+>  			continue;
+> +		} else if (err > 0) {
+> +			/* The page is successfully queued for migration */
+> +			continue;
+> +		}
+>  
+>  		err = store_status(status, i, err, 1);
+>  		if (err)
+> 
