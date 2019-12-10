@@ -1,8 +1,8 @@
-From: Tycho Andersen <tycho@tycho.ws>
+From: Christian Brauner <christian.brauner@ubuntu.com>
 Subject: Re: [PATCH v2 4/4] samples: Add example of using PTRACE_GETFD in
  conjunction with user trap
-Date: Tue, 10 Dec 2019 09:13:00 -0700
-Message-ID: <20191210161300.GE22803@cisco>
+Date: Tue, 10 Dec 2019 17:38:46 +0100
+Message-ID: <20191210163845.6hbbawr6cpt5dp5c@wittgenstein>
 References: <20191209070646.GA32477@ircssh-2.c.rugged-nimbus-611.internal>
  <20191209192959.GB10721@redhat.com>
  <BE3E056F-0147-4A00-8FF7-6CC9DE02A30C@ubuntu.com>
@@ -10,13 +10,13 @@ References: <20191209070646.GA32477@ircssh-2.c.rugged-nimbus-611.internal>
  <20191210111051.j5opodgjalqigx6q@wittgenstein>
  <CAMp4zn84YQHz62x-nxZFBgMEW9AiMt75q_rO83uaGg=YtyKV-w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
 In-Reply-To: <CAMp4zn84YQHz62x-nxZFBgMEW9AiMt75q_rO83uaGg=YtyKV-w@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Sargun Dhillon <sargun@sargun.me>
-Cc: Christian Brauner <christian.brauner@ubuntu.com>, Oleg Nesterov <oleg@redhat.com>, LKML <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel@vger.kernel.org, Jann Horn <jannh@google.com>, cyphar@cyphar.com, Andy Lutomirski <luto@amacapital.net>, viro@zeniv.linux.org.uk, Jed Davis <jld@mozilla.com>, Gian-Carlo Pascutto <gpascutto@mozilla.com>, Emilio Cobos =?iso-8859-1?Q?=C1lvarez?= <ealvarez@mozilla.com>, Florian Weimer <fweimer@redhat.com>
+Cc: Oleg Nesterov <oleg@redhat.com>, LKML <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel@vger.kernel.org, Tycho Andersen <tycho@tycho.ws>, Jann Horn <jannh@google.com>, cyphar@cyphar.com, Andy Lutomirski <luto@amacapital.net>, viro@zeniv.linux.org.uk, Jed Davis <jld@mozilla.com>, Gian-Carlo Pascutto <gpascutto@mozilla.com>, Emilio Cobos =?utf-8?Q?=C3=81lvarez?= <ealvarez@mozilla.com>, Florian Weimer <fweimer@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
 On Tue, Dec 10, 2019 at 08:07:45AM -0800, Sargun Dhillon wrote:
@@ -75,21 +75,67 @@ On Tue, Dec 10, 2019 at 08:07:45AM -0800, Sargun Dhillon wrote:
 > >
 > > Christian
 > Doesn't SECCOMP_IOCTL_NOTIF_GET_FD have some ambiguity to it?
+
+As Tycho mentioned, this is why we have a the tid of the calling task
+but we also have a cookie per request.
+The cookie is useful so that you can do
+- receive request <chocolate> cookie
+- open(/proc/<pid>{/mem})
+- verify <chocolate> cookie still exists
+  - <chocolate> cookie still exists -> file descriptor refers to correct
+    task
+  - <chocolate> cookie gone -> task has been recycled
+
 > Specifically, because
-> multiple processes can have the same notifier attached to them?
-
-The id member corresponds to a particular syscall from a particular
-pid, which makes it unique.
-
-> If we
+> multiple processes can have the same notifier attached to them? If we
 > choose to go down the
 > route of introducing an ioctl (which I'm not at all opposed to), I
 > would rather do it on pidfd. We
 > can then plumb seccomp notifier to send pidfd instead of raw pid. In
 > the mean time, folks
 > can just open up /proc/${PID}, and do the check cookie dance.
+> 
+> Christian,
+> As the maintainer of pidfd, what do you think?
 
-This might be more generally useful, the problem is synchronization, I
-guess.
+Let me quote what I wrote to the Mozilla folks today. :)
 
-Tycho
+"(One thing that always strikes me is that if my pidfd patches would've
+been ready back when we did the seccomp notifier we could've added a
+pidfd argument to the seccomp notifier kernel struct and if a flag is
+set given back a pidfd alongside the notifier fd. This way none of this
+revalidting the id stuff would've been necessary and you could also
+safely translate from a pidfd into a /proc/<pid> directory to e.g. open
+/proc/<pid>/mem. Anyway, that's not out of scope. One could still
+write a patch for that to add a pidfd argument under a new flag to the
+kernel struct. Should be rather trivial.)"
+
+So yeah, it crossed my mind. ;)
+
+I really would like to have this placed under a flag though...
+I very much dislike the idea of receiving any kind of fd
+- _especially a pidfd_ - implicitly.
+So ideally this would be a flag to the receive ioctl(). Kees just got my
+SECCOMP_USER_NOTIF_FLAG_CONTINUE patchset merged for v5.5 which adds the
+
+#define SECCOMP_USER_NOTIF_FLAG_CONTINUE (1UL << 0)
+
+flag which when set in the send case (i.e. supervisor -> kernel) will
+cause the syscall to be executed.
+
+When we add a new flag to get a pidfd it might make sense to rename the
+CONTINUE flag in master before v5.5 is out to
+
+#define SECCOMP_USER_NOTIF_SEND_FLAG_CONTINUE (1UL << 0)
+
+to indicate that it's only valid for the SEND ioctl().
+
+Then we add
+
+#define SECCOMP_USER_NOTIF_RECV_FLAG_PIDFD (1UL << 0)
+
+for v5.6. This way send and receive flags are named differently for
+clarity. (I don't care about the name being long. Other people might
+though _shrug_.)
+
+Christian
