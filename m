@@ -1,66 +1,86 @@
-From: Oleksandr Natalenko <oleksandr@redhat.com>
-Subject: Re: [PATCH NOTFORMERGE 0/5] Extend remote madvise API to KSM hints
-Date: Tue, 10 Dec 2019 11:49:39 +0100
-Message-ID: <20191210104939.jauw5hnv3smhtvtr@butterfly.localdomain>
-References: <20190616085835.953-1-oleksandr@redhat.com>
+From: Christian Brauner <christian.brauner@ubuntu.com>
+Subject: Re: [PATCH v2 4/4] samples: Add example of using PTRACE_GETFD in
+ conjunction with user trap
+Date: Tue, 10 Dec 2019 12:10:52 +0100
+Message-ID: <20191210111051.j5opodgjalqigx6q@wittgenstein>
+References: <20191209070646.GA32477@ircssh-2.c.rugged-nimbus-611.internal>
+ <20191209192959.GB10721@redhat.com>
+ <BE3E056F-0147-4A00-8FF7-6CC9DE02A30C@ubuntu.com>
+ <20191209204635.GC10721@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20190616085835.953-1-oleksandr@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <20191209204635.GC10721@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Minchan Kim <minchan@kernel.org>
-Cc: linux-kernel@vger.kernel.org, linux-mm@kvack.org, linux-api@vger.kernel.org
+To: Oleg Nesterov <oleg@redhat.com>
+Cc: Sargun Dhillon <sargun@sargun.me>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, tycho@tycho.ws, jannh@google.com, cyphar@cyphar.com, luto@amacapital.net, viro@zeniv.linux.org.uk, Jed Davis <jld@mozilla.com>, Gian-Carlo Pascutto <gpascutto@mozilla.com>, Emilio Cobos =?utf-8?Q?=C3=81lvarez?= <ealvarez@mozilla.com>, Florian Weimer <fweimer@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Hello, Minchan.
+[I'm expanding the Cc to a few Firefox and glibc people since we've been
+ been talking about replacing SECCOMP_RET_TRAP with
+ SECCOMP_RET_USER_NOTIF for a bit now because the useage of
+ SECCOMP_RET_TRAP in the broker blocks desirable core glibc changes.
+ Even if just for their lurking pleasure. :)]
 
-On Sun, Jun 16, 2019 at 10:58:30AM +0200, Oleksandr Natalenko wrote:
-> This is a set of commits based on our discussion on your submission [1].
->=20
-> First 2 implement minor suggestions just for you to not forget to take
-> them into account.
->=20
-> uio.h inclusion was needed for me to be able to compile your series
-> successfully. Also please note I had to enable "Transparent Hugepage
-> Support" as well as "Enable idle page tracking" options, otherwise the
-> build failed. I guess this can be addressed by you better since the
-> errors are introduced with MADV_COLD introduction.
->=20
-> Last 2 commits are the actual KSM hints enablement. The first one
-> implements additional check for the case where the mmap_sem is taken for
-> write, and the second one just allows KSM hints to be used by the remote
-> interface.
->=20
-> I'm not Cc'ing else anyone except two mailing lists to not distract
-> people unnecessarily. If you are fine with this addition, please use it
-> for your next iteration of process_madvise(), and then you'll Cc all the
-> people needed.
->=20
-> Thanks.
->=20
-> [1] https://lore.kernel.org/lkml/20190531064313.193437-1-minchan@kernel.o=
-rg/
->=20
-> Oleksandr Natalenko (5):
->   mm: rename madvise_core to madvise_common
->   mm: revert madvise_inject_error line split
->   mm: include uio.h to madvise.c
->   mm/madvise: employ mmget_still_valid for write lock
->   mm/madvise: allow KSM hints for remote API
->=20
->  mm/madvise.c | 23 ++++++++++++++---------
->  1 file changed, 14 insertions(+), 9 deletions(-)
->=20
-> --=20
-> 2.22.0
->=20
+On Mon, Dec 09, 2019 at 09:46:35PM +0100, Oleg Nesterov wrote:
+> On 12/09, Christian Brauner wrote:
+> >
+> > >We can
+> > >add PTRACE_DETACH_ASYNC, but this makes me think that PTRACE_GETFD has
+> > >nothing
+> > >to do with ptrace.
+> > >
+> > >May be a new syscall which does ptrace_may_access() + get_task_file()
+> > >will make
+> > >more sense?
+> > >
+> > >Oleg.
+> > 
+> > Once more since this annoying app uses html by default...
+> > 
+> > But we can already do this right now and this is just an improvement.
+> > That's a bit rich for a new syscall imho...
+> 
+> I agree, and I won't really argue...
+> 
+> but the changelog in 2/4 says
+> 
+> 	The requirement that the tracer has attached to the tracee prior to the
+> 	capture of the file descriptor may be lifted at a later point.
+> 
+> so may be we should do this right now?
 
-This is a gentle ping. Are you still planning to submit process_madvise() s=
-olution?
+I think so, yes. This doesn't strike me as premature optimization but
+rather as a core design questions.
 
---=20
-  Best regards,
-    Oleksandr Natalenko (post-factum)
-    Senior Software Maintenance Engineer
+> 
+> plus this part
+> 
+> 	@@ -1265,7 +1295,8 @@ SYSCALL_DEFINE4(ptrace, long, request, long, pid, unsigned long, addr,
+> 		}
+> 	 
+> 		ret = ptrace_check_attach(child, request == PTRACE_KILL ||
+> 	-				  request == PTRACE_INTERRUPT);
+> 	+				  request == PTRACE_INTERRUPT ||
+> 	+				  request == PTRACE_GETFD);
+> 
+> actually means "we do not need ptrace, but we do not know where else we
+> can add this fd_install(get_task_file()).
+
+Right, I totally get your point and I'm not a fan of this being in
+ptrace() either.
+
+The way I see is is that the main use-case for this feature is the
+seccomp notifier and I can see this being useful. So the right place to
+plumb this into might just be seccomp and specifically on to of the
+notifier.
+If we don't care about getting and setting fds at random points of
+execution it might make sense to add new options to the notify ioctl():
+
+#define SECCOMP_IOCTL_NOTIF_GET_FD	SECCOMP_IOWR(3, <sensible struct>)
+#define SECCOMP_IOCTL_NOTIF_SET_FD	SECCOMP_IOWR(4, <sensible struct>)
+
+which would let you get and set fds while the supervisee is blocked.
+
+Christian
