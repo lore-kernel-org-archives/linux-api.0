@@ -1,61 +1,36 @@
-From: Oleg Nesterov <oleg@redhat.com>
-Subject: Re: [PATCH v2 4/4] samples: Add example of using PTRACE_GETFD in
- conjunction with user trap
-Date: Mon, 9 Dec 2019 21:46:35 +0100
-Message-ID: <20191209204635.GC10721@redhat.com>
-References: <20191209070646.GA32477@ircssh-2.c.rugged-nimbus-611.internal>
- <20191209192959.GB10721@redhat.com>
- <BE3E056F-0147-4A00-8FF7-6CC9DE02A30C@ubuntu.com>
+From: syzbot <syzbot+92f32d4e21fb246d31a2@syzkaller.appspotmail.com>
+Subject: Re: BUG: unable to handle kernel NULL pointer dereference in mem16_serial_out
+Date: Mon, 09 Dec 2019 17:38:01 -0800
+Message-ID: <00000000000003cc8505994f9036@google.com>
+References: <00000000000044a65205994a7e13@google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="UTF-8"; format=flowed; delsp=yes
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <BE3E056F-0147-4A00-8FF7-6CC9DE02A30C@ubuntu.com>
-Content-Disposition: inline
+In-Reply-To: <00000000000044a65205994a7e13@google.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian.brauner@ubuntu.com>
-Cc: Sargun Dhillon <sargun@sargun.me>, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, tycho@tycho.ws, jannh@google.com, cyphar@cyphar.com, luto@amacapital.net, viro@zeniv.linux.org.uk
+To: andriy.shevchenko@linux.intel.com, asierra@xes-inc.com, corbet@lwn.net, ext-kimmo.rautkoski@vaisala.com, gregkh@linuxfoundation.org, jslaby@suse.com, kai.heng.feng@canonical.com, linux-api@vger.kernel.org, linux-doc@vger.kernel.org, linux-kernel@vger.kernel.org, linux-serial@vger.kernel.org, mika.westerberg@linux.intel.com, paulburton@kernel.org, peter@hurleysoftware.com, sr@denx.de, syzkaller-bugs@googlegroups.com, yamada.masahiro@socionext.com, yegorslists@googlemail.com
 List-Id: linux-api@vger.kernel.org
 
-On 12/09, Christian Brauner wrote:
->
-> >We can
-> >add PTRACE_DETACH_ASYNC, but this makes me think that PTRACE_GETFD has
-> >nothing
-> >to do with ptrace.
-> >
-> >May be a new syscall which does ptrace_may_access() + get_task_file()
-> >will make
-> >more sense?
-> >
-> >Oleg.
->=20
-> Once more since this annoying app uses html by default...
->=20
-> But we can already do this right now and this is just an improvement.
-> That's a bit rich for a new syscall imho...
+syzbot has bisected this bug to:
 
-I agree, and I won't really argue...
+commit bd94c4077a0b2ecc35562c294f80f3659ecd8499
+Author: Masahiro Yamada <yamada.masahiro@socionext.com>
+Date:   Wed Oct 28 03:46:05 2015 +0000
 
-but the changelog in 2/4 says
+     serial: support 16-bit register interface for console
 
-=09The requirement that the tracer has attached to the tracee prior to the
-=09capture of the file descriptor may be lifted at a later point.
+bisection log:  https://syzkaller.appspot.com/x/bisect.txt?x=13723196e00000
+start commit:   e42617b8 Linux 5.5-rc1
+git tree:       upstream
+final crash:    https://syzkaller.appspot.com/x/report.txt?x=10f23196e00000
+console output: https://syzkaller.appspot.com/x/log.txt?x=17723196e00000
+kernel config:  https://syzkaller.appspot.com/x/.config?x=3754e2c78c1adb82
+dashboard link: https://syzkaller.appspot.com/bug?extid=92f32d4e21fb246d31a2
+syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=136f7e41e00000
+C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=112b7c82e00000
 
-so may be we should do this right now?
+Reported-by: syzbot+92f32d4e21fb246d31a2@syzkaller.appspotmail.com
+Fixes: bd94c4077a0b ("serial: support 16-bit register interface for  
+console")
 
-plus this part
-
-=09@@ -1265,7 +1295,8 @@ SYSCALL_DEFINE4(ptrace, long, request, long, pid, =
-unsigned long, addr,
-=09=09}
-=09=20
-=09=09ret =3D ptrace_check_attach(child, request =3D=3D PTRACE_KILL ||
-=09-=09=09=09=09  request =3D=3D PTRACE_INTERRUPT);
-=09+=09=09=09=09  request =3D=3D PTRACE_INTERRUPT ||
-=09+=09=09=09=09  request =3D=3D PTRACE_GETFD);
-
-actually means "we do not need ptrace, but we do not know where else we
-can add this fd_install(get_task_file()).
-
-Oleg.
+For information about bisection process see: https://goo.gl/tpsmEJ#bisection
