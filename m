@@ -1,33 +1,105 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH for 5.5 0/3] Restartable Sequences Fixes
-Date: Wed, 11 Dec 2019 11:17:10 -0500
-Message-ID: <20191211161713.4490-1-mathieu.desnoyers@efficios.com>
+Subject: [PATCH for 5.5 3/3] rseq/selftests: Fix: Namespace gettid() for compatibility with glibc 2.30
+Date: Wed, 11 Dec 2019 11:17:13 -0500
+Message-ID: <20191211161713.4490-4-mathieu.desnoyers@efficios.com>
+References: <20191211161713.4490-1-mathieu.desnoyers@efficios.com>
 Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <20191211161713.4490-1-mathieu.desnoyers@efficios.com>
 Sender: stable-owner@vger.kernel.org
 To: Thomas Gleixner <tglx@linutronix.de>
-Cc: linux-kernel@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, "H . Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>, linux-api@vger.kernel.org, stable@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: linux-kernel@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, "H . Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>, linux-api@vger.kernel.org, stable@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Shuah Khan <skhan@linuxfoundation.org>, "Tommi T . Rantala" <tommi.t.rantala@nokia.com>, Dmitry Vyukov <dvyukov@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+glibc 2.30 introduces gettid() in public headers, which clashes with
+the internal static definition within rseq selftests.
 
-Here is a repost of a small set of rseq fixes which was initially posted
-in September 2019. It now targets kernel 5.5. Those should be backported
-to stable kernels >= 4.18.
+Rename gettid() to rseq_gettid() to eliminate this symbol name clash.
 
-Thanks,
-
-Mathieu
-
-Mathieu Desnoyers (3):
-  rseq: Fix: Reject unknown flags on rseq unregister
-  rseq: Fix: Unregister rseq for clone CLONE_VM
-  rseq/selftests: Fix: Namespace gettid() for compatibility with glibc
-    2.30
-
- include/linux/sched.h                     |  4 ++--
- kernel/rseq.c                             |  2 ++
+Reported-by: Tommi T. Rantala <tommi.t.rantala@nokia.com>
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Shuah Khan <skhan@linuxfoundation.org>
+Cc: Tommi T. Rantala <tommi.t.rantala@nokia.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Peter Zijlstra (Intel) <peterz@infradead.org>
+Cc: "Paul E. McKenney" <paulmck@linux.ibm.com>
+Cc: Boqun Feng <boqun.feng@gmail.com>
+Cc: "H . Peter Anvin" <hpa@zytor.com>
+Cc: Paul Turner <pjt@google.com>
+Cc: Dmitry Vyukov <dvyukov@google.com>
+Cc: <stable@vger.kernel.org>	# v4.18+
+---
  tools/testing/selftests/rseq/param_test.c | 18 ++++++++++--------
- 3 files changed, 14 insertions(+), 10 deletions(-)
+ 1 file changed, 10 insertions(+), 8 deletions(-)
 
+diff --git a/tools/testing/selftests/rseq/param_test.c b/tools/testing/selftests/rseq/param_test.c
+index eec2663261f2..e8a657a5f48a 100644
+--- a/tools/testing/selftests/rseq/param_test.c
++++ b/tools/testing/selftests/rseq/param_test.c
+@@ -15,7 +15,7 @@
+ #include <errno.h>
+ #include <stddef.h>
+ 
+-static inline pid_t gettid(void)
++static inline pid_t rseq_gettid(void)
+ {
+ 	return syscall(__NR_gettid);
+ }
+@@ -373,11 +373,12 @@ void *test_percpu_spinlock_thread(void *arg)
+ 		rseq_percpu_unlock(&data->lock, cpu);
+ #ifndef BENCHMARK
+ 		if (i != 0 && !(i % (reps / 10)))
+-			printf_verbose("tid %d: count %lld\n", (int) gettid(), i);
++			printf_verbose("tid %d: count %lld\n",
++				       (int) rseq_gettid(), i);
+ #endif
+ 	}
+ 	printf_verbose("tid %d: number of rseq abort: %d, signals delivered: %u\n",
+-		       (int) gettid(), nr_abort, signals_delivered);
++		       (int) rseq_gettid(), nr_abort, signals_delivered);
+ 	if (!opt_disable_rseq && thread_data->reg &&
+ 	    rseq_unregister_current_thread())
+ 		abort();
+@@ -454,11 +455,12 @@ void *test_percpu_inc_thread(void *arg)
+ 		} while (rseq_unlikely(ret));
+ #ifndef BENCHMARK
+ 		if (i != 0 && !(i % (reps / 10)))
+-			printf_verbose("tid %d: count %lld\n", (int) gettid(), i);
++			printf_verbose("tid %d: count %lld\n",
++				       (int) rseq_gettid(), i);
+ #endif
+ 	}
+ 	printf_verbose("tid %d: number of rseq abort: %d, signals delivered: %u\n",
+-		       (int) gettid(), nr_abort, signals_delivered);
++		       (int) rseq_gettid(), nr_abort, signals_delivered);
+ 	if (!opt_disable_rseq && thread_data->reg &&
+ 	    rseq_unregister_current_thread())
+ 		abort();
+@@ -605,7 +607,7 @@ void *test_percpu_list_thread(void *arg)
+ 	}
+ 
+ 	printf_verbose("tid %d: number of rseq abort: %d, signals delivered: %u\n",
+-		       (int) gettid(), nr_abort, signals_delivered);
++		       (int) rseq_gettid(), nr_abort, signals_delivered);
+ 	if (!opt_disable_rseq && rseq_unregister_current_thread())
+ 		abort();
+ 
+@@ -796,7 +798,7 @@ void *test_percpu_buffer_thread(void *arg)
+ 	}
+ 
+ 	printf_verbose("tid %d: number of rseq abort: %d, signals delivered: %u\n",
+-		       (int) gettid(), nr_abort, signals_delivered);
++		       (int) rseq_gettid(), nr_abort, signals_delivered);
+ 	if (!opt_disable_rseq && rseq_unregister_current_thread())
+ 		abort();
+ 
+@@ -1011,7 +1013,7 @@ void *test_percpu_memcpy_buffer_thread(void *arg)
+ 	}
+ 
+ 	printf_verbose("tid %d: number of rseq abort: %d, signals delivered: %u\n",
+-		       (int) gettid(), nr_abort, signals_delivered);
++		       (int) rseq_gettid(), nr_abort, signals_delivered);
+ 	if (!opt_disable_rseq && rseq_unregister_current_thread())
+ 		abort();
+ 
 -- 
 2.17.1
