@@ -1,44 +1,18 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH for 5.5 2/3] rseq: Fix: Unregister rseq for clone CLONE_VM
-Date: Wed, 11 Dec 2019 11:17:12 -0500
-Message-ID: <20191211161713.4490-3-mathieu.desnoyers@efficios.com>
-References: <20191211161713.4490-1-mathieu.desnoyers@efficios.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191211161713.4490-1-mathieu.desnoyers@efficios.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Subject: [PATCH for 5.5 1/1] rseq/selftests: Turn off timeout setting
+Date: Wed, 11 Dec 2019 11:28:57 -0500
+Message-ID: <20191211162857.11354-1-mathieu.desnoyers@efficios.com>
+Return-path: <stable-owner@vger.kernel.org>
+Sender: stable-owner@vger.kernel.org
 To: Thomas Gleixner <tglx@linutronix.de>
-Cc: linux-kernel@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, "H . Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>, linux-api@vger.kernel.org, stable@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Dmitry Vyukov <dvyukov@google.com>, Neel Natu <neelnatu@google.com>
+Cc: linux-kernel@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, "H . Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>, linux-api@vger.kernel.org, stable@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Shuah Khan <skhan@linuxfoundation.org>, Dmitry Vyukov <dvyukov@google.com>
 List-Id: linux-api@vger.kernel.org
 
-It has been reported by Google that rseq is not behaving properly
-with respect to clone when CLONE_VM is used without CLONE_THREAD.
-It keeps the prior thread's rseq TLS registered when the TLS of the
-thread has moved, so the kernel can corrupt the TLS of the parent.
-
-The approach of clearing the per task-struct rseq registration
-on clone with CLONE_THREAD flag is incomplete. It does not cover
-the use-case of clone with CLONE_VM set, but without CLONE_THREAD.
-
-Here is the rationale for unregistering rseq on clone with CLONE_VM
-flag set:
-
-1) CLONE_THREAD requires CLONE_SIGHAND, which requires CLONE_VM to be
-   set. Therefore, just checking for CLONE_VM covers all CLONE_THREAD
-   uses. There is no point in checking for both CLONE_THREAD and
-   CLONE_VM,
-
-2) There is the possibility of an unlikely scenario where CLONE_SETTLS
-   is used without CLONE_VM. In order to be an issue, it would require
-   that the rseq TLS is in a shared memory area.
-
-   I do not plan on adding CLONE_SETTLS to the set of clone flags which
-   unregister RSEQ, because it would require that we also unregister RSEQ
-   on set_thread_area(2) and arch_prctl(2) ARCH_SET_FS for completeness.
-   So rather than doing a partial solution, it appears better to let
-   user-space explicitly perform rseq unregistration across clone if
-   needed in scenarios where CLONE_VM is not set.
+As the rseq selftests can run for a long period of time, disable the
+timeout that the general selftests have.
 
 Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Shuah Khan <skhan@linuxfoundation.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>
 Cc: Peter Zijlstra (Intel) <peterz@infradead.org>
 Cc: "Paul E. McKenney" <paulmck@linux.ibm.com>
@@ -46,30 +20,17 @@ Cc: Boqun Feng <boqun.feng@gmail.com>
 Cc: "H . Peter Anvin" <hpa@zytor.com>
 Cc: Paul Turner <pjt@google.com>
 Cc: Dmitry Vyukov <dvyukov@google.com>
-Cc: Neel Natu <neelnatu@google.com>
-Cc: linux-api@vger.kernel.org
-Cc: <stable@vger.kernel.org>	# v4.18+
 ---
- include/linux/sched.h | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ tools/testing/selftests/rseq/settings | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 tools/testing/selftests/rseq/settings
 
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 467d26046416..716ad1d8d95e 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -1929,11 +1929,11 @@ static inline void rseq_migrate(struct task_struct *t)
- 
- /*
-  * If parent process has a registered restartable sequences area, the
-- * child inherits. Only applies when forking a process, not a thread.
-+ * child inherits. Unregister rseq for a clone with CLONE_VM set.
-  */
- static inline void rseq_fork(struct task_struct *t, unsigned long clone_flags)
- {
--	if (clone_flags & CLONE_THREAD) {
-+	if (clone_flags & CLONE_VM) {
- 		t->rseq = NULL;
- 		t->rseq_sig = 0;
- 		t->rseq_event_mask = 0;
+diff --git a/tools/testing/selftests/rseq/settings b/tools/testing/selftests/rseq/settings
+new file mode 100644
+index 000000000000..e7b9417537fb
+--- /dev/null
++++ b/tools/testing/selftests/rseq/settings
+@@ -0,0 +1 @@
++timeout=0
 -- 
 2.17.1
