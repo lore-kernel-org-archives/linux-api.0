@@ -1,109 +1,59 @@
-From: Sasha Levin <sashal@kernel.org>
-Subject: [PATCH AUTOSEL 5.4 026/134] selftests/powerpc: Fixup clobbers for TM tests
-Date: Wed, 11 Dec 2019 10:10:02 -0500
-Message-ID: <20191211151150.19073-26-sashal@kernel.org>
-References: <20191211151150.19073-1-sashal@kernel.org>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH for 5.4 0/3] Restartable Sequences Fixes
+Date: Wed, 11 Dec 2019 10:28:22 -0500 (EST)
+Message-ID: <211848436.2172.1576078102568.JavaMail.zimbra@efficios.com>
+References: <20190917182959.16333-1-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191211151150.19073-1-sashal@kernel.org>
+In-Reply-To: <20190917182959.16333-1-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Cc: Michael Ellerman <mpe@ellerman.id.au>, Sasha Levin <sashal@kernel.org>, linux-api@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>, Shuah Khan <skhan@linuxfoundation.org>
+Cc: linux-kernel <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, paulmck <paulmck@linux.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, "H. Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>, linux-api <linux-api@vger.kernel.org>, stable <stable@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Michael Ellerman <mpe@ellerman.id.au>
+Hi Thomas,
 
-[ Upstream commit a02cbc7ffe529ed58b6bbe54652104fc2c88bd77 ]
+I thought those rseq fixes posted in September were in the -tip tree, but it
+seems that they never made it to mainline.
 
-Some of our TM (Transactional Memory) tests, list "r1" (the stack
-pointer) as a clobbered register.
+Now Shuah Khan noticed the issue with gettid() compatibility with glibc
+2.30+. This series contained that fix.
 
-GCC >= 9 doesn't accept this, and the build breaks:
+Should I re-post it, or is this series on track to get into mainline
+at some point ?
 
-  ptrace-tm-spd-tar.c: In function 'tm_spd_tar':
-  ptrace-tm-spd-tar.c:31:2: error: listing the stack pointer register 'r1' in a clobber list is deprecated [-Werror=deprecated]
-     31 |  asm __volatile__(
-        |  ^~~
-  ptrace-tm-spd-tar.c:31:2: note: the value of the stack pointer after an 'asm' statement must be the same as it was before the statement
+Thanks,
 
-We do have some fairly large inline asm blocks in these tests, and
-some of them do change the value of r1. However they should all return
-to C with the value in r1 restored, so I think it's legitimate to say
-r1 is not clobbered.
+Mathieu
 
-As Segher points out, the r1 clobbers may have been added because of
-the use of `or 1,1,1`, however that doesn't actually clobber r1.
+----- On Sep 17, 2019, at 2:29 PM, Mathieu Desnoyers mathieu.desnoyers@efficios.com wrote:
 
-Segher also points out that some of these tests do clobber LR, because
-they call functions, and that is not listed in the clobbers, so add
-that where appropriate.
+> Hi,
+> 
+> Here is a small set of rseq fixes aiming Linux 5.4. Those should be
+> backported to stable kernels >= 4.18.
+> 
+> Thanks,
+> 
+> Mathieu
+> 
+> Mathieu Desnoyers (3):
+>  rseq: Fix: Reject unknown flags on rseq unregister
+>  rseq: Fix: Unregister rseq for clone CLONE_VM
+>  rseq/selftests: Fix: Namespace gettid() for compatibility with glibc
+>    2.30
+> 
+> include/linux/sched.h                     |  4 ++--
+> kernel/rseq.c                             |  2 ++
+> tools/testing/selftests/rseq/param_test.c | 18 ++++++++++--------
+> 3 files changed, 14 insertions(+), 10 deletions(-)
+> 
+> --
+> 2.17.1
 
-Signed-off-by: Michael Ellerman <mpe@ellerman.id.au>
-Link: https://lore.kernel.org/r/20191029095324.14669-1-mpe@ellerman.id.au
-Signed-off-by: Sasha Levin <sashal@kernel.org>
----
- tools/testing/selftests/powerpc/ptrace/ptrace-tm-spd-tar.c | 2 +-
- tools/testing/selftests/powerpc/ptrace/ptrace-tm-spd-vsx.c | 4 ++--
- tools/testing/selftests/powerpc/ptrace/ptrace-tm-tar.c     | 2 +-
- tools/testing/selftests/powerpc/ptrace/ptrace-tm-vsx.c     | 4 ++--
- 4 files changed, 6 insertions(+), 6 deletions(-)
-
-diff --git a/tools/testing/selftests/powerpc/ptrace/ptrace-tm-spd-tar.c b/tools/testing/selftests/powerpc/ptrace/ptrace-tm-spd-tar.c
-index 25e23e73c72e6..2ecfa1158e2bc 100644
---- a/tools/testing/selftests/powerpc/ptrace/ptrace-tm-spd-tar.c
-+++ b/tools/testing/selftests/powerpc/ptrace/ptrace-tm-spd-tar.c
-@@ -73,7 +73,7 @@ trans:
- 		[sprn_texasr]"i"(SPRN_TEXASR), [tar_1]"i"(TAR_1),
- 		[dscr_1]"i"(DSCR_1), [tar_2]"i"(TAR_2), [dscr_2]"i"(DSCR_2),
- 		[tar_3]"i"(TAR_3), [dscr_3]"i"(DSCR_3)
--		: "memory", "r0", "r1", "r3", "r4", "r5", "r6"
-+		: "memory", "r0", "r3", "r4", "r5", "r6", "lr"
- 		);
- 
- 	/* TM failed, analyse */
-diff --git a/tools/testing/selftests/powerpc/ptrace/ptrace-tm-spd-vsx.c b/tools/testing/selftests/powerpc/ptrace/ptrace-tm-spd-vsx.c
-index f603fe5a445b3..6f7fb51f08099 100644
---- a/tools/testing/selftests/powerpc/ptrace/ptrace-tm-spd-vsx.c
-+++ b/tools/testing/selftests/powerpc/ptrace/ptrace-tm-spd-vsx.c
-@@ -74,8 +74,8 @@ trans:
- 		"3: ;"
- 		: [res] "=r" (result), [texasr] "=r" (texasr)
- 		: [sprn_texasr] "i"  (SPRN_TEXASR)
--		: "memory", "r0", "r1", "r3", "r4",
--		"r7", "r8", "r9", "r10", "r11"
-+		: "memory", "r0", "r3", "r4",
-+		  "r7", "r8", "r9", "r10", "r11", "lr"
- 		);
- 
- 	if (result) {
-diff --git a/tools/testing/selftests/powerpc/ptrace/ptrace-tm-tar.c b/tools/testing/selftests/powerpc/ptrace/ptrace-tm-tar.c
-index e0d37f07bdeba..46ef378a15ecc 100644
---- a/tools/testing/selftests/powerpc/ptrace/ptrace-tm-tar.c
-+++ b/tools/testing/selftests/powerpc/ptrace/ptrace-tm-tar.c
-@@ -62,7 +62,7 @@ trans:
- 		[sprn_ppr]"i"(SPRN_PPR), [sprn_texasr]"i"(SPRN_TEXASR),
- 		[tar_1]"i"(TAR_1), [dscr_1]"i"(DSCR_1), [tar_2]"i"(TAR_2),
- 		[dscr_2]"i"(DSCR_2), [cptr1] "b" (&cptr[1])
--		: "memory", "r0", "r1", "r3", "r4", "r5", "r6"
-+		: "memory", "r0", "r3", "r4", "r5", "r6"
- 		);
- 
- 	/* TM failed, analyse */
-diff --git a/tools/testing/selftests/powerpc/ptrace/ptrace-tm-vsx.c b/tools/testing/selftests/powerpc/ptrace/ptrace-tm-vsx.c
-index 8027457b97b7c..70ca01234f79c 100644
---- a/tools/testing/selftests/powerpc/ptrace/ptrace-tm-vsx.c
-+++ b/tools/testing/selftests/powerpc/ptrace/ptrace-tm-vsx.c
-@@ -62,8 +62,8 @@ trans:
- 		"3: ;"
- 		: [res] "=r" (result), [texasr] "=r" (texasr)
- 		: [sprn_texasr] "i"  (SPRN_TEXASR), [cptr1] "b" (&cptr[1])
--		: "memory", "r0", "r1", "r3", "r4",
--		"r7", "r8", "r9", "r10", "r11"
-+		: "memory", "r0", "r3", "r4",
-+		  "r7", "r8", "r9", "r10", "r11", "lr"
- 		);
- 
- 	if (result) {
 -- 
-2.20.1
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
