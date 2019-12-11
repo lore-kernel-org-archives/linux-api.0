@@ -1,64 +1,44 @@
-From: Sasha Levin <sashal@kernel.org>
-Subject: [PATCH AUTOSEL 5.4 038/134] selftests/powerpc: Skip tm-signal-sigreturn-nt if TM not available
-Date: Wed, 11 Dec 2019 10:10:14 -0500
-Message-ID: <20191211151150.19073-38-sashal@kernel.org>
-References: <20191211151150.19073-1-sashal@kernel.org>
-Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [PATCH for 5.5 1/3] rseq: Fix: Reject unknown flags on rseq unregister
+Date: Wed, 11 Dec 2019 11:17:11 -0500
+Message-ID: <20191211161713.4490-2-mathieu.desnoyers@efficios.com>
+References: <20191211161713.4490-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191211151150.19073-1-sashal@kernel.org>
+In-Reply-To: <20191211161713.4490-1-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, stable@vger.kernel.org
-Cc: Michael Ellerman <mpe@ellerman.id.au>, Sasha Levin <sashal@kernel.org>, linux-api@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-kernel@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, "H . Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>, linux-api@vger.kernel.org, stable@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 List-Id: linux-api@vger.kernel.org
 
-From: Michael Ellerman <mpe@ellerman.id.au>
+It is preferrable to reject unknown flags within rseq unregistration
+rather than to ignore them. It is an oversight caused by the fact that
+the check for unknown flags is after the rseq unregister flag check.
 
-[ Upstream commit 505127068d9b705a6cf335143239db91bfe7bbe2 ]
-
-On systems where TM (Transactional Memory) is disabled the
-tm-signal-sigreturn-nt test causes a SIGILL:
-
-  test: tm_signal_sigreturn_nt
-  tags: git_version:7c202575ef63
-  !! child died by signal 4
-  failure: tm_signal_sigreturn_nt
-
-We should skip the test if TM is not available.
-
-Fixes: 34642d70ac7e ("selftests/powerpc: Add checks for transactional sigreturn")
-Signed-off-by: Michael Ellerman <mpe@ellerman.id.au>
-Link: https://lore.kernel.org/r/20191104233524.24348-1-mpe@ellerman.id.au
-Signed-off-by: Sasha Levin <sashal@kernel.org>
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Peter Zijlstra (Intel) <peterz@infradead.org>
+Cc: "Paul E. McKenney" <paulmck@linux.ibm.com>
+Cc: Boqun Feng <boqun.feng@gmail.com>
+Cc: "H . Peter Anvin" <hpa@zytor.com>
+Cc: Paul Turner <pjt@google.com>
+Cc: linux-api@vger.kernel.org
+Cc: <stable@vger.kernel.org>	# v4.18+
 ---
- tools/testing/selftests/powerpc/tm/tm-signal-sigreturn-nt.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ kernel/rseq.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/tools/testing/selftests/powerpc/tm/tm-signal-sigreturn-nt.c b/tools/testing/selftests/powerpc/tm/tm-signal-sigreturn-nt.c
-index 56fbf9f6bbf30..07c388147b75e 100644
---- a/tools/testing/selftests/powerpc/tm/tm-signal-sigreturn-nt.c
-+++ b/tools/testing/selftests/powerpc/tm/tm-signal-sigreturn-nt.c
-@@ -10,10 +10,12 @@
-  */
+diff --git a/kernel/rseq.c b/kernel/rseq.c
+index 27c48eb7de40..a4f86a9d6937 100644
+--- a/kernel/rseq.c
++++ b/kernel/rseq.c
+@@ -310,6 +310,8 @@ SYSCALL_DEFINE4(rseq, struct rseq __user *, rseq, u32, rseq_len,
+ 	int ret;
  
- #define _GNU_SOURCE
-+#include <stdio.h>
- #include <stdlib.h>
- #include <signal.h>
- 
- #include "utils.h"
-+#include "tm.h"
- 
- void trap_signal_handler(int signo, siginfo_t *si, void *uc)
- {
-@@ -29,6 +31,8 @@ int tm_signal_sigreturn_nt(void)
- {
- 	struct sigaction trap_sa;
- 
-+	SKIP_IF(!have_htm());
-+
- 	trap_sa.sa_flags = SA_SIGINFO;
- 	trap_sa.sa_sigaction = trap_signal_handler;
- 
+ 	if (flags & RSEQ_FLAG_UNREGISTER) {
++		if (flags & ~RSEQ_FLAG_UNREGISTER)
++			return -EINVAL;
+ 		/* Unregister rseq for current thread. */
+ 		if (current->rseq != rseq || !current->rseq)
+ 			return -EINVAL;
 -- 
-2.20.1
+2.17.1
