@@ -1,36 +1,62 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [PATCH for 5.5 1/1] rseq/selftests: Turn off timeout setting
-Date: Wed, 11 Dec 2019 11:28:57 -0500
-Message-ID: <20191211162857.11354-1-mathieu.desnoyers@efficios.com>
-Return-path: <stable-owner@vger.kernel.org>
-Sender: stable-owner@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Cc: linux-kernel@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, "H . Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>, linux-api@vger.kernel.org, stable@vger.kernel.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Shuah Khan <skhan@linuxfoundation.org>, Dmitry Vyukov <dvyukov@google.com>
+From: Dmitry Safonov <0x7f454c46@gmail.com>
+Subject: Re: [PATCHv8 00/34] kernel: Introduce Time Namespace
+Date: Wed, 11 Dec 2019 20:38:30 +0000
+Message-ID: <CAJwJo6ahGVHHgwFsPyjbY1PgmHs+D+A2Cma03ogvQGr+mPqYAw@mail.gmail.com>
+References: <20191112012724.250792-1-dima@arista.com> <20191121180555.GA440967@gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20191121180555.GA440967@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>, Andy Lutomirski <luto@kernel.org>, Ingo Molnar <mingo@redhat.com>
+Cc: Dmitry Safonov <dima@arista.com>, Andrei Vagin <avagin@gmail.com>, open list <linux-kernel@vger.kernel.org>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Vincenzo Frascino <vincenzo.frascino@arm.com>, Linux Containers <containers@lists.linux-foundation.org>, crml <criu@openvz.org>, Linux API <linux-api@vger.kernel.org>, X86 ML <x86@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-As the rseq selftests can run for a long period of time, disable the
-timeout that the general selftests have.
+Gentle ping, in case you have time to look at this.
 
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Shuah Khan <skhan@linuxfoundation.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Peter Zijlstra (Intel) <peterz@infradead.org>
-Cc: "Paul E. McKenney" <paulmck@linux.ibm.com>
-Cc: Boqun Feng <boqun.feng@gmail.com>
-Cc: "H . Peter Anvin" <hpa@zytor.com>
-Cc: Paul Turner <pjt@google.com>
-Cc: Dmitry Vyukov <dvyukov@google.com>
----
- tools/testing/selftests/rseq/settings | 1 +
- 1 file changed, 1 insertion(+)
- create mode 100644 tools/testing/selftests/rseq/settings
+On Thu, 21 Nov 2019 at 18:05, Andrei Vagin <avagin@gmail.com> wrote:
+>
+> Hi Thomas,
+>
+> What is your plan on this series? We know you are probably busy with
+> the next merge window. We just want to check that this is still in your
+> TODO list.
+>
+> On Tue, Nov 12, 2019 at 01:26:49AM +0000, Dmitry Safonov wrote:
+> >
+> > v7..v8 Changes:
+> > * Fix compile-time errors:
+> >   - on architectures without the support of time namespaces.
+> >   - when CONFIG_POSIX_TIMERS isn't set.
+> > * Added checks in selftests for CONFIG_POSIX_TIMERS.
+> > * Inline do_hres and do_coarse.
+> >   (And added Tested-by Vincenzo - thanks!)
+> > * Make TIME_NS depends on GENERIC_VDSO_TIME_NS and set it per-arch.
+> >
+> > [v1..v7 Changelogs is at the very bottom here]
+> >
+> > Our performance measurements show that the price of VDSO's clock_gettime()
+> > in a child time namespace is about 8% with a hot CPU cache and about 90%
+>
+> Here is a typo. The price of VDSO's clock_gettime() in a child time
+> namespace is about 12% with a cold CPU cache. The table with
+> measurements for a cold CPU cache contains correct data.
+>
+> > with a cold CPU cache. There is no performance regression for host
+> > processes outside time namespace on those tests.
+> >
+>
+> ....
+>
+> >
+> > Cold CPU cache (lesser tsc per cycle - the better):
+> >
+> >            | before    | CONFIG_TIME_NS=n | host      | inside timens
+> > --------------------------------------------------------------
+> > tsc        | 476       | 480              | 487       | 531
+> > stdev(tsc) | 0.6       | 1.3              | 4.3       | 5.7
+> > diff (%)   | 100       | 100.9            | 102       | 112
+> >
 
-diff --git a/tools/testing/selftests/rseq/settings b/tools/testing/selftests/rseq/settings
-new file mode 100644
-index 000000000000..e7b9417537fb
---- /dev/null
-+++ b/tools/testing/selftests/rseq/settings
-@@ -0,0 +1 @@
-+timeout=0
--- 
-2.17.1
+Thanks,
+             Dmitry
