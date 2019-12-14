@@ -1,85 +1,37 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCH] move_pages.2: not return ENOENT if the page are already
- on the target nodes
-Date: Sat, 14 Dec 2019 02:55:15 +0100
-Message-ID: <092adc11-7039-9343-7067-0e0199c9dc13@gmail.com>
-References: <1575596090-115377-1-git-send-email-yang.shi@linux.alibaba.com>
- <0dc96e40-5f2b-a2fe-6e5f-b6f3d5e9ebde@nvidia.com>
- <95170ea5-5b62-9168-fcd9-93b43330a1b4@linux.alibaba.com>
+From: Laurent Vivier <laurent@vivier.eu>
+Subject: Re: [PATCH v7 1/1] ns: add binfmt_misc to the user namespace
+Date: Sat, 14 Dec 2019 12:34:41 +0100
+Message-ID: <3205e74b-71f1-14f4-b784-d878b3ef697f@vivier.eu>
+References: <20191107140304.8426-1-laurent@vivier.eu>
+ <20191107140304.8426-2-laurent@vivier.eu>
+ <7cb245ed-f738-7991-a09b-b27152274b9f@vivier.eu>
+ <20191213185110.06b52cf4@md1za8fc.ad001.siemens.net>
+ <1576267177.4060.4.camel@HansenPartnership.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <95170ea5-5b62-9168-fcd9-93b43330a1b4@linux.alibaba.com>
-Content-Language: en-US
+In-Reply-To: <1576267177.4060.4.camel@HansenPartnership.com>
+Content-Language: fr
 Sender: linux-kernel-owner@vger.kernel.org
-To: Yang Shi <yang.shi@linux.alibaba.com>, John Hubbard <jhubbard@nvidia.com>, cl@linux.com, mhocko@suse.com, cai@lca.pw, akpm@linux-foundation.org
-Cc: mtk.manpages@gmail.com, linux-man@vger.kernel.org, linux-api@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org
+To: James Bottomley <James.Bottomley@HansenPartnership.com>, Henning Schild <henning.schild@siemens.com>
+Cc: linux-kernel@vger.kernel.org, Dmitry Safonov <dima@arista.com>, linux-fsdevel@vger.kernel.org, Eric Biederman <ebiederm@xmission.com>, linux-api@vger.kernel.org, Andrei Vagin <avagin@gmail.com>, =?UTF-8?Q?C=c3=a9dric_Le_Goater?= <clg@kaod.org>, Greg Kurz <groug@kaod.org>, Jann Horn <jannh@google.com>, containers@lists.linux-foundation.org, Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kiszka <jan.kiszka@siemens.com>
 List-Id: linux-api@vger.kernel.org
 
-On 12/6/19 6:26 PM, Yang Shi wrote:
-> 
-> 
-> On 12/6/19 12:25 AM, John Hubbard wrote:
->> On 12/5/19 5:34 PM, Yang Shi wrote:
->>> Since commit e78bbfa82624 ("mm: stop returning -ENOENT
->>> from sys_move_pages() if nothing got migrated"), move_pages doesn't
->>> return -ENOENT anymore if the pages are already on the target nodes, but
->>> this change is never reflected in manpage.
->>>
->>> Cc: Michael Kerrisk <mtk.manpages@gmail.com>
->>> Cc: Christoph Lameter <cl@linux.com>
->>> Cc: John Hubbard <jhubbard@nvidia.com>
->>> Cc: Michal Hocko <mhocko@suse.com>
->>> Cc: Qian Cai <cai@lca.pw>
->>> Signed-off-by: Yang Shi <yang.shi@linux.alibaba.com>
->>> ---
->>>   man2/move_pages.2 | 5 ++---
->>>   1 file changed, 2 insertions(+), 3 deletions(-)
->>>
->>> diff --git a/man2/move_pages.2 b/man2/move_pages.2
->>> index 2d96468..2a2f3cd 100644
->>> --- a/man2/move_pages.2
->>> +++ b/man2/move_pages.2
->>> @@ -192,9 +192,8 @@ was specified or an attempt was made to migrate 
->>> pages of a kernel thread.
->>>   One of the target nodes is not online.
->>>   .TP
->>>   .B ENOENT
->>> -No pages were found that require moving.
->>> -All pages are either already
->>> -on the target node, not present, had an invalid address or could not be
->>> +No pages were found.
->>> +All pages are either not present, had an invalid address or could 
->>> not be
->>>   moved because they were mapped by multiple processes.
->>>   .TP
->>>   .B EPERM
->>>
+Le 13/12/2019 à 20:59, James Bottomley a écrit :
+> On Fri, 2019-12-13 at 18:51 +0100, Henning Schild wrote:
+>> Hi all,
 >>
->> whoa, hold on. If I'm reading through the various error paths 
->> correctly, then this
->> code is *never* going to return ENOENT for the whole function. It can 
->> fill in that
->> value per-page, in the status array, but that's all. Did I get that 
->> right?
+>> that is a very useful contribution, which will hopefully be
+>> considered.
 > 
-> Nice catch. Yes, you are right.
-> 
->>
->> If so, we need to redo this part of the man page.
-> 
-> Yes.
+> I'm technically the maintainer on the you touched it last you own it
+> basis, so if Christian's concerns get addressed I'll shepherd it
+> upstream.
 
-So where are things at with this? Is an improved man-pages 
-patch on the way, or is some other action (on the API) planned?
+Thank you.
+
+I update this in the next days and re-send the patch.
 
 Thanks,
-
-Michael
-
-
--- 
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+Laurent
