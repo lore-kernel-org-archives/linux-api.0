@@ -1,52 +1,84 @@
-From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
-Subject: Re: [PATCH v7 1/1] ns: add binfmt_misc to the user namespace
-Date: Sat, 14 Dec 2019 13:32:26 +0100
-Message-ID: <CAKgNAkiaKJZMA0pzvwDa75CxfULTL1LmOZDzhW0Y5TmL7nBGZw@mail.gmail.com>
-References: <20191107140304.8426-1-laurent@vivier.eu> <20191107140304.8426-2-laurent@vivier.eu>
- <7cb245ed-f738-7991-a09b-b27152274b9f@vivier.eu> <20191213185110.06b52cf4@md1za8fc.ad001.siemens.net>
- <1576267177.4060.4.camel@HansenPartnership.com> <3205e74b-71f1-14f4-b784-d878b3ef697f@vivier.eu>
-Reply-To: mtk.manpages@gmail.com
+From: Rasmus Villemoes <linux@rasmusvillemoes.dk>
+Subject: Re: [PATCH] openat2: switch to __attribute__((packed)) for open_how
+Date: Sat, 14 Dec 2019 23:17:50 +0100
+Message-ID: <a328b91d-fd8f-4f27-b3c2-91a9c45f18c0@rasmusvillemoes.dk>
+References: <20191213222351.14071-1-cyphar@cyphar.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <3205e74b-71f1-14f4-b784-d878b3ef697f@vivier.eu>
+In-Reply-To: <20191213222351.14071-1-cyphar@cyphar.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Laurent Vivier <laurent@vivier.eu>
-Cc: James Bottomley <James.Bottomley@hansenpartnership.com>, Henning Schild <henning.schild@siemens.com>, lkml <linux-kernel@vger.kernel.org>, Dmitry Safonov <dima@arista.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, Eric Biederman <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, Andrei Vagin <avagin@gmail.com>, =?UTF-8?Q?C=C3=A9dric_Le_Goater?= <clg@kaod.org>, Greg Kurz <groug@kaod.org>, Jann Horn <jannh@google.com>, Containers <containers@lists.linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kiszka <jan.kiszka@siemens.com>
+To: Aleksa Sarai <cyphar@cyphar.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Shuah Khan <shuah@kernel.org>
+Cc: dev@opencontainers.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hello Laurent,
+On 13/12/2019 23.23, Aleksa Sarai wrote:
+> The design of the original open_how struct layout was such that it
+> ensured that there would be no un-labelled (and thus potentially
+> non-zero) padding to avoid issues with struct expansion, as well as
+> providing a uniform representation on all architectures (to avoid
+> complications with OPEN_HOW_SIZE versioning).
+> 
+> However, there were a few other desirable features which were not
+> fulfilled by the previous struct layout:
+> 
+>  * Adding new features (other than new flags) should always result in
+>    the struct getting larger. However, by including a padding field, it
+>    was possible for new fields to be added without expanding the
+>    structure. This would somewhat complicate version-number based
+>    checking of feature support.
+> 
+>  * A non-zero bit in __padding yielded -EINVAL when it should arguably
+>    have been -E2BIG (because the padding bits are effectively
+>    yet-to-be-used fields). However, the semantics are not entirely clear
+>    because userspace may expect -E2BIG to only signify that the
+>    structure is too big. It's much simpler to just provide the guarantee
+>    that new fields will always result in a struct size increase, and
+>    -E2BIG indicates you're using a field that's too recent for an older
+>    kernel.
 
-On Sat, 14 Dec 2019 at 12:35, Laurent Vivier <laurent@vivier.eu> wrote:
->
-> Le 13/12/2019 =C3=A0 20:59, James Bottomley a =C3=A9crit :
-> > On Fri, 2019-12-13 at 18:51 +0100, Henning Schild wrote:
-> >> Hi all,
-> >>
-> >> that is a very useful contribution, which will hopefully be
-> >> considered.
-> >
-> > I'm technically the maintainer on the you touched it last you own it
-> > basis, so if Christian's concerns get addressed I'll shepherd it
-> > upstream.
->
-> Thank you.
->
-> I update this in the next days and re-send the patch.
+And when the first extension adds another u64 field, that padding has to
+be added back in and checked for being 0, at which point the padding is
+again yet-to-be-used fields. So what exactly is the problem with
+returning EINVAL now?
 
-Would you also be so kind as to craft a patch for the
-user_namespaces(7) manual page describing the changes (sent to me,
-linux-man@vger.kernel.org, and the other parties already in CC)?
+>  * The padding wasted space needlessly, and would very likely not be
+>    used up entirely by future extensions for a long time (because it
+>    couldn't fit a u64).
 
-If you do not have the time to familiarize yourself with groff/man
-markup, a patch that uses plain text is fine; I can handle the
-formatting.
+Who knows, it does fit a u32. And if the struct is to be 8-byte aligned
+(see below), it doesn't actually waste space.
 
-Thanks,
+> diff --git a/include/uapi/linux/fcntl.h b/include/uapi/linux/fcntl.h
+> index d886bdb585e4..0e070c7f568a 100644
+> --- a/include/uapi/linux/fcntl.h
+> +++ b/include/uapi/linux/fcntl.h
+> @@ -109,17 +109,16 @@
+>   * O_TMPFILE} are set.
+>   *
+>   * @flags: O_* flags.
+> - * @mode: O_CREAT/O_TMPFILE file mode.
+>   * @resolve: RESOLVE_* flags.
+> + * @mode: O_CREAT/O_TMPFILE file mode.
+>   */
+>  struct open_how {
+> -	__aligned_u64 flags;
+> +	__u64 flags;
+> +	__u64 resolve;
+>  	__u16 mode;
+> -	__u16 __padding[3]; /* must be zeroed */
+> -	__aligned_u64 resolve;
+> -};
+> +} __attribute__((packed));
 
-Michael
---=20
-Michael Kerrisk
-Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
-Linux/UNIX System Programming Training: http://man7.org/training/
+IIRC, gcc assumes such a struct has alignment 1, which means that it
+will generate horrible code to access it. So if you do this (and I don't
+think it's a good idea), I think you'd also want to include a
+__attribute__((__aligned__(8))) - or perhaps that can be accomplished by
+just keeping flags as an explicitly aligned member. But that will of
+course bump its sizeof() back to 24, at which point it seems better to
+just make the padding explicit.
+
+Rasmus
