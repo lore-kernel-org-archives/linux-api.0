@@ -1,7 +1,7 @@
 From: Leonid Maksymchuk <leonmaxx@gmail.com>
-Subject: [PATCH v6 1/2] platform/x86: asus_wmi: Support throttle thermal policy
-Date: Sun, 15 Dec 2019 16:26:34 +0200
-Message-ID: <20191215142634.13888-1-leonmaxx@gmail.com>
+Subject: [PATCH v6 2/2] platform/x86: asus_wmi: Set throttle thermal policy to default
+Date: Sun, 15 Dec 2019 16:27:24 +0200
+Message-ID: <20191215142724.13986-1-leonmaxx@gmail.com>
 References: <20191215142527.13780-1-leonmaxx@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,231 +12,46 @@ To: linux-kernel@vger.kernel.org
 Cc: platform-driver-x86@vger.kernel.org, linux-api@vger.kernel.org, acpi4asus-user@lists.sourceforge.net, chiu@endlessm.com, yurii.pavlovskyi@gmail.com, kristian@klausen.dk, andy@infradead.org, dvhart@infradead.org, corentin.chary@gmail.com, Leonid Maksymchuk <leonmaxx@gmail.com>
 List-Id: linux-api@vger.kernel.org
 
-Throttle thermal policy ACPI device is used to control CPU cooling and
-throttling. This patch adds sysfs entry for setting current mode and
-Fn+F5 hotkey that switches to next.
+ASUS TUF FX705DY/FX505DY starts in silent mode and under heavy
+CPU load it overheats and drops CPU frequency to 399MHz and stays
+at it until reboot [1]. Set throttle thermal policy to default
+to avoid overheating and throttlig.
 
-Policy modes:
-* 0x00 - default
-* 0x01 - overboost
-* 0x02 - silent
+[1] Link: https://bugzilla.kernel.org/show_bug.cgi?id=203733
 
 Signed-off-by: Leonid Maksymchuk <leonmaxx@gmail.com>
 ---
- .../ABI/testing/sysfs-platform-asus-wmi       |  10 ++
- drivers/platform/x86/asus-wmi.c               | 113 ++++++++++++++++++
- include/linux/platform_data/x86/asus-wmi.h    |   1 +
- 3 files changed, 124 insertions(+)
+ drivers/platform/x86/asus-wmi.c | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
 
-diff --git a/Documentation/ABI/testing/sysfs-platform-asus-wmi b/Documentation/ABI/testing/sysfs-platform-asus-wmi
-index 9e99f2909612..1efac0ddb417 100644
---- a/Documentation/ABI/testing/sysfs-platform-asus-wmi
-+++ b/Documentation/ABI/testing/sysfs-platform-asus-wmi
-@@ -46,3 +46,13 @@ Description:
- 			* 0 - normal,
- 			* 1 - overboost,
- 			* 2 - silent
-+
-+What:		/sys/devices/platform/<platform>/throttle_thermal_policy
-+Date:		Dec 2019
-+KernelVersion:	5.6
-+Contact:	"Leonid Maksymchuk" <leonmaxx@gmail.com>
-+Description:
-+		Throttle thermal policy mode:
-+			* 0 - default,
-+			* 1 - overboost,
-+			* 2 - silent
 diff --git a/drivers/platform/x86/asus-wmi.c b/drivers/platform/x86/asus-wmi.c
-index 821b08e01635..f10ec9d745e5 100644
+index f10ec9d745e5..469f1a852719 100644
 --- a/drivers/platform/x86/asus-wmi.c
 +++ b/drivers/platform/x86/asus-wmi.c
-@@ -61,6 +61,7 @@ MODULE_LICENSE("GPL");
- #define NOTIFY_KBD_BRTDWN		0xc5
- #define NOTIFY_KBD_BRTTOGGLE		0xc7
- #define NOTIFY_KBD_FBM			0x99
-+#define NOTIFY_KBD_TTP			0xae
+@@ -1780,6 +1780,15 @@ static int throttle_thermal_policy_write(struct asus_wmi *asus)
+ 	return 0;
+ }
  
- #define ASUS_WMI_FNLOCK_BIOS_DISABLED	BIT(0)
- 
-@@ -81,6 +82,10 @@ MODULE_LICENSE("GPL");
- #define ASUS_FAN_BOOST_MODE_SILENT_MASK		0x02
- #define ASUS_FAN_BOOST_MODES_MASK		0x03
- 
-+#define ASUS_THROTTLE_THERMAL_POLICY_DEFAULT	0
-+#define ASUS_THROTTLE_THERMAL_POLICY_OVERBOOST	1
-+#define ASUS_THROTTLE_THERMAL_POLICY_SILENT	2
-+
- #define USB_INTEL_XUSB2PR		0xD0
- #define PCI_DEVICE_ID_INTEL_LYNXPOINT_LP_XHCI	0x9c31
- 
-@@ -198,6 +203,9 @@ struct asus_wmi {
- 	u8 fan_boost_mode_mask;
- 	u8 fan_boost_mode;
- 
-+	bool throttle_thermal_policy_available;
-+	u8 throttle_thermal_policy_mode;
-+
- 	// The RSOC controls the maximum charging percentage.
- 	bool battery_rsoc_available;
- 
-@@ -1724,6 +1732,98 @@ static ssize_t fan_boost_mode_store(struct device *dev,
- // Fan boost mode: 0 - normal, 1 - overboost, 2 - silent
- static DEVICE_ATTR_RW(fan_boost_mode);
- 
-+/* Throttle thermal policy ****************************************************/
-+
-+static int throttle_thermal_policy_check_present(struct asus_wmi *asus)
++static int throttle_thermal_policy_set_default(struct asus_wmi *asus)
 +{
-+	u32 result;
-+	int err;
++	if (!asus->throttle_thermal_policy_available)
++		return 0;
 +
-+	asus->throttle_thermal_policy_available = false;
-+
-+	err = asus_wmi_get_devstate(asus,
-+				    ASUS_WMI_DEVID_THROTTLE_THERMAL_POLICY,
-+				    &result);
-+	if (err) {
-+		if (err == -ENODEV)
-+			return 0;
-+		return err;
-+	}
-+
-+	if (result & ASUS_WMI_DSTS_PRESENCE_BIT)
-+		asus->throttle_thermal_policy_available = true;
-+
-+	return 0;
-+}
-+
-+static int throttle_thermal_policy_write(struct asus_wmi *asus)
-+{
-+	int err;
-+	u8 value;
-+	u32 retval;
-+
-+	value = asus->throttle_thermal_policy_mode;
-+
-+	err = asus_wmi_set_devstate(ASUS_WMI_DEVID_THROTTLE_THERMAL_POLICY,
-+				    value, &retval);
-+	if (err) {
-+		pr_warn("Failed to set throttle thermal policy: %d\n", err);
-+		return err;
-+	}
-+
-+	if (retval != 1) {
-+		pr_warn("Failed to set throttle thermal policy (retval): 0x%x\n",
-+			retval);
-+		return -EIO;
-+	}
-+
-+	return 0;
-+}
-+
-+static int throttle_thermal_policy_switch_next(struct asus_wmi *asus)
-+{
-+	u8 new_mode = asus->throttle_thermal_policy_mode + 1;
-+
-+	if (new_mode > ASUS_THROTTLE_THERMAL_POLICY_SILENT)
-+		new_mode = ASUS_THROTTLE_THERMAL_POLICY_DEFAULT;
-+
-+	asus->throttle_thermal_policy_mode = new_mode;
++	asus->throttle_thermal_policy_mode = ASUS_THROTTLE_THERMAL_POLICY_DEFAULT;
 +	return throttle_thermal_policy_write(asus);
 +}
 +
-+static ssize_t throttle_thermal_policy_show(struct device *dev,
-+				   struct device_attribute *attr, char *buf)
-+{
-+	struct asus_wmi *asus = dev_get_drvdata(dev);
-+	u8 mode = asus->throttle_thermal_policy_mode;
-+
-+	return scnprintf(buf, PAGE_SIZE, "%d\n", mode);
-+}
-+
-+static ssize_t throttle_thermal_policy_store(struct device *dev,
-+				    struct device_attribute *attr,
-+				    const char *buf, size_t count)
-+{
-+	int result;
-+	u8 new_mode;
-+	struct asus_wmi *asus = dev_get_drvdata(dev);
-+
-+	result = kstrtou8(buf, 10, &new_mode);
-+	if (result < 0)
-+		return result;
-+
-+	if (new_mode > ASUS_THROTTLE_THERMAL_POLICY_SILENT)
-+		return -EINVAL;
-+
-+	asus->throttle_thermal_policy_mode = new_mode;
-+	throttle_thermal_policy_write(asus);
-+
-+	return count;
-+}
-+
-+// Throttle thermal policy: 0 - default, 1 - overboost, 2 - silent
-+static DEVICE_ATTR_RW(throttle_thermal_policy);
-+
- /* Backlight ******************************************************************/
- 
- static int read_backlight_power(struct asus_wmi *asus)
-@@ -2005,6 +2105,11 @@ static void asus_wmi_handle_event_code(int code, struct asus_wmi *asus)
- 		return;
- 	}
- 
-+	if (asus->throttle_thermal_policy_available && code == NOTIFY_KBD_TTP) {
-+		throttle_thermal_policy_switch_next(asus);
-+		return;
-+	}
-+
- 	if (is_display_toggle(code) && asus->driver->quirks->no_display_toggle)
- 		return;
- 
-@@ -2155,6 +2260,7 @@ static struct attribute *platform_attributes[] = {
- 	&dev_attr_lid_resume.attr,
- 	&dev_attr_als_enable.attr,
- 	&dev_attr_fan_boost_mode.attr,
-+	&dev_attr_throttle_thermal_policy.attr,
- 	NULL
- };
- 
-@@ -2178,6 +2284,8 @@ static umode_t asus_sysfs_is_visible(struct kobject *kobj,
- 		devid = ASUS_WMI_DEVID_ALS_ENABLE;
- 	else if (attr == &dev_attr_fan_boost_mode.attr)
- 		ok = asus->fan_boost_mode_available;
-+	else if (attr == &dev_attr_throttle_thermal_policy.attr)
-+		ok = asus->throttle_thermal_policy_available;
- 
- 	if (devid != -1)
- 		ok = !(asus_wmi_get_devstate_simple(asus, devid) < 0);
-@@ -2437,6 +2545,10 @@ static int asus_wmi_add(struct platform_device *pdev)
+ static int throttle_thermal_policy_switch_next(struct asus_wmi *asus)
+ {
+ 	u8 new_mode = asus->throttle_thermal_policy_mode + 1;
+@@ -2548,6 +2557,8 @@ static int asus_wmi_add(struct platform_device *pdev)
+ 	err = throttle_thermal_policy_check_present(asus);
  	if (err)
- 		goto fail_fan_boost_mode;
+ 		goto fail_throttle_thermal_policy;
++	else
++		throttle_thermal_policy_set_default(asus);
  
-+	err = throttle_thermal_policy_check_present(asus);
-+	if (err)
-+		goto fail_throttle_thermal_policy;
-+
  	err = asus_wmi_sysfs_init(asus->platform_device);
  	if (err)
- 		goto fail_sysfs;
-@@ -2521,6 +2633,7 @@ static int asus_wmi_add(struct platform_device *pdev)
- fail_input:
- 	asus_wmi_sysfs_exit(asus->platform_device);
- fail_sysfs:
-+fail_throttle_thermal_policy:
- fail_fan_boost_mode:
- fail_platform:
- 	kfree(asus);
-diff --git a/include/linux/platform_data/x86/asus-wmi.h b/include/linux/platform_data/x86/asus-wmi.h
-index 60249e22e844..d39fc658c320 100644
---- a/include/linux/platform_data/x86/asus-wmi.h
-+++ b/include/linux/platform_data/x86/asus-wmi.h
-@@ -58,6 +58,7 @@
- #define ASUS_WMI_DEVID_LIGHT_SENSOR	0x00050022 /* ?? */
- #define ASUS_WMI_DEVID_LIGHTBAR		0x00050025
- #define ASUS_WMI_DEVID_FAN_BOOST_MODE	0x00110018
-+#define ASUS_WMI_DEVID_THROTTLE_THERMAL_POLICY 0x00120075
- 
- /* Misc */
- #define ASUS_WMI_DEVID_CAMERA		0x00060013
 -- 
 2.24.0
