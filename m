@@ -1,189 +1,64 @@
-From: Laurent Vivier <laurent@vivier.eu>
-Subject: Re: [PATCH v8 0/1] ns: introduce binfmt_misc namespace
-Date: Mon, 16 Dec 2019 11:08:39 +0100
-Message-ID: <155036d1-1219-292d-0439-17fa58a96439@vivier.eu>
-References: <20191216091220.465626-1-laurent@vivier.eu>
- <20191216094615.xlhxoze3umjn2tzy@wittgenstein>
- <4225d0e8-a907-941f-69ae-c2a9150e6a98@vivier.eu>
- <20191216100607.gvbhfqokf3ulkc23@wittgenstein>
+From: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>
+Subject: Re: [PATCH v7 1/1] ns: add binfmt_misc to the user namespace
+Date: Mon, 16 Dec 2019 16:34:32 +0100
+Message-ID: <CAKgNAkjgnV2-Q1RRtdkF98ggUaQPm3z1ndyX_AtwKEmjw0Ne6A@mail.gmail.com>
+References: <20191107140304.8426-1-laurent@vivier.eu> <20191107140304.8426-2-laurent@vivier.eu>
+ <7cb245ed-f738-7991-a09b-b27152274b9f@vivier.eu> <20191213185110.06b52cf4@md1za8fc.ad001.siemens.net>
+ <1576267177.4060.4.camel@HansenPartnership.com> <3205e74b-71f1-14f4-b784-d878b3ef697f@vivier.eu>
+ <CAKgNAkiaKJZMA0pzvwDa75CxfULTL1LmOZDzhW0Y5TmL7nBGZw@mail.gmail.com> <dbd19cb9-9172-d89d-f796-05a23213ca69@vivier.eu>
+Reply-To: mtk.manpages@gmail.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191216100607.gvbhfqokf3ulkc23@wittgenstein>
-Content-Language: fr
+In-Reply-To: <dbd19cb9-9172-d89d-f796-05a23213ca69@vivier.eu>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian.brauner@ubuntu.com>
-Cc: linux-kernel@vger.kernel.org, Greg Kurz <groug@kaod.org>, Jann Horn <jannh@google.com>, Andrei Vagin <avagin@gmail.com>, linux-api@vger.kernel.org, Dmitry Safonov <dima@arista.com>, James Bottomley <James.Bottomley@HansenPartnership.com>, Jan Kiszka <jan.kiszka@siemens.com>, linux-fsdevel@vger.kernel.org, containers@lists.linux-foundation.org, Alexander Viro <viro@zeniv.linux.org.uk>, Eric Biederman <ebiederm@xmission.com>, Henning Schild <henning.schild@siemens.com>, =?UTF-8?Q?C=c3=a9dric_Le_Goate?= =?UTF-8?Q?r?= <clg@kaod.org>, keescook@chromium.org
+To: Laurent Vivier <laurent@vivier.eu>
+Cc: James Bottomley <James.Bottomley@hansenpartnership.com>, Henning Schild <henning.schild@siemens.com>, lkml <linux-kernel@vger.kernel.org>, Dmitry Safonov <dima@arista.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, Eric Biederman <ebiederm@xmission.com>, Linux API <linux-api@vger.kernel.org>, Andrei Vagin <avagin@gmail.com>, =?UTF-8?Q?C=C3=A9dric_Le_Goater?= <clg@kaod.org>, Greg Kurz <groug@kaod.org>, Jann Horn <jannh@google.com>, Containers <containers@lists.linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Jan Kiszka <jan.kiszka@siemens.com>
 List-Id: linux-api@vger.kernel.org
 
-Le 16/12/2019 à 11:06, Christian Brauner a écrit :
-> On Mon, Dec 16, 2019 at 10:53:28AM +0100, Laurent Vivier wrote:
->> Le 16/12/2019 à 10:46, Christian Brauner a écrit :
->>> On Mon, Dec 16, 2019 at 10:12:19AM +0100, Laurent Vivier wrote:
->>>> v8: s/file->f_path.dentry/file_dentry(file)/
->>>>
->>>> v7: Use the new mount API
->>>>
->>>>     Replace
->>>>
->>>>       static struct dentry *bm_mount(struct file_system_type *fs_type,
->>>>                             int flags, const char *dev_name, void *data)
->>>>       {
->>>>                struct user_namespace *ns = current_user_ns();
->>>>
->>>>                return mount_ns(fs_type, flags, data, ns, ns,
->>>>                                bm_fill_super);
->>>>       }
->>>>
->>>>     by
->>>>
->>>>       static void bm_free(struct fs_context *fc)
->>>>       {
->>>>              if (fc->s_fs_info)
->>>>                      put_user_ns(fc->s_fs_info);
->>>>       }
->>>>
->>>>       static int bm_get_tree(struct fs_context *fc)
->>>>       {
->>>>               return get_tree_keyed(fc, bm_fill_super, get_user_ns(fc->user_ns));
->>>>       }
->>>>
->>>>       static const struct fs_context_operations bm_context_ops = {
->>>>               .free           = bm_free,
->>>>               .get_tree       = bm_get_tree,
->>>>       };
->>>>
->>>>       static int bm_init_fs_context(struct fs_context *fc)
->>>>       {
->>>>               fc->ops = &bm_context_ops;
->>>>               return 0;
->>>>       }
->>>>
->>>> v6: Return &init_binfmt_ns instead of NULL in binfmt_ns()
->>>>     This should never happen, but to stay safe return a
->>>>     value we can use.
->>>>     change subject from "RFC" to "PATCH"
->>>>
->>>> v5: Use READ_ONCE()/WRITE_ONCE()
->>>>     move mount pointer struct init to bm_fill_super() and add smp_wmb()
->>>>     remove useless NULL value init
->>>>     add WARN_ON_ONCE()
->>>>
->>>> v4: first user namespace is initialized with &init_binfmt_ns,
->>>>     all new user namespaces are initialized with a NULL and use
->>>>     the one of the first parent that is not NULL. The pointer
->>>>     is initialized to a valid value the first time the binfmt_misc
->>>>     fs is mounted in the current user namespace.
->>>>     This allows to not change the way it was working before:
->>>>     new ns inherits values from its parent, and if parent value is modified
->>>>     (or parent creates its own binfmt entry by mounting the fs) child
->>>>     inherits it (unless it has itself mounted the fs).
->>>>
->>>> v3: create a structure to store binfmt_misc data,
->>>>     add a pointer to this structure in the user_namespace structure,
->>>>     in init_user_ns structure this pointer points to an init_binfmt_ns
->>>>     structure. And all new user namespaces point to this init structure.
->>>>     A new binfmt namespace structure is allocated if the binfmt_misc
->>>>     filesystem is mounted in a user namespace that is not the initial
->>>>     one but its binfmt namespace pointer points to the initial one.
->>>>     add override_creds()/revert_creds() around open_exec() in
->>>>     bm_register_write()
->>>>
->>>> v2: no new namespace, binfmt_misc data are now part of
->>>>     the mount namespace
->>>>     I put this in mount namespace instead of user namespace
->>>>     because the mount namespace is already needed and
->>>>     I don't want to force to have the user namespace for that.
->>>>     As this is a filesystem, it seems logic to have it here.
->>>>
->>>> This allows to define a new interpreter for each new container.
->>>>
->>>> But the main goal is to be able to chroot to a directory
->>>> using a binfmt_misc interpreter without being root.
->>>>
->>>> I have a modified version of unshare at:
->>>>
->>>>   https://github.com/vivier/util-linux.git branch unshare-chroot
->>>>
->>>> with some new options to unshare binfmt_misc namespace and to chroot
->>>> to a directory.
->>>>
->>>> If you have a directory /chroot/powerpc/jessie containing debian for powerpc
->>>> binaries and a qemu-ppc interpreter, you can do for instance:
->>>>
->>>>  $ uname -a
->>>>  Linux fedora28-wor-2 4.19.0-rc5+ #18 SMP Mon Oct 1 00:32:34 CEST 2018 x86_64 x86_64 x86_64 GNU/Linux
->>>>  $ ./unshare --map-root-user --fork --pid \
->>>>    --load-interp ":qemu-ppc:M::\x7fELF\x01\x02\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x14:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff:/qemu-ppc:OC" \
->>>>    --root=/chroot/powerpc/jessie /bin/bash -l
->>>>  # uname -a
->>>>  Linux fedora28-wor-2 4.19.0-rc5+ #18 SMP Mon Oct 1 00:32:34 CEST 2018 ppc GNU/Linux
->>>>  # id
->>>> uid=0(root) gid=0(root) groups=0(root),65534(nogroup)
->>>>  # ls -l
->>>> total 5940
->>>> drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:58 bin
->>>> drwxr-xr-x.   2 nobody nogroup    4096 Jun 17 20:26 boot
->>>> drwxr-xr-x.   4 nobody nogroup    4096 Aug 12 00:08 dev
->>>> drwxr-xr-x.  42 nobody nogroup    4096 Sep 28 07:25 etc
->>>> drwxr-xr-x.   3 nobody nogroup    4096 Sep 28 07:25 home
->>>> drwxr-xr-x.   9 nobody nogroup    4096 Aug 12 00:58 lib
->>>> drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:08 media
->>>> drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:08 mnt
->>>> drwxr-xr-x.   3 nobody nogroup    4096 Aug 12 13:09 opt
->>>> dr-xr-xr-x. 143 nobody nogroup       0 Sep 30 23:02 proc
->>>> -rwxr-xr-x.   1 nobody nogroup 6009712 Sep 28 07:22 qemu-ppc
->>>> drwx------.   3 nobody nogroup    4096 Aug 12 12:54 root
->>>> drwxr-xr-x.   3 nobody nogroup    4096 Aug 12 00:08 run
->>>> drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:58 sbin
->>>> drwxr-xr-x.   2 nobody nogroup    4096 Aug 12 00:08 srv
->>>> drwxr-xr-x.   2 nobody nogroup    4096 Apr  6  2015 sys
->>>> drwxrwxrwt.   2 nobody nogroup    4096 Sep 28 10:31 tmp
->>>> drwxr-xr-x.  10 nobody nogroup    4096 Aug 12 00:08 usr
->>>> drwxr-xr-x.  11 nobody nogroup    4096 Aug 12 00:08 var
->>>>
->>>> If you want to use the qemu binary provided by your distro, you can use
->>>>
->>>>     --load-interp ":qemu-ppc:M::\x7fELF\x01\x02\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x14:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff:/bin/qemu-ppc-static:OCF"
->>>>
->>>> With the 'F' flag, qemu-ppc-static will be then loaded from the main root
->>>> filesystem before switching to the chroot.
->>>>
->>>> Another example is to use the 'P' flag in one chroot and not in another one (useful in a test
->>>> environment to test different configurations of the same interpreter):
->>>>
->>>> ./unshare --fork --pid --mount-proc --map-root-user --load-interp ":qemu-ppc:M::\x7fELF\x01\x02\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x14:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff://usr/bin/qemu-ppc-noargv0:OCF" --root=/chroot/powerpc/jessie /bin/bash -l
->>>> root@localhost:/# sh -c 'echo $0'
->>>> /bin/sh
->>>>
->>>> ./unshare --fork --pid --mount-proc --map-root-user --load-interp ":qemu-ppc:M::\x7fELF\x01\x02\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x14:\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff://usr/bin/qemu-ppc-argv0:OCFP" --root=/chroot/powerpc/jessie /bin/bash -l
->>>> root@localhost:/# sh -c 'echo $0'
->>>> sh
->>>
->>> Hey Laurent,
->>>
->>> We have quite some time before the v5.6 merge window opens. So I would
->>> really like for this new feature to come with proper testing!
->>
->> Are there some already existing tests for binfmt_misc or namespace I can
->> update to test the new feature?
-> 
-> I don't think so but there are tests for other namespace-aware
-> filesystem. For example, I've added basic tests for binderfs in
-> tools/testing/selftests/filesystems/binderfs/ and there are some devpts
-> tests in there (Though the devpts tests don't actually make use of the
-> kselftest framework so they aren't a great example. I'm not claiming
-> binderfs is either tbh. :))
-> 
-> You can just place the binfmt_misc tests in there. Helpers for setting
-> up user namespace and mappings are in there as well. I think you can
-> just place them in a separate file/header and include it for both
-> binderfs and binfmt_misc.
-> I'm happy to review this/answer questions.
-> 
+Hi Laurent,
 
-OK, thank you, I will try to add some tests here.
+On Mon, 16 Dec 2019 at 10:13, Laurent Vivier <laurent@vivier.eu> wrote:
+>
+> Le 14/12/2019 =C3=A0 13:32, Michael Kerrisk (man-pages) a =C3=A9crit :
+> > Hello Laurent,
+> >
+> > On Sat, 14 Dec 2019 at 12:35, Laurent Vivier <laurent@vivier.eu> wrote:
+> >>
+> >> Le 13/12/2019 =C3=A0 20:59, James Bottomley a =C3=A9crit :
+> >>> On Fri, 2019-12-13 at 18:51 +0100, Henning Schild wrote:
+> >>>> Hi all,
+> >>>>
+> >>>> that is a very useful contribution, which will hopefully be
+> >>>> considered.
+> >>>
+> >>> I'm technically the maintainer on the you touched it last you own it
+> >>> basis, so if Christian's concerns get addressed I'll shepherd it
+> >>> upstream.
+> >>
+> >> Thank you.
+> >>
+> >> I update this in the next days and re-send the patch.
+> >
+> > Would you also be so kind as to craft a patch for the
+> > user_namespaces(7) manual page describing the changes (sent to me,
+> > linux-man@vger.kernel.org, and the other parties already in CC)?
+> >
+> > If you do not have the time to familiarize yourself with groff/man
+> > markup, a patch that uses plain text is fine; I can handle the
+> > formatting.
+>
+> I will send a patch for the user_namespaces(7) manual.
+
+Thanks! Could you send that in parallel with (each of) the patch
+iterations please (rather than after the feature has been merged).
 
 Thanks,
-Laurent
+
+Michael
+
+--=20
+Michael Kerrisk
+Linux man-pages maintainer; http://www.kernel.org/doc/man-pages/
+Linux/UNIX System Programming Training: http://man7.org/training/
