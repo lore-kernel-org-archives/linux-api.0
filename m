@@ -1,137 +1,116 @@
-From: Aleksa Sarai <asarai@suse.de>
-Subject: Re: [PATCH] openat2: switch to __attribute__((packed)) for open_how
-Date: Tue, 17 Dec 2019 17:46:50 +1100
-Message-ID: <20191217064650.cd4bfb5d2koe6j7h@yavin.dot.cyphar.com>
-References: <20191213222351.14071-1-cyphar@cyphar.com>
- <a328b91d-fd8f-4f27-b3c2-91a9c45f18c0@rasmusvillemoes.dk>
- <20191215123443.jmfnrtgbscdwfohc@yavin.dot.cyphar.com>
- <b26ef210ec5b42009cf09b1015065768@AcuMS.aculab.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH v3 2/4] pid: Add PIDFD_IOCTL_GETFD to fetch file
+ descriptors from processes
+Date: Tue, 17 Dec 2019 09:54:40 +0100
+Message-ID: <CAK8P3a3G-W8s0G2-XKuDw9dRmupZSyiF6FRRAnvDt9=kMMzS8w@mail.gmail.com>
+References: <20191217010001.GA14461@ircssh-2.c.rugged-nimbus-611.internal>
+ <20191217015001.sp6mrhuiqrivkq3u@wittgenstein> <CAMp4zn8fzeiJVSn6EtRi6UAGh6AL3QWu=PZxw+=TAYJORjn_Sw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="pxbkdztdbvo4kssd"
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <b26ef210ec5b42009cf09b1015065768@AcuMS.aculab.com>
+In-Reply-To: <CAMp4zn8fzeiJVSn6EtRi6UAGh6AL3QWu=PZxw+=TAYJORjn_Sw@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: David Laight <David.Laight@ACULAB.COM>
-Cc: 'Aleksa Sarai' <cyphar@cyphar.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Alexander Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Shuah Khan <shuah@kernel.org>, "dev@opencontainers.org" <dev@opencontainers.org>, "containers@lists.linux-foundation.org" <containers@lists.linux-foundation.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-kselftest@vger.kernel.org" <linux-kselftest@vger.kernel.org>
+To: Sargun Dhillon <sargun@sargun.me>
+Cc: Christian Brauner <christian.brauner@ubuntu.com>, LKML <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Tycho Andersen <tycho@tycho.ws>, Jann Horn <jannh@google.com>, Aleksa Sarai <cyphar@cyphar.com>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Al Viro <viro@zeniv.linux.org.uk>, gpascutto@mozilla.com, ealvarez@mozilla.com, Florian Weimer <fweimer@redhat.com>, jld@mozilla.com
 List-Id: linux-api@vger.kernel.org
 
+On Tue, Dec 17, 2019 at 3:50 AM Sargun Dhillon <sargun@sargun.me> wrote:
+> On Mon, Dec 16, 2019 at 5:50 PM Christian Brauner <christian.brauner@ubuntu.com> wrote:
+> > > +
+> > > +#include <linux/types.h>
+> > > +#include <linux/ioctl.h>
+> > > +
+> > > +/* options to pass in to pidfd_getfd_args flags */
+> > > +#define PIDFD_GETFD_CLOEXEC (1 << 0) /* open the fd with cloexec */
+> >
+> > Please, make them cloexec by default unless there's a very good reason
+> > not to.
+> >
+> For now then, should I have flags, and just say "reserved for future usage",
+> or would you prefer that I drop flags entirely?
 
---pxbkdztdbvo4kssd
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+There is no need for adding reserved fields in an ioctl, just add a new ioctl
+number if you need it later.
 
-On 2019-12-16, David Laight <David.Laight@ACULAB.COM> wrote:
-> From:  Aleksa Sarai
-> > Sent: 15 December 2019 12:35
-> > On 2019-12-14, Rasmus Villemoes <linux@rasmusvillemoes.dk> wrote:
-> > > On 13/12/2019 23.23, Aleksa Sarai wrote:
-> > > > The design of the original open_how struct layout was such that it
-> > > > ensured that there would be no un-labelled (and thus potentially
-> > > > non-zero) padding to avoid issues with struct expansion, as well as
-> > > > providing a uniform representation on all architectures (to avoid
-> > > > complications with OPEN_HOW_SIZE versioning).
-> > > >
-> > > > However, there were a few other desirable features which were not
-> > > > fulfilled by the previous struct layout:
-> > > >
-> > > >  * Adding new features (other than new flags) should always result =
-in
-> > > >    the struct getting larger. However, by including a padding field=
-, it
-> > > >    was possible for new fields to be added without expanding the
-> > > >    structure. This would somewhat complicate version-number based
-> > > >    checking of feature support.
-> > > >
-> > > >  * A non-zero bit in __padding yielded -EINVAL when it should argua=
-bly
-> > > >    have been -E2BIG (because the padding bits are effectively
-> > > >    yet-to-be-used fields). However, the semantics are not entirely =
-clear
-> > > >    because userspace may expect -E2BIG to only signify that the
-> > > >    structure is too big. It's much simpler to just provide the guar=
-antee
-> > > >    that new fields will always result in a struct size increase, and
-> > > >    -E2BIG indicates you're using a field that's too recent for an o=
-lder
-> > > >    kernel.
-> > >
-> > > And when the first extension adds another u64 field, that padding has=
- to
-> > > be added back in and checked for being 0, at which point the padding =
-is
-> > > again yet-to-be-used fields.
-> >=20
-> > Maybe I'm missing something, but what is the issue with
-> >=20
-> >   struct open_how {
-> >     u64 flags;
-> >     u64 resolve;
-> >     u16 mode;
-> > 	u64 next_extension;
-> >   } __attribute__((packed));
->=20
-> Compile anything that accesses it for (say) sparc and look at the object =
-code.
-> You really, really, REALLY, don't want to EVER use 'packed'.
+> > > +
+> > > +struct pidfd_getfd_args {
+> > > +     __u32 size;             /* sizeof(pidfd_getfd_args) */
+> > > +     __u32 fd;       /* the tracee's file descriptor to get */
+> > > +     __u32 flags;
+> > > +};
+> >
+> > I think you want to either want to pad this
+> >
+> > +struct pidfd_getfd_args {
+> > +       __u32 size;             /* sizeof(pidfd_getfd_args) */
+> > +       __u32 fd;       /* the tracee's file descriptor to get */
+> > +       __u32 flags;
+> >         __u32 reserved;
+> > +};
+> >
+> > or use __aligned_u64 everywhere which I'd personally prefer instead of
+> > this manual padding everywhere.
 
-Right, so it's related to the "garbage code" problem. As mentioned
-above, I wasn't aware it was as bad as folks in this thread have
-mentioned.
+No, don't make ioctl structures extensible. If there is no 64-bit member
+in it, 32-bit alignment is sufficient.
 
-> Just use u64 for all the fields.
+Also, having implicit padding is dangerous because it makes it easier to
+leave it uninitialized, leaking kernel stack information on the copy_to_user().
 
-That is an option (and is the one that clone3 went with), but it's a bit
-awkward because umode_t is a u16 -- and it would be a waste of 6 bytes
-to store it as a u64. Arguably it could be extended but I personally
-find that to be very unlikely (and lots of other syscalls would need be
-updated).
+Please drop the '__u32 size' argument, too: the size is fixed by definition
+(through the _IOWR macro) and if you need to extend it you get a new
+command anyway.
 
-I'm just going to move the padding to the end and change the error for
-non-zero padding to -E2BIG.
+> Wouldn't __attribute__((packed)) achieve a similar thing of making sure
+> the struct is a constant size across all compilers?
+>
+> I'll go with __aligned_u64 instead of packed, if you don't want to use packed.
 
-> Use 'flags' bits to indicate whether the additional fields should be look=
-ed at.
-> Error if a 'flags' bit requires a value that isn't passed in the structur=
-e.
->=20
-> Then you can add an extra field and old source code recompiled with the
-> new headers will still work - because the 'junk' value isn't looked at.
+__attribute__((packed)) is worse because it forces compilers to use byte
+access on architectures that have no fast unaligned 32-bit load/store.
+Basically you should never put __packed on a structure, but instead add
+it to members that need to be unaligned within a sturct for compatibility
+reasons.
 
-This problem is already handled entirely by copy_struct_from_user().
+> > > +
+> > > +#define PIDFD_IOC_MAGIC                      'p'
+> > > +#define PIDFD_IO(nr)                 _IO(PIDFD_IOC_MAGIC, nr)
+> > > +#define PIDFD_IOR(nr, type)          _IOR(PIDFD_IOC_MAGIC, nr, type)
+> > > +#define PIDFD_IOW(nr, type)          _IOW(PIDFD_IOC_MAGIC, nr, type)
+> > > +#define PIDFD_IOWR(nr, type)         _IOWR(PIDFD_IOC_MAGIC, nr, type)
 
-It is true that for some new fields it will be necessary to add a new
-flag (such as passing fds -- where 0 is a valid value) but for most new
-fields (especially pointer or flag fields) it will not be necessary
-because the 0 value is equivalent to the old behaviour. It also allows
-us to entirely avoid accepting junk from userspace.
+Drop these macros, they just make it harder to grep or script around the use
+of _IOWR/_IOR/_IOW
 
---=20
-Aleksa Sarai
-Senior Software Engineer (Containers)
-SUSE Linux GmbH
-<https://www.cyphar.com/>
+> > > +#define PIDFD_IOCTL_GETFD            PIDFD_IOWR(0xb0, \
+> > > +                                             struct pidfd_getfd_args)
 
---pxbkdztdbvo4kssd
-Content-Type: application/pgp-signature; name="signature.asc"
+Without the size and flag members, this can become the simpler
 
------BEGIN PGP SIGNATURE-----
+#define PIDFD_IOCTL_GETFD  _IOWR('p', 0xb0, __u32)
 
-iQIzBAABCAAdFiEEXzbGxhtUYBJKdfWmnhiqJn3bjbQFAl34edcACgkQnhiqJn3b
-jbTUrQ/9EWPnCZlGMHHPgxyUQUwaE4kajhGnTsBLapKhdtsAfzkyJNqUPdSnipqB
-oAAFeriC/RGN9ktSBHM60IBnwk3nv70W3SNm8/GUVaXGmWHrkBFkuhujOSn22awm
-3jSxRKt+89I6NKoFBJPkxe9WQv6DecF8B9GWCn2sru2e/r105OHTe28EnPFqzBpQ
-XZ/f7D7729GVAIITr5H6NQfvM8P/Sf/ne1gzDxf6cFTrF734aGNF+AhpTgSA2uxz
-DVw1oQ6+HAcMdL6AixtdZgsN9Bm2nV9C4ndOEenV3rN6mG1Kn5ecz2RInuqKmmj9
-/9ETSRo9ZZpl6WGpbfDMRB+/6vsSXAwHv06LO2YXEIeoHnPN7Y8/0deB4KNBoQ3S
-jDzVHOKU2MToxsAkBPvyZ6UsKXJWLOT4QeiyOQeoExwzzu6K61pxtcHaXnKebheF
-2hCF6h0NaAtBCcO3/MrN5PEkZliY+KcpM5BCsefzfM3cAEuqSEx1LqShw0G+3dV2
-sGKHM0cfunvVas/8yawfs4qfEALCJR5Tnb2Kfveo/xd1qfT4+K54gPjkQqFvrkph
-pV7c6P2lyJrNFraB5uDb5UYFWXrxTXgZ3ZUpDoI7MfLSEGCTT2nL9n7IXuoEfX4W
-jj7ipubi5ZdNDgXiSACHJHYzwIVJBPHiNq4mzoQjNKNb8kj1VTQ=
-=sK1O
------END PGP SIGNATURE-----
+> > > +
+> > >  const struct file_operations pidfd_fops = {
+> > >       .release = pidfd_release,
+> > >       .poll = pidfd_poll,
+> > > +     .unlocked_ioctl = pidfd_ioctl,
 
---pxbkdztdbvo4kssd--
+This needs
+
++    .compat_ioctl = compat_ptr_ioctl,
+
+To work on compat tasks.
+
+Finally, there is the question whether this should be an ioctl
+operation at all, or
+if it would better be done as a proper syscall. Functionally the two
+are the same
+here, but doing such a fundamental operation as an ioctl doesn't feel
+quite right
+to me. As a system call, this could be something like
+
+int pidfd_get_fd(int pidfd, int their_fd, int flags);
+
+along the lines of dup3().
+
+        Arnd
