@@ -1,118 +1,60 @@
-From: Jann Horn <jannh@google.com>
-Subject: Re: [PATCH v8 1/1] ns: add binfmt_misc to the user namespace
-Date: Mon, 16 Dec 2019 23:53:54 +0100
-Message-ID: <CAG48ez2YE33KiuhnHa=cq_DymqWLAv9CyeD3BOrjsStKfb_dBQ@mail.gmail.com>
-References: <20191216091220.465626-1-laurent@vivier.eu> <20191216091220.465626-2-laurent@vivier.eu>
- <CAG48ez2xNCRmuzpNqYW5R+XMKzW8YiemsPUPgk42KSkSZXmvLg@mail.gmail.com> <15d270a6-2264-adc5-3f56-fdb8b67ad267@vivier.eu>
+From: Sargun Dhillon <sargun@sargun.me>
+Subject: [PATCH v3 0/4] Add pidfd getfd ioctl (Was Add ptrace get_fd request)
+Date: Tue, 17 Dec 2019 00:58:45 +0000
+Message-ID: <20191217005842.GA14379@ircssh-2.c.rugged-nimbus-611.internal>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <15d270a6-2264-adc5-3f56-fdb8b67ad267@vivier.eu>
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
-To: Laurent Vivier <laurent@vivier.eu>
-Cc: kernel list <linux-kernel@vger.kernel.org>, Greg Kurz <groug@kaod.org>, Andrei Vagin <avagin@gmail.com>, Linux API <linux-api@vger.kernel.org>, Dmitry Safonov <dima@arista.com>, James Bottomley <James.Bottomley@hansenpartnership.com>, Jan Kiszka <jan.kiszka@siemens.com>, Christian Brauner <christian.brauner@ubuntu.com>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Alexander Viro <viro@zeniv.linux.org.uk>, Eric Biederman <ebiederm@xmission.com>, Henning Schild <henning.schild@siemens.com>, =?UTF-8?Q?C=C3=A9dric_Le_Goater?= <clg@kaod.org>
+To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org
+Cc: tycho@tycho.ws, jannh@google.com, cyphar@cyphar.com, christian.brauner@ubuntu.com, oleg@redhat.com, luto@amacapital.net, viro@zeniv.linux.org.uk, gpascutto@mozilla.com, ealvarez@mozilla.com, fweimer@redhat.com, jld@mozilla.com
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Dec 16, 2019 at 9:05 PM Laurent Vivier <laurent@vivier.eu> wrote:
-> Le 16/12/2019 =C3=A0 20:08, Jann Horn a =C3=A9crit :
-> > On Mon, Dec 16, 2019 at 10:12 AM Laurent Vivier <laurent@vivier.eu> wro=
-te:
-> >> This patch allows to have a different binfmt_misc configuration
-> >> for each new user namespace. By default, the binfmt_misc configuration
-> >> is the one of the previous level, but if the binfmt_misc filesystem is
-> >> mounted in the new namespace a new empty binfmt instance is created an=
-d
-> >> used in this namespace.
-> >>
-> >> For instance, using "unshare" we can start a chroot of another
-> >> architecture and configure the binfmt_misc interpreter without being r=
-oot
-> >> to run the binaries in this chroot.
-> >
-> > How do you ensure that when userspace is no longer using the user
-> > namespace and mount namespace, the entries and the binfmt_misc
-> > superblock are deleted? As far as I can tell from looking at the code,
-> > at the moment, if I create a user namespace+mount namespace, mount
-> > binfmt_misc in there, register a file format and then let all
-> > processes inside the namespaces exit, the binfmt_misc mount will be
-> > kept alive by the simple_pin_fs() stuff, and the binfmt_misc entries
-> > will also stay in memory.
-> >
-> > [...]
->
-> Do you have any idea how I can fix this issue?
+This patchset introduces a mechanism to capture file descriptors from other
+processes by pidfd and ioctl. Although this can be achieved using
+SCM_RIGHTS, and parasitic code injection, this offers a more
+straightforward mechanism.
 
-I think the easiest way (keeping in mind that we want to avoid having
-to fiddle around with reference loops, where e.g. interpreter
-executable files opened by binfmt_misc have references back to the
-user namespace through ->f_cred) would be to add a new patch in front
-of this one that changes the semantics such that when binfmt_misc is
-unmounted, all the existing format registrations are deleted. That's
-probably also nicer from the perspective of inspectability. It could
-in theory break stuff, but I think that's probably somewhat unlikely.
-Still, it'd be an API change, and therefore you should CC linux-api@
-on such a change.
+It has a flags mechanism that's only usable to set CLOEXEC on the fd,
+but I'm thinking that it could be extended to other aspects. For example,
+for sockets, one could want to scrub the cgroup information.
 
-> >> @@ -718,7 +736,9 @@ static ssize_t bm_register_write(struct file *file=
-, const char __user *buffer,
-> >>         if (!inode)
-> >>                 goto out2;
-> >>
-> >> -       err =3D simple_pin_fs(&bm_fs_type, &bm_mnt, &entry_count);
-> >> +       ns =3D binfmt_ns(file_dentry(file)->d_sb->s_user_ns);
-> >> +       err =3D simple_pin_fs(&bm_fs_type, &ns->bm_mnt,
-> >> +                           &ns->entry_count);
-> >
-> > When you call simple_pin_fs() here, the user namespace of `current`
-> > and the user namespace of the superblock are not necessarily related.
-> > So simple_pin_fs() may end up taking a reference on the mountpoint for
-> > a user namespace that has nothing to do with the namespace for which
-> > an entry is being created.
->
-> Do you have any idea how I can fix this issue?
+Changes since v2:
+ * Move to ioctl on pidfd instead of ptrace function
+ * Add security check before moving file descriptor
 
-If you fix the memory leak the way I suggested, this wouldn't be a
-problem anymore either.
+Changes since the RFC v1:
+ * Introduce a new helper to fs/file.c to fetch a file descriptor from
+   any process. It largely uses the code suggested by Oleg, with a few
+   changes to fix locking
+ * It uses an extensible options struct to supply the FD, and option.
+ * I added a sample, using the code from the user-ptrace sample
 
-> >> +static void bm_free(struct fs_context *fc)
-> >> +{
-> >> +       if (fc->s_fs_info)
-> >> +               put_user_ns(fc->s_fs_info);
-> >> +}
-> >
-> > Silly question: Why the "if"? Can you ever reach this with fc->s_fs_inf=
-o=3D=3DNULL?
->
-> So I understand the if is unnecessary and I will remove it.
+Sargun Dhillon (4):
+  vfs, fdtable: Add get_task_file helper
+  pid: Add PIDFD_IOCTL_GETFD to fetch file descriptors from processes
+  samples: split generalized user-trap code into helper file
+  samples: Add example of using pidfd getfd in conjunction with user
+    trap
 
-Your code was actually exactly right, I didn't understand how
-fc->s_fs_info works.
+ Documentation/ioctl/ioctl-number.rst |   1 +
+ fs/file.c                            |  22 +++-
+ include/linux/file.h                 |   2 +
+ include/linux/pid.h                  |   1 +
+ include/uapi/linux/pid.h             |  26 ++++
+ kernel/fork.c                        |  72 ++++++++++
+ samples/seccomp/.gitignore           |   1 +
+ samples/seccomp/Makefile             |  15 ++-
+ samples/seccomp/user-trap-helper.c   |  84 ++++++++++++
+ samples/seccomp/user-trap-helper.h   |  13 ++
+ samples/seccomp/user-trap-pidfd.c    | 190 +++++++++++++++++++++++++++
+ samples/seccomp/user-trap.c          |  85 +-----------
+ 12 files changed, 424 insertions(+), 88 deletions(-)
+ create mode 100644 include/uapi/linux/pid.h
+ create mode 100644 samples/seccomp/user-trap-helper.c
+ create mode 100644 samples/seccomp/user-trap-helper.h
+ create mode 100644 samples/seccomp/user-trap-pidfd.c
 
-> >>  static int bm_get_tree(struct fs_context *fc)
-> >>  {
-> >> -       return get_tree_single(fc, bm_fill_super);
-> >> +       return get_tree_keyed(fc, bm_fill_super, get_user_ns(fc->user_=
-ns));
-> >
-> > get_user_ns() increments the refcount of the namespace, but in the
-> > case where a binfmt_misc mount already exists, that refcount is never
-> > dropped, right? That would be a security bug, since an attacker could
-> > overflow the refcount of the user namespace and then trigger a UAF.
-> > (And the refcount hardening won't catch it because user namespaces
-> > still use raw atomics instead of refcount_t.)
->
-> Do you have any idea how I can fix this issue?
-
-Ah, this was actually fine. I missed that get_tree_keyed() stashes
-that pointer in fc->s_fs_info.
-
-> >> +#if IS_ENABLED(CONFIG_BINFMT_MISC)
-> >
-> > Nit: Isn't this kind of check normally written as "#ifdef"?
-> >
->
-> What is the difference?
-
-As explained in Documentation/process/coding-style.rst and the
-relevant header, IS_ENABLED() is for inline use in C expressions.
+-- 
+2.20.1
