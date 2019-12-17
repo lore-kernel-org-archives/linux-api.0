@@ -1,68 +1,43 @@
-From: David Laight <David.Laight@ACULAB.COM>
-Subject: RE: [PATCH] openat2: switch to __attribute__((packed)) for open_how
-Date: Tue, 17 Dec 2019 10:14:48 +0000
-Message-ID: <6630d0573b5b40da8efc58fc20ac445e@AcuMS.aculab.com>
-References: <20191213222351.14071-1-cyphar@cyphar.com>
- <a328b91d-fd8f-4f27-b3c2-91a9c45f18c0@rasmusvillemoes.dk>
- <20191215123443.jmfnrtgbscdwfohc@yavin.dot.cyphar.com>
- <b26ef210ec5b42009cf09b1015065768@AcuMS.aculab.com>
- <20191217064650.cd4bfb5d2koe6j7h@yavin.dot.cyphar.com>
+From: Christian Brauner <christian.brauner@ubuntu.com>
+Subject: Re: [PATCH v3 2/4] pid: Add PIDFD_IOCTL_GETFD to fetch file
+ descriptors from processes
+Date: Tue, 17 Dec 2019 12:19:27 +0100
+Message-ID: <20191217111926.bgt7jih2noli3cnu@wittgenstein>
+References: <20191217010001.GA14461@ircssh-2.c.rugged-nimbus-611.internal>
+ <20191217015001.sp6mrhuiqrivkq3u@wittgenstein>
+ <CAMp4zn8fzeiJVSn6EtRi6UAGh6AL3QWu=PZxw+=TAYJORjn_Sw@mail.gmail.com>
+ <CAK8P3a3G-W8s0G2-XKuDw9dRmupZSyiF6FRRAnvDt9=kMMzS8w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191217064650.cd4bfb5d2koe6j7h@yavin.dot.cyphar.com>
-Content-Language: en-US
+Content-Disposition: inline
+In-Reply-To: <CAK8P3a3G-W8s0G2-XKuDw9dRmupZSyiF6FRRAnvDt9=kMMzS8w@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: 'Aleksa Sarai' <asarai@suse.de>
-Cc: 'Aleksa Sarai' <cyphar@cyphar.com>, Rasmus Villemoes <linux@rasmusvillemoes.dk>, Alexander Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Shuah Khan <shuah@kernel.org>, "dev@opencontainers.org" <dev@opencontainers.org>, "containers@lists.linux-foundation.org" <containers@lists.linux-foundation.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-kselftest@vger.kernel.org" <linux-kselftest@vger.kernel.org>
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Sargun Dhillon <sargun@sargun.me>, LKML <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Tycho Andersen <tycho@tycho.ws>, Jann Horn <jannh@google.com>, Aleksa Sarai <cyphar@cyphar.com>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Al Viro <viro@zeniv.linux.org.uk>, gpascutto@mozilla.com, ealvarez@mozilla.com, Florian Weimer <fweimer@redhat.com>, jld@mozilla.com
 List-Id: linux-api@vger.kernel.org
 
->From Aleksa Sarai
-> Sent: 17 December 2019 06:47
-...
-> > Just use u64 for all the fields.
+On Tue, Dec 17, 2019 at 09:54:40AM +0100, Arnd Bergmann wrote:
+> On Tue, Dec 17, 2019 at 3:50 AM Sargun Dhillon <sargun@sargun.me> wrote:
+> > On Mon, Dec 16, 2019 at 5:50 PM Christian Brauner <christian.brauner@ubuntu.com> wrote:
+> Finally, there is the question whether this should be an ioctl
+> operation at all, or
+> if it would better be done as a proper syscall. Functionally the two
+> are the same
+> here, but doing such a fundamental operation as an ioctl doesn't feel
+> quite right
+> to me. As a system call, this could be something like
 > 
-> That is an option (and is the one that clone3 went with), but it's a bit
-> awkward because umode_t is a u16 -- and it would be a waste of 6 bytes
-> to store it as a u64. Arguably it could be extended but I personally
-> find that to be very unlikely (and lots of other syscalls would need be
-> updated).
-
-6 bytes on interface structure will make almost no difference.
-There is no reason to save more than 16 bits anywhere else.
-You could error values with high bits set.
-
-> I'm just going to move the padding to the end and change the error for
-> non-zero padding to -E2BIG.
-
-The padding had to be after the u16 field.
-
-> > Use 'flags' bits to indicate whether the additional fields should be looked at.
-> > Error if a 'flags' bit requires a value that isn't passed in the structure.
-> >
-> > Then you can add an extra field and old source code recompiled with the
-> > new headers will still work - because the 'junk' value isn't looked at.
+> int pidfd_get_fd(int pidfd, int their_fd, int flags);
 > 
-> This problem is already handled entirely by copy_struct_from_user().
-> 
-> It is true that for some new fields it will be necessary to add a new
-> flag (such as passing fds -- where 0 is a valid value) but for most new
-> fields (especially pointer or flag fields) it will not be necessary
-> because the 0 value is equivalent to the old behaviour. It also allows
-> us to entirely avoid accepting junk from userspace.
+> along the lines of dup3().
 
-Only if userspace is guaranteed to memset the entire structure
-before making the call - rather than just fill in all the fields it knows about.
-If it doesn't use memset() then recompiling old code with new headers
-will pass garbage to the kernel.
-copy_struct_from_user() cannot solve that problem.
-You'll never be able to guarantee that all code actually clears the
-entire structure - so at some point extending it will break recompilations
-of old code - annoying.
+Thanks for taking a look, Arnd!
 
-	David
+Yeah, Oleg hinted at this in the first version as well. I originally
+disagreed but we can sure also do this as a separate syscall.
+What we should keep in mind is that people already brought up adding new
+fds to a task. Which is not a problem just something to remember as it
+might potentially mean another syscall.
 
--
-Registered Address Lakeside, Bramley Road, Mount Farm, Milton Keynes, MK1 1PT, UK
-Registration No: 1397386 (Wales)
+Christian
