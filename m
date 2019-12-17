@@ -1,94 +1,68 @@
-From: Sargun Dhillon <sargun@sargun.me>
-Subject: [PATCH v3 1/4] vfs, fdtable: Add get_task_file helper
-Date: Tue, 17 Dec 2019 01:01:21 +0000
-Message-ID: <20191217010119.GA14488@ircssh-2.c.rugged-nimbus-611.internal>
+From: Jann Horn <jannh@google.com>
+Subject: Re: [PATCH v3 2/4] pid: Add PIDFD_IOCTL_GETFD to fetch file
+ descriptors from processes
+Date: Tue, 17 Dec 2019 02:13:16 +0100
+Message-ID: <CAG48ez0ooeZfdBf+u9uE3mzo2yc7f1D5EHZ09Jz5T8VVh6AWYw@mail.gmail.com>
+References: <20191217010001.GA14461@ircssh-2.c.rugged-nimbus-611.internal>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
+In-Reply-To: <20191217010001.GA14461@ircssh-2.c.rugged-nimbus-611.internal>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org
-Cc: tycho@tycho.ws, jannh@google.com, cyphar@cyphar.com, christian.brauner@ubuntu.com, oleg@redhat.com, luto@amacapital.net, viro@zeniv.linux.org.uk, gpascutto@mozilla.com, ealvarez@mozilla.com, fweimer@redhat.com, jld@mozilla.com
+To: Sargun Dhillon <sargun@sargun.me>
+Cc: kernel list <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Tycho Andersen <tycho@tycho.ws>, Aleksa Sarai <cyphar@cyphar.com>, Christian Brauner <christian.brauner@ubuntu.com>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Al Viro <viro@zeniv.linux.org.uk>, gpascutto@mozilla.com, ealvarez@mozilla.com, Florian Weimer <fweimer@redhat.com>, jld@mozilla.com
 List-Id: linux-api@vger.kernel.org
 
-This introduces a function which can be used to fetch a file, given an
-arbitrary task. As long as the user holds a reference (refcnt) to the
-task_struct it is safe to call, and will either return NULL on failure,
-or a pointer to the file, with a refcnt.
+On Tue, Dec 17, 2019 at 2:00 AM Sargun Dhillon <sargun@sargun.me> wrote:
+> This adds an ioctl which allows file descriptors to be extracted
+> from processes based on their pidfd.
+[...]
+> You must have the ability to ptrace the process in order to extract any
+> file descriptors from it. ptrace can already be used to extract file
+> descriptors based on parasitic code injections, so the permissions
+> model is aligned.
+[...]
+> +       task = get_pid_task(pid, PIDTYPE_PID);
+> +       if (!task)
+> +               return -ESRCH;
+> +       ret = -EPERM;
 
-Signed-off-by: Sargun Dhillon <sargun@sargun.me>
----
- fs/file.c            | 22 ++++++++++++++++++++--
- include/linux/file.h |  2 ++
- 2 files changed, 22 insertions(+), 2 deletions(-)
+Please add something like
 
-diff --git a/fs/file.c b/fs/file.c
-index 3da91a112bab..63272d15be61 100644
---- a/fs/file.c
-+++ b/fs/file.c
-@@ -706,9 +706,9 @@ void do_close_on_exec(struct files_struct *files)
- 	spin_unlock(&files->file_lock);
- }
- 
--static struct file *__fget(unsigned int fd, fmode_t mask, unsigned int refs)
-+static struct file *__fget_files(struct files_struct *files, unsigned int fd,
-+				 fmode_t mask, unsigned int refs)
- {
--	struct files_struct *files = current->files;
- 	struct file *file;
- 
- 	rcu_read_lock();
-@@ -729,6 +729,11 @@ static struct file *__fget(unsigned int fd, fmode_t mask, unsigned int refs)
- 	return file;
- }
- 
-+static struct file *__fget(unsigned int fd, fmode_t mask, unsigned int refs)
-+{
-+	return __fget_files(current->files, fd, mask, refs);
-+}
-+
- struct file *fget_many(unsigned int fd, unsigned int refs)
- {
- 	return __fget(fd, FMODE_PATH, refs);
-@@ -746,6 +751,19 @@ struct file *fget_raw(unsigned int fd)
- }
- EXPORT_SYMBOL(fget_raw);
- 
-+struct file *fget_task(struct task_struct *task, unsigned int fd)
-+{
-+	struct file *file = NULL;
-+
-+	task_lock(task);
-+	if (task->files)
-+		file = __fget_files(task->files, fd, 0, 1);
-+
-+	task_unlock(task);
-+
-+	return file;
-+}
-+
- /*
-  * Lightweight file lookup - no refcnt increment if fd table isn't shared.
-  *
-diff --git a/include/linux/file.h b/include/linux/file.h
-index 3fcddff56bc4..c6c7b24ea9f7 100644
---- a/include/linux/file.h
-+++ b/include/linux/file.h
-@@ -16,6 +16,7 @@ extern void fput(struct file *);
- extern void fput_many(struct file *, unsigned int);
- 
- struct file_operations;
-+struct task_struct;
- struct vfsmount;
- struct dentry;
- struct inode;
-@@ -47,6 +48,7 @@ static inline void fdput(struct fd fd)
- extern struct file *fget(unsigned int fd);
- extern struct file *fget_many(unsigned int fd, unsigned int refs);
- extern struct file *fget_raw(unsigned int fd);
-+extern struct file *fget_task(struct task_struct *task, unsigned int fd);
- extern unsigned long __fdget(unsigned int fd);
- extern unsigned long __fdget_raw(unsigned int fd);
- extern unsigned long __fdget_pos(unsigned int fd);
--- 
-2.20.1
+if (mutex_lock_killable(&task->signal->cred_guard_mutex))
+  goto out;
+
+here, and drop the mutex after fget_task().
+
+> +       if (!ptrace_may_access(task, PTRACE_MODE_READ_REALCREDS))
+> +               goto out;
+> +       ret = -EBADF;
+> +       file = fget_task(task, args.fd);
+> +       if (!file)
+> +               goto out;
+> +
+> +       fd = get_unused_fd_flags(fd_flags);
+> +       if (fd < 0) {
+> +               ret = fd;
+> +               goto out_put_file;
+> +       }
+> +       /*
+> +        * security_file_receive must come last since it may have side effects
+> +        * and cannot be reversed.
+> +        */
+> +       ret = security_file_receive(file);
+> +       if (ret)
+> +               goto out_put_fd;
+> +
+> +       fd_install(fd, file);
+> +       put_task_struct(task);
+> +       return fd;
+> +
+> +out_put_fd:
+> +       put_unused_fd(fd);
+> +out_put_file:
+> +       fput(file);
+> +out:
+> +       put_task_struct(task);
+> +       return ret;
+> +}
