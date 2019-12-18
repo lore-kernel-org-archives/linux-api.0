@@ -1,8 +1,8 @@
 From: Sargun Dhillon <sargun@sargun.me>
-Subject: [PATCH v4 2/5] pid: Add PIDFD_IOCTL_GETFD to fetch file descriptors
- from processes
-Date: Wed, 18 Dec 2019 23:55:01 +0000
-Message-ID: <20191218235459.GA17271@ircssh-2.c.rugged-nimbus-611.internal>
+Subject: [PATCH v4 3/5] samples: split generalized user-trap code into helper
+ file
+Date: Wed, 18 Dec 2019 23:55:11 +0000
+Message-ID: <20191218235508.GA17277@ircssh-2.c.rugged-nimbus-611.internal>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
@@ -12,178 +12,255 @@ To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-a
 Cc: tycho@tycho.ws, jannh@google.com, cyphar@cyphar.com, christian.brauner@ubuntu.com, oleg@redhat.com, luto@amacapital.net, viro@zeniv.linux.org.uk, gpascutto@mozilla.com, ealvarez@mozilla.com, fweimer@redhat.com, jld@mozilla.com, arnd@arndb.de
 List-Id: linux-api@vger.kernel.org
 
-This adds an ioctl which allows file descriptors to be extracted
-from processes based on their pidfd.
-
-One reason to use this is to allow sandboxers to take actions on file
-descriptors on the behalf of another process. For example, this can be
-combined with seccomp-bpf's user notification to do on-demand fd
-extraction and take privileged actions. For example, it can be used
-to bind a socket to a privileged port. This is similar to ptrace, and
-using ptrace parasitic code injection to extract a file descriptor from a
-process, but without breaking debuggers, or paying the ptrace overhead
-cost.
-
-You must have the ability to ptrace the process in order to extract any
-file descriptors from it. ptrace can already be used to extract file
-descriptors based on parasitic code injections, so the permissions
-model is aligned.
-
-The ioctl takes a pointer to pidfd_getfd_args. pidfd_getfd_args contains
-a size, which allows for gradual evolution of the API. There is an options
-field, which can be used to state whether the fd should be opened with
-CLOEXEC, or not. An additional options field may be added in the future
-to include the ability to clear cgroup information about the file
-descriptor at a later point. If the structure is from a newer kernel, and
-includes members which make it larger than the structure that's known to
-this kernel version, E2BIG will be returned.
+This moves the code for setting up a syscall interceptor with user
+notification and sending the user notification file descriptor over a
+socket using SCM_RIGHTS into a file that can be shared between multiple
+samples.
 
 Signed-off-by: Sargun Dhillon <sargun@sargun.me>
 ---
- .../userspace-api/ioctl/ioctl-number.rst      |  1 +
- MAINTAINERS                                   |  1 +
- include/uapi/linux/pidfd.h                    | 10 +++
- kernel/fork.c                                 | 77 +++++++++++++++++++
- 4 files changed, 89 insertions(+)
- create mode 100644 include/uapi/linux/pidfd.h
+ samples/seccomp/Makefile           |  6 ++-
+ samples/seccomp/user-trap-helper.c | 84 +++++++++++++++++++++++++++++
+ samples/seccomp/user-trap-helper.h | 13 +++++
+ samples/seccomp/user-trap.c        | 85 +-----------------------------
+ 4 files changed, 103 insertions(+), 85 deletions(-)
+ create mode 100644 samples/seccomp/user-trap-helper.c
+ create mode 100644 samples/seccomp/user-trap-helper.h
 
-diff --git a/Documentation/userspace-api/ioctl/ioctl-number.rst b/Documentation/userspace-api/ioctl/ioctl-number.rst
-index 4ef86433bd67..9f9be681662b 100644
---- a/Documentation/userspace-api/ioctl/ioctl-number.rst
-+++ b/Documentation/userspace-api/ioctl/ioctl-number.rst
-@@ -273,6 +273,7 @@ Code  Seq#    Include File                                           Comments
-                                                                      <mailto:tim@cyberelk.net>
- 'p'   A1-A5  linux/pps.h                                             LinuxPPS
-                                                                      <mailto:giometti@linux.it>
-+'p'   B0-CF  linux/pidfd.h
- 'q'   00-1F  linux/serio.h
- 'q'   80-FF  linux/telephony.h                                       Internet PhoneJACK, Internet LineJACK
-              linux/ixjuser.h                                         <http://web.archive.org/web/%2A/http://www.quicknet.net>
-diff --git a/MAINTAINERS b/MAINTAINERS
-index cc0a4a8ae06a..bc370ff59dbf 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -13014,6 +13014,7 @@ M:	Christian Brauner <christian@brauner.io>
- L:	linux-kernel@vger.kernel.org
- S:	Maintained
- T:	git git://git.kernel.org/pub/scm/linux/kernel/git/brauner/linux.git
-+F:	include/uapi/linux/pidfd.h
- F:	samples/pidfd/
- F:	tools/testing/selftests/pidfd/
- F:	tools/testing/selftests/clone3/
-diff --git a/include/uapi/linux/pidfd.h b/include/uapi/linux/pidfd.h
+diff --git a/samples/seccomp/Makefile b/samples/seccomp/Makefile
+index 009775b52538..82b7347318d1 100644
+--- a/samples/seccomp/Makefile
++++ b/samples/seccomp/Makefile
+@@ -16,9 +16,13 @@ HOSTCFLAGS_bpf-direct.o += -I$(objtree)/usr/include
+ HOSTCFLAGS_bpf-direct.o += -idirafter $(objtree)/include
+ bpf-direct-objs := bpf-direct.o
+ 
++
++HOSTCFLAGS_user-trap-helper.o += -I$(objtree)/usr/include
++HOSTCFLAGS_user-trap-helper.o += -idirafter $(objtree)/include
++
+ HOSTCFLAGS_user-trap.o += -I$(objtree)/usr/include
+ HOSTCFLAGS_user-trap.o += -idirafter $(objtree)/include
+-user-trap-objs := user-trap.o
++user-trap-objs := user-trap.o user-trap-helper.o
+ 
+ # Try to match the kernel target.
+ ifndef CONFIG_64BIT
+diff --git a/samples/seccomp/user-trap-helper.c b/samples/seccomp/user-trap-helper.c
 new file mode 100644
-index 000000000000..90ff535be048
+index 000000000000..f91ae9d947c5
 --- /dev/null
-+++ b/include/uapi/linux/pidfd.h
-@@ -0,0 +1,10 @@
-+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-+#ifndef _UAPI_LINUX_PID_H
-+#define _UAPI_LINUX_PID_H
++++ b/samples/seccomp/user-trap-helper.c
+@@ -0,0 +1,84 @@
++#include <linux/seccomp.h>
++#include <linux/filter.h>
++#include <unistd.h>
++#include <errno.h>
++#include <stdio.h>
++#include <stddef.h>
++#include <sys/types.h>
++#include <sys/syscall.h>
++#include <sys/socket.h>
++#include "user-trap-helper.h"
 +
-+#include <linux/types.h>
-+#include <linux/ioctl.h>
++#define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
 +
-+#define PIDFD_IOCTL_GETFD	_IOWR('p', 0xb0, __u32)
++int user_trap_syscall(int nr, unsigned int flags)
++{
++	struct sock_filter filter[] = {
++		BPF_STMT(BPF_LD+BPF_W+BPF_ABS,
++			offsetof(struct seccomp_data, nr)),
++		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, nr, 0, 1),
++		BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_USER_NOTIF),
++		BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
++	};
 +
-+#endif /* _UAPI_LINUX_PID_H */
-diff --git a/kernel/fork.c b/kernel/fork.c
-index 2508a4f238a3..09b5f233b5a8 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -94,6 +94,7 @@
- #include <linux/thread_info.h>
- #include <linux/stackleak.h>
- #include <linux/kasan.h>
-+#include <uapi/linux/pidfd.h>
++	struct sock_fprog prog = {
++		.len = (unsigned short)ARRAY_SIZE(filter),
++		.filter = filter,
++	};
++
++	return seccomp(SECCOMP_SET_MODE_FILTER, flags, &prog);
++}
++
++int send_fd(int sock, int fd)
++{
++	struct msghdr msg = {};
++	struct cmsghdr *cmsg;
++	char buf[CMSG_SPACE(sizeof(int))] = {0}, c = 'c';
++	struct iovec io = {
++		.iov_base = &c,
++		.iov_len = 1,
++	};
++
++	msg.msg_iov = &io;
++	msg.msg_iovlen = 1;
++	msg.msg_control = buf;
++	msg.msg_controllen = sizeof(buf);
++	cmsg = CMSG_FIRSTHDR(&msg);
++	cmsg->cmsg_level = SOL_SOCKET;
++	cmsg->cmsg_type = SCM_RIGHTS;
++	cmsg->cmsg_len = CMSG_LEN(sizeof(int));
++	*((int *)CMSG_DATA(cmsg)) = fd;
++	msg.msg_controllen = cmsg->cmsg_len;
++
++	if (sendmsg(sock, &msg, 0) < 0) {
++		perror("sendmsg");
++		return -1;
++	}
++
++	return 0;
++}
++
++int recv_fd(int sock)
++{
++	struct msghdr msg = {};
++	struct cmsghdr *cmsg;
++	char buf[CMSG_SPACE(sizeof(int))] = {0}, c = 'c';
++	struct iovec io = {
++		.iov_base = &c,
++		.iov_len = 1,
++	};
++
++	msg.msg_iov = &io;
++	msg.msg_iovlen = 1;
++	msg.msg_control = buf;
++	msg.msg_controllen = sizeof(buf);
++
++	if (recvmsg(sock, &msg, 0) < 0) {
++		perror("recvmsg");
++		return -1;
++	}
++
++	cmsg = CMSG_FIRSTHDR(&msg);
++
++	return *((int *)CMSG_DATA(cmsg));
++}
+diff --git a/samples/seccomp/user-trap-helper.h b/samples/seccomp/user-trap-helper.h
+new file mode 100644
+index 000000000000..a5ebda25fdfe
+--- /dev/null
++++ b/samples/seccomp/user-trap-helper.h
+@@ -0,0 +1,13 @@
++#include <unistd.h>
++#include <sys/syscall.h>
++#include <errno.h>
++
++static inline int seccomp(unsigned int op, unsigned int flags, void *args)
++{
++	errno = 0;
++	return syscall(__NR_seccomp, op, flags, args);
++}
++
++int user_trap_syscall(int nr, unsigned int flags);
++int send_fd(int sock, int fd);
++int recv_fd(int sock);
+diff --git a/samples/seccomp/user-trap.c b/samples/seccomp/user-trap.c
+index 6d0125ca8af7..1b6526587456 100644
+--- a/samples/seccomp/user-trap.c
++++ b/samples/seccomp/user-trap.c
+@@ -5,101 +5,18 @@
+ #include <errno.h>
+ #include <fcntl.h>
+ #include <string.h>
+-#include <stddef.h>
+ #include <sys/sysmacros.h>
+ #include <sys/types.h>
+ #include <sys/wait.h>
+ #include <sys/socket.h>
+ #include <sys/stat.h>
+ #include <sys/mman.h>
+-#include <sys/syscall.h>
+ #include <sys/user.h>
+ #include <sys/ioctl.h>
+-#include <sys/ptrace.h>
+ #include <sys/mount.h>
+ #include <linux/limits.h>
+-#include <linux/filter.h>
+ #include <linux/seccomp.h>
+-
+-#define ARRAY_SIZE(x) (sizeof(x) / sizeof(*(x)))
+-
+-static int seccomp(unsigned int op, unsigned int flags, void *args)
+-{
+-	errno = 0;
+-	return syscall(__NR_seccomp, op, flags, args);
+-}
+-
+-static int send_fd(int sock, int fd)
+-{
+-	struct msghdr msg = {};
+-	struct cmsghdr *cmsg;
+-	char buf[CMSG_SPACE(sizeof(int))] = {0}, c = 'c';
+-	struct iovec io = {
+-		.iov_base = &c,
+-		.iov_len = 1,
+-	};
+-
+-	msg.msg_iov = &io;
+-	msg.msg_iovlen = 1;
+-	msg.msg_control = buf;
+-	msg.msg_controllen = sizeof(buf);
+-	cmsg = CMSG_FIRSTHDR(&msg);
+-	cmsg->cmsg_level = SOL_SOCKET;
+-	cmsg->cmsg_type = SCM_RIGHTS;
+-	cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+-	*((int *)CMSG_DATA(cmsg)) = fd;
+-	msg.msg_controllen = cmsg->cmsg_len;
+-
+-	if (sendmsg(sock, &msg, 0) < 0) {
+-		perror("sendmsg");
+-		return -1;
+-	}
+-
+-	return 0;
+-}
+-
+-static int recv_fd(int sock)
+-{
+-	struct msghdr msg = {};
+-	struct cmsghdr *cmsg;
+-	char buf[CMSG_SPACE(sizeof(int))] = {0}, c = 'c';
+-	struct iovec io = {
+-		.iov_base = &c,
+-		.iov_len = 1,
+-	};
+-
+-	msg.msg_iov = &io;
+-	msg.msg_iovlen = 1;
+-	msg.msg_control = buf;
+-	msg.msg_controllen = sizeof(buf);
+-
+-	if (recvmsg(sock, &msg, 0) < 0) {
+-		perror("recvmsg");
+-		return -1;
+-	}
+-
+-	cmsg = CMSG_FIRSTHDR(&msg);
+-
+-	return *((int *)CMSG_DATA(cmsg));
+-}
+-
+-static int user_trap_syscall(int nr, unsigned int flags)
+-{
+-	struct sock_filter filter[] = {
+-		BPF_STMT(BPF_LD+BPF_W+BPF_ABS,
+-			offsetof(struct seccomp_data, nr)),
+-		BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, nr, 0, 1),
+-		BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_USER_NOTIF),
+-		BPF_STMT(BPF_RET+BPF_K, SECCOMP_RET_ALLOW),
+-	};
+-
+-	struct sock_fprog prog = {
+-		.len = (unsigned short)ARRAY_SIZE(filter),
+-		.filter = filter,
+-	};
+-
+-	return seccomp(SECCOMP_SET_MODE_FILTER, flags, &prog);
+-}
++#include "user-trap-helper.h"
  
- #include <asm/pgtable.h>
- #include <asm/pgalloc.h>
-@@ -1790,9 +1791,85 @@ static __poll_t pidfd_poll(struct file *file, struct poll_table_struct *pts)
- 	return poll_flags;
- }
- 
-+static struct file *__pidfd_getfd_fget_task(struct task_struct *task, u32 fd)
-+{
-+	struct file *file;
-+	int ret;
-+
-+	ret = mutex_lock_killable(&task->signal->cred_guard_mutex);
-+	if (ret)
-+		return ERR_PTR(ret);
-+
-+	if (!ptrace_may_access(task, PTRACE_MODE_READ_REALCREDS)) {
-+		file = ERR_PTR(-EPERM);
-+		goto out;
-+	}
-+
-+	file = fget_task(task, fd);
-+	if (!file)
-+		file = ERR_PTR(-EBADF);
-+
-+out:
-+	mutex_unlock(&task->signal->cred_guard_mutex);
-+	return file;
-+}
-+
-+static long pidfd_getfd(struct pid *pid, u32 fd)
-+{
-+	struct task_struct *task;
-+	struct file *file;
-+	int ret, retfd;
-+
-+	task = get_pid_task(pid, PIDTYPE_PID);
-+	if (!task)
-+		return -ESRCH;
-+
-+	file = __pidfd_getfd_fget_task(task, fd);
-+	put_task_struct(task);
-+	if (IS_ERR(file))
-+		return PTR_ERR(file);
-+
-+	retfd = get_unused_fd_flags(O_CLOEXEC);
-+	if (retfd < 0) {
-+		ret = retfd;
-+		goto out;
-+	}
-+
-+	/*
-+	 * security_file_receive must come last since it may have side effects
-+	 * and cannot be reversed.
-+	 */
-+	ret = security_file_receive(file);
-+	if (ret)
-+		goto out_put_fd;
-+
-+	fd_install(retfd, file);
-+	return retfd;
-+
-+out_put_fd:
-+	put_unused_fd(retfd);
-+out:
-+	fput(file);
-+	return ret;
-+}
-+
-+static long pidfd_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-+{
-+	struct pid *pid = file->private_data;
-+
-+	switch (cmd) {
-+	case PIDFD_IOCTL_GETFD:
-+		return pidfd_getfd(pid, arg);
-+	default:
-+		return -EINVAL;
-+	}
-+}
-+
- const struct file_operations pidfd_fops = {
- 	.release = pidfd_release,
- 	.poll = pidfd_poll,
-+	.unlocked_ioctl = pidfd_ioctl,
-+	.compat_ioctl = compat_ptr_ioctl,
- #ifdef CONFIG_PROC_FS
- 	.show_fdinfo = pidfd_show_fdinfo,
- #endif
+ static int handle_req(struct seccomp_notif *req,
+ 		      struct seccomp_notif_resp *resp, int listener)
 -- 
 2.20.1
