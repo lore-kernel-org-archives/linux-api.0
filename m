@@ -1,98 +1,70 @@
-From: Christian Brauner <christian.brauner@ubuntu.com>
-Subject: Re: [PATCH 1/3] cgroup: unify attach permission checking
-Date: Thu, 19 Dec 2019 00:46:33 +0100
-Message-ID: <20191218234632.3xpobnq6efprohal@wittgenstein>
-References: <20191218173516.7875-1-christian.brauner@ubuntu.com>
- <20191218173516.7875-2-christian.brauner@ubuntu.com>
+From: Sargun Dhillon <sargun@sargun.me>
+Subject: [PATCH v4 0/5] Add pidfd getfd ioctl (Was Add ptrace get_fd request)
+Date: Wed, 18 Dec 2019 23:53:12 +0000
+Message-ID: <20191218235310.GA17259@ircssh-2.c.rugged-nimbus-611.internal>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20191218173516.7875-2-christian.brauner@ubuntu.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Tejun Heo <tj@kernel.org>
-Cc: Li Zefan <lizefan@huawei.com>, Johannes Weiner <hannes@cmpxchg.org>, cgroups@vger.kernel.org
+To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org
+Cc: tycho@tycho.ws, jannh@google.com, cyphar@cyphar.com, christian.brauner@ubuntu.com, oleg@redhat.com, luto@amacapital.net, viro@zeniv.linux.org.uk, gpascutto@mozilla.com, ealvarez@mozilla.com, fweimer@redhat.com, jld@mozilla.com, arnd@arndb.de
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Dec 18, 2019 at 06:35:14PM +0100, Christian Brauner wrote:
-> The core codepaths to check whether a process can be attached to a
-> cgroup are the same for threads and thread-group leaders. Only a small
-> piece of code verifying that source and destination cgroup are in the
-> same domain differentiates the thread permission checking from
-> thread-group leader permission checking.
-> Since cgroup_migrate_vet_dst() only matters cgroup2 - it is a noop on
-> cgroup1 - we can move it out of cgroup_attach_task().
-> All checks can now be consolidated into a new helper
-> cgroup_attach_permissions() callable from both cgroup_procs_write() and
-> cgroup_threads_write().
-> 
-> Cc: Tejun Heo <tj@kernel.org>
-> Cc: Li Zefan <lizefan@huawei.com>
-> Cc: Johannes Weiner <hannes@cmpxchg.org>
-> Cc: cgroups@vger.kernel.org
-> Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
-> ---
->  kernel/cgroup/cgroup.c | 46 +++++++++++++++++++++++++++++-------------
->  1 file changed, 32 insertions(+), 14 deletions(-)
-> 
-> diff --git a/kernel/cgroup/cgroup.c b/kernel/cgroup/cgroup.c
-> index 735af8f15f95..5ee06c1f7456 100644
-> --- a/kernel/cgroup/cgroup.c
-> +++ b/kernel/cgroup/cgroup.c
-> @@ -2719,11 +2719,7 @@ int cgroup_attach_task(struct cgroup *dst_cgrp, struct task_struct *leader,
->  {
->  	DEFINE_CGROUP_MGCTX(mgctx);
->  	struct task_struct *task;
-> -	int ret;
-> -
-> -	ret = cgroup_migrate_vet_dst(dst_cgrp);
-> -	if (ret)
-> -		return ret;
-> +	int ret = 0;
->  
->  	/* look up all src csets */
->  	spin_lock_irq(&css_set_lock);
-> @@ -4690,6 +4686,33 @@ static int cgroup_procs_write_permission(struct cgroup *src_cgrp,
->  	return 0;
->  }
->  
-> +static inline bool cgroup_same_domain(const struct cgroup *src_cgrp,
-> +				      const struct cgroup *dst_cgrp)
-> +{
-> +	return src_cgrp->dom_cgrp == dst_cgrp->dom_cgrp;
-> +}
-> +
-> +static int cgroup_attach_permissions(struct cgroup *src_cgrp,
-> +				     struct cgroup *dst_cgrp,
-> +				     struct super_block *sb, bool thread)
-> +{
-> +	int ret;
-> +
-> +	ret = cgroup_procs_write_permission(src_cgrp, dst_cgrp, sb);
-> +	if (ret)
-> +		return ret;
-> +
-> +	ret = cgroup_migrate_vet_dst(dst_cgrp);
-> +	if (ret)
-> +		return ret;
-> +
-> +	if (thread &&
-> +	    !cgroup_same_domain(src_cgrp->dom_cgrp, dst_cgrp->dom_cgrp))
-> +		ret = -EOPNOTSUPP;
-> +
-> +	return 0;
-> +}
-> +
->  static ssize_t cgroup_procs_write(struct kernfs_open_file *of,
->  				  char *buf, size_t nbytes, loff_t off)
->  {
-> @@ -4712,8 +4735,8 @@ static ssize_t cgroup_procs_write(struct kernfs_open_file *of,
->  	src_cgrp = task_cgroup_from_root(task, &cgrp_dfl_root);
->  	spin_unlock_irq(&css_set_lock);
->  
-> -	ret = cgroup_procs_write_permission(src_cgrp, dst_cgrp,
-> -					    of->file->f_path.dentry->d_sb);
-> +	ret = cgroup_attach_permissions(src_cgrp, dst_cgrp,
-> +					of->file->f_path.dentry->d_sb, true);
+This patchset introduces a mechanism to capture file descriptors from other
+processes by pidfd and ioctl. Although this can be achieved using
+SCM_RIGHTS, and parasitic code injection, this offers a more
+straightforward mechanism.
 
-typo: s/true/false/
+It has a flags mechanism that's only usable to set CLOEXEC on the fd,
+but I'm thinking that it could be extended to other aspects. For example,
+for sockets, one could want to scrub the cgroup information.
+
+Changes since v3:
+ * Add self-test
+ * Move to ioctl passing fd directly, versus args struct
+ * Shuffle around include files
+
+Changes since v2:
+ * Move to ioctl on pidfd instead of ptrace function
+ * Add security check before moving file descriptor
+
+Changes since the RFC v1:
+ * Introduce a new helper to fs/file.c to fetch a file descriptor from
+   any process. It largely uses the code suggested by Oleg, with a few
+   changes to fix locking
+ * It uses an extensible options struct to supply the FD, and option.
+ * I added a sample, using the code from the user-ptrace sample
+
+Sargun Dhillon (5):
+  vfs, fdtable: Add get_task_file helper
+  pid: Add PIDFD_IOCTL_GETFD to fetch file descriptors from processes
+  samples: split generalized user-trap code into helper file
+  samples: Add example of using pidfd getfd in conjunction with user
+    trap
+  test: Add test for pidfd getfd
+
+ .../userspace-api/ioctl/ioctl-number.rst      |   1 +
+ MAINTAINERS                                   |   1 +
+ fs/file.c                                     |  22 +-
+ include/linux/file.h                          |   2 +
+ include/uapi/linux/pidfd.h                    |  10 +
+ kernel/fork.c                                 |  77 ++++++
+ samples/seccomp/.gitignore                    |   1 +
+ samples/seccomp/Makefile                      |  15 +-
+ samples/seccomp/user-trap-helper.c            |  84 +++++++
+ samples/seccomp/user-trap-helper.h            |  13 +
+ samples/seccomp/user-trap-pidfd.c             | 185 ++++++++++++++
+ samples/seccomp/user-trap.c                   |  85 +------
+ tools/testing/selftests/pidfd/.gitignore      |   1 +
+ tools/testing/selftests/pidfd/Makefile        |   2 +-
+ .../selftests/pidfd/pidfd_getfd_test.c        | 231 ++++++++++++++++++
+ 15 files changed, 641 insertions(+), 89 deletions(-)
+ create mode 100644 include/uapi/linux/pidfd.h
+ create mode 100644 samples/seccomp/user-trap-helper.c
+ create mode 100644 samples/seccomp/user-trap-helper.h
+ create mode 100644 samples/seccomp/user-trap-pidfd.c
+ create mode 100644 tools/testing/selftests/pidfd/pidfd_getfd_test.c
+
+-- 
+2.20.1
