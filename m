@@ -1,144 +1,65 @@
-From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: [PATCH 2/2] openat2: drop open_how->__padding field
-Date: Thu, 19 Dec 2019 21:55:33 +1100
-Message-ID: <20191219105533.12508-6-cyphar@cyphar.com>
+From: Florian Weimer <fweimer@redhat.com>
+Subject: Re: [PATCH 1/2] uapi: split openat2(2) definitions from fcntl.h
+Date: Thu, 19 Dec 2019 12:07:13 +0100
+Message-ID: <87a77oy3oe.fsf@oldenburg2.str.redhat.com>
 References: <20191219105533.12508-1-cyphar@cyphar.com>
+        <20191219105533.12508-2-cyphar@cyphar.com>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191219105533.12508-1-cyphar@cyphar.com>
+In-Reply-To: <20191219105533.12508-2-cyphar@cyphar.com> (Aleksa Sarai's
+        message of "Thu, 19 Dec 2019 21:55:29 +1100")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alexander Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Shuah Khan <shuah@kernel.org>
-Cc: Aleksa Sarai <cyphar@cyphar.com>, David Laight <david.laight@aculab.com>, Florian Weimer <fweimer@redhat.com>, Christian Brauner <christian.brauner@ubuntu.com>, dev@opencontainers.org, containers@lists.linux-foundation.org, libc-alpha@sourceware.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org
+To: Aleksa Sarai <cyphar@cyphar.com>
+Cc: Alexander Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Shuah Khan <shuah@kernel.org>, David Laight <david.laight@aculab.com>, Christian Brauner <christian.brauner@ubuntu.com>, dev@opencontainers.org, containers@lists.linux-foundation.org, libc-alpha@sourceware.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The purpose of explicit padding was to allow us to use the space in the
-future (C provides no guarantee about the value of padding bytes and
-thus userspace could've provided garbage).
+* Aleksa Sarai:
 
-However, the downside of explicit padding is that any extension we wish
-to add should fit the space exactly (otherwise we may end up with a u16
-which will never be used). In addition, the correct error to return for
-non-zero padding is not clear (-EINVAL doesn't imply "you're using an
-extension field unsupported by this kernel", but -E2BIG seems a bit odd
-if the structure size isn't different).
+> diff --git a/include/uapi/linux/openat2.h b/include/uapi/linux/openat2.h
+> new file mode 100644
+> index 000000000000..19ef775e8e5e
+> --- /dev/null
+> +++ b/include/uapi/linux/openat2.h
+> @@ -0,0 +1,41 @@
+> +/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+> +#ifndef _UAPI_LINUX_OPENAT2_H
+> +#define _UAPI_LINUX_OPENAT2_H
 
-The simplest solution is to just match the design of clone3(2) -- use
-u64s for all fields. The extra few-bytes cost of extra fields is not
-significant (it's unlikely configuration structs will ever be extremely
-large) and it allows for more flag space if necessary.
+I think you should include the relevant header for __align_u64
+etc. here.
 
-As openat2(2) is not yet in Linus's tree, we can iron out these minor
-warts before we commit to this as a stable ABI.
+[=E2=80=A6]
+> + * Arguments for how openat2(2) should open the target path. If @resolve=
+ is
+> + * zero, then openat2(2) operates very similarly to openat(2).
+> + *
+> + * However, unlike openat(2), unknown bits in @flags result in -EINVAL r=
+ather
+> + * than being silently ignored. @mode must be zero unless one of {O_CREA=
+T,
+> + * O_TMPFILE} are set.
+> + *
+> + * @flags: O_* flags.
+> + * @mode: O_CREAT/O_TMPFILE file mode.
+> + * @resolve: RESOLVE_* flags.
+> + */
+> +struct open_how {
+> +	__aligned_u64 flags;
+> +	__u16 mode;
+> +	__u16 __padding[3]; /* must be zeroed */
+> +	__aligned_u64 resolve;
+> +};
+> +
+> +#define OPEN_HOW_SIZE_VER0	24 /* sizeof first published struct */
+> +#define OPEN_HOW_SIZE_LATEST	OPEN_HOW_SIZE_VER0
 
-Suggested-by: David Laight <david.laight@aculab.com>
-Signed-off-by: Aleksa Sarai <cyphar@cyphar.com>
----
- fs/open.c                                     |  2 --
- include/uapi/linux/openat2.h                  |  3 +--
- tools/testing/selftests/openat2/helpers.h     |  3 +--
- .../testing/selftests/openat2/openat2_test.c  | 24 +++++++------------
- 4 files changed, 10 insertions(+), 22 deletions(-)
+Are these really useful for the UAPI header?  Is there a situation where
+OPEN_HOW_SIZE_LATEST would be different from sizeof (struct open_how)?
 
-diff --git a/fs/open.c b/fs/open.c
-index 50a46501bcc9..8cdb2b675867 100644
---- a/fs/open.c
-+++ b/fs/open.c
-@@ -993,8 +993,6 @@ static inline int build_open_flags(const struct open_how *how,
- 		return -EINVAL;
- 	if (how->resolve & ~VALID_RESOLVE_FLAGS)
- 		return -EINVAL;
--	if (memchr_inv(how->__padding, 0, sizeof(how->__padding)))
--		return -EINVAL;
- 
- 	/* Deal with the mode. */
- 	if (WILL_CREATE(flags)) {
-diff --git a/include/uapi/linux/openat2.h b/include/uapi/linux/openat2.h
-index 19ef775e8e5e..76fad4ada2d4 100644
---- a/include/uapi/linux/openat2.h
-+++ b/include/uapi/linux/openat2.h
-@@ -16,8 +16,7 @@
-  */
- struct open_how {
- 	__aligned_u64 flags;
--	__u16 mode;
--	__u16 __padding[3]; /* must be zeroed */
-+	__aligned_u64 mode;
- 	__aligned_u64 resolve;
- };
- 
-diff --git a/tools/testing/selftests/openat2/helpers.h b/tools/testing/selftests/openat2/helpers.h
-index 43ca5ceab6e3..d756775d0725 100644
---- a/tools/testing/selftests/openat2/helpers.h
-+++ b/tools/testing/selftests/openat2/helpers.h
-@@ -37,8 +37,7 @@
-  */
- struct open_how {
- 	__aligned_u64 flags;
--	__u16 mode;
--	__u16 __padding[3]; /* must be zeroed */
-+	__aligned_u64 mode;
- 	__aligned_u64 resolve;
- };
- 
-diff --git a/tools/testing/selftests/openat2/openat2_test.c b/tools/testing/selftests/openat2/openat2_test.c
-index 0b64fedc008b..b386367c606b 100644
---- a/tools/testing/selftests/openat2/openat2_test.c
-+++ b/tools/testing/selftests/openat2/openat2_test.c
-@@ -40,7 +40,7 @@ struct struct_test {
- 	int err;
- };
- 
--#define NUM_OPENAT2_STRUCT_TESTS 10
-+#define NUM_OPENAT2_STRUCT_TESTS 7
- #define NUM_OPENAT2_STRUCT_VARIATIONS 13
- 
- void test_openat2_struct(void)
-@@ -57,20 +57,6 @@ void test_openat2_struct(void)
- 		  .arg.inner.flags = O_RDONLY,
- 		  .size = sizeof(struct open_how_ext) },
- 
--		/* Normal struct with broken padding. */
--		{ .name = "normal struct (non-zero padding[0])",
--		  .arg.inner.flags = O_RDONLY,
--		  .arg.inner.__padding = {0xa0, 0x00, 0x00},
--		  .size = sizeof(struct open_how_ext), .err = -EINVAL },
--		{ .name = "normal struct (non-zero padding[1])",
--		  .arg.inner.flags = O_RDONLY,
--		  .arg.inner.__padding = {0x00, 0x1a, 0x00},
--		  .size = sizeof(struct open_how_ext), .err = -EINVAL },
--		{ .name = "normal struct (non-zero padding[2])",
--		  .arg.inner.flags = O_RDONLY,
--		  .arg.inner.__padding = {0x00, 0x00, 0xef},
--		  .size = sizeof(struct open_how_ext), .err = -EINVAL },
--
- 		/* TODO: Once expanded, check zero-padding. */
- 
- 		/* Smaller than version-0 struct. */
-@@ -169,7 +155,7 @@ struct flag_test {
- 	int err;
- };
- 
--#define NUM_OPENAT2_FLAG_TESTS 21
-+#define NUM_OPENAT2_FLAG_TESTS 23
- 
- void test_openat2_flags(void)
- {
-@@ -214,9 +200,15 @@ void test_openat2_flags(void)
- 		{ .name = "invalid how.mode and O_CREAT",
- 		  .how.flags = O_CREAT,
- 		  .how.mode = 0xFFFF, .err = -EINVAL },
-+		{ .name = "invalid (very large) how.mode and O_CREAT",
-+		  .how.flags = O_CREAT,
-+		  .how.mode = 0xC000000000000000ULL, .err = -EINVAL },
- 		{ .name = "invalid how.mode and O_TMPFILE",
- 		  .how.flags = O_TMPFILE | O_RDWR,
- 		  .how.mode = 0x1337, .err = -EINVAL },
-+		{ .name = "invalid (very large) how.mode and O_TMPFILE",
-+		  .how.flags = O_TMPFILE | O_RDWR,
-+		  .how.mode = 0x0000A00000000000ULL, .err = -EINVAL },
- 
- 		/* ->resolve must only contain RESOLVE_* flags. */
- 		{ .name = "invalid how.resolve and O_RDONLY",
--- 
-2.24.0
+The header is not compatible with the assembler anyway, so the numeric
+constant does not seem useful.
+
+Thanks,
+Florian
