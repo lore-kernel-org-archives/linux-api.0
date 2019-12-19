@@ -1,92 +1,58 @@
-From: Christian Brauner <christian.brauner@ubuntu.com>
-Subject: Re: [PATCH 1/3] cgroup: unify attach permission checking
-Date: Thu, 19 Dec 2019 01:39:54 +0100
-Message-ID: <20191219003953.y26rclexqwijxmvz@wittgenstein>
-References: <20191218173516.7875-1-christian.brauner@ubuntu.com>
- <20191218173516.7875-2-christian.brauner@ubuntu.com>
+From: John Hubbard <jhubbard@nvidia.com>
+Subject: [PATCH] move_pages.2: remove ENOENT from the list of possible return values
+Date: Wed, 18 Dec 2019 21:13:47 -0800
+Message-ID: <20191219051347.1278026-1-jhubbard@nvidia.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20191218173516.7875-2-christian.brauner@ubuntu.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Tejun Heo <tj@kernel.org>
-Cc: Li Zefan <lizefan@huawei.com>, Johannes Weiner <hannes@cmpxchg.org>, cgroups@vger.kernel.org
+To: Michael Kerrisk <mtk.manpages@gmail.com>
+Cc: linux-man@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, Christopher Lameter <cl@linux.com>, linux-api@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-mm@kvack.org, John Hubbard <jhubbard@nvidia.com>, Michal Hocko <mhocko@suse.com>, Brice Goglin <Brice.Goglin@inria.fr>, Yang Shi <yang.shi@linux.alibaba.com>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Dec 18, 2019 at 06:35:14PM +0100, Christian Brauner wrote:
-> The core codepaths to check whether a process can be attached to a
-> cgroup are the same for threads and thread-group leaders. Only a small
-> piece of code verifying that source and destination cgroup are in the
-> same domain differentiates the thread permission checking from
-> thread-group leader permission checking.
-> Since cgroup_migrate_vet_dst() only matters cgroup2 - it is a noop on
-> cgroup1 - we can move it out of cgroup_attach_task().
-> All checks can now be consolidated into a new helper
-> cgroup_attach_permissions() callable from both cgroup_procs_write() and
-> cgroup_threads_write().
-> 
-> Cc: Tejun Heo <tj@kernel.org>
-> Cc: Li Zefan <lizefan@huawei.com>
-> Cc: Johannes Weiner <hannes@cmpxchg.org>
-> Cc: cgroups@vger.kernel.org
-> Signed-off-by: Christian Brauner <christian.brauner@ubuntu.com>
-> ---
->  kernel/cgroup/cgroup.c | 46 +++++++++++++++++++++++++++++-------------
->  1 file changed, 32 insertions(+), 14 deletions(-)
-> 
-> diff --git a/kernel/cgroup/cgroup.c b/kernel/cgroup/cgroup.c
-> index 735af8f15f95..5ee06c1f7456 100644
-> --- a/kernel/cgroup/cgroup.c
-> +++ b/kernel/cgroup/cgroup.c
-> @@ -2719,11 +2719,7 @@ int cgroup_attach_task(struct cgroup *dst_cgrp, struct task_struct *leader,
->  {
->  	DEFINE_CGROUP_MGCTX(mgctx);
->  	struct task_struct *task;
-> -	int ret;
-> -
-> -	ret = cgroup_migrate_vet_dst(dst_cgrp);
-> -	if (ret)
-> -		return ret;
-> +	int ret = 0;
->  
->  	/* look up all src csets */
->  	spin_lock_irq(&css_set_lock);
-> @@ -4690,6 +4686,33 @@ static int cgroup_procs_write_permission(struct cgroup *src_cgrp,
->  	return 0;
->  }
->  
-> +static inline bool cgroup_same_domain(const struct cgroup *src_cgrp,
-> +				      const struct cgroup *dst_cgrp)
-> +{
-> +	return src_cgrp->dom_cgrp == dst_cgrp->dom_cgrp;
-> +}
-> +
-> +static int cgroup_attach_permissions(struct cgroup *src_cgrp,
-> +				     struct cgroup *dst_cgrp,
-> +				     struct super_block *sb, bool thread)
-> +{
-> +	int ret;
+Linux kernel commit e78bbfa82624 ("mm: stop returning -ENOENT from
+sys_move_pages() if nothing got migrated") had the effect of *never*
+returning -ENOENT, in any situation. So we need to update the man page
+to reflect that ENOENT is not a possible return value.
 
-This needs to be
+Acked-by: Michal Hocko <mhocko@suse.com>
+Cc: Brice Goglin <Brice.Goglin@inria.fr>
+Cc: Yang Shi <yang.shi@linux.alibaba.com>
+Cc: Christoph Lameter <cl@linux.com>
+Signed-off-by: John Hubbard <jhubbard@nvidia.com>
+---
 
-ret = 0
+Hi,
 
-> +
-> +	ret = cgroup_procs_write_permission(src_cgrp, dst_cgrp, sb);
-> +	if (ret)
-> +		return ret;
-> +
-> +	ret = cgroup_migrate_vet_dst(dst_cgrp);
-> +	if (ret)
-> +		return ret;
-> +
-> +	if (thread &&
-> +	    !cgroup_same_domain(src_cgrp->dom_cgrp, dst_cgrp->dom_cgrp))
-> +		ret = -EOPNOTSUPP;
-> +
-> +	return 0;
+This fix for the man page was ACK'd by Michal, here:
 
-and this
+https://lore.kernel.org/r/20191218101711.GB21485@dhcp22.suse.cz
 
-return ret;
+thanks,
+John Hubbard
+NVIDIA
+
+ man2/move_pages.2 | 6 ------
+ 1 file changed, 6 deletions(-)
+
+diff --git a/man2/move_pages.2 b/man2/move_pages.2
+index 2d96468fa..1bf1053f2 100644
+--- a/man2/move_pages.2
++++ b/man2/move_pages.2
+@@ -191,12 +191,6 @@ was specified or an attempt was made to migrate pages =
+of a kernel thread.
+ .B ENODEV
+ One of the target nodes is not online.
+ .TP
+-.B ENOENT
+-No pages were found that require moving.
+-All pages are either already
+-on the target node, not present, had an invalid address or could not be
+-moved because they were mapped by multiple processes.
+-.TP
+ .B EPERM
+ The caller specified
+ .B MPOL_MF_MOVE_ALL
+--=20
+2.24.1
