@@ -1,32 +1,49 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: Re: [PATCH v4 2/5] pid: Add PIDFD_IOCTL_GETFD to fetch file
- descriptors from processes
-Date: Thu, 19 Dec 2019 17:43:17 -0800
-Message-ID: <CALCETrUK-SHA=sOUrBscpf+Bpxxff2L3RpXEaAfRHNnHGxa-LQ@mail.gmail.com>
-References: <20191218235459.GA17271@ircssh-2.c.rugged-nimbus-611.internal>
+From: Shuah Khan <skhan@linuxfoundation.org>
+Subject: Re: [PATCH for 5.5 1/1] rseq/selftests: Turn off timeout setting
+Date: Thu, 19 Dec 2019 18:44:45 -0700
+Message-ID: <f8f04858-ff13-8ec3-0249-8c864fad406a@linuxfoundation.org>
+References: <20191211162857.11354-1-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191218235459.GA17271@ircssh-2.c.rugged-nimbus-611.internal>
+In-Reply-To: <20191211162857.11354-1-mathieu.desnoyers@efficios.com>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: Sargun Dhillon <sargun@sargun.me>
-Cc: LKML <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Tycho Andersen <tycho@tycho.ws>, Jann Horn <jannh@google.com>, Aleksa Sarai <cyphar@cyphar.com>, Christian Brauner <christian.brauner@ubuntu.com>, Oleg Nesterov <oleg@redhat.com>, Al Viro <viro@zeniv.linux.org.uk>, gpascutto@mozilla.com, ealvarez@mozilla.com, Florian Weimer <fweimer@redhat.com>, jld@mozilla.com, Arnd Bergmann <arnd@arndb.de>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-kernel@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, "H . Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>, linux-api@vger.kernel.org, stable@vger.kernel.org, Dmitry Vyukov <dvyukov@google.com>, Shuah Khan <skhan@linuxfoundation.org>
 List-Id: linux-api@vger.kernel.org
 
-On Wed, Dec 18, 2019 at 3:55 PM Sargun Dhillon <sargun@sargun.me> wrote:
->
-> +
-> +       if (!ptrace_may_access(task, PTRACE_MODE_READ_REALCREDS)) {
-> +               file = ERR_PTR(-EPERM);
-> +               goto out;
-> +       }
+On 12/11/19 9:28 AM, Mathieu Desnoyers wrote:
+> As the rseq selftests can run for a long period of time, disable the
+> timeout that the general selftests have.
+> 
+> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+> Cc: Shuah Khan <skhan@linuxfoundation.org>
+> Cc: Thomas Gleixner <tglx@linutronix.de>
+> Cc: Peter Zijlstra (Intel) <peterz@infradead.org>
+> Cc: "Paul E. McKenney" <paulmck@linux.ibm.com>
+> Cc: Boqun Feng <boqun.feng@gmail.com>
+> Cc: "H . Peter Anvin" <hpa@zytor.com>
+> Cc: Paul Turner <pjt@google.com>
+> Cc: Dmitry Vyukov <dvyukov@google.com>
+> ---
+>   tools/testing/selftests/rseq/settings | 1 +
+>   1 file changed, 1 insertion(+)
+>   create mode 100644 tools/testing/selftests/rseq/settings
+> 
+> diff --git a/tools/testing/selftests/rseq/settings b/tools/testing/selftests/rseq/settings
+> new file mode 100644
+> index 000000000000..e7b9417537fb
+> --- /dev/null
+> +++ b/tools/testing/selftests/rseq/settings
+> @@ -0,0 +1 @@
+> +timeout=0
+> 
 
-I don't think this is MODE_READ.  By copying an fd from the task, you
-can easily change its state.
+I am pulling this patch in for Linux 5.5-rc4.
 
-IMO it would be really nice if pidfd could act more like a capability
-here and carry a ptrace mode, for example.  But I guess it doesn't
-right now.
+Let me know if you have any objections.
 
-
---Andy
+thanks,
+-- Shuah
