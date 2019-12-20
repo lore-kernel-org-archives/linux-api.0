@@ -1,79 +1,93 @@
-From: Shuah Khan <skhan@linuxfoundation.org>
-Subject: Re: [PATCH for 5.5 2/2] rseq/selftests: Clarify rseq_prepare_unload()
- helper requirements
-Date: Fri, 20 Dec 2019 13:27:29 -0700
-Message-ID: <2ad7d561-2cbc-09c2-2806-97c3be3727e2@linuxfoundation.org>
-References: <20191220201207.17389-1-mathieu.desnoyers@efficios.com>
- <20191220201207.17389-2-mathieu.desnoyers@efficios.com>
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: Re: [PATCH for 5.5 2/2] rseq/selftests: Clarify
+ rseq_prepare_unload() helper requirements
+Date: Fri, 20 Dec 2019 15:32:06 -0500 (EST)
+Message-ID: <190540378.14355.1576873926104.JavaMail.zimbra@efficios.com>
+References: <20191220201207.17389-1-mathieu.desnoyers@efficios.com> <20191220201207.17389-2-mathieu.desnoyers@efficios.com> <2ad7d561-2cbc-09c2-2806-97c3be3727e2@linuxfoundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191220201207.17389-2-mathieu.desnoyers@efficios.com>
-Content-Language: en-US
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Thomas Gleixner <tglx@linutronix.de>
-Cc: linux-kernel@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, "H . Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>, linux-api@vger.kernel.org, stable@vger.kernel.org, Florian Weimer <fw@deneb.enyo.de>, Dmitry Vyukov <dvyukov@google.com>, "skh >> Shuah Khan" <skhan@linuxfoundation.org>
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <2ad7d561-2cbc-09c2-2806-97c3be3727e2@linuxfoundation.org>
+Sender: stable-owner@vger.kernel.org
+To: Shuah Khan <skhan@linuxfoundation.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>, linux-kernel <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, paulmck <paulmck@linux.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, "H. Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>, linux-api <linux-api@vger.kernel.org>, stable <stable@vger.kernel.org>, Florian Weimer <fw@deneb.enyo.de>, Dmitry Vyukov <dvyukov@google.com>
 List-Id: linux-api@vger.kernel.org
 
-Hi Mathieu,
+----- On Dec 20, 2019, at 3:27 PM, Shuah Khan skhan@linuxfoundation.org wrote:
 
-On 12/20/19 1:12 PM, Mathieu Desnoyers wrote:
-> The rseq.h UAPI now documents that the rseq_cs field must be cleared
-> before reclaiming memory that contains the targeted struct rseq_cs, but
-> also that the rseq_cs field must be cleared before reclaiming memory of
-> the code pointed to by the rseq_cs start_ip and post_commit_offset
-> fields.
+> Hi Mathieu,
 > 
-> While we can expect that use of dlclose(3) will typically unmap
-> both struct rseq_cs and its associated code at once, nothing would
-> theoretically prevent a JIT from reclaiming the code without
-> reclaiming the struct rseq_cs, which would erroneously allow the
-> kernel to consider new code which is not a rseq critical section
-> as a rseq critical section following a code reclaim.
+> On 12/20/19 1:12 PM, Mathieu Desnoyers wrote:
+>> The rseq.h UAPI now documents that the rseq_cs field must be cleared
+>> before reclaiming memory that contains the targeted struct rseq_cs, but
+>> also that the rseq_cs field must be cleared before reclaiming memory of
+>> the code pointed to by the rseq_cs start_ip and post_commit_offset
+>> fields.
+>> 
+>> While we can expect that use of dlclose(3) will typically unmap
+>> both struct rseq_cs and its associated code at once, nothing would
+>> theoretically prevent a JIT from reclaiming the code without
+>> reclaiming the struct rseq_cs, which would erroneously allow the
+>> kernel to consider new code which is not a rseq critical section
+>> as a rseq critical section following a code reclaim.
+>> 
+>> Suggested-by: Florian Weimer <fw@deneb.enyo.de>
+>> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+>> Cc: Shuah Khan <skhan@linuxfoundation.org>
+>> Cc: Florian Weimer <fw@deneb.enyo.de>
+>> Cc: Thomas Gleixner <tglx@linutronix.de>
+>> Cc: Peter Zijlstra (Intel) <peterz@infradead.org>
+>> Cc: "Paul E. McKenney" <paulmck@linux.ibm.com>
+>> Cc: Boqun Feng <boqun.feng@gmail.com>
+>> Cc: "H . Peter Anvin" <hpa@zytor.com>
+>> Cc: Paul Turner <pjt@google.com>
+>> Cc: Dmitry Vyukov <dvyukov@google.com>
+>> ---
+>>   tools/testing/selftests/rseq/rseq.h | 12 +++++++-----
+>>   1 file changed, 7 insertions(+), 5 deletions(-)
+>> 
+>> diff --git a/tools/testing/selftests/rseq/rseq.h
+>> b/tools/testing/selftests/rseq/rseq.h
+>> index d40d60e7499e..15cbd51d0818 100644
+>> --- a/tools/testing/selftests/rseq/rseq.h
+>> +++ b/tools/testing/selftests/rseq/rseq.h
+>> @@ -149,11 +149,13 @@ static inline void rseq_clear_rseq_cs(void)
+>>   /*
+>>    * rseq_prepare_unload() should be invoked by each thread executing a rseq
+>>    * critical section at least once between their last critical section and
+>> - * library unload of the library defining the rseq critical section
+>> - * (struct rseq_cs). This also applies to use of rseq in code generated by
+>> - * JIT: rseq_prepare_unload() should be invoked at least once by each
+>> - * thread executing a rseq critical section before reclaim of the memory
+>> - * holding the struct rseq_cs.
+>> + * library unload of the library defining the rseq critical section (struct
+>> + * rseq_cs) or the code refered to by the struct rseq_cs start_ip and
 > 
-> Suggested-by: Florian Weimer <fw@deneb.enyo.de>
-> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-> Cc: Shuah Khan <skhan@linuxfoundation.org>
-> Cc: Florian Weimer <fw@deneb.enyo.de>
-> Cc: Thomas Gleixner <tglx@linutronix.de>
-> Cc: Peter Zijlstra (Intel) <peterz@infradead.org>
-> Cc: "Paul E. McKenney" <paulmck@linux.ibm.com>
-> Cc: Boqun Feng <boqun.feng@gmail.com>
-> Cc: "H . Peter Anvin" <hpa@zytor.com>
-> Cc: Paul Turner <pjt@google.com>
-> Cc: Dmitry Vyukov <dvyukov@google.com>
-> ---
->   tools/testing/selftests/rseq/rseq.h | 12 +++++++-----
->   1 file changed, 7 insertions(+), 5 deletions(-)
-> 
-> diff --git a/tools/testing/selftests/rseq/rseq.h b/tools/testing/selftests/rseq/rseq.h
-> index d40d60e7499e..15cbd51d0818 100644
-> --- a/tools/testing/selftests/rseq/rseq.h
-> +++ b/tools/testing/selftests/rseq/rseq.h
-> @@ -149,11 +149,13 @@ static inline void rseq_clear_rseq_cs(void)
->   /*
->    * rseq_prepare_unload() should be invoked by each thread executing a rseq
->    * critical section at least once between their last critical section and
-> - * library unload of the library defining the rseq critical section
-> - * (struct rseq_cs). This also applies to use of rseq in code generated by
-> - * JIT: rseq_prepare_unload() should be invoked at least once by each
-> - * thread executing a rseq critical section before reclaim of the memory
-> - * holding the struct rseq_cs.
-> + * library unload of the library defining the rseq critical section (struct
-> + * rseq_cs) or the code refered to by the struct rseq_cs start_ip and
+> Nit: referred instead of refered
 
-Nit: referred instead of refered
+Good catch. I've done the same error in patch 1/2. I'll update both and
+resend.
 
-> + * post_commit_offset fields. This also applies to use of rseq in code
-> + * generated by JIT: rseq_prepare_unload() should be invoked at least once by
-> + * each thread executing a rseq critical section before reclaim of the memory
-> + * holding the struct rseq_cs or reclaim of the code pointed to by struct
-> + * rseq_cs start_ip and post_commit_offset fields.
->    */
->   static inline void rseq_prepare_unload(void)
->   {
+Thanks!
+
+Mathieu
+
 > 
+>> + * post_commit_offset fields. This also applies to use of rseq in code
+>> + * generated by JIT: rseq_prepare_unload() should be invoked at least once by
+>> + * each thread executing a rseq critical section before reclaim of the memory
+>> + * holding the struct rseq_cs or reclaim of the code pointed to by struct
+>> + * rseq_cs start_ip and post_commit_offset fields.
+>>    */
+>>   static inline void rseq_prepare_unload(void)
+>>   {
+>> 
+> 
+> thanks,
+> -- Shuah
 
-thanks,
--- Shuah
+-- 
+Mathieu Desnoyers
+EfficiOS Inc.
+http://www.efficios.com
