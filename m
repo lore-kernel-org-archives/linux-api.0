@@ -1,98 +1,119 @@
 From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [PATCH for 5.5 1/2] rseq: Fix: Clarify rseq.h UAPI rseq_cs
- memory reclaim requirements
-Date: Fri, 20 Dec 2019 16:15:00 -0500 (EST)
-Message-ID: <669061171.14506.1576876500152.JavaMail.zimbra@efficios.com>
-References: <20191220201207.17389-1-mathieu.desnoyers@efficios.com> <87imman36g.fsf@mid.deneb.enyo.de> <173832695.14381.1576875253374.JavaMail.zimbra@efficios.com> <875zian2a2.fsf@mid.deneb.enyo.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Subject: [RFC PATCH glibc 10/13] glibc: sched_getcpu(): use rseq cpu_id TLS on Linux (v5)
+Date: Fri, 20 Dec 2019 16:36:47 -0500
+Message-ID: <20191220213650.11281-11-mathieu.desnoyers@efficios.com>
+References: <20191220213650.11281-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <875zian2a2.fsf@mid.deneb.enyo.de>
+In-Reply-To: <20191220213650.11281-1-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fw@deneb.enyo.de>
-Cc: Thomas Gleixner <tglx@linutronix.de>, linux-kernel <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, paulmck <paulmck@linux.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, "H. Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>, linux-api <linux-api@vger.kernel.org>, stable <stable@vger.kernel.org>, Dmitry Vyukov <dvyukov@google.com>, Neel Natu <neelnatu@google.com>
+To: Carlos O'Donell <carlos@redhat.com>
+Cc: Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha@sourceware.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
------ On Dec 20, 2019, at 3:57 PM, Florian Weimer fw@deneb.enyo.de wrote:
+When available, use the cpu_id field from __rseq_abi on Linux to
+implement sched_getcpu(). Fall-back on the vgetcpu vDSO if unavailable.
 
-> * Mathieu Desnoyers:
->=20
->> ----- On Dec 20, 2019, at 3:37 PM, Florian Weimer fw@deneb.enyo.de wrote=
-:
->>
->>> * Mathieu Desnoyers:
->>>=20
->>>> diff --git a/include/uapi/linux/rseq.h b/include/uapi/linux/rseq.h
->>>> index 9a402fdb60e9..6f26b0b148a6 100644
->>>> --- a/include/uapi/linux/rseq.h
->>>> +++ b/include/uapi/linux/rseq.h
->>>> @@ -100,7 +100,9 @@ struct rseq {
->>>>  =09 * instruction sequence block, as well as when the kernel detects =
-that
->>>>  =09 * it is preempting or delivering a signal outside of the range
->>>>  =09 * targeted by the rseq_cs. Also needs to be set to NULL by user-s=
-pace
->>>> -=09 * before reclaiming memory that contains the targeted struct rseq=
-_cs.
->>>> +=09 * before reclaiming memory that contains the targeted struct rseq=
-_cs
->>>> +=09 * or reclaiming memory that contains the code refered to by the
->>>> +=09 * start_ip and post_commit_offset fields of struct rseq_cs.
->>>=20
->>> Maybe mention that it's good practice to clear rseq_cs before
->>> returning from a function that contains a restartable sequence?
->>
->> Unfortunately, clearing it is not free. Considering that rseq is meant t=
-o
->> be used in very hot code paths, it would be preferable that applications
->> clear it in the very infrequent case where the rseq_cs or code will
->> vanish (e.g. dlclose or JIT reclaim), and not require it to be cleared
->> after each critical section. I am therefore reluctant to document the
->> behavior you describe as a "good practice" for rseq.
->=20
-> You already have to write to rseq_cs before entering the critical
-> section, right?  Then you've already determined the address, and the
-> cache line is already hot, so it really should be close to zero cost.
+Benchmarks:
 
-Considering that overall rseq executes in fraction of nanoseconds on
-some architectures, adding an extra store is perhaps close to zero,
-but still significantly degrades performance.
+x86-64: Intel E5-2630 v3@2.40GHz, 16-core, hyperthreading
 
->=20
-> I mean, you can still discard the advice, but you do so ad your own
-> peril =E2=80=A6
+glibc sched_getcpu():                     13.7 ns (baseline)
+glibc sched_getcpu() using rseq:           2.5 ns (speedup:  5.5x)
+inline load cpuid from __rseq_abi TLS:     0.8 ns (speedup: 17.1x)
 
-I am also uncomfortable leaving this to the end user. One possibility
-would be to extend rseq or membarrier to add a kind of "rseq-clear"
-barrier, which would ensure that the kernel will have cleared the
-rseq_cs field for each thread belonging to the current process. glibc
-could then call this barrier before dlclose.
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: Carlos O'Donell <carlos@redhat.com>
+CC: Florian Weimer <fweimer@redhat.com>
+CC: Joseph Myers <joseph@codesourcery.com>
+CC: Szabolcs Nagy <szabolcs.nagy@arm.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Paul Turner <pjt@google.com>
+CC: libc-alpha@sourceware.org
+CC: linux-kernel@vger.kernel.org
+CC: linux-api@vger.kernel.org
+---
+Changes since v1:
+- rseq is only used if both __NR_rseq and RSEQ_SIG are defined.
 
-This is slightly different from another rseq-barrier that has been
-requested by Paul Turner: a way to ensure that all previously
-running rseq critical sections have completed or aborted.
+Changes since v2:
+- remove duplicated __rseq_abi extern declaration.
 
-AFAIU, the desiderata for each of the 2 use-cases is as follows:
+Changes since v3:
+- update ChangeLog.
 
-rseq-barrier: guarantee that all prior rseq critical sections have
-completed or aborted for the current process or for a set of registered
-processes. Allows doing RCU-like algorithms within rseq critical sections.
+Changes since v4:
+- Use atomic_load_relaxed to load the __rseq_abi.cpu_id field, a
+  consequence of the fact that __rseq_abi is not volatile anymore.
+- Include atomic.h which provides atomic_load_relaxed.
+---
+ ChangeLog.old/ChangeLog.19             |  5 +++++
+ sysdeps/unix/sysv/linux/sched_getcpu.c | 25 +++++++++++++++++++++++--
+ 2 files changed, 28 insertions(+), 2 deletions(-)
 
-rseq-clear: guarantee that the rseq_cs field is cleared for each thread
-belonging to the current process before the barrier system call returns
-to the caller. Aborts currently running rseq critical sections for all
-threads belonging to the current process. The use-case is to allow
-dlclose and JIT reclaim to clear any leftover reference to struct
-rseq_cs or code which are going to be reclaimed.
-
-Thoughts ?
-
-Thanks,
-
-Mathieu
-
---=20
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+diff --git a/ChangeLog.old/ChangeLog.19 b/ChangeLog.old/ChangeLog.19
+index 9d6496c747..07c6aff585 100644
+--- a/ChangeLog.old/ChangeLog.19
++++ b/ChangeLog.old/ChangeLog.19
+@@ -1,3 +1,8 @@
++2019-12-17  Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
++
++	* sysdeps/unix/sysv/linux/sched_getcpu.c: use rseq cpu_id TLS on
++	Linux.
++
+ 2019-12-17  Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+ 
+ 	* NEWS: Add Restartable Sequences feature description.
+diff --git a/sysdeps/unix/sysv/linux/sched_getcpu.c b/sysdeps/unix/sysv/linux/sched_getcpu.c
+index 65dd9fdda7..6f24c1db99 100644
+--- a/sysdeps/unix/sysv/linux/sched_getcpu.c
++++ b/sysdeps/unix/sysv/linux/sched_getcpu.c
+@@ -18,14 +18,15 @@
+ #include <errno.h>
+ #include <sched.h>
+ #include <sysdep.h>
++#include <atomic.h>
+ 
+ #ifdef HAVE_GETCPU_VSYSCALL
+ # define HAVE_VSYSCALL
+ #endif
+ #include <sysdep-vdso.h>
+ 
+-int
+-sched_getcpu (void)
++static int
++vsyscall_sched_getcpu (void)
+ {
+ #ifdef __NR_getcpu
+   unsigned int cpu;
+@@ -37,3 +38,23 @@ sched_getcpu (void)
+   return -1;
+ #endif
+ }
++
++#ifdef __NR_rseq
++#include <sys/rseq.h>
++#endif
++
++#if defined __NR_rseq && defined RSEQ_SIG
++int
++sched_getcpu (void)
++{
++  int cpu_id = atomic_load_relaxed (&__rseq_abi.cpu_id);
++
++  return cpu_id >= 0 ? cpu_id : vsyscall_sched_getcpu ();
++}
++#else
++int
++sched_getcpu (void)
++{
++  return vsyscall_sched_getcpu ();
++}
++#endif
+-- 
+2.17.1
