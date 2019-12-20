@@ -1,49 +1,53 @@
-From: David Laight <David.Laight@ACULAB.COM>
-Subject: RE: [PATCH 1/2] uapi: split openat2(2) definitions from fcntl.h
-Date: Fri, 20 Dec 2019 10:18:23 +0000
-Message-ID: <85251686ad074be18db926f903497a45@AcuMS.aculab.com>
-References: <20191219105533.12508-1-cyphar@cyphar.com>
- <20191219105533.12508-2-cyphar@cyphar.com>
- <87a77oy3oe.fsf@oldenburg2.str.redhat.com>
- <20191219134525.mgzmjbsp4wo5b2bw@yavin.dot.cyphar.com>
- <845fc9e8b55e4868bb4d20655e674b50@AcuMS.aculab.com>
- <20191220093153.v7jpzvch3lohabll@yavin.dot.cyphar.com>
+From: Aleksa Sarai <cyphar@cyphar.com>
+Subject: [PATCH v2 0/2] openat2: minor uapi cleanups
+Date: Sat, 21 Dec 2019 01:03:26 +1100
+Message-ID: <20191220140328.20907-1-cyphar@cyphar.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191220093153.v7jpzvch3lohabll@yavin.dot.cyphar.com>
-Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: 'Aleksa Sarai' <cyphar@cyphar.com>
-Cc: Florian Weimer <fweimer@redhat.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Shuah Khan <shuah@kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>, "dev@opencontainers.org" <dev@opencontainers.org>, "containers@lists.linux-foundation.org" <containers@lists.linux-foundation.org>, "libc-alpha@sourceware.org" <libc-alpha@sourceware.org>, "linux-api@vger.kernel.org" <linux-api@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "linux-kselftest@vger.kernel.org" <linux-kselftest@vger.kernel.org>
+To: Alexander Viro <viro@zeniv.linux.org.uk>, Jeff Layton <jlayton@kernel.org>, "J. Bruce Fields" <bfields@fieldses.org>, Shuah Khan <shuah@kernel.org>
+Cc: Aleksa Sarai <cyphar@cyphar.com>, Florian Weimer <fweimer@redhat.com>, David Laight <david.laight@aculab.com>, Christian Brauner <christian.brauner@ubuntu.com>, dev@opencontainers.org, containers@lists.linux-foundation.org, libc-alpha@sourceware.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-From: Aleksa Sarai
-> Sent: 20 December 2019 09:32
-...
-> > I'm guessing that is just 64bit aligned on 32bit archs like x86?
-> 
-> Yeah,
-> 
-> #define __aligned_u64 __u64 __attribute__((aligned(8)))
-> 
-> > No need to enforce it provided the structure will have no padding on
-> > archs where the 64bit fields are 64bit aligned. A plain __u64 should
-> > be fine.
-> 
-> Will this cause problems for x86-on-x86_64 emulation? Requiring an
-> 8-byte alignment for 'struct open_how' really isn't that undue of a
-> burden IMHO. Then again, clone3 is a bit of an outlier since both
-> perf_event_open and sched_setattr just use __u64s.
+Patch changelog:
+  v2:
+   * Add include <linux/types.h> to openat2.h. [Florian Weimer]
+   * Move OPEN_HOW_SIZE_* constants out of UAPI. [Florian Weimer]
+   * Switch from __aligned_u64 to __u64 since it isn't necessary.
+     [David Laight]
+  v1: <https://lore.kernel.org/lkml/20191219105533.12508-1-cyphar@cyphar.com/>
 
-Makes diddly-squit difference.
-The 64bit kernel will 64bit align the structure.
-The kernel must allow for the userspace structure having arbitrary alignment.
-So there is no reason to (try to) align the user structure.
+While openat2(2) is still not yet in Linus's tree, we can take this
+opportunity to iron out some small warts that weren't noticed earlier:
 
-	David
+  * A fix was suggested by Florian Weimer, to separate the openat2
+    definitions so glibc can use the header directly. I've put the
+    maintainership under VFS but let me know if you'd prefer it belong
+    ot the fcntl folks.
 
--
-Registered Address Lakeside, Bramley Road, Mount Farm, Milton Keynes, MK1 1PT, UK
-Registration No: 1397386 (Wales)
+  * Having heterogenous field sizes in an extensible struct results in
+    "padding hole" problems when adding new fields (in addition the
+    correct error to use for non-zero padding isn't entirely clear ).
+    The simplest solution is to just copy clone(3)'s model -- always use
+    u64s. It will waste a little more space in the struct, but it
+    removes a possible future headache.
+
+Aleksa Sarai (2):
+  openat2: drop open_how->__padding field
+  uapi: split openat2(2) definitions from fcntl.h
+
+ MAINTAINERS                                   |  1 +
+ fs/open.c                                     |  2 -
+ include/linux/fcntl.h                         |  4 ++
+ include/uapi/linux/fcntl.h                    | 37 +-----------------
+ include/uapi/linux/openat2.h                  | 39 +++++++++++++++++++
+ tools/testing/selftests/openat2/helpers.h     |  7 ++--
+ .../testing/selftests/openat2/openat2_test.c  | 24 ++++--------
+ 7 files changed, 56 insertions(+), 58 deletions(-)
+ create mode 100644 include/uapi/linux/openat2.h
+
+
+base-commit: 912dfe068c43fa13c587b8d30e73d335c5ba7d44
+-- 
+2.24.0
