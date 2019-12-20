@@ -1,46 +1,83 @@
-From: Shuah Khan <skhan@linuxfoundation.org>
-Subject: Re: [PATCH for 5.5 3/3] rseq/selftests: Fix: Namespace gettid() for
- compatibility with glibc 2.30
-Date: Thu, 19 Dec 2019 18:44:51 -0700
-Message-ID: <166a5ea8-65e8-2c8b-12ce-4cc7d8a77a74@linuxfoundation.org>
-References: <20191211161713.4490-1-mathieu.desnoyers@efficios.com>
- <20191211161713.4490-4-mathieu.desnoyers@efficios.com>
+From: Aleksa Sarai <cyphar@cyphar.com>
+Subject: Re: [PATCH v4 2/5] pid: Add PIDFD_IOCTL_GETFD to fetch file
+ descriptors from processes
+Date: Fri, 20 Dec 2019 15:35:10 +1100
+Message-ID: <20191220043510.r5h6wvsp2p5glyjv@yavin.dot.cyphar.com>
+References: <20191218235459.GA17271@ircssh-2.c.rugged-nimbus-611.internal>
+ <CAK8P3a2eT=bHkUamyp-P3Y2adNq1KBk7UknCYBY5_aR4zJmYaQ@mail.gmail.com>
+ <20191219103525.yqb5f4pbd2dvztkb@wittgenstein>
+ <CAMp4zn_z-CCQYMpT=GjZeGVLobjHBCSbmfha1rtWdmptOQ8JtA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <20191211161713.4490-4-mathieu.desnoyers@efficios.com>
-Content-Language: en-US
-Sender: stable-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Thomas Gleixner <tglx@linutronix.de>
-Cc: linux-kernel@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, "H . Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>, linux-api@vger.kernel.org, stable@vger.kernel.org, "Tommi T . Rantala" <tommi.t.rantala@nokia.com>, Dmitry Vyukov <dvyukov@google.com>, Shuah Khan <skhan@linuxfoundation.org>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="nmgp7ksjzcrpo6tt"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAMp4zn_z-CCQYMpT=GjZeGVLobjHBCSbmfha1rtWdmptOQ8JtA@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Sargun Dhillon <sargun@sargun.me>
+Cc: Christian Brauner <christian.brauner@ubuntu.com>, Arnd Bergmann <arnd@arndb.de>, Oleg Nesterov <oleg@redhat.com>, Florian Weimer <fweimer@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Tycho Andersen <tycho@tycho.ws>, Jann Horn <jannh@google.com>, Andy Lutomirski <luto@amacapital.net>, Al Viro <viro@zeniv.linux.org.uk>, Gian-Carlo Pascutto <gpascutto@mozilla.com>, Emilio Cobos =?utf-8?Q?=C3=81lvarez?= <ealvarez@mozilla.com>, Jed Davis <jld@mozilla.com>
 List-Id: linux-api@vger.kernel.org
 
-On 12/11/19 9:17 AM, Mathieu Desnoyers wrote:
-> glibc 2.30 introduces gettid() in public headers, which clashes with
-> the internal static definition within rseq selftests.
-> 
-> Rename gettid() to rseq_gettid() to eliminate this symbol name clash.
-> 
-> Reported-by: Tommi T. Rantala <tommi.t.rantala@nokia.com>
-> Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-> Cc: Shuah Khan <skhan@linuxfoundation.org>
-> Cc: Tommi T. Rantala <tommi.t.rantala@nokia.com>
-> Cc: Thomas Gleixner <tglx@linutronix.de>
-> Cc: Peter Zijlstra (Intel) <peterz@infradead.org>
-> Cc: "Paul E. McKenney" <paulmck@linux.ibm.com>
-> Cc: Boqun Feng <boqun.feng@gmail.com>
-> Cc: "H . Peter Anvin" <hpa@zytor.com>
-> Cc: Paul Turner <pjt@google.com>
-> Cc: Dmitry Vyukov <dvyukov@google.com>
-> Cc: <stable@vger.kernel.org>	# v4.18+
-> ---
->   tools/testing/selftests/rseq/param_test.c | 18 ++++++++++--------
 
+--nmgp7ksjzcrpo6tt
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-I am pulling this patch in for Linux 5.5-rc4.
+On 2019-12-19, Sargun Dhillon <sargun@sargun.me> wrote:
+> On Thu, Dec 19, 2019 at 2:35 AM Christian Brauner
+> <christian.brauner@ubuntu.com> wrote:
+> > I guess this is the remaining question we should settle, i.e. what do we
+> > prefer.
+> > I still think that adding a new syscall for this seems a bit rich. On
+> > the other hand it seems that a lot more people agree that using a
+> > dedicated syscall instead of an ioctl is the correct way; especially
+> > when it touches core kernel functionality. I mean that was one of the
+> > takeaways from the pidfd API ioctl-vs-syscall discussion.
+> >
+> > A syscall is nicer especially for core-kernel code like this.
+> > So I guess the only way to find out is to try the syscall approach and
+> > either get yelled and switch to an ioctl() or have it accepted.
+> >
+> > What does everyone else think? Arnd, still in favor of a syscall I take
+> > it. Oleg, you had suggested a syscall too, right? Florian, any
+> > thoughts/worries on/about this from the glibc side?
+> >
+> > Christian
+>=20
+> My feelings towards this are that syscalls might pose a problem if we
+> ever want to extend this API. Of course we can have a reserved
+> "flags" field, and populate it later, but what if we turn out to need
+> a proper struct? I already know we're going to want to add one
+> around cgroup metadata (net_cls), and likely we'll want to add
+> a "steal" flag as well. As Arnd mentioned earlier, this is trivial to
+> fix in a traditional ioctl environment, as ioctls are "cheap". How
+> do we feel about potentially adding a pidfd_getfd2? Or are we
+> confident that reserved flags will save us?
 
-Let me know if you have any objections.
+If we end up making this a syscall, then we can re-use the
+copy_struct_from_user() API to make it both extensible and compatible in
+both directions. I wasn't aware that this was frowned upon for ioctls
+(sorry for the extra work) but there are several syscalls which use this
+model for extendability (clone3, openat2, sched_setattr,
+perf_events_open) so there shouldn't be any such complaints for a
+syscall which is extensible.
 
-thanks,
--- Shuah
+--=20
+Aleksa Sarai
+Senior Software Engineer (Containers)
+SUSE Linux GmbH
+<https://www.cyphar.com/>
+
+--nmgp7ksjzcrpo6tt
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXfxPewAKCRCdlLljIbnQ
+ElNGAP0QzHxTfcWUIyKQwziyZ7SKPlC5ve6y0476CjvwfTG0mQD+JDR19gzaS69O
+MYDK8035BURwBnELBe2PceZHzjVhlAQ=
+=Kwh+
+-----END PGP SIGNATURE-----
+
+--nmgp7ksjzcrpo6tt--
