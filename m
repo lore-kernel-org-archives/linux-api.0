@@ -1,70 +1,36 @@
-From: Oleg Nesterov <oleg@redhat.com>
-Subject: Re: [PATCH 2/3] clone3: allow spawning processes into cgroups
-Date: Fri, 20 Dec 2019 21:36:50 +0100
-Message-ID: <20191220203650.GA15133@redhat.com>
-References: <20191218173516.7875-1-christian.brauner@ubuntu.com>
- <20191218173516.7875-3-christian.brauner@ubuntu.com>
+From: Florian Weimer <fw@deneb.enyo.de>
+Subject: Re: [PATCH for 5.5 1/2] rseq: Fix: Clarify rseq.h UAPI rseq_cs memory reclaim requirements
+Date: Fri, 20 Dec 2019 21:37:59 +0100
+Message-ID: <87imman36g.fsf@mid.deneb.enyo.de>
+References: <20191220201207.17389-1-mathieu.desnoyers@efficios.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20191218173516.7875-3-christian.brauner@ubuntu.com>
+In-Reply-To: <20191220201207.17389-1-mathieu.desnoyers@efficios.com> (Mathieu
+        Desnoyers's message of "Fri, 20 Dec 2019 15:12:06 -0500")
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian.brauner@ubuntu.com>
-Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, Li Zefan <lizefan@huawei.com>, Peter Zijlstra <peterz@infradead.org>, cgroups@vger.kernel.org
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>, linux-kernel@vger.kernel.org, Peter Zijlstra <peterz@infradead.org>, "Paul E . McKenney" <paulmck@linux.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, "H . Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>, linux-api@vger.kernel.org, stable@vger.kernel.org, Dmitry Vyukov <dvyukov@google.com>, Neel Natu <neelnatu@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On 12/18, Christian Brauner wrote:
->
-> This adds support for creating a process in a different cgroup than its
-> parent.
+* Mathieu Desnoyers:
 
-Cough... I will not comment the intent ;) I can't review the cgroup patches
-anyway.
+> diff --git a/include/uapi/linux/rseq.h b/include/uapi/linux/rseq.h
+> index 9a402fdb60e9..6f26b0b148a6 100644
+> --- a/include/uapi/linux/rseq.h
+> +++ b/include/uapi/linux/rseq.h
+> @@ -100,7 +100,9 @@ struct rseq {
+>  	 * instruction sequence block, as well as when the kernel detects that
+>  	 * it is preempting or delivering a signal outside of the range
+>  	 * targeted by the rseq_cs. Also needs to be set to NULL by user-space
+> -	 * before reclaiming memory that contains the targeted struct rseq_cs.
+> +	 * before reclaiming memory that contains the targeted struct rseq_cs
+> +	 * or reclaiming memory that contains the code refered to by the
+> +	 * start_ip and post_commit_offset fields of struct rseq_cs.
 
-However,
+Maybe mention that it's good practice to clear rseq_cs before
+returning from a function that contains a restartable sequence?
 
-> +int cgroup_lock_fork(struct kernel_clone_args *kargs)
-> +	__acquires(&cgroup_mutex)
-> +{
-> +	struct cgroup *cgrp;
-> +
-> +	if (!(kargs->flags & CLONE_INTO_CGROUP))
-> +		return 0;
-> +
-> +	cgrp = kargs->cgrp;
-> +	if (!cgrp)
-> +		return 0;
-> +
-> +	mutex_lock(&cgroup_mutex);
-> +
-> +	if (!cgroup_is_dead(cgrp))
-> +		return 0;
-> +
-> +	mutex_unlock(&cgroup_mutex);
-> +	return -ENODEV;
-
-...
-
-> @@ -2172,7 +2172,7 @@ static __latent_entropy struct task_struct *copy_process(
->  	 * between here and cgroup_post_fork() if an organisation operation is in
->  	 * progress.
->  	 */
-> -	retval = cgroup_can_fork(p);
-> +	retval = cgroup_can_fork(current, p, args);
->  	if (retval)
->  		goto bad_fork_cgroup_threadgroup_change_end;
->  
-> @@ -2226,6 +2226,10 @@ static __latent_entropy struct task_struct *copy_process(
->  		goto bad_fork_cancel_cgroup;
->  	}
->  
-> +	retval = cgroup_lock_fork(args);
-
-mutex_lock() under spin_lock() ??
-
-
-just in case, note that mutex_lock(&cgroup_mutex) is not safe even under
-cgroup_threadgroup_change_begin(), this can deadlock.
-
-Oleg.
+That will deal with the dlclose issue because even if the function
+calls dlclose itself, unmapping something on call stack for dlclose is
+already undefined.
