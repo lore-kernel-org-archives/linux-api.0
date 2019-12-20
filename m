@@ -1,68 +1,45 @@
-From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-Subject: [PATCH 4.4 078/162] fs/proc: Stop reporting eip and esp in /proc/PID/stat
-Date: Thu, 19 Dec 2019 19:33:06 +0100
-Message-ID: <20191219183212.539842175@linuxfoundation.org>
-References: <20191219183150.477687052@linuxfoundation.org>
+From: Shuah Khan <skhan@linuxfoundation.org>
+Subject: Re: [PATCH for 5.4 0/3] Restartable Sequences Fixes
+Date: Thu, 19 Dec 2019 18:41:30 -0700
+Message-ID: <7fd53b32-8d9e-5c24-56c5-86c1c7c700dc@linuxfoundation.org>
+References: <20190917182959.16333-1-mathieu.desnoyers@efficios.com>
+ <211848436.2172.1576078102568.JavaMail.zimbra@efficios.com>
+ <b67930c1-c8e0-124f-9a88-6ecace27317c@linuxfoundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191219183150.477687052@linuxfoundation.org>
+In-Reply-To: <b67930c1-c8e0-124f-9a88-6ecace27317c@linuxfoundation.org>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, stable@vger.kernel.org, Jann Horn <jann@thejh.net>, Andy Lutomirski <luto@kernel.org>, Thomas Gleixner <tglx@linutronix.de>, Al Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Borislav Petkov <bp@alien8.de>, Brian Gerst <brgerst@gmail.com>, Kees Cook <keescook@chromium.org>, Linus Torvalds <torvalds@linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>, Tycho Andersen <tycho.andersen@canonical.com>, Ingo Molnar <mingo@kernel.org>, "zhangyi (F)" <yi.zhang@huawei.com>
+To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-kernel <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, paulmck <paulmck@linux.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, "H. Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>, linux-api <linux-api@vger.kernel.org>, stable <stable@vger.kernel.org>, Shuah Khan <skhan@linuxfoundation.org>
 List-Id: linux-api@vger.kernel.org
 
-From: Andy Lutomirski <luto@kernel.org>
+On 12/11/19 8:47 AM, Shuah Khan wrote:
+> On 12/11/19 8:28 AM, Mathieu Desnoyers wrote:
+>> Hi Thomas,
+>>
+>> I thought those rseq fixes posted in September were in the -tip tree, 
+>> but it
+>> seems that they never made it to mainline.
+>>
+>> Now Shuah Khan noticed the issue with gettid() compatibility with glibc
+>> 2.30+. This series contained that fix.
+>>
+>> Should I re-post it, or is this series on track to get into mainline
+>> at some point ?
+>>
+> 
+> It will be great this can make it into 5.5-rc2 or so.
+> 
+> thanks,
+> -- Shuah
+> 
 
-commit 0a1eb2d474edfe75466be6b4677ad84e5e8ca3f5 upstream.
+I am pulling this patch in for Linux 5.5-rc4.
 
-Reporting these fields on a non-current task is dangerous.  If the
-task is in any state other than normal kernel code, they may contain
-garbage or even kernel addresses on some architectures.  (x86_64
-used to do this.  I bet lots of architectures still do.)  With
-CONFIG_THREAD_INFO_IN_TASK=y, it can OOPS, too.
+Let me know if you have any objections.
 
-As far as I know, there are no use programs that make any material
-use of these fields, so just get rid of them.
-
-Reported-by: Jann Horn <jann@thejh.net>
-Signed-off-by: Andy Lutomirski <luto@kernel.org>
-Acked-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: Al Viro <viro@zeniv.linux.org.uk>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Borislav Petkov <bp@alien8.de>
-Cc: Brian Gerst <brgerst@gmail.com>
-Cc: Kees Cook <keescook@chromium.org>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Linux API <linux-api@vger.kernel.org>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Tetsuo Handa <penguin-kernel@i-love.sakura.ne.jp>
-Cc: Tycho Andersen <tycho.andersen@canonical.com>
-Link: http://lkml.kernel.org/r/a5fed4c3f4e33ed25d4bb03567e329bc5a712bcc.1475257877.git.luto@kernel.org
-Signed-off-by: Ingo Molnar <mingo@kernel.org>
-Signed-off-by: zhangyi (F) <yi.zhang@huawei.com>
-Signed-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-
----
- fs/proc/array.c |    9 +++++----
- 1 file changed, 5 insertions(+), 4 deletions(-)
-
---- a/fs/proc/array.c
-+++ b/fs/proc/array.c
-@@ -425,10 +425,11 @@ static int do_task_stat(struct seq_file
- 	mm = get_task_mm(task);
- 	if (mm) {
- 		vsize = task_vsize(mm);
--		if (permitted) {
--			eip = KSTK_EIP(task);
--			esp = KSTK_ESP(task);
--		}
-+		/*
-+		 * esp and eip are intentionally zeroed out.  There is no
-+		 * non-racy way to read them without freezing the task.
-+		 * Programs that need reliable values can use ptrace(2).
-+		 */
- 	}
- 
- 	get_task_comm(tcomm, task);
+thanks,
+-- Shuah
