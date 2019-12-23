@@ -1,80 +1,94 @@
-From: Andy Lutomirski <luto@kernel.org>
-Subject: [PATCH v3 2/8] random: Add a urandom_read_nowait() for random APIs that don't warn
-Date: Mon, 23 Dec 2019 00:20:45 -0800
-Message-ID: <c87ab200588de746431d9f916501ef11e5242b13.1577088521.git.luto@kernel.org>
-References: <cover.1577088521.git.luto@kernel.org>
+From: Sargun Dhillon <sargun@sargun.me>
+Subject: [PATCH v6 0/3] Add pidfd_getfd syscall
+Date: Mon, 23 Dec 2019 21:08:26 +0000
+Message-ID: <20191223210823.GA25083@ircssh-2.c.rugged-nimbus-611.internal>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1577088521.git.luto@kernel.org>
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
-To: Ted Ts'o <tytso@mit.edu>
-Cc: LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, "Jason A. Donenfeld" <Jason@zx2c4.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, Lennart Poettering <mzxreary@0pointer.de>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, Stephan Mueller <smueller@chronox.de>, Andy Lutomirski <luto@kernel.org>
+To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org
+Cc: tycho@tycho.ws, jannh@google.com, cyphar@cyphar.com, christian.brauner@ubuntu.com, oleg@redhat.com, luto@amacapital.net, viro@zeniv.linux.org.uk, gpascutto@mozilla.com, ealvarez@mozilla.com, fweimer@redhat.com, jld@mozilla.com, arnd@arndb.de
 List-Id: linux-api@vger.kernel.org
 
-/dev/random and getrandom() never warn.  Split the meat of
-urandom_read() into urandom_read_nowarn() and leave the warning code
-in urandom_read().
+This patchset introduces a mechanism (pidfd_getfd syscall) to get file
+descriptors from other processes via pidfd. Although this can be achieved
+using SCM_RIGHTS, and parasitic code injection, this offers a more
+straightforward mechanism, with less overhead and complexity. The process
+under manipulation's fd still remains valid, and unmodified by the
+copy operation.
 
-This has no effect on kernel behavior, but it makes subsequent
-patches more straightforward.  It also makes the fact that
-getrandom() never warns more obvious.
+It introduces a flags field. The flags field is reserved a the moment,
+but the intent is to extend it with the following capabilities:
+ * Close the remote FD when copying it
+ * Drop the cgroup data if it's a fd pointing a socket when copying it
 
-Signed-off-by: Andy Lutomirski <luto@kernel.org>
----
- drivers/char/random.c | 21 +++++++++++++++------
- 1 file changed, 15 insertions(+), 6 deletions(-)
+The syscall numbers were chosen to be one greater than openat2.
 
-diff --git a/drivers/char/random.c b/drivers/char/random.c
-index c6252a3a4aec..7b46751772e5 100644
---- a/drivers/char/random.c
-+++ b/drivers/char/random.c
-@@ -2018,12 +2018,23 @@ random_read(struct file *file, char __user *buf, size_t nbytes, loff_t *ppos)
- 	return _random_read(file->f_flags & O_NONBLOCK, buf, nbytes);
- }
- 
-+static ssize_t
-+urandom_read_nowarn(struct file *file, char __user *buf, size_t nbytes,
-+		    loff_t *ppos)
-+{
-+	int ret;
-+
-+	nbytes = min_t(size_t, nbytes, INT_MAX >> (ENTROPY_SHIFT + 3));
-+	ret = extract_crng_user(buf, nbytes);
-+	trace_urandom_read(8 * nbytes, 0, ENTROPY_BITS(&input_pool));
-+	return ret;
-+}
-+
- static ssize_t
- urandom_read(struct file *file, char __user *buf, size_t nbytes, loff_t *ppos)
- {
- 	unsigned long flags;
- 	static int maxwarn = 10;
--	int ret;
- 
- 	if (!crng_ready() && maxwarn > 0) {
- 		maxwarn--;
-@@ -2035,10 +2046,8 @@ urandom_read(struct file *file, char __user *buf, size_t nbytes, loff_t *ppos)
- 		crng_init_cnt = 0;
- 		spin_unlock_irqrestore(&primary_crng.lock, flags);
- 	}
--	nbytes = min_t(size_t, nbytes, INT_MAX >> (ENTROPY_SHIFT + 3));
--	ret = extract_crng_user(buf, nbytes);
--	trace_urandom_read(8 * nbytes, 0, ENTROPY_BITS(&input_pool));
--	return ret;
-+
-+	return urandom_read_nowarn(file, buf, nbytes, ppos);
- }
- 
- static __poll_t
-@@ -2200,7 +2209,7 @@ SYSCALL_DEFINE3(getrandom, char __user *, buf, size_t, count,
- 		if (unlikely(ret))
- 			return ret;
- 	}
--	return urandom_read(NULL, buf, count, NULL);
-+	return urandom_read_nowarn(NULL, buf, count, NULL);
- }
- 
- /********************************************************************
+Summary of history:
+This initially started as a ptrace command. It did not require the process
+to be stopped, and felt like kind of an awkward fit for ptrace. After that,
+it moved to an ioctl on the pidfd. Given functionality, it made sense to
+make it a syscall which did not require the process to be stopped.
+
+Changes since v5:
+ * Drop pidfd_getfd_options struct and replace with a flags field
+
+Changes since v4:
+ * Turn into a syscall
+ * Move to PTRACE_MODE_ATTACH_REALCREDS from PTRACE_MODE_READ_REALCREDS
+ * Remove the sample code. This will come in another patchset, as the
+   new self-tests cover all the functionality.
+
+Changes since v3:
+ * Add self-test
+ * Move to ioctl passing fd directly, versus args struct
+ * Shuffle around include files
+
+Changes since v2:
+ * Move to ioctl on pidfd instead of ptrace function
+ * Add security check before moving file descriptor
+
+Changes since the RFC v1:
+ * Introduce a new helper to fs/file.c to fetch a file descriptor from
+   any process. It largely uses the code suggested by Oleg, with a few
+   changes to fix locking
+ * It uses an extensible options struct to supply the FD, and option.
+ * I added a sample, using the code from the user-ptrace sample
+
+Sargun Dhillon (3):
+  vfs, fdtable: Add get_task_file helper
+  pid: Introduce pidfd_getfd syscall
+  test: Add test for pidfd getfd
+
+ arch/alpha/kernel/syscalls/syscall.tbl        |   1 +
+ arch/arm/tools/syscall.tbl                    |   1 +
+ arch/arm64/include/asm/unistd.h               |   2 +-
+ arch/arm64/include/asm/unistd32.h             |   2 +
+ arch/ia64/kernel/syscalls/syscall.tbl         |   1 +
+ arch/m68k/kernel/syscalls/syscall.tbl         |   1 +
+ arch/microblaze/kernel/syscalls/syscall.tbl   |   1 +
+ arch/mips/kernel/syscalls/syscall_n32.tbl     |   1 +
+ arch/mips/kernel/syscalls/syscall_n64.tbl     |   1 +
+ arch/mips/kernel/syscalls/syscall_o32.tbl     |   1 +
+ arch/parisc/kernel/syscalls/syscall.tbl       |   1 +
+ arch/powerpc/kernel/syscalls/syscall.tbl      |   1 +
+ arch/s390/kernel/syscalls/syscall.tbl         |   1 +
+ arch/sh/kernel/syscalls/syscall.tbl           |   1 +
+ arch/sparc/kernel/syscalls/syscall.tbl        |   1 +
+ arch/x86/entry/syscalls/syscall_32.tbl        |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl        |   1 +
+ arch/xtensa/kernel/syscalls/syscall.tbl       |   1 +
+ fs/file.c                                     |  22 +-
+ include/linux/file.h                          |   2 +
+ include/linux/syscalls.h                      |   1 +
+ include/uapi/asm-generic/unistd.h             |   3 +-
+ kernel/pid.c                                  | 106 ++++++++
+ tools/testing/selftests/pidfd/.gitignore      |   1 +
+ tools/testing/selftests/pidfd/Makefile        |   2 +-
+ .../selftests/pidfd/pidfd_getfd_test.c        | 253 ++++++++++++++++++
+ 26 files changed, 405 insertions(+), 5 deletions(-)
+ create mode 100644 tools/testing/selftests/pidfd/pidfd_getfd_test.c
+
 -- 
-2.23.0
+2.20.1
