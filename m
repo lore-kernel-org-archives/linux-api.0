@@ -1,11 +1,11 @@
 From: Alexey Gladkov <gladkov.alexey@gmail.com>
-Subject: [PATCH v6 02/10] proc: add proc_fs_info struct to store proc information
-Date: Wed, 25 Dec 2019 13:51:43 +0100
-Message-ID: <20191225125151.1950142-3-gladkov.alexey@gmail.com>
+Subject: [PATCH v6 07/10] proc: flush task dcache entries from all procfs instances
+Date: Wed, 25 Dec 2019 13:51:48 +0100
+Message-ID: <20191225125151.1950142-8-gladkov.alexey@gmail.com>
 References: <20191225125151.1950142-1-gladkov.alexey@gmail.com>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
-Return-path: <kernel-hardening-return-17527-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
+Return-path: <kernel-hardening-return-17529-glkh-kernel-hardening=m.gmane.org@lists.openwall.com>
 List-Post: <mailto:kernel-hardening@lists.openwall.com>
 List-Help: <mailto:kernel-hardening-help@lists.openwall.com>
 List-Unsubscribe: <mailto:kernel-hardening-unsubscribe@lists.openwall.com>
@@ -15,274 +15,190 @@ To: LKML <linux-kernel@vger.kernel.org>, Kernel Hardening <kernel-hardening@list
 Cc: Akinobu Mita <akinobu.mita@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Alexey Dobriyan <adobriyan@gmail.com>, Alexey Gladkov <gladkov.alexey@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Daniel Micay <danielmicay@gmail.com>, Djalal Harouni <tixxdz@gmail.com>, "Dmitry V . Levin" <ldv@altlinux.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Ingo Molnar <mingo@kernel.org>, "J . Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Jonathan Corbet <corbet@lwn.net>, Kees Cook <keescook@chromium.org>, Linus Torvalds <torvalds@linux-foundation.org>, Oleg Nesterov <oleg@redhat.com>, Solar Designer <solar@openwall.com>, Stephen Rothwell <sfr@canb.auug.org.au>
 List-Id: linux-api@vger.kernel.org
 
-This is a preparation patch that adds proc_fs_info to be able to store
-different procfs options and informations. Right now some mount options
-are stored inside the pid namespace which makes it hard to change or
-modernize procfs without affecting pid namespaces. Plus we do want to
-treat proc as more of a real mount point and filesystem. procfs is part
-of Linux API where it offers some features using filesystem syscalls and
-in order to support some features where we are able to have multiple
-instances of procfs, each one with its mount options inside the same pid
-namespace, we have to separate these procfs instances.
-
-This is the same feature that was also added to other Linux interfaces
-like devpts in order to support containers, sandboxes, and to have
-multiple instances of devpts filesystem [1].
-
-[1] https://elixir.bootlin.com/linux/v3.4/source/Documentation/filesystems/devpts.txt
+This allows to flush dcache entries of a task on multiple procfs mounts
+per pid namespace.
 
 Cc: Kees Cook <keescook@chromium.org>
-Suggested-by: Andy Lutomirski <luto@kernel.org>
+Cc: Andy Lutomirski <luto@kernel.org>
 Signed-off-by: Djalal Harouni <tixxdz@gmail.com>
 Signed-off-by: Alexey Gladkov <gladkov.alexey@gmail.com>
 ---
- fs/locks.c              |  6 +++--
- fs/proc/base.c          |  8 +++++--
- fs/proc/inode.c         |  4 ++--
- fs/proc/root.c          | 49 +++++++++++++++++++++++++++--------------
- include/linux/proc_fs.h | 16 +++++++++++++-
- 5 files changed, 59 insertions(+), 24 deletions(-)
+ fs/proc/base.c                | 23 ++++++++++++++-----
+ fs/proc/root.c                | 14 ++++++++++++
+ include/linux/pid_namespace.h | 42 +++++++++++++++++++++++++++++++++++
+ include/linux/proc_fs.h       |  2 ++
+ 4 files changed, 76 insertions(+), 5 deletions(-)
 
-diff --git a/fs/locks.c b/fs/locks.c
-index 6970f55daf54..21200e3005e4 100644
---- a/fs/locks.c
-+++ b/fs/locks.c
-@@ -2795,7 +2795,8 @@ static void lock_get_status(struct seq_file *f, struct file_lock *fl,
- {
- 	struct inode *inode = NULL;
- 	unsigned int fl_pid;
--	struct pid_namespace *proc_pidns = file_inode(f->file)->i_sb->s_fs_info;
-+	struct proc_fs_info *fs_info = proc_sb_info(file_inode(f->file)->i_sb);
-+	struct pid_namespace *proc_pidns = fs_info->pid_ns;
- 
- 	fl_pid = locks_translate_pid(fl, proc_pidns);
- 	/*
-@@ -2873,7 +2874,8 @@ static int locks_show(struct seq_file *f, void *v)
- {
- 	struct locks_iterator *iter = f->private;
- 	struct file_lock *fl, *bfl;
--	struct pid_namespace *proc_pidns = file_inode(f->file)->i_sb->s_fs_info;
-+	struct proc_fs_info *fs_info = proc_sb_info(file_inode(f->file)->i_sb);
-+	struct pid_namespace *proc_pidns = fs_info->pid_ns;
- 
- 	fl = hlist_entry(v, struct file_lock, fl_link);
- 
 diff --git a/fs/proc/base.c b/fs/proc/base.c
-index ebea9501afb8..672e71c52dbd 100644
+index 4ccb280a3e79..f4f1bcb28603 100644
 --- a/fs/proc/base.c
 +++ b/fs/proc/base.c
-@@ -3243,6 +3243,7 @@ struct dentry *proc_pid_lookup(struct dentry *dentry, unsigned int flags)
- {
- 	struct task_struct *task;
- 	unsigned tgid;
-+	struct proc_fs_info *fs_info;
- 	struct pid_namespace *ns;
- 	struct dentry *result = ERR_PTR(-ENOENT);
+@@ -3133,7 +3133,7 @@ static const struct inode_operations proc_tgid_base_inode_operations = {
+ 	.permission	= proc_pid_permission,
+ };
  
-@@ -3250,7 +3251,8 @@ struct dentry *proc_pid_lookup(struct dentry *dentry, unsigned int flags)
- 	if (tgid == ~0U)
+-static void proc_flush_task_mnt(struct vfsmount *mnt, pid_t pid, pid_t tgid)
++static void proc_flush_task_mnt_root(struct dentry *mnt_root, pid_t pid, pid_t tgid)
+ {
+ 	struct dentry *dentry, *leader, *dir;
+ 	char buf[10 + 1];
+@@ -3142,7 +3142,7 @@ static void proc_flush_task_mnt(struct vfsmount *mnt, pid_t pid, pid_t tgid)
+ 	name.name = buf;
+ 	name.len = snprintf(buf, sizeof(buf), "%u", pid);
+ 	/* no ->d_hash() rejects on procfs */
+-	dentry = d_hash_and_lookup(mnt->mnt_root, &name);
++	dentry = d_hash_and_lookup(mnt_root, &name);
+ 	if (dentry) {
+ 		d_invalidate(dentry);
+ 		dput(dentry);
+@@ -3153,7 +3153,7 @@ static void proc_flush_task_mnt(struct vfsmount *mnt, pid_t pid, pid_t tgid)
+ 
+ 	name.name = buf;
+ 	name.len = snprintf(buf, sizeof(buf), "%u", tgid);
+-	leader = d_hash_and_lookup(mnt->mnt_root, &name);
++	leader = d_hash_and_lookup(mnt_root, &name);
+ 	if (!leader)
  		goto out;
  
--	ns = dentry->d_sb->s_fs_info;
-+	fs_info = proc_sb_info(dentry->d_sb);
-+	ns = fs_info->pid_ns;
- 	rcu_read_lock();
- 	task = find_task_by_pid_ns(tgid, ns);
- 	if (task)
-@@ -3538,6 +3540,7 @@ static struct dentry *proc_task_lookup(struct inode *dir, struct dentry * dentry
- 	struct task_struct *task;
- 	struct task_struct *leader = get_proc_task(dir);
- 	unsigned tid;
+@@ -3208,14 +3208,27 @@ void proc_flush_task(struct task_struct *task)
+ 	int i;
+ 	struct pid *pid, *tgid;
+ 	struct upid *upid;
++	struct pid_namespace *pid_ns;
++	struct dentry *mnt_root;
 +	struct proc_fs_info *fs_info;
- 	struct pid_namespace *ns;
- 	struct dentry *result = ERR_PTR(-ENOENT);
  
-@@ -3548,7 +3551,8 @@ static struct dentry *proc_task_lookup(struct inode *dir, struct dentry * dentry
- 	if (tid == ~0U)
- 		goto out;
+ 	pid = task_pid(task);
+ 	tgid = task_tgid(task);
  
--	ns = dentry->d_sb->s_fs_info;
-+	fs_info = proc_sb_info(dentry->d_sb);
-+	ns = fs_info->pid_ns;
- 	rcu_read_lock();
- 	task = find_task_by_pid_ns(tid, ns);
- 	if (task)
-diff --git a/fs/proc/inode.c b/fs/proc/inode.c
-index dbe43a50caf2..b631608dfbcc 100644
---- a/fs/proc/inode.c
-+++ b/fs/proc/inode.c
-@@ -104,8 +104,8 @@ void __init proc_init_kmemcache(void)
+ 	for (i = 0; i <= pid->level; i++) {
+ 		upid = &pid->numbers[i];
+-		proc_flush_task_mnt(upid->ns->proc_mnt, upid->nr,
+-					tgid->numbers[i].nr);
++
++		pid_ns = upid->ns;
++
++		pidns_proc_lock_shared(pid_ns);
++		list_for_each_entry(fs_info, &pid_ns->proc_mounts, pidns_entry) {
++			mnt_root = fs_info->m_super->s_root;
++			proc_flush_task_mnt_root(mnt_root, upid->nr, tgid->numbers[i].nr);
++		}
++		pidns_proc_unlock_shared(pid_ns);
++
++		mnt_root = pid_ns->proc_mnt->mnt_root;
++		proc_flush_task_mnt_root(mnt_root, upid->nr, tgid->numbers[i].nr);
+ 	}
+ }
  
- static int proc_show_options(struct seq_file *seq, struct dentry *root)
- {
--	struct super_block *sb = root->d_sb;
--	struct pid_namespace *pid = sb->s_fs_info;
-+	struct proc_fs_info *fs_info = proc_sb_info(root->d_sb);
-+	struct pid_namespace *pid = fs_info->pid_ns;
- 
- 	if (!gid_eq(pid->pid_gid, GLOBAL_ROOT_GID))
- 		seq_printf(seq, ",gid=%u", from_kgid_munged(&init_user_ns, pid->pid_gid));
 diff --git a/fs/proc/root.c b/fs/proc/root.c
-index 0b7c8dffc9ae..d449f095f0f7 100644
+index 5d5cba4c899b..3bb8df360cf7 100644
 --- a/fs/proc/root.c
 +++ b/fs/proc/root.c
-@@ -30,7 +30,7 @@
- #include "internal.h"
+@@ -112,6 +112,12 @@ static int proc_fill_super(struct super_block *s, struct fs_context *fc)
  
- struct proc_fs_context {
--	struct pid_namespace	*pid_ns;
-+	struct proc_fs_info	*fs_info;
- 	unsigned int		mask;
- 	int			hidepid;
- 	int			gid;
-@@ -97,7 +97,8 @@ static void proc_apply_options(struct super_block *s,
+ 	proc_apply_options(ctx->fs_info, fc, pid_ns, current_user_ns());
  
- static int proc_fill_super(struct super_block *s, struct fs_context *fc)
- {
--	struct pid_namespace *pid_ns = get_pid_ns(s->s_fs_info);
-+	struct proc_fs_context *ctx = fc->fs_private;
-+	struct pid_namespace *pid_ns = get_pid_ns(ctx->fs_info->pid_ns);
- 	struct inode *root_inode;
- 	int ret;
- 
-@@ -145,7 +146,8 @@ static int proc_fill_super(struct super_block *s, struct fs_context *fc)
- static int proc_reconfigure(struct fs_context *fc)
- {
- 	struct super_block *sb = fc->root->d_sb;
--	struct pid_namespace *pid = sb->s_fs_info;
-+	struct proc_fs_info *fs_info = proc_sb_info(sb);
-+	struct pid_namespace *pid = fs_info->pid_ns;
- 
- 	sync_filesystem(sb);
- 
-@@ -157,14 +159,14 @@ static int proc_get_tree(struct fs_context *fc)
- {
- 	struct proc_fs_context *ctx = fc->fs_private;
- 
--	return get_tree_keyed(fc, proc_fill_super, ctx->pid_ns);
-+	return get_tree_keyed(fc, proc_fill_super, ctx->fs_info);
- }
- 
- static void proc_fs_context_free(struct fs_context *fc)
- {
- 	struct proc_fs_context *ctx = fc->fs_private;
- 
--	put_pid_ns(ctx->pid_ns);
-+	put_pid_ns(ctx->fs_info->pid_ns);
- 	kfree(ctx);
- }
- 
-@@ -178,14 +180,27 @@ static const struct fs_context_operations proc_fs_context_ops = {
- static int proc_init_fs_context(struct fs_context *fc)
- {
- 	struct proc_fs_context *ctx;
-+	struct pid_namespace *pid_ns;
- 
- 	ctx = kzalloc(sizeof(struct proc_fs_context), GFP_KERNEL);
- 	if (!ctx)
- 		return -ENOMEM;
- 
--	ctx->pid_ns = get_pid_ns(task_active_pid_ns(current));
-+	pid_ns = get_pid_ns(task_active_pid_ns(current));
++	ctx->fs_info->m_super = s;
 +
-+	if (!pid_ns->proc_mnt) {
-+		ctx->fs_info = kzalloc(sizeof(struct proc_fs_info), GFP_KERNEL);
-+		if (!ctx->fs_info) {
-+			kfree(ctx);
-+			return -ENOMEM;
-+		}
-+		ctx->fs_info->pid_ns = pid_ns;
-+	} else {
-+		ctx->fs_info = proc_sb_info(pid_ns->proc_mnt->mnt_sb);
-+	}
++	pidns_proc_lock(pid_ns);
++	list_add_tail(&ctx->fs_info->pidns_entry, &pid_ns->proc_mounts);
++	pidns_proc_unlock(pid_ns);
 +
- 	put_user_ns(fc->user_ns);
--	fc->user_ns = get_user_ns(ctx->pid_ns->user_ns);
-+	fc->user_ns = get_user_ns(ctx->fs_info->pid_ns->user_ns);
- 	fc->fs_private = ctx;
- 	fc->ops = &proc_fs_context_ops;
- 	return 0;
-@@ -193,15 +208,15 @@ static int proc_init_fs_context(struct fs_context *fc)
- 
- static void proc_kill_sb(struct super_block *sb)
- {
--	struct pid_namespace *ns;
-+	struct proc_fs_info *fs_info = proc_sb_info(sb);
- 
--	ns = (struct pid_namespace *)sb->s_fs_info;
--	if (ns->proc_self)
--		dput(ns->proc_self);
--	if (ns->proc_thread_self)
--		dput(ns->proc_thread_self);
-+	if (fs_info->pid_ns->proc_self)
-+		dput(fs_info->pid_ns->proc_self);
-+	if (fs_info->pid_ns->proc_thread_self)
-+		dput(fs_info->pid_ns->proc_thread_self);
+ 	/* User space would break if executables or devices appear on proc */
+ 	s->s_iflags |= SB_I_USERNS_VISIBLE | SB_I_NOEXEC | SB_I_NODEV;
+ 	s->s_flags |= SB_NODIRATIME | SB_NOSUID | SB_NOEXEC;
+@@ -215,6 +221,11 @@ static void proc_kill_sb(struct super_block *sb)
+ 		dput(fs_info->proc_self);
+ 	if (fs_info->proc_thread_self)
+ 		dput(fs_info->proc_thread_self);
++
++	pidns_proc_lock(fs_info->pid_ns);
++	list_del(&fs_info->pidns_entry);
++	pidns_proc_unlock(fs_info->pid_ns);
++
  	kill_anon_super(sb);
--	put_pid_ns(ns);
-+	put_pid_ns(fs_info->pid_ns);
-+	kfree(fs_info);
- }
- 
- static struct file_system_type proc_fs_type = {
-@@ -314,10 +329,10 @@ int pid_ns_prepare_proc(struct pid_namespace *ns)
+ 	put_pid_ns(fs_info->pid_ns);
+ 	kfree(fs_info);
+@@ -336,6 +347,9 @@ int pid_ns_prepare_proc(struct pid_namespace *ns)
+ 		ctx->fs_info->pid_ns = ns;
  	}
  
- 	ctx = fc->fs_private;
--	if (ctx->pid_ns != ns) {
--		put_pid_ns(ctx->pid_ns);
-+	if (ctx->fs_info->pid_ns != ns) {
-+		put_pid_ns(ctx->fs_info->pid_ns);
- 		get_pid_ns(ns);
--		ctx->pid_ns = ns;
-+		ctx->fs_info->pid_ns = ns;
- 	}
- 
++	init_rwsem(&ns->rw_proc_mounts);
++	INIT_LIST_HEAD(&ns->proc_mounts);
++
  	mnt = fc_mount(fc);
+ 	put_fs_context(fc);
+ 	if (IS_ERR(mnt))
+diff --git a/include/linux/pid_namespace.h b/include/linux/pid_namespace.h
+index 66f47f1afe0d..297b39604312 100644
+--- a/include/linux/pid_namespace.h
++++ b/include/linux/pid_namespace.h
+@@ -26,6 +26,8 @@ struct pid_namespace {
+ 	struct pid_namespace *parent;
+ #ifdef CONFIG_PROC_FS
+ 	struct vfsmount *proc_mnt; /* Internal proc mounted during each new pidns */
++	struct rw_semaphore rw_proc_mounts;
++	struct list_head proc_mounts; /* list of separated procfs mounts */
+ #endif
+ #ifdef CONFIG_BSD_PROCESS_ACCT
+ 	struct fs_pin *bacct;
+@@ -90,4 +92,44 @@ extern struct pid_namespace *task_active_pid_ns(struct task_struct *tsk);
+ void pidhash_init(void);
+ void pid_idr_init(void);
+ 
++#ifdef CONFIG_PROC_FS
++static inline void pidns_proc_lock(struct pid_namespace *pid_ns)
++{
++	down_write(&pid_ns->rw_proc_mounts);
++}
++
++static inline void pidns_proc_unlock(struct pid_namespace *pid_ns)
++{
++	up_write(&pid_ns->rw_proc_mounts);
++}
++
++static inline void pidns_proc_lock_shared(struct pid_namespace *pid_ns)
++{
++	down_read(&pid_ns->rw_proc_mounts);
++}
++
++static inline void pidns_proc_unlock_shared(struct pid_namespace *pid_ns)
++{
++	up_read(&pid_ns->rw_proc_mounts);
++}
++#else /* !CONFIG_PROC_FS */
++
++static inline void pidns_proc_lock(struct pid_namespace *pid_ns)
++{
++}
++
++static inline void pidns_proc_unlock(struct pid_namespace *pid_ns)
++{
++}
++
++static inline void pidns_proc_lock_shared(struct pid_namespace *pid_ns)
++{
++}
++
++static inline void pidns_proc_unlock_shared(struct pid_namespace *pid_ns)
++{
++}
++
++#endif /* CONFIG_PROC_FS */
++
+ #endif /* _LINUX_PID_NS_H */
 diff --git a/include/linux/proc_fs.h b/include/linux/proc_fs.h
-index a705aa2d03f9..6ef09e01bf10 100644
+index fd92bf38aa62..e349fcafd729 100644
 --- a/include/linux/proc_fs.h
 +++ b/include/linux/proc_fs.h
-@@ -12,10 +12,19 @@ struct proc_dir_entry;
- struct seq_file;
- struct seq_operations;
+@@ -20,6 +20,8 @@ enum {
+ };
  
-+struct proc_fs_info {
-+	struct pid_namespace *pid_ns;
-+};
-+
- #ifdef CONFIG_PROC_FS
- 
- typedef int (*proc_write_t)(struct file *, char *, size_t);
- 
-+static inline struct proc_fs_info *proc_sb_info(struct super_block *sb)
-+{
-+	return sb->s_fs_info;
-+}
-+
- extern void proc_root_init(void);
- extern void proc_flush_task(struct task_struct *);
- 
-@@ -86,6 +95,11 @@ int proc_pid_arch_status(struct seq_file *m, struct pid_namespace *ns,
- 
- #else /* CONFIG_PROC_FS */
- 
-+static inline struct proc_fs_info *proc_sb_info(struct super_block *sb)
-+{
-+	return NULL;
-+}
-+
- static inline void proc_root_init(void)
- {
- }
-@@ -146,7 +160,7 @@ int open_related_ns(struct ns_common *ns,
- /* get the associated pid namespace for a file in procfs */
- static inline struct pid_namespace *proc_pid_ns(const struct inode *inode)
- {
--	return inode->i_sb->s_fs_info;
-+	return proc_sb_info(inode->i_sb)->pid_ns;
- }
- 
- #endif /* _LINUX_PROC_FS_H */
+ struct proc_fs_info {
++	struct list_head pidns_entry;    /* Node in procfs_mounts of a pidns */
++	struct super_block *m_super;
+ 	struct pid_namespace *pid_ns;
+ 	struct dentry *proc_self;        /* For /proc/self */
+ 	struct dentry *proc_thread_self; /* For /proc/thread-self */
 -- 
 2.24.1
