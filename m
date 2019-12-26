@@ -1,87 +1,106 @@
-From: Tycho Andersen <tycho@tycho.ws>
-Subject: Re: [PATCH] seccomp: Check flags on seccomp_notif is unset
-Date: Thu, 26 Dec 2019 08:37:53 -0700
-Message-ID: <20191226153753.GA15663@cisco>
-References: <20191225214530.GA27780@ircssh-2.c.rugged-nimbus-611.internal>
- <20191226115245.usf7z5dkui7ndp4w@wittgenstein>
- <20191226143229.sbopynwut2hhsiwn@yavin.dot.cyphar.com>
+From: Sargun Dhillon <sargun@sargun.me>
+Subject: [PATCH v7 0/3] Add pidfd_getfd syscall
+Date: Thu, 26 Dec 2019 18:02:30 +0000
+Message-ID: <20191226180227.GA29389@ircssh-2.c.rugged-nimbus-611.internal>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20191226143229.sbopynwut2hhsiwn@yavin.dot.cyphar.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Aleksa Sarai <cyphar@cyphar.com>
-Cc: Christian Brauner <christian.brauner@ubuntu.com>, Sargun Dhillon <sargun@sargun.me>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, jannh@google.com, keescook@chromium.org
+To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org
+Cc: tycho@tycho.ws, jannh@google.com, cyphar@cyphar.com, christian.brauner@ubuntu.com, oleg@redhat.com, luto@amacapital.net, viro@zeniv.linux.org.uk, gpascutto@mozilla.com, ealvarez@mozilla.com, fweimer@redhat.com, jld@mozilla.com, arnd@arndb.de
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Dec 27, 2019 at 01:32:29AM +1100, Aleksa Sarai wrote:
-> On 2019-12-26, Christian Brauner <christian.brauner@ubuntu.com> wrote:
-> > On Wed, Dec 25, 2019 at 09:45:33PM +0000, Sargun Dhillon wrote:
-> > > This patch is a small change in enforcement of the uapi for
-> > > SECCOMP_IOCTL_NOTIF_RECV ioctl. Specificaly, the datastructure which is
-> > > passed (seccomp_notif), has a flags member. Previously that could be
-> > > set to a nonsense value, and we would ignore it. This ensures that
-> > > no flags are set.
-> > > 
-> > > Signed-off-by: Sargun Dhillon <sargun@sargun.me>
-> > > Cc: Kees Cook <keescook@chromium.org>
-> > 
-> > I'm fine with this since we soon want to make use of the flag argument
-> > when we add a flag to get a pidfd from the seccomp notifier on receive.
-> > The major users I could identify already pass in seccomp_notif with all
-> > fields set to 0. If we really break users we can always revert; this
-> > seems very unlikely to me though.
-> > 
-> > One more question below, otherwise:
-> > 
-> > Reviewed-by: Christian Brauner <christian.brauner@ubuntu.com>
-> > 
-> > > ---
-> > >  kernel/seccomp.c | 7 +++++++
-> > >  1 file changed, 7 insertions(+)
-> > > 
-> > > diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-> > > index 12d2227e5786..455925557490 100644
-> > > --- a/kernel/seccomp.c
-> > > +++ b/kernel/seccomp.c
-> > > @@ -1026,6 +1026,13 @@ static long seccomp_notify_recv(struct seccomp_filter *filter,
-> > >  	struct seccomp_notif unotif;
-> > >  	ssize_t ret;
-> > >  
-> > > +	if (copy_from_user(&unotif, buf, sizeof(unotif)))
-> > > +		return -EFAULT;
-> > > +
-> > > +	/* flags is reserved right now, make sure it's unset */
-> > > +	if (unotif.flags)
-> > > +		return -EINVAL;
-> > > +
-> > 
-> > Might it make sense to use
-> > 
-> > 	err = copy_struct_from_user(&unotif, sizeof(unotif), buf, sizeof(unotif));
-> > 	if (err)
-> > 		return err;
-> > 
-> > This way we check that the whole struct is 0 and report an error as soon
-> > as one of the members is non-zero. That's more drastic but it'd ensure
-> > that other fields can be used in the future for whatever purposes.
-> > It would also let us get rid of the memset() below. 
-> 
-> Given that this isn't an extensible struct, it would be simpler to just do
-> check_zeroed_user() -- copy_struct_from_user() is overkill. That would
-> also remove the need for any copy_from_user()s and the memset can be
-> dropped by just doing
-> 
->   struct seccomp_notif unotif = {};
+This patchset introduces a mechanism (pidfd_getfd syscall) to get file
+descriptors from other processes via pidfd. Although this can be achieved
+using SCM_RIGHTS, and parasitic code injection, this offers a more
+straightforward mechanism, with less overhead and complexity. The process
+under manipulation's fd still remains valid, and unmodified by the
+copy operation.
 
-This doesn't zero the padding according to the C standard, so no, you
-can't drop the memset, or you may leak kernel stack bits.
+It introduces a flags field. The flags field is reserved a the moment,
+but the intent is to extend it with the following capabilities:
+ * Close the remote FD when copying it
+ * Drop the cgroup data if it's a fd pointing a socket when copying it
 
-As for the rest of it, while it is an ABI change I think all of the
-users are CC'd on this thread, and it's an obvious goof on my part :).
-So:
+The syscall numbers were chosen to be one greater than openat2.
 
-Acked-by: Tycho Andersen <tycho@tycho.ws>
+Summary of history:
+This initially started as a ptrace command. It did not require the process
+to be stopped, and felt like kind of an awkward fit for ptrace. After that,
+it moved to an ioctl on the pidfd. Given functionality, it made sense to
+make it a syscall which did not require the process to be stopped.
 
-Tycho
+Previous versions:
+ V6: https://lore.kernel.org/lkml/20191223210823.GA25083@ircssh-2.c.rugged-nimbus-611.internal/
+ V5: https://lore.kernel.org/lkml/20191220232746.GA20215@ircssh-2.c.rugged-nimbus-611.internal/
+ V4: https://lore.kernel.org/lkml/20191218235310.GA17259@ircssh-2.c.rugged-nimbus-611.internal/
+ V3: https://lore.kernel.org/lkml/20191217005842.GA14379@ircssh-2.c.rugged-nimbus-611.internal/
+ V2: https://lore.kernel.org/lkml/20191209070446.GA32336@ircssh-2.c.rugged-nimbus-611.internal/
+ RFC V1: https://lore.kernel.org/lkml/20191205234450.GA26369@ircssh-2.c.rugged-nimbus-611.internal/
+
+Changes since v6:
+ * Proper attribution of get_task_file helper
+ * Move all types for syscall to int to represent fd
+
+Changes since v5:
+ * Drop pidfd_getfd_options struct and replace with a flags field
+
+Changes since v4:
+ * Turn into a syscall
+ * Move to PTRACE_MODE_ATTACH_REALCREDS from PTRACE_MODE_READ_REALCREDS
+ * Remove the sample code. This will come in another patchset, as the
+   new self-tests cover all the functionality.
+
+Changes since v3:
+ * Add self-test
+ * Move to ioctl passing fd directly, versus args struct
+ * Shuffle around include files
+
+Changes since v2:
+ * Move to ioctl on pidfd instead of ptrace function
+ * Add security check before moving file descriptor
+
+Changes since the RFC v1:
+ * Introduce a new helper to fs/file.c to fetch a file descriptor from
+   any process. It largely uses the code suggested by Oleg, with a few
+   changes to fix locking
+ * It uses an extensible options struct to supply the FD, and option.
+ * I added a sample, using the code from the user-ptrace sample
+
+Sargun Dhillon (3):
+  vfs, fdtable: Add get_task_file helper
+  pid: Introduce pidfd_getfd syscall
+  test: Add test for pidfd getfd
+
+ arch/alpha/kernel/syscalls/syscall.tbl        |   1 +
+ arch/arm/tools/syscall.tbl                    |   1 +
+ arch/arm64/include/asm/unistd.h               |   2 +-
+ arch/arm64/include/asm/unistd32.h             |   2 +
+ arch/ia64/kernel/syscalls/syscall.tbl         |   1 +
+ arch/m68k/kernel/syscalls/syscall.tbl         |   1 +
+ arch/microblaze/kernel/syscalls/syscall.tbl   |   1 +
+ arch/mips/kernel/syscalls/syscall_n32.tbl     |   1 +
+ arch/mips/kernel/syscalls/syscall_n64.tbl     |   1 +
+ arch/mips/kernel/syscalls/syscall_o32.tbl     |   1 +
+ arch/parisc/kernel/syscalls/syscall.tbl       |   1 +
+ arch/powerpc/kernel/syscalls/syscall.tbl      |   1 +
+ arch/s390/kernel/syscalls/syscall.tbl         |   1 +
+ arch/sh/kernel/syscalls/syscall.tbl           |   1 +
+ arch/sparc/kernel/syscalls/syscall.tbl        |   1 +
+ arch/x86/entry/syscalls/syscall_32.tbl        |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl        |   1 +
+ arch/xtensa/kernel/syscalls/syscall.tbl       |   1 +
+ fs/file.c                                     |  21 +-
+ include/linux/file.h                          |   2 +
+ include/linux/syscalls.h                      |   1 +
+ include/uapi/asm-generic/unistd.h             |   4 +-
+ kernel/pid.c                                  | 103 +++++++
+ tools/testing/selftests/pidfd/.gitignore      |   1 +
+ tools/testing/selftests/pidfd/Makefile        |   2 +-
+ .../selftests/pidfd/pidfd_getfd_test.c        | 254 ++++++++++++++++++
+ 26 files changed, 403 insertions(+), 5 deletions(-)
+ create mode 100644 tools/testing/selftests/pidfd/pidfd_getfd_test.c
+
+-- 
+2.20.1
