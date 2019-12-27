@@ -1,76 +1,111 @@
-From: "Theodore Y. Ts'o" <tytso@mit.edu>
-Subject: Re: [PATCH v3 0/8] Rework random blocking
-Date: Fri, 27 Dec 2019 08:04:36 -0500
-Message-ID: <20191227130436.GC70060@mit.edu>
-References: <20191226140423.GB3158@mit.edu>
- <26B7EEAE-1166-4B45-9534-E00C5B2767C1@amacapital.net>
- <4048434.Q8HajmOrkZ@tauon.chronox.de>
+From: Sargun Dhillon <sargun@sargun.me>
+Subject: Re: [PATCH] seccomp: Check flags on seccomp_notif is unset
+Date: Fri, 27 Dec 2019 09:22:20 -0500
+Message-ID: <CAMp4zn8iMsRvDoDtrotfnEm2_UUULH9VRiR6q9u8CS4qham2Eg@mail.gmail.com>
+References: <20191225214530.GA27780@ircssh-2.c.rugged-nimbus-611.internal>
+ <20191226115245.usf7z5dkui7ndp4w@wittgenstein> <20191226143229.sbopynwut2hhsiwn@yavin.dot.cyphar.com>
+ <57C06925-0CC6-4251-AD57-8FF1BC28F049@ubuntu.com> <20191227022446.37e64ag4uaqms2w4@yavin.dot.cyphar.com>
+ <20191227023131.klnobtlfgeqcmvbb@yavin.dot.cyphar.com> <20191227114725.xsacnaoaaxdv6yg3@wittgenstein>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <4048434.Q8HajmOrkZ@tauon.chronox.de>
+In-Reply-To: <20191227114725.xsacnaoaaxdv6yg3@wittgenstein>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Stephan Mueller <smueller@chronox.de>
-Cc: Andy Lutomirski <luto@amacapital.net>, Andy Lutomirski <luto@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, "Jason A. Donenfeld" <Jason@zx2c4.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, Lennart Poettering <mzxreary@0pointer.de>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>
+To: Christian Brauner <christian.brauner@ubuntu.com>
+Cc: Aleksa Sarai <cyphar@cyphar.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Tycho Andersen <tycho@tycho.ws>, Jann Horn <jannh@google.com>, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Dec 27, 2019 at 11:29:22AM +0100, Stephan Mueller wrote:
-> 
-> My definition of TRNG is identical to the German AIS 31 and I guess identical 
-> to your definition of a TRNG.
-> 
-> A TRNG will produce an amount of random data that is equal to the amount of 
-> "fresh" entropy that was provided by the noise source. I.e. it should be 
-> identical to the blocking_pool behavior.
+On Fri, Dec 27, 2019 at 6:47 AM Christian Brauner
+<christian.brauner@ubuntu.com> wrote:
+>
+> On Fri, Dec 27, 2019 at 01:31:31PM +1100, Aleksa Sarai wrote:
+> > On 2019-12-27, Aleksa Sarai <cyphar@cyphar.com> wrote:
+> >
+> > Scratch that -- as Tycho just mentioned, there is un-named padding in
+> > the struct so check_zeroed_user() is the wrong thing to do. But this
+>
+> Hm, I don't think so.
+> I understood Tycho's point as _if_ there ever is padding then this would
+> not be zeroed.
+> Right now, there is no padding since the struct is correctly padded:
+>
+> struct seccomp_data {
+>         int nr;
+>         __u32 arch;
+>         __u64 instruction_pointer;
+>         __u64 args[6];
+> };
+>
+> struct seccomp_notif {
+>         __u64 id;
+>         __u32 pid;
+>         __u32 flags;
+>         struct seccomp_data data;
+> };
+>
+> which would be - using pahole:
+>
+> struct seccomp_data {
+>         int                        nr;                   /*     0     4 */
+>         __u32                      arch;                 /*     4     4 */
+>         __u64                      instruction_pointer;  /*     8     8 */
+>         __u64                      args[6];              /*    16    48 */
+>
+>         /* size: 64, cachelines: 1, members: 4 */
+> };
+> struct seccomp_notif {
+>         __u64                      id;                   /*     0     8 */
+>         __u32                      pid;                  /*     8     4 */
+>         __u32                      flags;                /*    12     4 */
+>         struct seccomp_data data;                        /*    16    64 */
+>
+>         /* size: 80, cachelines: 2, members: 4 */
+>         /* last cacheline: 16 bytes */
+> };
+>
+> The only worry would be a 2byte int type but there's no architecture
+> we support which does this right now afaict.
+>
+> > also will make extensions harder to deal with because (presumably) they
+> > will also have un-named padding, making copy_struct_from_user() the
+>
+> This all will be a non-issue if we just use __u64 for extensions.
+>
+> My point about using copy_struct_from_user() was that we should verify
+> that _all_ fields are uninitialized and not just the flags argument
+> since we might introduce a flags argument that requires another already
+> existing member in seccomp_notif to be set to a value. We should do this
+> change now so we don't have to risk breaking someone in the future.
+>
+> I'm trying to get at least Mozilla/Firefox off of their crazy
+> SECCOMP_RET_TRAP way of implementing their broker onto the user notifier
+> and they will likely need some extensions. That includes the pidfd stuff
+> for seccomp that Sargun will likely be doing and the new pidfd_getfd()
+> syscall. So it's not unlikely that we might need other already existing
+> fields in that struct to be set to some value.
+>
+> I don't particulary care how we do it:
+> - We can do a simple copy_from_user() and check each field individually.
+Just doing a simple copy_from_user, and for now, calling memchr_inv
+on the whole thing. We can drop the memset, and just leave a note to
+indicate that if unpadded fields are introduced in the future, this structure
+must be manually zeroed out. Although, this might be laying a trap for
+ourselves.
 
-This begs the question of determining: (a) how much "fresh entropy"
-you can actually get from a noise source, (b) at what rate the "fresh
-entropy" is arriving, and (c) what assurance(s) you have that the
-noise source is actually working correctly.
+This leaves us in a good position for introducing a flag field in the future.
+All we have to do is change the memchr_inv from checking on an
+entire struct basis to checking on a per-field basis.
 
-You can't make those assurances from software alone; it needs to be an
-aspect of holistic design of the hardware's design; the supply chain,
-and the software.  So if we are going to claime that we have something
-like GRND_TRUERANDOM or /dev/trandom, or whatever, it needs to work on
-IOT devices running ARM, RISC-V, MIPS, PowerPC, x86.  Some of these
-architectures have no instruction reordering and are stupid simple;
-some of these hardware platforms may have no high-resolution clock or
-cryptographic instructions.
-
-In addition, if you use a hardware device which is USB attached, how
-does the kernel know that it really is the device that you think it
-is?  The only way you know that a ChaosKey is a ChaosKey is by its USB
-vendor and product id --- which can be easily forged by an attacker,
-either in the supply chain or delivery path, or who walks up to the
-laptop, yanks out the ChaosKey and replaces it with a "PutinKey" or a
-"NSAKey".
-
-So creating somethinig which shows up as "true random number
-generator" as a generic Linux concept seems to me to be fraught
-endeavor, and I'm not at all convince people need it.
-
-> - add a new GRND_TRUERANDOM flag to getrandom(2) which allows access to the 
-> TRNG. Andy did not like it because he mentioned that it may be misused since 
-> the syscall is unprivileged.
-
-Even if we could solve the "how the hell can the kernel guarantee that
-the noise source is legitimate" problem in a general way that works
-across all of the architectures, we still have the problem that
-everyone thinks they need "the good stuff".
-
-Suppose the system call was privileged and "true randomness" could
-only be accessed as root.  What would happen?  Application programmers
-would give instructions requiring that their application be installed
-as root to be more secure, "because that way you can get access the
-_really_ good random numbers".
-
-So let's take a step back and ask the question: "Exactly what _value_
-do you want to provide by creating some kind of true random
-interface?"  What does this enable?  What applications does this
-really help?
-
-As I thought while watching the latest Star Wars movie: Why?  Why?
-Whywhywhy?
-
-					- Ted
+> - Use copy_struct_from_user().
+>   That is safe to do right now since there is no padding afaict and
+>   it'll automatically verify new fields as well.
+>   If I understand the worry correctly then the argument against
+>   copy_struct_from_user() here is that there might be padding introduced
+>   and userspace will not do an explicit memset() but rather rely on an
+>   empty inializer {} and will _accidently_ pass down a struct which has
+>   __all fields cleared__ but __uninitialized padding__ and we tell them
+>   EINVAL? That can only happen if we introduce padding in the struct
+>   which I'd argue we just don't do. That'll be in line with what we
+>   require from our ABIs already anyway.
+>
+> Christian
