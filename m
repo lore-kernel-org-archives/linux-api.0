@@ -1,111 +1,32 @@
-From: Sargun Dhillon <sargun@sargun.me>
+From: Tycho Andersen <tycho@tycho.ws>
 Subject: Re: [PATCH] seccomp: Check flags on seccomp_notif is unset
-Date: Fri, 27 Dec 2019 09:22:20 -0500
-Message-ID: <CAMp4zn8iMsRvDoDtrotfnEm2_UUULH9VRiR6q9u8CS4qham2Eg@mail.gmail.com>
+Date: Fri, 27 Dec 2019 07:38:39 -0700
+Message-ID: <20191227143839.GB15663@cisco>
 References: <20191225214530.GA27780@ircssh-2.c.rugged-nimbus-611.internal>
- <20191226115245.usf7z5dkui7ndp4w@wittgenstein> <20191226143229.sbopynwut2hhsiwn@yavin.dot.cyphar.com>
- <57C06925-0CC6-4251-AD57-8FF1BC28F049@ubuntu.com> <20191227022446.37e64ag4uaqms2w4@yavin.dot.cyphar.com>
- <20191227023131.klnobtlfgeqcmvbb@yavin.dot.cyphar.com> <20191227114725.xsacnaoaaxdv6yg3@wittgenstein>
+ <20191226115245.usf7z5dkui7ndp4w@wittgenstein>
+ <20191226143229.sbopynwut2hhsiwn@yavin.dot.cyphar.com>
+ <57C06925-0CC6-4251-AD57-8FF1BC28F049@ubuntu.com>
+ <20191227022446.37e64ag4uaqms2w4@yavin.dot.cyphar.com>
+ <20191227023131.klnobtlfgeqcmvbb@yavin.dot.cyphar.com>
+ <20191227114725.xsacnaoaaxdv6yg3@wittgenstein>
+ <CAMp4zn8iMsRvDoDtrotfnEm2_UUULH9VRiR6q9u8CS4qham2Eg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191227114725.xsacnaoaaxdv6yg3@wittgenstein>
+Content-Disposition: inline
+In-Reply-To: <CAMp4zn8iMsRvDoDtrotfnEm2_UUULH9VRiR6q9u8CS4qham2Eg@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian.brauner@ubuntu.com>
-Cc: Aleksa Sarai <cyphar@cyphar.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Tycho Andersen <tycho@tycho.ws>, Jann Horn <jannh@google.com>, Kees Cook <keescook@chromium.org>
+To: Sargun Dhillon <sargun@sargun.me>
+Cc: Christian Brauner <christian.brauner@ubuntu.com>, Aleksa Sarai <cyphar@cyphar.com>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Jann Horn <jannh@google.com>, Kees Cook <keescook@chromium.org>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, Dec 27, 2019 at 6:47 AM Christian Brauner
-<christian.brauner@ubuntu.com> wrote:
->
-> On Fri, Dec 27, 2019 at 01:31:31PM +1100, Aleksa Sarai wrote:
-> > On 2019-12-27, Aleksa Sarai <cyphar@cyphar.com> wrote:
-> >
-> > Scratch that -- as Tycho just mentioned, there is un-named padding in
-> > the struct so check_zeroed_user() is the wrong thing to do. But this
->
-> Hm, I don't think so.
-> I understood Tycho's point as _if_ there ever is padding then this would
-> not be zeroed.
-> Right now, there is no padding since the struct is correctly padded:
->
-> struct seccomp_data {
->         int nr;
->         __u32 arch;
->         __u64 instruction_pointer;
->         __u64 args[6];
-> };
->
-> struct seccomp_notif {
->         __u64 id;
->         __u32 pid;
->         __u32 flags;
->         struct seccomp_data data;
-> };
->
-> which would be - using pahole:
->
-> struct seccomp_data {
->         int                        nr;                   /*     0     4 */
->         __u32                      arch;                 /*     4     4 */
->         __u64                      instruction_pointer;  /*     8     8 */
->         __u64                      args[6];              /*    16    48 */
->
->         /* size: 64, cachelines: 1, members: 4 */
-> };
-> struct seccomp_notif {
->         __u64                      id;                   /*     0     8 */
->         __u32                      pid;                  /*     8     4 */
->         __u32                      flags;                /*    12     4 */
->         struct seccomp_data data;                        /*    16    64 */
->
->         /* size: 80, cachelines: 2, members: 4 */
->         /* last cacheline: 16 bytes */
-> };
->
-> The only worry would be a 2byte int type but there's no architecture
-> we support which does this right now afaict.
->
-> > also will make extensions harder to deal with because (presumably) they
-> > will also have un-named padding, making copy_struct_from_user() the
->
-> This all will be a non-issue if we just use __u64 for extensions.
->
-> My point about using copy_struct_from_user() was that we should verify
-> that _all_ fields are uninitialized and not just the flags argument
-> since we might introduce a flags argument that requires another already
-> existing member in seccomp_notif to be set to a value. We should do this
-> change now so we don't have to risk breaking someone in the future.
->
-> I'm trying to get at least Mozilla/Firefox off of their crazy
-> SECCOMP_RET_TRAP way of implementing their broker onto the user notifier
-> and they will likely need some extensions. That includes the pidfd stuff
-> for seccomp that Sargun will likely be doing and the new pidfd_getfd()
-> syscall. So it's not unlikely that we might need other already existing
-> fields in that struct to be set to some value.
->
-> I don't particulary care how we do it:
-> - We can do a simple copy_from_user() and check each field individually.
-Just doing a simple copy_from_user, and for now, calling memchr_inv
-on the whole thing. We can drop the memset, and just leave a note to
-indicate that if unpadded fields are introduced in the future, this structure
-must be manually zeroed out. Although, this might be laying a trap for
-ourselves.
+On Fri, Dec 27, 2019 at 09:22:20AM -0500, Sargun Dhillon wrote:
+> Just doing a simple copy_from_user, and for now, calling memchr_inv
+> on the whole thing. We can drop the memset, and just leave a note to
+> indicate that if unpadded fields are introduced in the future, this structure
+> must be manually zeroed out. Although, this might be laying a trap for
+> ourselves.
 
-This leaves us in a good position for introducing a flag field in the future.
-All we have to do is change the memchr_inv from checking on an
-entire struct basis to checking on a per-field basis.
+Yes, please keep the memset().
 
-> - Use copy_struct_from_user().
->   That is safe to do right now since there is no padding afaict and
->   it'll automatically verify new fields as well.
->   If I understand the worry correctly then the argument against
->   copy_struct_from_user() here is that there might be padding introduced
->   and userspace will not do an explicit memset() but rather rely on an
->   empty inializer {} and will _accidently_ pass down a struct which has
->   __all fields cleared__ but __uninitialized padding__ and we tell them
->   EINVAL? That can only happen if we introduce padding in the struct
->   which I'd argue we just don't do. That'll be in line with what we
->   require from our ABIs already anyway.
->
-> Christian
+Tycho
