@@ -1,54 +1,31 @@
-From: Andy Lutomirski <luto@amacapital.net>
-Subject: Re: [PATCH v3 0/8] Rework random blocking
-Date: Fri, 27 Dec 2019 07:29:20 +0800
-Message-ID: <26B7EEAE-1166-4B45-9534-E00C5B2767C1@amacapital.net>
-References: <20191226140423.GB3158@mit.edu>
-Mime-Version: 1.0 (1.0)
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+From: Sargun Dhillon <sargun@sargun.me>
+Subject: Re: [PATCH v7 2/3] pid: Introduce pidfd_getfd syscall
+Date: Thu, 26 Dec 2019 20:35:00 -0500
+Message-ID: <CAMp4zn94deUbkXBrnX=Omw9-FmoZDANApqYUVsaV+VsXCX4Q-w@mail.gmail.com>
+References: <20191226180334.GA29409@ircssh-2.c.rugged-nimbus-611.internal> <201912270545.TQnRs9kG%lkp@intel.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191226140423.GB3158@mit.edu>
+In-Reply-To: <201912270545.TQnRs9kG%lkp@intel.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Theodore Y. Ts'o" <tytso@mit.edu>
-Cc: Stephan Mueller <smueller@chronox.de>, Andy Lutomirski <luto@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, "Jason A. Donenfeld" <Jason@zx2c4.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, Lennart Poettering <mzxreary@0pointer.de>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>
+To: kbuild test robot <lkp@intel.com>
+Cc: kbuild-all@lists.01.org, LKML <linux-kernel@vger.kernel.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, Linux FS-devel Mailing List <linux-fsdevel@vger.kernel.org>, Tycho Andersen <tycho@tycho.ws>, Jann Horn <jannh@google.com>, Aleksa Sarai <cyphar@cyphar.com>, Christian Brauner <christian.brauner@ubuntu.com>, Oleg Nesterov <oleg@redhat.com>, Andy Lutomirski <luto@amacapital.net>, Al Viro <viro@zeniv.linux.org.uk>, Gian-Carlo Pascutto <gpascutto@mozilla.com>, =?UTF-8?Q?Emilio_Cobos_=C3=81lvarez?= <ealvarez@mozilla.com>, Florian Weimer <fweimer@redhat.com>, Jed Davis <jld@mozilla.com>, Arnd Bergmann <arnd@arndb.de>
 List-Id: linux-api@vger.kernel.org
 
+On Thu, Dec 26, 2019 at 5:20 PM kbuild test robot <lkp@intel.com> wrote:
+>
+> Hi Sargun,
+>
+> Thank you for the patch! Yet something to improve:
+>
+> All errors (new ones prefixed by >>):
+>
+>    arch/alpha/kernel/systbls.o: In function `sys_call_table':
+> >> (.data+0x1120): undefined reference to `sys_pidfd'
+This is a small typo. I'll fix this in the next respin.
 
->> On Dec 26, 2019, at 10:04 PM, Theodore Y. Ts'o <tytso@mit.edu> wrote:
->>=20
->> =EF=BB=BFOn Thu, Dec 26, 2019 at 01:03:34PM +0100, Stephan Mueller wrote:=
 
->> Agreed. I was just trying to outline that the removal of the blocking_poo=
-l is
->> a good thing. Even when we decide that random.c should receive a TRNG, we=
- do
->> not need to re-add a blocking pool, but can easily use the existing ChaCh=
-a20
->> DRNG (most likely with its own instance).
->=20
-> Well, it depends on what you mean by "TRNG" --- the ChaCha20 DRNG only
-> has a state of 256 bits.  So if you want to only depend on "true
-> entropy" you can't extract more than 256 bits without violating that
-> assumption, at least if you're using a very strict definition of TRNG.
->=20
-> By getting rid of the blocking pool, and making /dev/random work like
-> getrandom with flags set to 0, we're effectively abandoning any kind
-> of assertion that /dev/random is some kind of TRNG.  This is not
-> insane; this is what the *BSD's have always done.
->=20
-> But once we do this, and /dev/random takes on the semantics of "block
-> until the CRNG has been initialized, and then it won't block after
-> that", if we change it so that it now has some different semantics,
-> such as "one you extract a 256-bit key, the read from /dev/random will
-> block until we can refill it, which might take seconds, minutes or
-> hours", will be considered a regression, and we can't do that.
-
-I don=E2=80=99t think Stephan was proposing that. He was proposing a way to i=
-mplement a new interface that blocks.
-
->=20
-> Of course, we can hope that people will be using getrandom() and there
-> will be very few new users of the /dev/random pathname.  But nothing
-> is ever guaranteed..
->=20
->                       - Ted
+>
+> ---
+> 0-DAY kernel test infrastructure                 Open Source Technology Center
+> https://lists.01.org/hyperkitty/list/kbuild-all@lists.01.org Intel Corporation
