@@ -1,37 +1,66 @@
-From: Tycho Andersen <tycho@tycho.ws>
-Subject: Re: [PATCH v2 2/2] seccomp: Check that seccomp_notif is zeroed out
- by the user
-Date: Fri, 27 Dec 2019 20:49:21 -0700
-Message-ID: <20191228034921.GG15663@cisco>
-References: <20191228014849.GA31783@ircssh-2.c.rugged-nimbus-611.internal>
+From: Willy Tarreau <w@1wt.eu>
+Subject: Re: [PATCH v3 0/8] Rework random blocking
+Date: Sat, 28 Dec 2019 08:01:11 +0100
+Message-ID: <20191228070111.GB2519@1wt.eu>
+References: <20191226140423.GB3158@mit.edu>
+ <4048434.Q8HajmOrkZ@tauon.chronox.de>
+ <20191227130436.GC70060@mit.edu>
+ <15817620.rmTN4T87Wr@tauon.chronox.de>
+ <20191227220857.GD70060@mit.edu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20191228014849.GA31783@ircssh-2.c.rugged-nimbus-611.internal>
+In-Reply-To: <20191227220857.GD70060@mit.edu>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Sargun Dhillon <sargun@sargun.me>
-Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, jannh@google.com, christian.brauner@ubuntu.com, keescook@chromium.org, cyphar@cyphar.com
+To: "Theodore Y. Ts'o" <tytso@mit.edu>
+Cc: Stephan Mueller <smueller@chronox.de>, Andy Lutomirski <luto@amacapital.net>, Andy Lutomirski <luto@kernel.org>, LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, "Jason A. Donenfeld" <Jason@zx2c4.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, Lennart Poettering <mzxreary@0pointer.de>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Matthew Garrett <mjg59@srcf.ucam.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sat, Dec 28, 2019 at 01:48:51AM +0000, Sargun Dhillon wrote:
-> This patch is a small change in enforcement of the uapi for
-> SECCOMP_IOCTL_NOTIF_RECV ioctl. Specifically, the datastructure which
-> is passed (seccomp_notif) must be zeroed out. Previously any of its
-> members could be set to nonsense values, and we would ignore it.
+On Fri, Dec 27, 2019 at 05:08:57PM -0500, Theodore Y. Ts'o wrote:
+> > Or maybe the terminology of TRNG (i.e. "true") is offending. I have no concern 
+> > to have it replaced with some other terminology. Yet, I was just taking one 
+> > well-defined term.
 > 
-> This ensures all fields are set to their zero value.
-> 
-> This relies on the seccomp_notif datastructure to not have
-> any unnamed padding, as it is valid to initialize the datastructure
-> as:
-> 
->   struct seccomp_notif notif = {};
-> 
-> This only initializes named members to their 0-value [1].
-> 
-> [1]: https://lore.kernel.org/lkml/20191227023131.klnobtlfgeqcmvbb@yavin.dot.cyphar.com/
-> 
-> Signed-off-by: Sargun Dhillon <sargun@sargun.me>
+> But my point is that it *isn't* a well defined term, precisely because
+> it's completely unclear what application programmer can expect when
+> they try to use some hypothetical GRANDOM_TRUERANDOM flag.  What does
+> that *mean*?
 
-Acked-by: Tycho Andersen <tycho@tycho.ws>
+I've also seen this term used and abused too many times and this bothers
+me because the expectations around it are the cause of the current
+situation.
+
+Randomness doesn't exist by itself. It's what characterizes the
+unpredictable nature of something. I.e. our inability to model it and
+guess what will happen based on what we know. 200 years ago we'd have
+considered the weather as a true random source. Now we have super
+computers making this moot. In the current state of art we consider
+that cesium decay or tunnel noise are unpredictable and excellent
+random sources, until one day we figure that magnetic fields,
+temperature or gamma rays strongly affect them.
+
+So in practice we should only talk about the complexity of the model we
+rely on. The more complex it is (i.e. the most independent variables it
+relies on), the less predictable it is and the more random it is. Jitter
+entropy and RAM contents are good examples of this: they may be highly
+unpredictable on some platforms and almost constant on others. And for
+sure, software cannot fix this, it can at best make the output *look*
+like it's unpredictable. Once someone can model all variables of the
+environment this is not true random anymore.
+
+That's why the best we can do is to combine as many sources as possible
+hoping that nobody can model enough of them, and produce an output which
+never ever reveals these sources' internal states. *This* is what software
+can and must do. And once the initial entropy is hidden enough and there
+is enough of it, there's no reason for it to ever get depleted if these
+initial bits cannot be guessed nor brute-forced.
+
+And quite frankly I'd rather just speak about the diversity of sources
+than "true" randomness. Just asking a user to press 10 random keys and
+to enter a random word for some operations can break many assumptions
+an attacker could have about the environment, by just adding one extra,
+less controllable, source.
+
+Just my two cents,
+Willy
