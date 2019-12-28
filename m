@@ -1,7 +1,8 @@
 From: Sargun Dhillon <sargun@sargun.me>
-Subject: [PATCH v2 1/2] samples, selftests/seccomp: Zero out seccomp_notif
-Date: Sat, 28 Dec 2019 01:48:39 +0000
-Message-ID: <20191228014837.GA31774@ircssh-2.c.rugged-nimbus-611.internal>
+Subject: [PATCH v2 2/2] seccomp: Check that seccomp_notif is zeroed out by
+ the user
+Date: Sat, 28 Dec 2019 01:48:51 +0000
+Message-ID: <20191228014849.GA31783@ircssh-2.c.rugged-nimbus-611.internal>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
@@ -11,56 +12,45 @@ To: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 Cc: tycho@tycho.ws, jannh@google.com, christian.brauner@ubuntu.com, keescook@chromium.org, cyphar@cyphar.com
 List-Id: linux-api@vger.kernel.org
 
-The seccomp_notif structure should be zeroed out prior to calling the
-SECCOMP_IOCTL_NOTIF_RECV ioctl. Previously, the kernel did not check
-whether these structures were zeroed out or not, so these worked.
+This patch is a small change in enforcement of the uapi for
+SECCOMP_IOCTL_NOTIF_RECV ioctl. Specifically, the datastructure which
+is passed (seccomp_notif) must be zeroed out. Previously any of its
+members could be set to nonsense values, and we would ignore it.
+
+This ensures all fields are set to their zero value.
+
+This relies on the seccomp_notif datastructure to not have
+any unnamed padding, as it is valid to initialize the datastructure
+as:
+
+  struct seccomp_notif notif = {};
+
+This only initializes named members to their 0-value [1].
+
+[1]: https://lore.kernel.org/lkml/20191227023131.klnobtlfgeqcmvbb@yavin.dot.cyphar.com/
 
 Signed-off-by: Sargun Dhillon <sargun@sargun.me>
 Cc: Kees Cook <keescook@chromium.org>
 ---
- samples/seccomp/user-trap.c                   | 2 +-
- tools/testing/selftests/seccomp/seccomp_bpf.c | 2 ++
- 2 files changed, 3 insertions(+), 1 deletion(-)
+ kernel/seccomp.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
 
-diff --git a/samples/seccomp/user-trap.c b/samples/seccomp/user-trap.c
-index 6d0125ca8af7..0ca8fb37cd79 100644
---- a/samples/seccomp/user-trap.c
-+++ b/samples/seccomp/user-trap.c
-@@ -298,7 +298,6 @@ int main(void)
- 		req = malloc(sizes.seccomp_notif);
- 		if (!req)
- 			goto out_close;
--		memset(req, 0, sizeof(*req));
+diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+index 12d2227e5786..4fd73cbdd01e 100644
+--- a/kernel/seccomp.c
++++ b/kernel/seccomp.c
+@@ -1026,6 +1026,12 @@ static long seccomp_notify_recv(struct seccomp_filter *filter,
+ 	struct seccomp_notif unotif;
+ 	ssize_t ret;
  
- 		resp = malloc(sizes.seccomp_notif_resp);
- 		if (!resp)
-@@ -306,6 +305,7 @@ int main(void)
- 		memset(resp, 0, sizeof(*resp));
++	ret = check_zeroed_user(buf, sizeof(unotif));
++	if (ret < 0)
++		return ret;
++	if (!ret)
++		return -EINVAL;
++
+ 	memset(&unotif, 0, sizeof(unotif));
  
- 		while (1) {
-+			memset(req, 0, sizes.seccomp_notif);
- 			if (ioctl(listener, SECCOMP_IOCTL_NOTIF_RECV, req)) {
- 				perror("ioctl recv");
- 				goto out_resp;
-diff --git a/tools/testing/selftests/seccomp/seccomp_bpf.c b/tools/testing/selftests/seccomp/seccomp_bpf.c
-index 6944b898bb53..f53f14971bff 100644
---- a/tools/testing/selftests/seccomp/seccomp_bpf.c
-+++ b/tools/testing/selftests/seccomp/seccomp_bpf.c
-@@ -3278,6 +3278,7 @@ TEST(user_notification_signal)
- 
- 	close(sk_pair[1]);
- 
-+	memset(&req, 0, sizeof(req));
- 	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_RECV, &req), 0);
- 
- 	EXPECT_EQ(kill(pid, SIGUSR1), 0);
-@@ -3296,6 +3297,7 @@ TEST(user_notification_signal)
- 	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_SEND, &resp), -1);
- 	EXPECT_EQ(errno, ENOENT);
- 
-+	memset(&req, 0, sizeof(req));
- 	EXPECT_EQ(ioctl(listener, SECCOMP_IOCTL_NOTIF_RECV, &req), 0);
- 
- 	resp.id = req.id;
+ 	ret = down_interruptible(&filter->notif->request);
 -- 
 2.20.1
