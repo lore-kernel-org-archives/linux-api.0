@@ -1,56 +1,94 @@
-From: Sargun Dhillon <sargun@sargun.me>
-Subject: [PATCH v2 2/2] seccomp: Check that seccomp_notif is zeroed out by
- the user
-Date: Sat, 28 Dec 2019 01:48:51 +0000
-Message-ID: <20191228014849.GA31783@ircssh-2.c.rugged-nimbus-611.internal>
+From: Aleksa Sarai <cyphar@cyphar.com>
+Subject: Re: [PATCH v2 2/2] seccomp: Check that seccomp_notif is zeroed out
+ by the user
+Date: Sat, 28 Dec 2019 13:06:43 +1100
+Message-ID: <20191228020643.jb2kn5wztwnrpr74@yavin.dot.cyphar.com>
+References: <20191228014849.GA31783@ircssh-2.c.rugged-nimbus-611.internal>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="54mmka6dnelc3rwm"
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
+In-Reply-To: <20191228014849.GA31783@ircssh-2.c.rugged-nimbus-611.internal>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
-Cc: tycho@tycho.ws, jannh@google.com, christian.brauner@ubuntu.com, keescook@chromium.org, cyphar@cyphar.com
+To: Sargun Dhillon <sargun@sargun.me>
+Cc: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, tycho@tycho.ws, jannh@google.com, christian.brauner@ubuntu.com, keescook@chromium.org
 List-Id: linux-api@vger.kernel.org
 
-This patch is a small change in enforcement of the uapi for
-SECCOMP_IOCTL_NOTIF_RECV ioctl. Specifically, the datastructure which
-is passed (seccomp_notif) must be zeroed out. Previously any of its
-members could be set to nonsense values, and we would ignore it.
 
-This ensures all fields are set to their zero value.
+--54mmka6dnelc3rwm
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-This relies on the seccomp_notif datastructure to not have
-any unnamed padding, as it is valid to initialize the datastructure
-as:
+On 2019-12-28, Sargun Dhillon <sargun@sargun.me> wrote:
+> This patch is a small change in enforcement of the uapi for
+> SECCOMP_IOCTL_NOTIF_RECV ioctl. Specifically, the datastructure which
+> is passed (seccomp_notif) must be zeroed out. Previously any of its
+> members could be set to nonsense values, and we would ignore it.
+>=20
+> This ensures all fields are set to their zero value.
+>=20
+> This relies on the seccomp_notif datastructure to not have
+> any unnamed padding, as it is valid to initialize the datastructure
+> as:
+>=20
+>   struct seccomp_notif notif =3D {};
+>=20
+> This only initializes named members to their 0-value [1].
+>=20
+> [1]: https://lore.kernel.org/lkml/20191227023131.klnobtlfgeqcmvbb@yavin.d=
+ot.cyphar.com/
+>=20
+> Signed-off-by: Sargun Dhillon <sargun@sargun.me>
+> Cc: Kees Cook <keescook@chromium.org>
 
-  struct seccomp_notif notif = {};
+Looks good.
 
-This only initializes named members to their 0-value [1].
+Reviewed-by: Aleksa Sarai <cyphar@cyphar.com>
 
-[1]: https://lore.kernel.org/lkml/20191227023131.klnobtlfgeqcmvbb@yavin.dot.cyphar.com/
+> ---
+>  kernel/seccomp.c | 6 ++++++
+>  1 file changed, 6 insertions(+)
+>=20
+> diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+> index 12d2227e5786..4fd73cbdd01e 100644
+> --- a/kernel/seccomp.c
+> +++ b/kernel/seccomp.c
+> @@ -1026,6 +1026,12 @@ static long seccomp_notify_recv(struct seccomp_fil=
+ter *filter,
+>  	struct seccomp_notif unotif;
+>  	ssize_t ret;
+> =20
+> +	ret =3D check_zeroed_user(buf, sizeof(unotif));
+> +	if (ret < 0)
+> +		return ret;
+> +	if (!ret)
+> +		return -EINVAL;
+> +
+>  	memset(&unotif, 0, sizeof(unotif));
+> =20
+>  	ret =3D down_interruptible(&filter->notif->request);
+> --=20
+> 2.20.1
+>=20
 
-Signed-off-by: Sargun Dhillon <sargun@sargun.me>
-Cc: Kees Cook <keescook@chromium.org>
----
- kernel/seccomp.c | 6 ++++++
- 1 file changed, 6 insertions(+)
 
-diff --git a/kernel/seccomp.c b/kernel/seccomp.c
-index 12d2227e5786..4fd73cbdd01e 100644
---- a/kernel/seccomp.c
-+++ b/kernel/seccomp.c
-@@ -1026,6 +1026,12 @@ static long seccomp_notify_recv(struct seccomp_filter *filter,
- 	struct seccomp_notif unotif;
- 	ssize_t ret;
- 
-+	ret = check_zeroed_user(buf, sizeof(unotif));
-+	if (ret < 0)
-+		return ret;
-+	if (!ret)
-+		return -EINVAL;
-+
- 	memset(&unotif, 0, sizeof(unotif));
- 
- 	ret = down_interruptible(&filter->notif->request);
--- 
-2.20.1
+--=20
+Aleksa Sarai
+Senior Software Engineer (Containers)
+SUSE Linux GmbH
+<https://www.cyphar.com/>
+
+--54mmka6dnelc3rwm
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXga4rwAKCRCdlLljIbnQ
+EnMAAP9Xs8l4Hin1hWv97QM7HT0Sw7QrXAEhmfu1n2Kz+eMk3AD/YAtD/Zr4L7OC
+hJdpl7t6/Bega+Lr5/MbnPjfDdjANQ8=
+=TLug
+-----END PGP SIGNATURE-----
+
+--54mmka6dnelc3rwm--
