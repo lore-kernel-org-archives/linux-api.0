@@ -1,7 +1,7 @@
 From: Sargun Dhillon <sargun@sargun.me>
-Subject: [PATCH v3 3/3] selftests/seccomp: Test kernel catches garbage on SECCOMP_IOCTL_NOTIF_RECV
-Date: Sat, 28 Dec 2019 22:24:51 -0800
-Message-ID: <20191229062451.9467-3-sargun@sargun.me>
+Subject: [PATCH v3 2/3] seccomp: Check that seccomp_notif is zeroed out by the user
+Date: Sat, 28 Dec 2019 22:24:50 -0800
+Message-ID: <20191229062451.9467-2-sargun@sargun.me>
 References: <20191229062451.9467-1-sargun@sargun.me>
 Mime-Version: 1.0
 Content-Transfer-Encoding: 8bit
@@ -12,49 +12,39 @@ To: linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 Cc: Jann Horn <jannh@google.com>, Christian Brauner <christian.brauner@ubuntu.com>, Kees Cook <keescook@chromium.org>, Aleksa Sarai <cyphar@cyphar.com>, Tycho Andersen <tycho@tycho.ws>, Sargun Dhillon <sargun@sargun.me>
 List-Id: linux-api@vger.kernel.org
 
-Add a self-test to make sure that the kernel returns EINVAL, if any
-of the fields in seccomp_notif are set to non-null.
+This patch is a small change in enforcement of the uapi for
+SECCOMP_IOCTL_NOTIF_RECV ioctl. Specifically, the datastructure which
+is passed (seccomp_notif) must be zeroed out. Previously any of its
+members could be set to nonsense values, and we would ignore it.
+
+This ensures all fields are set to their zero value.
 
 Signed-off-by: Sargun Dhillon <sargun@sargun.me>
-Suggested-by: Christian Brauner <christian.brauner@ubuntu.com>
 Cc: Kees Cook <keescook@chromium.org>
+Reviewed-by: Christian Brauner <christian.brauner@ubuntu.com>
+Reviewed-by: Aleksa Sarai <cyphar@cyphar.com>
+Acked-by: Tycho Andersen <tycho@tycho.ws>
 ---
- tools/testing/selftests/seccomp/seccomp_bpf.c | 23 +++++++++++++++++++
- 1 file changed, 23 insertions(+)
+ kernel/seccomp.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-diff --git a/tools/testing/selftests/seccomp/seccomp_bpf.c b/tools/testing/selftests/seccomp/seccomp_bpf.c
-index f53f14971bff..379391a7fa41 100644
---- a/tools/testing/selftests/seccomp/seccomp_bpf.c
-+++ b/tools/testing/selftests/seccomp/seccomp_bpf.c
-@@ -3601,6 +3601,29 @@ TEST(user_notification_continue)
- 	}
- }
+diff --git a/kernel/seccomp.c b/kernel/seccomp.c
+index 12d2227e5786..b6ea3dcb57bf 100644
+--- a/kernel/seccomp.c
++++ b/kernel/seccomp.c
+@@ -1026,6 +1026,13 @@ static long seccomp_notify_recv(struct seccomp_filter *filter,
+ 	struct seccomp_notif unotif;
+ 	ssize_t ret;
  
-+TEST(user_notification_garbage)
-+{
-+	/*
-+	 * intentionally set pid to a garbage value to make sure the kernel
-+	 * catches it
-+	 */
-+	struct seccomp_notif req = {
-+		.pid	= 1,
-+	};
-+	int ret, listener;
++	/* Verify that we're not given garbage to keep struct extensible. */
++	ret = check_zeroed_user(buf, sizeof(unotif));
++	if (ret < 0)
++		return ret;
++	if (!ret)
++		return -EINVAL;
 +
-+	ret = prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
-+	ASSERT_EQ(0, ret) {
-+		TH_LOG("Kernel does not support PR_SET_NO_NEW_PRIVS!");
-+	}
-+
-+	listener = user_trap_syscall(__NR_dup, SECCOMP_FILTER_FLAG_NEW_LISTENER);
-+	ASSERT_GE(listener, 0);
-+
-+	EXPECT_EQ(-1, ioctl(listener, SECCOMP_IOCTL_NOTIF_RECV, &req));
-+	EXPECT_EQ(EINVAL, errno);
-+}
-+
- /*
-  * TODO:
-  * - add microbenchmarks
+ 	memset(&unotif, 0, sizeof(unotif));
+ 
+ 	ret = down_interruptible(&filter->notif->request);
 -- 
 2.20.1
