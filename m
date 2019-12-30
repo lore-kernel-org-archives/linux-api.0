@@ -1,69 +1,144 @@
-From: Linus Torvalds <torvalds@linux-foundation.org>
-Subject: Re: [PATCH RFC 0/1] mount: universally disallow mounting over symlinks
-Date: Sun, 29 Dec 2019 23:53:47 -0800
-Message-ID: <CAHk-=whxNw7hYT6bJn9mVrB_a=7Y-irmpaPsp1R4xbHHkicv7g@mail.gmail.com>
-References: <20191230052036.8765-1-cyphar@cyphar.com> <20191230054413.GX4203@ZenIV.linux.org.uk>
- <20191230054913.c5avdjqbygtur2l7@yavin.dot.cyphar.com> <20191230072959.62kcojxpthhdwmfa@yavin.dot.cyphar.com>
+From: Aleksa Sarai <cyphar@cyphar.com>
+Subject: Re: [PATCH RFC 1/1] mount: universally disallow mounting over
+ symlinks
+Date: Mon, 30 Dec 2019 19:28:47 +1100
+Message-ID: <20191230082847.dkriyisvu7wwxqqu@yavin.dot.cyphar.com>
+References: <20191230052036.8765-1-cyphar@cyphar.com>
+ <20191230052036.8765-2-cyphar@cyphar.com>
+ <CAHk-=wjHPCQsMeK5bFOJQnrGPfVDXTAFQK4VsBZPj5u=ZgS-QA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="2ttgeqhlie5hzgct"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20191230072959.62kcojxpthhdwmfa@yavin.dot.cyphar.com>
+Content-Disposition: inline
+In-Reply-To: <CAHk-=wjHPCQsMeK5bFOJQnrGPfVDXTAFQK4VsBZPj5u=ZgS-QA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Aleksa Sarai <cyphar@cyphar.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
 Cc: Al Viro <viro@zeniv.linux.org.uk>, David Howells <dhowells@redhat.com>, Eric Biederman <ebiederm@xmission.com>, stable <stable@vger.kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>, Serge Hallyn <serge@hallyn.com>, dev@opencontainers.org, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Sun, Dec 29, 2019 at 11:30 PM Aleksa Sarai <cyphar@cyphar.com> wrote:
->
->     BUG: kernel NULL pointer dereference, address: 0000000000000000
 
-Would you mind building with debug info, and then running the oops through
+--2ttgeqhlie5hzgct
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
- scripts/decode_stacktrace.sh
+On 2019-12-29, Linus Torvalds <torvalds@linux-foundation.org> wrote:
+> On Sun, Dec 29, 2019 at 9:21 PM Aleksa Sarai <cyphar@cyphar.com> wrote:
+> > +       if (d_is_symlink(mp->m_dentry) ||
+> > +           d_is_symlink(mnt->mnt.mnt_root))
+> > +               return -EINVAL;
+>=20
+> So I don't hate this kind of check in general - overmounting a symlink
+> sounds odd, but at the same time I get the feeling that the real issue
+> is that something went wrong earlier.
+>=20
+> Yeah, the mount target kind of _is_ a path, but at the same time, we
+> most definitely want to have the permission to really open the
+> directory in question, don't we, and I don't see that we should accept
+> a O_PATH file descriptor.
 
-which makes those addresses much more legible.
+The new mount API uses O_PATH under the hood (which is a good thing
+since some files you'd like to avoid actually opening -- FIFOs are the
+obvious example) so I'm not sure that's something we could really avoid.
 
->     #PF: supervisor instruction fetch in kernel mode
->     #PF: error_code(0x0010) - not-present page
+But if we block O_PATH for mounts this will achieve the same thing,
+because the only way to get a file descriptor that references a symlink
+is through (O_PATH | O_NOFOLLOW).
 
-Somebody jumped through a NULL pointer.
+> I feel like the only valid use of "O_PATH" files is to then use them
+> as the base for an openat() and friends (ie fchmodat/execveat() etc).
 
->     RAX: 0000000000000000 RBX: ffff906d0cc3bb40 RCX: 0000000000000abc
->     RDX: 0000000000000089 RSI: ffff906d74623cc0 RDI: ffff906d74475df0
->     RBP: ffff906d74475df0 R08: ffffd70b7fb24c20 R09: ffff906d066a5000
->     R10: 0000000000000000 R11: 8080807fffffffff R12: ffff906d74623cc0
->     R13: 0000000000000089 R14: ffffb70b82963dc0 R15: 0000000000000080
->     FS:  00007fbc2a8f0540(0000) GS:ffff906dcf500000(0000) knlGS:0000000000000000
->     CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
->     CR2: ffffffffffffffd6 CR3: 00000003c68f8001 CR4: 00000000003606e0
->     Call Trace:
->      __lookup_slow+0x94/0x160
+See below, we use this for all sorts of dirty^Wclever tricks.
 
-And "__lookup_slow()" has two indirect calls (they aren't obvious with
-retpoline, but look for something  like
+> But maybe I'm completely wrong, and people really do want O_PATH
+> handling exactly for mounting too. It does sound a bit odd. By
+> definition, mounting wants permissions to the mount-point, so what's
+> the point of using O_PATH?
 
-        call __x86_indirect_thunk_rax
+When you go through O_PATH, you still get a proper 'struct path' which
+means that for operations such as mount (or open) you will operate on
+the *real* underlying file.
 
-which is the modern sad way of doing "call *%rax"). One is for
-revalidatinging an old dentry, but the one I _suspect_ you trigger is
-this one:
+This is part of what makes magic-links so useful (but also quite
+terrifying).
 
-                old = inode->i_op->lookup(inode, dentry, flags);
+> For example, is the problem that when you do a proper
+>=20
+>   fd =3D open("somepath", O_PATH);
+>=20
+> in one process, and then another thread does
+>=20
+>    fd =3D open("/proc/<pid>/fd/<opathfd>", O_RDWR);
+>=20
+> then we get confused and do bad things on that *second* open? Because
+> now the second open doesn't have O_PATH, and doesn't ghet marked
+> FMODE_PATH, but the underlying file descriptor is one of those limited
+> "is really only useful for openat() and friends".
 
-but I thought we only could get here if we know it's a directory.
+Actually, this isn't true (for the same reason as above) -- when you do
+a re-open through /proc/$pid/fd/$n you get a real-as-a-heart-attack file
+descriptor. We make lots of use of this in container runtimes in order
+to do some dirty^Wfun tricks that help us harden the runtime against
+malicious container processes.
 
-How did we miss the "d_can_lookup()", which is what should check that
-yes, we can call that ->lookup() routine.
+You might recall that when I was posting the earlier revisions of
+openat2(), I also included a patch for O_EMPTYPATH (which basically did
+a re-open of /proc/self/fd/$dfd but without needing /proc). That had
+precisely the same semantics so that you could do the same operation
+without procfs. That patch was dropped before Al merged openat2(), but I
+am probably going to revive it for the reasons I outlined below.
 
-This is why I have that suspicion that it's somehow that O_PATH fd
-opened in another process without O_PATH causes confusion...
+> I dunno. I haven't thought through the whole thing. But the oopses you
+> quote seem like we're really doing something wrong, and it really does
+> feel like your patch in no way _fixes_ the wrong thing we're doing,
+> it's just hiding the symptoms.
 
-So what I think has happened is that because of the O_PATH thing,
-we've ended up with an inode that has never been truly opened (because
-O_PATH skips that part), but then with the /proc/<pid>/fd/xyz open, we
-now have a file descriptor that _looks_ like it is valid, and we're
-treating that inode as if it can be used.
+That's fair enough.
 
-But I'm handwaving.
+I'll be honest, the real reason why I don't want mounts over symlinks to
+be possible is for an entirely different reason. I'm working on a safe
+path resolution library to accompany openat2()[1] -- and one of the
+things I want to do is to harden all of our uses of procfs (such that if
+we are running in a context where procfs has been messed with -- such as
+having files bind-mounted -- we can detect it and abort). The issue with
+symlinks is that we need to be able to operate on magic-links (such as
+/proc/self/fd/$n and /proc/self/exe) -- and if it's possible bind-mount
+over those magic-links then we can't detect it at all.
 
-             Linus
+openat2(RESOLVE_NO_XDEV) would block it, but it also blocks going
+through magic-links which change your mount (which would almost always
+be true). You can't trust /proc/self/mountinfo by definition -- not just
+because of the TOCTOU race but also because you can't depend on /proc to
+harden against a "bad" /proc. All other options such as
+umount2(MNT_EXPIRE) won't help with magic-links because we cannot take
+an O_PATH to a magic-link and follow it -- O_PATHs of symlinks are
+completely stunted in this respect.
+
+If allowing bind-mounts over symlinks is allowed (which I don't have a
+problem with really), it just means we'll need a few more kernel pieces
+to get this hardening to work. But these features would be useful
+outside of the problems I'm dealing with (O_EMPTYPATH and some kind of
+pidfd-based interface to grab the equivalent of /proc/self/exe and a few
+other such magic-link targets).
+
+[1]: https://github.com/openSUSE/libpathrs
+
+--=20
+Aleksa Sarai
+Senior Software Engineer (Containers)
+SUSE Linux GmbH
+<https://www.cyphar.com/>
+
+--2ttgeqhlie5hzgct
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXgm1PAAKCRCdlLljIbnQ
+EgySAP9VrQ+iD1l5aOAWe2wFG8Jw0u9h3RrYrsF6ygoOD7rhYgEAjl6Xtd4ayz7s
+rKcquB9aKdCEYTJMzkPShbvhgHd0rAc=
+=ff9q
+-----END PGP SIGNATURE-----
+
+--2ttgeqhlie5hzgct--
