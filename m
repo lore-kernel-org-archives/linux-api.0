@@ -1,82 +1,60 @@
 From: Yang Shi <yang.shi@linux.alibaba.com>
 Subject: Re: [PATCH] move_pages.2: not return ENOENT if the page are already
  on the target nodes
-Date: Mon, 30 Dec 2019 18:49:29 -0800
-Message-ID: <51a37061-8d95-eca1-a1d9-e6e8f4dc884d@linux.alibaba.com>
+Date: Mon, 30 Dec 2019 19:00:43 -0800
+Message-ID: <0059a598-5726-2488-cd37-b4b7f9b3353e@linux.alibaba.com>
 References: <1575596090-115377-1-git-send-email-yang.shi@linux.alibaba.com>
  <0dc96e40-5f2b-a2fe-6e5f-b6f3d5e9ebde@nvidia.com>
  <95170ea5-5b62-9168-fcd9-93b43330a1b4@linux.alibaba.com>
  <092adc11-7039-9343-7067-0e0199c9dc13@gmail.com>
  <51dd767a-221f-882d-c7f6-45bd0c217a67@nvidia.com>
+ <20191218101711.GB21485@dhcp22.suse.cz>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 8bit
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <51dd767a-221f-882d-c7f6-45bd0c217a67@nvidia.com>
+In-Reply-To: <20191218101711.GB21485@dhcp22.suse.cz>
 Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
-To: John Hubbard <jhubbard@nvidia.com>, "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, cl@linux.com, mhocko@suse.com, cai@lca.pw, akpm@linux-foundation.org
-Cc: linux-man@vger.kernel.org, linux-api@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org
+To: Michal Hocko <mhocko@kernel.org>, John Hubbard <jhubbard@nvidia.com>
+Cc: "Michael Kerrisk (man-pages)" <mtk.manpages@gmail.com>, cl@linux.com, cai@lca.pw, akpm@linux-foundation.org, linux-man@vger.kernel.org, linux-api@vger.kernel.org, linux-mm@kvack.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
 
 
-On 12/17/19 11:36 PM, John Hubbard wrote:
-> On 12/13/19 5:55 PM, Michael Kerrisk (man-pages) wrote:
-> ...
->>>> whoa, hold on. If I'm reading through the various error paths
->>>> correctly, then this
->>>> code is *never* going to return ENOENT for the whole function. It can
->>>> fill in that
->>>> value per-page, in the status array, but that's all. Did I get that
->>>> right?
->>>
->>> Nice catch. Yes, you are right.
->>>
->>>>
->>>> If so, we need to redo this part of the man page.
->>>
->>> Yes.
+On 12/18/19 2:17 AM, Michal Hocko wrote:
+> On Tue 17-12-19 23:36:09, John Hubbard wrote:
+> [...]
+>> diff --git a/man2/move_pages.2 b/man2/move_pages.2
+>> index 2d96468fa..1bf1053f2 100644
+>> --- a/man2/move_pages.2
+>> +++ b/man2/move_pages.2
+>> @@ -191,12 +191,6 @@ was specified or an attempt was made to migrate pages of a kernel thread.
+>>   .B ENODEV
+>>   One of the target nodes is not online.
+>>   .TP
+>> -.B ENOENT
+>> -No pages were found that require moving.
+>> -All pages are either already
+>> -on the target node, not present, had an invalid address or could not be
+>> -moved because they were mapped by multiple processes.
+>> -.TP
+>>   .B EPERM
+>>   The caller specified
+>>   .B MPOL_MF_MOVE_ALL
 >>
->> So where are things at with this? Is an improved man-pages
->> patch on the way, or is some other action (on the API) planned?
->>
+>> ...But I'm not sure if we should change the implementation, instead, so
+>> that it *can* return ENOENT. That's the main question to resolve before
+>> creating any more patches, I think.
+> I would start by dropping any note about ENOENT first. I am not really
+> sure there is a reasonable usecase for it but maybe somebody comes up
+> with something and only then we should consider it.
 >
-> I was waiting to see if Yang was going to respond...anyway, I think
-> we're looking at approximately this sort of change:
+> Feel free to add
+> Acked-by: Michal Hocko <mhocko@suse.com>
 >
+> ideally with a kernel commit which removed the ENOENT.
 
-Hi John,
-
-I apologize for the delay, just came back from vacation. Thanks for 
-taking care of the patch.
-
-> diff --git a/man2/move_pages.2 b/man2/move_pages.2
-> index 2d96468fa..1bf1053f2 100644
-> --- a/man2/move_pages.2
-> +++ b/man2/move_pages.2
-> @@ -191,12 +191,6 @@ was specified or an attempt was made to migrate 
-> pages of a kernel thread.
->  .B ENODEV
->  One of the target nodes is not online.
->  .TP
-> -.B ENOENT
-> -No pages were found that require moving.
-> -All pages are either already
-> -on the target node, not present, had an invalid address or could not be
-> -moved because they were mapped by multiple processes.
-> -.TP
->  .B EPERM
->  The caller specified
->  .B MPOL_MF_MOVE_ALL
->
-> ...But I'm not sure if we should change the implementation, instead, so
-> that it *can* return ENOENT. That's the main question to resolve before
-> creating any more patches, I think.
->
-> In addition, Michal mentioned that the page states in the status array 
-> also
-> need updated documentation.
->
->
-> thanks,
+A quick audit doesn't show kernel code or comment notes about ENOENT 
+wrongly. The status could be set as ENOENT if the page is not present 
+(follow_page() returns NULL), and man page does match what kernel does.
