@@ -1,99 +1,253 @@
 From: Richard Guy Briggs <rgb@redhat.com>
-Subject: [PATCH ghak90 V8 03/16] audit: read container ID of a process
-Date: Tue, 31 Dec 2019 14:48:16 -0500
-Message-ID: <05ba38492e83101df4d2aea72c3adda041e46fcf.1577736799.git.rgb@redhat.com>
+Subject: [PATCH ghak90 V8 04/16] audit: convert to contid list to check for orch/engine ownership
+Date: Tue, 31 Dec 2019 14:48:17 -0500
+Message-ID: <a911acf0b209c05dc156fb6b57f9da45778747ce.1577736799.git.rgb@redhat.com>
 References: <cover.1577736799.git.rgb@redhat.com>
-Return-path: <netdev-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1577736799.git.rgb@redhat.com>
 In-Reply-To: <cover.1577736799.git.rgb@redhat.com>
 References: <cover.1577736799.git.rgb@redhat.com>
-Sender: netdev-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: containers@lists.linux-foundation.org, linux-api@vger.kernel.org, Linux-Audit Mailing List <linux-audit@redhat.com>, linux-fsdevel@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org, netfilter-devel@vger.kernel.org
 Cc: Paul Moore <paul@paul-moore.com>, sgrubb@redhat.com, omosnace@redhat.com, dhowells@redhat.com, simo@redhat.com, eparis@parisplace.org, serge@hallyn.com, ebiederm@xmission.com, nhorman@tuxdriver.com, dwalsh@redhat.com, mpatel@redhat.com, Richard Guy Briggs <rgb@redhat.com>
 List-Id: linux-api@vger.kernel.org
 
-Add support for reading the audit container identifier from the proc
-filesystem.
-
-This is a read from the proc entry of the form
-/proc/PID/audit_containerid where PID is the process ID of the task
-whose audit container identifier is sought.
-
-The read expects up to a u64 value (unset: 18446744073709551615).
-
-This read requires CAP_AUDIT_CONTROL.
+Store the audit container identifier in a refcounted kernel object that
+is added to the master list of audit container identifiers.  This will
+allow multiple container orchestrators/engines to work on the same
+machine without danger of inadvertantly re-using an existing identifier.
+It will also allow an orchestrator to inject a process into an existing
+container by checking if the original container owner is the one
+injecting the task.  A hash table list is used to optimize searches.
 
 Signed-off-by: Richard Guy Briggs <rgb@redhat.com>
-Acked-by: Serge Hallyn <serge@hallyn.com>
-Acked-by: Neil Horman <nhorman@tuxdriver.com>
-Reviewed-by: Ondrej Mosnacek <omosnace@redhat.com>
 ---
- fs/proc/base.c | 25 ++++++++++++++++++++++---
- 1 file changed, 22 insertions(+), 3 deletions(-)
+ include/linux/audit.h | 14 ++++++--
+ kernel/audit.c        | 98 ++++++++++++++++++++++++++++++++++++++++++++++++---
+ kernel/audit.h        |  8 +++++
+ 3 files changed, 112 insertions(+), 8 deletions(-)
 
-diff --git a/fs/proc/base.c b/fs/proc/base.c
-index e2e7c9f4702f..26091800180c 100644
---- a/fs/proc/base.c
-+++ b/fs/proc/base.c
-@@ -1224,7 +1224,7 @@ static ssize_t oom_score_adj_write(struct file *file, const char __user *buf,
- };
+diff --git a/include/linux/audit.h b/include/linux/audit.h
+index a045b34ecf44..0e6dbe943ae4 100644
+--- a/include/linux/audit.h
++++ b/include/linux/audit.h
+@@ -94,10 +94,18 @@ struct audit_ntp_data {
+ struct audit_ntp_data {};
+ #endif
  
- #ifdef CONFIG_AUDIT
--#define TMPBUFLEN 11
-+#define TMPBUFLEN 21
- static ssize_t proc_loginuid_read(struct file * file, char __user * buf,
- 				  size_t count, loff_t *ppos)
- {
-@@ -1308,6 +1308,24 @@ static ssize_t proc_sessionid_read(struct file * file, char __user * buf,
- 	.llseek		= generic_file_llseek,
- };
++struct audit_contobj {
++	struct list_head	list;
++	u64			id;
++	struct task_struct	*owner;
++	refcount_t              refcount;
++	struct rcu_head         rcu;
++};
++
+ struct audit_task_info {
+ 	kuid_t			loginuid;
+ 	unsigned int		sessionid;
+-	u64			contid;
++	struct audit_contobj	*cont;
+ #ifdef CONFIG_AUDITSYSCALL
+ 	struct audit_context	*ctx;
+ #endif
+@@ -203,9 +211,9 @@ static inline unsigned int audit_get_sessionid(struct task_struct *tsk)
  
-+static ssize_t proc_contid_read(struct file *file, char __user *buf,
-+				  size_t count, loff_t *ppos)
-+{
-+	struct inode *inode = file_inode(file);
-+	struct task_struct *task = get_proc_task(inode);
-+	ssize_t length;
-+	char tmpbuf[TMPBUFLEN];
-+
-+	if (!task)
-+		return -ESRCH;
-+	/* if we don't have caps, reject */
-+	if (!capable(CAP_AUDIT_CONTROL))
-+		return -EPERM;
-+	length = scnprintf(tmpbuf, TMPBUFLEN, "%llu", audit_get_contid(task));
-+	put_task_struct(task);
-+	return simple_read_from_buffer(buf, count, ppos, tmpbuf, length);
-+}
-+
- static ssize_t proc_contid_write(struct file *file, const char __user *buf,
- 				   size_t count, loff_t *ppos)
+ static inline u64 audit_get_contid(struct task_struct *tsk)
  {
-@@ -1338,6 +1356,7 @@ static ssize_t proc_contid_write(struct file *file, const char __user *buf,
+-	if (!tsk->audit)
++	if (!tsk->audit || !tsk->audit->cont)
+ 		return AUDIT_CID_UNSET;
+-	return tsk->audit->contid;
++	return tsk->audit->cont->id;
  }
  
- static const struct file_operations proc_contid_operations = {
-+	.read		= proc_contid_read,
- 	.write		= proc_contid_write,
- 	.llseek		= generic_file_llseek,
- };
-@@ -3101,7 +3120,7 @@ static int proc_stack_depth(struct seq_file *m, struct pid_namespace *ns,
- #ifdef CONFIG_AUDIT
- 	REG("loginuid",   S_IWUSR|S_IRUGO, proc_loginuid_operations),
- 	REG("sessionid",  S_IRUGO, proc_sessionid_operations),
--	REG("audit_containerid", S_IWUSR, proc_contid_operations),
-+	REG("audit_containerid", S_IWUSR|S_IRUSR, proc_contid_operations),
+ extern u32 audit_enabled;
+diff --git a/kernel/audit.c b/kernel/audit.c
+index 2d7707426b7d..4bab20f5f781 100644
+--- a/kernel/audit.c
++++ b/kernel/audit.c
+@@ -138,6 +138,12 @@ struct auditd_connection {
+ 
+ /* Hash for inode-based rules */
+ struct list_head audit_inode_hash[AUDIT_INODE_BUCKETS];
++/* Hash for contid object lists */
++struct list_head audit_contid_hash[AUDIT_CONTID_BUCKETS];
++/* Lock all additions and deletions to the contid hash lists, assignment
++ * of container objects to tasks and refcount changes.  There should be
++ * no need for interaction with tasklist_lock */
++static DEFINE_SPINLOCK(audit_contobj_list_lock);
+ 
+ static struct kmem_cache *audit_buffer_cache;
+ 
+@@ -212,6 +218,31 @@ void __init audit_task_init(void)
+ 					     0, SLAB_PANIC, NULL);
+ }
+ 
++static struct audit_contobj *_audit_contobj(struct task_struct *tsk)
++{
++	if (!tsk->audit)
++		return NULL;
++	return tsk->audit->cont;
++}
++
++/* audit_contobj_list_lock must be held by caller unless new */
++static void _audit_contobj_hold(struct audit_contobj *cont)
++{
++	refcount_inc(&cont->refcount);
++}
++
++/* audit_contobj_list_lock must be held by caller */
++static void _audit_contobj_put(struct audit_contobj *cont)
++{
++	if (!cont)
++		return;
++	if (refcount_dec_and_test(&cont->refcount)) {
++		put_task_struct(cont->owner);
++		list_del_rcu(&cont->list);
++		kfree_rcu(cont, rcu);
++	}
++}
++
+ /**
+  * audit_alloc - allocate an audit info block for a task
+  * @tsk: task
+@@ -232,7 +263,11 @@ int audit_alloc(struct task_struct *tsk)
+ 	}
+ 	info->loginuid = audit_get_loginuid(current);
+ 	info->sessionid = audit_get_sessionid(current);
+-	info->contid = audit_get_contid(current);
++	spin_lock(&audit_contobj_list_lock);
++	info->cont = _audit_contobj(current);
++	if (info->cont)
++		_audit_contobj_hold(info->cont);
++	spin_unlock(&audit_contobj_list_lock);
+ 	tsk->audit = info;
+ 
+ 	ret = audit_alloc_syscall(tsk);
+@@ -247,7 +282,7 @@ int audit_alloc(struct task_struct *tsk)
+ struct audit_task_info init_struct_audit = {
+ 	.loginuid = INVALID_UID,
+ 	.sessionid = AUDIT_SID_UNSET,
+-	.contid = AUDIT_CID_UNSET,
++	.cont = NULL,
+ #ifdef CONFIG_AUDITSYSCALL
+ 	.ctx = NULL,
  #endif
- #ifdef CONFIG_FAULT_INJECTION
- 	REG("make-it-fail", S_IRUGO|S_IWUSR, proc_fault_inject_operations),
-@@ -3502,7 +3521,7 @@ static int proc_tid_comm_permission(struct inode *inode, int mask)
- #ifdef CONFIG_AUDIT
- 	REG("loginuid",  S_IWUSR|S_IRUGO, proc_loginuid_operations),
- 	REG("sessionid",  S_IRUGO, proc_sessionid_operations),
--	REG("audit_containerid", S_IWUSR, proc_contid_operations),
-+	REG("audit_containerid", S_IWUSR|S_IRUSR, proc_contid_operations),
- #endif
- #ifdef CONFIG_FAULT_INJECTION
- 	REG("make-it-fail", S_IRUGO|S_IWUSR, proc_fault_inject_operations),
+@@ -267,6 +302,9 @@ void audit_free(struct task_struct *tsk)
+ 	/* Freeing the audit_task_info struct must be performed after
+ 	 * audit_log_exit() due to need for loginuid and sessionid.
+ 	 */
++	spin_lock(&audit_contobj_list_lock); 
++	_audit_contobj_put(tsk->audit->cont);
++	spin_unlock(&audit_contobj_list_lock); 
+ 	info = tsk->audit;
+ 	tsk->audit = NULL;
+ 	kmem_cache_free(audit_task_cache, info);
+@@ -1658,6 +1696,9 @@ static int __init audit_init(void)
+ 	for (i = 0; i < AUDIT_INODE_BUCKETS; i++)
+ 		INIT_LIST_HEAD(&audit_inode_hash[i]);
+ 
++	for (i = 0; i < AUDIT_CONTID_BUCKETS; i++)
++		INIT_LIST_HEAD(&audit_contid_hash[i]);
++
+ 	mutex_init(&audit_cmd_mutex.lock);
+ 	audit_cmd_mutex.owner = NULL;
+ 
+@@ -2365,6 +2406,9 @@ int audit_signal_info(int sig, struct task_struct *t)
+  *
+  * Returns 0 on success, -EPERM on permission failure.
+  *
++ * If the original container owner goes away, no task injection is
++ * possible to an existing container.
++ *
+  * Called (set) from fs/proc/base.c::proc_contid_write().
+  */
+ int audit_set_contid(struct task_struct *task, u64 contid)
+@@ -2381,9 +2425,12 @@ int audit_set_contid(struct task_struct *task, u64 contid)
+ 	}
+ 	oldcontid = audit_get_contid(task);
+ 	read_lock(&tasklist_lock);
+-	/* Don't allow the audit containerid to be unset */
++	/* Don't allow the contid to be unset */
+ 	if (!audit_contid_valid(contid))
+ 		rc = -EINVAL;
++	/* Don't allow the contid to be set to the same value again */
++	else if (contid == oldcontid) {
++		rc = -EADDRINUSE;
+ 	/* if we don't have caps, reject */
+ 	else if (!capable(CAP_AUDIT_CONTROL))
+ 		rc = -EPERM;
+@@ -2396,8 +2443,49 @@ int audit_set_contid(struct task_struct *task, u64 contid)
+ 	else if (audit_contid_set(task))
+ 		rc = -ECHILD;
+ 	read_unlock(&tasklist_lock);
+-	if (!rc)
+-		task->audit->contid = contid;
++	if (!rc) {
++		struct audit_contobj *oldcont = _audit_contobj(task);
++		struct audit_contobj *cont = NULL, *newcont = NULL;
++		int h = audit_hash_contid(contid);
++
++		rcu_read_lock();
++		list_for_each_entry_rcu(cont, &audit_contid_hash[h], list)
++			if (cont->id == contid) {
++				/* task injection to existing container */
++				if (current == cont->owner) {
++					spin_lock(&audit_contobj_list_lock);
++					_audit_contobj_hold(cont);
++					spin_unlock(&audit_contobj_list_lock);
++					newcont = cont;
++				} else {
++					rc = -ENOTUNIQ;
++					goto conterror;
++				}
++				break;
++			}
++		if (!newcont) {
++			newcont = kmalloc(sizeof(*newcont), GFP_ATOMIC);
++			if (newcont) {
++				INIT_LIST_HEAD(&newcont->list);
++				newcont->id = contid;
++				get_task_struct(current);
++				newcont->owner = current;
++				refcount_set(&newcont->refcount, 1);
++				spin_lock(&audit_contobj_list_lock);
++				list_add_rcu(&newcont->list, &audit_contid_hash[h]);
++				spin_unlock(&audit_contobj_list_lock);
++			} else {
++				rc = -ENOMEM;
++				goto conterror;
++			}
++		}
++		task->audit->cont = newcont;
++		spin_lock(&audit_contobj_list_lock);
++		_audit_contobj_put(oldcont);
++		spin_unlock(&audit_contobj_list_lock);
++conterror:
++		rcu_read_unlock();
++	}
+ 	task_unlock(task);
+ 
+ 	if (!audit_enabled)
+diff --git a/kernel/audit.h b/kernel/audit.h
+index 16bd03b88e0d..e4a31aa92dfe 100644
+--- a/kernel/audit.h
++++ b/kernel/audit.h
+@@ -211,6 +211,14 @@ static inline int audit_hash_ino(u32 ino)
+ 	return (ino & (AUDIT_INODE_BUCKETS-1));
+ }
+ 
++#define AUDIT_CONTID_BUCKETS	32
++extern struct list_head audit_contid_hash[AUDIT_CONTID_BUCKETS];
++
++static inline int audit_hash_contid(u64 contid)
++{
++	return (contid & (AUDIT_CONTID_BUCKETS-1));
++}
++
+ /* Indicates that audit should log the full pathname. */
+ #define AUDIT_NAME_FULL -1
+ 
 -- 
 1.8.3.1
