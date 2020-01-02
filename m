@@ -1,70 +1,39 @@
-From: Aleksa Sarai <cyphar@cyphar.com>
-Subject: Re: [PATCH RFC 0/1] mount: universally disallow mounting over
+From: David Laight <David.Laight@ACULAB.COM>
+Subject: RE: [PATCH RFC 0/1] mount: universally disallow mounting over
  symlinks
-Date: Thu, 2 Jan 2020 14:59:20 +1100
-Message-ID: <20200102035920.dsycgxnb6ba2jhz2@yavin.dot.cyphar.com>
+Date: Thu, 2 Jan 2020 08:58:09 +0000
+Message-ID: <e1066da936244de99e7ee827695d6583@AcuMS.aculab.com>
 References: <20191230052036.8765-1-cyphar@cyphar.com>
  <20191230054413.GX4203@ZenIV.linux.org.uk>
  <20191230054913.c5avdjqbygtur2l7@yavin.dot.cyphar.com>
  <20191230072959.62kcojxpthhdwmfa@yavin.dot.cyphar.com>
- <20200101004324.GA11269@ZenIV.linux.org.uk>
- <20200101005446.GH4203@ZenIV.linux.org.uk>
- <20200101030815.GA17593@ZenIV.linux.org.uk>
- <20200101144407.ugjwzk7zxrucaa6a@yavin.dot.cyphar.com>
- <20200101234009.GB8904@ZenIV.linux.org.uk>
+ <CAHk-=whxNw7hYT6bJn9mVrB_a=7Y-irmpaPsp1R4xbHHkicv7g@mail.gmail.com>
+ <20191230083224.sbk2jspqmup43obs@yavin.dot.cyphar.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-        protocol="application/pgp-signature"; boundary="tef6rv2ffqcfqgo6"
-Return-path: <stable-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20200101234009.GB8904@ZenIV.linux.org.uk>
-Sender: stable-owner@vger.kernel.org
-To: Al Viro <viro@zeniv.linux.org.uk>
-Cc: David Howells <dhowells@redhat.com>, Eric Biederman <ebiederm@xmission.com>, Linus Torvalds <torvalds@linux-foundation.org>, stable@vger.kernel.org, Christian Brauner <christian.brauner@ubuntu.com>, Serge Hallyn <serge@hallyn.com>, dev@opencontainers.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20191230083224.sbk2jspqmup43obs@yavin.dot.cyphar.com>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+To: 'Aleksa Sarai' <cyphar@cyphar.com>, Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, David Howells <dhowells@redhat.com>, Eric Biederman <ebiederm@xmission.com>, stable <stable@vger.kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>, Serge Hallyn <serge@hallyn.com>, "dev@opencontainers.org" <dev@opencontainers.org>, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
+From: Aleksa Sarai
+> Sent: 30 December 2019 08:32
+...
+> I'm not sure I agree -- as I mentioned in my other mail, re-opening
+> through /proc/self/fd/$n works *very* well and has for a long time (in
+> fact, both LXC and runc depend on this working).
 
---tef6rv2ffqcfqgo6
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+I thought it was marginally broken because it is followed as a symlink?
+On, for example, NetBSD /proc/<n>/fd/<n> is a real reference to the
+filesystem inode and can be used to link the file back into the filesystem
+if all the directory entries have been removed.
 
-On 2020-01-01, Al Viro <viro@zeniv.linux.org.uk> wrote:
-> On Thu, Jan 02, 2020 at 01:44:07AM +1100, Aleksa Sarai wrote:
->=20
-> > Thanks, this fixes the issue for me (and also fixes another reproducer I
-> > found -- mounting a symlink on top of itself then trying to umount it).
-> >=20
-> > Reported-by: Aleksa Sarai <cyphar@cyphar.com>
-> > Tested-by: Aleksa Sarai <cyphar@cyphar.com>
->=20
-> Pushed into #fixes.
+	David
 
-Thanks. One other thing I noticed is that umount applies to the
-underlying symlink rather than the mountpoint on top. So, for example
-(using the same scripts I posted in the thread):
-
-  # ln -s /tmp/foo link
-  # ./mount_to_symlink /etc/passwd link
-  # umount -l link # will attempt to unmount "/tmp/foo"
-
-Is that intentional?
-
---=20
-Aleksa Sarai
-Senior Software Engineer (Containers)
-SUSE Linux GmbH
-<https://www.cyphar.com/>
-
---tef6rv2ffqcfqgo6
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-
-iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXg1qlQAKCRCdlLljIbnQ
-EjpjAP9+cSE8vOT4mUYl4IC31Io/0FRApXDAbaIGxDhJ1uYJQAD+IuziuN4KXZzb
-2vUrlYkc86XaKC4oX0suOlWHXbaUdgE=
-=iYvs
------END PGP SIGNATURE-----
-
---tef6rv2ffqcfqgo6--
+-
+Registered Address Lakeside, Bramley Road, Mount Farm, Milton Keynes, MK1 1PT, UK
+Registration No: 1397386 (Wales)
