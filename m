@@ -1,84 +1,52 @@
-From: Al Viro <viro@zeniv.linux.org.uk>
-Subject: Re: [PATCH RFC 0/1] mount: universally disallow mounting over
- symlinks
-Date: Fri, 3 Jan 2020 01:49:01 +0000
-Message-ID: <20200103014901.GC8904@ZenIV.linux.org.uk>
-References: <20191230052036.8765-1-cyphar@cyphar.com>
- <20191230054413.GX4203@ZenIV.linux.org.uk>
- <20191230054913.c5avdjqbygtur2l7@yavin.dot.cyphar.com>
- <20191230072959.62kcojxpthhdwmfa@yavin.dot.cyphar.com>
- <20200101004324.GA11269@ZenIV.linux.org.uk>
- <20200101005446.GH4203@ZenIV.linux.org.uk>
- <20200101030815.GA17593@ZenIV.linux.org.uk>
- <20200101144407.ugjwzk7zxrucaa6a@yavin.dot.cyphar.com>
- <20200101234009.GB8904@ZenIV.linux.org.uk>
- <20200102035920.dsycgxnb6ba2jhz2@yavin.dot.cyphar.com>
+From: Alexey Gladkov <gladkov.alexey@gmail.com>
+Subject: Re: [PATCH v6 07/10] proc: flush task dcache entries from all procfs
+ instances
+Date: Fri, 3 Jan 2020 09:56:34 +0100
+Message-ID: <20200103085634.6xkgb4aonivjhfnq@comp-core-i7-2640m-0182e6>
+References: <20191225125151.1950142-1-gladkov.alexey@gmail.com>
+ <20191225125151.1950142-8-gladkov.alexey@gmail.com>
+ <8d85ba43-0759-358e-137d-246107bac747@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20200102035920.dsycgxnb6ba2jhz2@yavin.dot.cyphar.com>
+In-Reply-To: <8d85ba43-0759-358e-137d-246107bac747@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Aleksa Sarai <cyphar@cyphar.com>
-Cc: David Howells <dhowells@redhat.com>, Eric Biederman <ebiederm@xmission.com>, Linus Torvalds <torvalds@linux-foundation.org>, stable@vger.kernel.org, Christian Brauner <christian.brauner@ubuntu.com>, Serge Hallyn <serge@hallyn.com>, dev@opencontainers.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, Ian Kent <raven@themaw.net>
+To: J Freyensee <why2jjj.linux@gmail.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux Security Module <linux-security-module@vger.kernel.org>, Akinobu Mita <akinobu.mita@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Daniel Micay <danielmicay@gmail.com>, Djalal Harouni <tixxdz@gmail.com>, "Dmitry V . Levin" <ldv@altlinux.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Ingo Molnar <mingo@kernel.org>, "J . Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 02, 2020 at 02:59:20PM +1100, Aleksa Sarai wrote:
-> On 2020-01-01, Al Viro <viro@zeniv.linux.org.uk> wrote:
-> > On Thu, Jan 02, 2020 at 01:44:07AM +1100, Aleksa Sarai wrote:
-> > 
-> > > Thanks, this fixes the issue for me (and also fixes another reproducer I
-> > > found -- mounting a symlink on top of itself then trying to umount it).
-> > > 
-> > > Reported-by: Aleksa Sarai <cyphar@cyphar.com>
-> > > Tested-by: Aleksa Sarai <cyphar@cyphar.com>
-> > 
-> > Pushed into #fixes.
-> 
-> Thanks. One other thing I noticed is that umount applies to the
-> underlying symlink rather than the mountpoint on top. So, for example
-> (using the same scripts I posted in the thread):
-> 
->   # ln -s /tmp/foo link
->   # ./mount_to_symlink /etc/passwd link
->   # umount -l link # will attempt to unmount "/tmp/foo"
-> 
-> Is that intentional?
+On Mon, Dec 30, 2019 at 02:03:29PM -0800, J Freyensee wrote:
+> > +#ifdef CONFIG_PROC_FS
+> > +static inline void pidns_proc_lock(struct pid_namespace *pid_ns)
+> > +{
+> > +	down_write(&pid_ns->rw_proc_mounts);
+> > +}
+> > +
+> > +static inline void pidns_proc_unlock(struct pid_namespace *pid_ns)
+> > +{
+> > +	up_write(&pid_ns->rw_proc_mounts);
+> > +}
+> > +
+> > +static inline void pidns_proc_lock_shared(struct pid_namespace *pid_ns)
+> > +{
+> > +	down_read(&pid_ns->rw_proc_mounts);
+> > +}
+> > +
+> > +static inline void pidns_proc_unlock_shared(struct pid_namespace *pid_ns)
+> > +{
+> > +	up_read(&pid_ns->rw_proc_mounts);
+> > +}
+> > +#else /* !CONFIG_PROC_FS */
+> > +
+> Apologies for my newbie question. I couldn't help but notice all these
+> function calls are assuming that the parameter struct pid_namespace *pid_ns
+> will never be NULL.  Is that a good assumption?
 
-It's a mess, again in mountpoint_last().  FWIW, at some point I proposed
-to have nd_jump_link() to fail with -ELOOP if the target was a symlink;
-Linus asked for reasons deeper than my dislike of the semantics, I looked
-around and hadn't spotted anything.  And there hadn't been at the time,
-but when four months later umount_lookup_last() went in I failed to look
-for that source of potential problems in it ;-/
+These inline helpers are introduced to improve readability. They only make
+sense inside procfs. I don't think that defensive programming is useful
+here.
 
-I've looked at that area again now.  Aside of usual cursing at do_last()
-horrors (yes, its control flow is a horror; yes, it needs serious massage;
-no, it's not a good idea to get sidetracked into that right now), there
-are several fun questions:
-	* d_manage() and d_automount().  We almost certainly don't
-want those for autofs on the final component of pathname in umount,
-including the trailing symlinks.  But do we want those on usual access
-via /proc/*/fd/*?  I.e. suppose somebody does open() (O_PATH or not)
-in autofs; do we want ->d_manage()/->d_automount() called when
-resolving /proc/self/fd/<whatever>/foo/bar?  We do not; is that
-correct from autofs point of view?  I suspect that refusing to
-do ->d_automount() is correct, but I don't understand ->d_manage()
-purpose well enough to tell.
-	* I really hope that the weird "trailing / forces automount
-even in cases when we normally wouldn't trigger it" (stat /mnt/foo
-vs. stat /mnt/foo/) is not meant to extend to umount.  I'd like
-Ian's confirmation, though.
-	* do we want ->d_manage() on following .. into overmounted
-directory?  Again, autofs question...
-
-	The minimal fix to mountpoint_last() would be to have
-follow_mount() done in LAST_NORM case.  However, I'd like to understand
-(and hopefully regularize) the rules for follow_mount()/follow_managed().
-Additional scary question is nfsd iterplay with automount.  For nfs4
-exports it's potentially interesting...
-
-	Ian, could you comment on the autofs questions above?
-I'd rather avoid doing changes in that area without your input -
-it's subtle and breakage in automount-related behaviour can be
-mysterious as hell.
+-- 
+Rgrds, legion
