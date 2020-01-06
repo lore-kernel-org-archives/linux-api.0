@@ -1,82 +1,75 @@
-From: Wu Hao <hao.wu@intel.com>
-Subject: Re: [PATCH v6 0/2] add performance reporting support to FPGA DFL
- drivers
-Date: Mon, 6 Jan 2020 10:37:42 +0800
-Message-ID: <20200106023742.GA3980@hao-dev>
-References: <1573622695-25607-1-git-send-email-hao.wu@intel.com>
- <20191125033412.GB890@hao-dev>
- <20191125080127.GC1809@willie-the-truck>
- <20191125080839.GA6227@hao-dev>
- <20191209024527.GA22625@hao-dev>
- <20191216010104.GA32154@yilunxu-OptiPlex-7050>
+From: Alexey Dobriyan <adobriyan@gmail.com>
+Subject: Re: [PATCH v6 00/10] proc: modernize proc to support multiple
+ private instances
+Date: Mon, 6 Jan 2020 18:15:14 +0300
+Message-ID: <20200106151514.GA382@avx2>
+References: <20191225125151.1950142-1-gladkov.alexey@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20191216010104.GA32154@yilunxu-OptiPlex-7050>
+In-Reply-To: <20191225125151.1950142-1-gladkov.alexey@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Will Deacon <will@kernel.org>
-Cc: mdf@kernel.org, mark.rutland@arm.com, linux-fpga@vger.kernel.org, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org, atull@kernel.org, gregkh@linuxfoundation.org, yilun.xu@intel.com
+To: Alexey Gladkov <gladkov.alexey@gmail.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux Security Module <linux-security-module@vger.kernel.org>, Akinobu Mita <akinobu.mita@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Daniel Micay <danielmicay@gmail.com>, Djalal Harouni <tixxdz@gmail.com>, "Dmitry V . Levin" <ldv@altlinux.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Ingo Molnar <mingo@kernel.org>, "J . Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Jonathan Corbet <corbet@lwn.net>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Dec 16, 2019 at 09:01:04AM +0800, Xu Yilum wrote:
-> On Mon, Dec 09, 2019 at 10:45:27AM +0800, Wu Hao wrote:
-> > On Mon, Nov 25, 2019 at 04:08:39PM +0800, Wu Hao wrote:
-> > > On Mon, Nov 25, 2019 at 08:01:28AM +0000, Will Deacon wrote:
-> > > > On Mon, Nov 25, 2019 at 11:34:12AM +0800, Wu Hao wrote:
-> > > > > Hi Will and Mark,
-> > > > > 
-> > > > > Could you please help us on review this patchset? as this patchset mainly 
-> > > > > introduced a new perf driver following the similar way as drivers/perf/*.
-> > > > 
-> > > > Why is it not under drivers/perf/, then?
-> > > 
-> > > Hi Will
-> > > 
-> > > Thanks for the quick response. This is one sub feature for DFL based FPGAs,
-> > > and we plan to put this sub feature together with others, including related
-> > > documentation. It only registers a standard perf pmu for its userspace
-> > > interfaces.
-> > > 
-> > > > 
-> > > > > This patchset has been submitted for a long time but didn't receive any
-> > > > > comment after v4. we appreciate any review comments! thanks in advance. :)
-> > > > 
-> > > > Hmm, not sure I saw the previous versions. Guessing I wasn't on cc?
-> > > 
-> > > We switched to perf API from v4, and started ccing you and Mark from v5. :)
-> > 
-> > Hi Will
-> > 
-> > Did you get a chance to look into this patchset?
-> > 
-> > Thanks
-> > Hao
-> 
-> Hi Will
-> 
-> Did you have time to look into this patchset? We have done review work
-> for FPGA part. And as a perf driver, we appreciate your comments.
-> 
-> Thanks
-> Yilun
+>  	hidepid=	Set /proc/<pid>/ access mode.
+>  	gid=		Set the group authorized to learn processes information.
+> +	pidonly=	Show only task related subset of procfs.
 
-Hi Will
+I'd rather have
 
-Did you get a chance to look into this patchset these days? 
+	mount -t proc -o set=pid
 
-Actually we didn't receive any comments for a long time, if you are busy and
-don't have enough time on this, do you know if someone else could help with
-review and ack from perf driver point of view, or any other things we can do
-to speed up this? Thanks in advance! 
+so that is can be naturally extended to 
 
-Hao
+	mount -t proc -o set=pid,sysctl,misc
 
-> 
-> > 
-> > > 
-> > > Thanks
-> > > Hao
-> > > 
-> > > > 
-> > > > Will
+> +static int proc_dir_open(struct inode *inode, struct file *file)
+> +{
+> +	struct proc_fs_info *fs_info = proc_sb_info(inode->i_sb);
+> +
+> +	if (proc_fs_pidonly(fs_info) == PROC_PIDONLY_ON)
+> +		return -ENOENT;
+> +
+> +	return 0;
+> +}
+> +
+>  /*
+>   * These are the generic /proc directory operations. They
+>   * use the in-memory "struct proc_dir_entry" tree to parse
+> @@ -338,6 +357,7 @@ static const struct file_operations proc_dir_operations = {
+>  	.llseek			= generic_file_llseek,
+>  	.read			= generic_read_dir,
+>  	.iterate_shared		= proc_readdir,
+> +	.open			= proc_dir_open,
+
+This should not be necessary: if lookup and readdir filters work
+then ->open can't happen.
+
+>  static int proc_reg_open(struct inode *inode, struct file *file)
+>  {
+> +	struct proc_fs_info *fs_info = proc_sb_info(inode->i_sb);
+>  	struct proc_dir_entry *pde = PDE(inode);
+>  	int rv = 0;
+>  	typeof_member(struct file_operations, open) open;
+>  	typeof_member(struct file_operations, release) release;
+>  	struct pde_opener *pdeo;
+>  
+> +	if (proc_fs_pidonly(fs_info) == PROC_PIDONLY_ON)
+> +		return -ENOENT;
+
+Ditto. Can't open what can't be looked up.
+
+> --- a/include/linux/proc_fs.h
+> +++ b/include/linux/proc_fs.h
+> +/* definitions for hide_pid field */
+> +enum {
+> +	HIDEPID_OFF	  = 0,
+> +	HIDEPID_NO_ACCESS = 1,
+> +	HIDEPID_INVISIBLE = 2,
+> +	HIDEPID_NOT_PTRACABLE = 3, /* Limit pids to only ptracable pids */
+> +};
+
+These should live in uapi/ as they _are_ user interface to mount().
