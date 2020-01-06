@@ -1,60 +1,201 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [PATCH for 5.5 1/2] rseq: Fix: Clarify rseq.h UAPI rseq_cs
- memory reclaim requirements
-Date: Mon, 6 Jan 2020 15:25:55 -0500 (EST)
-Message-ID: <2129265980.1223.1578342355079.JavaMail.zimbra@efficios.com>
-References: <20191220201207.17389-1-mathieu.desnoyers@efficios.com> <87imman36g.fsf@mid.deneb.enyo.de> <173832695.14381.1576875253374.JavaMail.zimbra@efficios.com> <875zian2a2.fsf@mid.deneb.enyo.de> <669061171.14506.1576876500152.JavaMail.zimbra@efficios.com> <1025393027.850.1578337717165.JavaMail.zimbra@efficios.com> <87a7709ydd.fsf@mid.deneb.enyo.de>
+From: Sargun Dhillon <sargun@sargun.me>
+Subject: Re: [PATCH v8 3/3] test: Add test for pidfd getfd
+Date: Mon, 6 Jan 2020 21:06:47 +0000
+Message-ID: <20200106210647.GA30920@ircssh-2.c.rugged-nimbus-611.internal>
+References: <20200103162928.5271-1-sargun@sargun.me>
+ <20200103162928.5271-4-sargun@sargun.me>
+ <20200105142019.umls5ff4b5433u6k@wittgenstein>
+ <20200105190812.GC8522@ircssh-2.c.rugged-nimbus-611.internal>
+ <20200106171940.vjo2w5o6cqw2kkuk@wittgenstein>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <87a7709ydd.fsf@mid.deneb.enyo.de>
-Sender: stable-owner@vger.kernel.org
-To: Florian Weimer <fw@deneb.enyo.de>, Michael Kerrisk <mtk.manpages@gmail.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>, linux-kernel <linux-kernel@vger.kernel.org>, Peter Zijlstra <peterz@infradead.org>, paulmck <paulmck@linux.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, "H. Peter Anvin" <hpa@zytor.com>, Paul Turner <pjt@google.com>, linux-api <linux-api@vger.kernel.org>, stable <stable@vger.kernel.org>, Dmitry Vyukov <dvyukov@google.com>, Neel Natu <neelnatu@google.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20200106171940.vjo2w5o6cqw2kkuk@wittgenstein>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christian Brauner <christian.brauner@ubuntu.com>
+Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, tycho@tycho.ws, jannh@google.com, cyphar@cyphar.com, oleg@redhat.com, luto@amacapital.net, viro@zeniv.linux.org.uk, gpascutto@mozilla.com, ealvarez@mozilla.com, fweimer@redhat.com, jld@mozilla.com, arnd@arndb.de
 List-Id: linux-api@vger.kernel.org
 
------ On Jan 6, 2020, at 2:30 PM, Florian Weimer fw@deneb.enyo.de wrote:
-
-> * Mathieu Desnoyers:
+On Mon, Jan 06, 2020 at 06:19:41PM +0100, Christian Brauner wrote:
+> On Sun, Jan 05, 2020 at 07:08:13PM +0000, Sargun Dhillon wrote:
+> > On Sun, Jan 05, 2020 at 03:20:23PM +0100, Christian Brauner wrote:
+> > > On Fri, Jan 03, 2020 at 08:29:28AM -0800, Sargun Dhillon wrote:
+> > > > +static int sys_pidfd_getfd(int pidfd, int fd, int flags)
+> > > > +{
+> > > > +	return syscall(__NR_pidfd_getfd, pidfd, fd, flags);
+> > > > +}
+> > > 
+> > > I think you can move this to the pidfd.h header as:
+> > > 
+> > > static inline int sys_pidfd_getfd(int pidfd, int fd, int flags)
+> > > {
+> > > 	return syscall(__NR_pidfd_getfd, pidfd, fd, flags);
+> > > }
+> > > 
+> > > Note, this also needs an
+> > > 
+> > > #ifndef __NR_pidfd_getfd
+> > > __NR_pidfd_getfd -1
+> > > #endif
+> > > so that compilation doesn't fail.
+> > > 
+> > I'll go ahead and move this into pidfd.h, and follow the pattern there. I
+> > don't think it's worth checking if each time the return code is ENOSYS.
+> > 
+> > Does it make sense to add something like:
+> > #ifdef __NR_pidfd_getfd
+> > TEST_HARNESS_MAIN
+> > #else
+> > int main(void)
+> > {
+> > 	fprintf(stderr, "pidfd_getfd syscall not supported\n");
+> > 	return KSFT_SKIP;
+> > }
+> > #endif
+> > 
+> > to short-circuit the entire test suite?
 > 
->> Just to clarify: should the discussion here prevent the UAPI
->> documentation change from being merged into the Linux kernel ? Our
->> discussion seems to be related to integration of rseq into glibc,
->> rather than the kernel UAPI per se.
+> You mean the getfd testsuite? If so and that works, then sounds like a
+> good idea to me.
 > 
-> I still think that clearing rseq_cs upon exit from the function that
-> contains the sequence is good practice, and the UAPI header should
-> mention that.
+> > 
+> > 
+> > 
+> > > 
+> > > Hm, isn't it safer to do 65535 explicitly? Since USHRT_MAX can
+> > > technically be greater than 65535.
+> > > 
+> > I borrowed this from the BPF tests. I can hardcode something like:
+> > #define NOBODY_UID 65535
+> > and setuid to that, if you think it's safer?
+> 
+> If you want to specifically seteuid() to 65535 then yes, using the
+> hard-coded number or using a dedicated macro seems better.
+> 
+> > 
+> > > > +
+> > > > +	ASSERT_EQ(1, send(self->sk, "P", 1, 0));
+> > > > +	ASSERT_EQ(1, recv(self->sk, &c, 1, 0));
+> > > > +
+> > > > +	fd = sys_pidfd_getfd(self->pidfd, self->remote_fd, 0);
+> > > > +	EXPECT_EQ(-1, fd);
+> > > > +	EXPECT_EQ(EPERM, errno);
+> > > > +
+> > > > +	if (uid == 0)
+> > > > +		ASSERT_EQ(0, seteuid(0));
+> > > > +}
+> > > > +
+> > > > +TEST_F(child, fetch_fd)
+> > > > +{
+> > > > +	int fd, ret;
+> > > > +
+> > > > +	fd = sys_pidfd_getfd(self->pidfd, self->remote_fd, 0);
+> > > > +	ASSERT_GE(fd, 0);
+> > > > +
+> > > > +	EXPECT_EQ(0, sys_kcmp(getpid(), self->pid, KCMP_FILE, fd, self->remote_fd));
+> > > 
+> > > So most of these tests seem to take place when the child has already
+> > > called exit() - or at least it's very likely that the child has already
+> > > called exit() - and remains a zombie. That's not ideal because
+> > > that's not the common scenario/use-case. Usually the task of which we
+> > > want to get an fd will be alive. Also, if the child has already called
+> > > exit(), by the time it returns to userspace it should have already
+> > > called exit_files() and so I wonder whether this test would fail if it's
+> > > run after the child has exited. Maybe I'm missing something here... Is
+> > > there some ordering enforced by TEST_F()?
+> > Yeah, I think perhaps I was being too clever.
+> > The timeline roughly goes something like this:
+> > 
+> > # Fixture bringup
+> > [parent] creates socket_pair
+> > [parent] forks, and passes pair down to child
+> > [parent] waits to read sizeof(int) from the sk_pair
+> > [child] creates memfd 
+> > [__child] sends local memfd number to parent via sk_pair
+> > [__child] waits to read from sk_pair
+> > [parent] reads remote memfd number from socket
+> > # Test
+> > [parent] performs tests
+> > # Fixture teardown
+> > [parent] closes sk_pair
+> > [__child] reads 0 from recv on sk_pair, implies the other end is closed
+> > [__child] Returns / exits 0
+> > [parent] Reaps child / reads exit code
+> > 
+> > ---
+> > The one case where this is not true, is if the parent sends 'P' to the sk pair,
+> > it triggers setting PR_SET_DUMPABLE to 0, and then resumes waiting for the fd to 
+> > close.
+> > 
+> > Maybe I'm being too clever? Instead, the alternative was to send explicit stop / 
+> > start messages across the sk_pair, but that got kind of ugly. Do you have a 
+> > better suggestion?
+> 
+> If I understand correctly you just need to block the child to stop it
+> from exiting. Couldn't you do this by simply calling recv() on the
+> socket in the child thereby blocking it? At the end you just send a
+> final message to proceed and if that doesn't work SIGKILL it?
+> 
+This already exists in:
+while ((ret = recv(sk, &buf, sizeof(buf), 0)) > 0) {
+	if (buf == 'P') {
+		ret = prctl(PR_SET_DUMPABLE, 0);
+		if (ret < 0) {
+			fprintf(stderr,
+				"%s: Child failed to disable ptrace\n",
+				strerror(errno));
+			return -1;
+		}
+	} else {
+		fprintf(stderr, "Child received unknown command %c\n",
+			buf);
+		return -1;
+	}
+	ret = send(sk, &buf, sizeof(buf), 0);
+	if (ret != 1) {
+		fprintf(stderr, "%s: Child failed to ack\n",
+			strerror(errno));
+		return -1;
+	}
+}
+----
+This will block until the close(self->sk) in the fixture teardown. Then ret
+returns 0, and the child should exit. Maybe a comment like:
+/*
+ * The fixture setup is completed at this point. The tests will run.
+ *
+ * Either we will read 'P' off of the sk, indicating that we need
+ * to disable ptrace, or if the other side of the socket is closed
+ * recv will return 0-bytes. This indicates that the fixture teardown
+ * has occured, and the child should exit.
+ */
+would be useful?
 
-My understanding is that a UAPI header should document what is strictly
-required (here, clearing rseq_cs before unmapping the memory area
-containing the rseq_cs structure or the code). Documenting a "best
-practice" would AFAIU belong to a man page and not a UAPI header.
+> > 
+> > > 
+> > > Also, what does self->pid point to? The fd of the already exited child?
+> > It's just the pid of the child. pidfd is the fd of the (unexited) child.
+I have no idea if it's pro / against the commenting style to blow up that
+structure:
+FIXTURE(child)
+{
+	/* pid points to the child which we are fetching FDs from */
+	pid_t pid;
+	/* pidfd is the pidfd of the child */
+	int pidfd;
+	/*
+	 * sk is our side of the socketpair used to communicate with the child.
+	 * When it is closed, the child will exit.
+	 */
+	int sk;
+	/*
+	 * remote_fd is the number of the FD which we are trying to retrieve
+	 * from the child.
+	 */
+	int remote_fd;
+};
 
-I'm adding Michael Kerrisk in CC in case he has an opinion on this
-matter.
-
-> For glibc, if I recall correctly, we decided against doing anything in
-> dlclose to deal with this issue (remapping new code in an existing
-> rseq area) because it would need updating all threads, not just the
-> thread calling dlclose.  That's why we're punting this to
-> applications and why I think the UAPI header should mention this.
-
-Nothing prevents us from implementing a clever scheme in the future,
-e.g. as a new membarrier command, that could be invoked from dlclose()
-when it becomes available.
-
-By documenting only the basic requirement in the UAPI header (do not
-use-after-free) and not providing a "best practice" (which is not so good
-performance-wise), we can then let the man page state the best practices,
-and update them as new system call commands are implemented.
-
-Thanks,
-
-Mathieu
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+> 
+> Ah, thanks!
+> Christian
