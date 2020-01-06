@@ -1,75 +1,108 @@
-From: Alexey Dobriyan <adobriyan@gmail.com>
-Subject: Re: [PATCH v6 00/10] proc: modernize proc to support multiple
- private instances
-Date: Mon, 6 Jan 2020 18:15:14 +0300
-Message-ID: <20200106151514.GA382@avx2>
-References: <20191225125151.1950142-1-gladkov.alexey@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Subject: [RFC PATCH glibc 10/13] glibc: sched_getcpu(): use rseq cpu_id TLS on Linux (v5)
+Date: Mon,  6 Jan 2020 10:57:10 -0500
+Message-ID: <20200106155713.397-11-mathieu.desnoyers@efficios.com>
+References: <20200106155713.397-1-mathieu.desnoyers@efficios.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20191225125151.1950142-1-gladkov.alexey@gmail.com>
+In-Reply-To: <20200106155713.397-1-mathieu.desnoyers@efficios.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Alexey Gladkov <gladkov.alexey@gmail.com>
-Cc: LKML <linux-kernel@vger.kernel.org>, Kernel Hardening <kernel-hardening@lists.openwall.com>, Linux API <linux-api@vger.kernel.org>, Linux FS Devel <linux-fsdevel@vger.kernel.org>, Linux Security Module <linux-security-module@vger.kernel.org>, Akinobu Mita <akinobu.mita@gmail.com>, Alexander Viro <viro@zeniv.linux.org.uk>, Andrew Morton <akpm@linux-foundation.org>, Andy Lutomirski <luto@kernel.org>, Daniel Micay <danielmicay@gmail.com>, Djalal Harouni <tixxdz@gmail.com>, "Dmitry V . Levin" <ldv@altlinux.org>, "Eric W . Biederman" <ebiederm@xmission.com>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Ingo Molnar <mingo@kernel.org>, "J . Bruce Fields" <bfields@fieldses.org>, Jeff Layton <jlayton@poochiereds.net>, Jonathan Corbet <corbet@lwn.net>
+To: Carlos O'Donell <carlos@redhat.com>
+Cc: Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha@sourceware.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
->  	hidepid=	Set /proc/<pid>/ access mode.
->  	gid=		Set the group authorized to learn processes information.
-> +	pidonly=	Show only task related subset of procfs.
+When available, use the cpu_id field from __rseq_abi on Linux to
+implement sched_getcpu(). Fall-back on the vgetcpu vDSO if unavailable.
 
-I'd rather have
+Benchmarks:
 
-	mount -t proc -o set=pid
+x86-64: Intel E5-2630 v3@2.40GHz, 16-core, hyperthreading
 
-so that is can be naturally extended to 
+glibc sched_getcpu():                     13.7 ns (baseline)
+glibc sched_getcpu() using rseq:           2.5 ns (speedup:  5.5x)
+inline load cpuid from __rseq_abi TLS:     0.8 ns (speedup: 17.1x)
 
-	mount -t proc -o set=pid,sysctl,misc
+	* sysdeps/unix/sysv/linux/sched_getcpu.c: use rseq cpu_id TLS on
+	Linux.
 
-> +static int proc_dir_open(struct inode *inode, struct file *file)
-> +{
-> +	struct proc_fs_info *fs_info = proc_sb_info(inode->i_sb);
-> +
-> +	if (proc_fs_pidonly(fs_info) == PROC_PIDONLY_ON)
-> +		return -ENOENT;
-> +
-> +	return 0;
-> +}
-> +
->  /*
->   * These are the generic /proc directory operations. They
->   * use the in-memory "struct proc_dir_entry" tree to parse
-> @@ -338,6 +357,7 @@ static const struct file_operations proc_dir_operations = {
->  	.llseek			= generic_file_llseek,
->  	.read			= generic_read_dir,
->  	.iterate_shared		= proc_readdir,
-> +	.open			= proc_dir_open,
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: Carlos O'Donell <carlos@redhat.com>
+CC: Florian Weimer <fweimer@redhat.com>
+CC: Joseph Myers <joseph@codesourcery.com>
+CC: Szabolcs Nagy <szabolcs.nagy@arm.com>
+CC: Thomas Gleixner <tglx@linutronix.de>
+CC: Ben Maurer <bmaurer@fb.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+CC: Boqun Feng <boqun.feng@gmail.com>
+CC: Will Deacon <will.deacon@arm.com>
+CC: Dave Watson <davejwatson@fb.com>
+CC: Paul Turner <pjt@google.com>
+CC: libc-alpha@sourceware.org
+CC: linux-kernel@vger.kernel.org
+CC: linux-api@vger.kernel.org
+---
+Changes since v1:
+- rseq is only used if both __NR_rseq and RSEQ_SIG are defined.
 
-This should not be necessary: if lookup and readdir filters work
-then ->open can't happen.
+Changes since v2:
+- remove duplicated __rseq_abi extern declaration.
 
->  static int proc_reg_open(struct inode *inode, struct file *file)
->  {
-> +	struct proc_fs_info *fs_info = proc_sb_info(inode->i_sb);
->  	struct proc_dir_entry *pde = PDE(inode);
->  	int rv = 0;
->  	typeof_member(struct file_operations, open) open;
->  	typeof_member(struct file_operations, release) release;
->  	struct pde_opener *pdeo;
->  
-> +	if (proc_fs_pidonly(fs_info) == PROC_PIDONLY_ON)
-> +		return -ENOENT;
+Changes since v3:
+- update ChangeLog.
 
-Ditto. Can't open what can't be looked up.
+Changes since v4:
+- Use atomic_load_relaxed to load the __rseq_abi.cpu_id field, a
+  consequence of the fact that __rseq_abi is not volatile anymore.
+- Include atomic.h which provides atomic_load_relaxed.
+---
+ sysdeps/unix/sysv/linux/sched_getcpu.c | 25 +++++++++++++++++++++++--
+ 1 file changed, 23 insertions(+), 2 deletions(-)
 
-> --- a/include/linux/proc_fs.h
-> +++ b/include/linux/proc_fs.h
-> +/* definitions for hide_pid field */
-> +enum {
-> +	HIDEPID_OFF	  = 0,
-> +	HIDEPID_NO_ACCESS = 1,
-> +	HIDEPID_INVISIBLE = 2,
-> +	HIDEPID_NOT_PTRACABLE = 3, /* Limit pids to only ptracable pids */
-> +};
-
-These should live in uapi/ as they _are_ user interface to mount().
+diff --git a/sysdeps/unix/sysv/linux/sched_getcpu.c b/sysdeps/unix/sysv/linux/sched_getcpu.c
+index 65dd9fdda7..6f24c1db99 100644
+--- a/sysdeps/unix/sysv/linux/sched_getcpu.c
++++ b/sysdeps/unix/sysv/linux/sched_getcpu.c
+@@ -18,14 +18,15 @@
+ #include <errno.h>
+ #include <sched.h>
+ #include <sysdep.h>
++#include <atomic.h>
+ 
+ #ifdef HAVE_GETCPU_VSYSCALL
+ # define HAVE_VSYSCALL
+ #endif
+ #include <sysdep-vdso.h>
+ 
+-int
+-sched_getcpu (void)
++static int
++vsyscall_sched_getcpu (void)
+ {
+ #ifdef __NR_getcpu
+   unsigned int cpu;
+@@ -37,3 +38,23 @@ sched_getcpu (void)
+   return -1;
+ #endif
+ }
++
++#ifdef __NR_rseq
++#include <sys/rseq.h>
++#endif
++
++#if defined __NR_rseq && defined RSEQ_SIG
++int
++sched_getcpu (void)
++{
++  int cpu_id = atomic_load_relaxed (&__rseq_abi.cpu_id);
++
++  return cpu_id >= 0 ? cpu_id : vsyscall_sched_getcpu ();
++}
++#else
++int
++sched_getcpu (void)
++{
++  return vsyscall_sched_getcpu ();
++}
++#endif
+-- 
+2.17.1
