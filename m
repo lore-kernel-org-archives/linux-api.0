@@ -1,77 +1,133 @@
-From: Florian Weimer <fweimer@redhat.com>
-Subject: Re: [RFC PATCH glibc 09/13] glibc: Perform rseq(2) registration at C startup and thread creation (v13)
-Date: Tue, 07 Jan 2020 13:23:59 +0100
-Message-ID: <871rsbv4io.fsf@oldenburg2.str.redhat.com>
-References: <20200106155713.397-1-mathieu.desnoyers@efficios.com>
-        <20200106155713.397-10-mathieu.desnoyers@efficios.com>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH v2 2/3] clone3: allow spawning processes into cgroups
+Date: Tue, 7 Jan 2020 08:32:04 -0800
+Message-ID: <20200107163204.GB2677547@devbig004.ftw2.facebook.com>
+References: <20191223061504.28716-1-christian.brauner@ubuntu.com>
+ <20191223061504.28716-3-christian.brauner@ubuntu.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200106155713.397-10-mathieu.desnoyers@efficios.com> (Mathieu
-        Desnoyers's message of "Mon, 6 Jan 2020 10:57:09 -0500")
+Content-Disposition: inline
+In-Reply-To: <20191223061504.28716-3-christian.brauner@ubuntu.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Cc: Carlos O'Donell <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha@sourceware.org, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+To: Christian Brauner <christian.brauner@ubuntu.com>
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, Li Zefan <lizefan@huawei.com>, Peter Zijlstra <peterz@infradead.org>, cgroups@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-* Mathieu Desnoyers:
-
-> Register rseq(2) TLS for each thread (including main), and unregister
-> for each thread (excluding main). "rseq" stands for Restartable
-> Sequences.
->
-> See the rseq(2) man page proposed here:
->   https://lkml.org/lkml/2018/9/19/647
->
-> This patch is based on glibc-2.30. The rseq(2) system call was merged
-> into Linux 4.18.
-
-This patch needs to be updated for some be/le abilist splits.
-Big-endian ABI lists for arm, microblaze, sh, appear to be missing.
-This is something that can be checked with build-many-glibcs.py.
-
-> diff --git a/manual/threads.texi b/manual/threads.texi
-> index 0858ef8f92..059f781120 100644
-> --- a/manual/threads.texi
-> +++ b/manual/threads.texi
-> @@ -881,3 +881,20 @@ Behaves like @code{pthread_timedjoin_np} except that the absolute time in
->  @c pthread_spin_unlock
->  @c pthread_testcancel
->  @c pthread_yield
+On Mon, Dec 23, 2019 at 07:15:03AM +0100, Christian Brauner wrote:
+> +static struct cgroup *cgroup_get_from_file(struct file *f)
+> +{
+> +	struct cgroup_subsys_state *css;
+> +	struct cgroup *cgrp;
 > +
-> +@node Restartable Sequences
-> +@section Restartable Sequences
-> +@cindex rseq
+> +	css = css_tryget_online_from_dir(f->f_path.dentry, NULL);
+> +	if (IS_ERR(css))
+> +		return ERR_CAST(css);
 > +
-> +This section describes the @glibcadj{} Restartable Sequences integration.
+> +	cgrp = css->cgroup;
+> +	if (!cgroup_on_dfl(cgrp)) {
+> +		cgroup_put(cgrp);
+> +		return ERR_PTR(-EBADF);
+> +	}
 > +
-> +The @glibcadj{} implements a __rseq_abi TLS symbol to interact with the
-   @Theglibc{}                  @code{__rseq_abi}
+> +	return cgrp;
+> +}
 
+It's minor but can you put this refactoring into a separate patch?
 
-> +Restartable Sequences system call (Linux-specific). The layout of this
-> +structure is defined by the Linux kernel rseq.h UAPI. Registration of each
-> +thread's __rseq_abi is performed by @glibcadj{} at libc initialization and
-                                       @theglibc{}
-           @code{__rseq_abi}
-> +pthread creation.
+...
+> +static int cgroup_css_set_fork(struct task_struct *parent,
+> +			       struct kernel_clone_args *kargs)
+> +	__acquires(&cgroup_mutex) __acquires(&cgroup_threadgroup_rwsem)
+> +{
+> +	int ret;
+> +	struct cgroup *dst_cgrp = NULL, *src_cgrp;
+> +	struct css_set *cset;
+> +	struct super_block *sb;
+> +	struct file *f;
+> +
+> +	if (kargs->flags & CLONE_INTO_CGROUP) {
+> +		ret = mutex_lock_killable(&cgroup_mutex);
+> +		if (ret)
+> +			return ret;
+> +	}
 
-> +Each supported architecture provide a RSEQ_SIG signature in sys/rseq.h. That
-                                         @code{RSEQ_SIG}       @file{sys/rseq.h} 
+I don't think this is necessary.  cgroup_mutex should always only be
+held for a finite enough time; otherwise, processes would get stuck on
+random cgroupfs accesses or even /proc/self/cgroup.
 
-> +signature is expected to be present in the code before each Restartable
-> +Sequences abort handler. Failure to provide the expected signature may
-> +terminate the process with a Segmentation fault.
+...
+> +	spin_lock_irq(&css_set_lock);
+> +	src_cgrp = task_cgroup_from_root(parent, &cgrp_dfl_root);
+> +	spin_unlock_irq(&css_set_lock);
 
+You can simply do cset->dfl_root here, which is consistent with other
+code paths which know that they want the dfl cgroup.
 
-Two spaces at the end of setences, please.
+> +	ret = cgroup_attach_permissions(src_cgrp, dst_cgrp, sb,
+> +					!!(kargs->flags & CLONE_THREAD));
+> +	if (ret)
+> +		goto err;
 
-The manual should use @deftypevar to create an index entry etc. for
-__rseq_abi.  See argp_program_version for an example of how to do this.
+So, the existing perm check depends on the fact that for the write
+operation to have started, it already should have passed write perm
+check on the destination cgroup.procs file.  We're missing that here,
+so we prolly need to check that explicitly.
 
-I think current policy is to have documentation for at least the minimum
-functionality in the manual.  I understand that it makes it a lot of
-work to write patches which add system call wrappers.
+> @@ -214,13 +215,21 @@ static void pids_cancel_attach(struct cgroup_taskset *tset)
+> +static int pids_can_fork(struct task_struct *parent, struct task_struct *child,
+> +			 struct kernel_clone_args *args)
+>  {
+> +	struct css_set *new_cset = NULL;
+>  	struct cgroup_subsys_state *css;
+>  	struct pids_cgroup *pids;
+>  	int err;
+>  
+> -	css = task_css_check(current, pids_cgrp_id, true);
+> +	if (args)
+> +		new_cset = args->cset;
+> +
+> +	if (!new_cset)
+> +		css = task_css_check(current, pids_cgrp_id, true);
+> +	else
+> +		css = new_cset->subsys[pids_cgrp_id];
 
-Thanks,
-Florian
+Heh, this kinda sucks.  Would it be better to pass in the new css into
+the callbacks rather than clone args?
+
+> diff --git a/kernel/fork.c b/kernel/fork.c
+> index 2508a4f238a3..1604552f7cd3 100644
+> --- a/kernel/fork.c
+> +++ b/kernel/fork.c
+> @@ -2165,16 +2165,15 @@ static __latent_entropy struct task_struct *copy_process(
+>  	INIT_LIST_HEAD(&p->thread_group);
+>  	p->task_works = NULL;
+>  
+> -	cgroup_threadgroup_change_begin(current);
+>  	/*
+>  	 * Ensure that the cgroup subsystem policies allow the new process to be
+>  	 * forked. It should be noted the the new process's css_set can be changed
+>  	 * between here and cgroup_post_fork() if an organisation operation is in
+>  	 * progress.
+>  	 */
+> -	retval = cgroup_can_fork(p);
+> +	retval = cgroup_can_fork(current, p, args);
+>  	if (retval)
+> -		goto bad_fork_cgroup_threadgroup_change_end;
+> +		goto bad_fork_put_pidfd;
+>  
+>  	/*
+>  	 * From this point on we must avoid any synchronous user-space
+
+Maybe we can move these changes into a prep patch together with the
+get_from_file change so that this patch only contains the actual
+feature implementation?
+
+Other than that, looks good to me.  Once the above review points are
+addressed and Oleg is okay with it, I'll be happy to route this
+through the cgroup tree.
+
+Thanks so much for working on this.  This is really cool.
+
+-- 
+tejun
