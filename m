@@ -1,133 +1,119 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH v2 2/3] clone3: allow spawning processes into cgroups
-Date: Tue, 7 Jan 2020 08:32:04 -0800
-Message-ID: <20200107163204.GB2677547@devbig004.ftw2.facebook.com>
-References: <20191223061504.28716-1-christian.brauner@ubuntu.com>
- <20191223061504.28716-3-christian.brauner@ubuntu.com>
+From: Sargun Dhillon <sargun@sargun.me>
+Subject: [PATCH v9 0/4] Add pidfd_getfd syscall
+Date: Tue,  7 Jan 2020 09:59:23 -0800
+Message-ID: <20200107175927.4558-1-sargun@sargun.me>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20191223061504.28716-3-christian.brauner@ubuntu.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Christian Brauner <christian.brauner@ubuntu.com>
-Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Ingo Molnar <mingo@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, Li Zefan <lizefan@huawei.com>, Peter Zijlstra <peterz@infradead.org>, cgroups@vger.kernel.org
+To: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org
+Cc: Sargun Dhillon <sargun@sargun.me>, tycho@tycho.ws, jannh@google.com, cyphar@cyphar.com, christian.brauner@ubuntu.com, oleg@redhat.com, luto@amacapital.net, viro@zeniv.linux.org.uk, gpascutto@mozilla.com, ealvarez@mozilla.com, fweimer@redhat.com, jld@mozilla.com, arnd@arndb.de
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Dec 23, 2019 at 07:15:03AM +0100, Christian Brauner wrote:
-> +static struct cgroup *cgroup_get_from_file(struct file *f)
-> +{
-> +	struct cgroup_subsys_state *css;
-> +	struct cgroup *cgrp;
-> +
-> +	css = css_tryget_online_from_dir(f->f_path.dentry, NULL);
-> +	if (IS_ERR(css))
-> +		return ERR_CAST(css);
-> +
-> +	cgrp = css->cgroup;
-> +	if (!cgroup_on_dfl(cgrp)) {
-> +		cgroup_put(cgrp);
-> +		return ERR_PTR(-EBADF);
-> +	}
-> +
-> +	return cgrp;
-> +}
+This patchset introduces a mechanism (pidfd_getfd syscall) to get file
+descriptors from other processes via pidfd. Although this can be achieved
+using SCM_RIGHTS, and parasitic code injection, this offers a more
+straightforward mechanism, with less overhead and complexity. The process
+under manipulation's fd still remains valid, and unmodified by the
+copy operation.
 
-It's minor but can you put this refactoring into a separate patch?
+It introduces a flags field. The flags field is reserved a the moment,
+but the intent is to extend it with the following capabilities:
+ * Close the remote FD when copying it
+ * Drop the cgroup data if it's a fd pointing a socket when copying it
 
-...
-> +static int cgroup_css_set_fork(struct task_struct *parent,
-> +			       struct kernel_clone_args *kargs)
-> +	__acquires(&cgroup_mutex) __acquires(&cgroup_threadgroup_rwsem)
-> +{
-> +	int ret;
-> +	struct cgroup *dst_cgrp = NULL, *src_cgrp;
-> +	struct css_set *cset;
-> +	struct super_block *sb;
-> +	struct file *f;
-> +
-> +	if (kargs->flags & CLONE_INTO_CGROUP) {
-> +		ret = mutex_lock_killable(&cgroup_mutex);
-> +		if (ret)
-> +			return ret;
-> +	}
+The syscall numbers were chosen to be one greater than openat2.
 
-I don't think this is necessary.  cgroup_mutex should always only be
-held for a finite enough time; otherwise, processes would get stuck on
-random cgroupfs accesses or even /proc/self/cgroup.
+Summary of history:
+This initially started as a ptrace command. It did not require the process
+to be stopped, and felt like kind of an awkward fit for ptrace. After that,
+it moved to an ioctl on the pidfd. Given the core functionality, it made
+sense to make it a syscall which did not require the process to be stopped.
 
-...
-> +	spin_lock_irq(&css_set_lock);
-> +	src_cgrp = task_cgroup_from_root(parent, &cgrp_dfl_root);
-> +	spin_unlock_irq(&css_set_lock);
+Previous versions:
+ V8: https://lore.kernel.org/lkml/20200103162928.5271-1-sargun@sargun.me/
+ V7: https://lore.kernel.org/lkml/20191226180227.GA29389@ircssh-2.c.rugged-nimbus-611.internal/
+ V6: https://lore.kernel.org/lkml/20191223210823.GA25083@ircssh-2.c.rugged-nimbus-611.internal/
+ V5: https://lore.kernel.org/lkml/20191220232746.GA20215@ircssh-2.c.rugged-nimbus-611.internal/
+ V4: https://lore.kernel.org/lkml/20191218235310.GA17259@ircssh-2.c.rugged-nimbus-611.internal/
+ V3: https://lore.kernel.org/lkml/20191217005842.GA14379@ircssh-2.c.rugged-nimbus-611.internal/
+ V2: https://lore.kernel.org/lkml/20191209070446.GA32336@ircssh-2.c.rugged-nimbus-611.internal/
+ RFC V1: https://lore.kernel.org/lkml/20191205234450.GA26369@ircssh-2.c.rugged-nimbus-611.internal/
 
-You can simply do cset->dfl_root here, which is consistent with other
-code paths which know that they want the dfl cgroup.
+Changes since v8:
+ * Cleanup / comments on tests
+ * Split out implementation of syscall vs. arch wiring
 
-> +	ret = cgroup_attach_permissions(src_cgrp, dst_cgrp, sb,
-> +					!!(kargs->flags & CLONE_THREAD));
-> +	if (ret)
-> +		goto err;
+Changes since v7:
+ * No longer put security_file_recv at the end, and align with other
+   usages of putting it at the end of the file_recv.
+ * Rewrite self-tests in kselftest harness.
+ * Minor refactoring
 
-So, the existing perm check depends on the fact that for the write
-operation to have started, it already should have passed write perm
-check on the destination cgroup.procs file.  We're missing that here,
-so we prolly need to check that explicitly.
+Changes since v6:
+ * Proper attribution of get_task_file helper
+ * Move all types for syscall to int to represent fd
 
-> @@ -214,13 +215,21 @@ static void pids_cancel_attach(struct cgroup_taskset *tset)
-> +static int pids_can_fork(struct task_struct *parent, struct task_struct *child,
-> +			 struct kernel_clone_args *args)
->  {
-> +	struct css_set *new_cset = NULL;
->  	struct cgroup_subsys_state *css;
->  	struct pids_cgroup *pids;
->  	int err;
->  
-> -	css = task_css_check(current, pids_cgrp_id, true);
-> +	if (args)
-> +		new_cset = args->cset;
-> +
-> +	if (!new_cset)
-> +		css = task_css_check(current, pids_cgrp_id, true);
-> +	else
-> +		css = new_cset->subsys[pids_cgrp_id];
+Changes since v5:
+ * Drop pidfd_getfd_options struct and replace with a flags field
 
-Heh, this kinda sucks.  Would it be better to pass in the new css into
-the callbacks rather than clone args?
+Changes since v4:
+ * Turn into a syscall
+ * Move to PTRACE_MODE_ATTACH_REALCREDS from PTRACE_MODE_READ_REALCREDS
+ * Remove the sample code. This will come in another patchset, as the
+   new self-tests cover all the functionality.
 
-> diff --git a/kernel/fork.c b/kernel/fork.c
-> index 2508a4f238a3..1604552f7cd3 100644
-> --- a/kernel/fork.c
-> +++ b/kernel/fork.c
-> @@ -2165,16 +2165,15 @@ static __latent_entropy struct task_struct *copy_process(
->  	INIT_LIST_HEAD(&p->thread_group);
->  	p->task_works = NULL;
->  
-> -	cgroup_threadgroup_change_begin(current);
->  	/*
->  	 * Ensure that the cgroup subsystem policies allow the new process to be
->  	 * forked. It should be noted the the new process's css_set can be changed
->  	 * between here and cgroup_post_fork() if an organisation operation is in
->  	 * progress.
->  	 */
-> -	retval = cgroup_can_fork(p);
-> +	retval = cgroup_can_fork(current, p, args);
->  	if (retval)
-> -		goto bad_fork_cgroup_threadgroup_change_end;
-> +		goto bad_fork_put_pidfd;
->  
->  	/*
->  	 * From this point on we must avoid any synchronous user-space
+Changes since v3:
+ * Add self-test
+ * Move to ioctl passing fd directly, versus args struct
+ * Shuffle around include files
 
-Maybe we can move these changes into a prep patch together with the
-get_from_file change so that this patch only contains the actual
-feature implementation?
+Changes since v2:
+ * Move to ioctl on pidfd instead of ptrace function
+ * Add security check before moving file descriptor
 
-Other than that, looks good to me.  Once the above review points are
-addressed and Oleg is okay with it, I'll be happy to route this
-through the cgroup tree.
+Changes since the RFC v1:
+ * Introduce a new helper to fs/file.c to fetch a file descriptor from
+   any process. It largely uses the code suggested by Oleg, with a few
+   changes to fix locking
+ * It uses an extensible options struct to supply the FD, and option.
+ * I added a sample, using the code from the user-ptrace sample
 
-Thanks so much for working on this.  This is really cool.
+Sargun Dhillon (4):
+  vfs, fdtable: Add fget_task helper
+  pid: Implement pidfd_getfd syscall
+  arch: wire up pidfd_getfd syscall
+  test: Add test for pidfd getfd
+
+ arch/alpha/kernel/syscalls/syscall.tbl        |   1 +
+ arch/arm/tools/syscall.tbl                    |   1 +
+ arch/arm64/include/asm/unistd.h               |   2 +-
+ arch/arm64/include/asm/unistd32.h             |   2 +
+ arch/ia64/kernel/syscalls/syscall.tbl         |   1 +
+ arch/m68k/kernel/syscalls/syscall.tbl         |   1 +
+ arch/microblaze/kernel/syscalls/syscall.tbl   |   1 +
+ arch/mips/kernel/syscalls/syscall_n32.tbl     |   1 +
+ arch/mips/kernel/syscalls/syscall_n64.tbl     |   1 +
+ arch/mips/kernel/syscalls/syscall_o32.tbl     |   1 +
+ arch/parisc/kernel/syscalls/syscall.tbl       |   1 +
+ arch/powerpc/kernel/syscalls/syscall.tbl      |   1 +
+ arch/s390/kernel/syscalls/syscall.tbl         |   1 +
+ arch/sh/kernel/syscalls/syscall.tbl           |   1 +
+ arch/sparc/kernel/syscalls/syscall.tbl        |   1 +
+ arch/x86/entry/syscalls/syscall_32.tbl        |   1 +
+ arch/x86/entry/syscalls/syscall_64.tbl        |   1 +
+ arch/xtensa/kernel/syscalls/syscall.tbl       |   1 +
+ fs/file.c                                     |  22 +-
+ include/linux/file.h                          |   2 +
+ include/linux/syscalls.h                      |   1 +
+ include/uapi/asm-generic/unistd.h             |   4 +-
+ kernel/pid.c                                  |  90 +++++++
+ tools/testing/selftests/pidfd/.gitignore      |   1 +
+ tools/testing/selftests/pidfd/Makefile        |   2 +-
+ tools/testing/selftests/pidfd/pidfd.h         |   9 +
+ .../selftests/pidfd/pidfd_getfd_test.c        | 249 ++++++++++++++++++
+ 27 files changed, 395 insertions(+), 5 deletions(-)
+ create mode 100644 tools/testing/selftests/pidfd/pidfd_getfd_test.c
 
 -- 
-tejun
+2.20.1
