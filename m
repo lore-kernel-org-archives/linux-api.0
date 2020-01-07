@@ -1,106 +1,31 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: Re: [RFC PATCH glibc 09/13] glibc: Perform rseq(2) registration at
- C startup and thread creation (v13)
-Date: Tue, 7 Jan 2020 15:44:00 -0500 (EST)
-Message-ID: <1968185366.4418.1578429840460.JavaMail.zimbra@efficios.com>
-References: <20200106155713.397-1-mathieu.desnoyers@efficios.com> <20200106155713.397-10-mathieu.desnoyers@efficios.com> <871rsbv4io.fsf@oldenburg2.str.redhat.com>
+From: "Theodore Y. Ts'o" <tytso@mit.edu>
+Subject: Re: [PATCH v3 2/8] random: Add a urandom_read_nowait() for random
+ APIs that don't warn
+Date: Tue, 7 Jan 2020 15:43:32 -0500
+Message-ID: <20200107204332.GG3619@mit.edu>
+References: <cover.1577088521.git.luto@kernel.org>
+ <c87ab200588de746431d9f916501ef11e5242b13.1577088521.git.luto@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <871rsbv4io.fsf@oldenburg2.str.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <c87ab200588de746431d9f916501ef11e5242b13.1577088521.git.luto@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Florian Weimer <fweimer@redhat.com>
-Cc: carlos <carlos@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha <libc-alpha@sourceware.org>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, Rich Felker <dalias@libc.org>, linux-kernel <linux-kernel@vger.kernel.org>, linux-api <linux-api@vger.kernel.org>
+To: Andy Lutomirski <luto@kernel.org>
+Cc: LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, "Jason A. Donenfeld" <Jason@zx2c4.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, Lennart Poettering <mzxreary@0pointer.de>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, Stephan Mueller <smueller@chronox.de>
 List-Id: linux-api@vger.kernel.org
 
-
-
------ On Jan 7, 2020, at 7:23 AM, Florian Weimer fweimer@redhat.com wrote:
-
-> * Mathieu Desnoyers:
+On Mon, Dec 23, 2019 at 12:20:45AM -0800, Andy Lutomirski wrote:
+> /dev/random and getrandom() never warn.  Split the meat of
+> urandom_read() into urandom_read_nowarn() and leave the warning code
+> in urandom_read().
 > 
->> Register rseq(2) TLS for each thread (including main), and unregister
->> for each thread (excluding main). "rseq" stands for Restartable
->> Sequences.
->>
->> See the rseq(2) man page proposed here:
->>   https://lkml.org/lkml/2018/9/19/647
->>
->> This patch is based on glibc-2.30. The rseq(2) system call was merged
->> into Linux 4.18.
+> This has no effect on kernel behavior, but it makes subsequent
+> patches more straightforward.  It also makes the fact that
+> getrandom() never warns more obvious.
 > 
-> This patch needs to be updated for some be/le abilist splits.
-> Big-endian ABI lists for arm, microblaze, sh, appear to be missing.
+> Signed-off-by: Andy Lutomirski <luto@kernel.org>
 
-done.
+Applied, thanks.
 
-> This is something that can be checked with build-many-glibcs.py.
-
-OK.
-
-> 
->> diff --git a/manual/threads.texi b/manual/threads.texi
->> index 0858ef8f92..059f781120 100644
->> --- a/manual/threads.texi
->> +++ b/manual/threads.texi
->> @@ -881,3 +881,20 @@ Behaves like @code{pthread_timedjoin_np} except that the
->> absolute time in
->>  @c pthread_spin_unlock
->>  @c pthread_testcancel
->>  @c pthread_yield
->> +
->> +@node Restartable Sequences
->> +@section Restartable Sequences
->> +@cindex rseq
->> +
->> +This section describes the @glibcadj{} Restartable Sequences integration.
->> +
->> +The @glibcadj{} implements a __rseq_abi TLS symbol to interact with the
->   @Theglibc{}                  @code{__rseq_abi}
-> 
-> 
->> +Restartable Sequences system call (Linux-specific). The layout of this
->> +structure is defined by the Linux kernel rseq.h UAPI. Registration of each
->> +thread's __rseq_abi is performed by @glibcadj{} at libc initialization and
->                                       @theglibc{}
->           @code{__rseq_abi}
->> +pthread creation.
-> 
->> +Each supported architecture provide a RSEQ_SIG signature in sys/rseq.h. That
->                                         @code{RSEQ_SIG}       @file{sys/rseq.h}
-> 
->> +signature is expected to be present in the code before each Restartable
->> +Sequences abort handler. Failure to provide the expected signature may
->> +terminate the process with a Segmentation fault.
-> 
-> 
-> Two spaces at the end of setences, please.
-
-All above done.
-
-> 
-> The manual should use @deftypevar to create an index entry etc. for
-> __rseq_abi.  See argp_program_version for an example of how to do this.
-
-OK. I've added __rseq_abi as a variable and RSEQ_SIG as a macro.
-
-> 
-> I think current policy is to have documentation for at least the minimum
-> functionality in the manual.  I understand that it makes it a lot of
-> work to write patches which add system call wrappers.
-
-Makes sense.
-
-Thanks!
-
-Mathieu
-
-> 
-> Thanks,
-> Florian
-
--- 
-Mathieu Desnoyers
-EfficiOS Inc.
-http://www.efficios.com
+					- Ted
