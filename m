@@ -1,52 +1,30 @@
-From: Christian Brauner <christian.brauner@ubuntu.com>
-Subject: Re: [PATCH v9 0/4] Add pidfd_getfd syscall
-Date: Tue, 7 Jan 2020 21:54:50 +0100
-Message-ID: <20200107205449.5dcp7o3hplg7r3fw@wittgenstein>
-References: <20200107175927.4558-1-sargun@sargun.me>
+From: "Theodore Y. Ts'o" <tytso@mit.edu>
+Subject: Re: [PATCH v3 5/8] random: Make /dev/random be almost like
+ /dev/urandom
+Date: Tue, 7 Jan 2020 16:02:57 -0500
+Message-ID: <20200107210257.GJ3619@mit.edu>
+References: <cover.1577088521.git.luto@kernel.org>
+ <5e6ac8831c6cf2e56a7a4b39616d1732b2bdd06c.1577088521.git.luto@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20200107175927.4558-1-sargun@sargun.me>
+In-Reply-To: <5e6ac8831c6cf2e56a7a4b39616d1732b2bdd06c.1577088521.git.luto@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Sargun Dhillon <sargun@sargun.me>
-Cc: linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, tycho@tycho.ws, jannh@google.com, cyphar@cyphar.com, oleg@redhat.com, luto@amacapital.net, viro@zeniv.linux.org.uk, gpascutto@mozilla.com, ealvarez@mozilla.com, fweimer@redhat.com, jld@mozilla.com, arnd@arndb.de
+To: Andy Lutomirski <luto@kernel.org>
+Cc: LKML <linux-kernel@vger.kernel.org>, Linux API <linux-api@vger.kernel.org>, Kees Cook <keescook@chromium.org>, "Jason A. Donenfeld" <Jason@zx2c4.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, Lennart Poettering <mzxreary@0pointer.de>, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, Michael Kerrisk <mtk.manpages@gmail.com>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Ext4 Developers List <linux-ext4@vger.kernel.org>, linux-man <linux-man@vger.kernel.org>, Stephan Mueller <smueller@chronox.de>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 07, 2020 at 09:59:23AM -0800, Sargun Dhillon wrote:
-> This patchset introduces a mechanism (pidfd_getfd syscall) to get file
-> descriptors from other processes via pidfd. Although this can be achieved
-> using SCM_RIGHTS, and parasitic code injection, this offers a more
-> straightforward mechanism, with less overhead and complexity. The process
-> under manipulation's fd still remains valid, and unmodified by the
-> copy operation.
+On Mon, Dec 23, 2019 at 12:20:48AM -0800, Andy Lutomirski wrote:
+> This patch changes the read semantics of /dev/random to be the same
+> as /dev/urandom except that reads will block until the CRNG is
+> ready.
 > 
-> It introduces a flags field. The flags field is reserved a the moment,
-> but the intent is to extend it with the following capabilities:
->  * Close the remote FD when copying it
->  * Drop the cgroup data if it's a fd pointing a socket when copying it
+> None of the cleanups that this enables have been done yet.  As a
+> result, this gives a warning about an unused function.
 > 
-> The syscall numbers were chosen to be one greater than openat2.
-> 
-> Summary of history:
-> This initially started as a ptrace command. It did not require the process
-> to be stopped, and felt like kind of an awkward fit for ptrace. After that,
-> it moved to an ioctl on the pidfd. Given the core functionality, it made
-> sense to make it a syscall which did not require the process to be stopped.
-> 
-> Previous versions:
->  V8: https://lore.kernel.org/lkml/20200103162928.5271-1-sargun@sargun.me/
->  V7: https://lore.kernel.org/lkml/20191226180227.GA29389@ircssh-2.c.rugged-nimbus-611.internal/
->  V6: https://lore.kernel.org/lkml/20191223210823.GA25083@ircssh-2.c.rugged-nimbus-611.internal/
->  V5: https://lore.kernel.org/lkml/20191220232746.GA20215@ircssh-2.c.rugged-nimbus-611.internal/
->  V4: https://lore.kernel.org/lkml/20191218235310.GA17259@ircssh-2.c.rugged-nimbus-611.internal/
->  V3: https://lore.kernel.org/lkml/20191217005842.GA14379@ircssh-2.c.rugged-nimbus-611.internal/
->  V2: https://lore.kernel.org/lkml/20191209070446.GA32336@ircssh-2.c.rugged-nimbus-611.internal/
->  RFC V1: https://lore.kernel.org/lkml/20191205234450.GA26369@ircssh-2.c.rugged-nimbus-611.internal/
+> Signed-off-by: Andy Lutomirski <luto@kernel.org>
 
-I don't see anything wrong with this series anymore:
+Applied, thanks.
 
-Acked-by: Christian Brauner <christian.brauner@ubuntu.com>
-
-Other Acked-bys/Reviewed-bys and reviews of course strongly encouraged!
-Christian
+						- Ted
