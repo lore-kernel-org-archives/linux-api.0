@@ -1,108 +1,79 @@
-From: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Subject: [RFC PATCH glibc 5/8] glibc: sched_getcpu(): use rseq cpu_id TLS on Linux (v5)
-Date: Wed,  8 Jan 2020 09:58:48 -0500
-Message-ID: <20200108145851.13594-6-mathieu.desnoyers@efficios.com>
-References: <20200108145851.13594-1-mathieu.desnoyers@efficios.com>
+From: Michal =?iso-8859-1?Q?Koutn=FD?= <mkoutny@suse.com>
+Subject: Re: [PATCH v2 2/3] clone3: allow spawning processes into cgroups
+Date: Wed, 8 Jan 2020 17:01:02 +0100
+Message-ID: <20200108160102.GA17415@blackbody.suse.cz>
+References: <20191223061504.28716-1-christian.brauner@ubuntu.com>
+ <20191223061504.28716-3-christian.brauner@ubuntu.com>
+Mime-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="G4iJoqBmSsgzjUCe"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20200108145851.13594-1-mathieu.desnoyers@efficios.com>
+Content-Disposition: inline
+In-Reply-To: <20191223061504.28716-3-christian.brauner@ubuntu.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Carlos O'Donell <carlos@redhat.com>
-Cc: Florian Weimer <fweimer@redhat.com>, Joseph Myers <joseph@codesourcery.com>, Szabolcs Nagy <szabolcs.nagy@arm.com>, libc-alpha@sourceware.org, Mathieu Desnoyers <mathieu.desnoyers@efficios.com>, Thomas Gleixner <tglx@linutronix.de>, Ben Maurer <bmaurer@fb.com>, Peter Zijlstra <peterz@infradead.org>, "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>, Boqun Feng <boqun.feng@gmail.com>, Will Deacon <will.deacon@arm.com>, Dave Watson <davejwatson@fb.com>, Paul Turner <pjt@google.com>, linux-kernel@vger.kernel.org, linux-api@vger.kernel.org
+To: Christian Brauner <christian.brauner@ubuntu.com>
+Cc: linux-api@vger.kernel.org, linux-kernel@vger.kernel.org, Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>, Oleg Nesterov <oleg@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, Li Zefan <lizefan@huawei.com>, Peter Zijlstra <peterz@infradead.org>, cgroups@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-When available, use the cpu_id field from __rseq_abi on Linux to
-implement sched_getcpu(). Fall-back on the vgetcpu vDSO if unavailable.
 
-Benchmarks:
+--G4iJoqBmSsgzjUCe
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-x86-64: Intel E5-2630 v3@2.40GHz, 16-core, hyperthreading
+On Mon, Dec 23, 2019 at 07:15:03AM +0100, Christian Brauner <christian.brau=
+ner@ubuntu.com> wrote:
+> This adds support for creating a process in a different cgroup than its
+> parent.
+Binding fork and migration together looks useful.
 
-glibc sched_getcpu():                     13.7 ns (baseline)
-glibc sched_getcpu() using rseq:           2.5 ns (speedup:  5.5x)
-inline load cpuid from __rseq_abi TLS:     0.8 ns (speedup: 17.1x)
+> --- a/kernel/cgroup/cgroup.c
+> +++ b/kernel/cgroup/cgroup.c
+> @@ -5882,21 +5882,176 @@ void cgroup_fork(struct task_struct *child)
+>  	INIT_LIST_HEAD(&child->cg_list);
+Just a nitpick, I noticed the comment for cgroup_fork should be updated
+too (generic migration happens in cgroup_post_fork).
 
-	* sysdeps/unix/sysv/linux/sched_getcpu.c: use rseq cpu_id TLS on
-	Linux.
+> --- a/kernel/fork.c
+> +++ b/kernel/fork.c
+> [...]
+> @@ -2279,8 +2278,7 @@ static __latent_entropy struct task_struct *copy_pr=
+ocess(
+>  	write_unlock_irq(&tasklist_lock);
+> =20
+>  	proc_fork_connector(p);
+> -	cgroup_post_fork(p);
+> -	cgroup_threadgroup_change_end(current);
+> +	cgroup_post_fork(current, p, args);
+I can see that when CLONE_INTO_CGROUP | CLONE_NEWCGROUP is passed, then
+the child's cgroup NS will be rooted at parent's css set
+(copy_namespaces precedes cgroup_post_fork).
 
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-CC: Carlos O'Donell <carlos@redhat.com>
-CC: Florian Weimer <fweimer@redhat.com>
-CC: Joseph Myers <joseph@codesourcery.com>
-CC: Szabolcs Nagy <szabolcs.nagy@arm.com>
-CC: Thomas Gleixner <tglx@linutronix.de>
-CC: Ben Maurer <bmaurer@fb.com>
-CC: Peter Zijlstra <peterz@infradead.org>
-CC: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-CC: Boqun Feng <boqun.feng@gmail.com>
-CC: Will Deacon <will.deacon@arm.com>
-CC: Dave Watson <davejwatson@fb.com>
-CC: Paul Turner <pjt@google.com>
-CC: libc-alpha@sourceware.org
-CC: linux-kernel@vger.kernel.org
-CC: linux-api@vger.kernel.org
----
-Changes since v1:
-- rseq is only used if both __NR_rseq and RSEQ_SIG are defined.
+Wouldn't it make better sense if this flags combination resulted in
+child's NS rooted in its css set?
 
-Changes since v2:
-- remove duplicated __rseq_abi extern declaration.
+Michal
 
-Changes since v3:
-- update ChangeLog.
 
-Changes since v4:
-- Use atomic_load_relaxed to load the __rseq_abi.cpu_id field, a
-  consequence of the fact that __rseq_abi is not volatile anymore.
-- Include atomic.h which provides atomic_load_relaxed.
----
- sysdeps/unix/sysv/linux/sched_getcpu.c | 29 ++++++++++++++++++++++++--
- 1 file changed, 27 insertions(+), 2 deletions(-)
+--G4iJoqBmSsgzjUCe
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
 
-diff --git a/sysdeps/unix/sysv/linux/sched_getcpu.c b/sysdeps/unix/sysv/linux/sched_getcpu.c
-index c019cfb3cf..6d3541333d 100644
---- a/sysdeps/unix/sysv/linux/sched_getcpu.c
-+++ b/sysdeps/unix/sysv/linux/sched_getcpu.c
-@@ -18,10 +18,15 @@
- #include <errno.h>
- #include <sched.h>
- #include <sysdep.h>
-+#include <atomic.h>
- #include <sysdep-vdso.h>
- 
--int
--sched_getcpu (void)
-+#ifdef HAVE_GETCPU_VSYSCALL
-+# define HAVE_VSYSCALL
-+#endif
-+
-+static int
-+vsyscall_sched_getcpu (void)
- {
-   unsigned int cpu;
-   int r = -1;
-@@ -32,3 +37,23 @@ sched_getcpu (void)
- #endif
-   return r == -1 ? r : cpu;
- }
-+
-+#ifdef __NR_rseq
-+#include <sys/rseq.h>
-+#endif
-+
-+#if defined __NR_rseq && defined RSEQ_SIG
-+int
-+sched_getcpu (void)
-+{
-+  int cpu_id = atomic_load_relaxed (&__rseq_abi.cpu_id);
-+
-+  return cpu_id >= 0 ? cpu_id : vsyscall_sched_getcpu ();
-+}
-+#else
-+int
-+sched_getcpu (void)
-+{
-+  return vsyscall_sched_getcpu ();
-+}
-+#endif
--- 
-2.17.1
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCAAdFiEEEoQaUCWq8F2Id1tNia1+riC5qSgFAl4V/LkACgkQia1+riC5
+qSh7ww/+JtgrB5RnfOwdlpOAFEIzNIFUXCtwsKQCZ+yWH6llH6b4JzLIIjX3S5Eq
+/99Cm3s9+6TG6Wr534KUcCfml7nToo/efiRjjuf0j0ZAPPR5y9s58s/qqH4oakiD
+2j4/FI86+StapFYGv8yJlQ59DZkFoDIYrPu1cYGYVzqcCo0TBSfmIK3kcO6OBA0O
+Z1aDXQGz0svw5ssVNMpOp/3P74ctvohlNAgYLNELbeMOoR6JFEiVug0kfQh1E8mo
+pPQUt1wsDNAB81h1i/5JKlkS7uYbIeDsV0i/aRM+2NGs323mDKK9iSm8EBXRhCWX
+1Y6+PuBLp7ZRPISsBZT+8jCsAwuBo2y48dw/KORd2BdBpZrxF2yLwRZNC2oRPuWX
+suMafu+vnI9ompGkrlgs0sFGiYMQiBmM0MtBCYD8MfEiJjPxGn6b17bSBNRxyzOa
+Jq1SjbPrWGWy/Pz+2CGFJstRJVsISBJbEejmBhDCo9MviK3V+2LDu0mYPvGXzJ/d
+2Kgslb9sdTQbSgeIQy+qcn9mWHZAfuyxC5i+7DJ/bE7l4bofN3TmkeFBriq9D4vU
+NELLJCnhQ7kDFhaTkFzMRrBMbkpG5Och8XfWFQDw4uskjTe8w9nORAsq/HtA/Ldv
+EHVorBc5qw9PReix/NFxNKD7vQHD0qwqHkG4h9QQbmsrtKB1/lQ=
+=atMP
+-----END PGP SIGNATURE-----
+
+--G4iJoqBmSsgzjUCe--
