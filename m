@@ -1,8 +1,8 @@
 From: Chris Down <chris@chrisdown.name>
 Subject: Re: [PATCH][RESEND v5] x86/resctrl: Add task resctrl information
  display
-Date: Thu, 9 Jan 2020 14:24:44 +0000
-Message-ID: <20200109142444.GB61542@chrisdown.name>
+Date: Thu, 9 Jan 2020 14:53:55 +0000
+Message-ID: <20200109145355.GC61542@chrisdown.name>
 References: <20200109135001.10076-1-yu.c.chen@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii; format=flowed
@@ -16,16 +16,9 @@ List-Id: linux-api@vger.kernel.org
 
 Chen Yu writes:
 >+#ifdef CONFIG_PROC_CPU_RESCTRL
->+
->+/*
->+ * A task can only be part of one control
->+ * group and of one monitoring group which
->+ * is associated to that control group.
->+ * So one line is simple and clear enough:
+>+	ONE("resctrl", S_IRUGO, proc_resctrl_show),
 
-Can we please avoid using the word "control group" to describe these? It's 
-extremely confusing for readers since it's exactly the same word as used for 
-actual cgroups, especially since those are also a form of "resource control"...
-
-Doesn't official documentation refer to them as "resource groups" to avoid 
-this?
+There was already some discussion about "resctrl" by itself being a misleading 
+name, hence why the CONFIG option eventually became CONFIG_X86_CPU_RESCTRL. Can 
+you please rethink the name of this /proc file, and have it at least be 
+"cpu_resctrl" or "x86_resctrl" or similar? :-)
