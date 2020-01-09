@@ -1,7 +1,7 @@
 From: Stephan =?ISO-8859-1?Q?M=FCller?= <smueller@chronox.de>
-Subject: [PATCH v27 11/12] LRNG - add interface for gathering of raw entropy
-Date: Thu, 09 Jan 2020 09:35:01 +0100
-Message-ID: <1617334.xIvO9ur7bq@positron.chronox.de>
+Subject: [PATCH v27 02/12] LRNG - allocate one DRNG instance per NUMA node
+Date: Thu, 09 Jan 2020 09:31:08 +0100
+Message-ID: <12264536.cAhUObFdc8@positron.chronox.de>
 References: <6157374.ptSnyUpaCn@positron.chronox.de> <2722222.P16TYeLAVu@positron.chronox.de> <2641155.iNH938UiKq@positron.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
@@ -13,23 +13,21 @@ To: Arnd Bergmann <arnd@arndb.de>
 Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@suse.de>, "Peter, Matthias" <matth>
 List-Id: linux-api@vger.kernel.org
 
-The test interface allows a privileged process to capture the raw
-unconditioned noise that is collected by the LRNG for statistical
-analysis. Such testing allows the analysis how much entropy
-the interrupt noise source provides on a given platform.
-Extracted noise data is not used to seed the LRNG. This
-is a test interface and not appropriate for production systems.
-Yet, the interface is considered to be sufficiently secured for
-production systems.
+In order to improve NUMA-locality when serving getrandom(2) requests,
+allocate one DRNG instance per node.
 
-Access to the data is given through the lrng_raw debugfs file. The
-data buffer should be multiples of sizeof(u32) to fill the entire
-buffer. Using the option lrng_testing.boot_test=1 the raw noise of
-the first 1000 entropy events since boot can be sampled.
+The DRNG instance that is present right from the start of the kernel is
+reused as the first per-NUMA-node DRNG. For all remaining online NUMA
+nodes a new DRNG instance is allocated.
 
-This test interface allows generating the data required for
-analysis whether the LRNG is in compliance with SP800-90B
-sections 3.1.3 and 3.1.4.
+During boot time, the multiple DRNG instances are seeded sequentially.
+With this, the first DRNG instance (referenced as the initial DRNG
+in the code) is completely seeded with 256 bits of entropy before the
+next DRNG instance is completely seeded.
+
+When random numbers are requested, the NUMA-node-local DRNG is checked
+whether it has been already fully seeded. If this is not the case, the
+initial DRNG is used to serve the request.
 
 CC: "Eric W. Biederman" <ebiederm@xmission.com>
 CC: "Alexander E. Patrakov" <patrakov@gmail.com>
@@ -47,328 +45,153 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
+Reviewed-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
 Tested-by: Roman Drahtmüller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
 Tested-by: Neil Horman <nhorman@redhat.com>
 Signed-off-by: Stephan Mueller <smueller@chronox.de>
 ---
- drivers/char/lrng/Kconfig        |  16 ++
- drivers/char/lrng/Makefile       |   1 +
- drivers/char/lrng/lrng_testing.c | 271 +++++++++++++++++++++++++++++++
- 3 files changed, 288 insertions(+)
- create mode 100644 drivers/char/lrng/lrng_testing.c
+ drivers/char/lrng/Makefile        |   2 +
+ drivers/char/lrng/lrng_internal.h |   5 ++
+ drivers/char/lrng/lrng_numa.c     | 101 ++++++++++++++++++++++++++++++
+ 3 files changed, 108 insertions(+)
+ create mode 100644 drivers/char/lrng/lrng_numa.c
 
-diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index 7b2bb3da066c..394066aa5a86 100644
---- a/drivers/char/lrng/Kconfig
-+++ b/drivers/char/lrng/Kconfig
-@@ -159,4 +159,20 @@ config LRNG_APT_CUTOFF
- 	default 325 if !LRNG_APT_BROKEN
- 	default 32 if LRNG_APT_BROKEN
- 
-+config LRNG_TESTING
-+	bool "Enable entropy test interface to LRNG noise source"
-+	depends on DEBUG_FS
-+	help
-+	  The test interface allows a privileged process to capture
-+	  the raw unconditioned noise that is collected by the LRNG
-+	  for statistical analysis. Extracted noise data is not used
-+	  to seed the LRNG.
-+
-+	  The raw noise data can be obtained using the lrng_raw
-+	  debugfs file. Using the option lrng_testing.boot_test=1
-+	  the raw noise of the first 1000 entropy events since boot
-+	  can be sampled.
-+
-+	  If unsure, say N.
-+
- endif # LRNG
 diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
-index c3008763dd14..b2ce1979dc4b 100644
+index 1d2a0211973d..0a32f22c2c1a 100644
 --- a/drivers/char/lrng/Makefile
 +++ b/drivers/char/lrng/Makefile
-@@ -15,3 +15,4 @@ obj-$(CONFIG_LRNG_DRBG)		+= lrng_drbg.o
- obj-$(CONFIG_LRNG_KCAPI)	+= lrng_kcapi.o
- obj-$(CONFIG_LRNG_JENT)		+= lrng_jent.o
- obj-$(CONFIG_LRNG_HEALTH_TESTS)	+= lrng_health.o
-+obj-$(CONFIG_LRNG_TESTING)	+= lrng_testing.o
-diff --git a/drivers/char/lrng/lrng_testing.c b/drivers/char/lrng/lrng_testing.c
+@@ -7,3 +7,5 @@ obj-y				+= lrng_pool.o lrng_aux.o \
+ 				   lrng_sw_noise.o lrng_archrandom.o \
+ 				   lrng_drng.o lrng_chacha20.o \
+ 				   lrng_interfaces.o \
++
++obj-$(CONFIG_NUMA)		+= lrng_numa.o
+diff --git a/drivers/char/lrng/lrng_internal.h b/drivers/char/lrng/lrng_internal.h
+index c9a7bccd14a0..c2b0a467548e 100644
+--- a/drivers/char/lrng/lrng_internal.h
++++ b/drivers/char/lrng/lrng_internal.h
+@@ -246,8 +246,13 @@ int lrng_drng_get_sleep(u8 *outbuf, u32 outbuflen);
+ void lrng_drng_force_reseed(void);
+ void lrng_drng_seed_work(struct work_struct *dummy);
+ 
++#ifdef CONFIG_NUMA
++struct lrng_drng **lrng_drng_instances(void);
++void lrng_drngs_numa_alloc(void);
++#else	/* CONFIG_NUMA */
+ static inline struct lrng_drng **lrng_drng_instances(void) { return NULL; }
+ static inline void lrng_drngs_numa_alloc(void) { return; }
++#endif /* CONFIG_NUMA */
+ 
+ /************************** Health Test linking code **************************/
+ 
+diff --git a/drivers/char/lrng/lrng_numa.c b/drivers/char/lrng/lrng_numa.c
 new file mode 100644
-index 000000000000..0e287eccd622
+index 000000000000..947c5b3ed517
 --- /dev/null
-+++ b/drivers/char/lrng/lrng_testing.c
-@@ -0,0 +1,271 @@
++++ b/drivers/char/lrng/lrng_numa.c
+@@ -0,0 +1,101 @@
 +// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
 +/*
-+ * Linux Random Number Generator (LRNG) Raw entropy collection tool
++ * LRNG NUMA support
 + *
-+ * Copyright (C) 2019 - 2020, Stephan Mueller <smueller@chronox.de>
++ * Copyright (C) 2016 - 2020, Stephan Mueller <smueller@chronox.de>
 + */
 +
 +#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 +
-+#include <linux/atomic.h>
-+#include <linux/bug.h>
-+#include <linux/debugfs.h>
-+#include <linux/module.h>
-+#include <linux/sched.h>
-+#include <linux/sched/signal.h>
++#include <linux/lrng.h>
 +#include <linux/slab.h>
-+#include <linux/string.h>
-+#include <linux/types.h>
-+#include <linux/uaccess.h>
-+#include <linux/workqueue.h>
-+#include <asm/errno.h>
 +
 +#include "lrng_internal.h"
 +
-+#define LRNG_TESTING_RINGBUFFER_SIZE	1024
-+#define LRNG_TESTING_RINGBUFFER_MASK	(LRNG_TESTING_RINGBUFFER_SIZE - 1)
++static struct lrng_drng **lrng_drng __read_mostly = NULL;
 +
-+static u32 lrng_testing_rb[LRNG_TESTING_RINGBUFFER_SIZE];
-+static u32 lrng_rb_reader = 0;
-+static u32 lrng_rb_writer = 0;
-+static atomic_t lrng_testing_enabled = ATOMIC_INIT(0);
-+
-+static DECLARE_WAIT_QUEUE_HEAD(lrng_raw_read_wait);
-+static DEFINE_SPINLOCK(lrng_raw_lock);
-+
-+/*
-+ * 0 ==> No boot test, gathering of runtime data allowed
-+ * 1 ==> Boot test enabled and ready for collecting data, gathering runtime
-+ *	 data is disabled
-+ * 2 ==> Boot test completed and disabled, gathering of runtime data is
-+ *	 disabled
-+ */
-+static u32 boot_test = 0;
-+module_param(boot_test, uint, 0644);
-+MODULE_PARM_DESC(boot_test, "Enable gathering boot time entropy of the first"
-+			    " entropy events");
-+
-+static inline void lrng_raw_entropy_reset(void)
++struct lrng_drng **lrng_drng_instances(void)
 +{
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(&lrng_raw_lock, flags);
-+	lrng_rb_reader = 0;
-+	lrng_rb_writer = 0;
-+	spin_unlock_irqrestore(&lrng_raw_lock, flags);
++	return lrng_drng;
 +}
 +
-+static void lrng_raw_entropy_init(void)
++/* Allocate the data structures for the per-NUMA node DRNGs */
++static void _lrng_drngs_numa_alloc(struct work_struct *work)
 +{
-+	/*
-+	 * The boot time testing implies we have a running test. If the
-+	 * caller wants to clear it, he has to unset the boot_test flag
-+	 * at runtime via sysfs to enable regular runtime testing
-+	 */
-+	if (boot_test)
-+		return;
++	struct lrng_drng **drngs;
++	struct lrng_drng *lrng_drng_init = lrng_drng_init_instance();
++	u32 node;
++	bool init_drng_used = false;
 +
-+	lrng_raw_entropy_reset();
-+	atomic_set(&lrng_testing_enabled, 1);
-+	pr_warn("Enabling raw entropy collection\n");
-+}
++	mutex_lock(&lrng_crypto_cb_update);
 +
-+static void lrng_raw_entropy_fini(void)
-+{
-+	if (boot_test)
-+		return;
++	/* per-NUMA-node DRNGs are already present */
++	if (lrng_drng)
++		goto unlock;
 +
-+	atomic_set(&lrng_testing_enabled, 0);
-+	lrng_raw_entropy_reset();
-+	pr_warn("Disabling raw entropy collection\n");
-+}
++	drngs = kcalloc(nr_node_ids, sizeof(void *), GFP_KERNEL|__GFP_NOFAIL);
++	for_each_online_node(node) {
++		struct lrng_drng *drng;
 +
-+bool lrng_raw_entropy_store(u32 value)
-+{
-+	unsigned long flags;
-+
-+	if (!atomic_read(&lrng_testing_enabled) && (boot_test != 1))
-+		return false;
-+
-+	spin_lock_irqsave(&lrng_raw_lock, flags);
-+
-+	/*
-+	 * Disable entropy testing for boot time testing after ring buffer
-+	 * is filled.
-+	 */
-+	if (boot_test) {
-+		if (lrng_rb_writer > LRNG_TESTING_RINGBUFFER_SIZE) {
-+			boot_test = 2;
-+			pr_warn_once("Boot time entropy collection test "
-+				     "disabled\n");
-+			spin_unlock_irqrestore(&lrng_raw_lock, flags);
-+			return false;
-+		}
-+
-+		if (lrng_rb_writer == 1)
-+			pr_warn("Boot time entropy collection test enabled\n");
-+	}
-+
-+	lrng_testing_rb[lrng_rb_writer & LRNG_TESTING_RINGBUFFER_MASK] = value;
-+	lrng_rb_writer++;
-+
-+	spin_unlock_irqrestore(&lrng_raw_lock, flags);
-+
-+	if (wq_has_sleeper(&lrng_raw_read_wait))
-+		wake_up_interruptible(&lrng_raw_read_wait);
-+
-+	return true;
-+}
-+
-+static inline bool lrng_raw_have_data(void)
-+{
-+	return ((lrng_rb_writer & LRNG_TESTING_RINGBUFFER_MASK) !=
-+		 (lrng_rb_reader & LRNG_TESTING_RINGBUFFER_MASK));
-+}
-+
-+static int lrng_raw_entropy_reader(u8 *outbuf, u32 outbuflen)
-+{
-+	unsigned long flags;
-+	int collected_data = 0;
-+
-+	lrng_raw_entropy_init();
-+
-+	while (outbuflen) {
-+		spin_lock_irqsave(&lrng_raw_lock, flags);
-+
-+		/* We have no data or reached the writer. */
-+		if (!lrng_rb_writer || (lrng_rb_writer == lrng_rb_reader)) {
-+
-+			spin_unlock_irqrestore(&lrng_raw_lock, flags);
-+
-+			/*
-+			 * Now we gathered all boot data, enable regular data
-+			 * collection.
-+			 */
-+			if (boot_test) {
-+				boot_test = 0;
-+				goto out;
-+			}
-+
-+			wait_event_interruptible(lrng_raw_read_wait,
-+						 lrng_raw_have_data());
-+			if (signal_pending(current)) {
-+				collected_data = -ERESTARTSYS;
-+				goto out;
-+			}
-+
++		if (!init_drng_used) {
++			drngs[node] = lrng_drng_init;
++			init_drng_used = true;
 +			continue;
 +		}
 +
-+		/* We copy out word-wise */
-+		if (outbuflen < sizeof(u32)) {
-+			spin_unlock_irqrestore(&lrng_raw_lock, flags);
-+			goto out;
++		drng = kmalloc_node(sizeof(struct lrng_drng),
++				     GFP_KERNEL|__GFP_NOFAIL, node);
++		memset(drng, 0, sizeof(lrng_drng));
++
++		drng->crypto_cb = lrng_drng_init->crypto_cb;
++		drng->drng = drng->crypto_cb->lrng_drng_alloc(
++					LRNG_DRNG_SECURITY_STRENGTH_BYTES);
++		if (IS_ERR(drng->drng)) {
++			kfree(drng);
++			goto err;
 +		}
 +
-+		memcpy(outbuf, &lrng_testing_rb[lrng_rb_reader], sizeof(u32));
-+		lrng_rb_reader++;
++		mutex_init(&drng->lock);
++		spin_lock_init(&drng->spin_lock);
 +
-+		spin_unlock_irqrestore(&lrng_raw_lock, flags);
++		/*
++		 * No reseeding of NUMA DRNGs from previous DRNGs as this
++		 * would complicate the code. Let it simply reseed.
++		 */
++		lrng_drng_reset(drng);
++		drngs[node] = drng;
 +
-+		outbuf += sizeof(u32);
-+		outbuflen -= sizeof(u32);
-+		collected_data += sizeof(u32);
++		lrng_pool_inc_numa_node();
++		pr_info("DRNG for NUMA node %d allocated\n", node);
 +	}
 +
-+out:
-+	lrng_raw_entropy_fini();
-+	return collected_data;
-+}
++	/* Ensure that all NUMA nodes receive changed memory here. */
++	mb();
 +
-+/**************************************************************************
-+ * Debugfs interface
-+ **************************************************************************/
-+static int lrng_raw_extract_user(char __user *buf, size_t nbytes)
-+{
-+	u8 *tmp, *tmp_aligned;
-+	int ret = 0, large_request = (nbytes > 256);
++	if (!cmpxchg(&lrng_drng, NULL, drngs))
++		goto unlock;
 +
-+	/*
-+	 * The intention of this interface is for collecting at least
-+	 * 1000 samples due to the SP800-90B requirements. So, we make no
-+	 * effort in avoiding allocating more memory that actually needed
-+	 * by the user. Hence, we allocate sufficient memory to always hold
-+	 * that amount of data.
-+	 */
-+	tmp = kmalloc(LRNG_TESTING_RINGBUFFER_SIZE + sizeof(u32), GFP_KERNEL);
-+	if (!tmp)
-+		return -ENOMEM;
++err:
++	for_each_online_node(node) {
++		struct lrng_drng *drng = drngs[node];
 +
-+	tmp_aligned = PTR_ALIGN(tmp, sizeof(u32));
++		if (drng == lrng_drng_init)
++			continue;
 +
-+	while (nbytes) {
-+		int i;
-+
-+		if (large_request && need_resched()) {
-+			if (signal_pending(current)) {
-+				if (ret == 0)
-+					ret = -ERESTARTSYS;
-+				break;
-+			}
-+			schedule();
++		if (drng) {
++			drng->crypto_cb->lrng_drng_dealloc(drng->drng);
++			kfree(drng);
 +		}
-+
-+		i = min_t(int, nbytes, LRNG_TESTING_RINGBUFFER_SIZE);
-+		i = lrng_raw_entropy_reader(tmp_aligned, i);
-+		if (i <= 0) {
-+			if (i < 0)
-+				ret = i;
-+			break;
-+		}
-+		if (copy_to_user(buf, tmp_aligned, i)) {
-+			ret = -EFAULT;
-+			break;
-+		}
-+
-+		nbytes -= i;
-+		buf += i;
-+		ret += i;
 +	}
++	kfree(drngs);
 +
-+	kzfree(tmp);
-+	return ret;
++unlock:
++	mutex_unlock(&lrng_crypto_cb_update);
 +}
 +
-+/* DebugFS operations and definition of the debugfs files */
-+static ssize_t lrng_raw_read(struct file *file, char __user *to,
-+			     size_t count, loff_t *ppos)
++static DECLARE_WORK(lrng_drngs_numa_alloc_work, _lrng_drngs_numa_alloc);
++
++void lrng_drngs_numa_alloc(void)
 +{
-+	loff_t pos = *ppos;
-+	int ret;
-+
-+	if (!count)
-+		return 0;
-+
-+	ret = lrng_raw_extract_user(to, count);
-+	if (ret < 0)
-+		return ret;
-+
-+	count -= ret;
-+	*ppos = pos + count;
-+
-+	return ret;
++	schedule_work(&lrng_drngs_numa_alloc_work);
 +}
-+
-+static const struct file_operations lrng_raw_name_fops = {
-+	.owner = THIS_MODULE,
-+	.read = lrng_raw_read,
-+};
-+
-+static int __init lrng_raw_init(void)
-+{
-+	struct dentry *lrng_raw_debugfs_root;
-+
-+	lrng_raw_debugfs_root = debugfs_create_dir(KBUILD_MODNAME, NULL);
-+	debugfs_create_file_unsafe("lrng_raw", 0400, lrng_raw_debugfs_root,
-+				   NULL, &lrng_raw_name_fops);
-+
-+	return 0;
-+}
-+
-+module_init(lrng_raw_init);
 -- 
 2.24.1
