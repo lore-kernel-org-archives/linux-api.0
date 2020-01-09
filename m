@@ -1,48 +1,184 @@
 From: Stephan =?ISO-8859-1?Q?M=FCller?= <smueller@chronox.de>
-Subject: [PATCH v27 03/12] LRNG - sysctls and /proc interface
-Date: Thu, 09 Jan 2020 09:31:39 +0100
-Message-ID: <2649838.LjHEXeKtmW@positron.chronox.de>
-References: <6157374.ptSnyUpaCn@positron.chronox.de> <2722222.P16TYeLAVu@positron.chronox.de> <2641155.iNH938UiKq@positron.chronox.de>
+Subject: [PATCH v27 00/12] /dev/random - a new approach with full SP800-90B
+Date: Thu, 09 Jan 2020 09:29:50 +0100
+Message-ID: <2641155.iNH938UiKq@positron.chronox.de>
+References: <6157374.ptSnyUpaCn@positron.chronox.de> <2787174.DQlWHN5GGo@positron.chronox.de> <2722222.P16TYeLAVu@positron.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: 8BIT
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <2641155.iNH938UiKq@positron.chronox.de>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <2722222.P16TYeLAVu@positron.chronox.de>
+Sender: linux-crypto-owner@vger.kernel.org
 To: Arnd Bergmann <arnd@arndb.de>
 Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@suse.de>, "Peter, Matthias" <matth>
 List-Id: linux-api@vger.kernel.org
 
-The LRNG sysctl interface provides the same controls as the existing
-/dev/random implementation. These sysctls behave identically and are
-implemented identically. The goal is to allow a possible merge of the
-existing /dev/random implementation with this implementation which
-implies that this patch tries have a very close similarity. Yet, all
-sysctls are documented at [1].
+Hi,
 
-In addition, it provides the file lrng_type which provides details about
-the LRNG:
+The following patch set provides a different approach to /dev/random which =
+is
+called Linux Random Number Generator (LRNG) to collect entropy within the L=
+inux
+kernel. The main improvements compared to the existing /dev/random is to pr=
+ovide
+sufficient entropy during boot time as well as in virtual environments and =
+when
+using SSDs. A secondary design goal is to limit the impact of the entropy
+collection on massive parallel systems and also allow the use accelerated
+cryptographic primitives. Also, all steps of the entropic data processing a=
+re
+testable.
 
-- the name of the DRNG that produces the random numbers for /dev/random,
-/dev/urandom, getrandom(2)
+The LRNG patch set allows a user to select use of the existing /dev/random =
+or
+the LRNG during compile time. As the LRNG provides API and ABI compatible
+interfaces to the existing /dev/random implementation, the user can freely =
+chose
+the RNG implementation without affecting kernel or user space operations.
 
-- the hash used to produce random numbers from the entropy pool
+This patch set provides early boot-time entropy which implies that no
+additional flags to the getrandom(2) system call discussed recently on
+the LKML is considered to be necessary. Yet, if additional flags are
+introduced to cover special hardware, the LRNG implementation will also
+provide them to be fully ABI and API compliant as already discussed on
+LKML.
 
-- the number of secondary DRNG instances
+The LRNG is fully compliant to SP800-90B requirements and is shipped with a
+full SP800-90B assessment and all required test tools. The existing /dev/ra=
+ndom
+implementation on the other hand has architectural limitations which
+does not easily allow to bring the implementation in compliance with
+SP800-90B. The key statement that causes concern is SP800-90B section
+3.1.6. This section denies crediting entropy to multiple similar noise
+sources. This section explicitly references different noise sources resting
+on the timing of events and their derivatives (i.e. it is a direct complaint
+to the existing existing /dev/random implementation). Therefore, SP800-90B
+now denies the very issue mentioned in [1] with the existing /dev/random
+implementation for a long time: crediting entropy to interrupts as well as
+crediting entropy to derivatives of interrupts (HID and disk events). This =
+is
+not permissible with SP800-90B.
 
-- indicator whether the LRNG operates SP800-90B compliant
+SP800-90B specifies various requirements for the noise source(s) that seed =
+any
+DRNG including SP800-90A DRBGs. In about a year from now, SP800-90B will be
+mandated for all noise sources that provide entropy to DRBGs as part of a F=
+IPS
+140-[2|3] validation or other evaluation types. That means, if we there are=
+ no
+solutions to comply with the requirements of SP800-90B found till one year
+from now, any random number generation and ciphers based on random numbers
+on Linux will be considered and treated as not applicable and delivering
+no entropy! As /dev/urandom, getrandom(2) and /dev/random are the most
+common and prevalent noise sources for DRNGs, all these DRNGs are affected.
+This applies across the board for all validations of cryptography executing=
+ on
+Linux (kernel and user space modules).
 
-- indicator whether a high-resolution timer is identified - only with a
-high-resolution timer the interrupt noise source will deliver sufficient
-entropy
+=46or users that are not interested in SP800-90B, the entire code for the
+compliance as well as test interfaces can be deselected at compile time.
 
-- indicator whether the LRNG has been minimally seeded (i.e. is the
-secondary DRNG seeded with at least 128 bits of of entropy)
+The design and implementation is driven by a set of goals described in [1]
+that the LRNG completely implements. Furthermore, [1] includes the full
+assessment of the SP800-90B compliance as well as a comparison with RNG
+design suggestions of SP800-90C, and AIS20/31.
 
-- indicator whether the LRNG has been fully seeded (i.e. is the
-secondary DRNG seeded with at least 256 bits of entropy)
+The LRNG provides a complete separation of the noise source maintenance
+and the collection of entropy into an entropy pool from the post-processing
+using a pseudo-random number generator. Different DRNGs are supported,
+including:
 
-[1] https://www.chronox.de/lrng.html
+* The LRNG can be compile-time enabled to replace the existing /dev/random
+  implementation. When not selecting the LRNG at compile time (default), the
+  existing /dev/random implementation is built.
+
+* Built-in ChaCha20 DRNG which has no dependency to other kernel
+  frameworks.
+
+* SP800-90A DRBG using the kernel crypto API including its accelerated
+  raw cipher implementations. This implies that the output of /dev/random,
+  getrandom(2), /dev/urandom or get_random_bytes is fully compliant to
+  SP800-90A.
+
+* Arbitrary DRNGs registered with the kernel crypto API
+
+* Full compliance with SP800-90B which covers the startup and runtime health
+  tests mandated by SP800-90B as well as providing the test tools and test
+  interfaces to obtain raw noise data securely. The test tools are provided=
+ at
+  [1].
+
+Booting the patch with the kernel command line option
+"dyndbg=3Dfile drivers/char/lrng/* +p" generates logs indicating the operat=
+ion
+of the LRNG. Each log is pre-pended with "lrng".
+
+The LRNG has a flexible design by allowing an easy replacement of the
+deterministic random number generator component.
+
+Compared to the existing /dev/random implementation, the compiled binary
+is smaller when the LRNG is compiled with all options equal to the
+existing /dev/random (i.e. only CONFIG_LRNG is set): random.o is 52.5 kBytes
+whereas all LRNG object files are in 49 kBytes in size. The fully
+SP800-90A/SP800-90B compliant binary code (CONFIG_LRNG,
+CONFIG_LRNG_DRNG_SWITCH, CONFIG_LRNG_DRBG, CONFIG_LRNG_HEALTH_TESTS)
+uses some 61 kBytes. In addition, the LRNG is about 50% faster in the
+performance critical interrupt handler code path compared to the existing
+/dev/random implementation.
+
+[1] http://www.chronox.de/lrng.html - If the patch is accepted, I would
+be volunteering to convert the documentation into RST format and
+contribute it to the Linux kernel documentation directory.
+
+Changes (compared to the previous patch set):
+
+* fix function prototype of lrng_init_time_source
+
+* fix indentation in getrandom
+
+* add unlock to error code path as reported by Julia Lawall
+
+* integrate 0da522107e5d9c000a4871d52e570912aa1225a2 from Arnd Bergmann and
+  supplemental patch 4aa37c463764052c68c5c430af2a67b5d784c1e0 from
+  Jason A. Donenfeld
+
+* use new jitterentropy.h header file
+
+* add power-on self-tests of security critical functions of hash_df, LFSR,
+  ChaCha20 DRNG, and time stamp array management
+
+* add support for significantly reduced runtime memory footprint as outlined
+  in patch 1
+
+* drop TRNG support - the LRNG has the same user experience as random.c
+  with Andy Lutomirski's recent patch removing the blocking_pool - rename
+  all *sdrng* symbols to *drng*
+
+* ensure that external noise sources can provide seed at least once when a
+  DRNG is reseeded to ensure internal and external noise sources are balanc=
+ed
+
+* add full documentation to all API calls provided to the remainder of the
+  kernel
+
+* ensure that after a SP800-90B health test failure the interrupt handler
+  triggers reseeds like during boot time
+
+This patch requires the presence of patch
+75551dbf112c992bc6c99a972990b3f272247e23 from Ted Tso's kernel tree
+(specifically the addition of GRND_INSECURE to random.h)
+
+As a side node: With the switchable DRNG support offered in this patch set,
+the following areas could be removed. As the existing /dev/random has no su=
+pport
+for switchable DRNGs, however, this is not yet feasible though.
+
+* remove lrng_ready_list and all code around it in lrng_interfaces.c
+
+* remove the kernel crypto API RNG API to avoid having two random number
+  providing APIs - this would imply that all RNGs developed for this API wo=
+uld
+  be converted to the LRNG interface
 
 CC: "Eric W. Biederman" <ebiederm@xmission.com>
 CC: "Alexander E. Patrakov" <patrakov@gmail.com>
@@ -60,225 +196,79 @@ CC: Andy Lutomirski <luto@kernel.org>
 CC: Florian Weimer <fweimer@redhat.com>
 CC: Lennart Poettering <mzxreary@0pointer.de>
 CC: Nicolai Stange <nstange@suse.de>
-Reviewed-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
-Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
-Tested-by: Roman Drahtmüller <draht@schaltsekun.de>
+Tested-by: Roman Drahtm=FCller <draht@schaltsekun.de>
 Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
-Tested-by: Neil Horman <nhorman@redhat.com>
-Signed-off-by: Stephan Mueller <smueller@chronox.de>
----
- drivers/char/lrng/Makefile          |   1 +
- drivers/char/lrng/lrng_interfaces.c |   1 -
- drivers/char/lrng/lrng_internal.h   |   4 +
- drivers/char/lrng/lrng_proc.c       | 163 ++++++++++++++++++++++++++++
- 4 files changed, 168 insertions(+), 1 deletion(-)
- create mode 100644 drivers/char/lrng/lrng_proc.c
 
-diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
-index 0a32f22c2c1a..e69c176f0161 100644
---- a/drivers/char/lrng/Makefile
-+++ b/drivers/char/lrng/Makefile
-@@ -9,3 +9,4 @@ obj-y				+= lrng_pool.o lrng_aux.o \
- 				   lrng_interfaces.o \
- 
- obj-$(CONFIG_NUMA)		+= lrng_numa.o
-+obj-$(CONFIG_SYSCTL)		+= lrng_proc.o
-diff --git a/drivers/char/lrng/lrng_interfaces.c b/drivers/char/lrng/lrng_interfaces.c
-index ff40ed37ddd6..8c4bf53d86ec 100644
---- a/drivers/char/lrng/lrng_interfaces.c
-+++ b/drivers/char/lrng/lrng_interfaces.c
-@@ -34,7 +34,6 @@ static DECLARE_WAIT_QUEUE_HEAD(lrng_write_wait);
- static DECLARE_WAIT_QUEUE_HEAD(lrng_init_wait);
- static struct fasync_struct *fasync;
- 
--struct ctl_table random_table[];
- /********************************** Helper ***********************************/
- 
- /* Is the DRNG seed level too low? */
-diff --git a/drivers/char/lrng/lrng_internal.h b/drivers/char/lrng/lrng_internal.h
-index c2b0a467548e..349152d3c1b0 100644
---- a/drivers/char/lrng/lrng_internal.h
-+++ b/drivers/char/lrng/lrng_internal.h
-@@ -116,7 +116,11 @@ void lrng_cc20_init_state(struct chacha20_state *state);
- 
- /********************************** /proc *************************************/
- 
-+#ifdef CONFIG_SYSCTL
-+void lrng_pool_inc_numa_node(void);
-+#else
- static inline void lrng_pool_inc_numa_node(void) { }
-+#endif
- 
- /****************************** LRNG interfaces *******************************/
- 
-diff --git a/drivers/char/lrng/lrng_proc.c b/drivers/char/lrng/lrng_proc.c
-new file mode 100644
-index 000000000000..f4ee01f61925
---- /dev/null
-+++ b/drivers/char/lrng/lrng_proc.c
-@@ -0,0 +1,163 @@
-+// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
-+/*
-+ * LRNG proc and sysctl interfaces
-+ *
-+ * Copyright (C) 2016 - 2020, Stephan Mueller <smueller@chronox.de>
-+ */
-+
-+#include <linux/lrng.h>
-+#include <linux/proc_fs.h>
-+#include <linux/seq_file.h>
-+#include <linux/sysctl.h>
-+#include <linux/uuid.h>
-+
-+#include "lrng_internal.h"
-+
-+/*
-+ * This function is used to return both the bootid UUID, and random
-+ * UUID.  The difference is in whether table->data is NULL; if it is,
-+ * then a new UUID is generated and returned to the user.
-+ *
-+ * If the user accesses this via the proc interface, the UUID will be
-+ * returned as an ASCII string in the standard UUID format; if via the
-+ * sysctl system call, as 16 bytes of binary data.
-+ */
-+static int lrng_proc_do_uuid(struct ctl_table *table, int write,
-+			     void __user *buffer, size_t *lenp, loff_t *ppos)
-+{
-+	struct ctl_table fake_table;
-+	unsigned char buf[64], tmp_uuid[16], *uuid;
-+
-+	uuid = table->data;
-+	if (!uuid) {
-+		uuid = tmp_uuid;
-+		generate_random_uuid(uuid);
-+	} else {
-+		static DEFINE_SPINLOCK(bootid_spinlock);
-+
-+		spin_lock(&bootid_spinlock);
-+		if (!uuid[8])
-+			generate_random_uuid(uuid);
-+		spin_unlock(&bootid_spinlock);
-+	}
-+
-+	sprintf(buf, "%pU", uuid);
-+
-+	fake_table.data = buf;
-+	fake_table.maxlen = sizeof(buf);
-+
-+	return proc_dostring(&fake_table, write, buffer, lenp, ppos);
-+}
-+
-+static int lrng_proc_do_entropy(struct ctl_table *table, int write,
-+				void __user *buffer, size_t *lenp, loff_t *ppos)
-+{
-+	struct ctl_table fake_table;
-+	int entropy_count;
-+
-+	entropy_count = lrng_avail_entropy();
-+
-+	fake_table.data = &entropy_count;
-+	fake_table.maxlen = sizeof(entropy_count);
-+
-+	return proc_dointvec(&fake_table, write, buffer, lenp, ppos);
-+}
-+
-+static int lrng_sysctl_poolsize = LRNG_POOL_SIZE_BITS;
-+static int lrng_min_write_thresh;
-+static int lrng_max_write_thresh = LRNG_POOL_SIZE_BITS;
-+static char lrng_sysctl_bootid[16];
-+static int lrng_drng_reseed_max_min;
-+
-+struct ctl_table random_table[] = {
-+	{
-+		.procname	= "poolsize",
-+		.data		= &lrng_sysctl_poolsize,
-+		.maxlen		= sizeof(int),
-+		.mode		= 0444,
-+		.proc_handler	= proc_dointvec,
-+	},
-+	{
-+		.procname	= "entropy_avail",
-+		.maxlen		= sizeof(int),
-+		.mode		= 0444,
-+		.proc_handler	= lrng_proc_do_entropy,
-+	},
-+	{
-+		.procname	= "write_wakeup_threshold",
-+		.data		= &lrng_write_wakeup_bits,
-+		.maxlen		= sizeof(int),
-+		.mode		= 0644,
-+		.proc_handler	= proc_dointvec_minmax,
-+		.extra1		= &lrng_min_write_thresh,
-+		.extra2		= &lrng_max_write_thresh,
-+	},
-+	{
-+		.procname	= "boot_id",
-+		.data		= &lrng_sysctl_bootid,
-+		.maxlen		= 16,
-+		.mode		= 0444,
-+		.proc_handler	= lrng_proc_do_uuid,
-+	},
-+	{
-+		.procname	= "uuid",
-+		.maxlen		= 16,
-+		.mode		= 0444,
-+		.proc_handler	= lrng_proc_do_uuid,
-+	},
-+	{
-+		.procname       = "urandom_min_reseed_secs",
-+		.data           = &lrng_drng_reseed_max_time,
-+		.maxlen         = sizeof(int),
-+		.mode           = 0644,
-+		.proc_handler   = proc_dointvec,
-+		.extra1		= &lrng_drng_reseed_max_min,
-+	},
-+	{ }
-+};
-+
-+/* Number of online DRNGs */
-+static u32 numa_drngs = 1;
-+
-+void lrng_pool_inc_numa_node(void)
-+{
-+	numa_drngs++;
-+}
-+
-+static int lrng_proc_type_show(struct seq_file *m, void *v)
-+{
-+	struct lrng_drng *lrng_drng_init = lrng_drng_init_instance();
-+	unsigned long flags = 0;
-+	unsigned char buf[300];
-+
-+	lrng_drng_lock(lrng_drng_init, &flags);
-+	snprintf(buf, sizeof(buf),
-+		 "DRNG name: %s\n"
-+		 "Hash for reading entropy pool: %s\n"
-+		 "DRNG security strength: %d bits\n"
-+		 "number of DRNG instances: %u\n"
-+		 "SP800-90B compliance: %s\n"
-+		 "High-resolution timer: %s\n"
-+		 "LRNG minimally seeded: %s\n"
-+		 "LRNG fully seeded: %s\n",
-+		 lrng_drng_init->crypto_cb->lrng_drng_name(),
-+		 lrng_drng_init->crypto_cb->lrng_hash_name(),
-+		 LRNG_DRNG_SECURITY_STRENGTH_BITS, numa_drngs,
-+		 lrng_sp80090b_compliant() ? "true" : "false",
-+		 lrng_pool_highres_timer() ? "true" : "false",
-+		 lrng_state_min_seeded() ? "true" : "false",
-+		 lrng_state_fully_seeded() ? "true" : "false");
-+	lrng_drng_unlock(lrng_drng_init, &flags);
-+
-+	seq_write(m, buf, strlen(buf));
-+
-+	return 0;
-+}
-+
-+static int __init lrng_proc_type_init(void)
-+{
-+	proc_create_single("lrng_type", 0444, NULL, &lrng_proc_type_show);
-+	return 0;
-+}
-+
-+module_init(lrng_proc_type_init);
--- 
+Stephan Mueller (12):
+  Linux Random Number Generator
+  LRNG - allocate one DRNG instance per NUMA node
+  LRNG - sysctls and /proc interface
+  LRNG - add switchable DRNG support
+  crypto: DRBG - externalize DRBG functions for LRNG
+  LRNG - add SP800-90A DRBG extension
+  LRNG - add kernel crypto API PRNG extension
+  crypto: provide access to a static Jitter RNG state
+  LRNG - add Jitter RNG fast noise source
+  LRNG - add SP800-90B compliant health tests
+  LRNG - add interface for gathering of raw entropy
+  LRNG - add power-on and runtime self-tests
+
+ MAINTAINERS                                   |   7 +
+ crypto/drbg.c                                 |  16 +-
+ crypto/jitterentropy-kcapi.c                  |   3 +-
+ crypto/jitterentropy.c                        |  25 +-
+ drivers/char/Kconfig                          |   2 +
+ drivers/char/Makefile                         |   9 +-
+ drivers/char/lrng/Kconfig                     | 203 ++++++
+ drivers/char/lrng/Makefile                    |  19 +
+ drivers/char/lrng/lrng_archrandom.c           |  92 +++
+ drivers/char/lrng/lrng_aux.c                  | 148 +++++
+ drivers/char/lrng/lrng_chacha20.c             | 317 +++++++++
+ drivers/char/lrng/lrng_chacha20.h             |  25 +
+ drivers/char/lrng/lrng_drbg.c                 | 261 ++++++++
+ drivers/char/lrng/lrng_drng.c                 | 397 +++++++++++
+ drivers/char/lrng/lrng_health.c               | 409 ++++++++++++
+ drivers/char/lrng/lrng_interfaces.c           | 622 ++++++++++++++++++
+ drivers/char/lrng/lrng_internal.h             | 305 +++++++++
+ drivers/char/lrng/lrng_jent.c                 |  87 +++
+ drivers/char/lrng/lrng_kcapi.c                | 328 +++++++++
+ drivers/char/lrng/lrng_lfsr.h                 | 152 +++++
+ drivers/char/lrng/lrng_numa.c                 | 101 +++
+ drivers/char/lrng/lrng_pool.c                 | 585 ++++++++++++++++
+ drivers/char/lrng/lrng_proc.c                 | 163 +++++
+ drivers/char/lrng/lrng_selftest.c             | 418 ++++++++++++
+ drivers/char/lrng/lrng_sw_noise.c             | 102 +++
+ drivers/char/lrng/lrng_sw_noise.h             |  57 ++
+ drivers/char/lrng/lrng_switch.c               | 179 +++++
+ drivers/char/lrng/lrng_testing.c              | 271 ++++++++
+ include/crypto/drbg.h                         |   7 +
+ .../crypto/internal}/jitterentropy.h          |   3 +
+ include/linux/lrng.h                          |  71 ++
+ 31 files changed, 5374 insertions(+), 10 deletions(-)
+ create mode 100644 drivers/char/lrng/Kconfig
+ create mode 100644 drivers/char/lrng/Makefile
+ create mode 100644 drivers/char/lrng/lrng_archrandom.c
+ create mode 100644 drivers/char/lrng/lrng_aux.c
+ create mode 100644 drivers/char/lrng/lrng_chacha20.c
+ create mode 100644 drivers/char/lrng/lrng_chacha20.h
+ create mode 100644 drivers/char/lrng/lrng_drbg.c
+ create mode 100644 drivers/char/lrng/lrng_drng.c
+ create mode 100644 drivers/char/lrng/lrng_health.c
+ create mode 100644 drivers/char/lrng/lrng_interfaces.c
+ create mode 100644 drivers/char/lrng/lrng_internal.h
+ create mode 100644 drivers/char/lrng/lrng_jent.c
+ create mode 100644 drivers/char/lrng/lrng_kcapi.c
+ create mode 100644 drivers/char/lrng/lrng_lfsr.h
+ create mode 100644 drivers/char/lrng/lrng_numa.c
+ create mode 100644 drivers/char/lrng/lrng_pool.c
+ create mode 100644 drivers/char/lrng/lrng_proc.c
+ create mode 100644 drivers/char/lrng/lrng_selftest.c
+ create mode 100644 drivers/char/lrng/lrng_sw_noise.c
+ create mode 100644 drivers/char/lrng/lrng_sw_noise.h
+ create mode 100644 drivers/char/lrng/lrng_switch.c
+ create mode 100644 drivers/char/lrng/lrng_testing.c
+ rename {crypto =3D> include/crypto/internal}/jitterentropy.h (84%)
+ create mode 100644 include/linux/lrng.h
+
+=2D-=20
 2.24.1
