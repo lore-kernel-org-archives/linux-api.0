@@ -1,45 +1,25 @@
-From: Yu Chen <yu.c.chen@intel.com>
-Subject: Re: [PATCH][RESEND v5] x86/resctrl: Add task resctrl information
- display
-Date: Fri, 10 Jan 2020 01:45:45 +0800
-Message-ID: <20200109174544.GC11490@chenyu-office.sh.intel.com>
-References: <20200109135001.10076-1-yu.c.chen@intel.com>
- <20200109142444.GB61542@chrisdown.name>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCHv8 00/34] kernel: Introduce Time Namespace
+Date: Thu, 09 Jan 2020 22:09:30 +0100
+Message-ID: <87y2ug9w1h.fsf@nanos.tec.linutronix.de>
+References: <20191112012724.250792-1-dima@arista.com> <20191121180555.GA440967@gmail.com> <CAJwJo6ahGVHHgwFsPyjbY1PgmHs+D+A2Cma03ogvQGr+mPqYAw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20200109142444.GB61542@chrisdown.name>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Chris Down <chris@chrisdown.name>
-Cc: x86@kernel.org, Thomas Gleixner <tglx@linutronix.de>, Borislav Petkov <bp@alien8.de>, Ingo Molnar <mingo@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>, Alexey Dobriyan <adobriyan@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Reinette Chatre <reinette.chatre@intel.com>, Fenghua Yu <fenghua.yu@intel.com>, Tony Luck <tony.luck@intel.com>, Michal Hocko <mhocko@suse.com>, Linus Torvalds <torvalds@linux-foundation.org>, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAJwJo6ahGVHHgwFsPyjbY1PgmHs+D+A2Cma03ogvQGr+mPqYAw@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dmitry Safonov <0x7f454c46@gmail.com>, Andy Lutomirski <luto@kernel.org>, Ingo Molnar <mingo@redhat.com>
+Cc: Dmitry Safonov <dima@arista.com>, Andrei Vagin <avagin@gmail.com>, open list <linux-kernel@vger.kernel.org>, Adrian Reber <adrian@lisas.de>, Andrei Vagin <avagin@openvz.org>, Arnd Bergmann <arnd@arndb.de>, Christian Brauner <christian.brauner@ubuntu.com>, Cyrill Gorcunov <gorcunov@openvz.org>, "Eric W. Biederman" <ebiederm@xmission.com>, "H. Peter Anvin" <hpa@zytor.com>, Jann Horn <jannh@google.com>, Jeff Dike <jdike@addtoit.com>, Oleg Nesterov <oleg@redhat.com>, Pavel Emelyanov <xemul@virtuozzo.com>, Shuah Khan <shuah@kernel.org>, Vincenzo Frascino <vincenzo.frascino@arm.com>, Linux Containers <containers@lists.linux-foundation.org>, crml <criu@openvz.org>, Linux API <linux-api@vger.kernel.org>, X86 ML <x86@kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-Hi Chris,
-On Thu, Jan 09, 2020 at 02:24:44PM +0000, Chris Down wrote:
-> Chen Yu writes:
-> > +#ifdef CONFIG_PROC_CPU_RESCTRL
-> > +
-> > +/*
-> > + * A task can only be part of one control
-> > + * group and of one monitoring group which
-> > + * is associated to that control group.
-> > + * So one line is simple and clear enough:
-> 
-> Can we please avoid using the word "control group" to describe these? It's
-> extremely confusing for readers since it's exactly the same word as used for
-> actual cgroups, especially since those are also a form of "resource
-> control"...
-> 
-> Doesn't official documentation refer to them as "resource groups" to avoid
-> this?
-Right, how abut changing change this description to:
-control group  ->   resctrl allocation group
-monitor group  ->   resctrl monitor group?
+Dmitry Safonov <0x7f454c46@gmail.com> writes:
 
-Yes, the Documentation/x86/resctrl_ui.rst described them as
-"Resource Control feature", which is composed of allocation
-and monitor, so distinguish them as above seems to be appropriate.
+> Gentle ping, in case you have time to look at this.
+
+I'm looking at it and so far I'm quite happy.
+
+Andy, Vincenco any opinions?
 
 Thanks,
-Chenyu
+
+        tglx
