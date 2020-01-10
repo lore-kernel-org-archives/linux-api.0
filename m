@@ -1,54 +1,90 @@
-From: Kurt Roeckx <kurt-burXGKnpAKGzQB+pC5nmwQ@public.gmane.org>
-Subject: Re: [PATCH v3 0/8] Rework random blocking
-Date: Fri, 10 Jan 2020 00:02:37 +0100
-Message-ID: <20200109230237.GA2992@roeckx.be>
-References: <20191226140423.GB3158@mit.edu>
- <4048434.Q8HajmOrkZ@tauon.chronox.de>
- <20191227130436.GC70060@mit.edu>
- <15817620.rmTN4T87Wr@tauon.chronox.de>
- <20191227220857.GD70060@mit.edu>
- <20200109220230.GA39185@roeckx.be>
- <20200109224011.GD41242@mit.edu>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [PATCH RFC 0/1] mount: universally disallow mounting over symlinks
+Date: Thu, 9 Jan 2020 16:08:16 -0800
+Message-ID: <CAHk-=wiq11+thoe60qhsSHk_nbRF2TRL1Wnf6eHcYObjhJmsww@mail.gmail.com>
+References: <20191230072959.62kcojxpthhdwmfa@yavin.dot.cyphar.com>
+ <20200101004324.GA11269@ZenIV.linux.org.uk> <20200101005446.GH4203@ZenIV.linux.org.uk>
+ <20200101030815.GA17593@ZenIV.linux.org.uk> <20200101144407.ugjwzk7zxrucaa6a@yavin.dot.cyphar.com>
+ <20200101234009.GB8904@ZenIV.linux.org.uk> <20200102035920.dsycgxnb6ba2jhz2@yavin.dot.cyphar.com>
+ <20200103014901.GC8904@ZenIV.linux.org.uk> <20200108031314.GE8904@ZenIV.linux.org.uk>
+ <CAHk-=wgQ3yOBuK8mxpnntD8cfX-+10ba81f86BYg8MhvwpvOMg@mail.gmail.com> <20200108213444.GF8904@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <20200109224011.GD41242-3s7WtUTddSA@public.gmane.org>
-Sender: linux-man-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: "Theodore Y. Ts'o" <tytso-3s7WtUTddSA@public.gmane.org>
-Cc: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>, Andy Lutomirski <luto-kltTT9wpgjJwATOyAt5JVQ@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, "Jason A. Donenfeld" <Jason-OnJsPKxuuEcAvxtiuMwx3w@public.gmane.org>, "Ahmed S. Darwish" <darwish.07-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Lennart Poettering <mzxreary-uLTowLwuiw4b1SvskN2V4Q@public.gmane.org>, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, "Alexander E. Patrakov" <patrakov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Michael Kerrisk <mtk.manpages-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59-1xO5oi07KQx4cg9Nei1l7Q@public.gmane.org>, Ext4 Developers List <linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-man <linux-man-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Type: text/plain; charset="UTF-8"
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200108213444.GF8904@ZenIV.linux.org.uk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Aleksa Sarai <cyphar@cyphar.com>, David Howells <dhowells@redhat.com>, Eric Biederman <ebiederm@xmission.com>, stable <stable@vger.kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>, Serge Hallyn <serge@hallyn.com>, dev@opencontainers.org, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Ian Kent <raven@themaw.net>
 List-Id: linux-api@vger.kernel.org
 
-On Thu, Jan 09, 2020 at 05:40:11PM -0500, Theodore Y. Ts'o wrote:
-> On Thu, Jan 09, 2020 at 11:02:30PM +0100, Kurt Roeckx wrote:
-> > 
-> > One thing the NIST DRBGs have is prediction resistance, which is
-> > done by reseeding. If you chain DRBGs, you tell your parent DRBG
-> > that you want prediction resistance, so your parent will also
-> > reseed. There currently is no way to tell the kernel to reseed.
-> 
-> It would be simple enough to add a new flag, perhaps GRND_RESEED, to
-> getrandom() which requests that the kernel reseed first.  This would
-> require sufficient amounts of entropy in the input pool to do the
-> reseed; if there is not enough, the getrandom() call would block until
-> there was enough.  If GRND_NONBLOCK is supplied, then getrandom()
-> would return EAGAIN if there wasn't sufficient entropy.
-> 
-> Is this what you want?
+On Wed, Jan 8, 2020 at 1:34 PM Al Viro <viro@zeniv.linux.org.uk> wrote:
+>
+> The point is, we'd never followed mounts on /proc/self/cwd et.al.
+> I hadn't checked 2.0, but 2.1.100 ('97, before any changes from me)
+> is that way.
 
-I think some people might want to see it, but I think you
-shouldn't add it.
+Hmm. If that's the case, maybe they should be marked implicitly as
+O_PATH when opened?
 
-> > I don't think we want that. As far as I know, the only reason for
-> > using /dev/random is that /dev/urandom returns data before it
-> > has sufficient entropy.
-> 
-> Is there any objections to just using getrandom(2)?
+> Actually, scratch that - 2.0 behaves the same way
+> (mountpoint crossing is done in iget() there; is that Minix influence
+> or straight from the Lions' book?)
 
-It provides the interface we want, so no. But there are still
-people who don't have it for various reasons. OpenSSL actually
-does the system call itself if libc doesn't provider a wrapper for
-it.
+I don't think I ever had access to Lions' - I've _seen_ a printout of
+it later, and obviously maybe others did,
 
+More likely it's from Maurice Bach: the Design of the Unix Operating
+System. I'm pretty sure that's where a lot of the FS layer stuff came
+from.  Certainly the bad old buffer head interfaces, and quite likely
+the iget() stuff too.
 
-Kurt
+> 0.10: forward traversal in iget(), back traversal in fs/namei.c:find_entry()
+
+Whee, you _really_ went back in time.
+
+So I did too.
+
+And looking at that code in iget(), I doubt it came from anywhere.
+Christ. It's just looping over a fixed-size array, both when finding
+the inode, and finding the superblock.
+
+Cute, but unbelievably stupid. It was a more innocent time.
+
+In other words, I think you can chalk it up to just me, because
+blaming anybody else for that garbage would be very very unfair indeed
+;)
+
+> How would your proposal deal with access("/proc/self/fd/42/foo", MAY_READ)
+> vs. faccessat(42, "foo", MAY_READ)?
+
+I think that in a perfect world, the O_PATH'ness of '42' would be the
+deciding factor. Wouldn't those be the best and most consistent
+semantics?
+
+And then 'cwd'/'root' always have the O_PATH behavior.
+
+> The latter would trigger automount,
+> the former would not...  Or would you extend that to "traverse mounts
+> upon following procfs links, if the file in question had been opened with
+> O_PATH"?
+
+Exactly.
+
+But you know what? I do not believe this is all that important, and I
+doubt it will matter to anybody.
+
+So what matters most is what makes the most sense to the VFS layer,
+and what makes the most sense to _you_.
+
+Because my reaction from this thread is that not only have you thought
+about this issue and followed the history a whole lot more than I
+would ever have done, it's also that I trust you to DTRT.
+
+I think it would be good to have some self-consistency, but at the
+same time clearly we already don't really, and our behavior here has
+subtly changed over the years (and not so subtly - if you go back
+sufficiently far, /proc behavior wrt file descriptors has had both
+"dup()" behavior and "make a new file descriptor with the same inode"
+behavior, afaik).
+
+               Linus
