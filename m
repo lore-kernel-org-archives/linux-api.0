@@ -1,79 +1,249 @@
-From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: [PATCH 4/4] mm/madvise: allow KSM hints for remote API
-Date: Fri, 10 Jan 2020 13:34:33 -0800
-Message-ID: <20200110213433.94739-5-minchan@kernel.org>
-References: <20200110213433.94739-1-minchan@kernel.org>
+From: Al Viro <viro@zeniv.linux.org.uk>
+Subject: Re: [PATCH RFC 0/1] mount: universally disallow mounting over
+ symlinks
+Date: Fri, 10 Jan 2020 23:19:45 +0000
+Message-ID: <20200110231945.GL8904@ZenIV.linux.org.uk>
+References: <20191230054413.GX4203@ZenIV.linux.org.uk>
+ <20191230054913.c5avdjqbygtur2l7@yavin.dot.cyphar.com>
+ <20191230072959.62kcojxpthhdwmfa@yavin.dot.cyphar.com>
+ <20200101004324.GA11269@ZenIV.linux.org.uk>
+ <20200101005446.GH4203@ZenIV.linux.org.uk>
+ <20200101030815.GA17593@ZenIV.linux.org.uk>
+ <20200101144407.ugjwzk7zxrucaa6a@yavin.dot.cyphar.com>
+ <20200101234009.GB8904@ZenIV.linux.org.uk>
+ <20200102035920.dsycgxnb6ba2jhz2@yavin.dot.cyphar.com>
+ <20200103014901.GC8904@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 8bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20200110213433.94739-1-minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, oleksandr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Suren Baghdasaryan <surenb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Tim Murray <timmurray-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Daniel Colascione <dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sandeep Patil <sspatil-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sonny Rao <sonnyrao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Brian Geffon <bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Shakeel Butt <shakeelb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, John Dias <joaodias-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <stable-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20200103014901.GC8904@ZenIV.linux.org.uk>
+Sender: stable-owner@vger.kernel.org
+To: Aleksa Sarai <cyphar@cyphar.com>
+Cc: David Howells <dhowells@redhat.com>, Eric Biederman <ebiederm@xmission.com>, Linus Torvalds <torvalds@linux-foundation.org>, stable@vger.kernel.org, Christian Brauner <christian.brauner@ubuntu.com>, Serge Hallyn <serge@hallyn.com>, dev@opencontainers.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, Ian Kent <raven@themaw.net>
 List-Id: linux-api@vger.kernel.org
 
-From: Oleksandr Natalenko <oleksandr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+On Fri, Jan 03, 2020 at 01:49:01AM +0000, Al Viro wrote:
+> On Thu, Jan 02, 2020 at 02:59:20PM +1100, Aleksa Sarai wrote:
+> > On 2020-01-01, Al Viro <viro@zeniv.linux.org.uk> wrote:
+> > > On Thu, Jan 02, 2020 at 01:44:07AM +1100, Aleksa Sarai wrote:
+> > > 
+> > > > Thanks, this fixes the issue for me (and also fixes another reproducer I
+> > > > found -- mounting a symlink on top of itself then trying to umount it).
+> > > > 
+> > > > Reported-by: Aleksa Sarai <cyphar@cyphar.com>
+> > > > Tested-by: Aleksa Sarai <cyphar@cyphar.com>
+> > > 
+> > > Pushed into #fixes.
+> > 
+> > Thanks. One other thing I noticed is that umount applies to the
+> > underlying symlink rather than the mountpoint on top. So, for example
+> > (using the same scripts I posted in the thread):
+> > 
+> >   # ln -s /tmp/foo link
+> >   # ./mount_to_symlink /etc/passwd link
+> >   # umount -l link # will attempt to unmount "/tmp/foo"
+> > 
+> > Is that intentional?
+> 
+> It's a mess, again in mountpoint_last().  FWIW, at some point I proposed
+> to have nd_jump_link() to fail with -ELOOP if the target was a symlink;
+> Linus asked for reasons deeper than my dislike of the semantics, I looked
+> around and hadn't spotted anything.  And there hadn't been at the time,
+> but when four months later umount_lookup_last() went in I failed to look
+> for that source of potential problems in it ;-/
 
-It all began with the fact that KSM works only on memory that is marked
-by madvise(). And the only way to get around that is to either:
+FWIW, since Ian appears to agree that we want ->d_manage() on the mount
+crossing at the end of umount(2) lookup, here's a much simpler solution -
+kill mountpoint_last() and switch to using lookup_last().  As a side
+benefit, LOOKUP_NO_REVAL also goes away.  It's possible to trim the
+things even more (path_mountpoint() is very similar to path_lookupat()
+at that point, and it's not hard to make the differences conditional on
+something like LOOKUP_UMOUNT); I would rather do that part in the
+cleanups series - the one below is easier to backport.
 
-  * use LD_PRELOAD; or
-  * patch the kernel with something like UKSM or PKSM.
+Aleksa, Ian - could you see if the patch below works for you?
 
-(i skip ptrace can of worms here intentionally)
+commit e56b43b971a7c08762fceab330a52b7245041dbc
+Author: Al Viro <viro@zeniv.linux.org.uk>
+Date:   Fri Jan 10 17:17:19 2020 -0500
 
-To overcome this restriction, lets employ a new remote madvise API. This
-can be used by some small userspace helper daemon that will do auto-KSM
-job for us.
+    reimplement path_mountpoint() with less magic
+    
+    ... and get rid of a bunch of bugs in it.  Background:
+    the reason for path_mountpoint() is that umount() really doesn't
+    want attempts to revalidate the root of what it's trying to umount.
+    The thing we want to avoid actually happen from complete_walk();
+    solution was to do something parallel to normal path_lookupat()
+    and it both went overboard and got the boilerplate subtly
+    (and not so subtly) wrong.
+    
+    A better solution is to do pretty much what the normal path_lookupat()
+    does, but instead of complete_walk() do unlazy_walk().  All it takes
+    to avoid that ->d_weak_revalidate() call...  mountpoint_last() goes
+    away, along with everything it got wrong, and so does the magic around
+    LOOKUP_NO_REVAL.
+    
+    Another source of bugs is that when we traverse mounts at the final
+    location (and we need to do that - umount . expects to get whatever's
+    overmounting ., if any, out of the lookup) we really ought to take
+    care of ->d_manage() - as it is, manual umount of autofs automount
+    in progress can lead to unpleasant surprises for the daemon.  Easily
+    solved by using handle_lookup_down() instead of follow_mount().
+    
+    Signed-off-by: Al Viro <viro@zeniv.linux.org.uk>
 
-I think of two major consumers of remote KSM hints:
-
-  * hosts, that run containers, especially similar ones and especially in
-    a trusted environment, sharing the same runtime like Node.js;
-
-  * heavy applications, that can be run in multiple instances, not
-    limited to opensource ones like Firefox, but also those that cannot be
-    modified since they are binary-only and, maybe, statically linked.
-
-Speaking of statistics, more numbers can be found in the very first
-submission, that is related to this one [1]. For my current setup with
-two Firefox instances I get 100 to 200 MiB saved for the second instance
-depending on the amount of tabs.
-
-1 FF instance with 15 tabs:
-
-   $ echo "$(cat /sys/kernel/mm/ksm/pages_sharing) * 4 / 1024" | bc
-   410
-
-2 FF instances, second one has 12 tabs (all the tabs are different):
-
-   $ echo "$(cat /sys/kernel/mm/ksm/pages_sharing) * 4 / 1024" | bc
-   592
-
-At the very moment I do not have specific numbers for containerised
-workload, but those should be comparable in case the containers share
-similar/same runtime.
-
-[1] https://lore.kernel.org/patchwork/patch/1012142/
-
-Signed-off-by: Oleksandr Natalenko <oleksandr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Signed-off-by: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
----
- mm/madvise.c | 2 ++
- 1 file changed, 2 insertions(+)
-
-diff --git a/mm/madvise.c b/mm/madvise.c
-index eb42b2b7f49b..3aa9aec6bfd9 100644
---- a/mm/madvise.c
-+++ b/mm/madvise.c
-@@ -1000,6 +1000,8 @@ process_madvise_behavior_valid(int behavior)
- 	switch (behavior) {
- 	case MADV_COLD:
- 	case MADV_PAGEOUT:
-+	case MADV_MERGEABLE:
-+	case MADV_UNMERGEABLE:
- 		return true;
- 	default:
- 		return false;
--- 
-2.25.0.rc1.283.g88dfdc4193-goog
+diff --git a/fs/namei.c b/fs/namei.c
+index d6c91d1e88cb..1793661c3342 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -1649,17 +1649,15 @@ static struct dentry *__lookup_slow(const struct qstr *name,
+ 	if (IS_ERR(dentry))
+ 		return dentry;
+ 	if (unlikely(!d_in_lookup(dentry))) {
+-		if (!(flags & LOOKUP_NO_REVAL)) {
+-			int error = d_revalidate(dentry, flags);
+-			if (unlikely(error <= 0)) {
+-				if (!error) {
+-					d_invalidate(dentry);
+-					dput(dentry);
+-					goto again;
+-				}
++		int error = d_revalidate(dentry, flags);
++		if (unlikely(error <= 0)) {
++			if (!error) {
++				d_invalidate(dentry);
+ 				dput(dentry);
+-				dentry = ERR_PTR(error);
++				goto again;
+ 			}
++			dput(dentry);
++			dentry = ERR_PTR(error);
+ 		}
+ 	} else {
+ 		old = inode->i_op->lookup(inode, dentry, flags);
+@@ -2618,72 +2616,6 @@ int user_path_at_empty(int dfd, const char __user *name, unsigned flags,
+ EXPORT_SYMBOL(user_path_at_empty);
+ 
+ /**
+- * mountpoint_last - look up last component for umount
+- * @nd:   pathwalk nameidata - currently pointing at parent directory of "last"
+- *
+- * This is a special lookup_last function just for umount. In this case, we
+- * need to resolve the path without doing any revalidation.
+- *
+- * The nameidata should be the result of doing a LOOKUP_PARENT pathwalk. Since
+- * mountpoints are always pinned in the dcache, their ancestors are too. Thus,
+- * in almost all cases, this lookup will be served out of the dcache. The only
+- * cases where it won't are if nd->last refers to a symlink or the path is
+- * bogus and it doesn't exist.
+- *
+- * Returns:
+- * -error: if there was an error during lookup. This includes -ENOENT if the
+- *         lookup found a negative dentry.
+- *
+- * 0:      if we successfully resolved nd->last and found it to not to be a
+- *         symlink that needs to be followed.
+- *
+- * 1:      if we successfully resolved nd->last and found it to be a symlink
+- *         that needs to be followed.
+- */
+-static int
+-mountpoint_last(struct nameidata *nd)
+-{
+-	int error = 0;
+-	struct dentry *dir = nd->path.dentry;
+-	struct path path;
+-
+-	/* If we're in rcuwalk, drop out of it to handle last component */
+-	if (nd->flags & LOOKUP_RCU) {
+-		if (unlazy_walk(nd))
+-			return -ECHILD;
+-	}
+-
+-	nd->flags &= ~LOOKUP_PARENT;
+-
+-	if (unlikely(nd->last_type != LAST_NORM)) {
+-		error = handle_dots(nd, nd->last_type);
+-		if (error)
+-			return error;
+-		path.dentry = dget(nd->path.dentry);
+-	} else {
+-		path.dentry = d_lookup(dir, &nd->last);
+-		if (!path.dentry) {
+-			/*
+-			 * No cached dentry. Mounted dentries are pinned in the
+-			 * cache, so that means that this dentry is probably
+-			 * a symlink or the path doesn't actually point
+-			 * to a mounted dentry.
+-			 */
+-			path.dentry = lookup_slow(&nd->last, dir,
+-					     nd->flags | LOOKUP_NO_REVAL);
+-			if (IS_ERR(path.dentry))
+-				return PTR_ERR(path.dentry);
+-		}
+-	}
+-	if (d_flags_negative(smp_load_acquire(&path.dentry->d_flags))) {
+-		dput(path.dentry);
+-		return -ENOENT;
+-	}
+-	path.mnt = nd->path.mnt;
+-	return step_into(nd, &path, 0, d_backing_inode(path.dentry), 0);
+-}
+-
+-/**
+  * path_mountpoint - look up a path to be umounted
+  * @nd:		lookup context
+  * @flags:	lookup flags
+@@ -2699,14 +2631,17 @@ path_mountpoint(struct nameidata *nd, unsigned flags, struct path *path)
+ 	int err;
+ 
+ 	while (!(err = link_path_walk(s, nd)) &&
+-		(err = mountpoint_last(nd)) > 0) {
++		(err = lookup_last(nd)) > 0) {
+ 		s = trailing_symlink(nd);
+ 	}
++	if (!err)
++		err = unlazy_walk(nd);
++	if (!err)
++		err = handle_lookup_down(nd);
+ 	if (!err) {
+ 		*path = nd->path;
+ 		nd->path.mnt = NULL;
+ 		nd->path.dentry = NULL;
+-		follow_mount(path);
+ 	}
+ 	terminate_walk(nd);
+ 	return err;
+diff --git a/fs/nfs/nfstrace.h b/fs/nfs/nfstrace.h
+index f64a33d2a1d1..2a82dcce5fc1 100644
+--- a/fs/nfs/nfstrace.h
++++ b/fs/nfs/nfstrace.h
+@@ -206,7 +206,6 @@ TRACE_DEFINE_ENUM(LOOKUP_AUTOMOUNT);
+ TRACE_DEFINE_ENUM(LOOKUP_PARENT);
+ TRACE_DEFINE_ENUM(LOOKUP_REVAL);
+ TRACE_DEFINE_ENUM(LOOKUP_RCU);
+-TRACE_DEFINE_ENUM(LOOKUP_NO_REVAL);
+ TRACE_DEFINE_ENUM(LOOKUP_OPEN);
+ TRACE_DEFINE_ENUM(LOOKUP_CREATE);
+ TRACE_DEFINE_ENUM(LOOKUP_EXCL);
+@@ -224,7 +223,6 @@ TRACE_DEFINE_ENUM(LOOKUP_DOWN);
+ 			{ LOOKUP_PARENT, "PARENT" }, \
+ 			{ LOOKUP_REVAL, "REVAL" }, \
+ 			{ LOOKUP_RCU, "RCU" }, \
+-			{ LOOKUP_NO_REVAL, "NO_REVAL" }, \
+ 			{ LOOKUP_OPEN, "OPEN" }, \
+ 			{ LOOKUP_CREATE, "CREATE" }, \
+ 			{ LOOKUP_EXCL, "EXCL" }, \
+diff --git a/include/linux/namei.h b/include/linux/namei.h
+index 7fe7b87a3ded..07bfb0874033 100644
+--- a/include/linux/namei.h
++++ b/include/linux/namei.h
+@@ -34,7 +34,6 @@ enum {LAST_NORM, LAST_ROOT, LAST_DOT, LAST_DOTDOT, LAST_BIND};
+ 
+ /* internal use only */
+ #define LOOKUP_PARENT		0x0010
+-#define LOOKUP_NO_REVAL		0x0080
+ #define LOOKUP_JUMPED		0x1000
+ #define LOOKUP_ROOT		0x2000
+ #define LOOKUP_ROOT_GRABBED	0x0008
