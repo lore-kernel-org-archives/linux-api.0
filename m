@@ -1,71 +1,133 @@
 From: Randy Dunlap <rdunlap@infradead.org>
-Subject: Re: [PATCH v27 12/12] LRNG - add power-on and runtime self-tests
-Date: Thu, 9 Jan 2020 16:22:51 -0800
-Message-ID: <2f225250-c1e1-c6e1-026c-9c63853ab7d1@infradead.org>
+Subject: Re: [PATCH v27 09/12] LRNG - add Jitter RNG fast noise source
+Date: Thu, 9 Jan 2020 16:24:47 -0800
+Message-ID: <0ba976fa-fed1-4720-c039-043160dbce9e@infradead.org>
 References: <6157374.ptSnyUpaCn@positron.chronox.de>
  <2722222.P16TYeLAVu@positron.chronox.de>
  <2641155.iNH938UiKq@positron.chronox.de>
- <2355906.JbblJTOqSk@positron.chronox.de>
+ <6341883.UacF4FzDma@positron.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <2355906.JbblJTOqSk@positron.chronox.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <6341883.UacF4FzDma@positron.chronox.de>
 Content-Language: en-US
-Sender: linux-crypto-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 To: =?UTF-8?Q?Stephan_M=c3=bcller?= <smueller@chronox.de>, Arnd Bergmann <arnd@arndb.de>
 Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@suse.de>, "Peter, Matthias" <matth>
 List-Id: linux-api@vger.kernel.org
 
 Hi,
 
-On 1/9/20 12:35 AM, Stephan Müller wrote:
+On 1/9/20 12:34 AM, Stephan Müller wrote:
 
 > ---
->  drivers/char/lrng/Kconfig         |  25 ++
->  drivers/char/lrng/Makefile        |   1 +
->  drivers/char/lrng/lrng_selftest.c | 418 ++++++++++++++++++++++++++++++
->  3 files changed, 444 insertions(+)
->  create mode 100644 drivers/char/lrng/lrng_selftest.c
+>  drivers/char/lrng/Kconfig     | 11 +++++
+>  drivers/char/lrng/Makefile    |  1 +
+>  drivers/char/lrng/lrng_jent.c | 87 +++++++++++++++++++++++++++++++++++
+>  3 files changed, 99 insertions(+)
+>  create mode 100644 drivers/char/lrng/lrng_jent.c
 > 
-> diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-> index 394066aa5a86..e9827e7df715 100644
-> --- a/drivers/char/lrng/Kconfig
-> +++ b/drivers/char/lrng/Kconfig
-> @@ -175,4 +175,29 @@ config LRNG_TESTING
->  
->  	  If unsure, say N.
->  
-> +config LRNG_SELFTEST
-> +	bool "Enable power-on and on-demand self-tests"
-> +	help
-> +	  The power-on self tests are executed during boot time
 
-	               self-tests
+> diff --git a/drivers/char/lrng/lrng_jent.c b/drivers/char/lrng/lrng_jent.c
+> new file mode 100644
+> index 000000000000..97c0d192e9c8
+> --- /dev/null
+> +++ b/drivers/char/lrng/lrng_jent.c
+> @@ -0,0 +1,87 @@
+> +// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
+> +/*
+> + * LRNG Fast Noise Source: Jitter RNG
+> + *
+> + * Copyright (C) 2016 - 2020, Stephan Mueller <smueller@chronox.de>
+> + */
+> +
+> +#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+> +
+> +#include <linux/types.h>
+> +#include <crypto/internal/jitterentropy.h>
+> +
+> +#include "lrng_internal.h"
+> +
+> +/*
+> + * Estimated entropy of data is a 16th of LRNG_DRNG_SECURITY_STRENGTH_BITS.
+> + * Albeit a full entropy assessment is provided for the noise source indicating
+> + * that it provides high entropy rates and considering that it deactivates
+> + * when it detects insufficient hardware, the chosen under estimation of
+> + * entropy is considered to be acceptable to all reviewers.
+> + */
+> +static u32 jitterrng = LRNG_DRNG_SECURITY_STRENGTH_BITS>>4;
+> +module_param(jitterrng, uint, 0644);
+> +MODULE_PARM_DESC(jitterrng, "Entropy in bits of 256 data bits from Jitter "
+> +			    "RNG noise source");
+> +
+> +/**
+> + * Get Jitter RNG entropy
+> + *
+> + * @outbuf buffer to store entropy
+> + * @outbuflen length of buffer
+> + * @return > 0 on success where value provides the added entropy in bits
+> + *	   0 if no fast source was available
+> + */
 
-> +	  covering the ChaCha20 DRNG, the LFSR processing and the
-> +	  time stamp management of the LRNG.
-> +
-> +	  The on-demand self-tests are triggered by writing any
-> +	  value into the SysFS file selftest_status. At the same
-> +	  time, when reading this file, the test status is
-> +	  returned. A zero indicates that all tests were executed
-> +	  successfully.
-> +
-> +	  If unsure, say Y.
-> +
-> +if LRNG_SELFTEST
-> +
-> +config LRNG_SELFTEST_PANIC
-> +	bool "Panic the kernel upon self-test failure"
-> +	help
-> +	  If the option is enabled, the kernel is terminated if an
-> +	  LRNG power-on self-test failure is detected.
-> +
-> +endif # LRNG_SELFTEST
-> +
->  endif # LRNG
+Don't begin the comment block with /**
+or convert it to Linux kernel-doc notation format.
 
+> +static struct rand_data *lrng_jent_state;
+> +
+> +u32 lrng_get_jent(u8 *outbuf, unsigned int outbuflen)
+> +{
+> +	int ret;
+> +	u32 ent_bits = jitterrng;
+> +	unsigned long flags;
+> +	static DEFINE_SPINLOCK(lrng_jent_lock);
+> +	static int lrng_jent_initialized = 0;
+> +
+> +	spin_lock_irqsave(&lrng_jent_lock, flags);
+> +
+> +	if (!ent_bits || (lrng_jent_initialized == -1)) {
+> +		spin_unlock_irqrestore(&lrng_jent_lock, flags);
+> +		return 0;
+> +	}
+> +
+> +	if (!lrng_jent_initialized) {
+> +		lrng_jent_state = jent_lrng_entropy_collector();
+> +		if (!lrng_jent_state) {
+> +			jitterrng = 0;
+> +			lrng_jent_initialized = -1;
+> +			spin_unlock_irqrestore(&lrng_jent_lock, flags);
+> +			pr_info("Jitter RNG unusable on current system\n");
+> +			return 0;
+> +		}
+> +		lrng_jent_initialized = 1;
+> +		pr_debug("Jitter RNG working on current system\n");
+> +	}
+> +	ret = jent_read_entropy(lrng_jent_state, outbuf, outbuflen);
+> +	spin_unlock_irqrestore(&lrng_jent_lock, flags);
+> +
+> +	if (ret) {
+> +		pr_debug("Jitter RNG failed with %d\n", ret);
+> +		return 0;
+> +	}
+> +
+> +	/* Obtain entropy statement */
+> +	if (outbuflen != LRNG_DRNG_SECURITY_STRENGTH_BYTES)
+> +		ent_bits = (ent_bits * outbuflen<<3) /
+> +			   LRNG_DRNG_SECURITY_STRENGTH_BITS;
+> +	/* Cap entropy to buffer size in bits */
+> +	ent_bits = min_t(u32, ent_bits, outbuflen<<3);
+> +	pr_debug("obtained %u bits of entropy from Jitter RNG noise source\n",
+> +		 ent_bits);
+> +
+> +	return ent_bits;
+> +}
+> +
+> +u32 lrng_jent_entropylevel(void)
+> +{
+> +	return min_t(u32, jitterrng, LRNG_DRNG_SECURITY_STRENGTH_BITS);
+> +}
+> 
 
+thanks.
 -- 
 ~Randy
