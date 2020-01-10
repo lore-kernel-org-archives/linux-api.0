@@ -1,310 +1,145 @@
-From: Ian Kent <raven@themaw.net>
-Subject: Re: [PATCH RFC 0/1] mount: universally disallow mounting over
- symlinks
-Date: Fri, 10 Jan 2020 14:20:55 +0800
-Message-ID: <979cf680b0fbdce515293a3449d564690cde6a3f.camel@themaw.net>
-References: <20200101005446.GH4203@ZenIV.linux.org.uk>
-         <20200101030815.GA17593@ZenIV.linux.org.uk>
-         <20200101144407.ugjwzk7zxrucaa6a@yavin.dot.cyphar.com>
-         <20200101234009.GB8904@ZenIV.linux.org.uk>
-         <20200102035920.dsycgxnb6ba2jhz2@yavin.dot.cyphar.com>
-         <20200103014901.GC8904@ZenIV.linux.org.uk>
-         <20200108031314.GE8904@ZenIV.linux.org.uk>
-         <CAHk-=wgQ3yOBuK8mxpnntD8cfX-+10ba81f86BYg8MhvwpvOMg@mail.gmail.com>
-         <20200108213444.GF8904@ZenIV.linux.org.uk>
-         <CAHk-=wiq11+thoe60qhsSHk_nbRF2TRL1Wnf6eHcYObjhJmsww@mail.gmail.com>
-         <20200110041523.GK8904@ZenIV.linux.org.uk>
+From: Stephan Mueller <smueller@chronox.de>
+Subject: Re: [PATCH v27 09/12] LRNG - add Jitter RNG fast noise source
+Date: Fri, 10 Jan 2020 08:45:22 +0100
+Message-ID: <3881936.EWlHz54Di6@tauon.chronox.de>
+References: <6157374.ptSnyUpaCn@positron.chronox.de> <6341883.UacF4FzDma@positron.chronox.de> <0ba976fa-fed1-4720-c039-043160dbce9e@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20200110041523.GK8904@ZenIV.linux.org.uk>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Al Viro <viro@zeniv.linux.org.uk>, Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Aleksa Sarai <cyphar@cyphar.com>, David Howells <dhowells@redhat.com>, Eric Biederman <ebiederm@xmission.com>, stable <stable@vger.kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>, Serge Hallyn <serge@hallyn.com>, dev@opencontainers.org, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-crypto-owner@vger.kernel.org>
+In-Reply-To: <0ba976fa-fed1-4720-c039-043160dbce9e@infradead.org>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Randy Dunlap <rdunlap@infradead.org>
+Cc: Arnd Bergmann <arnd@arndb.de>, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@sus>
 List-Id: linux-api@vger.kernel.org
 
-On Fri, 2020-01-10 at 04:15 +0000, Al Viro wrote:
-> On Thu, Jan 09, 2020 at 04:08:16PM -0800, Linus Torvalds wrote:
-> > On Wed, Jan 8, 2020 at 1:34 PM Al Viro <viro@zeniv.linux.org.uk>
-> > wrote:
-> > > The point is, we'd never followed mounts on /proc/self/cwd et.al.
-> > > I hadn't checked 2.0, but 2.1.100 ('97, before any changes from
-> > > me)
-> > > is that way.
-> > 
-> > Hmm. If that's the case, maybe they should be marked implicitly as
-> > O_PATH when opened?
-> 
-> I thought you wanted O_PATH as starting point to have mounts
-> traversed?
-> Confused...
-> 
-> > > Actually, scratch that - 2.0 behaves the same way
-> > > (mountpoint crossing is done in iget() there; is that Minix
-> > > influence
-> > > or straight from the Lions' book?)
-> > 
-> > I don't think I ever had access to Lions' - I've _seen_ a printout
-> > of
-> > it later, and obviously maybe others did,
-> > 
-> > More likely it's from Maurice Bach: the Design of the Unix
-> > Operating
-> > System. I'm pretty sure that's where a lot of the FS layer stuff
-> > came
-> > from.  Certainly the bad old buffer head interfaces, and quite
-> > likely
-> > the iget() stuff too.
-> > 
-> > > 0.10: forward traversal in iget(), back traversal in
-> > > fs/namei.c:find_entry()
-> > 
-> > Whee, you _really_ went back in time.
-> > 
-> > So I did too.
-> > 
-> > And looking at that code in iget(), I doubt it came from anywhere.
-> > Christ. It's just looping over a fixed-size array, both when
-> > finding
-> > the inode, and finding the superblock.
-> > 
-> > Cute, but unbelievably stupid. It was a more innocent time.
-> > 
-> > In other words, I think you can chalk it up to just me, because
-> > blaming anybody else for that garbage would be very very unfair
-> > indeed
-> > ;)
-> 
-> See 
-> https://minnie.tuhs.org/cgi-bin/utree.pl?file=V7/usr/sys/sys/iget.c
-> Exactly the same algorithm, complete with linear searches over those
-> fixed-sized array.
-> 
-> <grabs Bach> Right, he simply transcribes v7 iget().
-> 
-> So I suspect that you are right - your variant of iget was pretty
-> much
-> one-to-one implementation of Bach's description of v7 iget.
-> 
-> Your namei wasn't - Bach has 'if the entry points to root and you are
-> in the root and name is "..", find mount table entry (by device
-> number),
-> drop your directory inode, grab the inode of mountpount and restart
-> the search for ".." in there', which gives back traversals to
-> arbitrary
-> depth.  And v7 namei() (as Bach mentions) uses iget() for starting
-> point
-> as well as for each component.  You kept pointers instead, which is
-> where
-> the other difference has come from (no mount traversal at the
-> starting
-> point)...
-> 
-> Actually, I've misread your code in 0.10 - it does unlimited forward
-> traversals; it's back traversals that go only one level.  The forward
-> ones got limited to one level in 0.95, but then mount-over-root had
-> been banned all along.  I'd read the pre-dcache variant of iget(),
-> seen it go pretty much all the way back to beginning and hadn't
-> sorted out the 0.12 -> 0.95 transition...
-> 
-> > > How would your proposal deal with access("/proc/self/fd/42/foo",
-> > > MAY_READ)
-> > > vs. faccessat(42, "foo", MAY_READ)?
-> > 
-> > I think that in a perfect world, the O_PATH'ness of '42' would be
-> > the
-> > deciding factor. Wouldn't those be the best and most consistent
-> > semantics?
-> > 
-> > And then 'cwd'/'root' always have the O_PATH behavior.
-> 
-> See above - unless I'm misparsing you, you wanted mount traversals in
-> the
-> starting point if it's ...at() with O_PATH fd.  With O_PATH open()
-> not
-> doing them.
-> 
-> For cwd and root the situation is opposite - we do NOT traverse
-> mounts
-> for those.  And that's really too late to change.
-> 
-> > > The latter would trigger automount,
-> > > the former would not...  Or would you extend that to "traverse
-> > > mounts
-> > > upon following procfs links, if the file in question had been
-> > > opened with
-> > > O_PATH"?
-> > 
-> > Exactly.
-> > 
-> > But you know what? I do not believe this is all that important, and
-> > I
-> > doubt it will matter to anybody.
-> 
-> FWIW, digging through the automount-related parts of that stuff has
-> caught several fun issues.  One (and I'm rather embarrassed by it)
-> should've been caught back in commit 8aef18845266 (VFS: Fix vfsmount
-> overput on simultaneous automount).  To quote the commit message:
->     The problem is that lock_mount() drops the caller's reference to
-> the
->     mountpoint's vfsmount in the case where it finds something
-> already mounted on
->     the mountpoint as it transits to the mounted filesystem and
-> replaces path->mnt
->     with the new mountpoint vfsmount.
->     
->     During a pathwalk, however, we don't take a reference on the
-> vfsmount if it is
->     the same as the one in the nameidata struct, but do_add_mount()
-> doesn't know
->     this.
-> At which point I should've gone "what the fuck?" - lock_mount() does,
-> indeed,
-> drop path->mnt in this situation and replaces it with the whatever's
-> come to
-> cover it.  For mount(2) that's the right thing to do - we _want_ to
-> mount
-> on top of whatever we have at the mountpoint.  For automounts we very
-> much
-> don't want that - it's either "mount right on top of the automount
-> trigger"
-> or discard whatever we'd been about to mount and walk into whatever's
-> got
-> mounted there (presumably the same thing triggered by another
-> process).
-> We kinda-sorta get that effect, but in a very convoluted way:
-> do_add_mount()
-> will refuse to mount something on top of itself -
->         /* Refuse the same filesystem on the same mount point */
->         err = -EBUSY;
->         if (path->mnt->mnt_sb == newmnt->mnt.mnt_sb &&
->             path->mnt->mnt_root == path->dentry)
->                 goto unlock;
-> which will end up with -EBUSY returned (and recognized by
-> follow_automount()).
-> 
-> First of all, that's unreliable.  If somebody not only has triggered
-> that
-> automount, but managed to _mount_ something else on top (for example,
-> has triggered it by lookup of mountpoint-to-be in mount(2)), we'll
-> end
-> up not triggering that check.  In which case we'll get something like
-> nfs referral point under nfs automounted there under tmpfs from
-> explicit
-> overmount under same nfs mount we'd automounted there - identical to
-> what's
-> been buried under tmpfs.  It's hard to hit, but not impossibly so.
-> 
-> What's more, the whole solution is a kludge - the root of problem is
-> that lock_mount() is the wrong thing to do in case of
-> finish_automount().
-> We don't want to go into whatever's overmounting us there, both for
-> the reasons above *and* because it's a PITA for the caller.  So the
-> right solution is
-> 	* lift lock_mount() call from do_add_mount() into its callers
-> (all 2 of them); while we are at it, lift unlock_mount() as well
-> (makes for simpler failure exits in do_add_mount()).
-> 	* replace the call of lock_mount() in finish_automount()
-> with variant that doesn't do "unlock, walk deeper and retry locking",
-> returning ERR_PTR(-EBUSY) in such case.
-> 	* get rid of the kludge introduced in that commit.  Better
-> yet, don't bother with traversing into the covering mount in case
-> of success - let the caller of follow_automount() do that.  Which
-> eliminates the need to pass need_mntput to the sucker and suggests
-> an even better solution - have this analogue of lock_mount()
-> return NULL instead of ERR_PTR(-EBUSY) and treat it in
-> finish_automount()
-> as "OK, discard what we wanted to mount and return 0".  That gets
-> rid of the entire
->         err = finish_automount(mnt, path);
->         switch (err) {
->         case -EBUSY:
->                 /* Someone else made a mount here whilst we were busy
-> */
->                 return 0;
->         case 0:
->                 path_put(path);
->                 path->mnt = mnt;
->                 path->dentry = dget(mnt->mnt_root);
->                 return 0;
->         default:
->                 return err;
->         }
-> chunk in follow_automount() - it would just be
-> 	return finish_automount(mnt, path);
-> 
-> Another thing (in the same area) is not a bug per se, but...
-> after the call of ->d_automount() we have this:
->         if (IS_ERR(mnt)) {
->                 /*
->                  * The filesystem is allowed to return -EISDIR here
-> to indicate
->                  * it doesn't want to automount.  For instance,
-> autofs would do
->                  * this so that its userspace daemon can mount on
-> this dentry.
->                  *
->                  * However, we can only permit this if it's a
-> terminal point in
->                  * the path being looked up; if it wasn't then the
-> remainder of
->                  * the path is inaccessible and we should say so.
->                  */
->                 if (PTR_ERR(mnt) == -EISDIR && (nd->flags &
-> LOOKUP_PARENT))
->                         return -EREMOTE;
->                 return PTR_ERR(mnt);
-> 	}
-> Except that not a single instance of ->d_automount() has ever
-> returned
-> -EISDIR.  Certainly not autofs one, despite the what the comment
-> says.
-> That chunk has come from dhowells, back when the whole mount trap
-> series
-> had been merged.  After talking that thing over (fun: trying to
-> figure
-> out what had been intended nearly 9 years ago, when people involved
-> are
-> in UK, US east coast and AU west coast respectively.  The only way it
-> could suck more would've been if I were on the west coast - then all
-> timezone deltas would be 8-hour ones)...  looks like it's a rudiment
-> of plans that got superseded during the series development, nobody
-> quite remembers exact details.  Conclusion: it's not even dead, it's
-> stillborn; bury it.
+Am Freitag, 10. Januar 2020, 01:24:47 CET schrieb Randy Dunlap:
 
-Yeah, autofs ->d_automount() doesn't return -EISDIR, by the time
-we get there it's not relevant any more, so that check looks
-redundant. I'm not aware of any other fs automount implementation
-that needs that EISDIR pass-thru function.
+Hi Randy,
 
-I didn't notice it at the time of the merge, sorry about that.
+> Hi,
+>=20
+> On 1/9/20 12:34 AM, Stephan M=FCller wrote:
+> > ---
+> >=20
+> >  drivers/char/lrng/Kconfig     | 11 +++++
+> >  drivers/char/lrng/Makefile    |  1 +
+> >  drivers/char/lrng/lrng_jent.c | 87 +++++++++++++++++++++++++++++++++++
+> >  3 files changed, 99 insertions(+)
+> >  create mode 100644 drivers/char/lrng/lrng_jent.c
+> >=20
+> > diff --git a/drivers/char/lrng/lrng_jent.c b/drivers/char/lrng/lrng_jen=
+t.c
+> > new file mode 100644
+> > index 000000000000..97c0d192e9c8
+> > --- /dev/null
+> > +++ b/drivers/char/lrng/lrng_jent.c
+> > @@ -0,0 +1,87 @@
+> > +// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
+> > +/*
+> > + * LRNG Fast Noise Source: Jitter RNG
+> > + *
+> > + * Copyright (C) 2016 - 2020, Stephan Mueller <smueller@chronox.de>
+> > + */
+> > +
+> > +#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+> > +
+> > +#include <linux/types.h>
+> > +#include <crypto/internal/jitterentropy.h>
+> > +
+> > +#include "lrng_internal.h"
+> > +
+> > +/*
+> > + * Estimated entropy of data is a 16th of
+> > LRNG_DRNG_SECURITY_STRENGTH_BITS. + * Albeit a full entropy assessment =
+is
+> > provided for the noise source indicating + * that it provides high
+> > entropy rates and considering that it deactivates + * when it detects
+> > insufficient hardware, the chosen under estimation of + * entropy is
+> > considered to be acceptable to all reviewers.
+> > + */
+> > +static u32 jitterrng =3D LRNG_DRNG_SECURITY_STRENGTH_BITS>>4;
+> > +module_param(jitterrng, uint, 0644);
+> > +MODULE_PARM_DESC(jitterrng, "Entropy in bits of 256 data bits from Jit=
+ter
+> > " +			    "RNG noise source");
+> > +
+> > +/**
+> > + * Get Jitter RNG entropy
+> > + *
+> > + * @outbuf buffer to store entropy
+> > + * @outbuflen length of buffer
+> > + * @return > 0 on success where value provides the added entropy in bi=
+ts
+> > + *	   0 if no fast source was available
+> > + */
+>=20
+> Don't begin the comment block with /**
+> or convert it to Linux kernel-doc notation format.
 
-While we're at it that:
-   if (!path->dentry->d_op || !path->dentry->d_op->d_automount)
-       return -EREMOTE;
+Yes, the colons are missing and there is no @return. It will be fixed with =
+the=20
+next patch set.
 
-at the top of follow_automount() isn't going to be be relevant
-for autofs because ->d_automount() really must always be defined
-for it.
+Thank you.
+>=20
+> > +static struct rand_data *lrng_jent_state;
+> > +
+> > +u32 lrng_get_jent(u8 *outbuf, unsigned int outbuflen)
+> > +{
+> > +	int ret;
+> > +	u32 ent_bits =3D jitterrng;
+> > +	unsigned long flags;
+> > +	static DEFINE_SPINLOCK(lrng_jent_lock);
+> > +	static int lrng_jent_initialized =3D 0;
+> > +
+> > +	spin_lock_irqsave(&lrng_jent_lock, flags);
+> > +
+> > +	if (!ent_bits || (lrng_jent_initialized =3D=3D -1)) {
+> > +		spin_unlock_irqrestore(&lrng_jent_lock, flags);
+> > +		return 0;
+> > +	}
+> > +
+> > +	if (!lrng_jent_initialized) {
+> > +		lrng_jent_state =3D jent_lrng_entropy_collector();
+> > +		if (!lrng_jent_state) {
+> > +			jitterrng =3D 0;
+> > +			lrng_jent_initialized =3D -1;
+> > +			spin_unlock_irqrestore(&lrng_jent_lock, flags);
+> > +			pr_info("Jitter RNG unusable on current system\n");
+> > +			return 0;
+> > +		}
+> > +		lrng_jent_initialized =3D 1;
+> > +		pr_debug("Jitter RNG working on current system\n");
+> > +	}
+> > +	ret =3D jent_read_entropy(lrng_jent_state, outbuf, outbuflen);
+> > +	spin_unlock_irqrestore(&lrng_jent_lock, flags);
+> > +
+> > +	if (ret) {
+> > +		pr_debug("Jitter RNG failed with %d\n", ret);
+> > +		return 0;
+> > +	}
+> > +
+> > +	/* Obtain entropy statement */
+> > +	if (outbuflen !=3D LRNG_DRNG_SECURITY_STRENGTH_BYTES)
+> > +		ent_bits =3D (ent_bits * outbuflen<<3) /
+> > +			   LRNG_DRNG_SECURITY_STRENGTH_BITS;
+> > +	/* Cap entropy to buffer size in bits */
+> > +	ent_bits =3D min_t(u32, ent_bits, outbuflen<<3);
+> > +	pr_debug("obtained %u bits of entropy from Jitter RNG noise source\n",
+> > +		 ent_bits);
+> > +
+> > +	return ent_bits;
+> > +}
+> > +
+> > +u32 lrng_jent_entropylevel(void)
+> > +{
+> > +	return min_t(u32, jitterrng, LRNG_DRNG_SECURITY_STRENGTH_BITS);
+> > +}
+>=20
+> thanks.
 
-But, at the time of the merge, I didn't object to it because
-there were (are) other file systems that use the VFS automount
-function which may accidentally not define the method.
 
-> 
-> Unfortunately, there are other interesting questions related to
-> autofs-specific bits (->d_manage()) and the timezone-related fun
-> is, of course, still there.  I hope to sort that out today or
-> tomorrow, at least enough to do a reasonable set of backportable
-> fixes to put in front of follow_managed()/step_into() queue.
-> Oh, well...
 
-Yeah, I know it slows you down but I kink-off like having a chance
-to look at what's going and think about your questions before trying
-to answer them, rather than replying prematurely, as I usually do ...
-
-It's been a bit of a busy day so far but I'm getting to look into
-the questions you've asked.
-
-Ian
+Ciao
+Stephan
