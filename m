@@ -1,28 +1,59 @@
-From: Rick Schaech <cathben72-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Subject: I wait for your swift response,
-Date: Mon, 13 Jan 2020 01:52:24 -0400
-Message-ID: <CAEcBxO=TAnFn5LzizHa22hUC0Db5FuiZJF28m=yX3_9m--jRqg__15369.5634611481$1578894873$gmane$org@mail.gmail.com>
-Reply-To: rickschaech-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+From: Ian Kent <raven@themaw.net>
+Subject: Re: [PATCH RFC 0/1] mount: universally disallow mounting over
+ symlinks
+Date: Mon, 13 Jan 2020 14:00:28 +0800
+Message-ID: <41c535d689530f3715f21cd25074eb61e825a5f6.camel@themaw.net>
+References: <20191230072959.62kcojxpthhdwmfa@yavin.dot.cyphar.com>
+         <20200101004324.GA11269@ZenIV.linux.org.uk>
+         <20200101005446.GH4203@ZenIV.linux.org.uk>
+         <20200101030815.GA17593@ZenIV.linux.org.uk>
+         <20200101144407.ugjwzk7zxrucaa6a@yavin.dot.cyphar.com>
+         <20200101234009.GB8904@ZenIV.linux.org.uk>
+         <20200102035920.dsycgxnb6ba2jhz2@yavin.dot.cyphar.com>
+         <20200103014901.GC8904@ZenIV.linux.org.uk>
+         <20200110231945.GL8904@ZenIV.linux.org.uk>
+         <aea0bc800b6a1e547ca1944738ff9db4379098ba.camel@themaw.net>
+         <20200113035407.GQ8904@ZenIV.linux.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20200113035407.GQ8904@ZenIV.linux.org.uk>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Aleksa Sarai <cyphar@cyphar.com>, David Howells <dhowells@redhat.com>, Eric Biederman <ebiederm@xmission.com>, Linus Torvalds <torvalds@linux-foundation.org>, stable@vger.kernel.org, Christian Brauner <christian.brauner@ubuntu.com>, Serge Hallyn <serge@hallyn.com>, dev@opencontainers.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Dear, I'm Mr Rick Schaech, I am the General Account Auditor, Though i
-know we have not meet each other before but sometimes in life God have
-a reason of bringing two people from two different countries together
-as business partners or life partners.
+On Mon, 2020-01-13 at 03:54 +0000, Al Viro wrote:
+> On Mon, Jan 13, 2020 at 09:48:23AM +0800, Ian Kent wrote:
+> 
+> > I did try this patch and I was trying to work out why it didn't
+> > work. But thought I'd let you know what I saw.
+> > 
+> > Applying it to current Linus tree systemd stops at switch root.
+> > 
+> > Not sure what causes that, I couldn't see any reason for it.
+> 
+> Wait a minute...  So you are seeing problems early in the boot,
+> before any autofs ioctls might come into play?
 
-My dear friend, I have the sum of 15.7 Million USD i wish to put in
-your name due to the death of my late client who died several years
-ago as his next of kin column still remain blank. Though the internet
-medium is highly abuse these days but am assuring you that this
-transaction is legitimate and I am contacting you that we may have a
-deal, note for your cooperation and collaboration 40% of the sum will
-be for you while the other 60% will be for me as well. I wait for your
-swift response for more details. please forward your response to my
-personal E-mail: rickschaech-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+I did, then I checked it booted without the patch, then tried
+building from scratch with the patch twice and same thing
+happened each time.
 
-Yours sincerely,
-Rick Schaech.
+Looked like this, such as it is:
+[ OK ] Reached target Switch Root.
+[ OK ] Started Plymouth switch root service.
+       Starting Switch Root...
+
+I don't have any evidence but thought it might be this:
+https://github.com/karelzak/util-linux/blob/master/sys-utils/switch_root.c
+
+Mind you, that's not the actual systemd repo. either I probably
+need to look a lot deeper (and at the actual systemd repo) to
+work out what's actually being called.
+
+> 
+> Sigh...  Guess I'll have to dig that Fedora KVM image out and
+> try to see what it's about... ;-/  Here comes a couple of hours
+> of build...
