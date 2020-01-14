@@ -1,53 +1,61 @@
-From: Daniel Colascione <dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [PATCH 2/4] mm: introduce external memory hinting API
-Date: Mon, 13 Jan 2020 13:04:44 -0800
-Message-ID: <CAKOZueu=U4c2URaq8Pz-B00XV+TxaKwHRNXv3BUiDbQrLQpJ3A@mail.gmail.com>
-References: <20200110213433.94739-1-minchan@kernel.org> <20200110213433.94739-3-minchan@kernel.org>
- <56ea0927-ad2e-3fbd-3366-3813330f6cec@virtuozzo.com> <20200113104256.5ujbplyec2sk4onn@wittgenstein>
- <20200113184408.GD110363@google.com> <20200113191046.2tidyvc544zvchek@wittgenstein>
- <CAKOZuev5k3EquMd-6VbvruahjjtxQzRhUVo2ttgVyk+yYz9aOA@mail.gmail.com> <20200113204237.ew6nn4ohxu7auw3u@wittgenstein>
+From: Ian Kent <raven@themaw.net>
+Subject: Re: [PATCH RFC 0/1] mount: universally disallow mounting over
+ symlinks
+Date: Tue, 14 Jan 2020 08:25:19 +0800
+Message-ID: <19fa114ef619057c0d14dc1a587d0ae9ad67dc6d.camel@themaw.net>
+References: <20200101144407.ugjwzk7zxrucaa6a@yavin.dot.cyphar.com>
+         <20200101234009.GB8904@ZenIV.linux.org.uk>
+         <20200102035920.dsycgxnb6ba2jhz2@yavin.dot.cyphar.com>
+         <20200103014901.GC8904@ZenIV.linux.org.uk>
+         <20200108031314.GE8904@ZenIV.linux.org.uk>
+         <CAHk-=wgQ3yOBuK8mxpnntD8cfX-+10ba81f86BYg8MhvwpvOMg@mail.gmail.com>
+         <20200108213444.GF8904@ZenIV.linux.org.uk>
+         <CAHk-=wiq11+thoe60qhsSHk_nbRF2TRL1Wnf6eHcYObjhJmsww@mail.gmail.com>
+         <20200110041523.GK8904@ZenIV.linux.org.uk>
+         <979cf680b0fbdce515293a3449d564690cde6a3f.camel@themaw.net>
+         <20200112213352.GP8904@ZenIV.linux.org.uk>
+         <800d36a0dccd43f1b61cab6332a6252ab9aab73c.camel@themaw.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20200113204237.ew6nn4ohxu7auw3u@wittgenstein>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
-Cc: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, oleksandr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Suren Baghdasaryan <surenb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Tim Murray <timmurray-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sandeep Patil <sspatil-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sonny Rao <sonnyrao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Brian Geffon <bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Shakeel Butt <shakeelb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, John Dias <joaodias-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Content-Transfer-Encoding: 7bit
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <800d36a0dccd43f1b61cab6332a6252ab9aab73c.camel@themaw.net>
+Sender: stable-owner@vger.kernel.org
+To: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, Aleksa Sarai <cyphar@cyphar.com>, David Howells <dhowells@redhat.com>, Eric Biederman <ebiederm@xmission.com>, stable <stable@vger.kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>, Serge Hallyn <serge@hallyn.com>, dev@opencontainers.org, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, Jan 13, 2020 at 12:42 PM Christian Brauner
-<christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> wrote:
->
-> On Mon, Jan 13, 2020 at 11:27:03AM -0800, Daniel Colascione wrote:
-> > On Mon, Jan 13, 2020 at 11:10 AM Christian Brauner
-> > <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org> wrote:
-> > > This does not
-> > > affect the permission checking you're performing here.
-> >
-> > Pidfds-as-capabilities sounds like a good change. Can you clarify what
-> > you mean here though? Do you mean that in order to perform some
-> > process-directed operation X on process Y, the pidfd passed to X must
-> > have been opened with PIDFD_CAP_X *and* the process *using* the pidfds
-> > must be able to perform operation X on process Y? Or do pidfds in this
-> > model "carry" permissions in the same way that an ordinary file
-> > descriptor "carries" the ability to write to a file if it was opened
-> > with O_WRONLY even if the FD is passed to a process that couldn't
-> > otherwise write to that file? Right now, pidfds are identity-only and
-> > always rely on the caller's permissions. I like the capability bit
-> > model because it makes pidfds more consistent with other file
-> > descriptors and enabled delegation of capabilities across the system.
->
-> I'm going back and forth on this. My initial implementation has it that
-> you'd need both, PIDFD_FLAG/CAP_X and the process using the pidfd must
-> be able to perform the operation X on process Y. The alternative becomes
-> tricky for e.g. anything that requires ptrace_may_access() permissions
-> such as getting an fd out from another task based on its pidfd and so
-> on.
+On Mon, 2020-01-13 at 10:59 +0800, Ian Kent wrote:
+> 
+> > 3) is _anything_ besides root directory ever created in direct
+> > autofs
+> > superblocks by anyone?  If not, why does autofs_lookup() even
+> > bother
+> > to
+> > do anything there?  IOW, why not have it return ERR_PTR(-ENOENT)
+> > immediately
+> > for direct ones?  Or am I missing something and it is, in fact,
+> > possible
+> > to have the daemon create something in those?
+> 
+> Short answer is no, longer answer is directories "shouldn't" ever
+> be created inside direct mount points.
+> 
+> The thing is that the multi-mount map construct can be used with
+> direct mounts too, but they must always have a real mount at the
+> base because they are direct mounts. So processes should not be
+> able to walk into them while they are being mounted (constructed).
+> 
+> But I'm pretty sure it's rare (maybe not done at all) that this
+> map construct is used with direct mounts.
 
-I think the alternative is necessary though. What's the point of the
-pidfd capability bits if they don't grant access? If I have a pidfd
-for Y that doesn't let me do operation X, but I have ambient authority
-to do Y anyway, then I can just make my own pidfd for Y and then use
-that new pidfd to do X. AFAICT, pidfd capabilities only do something
-when they replace ptrace_may_access and friends for access control.
-Otherwise, they seem purely advisory. Am I missing something?
+This isn't right.
+
+There's actually nothing stopping a user from using a direct map
+entry that's a multi-mount without an actual mount at its root.
+So there could be directories created under these, it's just not
+usually done.
+
+I'm pretty sure I don't check and disallow this.
+
+Ian
