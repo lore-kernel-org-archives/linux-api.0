@@ -1,78 +1,94 @@
-From: Ian Kent <raven-PKsaG3nR2I+sTnJN9+BGXg@public.gmane.org>
-Subject: Re: [PATCH RFC 0/1] mount: universally disallow mounting over
- symlinks
-Date: Tue, 14 Jan 2020 13:59:42 +0800
-Message-ID: <1fb8a0e4a763219f0f6cde6023ba89c1774cb854.camel@themaw.net>
-References: <20200103014901.GC8904@ZenIV.linux.org.uk>
-         <20200108031314.GE8904@ZenIV.linux.org.uk>
-         <CAHk-=wgQ3yOBuK8mxpnntD8cfX-+10ba81f86BYg8MhvwpvOMg@mail.gmail.com>
-         <20200108213444.GF8904@ZenIV.linux.org.uk>
-         <CAHk-=wiq11+thoe60qhsSHk_nbRF2TRL1Wnf6eHcYObjhJmsww@mail.gmail.com>
-         <20200110041523.GK8904@ZenIV.linux.org.uk>
-         <979cf680b0fbdce515293a3449d564690cde6a3f.camel@themaw.net>
-         <20200112213352.GP8904@ZenIV.linux.org.uk>
-         <800d36a0dccd43f1b61cab6332a6252ab9aab73c.camel@themaw.net>
-         <19fa114ef619057c0d14dc1a587d0ae9ad67dc6d.camel@themaw.net>
-         <20200114043924.GV8904@ZenIV.linux.org.uk>
-         <d6cad1552171da1eb38c55d1d7b1ff45902b101f.camel@themaw.net>
+From: Wu Hao <hao.wu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: Re: [PATCH v6 0/2] add performance reporting support to FPGA DFL
+ drivers
+Date: Tue, 14 Jan 2020 13:56:05 +0800
+Message-ID: <20200114055605.GA13574@hao-dev>
+References: <1573622695-25607-1-git-send-email-hao.wu@intel.com>
+ <20191125033412.GB890@hao-dev>
+ <20191125080127.GC1809@willie-the-truck>
+ <20191125080839.GA6227@hao-dev>
+ <20191209024527.GA22625@hao-dev>
+ <20191216010104.GA32154@yilunxu-OptiPlex-7050>
+ <20200106023742.GA3980@hao-dev>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <d6cad1552171da1eb38c55d1d7b1ff45902b101f.camel-PKsaG3nR2I+sTnJN9+BGXg@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20200106023742.GA3980@hao-dev>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Aleksa Sarai <cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Eric Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, stable <stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, dev-IGmTWi+3HBZvNhPySn5qfx2eb7JE58TQ@public.gmane.org, Linux Containers <containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-fsdevel <linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux Kernel Mailing List <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+To: mdf-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, Will Deacon <will-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: mark.rutland-5wv7dgnIgG8@public.gmane.org, linux-fpga-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, atull-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org, yilun.xu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2020-01-14 at 13:01 +0800, Ian Kent wrote:
-> On Tue, 2020-01-14 at 04:39 +0000, Al Viro wrote:
-> > On Tue, Jan 14, 2020 at 08:25:19AM +0800, Ian Kent wrote:
-> > 
-> > > This isn't right.
+On Mon, Jan 06, 2020 at 10:37:42AM +0800, Wu Hao wrote:
+> On Mon, Dec 16, 2019 at 09:01:04AM +0800, Xu Yilum wrote:
+> > On Mon, Dec 09, 2019 at 10:45:27AM +0800, Wu Hao wrote:
+> > > On Mon, Nov 25, 2019 at 04:08:39PM +0800, Wu Hao wrote:
+> > > > On Mon, Nov 25, 2019 at 08:01:28AM +0000, Will Deacon wrote:
+> > > > > On Mon, Nov 25, 2019 at 11:34:12AM +0800, Wu Hao wrote:
+> > > > > > Hi Will and Mark,
+> > > > > > 
+> > > > > > Could you please help us on review this patchset? as this patchset mainly 
+> > > > > > introduced a new perf driver following the similar way as drivers/perf/*.
+> > > > > 
+> > > > > Why is it not under drivers/perf/, then?
+> > > > 
+> > > > Hi Will
+> > > > 
+> > > > Thanks for the quick response. This is one sub feature for DFL based FPGAs,
+> > > > and we plan to put this sub feature together with others, including related
+> > > > documentation. It only registers a standard perf pmu for its userspace
+> > > > interfaces.
+> > > > 
+> > > > > 
+> > > > > > This patchset has been submitted for a long time but didn't receive any
+> > > > > > comment after v4. we appreciate any review comments! thanks in advance. :)
+> > > > > 
+> > > > > Hmm, not sure I saw the previous versions. Guessing I wasn't on cc?
+> > > > 
+> > > > We switched to perf API from v4, and started ccing you and Mark from v5. :)
 > > > 
-> > > There's actually nothing stopping a user from using a direct map
-> > > entry that's a multi-mount without an actual mount at its root.
-> > > So there could be directories created under these, it's just not
-> > > usually done.
+> > > Hi Will
 > > > 
-> > > I'm pretty sure I don't check and disallow this.
+> > > Did you get a chance to look into this patchset?
+> > > 
+> > > Thanks
+> > > Hao
 > > 
-> > IDGI...  How the hell will that work in v5?  Who will set _any_
-> > traps outside the one in root in that scenario?  autofs_lookup()
-> > won't (there it's conditional upon indirect mount).  Neither
-> > will autofs_dir_mkdir() (conditional upon version being less
-> > than 5).  Who will, then?
+> > Hi Will
 > > 
-> > Confused...
+> > Did you have time to look into this patchset? We have done review work
+> > for FPGA part. And as a perf driver, we appreciate your comments.
+> > 
+> > Thanks
+> > Yilun
 > 
-> It's easy to miss.
+> Hi Will
 > 
-> For autofs type direct and offset mounts the flags are set at fill
-> super time.
+> Did you get a chance to look into this patchset these days? 
 > 
-> They have to be set then because they are direct mounts and offset
-> mounts behave the same as direct mounts so they need to be set then
-> too. So, like direct mounts, offset mounts are each distinct autofs
-> (trigger) mounts.
+> Actually we didn't receive any comments for a long time, if you are busy and
+> don't have enough time on this, do you know if someone else could help with
+> review and ack from perf driver point of view, or any other things we can do
+> to speed up this? Thanks in advance! 
+
+Hi Moritz
+
+Looks like still no response from Will. :(
+
+Do you know someone else could help?
+
+Thanks
+Hao
+
 > 
-> I could check for this construct and refuse it if that's really
-> needed. I'm pretty sure this map construct isn't much used by
-> people using direct mounts.
-
-Ok, once again I'm not exactly accurate is some of what I said.
-
-It turns out that the autofs connectathon tests, one of the tests
-that I use, does test direct mounts with offsets both with and
-without a real mount at the base of the mount.
-
-Based on that, I have to say this map construct is meant to be
-supported with Sun format maps of autofs (even though I think it's
-probably not used much).
-
-So not allowing it is probably the wrong thing to do.
-
-OTOH initial testing with the #work.namei branch shows these are
-functioning as required.
-
-Ian
+> Hao
+> 
+> > 
+> > > 
+> > > > 
+> > > > Thanks
+> > > > Hao
+> > > > 
+> > > > > 
+> > > > > Will
