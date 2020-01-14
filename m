@@ -1,92 +1,57 @@
-From: Ian Kent <raven-PKsaG3nR2I+sTnJN9+BGXg@public.gmane.org>
-Subject: Re: [PATCH RFC 0/1] mount: universally disallow mounting over
- symlinks
-Date: Tue, 14 Jan 2020 15:25:15 +0800
-Message-ID: <7b2b9f81871898d2b6301a74f2bee85943f21cdc.camel@themaw.net>
-References: <20200101030815.GA17593@ZenIV.linux.org.uk>
-         <20200101144407.ugjwzk7zxrucaa6a@yavin.dot.cyphar.com>
-         <20200101234009.GB8904@ZenIV.linux.org.uk>
-         <20200102035920.dsycgxnb6ba2jhz2@yavin.dot.cyphar.com>
-         <20200103014901.GC8904@ZenIV.linux.org.uk>
-         <20200110231945.GL8904@ZenIV.linux.org.uk>
-         <aea0bc800b6a1e547ca1944738ff9db4379098ba.camel@themaw.net>
-         <20200113035407.GQ8904@ZenIV.linux.org.uk>
-         <41c535d689530f3715f21cd25074eb61e825a5f6.camel@themaw.net>
-         <58f9894e51a00ad2a4ac3d4122bf29e7cb6c0d54.camel@themaw.net>
-         <20200113133047.GR8904@ZenIV.linux.org.uk>
+From: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>
+Subject: Re: [PATCH 2/4] mm: introduce external memory hinting API
+Date: Tue, 14 Jan 2020 11:39:28 +0300
+Message-ID: <3eec2097-75a3-1e1d-06d9-44ee5eaf1312@virtuozzo.com>
+References: <20200110213433.94739-1-minchan@kernel.org>
+ <20200110213433.94739-3-minchan@kernel.org>
+ <56ea0927-ad2e-3fbd-3366-3813330f6cec@virtuozzo.com>
+ <CAKOZuevwbQvrFWqy5GOm4RXuGszKLBvRs9i-KbAi3nPcHhwvSw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20200113133047.GR8904-3bDd1+5oDREiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
+In-Reply-To: <CAKOZuevwbQvrFWqy5GOm4RXuGszKLBvRs9i-KbAi3nPcHhwvSw-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Content-Language: en-US
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Al Viro <viro-RmSDqhL/yNMiFSDQTTA3OLVCufUGDwFn@public.gmane.org>
-Cc: Aleksa Sarai <cyphar-gVpy/LI/lHzQT0dZR+AlfA@public.gmane.org>, David Howells <dhowells-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Eric Biederman <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, stable-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>, Serge Hallyn <serge-A9i7LUbDfNHQT0dZR+AlfA@public.gmane.org>, dev-IGmTWi+3HBZvNhPySn5qfx2eb7JE58TQ@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Daniel Colascione <dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, oleksandr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Suren Baghdasaryan <surenb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Tim Murray <timmurray-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sandeep Patil <sspatil-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sonny Rao <sonnyrao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Brian Geffon <bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Shakeel Butt <shakeelb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, John Dias <joaodias-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Mon, 2020-01-13 at 13:30 +0000, Al Viro wrote:
-> On Mon, Jan 13, 2020 at 02:03:00PM +0800, Ian Kent wrote:
+On 13.01.2020 22:18, Daniel Colascione wrote:
+> On Mon, Jan 13, 2020, 12:47 AM Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org> wrote:
+>>> +SYSCALL_DEFINE5(process_madvise, int, pidfd, unsigned long, start,
+>>> +             size_t, len_in, int, behavior, unsigned long, flags)
+>>
+>> I don't like the interface. The fact we have pidfd does not mean,
+>> we have to use it for new syscalls always. A user may want to set
+>> madvise for specific pid from console and pass pid as argument.
+>> pidfd would be an overkill in this case.
+>> We usually call "kill -9 pid" from console. Why shouldn't process_madvise()
+>> allow this?
 > 
-> > Oh wait, for systemd I was actually looking at:
-> > https://github.com/systemd/systemd/blob/master/src/shared/switch-root.c
-> > 
-> > > Mind you, that's not the actual systemd repo. either I probably
-> > > need to look a lot deeper (and at the actual systemd repo) to
-> > > work out what's actually being called.
-> > > 
-> > > > Sigh...  Guess I'll have to dig that Fedora KVM image out and
-> > > > try to see what it's about... ;-/  Here comes a couple of hours
-> > > > of build...
-> 
-> D'oh...  And yes, that would've been a bisect hazard - switch to
-> path_lookupat() later in the series gets rid of that.  Incremental
-> (to be foldede, of course):
-> 
-> diff --git a/fs/namei.c b/fs/namei.c
-> index 1793661c3342..204677c37751 100644
-> --- a/fs/namei.c
-> +++ b/fs/namei.c
-> @@ -2634,7 +2634,7 @@ path_mountpoint(struct nameidata *nd, unsigned
-> flags, struct path *path)
->  		(err = lookup_last(nd)) > 0) {
->  		s = trailing_symlink(nd);
->  	}
-> -	if (!err)
-> +	if (!err && (nd->flags & LOOKUP_RCU))
->  		err = unlazy_walk(nd);
->  	if (!err)
->  		err = handle_lookup_down(nd);
+> All new APIs should use pidfds: they're better than numeric PIDs
 
-Ok, so I've tested with the updated patch.
+Yes
 
-The autofs connectathon tests I use function fine.
+> in every way.
 
-I also tested sending a SIGKILL to the daemon with about 180 active
-mounts and restarted the daemon to test the function of the ioctls
-that Al was concerned about.
+No
 
-While the connectathon test expired everything I had 3 mounts left
-after allowing sufficient expire time with the SIGKILL test.
+> If a program wants to allow users to specify processes by
+> numeric PID, it can parse that numeric PID, open the corresponding
+> pidfd, and then use that pidfd with whatever system call it wants.
+> It's not necessary to support numeric PIDs at the system call level to
+> allow a console program to identify a process by numeric PID.
 
-Those mounts correspond to one map entry that has a mix of NFS
-vers=3 and vers=2 mount options and NFSv2 isn't supported by the
-servers I use in testing.
+No. It is overkill. Ordinary pid interfaces also should be available.
+There are a lot of cases, when they are more comfortable. Say, a calling
+of process_madvise() from tracer, when a tracee is stopped. In this moment
+the tracer knows everything about tracee state, and pidfd brackets
+pidfd_open() and close() around actual action look just stupid, and this
+is cpu time wasting.
 
-I'm inclined to think this is a bug in the automount mount tree
-re-connection code rather than a problem with this patch since
-all the other mounts, some simple and others with not so simple
-constructs, expired fine after automount re-connected to them.
+Another example is a parent task, which manages parameters of its children.
+It knows everything about them, whether they are alive or not. Pidfd interface
+will just utilize additional cpu time here.
 
-There are two other map entries that have an NFS vers=2 option but
-they are simple mounts that will fail on attempting the automount
-because the server doesn't support v2 so they don't end up with
-mounts to reconnect to.
-
-This particular map entry, having a mix of NFS vers=3 and vers=2
-in the offsets of the entry, will lead to a partial mount of the
-map entry which is probably not being handled properly by automount
-when re-connecting to the mounts in the tree.
-
-So I think the patch here is fine from an autofs POV.
-
-Ian
+So, no. Both interfaces should be available.
