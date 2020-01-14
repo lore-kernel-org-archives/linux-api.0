@@ -1,106 +1,86 @@
-From: Ian Kent <raven@themaw.net>
-Subject: Re: [PATCH RFC 0/1] mount: universally disallow mounting over
- symlinks
-Date: Tue, 14 Jan 2020 20:17:11 +0800
-Message-ID: <fca18b4b9e9b5b5bc8610970dfb605458c3acaa0.camel@themaw.net>
-References: <20200101030815.GA17593@ZenIV.linux.org.uk>
-         <20200101144407.ugjwzk7zxrucaa6a@yavin.dot.cyphar.com>
-         <20200101234009.GB8904@ZenIV.linux.org.uk>
-         <20200102035920.dsycgxnb6ba2jhz2@yavin.dot.cyphar.com>
-         <20200103014901.GC8904@ZenIV.linux.org.uk>
-         <20200110231945.GL8904@ZenIV.linux.org.uk>
-         <aea0bc800b6a1e547ca1944738ff9db4379098ba.camel@themaw.net>
-         <20200113035407.GQ8904@ZenIV.linux.org.uk>
-         <41c535d689530f3715f21cd25074eb61e825a5f6.camel@themaw.net>
-         <58f9894e51a00ad2a4ac3d4122bf29e7cb6c0d54.camel@themaw.net>
-         <20200113133047.GR8904@ZenIV.linux.org.uk>
-         <7b2b9f81871898d2b6301a74f2bee85943f21cdc.camel@themaw.net>
+From: Minchan Kim <minchan-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH 2/4] mm: introduce external memory hinting API
+Date: Tue, 14 Jan 2020 10:59:44 -0800
+Message-ID: <20200114185944.GA178589@google.com>
+References: <20200110213433.94739-1-minchan@kernel.org>
+ <20200110213433.94739-3-minchan@kernel.org>
+ <56ea0927-ad2e-3fbd-3366-3813330f6cec@virtuozzo.com>
+ <20200113104256.5ujbplyec2sk4onn@wittgenstein>
+ <20200113184408.GD110363@google.com>
+ <20200113191046.2tidyvc544zvchek@wittgenstein>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <7b2b9f81871898d2b6301a74f2bee85943f21cdc.camel@themaw.net>
-Sender: stable-owner@vger.kernel.org
-To: Al Viro <viro@zeniv.linux.org.uk>
-Cc: Aleksa Sarai <cyphar@cyphar.com>, David Howells <dhowells@redhat.com>, Eric Biederman <ebiederm@xmission.com>, Linus Torvalds <torvalds@linux-foundation.org>, stable@vger.kernel.org, Christian Brauner <christian.brauner@ubuntu.com>, Serge Hallyn <serge@hallyn.com>, dev@opencontainers.org, containers@lists.linux-foundation.org, linux-api@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <20200113191046.2tidyvc544zvchek@wittgenstein>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Christian Brauner <christian.brauner-GeWIH/nMZzLQT0dZR+AlfA@public.gmane.org>
+Cc: Kirill Tkhai <ktkhai-5HdwGun5lf+gSpxsJD1C4w@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-mm <linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, oleksandr-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, Suren Baghdasaryan <surenb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Tim Murray <timmurray-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Daniel Colascione <dancol-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sandeep Patil <sspatil-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Sonny Rao <sonnyrao-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Brian Geffon <bgeffon-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, Shakeel Butt <shakeelb-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, John Dias <joaodias-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, 2020-01-14 at 15:25 +0800, Ian Kent wrote:
-> On Mon, 2020-01-13 at 13:30 +0000, Al Viro wrote:
-> > On Mon, Jan 13, 2020 at 02:03:00PM +0800, Ian Kent wrote:
+Hi Christian,
+
+On Mon, Jan 13, 2020 at 08:10:47PM +0100, Christian Brauner wrote:
+> On Mon, Jan 13, 2020 at 10:44:08AM -0800, Minchan Kim wrote:
+> > On Mon, Jan 13, 2020 at 11:42:57AM +0100, Christian Brauner wrote:
+> > > On Mon, Jan 13, 2020 at 11:47:11AM +0300, Kirill Tkhai wrote:
 > > 
-> > > Oh wait, for systemd I was actually looking at:
-> > > https://github.com/systemd/systemd/blob/master/src/shared/switch-root.c
-> > > 
-> > > > Mind you, that's not the actual systemd repo. either I probably
-> > > > need to look a lot deeper (and at the actual systemd repo) to
-> > > > work out what's actually being called.
+> > < snip >
+> > 
+> > > > > +SYSCALL_DEFINE5(process_madvise, int, pidfd, unsigned long, start,
+> > > > > +		size_t, len_in, int, behavior, unsigned long, flags)
 > > > > 
-> > > > > Sigh...  Guess I'll have to dig that Fedora KVM image out and
-> > > > > try to see what it's about... ;-/  Here comes a couple of
-> > > > > hours
-> > > > > of build...
+> > > > I don't like the interface. The fact we have pidfd does not mean,
+> > > > we have to use it for new syscalls always. A user may want to set
+> > > > madvise for specific pid from console and pass pid as argument.
+> > > > pidfd would be an overkill in this case.
+> > > > We usually call "kill -9 pid" from console. Why shouldn't process_madvise()
+> > > > allow this?
+> > > > 
+> > > > I suggent to extend first argument to work with both pid and pidfd.
+> > > > Look at what we have for waitid(idtype, id_t id, ...) for example:
+> > > > 
+> > > >        idtype == P_PID
+> > > >               Wait for the child whose process ID matches id.
+> > > > 
+> > > >        idtype == P_PIDFD (since Linux 5.4)
+> > > >               Wait for the child referred to by the PID file descriptor specified in id.  (See pidfd_open(2) for  further  information  on
+> > > >               PID file descriptors.)
+> > > > 
+> > > > We may use @flags argument for this.
+> > > 
+> > > Sorry for chiming in just a comment. Overall, I don't particularly care
+> > > how or if you integrate pidfd here. One thing I would like to point out
+> > > is that we're working on a patch to place new features under pidfd
+> > > specific flags. This e.g. means a pidfd would be only be able to be used
+> > > for madvise operations (or getfd operations) if it was created with that
+> > > specific flag set making it easier to share them with other processes.
+> > > So if you integrate them here I would be quite thankful if you target
+> > > the patchset for the v5.7 merge window, not for v5.6.
 > > 
-> > D'oh...  And yes, that would've been a bisect hazard - switch to
-> > path_lookupat() later in the series gets rid of that.  Incremental
-> > (to be foldede, of course):
-> > 
-> > diff --git a/fs/namei.c b/fs/namei.c
-> > index 1793661c3342..204677c37751 100644
-> > --- a/fs/namei.c
-> > +++ b/fs/namei.c
-> > @@ -2634,7 +2634,7 @@ path_mountpoint(struct nameidata *nd,
-> > unsigned
-> > flags, struct path *path)
-> >  		(err = lookup_last(nd)) > 0) {
-> >  		s = trailing_symlink(nd);
-> >  	}
-> > -	if (!err)
-> > +	if (!err && (nd->flags & LOOKUP_RCU))
-> >  		err = unlazy_walk(nd);
-> >  	if (!err)
-> >  		err = handle_lookup_down(nd);
+> > Hi Christian,
+> > Sorry but I couldn't understand your point.
+> > Could you clarify what you meant?
 > 
-> Ok, so I've tested with the updated patch.
+> Hi Minchan,
 > 
-> The autofs connectathon tests I use function fine.
-> 
-> I also tested sending a SIGKILL to the daemon with about 180 active
-> mounts and restarted the daemon to test the function of the ioctls
-> that Al was concerned about.
-> 
-> While the connectathon test expired everything I had 3 mounts left
-> after allowing sufficient expire time with the SIGKILL test.
-> 
-> Those mounts correspond to one map entry that has a mix of NFS
-> vers=3 and vers=2 mount options and NFSv2 isn't supported by the
-> servers I use in testing.
-> 
-> I'm inclined to think this is a bug in the automount mount tree
-> re-connection code rather than a problem with this patch since
-> all the other mounts, some simple and others with not so simple
-> constructs, expired fine after automount re-connected to them.
-> 
-> There are two other map entries that have an NFS vers=2 option but
-> they are simple mounts that will fail on attempting the automount
-> because the server doesn't support v2 so they don't end up with
-> mounts to reconnect to.
-> 
-> This particular map entry, having a mix of NFS vers=3 and vers=2
-> in the offsets of the entry, will lead to a partial mount of the
-> map entry which is probably not being handled properly by automount
-> when re-connecting to the mounts in the tree.
-> 
-> So I think the patch here is fine from an autofs POV.
+> Sure. When you create a pidfd, e.g. with clone3() and you'd wanted to
+> use it for madvise you'd need to set a flag like pidfd_cap_madvise or
+> pidfd_feature_madvise when you create the pidfd. Only if the pidfd was
+> created with that flag set could you use it with madvise (This does not
+> affect the permission checking you're performing here.). This has come
+> up a couple of times and becomes more relevant now that people keep
+> adding new features on top of pidfd and is similar to what we are now
+> doing with openat2().
 
-Umm ... unfortunately further testing shows an autofs problem.
+Thanks for the explain. When I read discussion with you and Daniel, it's
+still vague for me that what's the outcome so that it could land onto
+v5.6.(If I miss something progress on other thread, sorry about that.)
 
-It appears to be present in the current kernel (so far I've only
-been able to check the current git head and an earlier kernel
-but can't remember the version and can't check) so I must have
-missed it.
+I will keep Ccing you so that you may notice when this patchset could
+be merged(Please Cc me when you send your patchset for me to notice)
+So if we judge it's worth to integrate, maybe we could make a quick
+patch to use it or postpone a cycle to intergrate it if we have more
+time.
 
-I'm attempting to bisect now but managed to trash the root
-file system on my VM. I'll get this done as quickly as I can.
-
-Ian
+Thanks.
