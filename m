@@ -1,65 +1,66 @@
-From: Minchan Kim <minchan@kernel.org>
+From: Christian Brauner <christian.brauner@ubuntu.com>
 Subject: Re: [PATCH 2/4] mm: introduce external memory hinting API
-Date: Tue, 14 Jan 2020 11:12:39 -0800
-Message-ID: <20200114191239.GB178589@google.com>
+Date: Tue, 14 Jan 2020 20:20:57 +0100
+Message-ID: <20200114192056.b6wi4adsps6xi4t4@wittgenstein>
 References: <20200110213433.94739-1-minchan@kernel.org>
  <20200110213433.94739-3-minchan@kernel.org>
  <56ea0927-ad2e-3fbd-3366-3813330f6cec@virtuozzo.com>
- <CAKOZuevwbQvrFWqy5GOm4RXuGszKLBvRs9i-KbAi3nPcHhwvSw@mail.gmail.com>
- <3eec2097-75a3-1e1d-06d9-44ee5eaf1312@virtuozzo.com>
+ <20200113104256.5ujbplyec2sk4onn@wittgenstein>
+ <20200113184408.GD110363@google.com>
+ <20200113191046.2tidyvc544zvchek@wittgenstein>
+ <CAKOZuev5k3EquMd-6VbvruahjjtxQzRhUVo2ttgVyk+yYz9aOA@mail.gmail.com>
+ <20200113204237.ew6nn4ohxu7auw3u@wittgenstein>
+ <CAKOZueu=U4c2URaq8Pz-B00XV+TxaKwHRNXv3BUiDbQrLQpJ3A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Return-path: <owner-linux-mm@kvack.org>
 Content-Disposition: inline
-In-Reply-To: <3eec2097-75a3-1e1d-06d9-44ee5eaf1312@virtuozzo.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Kirill Tkhai <ktkhai@virtuozzo.com>
-Cc: Daniel Colascione <dancol@google.com>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, oleksandr@redhat.com, Suren Baghdasaryan <surenb@google.com>, Tim Murray <timmurray@google.com>, Sandeep Patil <sspatil@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, Michal Hocko <mhocko@suse.com>, Johannes Weiner <hannes@cmpxchg.org>, Shakeel Butt <shakeelb@google.com>, John Dias <joaodias@google.com>
+In-Reply-To: <CAKOZueu=U4c2URaq8Pz-B00XV+TxaKwHRNXv3BUiDbQrLQpJ3A@mail.gmail.com>
+Sender: owner-linux-mm@kvack.org
+To: Daniel Colascione <dancol@google.com>
+Cc: Minchan Kim <minchan@kernel.org>, Kirill Tkhai <ktkhai@virtuozzo.com>, Michal Hocko <mhocko@suse.com>, Andrew Morton <akpm@linux-foundation.org>, LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>, Linux API <linux-api@vger.kernel.org>, oleksandr@redhat.com, Suren Baghdasaryan <surenb@google.com>, Tim Murray <timmurray@google.com>, Sandeep Patil <sspatil@google.com>, Sonny Rao <sonnyrao@google.com>, Brian Geffon <bgeffon@google.com>, Johannes Weiner <hannes@cmpxchg.org>, Shakeel Butt <shakeelb@google.com>, John Dias <joaodias@google.com>
 List-Id: linux-api@vger.kernel.org
 
-On Tue, Jan 14, 2020 at 11:39:28AM +0300, Kirill Tkhai wrote:
-> On 13.01.2020 22:18, Daniel Colascione wrote:
-> > On Mon, Jan 13, 2020, 12:47 AM Kirill Tkhai <ktkhai@virtuozzo.com> wrote:
-> >>> +SYSCALL_DEFINE5(process_madvise, int, pidfd, unsigned long, start,
-> >>> +             size_t, len_in, int, behavior, unsigned long, flags)
-> >>
-> >> I don't like the interface. The fact we have pidfd does not mean,
-> >> we have to use it for new syscalls always. A user may want to set
-> >> madvise for specific pid from console and pass pid as argument.
-> >> pidfd would be an overkill in this case.
-> >> We usually call "kill -9 pid" from console. Why shouldn't process_madvise()
-> >> allow this?
-> > 
-> > All new APIs should use pidfds: they're better than numeric PIDs
+On Mon, Jan 13, 2020 at 01:04:44PM -0800, Daniel Colascione wrote:
+> On Mon, Jan 13, 2020 at 12:42 PM Christian Brauner
+> <christian.brauner@ubuntu.com> wrote:
+> >
+> > On Mon, Jan 13, 2020 at 11:27:03AM -0800, Daniel Colascione wrote:
+> > > On Mon, Jan 13, 2020 at 11:10 AM Christian Brauner
+> > > <christian.brauner@ubuntu.com> wrote:
+> > > > This does not
+> > > > affect the permission checking you're performing here.
+> > >
+> > > Pidfds-as-capabilities sounds like a good change. Can you clarify what
+> > > you mean here though? Do you mean that in order to perform some
+> > > process-directed operation X on process Y, the pidfd passed to X must
+> > > have been opened with PIDFD_CAP_X *and* the process *using* the pidfds
+> > > must be able to perform operation X on process Y? Or do pidfds in this
+> > > model "carry" permissions in the same way that an ordinary file
+> > > descriptor "carries" the ability to write to a file if it was opened
+> > > with O_WRONLY even if the FD is passed to a process that couldn't
+> > > otherwise write to that file? Right now, pidfds are identity-only and
+> > > always rely on the caller's permissions. I like the capability bit
+> > > model because it makes pidfds more consistent with other file
+> > > descriptors and enabled delegation of capabilities across the system.
+> >
+> > I'm going back and forth on this. My initial implementation has it that
+> > you'd need both, PIDFD_FLAG/CAP_X and the process using the pidfd must
+> > be able to perform the operation X on process Y. The alternative becomes
+> > tricky for e.g. anything that requires ptrace_may_access() permissions
+> > such as getting an fd out from another task based on its pidfd and so
+> > on.
 > 
-> Yes
-> 
-> > in every way.
-> 
-> No
-> 
-> > If a program wants to allow users to specify processes by
-> > numeric PID, it can parse that numeric PID, open the corresponding
-> > pidfd, and then use that pidfd with whatever system call it wants.
-> > It's not necessary to support numeric PIDs at the system call level to
-> > allow a console program to identify a process by numeric PID.
-> 
-> No. It is overkill. Ordinary pid interfaces also should be available.
-> There are a lot of cases, when they are more comfortable. Say, a calling
-> of process_madvise() from tracer, when a tracee is stopped. In this moment
-> the tracer knows everything about tracee state, and pidfd brackets
-> pidfd_open() and close() around actual action look just stupid, and this
-> is cpu time wasting.
-> 
-> Another example is a parent task, which manages parameters of its children.
-> It knows everything about them, whether they are alive or not. Pidfd interface
-> will just utilize additional cpu time here.
-> 
-> So, no. Both interfaces should be available.
+> I think the alternative is necessary though. What's the point of the
+> pidfd capability bits if they don't grant access? If I have a pidfd
+> for Y that doesn't let me do operation X, but I have ambient authority
+> to do Y anyway, then I can just make my own pidfd for Y and then use
+> that new pidfd to do X. AFAICT, pidfd capabilities only do something
+> when they replace ptrace_may_access and friends for access control.
+> Otherwise, they seem purely advisory. Am I missing something?
 
-Sounds like that you want to support both options for every upcoming API
-which deals with pid. I'm not sure how it's critical for process_madvise
-API this case. In general, we sacrifice some performance for the nicer one
-and later, once it's reported as hurdle for some workload, we could fix it
-via introducing new flag. What I don't like at this moment is to make
-syscall complicated with potential scenarios without real workload.
+(Sorry for the late reply. It's kinda busy atm.)
+Yes, I think the best option is to explore the possibility to make them
+act similar to open(). I'll try to post patches soon.
+
+Christian
