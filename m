@@ -1,261 +1,318 @@
-From: Stephan =?ISO-8859-1?Q?M=FCller?= <smueller@chronox.de>
-Subject: [PATCH v28 00/12] /dev/random - a new approach with full SP800-90B
-Date: Wed, 15 Jan 2020 11:31:04 +0100
-Message-ID: <5951792.lmNsirYsPE@positron.chronox.de>
-References: <6157374.ptSnyUpaCn@positron.chronox.de> <2722222.P16TYeLAVu@positron.chronox.de> <2641155.iNH938UiKq@positron.chronox.de>
+From: David Howells <dhowells@redhat.com>
+Subject: [RFC PATCH 11/14] block: Add block layer notifications [ver #3]
+Date: Wed, 15 Jan 2020 13:32:14 +0000
+Message-ID: <157909513401.20155.11696586597485616420.stgit@warthog.procyon.org.uk>
+References: <157909503552.20155.3030058841911628518.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <2641155.iNH938UiKq@positron.chronox.de>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@suse.de>, "Peter, Matthias" <matth>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <157909503552.20155.3030058841911628518.stgit@warthog.procyon.org.uk>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: torvalds@linux-foundation.org
+Cc: dhowells@redhat.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>dhowells@redhat.com, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.orglinux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Hi,
+Add a block layer notification mechanism whereby notifications about
+block-layer events such as I/O errors, can be reported to a monitoring
+process asynchronously.
 
-The following patch set provides a different approach to /dev/random which =
-is
-called Linux Random Number Generator (LRNG) to collect entropy within the L=
-inux
-kernel. The main improvements compared to the existing /dev/random is to pr=
-ovide
-sufficient entropy during boot time as well as in virtual environments and =
-when
-using SSDs. A secondary design goal is to limit the impact of the entropy
-collection on massive parallel systems and also allow the use accelerated
-cryptographic primitives. Also, all steps of the entropic data processing a=
-re
-testable.
+Firstly, an event queue needs to be created:
 
-The LRNG patch set allows a user to select use of the existing /dev/random =
-or
-the LRNG during compile time. As the LRNG provides API and ABI compatible
-interfaces to the existing /dev/random implementation, the user can freely =
-chose
-the RNG implementation without affecting kernel or user space operations.
+	pipe2(fds, O_NOTIFICATION_PIPE);
+	ioctl(fds[1], IOC_WATCH_QUEUE_SET_SIZE, 256);
 
-This patch set provides early boot-time entropy which implies that no
-additional flags to the getrandom(2) system call discussed recently on
-the LKML is considered to be necessary. Yet, if additional flags are
-introduced to cover special hardware, the LRNG implementation will also
-provide them to be fully ABI and API compliant as already discussed on
-LKML.
+then a notification can be set up to report block notifications via that
+queue:
 
-The LRNG is fully compliant to SP800-90B requirements and is shipped with a
-full SP800-90B assessment and all required test tools. The existing /dev/ra=
-ndom
-implementation on the other hand has architectural limitations which
-does not easily allow to bring the implementation in compliance with
-SP800-90B. The key statement that causes concern is SP800-90B section
-3.1.6. This section denies crediting entropy to multiple similar noise
-sources. This section explicitly references different noise sources resting
-on the timing of events and their derivatives (i.e. it is a direct complaint
-to the existing existing /dev/random implementation). Therefore, SP800-90B
-now denies the very issue mentioned in [1] with the existing /dev/random
-implementation for a long time: crediting entropy to interrupts as well as
-crediting entropy to derivatives of interrupts (HID and disk events). This =
-is
-not permissible with SP800-90B.
+	struct watch_notification_filter filter = {
+		.nr_filters = 1,
+		.filters = {
+			[0] = {
+				.type = WATCH_TYPE_BLOCK_NOTIFY,
+				.subtype_filter[0] = UINT_MAX;
+			},
+		},
+	};
+	ioctl(fds[1], IOC_WATCH_QUEUE_SET_FILTER, &filter);
+	watch_devices(fds[1], 12);
 
-SP800-90B specifies various requirements for the noise source(s) that seed =
-any
-DRNG including SP800-90A DRBGs. In about a year from now, SP800-90B will be
-mandated for all noise sources that provide entropy to DRBGs as part of a F=
-IPS
-140-[2|3] validation or other evaluation types. That means, if we there are=
- no
-solutions to comply with the requirements of SP800-90B found till one year
-from now, any random number generation and ciphers based on random numbers
-on Linux will be considered and treated as not applicable and delivering
-no entropy! As /dev/urandom, getrandom(2) and /dev/random are the most
-common and prevalent noise sources for DRNGs, all these DRNGs are affected.
-This applies across the board for all validations of cryptography executing=
- on
-Linux (kernel and user space modules).
+After that, records will be placed into the queue when, for example, errors
+occur on a block device.  Records are of the following format:
 
-=46or users that are not interested in SP800-90B, the entire code for the
-compliance as well as test interfaces can be deselected at compile time.
+	struct block_notification {
+		struct watch_notification watch;
+		__u64	dev;
+		__u64	sector;
+	} *n;
 
-The design and implementation is driven by a set of goals described in [1]
-that the LRNG completely implements. Furthermore, [1] includes the full
-assessment of the SP800-90B compliance as well as a comparison with RNG
-design suggestions of SP800-90C, and AIS20/31.
+Where:
 
-The LRNG provides a complete separation of the noise source maintenance
-and the collection of entropy into an entropy pool from the post-processing
-using a pseudo-random number generator. Different DRNGs are supported,
-including:
+	n->watch.type will be WATCH_TYPE_BLOCK_NOTIFY
 
-* The LRNG can be compile-time enabled to replace the existing /dev/random
-  implementation. When not selecting the LRNG at compile time (default), the
-  existing /dev/random implementation is built.
+	n->watch.subtype will be the type of notification, such as
+	NOTIFY_BLOCK_ERROR_CRITICAL_MEDIUM.
 
-* Built-in ChaCha20 DRNG which has no dependency to other kernel
-  frameworks.
+	n->watch.info & WATCH_INFO_LENGTH will indicate the length of the
+	record.
 
-* SP800-90A DRBG using the kernel crypto API including its accelerated
-  raw cipher implementations. This implies that the output of /dev/random,
-  getrandom(2), /dev/urandom or get_random_bytes is fully compliant to
-  SP800-90A.
+	n->watch.info & WATCH_INFO_ID will be the second argument to
+	watch_devices(), shifted.
 
-* Arbitrary DRNGs registered with the kernel crypto API
+	n->dev will be the device numbers munged together.
 
-* Full compliance with SP800-90B which covers the startup and runtime health
-  tests mandated by SP800-90B as well as providing the test tools and test
-  interfaces to obtain raw noise data securely. The test tools are provided=
- at
-  [1].
+	n->sector will indicate the affected sector (if appropriate for the
+	event).
 
-Booting the patch with the kernel command line option
-"dyndbg=3Dfile drivers/char/lrng/* +p" generates logs indicating the operat=
-ion
-of the LRNG. Each log is pre-pended with "lrng".
+Note that it is permissible for event records to be of variable length -
+or, at least, the length may be dependent on the subtype.
 
-The LRNG has a flexible design by allowing an easy replacement of the
-deterministic random number generator component.
+Signed-off-by: David Howells <dhowells@redhat.com>
+---
 
-Compared to the existing /dev/random implementation, the compiled binary
-is smaller when the LRNG is compiled with all options equal to the
-existing /dev/random (i.e. only CONFIG_LRNG is set): random.o is 52.5 kBytes
-whereas all LRNG object files are in 49 kBytes in size. The fully
-SP800-90A/SP800-90B compliant binary code (CONFIG_LRNG,
-CONFIG_LRNG_DRNG_SWITCH, CONFIG_LRNG_DRBG, CONFIG_LRNG_HEALTH_TESTS)
-uses some 61 kBytes. In addition, the LRNG is about 50% faster in the
-performance critical interrupt handler code path compared to the existing
-/dev/random implementation.
+ Documentation/watch_queue.rst    |    4 +++-
+ block/Kconfig                    |    9 +++++++++
+ block/blk-core.c                 |   29 ++++++++++++++++++++++++++++
+ include/linux/blkdev.h           |   15 ++++++++++++++
+ include/uapi/linux/watch_queue.h |   30 ++++++++++++++++++++++++++++-
+ samples/watch_queue/watch_test.c |   40 +++++++++++++++++++++++++++++++++++++-
+ 6 files changed, 124 insertions(+), 3 deletions(-)
 
-[1] http://www.chronox.de/lrng.html - If the patch is accepted, I would
-be volunteering to convert the documentation into RST format and
-contribute it to the Linux kernel documentation directory.
-
-Changes (compared to the previous patch set):
-
-* make comments compliant to kernel-doc style
-
-* update LRNG_RCT_CUTOFF from 30 to 31 (a cutoff of 30 implies
-  an alpha of 2^-29 and a cutoff of 31 is an alpha of 2^-30 - both
-  values are in line with SP800-90B, but to be consistent with documentation
-  update the cutoff value) - reported by Marcos Portnoi
-
-* remove lrng_drng_generate_helper_full that was only needed by removed
-  TRNG support
-
-* Remove "unlikely" from lrng_drng_lock which seems to cause additional gri=
-ef
-  with sparse. Note, sparse will still report a lock context imbalance as it
-  used to since we indeed have two lock contexts as documented in
-  lrng_drng_switch. Reported-by: kbuild test robot <lkp@intel.com>
-
-* Fix allocation size calculation in self-test code as reported by
-  Dan Carpenter <dan.carpenter@oracle.com>
-
-This patch requires the presence of patch
-75551dbf112c992bc6c99a972990b3f272247e23 from Ted Tso's kernel tree
-(specifically the addition of GRND_INSECURE to random.h)
-
-As a side node: With the switchable DRNG support offered in this patch set,
-the following areas could be removed. As the existing /dev/random has no su=
-pport
-for switchable DRNGs, however, this is not yet feasible though.
-
-* remove lrng_ready_list and all code around it in lrng_interfaces.c
-
-* remove the kernel crypto API RNG API to avoid having two random number
-  providing APIs - this would imply that all RNGs developed for this API wo=
-uld
-  be converted to the LRNG interface
-
-CC: "Eric W. Biederman" <ebiederm@xmission.com>
-CC: "Alexander E. Patrakov" <patrakov@gmail.com>
-CC: "Ahmed S. Darwish" <darwish.07@gmail.com>
-CC: "Theodore Y. Ts'o" <tytso@mit.edu>
-CC: Willy Tarreau <w@1wt.eu>
-CC: Matthew Garrett <mjg59@srcf.ucam.org>
-CC: Vito Caputo <vcaputo@pengaru.com>
-CC: Andreas Dilger <adilger.kernel@dilger.ca>
-CC: Jan Kara <jack@suse.cz>
-CC: Ray Strode <rstrode@redhat.com>
-CC: William Jon McCann <mccann@jhu.edu>
-CC: zhangjs <zachary@baishancloud.com>
-CC: Andy Lutomirski <luto@kernel.org>
-CC: Florian Weimer <fweimer@redhat.com>
-CC: Lennart Poettering <mzxreary@0pointer.de>
-CC: Nicolai Stange <nstange@suse.de>
-Tested-by: Roman Drahtm=FCller <draht@schaltsekun.de>
-Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
-
-Stephan Mueller (12):
-  Linux Random Number Generator
-  LRNG - allocate one DRNG instance per NUMA node
-  LRNG - sysctls and /proc interface
-  LRNG - add switchable DRNG support
-  crypto: DRBG - externalize DRBG functions for LRNG
-  LRNG - add SP800-90A DRBG extension
-  LRNG - add kernel crypto API PRNG extension
-  crypto: provide access to a static Jitter RNG state
-  LRNG - add Jitter RNG fast noise source
-  LRNG - add SP800-90B compliant health tests
-  LRNG - add interface for gathering of raw entropy
-  LRNG - add power-on and runtime self-tests
-
- MAINTAINERS                                   |   7 +
- crypto/drbg.c                                 |  16 +-
- crypto/jitterentropy-kcapi.c                  |   3 +-
- crypto/jitterentropy.c                        |  25 +-
- drivers/char/Kconfig                          |   2 +
- drivers/char/Makefile                         |   9 +-
- drivers/char/lrng/Kconfig                     | 203 ++++++
- drivers/char/lrng/Makefile                    |  19 +
- drivers/char/lrng/lrng_archrandom.c           |  94 +++
- drivers/char/lrng/lrng_aux.c                  | 148 ++++
- drivers/char/lrng/lrng_chacha20.c             | 265 ++++++++
- drivers/char/lrng/lrng_chacha20.h             |  25 +
- drivers/char/lrng/lrng_drbg.c                 | 260 +++++++
- drivers/char/lrng/lrng_drng.c                 | 400 +++++++++++
- drivers/char/lrng/lrng_health.c               | 409 +++++++++++
- drivers/char/lrng/lrng_interfaces.c           | 637 ++++++++++++++++++
- drivers/char/lrng/lrng_internal.h             | 305 +++++++++
- drivers/char/lrng/lrng_jent.c                 |  89 +++
- drivers/char/lrng/lrng_kcapi.c                | 327 +++++++++
- drivers/char/lrng/lrng_lfsr.h                 | 152 +++++
- drivers/char/lrng/lrng_numa.c                 | 101 +++
- drivers/char/lrng/lrng_pool.c                 | 588 ++++++++++++++++
- drivers/char/lrng/lrng_proc.c                 | 163 +++++
- drivers/char/lrng/lrng_selftest.c             | 418 ++++++++++++
- drivers/char/lrng/lrng_sw_noise.c             | 102 +++
- drivers/char/lrng/lrng_sw_noise.h             |  57 ++
- drivers/char/lrng/lrng_switch.c               | 183 +++++
- drivers/char/lrng/lrng_testing.c              | 271 ++++++++
- include/crypto/drbg.h                         |   7 +
- .../crypto/internal}/jitterentropy.h          |   3 +
- include/linux/lrng.h                          |  63 ++
- 31 files changed, 5341 insertions(+), 10 deletions(-)
- create mode 100644 drivers/char/lrng/Kconfig
- create mode 100644 drivers/char/lrng/Makefile
- create mode 100644 drivers/char/lrng/lrng_archrandom.c
- create mode 100644 drivers/char/lrng/lrng_aux.c
- create mode 100644 drivers/char/lrng/lrng_chacha20.c
- create mode 100644 drivers/char/lrng/lrng_chacha20.h
- create mode 100644 drivers/char/lrng/lrng_drbg.c
- create mode 100644 drivers/char/lrng/lrng_drng.c
- create mode 100644 drivers/char/lrng/lrng_health.c
- create mode 100644 drivers/char/lrng/lrng_interfaces.c
- create mode 100644 drivers/char/lrng/lrng_internal.h
- create mode 100644 drivers/char/lrng/lrng_jent.c
- create mode 100644 drivers/char/lrng/lrng_kcapi.c
- create mode 100644 drivers/char/lrng/lrng_lfsr.h
- create mode 100644 drivers/char/lrng/lrng_numa.c
- create mode 100644 drivers/char/lrng/lrng_pool.c
- create mode 100644 drivers/char/lrng/lrng_proc.c
- create mode 100644 drivers/char/lrng/lrng_selftest.c
- create mode 100644 drivers/char/lrng/lrng_sw_noise.c
- create mode 100644 drivers/char/lrng/lrng_sw_noise.h
- create mode 100644 drivers/char/lrng/lrng_switch.c
- create mode 100644 drivers/char/lrng/lrng_testing.c
- rename {crypto =3D> include/crypto/internal}/jitterentropy.h (84%)
- create mode 100644 include/linux/lrng.h
-
-=2D-=20
-2.24.1
+diff --git a/Documentation/watch_queue.rst b/Documentation/watch_queue.rst
+index ed592700be0e..f2299f631ae8 100644
+--- a/Documentation/watch_queue.rst
++++ b/Documentation/watch_queue.rst
+@@ -8,7 +8,9 @@ opened by userspace.  This can be used in conjunction with::
+ 
+   * Key/keyring notifications
+ 
+-  * General device event notifications
++  * General device event notifications, including::
++
++    * Block layer event notifications
+ 
+ 
+ The notifications buffers can be enabled by:
+diff --git a/block/Kconfig b/block/Kconfig
+index c23094a14a2b..9fa6ce2177bc 100644
+--- a/block/Kconfig
++++ b/block/Kconfig
+@@ -181,6 +181,15 @@ config BLK_SED_OPAL
+ 	Enabling this option enables users to setup/unlock/lock
+ 	Locking ranges for SED devices using the Opal protocol.
+ 
++config BLK_NOTIFICATIONS
++	bool "Block layer event notifications"
++	depends on DEVICE_NOTIFICATIONS
++	help
++	  This option provides support for getting block layer event
++	  notifications.  This makes use of the /dev/watch_queue misc device to
++	  handle the notification buffer and provides the device_notify() system
++	  call to enable/disable watches.
++
+ menu "Partition Types"
+ 
+ source "block/partitions/Kconfig"
+diff --git a/block/blk-core.c b/block/blk-core.c
+index 089e890ab208..50a5de025d5e 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -187,6 +187,22 @@ static const struct {
+ 	[BLK_STS_IOERR]		= { -EIO,	"I/O" },
+ };
+ 
++#ifdef CONFIG_BLK_NOTIFICATIONS
++static const
++enum block_notification_type blk_notifications[ARRAY_SIZE(blk_errors)] = {
++	[BLK_STS_TIMEOUT]	= NOTIFY_BLOCK_ERROR_TIMEOUT,
++	[BLK_STS_NOSPC]		= NOTIFY_BLOCK_ERROR_NO_SPACE,
++	[BLK_STS_TRANSPORT]	= NOTIFY_BLOCK_ERROR_RECOVERABLE_TRANSPORT,
++	[BLK_STS_TARGET]	= NOTIFY_BLOCK_ERROR_CRITICAL_TARGET,
++	[BLK_STS_NEXUS]		= NOTIFY_BLOCK_ERROR_CRITICAL_NEXUS,
++	[BLK_STS_MEDIUM]	= NOTIFY_BLOCK_ERROR_CRITICAL_MEDIUM,
++	[BLK_STS_PROTECTION]	= NOTIFY_BLOCK_ERROR_PROTECTION,
++	[BLK_STS_RESOURCE]	= NOTIFY_BLOCK_ERROR_KERNEL_RESOURCE,
++	[BLK_STS_DEV_RESOURCE]	= NOTIFY_BLOCK_ERROR_DEVICE_RESOURCE,
++	[BLK_STS_IOERR]		= NOTIFY_BLOCK_ERROR_IO,
++};
++#endif
++
+ blk_status_t errno_to_blk_status(int errno)
+ {
+ 	int i;
+@@ -227,6 +243,19 @@ static void print_req_error(struct request *req, blk_status_t status,
+ 		req->cmd_flags & ~REQ_OP_MASK,
+ 		req->nr_phys_segments,
+ 		IOPRIO_PRIO_CLASS(req->ioprio));
++
++#ifdef CONFIG_BLK_NOTIFICATIONS
++	if (blk_notifications[idx]) {
++		struct block_notification n = {
++			.watch.type	= WATCH_TYPE_BLOCK_NOTIFY,
++			.watch.subtype	= blk_notifications[idx],
++			.watch.info	= watch_sizeof(n),
++			.dev		= req->rq_disk ? disk_devt(req->rq_disk) : 0,
++			.sector		= blk_rq_pos(req),
++		};
++		post_block_notification(&n);
++	}
++#endif
+ }
+ 
+ static void req_bio_endio(struct request *rq, struct bio *bio,
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 47eb22a3b7f9..3cd1853dbdac 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -27,6 +27,7 @@
+ #include <linux/percpu-refcount.h>
+ #include <linux/scatterlist.h>
+ #include <linux/blkzoned.h>
++#include <linux/watch_queue.h>
+ 
+ struct module;
+ struct scsi_ioctl_command;
+@@ -1770,6 +1771,20 @@ static inline bool blk_req_can_dispatch_to_zone(struct request *rq)
+ }
+ #endif /* CONFIG_BLK_DEV_ZONED */
+ 
++#ifdef CONFIG_BLK_NOTIFICATIONS
++static inline void post_block_notification(struct block_notification *n)
++{
++	u64 id = 0; /* Might want to allow dev# here. */
++
++	post_device_notification(&n->watch, id);
++}
++#else
++static inline void post_block_notification(struct block_notification *n)
++{
++}
++#endif
++
++
+ #else /* CONFIG_BLOCK */
+ 
+ struct block_device;
+diff --git a/include/uapi/linux/watch_queue.h b/include/uapi/linux/watch_queue.h
+index c3d8320b5d3a..557771413242 100644
+--- a/include/uapi/linux/watch_queue.h
++++ b/include/uapi/linux/watch_queue.h
+@@ -14,7 +14,8 @@
+ enum watch_notification_type {
+ 	WATCH_TYPE_META		= 0,	/* Special record */
+ 	WATCH_TYPE_KEY_NOTIFY	= 1,	/* Key change event notification */
+-	WATCH_TYPE__NR		= 2
++	WATCH_TYPE_BLOCK_NOTIFY	= 2,	/* Block layer event notification */
++	WATCH_TYPE__NR		= 3
+ };
+ 
+ enum watch_meta_notification_subtype {
+@@ -101,4 +102,31 @@ struct key_notification {
+ 	__u32	aux;		/* Per-type auxiliary data */
+ };
+ 
++/*
++ * Type of block layer notification.
++ */
++enum block_notification_type {
++	NOTIFY_BLOCK_ERROR_TIMEOUT		= 1, /* Timeout error */
++	NOTIFY_BLOCK_ERROR_NO_SPACE		= 2, /* Critical space allocation error */
++	NOTIFY_BLOCK_ERROR_RECOVERABLE_TRANSPORT = 3, /* Recoverable transport error */
++	NOTIFY_BLOCK_ERROR_CRITICAL_TARGET	= 4, /* Critical target error */
++	NOTIFY_BLOCK_ERROR_CRITICAL_NEXUS	= 5, /* Critical nexus error */
++	NOTIFY_BLOCK_ERROR_CRITICAL_MEDIUM	= 6, /* Critical medium error */
++	NOTIFY_BLOCK_ERROR_PROTECTION		= 7, /* Protection error */
++	NOTIFY_BLOCK_ERROR_KERNEL_RESOURCE	= 8, /* Kernel resource error */
++	NOTIFY_BLOCK_ERROR_DEVICE_RESOURCE	= 9, /* Device resource error */
++	NOTIFY_BLOCK_ERROR_IO			= 10, /* Other I/O error */
++};
++
++/*
++ * Block layer notification record.
++ * - watch.type = WATCH_TYPE_BLOCK_NOTIFY
++ * - watch.subtype = enum block_notification_type
++ */
++struct block_notification {
++	struct watch_notification watch; /* WATCH_TYPE_BLOCK_NOTIFY */
++	__u64	dev;			/* Device number */
++	__u64	sector;			/* Affected sector */
++};
++
+ #endif /* _UAPI_LINUX_WATCH_QUEUE_H */
+diff --git a/samples/watch_queue/watch_test.c b/samples/watch_queue/watch_test.c
+index 0eaff5dc04c3..f5260fb792d1 100644
+--- a/samples/watch_queue/watch_test.c
++++ b/samples/watch_queue/watch_test.c
+@@ -58,6 +58,32 @@ static void saw_key_change(struct watch_notification *n, size_t len)
+ 	       k->key_id, n->subtype, key_subtypes[n->subtype], k->aux);
+ }
+ 
++static const char *block_subtypes[256] = {
++	[NOTIFY_BLOCK_ERROR_TIMEOUT]			= "timeout",
++	[NOTIFY_BLOCK_ERROR_NO_SPACE]			= "critical space allocation",
++	[NOTIFY_BLOCK_ERROR_RECOVERABLE_TRANSPORT]	= "recoverable transport",
++	[NOTIFY_BLOCK_ERROR_CRITICAL_TARGET]		= "critical target",
++	[NOTIFY_BLOCK_ERROR_CRITICAL_NEXUS]		= "critical nexus",
++	[NOTIFY_BLOCK_ERROR_CRITICAL_MEDIUM]		= "critical medium",
++	[NOTIFY_BLOCK_ERROR_PROTECTION]			= "protection",
++	[NOTIFY_BLOCK_ERROR_KERNEL_RESOURCE]		= "kernel resource",
++	[NOTIFY_BLOCK_ERROR_DEVICE_RESOURCE]		= "device resource",
++	[NOTIFY_BLOCK_ERROR_IO]				= "I/O",
++};
++
++static void saw_block_change(struct watch_notification *n, size_t len)
++{
++	struct block_notification *b = (struct block_notification *)n;
++
++	if (len < sizeof(struct block_notification))
++		return;
++
++	printf("BLOCK %08llx e=%u[%s] s=%llx\n",
++	       (unsigned long long)b->dev,
++	       n->subtype, block_subtypes[n->subtype],
++	       (unsigned long long)b->sector);
++}
++
+ /*
+  * Consume and display events.
+  */
+@@ -131,6 +157,9 @@ static void consumer(int fd)
+ 			case WATCH_TYPE_KEY_NOTIFY:
+ 				saw_key_change(&n.n, len);
+ 				break;
++			case WATCH_TYPE_BLOCK_NOTIFY:
++				saw_block_change(&n.n, len);
++				break;
+ 			default:
+ 				printf("other type\n");
+ 				break;
+@@ -142,12 +171,16 @@ static void consumer(int fd)
+ }
+ 
+ static struct watch_notification_filter filter = {
+-	.nr_filters	= 1,
++	.nr_filters	= 2,
+ 	.filters = {
+ 		[0]	= {
+ 			.type			= WATCH_TYPE_KEY_NOTIFY,
+ 			.subtype_filter[0]	= UINT_MAX,
+ 		},
++		[1]	= {
++			.type			= WATCH_TYPE_BLOCK_NOTIFY,
++			.subtype_filter[0]	= UINT_MAX,
++		},
+ 	},
+ };
+ 
+@@ -181,6 +214,11 @@ int main(int argc, char **argv)
+ 		exit(1);
+ 	}
+ 
++	if (syscall(__NR_watch_devices, fd, 0x04, 0) == -1) {
++		perror("watch_devices");
++		exit(1);
++	}
++
+ 	consumer(fd);
+ 	exit(0);
+ }
