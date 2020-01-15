@@ -1,318 +1,654 @@
-From: David Howells <dhowells@redhat.com>
-Subject: [RFC PATCH 11/14] block: Add block layer notifications [ver #3]
-Date: Wed, 15 Jan 2020 13:32:14 +0000
-Message-ID: <157909513401.20155.11696586597485616420.stgit@warthog.procyon.org.uk>
-References: <157909503552.20155.3030058841911628518.stgit@warthog.procyon.org.uk>
+From: Stephan =?ISO-8859-1?Q?M=FCller?= <smueller@chronox.de>
+Subject: [PATCH v28 10/12] LRNG - add SP800-90B compliant health tests
+Date: Wed, 15 Jan 2020 11:35:22 +0100
+Message-ID: <3714975.c4kBKJ4xk9@positron.chronox.de>
+References: <6157374.ptSnyUpaCn@positron.chronox.de> <2641155.iNH938UiKq@positron.chronox.de> <5951792.lmNsirYsPE@positron.chronox.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <157909503552.20155.3030058841911628518.stgit@warthog.procyon.org.uk>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: torvalds@linux-foundation.org
-Cc: dhowells@redhat.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>dhowells@redhat.com, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.orglinux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <5951792.lmNsirYsPE@positron.chronox.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@suse.de>, "Peter, Matthias" <matth>
 List-Id: linux-api@vger.kernel.org
 
-Add a block layer notification mechanism whereby notifications about
-block-layer events such as I/O errors, can be reported to a monitoring
-process asynchronously.
+Implement health tests for LRNG's slow noise sources as mandated by
+SP-800-90B The file contains the following health tests:
 
-Firstly, an event queue needs to be created:
+=2D stuck test: The stuck test calculates the first, second and third
+  discrete derivative of the time stamp to be processed by the LFSR.
+  Only if all three values are non-zero, the received time delta is
+  considered to be non-stuck.
 
-	pipe2(fds, O_NOTIFICATION_PIPE);
-	ioctl(fds[1], IOC_WATCH_QUEUE_SET_SIZE, 256);
+=2D SP800-90B Repetition Count Test (RCT): The LRNG uses an enhanced
+  version of the RCT specified in SP800-90B section 4.4.1. Instead of
+  counting identical back-to-back values, the input to the RCT is the
+  counting of the stuck values during the processing of received
+  interrupt events. The RCT is applied with alpha=3D2^-30 compliant to
+  the recommendation of FIPS 140-2 IG 9.8. During the counting operation,
+  the LRNG always calculates the RCT cut-off value of C. If that value
+  exceeds the allowed cut-off value, the LRNG will trigger the health
+  test failure discussed below. An error is logged to the kernel log
+  that such RCT failure occurred. This test is only applied and
+  enforced in FIPS mode, i.e. when the kernel compiled with
+  CONFIG_CONFIG_FIPS is started with fips=3D1.
 
-then a notification can be set up to report block notifications via that
-queue:
+=2D SP800-90B Adaptive Proportion Test (APT): The LRNG implements the
+  APT as defined in SP800-90B section 4.4.2. The applied significance
+  level again is alpha=3D2^-30 compliant to the recommendation of FIPS
+  140-2 IG 9.8.
 
-	struct watch_notification_filter filter = {
-		.nr_filters = 1,
-		.filters = {
-			[0] = {
-				.type = WATCH_TYPE_BLOCK_NOTIFY,
-				.subtype_filter[0] = UINT_MAX;
-			},
-		},
-	};
-	ioctl(fds[1], IOC_WATCH_QUEUE_SET_FILTER, &filter);
-	watch_devices(fds[1], 12);
+The aforementioned health tests are applied to the first 1,024 time stamps
+obtained from interrupt events. In case one error is identified for either
+the RCT, or the APT, the collected entropy is invalidated and the
+SP800-90B startup health test is restarted.
 
-After that, records will be placed into the queue when, for example, errors
-occur on a block device.  Records are of the following format:
+As long as the SP800-90B startup health test is not completed, all LRNG
+random number output interfaces that may block will block and not generate
+any data. This implies that only those potentially blocking interfaces are
+defined to provide random numbers that are seeded with the interrupt noise
+source being SP800-90B compliant. All other output interfaces will not be
+affected by the SP800-90B startup test and thus are not considered
+SP800-90B compliant.
 
-	struct block_notification {
-		struct watch_notification watch;
-		__u64	dev;
-		__u64	sector;
-	} *n;
+At runtime, the SP800-90B APT and RCT are applied to each time stamp
+generated for a received interrupt. When either the APT and RCT indicates
+a noise source failure, the LRNG is reset to a state it has immediately
+after boot:
 
-Where:
+=2D all entropy counters are set to zero
 
-	n->watch.type will be WATCH_TYPE_BLOCK_NOTIFY
+=2D the SP800-90B startup tests are re-performed which implies that
+getrandom(2) would block again until new entropy was collected
 
-	n->watch.subtype will be the type of notification, such as
-	NOTIFY_BLOCK_ERROR_CRITICAL_MEDIUM.
+To summarize, the following rules apply:
 
-	n->watch.info & WATCH_INFO_LENGTH will indicate the length of the
-	record.
+=E2=80=A2 SP800-90B compliant output interfaces
 
-	n->watch.info & WATCH_INFO_ID will be the second argument to
-	watch_devices(), shifted.
+  - /dev/random
 
-	n->dev will be the device numbers munged together.
+  - getrandom(2) system call
 
-	n->sector will indicate the affected sector (if appropriate for the
-	event).
+  -  get_random_bytes kernel-internal interface when being triggered by
+     the callback registered with add_random_ready_callback
 
-Note that it is permissible for event records to be of variable length -
-or, at least, the length may be dependent on the subtype.
+=E2=80=A2 SP800-90B non-compliant output interfaces
 
-Signed-off-by: David Howells <dhowells@redhat.com>
----
+  - /dev/urandom
 
- Documentation/watch_queue.rst    |    4 +++-
- block/Kconfig                    |    9 +++++++++
- block/blk-core.c                 |   29 ++++++++++++++++++++++++++++
- include/linux/blkdev.h           |   15 ++++++++++++++
- include/uapi/linux/watch_queue.h |   30 ++++++++++++++++++++++++++++-
- samples/watch_queue/watch_test.c |   40 +++++++++++++++++++++++++++++++++++++-
- 6 files changed, 124 insertions(+), 3 deletions(-)
+  - get_random_bytes kernel-internal interface called directly
 
-diff --git a/Documentation/watch_queue.rst b/Documentation/watch_queue.rst
-index ed592700be0e..f2299f631ae8 100644
---- a/Documentation/watch_queue.rst
-+++ b/Documentation/watch_queue.rst
-@@ -8,7 +8,9 @@ opened by userspace.  This can be used in conjunction with::
- 
-   * Key/keyring notifications
- 
--  * General device event notifications
-+  * General device event notifications, including::
-+
-+    * Block layer event notifications
- 
- 
- The notifications buffers can be enabled by:
-diff --git a/block/Kconfig b/block/Kconfig
-index c23094a14a2b..9fa6ce2177bc 100644
---- a/block/Kconfig
-+++ b/block/Kconfig
-@@ -181,6 +181,15 @@ config BLK_SED_OPAL
- 	Enabling this option enables users to setup/unlock/lock
- 	Locking ranges for SED devices using the Opal protocol.
- 
-+config BLK_NOTIFICATIONS
-+	bool "Block layer event notifications"
-+	depends on DEVICE_NOTIFICATIONS
+  - randomize_page kernel-internal interface
+
+  - get_random_u32 and get_random_u64 kernel-internal interfaces
+
+  - get_random_u32_wait, get_random_u64_wait, get_random_int_wait, and
+    get_random_long_wait kernel-internal interfaces
+
+If either the RCT, or the APT health test fails irrespective whether
+during initialization or runtime, the following actions occur:
+
+  1. The entropy of the entire entropy pool is invalidated.
+
+  2. All DRNGs are reset which imply that they are treated as being
+     not seeded and require a reseed during next invocation.
+
+  3. The SP800-90B startup health test are initiated with all
+     implications of the startup tests. That implies that from that point
+     on, new events must be observed and its entropy must be inserted into
+     the entropy pool before random numbers are calculated from the
+     entropy pool.
+
+=46urther details on the SP800-90B compliance and the availability of all
+test tools required to perform all tests mandated by SP800-90B are
+provided at [1].
+
+The entire health testing code is compile-time configurable.
+
+The patch provides a CONFIG_BROKEN configuration of the APT / RCT cutoff
+values which have a high likelihood to trigger the health test failure.
+The BROKEN APT cutoff is set to the exact mean of the expected value if
+the time stamps are equally distributed (512 time stamps divided by 16
+possible values due to using the 4 LSB of the time stamp). The BROKEN
+RCT cutoff value is set to 1 which is likely to be triggered during
+regular operation.
+
+CC: "Eric W. Biederman" <ebiederm@xmission.com>
+CC: "Alexander E. Patrakov" <patrakov@gmail.com>
+CC: "Ahmed S. Darwish" <darwish.07@gmail.com>
+CC: "Theodore Y. Ts'o" <tytso@mit.edu>
+CC: Willy Tarreau <w@1wt.eu>
+CC: Matthew Garrett <mjg59@srcf.ucam.org>
+CC: Vito Caputo <vcaputo@pengaru.com>
+CC: Andreas Dilger <adilger.kernel@dilger.ca>
+CC: Jan Kara <jack@suse.cz>
+CC: Ray Strode <rstrode@redhat.com>
+CC: William Jon McCann <mccann@jhu.edu>
+CC: zhangjs <zachary@baishancloud.com>
+CC: Andy Lutomirski <luto@kernel.org>
+CC: Florian Weimer <fweimer@redhat.com>
+CC: Lennart Poettering <mzxreary@0pointer.de>
+CC: Nicolai Stange <nstange@suse.de>
+Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
+Tested-by: Roman Drahtm=C3=BCller <draht@schaltsekun.de>
+Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
+Tested-by: Neil Horman <nhorman@redhat.com>
+Signed-off-by: Stephan Mueller <smueller@chronox.de>
+=2D--
+ drivers/char/lrng/Kconfig       |  56 +++++
+ drivers/char/lrng/Makefile      |   1 +
+ drivers/char/lrng/lrng_health.c | 409 ++++++++++++++++++++++++++++++++
+ 3 files changed, 466 insertions(+)
+ create mode 100644 drivers/char/lrng/lrng_health.c
+
+diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
+index 10b7cbdb8c8e..12b6b3439853 100644
+=2D-- a/drivers/char/lrng/Kconfig
++++ b/drivers/char/lrng/Kconfig
+@@ -103,4 +103,60 @@ config LRNG_JENT
+ 	  time or at runtime with the lrng_base.jitterrng configuration
+ 	  variable.
+=20
++config LRNG_HEALTH_TESTS
++	bool "Enable noise source online health tests"
 +	help
-+	  This option provides support for getting block layer event
-+	  notifications.  This makes use of the /dev/watch_queue misc device to
-+	  handle the notification buffer and provides the device_notify() system
-+	  call to enable/disable watches.
++	  The online health tests validate the noise source at
++	  runtime for fatal errors. These tests include SP800-90B
++	  compliant tests which are invoked if the system is booted
++	  with fips=3D1. In case of fatal errors during active
++	  SP800-90B tests, the issue is logged and the noise
++	  data is discarded. These tests are required for full
++	  compliance with SP800-90B.
 +
- menu "Partition Types"
- 
- source "block/partitions/Kconfig"
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 089e890ab208..50a5de025d5e 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -187,6 +187,22 @@ static const struct {
- 	[BLK_STS_IOERR]		= { -EIO,	"I/O" },
- };
- 
-+#ifdef CONFIG_BLK_NOTIFICATIONS
-+static const
-+enum block_notification_type blk_notifications[ARRAY_SIZE(blk_errors)] = {
-+	[BLK_STS_TIMEOUT]	= NOTIFY_BLOCK_ERROR_TIMEOUT,
-+	[BLK_STS_NOSPC]		= NOTIFY_BLOCK_ERROR_NO_SPACE,
-+	[BLK_STS_TRANSPORT]	= NOTIFY_BLOCK_ERROR_RECOVERABLE_TRANSPORT,
-+	[BLK_STS_TARGET]	= NOTIFY_BLOCK_ERROR_CRITICAL_TARGET,
-+	[BLK_STS_NEXUS]		= NOTIFY_BLOCK_ERROR_CRITICAL_NEXUS,
-+	[BLK_STS_MEDIUM]	= NOTIFY_BLOCK_ERROR_CRITICAL_MEDIUM,
-+	[BLK_STS_PROTECTION]	= NOTIFY_BLOCK_ERROR_PROTECTION,
-+	[BLK_STS_RESOURCE]	= NOTIFY_BLOCK_ERROR_KERNEL_RESOURCE,
-+	[BLK_STS_DEV_RESOURCE]	= NOTIFY_BLOCK_ERROR_DEVICE_RESOURCE,
-+	[BLK_STS_IOERR]		= NOTIFY_BLOCK_ERROR_IO,
++	  If unsure, say Y.
++
++config LRNG_RCT_BROKEN
++	bool "SP800-90B RCT with dangerous low cutoff value"
++	depends on LRNG_HEALTH_TESTS
++	depends on BROKEN
++	default n
++	help
++	  This option enables a dangerously low SP800-90B repetitive
++	  count test (RCT) cutoff value which makes it very likely
++	  that the RCT is triggered to raise a self test failure.
++
++	  This option is ONLY intended for developers wanting to
++	  test the effectiveness of the SP800-90B RCT health test.
++
++	  If unsure, say N.
++
++config LRNG_APT_BROKEN
++	bool "SP800-90B APT with dangerous low cutoff value"
++	depends on LRNG_HEALTH_TESTS
++	depends on BROKEN
++	default n
++	help
++	  This option enables a dangerously low SP800-90B adaptive
++	  proportion test (APT) cutoff value which makes it very
++	  likely that the RCT is triggered to raise a self test
++	  failure.
++
++	  This option is ONLY intended for developers wanting to
++	  test the effectiveness of the SP800-90B APT health test.
++
++	  If unsure, say N.
++
++# Default taken from SP800-90B sec 4.4.1 - significance level 2^-30
++config LRNG_RCT_CUTOFF
++	int
++	default 31 if !LRNG_RCT_BROKEN
++	default 1 if LRNG_RCT_BROKEN
++
++# Default taken from SP800-90B sec 4.4.2 - significance level 2^-30
++config LRNG_APT_CUTOFF
++	int
++	default 325 if !LRNG_APT_BROKEN
++	default 32 if LRNG_APT_BROKEN
++
+ endif # LRNG
+diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
+index 4f5b6f38f0c4..c3008763dd14 100644
+=2D-- a/drivers/char/lrng/Makefile
++++ b/drivers/char/lrng/Makefile
+@@ -14,3 +14,4 @@ obj-$(CONFIG_LRNG_DRNG_SWITCH)	+=3D lrng_switch.o
+ obj-$(CONFIG_LRNG_DRBG)		+=3D lrng_drbg.o
+ obj-$(CONFIG_LRNG_KCAPI)	+=3D lrng_kcapi.o
+ obj-$(CONFIG_LRNG_JENT)		+=3D lrng_jent.o
++obj-$(CONFIG_LRNG_HEALTH_TESTS)	+=3D lrng_health.o
+diff --git a/drivers/char/lrng/lrng_health.c b/drivers/char/lrng/lrng_healt=
+h.c
+new file mode 100644
+index 000000000000..4aeca29d0b87
+=2D-- /dev/null
++++ b/drivers/char/lrng/lrng_health.c
+@@ -0,0 +1,409 @@
++// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
++/*
++ * Linux Random Number Generator (LRNG) Health Testing
++ *
++ * Copyright (C) 2019 - 2020, Stephan Mueller <smueller@chronox.de>
++ */
++
++#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
++
++#include <linux/fips.h>
++#include <linux/module.h>
++
++#include "lrng_internal.h"
++
++/* Stuck Test */
++struct lrng_stuck_test {
++	u32 last_time;		/* Stuck test: time of previous IRQ */
++	u32 last_delta;		/* Stuck test: delta of previous IRQ */
++	u32 last_delta2;	/* Stuck test: 2. time derivation of prev IRQ */
 +};
-+#endif
 +
- blk_status_t errno_to_blk_status(int errno)
- {
- 	int i;
-@@ -227,6 +243,19 @@ static void print_req_error(struct request *req, blk_status_t status,
- 		req->cmd_flags & ~REQ_OP_MASK,
- 		req->nr_phys_segments,
- 		IOPRIO_PRIO_CLASS(req->ioprio));
++/* Repetition Count Test */
++struct lrng_rct {
++	atomic_t rct_count;	/* Number of stuck values */
++};
 +
-+#ifdef CONFIG_BLK_NOTIFICATIONS
-+	if (blk_notifications[idx]) {
-+		struct block_notification n = {
-+			.watch.type	= WATCH_TYPE_BLOCK_NOTIFY,
-+			.watch.subtype	= blk_notifications[idx],
-+			.watch.info	= watch_sizeof(n),
-+			.dev		= req->rq_disk ? disk_devt(req->rq_disk) : 0,
-+			.sector		= blk_rq_pos(req),
-+		};
-+		post_block_notification(&n);
++/* Adaptive Proportion Test */
++struct lrng_apt {
++	/* Data window size */
++#define LRNG_APT_WINDOW_SIZE	512
++	/* LSB of time stamp to process */
++#define LRNG_APT_LSB		16
++#define LRNG_APT_WORD_MASK	(LRNG_APT_LSB - 1)
++	atomic_t apt_count;		/* APT counter */
++	atomic_t apt_base;		/* APT base reference */
++
++	atomic_t apt_trigger;
++	bool apt_base_set;	/* Is APT base set? */
++};
++
++/* The health test code must operate lock-less */
++struct lrng_health {
++	struct lrng_rct rct;
++	struct lrng_apt apt;
++
++	bool health_test_enabled;
++
++	/* SP800-90B startup health tests */
++#define LRNG_SP80090B_STARTUP_SAMPLES  1024
++#define LRNG_SP80090B_STARTUP_BLOCKS   ((LRNG_SP80090B_STARTUP_SAMPLES + \
++					 LRNG_APT_WINDOW_SIZE - 1) /    \
++					LRNG_APT_WINDOW_SIZE)
++	bool sp80090b_startup_done;
++	atomic_t sp80090b_startup_blocks;
++};
++
++static struct lrng_health lrng_health =3D {
++	.rct.rct_count =3D ATOMIC_INIT(0),
++
++	.apt.apt_count =3D ATOMIC_INIT(0),
++	.apt.apt_base =3D ATOMIC_INIT(-1),
++	.apt.apt_trigger =3D ATOMIC_INIT(LRNG_APT_WINDOW_SIZE),
++	.apt.apt_base_set =3D false,
++
++	.health_test_enabled =3D true,
++
++	.sp80090b_startup_blocks =3D ATOMIC_INIT(LRNG_SP80090B_STARTUP_BLOCKS),
++	.sp80090b_startup_done =3D false,
++};
++
++static DEFINE_PER_CPU(struct lrng_stuck_test, lrng_stuck_test);
++
++static inline bool lrng_sp80090b_health_requested(void)
++{
++	/* Health tests are only requested in FIPS mode */
++	return fips_enabled;
++}
++
++static inline bool lrng_sp80090b_health_enabled(void)
++{
++	struct lrng_health *health =3D &lrng_health;
++
++	return lrng_sp80090b_health_requested() && health->health_test_enabled;
++}
++
++/*************************************************************************=
+**
++ * SP800-90B Compliance
++ *
++ * If the Linux-RNG is booted into FIPS mode, the following interfaces
++ * provide an SP800-90B compliant noise source:
++ *
++ * * /dev/random
++ * * getrandom(2)
++ * * get_random_bytes when using it in conjunction with
++ *   add_random_ready_callback
++ *
++ * All other interfaces, including /dev/urandom or get_random_bytes without
++ * the add_random_ready_callback cannot claim to use an SP800-90B compliant
++ * noise source.
++ *************************************************************************=
+**/
++
++/*
++ * Perform SP800-90B startup testing
++ */
++static inline void lrng_sp80090b_startup(struct lrng_health *health)
++{
++	if (!health->sp80090b_startup_done &&
++	    atomic_dec_and_test(&health->sp80090b_startup_blocks)) {
++		health->sp80090b_startup_done =3D true;
++		pr_info("SP800-90B startup health tests completed\n");
++		lrng_init_ops(0);
++
++		/*
++		 * Force a reseed of DRNGs to ensure they are seeded with
++		 * entropy that passed the SP800-90B health tests.
++		 * As the DRNG always will reseed before generating
++		 * random numbers, it does not need a reseed trigger.
++		 */
++		lrng_drng_force_reseed();
 +	}
-+#endif
- }
- 
- static void req_bio_endio(struct request *rq, struct bio *bio,
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 47eb22a3b7f9..3cd1853dbdac 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -27,6 +27,7 @@
- #include <linux/percpu-refcount.h>
- #include <linux/scatterlist.h>
- #include <linux/blkzoned.h>
-+#include <linux/watch_queue.h>
- 
- struct module;
- struct scsi_ioctl_command;
-@@ -1770,6 +1771,20 @@ static inline bool blk_req_can_dispatch_to_zone(struct request *rq)
- }
- #endif /* CONFIG_BLK_DEV_ZONED */
- 
-+#ifdef CONFIG_BLK_NOTIFICATIONS
-+static inline void post_block_notification(struct block_notification *n)
-+{
-+	u64 id = 0; /* Might want to allow dev# here. */
-+
-+	post_device_notification(&n->watch, id);
 +}
-+#else
-+static inline void post_block_notification(struct block_notification *n)
-+{
-+}
-+#endif
-+
-+
- #else /* CONFIG_BLOCK */
- 
- struct block_device;
-diff --git a/include/uapi/linux/watch_queue.h b/include/uapi/linux/watch_queue.h
-index c3d8320b5d3a..557771413242 100644
---- a/include/uapi/linux/watch_queue.h
-+++ b/include/uapi/linux/watch_queue.h
-@@ -14,7 +14,8 @@
- enum watch_notification_type {
- 	WATCH_TYPE_META		= 0,	/* Special record */
- 	WATCH_TYPE_KEY_NOTIFY	= 1,	/* Key change event notification */
--	WATCH_TYPE__NR		= 2
-+	WATCH_TYPE_BLOCK_NOTIFY	= 2,	/* Block layer event notification */
-+	WATCH_TYPE__NR		= 3
- };
- 
- enum watch_meta_notification_subtype {
-@@ -101,4 +102,31 @@ struct key_notification {
- 	__u32	aux;		/* Per-type auxiliary data */
- };
- 
-+/*
-+ * Type of block layer notification.
-+ */
-+enum block_notification_type {
-+	NOTIFY_BLOCK_ERROR_TIMEOUT		= 1, /* Timeout error */
-+	NOTIFY_BLOCK_ERROR_NO_SPACE		= 2, /* Critical space allocation error */
-+	NOTIFY_BLOCK_ERROR_RECOVERABLE_TRANSPORT = 3, /* Recoverable transport error */
-+	NOTIFY_BLOCK_ERROR_CRITICAL_TARGET	= 4, /* Critical target error */
-+	NOTIFY_BLOCK_ERROR_CRITICAL_NEXUS	= 5, /* Critical nexus error */
-+	NOTIFY_BLOCK_ERROR_CRITICAL_MEDIUM	= 6, /* Critical medium error */
-+	NOTIFY_BLOCK_ERROR_PROTECTION		= 7, /* Protection error */
-+	NOTIFY_BLOCK_ERROR_KERNEL_RESOURCE	= 8, /* Kernel resource error */
-+	NOTIFY_BLOCK_ERROR_DEVICE_RESOURCE	= 9, /* Device resource error */
-+	NOTIFY_BLOCK_ERROR_IO			= 10, /* Other I/O error */
-+};
 +
 +/*
-+ * Block layer notification record.
-+ * - watch.type = WATCH_TYPE_BLOCK_NOTIFY
-+ * - watch.subtype = enum block_notification_type
++ * Handle failure of SP800-90B startup testing
 + */
-+struct block_notification {
-+	struct watch_notification watch; /* WATCH_TYPE_BLOCK_NOTIFY */
-+	__u64	dev;			/* Device number */
-+	__u64	sector;			/* Affected sector */
-+};
-+
- #endif /* _UAPI_LINUX_WATCH_QUEUE_H */
-diff --git a/samples/watch_queue/watch_test.c b/samples/watch_queue/watch_test.c
-index 0eaff5dc04c3..f5260fb792d1 100644
---- a/samples/watch_queue/watch_test.c
-+++ b/samples/watch_queue/watch_test.c
-@@ -58,6 +58,32 @@ static void saw_key_change(struct watch_notification *n, size_t len)
- 	       k->key_id, n->subtype, key_subtypes[n->subtype], k->aux);
- }
- 
-+static const char *block_subtypes[256] = {
-+	[NOTIFY_BLOCK_ERROR_TIMEOUT]			= "timeout",
-+	[NOTIFY_BLOCK_ERROR_NO_SPACE]			= "critical space allocation",
-+	[NOTIFY_BLOCK_ERROR_RECOVERABLE_TRANSPORT]	= "recoverable transport",
-+	[NOTIFY_BLOCK_ERROR_CRITICAL_TARGET]		= "critical target",
-+	[NOTIFY_BLOCK_ERROR_CRITICAL_NEXUS]		= "critical nexus",
-+	[NOTIFY_BLOCK_ERROR_CRITICAL_MEDIUM]		= "critical medium",
-+	[NOTIFY_BLOCK_ERROR_PROTECTION]			= "protection",
-+	[NOTIFY_BLOCK_ERROR_KERNEL_RESOURCE]		= "kernel resource",
-+	[NOTIFY_BLOCK_ERROR_DEVICE_RESOURCE]		= "device resource",
-+	[NOTIFY_BLOCK_ERROR_IO]				= "I/O",
-+};
-+
-+static void saw_block_change(struct watch_notification *n, size_t len)
++static inline void lrng_sp80090b_startup_failure(struct lrng_health *healt=
+h)
 +{
-+	struct block_notification *b = (struct block_notification *)n;
++	/* Reset of LRNG and its entropy - NOTE: we are in atomic context */
++	lrng_reset();
 +
-+	if (len < sizeof(struct block_notification))
++	/*
++	 * Reset the SP800-90B startup test.
++	 *
++	 * NOTE SP800-90B section 4.3 bullet 4 does not specify what
++	 * exactly is to be done in case of failure! Thus, we do what
++	 * makes sense, i.e. restarting the health test and thus gating
++	 * the output function of /dev/random and getrandom(2).
++	 */
++	atomic_set(&health->sp80090b_startup_blocks,
++		   LRNG_SP80090B_STARTUP_BLOCKS);
++}
++
++/*
++ * Handle failure of SP800-90B runtime testing
++ */
++static inline void lrng_sp80090b_runtime_failure(struct lrng_health *healt=
+h)
++{
++	lrng_sp80090b_startup_failure(health);
++	health->sp80090b_startup_done =3D false;
++}
++
++static inline void lrng_sp80090b_failure(struct lrng_health *health)
++{
++	if (health->sp80090b_startup_done) {
++		pr_err("SP800-90B runtime health test failure - invalidating "
++		       "all existing entropy and initiate SP800-90B startup\n");
++		lrng_sp80090b_runtime_failure(health);
++	} else {
++		pr_err("SP800-90B startup test failure - resetting\n");
++		lrng_sp80090b_startup_failure(health);
++	}
++}
++
++/*
++ * Is the SP800-90B startup testing complete?
++ *
++ * This function is called by the LRNG to determine whether to unblock
++ * a certain user interface. Therefore, only the potentially blocking
++ * user interfaces are considered SP800-90B compliant.
++ */
++bool lrng_sp80090b_startup_complete(void)
++{
++	struct lrng_health *health =3D &lrng_health;
++
++	return (lrng_sp80090b_health_enabled()) ? health->sp80090b_startup_done:
++						  true;
++}
++
++bool lrng_sp80090b_compliant(void)
++{
++	struct lrng_health *health =3D &lrng_health;
++
++	return lrng_sp80090b_health_enabled() && health->sp80090b_startup_done;
++}
++
++/*************************************************************************=
+**
++ * Adaptive Proportion Test
++ *
++ * This test complies with SP800-90B section 4.4.2.
++ *************************************************************************=
+**/
++
++/*
++ * Reset the APT counter
++ *
++ * @health [in] Reference to health state
++ */
++static inline void lrng_apt_reset(struct lrng_health *health,
++				  unsigned int time_masked)
++{
++	struct lrng_apt *apt =3D &health->apt;
++
++	pr_debug("APT value %d for base %d\n",
++		 atomic_read(&apt->apt_count), atomic_read(&apt->apt_base));
++
++	/* Reset APT */
++	atomic_set(&apt->apt_count, 0);
++	atomic_set(&apt->apt_base, time_masked);
++}
++
++static inline void lrng_apt_restart(struct lrng_health *health)
++{
++	struct lrng_apt *apt =3D &health->apt;
++
++	atomic_set(&apt->apt_trigger, LRNG_APT_WINDOW_SIZE);
++}
++
++/*
++ * Insert a new entropy event into APT
++ *
++ * This function does is void as it does not decide about the fate of a ti=
+me
++ * stamp. An APT failure can only happen at the same time of a stuck test
++ * failure. Thus, the stuck failure will already decide how the time stamp
++ * is handled.
++ *
++ * @health [in] Reference to health state
++ * @now_time [in] Time stamp to process
++ */
++static inline void lrng_apt_insert(struct lrng_health *health,
++				   unsigned int now_time)
++{
++	struct lrng_apt *apt =3D &health->apt;
++
++	if (!lrng_sp80090b_health_requested())
 +		return;
 +
-+	printf("BLOCK %08llx e=%u[%s] s=%llx\n",
-+	       (unsigned long long)b->dev,
-+	       n->subtype, block_subtypes[n->subtype],
-+	       (unsigned long long)b->sector);
-+}
++	now_time &=3D LRNG_APT_WORD_MASK;
 +
- /*
-  * Consume and display events.
-  */
-@@ -131,6 +157,9 @@ static void consumer(int fd)
- 			case WATCH_TYPE_KEY_NOTIFY:
- 				saw_key_change(&n.n, len);
- 				break;
-+			case WATCH_TYPE_BLOCK_NOTIFY:
-+				saw_block_change(&n.n, len);
-+				break;
- 			default:
- 				printf("other type\n");
- 				break;
-@@ -142,12 +171,16 @@ static void consumer(int fd)
- }
- 
- static struct watch_notification_filter filter = {
--	.nr_filters	= 1,
-+	.nr_filters	= 2,
- 	.filters = {
- 		[0]	= {
- 			.type			= WATCH_TYPE_KEY_NOTIFY,
- 			.subtype_filter[0]	= UINT_MAX,
- 		},
-+		[1]	= {
-+			.type			= WATCH_TYPE_BLOCK_NOTIFY,
-+			.subtype_filter[0]	= UINT_MAX,
-+		},
- 	},
- };
- 
-@@ -181,6 +214,11 @@ int main(int argc, char **argv)
- 		exit(1);
- 	}
- 
-+	if (syscall(__NR_watch_devices, fd, 0x04, 0) == -1) {
-+		perror("watch_devices");
-+		exit(1);
++	/* Initialization of APT */
++	if (!apt->apt_base_set) {
++		atomic_set(&apt->apt_base, now_time);
++		apt->apt_base_set =3D true;
++		return;
 +	}
 +
- 	consumer(fd);
- 	exit(0);
- }
++	if (now_time =3D=3D (unsigned int)atomic_read(&apt->apt_base)) {
++		u32 apt_val =3D (u32)atomic_inc_return_relaxed(&apt->apt_count);
++
++		if (apt_val >=3D CONFIG_LRNG_APT_CUTOFF)
++			lrng_sp80090b_failure(health);
++	}
++
++	if (atomic_dec_and_test(&apt->apt_trigger)) {
++		lrng_apt_restart(health);
++		lrng_apt_reset(health, now_time);
++		lrng_sp80090b_startup(health);
++	}
++}
++
++/*************************************************************************=
+**
++ * Repetition Count Test
++ *
++ * The LRNG uses an enhanced version of the Repetition Count Test
++ * (RCT) specified in SP800-90B section 4.4.1. Instead of counting identic=
+al
++ * back-to-back values, the input to the RCT is the counting of the stuck
++ * values while filling the entropy pool.
++ *
++ * The RCT is applied with an alpha of 2^-30 compliant to FIPS 140-2 IG 9.=
+8.
++ *
++ * During the counting operation, the LRNG always calculates the RCT
++ * cut-off value of C. If that value exceeds the allowed cut-off value,
++ * the LRNG will invalidate all entropy for the entropy pool which implies
++ * that no data can be extracted from the entropy pool unless new entropy
++ * is received.
++ *************************************************************************=
+**/
++
++/*
++ * Hot code path - Insert data for Repetition Count Test
++ *
++ * @health: Reference to health information
++ * @stuck: Decision of stuck test
++ */
++static inline void lrng_rct(struct lrng_health *health, int stuck)
++{
++	struct lrng_rct *rct =3D &health->rct;
++
++	if (!lrng_sp80090b_health_requested())
++		return;
++
++	if (stuck) {
++		u32 rct_count =3D atomic_add_return_relaxed(1, &rct->rct_count);
++
++		pr_debug("RCT count: %u\n", rct_count);
++
++		/*
++		 * The cutoff value is based on the following consideration:
++		 * alpha =3D 2^-30 as recommended in FIPS 140-2 IG 9.8.
++		 * In addition, we imply an entropy value H of 1 bit as this
++		 * is the minimum entropy required to provide full entropy.
++		 *
++		 * Note, rct_count (which equals to value B in the
++		 * pseudo code of SP800-90B section 4.4.1) starts with zero.
++		 * Hence we need to subtract one from the cutoff value as
++		 * calculated following SP800-90B.
++		 */
++		if (rct_count >=3D CONFIG_LRNG_RCT_CUTOFF) {
++			atomic_set(&rct->rct_count, 0);
++
++			/*
++			 * APT must start anew as we consider all previously
++			 * recorded data to contain no entropy.
++			 */
++			lrng_apt_restart(health);
++
++			lrng_sp80090b_failure(health);
++		}
++	} else {
++		atomic_set(&rct->rct_count, 0);
++	}
++}
++
++/*************************************************************************=
+**
++ * Stuck Test
++ *
++ * Checking the:
++ *      1st derivative of the event occurrence (time delta)
++ *      2nd derivative of the event occurrence (delta of time deltas)
++ *      3rd derivative of the event occurrence (delta of delta of time del=
+tas)
++ *
++ * All values must always be non-zero. The stuck test is only valid disabl=
+ed if
++ * high-resolution time stamps are identified after initialization.
++ *************************************************************************=
+**/
++
++static inline u32 lrng_delta(u32 prev, u32 next)
++{
++	/*
++	 * Note that this (unsigned) subtraction does yield the correct value
++	 * in the wraparound-case, i.e. when next < prev.
++	 */
++	return (next - prev);
++}
++
++/*
++ * Hot code path
++ *
++ * @health: Reference to health information
++ * @now: Event time
++ * @return: 0 event occurrence not stuck (good time stamp)
++ *	    !=3D 0 event occurrence stuck (reject time stamp)
++ */
++static inline int lrng_irq_stuck(struct lrng_stuck_test *stuck, u32 now_ti=
+me)
++{
++	u32 delta =3D lrng_delta(stuck->last_time, now_time);
++	u32 delta2 =3D lrng_delta(stuck->last_delta, delta);
++	u32 delta3 =3D lrng_delta(stuck->last_delta2, delta2);
++
++	stuck->last_time =3D now_time;
++	stuck->last_delta =3D delta;
++	stuck->last_delta2 =3D delta2;
++
++	if (!delta || !delta2 || !delta3)
++		return 1;
++
++	return 0;
++}
++
++/*************************************************************************=
+**
++ * Health test interfaces
++ *************************************************************************=
+**/
++
++/*
++ * Disable all health tests
++ */
++void lrng_health_disable(void)
++{
++	struct lrng_health *health =3D &lrng_health;
++
++	health->health_test_enabled =3D false;
++
++	if (lrng_sp80090b_health_requested())
++		pr_warn("SP800-90B compliance requested but the Linux RNG is "
++			"NOT SP800-90B compliant\n");
++}
++
++/*
++ * Hot code path - Perform health test on time stamp received from an event
++ *
++ * @now_time Time stap
++ */
++enum lrng_health_res lrng_health_test(u32 now_time)
++{
++	struct lrng_health *health =3D &lrng_health;
++	struct lrng_stuck_test *stuck_test =3D this_cpu_ptr(&lrng_stuck_test);
++	int stuck;
++
++	if (!health->health_test_enabled)
++		return lrng_health_pass;
++
++	lrng_apt_insert(health, now_time);
++
++	stuck =3D lrng_irq_stuck(stuck_test, now_time);
++	lrng_rct(health, stuck);
++	if (stuck) {
++		/* SP800-90B disallows using a failing health test time stamp */
++		return lrng_sp80090b_health_requested() ?
++			lrng_health_fail_drop : lrng_health_fail_use;
++	}
++
++	return lrng_health_pass;
++}
+=2D-=20
+2.24.1
