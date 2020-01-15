@@ -1,289 +1,136 @@
 From: David Howells <dhowells@redhat.com>
-Subject: [RFC PATCH 07/14] Add sample notification program [ver #3]
-Date: Wed, 15 Jan 2020 13:31:38 +0000
-Message-ID: <157909509882.20155.1159021562184142124.stgit@warthog.procyon.org.uk>
+Subject: [RFC PATCH 09/14] pipe: Add notification lossage handling [ver #3]
+Date: Wed, 15 Jan 2020 13:31:56 +0000
+Message-ID: <157909511604.20155.1902245459684441811.stgit@warthog.procyon.org.uk>
 References: <157909503552.20155.3030058841911628518.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-block-owner@vger.kernel.org>
+Return-path: <linux-security-module-owner@vger.kernel.org>
 In-Reply-To: <157909503552.20155.3030058841911628518.stgit@warthog.procyon.org.uk>
-Sender: linux-block-owner@vger.kernel.org
+Sender: owner-linux-security-module@vger.kernel.org
 To: torvalds@linux-foundation.org
 Cc: dhowells@redhat.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>dhowells@redhat.com, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.orglinux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-The sample program is run like:
+Add handling for loss of notifications by having read() insert a
+loss-notification message after it has read the pipe buffer that was last
+in the ring when the loss occurred.
 
-	./samples/watch_queue/watch_test
-
-and watches "/" for mount changes and the current session keyring for key
-changes:
-
-	# keyctl add user a a @s
-	1035096409
-	# keyctl unlink 1035096409 @s
-
-producing:
-
-	# ./watch_test
-	read() = 16
-	NOTIFY[000]: ty=000001 sy=02 i=00000110
-	KEY 2ffc2e5d change=2[linked] aux=1035096409
-	read() = 16
-	NOTIFY[000]: ty=000001 sy=02 i=00000110
-	KEY 2ffc2e5d change=3[unlinked] aux=1035096409
-
-Other events may be produced, such as with a failing disk:
-
-	read() = 22
-	NOTIFY[000]: ty=000003 sy=02 i=00000416
-	USB 3-7.7 dev-reset e=0 r=0
-	read() = 24
-	NOTIFY[000]: ty=000002 sy=06 i=00000418
-	BLOCK 00800050 e=6[critical medium] s=64000ef8
-
-This corresponds to:
-
-	blk_update_request: critical medium error, dev sdf, sector 1677725432 op 0x0:(READ) flags 0x0 phys_seg 1 prio class 0
-
-in dmesg.
+Lossage can come about either by running out of notification descriptors or
+by running out of space in the pipe ring.
 
 Signed-off-by: David Howells <dhowells@redhat.com>
 ---
 
- samples/Kconfig                  |    6 +
- samples/Makefile                 |    1 
- samples/watch_queue/Makefile     |    7 +
- samples/watch_queue/watch_test.c |  183 ++++++++++++++++++++++++++++++++++++++
- 4 files changed, 197 insertions(+)
- create mode 100644 samples/watch_queue/Makefile
- create mode 100644 samples/watch_queue/watch_test.c
+ fs/pipe.c                        |   28 ++++++++++++++++++++++++++++
+ include/linux/pipe_fs_i.h        |    7 +++++++
+ kernel/watch_queue.c             |    2 ++
+ samples/watch_queue/watch_test.c |    3 +++
+ 4 files changed, 40 insertions(+)
 
-diff --git a/samples/Kconfig b/samples/Kconfig
-index 9d236c346de5..5c31971a5745 100644
---- a/samples/Kconfig
-+++ b/samples/Kconfig
-@@ -190,5 +190,11 @@ config SAMPLE_INTEL_MEI
- 	help
- 	  Build a sample program to work with mei device.
+diff --git a/fs/pipe.c b/fs/pipe.c
+index 05d0b02ed08d..423aafca4338 100644
+--- a/fs/pipe.c
++++ b/fs/pipe.c
+@@ -311,6 +311,30 @@ pipe_read(struct kiocb *iocb, struct iov_iter *to)
+ 		unsigned int tail = pipe->tail;
+ 		unsigned int mask = pipe->ring_size - 1;
  
-+config SAMPLE_WATCH_QUEUE
-+	bool "Build example /dev/watch_queue notification consumer"
-+	depends on HEADERS_INSTALL
-+	help
-+	  Build example userspace program to use the new mount_notify(),
-+	  sb_notify() syscalls and the KEYCTL_WATCH_KEY keyctl() function.
++#ifdef CONFIG_WATCH_QUEUE
++		if (pipe->note_loss) {
++			struct watch_notification n;
++
++			if (total_len < 8) {
++				if (ret == 0)
++					ret = -ENOBUFS;
++				break;
++			}
++
++			n.type = WATCH_TYPE_META;
++			n.subtype = WATCH_META_LOSS_NOTIFICATION;
++			n.info = watch_sizeof(n);
++			if (copy_to_iter(&n, sizeof(n), to) != sizeof(n)) {
++				if (ret == 0)
++					ret = -EFAULT;
++				break;
++			}
++			ret += sizeof(n);
++			total_len -= sizeof(n);
++			pipe->note_loss = false;
++		}
++#endif
++
+ 		if (!pipe_empty(head, tail)) {
+ 			struct pipe_buffer *buf = &pipe->bufs[tail & mask];
+ 			size_t chars = buf->len;
+@@ -352,6 +376,10 @@ pipe_read(struct kiocb *iocb, struct iov_iter *to)
+ 			if (!buf->len) {
+ 				pipe_buf_release(pipe, buf);
+ 				spin_lock_irq(&pipe->wait.lock);
++#ifdef CONFIG_WATCH_QUEUE
++				if (buf->flags & PIPE_BUF_FLAG_LOSS)
++					pipe->note_loss = true;
++#endif
+ 				tail++;
+ 				pipe->tail = tail;
+ 				spin_unlock_irq(&pipe->wait.lock);
+diff --git a/include/linux/pipe_fs_i.h b/include/linux/pipe_fs_i.h
+index f86ae087aaca..810eb2b1efc6 100644
+--- a/include/linux/pipe_fs_i.h
++++ b/include/linux/pipe_fs_i.h
+@@ -9,6 +9,9 @@
+ #define PIPE_BUF_FLAG_GIFT	0x04	/* page is a gift */
+ #define PIPE_BUF_FLAG_PACKET	0x08	/* read() as a packet */
+ #define PIPE_BUF_FLAG_WHOLE	0x10	/* read() must return entire buffer or error */
++#ifdef CONFIG_WATCH_QUEUE
++#define PIPE_BUF_FLAG_LOSS	0x20	/* Message loss happened after this buffer */
++#endif
  
- endif # SAMPLES
-diff --git a/samples/Makefile b/samples/Makefile
-index 5ce50ef0f2b2..a80ab2dbaae7 100644
---- a/samples/Makefile
-+++ b/samples/Makefile
-@@ -23,3 +23,4 @@ obj-$(CONFIG_VIDEO_PCI_SKELETON)	+= v4l/
- obj-y					+= vfio-mdev/
- subdir-$(CONFIG_SAMPLE_VFS)		+= vfs
- obj-$(CONFIG_SAMPLE_INTEL_MEI)		+= mei/
-+subdir-$(CONFIG_SAMPLE_WATCH_QUEUE)	+= watch_queue
-diff --git a/samples/watch_queue/Makefile b/samples/watch_queue/Makefile
-new file mode 100644
-index 000000000000..eec00dd0a8df
---- /dev/null
-+++ b/samples/watch_queue/Makefile
-@@ -0,0 +1,7 @@
-+# List of programs to build
-+hostprogs-y := watch_test
-+
-+# Tell kbuild to always build the programs
-+always := $(hostprogs-y)
-+
-+HOSTCFLAGS_watch_test.o += -I$(objtree)/usr/include
+ /**
+  *	struct pipe_buffer - a linux kernel pipe buffer
+@@ -33,6 +36,7 @@ struct pipe_buffer {
+  *	@wait: reader/writer wait point in case of empty/full pipe
+  *	@head: The point of buffer production
+  *	@tail: The point of buffer consumption
++ *	@note_loss: The next read() should insert a data-lost message
+  *	@max_usage: The maximum number of slots that may be used in the ring
+  *	@ring_size: total number of buffers (should be a power of 2)
+  *	@nr_accounted: The amount this pipe accounts for in user->pipe_bufs
+@@ -55,6 +59,9 @@ struct pipe_inode_info {
+ 	unsigned int tail;
+ 	unsigned int max_usage;
+ 	unsigned int ring_size;
++#ifdef CONFIG_WATCH_QUEUE
++	bool note_loss;
++#endif
+ 	unsigned int nr_accounted;
+ 	unsigned int readers;
+ 	unsigned int writers;
+diff --git a/kernel/watch_queue.c b/kernel/watch_queue.c
+index a01f2fed0983..d48f422f391a 100644
+--- a/kernel/watch_queue.c
++++ b/kernel/watch_queue.c
+@@ -132,6 +132,8 @@ static bool post_one_notification(struct watch_queue *wqueue,
+ 	return done;
+ 
+ lost:
++	buf = &pipe->bufs[(head - 1) & mask];
++	buf->flags |= PIPE_BUF_FLAG_LOSS;
+ 	goto out;
+ }
+ 
 diff --git a/samples/watch_queue/watch_test.c b/samples/watch_queue/watch_test.c
-new file mode 100644
-index 000000000000..9bf60abf5c7e
---- /dev/null
+index 924e13a49c37..0eaff5dc04c3 100644
+--- a/samples/watch_queue/watch_test.c
 +++ b/samples/watch_queue/watch_test.c
-@@ -0,0 +1,183 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/* Use /dev/watch_queue to watch for notifications.
-+ *
-+ * Copyright (C) 2020 Red Hat, Inc. All Rights Reserved.
-+ * Written by David Howells (dhowells@redhat.com)
-+ */
-+
-+#define _GNU_SOURCE
-+#include <stdbool.h>
-+#include <stdarg.h>
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <signal.h>
-+#include <unistd.h>
-+#include <errno.h>
-+#include <sys/ioctl.h>
-+#include <limits.h>
-+#include <linux/watch_queue.h>
-+#include <linux/unistd.h>
-+#include <linux/keyctl.h>
-+
-+#ifndef KEYCTL_WATCH_KEY
-+#define KEYCTL_WATCH_KEY -1
-+#endif
-+#ifndef __NR_watch_devices
-+#define __NR_watch_devices -1
-+#endif
-+
-+#define BUF_SIZE 256
-+
-+static long keyctl_watch_key(int key, int watch_fd, int watch_id)
-+{
-+	return syscall(__NR_keyctl, KEYCTL_WATCH_KEY, key, watch_fd, watch_id);
-+}
-+
-+static const char *key_subtypes[256] = {
-+	[NOTIFY_KEY_INSTANTIATED]	= "instantiated",
-+	[NOTIFY_KEY_UPDATED]		= "updated",
-+	[NOTIFY_KEY_LINKED]		= "linked",
-+	[NOTIFY_KEY_UNLINKED]		= "unlinked",
-+	[NOTIFY_KEY_CLEARED]		= "cleared",
-+	[NOTIFY_KEY_REVOKED]		= "revoked",
-+	[NOTIFY_KEY_INVALIDATED]	= "invalidated",
-+	[NOTIFY_KEY_SETATTR]		= "setattr",
-+};
-+
-+static void saw_key_change(struct watch_notification *n, size_t len)
-+{
-+	struct key_notification *k = (struct key_notification *)n;
-+
-+	if (len != sizeof(struct key_notification)) {
-+		fprintf(stderr, "Incorrect key message length\n");
-+		return;
-+	}
-+
-+	printf("KEY %08x change=%u[%s] aux=%u\n",
-+	       k->key_id, n->subtype, key_subtypes[n->subtype], k->aux);
-+}
-+
-+/*
-+ * Consume and display events.
-+ */
-+static void consumer(int fd)
-+{
-+	unsigned char buffer[4096], *p, *end;
-+	union {
-+		struct watch_notification n;
-+		unsigned char buf1[128];
-+	} n;
-+	ssize_t buf_len;
-+
-+	for (;;) {
-+		buf_len = read(fd, buffer, sizeof(buffer));
-+		if (buf_len == -1) {
-+			perror("read");
-+			exit(1);
-+		}
-+
-+		if (buf_len == 0) {
-+			printf("-- END --\n");
-+			return;
-+		}
-+
-+		if (buf_len > sizeof(buffer)) {
-+			fprintf(stderr, "Read buffer overrun: %zd\n", buf_len);
-+			return;
-+		}
-+
-+		printf("read() = %zd\n", buf_len);
-+
-+		p = buffer;
-+		end = buffer + buf_len;
-+		while (p < end) {
-+			size_t largest, len;
-+
-+			largest = end - p;
-+			if (largest > 128)
-+				largest = 128;
-+			if (largest < sizeof(struct watch_notification)) {
-+				fprintf(stderr, "Short message header: %zu\n", largest);
-+				return;
-+			}
-+			memcpy(&n, p, largest);
-+
-+			printf("NOTIFY[%03zx]: ty=%06x sy=%02x i=%08x\n",
-+			       p - buffer, n.n.type, n.n.subtype, n.n.info);
-+
-+			len = n.n.info & WATCH_INFO_LENGTH;
-+			if (len < sizeof(n.n) || len > largest) {
-+				fprintf(stderr, "Bad message length: %zu/%zu\n", len, largest);
-+				exit(1);
-+			}
-+
-+			switch (n.n.type) {
-+			case WATCH_TYPE_META:
-+				switch (n.n.subtype) {
-+				case WATCH_META_REMOVAL_NOTIFICATION:
-+					printf("REMOVAL of watchpoint %08x\n",
-+					       (n.n.info & WATCH_INFO_ID) >>
-+					       WATCH_INFO_ID__SHIFT);
+@@ -120,6 +120,9 @@ static void consumer(int fd)
+ 					       (n.n.info & WATCH_INFO_ID) >>
+ 					       WATCH_INFO_ID__SHIFT);
+ 					break;
++				case WATCH_META_LOSS_NOTIFICATION:
++					printf("-- LOSS --\n");
 +					break;
-+				default:
-+					printf("other meta record\n");
-+					break;
-+				}
-+				break;
-+			case WATCH_TYPE_KEY_NOTIFY:
-+				saw_key_change(&n.n, len);
-+				break;
-+			default:
-+				printf("other type\n");
-+				break;
-+			}
-+
-+			p += len;
-+		}
-+	}
-+}
-+
-+static struct watch_notification_filter filter = {
-+	.nr_filters	= 1,
-+	.filters = {
-+		[0]	= {
-+			.type			= WATCH_TYPE_KEY_NOTIFY,
-+			.subtype_filter[0]	= UINT_MAX,
-+		},
-+	},
-+};
-+
-+int main(int argc, char **argv)
-+{
-+	int pipefd[2], fd;
-+
-+	if (pipe2(pipefd, O_NOTIFICATION_PIPE) == -1) {
-+		perror("pipe2");
-+		exit(1);
-+	}
-+	fd = pipefd[0];
-+
-+	if (ioctl(fd, IOC_WATCH_QUEUE_SET_SIZE, BUF_SIZE) == -1) {
-+		perror("/dev/watch_queue(size)");
-+		exit(1);
-+	}
-+
-+	if (ioctl(fd, IOC_WATCH_QUEUE_SET_FILTER, &filter) == -1) {
-+		perror("/dev/watch_queue(filter)");
-+		exit(1);
-+	}
-+
-+	if (keyctl_watch_key(KEY_SPEC_SESSION_KEYRING, fd, 0x01) == -1) {
-+		perror("keyctl");
-+		exit(1);
-+	}
-+
-+	if (keyctl_watch_key(KEY_SPEC_USER_KEYRING, fd, 0x02) == -1) {
-+		perror("keyctl");
-+		exit(1);
-+	}
-+
-+	consumer(fd);
-+	exit(0);
-+}
+ 				default:
+ 					printf("other meta record\n");
+ 					break;
