@@ -1,427 +1,486 @@
-From: Stephan =?ISO-8859-1?Q?M=FCller?= <smueller@chronox.de>
-Subject: [PATCH v28 07/12] LRNG - add kernel crypto API PRNG extension
-Date: Wed, 15 Jan 2020 11:34:09 +0100
-Message-ID: <526421170.FD02tCEzJt@positron.chronox.de>
-References: <6157374.ptSnyUpaCn@positron.chronox.de> <2641155.iNH938UiKq@positron.chronox.de> <5951792.lmNsirYsPE@positron.chronox.de>
+From: David Howells <dhowells@redhat.com>
+Subject: [RFC PATCH 10/14] Add a general,
+ global device notification watch list [ver #3]
+Date: Wed, 15 Jan 2020 13:32:04 +0000
+Message-ID: <157909512494.20155.2812648243716525260.stgit@warthog.procyon.org.uk>
+References: <157909503552.20155.3030058841911628518.stgit@warthog.procyon.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <5951792.lmNsirYsPE@positron.chronox.de>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@suse.de>, "Peter, Matthias" <matth>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <157909503552.20155.3030058841911628518.stgit@warthog.procyon.org.uk>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: torvalds@linux-foundation.org
+Cc: dhowells@redhat.com, Greg Kroah-Hartman <gregkh@linuxfoundation.org>, Casey Schaufler <casey@schaufler-ca.com>, Stephen Smalley <sds@tycho.nsa.gov>, nicolas.dichtel@6wind.com, raven@themaw.net, Christian Brauner <christian@brauner.io>dhowells@redhat.com, keyrings@vger.kernel.org, linux-usb@vger.kernel.org, linux-block@vger.kernel.org, linux-security-module@vger.kernel.org, linux-fsdevel@vger.kernel.org, linux-api@vger.kernel.orglinux-security-module@vger.kernel.org, linux-kernel@vger.kernel.org
 List-Id: linux-api@vger.kernel.org
 
-Add runtime-pluggable support for all PRNGs that are accessible via
-the kernel crypto API, including hardware PRNGs. The PRNG is selected
-with the module parameter drng_name where the name must be one that the
-kernel crypto API can resolve into an RNG.
+Create a general, global watch list that can be used for the posting of
+device notification events, for such things as device attachment,
+detachment and errors on sources such as block devices and USB devices.
+This can be enabled with:
 
-This allows using of the kernel crypto API PRNG implementations that
-provide an interface to hardware PRNGs. Using this extension,
-the LRNG uses the hardware PRNGs to generate random numbers. An
-example is the S390 CPACF support providing such a PRNG.
+	CONFIG_DEVICE_NOTIFICATIONS
 
-The hash is provided by a kernel crypto API SHASH whose digest size
-complies with the seedsize of the PRNG.
+To add a watch on this list, an event queue must be created and configured:
 
-CC: "Eric W. Biederman" <ebiederm@xmission.com>
-CC: "Alexander E. Patrakov" <patrakov@gmail.com>
-CC: "Ahmed S. Darwish" <darwish.07@gmail.com>
-CC: "Theodore Y. Ts'o" <tytso@mit.edu>
-CC: Willy Tarreau <w@1wt.eu>
-CC: Matthew Garrett <mjg59@srcf.ucam.org>
-CC: Vito Caputo <vcaputo@pengaru.com>
-CC: Andreas Dilger <adilger.kernel@dilger.ca>
-CC: Jan Kara <jack@suse.cz>
-CC: Ray Strode <rstrode@redhat.com>
-CC: William Jon McCann <mccann@jhu.edu>
-CC: zhangjs <zachary@baishancloud.com>
-CC: Andy Lutomirski <luto@kernel.org>
-CC: Florian Weimer <fweimer@redhat.com>
-CC: Lennart Poettering <mzxreary@0pointer.de>
-CC: Nicolai Stange <nstange@suse.de>
-Reviewed-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
-Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
-Tested-by: Roman Drahtm=FCller <draht@schaltsekun.de>
-Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
-Tested-by: Neil Horman <nhorman@redhat.com>
-Signed-off-by: Stephan Mueller <smueller@chronox.de>
-=2D--
- drivers/char/lrng/Kconfig      |  10 +
- drivers/char/lrng/Makefile     |   1 +
- drivers/char/lrng/lrng_kcapi.c | 327 +++++++++++++++++++++++++++++++++
- 3 files changed, 338 insertions(+)
- create mode 100644 drivers/char/lrng/lrng_kcapi.c
+        pipe2(fds, O_NOTIFICATION_PIPE);
+        ioctl(fds[1], IOC_WATCH_QUEUE_SET_SIZE, 256);
 
-diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index 15fb623d9d1f..0d070a3897dd 100644
-=2D-- a/drivers/char/lrng/Kconfig
-+++ b/drivers/char/lrng/Kconfig
-@@ -80,6 +80,16 @@ config LRNG_DRBG
- 	  Enable the SP800-90A DRBG support for the LRNG. Once the
- 	  module is loaded, output from /dev/random, /dev/urandom,
- 	  getrandom(2), or get_random_bytes is provided by a DRBG.
+and then a watch can be placed upon it using a system call:
+
+        watch_devices(fds[1], 12, 0);
+
+Unless the application wants to receive all events, it should employ
+appropriate filters.  For example, to receive just USB notifications, it
+could do:
+
+	struct watch_notification_filter filter = {
+		.nr_filters = 1,
+		.filters = {
+			[0] = {
+				.type = WATCH_TYPE_USB_NOTIFY,
+				.subtype_filter[0] = UINT_MAX;
+			},
+		},
+	};
+	ioctl(fds[1], IOC_WATCH_QUEUE_SET_FILTER, &filter);
+
+Signed-off-by: David Howells <dhowells@redhat.com>
+---
+
+ Documentation/watch_queue.rst               |   22 ++++++-
+ arch/alpha/kernel/syscalls/syscall.tbl      |    1 
+ arch/arm/tools/syscall.tbl                  |    1 
+ arch/arm64/include/asm/unistd.h             |    2 -
+ arch/arm64/include/asm/unistd32.h           |    2 +
+ arch/ia64/kernel/syscalls/syscall.tbl       |    1 
+ arch/m68k/kernel/syscalls/syscall.tbl       |    1 
+ arch/microblaze/kernel/syscalls/syscall.tbl |    1 
+ arch/mips/kernel/syscalls/syscall_n32.tbl   |    1 
+ arch/mips/kernel/syscalls/syscall_n64.tbl   |    1 
+ arch/mips/kernel/syscalls/syscall_o32.tbl   |    1 
+ arch/parisc/kernel/syscalls/syscall.tbl     |    1 
+ arch/powerpc/kernel/syscalls/syscall.tbl    |    1 
+ arch/s390/kernel/syscalls/syscall.tbl       |    1 
+ arch/sh/kernel/syscalls/syscall.tbl         |    1 
+ arch/sparc/kernel/syscalls/syscall.tbl      |    1 
+ arch/x86/entry/syscalls/syscall_32.tbl      |    1 
+ arch/x86/entry/syscalls/syscall_64.tbl      |    1 
+ arch/xtensa/kernel/syscalls/syscall.tbl     |    1 
+ drivers/base/Kconfig                        |    9 +++
+ drivers/base/Makefile                       |    1 
+ drivers/base/watch.c                        |   90 +++++++++++++++++++++++++++
+ include/linux/device.h                      |    7 ++
+ include/linux/syscalls.h                    |    1 
+ include/uapi/asm-generic/unistd.h           |    4 +
+ kernel/sys_ni.c                             |    1 
+ 26 files changed, 152 insertions(+), 3 deletions(-)
+ create mode 100644 drivers/base/watch.c
+
+diff --git a/Documentation/watch_queue.rst b/Documentation/watch_queue.rst
+index d8f70282d247..ed592700be0e 100644
+--- a/Documentation/watch_queue.rst
++++ b/Documentation/watch_queue.rst
+@@ -223,6 +223,25 @@ The ``id`` is the ID of the source object (such as the serial number on a key).
+ Only watches that have the same ID set in them will see this notification.
+ 
+ 
++Global Device Watch List
++========================
 +
-+config LRNG_KCAPI
-+	tristate "Kernel Crypto API support for the LRNG"
-+	select CRYPTO_RNG
++There is a global watch list that hardware generated events, such as device
++connection, disconnection, failure and error can be posted upon.  It must be
++enabled using::
++
++	CONFIG_DEVICE_NOTIFICATIONS
++
++Watchpoints are set in userspace using the device_notify(2) system call.
++Within the kernel events are posted upon it using::
++
++	void post_device_notification(struct watch_notification *n, u64 id);
++
++where ``n`` is the formatted notification record to post.  ``id`` is an
++identifier that can be used to direct to specific watches, but it should be 0
++for general use on this queue.
++
++
+ Watch Sources
+ =============
+ 
+@@ -238,7 +257,8 @@ Any particular buffer can be fed from multiple sources.  Sources include:
+   * WATCH_TYPE_BLOCK_NOTIFY
+ 
+     Notifications of this type indicate block layer events, such as I/O errors
+-    or temporary link loss.  Watches of this type are set on a global queue.
++    or temporary link loss.  Watches of this type are set on the global device
++    watch list.
+ 
+ 
+ Event Filtering
+diff --git a/arch/alpha/kernel/syscalls/syscall.tbl b/arch/alpha/kernel/syscalls/syscall.tbl
+index 8e13b0b2928d..3b355b0996a1 100644
+--- a/arch/alpha/kernel/syscalls/syscall.tbl
++++ b/arch/alpha/kernel/syscalls/syscall.tbl
+@@ -475,3 +475,4 @@
+ 543	common	fspick				sys_fspick
+ 544	common	pidfd_open			sys_pidfd_open
+ # 545 reserved for clone3
++546	common	watch_devices			sys_watch_devices
+diff --git a/arch/arm/tools/syscall.tbl b/arch/arm/tools/syscall.tbl
+index 6da7dc4d79cc..0f080cf44cc9 100644
+--- a/arch/arm/tools/syscall.tbl
++++ b/arch/arm/tools/syscall.tbl
+@@ -449,3 +449,4 @@
+ 433	common	fspick				sys_fspick
+ 434	common	pidfd_open			sys_pidfd_open
+ 435	common	clone3				sys_clone3
++436	common	watch_devices			sys_watch_devices
+diff --git a/arch/arm64/include/asm/unistd.h b/arch/arm64/include/asm/unistd.h
+index 2629a68b8724..368761302768 100644
+--- a/arch/arm64/include/asm/unistd.h
++++ b/arch/arm64/include/asm/unistd.h
+@@ -38,7 +38,7 @@
+ #define __ARM_NR_compat_set_tls		(__ARM_NR_COMPAT_BASE + 5)
+ #define __ARM_NR_COMPAT_END		(__ARM_NR_COMPAT_BASE + 0x800)
+ 
+-#define __NR_compat_syscalls		436
++#define __NR_compat_syscalls		437
+ #endif
+ 
+ #define __ARCH_WANT_SYS_CLONE
+diff --git a/arch/arm64/include/asm/unistd32.h b/arch/arm64/include/asm/unistd32.h
+index 94ab29cf4f00..b5310789ce7a 100644
+--- a/arch/arm64/include/asm/unistd32.h
++++ b/arch/arm64/include/asm/unistd32.h
+@@ -879,6 +879,8 @@ __SYSCALL(__NR_fspick, sys_fspick)
+ __SYSCALL(__NR_pidfd_open, sys_pidfd_open)
+ #define __NR_clone3 435
+ __SYSCALL(__NR_clone3, sys_clone3)
++#define __NR_watch_devices 436
++__SYSCALL(__NR_watch_devices, sys_watch_devices)
+ 
+ /*
+  * Please add new compat syscalls above this comment and update
+diff --git a/arch/ia64/kernel/syscalls/syscall.tbl b/arch/ia64/kernel/syscalls/syscall.tbl
+index 36d5faf4c86c..2f33f5db2fed 100644
+--- a/arch/ia64/kernel/syscalls/syscall.tbl
++++ b/arch/ia64/kernel/syscalls/syscall.tbl
+@@ -356,3 +356,4 @@
+ 433	common	fspick				sys_fspick
+ 434	common	pidfd_open			sys_pidfd_open
+ # 435 reserved for clone3
++436	common	watch_devices			sys_watch_devices
+diff --git a/arch/m68k/kernel/syscalls/syscall.tbl b/arch/m68k/kernel/syscalls/syscall.tbl
+index a88a285a0e5f..83e4e8784b88 100644
+--- a/arch/m68k/kernel/syscalls/syscall.tbl
++++ b/arch/m68k/kernel/syscalls/syscall.tbl
+@@ -435,3 +435,4 @@
+ 433	common	fspick				sys_fspick
+ 434	common	pidfd_open			sys_pidfd_open
+ # 435 reserved for clone3
++436	common	watch_devices			sys_watch_devices
+diff --git a/arch/microblaze/kernel/syscalls/syscall.tbl b/arch/microblaze/kernel/syscalls/syscall.tbl
+index 09b0cd7dab0a..9a70a3be3b7b 100644
+--- a/arch/microblaze/kernel/syscalls/syscall.tbl
++++ b/arch/microblaze/kernel/syscalls/syscall.tbl
+@@ -441,3 +441,4 @@
+ 433	common	fspick				sys_fspick
+ 434	common	pidfd_open			sys_pidfd_open
+ 435	common	clone3				sys_clone3
++436	common	watch_devices			sys_watch_devices
+diff --git a/arch/mips/kernel/syscalls/syscall_n32.tbl b/arch/mips/kernel/syscalls/syscall_n32.tbl
+index e7c5ab38e403..b39527fc32c9 100644
+--- a/arch/mips/kernel/syscalls/syscall_n32.tbl
++++ b/arch/mips/kernel/syscalls/syscall_n32.tbl
+@@ -374,3 +374,4 @@
+ 433	n32	fspick				sys_fspick
+ 434	n32	pidfd_open			sys_pidfd_open
+ 435	n32	clone3				__sys_clone3
++436	n32	watch_devices			sys_watch_devices
+diff --git a/arch/mips/kernel/syscalls/syscall_n64.tbl b/arch/mips/kernel/syscalls/syscall_n64.tbl
+index 13cd66581f3b..a7f0c5e71768 100644
+--- a/arch/mips/kernel/syscalls/syscall_n64.tbl
++++ b/arch/mips/kernel/syscalls/syscall_n64.tbl
+@@ -350,3 +350,4 @@
+ 433	n64	fspick				sys_fspick
+ 434	n64	pidfd_open			sys_pidfd_open
+ 435	n64	clone3				__sys_clone3
++436	n64	watch_devices			sys_watch_devices
+diff --git a/arch/mips/kernel/syscalls/syscall_o32.tbl b/arch/mips/kernel/syscalls/syscall_o32.tbl
+index 353539ea4140..6f378288598c 100644
+--- a/arch/mips/kernel/syscalls/syscall_o32.tbl
++++ b/arch/mips/kernel/syscalls/syscall_o32.tbl
+@@ -423,3 +423,4 @@
+ 433	o32	fspick				sys_fspick
+ 434	o32	pidfd_open			sys_pidfd_open
+ 435	o32	clone3				__sys_clone3
++436	o32	watch_devices			sys_watch_devices
+diff --git a/arch/parisc/kernel/syscalls/syscall.tbl b/arch/parisc/kernel/syscalls/syscall.tbl
+index 285ff516150c..b64bbafa5919 100644
+--- a/arch/parisc/kernel/syscalls/syscall.tbl
++++ b/arch/parisc/kernel/syscalls/syscall.tbl
+@@ -433,3 +433,4 @@
+ 433	common	fspick				sys_fspick
+ 434	common	pidfd_open			sys_pidfd_open
+ 435	common	clone3				sys_clone3_wrapper
++436	common	watch_devices			sys_watch_devices
+diff --git a/arch/powerpc/kernel/syscalls/syscall.tbl b/arch/powerpc/kernel/syscalls/syscall.tbl
+index 43f736ed47f2..0a503239ab5c 100644
+--- a/arch/powerpc/kernel/syscalls/syscall.tbl
++++ b/arch/powerpc/kernel/syscalls/syscall.tbl
+@@ -517,3 +517,4 @@
+ 433	common	fspick				sys_fspick
+ 434	common	pidfd_open			sys_pidfd_open
+ 435	nospu	clone3				ppc_clone3
++436	common	watch_devices			sys_watch_devices
+diff --git a/arch/s390/kernel/syscalls/syscall.tbl b/arch/s390/kernel/syscalls/syscall.tbl
+index 3054e9c035a3..19b43c0d928a 100644
+--- a/arch/s390/kernel/syscalls/syscall.tbl
++++ b/arch/s390/kernel/syscalls/syscall.tbl
+@@ -438,3 +438,4 @@
+ 433  common	fspick			sys_fspick			sys_fspick
+ 434  common	pidfd_open		sys_pidfd_open			sys_pidfd_open
+ 435  common	clone3			sys_clone3			sys_clone3
++436  common	watch_devices		sys_watch_devices		sys_watch_devices
+diff --git a/arch/sh/kernel/syscalls/syscall.tbl b/arch/sh/kernel/syscalls/syscall.tbl
+index b5ed26c4c005..b454e07c9372 100644
+--- a/arch/sh/kernel/syscalls/syscall.tbl
++++ b/arch/sh/kernel/syscalls/syscall.tbl
+@@ -438,3 +438,4 @@
+ 433	common	fspick				sys_fspick
+ 434	common	pidfd_open			sys_pidfd_open
+ # 435 reserved for clone3
++436	common	watch_devices			sys_watch_devices
+diff --git a/arch/sparc/kernel/syscalls/syscall.tbl b/arch/sparc/kernel/syscalls/syscall.tbl
+index 8c8cc7537fb2..8ef43c27457e 100644
+--- a/arch/sparc/kernel/syscalls/syscall.tbl
++++ b/arch/sparc/kernel/syscalls/syscall.tbl
+@@ -481,3 +481,4 @@
+ 433	common	fspick				sys_fspick
+ 434	common	pidfd_open			sys_pidfd_open
+ # 435 reserved for clone3
++436	common	watch_devices			sys_watch_devices
+diff --git a/arch/x86/entry/syscalls/syscall_32.tbl b/arch/x86/entry/syscalls/syscall_32.tbl
+index 15908eb9b17e..bdf7e845d1f8 100644
+--- a/arch/x86/entry/syscalls/syscall_32.tbl
++++ b/arch/x86/entry/syscalls/syscall_32.tbl
+@@ -440,3 +440,4 @@
+ 433	i386	fspick			sys_fspick			__ia32_sys_fspick
+ 434	i386	pidfd_open		sys_pidfd_open			__ia32_sys_pidfd_open
+ 435	i386	clone3			sys_clone3			__ia32_sys_clone3
++436	i386	watch_devices		sys_watch_devices		__ia32_sys_watch_devices
+diff --git a/arch/x86/entry/syscalls/syscall_64.tbl b/arch/x86/entry/syscalls/syscall_64.tbl
+index c29976eca4a8..29293d103829 100644
+--- a/arch/x86/entry/syscalls/syscall_64.tbl
++++ b/arch/x86/entry/syscalls/syscall_64.tbl
+@@ -357,6 +357,7 @@
+ 433	common	fspick			__x64_sys_fspick
+ 434	common	pidfd_open		__x64_sys_pidfd_open
+ 435	common	clone3			__x64_sys_clone3/ptregs
++436	common	watch_devices		__x64_sys_watch_devices
+ 
+ #
+ # x32-specific system call numbers start at 512 to avoid cache impact
+diff --git a/arch/xtensa/kernel/syscalls/syscall.tbl b/arch/xtensa/kernel/syscalls/syscall.tbl
+index 25f4de729a6d..243fa18b8d1e 100644
+--- a/arch/xtensa/kernel/syscalls/syscall.tbl
++++ b/arch/xtensa/kernel/syscalls/syscall.tbl
+@@ -406,3 +406,4 @@
+ 433	common	fspick				sys_fspick
+ 434	common	pidfd_open			sys_pidfd_open
+ 435	common	clone3				sys_clone3
++436	common	watch_devices			sys_watch_devices
+diff --git a/drivers/base/Kconfig b/drivers/base/Kconfig
+index c3b3b5c0b0da..d4ae1c1adf69 100644
+--- a/drivers/base/Kconfig
++++ b/drivers/base/Kconfig
+@@ -1,6 +1,15 @@
+ # SPDX-License-Identifier: GPL-2.0
+ menu "Generic Driver Options"
+ 
++config DEVICE_NOTIFICATIONS
++	bool "Provide device event notifications"
++	depends on WATCH_QUEUE
 +	help
-+	  Enable the support for generic pseudo-random number
-+	  generators offered by the kernel crypto API with the
-+	  LRNG. Once the module is loaded, output from /dev/random,
-+	  /dev/urandom, getrandom(2), or get_random_bytes is
-+	  provided by the selected kernel crypto API RNG.
- endif # LRNG_DRNG_SWITCH
-=20
- endif # LRNG
-diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
-index 0d320fcb7b9e..94b2dfb2dfdb 100644
-=2D-- a/drivers/char/lrng/Makefile
-+++ b/drivers/char/lrng/Makefile
-@@ -12,3 +12,4 @@ obj-$(CONFIG_NUMA)		+=3D lrng_numa.o
- obj-$(CONFIG_SYSCTL)		+=3D lrng_proc.o
- obj-$(CONFIG_LRNG_DRNG_SWITCH)	+=3D lrng_switch.o
- obj-$(CONFIG_LRNG_DRBG)		+=3D lrng_drbg.o
-+obj-$(CONFIG_LRNG_KCAPI)	+=3D lrng_kcapi.o
-diff --git a/drivers/char/lrng/lrng_kcapi.c b/drivers/char/lrng/lrng_kcapi.c
++	  This option provides support for getting hardware event notifications
++	  on devices, buses and interfaces.  This makes use of the
++	  /dev/watch_queue misc device to handle the notification buffer.
++	  device_notify(2) is used to set/remove watches.
++
+ config UEVENT_HELPER
+ 	bool "Support for uevent helper"
+ 	help
+diff --git a/drivers/base/Makefile b/drivers/base/Makefile
+index 157452080f3d..4db2e8f1a1f4 100644
+--- a/drivers/base/Makefile
++++ b/drivers/base/Makefile
+@@ -7,6 +7,7 @@ obj-y			:= component.o core.o bus.o dd.o syscore.o \
+ 			   attribute_container.o transport_class.o \
+ 			   topology.o container.o property.o cacheinfo.o \
+ 			   devcon.o swnode.o
++obj-$(CONFIG_DEVICE_NOTIFICATIONS) += watch.o
+ obj-$(CONFIG_DEVTMPFS)	+= devtmpfs.o
+ obj-y			+= power/
+ obj-$(CONFIG_ISA_BUS_API)	+= isa.o
+diff --git a/drivers/base/watch.c b/drivers/base/watch.c
 new file mode 100644
-index 000000000000..115af147bd5c
-=2D-- /dev/null
-+++ b/drivers/char/lrng/lrng_kcapi.c
-@@ -0,0 +1,327 @@
-+// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
+index 000000000000..725aaa24275b
+--- /dev/null
++++ b/drivers/base/watch.c
+@@ -0,0 +1,90 @@
++// SPDX-License-Identifier: GPL-2.0
 +/*
-+ * Backend for the LRNG providing the cryptographic primitives using the
-+ * kernel crypto API.
++ * Event notifications.
 + *
-+ * Copyright (C) 2018 - 2020, Stephan Mueller <smueller@chronox.de>
++ * Copyright (C) 2019 Red Hat, Inc. All Rights Reserved.
++ * Written by David Howells (dhowells@redhat.com)
 + */
 +
-+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
++#include <linux/device.h>
++#include <linux/watch_queue.h>
++#include <linux/syscalls.h>
++#include <linux/init_task.h>
++#include <linux/security.h>
 +
-+#include <crypto/hash.h>
-+#include <crypto/rng.h>
-+#include <linux/init.h>
-+#include <linux/module.h>
-+#include <linux/lrng.h>
-+
-+static char *drng_name =3D NULL;
-+module_param(drng_name, charp, 0444);
-+MODULE_PARM_DESC(drng_name, "Kernel crypto API name of DRNG");
-+
-+static char *pool_hash =3D "sha512";
-+module_param(pool_hash, charp, 0444);
-+MODULE_PARM_DESC(pool_hash,
-+		 "Kernel crypto API name of hash or keyed message digest to read the ent=
-ropy pool");
-+
-+static char *seed_hash =3D NULL;
-+module_param(seed_hash, charp, 0444);
-+MODULE_PARM_DESC(seed_hash,
-+		 "Kernel crypto API name of hash with output size equal to seedsize of D=
-RNG to bring seed string to the size required by the DRNG");
-+
-+struct lrng_hash_info {
-+	struct shash_desc shash;
-+	char ctx[];
++/*
++ * Global queue for watching for device layer events.
++ */
++static struct watch_list device_watchers = {
++	.watchers	= HLIST_HEAD_INIT,
++	.lock		= __SPIN_LOCK_UNLOCKED(&device_watchers.lock),
 +};
 +
-+struct lrng_drng_info {
-+	struct crypto_rng *kcapi_rng;
-+	struct lrng_hash_info *lrng_hash;
-+};
++static DEFINE_SPINLOCK(device_watchers_lock);
 +
-+static struct lrng_hash_info *_lrng_kcapi_hash_alloc(const char *name)
++/**
++ * post_device_notification - Post notification of a device event
++ * @n - The notification to post
++ * @id - The device ID
++ *
++ * Note that there's only a global queue to which all events are posted.  Might
++ * want to provide per-dev queues also.
++ */
++void post_device_notification(struct watch_notification *n, u64 id)
 +{
-+	struct lrng_hash_info *lrng_hash;
-+	struct crypto_shash *tfm;
-+	int size;
++	post_watch_notification(&device_watchers, n, &init_cred, id);
++}
++EXPORT_SYMBOL(post_device_notification);
 +
-+	if (!name) {
-+		pr_err("Hash name missing\n");
-+		return ERR_PTR(-EINVAL);
++/**
++ * sys_watch_devices - Watch for device events.
++ * @watch_fd: The watch queue to send notifications to.
++ * @watch_id: The watch ID to be placed in the notification (-1 to remove watch)
++ * @flags: Flags (reserved for future)
++ */
++SYSCALL_DEFINE3(watch_devices, int, watch_fd, int, watch_id, unsigned int, flags)
++{
++	struct watch_queue *wqueue;
++	struct watch *watch = NULL;
++	long ret = -ENOMEM;
++
++	if (watch_id < -1 || watch_id > 0xff || flags)
++		return -EINVAL;
++
++	wqueue = get_watch_queue(watch_fd);
++	if (IS_ERR(wqueue)) {
++		ret = PTR_ERR(wqueue);
++		goto err;
 +	}
 +
-+	tfm =3D crypto_alloc_shash(name, 0, 0);
-+	if (IS_ERR(tfm)) {
-+		pr_err("could not allocate hash %s\n", name);
-+		return ERR_CAST(tfm);
-+	}
++	if (watch_id >= 0) {
++		watch = kzalloc(sizeof(*watch), GFP_KERNEL);
++		if (!watch)
++			goto err_wqueue;
 +
-+	size =3D sizeof(struct lrng_hash_info) + crypto_shash_descsize(tfm);
-+	lrng_hash =3D kmalloc(size, GFP_KERNEL);
-+	if (!lrng_hash) {
-+		crypto_free_shash(tfm);
-+		return ERR_PTR(-ENOMEM);
-+	}
++		init_watch(watch, wqueue);
++		watch->info_id = (u32)watch_id << WATCH_INFO_ID__SHIFT;
 +
-+	lrng_hash->shash.tfm =3D tfm;
++		ret = security_watch_devices();
++		if (ret < 0)
++			goto err_watch;
 +
-+	return lrng_hash;
-+}
-+
-+static inline u32 _lrng_kcapi_hash_digestsize(struct lrng_hash_info *lrng_=
-hash)
-+{
-+	struct shash_desc *shash =3D &lrng_hash->shash;
-+	struct crypto_shash *tfm =3D shash->tfm;
-+
-+	return crypto_shash_digestsize(tfm);
-+}
-+
-+static inline void _lrng_kcapi_hash_free(struct lrng_hash_info *lrng_hash)
-+{
-+	struct shash_desc *shash =3D &lrng_hash->shash;
-+	struct crypto_shash *tfm =3D shash->tfm;
-+
-+	crypto_free_shash(tfm);
-+	kfree(lrng_hash);
-+}
-+
-+static void *lrng_kcapi_hash_alloc(const u8 *key, u32 keylen)
-+{
-+	struct lrng_hash_info *lrng_hash;
-+	int ret;
-+
-+	lrng_hash =3D _lrng_kcapi_hash_alloc(pool_hash);
-+	if (IS_ERR(lrng_hash))
-+		return ERR_CAST(lrng_hash);
-+
-+	/* If the used hash is no MAC, ignore the ENOSYS return code */
-+	ret =3D crypto_shash_setkey(lrng_hash->shash.tfm, key, keylen);
-+	if (ret && ret !=3D -ENOSYS) {
-+		pr_err("could not set the key for MAC\n");
-+		_lrng_kcapi_hash_free(lrng_hash);
-+		return ERR_PTR(ret);
-+	}
-+
-+	pr_info("Hash %s allocated\n", pool_hash);
-+
-+	return lrng_hash;
-+}
-+
-+static void lrng_kcapi_hash_dealloc(void *hash)
-+{
-+	struct lrng_hash_info *lrng_hash =3D (struct lrng_hash_info *)hash;
-+
-+	_lrng_kcapi_hash_free(lrng_hash);
-+	pr_info("Hash %s deallocated\n", pool_hash);
-+}
-+
-+static u32 lrng_kcapi_hash_digestsize(void *hash)
-+{
-+	struct lrng_hash_info *lrng_hash =3D (struct lrng_hash_info *)hash;
-+
-+	return _lrng_kcapi_hash_digestsize(lrng_hash);
-+}
-+
-+static int lrng_kcapi_hash_buffer(void *hash, const u8 *inbuf, u32 inbufle=
-n,
-+				  u8 *digest)
-+{
-+	struct lrng_hash_info *lrng_hash =3D (struct lrng_hash_info *)hash;
-+	struct shash_desc *shash =3D &lrng_hash->shash;
-+
-+	return crypto_shash_digest(shash, inbuf, inbuflen, digest);
-+}
-+
-+static int lrng_kcapi_drng_seed_helper(void *drng, const u8 *inbuf,
-+				       u32 inbuflen)
-+{
-+	struct lrng_drng_info *lrng_drng_info =3D (struct lrng_drng_info *)drng;
-+	struct crypto_rng *kcapi_rng =3D lrng_drng_info->kcapi_rng;
-+	struct lrng_hash_info *lrng_hash =3D lrng_drng_info->lrng_hash;
-+
-+	if (lrng_hash) {
-+		struct shash_desc *shash =3D &lrng_hash->shash;
-+		u32 digestsize =3D _lrng_kcapi_hash_digestsize(lrng_hash);
-+		u8 digest[64] __aligned(8);
-+		int ret;
-+
-+		BUG_ON(digestsize > sizeof(digest));
-+
-+		ret =3D crypto_shash_digest(shash, inbuf, inbuflen, digest);
-+		if (ret)
-+			return ret;
-+
-+		ret =3D crypto_rng_reset(kcapi_rng, digest, digestsize);
-+		if (ret)
-+			return ret;
-+
-+		memzero_explicit(digest, digestsize);
-+
-+		return 0;
++		spin_lock(&device_watchers_lock);
++		ret = add_watch_to_object(watch, &device_watchers);
++		spin_unlock(&device_watchers_lock);
++		if (ret == 0)
++			watch = NULL;
 +	} else {
-+		return crypto_rng_reset(kcapi_rng, inbuf, inbuflen);
-+	}
-+}
-+
-+static int lrng_kcapi_drng_generate_helper(void *drng, u8 *outbuf,
-+					   u32 outbuflen)
-+{
-+	struct lrng_drng_info *lrng_drng_info =3D (struct lrng_drng_info *)drng;
-+	struct crypto_rng *kcapi_rng =3D lrng_drng_info->kcapi_rng;
-+	int ret =3D crypto_rng_get_bytes(kcapi_rng, outbuf, outbuflen);
-+
-+	if (ret < 0)
-+		return ret;
-+
-+	return outbuflen;
-+}
-+
-+static void *lrng_kcapi_drng_alloc(u32 sec_strength)
-+{
-+	struct lrng_drng_info *lrng_drng_info;
-+	struct crypto_rng *kcapi_rng;
-+	int seedsize;
-+	void *ret =3D  ERR_PTR(-ENOMEM);
-+
-+	if (!drng_name) {
-+		pr_err("DRNG name missing\n");
-+		return ERR_PTR(-EINVAL);
++		spin_lock(&device_watchers_lock);
++		ret = remove_watch_from_object(&device_watchers, wqueue, 0,
++					       false);
++		spin_unlock(&device_watchers_lock);
 +	}
 +
-+	if (!memcmp(drng_name, "drbg", 4)) {
-+		pr_err("SP800-90A DRBG cannot be allocated using lrng_kcapi "
-+		       "backend, use lrng_drbg backend instead\n");
-+		return ERR_PTR(-EINVAL);
-+	}
-+
-+	if (!memcmp(drng_name, "stdrng", 6)) {
-+		pr_err("stdrng cannot be allocated using lrng_kcapi backend, "
-+		       "it is too unspecific and potentially may allocate the "
-+		       "DRBG\n");
-+		return ERR_PTR(-EINVAL);
-+	}
-+
-+	lrng_drng_info =3D kmalloc(sizeof(*lrng_drng_info), GFP_KERNEL);
-+	if (!lrng_drng_info)
-+		return ERR_PTR(-ENOMEM);
-+
-+	kcapi_rng =3D crypto_alloc_rng(drng_name, 0, 0);
-+	if (IS_ERR(kcapi_rng)) {
-+		pr_err("DRNG %s cannot be allocated\n", drng_name);
-+		ret =3D ERR_CAST(kcapi_rng);
-+		goto free;
-+	}
-+	lrng_drng_info->kcapi_rng =3D kcapi_rng;
-+
-+	seedsize =3D  crypto_rng_seedsize(kcapi_rng);
-+
-+	if (sec_strength > seedsize)
-+		pr_info("Seedsize DRNG (%u bits) lower than "
-+			"security strength of LRNG noise source (%u bits)\n",
-+			crypto_rng_seedsize(kcapi_rng) * 8,
-+			sec_strength * 8);
-+
-+	if (seedsize) {
-+		struct lrng_hash_info *lrng_hash;
-+
-+		if (!seed_hash) {
-+			switch (seedsize) {
-+			case 32:
-+				seed_hash =3D "sha256";
-+				break;
-+			case 48:
-+				seed_hash =3D "sha384";
-+				break;
-+			case 64:
-+				seed_hash =3D "sha512";
-+				break;
-+			default:
-+				pr_err("Seed size %d cannot be processed\n",
-+				       seedsize);
-+				goto dealloc;
-+				break;
-+			}
-+		}
-+
-+		lrng_hash =3D _lrng_kcapi_hash_alloc(seed_hash);
-+		if (IS_ERR(lrng_hash)) {
-+			ret =3D ERR_CAST(lrng_hash);
-+			goto dealloc;
-+		}
-+
-+		if (seedsize !=3D _lrng_kcapi_hash_digestsize(lrng_hash)) {
-+			pr_err("Seed hash output size not equal to DRNG seed "
-+			       "size\n");
-+			_lrng_kcapi_hash_free(lrng_hash);
-+			ret =3D ERR_PTR(-EINVAL);
-+			goto dealloc;
-+		}
-+
-+		lrng_drng_info->lrng_hash =3D lrng_hash;
-+
-+		pr_info("Seed hash %s allocated\n", seed_hash);
-+	} else {
-+		lrng_drng_info->lrng_hash =3D NULL;
-+	}
-+
-+	pr_info("Kernel crypto API DRNG %s allocated\n", drng_name);
-+
-+	return lrng_drng_info;
-+
-+dealloc:
-+	crypto_free_rng(kcapi_rng);
-+free:
-+	kfree(lrng_drng_info);
++err_watch:
++	kfree(watch);
++err_wqueue:
++	put_watch_queue(wqueue);
++err:
 +	return ret;
 +}
+diff --git a/include/linux/device.h b/include/linux/device.h
+index 96ff76731e93..f32de6466092 100644
+--- a/include/linux/device.h
++++ b/include/linux/device.h
+@@ -43,6 +43,7 @@ struct iommu_group;
+ struct iommu_fwspec;
+ struct dev_pin_info;
+ struct iommu_param;
++struct watch_notification;
+ 
+ struct bus_attribute {
+ 	struct attribute	attr;
+@@ -1687,6 +1688,12 @@ void device_link_remove(void *consumer, struct device *supplier);
+ void device_links_supplier_sync_state_pause(void);
+ void device_links_supplier_sync_state_resume(void);
+ 
++#ifdef CONFIG_DEVICE_NOTIFICATIONS
++extern void post_device_notification(struct watch_notification *n, u64 id);
++#else
++static inline void post_device_notification(struct watch_notification *n, u64 id) {}
++#endif
 +
-+static void lrng_kcapi_drng_dealloc(void *drng)
-+{
-+	struct lrng_drng_info *lrng_drng_info =3D (struct lrng_drng_info *)drng;
-+	struct crypto_rng *kcapi_rng =3D lrng_drng_info->kcapi_rng;
-+	struct lrng_hash_info *lrng_hash =3D lrng_drng_info->lrng_hash;
-+
-+	crypto_free_rng(kcapi_rng);
-+	if (lrng_hash) {
-+		_lrng_kcapi_hash_free(lrng_hash);
-+		pr_info("Seed hash %s deallocated\n", seed_hash);
-+	}
-+	kfree(lrng_drng_info);
-+	pr_info("DRNG %s deallocated\n", drng_name);
-+}
-+
-+static const char *lrng_kcapi_drng_name(void)
-+{
-+	return drng_name;
-+}
-+
-+static const char *lrng_kcapi_pool_hash(void)
-+{
-+	return pool_hash;
-+}
-+
-+const static struct lrng_crypto_cb lrng_kcapi_crypto_cb =3D {
-+	.lrng_drng_name			=3D lrng_kcapi_drng_name,
-+	.lrng_hash_name			=3D lrng_kcapi_pool_hash,
-+	.lrng_drng_alloc		=3D lrng_kcapi_drng_alloc,
-+	.lrng_drng_dealloc		=3D lrng_kcapi_drng_dealloc,
-+	.lrng_drng_seed_helper		=3D lrng_kcapi_drng_seed_helper,
-+	.lrng_drng_generate_helper	=3D lrng_kcapi_drng_generate_helper,
-+	.lrng_hash_alloc		=3D lrng_kcapi_hash_alloc,
-+	.lrng_hash_dealloc		=3D lrng_kcapi_hash_dealloc,
-+	.lrng_hash_digestsize		=3D lrng_kcapi_hash_digestsize,
-+	.lrng_hash_buffer		=3D lrng_kcapi_hash_buffer,
-+};
-+
-+static int __init lrng_kcapi_init(void)
-+{
-+	return lrng_set_drng_cb(&lrng_kcapi_crypto_cb);
-+}
-+static void __exit lrng_kcapi_exit(void)
-+{
-+	lrng_set_drng_cb(NULL);
-+}
-+
-+late_initcall(lrng_kcapi_init);
-+module_exit(lrng_kcapi_exit);
-+MODULE_LICENSE("Dual BSD/GPL");
-+MODULE_AUTHOR("Stephan Mueller <smueller@chronox.de>");
-+MODULE_DESCRIPTION("Linux Random Number Generator - kernel crypto API DRNG=
- backend");
-=2D-=20
-2.24.1
+ #ifndef dev_fmt
+ #define dev_fmt(fmt) fmt
+ #endif
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index 2960dedcfde8..393661015a30 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -1000,6 +1000,7 @@ asmlinkage long sys_fspick(int dfd, const char __user *path, unsigned int flags)
+ asmlinkage long sys_pidfd_send_signal(int pidfd, int sig,
+ 				       siginfo_t __user *info,
+ 				       unsigned int flags);
++asmlinkage long sys_watch_devices(int watch_fd, int watch_id, unsigned int flags);
+ 
+ /*
+  * Architecture-specific system calls
+diff --git a/include/uapi/asm-generic/unistd.h b/include/uapi/asm-generic/unistd.h
+index 1fc8faa6e973..4794d3c2afd7 100644
+--- a/include/uapi/asm-generic/unistd.h
++++ b/include/uapi/asm-generic/unistd.h
+@@ -850,9 +850,11 @@ __SYSCALL(__NR_pidfd_open, sys_pidfd_open)
+ #define __NR_clone3 435
+ __SYSCALL(__NR_clone3, sys_clone3)
+ #endif
++#define __NR_watch_devices 436
++__SYSCALL(__NR_watch_devices, sys_watch_devices)
+ 
+ #undef __NR_syscalls
+-#define __NR_syscalls 436
++#define __NR_syscalls 437
+ 
+ /*
+  * 32 bit systems traditionally used different
+diff --git a/kernel/sys_ni.c b/kernel/sys_ni.c
+index 3b69a560a7ac..0e9b275260f8 100644
+--- a/kernel/sys_ni.c
++++ b/kernel/sys_ni.c
+@@ -51,6 +51,7 @@ COND_SYSCALL_COMPAT(io_pgetevents);
+ COND_SYSCALL(io_uring_setup);
+ COND_SYSCALL(io_uring_enter);
+ COND_SYSCALL(io_uring_register);
++COND_SYSCALL(watch_devices);
+ 
+ /* fs/xattr.c */
+ 
