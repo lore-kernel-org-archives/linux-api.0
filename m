@@ -1,125 +1,158 @@
-From: Stephan =?ISO-8859-1?Q?M=FCller?= <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
-Subject: [PATCH v28 08/12] crypto: provide access to a static Jitter RNG state
-Date: Wed, 15 Jan 2020 11:34:33 +0100
-Message-ID: <2416529.PIfjfizJid@positron.chronox.de>
+From: Stephan =?ISO-8859-1?Q?M=FCller?= <smueller@chronox.de>
+Subject: [PATCH v28 05/12] crypto: DRBG - externalize DRBG functions for LRNG
+Date: Wed, 15 Jan 2020 11:33:17 +0100
+Message-ID: <2406023.Y8oabYYV3t@positron.chronox.de>
 References: <6157374.ptSnyUpaCn@positron.chronox.de> <2641155.iNH938UiKq@positron.chronox.de> <5951792.lmNsirYsPE@positron.chronox.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5951792.lmNsirYsPE-jJGQKZiSfeo1haGO/jJMPxvVK+yQ3ZXh@public.gmane.org>
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, "Alexander E. Patrakov" <patrakov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Ahmed S. Darwish" <darwish.07-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Theodore Y. Ts'o" <tytso-3s7WtUTddSA@public.gmane.org>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59-1xO5oi07KQx4cg9Nei1l7Q@public.gmane.org>, Vito Caputo <vcaputo-IiWei5kqaphBDgjK7y7TUQ@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Ray Strode <rstrode-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, William Jon McCann <mccann-4GNroTWusrE@public.gmane.org>, zhangjs <zachary-+jQ8zvd9CV5SzTKKI/wJ2A@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Lennart Poettering <mzxreary-uLTowLwuiw4b1SvskN2V4Q@public.gmane.org>, Nicolai Stange <nstange-l3A5Bk7waGM@public.gmane.org>, "Peter, Matthias" <matth>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <5951792.lmNsirYsPE@positron.chronox.de>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@suse.de>, "Peter, Matthias" <matth>
 List-Id: linux-api@vger.kernel.org
 
-To support the LRNG operation which uses the Jitter RNG separately
-from the kernel crypto API, at a time where potentially the regular
-memory management is not yet initialized, the Jitter RNG needs to
-provide a state whose memory is defined at compile time. As only once
-instance will ever be needed by the LRNG, define once static memory
-block which is solely to be used by the LRNG.
+This patch allows several DRBG functions to be called by the LRNG kernel
+code paths outside the drbg.c file.
 
-CC: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-CC: "Alexander E. Patrakov" <patrakov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-CC: "Ahmed S. Darwish" <darwish.07-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-CC: "Theodore Y. Ts'o" <tytso-3s7WtUTddSA@public.gmane.org>
+CC: "Eric W. Biederman" <ebiederm@xmission.com>
+CC: "Alexander E. Patrakov" <patrakov@gmail.com>
+CC: "Ahmed S. Darwish" <darwish.07@gmail.com>
+CC: "Theodore Y. Ts'o" <tytso@mit.edu>
 CC: Willy Tarreau <w@1wt.eu>
-CC: Matthew Garrett <mjg59-1xO5oi07KQx4cg9Nei1l7Q@public.gmane.org>
-CC: Vito Caputo <vcaputo-IiWei5kqaphBDgjK7y7TUQ@public.gmane.org>
-CC: Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
-CC: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-CC: Ray Strode <rstrode-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-CC: William Jon McCann <mccann-4GNroTWusrE@public.gmane.org>
-CC: zhangjs <zachary-+jQ8zvd9CV5SzTKKI/wJ2A@public.gmane.org>
-CC: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-CC: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-CC: Lennart Poettering <mzxreary-uLTowLwuiw4b1SvskN2V4Q@public.gmane.org>
-CC: Nicolai Stange <nstange-l3A5Bk7waGM@public.gmane.org>
-Reviewed-by: Roman Drahtmueller <draht-UTA6Eu5RHcbyVfKhlJ+g5A@public.gmane.org>
-Tested-by: Roman Drahtm=FCller <draht-UTA6Eu5RHcbyVfKhlJ+g5A@public.gmane.org>
-Tested-by: Marcelo Henrique Cerri <marcelo.cerri-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Tested-by: Neil Horman <nhorman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Signed-off-by: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
+CC: Matthew Garrett <mjg59@srcf.ucam.org>
+CC: Vito Caputo <vcaputo@pengaru.com>
+CC: Andreas Dilger <adilger.kernel@dilger.ca>
+CC: Jan Kara <jack@suse.cz>
+CC: Ray Strode <rstrode@redhat.com>
+CC: William Jon McCann <mccann@jhu.edu>
+CC: zhangjs <zachary@baishancloud.com>
+CC: Andy Lutomirski <luto@kernel.org>
+CC: Florian Weimer <fweimer@redhat.com>
+CC: Lennart Poettering <mzxreary@0pointer.de>
+CC: Nicolai Stange <nstange@suse.de>
+Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
+Tested-by: Roman Drahtm=FCller <draht@schaltsekun.de>
+Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
+Tested-by: Neil Horman <nhorman@redhat.com>
+Signed-off-by: Stephan Mueller <smueller@chronox.de>
 =2D--
- crypto/jitterentropy-kcapi.c                  |  3 +--
- crypto/jitterentropy.c                        | 25 ++++++++++++++++++-
- .../crypto/internal}/jitterentropy.h          |  3 +++
- 3 files changed, 28 insertions(+), 3 deletions(-)
- rename {crypto =3D> include/crypto/internal}/jitterentropy.h (84%)
+ crypto/drbg.c         | 16 ++++++++++------
+ include/crypto/drbg.h |  7 +++++++
+ 2 files changed, 17 insertions(+), 6 deletions(-)
 
-diff --git a/crypto/jitterentropy-kcapi.c b/crypto/jitterentropy-kcapi.c
-index a5ce8f96790f..11b00e9f37f3 100644
-=2D-- a/crypto/jitterentropy-kcapi.c
-+++ b/crypto/jitterentropy-kcapi.c
-@@ -43,8 +43,7 @@
- #include <linux/time.h>
- #include <linux/crypto.h>
- #include <crypto/internal/rng.h>
-=2D
-=2D#include "jitterentropy.h"
-+#include <crypto/internal/jitterentropy.h>
+diff --git a/crypto/drbg.c b/crypto/drbg.c
+index b6929eb5f565..5561dd0f09e1 100644
+=2D-- a/crypto/drbg.c
++++ b/crypto/drbg.c
+@@ -113,7 +113,7 @@
+  * the SHA256 / AES 256 over other ciphers. Thus, the favored
+  * DRBGs are the latest entries in this array.
+  */
+=2Dstatic const struct drbg_core drbg_cores[] =3D {
++const struct drbg_core drbg_cores[] =3D {
+ #ifdef CONFIG_CRYPTO_DRBG_CTR
+ 	{
+ 		.flags =3D DRBG_CTR | DRBG_STRENGTH128,
+@@ -190,6 +190,7 @@ static const struct drbg_core drbg_cores[] =3D {
+ 	},
+ #endif /* CONFIG_CRYPTO_DRBG_HMAC */
+ };
++EXPORT_SYMBOL(drbg_cores);
 =20
- /*************************************************************************=
-**
-  * Helper function
-diff --git a/crypto/jitterentropy.c b/crypto/jitterentropy.c
-index 042157f0d28b..529c9db13e64 100644
-=2D-- a/crypto/jitterentropy.c
-+++ b/crypto/jitterentropy.c
-@@ -103,7 +103,7 @@ struct rand_data {
-  * Helper functions
-  *************************************************************************=
-**/
+ static int drbg_uninstantiate(struct drbg_state *drbg);
 =20
-=2D#include "jitterentropy.h"
-+#include <crypto/internal/jitterentropy.h>
-=20
- /**
-  * Update of the loop count used for the next round of
-@@ -639,3 +639,26 @@ int jent_entropy_init(void)
-=20
- 	return 0;
+@@ -205,7 +206,7 @@ static int drbg_uninstantiate(struct drbg_state *drbg);
+  * Return: normalized strength in *bytes* value or 32 as default
+  *	   to counter programming errors
+  */
+=2Dstatic inline unsigned short drbg_sec_strength(drbg_flag_t flags)
++unsigned short drbg_sec_strength(drbg_flag_t flags)
+ {
+ 	switch (flags & DRBG_STRENGTH_MASK) {
+ 	case DRBG_STRENGTH128:
+@@ -218,6 +219,7 @@ static inline unsigned short drbg_sec_strength(drbg_fla=
+g_t flags)
+ 		return 32;
+ 	}
  }
++EXPORT_SYMBOL(drbg_sec_strength);
+=20
+ /*
+  * FIPS 140-2 continuous self test for the noise source
+@@ -1202,7 +1204,7 @@ static int drbg_seed(struct drbg_state *drbg, struct =
+drbg_string *pers,
+ }
+=20
+ /* Free all substructures in a DRBG state without the DRBG state structure=
+ */
+=2Dstatic inline void drbg_dealloc_state(struct drbg_state *drbg)
++void drbg_dealloc_state(struct drbg_state *drbg)
+ {
+ 	if (!drbg)
+ 		return;
+@@ -1223,12 +1225,13 @@ static inline void drbg_dealloc_state(struct drbg_s=
+tate *drbg)
+ 		drbg->fips_primed =3D false;
+ 	}
+ }
++EXPORT_SYMBOL(drbg_dealloc_state);
+=20
+ /*
+  * Allocate all sub-structures for a DRBG state.
+  * The DRBG state structure must already be allocated.
+  */
+=2Dstatic inline int drbg_alloc_state(struct drbg_state *drbg)
++int drbg_alloc_state(struct drbg_state *drbg)
+ {
+ 	int ret =3D -ENOMEM;
+ 	unsigned int sb_size =3D 0;
+@@ -1307,6 +1310,7 @@ static inline int drbg_alloc_state(struct drbg_state =
+*drbg)
+ 	drbg_dealloc_state(drbg);
+ 	return ret;
+ }
++EXPORT_SYMBOL(drbg_alloc_state);
+=20
+ /*************************************************************************
+  * DRBG interface functions
+@@ -1874,8 +1878,7 @@ static int drbg_kcapi_sym_ctr(struct drbg_state *drbg,
+  *
+  * return: flags
+  */
+=2Dstatic inline void drbg_convert_tfm_core(const char *cra_driver_name,
+=2D					 int *coreref, bool *pr)
++void drbg_convert_tfm_core(const char *cra_driver_name, int *coreref, bool=
+ *pr)
+ {
+ 	int i =3D 0;
+ 	size_t start =3D 0;
+@@ -1902,6 +1905,7 @@ static inline void drbg_convert_tfm_core(const char *=
+cra_driver_name,
+ 		}
+ 	}
+ }
++EXPORT_SYMBOL(drbg_convert_tfm_core);
+=20
+ static int drbg_kcapi_init(struct crypto_tfm *tfm)
+ {
+diff --git a/include/crypto/drbg.h b/include/crypto/drbg.h
+index 8c9af21efce1..c63b20375235 100644
+=2D-- a/include/crypto/drbg.h
++++ b/include/crypto/drbg.h
+@@ -282,4 +282,11 @@ enum drbg_prefixes {
+ 	DRBG_PREFIX3
+ };
+=20
++extern int drbg_alloc_state(struct drbg_state *drbg);
++extern void drbg_dealloc_state(struct drbg_state *drbg);
++extern void drbg_convert_tfm_core(const char *cra_driver_name, int *corere=
+f,
++				  bool *pr);
++extern const struct drbg_core drbg_cores[];
++extern unsigned short drbg_sec_strength(drbg_flag_t flags);
 +
-+struct rand_data *jent_lrng_entropy_collector(void)
-+{
-+	static unsigned char lrng_jent_mem[JENT_MEMORY_SIZE];
-+	static struct rand_data lrng_jent_state =3D {
-+		.data		=3D 0,
-+		.old_data	=3D 0,
-+		.prev_time	=3D 0,
-+		.last_delta	=3D 0,
-+		.last_delta2	=3D 0,
-+		.osr		=3D 1,
-+		.mem		=3D lrng_jent_mem,
-+		.memlocation	=3D 0,
-+		.memblocks	=3D JENT_MEMORY_BLOCKSIZE,
-+		.memblocksize	=3D JENT_MEMORY_BLOCKS,
-+		.memaccessloops	=3D JENT_MEMORY_ACCESSLOOPS,
-+	};
-+
-+	if (jent_entropy_init())
-+		return NULL;
-+
-+	return &lrng_jent_state;
-+}
-diff --git a/crypto/jitterentropy.h b/include/crypto/internal/jitterentropy=
-=2Eh
-similarity index 84%
-rename from crypto/jitterentropy.h
-rename to include/crypto/internal/jitterentropy.h
-index c83fff32d130..6e07d86eac82 100644
-=2D-- a/crypto/jitterentropy.h
-+++ b/include/crypto/internal/jitterentropy.h
-@@ -15,3 +15,6 @@ extern int jent_read_entropy(struct rand_data *ec, unsign=
-ed char *data,
- extern struct rand_data *jent_entropy_collector_alloc(unsigned int osr,
- 						      unsigned int flags);
- extern void jent_entropy_collector_free(struct rand_data *entropy_collecto=
-r);
-+
-+/* Access to statically allocated Jitter RNG instance */
-+extern struct rand_data *jent_lrng_entropy_collector(void);
+ #endif /* _DRBG_H */
 =2D-=20
 2.24.1
