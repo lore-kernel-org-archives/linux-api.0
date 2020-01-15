@@ -1,296 +1,288 @@
-From: Stephan =?ISO-8859-1?Q?M=FCller?= <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
-Subject: [PATCH v28 04/12] LRNG - add switchable DRNG support
-Date: Wed, 15 Jan 2020 11:32:55 +0100
-Message-ID: <18210082.uQRsEe3XHB@positron.chronox.de>
-References: <6157374.ptSnyUpaCn@positron.chronox.de> <2641155.iNH938UiKq@positron.chronox.de> <5951792.lmNsirYsPE@positron.chronox.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+From: Chen Yu <yu.c.chen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH][v7] x86/resctrl: Add task resctrl information display
+Date: Wed, 15 Jan 2020 17:28:51 +0800
+Message-ID: <20200115092851.14761-1-yu.c.chen@intel.com>
 Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5951792.lmNsirYsPE-jJGQKZiSfeo1haGO/jJMPxvVK+yQ3ZXh@public.gmane.org>
 Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Arnd Bergmann <arnd-r2nGTMty4D4@public.gmane.org>
-Cc: Greg Kroah-Hartman <gregkh-hQyY1W1yCW8ekmWlsbkhG0B+6BGkLq7r@public.gmane.org>, linux-crypto-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, LKML <linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>, "Alexander E. Patrakov" <patrakov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Ahmed S. Darwish" <darwish.07-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, "Theodore Y. Ts'o" <tytso-3s7WtUTddSA@public.gmane.org>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59-1xO5oi07KQx4cg9Nei1l7Q@public.gmane.org>, Vito Caputo <vcaputo-IiWei5kqaphBDgjK7y7TUQ@public.gmane.org>, Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>, Ray Strode <rstrode-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, William Jon McCann <mccann-4GNroTWusrE@public.gmane.org>, zhangjs <zachary-+jQ8zvd9CV5SzTKKI/wJ2A@public.gmane.org>, Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, Lennart Poettering <mzxreary-uLTowLwuiw4b1SvskN2V4Q@public.gmane.org>, Nicolai Stange <nstange-l3A5Bk7waGM@public.gmane.org>, "Peter, Matthias" <matth>
+To: x86-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org
+Cc: Chen Yu <yu.c.chen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>, Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>, Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Reinette Chatre <reinette.chatre-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Fenghua Yu <fenghua.yu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Tony Luck <tony.luck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>, Chris Down <chris-6Bi1550iOqEnzZ6mRAm98g@public.gmane.org>, Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>, Krzysztof Kozlowski <krzk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Mauro Carvalho Chehab <mchehab+samsung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-api@vger.kernel.org
 
-The DRNG switch support allows replacing the DRNG mechanism of the
-LRNG. The switching support rests on the interface definition of
-include/linux/lrng.h. A new DRNG is implemented by filling in the
-interface defined in this header file.
+Monitoring tools that want to find out which resctrl control and monitor
+groups a task belongs to must currently read the "tasks" file in every
+group until they locate the process ID.
 
-In addition to the DRNG, the extension also has to provide a hash
-implementation that is used to hash the entropy pool for random number
-extraction.
+Add an additional file /proc/{pid}/cpu_resctrl_groups to provide this
+information:
 
-Note: It is permissible to implement a DRNG whose operations may sleep.
-However, the hash function must not sleep.
+1)   res:
+     mon:
 
-The switchable DRNG support allows replacing the DRNG at runtime.
-However, only one DRNG extension is allowed to be loaded at any given
-time. Before replacing it with another DRNG implementation, the possibly
-existing DRNG extension must be unloaded.
+resctrl is not available.
 
-The switchable DRNG extension activates the new DRNG during load time.
-It is expected, however, that such a DRNG switch would be done only once
-by an administrator to load the intended DRNG implementation.
+2)   res:/
+     mon:
 
-It is permissible to compile DRNG extensions either as kernel modules or
-statically. The initialization of the DRNG extension should be performed
-with a late_initcall to ensure the extension is available when user
-space starts but after all other initialization completed.
-The initialization is performed by registering the function call data
-structure with the lrng_set_drng_cb function. In order to unload the
-DRNG extension, lrng_set_drng_cb must be invoked with the NULL
-parameter.
+Task is part of the root resctrl control group, and it is not associated
+to any monitor group.
 
-The DRNG extension should always provide a security strength that is at
-least as strong as LRNG_DRNG_SECURITY_STRENGTH_BITS.
+3)  res:/
+    mon:mon0
 
-CC: "Eric W. Biederman" <ebiederm-aS9lmoZGLiVWk0Htik3J/w@public.gmane.org>
-CC: "Alexander E. Patrakov" <patrakov-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-CC: "Ahmed S. Darwish" <darwish.07-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-CC: "Theodore Y. Ts'o" <tytso-3s7WtUTddSA@public.gmane.org>
-CC: Willy Tarreau <w@1wt.eu>
-CC: Matthew Garrett <mjg59-1xO5oi07KQx4cg9Nei1l7Q@public.gmane.org>
-CC: Vito Caputo <vcaputo-IiWei5kqaphBDgjK7y7TUQ@public.gmane.org>
-CC: Andreas Dilger <adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>
-CC: Jan Kara <jack-AlSwsSmVLrQ@public.gmane.org>
-CC: Ray Strode <rstrode-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-CC: William Jon McCann <mccann-4GNroTWusrE@public.gmane.org>
-CC: zhangjs <zachary-+jQ8zvd9CV5SzTKKI/wJ2A@public.gmane.org>
-CC: Andy Lutomirski <luto-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-CC: Florian Weimer <fweimer-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-CC: Lennart Poettering <mzxreary-uLTowLwuiw4b1SvskN2V4Q@public.gmane.org>
-CC: Nicolai Stange <nstange-l3A5Bk7waGM@public.gmane.org>
-Reviewed-by: Marcelo Henrique Cerri <marcelo.cerri-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Reviewed-by: Roman Drahtmueller <draht-UTA6Eu5RHcbyVfKhlJ+g5A@public.gmane.org>
-Tested-by: Roman Drahtm=FCller <draht-UTA6Eu5RHcbyVfKhlJ+g5A@public.gmane.org>
-Tested-by: Marcelo Henrique Cerri <marcelo.cerri-Z7WLFzj8eWMS+FvcfC7Uqw@public.gmane.org>
-Tested-by: Neil Horman <nhorman-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Signed-off-by: Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
-=2D--
- drivers/char/lrng/Kconfig       |   7 ++
- drivers/char/lrng/Makefile      |   1 +
- drivers/char/lrng/lrng_switch.c | 183 ++++++++++++++++++++++++++++++++
- 3 files changed, 191 insertions(+)
- create mode 100644 drivers/char/lrng/lrng_switch.c
+Task is part of the root resctrl control group and monitor group mon0.
 
-diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index 56f13efd3592..cb701bb0b8b6 100644
-=2D-- a/drivers/char/lrng/Kconfig
-+++ b/drivers/char/lrng/Kconfig
-@@ -64,4 +64,11 @@ config LRNG_POOL_SIZE
- 	default 7 if LRNG_POOL_SIZE_65536
- 	default 8 if LRNG_POOL_SIZE_131072
-=20
-+menuconfig LRNG_DRNG_SWITCH
-+	bool "Support DRNG runtime switching"
-+	help
-+	  The Linux RNG per default uses a ChaCha20 DRNG that is
-+	  accessible via the external interfaces. With this configuration
-+	  option other DRNGs can be selected and loaded at runtime.
-+
- endif # LRNG
-diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
-index e69c176f0161..31cfe87c999e 100644
-=2D-- a/drivers/char/lrng/Makefile
-+++ b/drivers/char/lrng/Makefile
-@@ -10,3 +10,4 @@ obj-y				+=3D lrng_pool.o lrng_aux.o \
-=20
- obj-$(CONFIG_NUMA)		+=3D lrng_numa.o
- obj-$(CONFIG_SYSCTL)		+=3D lrng_proc.o
-+obj-$(CONFIG_LRNG_DRNG_SWITCH)	+=3D lrng_switch.o
-diff --git a/drivers/char/lrng/lrng_switch.c b/drivers/char/lrng/lrng_switc=
-h.c
-new file mode 100644
-index 000000000000..48c9a364aecf
-=2D-- /dev/null
-+++ b/drivers/char/lrng/lrng_switch.c
-@@ -0,0 +1,183 @@
-+// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
-+/*
-+ * LRNG DRNG switching support
-+ *
-+ * Copyright (C) 2016 - 2020, Stephan Mueller <smueller-T9tCv8IpfcWELgA04lAiVw@public.gmane.org>
-+ */
-+
-+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-+
-+#include <linux/lrng.h>
-+
-+#include "lrng_internal.h"
-+
-+static int lrng_drng_switch(struct lrng_drng *drng_store,
-+			    const struct lrng_crypto_cb *cb, int node)
-+{
-+	const struct lrng_crypto_cb *old_cb;
-+	unsigned long flags =3D 0;
-+	int ret;
-+	u8 seed[LRNG_DRNG_SECURITY_STRENGTH_BYTES];
-+	void *new_drng =3D cb->lrng_drng_alloc(LRNG_DRNG_SECURITY_STRENGTH_BYTES);
-+	void *old_drng, *new_hash, *old_hash;
-+	bool sl =3D false, reset_drng =3D !lrng_get_available();
-+
-+	if (IS_ERR(new_drng)) {
-+		pr_warn("could not allocate new DRNG for NUMA node %d (%ld)\n",
-+			node, PTR_ERR(new_drng));
-+		return PTR_ERR(new_drng);
-+	}
-+
-+	new_hash =3D cb->lrng_hash_alloc(seed, sizeof(seed));
-+	if (IS_ERR(new_hash)) {
-+		pr_warn("could not allocate new LRNG pool hash (%ld)\n",
-+			PTR_ERR(new_hash));
-+		cb->lrng_drng_dealloc(new_drng);
-+		return PTR_ERR(new_hash);
-+	}
-+
-+	lrng_drng_lock(drng_store, &flags);
-+
-+	/*
-+	 * Pull from existing DRNG to seed new DRNG regardless of seed status
-+	 * of old DRNG -- the entropy state for the DRNG is left unchanged which
-+	 * implies that als the new DRNG is reseeded when deemed necessary. This
-+	 * seeding of the new DRNG shall only ensure that the new DRNG has the
-+	 * same entropy as the old DRNG.
-+	 */
-+	ret =3D drng_store->crypto_cb->lrng_drng_generate_helper(
-+				drng_store->drng, seed, sizeof(seed));
-+	lrng_drng_unlock(drng_store, &flags);
-+
-+	if (ret < 0) {
-+		reset_drng =3D true;
-+		pr_warn("getting random data from DRNG failed for NUMA node %d "
-+			"(%d)\n", node, ret);
-+	} else {
-+		/* seed new DRNG with data */
-+		ret =3D cb->lrng_drng_seed_helper(new_drng, seed, ret);
-+		if (ret < 0) {
-+			reset_drng =3D true;
-+			pr_warn("seeding of new DRNG failed for NUMA node %d "
-+				"(%d)\n", node, ret);
-+		} else {
-+			pr_debug("seeded new DRNG of NUMA node %d instance "
-+				 "from old DRNG instance\n", node);
-+		}
-+	}
-+
-+	mutex_lock(&drng_store->lock);
-+	/*
-+	 * If we switch the DRNG from the initial ChaCha20 DRNG to something
-+	 * else, there is a lock transition from spin lock to mutex (see
-+	 * lrng_drng_is_atomic and how the lock is taken in lrng_drng_lock).
-+	 * Thus, we need to take both locks during the transition phase.
-+	 */
-+	if (lrng_drng_is_atomic(drng_store)) {
-+		spin_lock_irqsave(&drng_store->spin_lock, flags);
-+		sl =3D true;
-+	}
-+
-+	if (reset_drng)
-+		lrng_drng_reset(drng_store);
-+
-+	old_drng =3D drng_store->drng;
-+	old_cb =3D drng_store->crypto_cb;
-+	drng_store->drng =3D new_drng;
-+	drng_store->crypto_cb =3D cb;
-+
-+	old_hash =3D drng_store->hash;
-+	drng_store->hash =3D new_hash;
-+	pr_info("Entropy pool read-hash allocated for DRNG for NUMA node %d\n",
-+		node);
-+
-+	if (sl)
-+		spin_unlock_irqrestore(&drng_store->spin_lock, flags);
-+	mutex_unlock(&drng_store->lock);
-+
-+	/* ChaCha20 serves as atomic instance left untouched. */
-+	if (old_drng !=3D &chacha20) {
-+		old_cb->lrng_drng_dealloc(old_drng);
-+		old_cb->lrng_hash_dealloc(old_hash);
-+	}
-+
-+	pr_info("DRNG of NUMA node %d switched\n", node);
-+
-+	return 0;
-+}
+4)  res:group0
+    mon:
+
+Task is part of resctrl control group group0, and it is not associated
+to any monitor group.
+
+5) res:group0
+   mon:mon1
+
+Task is part of resctrl control group group0 and monitor group mon1.
+
+Tested-by: Jinshi Chen <jinshi.chen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Cc: Borislav Petkov <bp-Gina5bIWoIWzQB+pC5nmwQ@public.gmane.org>
+Cc: Ingo Molnar <mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: "H. Peter Anvin" <hpa-YMNOUZJC4hwAvxtiuMwx3w@public.gmane.org>
+Cc: Alexey Dobriyan <adobriyan-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: Reinette Chatre <reinette.chatre-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Fenghua Yu <fenghua.yu-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Tony Luck <tony.luck-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Cc: Chris Down <chris-6Bi1550iOqEnzZ6mRAm98g@public.gmane.org>
+Cc: Michal Hocko <mhocko-IBi9RG/b67k@public.gmane.org>
+Cc: Krzysztof Kozlowski <krzk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Mauro Carvalho Chehab <mchehab+samsung-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Cc: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+Cc: linux-fsdevel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Signed-off-by: Chen Yu <yu.c.chen-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+---
+v1: Initial version reviewed by Reinette Chatre,
+    Fenghua Yu and Tony Luck.
+
+v2: According to Boris's suggestion,
+    reduce indentation level in proc_resctrl_show().
+    Create the include/linux/resctrl.h header and
+    declare proc_resctrl_show() in this file, so
+    that other architectures would probably use it
+    in the future. Different architectures should
+    implement architectural specific proc_resctrl_show()
+    accordingly.
+
+v3: According to Boris's suggestion,
+    Return empty string if the resctrl filesystem has
+    not been mounted.
+    Rename the config from CPU_RESCTRL to PROC_CPU_RESCTRL
+    to better represent its usage. Move PROC_CPU_RESCTRL
+    from arch/Kconfig to fs/proc/Kconfig.
+    And let PROC_CPU_RESCTRL to be depended on PROC_FS.
+
+v4: According to Thomas's suggestion, changed the output
+    from multiple lines to one single line.
+
+v5: According to Alexey's feedback, removed the header file
+    proc_fs.h in resctrl.h, and changed seq_puts() to
+    seq_putc() for simplicity.
+
+v6: According to Chris Down's suggestion,
+    1. rename:
+    /proc/{pid}/resctrl to /proc/{pid}/cpu_resctrl
+    to better reflect its meaning.
+    2. change the description in comments:
+    "control group" to "resctrl control group"
+    as the former is confusing for cgroup users.
+
+v7: According to Boris's suggestion,
+    split the output into two lines, to display the
+    resctrl control group and monitor group respctively
+    to be more human/tool-readable. Renamed the file to
+    cpu_resctrl_groups.
+---
+ arch/x86/Kconfig                       |  1 +
+ arch/x86/kernel/cpu/resctrl/rdtgroup.c | 86 ++++++++++++++++++++++++++
+ fs/proc/Kconfig                        |  4 ++
+ fs/proc/base.c                         |  7 +++
+ include/linux/resctrl.h                | 14 +++++
+ 5 files changed, 112 insertions(+)
+ create mode 100644 include/linux/resctrl.h
+
+diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
+index 5e8949953660..6e17a68c7d77 100644
+--- a/arch/x86/Kconfig
++++ b/arch/x86/Kconfig
+@@ -456,6 +456,7 @@ config X86_CPU_RESCTRL
+ 	bool "x86 CPU resource control support"
+ 	depends on X86 && (CPU_SUP_INTEL || CPU_SUP_AMD)
+ 	select KERNFS
++	select PROC_CPU_RESCTRL		if PROC_FS
+ 	help
+ 	  Enable x86 CPU resource control support.
+ 
+diff --git a/arch/x86/kernel/cpu/resctrl/rdtgroup.c b/arch/x86/kernel/cpu/resctrl/rdtgroup.c
+index 2e3b06d6bbc6..4b185740d29d 100644
+--- a/arch/x86/kernel/cpu/resctrl/rdtgroup.c
++++ b/arch/x86/kernel/cpu/resctrl/rdtgroup.c
+@@ -725,6 +725,92 @@ static int rdtgroup_tasks_show(struct kernfs_open_file *of,
+ 	return ret;
+ }
+ 
++#ifdef CONFIG_PROC_CPU_RESCTRL
 +
 +/*
-+ * Switch the existing DRNG instances with new using the new crypto callba=
-cks.
-+ * The caller must hold the lrng_crypto_cb_update lock.
++ * A task can only be part of one resctrl control group and of one monitor
++ * group which is associated to that control group.
++ *
++ * 1)   res:
++ *      mon:
++ *
++ *    resctrl is not available.
++ *
++ * 2)   res:/
++ *      mon:
++ *
++ *    Task is part of the root resctrl control group, and it is not associated
++ *    to any monitor group.
++ *
++ * 3)  res:/
++ *     mon:mon0
++ *
++ *    Task is part of the root resctrl control group and monitor group mon0.
++ *
++ * 4)  res:group0
++ *     mon:
++ *
++ *    Task is part of resctrl control group group0, and it is not associated
++ *    to any monitor group.
++ *
++ * 5) res:group0
++ *    mon:mon1
++ *
++ *    Task is part of resctrl control group group0 and monitor group mon1.
 + */
-+static int lrng_drngs_switch(const struct lrng_crypto_cb *cb)
++int proc_resctrl_show(struct seq_file *s, struct pid_namespace *ns,
++		      struct pid *pid, struct task_struct *tsk)
 +{
-+	struct lrng_drng **lrng_drng =3D lrng_drng_instances();
-+	struct lrng_drng *lrng_drng_init =3D lrng_drng_init_instance();
-+	int ret =3D 0;
++	struct rdtgroup *rdtg;
++	int ret = 0;
 +
-+	/* Update DRNG */
-+	if (lrng_drng) {
-+		u32 node;
++	mutex_lock(&rdtgroup_mutex);
 +
-+		for_each_online_node(node) {
-+			if (lrng_drng[node])
-+				ret =3D lrng_drng_switch(lrng_drng[node], cb,
-+						       node);
++	/* Return empty if resctrl has not been mounted. */
++	if (!static_branch_unlikely(&rdt_enable_key)) {
++		seq_puts(s, "res:\nmon:\n");
++		goto unlock;
++	}
++
++	list_for_each_entry(rdtg, &rdt_all_groups, rdtgroup_list) {
++		struct rdtgroup *crg;
++
++		/*
++		 * Task information is only relevant for shareable
++		 * and exclusive groups.
++		 */
++		if (rdtg->mode != RDT_MODE_SHAREABLE &&
++		    rdtg->mode != RDT_MODE_EXCLUSIVE)
++			continue;
++
++		if (rdtg->closid != tsk->closid)
++			continue;
++
++		seq_printf(s, "res:%s%s\n", (rdtg == &rdtgroup_default) ? "/" : "",
++			   rdtg->kn->name);
++		seq_puts(s, "mon:");
++		list_for_each_entry(crg, &rdtg->mon.crdtgrp_list,
++				    mon.crdtgrp_list) {
++			if (tsk->rmid != crg->mon.rmid)
++				continue;
++			seq_printf(s, "%s", crg->kn->name);
++			break;
 +		}
-+	} else {
-+		ret =3D lrng_drng_switch(lrng_drng_init, cb, 0);
++		seq_putc(s, '\n');
++		goto unlock;
 +	}
-+
-+	if (!ret)
-+		lrng_set_available();
-+
-+	return 0;
-+}
-+
-+/**
-+ * lrng_set_drng_cb - Register new cryptographic callback functions for DR=
-NG
-+ * The registering implies that all old DRNG states are replaced with new
-+ * DRNG states.
-+ *
-+ * @cb: Callback functions to be registered -- if NULL, use the default
-+ *	callbacks pointing to the ChaCha20 DRNG.
-+ *
-+ * Return:
-+ * * 0 on success
-+ * * < 0 on error
-+ */
-+int lrng_set_drng_cb(const struct lrng_crypto_cb *cb)
-+{
-+	struct lrng_drng *lrng_drng_init =3D lrng_drng_init_instance();
-+	int ret;
-+
-+	if (!cb)
-+		cb =3D &lrng_cc20_crypto_cb;
-+
-+	mutex_lock(&lrng_crypto_cb_update);
-+
 +	/*
-+	 * If a callback other than the default is set, allow it only to be
-+	 * set back to the default callback. This ensures that multiple
-+	 * different callbacks can be registered at the same time. If a
-+	 * callback different from the current callback and the default
-+	 * callback shall be set, the current callback must be deregistered
-+	 * (e.g. the kernel module providing it must be unloaded) and the new
-+	 * implementation can be registered.
++	 * The above search should succeed. Otherwise return
++	 * with an error.
 +	 */
-+	if ((cb !=3D &lrng_cc20_crypto_cb) &&
-+	    (lrng_drng_init->crypto_cb !=3D &lrng_cc20_crypto_cb)) {
-+		pr_warn("disallow setting new cipher callbacks, unload the old "
-+			"callbacks first!\n");
-+		ret =3D -EINVAL;
-+		goto out;
-+	}
++	ret = -ENOENT;
++unlock:
++	mutex_unlock(&rdtgroup_mutex);
 +
-+	ret =3D lrng_drngs_switch(cb);
-+
-+out:
-+	mutex_unlock(&lrng_crypto_cb_update);
 +	return ret;
 +}
-+EXPORT_SYMBOL(lrng_set_drng_cb);
-=2D-=20
-2.24.1
++#endif
++
+ static int rdt_last_cmd_status_show(struct kernfs_open_file *of,
+ 				    struct seq_file *seq, void *v)
+ {
+diff --git a/fs/proc/Kconfig b/fs/proc/Kconfig
+index 733881a6387b..27ef84d99f59 100644
+--- a/fs/proc/Kconfig
++++ b/fs/proc/Kconfig
+@@ -103,3 +103,7 @@ config PROC_CHILDREN
+ config PROC_PID_ARCH_STATUS
+ 	def_bool n
+ 	depends on PROC_FS
++
++config PROC_CPU_RESCTRL
++	def_bool n
++	depends on PROC_FS
+diff --git a/fs/proc/base.c b/fs/proc/base.c
+index ebea9501afb8..bbffd654bb0e 100644
+--- a/fs/proc/base.c
++++ b/fs/proc/base.c
+@@ -94,6 +94,7 @@
+ #include <linux/sched/debug.h>
+ #include <linux/sched/stat.h>
+ #include <linux/posix-timers.h>
++#include <linux/resctrl.h>
+ #include <trace/events/oom.h>
+ #include "internal.h"
+ #include "fd.h"
+@@ -3060,6 +3061,9 @@ static const struct pid_entry tgid_base_stuff[] = {
+ #endif
+ #ifdef CONFIG_CGROUPS
+ 	ONE("cgroup",  S_IRUGO, proc_cgroup_show),
++#endif
++#ifdef CONFIG_PROC_CPU_RESCTRL
++	ONE("cpu_resctrl_groups", S_IRUGO, proc_resctrl_show),
+ #endif
+ 	ONE("oom_score",  S_IRUGO, proc_oom_score),
+ 	REG("oom_adj",    S_IRUGO|S_IWUSR, proc_oom_adj_operations),
+@@ -3460,6 +3464,9 @@ static const struct pid_entry tid_base_stuff[] = {
+ #endif
+ #ifdef CONFIG_CGROUPS
+ 	ONE("cgroup",  S_IRUGO, proc_cgroup_show),
++#endif
++#ifdef CONFIG_PROC_CPU_RESCTRL
++	ONE("cpu_resctrl_groups", S_IRUGO, proc_resctrl_show),
+ #endif
+ 	ONE("oom_score", S_IRUGO, proc_oom_score),
+ 	REG("oom_adj",   S_IRUGO|S_IWUSR, proc_oom_adj_operations),
+diff --git a/include/linux/resctrl.h b/include/linux/resctrl.h
+new file mode 100644
+index 000000000000..daf5cf64c6a6
+--- /dev/null
++++ b/include/linux/resctrl.h
+@@ -0,0 +1,14 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++#ifndef _RESCTRL_H
++#define _RESCTRL_H
++
++#ifdef CONFIG_PROC_CPU_RESCTRL
++
++int proc_resctrl_show(struct seq_file *m,
++		      struct pid_namespace *ns,
++		      struct pid *pid,
++		      struct task_struct *tsk);
++
++#endif
++
++#endif /* _RESCTRL_H */
+-- 
+2.17.1
