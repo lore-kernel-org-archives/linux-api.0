@@ -1,183 +1,58 @@
-From: Stephan =?ISO-8859-1?Q?M=FCller?= <smueller@chronox.de>
-Subject: [PATCH v28 09/12] LRNG - add Jitter RNG fast noise source
-Date: Wed, 15 Jan 2020 11:34:59 +0100
-Message-ID: <2704719.5neY5jeiZ3@positron.chronox.de>
-References: <6157374.ptSnyUpaCn@positron.chronox.de> <2641155.iNH938UiKq@positron.chronox.de> <5951792.lmNsirYsPE@positron.chronox.de>
+From: Aleksa Sarai <cyphar@cyphar.com>
+Subject: Re: [PATCH RFC 0/1] mount: universally disallow mounting over
+ symlinks
+Date: Thu, 16 Jan 2020 00:57:04 +1100
+Message-ID: <20200115135704.eh4atya6fwnikyll@yavin>
+References: <20200101005446.GH4203@ZenIV.linux.org.uk>
+ <20200101030815.GA17593@ZenIV.linux.org.uk>
+ <20200101144407.ugjwzk7zxrucaa6a@yavin.dot.cyphar.com>
+ <20200101234009.GB8904@ZenIV.linux.org.uk>
+ <20200102035920.dsycgxnb6ba2jhz2@yavin.dot.cyphar.com>
+ <20200103014901.GC8904@ZenIV.linux.org.uk>
+ <20200108031314.GE8904@ZenIV.linux.org.uk>
+ <CAHk-=wgQ3yOBuK8mxpnntD8cfX-+10ba81f86BYg8MhvwpvOMg@mail.gmail.com>
+ <20200110210719.ktg3l2kwjrdutlh6@yavin>
+ <20200114045733.GW8904@ZenIV.linux.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/signed; micalg=pgp-sha256;
+        protocol="application/pgp-signature"; boundary="3nfjay3o6o7sfgzp"
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5951792.lmNsirYsPE@positron.chronox.de>
+Content-Disposition: inline
+In-Reply-To: <20200114045733.GW8904@ZenIV.linux.org.uk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Arnd Bergmann <arnd@arndb.de>
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@suse.de>, "Peter, Matthias" <matth>
+To: Al Viro <viro@zeniv.linux.org.uk>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>, David Howells <dhowells@redhat.com>, Eric Biederman <ebiederm@xmission.com>, stable <stable@vger.kernel.org>, Christian Brauner <christian.brauner@ubuntu.com>, Serge Hallyn <serge@hallyn.com>, dev@opencontainers.org, Linux Containers <containers@lists.linux-foundation.org>, Linux API <linux-api@vger.kernel.org>, linux-fsdevel <linux-fsdevel@vger.kernel.org>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Ian Kent <raven@themaw.net>
 List-Id: linux-api@vger.kernel.org
 
-=46rom 1666398d358388d0476f79019e0a6116c30db8a4 Mon Sep 17 00:00:00 2001
-=46rom: Stephan Mueller <smueller@chronox.de>
-Date: Sun, 12 Jan 2020 11:56:31 +0100
-Subject: [PATCH v28 09/12] LRNG - add Jitter RNG fast noise source
-MIME-Version: 1.0
-Content-Type: text/plain; charset=3DUTF-8
-Content-Transfer-Encoding: 8bit
 
-The Jitter RNG fast noise source implemented as part of the kernel
-crypto API is queried for 256 bits of entropy at the time the seed
-buffer managed by the LRNG is about to be filled.
+--3nfjay3o6o7sfgzp
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-CC: "Eric W. Biederman" <ebiederm@xmission.com>
-CC: "Alexander E. Patrakov" <patrakov@gmail.com>
-CC: "Ahmed S. Darwish" <darwish.07@gmail.com>
-CC: "Theodore Y. Ts'o" <tytso@mit.edu>
-CC: Willy Tarreau <w@1wt.eu>
-CC: Matthew Garrett <mjg59@srcf.ucam.org>
-CC: Vito Caputo <vcaputo@pengaru.com>
-CC: Andreas Dilger <adilger.kernel@dilger.ca>
-CC: Jan Kara <jack@suse.cz>
-CC: Ray Strode <rstrode@redhat.com>
-CC: William Jon McCann <mccann@jhu.edu>
-CC: zhangjs <zachary@baishancloud.com>
-CC: Andy Lutomirski <luto@kernel.org>
-CC: Florian Weimer <fweimer@redhat.com>
-CC: Lennart Poettering <mzxreary@0pointer.de>
-CC: Nicolai Stange <nstange@suse.de>
-Reviewed-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
-Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
-Tested-by: Roman Drahtm=FCller <draht@schaltsekun.de>
-Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
-Tested-by: Neil Horman <nhorman@redhat.com>
-Signed-off-by: Stephan Mueller <smueller@chronox.de>
-=2D--
- drivers/char/lrng/Kconfig     | 11 +++++
- drivers/char/lrng/Makefile    |  1 +
- drivers/char/lrng/lrng_jent.c | 89 +++++++++++++++++++++++++++++++++++
- 3 files changed, 101 insertions(+)
- create mode 100644 drivers/char/lrng/lrng_jent.c
+On 2020-01-14, Al Viro <viro@zeniv.linux.org.uk> wrote:
+> 1) do you see any problems on your testcases with the current #fixes?
+> That's commit 7a955b7363b8 as branch tip.
 
-diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
-index 0d070a3897dd..10b7cbdb8c8e 100644
-=2D-- a/drivers/char/lrng/Kconfig
-+++ b/drivers/char/lrng/Kconfig
-@@ -92,4 +92,15 @@ config LRNG_KCAPI
- 	  provided by the selected kernel crypto API RNG.
- endif # LRNG_DRNG_SWITCH
-=20
-+config LRNG_JENT
-+	bool "Enable Jitter RNG as LRNG Seed Source"
-+	select CRYPTO_JITTERENTROPY
-+	help
-+	  The Linux RNG may use the Jitter RNG as noise source. Enabling
-+	  this option enables the use of the Jitter RNG. Its default
-+	  entropy level is 16 bits of entropy per 256 data bits delivered
-+	  by the Jitter RNG. This entropy level can be changed at boot
-+	  time or at runtime with the lrng_base.jitterrng configuration
-+	  variable.
-+
- endif # LRNG
-diff --git a/drivers/char/lrng/Makefile b/drivers/char/lrng/Makefile
-index 94b2dfb2dfdb..4f5b6f38f0c4 100644
-=2D-- a/drivers/char/lrng/Makefile
-+++ b/drivers/char/lrng/Makefile
-@@ -13,3 +13,4 @@ obj-$(CONFIG_SYSCTL)		+=3D lrng_proc.o
- obj-$(CONFIG_LRNG_DRNG_SWITCH)	+=3D lrng_switch.o
- obj-$(CONFIG_LRNG_DRBG)		+=3D lrng_drbg.o
- obj-$(CONFIG_LRNG_KCAPI)	+=3D lrng_kcapi.o
-+obj-$(CONFIG_LRNG_JENT)		+=3D lrng_jent.o
-diff --git a/drivers/char/lrng/lrng_jent.c b/drivers/char/lrng/lrng_jent.c
-new file mode 100644
-index 000000000000..ff0bbe2680c4
-=2D-- /dev/null
-+++ b/drivers/char/lrng/lrng_jent.c
-@@ -0,0 +1,89 @@
-+// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
-+/*
-+ * LRNG Fast Noise Source: Jitter RNG
-+ *
-+ * Copyright (C) 2016 - 2020, Stephan Mueller <smueller@chronox.de>
-+ */
-+
-+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-+
-+#include <linux/types.h>
-+#include <crypto/internal/jitterentropy.h>
-+
-+#include "lrng_internal.h"
-+
-+/*
-+ * Estimated entropy of data is a 16th of LRNG_DRNG_SECURITY_STRENGTH_BITS.
-+ * Albeit a full entropy assessment is provided for the noise source indic=
-ating
-+ * that it provides high entropy rates and considering that it deactivates
-+ * when it detects insufficient hardware, the chosen under estimation of
-+ * entropy is considered to be acceptable to all reviewers.
-+ */
-+static u32 jitterrng =3D LRNG_DRNG_SECURITY_STRENGTH_BITS>>4;
-+module_param(jitterrng, uint, 0644);
-+MODULE_PARM_DESC(jitterrng, "Entropy in bits of 256 data bits from Jitter "
-+			    "RNG noise source");
-+
-+/**
-+ * lrng_get_jent() - Get Jitter RNG entropy
-+ *
-+ * @outbuf: buffer to store entropy
-+ * @outbuflen: length of buffer
-+ *
-+ * Return:
-+ * * > 0 on success where value provides the added entropy in bits
-+ * * 0 if no fast source was available
-+ */
-+static struct rand_data *lrng_jent_state;
-+
-+u32 lrng_get_jent(u8 *outbuf, unsigned int outbuflen)
-+{
-+	int ret;
-+	u32 ent_bits =3D jitterrng;
-+	unsigned long flags;
-+	static DEFINE_SPINLOCK(lrng_jent_lock);
-+	static int lrng_jent_initialized =3D 0;
-+
-+	spin_lock_irqsave(&lrng_jent_lock, flags);
-+
-+	if (!ent_bits || (lrng_jent_initialized =3D=3D -1)) {
-+		spin_unlock_irqrestore(&lrng_jent_lock, flags);
-+		return 0;
-+	}
-+
-+	if (!lrng_jent_initialized) {
-+		lrng_jent_state =3D jent_lrng_entropy_collector();
-+		if (!lrng_jent_state) {
-+			jitterrng =3D 0;
-+			lrng_jent_initialized =3D -1;
-+			spin_unlock_irqrestore(&lrng_jent_lock, flags);
-+			pr_info("Jitter RNG unusable on current system\n");
-+			return 0;
-+		}
-+		lrng_jent_initialized =3D 1;
-+		pr_debug("Jitter RNG working on current system\n");
-+	}
-+	ret =3D jent_read_entropy(lrng_jent_state, outbuf, outbuflen);
-+	spin_unlock_irqrestore(&lrng_jent_lock, flags);
-+
-+	if (ret) {
-+		pr_debug("Jitter RNG failed with %d\n", ret);
-+		return 0;
-+	}
-+
-+	/* Obtain entropy statement */
-+	if (outbuflen !=3D LRNG_DRNG_SECURITY_STRENGTH_BYTES)
-+		ent_bits =3D (ent_bits * outbuflen<<3) /
-+			   LRNG_DRNG_SECURITY_STRENGTH_BITS;
-+	/* Cap entropy to buffer size in bits */
-+	ent_bits =3D min_t(u32, ent_bits, outbuflen<<3);
-+	pr_debug("obtained %u bits of entropy from Jitter RNG noise source\n",
-+		 ent_bits);
-+
-+	return ent_bits;
-+}
-+
-+u32 lrng_jent_entropylevel(void)
-+{
-+	return min_t(u32, jitterrng, LRNG_DRNG_SECURITY_STRENGTH_BITS);
-+}
-=2D-=20
-2.24.1
+I just finished testing the few cases I reported earlier and they both
+appear to be fixed with the current #work.namei branch. And I don't have
+any troubles booting whatsoever.
+
+--=20
+Aleksa Sarai
+Senior Software Engineer (Containers)
+SUSE Linux GmbH
+<https://www.cyphar.com/>
+
+--3nfjay3o6o7sfgzp
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+
+iHUEABYIAB0WIQSxZm6dtfE8gxLLfYqdlLljIbnQEgUCXh8aLQAKCRCdlLljIbnQ
+El7BAP4mVcB8EHkVpb1BiYmM6aGj6dmCburCpsIPyRObtfW53wD9GQvyGsKlZef1
+tVRXIsFXbnwRaq5E9oXLf8yZ1F1nuAc=
+=l76M
+-----END PGP SIGNATURE-----
+
+--3nfjay3o6o7sfgzp--
