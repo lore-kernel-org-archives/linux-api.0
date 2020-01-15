@@ -1,91 +1,106 @@
-From: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH] mm/compaction: Disable compact_unevictable_allowed on RT
-Date: Wed, 15 Jan 2020 23:04:19 +0100
-Message-ID: <4cf4507b-0632-34e6-5985-df933559af9f@suse.cz>
-References: <20200115161035.893221-1-bigeasy@linutronix.de>
+From: Vineet Gupta <Vineet.Gupta1@synopsys.com>
+Subject: clone3 on ARC (was Re: [PATCH v3 2/2] arch: wire-up clone3() syscall)
+Date: Wed, 15 Jan 2020 22:41:20 +0000
+Message-ID: <a58c8425-83a3-b64c-339a-7e94a72f4bee@synopsys.com>
+References: <20190604160944.4058-1-christian@brauner.io>
+ <20190604160944.4058-2-christian@brauner.io>
+ <CAK8P3a0OfBpx6y4m5uWX-DUg16NoFby5ik-3xCcD+yMrw0tbEw@mail.gmail.com>
+ <20190604212930.jaaztvkent32b7d3@brauner.io>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20200115161035.893221-1-bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Return-path: <linux-arch-owner@vger.kernel.org>
+In-Reply-To: <20190604212930.jaaztvkent32b7d3@brauner.io>
 Content-Language: en-US
-Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
-Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Luis Chamberlain <mcgrof-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Kees Cook <keescook-F7+t8E8rja9g9hUCZPvPmw@public.gmane.org>, Iurii Zaikin <yzaikin-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>, Mel Gorman <mgorman-3eNAlZScCAx27rWaFMvyedHuzzzSOjJt@public.gmane.org>, Linux API <linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-ID: <BB017E12F10A4D488BE280BF32F60C06@namprd12.prod.outlook.com>
+Sender: linux-arch-owner@vger.kernel.org
+To: Christian Brauner <christian@brauner.io>, Arnd Bergmann <arnd@arndb.de>
+Cc: Al Viro <viro@zeniv.linux.org.uk>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Jann Horn <jannh@google.com>, Kees Cook <keescook@chromium.org>, Florian Weimer <fweimer@redhat.com>, Oleg Nesterov <oleg@redhat.com>, David Howells <dhowells@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, arcml <linux-snps-arc@lists.infradead.org>
 List-Id: linux-api@vger.kernel.org
 
-On 1/15/2020 5:10 PM, Sebastian Andrzej Siewior wrote:
-> Since commit
->     5bbe3547aa3ba ("mm: allow compaction of unevictable pages")
-> 
-> it is allowed to examine mlocked pages and compact them by default.
-> On -RT even minor pagefaults are problematic because it may take a few
-> 100us to resolve them and until then the task is blocked.
-
-Fine, this makes sense on RT I guess. There might be some trade-off for
-high-order allocation latencies though. We could perhaps migrate such mlocked
-pages to pages allocated without __GFP_MOVABLE during the mlock() to at least
-somewhat prevent them being scattered all over the zones. For MCL_FUTURE,
-allocate them as unmovable from the beginning. But that can wait until issues
-are reported.
-I assume you have similar solution for NUMA balancing and whatever else can
-cause minor faults?
-
-> Make compact_unevictable_allowed = 0 default and remove it from /proc on
-> RT.
-
-Removing it is maybe going too far in terms of RT kernel differences confusing
-users? Change the default sure, perhaps making it read-only, but removing?
-
-> Link: https://lore.kernel.org/linux-mm/20190710144138.qyn4tuttdq6h7kqx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org/
-
-In any case the sysctl Documentation/ should be updated? And perhaps also the
-mlock manpage as you noted in the older thread above?
-
-Thanks,
-Vlastimil
-
-> Signed-off-by: Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-> ---
->  kernel/sysctl.c | 3 ++-
->  mm/compaction.c | 4 ++++
->  2 files changed, 6 insertions(+), 1 deletion(-)
-> 
-> diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-> index 70665934d53e2..d08bd51a0fbc3 100644
-> --- a/kernel/sysctl.c
-> +++ b/kernel/sysctl.c
-> @@ -1488,6 +1488,7 @@ static struct ctl_table vm_table[] = {
->  		.extra1		= &min_extfrag_threshold,
->  		.extra2		= &max_extfrag_threshold,
->  	},
-> +#ifndef CONFIG_PREEMPT_RT
->  	{
->  		.procname	= "compact_unevictable_allowed",
->  		.data		= &sysctl_compact_unevictable_allowed,
-> @@ -1497,7 +1498,7 @@ static struct ctl_table vm_table[] = {
->  		.extra1		= SYSCTL_ZERO,
->  		.extra2		= SYSCTL_ONE,
->  	},
-> -
-> +#endif
->  #endif /* CONFIG_COMPACTION */
->  	{
->  		.procname	= "min_free_kbytes",
-> diff --git a/mm/compaction.c b/mm/compaction.c
-> index 672d3c78c6abf..b2c804c35ae56 100644
-> --- a/mm/compaction.c
-> +++ b/mm/compaction.c
-> @@ -1590,7 +1590,11 @@ typedef enum {
->   * Allow userspace to control policy on scanning the unevictable LRU for
->   * compactable pages.
->   */
-> +#ifdef CONFIG_PREEMPT_RT
-> +#define sysctl_compact_unevictable_allowed 0
-> +#else
->  int sysctl_compact_unevictable_allowed __read_mostly = 1;
-> +#endif
->  
->  static inline void
->  update_fast_start_pfn(struct compact_control *cc, unsigned long pfn)
-> 
+T24gNi80LzE5IDI6MjkgUE0sIENocmlzdGlhbiBCcmF1bmVyIHdyb3RlOg0KPiBPbiBUdWUsIEp1
+biAwNCwgMjAxOSBhdCAwODo0MDowMVBNICswMjAwLCBBcm5kIEJlcmdtYW5uIHdyb3RlOg0KPj4g
+T24gVHVlLCBKdW4gNCwgMjAxOSBhdCA2OjA5IFBNIENocmlzdGlhbiBCcmF1bmVyIDxjaHJpc3Rp
+YW5AYnJhdW5lci5pbz4gd3JvdGU6DQo+Pj4NCj4+PiBXaXJlIHVwIHRoZSBjbG9uZTMoKSBjYWxs
+IG9uIGFsbCBhcmNoZXMgdGhhdCBkb24ndCByZXF1aXJlIGhhbmQtcm9sbGVkDQo+Pj4gYXNzZW1i
+bHkuDQo+Pj4NCj4+PiBTb21lIG9mIHRoZSBhcmNoZXMgbG9vayBsaWtlIHRoZXkgbmVlZCBzcGVj
+aWFsIGFzc2VtYmx5IG1hc3NhZ2luZyBhbmQgaXQgaXMNCj4+PiBwcm9iYWJseSBzbWFydGVyIGlm
+IHRoZSBhcHByb3ByaWF0ZSBhcmNoIG1haW50YWluZXJzIHdvdWxkIGRvIHRoZSBhY3R1YWwNCj4+
+PiB3aXJpbmcuIEFyY2hlcyB0aGF0IGFyZSB3aXJlZC11cCBhcmU6DQo+Pj4gLSB4ODZ7XzMyLDY0
+fQ0KPj4+IC0gYXJtezY0fQ0KPj4+IC0geHRlbnNhDQo+Pg0KPj4gVGhlIG9uZXMgeW91IGRpZCBs
+b29rIGdvb2QgdG8gbWUuIEkgd291bGQgaG9wZSB0aGF0IHdlIGNhbiBkbyBhbGwgb3RoZXINCj4+
+IGFyY2hpdGVjdHVyZXMgdGhlIHNhbWUgd2F5LCBldmVuIGlmIHRoZXkgaGF2ZSBzcGVjaWFsIGFz
+c2VtYmx5IHdyYXBwZXJzDQo+PiBmb3IgdGhlIG9sZCBjbG9uZSgpLiBUaGUgbW9zdCBpbnRlcmVz
+dGluZyBjYXNlcyBhcHBlYXIgdG8gYmUgaWE2NCwgYWxwaGEsDQo+PiBtNjhrIGFuZCBzcGFyYywg
+c28gaXQgd291bGQgYmUgZ29vZCBpZiB0aGVpciBtYWludGFpbmVycyBjb3VsZCB0YWtlIGENCj4+
+IGxvb2suDQo+IA0KPiBZZXMsIGFncmVlZC4gVGhleSBjYW4gc29ydCB0aGlzIG91dCBldmVuIGFm
+dGVyIHRoaXMgbGFuZHMuDQo+IA0KPj4NCj4+IFdoYXQgZG8geW91IHVzZSBmb3IgdGVzdGluZz8g
+V291bGQgaXQgYmUgcG9zc2libGUgdG8gb3ZlcnJpZGUgdGhlDQo+PiBpbnRlcm5hbCBjbG9uZSgp
+IGZ1bmN0aW9uIGluIGdsaWJjIHdpdGggYW4gTERfUFJFTE9BRCBsaWJyYXJ5DQo+PiB0byBxdWlj
+a2x5IHRlc3Qgb25lIG9mIHRoZSBvdGhlciBhcmNoaXRlY3R1cmVzIGZvciByZWdyZXNzaW9ucz8N
+Cj4gDQo+IEkgaGF2ZSBhIHRlc3QgcHJvZ3JhbSB0aGF0IGlzIHJhdGhlciBob3JyZW5kb3VzbHkg
+dWdseSBhbmQgSSBjb21waWxlZA0KPiBrZXJuZWxzIGZvciB4ODYgYW5kIHRoZSBhcm1zIGFuZCB0
+ZXN0ZWQgaW4gcWVtdS4gVGhlIHByb2dyYW0gYmFzaWNhbGx5DQo+IGxvb2tzIGxpa2UgWzFdLg0K
+DQpJIGp1c3QgZ290IGFyb3VuZCB0byBmaXhpbmcgdGhpcyBmb3IgQVJDIChwYXRjaCB0byBmb2xs
+b3cgYWZ0ZXIgd2Ugc29ydCBvdXQgdGhlDQp0ZXN0aW5nKSBhbmQgd2FzIHRyeWluZyB0byB1c2Ug
+dGhlIHRlc3QgY2FzZSBiZWxvdyBmb3IgYSBxdWNpayBhbmQgZGlydHkgc21va2UNCnRlc3QgKHNv
+IGV4aXN0aW5nIHRvb2xjaGFpbiBsYWNraW5nIHdpdGggaGVhZGVycyBsYWNraW5nIE5SX2Nsb25l
+MyBvciBzdHJ1Y3QNCmNsb25lX2FyZ3MgZXRjKS4gSSBkaWQgaGFjayB0aG9zZSB1cCwgYnV0IHRo
+ZW4gc3BvdHRlZCBiZWxvdw0KDQp1YXBpL2xpbnV4L3NjaGVkLmgNCg0KfCAgICBzdHJ1Y3QgY2xv
+bmVfYXJncyB7DQp8CV9fYWxpZ25lZF91NjQgZmxhZ3M7DQp8CV9fYWxpZ25lZF91NjQgcGlkZmQ7
+DQp8CV9fYWxpZ25lZF91NjQgY2hpbGRfdGlkOw0KfAlfX2FsaWduZWRfdTY0IHBhcmVudF90aWQ7
+DQouLg0KLi4NCg0KQXJlIGFsbCBjbG9uZTMgYXJnIGZpZWxkcyBzdXBwb3NlZCB0byBiZSA2NC1i
+aXQgd2lkZSwgZXZlbiB0aGluZ3MgbGlrZSBAY2hpbGRfdGlkLA0KQHRscyAuLi4uIHdoaWNoIGFy
+ZSB0cmFkaXRpb25hbGx5IEFSQ0ggd29yZCB3aWRlID8NCg0KDQo+IA0KPiBDaHJpc3RpYW4NCj4g
+DQo+IFsxXToNCj4gI2RlZmluZSBfR05VX1NPVVJDRQ0KPiAjaW5jbHVkZSA8ZXJyLmg+DQo+ICNp
+bmNsdWRlIDxlcnJuby5oPg0KPiAjaW5jbHVkZSA8ZmNudGwuaD4NCj4gI2luY2x1ZGUgPGxpbnV4
+L3NjaGVkLmg+DQo+ICNpbmNsdWRlIDxsaW51eC90eXBlcy5oPg0KPiAjaW5jbHVkZSA8c2NoZWQu
+aD4NCj4gI2luY2x1ZGUgPHNpZ25hbC5oPg0KPiAjaW5jbHVkZSA8c3RkaW50Lmg+DQo+ICNpbmNs
+dWRlIDxzdGRpby5oPg0KPiAjaW5jbHVkZSA8c3RkbGliLmg+DQo+ICNpbmNsdWRlIDxzeXMvbW91
+bnQuaD4NCj4gI2luY2x1ZGUgPHN5cy9zb2NrZXQuaD4NCj4gI2luY2x1ZGUgPHN5cy9zdGF0Lmg+
+DQo+ICNpbmNsdWRlIDxzeXMvc3lzY2FsbC5oPg0KPiAjaW5jbHVkZSA8c3lzL3N5c21hY3Jvcy5o
+Pg0KPiAjaW5jbHVkZSA8c3lzL3R5cGVzLmg+DQo+ICNpbmNsdWRlIDxzeXMvdW4uaD4NCj4gI2lu
+Y2x1ZGUgPHN5cy93YWl0Lmg+DQo+ICNpbmNsdWRlIDx1bmlzdGQuaD4NCj4gDQo+IHN0YXRpYyBw
+aWRfdCByYXdfY2xvbmUoc3RydWN0IGNsb25lX2FyZ3MgKmFyZ3MpDQo+IHsNCj4gCXJldHVybiBz
+eXNjYWxsKF9fTlJfY2xvbmUzLCBhcmdzLCBzaXplb2Yoc3RydWN0IGNsb25lX2FyZ3MpKTsNCj4g
+fQ0KPiANCj4gc3RhdGljIHBpZF90IHJhd19jbG9uZV9sZWdhY3koaW50ICpwaWRmZCwgdW5zaWdu
+ZWQgaW50IGZsYWdzKQ0KPiB7DQo+IAlyZXR1cm4gc3lzY2FsbChfX05SX2Nsb25lLCBmbGFncywg
+MCwgcGlkZmQsIDAsIDApOw0KPiB9DQo+IA0KPiBzdGF0aWMgaW50IHdhaXRfZm9yX3BpZChwaWRf
+dCBwaWQpDQo+IHsNCj4gCWludCBzdGF0dXMsIHJldDsNCj4gDQo+IGFnYWluOg0KPiAJcmV0ID0g
+d2FpdHBpZChwaWQsICZzdGF0dXMsIDApOw0KPiAJaWYgKHJldCA9PSAtMSkgew0KPiAJCWlmIChl
+cnJubyA9PSBFSU5UUikNCj4gCQkJZ290byBhZ2FpbjsNCj4gDQo+IAkJcmV0dXJuIC0xOw0KPiAJ
+fQ0KPiANCj4gCWlmIChyZXQgIT0gcGlkKQ0KPiAJCWdvdG8gYWdhaW47DQo+IA0KPiAJaWYgKCFX
+SUZFWElURUQoc3RhdHVzKSB8fCBXRVhJVFNUQVRVUyhzdGF0dXMpICE9IDApDQo+IAkJcmV0dXJu
+IC0xOw0KPiANCj4gCXJldHVybiAwOw0KPiB9DQo+IA0KPiAjZGVmaW5lIHB0cl90b191NjQocHRy
+KSAoKF9fdTY0KSgodWludHB0cl90KShwdHIpKSkNCj4gI2RlZmluZSB1NjRfdG9fcHRyKG4pICgo
+dWludHB0cl90KSgoX191NjQpKG4pKSkNCj4gDQo+IGludCBtYWluKGludCBhcmdjLCBjaGFyICph
+cmd2W10pDQo+IHsNCj4gCWludCBwaWRmZCA9IC0xOw0KPiAJcGlkX3QgcGFyZW50X3RpZCA9IC0x
+LCBwaWQgPSAtMTsNCj4gCXN0cnVjdCBjbG9uZV9hcmdzIGFyZ3MgPSB7MH07DQo+IAlhcmdzLnBh
+cmVudF90aWQgPSBwdHJfdG9fdTY0KCZwYXJlbnRfdGlkKTsNCj4gCWFyZ3MucGlkZmQgPSBwdHJf
+dG9fdTY0KCZwaWRmZCk7DQo+IAlhcmdzLmZsYWdzID0gQ0xPTkVfUElERkQgfCBDTE9ORV9QQVJF
+TlRfU0VUVElEOw0KPiAJYXJncy5leGl0X3NpZ25hbCA9IFNJR0NITEQ7DQo+IA0KPiAJcGlkID0g
+cmF3X2Nsb25lKCZhcmdzKTsNCj4gCWlmIChwaWQgPCAwKSB7DQo+IAkJZnByaW50ZihzdGRlcnIs
+ICIlcyAtIEZhaWxlZCB0byBjcmVhdGUgbmV3IHByb2Nlc3NcbiIsDQo+IAkJCXN0cmVycm9yKGVy
+cm5vKSk7DQo+IAkJZXhpdChFWElUX0ZBSUxVUkUpOw0KPiAJfQ0KPiANCj4gCWlmIChwaWQgPT0g
+MCkgew0KPiAJCXByaW50ZigiSSBhbSB0aGUgY2hpbGQgd2l0aCBwaWQgJWRcbiIsIGdldHBpZCgp
+KTsNCj4gCQlleGl0KEVYSVRfU1VDQ0VTUyk7DQo+IAl9DQo+IA0KPiAJcHJpbnRmKCJyYXdfY2xv
+bmU6IEkgYW0gdGhlIHBhcmVudC4gTXkgY2hpbGQncyBwaWQgaXMgICAlZFxuIiwgcGlkKTsNCj4g
+CXByaW50ZigicmF3X2Nsb25lOiBJIGFtIHRoZSBwYXJlbnQuIE15IGNoaWxkJ3MgcGlkZmQgaXMg
+JWRcbiIsDQo+IAkgICAgICAgKihpbnQgKilhcmdzLnBpZGZkKTsNCj4gCXByaW50ZigicmF3X2Ns
+b25lOiBJIGFtIHRoZSBwYXJlbnQuIE15IGNoaWxkJ3MgcGFyZW5fdGlkIHZhbHVlIGlzICVkXG4i
+LA0KPiAJICAgICAgICoocGlkX3QgKilhcmdzLnBhcmVudF90aWQpOw0KPiANCj4gCWlmICh3YWl0
+X2Zvcl9waWQocGlkKSkNCj4gCQlleGl0KEVYSVRfRkFJTFVSRSk7DQo+IA0KPiAJaWYgKHBpZCAh
+PSAqKHBpZF90ICopYXJncy5wYXJlbnRfdGlkKQ0KPiAJCWV4aXQoRVhJVF9GQUlMVVJFKTsNCj4g
+DQo+IAljbG9zZShwaWRmZCk7DQo+IA0KPiAJcHJpbnRmKCJcblxuIik7DQo+IAlwaWRmZCA9IC0x
+Ow0KPiAJcGlkID0gcmF3X2Nsb25lX2xlZ2FjeSgmcGlkZmQsIENMT05FX1BJREZEIHwgU0lHQ0hM
+RCk7DQo+IAlpZiAocGlkIDwgMCkgew0KPiAJCWZwcmludGYoc3RkZXJyLCAiJXMgLSBGYWlsZWQg
+dG8gY3JlYXRlIG5ldyBwcm9jZXNzXG4iLA0KPiAJCQlzdHJlcnJvcihlcnJubykpOw0KPiAJCWV4
+aXQoRVhJVF9GQUlMVVJFKTsNCj4gCX0NCj4gDQo+IAlpZiAocGlkID09IDApIHsNCj4gCQlwcmlu
+dGYoIkkgYW0gdGhlIGNoaWxkIHdpdGggcGlkICVkXG4iLCBnZXRwaWQoKSk7DQo+IAkJZXhpdChF
+WElUX1NVQ0NFU1MpOw0KPiAJfQ0KPiANCj4gCXByaW50ZigicmF3X2Nsb25lX2xlZ2FjeTogSSBh
+bSB0aGUgcGFyZW50LiBNeSBjaGlsZCdzIHBpZCBpcyAgICVkXG4iLA0KPiAJICAgICAgIHBpZCk7
+DQo+IAlwcmludGYoInJhd19jbG9uZV9sZWdhY3k6IEkgYW0gdGhlIHBhcmVudC4gTXkgY2hpbGQn
+cyBwaWRmZCBpcyAlZFxuIiwNCj4gCSAgICAgICBwaWRmZCk7DQo+IA0KPiAJaWYgKHdhaXRfZm9y
+X3BpZChwaWQpKQ0KPiAJCWV4aXQoRVhJVF9GQUlMVVJFKTsNCj4gDQo+IAlpZiAocGlkICE9ICoo
+cGlkX3QgKilhcmdzLnBhcmVudF90aWQpDQo+IAkJZXhpdChFWElUX0ZBSUxVUkUpOw0KPiANCj4g
+CXJldHVybiAwOw0KPiB9DQo+IA0KDQo=
