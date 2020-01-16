@@ -1,106 +1,233 @@
-From: Vineet Gupta <Vineet.Gupta1@synopsys.com>
-Subject: clone3 on ARC (was Re: [PATCH v3 2/2] arch: wire-up clone3() syscall)
-Date: Wed, 15 Jan 2020 22:41:20 +0000
-Message-ID: <a58c8425-83a3-b64c-339a-7e94a72f4bee@synopsys.com>
-References: <20190604160944.4058-1-christian@brauner.io>
- <20190604160944.4058-2-christian@brauner.io>
- <CAK8P3a0OfBpx6y4m5uWX-DUg16NoFby5ik-3xCcD+yMrw0tbEw@mail.gmail.com>
- <20190604212930.jaaztvkent32b7d3@brauner.io>
+From: Randy Dunlap <rdunlap@infradead.org>
+Subject: Re: [PATCH v28 01/12] Linux Random Number Generator
+Date: Wed, 15 Jan 2020 16:11:40 -0800
+Message-ID: <3a8d5d2d-d54f-cf18-0c93-dbe8cd91ed12@infradead.org>
+References: <6157374.ptSnyUpaCn@positron.chronox.de>
+ <2641155.iNH938UiKq@positron.chronox.de>
+ <5951792.lmNsirYsPE@positron.chronox.de>
+ <2211028.KG5F5qfgHC@positron.chronox.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <linux-arch-owner@vger.kernel.org>
-In-Reply-To: <20190604212930.jaaztvkent32b7d3@brauner.io>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <2211028.KG5F5qfgHC@positron.chronox.de>
 Content-Language: en-US
-Content-ID: <BB017E12F10A4D488BE280BF32F60C06@namprd12.prod.outlook.com>
-Sender: linux-arch-owner@vger.kernel.org
-To: Christian Brauner <christian@brauner.io>, Arnd Bergmann <arnd@arndb.de>
-Cc: Al Viro <viro@zeniv.linux.org.uk>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Linus Torvalds <torvalds@linux-foundation.org>, Jann Horn <jannh@google.com>, Kees Cook <keescook@chromium.org>, Florian Weimer <fweimer@redhat.com>, Oleg Nesterov <oleg@redhat.com>, David Howells <dhowells@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Adrian Reber <adrian@lisas.de>, Linux API <linux-api@vger.kernel.org>, linux-arch <linux-arch@vger.kernel.org>, the arch/x86 maintainers <x86@kernel.org>, arcml <linux-snps-arc@lists.infradead.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: =?UTF-8?Q?Stephan_M=c3=bcller?= <smueller@chronox.de>, Arnd Bergmann <arnd@arndb.de>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>, linux-crypto@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, linux-api@vger.kernel.org, "Eric W. Biederman" <ebiederm@xmission.com>, "Alexander E. Patrakov" <patrakov@gmail.com>, "Ahmed S. Darwish" <darwish.07@gmail.com>, "Theodore Y. Ts'o" <tytso@mit.edu>, Willy Tarreau <w@1wt.eu>, Matthew Garrett <mjg59@srcf.ucam.org>, Vito Caputo <vcaputo@pengaru.com>, Andreas Dilger <adilger.kernel@dilger.ca>, Jan Kara <jack@suse.cz>, Ray Strode <rstrode@redhat.com>, William Jon McCann <mccann@jhu.edu>, zhangjs <zachary@baishancloud.com>, Andy Lutomirski <luto@kernel.org>, Florian Weimer <fweimer@redhat.com>, Lennart Poettering <mzxreary@0pointer.de>, Nicolai Stange <nstange@suse.de>, "Peter, Matthias" <matth>
 List-Id: linux-api@vger.kernel.org
 
-T24gNi80LzE5IDI6MjkgUE0sIENocmlzdGlhbiBCcmF1bmVyIHdyb3RlOg0KPiBPbiBUdWUsIEp1
-biAwNCwgMjAxOSBhdCAwODo0MDowMVBNICswMjAwLCBBcm5kIEJlcmdtYW5uIHdyb3RlOg0KPj4g
-T24gVHVlLCBKdW4gNCwgMjAxOSBhdCA2OjA5IFBNIENocmlzdGlhbiBCcmF1bmVyIDxjaHJpc3Rp
-YW5AYnJhdW5lci5pbz4gd3JvdGU6DQo+Pj4NCj4+PiBXaXJlIHVwIHRoZSBjbG9uZTMoKSBjYWxs
-IG9uIGFsbCBhcmNoZXMgdGhhdCBkb24ndCByZXF1aXJlIGhhbmQtcm9sbGVkDQo+Pj4gYXNzZW1i
-bHkuDQo+Pj4NCj4+PiBTb21lIG9mIHRoZSBhcmNoZXMgbG9vayBsaWtlIHRoZXkgbmVlZCBzcGVj
-aWFsIGFzc2VtYmx5IG1hc3NhZ2luZyBhbmQgaXQgaXMNCj4+PiBwcm9iYWJseSBzbWFydGVyIGlm
-IHRoZSBhcHByb3ByaWF0ZSBhcmNoIG1haW50YWluZXJzIHdvdWxkIGRvIHRoZSBhY3R1YWwNCj4+
-PiB3aXJpbmcuIEFyY2hlcyB0aGF0IGFyZSB3aXJlZC11cCBhcmU6DQo+Pj4gLSB4ODZ7XzMyLDY0
-fQ0KPj4+IC0gYXJtezY0fQ0KPj4+IC0geHRlbnNhDQo+Pg0KPj4gVGhlIG9uZXMgeW91IGRpZCBs
-b29rIGdvb2QgdG8gbWUuIEkgd291bGQgaG9wZSB0aGF0IHdlIGNhbiBkbyBhbGwgb3RoZXINCj4+
-IGFyY2hpdGVjdHVyZXMgdGhlIHNhbWUgd2F5LCBldmVuIGlmIHRoZXkgaGF2ZSBzcGVjaWFsIGFz
-c2VtYmx5IHdyYXBwZXJzDQo+PiBmb3IgdGhlIG9sZCBjbG9uZSgpLiBUaGUgbW9zdCBpbnRlcmVz
-dGluZyBjYXNlcyBhcHBlYXIgdG8gYmUgaWE2NCwgYWxwaGEsDQo+PiBtNjhrIGFuZCBzcGFyYywg
-c28gaXQgd291bGQgYmUgZ29vZCBpZiB0aGVpciBtYWludGFpbmVycyBjb3VsZCB0YWtlIGENCj4+
-IGxvb2suDQo+IA0KPiBZZXMsIGFncmVlZC4gVGhleSBjYW4gc29ydCB0aGlzIG91dCBldmVuIGFm
-dGVyIHRoaXMgbGFuZHMuDQo+IA0KPj4NCj4+IFdoYXQgZG8geW91IHVzZSBmb3IgdGVzdGluZz8g
-V291bGQgaXQgYmUgcG9zc2libGUgdG8gb3ZlcnJpZGUgdGhlDQo+PiBpbnRlcm5hbCBjbG9uZSgp
-IGZ1bmN0aW9uIGluIGdsaWJjIHdpdGggYW4gTERfUFJFTE9BRCBsaWJyYXJ5DQo+PiB0byBxdWlj
-a2x5IHRlc3Qgb25lIG9mIHRoZSBvdGhlciBhcmNoaXRlY3R1cmVzIGZvciByZWdyZXNzaW9ucz8N
-Cj4gDQo+IEkgaGF2ZSBhIHRlc3QgcHJvZ3JhbSB0aGF0IGlzIHJhdGhlciBob3JyZW5kb3VzbHkg
-dWdseSBhbmQgSSBjb21waWxlZA0KPiBrZXJuZWxzIGZvciB4ODYgYW5kIHRoZSBhcm1zIGFuZCB0
-ZXN0ZWQgaW4gcWVtdS4gVGhlIHByb2dyYW0gYmFzaWNhbGx5DQo+IGxvb2tzIGxpa2UgWzFdLg0K
-DQpJIGp1c3QgZ290IGFyb3VuZCB0byBmaXhpbmcgdGhpcyBmb3IgQVJDIChwYXRjaCB0byBmb2xs
-b3cgYWZ0ZXIgd2Ugc29ydCBvdXQgdGhlDQp0ZXN0aW5nKSBhbmQgd2FzIHRyeWluZyB0byB1c2Ug
-dGhlIHRlc3QgY2FzZSBiZWxvdyBmb3IgYSBxdWNpayBhbmQgZGlydHkgc21va2UNCnRlc3QgKHNv
-IGV4aXN0aW5nIHRvb2xjaGFpbiBsYWNraW5nIHdpdGggaGVhZGVycyBsYWNraW5nIE5SX2Nsb25l
-MyBvciBzdHJ1Y3QNCmNsb25lX2FyZ3MgZXRjKS4gSSBkaWQgaGFjayB0aG9zZSB1cCwgYnV0IHRo
-ZW4gc3BvdHRlZCBiZWxvdw0KDQp1YXBpL2xpbnV4L3NjaGVkLmgNCg0KfCAgICBzdHJ1Y3QgY2xv
-bmVfYXJncyB7DQp8CV9fYWxpZ25lZF91NjQgZmxhZ3M7DQp8CV9fYWxpZ25lZF91NjQgcGlkZmQ7
-DQp8CV9fYWxpZ25lZF91NjQgY2hpbGRfdGlkOw0KfAlfX2FsaWduZWRfdTY0IHBhcmVudF90aWQ7
-DQouLg0KLi4NCg0KQXJlIGFsbCBjbG9uZTMgYXJnIGZpZWxkcyBzdXBwb3NlZCB0byBiZSA2NC1i
-aXQgd2lkZSwgZXZlbiB0aGluZ3MgbGlrZSBAY2hpbGRfdGlkLA0KQHRscyAuLi4uIHdoaWNoIGFy
-ZSB0cmFkaXRpb25hbGx5IEFSQ0ggd29yZCB3aWRlID8NCg0KDQo+IA0KPiBDaHJpc3RpYW4NCj4g
-DQo+IFsxXToNCj4gI2RlZmluZSBfR05VX1NPVVJDRQ0KPiAjaW5jbHVkZSA8ZXJyLmg+DQo+ICNp
-bmNsdWRlIDxlcnJuby5oPg0KPiAjaW5jbHVkZSA8ZmNudGwuaD4NCj4gI2luY2x1ZGUgPGxpbnV4
-L3NjaGVkLmg+DQo+ICNpbmNsdWRlIDxsaW51eC90eXBlcy5oPg0KPiAjaW5jbHVkZSA8c2NoZWQu
-aD4NCj4gI2luY2x1ZGUgPHNpZ25hbC5oPg0KPiAjaW5jbHVkZSA8c3RkaW50Lmg+DQo+ICNpbmNs
-dWRlIDxzdGRpby5oPg0KPiAjaW5jbHVkZSA8c3RkbGliLmg+DQo+ICNpbmNsdWRlIDxzeXMvbW91
-bnQuaD4NCj4gI2luY2x1ZGUgPHN5cy9zb2NrZXQuaD4NCj4gI2luY2x1ZGUgPHN5cy9zdGF0Lmg+
-DQo+ICNpbmNsdWRlIDxzeXMvc3lzY2FsbC5oPg0KPiAjaW5jbHVkZSA8c3lzL3N5c21hY3Jvcy5o
-Pg0KPiAjaW5jbHVkZSA8c3lzL3R5cGVzLmg+DQo+ICNpbmNsdWRlIDxzeXMvdW4uaD4NCj4gI2lu
-Y2x1ZGUgPHN5cy93YWl0Lmg+DQo+ICNpbmNsdWRlIDx1bmlzdGQuaD4NCj4gDQo+IHN0YXRpYyBw
-aWRfdCByYXdfY2xvbmUoc3RydWN0IGNsb25lX2FyZ3MgKmFyZ3MpDQo+IHsNCj4gCXJldHVybiBz
-eXNjYWxsKF9fTlJfY2xvbmUzLCBhcmdzLCBzaXplb2Yoc3RydWN0IGNsb25lX2FyZ3MpKTsNCj4g
-fQ0KPiANCj4gc3RhdGljIHBpZF90IHJhd19jbG9uZV9sZWdhY3koaW50ICpwaWRmZCwgdW5zaWdu
-ZWQgaW50IGZsYWdzKQ0KPiB7DQo+IAlyZXR1cm4gc3lzY2FsbChfX05SX2Nsb25lLCBmbGFncywg
-MCwgcGlkZmQsIDAsIDApOw0KPiB9DQo+IA0KPiBzdGF0aWMgaW50IHdhaXRfZm9yX3BpZChwaWRf
-dCBwaWQpDQo+IHsNCj4gCWludCBzdGF0dXMsIHJldDsNCj4gDQo+IGFnYWluOg0KPiAJcmV0ID0g
-d2FpdHBpZChwaWQsICZzdGF0dXMsIDApOw0KPiAJaWYgKHJldCA9PSAtMSkgew0KPiAJCWlmIChl
-cnJubyA9PSBFSU5UUikNCj4gCQkJZ290byBhZ2FpbjsNCj4gDQo+IAkJcmV0dXJuIC0xOw0KPiAJ
-fQ0KPiANCj4gCWlmIChyZXQgIT0gcGlkKQ0KPiAJCWdvdG8gYWdhaW47DQo+IA0KPiAJaWYgKCFX
-SUZFWElURUQoc3RhdHVzKSB8fCBXRVhJVFNUQVRVUyhzdGF0dXMpICE9IDApDQo+IAkJcmV0dXJu
-IC0xOw0KPiANCj4gCXJldHVybiAwOw0KPiB9DQo+IA0KPiAjZGVmaW5lIHB0cl90b191NjQocHRy
-KSAoKF9fdTY0KSgodWludHB0cl90KShwdHIpKSkNCj4gI2RlZmluZSB1NjRfdG9fcHRyKG4pICgo
-dWludHB0cl90KSgoX191NjQpKG4pKSkNCj4gDQo+IGludCBtYWluKGludCBhcmdjLCBjaGFyICph
-cmd2W10pDQo+IHsNCj4gCWludCBwaWRmZCA9IC0xOw0KPiAJcGlkX3QgcGFyZW50X3RpZCA9IC0x
-LCBwaWQgPSAtMTsNCj4gCXN0cnVjdCBjbG9uZV9hcmdzIGFyZ3MgPSB7MH07DQo+IAlhcmdzLnBh
-cmVudF90aWQgPSBwdHJfdG9fdTY0KCZwYXJlbnRfdGlkKTsNCj4gCWFyZ3MucGlkZmQgPSBwdHJf
-dG9fdTY0KCZwaWRmZCk7DQo+IAlhcmdzLmZsYWdzID0gQ0xPTkVfUElERkQgfCBDTE9ORV9QQVJF
-TlRfU0VUVElEOw0KPiAJYXJncy5leGl0X3NpZ25hbCA9IFNJR0NITEQ7DQo+IA0KPiAJcGlkID0g
-cmF3X2Nsb25lKCZhcmdzKTsNCj4gCWlmIChwaWQgPCAwKSB7DQo+IAkJZnByaW50ZihzdGRlcnIs
-ICIlcyAtIEZhaWxlZCB0byBjcmVhdGUgbmV3IHByb2Nlc3NcbiIsDQo+IAkJCXN0cmVycm9yKGVy
-cm5vKSk7DQo+IAkJZXhpdChFWElUX0ZBSUxVUkUpOw0KPiAJfQ0KPiANCj4gCWlmIChwaWQgPT0g
-MCkgew0KPiAJCXByaW50ZigiSSBhbSB0aGUgY2hpbGQgd2l0aCBwaWQgJWRcbiIsIGdldHBpZCgp
-KTsNCj4gCQlleGl0KEVYSVRfU1VDQ0VTUyk7DQo+IAl9DQo+IA0KPiAJcHJpbnRmKCJyYXdfY2xv
-bmU6IEkgYW0gdGhlIHBhcmVudC4gTXkgY2hpbGQncyBwaWQgaXMgICAlZFxuIiwgcGlkKTsNCj4g
-CXByaW50ZigicmF3X2Nsb25lOiBJIGFtIHRoZSBwYXJlbnQuIE15IGNoaWxkJ3MgcGlkZmQgaXMg
-JWRcbiIsDQo+IAkgICAgICAgKihpbnQgKilhcmdzLnBpZGZkKTsNCj4gCXByaW50ZigicmF3X2Ns
-b25lOiBJIGFtIHRoZSBwYXJlbnQuIE15IGNoaWxkJ3MgcGFyZW5fdGlkIHZhbHVlIGlzICVkXG4i
-LA0KPiAJICAgICAgICoocGlkX3QgKilhcmdzLnBhcmVudF90aWQpOw0KPiANCj4gCWlmICh3YWl0
-X2Zvcl9waWQocGlkKSkNCj4gCQlleGl0KEVYSVRfRkFJTFVSRSk7DQo+IA0KPiAJaWYgKHBpZCAh
-PSAqKHBpZF90ICopYXJncy5wYXJlbnRfdGlkKQ0KPiAJCWV4aXQoRVhJVF9GQUlMVVJFKTsNCj4g
-DQo+IAljbG9zZShwaWRmZCk7DQo+IA0KPiAJcHJpbnRmKCJcblxuIik7DQo+IAlwaWRmZCA9IC0x
-Ow0KPiAJcGlkID0gcmF3X2Nsb25lX2xlZ2FjeSgmcGlkZmQsIENMT05FX1BJREZEIHwgU0lHQ0hM
-RCk7DQo+IAlpZiAocGlkIDwgMCkgew0KPiAJCWZwcmludGYoc3RkZXJyLCAiJXMgLSBGYWlsZWQg
-dG8gY3JlYXRlIG5ldyBwcm9jZXNzXG4iLA0KPiAJCQlzdHJlcnJvcihlcnJubykpOw0KPiAJCWV4
-aXQoRVhJVF9GQUlMVVJFKTsNCj4gCX0NCj4gDQo+IAlpZiAocGlkID09IDApIHsNCj4gCQlwcmlu
-dGYoIkkgYW0gdGhlIGNoaWxkIHdpdGggcGlkICVkXG4iLCBnZXRwaWQoKSk7DQo+IAkJZXhpdChF
-WElUX1NVQ0NFU1MpOw0KPiAJfQ0KPiANCj4gCXByaW50ZigicmF3X2Nsb25lX2xlZ2FjeTogSSBh
-bSB0aGUgcGFyZW50LiBNeSBjaGlsZCdzIHBpZCBpcyAgICVkXG4iLA0KPiAJICAgICAgIHBpZCk7
-DQo+IAlwcmludGYoInJhd19jbG9uZV9sZWdhY3k6IEkgYW0gdGhlIHBhcmVudC4gTXkgY2hpbGQn
-cyBwaWRmZCBpcyAlZFxuIiwNCj4gCSAgICAgICBwaWRmZCk7DQo+IA0KPiAJaWYgKHdhaXRfZm9y
-X3BpZChwaWQpKQ0KPiAJCWV4aXQoRVhJVF9GQUlMVVJFKTsNCj4gDQo+IAlpZiAocGlkICE9ICoo
-cGlkX3QgKilhcmdzLnBhcmVudF90aWQpDQo+IAkJZXhpdChFWElUX0ZBSUxVUkUpOw0KPiANCj4g
-CXJldHVybiAwOw0KPiB9DQo+IA0KDQo=
+Hi,
+
+On 1/15/20 2:31 AM, Stephan Müller wrote:
+
+> CC: "Eric W. Biederman" <ebiederm@xmission.com>
+> CC: "Alexander E. Patrakov" <patrakov@gmail.com>
+> CC: "Ahmed S. Darwish" <darwish.07@gmail.com>
+> CC: "Theodore Y. Ts'o" <tytso@mit.edu>
+> CC: Willy Tarreau <w@1wt.eu>
+> CC: Matthew Garrett <mjg59@srcf.ucam.org>
+> CC: Vito Caputo <vcaputo@pengaru.com>
+> CC: Andreas Dilger <adilger.kernel@dilger.ca>
+> CC: Jan Kara <jack@suse.cz>
+> CC: Ray Strode <rstrode@redhat.com>
+> CC: William Jon McCann <mccann@jhu.edu>
+> CC: zhangjs <zachary@baishancloud.com>
+> CC: Andy Lutomirski <luto@kernel.org>
+> CC: Florian Weimer <fweimer@redhat.com>
+> CC: Lennart Poettering <mzxreary@0pointer.de>
+> CC: Nicolai Stange <nstange@suse.de>
+> Mathematical aspects Reviewed-by: "Peter, Matthias" <matthias.peter@bsi.bund.de>
+> Reviewed-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
+> Reviewed-by: Roman Drahtmueller <draht@schaltsekun.de>
+> Tested-by: Roman Drahtmüller <draht@schaltsekun.de>
+> Tested-by: Marcelo Henrique Cerri <marcelo.cerri@canonical.com>
+> Tested-by: Neil Horman <nhorman@redhat.com>
+> Signed-off-by: Stephan Mueller <smueller@chronox.de>
+> ---
+>  MAINTAINERS                         |   7 +
+>  drivers/char/Kconfig                |   2 +
+>  drivers/char/Makefile               |   9 +-
+>  drivers/char/lrng/Kconfig           |  67 +++
+>  drivers/char/lrng/Makefile          |   9 +
+>  drivers/char/lrng/lrng_archrandom.c |  94 ++++
+>  drivers/char/lrng/lrng_aux.c        | 148 +++++++
+>  drivers/char/lrng/lrng_chacha20.c   | 265 ++++++++++++
+>  drivers/char/lrng/lrng_chacha20.h   |  25 ++
+>  drivers/char/lrng/lrng_drng.c       | 400 +++++++++++++++++
+>  drivers/char/lrng/lrng_interfaces.c | 638 ++++++++++++++++++++++++++++
+>  drivers/char/lrng/lrng_internal.h   | 296 +++++++++++++
+>  drivers/char/lrng/lrng_lfsr.h       | 152 +++++++
+>  drivers/char/lrng/lrng_pool.c       | 588 +++++++++++++++++++++++++
+>  drivers/char/lrng/lrng_sw_noise.c   | 102 +++++
+>  drivers/char/lrng/lrng_sw_noise.h   |  57 +++
+>  include/linux/lrng.h                |  63 +++
+>  17 files changed, 2921 insertions(+), 1 deletion(-)
+>  create mode 100644 drivers/char/lrng/Kconfig
+>  create mode 100644 drivers/char/lrng/Makefile
+>  create mode 100644 drivers/char/lrng/lrng_archrandom.c
+>  create mode 100644 drivers/char/lrng/lrng_aux.c
+>  create mode 100644 drivers/char/lrng/lrng_chacha20.c
+>  create mode 100644 drivers/char/lrng/lrng_chacha20.h
+>  create mode 100644 drivers/char/lrng/lrng_drng.c
+>  create mode 100644 drivers/char/lrng/lrng_interfaces.c
+>  create mode 100644 drivers/char/lrng/lrng_internal.h
+>  create mode 100644 drivers/char/lrng/lrng_lfsr.h
+>  create mode 100644 drivers/char/lrng/lrng_pool.c
+>  create mode 100644 drivers/char/lrng/lrng_sw_noise.c
+>  create mode 100644 drivers/char/lrng/lrng_sw_noise.h
+>  create mode 100644 include/linux/lrng.h
+> 
+
+> diff --git a/drivers/char/lrng/Kconfig b/drivers/char/lrng/Kconfig
+> new file mode 100644
+> index 000000000000..56f13efd3592
+> --- /dev/null
+> +++ b/drivers/char/lrng/Kconfig
+> @@ -0,0 +1,67 @@
+> +# SPDX-License-Identifier: GPL-2.0
+> +#
+> +# Linux Random Number Generator configuration
+> +#
+> +
+> +menuconfig LRNG
+> +	bool "Linux Random Number Generator"
+
+This should probably depend on CRYPTO and/or some other CRYPTO_xxx symbols.
+Or (worst case) select them.  :(
+
+This message (when CONFIG_CRYPTO is disabled and no crypto facilities are enabled)
+should be avoidable when the correct Kconfig entries are used:
+
+../drivers/char/lrng/lrng_drbg.c:38:2: error: #error "Unknown DRBG in use"
+ #error "Unknown DRBG in use"
+
+
+> +	help
+> +	  The Linux Random Number Generator (LRNG) is the replacement
+> +	  of the existing /dev/random provided with drivers/char/random.c.
+> +	  It generates entropy from different noise sources and
+> +	  delivers significant entropy during boot.
+> +
+> +if LRNG
+> +
+> +choice
+> +	prompt "LRNG Entropy Pool Size"
+> +	default LRNG_POOL_SIZE_4096
+> +	help
+> +	  Select the size of the LRNG entropy pool. The size of the
+> +	  entropy pool is relevant for the amount of entropy that
+> +	  the LRNG can maintain as a maximum. The larger the size
+> +	  of the entropy pool is the more entropy can be maintained
+> +	  but the less often older entropic values are overwritten
+> +	  with new entropy.
+> +
+> +	config LRNG_POOL_SIZE_512
+> +		bool "512 bits"
+> +
+> +	config LRNG_POOL_SIZE_1024
+> +		bool "1024 bits"
+> +
+> +	config LRNG_POOL_SIZE_2048
+> +		bool "2048 bits"
+> +
+> +	config LRNG_POOL_SIZE_4096
+> +		bool "4096 bits (default)"
+> +
+> +	config LRNG_POOL_SIZE_8192
+> +		bool "8192 bits"
+> +
+> +	config LRNG_POOL_SIZE_16384
+> +		bool "16384 bits"
+> +
+> +	config LRNG_POOL_SIZE_32768
+> +		bool "32768 bits"
+> +
+> +	config LRNG_POOL_SIZE_65536
+> +		bool "65536 bits"
+> +
+> +	config LRNG_POOL_SIZE_131072
+> +		bool "131072 bits"
+> +endchoice
+> +
+> +config LRNG_POOL_SIZE
+> +	int
+> +	default 0 if LRNG_POOL_SIZE_512
+> +	default 1 if LRNG_POOL_SIZE_1024
+> +	default 2 if LRNG_POOL_SIZE_2048
+> +	default 3 if LRNG_POOL_SIZE_4096
+> +	default 4 if LRNG_POOL_SIZE_8192
+> +	default 5 if LRNG_POOL_SIZE_16384
+> +	default 6 if LRNG_POOL_SIZE_32768
+> +	default 7 if LRNG_POOL_SIZE_65536
+> +	default 8 if LRNG_POOL_SIZE_131072
+> +
+> +endif # LRNG
+
+> diff --git a/drivers/char/lrng/lrng_archrandom.c b/drivers/char/lrng/lrng_archrandom.c
+> new file mode 100644
+> index 000000000000..eeba708d025f
+> --- /dev/null
+> +++ b/drivers/char/lrng/lrng_archrandom.c
+> @@ -0,0 +1,94 @@
+> +// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
+> +/*
+> + * LRNG Fast Noise Source: CPU-based noise source
+> + *
+> + * Copyright (C) 2016 - 2020, Stephan Mueller <smueller@chronox.de>
+> + */
+> +
+> +#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+> +
+> +#include <linux/random.h>
+> +
+> +#include "lrng_internal.h"
+> +
+> +/*
+> + * Estimated entropy of data is a 32th of LRNG_DRNG_SECURITY_STRENGTH_BITS.
+> + * As we have no ability to review the implementation of those noise sources,
+> + * it is prudent to have a conservative estimate here.
+> + */
+> +#define LRNG_ARCHRANDOM_DEFAULT_STRENGTH (LRNG_DRNG_SECURITY_STRENGTH_BITS>>5)
+> +#define LRNG_ARCHRANDOM_TRUST_CPU_STRENGTH LRNG_DRNG_SECURITY_STRENGTH_BITS
+> +#ifdef CONFIG_RANDOM_TRUST_CPU
+> +static u32 archrandom = LRNG_ARCHRANDOM_TRUST_CPU_STRENGTH;
+> +#else
+> +static u32 archrandom = LRNG_ARCHRANDOM_DEFAULT_STRENGTH;
+> +#endif
+> +module_param(archrandom, uint, 0644);
+> +MODULE_PARM_DESC(archrandom, "Entropy in bits of 256 data bits from CPU noise "
+> +			     "source (e.g. RDRAND)");
+
+Please put the string on one line like several other MODULE_PARM_DESC() are done:
+
++MODULE_PARM_DESC(archrandom,
++		"Entropy in bits of 256 data bits from CPU noise source (e.g. RDRAND)");
+
+
+With CONFIG_CRYPTO disabled, these warnings happen:
+
+WARNING: unmet direct dependencies detected for CRYPTO_DRBG_MENU
+  Depends on [n]: CRYPTO [=n]
+  Selected by [m]:
+  - LRNG_DRBG [=m] && LRNG [=y] && LRNG_DRNG_SWITCH [=y]
+
+WARNING: unmet direct dependencies detected for CRYPTO_RNG
+  Depends on [n]: CRYPTO [=n]
+  Selected by [m]:
+  - LRNG_KCAPI [=m] && LRNG [=y] && LRNG_DRNG_SWITCH [=y]
+
+../drivers/char/lrng/lrng_drbg.c: In function ‘lrng_hash_name’:
+../drivers/char/lrng/lrng_drbg.c:225:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+../drivers/char/lrng/lrng_drbg.c: In function ‘lrng_drbg_name’:
+../drivers/char/lrng/lrng_drbg.c:220:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+
+and build errors happen also, which can be prevented with Kconfig fixes.
+
+-- 
+~Randy
+Reported-by: Randy Dunlap <rdunlap@infradead.org>
